@@ -400,7 +400,7 @@ cmr_int cmr_sensor_get_info(cmr_handle sensor_handle, cmr_uint sensor_id, struct
 	SENSOR_EXP_INFO_T *cur_sensor_info = NULL;
 	CMR_LOGV("E");
 
-	ret = sensor_get_info_common(&handle->sensor_cxt[sensor_id], &cur_sensor_info);
+	ret = sensor_get_info_common(&(handle->sensor_cxt[sensor_id]), &cur_sensor_info);
 	if (ret) {
 		CMR_LOGE("X fail, bypass this!");
 		return ret;

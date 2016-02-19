@@ -15,6 +15,7 @@
  */
 #include "cutils/properties.h"
 #include <utils/Log.h>
+#include <dlfcn.h>
 #include "sensor.h"
 #include "jpeg_exif_header.h"
 #include "sensor_drv_u.h"
@@ -22,7 +23,7 @@
 //#include "packet_convert.h"
 //#include "sensor_s5k3l2xx_golden.c"
 //#if defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4)
-#include "sensor_s5k3l2xx_raw_param_v3.c"
+//#include "sensor_s5k3l2xx_raw_param_v3.c"
 //#else
 //#endif
 //#include "packet_convert.h"
@@ -42,6 +43,11 @@
 #define DW9807_VCM_SLAVE_ADDR     (0x18 >> 1)
 #define DW9807_EEPROM_SLAVE_ADDR  (0xB0 >> 1)
 #define S5K3L2XX_RAW_PARAM_COM     0x0000
+
+/**
+ * Name of the sensor_raw_param as a string
+ */
+#define S5K3L2XX_RAW_PARAM_AS_STR  "S5K3L2XXRP"
 
 
 #define SWAP16(x)  (x)//(((x)<<8)&0xff00)|(((x)>>8)&0xff)
@@ -83,7 +89,7 @@ static unsigned long _s5k3l2xx_ex_write_exposure(SENSOR_HW_HANDLE handle, unsign
 
 
 static const struct raw_param_info_tab s_s5k3l2xx_raw_param_tab[] = {
-	{S5K3L2XX_RAW_PARAM_COM, &s_s5k3l2xx_mipi_raw_info, _s5k3l2xx_com_Identify_otp, NULL},
+	{S5K3L2XX_RAW_PARAM_COM, NULL, _s5k3l2xx_com_Identify_otp, NULL},
 	{RAW_INFO_END_ID, PNULL, PNULL, PNULL}
 };
 static const SENSOR_REG_T s5k3l2xx_common_init_new[] = {
@@ -2571,8 +2577,23 @@ static uint32_t _s5k3l2xx_GetRawInof(SENSOR_HW_HANDLE handle)
 		}
 		else if (PNULL!=tab_ptr[i].identify_otp) {
 			if (SENSOR_SUCCESS==tab_ptr[i].identify_otp(handle, 0)) {
-				s_s5k3l2xx_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
-				SENSOR_PRINT("SENSOR_S5K3L2XX: s5k3l2xx_GetRawInof success");
+				void *handle;
+				handle = dlopen("libcamsensortuning.so", RTLD_NOW);
+				if (handle == NULL) {
+					char const *err_str = dlerror();
+					ALOGE("dlopen error%s", err_str?err_str:"unknown");
+				}
+
+				/* Get the address of the struct hal_module_info. */
+				const char *sym = S5K3L2XX_RAW_PARAM_AS_STR;
+
+				s_s5k3l2xx_mipi_raw_info_ptr = (oem_module_t *)dlsym(handle, sym);
+				if (s_s5k3l2xx_mipi_raw_info_ptr == NULL) {
+					SENSOR_PRINT("load: couldn't find symbol %s", sym);
+				} else {
+					//s_s5k3l2xx_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
+					SENSOR_PRINT("SENSOR_S5K3L2XX: s5k3l2xx_GetRawInof success");
+				}
 				break;
 			}
 		}

@@ -48,14 +48,7 @@ LOCAL_C_INCLUDES += \
 # don't modify this code
 LOCAL_SRC_FILES := $(shell find $(LOCAL_PATH) -name '*.c' | sed s:^$(LOCAL_PATH)/::g)
 
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ANTI_FLICKER)),true)
-LOCAL_CFLAGS += -DCONFIG_CAMERA_AFL_AUTO_DETECTION
-endif
-
-ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RE_FOCUS)),true)
-LOCAL_CFLAGS += -DCONFIG_CAMERA_RE_FOCUS
-LOCAL_CFLAGS += -DCONFIG_AE_SYNC_INFO_MAPPING
-endif
+include $(LOCAL_PATH)/../SprdCtrl.mk
 
 LOCAL_MODULE := libcamisp
 

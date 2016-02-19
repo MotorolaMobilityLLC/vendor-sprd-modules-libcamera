@@ -15,6 +15,7 @@
  */
 
 #include <utils/Log.h>
+#include <dlfcn.h>
 #include "sensor.h"
 #include "jpeg_exif_header.h"
 #include "sensor_drv_u.h"
@@ -22,10 +23,6 @@
 #include "packet_convert.h"
 #include "sensor_s5k4h5yc_golden.c"
 #include "sensor_s5k4h5yc_lsc_otp_golden.c"
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4)
-#include "sensor_s5k4h5yc_raw_param_v3.c"
-#else
-#endif
 #include "isp_param_file_update.h"
 
 #define S5K4H5YC_I2C_ADDR_W        0x37
@@ -35,6 +32,12 @@
 #define S5K4H5YC_RAW_PARAM_COM     0x0000
 
 #define S5K4H5YC_4_LANES
+
+/**
+ * Name of the sensor_raw_param as a string
+ */
+#define S5K4H5YC_RAW_PARAM_AS_STR  "S5K4H5YCRP"
+
 
 static int s_s5k4h5yc_gain = 0;
 static int s_capture_shutter = 0;
@@ -72,7 +75,7 @@ static uint32_t _s5k4h5yc_write_otp(unsigned long param);
 
 
 static const struct raw_param_info_tab s_s5k4h5yc_raw_param_tab[] = {
-	{S5K4H5YC_RAW_PARAM_COM, &s_s5k4h5yc_mipi_raw_info, _s5k4h5yc_com_Identify_otp, NULL},
+	{S5K4H5YC_RAW_PARAM_COM, NULL, _s5k4h5yc_com_Identify_otp, NULL},
 	{RAW_INFO_END_ID, PNULL, PNULL, PNULL}
 };
 
@@ -1071,8 +1074,23 @@ static uint32_t _s5k4h5yc_GetRawInof(void)
 		}
 		else if (PNULL!=tab_ptr[i].identify_otp) {
 			if (SENSOR_SUCCESS==tab_ptr[i].identify_otp(0)) {
-				s_s5k4h5yc_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
-				SENSOR_PRINT("SENSOR_S5K4H5YC: s5k4h5yc_GetRawInof success");
+				void *handle;
+				handle = dlopen("libcamsensortuning.so", RTLD_NOW);
+				if (handle == NULL) {
+					char const *err_str = dlerror();
+					ALOGE("dlopen error%s", err_str?err_str:"unknown");
+				}
+
+				/* Get the address of the struct hal_module_info. */
+				const char *sym = S5K4H5YC_RAW_PARAM_AS_STR;
+
+				s_s5k4h5yc_mipi_raw_info_ptr = (oem_module_t *)dlsym(handle, sym);
+				if (s_s5k4h5yc_mipi_raw_info_ptr == NULL) {
+					SENSOR_PRINT("load: couldn't find symbol %s", sym);
+				} else {
+					//s_s5k4h5yc_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
+					SENSOR_PRINT("SENSOR_S5K4H5YC: s5k4h5yc_GetRawInof success");
+				}
 				break;
 			}
 		}

@@ -1,5 +1,5 @@
 LOCAL_SHARED_LIBRARIES := libutils libmemion libcamera_client libcutils libhardware libcamera_metadata
-LOCAL_SHARED_LIBRARIES += libui libbinder libdl
+LOCAL_SHARED_LIBRARIES += libui libbinder libdl libcamsensor
 
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),3)

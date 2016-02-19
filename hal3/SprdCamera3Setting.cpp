@@ -30,13 +30,13 @@
 #include <unistd.h>
 #include <cutils/properties.h>
 #include <media/hardware/MetadataBufferType.h>
-#include "SprdOEMCamera.h"
+#include "cmr_common.h"
 //#include <androidfw/SprdIlog.h>
 #include "SprdCamera3Setting.h"
 
 #include "SprdCamera3.h"
 //#include "SprdCameraHardwareConfig2.h"
-#include "SprdCamera3Config.h"
+#include "inc/SprdCamera3Config.h"
 
 using namespace android;
 

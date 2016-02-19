@@ -8,7 +8,7 @@
 
 #include <stdint.h>
 #include <signal.h>
-#include "tool/mtrace/mtrace.h"
+#include "mtrace.h"
 
 #define OS_PATH_SEPARATOR '/'
 

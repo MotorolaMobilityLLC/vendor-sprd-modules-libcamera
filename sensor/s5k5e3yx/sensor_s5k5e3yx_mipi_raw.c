@@ -15,20 +15,22 @@
  */
 
 #include <utils/Log.h>
+#include <dlfcn.h>
 #include "sensor.h"
 #include "jpeg_exif_header.h"
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4)
-#include "sensor_s5k5e3yx_raw_param_v3.c"
-#else
-#endif
 #include "isp_param_file_update.h"
 
 
 #define S5K5E3YX_I2C_ADDR_W        0x10
 #define S5K5E3YX_I2C_ADDR_R        0x10
 #define S5K5E3YX_RAW_PARAM_COM     0x0000
+
+/**
+ * Name of the sensor_raw_param as a string
+ */
+#define S5K5E3YX_RAW_PARAM_AS_STR  "S5K5E3YXRP"
 
 static uint32_t g_module_id = 0;
 static struct sensor_raw_info* s_s5k5e3yx_mipi_raw_info_ptr = NULL;
@@ -52,7 +54,7 @@ static uint16_t _s5k5e3yx_get_shutter(SENSOR_HW_HANDLE handle);
 
 
 static const struct raw_param_info_tab s_s5k5e3yx_raw_param_tab[] = {
-	{S5K5E3YX_RAW_PARAM_COM, &s_s5k5e3yx_mipi_raw_info, _s5k5e3yx_com_Identify_otp, NULL},
+	{S5K5E3YX_RAW_PARAM_COM, NULL, _s5k5e3yx_com_Identify_otp, NULL},
 	{RAW_INFO_END_ID, PNULL, PNULL, PNULL}
 };
 
@@ -1166,8 +1168,25 @@ static uint32_t _s5k5e3yx_GetRawInof(SENSOR_HW_HANDLE handle)
 		}
 		else if (PNULL!=tab_ptr[i].identify_otp) {
 			if (SENSOR_SUCCESS==tab_ptr[i].identify_otp(handle, 0)) {
-				s_s5k5e3yx_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
-				SENSOR_PRINT("SENSOR_S5K5E3YX: _s5k5e3yx_GetRawInof success");
+				void *handle;
+				handle = dlopen("libcamsensortuning.so", RTLD_NOW);
+				if (handle == NULL) {
+					char const *err_str = dlerror();
+					ALOGE("dlopen error%s", err_str?err_str:"unknown");
+				}
+
+				/* Get the address of the struct hal_module_info. */
+				const char *sym = S5K5E3YX_RAW_PARAM_AS_STR;
+
+				s_s5k5e3yx_mipi_raw_info_ptr = (oem_module_t *)dlsym(handle, sym);
+				if (s_s5k5e3yx_mipi_raw_info_ptr == NULL) {
+					SENSOR_PRINT("load: couldn't find symbol %s", sym);
+				} else {
+					//s_s5k4h5yc_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
+					SENSOR_PRINT("SENSOR_S5K5E3YX: _s5k5e3yx_GetRawInof success");
+				}
+				//s_s5k5e3yx_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
+				//SENSOR_PRINT("SENSOR_S5K5E3YX: _s5k5e3yx_GetRawInof success");
 				break;
 			}
 		}

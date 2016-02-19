@@ -1,185 +1,11 @@
-LOCAL_C_INCLUDES := \
-	$(LOCAL_PATH)/vsp/inc \
-	$(LOCAL_PATH)/vsp/src \
-	$(LOCAL_PATH)/sensor \
-	$(LOCAL_PATH)/jpeg/inc \
-	$(LOCAL_PATH)/jpeg/src \
-	$(LOCAL_PATH)/common/inc \
-	$(LOCAL_PATH)/hal1.0/inc \
-	$(LOCAL_PATH)/tool/auto_test/inc \
-	$(LOCAL_PATH)/tool/mtrace \
-	external/skia/include/images \
-	external/skia/include/core\
-	external/jhead \
-	external/sqlite/dist \
-	system/media/camera/include \
-	$(TOP)vendor/sprd/modules/libmemion \
-	$(TOP)/vendor/sprd/modules/libmemion \
-	$(TARGET_OUT_INTERMEDIATES)/KERNEL/source/include/video \
-	$(TARGET_OUT_INTERMEDIATES)/KERNEL/source/include/uapi
-
-
-ifeq ($(strip $(TARGET_GPU_PLATFORM)),midgard)
-LOCAL_C_INCLUDES += vendor/sprd/proprietories-source/libgpu/gralloc/midgard
-else ifeq ($(strip $(TARGET_GPU_PLATFORM)),utgard)
-LOCAL_C_INCLUDES += vendor/sprd/proprietories-source/libgpu/gralloc/utgard
-else
-LOCAL_C_INCLUDES += hardware/libhardware/modules/gralloc/
-endif
-
-include $(shell find $(LOCAL_PATH) -name 'Sprdroid.mk')
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_MEMORY_OPTIMIZATION)),true)
-LOCAL_CFLAGS += -DCONFIG_MEM_OPTIMIZATION
-endif
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),3)
-LOCAL_C_INCLUDES += \
-	$(LOCAL_PATH)/isp3.0/dummy \
-	$(LOCAL_PATH)/isp3.0/common/inc \
-	$(LOCAL_PATH)/isp3.0/middleware/inc
-endif
-
-LOCAL_C_INCLUDES += \
-    $(LOCAL_PATH)/oem2v0/inc \
-    $(LOCAL_PATH)/oem2v0/isp_calibration/inc
-
-LOCAL_SRC_FILES+= \
-	hal1.0/src/SprdCameraParameters.cpp \
-	vsp/src/jpg_drv_sc8830.c \
-	jpeg/src/jpegcodec_bufmgr.c \
-	jpeg/src/jpegcodec_global.c \
-	jpeg/src/jpegcodec_table.c \
-	jpeg/src/jpegenc_bitstream.c \
-	jpeg/src/jpegenc_frame.c \
-	jpeg/src/jpegenc_header.c \
-	jpeg/src/jpegenc_init.c \
-	jpeg/src/jpegenc_interface.c \
-	jpeg/src/jpegenc_malloc.c \
-	jpeg/src/jpegenc_api.c \
-	jpeg/src/jpegdec_bitstream.c \
-	jpeg/src/jpegdec_frame.c \
-	jpeg/src/jpegdec_init.c \
-	jpeg/src/jpegdec_interface.c \
-	jpeg/src/jpegdec_malloc.c \
-	jpeg/src/jpegdec_dequant.c	\
-	jpeg/src/jpegdec_out.c \
-	jpeg/src/jpegdec_parse.c \
-	jpeg/src/jpegdec_pvld.c \
-	jpeg/src/jpegdec_vld.c \
-	jpeg/src/jpegdec_api.c  \
-	jpeg/src/exif_writer.c  \
-	jpeg/src/jpeg_stream.c \
-	tool/mtrace/mtrace.c
-
-
-LOCAL_SRC_FILES+= \
-	oem2v0/src/SprdOEMCamera.c \
-	oem2v0/src/cmr_common.c \
-	oem2v0/src/cmr_oem.c \
-	oem2v0/src/cmr_setting.c \
-	oem2v0/src/cmr_mem.c \
-	oem2v0/src/cmr_scale.c \
-	oem2v0/src/cmr_rotate.c \
-	oem2v0/src/cmr_grab.c \
-	oem2v0/src/jpeg_codec.c \
-	oem2v0/src/cmr_exif.c \
-	oem2v0/src/sensor_cfg.c \
-	oem2v0/src/cmr_preview.c \
-	oem2v0/src/cmr_snapshot.c \
-	oem2v0/src/cmr_sensor.c \
-	oem2v0/src/cmr_ipm.c \
-	oem2v0/src/cmr_focus.c \
-	oem2v0/src/sensor_drv_u.c \
-	oem2v0/isp_calibration/src/isp_calibration.c \
-	oem2v0/isp_calibration/src/isp_cali_interface.c
-
-LOCAL_SRC_FILES += test.cpp
-#LOCAL_STATIC_LIBRARIES += libftminui
-#LOCAL_C_INCLUDES += vendor/sprd/proprietories-source/factorytest/minui
-
-LOCAL_SRC_FILES+= \
-	sensor/ov5640/sensor_ov5640_mipi.c \
-	sensor/ov5640/sensor_ov5640_mipi_raw.c \
-	sensor/s5k3p3sm/sensor_s5k3p3sm_mipi_raw.c \
-	sensor/imx230/sensor_imx230_mipi_raw.c \
-	sensor/imx258/sensor_imx258_mipi_raw.c \
-	sensor/imx132/sensor_imx132_mipi_raw.c \
-	sensor/ov2680/sensor_ov2680_mipi_raw.c \
-	sensor/af_bu64297gwz.c \
-	sensor/s5k4h8yx/sensor_s5k4h8yx_mipi_raw.c\
-	sensor/s5k5e3yx/sensor_s5k5e3yx_mipi_raw.c\
-	sensor/vcm/vcm_dw9800.c \
-	sensor/s5k3l2xx/sensor_s5k3l2xx_mipi_raw.c\
-	sensor/vcm/vcm_dw9807.c \
-	sensor/ov13870/sensor_ov13870_mipi_raw.c
-
-ifeq ($(strip $(TARGET_CAMERA_OIS_FUNC)),true)
-	LOCAL_C_INCLUDES += \
-	$(LOCAL_PATH)/sensor/ois
-
-	LOCAL_SRC_FILES+= \
-	sensor/ois/OIS_func.c \
-	sensor/ois/OIS_user.c \
-	sensor/ois/OIS_main.c
-endif
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
-ifeq ($(strip $(TARGET_BOARD_CAMERA_FD_LIB)),omron)
-	LOCAL_C_INCLUDES += \
-			    $(LOCAL_PATH)/arithmetic/omron/inc
-	LOCAL_SRC_FILES+= oem2v0/src/cmr_fd_omron.c
-else
-	LOCAL_SRC_FILES+= oem2v0/src/cmr_fd.c
-endif
-endif
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)
-	LOCAL_C_INCLUDES += \
-			$(LOCAL_PATH)/arithmetic/eis/inc
-endif
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
-LOCAL_SRC_FILES+= oem2v0/src/cmr_hdr.c
-endif
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_UV_DENOISE)),true)
-LOCAL_SRC_FILES+= oem2v0/src/cmr_uvdenoise.c
-endif
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_Y_DENOISE)),true)
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/oem2v0/inc/ydenoise_paten
-LOCAL_SRC_FILES+= oem2v0/src/cmr_ydenoise.c
-endif
-
-ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RE_FOCUS)),true)
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/sensor/al3200
-LOCAL_SRC_FILES += sensor/al3200/al3200.c
-
-LOCAL_SRC_FILES+= oem2v0/src/cmr_refocus.c
-endif
-
-
-ifeq ($(TARGET_BOARD_CAMERA_HAL_VERSION), $(filter $(TARGET_BOARD_CAMERA_HAL_VERSION), HAL1.0 hal1.0 1.0))
-LOCAL_SRC_FILES += hal1.0/src/SprdCameraHardwareInterface.cpp
-else
-LOCAL_SRC_FILES+= \
-	hal3/SprdCamera3Factory.cpp \
-	hal3/SprdCamera3Hal.cpp \
-	hal3/SprdCamera3HWI.cpp \
-	hal3/SprdCamera3Channel.cpp \
-	hal3/SprdCamera3Mem.cpp \
-	hal3/SprdCamera3OEMIf.cpp \
-	hal3/SprdCamera3Setting.cpp \
-	hal3/SprdCamera3Stream.cpp
-endif
-
-LOCAL_CFLAGS += -fno-strict-aliasing -D_VSP_ -DJPEG_ENC -D_VSP_LINUX_ -DCHIP_ENDIAN_LITTLE -Wno-unused-parameter
-
 ifeq ($(strip $(TARGET_BOARD_IS_SC_FPGA)),true)
 LOCAL_CFLAGS += -DSC_FPGA=1
 else
 LOCAL_CFLAGS += -DSC_FPGA=0
+endif
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_MEMORY_OPTIMIZATION)),true)
+LOCAL_CFLAGS += -DCONFIG_MEM_OPTIMIZATION
 endif
 
 ifeq ($(strip $(TARGET_BOARD_SC_IOMMU_PF)),1)
@@ -552,6 +378,7 @@ endif
 
 ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RE_FOCUS)),true)
 LOCAL_CFLAGS += -DCONFIG_CAMERA_RE_FOCUS
+LOCAL_CFLAGS += -DCONFIG_AE_SYNC_INFO_MAPPING
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_PIPVIV_SUPPORT)),true)
@@ -565,3 +392,5 @@ endif
 ifeq ($(strip $(TARGET_BOARD_CAMERA_SUPPORT_4K2K)),true)
 LOCAL_CFLAGS += -DCONFIG_CAMERA_SUPPORT_4K2K
 endif
+
+LOCAL_CFLAGS += -DCHIP_ENDIAN_LITTLE -DJPEG_ENC

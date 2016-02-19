@@ -54,9 +54,10 @@ namespace sprdcamera {
 #define ROUND_TO_PAGE(x) (((x)+0xfff)&~0xfff)
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(*x))
 #define METADATA_SIZE (2*sizeof(unsigned long)+5*sizeof(unsigned int))//28/* (7 * 4) */
-#define SET_PARM(x,y,z) do {\
+#define SET_PARM(h,x,y,z) do {\
 			LOGV("%s: set camera param: %s, %d", __func__, #x, y);\
-			camera_set_param (x, y, z);\
+			if (NULL != h && NULL != h->ops)\
+				h->ops->camera_set_param (x, y, z);\
 		} while(0)
 #define SIZE_ALIGN(x) (((x)+15)&(~15))
 #define UNUSED(x) (void)x

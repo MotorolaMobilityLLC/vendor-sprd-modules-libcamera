@@ -29,9 +29,17 @@
 
 #include "SprdCamera3Factory.h"
 
+extern int HAL_camera_device_open_wrapper(const struct hw_module_t* module,
+              const char *id, struct hw_device_t** device);
+
+static int HAL_open_legacy(const struct hw_module_t* module, const char* id, uint32_t halVersion, struct hw_device_t** device)
+{
+    return HAL_camera_device_open_wrapper(module, id, device);
+}
+
 static hw_module_t camera_common = {
 	tag: HARDWARE_MODULE_TAG,
-	module_api_version: CAMERA_MODULE_API_VERSION_2_2,//CAMERA_MODULE_API_VERSION_2_0,
+	module_api_version: CAMERA_MODULE_API_VERSION_2_3,//CAMERA_MODULE_API_VERSION_2_0,
 	hal_api_version: HARDWARE_HAL_API_VERSION,
 	id: CAMERA_HARDWARE_MODULE_ID,
 	name: "Sprd Camera HAL3",
@@ -47,5 +55,6 @@ camera_module_t HAL_MODULE_INFO_SYM = {
 	get_camera_info: sprdcamera::SprdCamera3Factory::get_camera_info,
 	set_callbacks: sprdcamera::SprdCamera3Factory::set_callbacks,/*HAL 3.2*/
 	get_vendor_tag_ops: sprdcamera::SprdCamera3Factory::get_vendor_tag_ops,/*HAL 3.2*/
+	open_legacy             :HAL_open_legacy,/*HAL1.0*/
 };
 

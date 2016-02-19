@@ -2794,9 +2794,9 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 	cmr_bzero(&isp_param, sizeof(isp_param));
 	CMR_PRINT_TIME;
 	CHECK_HANDLE_VALID(oem_handle);
-	isp_cxt = &cxt->isp_cxt;
+	isp_cxt = &(cxt->isp_cxt);
 	CHECK_HANDLE_VALID(isp_cxt);
-	sn_cxt = &cxt->sn_cxt;
+	sn_cxt = &(cxt->sn_cxt);
 	CHECK_HANDLE_VALID(sn_cxt);
 
 	if (1 == isp_cxt->inited) {
@@ -2804,7 +2804,7 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 		goto exit;
 	}
 
-	ret = cmr_sensor_get_info(sn_cxt->sensor_handle, cxt->camera_id, &sn_cxt->sensor_info);
+	ret = cmr_sensor_get_info(sn_cxt->sensor_handle, cxt->camera_id, &(sn_cxt->sensor_info));
 	if (ret) {
 		CMR_LOGE("fail to get sensor info ret %ld", ret);
 		goto exit;
@@ -2844,7 +2844,7 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 	#endif
 #endif
 
-	sensor_info_ptr = &sn_cxt->sensor_info;
+	sensor_info_ptr = &(sn_cxt->sensor_info);
 	CHECK_HANDLE_VALID(sensor_info_ptr);
 
 //	ret = sensor_merge_isp_param(&isp_param,sensor_info_ptr->raw_info_ptr);

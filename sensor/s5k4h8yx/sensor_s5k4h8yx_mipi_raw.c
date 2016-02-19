@@ -15,14 +15,15 @@
  */
 #include "cutils/properties.h"
 #include <utils/Log.h>
+#include <dlfcn.h>
 #include "sensor.h"
 #include "jpeg_exif_header.h"
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4)
-#include "sensor_s5k4h8yx_raw_param_v3.c"
-#else
-#endif
+//#if defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4)
+//#include "sensor_s5k4h8yx_raw_param_v3.c"
+//#else
+//#endif
 #include "isp_param_file_update.h"
 
 #ifndef RAW_INFO_END_ID
@@ -37,13 +38,18 @@
 //#define S5K4H8YX_2_LANES
 #define S5K4H8YX_4_LANES
 
+/**
+ * Name of the sensor_raw_param as a string
+ */
+#define S5K4H8YX_RAW_PARAM_AS_STR  "S5K4H8YXRP"
+
 static int s_s5k4h8yx_gain = 0;
 static int s_capture_shutter = 0;
 static int s_capture_VTS = 0;
 static int s_exposure_time = 0;
 static uint32_t g_module_id = 0;
 static uint32_t g_flash_mode_en = 0;
-static struct sensor_raw_info* s_s5k4h8yx_mipi_raw_info_ptr = &s_s5k4h8yx_mipi_raw_info;
+static struct sensor_raw_info* s_s5k4h8yx_mipi_raw_info_ptr = NULL;
 static uint32_t s_set_gain;
 static uint32_t s_set_exposure;
 struct sensor_ev_info_t {
@@ -59,6 +65,7 @@ void _s5k4h8yx_Destroy(SENSOR_HW_HANDLE handle);
 static unsigned long _s5k4h8yx_GetResolutionTrimTab(SENSOR_HW_HANDLE handle, unsigned long param);
 static unsigned long _s5k4h8yx_PowerOn(SENSOR_HW_HANDLE handle, unsigned long power_on);
 static unsigned long _s5k4h8yx_Identify(SENSOR_HW_HANDLE handle, unsigned long param);
+static uint32_t _s5k4h8yx_GetRawInof(SENSOR_HW_HANDLE handle);
 static unsigned long _s5k4h8yx_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned long param);
 static unsigned long _s5k4h8yx_after_snapshot(SENSOR_HW_HANDLE handle, unsigned long param);
 static unsigned long _s5k4h8yx_StreamOn(SENSOR_HW_HANDLE handle, unsigned long param);
@@ -116,7 +123,7 @@ struct otp_info_t {
 #include "sensor_s5k4h8yx_ofilm_otp.c"
 
 static const struct raw_param_info_tab s_s5k4h8yx_raw_param_tab[] = {
-	{MODULE_ID_s5k4h8yx_truly, &s_s5k4h8yx_mipi_raw_info, s5k4h8yx_ofilm_identify_otp, s5k4h8yx_ofilm_update_otp},
+	{MODULE_ID_s5k4h8yx_truly, NULL , s5k4h8yx_ofilm_identify_otp, s5k4h8yx_ofilm_update_otp},
 	{RAW_INFO_END_ID, PNULL, PNULL, PNULL}
 };
 #endif
@@ -1626,6 +1633,30 @@ static uint32_t _s5k4h8yx_init_mode_fps_info(SENSOR_HW_HANDLE handle)
 	return rtn;
 }
 
+static uint32_t _s5k4h8yx_GetRawInof(SENSOR_HW_HANDLE handle)
+{
+	uint32_t rtn=SENSOR_SUCCESS;
+	void *handlelib;
+	handlelib = dlopen("libcamsensortuning.so", RTLD_NOW);
+	if (handlelib == NULL) {
+		char const *err_str = dlerror();
+		ALOGE("dlopen error%s", err_str?err_str:"unknown");
+	}
+
+	/* Get the address of the struct hal_module_info. */
+	const char *sym = S5K4H8YX_RAW_PARAM_AS_STR;
+
+	s_s5k4h8yx_mipi_raw_info_ptr = (oem_module_t *)dlsym(handlelib, sym);
+	if (s_s5k4h8yx_mipi_raw_info_ptr == NULL) {
+		SENSOR_PRINT("load: couldn't find symbol %s", sym);
+	} else {
+		//s_s5k4h8yx_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
+		SENSOR_PRINT("SENSOR_S5K4H8YX: _s5k4h8yx_GetRawInof success");
+	}
+
+	return rtn;
+}
+
 static unsigned long _s5k4h8yx_Identify(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 #define S5K4H8YX_PID_VALUE    0x4088
@@ -1649,6 +1680,10 @@ static unsigned long _s5k4h8yx_Identify(SENSOR_HW_HANDLE handle, unsigned long p
 		if (S5K4H8YX_VER_VALUE == ver_value) {
 			ret_value = SENSOR_SUCCESS;
 			SENSOR_PRINT_ERR("SENSOR_S5K4H8YX: this is S5K4H8YX sensor !");
+			ret_value=_s5k4h8yx_GetRawInof(handle);
+			if (SENSOR_SUCCESS != ret_value) {
+					SENSOR_PRINT_ERR("SENSOR_S5K4H8YX: the module is unknow error !");
+			}
 //			_dw9807_SRCInit(2);
 //			Sensor_s5k4h8yx_InitRawTuneInfo();
 			_s5k4h8yx_init_mode_fps_info(handle);

@@ -12,14 +12,16 @@
 #include <unistd.h>
 #include <cutils/properties.h>
 #include <media/hardware/MetadataBufferType.h>
-#include "SprdOEMCamera.h"
-#include <linux/sprd_ion.h>
+#include "cmr_common.h"
+#include "sprd_ion.h"
 #include "hal3/SprdCamera3Setting.h"
 //#include "graphics.h"
 #include <linux/fb.h>
 //#include "sprd_rot_k.h"
 #include "sprd_cpp.h"
 using namespace sprdcamera;
+
+#include <dlfcn.h>
 
 typedef struct {
     int width;
@@ -88,6 +90,9 @@ sprd_camera_memory_t* mIspB4awbHeapReserved[kISPB4awbCount];
 sprd_camera_memory_t* mIspRawAemHeapReserved[kISPB4awbCount];
 
 static sprd_camera_memory_t* previewHeapArray[PREVIEW_BUFF_NUM]; /*preview heap arrary*/
+
+static oem_module_t   *mHalOem;
+
 struct client_t
 {
     int reserved;
@@ -390,7 +395,12 @@ static void eng_test_fb_update(const camera_frame_type *frame)
 	}
 
 	/*  */
-	camera_set_preview_buffer(oem_handle, (cmr_uint)previewHeapArray[buffer_id]->phys_addr, (cmr_uint)previewHeapArray[buffer_id]->data, (cmr_s32)previewHeapArray[buffer_id]->fd);
+    if(NULL == mHalOem || NULL == mHalOem->ops) {
+        ALOGI("Native MMI Test: oem is null or oem ops is null, do nothing\n");
+        return;
+    }
+
+	mHalOem->ops->camera_set_preview_buffer(oem_handle, (cmr_uint)previewHeapArray[buffer_id]->phys_addr, (cmr_uint)previewHeapArray[buffer_id]->data, (cmr_s32)previewHeapArray[buffer_id]->fd);
 
 }
 
@@ -942,7 +952,7 @@ static void eng_tst_camera_startpreview(void)
     struct img_size capture_size;
     struct cmr_preview_fps_param fps_param;
 
-    if (!oem_handle) return;
+    if (!oem_handle || NULL == mHalOem || NULL == mHalOem->ops) return;
 
     ALOGI("Native MMI Test: %s,%d IN\n", __func__, __LINE__);
 
@@ -959,27 +969,27 @@ static void eng_tst_camera_startpreview(void)
     fps_param.video_mode = 0;
 
     /*  */
-    camera_fast_ctrl(oem_handle, CAMERA_FAST_MODE_FD, 0);
+    mHalOem->ops->camera_fast_ctrl(oem_handle, CAMERA_FAST_MODE_FD, 0);
 
     /*  */
-    SET_PARM(oem_handle , CAMERA_PARAM_PREVIEW_SIZE   , (cmr_uint)&preview_size);
+    SET_PARM(mHalOem, oem_handle , CAMERA_PARAM_PREVIEW_SIZE   , (cmr_uint)&preview_size);
     //SET_PARM(oem_handle , CAMERA_PARAM_VIDEO_SIZE     , (cmr_uint)&video_size);
     //SET_PARM(oem_handle , CAMERA_PARAM_CAPTURE_SIZE   , (cmr_uint)&capture_size);
-    SET_PARM(oem_handle , CAMERA_PARAM_PREVIEW_FORMAT , CAMERA_DATA_FORMAT_YUV420);
+    SET_PARM(mHalOem, oem_handle , CAMERA_PARAM_PREVIEW_FORMAT , CAMERA_DATA_FORMAT_YUV420);
     //SET_PARM(oem_handle , CAMERA_PARAM_CAPTURE_FORMAT , CAMERA_DATA_FORMAT_YUV420);
-    SET_PARM(oem_handle , CAMERA_PARAM_SENSOR_ROTATION, 0);
-    SET_PARM(oem_handle , CAMERA_PARAM_ZOOM           , (cmr_uint)&zoom_param);
-    SET_PARM(oem_handle , CAMERA_PARAM_PREVIEW_FPS    , (cmr_uint)&fps_param);
+    SET_PARM(mHalOem, oem_handle , CAMERA_PARAM_SENSOR_ROTATION, 0);
+    SET_PARM(mHalOem, oem_handle , CAMERA_PARAM_ZOOM           , (cmr_uint)&zoom_param);
+    SET_PARM(mHalOem, oem_handle , CAMERA_PARAM_PREVIEW_FPS    , (cmr_uint)&fps_param);
 
     /* set malloc && free callback*/
-    ret = camera_set_mem_func(oem_handle, (void*)Callback_Malloc, (void*)Callback_Free, NULL);
+    ret = mHalOem->ops->camera_set_mem_func(oem_handle, (void*)Callback_Malloc, (void*)Callback_Free, NULL);
     if (CMR_CAMERA_SUCCESS != ret) {
         ALOGE("Native MMI Test: %s,%d, failed: camera set mem func error.\n", __func__, __LINE__);
         return;
     }
 
     /*start preview*/
-    ret = camera_start_preview(oem_handle, CAMERA_NORMAL_MODE);
+    ret = mHalOem->ops->camera_start_preview(oem_handle, CAMERA_NORMAL_MODE);
     if (CMR_CAMERA_SUCCESS != ret) {
         ALOGE("Native MMI Test: %s,%d, failed: camera start preview error.\n", __func__, __LINE__);
         return;
@@ -992,7 +1002,12 @@ static int eng_tst_camera_stoppreview(void)
 
     ALOGI("Native MMI Test: %s,%d IN\n", __func__, __LINE__);
 
-    ret = camera_stop_preview(oem_handle);
+    if (!oem_handle || NULL == mHalOem || NULL == mHalOem->ops) {
+        ALOGI("Native MMI Test: oem is null or oem ops is null, do nothing\n");
+        return -1;
+    }
+
+    ret = mHalOem->ops->camera_stop_preview(oem_handle);
 
     return ret;
 }
@@ -1007,10 +1022,19 @@ int eng_tst_camera_deinit()
 
 	ret = eng_tst_camera_stoppreview();
 
-	ret = camera_deinit(oem_handle);
+    if (oem_handle != NULL && mHalOem != NULL && mHalOem->ops != NULL) {
+        ret = mHalOem->ops->camera_deinit(oem_handle);
+    }
+
 //	memcpy(gr_draw->data, tmpbuf1, lcd_w*lcd_h*4);
 //	gr_draw = gr_backend->flip(gr_backend);
 //	memcpy(gr_draw->data, tmpbuf1, lcd_w*lcd_h*4);
+
+    if(NULL != mHalOem->dso){
+           dlclose(mHalOem->dso);
+    }
+    free((void *)mHalOem);
+    mHalOem = NULL;
 
 //	free(tmpbuf);
 //	free(tmpbuf1);
@@ -1018,7 +1042,49 @@ int eng_tst_camera_deinit()
 	free(tmpbuf3);
 	return ret;
 }
+cmr_int autotest_load_hal_lib(void){
+	int ret = 0;
+       if(!mHalOem) {
+           void *handle;
+           oem_module_t *omi;
 
+           mHalOem = (oem_module_t *)malloc(sizeof(oem_module_t));
+
+           handle = dlopen(OEM_LIBRARY_PATH, RTLD_NOW);
+
+           if (handle == NULL) {
+               char const *err_str = dlerror();
+               ALOGE("dlopen error%s", err_str?err_str:"unknown");
+	        ret = -1;
+		goto loaderror;
+           }
+
+           /* Get the address of the struct hal_module_info. */
+           const char *sym = OEM_MODULE_INFO_SYM_AS_STR;
+           omi = (oem_module_t *)dlsym(handle, sym);
+           if (omi == NULL) {
+               ALOGE("load: couldn't find symbol %s", sym);
+		 ret = -1;
+		 goto loaderror;
+           }
+
+           mHalOem->dso = handle;
+           mHalOem->ops = omi->ops;
+
+           ALOGV("loaded HAL libcamoem handle=%p", handle);
+       }
+
+	 return ret;
+
+loaderror:
+
+	 if(NULL != mHalOem->dso){
+               dlclose(mHalOem->dso);
+	 }
+	 free((void *)mHalOem);
+	 mHalOem = NULL;
+	 return ret;
+}
 int eng_tst_camera_init(int cameraId, minui_backend* backend, GRSurface* draw)
 {
 	int ret = 0;
@@ -1041,8 +1107,11 @@ int eng_tst_camera_init(int cameraId, minui_backend* backend, GRSurface* draw)
 	tmpbuf3 = (uint8_t*)malloc(lcd_w*lcd_h*4);
 //	memcpy(tmpbuf1, gr_draw->data, lcd_w*lcd_h*4);
 	eng_test_fb_open();
+    if(autotest_load_hal_lib()){
+        return -1;
+    }
 
-	ret = camera_init(cameraId, eng_tst_camera_cb , &client_data , 0 , &oem_handle, (void*)Callback_Malloc, (void*)Callback_Free);
+	ret = mHalOem->ops->camera_init(cameraId, eng_tst_camera_cb , &client_data , 0 , &oem_handle, (void*)Callback_Malloc, (void*)Callback_Free);
 	ALOGI("Native MMI Test: %s,%s,%d IN\n", __FILE__,__func__, __LINE__);
 
 	eng_tst_camera_startpreview();

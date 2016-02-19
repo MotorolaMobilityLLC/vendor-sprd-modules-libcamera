@@ -15,7 +15,7 @@
  */
 #ifndef _SPRD_CAMERA_HARDWARE_CONFIG_H_
 #define _SPRD_CAMERA_HARDWARE_CONFIG_H_
-#include "SprdOEMCamera.h"
+#include "cmr_common.h"
 
 
  /* Effect type, used for CAMERA_PARM_EFFECT */

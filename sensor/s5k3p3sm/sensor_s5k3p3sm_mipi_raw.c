@@ -15,11 +15,12 @@
  */
 #include "cutils/properties.h"
 #include <utils/Log.h>
+#include <dlfcn.h>
 #include "sensor.h"
 #include "jpeg_exif_header.h"
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
-#include "sensor_s5k3p3sm_raw_param.c"
+//#include "sensor_s5k3p3sm_raw_param.c"
 #include "isp_param_file_update.h"
 #if defined(CONFIG_CAMERA_OIS_FUNC)
 #include "OIS_main.h"
@@ -36,6 +37,11 @@
 #ifndef RAW_INFO_END_ID
 #define RAW_INFO_END_ID 0x71717567
 #endif
+
+/**
+ * Name of the sensor_raw_param as a string
+ */
+#define S5K3P3SM_RAW_PARAM_AS_STR  "S5K3P3SMRP"
 
 #define s5k3p3sm_i2c_read_otp(addr)  s5k3p3sm_i2c_read_otp_set(handle,addr)
 
@@ -71,7 +77,7 @@ static unsigned long _s5k3p3sm_ex_write_exposure(SENSOR_HW_HANDLE handle, unsign
 
 
 static const struct raw_param_info_tab s_s5k3p3sm_raw_param_tab[] = {
-	{S5K3P3SM_RAW_PARAM_COM, &s_s5k3p3sm_mipi_raw_info, _s5k3p3sm_com_Identify_otp, NULL},
+	{S5K3P3SM_RAW_PARAM_COM, NULL, _s5k3p3sm_com_Identify_otp, NULL},
 	{RAW_INFO_END_ID, PNULL, PNULL, PNULL}
 };
 
@@ -1265,8 +1271,23 @@ static uint32_t _s5k3p3sm_GetRawInof(SENSOR_HW_HANDLE handle)
 		}
 		else if (PNULL!=tab_ptr[i].identify_otp) {
 			if (SENSOR_SUCCESS==tab_ptr[i].identify_otp(handle, 0)) {
-				s_s5k3p3sm_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
-				SENSOR_PRINT("SENSOR_S5K3P3SM: _s5k3p3sm_GetRawInof success");
+				void *handle;
+				handle = dlopen("libcamsensortuning.so", RTLD_NOW);
+				if (handle == NULL) {
+					char const *err_str = dlerror();
+					ALOGE("dlopen error%s", err_str?err_str:"unknown");
+				}
+
+				/* Get the address of the struct hal_module_info. */
+				const char *sym = S5K3P3SM_RAW_PARAM_AS_STR;
+
+				s_s5k3p3sm_mipi_raw_info_ptr = (oem_module_t *)dlsym(handle, sym);
+				if (s_s5k3p3sm_mipi_raw_info_ptr == NULL) {
+					SENSOR_PRINT("load: couldn't find symbol %s", sym);
+				} else {
+					//s_s5k3p3sm_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
+					SENSOR_PRINT("SENSOR_S5K3P3SM: _s5k3p3sm_GetRawInof success");
+				}
 				break;
 			}
 		}
