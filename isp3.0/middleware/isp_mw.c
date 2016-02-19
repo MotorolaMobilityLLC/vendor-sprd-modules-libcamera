@@ -1,0 +1,282 @@
+/*
+ * Copyright (C) 2012 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#define LOG_TAG "isp_mw"
+
+#include <stdlib.h>
+#include "cutils/properties.h"
+#include <unistd.h>
+#include "isp_mw.h"
+#include "isp_3a_fw.h"
+#include "isp_dev_access.h"
+/**************************************** MACRO DEFINE *****************************************/
+
+
+
+/************************************* INTERNAL DATA TYPE ***************************************/
+struct isp_mw_context {
+	cmr_u32 camera_id;
+	cmr_u32 is_inited;
+	cmr_handle caller_handle;
+	cmr_handle isp_3a_handle;
+	cmr_handle isp_dev_handle;
+	cmr_malloc alloc_cb;
+	cmr_free   free_cb;
+	proc_callback caller_callback;
+	struct isp_init_param input_param;
+
+};
+
+static cmr_int ispmw_create_thread(cmr_handle isp_mw_handle);
+static void ispmw_dev_evt_cb(cmr_int evt, void* data, void* privdata);
+/*************************************INTERNAK FUNCTION ***************************************/
+cmr_int ispmw_create_thread(cmr_handle isp_mw_handle)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+
+	return ret;
+}
+
+
+void ispmw_dev_evt_cb(cmr_int evt, void* data, void* privdata)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp_mw_context                       *cxt = (struct isp_mw_context*)privdata;
+
+	if (!privdata) {
+		ISP_LOGE("error,handle is NULL");
+		goto exit;
+	}
+
+	switch (evt) {
+	case ISP3A_DEV_STATICS_DONE:
+	case ISP3A_DEV_SENSOR_SOF:
+		ret = isp_3a_fw_receive_data(cxt->isp_3a_handle, evt, data);
+		break;
+	default:
+		break;
+	}
+exit:
+	ISP_LOGI("done");
+}
+/*************************************EXTERNAL FUNCTION ***************************************/
+cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp_3a_fw_init_in                    isp3a_input;
+	struct isp_dev_init_in                      isp_dev_input;
+	struct isp_mw_context                       *cxt = NULL;
+
+	if (!input_ptr || !isp_handle) {
+		ISP_LOGE("init param is null,input_ptr is 0x%lx,isp_handle is 0x%lx", (cmr_uint)input_ptr, (cmr_uint)isp_handle);
+		ret = ISP_PARAM_NULL;
+		goto exit;
+	}
+
+	*isp_handle = NULL;
+	cxt = (struct isp_mw_context*)malloc(sizeof(struct isp_mw_context));
+	if (NULL == cxt) {
+		ISP_LOGE("failed to malloc");
+		ret = ISP_ALLOC_ERROR;
+		goto exit;
+	}
+	cmr_bzero(cxt, sizeof(*cxt));
+
+	cxt->camera_id = input_ptr->camera_id;
+	cxt->caller_handle = input_ptr->oem_handle;
+	cxt->caller_callback = input_ptr->ctrl_callback;
+	cxt->alloc_cb = input_ptr->alloc_cb;
+	cxt->free_cb = input_ptr->free_cb;
+
+	isp_dev_input.camera_id = input_ptr->camera_id;
+	isp_dev_input.caller_handle = (cmr_handle)cxt;
+	isp_dev_input.mem_cb_handle = input_ptr->oem_handle;
+	memcpy(&isp_dev_input.init_param, input_ptr, sizeof(struct isp_init_param));
+	ret = isp_dev_access_init(&isp_dev_input, &cxt->isp_dev_handle);
+	if (ret) {
+		goto exit;
+	}
+
+	isp3a_input.setting_param_ptr = input_ptr->setting_param_ptr;
+	isp3a_input.isp_mw_callback = input_ptr->ctrl_callback;
+	isp3a_input.caller_handle = input_ptr->oem_handle;
+	isp3a_input.dev_access_handle = cxt->isp_dev_handle;
+	isp3a_input.camera_id = input_ptr->camera_id;
+	ret = isp_3a_fw_init(&isp3a_input, &cxt->isp_3a_handle);
+exit:
+	if (ret) {
+		if (cxt) {
+			ret = isp_3a_fw_deinit(cxt->isp_3a_handle);
+			ret = isp_dev_access_deinit(cxt->isp_dev_handle);
+			free((void*)cxt);
+		}
+	} else {
+		cxt->is_inited = 1;
+		*isp_handle = (cmr_handle)cxt;
+	}
+	ISP_LOGI("done %ld",ret);
+	return ret;;
+}
+
+cmr_int isp_deinit(cmr_handle isp_handle)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp_mw_context                       *cxt = (struct isp_mw_context *)isp_handle;
+
+	ISP_CHECK_HANDLE_VALID(isp_handle);
+
+	ret = isp_3a_fw_deinit(cxt->isp_3a_handle);
+	ret = isp_dev_access_deinit(cxt->isp_dev_handle);
+	return ret;
+}
+
+cmr_int isp_capability(cmr_handle isp_handle, enum isp_capbility_cmd cmd, void *param_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp_mw_context                       *cxt = (struct isp_mw_context *)isp_handle;
+
+	ISP_CHECK_HANDLE_VALID(isp_handle);
+
+	if (!param_ptr) {
+		ISP_LOGE("input is NULL");
+		ret = ISP_PARAM_NULL;
+		goto exit;
+	}
+	ISP_LOGI("CMD 0x%x", cmd);
+	switch (cmd) {
+	case ISP_VIDEO_SIZE:
+	case ISP_CAPTURE_SIZE:
+	case ISP_REG_VAL:
+		ret = isp_dev_access_capability(cxt->isp_dev_handle, cmd, param_ptr);
+		break;
+	case ISP_LOW_LUX_EB:
+	case ISP_CUR_ISO:
+	case ISP_CTRL_GET_AE_LUM:
+		ret = isp_3a_fw_capability(cxt->isp_3a_handle, cmd, param_ptr);
+		break;
+	case ISP_DENOISE_LEVEL:
+	case ISP_DENOISE_INFO:
+	default:
+		break;
+	}
+exit:
+	return ret;
+}
+
+cmr_int isp_ioctl(cmr_handle isp_handle, enum isp_ctrl_cmd cmd, void *param_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp_mw_context                       *cxt = (struct isp_mw_context *)isp_handle;
+
+	ISP_CHECK_HANDLE_VALID(isp_handle);
+
+	ret = isp_3a_fw_ioctl(cxt->isp_3a_handle, cmd, param_ptr);
+
+	return ret;
+}
+
+cmr_int isp_video_start(cmr_handle isp_handle, struct isp_video_start *param_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp_mw_context                       *cxt = (struct isp_mw_context *)isp_handle;
+	struct isp_3a_cfg_param                     cfg_param;
+	struct isp_3a_get_dld_in                    dld_in;
+	struct isp_3a_dld_sequence                  dld_seq;
+	struct isp_dev_access_start_in              dev_in;
+
+	ISP_CHECK_HANDLE_VALID(isp_handle);
+
+	if (NULL == param_ptr) {
+		ISP_LOGE("error,input is NULL");
+		goto exit;
+	}
+	ret = isp_3a_fw_start(cxt->isp_3a_handle, param_ptr);
+	if (ret) {
+		ISP_LOGE("failed to start 3a");
+		goto exit;
+	}
+	ret = isp_3a_fw_get_cfg(cxt->isp_3a_handle, &dev_in.hw_cfg);
+	if (ret) {
+		ISP_LOGE("failed to get cfg");
+		goto stop_exit;
+	}
+	dld_in.op_mode = ISP3A_OPMODE_NORMALLV;
+	ret = isp_3a_fw_get_dldseq(cxt->isp_3a_handle, &dld_in, &dev_in.dld_seq);
+	if (ret) {
+		ISP_LOGE("failed to get dldseq");
+		goto stop_exit;
+	}
+
+	dev_in.common_in = *param_ptr;
+	ret = isp_dev_access_start_multiframe(cxt->isp_dev_handle, &dev_in);
+	if (ISP_SUCCESS == ret) {
+		goto exit;
+	}
+stop_exit:
+	isp_3a_fw_stop(cxt->isp_3a_handle);
+exit:
+	ISP_LOGI("done %ld", ret);
+	return ret;
+}
+
+cmr_int isp_video_stop(cmr_handle isp_handle)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp_mw_context                       *cxt = (struct isp_mw_context *)isp_handle;
+
+	ISP_CHECK_HANDLE_VALID(isp_handle);
+
+	ret = isp_dev_access_stop_multiframe(cxt->isp_dev_handle);
+	ret = isp_3a_fw_stop(cxt->isp_3a_handle);
+
+	return ret;
+}
+
+cmr_int isp_proc_start(cmr_handle isp_handle, struct ips_in_param *input_ptr, struct ips_out_param *output_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp_mw_context                       *cxt = (struct isp_mw_context *)isp_handle;
+	struct isp_dev_postproc_in                  dev_in;
+	struct isp_dev_postproc_out                 dev_out;
+	struct isp_3a_get_dld_in                    dld_in;
+
+	ret = isp_3a_fw_get_cfg(cxt->isp_3a_handle, &dev_in.hw_cfg);
+	if (ret) {
+		ISP_LOGE("failed to get cfg");
+		goto exit;
+	}
+	dld_in.op_mode = ISP3A_OPMODE_NORMALLV;
+	ret = isp_3a_fw_get_dldseq(cxt->isp_3a_handle, &dld_in, &dev_in.dldseq);
+	if (ret) {
+		ISP_LOGE("failed to get dldseq");
+		goto exit;
+	}
+	ret = isp_3a_fw_get_awb_gain(cxt->isp_3a_handle, &dev_in.awb_gain, &dev_in.awb_gain_balanced);
+	if (ret) {
+		ISP_LOGE("failed to get awb gain");
+		goto  exit;
+	}
+	ret = isp_dev_access_start_postproc(cxt->isp_dev_handle, &dev_in, &dev_out);
+exit:
+	return ret;
+}
+
+cmr_int isp_proc_next(cmr_handle isp_handle, struct ipn_in_param *input_ptr, struct ips_out_param *output_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp_mw_context                       *cxt = (struct isp_mw_context *)isp_handle;
+
+	return ret;
+}
