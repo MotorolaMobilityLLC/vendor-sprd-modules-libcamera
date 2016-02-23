@@ -23,6 +23,7 @@ LOCAL_C_INCLUDES := \
 	system/media/camera/include \
 	kernel/include/video \
 	vendor/sprd/modules/libmemion \
+	vendor/sprd/external/kernel-headers \
 #	$(TOP)/vendor/sprd/modules/libmemion \
 #	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
 #	$(TARGET_OUT_INTERMEDIATES)/KERNEL \
@@ -147,12 +148,12 @@ ifneq ($(strip $(TARGET_BOARD_IS_SC_FPGA)),true)
 		sensor/sensor_gc0310_mipi.c \
 		sensor/ov5648/sensor_ov5648_mipi_raw.c \
 		sensor/ov13850/sensor_ov13850_mipi_raw.c \
-		sensor/ov8858/sensor_ov8858_mipi_raw.c \
 		sensor/ov2680/sensor_ov2680_mipi_raw.c \
 		sensor/s5k4h5yc/sensor_s5k4h5yc_mipi_raw.c \
 		sensor/s5k5e3yx/sensor_s5k5e3yx_mipi_raw.c \
 		sensor/s5k4h5yc/sensor_s5k4h5yc_mipi_raw_jsl.c \
 		sensor/s5k3l2xx/sensor_s5k3l2xx_mipi_raw.c \
+		sensor/s5k3p3sm/sensor_s5k3p3sm_mipi_raw.c \
 		sensor/s5k4h5yc/packet_convert.c \
 
 	else

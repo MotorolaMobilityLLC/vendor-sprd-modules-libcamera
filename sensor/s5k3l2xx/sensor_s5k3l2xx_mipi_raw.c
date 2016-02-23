@@ -25,6 +25,7 @@
 #include "sensor_s5k3l2xx_raw_param_v3.c"
 //#else
 //#endif
+#include "packet_convert.h"
 
 #define CONFIG_S5K3L2XX_XCE  1
 #define S5K3L2XX_4_LANES

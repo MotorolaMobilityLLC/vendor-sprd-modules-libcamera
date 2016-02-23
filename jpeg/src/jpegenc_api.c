@@ -442,7 +442,7 @@ uint32_t JPEGENC_Poll_MEA_BSM_OneSlice(uint32_t time, uint32_t slice_num) {
 
   // ret = ioctl(jpg_fd,JPG_ACQUAIRE_MBIO_DONE,INTS_MBIO);
   ret = 0;
-  SCI_TRACE_LOW("after ioctl JPG_ACQUAIRE_MBIO_DONE ret %d", ret);
+  SCI_TRACE_LOW("after ioctl JPG_ACQUAIRE_MBIO_VLC_DONE ret %d", ret);
   SCI_TRACE_LOW("slice_num=%d.\n", jpeg_fw_codec->slice_num);
 
   jpeg_fw_codec->slice_num--;
@@ -547,8 +547,8 @@ static uint32_t _Encode_NextSlice(uint32_t time,
 		 }
 	}
 #else
-  ret = ioctl(jpg_fd, JPG_ACQUAIRE_MBIO_DONE, INTS_MBIO);
-  SCI_TRACE_LOW("after ioctl JPG_ACQUAIRE_MBIO_DONE ret %d", ret);
+  ret = ioctl(jpg_fd, JPG_ACQUAIRE_MBIO_VLC_DONE, INTS_MBIO);
+  SCI_TRACE_LOW("after ioctl JPG_ACQUAIRE_MBIO_VLC_DONE ret %d", ret);
 //	if(0 == ret)
 //	{
 //		if(slice_num>0)
@@ -574,8 +574,8 @@ uint32_t JPEGENC_Poll_VLC_BSM_Slice(uint32_t time) {
 
   SCI_TRACE_LOW("JPEGENC_Poll_VLC_BSM E jpg_fd %d\n", jpg_fd);
   do {
-    ret = ioctl(jpg_fd, JPG_ACQUAIRE_MBIO_DONE, INTS_VLC);
-    SCI_TRACE_LOW("after ioctl JPG_ACQUAIRE_MBIO_DONE ret %d", ret);
+    ret = ioctl(jpg_fd, JPG_ACQUAIRE_MBIO_VLC_DONE, INTS_VLC);
+    SCI_TRACE_LOW("after ioctl JPG_ACQUAIRE_MBIO_VLC_DONE ret %d", ret);
   } while (!ret);
 
   return ret;
@@ -755,6 +755,8 @@ int JPEGENC_Slice_Start(JPEGENC_PARAMS_T *jpegenc_params,
   uint32_t slice_num = 0;
   int32_t stream_size = 0;
   JPEG_CODEC_T *jpeg_fw_codec = Get_JPEGEncCodec();
+	unsigned long phy_ddr = 0;
+	size_t iova_size = 0;
 
   memset(out_ptr, 0, sizeof(JPEGENC_SLICE_OUT_T));
   jpeg_fw_codec->stream_buf_id = 0;
@@ -792,6 +794,28 @@ int JPEGENC_Slice_Start(JPEGENC_PARAMS_T *jpegenc_params,
   ioctl(jpg_fd, JPG_CONFIG_FREQ, &jpg_clk);
   JPG_SetVirtualBaseAddr((unsigned long)jpg_addr);
   JPG_reg_reset_callback(JPG_reset_cb, jpg_fd);
+	SCI_TRACE_LOW("mfd %x,%x => %x\n",jpegenc_params->src_mfd.y, jpegenc_params->src_mfd.u, jpegenc_params->stream_buf_fd);
+	SCI_TRACE_LOW("offset %x,%x => %x\n",jpegenc_params->yuv_phy_buf, jpegenc_params->yuv_u_phy_buf, jpegenc_params->stream_phy_buf[0]);
+
+    JPG_Get_IOVA(jpg_fd, jpegenc_params->stream_buf_fd, &phy_ddr, &iova_size);
+	SCI_TRACE_LOW("mfd %x,iova 0x%x\n",jpegenc_params->stream_buf_fd, phy_ddr);
+	jpegenc_params->stream_phy_buf[0] = jpegenc_params->stream_phy_buf[0] + phy_ddr;
+	jpegenc_params->iova[0] = phy_ddr;
+	jpegenc_params->iova_size[0] = iova_size;
+
+	JPG_Get_IOVA(jpg_fd, jpegenc_params->src_mfd.y, &phy_ddr, &iova_size);
+	SCI_TRACE_LOW("mfd %x,iova 0x%x\n",jpegenc_params->src_mfd.y, phy_ddr);
+	jpegenc_params->yuv_phy_buf = jpegenc_params->yuv_phy_buf + phy_ddr;
+	jpegenc_params->iova[1] = phy_ddr;
+	jpegenc_params->iova_size[1] = iova_size;
+
+	JPG_Get_IOVA(jpg_fd, jpegenc_params->src_mfd.u, &phy_ddr, &iova_size);
+	SCI_TRACE_LOW("mfd %x,iova 0x%x\n",jpegenc_params->src_mfd.u, phy_ddr);
+	jpegenc_params->yuv_u_phy_buf = jpegenc_params->yuv_u_phy_buf + phy_ddr;
+	jpegenc_params->iova[2] = phy_ddr;
+	jpegenc_params->iova_size[2] = iova_size;
+
+	SCI_TRACE_LOW("%x,%x => %x\n",jpegenc_params->yuv_phy_buf, jpegenc_params->yuv_u_phy_buf, jpegenc_params->stream_phy_buf[0]);
   if (JPEG_SUCCESS != JPEGENC_start_encode(jpegenc_params)) {
     SCI_TRACE_LOW("JPEGENC fail to JPEGENC_start_encode.");
     ret = -1;
@@ -832,8 +856,11 @@ int JPEGENC_Slice_Start(JPEGENC_PARAMS_T *jpegenc_params,
                             jpg_fd = -1;
                     }*/
 
-    out_ptr->is_over = 1;
+		out_ptr->is_over = 1;
     out_ptr->stream_size = stream_size;
+		JPG_Free_IOVA(jpg_fd, jpegenc_params->iova[0], jpegenc_params->iova_size[0]);
+		JPG_Free_IOVA(jpg_fd, jpegenc_params->iova[1], jpegenc_params->iova_size[1]);
+		JPG_Free_IOVA(jpg_fd, jpegenc_params->iova[2], jpegenc_params->iova_size[2]);
     SCI_TRACE_LOW("JPEGENC_Slice_Start,end stream_size %d.", stream_size);
   }
 
@@ -842,6 +869,10 @@ error:
     /*		munmap(jpg_addr,SPRD_JPG_MAP_SIZE);*/
     ioctl(jpg_fd, JPG_DISABLE, NULL);
     ioctl(jpg_fd, JPG_RELEASE, NULL);
+		JPG_Free_IOVA(jpg_fd, jpegenc_params->iova[0], jpegenc_params->iova_size[0]);
+		JPG_Free_IOVA(jpg_fd, jpegenc_params->iova[1], jpegenc_params->iova_size[1]);
+		JPG_Free_IOVA(jpg_fd, jpegenc_params->iova[2], jpegenc_params->iova_size[2]);
+		SCI_TRACE_LOW("error\n");
     /*		if(jpg_fd >= 0){
                             close(jpg_fd);
                     }*/
@@ -872,6 +903,9 @@ uint32_t JPEGENC_Slice_Next(JPEGENC_SLICE_NEXT_T *update_parm_ptr,
   slice_num = jpeg_fw_codec->slice_num;
 
   if (2 == ret) {
+		JPG_Free_IOVA(jpg_fd, update_parm_ptr->param->iova[0], update_parm_ptr->param->iova_size[0]);
+		JPG_Free_IOVA(jpg_fd, update_parm_ptr->param->iova[1], update_parm_ptr->param->iova_size[1]);
+		JPG_Free_IOVA(jpg_fd, update_parm_ptr->param->iova[2], update_parm_ptr->param->iova_size[2]);
     munmap(jpg_addr, SPRD_JPG_MAP_SIZE);
     ioctl(jpg_fd, JPG_DISABLE, NULL);
     ioctl(jpg_fd, JPG_RELEASE, NULL);
@@ -893,6 +927,9 @@ uint32_t JPEGENC_Slice_Next(JPEGENC_SLICE_NEXT_T *update_parm_ptr,
       SCI_TRACE_LOW("JPEGENC fail to JPEGENC_stop_encode.");
       ret = 1;
     }
+		JPG_Free_IOVA(jpg_fd, update_parm_ptr->param->iova[0], update_parm_ptr->param->iova_size[0]);
+		JPG_Free_IOVA(jpg_fd, update_parm_ptr->param->iova[1], update_parm_ptr->param->iova_size[1]);
+		JPG_Free_IOVA(jpg_fd, update_parm_ptr->param->iova[2], update_parm_ptr->param->iova_size[2]);
     munmap(jpg_addr, SPRD_JPG_MAP_SIZE);
     ioctl(jpg_fd, JPG_DISABLE, NULL);
     ioctl(jpg_fd, JPG_RELEASE, NULL);

@@ -36,6 +36,7 @@ extern "C"
 #include "jpg_dct.h"
 #include "jpg_global_define.h"
 #include "stdio.h"
+#include "string.h"
 
 #ifdef _VSP_LINUX_
 #define LOG_TAG __FILE__
@@ -60,8 +61,9 @@ extern "C"
 /*----------------------------------------------------------------------------*
 **                            Macro Definitions                               *
 **---------------------------------------------------------------------------*/
-#if 0
+
 #define SPRD_JPG_MAP_SIZE 0x6000
+#if 0
 
 #define SPRD_JPG_IOCTL_MAGIC 	'm'
 #define JPG_CONFIG_FREQ 		_IOW(SPRD_JPG_IOCTL_MAGIC, 1, unsigned int)
@@ -86,6 +88,11 @@ size_t size;
 unsigned int iova;
 }JPG_IOMMU_MAP_DATA_T;
 #endif
+PUBLIC int JPG_Get_IOVA(int jpg_fd, int fd, unsigned long *iova, size_t *size);
+PUBLIC int JPG_Free_IOVA(int jpg_fd,  unsigned long iova, size_t size);
+PUBLIC int VSP_Get_IOMMU_Status(int jpg_fd);
+
+
 
 #define INTS_MBIO 3
 #define INTS_VLD 2

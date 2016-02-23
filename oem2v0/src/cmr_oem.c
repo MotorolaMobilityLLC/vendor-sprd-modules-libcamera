@@ -3258,13 +3258,13 @@ static cmr_int camera_res_init_internal(cmr_handle oem_handle)
 		CMR_LOGE("failed to init focus %ld", ret);
 		goto exit;
 	}
-#if 0
+
 	ret = camera_jpeg_init(oem_handle);
 	if (ret) {
 		CMR_LOGE("failed to init jpeg %ld", ret);
 		goto exit;
 	}
-	#endif
+
 	ret = camera_grab_init(oem_handle);
 	if (ret) {
 		CMR_LOGE("failed to init grab %ld", ret);

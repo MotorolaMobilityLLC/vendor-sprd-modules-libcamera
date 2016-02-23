@@ -23,6 +23,7 @@
 #include "sensor_s5k4h5yc$jsl_raw_param_v3.c"
 #else
 #endif
+#include "packet_convert.h"
 
 #define S5K4H5YC_JSL_I2C_ADDR_W        0x10
 #define S5K4H5YC_JSL_I2C_ADDR_R        0x10
