@@ -314,6 +314,7 @@ struct ae_ctrl_param_gyro {
 struct ae_ctrl_proc_out {
 	struct isp3a_ae_info ae_info;
 	struct ae_ctrl_param_ae_frame ae_frame;
+	struct isp3a_ae_hw_cfg hw_cfg;
 
 	cmr_u32 priv_size;
 	void *priv_data;

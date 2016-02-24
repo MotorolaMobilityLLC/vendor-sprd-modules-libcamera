@@ -13,7 +13,7 @@
 
 #define _AL_HW3A_STATS_VER              (0.02)
 
-/* 
+/*
  * ////////////////////////////////////////////////////////////////////
  * Include files
  * ////////////////////////////////////////////////////////////////////
@@ -23,7 +23,7 @@
 #include "FrmWk_HW3A_event_type.h"
 #include <sys/time.h>   /* for timestamp calling */
 
-/* 
+/*
  * ////////////////////////////////////////////////////////////////////
  * Macro definitions
  * ////////////////////////////////////////////////////////////////////
@@ -46,7 +46,7 @@
 #define HW3A_METADATA_SIZE              HW3A_MAX_TOTAL_STATS_BUFFER_SIZE
 
 /* Define for suggested single stats buffer size, including stats info */
-/* This including each A stats info after A tag, take AE for exsample, 
+/* This including each A stats info after A tag, take AE for exsample,
  * including  udPixelsPerBlocks/udBankSize/ucValidBlocks
  */
 /* ucValidBanks/8-align Dummy */
@@ -71,14 +71,14 @@
 #define HW3A_MAX_FRMWK_AE_BLOCKS                AL_MAX_AE_STATS_NUM
 #define HW3A_MAX_FRMWK_AF_BLOCKS                (9)
 
-/* 
+/*
  * ////////////////////////////////////////////////////////////////////
  * Static declarations
  * ////////////////////////////////////////////////////////////////////
  */
 
 
-/* 
+/*
  * ////////////////////////////////////////////////////////////////////
  * Type declarations
  * ////////////////////////////////////////////////////////////////////
@@ -144,7 +144,7 @@ typedef enum {
         OPMODE_MAX,
 } alISP_OPMODE_IDX_t;
 
-/* 
+/*
  * ////////////////////////////////////////////////////////////////////
  * Framework related declaration
  * ////////////////////////////////////////////////////////////////////
@@ -236,7 +236,7 @@ typedef struct {
 } calib_wb_gain_t;
 #pragma pack(pop)  /* restore old alignment setting from stack */
 
-/* 
+/*
  * ////////////////////////////////////////////////////////////////////
  * HW3A engine related declaration
  * ////////////////////////////////////////////////////////////////////
@@ -343,9 +343,9 @@ typedef struct {
         UINT16                          uwBGain;                /* ALTEK format of calibration data */
         UINT8                           ucCrShift;              /* Cr shift for stat data */
         UINT8                           ucOffsetShift;          /* offset shift for stat data */
-        UINT8                           ucQuantize;             /* Set ucQuantize = 0 (fixed) 
+        UINT8                           ucQuantize;             /* Set ucQuantize = 0 (fixed)
                                                                  * since crs = Cr- [(cbs+awb_quantize_damp)>>awb_damp] */
-        UINT8                           ucDamp;                 /* Set ucDamp = 7 (fixed) 
+        UINT8                           ucDamp;                 /* Set ucDamp = 7 (fixed)
                                                                  * since crs = Cr- [(cbs+awb_quantize_damp)>>awb_damp] */
         UINT8                           ucSumShift;             /* Sum shift = 5 (fixed), based on ISP sampling points.
                                                                  * [9:0]G' = (sum(G[i,j]/2) + 2^(awb_sum_shift-1)) >> awb_sum_shift */
@@ -444,7 +444,7 @@ typedef struct {
         UINT8  pAE_Stats[HW3A_AE_STATS_BUFFER_SIZE];
         UINT16 uAETokenID;
         UINT32 uAEStatsSize;
-        UINT16 uPseudoFlag;             /* 0: normal stats, 1: PseudoFlag flag 
+        UINT16 uPseudoFlag;             /* 0: normal stats, 1: PseudoFlag flag
                                          * (for lib, smoothing/progressive run) */
 
         /* framework time/frame idx info */
@@ -487,7 +487,7 @@ typedef struct {
         UINT8 pAWB_Stats[HW3A_AWB_STATS_BUFFER_SIZE];
         UINT16 uAWBTokenID;
         UINT32 uAWBStatsSize;
-        UINT16 uPseudoFlag;             /* 0: normal stats, 1: PseudoFlag flag 
+        UINT16 uPseudoFlag;             /* 0: normal stats, 1: PseudoFlag flag
                                          * (for lib, smoothing/progressive run) */
 
         /* framework time/frame idx info */

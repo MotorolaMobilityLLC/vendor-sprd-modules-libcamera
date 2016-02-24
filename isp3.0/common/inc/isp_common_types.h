@@ -215,7 +215,7 @@ struct isp3a_awb_hw_cfg {
 	struct isp3a_hw_region region;//tAWBRegion;
 	cmr_u8 uc_factor[16];//ucYFactor[16];
 	cmr_s8 bbr_factor[33];//BBrFactor[33];
-	cmr_u16 uw_gain;//uwRGain;
+	cmr_u16 uw_rgain;//uwRGain;
 	cmr_u16 uw_ggain;//uwGGain;
 	cmr_u16 uw_bgain;//uwBGain;
 	cmr_u8 uccr_shift;//ucCrShift;
@@ -227,8 +227,34 @@ struct isp3a_awb_hw_cfg {
 	cmr_u16 uwrlinear_gain;//uwRLinearGain;
 	cmr_u16 uwblinear_gain;//uwBLinearGain;
 };
-struct isp3a_af_hw_cfg {
 
+struct isp3a_af_stats_roi {
+	cmr_u16 uw_size_ratio_x;
+	cmr_u16 uw_size_ratio_y;
+	cmr_u16 uw_blk_num_x;
+	cmr_u16 uw_blk_num_y;
+	cmr_u16 uw_offset_ratio_x;
+	cmr_u16 uw_offset_ratio_y;
+};
+
+struct isp3a_af_hw_cfg {
+	cmr_u16 token_id;
+	struct isp3a_af_stats_roi af_region;
+	cmr_u8 enable_af_lut;
+	cmr_u16 auw_lut[259];
+	cmr_u16 auw_af_lut[259];
+	cmr_u8 auc_weight[6];
+	cmr_u16 uw_sh;
+	cmr_u8 uc_th_mode;
+	cmr_u8 auc_index[82];
+	cmr_u16 auw_th[4];
+	cmr_u16 pw_tv[4];
+	cmr_u32 ud_af_offset;
+	cmr_u8 af_py_enable;
+	cmr_u8 af_lpf_enable;
+	cmr_int filter_mode;
+	cmr_u8 uc_filter_id;
+	cmr_u16 uw_ine_cnt;
 };
 
 struct isp3a_afl_hw_cfg {

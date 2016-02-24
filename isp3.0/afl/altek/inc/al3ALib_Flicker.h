@@ -138,12 +138,12 @@ typedef unsigned int (* alFlickerLib_process )( void * HW3a_stats_Data, void *fl
 
 #pragma pack(push) /* push current alignment setting to stack */
 #pragma pack(4)    /* new alignment setting  */
-typedef struct 
+typedef struct
 {
     alFlickerLib_intial    initial;
     alFlickerLib_deinit    deinit;
     alFlickerLib_set_param set_param;
-    alFlickerLib_get_param get_param;  
+    alFlickerLib_get_param get_param;
     alFlickerLib_process   process;
 
 }alFlickerRuntimeObj_t;
@@ -154,6 +154,6 @@ void alFlickerLib_GetLibVersion( al_flickerlib_version_t* flicker_LibVersion );
 
 #ifdef __cplusplus
 }  // extern "C"
-#endif 
+#endif
 
 #endif // _AL_FLICKER_H_

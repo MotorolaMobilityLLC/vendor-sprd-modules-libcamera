@@ -13,7 +13,7 @@
 #include ".\..\..\INCLUDE\mtype.h"
 #include ".\..\..\INCLUDE\FrmWk_HW3A_event_type.h"
 #include ".\..\..\INCLUDE\HW3A_Stats.h"
-#else  // normal release in AP 
+#else  // normal release in AP
 #include "mtype.h"
 #include "FrmWk_HW3A_event_type.h"
 #include "HW3A_Stats.h"
@@ -24,6 +24,8 @@
 extern "C"
 {
 #endif
+
+#define _WRAPPER_VER 0.8000
 
 /**
 \API name: al3AWrapper_DispatchHW3AStats
@@ -68,6 +70,14 @@ UINT32 al3AWrapper_GetCurrentDLSequence( UINT8 ucAHBSensoreID, alISP_DldSequence
 \return: error code
 */
 UINT32 al3AWrapper_SetDLSequence( alISP_DldSequence_t aDldSequence );
+
+/**
+\API name: al3AWrapper_GetVersion
+\This API would return labeled version of wrapper
+\fWrapVersion[out], return current wapper version
+\return: error code
+*/
+UINT32 al3AWrapper_GetVersion( float *fWrapVersion );
 
 #ifdef __cplusplus
 }  // extern "C"

@@ -164,6 +164,7 @@ typedef struct {
         alAWBLib_awb_debug_type     awb_debug_mask;         /* awb debug mask, can print different information with different mask */
         UINT32                      awb_debug_data_size;    /* awb debug data size */
         CHAR                        awb_debug_data_array[alAWBLib_Debug_Size]; /* awb debug data */
+        void                        *awb_debug_data_full;   /* awb debug data full size, Structure2, about 10K [TBD] */
 } alAWBLib_output_data_t;
 #pragma pack(pop)  /* restore old alignment setting from stack */
 
@@ -276,7 +277,7 @@ typedef struct {
 }   alAWBRuntimeObj_t;
 #pragma pack(pop)  /* restore old alignment setting from stack */
 
-/* Return Error, TRUE: loadFunc error. FALSE: loadFunc success. */
+/* Return: TRUE: loadFunc success. FALSE: loadFunc error. */
 BOOL    alAWBLib_loadFunc(alAWBRuntimeObj_t *awb_run_obj);
 
 #endif /*_ALTEK_AWB_LIB_ */

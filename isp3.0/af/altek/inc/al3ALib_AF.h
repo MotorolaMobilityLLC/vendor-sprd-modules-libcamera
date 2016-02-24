@@ -14,7 +14,8 @@
 * ALAF_MAX_ZONE:  coresp. to (A3CTRL_A_AF_MAX_BLOCKS)
 */
 
-#define MAX_AF_DEBUG_DATA_SIZE (8192)
+#define ALAF_EXIF_INFO_SIZE (379)
+#define ALAF_DEBUG_INFO_SIZE (7168)
 #define MAX_STATS_ROI_NUM (5)
 #define MAX_STATS_COLUMN_NUM (9)
 #define MAX_STATS_ROW_NUM (9)
@@ -48,9 +49,9 @@ typedef struct _alAFLib_input_move_lens_cb_t{
 /*alAFLib_lens_status
 
 *LENS_STOP:    lens is in stop status.
-*LENS_MOVING:   lens is moving now.   
-*LENS_MOVE_DONE: lens is move done which change from MOVING. 
- 
+*LENS_MOVING:   lens is moving now.
+*LENS_MOVE_DONE: lens is move done which change from MOVING.
+
  lens working status. to info alAFLib.
 */
 typedef enum _alAFLib_lens_status{
@@ -64,9 +65,9 @@ typedef enum _alAFLib_lens_status{
 
 *lens_pos_updated:true, if lens position is update.
 *lens_pos:current position
-*lens_status:current lens status 
+*lens_status:current lens status
 *manual_lens_pos_dac: input lens vcm dac value to alAFLib
- 
+
  set image buffer to alAFLib. the sub-cam buf only avalible when sub-cam supported.
 */
 typedef struct _alAFLib_input_lens_info_t{
@@ -80,7 +81,7 @@ typedef struct _alAFLib_input_lens_info_t{
 
 *sof_time:   system time when updating sof id.
 *sof_frame_id: sof frame id.
- 
+
  send sof id number and system time at sof updating moment.
 */
 typedef struct _alAFLib_input_sof_id_t{
@@ -94,7 +95,7 @@ typedef struct _alAFLib_input_sof_id_t{
 *img_time: system time when DL image.
 *p_main_cam: pointer to image buf from main-cam
 *p_sub_cam: pointer to image buf from sub-cam, set to null if sub-cam not support.
- 
+
  set image buffer to alAFLib. the sub-cam buf only avalible when sub-cam supported.
 */
 typedef struct _alAFLib_input_image_buf_t{
@@ -105,17 +106,17 @@ typedef struct _alAFLib_input_image_buf_t{
 }alAFLib_input_image_buf_t;
 
 /*alAFLib_input_from_calib_t
- 
+
 *inf_step: VCM inf step
         $macro_step: VCM macro step
         $inf_distance: VCM calibration inf distance in mm.
         $macro_distance: VCM calibration macro distance in mm.
         $mech_top: mechanical limitation top position (macro side) in step.
         $mech_bottom: mechanical limitation bottom position(inf side) in step.
-        $lens_move_stable_time: time consume of lens from moving to stable in ms. 
+        $lens_move_stable_time: time consume of lens from moving to stable in ms.
         $extend_calib_ptr: extra lib calibraion data, if not support, set to null.
         $extend_calib_data_size: size of extra lib calibration data, if not support set to zero.
- 
+
  data from OTP must input to alAFLib
 */
 typedef struct _alAFLib_input_from_calib_t{
@@ -134,7 +135,7 @@ typedef struct _alAFLib_input_from_calib_t{
 
  f_number: f-number, ex. f2.0, then input 2.0
  focal_lenth: focal length in um
- 
+
  the data should settled before initialing.
 */
 typedef struct _alAFLib_input_module_info_t{
@@ -146,7 +147,7 @@ typedef struct _alAFLib_input_module_info_t{
 
  module_info: info of module spec
  calib_data:  calibration data
- 
+
  the data should settled before initialing.
 */
 typedef struct _alAFLib_input_init_info_t{
@@ -162,8 +163,8 @@ typedef struct _alAFLib_input_initial_set_t{
 }alAFLib_input_initial_set_t;
 
 /*alAFLib_input_enable_hybrid_t
- enable_hybrid: enable hybrid AF         
- type:  hybrid af type.                   
+ enable_hybrid: enable hybrid AF
+ type:  hybrid af type.
 
  haf setting data, if support.
 */
@@ -175,19 +176,19 @@ typedef struct _alAFLib_input_enable_hybrid_t{
 /*alAFLib_input_focus_mode_type
 *
 * input af mode which should be set from HAL control.
-* alAFLib_AF_MODE_OFF  : 1 AF turn off                                                          
-* alAFLib_AF_MODE_AUTO  : 2 Auto mode                                                            
-* alAFLib_AF_MODE_MACRO   : 3 Macro mode                                                   
-* alAFLib_AF_MODE_CONTINUOUS_VIDEO   : 4 continues video mode                                         
-* alAFLib_AF_MODE_CONTINUOUS_PICTURE : 5 continues liveview picture.                                  
-* alAFLib_AF_MODE_EDOF,              : 6 set focus lens position by HAL                             
-* alAFLib_AF_MODE_MANUAL,            : 7 manual mode.                                                 
-* alAFLib_AF_MODE_HYBRID_AUTO,       : 8 hybrid af auto mode, if haf qualify                                  
-* alAFLib_AF_MODE_HYBRID_CONTINUOUS_VIDEO   : 9 hybrid af continues video mode, if haf qualify       
-* alAFLib_AF_MODE_HYBRID_CONTINUOUS_PICTURE : 10 hybrid af continues liveview picture mode, if haf qualify 
-* alAFLib_AF_MODE_TUNING,                   : 11 Special mode for tuning.                             
-* alAFLib_AF_MODE_NOT_SUPPORTED,            : 12 not support.                                                 
-* alAFLib_AF_MODE_MAX                                                                                     
+* alAFLib_AF_MODE_OFF  : 1 AF turn off
+* alAFLib_AF_MODE_AUTO  : 2 Auto mode
+* alAFLib_AF_MODE_MACRO   : 3 Macro mode
+* alAFLib_AF_MODE_CONTINUOUS_VIDEO   : 4 continues video mode
+* alAFLib_AF_MODE_CONTINUOUS_PICTURE : 5 continues liveview picture.
+* alAFLib_AF_MODE_EDOF,              : 6 set focus lens position by HAL
+* alAFLib_AF_MODE_MANUAL,            : 7 manual mode.
+* alAFLib_AF_MODE_HYBRID_AUTO,       : 8 hybrid af auto mode, if haf qualify
+* alAFLib_AF_MODE_HYBRID_CONTINUOUS_VIDEO   : 9 hybrid af continues video mode, if haf qualify
+* alAFLib_AF_MODE_HYBRID_CONTINUOUS_PICTURE : 10 hybrid af continues liveview picture mode, if haf qualify
+* alAFLib_AF_MODE_TUNING,                   : 11 Special mode for tuning.
+* alAFLib_AF_MODE_NOT_SUPPORTED,            : 12 not support.
+* alAFLib_AF_MODE_MAX
 */
 typedef enum _alAFLib_input_focus_mode_type{
         alAFLib_AF_MODE_OFF = 1,
@@ -253,7 +254,7 @@ typedef struct _alAFLib_img_t{
 *uwy: top-left y position
 *dx: crop width
 *dy: crop height
- 
+
  img crop info struct.
 */
 typedef struct _alAFLib_crop_t{
@@ -272,7 +273,7 @@ typedef struct _alAFLib_crop_t{
 *roi:     array of roi info, refer to type alAFLib_roi_t
 *weight:   weighting for each roi.
 *src_img_sz: the source image which is refered by current input roi.
- 
+
  roi info
 */
 typedef struct _alAFLib_input_roi_info_t{
@@ -288,7 +289,7 @@ typedef struct _alAFLib_input_roi_info_t{
 /*alAFLib_input_sensor_info_t
 
 *preview_img_sz:  size of live view image
-*sensor_crop_info:sensor crop image size info. 
+*sensor_crop_info:sensor crop image size info.
 *actuator_info:  info from actuator, refer to alAFLib_actuator_info_t
  sensor info
 */
@@ -300,7 +301,7 @@ typedef struct _alAFLib_input_sensor_info_t{
 /*alAFLib_input_isp_info_t
 
 *liveview_img_sz: size of live view image
- 
+
  isp info
 */
 typedef struct _alAFLib_input_isp_info_t{
@@ -332,7 +333,7 @@ typedef struct _alAFLib_input_aec_info_t{
 
 *awb_ready: true for awb report ready.
 *p_awb_report: pointer to awb report, if not support, point to null.
- 
+
  pointer awb report which is from awb library.
 */
 typedef struct _alAFLib_input_awb_info_t{
@@ -345,7 +346,7 @@ typedef struct _alAFLib_input_awb_info_t{
  gyro_enable:  true for gyro available.
  gyro_ready:  true for gyro set data ready.
  gyro_value[3]:  gyro value for different direction.
- 
+
  Gyro data
 */
 typedef struct _alAFLib_input_gyro_info_t{
@@ -359,7 +360,7 @@ typedef struct _alAFLib_input_gyro_info_t{
  gravity_enable: true for gravity available.
  gravity_ready: true for gravity set data ready.
  g_vactor[3]:  gravity value.
- 
+
  Gravity data
 */
 typedef struct _alAFLib_input_gravity_vector_t{
@@ -369,19 +370,19 @@ typedef struct _alAFLib_input_gravity_vector_t{
 } alAFLib_input_gravity_vector_t;
 
 /*alAFLib_hw_stats_t
-*      AF_token_id: valid setting number, which same when doing AF configuration, for 3A libs synchronization   
-*      curr_frame_id: frame id when send                                                                          
+*      AF_token_id: valid setting number, which same when doing AF configuration, for 3A libs synchronization
+*      curr_frame_id: frame id when send
 *      hw3a_frame_id: frame id when hw3a compute stats.
-*      valid_column_num;  Number of valid column which hw output   
-*      valid_row_num;      Number of valid row which hw output   
-*      time_stamp: time when hw3a compute stats. unit: ms                                        
-*      fv_hor[ALAF_MAX_STATS_NUM]:  focus value horizontal;                                                              
-*      fv_ver[ALAF_MAX_STATS_NUM]:  focus value vertical;                                                         
-*      filter_value1[ALAF_MAX_STATS_NUM]: IIR filter type 1;                                                                 
-*      filter_value2[ALAF_MAX_STATS_NUM]: IIR filter type 2;                                                                 
-*      Yfactor[ALAF_MAX_STATS_NUM]:  Arrays with the sums for the intensity.                                             
-*      cnt_hor[ALAF_MAX_STATS_NUM]:  Counts for the horizontal focus value above the threshold                           
-*      cnt_ver[ALAF_MAX_STATS_NUM]:  Counts for the vertical focus value above the threshold                             
+*      valid_column_num;  Number of valid column which hw output
+*      valid_row_num;      Number of valid row which hw output
+*      time_stamp: time when hw3a compute stats. unit: ms
+*      fv_hor[ALAF_MAX_STATS_NUM]:  focus value horizontal;
+*      fv_ver[ALAF_MAX_STATS_NUM]:  focus value vertical;
+*      filter_value1[ALAF_MAX_STATS_NUM]: IIR filter type 1;
+*      filter_value2[ALAF_MAX_STATS_NUM]: IIR filter type 2;
+*      Yfactor[ALAF_MAX_STATS_NUM]:  Arrays with the sums for the intensity.
+*      cnt_hor[ALAF_MAX_STATS_NUM]:  Counts for the horizontal focus value above the threshold
+*      cnt_ver[ALAF_MAX_STATS_NUM]:  Counts for the vertical focus value above the threshold
 */
 
 typedef struct _alAFLib_hw_stats_t{
@@ -404,7 +405,7 @@ typedef struct _alAFLib_hw_stats_t{
         $hw_stats_ready:        af_stats data from hw is ready
         $max_num_stats:         setting param from hw defined, corrsp. to ALAF_MAX_STATS_NUM
         $max_num_zone:  setting param from hw defined, corrsp. to A3CTRL_A_AF_MAX_BLOCKS
-        $max_num_banks:         setting param from hw defined, corrsp. to A3CTRL_A_AF_MAX_BANKS        
+        $max_num_banks:         setting param from hw defined, corrsp. to A3CTRL_A_AF_MAX_BANKS
         $hw_stats:  hw3a stats, refer to alAFLib_hw_stats_t.
 */
 typedef struct _alAFLib_input_hwaf_info_t{
@@ -423,8 +424,8 @@ typedef struct _alAFLib_input_hwaf_info_t{
 
  p_cbaf_tuning_ptr: linke to cbaf tuning table header, ptr to cbaf tuning table, if enable.
  p_scdet_tuning_ptr: link to scdet tuning table header, ptr to scdet tuning table, if enable.
- p_haf_tuning_ptr: need to include extend tuning table from provider, ptr to extend haf lib tuning table, if enable. 
- 
+ p_haf_tuning_ptr: need to include extend tuning table from provider, ptr to extend haf lib tuning table, if enable.
+
  To set alAF tuning data in.
 */
 typedef struct _alAFLib_input_altune_t{
@@ -465,13 +466,13 @@ typedef struct _alAFLib_input_special_event{
  the type of which parameter setin to alAFLib.
  alAFLIB_SET_PARAM_UNKNOWN,  // 0 //         No type input
         alAFLIB_SET_PARAM_SET_CALIBDATA, // 1 //         Set OTP, calibration info and module info from hardware
-        alAFLIB_SET_PARAM_SET_SETTING_FILE, // 2 //         send initial af library setting data 
+        alAFLIB_SET_PARAM_SET_SETTING_FILE, // 2 //         send initial af library setting data
         alAFLIB_SET_PARAM_INIT,   // 3 //         Initial alAFLib when open camera, allocate af thread data
-        alAFLIB_SET_PARAM_AF_START,  // 4 //         Except CAF, start AF scan process once. TAF 
+        alAFLIB_SET_PARAM_AF_START,  // 4 //         Except CAF, start AF scan process once. TAF
         alAFLIB_SET_PARAM_CANCEL_FOCUS,  // 5 //         Cancel current AF process. Interrupt focusing
         alAFLIB_SET_PARAM_FOCUS_MODE,  // 6 //         Set AF focus mode
         alAFLIB_SET_PARAM_UPDATE_LENS_INFO, // 7 //        when lens status change, update lens info to inform alAFLib.
-        alAFLIB_SET_PARAM_RESET_LENS_POS, // 8 //         reset lens position to default. 
+        alAFLIB_SET_PARAM_RESET_LENS_POS, // 8 //         reset lens position to default.
         alAFLIB_SET_PARAM_SET_LENS_MOVE_CB, // 9 //         Set Lens move callback function when initialization
         alAFLIB_SET_PARAM_SET_MANUAL_FOCUS_DIST,// 10 //         Set Manual focus distance
         alAFLIB_SET_PARAM_SET_ROI,  // 11 //         Set Region of interest info, e.q. face roi, Top- Left x,y position and ROI's width Height
@@ -491,7 +492,7 @@ typedef struct _alAFLib_input_special_event{
         alAFLIB_SET_PARAM_SET_IMGBUF,  // 25 //         Set Image Buffer into alAFLib
         alAFLIB_SET_PARAM_SET_DEFAULT_SETTING, // 26 //        Set alAFLib to default setting. The current setting will be remove, and no longer to recover until restart camera and load such setting file.
         alAFLIB_SET_PARAM_SPECIAL_EVENT, // 27 //        To inform alAFLib if event change status. Event Type please reference to alAFLib_input_special_event_type
-        alAFLIB_SET_PARAM_MAX   // 28 
+        alAFLIB_SET_PARAM_MAX   // 28
 */
 typedef enum _alAFLib_set_param_type{
  alAFLIB_SET_PARAM_UNKNOWN,
@@ -527,9 +528,9 @@ typedef enum _alAFLib_set_param_type{
 
 /*_alAFLib_input_set_param_t
 * To set info to alAFLib, refernce to type
-* 
+*
 * type: set_param type to which you are going to setin alAFLib, refer to alAFLib_set_param_type
-* current_sof_id: frame id from sof; 
+* current_sof_id: frame id from sof;
 * union{
 *  init_info:
 *  init_set:
@@ -583,12 +584,12 @@ typedef struct _alAFLib_input_set_param_t{
 }alAFLib_input_set_param_t;
 
 /* alAFLib_input_get_param_t
- 
-*alAFLIB_GET_PARAM_FOCUS_MODE:  get current focus mode 
+
+*alAFLIB_GET_PARAM_FOCUS_MODE:  get current focus mode
 *alAFLIB_GET_PARAM_DEFAULT_LENS_POS: get default lens position (step)
 *alAFLIB_GET_PARAM_GET_CUR_LENS_POS: get current lens position (step)
-*alAFLIB_GET_PARAM_NOTHING:  set it if you don't need to get info from alAFlib this time. 
- 
+*alAFLIB_GET_PARAM_NOTHING:  set it if you don't need to get info from alAFlib this time.
+
  info type you want to get from alAFLib.
 */
 typedef enum _alAFLib_get_param_type{
@@ -600,9 +601,9 @@ typedef enum _alAFLib_get_param_type{
 }alAFLib_get_param_type;
 
 /* alAFLib_input_get_param_t
- 
+
 *type:   refer to alAFLib_get_param_type.
- 
+
 *default_lens_pos: current lens pos (step).
 *af_focus_mode:  current setted focused mode.
 *uwdefault_lens_pos:  default lens pos (step)
@@ -616,17 +617,17 @@ typedef struct _alAFLib_input_get_param_t{
                 alAFLib_input_focus_mode_type af_focus_mode;
                 INT16 wcurrent_lens_pos;
                 UINT16 uwdefault_lens_pos;
-        }u_get_data; 
+        }u_get_data;
 }alAFLib_input_get_param_t;
 
 /* alAFLib_status_type
-* 
+*
 **alAFLib_STATUS_INVALID : alAF lib invalid.
 **alAFLib_STATUS_INIT : alAF lib finished initialization, ready for waitinf trigger.
 **alAFLib_STATUS_FOCUSED : alAF lib finished one round focus process.
 **alAFLib_STATUS_UNKNOWN : alAF lib is know in unknown status. AF is not busy.
 **alAFLib_STATUS_FOCUSING: alAF lib is busy know and doing focus process., the aec should be locked this time.
-* 
+*
 * To inform upper layer (ex. af_wrapper) current AF status.
 * the type is get by get_param.
 */
@@ -642,7 +643,7 @@ typedef enum{
 *focus_done: alAFLib focus process done.
 *t_status: refer to alAFLib_status_type.
 *f_distance: focus distance in mm this AF round.
- 
+
  Some information of alAFLib, when receive trigger.
 */
 typedef struct _alAFLib_af_out_status_t{
@@ -662,7 +663,7 @@ typedef enum _alAFLib_med_filter_mode{
 }alAFLib_med_filter_mode;
 
 /* alAFLib_af_out_roi_t
- 
+
         $roi:  AF use roi info.
         $src_img_sz: roi reference source img size, which is received from upper layer.
         $num_blk_ver: vertical block number.
@@ -683,9 +684,9 @@ typedef enum _alAFLib_med_filter_mode{
         $ucFilterID: median filter device ID, for AF, use 1
         $uwLineCnt: AF timing control anchor point
 
- 
- feadback AF current use roi info and block number.  
- 
+
+ feadback AF current use roi info and block number.
+
 */
 typedef struct _alAFLib_af_out_stats_config_t{
         UINT16 TokenID;
@@ -720,39 +721,44 @@ typedef enum _alAFLib_output_type{
          alAFLIB_OUTPUT_MAX
 }alAFLib_output_type;
 
-/* alAFLib_output_report_t 
+/* alAFLib_output_report_t
 * sof_frame_id: sof frame id of this output report.
 * result: AFLib result. TRUE : AF control should updated AF report and response; FALSE : Do nothing.
 * type:  refer to alAFLib_output_type
-  
+
 * focus_status: AFLib current status. if triggered.
 * stats_config: ISP driver configuration for HW AF.
-* alaf_debug_data: AF lib debug information.
+* alaf_debug_data: AF lib debug info data.
+* alAF_debug_data_size: AF lib debug data size.
+* alAF_EXIF_data: AF lib EXIF info.
+* alAF_EXIF_data_size: AF lib EXIF data size.
 * wrap_result: returns result, the result define in al3ALib_AF_ErrCode.h
 * param_result: param_result returns the error result that only effect AF focus quality but do not make lib crash.
  it often occurs when set / get parameter behavior so naming it as param_result.
-*/ 
+*/
 typedef struct _alAFLib_output_report_t {
         INT32 sof_frame_id;
         INT32 result;
         alAFLib_output_type type;
         alAFLib_af_out_status_t focus_status;
         alAFLib_af_out_stats_config_t stats_config;
-        UINT32 alaf_debug_data[MAX_AF_DEBUG_DATA_SIZE];
+        PVOID p_alAF_debug_data;
         UINT32 alAF_debug_data_size;
+        PVOID  p_alAF_EXIF_data;
+        UINT32 alAF_EXIF_data_size;
         UINT32 wrap_result;
         UINT16 param_result;
 } alAFLib_output_report_t;
 
 ////////////////////////////////////////////////////
-/********** alAFLib API **************/ 
+/********** alAFLib API **************/
 
 /*alAFLib_version_t
- 
+
 *m_uwMainVer: Main version
 *m_uwSubVer: Sub version
- 
-*/ 
+
+*/
 typedef struct _alAFLib_Version{
         UINT16 m_uwMainVer;
         UINT16 m_uwSubVer;
@@ -772,9 +778,9 @@ typedef BOOL (* alAFLib_deinit_func)(PVOID alAFLib_runtim_obj, PVOID alAFLib_out
         $deinit: close alAFLib, when close camera or...etc.
         $set_param: set data to alAFlib.
         $get_param: get info from alAFLib.
-        $process:  
+        $process:
 */
-typedef struct _alAFLib_ops_t{ 
+typedef struct _alAFLib_ops_t{
         alAFLib_intial_func initial;
         alAFLib_deinit_func deinit;
         alAFLib_set_param_func set_param;

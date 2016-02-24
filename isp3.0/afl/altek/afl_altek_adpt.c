@@ -19,6 +19,8 @@
 #include "afl_altek_adpt.h"
 #include "al3ALib_Flicker.h"
 #include "al3ALib_Flicker_ErrCode.h"
+#include "al3AWrapper_Flicker.h"
+#include "al3AWrapper_FlickerErrCode.h"
 
 
 #define AFLLIB_PATH "libalFlickerLib.so"
@@ -35,6 +37,7 @@ struct aflaltek_lib_data {
 	flicker_output_data_t output_data;
 	cmr_u16 success_num;
 	alHW3a_Flicker_CfgInfo_t  hwisp_cfg;
+	al3AWrapper_Stats_Flicker_t stats_data;
 };
 
 /*ae altek context*/
@@ -157,7 +160,7 @@ static cmr_int afl_altek_set_init_setting(struct aflaltek_cxt *cxt_ptr, struct a
 	param_ct_ptr->ReferencePreviousData = REFERENCE_PREVIOUS_DATA_INTERVAL;
 	param_ct_ptr->RawSizeX = in_ptr->init.resolution.frame_size.w;
 	param_ct_ptr->RawSizeY = in_ptr->init.resolution.frame_size.h;
-	param_ct_ptr->Line_Time = (float)(in_ptr->init.resolution.line_time / AFL_SECOND_BASE * 1.0); //unit: second
+	param_ct_ptr->Line_Time = (float)in_ptr->init.resolution.line_time / AFL_SECOND_BASE * 1.0; //unit: second
 
 	type = FLICKER_SET_PARAM_INIT_SETTING;
 	in_param.flicker_set_param_type = type;
@@ -387,7 +390,7 @@ static cmr_int afl_altek_set_work_mode(struct aflaltek_cxt *cxt_ptr, struct afl_
 	output_param_ptr = &cxt_ptr->lib_data.output_data;
 	param_ct_ptr = &in_param.set_param;
 
-	param_ct_ptr->Line_Time = (float)(in_ptr->work_param.resolution.line_time /AFL_SECOND_BASE * 1.0); //unit: second
+	param_ct_ptr->Line_Time = (float)in_ptr->work_param.resolution.line_time /AFL_SECOND_BASE * 1.0; //unit: second
 	param_ct_ptr->RawSizeX = in_ptr->work_param.resolution.frame_size.w;
 	param_ct_ptr->RawSizeY = in_ptr->work_param.resolution.frame_size.h;
 
@@ -598,7 +601,15 @@ static cmr_int afl_altek_adpt_process(cmr_handle handle, void *in, void *out)
 		ISP_LOGI("hw stat data is NULL error!!");
 		goto exit;
 	}
-	lib_ret = cxt_ptr->afl_obj.process(in_ptr->stat_data_ptr->addr, cxt_ptr->lib_run_data, &cxt_ptr->lib_data.output_data);
+	lib_ret = al3AWrapper_DispatchHW3A_FlickerStats((ISP_DRV_META_AntiF_t*)in_ptr->stat_data_ptr->addr
+			, &cxt_ptr->lib_data.stats_data, &cxt_ptr->afl_obj, cxt_ptr->lib_run_data);
+	if (ERR_WPR_FLICKER_SUCCESS != lib_ret) {
+		ret = ISP_ERROR;
+		ISP_LOGE("dispatch lib_ret=%ld", lib_ret);
+		goto exit;
+	}
+
+	// lib_ret = cxt_ptr->afl_obj.process(&cxt_ptr->lib_data.stats_data, cxt_ptr->lib_run_data, &cxt_ptr->lib_data.output_data);
 	if (lib_ret)
 		goto exit;
 	if (cxt_ptr->init_in_param.ops_in.afl_callback) {

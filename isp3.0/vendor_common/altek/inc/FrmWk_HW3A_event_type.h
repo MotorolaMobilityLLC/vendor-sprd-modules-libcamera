@@ -12,7 +12,7 @@
 #ifndef _AL_FRMWK_HW3A_EVENT_TYPE_H_
 #define _AL_FRMWK_HW3A_EVENT_TYPE_H_
 
-/* 
+/*
  * ////////////////////////////////////////////////////////////////////
  * Include files
  * ////////////////////////////////////////////////////////////////////
@@ -20,7 +20,7 @@
 #include "mtype.h"
 
 
-/* 
+/*
  * ////////////////////////////////////////////////////////////////////
  * Macro definitions
  * ////////////////////////////////////////////////////////////////////
@@ -32,14 +32,14 @@
 #define MAX_AE_DEBUG_ARRAY_NUM          MAX_RUNTIME_AE_DEBUG_DATA
 #define MAX_AE_COMMON_EXIF_DATA         (1024)
 
-/* 
+/*
  * ////////////////////////////////////////////////////////////////////
  * Static declarations
  * ////////////////////////////////////////////////////////////////////
  */
 
 
-/* 
+/*
  * ////////////////////////////////////////////////////////////////////
  * Type declarations
  * ////////////////////////////////////////////////////////////////////
@@ -310,6 +310,7 @@ typedef struct {
         UINT16  ae_commonexif_valid_size;
         UINT8 ae_commonexif_data[MAX_AE_COMMON_EXIF_DATA];
 
+        UINT8   ucIsEnableAeDebugReport;             /* 0: disable debug report, 1: enable debug report */
         /* debug message for altek advanced debug reader info */
         UINT16  ae_debug_valid_size;
         UINT8 ae_debug_data[MAX_RUNTIME_AE_DEBUG_DATA];
@@ -328,11 +329,11 @@ typedef struct {
         awb_mode_type_t         awb_mode;               /* 0: Auto, others are MWB type */
         wbgain_data_t           wbgain;
         wbgain_data_t           wbgain_balanced;
-        wbgain_data_t           wbgain_flash_off;       /* for flash contorl, 
-                                                         * stop updating uder set state_under_flash = TRUE 
+        wbgain_data_t           wbgain_flash_off;       /* for flash contorl,
+                                                         * stop updating uder set state_under_flash = TRUE
                                                          * (event: prepare_under_flash) */
         UINT32                  color_temp;
-        UINT32                  color_temp_flash_off;   /* for flash contorl, 
+        UINT32                  color_temp_flash_off;   /* for flash contorl,
                                                          * stop updating uder set state_under_flash = TRUE
                                                          * (event: prepare_under_flash) */
         UINT16                  light_source;           /* light source */

@@ -1,15 +1,15 @@
 ////////////////////////////////////////////////////////////////////
 //  File name: al3AWrapperErrCode.h
-//  Create Date: 
+//  Create Date:
 //
 //  Comment:
 //
-//  
+//
 ////////////////////////////////////////////////////////////////////
 
-#define ERR_WRP_SUCCESS          0x0
-#define ERR_WRP_METADATA_PARSER  0x9000
-#define ERR_WRP_DL_PARSER        0x9100
+#define ERR_WRP_SUCCESS          (0x0)
+#define ERR_WRP_METADATA_PARSER  (0x9000)
+#define ERR_WRP_DL_PARSER        (0x9100)
 
 #define ERR_WRP_NULL_METADATA_ADDR   (ERR_WRP_METADATA_PARSER +  0x01 )
 #define ERR_WRP_EMPTY_METADATA       (ERR_WRP_METADATA_PARSER +  0x02 )

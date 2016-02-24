@@ -3,6 +3,8 @@
  *
  *  Created on: 2015/12/07
  *      Author: HanTseng
+ *  Latest update: 2016/2/17
+ *      Reviser: MarkTseng
  *  Comments:
  *       This c file is mainly used for AP framework to:
  *       1. Query HW3A config setting
@@ -23,7 +25,7 @@
  * This API used for patching HW3A stats from ISP(Altek) for AWB libs(Altek),
  * after patching completed, AWB ctrl should prepare patched
  * stats to AWB libs
- * param alISP_MetaData_AWB[In]: patched data after calling al3AWrapper_DispatchHW3AStats, 
+ * param alISP_MetaData_AWB[In]: patched data after calling al3AWrapper_DispatchHW3AStats,
  *                               used for patch AWB stats for AWB lib
  * param alWrappered_AWB_Dat[Out]: result AWB stats
  * return: error code
@@ -134,7 +136,7 @@ unsigned int al3AWrapperAWB_GetDefaultCfg(alHW3a_AWB_CfgInfo_t *aAWBConfig)
         unsigned int ret = ERR_WPR_AWB_SUCCESS;
         alHW3a_AWB_CfgInfo_t localParam;
         unsigned char   i;
-        unsigned char   yFactor[16] = { 0, 0, 0, 4, 7, 10, 12, 14, 
+        unsigned char   yFactor[16] = { 0, 0, 0, 4, 7, 10, 12, 14,
                                         15, 15, 15, 15, 14, 13, 10, 5};
         signed char     bbrFactor[33] = {22, 20, 18, 16, 15, 13, 11, 10, 8, 8,
                                         6, 5, 3, 1, -1, -3, -4, -5, -6, -7, -8,
@@ -187,7 +189,7 @@ unsigned int al3AWrapperAWB_GetDefaultCfg(alHW3a_AWB_CfgInfo_t *aAWBConfig)
  * API name: al3AWrapperAWB_QueryISPConfig_AWB
  * This API is used for query ISP config before calling al3AWrapperAWB_UpdateISPConfig_AWB
  * param aAWBConfig[out]: API would manage parameter and return via this pointer
- * param aAWBLibCallback[in]: callback lookup table, 
+ * param aAWBLibCallback[in]: callback lookup table,
  * must passing correct table into this API for querying HW3A config
  * return: error code
  */
@@ -274,3 +276,17 @@ unsigned int al3AWrapperAWB_SetTuningFile(void *setting_file, alAWBRuntimeObj_t 
         return ret;
 }
 
+/**
+\API name: al3AWrapperAWB_GetVersion
+\This API would return labeled version of wrapper
+\fWrapVersion[out], return current wapper version
+\return: error code
+*/
+unsigned int al3AWrapperAWB_GetVersion( float *fWrapVersion )
+{
+	unsigned int ret = ERR_WPR_AWB_SUCCESS;
+
+	*fWrapVersion = _WRAPPER_AWB_VER;
+
+	return ret;
+}

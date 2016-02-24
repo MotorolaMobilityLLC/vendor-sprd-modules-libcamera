@@ -85,7 +85,7 @@ static cmr_int awbctrl_set_workmode(cmr_handle awb_ctrl_handle, void *input_ptr,
 static cmr_int awbctr_set_workmode(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr);
 static cmr_int awbctrl_set_faceinfo(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr);
 static cmr_int awbctrl_set_dzoom(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr);
-static cmr_int awbctrl_set_sof_frame_idx(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr); 
+static cmr_int awbctrl_set_sof_frame_idx(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr);
 static cmr_int awbctrl_set_bypass(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr);
 static cmr_int awbctrl_get_gain(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr);
 static cmr_int awbctrl_set_flash_open_p(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr);
@@ -98,7 +98,9 @@ static cmr_int awbctrl_get_ct(cmr_handle awb_ctrl_handle, void *input_ptr, void 
 static cmr_int awbctrl_set_flash_before_p(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr);
 static cmr_int awbctrl_set_flash_status(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr);
 static cmr_int awbctrl_set_ae_info(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr);
-
+static cmr_int awbctrl_set_af_info(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr);
+static cmr_int awbctrl_get_exif_debug_info(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr);
+static cmr_int awbctrl_get_debug_info(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr);
 /**************************************LOCAL VARIABLE******************************************/
 static struct awbctrl_ioctrl_fun s_awbctrl_func[AWB_CTRL_CMD_MAX+1] = {
 	{AWB_CTRL_CMD_SET_BASE, NULL},
@@ -127,7 +129,9 @@ static struct awbctrl_ioctrl_fun s_awbctrl_func[AWB_CTRL_CMD_MAX+1] = {
 	{AWB_CTRL_CMD_FLASH_BEFORE_P, awbctrl_set_flash_before_p},
 	{AWB_CTRL_CMD_SET_FLASH_STATUS, awbctrl_set_flash_status},
 	{AWB_CTRL_CMD_SET_AE_REPORT, awbctrl_set_ae_info},
-	{AWB_CTRL_CMD_SET_AF_REPORT, NULL},
+	{AWB_CTRL_CMD_SET_AF_REPORT, awbctrl_set_af_info},
+	{AWB_CTRL_CMD_GET_EXIF_DEBUG_INFO, awbctrl_get_exif_debug_info},
+	{AWB_CTRL_CMD_GET_DEBUG_INFO, awbctrl_get_debug_info},
 	{AWB_CTRL_CMD_MAX,NULL}
 };
 
@@ -266,7 +270,7 @@ cmr_int awbctrl_ioctrl(cmr_handle awb_ctrl_handle, enum awb_ctrl_cmd cmd, void *
 	if (NULL != ioctrl_fun) {
 		ret = ioctrl_fun(awb_ctrl_handle, input_ptr, output_ptr);
 	} else {
-		ISP_LOGI("ioctrl fun is NULL");
+		ISP_LOGI("ioctrl fun is NULL, cmd = %d", cmd);
 	}
 exit:
 	ISP_LOGI("done %ld", ret);
@@ -539,6 +543,42 @@ cmr_int awbctrl_set_ae_info(cmr_handle awb_ctrl_handle, void *input_ptr, void *o
 
 	if (cxt->awb_adpt_ops->adpt_ioctrl) {
 		ret = cxt->awb_adpt_ops->adpt_ioctrl(cxt->lib_handle, AWB_CTRL_CMD_SET_AE_REPORT, input_ptr, output_ptr);
+	}
+
+	return ret;
+}
+
+cmr_int awbctrl_set_af_info(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+
+	if (cxt->awb_adpt_ops->adpt_ioctrl) {
+		ret = cxt->awb_adpt_ops->adpt_ioctrl(cxt->lib_handle, AWB_CTRL_CMD_SET_AF_REPORT, input_ptr, output_ptr);
+	}
+
+	return ret;
+}
+
+cmr_int awbctrl_get_exif_debug_info(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+
+	if (cxt->awb_adpt_ops->adpt_ioctrl) {
+		ret = cxt->awb_adpt_ops->adpt_ioctrl(cxt->lib_handle, AWB_CTRL_CMD_GET_EXIF_DEBUG_INFO, input_ptr, output_ptr);
+	}
+
+	return ret;
+}
+
+cmr_int awbctrl_get_debug_info(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+
+	if (cxt->awb_adpt_ops->adpt_ioctrl) {
+		ret = cxt->awb_adpt_ops->adpt_ioctrl(cxt->lib_handle, AWB_CTRL_CMD_GET_DEBUG_INFO, input_ptr, output_ptr);
 	}
 
 	return ret;

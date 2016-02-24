@@ -41,6 +41,8 @@ extern "C"
 {
 #endif
 
+#define _WRAPPER_AWB_VER 0.8000
+
 /*
  * API name: al3AWrapperAWB_SetOTPcalibration
  * This API is used for setting stylish file to alAWBLib
@@ -113,6 +115,14 @@ unsigned int al3AWrapper_DispatchHW3A_AWBStats(void *alISP_MetaData_AWB, void *a
  * return: error code
  */
 unsigned int al3AWrapperAWB_SetTuningFile(void *setting_file, alAWBRuntimeObj_t *aAWBLibCallback);
+
+/**
+\API name: al3AWrapperAWB_GetVersion
+\This API would return labeled version of wrapper
+\fWrapVersion[out], return current wapper version
+\return: error code
+*/
+unsigned int al3AWrapperAWB_GetVersion( float *fWrapVersion );
 
 #ifdef __cplusplus
 }  /* extern "C" */

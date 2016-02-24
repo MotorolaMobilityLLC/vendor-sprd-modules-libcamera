@@ -436,7 +436,7 @@ struct sensor_ee_txt {
 };
 
 /*
-sensor_ee_corner: 
+sensor_ee_corner:
 ee_corner_th, ee_corner_gain and ee_corner_sm are Algo reserved.
  */
 struct sensor_ee_corner {

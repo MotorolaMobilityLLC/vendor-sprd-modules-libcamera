@@ -108,8 +108,6 @@ struct af_altek_context {
 	alAFLib_hw_stats_t af_stats; /* TBD */
 };
 
-UINT32 al3AWrapper_UpdateAFReport(alAFLib_af_out_status_t *aAFLibStatus,af_report_update_t *aAFReport);
-
 /************************************ INTERNAK DECLARATION ************************************/
 static cmr_int afaltek_adpt_proc_out_report(cmr_handle adpt_handle,
 					    alAFLib_output_report_t *report_in, void *report_out);
@@ -208,10 +206,12 @@ static void afaltek_adpt_get_version(cmr_handle adpt_handle)
 {
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	alAFLib_version_t version = { 0x00 };
+	float wrapper_ver = 0.0;
 
 	cxt->lib_api.af_altek_version(&version);
+	al3AWrapperAF_GetVersion(&wrapper_ver);
 
-	ISP_LOGI("main version : %d sub version : %d", version.m_uwMainVer, version.m_uwSubVer);
+	ISP_LOGI("version main : %d sub : %d, wraper : %f", version.m_uwMainVer, version.m_uwSubVer, wrapper_ver);
 }
 
 static cmr_int afaltek_adpt_load_ops(cmr_handle adpt_handle)
@@ -1192,6 +1192,22 @@ static cmr_int afaltek_adpt_outctrl(cmr_handle adpt_handle, cmr_int cmd,
 	return ret;
 }
 
+static cmr_int afaltek_get_hw_config(struct isp3a_af_hw_cfg *out)
+{
+	cmr_int ret = -ISP_ERROR;
+	alHW3a_AF_CfgInfo_t *af_cfg = (alHW3a_AF_CfgInfo_t *)out;
+
+	ret = al3AWrapperAF_GetDefaultCfg(af_cfg);
+	if (ret) {
+		ISP_LOGE("failed to get hw ret = %ld", ret);
+		ret = -ISP_ERROR;
+	} else {
+		ret = ISP_SUCCESS;
+	}
+
+	return ret;
+}
+
 static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 				       struct af_ctrl_init_in *in)
 {
@@ -1201,6 +1217,21 @@ static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 	alAFLib_input_move_lens_cb_t move_lens_info = { 0 };
 	alAFLib_input_sensor_info_t sensor_info;
 
+#if 1 //TBD
+	alAFLib_input_init_info_t init_info;
+	init_info.module_info.f_number = 2.0;
+	init_info.module_info.focal_lenth = 4400;
+	init_info.calib_data.inf_step = 100;
+	init_info.calib_data.macro_step = 900;
+	init_info.calib_data.inf_distance = 20000;
+	init_info.calib_data.macro_distance = 700;
+	init_info.calib_data.mech_top = 1023;
+	init_info.calib_data.mech_bottom = 0;
+	init_info.calib_data.lens_move_stable_time = 20;
+	init_info.calib_data.extend_calib_ptr = NULL;
+	init_info.calib_data.extend_calib_data_size = 0;
+	in->otp_info.otp_data = &init_info;
+#endif
 	/* init otp */
 	otp_info = (alAFLib_input_init_info_t *) in->otp_info.otp_data;
 	if (otp_info) {
@@ -1211,7 +1242,11 @@ static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 	} else {
 		ISP_LOGI("there is no OTP in this module");
 	}
-
+#if 1 //TBD
+	in->tuning_info.tuning_file = malloc(0x10);
+	in->tuning_info.size = 0x10;
+	memset(in->tuning_info.tuning_file, 0x0f, 0x10);
+#endif
 	/* tuning file setting */
 	ret = afaltek_adpt_set_setting_file(cxt, &in->tuning_info);
 	if (ret)
@@ -1224,7 +1259,15 @@ static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 	ret = afaltek_adpt_set_move_lens_info(cxt, &move_lens_info);
 	if (ret)
 		ISP_LOGI("ret = %ld", ret);
-
+#if 1 //TBD
+	memset(&sensor_info, 0x00, sizeof(sensor_info));
+	sensor_info.preview_img_sz.uwWidth = in->isp_info.img_width;
+	sensor_info.preview_img_sz.uwHeight = in->isp_info.img_height;
+	sensor_info.sensor_crop_info.uwx = 0;// in->sensor_info.crop_info.x;
+	sensor_info.sensor_crop_info.uwy = 0;//in->sensor_info.crop_info.y;
+	sensor_info.sensor_crop_info.dx = in->isp_info.img_width;
+	sensor_info.sensor_crop_info.dy = in->isp_info.img_height;
+#else
 	/* set sensor info */
 	cmr_bzero(&sensor_info, sizeof(sensor_info));
 	sensor_info.preview_img_sz.uwWidth = in->sensor_info.sensor_res_width;
@@ -1233,14 +1276,20 @@ static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 	sensor_info.sensor_crop_info.uwy = in->sensor_info.crop_info.y;
 	sensor_info.sensor_crop_info.dx = in->sensor_info.crop_info.width;
 	sensor_info.sensor_crop_info.dy = in->sensor_info.crop_info.height;
+#endif
+	ISP_LOGI("sensor_res_width = %d, sensor_res_height = %d",
+			in->sensor_info.sensor_res_width, in->sensor_info.sensor_res_height);
+	ISP_LOGI("crop_info.x = %d, crop_info.y = %d crop_info.width = %d, crop_info.height = %d",
+			in->sensor_info.crop_info.x, in->sensor_info.crop_info.y, in->sensor_info.crop_info.width, in->sensor_info.crop_info.height);
 	ret = afaltek_adpt_update_sensor_info(cxt, &sensor_info);
 	if (ret)
 		ISP_LOGI("update sensor info ret = %ld", ret);
 
+	ISP_LOGI("isp info img_width = %d, img_height = %d", in->isp_info.img_width, in->isp_info.img_height);
 	/* set isp info */
 	ret = afaltek_adpt_update_isp_info(cxt, &in->isp_info);
 	if (ret)
-		ISP_LOGI("update isp inof ret = %ld", ret);
+		ISP_LOGI("update isp info ret = %ld", ret);
 
 	/* sync init param */
 	ret = afaltek_adpt_set_param_init(cxt, 1);
@@ -1341,9 +1390,13 @@ static cmr_int afaltek_adpt_init(void *in, void *out, cmr_handle * adpt_handle)
 	}
 
 	/* init param */
-	ret = afaltek_adpt_param_init(cxt, in_p->ctrl_in);
+	ret = 0;//TBD afaltek_adpt_param_init(cxt, in_p->ctrl_in);
 	if (ret)
-		ISP_LOGI("ret = %ld", ret);
+		ISP_LOGE("ret = %ld", ret);
+
+	ret = afaltek_get_hw_config(&out_p->hw_cfg);
+	if (ret)
+		ISP_LOGE("ret = %ld", ret);
 
 	*adpt_handle = (cmr_handle)cxt;
 	return ret;
@@ -1459,8 +1512,8 @@ static cmr_int afaltek_adpt_process(cmr_handle adpt_handle, void *in, void *out)
 			ret = afaltek_adpt_proc_out_report(cxt, &cxt->af_out_obj, &cxt->report_data);
 			ISP_LOGI("process need repot result ret = %ld", ret);
 			if (cxt->report_data.need_report) {
-				proc_out->data = &cxt->report_data;
-				proc_out->size = sizeof(cxt->report_data);
+				proc_out->data = &cxt->report_data.report_out;
+				proc_out->size = sizeof(cxt->report_data.report_out);
 			} else {
 				proc_out->data = NULL;
 				proc_out->size = 0;

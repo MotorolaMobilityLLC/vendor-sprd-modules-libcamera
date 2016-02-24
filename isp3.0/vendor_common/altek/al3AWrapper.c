@@ -3,6 +3,8 @@
  *
  *  Created on: 2015/12/05
  *      Author: MarkTseng
+ *  Latest update: 2016/2/17
+ *      Reviser: MarkTseng
  *  Comments:
  *       This c file is mainly used for AP framework to:
  *       1. Dispatch ISP stats to seperated stats
@@ -21,7 +23,7 @@
 #include ".\..\..\INCLUDE\HW3A_Stats.h"
 #include "al3AWrapper.h"
 #include "al3AWrapperErrCode.h"
-#else  // normal release in AP 
+#else  // normal release in AP
 #include "mtype.h"
 #include "FrmWk_HW3A_event_type.h"
 #include "HW3A_Stats.h"
@@ -524,7 +526,7 @@ UINT32 al3AWrapper_SetDLSequence( alISP_DldSequence_t aDldSequence )
     UINT8 ucAHBSensoreID, ucIsSingle3AMode;
 
     ucAHBSensoreID = aDldSequence.ucAHBSensoreID;
-#if 0// by qin ndef LOCAL_NDK_BUILD   // test build in local
+#if 0//#ifndef LOCAL_NDK_BUILD   // test build in local
     // W9 config
     ret = ISPDRV_SetBasicPreivewDldSeq( ucAHBSensoreID, (UINT8 *)(&aDldSequence.aucPreview_Baisc_DldSeq[0]), aDldSequence.ucPreview_Baisc_DldSeqLength );
     if ( ret!= ERR_WRP_SUCCESS )
@@ -539,4 +541,19 @@ UINT32 al3AWrapper_SetDLSequence( alISP_DldSequence_t aDldSequence )
         return ret;
 #endif
     return ret;
+}
+
+/**
+\API name: al3AWrapper_GetVersion
+\This API would return labeled version of wrapper
+\fWrapVersion[out], return current wapper version
+\return: error code
+*/
+UINT32 al3AWrapper_GetVersion( float *fWrapVersion )
+{
+	UINT32 ret = ERR_WRP_SUCCESS;
+
+	*fWrapVersion = _WRAPPER_VER;
+
+	return ret;
 }

@@ -238,7 +238,7 @@ struct af_ctrl_init_in {
 };
 
 struct af_ctrl_init_out {
-	void *data;
+	struct isp3a_af_hw_cfg hw_cfg;
 };
 
 struct af_ctrl_sof_info {

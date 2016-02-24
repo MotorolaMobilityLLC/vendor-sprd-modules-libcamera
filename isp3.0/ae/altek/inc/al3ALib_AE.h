@@ -170,7 +170,7 @@ typedef enum {
     AE_SET_PARAM_RESET_ROI_ACK,    /* reset ROI ack status once framework received ae_report_update_t->ae_roi_change_st = 1, after reset, next output would receive ae_report_update_t->ae_roi_change_st = 0 */
 
     AE_SET_PARAM_CONVERGE_SPD,     /* control AE converge speed */
-
+    AE_SET_PARAM_ENABLE_DEBUG_REPORT,   // enable AE debug 3K report reporting
 
     /* Outer update, ex: AWB, AF, motion, etc.  */
     AE_SET_PARAM_AWB_INFO,            /* set AWB update information (From 3A AWB) */
@@ -185,6 +185,8 @@ typedef enum {
     AE_SET_PARAM_FLASHAE_EST,
     AE_SET_PARAM_RESET_FLASH_EST,     // reset flash exposure report
     AE_SET_PARAM_FLASH_ST,                   // inform AE flash HW stats (on, off, timeout)
+    AE_SET_PARAM_FORCE_FLASHEST_CONVERGE,     // used when framework need to force abort current converging (running time expired)
+                                                                                    // use this command to abort current converging
 
     AE_SET_PARAM_PRECAP_START,           // precapture start
 
@@ -195,6 +197,7 @@ typedef enum {
     AE_SET_PARAM_MANUAL_EXPTIME,
     AE_SET_PARAM_MANAUL_GAIN,
     AE_SET_PARAM_MANAUL_ISP_GAIN,     /* reserved */
+    AE_SET_PARAM_RELOAD_SETFILE,
 
     /* script test command */
     AE_SET_PARAM_SET_SCRIPT_MODE,      // set mode on/off, which would be used for AE linearity check, FE response DVT
@@ -217,6 +220,7 @@ typedef enum {
     AE_GET_SCRIPT_MODE,
     AE_GET_DUAL_FLASH_ST,
     AE_GET_ISO_ADGAIN_FACTOR,
+    AE_GET_ISO_FROM_ADGAIN,
 
     AE_GET_PARAM_MAX
 } ae_get_param_type_t;
@@ -359,6 +363,15 @@ typedef struct {
 #pragma pack(push) /* push current alignment setting to stack */
 #pragma pack(4)    /* new alignment setting  */
 typedef struct {
+    UINT32    ad_gain;   // scale 100
+    UINT32    ISO;
+} ae_ISO_ADgain_info_t;
+#pragma pack(pop)  /* restore old alignment setting from stack  */
+
+
+#pragma pack(push) /* push current alignment setting to stack */
+#pragma pack(4)    /* new alignment setting  */
+typedef struct {
     int      valid_exp_num;
     INT32   bracket_evComp[AL_MAX_EXP_ENTRIES];    // scale 1000, should corresponding to valid_exp_num, max number follow AL_MAX_EXP_ENTRIES define
 } ae_exposure_bracket_param_t;
@@ -373,7 +386,9 @@ typedef struct {
     UINT32 exp_linecount;
     UINT32 exp_time;  // in us, 1.0s should set 1000000
     UINT32 exp_adgain;    // scale 100
+    INT32  ImageBV;    // this data would be calculated automatically, no need to input by framework
 
+    UINT16 cuFPS;    //scale 100, ex: 16.0 FPS --> 1600
 }  ae_sof_notify_param_t;
 #pragma pack(pop)  /* restore old alignment setting from stack  */
 
@@ -393,6 +408,7 @@ typedef struct {
     UINT32 udLED1Current;    //scale 100, ex: 87.5 mA --> 8750
     UINT32 udLED2Index;
     UINT32 udLED2Current;    //scale 100, ex: 87.5 mA --> 8750
+    UINT32 udTotalIndex;
 
     UINT8   ucFlashMode;     // 0: not defined,  1: torch mode, 2: main-flash mode
 
@@ -489,6 +505,8 @@ typedef struct {
     BOOL ae_enable;
     BOOL ae_lock;
 
+    BOOL ae_enableDebugLog;
+
     ae_capture_mode_t  capture_mode;   // refer to ae_capture_mode_t
     BOOL  longexp_mode;    // reserved
     BOOL  hdr_sensor_mode;  // ture: turned on, false: turned off
@@ -513,6 +531,11 @@ typedef struct {
     /* flash-LED related control command */
     ae_flash_st_t    ae_flash_st;  // store flash status
     AL3A_FE_UI_FLASH_MODE  flash_mode;    // UI flash setting mode, forcefill, auto, off, torch, etc.
+
+    /* advanced control command  */
+    UINT8  ucForceConvegeSwt;     /* 0: normal AE, 1: always report converge in each
+                                                        AE state (such as prepare, do with flash, nromal AE), switch would be hold untill release via set_parmeter again */
+
 
     ae_HW_config_t ae_hw_config;  /* reserved  *///sensor info, hw3a info
 
@@ -544,6 +567,7 @@ typedef struct {
         ae_script_mode_data_t  curScriptModeData;
         UINT8   ucDualLEDStats;    //0: undefined, 1: single LED, 2: dual LED
         UINT32  udADGainx100PerISO100Gain;    // if value = 100 , mean ISO 100 = 100 (AD gain = 1.0x ), if value = 200, mean ISO 100 = 200 (AD gain = 2.0x)
+        ae_ISO_ADgain_info_t   ISO_ADgain_info;
     } para;
 }  ae_get_param_t;
 #pragma pack(pop)  /* restore old alignment setting from stack  */

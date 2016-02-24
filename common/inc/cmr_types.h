@@ -54,7 +54,7 @@ typedef int             cmr_s32;
 typedef unsigned short  cmr_u16;
 typedef short           cmr_s16;
 typedef unsigned char   cmr_u8;
-typedef char            cmr_s8;
+typedef signed char     cmr_s8;
 typedef void*           cmr_handle;
 
 
@@ -68,11 +68,11 @@ typedef void*           cmr_handle;
 
 
 #if 1//(SC_FPGA == 0)
-#define CMR_LOGE(format,...) ALOGD(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define CMR_LOGW(format,...) ALOGD(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define CMR_LOGI(format,...) ALOGD(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+#define CMR_LOGE(format,...) ALOGE(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+#define CMR_LOGW(format,...) ALOGW(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+#define CMR_LOGI(format,...) ALOGI(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
 #define CMR_LOGD(format,...) ALOGD(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define CMR_LOGV(format,...) ALOGD(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+#define CMR_LOGV(format,...) ALOGV(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
 //#warnning  "SC_FPGA is not set"
 #else
 #include "ylog.h"

@@ -227,6 +227,7 @@ static cmr_int isp3a_set_ae_lock(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_dzoom(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_convergence_req(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_snapshot_finished(cmr_handle isp_3a_handle, void *param_ptr);
+static cmr_int isp3a_get_exif_info(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_init_statistics_buf(cmr_handle isp_3a_handle);
 static cmr_int isp3a_deinit_statistics_buf(cmr_handle isp_3a_handle);
 static cmr_int isp3a_get_statistics_buf(cmr_handle isp_3a_handle, cmr_int type, struct isp3a_statistics_data **buf_ptr);
@@ -266,7 +267,7 @@ static struct isp3a_ctrl_io_func s_isp3a_ioctrl_tab[ISP_CTRL_MAX] = {
 	{ISP_CTRL_HDR,                     isp3a_set_hdr},
 	{ISP_CTRL_GLOBAL_GAIN,             NULL},
 	{ISP_CTRL_CHN_GAIN,                NULL},
-	{ISP_CTRL_GET_EXIF_INFO,           NULL},
+	{ISP_CTRL_GET_EXIF_INFO,           isp3a_get_exif_info},
 	{ISP_CTRL_ISO,                     isp3a_set_iso},
 	{ISP_CTRL_WB_TRIM,                 NULL},
 	{ISP_CTRL_PARAM_UPDATE,            NULL},
@@ -430,21 +431,39 @@ exit:
 	return ret;
 }
 
+#if 1 //TBD
+struct sensor_ex_exposure {
+	cmr_u32 exposure;
+	cmr_u32 dummy;
+	cmr_u32 size_index;
+};
+#endif
 cmr_int isp3a_set_exposure(cmr_handle handle, struct ae_ctrl_param_sensor_exposure *in_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)handle;
 	cmr_u32                                     sensor_param = 0;
+	struct sensor_ex_exposure                   ex_exp;
 
-	if (!cxt || !cxt->ioctrl_ptr || !cxt->ioctrl_ptr->set_exposure || !in_ptr) {
+
+	if (!cxt || !cxt->ioctrl_ptr || !in_ptr) {
 		ISP_LOGE("don't have io interface");
 		goto exit;
 	}
-	sensor_param = in_ptr->exp_line& 0x0000ffff;
-	sensor_param |= (in_ptr->dummy << 0x10) & 0x0fff0000;
-	sensor_param |= (in_ptr->size_index << 0x1c) & 0xf0000000;
 
-	ret = cxt->ioctrl_ptr->set_exposure(sensor_param);
+	if (cxt->ioctrl_ptr->ex_set_exposure) {
+		ex_exp.exposure = in_ptr->exp_line;
+		ex_exp.dummy = in_ptr->dummy;
+		ex_exp.size_index = in_ptr->size_index;
+
+		ret = cxt->ioctrl_ptr->ex_set_exposure((unsigned long)&ex_exp);
+	} else if (cxt->ioctrl_ptr->set_exposure) {
+		sensor_param = in_ptr->exp_line& 0x0000ffff;
+		sensor_param |= (in_ptr->dummy << 0x10) & 0x0fff0000;
+		sensor_param |= (in_ptr->size_index << 0x1c) & 0xf0000000;
+
+		ret = cxt->ioctrl_ptr->set_exposure(sensor_param);
+	}
 exit:
 	ISP_LOGI("done %ld", ret);
 	return ret;
@@ -597,6 +616,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = NULL;
 	struct af_ctrl_init_in                      af_input;
+	struct af_ctrl_init_out                     af_output;
 	struct awb_ctrl_init_in                     awb_input;
 	struct awb_ctrl_init_out                    awb_output;
 	struct ae_ctrl_init_in                      ae_input;
@@ -630,11 +650,12 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 	af_input.af_ctrl_cb_ops.lock_ae_awb = isp3a_set_ae_awb_lock;
 	af_input.af_ctrl_cb_ops.cfg_af_stats = isp3a_cfg_af_param;
 	af_input.af_ctrl_cb_ops.get_system_time = isp3a_get_dev_time;
-	ret = af_ctrl_init(&af_input, NULL, &cxt->af_cxt.handle);
+	ret = af_ctrl_init(&af_input, &af_output, &cxt->af_cxt.handle);
 	if (ret) {
 		ISP_LOGE("failed to AF initialize");
 		goto exit;
 	}
+	cxt->af_cxt.hw_cfg = af_output.hw_cfg;
 #endif
 	awb_input.awb_cb = isp3a_awb_callback;
 	awb_input.camera_id = input_ptr->camera_id;
@@ -669,11 +690,11 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 	ae_input.ops_in.release_stat_buffer = isp3a_release_statistics_buf;
 #if 1 //TBD
 	ae_input.sensor_static_info.f_num = 200;
-	ae_input.sensor_static_info.exposure_valid_num = 1;
-	ae_input.sensor_static_info.gain_valid_num = 1;
-	ae_input.sensor_static_info.preview_skip_num = 1;
-	ae_input.sensor_static_info.capture_skip_num = 1;
-	ae_input.sensor_static_info.max_fps = 30;
+	ae_input.sensor_static_info.exposure_valid_num = 2;
+	ae_input.sensor_static_info.gain_valid_num = 2;
+	ae_input.sensor_static_info.preview_skip_num = 3;
+	ae_input.sensor_static_info.capture_skip_num = 3;
+	ae_input.sensor_static_info.max_fps = 15;
 	ae_input.sensor_static_info.max_gain = 16;
 	ae_input.sensor_static_info.ois_supported = 0;
 #endif
@@ -683,7 +704,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 	ae_input.preview_work.resolution.frame_size.h = sensor_raw_info_ptr->resolution_info_ptr->tab[1].height;
 	ae_input.preview_work.resolution.frame_line = sensor_raw_info_ptr->resolution_info_ptr->tab[1].frame_line;
 	ae_input.preview_work.resolution.line_time = sensor_raw_info_ptr->resolution_info_ptr->tab[1].line_time;;
-	ae_input.preview_work.resolution.max_fps = 30;
+	ae_input.preview_work.resolution.max_fps = 15;
 	ae_input.preview_work.resolution.max_gain = 16;
 	ae_input.preview_work.resolution.sensor_size_index = 1;
 #endif
@@ -1368,7 +1389,7 @@ cmr_int isp3a_set_effect(cmr_handle isp_3a_handle, void *param_ptr)
 		goto exit;
 	}
 	dev_ioctrl_in.value = *((cmr_u32*)param_ptr);
-	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_ACCESS_SET_SATURATION, &dev_ioctrl_in, NULL);
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_ACCESS_SET_SPECIAL_EFFECT, &dev_ioctrl_in, NULL);
 exit:
 	return ret;
 }
@@ -1398,7 +1419,7 @@ cmr_int isp3a_set_contrast(cmr_handle isp_3a_handle, void *param_ptr)
 		goto exit;
 	}
 	dev_ioctrl_in.value = *((cmr_u32*)param_ptr);
-	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_ACCESS_SET_SATURATION, &dev_ioctrl_in, NULL);
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_ACCESS_SET_CONSTRACT, &dev_ioctrl_in, NULL);
 
 exit:
 	return ret;
@@ -1754,11 +1775,13 @@ cmr_int isp3a_get_info(cmr_handle isp_3a_handle, void *param_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
+	struct isp_info                             *info_ptr = (struct isp_info*)param_ptr;
 
 	if (!param_ptr) {
 		ISP_LOGW("input is NULL");
 		goto exit;
 	}
+	info_ptr->size = 0;
 exit:
 	return ret;
 }
@@ -1869,6 +1892,21 @@ cmr_int isp3a_set_snapshot_finished(cmr_handle isp_3a_handle, void *param_ptr)
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
 
 	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_SNAPSHOT_FINISHED, NULL, NULL);
+exit:
+	return ret;
+}
+
+cmr_int isp3a_get_exif_info(cmr_handle isp_3a_handle, void *param_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
+	struct isp_info                             *exif_info_ptr = (struct isp_info*)param_ptr;
+
+	if (!param_ptr) {
+		ISP_LOGW("input is NULL");
+		goto exit;
+	}
+	exif_info_ptr->size = 0;
 exit:
 	return ret;
 }
@@ -2501,6 +2539,8 @@ cmr_int isp3a_start_af_process(cmr_handle isp_3a_handle, struct isp3a_statistics
 
 	ret = isp3a_hold_statistics_buf(isp_3a_handle, ISP3A_AF, stats_data);
 	input.statistics_data = stats_data;
+	output.data = NULL;
+	output.size = 0;
 	ret = af_ctrl_process(cxt->af_cxt.handle, &input, &output);
 	if (ret) {
 		ISP_LOGE("failed to af process %ld", ret);
@@ -2616,7 +2656,7 @@ cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start* input_ptr)
 
 	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_WORK_MODE, &ae_in, &ae_out);
 	cxt->ae_cxt.proc_out = ae_out.proc_out;
-	cxt->ae_cxt.hw_cfg = ae_out.hw_cfg;
+	cxt->ae_cxt.hw_cfg = ae_out.proc_out.hw_cfg;
 	if (ret) {
 		ISP_LOGE("failed to set work to AE");
 	}

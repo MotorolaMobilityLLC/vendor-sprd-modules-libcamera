@@ -1274,6 +1274,59 @@ cmr_int isp_dev_capability_highiso_buf_size(isp_handle handle, cmr_int *size)
 	return ret;
 }
 
+cmr_int isp_dev_capability_video_size(isp_handle handle, struct isp_img_size *size)
+{
+	cmr_int ret = 0;
+	struct isp_file *file = NULL;
+	struct isp_capability param;
+
+	if (!handle) {
+		CMR_LOGE("handle is null error.");
+		return -1;
+	}
+	if (!size) {
+		CMR_LOGE("Param is null error.");
+	}
+
+	param.index = ISP_GET_CONTINUE_SIZE;
+	param.property_param = (void *)size;
+
+	file = (struct isp_file *)(handle);
+
+	ret = ioctl(file->fd, ISP_IO_CAPABILITY, &param);
+	if (ret) {
+		CMR_LOGE("error");
+	}
+
+	return ret;
+}
+
+cmr_int isp_dev_capability_single_size(isp_handle handle, struct isp_img_size *size)
+{
+	cmr_int ret = 0;
+	struct isp_file *file = NULL;
+	struct isp_capability param;
+
+	if (!handle) {
+		CMR_LOGE("handle is null error.");
+		return -1;
+	}
+	if (!size) {
+		CMR_LOGE("Param is null error.");
+	}
+
+	param.index = ISP_GET_SINGLE_SIZE;
+	param.property_param = (void *)size;
+
+	file = (struct isp_file *)(handle);
+
+	ret = ioctl(file->fd, ISP_IO_CAPABILITY, &param);
+	if (ret) {
+		CMR_LOGE("error");
+	}
+
+	return ret;
+}
 #if 0
 cmr_int isp_dev_get_irq(isp_handle handle, cmr_int *evt_ptr)
 {

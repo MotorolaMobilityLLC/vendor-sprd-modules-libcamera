@@ -53,6 +53,8 @@ enum awb_ctrl_cmd {
 	AWB_CTRL_CMD_FLASH_BEFORE_M,
 	AWB_CTRL_CMD_SET_AE_REPORT,
 	AWB_CTRL_CMD_SET_AF_REPORT,
+	AWB_CTRL_CMD_GET_EXIF_DEBUG_INFO,//to jpeg exif
+	AWB_CTRL_CMD_GET_DEBUG_INFO,//to jpeg tail
 	AWB_CTRL_CMD_MAX
 };
 
@@ -219,6 +221,7 @@ union awb_ctrl_cmd_in{
 union awb_ctrl_cmd_out {
 	struct isp_awb_gain gain;
 	struct isp3a_awb_hw_cfg hw_cfg;
+	struct isp_info debug_info;
 	cmr_u32 ct;
 };
 /**********************************END***********************************/

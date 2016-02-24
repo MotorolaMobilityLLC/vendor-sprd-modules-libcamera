@@ -3,6 +3,8 @@
  *
  *  Created on: 2015/12/06
  *      Author: MarkTseng
+ *  Latest update: 2016/2/17
+ *      Reviser: MarkTseng
  *  Comments:
  *       This c file is mainly used for AP framework to:
  *       1. Query HW3A config setting
@@ -14,7 +16,7 @@
  *       7. WOI inform to AP
  */
 
-#ifdef LOCAL_NDK_BUILD   // test build in local 
+#ifdef LOCAL_NDK_BUILD   // test build in local
 #include ".\..\..\INCLUDE\mtype.h"
 #include ".\..\..\INCLUDE\FrmWk_HW3A_event_type.h"
 #include ".\..\..\INCLUDE\HW3A_Stats.h"
@@ -27,7 +29,7 @@
 #include "al3AWrapper_AE.h"  // include wrapper AE define
 #include "al3AWrapper_AEErrCode.h"
 
-#else  // normal release in AP 
+#else  // normal release in AP
 #include "mtype.h"
 #include "FrmWk_HW3A_event_type.h"
 #include "HW3A_Stats.h"
@@ -134,7 +136,7 @@ UINT32 al3AWrapper_DispatchHW3A_AEStats( ISP_DRV_META_AE_t * alISP_MetaData_AE, 
 #if print_ae_log
         /* debug printf, removed for release version */
         ISP_LOGI( "al3AWrapper_DispatchHW3A_AEStats get OTP WB R/G/B : (%d, %d, %d) \r\n", wb_gain.r, wb_gain.g, wb_gain.b );
-        // LOGD( "al3AWrapper_DispatchHW3A_AEStats get OTP WB R/G/B : (%d, %d, %d) \r\n", wb_gain.r, wb_gain.g, wb_gain.b );        
+        // LOGD( "al3AWrapper_DispatchHW3A_AEStats get OTP WB R/G/B : (%d, %d, %d) \r\n", wb_gain.r, wb_gain.g, wb_gain.b );
 #endif
     }
 
@@ -149,7 +151,7 @@ UINT32 al3AWrapper_DispatchHW3A_AEStats( ISP_DRV_META_AE_t * alISP_MetaData_AE, 
 #if print_ae_log
     /* debug printf, removed for release version */
     ISP_LOGI( "al3AWrapper_DispatchHW3A_AEStats get patching WB R/G/B : (%d, %d, %d) \r\n", wb_gain.r, wb_gain.g, wb_gain.b );
-    // LOGD( "al3AWrapper_DispatchHW3A_AEStats get patching WB R/G/B : (%d, %d, %d) \r\n", wb_gain.r, wb_gain.g, wb_gain.b );    
+    // LOGD( "al3AWrapper_DispatchHW3A_AEStats get patching WB R/G/B : (%d, %d, %d) \r\n", wb_gain.r, wb_gain.g, wb_gain.b );
 #endif
     udOffset =0;
     index = 0;
@@ -169,16 +171,16 @@ UINT32 al3AWrapper_DispatchHW3A_AEStats( ISP_DRV_META_AE_t * alISP_MetaData_AE, 
 
 #if print_ae_log
     /* debug printf, removed for release version */
-    ISP_LOGI( "al3AWrapper_DispatchHW3A_AEStats VerNum: %d, HWID: %d, Frmidx: %d, TokID: %d, Size: %d, PPB: %d, BZ: %d, ValidBlock: %d, ValidBank:%d, SFlag:%d \r\n", 
+    ISP_LOGI( "al3AWrapper_DispatchHW3A_AEStats VerNum: %d, HWID: %d, Frmidx: %d, TokID: %d, Size: %d, PPB: %d, BZ: %d, ValidBlock: %d, ValidBank:%d, SFlag:%d \r\n",
     pPatched_AEDat->uMagicNum, pPatched_AEDat->uHWengineID, pPatched_AEDat->uFrameIdx, pPatched_AEDat->uAETokenID, pPatched_AEDat->uAEStatsSize,
-    pPatched_AEDat->udPixelsPerBlocks, pPatched_AEDat->udBankSize, pPatched_AEDat->ucValidBlocks, pPatched_AEDat->ucValidBanks, pPatched_AEDat->uPseudoFlag  );    
+    pPatched_AEDat->udPixelsPerBlocks, pPatched_AEDat->udBankSize, pPatched_AEDat->ucValidBlocks, pPatched_AEDat->ucValidBanks, pPatched_AEDat->uPseudoFlag  );
 #endif
     // store frame & timestamp
     memcpy( &pPatched_AEDat->systemTime, &pMetaData_AE->systemTime, sizeof(struct timeval));
     pPatched_AEDat->udsys_sof_idx       = pMetaData_AE->udsys_sof_idx;
 #if print_ae_log
     /* debug printf, removed for release version */
-    ISP_LOGI( "al3AWrapper_DispatchHW3A_AEStats SOF idx :%d \r\n", pPatched_AEDat->udsys_sof_idx  );  
+    ISP_LOGI( "al3AWrapper_DispatchHW3A_AEStats SOF idx :%d \r\n", pPatched_AEDat->udsys_sof_idx  );
 #endif
     // patching R/G/G/B from WB or calibration WB to Y/R/G/B,
     // here is the sample which use array passing insetad of pointer passing of prepared buffer from AE ctrl layer
@@ -198,13 +200,13 @@ UINT32 al3AWrapper_DispatchHW3A_AEStats( ISP_DRV_META_AE_t * alISP_MetaData_AE, 
                                               pPatched_AEDat->statsB[index] * wb_gain.b ) >> 8;  // 10 bits
 #if print_ae_log
             /* debug printf, removed for release version */
-            ISP_LOGI( "al3AWrapper_DispatchHW3A_AEStats stats[%d] Y/R/G/B: %d, %d, %d, %d \r\n", index, 
-            pPatched_AEDat->statsY[index],pPatched_AEDat->statsR[index], pPatched_AEDat->statsG[index], pPatched_AEDat->statsB[index] ); 
+            ISP_LOGI( "al3AWrapper_DispatchHW3A_AEStats stats[%d] Y/R/G/B: %d, %d, %d, %d \r\n", index,
+            pPatched_AEDat->statsY[index],pPatched_AEDat->statsR[index], pPatched_AEDat->statsG[index], pPatched_AEDat->statsB[index] );
 #endif
             index++;
             udOffset += 16;
-            
-            
+
+
         }
     }
 
@@ -227,7 +229,7 @@ UINT32 al3AWrapperAE_UpdateOTP2AELib( calib_wb_gain_t aCalibWBGain,  alAERuntime
 
     if ( aCalibWBGain.r == 0 || aCalibWBGain.g == 0 || aCalibWBGain.b == 0 )
       return ERR_WRP_AE_INVALID_INPUT_WB;
-    
+
     memset( &localParam, 0, sizeof(ae_set_param_content_t) );
     localParam.ae_set_param_type = AE_SET_PARAM_OTP_WB_DAT;  // ask AE lib for HW3A setting
     localParam.set_param.ae_calib_wb_gain.calib_r_gain = aCalibWBGain.r;   // scale 1000 base, if source is already scaled by 1000, direcly passing to AE lib
@@ -382,10 +384,25 @@ UINT32 al3AWrapperAE_GetDefaultCfg( alHW3a_AE_CfgInfo_t* aAEConfig)
 UINT32 al3AWrapperAE_UpdateISPConfig_AE( UINT8 a_ucSensor, alHW3a_AE_CfgInfo_t* aAEConfig )
 {
     UINT32 ret = ERR_WPR_AE_SUCCESS;
-#ifndef LOCAL_NDK_BUILD  // test build in local  
+#ifndef LOCAL_NDK_BUILD  // test build in local
 //    ret = ISPDRV_AP3AMGR_SetAECfg( a_ucSensor, aAEConfig );
 #endif
     return ret;
+}
+
+/**
+\API name: al3AWrapperAE_GetVersion
+\This API would return labeled version of wrapper
+\fWrapVersion[out], return current wapper version
+\return: error code
+*/
+UINT32 al3AWrapperAE_GetVersion( float *fWrapVersion )
+{
+	UINT32 ret = ERR_WPR_AE_SUCCESS;
+
+	*fWrapVersion = _WRAPPER_AE_VER;
+
+	return ret;
 }
 
 /**

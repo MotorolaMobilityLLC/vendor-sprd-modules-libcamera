@@ -3,6 +3,8 @@
  *
  *  Created on: 2015/12/06
  *      Author: ZenoKuo
+ *  Latest update: 2016/2/17
+ *      Reviser: MarkTseng
  *  Comments:
  *       This c file is mainly used for AP framework to:
  *       1. Query HW3A config setting
@@ -13,7 +15,7 @@
 */
 
 
- /* test build in local */ 
+ /* test build in local */
  #ifdef LOCAL_NDK_BUILD
 #include ".\..\..\INCLUDE\mtype.h"
 #include ".\..\..\INCLUDE\FrmWk_HW3A_event_type.h"
@@ -109,7 +111,7 @@
 /* for AF ctrl layer */
 /**
 \API name: al3AWrapper_DispatchHW3A_AFStats
-\This API used for patching HW3A stats from ISP(Altek) for AF libs(Altek), after patching completed, AF ctrl should prepare patched 
+\This API used for patching HW3A stats from ISP(Altek) for AF libs(Altek), after patching completed, AF ctrl should prepare patched
 \stats to AF libs
 \param alISP_MetaData_AF[In]: patched data after calling al3AWrapper_DispatchHW3AStats, used for patch AF stats for AF lib
 \param alWrappered_AF_Dat[Out]: result patched AF stats
@@ -181,7 +183,7 @@ UINT32 al3AWrapper_DispatchHW3A_AFStats(void *alISP_MetaData_AF,void *alWrappere
                                 /*40 Bytes(HW3A AF Block Size) = 10 * UINT32(4 Bytes)*/
                                 StatsAddr_32+= 10;
                                 /*40 Bytes(HW3A AF Block Size) = 5 * UINT64(8 Bytes)*/
-                                StatsAddr_64+= 5; 
+                                StatsAddr_64+= 5;
                                 WRAP_LOG("fv_hor[%d] %d\n",index,pPatched_AFDat->fv_hor[index]);
                         }
                 }
@@ -198,7 +200,7 @@ UINT32 al3AWrapper_DispatchHW3A_AFStats(void *alISP_MetaData_AF,void *alWrappere
                                 pPatched_AFDat->fv_hor[index] = StatsAddr_32[4];
                                 pPatched_AFDat->fv_ver[index] = StatsAddr_32[3];
                                 /*24 Bytes(HW3A AF Block Size) = 6 * UINT32(4 Bytes)*/
-                                StatsAddr_32+= 6; 
+                                StatsAddr_32+= 6;
                                 WRAP_LOG("fv_hor[%d] %d\n",index,pPatched_AFDat->fv_hor[index]);
                         }
                 }
@@ -227,16 +229,16 @@ UINT32 al3AWrapperAF_TranslateFocusModeToAPType(UINT32 aFocusMode)
 
           switch(aFocusMode){
 /* here just sample code, need to be implement by Framework define
-              case alAFLib_AF_MODE_AUTO: 
+              case alAFLib_AF_MODE_AUTO:
                   retAPFocusMode = FOCUS_MODE_AUTO;
                   break;
-              case alAFLib_AF_MODE_MANUAL: 
+              case alAFLib_AF_MODE_MANUAL:
                   retAPFocusMode = FOCUS_MODE_MANUAL;
                   break;
-              case alAFLib_AF_MODE_MACRO: 
+              case alAFLib_AF_MODE_MACRO:
                   retAPFocusMode = FOCUS_MODE_MACRO;
                   break;
-              case alAFLib_AF_MODE_OFF: 
+              case alAFLib_AF_MODE_OFF:
                   retAPFocusMode = FOCUS_MODE_OFF;
                   break;
               case alAFLib_AF_MODE_OFF:
@@ -264,26 +266,26 @@ UINT32 al3AWrapperAF_TranslateFocusModeToAFLibType(UINT32 aFocusMode)
 {
         UINT32 retAFFocusMode;
 
-        switch(aFocusMode) 
+        switch(aFocusMode)
         {
 /* here just sample code, need to be implement by Framework define
-        
-        case FOCUS_MODE_AUTO: 
-        case FOCUS_MODE_CONTINUOUS_PICTURE: 
+
+        case FOCUS_MODE_AUTO:
+        case FOCUS_MODE_CONTINUOUS_PICTURE:
         case FOCUS_MODE_CONTINUOUS_VIDEO:
             retAFFocusMode = alAFLib_AF_MODE_AUTO;
             break;
 
-        case FOCUS_MODE_MANUAL: 
+        case FOCUS_MODE_MANUAL:
         case FOCUS_MODE_INFINITY:
             retAFFocusMode = alAFLib_AF_MODE_MANUAL;
             break;
 
-        case FOCUS_MODE_MACRO: 
+        case FOCUS_MODE_MACRO:
             retAFFocusMode = alAFLib_AF_MODE_MACRO;
             break;
 
-        case FOCUS_MODE_OFF: 
+        case FOCUS_MODE_OFF:
             retAFFocusMode = alAFLib_AF_MODE_OFF;
             break;
         case FOCUS_MODE_FIXED:
@@ -293,7 +295,7 @@ UINT32 al3AWrapperAF_TranslateFocusModeToAFLibType(UINT32 aFocusMode)
             retAFFocusMode = alAFLib_AF_MODE_EDOF;
             break;
 */
-        default: 
+        default:
                 retAFFocusMode = alAFLib_AF_MODE_NOT_SUPPORTED;
                 break;
         }
@@ -305,7 +307,7 @@ UINT32 al3AWrapperAF_TranslateFocusModeToAFLibType(UINT32 aFocusMode)
 \API name: al3AWrapperAF_TranslateCalibDatToAFLibType
 \This API used for translating EEPROM data to AF lib define
 \EEPROM_Addr[In] :   EEPROM data address
-\AF_Calib_Dat[Out] :   Altek data format 
+\AF_Calib_Dat[Out] :   Altek data format
 \return: Error code
 */
 
@@ -327,7 +329,7 @@ UINT32 al3AWrapperAF_TranslateCalibDatToAFLibType(void *EEPROM_Addr,alAFLib_inpu
         AF_Init_Dat->module_info.focal_lenth = MODULE_FOCAL_LENGTH;
         AF_Init_Dat->calib_data.mech_top = VCM_INF_STEP_MECH_TOP;
         AF_Init_Dat->calib_data.mech_bottom = VCM_INF_STEP_MECH_BOTTOM;
-        AF_Init_Dat->calib_data.lens_move_stable_time = VCM_MOVING_STATBLE_TIME; 
+        AF_Init_Dat->calib_data.lens_move_stable_time = VCM_MOVING_STATBLE_TIME;
         /* extra lib calibration data, if not support, set to null.*/
         AF_Init_Dat->calib_data.extend_calib_ptr = NULL;
         /* size of extra lib calibration data, if not support set to zero.*/
@@ -340,7 +342,7 @@ UINT32 al3AWrapperAF_TranslateCalibDatToAFLibType(void *EEPROM_Addr,alAFLib_inpu
 \API name: al3AWrapperAF_TranslateROIToAFLibType
 \This API used for translating ROI info to AF lib define
 \frame_id[In] :   Current frame id
-\AF_ROI_Info[Out] :   Altek data format 
+\AF_ROI_Info[Out] :   Altek data format
 \return: Error code
 */
 
@@ -367,7 +369,7 @@ UINT32 al3AWrapperAF_TranslateROIToAFLibType(unsigned int frame_id,alAFLib_input
 \API name: al3AWrapperAF_UpdateISPConfig_AF
 \This API is used for query ISP config before calling al3AWrapperAF_UpdateISPConfig_AF
 \param aAFLibStatsConfig[in]: AF stats config info from AF lib
-\param aAFConfig[out]: input buffer, API would manage parameter and return via this pointer 
+\param aAFConfig[out]: input buffer, API would manage parameter and return via this pointer
 \return: error code
 */
 UINT32 al3AWrapperAF_UpdateISPConfig_AF(alAFLib_af_out_stats_config_t *aAFLibStatsConfig,alHW3a_AF_CfgInfo_t *aAFConfig)
@@ -376,7 +378,7 @@ UINT32 al3AWrapperAF_UpdateISPConfig_AF(alAFLib_af_out_stats_config_t *aAFLibSta
         UINT32 udTemp = 0;
         WRAP_LOG("al3AWrapperAF_UpdateISPConfig_AF start ID %d\n",aAFLibStatsConfig->TokenID);
 
-        aAFConfig->TokenID = aAFLibStatsConfig->TokenID; 
+        aAFConfig->TokenID = aAFLibStatsConfig->TokenID;
 
         aAFConfig->tAFRegion.uwBlkNumX = aAFLibStatsConfig->num_blk_hor;
         WRAP_LOG("uwBlkNumX %d\n",aAFConfig->tAFRegion.uwBlkNumX);
@@ -442,7 +444,7 @@ UINT32 al3AWrapperAF_UpdateISPConfig_AF(alAFLib_af_out_stats_config_t *aAFLibSta
 \API name: al3AWrapper_UpdateAFReport
 \This API is used for translate AF status  to generate AF report for AP
 \param aAFLibStatus[in]: af status from AF update
-\param aAFReport[out]: AF report for AP 
+\param aAFReport[out]: AF report for AP
 \return: error code
 */
 UINT32 al3AWrapper_UpdateAFReport(alAFLib_af_out_status_t *aAFLibStatus,af_report_update_t *aAFReport)
@@ -463,7 +465,7 @@ UINT32 al3AWrapper_UpdateAFReport(alAFLib_af_out_status_t *aAFLibStatus,af_repor
 \API name: al3AWrapperAF_TranslateAEInfoToAFLibType
 \This API used for translating AE info to AF lib define
 \ae_report_update_t[In] :   Iput AE data
-\alAFLib_input_aec_info_t[Out] :   Altek data format 
+\alAFLib_input_aec_info_t[Out] :   Altek data format
 \return: Error code
 */
 UINT32 al3AWrapperAF_TranslateAEInfoToAFLibType(ae_report_update_t *aAEReport,alAFLib_input_aec_info_t *aAEInfo)
@@ -494,7 +496,7 @@ UINT32 al3AWrapperAF_TranslateAEInfoToAFLibType(ae_report_update_t *aAEReport,al
 /**
 \API name: al3AWrapperAF_GetDefaultCfg
 \This API is used for query default ISP config before calling al3AWrapperAF_UpdateISPConfig_AF
-\param aAFConfig[out]: input buffer, API would manage parameter and return via this pointer 
+\param aAFConfig[out]: input buffer, API would manage parameter and return via this pointer
 \return: error code
 */
 
@@ -535,6 +537,20 @@ UINT32 al3AWrapperAF_GetDefaultCfg(alHW3a_AF_CfgInfo_t *aAFConfig)
         return ret;
 }
 
+/**
+\API name: al3AWrapperAF_GetVersion
+\This API would return labeled version of wrapper
+\fWrapVersion[out], return current wapper version
+\return: error code
+*/
+UINT32 al3AWrapperAF_GetVersion( float *fWrapVersion )
+{
+	UINT32 ret = ERR_WPR_AF_SUCCESS;
+
+	*fWrapVersion = _WRAPPER_AF_VER;
+
+	return ret;
+}
 
 UINT32 al3AWrapperAF_TranslateImageBufInfoToAFLibType(void *aImgBuf,alAFLib_input_image_buf_t *aAFImageBuf);
 

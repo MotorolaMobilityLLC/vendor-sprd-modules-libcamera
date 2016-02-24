@@ -36,6 +36,7 @@
 #include "al3AWrapper.h"
 #endif
 
+#define _WRAPPER_AE_VER 0.8000
 
 #ifdef __cplusplus
 extern "C"
@@ -150,6 +151,14 @@ UINT32 al3AWrapper_GetAELib_Param( void * uDatatype, void * get_param, alAERunti
 \return: error code
 */
 UINT32 al3AWrapper_UpdateAESettingFile( void * ae_set_file, alAERuntimeObj_t *aAELibCallback, ae_output_data_t *ae_output, void * ae_runtimeDat );
+
+/**
+\API name: al3AWrapperAE_GetVersion
+\This API would return labeled version of wrapper
+\fWrapVersion[out], return current wapper version
+\return: error code
+*/
+UINT32 al3AWrapperAE_GetVersion( float *fWrapVersion );
 
 #ifdef __cplusplus
 }  // extern "C"

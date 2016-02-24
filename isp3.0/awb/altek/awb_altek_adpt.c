@@ -29,6 +29,7 @@
 /**************************************** MACRO DEFINE *****************************************/
 #define LIBRARY_PATH "libalAWBLib.so"
 #define TEST_VERSION   1
+#define AWB_EXIF_DEBUG_INFO_SIZE 5120
 /************************************* INTERNAL DATA TYPE ***************************************/
 struct awb_altek_lib_ops {
 	cmr_int (*load_func)(alAWBRuntimeObj_t *awb_run_obj);
@@ -52,6 +53,7 @@ struct awb_altek_context {
 	struct awb_ctrl_recover_param recover;
 	struct awb_flash_info flash_info;
 	Report_update_t report;
+	cmr_s8 exif_debug_info[AWB_EXIF_DEBUG_INFO_SIZE];
 };
 /*********************************************END***********************************************/
 static cmr_int awbaltek_load_library(cmr_handle adpt_handle);
@@ -64,6 +66,8 @@ static cmr_int awbaltek_open_pre_flash(cmr_handle adpt_handle);
 static cmr_int awbaltek_ioctrl(cmr_handle adpt_handle, enum awb_ctrl_cmd cmd, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr);
 static cmr_int awbaltek_process(cmr_handle adpt_handle ,struct awb_ctrl_process_in *input_ptr, struct awb_ctrl_process_out *output_ptr);
 static cmr_int awbaltek_convert_wb_mode(enum awb_ctrl_wb_mode input_mode );
+static cmr_int awbaltek_get_exif_info(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr);
+static cmr_int awbaltek_get_debug_info(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr);
 /*************************************INTERNAK FUNCTION ****************************************/
 cmr_int awbaltek_load_library(cmr_handle adpt_handle)
 {
@@ -107,6 +111,112 @@ cmr_int awbaltek_unload_library(cmr_handle adpt_handle)
 	ISP_LOGV("done %ld", ret);
 	return ret;
 }
+
+cmr_int awbaltek_set_wb_mode(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
+	alAWBLib_set_parameter_t                    input;
+
+	input.type = alawb_set_param_awb_mode_setting;
+	input.para.awb_mode_setting.wbmode_type = awbaltek_convert_wb_mode(input_ptr->wb_mode.wb_mode);
+	input.para.awb_mode_setting.manual_ct = input_ptr->wb_mode.manual_ct;
+	ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
+	if (ret) {
+		ISP_LOGE("failed to set wb mode 0x%lx", ret);
+	}
+
+	return ret;
+}
+
+cmr_int awbaltek_set_dzoom(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
+	alAWBLib_set_parameter_t                    input;
+
+	input.type = alawb_set_param_dzoom_factor;
+	input.para.dzoom_factor = input_ptr->dzoom_factor;
+	ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
+	if (ret) {
+		ISP_LOGE("failed to set dzoom factor 0x%lx", ret);
+	}
+
+	return ret;
+}
+
+cmr_int awbaltek_set_sof_frame_id(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
+	alAWBLib_set_parameter_t                    input;
+
+	input.type = alawb_set_param_sys_sof_frame_idx;
+	input.para.sys_sof_frame_idx = input_ptr->sof_frame_idx;
+	ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
+	if (ret) {
+		ISP_LOGE("failed to set sof frame id 0x%lx", ret);
+	}
+
+	return ret;
+}
+
+cmr_int awbaltek_get_gain(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
+	alAWBLib_get_parameter_t                    get_input;
+
+	if (!output_ptr) {
+		ISP_LOGE("error,output is NULL");
+		goto exit;
+	}
+	output_ptr->gain.r = (float)0;
+	output_ptr->gain.g = (float)0;
+	output_ptr->gain.b = (float)0;
+	get_input.type = alawb_get_param_wbgain;
+	ret = (cmr_int)cxt->lib_func.get_param(&get_input, cxt->lib_func.awb);
+	if (ret) {
+		ISP_LOGE("failed to get gain");
+	} else {
+		output_ptr->gain.r = get_input.para.wbgain.r_gain;
+		output_ptr->gain.g = get_input.para.wbgain.g_gain;
+		output_ptr->gain.b = get_input.para.wbgain.b_gain;
+	}
+exit:
+	return ret;
+}
+
+cmr_int awbaltek_get_exif_info(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
+
+	if (!output_ptr) {
+		ISP_LOGI("output is NULL");
+		goto exit;
+	}
+	output_ptr->debug_info.size = AWB_EXIF_DEBUG_INFO_SIZE;
+	output_ptr->debug_info.addr = &cxt->exif_debug_info[0];
+exit:
+	return ret;
+}
+
+cmr_int awbaltek_get_debug_info(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
+
+	if (!output_ptr) {
+		ISP_LOGI("output is NULL");
+		goto exit;
+	}
+	output_ptr->debug_info.size = alAWBLib_Debug_Size;
+	output_ptr->debug_info.addr = &cxt->cur_process_out.awb_debug_data_array[0];
+exit:
+	return ret;
+}
+
 char test_tuning[20*1024];
 cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr, struct awb_ctrl_init_out *output_ptr)
 {
@@ -132,7 +242,7 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 	}
 
 	ret = cxt->ops.load_func(&cxt->lib_func);
-	if (ret) {
+	if (!ret) {
 		ISP_LOGE("failed to load lib function");
 		goto exit;
 	}
@@ -229,10 +339,10 @@ normal_flow:
 		output_ptr->hw_cfg.token_id, output_ptr->hw_cfg.uccr_shift,
 		output_ptr->hw_cfg.uc_damp, output_ptr->hw_cfg.uc_offset_shift);
 	ISP_LOGV("uc_quantize = %d\n, uc_sum_shift = %d\n, uwblinear_gain = %d\n, uwrlinear_gain = %d\n,\
-		uw_bgain = %d\n, uw_gain = %d\n, uw_ggain = %d\n",
+		uw_bgain = %d\n, uw_rgain = %d\n, uw_ggain = %d\n",
 		output_ptr->hw_cfg.uc_quantize, output_ptr->hw_cfg.uc_sum_shift,
 		output_ptr->hw_cfg.uwblinear_gain, output_ptr->hw_cfg.uwrlinear_gain,
-		output_ptr->hw_cfg.uw_bgain, output_ptr->hw_cfg.uw_gain,
+		output_ptr->hw_cfg.uw_bgain, output_ptr->hw_cfg.uw_rgain,
 		output_ptr->hw_cfg.uw_ggain);
 	for (i=0 ; i<16 ; i++) {
 		ISP_LOGV("uc_factor[%ld] = %d\n", i, output_ptr->hw_cfg.uc_factor[i]);
@@ -304,7 +414,7 @@ normal_flow:
 	ISP_LOGI("gain %d, %d, %d, %d", output_ptr->gain.r, output_ptr->gain.g, output_ptr->gain.b, output_ptr->ct);
 
 	set_param.type = alawb_set_param_awb_debug_mask;
-    set_param.para.awb_debug_mask = alawb_dbg_manual_flowCheck;
+    set_param.para.awb_debug_mask = alawb_dbg_enable_log;//alawb_dbg_enable_output;
     ret = cxt->lib_func.set_param(&set_param, cxt->lib_func.awb);
 	if (ret) {
 		ISP_LOGE("failed to set debug %lx", ret);
@@ -456,10 +566,7 @@ cmr_int awbaltek_ioctrl(cmr_handle adpt_handle, enum awb_ctrl_cmd cmd, union awb
 
 	switch (cmd) {
 	case AWB_CTRL_CMD_SET_WB_MODE:
-		input.type = alawb_set_param_awb_mode_setting;
-		input.para.awb_mode_setting.wbmode_type = awbaltek_convert_wb_mode(input_ptr->wb_mode.wb_mode);
-		input.para.awb_mode_setting.manual_ct = input_ptr->wb_mode.manual_ct;
-		ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
+		ret = awbaltek_set_wb_mode(adpt_handle, input_ptr, output_ptr);
 		break;
 	case AWB_CTRL_CMD_SET_FLASH_MODE:
 		break;
@@ -470,38 +577,13 @@ cmr_int awbaltek_ioctrl(cmr_handle adpt_handle, enum awb_ctrl_cmd cmd, union awb
 		ret = awbaltek_set_face(adpt_handle, cmd, input_ptr, output_ptr);
 		break;
 	case AWB_CTRL_CMD_SET_DZOOM_FACTOR:
-		input.type = alawb_set_param_dzoom_factor;
-		input.para.dzoom_factor = input_ptr->dzoom_factor;
-		ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
-		if (ret) {
-			ISP_LOGE("failed to set dzoom factor %ld", ret);
-		}
+		ret = awbaltek_set_dzoom(adpt_handle, input_ptr, output_ptr);
 		break;
 	case AWB_CTRL_CMD_SET_SOF_FRAME_IDX:
-		input.type = alawb_set_param_sys_sof_frame_idx;
-		input.para.sys_sof_frame_idx = input_ptr->sof_frame_idx;
-		ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
-		if (ret) {
-			ISP_LOGE("failed to set dzoom factor %ld", ret);
-		}
+		ret = awbaltek_set_sof_frame_id(adpt_handle, input_ptr, output_ptr);
 		break;
 	case AWB_CTRL_CMD_GET_GAIN:
-		if (!output_ptr) {
-			ISP_LOGE("error,output is NULL");
-			break;
-		}
-		output_ptr->gain.r = (float)0;
-		output_ptr->gain.g = (float)0;
-		output_ptr->gain.b = (float)0;
-		get_input.type = alawb_get_param_wbgain;
-		ret = (cmr_int)cxt->lib_func.get_param(&get_input, cxt->lib_func.awb);
-		if (ret) {
-			ISP_LOGE("failed to get gain");
-		} else {
-			output_ptr->gain.r = get_input.para.wbgain.r_gain;
-			output_ptr->gain.g = get_input.para.wbgain.g_gain;
-			output_ptr->gain.b = get_input.para.wbgain.b_gain;
-		}
+		ret = awbaltek_get_gain(adpt_handle, input_ptr, output_ptr);
 		break;
 	case AWB_CTRL_CMD_FLASH_OPEN_P:
 		ret = awbaltek_open_pre_flash(adpt_handle);
@@ -625,6 +707,12 @@ cmr_int awbaltek_ioctrl(cmr_handle adpt_handle, enum awb_ctrl_cmd cmd, union awb
 	case AWB_CTRL_CMD_GET_PARAM_WIN_START:
 	case AWB_CTRL_CMD_GET_PARAM_WIN_SIZE:
 		break;
+	case AWB_CTRL_CMD_GET_EXIF_DEBUG_INFO:
+		ret = awbaltek_get_exif_info(adpt_handle, input_ptr, output_ptr);
+		break;
+	case AWB_CTRL_CMD_GET_DEBUG_INFO:
+		ret = awbaltek_get_debug_info(adpt_handle, input_ptr, output_ptr);
+		break;
 	default:
 		break;
 	}
@@ -711,6 +799,7 @@ cmr_int awbaltek_process(cmr_handle adpt_handle ,struct awb_ctrl_process_in *inp
 			output_ptr->hw3a_frame_id = report_ptr->hw3a_frame_id;;
 			output_ptr->is_update = cxt->cur_process_out.awb_update;
 			output_ptr->light_source = cxt->cur_process_out.light_source;
+			//memcpy(&cxt->exif_debug_info[0], cxt->cur_process_out.awb_debug_data_full, AWB_EXIF_DEBUG_INFO_SIZE);
 #else
 			report_ptr = &cxt->cur_process_out.report_3a_update.awb_update;
 			output_ptr->ct = report_ptr->color_temp;

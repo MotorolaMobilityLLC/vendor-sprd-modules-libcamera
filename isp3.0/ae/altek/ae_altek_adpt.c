@@ -190,6 +190,7 @@ struct aealtek_cxt {
 
 	struct ae_ctrl_proc_in proc_in;
 	struct aealtek_sensor_exp_data sensor_exp_data;
+	struct aealtek_exposure_param pre_write_exp_data;
 };
 
 
@@ -925,19 +926,30 @@ static cmr_int aealtek_write_to_sensor(struct aealtek_cxt *cxt_ptr, struct ae_ct
 {
 	cmr_int ret = ISP_ERROR;
 
-	if (! cxt_ptr) {
-		ISP_LOGE("param %p is NULL error!", cxt_ptr);
+	if (! cxt_ptr || !exp_ptr || !gain_ptr) {
+		ISP_LOGE("param %p %p %p is NULL error!", cxt_ptr, exp_ptr, gain_ptr);
 		ret = ISP_PARAM_NULL;
 		goto exit;
 	}
 
 	if (cxt_ptr->init_in_param.ops_in.set_exposure) {
-		(*cxt_ptr->init_in_param.ops_in.set_exposure)(cxt_ptr->caller_handle, exp_ptr);
+		if (0 != exp_ptr->exp_line && (cxt_ptr->pre_write_exp_data.exp_line != exp_ptr->exp_line
+				|| cxt_ptr->pre_write_exp_data.dummy != exp_ptr->dummy)) {
+			(*cxt_ptr->init_in_param.ops_in.set_exposure)(cxt_ptr->caller_handle, exp_ptr);
+		}
 	}
 
 	if (cxt_ptr->init_in_param.ops_in.set_again) {
-		(*cxt_ptr->init_in_param.ops_in.set_again)(cxt_ptr->caller_handle, gain_ptr);
+		if (0 != gain_ptr->gain && cxt_ptr->pre_write_exp_data.gain != gain_ptr->gain) {
+			(*cxt_ptr->init_in_param.ops_in.set_again)(cxt_ptr->caller_handle, gain_ptr);
+		}
 	}
+
+	cxt_ptr->pre_write_exp_data.exp_line = exp_ptr->exp_line;
+	cxt_ptr->pre_write_exp_data.dummy = exp_ptr->dummy;
+	cxt_ptr->pre_write_exp_data.gain = gain_ptr->gain;
+
+
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld", ret);
@@ -1080,8 +1092,20 @@ static cmr_int aealtek_set_exp_comp(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 	param_ct_ptr = &in_param.set_param;
 
 	switch (in_ptr->exp_comp.level) {
+	case AE_CTRL_ATTR_LEVEL_1:
+		lib_ev_comp = -2000;
+		break;
+	case AE_CTRL_ATTR_LEVEL_2:
+		lib_ev_comp = -1000;
+		break;
 	case AE_CTRL_ATTR_LEVEL_3:
 		lib_ev_comp = 0;
+		break;
+	case AE_CTRL_ATTR_LEVEL_4:
+		lib_ev_comp = 1000;
+		break;
+	case AE_CTRL_ATTR_LEVEL_5:
+		lib_ev_comp = 2000;
 		break;
 	default:
 		ISP_LOGW("UI level =%ld",in_ptr->exp_comp.level);
@@ -1649,6 +1673,26 @@ static cmr_int aealtek_first_work(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_pa
 	ret = aealtek_lib_exposure2sensor(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
 	if (ret)
 		goto exit;
+
+	/*fps calc*/
+
+	if (0 != cxt_ptr->nxt_status.ui_param.work_info.resolution.max_fps
+		&& 0 != cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time) {
+		cxt_ptr->nxt_status.min_frame_length = SENSOR_EXP_US_BASE / cxt_ptr->nxt_status.ui_param.work_info.resolution.max_fps / cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time;
+	} else {
+		cxt_ptr->nxt_status.min_frame_length = 0;
+	}
+	ISP_LOGI("min_frame_length=%d", cxt_ptr->nxt_status.min_frame_length);
+
+
+	/*fps ctrl*/
+	cxt_ptr->sensor_exp_data.lib_exp.dummy = 0;
+	if (0 != cxt_ptr->nxt_status.min_frame_length) {
+		if (cxt_ptr->sensor_exp_data.lib_exp.exp_line < cxt_ptr->nxt_status.min_frame_length) {
+			cxt_ptr->sensor_exp_data.lib_exp.dummy = cxt_ptr->nxt_status.min_frame_length - cxt_ptr->sensor_exp_data.lib_exp.exp_line;
+		}
+	}
+
 	cxt_ptr->sensor_exp_data.write_exp = cxt_ptr->sensor_exp_data.lib_exp;
 	ISP_LOGE("gain=%d, exp_line=%d, exp_time=%d", cxt_ptr->sensor_exp_data.write_exp.gain,
 				cxt_ptr->sensor_exp_data.write_exp.exp_line,
@@ -2047,7 +2091,7 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 		}
 	}
 
-	ret = aealtek_get_hwisp_cfg( cxt_ptr, &out_ptr->hw_cfg);
+	ret = aealtek_get_hwisp_cfg( cxt_ptr, &out_ptr->proc_out.hw_cfg);
 	if (ret)
 		goto exit;
 
