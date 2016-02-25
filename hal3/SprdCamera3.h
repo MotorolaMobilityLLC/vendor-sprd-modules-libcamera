@@ -191,6 +191,7 @@ static tags_info_t android_add_parameters[VENDOR_SECTION_END - VENDOR_SECTION_ST
     { "flash-mode-supported",             TYPE_BYTE },
     { "prv-rec-difsize-supported",         TYPE_BYTE },
     { "notify-flag-rec -sync",         TYPE_BYTE },
+    { "sprdZslEnabled",         TYPE_BYTE },
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {
