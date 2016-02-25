@@ -30,7 +30,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <cutils/properties.h>
-#include "sprd_ion.h"
+#include <linux/sprd_ion.h>
 #include <media/hardware/MetadataBufferType.h>
 #include "SprdOEMCamera.h"
 #ifdef SPRD_PERFORMANCE

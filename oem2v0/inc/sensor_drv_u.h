@@ -27,7 +27,6 @@
 #include <sys/types.h>
 #include "cmr_msg.h"
 #include "sensor_raw.h"
-#include "sprd_sensor_k.h"
 
 #ifdef	 __cplusplus
 extern	 "C"

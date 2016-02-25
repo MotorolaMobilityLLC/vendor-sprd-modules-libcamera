@@ -24,8 +24,7 @@ LOCAL_CFLAGS += -fno-strict-aliasing -Wno-unused-parameter -Werror
 # external header file
 # ************************************************
 LOCAL_C_INCLUDES := \
-	$(TOP)/vendor/sprd/external/kernel-headers \
-	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
+	$(TARGET_OUT_INTERMEDIATES)/KERNEL/source/include/video \
 	$(LOCAL_PATH)/../common/inc
 
 # ************************************************

@@ -16,9 +16,11 @@ LOCAL_C_INCLUDES := \
 	external/jhead \
 	external/sqlite/dist \
 	system/media/camera/include \
-	kernel/include/video \
-	vendor/sprd/modules/libmemion \
-	vendor/sprd/external/kernel-headers
+	$(TOP)vendor/sprd/modules/libmemion \
+	$(TOP)/vendor/sprd/external/kernel-headers \
+	$(TOP)/vendor/sprd/modules/libmemion \
+	$(TARGET_OUT_INTERMEDIATES)/KERNEL/source/include/video \
+	$(TARGET_OUT_INTERMEDIATES)/KERNEL/source/include/uapi
 
 
 ifeq ($(strip $(TARGET_GPU_PLATFORM)),midgard)
