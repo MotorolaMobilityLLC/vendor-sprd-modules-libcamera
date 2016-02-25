@@ -4374,6 +4374,15 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_uint cameraParaTag)
 			SET_PARM(mCameraHandle, CAMERA_PARAM_SENSOR_ROTATION, sprddefInfo.sensor_rotation);
 		}
 		break;
+        case ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR:
+		{
+			SPRD_DEF_Tag sprddefInfo;
+
+			mSetting->getSPRDDEFTag(&sprddefInfo);
+			HAL_LOGD("flip_on_level = %d", sprddefInfo.flip_on);
+			SET_PARM(mCameraHandle, CAMERA_PARAM_FLIP_ON, sprddefInfo.flip_on);
+		}
+		break;
 	case ANDROID_CONTROL_AF_MODE:
 		{
 			int8_t AfMode = 0;

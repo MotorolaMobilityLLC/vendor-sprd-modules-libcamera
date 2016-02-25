@@ -5470,6 +5470,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	} else {
 		is_cfg_snp = 1;
 	}
+
 	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_CAPTURE_FORMAT, &setting_param);
 	if (ret) {
 		CMR_LOGE("failed to get cap fmt %ld", ret);
@@ -5489,7 +5490,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 		goto exit;
 	}
 	out_param_ptr->snapshot_eb = is_cfg_snp;
-	out_param_ptr->flip_on = cxt->flip_on;
+	//out_param_ptr->flip_on = cxt->flip_on;
 
 	out_param_ptr->isp_width_limit = cxt->isp_cxt.width_limit;
 	out_param_ptr->tool_eb = 0;
@@ -5578,6 +5579,15 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	}
 	cxt->snp_cxt.total_num = setting_param.cmd_type_value;
 
+    /*for bug500099*/
+    ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_FLIP_ON, &setting_param);
+    if (ret) {
+            CMR_LOGE("failed to get preview sprd flip_on enabled flag %ld", ret);
+            goto exit;
+    }
+    out_param_ptr->flip_on = setting_param.cmd_type_value;
+	//bug500099 front cam mirror end
+
 #ifdef CONFIG_MEM_OPTIMIZATION
 	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_SPRD_ZSL_ENABLED, &setting_param);
 	if (ret) {
@@ -5648,6 +5658,7 @@ exit:
 		     jpeg_cxt->param.thumb_quality, jpeg_cxt->param.set_encode_rotation,
 		     jpeg_cxt->param.thum_size.width, jpeg_cxt->param.thum_size.height);
 	CMR_LOGI("frame cnt %d", out_param_ptr->frame_count);
+	CMR_LOGI("out_param_ptr->flip_on  %d", out_param_ptr->flip_on );
 
 	return ret;
 }
@@ -5907,6 +5918,10 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id, cmr
 		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);
 		break;
 	case CAMERA_PARAM_PERFECT_SKIN_LEVEL:
+		setting_param.cmd_type_value = param;
+		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);
+		break;
+        case CAMERA_PARAM_FLIP_ON:
 		setting_param.cmd_type_value = param;
 		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);
 		break;

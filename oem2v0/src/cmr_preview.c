@@ -1183,7 +1183,7 @@ cmr_int cmr_preview_before_set_param(cmr_handle preview_handle, cmr_u32 camera_i
 	CHECK_HANDLE_VALID(handle);
 	CHECK_CAMERA_ID(camera_id);
 
-	CMR_LOGV("in");
+       CMR_LOGV("in");
 
 	/*deliver the zoom param via internal msg*/
 	inter_param = (struct internal_param*)malloc(sizeof(struct internal_param));
@@ -4705,6 +4705,7 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id)
 	cmr_u32                 is_cfg_rot_cap = 0;
 	cmr_u32                 aligned_type = 0;
 	cmr_u32                 mode_flag = 0;
+	cmr_u32 				flip_on;
 
 	CHECK_HANDLE_VALID(handle);
 
@@ -4720,6 +4721,7 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id)
 	cfg_cap_rot    = handle->prev_cxt[camera_id].prev_param.encode_angle;
 	is_cfg_rot_cap = handle->prev_cxt[camera_id].prev_param.is_cfg_rot_cap;
 	sensor_info    = &handle->prev_cxt[camera_id].sensor_info;
+	flip_on        = &handle->prev_cxt[camera_id].prev_param.flip_on;
 
 	CMR_LOGI("preview_eb %d, snapshot_eb %d, video_eb %d",
 		handle->prev_cxt[camera_id].prev_param.preview_eb,

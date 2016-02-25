@@ -150,6 +150,7 @@ struct setting_hal_param {
 	cmr_uint                       capture_mode;
 	cmr_uint                       shot_num;
 	cmr_uint                       perfect_skinlevel;
+        cmr_uint                       flip_on;
 
 	struct setting_flash_param     flash_param;
 
@@ -1846,6 +1847,27 @@ static cmr_int setting_get_perfect_skinlevel(struct setting_component *cpt,
 	return ret;
 }
 
+static cmr_int setting_set_flip_on(struct setting_component *cpt,
+                                                            struct setting_cmd_parameter *parm)
+{
+cmr_int                     ret = 0;
+	struct setting_hal_param    *hal_param = get_hal_param(cpt, parm->camera_id);
+	hal_param->flip_on = parm->cmd_type_value;
+	CMR_LOGD("hal_param->flip_on = %d",hal_param->flip_on);
+	return ret;
+}
+
+static cmr_int setting_get_flip_on(struct setting_component *cpt,
+                                                            struct setting_cmd_parameter *parm)
+{
+	cmr_int                     ret = 0;
+	struct setting_hal_param    *hal_param = get_hal_param(cpt, parm->camera_id);
+    parm->cmd_type_value = hal_param->flip_on;
+	CMR_LOGD("hal_param->flip_on = %d",hal_param->flip_on);
+	return ret;
+}
+
+
 static cmr_int setting_get_preview_angle(struct setting_component *cpt,
 					                    struct setting_cmd_parameter *parm)
 {
@@ -2917,6 +2939,7 @@ cmr_int cmr_setting_ioctl(cmr_handle setting_handle, cmr_uint cmd_type,
 		{CAMERA_PARAM_FOCAL_LENGTH,            setting_set_focal_length},
 		{CAMERA_PARAM_SENSOR_ROTATION,         setting_set_capture_angle},
 		{CAMERA_PARAM_PERFECT_SKIN_LEVEL,      setting_set_perfect_skinlevel},
+                {CAMERA_PARAM_FLIP_ON,                 setting_set_flip_on},
 		{CAMERA_PARAM_SHOT_NUM,                setting_set_shot_num},
 		{CAMERA_PARAM_ROTATION_CAPTURE,        setting_set_rotation_capture},
 		{CAMERA_PARAM_POSITION,                setting_set_position},
@@ -2961,6 +2984,7 @@ cmr_int cmr_setting_ioctl(cmr_handle setting_handle, cmr_uint cmd_type,
 		{SETTING_SET_HIGHFLASH_AE_MEASURE,            setting_set_highflash_ae_measure},
 		{SETTING_GET_HW_FLASH_STATUS,             setting_get_HW_flash_status},
 		{SETTING_GET_PERFECT_SKINLEVEL,           setting_get_perfect_skinlevel},
+		{SETTING_GET_FLIP_ON,                     setting_get_flip_on},
 #ifdef CONFIG_MEM_OPTIMIZATION
 		{SETTING_GET_SPRD_ZSL_ENABLED,            setting_get_sprd_zsl_enabled},
 #endif

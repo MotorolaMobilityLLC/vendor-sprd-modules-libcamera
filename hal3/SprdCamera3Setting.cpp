@@ -2862,6 +2862,13 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 	}
 
 
+        if (frame_settings.exists(ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR)) {
+		uint8_t flip_on = frame_settings.find(ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR).data.u8[0];
+		s_setting[mCameraId].sprddefInfo.flip_on = flip_on;
+		pushAndroidParaTag(ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR);
+		HAL_LOGV("flip_on_level %d", s_setting[mCameraId].sprddefInfo.flip_on);
+	}
+
 //JPEG
 	if (frame_settings.exists(ANDROID_JPEG_QUALITY) && is_capture) {
 		valueU8 = frame_settings.find(ANDROID_JPEG_QUALITY).data.u8[0];

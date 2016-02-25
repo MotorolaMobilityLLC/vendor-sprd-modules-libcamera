@@ -339,6 +339,7 @@ typedef struct {
 #ifdef CONFIG_MEM_OPTIMIZATION
 	uint8_t sprd_zsl_enabled;
 #endif
+        uint8_t flip_on;
 } SPRD_DEF_Tag;
 
 typedef struct {
