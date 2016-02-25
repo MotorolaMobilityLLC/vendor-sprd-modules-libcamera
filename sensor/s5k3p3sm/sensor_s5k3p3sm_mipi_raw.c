@@ -19,12 +19,9 @@
 #include "jpeg_exif_header.h"
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4)
 #include "sensor_s5k3p3sm_raw_param.c"
-#else
-#endif
 #include "isp_param_file_update.h"
-
+#include "af_bu64297gwz.h"
 
 #define S5K3P3SM_I2C_ADDR_W        0x10
 #define S5K3P3SM_I2C_ADDR_R        0x10
@@ -51,9 +48,12 @@ static unsigned long _s5k3p3sm_PowerOn(unsigned long power_on);
 static unsigned long _s5k3p3sm_write_exposure(unsigned long param);
 static unsigned long _s5k3p3sm_write_gain(unsigned long param);
 static unsigned long _s5k3p3sm_access_val(unsigned long param);
+static unsigned long s5k3p3sm_write_af(unsigned long param);
 static unsigned long _s5k3p3sm_GetExifInfo(unsigned long param);
 static unsigned long _s5k3p3sm_BeforeSnapshot(unsigned long param);
 static uint16_t _s5k3p3sm_get_shutter(void);
+static unsigned long s5k3p3sm_cfg_otp(unsigned long param);
+static unsigned long _s5k3p3sm_ex_write_exposure(unsigned long param);
 
 
 static const struct raw_param_info_tab s_s5k3p3sm_raw_param_tab[] = {
@@ -377,7 +377,7 @@ static SENSOR_IOCTL_FUNC_TAB_T s_s5k3p3sm_ioctl_func_tab = {
 	_s5k3p3sm_write_gain,
 	PNULL,
 	PNULL,
-	PNULL,//_s5k3p3sm_write_af,
+	s5k3p3sm_write_af,
 	PNULL,
 	PNULL,//_s5k3p3sm_set_awb,
 	PNULL,
@@ -395,7 +395,8 @@ static SENSOR_IOCTL_FUNC_TAB_T s_s5k3p3sm_ioctl_func_tab = {
 	PNULL,//get_status
 	_s5k3p3sm_StreamOn,
 	_s5k3p3sm_StreamOff,
-	PNULL,//	_s5k3p3sm_access_val,
+	s5k3p3sm_cfg_otp,//	_s5k3p3sm_access_val,
+	_s5k3p3sm_ex_write_exposure
 };
 
 
@@ -441,7 +442,7 @@ SENSOR_INFO_T g_s5k3p3sm_mipi_raw_info = {
 
 	4632,			// max width of source image
 	3480,			// max height of source image
-	"s5k3p3sm_mipi_raw",		// name of sensor
+	(cmr_s8 *)"s5k3p3sm_mipi_raw",		// name of sensor
 
 	SENSOR_IMAGE_FORMAT_RAW,	// define in SENSOR_IMAGE_FORMAT_E enum,SENSOR_IMAGE_FORMAT_MAX
 	// if set to SENSOR_IMAGE_FORMAT_MAX here, image format depent on SENSOR_REG_TAB_INFO_T
@@ -779,7 +780,7 @@ static unsigned long _s5k3p3sm_Identify(unsigned long param)
 	uint32_t ret_value = SENSOR_FAIL;
 
 	SENSOR_PRINT_ERR("SENSOR_S5K3P3SM: mipi raw identify\n");
-	SENSOR_PRINT_ERR("SENSOR_S5K3P3SM: mipi raw identify\n");
+
 	pid_value = Sensor_ReadReg(S5K3P3SM_PID_ADDR);
 	ver_value = Sensor_ReadReg(S5K3P3SM_VER_ADDR);
 
@@ -791,6 +792,7 @@ static unsigned long _s5k3p3sm_Identify(unsigned long param)
 			if (SENSOR_SUCCESS != ret_value) {
 				SENSOR_PRINT_ERR("SENSOR_S5K3P3SM: the module is unknow error !");
 			}
+			bu64297gwz_init();
 			Sensor_s5k3p3sm_InitRawTuneInfo();
 		} else {
 			SENSOR_PRINT_ERR("SENSOR_S5K3P3SM: Identify this is hm%x%x sensor !", pid_value, ver_value);
@@ -813,31 +815,25 @@ static uint32_t _s5k3p3sm_GetMaxFrameLine(uint32_t index)
 	return max_line;
 }
 
-//uint32_t s_af_step=0x00;
-static unsigned long _s5k3p3sm_write_exposure(unsigned long param)
+static unsigned long _s5k3p3sm_write_exp_dummy(uint16_t expsure_line,
+								uint16_t dummy_line, uint16_t size_index)
+
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
-	uint32_t expsure_line = 0x00;
-	uint32_t dummy_line = 0x00;
 	uint32_t frame_len_cur = 0x00;
 	uint32_t frame_len = 0x00;
-	uint32_t size_index=0x00;
 	uint32_t max_frame_len=0x00;
 	uint32_t linetime = 0;
 
 
-	expsure_line=param&0xffff;
-	dummy_line=(param>>0x10)&0x0fff;
-	size_index=(param>>0x1c)&0x0f;
-
-	SENSOR_PRINT_HIGH("SENSOR_S5K3P3SM: write_exposure line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
+	SENSOR_PRINT("SENSOR_S5K3P3SM: write_exp_dummy line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
 	max_frame_len=_s5k3p3sm_GetMaxFrameLine(size_index);
 	if (expsure_line < 3) {
 		expsure_line = 3;
 	}
-	expsure_line = 5000;
+
 	frame_len = expsure_line + dummy_line;
-	frame_len = frame_len > (expsure_line + 8) ? frame_len : (expsure_line + 8);
+	frame_len = (frame_len > (uint32_t)(expsure_line + 8)) ? frame_len : (uint32_t)(expsure_line + 8);
 	frame_len = (frame_len > max_frame_len) ? frame_len : max_frame_len;
 	if (0x00!=(0x01&frame_len)) {
 		frame_len+=0x01;
@@ -864,6 +860,53 @@ static unsigned long _s5k3p3sm_write_exposure(unsigned long param)
 
 	return ret_value;
 }
+static unsigned long _s5k3p3sm_write_exposure(unsigned long param)
+{
+	uint32_t ret_value = SENSOR_SUCCESS;
+	uint32_t expsure_line = 0x00;
+	uint32_t dummy_line = 0x00;
+	uint32_t size_index=0x00;
+
+
+	expsure_line=param&0xffff;
+	dummy_line=(param>>0x10)&0x0fff;
+	size_index=(param>>0x1c)&0x0f;
+
+	SENSOR_PRINT("SENSOR_S5K3P3SM: write_exposure line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
+
+	ret_value = _s5k3p3sm_write_exp_dummy(expsure_line, dummy_line, size_index);
+
+	return ret_value;
+}
+
+static unsigned long s5k3p3sm_cfg_otp(unsigned long param)
+{
+	SENSOR_PRINT("E");
+	return 0;
+}
+
+static unsigned long _s5k3p3sm_ex_write_exposure(unsigned long param)
+{
+	uint32_t ret_value = SENSOR_SUCCESS;
+	uint16_t exposure_line = 0x00;
+	uint16_t dummy_line = 0x00;
+	uint16_t size_index=0x00;
+	struct sensor_ex_exposure  *ex = (struct sensor_ex_exposure*)param;
+
+
+	if (!param) {
+		SENSOR_PRINT_ERR("param is NULL !!!");
+		return ret_value;
+	}
+
+	exposure_line = ex->exposure;
+	dummy_line = ex->dummy;
+	size_index = ex->size_index;
+
+	ret_value = _s5k3p3sm_write_exp_dummy(exposure_line, dummy_line, size_index);
+
+	return ret_value;
+}
 
 static unsigned long _s5k3p3sm_write_gain(unsigned long param)
 {
@@ -877,7 +920,7 @@ static unsigned long _s5k3p3sm_write_gain(unsigned long param)
 
 	SENSOR_PRINT("SENSOR_S5K3P3SM: real_gain:0x%x, param: 0x%lx", real_gain, param);
 
-	real_gain = 16*32;
+
 	if (real_gain <= 16*32) {
 		a_gain = real_gain;
 		d_gain = 256;
@@ -894,10 +937,16 @@ static unsigned long _s5k3p3sm_write_gain(unsigned long param)
 	ret_value = Sensor_WriteReg(0x214, d_gain);
 #endif
 //	ret_value = Sensor_WriteReg(0x104, 0x00);
-	SENSOR_PRINT_HIGH("SENSOR_S5K3P3SM: a_gain:0x%x, d_gain: 0x%x", a_gain, d_gain);
+	SENSOR_PRINT("SENSOR_S5K3P3SM: a_gain:0x%x, d_gain: 0x%x", a_gain, d_gain);
 
 	return ret_value;
 
+}
+
+static unsigned long s5k3p3sm_write_af(unsigned long param)
+{
+	bu64297gwz_write_af(param);
+	return 0;
 }
 
 
@@ -911,7 +960,7 @@ static unsigned long _s5k3p3sm_BeforeSnapshot(unsigned long param)
 	uint32_t prv_linetime=s_s5k3p3sm_Resolution_Trim_Tab[preview_mode].line_time;
 	uint32_t cap_linetime = s_s5k3p3sm_Resolution_Trim_Tab[capture_mode].line_time;
 
-	SENSOR_PRINT("SENSOR_s5k3p3sm: BeforeSnapshot mode: 0x%08x",param);
+	SENSOR_PRINT("SENSOR_s5k3p3sm: BeforeSnapshot mode: 0x%08lx",param);
 
 	if (preview_mode == capture_mode) {
 		SENSOR_PRINT("SENSOR_s5k3p3sm: prv mode equal to capmode");
@@ -1040,7 +1089,7 @@ static unsigned long _s5k3p3sm_PowerOn(unsigned long power_on)
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 	}
 
-	SENSOR_PRINT_ERR("SENSOR_S5K3P3SM: _s5k3p3sm_PowerOn(1:on, 0:off): %d, reset_level %d, dvdd_val %d", power_on, reset_level, dvdd_val);
+	SENSOR_PRINT_ERR("SENSOR_S5K3P3SM: _s5k3p3sm_PowerOn(1:on, 0:off): %ld, reset_level %d, dvdd_val %d", power_on, reset_level, dvdd_val);
 	return SENSOR_SUCCESS;
 }
 

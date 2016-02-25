@@ -1,8 +1,11 @@
+TUNING_BIN := s5k3p3sm_mipi_raw_3a.bin
+TUNING_BIN += s5k3p3sm_mipi_raw_shading.bin
+
 
 ALTEK_LIB := libalAWBLib \
-	libalFlickerLib \
 	libalAELib \
 	libalAFLib \
+	libalFlickerLib \
 	libspcaftrigger
 
 ALTEK_FW := TBM_G2v1DDR.bin \
@@ -12,4 +15,5 @@ ALTEK_FW := TBM_G2v1DDR.bin \
 
 PRODUCT_PACKAGES += $(ALTEK_LIB)
 PRODUCT_PACKAGES += $(ALTEK_FW)
+PRODUCT_PACKAGES += $(TUNING_BIN)
 PRODUCT_PACKAGES += tuning.bin

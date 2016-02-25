@@ -10,6 +10,7 @@ endif
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/vsp/inc \
 	$(LOCAL_PATH)/vsp/src \
+	$(LOCAL_PATH)/sensor \
 	$(LOCAL_PATH)/jpeg/inc \
 	$(LOCAL_PATH)/jpeg/src \
 	$(LOCAL_PATH)/common/inc \
@@ -154,6 +155,7 @@ ifneq ($(strip $(TARGET_BOARD_IS_SC_FPGA)),true)
 		sensor/s5k4h5yc/sensor_s5k4h5yc_mipi_raw_jsl.c \
 		sensor/s5k3l2xx/sensor_s5k3l2xx_mipi_raw.c \
 		sensor/s5k3p3sm/sensor_s5k3p3sm_mipi_raw.c \
+		sensor/af_bu64297gwz.c \
 		sensor/s5k4h5yc/packet_convert.c \
 
 	else
@@ -205,6 +207,7 @@ else
 			sensor/ov5640/sensor_ov5640_mipi.c \
 			sensor/ov5640/sensor_ov5640_mipi_raw.c \
 			sensor/s5k3p3sm/sensor_s5k3p3sm_mipi_raw.c \
+			sensor/af_bu64297gwz.c \
 			sensor/s5k4h8yx/sensor_s5k4h8yx_mipi_raw.c \
 
 	else
