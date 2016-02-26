@@ -119,7 +119,8 @@ struct  sensor_ex_info{
 	cmr_u32 adgain_valid_frame_num;
 	cmr_u32 preview_skip_num;
 	cmr_u32 capture_skip_num;
-	cmr_s8  sensor_name[SNR_NAME_MAX_LEN];
+	cmr_s8  *name;
+	cmr_s8  *sensor_version_info;
 };
 
 struct sensor_fps_info{

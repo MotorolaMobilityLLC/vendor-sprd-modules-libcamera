@@ -470,6 +470,7 @@ SENSOR_INFO_T g_s5k3p3sm_mipi_raw_info = {
 	3,			// skip frame num while change setting
 	48,			// horizontal view angle
 	48,			// vertical view angle
+	(cmr_s8 *)"s5k3p3sm_truly_v1",		// version info of sensor
 };
 
 static struct sensor_raw_info* Sensor_GetContext(void)
@@ -766,7 +767,6 @@ static unsigned long _s5k3p3sm_GetResolutionTrimTab(unsigned long param)
 	SENSOR_PRINT("0x%lx",  (unsigned long)s_s5k3p3sm_Resolution_Trim_Tab);
 	return (unsigned long) s_s5k3p3sm_Resolution_Trim_Tab;
 }
-
 
 
 static unsigned long _s5k3p3sm_Identify(unsigned long param)
@@ -1157,7 +1157,8 @@ static uint32_t _s5k3p3sm_get_static_info(uint32_t *param)
 	ex_info->adgain_valid_frame_num = 1;
 	ex_info->preview_skip_num = g_s5k3p3sm_mipi_raw_info.preview_skip_num;
 	ex_info->capture_skip_num = g_s5k3p3sm_mipi_raw_info.capture_skip_num;
-	cmr_copy(ex_info->sensor_name,"s5k3p3sm",8);
+	ex_info->name = g_s5k3p3sm_mipi_raw_info.name;
+	ex_info->sensor_version_info = g_s5k3p3sm_mipi_raw_info.sensor_version_info;
 	SENSOR_PRINT("SENSOR_s5k3p3sm: f_num: %d", ex_info->f_num);
 	SENSOR_PRINT("SENSOR_s5k3p3sm: max_fps: %d", ex_info->max_fps);
 	SENSOR_PRINT("SENSOR_s5k3p3sm: max_adgain: %d", ex_info->max_adgain);
@@ -1165,7 +1166,9 @@ static uint32_t _s5k3p3sm_get_static_info(uint32_t *param)
 	SENSOR_PRINT("SENSOR_s5k3p3sm: pdaf_supported: %d", ex_info->pdaf_supported);
 	SENSOR_PRINT("SENSOR_s5k3p3sm: exp_valid_frame_num: %d", ex_info->exp_valid_frame_num);
 	SENSOR_PRINT("SENSOR_s5k3p3sm: clam_level: %d", ex_info->clamp_level);
-	SENSOR_PRINT("SENSOR_s5k3p3sm: adgain_valid_frame_num: %d", ex_info->adgain_valid_frame_num);
+//	SENSOR_PRINT("SENSOR_s5k3p3sm: adgain_valid_frame_num: %d", ex_info->adgain_valid_frame_num);
+	SENSOR_PRINT("SENSOR_s5k3p3sm: sensor name is: %s", ex_info->name);
+	SENSOR_PRINT("SENSOR_s5k3p3sm: sensor version info is: %s", ex_info->sensor_version_info);
 
 	return rtn;
 }

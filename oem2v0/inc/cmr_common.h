@@ -610,6 +610,8 @@ struct sensor_exp_info {
 	struct sensor_video_info            video_info[SENSOR_MODE_MAX];
 	struct sensor_view_angle            view_angle;
 	struct sensor_raw_info              *raw_info_list_ptr[CAMERA_SENSOR_INFO_2_ISP_NUM];
+	cmr_s8                              *name;
+	cmr_s8                              *sensor_version_info;
 };
 
 struct yuv_sn_af_param {

@@ -687,6 +687,7 @@ typedef struct sensor_exp_info_tag {
 	cmr_u32 sensor_image_type;
 	cmr_u16 horizontal_view_angle;
 	cmr_u16 vertical_view_angle;
+	const cmr_s8 *sensor_version_info;
 } SENSOR_EXP_INFO_T, *SENSOR_EXP_INFO_T_PTR;
 
 typedef struct sensor_info_tag {
@@ -729,6 +730,7 @@ typedef struct sensor_info_tag {
 	cmr_u32 change_setting_skip_num;
 	cmr_u16 horizontal_view_angle;
 	cmr_u16 vertical_view_angle;
+	const cmr_s8 *sensor_version_info;
 } SENSOR_INFO_T;
 
 typedef enum {
