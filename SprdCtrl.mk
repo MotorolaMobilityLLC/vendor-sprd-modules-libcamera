@@ -1,11 +1,5 @@
 
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_SOFTWARE_VERSION)),2)
 isp_use2.0=1
-endif
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_SOFTWARE_VERSION)),3)
-isp_use2.0=1
-endif
 
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/vsp/inc \
