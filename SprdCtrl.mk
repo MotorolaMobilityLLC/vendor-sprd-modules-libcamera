@@ -91,7 +91,7 @@ LOCAL_SRC_FILES+= \
 	oem2v0/isp_calibration/src/isp_calibration.c \
 	oem2v0/isp_calibration/src/isp_cali_interface.c
 
-include $(LOCAL_PATH)/isp2.0/isp2_0.mk
+#include $(LOCAL_PATH)/isp2.0/isp2_0.mk
 LOCAL_SRC_FILES+= \
 	sensor/ov5640/sensor_ov5640_mipi.c \
 	sensor/ov5640/sensor_ov5640_mipi_raw.c \

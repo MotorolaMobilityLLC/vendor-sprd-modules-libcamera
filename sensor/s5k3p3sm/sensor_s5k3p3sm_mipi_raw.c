@@ -395,7 +395,7 @@ static SENSOR_IOCTL_FUNC_TAB_T s_s5k3p3sm_ioctl_func_tab = {
 	PNULL,//get_status
 	_s5k3p3sm_StreamOn,
 	_s5k3p3sm_StreamOff,
-	_s5k3p3sm_access_val,//s5k3p3sm_cfg_otp,
+	_s5k3p3sm_access_val, //s5k3p3sm_cfg_otp,
 	_s5k3p3sm_ex_write_exposure
 };
 
@@ -825,7 +825,6 @@ static unsigned long _s5k3p3sm_write_exp_dummy(uint16_t expsure_line,
 	uint32_t max_frame_len=0x00;
 	uint32_t linetime = 0;
 
-
 	SENSOR_PRINT("SENSOR_S5K3P3SM: write_exp_dummy line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
 	max_frame_len=_s5k3p3sm_GetMaxFrameLine(size_index);
 	if (expsure_line < 3) {
@@ -860,6 +859,7 @@ static unsigned long _s5k3p3sm_write_exp_dummy(uint16_t expsure_line,
 
 	return ret_value;
 }
+
 static unsigned long _s5k3p3sm_write_exposure(unsigned long param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
@@ -1211,7 +1211,7 @@ static unsigned long _s5k3p3sm_access_val(unsigned long param)
 			//rtn = _s5k3p3sm_write_vcm(param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_READ_OTP:
-			((SENSOR_OTP_PARAM_T*)param_ptr->pval)->len = 0;
+			((struct _sensor_otp_param_tag*)param_ptr->pval)->len = 0;
 			s5k3p3sm_cfg_otp(param_ptr->pval);
 			rtn=SENSOR_FAIL;
 			//rtn = _hi544_read_otp((uint32_t)param_ptr->pval);

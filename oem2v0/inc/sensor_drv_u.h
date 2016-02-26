@@ -27,7 +27,7 @@
 #include <sys/types.h>
 #include "cmr_msg.h"
 #include "sensor_raw.h"
-#include "sensor_drv_k.h"
+#include "sprd_sensor_k.h"
 
 #ifdef	 __cplusplus
 extern	 "C"
@@ -865,6 +865,13 @@ struct sensor_ex_exposure {
 	uint32_t size_index;
 };
 
+enum {
+	BITS_REG8_ADDR8,
+	BITS_REG8_ADDR16,
+	BITS_REG16_ADDR8,
+	BITS_REG16_ADDR16,
+};
+
 #define CMR_SENSOR_DEV_NAME "/dev/sprd_sensor"
 
 /*common functions for OEM*/
@@ -936,8 +943,6 @@ cmr_int Sensor_Device_WriteRegTab(SENSOR_REG_TAB_PTR reg_tab);
 
 cmr_int Sensor_WriteI2C(cmr_u16 slave_addr, cmr_u8 *cmd, cmr_u16 cmd_length);
 
-cmr_int Sensor_ReadI2C(cmr_u16 slave_addr, cmr_u8 *cmd, cmr_u16 cmd_length);
-
 cmr_int Sensor_GetMode(cmr_u32 *mode);
 
 cmr_int Sensor_SetMode_WaitDone(void);
@@ -954,6 +959,9 @@ cmr_int Sensor_SetFlash(uint32_t is_open);
 
 //utest refer
 cmr_int Sensor_set_calibration(cmr_u32 value);
+
+cmr_u16 sensor_grc_read_i2c(cmr_u16 slave_addr, cmr_u16 addr, cmr_int bits);
+cmr_u16 sensor_grc_write_i2c(cmr_u16 slave_addr, cmr_u16 reg, cmr_u16 addr, cmr_int bits);
 #ifdef	 __cplusplus
 }
 #endif

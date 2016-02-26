@@ -433,15 +433,15 @@ cmr_int sns_set_i2c_clk(struct sensor_drv_context *sensor_cxt)
 }
 
 cmr_int sns_dev_i2c_write(struct sensor_drv_context *sensor_cxt,
-					SENSOR_I2C_T_PTR i2c_tab)
+					struct sensor_i2c_tag *i2c_tag)
 {
 	cmr_int ret = SENSOR_SUCCESS;
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 
-	ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_I2C_WRITE_EXT, i2c_tab);
+	ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_GRC_I2C_WRITE, i2c_tag);
 	if (0 != ret) {
-		CMR_LOGE("failed, slave_addr=0x%x, ptr=0x%p, count=%d",
-			i2c_tab->slave_addr, i2c_tab->i2c_data, i2c_tab->i2c_count);
+		CMR_LOGE("failed to write i2c, slave_addr=0x%x, ptr=0x%p, count=%d",
+			i2c_tag->slave_addr, i2c_tag->i2c_data, i2c_tag->i2c_count);
 		ret = -1;
 	}
 
@@ -449,16 +449,15 @@ cmr_int sns_dev_i2c_write(struct sensor_drv_context *sensor_cxt,
 }
 
 cmr_int sns_dev_i2c_read(struct sensor_drv_context *sensor_cxt,
-					SENSOR_I2C_T_PTR i2c_tab)
+					struct sensor_i2c_tag *i2c_tag)
 {
 	int ret = SENSOR_SUCCESS;
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 
-	ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_I2C_READ_EXT, i2c_tab);
-	if (0 != ret)
-	{
-		CMR_LOGE("_Sensor_Device_I2CRead failed, slave_addr=0x%x, ptr=0x%p, count=%d\n",
-			i2c_tab->slave_addr, i2c_tab->i2c_data, i2c_tab->i2c_count);
+	ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_GRC_I2C_READ, i2c_tag);
+	if (0 != ret) {
+		CMR_LOGE("failed to read i2c, slave_addr=0x%x, ptr=0x%p, count=%d\n",
+			i2c_tag->slave_addr, i2c_tag->i2c_data, i2c_tag->i2c_count);
 		ret = -1;
 	}
 
@@ -567,23 +566,128 @@ cmr_int Sensor_WriteI2C(cmr_u16 slave_addr, cmr_u8 *cmd, cmr_u16 cmd_length)
 	return ret;
 }
 
-cmr_int Sensor_ReadI2C(cmr_u16 slave_addr, cmr_u8 *cmd, cmr_u16 cmd_length)
+static cmr_int sns_grc_read_i2c(cmr_u16 slave_addr, cmr_u16 *reg, cmr_u16 addr, cmr_int bits)
 {
-	SENSOR_I2C_T i2c_tab;
-	cmr_int ret = SENSOR_SUCCESS;
+	cmr_int ret = -SENSOR_FAIL;
+	cmr_u8 cmd[2] = { 0x00 };
+	struct sensor_i2c_tag i2c_tab;
 	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)sensor_get_dev_cxt();
 
-	i2c_tab.slave_addr 	= slave_addr;
-	i2c_tab.i2c_data	= cmd;
-	i2c_tab.i2c_count	= cmd_length;
+	i2c_tab.slave_addr = slave_addr;
 
-	CMR_LOGV("Sensor_ReadI2C, slave_addr=0x%x, ptr=0x%p, count=%d\n",
-		i2c_tab.slave_addr, i2c_tab.i2c_data, i2c_tab.i2c_count);
+	switch (bits) {
+	case BITS_REG8_ADDR8:
+	case BITS_REG16_ADDR8:
+		cmd[0] = 0x00ff & addr;
+		i2c_tab.i2c_data = cmd;
+		i2c_tab.i2c_count = 1;
+		break;
+	case BITS_REG8_ADDR16:
+	case BITS_REG16_ADDR16:
+		cmd[0] = (0xff00 & addr) >> 8;
+		cmd[1] = 0x00ff & addr;
+		i2c_tab.i2c_data = cmd;
+		i2c_tab.i2c_count = 2;
+		break;
+	default:
+		CMR_LOGE("failed to set bits");
+		goto exit;
+		break;
+	}
 
 	ret = sns_dev_i2c_read(sensor_cxt, &i2c_tab);
+	if (ret)
+	    goto exit;
 
+	switch (bits) {
+	case BITS_REG8_ADDR8:
+	case BITS_REG8_ADDR16:
+		*reg = i2c_tab.i2c_data[0];
+		break;
+	case BITS_REG16_ADDR8:
+	case BITS_REG16_ADDR16:
+		*reg = (0x00ff & i2c_tab.i2c_data[0]) << 8;
+		*reg = (0x00ff & i2c_tab.i2c_data[1]) | *reg;
+		break;
+	default:
+		CMR_LOGE("failed to set bits");
+		break;
+	}
+
+exit:
 	return ret;
 }
+
+cmr_u16 sensor_grc_read_i2c(cmr_u16 slave_addr, cmr_u16 addr, cmr_int bits)
+{
+	cmr_int ret = SENSOR_SUCCESS;
+	cmr_u16 reg = 0;
+
+	ret = sns_grc_read_i2c(slave_addr, &reg, addr, bits);
+	if (ret)
+		CMR_LOGE("failed to read i2c");
+
+	return reg;
+}
+
+static cmr_int sns_grc_write_i2c(cmr_u16 slave_addr, cmr_u16 reg, cmr_u16 addr, cmr_int bits)
+{
+	cmr_int ret = -SENSOR_FAIL;
+	cmr_u8 cmd[4] = { 0x00 };
+	struct sensor_i2c_tag i2c_tab;
+	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)sensor_get_dev_cxt();
+
+	i2c_tab.slave_addr = slave_addr;
+
+	switch (bits) {
+	case BITS_REG8_ADDR8:
+		cmd[0] = 0x00ff & reg;
+		cmd[1] = 0x00ff & addr;
+		i2c_tab.i2c_data = cmd;
+		i2c_tab.i2c_count = 2;
+		break;
+	case BITS_REG8_ADDR16:
+		cmd[0] = 0x00ff & reg;
+		cmd[1] = (0xff00 & addr) >> 8;
+		cmd[2] = 0x00ff & addr;
+		i2c_tab.i2c_data = cmd;
+		i2c_tab.i2c_count = 3;
+		break;
+	case BITS_REG16_ADDR8:
+		cmd[0] = (0xff00 & reg) >> 8;
+		cmd[1] = 0x00ff & reg;
+		cmd[2] = 0x00ff & addr;
+		i2c_tab.i2c_data = cmd;
+		i2c_tab.i2c_count = 3;
+		break;
+	case BITS_REG16_ADDR16:
+		cmd[0] = (0xff00 & reg) >> 8;
+		cmd[1] = 0x00ff & reg;
+		cmd[2] = (0xff00 & addr) >> 8;
+		cmd[3] = 0x00ff & addr;
+		i2c_tab.i2c_data = cmd;
+		i2c_tab.i2c_count = 4;
+		break;
+	default:
+		CMR_LOGE("failed to set bits");
+		goto exit;
+		break;
+	}
+	ret = sns_dev_i2c_write(sensor_cxt, &i2c_tab);
+exit:
+	return ret;
+}
+
+cmr_u16 sensor_grc_write_i2c(cmr_u16 slave_addr, cmr_u16 reg, cmr_u16 addr, cmr_int bits)
+{
+	cmr_int ret = SENSOR_SUCCESS;
+	ret = sns_grc_write_i2c(slave_addr, reg, addr, bits);
+	if (ret)
+		CMR_LOGE("failed to read i2c");
+
+	return reg;
+}
+
 void Sensor_Reset(cmr_u32 level)
 {
 	cmr_int err = 0xff;
@@ -1000,7 +1104,7 @@ void Sensor_SetExportInfo(struct sensor_drv_context *sensor_cxt)
 			exp_info_ptr->raw_info_ptr->ioctrl_ptr->set_gain = exp_info_ptr->ioctl_func_ptr->write_gain_value;
 			exp_info_ptr->raw_info_ptr->ioctrl_ptr->ext_fuc = exp_info_ptr->ioctl_func_ptr->set_focus;
 			exp_info_ptr->raw_info_ptr->ioctrl_ptr->write_i2c = Sensor_WriteI2C;
-			exp_info_ptr->raw_info_ptr->ioctrl_ptr->read_i2c = Sensor_ReadI2C;
+			//exp_info_ptr->raw_info_ptr->ioctrl_ptr->read_i2c = Sensor_ReadI2C;
 			exp_info_ptr->raw_info_ptr->ioctrl_ptr->ex_set_exposure= exp_info_ptr->ioctl_func_ptr->ex_write_exp;
 		}
 

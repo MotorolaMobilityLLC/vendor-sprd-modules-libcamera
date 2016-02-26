@@ -1992,7 +1992,7 @@ static int camera_get_reloadinfo(cmr_handle  oem_handle, struct isp_cali_param *
 	uint32_t                       otp_start_addr = 0;
 	uint32_t                       otp_data_len = 0;
 	SENSOR_VAL_T                   val;
-	SENSOR_OTP_PARAM_T             param_ptr;
+	struct _sensor_otp_param_tag   param_ptr;
 	const char                     golden_file[] = "/data/golden.bin";
 	const char                     random_lsc_file[] = "/data/random_lsc.bin";
 	const char                     random_awb_file[] = "/data/random_awb.bin";

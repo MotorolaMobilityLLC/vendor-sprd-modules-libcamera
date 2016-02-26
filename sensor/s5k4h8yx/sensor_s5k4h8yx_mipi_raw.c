@@ -19,9 +19,6 @@
 #include "jpeg_exif_header.h"
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
-#include "s5k4h8_packet_convert.h"
-#include "sensor_s5k4h8yx_golden.c"
-#include "sensor_s5k4h8yx_lsc_otp_golden.c"
 #if defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4)
 #include "sensor_s5k4h8yx_raw_param_v3.c"
 #else
@@ -1600,7 +1597,7 @@ static uint32_t _s5k4h8yx_read_vcm(uint32_t *param)
 
 	cmd_len = 1;
 	cmd_val[0] = ((*param)>>16) & 0xff;
-	ret_value = (uint32_t)Sensor_ReadI2C(slave_addr,(cmr_u8*)&cmd_val[0], cmd_len);
+	//ret_value = (uint32_t)Sensor_ReadI2C(slave_addr,(cmr_u8*)&cmd_val[0], cmd_len);
 	if (SENSOR_SUCCESS == ret_value)
 		*param |= cmd_val[0];
 
@@ -1633,7 +1630,7 @@ LOCAL uint32_t _s5k4h8yx_erase_otp(unsigned long param)
 LOCAL uint32_t _s5k4h8yx_write_otp(unsigned long param)
 {
 	uint32_t rtn=SENSOR_SUCCESS;
-	SENSOR_OTP_PARAM_T* param_ptr = (SENSOR_OTP_PARAM_T*)param;
+	struct _sensor_otp_param_tag * param_ptr = (struct _sensor_otp_param_tag *)param;
 	uint32_t start_addr = param_ptr->start_addr;
 	uint32_t len  		= param_ptr->len;
 	uint8_t *buff 		= param_ptr->buff;
@@ -1660,8 +1657,9 @@ LOCAL uint32_t _s5k4h8yx_write_otp(unsigned long param)
 
 LOCAL uint32_t _s5k4h8yx_read_otp(unsigned long param)
 {
+#if 0
 	uint32_t rtn                  = SENSOR_SUCCESS;
-	SENSOR_OTP_PARAM_T* param_ptr = (SENSOR_OTP_PARAM_T*)param;
+	struct _sensor_otp_param_tag* param_ptr = (struct _sensor_otp_param_tag *)param;
 	uint32_t start_addr           = 0;
 	uint32_t len                  = 0;
 	uint8_t *buff                 = NULL;
@@ -1725,16 +1723,17 @@ LOCAL uint32_t _s5k4h8yx_read_otp(unsigned long param)
 		CMR_LOGI("SENSOR_s5k4h8yx: lsc real_size %d", real_size);
 	}
 	CMR_LOGI("SENSOR_s5k4h8yx: _s5k4h8yx_read_otp X");
-
 	return rtn;
-
+#else
+	return 0;
+#endif
 }
 
 
 LOCAL uint32_t _s5k4h8yx_parse_otp(unsigned long param)
 {
 	uint32_t rtn                  = SENSOR_SUCCESS;
-	SENSOR_OTP_PARAM_T* param_ptr = (SENSOR_OTP_PARAM_T*)param;
+	struct _sensor_otp_param_tag* param_ptr = (struct _sensor_otp_param_tag *)param;
 	uint8_t *buff                 = NULL;
 	uint32_t awb_src_addr = 0x900;
 	uint32_t lsc_src_addr = 0xA00;
@@ -1743,7 +1742,7 @@ LOCAL uint32_t _s5k4h8yx_parse_otp(unsigned long param)
 	if (NULL == param_ptr) {
 		return -1;
 	}
-
+#if 0
 	CMR_LOGI("SENSOR_s5k4h8yx: _s5k4h8yx_parse_otp E");
 
 	buff                 = param_ptr->buff;
@@ -1763,19 +1762,20 @@ LOCAL uint32_t _s5k4h8yx_parse_otp(unsigned long param)
 	}
 
 	CMR_LOGI("SENSOR_s5k4h8yx: _s5k4h8yx_parse_otp X");
+#endif
 	return rtn;
-
 }
 
 static uint32_t _s5k4h8yx_get_golden_data(unsigned long param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
-	SENSOR_OTP_PARAM_T* param_ptr = (SENSOR_OTP_PARAM_T*)param;
-
+	struct _sensor_otp_param_tag* param_ptr = (struct _sensor_otp_param_tag *)param;
+#if 0
 	param_ptr->golden.data_ptr = (void*)s5k4h8_golden_data;
 	param_ptr->golden.size = sizeof(s5k4h8_golden_data);
 
 	SENSOR_PRINT("SENSOR_s5k4h8yx: golden: %d", param_ptr->golden.size);
+#endif
 
 	return rtn;
 }
@@ -1834,7 +1834,7 @@ static unsigned long _s5k4h8yx_access_val(unsigned long param)
 			rtn = _s5k4h8yx_get_golden_data((unsigned long)param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_GET_GOLDEN_LSC_DATA:
-			*(uint32_t*)param_ptr->pval = s5k4h8_lsc_golden_data;
+			//*(uint32_t*)param_ptr->pval = s5k4h8_lsc_golden_data;
 			break;
 		default:
 			break;
