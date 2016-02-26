@@ -621,15 +621,8 @@ void SprdCameraHardware::release()
 	}
 	// Free mCommonHeapReserved for preview, video, and zsl
 	if (NULL != mCommonHeapReserved) {
-#ifdef SC_IOMMU_PF
-		freeCameraMem(*(sprd_camera_memory_t**)mCommonHeapReserved);
-		freeCameraMem(*(sprd_camera_memory_t**)(mCommonHeapReserved + 1));
-		free(mCommonHeapReserved);
-		mCommonHeapReserved = NULL;
-#else
 		freeCameraMem(mCommonHeapReserved);
 		mCommonHeapReserved = NULL;
-#endif
 	}
 	pre_alloc_cap_mem_thread_deinit((void *)this);
 

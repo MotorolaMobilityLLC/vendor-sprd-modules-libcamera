@@ -517,7 +517,11 @@ private:
 #else
 	sprd_camera_memory_t*			mPreviewHeapArray[kPreviewBufferCount+kPreviewRotBufferCount+1];
 #endif
+#ifdef SC_IOMMU_PF
+	sprd_camera_memory_t*           mVideoHeapArray[kVideoBufferCount+kVideoRotBufferCount+1][2];
+#else
 	sprd_camera_memory_t*           mVideoHeapArray[kVideoBufferCount+kVideoRotBufferCount+1];
+#endif
 	sprd_camera_memory_t*           mZslHeapArray[kZslBufferCount+kZslRotBufferCount+1];
 #ifdef CONFIG_MEM_OPTIMIZATION
 	uintptr_t                       mZslHeapArray_phy[kZslBufferCount+kZslRotBufferCount+1];

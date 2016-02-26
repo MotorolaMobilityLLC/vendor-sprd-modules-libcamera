@@ -196,7 +196,7 @@ cmr_int cmr_preview_after_set_param(cmr_handle preview_handle,
 
 cmr_int cmr_preview_set_preview_buffer(cmr_handle preview_handle, cmr_u32 camera_id, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd);
 
-cmr_int cmr_preview_set_video_buffer(cmr_handle preview_handle, cmr_u32 camera_id, cmr_uint src_phy_addr, cmr_uint src_vir_addr);
+cmr_int cmr_preview_set_video_buffer(cmr_handle preview_handle, cmr_u32 camera_id, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd);
 
 cmr_int cmr_preview_set_zsl_buffer(cmr_handle preview_handle, cmr_u32 camera_id, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_uint zsl_private);
 #ifdef __cplusplus

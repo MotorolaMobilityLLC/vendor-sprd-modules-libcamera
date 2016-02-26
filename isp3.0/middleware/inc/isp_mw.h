@@ -26,6 +26,7 @@ typedef cmr_int ( *proc_callback)(cmr_handle handle, cmr_u32 mode, void* param_p
 #define ISP_MODE_NUM_MAX                               16
 #define ISP_EVT_MASK                                   0x00000F00
 #define ISP_CALLBACK_EVT                               0x00040000
+#define ISP_SNR_NAME_MAX_LEN							64
 
 /*******************************enum type*************************************************/
 enum isp_callback_cmd {
@@ -341,6 +342,27 @@ struct isp_ops {
 	cmr_s32  (*flash_set_time)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element);
 };
 
+struct  isp_sensor_ex_info{
+    cmr_u32 f_num;
+    cmr_u32 max_fps;
+    cmr_u32 max_adgain;
+    cmr_u32 ois_supported;
+    cmr_u32 pdaf_supported;
+    cmr_u32 exp_valid_frame_num;
+    cmr_u32 clamp_level;
+    cmr_u32 adgain_valid_frame_num;
+    cmr_u32 preview_skip_num;
+    cmr_u32 capture_skip_num;
+	cmr_u32 sensor_name[ISP_SNR_NAME_MAX_LEN];
+};
+
+struct isp_sensor_fps_info{
+	cmr_u32 is_high_fps;
+	cmr_u32 high_fps_skip_num;
+	cmr_u32 max_fps;    //x100
+	cmr_u32 min_fps;     //x100
+};
+
 struct isp_init_param {
 	cmr_u32 camera_id;
 	void* setting_param_ptr;
@@ -354,6 +376,7 @@ struct isp_init_param {
 	cmr_malloc alloc_cb;
 	cmr_free   free_cb;
 	void* setting_param_list_ptr[3];//0:back,1:front,2:dual back,
+	struct isp_sensor_ex_info      ex_info;
 };
 
 struct isp_video_limit {
@@ -415,6 +438,7 @@ struct isp_video_start {
 	cmr_uint anti_flicker_virt_addr;
 	cmr_u32 is_need_flash;
 	cmr_u32 capture_skip_num;
+	struct isp_sensor_fps_info sensor_fps;
 };
 
 struct ips_in_param {

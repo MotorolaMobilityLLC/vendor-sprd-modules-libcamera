@@ -718,15 +718,15 @@ exit:
 	CMR_LOGV("done %ld", ret);
 	return ret;
 }
-cmr_int camera_set_video_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr)
+cmr_int camera_set_video_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd)
 {
 	cmr_int    ret = CMR_CAMERA_SUCCESS;
-	if (!camera_handle || !src_phy_addr || !src_vir_addr) {
+	if (!camera_handle  || !src_vir_addr) {
 		CMR_LOGE("Invalid param error");
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}
-	ret = camera_local_set_video_buffer(camera_handle, src_phy_addr, src_vir_addr);
+	ret = camera_local_set_video_buffer(camera_handle, src_phy_addr, src_vir_addr, fd);
 	if (ret) {
 		CMR_LOGE("failed %ld", ret);
 	}

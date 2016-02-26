@@ -366,6 +366,8 @@ typedef enum {
 	SENSOR_VAL_TYPE_READ_OTP_GAIN,
 	SENSOR_VAL_TYPE_GET_GOLDEN_DATA,
 	SENSOR_VAL_TYPE_GET_GOLDEN_LSC_DATA,
+	SENSOR_VAL_TYPE_GET_STATIC_INFO,
+	SENSOR_VAL_TYPE_GET_FPS_INFO,
 	SENSOR_VAL_TYPE_MAX
 } SENSOR_IOCTL_VAL_TYPE;
 
@@ -482,6 +484,25 @@ typedef enum {
 	DCAMERA_EFFECT_RELIEVOS,
 	DCAMERA_EFFECT_MAX
 } DCAMERA_PARAM_EFFECT_E;
+
+typedef enum {
+	SENSOR_OTP_TYPE,
+	MODULE_OTP_TYPE,
+	OTP_TYPE_MAX
+} CAMERA_OTP_TYPE;
+
+struct otp_data_tag {
+	cmr_u32 size;
+	void *data_ptr;
+	cmr_u16 width;
+};
+
+typedef struct sensor_otp_data {
+	struct otp_data_tag awb;
+	struct otp_data_tag lsc;
+	struct otp_data_tag af;
+	struct otp_data_tag golden;
+} OTP_DATA_INFO_TAG;
 
 typedef struct _sensor_rect_tag {
 	cmr_u16 x;

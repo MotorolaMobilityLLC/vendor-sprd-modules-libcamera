@@ -24,6 +24,7 @@
 #define AE_ISO_NUM_NEW 8
 #define AE_WEIGHT_TABLE_NUM 3
 #define AE_SCENE_NUM 8
+#define SNR_NAME_MAX_LEN 64
 struct isp_block_header {
 	cmr_u8 block_name[8];
 
@@ -78,6 +79,20 @@ struct sensor_libuse_info {
 	uint32_t reserve[32];
 };
 
+#if 0
+typedef struct
+{
+    u8                 ucSensorMode; /*FR,  binning_1, binning_2*/
+    SCINFO_SENSOR_MODULE_TYPE   ucSensorMouduleType; /*IMX_219, OV4688*/
+    u16                uwWidth; /*Width of Raw image*/
+    u16                uwHeight; /*Height of Raw image*/
+    u16                uwFrameRate; /* FPS*/
+    u32                udLineTime; /*line time x100*/
+    SCINFO_COLOR_ORDER  nColorOrder; /*color order*/
+    u16                uwClampLevel; /*sensor's clamp level*/
+} SCINFO_MODE_INFO_ISP;
+#endif
+
 struct sensor_version_info {
 	cmr_u32 version_id;
 	cmr_u32 srtuct_size;
@@ -91,6 +106,27 @@ struct sensor_raw_resolution_info {
 	cmr_u16 height;
 	cmr_u16 line_time;
 	cmr_u16 frame_line;
+};
+
+struct  sensor_ex_info{
+	cmr_u32 f_num;
+	cmr_u32 max_fps;
+	cmr_u32 max_adgain;
+	cmr_u32 ois_supported;
+	cmr_u32 pdaf_supported;
+	cmr_u32 exp_valid_frame_num;
+	cmr_u32 clamp_level;
+	cmr_u32 adgain_valid_frame_num;
+	cmr_u32 preview_skip_num;
+	cmr_u32 capture_skip_num;
+	cmr_s8  sensor_name[SNR_NAME_MAX_LEN];
+};
+
+struct sensor_fps_info{
+        cmr_u32 is_high_fps;
+        cmr_u32 high_fps_skip_num;
+        cmr_u32 max_fps;    //x100
+        cmr_u32 min_fps;    //x100
 };
 
 struct sensor_raw_resolution_info_tab {

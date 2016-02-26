@@ -1001,6 +1001,7 @@ void Sensor_SetExportInfo(struct sensor_drv_context *sensor_cxt)
 			exp_info_ptr->raw_info_ptr->ioctrl_ptr->ext_fuc = exp_info_ptr->ioctl_func_ptr->set_focus;
 			exp_info_ptr->raw_info_ptr->ioctrl_ptr->write_i2c = Sensor_WriteI2C;
 			exp_info_ptr->raw_info_ptr->ioctrl_ptr->read_i2c = Sensor_ReadI2C;
+			exp_info_ptr->raw_info_ptr->ioctrl_ptr->ex_set_exposure= exp_info_ptr->ioctl_func_ptr->ex_write_exp;
 		}
 
 	}

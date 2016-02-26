@@ -333,7 +333,7 @@ cmr_int camera_local_pre_flash (cmr_handle oem_handle);
 cmr_int camera_local_get_viewangle(cmr_handle oem_handle, struct sensor_view_angle *view_angle);
 
 cmr_int camera_local_set_preview_buffer(cmr_handle oem_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd);
-cmr_int camera_local_set_video_buffer(cmr_handle oem_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr);
+cmr_int camera_local_set_video_buffer(cmr_handle oem_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd);
 cmr_int camera_local_set_zsl_buffer(cmr_handle oem_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_uint zsl_private);
 cmr_int camera_local_set_video_snapshot_buffer(cmr_handle oem_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr);
 cmr_int camera_local_set_zsl_snapshot_buffer(cmr_handle oem_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr);

@@ -1047,6 +1047,10 @@ cmr_int cmr_sns_get_ioctl_cmd(SENSOR_IOCTL_CMD_E *sns_cmd, enum sensor_cmd in_cm
 			*sns_cmd = SENSOR_IOCTL_ACCESS_VAL;
 			break;
 
+		case SENSOR_YUV_FPS:
+			*sns_cmd = SENSOR_IOCTL_FOCUS;
+			CMR_LOGE("SENSOR_YUV_FPS --> SENSOR_IOCTL_FOCUS ");
+			break;
 		default:
 			ret = CMR_CAMERA_INVALID_PARAM;
 			break;

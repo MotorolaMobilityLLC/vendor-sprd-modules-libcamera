@@ -310,7 +310,15 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId,
 	}
 #endif
 
+#ifdef CONFIG_DCAM_SENSOR_MAIN2_SUPPORT//TBD tony.peng
+	if (1 == cameraId) {
+		mCameraId = 2;
+	} else {
+		mCameraId = cameraId;
+	}
+#else
 	mCameraId = cameraId;
+#endif
 	mCbInfoList.clear();
 	mSetting->getDefaultParameters(mParameters);
 
@@ -511,15 +519,8 @@ void SprdCamera3OEMIf::closeCamera()
 
 #ifdef CONFIG_MEM_OPTIMIZATION
 	// Free mCommonHeapReserved for preview, video, and zsl
-	#ifdef SC_IOMMU_PF
-		freeCameraMem(*(sprd_camera_memory_t**)mCommonHeapReserved);
-		freeCameraMem(*(sprd_camera_memory_t**)(mCommonHeapReserved + 1));
-		free(mCommonHeapReserved);
-		mCommonHeapReserved = NULL;
-#else
-		freeCameraMem(mCommonHeapReserved);
-		mCommonHeapReserved = NULL;
-#endif
+	freeCameraMem(mCommonHeapReserved);
+	mCommonHeapReserved = NULL;
 #endif
 
 	// Performance optimization:move Callback_CaptureFree to closeCamera function
@@ -4826,13 +4827,27 @@ int SprdCamera3OEMIf::Callback_VideoFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
 	Mutex::Autolock l(&mPrevBufLock);
 
 	HAL_LOGD("mVideoHeapNum %d sum %d", mVideoHeapNum, sum);
+#ifdef SC_IOMMU_PF
+	for (i=0 ; i<mVideoHeapNum ; i++) {
+		if (NULL != mVideoHeapArray[i][0]) {
+			freeCameraMem(mVideoHeapArray[i][0]);
+		}
+		mVideoHeapArray[i][0] = NULL;
 
+		if (NULL != mVideoHeapArray[i][1]) {
+			freeCameraMem(mVideoHeapArray[i][1]);
+		}
+		mVideoHeapArray[i][1] = NULL;
+	}
+#else
 	for (i=0 ; i<mVideoHeapNum ; i++) {
 		if (NULL != mVideoHeapArray[i]) {
 			freeCameraMem(mVideoHeapArray[i]);
 		}
 		mVideoHeapArray[i] = NULL;
 	}
+#endif
+
 	mVideoHeapNum = 0;
 
 	return 0;
@@ -4863,6 +4878,31 @@ int SprdCamera3OEMIf::Callback_VideoMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *
 		phy_addr += kVideoBufferCount;
 		vir_addr += kVideoBufferCount;
 		for (i=kVideoBufferCount ; i<(cmr_int)sum ; i++) {
+#ifdef SC_IOMMU_PF
+			memory = allocCameraMem(size, 1, true);
+			if (NULL == memory) {
+				HAL_LOGE("error memory is null.");
+				goto mem_fail;
+			}
+
+			mVideoHeapArray[i][0] = memory;
+			//mVideoHeapNum++;
+			*phy_addr++ = 0;
+			*vir_addr++ = (cmr_uint)memory->data;
+			if (NULL != mfd)
+				*mfd++ = (cmr_s32)memory->mfd;
+
+
+
+			mVideoHeapArray[i][1] = memory;
+			*phy_addr++ = 2/3*size;
+			*vir_addr++ = (cmr_uint)memory->data;
+			if (NULL != mfd)
+				*mfd++ = (cmr_s32)memory->mfd;
+
+			mVideoHeapNum++;
+
+#else
 			memory = allocCameraMem(size, 1, true);
 
 			if (NULL == memory) {
@@ -4876,6 +4916,7 @@ int SprdCamera3OEMIf::Callback_VideoMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *
 			*vir_addr++ = (cmr_uint)memory->data;
 			if (NULL != mfd)
 				*mfd++ = (cmr_s32)memory->mfd;
+#endif
 		}
 	} else {
 		HAL_LOGD("Do not need malloc, malloced num %d,request num %d, request size 0x%x",
@@ -5295,26 +5336,11 @@ int SprdCamera3OEMIf::Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint 
 	HAL_LOGD("sum %d", sum);
 
 #ifndef CONFIG_MEM_OPTIMIZATION
-	sprd_camera_memory_t **memory = NULL;
 	if (type == CAMERA_PREVIEW_RESERVED) {
 		if (NULL != mPreviewHeapReserved) {
-			memory = (sprd_camera_memory_t**)mPreviewHeapReserved;
-			if (memory) {
-				freeCameraMem(memory[0]);
-				//freeCameraMem(memory[1]);
-				free(memory);
-			}
-		
-	}
-	mPreviewHeapReserved = NULL;
-	}
-
-
-	if (type == CAMERA_ISP_LSC) {
-	if (NULL != mIspLscHeapReserved) {
-		memory = (sprd_camera_memory_t**)mIspLscHeapReserved;
- 	}
-	mIspLscHeapReserved = NULL;
+			freeCameraMem(mPreviewHeapReserved);
+		}
+		mPreviewHeapReserved = NULL;
 	}
 
 	if (type == CAMERA_VIDEO_RESERVED) {
@@ -5390,98 +5416,98 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32
 #ifdef SC_IOMMU_PF
 #ifdef CONFIG_MEM_OPTIMIZATION
 	if (type == CAMERA_PREVIEW_RESERVED || type == CAMERA_VIDEO_RESERVED || type == CAMERA_SNAPSHOT_ZSL_RESERVED) {
-		sprd_camera_memory_t **memory = NULL;
-		HAL_LOGD("size %d sum %d mPreviewHeapNum %d, type %d   11111111111", size, sum, mPreviewHeapNum,type);
 		if(NULL == mCommonHeapReserved) {
 			buffer_id = camera_pre_capture_get_buffer_id(mCameraId);
 			if (camera_get_reserve_buffer_size(mCameraId, buffer_id, &mem_size, &mem_sum) != CMR_CAMERA_SUCCESS) {
 				HAL_LOGE("camera_get_reserve_buffer_size failed");
 				goto mem_fail;
 			}
-
-			memory = (sprd_camera_memory_t**)calloc(2 , sizeof(sprd_camera_memory_t*));
-			if(!memory){
-					LOGE("error memory is null.");
-					return BAD_VALUE;
-			}
-			memory[0] = allocCameraMem(size, 1, true);
-			if (NULL == memory[0]) {
+			memory = allocCameraMem(size, 1, true);
+			if (NULL == memory) {
 				LOGE("error memory is null.");
 				goto mem_fail;
 			}
-			/*memory[1] = allocCameraMem(size>>1, 1, true);
-			if (NULL == memory[1]) {
-				LOGE("error memory is null.");
-				goto mem_fail;
-			}*/
 			mCommonHeapReserved = (sprd_camera_memory_t*)memory;
 		} else {
 			HAL_LOGD("malloc Common memory for preview, video, and zsl, malloced type %d,request num %d, request size 0x%x",
 				type, sum, size);
-			memory = (sprd_camera_memory_t**)mCommonHeapReserved;
+			memory = (sprd_camera_memory_t*)mCommonHeapReserved;
 		}
 		*phy_addr++ = 0;
-		*vir_addr++ = (cmr_uint)memory[0]->data;
+		*vir_addr++ = (cmr_uint)memory->data;
 		if (NULL != mfd)
-			*mfd++ = (cmr_s32)memory[0]->mfd;
+			*mfd++ = (cmr_s32)memory->mfd;
 		*phy_addr++ = size*2/3;
-		*vir_addr++ = (cmr_uint)memory[0]->data;
+		*vir_addr++ = (cmr_uint)memory->data;
 		if (NULL != mfd)
-			*mfd++ = (cmr_s32)memory[0]->mfd;
+			*mfd++ = (cmr_s32)memory->mfd;
 
 		HAL_LOGD("malloc mCommonHeapReserved memory, malloced vir_addr0 %d,vir_addr1 %d, mfd0 0x%x, mfd1 0x%x",
-			(cmr_uint)memory[0]->data, (cmr_uint)memory[1]->data, (cmr_s32)memory[0]->mfd, (cmr_s32)memory[1]->mfd);
+			(cmr_uint)memory->data, (cmr_uint)memory->data, (cmr_s32)memory->mfd, (cmr_s32)memory->mfd);
 	}
 #else
 	if (type == CAMERA_PREVIEW_RESERVED) {
 		HAL_LOGD("CAMERA_PREVIEW_RESERVED.");
-		sprd_camera_memory_t **memory = NULL;
-		HAL_LOGD("size %d sum %d mPreviewHeapNum %d, type %d   222222222", size, sum, mPreviewHeapNum,type);
 		if(mPreviewHeapReserved == NULL) {
-			memory = (sprd_camera_memory_t**)calloc(2 , sizeof(sprd_camera_memory_t*));
-			if(!memory){
-					LOGE("error memory is null.");
-					return BAD_VALUE;
-			}
-			memory[0] = allocCameraMem(size, 1, true);
-			if (NULL == memory[0]) {
+			memory = allocCameraMem(size, 1, true);
+			if (NULL == memory) {
 				LOGE("error memory is null.");
 				goto mem_fail;
 			}
-			/*memory[1] = allocCameraMem(size>>1, 1, true);
-			if (NULL == memory[1]) {
-				LOGE("error memory is null.");
-				goto mem_fail;
-			}*/
 			mPreviewHeapReserved = (sprd_camera_memory_t*)memory;
 		} else{
 			HAL_LOGD("malloc Common memory for preview malloced type %d,request num %d, request size 0x%x",
 				type, sum, size);
-			memory = (sprd_camera_memory_t**)mPreviewHeapReserved;
+			memory = (sprd_camera_memory_t*)mPreviewHeapReserved;
 		}
 		*phy_addr++ = 0;
-		*vir_addr++ = (cmr_uint)memory[0]->data;
+		*vir_addr++ = (cmr_uint)memory->data;
 		if (NULL != mfd)
-			*mfd++ = (cmr_s32)memory[0]->mfd;
+			*mfd++ = (cmr_s32)memory->mfd;
 		*phy_addr++ = size*2/3;
-		*vir_addr++ = (cmr_uint)memory[0]->data;
+		*vir_addr++ = (cmr_uint)memory->data;
 		if (NULL != mfd)
-			*mfd++ = (cmr_s32)memory[0]->mfd;
+			*mfd++ = (cmr_s32)memory->mfd;
 		HAL_LOGD("malloc mPreviewHeapReserved memory, malloced vir_addr0 %d,vir_addr1 %d, mfd0 0x%x, mfd1 0x%x",
-			(cmr_uint)memory[0]->data, (cmr_uint)memory[0]->data, (cmr_s32)memory[0]->mfd, (cmr_s32)memory[0]->mfd);
+			(cmr_uint)memory->data, (cmr_uint)memory->data, (cmr_s32)memory->mfd, (cmr_s32)memory->mfd);
 	} else if (type == CAMERA_VIDEO_RESERVED) {
+#ifdef SC_IOMMU_PF
+		HAL_LOGD("CAMERA_VIDEO_RESERVED.");
 		if(mVideoHeapReserved == NULL) {
 			memory = allocCameraMem(size, 1, true);
 			if (NULL == memory) {
-				HAL_LOGE("error memory is null.");
+				LOGE("error memory is null.");
 				goto mem_fail;
 			}
-			mVideoHeapReserved = memory;
+			mVideoHeapReserved = (sprd_camera_memory_t*)memory;
+		}else{
+			HAL_LOGD("malloc Common memory for video malloced type %d,request num %d, request size 0x%x",
+				type, sum, size);
+			memory = (sprd_camera_memory_t*)mVideoHeapReserved;
 		}
 		*phy_addr++ = 0;
-		*vir_addr++ = (cmr_uint)mVideoHeapReserved->data;
+		*vir_addr++ = (cmr_uint)memory->data;
 		if (NULL != mfd)
-			*mfd++ = (cmr_s32)mVideoHeapReserved->mfd;
+			*mfd++ = (cmr_s32)memory->mfd;
+
+		*phy_addr++ = size*2/3;
+		*vir_addr++ = (cmr_uint)memory->data;
+		if (NULL != mfd)
+			*mfd++ = (cmr_s32)memory->mfd;
+#else
+	if(mVideoHeapReserved == NULL) {
+		memory = allocCameraMem(size, 1, true);
+		if (NULL == memory) {
+			HAL_LOGE("error memory is null.");
+			goto mem_fail;
+		}
+		mVideoHeapReserved = memory;
+	}
+	*phy_addr++ = 0;
+	*vir_addr++ = (cmr_uint)mVideoHeapReserved->data;
+	if (NULL != mfd)
+		*mfd++ = (cmr_s32)mVideoHeapReserved->mfd;
+#endif
 	} else if(type == CAMERA_SNAPSHOT_ZSL_RESERVED) {
 		if(mZslHeapReserved == NULL) {
 			memory = allocCameraMem(size, 1, true);
@@ -5586,9 +5612,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32
 	}
 #else
 	#ifdef CONFIG_MEM_OPTIMIZATION
-	HAL_LOGD("size %d sum %d mPreviewHeapNum %d, type %d   33333333", size, sum, mPreviewHeapNum,type);
 	if (type == CAMERA_PREVIEW_RESERVED || type == CAMERA_VIDEO_RESERVED || type == CAMERA_SNAPSHOT_ZSL_RESERVED) {
-		HAL_LOGD("size %d sum %d mPreviewHeapNum %d, type %d   4444444", size, sum, mPreviewHeapNum,type);
 		if(NULL == mCommonHeapReserved) {
 			buffer_id = camera_pre_capture_get_buffer_id(mCameraId);
 			if (camera_get_reserve_buffer_size(mCameraId, buffer_id, &mem_size, &mem_sum) != CMR_CAMERA_SUCCESS) {
@@ -5615,7 +5639,6 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32
 	}
 #else
 	if (type == CAMERA_PREVIEW_RESERVED) {
-		HAL_LOGD("size %d sum %d mPreviewHeapNum %d, type %d   555555555", size, sum, mPreviewHeapNum,type);
 		if(mPreviewHeapReserved == NULL) {
 			memory = allocCameraMem(size, 1, true);
 			if (NULL == memory) {
@@ -5898,7 +5921,7 @@ int SprdCamera3OEMIf::PushPreviewbuff(buffer_handle_t * buff_handle)
 
 		if(stream) {
 			ret = stream->getQBufForHandle(buff_handle, &addr_vir, &addr_phy, &priv_data);
-			HAL_LOGD("addr_phy = 0x%lx, addr_vir = 0x%lx, ret = %d",addr_phy, addr_vir, ret);
+			HAL_LOGD("addr_phy = 0x%lx, addr_vir = 0x%lx, priv_data = 0x%lx, ret = %d",addr_phy, addr_vir, priv_data, ret);
 			if(ret == NO_ERROR) {
 				if(addr_vir != NULL)
 					camera_set_preview_buffer(mCameraHandle, addr_phy, addr_vir,priv_data);
@@ -5929,10 +5952,10 @@ int SprdCamera3OEMIf::PushVideobuff(buffer_handle_t * buff_handle)
 
 		if(stream) {
 			ret = stream->getQBufForHandle(buff_handle, &addr_vir, &addr_phy, &priv_data);
-			HAL_LOGD("addr_phy = 0x%lx, addr_vir = 0x%lx, ret = %d",addr_phy, addr_vir, ret);
+			HAL_LOGD("addr_phy = 0x%lx, addr_vir = 0x%lx, priv_data = 0x%lx, ret = %d",addr_phy, addr_vir, priv_data, ret);
 			if(ret == NO_ERROR) {
 				if(addr_vir != NULL)
-					camera_set_video_buffer(mCameraHandle, addr_phy, addr_vir);
+					camera_set_video_buffer(mCameraHandle, addr_phy, addr_vir, priv_data);
 				else
 					stream->getQBufNumForVir(addr_vir, &mDropVideoFrameNum);
 			}
@@ -6010,7 +6033,7 @@ int SprdCamera3OEMIf::PushFirstPreviewbuff()
 int SprdCamera3OEMIf::PushFirstVideobuff()
 {
 	SprdCamera3RegularChannel* channel = reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
-	cmr_uint addr_vir = NULL, addr_phy = NULL;
+	cmr_uint addr_vir = NULL, addr_phy = NULL, priv_data = NULL;
 	SprdCamera3Stream *stream = NULL;
 	uint32_t frame_number = 0;
 	int ret = NO_ERROR;
@@ -6023,10 +6046,11 @@ int SprdCamera3OEMIf::PushFirstVideobuff()
 		if(stream) {
 			ret = stream->getQBuffFirstVir(&addr_vir);
 			stream->getQBuffFirstPhy(&addr_phy);
-			HAL_LOGD("addr_phy = 0x%lx, addr_vir = 0x%lx, ret = %d",addr_phy, addr_vir, ret);
+			stream->getQBuffFirstFd(&priv_data);
+			HAL_LOGD("addr_phy = 0x%lx, addr_vir = 0x%lx, priv_data = 0x%lx, ret = %d",addr_phy, addr_vir, priv_data, ret);
 			if(ret == NO_ERROR) {
 				if(addr_vir != NULL)
-					camera_set_video_buffer(mCameraHandle, addr_phy, addr_vir);
+					camera_set_video_buffer(mCameraHandle, addr_phy, addr_vir, priv_data);
 				else
 					stream->getQBuffFirstNum(&mDropVideoFrameNum);
 			}

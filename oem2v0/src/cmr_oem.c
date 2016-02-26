@@ -1914,6 +1914,75 @@ void camera_calibrationconfigure_load (uint32_t *start_addr, uint32_t *data_size
 
 #if defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4)
 #define CMR_ISP_OTP_MAX_SIZE (100 * 1024)
+static int camera_get_otpinfo(cmr_handle  oem_handle,struct isp_cali_param *cali_param, struct isp_data_info *cali_result)
+{
+	cmr_int                        ret = 0;
+	struct camera_context          *cxt = (struct camera_context*)oem_handle;
+
+	struct isp_data_t              sensor_otp;
+	struct isp_data_t              target_buf;
+	struct sensor_otp_data         *param = NULL;
+	SENSOR_VAL_T                   val;
+	uint32_t                       otp_start_addr = 0;
+	uint32_t                       otp_data_len = 0;
+	int i;
+	CMR_LOGE("get otp info start");
+
+	param = (struct sensor_otp_data *)malloc(sizeof(struct sensor_otp_data));
+	if (NULL == param) {
+		CMR_LOGE("malloc otp param failed");
+		goto EXIT;
+	}
+	cmr_bzero(param, sizeof(struct sensor_otp_data));
+
+	param->lsc.size = CMR_ISP_OTP_MAX_SIZE;
+	param->lsc.data_ptr = malloc(param->lsc.size);
+	if (NULL == param->lsc.data_ptr) {
+		CMR_LOGE("malloc lsc failed");
+		goto EXIT;
+	}
+
+	/* read otp awb data */
+	param->awb.size = CMR_ISP_OTP_MAX_SIZE;
+	param->awb.data_ptr = malloc(param->awb.size);
+	if (NULL == param->awb.data_ptr) {
+		CMR_LOGE("malloc awb  failed");
+		goto EXIT;
+	}
+
+	/* read otp af data */
+	param->af.size = CMR_ISP_OTP_MAX_SIZE;
+	param->af.data_ptr = malloc(param->af.size);
+	if (NULL == param->af.data_ptr) {
+		CMR_LOGE("malloc af  failed");
+		goto EXIT;
+	}
+
+	val.type               = SENSOR_VAL_TYPE_READ_OTP;
+	val.pval               = param;
+	ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_ACCESS_VAL, (cmr_uint)&val);
+	if (0 != ret) {
+		CMR_LOGE("read otp data failed %ld", ret);
+		goto EXIT;
+	}
+	cali_result->data_ptr = (void *)param;
+	cali_result->size = sizeof(struct sensor_otp_data);
+	return ret;
+EXIT:
+	if (NULL != param) {
+		free(param);
+	}
+	if (NULL != param->lsc.data_ptr) {
+		free(param->lsc.data_ptr);
+	}
+	if (NULL != param->awb.data_ptr) {
+		free(param->awb.data_ptr);
+	}
+	if (NULL != param->af.data_ptr) {
+		free(param->af.data_ptr);
+	}
+	return ret;
+}
 static int camera_get_reloadinfo(cmr_handle  oem_handle, struct isp_cali_param *cali_param, struct isp_data_info* cali_result)
 {
 	int32_t                        rtn = 0;
@@ -2554,6 +2623,14 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 	isp_param.camera_id = cxt->camera_id;
 	isp_param.alloc_cb = camera_malloc;
 	isp_param.free_cb  = camera_free;
+	val.type               = SENSOR_VAL_TYPE_GET_STATIC_INFO;
+	val.pval               = &isp_param.ex_info;
+	cmr_bzero(isp_param.ex_info.sensor_name,SNR_NAME_MAX_LEN);
+	ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_ACCESS_VAL, (cmr_uint)&val);
+	if (ret) {
+		CMR_LOGE("get sensor static info failed %ld", ret);
+		goto exit;
+	}
 	CMR_LOGD("w %d h %d", isp_param.size.w,isp_param.size.h);
 	CMR_PRINT_TIME;
 	ret = isp_init(&isp_param, &isp_cxt->isp_handle);
@@ -4129,6 +4206,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 	cmr_int                        work_mode = 0;
 	cmr_int                        dv_mode = 0;
 	struct setting_cmd_parameter   setting_param;
+	SENSOR_VAL_T                   val;
 
 #if !(defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4))
 	struct isp_ae_info             isp_ae_info;
@@ -4240,6 +4318,15 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 		work_mode = param_ptr->work_mode;
 	}
 	isp_param.work_mode = work_mode;
+
+	cmr_bzero(&setting_param, sizeof(setting_param));
+	setting_param.camera_id = cxt->camera_id;
+	ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_CAPTURE_MODE, &setting_param);
+		if (ret) {
+			CMR_LOGE("failed to get dv mode %ld", ret);
+			goto exit;
+		}
+	isp_param.capture_mode =  setting_param.cmd_type_value;
 //	isp_param.dv_mode = dv_mode;
 { //TBD
 	struct sensor_mode_info        *sensor_mode_info;
@@ -4255,15 +4342,23 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 	isp_param.resolution_info.frame_line = sensor_mode_info->frame_line;
 	isp_param.resolution_info.size_index = sn_mode;
 	isp_param.resolution_info.crop.st_x = sensor_mode_info->trim_start_x;
-	isp_param.resolution_info.crop.st_x = sensor_mode_info->trim_start_y;
+	isp_param.resolution_info.crop.st_y = sensor_mode_info->trim_start_y;
 	isp_param.resolution_info.crop.width = sensor_mode_info->trim_width;
 	isp_param.resolution_info.crop.height = sensor_mode_info->trim_height;
-	isp_param.resolution_info.fps.max_fps = 30;
+	isp_param.resolution_info.fps.max_fps = 15;
 	isp_param.resolution_info.fps.min_fps = 1;
 	isp_param.resolution_info.max_gain = 16;
 }
-	CMR_LOGI("work_mode %ld, dv_mode %ld", work_mode, dv_mode);
+	CMR_LOGI("work_mode %ld, dv_mode %ld, capture_mode %ld", work_mode, dv_mode, isp_param.capture_mode);
 	CMR_LOGI("isp w h, %d %d", isp_param.size.w, isp_param.size.h);
+
+	val.type               = SENSOR_VAL_TYPE_GET_FPS_INFO;
+	val.pval               = &isp_param.sensor_fps;
+	ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_ACCESS_VAL, (cmr_uint)&val);
+	if (ret) {
+		CMR_LOGE("get sensor fps info failed %ld", ret);
+		goto exit;
+	}
 	ret = isp_video_start(isp_cxt->isp_handle, &isp_param);
 	if (!ret) {
 		isp_cxt->is_work = 1;
@@ -6641,18 +6736,18 @@ cmr_int camera_local_set_preview_buffer(cmr_handle oem_handle, cmr_uint src_phy_
 exit:
 	return ret;
 }
-cmr_int camera_local_set_video_buffer(cmr_handle oem_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr)
+cmr_int camera_local_set_video_buffer(cmr_handle oem_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd)
 {
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt;
 	struct sensor_exp_info         exp_info;
-	if (!oem_handle || !src_phy_addr || !src_vir_addr) {
+	if (!oem_handle  || !src_vir_addr) {
 		CMR_LOGE("in parm error");
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}
 	cxt = (struct camera_context*)oem_handle;
-	ret = cmr_preview_set_video_buffer(cxt->prev_cxt.preview_handle, cxt->camera_id, src_phy_addr, src_vir_addr);
+	ret = cmr_preview_set_video_buffer(cxt->prev_cxt.preview_handle, cxt->camera_id, src_phy_addr, src_vir_addr, fd);
 	if (ret) {
 		CMR_LOGE("failed to set video buffer %ld", ret);
 		goto exit;

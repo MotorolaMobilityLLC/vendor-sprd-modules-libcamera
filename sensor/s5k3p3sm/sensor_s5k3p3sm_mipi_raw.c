@@ -371,12 +371,12 @@ static SENSOR_IOCTL_FUNC_TAB_T s_s5k3p3sm_ioctl_func_tab = {
 	_s5k3p3sm_BeforeSnapshot,
 	PNULL,//_s5k3p3sm_after_snapshot,
 	PNULL,//_s5k3p3sm_flash,
-	PNULL,
+	PNULL,//read_ae_value
 	_s5k3p3sm_write_exposure,
-	PNULL,
+	PNULL,//read_gain_value
 	_s5k3p3sm_write_gain,
-	PNULL,
-	PNULL,
+	PNULL,//read_gain_scale
+	PNULL,//set_frame_rate
 	s5k3p3sm_write_af,
 	PNULL,
 	PNULL,//_s5k3p3sm_set_awb,
@@ -395,7 +395,7 @@ static SENSOR_IOCTL_FUNC_TAB_T s_s5k3p3sm_ioctl_func_tab = {
 	PNULL,//get_status
 	_s5k3p3sm_StreamOn,
 	_s5k3p3sm_StreamOff,
-	s5k3p3sm_cfg_otp,//	_s5k3p3sm_access_val,
+	_s5k3p3sm_access_val,//s5k3p3sm_cfg_otp,
 	_s5k3p3sm_ex_write_exposure
 };
 
@@ -1036,7 +1036,7 @@ static unsigned long _s5k3p3sm_StreamOff(unsigned long param)
 	SENSOR_PRINT_ERR("SENSOR_S5K3P3SM: StreamOff");
 
 	Sensor_WriteReg(0x0100, 0x0000);
-	usleep(10*1000);
+	usleep(120*1000);
 
 	return 0;
 }
@@ -1142,6 +1142,51 @@ static uint16_t _s5k3p3sm_get_shutter(void)
 #endif
 }
 
+static uint32_t _s5k3p3sm_get_static_info(uint32_t *param)
+{
+	uint32_t rtn = SENSOR_SUCCESS;
+	struct sensor_ex_info *ex_info;
+	ex_info = (struct sensor_ex_info*)param;
+	ex_info->f_num = 200;
+	ex_info->max_fps = 30;
+	ex_info->max_adgain = 16;
+	ex_info->ois_supported = 0;
+	ex_info->pdaf_supported = 0;
+	ex_info->exp_valid_frame_num = 1;
+	ex_info->clamp_level = 64;
+	ex_info->adgain_valid_frame_num = 1;
+	ex_info->preview_skip_num = g_s5k3p3sm_mipi_raw_info.preview_skip_num;
+	ex_info->capture_skip_num = g_s5k3p3sm_mipi_raw_info.capture_skip_num;
+	cmr_copy(ex_info->sensor_name,"s5k3p3sm",8);
+	SENSOR_PRINT("SENSOR_s5k3p3sm: f_num: %d", ex_info->f_num);
+	SENSOR_PRINT("SENSOR_s5k3p3sm: max_fps: %d", ex_info->max_fps);
+	SENSOR_PRINT("SENSOR_s5k3p3sm: max_adgain: %d", ex_info->max_adgain);
+	SENSOR_PRINT("SENSOR_s5k3p3sm: ois_supported: %d", ex_info->ois_supported);
+	SENSOR_PRINT("SENSOR_s5k3p3sm: pdaf_supported: %d", ex_info->pdaf_supported);
+	SENSOR_PRINT("SENSOR_s5k3p3sm: exp_valid_frame_num: %d", ex_info->exp_valid_frame_num);
+	SENSOR_PRINT("SENSOR_s5k3p3sm: clam_level: %d", ex_info->clamp_level);
+	SENSOR_PRINT("SENSOR_s5k3p3sm: adgain_valid_frame_num: %d", ex_info->adgain_valid_frame_num);
+
+	return rtn;
+}
+
+static uint32_t _s5k3p3sm_get_fps_info(uint32_t *param)
+{
+	uint32_t rtn = SENSOR_SUCCESS;
+	struct sensor_fps_info *fps_info;
+	fps_info = (struct sensor_fps_info*)param;
+	fps_info->max_fps = 60;
+	fps_info->min_fps = 15;
+	fps_info->is_high_fps = 1;
+	fps_info->high_fps_skip_num = 4;
+	SENSOR_PRINT("SENSOR_s5k3p3sm: max_fps: %d", fps_info->max_fps);
+	SENSOR_PRINT("SENSOR_s5k3p3sm: min_fps: %d", fps_info->min_fps);
+	SENSOR_PRINT("SENSOR_s5k3p3sm: is_high_fps: %d", fps_info->is_high_fps);
+	SENSOR_PRINT("SENSOR_s5k3p3sm: high_fps_skip_num: %d", fps_info->high_fps_skip_num);
+
+	return rtn;
+}
+
 static unsigned long _s5k3p3sm_access_val(unsigned long param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
@@ -1167,6 +1212,7 @@ static unsigned long _s5k3p3sm_access_val(unsigned long param)
 			break;
 		case SENSOR_VAL_TYPE_READ_OTP:
 			((SENSOR_OTP_PARAM_T*)param_ptr->pval)->len = 0;
+			s5k3p3sm_cfg_otp(param_ptr->pval);
 			rtn=SENSOR_FAIL;
 			//rtn = _hi544_read_otp((uint32_t)param_ptr->pval);
 			break;
@@ -1187,6 +1233,12 @@ static unsigned long _s5k3p3sm_access_val(unsigned long param)
 			break;
 		case SENSOR_VAL_TYPE_READ_OTP_GAIN:
 			rtn = _s5k3p3sm_read_otp_gain(param_ptr->pval);
+			break;
+		case SENSOR_VAL_TYPE_GET_STATIC_INFO:
+			rtn = _s5k3p3sm_get_static_info(param_ptr->pval);
+			break;
+		case SENSOR_VAL_TYPE_GET_FPS_INFO:
+			rtn = _s5k3p3sm_get_fps_info(param_ptr->pval);
 			break;
 		default:
 			break;
