@@ -3395,11 +3395,11 @@ static cmr_int camera_res_deinit_internal(cmr_handle oem_handle)
 
 	camera_setting_deinit(oem_handle);
 
-	camera_grab_deinit(oem_handle);
-
 	camera_rotation_deinit(oem_handle);
 
 	camera_scaler_deinit(oem_handle);
+
+	camera_grab_deinit(oem_handle);
 
 	camera_ipm_deinit(oem_handle);
 

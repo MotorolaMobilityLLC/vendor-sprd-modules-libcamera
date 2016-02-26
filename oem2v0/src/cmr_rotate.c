@@ -22,7 +22,7 @@
 #include "cmr_cvt.h"
 #include "sprd_cpp.h"
 
-static cmr_s8 rot_dev_name[50] = "/dev/sprd_rotation";
+static cmr_s8 rot_dev_name[50] = "/dev/sprd_cpp";
 
 extern cmr_s32 cmr_grab_get_cpp_fd(cmr_handle grab_handle);
 
@@ -71,14 +71,13 @@ cmr_int cmr_rot_open(cmr_handle *rot_handle)
 		ret = - CMR_CAMERA_FAIL;
 		goto open_out;
 	}
-#if 0
+
 	fd = open(rot_dev_name, O_RDWR, 0);
 	if (fd < 0) {
 		CMR_LOGE("Fail to open rotation device.");
 		goto rot_free;
 	}
-#endif
-	fd = cmr_grab_get_cpp_fd(*rot_handle);
+
 
 	ret = ioctl(fd, SPRD_CPP_IO_OPEN_ROT, &val);
 	if (ret)
@@ -210,7 +209,7 @@ cmr_int cmr_rot_close(cmr_handle rot_handle)
 	if (ret)
 		ret = -CMR_CAMERA_FAIL;
 
-	//close(file->fd);
+	close(file->fd);
 
 close_free:
 	free(file);

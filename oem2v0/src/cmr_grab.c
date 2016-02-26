@@ -51,7 +51,6 @@
 struct cmr_grab
 {
 	cmr_s32                 fd;
-	cmr_s32                 cpp_fd;
 	cmr_evt_cb              grab_evt_cb;
 	sem_t                   exit_sem;
 	pthread_mutex_t         cb_mutex;
@@ -105,8 +104,7 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr, cmr_handle *grab_h
 	sem_init(&p_grab->exit_sem, 0, 0);
 	CMR_LOGI("Start to open GRAB device. %p", *p_grab);
 	p_grab->fd = open(CMR_GRAB_DEV_NAME, O_RDWR, 0);
-	p_grab->cpp_fd = open(CMR_CPP_DEV_NAME, O_RDWR, 0);
-	if (-1 == p_grab->fd || -1 == p_grab->cpp_fd) {
+	if (-1 == p_grab->fd) {
 		CMR_LOGE("Failed to open dcam device.errno : %d", errno);
 		fprintf(stderr, "Cannot open '%s': %d, %s\n", CMR_GRAB_DEV_NAME, errno,  strerror(errno));
 		cmr_grap_free_grab(p_grab);
@@ -197,8 +195,6 @@ cmr_int cmr_grab_deinit(cmr_handle grab_handle)
 			fprintf(stderr, "error %d, %s\n", errno, strerror(errno));
 			exit(EXIT_FAILURE);
 		}
-		close(p_grab->cpp_fd);
-		p_grab->cpp_fd = -1;
 		p_grab->fd = -1;
 		CMR_LOGI("p_grab->fd closed");
 	}
@@ -1250,14 +1246,5 @@ cmr_int cmr_grab_cfg_flash(cmr_handle grab_handle, void *param)
 		CMR_LOGE("error");
 	}
 	return ret;
-}
-
-cmr_s32 cmr_grab_get_cpp_fd(cmr_handle grab_handle)
-{
-	struct cmr_grab          *p_grab;
-
-	p_grab = (struct cmr_grab*)grab_handle;
-
-	return p_grab->cpp_fd;
 }
 

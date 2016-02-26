@@ -471,12 +471,12 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf()
 		freeCameraMem(mIspLscHeapReserved);
 		mIspLscHeapReserved = NULL;
 	}
-
+/*
 	if (NULL != mIspAntiFlickerHeapReserved) {
 		freeCameraMem(mIspAntiFlickerHeapReserved);
 		mIspAntiFlickerHeapReserved = NULL;
 	}
-
+*/
 
 	for (i = 0; i < kISPB4awbCount; i++) {
 		if (NULL != mIspB4awbHeapReserved[i]) {

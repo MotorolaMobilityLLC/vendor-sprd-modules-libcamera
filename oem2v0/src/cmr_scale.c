@@ -61,7 +61,7 @@ struct scale_cfg_param_t{
 
 extern cmr_s32 cmr_grab_get_cpp_fd(cmr_handle grab_handle);
 
-static cmr_s8 scaler_dev_name[50] = "/dev/sprd_scale";
+static cmr_s8 scaler_dev_name[50] = "/dev/sprd_cpp";
 
 static cmr_int cmr_scale_restart(struct scale_file *file);
 
@@ -411,9 +411,9 @@ cmr_int cmr_scale_open(cmr_handle *scale_handle)
 	}
 
 	for ( ; time_out > 0; time_out--) {
-		fd = cmr_grab_get_cpp_fd(*scale_handle);
-		//fd = open(scaler_dev_name, O_RDWR, 0);
-
+		//fd = cmr_grab_get_cpp_fd(*scale_handle);
+		fd = open(scaler_dev_name, O_RDWR, 0);
+		CMR_LOGE("----tony----cpp device.scale_open : %ld", fd);
 		ret = ioctl(fd, SPRD_CPP_IO_OPEN_SCALE, &val);
 		if (ret)
 			usleep(50*1000);
@@ -714,12 +714,12 @@ cmr_int cmr_scale_close(cmr_handle scale_handle)
 	}
 
 	if (-1 != file->handle) {
-		//if (-1 == close(file->handle)) {
-		//	CMR_LOGE("scale error: close");
-		//}
 		ret = ioctl(file->handle, SPRD_CPP_IO_CLOSE_SCALE, &val);
 		if (ret)
 			CMR_LOGE("scale error: close");
+		if (-1 == close(file->handle)) {
+			CMR_LOGE("scale error: close");
+		}
 	} else {
 		CMR_LOGE("scale error: handle is invalid");
 	}
