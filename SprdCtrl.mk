@@ -18,10 +18,7 @@ LOCAL_C_INCLUDES := \
 	system/media/camera/include \
 	kernel/include/video \
 	vendor/sprd/modules/libmemion \
-	vendor/sprd/external/kernel-headers \
-#	$(TOP)/vendor/sprd/modules/libmemion \
-#	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
-#	$(TARGET_OUT_INTERMEDIATES)/KERNEL \
+	vendor/sprd/external/kernel-headers
 
 
 ifeq ($(strip $(TARGET_GPU_PLATFORM)),midgard)
@@ -39,18 +36,9 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/isp3.0/middleware/inc
 endif
 
-# start: sepreate the oem folder to oem and oem2v0 according to isp version
-# oem for tshark/sharkl and oem2v0 for tshark2.
-ifeq ($(strip $(isp_use2.0)),1)
 LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/oem2v0/inc \
     $(LOCAL_PATH)/oem2v0/isp_calibration/inc
-else
-LOCAL_C_INCLUDES += \
-    $(LOCAL_PATH)/oem/inc \
-    $(LOCAL_PATH)/oem/isp_calibration/inc
-endif
-# end.
 
 LOCAL_SRC_FILES+= \
 	hal1.0/src/SprdCameraParameters.cpp \
@@ -82,11 +70,8 @@ LOCAL_SRC_FILES+= \
 	tool/mtrace/mtrace.c
 
 
-# start: sepreate the oem folder to oem and oem2v0 according to isp version
-# oem for tshark/sharkl and oem2v0 for tshark2.
-ifeq ($(strip $(isp_use2.0)),1)
 LOCAL_SRC_FILES+= \
-    oem2v0/src/SprdOEMCamera.c \
+	oem2v0/src/SprdOEMCamera.c \
 	oem2v0/src/cmr_common.c \
 	oem2v0/src/cmr_oem.c \
 	oem2v0/src/cmr_setting.c \
@@ -105,155 +90,37 @@ LOCAL_SRC_FILES+= \
 	oem2v0/src/sensor_drv_u.c \
 	oem2v0/isp_calibration/src/isp_calibration.c \
 	oem2v0/isp_calibration/src/isp_cali_interface.c
-else
+
+include $(LOCAL_PATH)/isp2.0/isp2_0.mk
 LOCAL_SRC_FILES+= \
-    oem/src/SprdOEMCamera.c \
-	oem/src/cmr_common.c \
-	oem/src/cmr_oem.c \
-	oem/src/cmr_setting.c \
-	oem/src/cmr_mem.c \
-	oem/src/cmr_scale.c \
-	oem/src/cmr_rotate.c \
-	oem/src/cmr_grab.c \
-	oem/src/jpeg_codec.c \
-	oem/src/cmr_exif.c \
-	oem/src/sensor_cfg.c \
-	oem/src/cmr_preview.c \
-	oem/src/cmr_snapshot.c \
-	oem/src/cmr_sensor.c \
-	oem/src/cmr_ipm.c \
-	oem/src/cmr_focus.c \
-	oem/src/sensor_drv_u.c \
-	oem/isp_calibration/src/isp_calibration.c \
-	oem/isp_calibration/src/isp_cali_interface.c
-endif
-# end.
+	sensor/ov5640/sensor_ov5640_mipi.c \
+	sensor/ov5640/sensor_ov5640_mipi_raw.c \
+	sensor/s5k3p3sm/sensor_s5k3p3sm_mipi_raw.c \
+	sensor/af_bu64297gwz.c \
+	sensor/s5k4h8yx/sensor_s5k4h8yx_mipi_raw.c
 
-ifneq ($(strip $(TARGET_BOARD_IS_SC_FPGA)),true)
-	ifeq ($(strip $(isp_use2.0)),1)
-	include $(LOCAL_PATH)/isp2.0/isp2_0.mk
-	LOCAL_SRC_FILES+= \
-		sensor/ov5640/sensor_ov5640_mipi.c \
-		sensor/ov5640/sensor_ov5640_mipi_raw.c \
-		sensor/ov5670/sensor_ov5670_mipi_raw.c \
-		sensor/gc2155/sensor_gc2155_mipi.c \
-		sensor/ov8825/sensor_ov8825_mipi_raw.c \
-		sensor/hi544/sensor_hi544_mipi_raw.c \
-		sensor/hi255/sensor_hi255.c \
-		sensor/sensor_gc0310_mipi.c \
-		sensor/ov5648/sensor_ov5648_mipi_raw.c \
-		sensor/ov13850/sensor_ov13850_mipi_raw.c \
-		sensor/ov2680/sensor_ov2680_mipi_raw.c \
-		sensor/s5k4h5yc/sensor_s5k4h5yc_mipi_raw.c \
-		sensor/s5k5e3yx/sensor_s5k5e3yx_mipi_raw.c \
-		sensor/s5k4h5yc/sensor_s5k4h5yc_mipi_raw_jsl.c \
-		sensor/s5k3l2xx/sensor_s5k3l2xx_mipi_raw.c \
-		sensor/s5k3p3sm/sensor_s5k3p3sm_mipi_raw.c \
-		sensor/af_bu64297gwz.c \
-		sensor/s5k4h5yc/packet_convert.c \
-
-	else
-	include $(LOCAL_PATH)/isp1.0/isp1_0.mk
-	LOCAL_SRC_FILES+= \
-		tool/auto_test/src/SprdCameraHardware_autest_Interface.cpp \
-		sensor/sensor_ov8825_mipi_raw.c \
-		sensor/sensor_autotest_ov8825_mipi_raw.c\
-		sensor/sensor_ov13850_mipi_raw.c \
-		sensor/sensor_ov5648_mipi_raw.c \
-		sensor/sensor_ov5670_mipi_raw.c \
-		sensor/sensor_ov2680_mipi_raw.c \
-		sensor/sensor_ov8858_mipi_raw.c \
-		sensor/sensor_imx179_mipi_raw.c \
-		sensor/sensor_imx219_mipi_raw.c \
-		sensor/sensor_hi544_mipi_raw.c \
-		sensor/sensor_ov5640_mipi.c \
-		sensor/sensor_autotest_ov5640_mipi_yuv.c \
-		sensor/sensor_ov5640.c \
-		sensor/sensor_autotest_ov5640_ccir_yuv.c \
-		sensor/sensor_autotest_ccir_yuv.c \
-		sensor/sensor_JX205_mipi_raw.c \
-		sensor/sensor_gc2035.c \
-		sensor/sensor_gc2155.c \
-		sensor/sensor_gc2155_mipi.c \
-		sensor/sensor_gc0308.c \
-		sensor/sensor_gc0310_mipi.c \
-		sensor/sensor_hm2058.c \
-		sensor/sensor_ov8865_mipi_raw.c \
-		sensor/sensor_gt2005.c \
-		sensor/sensor_hi702_ccir.c \
-		sensor/sensor_pattern.c \
-		sensor/sensor_ov7675.c\
-		sensor/sensor_hi253.c\
-		sensor/sensor_hi255.c\
-		sensor/sensor_s5k4ecgx_mipi.c \
-		sensor/sensor_sp2529_mipi.c \
-		sensor/sensor_s5k4ecgx.c \
-		sensor/sensor_sr352.c \
-		sensor/sensor_sr352_mipi.c \
-		sensor/sensor_sr030pc50_mipi.c \
-		sensor/sensor_s5k4h5yb_mipi_raw.c \
-		sensor/sensor_s5k5e3yx_mipi_raw.c
-	endif
-else
-	ifeq ($(strip $(isp_use2.0)),1)
-		include $(LOCAL_PATH)/isp2.0/isp2_0.mk
-		LOCAL_SRC_FILES+= \
-			sensor/ov5640/sensor_ov5640_mipi.c \
-			sensor/ov5640/sensor_ov5640_mipi_raw.c \
-			sensor/s5k3p3sm/sensor_s5k3p3sm_mipi_raw.c \
-			sensor/af_bu64297gwz.c \
-			sensor/s5k4h8yx/sensor_s5k4h8yx_mipi_raw.c \
-
-	else
-		include $(LOCAL_PATH)/isp1.0/isp1_0.mk
-		LOCAL_SRC_FILES+= \
-			sensor/sensor_ov5640_mipi.c \
-			sensor/sensor_ov5640.c
-	endif
-endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
-	ifeq ($(strip $(TARGET_BOARD_CAMERA_FD_LIB)),omron)
-		LOCAL_C_INCLUDES += \
-			$(LOCAL_PATH)/arithmetic/omron/inc
-        ifeq ($(strip $(isp_use2.0)),1)
-            LOCAL_SRC_FILES+= oem2v0/src/cmr_fd_omron.c
-        else
-            LOCAL_SRC_FILES+= oem/src/cmr_fd_omron.c
-        endif
-	else
-        ifeq ($(strip $(isp_use2.0)),1)
-            LOCAL_SRC_FILES+= oem2v0/src/cmr_fd.c
-        else
-            LOCAL_SRC_FILES+= oem/src/cmr_fd.c
-        endif
-	endif
+ifeq ($(strip $(TARGET_BOARD_CAMERA_FD_LIB)),omron)
+	LOCAL_C_INCLUDES += \
+			    $(LOCAL_PATH)/arithmetic/omron/inc
+	LOCAL_SRC_FILES+= oem2v0/src/cmr_fd_omron.c
+else
+	LOCAL_SRC_FILES+= oem2v0/src/cmr_fd.c
+endif
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
-    ifeq ($(strip $(isp_use2.0)),1)
-        LOCAL_SRC_FILES+= oem2v0/src/cmr_hdr.c
-    else
-        LOCAL_SRC_FILES+= oem/src/cmr_hdr.c
-    endif
+LOCAL_SRC_FILES+= oem2v0/src/cmr_hdr.c
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_UV_DENOISE)),true)
-    ifeq ($(strip $(isp_use2.0)),1)
-        LOCAL_SRC_FILES+= oem2v0/src/cmr_uvdenoise.c
-    else
-        LOCAL_SRC_FILES+= oem/src/cmr_uvdenoise.c
-    endif
+LOCAL_SRC_FILES+= oem2v0/src/cmr_uvdenoise.c
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_Y_DENOISE)),true)
-    ifeq ($(strip $(isp_use2.0)),1)
-        LOCAL_C_INCLUDES += $(LOCAL_PATH)/oem2v0/inc/ydenoise_paten
-        LOCAL_SRC_FILES+= oem2v0/src/cmr_ydenoise.c
-    else
-        LOCAL_C_INCLUDES += $(LOCAL_PATH)/oem/inc/ydenoise_paten
-        LOCAL_SRC_FILES+= oem/src/cmr_ydenoise.c
-    endif
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/oem2v0/inc/ydenoise_paten
+LOCAL_SRC_FILES+= oem2v0/src/cmr_ydenoise.c
 endif
 
 ifeq ($(TARGET_BOARD_CAMERA_HAL_VERSION), $(filter $(TARGET_BOARD_CAMERA_HAL_VERSION), HAL1.0 hal1.0 1.0))
@@ -271,7 +138,7 @@ LOCAL_SRC_FILES+= \
 endif
 
 
-LOCAL_CFLAGS += -fno-strict-aliasing -D_VSP_ -DJPEG_ENC -D_VSP_LINUX_ -DCHIP_ENDIAN_LITTLE -DCONFIG_CAMERA_2M -DANDROID_4100 -Wno-unused-parameter
+LOCAL_CFLAGS += -fno-strict-aliasing -D_VSP_ -DJPEG_ENC -D_VSP_LINUX_ -DCHIP_ENDIAN_LITTLE -Wno-unused-parameter
 
 ifeq ($(strip $(TARGET_BOARD_IS_SC_FPGA)),true)
 LOCAL_CFLAGS += -DSC_FPGA=1
@@ -589,5 +456,3 @@ endif
 ifeq ($(strip $(TARGET_VCM_BU64241GWZ)),true)
 LOCAL_CFLAGS += -DCONFIG_VCM_BU64241GWZ
 endif
-
-
