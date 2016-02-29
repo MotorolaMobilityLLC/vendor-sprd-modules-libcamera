@@ -358,12 +358,9 @@ typedef struct {
 #pragma pack(push) /* push current alignment setting to stack */
 #pragma pack(4)    /* new alignment setting */
 typedef struct {
-        unsigned short                           TokenID;
-        unsigned char                            PixPow;
-        unsigned char                            PixDiv;
-        unsigned short                           PixOff;
-        unsigned short                           LineOff;
-        unsigned short                           LineSize;
+    unsigned short                  TokenID;
+    UINT16                            uwoffsetratiox;
+    UINT16                            uwoffsetratioy;
 
 }   alHW3a_Flicker_CfgInfo_t;
 #pragma pack(pop)  /* restore old alignment setting from stack */

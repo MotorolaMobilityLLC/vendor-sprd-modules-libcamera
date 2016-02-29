@@ -259,11 +259,8 @@ struct isp3a_af_hw_cfg {
 
 struct isp3a_afl_hw_cfg {
 	cmr_u16 token_id;
-	cmr_u8 pix_pow;
-	cmr_u8 pix_div;
-	cmr_u16 pix_off;
-	cmr_u16 line_off;
-	cmr_u16 line_size;
+	cmr_u16 offset_ratiox;
+	cmr_u16 offset_ratioy;
 };
 
 struct isp3a_yhis_hw_cfg {

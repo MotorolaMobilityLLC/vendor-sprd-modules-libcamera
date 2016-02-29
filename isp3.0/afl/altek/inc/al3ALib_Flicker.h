@@ -151,6 +151,14 @@ typedef struct
 
 void alFlickerLib_GetLibVersion( al_flickerlib_version_t* flicker_LibVersion );
 
+/*
+ *\brief get anti-flicker detection lib API address
+ *\param flicker_run_obj [out], object of anti-flicker detection lib APIs address
+ *\param identityID  [in],  framework tag for current instance
+ *\return value , TRUE: loading with no error , FALSE: false loading function APIs address
+ */
+BOOL alFlickerlib_loadFunc(  alFlickerRuntimeObj_t *flicker_run_obj, unsigned long identityID );
+
 
 #ifdef __cplusplus
 }  // extern "C"

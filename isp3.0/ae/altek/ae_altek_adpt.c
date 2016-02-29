@@ -158,7 +158,7 @@ struct aealtek_lib_data {
 	ae_output_data_t output_data;
 	al3AWrapper_Stats_AE_t stats_data;
 	ae_output_data_t temp_output_data;
-	calibration_data_t ae_otp_data;
+	calib_wb_gain_t ae_otp_data;
 	struct aealtek_lib_exposure_data exposure_array;
 };
 
@@ -286,7 +286,7 @@ exit:
 static cmr_int aealtek_convert_otp(struct aealtek_cxt *cxt_ptr, calib_wb_gain_t *otp_ptr)
 {
 	cmr_int ret = ISP_ERROR;
-	calibration_data_t  *lib_otp_ptr = NULL;
+	calib_wb_gain_t  *lib_otp_ptr = NULL;
 
 
 	if (!cxt_ptr) {
@@ -296,13 +296,13 @@ static cmr_int aealtek_convert_otp(struct aealtek_cxt *cxt_ptr, calib_wb_gain_t 
 	}
 	lib_otp_ptr = &cxt_ptr->lib_data.ae_otp_data;
 	if (otp_ptr) {
-		lib_otp_ptr->calib_r_gain = otp_ptr->r;
-		lib_otp_ptr->calib_g_gain = otp_ptr->g;
-		lib_otp_ptr->calib_b_gain = otp_ptr->b;
+		lib_otp_ptr->r = otp_ptr->r;
+		lib_otp_ptr->g = otp_ptr->g;
+		lib_otp_ptr->b = otp_ptr->b;
 	} else {
-		lib_otp_ptr->calib_r_gain = 1500;
-		lib_otp_ptr->calib_g_gain = 1300;
-		lib_otp_ptr->calib_b_gain = 1600;
+		lib_otp_ptr->r = 1500;
+		lib_otp_ptr->g = 1300;
+		lib_otp_ptr->b = 1600;
 		ISP_LOGE("NO OTP DATA !!!");
 	}
 	return ISP_SUCCESS;
@@ -649,12 +649,9 @@ static cmr_int aealtek_convert_ui2initlib(struct aealtek_cxt *cxt_ptr, struct ae
 
 	to_ptr->capture_sensor_info = to_ptr->preview_sensor_info;
 
-#if 0
-	to_ptr->sensor_raw_w = resolution_ptr->frame_size.w;
-	to_ptr->sensor_raw_h = resolution_ptr->frame_size.h;
-#endif
-
-	to_ptr->ae_calib_wb_gain = cxt_ptr->lib_data.ae_otp_data;
+	to_ptr->ae_calib_wb_gain.calib_r_gain = cxt_ptr->lib_data.ae_otp_data.r;
+	to_ptr->ae_calib_wb_gain.calib_g_gain = cxt_ptr->lib_data.ae_otp_data.g;
+	to_ptr->ae_calib_wb_gain.calib_b_gain = cxt_ptr->lib_data.ae_otp_data.b;
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld", ret);
@@ -665,13 +662,8 @@ static cmr_int aealtek_load_otp(struct aealtek_cxt *cxt_ptr, void *otp_ptr)
 {
 	cmr_int ret = ISP_ERROR;
 
-	cmr_int lib_ret = 0;
+	UINT32 lib_ret = 0;
 	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t *output_param_ptr = NULL;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t *param_ct_ptr = NULL;
-
 
 	if (!cxt_ptr) {
 		ISP_LOGE("param is NULL error!");
@@ -683,23 +675,20 @@ static cmr_int aealtek_load_otp(struct aealtek_cxt *cxt_ptr, void *otp_ptr)
 	if (ret)
 		goto exit;
 
-	output_param_ptr = &cxt_ptr->lib_data.output_data;
-	param_ct_ptr = &in_param.set_param;
 
-	type = AE_SET_PARAM_OTP_WB_DAT;
-	param_ct_ptr->ae_calib_wb_gain = cxt_ptr->lib_data.ae_otp_data;
-	in_param.ae_set_param_type = type;
-	if (obj_ptr && obj_ptr->set_param)
-		lib_ret= obj_ptr->set_param(&in_param, output_param_ptr, obj_ptr->ae);
+	ISP_LOGI("ae_otp_data r=%d,g=%d,b=%d", cxt_ptr->lib_data.ae_otp_data.r,
+			cxt_ptr->lib_data.ae_otp_data.g,
+			cxt_ptr->lib_data.ae_otp_data.b);
 
-	ISP_LOGE("r=%d,g=%d,b=%d", param_ct_ptr->ae_calib_wb_gain.calib_r_gain,
-			param_ct_ptr->ae_calib_wb_gain.calib_g_gain,
-			param_ct_ptr->ae_calib_wb_gain.calib_b_gain);
-	if (lib_ret)
-		goto exit;
+	if (obj_ptr) {
+		lib_ret = al3AWrapperAE_UpdateOTP2AELib(cxt_ptr->lib_data.ae_otp_data,
+								obj_ptr, &cxt_ptr->lib_data.output_data, obj_ptr->ae);
+		if (lib_ret)
+			goto exit;
+	}
 	return ISP_SUCCESS;
 exit:
-	ISP_LOGE("ret=%ld lib_ret=%ld !!!", ret, lib_ret);
+	ISP_LOGE("ret=%ld lib_ret=%d !!!", ret, lib_ret);
 	return ret;
 }
 
@@ -922,6 +911,41 @@ exit:
 	return ret;
 }
 
+static cmr_int aealtek_enable_debug_report(struct aealtek_cxt *cxt_ptr, cmr_int enable)
+{
+	cmr_int ret = ISP_ERROR;
+
+	cmr_int lib_ret = 0;
+	alAERuntimeObj_t *obj_ptr = NULL;
+	ae_set_param_t in_param;
+	ae_output_data_t *output_param_ptr = NULL;
+	ae_set_param_type_t type = 0;
+	ae_set_param_content_t *param_ct_ptr = NULL;
+
+
+	if (!cxt_ptr) {
+		ISP_LOGE("param is NULL error!");
+		goto exit;
+	}
+
+	obj_ptr = &cxt_ptr->al_obj;
+	output_param_ptr = &cxt_ptr->lib_data.output_data;
+	param_ct_ptr = &in_param.set_param;
+
+
+	param_ct_ptr->ae_enableDebugLog = enable;
+	type = AE_SET_PARAM_ENABLE_DEBUG_REPORT;
+	if (obj_ptr && obj_ptr->set_param)
+		lib_ret = obj_ptr->set_param(&in_param, output_param_ptr, obj_ptr->ae);
+	if (lib_ret)
+		goto exit;
+
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld, lib_ret=%ld !!!", ret, lib_ret);
+	return ret;
+}
+
 static cmr_int aealtek_write_to_sensor(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_sensor_exposure *exp_ptr, struct ae_ctrl_param_sensor_gain *gain_ptr)
 {
 	cmr_int ret = ISP_ERROR;
@@ -1056,6 +1080,9 @@ static cmr_int aealtek_set_iso(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 
 
 	param_ct_ptr->ISOLevel = in_ptr->iso.iso_mode;
+	param_ct_ptr->AdgainLevel = AE_ADGAIN_AUTO;
+	ISP_LOGI("ISOLevel=%d, AdgainLevel=%d",
+		param_ct_ptr->ISOLevel, param_ct_ptr->AdgainLevel);
 	type = AE_SET_PARAM_ISO_MODE;
 	if (obj_ptr && obj_ptr->set_param)
 		lib_ret = obj_ptr->set_param(&in_param, output_param_ptr, obj_ptr->ae);
@@ -1913,6 +1940,10 @@ static cmr_int aealtek_capture_hdr(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 	if (ret)
 		goto exit;
 	cxt_ptr->lib_data.exposure_array = ae_exposure;
+	ret = aealtek_convert_lib_exposure2outdata(cxt_ptr, &cxt_ptr->lib_data.exposure_array.bracket_exp[0], &cxt_ptr->lib_data.output_data);
+	if (ret)
+		goto exit;
+
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld, lib_ret=%ld !!!", ret, lib_ret);
@@ -2077,7 +2108,7 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 			ret = aealtek_work_preview(cxt_ptr, in_ptr, out_ptr);
 			break;
 		case ISP3A_WORK_MODE_CAPTURE:
-			//ret = aealtek_work_capture(cxt_ptr, in_ptr, out_ptr);
+			ret = aealtek_work_capture(cxt_ptr, in_ptr, out_ptr);
 			ret = 0;
 			break;
 		case ISP3A_WORK_MODE_VIDEO:
@@ -2112,10 +2143,46 @@ exit:
 	return ret;
 }
 
+static cmr_int aealtek_set_lib_lock(struct aealtek_cxt *cxt_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+	cmr_int lib_ret = 0;
+	alAERuntimeObj_t *obj_ptr = NULL;
+	ae_set_param_t in_param;
+	ae_output_data_t *output_param_ptr = NULL;
+	ae_set_param_type_t type = 0;
+	ae_set_param_content_t *param_ct_ptr = NULL;
+
+	if (!cxt_ptr) {
+		ISP_LOGE("param is NULL error!");
+		goto exit;
+	}
+
+	obj_ptr = &cxt_ptr->al_obj;
+	output_param_ptr = &cxt_ptr->lib_data.output_data;
+	param_ct_ptr = &in_param.set_param;
+
+	if (cxt_ptr->lock_cnt > 0)
+		param_ct_ptr->ae_lock = 1;
+	else
+		param_ct_ptr->ae_lock = 0;
+
+	ISP_LOGI("is_lock=%d", param_ct_ptr->ae_lock);
+	type = AE_SET_PARAM_LOCKAE;
+	in_param.ae_set_param_type = type;
+	if (obj_ptr && obj_ptr->set_param)
+		lib_ret = obj_ptr->set_param(&in_param, output_param_ptr, obj_ptr->ae);
+	if (lib_ret)
+		goto exit;
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld, lib_ret=%ld !!!", ret, lib_ret);
+	return ret;
+}
+
 static cmr_int aealtek_set_lock(struct aealtek_cxt *cxt_ptr, cmr_int is_lock)
 {
 	cmr_int ret = ISP_ERROR;
-
 
 	if (!cxt_ptr) {
 		ISP_LOGE("param is NULL error!");
@@ -2124,12 +2191,16 @@ static cmr_int aealtek_set_lock(struct aealtek_cxt *cxt_ptr, cmr_int is_lock)
 	ISP_LOGI("lock_cnt=%d, is_lock=%ld", cxt_ptr->lock_cnt, is_lock);
 
 	if (is_lock) {
-		if (0 == cxt_ptr->lock_cnt) {
-		}
 		cxt_ptr->lock_cnt++;
 	} else {
-		cxt_ptr->lock_cnt--;
+		if (cxt_ptr->lock_cnt > 0)
+			cxt_ptr->lock_cnt--;
 	}
+
+	ret = aealtek_set_lib_lock(cxt_ptr);
+	if (ret)
+		goto exit;
+
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGI("ret=%ld !!!", ret);
@@ -2754,15 +2825,19 @@ static cmr_int aealtek_set_hdr_ev(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_pa
 	level = in_ptr->soft_hdr_ev.level;
 	switch (level) {
 	case AE_CTRL_HDR_EV_UNDEREXPOSURE:
-		ret = aealtek_pre_to_sensor(cxt_ptr, 1);
+		// cxt_ptr->sensor_exp_data.lib_exp = cxt_ptr->lib_data.exposure_array.bracket_exp[0];
 		break;
 	case AE_CTRL_HDR_EV_NORMAL:
+		cxt_ptr->sensor_exp_data.lib_exp = cxt_ptr->lib_data.exposure_array.bracket_exp[1];
 		break;
 	case AE_CTRL_HDR_EV_OVEREXPOSURE:
+		cxt_ptr->sensor_exp_data.lib_exp = cxt_ptr->lib_data.exposure_array.bracket_exp[2];
 		break;
 	default:
 		break;
 	}
+	ret = aealtek_pre_to_sensor(cxt_ptr, 1);
+
 	return ISP_SUCCESS;
 exit:
 	return ret;
@@ -2793,9 +2868,9 @@ static cmr_int aealtek_set_awb_info(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 		&& awb_ptr->normal_gain.g == 0
 		&& awb_ptr->normal_gain.b == 0) {
 		param_ct_ptr->ae_awb_info.color_temp = 5000;
-		param_ct_ptr->ae_awb_info.gain_r = cxt_ptr->lib_data.ae_otp_data.calib_r_gain;
-		param_ct_ptr->ae_awb_info.gain_g = cxt_ptr->lib_data.ae_otp_data.calib_g_gain;;
-		param_ct_ptr->ae_awb_info.gain_b = cxt_ptr->lib_data.ae_otp_data.calib_b_gain;
+		param_ct_ptr->ae_awb_info.gain_r = cxt_ptr->lib_data.ae_otp_data.r;
+		param_ct_ptr->ae_awb_info.gain_g = cxt_ptr->lib_data.ae_otp_data.g;
+		param_ct_ptr->ae_awb_info.gain_b = cxt_ptr->lib_data.ae_otp_data.b;
 		param_ct_ptr->ae_awb_info.awb_state = 1;
 	} else {
 		param_ct_ptr->ae_awb_info.color_temp = awb_ptr->color_temp;
@@ -2956,6 +3031,42 @@ static cmr_int aealtek_get_ev_table(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, out_ptr);
 		goto exit;
 	}
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld !!!", ret);
+	return ret;
+}
+
+static cmr_int aealtek_get_debug_data(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+
+
+	if (!cxt_ptr || !out_ptr) {
+		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, out_ptr);
+		goto exit;
+	}
+	out_ptr->debug_param.size = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_debug_valid_size;
+	out_ptr->debug_param.data = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_debug_data;
+
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld !!!", ret);
+	return ret;
+}
+
+static cmr_int aealtek_get_exif_data(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+
+
+	if (!cxt_ptr || !out_ptr) {
+		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, out_ptr);
+		goto exit;
+	}
+	out_ptr->exif_param.size = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_commonexif_valid_size;
+	out_ptr->exif_param.data = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_commonexif_data;
+
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld !!!", ret);
@@ -3171,6 +3282,12 @@ static cmr_int ae_altek_adpt_ioctrl(cmr_handle handle, cmr_int cmd, void *in, vo
 		break;
 	case AE_CTRL_SET_SNAPSHOT_FINISHED:
 		ret = aealtek_set_snapshot_finished(cxt_ptr, in_ptr, out_ptr);
+		break;
+	case AE_CTRL_GET_DEBUG_DATA:
+		ret = aealtek_get_debug_data(cxt_ptr, in_ptr, out_ptr);
+		break;
+	case AE_CTRL_GET_EXIF_DATA:
+		ret = aealtek_get_exif_data(cxt_ptr, in_ptr, out_ptr);
 		break;
 	default:
 		ISP_LOGE("cmd %ld is not defined!", cmd);
@@ -3410,10 +3527,7 @@ static cmr_int ae_altek_adpt_process(cmr_handle handle, void *in, void *out)
 		ISP_LOGE("param stat data is NULL error!");
 		goto exit;
 	}
-	if (cxt_ptr->lock_cnt) {
-		ISP_LOGW("lock st %d", cxt_ptr->lock_cnt);
-		goto exit;
-	}
+
 	ret = aealtek_pre_process(cxt_ptr, in_ptr);
 	if (ret)
 		goto exit;

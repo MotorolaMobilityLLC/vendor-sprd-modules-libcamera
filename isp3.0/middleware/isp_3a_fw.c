@@ -1654,11 +1654,16 @@ cmr_int isp3a_set_hdr(cmr_handle isp_3a_handle, void *param_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
+	struct ae_ctrl_param_in                     ae_in;
 
 	if (!param_ptr) {
 		ISP_LOGW("input is NULL");
 		goto exit;
 	}
+
+	ae_in.soft_hdr_ev.level = *(cmr_s32*)param_ptr;
+	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_HDR_EV, &ae_in, NULL);
+
 exit:
 	return ret;
 }
@@ -2432,7 +2437,7 @@ cmr_int isp3a_handle_stats(cmr_handle isp_3a_handle, void *data)
 	awb_stats_buf_ptr->timestamp = af_stats_buf_ptr->timestamp;
 	test_tbd = (cmr_int)dev_stats->vir_addr;
 	ret = isp_dispatch_stats((void*)test_tbd, ae_stats_buf_ptr->addr, awb_stats_buf_ptr->addr, af_stats_buf_ptr->addr,
-							 afl_stats_buf_ptr->addr, NULL, NULL, cxt->sof_idx);
+							 NULL, afl_stats_buf_ptr->addr, NULL, cxt->sof_idx);
 	if (ret) {
 		ret = isp3a_put_3a_stats_buf(isp_3a_handle);
 		goto exit;

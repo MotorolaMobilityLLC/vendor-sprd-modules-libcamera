@@ -101,11 +101,8 @@ unsigned int al3AWrapperFlicker_GetDefaultCfg( alHW3a_Flicker_CfgInfo_t* aFlicke
         return ERR_WRP_FLICKER_INVALID_INPUT_PARAM;
 
     localParam.TokenID = 0xFFFF;
-    localParam.PixPow = 0;
-    localParam.PixDiv = 0;
-    localParam.PixOff = 0;
-    localParam.LineOff = 0;
-    localParam.LineSize = 960;
+    localParam.uwoffsetratiox = 0;
+    localParam.uwoffsetratioy = 0;
     memcpy( aFlickerConfig, &localParam, sizeof(alHW3a_Flicker_CfgInfo_t ) );
     return ret;
 }

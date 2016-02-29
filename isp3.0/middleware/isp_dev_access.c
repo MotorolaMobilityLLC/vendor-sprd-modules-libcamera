@@ -408,7 +408,33 @@ static void isp_dev_access_set_af_hw_cfg(AF_CfgInfo *af_cfg_info, struct isp3a_a
 	ISP_LOGV("uw_ine_cnt = %d", af_hw_cfg->uw_ine_cnt);
 }
 
-void _isp_dev_access_convert_awb_param(struct isp3a_awb_hw_cfg *data, AWB_CfgInfo *awb_param)
+void isp_dev_access_convert_ae_param(struct isp3a_ae_hw_cfg *from, AE_CfgInfo *to)
+{
+	if (!from || !to) {
+		ISP_LOGE("param %p %p is NULL !!!", from, to);
+		return;
+	}
+	to->TokenID = from->tokenID;
+	to->tAERegion.uwBorderRatioX = from->region.border_ratio_X;
+	to->tAERegion.uwBorderRatioY = from->region.border_ratio_Y;
+	to->tAERegion.uwBlkNumX = from->region.blk_num_X;
+	to->tAERegion.uwBlkNumY = from->region.blk_num_Y;
+	to->tAERegion.uwOffsetRatioX = from->region.offset_ratio_X;
+	to->tAERegion.uwOffsetRatioY = from->region.offset_ratio_Y;
+}
+
+void isp_dev_access_convert_afl_param(struct isp3a_afl_hw_cfg *from, AntiFlicker_CfgInfo *to)
+{
+	if (!from || !to) {
+		ISP_LOGE("param %p %p is NULL !!!", from, to);
+		return;
+	}
+	to->TokenID = from->token_id;
+	to->uwOffsetRatioX = from->offset_ratiox;
+	to->uwOffsetRatioY = from->offset_ratioy;
+}
+
+void isp_dev_access_convert_awb_param(struct isp3a_awb_hw_cfg *data, AWB_CfgInfo *awb_param)
 {
 	cmr_int                                ret = ISP_SUCCESS;
 	cmr_u32                                i = 0;
@@ -561,26 +587,11 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	ret = isp_dev_set_img_param(cxt->isp_driver_handle, &img_buf_param);
 
 #ifdef FPGA_TEST
-#if 0
-	// AE
-	cfg3a_info.tAEInfo.TokenID = 0x111;
-	cfg3a_info.tAEInfo.tAERegion.uwBorderRatioX = 100;
-	cfg3a_info.tAEInfo.tAERegion.uwBorderRatioY = 100;
-	cfg3a_info.tAEInfo.tAERegion.uwBlkNumX = 16;
-	cfg3a_info.tAEInfo.tAERegion.uwBlkNumY = 16;
-	cfg3a_info.tAEInfo.tAERegion.uwOffsetRatioX = 0;
-	cfg3a_info.tAEInfo.tAERegion.uwOffsetRatioY = 0;
-#endif
 	// SubSample
 	cfg3a_info.tSubSampleInfo.TokenID = 0x100;
 	cfg3a_info.tSubSampleInfo.udBufferImageSize = 320*240;
 	cfg3a_info.tSubSampleInfo.uwOffsetRatioX =0;
 	cfg3a_info.tSubSampleInfo.uwOffsetRatioY =0;
-
-	//Antiflicker
-	cfg3a_info.tAntiFlickerInfo.TokenID = 0x130;
-	cfg3a_info.tAntiFlickerInfo.uwOffsetRatioX =0;
-	cfg3a_info.tAntiFlickerInfo.uwOffsetRatioY =0;
 
 
 	// Yhis configuration:
@@ -597,26 +608,11 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	memcpy(&cfg3a_info.hw_cfg.tSubSampleInfo, &param_ptr->hw_cfg.subsample_cfg, sizeof(SubSample_CfgInfo));
 #endif
 #endif
-	_isp_dev_access_convert_awb_param(&param_ptr->hw_cfg.awb_cfg, &cfg3a_info.tAWBInfo);
-	cfg3a_info.tAEInfo.TokenID = param_ptr->hw_cfg.ae_cfg.tokenID;
-	cfg3a_info.tAEInfo.tAERegion.uwBorderRatioX = param_ptr->hw_cfg.ae_cfg.region.border_ratio_X;
-	cfg3a_info.tAEInfo.tAERegion.uwBorderRatioY = param_ptr->hw_cfg.ae_cfg.region.border_ratio_Y;
-	cfg3a_info.tAEInfo.tAERegion.uwBlkNumX = param_ptr->hw_cfg.ae_cfg.region.blk_num_X;
-	cfg3a_info.tAEInfo.tAERegion.uwBlkNumY = param_ptr->hw_cfg.ae_cfg.region.blk_num_Y;
-	cfg3a_info.tAEInfo.tAERegion.uwOffsetRatioX = param_ptr->hw_cfg.ae_cfg.region.offset_ratio_X;
-	cfg3a_info.tAEInfo.tAERegion.uwOffsetRatioY = param_ptr->hw_cfg.ae_cfg.region.offset_ratio_Y;
+
+	isp_dev_access_convert_ae_param(&param_ptr->hw_cfg.ae_cfg, &cfg3a_info.tAEInfo);
+	isp_dev_access_convert_afl_param(&param_ptr->hw_cfg.afl_cfg, &cfg3a_info.tAntiFlickerInfo);
+	isp_dev_access_convert_awb_param(&param_ptr->hw_cfg.awb_cfg, &cfg3a_info.tAWBInfo);
 	isp_dev_access_set_af_hw_cfg(&cfg3a_info.tAFInfo, &param_ptr->hw_cfg.af_cfg);
-
-	ISP_LOGV("AE HW CFG:tokenID = %d\n blk_num_X = %d\n blk_num_Y = %d\n \
-		border_ratio_X = %d\n border_ratio_Y = %d\n offset_ratio_X = %d\n offset_ratio_Y = %d\n",
-		param_ptr->hw_cfg.ae_cfg.tokenID,
-		param_ptr->hw_cfg.ae_cfg.region.blk_num_X,
-		param_ptr->hw_cfg.ae_cfg.region.blk_num_Y,
-		param_ptr->hw_cfg.ae_cfg.region.border_ratio_X,
-		param_ptr->hw_cfg.ae_cfg.region.border_ratio_Y,
-		param_ptr->hw_cfg.ae_cfg.region.offset_ratio_X,
-		param_ptr->hw_cfg.ae_cfg.region.offset_ratio_Y);
-
 
 	ret = isp_dev_cfg_3a_param(cxt->isp_driver_handle, &cfg3a_info);
 	if (ret) {

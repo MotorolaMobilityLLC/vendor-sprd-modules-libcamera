@@ -289,11 +289,8 @@ static cmr_int afl_altek_to_afl_hw_cfg(alHW3a_Flicker_CfgInfo_t *from, struct is
 		goto exit;
 	}
 	to->token_id = from->TokenID;
-	to->pix_pow = from->PixPow;
-	to->pix_div = from->PixDiv;
-	to->pix_off = from->PixOff;
-	to->line_off = from->LineOff;
-	to->line_size = from->LineSize;
+	to->offset_ratiox = from->uwoffsetratiox;
+	to->offset_ratioy = from->uwoffsetratioy;
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld", ret);
@@ -330,7 +327,10 @@ static cmr_int afl_altek_get_hw_config(struct aflaltek_cxt *cxt_ptr, struct isp3
 	ret = afl_altek_to_afl_hw_cfg(&cxt_ptr->lib_data.hwisp_cfg, out_ptr);
 	if (ret)
 		goto exit;
-
+	ISP_LOGI("token=%d, ratiox=%d, ratioy=%d",
+		out_ptr->token_id,
+		out_ptr->offset_ratiox,
+		out_ptr->offset_ratioy);
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld, lib_ret=%ld !!!", ret, lib_ret);
@@ -417,7 +417,6 @@ static cmr_int afl_altek_set_work_mode(struct aflaltek_cxt *cxt_ptr, struct afl_
 	ret = afl_altek_get_hw_config(cxt_ptr, &out_ptr->hw_cfg);
 	if (ret)
 		goto exit;
-
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld, lib_ret=%ld !!!", ret, lib_ret);
@@ -609,12 +608,15 @@ static cmr_int afl_altek_adpt_process(cmr_handle handle, void *in, void *out)
 		goto exit;
 	}
 
-	// lib_ret = cxt_ptr->afl_obj.process(&cxt_ptr->lib_data.stats_data, cxt_ptr->lib_run_data, &cxt_ptr->lib_data.output_data);
+	lib_ret = cxt_ptr->afl_obj.process(&cxt_ptr->lib_data.stats_data, cxt_ptr->lib_run_data, &cxt_ptr->lib_data.output_data);
 	if (lib_ret)
 		goto exit;
 	if (cxt_ptr->init_in_param.ops_in.afl_callback) {
-		callback_in.flicker_mode = cxt_ptr->lib_data.output_data.FinalFreq;
-		ISP_LOGI("flicker_mode=%d", callback_in.flicker_mode);
+		ISP_LOGI("FinalFreq=%d", cxt_ptr->lib_data.output_data.FinalFreq);
+		if (cxt_ptr->lib_data.output_data.FinalFreq < 57)
+			callback_in.flicker_mode = AFL_CTRL_FLICKER_50HZ;
+		else
+			callback_in.flicker_mode = AFL_CTRL_FLICKER_60HZ;
 		//cxt_ptr->init_in_param.ops_in.afl_callback(cxt_ptr->caller_handle, AFL_CTRL_CB_FLICKER_MODE, &callback_in);
 	}
 	return ISP_SUCCESS;

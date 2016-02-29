@@ -74,6 +74,8 @@ enum ae_ctrl_cmd {
 	AE_CTRL_SET_AF_REPORT,
 	AE_CTRL_SET_CONVERGENCE_REQ,
 	AE_CTRL_SET_SNAPSHOT_FINISHED,
+	AE_CTRL_GET_DEBUG_DATA,
+	AE_CTRL_GET_EXIF_DATA,
 	AE_CTRL_CMD_MAX
 };
 
@@ -311,6 +313,16 @@ struct ae_ctrl_param_gyro {
 	cmr_u32 finfo[3];
 };
 
+struct ae_ctrl_debug_param {
+	cmr_u16  size;
+	cmr_u8   *data;
+};
+
+struct ae_ctrl_exif_param {
+	cmr_u16  size;
+	cmr_u8   *data;
+};
+
 struct ae_ctrl_proc_out {
 	struct isp3a_ae_info ae_info;
 	struct ae_ctrl_param_ae_frame ae_frame;
@@ -336,6 +348,8 @@ struct ae_ctrl_param_out {
 	cmr_u32 isp_d_gain;
 	cmr_u32 hw_iso_speed;
 	cmr_u32 bv;
+	struct ae_ctrl_debug_param debug_param;
+	struct ae_ctrl_exif_param exif_param;
 	};
 };
 
