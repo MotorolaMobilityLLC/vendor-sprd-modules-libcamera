@@ -1163,6 +1163,22 @@ static cmr_int afaltek_adpt_get_nothing(cmr_handle adpt_handle)
 	return ret;
 }
 
+cmr_int afaltek_adpt_get_exif_info(cmr_handle adpt_handle, void *out)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+
+	return ret;
+}
+
+cmr_int afaltek_adpt_get_debug_info(cmr_handle adpt_handle, void *out)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+
+	return ret;
+}
+
 static cmr_int afaltek_adpt_outctrl(cmr_handle adpt_handle, cmr_int cmd,
 				    void *in, void *out)
 {
@@ -1183,6 +1199,12 @@ static cmr_int afaltek_adpt_outctrl(cmr_handle adpt_handle, cmr_int cmd,
 		break;
 	case AF_CTRL_CMD_GET_DEBUG:
 		ret = afaltek_adpt_get_nothing(adpt_handle);
+		break;
+	case AF_CTRL_CMD_GET_EXIF_DEBUG_INFO:
+		ret = afaltek_adpt_get_exif_info(adpt_handle, (void *)out);
+		break;
+	case AF_CTRL_CMD_GET_DEBUG_INFO:
+		ret = afaltek_adpt_get_debug_info(adpt_handle, (void *)out);
 		break;
 	default:
 		ISP_LOGE("failed to case cmd = %ld", cmd);
