@@ -404,8 +404,8 @@ cmr_int awbaltek_get_exif_info(cmr_handle adpt_handle, union awb_ctrl_cmd_in *in
 		ISP_LOGI("output is NULL");
 		goto exit;
 	}
-	output_ptr->debug_info.size = AWB_EXIF_DEBUG_INFO_SIZE;
-	output_ptr->debug_info.addr = &cxt->exif_debug_info[0];
+	output_ptr->debug_info.size = cxt->cur_process_out.awb_debug_data_size;
+	output_ptr->debug_info.addr = &cxt->cur_process_out.awb_debug_data_array[0];
 exit:
 	return ret;
 }
@@ -420,7 +420,12 @@ cmr_int awbaltek_get_debug_info(cmr_handle adpt_handle, union awb_ctrl_cmd_in *i
 		goto exit;
 	}
 	output_ptr->debug_info.size = alAWBLib_Debug_Size;
-	output_ptr->debug_info.addr = &cxt->cur_process_out.awb_debug_data_array[0];
+	output_ptr->debug_info.addr = cxt->cur_process_out.awb_debug_data_full;
+	ISP_LOGI("debug info %d %d %d %d",
+		cxt->cur_process_out.awb_debug_data_array[0],
+		cxt->cur_process_out.awb_debug_data_array[1],
+		cxt->cur_process_out.awb_debug_data_array[2],
+		cxt->cur_process_out.awb_debug_data_array[3]);
 exit:
 	return ret;
 }
@@ -518,6 +523,16 @@ normal_flow:
 	    //. Set tuning bin file data
 	    set_param.type = alawb_set_param_tuning_file;
 	    set_param.para.tuning_file = (void*)&test_tuning[0];
+	    ret = (cmr_int)cxt->lib_func.set_param(&set_param, cxt->lib_func.awb);
+		if (ret) {
+			ISP_LOGE("failed to set tuning file %lx", ret);
+		}
+	}
+
+	if (input_ptr->tuning_param) {
+		ISP_LOGI("set tuning file");
+	    set_param.type = alawb_set_param_tuning_file;
+	    set_param.para.tuning_file = input_ptr->tuning_param;
 	    ret = (cmr_int)cxt->lib_func.set_param(&set_param, cxt->lib_func.awb);
 		if (ret) {
 			ISP_LOGE("failed to set tuning file %lx", ret);

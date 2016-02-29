@@ -651,6 +651,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 	af_input.af_ctrl_cb_ops.lock_ae_awb = isp3a_set_ae_awb_lock;
 	af_input.af_ctrl_cb_ops.cfg_af_stats = isp3a_cfg_af_param;
 	af_input.af_ctrl_cb_ops.get_system_time = isp3a_get_dev_time;
+	af_input.tuning_info.tuning_file = input_ptr->bin_info.af_addr;
 	ret = af_ctrl_init(&af_input, &af_output, &cxt->af_cxt.handle);
 	if (ret) {
 		ISP_LOGE("failed to AF initialize");
@@ -665,6 +666,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 	awb_input.caller_handle = isp_3a_handle;
 	awb_input.awb_process_type = AWB_CTRL_RESPONSE_STABLE;
 	awb_input.awb_process_level = AWB_CTRL_RESPONSE_NORMAL;
+	awb_input.tuning_param = input_ptr->bin_info.awb_addr;
 	ret = awb_ctrl_init(&awb_input, &awb_output, &cxt->awb_cxt.handle);
 	if (ret) {
 		ISP_LOGE("failed to AWB initialize");
@@ -709,6 +711,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 	ae_input.preview_work.resolution.max_gain = 16;
 	ae_input.preview_work.resolution.sensor_size_index = 1;
 #endif
+	ae_input.tuning_param = input_ptr->bin_info.ae_addr;
 	ret = ae_ctrl_init(&ae_input, &ae_output, &cxt->ae_cxt.handle);
 	if (ret) {
 		ISP_LOGE("failed to AE initialize");
@@ -1777,13 +1780,24 @@ cmr_int isp3a_get_info(cmr_handle isp_3a_handle, void *param_ptr)
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
 	struct isp_info                             *info_ptr = (struct isp_info*)param_ptr;
-
+	union awb_ctrl_cmd_out                      awb_out;
 	if (!param_ptr) {
 		ISP_LOGW("input is NULL");
 		goto exit;
 	}
 	info_ptr->size = 0;
+	info_ptr->addr = NULL;
+
+	ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_DEBUG_INFO, NULL, &awb_out);
+	if (ret) {
+		ISP_LOGE("failed to get awb debug info 0x%lx", ret);
+		goto exit;
+	}
+	//ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, enum ae_ctrl_cmd cmd, struct ae_ctrl_param_in * in_ptr, struct ae_ctrl_param_out * out_ptr);
+	//ret = af_ctrl_ioctrl(cxt->af_cxt.handle, cmr_int cmd, struct af_ctrl_param_in * in, struct af_ctrl_param_out * out)
+
 exit:
+	ISP_LOGI("debug info size %ld", info_ptr->size);
 	return ret;
 }
 
@@ -1902,13 +1916,21 @@ cmr_int isp3a_get_exif_info(cmr_handle isp_3a_handle, void *param_ptr)
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
 	struct isp_info                             *exif_info_ptr = (struct isp_info*)param_ptr;
+	union awb_ctrl_cmd_out                      awb_out;
 
 	if (!param_ptr) {
 		ISP_LOGW("input is NULL");
 		goto exit;
 	}
 	exif_info_ptr->size = 0;
+
+	ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_EXIF_DEBUG_INFO, NULL, &awb_out);
+	if (ret) {
+		ISP_LOGE("failed to get awb exif info 0x%lx", ret);
+	}
 exit:
+	ISP_LOGI("exif debug info size %ld", exif_info_ptr->size);
+
 	return ret;
 }
 
@@ -2776,8 +2798,6 @@ cmr_int isp_3a_fw_init(struct isp_3a_fw_init_in* input_ptr, cmr_handle* isp_3a_h
 #if 0
 	isp3a_test_stat_buf((cmr_handle)cxt);
 #endif
-	cxt->bin_info.addr = input_ptr->bin_info.addr;
-	cxt->bin_info.size = input_ptr->bin_info.size;
 	ret = isp3a_alg_init((cmr_handle)cxt, input_ptr);
 	if (ret) {
 		goto exit;

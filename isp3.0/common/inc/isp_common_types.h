@@ -302,7 +302,9 @@ struct isp3a_statistics_data {
 };
 
 struct isp_bin_info {
-	void *addr;
+	void *ae_addr;
+	void *awb_addr;
+	void *af_addr;
 	cmr_u32 size;
 };
 /**********************************FUNCTION***********************************/

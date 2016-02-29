@@ -31,6 +31,11 @@ struct isp_mw_tunng_file_info {
 	void *isp_shading_addr;
 	cmr_u32 isp_3a_size;
 	cmr_u32 isp_shading_size;
+	void *ae_tuning_addr;
+	void *awb_tuning_addr;
+	void *af_tuning_addr;
+	void *shading_addr;
+	void *irp_addr;
 };
 
 struct isp_mw_context {
@@ -78,6 +83,17 @@ void ispmw_dev_evt_cb(cmr_int evt, void* data, void* privdata)
 exit:
 	ISP_LOGI("done");
 }
+cmr_int ispmw_parse_tuning_bin(cmr_handle isp_mw_handle)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp_mw_context                       *cxt = (struct isp_mw_context*)isp_mw_handle;
+
+	cxt->tuning_bin.ae_tuning_addr = NULL;
+	cxt->tuning_bin.awb_tuning_addr = NULL;
+	cxt->tuning_bin.af_tuning_addr = NULL;
+
+	return ret;
+}
 
 cmr_int ispmw_get_tuning_bin(cmr_handle isp_mw_handle, const cmr_s8 *sensor_name)
 {
@@ -87,12 +103,13 @@ cmr_int ispmw_get_tuning_bin(cmr_handle isp_mw_handle, const cmr_s8 *sensor_name
 	cmr_u8                                      file_name[ISP_MW_FILE_NAME_LEN];
 
 	//get 3A bin
-	sprintf((void*)&file_name[0],"/system/lib/sensor/%s_3a.bin",sensor_name);
+	sprintf((void*)&file_name[0],"/system/lib/tuning/%s_3a.bin",sensor_name);
 	fp = fopen((void*)&file_name[0], "rb");
 	if (NULL == fp) {
 		ISP_LOGE("failed to open 3a tuning bin");
 		goto exit;
 	}
+	ISP_LOGI("sensor is %s", sensor_name);
 	fseek(fp,0,SEEK_END);
 	cxt->tuning_bin.isp_3a_size = ftell(fp);
 	fseek(fp,0,SEEK_SET);
@@ -112,7 +129,7 @@ cmr_int ispmw_get_tuning_bin(cmr_handle isp_mw_handle, const cmr_s8 *sensor_name
 	memset(&file_name[0], 0, ISP_MW_FILE_NAME_LEN);
 
 	//get Shading bin
-	sprintf((void*)&file_name[0],"/system/lib/sensor/%s_shading.bin",sensor_name);
+	sprintf((void*)&file_name[0],"/system/lib/tuning/%s_shading.bin",sensor_name);
 	fp = fopen((void*)&file_name[0], "rb");
 	if (NULL == fp) {
 		ISP_LOGE("failed to open shading bin");
@@ -175,6 +192,7 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 	struct isp_3a_fw_init_in                    isp3a_input;
 	struct isp_dev_init_in                      isp_dev_input;
 	struct isp_mw_context                       *cxt = NULL;
+	cmr_s8                                      sensor_name[60] = "s5k3p3sm_mipi_raw";
 
 	if (!input_ptr || !isp_handle) {
 		ISP_LOGE("init param is null,input_ptr is 0x%lx,isp_handle is 0x%lx", (cmr_uint)input_ptr, (cmr_uint)isp_handle);
@@ -191,7 +209,11 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 	}
 	cmr_bzero(cxt, sizeof(*cxt));
 
-//	ret = ispmw_get_tuning_bin((cmr_handle)cxt,sensor_name);
+	ret = ispmw_get_tuning_bin((cmr_handle)cxt,(const cmr_s8*)&sensor_name[0]);//TBD
+	if (ret) {
+		goto exit;
+	}
+	ret = ispmw_parse_tuning_bin((cmr_handle)cxt);
 	if (ret) {
 		goto exit;
 	}
@@ -216,8 +238,9 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 	isp3a_input.caller_handle = input_ptr->oem_handle;
 	isp3a_input.dev_access_handle = cxt->isp_dev_handle;
 	isp3a_input.camera_id = input_ptr->camera_id;
-	isp3a_input.bin_info.addr = cxt->tuning_bin.isp_3a_addr;
-	isp3a_input.bin_info.size = cxt->tuning_bin.isp_3a_size;
+	isp3a_input.bin_info.ae_addr = cxt->tuning_bin.ae_tuning_addr;
+	isp3a_input.bin_info.awb_addr = cxt->tuning_bin.awb_tuning_addr;
+	isp3a_input.bin_info.af_addr = cxt->tuning_bin.af_tuning_addr;
 	ret = isp_3a_fw_init(&isp3a_input, &cxt->isp_3a_handle);
 exit:
 	if (ret) {
