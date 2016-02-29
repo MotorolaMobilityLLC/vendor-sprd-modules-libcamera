@@ -517,6 +517,7 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	DldSequence                            dldseq_info;
 	cmr_u32                                iso_gain = 0;
 	struct isp_awb_gain_info               awb_gain_info;
+	cmr_u32                                dcam_id = 0;
 #ifdef FPGA_TEST
 	struct isp_cfg_img_param               img_buf_param;
 	cmr_u32 img_size, cnt;
@@ -655,6 +656,15 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	awb_gain_info.b = param_ptr->hw_cfg.awb_gain.b;
 
 	ret = isp_dev_cfg_awb_gain(cxt->isp_driver_handle, &awb_gain_info);
+
+	if (0 == cxt->camera_id)
+		dcam_id = 0;
+	else if (2 == cxt->camera_id)
+		dcam_id = 1;
+	else
+		dcam_id = 0;
+	ISP_LOGI("dcam_id %d", dcam_id);
+	ret = isp_dev_set_dcam_id(cxt->isp_driver_handle, dcam_id);
 	ret = isp_dev_stream_on(cxt->isp_driver_handle);
 exit:
 	ISP_LOGI("done %ld", ret);
@@ -682,6 +692,7 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 	struct isp_cfg_img_param               img_param;
 	struct isp_awb_gain_info               awb_gain;
 	DldSequence                            dldseq;
+	cmr_u32                              dcam_id = 0;
 
 	ret = isp_dev_cfg_scenario_info(cxt->isp_driver_handle, &scenario_in);
 	if (ret) {
@@ -724,6 +735,13 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 		goto exit;
 	}
 
+	if (0 == cxt->camera_id)
+		dcam_id = 0;
+	else if (2 == cxt->camera_id)
+		dcam_id = 1;
+	else
+		dcam_id = 0;
+	ret = isp_dev_set_dcam_id(cxt->isp_driver_handle, dcam_id);
 	ret = isp_dev_stream_on(cxt->isp_driver_handle);
 exit:
 	ISP_LOGI("done %ld", ret);

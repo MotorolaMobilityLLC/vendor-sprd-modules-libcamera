@@ -88,5 +88,5 @@ cmr_int isp_dev_capability_dram_buf_size(isp_handle handle, cmr_int *size);
 cmr_int isp_dev_capability_highiso_buf_size(isp_handle handle, cmr_int *size);
 cmr_int isp_dev_capability_video_size(isp_handle handle, struct isp_img_size *size);
 cmr_int isp_dev_capability_single_size(isp_handle handle, struct isp_img_size *size);
-
+cmr_int isp_dev_set_dcam_id(isp_handle handle, cmr_u32 dcam_id);
 #endif

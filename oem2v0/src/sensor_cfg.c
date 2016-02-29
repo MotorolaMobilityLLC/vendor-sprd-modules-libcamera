@@ -135,7 +135,7 @@ const SENSOR_MATCH_T main2_sensor_infor_tab[]=
 #ifdef SC_FPGA
 	//{"s5k4h8yx_mipi_raw", &g_s5k4h8yx_mipi_raw_info},
 #endif
-	//{"s5k4h8yx_mipi_raw", &g_s5k4h8yx_mipi_raw_info},
+	{"s5k4h8yx_mipi_raw", &g_s5k4h8yx_mipi_raw_info},
 	PNULL
 };
 

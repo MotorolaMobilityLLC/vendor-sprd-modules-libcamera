@@ -83,6 +83,8 @@ static const struct raw_param_info_tab s_s5k4h8yx_raw_param_tab[] = {
 ////initial setting
 static const SENSOR_REG_T s5k4h8yx_common_init[] = {
  { 0x6028, 0x4000 },
+ { 0x6010, 0x0001 },// Reset
+ { 0xffff, 0x000a },//must add delay >3ms
  { 0x602A, 0x6214 },
  { 0x6F12, 0x7971 },
  { 0x602A, 0x6218 },

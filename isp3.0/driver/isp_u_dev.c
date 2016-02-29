@@ -36,7 +36,7 @@ struct isp_fw_mem {
 
 struct isp_file {
 	int                        fd;
-	int                        isp_id;//camera_id
+	int                       camera_id;
 	cmr_handle                 evt_3a_handle;
 	pthread_mutex_t            cb_mutex;
 	pthread_t                  thread_handle;
@@ -98,7 +98,7 @@ cmr_int isp_dev_init(struct isp_dev_init_info *init_param_ptr, isp_handle *handl
 		goto isp_free;
 	}
 
-	file->isp_id = init_param_ptr->camera_id;
+	file->camera_id = init_param_ptr->camera_id;
 	file->isp_is_inited = 0;
 	*handle = (isp_handle)file;
 
@@ -383,7 +383,7 @@ cmr_int isp_dev_open(isp_handle *handle, struct isp_dev_init_param *param)
 	}
 
 	file->fd = fd;
-	file->isp_id = 0;
+	file->camera_id = 0;
 	*handle = (isp_handle)file;
 
 	ret= ioctl(file->fd, ISP_IO_SET_INIT_PARAM, init_param);
@@ -430,7 +430,7 @@ cmr_int isp_dev_close(isp_handle handle)
 cmr_int isp_dev_stop(isp_handle handle)
 {
 	cmr_int ret = 0;
-	cmr_int isp_id = 0;
+	cmr_int camera_id = 0;
 	struct isp_file *file = NULL;
 
 	if (!handle) {
@@ -439,9 +439,9 @@ cmr_int isp_dev_stop(isp_handle handle)
 	}
 
 	file = (struct isp_file *)(handle);
-	isp_id = file->isp_id;
+	camera_id = file->camera_id;
 
-	ret = ioctl(file->fd, ISP_IO_STOP, &isp_id);
+	ret = ioctl(file->fd, ISP_IO_STOP, &camera_id);
 	if (ret) {
 		CMR_LOGE("isp_dev_stop error.");
 	}
@@ -452,7 +452,7 @@ cmr_int isp_dev_stop(isp_handle handle)
 cmr_int isp_dev_stream_on(isp_handle handle)
 {
 	cmr_int ret = 0;
-	cmr_int isp_id = 0;
+	cmr_int camera_id = 0;
 	struct isp_file *file = NULL;
 
 	if (!handle) {
@@ -461,9 +461,9 @@ cmr_int isp_dev_stream_on(isp_handle handle)
 	}
 
 	file = (struct isp_file *)(handle);
-	isp_id = file->isp_id;
+	camera_id = file->camera_id;
 
-	ret = ioctl(file->fd, ISP_IO_STREAM_ON, &isp_id);
+	ret = ioctl(file->fd, ISP_IO_STREAM_ON, &camera_id);
 	if (ret) {
 		CMR_LOGE("isp_dev_stream_on error.");
 	}
@@ -474,7 +474,7 @@ cmr_int isp_dev_stream_on(isp_handle handle)
 cmr_int isp_dev_stream_off(isp_handle handle)
 {
 	cmr_int ret = 0;
-	cmr_int isp_id = 0;
+	cmr_int camera_id = 0;
 	struct isp_file *file = NULL;
 
 	if (!handle) {
@@ -483,9 +483,9 @@ cmr_int isp_dev_stream_off(isp_handle handle)
 	}
 
 	file = (struct isp_file *)(handle);
-	isp_id = file->isp_id;
+	camera_id = file->camera_id;
 
-	ret = ioctl(file->fd, ISP_IO_STREAM_OFF, &isp_id);
+	ret = ioctl(file->fd, ISP_IO_STREAM_OFF, &camera_id);
 	if (ret) {
 		CMR_LOGE("isp_dev_stream_off error.");
 	}
@@ -496,7 +496,6 @@ cmr_int isp_dev_stream_off(isp_handle handle)
 cmr_int isp_dev_load_firmware(isp_handle handle, struct isp_init_mem_param *param)
 {
 	cmr_int ret = 0;
-	cmr_int isp_id = 0;
 	struct isp_file *file = NULL;
 
 	if (!handle) {
@@ -507,18 +506,6 @@ cmr_int isp_dev_load_firmware(isp_handle handle, struct isp_init_mem_param *para
 		CMR_LOGE("Param is null error.");
 		return -1;
 	}
-
-	/*load altek isp firmware from user space*/
-/*	fd = open(isp_fw_name,O_RDONLY);
-	if(fd < 0) {
-		CMR_LOGE("open file error.");
-		return ret;
-	}
-	ret = read(fd, (void *)param->fw_buf_vir_addr, isp_fw_size);
-	if(ret < 0){
-		CMR_LOGE("read file error.");
-	}
-	close(fd);*/
 
 	file = (struct isp_file *)(handle);
 	ret = ioctl(file->fd, ISP_IO_LOAD_FW, param);
@@ -1360,3 +1347,21 @@ cmr_int isp_dev_get_irq(isp_handle handle, cmr_int *evt_ptr)
 }
 #endif
 
+cmr_int isp_dev_set_dcam_id(isp_handle handle, cmr_u32 dcam_id)
+{
+	cmr_int ret = 0;
+	struct isp_file *file = NULL;
+
+	if (!handle) {
+		CMR_LOGE("handle is null error.");
+		return -1;
+	}
+	CMR_LOGI("dcam_id %d", dcam_id);
+	file = (struct isp_file *)(handle);
+	ret = ioctl(file->fd, ISP_IO_SET_DCAM_ID, &dcam_id);
+	if (ret) {
+		CMR_LOGE("isp_dev_stream_on error.");
+	}
+
+	return ret;
+}
