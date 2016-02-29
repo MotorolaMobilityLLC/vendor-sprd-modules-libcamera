@@ -3345,7 +3345,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame)
 				int isp_info_size = 0;
 				if(encInfo->outPtr != NULL) {
 					memcpy((char *)pic_addr_vir, (char *)(encInfo->outPtr), encInfo->size);
-					if (!camera_get_isp_info(mCameraHandle, &isp_info_addr, &isp_info_size)) {
+					if (!camera_get_isp_info(mCameraHandle, &isp_info_addr, &isp_info_size) && (0 != isp_info_size)) {
 						mJpegSize = encInfo->size;
 						memcpy(((char *)pic_addr_vir+mJpegSize),(char *)isp_info_addr,isp_info_size);
 					}
