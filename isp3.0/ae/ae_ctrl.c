@@ -323,12 +323,28 @@ cmr_int ae_ctrl_ioctrl(cmr_handle handle, enum ae_ctrl_cmd cmd, struct ae_ctrl_p
 
 	message.msg_type = AECTRL_EVT_IOCTRL;
 	message.sub_msg_type = cmd;
-	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
-	message.alloc_flag = 0;
-	message.data = (void*)in_ptr;
+	if (AE_CTRL_SET_SOF == cmd) {
+		message.data = malloc(sizeof(*in_ptr));
+		if (!message.data) {
+			CMR_LOGE("failed to malloc msg");
+			ret = -ISP_ALLOC_ERROR;
+			goto exit;
+		}
+		memcpy(message.data, in_ptr, sizeof(*in_ptr));
+		message.alloc_flag = 1;
+		message.sync_flag = CMR_MSG_SYNC_NONE;
+	}
+	else {
+		message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+		message.alloc_flag = 0;
+		message.data = (void*)in_ptr;
+	}
+
 	ret = cmr_thread_msg_send(cxt_ptr->ctrl_thr_cxt.thr_handle, &message);
 	if (ret) {
 		ISP_LOGE("failed to send msg to main thr %ld", ret);
+		if (message.alloc_flag && message.data)
+			free(message.data);
 		goto exit;
 	}
 	if (out_ptr) {

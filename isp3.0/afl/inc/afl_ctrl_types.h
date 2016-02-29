@@ -42,6 +42,7 @@ enum afl_ctrl_cmd {
 	AFL_CTRL_SET_ENABLE,
 	AFL_CTRL_SET_PREVIOUS_DATA_INTERVAL,
 	AFL_CTRL_GET_SUCCESS_NUM,
+	AFL_CTRL_SET_STAT_QUEUE_RELEASE,
 	AFL_CTRL_CMD_MAX
 };
 
@@ -55,12 +56,14 @@ enum afl_ctrl_flicker_mode {
 
 enum afl_ctrl_cb_type {
 	AFL_CTRL_CB_FLICKER_MODE,
+	AFL_CTRL_CB_STAT_DATA,
 	AFL_CTRL_CB_MAX
 };
 
 struct afl_ctrl_callback_in {
 	union {
 	cmr_s32 flicker_mode;
+	struct isp3a_statistics_data *stat_data;
 	};
 };
 

@@ -40,6 +40,13 @@ struct aflaltek_lib_data {
 	al3AWrapper_Stats_Flicker_t stats_data;
 };
 
+struct aflaltek_statistics_queue {
+	cmr_u32 read;
+	cmr_u32 write;
+	cmr_u32 size;
+	struct isp3a_statistics_data* data[10];
+};
+
 /*ae altek context*/
 struct aflaltek_cxt {
 	cmr_u32 is_inited;
@@ -52,6 +59,7 @@ struct aflaltek_cxt {
 	void *lib_run_data;
 	struct aflaltek_lib_ops lib_ops;
 	struct aflaltek_lib_data lib_data;
+	struct aflaltek_statistics_queue stat_queue;
 };
 
 /**function**/
@@ -134,7 +142,7 @@ exit:
 	return ret;
 }
 
-static cmr_int afl_altek_set_init_setting(struct aflaltek_cxt *cxt_ptr, struct afl_ctrl_param_in *in_ptr, struct afl_ctrl_param_out *out_ptr)
+static cmr_int aflaltek_set_init_setting(struct aflaltek_cxt *cxt_ptr, struct afl_ctrl_param_in *in_ptr, struct afl_ctrl_param_out *out_ptr)
 {
 	cmr_int ret = ISP_ERROR;
 
@@ -175,7 +183,7 @@ exit:
 	return ret;
 }
 
-static cmr_int afl_altek_set_enable(struct aflaltek_cxt *cxt_ptr, struct afl_ctrl_param_in *in_ptr, struct afl_ctrl_param_out *out_ptr)
+static cmr_int aflaltek_set_enable(struct aflaltek_cxt *cxt_ptr, struct afl_ctrl_param_in *in_ptr, struct afl_ctrl_param_out *out_ptr)
 {
 	cmr_int ret = ISP_ERROR;
 
@@ -210,7 +218,7 @@ exit:
 	return ret;
 }
 
-static cmr_int afl_altek_set_current_frequency(struct aflaltek_cxt *cxt_ptr, struct afl_ctrl_param_in *in_ptr, struct afl_ctrl_param_out *out_ptr)
+static cmr_int aflaltek_set_current_frequency(struct aflaltek_cxt *cxt_ptr, struct afl_ctrl_param_in *in_ptr, struct afl_ctrl_param_out *out_ptr)
 {
 	cmr_int ret = ISP_ERROR;
 
@@ -245,7 +253,7 @@ exit:
 	return ret;
 }
 
-static cmr_int afl_altek_set_reference_data_interval(struct aflaltek_cxt *cxt_ptr, struct afl_ctrl_param_in *in_ptr, struct afl_ctrl_param_out *out_ptr)
+static cmr_int aflaltek_set_reference_data_interval(struct aflaltek_cxt *cxt_ptr, struct afl_ctrl_param_in *in_ptr, struct afl_ctrl_param_out *out_ptr)
 {
 	cmr_int ret = ISP_ERROR;
 
@@ -280,7 +288,7 @@ exit:
 	return ret;
 }
 
-static cmr_int afl_altek_to_afl_hw_cfg(alHW3a_Flicker_CfgInfo_t *from, struct isp3a_afl_hw_cfg *to)
+static cmr_int aflaltek_to_afl_hw_cfg(alHW3a_Flicker_CfgInfo_t *from, struct isp3a_afl_hw_cfg *to)
 {
 	cmr_int ret = ISP_ERROR;
 
@@ -297,7 +305,36 @@ exit:
 	return ret;
 }
 
-static cmr_int afl_altek_get_hw_config(struct aflaltek_cxt *cxt_ptr, struct isp3a_afl_hw_cfg *out_ptr)
+static cmr_int aflaltek_stat_queue_release_all(struct aflaltek_cxt *cxt_ptr, struct afl_ctrl_param_in *in_ptr, struct afl_ctrl_param_out *out_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+	struct afl_ctrl_callback_in callback_in;
+	cmr_u32 data_length;
+
+	if (!cxt_ptr) {
+		ISP_LOGE("param %p is NULL error!", cxt_ptr);
+		goto exit;
+	}
+	data_length = ARRAY_SIZE(cxt_ptr->stat_queue.data) - 1;
+	while (cxt_ptr->stat_queue.read != cxt_ptr->stat_queue.write) {
+		callback_in.stat_data = cxt_ptr->stat_queue.data[cxt_ptr->stat_queue.read];
+		cxt_ptr->stat_queue.size --;
+		if (data_length == cxt_ptr->stat_queue.read) {
+			cxt_ptr->stat_queue.read = 0;
+		} else {
+			cxt_ptr->stat_queue.read ++;
+		}
+		cxt_ptr->init_in_param.ops_in.afl_callback(cxt_ptr->caller_handle, AFL_CTRL_CB_STAT_DATA, &callback_in);
+	}
+
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld", ret);
+	return ret;
+}
+
+
+static cmr_int aflaltek_get_hw_config(struct aflaltek_cxt *cxt_ptr, struct isp3a_afl_hw_cfg *out_ptr)
 {
 	cmr_int ret = ISP_ERROR;
 
@@ -324,7 +361,7 @@ static cmr_int afl_altek_get_hw_config(struct aflaltek_cxt *cxt_ptr, struct isp3
 		goto exit;
 	cxt_ptr->lib_data.hwisp_cfg = in_param.alHW3A_FlickerConfig;
 
-	ret = afl_altek_to_afl_hw_cfg(&cxt_ptr->lib_data.hwisp_cfg, out_ptr);
+	ret = aflaltek_to_afl_hw_cfg(&cxt_ptr->lib_data.hwisp_cfg, out_ptr);
 	if (ret)
 		goto exit;
 	ISP_LOGI("token=%d, ratiox=%d, ratioy=%d",
@@ -337,7 +374,7 @@ exit:
 	return ret;
 }
 
-static cmr_int afl_altek_get_success_num(struct aflaltek_cxt *cxt_ptr, struct afl_ctrl_param_in *in_ptr, struct afl_ctrl_param_out *out_ptr)
+static cmr_int aflaltek_get_success_num(struct aflaltek_cxt *cxt_ptr, struct afl_ctrl_param_in *in_ptr, struct afl_ctrl_param_out *out_ptr)
 {
 	cmr_int ret = ISP_ERROR;
 
@@ -370,7 +407,7 @@ exit:
 	return ret;
 }
 
-static cmr_int afl_altek_set_work_mode(struct aflaltek_cxt *cxt_ptr, struct afl_ctrl_param_in *in_ptr, struct afl_ctrl_param_out *out_ptr)
+static cmr_int aflaltek_set_work_mode(struct aflaltek_cxt *cxt_ptr, struct afl_ctrl_param_in *in_ptr, struct afl_ctrl_param_out *out_ptr)
 {
 	cmr_int ret = ISP_ERROR;
 
@@ -414,16 +451,18 @@ static cmr_int afl_altek_set_work_mode(struct aflaltek_cxt *cxt_ptr, struct afl_
 		goto exit;
 	}
 
-	ret = afl_altek_get_hw_config(cxt_ptr, &out_ptr->hw_cfg);
+	ret = aflaltek_get_hw_config(cxt_ptr, &out_ptr->hw_cfg);
 	if (ret)
 		goto exit;
+
+	cmr_bzero(&cxt_ptr->stat_queue, sizeof(cxt_ptr->stat_queue));
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld, lib_ret=%ld !!!", ret, lib_ret);
 	return ret;
 }
 
-static cmr_int afl_altek_init(struct aflaltek_cxt *cxt_ptr, struct afl_ctrl_init_in *in_ptr)
+static cmr_int aflaltek_init(struct aflaltek_cxt *cxt_ptr, struct afl_ctrl_init_in *in_ptr)
 {
 	cmr_int ret = ISP_ERROR;
 	struct afl_ctrl_param_in in_param;
@@ -456,7 +495,7 @@ static cmr_int afl_altek_init(struct aflaltek_cxt *cxt_ptr, struct afl_ctrl_init
 	in_param.init.resolution.frame_size.w = in_ptr->init_param.resolution.frame_size.w;
 	in_param.init.resolution.frame_size.h = in_ptr->init_param.resolution.frame_size.h;
 
-	ret = afl_altek_set_init_setting(cxt_ptr, &in_param, NULL);
+	ret = aflaltek_set_init_setting(cxt_ptr, &in_param, NULL);
 	if (ret)
 		goto exit;
 	return ISP_SUCCESS;
@@ -497,12 +536,12 @@ static cmr_int afl_altek_adpt_init(void *in, void *out, cmr_handle *handle)
 		goto exit;
 	}
 
-	ret = afl_altek_init(cxt_ptr, in_ptr);
+	ret = aflaltek_init(cxt_ptr, in_ptr);
 	if (ret) {
 		goto exit;
 	}
 
-	ret = afl_altek_get_hw_config(cxt_ptr, &out_ptr->hw_cfg);
+	ret = aflaltek_get_hw_config(cxt_ptr, &out_ptr->hw_cfg);
 	if (ret)
 		goto exit;
 	*handle = (cmr_handle)cxt_ptr;
@@ -560,19 +599,22 @@ static cmr_int afl_altek_adpt_ioctrl(cmr_handle handle, cmr_int cmd, void *in, v
 
 	switch (cmd) {
 	case AFL_CTRL_SET_WORK_MODE:
-		ret = afl_altek_set_work_mode(cxt_ptr, in_ptr, out_ptr);
+		ret = aflaltek_set_work_mode(cxt_ptr, in_ptr, out_ptr);
 		break;
 	case AFL_CTRL_SET_FLICKER:
-		ret = afl_altek_set_current_frequency(cxt_ptr, in_ptr, out_ptr);
+		ret = aflaltek_set_current_frequency(cxt_ptr, in_ptr, out_ptr);
 		break;
 	case AFL_CTRL_SET_ENABLE:
-		ret = afl_altek_set_enable(cxt_ptr, in_ptr, out_ptr);
+		ret = aflaltek_set_enable(cxt_ptr, in_ptr, out_ptr);
 		break;
 	case AFL_CTRL_SET_PREVIOUS_DATA_INTERVAL:
-		ret = afl_altek_set_reference_data_interval(cxt_ptr, in_ptr, out_ptr);
+		ret = aflaltek_set_reference_data_interval(cxt_ptr, in_ptr, out_ptr);
 		break;
 	case AFL_CTRL_GET_SUCCESS_NUM:
-		ret = afl_altek_get_success_num(cxt_ptr, in_ptr, out_ptr);
+		ret = aflaltek_get_success_num(cxt_ptr, in_ptr, out_ptr);
+		break;
+	case AFL_CTRL_SET_STAT_QUEUE_RELEASE:
+		ret = aflaltek_stat_queue_release_all(cxt_ptr, in_ptr, out_ptr);
 		break;
 	default:
 		ISP_LOGE("cmd %ld is not defined!", cmd);
@@ -581,6 +623,45 @@ static cmr_int afl_altek_adpt_ioctrl(cmr_handle handle, cmr_int cmd, void *in, v
 
 exit:
 	return ret;
+}
+
+static cmr_int aflaltek_stat_queue_process(struct aflaltek_cxt *cxt_ptr, struct isp3a_statistics_data *stat_data_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+	struct afl_ctrl_callback_in callback_in;
+	cmr_u32 data_length;
+
+	if (!cxt_ptr || !stat_data_ptr) {
+		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, stat_data_ptr);
+		goto exit;
+	}
+
+	data_length = ARRAY_SIZE(cxt_ptr->stat_queue.data) - 1;
+	ISP_LOGI("add stat_data =%p,size:%d", stat_data_ptr,cxt_ptr->stat_queue.size);
+	cxt_ptr->stat_queue.data[cxt_ptr->stat_queue.write] = stat_data_ptr;
+	cxt_ptr->stat_queue.size ++;
+	if (data_length == cxt_ptr->stat_queue.write) {
+		cxt_ptr->stat_queue.write = 0;
+	} else {
+		cxt_ptr->stat_queue.write ++;
+	}
+
+	if (cxt_ptr->stat_queue.size > FLICKERINIT_TOTAL_QUEUE) {
+		callback_in.stat_data = cxt_ptr->stat_queue.data[cxt_ptr->stat_queue.read];
+		cxt_ptr->stat_queue.size --;
+		if (data_length == cxt_ptr->stat_queue.read) {
+			cxt_ptr->stat_queue.read = 0;
+		} else {
+			cxt_ptr->stat_queue.read ++;
+		}
+		cxt_ptr->init_in_param.ops_in.afl_callback(cxt_ptr->caller_handle, AFL_CTRL_CB_STAT_DATA, &callback_in);
+	}
+
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld", ret);
+	return ret;
+
 }
 
 static cmr_int afl_altek_adpt_process(cmr_handle handle, void *in, void *out)
@@ -619,6 +700,10 @@ static cmr_int afl_altek_adpt_process(cmr_handle handle, void *in, void *out)
 			callback_in.flicker_mode = AFL_CTRL_FLICKER_60HZ;
 		//cxt_ptr->init_in_param.ops_in.afl_callback(cxt_ptr->caller_handle, AFL_CTRL_CB_FLICKER_MODE, &callback_in);
 	}
+
+	ret = aflaltek_stat_queue_process(cxt_ptr, in_ptr->stat_data_ptr);
+	if (ret)
+		goto exit;
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGI("done %ld, lib_ret=%ld", ret, lib_ret);

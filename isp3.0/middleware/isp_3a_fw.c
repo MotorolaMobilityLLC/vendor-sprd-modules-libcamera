@@ -247,6 +247,7 @@ static cmr_int isp3a_start_afl_process(cmr_handle isp_3a_handle, struct isp3a_st
 static cmr_int isp3a_start_awb_process(cmr_handle isp_3a_handle, struct isp3a_statistics_data *stats_data, struct ae_ctrl_callback_in *ae_info);
 static cmr_int isp3a_handle_ae_result(cmr_handle isp_3a_handle, struct ae_ctrl_callback_in *result_ptr);
 static cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start* input_ptr);
+static cmr_int isp3a_stop(cmr_handle isp_3a_handle);
 
 
 static struct isp3a_ctrl_io_func s_isp3a_ioctrl_tab[ISP_CTRL_MAX] = {
@@ -422,7 +423,10 @@ cmr_int isp3a_afl_callback(cmr_handle handle, enum afl_ctrl_cb_type cmd, struct 
 		ISP_LOGI("flicker_mode =%d", in_ptr->flicker_mode);
 		ae_in.flicker.flicker_mode = in_ptr->flicker_mode;
 		ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_FLICKER, &ae_in, NULL);
-		//TBD
+		break;
+	case AFL_CTRL_CB_STAT_DATA:
+		ISP_LOGI("release stat_data =%p", in_ptr->stat_data);
+		isp3a_release_statistics_buf(handle, ISP3A_AFL, in_ptr->stat_data);
 		break;
 	default:
 		break;
@@ -900,6 +904,7 @@ cmr_int isp3a_process_thread_proc(struct cmr_msg *message, void* p_data)
 		ret = isp3a_handle_sensor_sof((cmr_handle)cxt, message->data);
 		break;
 	case ISP3A_PROC_EVT_STOP:
+		ret = isp3a_stop((cmr_handle)cxt);
 		break;
 	default:
 		ISP_LOGI("don't support msg");
@@ -2593,11 +2598,11 @@ cmr_int isp3a_start_afl_process(cmr_handle isp_3a_handle, struct isp3a_statistic
 	input.stat_data_ptr = stats_data;
 	isp3a_hold_statistics_buf(isp_3a_handle, ISP3A_AFL, stats_data);
 
-	ret = afl_ctrl_process(cxt->afl_cxt.handle, &input, &output);//TBD
+	ret = afl_ctrl_process(cxt->afl_cxt.handle, &input, &output);
 	if (ret) {
 		ISP_LOGE("failed to afl process");
 	}
-	isp3a_release_statistics_buf(isp_3a_handle, ISP3A_AFL, stats_data);
+
 	return ret;
 }
 
@@ -2711,6 +2716,21 @@ cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start* input_ptr)
 		ISP_LOGE("failed to set work mode to AFL");
 	} else {
 		cxt->afl_cxt.hw_cfg = afl_out.hw_cfg;
+	}
+
+	return ret;
+}
+
+cmr_int isp3a_stop(cmr_handle isp_3a_handle)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
+	struct afl_ctrl_param_in                    afl_in;
+	struct afl_ctrl_param_out                   afl_out;
+
+	ret = afl_ctrl_ioctrl(cxt->afl_cxt.handle, AFL_CTRL_SET_STAT_QUEUE_RELEASE, &afl_in, &afl_out);
+	if (ret) {
+		ISP_LOGE("failed to release stat queue to AFL");
 	}
 
 	return ret;

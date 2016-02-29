@@ -2143,7 +2143,7 @@ exit:
 	return ret;
 }
 
-static cmr_int aealtek_set_lib_lock(struct aealtek_cxt *cxt_ptr)
+static cmr_int aealtek_set_lib_lock(struct aealtek_cxt *cxt_ptr, cmr_int is_lock)
 {
 	cmr_int ret = ISP_ERROR;
 	cmr_int lib_ret = 0;
@@ -2162,10 +2162,7 @@ static cmr_int aealtek_set_lib_lock(struct aealtek_cxt *cxt_ptr)
 	output_param_ptr = &cxt_ptr->lib_data.output_data;
 	param_ct_ptr = &in_param.set_param;
 
-	if (cxt_ptr->lock_cnt > 0)
-		param_ct_ptr->ae_lock = 1;
-	else
-		param_ct_ptr->ae_lock = 0;
+	param_ct_ptr->ae_lock = is_lock;
 
 	ISP_LOGI("is_lock=%d", param_ct_ptr->ae_lock);
 	type = AE_SET_PARAM_LOCKAE;
@@ -2197,7 +2194,12 @@ static cmr_int aealtek_set_lock(struct aealtek_cxt *cxt_ptr, cmr_int is_lock)
 			cxt_ptr->lock_cnt--;
 	}
 
-	ret = aealtek_set_lib_lock(cxt_ptr);
+	if (cxt_ptr->lock_cnt > 0)
+		is_lock = 1;
+	else
+		is_lock = 0;
+
+	ret = aealtek_set_lib_lock(cxt_ptr, is_lock);
 	if (ret)
 		goto exit;
 
