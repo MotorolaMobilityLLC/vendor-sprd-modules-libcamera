@@ -155,6 +155,7 @@ struct isp3a_fw_context {
 	struct other_stats_info  other_stats_cxt;
 	void *setting_param_ptr;
 	struct sensor_raw_ioctrl *ioctrl_ptr;
+	struct isp_bin_info bin_info;
 	cmr_uint sof_idx;
 };
 /*************************************INTERNAK DECLARATION***************************************/
@@ -2775,6 +2776,8 @@ cmr_int isp_3a_fw_init(struct isp_3a_fw_init_in* input_ptr, cmr_handle* isp_3a_h
 #if 0
 	isp3a_test_stat_buf((cmr_handle)cxt);
 #endif
+	cxt->bin_info.addr = input_ptr->bin_info.addr;
+	cxt->bin_info.size = input_ptr->bin_info.size;
 	ret = isp3a_alg_init((cmr_handle)cxt, input_ptr);
 	if (ret) {
 		goto exit;

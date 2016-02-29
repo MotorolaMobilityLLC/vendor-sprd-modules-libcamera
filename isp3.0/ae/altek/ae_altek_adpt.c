@@ -2478,6 +2478,37 @@ exit:
 	return ret;
 }
 
+static cmr_int aealtek_get_iso_from_adgain(struct aealtek_cxt *cxt_ptr, cmr_u32 *from, cmr_u32 *to)
+{
+	cmr_int ret = ISP_ERROR;
+	cmr_int lib_ret = 0;
+
+	alAERuntimeObj_t *obj_ptr = NULL;
+	ae_get_param_t in_param;
+
+
+	if (!cxt_ptr || !from || !to) {
+		ISP_LOGE("param %p %p %p is NULL error!", cxt_ptr, from, to);
+		goto exit;
+	}
+	obj_ptr = &cxt_ptr->al_obj;
+
+	in_param.ae_get_param_type = AE_GET_ISO_FROM_ADGAIN;
+	in_param.para.ISO_ADgain_info.ad_gain = *from;
+
+	if (obj_ptr && obj_ptr->get_param)
+		lib_ret = obj_ptr->get_param(&in_param, obj_ptr->ae);
+	if (lib_ret)
+		goto exit;
+
+	*to = in_param.para.ISO_ADgain_info.ISO;
+
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld lib_ret=%ld !!!", ret, lib_ret);
+	return ret;
+}
+
 static cmr_int aealtek_set_sof_to_lib(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct aealtek_exposure_param exp_param)
 {
 	cmr_int ret = ISP_ERROR;
@@ -2569,7 +2600,10 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	if (ret)
 		goto exit;
 	out_ptr->isp_d_gain = cxt_ptr->sensor_exp_data.actual_exp.gain;
-	out_ptr->hw_iso_speed = cxt_ptr->sensor_exp_data.actual_exp.iso;
+	ret = aealtek_get_iso_from_adgain(cxt_ptr, &cxt_ptr->sensor_exp_data.actual_exp.gain, &out_ptr->hw_iso_speed);
+	if (ret)
+		goto exit;
+
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld", ret);
@@ -2972,7 +3006,10 @@ static cmr_int ae_altek_adpt_init(void *in, void *out, cmr_handle *handle)
 	ret = aealtek_first_work(cxt_ptr, NULL, NULL);
 	if (ret)
 		goto exit;
-	out_ptr->hw_iso_speed = cxt_ptr->sensor_exp_data.lib_exp.iso;
+	ret = aealtek_get_iso_from_adgain(cxt_ptr, &cxt_ptr->sensor_exp_data.lib_exp.gain, &out_ptr->hw_iso_speed);
+	if (ret)
+		goto exit;
+
 	ret = aealtek_get_hwisp_cfg( cxt_ptr, &out_ptr->hw_cfg);
 	if (ret)
 		goto exit;

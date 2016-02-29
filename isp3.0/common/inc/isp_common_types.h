@@ -301,6 +301,10 @@ struct isp3a_statistics_data {
 	void *addr;
 };
 
+struct isp_bin_info {
+	void *addr;
+	cmr_u32 size;
+};
 /**********************************FUNCTION***********************************/
 typedef cmr_int (*isp3a_callback) (cmr_handle handle, cmr_u32 cb_type,
 				  void *param_ptr, cmr_u32 param_len);

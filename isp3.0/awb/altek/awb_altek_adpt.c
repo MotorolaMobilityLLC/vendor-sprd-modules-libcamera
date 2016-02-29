@@ -161,6 +161,192 @@ cmr_int awbaltek_set_sof_frame_id(cmr_handle adpt_handle, union awb_ctrl_cmd_in 
 	return ret;
 }
 
+cmr_int awbaltek_set_lock(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
+	alAWBLib_set_parameter_t                    input;
+
+	if (1 != cxt->is_lock) {
+		input.type = alawb_set_param_manual_flow;
+		input.para.awb_manual_flow.manual_setting = alawb_flow_lock;
+		input.para.awb_manual_flow.manual_wbgain.r_gain = input_ptr->lock_param.wbgain.r;
+		input.para.awb_manual_flow.manual_wbgain.g_gain = input_ptr->lock_param.wbgain.g;
+		input.para.awb_manual_flow.manual_wbgain.b_gain = input_ptr->lock_param.wbgain.b;
+		input.para.awb_manual_flow.manual_ct = input_ptr->lock_param.ct;
+		ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
+		if (ret) {
+			ISP_LOGE("failed to lock");
+		} else {
+			cxt->is_lock = 1;
+		}
+	} else {
+		ISP_LOGI("AWB has locked!");
+	}
+exit:
+	return ret;
+}
+
+cmr_int awbaltek_set_unlock(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
+	alAWBLib_set_parameter_t                    input;
+
+	input.type = alawb_set_param_manual_flow;
+	input.para.awb_manual_flow.manual_setting = alawb_flow_none;
+	ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
+	cxt->is_lock = 0;
+exit:
+	return ret;
+}
+
+cmr_int awbaltek_set_flash_close(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
+	alAWBLib_set_parameter_t                    input;
+
+	cxt->flash_info.flash_status = input_ptr->flash_status;
+	cxt->flash_info.flash_mode = AWB_CTRL_FLASH_END;
+	ISP_LOGI("is lock %d", cxt->is_lock);
+	if (1 == cxt->is_lock) {
+		input.type = alawb_set_param_manual_flow;
+		input.para.awb_manual_flow.manual_setting = alawb_flow_none;
+		ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
+		if (!ret) {
+			cxt->is_lock = 0;
+		}
+	}
+
+exit:
+	return ret;
+}
+
+cmr_int awbaltek_set_ae_report(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
+	alAWBLib_set_parameter_t                    input;
+	struct isp3a_ae_report                      *report_ptr;
+
+	input.type = alawb_set_param_update_ae_report;
+	report_ptr = &input_ptr->ae_info.report_data;
+	input.para.ae_report_update.ae_converge = report_ptr->ae_converge_st;
+	input.para.ae_report_update.ae_state = report_ptr->ae_state;
+	input.para.ae_report_update.BV = report_ptr->BV;
+	input.para.ae_report_update.fe_state = report_ptr->fe_state;
+	input.para.ae_report_update.ISO = report_ptr->ISO;
+	input.para.ae_report_update.non_comp_BV = report_ptr->non_comp_BV;
+	input.para.ae_report_update.flash_param_preview.flash_gain.r_gain = report_ptr->flash_param_preview.wbgain_led1.r;
+	input.para.ae_report_update.flash_param_preview.flash_gain.g_gain = report_ptr->flash_param_preview.wbgain_led1.g;
+	input.para.ae_report_update.flash_param_preview.flash_gain.b_gain = report_ptr->flash_param_preview.wbgain_led1.b;
+	input.para.ae_report_update.flash_param_preview.flash_gain_led2.r_gain = report_ptr->flash_param_preview.wbgain_led2.r;
+	input.para.ae_report_update.flash_param_preview.flash_gain_led2.g_gain = report_ptr->flash_param_preview.wbgain_led2.g;
+	input.para.ae_report_update.flash_param_preview.flash_gain_led2.b_gain = report_ptr->flash_param_preview.wbgain_led2.b;
+	input.para.ae_report_update.flash_param_preview.flash_ratio = report_ptr->flash_param_preview.blending_ratio_led1;
+	input.para.ae_report_update.flash_param_preview.flash_ratio_led2 = report_ptr->flash_param_preview.blending_ratio_led2;
+	input.para.ae_report_update.flash_param_preview.LED1_CT = report_ptr->flash_param_preview.color_temp_led1;
+	input.para.ae_report_update.flash_param_preview.LED2_CT = report_ptr->flash_param_preview.color_temp_led2;
+	input.para.ae_report_update.flash_param_capture.flash_gain.r_gain = report_ptr->flash_param_capture.wbgain_led1.r;
+	input.para.ae_report_update.flash_param_capture.flash_gain.g_gain = report_ptr->flash_param_capture.wbgain_led1.g;
+	input.para.ae_report_update.flash_param_capture.flash_gain.b_gain = report_ptr->flash_param_capture.wbgain_led1.b;
+	input.para.ae_report_update.flash_param_capture.flash_gain_led2.r_gain = report_ptr->flash_param_capture.wbgain_led2.r;
+	input.para.ae_report_update.flash_param_capture.flash_gain_led2.g_gain = report_ptr->flash_param_capture.wbgain_led2.g;
+	input.para.ae_report_update.flash_param_capture.flash_gain_led2.b_gain = report_ptr->flash_param_capture.wbgain_led2.b;
+	input.para.ae_report_update.flash_param_capture.flash_ratio = report_ptr->flash_param_capture.blending_ratio_led1;
+	input.para.ae_report_update.flash_param_capture.flash_ratio_led2 = report_ptr->flash_param_capture.blending_ratio_led2;
+	input.para.ae_report_update.flash_param_capture.LED1_CT = report_ptr->flash_param_capture.color_temp_led1;
+	input.para.ae_report_update.flash_param_capture.LED2_CT = report_ptr->flash_param_capture.color_temp_led2;
+	ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
+	if (ret) {
+		ISP_LOGE("failed to set ae info");
+	}
+
+exit:
+	return ret;
+}
+
+cmr_int awbaltek_set_af_report(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
+	alAWBLib_set_parameter_t                    input;
+
+	input.type = alawb_set_param_update_af_report;
+	ISP_LOGI("af report size %d", input_ptr->af_report.data_size);
+	memcpy(&input.para.af_report_update, input_ptr->af_report.data, sizeof(af_report_update_t));
+	ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
+	if (ret) {
+		ISP_LOGE("failed to set ae info");
+	}
+exit:
+	return ret;
+}
+
+cmr_int awbaltek_set_bypass(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
+	alAWBLib_set_parameter_t                    input;
+
+	input.type = alawb_set_param_manual_flow;
+	if (1 == input_ptr->bypass) {
+		input.para.awb_manual_flow.manual_setting = alawb_flow_bypass;
+	} else {
+		input.para.awb_manual_flow.manual_setting = alawb_flow_none;
+	}
+	ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
+	if (!ret) {
+		if (1 == input_ptr->bypass) {
+			cxt->is_bypass = 1;
+		} else {
+			cxt->is_bypass = 0;
+		}
+	}
+
+exit:
+	return ret;
+}
+
+cmr_int awbaltek_set_flash_before_p(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
+	alAWBLib_set_parameter_t                    input;
+
+	input.type = alawb_set_param_state_under_flash;
+	input.para.state_under_flash = alawb_set_flash_prepare_under_flashon;
+	ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
+
+exit:
+	return ret;
+}
+
+cmr_int awbaltek_set_flash_before_m(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
+	alAWBLib_set_parameter_t                    input;
+
+	if (1 != cxt->is_lock) {
+		input.type = alawb_set_param_manual_flow;
+		input.para.awb_manual_flow.manual_setting = alawb_flow_lock;
+		input.para.awb_manual_flow.manual_wbgain.r_gain = input_ptr->lock_param.wbgain.r;
+		input.para.awb_manual_flow.manual_wbgain.g_gain = input_ptr->lock_param.wbgain.g;
+		input.para.awb_manual_flow.manual_wbgain.b_gain = input_ptr->lock_param.wbgain.b;
+		input.para.awb_manual_flow.manual_ct = input_ptr->lock_param.ct;
+		ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
+		if (!ret) {
+			cxt->is_lock = 1;
+		}
+	} else {
+		ISP_LOGI("AWB has locked!");
+	}
+exit:
+	return ret;
+}
+
 cmr_int awbaltek_get_gain(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
@@ -182,6 +368,28 @@ cmr_int awbaltek_get_gain(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_p
 		output_ptr->gain.r = get_input.para.wbgain.r_gain;
 		output_ptr->gain.g = get_input.para.wbgain.g_gain;
 		output_ptr->gain.b = get_input.para.wbgain.b_gain;
+	}
+exit:
+	return ret;
+}
+
+cmr_int awbaltek_get_ct(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
+	alAWBLib_get_parameter_t                    get_input;
+
+	if (!output_ptr) {
+		ISP_LOGE("error,output is NULL");
+		goto exit;
+	}
+	output_ptr->ct = 0;
+	get_input.type = alawb_get_param_color_temperature;
+	ret = (cmr_int)cxt->lib_func.get_param(&get_input, cxt->lib_func.awb);
+	if (ret) {
+		ISP_LOGE("failed to get gain");
+	} else {
+		output_ptr->ct = get_input.para.color_temp;
 	}
 exit:
 	return ret;
@@ -593,111 +801,33 @@ cmr_int awbaltek_ioctrl(cmr_handle adpt_handle, enum awb_ctrl_cmd cmd, union awb
 	case AWB_CTRL_CMD_FLASHING:
 		break;
 	case AWB_CTRL_CMD_FLASH_CLOSE:
-		cxt->flash_info.flash_status = input_ptr->flash_status;
-		cxt->flash_info.flash_mode = AWB_CTRL_FLASH_END;
-		ISP_LOGI("is lock %d", cxt->is_lock);
-		if (1 == cxt->is_lock) {
-			input.type = alawb_set_param_manual_flow;
-			input.para.awb_manual_flow.manual_setting = alawb_flow_none;
-			ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
-			if (!ret) {
-				cxt->is_lock = 0;
-			}
-		}
+		ret = awbaltek_set_flash_close(adpt_handle, input_ptr, output_ptr);
 		break;
 	case AWB_CTRL_CMD_LOCK:
-		if (1 != cxt->is_lock) {
-			input.type = alawb_set_param_manual_flow;
-			input.para.awb_manual_flow.manual_setting = alawb_flow_lock;
-			input.para.awb_manual_flow.manual_wbgain.r_gain = input_ptr->lock_param.wbgain.r;
-			input.para.awb_manual_flow.manual_wbgain.g_gain = input_ptr->lock_param.wbgain.g;
-			input.para.awb_manual_flow.manual_wbgain.b_gain = input_ptr->lock_param.wbgain.b;
-			input.para.awb_manual_flow.manual_ct = input_ptr->lock_param.ct;
-			ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
-			if (ret) {
-				ISP_LOGE("failed to lock");
-			} else {
-				cxt->is_lock = 1;
-			}
-		} else {
-			ISP_LOGI("AWB has locked!");
-		}
+		ret = awbaltek_set_lock(adpt_handle, input_ptr, output_ptr);
 		break;
 	case AWB_CTRL_CMD_UNLOCK:
-		input.type = alawb_set_param_manual_flow;
-		input.para.awb_manual_flow.manual_setting = alawb_flow_none;
-		ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
-		cxt->is_lock = 0;
+		ret = awbaltek_set_unlock(adpt_handle, input_ptr, output_ptr);
 		break;
 	case AWB_CTRL_CMD_GET_CT:
-		if (!output_ptr) {
-			ISP_LOGE("error,output is NULL");
-			break;
-		}
-		output_ptr->ct = 0;
-		get_input.type = alawb_get_param_color_temperature;
-		ret = (cmr_int)cxt->lib_func.get_param(&get_input, cxt->lib_func.awb);
-		if (ret) {
-			ISP_LOGE("failed to get gain");
-		} else {
-			output_ptr->ct = get_input.para.color_temp;
-		}
+		ret = awbaltek_get_ct(adpt_handle, input_ptr, output_ptr);
 		break;
 	case AWB_CTRL_CMD_FLASH_BEFORE_P://TBD
-		input.type = alawb_set_param_state_under_flash;
-		input.para.state_under_flash = alawb_set_flash_prepare_under_flashon;
-		ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
+		ret = awbaltek_set_flash_before_p(adpt_handle, input_ptr, output_ptr);
 		break;
 	case AWB_CTRL_CMD_FLASH_BEFORE_M:
-		if (1 != cxt->is_lock) {
-			input.type = alawb_set_param_manual_flow;
-			input.para.awb_manual_flow.manual_setting = alawb_flow_lock;
-			input.para.awb_manual_flow.manual_wbgain.r_gain = input_ptr->lock_param.wbgain.r;
-			input.para.awb_manual_flow.manual_wbgain.g_gain = input_ptr->lock_param.wbgain.g;
-			input.para.awb_manual_flow.manual_wbgain.b_gain = input_ptr->lock_param.wbgain.b;
-			input.para.awb_manual_flow.manual_ct = input_ptr->lock_param.ct;
-			ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
-			if (!ret) {
-				cxt->is_lock = 1;
-			}
-		} else {
-			ISP_LOGI("AWB has locked!");
-		}
+		ret = awbaltek_set_flash_before_m(adpt_handle, input_ptr, output_ptr);
 		break;
 	case AWB_CTRL_CMD_SET_FLASH_STATUS:
 		break;
 	case AWB_CTRL_CMD_SET_AE_REPORT://TBD
-		input.type = alawb_set_param_update_ae_report;
-//		input.para.report_update = ???
-		ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
-		if (ret) {
-			ISP_LOGE("failed to set ae info");
-		}
+		ret = awbaltek_set_ae_report(adpt_handle, input_ptr, output_ptr);
 		break;
 	case AWB_CTRL_CMD_SET_AF_REPORT:
-		input.type = alawb_set_param_update_af_report;
-		ISP_LOGI("af report size %d", input_ptr->af_report.data_size);
-		memcpy(&input.para.af_report_update, input_ptr->af_report.data, sizeof(af_report_update_t));
-		ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
-		if (ret) {
-			ISP_LOGE("failed to set ae info");
-		}
+		ret = awbaltek_set_af_report(adpt_handle, input_ptr, output_ptr);
 		break;
 	case AWB_CTRL_CMD_SET_BYPASS:
-		input.type = alawb_set_param_manual_flow;
-		if (1 == input_ptr->bypass) {
-			input.para.awb_manual_flow.manual_setting = alawb_flow_bypass;
-		} else {
-			input.para.awb_manual_flow.manual_setting = alawb_flow_none;
-		}
-		ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
-		if (!ret) {
-			if (1 == input_ptr->bypass) {
-				cxt->is_bypass = 1;
-			} else {
-				cxt->is_bypass = 0;
-			}
-		}
+		ret = awbaltek_set_bypass(adpt_handle, input_ptr, output_ptr);
 		break;
 	case AWB_CTRL_CMD_SET_SCENE_MODE:
 	case AWB_CTRL_CMD_GET_STAT_SIZE:

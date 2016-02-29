@@ -615,7 +615,7 @@ static cmr_int afl_altek_adpt_process(cmr_handle handle, void *in, void *out)
 	if (cxt_ptr->init_in_param.ops_in.afl_callback) {
 		callback_in.flicker_mode = cxt_ptr->lib_data.output_data.FinalFreq;
 		ISP_LOGI("flicker_mode=%d", callback_in.flicker_mode);
-		cxt_ptr->init_in_param.ops_in.afl_callback(cxt_ptr->caller_handle, AFL_CTRL_CB_FLICKER_MODE, &callback_in);
+		//cxt_ptr->init_in_param.ops_in.afl_callback(cxt_ptr->caller_handle, AFL_CTRL_CB_FLICKER_MODE, &callback_in);
 	}
 	return ISP_SUCCESS;
 exit:

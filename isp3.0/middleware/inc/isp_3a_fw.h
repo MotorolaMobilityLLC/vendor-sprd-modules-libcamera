@@ -31,7 +31,8 @@ struct isp_3a_fw_init_in {
 	cmr_handle dev_access_handle;
 	cmr_u32 camera_id;
 	proc_callback isp_mw_callback;
-	void* setting_param_ptr;
+	void *setting_param_ptr;
+	struct isp_bin_info bin_info;
 	struct isp_size size;
 	struct isp_data_info calibration_param;
 	struct isp_lib_config af_config;
@@ -40,7 +41,6 @@ struct isp_3a_fw_init_in {
 	struct isp_lib_config afl_config;
 	void* sensor_lsc_golden_data;
 	struct isp_ops ops;
-	//TBD
 };
 
 
