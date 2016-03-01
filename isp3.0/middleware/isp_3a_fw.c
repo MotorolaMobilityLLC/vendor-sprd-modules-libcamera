@@ -1791,6 +1791,9 @@ cmr_int isp3a_get_info(cmr_handle isp_3a_handle, void *param_ptr)
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
 	struct isp_info                             *info_ptr = (struct isp_info*)param_ptr;
 	union awb_ctrl_cmd_out                      awb_out;
+	struct ae_ctrl_param_out                    ae_out;
+	struct af_ctrl_param_out                    af_out;
+
 	if (!param_ptr) {
 		ISP_LOGW("input is NULL");
 		goto exit;
@@ -1803,8 +1806,16 @@ cmr_int isp3a_get_info(cmr_handle isp_3a_handle, void *param_ptr)
 		ISP_LOGE("failed to get awb debug info 0x%lx", ret);
 		goto exit;
 	}
-	//ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, enum ae_ctrl_cmd cmd, struct ae_ctrl_param_in * in_ptr, struct ae_ctrl_param_out * out_ptr);
-	//ret = af_ctrl_ioctrl(cxt->af_cxt.handle, cmr_int cmd, struct af_ctrl_param_in * in, struct af_ctrl_param_out * out)
+	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_GET_DEBUG_DATA, NULL, &ae_out);
+	if (ret) {
+		ISP_LOGE("failed to get ae debug info 0x%lx", ret);
+		goto exit;
+	}
+	ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_GET_DEBUG_INFO, NULL, &af_out);
+	if (ret) {
+		ISP_LOGE("failed to get af debug info 0x%lx", ret);
+		goto exit;
+	}
 
 exit:
 	ISP_LOGI("debug info size %ld", info_ptr->size);
@@ -1927,16 +1938,27 @@ cmr_int isp3a_get_exif_info(cmr_handle isp_3a_handle, void *param_ptr)
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
 	struct isp_info                             *exif_info_ptr = (struct isp_info*)param_ptr;
 	union awb_ctrl_cmd_out                      awb_out;
+	struct ae_ctrl_param_out                    ae_out;
+	struct af_ctrl_param_out                    af_out;
 
 	if (!param_ptr) {
 		ISP_LOGW("input is NULL");
 		goto exit;
 	}
 	exif_info_ptr->size = 0;
+	ret= ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_GET_EXIF_DATA, NULL, &ae_out);
+	if (ret) {
+		ISP_LOGE("failed to get ae exif info 0x%lx", ret);
+	}
 
 	ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_EXIF_DEBUG_INFO, NULL, &awb_out);
 	if (ret) {
 		ISP_LOGE("failed to get awb exif info 0x%lx", ret);
+	}
+
+	ret= af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_GET_EXIF_DEBUG_INFO, NULL, &af_out);
+	if (ret) {
+		ISP_LOGE("failed to get af exif info 0x%lx", ret);
 	}
 exit:
 	ISP_LOGI("exif debug info size %ld", exif_info_ptr->size);
