@@ -359,6 +359,7 @@ cmr_int isp3a_ae_callback(cmr_handle handle, enum ae_ctrl_cb_type cmd, struct ae
 	case AE_CTRL_CB_CLOSE_PREFLASH:
 	case AE_CTRL_CB_CLOSE_MAIN_FLASH:
 	case AE_CTRL_CB_PREFLASH_PERIOD_END:
+	case AE_CTRl_CB_TOUCH_CONVERGED:
 		callback_cmd = ISP_AE_STAB_CALLBACK;
 		break;
 	case AE_CTRL_CB_QUICKMODE_DOWN:

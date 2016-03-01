@@ -3821,7 +3821,9 @@ int SprdCamera3Setting::androidAmModeToDrvAwbMode(uint8_t androidAmMode, struct 
 	ae_param->win_area.rect[0].width  = area[2];
 	ae_param->win_area.rect[0].height = area[3];
 
-	if (CAMERA_AE_SPOT_METERING == androidAmMode) {
+	//delete this if because app change metering condition
+	//if (CAMERA_AE_SPOT_METERING == androidAmMode)
+	{
 		ae_param->win_area.rect[0].start_x = s_setting[mCameraId].sprddefInfo.am_regions[0];
 		ae_param->win_area.rect[0].start_y = s_setting[mCameraId].sprddefInfo.am_regions[1];
 		ae_param->win_area.rect[0].width  = s_setting[mCameraId].sprddefInfo.am_regions[2];

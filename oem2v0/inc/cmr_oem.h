@@ -266,6 +266,7 @@ struct camera_context {
 	camera_cb_of_malloc      hal_malloc;
 	camera_cb_of_free        hal_free;
 	void                     *hal_mem_privdata;
+	cmr_uint                 is_enter_focus;
 
 #if defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4)
 	/*for isp lsc buffer*/

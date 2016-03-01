@@ -1470,6 +1470,8 @@ cmr_int camera_focus_pre_proc(cmr_handle oem_handle)
 	struct setting_cmd_parameter    setting_param = {0};
 	cmr_int                         need_pre_flash = 1;
 
+	//set focus flag to 1
+	cxt->is_enter_focus = 1;
 	/*open flash*/
 	setting_param.camera_id = cxt->camera_id;
 #ifdef CONFIG_MEM_OPTIMIZATION
@@ -1482,6 +1484,12 @@ cmr_int camera_focus_pre_proc(cmr_handle oem_handle)
 		need_pre_flash = 0;
 	}
 #endif
+	//wait  AOI converged
+	ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_SET_ROI_CONVERGENCE_REQ, &setting_param);
+	if (ret) {
+		CMR_LOGE("failed to _SET_ROI_CONVERGENCE_REQ");
+	}
+
 	if (need_pre_flash) {
 		setting_param.ctrl_flash.is_active = 1;
 		setting_param.ctrl_flash.flash_type = FLASH_OPEN;
@@ -1564,6 +1572,9 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture)
 			}
 		}
 	}
+	//clear focus
+	cxt->is_enter_focus = 0;
+
 	return ret;
 }
 
@@ -2563,6 +2574,7 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 		goto exit;
 	}
 
+	cxt->is_enter_focus= 0;
 #if defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4)
 	cxt->isp_malloc_flag = 0;
 	cxt->isp_anti_flicker_flag = 0;
@@ -4087,6 +4099,12 @@ cmr_int camera_capture_post_proc(cmr_handle oem_handle, cmr_u32 camera_id)
 			CMR_LOGE("failed to set sensor %ld", ret);
 		}
 	}
+	//notify isp after snapshot
+	ret = camera_isp_ioctl(oem_handle,COM_ISP_SET_SNAPSHOT_FINISHED,NULL);
+	if (ret) {
+			CMR_LOGE("failed to set snapshot finished %ld", ret);
+	}
+
 exit:
 	CMR_LOGI("done %ld", ret);
 	return ret;
@@ -5082,17 +5100,20 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type, struct common
 		CMR_LOGI("ae mode %d", param_ptr->cmd_value);
 		break;
 	case COM_ISP_SET_AE_MEASURE_LUM:
+		if(cxt->is_enter_focus)
+			goto exit;
 		isp_cmd = ISP_CTRL_AE_MEASURE_LUM;
 		isp_param = param_ptr->cmd_value;
 		CMR_LOGI("aw measure lum %d", param_ptr->cmd_value);
 		break;
 	case COM_ISP_SET_AE_METERING_AREA:
+		if(cxt->is_enter_focus)
+			goto exit;
 		isp_cmd = ISP_CTRL_AE_TOUCH;
 		trim.start_x = param_ptr->win_area.rect[0].start_x;
 		trim.start_y = param_ptr->win_area.rect[0].start_y;
 		trim.end_x = param_ptr->win_area.rect[0].start_x + param_ptr->win_area.rect[0].width;
 		trim.end_y = param_ptr->win_area.rect[0].start_y + param_ptr->win_area.rect[0].height;
-
 		if (trim.end_x <= (uint32_t)trim.start_x
 			|| trim.end_y <= (uint32_t)trim.start_y) {
 			goto exit;
@@ -5238,6 +5259,19 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type, struct common
 		isp_param = param_ptr->cmd_value;
 		CMR_LOGI("set AE Lock & Unlock %d", isp_param);
 		break;
+
+	case COM_ISP_SET_ROI_CONVERGENCE_REQ:
+		isp_cmd = ISP_CTRL_SET_CONVERGENCE_REQ;
+		ptr_flag = 1;
+		CMR_LOGI("ISP_CTRL_SET_CONVERGENCE_REQ");
+		break;
+
+	case COM_ISP_SET_SNAPSHOT_FINISHED:
+		isp_cmd = ISP_CTRL_SET_SNAPSHOT_FINISHED;
+		ptr_flag = 1;
+		CMR_LOGI("ISP_CTRL_SET_SNAPSHOT_FINISHED");
+		break;
+
 	default:
 		CMR_LOGE("don't support cmd %ld", cmd_type);
 		ret = CMR_CAMERA_NO_SUPPORT;

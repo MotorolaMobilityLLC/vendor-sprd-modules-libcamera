@@ -183,6 +183,7 @@ struct setting_component {
 	sem_t                         quick_ae_sem;
 	sem_t                         preflash_sem;
 	uint32_t flash_need_quit;
+	uint32_t		        is_touch_focus;
 };
 
 struct setting_item {
@@ -586,6 +587,7 @@ static cmr_int setting_set_general(struct setting_component *cpt,
 		*item->cmd_type_value = type_val;
 	}
 
+
 setting_out:
 	return ret;
 }
@@ -782,12 +784,29 @@ static cmr_int setting_set_auto_exposure_mode(struct setting_component *cpt,
 	cmr_int                             ret = 0;
 	struct setting_init_in              *init_in = &cpt->init_in;
 	struct common_isp_cmd_param        isp_param;
-
+	struct isp_pos_rect            trim;
 
 	ret = setting_set_general(cpt, SETTING_GENERAL_AUTO_EXPOSURE_MODE, parm);
-	if (CAMERA_AE_SPOT_METERING == parm->ae_param.mode) {
+	//delete this if because app change metering condition
+	//if (CAMERA_AE_SPOT_METERING == parm->ae_param.mode)
+	{
 		if (setting_is_rawrgb_format(cpt, parm)) {
 			isp_param.win_area = parm->ae_param.win_area;
+			trim.start_x = isp_param.win_area.rect[0].start_x;
+			trim.start_y = isp_param.win_area.rect[0].start_y;
+			trim.end_x = isp_param.win_area.rect[0].start_x + isp_param.win_area.rect[0].width;
+			trim.end_y = isp_param.win_area.rect[0].start_y +  isp_param.win_area.rect[0].height;
+
+			CMR_LOGI("trim rect (%ld,%ld,%ld,%ld)",trim.start_x,trim.start_y,trim.end_x,trim.end_y );
+			if (trim.end_x <= (uint32_t)trim.start_x
+			|| trim.end_y <= (uint32_t)trim.start_y)
+			{
+				cpt->is_touch_focus  = 0;
+				ret  = 1;
+				return ret;
+			}
+			cpt->is_touch_focus  =1;
+
 			if (init_in->setting_isp_ioctl) {
 				isp_param.camera_id = parm->camera_id;
 				ret = (*init_in->setting_isp_ioctl)(init_in->oem_handle, COM_ISP_SET_AE_METERING_AREA, &isp_param);
@@ -2411,6 +2430,32 @@ static cmr_int setting_is_zoom_pull(struct setting_component *cpt,
 	return is_changed;
 }
 
+static cmr_int setting_set_roi_convergence_req(struct setting_component *cpt,
+					                  struct setting_cmd_parameter *parm)
+{
+	cmr_int                     		     ret = 0;
+	struct setting_hal_param    *hal_param = get_hal_param(cpt, parm->camera_id);
+	struct setting_init_in             *init_in = &cpt->init_in;
+	cmr_uint                                   flash_mode = 0;
+	struct common_isp_cmd_param        isp_param;
+
+	flash_mode = hal_param->flash_param.flash_mode;
+	if(cpt->is_touch_focus ==1 && (flash_mode == CAMERA_FLASH_MODE_AUTO ||flash_mode == CAMERA_FLASH_MODE_OFF))
+	{
+		cmr_setting_clear_sem(cpt);
+		//wait roi converged
+		if (init_in->setting_isp_ioctl) {
+			ret = (*init_in->setting_isp_ioctl)(init_in->oem_handle, COM_ISP_SET_ROI_CONVERGENCE_REQ, &isp_param);
+		}
+
+		setting_isp_wait_notice(cpt);
+
+	}
+
+	return ret;
+}
+
+
 static cmr_int setting_thread_proc(struct cmr_msg *message, void *data)
 {
 	cmr_int                     ret = 0;
@@ -2461,7 +2506,6 @@ static cmr_int cmr_setting_clear_sem (struct setting_component *cpt)
 		CMR_LOGE("camera_context is null.");
 		return -1;
 	}
-
 	pthread_mutex_lock(&cpt->isp_mutex);
 	sem_getvalue(&cpt->isp_sem, &tmpVal);
 	while (0 < tmpVal && FLASH_OPEN==cpt->flash_need_quit) {
@@ -2481,6 +2525,7 @@ static cmr_int cmr_setting_clear_sem (struct setting_component *cpt)
 		sem_getvalue(&cpt->preflash_sem, &tmpVal);
 	}
 	pthread_mutex_unlock(&cpt->isp_mutex);
+
 	return 0;
 }
 
@@ -2517,6 +2562,7 @@ static cmr_int setting_isp_wait_notice_withtime (struct setting_component *cpt, 
 		}
 	}
 	pthread_mutex_unlock(&cpt->isp_mutex);
+
 	return rtn;
 }
 
@@ -2524,7 +2570,6 @@ cmr_int cmr_setting_isp_notice_done (cmr_handle setting_handle, void *data)
 {
 	struct setting_component *cpt = (struct setting_component *)setting_handle;
 	UNUSED(data);
-
 	if (!cpt) {
 		CMR_LOGE("camera_context is null.");
 		return -1;
@@ -2538,6 +2583,7 @@ cmr_int cmr_setting_isp_notice_done (cmr_handle setting_handle, void *data)
 	//	cpt->isp_is_timeout = 0;
 	//}
 	pthread_mutex_unlock(&cpt->isp_mutex);
+
 	return 0;
 }
 
@@ -2607,6 +2653,12 @@ static cmr_int setting_set_pre_lowflash (struct setting_component *cpt,
 		image_format,
 		flash_mode,
 		been_preflash);
+
+	//wait  AOI converged
+	ret =  setting_set_roi_convergence_req(cpt,parm);
+	if (ret) {
+		CMR_LOGE("failed to setting_set_roi_convergence_req");
+	}
 
 	if (!been_preflash) {
 		if (CAMERA_FLASH_MODE_AUTO == flash_mode) {
@@ -2912,6 +2964,7 @@ cmr_int cmr_setting_ioctl(cmr_handle setting_handle, cmr_uint cmd_type,
 #ifdef CONFIG_MEM_OPTIMIZATION
 		{SETTING_GET_SPRD_ZSL_ENABLED,            setting_get_sprd_zsl_enabled},
 #endif
+		{SETTING_SET_ROI_CONVERGENCE_REQ,           setting_set_roi_convergence_req},
 	};
 	struct setting_item          *item = NULL;
 	struct setting_component     *cpt =	 (struct setting_component *)setting_handle;

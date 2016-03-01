@@ -4525,8 +4525,10 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_uint cameraParaTag)
 				sprddefInfo.am_regions[3] = zoom.height;
 				mSetting->setSPRDDEFTag(sprddefInfo);
 			}
+
 			mSetting->androidAmModeToDrvAwbMode(sprddefInfo.am_mode, &ae_param);
 			SET_PARM(mCameraHandle, CAMERA_PARAM_AUTO_EXPOSURE_MODE, (cmr_uint)&ae_param);
+
 		}
 		break;
 
