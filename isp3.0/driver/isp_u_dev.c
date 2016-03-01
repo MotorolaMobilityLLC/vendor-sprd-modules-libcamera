@@ -286,6 +286,7 @@ static void* isp_dev_thread_proc(void *data)
 	struct isp_statis_frame_output    statis_frame;
 	struct isp_statis_frame           statis_frame_buf;
 	struct isp_irq                    irq_node;
+	struct isp_irq_info               irq_info;
 
 	file = (struct isp_file*)data;
 	CMR_LOGI("isp dev thread file %p ", file);
@@ -299,51 +300,49 @@ static void* isp_dev_thread_proc(void *data)
 
 	CMR_LOGI("isp dev thread in.");
 	while (1) {
-		/*Get interrupt status SOF*/
-		if (-1 == ioctl(file->fd, ISP_IO_IRQ, &irq_node)) {
-			CMR_LOGE("isp get irq error.");
+		/*Get irq*/
+		if (-1 == ioctl(file->fd, ISP_IO_IRQ, &irq_info)) {
+			CMR_LOGI("ISP_IO_IRQ error.");
 			break;
 		} else {
-			if (irq_node.ret_val) {
-				CMR_LOGE("isp sof continue");
-			} else {
-				CMR_LOGI("got one sof");
-				pthread_mutex_lock(&file->cb_mutex);
-				if(file->isp_event_cb) {
-					(*file->isp_event_cb)(ISP_DRV_SENSOR_SOF, &irq_node, (void *)file->evt_3a_handle);
-				}
-				pthread_mutex_unlock(&file->cb_mutex);
-			}
-		}
-		/*Get statistics frame*/
-		if (-1 == ioctl(file->fd, ISP_IO_GET_STATIS_BUF, &statis_frame_buf)) {
-			CMR_LOGI("isp_dev_get_statis_buf error.");
-			break;
-		} else {
-			if(ISP_IMG_TX_STOP == statis_frame_buf.evt) {
+			if(ISP_IMG_TX_STOP == irq_info.irq_flag) {
 				CMR_LOGE("isp_dev_thread_proc exit.");
 				break;
-			} else if (ISP_IMG_SYS_BUSY == statis_frame_buf.evt) {
+			} else if (ISP_IMG_SYS_BUSY == irq_info.irq_flag) {
 				cmr_usleep(100);
 				CMR_LOGI("continue.");
 				continue;
-			} else if (ISP_IMG_NO_MEM == statis_frame_buf.evt){
+			} else if (ISP_IMG_NO_MEM == irq_info.irq_flag){
 				CMR_LOGE("statistics no mem");
 				continue;
 			} else {
-				if(ISP_IMG_TX_DONE == statis_frame_buf.evt) {
-					CMR_LOGI("got one frame statis vaddr 0x%lx paddr 0x%lx buf_size 0x%x", statis_frame_buf.vir_addr, statis_frame_buf.phy_addr, statis_frame_buf.buf_size);
-					statis_frame.format = statis_frame_buf.format;
-					statis_frame.buf_size = statis_frame_buf.buf_size;
-					statis_frame.phy_addr = statis_frame_buf.phy_addr;
-					statis_frame.vir_addr = statis_frame_buf.vir_addr;
-					statis_frame.time_stamp.sec = statis_frame_buf.time_stamp.sec;
-					statis_frame.time_stamp.usec = statis_frame_buf.time_stamp.usec;
-					pthread_mutex_lock(&file->cb_mutex);
-					if(file->isp_event_cb) {
-						(*file->isp_event_cb)(ISP_DRV_STATISTICE, &statis_frame, (void *)file->evt_3a_handle);
+				if(ISP_IMG_TX_DONE == irq_info.irq_flag) {
+					if (irq_info.irq_type == ISP_IRQ_STATIS) {
+						CMR_LOGI("got one frame statis vaddr 0x%lx paddr 0x%lx buf_size 0x%lx", irq_info.yaddr_vir, irq_info.yaddr, irq_info.length);
+						statis_frame.format = irq_info.format;
+						statis_frame.buf_size = irq_info.length;
+						statis_frame.phy_addr = irq_info.yaddr;
+						statis_frame.vir_addr = irq_info.yaddr_vir;
+						statis_frame.time_stamp.sec = irq_info.time_stamp.sec;
+						statis_frame.time_stamp.usec = irq_info.time_stamp.usec;
+						pthread_mutex_lock(&file->cb_mutex);
+						if(file->isp_event_cb) {
+							(*file->isp_event_cb)(ISP_DRV_STATISTICE, &statis_frame, (void *)file->evt_3a_handle);
+						}
+						pthread_mutex_unlock(&file->cb_mutex);
+					} else if (irq_info.irq_type == ISP_IRQ_3A_SOF){
+						CMR_LOGI("got one sof");
+						irq_node.irq_val0 = irq_info.irq_id;
+						irq_node.reserved = 0;
+						irq_node.ret_val = 0;
+						irq_node.time_stamp.sec = irq_info.time_stamp.sec;
+						irq_node.time_stamp.usec = irq_info.time_stamp.usec;
+						pthread_mutex_lock(&file->cb_mutex);
+						if(file->isp_event_cb) {
+							(*file->isp_event_cb)(ISP_DRV_SENSOR_SOF, &irq_node, (void *)file->evt_3a_handle);
+						}
+						pthread_mutex_unlock(&file->cb_mutex);
 					}
-					pthread_mutex_unlock(&file->cb_mutex);
 				}
 			}
 		}
