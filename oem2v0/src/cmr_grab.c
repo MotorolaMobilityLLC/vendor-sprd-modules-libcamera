@@ -352,9 +352,9 @@ static cmr_int cmr_grab_cap_cfg_common(cmr_handle grab_handle, struct cap_cfg *c
 	CMR_CHECK_FD;
 
 	parm.channel_id = channel_id;
-	parm.shrink = config->cfg.shrink;
+	parm.regular_desc = config->cfg.regular_desc;
 	ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_SHRINK, &parm);
-	CMR_LOGI("channel_id  %d, shrink %d, ret %ld \n", channel_id, config->cfg.shrink, ret);
+	CMR_LOGI("channel_id  %d, regular_mode %d, ret %ld \n", channel_id, config->cfg.regular_desc.regular_mode, ret);
 
 	parm.channel_id = channel_id;
 	parm.deci = config->chn_deci_factor;
@@ -461,7 +461,7 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config, cmr_u32
 	parm.pixel_fmt = pxl_fmt;
 	parm.need_isp_tool = config->cfg.need_isp_tool;
 	parm.need_isp = config->cfg.need_isp;
-	parm.shrink = config->cfg.shrink;
+	parm.regular_desc = config->cfg.regular_desc;
 	parm.crop_rect.x = config->cfg.src_img_rect.start_x;
 	parm.crop_rect.y = config->cfg.src_img_rect.start_y;
 	parm.crop_rect.w = config->cfg.src_img_rect.width;
