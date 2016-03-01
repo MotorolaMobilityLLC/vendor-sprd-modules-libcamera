@@ -131,6 +131,7 @@ struct aealtek_flash_param {
 	enum aealtek_flash_state flash_state;
 	struct aealtek_flash_cfg pre_flash_before;
 	struct aealtek_flash_cfg main_flash_est;
+	struct isp_flash_led_info led_info;
 };
 
 struct aealtek_touch_param {
@@ -2403,7 +2404,7 @@ exit:
 	return ret;
 }
 
-static cmr_int aealtek_set_preflash_before(struct aealtek_cxt *cxt_ptr)
+static cmr_int aealtek_set_preflash_before(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_flash_notice *notice_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	cmr_int index = 0;
@@ -2412,6 +2413,8 @@ static cmr_int aealtek_set_preflash_before(struct aealtek_cxt *cxt_ptr)
 
 	cmr_bzero(&cxt_ptr->flash_param, sizeof(cxt_ptr->flash_param));
 	cxt_ptr->flash_param.enable = 1;
+
+	cxt_ptr->flash_param.led_info = notice_ptr->led_info;
 
 	aealtek_change_flash_state(cxt_ptr, cxt_ptr->flash_param.flash_state, AEALTEK_FLASH_STATE_PREPARE_ON);
 	return rtn;
@@ -2439,7 +2442,7 @@ static cmr_int aealtek_set_flash_notice(struct aealtek_cxt *cxt_ptr, struct ae_c
 	switch (mode) {
 	case ISP_FLASH_PRE_BEFORE:
 		ISP_LOGI("=========pre flash before start");
-		ret = aealtek_set_preflash_before(cxt_ptr);
+		ret = aealtek_set_preflash_before(cxt_ptr, notice_ptr);
 		if (ret)
 			goto exit;
 		notice_ptr->ui_flash_status = ISP_UI_FLASH_STATUS_ON;
@@ -2497,9 +2500,17 @@ static cmr_int aealtek_set_flash_notice(struct aealtek_cxt *cxt_ptr, struct ae_c
 			flash_cfg.led_idx = 0;
 			flash_cfg.type = ISP_FLASH_TYPE_MAIN;
 
-			flash_element.index = cxt_ptr->flash_param.main_flash_est.led_0.idx;
-			flash_element.val = cxt_ptr->flash_param.main_flash_est.led_0.current;
-			cxt_ptr->init_in_param.ops_in.flash_set_charge(cxt_ptr->caller_handle, &flash_cfg, &flash_element);
+			if (ISP_FLASH_LED_0 & cxt_ptr->flash_param.led_info.led_tag) {
+				flash_element.index = cxt_ptr->flash_param.main_flash_est.led_0.idx;
+				flash_element.val = cxt_ptr->flash_param.main_flash_est.led_0.current;
+				cxt_ptr->init_in_param.ops_in.flash_set_charge(cxt_ptr->caller_handle, &flash_cfg, &flash_element);
+			}
+
+			if (ISP_FLASH_LED_1 & cxt_ptr->flash_param.led_info.led_tag) {
+				flash_element.index = cxt_ptr->flash_param.main_flash_est.led_1.idx;
+				flash_element.val = cxt_ptr->flash_param.main_flash_est.led_1.current;
+				cxt_ptr->init_in_param.ops_in.flash_set_charge(cxt_ptr->caller_handle, &flash_cfg, &flash_element);
+			}
 		}
 		ret = aealtek_convert_lib_exposure2outdata(cxt_ptr, &cxt_ptr->flash_param.main_flash_est.exp_cell, &cxt_ptr->lib_data.output_data);
 		if (ret)
@@ -3411,12 +3422,23 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 					struct isp_flash_cfg flash_cfg;
 					struct isp_flash_element  flash_element;
 
+					ISP_LOGI("========led_num:%d,led_tag:0x%x\n",cxt_ptr->flash_param.pre_flash_before.led_num
+							,cxt_ptr->flash_param.led_info.led_tag);
+
 					flash_cfg.led_idx = 0;
 					flash_cfg.type = ISP_FLASH_TYPE_PREFLASH;
 
-					flash_element.index = cxt_ptr->flash_param.pre_flash_before.led_0.idx;
-					flash_element.val = cxt_ptr->flash_param.pre_flash_before.led_0.current;
-					cxt_ptr->init_in_param.ops_in.flash_set_charge(cxt_ptr->caller_handle, &flash_cfg, &flash_element);
+					if (ISP_FLASH_LED_0 & cxt_ptr->flash_param.led_info.led_tag) {
+						flash_element.index = cxt_ptr->flash_param.pre_flash_before.led_0.idx;
+						flash_element.val = cxt_ptr->flash_param.pre_flash_before.led_0.current;
+						cxt_ptr->init_in_param.ops_in.flash_set_charge(cxt_ptr->caller_handle, &flash_cfg, &flash_element);
+					}
+
+					if (ISP_FLASH_LED_1 & cxt_ptr->flash_param.led_info.led_tag) {
+						flash_element.index = cxt_ptr->flash_param.pre_flash_before.led_1.idx;
+						flash_element.val = cxt_ptr->flash_param.pre_flash_before.led_1.current;
+						cxt_ptr->init_in_param.ops_in.flash_set_charge(cxt_ptr->caller_handle, &flash_cfg, &flash_element);
+					}
 				}
 				if (cxt_ptr->touch_param.touch_flag
 					&& cxt_ptr->touch_param.ctrl_roi_changed_flag) {

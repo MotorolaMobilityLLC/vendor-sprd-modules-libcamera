@@ -208,11 +208,9 @@ struct ae_ctrl_param_flash_notice {
 	cmr_u32 flash_mode;
 	cmr_u32 will_capture;
 	cmr_u32 flash_ratio;
-	struct isp_flash_power power;
 	cmr_u32 capture_skip_num;
 	cmr_u32 ui_flash_status;
-	cmr_u32 led_num;
-	struct isp_flash_power power_1;
+	struct isp_flash_led_info led_info;
 };
 
 struct ae_ctrl_param_ae_lum {

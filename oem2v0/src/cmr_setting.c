@@ -2066,8 +2066,11 @@ static cmr_int setting_isp_flash_notify(struct setting_component *cpt,
 
 		setting_get_sensor_static_info(cpt, parm, &local_param->sensor_static_info);
 		ret = setting_get_flash_max_capacity(cpt, parm, &max_time, &max_charge);
-		isp_param.flash_notice.power.max_charge = max_charge;
-		isp_param.flash_notice.power.max_time = max_time;
+		isp_param.flash_notice.led_info.led_tag = ISP_FLASH_LED_0 | ISP_FLASH_LED_1;
+		isp_param.flash_notice.led_info.power_0.max_charge = max_charge;
+		isp_param.flash_notice.led_info.power_0.max_time = max_time;
+		isp_param.flash_notice.led_info.power_1.max_charge = max_charge;
+		isp_param.flash_notice.led_info.power_1.max_time = max_time;
 		isp_param.flash_notice.capture_skip_num = local_param->sensor_static_info.capture_skip_num;
 
 		CMR_LOGI("max_time=%d, max_charge=%d", max_time, max_charge);

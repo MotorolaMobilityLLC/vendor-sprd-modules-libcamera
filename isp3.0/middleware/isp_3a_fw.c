@@ -1531,7 +1531,9 @@ cmr_int isp3a_notice_flash(cmr_handle isp_3a_handle, void *param_ptr)//TBD
 	isp_notice_ptr = (struct isp_flash_notice*)param_ptr;
 	switch (isp_notice_ptr->mode) {
 	case ISP_FLASH_PRE_BEFORE:
-		ae_in.flash_notice.power = isp_notice_ptr->power;
+		ae_in.flash_notice.led_info.power_0 = isp_notice_ptr->led_info.power_0;
+		ae_in.flash_notice.led_info.power_1 = isp_notice_ptr->led_info.power_1;
+		ae_in.flash_notice.led_info.led_tag = isp_notice_ptr->led_info.led_tag;
 		ae_in.flash_notice.capture_skip_num = isp_notice_ptr->capture_skip_num;
 		awb_in.flash_status = AWB_CTRL_FLASH_PRE_BEFORE;
 		ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASH_BEFORE_P, &awb_in, NULL);

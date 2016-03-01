@@ -154,10 +154,9 @@ enum isp_posture_type {
 	ISP_POSTURE_MAX
 };
 
-enum isp_flash_led {
-	ISP_FLASH_LED_0,
-	ISP_FLASH_LED_1,
-	ISP_FLASH_LED_MAX
+enum isp_flash_led_tag {
+	ISP_FLASH_LED_0 = 0x0001,
+	ISP_FLASH_LED_1 = 0x0002
 };
 
 enum isp_flash_type {
@@ -267,6 +266,7 @@ enum isp_capture_mode {
 	ISP_CAP_MODE_MAX
 };
 
+
 /*********************************struct type*********************************************/
 struct isp_af_notice {
 	cmr_u32 mode;
@@ -278,11 +278,17 @@ struct isp_flash_power {
 	cmr_s32 max_time;  // ms
 };
 
+struct isp_flash_led_info {
+	struct isp_flash_power power_0;
+	struct isp_flash_power power_1;
+	cmr_u32 led_tag; // isp_flash_led_tag
+};
+
 struct isp_flash_notice {
 	enum isp_flash_mode mode;
 	cmr_u32 flash_ratio;
 	cmr_u32 will_capture;
-	struct isp_flash_power power;
+	struct isp_flash_led_info led_info;
 	cmr_s32 capture_skip_num;
 };
 
