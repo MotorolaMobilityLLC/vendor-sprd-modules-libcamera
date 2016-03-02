@@ -22,9 +22,9 @@
 #include "isp_type.h"
 #include "awb_ctrl_types.h"
 #include "isp_adpt.h"
-#include "al3ALib_AWB.h"
-#include "al3ALib_AWB_ErrCode.h"
-#include "al3AWrapper_AWB.h"
+#include "allib_awb.h"
+#include "allib_awb_errcode.h"
+#include "alwrapper_awb.h"
 
 /**************************************** MACRO DEFINE *****************************************/
 #define LIBRARY_PATH "libalAWBLib.so"
@@ -32,8 +32,8 @@
 #define AWB_EXIF_DEBUG_INFO_SIZE 5120
 /************************************* INTERNAL DATA TYPE ***************************************/
 struct awb_altek_lib_ops {
-	cmr_int (*load_func)(alAWBRuntimeObj_t *awb_run_obj);
-	void (*get_version)(alAWB_Lib_Version_t* version);
+	cmr_int (*load_func)(struct allib_awb_runtime_obj_t *awb_run_obj);
+	void (*get_version)(struct allib_awb_lib_version_t* version);
 };
 
 struct awb_altek_context {
@@ -47,12 +47,12 @@ struct awb_altek_context {
 	struct awb_altek_lib_ops ops;
 	struct isp_awb_gain cur_gain;
 	struct awb_ctrl_work_param work_mode;
-	alAWBRuntimeObj_t  lib_func;
-	alAWBLib_output_data_t cur_process_out;
-	al3AWrapper_Stats_AWB_t awb_stats;
+	struct allib_awb_runtime_obj_t  lib_func;
+	struct allib_awb_output_data_t cur_process_out;
+	struct al3awrapper_stats_awb_t awb_stats;
 	struct awb_ctrl_recover_param recover;
 	struct awb_flash_info flash_info;
-	Report_update_t report;
+	struct report_update_t report;
 	cmr_s8 exif_debug_info[AWB_EXIF_DEBUG_INFO_SIZE];
 };
 /*********************************************END***********************************************/
@@ -79,13 +79,13 @@ cmr_int awbaltek_load_library(cmr_handle adpt_handle)
 		ISP_LOGE("failed to dlopen");
 		goto exit;
 	}
-	cxt->ops.load_func = dlsym(cxt->altek_lib_handle, "alAWBLib_loadFunc");
+	cxt->ops.load_func = dlsym(cxt->altek_lib_handle, "allib_awb_loadfunc");
 	if (!cxt->ops.load_func) {
 		ISP_LOGE("failed to dlsym load_func");
 		goto exit;
 	}
 
-	cxt->ops.get_version = dlsym(cxt->altek_lib_handle, "alAWBLib_GetLibVersion");
+	cxt->ops.get_version = dlsym(cxt->altek_lib_handle, "allib_awb_getlib_version");
 	if (!cxt->ops.load_func) {
 		ISP_LOGE("failed to dlsym get_version");
 		goto exit;
@@ -116,7 +116,7 @@ cmr_int awbaltek_set_wb_mode(cmr_handle adpt_handle, union awb_ctrl_cmd_in *inpu
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
-	alAWBLib_set_parameter_t                    input;
+	struct allib_awb_set_parameter_t            input;
 
 	input.type = alawb_set_param_awb_mode_setting;
 	input.para.awb_mode_setting.wbmode_type = awbaltek_convert_wb_mode(input_ptr->wb_mode.wb_mode);
@@ -133,7 +133,7 @@ cmr_int awbaltek_set_dzoom(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
-	alAWBLib_set_parameter_t                    input;
+	struct allib_awb_set_parameter_t            input;
 
 	input.type = alawb_set_param_dzoom_factor;
 	input.para.dzoom_factor = input_ptr->dzoom_factor;
@@ -149,7 +149,7 @@ cmr_int awbaltek_set_sof_frame_id(cmr_handle adpt_handle, union awb_ctrl_cmd_in 
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
-	alAWBLib_set_parameter_t                    input;
+	struct allib_awb_set_parameter_t            input;
 
 	input.type = alawb_set_param_sys_sof_frame_idx;
 	input.para.sys_sof_frame_idx = input_ptr->sof_frame_idx;
@@ -165,7 +165,7 @@ cmr_int awbaltek_set_lock(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_p
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
-	alAWBLib_set_parameter_t                    input;
+	struct allib_awb_set_parameter_t            input;
 
 	if (1 != cxt->is_lock) {
 		input.type = alawb_set_param_manual_flow;
@@ -191,7 +191,7 @@ cmr_int awbaltek_set_unlock(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
-	alAWBLib_set_parameter_t                    input;
+	struct allib_awb_set_parameter_t            input;
 
 	input.type = alawb_set_param_manual_flow;
 	input.para.awb_manual_flow.manual_setting = alawb_flow_none;
@@ -205,7 +205,7 @@ cmr_int awbaltek_set_flash_close(cmr_handle adpt_handle, union awb_ctrl_cmd_in *
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
-	alAWBLib_set_parameter_t                    input;
+	struct allib_awb_set_parameter_t            input;
 
 	cxt->flash_info.flash_status = input_ptr->flash_status;
 	cxt->flash_info.flash_mode = AWB_CTRL_FLASH_END;
@@ -227,17 +227,17 @@ cmr_int awbaltek_set_ae_report(cmr_handle adpt_handle, union awb_ctrl_cmd_in *in
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
-	alAWBLib_set_parameter_t                    input;
+	struct allib_awb_set_parameter_t            input;
 	struct isp3a_ae_report                      *report_ptr;
 
 	input.type = alawb_set_param_update_ae_report;
 	report_ptr = &input_ptr->ae_info.report_data;
 	input.para.ae_report_update.ae_converge = report_ptr->ae_converge_st;
 	input.para.ae_report_update.ae_state = report_ptr->ae_state;
-	input.para.ae_report_update.BV = report_ptr->BV;
+	input.para.ae_report_update.bv = report_ptr->BV;
 	input.para.ae_report_update.fe_state = report_ptr->fe_state;
-	input.para.ae_report_update.ISO = report_ptr->ISO;
-	input.para.ae_report_update.non_comp_BV = report_ptr->non_comp_BV;
+	input.para.ae_report_update.iso = report_ptr->ISO;
+	input.para.ae_report_update.non_comp_bv = report_ptr->non_comp_BV;
 	input.para.ae_report_update.flash_param_preview.flash_gain.r_gain = report_ptr->flash_param_preview.wbgain_led1.r;
 	input.para.ae_report_update.flash_param_preview.flash_gain.g_gain = report_ptr->flash_param_preview.wbgain_led1.g;
 	input.para.ae_report_update.flash_param_preview.flash_gain.b_gain = report_ptr->flash_param_preview.wbgain_led1.b;
@@ -271,11 +271,11 @@ cmr_int awbaltek_set_af_report(cmr_handle adpt_handle, union awb_ctrl_cmd_in *in
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
-	alAWBLib_set_parameter_t                    input;
+	struct allib_awb_set_parameter_t            input;
 
 	input.type = alawb_set_param_update_af_report;
 	ISP_LOGI("af report size %d", input_ptr->af_report.data_size);
-	memcpy(&input.para.af_report_update, input_ptr->af_report.data, sizeof(af_report_update_t));
+	memcpy(&input.para.af_report_update, input_ptr->af_report.data, sizeof(struct af_report_update_t));
 	ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
 	if (ret) {
 		ISP_LOGE("failed to set ae info");
@@ -288,7 +288,7 @@ cmr_int awbaltek_set_bypass(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
-	alAWBLib_set_parameter_t                    input;
+	struct allib_awb_set_parameter_t            input;
 
 	input.type = alawb_set_param_manual_flow;
 	if (1 == input_ptr->bypass) {
@@ -313,7 +313,7 @@ cmr_int awbaltek_set_flash_before_p(cmr_handle adpt_handle, union awb_ctrl_cmd_i
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
-	alAWBLib_set_parameter_t                    input;
+	struct allib_awb_set_parameter_t            input;
 
 	input.type = alawb_set_param_state_under_flash;
 	input.para.state_under_flash = alawb_set_flash_prepare_under_flashon;
@@ -327,7 +327,7 @@ cmr_int awbaltek_set_flash_before_m(cmr_handle adpt_handle, union awb_ctrl_cmd_i
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
-	alAWBLib_set_parameter_t                    input;
+	struct allib_awb_set_parameter_t            input;
 
 	if (1 != cxt->is_lock) {
 		input.type = alawb_set_param_manual_flow;
@@ -351,7 +351,7 @@ cmr_int awbaltek_get_gain(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_p
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
-	alAWBLib_get_parameter_t                    get_input;
+	struct allib_awb_get_parameter_t            get_input;
 
 	if (!output_ptr) {
 		ISP_LOGE("error,output is NULL");
@@ -377,7 +377,7 @@ cmr_int awbaltek_get_ct(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
-	alAWBLib_get_parameter_t                    get_input;
+	struct allib_awb_get_parameter_t            get_input;
 
 	if (!output_ptr) {
 		ISP_LOGE("error,output is NULL");
@@ -435,14 +435,14 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
-	alAWBRuntimeObj_t                           *lib_func_ptr = NULL;
-	alAWB_Lib_Version_t                         awb_version;
-	alAWBLib_set_parameter_t                    set_param;
-	alAWBLib_set_parameter_t                    set_otp_param;
-	alAWBLib_get_parameter_t                    get_init_param;
-	alAWBLib_get_parameter_t                    get_isp_cfg;
-	alHW3a_AWB_CfgInfo_t                        cfg_info;
-	alAWBLib_output_data_t                      output;
+	struct allib_awb_runtime_obj_t              *lib_func_ptr = NULL;
+	struct allib_awb_lib_version_t              awb_version;
+	struct allib_awb_set_parameter_t            set_param;
+	struct allib_awb_set_parameter_t            set_otp_param;
+	struct allib_awb_get_parameter_t            get_init_param;
+	struct allib_awb_get_parameter_t            get_isp_cfg;
+	struct alhw3a_awb_cfginfo_t                 cfg_info;
+	struct allib_awb_output_data_t              output;
 	FILE                                        *fp = NULL;
 	cmr_u32                                     is_tuning = 0;
 	cmr_u32                                     tuning_size = 0;
@@ -540,11 +540,11 @@ normal_flow:
 	}
 
 #if TEST_VERSION
-	ret = (cmr_int)al3AWrapperAWB_GetDefaultCfg(&cfg_info);
+	ret = (cmr_int)al3awrapperawb_getdefaultcfg(&cfg_info);
 	if (ret) {
 		ISP_LOGE("failed to get isp cfg");
 	} else {
-		memcpy((void*)&output_ptr->hw_cfg, (void*)&cfg_info, sizeof(alHW3a_AWB_CfgInfo_t));
+		memcpy((void*)&output_ptr->hw_cfg, (void*)&cfg_info, sizeof(struct alhw3a_awb_cfginfo_t));
 	}
 #else
 	//get isp cfg
@@ -699,8 +699,8 @@ cmr_int awbaltek_set_face(cmr_handle adpt_handle, enum awb_ctrl_cmd cmd, union a
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
-	alAWBLib_set_parameter_t                    input;
-	alAWBLib_output_data_t                      output;
+	struct allib_awb_set_parameter_t            input;
+	struct allib_awb_output_data_t              output;
 	cmr_u32                                     i = 0;
 	cmr_u32                                     index = 0;
 	cmr_u32                                     temp = 0;
@@ -739,7 +739,7 @@ cmr_int awbaltek_open_pre_flash(cmr_handle adpt_handle)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
-	alAWBLib_set_parameter_t                    input;
+	struct allib_awb_set_parameter_t            input;
 #if 0
 	if (1 == cxt->is_lock) {
 		ISP_LOGI("unlock awb");
@@ -784,8 +784,8 @@ cmr_int awbaltek_ioctrl(cmr_handle adpt_handle, enum awb_ctrl_cmd cmd, union awb
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
-	alAWBLib_set_parameter_t                    input;
-	alAWBLib_get_parameter_t                    get_input;
+	struct allib_awb_set_parameter_t            input;
+	struct allib_awb_get_parameter_t            get_input;
 
 	switch (cmd) {
 	case AWB_CTRL_CMD_SET_WB_MODE:
@@ -871,8 +871,8 @@ cmr_int awbaltek_process(cmr_handle adpt_handle ,struct awb_ctrl_process_in *inp
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
-	alAWBLib_set_parameter_t                    set_param;
-	awb_report_update_t                         *report_ptr;
+	struct allib_awb_set_parameter_t            set_param;
+	struct awb_report_update_t                  *report_ptr;
 
 	if (cxt->is_bypass) {
 		output_ptr->is_update = 0;
@@ -881,7 +881,7 @@ cmr_int awbaltek_process(cmr_handle adpt_handle ,struct awb_ctrl_process_in *inp
 	}
 	if (cxt->lib_func.estimation && cxt->lib_func.set_param) {
 		//dispatch stats
-		ret = al3AWrapper_DispatchHW3A_AWBStats(input_ptr->statistics_data->addr, (void*)(&cxt->awb_stats));
+		ret = al3awrapper_dispatchhw3a_awbstats(input_ptr->statistics_data->addr, (void*)(&cxt->awb_stats));
 		if (ret) {
 			ISP_LOGE("failed to dispatch stats %lx", ret);
 		}
@@ -890,9 +890,9 @@ cmr_int awbaltek_process(cmr_handle adpt_handle ,struct awb_ctrl_process_in *inp
 		set_param.type = alawb_set_param_update_ae_report;
 		set_param.para.ae_report_update.ae_state = input_ptr->ae_info.report_data.ae_state;
 		set_param.para.ae_report_update.ae_converge = input_ptr->ae_info.report_data.ae_converge_st;
-		set_param.para.ae_report_update.BV = input_ptr->ae_info.report_data.BV;
-		set_param.para.ae_report_update.non_comp_BV = input_ptr->ae_info.report_data.non_comp_BV;// non compensated bv value
-		set_param.para.ae_report_update.ISO = input_ptr->ae_info.report_data.ISO;// ISO Speed
+		set_param.para.ae_report_update.bv = input_ptr->ae_info.report_data.BV;
+		set_param.para.ae_report_update.non_comp_bv = input_ptr->ae_info.report_data.non_comp_BV;// non compensated bv value
+		set_param.para.ae_report_update.iso = input_ptr->ae_info.report_data.ISO;// ISO Speed
 		set_param.para.ae_report_update.fe_state = input_ptr->ae_info.report_data.fe_state;
 		set_param.para.ae_report_update.flash_param_preview.flash_gain.r_gain = input_ptr->ae_info.report_data.flash_param_preview.wbgain_led1.r;
 		set_param.para.ae_report_update.flash_param_preview.flash_gain.g_gain = input_ptr->ae_info.report_data.flash_param_preview.wbgain_led1.g;
