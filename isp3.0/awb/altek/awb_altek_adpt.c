@@ -1042,7 +1042,7 @@ cmr_int awbaltek_process(cmr_handle adpt_handle ,struct awb_ctrl_process_in *inp
 			ISP_LOGV("awb mode %d, gain %d %d %d, gain_blanced %d %d %d",
 				     output_ptr->awb_mode,output_ptr->gain.r, output_ptr->gain.g, output_ptr->gain.b,
 				     output_ptr->gain_balanced.r, output_ptr->gain_balanced.g, output_ptr->gain_balanced.b);
-			ISP_LOGV("awb update %d, frame id %d", output_ptr->is_update, output_ptr->hw3a_frame_id);
+			ISP_LOGI("awb update %d, frame id %d", output_ptr->is_update, output_ptr->hw3a_frame_id);
 			ISP_LOGV("awb ct %d, light source %d", output_ptr->ct, output_ptr->light_source);
 		}
 	} else {

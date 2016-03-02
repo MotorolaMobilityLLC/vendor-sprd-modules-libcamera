@@ -27,6 +27,7 @@
 #endif
 #include "isp_type.h"
 #include "sprd_isp_altek.h"
+#include "debug_structure.h"
 
 typedef void*           isp_handle;
 typedef void (*isp_evt_cb)(cmr_int evt, void *data, void *privdata);
@@ -67,6 +68,7 @@ cmr_int isp_dev_get_timestamp(isp_handle handle, cmr_u32 *sec, cmr_u32 *usec);
 cmr_int isp_dev_cfg_scenario_info(isp_handle handle, SCENARIO_INFO_AP *data);
 cmr_int isp_dev_cfg_iso_speed(isp_handle handle, cmr_u32 *data);
 cmr_int isp_dev_cfg_awb_gain(isp_handle handle, struct isp_awb_gain_info *data);
+cmr_int isp_dev_cfg_awb_gain_balanced(isp_handle handle, struct isp_awb_gain_info *data);
 cmr_int isp_dev_cfg_dld_seq(isp_handle handle, DldSequence *data);
 cmr_int isp_dev_cfg_3a_param(isp_handle handle, Cfg3A_Info *data);
 cmr_int isp_dev_cfg_ae_param(isp_handle handle, AE_CfgInfo *data);
@@ -89,4 +91,5 @@ cmr_int isp_dev_capability_highiso_buf_size(isp_handle handle, cmr_int *size);
 cmr_int isp_dev_capability_video_size(isp_handle handle, struct isp_img_size *size);
 cmr_int isp_dev_capability_single_size(isp_handle handle, struct isp_img_size *size);
 cmr_int isp_dev_set_dcam_id(isp_handle handle, cmr_u32 dcam_id);
+cmr_int isp_dev_get_iq_param(isp_handle handle, struct debug_info1 *info1, struct debug_info2 *info2);
 #endif

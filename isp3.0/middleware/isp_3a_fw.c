@@ -30,7 +30,6 @@
 #include "isp_dev_access.h"
 #include "alwrapper_3a.h"
 #include "isp_3a_adpt.h"
-#include "debug_structure.h"
 
 /**************************************** MACRO DEFINE *****************************************/
 #define ISP3A_MSG_QUEUE_SIZE                                         100
@@ -1828,6 +1827,7 @@ cmr_int isp3a_get_info(cmr_handle isp_3a_handle, void *param_ptr)
 	}
 	strcpy((char*)&cxt->debug_data.debug_info.string2[0],"jpeg_str_g2v1");
 	strcpy((char*)&cxt->debug_data.debug_info.end_string[0], "end_jpeg_str_g2v1");
+	ret = isp_dev_access_get_debug_info(cxt->dev_access_handle, &cxt->debug_data.debug_info);
 	ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_DEBUG_INFO, NULL, &awb_out);
 	if (ret) {
 		ISP_LOGE("failed to get awb debug info 0x%lx", ret);
@@ -1854,7 +1854,6 @@ cmr_int isp3a_get_info(cmr_handle isp_3a_handle, void *param_ptr)
 		goto exit;
 	}
 	//TBD AF debug
-//	cxt->debug_data.debug_info.irp_tuning_para_debug_info2;
 //	cxt->debug_data.debug_info.otp_report_debug_info2
 	cxt->debug_data.debug_info.structure_size2 = sizeof(struct debug_info2);
 	info_ptr->size = sizeof(struct debug_info2);
@@ -2002,8 +2001,6 @@ cmr_int isp3a_get_exif_info(cmr_handle isp_3a_handle, void *param_ptr)
 //	exif_ptr->other_debug_info1.focal_length = //AF
 //	exif_ptr->otp_report_debug_info1
 	strcpy((char*)&exif_ptr->project_name[0], "whale2");
-//	exif_ptr->raw_debug_info1//isp drv
-//	exif_ptr->shading_debug_info1//isp drv
 //	exif_ptr->struct_version         //TBD confirm with Mark
 //	exif_ptr->sw_debug1//isp drv
 	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_GET_EXT_DEBUG_INFO, NULL, &ae_out);
@@ -2015,6 +2012,7 @@ cmr_int isp3a_get_exif_info(cmr_handle isp_3a_handle, void *param_ptr)
 	exif_ptr->other_debug_info1.valid_ad_gain = ae_out.debug_info.valid_ad_gain;
 	exif_ptr->other_debug_info1.valid_exposure_line = ae_out.debug_info.valid_exposure_line;
 	exif_ptr->other_debug_info1.valid_exposure_time = ae_out.debug_info.valid_exposure_time;
+	ret = isp_dev_access_get_exif_debug_info(cxt->dev_access_handle, exif_ptr);
 	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_GET_EXIF_DATA, NULL, &ae_out);
 	if (ret) {
 		ISP_LOGE("failed to get ae exif info 0x%lx", ret);
@@ -2616,6 +2614,8 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 		struct isp_awb_gain gain;
 		gain = cxt->awb_cxt.proc_out.gain;
 		ret = isp_dev_access_cfg_awb_gain(cxt->dev_access_handle, &gain);
+		gain = cxt->awb_cxt.proc_out.gain_balanced;
+		ret = isp_dev_access_cfg_awb_gain_balanced(cxt->dev_access_handle, &gain);
 	}
 
 	ae_in.sof_param.frame_index = cxt->sof_idx;

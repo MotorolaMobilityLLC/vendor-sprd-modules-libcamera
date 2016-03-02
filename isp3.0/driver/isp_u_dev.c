@@ -330,7 +330,7 @@ static void* isp_dev_thread_proc(void *data)
 							(*file->isp_event_cb)(ISP_DRV_STATISTICE, &statis_frame, (void *)file->evt_3a_handle);
 						}
 						pthread_mutex_unlock(&file->cb_mutex);
-					} else if (irq_info.irq_type == ISP_IRQ_3A_SOF){
+					} else if (irq_info.irq_type == ISP_IRQ_3A_SOF) {
 						CMR_LOGI("got one sof");
 						irq_node.irq_val0 = irq_info.irq_id;
 						irq_node.reserved = 0;
@@ -736,6 +736,33 @@ cmr_int isp_dev_cfg_awb_gain(isp_handle handle, struct isp_awb_gain_info *data)
 	}
 
 	param.sub_id = ISP_CFG_SET_AWB_GAIN;
+	param.property_param = data;
+
+	file = (struct isp_file *)(handle);
+
+	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
+	if (ret) {
+		CMR_LOGE("isp_dev_cfg_awb_gain error.");
+	}
+
+	return ret;
+}
+
+cmr_int isp_dev_cfg_awb_gain_balanced(isp_handle handle, struct isp_awb_gain_info *data)
+{
+	cmr_int ret = 0;
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle) {
+		CMR_LOGE("handle is null error.");
+		return -1;
+	}
+	if (!data) {
+		CMR_LOGE("Param is null error.");
+	}
+
+	param.sub_id = ISP_CFG_SET_AWB_GAIN_BALANCED;
 	param.property_param = data;
 
 	file = (struct isp_file *)(handle);
@@ -1361,6 +1388,50 @@ cmr_int isp_dev_set_dcam_id(isp_handle handle, cmr_u32 dcam_id)
 	if (ret) {
 		CMR_LOGE("isp_dev_stream_on error.");
 	}
+
+	return ret;
+}
+
+cmr_int isp_dev_get_iq_param(isp_handle handle, struct debug_info1 *info1, struct debug_info2 *info2)
+{
+	cmr_int ret = 0;
+	struct isp_file *file = NULL;
+	struct altek_iq_info param;
+
+	if (!handle) {
+		CMR_LOGE("handle is null error.");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+
+	ret = ioctl(file->fd, ISP_IO_GET_IQ_PARAM, &param);
+	if (ret) {
+		CMR_LOGE("ioctl error.");
+	}
+
+	if (info1) {
+		info1->raw_debug_info1.raw_width = param.tRawInfo.uwWidth;
+		info1->raw_debug_info1.raw_height = param.tRawInfo.uwHeight;
+		info1->raw_debug_info1.raw_format = param.tRawInfo.ucFormat;
+		info1->raw_debug_info1.raw_bit_number = param.tRawInfo.ucBitNumber;
+		info1->raw_debug_info1.mirror_flip = param.tRawInfo.ucMirrorFlip;
+		info1->raw_debug_info1.raw_color_order = param.tRawInfo.nColorOrder;
+		memcpy((void *)&info1->shading_debug_info1, &param.tShadingInfo, sizeof(struct shading_debug));
+		memcpy((void *)&info1->irp_tuning_para_debug_info1, &param.tIrpInfo, sizeof(struct irp_tuning_debug));
+		memcpy((void *)&info1->sw_debug1, &param.tSWInfo, sizeof(struct isp_sw_debug));
+	}
+	if (info2) {
+		memcpy((void *)&info2->irp_tuning_para_debug_info2, &param.tGammaTone, sizeof(struct irp_gamma_tone));
+	}
+
+	CMR_LOGI("%d %d %d %d %d %d\n",
+		param.tRawInfo.uwWidth,
+		param.tRawInfo.uwHeight,
+		param.tRawInfo.ucFormat,
+		param.tRawInfo.ucBitNumber,
+		param.tRawInfo.ucMirrorFlip,
+		param.tRawInfo.nColorOrder);
 
 	return ret;
 }

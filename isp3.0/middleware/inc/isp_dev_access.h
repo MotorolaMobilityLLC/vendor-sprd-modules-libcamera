@@ -97,9 +97,12 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 void isp_dev_access_evt_reg(cmr_handle isp_dev_handle, isp_evt_cb isp_event_cb, void *privdata);
 cmr_int isp_dev_access_cfg_awb_param(cmr_handle isp_dev_handle, struct isp3a_awb_hw_cfg *data);
 cmr_int isp_dev_access_cfg_awb_gain(cmr_handle isp_dev_handle, struct isp_awb_gain *data);
+cmr_int isp_dev_access_cfg_awb_gain_balanced(cmr_handle isp_dev_handle, struct isp_awb_gain *data);
 cmr_int isp_dev_access_set_stats_buf(cmr_handle isp_dev_handle, struct isp_statis_buf *buf);
 cmr_int isp_dev_access_cfg_af_param(cmr_handle isp_dev_handle, struct isp3a_af_hw_cfg *data);
 cmr_int isp_dev_access_cfg_iso_speed(cmr_handle isp_dev_handle, cmr_u32 *data);
+cmr_int isp_dev_access_get_exif_debug_info(cmr_handle isp_dev_handle, struct debug_info1 *exif_info);
+cmr_int isp_dev_access_get_debug_info(cmr_handle isp_dev_handle, struct debug_info2 *debug_info);
 /**---------------------------------------------------------------------------*/
 
 #endif

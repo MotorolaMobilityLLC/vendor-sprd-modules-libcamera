@@ -849,6 +849,21 @@ cmr_int isp_dev_access_cfg_awb_gain(cmr_handle isp_dev_handle, struct isp_awb_ga
 	return ret;
 }
 
+cmr_int isp_dev_access_cfg_awb_gain_balanced(cmr_handle isp_dev_handle, struct isp_awb_gain *data)
+{
+	cmr_int                                ret = ISP_SUCCESS;
+	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	struct isp_awb_gain_info               gain;
+
+	gain.r = data->r;
+	gain.g = data->g;
+	gain.b = data->b;
+	ISP_LOGI("balanced gain %d %d %d", gain.r, gain.g, gain.b);
+	ret = isp_dev_cfg_awb_gain_balanced(cxt->isp_driver_handle, &gain);
+
+	return ret;
+}
+
 cmr_int isp_dev_access_set_stats_buf(cmr_handle isp_dev_handle, struct isp_statis_buf *buf)
 {
 	cmr_int                                ret = ISP_SUCCESS;
@@ -877,5 +892,27 @@ cmr_int isp_dev_access_cfg_iso_speed(cmr_handle isp_dev_handle, cmr_u32 *data)
 	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
 	ret = isp_dev_cfg_iso_speed(cxt->isp_driver_handle, data);
+	return ret;
+}
+
+cmr_int isp_dev_access_get_exif_debug_info(cmr_handle isp_dev_handle, struct debug_info1 *exif_info)
+{
+	cmr_int                                ret = ISP_SUCCESS;
+	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+
+	ret = isp_dev_get_iq_param(cxt->isp_driver_handle, exif_info, NULL);
+
+	ISP_LOGI("done %ld" ,ret);
+	return ret;
+}
+
+cmr_int isp_dev_access_get_debug_info(cmr_handle isp_dev_handle, struct debug_info2 *debug_info)
+{
+	cmr_int                                ret = ISP_SUCCESS;
+	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+
+	ret = isp_dev_get_iq_param(cxt->isp_driver_handle, NULL, debug_info);
+
+	ISP_LOGI("done %ld" ,ret);
 	return ret;
 }
