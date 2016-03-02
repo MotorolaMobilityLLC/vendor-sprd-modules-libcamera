@@ -31,6 +31,10 @@ extern "C" {
 #define cmr_msleep(x)					usleep((x) * 1000)
 #define cmr_usleep(x)					usleep((x))
 
+#ifndef MIN
+#define MIN(x,y) (((x)<(y))?(x):(y))
+#endif
+
 #ifdef CONFIG_LOG_TO_SHELL
 #define DEBUG_STR     "L %d, %s: "
 #define DEBUG_ARGS    __LINE__,__FUNCTION__
@@ -302,6 +306,10 @@ struct isp_bin_info {
 	void *ae_addr;
 	void *awb_addr;
 	void *af_addr;
+	void *isp_3a_addr;
+	cmr_u32 isp_3a_size;
+	void *isp_shading_addr;
+	cmr_u32 isp_shading_size;
 	cmr_u32 size;
 };
 /**********************************FUNCTION***********************************/

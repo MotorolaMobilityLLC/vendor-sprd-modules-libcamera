@@ -1,15 +1,14 @@
-/*
- * mtype.h
+/******************************************************************************
+ * File name: mtype.h
  *
- *  Created on: 2014/9/9
- *      Author: HubertHuang
- */
+ * Created on: 2014/9/9
+ *     Author: HubertHuang
+ ******************************************************************************/
 
 #ifndef MTYPE_H_
 #define MTYPE_H_
 
 /* Global constant */
-
 #ifndef TRUE
 #define TRUE                    1
 #endif
@@ -71,5 +70,20 @@ typedef UINT32                  HANDLE;
 
 typedef void (*CALLBACK)();
 
+/* For Android platform */
+typedef unsigned char           uint8;
+typedef unsigned short          uint16;
+typedef unsigned int            uint32;
+typedef unsigned long long      uint64;
+#ifdef _ARC
+typedef char                    int8;
+#else
+typedef signed char             int8;
+#endif
+typedef short                   int16;
+typedef int                     int32;
+typedef long long               int64;
+
+typedef signed char             sint8;
 
 #endif /* MTYPE_H_ */

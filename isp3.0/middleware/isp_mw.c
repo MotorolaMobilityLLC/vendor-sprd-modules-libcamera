@@ -242,6 +242,10 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 	isp3a_input.bin_info.awb_addr = cxt->tuning_bin.awb_tuning_addr;
 	isp3a_input.bin_info.af_addr = cxt->tuning_bin.af_tuning_addr;
 	isp3a_input.ops = input_ptr->ops;
+	isp3a_input.bin_info.isp_3a_addr = cxt->tuning_bin.isp_3a_addr;
+	isp3a_input.bin_info.isp_3a_size = cxt->tuning_bin.isp_3a_size;
+	isp3a_input.bin_info.isp_shading_addr = cxt->tuning_bin.isp_shading_addr;
+	isp3a_input.bin_info.isp_shading_size = cxt->tuning_bin.isp_shading_size;
 	ret = isp_3a_fw_init(&isp3a_input, &cxt->isp_3a_handle);
 exit:
 	if (ret) {

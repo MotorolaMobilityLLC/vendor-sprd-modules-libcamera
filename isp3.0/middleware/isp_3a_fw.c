@@ -30,6 +30,7 @@
 #include "isp_dev_access.h"
 #include "al3AWrapper.h"
 #include "isp_3a_adpt.h"
+#include "debug_structure.h"
 
 /**************************************** MACRO DEFINE *****************************************/
 #define ISP3A_MSG_QUEUE_SIZE                                         100
@@ -138,6 +139,16 @@ struct stats_buf_context {
 	struct isp3a_statistics_data *subsample_stats_buf_ptr;
 };
 
+struct isp3a_fw_debug_context {
+	struct debug_info1 exif_debug_info;
+	struct debug_info2 debug_info;
+};
+
+struct isp3a_fw_bin_context {
+	struct isp_bin_info bin_info;
+	cmr_u32 is_write_to_debug_buf;
+};
+
 struct isp3a_fw_context {
 	cmr_u32 camera_id;
 	cmr_u32 is_inited;
@@ -155,8 +166,9 @@ struct isp3a_fw_context {
 	struct other_stats_info  other_stats_cxt;
 	void *setting_param_ptr;
 	struct sensor_raw_ioctrl *ioctrl_ptr;
-	struct isp_bin_info bin_info;
+	struct isp3a_fw_bin_context bin_cxt;
 	cmr_uint sof_idx;
+	struct isp3a_fw_debug_context debug_data;
 };
 /*************************************INTERNAK DECLARATION***************************************/
 static cmr_int isp3a_get_dev_time(cmr_handle handle, cmr_u32 *sec_ptr, cmr_u32 *usec_ptr);
@@ -1796,6 +1808,7 @@ cmr_int isp3a_get_info(cmr_handle isp_3a_handle, void *param_ptr)
 	union awb_ctrl_cmd_out                      awb_out;
 	struct ae_ctrl_param_out                    ae_out;
 	struct af_ctrl_param_out                    af_out;
+	cmr_u32                                     size = 0;
 
 	if (!param_ptr) {
 		ISP_LOGW("input is NULL");
@@ -1804,22 +1817,48 @@ cmr_int isp3a_get_info(cmr_handle isp_3a_handle, void *param_ptr)
 	info_ptr->size = 0;
 	info_ptr->addr = NULL;
 
+	if (0 == cxt->bin_cxt.is_write_to_debug_buf) {
+		if (cxt->bin_cxt.bin_info.isp_3a_addr && cxt->bin_cxt.bin_info.isp_shading_addr) {
+			size = MIN(MAX_BIN1_DEBUG_SIZE_STRUCT2, cxt->bin_cxt.bin_info.isp_3a_size);
+			memcpy((void*)&cxt->debug_data.debug_info.bin_file1[0], cxt->bin_cxt.bin_info.isp_3a_addr, size);
+			size = MIN(MAX_BIN2_DEBUG_SIZE_STRUCT2, cxt->bin_cxt.bin_info.isp_shading_size);
+			memcpy((void*)&cxt->debug_data.debug_info.bin_file2, cxt->bin_cxt.bin_info.isp_shading_addr, size);
+			cxt->bin_cxt.is_write_to_debug_buf = 1;
+		}
+	}
+	strcpy((char*)&cxt->debug_data.debug_info.string2[0],"jpeg_str_g2v1");
+	strcpy((char*)&cxt->debug_data.debug_info.end_string[0], "end_jpeg_str_g2v1");
 	ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_DEBUG_INFO, NULL, &awb_out);
 	if (ret) {
 		ISP_LOGE("failed to get awb debug info 0x%lx", ret);
 		goto exit;
+	}
+	if (awb_out.debug_info.addr) {
+		size = MIN(awb_out.debug_info.size, MAX_AWB_DEBUG_SIZE_STRUCT2);
+		memcpy(&cxt->debug_data.debug_info.awb_debug_info2[0], awb_out.debug_info.addr, size);
+		ISP_LOGI("awb debug size is %d", size);
 	}
 	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_GET_DEBUG_DATA, NULL, &ae_out);
 	if (ret) {
 		ISP_LOGE("failed to get ae debug info 0x%lx", ret);
 		goto exit;
 	}
+	if (ae_out.debug_param.data) {
+		size = MIN(ae_out.debug_param.size, MAX_AEFE_DEBUG_SIZE_STRUCT2);
+		memcpy(cxt->debug_data.debug_info.ae_fe_debug_info2, ae_out.debug_param.data, size);
+		ISP_LOGI("ae debug size is %d", size);
+	}
 	ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_GET_DEBUG_INFO, NULL, &af_out);
 	if (ret) {
 		ISP_LOGE("failed to get af debug info 0x%lx", ret);
 		goto exit;
 	}
-
+	//TBD AF debug
+//	cxt->debug_data.debug_info.irp_tuning_para_debug_info2;
+//	cxt->debug_data.debug_info.otp_report_debug_info2
+	cxt->debug_data.debug_info.structure_size2 = sizeof(struct debug_info2);
+	info_ptr->size = sizeof(struct debug_info2);
+	info_ptr->addr = (void*)&cxt->debug_data.debug_info;
 exit:
 	ISP_LOGI("debug info size %ld", info_ptr->size);
 	return ret;
@@ -1943,26 +1982,61 @@ cmr_int isp3a_get_exif_info(cmr_handle isp_3a_handle, void *param_ptr)
 	union awb_ctrl_cmd_out                      awb_out;
 	struct ae_ctrl_param_out                    ae_out;
 	struct af_ctrl_param_out                    af_out;
+	cmr_u32                                     size = 0;
+	struct debug_info1                          *exif_ptr = &cxt->debug_data.exif_debug_info;
 
 	if (!param_ptr) {
 		ISP_LOGW("input is NULL");
 		goto exit;
 	}
 	exif_info_ptr->size = 0;
+	exif_info_ptr->addr = NULL;
+	strcpy((char*)&exif_ptr->string1[0], "exif_str_g2v1");
+	strcpy((char*)&exif_ptr->end_string[0],"end_exif_str_g2v1");
+//	exif_ptr->general_debug_info1//from ae TBD confirm with MARK
+//	exif_ptr->irp_tuning_para_debug_info1//for drv
+//	exif_ptr->isp_ver_major =       //from isp drv
+//	exif_ptr->isp_ver_minor =
+//	exif_ptr->main_ver_major =   //TBD with Mark
+//	exif_ptr->main_ver_minor =   //TBD confirm with Mark
+//	exif_ptr->other_debug_info1.flash_flag  //from AE
+//	exif_ptr->other_debug_info1.fn_value = //from AE
+//	exif_ptr->other_debug_info1.focal_length =    //from AF
+//	exif_ptr->other_debug_info1.valid_ad_gain =    //from AE
+//	exif_ptr->other_debug_info1.valid_exposure_line = //from AE
+//	exif_ptr->other_debug_info1.valid_exposure_time = //from AE
+//	exif_ptr->otp_report_debug_info1
+	strcpy((char*)&exif_ptr->project_name[0], "whale2");
+//	exif_ptr->raw_debug_info1//isp drv
+//	exif_ptr->shading_debug_info1//isp drv
+//	exif_ptr->struct_version         //TBD confirm with Mark
+//	exif_ptr->sw_debug1//isp drv
 	ret= ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_GET_EXIF_DATA, NULL, &ae_out);
 	if (ret) {
 		ISP_LOGE("failed to get ae exif info 0x%lx", ret);
+	}
+	if (ae_out.exif_param.data) {
+		size = MIN(ae_out.exif_param.size, MAX_AEFE_DEBUG_SIZE_STRUCT1);
+		memcpy((void*)&exif_ptr->ae_fe_debug_info1[0], (void*)ae_out.exif_param.data, size);
 	}
 
 	ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_EXIF_DEBUG_INFO, NULL, &awb_out);
 	if (ret) {
 		ISP_LOGE("failed to get awb exif info 0x%lx", ret);
 	}
+	if (awb_out.debug_info.addr) {
+		size = MIN(awb_out.debug_info.size, MAX_AEFE_DEBUG_SIZE_STRUCT1);
+		memcpy((void*)&exif_ptr->awb_debug_info1[0], awb_out.debug_info.addr, size);
+	}
 
 	ret= af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_GET_EXIF_DEBUG_INFO, NULL, &af_out);
 	if (ret) {
 		ISP_LOGE("failed to get af exif info 0x%lx", ret);
 	}
+//	exif_ptr->af_debug_info1
+	cxt->debug_data.exif_debug_info.structure_size1 = sizeof(cxt->debug_data.exif_debug_info);
+	exif_info_ptr->size = sizeof(cxt->debug_data.exif_debug_info);
+	exif_info_ptr->addr = (void*)&cxt->debug_data.exif_debug_info;
 exit:
 	ISP_LOGI("exif debug info size %ld", exif_info_ptr->size);
 
@@ -2838,7 +2912,8 @@ cmr_int isp_3a_fw_init(struct isp_3a_fw_init_in* input_ptr, cmr_handle* isp_3a_h
 	cxt->setting_param_ptr = input_ptr->setting_param_ptr;
 	cxt->ioctrl_ptr = sensor_raw_info_ptr->ioctrl_ptr;
 	cxt->dev_access_handle = input_ptr->dev_access_handle;
-
+	cxt->bin_cxt.bin_info = input_ptr->bin_info;
+	cxt->bin_cxt.is_write_to_debug_buf = 0;
 	sem_init(&cxt->statistics_data_sm, 0, 1);
 
 	ret = isp3a_init_statistics_buf((cmr_handle)cxt);
