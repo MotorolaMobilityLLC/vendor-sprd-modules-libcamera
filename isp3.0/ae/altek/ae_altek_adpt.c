@@ -17,10 +17,10 @@
 
 #include <dlfcn.h>
 #include "ae_altek_adpt.h"
-#include "al3ALib_AE.h"
-#include "al3ALib_AE_ErrCode.h"
-#include "al3AWrapper_AE.h"
-#include "al3AWrapper_AEErrCode.h"
+#include "allib_ae.h"
+#include "allib_ae_errcode.h"
+#include "alwrapper_ae.h"
+#include "alwrapper_ae_errcode.h"
 #include "sensor_exposure_queue.h"
 
 
@@ -42,8 +42,8 @@ enum aealtek_work_mode{
 };
 
 struct aealtek_lib_ops {
-	BOOL (*load_func)(alAERuntimeObj_t *aec_run_obj, UINT32 identityID);
-	void (*get_lib_ver)(alAElib_Version_t* AE_LibVersion);
+	BOOL (*load_func)(struct alaeruntimeobj_t *aec_run_obj, UINT32 identityID);
+	void (*get_lib_ver)(struct alaelib_version_t* AE_LibVersion);
 };
 
 struct aealtek_exposure_param {
@@ -75,12 +75,12 @@ struct aealtek_ui_param {
 
 struct aealtek_lib_ui_param {
 	struct ae_ctrl_param_work work_info;
-	ae_scene_mode_t scene;
-	ae_iso_mode_t iso;
+	enum ae_scene_mode_t scene;
+	enum ae_iso_mode_t iso;
 	cmr_s32 ui_ev_level;
-	ae_metering_mode_type_t weight;
+	enum ae_metering_mode_type_t weight;
 	struct ae_ctrl_param_range_fps fps;
-	ae_antiflicker_mode_t flicker;
+	enum ae_antiflicker_mode_t flicker;
 };
 
 struct aealtek_status {
@@ -155,11 +155,11 @@ struct aealtek_update_list {
 
 struct aealtek_lib_data {
 	cmr_s32 is_called_hwisp_cfg; //called default hw isp config
-	alHW3a_AE_CfgInfo_t hwisp_cfg;
-	ae_output_data_t output_data;
-	al3AWrapper_Stats_AE_t stats_data;
-	ae_output_data_t temp_output_data;
-	calib_wb_gain_t ae_otp_data;
+	struct alhw3a_ae_cfginfo_t hwisp_cfg;
+	struct ae_output_data_t output_data;
+	struct al3awrapper_stats_ae_t stats_data;
+	struct ae_output_data_t temp_output_data;
+	struct calib_wb_gain_t ae_otp_data;
 	struct aealtek_lib_exposure_data exposure_array;
 };
 
@@ -171,7 +171,7 @@ struct aealtek_cxt {
 	cmr_handle caller_handle;
 	cmr_handle lib_handle;
 	struct ae_ctrl_init_in init_in_param;
-	alAERuntimeObj_t al_obj;
+	struct alaeruntimeobj_t al_obj;
 	struct aealtek_lib_ops lib_ops;
 
 	void *seq_handle;
@@ -199,7 +199,7 @@ static cmr_int aealtek_reset_touch_ack(struct aealtek_cxt *cxt_ptr);
 static cmr_int aealtek_set_lock(struct aealtek_cxt *cxt_ptr, cmr_int is_lock);
 static cmr_int aealtek_set_flash_est(struct aealtek_cxt *cxt_ptr, cmr_u32 is_reset);
 /********function start******/
-static void aealtek_print_lib_log(struct aealtek_cxt *cxt_ptr, ae_output_data_t *in_ptr)
+static void aealtek_print_lib_log(struct aealtek_cxt *cxt_ptr, struct ae_output_data_t *in_ptr)
 {
 	#define report_str "report data:"
 	#define output_str "output data:"
@@ -284,10 +284,10 @@ exit:
 	return;
 }
 
-static cmr_int aealtek_convert_otp(struct aealtek_cxt *cxt_ptr, calib_wb_gain_t *otp_ptr)
+static cmr_int aealtek_convert_otp(struct aealtek_cxt *cxt_ptr, struct calib_wb_gain_t *otp_ptr)
 {
 	cmr_int ret = ISP_ERROR;
-	calib_wb_gain_t  *lib_otp_ptr = NULL;
+	struct calib_wb_gain_t  *lib_otp_ptr = NULL;
 
 
 	if (!cxt_ptr) {
@@ -311,7 +311,7 @@ exit:
 	return ret;
 }
 
-static cmr_int aealtek_convert_lib_exposure2outdata(struct aealtek_cxt *cxt_ptr, struct aealtek_exposure_param *from_ptr, ae_output_data_t *to_ptr)
+static cmr_int aealtek_convert_lib_exposure2outdata(struct aealtek_cxt *cxt_ptr, struct aealtek_exposure_param *from_ptr, struct ae_output_data_t *to_ptr)
 {
 	cmr_int ret = ISP_ERROR;
 
@@ -331,7 +331,7 @@ exit:
 	return ret;
 }
 
-static cmr_int aealtek_lib_exposure2sensor(struct aealtek_cxt *cxt_ptr, ae_output_data_t *from_ptr, struct aealtek_exposure_param *to_ptr)
+static cmr_int aealtek_lib_exposure2sensor(struct aealtek_cxt *cxt_ptr, struct ae_output_data_t *from_ptr, struct aealtek_exposure_param *to_ptr)
 {
 	cmr_int ret = ISP_ERROR;
 
@@ -352,7 +352,7 @@ exit:
 	return ret;
 }
 
-static cmr_int aealtek_lib_report2out(ae_report_update_t *from_ptr, struct isp3a_ae_report *to_ptr)
+static cmr_int aealtek_lib_report2out(struct ae_report_update_t *from_ptr, struct isp3a_ae_report *to_ptr)
 {
 	cmr_int ret = ISP_ERROR;
 
@@ -403,7 +403,7 @@ exit:
 	return ret;
 }
 
-static cmr_int aealtek_lib_to_out_report(ae_output_data_t *from_ptr, struct isp3a_ae_report *to_ptr)
+static cmr_int aealtek_lib_to_out_report(struct ae_output_data_t *from_ptr, struct isp3a_ae_report *to_ptr)
 {
 	cmr_int ret = ISP_ERROR;
 
@@ -422,7 +422,7 @@ exit:
 	return ret;
 }
 
-static cmr_int aealtek_lib_to_out_info(struct aealtek_cxt *cxt_ptr, ae_output_data_t *from_ptr, struct isp3a_ae_info *to_ptr)
+static cmr_int aealtek_lib_to_out_info(struct aealtek_cxt *cxt_ptr, struct ae_output_data_t *from_ptr, struct isp3a_ae_info *to_ptr)
 {
 	cmr_int ret = ISP_ERROR;
 
@@ -516,9 +516,9 @@ exit:
 	return ret;
 }
 
-static void aealtek_flicker_ui2lib(enum ae_ctrl_flicker_mode from, ae_antiflicker_mode_t *to_ptr)
+static void aealtek_flicker_ui2lib(enum ae_ctrl_flicker_mode from, enum ae_antiflicker_mode_t *to_ptr)
 {
-	ae_antiflicker_mode_t lib_flicker = 0;
+	enum ae_antiflicker_mode_t lib_flicker = 0;
 
 
 	if (!to_ptr) {
@@ -547,9 +547,9 @@ exit:
 	return;
 }
 
-static void aealtek_weight_ui2lib(enum ae_ctrl_measure_lum_mode from, ae_metering_mode_type_t *to_ptr)
+static void aealtek_weight_ui2lib(enum ae_ctrl_measure_lum_mode from, enum ae_metering_mode_type_t *to_ptr)
 {
-	ae_metering_mode_type_t lib_metering = 0;
+	enum ae_metering_mode_type_t lib_metering = 0;
 
 
 	if (!to_ptr) {
@@ -582,7 +582,7 @@ exit:
 	return;
 }
 
-static cmr_int aealtek_sensor_info_ui2lib(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_resolution *from_ptr, ae_sensor_info_t *to_ptr)
+static cmr_int aealtek_sensor_info_ui2lib(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_resolution *from_ptr, struct ae_sensor_info_t *to_ptr)
 {
 	cmr_int ret = ISP_ERROR;
 	struct ae_ctrl_param_sensor_static_info *static_sensor_ptr = NULL;
@@ -608,8 +608,8 @@ static cmr_int aealtek_sensor_info_ui2lib(struct aealtek_cxt *cxt_ptr, struct ae
 	to_ptr->sensor_width = from_ptr->frame_size.w;
 	to_ptr->sensor_height = from_ptr->frame_size.h;
 
-	to_ptr->sensor_fullWidth = from_ptr->frame_size.w;
-	to_ptr->sensor_fullHeight = from_ptr->frame_size.h;
+	to_ptr->sensor_fullwidth = from_ptr->frame_size.w;
+	to_ptr->sensor_fullheight = from_ptr->frame_size.h;
 
 	to_ptr->ois_supported = static_sensor_ptr->ois_supported;
 	to_ptr->f_number = (float)(1.0 * static_sensor_ptr->f_num / F_NUM_BASE);
@@ -619,7 +619,7 @@ exit:
 	return ret;
 }
 
-static cmr_int aealtek_convert_ui2initlib(struct aealtek_cxt *cxt_ptr, struct aealtek_status *from_ptr, ae_set_parameter_init_t *to_ptr)
+static cmr_int aealtek_convert_ui2initlib(struct aealtek_cxt *cxt_ptr, struct aealtek_status *from_ptr, struct ae_set_parameter_init_t *to_ptr)
 {
 	cmr_int ret = ISP_ERROR;
 	struct ae_ctrl_param_resolution *resolution_ptr = NULL;
@@ -664,7 +664,7 @@ static cmr_int aealtek_load_otp(struct aealtek_cxt *cxt_ptr, void *otp_ptr)
 	cmr_int ret = ISP_ERROR;
 
 	UINT32 lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
 
 	if (!cxt_ptr) {
 		ISP_LOGE("param is NULL error!");
@@ -682,7 +682,7 @@ static cmr_int aealtek_load_otp(struct aealtek_cxt *cxt_ptr, void *otp_ptr)
 			cxt_ptr->lib_data.ae_otp_data.b);
 
 	if (obj_ptr) {
-		lib_ret = al3AWrapperAE_UpdateOTP2AELib(cxt_ptr->lib_data.ae_otp_data,
+		lib_ret = al3awrapperae_updateotp2aelib(cxt_ptr->lib_data.ae_otp_data,
 								obj_ptr, &cxt_ptr->lib_data.output_data, obj_ptr->ae);
 		if (lib_ret)
 			goto exit;
@@ -697,7 +697,7 @@ static cmr_int aealtek_load_lib(struct aealtek_cxt *cxt_ptr)
 {
 	cmr_int ret = ISP_ERROR;
 	cmr_int is_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
 	UINT32 identityID = 0;
 
 
@@ -714,13 +714,13 @@ static cmr_int aealtek_load_lib(struct aealtek_cxt *cxt_ptr)
 		goto exit;
 	}
 
-	cxt_ptr->lib_ops.load_func = dlsym(cxt_ptr->lib_handle, "alAElib_loadFunc");
+	cxt_ptr->lib_ops.load_func = dlsym(cxt_ptr->lib_handle, "allib_ae_loadfunc");
 	if (!cxt_ptr->lib_ops.load_func) {
 		ISP_LOGE("failed to dlsym load func");
 		ret = ISP_ERROR;
 		goto error_dlsym;
 	}
-	cxt_ptr->lib_ops.get_lib_ver = dlsym(cxt_ptr->lib_handle, "alAELib_GetLibVersion");
+	cxt_ptr->lib_ops.get_lib_ver = dlsym(cxt_ptr->lib_handle, "allib_ae_getlib_version");
 	if (!cxt_ptr->lib_ops.get_lib_ver) {
 		ISP_LOGE("failed to dlsym get lib ver");
 		ret = ISP_ERROR;
@@ -738,7 +738,7 @@ exit:
 static cmr_int aealtek_get_lib_ver(struct aealtek_cxt *cxt_ptr)
 {
 	cmr_int ret = ISP_ERROR;
-	alAElib_Version_t lib_ver;
+	struct alaelib_version_t lib_ver;
 
 
 	if (!cxt_ptr) {
@@ -761,9 +761,9 @@ static cmr_int aealtek_init(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_init_in 
 {
 	cmr_int ret = ISP_ERROR;
 	cmr_int is_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
 	UINT32 identityID = 0;
-	ae_set_parameter_init_t init_setting;
+	struct ae_set_parameter_init_t init_setting;
 	struct seq_init_in seq_in;
 
 
@@ -829,7 +829,7 @@ static void aealtek_change_flash_state(struct aealtek_cxt *cxt_ptr, enum aealtek
 	cxt_ptr->flash_param.flash_state = to;
 }
 
-static cmr_int aealtek_get_def_hwisp_cfg( alHW3a_AE_CfgInfo_t *cfg_ptr)
+static cmr_int aealtek_get_def_hwisp_cfg( struct alhw3a_ae_cfginfo_t *cfg_ptr)
 {
 	cmr_int ret = ISP_ERROR;
 
@@ -838,13 +838,13 @@ static cmr_int aealtek_get_def_hwisp_cfg( alHW3a_AE_CfgInfo_t *cfg_ptr)
 		ISP_LOGE("param %p is NULL error!", cfg_ptr);
 		goto exit;
 	}
-	cfg_ptr->TokenID = 0x01;
-	cfg_ptr->tAERegion.uwBorderRatioX = 100;   // 100% use of current sensor cropped area
-	cfg_ptr->tAERegion.uwBorderRatioY = 100;   // 100% use of current sensor cropped area
-	cfg_ptr->tAERegion.uwBlkNumX = 16;         // fixed value for AE lib
-	cfg_ptr->tAERegion.uwBlkNumY = 16;         // fixed value for AE lib
-	cfg_ptr->tAERegion.uwOffsetRatioX = 0;     // 0% offset of left of current sensor cropped area
-	cfg_ptr->tAERegion.uwOffsetRatioY = 0;     // 0% offset of top of current sensor cropped area
+	cfg_ptr->tokenid = 0x01;
+	cfg_ptr->taeregion.uwborderratiox = 100;   // 100% use of current sensor cropped area
+	cfg_ptr->taeregion.uwborderratioy = 100;   // 100% use of current sensor cropped area
+	cfg_ptr->taeregion.uwblknumx = 16;         // fixed value for AE lib
+	cfg_ptr->taeregion.uwblknumy = 16;         // fixed value for AE lib
+	cfg_ptr->taeregion.uwoffsetratiox = 0;     // 0% offset of left of current sensor cropped area
+	cfg_ptr->taeregion.uwoffsetratioy = 0;     // 0% offset of top of current sensor cropped area
 
 	return ISP_SUCCESS;
 exit:
@@ -852,7 +852,7 @@ exit:
 	return ret;
 }
 
-static cmr_int aealtek_to_ae_hw_cfg(alHW3a_AE_CfgInfo_t *from_ptr, struct isp3a_ae_hw_cfg *to_ptr)
+static cmr_int aealtek_to_ae_hw_cfg(struct alhw3a_ae_cfginfo_t *from_ptr, struct isp3a_ae_hw_cfg *to_ptr)
 {
 	cmr_int ret = ISP_ERROR;
 
@@ -860,13 +860,13 @@ static cmr_int aealtek_to_ae_hw_cfg(alHW3a_AE_CfgInfo_t *from_ptr, struct isp3a_
 		ISP_LOGE("param %p %p is NULL error!", from_ptr, to_ptr);
 		goto exit;
 	}
-	to_ptr->tokenID = from_ptr->TokenID;
-	to_ptr->region.border_ratio_X = from_ptr->tAERegion.uwBorderRatioX;
-	to_ptr->region.border_ratio_Y = from_ptr->tAERegion.uwBorderRatioY;
-	to_ptr->region.blk_num_X = from_ptr->tAERegion.uwBlkNumX;
-	to_ptr->region.blk_num_Y = from_ptr->tAERegion.uwBlkNumY;
-	to_ptr->region.offset_ratio_X = from_ptr->tAERegion.uwOffsetRatioX;
-	to_ptr->region.offset_ratio_Y = from_ptr->tAERegion.uwOffsetRatioY;
+	to_ptr->tokenID = from_ptr->tokenid;
+	to_ptr->region.border_ratio_X = from_ptr->taeregion.uwborderratiox;
+	to_ptr->region.border_ratio_Y = from_ptr->taeregion.uwborderratioy;
+	to_ptr->region.blk_num_X = from_ptr->taeregion.uwblknumx;
+	to_ptr->region.blk_num_Y = from_ptr->taeregion.uwblknumy;
+	to_ptr->region.offset_ratio_X = from_ptr->taeregion.uwoffsetratiox;
+	to_ptr->region.offset_ratio_Y = from_ptr->taeregion.uwoffsetratioy;
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld", ret);
@@ -878,8 +878,8 @@ static cmr_int aealtek_get_hwisp_cfg(struct aealtek_cxt *cxt_ptr, struct isp3a_a
 	cmr_int ret = ISP_ERROR;
 	cmr_int lib_ret = 0;
 
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_get_param_t in_param;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_get_param_t in_param;
 
 
 	if (!cxt_ptr || !out_ptr) {
@@ -895,7 +895,7 @@ static cmr_int aealtek_get_hwisp_cfg(struct aealtek_cxt *cxt_ptr, struct isp3a_a
 			lib_ret = obj_ptr->get_param(&in_param, obj_ptr->ae);
 		if (lib_ret)
 			goto exit;
-		cxt_ptr->lib_data.hwisp_cfg = in_param.para.alHW3A_AEConfig;
+		cxt_ptr->lib_data.hwisp_cfg = in_param.para.alhw3a_aeconfig;
 	} else {
 		cxt_ptr->lib_data.is_called_hwisp_cfg = 1;
 		ret = aealtek_get_def_hwisp_cfg(&cxt_ptr->lib_data.hwisp_cfg);
@@ -917,11 +917,11 @@ static cmr_int aealtek_enable_debug_report(struct aealtek_cxt *cxt_ptr, cmr_int 
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t *output_param_ptr = NULL;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t *param_ct_ptr = NULL;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t *output_param_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t *param_ct_ptr = NULL;
 
 
 	if (!cxt_ptr) {
@@ -1025,11 +1025,11 @@ static cmr_int aealtek_set_boost(struct aealtek_cxt *cxt_ptr, cmr_u32 is_speed)
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t *output_param_ptr = NULL;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t *param_ct_ptr = NULL;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t *output_param_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t *param_ct_ptr = NULL;
 
 
 	if (!cxt_ptr) {
@@ -1042,9 +1042,9 @@ static cmr_int aealtek_set_boost(struct aealtek_cxt *cxt_ptr, cmr_u32 is_speed)
 	param_ct_ptr = &in_param.set_param;
 
 	if (is_speed)
-		param_ct_ptr->converge_speedLV = AE_CONVERGE_FAST;
+		param_ct_ptr->converge_speedlv = AE_CONVERGE_FAST;
 	else
-		param_ct_ptr->converge_speedLV = AE_CONVERGE_NORMAL;;
+		param_ct_ptr->converge_speedlv = AE_CONVERGE_NORMAL;;
 	type = AE_SET_PARAM_CONVERGE_SPD;
 	in_param.ae_set_param_type = type;
 	if (obj_ptr && obj_ptr->set_param)
@@ -1062,11 +1062,11 @@ static cmr_int aealtek_set_iso(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t *output_param_ptr = NULL;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t *param_ct_ptr = NULL;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t *output_param_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t *param_ct_ptr = NULL;
 
 
 	if (!cxt_ptr || !in_ptr) {
@@ -1080,16 +1080,16 @@ static cmr_int aealtek_set_iso(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	param_ct_ptr = &in_param.set_param;
 
 
-	param_ct_ptr->ISOLevel = in_ptr->iso.iso_mode;
-	param_ct_ptr->AdgainLevel = AE_ADGAIN_AUTO;
+	param_ct_ptr->isolevel = in_ptr->iso.iso_mode;
+	param_ct_ptr->adgainlevel = AE_ADGAIN_AUTO;
 	ISP_LOGI("ISOLevel=%d, AdgainLevel=%d",
-		param_ct_ptr->ISOLevel, param_ct_ptr->AdgainLevel);
+		param_ct_ptr->isolevel, param_ct_ptr->adgainlevel);
 	type = AE_SET_PARAM_ISO_MODE;
 	if (obj_ptr && obj_ptr->set_param)
 		lib_ret = obj_ptr->set_param(&in_param, output_param_ptr, obj_ptr->ae);
 	if (lib_ret)
 		goto exit;
-	cxt_ptr->nxt_status.lib_ui_param.iso = param_ct_ptr->ISOLevel;
+	cxt_ptr->nxt_status.lib_ui_param.iso = param_ct_ptr->isolevel;
 	cxt_ptr->update_list.is_iso = 1;
 	return ISP_SUCCESS;
 exit:
@@ -1102,11 +1102,11 @@ static cmr_int aealtek_set_exp_comp(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t *output_param_ptr = NULL;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t *param_ct_ptr = NULL;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t *output_param_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t *param_ct_ptr = NULL;
 	cmr_s32 lib_ev_comp = 0;
 
 	if (!cxt_ptr || !in_ptr) {
@@ -1159,11 +1159,11 @@ static cmr_int aealtek_set_bypass(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_pa
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t *output_param_ptr = NULL;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t *param_ct_ptr = NULL;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t *output_param_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t *param_ct_ptr = NULL;
 
 
 	if (!cxt_ptr || !in_ptr) {
@@ -1194,12 +1194,12 @@ static cmr_int aealtek_set_flicker(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t *output_param_ptr = NULL;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t *param_ct_ptr = NULL;
-	ae_antiflicker_mode_t lib_flicker_mode = 0;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t *output_param_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t *param_ct_ptr = NULL;
+	enum ae_antiflicker_mode_t lib_flicker_mode = 0;
 
 
 	if (!cxt_ptr || !in_ptr) {
@@ -1234,12 +1234,12 @@ static cmr_int aealtek_set_scene_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t *output_param_ptr = NULL;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t *param_ct_ptr = NULL;
-	ae_scene_mode_t lib_scene_mode = 0;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t *output_param_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t *param_ct_ptr = NULL;
+	enum ae_scene_mode_t lib_scene_mode = 0;
 
 
 	if (!cxt_ptr || !in_ptr) {
@@ -1290,11 +1290,11 @@ static cmr_int aealtek_set_fps(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t *output_param_ptr = NULL;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t *param_ct_ptr = NULL;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t *output_param_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t *param_ct_ptr = NULL;
 
 
 	if (!cxt_ptr || !in_ptr) {
@@ -1307,8 +1307,8 @@ static cmr_int aealtek_set_fps(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	output_param_ptr = &cxt_ptr->lib_data.output_data;
 	param_ct_ptr = &in_param.set_param;
 
-	param_ct_ptr->min_FPS = 100 * in_ptr->range_fps.min_fps;
-	param_ct_ptr->max_FPS = 100 * in_ptr->range_fps.max_fps;
+	param_ct_ptr->min_fps = 100 * in_ptr->range_fps.min_fps;
+	param_ct_ptr->max_fps = 100 * in_ptr->range_fps.max_fps;
 	type = AE_SET_PARAM_FPS;
 	in_param.ae_set_param_type = type;
 	if (obj_ptr && obj_ptr->set_param)
@@ -1326,12 +1326,12 @@ static cmr_int aealtek_set_lib_metering_mode(struct aealtek_cxt *cxt_ptr, struct
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t *output_param_ptr = NULL;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t *param_ct_ptr = NULL;
-	ae_metering_mode_type_t ae_mode = 0;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t *output_param_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t *param_ct_ptr = NULL;
+	enum ae_metering_mode_type_t ae_mode = 0;
 
 
 	if (!cxt_ptr || !in_ptr) {
@@ -1396,11 +1396,11 @@ static cmr_int aealtek_set_stat_trim(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 {
 	cmr_int ret = ISP_ERROR;
 
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t output_param;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t param_ct;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t output_param;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t param_ct;
 
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param is NULL error!");
@@ -1417,10 +1417,10 @@ static cmr_int aealtek_reset_touch_ack(struct aealtek_cxt *cxt_ptr)
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t *output_param_ptr = NULL;
-	ae_set_param_type_t type = 0;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t *output_param_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
 
 
 	if (!cxt_ptr) {
@@ -1447,11 +1447,11 @@ static cmr_int aealtek_set_lib_roi(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t *output_param_ptr = NULL;
-	ae_set_param_type_t type = 0;
-	rect_roi_config_t *roi_ptr = NULL;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t *output_param_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
+	struct rect_roi_config_t *roi_ptr = NULL;
 
 
 	if (!cxt_ptr || !in_ptr) {
@@ -1536,9 +1536,9 @@ static cmr_int aealtek_get_lib_init_expousre(struct aealtek_cxt *cxt_ptr, struct
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_get_param_t in_param;
-	ae_get_param_type_t type = 0;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_get_param_t in_param;
+	enum ae_get_param_type_t type = 0;
 
 
 	if (!cxt_ptr || !exposure_ptr) {
@@ -1579,9 +1579,9 @@ static cmr_int aealtek_get_lib_expousre(struct aealtek_cxt *cxt_ptr, enum aealte
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_get_param_t in_param;
-	ae_get_param_type_t type = 0;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_get_param_t in_param;
+	enum ae_get_param_type_t type = 0;
 
 	cmr_u32 i = 0;
 
@@ -1636,16 +1636,16 @@ exit:
 	return ret;
 }
 
-static cmr_int aealtek_init_lib_setting(struct aealtek_cxt *cxt_ptr, ae_set_parameter_init_t *init_ptr)
+static cmr_int aealtek_init_lib_setting(struct aealtek_cxt *cxt_ptr, struct ae_set_parameter_init_t *init_ptr)
 {
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t *output_param_ptr = NULL;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t *param_ct_ptr = NULL;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t *output_param_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t *param_ct_ptr = NULL;
 
 
 	if (!cxt_ptr || !init_ptr) {
@@ -1673,7 +1673,7 @@ static cmr_int aealtek_first_work(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_pa
 {
 	cmr_int ret = ISP_ERROR;
 
-	ae_set_parameter_init_t param_init;
+	struct ae_set_parameter_init_t param_init;
 	struct aealtek_lib_exposure_data ae_exposure;
 
 
@@ -1736,12 +1736,12 @@ static cmr_int aealtek_work_preview(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t set_in_param;
-	ae_output_data_t *output_data_ptr = NULL;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t *param_ct_ptr;
-	ae_sensor_info_t *preview_sensor_ptr = NULL;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t set_in_param;
+	struct ae_output_data_t *output_data_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t *param_ct_ptr;
+	struct ae_sensor_info_t *preview_sensor_ptr = NULL;
 
 	struct aealtek_lib_exposure_data ae_exposure;
 
@@ -1813,12 +1813,12 @@ static cmr_int aealtek_set_capture_mode(struct aealtek_cxt *cxt_ptr, enum isp_ca
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t *output_param_ptr = NULL;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t *param_ct_ptr = NULL;
-	ae_capture_mode_t lib_cap_mode = 0;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t *output_param_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t *param_ct_ptr = NULL;
+	enum ae_capture_mode_t lib_cap_mode = 0;
 
 	if (!cxt_ptr) {
 		ISP_LOGE("param %p is NULL error!", cxt_ptr);
@@ -1870,12 +1870,12 @@ static cmr_int aealtek_capture_hdr(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t set_in_param;
-	ae_output_data_t *output_data_ptr = NULL;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t *param_ct_ptr;
-	ae_sensor_info_t *cap_sensor_ptr = NULL;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t set_in_param;
+	struct ae_output_data_t *output_data_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t *param_ct_ptr;
+	struct ae_sensor_info_t *cap_sensor_ptr = NULL;
 
 	struct aealtek_lib_exposure_data ae_exposure;
 
@@ -1956,12 +1956,12 @@ static cmr_int aealtek_capture_normal(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t set_in_param;
-	ae_output_data_t *output_data_ptr = NULL;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t *param_ct_ptr;
-	ae_sensor_info_t *cap_sensor_ptr = NULL;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t set_in_param;
+	struct ae_output_data_t *output_data_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t *param_ct_ptr;
+	struct ae_sensor_info_t *cap_sensor_ptr = NULL;
 
 	struct aealtek_lib_exposure_data ae_exposure;
 
@@ -2052,11 +2052,11 @@ static cmr_int aealtek_work_video(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_pa
 {
 	cmr_int ret = ISP_ERROR;
 
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t output_param;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t param_ct;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t output_param;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t param_ct;
 
 	enum isp3a_work_mode work_mode = 0;
 
@@ -2075,11 +2075,11 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 {
 	cmr_int ret = ISP_ERROR;
 
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t output_param;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t param_ct;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t output_param;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t param_ct;
 
 	enum isp3a_work_mode work_mode = 0;
 
@@ -2148,11 +2148,11 @@ static cmr_int aealtek_set_lib_lock(struct aealtek_cxt *cxt_ptr, cmr_int is_lock
 {
 	cmr_int ret = ISP_ERROR;
 	cmr_int lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t *output_param_ptr = NULL;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t *param_ct_ptr = NULL;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t *output_param_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t *param_ct_ptr = NULL;
 
 	if (!cxt_ptr) {
 		ISP_LOGE("param is NULL error!");
@@ -2215,12 +2215,12 @@ static cmr_int aealtek_set_flash_est(struct aealtek_cxt *cxt_ptr, cmr_u32 is_res
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t *output_param_ptr = NULL;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t *param_ct_ptr = NULL;
-	ae_flash_st_t lib_led_st = 0;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t *output_param_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t *param_ct_ptr = NULL;
+	enum ae_flash_st_t lib_led_st = 0;
 
 
 	if (!cxt_ptr) {
@@ -2252,12 +2252,12 @@ static cmr_int aealtek_set_hw_flash_status(struct aealtek_cxt *cxt_ptr, cmr_int 
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t *output_param_ptr = NULL;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t *param_ct_ptr = NULL;
-	ae_flash_st_t lib_led_st = 0;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t *output_param_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t *param_ct_ptr = NULL;
+	enum ae_flash_st_t lib_led_st = 0;
 
 
 	if (!cxt_ptr) {
@@ -2291,12 +2291,12 @@ static cmr_int aealtek_set_ui_flash_mode(struct aealtek_cxt *cxt_ptr, enum isp_u
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t *output_param_ptr = NULL;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t *param_ct_ptr = NULL;
-	AL3A_FE_UI_FLASH_MODE lib_flash_mode = 0;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t *output_param_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t *param_ct_ptr = NULL;
+	enum al3a_fe_ui_flash_mode lib_flash_mode = 0;
 
 
 	if (!cxt_ptr) {
@@ -2343,11 +2343,11 @@ static cmr_int aealtek_set_flash_prepare_on(struct aealtek_cxt *cxt_ptr)
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t *output_param_ptr = NULL;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t *param_ct_ptr = NULL;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t *output_param_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t *param_ct_ptr = NULL;
 
 
 	if (!cxt_ptr) {
@@ -2376,11 +2376,11 @@ static cmr_int aealtek_set_flash_with_lighting(struct aealtek_cxt *cxt_ptr)
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t *output_param_ptr = NULL;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t *param_ct_ptr = NULL;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t *output_param_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t *param_ct_ptr = NULL;
 
 
 	if (!cxt_ptr) {
@@ -2424,11 +2424,11 @@ static cmr_int aealtek_set_flash_notice(struct aealtek_cxt *cxt_ptr, struct ae_c
 {
 	cmr_int ret = ISP_ERROR;
 
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t output_param;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t param_ct;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t output_param;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t param_ct;
 
 	enum isp_flash_mode mode = 0;
 
@@ -2548,11 +2548,11 @@ static cmr_int aealtek_get_flash_effect(struct aealtek_cxt *cxt_ptr, struct ae_c
 {
 	cmr_int ret = ISP_SUCCESS;
 
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t output_param;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t param_ct;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t output_param;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t param_ct;
 
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param is NULL error!");
@@ -2567,8 +2567,8 @@ static cmr_int aealtek_get_iso_from_adgain(struct aealtek_cxt *cxt_ptr, cmr_u32 
 	cmr_int ret = ISP_ERROR;
 	cmr_int lib_ret = 0;
 
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_get_param_t in_param;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_get_param_t in_param;
 
 
 	if (!cxt_ptr || !from || !to) {
@@ -2578,14 +2578,14 @@ static cmr_int aealtek_get_iso_from_adgain(struct aealtek_cxt *cxt_ptr, cmr_u32 
 	obj_ptr = &cxt_ptr->al_obj;
 
 	in_param.ae_get_param_type = AE_GET_ISO_FROM_ADGAIN;
-	in_param.para.ISO_ADgain_info.ad_gain = *from;
+	in_param.para.iso_adgain_info.ad_gain = *from;
 
 	if (obj_ptr && obj_ptr->get_param)
 		lib_ret = obj_ptr->get_param(&in_param, obj_ptr->ae);
 	if (lib_ret)
 		goto exit;
 
-	*to = in_param.para.ISO_ADgain_info.ISO;
+	*to = in_param.para.iso_adgain_info.ISO;
 
 	return ISP_SUCCESS;
 exit:
@@ -2598,11 +2598,11 @@ static cmr_int aealtek_set_sof_to_lib(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t *output_param_ptr = NULL;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t *param_ct_ptr = NULL;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t *output_param_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t *param_ct_ptr = NULL;
 
 
 	if (!cxt_ptr || !in_ptr) {
@@ -2731,11 +2731,11 @@ static cmr_int aealtek_set_fd_param(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t *output_param_ptr = NULL;
-	ae_set_param_type_t type = 0;
-	rect_roi_config_t *roi_ptr = NULL;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t *output_param_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
+	struct rect_roi_config_t *roi_ptr = NULL;
 	cmr_u16 i = 0;
 	cmr_u16 face_num = 0;
 	cmr_u32 sx = 0;
@@ -2784,11 +2784,11 @@ static cmr_int aealtek_set_gyro_param(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t *output_param_ptr = NULL;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t *param_ct_ptr = NULL;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t *output_param_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t *param_ct_ptr = NULL;
 	cmr_int i = 0;
 
 	if (!cxt_ptr || !in_ptr) {
@@ -2823,11 +2823,11 @@ static cmr_int aealtek_set_hdr_ev(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_pa
 	cmr_int ret = ISP_ERROR;
 	enum ae_ctrl_hdr_ev_level level = 0;
 
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t output_param;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t *param_ct_ptr = NULL;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t output_param;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t *param_ct_ptr = NULL;
 
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param is NULL error!");
@@ -2861,11 +2861,11 @@ static cmr_int aealtek_set_awb_info(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t *output_param_ptr = NULL;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t *param_ct_ptr = NULL;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t *output_param_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t *param_ct_ptr = NULL;
 
 
 	if (!cxt_ptr || !awb_ptr) {
@@ -2941,11 +2941,11 @@ static cmr_int aealtek_set_af_report(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_set_param_t in_param;
-	ae_output_data_t *output_param_ptr = NULL;
-	ae_set_param_type_t type = 0;
-	ae_set_param_content_t *param_ct_ptr = NULL;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t *output_param_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t *param_ct_ptr = NULL;
 
 
 	if (!cxt_ptr || !in_ptr) {
@@ -3316,7 +3316,7 @@ static cmr_int aealtek_pre_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 	cmr_int ret = ISP_ERROR;
 
 	cmr_uint lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
 
 
 	if (!cxt_ptr || !in_ptr) {
@@ -3330,7 +3330,7 @@ static cmr_int aealtek_pre_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 			ISP_LOGE("LIB AE stat data is NULL");
 			goto exit;
 		}
-		lib_ret = al3AWrapper_DispatchHW3A_AEStats((ISP_DRV_META_AE_t*)in_ptr->stat_data_ptr->addr, &cxt_ptr->lib_data.stats_data, obj_ptr, obj_ptr->ae);
+		lib_ret = al3awrapper_dispatchhw3a_aestats((struct isp_drv_meta_ae_t*)in_ptr->stat_data_ptr->addr, &cxt_ptr->lib_data.stats_data, obj_ptr, obj_ptr->ae);
 		if (ERR_WPR_AE_SUCCESS != lib_ret) {
 			ret = ISP_ERROR;
 			ISP_LOGE("dispatch lib_ret=%ld", lib_ret);
@@ -3503,8 +3503,8 @@ static cmr_int aealtek_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_proc_
 	cmr_int ret = ISP_ERROR;
 
 	cmr_uint lib_ret = 0;
-	alAERuntimeObj_t *obj_ptr = NULL;
-	ae_output_data_t *out_data_ptr = NULL;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_output_data_t *out_data_ptr = NULL;
 
 
 	if (!cxt_ptr || !in_ptr) {

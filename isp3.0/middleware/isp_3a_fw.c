@@ -28,7 +28,7 @@
 #include "cmr_msg.h"
 #include "cmr_sensor_info.h"
 #include "isp_dev_access.h"
-#include "al3AWrapper.h"
+#include "alwrapper_3a.h"
 #include "isp_3a_adpt.h"
 #include "debug_structure.h"
 

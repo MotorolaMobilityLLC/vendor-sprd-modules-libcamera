@@ -17,10 +17,10 @@
 
 #include <dlfcn.h>
 #include "afl_altek_adpt.h"
-#include "al3ALib_Flicker.h"
-#include "al3ALib_Flicker_ErrCode.h"
-#include "al3AWrapper_Flicker.h"
-#include "al3AWrapper_FlickerErrCode.h"
+#include "allib_flicker.h"
+#include "allib_flicker_errcode.h"
+#include "alwrapper_flicker.h"
+#include "alwrapper_flicker_errcode.h"
 
 
 #define AFLLIB_PATH "libalFlickerLib.so"
@@ -28,16 +28,16 @@
 #define AFL_SECOND_BASE       10000000 // x10us
 
 struct aflaltek_lib_ops {
-	BOOL (*load_func)(alFlickerRuntimeObj_t *flicker_run_obj, unsigned long identityID);
-	void (*get_lib_ver)(al_flickerlib_version_t* flicker_LibVersion);
+	BOOL (*load_func)(struct alflickerruntimeobj_t *flicker_run_obj, unsigned long identityID);
+	void (*get_lib_ver)(struct al_flickerlib_version_t* flicker_LibVersion);
 };
 
 
 struct aflaltek_lib_data {
-	flicker_output_data_t output_data;
+	struct flicker_output_data_t output_data;
 	cmr_u16 success_num;
-	alHW3a_Flicker_CfgInfo_t  hwisp_cfg;
-	al3AWrapper_Stats_Flicker_t stats_data;
+	struct alhw3a_flicker_cfginfo_t  hwisp_cfg;
+	struct al3awrapper_stats_flicker_t stats_data;
 };
 
 struct aflaltek_statistics_queue {
@@ -55,7 +55,7 @@ struct aflaltek_cxt {
 	cmr_handle lib_handle;
 	struct afl_ctrl_init_in init_in_param;
 
-	alFlickerRuntimeObj_t afl_obj;
+	struct alflickerruntimeobj_t afl_obj;
 	void *lib_run_data;
 	struct aflaltek_lib_ops lib_ops;
 	struct aflaltek_lib_data lib_data;
@@ -85,7 +85,7 @@ exit:
 static cmr_int aflaltek_get_lib_ver(struct aflaltek_cxt *cxt_ptr)
 {
 	cmr_int ret = ISP_ERROR;
-	al_flickerlib_version_t lib_ver;
+	struct al_flickerlib_version_t lib_ver;
 
 
 	if (!cxt_ptr) {
@@ -123,14 +123,14 @@ static cmr_int aflaltek_load(struct aflaltek_cxt *cxt_ptr, struct afl_ctrl_init_
 		goto exit;
 	}
 
-	cxt_ptr->lib_ops.load_func = dlsym(cxt_ptr->lib_handle, "alFlickerlib_loadFunc");
+	cxt_ptr->lib_ops.load_func = dlsym(cxt_ptr->lib_handle, "allib_flicker_loadfunc");
 	if (!cxt_ptr->lib_ops.load_func) {
 		ISP_LOGE("failed to load func");
 		ret = ISP_ERROR;
 		goto exit;
 	}
 
-	cxt_ptr->lib_ops.get_lib_ver = dlsym(cxt_ptr->lib_handle, "alFlickerLib_GetLibVersion");
+	cxt_ptr->lib_ops.get_lib_ver = dlsym(cxt_ptr->lib_handle, "allib_flicker_getlibversion");
 	if (!cxt_ptr->lib_ops.get_lib_ver) {
 		ISP_LOGE("failed to dlsym get lib func");
 		ret = ISP_ERROR;
@@ -147,11 +147,11 @@ static cmr_int aflaltek_set_init_setting(struct aflaltek_cxt *cxt_ptr, struct af
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alFlickerRuntimeObj_t *obj_ptr = NULL;
-	flicker_set_param_t in_param;
-	flicker_output_data_t *output_param_ptr = NULL;
-	flicker_set_param_type_t type = 0;
-	flicker_set_param_content_t *param_ct_ptr = NULL;
+	struct alflickerruntimeobj_t *obj_ptr = NULL;
+	struct flicker_set_param_t in_param;
+	struct flicker_output_data_t *output_param_ptr = NULL;
+	enum flicker_set_param_type_t type = 0;
+	struct flicker_set_param_content_t *param_ct_ptr = NULL;
 
 
 	if (!cxt_ptr || !in_ptr) {
@@ -163,12 +163,12 @@ static cmr_int aflaltek_set_init_setting(struct aflaltek_cxt *cxt_ptr, struct af
 	param_ct_ptr = &in_param.set_param;
 
 	param_ct_ptr->flicker_enable = FLICKERINIT_FLICKER_ENABLE;
-	param_ct_ptr->TotalQueue = FLICKERINIT_TOTAL_QUEUE;
-	param_ct_ptr->RefQueue = FLICKERINIT_REF_QUEUE;
-	param_ct_ptr->ReferencePreviousData = REFERENCE_PREVIOUS_DATA_INTERVAL;
-	param_ct_ptr->RawSizeX = in_ptr->init.resolution.frame_size.w;
-	param_ct_ptr->RawSizeY = in_ptr->init.resolution.frame_size.h;
-	param_ct_ptr->Line_Time = (float)in_ptr->init.resolution.line_time / AFL_SECOND_BASE * 1.0; //unit: second
+	param_ct_ptr->totalqueue = FLICKERINIT_TOTAL_QUEUE;
+	param_ct_ptr->refqueue = FLICKERINIT_REF_QUEUE;
+	param_ct_ptr->referencepreviousdata = REFERENCE_PREVIOUS_DATA_INTERVAL;
+	param_ct_ptr->rawsizex = in_ptr->init.resolution.frame_size.w;
+	param_ct_ptr->rawsizey = in_ptr->init.resolution.frame_size.h;
+	param_ct_ptr->line_time = (float)in_ptr->init.resolution.line_time / AFL_SECOND_BASE * 1.0; //unit: second
 
 	type = FLICKER_SET_PARAM_INIT_SETTING;
 	in_param.flicker_set_param_type = type;
@@ -188,11 +188,11 @@ static cmr_int aflaltek_set_enable(struct aflaltek_cxt *cxt_ptr, struct afl_ctrl
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alFlickerRuntimeObj_t *obj_ptr = NULL;
-	flicker_set_param_t in_param;
-	flicker_output_data_t *output_param_ptr = NULL;
-	flicker_set_param_type_t type = 0;
-	flicker_set_param_content_t *param_ct_ptr = NULL;
+	struct alflickerruntimeobj_t *obj_ptr = NULL;
+	struct flicker_set_param_t in_param;
+	struct flicker_output_data_t *output_param_ptr = NULL;
+	enum flicker_set_param_type_t type = 0;
+	struct flicker_set_param_content_t *param_ct_ptr = NULL;
 
 
 	if (!cxt_ptr || !in_ptr) {
@@ -223,11 +223,11 @@ static cmr_int aflaltek_set_current_frequency(struct aflaltek_cxt *cxt_ptr, stru
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alFlickerRuntimeObj_t *obj_ptr = NULL;
-	flicker_set_param_t in_param;
-	flicker_output_data_t *output_param_ptr = NULL;
-	flicker_set_param_type_t type = 0;
-	flicker_set_param_content_t *param_ct_ptr = NULL;
+	struct alflickerruntimeobj_t *obj_ptr = NULL;
+	struct flicker_set_param_t in_param;
+	struct flicker_output_data_t *output_param_ptr = NULL;
+	enum flicker_set_param_type_t type = 0;
+	struct flicker_set_param_content_t *param_ct_ptr = NULL;
 
 
 	if (!cxt_ptr || !in_ptr) {
@@ -238,7 +238,7 @@ static cmr_int aflaltek_set_current_frequency(struct aflaltek_cxt *cxt_ptr, stru
 	output_param_ptr = &cxt_ptr->lib_data.output_data;
 	param_ct_ptr = &in_param.set_param;
 
-	param_ct_ptr->CurrentFreq = in_ptr->mode.flicker_mode;
+	param_ct_ptr->currentfreq = in_ptr->mode.flicker_mode;
 
 	type = FLICKER_SET_PARAM_CURRENT_FREQUENCY;
 	in_param.flicker_set_param_type = type;
@@ -258,11 +258,11 @@ static cmr_int aflaltek_set_reference_data_interval(struct aflaltek_cxt *cxt_ptr
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alFlickerRuntimeObj_t *obj_ptr = NULL;
-	flicker_set_param_t in_param;
-	flicker_output_data_t *output_param_ptr = NULL;
-	flicker_set_param_type_t type = 0;
-	flicker_set_param_content_t *param_ct_ptr = NULL;
+	struct alflickerruntimeobj_t *obj_ptr = NULL;
+	struct flicker_set_param_t in_param;
+	struct flicker_output_data_t *output_param_ptr = NULL;
+	enum flicker_set_param_type_t type = 0;
+	struct flicker_set_param_content_t *param_ct_ptr = NULL;
 
 
 	if (!cxt_ptr || !in_ptr) {
@@ -273,7 +273,7 @@ static cmr_int aflaltek_set_reference_data_interval(struct aflaltek_cxt *cxt_ptr
 	output_param_ptr = &cxt_ptr->lib_data.output_data;
 	param_ct_ptr = &in_param.set_param;
 
-	param_ct_ptr->ReferencePreviousData = in_ptr->ref_data.data_interval;
+	param_ct_ptr->referencepreviousdata = in_ptr->ref_data.data_interval;
 
 	type = FLICKER_SET_PARAM_REFERENCE_DATA_INTERVAL;
 	in_param.flicker_set_param_type = type;
@@ -288,7 +288,7 @@ exit:
 	return ret;
 }
 
-static cmr_int aflaltek_to_afl_hw_cfg(alHW3a_Flicker_CfgInfo_t *from, struct isp3a_afl_hw_cfg *to)
+static cmr_int aflaltek_to_afl_hw_cfg(struct alhw3a_flicker_cfginfo_t *from, struct isp3a_afl_hw_cfg *to)
 {
 	cmr_int ret = ISP_ERROR;
 
@@ -296,7 +296,7 @@ static cmr_int aflaltek_to_afl_hw_cfg(alHW3a_Flicker_CfgInfo_t *from, struct isp
 		ISP_LOGE("param %p %p is NULL error!", from, to);
 		goto exit;
 	}
-	to->token_id = from->TokenID;
+	to->token_id = from->tokenid;
 	to->offset_ratiox = from->uwoffsetratiox;
 	to->offset_ratioy = from->uwoffsetratioy;
 	return ISP_SUCCESS;
@@ -339,10 +339,10 @@ static cmr_int aflaltek_get_hw_config(struct aflaltek_cxt *cxt_ptr, struct isp3a
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alFlickerRuntimeObj_t *obj_ptr = NULL;
-	flicker_get_param_t in_param;
-	flicker_get_param_type_t type = 0;
-	flicker_get_param_content_t *param_ct_ptr = NULL;
+	struct alflickerruntimeobj_t *obj_ptr = NULL;
+	struct flicker_get_param_t in_param;
+	enum flicker_get_param_type_t type = 0;
+	struct flicker_get_param_content_t *param_ct_ptr = NULL;
 
 
 	if (!cxt_ptr || !out_ptr) {
@@ -359,7 +359,7 @@ static cmr_int aflaltek_get_hw_config(struct aflaltek_cxt *cxt_ptr, struct isp3a
 		lib_ret = obj_ptr->get_param(&in_param, cxt_ptr->lib_run_data);
 	if (lib_ret)
 		goto exit;
-	cxt_ptr->lib_data.hwisp_cfg = in_param.alHW3A_FlickerConfig;
+	cxt_ptr->lib_data.hwisp_cfg = in_param.alhw3a_flickerconfig;
 
 	ret = aflaltek_to_afl_hw_cfg(&cxt_ptr->lib_data.hwisp_cfg, out_ptr);
 	if (ret)
@@ -379,10 +379,10 @@ static cmr_int aflaltek_get_success_num(struct aflaltek_cxt *cxt_ptr, struct afl
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alFlickerRuntimeObj_t *obj_ptr = NULL;
-	flicker_get_param_t in_param;
-	flicker_get_param_type_t type = 0;
-	flicker_get_param_content_t *param_ct_ptr = NULL;
+	struct alflickerruntimeobj_t *obj_ptr = NULL;
+	struct flicker_get_param_t in_param;
+	enum flicker_get_param_type_t type = 0;
+	struct flicker_get_param_content_t *param_ct_ptr = NULL;
 
 
 	if (!cxt_ptr) {
@@ -412,11 +412,11 @@ static cmr_int aflaltek_set_work_mode(struct aflaltek_cxt *cxt_ptr, struct afl_c
 	cmr_int ret = ISP_ERROR;
 
 	cmr_int lib_ret = 0;
-	alFlickerRuntimeObj_t *obj_ptr = NULL;
-	flicker_set_param_t in_param;
-	flicker_output_data_t *output_param_ptr = NULL;
-	flicker_set_param_type_t type = 0;
-	flicker_set_param_content_t *param_ct_ptr = NULL;
+	struct alflickerruntimeobj_t *obj_ptr = NULL;
+	struct flicker_set_param_t in_param;
+	struct flicker_output_data_t *output_param_ptr = NULL;
+	enum flicker_set_param_type_t type = 0;
+	struct flicker_set_param_content_t *param_ct_ptr = NULL;
 
 
 	if (!cxt_ptr || !in_ptr || !out_ptr) {
@@ -427,9 +427,9 @@ static cmr_int aflaltek_set_work_mode(struct aflaltek_cxt *cxt_ptr, struct afl_c
 	output_param_ptr = &cxt_ptr->lib_data.output_data;
 	param_ct_ptr = &in_param.set_param;
 
-	param_ct_ptr->Line_Time = (float)in_ptr->work_param.resolution.line_time /AFL_SECOND_BASE * 1.0; //unit: second
-	param_ct_ptr->RawSizeX = in_ptr->work_param.resolution.frame_size.w;
-	param_ct_ptr->RawSizeY = in_ptr->work_param.resolution.frame_size.h;
+	param_ct_ptr->line_time = (float)in_ptr->work_param.resolution.line_time /AFL_SECOND_BASE * 1.0; //unit: second
+	param_ct_ptr->rawsizex = in_ptr->work_param.resolution.frame_size.w;
+	param_ct_ptr->rawsizey = in_ptr->work_param.resolution.frame_size.h;
 
 	type = FLICKER_SET_PARAM_LINE_TIME;
 	in_param.flicker_set_param_type = type;
@@ -681,7 +681,7 @@ static cmr_int afl_altek_adpt_process(cmr_handle handle, void *in, void *out)
 		ISP_LOGI("hw stat data is NULL error!!");
 		goto exit;
 	}
-	lib_ret = al3AWrapper_DispatchHW3A_FlickerStats((ISP_DRV_META_AntiF_t*)in_ptr->stat_data_ptr->addr
+	lib_ret = al3awrapper_dispatchhw3a_flickerstats((struct isp_drv_meta_antif_t*)in_ptr->stat_data_ptr->addr
 			, &cxt_ptr->lib_data.stats_data, &cxt_ptr->afl_obj, cxt_ptr->lib_run_data);
 	if (ERR_WPR_FLICKER_SUCCESS != lib_ret) {
 		ret = ISP_ERROR;
@@ -693,8 +693,8 @@ static cmr_int afl_altek_adpt_process(cmr_handle handle, void *in, void *out)
 	if (lib_ret)
 		goto exit;
 	if (cxt_ptr->init_in_param.ops_in.afl_callback) {
-		ISP_LOGI("FinalFreq=%d", cxt_ptr->lib_data.output_data.FinalFreq);
-		if (cxt_ptr->lib_data.output_data.FinalFreq < 57)
+		ISP_LOGI("FinalFreq=%d", cxt_ptr->lib_data.output_data.finalfreq);
+		if (cxt_ptr->lib_data.output_data.finalfreq < 57)
 			callback_in.flicker_mode = AFL_CTRL_FLICKER_50HZ;
 		else
 			callback_in.flicker_mode = AFL_CTRL_FLICKER_60HZ;

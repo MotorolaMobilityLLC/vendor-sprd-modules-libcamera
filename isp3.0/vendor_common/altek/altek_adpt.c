@@ -17,20 +17,20 @@
 
 #include <stdlib.h>
 #include "isp_common_types.h"
-#include "al3AWrapper.h"
-#include "HW3A_Stats.h"
+#include "alwrapper_3a.h"
+#include "hw3a_stats.h"
 
 cmr_int isp_dispatch_stats(void *isp_stats, void *ae_stats_buf, void *awb_stats_buf, void *af_stats_buf, void *yhist_stats_buf, void *antif_stats_buf, void *subsample, cmr_u32 sof_idx)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 
-	ret = (cmr_int)al3AWrapper_DispatchHW3AStats(isp_stats,
-			(ISP_DRV_META_AE_t*)ae_stats_buf,
-			(ISP_DRV_META_AWB_t*)awb_stats_buf,
-			(ISP_DRV_META_AF_t *)af_stats_buf,
-			(ISP_DRV_META_YHist_t *)yhist_stats_buf,
-			(ISP_DRV_META_AntiF_t *)antif_stats_buf,
-			(ISP_DRV_META_Subsample_t *)subsample,
+	ret = (cmr_int)al3awrapper_dispatchhw3astats(isp_stats,
+			(struct isp_drv_meta_ae_t*)ae_stats_buf,
+			(struct isp_drv_meta_awb_t*)awb_stats_buf,
+			(struct isp_drv_meta_af_t *)af_stats_buf,
+			(struct isp_drv_meta_yhist_t *)yhist_stats_buf,
+			(struct isp_drv_meta_antif_t *)antif_stats_buf,
+			(struct isp_drv_meta_subsample_t *)subsample,
 			sof_idx);
 	if (ret) {
 		ISP_LOGE("failed to disptach stats %ld", ret);
