@@ -25,7 +25,7 @@
 
 #define AFLLIB_PATH "libalFlickerLib.so"
 
-#define AFL_SECOND_BASE       10000000 // x10us
+#define AFL_NSECOND_BASE       100 // x10us
 
 struct aflaltek_lib_ops {
 	BOOL (*load_func)(struct alflickerruntimeobj_t *flicker_run_obj, unsigned long identityID);
@@ -168,7 +168,7 @@ static cmr_int aflaltek_set_init_setting(struct aflaltek_cxt *cxt_ptr, struct af
 	param_ct_ptr->referencepreviousdata = REFERENCE_PREVIOUS_DATA_INTERVAL;
 	param_ct_ptr->rawsizex = in_ptr->init.resolution.frame_size.w;
 	param_ct_ptr->rawsizey = in_ptr->init.resolution.frame_size.h;
-	param_ct_ptr->line_time = (float)in_ptr->init.resolution.line_time / AFL_SECOND_BASE * 1.0; //unit: second
+	param_ct_ptr->line_time = in_ptr->init.resolution.line_time * AFL_NSECOND_BASE; //unit: nsecond
 
 	type = FLICKER_SET_PARAM_INIT_SETTING;
 	in_param.flicker_set_param_type = type;
@@ -427,7 +427,7 @@ static cmr_int aflaltek_set_work_mode(struct aflaltek_cxt *cxt_ptr, struct afl_c
 	output_param_ptr = &cxt_ptr->lib_data.output_data;
 	param_ct_ptr = &in_param.set_param;
 
-	param_ct_ptr->line_time = (float)in_ptr->work_param.resolution.line_time /AFL_SECOND_BASE * 1.0; //unit: second
+	param_ct_ptr->line_time = in_ptr->work_param.resolution.line_time * AFL_NSECOND_BASE; //unit: nsecond
 	param_ct_ptr->rawsizex = in_ptr->work_param.resolution.frame_size.w;
 	param_ct_ptr->rawsizey = in_ptr->work_param.resolution.frame_size.h;
 

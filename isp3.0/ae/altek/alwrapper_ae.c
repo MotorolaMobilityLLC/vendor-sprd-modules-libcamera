@@ -190,11 +190,11 @@ uint32 al3awrapper_dispatchhw3a_aestats( struct isp_drv_meta_ae_t * alisp_metada
 			/* calculate Y */
 			ppatched_aedat->statsy[index] = ( ppatched_aedat->statsr[index]* wb_gain.r + ppatched_aedat->statsg[index] * wb_gain.g +
 						      ppatched_aedat->statsb[index] * wb_gain.b ) >> 8;  /* 10 bits */
-
+#if print_ae_log
 			/* debug printf, removed for release version */
-			printf( "al3awrapper_dispatchhw3a_aestats stats[%d] y/r/g/b: %d, %d, %d, %d \r\n", index, 
+			ISP_LOGI( "al3awrapper_dispatchhw3a_aestats stats[%d] y/r/g/b: %d, %d, %d, %d \r\n", index,
 			ppatched_aedat->statsy[index],ppatched_aedat->statsr[index], ppatched_aedat->statsg[index], ppatched_aedat->statsb[index] ); 
-
+#endif
 			index++;
 			udoffset += 16;
 		}

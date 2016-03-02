@@ -3086,6 +3086,27 @@ exit:
 	return ret;
 }
 
+static cmr_int aealtek_get_ext_debug_info(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+
+
+	if (!cxt_ptr || !out_ptr) {
+		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, out_ptr);
+		goto exit;
+	}
+	out_ptr->debug_info.flash_flag = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_need_flash_flg;
+	out_ptr->debug_info.fn_value = cxt_ptr->init_in_param.sensor_static_info.f_num;
+	out_ptr->debug_info.valid_ad_gain = cxt_ptr->sensor_exp_data.actual_exp.gain;
+	out_ptr->debug_info.valid_exposure_line = cxt_ptr->sensor_exp_data.actual_exp.exp_line;
+	out_ptr->debug_info.valid_exposure_time = cxt_ptr->sensor_exp_data.actual_exp.exp_time;
+
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld !!!", ret);
+	return ret;
+}
+
 static cmr_int ae_altek_adpt_init(void *in, void *out, cmr_handle *handle)
 {
 	cmr_int ret = ISP_ERROR;
@@ -3301,6 +3322,9 @@ static cmr_int ae_altek_adpt_ioctrl(cmr_handle handle, cmr_int cmd, void *in, vo
 		break;
 	case AE_CTRL_GET_EXIF_DATA:
 		ret = aealtek_get_exif_data(cxt_ptr, in_ptr, out_ptr);
+		break;
+	case AE_CTRL_GET_EXT_DEBUG_INFO:
+		ret = aealtek_get_ext_debug_info(cxt_ptr, in_ptr, out_ptr);
 		break;
 	default:
 		ISP_LOGE("cmd %ld is not defined!", cmd);
