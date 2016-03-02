@@ -10,16 +10,13 @@
 #define _ALTEK_AWB_LIB_
 
 /* Include files */
-
 #include "pthread.h"
-
 #include "mtype.h"
 #include "hw3a_stats.h"
 #include "allib_awb_errcode.h"
 #include "frmwk_hw3a_event_type.h"
 
 /* Macro definitions */
-#define alAWBLib_Debug_Size         (512)
 
 /* Static declarations */
 
@@ -117,6 +114,14 @@ struct allib_awb_initial_data_t {
 };
 #pragma pack(pop)  /* restore old alignment setting from stack */
 
+#pragma pack(push) /* push current alignment setting to stack */
+#pragma pack(4)    /* new alignment setting */
+struct allib_awb_debug_data_t {
+	uint32                      data_size;
+	void                        *data_addr;
+};
+#pragma pack(pop)  /* restore old alignment setting from stack */
+
 enum allib_awb_set_flash_states_t {
 	alawb_set_flash_none = 0,
 	alawb_set_flash_prepare_under_flashon,
@@ -144,26 +149,27 @@ enum allib_awb_awb_states_t {
 #pragma pack(push) /* push current alignment setting to stack */
 #pragma pack(4)    /* new alignment setting */
 struct allib_awb_output_data_t {
-	struct report_update_t           report_3a_update;       /* update awb information */
-	uint32                           hw3a_curframeidx;       /* hw3a frame Index */
-	uint32                           sys_cursof_frameidx;    /* sof frame Index */
-	uint16                           awb_update;             /* valid awb to update or not */
-	enum awb_mode_type_t             awb_mode;               /* WB mode, 0: Auto, others are MWB type */
-	struct wbgain_data_t             wbgain;                 /* WB gain for final result */
-	struct wbgain_data_t             wbgain_balanced;        /* All balanced WB gain, for shading or else */
-	struct wbgain_data_t             wbgain_capture;         /* WB gain for single shot */
-	struct wbgain_data_t             wbgain_flash_off;       /* WB gain for flash control, flash off status, all-balanced */
-	uint32                           color_temp;             /* (major) color temperature */
-	uint32                           color_temp_capture;     /* one shot color temperature */
-	uint32                           color_temp_flash_off;   /* flash off color temperature */
-	enum allib_awb_lightsource_t     light_source;           /* light source */
-	uint16                           awb_decision;           /* simple scene detect */
-	uint8                            flag_shading_on;        /* 0: False, 1: True */
-	enum allib_awb_awb_states_t      awb_states;             /* alAWBLib states */
-	enum allib_awb_awb_debug_type    awb_debug_mask;         /* awb debug mask, can print different information with different mask */
-	uint32                           awb_debug_data_size;    /* awb debug data size */
-	int8                             awb_debug_data_array[alAWBLib_Debug_Size]; /* awb debug data */
-	void                             *awb_debug_data_full;   /* awb debug data full size, Structure2, about 10K [TBD] */
+	struct report_update_t           report_3a_update;          /* update awb information */
+	uint32                           hw3a_curframeidx;          /* hw3a frame Index */
+	uint32                           sys_cursof_frameidx;       /* sof frame Index */
+	uint16                           awb_update;                /* valid awb to update or not */
+	enum awb_mode_type_t             awb_mode;                  /* WB mode, 0: Auto, others are MWB type */
+	struct wbgain_data_t             wbgain;                    /* WB gain for final result */
+	struct wbgain_data_t             wbgain_balanced;           /* All balanced WB gain, for shading or else */
+	struct wbgain_data_t             wbgain_capture;            /* WB gain for single shot */
+	struct wbgain_data_t             wbgain_flash_off;          /* WB gain for flash control, flash off status, all-balanced */
+	uint32                           color_temp;                /* (major) color temperature */
+	uint32                           color_temp_capture;        /* one shot color temperature */
+	uint32                           color_temp_flash_off;      /* flash off color temperature */
+	enum allib_awb_lightsource_t     light_source;              /* light source */
+	uint16                           awb_decision;              /* simple scene detect */
+	uint8                            flag_shading_on;           /* 0: False, 1: True */
+	enum allib_awb_awb_states_t      awb_states;                /* alAWBLib states */
+	enum allib_awb_awb_debug_type    awb_debug_mask;            /* awb debug mask, can print different information with different mask */
+	uint32                           awb_exif_data_size;        /* awb exif data size */
+	void                             *awb_exif_data;            /* awb exif data, Structure1, about 340bytes */
+	uint32                           awb_debug_data_size;       /* awb debug data size */
+	void                             *awb_debug_data;           /* awb debug data, Structure2, about 10240bytes [TBD] */
 };
 #pragma pack(pop)  /* restore old alignment setting from stack */
 
@@ -221,6 +227,8 @@ enum allib_awb_get_parameter_type_t {
 	alawb_get_param_manual_flow,
 	alawb_get_param_test_fix_patten,
 	alawb_get_param_awb_states,
+	alawb_get_param_debug_data_exif,
+	alawb_get_param_debug_data_full,
 	alawb_get_param_max
 };
 
@@ -242,6 +250,7 @@ struct allib_awb_get_parameter_t {
 		struct allib_awb_manual_flow_setting_t  awb_manual_flow;        /* alawb_get_param_manual_flow */
 		uint8                                   test_fix_patten;        /* alawb_get_param_test_fix_patten */
 		enum allib_awb_awb_states_t             awb_states;             /* alawb_get_param_awb_states */
+		struct allib_awb_debug_data_t           debug_data;             /* alawb_get_param_debug_data_exif & full */
 	}   para;
 };
 #pragma pack(pop)  /* restore old alignment setting from stack */
@@ -276,7 +285,7 @@ struct allib_awb_runtime_obj_t {
 };
 #pragma pack(pop)  /* restore old alignment setting from stack */
 
-/* Return: TRUE: loadFunc success. FALSE: loadFunc error. */
+/* Return: TRUE: loading with no error , FALSE: false loading function APIs address. */
 uint8 allib_awb_loadfunc(struct allib_awb_runtime_obj_t *awb_run_obj);
 
 #endif /*_ALTEK_AWB_LIB_ */

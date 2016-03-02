@@ -30,7 +30,7 @@ extern "C"
 {
 #endif
 
-#define _WRAPPER_VER 0.8010
+#define _WRAPPER_VER 0.8020
 
 /*
  * API name: al3awrapper_dispatchhw3astats

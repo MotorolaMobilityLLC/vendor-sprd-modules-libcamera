@@ -3,7 +3,7 @@
  *
  *  Created on: 2015/12/05
  *      Author: MarkTseng
- *  Latest update: 2016/2/26
+ *  Latest update: 2016/03/02
  *      Reviser: MarkTseng 
  *  Comments:
  *       This c file is mainly used for AP framework to:
@@ -506,48 +506,48 @@ uint32 al3awrapper_getcurrentdlsequence( uint8 ucahbsensoreid, struct alisp_dlds
 	adlselist->ucahbsensoreid = ucahbsensoreid;	/* fulfill AHB sensor index which would be used when calling al3AWrapper_SetDLSequence */
 
 	switch ( opmode ) {
-		case OPMODE_NORMALLV:
-			/* W9 config */
-			adlselist->ucpreview_baisc_dldseqlength = 4;
-			adlselist->aucpreview_baisc_dldseq[0] = HA3ACTRL_B_DL_TYPE_AE;
-			adlselist->aucpreview_baisc_dldseq[1] = HA3ACTRL_B_DL_TYPE_AWB;
-			adlselist->aucpreview_baisc_dldseq[2] = HA3ACTRL_B_DL_TYPE_AF;
-			adlselist->aucpreview_baisc_dldseq[3] = HA3ACTRL_B_DL_TYPE_AWB;
-			/* W10 config */
-			adlselist->ucpreview_adv_dldseqlength = 1;
-			adlselist->aucpreview_adv_dldseq[0] = HA3ACTRL_B_DL_TYPE_AntiF;
-			/* W9 */
-			adlselist->ucfastconverge_baisc_dldseqlength = 0;
-			adlselist->aucfastconverge_baisc_dldseq[0] = HA3ACTRL_B_DL_TYPE_NONE;
-			break;
-		case OPMODE_AF_FLASH_AF:
-			/* W9 config */
-			adlselist->ucpreview_baisc_dldseqlength = 2;
-			adlselist->aucpreview_baisc_dldseq[0] = HA3ACTRL_B_DL_TYPE_AF;
-			adlselist->aucpreview_baisc_dldseq[1] = HA3ACTRL_B_DL_TYPE_AF;
-			/* W10 config */
-			adlselist->ucpreview_adv_dldseqlength = 1;
-			adlselist->aucpreview_adv_dldseq[0] = HA3ACTRL_B_DL_TYPE_Sub;
+	case OPMODE_NORMALLV:
+		/* W9 config */
+		adlselist->ucpreview_baisc_dldseqlength = 4;
+		adlselist->aucpreview_baisc_dldseq[0] = HA3ACTRL_B_DL_TYPE_AE;
+		adlselist->aucpreview_baisc_dldseq[1] = HA3ACTRL_B_DL_TYPE_AWB;
+		adlselist->aucpreview_baisc_dldseq[2] = HA3ACTRL_B_DL_TYPE_AF;
+		adlselist->aucpreview_baisc_dldseq[3] = HA3ACTRL_B_DL_TYPE_AWB;
+		/* W10 config */
+		adlselist->ucpreview_adv_dldseqlength = 1;
+		adlselist->aucpreview_adv_dldseq[0] = HA3ACTRL_B_DL_TYPE_AntiF;
+		/* W9 */
+		adlselist->ucfastconverge_baisc_dldseqlength = 0;
+		adlselist->aucfastconverge_baisc_dldseq[0] = HA3ACTRL_B_DL_TYPE_NONE;
+		break;
+	case OPMODE_AF_FLASH_AF:
+		/* W9 config */
+		adlselist->ucpreview_baisc_dldseqlength = 2;
+		adlselist->aucpreview_baisc_dldseq[0] = HA3ACTRL_B_DL_TYPE_AF;
+		adlselist->aucpreview_baisc_dldseq[1] = HA3ACTRL_B_DL_TYPE_AF;
+		/* W10 config */
+		adlselist->ucpreview_adv_dldseqlength = 1;
+		adlselist->aucpreview_adv_dldseq[0] = HA3ACTRL_B_DL_TYPE_Sub;
 
-			adlselist->ucfastconverge_baisc_dldseqlength = 0;
-			adlselist->aucfastconverge_baisc_dldseq[0] = HA3ACTRL_B_DL_TYPE_NONE;
-			break;
-		case OPMODE_FLASH_AE:
-			/* W9 config */
-			adlselist->ucpreview_baisc_dldseqlength = 2;
-			adlselist->aucpreview_baisc_dldseq[0] = HA3ACTRL_B_DL_TYPE_AE;
-			adlselist->aucpreview_baisc_dldseq[1] = HA3ACTRL_B_DL_TYPE_AWB;
-			/* W10 config */
-			adlselist->ucpreview_adv_dldseqlength = 1;
-			adlselist->aucpreview_adv_dldseq[0] = HA3ACTRL_B_DL_TYPE_AntiF;
+		adlselist->ucfastconverge_baisc_dldseqlength = 0;
+		adlselist->aucfastconverge_baisc_dldseq[0] = HA3ACTRL_B_DL_TYPE_NONE;
+		break;
+	case OPMODE_FLASH_AE:
+		/* W9 config */
+		adlselist->ucpreview_baisc_dldseqlength = 2;
+		adlselist->aucpreview_baisc_dldseq[0] = HA3ACTRL_B_DL_TYPE_AE;
+		adlselist->aucpreview_baisc_dldseq[1] = HA3ACTRL_B_DL_TYPE_AWB;
+		/* W10 config */
+		adlselist->ucpreview_adv_dldseqlength = 1;
+		adlselist->aucpreview_adv_dldseq[0] = HA3ACTRL_B_DL_TYPE_AntiF;
 
-			adlselist->ucfastconverge_baisc_dldseqlength = 0;
-			adlselist->aucfastconverge_baisc_dldseq[0] = HA3ACTRL_B_DL_TYPE_NONE;
-			break;
+		adlselist->ucfastconverge_baisc_dldseqlength = 0;
+		adlselist->aucfastconverge_baisc_dldseq[0] = HA3ACTRL_B_DL_TYPE_NONE;
+		break;
 
-		default:
-			return ERR_WRP_INVALID_DL_OPMODE;
-			break;
+	default:
+		return ERR_WRP_INVALID_DL_OPMODE;
+		break;
 	}
 	return ret;
 }

@@ -342,7 +342,7 @@ struct alhw3a_awb_cfginfo_t {
 								 * since crs = Cr- [(cbs+awb_quantize_damp)>>awb_damp] */
 	uint8                           ucsumshift;		/* Sum shift = 5 (fixed), based on ISP sampling points.
 								 * [9:0]G' = (sum(G[i,j]/2) + 2^(awb_sum_shift-1)) >> awb_sum_shift */
-	struct alhw3a_awb_histogram_t          this;
+	struct alhw3a_awb_histogram_t   tawbhis;
 	uint16                          uwrlineargain;		/* calib_r_gain with foramt scale 128, normalized by g */
 	uint16                          uwblineargain;		/* calib_b_gain with foramt scale 128, normalized by g */
 

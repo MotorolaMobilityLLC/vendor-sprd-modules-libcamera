@@ -3,8 +3,8 @@
  *
  *  Created on: 2015/12/07
  *      Author: HanTseng
- *  Latest update: 2016/2/26
- *      Reviser: JohnsonHsieh 
+ *  Latest update: 2016/3/02
+ *      Reviser: HanTseng 
  *  Comments:
  *       This c file is mainly used for AP framework to:
  *       1. Query HW3A config setting
@@ -91,12 +91,12 @@ uint32 al3awrapperawb_translatescenemodefromawblib2ap(uint32 ascenemode)
 	uint32 retapscenemode;
 
 	switch (ascenemode) {
-		case 0:
-			retapscenemode = 0;
-			break;
-		default:
-			retapscenemode = 0;
-			break;
+	case 0:
+		retapscenemode = 0;
+		break;
+	default:
+		retapscenemode = 0;
+		break;
 	}
 
 	return retapscenemode;
@@ -114,11 +114,11 @@ uint32 al3awrapperawb_translatescenemodefromap2awblib(uint32 ascenemode)
 
 	switch (ascenemode) {
 	case 0:
-			retawbscenemode = 0;
-			break;
+		retawbscenemode = 0;
+		break;
 	default:
-			retawbscenemode = 0;
-			break;
+		retawbscenemode = 0;
+		break;
 	}
 
 	return retawbscenemode;
@@ -146,40 +146,40 @@ uint32 al3awrapperawb_getdefaultcfg(struct alhw3a_awb_cfginfo_t *aawbconfig)
 	if (aawbconfig == NULL)
 		return ERR_WRP_AWB_INVALID_INPUT_PARAM;
 
-	localparam.tokenid                   = 0x01;
-	localparam.tawbregion.uwborderratiox = 100;
-	localparam.tawbregion.uwborderratioy = 100;
-	localparam.tawbregion.uwblknumx      = 64;
-	localparam.tawbregion.uwblknumy      = 48;
-	localparam.tawbregion.uwoffsetratiox = 0;
-	localparam.tawbregion.uwoffsetratioy = 0;
+	localparam.tokenid                      = 0x01;
+	localparam.tawbregion.uwborderratiox    = 100;
+	localparam.tawbregion.uwborderratioy    = 100;
+	localparam.tawbregion.uwblknumx         = 64;
+	localparam.tawbregion.uwblknumy         = 48;
+	localparam.tawbregion.uwoffsetratiox    = 0;
+	localparam.tawbregion.uwoffsetratioy    = 0;
 	memcpy(localparam.ucyfactor, yfactor, 16 * sizeof(uint8));
 	memcpy(localparam.bbrfactor, bbrfactor, 33 * sizeof(sint8));
-	localparam.uwrgain                   = 0;
-	localparam.uwggain                   = 0;
-	localparam.uwbgain                   = 0;
-	localparam.uccrshift                 = 100;
-	localparam.ucoffsetshift             = 100;
-	localparam.ucquantize                = 0;
-	localparam.ucdamp                    = 7;
-	localparam.ucsumshift                = 5;
-	localparam.this.benable              = TRUE;
-	localparam.this.ccrstart             = -46;
-	localparam.this.ccrend               = 110;
-	localparam.this.coffsetup            = 10;
-	localparam.this.coffsetdown          = -90;
-	localparam.this.ccrpurple            = 0;
-	localparam.this.ucoffsetpurple       = 2;
-	localparam.this.cgrassoffset         = -22;
-	localparam.this.cgrassstart          = -30;
-	localparam.this.cgrassend            = 25;
-	localparam.this.ucdampgrass          = 4;
-	localparam.this.coffset_bbr_w_start  = -2;
-	localparam.this.coffset_bbr_w_end    = 2;
-	localparam.this.ucyfac_w             = 2;
-	localparam.this.dhisinterp           = -178;
-	localparam.uwrlineargain             = 128;
-	localparam.uwblineargain             = 128;
+	localparam.uwrgain                      = 0;
+	localparam.uwggain                      = 0;
+	localparam.uwbgain                      = 0;
+	localparam.uccrshift                    = 100;
+	localparam.ucoffsetshift                = 100;
+	localparam.ucquantize                   = 0;
+	localparam.ucdamp                       = 7;
+	localparam.ucsumshift                   = 5;
+	localparam.tawbhis.benable              = TRUE;
+	localparam.tawbhis.ccrstart             = -46;
+	localparam.tawbhis.ccrend               = 110;
+	localparam.tawbhis.coffsetup            = 10;
+	localparam.tawbhis.coffsetdown          = -90;
+	localparam.tawbhis.ccrpurple            = 0;
+	localparam.tawbhis.ucoffsetpurple       = 2;
+	localparam.tawbhis.cgrassoffset         = -22;
+	localparam.tawbhis.cgrassstart          = -30;
+	localparam.tawbhis.cgrassend            = 25;
+	localparam.tawbhis.ucdampgrass          = 4;
+	localparam.tawbhis.coffset_bbr_w_start  = -2;
+	localparam.tawbhis.coffset_bbr_w_end    = 2;
+	localparam.tawbhis.ucyfac_w             = 2;
+	localparam.tawbhis.dhisinterp           = -178;
+	localparam.uwrlineargain                = 128;
+	localparam.uwblineargain                = 128;
 	memcpy(aawbconfig, &localparam, sizeof(struct alhw3a_awb_cfginfo_t));
 
 	return ret;

@@ -399,13 +399,25 @@ cmr_int awbaltek_get_exif_info(cmr_handle adpt_handle, union awb_ctrl_cmd_in *in
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
+	struct allib_awb_get_parameter_t            get_input;
 
 	if (!output_ptr) {
 		ISP_LOGI("output is NULL");
 		goto exit;
 	}
-	output_ptr->debug_info.size = cxt->cur_process_out.awb_debug_data_size;
-	output_ptr->debug_info.addr = &cxt->cur_process_out.awb_debug_data_array[0];
+	output_ptr->debug_info.size = 0;
+	output_ptr->debug_info.addr = NULL;
+
+	get_input.type = alawb_get_param_debug_data_exif;
+	ret = (cmr_int)cxt->lib_func.get_param(&get_input, cxt->lib_func.awb);
+	if (ret) {
+		ISP_LOGE("failed to get gain");
+	} else {
+		output_ptr->debug_info.size = get_input.para.debug_data.data_size;
+		output_ptr->debug_info.addr = get_input.para.debug_data.data_addr;
+	}
+	ISP_LOGI("exif debug info addr %p size %ld", output_ptr->debug_info.addr, output_ptr->debug_info.size);
+
 exit:
 	return ret;
 }
@@ -414,18 +426,23 @@ cmr_int awbaltek_get_debug_info(cmr_handle adpt_handle, union awb_ctrl_cmd_in *i
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
+	struct allib_awb_get_parameter_t            get_input;
 
 	if (!output_ptr) {
 		ISP_LOGI("output is NULL");
 		goto exit;
 	}
-	output_ptr->debug_info.size = alAWBLib_Debug_Size;
-	output_ptr->debug_info.addr = cxt->cur_process_out.awb_debug_data_full;
-	ISP_LOGI("debug info %d %d %d %d",
-		cxt->cur_process_out.awb_debug_data_array[0],
-		cxt->cur_process_out.awb_debug_data_array[1],
-		cxt->cur_process_out.awb_debug_data_array[2],
-		cxt->cur_process_out.awb_debug_data_array[3]);
+	output_ptr->debug_info.size = 0;
+	output_ptr->debug_info.addr = NULL;
+	get_input.type = alawb_get_param_debug_data_full;
+	ret = (cmr_int)cxt->lib_func.get_param(&get_input, cxt->lib_func.awb);
+	if (ret) {
+		ISP_LOGE("failed to get gain");
+	} else {
+		output_ptr->debug_info.size = get_input.para.debug_data.data_size;
+		output_ptr->debug_info.addr = get_input.para.debug_data.data_addr;
+	}
+	ISP_LOGI("debug info addr %p size %ld", output_ptr->debug_info.addr, output_ptr->debug_info.size);
 exit:
 	return ret;
 }
@@ -455,7 +472,7 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 	}
 
 	ret = cxt->ops.load_func(&cxt->lib_func);
-	if (!ret) {
+	if (ret) {
 		ISP_LOGE("failed to load lib function");
 		goto exit;
 	}
@@ -544,7 +561,7 @@ normal_flow:
 	if (ret) {
 		ISP_LOGE("failed to get isp cfg");
 	} else {
-		memcpy((void*)&output_ptr->hw_cfg, (void*)&cfg_info, sizeof(struct alhw3a_awb_cfginfo_t));
+	//	memcpy((void*)&output_ptr->hw_cfg, (void*)&cfg_info, sizeof(struct alhw3a_awb_cfginfo_t));
 	}
 #else
 	//get isp cfg
@@ -557,8 +574,45 @@ normal_flow:
 		ISP_LOGI("cur_frame %d, cur_sof %d", get_isp_cfg.hw3a_curframeidx, get_isp_cfg.sys_cursof_frameidx);
 	}
 #endif
-
-	ISP_LOGV("token_id = %d\n, uccr_shift = %d\n, uc_damp = %d\n, uc_offset_shift = %d\n",
+	for ( i=0 ; i<33 ; i++) {
+		output_ptr->hw_cfg.bbr_factor[i] = cfg_info.bbrfactor[i];
+	}
+	output_ptr->hw_cfg.region.blk_num_X = cfg_info.tawbregion.uwblknumx;
+	output_ptr->hw_cfg.region.blk_num_Y = cfg_info.tawbregion.uwblknumy;
+	output_ptr->hw_cfg.region.border_ratio_X = cfg_info.tawbregion.uwborderratiox;
+	output_ptr->hw_cfg.region.border_ratio_Y = cfg_info.tawbregion.uwborderratioy;
+	output_ptr->hw_cfg.region.offset_ratio_X = cfg_info.tawbregion.uwoffsetratiox;
+	output_ptr->hw_cfg.region.offset_ratio_Y = cfg_info.tawbregion.uwoffsetratioy;
+	output_ptr->hw_cfg.token_id = cfg_info.tokenid;
+	output_ptr->hw_cfg.t_his.benable = cfg_info.tawbhis.benable;
+	output_ptr->hw_cfg.t_his.ccrend = cfg_info.tawbhis.ccrend;
+	output_ptr->hw_cfg.t_his.ccrpurple = cfg_info.tawbhis.ccrpurple;
+	output_ptr->hw_cfg.t_his.ccrstart = cfg_info.tawbhis.ccrstart;
+	output_ptr->hw_cfg.t_his.cgrass_end = cfg_info.tawbhis.cgrassend;
+	output_ptr->hw_cfg.t_his.cgrass_offset = cfg_info.tawbhis.cgrassoffset;
+	output_ptr->hw_cfg.t_his.cgrass_start = cfg_info.tawbhis.cgrassstart;
+	output_ptr->hw_cfg.t_his.coffsetdown = cfg_info.tawbhis.coffsetdown;
+	output_ptr->hw_cfg.t_his.coffset_bbr_w_end = cfg_info.tawbhis.coffset_bbr_w_end;
+	output_ptr->hw_cfg.t_his.coffset_bbr_w_start = cfg_info.tawbhis.coffset_bbr_w_start;
+	output_ptr->hw_cfg.t_his.cooffsetup = cfg_info.tawbhis.coffsetup;
+	output_ptr->hw_cfg.t_his.dhisinterp = cfg_info.tawbhis.dhisinterp;
+	output_ptr->hw_cfg.t_his.ucdampgrass = cfg_info.tawbhis.ucdampgrass;
+	output_ptr->hw_cfg.t_his.ucoffsetpurple = cfg_info.tawbhis.ucoffsetpurple;
+	output_ptr->hw_cfg.t_his.ucyfac_w = cfg_info.tawbhis.ucyfac_w;
+	output_ptr->hw_cfg.uccr_shift = cfg_info.uccrshift;
+	output_ptr->hw_cfg.uc_damp = cfg_info.ucdamp;
+	for ( i=0 ; i<16 ; i++) {
+		output_ptr->hw_cfg.uc_factor[i] = cfg_info.ucyfactor[i];
+	}
+	output_ptr->hw_cfg.uc_offset_shift = cfg_info.ucoffsetshift;
+	output_ptr->hw_cfg.uc_quantize = cfg_info.ucquantize;
+	output_ptr->hw_cfg.uc_sum_shift = cfg_info.ucsumshift;
+	output_ptr->hw_cfg.uwblinear_gain = cfg_info.uwblineargain;
+	output_ptr->hw_cfg.uwrlinear_gain = cfg_info.uwrlineargain;
+	output_ptr->hw_cfg.uw_bgain = cfg_info.uwbgain;
+	output_ptr->hw_cfg.uw_ggain = cfg_info.uwggain;
+	output_ptr->hw_cfg.uw_rgain = cfg_info.uwrgain;
+	ISP_LOGI("token_id = %d\n, uccr_shift = %d\n, uc_damp = %d\n, uc_offset_shift = %d\n",
 		output_ptr->hw_cfg.token_id, output_ptr->hw_cfg.uccr_shift,
 		output_ptr->hw_cfg.uc_damp, output_ptr->hw_cfg.uc_offset_shift);
 	ISP_LOGV("uc_quantize = %d\n, uc_sum_shift = %d\n, uwblinear_gain = %d\n, uwrlinear_gain = %d\n,\
@@ -944,7 +998,6 @@ cmr_int awbaltek_process(cmr_handle adpt_handle ,struct awb_ctrl_process_in *inp
 			output_ptr->hw3a_frame_id = report_ptr->hw3a_frame_id;;
 			output_ptr->is_update = cxt->cur_process_out.awb_update;
 			output_ptr->light_source = cxt->cur_process_out.light_source;
-			//memcpy(&cxt->exif_debug_info[0], cxt->cur_process_out.awb_debug_data_full, AWB_EXIF_DEBUG_INFO_SIZE);
 #else
 			report_ptr = &cxt->cur_process_out.report_3a_update.awb_update;
 			output_ptr->ct = report_ptr->color_temp;
