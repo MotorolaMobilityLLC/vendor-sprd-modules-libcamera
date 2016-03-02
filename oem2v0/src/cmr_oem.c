@@ -559,6 +559,10 @@ void camera_grab_handle(cmr_int evt, void* data, void* privdata)
 		buf_cfg.addr_vir[0].addr_y = frame->yaddr_vir;
 		buf_cfg.addr_vir[0].addr_u = frame->uaddr_vir;
 		buf_cfg.addr_vir[0].addr_v = frame->vaddr_vir;
+		buf_cfg.mfd[0].y = frame->mfd[0];
+		buf_cfg.mfd[0].u = frame->mfd[1];
+		buf_cfg.mfd[0].v = frame->mfd[2];
+		CMR_LOGE("zsl  buf_cfg.mfd[0].y 0x%x, u 0x%x, v 0x%x", buf_cfg.mfd[0].y, buf_cfg.mfd[0].u, buf_cfg.mfd[0].v);
 		camera_channel_buff_cfg(cxt, &buf_cfg);
 		return;
 	}
@@ -3852,11 +3856,13 @@ cmr_int camera_start_scale2(cmr_handle oem_handle, cmr_handle caller_handle, str
 cmr_int camera_start_scale_in_gsp(struct img_frm *src,
                                       struct img_frm *dst, int src_fd, int dst_fd)
 {
-	return cmr_gsp_start_scale(src, dst, src_fd,dst_fd);
+	//return cmr_gsp_start_scale(src, dst, src_fd,dst_fd);
+	return 0;
 }
 cmr_int camera_notify_close_gsp_hwc(cmr_int need_close)
 {
-	return cmr_notify_close_gsp_hwc(need_close);
+	//return cmr_notify_close_gsp_hwc(need_close);
+	return 0;
 }
 
 #endif
@@ -6285,6 +6291,9 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle, enum takepicture_mode
 		frame.yaddr_vir  = isp_cap_raw.addr_vir.addr_y;
 		frame.uaddr_vir  = isp_cap_raw.addr_vir.addr_u;
 		frame.vaddr_vir  = isp_cap_raw.addr_vir.addr_v;
+		frame.mfd[0] = isp_cap_raw.mfd.y;
+		frame.mfd[1] = isp_cap_raw.mfd.u;
+		frame.mfd[2] = 0;
 
 		// call cmr_snapshot_receive_data for post-processing
 		ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle, SNAPSHOT_EVT_CHANNEL_DONE, (void*)&frame);
@@ -6789,18 +6798,18 @@ cmr_int camera_local_set_video_buffer(cmr_handle oem_handle, cmr_uint src_phy_ad
 exit:
 	return ret;
 }
-cmr_int camera_local_set_zsl_buffer(cmr_handle oem_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_uint zsl_private)
+cmr_int camera_local_set_zsl_buffer(cmr_handle oem_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd)
 {
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt;
 	struct sensor_exp_info         exp_info;
-	if (!oem_handle || !src_phy_addr || !src_vir_addr) {
+	if (!oem_handle ||!src_vir_addr) {
 		CMR_LOGE("in parm error");
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}
 	cxt = (struct camera_context*)oem_handle;
-	ret = cmr_preview_set_zsl_buffer(cxt->prev_cxt.preview_handle, cxt->camera_id, src_phy_addr, src_vir_addr, zsl_private);
+	ret = cmr_preview_set_zsl_buffer(cxt->prev_cxt.preview_handle, cxt->camera_id, src_phy_addr, src_vir_addr, fd);
 	if (ret) {
 		CMR_LOGE("failed to set zsl buffer %ld", ret);
 		goto exit;
@@ -6850,7 +6859,7 @@ exit:
 	return ret;
 }
 
-cmr_int camera_local_set_zsl_snapshot_buffer(cmr_handle oem_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr)
+cmr_int camera_local_set_zsl_snapshot_buffer(cmr_handle oem_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd)
 {
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt;
@@ -6858,12 +6867,12 @@ cmr_int camera_local_set_zsl_snapshot_buffer(cmr_handle oem_handle, cmr_uint src
 	cmr_u32                        buffer_size = 0;
 	cmr_int                        need_pause = 0;
 
-	if (!oem_handle || !src_phy_addr || !src_vir_addr) {
+	if (!oem_handle || !src_vir_addr) {
 		CMR_LOGE("in parm error");
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}
-	CMR_LOGI("in src_phy_addr 0x%lx src_vir_addr 0x%lx", src_phy_addr, src_vir_addr);
+	CMR_LOGI("in src_phy_addr 0x%lx src_vir_addr 0x%lx, fd 0x%x", src_phy_addr, src_vir_addr, fd);
 	cxt = (struct camera_context*)oem_handle;
 	camera_local_zsl_snapshot_need_pause(oem_handle, &need_pause);
 	if (TAKE_PICTURE_NEEDED == camera_get_snp_req((cmr_handle)cxt)) {
@@ -6877,6 +6886,9 @@ cmr_int camera_local_set_zsl_snapshot_buffer(cmr_handle oem_handle, cmr_uint src
 		chn_data.yaddr_vir  = src_vir_addr;
 		chn_data.uaddr_vir  = src_vir_addr + buffer_size;
 		chn_data.vaddr_vir  = 0;
+		chn_data.mfd[0] = fd;
+		chn_data.mfd[1] = fd;
+		chn_data.mfd[2] = 0;
 
 #ifdef CONFIG_MEM_OPTIMIZATION
 		// update postprocess params
@@ -6898,6 +6910,10 @@ cmr_int camera_local_set_zsl_snapshot_buffer(cmr_handle oem_handle, cmr_uint src
 		img_frame.addr_vir.addr_v = 0;
 		img_frame.data_end.y_endian = 1; // ?
 		img_frame.data_end.uv_endian = 2; // ?
+		img_frame.mfd.y = fd;
+		img_frame.mfd.u = fd;
+		img_frame.mfd.v = 0;
+		CMR_LOGI("in src_phy_addr 0x%lx src_vir_addr 0x%lx, img_frame.mfd.y 0x%x", src_phy_addr, src_vir_addr, img_frame.mfd.y);
 
 		zsl_snp_update_post_proc_param(cxt->snp_cxt.snapshot_handle, (void*)&img_frame);
 #endif

@@ -570,7 +570,7 @@ int camera_arrange_capture_buf(struct cmr_cap_2_frm *cap_2_frm,
 				return -1;
 			}
 		} else {
-#ifdef CONFIG_MEM_OPTIMIZATION
+#if 0//def CONFIG_MEM_OPTIMIZATION
 	ret = arrange_yuv_buf_optimization(cap_2_frm,
 						sn_size,
 						sn_trim,

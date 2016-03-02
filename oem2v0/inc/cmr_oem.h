@@ -335,9 +335,9 @@ cmr_int camera_local_get_viewangle(cmr_handle oem_handle, struct sensor_view_ang
 
 cmr_int camera_local_set_preview_buffer(cmr_handle oem_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd);
 cmr_int camera_local_set_video_buffer(cmr_handle oem_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd);
-cmr_int camera_local_set_zsl_buffer(cmr_handle oem_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_uint zsl_private);
+cmr_int camera_local_set_zsl_buffer(cmr_handle oem_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd);
 cmr_int camera_local_set_video_snapshot_buffer(cmr_handle oem_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr);
-cmr_int camera_local_set_zsl_snapshot_buffer(cmr_handle oem_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr);
+cmr_int camera_local_set_zsl_snapshot_buffer(cmr_handle oem_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd);
 cmr_int camera_local_zsl_snapshot_need_pause(cmr_handle oem_handle, cmr_int *flag);
 void camera_calibrationconfigure_save (uint32_t start_addr, uint32_t data_size);
 void camera_set_reload_support(uint32_t is_support);
@@ -349,6 +349,9 @@ void camera_local_end_burst_notice(cmr_handle oem_handle);
 #ifdef CONFIG_MEM_OPTIMIZATION
 cmr_int camera_start_scale2(cmr_handle oem_handle, cmr_handle caller_handle, struct img_frm *src,
                                       struct img_frm *dst, struct cmr_op_mean *mean);
+cmr_int camera_start_scale_in_gsp(struct img_frm *src,
+                                      struct img_frm *dst, int src_fd, int dst_fd);
+cmr_int camera_notify_close_gsp_hwc(cmr_int need_close);
 #endif
 
 #ifdef __cplusplus

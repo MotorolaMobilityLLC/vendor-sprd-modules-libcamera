@@ -359,9 +359,9 @@ cmr_int camera_get_viewangle(cmr_handle camera_handle, struct sensor_view_angle 
 cmr_uint camera_get_sensor_exif_info(cmr_handle camera_handle, struct exif_info *exif_info);
 cmr_int camera_set_preview_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd);
 cmr_int camera_set_video_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd);
-cmr_int camera_set_zsl_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_uint zsl_private);
+cmr_int camera_set_zsl_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd);
 cmr_int camera_set_video_snapshot_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr);
-cmr_int camera_set_zsl_snapshot_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr);
+cmr_int camera_set_zsl_snapshot_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd);
 cmr_int camera_zsl_snapshot_need_pause(cmr_handle camera_handle, cmr_int *flag);
 cmr_int camera_get_isp_handle(cmr_handle camera_handle, cmr_handle *isp_handle);
 void camera_lls_enable(cmr_handle camera_handle, cmr_u32 is_enable);

@@ -26,7 +26,7 @@
 #include "sprd_cpp.h"
 
 #ifdef CONFIG_MEM_OPTIMIZATION
-#include "../hwcomposer/sc8830/gsp_hal.h"
+//#include "../hwcomposer/sc8830/gsp_hal.h"
 #include <sys/ioctl.h>
 #endif
 
@@ -460,7 +460,7 @@ exit:
 }
 
 
-#ifdef CONFIG_MEM_OPTIMIZATION
+#if 0 //def CONFIG_MEM_OPTIMIZATION
 static cmr_int need_notify_close_gsp_hwc=1;
 
 cmr_int cmr_notify_close_gsp_hwc(cmr_int need_close)

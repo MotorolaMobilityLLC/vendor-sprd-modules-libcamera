@@ -202,6 +202,10 @@ cmr_int cmr_snapshot_format_convert(cmr_handle snapshot_handle, void *data, stru
 
 cmr_int cmr_snapshot_memory_flush(cmr_handle snapshot_handle);
 
+#ifdef CONFIG_MEM_OPTIMIZATION
+cmr_int zsl_snp_update_post_proc_param(cmr_handle snp_handle, struct img_frm *img_frame);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

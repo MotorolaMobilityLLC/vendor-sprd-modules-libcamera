@@ -31,6 +31,10 @@ else
 LOCAL_C_INCLUDES += hardware/libhardware/modules/gralloc/
 endif
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_MEMORY_OPTIMIZATION)),true)
+LOCAL_CFLAGS += -DCONFIG_MEM_OPTIMIZATION
+endif
+
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),3)
 LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/isp3.0/dummy \

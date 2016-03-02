@@ -527,9 +527,10 @@ private:
 	uintptr_t                       mZslHeapArray_phy[kZslBufferCount+kZslRotBufferCount+1];
 	uintptr_t                       mZslHeapArray_vir[kZslBufferCount+kZslRotBufferCount+1];
 	uint32_t                        mZslHeapArray_size[kZslBufferCount+kZslRotBufferCount+1];
+	uint32_t                        mZslHeapArray_mfd[kZslBufferCount+kZslRotBufferCount+1];
 #endif
 
-#ifdef CONFIG_MEM_OPTIMIZATION
+#if 0 //def CONFIG_MEM_OPTIMIZATION
 	/* mCommonHeapReserved for preview, video and zsl reserved buffer*/
 	sprd_camera_memory_t*           mCommonHeapReserved;
 #else

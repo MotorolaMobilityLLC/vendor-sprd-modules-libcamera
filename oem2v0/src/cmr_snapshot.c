@@ -489,6 +489,9 @@ cmr_int snp_postproc_thread_proc(struct cmr_msg *message, void* p_data)
 			buf_cfg.addr_vir[0].addr_y = frame.yaddr_vir;
 			buf_cfg.addr_vir[0].addr_u = frame.uaddr_vir;
 			buf_cfg.addr_vir[0].addr_v = frame.vaddr_vir;
+			buf_cfg.mfd[0].y = frame.mfd[0];
+			buf_cfg.mfd[0].u = frame.mfd[1];
+			buf_cfg.mfd[0].v = 0;
 			cxt->ops.channel_buff_cfg(cxt->oem_handle, &buf_cfg);
 			CMR_LOGI("free frame");
 		}
@@ -3172,14 +3175,19 @@ cmr_int snp_update_scale_param(cmr_handle snp_handle, struct img_frm chn_data)
 		chn_param_ptr->scale[i].src_img.addr_vir.addr_y = chn_data.addr_vir.addr_y + offset[i];
 		chn_param_ptr->scale[i].src_img.addr_vir.addr_u = chn_data.addr_vir.addr_u + (offset[i] >> 1);
 		chn_param_ptr->scale[i].src_img.addr_vir.addr_v = chn_data.addr_vir.addr_v + (offset[i] >> 1);
+		chn_param_ptr->scale[i].src_img.mfd.y = chn_data.mfd.y;
+		chn_param_ptr->scale[i].src_img.mfd.u = chn_data.mfd.u;
+		chn_param_ptr->scale[i].src_img.mfd.v = 0;
 	}
 
 	for (i=0 ; i<1/*CMR_CAPTURE_MEM_SUM*/ ; i++) {
-		CMR_LOGI("src addr 0x%lx 0x%lx dst add 0x%lx 0x%lx",
+		CMR_LOGI("src addr 0x%lx 0x%lx dst add 0x%lx 0x%lx, y u 0x%x 0x%x",
 			chn_param_ptr->scale[i].src_img.addr_phy.addr_y,
 			chn_param_ptr->scale[i].src_img.addr_phy.addr_u,
 			chn_param_ptr->scale[i].dst_img.addr_phy.addr_y,
-			chn_param_ptr->scale[i].dst_img.addr_phy.addr_u);
+			chn_param_ptr->scale[i].dst_img.addr_phy.addr_u,
+			chn_param_ptr->scale[i].src_img.mfd.y,
+			chn_param_ptr->scale[i].src_img.mfd.u);
 
 		CMR_LOGI("src size %d %d dst size %d %d",
 			chn_param_ptr->scale[i].src_img.size.width,
