@@ -788,7 +788,6 @@ static cmr_int aealtek_init(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_init_in 
 
 	if (obj_ptr->initial)
 		obj_ptr->initial(&obj_ptr->ae);
-	ISP_LOGE("lib runtime=%p", obj_ptr->ae);
 
 	ret = aealtek_load_otp(cxt_ptr, in_ptr->otp_param);
 	if (ret)
@@ -2893,14 +2892,14 @@ static cmr_int aealtek_set_awb_info(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 
 		param_ct_ptr->ae_awb_info.awb_state = awb_ptr->awb_state;
 	}
-
+#if 0
 	ISP_LOGI("awb color_temp=%d, r=%d, g=%d, b=%d, awb_state=%d",
 		param_ct_ptr->ae_awb_info.color_temp,
 		param_ct_ptr->ae_awb_info.gain_r,
 		param_ct_ptr->ae_awb_info.gain_g,
 		param_ct_ptr->ae_awb_info.gain_b,
 		param_ct_ptr->ae_awb_info.awb_state);
-
+#endif
 	type = AE_SET_PARAM_AWB_INFO;
 	in_param.ae_set_param_type = type;
 	if (obj_ptr && obj_ptr->set_param)
@@ -3227,7 +3226,6 @@ static cmr_int ae_altek_adpt_ioctrl(cmr_handle handle, cmr_int cmd, void *in, vo
 		ISP_LOGE("param is NULL error!");
 		goto exit;
 	}
-	ISP_LOGE("cmd %ld", cmd);
 	switch (cmd) {
 	case AE_CTRL_GET_LUM:
 		break;
