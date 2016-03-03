@@ -1163,18 +1163,30 @@ static cmr_int afaltek_adpt_get_nothing(cmr_handle adpt_handle)
 	return ret;
 }
 
-cmr_int afaltek_adpt_get_exif_info(cmr_handle adpt_handle, void *out)
+cmr_int afaltek_adpt_get_exif_info(cmr_handle adpt_handle, struct allib_af_get_data_info_t *out)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+	struct allib_af_input_get_param_t p = { 0x00 };
+
+	p.type = alAFLIB_GET_PARAM_EXIF_INFO;
+
+	ret = afaltek_adpt_get_parameters(cxt, &p);
+	*out = p.u_get_data.exif_data_info;
 
 	return ret;
 }
 
-cmr_int afaltek_adpt_get_debug_info(cmr_handle adpt_handle, void *out)
+cmr_int afaltek_adpt_get_debug_info(cmr_handle adpt_handle, struct allib_af_get_data_info_t *out)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+	struct allib_af_input_get_param_t p = { 0x00 };
+
+	p.type = alAFLIB_GET_PARAM_DEBUG_INFO;
+
+	ret = afaltek_adpt_get_parameters(cxt, &p);
+	*out = p.u_get_data.debug_data_info;
 
 	return ret;
 }
@@ -1201,10 +1213,10 @@ static cmr_int afaltek_adpt_outctrl(cmr_handle adpt_handle, cmr_int cmd,
 		ret = afaltek_adpt_get_nothing(adpt_handle);
 		break;
 	case AF_CTRL_CMD_GET_EXIF_DEBUG_INFO:
-		ret = afaltek_adpt_get_exif_info(adpt_handle, (void *)out);
+		ret = afaltek_adpt_get_exif_info(adpt_handle, (struct allib_af_get_data_info_t *)out);
 		break;
 	case AF_CTRL_CMD_GET_DEBUG_INFO:
-		ret = afaltek_adpt_get_debug_info(adpt_handle, (void *)out);
+		ret = afaltek_adpt_get_debug_info(adpt_handle, (struct allib_af_get_data_info_t *)out);
 		break;
 	default:
 		ISP_LOGE("failed to case cmd = %ld", cmd);
