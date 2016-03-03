@@ -296,13 +296,13 @@ struct ae_report_update_t {
 	uint32             ae_Frmwkstates;              /* store states of framework depend state machine define */
 
 	/* common exif info for Altek exif reader */
-	uint16  ae_commonexif_valid_size;
-	uint8 ae_commonexif_data[MAX_AE_COMMON_EXIF_DATA];
+	uint32  ae_commonexif_valid_size;
+	void* ae_commonexif_data;
 
 	uint8   ucIsEnableAeDebugReport;             /* 0: disable debug report, 1: enable debug report */
 	/* debug message for altek advanced debug reader info */
-	uint16  ae_debug_valid_size;
-	uint8 ae_debug_data[MAX_RUNTIME_AE_DEBUG_DATA];
+	uint32  ae_debug_valid_size;
+	void* ae_debug_data;
 
 };
 #pragma pack(pop)  /* restore old alignment setting from stack */

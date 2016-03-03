@@ -77,6 +77,7 @@ enum ae_ctrl_cmd {
 	AE_CTRL_GET_DEBUG_DATA,
 	AE_CTRL_GET_EXIF_DATA,
 	AE_CTRL_GET_EXT_DEBUG_INFO,
+	AE_CTRL_GET_HW_ISO_SPEED,
 	AE_CTRL_CMD_MAX
 };
 
@@ -313,13 +314,13 @@ struct ae_ctrl_param_gyro {
 };
 
 struct ae_ctrl_debug_param {
-	cmr_u16  size;
-	cmr_u8   *data;
+	cmr_u32  size;
+	void   *data;
 };
 
 struct ae_ctrl_exif_param {
-	cmr_u16  size;
-	cmr_u8   *data;
+	cmr_u32  size;
+	void   *data;
 };
 
 struct ae_ctrl_ext_debug_info {

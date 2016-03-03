@@ -2683,10 +2683,6 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	ret = aealtek_pre_to_sensor(cxt_ptr, 0);
 	if (ret)
 		goto exit;
-	out_ptr->isp_d_gain = cxt_ptr->sensor_exp_data.actual_exp.gain;
-	ret = aealtek_get_iso_from_adgain(cxt_ptr, &cxt_ptr->sensor_exp_data.actual_exp.gain, &out_ptr->hw_iso_speed);
-	if (ret)
-		goto exit;
 
 	return ISP_SUCCESS;
 exit:
@@ -3107,6 +3103,25 @@ exit:
 	return ret;
 }
 
+static cmr_int aealtek_get_hw_iso_speed(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+
+
+	if (!cxt_ptr || !out_ptr) {
+		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, out_ptr);
+		goto exit;
+	}
+
+	ret = aealtek_get_iso_from_adgain(cxt_ptr, &cxt_ptr->sensor_exp_data.actual_exp.gain, &out_ptr->hw_iso_speed);
+	if (ret)
+		goto exit;
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld !!!", ret);
+	return ret;
+}
+
 static cmr_int ae_altek_adpt_init(void *in, void *out, cmr_handle *handle)
 {
 	cmr_int ret = ISP_ERROR;
@@ -3325,6 +3340,9 @@ static cmr_int ae_altek_adpt_ioctrl(cmr_handle handle, cmr_int cmd, void *in, vo
 		break;
 	case AE_CTRL_GET_EXT_DEBUG_INFO:
 		ret = aealtek_get_ext_debug_info(cxt_ptr, in_ptr, out_ptr);
+		break;
+	case AE_CTRL_GET_HW_ISO_SPEED:
+		ret = aealtek_get_hw_iso_speed(cxt_ptr, in_ptr, out_ptr);
 		break;
 	default:
 		ISP_LOGE("cmd %ld is not defined!", cmd);
