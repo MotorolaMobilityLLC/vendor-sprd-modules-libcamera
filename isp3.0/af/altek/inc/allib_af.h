@@ -15,7 +15,6 @@
 #define ALAF_EXIF_INFO_SIZE (379)
 #define ALAF_DEBUG_INFO_SIZE (7168)
 #define MAX_STATS_ROI_NUM (5)
-#define MAX_AF_DEBUG_DATA_SIZE (8192)
 #define MAX_STATS_COLUMN_NUM (9)
 #define MAX_STATS_ROW_NUM (9)
 #define ALAF_MAX_STATS_NUM (MAX_STATS_COLUMN_NUM*MAX_STATS_ROW_NUM)
@@ -192,7 +191,6 @@ struct allib_af_input_init_info_t {
 #pragma pack(push, 4)
 struct allib_af_input_initial_set_t {
 	void*	p_initial_set_data;
-	uint32	ud_bin_size;
 };
 #pragma pack(pop)
 
@@ -207,6 +205,19 @@ struct allib_af_input_initial_set_t {
 struct allib_af_input_enable_hybrid_t {
 	uint8	enable_hybrid;
 	uint8	type;
+};
+#pragma pack(pop)
+
+/*
+ * allib_af_get_data_info_t
+ * addr:	data address.
+ * size:	data size.
+ *
+ */
+#pragma pack(push, 4)
+struct allib_af_get_data_info_t {
+	void*	addr;
+	uint32	size;
 };
 #pragma pack(pop)
 
@@ -696,6 +707,8 @@ enum allib_af_get_param_type {
 	alAFLIB_GET_PARAM_FOCUS_MODE = 0,
 	alAFLIB_GET_PARAM_DEFAULT_LENS_POS,
 	alAFLIB_GET_PARAM_GET_CUR_LENS_POS,
+	alAFLIB_GET_PARAM_DEBUG_INFO,
+	alAFLIB_GET_PARAM_EXIF_INFO,
 	alAFLIB_GET_PARAM_NOTHING,
 	alAFLIB_GET_PARAM_MAX
 };
@@ -720,6 +733,8 @@ struct allib_af_input_get_param_t {
 		enum allib_af_input_focus_mode_type	af_focus_mode;
 		int16				w_current_lens_pos;
 		uint16				uw_default_lens_pos;
+		struct allib_af_get_data_info_t debug_data_info;
+		struct allib_af_get_data_info_t exif_data_info;
 	}u_get_data;	
 };
 #pragma pack(pop)
