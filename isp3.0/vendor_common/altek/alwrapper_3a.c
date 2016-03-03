@@ -598,3 +598,37 @@ UINT32 al3awrapper_getversion( float *fwrapversion )
 	
 	return ret;
 }
+
+/*
+ * brief Separate 3ABin
+ * param a_pc3ABinAdd [IN], pointer of 3A Bin
+ * param a_pcAEAdd     [OUT], location pointer of AE bin
+ * param a_pcAFAdd     [OUT], location pointer of AF bin
+ * param a_pcAWBAdd    [OUT], location pointer of AWB bin
+ * return None
+ */
+void Separate3ABin(uint32* a_pc3ABinAdd, uint32** a_pcAEAdd, uint32** a_pcAFAdd, uint32** a_pcAWBAdd)
+{
+	struct header_info *t_header_info;
+	t_header_info = (struct header_info *)a_pc3ABinAdd;
+
+	*a_pcAEAdd = a_pc3ABinAdd + t_header_info->uwlocation1;
+	*a_pcAFAdd = a_pc3ABinAdd + t_header_info->uwlocation2;
+	*a_pcAWBAdd = a_pc3ABinAdd + t_header_info->uwlocation3;
+}
+
+/*
+ * brief Separate ShadongIRPBin
+ * param a_pcShadingIRPBinAdd [IN], pointer of ShadingIRP Bin
+ * param a_pcShadingAdd      [OUT], location pointer of Shading bin
+ * param a_pcIRPAdd          [OUT], location pointer of IRP bin
+ * return None
+ */
+void SeparateShadingIRPBin(uint32* a_pcShadingIRPBinAdd, uint32** a_pcShadingAdd, uint32** a_pcIRPAdd)
+{
+	struct header_info *t_header_info;
+	t_header_info = (struct header_info *)a_pcShadingIRPBinAdd;
+
+	*a_pcShadingAdd = a_pcShadingIRPBinAdd + t_header_info->uwlocation1;
+	*a_pcIRPAdd = a_pcShadingIRPBinAdd + t_header_info->uwlocation2;
+}

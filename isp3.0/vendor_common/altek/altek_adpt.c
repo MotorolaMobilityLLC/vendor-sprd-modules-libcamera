@@ -38,3 +38,20 @@ cmr_int isp_dispatch_stats(void *isp_stats, void *ae_stats_buf, void *awb_stats_
 	ISP_LOGI("done %ld", ret);
 	return ret;
 }
+
+cmr_int isp_separate_3a_bin(void *bin, void **ae_tuning_buf, void **awb_tuning_buf, void **af_tuning_buf)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+
+	Separate3ABin((uint32*)bin, (uint32**)ae_tuning_buf, (uint32**)af_tuning_buf, (uint32**)awb_tuning_buf);
+
+	return ret;
+}
+
+cmr_int isp_separate_drv_bin(void *bin, void **shading_buf, void **irp_buf)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+
+	SeparateShadingIRPBin((uint32*)bin, (uint32**)shading_buf, (uint32**)irp_buf);
+	return ret;
+}

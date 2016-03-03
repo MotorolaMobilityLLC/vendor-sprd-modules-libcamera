@@ -32,6 +32,15 @@ extern "C"
 
 #define _WRAPPER_VER 0.8020
 
+struct header_info{
+	int8 cBinTag[20];
+	uint32 uwTotalSize;
+	uint32 uwVersion1;
+	uint32 uwVersion2;
+	uint32 uwlocation1;
+	uint32 uwlocation2;
+	uint32 uwlocation3;
+};
 /*
  * API name: al3awrapper_dispatchhw3astats
  * This API used for copying stats data from HW ISP(Altek) to seperated buffer, but without further patching
@@ -88,4 +97,6 @@ uint32 al3awrapper_getversion( float *fwrapversion );
 }  // extern "C"
 #endif
 
+void Separate3ABin(uint32* a_pc3ABinAdd, uint32** a_pcAEAdd, uint32** a_pcAFAdd, uint32** a_pcAWBAdd);
+void SeparateShadingIRPBin(uint32* a_pcShadingIRPBinAdd, uint32** a_pcShadingAdd, uint32** a_pcIRPAdd);
 #endif // _AL_3AWRAPPER_H_
