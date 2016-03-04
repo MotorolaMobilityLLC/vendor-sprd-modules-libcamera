@@ -1148,6 +1148,7 @@ static uint32_t _s5k3p3sm_get_static_info(uint32_t *param)
 	struct sensor_ex_info *ex_info;
 	ex_info = (struct sensor_ex_info*)param;
 	ex_info->f_num = 200;
+	ex_info->focal_length = 10;
 	ex_info->max_fps = 30;
 	ex_info->max_adgain = 16;
 	ex_info->ois_supported = 0;

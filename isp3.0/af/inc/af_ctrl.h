@@ -248,6 +248,11 @@ struct af_ctrl_sof_info {
 	struct isp3a_timestamp timestamp;
 };
 
+struct af_ctrl_debug_info_t {
+	void* addr;
+	cmr_u32 size;
+};
+
 struct af_ctrl_param_in {
 	union {
 		enum af_ctrl_mode_type af_mode;
@@ -269,6 +274,8 @@ struct af_ctrl_param_out {
 		cmr_u16 bypass;
 		struct af_ctrl_roi_info_type af_ctrl_roi_info;
 		enum af_ctrl_status_type af_ctrl_status;
+		struct af_ctrl_debug_info_t debug_info;
+		struct af_ctrl_debug_info_t exif_info;
 	};
 };
 

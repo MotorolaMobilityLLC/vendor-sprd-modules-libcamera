@@ -110,6 +110,7 @@ struct sensor_raw_resolution_info {
 
 struct  sensor_ex_info{
 	cmr_u32 f_num;
+	cmr_u32 focal_length;
 	cmr_u32 max_fps;
 	cmr_u32 max_adgain;
 	cmr_u32 ois_supported;

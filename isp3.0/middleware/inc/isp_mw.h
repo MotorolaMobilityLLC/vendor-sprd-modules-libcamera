@@ -349,18 +349,19 @@ struct isp_ops {
 };
 
 struct  isp_sensor_ex_info{
-    cmr_u32 f_num;
-    cmr_u32 max_fps;
-    cmr_u32 max_adgain;
-    cmr_u32 ois_supported;
-    cmr_u32 pdaf_supported;
-    cmr_u32 exp_valid_frame_num;
-    cmr_u32 clamp_level;
-    cmr_u32 adgain_valid_frame_num;
-    cmr_u32 preview_skip_num;
-    cmr_u32 capture_skip_num;
-    cmr_s8 *name;
-    cmr_s8 *sensor_version_info;
+	cmr_u32 f_num;
+	cmr_u32 focal_length;
+	cmr_u32 max_fps;
+	cmr_u32 max_adgain;
+	cmr_u32 ois_supported;
+	cmr_u32 pdaf_supported;
+	cmr_u32 exp_valid_frame_num;
+	cmr_u32 clamp_level;
+	cmr_u32 adgain_valid_frame_num;
+	cmr_u32 preview_skip_num;
+	cmr_u32 capture_skip_num;
+	cmr_s8 *name;
+	cmr_s8 *sensor_version_info;
 };
 
 struct isp_sensor_fps_info{
