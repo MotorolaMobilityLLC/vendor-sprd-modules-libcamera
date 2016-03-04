@@ -1411,27 +1411,22 @@ cmr_int isp_dev_get_iq_param(isp_handle handle, struct debug_info1 *info1, struc
 	}
 
 	if (info1) {
-		info1->raw_debug_info1.raw_width = param.tRawInfo.uwWidth;
-		info1->raw_debug_info1.raw_height = param.tRawInfo.uwHeight;
-		info1->raw_debug_info1.raw_format = param.tRawInfo.ucFormat;
-		info1->raw_debug_info1.raw_bit_number = param.tRawInfo.ucBitNumber;
-		info1->raw_debug_info1.mirror_flip = param.tRawInfo.ucMirrorFlip;
-		info1->raw_debug_info1.raw_color_order = param.tRawInfo.nColorOrder;
-		memcpy((void *)&info1->shading_debug_info1, &param.tShadingInfo, sizeof(struct shading_debug));
-		memcpy((void *)&info1->irp_tuning_para_debug_info1, &param.tIrpInfo, sizeof(struct irp_tuning_debug));
-		memcpy((void *)&info1->sw_debug1, &param.tSWInfo, sizeof(struct isp_sw_debug));
+		memcpy((void *)&info1->raw_debug_info1, &param.iq_info_1.tRawInfo, sizeof(struct raw_img_debug));
+		memcpy((void *)&info1->shading_debug_info1, &param.iq_info_1.tShadingInfo, sizeof(struct shading_debug));
+		memcpy((void *)&info1->irp_tuning_para_debug_info1, &param.iq_info_1.tIrpInfo, sizeof(struct irp_tuning_debug));
+		memcpy((void *)&info1->sw_debug1, &param.iq_info_1.tSWInfo, sizeof(struct isp_sw_debug));
 	}
 	if (info2) {
-		memcpy((void *)&info2->irp_tuning_para_debug_info2, &param.tGammaTone, sizeof(struct irp_gamma_tone));
+		memcpy((void *)&info2->irp_tuning_para_debug_info2, &param.iq_info_2.tGammaTone, sizeof(struct irp_gamma_tone));
 	}
 
 	CMR_LOGI("%d %d %d %d %d %d\n",
-		param.tRawInfo.uwWidth,
-		param.tRawInfo.uwHeight,
-		param.tRawInfo.ucFormat,
-		param.tRawInfo.ucBitNumber,
-		param.tRawInfo.ucMirrorFlip,
-		param.tRawInfo.nColorOrder);
+		param.iq_info_1.tRawInfo.uwWidth,
+		param.iq_info_1.tRawInfo.uwHeight,
+		param.iq_info_1.tRawInfo.ucFormat,
+		param.iq_info_1.tRawInfo.ucBitNumber,
+		param.iq_info_1.tRawInfo.ucMirrorFlip,
+		param.iq_info_1.tRawInfo.nColorOrder);
 
 	return ret;
 }
