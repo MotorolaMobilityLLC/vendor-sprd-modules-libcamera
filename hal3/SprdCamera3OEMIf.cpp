@@ -259,6 +259,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId,
 	m_pPowerModule(NULL),
 	mHDRPowerHint(0),
 	mHDRPowerHintFlag(0),
+	mDumpJpegFlag(0),
 	mIsRecording(false)
 {
 	//mIsPerformanceTestable = sprd_isPerformanceTestable();
@@ -3352,6 +3353,10 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame)
 						memcpy(((char *)pic_addr_vir+mJpegSize),(char *)isp_info_addr,isp_info_size);
 					}
 				}
+
+				if (mDumpJpegFlag)
+					dump_jpeg_file((void *)pic_addr_vir, encInfo->size+isp_info_size);
+
 				pic_stream->getHeapSize(&heap_size);
 				jpegBlob = (camera3_jpeg_blob*)((char *)pic_addr_vir + (heap_size - sizeof(camera3_jpeg_blob)));
 				jpegBlob->jpeg_size = encInfo->size+isp_info_size;
@@ -4583,6 +4588,7 @@ snapshot_mode_type_t SprdCamera3OEMIf::GetTakePictureMode()
 int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode, uint32_t frame_number)
 {
 	char value[PROPERTY_VALUE_MAX];
+	char value2[PROPERTY_VALUE_MAX];
 	property_get("persist.sys.camera.raw.mode", value, "jpeg");
 	HAL_LOGD("cap_mode = %d",cap_mode);
 	switch(cap_mode)
@@ -4631,12 +4637,21 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode, uint32_t fr
 			mPicCaptureCnt = 1;
 			mZslPreviewMode = false;
 			if (!strcmp(value, "raw")) {
-				HAL_LOGE("enter isp tuning mode ");
+				HAL_LOGD("enter isp tuning mode ");
 				mCaptureMode = CAMERA_ISP_TUNING_MODE;
 			} else if (!strcmp(value, "sim")) {
-				HAL_LOGE("enter isp simulation mode ");
+				HAL_LOGD("enter isp simulation mode ");
 				mCaptureMode = CAMERA_ISP_SIMULATION_MODE;
 			}
+
+			property_get("persist.sys.camera.dump.jpg", value2, "no");
+			if (!strcmp(value2, "yes")) {
+				HAL_LOGD("dump jpeg for tuning");
+				mDumpJpegFlag = true;
+			} else {
+				mDumpJpegFlag = false;
+			}
+
 			break;
 		case CAMERA_CAPTURE_MODE_CONTINUE_NON_ZSL_SNAPSHOT:
 			mTakePictureMode = SNAPSHOT_NO_ZSL_MODE;
@@ -4653,6 +4668,15 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode, uint32_t fr
 				HAL_LOGE("enter isp simulation mode ");
 				mCaptureMode = CAMERA_ISP_SIMULATION_MODE;
 			}
+
+			property_get("persist.sys.camera.dump.jpg", value2, "no");
+			if (!strcmp(value2, "yes")) {
+				HAL_LOGD("dump jpeg for tuning");
+				mDumpJpegFlag = true;
+			} else {
+				mDumpJpegFlag = false;
+			}
+
 			break;
 		case CAMERA_CAPTURE_MODE_ZSL_SNAPSHOT:
 			mTakePictureMode = SNAPSHOT_ZSL_MODE;

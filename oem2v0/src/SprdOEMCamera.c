@@ -864,3 +864,31 @@ cmr_int camera_get_gain_thrs(cmr_handle camera_handle, cmr_u32 *is_over_thrs)
 
 	return ret;
 }
+
+void dump_jpeg_file(void *virt_addr, unsigned int size)
+{
+	char str_buf[100];
+	FILE* fp;
+
+	char datetime[100];
+	time_t timep;
+	struct tm *p;
+	time(&timep);
+	p = localtime(&timep);
+	snprintf(datetime, sizeof(str_buf), "%04d%02d%02d%02d%02d%02d",
+			(1900 + p->tm_year),
+			(1 + p->tm_mon),
+			p->tm_mday,
+			p->tm_hour,
+			p->tm_min,
+			p->tm_sec);
+
+	snprintf(str_buf, sizeof(str_buf), "/data/misc/media/%s.jpg", datetime);
+	fp = fopen(str_buf, "ab+");
+	if (NULL == fp) {
+		printf("open %s failed\n", str_buf);
+	}
+	fwrite((uint8_t *)virt_addr, 1, size, fp);
+	fflush(fp);
+	fclose(fp);
+}

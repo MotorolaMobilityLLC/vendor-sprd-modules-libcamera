@@ -3076,6 +3076,52 @@ PUBLIC JPEG_RET_E Jpeg_WriteAPP3(uint8 *target_buf,
 
 	return JPEG_SUCCESS;
 	}
+
+PUBLIC JPEG_RET_E Jpeg_WriteAPP4(uint8 *target_buf,
+				uint32 target_buf_size,
+				EXIF_ISP_DEBUG_INFO_T exif_isp_debug_info,
+				uint32 *app4_size_ptr)
+{
+	uint32 i = 0;
+	uint8 exif_id[6] = "APP4";
+	uint16 app4_lengh;
+	uint32                  begin_offset    = 0;
+	uint8 *ptr = (uint8 *)exif_isp_debug_info.addr;
+	uint8 *dst_ptr = (uint8 *)target_buf;
+	JPEG_WRITE_STREAM_CONTEXT_T context;
+
+	if (target_buf == NULL || exif_isp_debug_info.addr == NULL) {
+		JPEG_PRINT_LOW("params error");
+		return -1;
+	}
+	if (target_buf_size < exif_isp_debug_info.size) {
+		JPEG_PRINT_LOW("out of memory");
+		return -1;
+	}
+
+	app4_lengh = exif_isp_debug_info.size + 8;
+
+	memset(&context, 0, sizeof(JPEG_WRITE_STREAM_CONTEXT_T));
+	context.write_buf = target_buf;
+	context.write_buf_size = target_buf_size;
+	context.write_ptr = context.write_buf;
+
+	Jpeg_SetWritePos(&context, begin_offset);
+	JPEG_WRITE_DATA(Jpeg_WriteC, &context, M_MARKER, return JPEG_FAILED);
+	JPEG_WRITE_DATA(Jpeg_WriteC, &context, M_APP4, return JPEG_FAILED);
+	JPEG_WRITE_DATA(Jpeg_WriteW, &context, app4_lengh, return JPEG_FAILED);
+
+	for (i=0; i<6; i++) {
+		JPEG_WRITE_DATA(Jpeg_WriteC, &context, exif_id[i], return JPEG_FAILED);
+	}
+	for(i=0; i<exif_isp_debug_info.size; i++) {
+		JPEG_WRITE_DATA(Jpeg_WriteC, &context, ptr[i], return JPEG_FAILED);
+	}
+
+	*app4_size_ptr = app4_lengh + 2;
+	return JPEG_SUCCESS;
+}
+
 /*****************************************************************************
 **	Name :
 **	Description:	and the EXIF info and write the output jpeg to the memory
@@ -3088,84 +3134,113 @@ PUBLIC JPEG_RET_E Jpeg_WriteAPP3(uint8 *target_buf,
 LOCAL JPEG_RET_E JPEG_AddExifToMemory(JINF_WEXIF_IN_PARAM_T *in_param_ptr,
                                       JINF_WEXIF_OUT_PARAM_T *out_param_ptr)
 {
-    uint8   *app1_buf_ptr   = NULL;
-    uint32  app1_buf_size   = 0;
-    uint32  app1_size       = 0;
-    uint8   *target_buf_ptr = NULL;
-    uint32  free_buf_size   = 0;
-    JPEG_RET_E  ret         = JPEG_SUCCESS;
+	uint8   *app1_buf_ptr   = NULL;
+	uint32  app1_buf_size   = 0;
+	uint32  app1_size       = 0;
+	uint8   *target_buf_ptr = NULL;
+	uint32  free_buf_size   = 0;
+	JPEG_RET_E  ret         = JPEG_SUCCESS;
 	uint32_t i = 0;
-    uint8   *app3_buf_ptr           = NULL;
-    uint32  app3_buf_size           = 0;
-    uint32  app3_size               = 0;
-    app3_buf_ptr = in_param_ptr->temp_exif_isp_buf_ptr;
-    app3_buf_size = in_param_ptr->temp_exif_isp_buf_size;
+	uint8   *app3_buf_ptr           = NULL;
+	uint32  app3_buf_size           = 0;
+	uint32  app3_size               = 0;
 
-    app1_buf_ptr = in_param_ptr->temp_buf_ptr;
-    app1_buf_size = in_param_ptr->temp_buf_size;
+	uint8   *app4_buf_ptr           = NULL;
+	uint32  app4_buf_size           = 0;
+	uint32  app4_size               = 0;
 
-    //write APP1 to temp buffer
-    ret = Jpeg_WriteAPP1(app1_buf_ptr,
-							app1_buf_size,
-							in_param_ptr->exif_info_ptr,
-							in_param_ptr->thumbnail_buf_ptr,
-							in_param_ptr->thumbnail_buf_size,
-							&app1_size);
-#ifdef EXIF_DEBUG
-	JPEG_PRINT_LOW("Jpeg_WriteAPP1 end.ret = %d.",ret);
-#endif
-    if (JPEG_SUCCESS != ret) {
-    	JPEG_PRINT_LOW("[JPEG_AddExifToMemory] Jpeg_WriteAPP1 failed");
-        return ret;
-    }
+	app3_buf_ptr = in_param_ptr->temp_exif_isp_buf_ptr;
+	app3_buf_size = in_param_ptr->temp_exif_isp_buf_size;
 
-    free_buf_size = (unsigned long)in_param_ptr->src_jpeg_buf_ptr
-                        - (unsigned long)in_param_ptr->target_buf_ptr;
+	app1_buf_ptr = in_param_ptr->temp_buf_ptr;
+	app1_buf_size = in_param_ptr->temp_buf_size;
 
-    if (free_buf_size < app1_size) {
-    	JPEG_PRINT_LOW("[JPEG_AddExifToMemory] free buffer size is not enought \
-							free buffer = %d, app1_size = %d",free_buf_size, app1_size);
-        return JPEG_MEMORY_NOT_ENOUGH;
-    }
+	app4_buf_ptr = in_param_ptr->temp_exif_isp_dbg_buf_ptr;
+	app4_buf_size = in_param_ptr->temp_exif_isp_dbg_buf_size;
+
+	JPEG_PRINT_LOW("app4: addr=%p, size=%d", app4_buf_ptr, app4_buf_size);
+
+	//write APP1 to temp buffer
+	ret = Jpeg_WriteAPP1(app1_buf_ptr,
+			app1_buf_size,
+			in_param_ptr->exif_info_ptr,
+			in_param_ptr->thumbnail_buf_ptr,
+			in_param_ptr->thumbnail_buf_size,
+			&app1_size);
+	if (JPEG_SUCCESS != ret) {
+		JPEG_PRINT_LOW("[JPEG_AddExifToMemory] Jpeg_WriteAPP1 failed");
+		return ret;
+	}
+
+	free_buf_size = (unsigned long)in_param_ptr->src_jpeg_buf_ptr -
+			(unsigned long)in_param_ptr->target_buf_ptr;
+	if (free_buf_size < app1_size) {
+		JPEG_PRINT_LOW("buf is not enought, free_buf_size=%d, app1_size = %d",
+				free_buf_size, app1_size);
+		return JPEG_MEMORY_NOT_ENOUGH;
+	}
+
 	if (NULL != in_param_ptr->exif_isp_info && NULL != app3_buf_ptr && app3_buf_size > 0) {
-	    ret = Jpeg_WriteAPP3(app3_buf_ptr,
-								app3_buf_size,
-								in_param_ptr->exif_isp_info,
-								&app3_size);
-	    JPEG_PRINT_LOW("[JPEG_AddExifToMemory] :after Jpeg_WriteAPP3, ret = %d,\
-							app3_size = %d\n", ret, app3_size);
+		ret = Jpeg_WriteAPP3(app3_buf_ptr,
+				app3_buf_size,
+				in_param_ptr->exif_isp_info,
+				&app3_size);
 		if (JPEG_SUCCESS == ret) {
-		    free_buf_size = (unsigned long)in_param_ptr->src_jpeg_buf_ptr
-		                        - (unsigned long)in_param_ptr->target_buf_ptr - app1_size;
-
-		    JPEG_PRINT_LOW("free_buf_size = %d, app1_size = %d,  app3_size = %d\n",
-								free_buf_size, app1_size, app3_size);
-		    if (free_buf_size < app3_size) {
+			free_buf_size = (unsigned long)in_param_ptr->src_jpeg_buf_ptr -
+					(unsigned long)in_param_ptr->target_buf_ptr - app1_size;
+			if (free_buf_size < app3_size) {
+				JPEG_PRINT_LOW("buf is not enought");
 				app3_size = 0;
-			} 
+			}
 		} else {
 			app3_size = 0;
-	    }
+		}
 	} else {
 		app3_size = 0;
 	}
-    target_buf_ptr = in_param_ptr->src_jpeg_buf_ptr - app1_size - app3_size;
+	JPEG_PRINT_LOW("app3_size = %d\n",app3_size);
 
-    out_param_ptr->output_buf_ptr = target_buf_ptr;
-    out_param_ptr->output_size = app1_size + app3_size + in_param_ptr->src_jpeg_size;
-
-    //write SOI marker
-    *target_buf_ptr++ = M_MARKER;
-    *target_buf_ptr++ = M_SOI;
-
-    memcpy(target_buf_ptr, app1_buf_ptr, app1_size);
-	if(app3_size > 0) {
-	    target_buf_ptr = target_buf_ptr + app1_size;
-	    memcpy(target_buf_ptr, app3_buf_ptr, app3_size);
+	if (NULL != in_param_ptr->exif_isp_debug_info.addr && NULL != app4_buf_ptr && app4_buf_size > 0) {
+		ret = Jpeg_WriteAPP4(app4_buf_ptr,
+				app4_buf_size,
+				in_param_ptr->exif_isp_debug_info,
+				&app4_size);
+		if(JPEG_SUCCESS == ret) {
+			free_buf_size = (unsigned long)in_param_ptr->src_jpeg_buf_ptr -
+					(unsigned long)in_param_ptr->target_buf_ptr -
+					app1_size - app3_size;
+			if (free_buf_size < app4_size) {
+				JPEG_PRINT_LOW("buf is not enought");
+				app4_size = 0;
+			}
+		} else {
+			app4_size = 0;
+		}
+	} else {
+		app4_size = 0;
 	}
-	JPEG_PRINT_LOW("end.");
+	JPEG_PRINT_LOW("app4_size = %d\n", app4_size);
 
-    return JPEG_SUCCESS;
+	target_buf_ptr = in_param_ptr->src_jpeg_buf_ptr - app1_size - app3_size - app4_size;
+	out_param_ptr->output_buf_ptr = target_buf_ptr;
+	out_param_ptr->output_size = app1_size + app3_size + app4_size + in_param_ptr->src_jpeg_size;
+
+	//write SOI marker
+	*target_buf_ptr++ = M_MARKER;
+	*target_buf_ptr++ = M_SOI;
+
+	memcpy(target_buf_ptr, app1_buf_ptr, app1_size);
+	if(app3_size > 0) {
+		target_buf_ptr = target_buf_ptr + app1_size;
+		memcpy(target_buf_ptr, app3_buf_ptr, app3_size);
+	}
+	if(app4_size > 0) {
+		target_buf_ptr = target_buf_ptr + app1_size + app3_size;
+		memcpy(target_buf_ptr, app4_buf_ptr, app4_size);
+	}
+	JPEG_PRINT_LOW("end");
+
+	return JPEG_SUCCESS;
 }
 
 /*****************************************************************************
@@ -3296,12 +3371,12 @@ JINF_RET_E IMGJPEG_WriteExif(JINF_WEXIF_IN_PARAM_T *in_param_ptr,
 		JPEG_PRINT_LOW("input parameter error!");
 		return JPEGE_INVALID_ARGUMENT;
 	}
-	JPEG_PRINT_LOW("[EXIFW_AddExif] src buf = 0x%lx, size = %d, thumb  buf = 0x%lx, size = %d,\
-						temp buf = 0x%lx, size = %d, write file = 0x%lx",
-						(unsigned long)in_param_ptr->src_jpeg_buf_ptr, in_param_ptr->src_jpeg_size,
-						(unsigned long)in_param_ptr->thumbnail_buf_ptr, in_param_ptr->thumbnail_buf_size,
-						(unsigned long)in_param_ptr->temp_buf_ptr, in_param_ptr->temp_buf_size,
-						(unsigned long)in_param_ptr->wrtie_file_func);
+	JPEG_PRINT_LOW("src buf = 0x%lx, size = %d, thumb  buf = 0x%lx, size = %d,\
+			temp buf = 0x%lx, size = %d, write file = 0x%lx",
+			(unsigned long)in_param_ptr->src_jpeg_buf_ptr, in_param_ptr->src_jpeg_size,
+			(unsigned long)in_param_ptr->thumbnail_buf_ptr, in_param_ptr->thumbnail_buf_size,
+			(unsigned long)in_param_ptr->temp_buf_ptr, in_param_ptr->temp_buf_size,
+			(unsigned long)in_param_ptr->wrtie_file_func);
 
     if (PNULL != in_param_ptr->wrtie_file_func) {
         ret = JPEG_AddExifToFile(in_param_ptr);

@@ -240,7 +240,7 @@ static cmr_int isp3a_set_ae_lock(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_dzoom(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_convergence_req(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_snapshot_finished(cmr_handle isp_3a_handle, void *param_ptr);
-static cmr_int isp3a_get_exif_info(cmr_handle isp_3a_handle, void *param_ptr);
+static cmr_int isp3a_get_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_init_statistics_buf(cmr_handle isp_3a_handle);
 static cmr_int isp3a_deinit_statistics_buf(cmr_handle isp_3a_handle);
 static cmr_int isp3a_get_statistics_buf(cmr_handle isp_3a_handle, cmr_int type, struct isp3a_statistics_data **buf_ptr);
@@ -281,7 +281,7 @@ static struct isp3a_ctrl_io_func s_isp3a_ioctrl_tab[ISP_CTRL_MAX] = {
 	{ISP_CTRL_HDR,                     isp3a_set_hdr},
 	{ISP_CTRL_GLOBAL_GAIN,             NULL},
 	{ISP_CTRL_CHN_GAIN,                NULL},
-	{ISP_CTRL_GET_EXIF_INFO,           isp3a_get_exif_info},
+	{ISP_CTRL_GET_EXIF_INFO,           NULL},
 	{ISP_CTRL_ISO,                     isp3a_set_iso},
 	{ISP_CTRL_WB_TRIM,                 NULL},
 	{ISP_CTRL_PARAM_UPDATE,            NULL},
@@ -337,7 +337,8 @@ static struct isp3a_ctrl_io_func s_isp3a_ioctrl_tab[ISP_CTRL_MAX] = {
 	{ISP_CTRL_IFX_PARAM_UPDATE,        NULL},
 	{ISP_CTRL_SET_DZOOM_FACTOR,        isp3a_set_dzoom},
 	{ISP_CTRL_SET_CONVERGENCE_REQ,     isp3a_set_convergence_req},
-	{ISP_CTRL_SET_SNAPSHOT_FINISHED,   isp3a_set_snapshot_finished}
+	{ISP_CTRL_SET_SNAPSHOT_FINISHED,   isp3a_set_snapshot_finished},
+	{ISP_CTRL_GET_EXIF_DEBUG_INFO,     isp3a_get_exif_debug_info},
 };
 
 /*************************************INTERNAK FUNCTION ***************************************/
@@ -1979,7 +1980,7 @@ exit:
 	return ret;
 }
 
-cmr_int isp3a_get_exif_info(cmr_handle isp_3a_handle, void *param_ptr)
+cmr_int isp3a_get_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;

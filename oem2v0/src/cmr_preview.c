@@ -5265,15 +5265,6 @@ cmr_int prev_construct_frame(struct prev_handle *handle,
 			prev_fd_send_data(handle, camera_id, frm_ptr);
 		}
 
-		#if 1
-		if(prev_cxt->prev_frm_cnt == 10)
-		camera_save_to_file(prev_cxt->prev_frm_cnt,
-				IMG_DATA_TYPE_YUV420,
-				frame_type->width,
-				frame_type->height,
-				&prev_cxt->prev_frm[frm_id].addr_vir);
-		#endif
-
 	} else {
 		CMR_LOGE("ignored, channel id %d, frame id %d", info->channel_id, info->frame_id);
 	}

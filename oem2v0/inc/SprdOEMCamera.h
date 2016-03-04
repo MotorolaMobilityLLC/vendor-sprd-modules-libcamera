@@ -379,6 +379,8 @@ void camera_end_burst_notice(cmr_handle camera_handle);
 cmr_int camera_transfer_caf_to_af(cmr_handle camera_handle);
 cmr_int camera_transfer_af_to_caf(cmr_handle camera_handle);
 
+void dump_jpeg_file(void *virt_addr, unsigned int size);
+
 #ifdef CONFIG_MEM_OPTIMIZATION
 cmr_int camera_start_scaling(cmr_handle camera_handle, cmr_handle caller_handle, struct img_frm *src, struct img_frm *dst, struct cmr_op_mean *mean);
 cmr_int camera_start_scaling_in_gsp(struct img_frm *src, struct img_frm *dst, int srd_fd, int dst_fd);

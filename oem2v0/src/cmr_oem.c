@@ -3764,9 +3764,12 @@ cmr_int camera_start_exif_encode(cmr_handle oem_handle, cmr_handle caller_handle
 	UNUSED(exif);
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
+	struct isp_context             *isp_cxt = &cxt->isp_cxt;
+
 	struct jpeg_enc_exif_param     enc_exif_param;
 	struct jpeg_wexif_cb_param     out_pram;
 	struct setting_cmd_parameter   setting_param;
+	struct common_isp_cmd_param    isp_param;
 
 	if (!caller_handle || !oem_handle || !pic_src || !dst || !thumb_src || !out_ptr) {
 		CMR_LOGE("in parm error");
@@ -3785,6 +3788,21 @@ cmr_int camera_start_exif_encode(cmr_handle oem_handle, cmr_handle caller_handle
 	ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_EXIF_INFO, &setting_param);
 	enc_exif_param.exif_ptr = setting_param.exif_all_info_ptr;
 	enc_exif_param.exif_isp_info = NULL;
+
+	ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_EXIF_DEBUG_INFO, &isp_param);
+	if (ret) {
+		CMR_LOGW("isp get exif debug info failed");
+		enc_exif_param.exif_isp_debug_info.addr = NULL;
+		enc_exif_param.exif_isp_debug_info.size = 0;
+	} else {
+		enc_exif_param.exif_isp_debug_info.addr = isp_param.isp_dbg_info.addr;
+		enc_exif_param.exif_isp_debug_info.size = isp_param.isp_dbg_info.size;
+	}
+
+	CMR_LOGV("exif_isp_debug_info: addr=%p, size=%d",
+		enc_exif_param.exif_isp_debug_info.addr,
+		enc_exif_param.exif_isp_debug_info.size);
+
 	enc_exif_param.padding = 0;
 	out_pram.output_buf_virt_addr = 0;
 	out_pram.output_buf_size = 0;
@@ -5204,6 +5222,11 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type, struct common
 		isp_cmd = ISP_CTRL_GET_EXIF_INFO;
 		ptr_flag = 1;
 		isp_param_ptr = (void*)&param_ptr->exif_pic_info;
+		break;
+	case COM_ISP_GET_EXIF_DEBUG_INFO:
+		isp_cmd = ISP_CTRL_GET_EXIF_DEBUG_INFO;
+		ptr_flag = 1;
+		isp_param_ptr = (void*)&param_ptr->isp_dbg_info;
 		break;
 	case COM_ISP_SET_AF:
 		isp_cmd = ISP_CTRL_AF;

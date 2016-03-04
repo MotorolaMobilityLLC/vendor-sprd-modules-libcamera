@@ -108,6 +108,7 @@ struct jpeg_enc_exif_param {
 	cmr_u32                  padding;
 	JINF_EXIF_INFO_T         *exif_ptr;
 	EXIF_ISP_INFO_T          *exif_isp_info;
+	EXIF_ISP_DEBUG_INFO_T    exif_isp_debug_info;
 };
 
 cmr_int jpeg_init(cmr_handle oem_handle, cmr_handle *jpeg_handle);

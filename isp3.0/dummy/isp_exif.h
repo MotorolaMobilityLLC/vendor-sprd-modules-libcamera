@@ -273,4 +273,10 @@ typedef struct exif_isp_info{
 
 }EXIF_ISP_INFO_T;
 
+/* for whale2 isp debug info */
+typedef struct exif_isp_debug_info{
+	void *addr;
+	cmr_int size;
+} EXIF_ISP_DEBUG_INFO_T;
+
 #endif //_ISP_EXIF_H_

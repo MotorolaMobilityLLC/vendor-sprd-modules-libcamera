@@ -830,12 +830,15 @@ static cmr_int _jpeg_enc_wexif(struct jpeg_enc_exif_param *param_ptr, struct jpe
 	input_param.temp_buf_size = param_ptr->thumbnail_size + JPEG_WEXIF_TEMP_MARGIN;
 	input_param.temp_buf_ptr = (cmr_u8*)malloc(input_param.temp_buf_size);
 	input_param.exif_isp_info = param_ptr->exif_isp_info;
+	input_param.exif_isp_debug_info = param_ptr->exif_isp_debug_info;
 	if (PNULL == input_param.temp_buf_ptr) {
 		CMR_LOGE("jpeg:malloc temp buf for wexif fail.");
 		return JPEG_CODEC_NO_MEM;
 	}
 	input_param.temp_exif_isp_buf_size = 4 * 1024;
 	input_param.temp_exif_isp_buf_ptr = (uint8_t*)malloc(input_param.temp_exif_isp_buf_size);
+	input_param.temp_exif_isp_dbg_buf_size = 4 * 1024;
+	input_param.temp_exif_isp_dbg_buf_ptr = (uint8_t*)malloc(input_param.temp_exif_isp_dbg_buf_size);
 	input_param.wrtie_file_func = NULL;
 	if (PNULL == input_param.temp_exif_isp_buf_ptr) {
 		free(input_param.temp_buf_ptr);
@@ -853,6 +856,7 @@ static cmr_int _jpeg_enc_wexif(struct jpeg_enc_exif_param *param_ptr, struct jpe
 	out_ptr->output_buf_size = output_param.output_size;
 	free(input_param.temp_buf_ptr);
 	free(input_param.temp_exif_isp_buf_ptr);
+	free(input_param.temp_exif_isp_dbg_buf_ptr);
 	input_param.temp_buf_ptr = PNULL;
 	CMR_LOGI("jpeg:output: addr 0x%lx,size %d", out_ptr->output_buf_virt_addr, (cmr_u32)out_ptr->output_buf_size);
 
