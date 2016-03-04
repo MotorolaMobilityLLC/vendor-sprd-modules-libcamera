@@ -545,7 +545,7 @@ normal_flow:
 			ISP_LOGE("failed to set tuning file %lx", ret);
 		}
 	}
-
+#if 0
 	if (input_ptr->tuning_param) {
 		ISP_LOGI("set tuning file");
 	    set_param.type = alawb_set_param_tuning_file;
@@ -555,7 +555,7 @@ normal_flow:
 			ISP_LOGE("failed to set tuning file %lx", ret);
 		}
 	}
-
+#endif
 #if TEST_VERSION
 	ret = (cmr_int)al3awrapperawb_getdefaultcfg(&cfg_info);
 	if (ret) {
@@ -691,7 +691,7 @@ normal_flow:
 	ISP_LOGI("gain %d, %d, %d, %d", output_ptr->gain.r, output_ptr->gain.g, output_ptr->gain.b, output_ptr->ct);
 
 	set_param.type = alawb_set_param_awb_debug_mask;
-    set_param.para.awb_debug_mask = alawb_dbg_enable_log;//alawb_dbg_enable_output;
+    set_param.para.awb_debug_mask = alawb_dbg_enable_output;
     ret = cxt->lib_func.set_param(&set_param, cxt->lib_func.awb);
 	if (ret) {
 		ISP_LOGE("failed to set debug %lx", ret);

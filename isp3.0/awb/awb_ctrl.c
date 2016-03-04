@@ -688,7 +688,7 @@ cmr_int awb_ctrl_ioctrl(cmr_handle awb_handle, enum awb_ctrl_cmd cmd, union awb_
 #endif
 	ISP_CHECK_HANDLE_VALID(awb_handle);
 
-	if (!input_ptr || (cmd >= AWB_CTRL_CMD_MAX) || (0 == cxt->is_inited)) {
+	if ((cmd >= AWB_CTRL_CMD_MAX) || (0 == cxt->is_inited)) {
 		ISP_LOGI("input param is error 0x%lx", (cmr_uint)input_ptr);
 		goto exit;
 	}

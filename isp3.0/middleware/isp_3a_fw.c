@@ -168,6 +168,7 @@ struct isp3a_fw_context {
 	struct isp3a_fw_bin_context bin_cxt;
 	cmr_uint sof_idx;
 	struct isp3a_fw_debug_context debug_data;
+	struct isp_sensor_ex_info ex_info;
 };
 /*************************************INTERNAK DECLARATION***************************************/
 static cmr_int isp3a_get_dev_time(cmr_handle handle, cmr_u32 *sec_ptr, cmr_u32 *usec_ptr);
@@ -1853,6 +1854,11 @@ cmr_int isp3a_get_info(cmr_handle isp_3a_handle, void *param_ptr)
 		ISP_LOGE("failed to get af debug info 0x%lx", ret);
 		goto exit;
 	}
+	if (af_out.debug_info.addr) {
+		size = MIN(MAX_AF_DEBUG_SIZE_STRUCT2, af_out.debug_info.size);
+		memcpy(cxt->debug_data.debug_info.af_debug_info2, af_out.debug_info.addr, size);
+		ISP_LOGI("af debug size is %d", size);
+	}
 	//TBD AF debug
 //	cxt->debug_data.debug_info.otp_report_debug_info2
 	cxt->debug_data.debug_info.structure_size2 = sizeof(struct debug_info2);
@@ -1992,13 +1998,13 @@ cmr_int isp3a_get_exif_info(cmr_handle isp_3a_handle, void *param_ptr)
 	exif_info_ptr->addr = NULL;
 	strcpy((char*)&exif_ptr->string1[0], "exif_str_g2v1");
 	strcpy((char*)&exif_ptr->end_string[0],"end_exif_str_g2v1");
+	exif_ptr->other_debug_info1.focal_length = cxt->ex_info.focal_length;
 //	exif_ptr->general_debug_info1//from ae TBD confirm with MARK
 //	exif_ptr->irp_tuning_para_debug_info1//for drv.
 //	exif_ptr->isp_ver_major =       //from isp drv
 //	exif_ptr->isp_ver_minor =
 //	exif_ptr->main_ver_major =   //TBD with Mark
 //	exif_ptr->main_ver_minor =   //TBD confirm with Mark
-//	exif_ptr->other_debug_info1.focal_length = //AF
 //	exif_ptr->otp_report_debug_info1
 	strcpy((char*)&exif_ptr->project_name[0], "whale2");
 //	exif_ptr->struct_version         //TBD confirm with Mark
@@ -2020,6 +2026,7 @@ cmr_int isp3a_get_exif_info(cmr_handle isp_3a_handle, void *param_ptr)
 	if (ae_out.exif_param.data) {
 		size = MIN(ae_out.exif_param.size, MAX_AEFE_DEBUG_SIZE_STRUCT1);
 		memcpy((void*)&exif_ptr->ae_fe_debug_info1[0], (void*)ae_out.exif_param.data, size);
+		ISP_LOGI("ae exif debug size is %d", size);
 	}
 
 	ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_EXIF_DEBUG_INFO, NULL, &awb_out);
@@ -2029,13 +2036,18 @@ cmr_int isp3a_get_exif_info(cmr_handle isp_3a_handle, void *param_ptr)
 	if (awb_out.debug_info.addr) {
 		size = MIN(awb_out.debug_info.size, MAX_AEFE_DEBUG_SIZE_STRUCT1);
 		memcpy((void*)&exif_ptr->awb_debug_info1[0], awb_out.debug_info.addr, size);
+		ISP_LOGI("awb exif debug size is %d", size);
 	}
 
 	ret= af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_GET_EXIF_DEBUG_INFO, NULL, &af_out);
 	if (ret) {
 		ISP_LOGE("failed to get af exif info 0x%lx", ret);
 	}
-//	exif_ptr->af_debug_info1
+	if (af_out.exif_info.addr) {
+		size = MIN(MAX_AF_DEBUG_SIZE_STRUCT1, af_out.exif_info.size);
+		memcpy((void*)&exif_ptr->af_debug_info1[0], af_out.exif_info.addr, size);
+		ISP_LOGI("af exif debug size is %d", size);
+	}
 	cxt->debug_data.exif_debug_info.structure_size1 = sizeof(cxt->debug_data.exif_debug_info);
 	exif_info_ptr->size = sizeof(cxt->debug_data.exif_debug_info);
 	exif_info_ptr->addr = (void*)&cxt->debug_data.exif_debug_info;
@@ -2922,6 +2934,7 @@ cmr_int isp_3a_fw_init(struct isp_3a_fw_init_in* input_ptr, cmr_handle* isp_3a_h
 	cxt->dev_access_handle = input_ptr->dev_access_handle;
 	cxt->bin_cxt.bin_info = input_ptr->bin_info;
 	cxt->bin_cxt.is_write_to_debug_buf = 0;
+	cxt->ex_info = input_ptr->ex_info;
 	sem_init(&cxt->statistics_data_sm, 0, 1);
 
 	ret = isp3a_init_statistics_buf((cmr_handle)cxt);

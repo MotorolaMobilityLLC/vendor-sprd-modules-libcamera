@@ -384,7 +384,7 @@ struct isp_init_param {
 	cmr_malloc alloc_cb;
 	cmr_free   free_cb;
 	void* setting_param_list_ptr[3];//0:back,1:front,2:dual back,
-	struct isp_sensor_ex_info      ex_info;
+	struct isp_sensor_ex_info ex_info;
 };
 
 struct isp_video_limit {
