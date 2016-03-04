@@ -215,11 +215,10 @@ cmr_int awbctrl_init_lib(cmr_handle awb_ctrl_handle)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
-	struct awb_ctrl_init_in                     input_param;
 	struct awb_ctrl_init_out                    output_param;
 
 	if (cxt->awb_adpt_ops->adpt_init) {
-		ret = cxt->awb_adpt_ops->adpt_init((void*)&input_param, (void*)&output_param, &cxt->lib_handle);
+		ret = cxt->awb_adpt_ops->adpt_init((void*)&cxt->input_param, (void*)&output_param, &cxt->lib_handle);
 		if (!ret) {
 			cxt->cur_gain = output_param.gain;
 			cxt->cur_ct = output_param.ct;

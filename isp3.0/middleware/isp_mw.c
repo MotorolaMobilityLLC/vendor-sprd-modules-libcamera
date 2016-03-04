@@ -133,6 +133,10 @@ cmr_int ispmw_get_tuning_bin(cmr_handle isp_mw_handle, const cmr_s8 *sensor_name
 	ISP_LOGI("sensor is %s", sensor_name);
 	fseek(fp,0,SEEK_END);
 	cxt->tuning_bin.isp_3a_size = ftell(fp);
+	if (0 == cxt->tuning_bin.isp_3a_size) {
+		fclose(fp);
+		goto exit;
+	}
 	fseek(fp,0,SEEK_SET);
 	cxt->tuning_bin.isp_3a_addr = malloc(cxt->tuning_bin.isp_3a_size);
 	if (NULL == cxt->tuning_bin.isp_3a_addr) {
@@ -158,6 +162,10 @@ cmr_int ispmw_get_tuning_bin(cmr_handle isp_mw_handle, const cmr_s8 *sensor_name
 	}
 	fseek(fp,0,SEEK_END);
 	cxt->tuning_bin.isp_shading_size = ftell(fp);
+	if (0 == cxt->tuning_bin.isp_shading_size) {
+		fclose(fp);
+		goto exit;
+	}
 	fseek(fp,0,SEEK_SET);
 	cxt->tuning_bin.isp_shading_addr = malloc(cxt->tuning_bin.isp_shading_size);
 	if (NULL == cxt->tuning_bin.isp_shading_addr) {

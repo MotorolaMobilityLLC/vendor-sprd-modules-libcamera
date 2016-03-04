@@ -685,6 +685,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 	awb_input.awb_process_type = AWB_CTRL_RESPONSE_STABLE;
 	awb_input.awb_process_level = AWB_CTRL_RESPONSE_NORMAL;
 	awb_input.tuning_param = input_ptr->bin_info.awb_addr;
+	ISP_LOGE("awb bin %p", awb_input.tuning_param);
 	ret = awb_ctrl_init(&awb_input, &awb_output, &cxt->awb_cxt.handle);
 	if (ret) {
 		ISP_LOGE("failed to AWB initialize");
