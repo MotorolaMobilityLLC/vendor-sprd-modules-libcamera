@@ -213,7 +213,6 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 	struct isp_3a_fw_init_in                    isp3a_input;
 	struct isp_dev_init_in                      isp_dev_input;
 	struct isp_mw_context                       *cxt = NULL;
-	cmr_s8                                      sensor_name[60] = "s5k3p3sm_mipi_raw";
 
 	if (!input_ptr || !isp_handle) {
 		ISP_LOGE("init param is null,input_ptr is 0x%lx,isp_handle is 0x%lx", (cmr_uint)input_ptr, (cmr_uint)isp_handle);
@@ -230,7 +229,7 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 	}
 	cmr_bzero(cxt, sizeof(*cxt));
 
-	ret = ispmw_get_tuning_bin((cmr_handle)cxt,(const cmr_s8*)&sensor_name[0]);//TBD
+	ret = ispmw_get_tuning_bin((cmr_handle)cxt,(const cmr_s8*)input_ptr->ex_info.name);
 	if (ret) {
 		goto exit;
 	}

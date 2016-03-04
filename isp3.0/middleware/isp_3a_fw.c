@@ -1994,24 +1994,28 @@ cmr_int isp3a_get_exif_info(cmr_handle isp_3a_handle, void *param_ptr)
 	strcpy((char*)&exif_ptr->string1[0], "exif_str_g2v1");
 	strcpy((char*)&exif_ptr->end_string[0],"end_exif_str_g2v1");
 //	exif_ptr->general_debug_info1//from ae TBD confirm with MARK
-//	exif_ptr->irp_tuning_para_debug_info1//for drv
+//	exif_ptr->irp_tuning_para_debug_info1//for drv.
 //	exif_ptr->isp_ver_major =       //from isp drv
 //	exif_ptr->isp_ver_minor =
 //	exif_ptr->main_ver_major =   //TBD with Mark
 //	exif_ptr->main_ver_minor =   //TBD confirm with Mark
-//	exif_ptr->other_debug_info1.flash_flag  //from AE
-//	exif_ptr->other_debug_info1.fn_value = //from AE
-//	exif_ptr->other_debug_info1.focal_length =    //from AF
-//	exif_ptr->other_debug_info1.valid_ad_gain =    //from AE
-//	exif_ptr->other_debug_info1.valid_exposure_line = //from AE
-//	exif_ptr->other_debug_info1.valid_exposure_time = //from AE
+//	exif_ptr->other_debug_info1.focal_length = //AF
 //	exif_ptr->otp_report_debug_info1
 	strcpy((char*)&exif_ptr->project_name[0], "whale2");
 //	exif_ptr->raw_debug_info1//isp drv
 //	exif_ptr->shading_debug_info1//isp drv
 //	exif_ptr->struct_version         //TBD confirm with Mark
 //	exif_ptr->sw_debug1//isp drv
-	ret= ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_GET_EXIF_DATA, NULL, &ae_out);
+	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_GET_EXT_DEBUG_INFO, NULL, &ae_out);
+	if (ret) {
+		ISP_LOGE("failed to get ae ext info 0x%lx", ret);
+	}
+	exif_ptr->other_debug_info1.flash_flag = ae_out.debug_info.flash_flag;
+	exif_ptr->other_debug_info1.fn_value = ae_out.debug_info.fn_value;
+	exif_ptr->other_debug_info1.valid_ad_gain = ae_out.debug_info.valid_ad_gain;
+	exif_ptr->other_debug_info1.valid_exposure_line = ae_out.debug_info.valid_exposure_line;
+	exif_ptr->other_debug_info1.valid_exposure_time = ae_out.debug_info.valid_exposure_time;
+	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_GET_EXIF_DATA, NULL, &ae_out);
 	if (ret) {
 		ISP_LOGE("failed to get ae exif info 0x%lx", ret);
 	}
