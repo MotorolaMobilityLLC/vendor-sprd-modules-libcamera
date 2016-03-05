@@ -259,12 +259,16 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 #ifdef CONFIG_CAMERA_EIS
 	mGyroInit(0),
 	mGyroDeinit(0),
+	mGyrostart(0),
+	mGyroend(0),
+	mEisInit(0),
+	mSprdEisEnabled(false),
 #endif
 	mIsRecording(false)
+
 {
 	//mIsPerformanceTestable = sprd_isPerformanceTestable();
 	HAL_LOGD("openCameraHardware: E cameraId: %d.", cameraId);
-
 	shakeTestInit(&mShakeTest);
 #if defined(CONFIG_BACK_CAMERA_ROTATION)
 	if (0 == cameraId) {
@@ -419,7 +423,6 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf()
 	if (!mReleaseFLag) {
 		closeCamera();
 	}
-
 	// Just in case that exception happen
 	if (miSPreviewFirstFrame == 1) {
 #ifdef HAS_CAMERA_HINTS
@@ -615,6 +618,16 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type, uint32_t frame_n
 				mSprdZslEnabled = true;
 			} else {
 				mSprdZslEnabled = false;
+			}
+#endif
+
+#ifdef CONFIG_CAMERA_EIS
+			SPRD_DEF_Tag sprddefInfo;
+			mSetting->getSPRDDEFTag(&sprddefInfo);
+			if(sprddefInfo.sprd_eis_enabled == 1){
+				mSprdEisEnabled = true;
+			}else{
+				mSprdEisEnabled = false;
 			}
 #endif
 
@@ -2778,7 +2791,18 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 	send_img_data(ISP_TOOL_YVU420_2FRAME, mPreviewWidth, mPreviewHeight, (char *)frame->y_vir_addr, frame->width * frame->height * 3 /2);
 #endif
 
+#ifdef CONFIG_CAMERA_EIS
+	int64_t buffer_timestamp;
+	if(mSprdEisEnabled){
+		buffer_timestamp = frame->timestamp -frame->ae_time/2;
+	}else{
+		buffer_timestamp = frame->timestamp;
+	}
+#else
 	int64_t buffer_timestamp = frame->timestamp;
+#endif
+
+
 	SprdCamera3RegularChannel* channel = reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
 	cmr_uint pre_addr_vir = NULL, rec_addr_vir = NULL, callback_addr_vir = NULL;
 	SprdCamera3Stream *pre_stream = NULL, *rec_stream = NULL, *callback_stream = NULL;
@@ -2831,6 +2855,22 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 					if (frame_num > mPreviewFrameNum) {/*record first coming*/
 						calculateTimestampForSlowmotion(buffer_timestamp);
 					}
+#ifdef CONFIG_CAMERA_EIS
+					HAL_LOGI("eis_enable = %d", mSprdEisEnabled);
+					if(mSprdEisEnabled){
+						int64_t boot_time = frame->monoboottime;
+						int64_t ae_time =frame->ae_time;
+						//int64_t sleep_time = boot_time -buffer_timestamp;
+						uint32_t zoom_ratio =(uint32_t)(frame->zoom_ratio * 100);
+						rec_stream->getQBufHandleForNum(frame_num, &buff_handle);
+						private_handle_t *private_handle = (struct private_handle_t*) (*buff_handle);
+						//nsecs_t time = systemTime(CLOCK_MONOTONIC);
+						//HAL_LOGD("CLOCK_MONOTONIC = %lld\n", time);
+						HAL_LOGV("rec_timestamp = %lld, boot_time = %lld\n", buffer_timestamp, boot_time);
+						HAL_LOGI("ae_time = %lld, zoom_ratio = %d\n", ae_time, zoom_ratio);
+						private_handle->phyaddr = zoom_ratio;
+					}
+#endif
 					channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp, CAMERA_STREAM_TYPE_VIDEO);
 					if (buf_deq_num == 0) {
 						mSlowPara.last_frm_timestamp = 0;
@@ -2861,6 +2901,39 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 						if(mVideoShotFlag)
 							PushVideoSnapShotbuff(frame_num, CAMERA_STREAM_TYPE_PREVIEW);
 					}
+#ifdef CONFIG_CAMERA_EIS
+					HAL_LOGI("eis_enable = %d", mSprdEisEnabled);
+					if(mRecordingMode && mSprdEisEnabled){
+						int64_t boot_time = frame->monoboottime;
+						int64_t ae_time =frame->ae_time;
+						int64_t sleep_time = boot_time -buffer_timestamp;
+						float zoom_ratio = frame->zoom_ratio;
+						HAL_LOGV("prev_timestamp = %lld, boot_time = %lld\n", buffer_timestamp, boot_time);
+						HAL_LOGV("ae_time = %lld, zoom_ratio = %f\n", ae_time, zoom_ratio);
+						if(!mEisInit){
+							EIS_init();
+							mEisInit = true;
+						}
+						vsInFrame frame_in;
+						vsOutFrame frame_out;
+						frame_in.frame_data = NULL;
+						frame_out.frame_data = NULL;
+						frame_in.frame_data = (uint8_t*)buff_vir;
+						frame_in.timestamp = (double)(boot_time - ae_time/2);
+						frame_in.timestamp = frame_in.timestamp /1000000000;
+						frame_in.zoom = (double)zoom_ratio;
+						frame_out = processEIS(frame_in);
+						HAL_LOGD("transfer_matrix wrap %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf", frame_out.warp.dat[0][0], frame_out.warp.dat[0][1], frame_out.warp.dat[0][2], frame_out.warp.dat[1][0], frame_out.warp.dat[1][1], frame_out.warp.dat[1][2], frame_out.warp.dat[2][0], frame_out.warp.dat[2][1], frame_out.warp.dat[2][2]);
+
+						EIS_CROP_Tag eiscrop_Info;
+						eiscrop_Info.crop[0] = (int)((float) mParam.src_w /12 + 0.5) + frame_out.warp.dat[0][2];
+						eiscrop_Info.crop[1] = (int)((float) mParam.src_h /12 + 0.5)+frame_out.warp.dat[1][2];
+						eiscrop_Info.crop[2] = (int)((float) mParam.src_w /12 + 0.5) + frame_out.warp.dat[0][2] + mParam.dst_w;
+						eiscrop_Info.crop[3] = (int)((float) mParam.src_h /12 + 0.5) +frame_out.warp.dat[1][2] + mParam.dst_h;
+						mSetting->setEISCROPTag(eiscrop_Info);
+					}
+#endif
+
 #ifdef CONFIG_MEM_OPTIMIZATION
 					mIsRecording = false;
 					if (rec_stream) {
@@ -2884,6 +2957,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 						rec_stream->getQBufAddrForNum(frame_num, &videobuf_vir, &videobuf_phy, &videobuf_ion_fd);
 						HAL_LOGD("frame_num=%d, videobuf_phy=0x%lx, videobuf_vir=0x%lx", frame_num, videobuf_phy, videobuf_vir);
 						HAL_LOGD("frame_num=%d, prebuf_phy=0x%lx, prebuf_vir=0x%lx", frame_num, prebuf_phy, prebuf_vir);
+
 						memcpy((void*)videobuf_vir, (void*)prebuf_vir, mPreviewWidth * mPreviewHeight * 3 / 2);
 						channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp, CAMERA_STREAM_TYPE_VIDEO);
 
@@ -4294,6 +4368,17 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_uint cameraParaTag)
 			SET_PARM(mCameraHandle, CAMERA_PARAM_FLIP_ON, sprddefInfo.flip_on);
 		}
 		break;
+
+	case ANDROID_SPRD_EIS_ENABLED:
+		{
+			SPRD_DEF_Tag sprddefInfo;
+
+			mSetting->getSPRDDEFTag(&sprddefInfo);
+			HAL_LOGD("sprd_eis_enabled = %d", sprddefInfo.sprd_eis_enabled);
+			SET_PARM(mCameraHandle, CAMERA_PARAM_SPRD_EIS_ENABLED, sprddefInfo.sprd_eis_enabled);
+		}
+		break;
+
 	case ANDROID_CONTROL_AF_MODE:
 		{
 			int8_t AfMode = 0;
@@ -6245,6 +6330,70 @@ void * SprdCamera3OEMIf::pre_alloc_cap_mem_thread_proc(void *p_data)
 }
 
 #ifdef CONFIG_CAMERA_EIS
+void SprdCamera3OEMIf::EIS_init() {
+	//mParam = {0};
+	video_stab_param_default(&mParam);
+	mParam.src_w = (uint16_t)mPreviewWidth;
+	mParam.src_h = (uint16_t)mPreviewHeight;
+	mParam.dst_w = (uint16_t)mPreviewWidth * 5 / 6;
+	mParam.dst_h = (uint16_t)mPreviewHeight * 5 / 6;
+	mParam.method= 0;
+	mParam.wdx = 0;
+	mParam.wdy = 0;
+	mParam.wdz = 0;
+	mParam.f   = 1300;
+	mParam.td  = 0.001;
+	mParam.ts  = 0.013;
+	video_stab_open(&mInst, &mParam);
+	HAL_LOGD("mParam src_w: %d, src_h:%d, dst_w:%d, dst_h:%d",mParam.src_w,mParam.src_h, mParam.dst_w, mParam.dst_h);
+}
+
+vsOutFrame SprdCamera3OEMIf::processEIS(vsInFrame frame_in)
+{
+	int gyro_start = 0;
+	int gyro_end =0;
+	int gyro_num = 0;
+	int i;
+	vsGyro* gyro =NULL;
+	vsOutFrame frame_out_preview;
+	frame_out_preview.frame_data = NULL;
+
+	HAL_LOGD("frame_in.timestamp: %lf, mGyromaxtimestamp %lf",frame_in.timestamp,mGyromaxtimestamp);
+	while(mGyromaxtimestamp < (frame_in.timestamp + mParam.td + mParam.ts /2)){
+		usleep(5*1000);
+	}
+	gyro_start = mGyrostart;
+	gyro_end = mGyroend;
+	HAL_LOGD("gyro_start = %d, gyro_end = %d",gyro_start, gyro_end);
+	mGyrostart = gyro_end;
+	if(gyro_end >= gyro_start)
+		gyro_num = gyro_end -gyro_start;
+	else
+		gyro_num = gyro_end -gyro_start + 30;
+	if(gyro_num){
+		gyro = new vsGyro[gyro_num];
+		for(i = 0; i < gyro_num; i++)
+		{
+			gyro[i].t=mGyro[0][gyro_start]/1000000000;
+			gyro[i].w[0] =mGyro[1][gyro_start];
+			gyro[i].w[1] =mGyro[2][gyro_start];
+			gyro[i].w[2] =mGyro[3][gyro_start];
+			HAL_LOGD("gyro i %d,timestamp %lf, x: %lf, y: %lf, z: %lf", i, gyro[i].t, gyro[i].w[0], gyro[i].w[1], gyro[i].w[2]);
+			gyro_start ++;
+			if(gyro_start >=30) gyro_start = 0;
+		}
+	}
+	video_stab_write(mInst, &frame_in, gyro, gyro_num);
+	video_stab_read(mInst, &frame_out_preview);
+	HAL_LOGD("frame_in 0x%lx, frame_out 0x%lx", frame_in.frame_data,frame_out_preview.frame_data);
+	if(gyro){
+		delete gyro;
+		gyro = NULL;
+	}
+
+	return frame_out_preview;
+}
+
 int SprdCamera3OEMIf::gyro_monitor_thread_init(void *p_data)
 {
 	int ret = NO_ERROR;
@@ -6286,6 +6435,11 @@ void * SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data)
 		HAL_LOGE("obj null  error");
 		return NULL;
 	}
+	memset(obj->mGyro, 0, sizeof(obj->mGyro));
+	obj->mGyrostart = 0;
+	obj->mGyroend = 0;
+	obj->mGyromaxtimestamp = 0;
+
 	SensorManager&  mgr(SensorManager::getInstanceForPackage(String16("EIS intergrate")));
 
 	Sensor const* const* list;
@@ -6318,6 +6472,17 @@ void * SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data)
 				switch(buffer[i].type) {
 				case Sensor::TYPE_GYROSCOPE:
 				{
+					struct timespec t1;
+					clock_gettime(CLOCK_BOOTTIME, &t1);
+					nsecs_t time1 = (t1.tv_sec)*1000000000LL + t1.tv_nsec;
+					HAL_LOGV("mGyroCamera CLOCK_BOOTTIME =%lld\n", time1);
+					obj->mGyro[0][obj->mGyroend] = buffer[i].timestamp;
+					obj->mGyro[1][obj->mGyroend] = buffer[i].data[0];
+					obj->mGyro[2][obj->mGyroend] = buffer[i].data[1];
+					obj->mGyro[3][obj->mGyroend] = buffer[i].data[2];
+					obj->mGyromaxtimestamp = obj->mGyro[0][obj->mGyroend]/1000000000;
+					obj->mGyroend ++;
+					if(obj->mGyroend >= 30) obj->mGyroend = 0;
 					sensor_info.type = CAMERA_AF_GYROSCOPE;
 					sensor_info.gyro_info.timestamp = buffer[i].timestamp;
 					sensor_info.gyro_info.x = buffer[i].data[0];
@@ -6373,17 +6538,22 @@ int SprdCamera3OEMIf::gyro_monitor_thread_deinit(void *p_data)
 
 	if (obj->mGyroInit) {
 		obj->mGyroInit = 0;
-		while(!obj->mGyroDeinit)
-		{
+		while(!obj->mGyroDeinit){
 			usleep(2000);
 		}
 		ret = pthread_join(obj->mGyroMsgQueHandle, &dummy);
 		obj->mGyroMsgQueHandle = 0;
+		if(obj->mEisInit){
+			video_stab_close(obj->mInst);
+			obj->mEisInit = 0;
+		}
 	}
 	HAL_LOGD("X inited=%d, Deinit = %d", obj->mGyroInit, obj->mGyroDeinit);
 
+	HAL_LOGD("relase eis");
 	return ret ;
 }
 
 #endif
+
 }

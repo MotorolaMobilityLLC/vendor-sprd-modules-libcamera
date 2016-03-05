@@ -353,6 +353,7 @@ typedef struct {
 	uint8_t sprd_pipviv_enabled;
 	uint8_t sprd_highiso_enabled;
 	uint8_t availabe_smile_enable;
+	uint8_t sprd_eis_enabled;
 } SPRD_DEF_Tag;
 
 typedef struct {
@@ -363,6 +364,10 @@ typedef struct {
 typedef struct {
 	int32_t max_latency;
 } SYNC_Tag;
+
+ typedef struct {
+	int32_t crop[4];
+} EIS_CROP_Tag;
 
 typedef struct {
 	cam_dimension_t preview_size;
@@ -399,6 +404,7 @@ typedef struct {
 
 	uint8_t supported_hardware_level;
 	uint8_t demosaic_mode;
+	EIS_CROP_Tag eiscrop_Info;
 } sprd_setting_info_t;
 
 class SprdCamera3Setting {
@@ -523,6 +529,10 @@ public:
 
 	int setFACETag(FACE_Tag faceInfo);
 	int getFACETag(FACE_Tag* faceInfo);
+
+	int setEISCROPTag(EIS_CROP_Tag eiscrop_Info);
+	int getEISCROPTag(EIS_CROP_Tag* eiscrop_Info);
+
 	int setMETAInfo(meta_info_t metaInfo);/*   for some metadata,   result meta should be  corresponding with request meta */
 	int getMETAInfo(meta_info_t* metaInfo);
 	static uint8_t mMaxCameraCount;

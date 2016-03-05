@@ -858,6 +858,9 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void* data, cmr_u3
 		struct isp_ae_simple_sync_input *ae_sync_info = (struct isp_ae_simple_sync_input *)data;
 		// TBD write info to al3200
 	}
+	case ISP_AE_EXP_TIME:
+		CMR_LOGI("ISP_AE_EXP_TIME,data %lld", *(uint64_t *)data);
+		prev_set_ae_time(cxt->prev_cxt.preview_handle, cxt->camera_id, data);
 		break;
 	default:
 		break;
@@ -5872,6 +5875,14 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	out_param_ptr->sprd_highiso_enabled = setting_param.cmd_type_value;
 	CMR_LOGI("sprd highiso_enabled flag %d", out_param_ptr->sprd_highiso_enabled);
 
+	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_SPRD_EIS_ENABLED, &setting_param);
+	if (ret) {
+		CMR_LOGE("failed to get preview sprd eis enabled flag %ld", ret);
+		goto exit;
+	}
+	out_param_ptr->sprd_eis_enabled = setting_param.cmd_type_value;
+	CMR_LOGI("sprd eis_enabled flag %d", out_param_ptr->sprd_eis_enabled);
+
 exit:
 	CMR_LOGI("prev size %d %d pic size %d %d", out_param_ptr->preview_size.width, out_param_ptr->preview_size.height,
 		     out_param_ptr->picture_size.width, out_param_ptr->picture_size.height);
@@ -6245,6 +6256,10 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id, cmr
 		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);
 		break;
 	case CAMERA_PARAM_SPRD_HIGHISO_ENABLED:
+		setting_param.cmd_type_value = param;
+		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);
+		break;
+	case CAMERA_PARAM_SPRD_EIS_ENABLED:
 		setting_param.cmd_type_value = param;
 		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);
 		break;

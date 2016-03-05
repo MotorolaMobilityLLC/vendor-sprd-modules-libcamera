@@ -177,6 +177,7 @@ enum camera_param_type{
 	CAMERA_PARAM_SLOW_MOTION_FLAG,
 	CAMERA_PARAM_SPRD_PIPVIV_ENABLED,
 	CAMERA_PARAM_SPRD_HIGHISO_ENABLED,
+	CAMERA_PARAM_SPRD_EIS_ENABLED,
 	CAMERA_PARAM_TYPE_MAX
 };
 
@@ -251,6 +252,9 @@ struct camera_frame_type {
 	struct camera_jpeg_param  jpeg_param;
 	struct camera_sensor_info sensor_info;
 	cmr_uint                  zsl_private;
+	float                     zoom_ratio;
+	cmr_s64                   ae_time;
+	cmr_s64                   monoboottime;
 };
 /*
 struct camera_cap_frm_info {

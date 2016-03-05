@@ -50,6 +50,7 @@ extern "C" {
 #include <gui/Sensor.h>
 #include <gui/SensorManager.h>
 #include <gui/SensorEventQueue.h>
+#include "sprd_eis.h"
 #endif
 
 using namespace android;
@@ -191,6 +192,8 @@ public:
 	void            setIspFlashMode(uint32_t mode);
 
 #ifdef CONFIG_CAMERA_EIS
+	virtual void EIS_init();
+	vsOutFrame processEIS(vsInFrame frame_in);
 	static int		gyro_monitor_thread_init(void *p_data);
 	static int		gyro_monitor_thread_deinit(void *p_data);
 	static void*  gyro_monitor_thread_proc( void *p_data);
@@ -594,11 +597,19 @@ private:
 
 	bool                          mIOMMUEnabled;
 	int                             mIOMMUID;
-		/* for eis*/
+	/* for eis*/
 #ifdef CONFIG_CAMERA_EIS
 	bool                          mGyroInit;
 	bool                          mGyroDeinit;
+	bool                          mEisInit;
 	pthread_t                     mGyroMsgQueHandle;
+	double                        mGyro[4][30];
+	int                           mGyrostart;
+	int                           mGyroend;
+	double                        mGyromaxtimestamp;
+	vsParam                       mParam;
+	vsInst                        mInst;
+	bool                          mSprdEisEnabled;
 #endif
 };
 

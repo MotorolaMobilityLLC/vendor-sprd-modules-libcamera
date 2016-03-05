@@ -132,6 +132,11 @@ else
 endif
 endif
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)
+	LOCAL_C_INCLUDES += \
+			$(LOCAL_PATH)/arithmetic/eis/inc
+endif
+
 ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
 LOCAL_SRC_FILES+= oem2v0/src/cmr_hdr.c
 endif
@@ -358,6 +363,10 @@ LOCAL_CFLAGS += -DCONFIG_CAMERA_FACE_DETECT_OMRON
 else
 LOCAL_CFLAGS += -DCONFIG_CAMERA_FACE_DETECT_FD
 endif
+endif
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)
+LOCAL_CFLAGS += -DCONFIG_CAMERA_EIS
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)

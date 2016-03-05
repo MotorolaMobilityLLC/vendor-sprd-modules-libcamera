@@ -25,7 +25,7 @@ typedef cmr_int ( *proc_callback)(cmr_handle handle, cmr_u32 mode, void* param_p
 
 #define ISP_FLASH_MAX_CELL                             40
 #define ISP_MODE_NUM_MAX                               16
-#define ISP_EVT_MASK                                   0x00000F00
+#define ISP_EVT_MASK                                   0x0000FF00
 #define ISP_CALLBACK_EVT                               0x00040000
 #define ISP_SNR_NAME_MAX_LEN							64
 
@@ -47,6 +47,7 @@ enum isp_callback_cmd {
 	ISP_AE_LOCK_NOTIFY = 0x00000D00,
 	ISP_AE_UNLOCK_NOTIFY = 0x00000E00,
 	ISP_AE_SYNC_INFO = 0x00000F00,
+	ISP_AE_EXP_TIME = 0x00001000,
 	ISP_CALLBACK_CMD_MAX = 0xffffffff
 };
 

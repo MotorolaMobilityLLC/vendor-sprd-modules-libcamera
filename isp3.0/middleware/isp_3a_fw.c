@@ -3076,6 +3076,11 @@ cmr_int isp3a_handle_ae_result(cmr_handle isp_3a_handle, struct ae_ctrl_callback
 		cxt->ae_cxt.proc_out = result_ptr->proc_out;
 		ret = isp3a_start_awb_process(isp_3a_handle, awb_stats_data, result_ptr);
 	}
+	uint64_t exp_time = 0; //us
+	exp_time = (uint64_t)cxt->ae_cxt.proc_out.ae_info.report_data.exp_time;
+	if (cxt->caller_callback) {
+		ret = cxt->caller_callback(cxt->caller_handle, ISP_CALLBACK_EVT|ISP_AE_EXP_TIME, &exp_time, 4);
+	}
 	return ret;
 }
 

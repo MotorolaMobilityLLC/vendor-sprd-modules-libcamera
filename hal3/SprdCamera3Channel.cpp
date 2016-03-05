@@ -894,6 +894,10 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number)
 			HAL_LOGV("ANDROID_SPRD_SLOW_MOTION");
 			mOEMIf->SetCameraParaTag(ANDROID_SPRD_SLOW_MOTION);
 			break;
+		case ANDROID_SPRD_EIS_ENABLED:
+			HAL_LOGV("ANDROID_SPRD_EIS_ENABLED");
+			mOEMIf->SetCameraParaTag(ANDROID_SPRD_EIS_ENABLED);
+			break;
 		case ANDROID_CONTROL_AE_LOCK:
 			HAL_LOGD("ANDROID_CONTROL_AE_LOCK");
 			mOEMIf->SetCameraParaTag(ANDROID_CONTROL_AE_LOCK);

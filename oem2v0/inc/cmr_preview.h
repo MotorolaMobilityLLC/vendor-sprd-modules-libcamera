@@ -131,6 +131,7 @@ struct preview_param {
 	cmr_u32                  video_slowmotion_eb;
 	cmr_u32                  sprd_pipviv_enabled;
 	cmr_u32                  sprd_highiso_enabled;
+	cmr_u32                  sprd_eis_enabled;
 };
 
 struct preview_out_param {
@@ -205,6 +206,8 @@ cmr_int cmr_preview_set_preview_buffer(cmr_handle preview_handle, cmr_u32 camera
 cmr_int cmr_preview_set_video_buffer(cmr_handle preview_handle, cmr_u32 camera_id, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd);
 
 cmr_int cmr_preview_set_zsl_buffer(cmr_handle preview_handle, cmr_u32 camera_id, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd);
+
+cmr_int prev_set_ae_time(cmr_handle preview_handle, cmr_u32 camera_id, void *data);
 #ifdef __cplusplus
 }
 #endif

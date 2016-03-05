@@ -15,6 +15,10 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 	endif
 endif
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)
+LOCAL_SHARED_LIBRARIES += libgyrostab
+endif
+
 ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
 LOCAL_CFLAGS += -DCONFIG_SPRD_HDR_LIB
 LOCAL_SHARED_LIBRARIES += libsprd_easy_hdr

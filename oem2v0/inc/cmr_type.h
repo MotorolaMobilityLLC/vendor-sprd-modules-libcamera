@@ -136,6 +136,7 @@ struct frm_info {
 	cmr_u32                             vaddr_vir;
 	cmr_uint                            zsl_private;
 	cmr_u32                             fd;
+	cmr_s64                             monoboottime;
 };
 
 struct cmr_af_gyro_info {

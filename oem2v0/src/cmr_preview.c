@@ -292,6 +292,7 @@ struct prev_context {
 	cmr_uint                        recovery_cnt;
 	cmr_uint                        isp_status;
 	struct sensor_exp_info          sensor_info;
+	cmr_uint                        ae_time;
 	void                            *private_data;
 };
 
@@ -5092,6 +5093,7 @@ cmr_int prev_construct_frame(struct prev_handle *handle,
 	cmr_u32                 prev_rot = 0;
 	struct prev_context     *prev_cxt = NULL;
 	struct img_frm          *frm_ptr = NULL;
+	cmr_s64                 ae_time =  0;
 
 	if (!handle || !frame_type || !info) {
 		CMR_LOGE("Invalid param! 0x%p, 0x%p, 0x%p", handle, frame_type, info);
@@ -5103,6 +5105,7 @@ cmr_int prev_construct_frame(struct prev_handle *handle,
 	cap_chn_id  = handle->prev_cxt[camera_id].cap_channel_id;
 	prev_rot    = handle->prev_cxt[camera_id].prev_param.prev_rot;
 	prev_cxt    = &handle->prev_cxt[camera_id];
+	ae_time  = prev_cxt->ae_time;
 
 	if (prev_chn_id == info->channel_id) {
 		if (prev_rot) {
@@ -5139,6 +5142,10 @@ cmr_int prev_construct_frame(struct prev_handle *handle,
 		frame_type->width = prev_cxt->prev_param.preview_size.width;
 		frame_type->height = prev_cxt->prev_param.preview_size.height;
 		frame_type->timestamp = info->sec * 1000000000LL + info->usec * 1000;
+		frame_type->monoboottime = info->monoboottime;
+		frame_type->zoom_ratio = prev_cxt->prev_param.zoom_setting.zoom_info.zoom_ratio;
+		frame_type->ae_time = ae_time;
+		CMR_LOGI("ae_time: %lld, zoom_ratio: %f", frame_type->ae_time, frame_type->zoom_ratio);
 		frame_type->type = PREVIEW_FRAME;
 		CMR_LOGV("%lld", frame_type->timestamp);
 		if (prev_cxt->prev_param.is_support_fd && prev_cxt->prev_param.is_fd_on) {
@@ -5167,6 +5174,7 @@ cmr_int prev_construct_video_frame(struct prev_handle *handle,
 	cmr_u32                 prev_rot = 0;
 	struct prev_context     *prev_cxt = NULL;
 	struct img_frm          *frm_ptr = NULL;
+	cmr_s64                 ae_time =  0;
 
 	if (!handle || !frame_type || !info) {
 		CMR_LOGE("Invalid param! 0x%p, 0x%p, 0x%p", handle, frame_type, info);
@@ -5178,6 +5186,7 @@ cmr_int prev_construct_video_frame(struct prev_handle *handle,
 	cap_chn_id  = handle->prev_cxt[camera_id].cap_channel_id;
 	prev_rot    = handle->prev_cxt[camera_id].prev_param.prev_rot;
 	prev_cxt    = &handle->prev_cxt[camera_id];
+	ae_time  = prev_cxt->ae_time;
 
 	if (video_chn_id == info->channel_id) {
 		if (prev_rot) {
@@ -5215,6 +5224,10 @@ cmr_int prev_construct_video_frame(struct prev_handle *handle,
 		frame_type->width  = prev_cxt->prev_param.video_size.width;
 		frame_type->height = prev_cxt->prev_param.video_size.height;
 		frame_type->timestamp = info->sec * 1000000000LL + info->usec * 1000;
+		frame_type->monoboottime = info->monoboottime;
+		frame_type->zoom_ratio = prev_cxt->prev_param.zoom_setting.zoom_info.zoom_ratio;
+		frame_type->ae_time = ae_time;
+		CMR_LOGI("ae_time: %lld, zoom_ratio: %f", frame_type->ae_time, frame_type->zoom_ratio);
 		frame_type->type      = PREVIEW_VIDEO_FRAME;
 
 		#if 0
@@ -5775,7 +5788,12 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_
 	chn_param.cap_inf_cfg.frm_num          = -1;
 	chn_param.cap_inf_cfg.cfg.need_binning = 0;
 	chn_param.cap_inf_cfg.cfg.need_isp     = 0;
-	chn_param.cap_inf_cfg.cfg.dst_img_fmt  = prev_cxt->prev_param.preview_fmt;
+	if( prev_cxt->prev_param.sprd_eis_enabled ){
+		CMR_LOGI("eis Mode preview format is NV12");
+		chn_param.cap_inf_cfg.cfg.dst_img_fmt  = IMG_DATA_TYPE_YVU420;
+	} else {
+		chn_param.cap_inf_cfg.cfg.dst_img_fmt  = prev_cxt->prev_param.preview_fmt;
+	}
 	chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode= 1;
 
 	if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
@@ -8605,4 +8623,22 @@ cmr_int prev_set_preview_skip_frame_num(cmr_handle preview_handle, cmr_u32 camer
 
 	return ret;
 
+}
+
+cmr_int prev_set_ae_time(cmr_handle preview_handle, cmr_u32 camera_id, void *data)
+{
+	cmr_int                ret = CMR_CAMERA_SUCCESS;
+	struct prev_handle	   *handle = (struct prev_handle*)preview_handle;
+	struct prev_context    *prev_cxt = NULL;
+	cmr_uint   ae_time = 0;
+
+	CHECK_HANDLE_VALID(handle);
+	CHECK_CAMERA_ID(camera_id);
+
+	ae_time = *(cmr_uint *)data * 1000; //ns
+
+	prev_cxt = &handle->prev_cxt[camera_id];
+	prev_cxt->ae_time = ae_time;
+
+	return ret;
 }

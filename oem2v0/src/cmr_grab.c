@@ -1030,6 +1030,7 @@ static void* cmr_grab_thread_proc(void* data)
 				frame.frame_real_id   = op.parm.frame.real_index;
 				frame.sec             = op.parm.frame.sec;
 				frame.usec            = op.parm.frame.usec;
+				frame.monoboottime    = op.parm.frame.monoboottime;
 				frame.length          = op.parm.frame.length;
 				frame.base            = op.parm.frame.frm_base_id;
 				frame.fmt             = cmr_grab_get_img_type(op.parm.frame.img_fmt);

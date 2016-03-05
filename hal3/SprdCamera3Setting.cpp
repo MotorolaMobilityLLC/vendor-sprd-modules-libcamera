@@ -2902,6 +2902,9 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
 	requestInfo.update(ANDROID_SPRD_ZSL_ENABLED, &sprdZslEnabled, 1);
 #endif
 
+	uint8_t sprdEisEnabled= 0;
+	requestInfo.update(ANDROID_SPRD_EIS_ENABLED, &sprdEisEnabled, 1);
+
 	mDefaultMetadata[type] = requestInfo.release();
 	*metadata = mDefaultMetadata[type];
 
@@ -3095,6 +3098,14 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
                 s_setting[mCameraId].sprddefInfo.perfect_skin_level = perfectskinlevel;
                 pushAndroidParaTag(ANDROID_SPRD_UCAM_SKIN_LEVEL);
                 HAL_LOGD("perfectskinlevel %d", s_setting[mCameraId].sprddefInfo.perfect_skin_level);
+        }
+
+        if (frame_settings.exists(ANDROID_SPRD_EIS_ENABLED)) {
+                int32_t sprd_eis_enabled = frame_settings.find(ANDROID_SPRD_EIS_ENABLED).data.u8[0];
+
+                s_setting[mCameraId].sprddefInfo.sprd_eis_enabled = sprd_eis_enabled;
+                pushAndroidParaTag(ANDROID_SPRD_EIS_ENABLED);
+                HAL_LOGD("sprd_eis_enabled %d", s_setting[mCameraId].sprddefInfo.sprd_eis_enabled);
         }
 
         if (frame_settings.exists(ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR)) {
@@ -3678,6 +3689,16 @@ SprdCamera3Setting::translateLocalToFwMetadata()
 	camMetadata.update(ANDROID_STATISTICS_SCENE_FLICKER, &(s_setting[mCameraId].statisticsInfo.scene_flicker), 1);
 	camMetadata.update(ANDROID_STATISTICS_LENS_SHADING_MAP_MODE, &(s_setting[mCameraId].statisticsInfo.lens_shading_map_mode), 1);
 	//s_setting[mCameraId].statisticsInfo.face_detect_mode = ANDROID_STATISTICS_FACE_DETECT_MODE_OFF;
+	camMetadata.update(ANDROID_SPRD_EIS_ENABLED, &(s_setting[mCameraId].sprddefInfo.sprd_eis_enabled), 1);
+	if(ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD == s_setting[mCameraId].controlInfo.capture_intent && s_setting[mCameraId].sprddefInfo.sprd_eis_enabled){
+		int32_t eisCrop[4];
+		eisCrop[0] = s_setting[mCameraId].eiscrop_Info.crop[0];
+		eisCrop[1] = s_setting[mCameraId].eiscrop_Info.crop[1];
+		eisCrop[2] = s_setting[mCameraId].eiscrop_Info.crop[2];
+		eisCrop[3] = s_setting[mCameraId].eiscrop_Info.crop[3];
+		ALOGI("eisCrop:[%d, %d, %d, %d]",eisCrop[0],eisCrop[1],eisCrop[2],eisCrop[3]);
+		camMetadata.update(ANDROID_SPRD_EIS_CROP, eisCrop, 4);
+	}
 	camMetadata.update(ANDROID_STATISTICS_FACE_DETECT_MODE, &(s_setting[mCameraId].statisticsInfo.face_detect_mode), 1);
 	if(ANDROID_STATISTICS_FACE_DETECT_MODE_OFF != (s_setting[mCameraId].statisticsInfo.face_detect_mode))
 	{
@@ -4432,6 +4453,19 @@ int SprdCamera3Setting::getFACETag(FACE_Tag* faceInfo)
 	*faceInfo = s_setting[mCameraId].faceInfo;
 	return 0;
 }
+
+int SprdCamera3Setting::setEISCROPTag(EIS_CROP_Tag eiscrop_Info)
+{
+	s_setting[mCameraId].eiscrop_Info= eiscrop_Info;
+	return 0;
+}
+
+int SprdCamera3Setting::getEISCROPTag(EIS_CROP_Tag* eiscrop_Info)
+{
+	*eiscrop_Info = s_setting[mCameraId].eiscrop_Info;
+	return 0;
+}
+
 int SprdCamera3Setting::setMETAInfo(meta_info_t metaInfo)
 {
 	s_setting[mCameraId].metaInfo= metaInfo;

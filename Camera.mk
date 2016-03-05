@@ -200,7 +200,25 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 	endif # fd_lib
 endif
 
-
+ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)
+ifeq ($(strip $(TARGET_ARCH)),arm64)
+include $(CLEAR_VARS)
+LOCAL_MODULE := libgyrostab
+LOCAL_MODULE_CLASS := SHARED_LIBRARIES
+LOCAL_MODULE_TAGS := optional
+LOCAL_MULTILIB := both
+LOCAL_MODULE_STEM_32 := libgyrostab.so
+LOCAL_MODULE_STEM_64 := libgyrostab.so
+LOCAL_SRC_FILES_32 :=  arithmetic/eis/lib32/libgyrostab.so
+LOCAL_SRC_FILES_64 :=  arithmetic/eis/lib64/libgyrostab.so
+include $(BUILD_PREBUILT)
+else
+include $(CLEAR_VARS)
+LOCAL_PREBUILT_LIBS := arithmetic/eis/lib32/libgyrostab.so
+LOCAL_MODULE_TAGS := optional
+include $(BUILD_MULTI_PREBUILT)
+endif
+endif
 
 ifeq ($(strip $(isp_use2.0)),1)
 
