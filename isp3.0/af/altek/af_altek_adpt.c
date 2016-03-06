@@ -636,7 +636,7 @@ static cmr_int afaltek_adpt_update_isp_info(cmr_handle adpt_handle, void *in)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_isp_info_t *isp_info = (struct allib_af_input_isp_info_t *)in;
+	struct af_ctrl_isp_info_t *in_isp_info = (struct af_ctrl_isp_info_t *) in;
 	struct allib_af_input_set_param_t p = { 0x00 };
 
 	if (!in) {
@@ -645,9 +645,14 @@ static cmr_int afaltek_adpt_update_isp_info(cmr_handle adpt_handle, void *in)
 	}
 
 	p.type = alAFLIB_SET_PARAM_UPDATE_ISP_INFO;
-	p.u_set_data.isp_info = *isp_info;
+	p.u_set_data.isp_info.liveview_img_sz.uw_width = in_isp_info->img_width;
+	p.u_set_data.isp_info.liveview_img_sz.uw_height = in_isp_info->img_height;
+
+	ISP_LOGI("uw_width = %d", p.u_set_data.isp_info.liveview_img_sz.uw_width);
+	ISP_LOGI("uw_height= %d", p.u_set_data.isp_info.liveview_img_sz.uw_height);
 
 	ret = afaltek_adpt_set_parameters(cxt, &p);
+	ISP_LOGI("ret = %ld", ret);
 	return ret;
 }
 
@@ -1284,7 +1289,7 @@ static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 	/* tuning file setting */
 	ret = afaltek_adpt_set_setting_file(cxt, &in->tuning_info);
 	if (ret)
-		ISP_LOGI("wrong tuning file ret = %ld", ret);
+		ISP_LOGI("failed to set tuning file ret = %ld", ret);
 
 	/* register vcm callback */
 	move_lens_info.uc_device_id = cxt->camera_id;
@@ -1292,7 +1297,7 @@ static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 	move_lens_info.move_lens_cb = afaltek_adpt_set_pos;
 	ret = afaltek_adpt_set_move_lens_info(cxt, &move_lens_info);
 	if (ret)
-		ISP_LOGI("ret = %ld", ret);
+		ISP_LOGI("failed to set move len info ret = %ld", ret);
 #if 1 //TBD
 	memset(&sensor_info, 0x00, sizeof(sensor_info));
 	sensor_info.preview_img_sz.uw_width = in->isp_info.img_width;
@@ -1311,24 +1316,26 @@ static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 	sensor_info.sensor_crop_info.dx = in->sensor_info.crop_info.width;
 	sensor_info.sensor_crop_info.dy = in->sensor_info.crop_info.height;
 #endif
+	ISP_LOGI("in->isp_info.img_width = %d, in->isp_info.img_height = %d",
+			in->isp_info.img_width, in->isp_info.img_height);
 	ISP_LOGI("sensor_res_width = %d, sensor_res_height = %d",
 			in->sensor_info.sensor_res_width, in->sensor_info.sensor_res_height);
 	ISP_LOGI("crop_info.x = %d, crop_info.y = %d crop_info.width = %d, crop_info.height = %d",
 			in->sensor_info.crop_info.x, in->sensor_info.crop_info.y, in->sensor_info.crop_info.width, in->sensor_info.crop_info.height);
 	ret = afaltek_adpt_update_sensor_info(cxt, &sensor_info);
 	if (ret)
-		ISP_LOGI("update sensor info ret = %ld", ret);
+		ISP_LOGI("failed to update sensor info ret = %ld", ret);
 
 	ISP_LOGI("isp info img_width = %d, img_height = %d", in->isp_info.img_width, in->isp_info.img_height);
 	/* set isp info */
 	ret = afaltek_adpt_update_isp_info(cxt, &in->isp_info);
 	if (ret)
-		ISP_LOGI("update isp info ret = %ld", ret);
+		ISP_LOGI("failed to update isp info ret = %ld", ret);
 
 	/* sync init param */
 	ret = afaltek_adpt_set_param_init(cxt, 1);
 	if (ret)
-		ISP_LOGI("set param init ret = %ld", ret);
+		ISP_LOGI("failed to set param init ret = %ld", ret);
 
 	return ret;
 }
@@ -1424,7 +1431,7 @@ static cmr_int afaltek_adpt_init(void *in, void *out, cmr_handle * adpt_handle)
 	}
 
 	/* init param */
-	ret = 0;//TBD afaltek_adpt_param_init(cxt, in_p->ctrl_in);
+	ret = afaltek_adpt_param_init(cxt, in_p->ctrl_in);
 	if (ret)
 		ISP_LOGE("ret = %ld", ret);
 
@@ -1500,9 +1507,13 @@ static cmr_int afaltek_adpt_proc_out_report(cmr_handle adpt_handle,
 	}
 
 	if (alAFLIB_OUTPUT_DEBUG_INFO & report->type) {
+		ret = ISP_SUCCESS;
 		if (report_out) {
 			struct af_altek_report_t *out = (struct af_altek_report_t *)report_out;
-			al3awrapper_updateafreport(&report->focus_status, &out->report_out);
+			ret = al3awrapper_updateafreport(&report->focus_status, &out->report_out);
+			ISP_LOGI("ret = %ld", ret);
+			if (ERR_WPR_AF_SUCCESS == ret)
+				ret = ISP_SUCCESS;
 			out->need_report = 1;
 		}
 	}

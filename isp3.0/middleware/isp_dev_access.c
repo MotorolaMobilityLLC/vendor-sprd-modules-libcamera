@@ -88,6 +88,11 @@ cmr_int isp_dev_access_init(struct isp_dev_init_in *input_ptr, cmr_handle *isp_d
 		ISP_LOGE("failed to dev initialized");
 	}
 
+	ret = isp_dev_start(cxt->isp_driver_handle);
+	if (ret) {
+		ISP_LOGE("failed to dev_start %ld", ret);
+		goto exit;
+	}
 exit:
 	if (ret) {
 		if (cxt) {
@@ -531,11 +536,6 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	SCENARIO_INFO_AP tSecnarioInfo;
 #endif
 	ISP_CHECK_HANDLE_VALID(isp_dev_handle);
-	ret = isp_dev_start(cxt->isp_driver_handle);
-	if (ret) {
-		ISP_LOGE("failed to dev_start %ld", ret);
-		goto exit;
-	}
 #ifndef FPGA_TEST
 	ret = isp_dev_cfg_scenario_info(cxt->isp_driver_handle, &input_data);//TBD
 	if (ret) {
