@@ -45,11 +45,11 @@ extern "C" {
 #define ISP_LOGD(format,...) printf(DEBUG_STR format "\n\n", DEBUG_ARGS, ##__VA_ARGS__)
 #define ISP_LOGV(format,...) printf(DEBUG_STR format "\n\n", DEBUG_ARGS, ##__VA_ARGS__)
 #else
-#define ISP_LOGE CMR_LOGE
-#define ISP_LOGW CMR_LOGW
-#define ISP_LOGI CMR_LOGI
-#define ISP_LOGD CMR_LOGD
-#define ISP_LOGV CMR_LOGV
+#define ISP_LOGE(format,...) ALOGE(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+#define ISP_LOGW(format,...) ALOGW(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+#define ISP_LOGI(format,...) ALOGI(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+#define ISP_LOGD(format,...) ALOGD(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+#define ISP_LOGV(format,...) ALOGV(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
 #endif
 
 #define ISP_CHECK_HANDLE_VALID(handle) \
