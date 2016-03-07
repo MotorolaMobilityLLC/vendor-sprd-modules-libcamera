@@ -5540,7 +5540,11 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 
 	chn_param.is_lightly = 0;
 	chn_param.frm_num    = -1;
-	chn_param.skip_num   = prev_cxt->prev_skip_num;
+	if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
+		chn_param.skip_num = 0;
+	} else {
+		chn_param.skip_num   = prev_cxt->prev_skip_num;
+	}
 
 	chn_param.cap_inf_cfg.chn_deci_factor  = 0;
 	chn_param.cap_inf_cfg.frm_num          = -1;
@@ -5748,7 +5752,11 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle, cmr_u32 camera_i
 
 	chn_param.is_lightly = 1; /*config channel lightly*/
 	chn_param.frm_num    = -1;
-	chn_param.skip_num   = prev_cxt->prev_skip_num;
+	if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
+		chn_param.skip_num = 0;
+	} else {
+		chn_param.skip_num   = prev_cxt->prev_skip_num;
+	}
 
 	chn_param.cap_inf_cfg.chn_deci_factor  = 0;
 	chn_param.cap_inf_cfg.frm_num	       = -1;
@@ -5874,7 +5882,11 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_
 
 	chn_param.is_lightly = 0;
 	chn_param.frm_num    = -1;
-	chn_param.skip_num   = prev_cxt->prev_skip_num;
+	if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
+		chn_param.skip_num = 0;
+	} else {
+		chn_param.skip_num   = prev_cxt->prev_skip_num;
+	}
 
 	chn_param.cap_inf_cfg.chn_deci_factor  = 0;
 	chn_param.cap_inf_cfg.frm_num          = -1;
@@ -6063,7 +6075,11 @@ cmr_int prev_set_video_param_lightly(struct prev_handle *handle, cmr_u32 camera_
 
 	chn_param.is_lightly = 1; /*config channel lightly*/
 	chn_param.frm_num    = -1;
-	chn_param.skip_num   = prev_cxt->prev_skip_num;
+	if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
+		chn_param.skip_num = 0;
+	} else {
+		chn_param.skip_num   = prev_cxt->prev_skip_num;
+	}
 
 	chn_param.cap_inf_cfg.chn_deci_factor  = 0;
 	chn_param.cap_inf_cfg.frm_num	       = -1;
@@ -6177,8 +6193,12 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 
 	chn_param.is_lightly   = is_lightly;;
 	chn_param.sensor_mode  = prev_cxt->cap_mode;
-	chn_param.skip_num     = sensor_info->capture_skip_num;
-	prev_cxt->cap_skip_num = chn_param.skip_num;
+	prev_cxt->cap_skip_num = sensor_info->capture_skip_num;
+	if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
+		chn_param.skip_num = 0;
+	} else {
+		chn_param.skip_num   = prev_cxt->cap_skip_num;
+	}
 
 	CMR_LOGI("preview_eb %d , snapshot_eb %d, frame_ctrl %d, frame_count %d, is_restart %d",
 		prev_cxt->prev_param.preview_eb,
@@ -6455,7 +6475,11 @@ cmr_int prev_set_zsl_param_lightly(struct prev_handle *handle, cmr_u32 camera_id
 
 	chn_param.is_lightly = 1; /*config channel lightly*/
 	chn_param.frm_num    = -1;
-	chn_param.skip_num   = prev_cxt->cap_skip_num;
+	if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
+		chn_param.skip_num = 0;
+	} else {
+		chn_param.skip_num   = prev_cxt->cap_skip_num;
+	}
 
 	chn_param.cap_inf_cfg.chn_deci_factor  = 0;
 	chn_param.cap_inf_cfg.frm_num          = -1;
