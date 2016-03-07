@@ -1367,6 +1367,9 @@ static cmr_int aealtek_set_measure_lum(struct aealtek_cxt *cxt_ptr, struct ae_ct
 	}
 	cxt_ptr->nxt_status.ui_param.weight = in_ptr->measure_lum.lum_mode;
 
+	ISP_LOGI("flash_enable:%d,touch_flag:%d,lum_mode:%ld\n", cxt_ptr->flash_param.enable
+			, cxt_ptr->touch_param.touch_flag, in_ptr->measure_lum.lum_mode);
+
 
 	if ((AE_CTRL_MEASURE_LUM_TOUCH != in_ptr->measure_lum.lum_mode)
 		&& cxt_ptr->touch_param.touch_flag) {
@@ -1482,6 +1485,7 @@ exit:
 static cmr_int aealtek_set_touch_zone(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr)
 {
 	cmr_int ret = ISP_ERROR;
+	struct ae_ctrl_param_in temp_param;
 
 
 	if (!cxt_ptr || !in_ptr) {
@@ -1489,7 +1493,9 @@ static cmr_int aealtek_set_touch_zone(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 		goto exit;
 	}
 	if (in_ptr->touch_zone.zone.w <= 0
-		|| in_ptr->touch_zone.zone.h <= 0) {
+		|| in_ptr->touch_zone.zone.h <= 0
+		|| (cmr_u32)in_ptr->touch_zone.zone.w > cxt_ptr->cur_status.ui_param.work_info.resolution.frame_size.w
+		|| (cmr_u32)in_ptr->touch_zone.zone.h > cxt_ptr->cur_status.ui_param.work_info.resolution.frame_size.h) {
 		ISP_LOGE("x=%d,y=%d,w=%d,h=%d",in_ptr->touch_zone.zone.x,
 				in_ptr->touch_zone.zone.y,
 				in_ptr->touch_zone.zone.w,
@@ -1499,6 +1505,10 @@ static cmr_int aealtek_set_touch_zone(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 	aealtek_reset_touch_param(cxt_ptr);
 
 	cxt_ptr->touch_param.touch_flag = 1;
+	temp_param.measure_lum.lum_mode = AE_CTRL_MEASURE_LUM_TOUCH;
+	ret = aealtek_set_measure_lum(cxt_ptr, &temp_param, NULL);
+	if (ret)
+		goto exit;
 	ret = aealtek_set_lib_roi(cxt_ptr, in_ptr, out_ptr);
 	if (ret)
 		goto exit;
@@ -1915,7 +1925,7 @@ static cmr_int aealtek_capture_hdr(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 	if (ret)
 		goto exit;
 
-	type = AE_SET_PARAM_SENSOR_INFO;
+	type = AE_SET_PARAM_CAPTURE_SENSOR_INFO;
 	set_in_param.ae_set_param_type = type;
 	if (obj_ptr && obj_ptr->set_param)
 		lib_ret = obj_ptr->set_param(&set_in_param, output_data_ptr, obj_ptr->ae);
@@ -2490,6 +2500,7 @@ static cmr_int aealtek_set_flash_notice(struct aealtek_cxt *cxt_ptr, struct ae_c
 		break;
 
 	case ISP_FLASH_MAIN_BEFORE:
+		ISP_LOGI("=========main flash before start");
 		aealtek_change_flash_state(cxt_ptr, cxt_ptr->flash_param.flash_state, AEALTEK_FLASH_STATE_MAX);
 
 		if (cxt_ptr->init_in_param.ops_in.flash_set_charge) {
@@ -2519,11 +2530,13 @@ static cmr_int aealtek_set_flash_notice(struct aealtek_cxt *cxt_ptr, struct ae_c
 			goto exit;
 		cxt_ptr->sensor_exp_data.write_exp = cxt_ptr->sensor_exp_data.lib_exp;
 		aealtek_pre_to_sensor(cxt_ptr, 1);
+		ISP_LOGI("=========main flash before end");
 		break;
 
 	case ISP_FLASH_MAIN_LIGHTING:
 		break;
 	case ISP_FLASH_MAIN_AFTER:
+		ISP_LOGI("=========main flash after start");
 		aealtek_set_hw_flash_status(cxt_ptr, 0);
 		ret = aealtek_convert_lib_exposure2outdata(cxt_ptr, &cxt_ptr->flash_param.pre_flash_before.exp_cell, &cxt_ptr->lib_data.output_data);
 		if (ret)
@@ -2531,12 +2544,11 @@ static cmr_int aealtek_set_flash_notice(struct aealtek_cxt *cxt_ptr, struct ae_c
 		ret = aealtek_lib_exposure2sensor(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
 		if (ret)
 			goto exit;
+		ISP_LOGI("=========main flash after end");
 		break;
 	default:
 		break;
 	}
-	if (ret)
-		goto exit;
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld !!!", ret);
@@ -2977,6 +2989,7 @@ static cmr_int aealtek_set_snapshot_finished(struct aealtek_cxt *cxt_ptr, struct
 		ISP_LOGE("param %p is NULL error!", cxt_ptr);
 		goto exit;
 	}
+	ISP_LOGI("flash_enable:%d,touch_flag:%d\n", cxt_ptr->flash_param.enable, cxt_ptr->touch_param.touch_flag);
 	if (cxt_ptr->flash_param.enable) {
 		ret = aealtek_set_flash_est(cxt_ptr, 1);
 		if (ret)
@@ -3432,14 +3445,14 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 	}
 	/*flash*/
 	if (cxt_ptr->flash_param.enable) {
-		ISP_LOGI("======lib converged =%d",cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_converged);
-		ISP_LOGI("======lib ae_st=%d",
+		ISP_LOGI("======lib flash converged =%d",cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_converged);
+		ISP_LOGI("======lib flash ae_st=%d",
 			cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_LibStates);
 		ISP_LOGI("=====lib flash_st=%d",
 			cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_FlashStates);
 		switch (cxt_ptr->flash_param.flash_state) {
 		case AEALTEK_FLASH_STATE_PREPARE_ON:
-			ISP_LOGI("========led prepare on");
+			ISP_LOGI("========flash led prepare on");
 
 			is_special_converge_flag = 1;
 			if (cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_converged
@@ -3462,8 +3475,9 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 					struct isp_flash_cfg flash_cfg;
 					struct isp_flash_element  flash_element;
 
-					ISP_LOGI("========led_num:%d,led_tag:0x%x\n",cxt_ptr->flash_param.pre_flash_before.led_num
-							,cxt_ptr->flash_param.led_info.led_tag);
+					ISP_LOGI("========flash pre exp:%d,%d,%d,%d\n",
+							cxt_ptr->flash_param.pre_flash_before.exp_cell.gain,cxt_ptr->flash_param.pre_flash_before.exp_cell.exp_line
+							,cxt_ptr->flash_param.pre_flash_before.exp_cell.exp_time,cxt_ptr->flash_param.pre_flash_before.exp_cell.iso);
 
 					flash_cfg.led_idx = 0;
 					flash_cfg.type = ISP_FLASH_TYPE_PREFLASH;
@@ -3489,7 +3503,7 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 			}
 			break;
 		case AEALTEK_FLASH_STATE_LIGHTING:
-			ISP_LOGI("========led on");
+			ISP_LOGI("========flash led on");
 
 			is_special_converge_flag = 1;
 			if (cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_converged
@@ -3509,6 +3523,10 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 				cxt_ptr->flash_param.main_flash_est.exp_cell.exp_line = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.snapshot_exp_dat.exposure_line;
 				cxt_ptr->flash_param.main_flash_est.exp_cell.exp_time = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.snapshot_exp_dat.exposure_time;
 				cxt_ptr->flash_param.main_flash_est.exp_cell.iso = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.snapshot_exp_dat.ISO;
+
+				ISP_LOGI("========flash main exp:%d,%d,%d,%d\n",
+						cxt_ptr->flash_param.main_flash_est.exp_cell.gain,cxt_ptr->flash_param.main_flash_est.exp_cell.exp_line
+						,cxt_ptr->flash_param.main_flash_est.exp_cell.exp_time,cxt_ptr->flash_param.main_flash_est.exp_cell.iso);
 			}
 			break;
 		default:

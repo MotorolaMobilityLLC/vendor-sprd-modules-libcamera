@@ -1544,6 +1544,7 @@ cmr_int isp3a_notice_flash(cmr_handle isp_3a_handle, void *param_ptr)//TBD
 		goto exit;
 	}
 	isp_notice_ptr = (struct isp_flash_notice*)param_ptr;
+	ISP_LOGI("flash notice mode=%d", isp_notice_ptr->mode);
 	switch (isp_notice_ptr->mode) {
 	case ISP_FLASH_PRE_BEFORE:
 		ae_in.flash_notice.led_info.power_0 = isp_notice_ptr->led_info.power_0;

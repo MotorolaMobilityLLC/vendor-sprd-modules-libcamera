@@ -83,6 +83,8 @@ static cmr_int seq_push_actual_element(struct seq_cxt *cxt_ptr, cmr_u32 is_add_i
 	offset_idx = cur_idx + offset;
 
 	offset_idx = offset_idx % cxt_ptr->actual_q.max_num;
+	if (in_ptr->dummy)
+		(cxt_ptr->actual_q.cell_ptr + offset_idx)->dummy = in_ptr->dummy;
 	if (in_ptr->exp_time)
 		(cxt_ptr->actual_q.cell_ptr + offset_idx)->exp_time = in_ptr->exp_time;
 	if (in_ptr->exp_line)
@@ -138,6 +140,8 @@ static cmr_int seq_push_write_element(struct seq_cxt *cxt_ptr,cmr_u32 is_add_idx
 	offset_idx = cur_idx + offset;
 
 	offset_idx = offset_idx % cxt_ptr->write_q.max_num;
+	if (in_ptr->dummy)
+		(cxt_ptr->write_q.cell_ptr + offset_idx)->dummy = in_ptr->dummy;
 	if (in_ptr->exp_time)
 		(cxt_ptr->write_q.cell_ptr + offset_idx)->exp_time = in_ptr->exp_time;
 	if (in_ptr->exp_line)
@@ -320,6 +324,7 @@ cmr_int seq_put(void *handle, struct seq_item *in_est_ptr, struct seq_cell *out_
 	if (0 == offset_num) {
 		/*same valid frame*/
 		push_write_cell.frame_id = cur_frame_id;
+		push_write_cell.dummy = in_est_ptr->cell.dummy;
 		push_write_cell.exp_time = in_est_ptr->cell.exp_time;
 		push_write_cell.exp_line = in_est_ptr->cell.exp_line;
 		push_write_cell.gain = in_est_ptr->cell.gain;
@@ -327,6 +332,7 @@ cmr_int seq_put(void *handle, struct seq_item *in_est_ptr, struct seq_cell *out_
 		/*different valid frame*/
 		if (cxt_ptr->is_first_exp) {
 			push_write_cell.frame_id = cur_frame_id;
+			push_write_cell.dummy = in_est_ptr->cell.dummy;
 			push_write_cell.exp_time = in_est_ptr->cell.exp_time;
 			push_write_cell.exp_line = in_est_ptr->cell.exp_line;
 			push_write_cell.gain = cur_write_cell.gain;
@@ -351,9 +357,11 @@ cmr_int seq_put(void *handle, struct seq_item *in_est_ptr, struct seq_cell *out_
 			push_write_cell.gain = in_est_ptr->cell.gain;
 			push_write_cell.exp_line = cur_write_cell.exp_line;
 			push_write_cell.exp_time = cur_write_cell.exp_time;
+			push_write_cell.dummy = cur_write_cell.dummy;
 
 			push_nxt_write_cell.exp_line = in_est_ptr->cell.exp_line;
 			push_nxt_write_cell.exp_time = in_est_ptr->cell.exp_time;
+			push_nxt_write_cell.dummy = in_est_ptr->cell.dummy;
 		}
 	}
 

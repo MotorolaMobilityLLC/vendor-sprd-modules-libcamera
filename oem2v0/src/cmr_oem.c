@@ -4081,6 +4081,7 @@ cmr_int camera_capture_post_proc(cmr_handle oem_handle, cmr_u32 camera_id)
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 	struct snapshot_context        *snp_cxt;
 	struct setting_cmd_parameter   setting_param;
+	struct common_isp_cmd_param    isp_param;
 	cmr_int                        flash_status = FLASH_CLOSE;
 
 	if (!oem_handle) {
@@ -4126,7 +4127,7 @@ cmr_int camera_capture_post_proc(cmr_handle oem_handle, cmr_u32 camera_id)
 		}
 	}
 	//notify isp after snapshot
-	ret = camera_isp_ioctl(oem_handle,COM_ISP_SET_SNAPSHOT_FINISHED,NULL);
+	ret = camera_isp_ioctl(oem_handle,COM_ISP_SET_SNAPSHOT_FINISHED, &isp_param);
 	if (ret) {
 			CMR_LOGE("failed to set snapshot finished %ld", ret);
 	}

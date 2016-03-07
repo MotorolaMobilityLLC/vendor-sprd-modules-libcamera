@@ -41,6 +41,7 @@ struct seq_cell {
 	cmr_u32 exp_line; //it is invalid value while 0
 	cmr_u32 gain; //it is invalid value while 0
 	cmr_u32 exp_time;
+	cmr_u32 dummy;
 };
 
 struct seq_item {
