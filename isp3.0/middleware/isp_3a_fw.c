@@ -719,15 +719,15 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 	ae_input.ops_in.flash_set_time = isp3a_flash_set_time;
 	ae_input.ops_in.set_exposure = isp3a_set_exposure;
 	ae_input.ops_in.release_stat_buffer = isp3a_release_statistics_buf;
-#if 1 //TBD
-	ae_input.sensor_static_info.f_num = 200;
-	ae_input.sensor_static_info.exposure_valid_num = 2;
-	ae_input.sensor_static_info.gain_valid_num = 2;
-	ae_input.sensor_static_info.preview_skip_num = 3;
-	ae_input.sensor_static_info.capture_skip_num = 3;
-	ae_input.sensor_static_info.max_fps = 15;
-	ae_input.sensor_static_info.max_gain = 16;
-	ae_input.sensor_static_info.ois_supported = 0;
+#if 1
+	ae_input.sensor_static_info.f_num = input_ptr->ex_info.f_num;
+	ae_input.sensor_static_info.exposure_valid_num = input_ptr->ex_info.exp_valid_frame_num;
+	ae_input.sensor_static_info.gain_valid_num = input_ptr->ex_info.adgain_valid_frame_num;
+	ae_input.sensor_static_info.preview_skip_num = input_ptr->ex_info.preview_skip_num;
+	ae_input.sensor_static_info.capture_skip_num = input_ptr->ex_info.capture_skip_num;
+	ae_input.sensor_static_info.max_fps = input_ptr->ex_info.max_fps;
+	ae_input.sensor_static_info.max_gain = input_ptr->ex_info.max_adgain;
+	ae_input.sensor_static_info.ois_supported = input_ptr->ex_info.ois_supported;
 #endif
 #if 1 //TBD
 	ae_input.preview_work.work_mode = 0;
@@ -735,8 +735,8 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 	ae_input.preview_work.resolution.frame_size.h = sensor_raw_info_ptr->resolution_info_ptr->tab[1].height;
 	ae_input.preview_work.resolution.frame_line = sensor_raw_info_ptr->resolution_info_ptr->tab[1].frame_line;
 	ae_input.preview_work.resolution.line_time = sensor_raw_info_ptr->resolution_info_ptr->tab[1].line_time;;
-	ae_input.preview_work.resolution.max_fps = 15;
-	ae_input.preview_work.resolution.max_gain = 16;
+	ae_input.preview_work.resolution.max_fps = input_ptr->ex_info.max_fps;
+	ae_input.preview_work.resolution.max_gain = input_ptr->ex_info.max_adgain;
 	ae_input.preview_work.resolution.sensor_size_index = 1;
 #endif
 	ae_input.tuning_param = input_ptr->bin_info.ae_addr;
@@ -2851,8 +2851,8 @@ cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start* input_ptr)
 
 	ae_in.work_param.work_mode = input_ptr->work_mode;
 	ae_in.work_param.capture_mode = input_ptr->capture_mode;
-	ae_in.work_param.resolution.frame_size.w = input_ptr->resolution_info.sensor_size.w;
-	ae_in.work_param.resolution.frame_size.h = input_ptr->resolution_info.sensor_size.h;
+	ae_in.work_param.resolution.frame_size.w = input_ptr->resolution_info.crop.width;
+	ae_in.work_param.resolution.frame_size.h = input_ptr->resolution_info.crop.height;
 	ae_in.work_param.resolution.line_time = input_ptr->resolution_info.line_time;
 	ae_in.work_param.resolution.frame_line = input_ptr->resolution_info.frame_line;
 	ae_in.work_param.resolution.sensor_size_index = input_ptr->resolution_info.size_index;
@@ -2868,8 +2868,8 @@ cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start* input_ptr)
 	//HW AE cfg  TBD
 	awb_in.work_param.work_mode = input_ptr->work_mode;
 	awb_in.work_param.capture_mode = input_ptr->capture_mode;
-	awb_in.work_param.sensor_size.w = input_ptr->resolution_info.sensor_size.w;
-	awb_in.work_param.sensor_size.h = input_ptr->resolution_info.sensor_size.h;
+	awb_in.work_param.sensor_size.w = input_ptr->resolution_info.crop.width;
+	awb_in.work_param.sensor_size.h = input_ptr->resolution_info.crop.height;
 	ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_WORK_MODE, &awb_in, &awb_out);
 	if (ret) {
 		ISP_LOGE("failed to set work mode to AWB");

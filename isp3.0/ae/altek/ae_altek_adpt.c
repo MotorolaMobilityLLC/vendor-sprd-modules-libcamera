@@ -198,6 +198,8 @@ struct aealtek_cxt {
 static cmr_int aealtek_reset_touch_ack(struct aealtek_cxt *cxt_ptr);
 static cmr_int aealtek_set_lock(struct aealtek_cxt *cxt_ptr, cmr_int is_lock);
 static cmr_int aealtek_set_flash_est(struct aealtek_cxt *cxt_ptr, cmr_u32 is_reset);
+static cmr_int aealtek_enable_debug_report(struct aealtek_cxt *cxt_ptr, cmr_int enable);
+static cmr_int aealtek_set_tuning_param(struct aealtek_cxt *cxt_ptr, void *tuning_param);
 /********function start******/
 static void aealtek_print_lib_log(struct aealtek_cxt *cxt_ptr, struct ae_output_data_t *in_ptr)
 {
@@ -812,6 +814,15 @@ static cmr_int aealtek_init(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_init_in 
 	ret = seq_init(10, &seq_in, &cxt_ptr->seq_handle);
 	if (ret || NULL == cxt_ptr->seq_handle)
 		goto exit;
+
+	ret = aealtek_enable_debug_report(cxt_ptr, 1);
+	if (ret)
+		goto exit;
+
+	/* TBD
+	ret = aealtek_set_tuning_param(cxt_ptr, in_ptr->tuning_param);
+	if (ret)
+		goto exit;*/
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld", ret);
@@ -935,6 +946,7 @@ static cmr_int aealtek_enable_debug_report(struct aealtek_cxt *cxt_ptr, cmr_int 
 
 	param_ct_ptr->ae_enableDebugLog = enable;
 	type = AE_SET_PARAM_ENABLE_DEBUG_REPORT;
+	in_param.ae_set_param_type = type;
 	if (obj_ptr && obj_ptr->set_param)
 		lib_ret = obj_ptr->set_param(&in_param, output_param_ptr, obj_ptr->ae);
 	if (lib_ret)
@@ -943,6 +955,42 @@ static cmr_int aealtek_enable_debug_report(struct aealtek_cxt *cxt_ptr, cmr_int 
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld, lib_ret=%ld !!!", ret, lib_ret);
+	return ret;
+}
+
+static cmr_int aealtek_set_tuning_param(struct aealtek_cxt *cxt_ptr, void *tuning_param)
+{
+	cmr_int ret = ISP_ERROR;
+
+	cmr_int lib_ret = 0;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t *output_param_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t *param_ct_ptr = NULL;
+
+
+	if (!cxt_ptr) {
+		ISP_LOGE("param is NULL error!");
+		goto exit;
+	}
+
+	obj_ptr = &cxt_ptr->al_obj;
+	output_param_ptr = &cxt_ptr->lib_data.output_data;
+	param_ct_ptr = &in_param.set_param;
+
+
+	param_ct_ptr->ae_setting_data = tuning_param;
+	type = AE_SET_PARAM_RELOAD_SETFILE;
+	in_param.ae_set_param_type = type;
+	if (obj_ptr && obj_ptr->set_param)
+		lib_ret = obj_ptr->set_param(&in_param, output_param_ptr, obj_ptr->ae);
+	if (lib_ret)
+		goto exit;
+
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld, lib_ret=%ld,tuning_param:%p\n !!!", ret, lib_ret,tuning_param);
 	return ret;
 }
 
@@ -1731,7 +1779,7 @@ static cmr_int aealtek_first_work(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_pa
 	}
 
 	cxt_ptr->sensor_exp_data.write_exp = cxt_ptr->sensor_exp_data.lib_exp;
-	ISP_LOGE("gain=%d, exp_line=%d, exp_time=%d", cxt_ptr->sensor_exp_data.write_exp.gain,
+	ISP_LOGI("gain=%d, exp_line=%d, exp_time=%d", cxt_ptr->sensor_exp_data.write_exp.gain,
 				cxt_ptr->sensor_exp_data.write_exp.exp_line,
 				cxt_ptr->sensor_exp_data.write_exp.exp_time);
 	return ISP_SUCCESS;
