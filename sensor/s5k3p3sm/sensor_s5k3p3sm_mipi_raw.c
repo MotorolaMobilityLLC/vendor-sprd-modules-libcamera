@@ -52,7 +52,6 @@ static unsigned long s5k3p3sm_write_af(unsigned long param);
 static unsigned long _s5k3p3sm_GetExifInfo(unsigned long param);
 static unsigned long _s5k3p3sm_BeforeSnapshot(unsigned long param);
 static uint16_t _s5k3p3sm_get_shutter(void);
-static unsigned long s5k3p3sm_cfg_otp(unsigned long param);
 static unsigned long _s5k3p3sm_ex_write_exposure(unsigned long param);
 
 
@@ -878,10 +877,22 @@ static unsigned long _s5k3p3sm_write_exposure(unsigned long param)
 
 	return ret_value;
 }
+static cmr_u8 s5k3p3_opt_lsc_data[1658];
+static struct sensor_otp_cust_info s5k3p3_otp_info;
 
-static unsigned long s5k3p3sm_cfg_otp(unsigned long param)
+static unsigned long s5k3p3sm_cfg_otp(SENSOR_VAL_T* param)
 {
+	struct sensor_otp_cust_info *otp_info = NULL;
 	SENSOR_PRINT("E");
+	otp_info = &s5k3p3_otp_info;
+
+	otp_info->program_flag = 1;
+	otp_info->module_info.year = 0x10;
+	otp_info->lsc_info.lsc_data_addr = s5k3p3_opt_lsc_data;
+	otp_info->lsc_info.lsc_data_size = 1658;
+	param->pval = (void *)otp_info;
+	SENSOR_PRINT("param->pval = %p", param->pval);
+
 	return 0;
 }
 
@@ -1215,10 +1226,7 @@ static unsigned long _s5k3p3sm_access_val(unsigned long param)
 			//rtn = _s5k3p3sm_write_vcm(param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_READ_OTP:
-			((struct _sensor_otp_param_tag*)param_ptr->pval)->len = 0;
-			s5k3p3sm_cfg_otp(param_ptr->pval);
-			rtn=SENSOR_FAIL;
-			//rtn = _hi544_read_otp((uint32_t)param_ptr->pval);
+			s5k3p3sm_cfg_otp(param_ptr);
 			break;
 		case SENSOR_VAL_TYPE_WRITE_OTP:
 			//rtn = _hi544_write_otp((uint32_t)param_ptr->pval);

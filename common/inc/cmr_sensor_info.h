@@ -80,16 +80,15 @@ struct sensor_libuse_info {
 };
 
 #if 0
-typedef struct
-{
-    u8                 ucSensorMode; /*FR,  binning_1, binning_2*/
-    SCINFO_SENSOR_MODULE_TYPE   ucSensorMouduleType; /*IMX_219, OV4688*/
-    u16                uwWidth; /*Width of Raw image*/
-    u16                uwHeight; /*Height of Raw image*/
-    u16                uwFrameRate; /* FPS*/
-    u32                udLineTime; /*line time x100*/
-    SCINFO_COLOR_ORDER  nColorOrder; /*color order*/
-    u16                uwClampLevel; /*sensor's clamp level*/
+typedef struct {
+	u8 ucSensorMode;	/*FR,  binning_1, binning_2 */
+	SCINFO_SENSOR_MODULE_TYPE ucSensorMouduleType;	/*IMX_219, OV4688 */
+	u16 uwWidth;		/*Width of Raw image */
+	u16 uwHeight;		/*Height of Raw image */
+	u16 uwFrameRate;	/* FPS */
+	u32 udLineTime;		/*line time x100 */
+	SCINFO_COLOR_ORDER nColorOrder;	/*color order */
+	u16 uwClampLevel;	/*sensor's clamp level */
 } SCINFO_MODE_INFO_ISP;
 #endif
 
@@ -108,7 +107,7 @@ struct sensor_raw_resolution_info {
 	cmr_u16 frame_line;
 };
 
-struct  sensor_ex_info{
+struct sensor_ex_info {
 	cmr_u32 f_num;
 	cmr_u32 focal_length;
 	cmr_u32 max_fps;
@@ -120,15 +119,15 @@ struct  sensor_ex_info{
 	cmr_u32 adgain_valid_frame_num;
 	cmr_u32 preview_skip_num;
 	cmr_u32 capture_skip_num;
-	cmr_s8  *name;
-	cmr_s8  *sensor_version_info;
+	cmr_s8 *name;
+	cmr_s8 *sensor_version_info;
 };
 
-struct sensor_fps_info{
-        cmr_u32 is_high_fps;
-        cmr_u32 high_fps_skip_num;
-        cmr_u32 max_fps;    //x100
-        cmr_u32 min_fps;    //x100
+struct sensor_fps_info {
+	cmr_u32 is_high_fps;
+	cmr_u32 high_fps_skip_num;
+	cmr_u32 max_fps;	//x100
+	cmr_u32 min_fps;	//x100
 };
 
 struct sensor_raw_resolution_info_tab {
@@ -149,7 +148,7 @@ struct sensor_raw_ioctrl {
 };
 
 /*************new***************************/
-struct sensor_fix_param_mode_info{
+struct sensor_fix_param_mode_info {
 	uint32_t version_id;
 	uint32_t mode_id;
 	uint32_t width;
@@ -157,23 +156,23 @@ struct sensor_fix_param_mode_info{
 	uint32_t reserved[8];
 };
 
-struct sensor_fix_param_block_info{
+struct sensor_fix_param_block_info {
 	uint32_t version;
 	uint32_t block_id;
 	uint32_t reserved[8];
 };
 
-struct sensor_mode_fix_param{
-uint32_t *mode_info;
-uint32_t   len;
+struct sensor_mode_fix_param {
+	uint32_t *mode_info;
+	uint32_t len;
 };
 
-struct sensor_block_fix_param{
-uint32_t *block_info;
-uint32_t   len;
+struct sensor_block_fix_param {
+	uint32_t *block_info;
+	uint32_t len;
 };
 
- struct ae_exp_gain_tab{
+struct ae_exp_gain_tab {
 	uint32_t *index;
 	uint32_t index_len;
 	uint32_t *exposure;
@@ -186,7 +185,7 @@ uint32_t   len;
 	uint32_t dgain_len;
 };
 
-  struct ae_scene_exp_gain_tab{
+struct ae_scene_exp_gain_tab {
 	uint32_t *scene_info;
 	uint32_t scene_info_len;
 	uint32_t *index;
@@ -201,27 +200,27 @@ uint32_t   len;
 	uint32_t dgain_len;
 };
 
- struct ae_weight_tab{
+struct ae_weight_tab {
 	uint8_t *weight_table;
 	uint32_t len;
- };
+};
 
- struct ae_auto_iso_tab_v1{
-	 uint16_t *auto_iso_tab;
-	 uint32_t len;
- };
+struct ae_auto_iso_tab_v1 {
+	uint16_t *auto_iso_tab;
+	uint32_t len;
+};
 
-struct sensor_ae_tab{
+struct sensor_ae_tab {
 	struct sensor_block_fix_param block;
 	struct ae_exp_gain_tab ae_tab[AE_FLICKER_NUM][AE_ISO_NUM_NEW];
 	struct ae_weight_tab weight_tab[AE_WEIGHT_TABLE_NUM];
 	struct ae_scene_exp_gain_tab scene_tab[AE_SCENE_NUM][AE_FLICKER_NUM];
-	struct ae_auto_iso_tab_v1  auto_iso_tab[AE_FLICKER_NUM];
+	struct ae_auto_iso_tab_v1 auto_iso_tab[AE_FLICKER_NUM];
 };
 
 /*******************************new***************/
 
-struct sensor_lens_map_info{
+struct sensor_lens_map_info {
 	uint32_t envi;
 	uint32_t ct;
 	uint32_t width;
@@ -231,46 +230,45 @@ struct sensor_lens_map_info{
 
 struct sensor_lens_map {
 	uint32_t *map_info;
-	uint32_t  map_info_len;
+	uint32_t map_info_len;
 	uint16_t *lnc_addr;
 	uint32_t lnc_len;
 };
 
-struct sensor_lsc_map{
+struct sensor_lsc_map {
 	struct sensor_block_fix_param block;
 	struct sensor_lens_map map[9];
 };
 
-struct sensor_awb_map{
+struct sensor_awb_map {
 	uint16_t *addr;
 	uint32_t len;		//by bytes
 };
 
-struct sensor_awb_weight{
+struct sensor_awb_weight {
 	uint8_t *addr;
 	uint32_t weight_len;
 	uint16_t *size;
 	uint32_t size_param_len;
 };
 
-struct sensor_awb_map_weight_param{
+struct sensor_awb_map_weight_param {
 	struct sensor_block_fix_param block;
 	struct sensor_awb_map awb_map;
 	struct sensor_awb_weight awb_weight;
 };
 
-struct sensor_raw_fix_info{
+struct sensor_raw_fix_info {
 	struct sensor_mode_fix_param mode;
 	struct sensor_ae_tab ae;
 	struct sensor_lsc_map lnc;
 	struct sensor_awb_map_weight_param awb;
 };
 
-struct sensor_raw_note_info{
+struct sensor_raw_note_info {
 	uint8_t *note;
 	uint32_t node_len;
 };
-
 
 struct sensor_raw_info {
 	struct sensor_version_info *version_info;
@@ -285,8 +283,47 @@ struct sensor_raw_info {
 struct raw_param_info_tab {
 	cmr_u32 param_id;
 	struct sensor_raw_info *info_ptr;
-	 cmr_u32(*identify_otp) (void *param_ptr);
-	 cmr_u32(*cfg_otp) (void *param_ptr);
+	cmr_u32(*identify_otp) (void *param_ptr);
+	cmr_u32(*cfg_otp) (void *param_ptr);
+};
+
+struct sensor_otp_module_info {
+	cmr_u8 year;
+	cmr_u8 month;
+	cmr_u8 day;
+	cmr_u8 mid;
+	cmr_u8 lens_id;
+	cmr_u8 vcm_id;
+	cmr_u8 driver_ic_id;
+};
+
+struct sensor_otp_iso_awb_info {
+	cmr_u16 iso;
+	cmr_u16 gain_r;
+	cmr_u16 gain_g;
+	cmr_u16 gain_b;
+};
+
+struct sensor_otp_lsc_info {
+	cmr_u8 *lsc_data_addr;
+	cmr_u16 lsc_data_size;
+};
+
+struct sensor_otp_af_info {
+	cmr_u8 flag;
+	cmr_u16 infinite_cali;
+	cmr_u16 macro_cali;
+};
+
+struct sensor_otp_cust_info {
+	cmr_u8 program_flag;
+	struct sensor_otp_module_info module_info;
+	cmr_u8 reserved0;
+	struct sensor_otp_iso_awb_info isp_awb_info;
+	cmr_u8 reserved1;
+	struct sensor_otp_lsc_info lsc_info;
+	cmr_u8 reserved2;
+	struct sensor_otp_af_info af_info;
 };
 
 #endif

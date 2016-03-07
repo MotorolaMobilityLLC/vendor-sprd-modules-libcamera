@@ -67,7 +67,6 @@ static cmr_int sns_ctrl_thread_proc(struct cmr_msg *message, void *p_data);
 static cmr_int sns_destroy_ctrl_thread(struct sensor_drv_context *sensor_cxt);
 static cmr_int sns_stream_ctrl_common(struct sensor_drv_context *sensor_cxt, cmr_u32 on_off);
 
-
 extern uint32_t isp_raw_para_update_from_file(SENSOR_INFO_T *sensor_info_ptr,SENSOR_ID_E sensor_id);
 
 /***---------------------------------------------------------------------------*
@@ -3833,17 +3832,35 @@ cmr_int sensor_cfg_otp_update_isparam(struct sensor_drv_context *sensor_cxt,
 	return ret;
 }
 
+cmr_int sensor_read_otp_info(struct sensor_drv_context *sensor_cxt,
+		cmr_u32 sensor_id,
+		struct sensor_otp_cust_info **otp_info)
+{
+	cmr_int                      ret = 0;
+	struct _sensor_val_tag	     param;
+
+	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
+	if ((NULL != sensor_cxt->sensor_info_ptr)
+			&& (NULL != sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr)) {
+		param.type = SENSOR_VAL_TYPE_READ_OTP;
+		if (PNULL != sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr->cfg_otp)
+			sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr->cfg_otp(&param);
+		*otp_info = param.pval;
+	} else {
+		CMR_LOGE("invalid param failed!");
+		return CMR_CAMERA_INVALID_PARAM;
+	}
+	return ret;
+}
+
 cmr_int sns_cfg_otp_update_isparam(struct sensor_drv_context *sensor_cxt,
 						cmr_u32 sensor_id)
 {
 	cmr_int                      ret = 0;
 
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
-	if ((NULL != sensor_cxt->sensor_info_ptr)&& (NULL != sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr)){
-
-#if 0
-		isp_raw_para_update_from_file(sensor_cxt->sensor_info_ptr, sensor_id);
-#endif
+	if ((NULL != sensor_cxt->sensor_info_ptr)
+			&& (NULL != sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr)){
 
 		if(PNULL != sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr->cfg_otp){
 			sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr->cfg_otp(0);
