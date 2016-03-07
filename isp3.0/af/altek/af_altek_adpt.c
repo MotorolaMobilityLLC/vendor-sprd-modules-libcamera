@@ -336,6 +336,17 @@ static cmr_int afaltek_adpt_set_roi(cmr_handle adpt_handle, void *in)
 
 	p.type = alAFLIB_SET_PARAM_SET_ROI;
 	p.u_set_data.roi_info = *roi;
+	ISP_LOGI("roi_updated = %d type = %d frame_id = %d num_roi = %d",
+			p.u_set_data.roi_info.roi_updated,
+			p.u_set_data.roi_info.type,
+			p.u_set_data.roi_info.frame_id,
+			p.u_set_data.roi_info.num_roi);
+
+	ISP_LOGI("top = %d left = %d dx = %d dy = %d",
+			p.u_set_data.roi_info.roi[0].uw_top,
+			p.u_set_data.roi_info.roi[0].uw_left,
+			p.u_set_data.roi_info.roi[0].uw_dx,
+			p.u_set_data.roi_info.roi[0].uw_dy);
 
 	ret = afaltek_adpt_set_parameters(cxt, &p);
 	return ret;
@@ -1005,7 +1016,7 @@ static cmr_int afaltek_adpt_lens_move_done(cmr_handle adpt_handle,
 	lens_info.lens_pos_updated = 1;
 	lens_info.lens_pos = pos_info->motor_pos;
 	lens_info.lens_status = LENS_MOVE_DONE;
-	afaltek_adpt_update_lens_info(adpt_handle, &lens_info);
+	ret = afaltek_adpt_update_lens_info(adpt_handle, &lens_info);
 
 	return ret;
 }
@@ -1473,7 +1484,7 @@ static cmr_int afaltek_adpt_deinit(cmr_handle adpt_handle)
 static cmr_int afaltek_adpt_proc_out_report(cmr_handle adpt_handle,
 					    struct allib_af_output_report_t *report, void *report_out)
 {
-	cmr_int ret = -ISP_ERROR;
+	cmr_int ret = ISP_SUCCESS;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 
 	ISP_LOGI("report->type = 0x%x", report->type);
