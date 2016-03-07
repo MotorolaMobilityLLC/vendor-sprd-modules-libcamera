@@ -93,10 +93,7 @@ cmr_int ispmw_parse_tuning_bin(cmr_handle isp_mw_handle)
 	cxt->tuning_bin.awb_tuning_addr = NULL;
 	cxt->tuning_bin.af_tuning_addr = NULL;
 	if (cxt->tuning_bin.isp_3a_addr
-		&& (0 != cxt->tuning_bin.isp_3a_size)
-		&& cxt->tuning_bin.ae_tuning_addr
-		&& cxt->tuning_bin.awb_tuning_addr
-		&& cxt->tuning_bin.af_tuning_addr) {
+		&& (0 != cxt->tuning_bin.isp_3a_size)) {
 		ret = isp_separate_3a_bin(cxt->tuning_bin.isp_3a_addr,
 								&cxt->tuning_bin.ae_tuning_addr,
 								&cxt->tuning_bin.awb_tuning_addr,
@@ -105,9 +102,7 @@ cmr_int ispmw_parse_tuning_bin(cmr_handle isp_mw_handle)
 				cxt->tuning_bin.ae_tuning_addr, cxt->tuning_bin.awb_tuning_addr, cxt->tuning_bin.af_tuning_addr);
 	}
 	if (cxt->tuning_bin.isp_shading_addr
-		&& (0 != cxt->tuning_bin.isp_shading_size)
-		&& cxt->tuning_bin.shading_addr
-		&& cxt->tuning_bin.irp_addr) {
+		&& (0 != cxt->tuning_bin.isp_shading_size)) {
 		ret = isp_separate_drv_bin(cxt->tuning_bin.isp_shading_addr,
 								&cxt->tuning_bin.shading_addr,
 								&cxt->tuning_bin.irp_addr);
