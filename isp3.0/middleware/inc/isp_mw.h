@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 #include "isp_common_types.h"
+#include "cmr_sensor_info.h"
 
 
 typedef cmr_int ( *proc_callback)(cmr_handle handle, cmr_u32 mode, void* param_ptr, cmr_u32 param_len);
@@ -386,6 +387,7 @@ struct isp_init_param {
 	cmr_free   free_cb;
 	void* setting_param_list_ptr[3];//0:back,1:front,2:dual back,
 	struct isp_sensor_ex_info ex_info;
+	struct sensor_otp_cust_info *otp_data;
 };
 
 struct isp_video_limit {

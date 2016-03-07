@@ -169,6 +169,7 @@ struct isp3a_fw_context {
 	cmr_uint sof_idx;
 	struct isp3a_fw_debug_context debug_data;
 	struct isp_sensor_ex_info ex_info;
+	struct sensor_otp_cust_info *otp_data;
 };
 /*************************************INTERNAK DECLARATION***************************************/
 static cmr_int isp3a_get_dev_time(cmr_handle handle, cmr_u32 *sec_ptr, cmr_u32 *usec_ptr);
@@ -660,7 +661,6 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 	memset(&af_input.tuning_info, 0x00, sizeof(af_input.tuning_info));
 	af_input.isp_info.img_width = 1280;//TBD
 	af_input.isp_info.img_height = 960;//TBD
-//	af_input.sensor_info.crop_info = //TBD
 	af_input.sensor_info.sensor_res_width = input_ptr->size.w;
 	af_input.sensor_info.sensor_res_height = input_ptr->size.h;
 	af_input.af_ctrl_cb_ops.set_pos = isp3a_set_pos;
@@ -670,6 +670,10 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 	af_input.af_ctrl_cb_ops.cfg_af_stats = isp3a_cfg_af_param;
 	af_input.af_ctrl_cb_ops.get_system_time = isp3a_get_dev_time;
 	af_input.tuning_info.tuning_file = input_ptr->bin_info.af_addr;
+	if (cxt->otp_data) {
+		af_input.otp_info.otp_data = &cxt->otp_data->af_info;
+		af_input.otp_info.size = sizeof(cxt->otp_data->af_info);
+	}
 	ret = af_ctrl_init(&af_input, &af_output, &cxt->af_cxt.handle);
 	if (ret) {
 		ISP_LOGE("failed to AF initialize");
@@ -685,6 +689,11 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 	awb_input.awb_process_type = AWB_CTRL_RESPONSE_STABLE;
 	awb_input.awb_process_level = AWB_CTRL_RESPONSE_NORMAL;
 	awb_input.tuning_param = input_ptr->bin_info.awb_addr;
+	if (cxt->otp_data) {
+		awb_input.calibration_gain.r = cxt->otp_data->isp_awb_info.gain_r;
+		awb_input.calibration_gain.g = cxt->otp_data->isp_awb_info.gain_g;
+		awb_input.calibration_gain.b = cxt->otp_data->isp_awb_info.gain_b;
+	}
 	ISP_LOGE("awb bin %p", awb_input.tuning_param);
 	ret = awb_ctrl_init(&awb_input, &awb_output, &cxt->awb_cxt.handle);
 	if (ret) {
@@ -2938,6 +2947,9 @@ cmr_int isp_3a_fw_init(struct isp_3a_fw_init_in* input_ptr, cmr_handle* isp_3a_h
 	cxt->bin_cxt.bin_info = input_ptr->bin_info;
 	cxt->bin_cxt.is_write_to_debug_buf = 0;
 	cxt->ex_info = input_ptr->ex_info;
+	if (input_ptr->otp_data) {
+		cxt->otp_data = input_ptr->otp_data;
+	}
 	sem_init(&cxt->statistics_data_sm, 0, 1);
 
 	ret = isp3a_init_statistics_buf((cmr_handle)cxt);

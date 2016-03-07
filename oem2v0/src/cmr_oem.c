@@ -2650,6 +2650,16 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 	CMR_LOGD("get static info:sensor name: %s, version: %s.",
 			isp_param.ex_info.name,isp_param.ex_info.sensor_version_info);
 	CMR_LOGD("w %d h %d", isp_param.size.w,isp_param.size.h);
+	val.type = SENSOR_VAL_TYPE_READ_OTP;
+	val.pval = NULL;
+	ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_ACCESS_VAL, (cmr_uint)&val);
+	if (ret) {
+		CMR_LOGE("get sensor static info failed %ld", ret);
+		goto exit;
+	}
+	if (val.pval) {
+		isp_param.otp_data = val.pval;
+	}
 	CMR_PRINT_TIME;
 	ret = isp_init(&isp_param, &isp_cxt->isp_handle);
 	if (ret) {

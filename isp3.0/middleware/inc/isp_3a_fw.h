@@ -42,6 +42,7 @@ struct isp_3a_fw_init_in {
 	void* sensor_lsc_golden_data;
 	struct isp_ops ops;
 	struct isp_sensor_ex_info ex_info;
+	struct sensor_otp_cust_info *otp_data;
 };
 
 

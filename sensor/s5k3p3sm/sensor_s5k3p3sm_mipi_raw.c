@@ -890,6 +890,9 @@ static unsigned long s5k3p3sm_cfg_otp(SENSOR_VAL_T* param)
 	otp_info->module_info.year = 0x10;
 	otp_info->lsc_info.lsc_data_addr = s5k3p3_opt_lsc_data;
 	otp_info->lsc_info.lsc_data_size = 1658;
+	otp_info->isp_awb_info.gain_r = 2007;
+	otp_info->isp_awb_info.gain_g = 1000;
+	otp_info->isp_awb_info.gain_b = 1460;
 	param->pval = (void *)otp_info;
 	SENSOR_PRINT("param->pval = %p", param->pval);
 
