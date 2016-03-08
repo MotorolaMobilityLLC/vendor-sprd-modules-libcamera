@@ -9,20 +9,6 @@
 #ifndef _AL_3AWRAPPER_AE_H_
 #define _AL_3AWRAPPER_AE_H_
 
-#ifdef LOCAL_NDK_BUILD
-
-#include ".\..\..\INCLUDE\mtype.h"
-/* ISP Framework define */
-#include ".\..\..\INCLUDE\frmwk_hw3a_event_type.h"
-#include ".\..\..\INCLUDE\hw3a_stats.h"
-/* AE lib define */
-#include ".\..\..\INCLUDE\allib_ae.h"
-#include ".\..\..\INCLUDE\allib_ae_errcode.h"
-/* Wrapper define */
-#include "alwrapper_3a.h"
-
-#else  /* normal release */
-
 #include "mtype.h"
 /* ISP Framework define */
 #include "frmwk_hw3a_event_type.h"
@@ -33,9 +19,7 @@
 /* Wrapper define */
 #include "alwrapper_3a.h"
 
-#endif
-
-#define _WRAPPER_AE_VER 0.8020
+#define _WRAPPER_AE_VER 0.8040
 
 #ifdef __cplusplus
 extern "C"
@@ -69,7 +53,7 @@ uint32 al3awrapperae_getdefaultcfg( struct alhw3a_ae_cfginfo_t* aaeconfig);
  */
 uint32 al3awrapperae_updateispconfig_ae( uint8 a_ucsensor, struct alhw3a_ae_cfginfo_t* aaeconfig );
 
-/* 
+/*
  * API name: al3AWrapperAE_UpdateOTP2AELib
  * This API is used for set correct HW3A config (Altek ISP) to generate correct AE stats
  * param aCalibWBGain[in]: calibration data from OTP
@@ -80,7 +64,7 @@ uint32 al3awrapperae_updateispconfig_ae( uint8 a_ucsensor, struct alhw3a_ae_cfgi
  */
 uint32 al3awrapperae_updateotp2aelib( struct calib_wb_gain_t acalibwbgain, struct alaeruntimeobj_t *aaelibcallback, struct ae_output_data_t *ae_output , void * ae_runtimedat );
 
-/* 
+/*
  * API name: al3AWrapperAE_UpdateOTP2AELib
  * This API is used for set correct HW3A config (Altek ISP) to generate correct AE stats
  * param aAEReport[in]: ae report from AE update

@@ -318,11 +318,11 @@ struct awb_report_update_t {
 	enum awb_mode_type_t         awb_mode;               /* 0: Auto, others are MWB type */
 	struct wbgain_data_t           wbgain;
 	struct wbgain_data_t           wbgain_balanced;
-	struct wbgain_data_t           wbgain_flash_off;       /* for flash contorl, 
-							 * stop updating uder set state_under_flash = TRUE 
+	struct wbgain_data_t           wbgain_flash_off;       /* for flash contorl,
+							 * stop updating uder set state_under_flash = TRUE
 							 * (event: prepare_under_flash) */
 	uint32                  color_temp;
-	uint32                  color_temp_flash_off;   /* for flash contorl, 
+	uint32                  color_temp_flash_off;   /* for flash contorl,
 							 * stop updating uder set state_under_flash = TRUE
 							 * (event: prepare_under_flash) */
 	uint16                  light_source;           /* light source */

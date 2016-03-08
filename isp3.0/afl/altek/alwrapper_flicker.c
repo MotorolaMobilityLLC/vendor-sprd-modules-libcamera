@@ -3,8 +3,8 @@
  *
  *  Created on: 2016/01/05
  *      Author: Hubert Huang
- *  Latest update: 2016/2/26
- *      Reviser: MarkTseng  
+ *  Latest update: 2016/3/05
+ *      Reviser: MarkTseng
  *  Comments:
  *       This c file is mainly used for AP framework to:
  *       1. Query HW3A config setting
@@ -14,22 +14,8 @@
  *       5. translate input parameter from AP framework to AP
  *       6. Patch stats from ISP
  *       7. WOI inform to AP
+ *       8. Translate flicker enum to/from lib value
  ******************************************************************************/
-
-#ifdef  LOCAL_NDK_BUILD   /* test build in local PC */
-
-#include <math.h>
-#include <string.h>
-#include ".\..\..\INCLUDE\mtype.h"
-#include ".\..\..\INCLUDE\hw3a_stats.h"
-/* Wrapper define */
-#include "alwrapper_3a.h"
-#include "alwrapper_flicker.h"
-#include "alwrapper_flicker_errcode.h"
-/* Flicker lib define */
-#include ".\..\..\INCLUDE\allib_flicker.h"
-
-#else
 
 #include <math.h>
 #include <string.h>
@@ -42,19 +28,18 @@
 /* Flicker lib define */
 #include "allib_flicker.h"
 
-#endif
 
 /* for Flicker ctrl layer */
-/**
-\API name: al3AWrapper_DispatchHW3A_FlickerStats
-\This API used for patching HW3A stats from ISP(Altek) for Flicker libs(Altek), after patching completed, Flicker ctrl should prepare patched
-\stats to Flicker libs
-\param alISP_MetaData_Flicker[In]: patched data after calling al3AWrapper_DispatchHW3AStats, used for patch Flicker stats for Flicker lib
-\param alWrappered_Flicker_Dat[Out]: result patched Flicker stats
-\param aFlickerLibCallback[in]: callback lookup table, must passing correct table into this API for querying HW3A config
-\param flicker_runtimeDat[in]: Flicker lib runtime buffer after calling init, must passing correct addr to into this API
-\return: error code
-*/
+/*
+ * API name: al3AWrapper_DispatchHW3A_FlickerStats
+ * This API used for patching HW3A stats from ISP(Altek) for Flicker libs(Altek), after patching completed, Flicker ctrl should prepare patched
+ * stats to Flicker libs
+ * param alISP_MetaData_Flicker[In]: patched data after calling al3AWrapper_DispatchHW3AStats, used for patch Flicker stats for Flicker lib
+ * param alWrappered_Flicker_Dat[Out]: result patched Flicker stats
+ * param aFlickerLibCallback[in]: callback lookup table, must passing correct table into this API for querying HW3A config
+ * param flicker_runtimeDat[in]: Flicker lib runtime buffer after calling init, must passing correct addr to into this API
+ * return: error code
+ */
 uint32 al3awrapper_dispatchhw3a_flickerstats( struct isp_drv_meta_antif_t * alisp_metadata_flicker, struct al3awrapper_stats_flicker_t * alwrappered_flicker_dat, struct alflickerruntimeobj_t *aflickerlibcallback, void * flicker_runtimedat  )
 {
 	uint32 ret = ERR_WPR_FLICKER_SUCCESS;
@@ -89,12 +74,12 @@ uint32 al3awrapper_dispatchhw3a_flickerstats( struct isp_drv_meta_antif_t * alis
 	return ret;
 }
 
-/**
-\API name: al3AWrapperFlicker_GetDefaultCfg
-\This API is used for query default ISP config before calling al3AWrapperFlicker_UpdateISPConfig_Flicker
-\param aFlickerConfig[out]: input buffer, API would manage parameter and return via this pointer
-\return: error code
-*/
+/*
+ * API name: al3AWrapperFlicker_GetDefaultCfg
+ * This API is used for query default ISP config before calling al3AWrapperFlicker_UpdateISPConfig_Flicker
+ * param aFlickerConfig[out]: input buffer, API would manage parameter and return via this pointer
+ * return: error code
+ */
 uint32 al3awrapperflicker_getdefaultcfg( struct alhw3a_flicker_cfginfo_t* aflickerconfig )
 {
 	uint32 ret = ERR_WPR_FLICKER_SUCCESS;
@@ -111,13 +96,13 @@ uint32 al3awrapperflicker_getdefaultcfg( struct alhw3a_flicker_cfginfo_t* aflick
 	return ret;
 }
 
-/**
-\API name: al3AWrapperFlicker_UpdateISPConfig_Flicker
-\This API is used for updating ISP config
-\param a_ucSensor[in]: AHB sensor ID
-\param aFlickerConfig[out]: input buffer, API would manage parameter and return via this pointer
-\return: error code
-*/
+/*
+ * API name: al3AWrapperFlicker_UpdateISPConfig_Flicker
+ * This API is used for updating ISP config
+ * param a_ucSensor[in]: AHB sensor ID
+ * param aFlickerConfig[out]: input buffer, API would manage parameter and return via this pointer
+ * return: error code
+ */
 uint32 al3awrapperflicker_updateispconfig_flicker( uint8 a_ucsensor, struct alhw3a_flicker_cfginfo_t* aflickerconfig )
 {
 	uint32 ret = ERR_WPR_FLICKER_SUCCESS;
@@ -125,19 +110,19 @@ uint32 al3awrapperflicker_updateispconfig_flicker( uint8 a_ucsensor, struct alhw
 	return ret;
 }
 
-/**
-\API name: al3AWrapperFlicker_QueryISPConfig_Flicker
-\This API is used for query ISP config before calling al3AWrapperFlicker_UpdateISPConfig_Flicker
-\param aFlickerConfig[out]: API would manage parameter and return via this pointer
-\param aFlickerLibCallback[in]: callback lookup table, must passing correct table into this API for querying HW3A config
-\param flicker_runtimeDat[in]: Flicker lib runtime buffer after calling init, must passing correct addr to into this API
-\return: error code
-*/
+/*
+ * API name: al3AWrapperFlicker_QueryISPConfig_Flicker
+ * This API is used for query ISP config before calling al3AWrapperFlicker_UpdateISPConfig_Flicker
+ * param aFlickerConfig[out]: API would manage parameter and return via this pointer
+ * param aFlickerLibCallback[in]: callback lookup table, must passing correct table into this API for querying HW3A config
+ * param flicker_runtimeDat[in]: Flicker lib runtime buffer after calling init, must passing correct addr to into this API
+ * return: error code
+ */
 uint32 al3awrapperflicker_queryispconfig_flicker( struct alhw3a_flicker_cfginfo_t* aflickerconfig, struct alflickerruntimeobj_t *aflickerlibcallback, void * flicker_runtimedat, struct raw_info *aflickersensorinfo )
 {
 	uint32 ret = ERR_WPR_FLICKER_SUCCESS;
 	struct flicker_get_param_t localparam;
-	void* outputparam = NULL;
+	struct flicker_output_data_t outputparam;
 	struct flicker_set_param_t local_setparam;
 
 	if ( aflickerconfig == NULL || flicker_runtimedat == NULL )
@@ -156,11 +141,11 @@ uint32 al3awrapperflicker_queryispconfig_flicker( struct alhw3a_flicker_cfginfo_
 	local_setparam.set_param.rawsizey = aflickersensorinfo->sensor_raw_h;
 	local_setparam.set_param.line_time = aflickersensorinfo->line_time;
 	local_setparam.flicker_set_param_type = FLICKER_SET_PARAM_RAW_SIZE;
-	ret = aflickerlibcallback->set_param( &local_setparam, outputparam, &flicker_runtimedat );
+	ret = aflickerlibcallback->set_param( &local_setparam, &outputparam, &flicker_runtimedat );
 	if ( ret != ERR_WPR_FLICKER_SUCCESS )
 		return ret;
 	local_setparam.flicker_set_param_type = FLICKER_SET_PARAM_LINE_TIME;
-	ret = aflickerlibcallback->set_param( &local_setparam, outputparam, &flicker_runtimedat );
+	ret = aflickerlibcallback->set_param( &local_setparam, &outputparam, &flicker_runtimedat );
 	if ( ret != ERR_WPR_FLICKER_SUCCESS )
 		return ret;
 
@@ -169,38 +154,72 @@ uint32 al3awrapperflicker_queryispconfig_flicker( struct alhw3a_flicker_cfginfo_
 	return ret;
 }
 
-/**
-\API name: al3AWrapperAntiF_GetVersion
-\This API would return labeled version of wrapper
-\fWrapVersion[out], return current wapper version
-\return: error code
-*/
+/*
+ * API name: al3AWrapperAntiF_GetVersion
+ * This API would return labeled version of wrapper
+ * fWrapVersion[out], return current wapper version
+ * return: error code
+ */
 uint32 al3awrapperantif_getversion( float *fwrapversion )
 {
 	uint32 ret = ERR_WPR_FLICKER_SUCCESS;
-	
+
 	*fwrapversion = _WRAPPER_ANTIF_VER;
-	
+
 	return ret;
 }
 
-/**
-\API name: al3awrapper_antif_get_flickermode
-\This API would return handled enum flicker mode (50 Hz or 60 Hz )
-\flicker_libresult[in], flicker result from flicker lib
-\flicker_mode[out], return current wapper version
-\return: error code
-*/
+/*
+ * API name: al3awrapper_antif_get_flickermode
+ * This API would return handled enum flicker mode (50 Hz or 60 Hz )
+ * flicker_libresult[in], flicker result from flicker lib
+ * flicker_mode[out], return current wapper version
+ * return: error code
+ */
 uint32 al3awrapper_antif_get_flickermode( uint8 flicker_libresult, enum ae_antiflicker_mode_t *flicker_mode )
 {
 	uint32 ret = ERR_WPR_FLICKER_SUCCESS;
-	
+
 	if ( flicker_libresult > _DEFAULT_FLICKER_50HZ_TH_LOWER && flicker_libresult < _DEFAULT_FLICKER_50HZ_TH_UPPER )
 		*flicker_mode = ANTIFLICKER_50HZ;
 	else if ( flicker_libresult > _DEFAULT_FLICKER_60HZ_TH_LOWER && flicker_libresult < _DEFAULT_FLICKER_60HZ_TH_UPPER )
 		*flicker_mode = ANTIFLICKER_60HZ;
-	/*else
-		;   unchanged when result uncertain */
-	
+	else
+		return ERR_WRP_FLICKER_INVALID_INPUT_HZ;  /*  invalid input Hz range  */
+
+	return ret;
+}
+
+
+/*
+ * API name: al3awrapper_antif_set_flickermode
+ * This API would help to parse set current flicker to flicker lib
+ * param flicker_mode[in], current flicker result (enum, 50 Hz or 60 Hz)
+ * param aFlickerLibCallback[in]: callback lookup table, must passing correct table into this API for querying HW3A config
+ * param flicker_runtimeDat[in]: Flicker lib runtime buffer after calling init, must passing correct addr to into this API
+ * return: error code
+ */
+uint32 al3awrapper_antif_set_flickermode( enum ae_antiflicker_mode_t flicker_mode, struct alflickerruntimeobj_t *aflickerlibcallback, void * flicker_runtimedat )
+{
+	uint32 ret = ERR_WPR_FLICKER_SUCCESS;
+	uint16 flicker_hz;
+	struct flicker_output_data_t outputparam;   /* f set_param, no actual usage now, just cread instant in avoid of error when passing NULL to lib */
+	struct flicker_set_param_t local_setparam;
+
+	if ( flicker_mode == ANTIFLICKER_50HZ )
+		flicker_hz = _DEFAULT_FLICKER_LIBVALUE_50HZ;
+	else if ( flicker_mode == _DEFAULT_FLICKER_LIBVALUE_60HZ )
+		flicker_hz = _DEFAULT_FLICKER_LIBVALUE_60HZ;
+	else
+		return ret;  /*  invalid input Hz range, do nothing to flicker lib  */
+
+	memset( &local_setparam, 0, sizeof(struct flicker_set_param_t) );
+	local_setparam.flicker_set_param_type = FLICKER_SET_PARAM_CURRENT_FREQUENCY;   /* ask Flicker lib for HW3A setting */
+	local_setparam.set_param.currentfreq = flicker_hz;
+
+	ret = aflickerlibcallback->set_param( &local_setparam, &outputparam, &flicker_runtimedat );
+	if ( ret != ERR_WPR_FLICKER_SUCCESS )
+		return ret;
+
 	return ret;
 }

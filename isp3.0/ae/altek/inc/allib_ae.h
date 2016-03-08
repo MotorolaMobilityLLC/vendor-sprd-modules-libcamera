@@ -40,7 +40,7 @@ extern "C"
  *@typedef ae_metering_mode_type_t
  *@brief AE metering mode
  */
-enum ae_metering_mode_type_t{
+enum ae_metering_mode_type_t {
 	AE_METERING_AVERAGE,
 	AE_METERING_CENTERWT,
 	AE_METERING_SPOTWT,
@@ -89,7 +89,7 @@ enum ae_gain_mode_t {
  *@typedef ae_flash_st_t
  *@brief Flash (HW) status (off/on)
  */
-enum ae_flash_st_t{
+enum ae_flash_st_t {
 	AE_FLASH_OFF,		/* flash HW status is switched off, no matter is torch off, or main-flash off, or pre-flash off */
 	AE_FLASH_ON,		/* flash HW status is switched on */
 	AE_FLASH_CANCEL,	/* time out */
@@ -276,10 +276,10 @@ struct ae_sensor_info_t {
 	uint32 min_line_cnt;	/* minimun exposure line, suggest value 1~ 4 (follow sensor FAE suggestion) */
 	uint32 max_line_cnt;	/* maximun exposure line, suggest value 65535 (follow sensor FAE suggestion), which corresponding to min FPS setting
 				*  if min FPS = 16, means max exposure time = 1/16 = 62.5 ms
-				*  if 1 line = 20 us, max line count = 62.5ms / 20us = 3125 lines 
+				*  if 1 line = 20 us, max line count = 62.5ms / 20us = 3125 lines
 				*/
 
-	uint32 exposuretime_per_exp_line_ns;	/* optional, used for more precise control, if set 0 , would use min FPS vs max line count to calculate 
+	uint32 exposuretime_per_exp_line_ns;	/* optional, used for more precise control, if set 0 , would use min FPS vs max line count to calculate
 						*automatically
 						* note: use ns as units to keep precision, which would have difference for long exposure
 						* ex: min_fps = 15.99, max line = 3000
@@ -314,7 +314,7 @@ struct ae_sensor_info_t {
  */
 #pragma pack(push) /* push current alignment setting to stack */
 #pragma pack(4)    /* new alignment setting  */
-struct ae_gyro_info_t{
+struct ae_gyro_info_t {
 	uint8    param_mode_int;	/* true: interger, false: float */
 	uint32  uinfo[3];
 	float   finfo[3];
@@ -448,7 +448,7 @@ struct ae_init_exposure_param_t {
  */
 #pragma pack(push) /* push current alignment setting to stack */
 #pragma pack(4)    /* new alignment setting  */
-struct ae_iso_adgain_info_t{
+struct ae_iso_adgain_info_t {
 	uint32    ad_gain;	/* scale 100 */
 	uint32    ISO;
 };
@@ -517,8 +517,8 @@ struct ae_script_param_t {
 #pragma pack(push) /* push current alignment setting to stack */
 #pragma pack(4)    /* new alignment setting  */
 struct ae_script_mode_data_t {
-    enum ae_script_mode_t  script_mode;
-    struct ae_script_param_t  script_param;
+	enum ae_script_mode_t  script_mode;
+	struct ae_script_param_t  script_param;
 };
 #pragma pack(pop)  /* restore old alignment setting from stack  */
 
@@ -637,7 +637,7 @@ struct ae_set_param_content_t {
 	enum al3a_fe_ui_flash_mode  flash_mode;	/* UI flash setting mode, forcefill, auto, off, torch, etc. */
 
 	/* advanced control command  */
-	uint8  ucforceconvegeswt;		/* 0: normal AE, 1: always report converge in each 
+	uint8  ucforceconvegeswt;		/* 0: normal AE, 1: always report converge in each
 						 * AE state (such as prepare, do with flash, nromal AE), switch would be hold untill release via set_parmeter again */
 
 	struct ae_hw_config_t ae_hw_config;  /* reserved,  sensor info, hw3a info */

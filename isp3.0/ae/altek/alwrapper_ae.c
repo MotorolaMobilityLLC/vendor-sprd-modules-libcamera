@@ -3,7 +3,7 @@
  *
  *  Created on: 2015/12/06
  *      Author: MarkTseng
- *  Latest update: 2016/03/02
+ *  Latest update: 2016/3/05
  *      Reviser: MarkTseng
  *  Comments:
  *       This c file is mainly used for AP framework to:
@@ -16,20 +16,6 @@
  *       7. WOI inform to AP
  ******************************************************************************/
 
-#ifdef LOCAL_NDK_BUILD   /* test build in local */
-
-#include ".\..\..\INCLUDE\mtype.h"
-#include ".\..\..\INCLUDE\frmwk_hw3a_event_type.h"
-#include ".\..\..\INCLUDE\hw3a_stats.h"
-/* AE lib define */
-#include ".\..\..\INCLUDE\allib_ae.h"
-#include ".\..\..\INCLUDE\allib_ae_errcode.h"
-/* Wrapper define */
-#include "alwrapper_3a.h"
-#include "alwrapper_ae.h"     /* include wrapper AE define */
-#include "alwrapper_ae_errcode.h"
-
-#else  /* normal release in AP  */
 #include "mtype.h"
 #include "frmwk_hw3a_event_type.h"
 #include "hw3a_stats.h"
@@ -41,8 +27,6 @@
 #include "alwrapper_3a.h"
 #include "alwrapper_ae.h"   /* include wrapper AE define */
 #include "alwrapper_ae_errcode.h"
-
-#endif
 
 #include <math.h>
 #include <string.h>
@@ -164,16 +148,16 @@ uint32 al3awrapper_dispatchhw3a_aestats( struct isp_drv_meta_ae_t * alisp_metada
 	ppatched_aedat->upseudoflag         = pmetadata_ae->upseudoflag;
 
 	/* debug printf, removed for release version */
-	// printf( "al3AWrapper_DispatchHW3A_AEStats VerNum: %d, HWID: %d, Frmidx: %d, TokID: %d, Size: %d, PPB: %d, BZ: %d, ValidBlock: %d, ValidBank:%d, SFlag:%d \r\n", 
+	// printf( "al3AWrapper_DispatchHW3A_AEStats VerNum: %d, HWID: %d, Frmidx: %d, TokID: %d, Size: %d, PPB: %d, BZ: %d, ValidBlock: %d, ValidBank:%d, SFlag:%d \r\n",
 	// ppatched_aedat->umagicnum, ppatched_aedat->uhwengineid, ppatched_aedat->uframeidx, ppatched_aedat->uaetokenid, ppatched_aedat->uaestatssize,
-	// ppatched_aedat->udpixelsperblocks, ppatched_aedat->udbanksize, ppatched_aedat->ucvalidblocks, ppatched_aedat->ucvalidbanks, ppatched_aedat->upseudoflag  );    
+	// ppatched_aedat->udpixelsperblocks, ppatched_aedat->udbanksize, ppatched_aedat->ucvalidblocks, ppatched_aedat->ucvalidbanks, ppatched_aedat->upseudoflag  );
 
 	// store frame & timestamp
 	memcpy( &ppatched_aedat->systemtime, &pmetadata_ae->systemtime, sizeof(struct timeval));
 	ppatched_aedat->udsys_sof_idx       = pmetadata_ae->udsys_sof_idx;
 
 	/* debug printf, removed for release version */
-	// printf( "al3AWrapper_DispatchHW3A_AEStats SOF idx :%d \r\n", ppatched_aedat->udsys_sof_idx  );  
+	// printf( "al3AWrapper_DispatchHW3A_AEStats SOF idx :%d \r\n", ppatched_aedat->udsys_sof_idx  );
 
 	/* patching R/G/G/B from WB or calibration WB to Y/R/G/B, */
 	/* here is the sample which use array passing insetad of pointer passing of prepared buffer from AE ctrl layer */
@@ -184,16 +168,16 @@ uint32 al3awrapper_dispatchhw3a_aestats( struct isp_drv_meta_ae_t * alisp_metada
 			/* due to data from HW, use direct address instead of casting */
 			ppatched_aedat->statsr[index] = ( stats[udoffset] + (stats[udoffset+1]<<8) + (stats[udoffset+2]<<16) + (stats[udoffset+3]<<24) )/udpixelsperblocks;  /* 10 bits */
 			ppatched_aedat->statsg[index] = (( ( stats[udoffset+4] + (stats[udoffset+5]<<8) + (stats[udoffset+6]<<16) + (stats[udoffset+7]<<24) ) +
-						       ( stats[udoffset+8] + (stats[udoffset+9]<<8) + (stats[udoffset+10]<<16) + (stats[udoffset+11]<<24) ) )/udpixelsperblocks)>>1; /* 10 bits */
+			                                   ( stats[udoffset+8] + (stats[udoffset+9]<<8) + (stats[udoffset+10]<<16) + (stats[udoffset+11]<<24) ) )/udpixelsperblocks)>>1; /* 10 bits */
 			ppatched_aedat->statsb[index] = ( stats[udoffset+12] + (stats[udoffset+13]<<8) + (stats[udoffset+14]<<16) + (stats[udoffset+15]<<24) )/udpixelsperblocks;    /* 10 bits */
 
 			/* calculate Y */
 			ppatched_aedat->statsy[index] = ( ppatched_aedat->statsr[index]* wb_gain.r + ppatched_aedat->statsg[index] * wb_gain.g +
-						      ppatched_aedat->statsb[index] * wb_gain.b ) >> 8;  /* 10 bits */
+			                                  ppatched_aedat->statsb[index] * wb_gain.b ) >> 8;  /* 10 bits */
 #if print_ae_log
 			/* debug printf, removed for release version */
 			ISP_LOGI( "al3awrapper_dispatchhw3a_aestats stats[%d] y/r/g/b: %d, %d, %d, %d \r\n", index,
-			ppatched_aedat->statsy[index],ppatched_aedat->statsr[index], ppatched_aedat->statsg[index], ppatched_aedat->statsb[index] ); 
+			        ppatched_aedat->statsy[index],ppatched_aedat->statsr[index], ppatched_aedat->statsg[index], ppatched_aedat->statsb[index] );
 #endif
 			index++;
 			udoffset += 16;
@@ -203,7 +187,7 @@ uint32 al3awrapper_dispatchhw3a_aestats( struct isp_drv_meta_ae_t * alisp_metada
 	return ret;
 }
 
-/* 
+/*
  * API name: al3AWrapperAE_UpdateOTP2AELib
  * This API is used for set correct HW3A config (Altek ISP) to generate correct AE stats
  * param aCalibWBGain[in]: calibration data from OTP
@@ -233,7 +217,7 @@ uint32 al3awrapperae_updateotp2aelib( struct calib_wb_gain_t acalibwbgain,  stru
 	return ret;
 }
 
-/* 
+/*
  * API name: al3AWrapperAE_UpdateOTP2AELib
  * This API is used for set correct HW3A config (Altek ISP) to generate correct AE stats
  * param aAEReport[in]: ae report from AE update
@@ -386,9 +370,9 @@ uint32 al3awrapperae_updateispconfig_ae( uint8 a_ucsensor, struct alhw3a_ae_cfgi
 uint32 al3awrapperae_getversion( float *fwrapversion )
 {
 	uint32 ret = ERR_WPR_AE_SUCCESS;
-	
+
 	*fwrapversion = _WRAPPER_AE_VER;
-	
+
 	return ret;
 }
 

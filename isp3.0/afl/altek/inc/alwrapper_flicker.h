@@ -3,26 +3,13 @@
  *  Create Date:
  *
  *  Comment:
- *   
+ *
  *
  ******************************************************************************/
- 
+
 #ifndef _AL_3AWRAPPER_FLICKER_H_
 #define _AL_3AWRAPPER_FLICKER_H_
 
-#ifdef  LOCAL_NDK_BUILD
-
-#include ".\..\..\INCLUDE\mtype.h"
-/* ISP Framework define */
-#include ".\..\..\INCLUDE\frmwk_hw3a_event_type.h"
-#include ".\..\..\INCLUDE\hw3a_stats.h"
-/* Flicker lib define */
-#include ".\..\..\INCLUDE\allib_flicker.h"
-#include ".\..\..\INCLUDE\allib_flicker_errcode.h"
-/* Wrapper define */
-#include "alwrapper_3a.h"
-
-#else  /* normal release */
 #include "mtype.h"
 /* ISP Framework define */
 #include "frmwk_hw3a_event_type.h"
@@ -33,14 +20,15 @@
 /* Wrapper define */
 #include "alwrapper_3a.h"
 
-#endif
 
-#define _WRAPPER_ANTIF_VER 0.8010
+#define _WRAPPER_ANTIF_VER 0.8040
 
 #define _DEFAULT_FLICKER_50HZ_TH_LOWER  (47)
 #define _DEFAULT_FLICKER_50HZ_TH_UPPER  (53)
 #define _DEFAULT_FLICKER_60HZ_TH_LOWER  (56)
 #define _DEFAULT_FLICKER_60HZ_TH_UPPER  (64)
+#define _DEFAULT_FLICKER_LIBVALUE_50HZ  (50)
+#define _DEFAULT_FLICKER_LIBVALUE_60HZ  (60)
 
 #define _DEFAULT_FLICKER_MODE      (ANTIFLICKER_50HZ)
 
@@ -107,6 +95,16 @@ uint32 al3awrapperantif_getversion( float *fwrapversion );
 \return: error code
 */
 uint32 al3awrapper_antif_get_flickermode( uint8 flicker_libresult, enum ae_antiflicker_mode_t *flicker_mode );
+
+/**
+\API name: al3awrapper_antif_set_flickermode
+\This API would help to parse set current flicker to flicker lib
+\param flicker_mode[in], current flicker result (enum, 50 Hz or 60 Hz)
+\param aFlickerLibCallback[in]: callback lookup table, must passing correct table into this API for querying HW3A config
+\param flicker_runtimeDat[in]: Flicker lib runtime buffer after calling init, must passing correct addr to into this API
+\return: error code
+*/
+uint32 al3awrapper_antif_set_flickermode( enum ae_antiflicker_mode_t flicker_mode, struct alflickerruntimeobj_t *aflickerlibcallback, void * flicker_runtimedat );
 
 #ifdef __cplusplus
 }  // extern "C"

@@ -40,7 +40,7 @@
 #define HW3A_METADATA_SIZE              HW3A_MAX_TOTAL_STATS_BUFFER_SIZE
 
 /* Define for suggested single stats buffer size, including stats info */
-/* This including each A stats info after A tag, take AE for exsample, 
+/* This including each A stats info after A tag, take AE for exsample,
  * including  udPixelsPerBlocks/udbanksize/ucvalidblocks
  */
 /* ucvalidbanks/8-align Dummy */
@@ -247,8 +247,8 @@ struct alhw3a_statisticsdldregion_t {
 #pragma pack(push) /* push current alignment setting to stack */
 #pragma pack(4)    /* new alignment setting */
 struct alhw3a_ae_cfginfo_t {
-        uint16 tokenid;
-        struct alhw3a_statisticsdldregion_t taeregion;
+	uint16 tokenid;
+	struct alhw3a_statisticsdldregion_t taeregion;
 };
 #pragma pack(pop)  /* restore old alignment setting from stack */
 
@@ -336,9 +336,9 @@ struct alhw3a_awb_cfginfo_t {
 	uint16                          uwbgain;		/* ALTEK format of calibration data */
 	uint8                           uccrshift;		/* Cr shift for stat data */
 	uint8                           ucoffsetshift;		/* offset shift for stat data */
-	uint8                           ucquantize;		/* Set ucQuantize = 0 (fixed) 
+	uint8                           ucquantize;		/* Set ucQuantize = 0 (fixed)
 								 * since crs = Cr- [(cbs+awb_quantize_damp)>>awb_damp] */
-	uint8                           ucdamp;			/* Set ucDamp = 7 (fixed) 
+	uint8                           ucdamp;			/* Set ucDamp = 7 (fixed)
 								 * since crs = Cr- [(cbs+awb_quantize_damp)>>awb_damp] */
 	uint8                           ucsumshift;		/* Sum shift = 5 (fixed), based on ISP sampling points.
 								 * [9:0]G' = (sum(G[i,j]/2) + 2^(awb_sum_shift-1)) >> awb_sum_shift */
@@ -435,7 +435,7 @@ struct isp_drv_meta_ae_t {
 	uint8  pae_stats[HW3A_AE_STATS_BUFFER_SIZE];
 	uint16 uaetokenid;
 	uint32 uaestatssize;
-	uint16 upseudoflag;		/* 0: normal stats, 1: PseudoFlag flag 
+	uint16 upseudoflag;		/* 0: normal stats, 1: PseudoFlag flag
 					 * (for lib, smoothing/progressive run) */
 
 	/* framework time/frame idx info */
@@ -478,7 +478,7 @@ struct isp_drv_meta_awb_t {
 	uint8 pawb_stats[HW3A_AWB_STATS_BUFFER_SIZE];
 	uint16 uawbtokenid;
 	uint32 uawbstatssize;
-	uint16 upseudoflag;		/* 0: normal stats, 1: PseudoFlag flag 
+	uint16 upseudoflag;		/* 0: normal stats, 1: PseudoFlag flag
 					 * (for lib, smoothing/progressive run) */
 
 	/* framework time/frame idx info */

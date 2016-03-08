@@ -2,7 +2,7 @@
  * File name: allib_flicker.h
  * brief	Structure of Setting Parameters
  * author		Hubert Huang
- * 
+ *
  * date		2015/10/23
  *****************************************************************************/
 #ifndef _AL_FLICKER_H_
@@ -149,6 +149,6 @@ uint8 allib_flicker_loadfunc( struct alflickerruntimeobj_t *flicker_run_obj, uin
 
 #ifdef __cplusplus
 }  // extern "C"
-#endif 
+#endif
 
 #endif // _AL_FLICKER_H_

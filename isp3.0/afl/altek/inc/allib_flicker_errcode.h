@@ -2,7 +2,7 @@
  * File name: allib_ae_errcode.h
  * brief	Flicker Lib. related error code.
  * author		Hubert Huang
- * 
+ *
  * date		2015/10/23
  ******************************************************************************/
 #ifndef ALFLICKERLIB_ERR_H_
