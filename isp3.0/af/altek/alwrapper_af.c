@@ -3,7 +3,7 @@
  *
  *  Created on: 2015/12/06
  *      Author: ZenoKuo
- *  Latest update: 2016/2/26
+ *  Latest update: 2016/3/05
  *      Reviser: MarkTseng
  *  Comments:
  *       This c file is mainly used for AP framework to:
@@ -15,20 +15,7 @@
 ********************************************************************************/
 
 /* test build in local */
-#ifdef LOCAL_NDK_BUILD
-#include ".\..\..\INCLUDE\mtype.h"
-#include ".\..\..\INCLUDE\frmwk_hw3a_event_type.h"
-#include ".\..\..\INCLUDE\hw3a_stats.h"
-/* AF lib define */
-#include ".\..\..\INCLUDE\allib_af.h"
 
-/* Wrapper define */
-#include "alwrapper_3a.h"
-#include "alwrapper_af.h"
-#include "alwrapper_af_errcode.h"
-
-/* normal release in AP*/
-#else
 #include "mtype.h"
 #include "frmwk_hw3a_event_type.h"
 #include "hw3a_stats.h"
@@ -40,8 +27,6 @@
 #include "alwrapper_3a.h"
 #include "alwrapper_af.h"
 #include "alwrapper_af_errcode.h"
-
-#endif
 
 #include <math.h>
 #include <string.h>
@@ -59,9 +44,9 @@
 #define VCM_INF_STEP_ADDR_OFFSET (1714)
 /* VCM macro step */
 #define VCM_MACRO_STEP_ADDR_OFFSET (1715)
-/* VCM calibration inf distance in mm.*/
+/* VCM calibration inf distance in mm */
 #define VCM_INF_STEP_CALIB_DISTANCE (20000)
-/* VCM calibration macro distance in mm.*/
+/* VCM calibration macro distance in mm */
 #define VCM_MACRO_STEP_CALIB_DISTANCE (700)
 /* f-number, ex. f2.0, then input 2.0*/
 #define MODULE_F_NUMBER (2.0)
@@ -128,13 +113,13 @@ uint32 al3awrapper_dispatchhw3a_afstats(void *isp_meta_data,void *alaf_stats)
 	uint64 *stats_addr_64;
 	WRAP_LOG("al3awrapper_dispatchhw3a_afstats start\n");
 
-	 /* check input parameter validity*/
-	if(isp_meta_data == NULL){
+	/* check input parameter validity */
+	if(isp_meta_data == NULL) {
 		WRAP_LOG("ERR_WRP_AF_EMPTY_METADATA\n");
 		return ERR_WRP_AF_EMPTY_METADATA;
 	}
 
-	if(alaf_stats == NULL){
+	if(alaf_stats == NULL) {
 		WRAP_LOG("ERR_WRP_AF_INVALID_INPUT_PARAM\n");
 		return ERR_WRP_AF_INVALID_INPUT_PARAM;
 	}
@@ -165,12 +150,12 @@ uint32 al3awrapper_dispatchhw3a_afstats(void *isp_meta_data,void *alaf_stats)
 	WRAP_LOG("uhwengineid %d\n",p_meta_data_af->uhwengineid);
 
 	/* AP3AMGR_HW3A_A_0 and AP3AMGR_HW3A_B_0, see the AP3AMgr.h*/
-	if(AL3A_HW3A_DEV_ID_A_0 == p_meta_data_af->uhwengineid){
-		for(j = 0;j < banks;j++){
+	if(AL3A_HW3A_DEV_ID_A_0 == p_meta_data_af->uhwengineid) {
+		for(j = 0; j < banks; j++) {
 			stats_addr_32 = (uint32 *)(p_meta_data_af->paf_stats)+j* bank_size/4;
 			stats_addr_64 = (uint64 *)stats_addr_32;
 
-			for(i = 0;i < blocks;i++){
+			for(i = 0; i < blocks; i++) {
 				index = i+j*banks;
 				p_patched_stats->cnt_hor[index] = stats_addr_32[1];
 				p_patched_stats->cnt_ver[index] = stats_addr_32[0];
@@ -186,10 +171,10 @@ uint32 al3awrapper_dispatchhw3a_afstats(void *isp_meta_data,void *alaf_stats)
 				WRAP_LOG("fv_hor[%d] %d\n",index,p_patched_stats->fv_hor[index]);
 			}
 		}
-	}else if(AL3A_HW3A_DEV_ID_B_0 == p_meta_data_af->uhwengineid){
-		for(j = 0; j < banks; j++){
+	} else if(AL3A_HW3A_DEV_ID_B_0 == p_meta_data_af->uhwengineid) {
+		for(j = 0; j < banks; j++) {
 			stats_addr_32 = (uint32 *)(p_meta_data_af->paf_stats)+j*bank_size/4;
-			for(i = 0;i < blocks;i++){
+			for(i = 0; i < blocks; i++) {
 				index = i+j*banks;
 				p_patched_stats->cnt_hor[index] = stats_addr_32[1];
 				p_patched_stats->cnt_ver[index] = stats_addr_32[0];
@@ -203,7 +188,7 @@ uint32 al3awrapper_dispatchhw3a_afstats(void *isp_meta_data,void *alaf_stats)
 				WRAP_LOG("fv_hor[%d] %d\n",index,p_patched_stats->fv_hor[index]);
 			}
 		}
-	}else{
+	} else {
 		WRAP_LOG("ERR_WRP_AF_INVALID_ENGINE\n");
 		return ERR_WRP_AF_INVALID_ENGINE;
 	}
@@ -223,9 +208,9 @@ uint32 al3awrapper_dispatchhw3a_afstats(void *isp_meta_data,void *alaf_stats)
  */
 uint32 al3awrapperaf_translatefocusmodetoaptype(uint32 focus_mode)
 {
-	  uint32 ret_focus_mode;
+	uint32 ret_focus_mode;
 
-	  switch(focus_mode){
+	switch(focus_mode) {
 	/*
 	* here just sample code, need to be implement by Framework define
 	      case alAFLib_AF_MODE_AUTO:
@@ -247,9 +232,9 @@ uint32 al3awrapperaf_translatefocusmodetoaptype(uint32 focus_mode)
 		  ret_focus_mode = FOCUS_MODE_EDOF;
 		  break;
 	*/
-		default:
-			ret_focus_mode = 0;
-			break;
+	default:
+		ret_focus_mode = 0;
+		break;
 	}
 
 	return ret_focus_mode;
@@ -265,8 +250,7 @@ uint32 al3awrapperaf_translatefocusmodetoaflibtype(uint32 focus_mode)
 {
 	uint32 ret_focus_mode;
 
-	switch(focus_mode)
-	{
+	switch(focus_mode) {
 	/*
 	 here just sample code, need to be implement by Framework define
 
@@ -296,9 +280,9 @@ uint32 al3awrapperaf_translatefocusmodetoaflibtype(uint32 focus_mode)
 	    break;
 
 	*/
-		default:
-			ret_focus_mode = alAFLib_AF_MODE_NOT_SUPPORTED;
-			break;
+	default:
+		ret_focus_mode = alAFLib_AF_MODE_NOT_SUPPORTED;
+		break;
 	}
 
 	return ret_focus_mode;
@@ -347,7 +331,7 @@ uint32 al3awrapperaf_translatecalibdattoaflibtype(void *eeprom_addr,struct allib
  */
 uint32 al3awrapperaf_translateroitoaflibtype(unsigned int frame_id,struct allib_af_input_roi_info_t *roi_info)
 {
-/*Sample code for continuous AF default setting in sensor raw size  1280*960 , 30% * 30% crop*/
+	/* Sample code for continuous AF default setting in sensor raw size  1280*960 , 30% * 30% crop */
 	roi_info->roi_updated = TRUE;
 	roi_info->type = alAFLib_ROI_TYPE_NORMAL;
 	roi_info->frame_id = frame_id;
@@ -424,7 +408,7 @@ uint32 al3awrapperaf_updateispconfig_af(struct allib_af_out_stats_config_t *lib_
 		isp_config->nfiltermode = HW3A_MF_31_MODE;
 		break;
 	case DISABLE:
-		default:
+	default:
 		isp_config->nfiltermode = HW3A_MF_DISABLE;
 		break;
 	}
