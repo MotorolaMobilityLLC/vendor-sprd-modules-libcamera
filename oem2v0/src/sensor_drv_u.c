@@ -2465,13 +2465,6 @@ cmr_int sns_destroy_ctrl_thread(struct sensor_drv_context *sensor_cxt)
 			if (ret_val != SENSOR_SUCCESS ) {
 				Sensor_PowerOn(sensor_cxt, SENSOR_FALSE);
 			}
-
-			CMR_LOGI("1 is identify, register OK");
-			ret_val = sns_open(sensor_cxt, sensor_id);
-			if (ret_val != SENSOR_SUCCESS ) {
-				Sensor_PowerOn(sensor_cxt, SENSOR_FALSE);
-			}
-
 		}
 
 		if (ret_val != SENSOR_SUCCESS) {

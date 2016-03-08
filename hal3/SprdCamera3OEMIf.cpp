@@ -2897,7 +2897,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 					mIsRecording = false;
 					if (rec_stream) {
 						ret = rec_stream->getQBufAddrForNum(frame_num, &videobuf_vir, &videobuf_phy);
-						if (ret == NO_ERROR && videobuf_vir != 0 && videobuf_phy != 0) {
+						if (ret == NO_ERROR && videobuf_vir != 0) {
 							mIsRecording = true;
 							if (mSlowPara.last_frm_timestamp == 0) {/*record first frame*/
 								mSlowPara.last_frm_timestamp = buffer_timestamp;
