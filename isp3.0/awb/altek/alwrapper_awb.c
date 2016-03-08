@@ -3,8 +3,8 @@
  *
  *  Created on: 2015/12/07
  *      Author: HanTseng
- *  Latest update: 2016/3/02
- *      Reviser: HanTseng 
+ *  Latest update: 2016/3/05
+ *      Reviser: MarkTseng
  *  Comments:
  *       This c file is mainly used for AP framework to:
  *       1. Query HW3A config setting
@@ -136,12 +136,14 @@ uint32 al3awrapperawb_getdefaultcfg(struct alhw3a_awb_cfginfo_t *aawbconfig)
 	uint32 ret = ERR_WPR_AWB_SUCCESS;
 	struct alhw3a_awb_cfginfo_t localparam;
 	uint8   i;
-	uint8   yfactor[16] = { 0, 0, 0, 4, 7, 10, 12, 14, 
-				15, 15, 15, 15, 14, 13, 10, 5};
+	uint8   yfactor[16] = { 0, 0, 0, 4, 7, 10, 12, 14,
+	                        15, 15, 15, 15, 14, 13, 10, 5
+	                      };
 	sint8   bbrfactor[33] = {22, 20, 18, 16, 15, 13, 11, 10, 8, 8,
-				6, 5, 3, 1, -1, -3, -4, -5, -6, -7, -8,
-				-9, -10, -11, -12, -13, -14, -15, -16,
-				-18, -18, -18, -18};
+	                         6, 5, 3, 1, -1, -3, -4, -5, -6, -7, -8,
+	                         -9, -10, -11, -12, -13, -14, -15, -16,
+	                         -18, -18, -18, -18
+	                        };
 
 	if (aawbconfig == NULL)
 		return ERR_WRP_AWB_INVALID_INPUT_PARAM;

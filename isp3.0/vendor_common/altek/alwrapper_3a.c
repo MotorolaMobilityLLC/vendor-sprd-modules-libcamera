@@ -3,8 +3,8 @@
  *
  *  Created on: 2015/12/05
  *      Author: MarkTseng
- *  Latest update: 2016/03/02
- *      Reviser: MarkTseng 
+ *  Latest update: 2016/3/05
+ *      Reviser: MarkTseng
  *  Comments:
  *       This c file is mainly used for AP framework to:
  *       1. Dispatch ISP stats to seperated stats
@@ -17,23 +17,11 @@
 #include <string.h>
 #include <sys/time.h>
 
-#ifdef  LOCAL_NDK_BUILD  /* test build in local */
-
-#include ".\..\..\INCLUDE\mtype.h"
-#include ".\..\..\INCLUDE\frmwk_hw3a_event_type.h"
-#include ".\..\..\INCLUDE\hw3a_stats.h"
-#include "alwrapper_3a.h"
-#include "alwrapper_3a_errcode.h"
-
-#else  /* normal release in AP */
-
 #include "mtype.h"
 #include "frmwk_hw3a_event_type.h"
 #include "hw3a_stats.h"
 #include "alwrapper_3a.h"
 #include "alwrapper_3a_errcode.h"
-
-#endif
 
 /******************************************************************************
  * function prototype
@@ -60,10 +48,10 @@
  * param udsof_idx[In] : current SOF index, should be from ISP driver layer
  * return: error code
  */
-uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta_ae_t* alisp_metadata_ae, 
-	struct isp_drv_meta_awb_t* alisp_metadata_awb, struct isp_drv_meta_af_t * alisp_metadata_af, 
-	struct isp_drv_meta_yhist_t * alisp_metadata_yhist, struct isp_drv_meta_antif_t * alisp_metadata_antif, 
-	struct isp_drv_meta_subsample_t * alisp_metadata_subsample, uint32 udsof_idx  )
+uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta_ae_t* alisp_metadata_ae,
+                                      struct isp_drv_meta_awb_t* alisp_metadata_awb, struct isp_drv_meta_af_t * alisp_metadata_af,
+                                      struct isp_drv_meta_yhist_t * alisp_metadata_yhist, struct isp_drv_meta_antif_t * alisp_metadata_antif,
+                                      struct isp_drv_meta_subsample_t * alisp_metadata_subsample, uint32 udsof_idx  )
 {
 	UINT32 ret = ERR_WRP_SUCCESS;
 	UINT8 *paddrlocal;
@@ -283,7 +271,7 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 
 		/* allocate memory buffer base on meta size of AWB stats */
 		if ( alisp_metadata_awb->uawbstatssize > HW3A_AWB_STATS_BUFFER_SIZE  ) {
-		    return ERR_WRP_ALLOCATE_BUFFER;
+			return ERR_WRP_ALLOCATE_BUFFER;
 		}
 
 		/* shift to data addr */
@@ -346,7 +334,7 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 
 		// allocate memory buffer base on meta size of AF stats
 		if ( alisp_metadata_af->uafstatssize > HW3A_AF_STATS_BUFFER_SIZE ) {
-		    return ERR_WRP_ALLOCATE_BUFFER;
+			return ERR_WRP_ALLOCATE_BUFFER;
 		}
 
 		// shift to data addr
@@ -383,7 +371,7 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 
 		/* allocate memory buffer base on meta size of YHist stats */
 		if ( alisp_metadata_yhist->uyhiststatssize > HW3A_YHIST_STATS_BUFFER_SIZE ) {
-		    return ERR_WRP_ALLOCATE_BUFFER;
+			return ERR_WRP_ALLOCATE_BUFFER;
 		}
 
 		/* shift to data addr */
@@ -420,7 +408,7 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 
 		/* allocate memory buffer base on meta size of AntiF stats */
 		if ( alisp_metadata_antif->uantifstatssize > HW3A_ANTIF_STATS_BUFFER_SIZE ) {
-		    return ERR_WRP_ALLOCATE_BUFFER;
+			return ERR_WRP_ALLOCATE_BUFFER;
 		}
 
 		/* shift to data addr */
@@ -466,7 +454,7 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 
 		/* allocate memory buffer base on meta size of Subsample stats */
 		if ( alisp_metadata_subsample->usubsamplestatssize > HW3A_SUBIMG_STATS_BUFFER_SIZE ) {
-		    return ERR_WRP_ALLOCATE_BUFFER;
+			return ERR_WRP_ALLOCATE_BUFFER;
 		}
 
 		/* shift to data addr */
@@ -563,10 +551,10 @@ uint32 al3awrapper_getcurrentdlsequence( uint8 ucahbsensoreid, struct alisp_dlds
  */
 uint32 al3awrapper_setdlsequence( struct alisp_dldsequence_t adldsequence )
 {
-    UINT32 ret = ERR_WRP_SUCCESS;
-    UINT8 ucahbsensoreid, ucIsSingle3AMode;
+	UINT32 ret = ERR_WRP_SUCCESS;
+	UINT8 ucahbsensoreid, ucIsSingle3AMode;
 
-    ucahbsensoreid = adldsequence.ucahbsensoreid;
+	ucahbsensoreid = adldsequence.ucahbsensoreid;
 #ifndef LOCAL_NDK_BUILD   /* test build in local   */
 	/* W9 config */
 //	ret = ISPDRV_SetBasicPreivewDldSeq( ucahbsensoreid, (UINT8 *)(&adldsequence.aucpreview_baisc_dldseq[0]), adldsequence.ucpreview_baisc_dldseqlength );
@@ -597,38 +585,4 @@ UINT32 al3awrapper_getversion( float *fwrapversion )
 	*fwrapversion = _WRAPPER_VER;
 	
 	return ret;
-}
-
-/*
- * brief Separate 3ABin
- * param a_pc3ABinAdd [IN], pointer of 3A Bin
- * param a_pcAEAdd     [OUT], location pointer of AE bin
- * param a_pcAFAdd     [OUT], location pointer of AF bin
- * param a_pcAWBAdd    [OUT], location pointer of AWB bin
- * return None
- */
-void Separate3ABin(uint32* a_pc3ABinAdd, uint32** a_pcAEAdd, uint32** a_pcAFAdd, uint32** a_pcAWBAdd)
-{
-	struct header_info *t_header_info;
-	t_header_info = (struct header_info *)a_pc3ABinAdd;
-
-	*a_pcAEAdd = a_pc3ABinAdd + t_header_info->uwlocation1;
-	*a_pcAFAdd = a_pc3ABinAdd + t_header_info->uwlocation2;
-	*a_pcAWBAdd = a_pc3ABinAdd + t_header_info->uwlocation3;
-}
-
-/*
- * brief Separate ShadongIRPBin
- * param a_pcShadingIRPBinAdd [IN], pointer of ShadingIRP Bin
- * param a_pcShadingAdd      [OUT], location pointer of Shading bin
- * param a_pcIRPAdd          [OUT], location pointer of IRP bin
- * return None
- */
-void SeparateShadingIRPBin(uint32* a_pcShadingIRPBinAdd, uint32** a_pcShadingAdd, uint32** a_pcIRPAdd)
-{
-	struct header_info *t_header_info;
-	t_header_info = (struct header_info *)a_pcShadingIRPBinAdd;
-
-	*a_pcShadingAdd = a_pcShadingIRPBinAdd + t_header_info->uwlocation1;
-	*a_pcIRPAdd = a_pcShadingIRPBinAdd + t_header_info->uwlocation2;
 }

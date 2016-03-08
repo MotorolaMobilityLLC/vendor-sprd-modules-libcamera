@@ -131,7 +131,6 @@ enum allib_awb_set_flash_states_t {
 
 enum allib_awb_awb_debug_type {
 	alawb_dbg_none = 0,
-	alawb_dbg_enable_output,
 	alawb_dbg_enable_log,
 	alawb_dbg_manual,
 	alawb_dbg_manual_flowCheck,
@@ -275,13 +274,14 @@ typedef uint32 (*allib_awb_estimation_func)(void *hw3a_stats_data, void *awb_dat
 #pragma pack(push) /* push current alignment setting to stack */
 #pragma pack(4)    /* new alignment setting */
 struct allib_awb_runtime_obj_t {
-	pthread_mutex_t              mutex_obj;
-	void                         *awb;
-	allib_awb_init_func          initial;
-	allib_awb_deinit_func        deinit;
-	allib_awb_set_param_func     set_param;
-	allib_awb_get_param_func     get_param;
-	allib_awb_estimation_func    estimation;
+	pthread_mutex_t             mutex_obj;
+	uint32                      obj_verification;
+	void                        *awb;
+	allib_awb_init_func         initial;
+	allib_awb_deinit_func       deinit;
+	allib_awb_set_param_func    set_param;
+	allib_awb_get_param_func    get_param;
+	allib_awb_estimation_func   estimation;
 };
 #pragma pack(pop)  /* restore old alignment setting from stack */
 

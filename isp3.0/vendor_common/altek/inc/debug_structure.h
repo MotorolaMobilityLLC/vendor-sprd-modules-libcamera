@@ -7,6 +7,8 @@
  *****************************************************************************/
 #include "mtype.h"
 
+#define DEBUG_STRUCT_VERSION               (500)
+
 #define MAX_AEFE_DEBUG_SIZE_STRUCT1        (615)
 #define MAX_AEFE_DEBUG_SIZE_STRUCT2        (5120)
 #define MAX_GENERAL_DEBUG_SIZE_STRUCT1     (46)
@@ -14,13 +16,15 @@
 #define MAX_AWB_DEBUG_SIZE_STRUCT2         (10240)
 #define MAX_AF_DEBUG_SIZE_STRUCT1          (379)
 #define MAX_AF_DEBUG_SIZE_STRUCT2          (7168)
-#define MAX_OTP_DEBUG_SIZE_STRUCT1         (40)
-#define MAX_OTP_DEBUG_SIZE_STRUCT2         (3356)
 #define MAX_BIN1_DEBUG_SIZE_STRUCT2        (26412)
 #define MAX_BIN2_DEBUG_SIZE_STRUCT2        (1137144)
 #define START_STR_SIZE                     (31)
 #define END_STR_SIZE                       (24)
 #define PROJECT_NAME_SIZE                  (16)
+#define OTP_RESERVED1_SIZE                 (8)
+#define OTP_RESERVED2_SIZE                 (8)
+#define OTP_RESERVED3_SIZE                 (6)
+#define OTP_LSC_DATA_SIZE                  (1658)
 #define SHADING_DEBUG_VERSION_NUMBER       (12)
 #define IRP_TUNING_DEBUG_INFO              (6)
 #define IRP_TUNING_DEBUG_CCM               (9)
@@ -36,6 +40,57 @@ enum e_scinfo_color_order {
 	E_SCINFO_COLOR_ORDER_GB,
 	E_SCINFO_COLOR_ORDER_BG
 };
+
+#pragma pack(push) /* push current alignment setting to stack */
+#pragma pack(4)    /* new alignment setting  */
+struct otp_report_debug1 {
+    uint8 current_module_calistatus;  /* 00:Fail, 01:Success */
+    uint8 current_module_year;  /* eg: 2015 0x0F */
+    uint8 current_module_month;  /* eg: Jan 0x01 */
+    uint8 current_module_day;  /* eg: 1st 0x01 */
+    uint8 current_module_mid;  /* 0x02(Truly) */
+    uint8 current_module_lens_id;
+    uint8 current_module_vcm_id;
+    uint8 current_module_driver_ic;
+    uint8 reserved1[OTP_RESERVED1_SIZE];  /* Set 0x00 */
+    uint16 current_module_iso;  /* MinISO */
+    uint16 current_module_r_gain;  /* ISO_Gain_R */
+    uint16 current_module_g_gain;  /* ISO_Gain_G */
+    uint16 current_module_b_gain;  /* ISO_Gain_B */
+    uint8 reserved2[OTP_RESERVED2_SIZE];  /* Set 0x00 */
+    uint8 reserved3[OTP_RESERVED3_SIZE];  /* Set 0x00 */
+    uint8 current_module_af_flag;  /* 00:Fail, 01:Success */
+    uint16 current_module_infinity;
+    uint16 current_module_macro;
+    uint8 total_check_sum;
+};
+#pragma pack(pop)  /* restore old alignment setting from stack  */
+
+#pragma pack(push) /* push current alignment setting to stack */
+#pragma pack(4)    /* new alignment setting  */
+struct otp_report_debug2 {
+    uint8 current_module_calistatus;  /* 00:Fail, 01:Success */
+    uint8 current_module_year;  /* eg: 2015 0x0F */
+    uint8 current_module_month;  /* eg: Jan 0x01 */
+    uint8 current_module_day;  /* eg: 1st 0x01 */
+    uint8 current_module_mid;  /* 0x02(Truly) */
+    uint8 current_module_lens_id;
+    uint8 current_module_vcm_id;
+    uint8 current_module_driver_ic;
+    uint8 reserved1[OTP_RESERVED1_SIZE];  /* Set 0x00 */
+    uint16 current_module_iso;  /* MinISO */
+    uint16 current_module_r_gain;  /* ISO_Gain_R */
+    uint16 current_module_g_gain;  /* ISO_Gain_G */
+    uint16 current_module_b_gain;  /* ISO_Gain_B */
+    uint8 reserved2[OTP_RESERVED2_SIZE];  /* Set 0x00 */
+    uint8 current_module_lsc[OTP_LSC_DATA_SIZE];  /* LSC Data */
+    uint8 reserved3[OTP_RESERVED3_SIZE];  /* Set 0x00 */
+    uint8 current_module_af_flag;  /* 00:Fail, 01:Success */
+    uint16 current_module_infinity;
+    uint16 current_module_macro;
+    uint8 total_check_sum;
+};
+#pragma pack(pop)  /* restore old alignment setting from stack  */
 
 #pragma pack(push) /* push current alignment setting to stack */
 #pragma pack(4)    /* new alignment setting  */
@@ -179,7 +234,7 @@ struct debug_info1 {
 								 * alAFLib_output_report_t->alAF_EXIF_data[]
 								 * alAFLib_output_report_t->alAF_EXIF_data_size
 								 */
-	uint8 otp_report_debug_info1[MAX_OTP_DEBUG_SIZE_STRUCT1];
+	struct otp_report_debug1 otp_report_debug_info1;
 	struct raw_img_debug raw_debug_info1;	/* Senosr/ISP, included into S_ISP_DEBUG_INFO of ISP API: u32 ISPDrv_GetOutputBuffer(u8 a_ucSensor,
 						 * u8 a_ucOutputImage, u32 a_pudOutputBuffer, S_SCENARIO_SIZE a_ptCropSize, S_ISP_DEBUG_INFO * a_ptIspDebugInfo)
 						 */
@@ -213,7 +268,7 @@ struct debug_info2 {
 								 * alAFLib_output_report_t->alaf_debug_data[]
 								 * alAFLib_output_report_t->alAF_debug_data_size
 								 */
-	uint8 otp_report_debug_info2[MAX_OTP_DEBUG_SIZE_STRUCT2];
+	struct otp_report_debug2 otp_report_debug_info2;
 	struct irp_gamma_tone irp_tuning_para_debug_info2;	/* Included into S_ISP_DEBUG_INFO of ISP API: u32 ISPDrv_GetOutputBuffer(u8 a_ucSensor, 
 								 * u8 a_ucOutputImage, u32 a_pudOutputBuffer, S_SCENARIO_SIZE a_ptCropSize, S_ISP_DEBUG_INFO * a_ptIspDebugInfo)
 								 */

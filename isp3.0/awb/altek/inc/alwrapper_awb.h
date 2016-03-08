@@ -8,40 +8,22 @@
 #ifndef _AL_3AWRAPPER_AWB_H_
 #define _AL_3AWRAPPER_AWB_H_
 
-#ifdef LOCAL_NDK_BUILD
-
-#include ".\..\..\INCLUDE\mtype.h"
-/* ISP Framework define */
-#include ".\..\..\INCLUDE\frmwk_hw3a_event_type.h"
-#include ".\..\..\INCLUDE\hw3a_stats.h"
-
-/* AWB lib define */
-#include ".\..\..\INCLUDE\allib_awb.h"
-#include ".\..\..\INCLUDE\allib_awb_errcode.h"
-
-/* Wrapper define */
-#include "alwrapper_3a.h"
-
-#else
 #include "mtype.h"
 /* ISP Framework define */
 #include "frmwk_hw3a_event_type.h"
 #include "hw3a_stats.h"
-
 /* AWB lib define */
 #include "allib_awb.h"
 #include "allib_awb_errcode.h"
-
 /* Wrapper define */
 #include "alwrapper_3a.h"
-#endif
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-#define _WRAPPER_AWB_VER 0.8030
+#define _WRAPPER_AWB_VER 0.8040
 
 /*
  * API name: al3awrapperawb_setotpcalibration
