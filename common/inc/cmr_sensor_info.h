@@ -324,6 +324,7 @@ struct sensor_otp_cust_info {
 	struct sensor_otp_lsc_info lsc_info;
 	cmr_u8 reserved2;
 	struct sensor_otp_af_info af_info;
+	cmr_u8 checksum;
 };
 
 #endif
