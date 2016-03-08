@@ -96,7 +96,7 @@ static cmr_int aflaltek_get_lib_ver(struct aflaltek_cxt *cxt_ptr)
 	cmr_bzero(&lib_ver, sizeof(lib_ver));
 	if (cxt_ptr->lib_ops.get_lib_ver)
 		cxt_ptr->lib_ops.get_lib_ver(&lib_ver);
-	ISP_LOGI("LIB Ver %d.%d", lib_ver.major_version, lib_ver.minor_version);
+	ISP_LOGI("LIB Ver %04d.%04d", lib_ver.major_version, lib_ver.minor_version);
 
 	return ISP_SUCCESS;
 exit:

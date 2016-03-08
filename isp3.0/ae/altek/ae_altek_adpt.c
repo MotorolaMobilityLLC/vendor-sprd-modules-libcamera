@@ -751,7 +751,7 @@ static cmr_int aealtek_get_lib_ver(struct aealtek_cxt *cxt_ptr)
 	cmr_bzero(&lib_ver, sizeof(lib_ver));
 	if (cxt_ptr->lib_ops.get_lib_ver)
 		cxt_ptr->lib_ops.get_lib_ver(&lib_ver);
-	ISP_LOGI("LIB Ver %d.%d", lib_ver.major_version, lib_ver.minor_version);
+	ISP_LOGI("LIB Ver %04d.%04d", lib_ver.major_version, lib_ver.minor_version);
 
 	return ISP_SUCCESS;
 exit:
@@ -1542,8 +1542,8 @@ static cmr_int aealtek_set_touch_zone(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 	}
 	if (in_ptr->touch_zone.zone.w <= 0
 		|| in_ptr->touch_zone.zone.h <= 0
-		|| (cmr_u32)in_ptr->touch_zone.zone.w > cxt_ptr->cur_status.ui_param.work_info.resolution.frame_size.w
-		|| (cmr_u32)in_ptr->touch_zone.zone.h > cxt_ptr->cur_status.ui_param.work_info.resolution.frame_size.h) {
+		|| ((cmr_u32)in_ptr->touch_zone.zone.w + in_ptr->touch_zone.zone.x) > cxt_ptr->cur_status.ui_param.work_info.resolution.frame_size.w
+		|| ((cmr_u32)in_ptr->touch_zone.zone.h + in_ptr->touch_zone.zone.y) > cxt_ptr->cur_status.ui_param.work_info.resolution.frame_size.h) {
 		ISP_LOGE("x=%d,y=%d,w=%d,h=%d",in_ptr->touch_zone.zone.x,
 				in_ptr->touch_zone.zone.y,
 				in_ptr->touch_zone.zone.w,
@@ -2822,6 +2822,7 @@ static cmr_int aealtek_set_fd_param(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 		roi_ptr->roi[i].roi.w = ex - sx + 1;
 		roi_ptr->roi[i].roi.h = ey - sy + 1;
 	}
+
 	type = AE_SET_PARAM_FACE_ROI;
 	in_param.ae_set_param_type = type;
 	if (obj_ptr && obj_ptr->set_param)

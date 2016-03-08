@@ -382,11 +382,6 @@ static cmr_int fd_start(cmr_handle class_handle, struct fd_start_parameter *para
 		return CMR_CAMERA_INVALID_PARAM;
 	}
 
-	if (!param->frame_data) {
-		CMR_LOGE("frame_data is NULL. fail");
-		return CMR_CAMERA_INVALID_PARAM;
-	}
-
 	message.data = (void *)malloc(sizeof(struct fd_start_parameter));
 	if (NULL == message.data) {
 		CMR_LOGE("NO mem, Fail to alloc memory for msg data");
