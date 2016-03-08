@@ -2711,15 +2711,17 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 	if (ret) {
 		ISP_LOGE("failed to set ae sof");
 	}
+	ISP_LOGE("test msg 0");
 	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_GET_HW_ISO_SPEED, NULL, &ae_out);
 	if (ret) {
 		ISP_LOGE("failed to get hw_iso_speed");
 	}
+	ISP_LOGE("test msg 1");
 	ret = isp_dev_access_cfg_iso_speed(cxt->dev_access_handle, &ae_out.hw_iso_speed);
 	if (ret) {
 		ISP_LOGE("failed to cfg iso speed");
 	}
-
+	ISP_LOGE("test msg 2");
 	return ret;
 }
 
