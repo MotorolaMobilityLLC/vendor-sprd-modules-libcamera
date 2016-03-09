@@ -178,6 +178,7 @@ struct aealtek_cxt {
 
 	cmr_s32 lock_cnt;
 	cmr_s32 ae_state;
+	cmr_s32 is_script_mode;
 
 	struct aealtek_status prv_status;
 	struct aealtek_status cur_status;
@@ -284,6 +285,50 @@ static void aealtek_print_lib_log(struct aealtek_cxt *cxt_ptr, struct ae_output_
 #endif
 exit:
 	return;
+}
+
+static cmr_int aealtek_set_min_frame_length(struct aealtek_cxt *cxt_ptr, cmr_int max_fps, cmr_int line_time)
+{
+	cmr_int ret = ISP_ERROR;
+
+
+	if (!cxt_ptr) {
+		ISP_LOGE("param %p is NULL !!!", cxt_ptr);
+		ret = ISP_PARAM_NULL;
+		goto exit;
+	}
+	if (0 != max_fps && 0 != line_time) {
+		cxt_ptr->cur_status.min_frame_length = SENSOR_EXP_US_BASE / max_fps / line_time;
+	} else {
+		cxt_ptr->cur_status.min_frame_length = 0;
+	}
+	ISP_LOGI("min_frame_length=%d", cxt_ptr->cur_status.min_frame_length);
+	return ISP_SUCCESS;
+exit:
+	return ret;
+}
+
+static cmr_int aealtek_set_dummy(struct aealtek_cxt *cxt_ptr, struct aealtek_exposure_param *exp_param_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+	cmr_u32 min_frame_length = 0;
+
+
+	if (!cxt_ptr || !exp_param_ptr) {
+		ISP_LOGE("param %p %p is NULL !!!", cxt_ptr, exp_param_ptr);
+		ret = ISP_PARAM_NULL;
+		goto exit;
+	}
+	exp_param_ptr->dummy = 0;
+	min_frame_length = cxt_ptr->cur_status.min_frame_length;
+	if (0 != min_frame_length) {
+		if (exp_param_ptr->exp_line < min_frame_length) {
+			exp_param_ptr->dummy = min_frame_length - exp_param_ptr->exp_line;
+		}
+	}
+	return ISP_SUCCESS;
+exit:
+	return ret;
 }
 
 static cmr_int aealtek_convert_otp(struct aealtek_cxt *cxt_ptr, struct calib_wb_gain_t *otp_ptr)
@@ -1343,6 +1388,9 @@ static cmr_int aealtek_set_fps(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	enum ae_set_param_type_t type = 0;
 	struct ae_set_param_content_t *param_ct_ptr = NULL;
 
+	cmr_u32 max_fps = 0;
+	cmr_u32 line_time = 0;
+
 
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
@@ -1362,6 +1410,13 @@ static cmr_int aealtek_set_fps(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 		lib_ret = obj_ptr->set_param(&in_param, output_param_ptr, obj_ptr->ae);
 	if (lib_ret)
 		goto exit;
+#if 0
+	max_fps = cxt_ptr->nxt_status.ui_param.fps.max_fps;
+	line_time = cxt_ptr->cur_status.ui_param.work_info.resolution.line_time;
+	ret = aealtek_set_min_frame_length(cxt_ptr, max_fps, line_time);
+	if (ret)
+		ISP_LOGW("warning set_min_frame ret=%ld !!!", ret);
+#endif
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld, lib_ret=%ld !!!", ret, lib_ret);
@@ -1566,6 +1621,39 @@ exit:
 	return ret;
 }
 
+static cmr_int aealtek_set_script_mode(struct aealtek_cxt *cxt_ptr, enum ae_script_mode_t script_mode)
+{
+	cmr_int ret = ISP_ERROR;
+
+	cmr_int lib_ret = 0;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t *output_param_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t *param_ct_ptr = NULL;
+
+
+	if (!cxt_ptr) {
+		ISP_LOGE("param %p is NULL error!", cxt_ptr);
+		goto exit;
+	}
+	obj_ptr = &cxt_ptr->al_obj;
+	output_param_ptr = &cxt_ptr->lib_data.output_data;
+	param_ct_ptr = &in_param.set_param;
+
+	type = AE_SET_PARAM_SET_SCRIPT_MODE;
+	in_param.ae_set_param_type = type;
+	param_ct_ptr->script_mode = script_mode;
+	if (obj_ptr && obj_ptr->set_param)
+		lib_ret = obj_ptr->set_param(&in_param, output_param_ptr, obj_ptr->ae);
+	if (lib_ret)
+		goto exit;
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld, lib_ret=%ld !!!", ret, lib_ret);
+	return ret;
+}
+
 static cmr_int aealtek_set_convergence_req(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr)
 {
 	cmr_int ret = ISP_ERROR;
@@ -1732,7 +1820,8 @@ static cmr_int aealtek_first_work(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_pa
 
 	struct ae_set_parameter_init_t param_init;
 	struct aealtek_lib_exposure_data ae_exposure;
-
+	cmr_u32 max_fps = 0;
+	cmr_u32 line_time = 0;
 
 	if (!cxt_ptr) {
 		ISP_LOGE("param is NULL error!");
@@ -1759,29 +1848,17 @@ static cmr_int aealtek_first_work(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_pa
 	if (ret)
 		goto exit;
 
-	/*fps calc*/
+	max_fps = cxt_ptr->nxt_status.ui_param.work_info.resolution.max_fps;
+	line_time = cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time;
+	ret = aealtek_set_min_frame_length(cxt_ptr, max_fps, line_time);
+	if (ret)
+		ISP_LOGW("warning set_min_frame ret=%ld !!!", ret);
 
-	if (0 != cxt_ptr->nxt_status.ui_param.work_info.resolution.max_fps
-		&& 0 != cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time) {
-		cxt_ptr->nxt_status.min_frame_length = SENSOR_EXP_US_BASE / cxt_ptr->nxt_status.ui_param.work_info.resolution.max_fps / cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time;
-	} else {
-		cxt_ptr->nxt_status.min_frame_length = 0;
-	}
-	ISP_LOGI("min_frame_length=%d", cxt_ptr->nxt_status.min_frame_length);
-
-
-	/*fps ctrl*/
-	cxt_ptr->sensor_exp_data.lib_exp.dummy = 0;
-	if (0 != cxt_ptr->nxt_status.min_frame_length) {
-		if (cxt_ptr->sensor_exp_data.lib_exp.exp_line < cxt_ptr->nxt_status.min_frame_length) {
-			cxt_ptr->sensor_exp_data.lib_exp.dummy = cxt_ptr->nxt_status.min_frame_length - cxt_ptr->sensor_exp_data.lib_exp.exp_line;
-		}
-	}
+	ret = aealtek_set_dummy(cxt_ptr, &cxt_ptr->sensor_exp_data.lib_exp);
+	if (ret)
+		ISP_LOGW("warning set_dummy ret=%ld !!!", ret);
 
 	cxt_ptr->sensor_exp_data.write_exp = cxt_ptr->sensor_exp_data.lib_exp;
-	ISP_LOGI("gain=%d, exp_line=%d, exp_time=%d", cxt_ptr->sensor_exp_data.write_exp.gain,
-				cxt_ptr->sensor_exp_data.write_exp.exp_line,
-				cxt_ptr->sensor_exp_data.write_exp.exp_time);
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld", ret);
@@ -1802,6 +1879,9 @@ static cmr_int aealtek_work_preview(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 
 	struct aealtek_lib_exposure_data ae_exposure;
 
+	cmr_u32 max_fps = 0;
+	cmr_u32 line_time = 0;
+
 
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
@@ -1812,15 +1892,12 @@ static cmr_int aealtek_work_preview(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 	output_data_ptr = &cxt_ptr->lib_data.output_data;
 	param_ct_ptr = &set_in_param.set_param;
 
-	/*fps calc*/
 
-	if (0 != in_ptr->work_param.resolution.max_fps
-		&& 0 != in_ptr->work_param.resolution.line_time) {
-		cxt_ptr->nxt_status.min_frame_length = SENSOR_EXP_US_BASE / in_ptr->work_param.resolution.max_fps / in_ptr->work_param.resolution.line_time;
-	} else {
-		cxt_ptr->nxt_status.min_frame_length = 0;
-	}
-	ISP_LOGI("min_frame_length=%d", cxt_ptr->nxt_status.min_frame_length);
+	max_fps = in_ptr->work_param.resolution.max_fps;
+	line_time = in_ptr->work_param.resolution.line_time;
+	ret = aealtek_set_min_frame_length(cxt_ptr, max_fps, line_time);
+	if (ret)
+		ISP_LOGW("warning set_min_frame ret=%ld !!!", ret);
 
 	//preview_sensor_info
 	preview_sensor_ptr = &param_ct_ptr->normal_sensor_info;
@@ -1858,6 +1935,11 @@ static cmr_int aealtek_work_preview(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 	ret = aealtek_lib_exposure2sensor(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
 	if (ret)
 		goto exit;
+
+	ret = aealtek_set_dummy(cxt_ptr, &cxt_ptr->sensor_exp_data.lib_exp);
+	if (ret)
+		ISP_LOGW("warning set_dummy ret=%ld !!!", ret);
+
 	cxt_ptr->sensor_exp_data.write_exp = cxt_ptr->sensor_exp_data.lib_exp;
 	return ISP_SUCCESS;
 exit:
@@ -2151,32 +2233,36 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 			in_ptr->work_param.resolution.line_time);
 
 	cxt_ptr->nxt_status.ui_param.work_info = in_ptr->work_param;
-#if 0
-	if (0 == cxt_ptr->work_cnt) {
+
+	work_mode = in_ptr->work_param.work_mode;
+	switch (work_mode) {
+	case ISP3A_WORK_MODE_PREVIEW:
 		cxt_ptr->nxt_status.is_hdr_status = 0;
+		ret = aealtek_work_preview(cxt_ptr, in_ptr, out_ptr);
+		break;
+	case ISP3A_WORK_MODE_CAPTURE:
+		ret = aealtek_work_capture(cxt_ptr, in_ptr, out_ptr);
 		ret = 0;
-		//ret = aealtek_first_work(cxt_ptr, in_ptr, out_ptr);
-	} else
-#endif
-	{
-		work_mode = in_ptr->work_param.work_mode;
-		switch (work_mode) {
-		case ISP3A_WORK_MODE_PREVIEW:
-			cxt_ptr->nxt_status.is_hdr_status = 0;
-			ret = aealtek_work_preview(cxt_ptr, in_ptr, out_ptr);
-			break;
-		case ISP3A_WORK_MODE_CAPTURE:
-			ret = aealtek_work_capture(cxt_ptr, in_ptr, out_ptr);
-			ret = 0;
-			break;
-		case ISP3A_WORK_MODE_VIDEO:
-			cxt_ptr->nxt_status.is_hdr_status = 0;
-			//ret = aealtek_work_video(cxt_ptr, in_ptr, out_ptr);
-			ret = 0;
-			break;
-		default:
-			ISP_LOGE("not support work mode %d", work_mode);
-			break;
+		break;
+	case ISP3A_WORK_MODE_VIDEO:
+		cxt_ptr->nxt_status.is_hdr_status = 0;
+		//ret = aealtek_work_video(cxt_ptr, in_ptr, out_ptr);
+		ret = 0;
+		break;
+	default:
+		ISP_LOGE("not support work mode %d", work_mode);
+		break;
+	}
+	if (ISP_CAP_MODE_MAX == in_ptr->work_param.capture_mode) {
+		ret = aealtek_set_script_mode(cxt_ptr, AE_SCRIPT_ON); //TBD FE_SCRIPT_ON
+		if (ret)
+			goto exit;
+		cxt_ptr->is_script_mode = 1;
+	} else {
+		if (cxt_ptr->is_script_mode) {
+			ret = aealtek_set_script_mode(cxt_ptr, AE_SCRIPT_OFF);
+			if (ret)
+				goto exit;
 		}
 	}
 
@@ -2188,8 +2274,9 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 	if (ret)
 		goto exit;
 
-	aealtek_lib_to_out_info(cxt_ptr, &cxt_ptr->lib_data.output_data, &out_ptr->proc_out.ae_info);
-
+	ret = aealtek_lib_to_out_info(cxt_ptr, &cxt_ptr->lib_data.output_data, &out_ptr->proc_out.ae_info);
+	if (ret)
+		goto exit;
 	ret = aealtek_pre_to_sensor(cxt_ptr, 1);
 	if (ret)
 		goto exit;
@@ -3183,6 +3270,28 @@ exit:
 	return ret;
 }
 
+static cmr_int aealtek_get_lib_script_info(struct aealtek_cxt *cxt_ptr, struct ae_output_data_t *from_ptr, struct aealtek_exposure_param *to_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+
+
+	if (!cxt_ptr || !from_ptr || !to_ptr) {
+		ISP_LOGE("param %p %p %p is NULL error!", cxt_ptr, from_ptr, to_ptr);
+		goto exit;
+	}
+	ISP_LOGI("ae_script_mode=%d", from_ptr->ae_script_mode);
+	ISP_LOGI("max_cnt=%d, cur_cnt=%d", from_ptr->ae_script_info.udmaxscriptcnt,
+			from_ptr->ae_script_info.udcurrentscriptcnt);
+
+	to_ptr->exp_line = from_ptr->ae_script_info.udcurrentscriptexpline;
+	to_ptr->exp_time = from_ptr->ae_script_info.udcurrentscriptexptime;
+	to_ptr->gain = from_ptr->ae_script_info.udcurrentscriptgain;
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld !!!", ret);
+	return ret;
+}
+
 static cmr_int ae_altek_adpt_init(void *in, void *out, cmr_handle *handle)
 {
 	cmr_int ret = ISP_ERROR;
@@ -3456,19 +3565,19 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 		goto exit;
 	}
 	//cxt_ptr->update_list. //TBD
-
-	ret = aealtek_lib_exposure2sensor(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
-	if (ret)
-		goto exit;
-
-	/*fps ctrl*/
-	cxt_ptr->sensor_exp_data.lib_exp.dummy = 0;
-	if (0 != cxt_ptr->nxt_status.min_frame_length) {
-		if (cxt_ptr->sensor_exp_data.lib_exp.exp_line < cxt_ptr->nxt_status.min_frame_length) {
-			cxt_ptr->sensor_exp_data.lib_exp.dummy = cxt_ptr->nxt_status.min_frame_length - cxt_ptr->sensor_exp_data.lib_exp.exp_line;
-		}
+	if (0 == cxt_ptr->is_script_mode) {
+		ret = aealtek_lib_exposure2sensor(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
+		if (ret)
+			goto exit;
+	} else {
+		ret = aealtek_get_lib_script_info(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
+		if (ret)
+			goto exit;
 	}
 
+	ret = aealtek_set_dummy(cxt_ptr, &cxt_ptr->sensor_exp_data.lib_exp);
+	if (ret)
+		ISP_LOGW("warning set_dummy ret=%ld !!!", ret);
 
 	aealtek_change_ae_state(cxt_ptr, cxt_ptr->ae_state, ISP3A_AE_CTRL_ST_SEARCHING);
 
