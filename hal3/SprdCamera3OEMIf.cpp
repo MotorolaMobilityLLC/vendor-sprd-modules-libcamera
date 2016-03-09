@@ -4374,6 +4374,15 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_uint cameraParaTag)
 			SET_PARM(mCameraHandle, CAMERA_PARAM_SENSOR_ROTATION, sprddefInfo.sensor_rotation);
 		}
 		break;
+        case ANDROID_SPRD_UCAM_SKIN_LEVEL:
+                {
+                        SPRD_DEF_Tag sprddefInfo;
+
+                        mSetting->getSPRDDEFTag(&sprddefInfo);
+                        HAL_LOGD("perfect_skin_level = %d", sprddefInfo.perfect_skin_level);
+                        SET_PARM(mCameraHandle, CAMERA_PARAM_PERFECT_SKIN_LEVEL, sprddefInfo.perfect_skin_level);
+                }
+                break;
         case ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR:
 		{
 			SPRD_DEF_Tag sprddefInfo;

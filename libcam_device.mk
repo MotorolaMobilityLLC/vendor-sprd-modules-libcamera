@@ -17,3 +17,6 @@ PRODUCT_PACKAGES += $(ALTEK_LIB)
 PRODUCT_PACKAGES += $(ALTEK_FW)
 PRODUCT_PACKAGES += $(TUNING_BIN)
 PRODUCT_PACKAGES += tuning.bin
+
+### face beautify lib
+PRODUCT_PACKAGES += libts_face_beautify_hal

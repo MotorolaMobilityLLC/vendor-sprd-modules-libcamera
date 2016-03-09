@@ -2861,6 +2861,15 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 		HAL_LOGV("rot %d", s_setting[mCameraId].sprddefInfo.sensor_rotation);
 	}
 
+        if (frame_settings.exists(ANDROID_SPRD_UCAM_SKIN_LEVEL)) {
+                int32_t perfectskinlevel = frame_settings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[0];
+
+                if (perfectskinlevel>100 || perfectskinlevel<0)
+                        perfectskinlevel = 0;
+                s_setting[mCameraId].sprddefInfo.perfect_skin_level = perfectskinlevel;
+                pushAndroidParaTag(ANDROID_SPRD_UCAM_SKIN_LEVEL);
+                HAL_LOGD("perfectskinlevel %d", s_setting[mCameraId].sprddefInfo.perfect_skin_level);
+        }
 
         if (frame_settings.exists(ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR)) {
 		uint8_t flip_on = frame_settings.find(ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR).data.u8[0];

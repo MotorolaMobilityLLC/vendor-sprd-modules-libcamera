@@ -27,6 +27,12 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_Y_DENOISE)),true)
 LOCAL_SHARED_LIBRARIES += libynoise
 endif
 
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),false)
+else
+LOCAL_SHARED_LIBRARIES += libts_face_beautify_hal
+endif
+
 ifeq ($(strip $(isp_use2.0)),1)
 ifeq ($(strip $(TARGET_ARCH)),arm)
 LOCAL_SHARED_LIBRARIES += libAF libsft_af_ctrl libdeflicker

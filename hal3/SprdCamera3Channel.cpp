@@ -849,6 +849,10 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number)
 		case ANDROID_SPRD_SENSOR_ROTATION:
 			mOEMIf->SetCameraParaTag(ANDROID_SPRD_SENSOR_ROTATION);
 			break;
+		case ANDROID_SPRD_UCAM_SKIN_LEVEL:
+			HAL_LOGV("ANDROID_SPRD_UCAM_SKIN_LEVEL");
+			mOEMIf->SetCameraParaTag(ANDROID_SPRD_UCAM_SKIN_LEVEL);
+			break;
                 case ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR:
                         HAL_LOGV("ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR");
                         mOEMIf->SetCameraParaTag(ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR);

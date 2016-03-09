@@ -31,6 +31,8 @@ else
 LOCAL_C_INCLUDES += hardware/libhardware/modules/gralloc/
 endif
 
+include $(shell find $(LOCAL_PATH) -name 'Sprdroid.mk')
+
 ifeq ($(strip $(TARGET_BOARD_CAMERA_MEMORY_OPTIMIZATION)),true)
 LOCAL_CFLAGS += -DCONFIG_MEM_OPTIMIZATION
 endif
@@ -469,4 +471,9 @@ endif
 
 ifeq ($(strip $(TARGET_VCM_BU64241GWZ)),true)
 LOCAL_CFLAGS += -DCONFIG_VCM_BU64241GWZ
+endif
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),false)
+else
+LOCAL_CFLAGS += -DCONFIG_FACE_BEAUTY
 endif
