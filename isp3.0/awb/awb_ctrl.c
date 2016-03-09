@@ -272,7 +272,6 @@ cmr_int awbctrl_ioctrl(cmr_handle awb_ctrl_handle, enum awb_ctrl_cmd cmd, void *
 		ISP_LOGI("ioctrl fun is NULL, cmd = %d", cmd);
 	}
 exit:
-	ISP_LOGI("done %ld", ret);
 	return ret;
 }
 

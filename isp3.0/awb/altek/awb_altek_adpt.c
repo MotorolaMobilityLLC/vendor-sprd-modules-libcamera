@@ -985,7 +985,6 @@ cmr_int awbaltek_process(cmr_handle adpt_handle ,struct awb_ctrl_process_in *inp
 		if (ret) {
 			ISP_LOGE("failed %ld", ret);
 		} else {
-#if 1
 			report_ptr = &cxt->cur_process_out.report_3a_update.awb_update;
 			output_ptr->ct = cxt->cur_process_out.color_temp;
 			output_ptr->gain.r = cxt->cur_process_out.wbgain.r_gain;
@@ -1005,27 +1004,6 @@ cmr_int awbaltek_process(cmr_handle adpt_handle ,struct awb_ctrl_process_in *inp
 			output_ptr->hw3a_frame_id = report_ptr->hw3a_frame_id;;
 			output_ptr->is_update = cxt->cur_process_out.awb_update;
 			output_ptr->light_source = cxt->cur_process_out.light_source;
-#else
-			report_ptr = &cxt->cur_process_out.report_3a_update.awb_update;
-			output_ptr->ct = report_ptr->color_temp;
-			output_ptr->gain.r = report_ptr->wbgain.r_gain;
-			output_ptr->gain.g = report_ptr->wbgain.g_gain;
-			output_ptr->gain.b = report_ptr->wbgain.b_gain;;
-			output_ptr->gain_balanced.r = report_ptr->wbgain_balanced.r_gain;
-			output_ptr->gain_balanced.g = report_ptr->wbgain_balanced.g_gain;
-			output_ptr->gain_balanced.b = report_ptr->wbgain_balanced.b_gain;
-			output_ptr->gain_flash_off.r = report_ptr->wbgain_flash_off.r_gain;
-			output_ptr->gain_flash_off.g = report_ptr->wbgain_flash_off.g_gain;
-			output_ptr->gain_flash_off.b = report_ptr->wbgain_flash_off.b_gain;
-			output_ptr->gain_capture.r = cxt->cur_process_out.wbgain_capture.r_gain;
-			output_ptr->gain_capture.g = cxt->cur_process_out.wbgain_capture.g_gain;
-			output_ptr->gain_capture.b = cxt->cur_process_out.wbgain_capture.b_gain;
-			output_ptr->awb_decision = report_ptr->awb_decision;
-			output_ptr->awb_mode = report_ptr->awb_mode;
-			output_ptr->hw3a_frame_id = report_ptr->hw3a_frame_id;
-			output_ptr->is_update = report_ptr->awb_update;
-			output_ptr->light_source = report_ptr->light_source;
-#endif
 			output_ptr->awb_states = AWB_CTRL_STATUS_NORMAL;
 			if (AL3A_WB_STATE_PREPARE_UNDER_FLASHON_DONE == report_ptr->awb_states
 				|| AL3A_WB_STATE_UNDER_FLASHON_AWB_DONE == report_ptr->awb_states) {
@@ -1046,10 +1024,10 @@ cmr_int awbaltek_process(cmr_handle adpt_handle ,struct awb_ctrl_process_in *inp
 				output_ptr->awb_states = AWB_CTRL_STATUS_CONVERGE;
 #endif
 			}
-			ISP_LOGV("awb mode %d, gain %d %d %d, gain_blanced %d %d %d",
+			ISP_LOGI("awb mode %d, gain %d %d %d, gain_blanced %d %d %d",
 				     output_ptr->awb_mode,output_ptr->gain.r, output_ptr->gain.g, output_ptr->gain.b,
 				     output_ptr->gain_balanced.r, output_ptr->gain_balanced.g, output_ptr->gain_balanced.b);
-			ISP_LOGI("awb update %d, frame id %d", output_ptr->is_update, output_ptr->hw3a_frame_id);
+			ISP_LOGV("awb update %d, frame id %d", output_ptr->is_update, output_ptr->hw3a_frame_id);
 			ISP_LOGV("awb ct %d, light source %d", output_ptr->ct, output_ptr->light_source);
 		}
 	} else {
@@ -1057,7 +1035,7 @@ cmr_int awbaltek_process(cmr_handle adpt_handle ,struct awb_ctrl_process_in *inp
 	}
 
 exit:
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGV("done %ld", ret);
 	return ret;
 }
 

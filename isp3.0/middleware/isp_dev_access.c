@@ -485,7 +485,7 @@ void isp_dev_access_convert_awb_param(struct isp3a_awb_hw_cfg *data, AWB_CfgInfo
 	awb_param->uwBLinearGain = data->uwblinear_gain;
 	ISP_LOGE("token_id = %d, uccr_shift = %d, uc_damp = %d, uc_offset_shift = %d\n",
 		awb_param->TokenID, awb_param->ucCrShift, awb_param->ucDamp, awb_param->ucOffsetShift);
-	ISP_LOGE("uc_quantize = %d\n, uc_sum_shift = %d\n, uwblinear_gain = %d\n, uwrlinear_gain = %d\n,\
+	ISP_LOGV("uc_quantize = %d\n, uc_sum_shift = %d\n, uwblinear_gain = %d\n, uwrlinear_gain = %d\n,\
 		uw_bgain = %d\n, uw_rgain = %d\n, uw_ggain = %d\n",
 		awb_param->ucQuantize, awb_param->ucSumShift, awb_param->uwBLinearGain, awb_param->uwRLinearGain,
 		awb_param->uwBGain, awb_param->uwRGain, awb_param->uwGGain);
@@ -858,7 +858,7 @@ cmr_int isp_dev_access_cfg_awb_gain_balanced(cmr_handle isp_dev_handle, struct i
 	gain.r = data->r;
 	gain.g = data->g;
 	gain.b = data->b;
-	ISP_LOGI("balanced gain %d %d %d", gain.r, gain.g, gain.b);
+	ISP_LOGV("balanced gain %d %d %d", gain.r, gain.g, gain.b);
 	ret = isp_dev_cfg_awb_gain_balanced(cxt->isp_driver_handle, &gain);
 
 	return ret;
