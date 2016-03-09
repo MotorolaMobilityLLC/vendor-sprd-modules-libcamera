@@ -48,7 +48,7 @@
 
 #define ISP_YUV_TO_RAW_GAP        CMR_SLICE_HEIGHT
 #define BACK_CAMERA_ID            0
-#define FRONT_CAMERA_ID           2
+#define FRONT_CAMERA_ID           1
 #define DEV2_CAMERA_ID           2
 #define JPEG_SMALL_SIZE           (300 * 1024)
 #define ADDR_BY_WORD(a)           (((a) + 3 ) & (~3))

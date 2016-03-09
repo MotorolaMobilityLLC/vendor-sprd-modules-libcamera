@@ -1225,13 +1225,37 @@ const CameraInfo kCameraInfo[] = {
 		CAMERA_FACING_FRONT,
 		270,/*orientation*/
 	},
+#else
+		{
+			-1,
+			-1,/*orientation*/
+		},
 #endif
-#ifdef CONFIG_DCAM_SENSOR_DEV_2_SUPPORT
-	{
-		2,
-		270,/*orientation*/
-	},
+
+#ifdef CONFIG_DCAM_SENSOR2_SUPPORT
+		{
+			CAMERA_FACING_BACK,
+			90,/*orientation*/
+		},
+#else
+		{
+			-1,
+			-1,/*orientation*/
+		},
 #endif
+
+#ifdef CONFIG_DCAM_SENSOR3_SUPPORT
+		{
+			CAMERA_FACING_FRONT,
+			270,/*orientation*/
+		},
+#else
+		{
+			-1,
+			-1,/*orientation*/
+		},
+#endif
+
 };
 
 SprdCameraParameters SprdCamera3Setting::mDefaultParameters;
@@ -1422,8 +1446,17 @@ int SprdCamera3Setting::coordinate_convert(int *rect_arr,int arr_size,int angle,
 int SprdCamera3Setting::getCameraInfo(int32_t cameraId, struct camera_info *cameraInfo)
 {
 	if (cameraInfo) {
-		cameraInfo->facing = kCameraInfo[cameraId].facing;
-		cameraInfo->orientation = kCameraInfo[cameraId].orientation;
+		int id = -1;
+		for(int i = 0; ; i++) {
+			if(kCameraInfo[i].orientation != -1)
+				id++;
+			if(id == cameraId){
+				cameraInfo->facing = kCameraInfo[i].facing;
+				cameraInfo->orientation = kCameraInfo[i].orientation;
+				break;
+			}
+		}
+
 	}
 	return 0;
 }
@@ -1431,8 +1464,14 @@ int SprdCamera3Setting::getCameraInfo(int32_t cameraId, struct camera_info *came
 int SprdCamera3Setting::getNumberOfCameras()
 {
 	int num = 0;
+	int i ,j = 0;
 
-	num = ARRAY_SIZE(kCameraInfo);
+	j = ARRAY_SIZE(kCameraInfo);
+	for(i = 0; i< j; i++) {
+		if(kCameraInfo[i].orientation != -1)
+			num++;
+	}
+
 	LOGI("getNumberOfCameras:%d",num);
 
 	return num;

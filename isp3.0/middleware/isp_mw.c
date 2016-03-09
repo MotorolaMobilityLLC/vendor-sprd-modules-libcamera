@@ -240,7 +240,6 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 	if (ret) {
 		goto exit;
 	}
-
 	cxt->camera_id = input_ptr->camera_id;
 	cxt->caller_handle = input_ptr->oem_handle;
 	cxt->caller_callback = input_ptr->ctrl_callback;

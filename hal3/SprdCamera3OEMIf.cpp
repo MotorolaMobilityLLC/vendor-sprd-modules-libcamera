@@ -310,15 +310,6 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId,
 	}
 #endif
 
-#ifdef CONFIG_DCAM_SENSOR_MAIN2_SUPPORT//TBD tony.peng
-	if (1 == cameraId) {
-		mCameraId = 2;
-	} else {
-		mCameraId = cameraId;
-	}
-#else
-	mCameraId = cameraId;
-#endif
 	mCbInfoList.clear();
 	mSetting->getDefaultParameters(mParameters);
 

@@ -129,17 +129,17 @@ const SENSOR_MATCH_T main_sensor_infor_tab[]=
 
 const SENSOR_MATCH_T sub_sensor_infor_tab[]=
 {
-	{"ov2680_mipi_raw", &g_ov2680_mipi_raw_info},
-	PNULL
-};
-
-const SENSOR_MATCH_T main2_sensor_infor_tab[]=
-{
 	{"s5k4h8yx_mipi_raw", &g_s5k4h8yx_mipi_raw_info},
 	PNULL
 };
 
-const SENSOR_MATCH_T sub2_sensor_infor_tab[]=
+const SENSOR_MATCH_T sensor2_infor_tab[]=
+{
+	{"ov2680_mipi_raw", &g_ov2680_mipi_raw_info},
+	PNULL
+};
+
+const SENSOR_MATCH_T sensor3_infor_tab[]=
 {
 #ifdef SC_FPGA
 	{"ov5640_mipi_yuv", &g_ov5640_mipi_yuv_info},
@@ -243,11 +243,11 @@ SENSOR_MATCH_T * Sensor_GetInforTab(struct sensor_drv_context *sensor_cxt, SENSO
 	if (AUTO_TEST_CAMERA == at_flag) {
 		switch ( sensor_id) {
 			case SENSOR_MAIN:
-			case SENSOR_MAIN2:
+			case SENSOR_DEVICE2:
 					sensor_infor_tab_ptr=(SENSOR_MATCH_T*)&at_main_sensor_infor_tab;
 					break;
 			case SENSOR_SUB:
-			case SENSOR_SUB2:
+			case SENSOR_DEVICE3:
 					sensor_infor_tab_ptr=(SENSOR_MATCH_T*)&at_sub_sensor_infor_tab;
 					break;
 			case SENSOR_ATV:
@@ -267,11 +267,11 @@ SENSOR_MATCH_T * Sensor_GetInforTab(struct sensor_drv_context *sensor_cxt, SENSO
 		case SENSOR_SUB:
 			sensor_infor_tab_ptr=(SENSOR_MATCH_T*)&sub_sensor_infor_tab;
 			break;
-		case SENSOR_MAIN2:
-			sensor_infor_tab_ptr=(SENSOR_MATCH_T*)&main2_sensor_infor_tab;
+		case SENSOR_DEVICE2:
+			sensor_infor_tab_ptr=(SENSOR_MATCH_T*)&sensor2_infor_tab;
 			break;
-		case SENSOR_SUB2:
-			sensor_infor_tab_ptr=(SENSOR_MATCH_T*)&sub2_sensor_infor_tab;
+		case SENSOR_DEVICE3:
+			sensor_infor_tab_ptr=(SENSOR_MATCH_T*)&sensor3_infor_tab;
 			break;
 
 		case SENSOR_ATV:
@@ -292,12 +292,12 @@ uint32_t Sensor_GetInforTabLenght(struct sensor_drv_context *sensor_cxt, SENSOR_
 	if (AUTO_TEST_CAMERA == at_flag) {
 		switch (sensor_id) {
 			case SENSOR_MAIN:
-			case SENSOR_MAIN2:
+			case SENSOR_DEVICE2:
 				tab_lenght=(sizeof(at_main_sensor_infor_tab)/sizeof(SENSOR_MATCH_T));
 				break;
 
 			case SENSOR_SUB:
-			case SENSOR_SUB2:
+			case SENSOR_DEVICE3:
 				tab_lenght=(sizeof(at_sub_sensor_infor_tab)/sizeof(SENSOR_MATCH_T));
 				break;
 
@@ -316,11 +316,11 @@ uint32_t Sensor_GetInforTabLenght(struct sensor_drv_context *sensor_cxt, SENSOR_
 			case SENSOR_SUB:
 				tab_lenght=(sizeof(sub_sensor_infor_tab)/sizeof(SENSOR_MATCH_T));
 				break;
-			case SENSOR_MAIN2:
+			case SENSOR_DEVICE2:
 				tab_lenght=(sizeof(main_sensor_infor_tab)/sizeof(SENSOR_MATCH_T));
 				break;
-			case SENSOR_SUB2:
-				tab_lenght=(sizeof(sub2_sensor_infor_tab)/sizeof(SENSOR_MATCH_T));
+			case SENSOR_DEVICE3:
+				tab_lenght=(sizeof(sensor3_infor_tab)/sizeof(SENSOR_MATCH_T));
 				break;
 
 			case SENSOR_ATV:
@@ -341,7 +341,7 @@ cmr_u32 Sensor_IndexGet(struct sensor_drv_context *sensor_cxt, cmr_u32 index) {
 	cmr_u32 sSnNum=0;
 	cmr_int  at_flag = sensor_cxt->is_autotest;
 	if (AUTO_TEST_CAMERA == at_flag) {
-		if(index == SENSOR_MAIN || index == SENSOR_MAIN2) {
+		if(index == SENSOR_MAIN || index == SENSOR_DEVICE2) {
 			mSnNum = sizeof(at_main_sensor_infor_tab)/sizeof(SENSOR_MATCH_T)-1;
 			CMR_LOGI("sensor autotest sensorTypeMatch main is %d", mSnNum );
 			for(i=0; i<mSnNum; i++) {
@@ -352,7 +352,7 @@ cmr_u32 Sensor_IndexGet(struct sensor_drv_context *sensor_cxt, cmr_u32 index) {
 				}
 			}
 		}
-		if(index == SENSOR_SUB || index == SENSOR_SUB2) {
+		if(index == SENSOR_SUB || index == SENSOR_DEVICE3) {
 			sSnNum = sizeof(at_sub_sensor_infor_tab)/sizeof(SENSOR_MATCH_T)-1;
 			CMR_LOGI("sensor autotest sensorTypeMatch sub is %d", sSnNum );
 			for(i=0; i<sSnNum; i++) {
@@ -386,22 +386,22 @@ cmr_u32 Sensor_IndexGet(struct sensor_drv_context *sensor_cxt, cmr_u32 index) {
 				}
 			}
 		}
-		if(index == SENSOR_MAIN2) {
-			mSnNum = sizeof(main2_sensor_infor_tab)/sizeof(SENSOR_MATCH_T)-1;
+		if(index == SENSOR_DEVICE2) {
+			mSnNum = sizeof(sensor2_infor_tab)/sizeof(SENSOR_MATCH_T)-1;
 			CMR_LOGI("sensor sensorTypeMatch main2 is %d", mSnNum );
 			for(i=0; i<mSnNum; i++) {
-				if( strcmp(main2_sensor_infor_tab[i].sn_name, CAMERA_SENSOR_TYPE_BACK) == 0) {
+				if( strcmp(sensor2_infor_tab[i].sn_name, CAMERA_SENSOR_TYPE_BACK) == 0) {
 					CMR_LOGI("sensor sensor matched  %dth  is %s", i, CAMERA_SENSOR_TYPE_BACK);
 					retValue = i;
 					break;
 				}
 			}
 		}
-		if(index == SENSOR_SUB2) {
-			sSnNum = sizeof(sub2_sensor_infor_tab)/sizeof(SENSOR_MATCH_T)-1;
+		if(index == SENSOR_DEVICE3) {
+			sSnNum = sizeof(sensor3_infor_tab)/sizeof(SENSOR_MATCH_T)-1;
 			CMR_LOGI("sensor sensorTypeMatch sub2 is %d", sSnNum );
 			for(i=0; i<sSnNum; i++) {
-				if( strcmp(sub2_sensor_infor_tab[i].sn_name, CAMERA_SENSOR_TYPE_FRONT) == 0) {
+				if( strcmp(sensor3_infor_tab[i].sn_name, CAMERA_SENSOR_TYPE_FRONT) == 0) {
 					CMR_LOGI("sensor sensor matched the %dth  is %s", i, CAMERA_SENSOR_TYPE_FRONT);
 					retValue = i;
 					break;

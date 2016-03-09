@@ -35,6 +35,7 @@ extern "C" {
 #define MIN(x,y) (((x)<(y))?(x):(y))
 #endif
 
+#undef CONFIG_LOG_TO_SHELL
 #ifdef CONFIG_LOG_TO_SHELL
 #define DEBUG_STR     "L %d, %s: "
 #define DEBUG_ARGS    __LINE__,__FUNCTION__

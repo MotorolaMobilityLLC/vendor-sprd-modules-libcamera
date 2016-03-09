@@ -71,6 +71,7 @@ cmr_int isp_dev_access_init(struct isp_dev_init_in *input_ptr, cmr_handle *isp_d
 		ret = ISP_ALLOC_ERROR;
 		goto exit;
 	}
+	ISP_LOGV("input_ptr->camera_id %d\n", input_ptr->camera_id);
 	cmr_bzero(cxt, sizeof(*cxt));
 	cxt->camera_id = input_ptr->camera_id;
 	cxt->caller_handle = input_ptr->caller_handle;
@@ -671,12 +672,14 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 
 	ret = isp_dev_cfg_awb_gain(cxt->isp_driver_handle, &awb_gain_info);
 
+#if 0
 	if (0 == cxt->camera_id)
 		dcam_id = 0;
 	else if (2 == cxt->camera_id || 1 == cxt->camera_id)
 		dcam_id = 1;
 	ISP_LOGI("dcam_id %d", dcam_id);
 	ret = isp_dev_set_dcam_id(cxt->isp_driver_handle, dcam_id);
+#endif
 	ret = isp_dev_stream_on(cxt->isp_driver_handle);
 exit:
 	ISP_LOGI("done %ld", ret);
@@ -905,14 +908,15 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 		ISP_LOGE("failed to cfg awb gain");
 		goto exit;
 	}
-
+#if 0
 	if (0 == cxt->camera_id)
 		dcam_id = 0;
 	else if (2 == cxt->camera_id || 1 == cxt->camera_id)
 		dcam_id = 1;
+	ret = isp_dev_set_dcam_id(cxt->isp_driver_handle, dcam_id);
+#endif
 
 	ret = isp_dev_stream_on(cxt->isp_driver_handle);
-	ret = isp_dev_set_dcam_id(cxt->isp_driver_handle, dcam_id);
 
 	usleep(100*1000);
 

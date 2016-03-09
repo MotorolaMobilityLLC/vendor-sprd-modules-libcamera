@@ -488,10 +488,10 @@ cmr_u32 sns_get_mipi_phy_id(struct sensor_drv_context *sensor_cxt)
 		phy_id = 0x04;
 #endif
 		CMR_LOGI("sub phy_id:%x \n", phy_id);
-	} else if (SENSOR_MAIN2 == sensor_id) {
+	} else if (SENSOR_DEVICE2 == sensor_id) {
 		phy_id = 0x03;
 		CMR_LOGI("main2 phy_id:%x \n", phy_id);
-	} else if (SENSOR_SUB2 == sensor_id){
+	} else if (SENSOR_DEVICE3 == sensor_id){
 		phy_id = 0x03;
 		CMR_LOGI("sub2 phy_id:%x \n", phy_id);
 	}
@@ -1282,14 +1282,14 @@ void sns_clean_info(struct sensor_drv_context *sensor_cxt)
 	sensor_register_info_ptr = &sensor_cxt->sensor_register_info;
 	sensor_cxt->sensor_mode[SENSOR_MAIN] = SENSOR_MODE_MAX;
 	sensor_cxt->sensor_mode[SENSOR_SUB] = SENSOR_MODE_MAX;
-	sensor_cxt->sensor_mode[SENSOR_MAIN2] = SENSOR_MODE_MAX;
-	sensor_cxt->sensor_mode[SENSOR_SUB2] = SENSOR_MODE_MAX;
+	sensor_cxt->sensor_mode[SENSOR_DEVICE2] = SENSOR_MODE_MAX;
+	sensor_cxt->sensor_mode[SENSOR_DEVICE3] = SENSOR_MODE_MAX;
 	sensor_cxt->sensor_info_ptr = PNULL;
 	sensor_cxt->sensor_isInit = SENSOR_FALSE;
 	sensor_cxt->sensor_index[SENSOR_MAIN] = 0xFF;
 	sensor_cxt->sensor_index[SENSOR_SUB] = 0xFF;
-	sensor_cxt->sensor_index[SENSOR_MAIN2] = 0xFF;
-	sensor_cxt->sensor_index[SENSOR_SUB2] = 0xFF;
+	sensor_cxt->sensor_index[SENSOR_DEVICE2] = 0xFF;
+	sensor_cxt->sensor_index[SENSOR_DEVICE3] = 0xFF;
 	sensor_cxt->sensor_index[SENSOR_ATV] = 0xFF;
 	SENSOR_MEMSET(&sensor_cxt->sensor_exp_info, 0x00, sizeof(SENSOR_EXP_INFO_T));
 	sensor_register_info_ptr->cur_id = SENSOR_ID_MAX;
@@ -1312,12 +1312,12 @@ cmr_int sns_set_id(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E sensor_id)
 			return SENSOR_SUCCESS;
 		if ((SENSOR_SUB == sensor_id) && (0 == sensor_cxt->is_main_sensor))
 			return SENSOR_SUCCESS;
-		if ((SENSOR_MAIN2 == sensor_id) && (1 == sensor_cxt->is_main2_sensor))
+		if ((SENSOR_DEVICE2 == sensor_id) && (1 == sensor_cxt->is_main2_sensor))
 			return SENSOR_SUCCESS;
-		if ((SENSOR_SUB2 == sensor_id) && (0 == sensor_cxt->is_main2_sensor))
+		if ((SENSOR_DEVICE3 == sensor_id) && (0 == sensor_cxt->is_main2_sensor))
 			return SENSOR_SUCCESS;
 	}
-	if ((SENSOR_MAIN <= sensor_id) || (SENSOR_SUB2 >= sensor_id)) {
+	if ((SENSOR_MAIN <= sensor_id) || (SENSOR_DEVICE3 >= sensor_id)) {
 		if (SENSOR_SUB == sensor_id) {
 			if ((1 == sensor_cxt->is_register_sensor) && (1 == sensor_cxt->is_main_sensor)) {
 				sns_dev_i2c_deinit(sensor_cxt, SENSOR_MAIN);
@@ -1328,14 +1328,14 @@ cmr_int sns_set_id(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E sensor_id)
 				sns_dev_i2c_deinit(sensor_cxt, SENSOR_SUB);
 			}
 			sensor_cxt->is_main_sensor = 1;
-		} else if (SENSOR_SUB2 == sensor_id) {
+		} else if (SENSOR_DEVICE3 == sensor_id) {
 			if ((1 == sensor_cxt->is_register_sensor) && (1 == sensor_cxt->is_main2_sensor)) {
-				sns_dev_i2c_deinit(sensor_cxt, SENSOR_MAIN2);
+				sns_dev_i2c_deinit(sensor_cxt, SENSOR_DEVICE2);
 			}
 			sensor_cxt->is_main2_sensor = 0;
-		} else if (SENSOR_MAIN2 == sensor_id) {
+		} else if (SENSOR_DEVICE2 == sensor_id) {
 			if ((1 == sensor_cxt->is_register_sensor) && (0 == sensor_cxt->is_main2_sensor)) {
-				sns_dev_i2c_deinit(sensor_cxt, SENSOR_SUB2);
+				sns_dev_i2c_deinit(sensor_cxt, SENSOR_DEVICE3);
 			}
 			sensor_cxt->is_main2_sensor = 1;
 		}
@@ -1343,7 +1343,7 @@ cmr_int sns_set_id(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E sensor_id)
 		if (sns_dev_i2c_init(sensor_cxt, sensor_id)) {
 			if (SENSOR_MAIN == sensor_id) {
 				sensor_cxt->is_main_sensor = 0;
-			} else if (SENSOR_MAIN2 == sensor_id) {
+			} else if (SENSOR_DEVICE2 == sensor_id) {
 				sensor_cxt->is_main2_sensor = 0;
 			}
 			CMR_LOGI("add I2C error");
@@ -1382,7 +1382,7 @@ void sns_i2c_init(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E sensor_id)
 	sensor_register_info_ptr->cur_id = sensor_id;
 
 	if (0 == sensor_cxt->is_register_sensor) {
-		if ((SENSOR_MAIN <= sensor_id) || (SENSOR_SUB2 >= sensor_id)) {
+		if ((SENSOR_MAIN <= sensor_id) || (SENSOR_DEVICE3 >= sensor_id)) {
 
 			if(sns_dev_i2c_init(sensor_cxt, sensor_id)){
 				CMR_LOGE("SENSOR: add I2C driver error");
@@ -1403,7 +1403,7 @@ cmr_int sns_i2c_deinit(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E sensor
 {
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 	if (1 == sensor_cxt->is_register_sensor) {
-		if ((SENSOR_MAIN <= sensor_id) || (SENSOR_SUB2 >= sensor_id)) {
+		if ((SENSOR_MAIN <= sensor_id) || (SENSOR_DEVICE3 >= sensor_id)) {
 			sns_dev_i2c_deinit(sensor_cxt, sensor_id);
 			sensor_cxt->is_register_sensor = 0;
 			CMR_LOGI("delete I2C %d driver OK", sensor_id);
@@ -2453,14 +2453,14 @@ cmr_int sns_destroy_ctrl_thread(struct sensor_drv_context *sensor_cxt)
 				sensor_num++;
 			}
 #endif
-#ifdef CONFIG_DCAM_SENSOR_MAIN2_SUPPORT
-			if (SENSOR_SUCCESS == sns_register(sensor_cxt, SENSOR_MAIN2)) {
+#ifdef CONFIG_DCAM_SENSOR2_SUPPORT
+			if (SENSOR_SUCCESS == sns_register(sensor_cxt, SENSOR_DEVICE2)) {
 				sensor_num++;
 			}
 #endif
 
-#ifdef CONFIG_DCAM_SENSOR_SUB2_SUPPORT
-			if (SENSOR_SUCCESS == sns_register(sensor_cxt, SENSOR_SUB2)) {
+#ifdef CONFIG_DCAM_SENSOR3_SUPPORT
+			if (SENSOR_SUCCESS == sns_register(sensor_cxt, SENSOR_DEVICE3)) {
 				sensor_num++;
 			}
 #endif
@@ -2480,12 +2480,12 @@ cmr_int sns_destroy_ctrl_thread(struct sensor_drv_context *sensor_cxt)
 			if (sns_identify(sensor_cxt, SENSOR_SUB))
 				sensor_num++;
 #endif
-#ifdef CONFIG_DCAM_SENSOR_MAIN2_SUPPORT
-			if (sns_identify(sensor_cxt, SENSOR_MAIN2))
+#ifdef CONFIG_DCAM_SENSOR2_SUPPORT
+			if (sns_identify(sensor_cxt, SENSOR_DEVICE2))
 				sensor_num++;
 #endif
-#ifdef CONFIG_DCAM_SENSOR_SUB2_SUPPORT
-			if (sns_identify(sensor_cxt, SENSOR_SUB2))
+#ifdef CONFIG_DCAM_SENSOR3_SUPPORT
+			if (sns_identify(sensor_cxt, SENSOR_DEVICE3))
 				sensor_num++;
 #endif
 
@@ -2929,9 +2929,9 @@ cmr_int sensor_close_common(struct sensor_drv_context *sensor_cxt, cmr_u32 senso
 			sns_dev_i2c_deinit(sensor_cxt, SENSOR_SUB);
 		}
 		if (1 == sensor_cxt->is_main2_sensor) {
-			sns_dev_i2c_deinit(sensor_cxt, SENSOR_MAIN2);
+			sns_dev_i2c_deinit(sensor_cxt, SENSOR_DEVICE2);
 		} else {
-			sns_dev_i2c_deinit(sensor_cxt, SENSOR_SUB2);
+			sns_dev_i2c_deinit(sensor_cxt, SENSOR_DEVICE3);
 		}
 		sensor_cxt->is_register_sensor = 0;
 		sensor_cxt->is_main_sensor = 0;
@@ -2975,32 +2975,32 @@ cmr_int sensor_close_common(struct sensor_drv_context *sensor_cxt, cmr_u32 senso
 					sensor_cxt->is_main_sensor = 0;
 				}
 			}
-		} else if (SENSOR_MAIN2 == snr_get_cur_id(sensor_cxt)) {
+		} else if (SENSOR_DEVICE2 == snr_get_cur_id(sensor_cxt)) {
 			CMR_LOGI("0.");
-			if (SCI_TRUE == sensor_register_info_ptr->is_register[SENSOR_SUB2]) {
+			if (SCI_TRUE == sensor_register_info_ptr->is_register[SENSOR_DEVICE3]) {
 				CMR_LOGI("1.");
-				sns_set_id(sensor_cxt, SENSOR_SUB2);
-				sensor_cxt->sensor_info_ptr = sensor_cxt->sensor_list_ptr[SENSOR_SUB2];
+				sns_set_id(sensor_cxt, SENSOR_DEVICE3);
+				sensor_cxt->sensor_info_ptr = sensor_cxt->sensor_list_ptr[SENSOR_DEVICE3];
 				Sensor_SetExportInfo(sensor_cxt);
 				Sensor_PowerOn(sensor_cxt, SENSOR_FALSE);
 				if (1 == sensor_cxt->is_register_sensor) {
 					CMR_LOGI ("2.");
-					sns_dev_i2c_deinit(sensor_cxt, SENSOR_SUB2);
+					sns_dev_i2c_deinit(sensor_cxt, SENSOR_DEVICE3);
 					sensor_cxt->is_register_sensor = 0;
 					sensor_cxt->is_main2_sensor = 0;
 				}
 			}
-		} else if (SENSOR_SUB2 == snr_get_cur_id(sensor_cxt)) {
+		} else if (SENSOR_DEVICE3 == snr_get_cur_id(sensor_cxt)) {
 			CMR_LOGI("3.");
-			if (SCI_TRUE == sensor_register_info_ptr->is_register[SENSOR_MAIN2]) {
+			if (SCI_TRUE == sensor_register_info_ptr->is_register[SENSOR_DEVICE2]) {
 				CMR_LOGI("4.");
-				sns_set_id(sensor_cxt, SENSOR_MAIN2);
-				sensor_cxt->sensor_info_ptr = sensor_cxt->sensor_list_ptr[SENSOR_MAIN2];
+				sns_set_id(sensor_cxt, SENSOR_DEVICE2);
+				sensor_cxt->sensor_info_ptr = sensor_cxt->sensor_list_ptr[SENSOR_DEVICE2];
 				Sensor_SetExportInfo(sensor_cxt);
 				Sensor_PowerOn(sensor_cxt, SENSOR_FALSE);
 				if (1 == sensor_cxt->is_register_sensor) {
 					CMR_LOGI ("5.");
-					sns_dev_i2c_deinit(sensor_cxt, SENSOR_MAIN2);
+					sns_dev_i2c_deinit(sensor_cxt, SENSOR_DEVICE2);
 					sensor_cxt->is_register_sensor = 0;
 					sensor_cxt->is_main2_sensor = 0;
 				}
@@ -3032,28 +3032,28 @@ cmr_int sensor_close_common(struct sensor_drv_context *sensor_cxt, cmr_u32 senso
 					sensor_cxt->is_main_sensor = 0;
 				}
 			}
-			if (SCI_TRUE == sensor_register_info_ptr->is_register[SENSOR_MAIN2]) {
+			if (SCI_TRUE == sensor_register_info_ptr->is_register[SENSOR_DEVICE2]) {
 				CMR_LOGI("4.");
-				sns_set_id(sensor_cxt, SENSOR_MAIN2);
-				sensor_cxt->sensor_info_ptr = sensor_cxt->sensor_list_ptr[SENSOR_MAIN2];
+				sns_set_id(sensor_cxt, SENSOR_DEVICE2);
+				sensor_cxt->sensor_info_ptr = sensor_cxt->sensor_list_ptr[SENSOR_DEVICE2];
 				Sensor_SetExportInfo(sensor_cxt);
 				Sensor_PowerOn(sensor_cxt, SENSOR_FALSE);
 				if (1 == sensor_cxt->is_register_sensor) {
 					CMR_LOGI("6.");
-					sns_dev_i2c_deinit(sensor_cxt, SENSOR_MAIN2);
+					sns_dev_i2c_deinit(sensor_cxt, SENSOR_DEVICE2);
 					sensor_cxt->is_register_sensor = 0;
 					sensor_cxt->is_main2_sensor = 0;
 				}
 			}
-			if (SCI_TRUE == sensor_register_info_ptr->is_register[SENSOR_SUB2]) {
+			if (SCI_TRUE == sensor_register_info_ptr->is_register[SENSOR_DEVICE3]) {
 				CMR_LOGI("7.");
-				sns_set_id(sensor_cxt, SENSOR_SUB2);
-				sensor_cxt->sensor_info_ptr = sensor_cxt->sensor_list_ptr[SENSOR_SUB2];
+				sns_set_id(sensor_cxt, SENSOR_DEVICE3);
+				sensor_cxt->sensor_info_ptr = sensor_cxt->sensor_list_ptr[SENSOR_DEVICE3];
 				Sensor_SetExportInfo(sensor_cxt);
 				Sensor_PowerOn(sensor_cxt, SENSOR_FALSE);
 				if (1 == sensor_cxt->is_register_sensor) {
 					CMR_LOGI("8.");
-					sns_dev_i2c_deinit(sensor_cxt, SENSOR_SUB2);
+					sns_dev_i2c_deinit(sensor_cxt, SENSOR_DEVICE3);
 					sensor_cxt->is_register_sensor = 0;
 					sensor_cxt->is_main2_sensor = 0;
 				}
@@ -3067,8 +3067,8 @@ cmr_int sensor_close_common(struct sensor_drv_context *sensor_cxt, cmr_u32 senso
 	sensor_cxt->sensor_isInit = SENSOR_FALSE;
 	sensor_cxt->sensor_mode[SENSOR_MAIN] = SENSOR_MODE_MAX;
 	sensor_cxt->sensor_mode[SENSOR_SUB] = SENSOR_MODE_MAX;
-	sensor_cxt->sensor_mode[SENSOR_MAIN2] = SENSOR_MODE_MAX;
-	sensor_cxt->sensor_mode[SENSOR_SUB2] = SENSOR_MODE_MAX;
+	sensor_cxt->sensor_mode[SENSOR_DEVICE2] = SENSOR_MODE_MAX;
+	sensor_cxt->sensor_mode[SENSOR_DEVICE3] = SENSOR_MODE_MAX;
 	CMR_LOGI("X");
 
 	return SENSOR_SUCCESS;
