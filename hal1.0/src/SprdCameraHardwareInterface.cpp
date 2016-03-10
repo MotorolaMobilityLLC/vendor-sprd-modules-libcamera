@@ -28,7 +28,7 @@
 #include <linux/fb.h>
 
 #include <cutils/properties.h>
-#include "ion_sprd.h"
+#include <linux/sprd_ion.h>
 #if(MINICAMERA != 1)
 #include <gralloc_priv.h>
 #endif
@@ -191,6 +191,7 @@ const CameraInfo SprdCameraHardware::kCameraInfo[] = {
 #endif
 
 };
+
 
 const CameraInfo SprdCameraHardware::kCameraInfo3[] = {
 	{
@@ -479,13 +480,16 @@ SprdCameraHardware::SprdCameraHardware(int cameraId)
 	mPreviewBufferUsage = PREVIEW_BUFFER_USAGE_DCAM;
 #endif
 	mOriginalPreviewBufferUsage = mPreviewBufferUsage;
+#if 0
 	if (MemIon::IOMMU_is_enabled(ION_MM)) {
             mIOMMUEnabled = true;
             mIOMMUID = ION_MM;
 	} else if (MemIon::IOMMU_is_enabled(ION_DCAM)) {
             mIOMMUEnabled = true;
             mIOMMUID = ION_DCAM;
-	} else {
+	} else
+#endif
+	{
             mIOMMUEnabled = false;
             mIOMMUID = -1;
 	}
@@ -496,6 +500,7 @@ SprdCameraHardware::SprdCameraHardware(int cameraId)
 	memset(mPreviewHeapArray_vir, 0, sizeof(mPreviewHeapArray_vir));
 	memset(mSubRawHeapArray, 0, sizeof(mSubRawHeapArray));
 	memset(mPathRawHeapArray, 0, sizeof(mPathRawHeapArray));
+	memset(mPreviewMfdArray, 0, sizeof(mPreviewMfdArray));
 #if(MINICAMERA != 1)
 	memset(mPreviewBufferHandle, 0, kPreviewBufferCount * sizeof(void*));
 	memset(mPreviewCancelBufHandle, 0, kPreviewBufferCount * sizeof(void*));
@@ -1212,9 +1217,9 @@ void SprdCameraHardware::releaseRecordingFrame(const void *opaque)
 		//camera_release_frame(mCameraHandle, CAMERA_VIDEO_DATA, index);
 		if (isPreviewing())
 #ifdef SC_IOMMU_PF
-			camera_set_preview_buffer(mCameraHandle, mPreviewHeapArray_phy[index][0], mPreviewHeapArray_vir[index][0],0);
+			camera_set_preview_buffer(mCameraHandle, mPreviewHeapArray_phy[index][0], mPreviewHeapArray_vir[index][0],mPreviewMfdArray[index][0]);
 #else
-			camera_set_preview_buffer(mCameraHandle, mPreviewHeapArray_phy[index], mPreviewHeapArray_vir[index], 0);
+			camera_set_preview_buffer(mCameraHandle, mPreviewHeapArray_phy[index], mPreviewHeapArray_vir[index], mPreviewMfdArray[index]);
 #endif
 	} else {
 		Mutex::Autolock pgbcl(&mGraphBufCntLock);
@@ -1223,9 +1228,9 @@ void SprdCameraHardware::releaseRecordingFrame(const void *opaque)
 			LOGV("releasePreviewFrame 0x%x count %d", index, mGraphBufferCount[index]);
 			if((mGraphBufferCount[index] == 0) && isPreviewing())
 #ifdef SC_IOMMU_PF
-							camera_set_preview_buffer(mCameraHandle, mPreviewHeapArray_phy[index][0], mPreviewHeapArray_vir[index][0], 0);
+							camera_set_preview_buffer(mCameraHandle, mPreviewHeapArray_phy[index][0], mPreviewHeapArray_vir[index][0],mPreviewMfdArray[index][0]);
 #else
-							camera_set_preview_buffer(mCameraHandle, mPreviewHeapArray_phy[index], mPreviewHeapArray_vir[index], 0);
+							camera_set_preview_buffer(mCameraHandle, mPreviewHeapArray_phy[index], mPreviewHeapArray_vir[index], mPreviewMfdArray[index]);
 #endif
 
 		}
@@ -3180,22 +3185,6 @@ void SprdCameraHardware::cancelPreviewMemFromGraphics(cmr_u32 sum)
 		cnt = ((cmr_int)sum > kPreviewBufferCount) ? kPreviewBufferCount : (cmr_int)sum;
 		for ( i=0 ; i<(cmr_int)cnt ; i++) {
 			if (mPreviewBufferHandle[i]) {
-				if (mIOMMUEnabled) {
-					LOGE("free_mm_iova by cancelPreviewMemFromGraphics %ld", i);
-					private_h=(struct private_handle_t*) (*mPreviewBufferHandle[i]);
-					if(private_h != NULL && mPreviewHeapArray_phy[i] != NULL && mPreviewHeapArray_size[i] > 0)
-					{
-#ifdef SC_IOMMU_PF
-						ret = MemoryHeapIon::Free_iova(mIOMMUID, private_h->share_fd, mPreviewHeapArray_phy[i][0], mPreviewHeapArray_size[i][0]);
-						ret = MemoryHeapIon::Free_iova(mIOMMUID, private_h->share_fd, mPreviewHeapArray_phy[i][1], mPreviewHeapArray_size[i][1]);
-#else
-						ret = MemoryHeapIon::Free_iova(mIOMMUID, private_h->share_fd, mPreviewHeapArray_phy[i], mPreviewHeapArray_size[i]);
-#endif
-						if (ret) {
-							LOGE("free mm iova failed");
-						}
-					}
-				}
 				if (0 != mPreviewWindow->cancel_buffer(mPreviewWindow, mPreviewBufferHandle[i])) {
 					LOGE("cancelPreviewMemFromGraphics: cancel_buffer error id %ld",i);
 				}
@@ -3207,7 +3196,7 @@ void SprdCameraHardware::cancelPreviewMemFromGraphics(cmr_u32 sum)
 	}
 }
 
-bool SprdCameraHardware::allocatePreviewMemFromGraphics(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr)
+bool SprdCameraHardware::allocatePreviewMemFromGraphics(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr,cmr_s32 *mfd)
 {
 #if 0//wjp
 	if (mIsPerformanceTestable) {
@@ -3259,37 +3248,20 @@ bool SprdCameraHardware::allocatePreviewMemFromGraphics(cmr_u32 size, cmr_u32 su
 				LOGE("NULL buffer handle!");
 				return -1;
 			}
-			if (!mIOMMUEnabled) {
-				unsigned long ion_addr=0;
-				size_t ion_size=0;
-				if (0 != MemoryHeapIon::Get_phy_addr_from_ion(private_h->share_fd,&ion_addr,&ion_size)) {
-					LOGE("allocatePreviewMemFromGraphics: Get_phy_addr_from_ion error");
-					return -1;
-				}
-				LOGI("MemoryHeapIon::Get_mm_ion: %d addr 0x%lx size 0x%x",i, ion_addr, ion_size);
-				mPreviewBufferHandle[i] = buffer_handle;
-				mPreviewHeapArray_phy[i] = (uintptr_t)ion_addr;
-				mPreviewHeapArray_vir[i] = (uintptr_t)private_h->base;
-				*phy_addr++ = (cmr_uint)ion_addr;
-				*vir_addr++ = (cmr_uint)private_h->base;
-			} else {
+			{
 				unsigned long iova_addr=0;
 				size_t iova_size=0;
-				LOGI("MemoryHeapIon::Get_mm_iova: %d",i);
-				if (MemoryHeapIon::Get_iova(mIOMMUID, private_h->share_fd,&iova_addr,&iova_size)) {
-					LOGE("allocatePreviewMemFromGraphics: Get_mm_iova error");
-					return -1;
-				}
 				mPreviewBufferHandle[i] = buffer_handle;
-				mPreviewHeapArray_phy[i] = (uintptr_t)iova_addr;
-				mPreviewHeapArray_vir[i] = (uintptr_t)private_h->base;
-				mPreviewHeapArray_size[i] = iova_size;
-				*phy_addr++ = (cmr_uint)iova_addr;
-				*vir_addr++ = (cmr_uint)private_h->base;
+				mPreviewHeapArray_phy[i][0] = (uintptr_t)iova_addr;
+				mPreviewHeapArray_vir[i][0] = (uintptr_t)private_h->base;
+				mPreviewHeapArray_size[i][0] = iova_size;
+				mPreviewMfdArray[i][0] = private_h->share_fd;
+				*(phy_addr+i*2)= (cmr_uint)iova_addr;
+				*(vir_addr+i*2) = (cmr_uint)private_h->base;
+				*(mfd+i*2)	= private_h->share_fd;
 			}
-
 			LOGI("allocatePreviewMemFromGraphics: phyaddr:0x%lx, base:0x%lx, size:0x%x, stride:0x%x ",
-				 mPreviewHeapArray_phy[i],(uintptr_t)private_h->base,private_h->size, stride);
+				 mPreviewHeapArray_phy[i][0],(uintptr_t)private_h->base,private_h->size, stride);
 			mCancelBufferEb[i] = 0;
 		}
 
@@ -3322,7 +3294,7 @@ int SprdCameraHardware::Callback_PreviewMalloc(cmr_u32 size, cmr_u32 sum, cmr_ui
 		mPreviewBufferUsage, mOriginalPreviewBufferUsage, size, sum);
 
 	mPreviewHeapNum = sum;
-	if (allocatePreviewMemFromGraphics(size, kPreviewBufferCount, phy_addr, vir_addr)) {
+	if (allocatePreviewMemFromGraphics(size, kPreviewBufferCount, phy_addr, vir_addr,mfd)) {
 		cancelPreviewMemFromGraphics(sum);
 		return -1;
 	}
@@ -3359,21 +3331,14 @@ int SprdCameraHardware::Callback_PreviewMalloc(cmr_u32 size, cmr_u32 sum, cmr_ui
 			return false;
 		}
 
-		phy_addr += buffer_start_id;
-		vir_addr += buffer_start_id;
+		phy_addr += buffer_start_id*2;
+		vir_addr += buffer_start_id*2;
 
 		for (i=buffer_start_id ; i<buffer_end_id ; i++) {
 #ifdef SC_IOMMU_PF
 			sprd_camera_memory_t* PreviewHeap = allocCameraMem(size*2/3, true);
 			if (NULL == PreviewHeap) {
 				LOGE("Callback_PreviewMalloc: error PreviewHeap is null, index %ld", i);
-				return false;
-			}
-
-			if (NULL == PreviewHeap->handle) {
-				LOGE("Callback_PreviewMalloc: error handle is null, index %ld", i);
-				freeCameraMem(PreviewHeap);
-				Callback_PreviewFree(0, 0, 0);
 				return false;
 			}
 
@@ -3387,6 +3352,7 @@ int SprdCameraHardware::Callback_PreviewMalloc(cmr_u32 size, cmr_u32 sum, cmr_ui
 			mPreviewHeapArray[j++] = PreviewHeap;
 			mPreviewHeapArray_phy[i][0] = 0;  //PreviewHeap->phys_addr;
 			mPreviewHeapArray_vir[i][0] = (uintptr_t)PreviewHeap->data;
+			mPreviewMfdArray[i][0] = (cmr_s32)PreviewHeap->mfd;
 
 			if (i < sum) {
 				*phy_addr++ = 0;
@@ -3402,13 +3368,6 @@ int SprdCameraHardware::Callback_PreviewMalloc(cmr_u32 size, cmr_u32 sum, cmr_ui
 				return false;
 			}
 
-			if (NULL == PreviewHeap->handle) {
-				LOGE("Callback_PreviewMalloc: error handle is null, index %ld", i);
-				freeCameraMem(PreviewHeap);
-				Callback_PreviewFree(0, 0, 0);
-				return false;
-			}
-
 			if (PreviewHeap->phys_addr & 0xFF) {
 				LOGE("Callback_PreviewMalloc: error mPreviewHeap is not 256 bytes aligned, index %ld", i);
 				freeCameraMem(PreviewHeap);
@@ -3419,6 +3378,7 @@ int SprdCameraHardware::Callback_PreviewMalloc(cmr_u32 size, cmr_u32 sum, cmr_ui
 			mPreviewHeapArray[j++] = PreviewHeap;
 			mPreviewHeapArray_phy[i][1] = 0; //PreviewHeap->phys_addr;
 			mPreviewHeapArray_vir[i][1] = (uintptr_t)PreviewHeap->data;
+			mPreviewMfdArray[i][1] = (cmr_s32)PreviewHeap->mfd;
 
 			if (i < sum) {
 				*phy_addr++ = 0;
@@ -3431,13 +3391,6 @@ int SprdCameraHardware::Callback_PreviewMalloc(cmr_u32 size, cmr_u32 sum, cmr_ui
 			sprd_camera_memory_t* PreviewHeap = allocCameraMem(size, true);
 			if (NULL == PreviewHeap) {
 				LOGE("Callback_PreviewMalloc: error PreviewHeap is null, index %ld", i);
-				return false;
-			}
-
-			if (NULL == PreviewHeap->handle) {
-				LOGE("Callback_PreviewMalloc: error handle is null, index %ld", i);
-				freeCameraMem(PreviewHeap);
-				Callback_PreviewFree(0, 0, 0);
 				return false;
 			}
 
@@ -3476,13 +3429,6 @@ int SprdCameraHardware::Callback_PreviewMalloc(cmr_u32 size, cmr_u32 sum, cmr_ui
 			sprd_camera_memory_t* PreviewHeap = allocCameraMem(frame_size, true);
 			if (NULL == PreviewHeap) {
 				LOGE("allocatePreviewMem: 420p error PreviewHeap is null, index=%d", i);
-				return false;
-			}
-
-			if (NULL == PreviewHeap->handle) {
-				LOGE("allocatePreviewMem: 420p error handle is null, index=%d", i);
-				freeCameraMem(PreviewHeap);
-				freePreviewMem();
 				return false;
 			}
 
@@ -3740,7 +3686,6 @@ int SprdCameraHardware::Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *
 	return 0;
 }
 
-
 int SprdCameraHardware::Callback_CaptureMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *mfd)
 {
 	sprd_camera_memory_t *memory = NULL;
@@ -3762,7 +3707,7 @@ int SprdCameraHardware::Callback_CaptureMalloc(cmr_u32 size, cmr_u32 sum, cmr_ui
 	if (0 == mSubRawHeapNum) {
 		for (i=0 ; i<(cmr_int)sum ; i++) {
 #ifdef SC_IOMMU_PF
-			memory = allocCameraMem(size*2/3, true);
+			memory = allocCameraMem(size, true);
 			if (NULL == memory) {
 				LOGE("Callback_CaptureMalloc: error memory is null.");
 				goto mem_fail;
@@ -3778,15 +3723,6 @@ int SprdCameraHardware::Callback_CaptureMalloc(cmr_u32 size, cmr_u32 sum, cmr_ui
 			if (NULL != mfd)
 				*mfd++ = (cmr_s32)memory->mfd;
 
-			memory = allocCameraMem(size/3, true);
-			if (NULL == memory) {
-				LOGE("Callback_CaptureMalloc: error memory is null.");
-				goto mem_fail;
-			}
-			if (NULL == memory->handle) {
-				LOGE("Callback_CaptureMalloc: error memory->handle is null.");
-				goto mem_fail;
-			}
 			mSubRawHeapArray[mSubRawHeapNum][1] = memory;
 
 			*phy_addr++ = 0; //(cmr_uint)memory->phys_addr;
@@ -3931,42 +3867,32 @@ int SprdCameraHardware::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u
 	*vir_addr = 0;
 
 	if (type == CAMERA_PREVIEW_RESERVED || type == CAMERA_VIDEO_RESERVED || type == CAMERA_SNAPSHOT_ZSL_RESERVED) {
-		sprd_camera_memory_t **memory = NULL;
+		sprd_camera_memory_t *memory = NULL;
 		if(NULL == mCommonHeapReserved) {
 			buffer_id = camera_pre_capture_get_buffer_id(mCameraId);
 			if (camera_get_reserve_buffer_size(mCameraId, buffer_id, &mem_size, &mem_sum) != CMR_CAMERA_SUCCESS) {
 				LOGE("camera_get_reserve_buffer_size failed");
 				goto mem_fail;
 			}
-
-			memory = (sprd_camera_memory_t**)calloc(2 , sizeof(sprd_camera_memory_t*));
-			if(!memory){
-					LOGE("error memory is null.");
-					return BAD_VALUE;
-			}
-			memory[0] = allocCameraMem(size, true);
-			if (NULL == memory[0]) {
-				LOGE("error memory is null.");
-				goto mem_fail;
-			}
-			memory[1] = allocCameraMem(size>>1, true);
-			if (NULL == memory[1]) {
+			memory = allocCameraMem(mem_size, true);
+			if (NULL == memory) {
 				LOGE("error memory is null.");
 				goto mem_fail;
 			}
 			mCommonHeapReserved = (sprd_camera_memory_t*)memory;
 		} else {
 			LOGI("malloc Preview memory, malloced type %d,request num %d, request size 0x%x", type, sum, size);
-			memory = (sprd_camera_memory_t**)mCommonHeapReserved;
+			memory = (sprd_camera_memory_t*)mCommonHeapReserved;
 		}
-		*phy_addr++ = 0;  //(cmr_uint)memory[0]->phys_addr;
-		*vir_addr++ = (cmr_uint)memory[0]->data;
+
+		*phy_addr++ = 0;
+		*vir_addr++ = (cmr_uint)memory->data;
 		if (NULL != mfd)
-			*mfd++ = (cmr_s32)memory[0]->mfd;
-		*phy_addr++ = 0; //(cmr_uint)memory[1]->phys_addr;
-		*vir_addr++ = (cmr_uint)memory[1]->data;
+			*mfd++ = (cmr_s32)memory->mfd;
+		*phy_addr++ = mem_size*2/3;
+		*vir_addr++ = (cmr_uint)memory->data;
 		if (NULL != mfd)
-			*mfd++ = (cmr_s32)memory[1]->mfd;
+			*mfd++ = (cmr_s32)memory->mfd;
 	} else if (type == CAMERA_ISP_LSC) {
 		if(mIspLscHeapReserved == NULL) {
 			memory = allocCameraMem(size, true);
@@ -4577,7 +4503,7 @@ int SprdCameraHardware::Callback_Free(enum camera_mem_cb_type type, cmr_uint *ph
 sprd_camera_memory_t* SprdCameraHardware::allocCameraMem(int buf_size, uint32_t is_cache)
 {
 	sprd_camera_memory_t *memory = (sprd_camera_memory_t *)malloc(sizeof(*memory));
-	MemoryHeapIon *pHeapIon = NULL;
+	MemIon *pHeapIon = NULL;
 
 	if (mIsPerformanceTestable) {
 		sprd_startPerfTracking("allocCameraMem E.\n");
@@ -4592,8 +4518,8 @@ sprd_camera_memory_t* SprdCameraHardware::allocCameraMem(int buf_size, uint32_t 
 
 	memset(memory, 0, sizeof(*memory));
 	memory->busy_flag = false;
-
 	camera_memory_t *camera_memory = NULL;
+
 	unsigned long paddr = 0;
 	size_t psize = 0;
 	int result = 0;
@@ -4601,15 +4527,15 @@ sprd_camera_memory_t* SprdCameraHardware::allocCameraMem(int buf_size, uint32_t 
 
 	if (!mIOMMUEnabled) {
 		if (is_cache) {
-			pHeapIon = new MemoryHeapIon("/dev/ion", buf_size ,0 , (1<<31) | ION_HEAP_ID_MASK_MM);
+			pHeapIon = new MemIon("/dev/ion", buf_size ,0 , (1<<31) | ION_HEAP_ID_MASK_MM);
 		} else {
-			pHeapIon = new MemoryHeapIon("/dev/ion", buf_size , MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_MM);
+			pHeapIon = new MemIon("/dev/ion", buf_size , MemIon::NO_CACHING, ION_HEAP_ID_MASK_MM);
 		}
 	} else {
 		if (is_cache) {
-			pHeapIon = new MemoryHeapIon("/dev/ion", buf_size ,0 , (1<<31) | ION_HEAP_ID_MASK_SYSTEM);
+			pHeapIon = new MemIon("/dev/ion", buf_size ,0 , (1<<31) | ION_HEAP_ID_MASK_SYSTEM);
 		} else {
-			pHeapIon = new MemoryHeapIon("/dev/ion", buf_size , MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
+			pHeapIon = new MemIon("/dev/ion", buf_size , MemIon::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
 		}
 	}
 
@@ -4631,25 +4557,26 @@ sprd_camera_memory_t* SprdCameraHardware::allocCameraMem(int buf_size, uint32_t 
 		result = -1;
 		goto getpmem_end;
 	}
+
 	camera_memory = mGetMemory_cb(pHeapIon->getHeapID(), buf_size, 1, NULL);
 
 	if(NULL == camera_memory) {
-		LOGE("allocCameraMem: error camera_memory is null.");
-		result = -1;
-		goto getpmem_end;
+	    LOGE("allocCameraMem: error camera_memory is null.");
+	      result = -1;
+	      goto getpmem_end;
 	}
 
 	if (HEAPION_INVALIDPTR == (uintptr_t)camera_memory->data) {
-		camera_memory = NULL;
-		result = -1;
-		LOGE("allocCameraMem: error data is null.");
-		goto getpmem_end;
+	      camera_memory = NULL;
+	       result = -1;
+	       LOGE("allocCameraMem: error data is null.");
+	     goto getpmem_end;
 	}
 
 	if (!mIOMMUEnabled) {
 		result = pHeapIon->get_phy_addr_from_ion(&paddr, &psize);
 	} else {
-		result = pHeapIon->get_iova(mIOMMUID, &paddr, &psize);
+		//result = pHeapIon->get_iova(mIOMMUID, &paddr, &psize);
 	}
 
 	if (result < 0) {
@@ -4657,81 +4584,44 @@ sprd_camera_memory_t* SprdCameraHardware::allocCameraMem(int buf_size, uint32_t 
 		goto getpmem_end;
 	}
 
-getpmem_end:
-
 	memory->ion_heap = pHeapIon;
 	memory->camera_memory = camera_memory;
 	memory->phys_addr = paddr;
 	memory->phys_size = psize;
+	memory->data = pHeapIon->getBase();
 	memory->mfd = pHeapIon->getHeapID();
-	if (camera_memory) {
-		memory->handle = camera_memory->handle;
-	}
-	if (pHeapIon) {
-		memory->data = pHeapIon->getBase();
-	}
+	memory->handle = camera_memory->handle;
 
-	if (0 == result) {
-		if (camera_memory) {
-			if (!mIOMMUEnabled) {
-				LOGI("allocCameraMem X: phys_addr 0x%lx, data: 0x%lx, size: 0x%x, phys_size: 0x%x.",
-					(unsigned long)memory->phys_addr, (unsigned long)memory->data,
-					camera_memory->size, memory->phys_size);
-			} else {
-				LOGI("allocCameraMem X: mm_iova: phys_addr 0x%lx, data: 0x%lx, size: 0x%x, phys_size: 0x%x.",
-					(unsigned long)memory->phys_addr, (unsigned long)memory->data,
-					camera_memory->size, memory->phys_size);
-			}
-#if (SC_FPGA == 1 && SC_IOMMU_PF == 1)
-			{
-				uint64_t kaddr;
-				uint32_t ksize;
-				memory->ion_heap->get_kaddr(&kaddr, &ksize);
-				LOGI("kaddr = 0x%llx\n", kaddr);
-			}
-#endif
-
-		} else {
-				LOGE("allocCameraMem X: phys_addr or mm_iova: error.");
-		}
+	if (!mIOMMUEnabled) {
+		LOGI("X: phys_addr 0x%lx, data: 0x%p, phys_size: 0x%lx heap=%p",
+			memory->phys_addr, memory->data, memory->phys_size, pHeapIon);
 	} else {
-		LOGE("allocCameraMem fail");
-		freeCameraMem(memory);
+		LOGI("X: mm_iova: phys_addr 0x%lx, data: 0x%p, phys_size: 0x%lx.heap=%p",
+			memory->phys_addr, memory->data,memory->phys_size, pHeapIon);
+	}
+
+	return memory;
+
+getpmem_end:
+	if (pHeapIon != NULL) {
+		delete pHeapIon;
+	}
+	if (memory != NULL) {
+		free(memory);
 		memory = NULL;
 	}
-	if (mIsPerformanceTestable) {
-		sprd_stopPerfTracking(" allocCameraMem X.\n");
-	} else {
-		LOGI(" allocCameraMem X.\n");
-	}
-	return memory;
+	return NULL;
+
 }
 
 void SprdCameraHardware::freeCameraMem(sprd_camera_memory_t* memory)
 {
 	if (memory) {
-		if (NULL == memory->camera_memory) {
-			LOGI("freeCameraMem: memory->camera_memory is null");
-		} else if (memory->camera_memory->release) {
-			memory->camera_memory->release(memory->camera_memory);
-			memory->camera_memory = NULL;
-		} else {
-			LOGE("freeCameraMem: camera_memory->release is null.");
-		}
-
 		if(memory->ion_heap) {
-			if (mIOMMUEnabled) {
-				LOGI("free_mm_iova: 0x%lx,data: 0x%lx, 0x%x", (unsigned long)memory->phys_addr, (unsigned long)memory->data,memory->phys_size);
-				memory->ion_heap->free_iova(mIOMMUID, memory->phys_addr, memory->phys_size);
-			}
-#if (SC_FPGA == 1)
-			memory->ion_heap->free_kaddr();
-#endif
 			delete memory->ion_heap;
 			memory->ion_heap = NULL;
 		}
 		free(memory);
-		memory = NULL;
 	} else {
 		LOGI("freeCameraMem: null");
 	}
@@ -4750,10 +4640,6 @@ void SprdCameraHardware::clearCameraMem(sprd_camera_memory_t* memory)
 		}
 
 		if (memory->ion_heap) {
-			if (mIOMMUEnabled) {
-				LOGI("free_mm_iova: 0x%lx,data: 0x%lx, 0x%x", (unsigned long)memory->phys_addr, (unsigned long)memory->data,memory->phys_size);
-				memory->ion_heap->free_iova(mIOMMUID, memory->phys_addr, memory->phys_size);
-			}
 			delete memory->ion_heap;
 			memory->ion_heap = NULL;
 		}
@@ -4761,6 +4647,7 @@ void SprdCameraHardware::clearCameraMem(sprd_camera_memory_t* memory)
 		LOGI("clearCameraMem: null");
 	}
 }
+
 
 int SprdCameraHardware::map(sprd_camera_memory_t* camera_memory, hal_mem_info_t *mem_info)
 {
@@ -4777,7 +4664,7 @@ int SprdCameraHardware::map(sprd_camera_memory_t* camera_memory, hal_mem_info_t 
 	if (!mIOMMUEnabled) {
 		result = camera_memory->ion_heap->get_phy_addr_from_ion(&paddr, &psize);
 	} else {
-		result = camera_memory->ion_heap->get_iova(mIOMMUID, &paddr, &psize);
+		//result = camera_memory->ion_heap->get_iova(mIOMMUID, &paddr, &psize);
 	}
 
 	if (result < 0) {
@@ -4800,8 +4687,8 @@ getpmem_end:
 
 	LOGV(" map X.\n");
 	return result;
-
 }
+
 
 int SprdCameraHardware::unmap(sprd_camera_memory_t* camera_memory, hal_mem_info_t *mem_info)
 {
@@ -4813,7 +4700,7 @@ int SprdCameraHardware::unmap(sprd_camera_memory_t* camera_memory, hal_mem_info_
 	if(camera_memory->ion_heap) {
 		if (mIOMMUEnabled) {
 			LOGI("unmap free_mm_iova: 0x%lx,data: 0x%lx, 0x%x", (unsigned long)camera_memory->phys_addr, (unsigned long)camera_memory->data,camera_memory->phys_size);
-			result = camera_memory->ion_heap->free_iova(mIOMMUID, camera_memory->phys_addr, camera_memory->phys_size);
+			//result = camera_memory->ion_heap->free_iova(mIOMMUID, camera_memory->phys_addr, camera_memory->phys_size);
 			if (0 ==  result) {
 				camera_memory->phys_addr = 0;
 			}
@@ -4944,6 +4831,7 @@ uint32_t SprdCameraHardware::releaseZslBuffer(struct camera_frame_type *frame)
 	return 0;
 }
 
+
 uint32_t SprdCameraHardware::getZslBuffer(hal_mem_info_t *mem_info)
 {
 	int ret = 0;
@@ -4971,7 +4859,6 @@ uint32_t SprdCameraHardware::getZslBuffer(hal_mem_info_t *mem_info)
 	return 0;
 }
 
-
 void SprdCameraHardware::canclePreviewMem()
 {
 	if (PREVIEW_BUFFER_USAGE_GRAPHICS == mPreviewBufferUsage && mPreviewWindow) {
@@ -4982,11 +4869,6 @@ void SprdCameraHardware::canclePreviewMem()
 
 		for (i = 0; i < kPreviewBufferCount; i++) {
 			if (mPreviewBufferHandle[i]) {
-				if (!mIOMMUEnabled) {
-					LOGE("free_mm_iova by  allocatePreviewMemByGraphics:%d",i);
-					private_h=(struct private_handle_t*) (*mPreviewBufferHandle[i]);
-					MemoryHeapIon::Free_iova(mIOMMUID, private_h->share_fd,mPreviewHeapArray_phy[i],mPreviewHeapArray_size[i]);
-				}
 				if (0 != mPreviewWindow->cancel_buffer(mPreviewWindow, mPreviewBufferHandle[i])) {
 					LOGE("canclePreviewMem: cancel_buffer error id = %d",i);
 				}
@@ -5027,7 +4909,7 @@ int SprdCameraHardware::releasePreviewFrame()
 				}
 				LOGV("releasePreviewFrame 0x%x count %d", free_buffer_id, mGraphBufferCount[free_buffer_id]);
 				if((mGraphBufferCount[free_buffer_id] == 0) && isPreviewing())
-					camera_set_preview_buffer(mCameraHandle, mPreviewHeapArray_phy[free_buffer_id], mPreviewHeapArray_vir[free_buffer_id], 0);
+					camera_set_preview_buffer(mCameraHandle, mPreviewHeapArray_phy[free_buffer_id][0], mPreviewHeapArray_vir[free_buffer_id][0], mPreviewMfdArray[free_buffer_id][0]);
 			}
 		}
 #endif
@@ -5085,30 +4967,25 @@ bool SprdCameraHardware::allocatePreviewMemByGraphics()
 			if (!mIOMMUEnabled) {
 				unsigned long ion_addr=0;
 				size_t ion_size=0;
-				if (0 != MemoryHeapIon::Get_phy_addr_from_ion(private_h->share_fd,&ion_addr,&ion_size)) {
+				if (0 != MemIon::Get_phy_addr_from_ion(private_h->share_fd,&ion_addr,&ion_size)) {
 					LOGE("allocatePreviewMemByGraphics: Get_phy_addr_from_ion error");
 					return -1;
 				}
-				LOGI("MemoryHeapIon::Get_mm_ion: %d addr 0x%lx size 0x%x",i, ion_addr, ion_size);
+				LOGI("MemIon::Get_mm_ion: %d addr 0x%lx size 0x%x",i, ion_addr, ion_size);
 				mPreviewBufferHandle[i] = buffer_handle;
-				mPreviewHeapArray_phy[i] = (uintptr_t)ion_addr;
-				mPreviewHeapArray_vir[i] = (uintptr_t)private_h->base;
+				mPreviewHeapArray_phy[i][0] = (uintptr_t)ion_addr;
+				mPreviewHeapArray_vir[i][0] = (uintptr_t)private_h->base;
 				/*mPreviewHeapArray_size[i] = ion_size;*/
 			} else {
 				unsigned long iova_addr=0;
 				size_t iova_size=0;
-				LOGI("MemoryHeapIon::Get_mm_iova: %d",i);
-				if (MemoryHeapIon::Get_iova(mIOMMUID, private_h->share_fd,&iova_addr,&iova_size)) {
-					LOGE("allocatePreviewMemByGraphics: Get_mm_iova error");
-					return -1;
-				}
 				mPreviewBufferHandle[i] = buffer_handle;
-				mPreviewHeapArray_phy[i] = (uintptr_t)iova_addr;
-				mPreviewHeapArray_vir[i] = (uintptr_t)private_h->base;
-				mPreviewHeapArray_size[i]=iova_size;
+				mPreviewHeapArray_phy[i][0] = (uintptr_t)iova_addr;
+				mPreviewHeapArray_vir[i][0] = (uintptr_t)private_h->base;
+				mPreviewHeapArray_size[i][0]=iova_size;
 			}
 			LOGI("allocatePreviewMemByGraphics: phyaddr:0x%lx, base:0x%lx, size:0x%x, stride:0x%x ",
-				mPreviewHeapArray_phy[i],(unsigned long)private_h->base,private_h->size, stride);
+				mPreviewHeapArray_phy[i][0],(unsigned long)private_h->base,private_h->size, stride);
 			mCancelBufferEb[i] = 0;
 		}
 
@@ -6430,16 +6307,18 @@ bool SprdCameraHardware::displayOneFrameForCapture(uint32_t width, uint32_t heig
 #if !defined(CONFIG_GPU_MIDGARD)
 	dst_phy_addr = (uintptr_t)(private_h->phyaddr);
 #else
+
 	if (!mIOMMUEnabled) {
 		unsigned long ion_addr=0;
 		size_t ion_size=0;
-		if (0 != MemoryHeapIon::Get_phy_addr_from_ion(private_h->share_fd, &ion_addr, &ion_size)) {
+		if (0 != MemIon::Get_phy_addr_from_ion(private_h->share_fd, &ion_addr, &ion_size)) {
 			LOGE("displayOneFrameForCapture: Get_phy_addr_from_ion error");
 			return false;
 		}
 		LOGI("MemoryHeapIon::Get_phy_addr_from_ion: addr 0x%lx size 0x%x", ion_addr, ion_size);
 		dst_phy_addr = (uintptr_t)ion_addr;
 	} else {
+		#if 0
 		unsigned long iova_addr=0;
 		size_t iova_size=0;
 		if (MemoryHeapIon::Get_iova(mIOMMUID, private_h->share_fd, &iova_addr, &iova_size)) {
@@ -6448,6 +6327,7 @@ bool SprdCameraHardware::displayOneFrameForCapture(uint32_t width, uint32_t heig
 		}
 		LOGI("MemoryHeapIon::Get_iova: addr 0x%lx size 0x%x", iova_addr, iova_size);
 		dst_phy_addr = (uintptr_t)iova_addr;
+		#endif
 	}
 #endif
 	LOGI("displayOneFrameForCapture,0x%lx.",(unsigned long)virtual_addr);
@@ -6539,10 +6419,11 @@ bool SprdCameraHardware::displayOneFrame(uint32_t width, uint32_t height, uintpt
 	#if !defined(CONFIG_GPU_MIDGARD)
 		dst_phy_addr =  (uintptr_t)(private_h->phyaddr);
 	#else
+#if 0
 		if (!mIOMMUEnabled) {
 			unsigned long ion_addr=0;
 			size_t ion_size=0;
-			if (0 != MemoryHeapIon::Get_phy_addr_from_ion(private_h->share_fd, &ion_addr, &ion_size)) {
+			if (0 != MemIon::Get_phy_addr_from_ion(private_h->share_fd, &ion_addr, &ion_size)) {
 				LOGE("displayOneFrame: Get_phy_addr_from_ion error");
 				return false;
 			}
@@ -6558,6 +6439,7 @@ bool SprdCameraHardware::displayOneFrame(uint32_t width, uint32_t height, uintpt
 			LOGI("MemoryHeapIon::Get_iova: addr 0x%lx size 0x%x", iova_addr, iova_size);
 			dst_phy_addr = (uintptr_t)iova_addr;
 		}
+#endif
 	#endif
 		if (isPreviewing()) {
 			ret = displayCopy(dst_phy_addr, (uintptr_t)vaddr, phy_addr, (uintptr_t)virtual_addr, width, height);
@@ -6589,7 +6471,7 @@ bool SprdCameraHardware::displayOneFrame(uint32_t width, uint32_t height, uintpt
 			LOGW("displayOneFrame skip: Could not enqueue cancel buffer!\n");
 			//camera_release_frame(mCameraHandle, CAMERA_PREVIEW_DATA, id);
 			if(isPreviewing())
-				camera_set_preview_buffer(mCameraHandle, mPreviewHeapArray_phy[id], mPreviewHeapArray_vir[id], 0);
+				camera_set_preview_buffer(mCameraHandle, mPreviewHeapArray_phy[id][0], mPreviewHeapArray_vir[id][0],mPreviewMfdArray[id][0]);
 			return true;
 		} else {
 			if (!mPreviewWindow || !mGrallocHal) {
@@ -6855,13 +6737,13 @@ int SprdCameraHardware::allocOneFrameMem(struct SprdCameraHardware::OneFrameMem 
 	/* alloc input y buffer */
 	LOGI("allocOneFrameMem %d  %d  %d\n",mIOMMUEnabled,tmp_one_frame_mem_ptr->width,tmp_one_frame_mem_ptr->height);
 	if (!mIOMMUEnabled) {
-		tmp_one_frame_mem_ptr->input_y_pmem_hp = new MemoryHeapIon("/dev/ion",
+		tmp_one_frame_mem_ptr->input_y_pmem_hp = new MemIon("/dev/ion",
 											tmp_one_frame_mem_ptr->width * tmp_one_frame_mem_ptr->height,
-											MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_MM);
+											MemIon::NO_CACHING, ION_HEAP_ID_MASK_MM);
 	} else {
-		tmp_one_frame_mem_ptr->input_y_pmem_hp = new MemoryHeapIon("/dev/ion",
+		tmp_one_frame_mem_ptr->input_y_pmem_hp = new MemIon("/dev/ion",
 										tmp_one_frame_mem_ptr->width * tmp_one_frame_mem_ptr->height,
-										MemoryHeapBase::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
+										MemIon::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
 	}
 	if (tmp_one_frame_mem_ptr->input_y_pmem_hp->getHeapID() < 0) {
 		LOGE("failed to alloc input_y pmem buffer.\n");
@@ -6876,12 +6758,14 @@ int SprdCameraHardware::allocOneFrameMem(struct SprdCameraHardware::OneFrameMem 
 			return -1;
 		}
 	} else {
+		/*
 		ret = tmp_one_frame_mem_ptr->input_y_pmem_hp->get_iova(mIOMMUID, (unsigned long *)(&tmp_one_frame_mem_ptr->input_y_physical_addr),
 		(size_t *)(&tmp_one_frame_mem_ptr->input_y_pmemory_size));
 		if (ret) {
 			LOGE("failed to get_mm_iova.\n");
 			return -1;
 		}
+		*/
 	}
 	tmp_one_frame_mem_ptr->input_y_virtual_addr = (unsigned char*)tmp_one_frame_mem_ptr->input_y_pmem_hp->getBase();
 	if (!tmp_one_frame_mem_ptr->input_y_physical_addr) {
@@ -6902,7 +6786,7 @@ int SprdCameraHardware::relaseOneFrameMem(struct SprdCameraHardware::OneFrameMem
 		if (!mIOMMUEnabled) {
 			tmp_one_frame_mem_ptr->input_y_pmem_hp.clear();
 		} else {
-			tmp_one_frame_mem_ptr->input_y_pmem_hp->free_iova(mIOMMUID, tmp_one_frame_mem_ptr->input_y_physical_addr,tmp_one_frame_mem_ptr->input_y_pmemory_size);
+			//tmp_one_frame_mem_ptr->input_y_pmem_hp->free_iova(mIOMMUID, tmp_one_frame_mem_ptr->input_y_physical_addr,tmp_one_frame_mem_ptr->input_y_pmemory_size);
 		}
 	}
 	return 0;
@@ -7282,11 +7166,11 @@ void SprdCameraHardware::receiveZslFrame(struct camera_frame_type *frame)
 			}
 			if (0 == getZSLQueueFrameNum()) {
 				Mutex::Autolock zsllock(&mZslBufLock);
-				camera_set_zsl_snapshot_buffer(mCameraHandle,frame->y_phy_addr, frame->y_vir_addr);
+				camera_set_zsl_snapshot_buffer(mCameraHandle,frame->y_phy_addr, frame->y_vir_addr,0);
 			} else {
 				Mutex::Autolock zsllock(&mZslBufLock);
 				zsl_frame = popZSLQueue();
-				camera_set_zsl_snapshot_buffer(mCameraHandle,zsl_frame.frame.y_phy_addr, zsl_frame.frame.y_vir_addr);
+				camera_set_zsl_snapshot_buffer(mCameraHandle,zsl_frame.frame.y_phy_addr, zsl_frame.frame.y_vir_addr,0);
 				if (!need_pause) {
 					camera_set_zsl_buffer(mCameraHandle, zsl_frame.frame.y_phy_addr, zsl_frame.frame.y_vir_addr, (cmr_uint)zsl_frame.heap_array);
 				}
@@ -7334,7 +7218,7 @@ void SprdCameraHardware::processZslFrame(void *p_data)
 		ret = obj->getZSLSnapshotFrame(&mem_info);
 		if (0 == ret) {
 			Mutex::Autolock zsllock(&mZslBufLock);
-			camera_set_zsl_snapshot_buffer(obj->mCameraHandle, (cmr_uint)mem_info.addr_phy, (cmr_uint)mem_info.addr_vir);
+			//camera_set_zsl_snapshot_buffer(obj->mCameraHandle, (cmr_uint)mem_info.addr_phy, (cmr_uint)mem_info.addr_vir,mem_info.addr_vir,(cmr_s32)mem_info.zsl_private);
 			obj->mZslShotPushFlag = 0;
 			obj->mZslChannelStatus = 0;
 		}
@@ -7417,12 +7301,12 @@ void SprdCameraHardware::receivePreviewFrame(struct camera_frame_type *frame)
 		yuvConvertFormat(frame);
 		if (PREVIEW_FRAME == frame->type) {
 			if (!displayOneFrame(width, height, (uintptr_t)frame->y_phy_addr, (char *)frame->y_vir_addr, frame->buf_id)) {
-				camera_set_preview_buffer(mCameraHandle, frame->y_phy_addr, frame->y_vir_addr, 0);
+				camera_set_preview_buffer(mCameraHandle, frame->y_phy_addr, frame->y_vir_addr, frame->y_mfd);
 				LOGE("%s: displayOneFrame not successful!", __func__);
 				return;
 			}
 		} else if (PREVIEW_CANCELED_FRAME == frame->type) {
-			camera_set_preview_buffer(mCameraHandle, frame->y_phy_addr, frame->y_vir_addr, 0);
+			camera_set_preview_buffer(mCameraHandle, frame->y_phy_addr, frame->y_vir_addr, frame->y_mfd);
 			return;
 		}
 	} else {
@@ -7480,13 +7364,13 @@ void SprdCameraHardware::receivePreviewFrame(struct camera_frame_type *frame)
 				sendPreviewFrameToVideo(frame);
 			} else if (PREVIEW_CANCELED_FRAME == frame->type) {
 				if(isPreviewing())
-					camera_set_preview_buffer(mCameraHandle, frame->y_phy_addr, frame->y_vir_addr, 0);
+					camera_set_preview_buffer(mCameraHandle, frame->y_phy_addr, frame->y_vir_addr, frame->y_mfd);
 				return;
 			}
 		} else {
 			if (PREVIEW_BUFFER_USAGE_DCAM == mPreviewBufferUsage) {
 				if(isPreviewing())
-					camera_set_preview_buffer(mCameraHandle, frame->y_phy_addr, frame->y_vir_addr, 0);
+					camera_set_preview_buffer(mCameraHandle, frame->y_phy_addr, frame->y_vir_addr,frame->y_mfd);
 			}
 		}
 		// When we are doing preview but not recording, we need to
@@ -7506,7 +7390,7 @@ void SprdCameraHardware::receivePreviewFrame(struct camera_frame_type *frame)
 
 	if(isPreviewing()) {
 		if ((PREVIEW_BUFFER_USAGE_DCAM == mPreviewBufferUsage) && (PREVIEW_FRAME == frame->type)) {
-			camera_set_preview_buffer(mCameraHandle, frame->y_phy_addr, frame->y_vir_addr, 0);
+			camera_set_preview_buffer(mCameraHandle, frame->y_phy_addr, frame->y_vir_addr, frame->y_mfd);
 		}
 	}
 	if (!is_preview)
@@ -8440,8 +8324,6 @@ int SprdCameraHardware::switch_monitor_thread_init(void *p_data)
 		ret = cmr_msg_post((cmr_handle)obj->mSwitchMonitorMsgQueHandle, &message, 1);
 		if (ret) {
 			LOGE("switch_monitor_thread_init Fail to send one msg!");
-		} else {
-			pthread_debug_setname(obj->mSwitchMonitorThread, "SwitchMonitor");
 		}
 		sem_wait(&obj->mSwitchMonitorSyncSem);
 	}
@@ -8684,8 +8566,6 @@ int SprdCameraHardware::pre_alloc_cap_mem_thread_init(void *p_data)
 			obj->mPreAllocCapMemInited = 0;
 			sem_destroy(&obj->mPreAllocCapMemSemDone);
 			LOGE("pre_alloc_cap_mem_thread_init: fail to send init msg");
-		} else {
-			pthread_debug_setname(obj->mPreAllocCapMemThread, "mPreAllocCapMemThread");
 		}
 	}
 
@@ -8856,7 +8736,7 @@ int SprdCameraHardware::flush_buffer(camera_flush_mem_type_e  type, int index, v
 {
 	int ret = 0;
 	sprd_camera_memory_t *pmem = NULL;
-	MemoryHeapIon *pHeapIon = NULL;
+	MemIon *pHeapIon = NULL;
 	uint32_t i;
 
 	LOGV("flush_buffer %d %d",type,index);

@@ -3371,23 +3371,6 @@ cmr_int prev_alloc_prev_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 
 	if (!is_restart) {
 		prev_cxt->prev_mem_valid_num = 0;
-#ifdef SC_IOMMU_PF
-		/*mem_ops->alloc_mem(CAMERA_PREVIEW,
-				   handle->oem_handle,
-				   (cmr_u32 *)&prev_cxt->prev_mem_size,
-				   (cmr_u32 *)&prev_cxt->prev_mem_num,
-				   prev_cxt->prev_phys_addr_array,
-				   prev_cxt->prev_virt_addr_array,
-				   prev_cxt->prev_mfd_array);*/
-		for (i = 0; i < prev_cxt->prev_mem_num; i++) {
-			prev_cxt->prev_phys_addr_array[i][0] = NULL;
-			prev_cxt->prev_virt_addr_array[i][0] = NULL;
-			prev_cxt->prev_mfd_array[i][0] = 0;
-			prev_cxt->prev_phys_addr_array[i][1] = NULL;
-			prev_cxt->prev_virt_addr_array[i][1] = NULL;
-			prev_cxt->prev_mfd_array[i][1] = 0;
-		}
-#else
 		mem_ops->alloc_mem(CAMERA_PREVIEW,
 				   handle->oem_handle,
 				   (cmr_u32 *)&prev_cxt->prev_mem_size,
@@ -3395,7 +3378,6 @@ cmr_int prev_alloc_prev_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 				   prev_cxt->prev_phys_addr_array,
 				   prev_cxt->prev_virt_addr_array,
 				   prev_cxt->prev_mfd_array);
-#endif
 		/*check memory valid*/
 		CMR_LOGI("prev_mem_size 0x%lx, mem_num %ld", prev_cxt->prev_mem_size, prev_cxt->prev_mem_num);
 #ifdef SC_IOMMU_PF
@@ -3481,16 +3463,16 @@ cmr_int prev_alloc_prev_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 
 #ifdef SC_IOMMU_PF
 	for (i = 0; i < (cmr_uint)prev_cxt->prev_mem_valid_num; i++) {
-		prev_cxt->prev_frm[i].buf_size        = frame_size;
+		prev_cxt->prev_frm[i].buf_size		  = frame_size;
 		prev_cxt->prev_frm[i].addr_vir.addr_y = prev_cxt->prev_virt_addr_array[i][0];
-		prev_cxt->prev_frm[i].addr_vir.addr_u = prev_cxt->prev_virt_addr_array[i][1];
+		prev_cxt->prev_frm[i].addr_vir.addr_u = prev_cxt->prev_frm[i].addr_vir.addr_y + buffer_size;
 		prev_cxt->prev_frm[i].addr_phy.addr_y = prev_cxt->prev_phys_addr_array[i][0];
-		prev_cxt->prev_frm[i].addr_phy.addr_u = prev_cxt->prev_phys_addr_array[i][1];
+		prev_cxt->prev_frm[i].addr_phy.addr_u = prev_cxt->prev_frm[i].addr_phy.addr_y + buffer_size;
 		prev_cxt->prev_frm[i].mfd.y 		  = prev_cxt->prev_mfd_array[i][0];
-		prev_cxt->prev_frm[i].mfd.u 		  = prev_cxt->prev_mfd_array[i][1];
-		prev_cxt->prev_frm[i].fmt             = prev_cxt->prev_param.preview_fmt;
-		prev_cxt->prev_frm[i].size.width      = prev_cxt->actual_prev_size.width;
-		prev_cxt->prev_frm[i].size.height     = prev_cxt->actual_prev_size.height;
+		prev_cxt->prev_frm[i].mfd.u 		  = prev_cxt->prev_mfd_array[i][0];
+		prev_cxt->prev_frm[i].fmt			  = prev_cxt->prev_param.preview_fmt;
+		prev_cxt->prev_frm[i].size.width	  = prev_cxt->actual_prev_size.width;
+		prev_cxt->prev_frm[i].size.height	  = prev_cxt->actual_prev_size.height;
 
 		buffer->addr[i].addr_y     = prev_cxt->prev_frm[i].addr_phy.addr_y;
 		buffer->addr[i].addr_u     = prev_cxt->prev_frm[i].addr_phy.addr_u;
@@ -7006,6 +6988,7 @@ cmr_int prev_get_scale_rect(struct prev_handle *handle,
 		trim_sz.width = rect.width;
 		trim_sz.height = rect.height;
 		/*caculate trim rect*/
+
 		if (ZOOM_INFO != zoom_param->mode) {
 			ret = camera_get_trim_rect(&rect,
 					zoom_param->zoom_level,

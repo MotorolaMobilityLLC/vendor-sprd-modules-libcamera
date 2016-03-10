@@ -32,12 +32,16 @@ extern "C" {
 #include <utils/RefBase.h>
 #include <binder/MemoryBase.h>
 #include <binder/MemoryHeapBase.h>
-#include <MemoryHeapIon.h>
+//#include <MemoryHeapIon.h>
+#include "MemIon.h"
+
 #include <hardware/camera.h>
 #include <hardware/gralloc.h>
 #else
 #include <binder/MemoryHeapBase.h>
-#include <MemoryHeapIon.h>
+//#include <MemoryHeapIon.h>
+#include "MemIon.h"
+
 #include <hardware/camera.h>
 #endif
 #include <camera/CameraParameters.h>
@@ -66,7 +70,7 @@ typedef void (*autofocus_callback)(bool, void *);
 
 typedef struct sprd_camera_memory {
 	camera_memory_t *camera_memory;
-	MemoryHeapIon *ion_heap;
+	MemIon *ion_heap;
 	uintptr_t phys_addr;
 	uint32_t phys_size;
 	cmr_s32  mfd;
@@ -193,7 +197,7 @@ private:
 		const char *mName;
 	};
 	struct OneFrameMem {
-		sp<MemoryHeapIon> input_y_pmem_hp;
+		sp<MemIon> input_y_pmem_hp;
 		uint32_t input_y_pmemory_size;
 		int input_y_physical_addr ;
 		unsigned char* input_y_virtual_addr;
@@ -214,7 +218,7 @@ private:
 		AshmemPool(int buffer_size, int num_buffers, int frame_size,
 						int frame_offset, const char *name);
 	};
-	bool allocatePreviewMemFromGraphics(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr);
+	bool allocatePreviewMemFromGraphics(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr,cmr_s32 *mfd);
 	void cancelPreviewMemFromGraphics(cmr_u32 sum);
 	int Callback_PreviewMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *mfd);
 	int Callback_VideoMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *mfd);
@@ -478,6 +482,7 @@ private:
 	uintptr_t                       mZslHeapArray_phy[kPreviewBufferCount+kPreviewRotBufferCount+1][2];
 	uintptr_t                       mZslHeapArray_vir[kPreviewBufferCount+kPreviewRotBufferCount+1][2];
 	uint32_t                        mZslHeapArray_size[kPreviewBufferCount+kPreviewRotBufferCount+1][2];
+	cmr_s32                       mPreviewMfdArray[kPreviewBufferCount+kPreviewRotBufferCount+1][2];
 #else
 	uintptr_t                       mPreviewHeapArray_phy[kPreviewBufferCount+kPreviewRotBufferCount+1];
 	uintptr_t                       mPreviewHeapArray_vir[kPreviewBufferCount+kPreviewRotBufferCount+1];
@@ -488,6 +493,7 @@ private:
 	uintptr_t                       mZslHeapArray_phy[kPreviewBufferCount+kPreviewRotBufferCount+1];
 	uintptr_t                       mZslHeapArray_vir[kPreviewBufferCount+kPreviewRotBufferCount+1];
 	uint32_t                        mZslHeapArray_size[kPreviewBufferCount+kPreviewRotBufferCount+1];
+	cmr_s32                       mPreviewMfdArray[kPreviewBufferCount+kPreviewRotBufferCount+1];
 #endif
 #if(MINICAMERA != 1)
 	buffer_handle_t                 *mPreviewBufferHandle[kPreviewBufferCount];

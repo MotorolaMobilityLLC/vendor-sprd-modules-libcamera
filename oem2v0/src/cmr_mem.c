@@ -1205,7 +1205,7 @@ int arrange_yuv_buf(struct cmr_cap_2_frm *cap_2_frm,
 			offset[0] = channel_size + tmp;
 	#endif
 		} else {
-			offset[0] = channel_size + CMR_YUV_BUF_GAP * align16_image_size.width;
+			offset[0] =  ((channel_size * 3) >> 1) + CMR_YUV_BUF_GAP * align16_image_size.width;
 		}
 #else
 	if (ZOOM_POST_PROCESS == cap_2_frm->zoom_post_proc || flag) {
@@ -1417,17 +1417,11 @@ int arrange_misc_buf(struct cmr_cap_2_frm *cap_2_frm,
 		CMR_LOGI("i %d %x reseved in buffer, alloc %x buffers\n", i, mem_res, size_pixel);
 		if (mem_res >= size_pixel) {
 			img_frame[i].buf_size = size_pixel;
-#ifdef SC_IOMMU_PF
-			img_frame[i].addr_phy.addr_y = cap_2_frm->mem_frm.addr_phy.addr_y + mem_end[0];
-			img_frame[i].addr_phy.addr_u = cap_2_frm->mem_frm.addr_phy.addr_u + (mem_end[1] >> 1);
-			img_frame[i].addr_vir.addr_y = cap_2_frm->mem_frm.addr_vir.addr_y + mem_end[0];
-			img_frame[i].addr_vir.addr_u = cap_2_frm->mem_frm.addr_vir.addr_u + (mem_end[1] >> 1);
-#else
+
 			img_frame[i].addr_phy.addr_y = cap_2_frm->mem_frm.addr_phy.addr_y + mem_end[0];
 			img_frame[i].addr_vir.addr_y = cap_2_frm->mem_frm.addr_vir.addr_y + mem_end[0];
 			img_frame[i].addr_phy.addr_u = img_frame[i].addr_phy.addr_y + size_pixel * 2 / 3;
 			img_frame[i].addr_vir.addr_u = img_frame[i].addr_vir.addr_y + size_pixel * 2 / 3;
-#endif
 			/* re-calculate the currend end of mem */
 			mem_res[0] -= size_pixel;
 			mem_end[0] += size_pixel;
