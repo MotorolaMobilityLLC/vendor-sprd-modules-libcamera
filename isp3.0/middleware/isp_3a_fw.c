@@ -711,7 +711,6 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 	ae_input.camera_id = input_ptr->camera_id;
 	ae_input.caller_handle = isp_3a_handle;
 	ae_input.lib_param = input_ptr->ae_config;
-	memset(&ae_input.lib_param, 0x00, sizeof(ae_input.lib_param));
 	ae_input.ops_in.get_system_time = isp3a_get_dev_time;
 	ae_input.ops_in.ae_callback = isp3a_ae_callback;
 	ae_input.ops_in.set_again = isp3a_ae_set_gain;
@@ -742,6 +741,11 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 	ae_input.preview_work.resolution.sensor_size_index = 1;
 #endif
 	ae_input.tuning_param = input_ptr->bin_info.ae_addr;
+	if (cxt->otp_data) {
+		ae_input.otp_data.r = cxt->otp_data->isp_awb_info.gain_r;
+		ae_input.otp_data.g = cxt->otp_data->isp_awb_info.gain_g;
+		ae_input.otp_data.b = cxt->otp_data->isp_awb_info.gain_b;
+	}
 	ret = ae_ctrl_init(&ae_input, &ae_output, &cxt->ae_cxt.handle);
 	if (ret) {
 		ISP_LOGE("failed to AE initialize");
