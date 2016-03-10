@@ -112,6 +112,8 @@ extern SENSOR_INFO_T g_at_ov5670_mipi_raw_info;
 
 extern SENSOR_INFO_T g_s5k3p3sm_mipi_raw_info;
 extern SENSOR_INFO_T g_s5k4h8yx_mipi_raw_info;
+extern SENSOR_INFO_T g_imx230_mipi_raw_info;
+extern SENSOR_INFO_T g_ov2680_mipi_raw_info;
 
 #define AUTO_TEST_CAMERA 1
 
@@ -121,20 +123,18 @@ extern SENSOR_INFO_T g_s5k4h8yx_mipi_raw_info;
 const SENSOR_MATCH_T main_sensor_infor_tab[]=
 {
 	{"s5k3p3sm_mipi_raw", &g_s5k3p3sm_mipi_raw_info},
+	{"imx230_mipi_raw", &g_imx230_mipi_raw_info},
 	PNULL
 };
 
 const SENSOR_MATCH_T sub_sensor_infor_tab[]=
 {
-	//{"s5k4h8yx_mipi_raw", &g_s5k4h8yx_mipi_raw_info},
+	{"ov2680_mipi_raw", &g_ov2680_mipi_raw_info},
 	PNULL
 };
 
 const SENSOR_MATCH_T main2_sensor_infor_tab[]=
 {
-#ifdef SC_FPGA
-	//{"s5k4h8yx_mipi_raw", &g_s5k4h8yx_mipi_raw_info},
-#endif
 	{"s5k4h8yx_mipi_raw", &g_s5k4h8yx_mipi_raw_info},
 	PNULL
 };

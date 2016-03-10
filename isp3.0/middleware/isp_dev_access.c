@@ -673,10 +673,8 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 
 	if (0 == cxt->camera_id)
 		dcam_id = 0;
-	else if (2 == cxt->camera_id)
+	else if (2 == cxt->camera_id || 1 == cxt->camera_id)
 		dcam_id = 1;
-	else
-		dcam_id = 0;
 	ISP_LOGI("dcam_id %d", dcam_id);
 	ret = isp_dev_set_dcam_id(cxt->isp_driver_handle, dcam_id);
 	ret = isp_dev_stream_on(cxt->isp_driver_handle);
@@ -910,10 +908,8 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 
 	if (0 == cxt->camera_id)
 		dcam_id = 0;
-	else if (2 == cxt->camera_id)
+	else if (2 == cxt->camera_id || 1 == cxt->camera_id)
 		dcam_id = 1;
-	else
-		dcam_id = 0;
 
 	ret = isp_dev_stream_on(cxt->isp_driver_handle);
 	ret = isp_dev_set_dcam_id(cxt->isp_driver_handle, dcam_id);
