@@ -331,7 +331,7 @@ exit:
 	return ret;
 }
 
-static cmr_int aealtek_convert_otp(struct aealtek_cxt *cxt_ptr, struct calib_wb_gain_t *otp_ptr)
+static cmr_int aealtek_convert_otp(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_otp_data otp_data)
 {
 	cmr_int ret = ISP_ERROR;
 	struct calib_wb_gain_t  *lib_otp_ptr = NULL;
@@ -343,10 +343,12 @@ static cmr_int aealtek_convert_otp(struct aealtek_cxt *cxt_ptr, struct calib_wb_
 		goto exit;
 	}
 	lib_otp_ptr = &cxt_ptr->lib_data.ae_otp_data;
-	if (otp_ptr) {
-		lib_otp_ptr->r = otp_ptr->r;
-		lib_otp_ptr->g = otp_ptr->g;
-		lib_otp_ptr->b = otp_ptr->b;
+	if (0 != otp_data.r
+		&& 0 != otp_data.g
+		&& 0 != otp_data.b) {
+		lib_otp_ptr->r = otp_data.r;
+		lib_otp_ptr->g = otp_data.g;
+		lib_otp_ptr->b = otp_data.b;
 	} else {
 		lib_otp_ptr->r = 1500;
 		lib_otp_ptr->g = 1300;
@@ -706,7 +708,7 @@ exit:
 	return ret;
 }
 
-static cmr_int aealtek_load_otp(struct aealtek_cxt *cxt_ptr, void *otp_ptr)
+static cmr_int aealtek_load_otp(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_otp_data otp_data)
 {
 	cmr_int ret = ISP_ERROR;
 
@@ -719,10 +721,9 @@ static cmr_int aealtek_load_otp(struct aealtek_cxt *cxt_ptr, void *otp_ptr)
 	}
 	obj_ptr = &cxt_ptr->al_obj;
 
-	ret = aealtek_convert_otp(cxt_ptr, otp_ptr);
+	ret = aealtek_convert_otp(cxt_ptr, otp_data);
 	if (ret)
 		goto exit;
-
 
 	ISP_LOGI("ae_otp_data r=%d,g=%d,b=%d", cxt_ptr->lib_data.ae_otp_data.r,
 			cxt_ptr->lib_data.ae_otp_data.g,
@@ -836,7 +837,7 @@ static cmr_int aealtek_init(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_init_in 
 	if (obj_ptr->initial)
 		obj_ptr->initial(&obj_ptr->ae);
 
-	ret = aealtek_load_otp(cxt_ptr, in_ptr->otp_param);
+	ret = aealtek_load_otp(cxt_ptr, in_ptr->otp_data);
 	if (ret)
 		goto exit;
 

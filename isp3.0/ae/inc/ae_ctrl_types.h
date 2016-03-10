@@ -331,6 +331,12 @@ struct ae_ctrl_ext_debug_info {
 	cmr_u32 valid_exposure_time;
 };
 
+struct ae_ctrl_otp_data {
+	cmr_u32 r;
+	cmr_u32 g;
+	cmr_u32 b;
+};
+
 struct ae_ctrl_proc_out {
 	struct isp3a_ae_info ae_info;
 	struct ae_ctrl_param_ae_frame ae_frame;
@@ -412,7 +418,7 @@ struct ae_ctrl_init_out {
 struct ae_ctrl_init_in {
 	cmr_u32 camera_id;
 	void *tuning_param;
-	void *otp_param;
+	struct ae_ctrl_otp_data otp_data;
 	cmr_handle caller_handle;
 	struct ae_ctrl_ops_in  ops_in;
 	struct isp_lib_config  lib_param;
