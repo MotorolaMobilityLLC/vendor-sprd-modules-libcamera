@@ -25,6 +25,7 @@
 #include "alwrapper_af_errcode.h"
 #include "alwrapper_af.h"
 #include "af_alg.h"
+#include "cutils/properties.h"
 
 #define LIBRARY_PATH "libalAFLib.so"
 #define CAF_LIBRARY_PATH "libspcaftrigger.so"
@@ -86,6 +87,11 @@ struct af_altek_report_t {
 	cmr_u8 need_report;
 };
 
+struct af_altek_vcm_tune_info {
+	cmr_u16 tuning_enable;
+	cmr_u16 cur_pos;
+};
+
 struct af_altek_context {
 	cmr_u32 camera_id;
 	cmr_u32 frame_id;
@@ -106,11 +112,15 @@ struct af_altek_context {
 	struct af_altek_stats_config_t stats_config;
 	struct af_altek_report_t report_data;
 	struct allib_af_hw_stats_t af_stats; /* TBD */
+	struct af_altek_vcm_tune_info vcm_tune;
 };
 
 /************************************ INTERNAK DECLARATION ************************************/
 static cmr_int afaltek_adpt_proc_out_report(cmr_handle adpt_handle,
-					    struct allib_af_output_report_t *report_in, void *report_out);
+					    struct allib_af_output_report_t *report_in,
+					    void *report_out);
+
+static cmr_u8 afaltek_adpt_set_pos(cmr_handle adpt_handle, cmr_s16 dac, cmr_u8 sensor_id);
 
 /************************************ INTERNAK FUNCTION ***************************************/
 
@@ -667,12 +677,49 @@ static cmr_int afaltek_adpt_update_isp_info(cmr_handle adpt_handle, void *in)
 	return ret;
 }
 
+static cmr_int afaltek_vcm_tuning_param(cmr_handle adpt_handle)
+{
+	cmr_int ret = ISP_SUCCESS;
+	cmr_s8 value[PROPERTY_VALUE_MAX];
+	cmr_s8 pos[PROPERTY_VALUE_MAX];
+	cmr_s16 position = 0;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+
+	memset(value, '\0', sizeof(value));
+	property_get("persist.sys.isp.vcm.tuning.mode", (char *)value, "0");
+
+	if (1 == atoi((char *)value)) {
+		memset(pos, '\0', sizeof(pos));
+		property_get("persist.sys.isp.vcm.position", (char *)pos, "0");
+		position = atoi((char *)pos);
+
+		if (position != cxt->vcm_tune.cur_pos) {
+			ret = afaltek_adpt_set_pos(adpt_handle, position, 0);
+			if (!ret) {
+				cxt->vcm_tune.cur_pos = position;
+				cxt->vcm_tune.tuning_enable = 1;
+				ISP_LOGI("VCM TUNING MODE position %d", position);
+			}
+		}
+	} else {
+		cxt->vcm_tune.tuning_enable = 0;
+	}
+
+	return ret;
+
+}
+
 static cmr_int afaltek_adpt_update_sof(cmr_handle adpt_handle, void *in)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct af_ctrl_sof_info *sof_info = (struct af_ctrl_sof_info *)in;
 	struct allib_af_input_set_param_t p = { 0x00 };
+
+	ret = afaltek_vcm_tuning_param(adpt_handle);
+	if (ret) {
+		ISP_LOGE("set vcm tuning position error");
+	}
 
 	p.type = alAFLIB_SET_PARAM_UPDATE_SOF;
 
@@ -1482,7 +1529,8 @@ static cmr_int afaltek_adpt_deinit(cmr_handle adpt_handle)
 }
 
 static cmr_int afaltek_adpt_proc_out_report(cmr_handle adpt_handle,
-					    struct allib_af_output_report_t *report, void *report_out)
+					    struct allib_af_output_report_t *report,
+					    void *report_out)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
