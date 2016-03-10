@@ -72,7 +72,6 @@
 						(prev_cxt->cap_org_size.height == prev_cxt->actual_pic_size.height))
 
 #define RAW_NO_SCALING       		((ZOOM_POST_PROCESS == prev_cxt->cap_zoom_mode) && \
-						0 == zoom_param->zoom_level && \
 						(prev_cxt->cap_org_size.width == prev_cxt->actual_pic_size.width) && \
 						(prev_cxt->cap_org_size.height == prev_cxt->actual_pic_size.height))
 
@@ -3987,7 +3986,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 			prev_cxt->cap_mfd_array[i][1] = prev_cxt->cap_mfd_array[0][0];
 		}
 		/*check memory valid*/
-		CMR_LOGI("cap mem size 0x%x, mem_num %d", total_mem_size, CMR_CAPTURE_MEM_SUM);
+		CMR_LOGI("cap mem size %d bytes, mem_num %d", total_mem_size, CMR_CAPTURE_MEM_SUM);
 		for (i = 0; i < CMR_CAPTURE_MEM_SUM; i++) {
 			CMR_LOGI("%d, phys_addr 0x%lx,0x%lx, virt_addr 0x%lx,0x%lx, mfd 0x%x,0x%x\n",
 				i,
@@ -4117,7 +4116,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 	buffer->flag       = BUF_FLAG_INIT;
 	buffer_size        = prev_cxt->actual_pic_size.width * prev_cxt->actual_pic_size.height;
 	frame_size         = buffer_size * 3 / 2;
-	CMR_LOGI("@xin  prev_cxt->cap_org_fmt: %ld, encode_angle %d", prev_cxt->cap_org_fmt, prev_cxt->prev_param.encode_angle);
+	CMR_LOGI("prev_cxt->cap_org_fmt: %ld, encode_angle %d", prev_cxt->cap_org_fmt, prev_cxt->prev_param.encode_angle);
 	for (i = 0; i < buffer->count; i++){
 		if (IMG_DATA_TYPE_RAW == prev_cxt->cap_org_fmt) {
 			if ((IMG_ANGLE_0 != prev_cxt->prev_param.cap_rot) || prev_cxt->prev_param.is_cfg_rot_cap) {
@@ -4130,9 +4129,11 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 				}
 			} else {
 				if (NO_SCALING) {
+					CMR_LOGD("raw no scale, no rotation");
 					prev_cxt->cap_mem[i].cap_raw.addr_phy.addr_y = prev_cxt->cap_mem[i].cap_yuv.addr_phy.addr_y;
 					prev_cxt->cap_mem[i].cap_raw.addr_vir.addr_y = prev_cxt->cap_mem[i].cap_yuv.addr_vir.addr_y;
 				} else {
+					CMR_LOGD("raw has scale, no rotation");
 					prev_cxt->cap_mem[i].cap_raw.addr_phy.addr_y = prev_cxt->cap_mem[i].target_yuv.addr_phy.addr_y;
 					prev_cxt->cap_mem[i].cap_raw.addr_vir.addr_y = prev_cxt->cap_mem[i].target_yuv.addr_vir.addr_y;
 				}
@@ -4748,12 +4749,16 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id)
 		aligned_type = CAMERA_MEM_ALIGNED;
 	}
 #else
-	if ((1 == handle->prev_cxt[camera_id].prev_param.is_dv)) {
+	if (1 == handle->prev_cxt[camera_id].prev_param.is_dv) {
 		aligned_type = CAMERA_MEM_NO_ALIGNED;
 	} else {
 		aligned_type = CAMERA_MEM_ALIGNED;
 	}
 #endif
+
+	if (cap_rot == IMG_ANGLE_0) {
+		aligned_type = CAMERA_MEM_NO_ALIGNED;
+	}
 
 	/* w/h aligned by 16 */
 	alg_pic_size->width  = camera_get_aligned_size(aligned_type, org_pic_size->width);

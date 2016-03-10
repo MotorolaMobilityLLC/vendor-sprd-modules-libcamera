@@ -35,6 +35,7 @@ typedef void (*isp_evt_cb)(cmr_int evt, void *data, void *privdata);
 enum isp_drv_evt {
 	ISP_DRV_STATISTICE,
 	ISP_DRV_SENSOR_SOF,
+	ISP_DRV_RAW10,
 	ISP_DEV_EVT_MAX
 };
 
@@ -58,6 +59,9 @@ cmr_int isp_dev_close(isp_handle handle);
 cmr_int isp_dev_stop(isp_handle handle);
 cmr_int isp_dev_stream_on(isp_handle handle);
 cmr_int isp_dev_stream_off(isp_handle handle);
+cmr_int isp_dev_set_rawaddr(isp_handle handle, struct isp_raw_data *param);
+cmr_int isp_dev_set_post_yuv_mem(isp_handle handle, struct isp_img_mem *param);
+cmr_int isp_dev_set_fetch_src_buf(isp_handle handle, struct isp_img_mem *param);
 cmr_int isp_dev_load_firmware(isp_handle handle, struct isp_init_mem_param *param);
 cmr_int isp_dev_set_statis_buf(isp_handle handle, struct isp_statis_buf *param);
 cmr_int isp_dev_get_statis_buf(isp_handle handle, struct isp_img_read_op *param);
@@ -92,4 +96,6 @@ cmr_int isp_dev_capability_video_size(isp_handle handle, struct isp_img_size *si
 cmr_int isp_dev_capability_single_size(isp_handle handle, struct isp_img_size *size);
 cmr_int isp_dev_set_dcam_id(isp_handle handle, cmr_u32 dcam_id);
 cmr_int isp_dev_get_iq_param(isp_handle handle, struct debug_info1 *info1, struct debug_info2 *info2);
+cmr_int isp_dev_set_capture_mode(isp_handle handle, cmr_u32 capture_mode);
+
 #endif

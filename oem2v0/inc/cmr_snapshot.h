@@ -87,9 +87,11 @@ typedef void (*snapshot_cb_of_state)(cmr_handle oem_handle, enum snapshot_cb_typ
 struct raw_proc_param {
 	struct img_frm           src_frame;
 	struct img_frm           dst_frame;
+	struct img_frm           dst2_frame;
 	cmr_u32                  src_avail_height;
 	cmr_u32                  src_slice_height;
 	cmr_u32                  dst_slice_height;
+	cmr_u32                  dst2_slice_height;
 	cmr_u32                  slice_num;
 };
 

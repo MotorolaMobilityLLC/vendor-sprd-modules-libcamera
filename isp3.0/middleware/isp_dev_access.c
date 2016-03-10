@@ -536,6 +536,9 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	SCENARIO_INFO_AP tSecnarioInfo;
 #endif
 	ISP_CHECK_HANDLE_VALID(isp_dev_handle);
+
+	isp_dev_set_capture_mode(cxt->isp_driver_handle, param_ptr->common_in.capture_mode);
+
 #ifndef FPGA_TEST
 	ret = isp_dev_cfg_scenario_info(cxt->isp_driver_handle, &input_data);//TBD
 	if (ret) {
@@ -692,37 +695,196 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 	struct isp_cfg_img_param               img_param;
 	struct isp_awb_gain_info               awb_gain;
 	DldSequence                            dldseq;
-	cmr_u32                              dcam_id = 0;
+	cmr_u32                                dcam_id = 0;
+	struct isp_cfg_img_param               img_buf_param;
+	cmr_u32                                iso_gain = 0;
+	struct isp_raw_data                    isp_raw_mem;
+	struct isp_img_mem                     img_mem;
+	cmr_int                                cnt = 0;
 
+	ISP_CHECK_HANDLE_VALID(isp_dev_handle);
+	ret = isp_dev_start(cxt->isp_driver_handle);
+	if (ret) {
+		ISP_LOGE("failed to dev_start %ld", ret);
+		goto exit;
+	}
+
+	memset(&isp_raw_mem, 0, sizeof(struct isp_raw_data));
+	isp_raw_mem.capture_mode = ISP_CAP_MODE_RAW_DATA;
+	isp_dev_set_capture_mode(cxt->isp_driver_handle, isp_raw_mem.capture_mode);
+
+	ISP_LOGE("isp_raw_data.capture_mode = %d", isp_raw_mem.capture_mode);
+	isp_raw_mem.fd = input_ptr->dst2_frame.img_fd.y;
+	isp_raw_mem.phy_addr = input_ptr->dst2_frame.img_addr_phy.chn0;
+	isp_raw_mem.virt_addr = input_ptr->dst2_frame.img_addr_vir.chn0;
+	isp_raw_mem.size = (input_ptr->dst2_frame.img_size.w*input_ptr->dst2_frame.img_size.h)*4*2/3;
+	isp_raw_mem.width = input_ptr->dst2_frame.img_size.w;
+	isp_raw_mem.height = input_ptr->dst2_frame.img_size.h;
+	ret = isp_dev_set_rawaddr(cxt->isp_driver_handle, &isp_raw_mem);
+	ISP_LOGE("raw10_buf fd 0x%x phy_addr 0x%x virt_addr 0x%x", isp_raw_mem.fd,
+		isp_raw_mem.phy_addr, isp_raw_mem.virt_addr);
+
+	memset(&img_mem, 0, sizeof(struct isp_img_mem));
+	img_mem.img_fmt = input_ptr->dst_frame.img_fmt;
+	img_mem.yaddr = input_ptr->dst_frame.img_addr_phy.chn0;
+	img_mem.uaddr = input_ptr->dst_frame.img_addr_phy.chn1;
+	img_mem.vaddr = input_ptr->dst_frame.img_addr_phy.chn2;
+	img_mem.yaddr_vir = input_ptr->dst_frame.img_addr_vir.chn0;
+	img_mem.uaddr_vir = input_ptr->dst_frame.img_addr_vir.chn1;
+	img_mem.vaddr_vir = input_ptr->dst_frame.img_addr_vir.chn2;
+	img_mem.img_y_fd = input_ptr->dst_frame.img_fd.y;
+	img_mem.img_u_fd = input_ptr->dst_frame.img_fd.u;
+	img_mem.width = input_ptr->dst_frame.img_size.w;
+	img_mem.height = input_ptr->dst_frame.img_size.h;
+	ISP_LOGE("yuv_raw fd 0x%x yaddr 0x%lx yaddr_vir 0x%lx", img_mem.img_y_fd, img_mem.yaddr, img_mem.yaddr_vir);
+	isp_dev_set_post_yuv_mem(cxt->isp_driver_handle, &img_mem);
+
+	memset(&img_mem, 0, sizeof(struct isp_img_mem));
+	img_mem.img_fmt = input_ptr->src_frame.img_fmt;
+	img_mem.yaddr = input_ptr->src_frame.img_addr_phy.chn0;
+	img_mem.uaddr = input_ptr->src_frame.img_addr_phy.chn1;
+	img_mem.vaddr = input_ptr->src_frame.img_addr_phy.chn2;
+	img_mem.yaddr_vir = input_ptr->src_frame.img_addr_vir.chn0;
+	img_mem.uaddr_vir = input_ptr->src_frame.img_addr_vir.chn1;
+	img_mem.vaddr_vir = input_ptr->src_frame.img_addr_vir.chn2;
+	img_mem.img_y_fd = input_ptr->src_frame.img_fd.y;
+	img_mem.img_u_fd = input_ptr->src_frame.img_fd.u;
+	img_mem.width = input_ptr->src_frame.img_size.w;
+	img_mem.height = input_ptr->src_frame.img_size.h;
+	ISP_LOGE("sns_raw fd 0x%x yaddr 0x%lx yaddr_vir 0x%lx", img_mem.img_y_fd, img_mem.yaddr, img_mem.yaddr_vir);
+
+	isp_dev_set_fetch_src_buf(cxt->isp_driver_handle, &img_mem);
+
+#ifdef FPGA_TEST
+	memset(&scenario_in, 0, sizeof(scenario_in));
+	scenario_in.tSensorInfo.ucSensorMode = 0;
+	scenario_in.tSensorInfo.ucSensorMouduleType = 0;//0-sensor1  1-sensor2
+	scenario_in.tSensorInfo.uwWidth = cxt->input_param.init_param.size.w;
+	scenario_in.tSensorInfo.uwHeight = cxt->input_param.init_param.size.h;
+	scenario_in.tSensorInfo.udLineTime = 1315;//param_ptr->common_in.resolution_info.line_time * 10;
+	scenario_in.tSensorInfo.uwFrameRate = 3000;//param_ptr->common_in.resolution_info.fps.max_fps * 100;
+	scenario_in.tSensorInfo.nColorOrder = COLOR_ORDER_GR;
+	scenario_in.tSensorInfo.uwClampLevel = 64;
+
+	scenario_in.tScenarioOutBypassFlag.bBypassLV = 0;
+	scenario_in.tScenarioOutBypassFlag.bBypassVideo = 1;
+	scenario_in.tScenarioOutBypassFlag.bBypassStill = 0;
+	scenario_in.tScenarioOutBypassFlag.bBypassMetaData = 0;
+
+	scenario_in.tBayerSCLOutInfo.uwBayerSCLOutWidth = 0;
+	scenario_in.tBayerSCLOutInfo.uwBayerSCLOutHeight = 0;
+	if (ISP_CAP_MODE_RAW_DATA == isp_raw_mem.capture_mode) {
+		ISP_LOGE("bayer scaler wxh %dx%d\n", cxt->input_param.init_param.size.w, cxt->input_param.init_param.size.h);
+		scenario_in.tBayerSCLOutInfo.uwBayerSCLOutWidth = cxt->input_param.init_param.size.w;
+		scenario_in.tBayerSCLOutInfo.uwBayerSCLOutHeight = cxt->input_param.init_param.size.h;
+	}
+	ISP_LOGE("size %dx%d, line time %d frameRate %d", scenario_in.tSensorInfo.uwWidth, scenario_in.tSensorInfo.uwHeight,
+		scenario_in.tSensorInfo.udLineTime, scenario_in.tSensorInfo.uwFrameRate);
+	ret = isp_dev_cfg_scenario_info(cxt->isp_driver_handle, &scenario_in);
+	if (ISP_SUCCESS != ret) {
+		ISP_LOGE("isp_dev_cfg_scenario_info error %ld", ret);
+		return -1;
+	}
+
+	/*set still image buffer format*/
+	memset(&img_buf_param, 0, sizeof(img_buf_param));
+
+	img_buf_param.format = ISP_OUT_IMG_NV12;
+	img_buf_param.img_id = ISP_IMG_STILL_CAPTURE;
+	img_buf_param.dram_eb = 0;
+	img_buf_param.buf_num = 4;
+	img_buf_param.width = cxt->input_param.init_param.size.w;
+	img_buf_param.height = cxt->input_param.init_param.size.h;
+	img_buf_param.line_offset = (cxt->input_param.init_param.size.w);
+	img_buf_param.addr[0].chn0 = 0x2FFFFFFF;
+	img_buf_param.addr[1].chn0 = 0x2FFFFFFF;
+	img_buf_param.addr[2].chn0 = 0x2FFFFFFF;
+	img_buf_param.addr[3].chn0 = 0x2FFFFFFF;
+	ISP_LOGE("set still image buffer param img_id %d", img_buf_param.img_id);
+	ret = isp_dev_set_img_param(cxt->isp_driver_handle, &img_buf_param);
+
+
+	/*set preview image buffer format*/
+	memset(&img_buf_param, 0, sizeof(img_buf_param));
+	ISP_LOGE("set isp_raw_data capture mode = %d", isp_raw_mem.capture_mode);
+	if (ISP_CAP_MODE_RAW_DATA == isp_raw_mem.capture_mode) {
+		img_buf_param.format = ISP_OUT_IMG_YUY2;
+		img_buf_param.img_id = ISP_IMG_PREVIEW;
+		img_buf_param.dram_eb = 0;
+		img_buf_param.buf_num = 4;
+		img_buf_param.width = cxt->input_param.init_param.size.w;
+		img_buf_param.height = cxt->input_param.init_param.size.h;
+		img_buf_param.line_offset = (2 * cxt->input_param.init_param.size.w);
+		img_buf_param.addr[0].chn0 = 0x2FFFFFFF;
+		img_buf_param.addr[1].chn0 = 0x2FFFFFFF;
+		img_buf_param.addr[2].chn0 = 0x2FFFFFFF;
+		img_buf_param.addr[3].chn0 = 0x2FFFFFFF;
+		ISP_LOGE("set preview image buffer param img_id %d", img_buf_param.img_id);
+		ret = isp_dev_set_img_param(cxt->isp_driver_handle, &img_buf_param);
+	}
+
+#endif
+
+#ifndef FPGA_TEST
 	ret = isp_dev_cfg_scenario_info(cxt->isp_driver_handle, &scenario_in);
 	if (ret) {
 		ISP_LOGE("failed to cfg scenatio info %ld", ret);
 		goto exit;
 	}
-	memcpy(&cfg_info, &input_ptr->hw_cfg, sizeof(Cfg3A_Info));
+#endif
+#ifdef FPGA_TEST
+	cfg_info.tSubSampleInfo.TokenID = 0x100;
+	cfg_info.tSubSampleInfo.udBufferImageSize = 320*240;
+	cfg_info.tSubSampleInfo.uwOffsetRatioX =0;
+	cfg_info.tSubSampleInfo.uwOffsetRatioY =0;
+	cfg_info.tYHisInfo.TokenID = 0x120;
+	cfg_info.tYHisInfo.tYHisRegion.uwBorderRatioX = 100;
+	cfg_info.tYHisInfo.tYHisRegion.uwBorderRatioY = 100;
+	cfg_info.tYHisInfo.tYHisRegion.uwBlkNumX = 16;
+	cfg_info.tYHisInfo.tYHisRegion.uwBlkNumY = 16;
+	cfg_info.tYHisInfo.tYHisRegion.uwOffsetRatioX = 0;
+	cfg_info.tYHisInfo.tYHisRegion.uwOffsetRatioY = 0;
+#else
+	memcpy(&cfg_info.hw_cfg.tAntiFlickerInfo, input_ptr.hw_cfg.afl_cfg, sizeof(AntiFlicker_CfgInfo));
+	memcpy(&cfg_info.hw_cfg.tYHisInfo, input_ptr.hw_cfg.yhis_cfg, sizeof(YHis_CfgInfo);
+	memcpy(&cfg_info.hw_cfg.tSubSampleInfo, input_ptr.hw_cfg.subsample_cfg, sizeof(SubSample_CfgInfo));
+#endif
+	isp_dev_access_convert_ae_param(&input_ptr->hw_cfg.ae_cfg, &cfg_info.tAEInfo);
+	isp_dev_access_convert_afl_param(&input_ptr->hw_cfg.afl_cfg, &cfg_info.tAntiFlickerInfo);
+	isp_dev_access_convert_awb_param(&input_ptr->hw_cfg.awb_cfg, &cfg_info.tAWBInfo);
+	isp_dev_access_set_af_hw_cfg(&cfg_info.tAFInfo, &input_ptr->hw_cfg.af_cfg);
 	ret = isp_dev_cfg_3a_param(cxt->isp_driver_handle, &cfg_info);
 	if (ret) {
 		ISP_LOGE("failed to cfg 3a %ld", ret);
 		goto exit;
 	}
 //	img_param.img_id = ;//0-preview, 1-video, 2-still capture 3-statistics
-//	img_param.dram_eb = ;
-//	img_param.format;
-//	img_param.width;
-//	img_param.height;
-//	img_param.buf_num;
-//	img_param.addr[IMG_BUF_NUM_MAX];
-//	img_param.addr_vir[IMG_BUF_NUM_MAX];
-//	img_param.line_offset;
-	ret = isp_dev_set_img_param(cxt->isp_driver_handle, &img_param);
-	if (ret) {
-		ISP_LOGE("failed to set img param");
-		goto  exit;
-	}
+#ifdef FPGA_TEST
+	dldseq.ucPreview_Baisc_DldSeqLength = 4;
+	dldseq.aucPreview_Baisc_DldSeq[0] = 1;
+	dldseq.aucPreview_Baisc_DldSeq[1] = 1;
+	dldseq.aucPreview_Baisc_DldSeq[2] = 1;
+	dldseq.aucPreview_Baisc_DldSeq[3] = 1;
+	dldseq.ucPreview_Adv_DldSeqLength = 3;
+	dldseq.aucPreview_Adv_DldSeq[0] = 1;
+	dldseq.aucPreview_Adv_DldSeq[1] = 1;
+	dldseq.aucPreview_Adv_DldSeq[2] = 1;
+	dldseq.ucFastConverge_Baisc_DldSeqLength = 2;
+	dldseq.aucFastConverge_Baisc_DldSeq[0] = 3;
+	dldseq.aucFastConverge_Baisc_DldSeq[1] = 3;
+#else
 	memcpy(&dldseq, &input_ptr->dldseq, sizeof(DldSequence));
+#endif
 	ret = isp_dev_cfg_dld_seq(cxt->isp_driver_handle, &dldseq);
 	if (ret) {
 		ISP_LOGE("failed to cfg_dld_seq");
+		goto  exit;
+	}
+
+	iso_gain = 100;
+	ret = isp_dev_cfg_iso_speed(cxt->isp_driver_handle, &iso_gain);//TBD ???
+	if (ret) {
+		ISP_LOGE("failed to cfg iso speed %ld", ret);
 		goto exit;
 	}
 	//ret = isp_dev_cfg_iso_speed(cxt->isp_driver_handle,
@@ -741,8 +903,15 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 		dcam_id = 1;
 	else
 		dcam_id = 0;
-	ret = isp_dev_set_dcam_id(cxt->isp_driver_handle, dcam_id);
+
 	ret = isp_dev_stream_on(cxt->isp_driver_handle);
+	ret = isp_dev_set_dcam_id(cxt->isp_driver_handle, dcam_id);
+
+	usleep(100*1000);
+
+	ret = isp_dev_stream_off(cxt->isp_driver_handle);
+	ret = isp_dev_stop(cxt->isp_driver_handle);
+
 exit:
 	ISP_LOGI("done %ld", ret);
 	return ret;

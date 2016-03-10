@@ -4199,9 +4199,13 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle, struct 
 
 	CMR_LOGI("slice num %d avail height %d slice height %d", param_ptr->slice_num, param_ptr->src_avail_height,
 		     param_ptr->src_slice_height);
-	CMR_LOGI("src addr 0x%lx 0x%lx pattern %d,dst addr 0x%lx 0x%lx", param_ptr->src_frame.addr_phy.addr_y,
-			 param_ptr->src_frame.addr_phy.addr_u, param_ptr->src_frame.format_pattern,
-			 param_ptr->dst_frame.addr_phy.addr_y, param_ptr->dst_frame.addr_phy.addr_u);
+	CMR_LOGI("src addr 0x%lx 0x%lx pattern %d,dst addr 0x%lx 0x%lx, dst2 addr 0x%lx 0x%lx",
+		param_ptr->src_frame.addr_phy.addr_y, param_ptr->src_frame.addr_phy.addr_u,
+		param_ptr->src_frame.format_pattern,
+		param_ptr->dst_frame.addr_phy.addr_y, param_ptr->dst_frame.addr_phy.addr_u,
+		param_ptr->dst2_frame.addr_phy.addr_y, param_ptr->dst2_frame.addr_phy.addr_u);
+	CMR_LOGI("fd: src.fd=0x%x, dst.fd=0x%x, dst2.fd=0x%x",
+		param_ptr->src_frame.mfd.y, param_ptr->dst_frame.mfd.y, param_ptr->dst2_frame.mfd.y);
 
 	if (1 == param_ptr->slice_num) {
 		struct ips_in_param  in_param;
@@ -4209,6 +4213,8 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle, struct 
 		in_param.src_frame.img_fmt = param_ptr->src_frame.fmt;
 		in_param.src_frame.img_size.w = param_ptr->src_frame.size.width;
 		in_param.src_frame.img_size.h = param_ptr->src_frame.size.height;
+		in_param.src_frame.img_fd.y = param_ptr->src_frame.mfd.y;
+		in_param.src_frame.img_fd.u = param_ptr->src_frame.mfd.u;
 		in_param.src_frame.img_addr_phy.chn0 = param_ptr->src_frame.addr_phy.addr_y;
 		in_param.src_frame.img_addr_phy.chn1 = param_ptr->src_frame.addr_phy.addr_u;
 		in_param.src_frame.img_addr_vir.chn0 = param_ptr->src_frame.addr_vir.addr_y;
@@ -4219,11 +4225,24 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle, struct 
 		in_param.dst_frame.img_fmt = param_ptr->dst_frame.fmt;
 		in_param.dst_frame.img_size.w = param_ptr->dst_frame.size.width;
 		in_param.dst_frame.img_size.h = param_ptr->dst_frame.size.height;
+		in_param.dst_frame.img_fd.y = param_ptr->dst_frame.mfd.y;
+		in_param.dst_frame.img_fd.u = param_ptr->dst_frame.mfd.u;
 		in_param.dst_frame.img_addr_phy.chn0 = param_ptr->dst_frame.addr_phy.addr_y;
 		in_param.dst_frame.img_addr_phy.chn1 = param_ptr->dst_frame.addr_phy.addr_u;
 		in_param.dst_frame.img_addr_vir.chn0 = param_ptr->dst_frame.addr_vir.addr_y;
 		in_param.dst_frame.img_addr_vir.chn1 = param_ptr->dst_frame.addr_vir.addr_u;
 		in_param.dst_slice_height = param_ptr->dst_slice_height;
+
+		in_param.dst2_frame.img_fmt = param_ptr->dst2_frame.fmt;
+		in_param.dst2_frame.img_size.w = param_ptr->dst2_frame.size.width;
+		in_param.dst2_frame.img_size.h = param_ptr->dst2_frame.size.height;
+		in_param.dst2_frame.img_fd.y = param_ptr->dst2_frame.mfd.y;
+		in_param.dst2_frame.img_fd.u = param_ptr->dst2_frame.mfd.u;
+		in_param.dst2_frame.img_addr_phy.chn0 = param_ptr->dst2_frame.addr_phy.addr_y;
+		in_param.dst2_frame.img_addr_phy.chn1 = param_ptr->dst2_frame.addr_phy.addr_u;
+		in_param.dst2_frame.img_addr_vir.chn0 = param_ptr->dst2_frame.addr_vir.addr_y;
+		in_param.dst2_frame.img_addr_vir.chn1 = param_ptr->dst2_frame.addr_vir.addr_u;
+		in_param.dst2_slice_height = param_ptr->dst2_slice_height;
 
 		ret = isp_proc_start(isp_cxt->isp_handle, &in_param, &out_param);
 

@@ -44,7 +44,7 @@ struct isp_file {
 	struct isp_dev_init_info   init_param;
 	sem_t                      close_sem;
 	struct isp_fw_mem          fw_mem;
-	cmr_int                                isp_is_inited;
+	cmr_int                    isp_is_inited;
 };
 
 static cmr_int isp_dev_create_thread(isp_handle handle);
@@ -637,6 +637,84 @@ cmr_int isp_dev_set_img_param(isp_handle handle, struct isp_cfg_img_param *param
 	ret = ioctl(file->fd, ISP_IO_SET_IMG_PARAM, param);
 	if (ret) {
 		CMR_LOGE("isp_dev_set_img_param error.");
+	}
+
+	return ret;
+}
+
+cmr_int isp_dev_set_rawaddr(isp_handle handle, struct isp_raw_data *param)
+{
+	cmr_int ret = 0;
+	cmr_int isp_id = 0;
+	struct isp_file *file = NULL;
+
+	if (!handle) {
+		CMR_LOGE("handle is null error.");
+		return -1;
+	}
+
+	if (!param) {
+	CMR_LOGE("param is null error.");
+	return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+
+	ret = ioctl(file->fd, ISP_IO_SET_RAW10, param);
+	if (ret) {
+		CMR_LOGE("isp_dev_set_rawaddr error.");
+	}
+
+	return ret;
+}
+
+cmr_int isp_dev_set_post_yuv_mem(isp_handle handle, struct isp_img_mem *param)
+{
+	cmr_int ret = 0;
+	cmr_int isp_id = 0;
+	struct isp_file *file = NULL;
+
+	if (!handle) {
+		CMR_LOGE("handle is null error.");
+		return -1;
+	}
+
+	if (!param) {
+	CMR_LOGE("param is null error.");
+	return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+
+	ret = ioctl(file->fd, ISP_IO_SET_POST_PROC_YUV, param);
+	if (ret) {
+		CMR_LOGE("isp_dev_set_post_yuv_mem error.");
+	}
+
+	return ret;
+}
+
+cmr_int isp_dev_set_fetch_src_buf(isp_handle handle, struct isp_img_mem *param)
+{
+	cmr_int ret = 0;
+	cmr_int isp_id = 0;
+	struct isp_file *file = NULL;
+
+	if (!handle) {
+		CMR_LOGE("handle is null error.");
+		return -1;
+	}
+
+	if (!param) {
+	CMR_LOGE("param is null error.");
+	return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+
+	ret = ioctl(file->fd, ISP_IO_SET_FETCH_SRC_BUF, param);
+	if (ret) {
+		CMR_LOGE("isp_dev_set_fetch_src_buf error.");
 	}
 
 	return ret;
@@ -1386,7 +1464,26 @@ cmr_int isp_dev_set_dcam_id(isp_handle handle, cmr_u32 dcam_id)
 	file = (struct isp_file *)(handle);
 	ret = ioctl(file->fd, ISP_IO_SET_DCAM_ID, &dcam_id);
 	if (ret) {
-		CMR_LOGE("isp_dev_stream_on error.");
+		CMR_LOGE("isp_dev_set_dcam_id error.");
+	}
+
+	return ret;
+}
+
+cmr_int isp_dev_set_capture_mode(isp_handle handle, cmr_u32 capture_mode)
+{
+	cmr_int ret = 0;
+	struct isp_file *file = NULL;
+
+	if (!handle) {
+		CMR_LOGE("handle is null error.");
+		return -1;
+	}
+	CMR_LOGI("capture_mode %d", capture_mode);
+	file = (struct isp_file *)(handle);
+	ret = ioctl(file->fd, ISP_IO_SET_CAP_MODE, &capture_mode);
+	if (ret) {
+		CMR_LOGE("isp_dev_set_capture_mode error.");
 	}
 
 	return ret;

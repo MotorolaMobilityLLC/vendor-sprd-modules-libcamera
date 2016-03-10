@@ -138,6 +138,7 @@ enum isp_format {
 	ISP_DATA_YUV420_3_FRAME,
 	ISP_DATA_NORMAL_RAW10,
 	ISP_DATA_CSI2_RAW10,
+	ISP_DATA_ALTEK_RAW10,
 	ISP_DATA_FORMAT_MAX
 };
 
@@ -265,6 +266,7 @@ enum isp_capture_mode {
 	ISP_CAP_MODE_VIDEO,
 	ISP_CAP_MODE_VIDEO_HDR,
 	ISP_CAP_MODE_BRACKET,
+	ISP_CAP_MODE_RAW_DATA,
 	ISP_CAP_MODE_MAX
 };
 
@@ -319,9 +321,16 @@ struct isp_face_area {
 	struct isp_face_info face_info[10];
 };
 
+struct isp_img_mfd {
+	cmr_u32 y;
+	cmr_u32 u;
+	cmr_u32 v;
+};
+
 struct isp_img_frm {
 	enum isp_format img_fmt;
 	struct isp_size img_size;
+	struct isp_img_mfd img_fd;
 	struct isp_addr img_addr_phy;  // isp_add is from kernel header(sprd_isp_altek.h)
 	struct isp_addr img_addr_vir;
 };
@@ -457,7 +466,9 @@ struct ips_in_param {
 	cmr_u32 src_avail_height;
 	cmr_u32 src_slice_height;
 	struct isp_img_frm dst_frame;
+	struct isp_img_frm dst2_frame;
 	cmr_u32 dst_slice_height;
+	cmr_u32 dst2_slice_height;
 };
 
 struct ips_out_param {

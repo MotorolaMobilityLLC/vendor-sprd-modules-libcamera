@@ -1016,6 +1016,8 @@ static void* cmr_grab_thread_proc(void* data)
 				frame.zsl_private     = op.parm.frame.reserved[0];
 				memcpy(frame.mfd, &op.parm.frame.reserved[1], sizeof(uint32_t)*3);
 
+
+				CMR_LOGV("frame.mfd=0x%x, y_virt=0x%lx", frame.mfd[0], frame.yaddr_vir);
 				pthread_mutex_lock(&p_grab->status_mutex);
 				on_flag = p_grab->is_on;
 				pthread_mutex_unlock(&p_grab->status_mutex);

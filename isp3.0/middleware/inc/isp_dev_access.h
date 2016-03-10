@@ -49,8 +49,10 @@ struct isp_dev_postproc_in {
 	cmr_u32 src_avail_height;
 	cmr_u32 src_slice_height;
 	cmr_u32 dst_slice_height;
+	cmr_u32 dst2_slice_height;
 	struct isp_img_frm src_frame;
 	struct isp_img_frm dst_frame;
+	struct isp_img_frm dst2_frame;
 	struct isp_3a_cfg_param hw_cfg;
 	struct isp_3a_dld_sequence dldseq;
 	struct isp_awb_gain awb_gain;

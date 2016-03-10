@@ -928,7 +928,7 @@ cmr_int snp_start_encode(cmr_handle snp_handle, void *data)
 			goto exit;
 		}
 #endif
-		if ((!snp_cxt->req_param.is_video_snapshot) && (!snp_cxt->req_param.is_zsl_snapshot)) {
+		if ((!snp_cxt->req_param.is_video_snapshot) && (!snp_cxt->req_param.is_zsl_snapshot) && (snp_cxt->req_param.mode != CAMERA_ISP_TUNING_MODE)) {
 			snp_img_padding(&jpeg_in_ptr->src, &jpeg_in_ptr->dst, NULL);
 		}
 		camera_take_snapshot_step(CMR_STEP_JPG_ENC_S);
@@ -1456,9 +1456,110 @@ static int camera_save_raw_to_file(char *name, uint32_t img_fmt,
 		return -1;
 	}
 
-	fwrite((void *)addr->addr_y, 1, (uint32_t) (width * height * 5 / 4), fp);
+	fwrite((void *)addr->addr_y, 1, (uint32_t) (width * height * 2), fp);
 	fclose(fp);
 #endif
+	return 0;
+
+}
+
+static int camera_save_raw2_to_file(char *name, uint32_t img_fmt,
+					uint32_t width, uint32_t height, struct img_addr *addr)
+{
+#define FILE_DIR "/data/misc/media/"
+
+#define FILE_NAME_LEN 200
+	int ret = CMR_CAMERA_SUCCESS;
+	char file_name[FILE_NAME_LEN] = {0};
+	char tmp_str[20] = {0};
+	FILE *fp = NULL;
+	uint32_t gain = 0;
+	uint32_t shutter = 0;
+	struct isp_awbc_cfg_test awbc_cfg;
+	void *   isp_handle = ispvideo_GetIspHandle();
+	uint32_t pos = 0;
+
+	read_sensor_gain(&gain);
+	read_sensor_shutter(&shutter);
+	read_otp_awb_gain(isp_handle, (void*)&awbc_cfg);
+	read_position(isp_handle, &pos);
+
+	CMR_LOGE("gain = %d shutter = %d\n",gain, shutter);
+	CMR_LOGI("name %s, format %d, width %d, heght %d",
+			name, img_fmt, width, height);
+
+	strcpy(file_name, FILE_DIR);
+	sprintf(tmp_str, "%d", width);
+	strcat(file_name, tmp_str);
+	strcat(file_name, "X");
+	sprintf(tmp_str, "%d", height);
+	strcat(file_name, tmp_str);
+
+	strcat(file_name, "_");
+	sprintf(tmp_str, "%s", name);
+	strcat(file_name, tmp_str);
+
+	strcat(file_name, "_");
+	strcat(file_name, "gain");
+	strcat(file_name, "_");
+	sprintf(tmp_str, "%d", gain);
+	strcat(file_name, tmp_str);
+	strcat(file_name, "_");
+	strcat(file_name, "shutter");
+	strcat(file_name, "_");
+	sprintf(tmp_str, "%d", shutter);
+	strcat(file_name, tmp_str);
+
+	strcat(file_name, "_");
+	strcat(file_name, "awbgain");
+	strcat(file_name, "_");
+	strcat(file_name, "r");
+	strcat(file_name, "_");
+	sprintf(tmp_str, "%d", awbc_cfg.r_gain);
+	strcat(file_name, tmp_str);
+	strcat(file_name, "_");
+	strcat(file_name, "g");
+	strcat(file_name, "_");
+	sprintf(tmp_str, "%d", awbc_cfg.g_gain);
+	strcat(file_name, tmp_str);
+	strcat(file_name, "_");
+	strcat(file_name, "b");
+	strcat(file_name, "_");
+	sprintf(tmp_str, "%d", awbc_cfg.b_gain);
+	strcat(file_name, tmp_str);
+	memset(tmp_str, 0, sizeof(tmp_str));
+	strcat(file_name, "_");
+	strcat(file_name, "afpos");
+	strcat(file_name, "_");
+	sprintf(tmp_str, "%ld", pos);
+	strcat(file_name, tmp_str);
+
+	memset(tmp_str, 0, sizeof(tmp_str));
+	strcat(file_name, "_");
+	strcat(file_name, "ct");
+	strcat(file_name, "_");
+	sprintf(tmp_str, "%ld", isp_cur_ct);
+	strcat(file_name, tmp_str);
+	memset(tmp_str, 0, sizeof(tmp_str));
+	strcat(file_name, "_");
+	strcat(file_name, "bv");
+	strcat(file_name, "_");
+	sprintf(tmp_str, "%ld", isp_cur_bv);
+	strcat(file_name, tmp_str);
+
+
+
+	strcat(file_name, ".altek_raw");
+	CMR_LOGI("file name %s", file_name);
+
+	fp = fopen(file_name, "wb");
+	if (NULL == fp) {
+		CMR_LOGE("can not open file: %s errno = %d\n", file_name, errno);
+		return -1;
+	}
+
+	fwrite((void *)addr->addr_y, 1, (uint32_t) (width * height * 4 / 3), fp);
+	fclose(fp);
 	return 0;
 
 }
@@ -1621,6 +1722,16 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data)
 			}
 #endif
 		}
+
+		struct cmr_cap_mem   *mem_ptr2 = &snp_cxt->req_param.post_proc_setting.mem[snp_cxt->index];
+		isp_in_param.src_frame = mem_ptr2->cap_raw;
+		isp_in_param.dst_frame = mem_ptr2->target_yuv;
+		isp_in_param.dst2_frame = mem_ptr2->cap_raw2;
+		isp_in_param.src_avail_height = mem_ptr2->cap_raw.size.height;
+		isp_in_param.src_slice_height = isp_in_param.src_avail_height;
+		isp_in_param.dst_slice_height = isp_in_param.src_avail_height;
+		isp_in_param.dst2_slice_height = isp_in_param.src_avail_height;
+		isp_in_param.slice_num = 1;
 		ret = snp_cxt->ops.raw_proc(snp_cxt->oem_handle, snp_handle, &isp_in_param);
 		if (ret) {
 			CMR_LOGE("failed to start isp proc %ld", ret);
@@ -1724,6 +1835,7 @@ cmr_int snp_start_cvt(cmr_handle snp_handle, void *data)
 		snp_cvt_done(snp_handle);
 	} else if (IMG_DATA_TYPE_RAW == frm_ptr->fmt) {
 		ret = snp_start_isp_proc(snp_handle, data);
+		snp_cvt_done(snp_handle);
 //		snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_STATE, SNAPSHOT_EVT_START_CVT, (void*)ret, sizeof(cmr_int));
 	}
 	if (ret) {
@@ -3011,22 +3123,22 @@ cmr_int snp_set_isp_proc_param(cmr_handle snp_handle)
 		chn_param_ptr->isp_proc_in[i].dst_frame.size = req_param_ptr->post_proc_setting.dealign_actual_snp_size;
 		chn_param_ptr->isp_proc_in[i].src_frame = req_param_ptr->post_proc_setting.mem[i].cap_raw;
 		chn_param_ptr->isp_proc_in[i].src_avail_height = req_param_ptr->post_proc_setting.mem[i].cap_raw.size.height;
-#if 1
+		chn_param_ptr->isp_proc_in[i].dst2_frame = req_param_ptr->post_proc_setting.mem[i].cap_raw2;
+		chn_param_ptr->isp_proc_in[i].dst2_frame.size = req_param_ptr->post_proc_setting.dealign_actual_snp_size;
+
 		chn_param_ptr->isp_proc_in[i].src_slice_height = chn_param_ptr->isp_proc_in[i].src_avail_height;
 		chn_param_ptr->isp_proc_in[i].dst_slice_height = chn_param_ptr->isp_proc_in[i].src_avail_height;
+		chn_param_ptr->isp_proc_in[i].dst2_slice_height = chn_param_ptr->isp_proc_in[i].src_avail_height;
 		chn_param_ptr->isp_process[i].slice_height_in = chn_param_ptr->isp_proc_in[i].src_avail_height;
-#else
-		chn_param_ptr->isp_proc_in[i].src_slice_height = CMR_SLICE_HEIGHT;
-		chn_param_ptr->isp_proc_in[i].dst_slice_height = CMR_SLICE_HEIGHT;
-		chn_param_ptr->isp_process[i].slice_height_in = CMR_SLICE_HEIGHT;
-#endif
+
 		if (CAMERA_ISP_SIMULATION_MODE == req_param_ptr->mode) {
-//			chn_param_ptr->isp_proc_in[i].src_frame.format_pattern = tool_fmt_pattern;
+			// chn_param_ptr->isp_proc_in[i].src_frame.format_pattern = tool_fmt_pattern;
 		} else {
 			chn_param_ptr->isp_proc_in[i].src_frame.format_pattern = INVALID_FORMAT_PATTERN;
 		}
 		chn_param_ptr->isp_proc_in[i].src_frame.fmt = ISP_DATA_CSI2_RAW10;
 		chn_param_ptr->isp_proc_in[i].dst_frame.fmt = ISP_DATA_YVU420_2FRAME;
+		chn_param_ptr->isp_proc_in[i].dst2_frame.fmt = ISP_DATA_ALTEK_RAW10;
 	}
 
 	if (!(chn_param_ptr->is_scaling || chn_param_ptr->is_rot)) {
@@ -3035,10 +3147,16 @@ cmr_int snp_set_isp_proc_param(cmr_handle snp_handle)
 		}
 	}
 	for (i=0 ; i<1/*CMR_CAPTURE_MEM_SUM*/ ; i++) {
-		CMR_LOGI("src addr 0x%lx  dst addr 0x%lx 0x%lx chan w=%d h=%d", chn_param_ptr->isp_proc_in[i].src_frame.addr_phy.addr_y,
-				chn_param_ptr->isp_proc_in[i].dst_frame.addr_phy.addr_y, chn_param_ptr->isp_proc_in[i].dst_frame.addr_phy.addr_u,
-				req_param_ptr->post_proc_setting.chn_out_frm[i].size.width,
-				req_param_ptr->post_proc_setting.chn_out_frm[i].size.height);
+		CMR_LOGI("src: 0x%x 0x%lx dst: 0x%x 0x%lx 0x%lx dst2: 0x%x 0x%lx w=%d h=%d",
+			chn_param_ptr->isp_proc_in[i].src_frame.mfd.y,
+			chn_param_ptr->isp_proc_in[i].src_frame.addr_phy.addr_y,
+			chn_param_ptr->isp_proc_in[i].dst_frame.mfd.y,
+			chn_param_ptr->isp_proc_in[i].dst_frame.addr_phy.addr_y,
+			chn_param_ptr->isp_proc_in[i].dst_frame.addr_phy.addr_u,
+			chn_param_ptr->isp_proc_in[i].dst2_frame.mfd.y,
+			chn_param_ptr->isp_proc_in[i].dst2_frame.addr_phy.addr_y,
+			req_param_ptr->post_proc_setting.chn_out_frm[i].size.width,
+			req_param_ptr->post_proc_setting.chn_out_frm[i].size.height);
 	}
 	return ret;
 }
@@ -3723,11 +3841,13 @@ cmr_int camera_set_frame_type(cmr_handle snp_handle, struct camera_frame_type *f
 							  (char *)mem_ptr->target_yuv.addr_vir.addr_y,
 							  size, (char *)mem_ptr->target_yuv.addr_vir.addr_u,
 							  size/2, 0, 0);
+			/*
 			ret = camera_save_to_file(isp_get_saved_file_count(snp_handle),
 										IMG_DATA_TYPE_YUV420,
 										frame_type->width,
 										frame_type->height,
 										&mem_ptr->target_yuv.addr_vir);
+			*/
 		}
 		}
 		break;
@@ -4164,6 +4284,25 @@ cmr_int snp_post_proc_for_isp_tuning(cmr_handle snp_handle, void *data)
 	if (ret) {
 		CMR_LOGE("failed to send start cvt msg to cvt thr %ld", ret);
 	}
+
+	struct cmr_cap_mem   *mem_ptr = &cxt->req_param.post_proc_setting.mem[cxt->index];
+	if (CAMERA_ISP_TUNING_MODE == cxt->req_param.mode) {
+		char datetime[15] = {0};
+		CMR_LOGI("ISP save altek raw to file");
+		camera_get_system_time(datetime);
+		camera_save_raw2_to_file(datetime,
+					IMG_DATA_TYPE_RAW,
+					mem_ptr->cap_raw2.size.width,
+					mem_ptr->cap_raw2.size.height,
+					&mem_ptr->cap_raw2.addr_vir);
+	}
+
+	CMR_LOGV("post_proc_setting.data_endian.uv_endian=%d",
+		cxt->req_param.post_proc_setting.data_endian.uv_endian);
+	cxt->req_param.post_proc_setting.data_endian.uv_endian = 1;
+	CMR_LOGV("post_proc_setting.data_endian.uv_endian=%d",
+		cxt->req_param.post_proc_setting.data_endian.uv_endian);
+
 	chn_data_ptr->fmt = IMG_DATA_TYPE_YUV420;
 	ret = snp_post_proc_for_yuv(snp_handle, data);
 	CMR_LOGI("done %ld", ret);

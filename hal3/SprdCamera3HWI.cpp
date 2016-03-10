@@ -1002,7 +1002,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 			}
 
 			if(channel != mCallbackChan) {
-				HAL_LOGE("channel != mCallbackChan");
+				HAL_LOGV("channel != mCallbackChan");
 				ret = channel->request(stream, output.buffer, frameNumber);
 				if(ret){
 					HAL_LOGE("request buff 0x%lx (%d)failed", output.buffer, frameNumber);

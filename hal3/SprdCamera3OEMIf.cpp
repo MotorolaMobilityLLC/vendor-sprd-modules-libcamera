@@ -5557,15 +5557,18 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32
 				goto mem_fail;
 			}
 			mZslHeapReserved = memory;
-		} else {
-			memory = (sprd_camera_memory_t*)mZslHeapReserved;
 		}
 		*phy_addr++ = 0;
-		*vir_addr++ = (cmr_uint)memory->data;
+		*vir_addr++ = (cmr_uint)mZslHeapReserved->data;
 		if (NULL != mfd)
-			*mfd++ = (cmr_s32)memory->mfd;
+			*mfd++ = (cmr_s32)mZslHeapReserved->mfd;
+		*phy_addr++ = size*2/3;
+		*vir_addr++ = (cmr_uint)mZslHeapReserved->data;
+		if (NULL != mfd)
+			*mfd++ = (cmr_s32)mZslHeapReserved->mfd;
 		HAL_LOGD("malloc CAMERA_SNAPSHOT_ZSL_RESERVED memory, malloced vir_addr0 %d,vir_addr1 %d, mfd0 0x%x, mfd1 0x%x",
-			(cmr_uint)memory->data, (cmr_uint)memory->data, (cmr_s32)memory->mfd, (cmr_s32)memory->mfd);
+			(cmr_uint)mZslHeapReserved->data, (cmr_uint)mZslHeapReserved->data,
+			(cmr_s32)mZslHeapReserved->mfd, (cmr_s32)mZslHeapReserved->mfd);
 	}
 #endif
 	else if (type == CAMERA_ISP_LSC) {
@@ -5933,12 +5936,25 @@ int SprdCamera3OEMIf::SetDimensionRaw(cam_dimension_t raw_size)
 	return NO_ERROR;
 }
 
+#define ISP_TUNING_MODE_WIDTH 1920
+#define ISP_TUNING_MODE_HEIGHT 1080
 int SprdCamera3OEMIf::SetDimensionCapture(cam_dimension_t capture_size)
 {
+	char value[PROPERTY_VALUE_MAX];
+	property_get("persist.sys.camera.raw.mode", value, "jpeg");
+
 	if((mCaptureWidth != capture_size.width) || (mCaptureHeight != capture_size.height)) {
 		mCaptureWidth = capture_size.width;
 		mCaptureHeight = capture_size.height;
 		mRestartFlag = true;
+	}
+
+	HAL_LOGD("mCaptureWidth=%d, mCaptureHeight=%d", mCaptureWidth, mCaptureHeight);
+	if (!strcmp(value, "raw")) {
+		HAL_LOGD("camera isp tuning mode:");
+		HAL_LOGD("mCaptureWidth=%d, mCaptureHeight=%d", mCaptureWidth, mCaptureHeight);
+		mCaptureWidth = ISP_TUNING_MODE_WIDTH;
+		mCaptureHeight = ISP_TUNING_MODE_HEIGHT;
 	}
 
 	return NO_ERROR;

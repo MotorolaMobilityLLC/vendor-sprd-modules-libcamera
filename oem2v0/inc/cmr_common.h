@@ -179,6 +179,7 @@ enum img_data_type {
 	IMG_DATA_TYPE_YVU420,
 	IMG_DATA_TYPE_YUV420_3PLANE,
 	IMG_DATA_TYPE_RAW,
+	IMG_DATA_TYPE_RAW2,
 	IMG_DATA_TYPE_RGB565,
 	IMG_DATA_TYPE_RGB666,
 	IMG_DATA_TYPE_RGB888,
@@ -348,7 +349,7 @@ struct img_frm {
 	struct img_size                         size;
 	struct img_addr                         addr_phy;
 	struct img_addr                         addr_vir;
-	struct  img_mfd                         mfd;
+	struct img_mfd                          mfd;
 	struct img_data_end                     data_end;
 	cmr_u32                                 format_pattern;
 	void*                                   reserved;
@@ -512,6 +513,8 @@ struct cmr_path_capability {
 /******************************** memory start ********************************/
 struct cmr_cap_mem {
 	struct img_frm                      cap_raw;
+	/* for whale2 raw capture*/
+	struct img_frm                      cap_raw2;
 	struct img_frm                      cap_yuv;
 	struct img_frm                      target_yuv;
 	struct img_frm                      target_jpeg;
