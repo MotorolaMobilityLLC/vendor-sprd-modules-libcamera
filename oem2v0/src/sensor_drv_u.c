@@ -1106,12 +1106,16 @@ void Sensor_SetExportInfo(struct sensor_drv_context *sensor_cxt)
 			//exp_info_ptr->raw_info_ptr->ioctrl_ptr->read_i2c = Sensor_ReadI2C;
 			exp_info_ptr->raw_info_ptr->ioctrl_ptr->ex_set_exposure= exp_info_ptr->ioctl_func_ptr->ex_write_exp;
 		}
+		//now we think sensor output width and height are equal to sensor trim_width and trim_height
+		exp_info_ptr->sensor_mode_info[i].out_width = exp_info_ptr->sensor_mode_info[i].trim_width;
+		exp_info_ptr->sensor_mode_info[i].out_height = exp_info_ptr->sensor_mode_info[i].trim_height;
 
 	}
 	exp_info_ptr->sensor_interface = sensor_info_ptr->sensor_interface;
 	exp_info_ptr->change_setting_skip_num = sensor_info_ptr->change_setting_skip_num;
 	exp_info_ptr->horizontal_view_angle = sensor_info_ptr->horizontal_view_angle;
 	exp_info_ptr->vertical_view_angle = sensor_info_ptr->vertical_view_angle;
+	exp_info_ptr->sensor_version_info = sensor_info_ptr->sensor_version_info;
 	
 	CMR_LOGI("X");
 }

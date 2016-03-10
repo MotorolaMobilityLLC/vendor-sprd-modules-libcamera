@@ -564,6 +564,8 @@ struct sensor_mode_info {
 	cmr_u32                             frame_line;
 	cmr_u32                             padding;
 	struct img_rect                     scaler_trim;
+	cmr_u16                             out_width;//sensor output width after binning and trimming
+	cmr_u16                             out_height;//sensor outpout width after binning and trimming
 };
 
 struct sensor_ae_info {

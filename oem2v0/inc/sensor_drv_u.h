@@ -624,8 +624,8 @@ typedef struct sensor_reg_tab_info_tag {
 
 typedef struct sensor_mode_info_tag {
 	enum sensor_mode mode;
-	cmr_u16 width;
-	cmr_u16 height;
+	cmr_u16 width;//width before trim,maybe after binning?
+	cmr_u16 height;//height before trim,maybe after binning?
 	cmr_u16 trim_start_x;
 	cmr_u16 trim_start_y;
 	cmr_u16 trim_width;
@@ -635,6 +635,8 @@ typedef struct sensor_mode_info_tag {
 	cmr_u32 bps_per_lane;
 	cmr_u32 frame_line;
 	SENSOR_RECT_T scaler_trim;
+	cmr_u16 out_width;//sensor output width after binning and crop/trim
+	cmr_u16 out_height;//sensor output height after binning and crop/trim
 } SENSOR_MODE_INFO_T, *SENSOR_MODE_INFO_T_PTR;
 
 typedef struct sensor_extend_info_tag {

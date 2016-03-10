@@ -4407,7 +4407,6 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 { //TBD
 	struct sensor_mode_info        *sensor_mode_info;
 	cmr_uint                       sn_mode = 0;
-
 	ret = cmr_sensor_get_mode(cxt->sn_cxt.sensor_handle, cxt->camera_id, &sn_mode);
 	if (ret)
 		goto exit;
@@ -4424,9 +4423,20 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 	isp_param.resolution_info.fps.max_fps = 15;
 	isp_param.resolution_info.fps.min_fps = 1;
 	isp_param.resolution_info.max_gain = 16;
+	isp_param.resolution_info.sensor_max_size.w = cxt->sn_cxt.sensor_info.source_width_max;
+	isp_param.resolution_info.sensor_max_size.h = cxt->sn_cxt.sensor_info.source_height_max;
+	isp_param.resolution_info.sensor_output_size.w = sensor_mode_info->out_width;
+	isp_param.resolution_info.sensor_output_size.h = sensor_mode_info->out_height;
 }
 	CMR_LOGI("work_mode %ld, dv_mode %ld, capture_mode %ld", work_mode, dv_mode, isp_param.capture_mode);
 	CMR_LOGI("isp w h, %d %d", isp_param.size.w, isp_param.size.h);
+	CMR_LOGI("isp sensor max w h, %d %d", isp_param.resolution_info.sensor_max_size.w,
+		isp_param.resolution_info.sensor_max_size.h);
+	CMR_LOGI("isp sensor output w h, %d %d", isp_param.resolution_info.sensor_output_size.w,
+		isp_param.resolution_info.sensor_output_size.h);
+	CMR_LOGI("isp sensor crop startx start w h, %d %d %d %d", isp_param.resolution_info.crop.st_x,
+		isp_param.resolution_info.crop.st_y,isp_param.resolution_info.crop.width,
+		isp_param.resolution_info.crop.height);
 
 	val.type               = SENSOR_VAL_TYPE_GET_FPS_INFO;
 	val.pval               = &isp_param.sensor_fps;

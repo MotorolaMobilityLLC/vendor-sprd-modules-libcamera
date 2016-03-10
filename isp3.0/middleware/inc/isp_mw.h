@@ -440,6 +440,8 @@ struct isp_sensor_resolution_info {
 	cmr_u32 frame_line;
 	cmr_u32 size_index;
 	cmr_u32 max_gain;
+	struct isp_size sensor_max_size;
+	struct isp_size sensor_output_size;
 };
 
 struct isp_video_start {

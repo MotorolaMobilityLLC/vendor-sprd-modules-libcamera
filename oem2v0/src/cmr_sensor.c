@@ -315,6 +315,8 @@ cmr_int cmr_sns_copy_mode_info(struct sensor_mode_info *out_mode_info, SENSOR_MO
 	out_mode_info->scaler_trim.start_y = (cmr_u32)in_mode_info->scaler_trim.y;
 	out_mode_info->scaler_trim.width = (cmr_u32)in_mode_info->scaler_trim.w;
 	out_mode_info->scaler_trim.height = (cmr_u32)in_mode_info->scaler_trim.h;
+	out_mode_info->out_width = in_mode_info->out_width;
+	out_mode_info->out_height = in_mode_info->out_height;
 
 	return CMR_CAMERA_SUCCESS;
 }
