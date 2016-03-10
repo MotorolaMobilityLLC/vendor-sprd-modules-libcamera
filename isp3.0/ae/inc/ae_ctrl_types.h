@@ -78,6 +78,7 @@ enum ae_ctrl_cmd {
 	AE_CTRL_GET_EXIF_DATA,
 	AE_CTRL_GET_EXT_DEBUG_INFO,
 	AE_CTRL_GET_HW_ISO_SPEED,
+	AE_CTRL_GET_EXP_GAIN,
 	AE_CTRL_CMD_MAX
 };
 
@@ -337,6 +338,13 @@ struct ae_ctrl_otp_data {
 	cmr_u32 b;
 };
 
+struct ae_ctrl_exp_gain_param {
+	cmr_u32 exposure_line;
+	cmr_u32 exposure_time;
+	cmr_u32 dummy;
+	cmr_u32 gain;
+};
+
 struct ae_ctrl_proc_out {
 	struct isp3a_ae_info ae_info;
 	struct ae_ctrl_param_ae_frame ae_frame;
@@ -365,6 +373,7 @@ struct ae_ctrl_param_out {
 	struct ae_ctrl_debug_param debug_param;
 	struct ae_ctrl_exif_param exif_param;
 	struct ae_ctrl_ext_debug_info debug_info;
+	struct ae_ctrl_exp_gain_param exp_gain;
 	};
 };
 

@@ -16,6 +16,7 @@
 #define LOG_TAG "alk_adpt_ae"
 
 #include <dlfcn.h>
+#include <cutils/properties.h>
 #include "ae_altek_adpt.h"
 #include "allib_ae.h"
 #include "allib_ae_errcode.h"
@@ -33,12 +34,19 @@
 #define MAX_EXP_LINE_CNT       65535
 #define BRACKET_NUM            5
 #define SENSOR_EXP_US_BASE     10000000 /*x10us*/
+#define TUNING_EXPOSURE_NUM    300
 
 enum aealtek_work_mode{
 	AEALTEK_PREVIEW,
 	AEALTEK_BRACKET,
 	AEALTEK_SNAPSHOT,
 	AEALTEK_MAX
+};
+
+enum ae_tuning_mode {
+	TUNING_MODE_EXPOSURE,
+	TUNING_MODE_GAIN,
+	TUNING_MODE_OBCLAMP
 };
 
 struct aealtek_lib_ops {
@@ -163,6 +171,14 @@ struct aealtek_lib_data {
 	struct aealtek_lib_exposure_data exposure_array;
 };
 
+struct aealtek_tuning_info {
+	cmr_s32 manual_ae_on;
+	cmr_s32 num;
+	enum ae_tuning_mode tuning_mode;
+	cmr_s32 exposure[TUNING_EXPOSURE_NUM];
+	cmr_s32 gain[TUNING_EXPOSURE_NUM];
+};
+
 /*ae altek context*/
 struct aealtek_cxt {
 	cmr_u32 is_inited;
@@ -193,6 +209,7 @@ struct aealtek_cxt {
 	struct ae_ctrl_proc_in proc_in;
 	struct aealtek_sensor_exp_data sensor_exp_data;
 	struct aealtek_exposure_param pre_write_exp_data;
+	struct aealtek_tuning_info tuning_info;
 };
 
 
@@ -1036,7 +1053,7 @@ static cmr_int aealtek_set_tuning_param(struct aealtek_cxt *cxt_ptr, void *tunin
 
 	return ISP_SUCCESS;
 exit:
-	ISP_LOGE("ret=%ld, lib_ret=%ld,tuning_param:%p\n !!!", ret, lib_ret,tuning_param);
+	ISP_LOGE("ret=%ld, lib_ret=%ld,tuning_param:%p !!!", ret, lib_ret,tuning_param);
 	return ret;
 }
 
@@ -1471,7 +1488,7 @@ static cmr_int aealtek_set_measure_lum(struct aealtek_cxt *cxt_ptr, struct ae_ct
 	}
 	cxt_ptr->nxt_status.ui_param.weight = in_ptr->measure_lum.lum_mode;
 
-	ISP_LOGI("flash_enable:%d,touch_flag:%d,lum_mode:%ld\n", cxt_ptr->flash_param.enable
+	ISP_LOGI("flash_enable:%d,touch_flag:%d,lum_mode:%ld", cxt_ptr->flash_param.enable
 			, cxt_ptr->touch_param.touch_flag, in_ptr->measure_lum.lum_mode);
 
 
@@ -2271,16 +2288,31 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 	if (ret)
 		goto exit;
 
-	ret = aealtek_lib_exposure2sensor(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
-	if (ret)
-		goto exit;
+	if (!cxt_ptr->tuning_info.manual_ae_on) {
+		ret = aealtek_lib_exposure2sensor(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
+		if (ret)
+			goto exit;
+	}
 
 	ret = aealtek_lib_to_out_info(cxt_ptr, &cxt_ptr->lib_data.output_data, &out_ptr->proc_out.ae_info);
 	if (ret)
 		goto exit;
-	ret = aealtek_pre_to_sensor(cxt_ptr, 1);
-	if (ret)
-		goto exit;
+	if (cxt_ptr->tuning_info.manual_ae_on && ISP3A_WORK_MODE_PREVIEW == work_mode) {
+		cxt_ptr->sensor_exp_data.lib_exp.exp_line = 10*cxt_ptr->tuning_info.exposure[cxt_ptr->tuning_info.num]/cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time;
+		cxt_ptr->sensor_exp_data.lib_exp.gain = cxt_ptr->tuning_info.gain[cxt_ptr->tuning_info.num];
+		ISP_LOGI("get num:%d tuning exp_gain:%d,%d", cxt_ptr->tuning_info.num
+				,cxt_ptr->sensor_exp_data.lib_exp.exp_line,cxt_ptr->sensor_exp_data.lib_exp.gain);
+		cxt_ptr->tuning_info.num++;
+
+	}
+
+	if (cxt_ptr->tuning_info.manual_ae_on && ISP3A_WORK_MODE_CAPTURE == work_mode) {
+	} else {
+		ret = aealtek_pre_to_sensor(cxt_ptr, 1);
+		if (ret)
+			goto exit;
+	}
+
 	++cxt_ptr->work_cnt;
 	cxt_ptr->cur_status.ui_param.work_info = cxt_ptr->nxt_status.ui_param.work_info;
 	return ISP_SUCCESS;
@@ -3126,7 +3158,7 @@ static cmr_int aealtek_set_snapshot_finished(struct aealtek_cxt *cxt_ptr, struct
 		ISP_LOGE("param %p is NULL error!", cxt_ptr);
 		goto exit;
 	}
-	ISP_LOGI("flash_enable:%d,touch_flag:%d\n", cxt_ptr->flash_param.enable, cxt_ptr->touch_param.touch_flag);
+	ISP_LOGI("flash_enable:%d,touch_flag:%d", cxt_ptr->flash_param.enable, cxt_ptr->touch_param.touch_flag);
 	if (cxt_ptr->flash_param.enable) {
 		ret = aealtek_set_flash_est(cxt_ptr, 1);
 		if (ret)
@@ -3271,6 +3303,26 @@ exit:
 	return ret;
 }
 
+static cmr_int aealtek_get_exp_gain(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+
+
+	if (!cxt_ptr || !out_ptr) {
+		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, out_ptr);
+		goto exit;
+	}
+	out_ptr->exp_gain.exposure_time = cxt_ptr->sensor_exp_data.actual_exp.exp_time;
+	out_ptr->exp_gain.exposure_line = cxt_ptr->sensor_exp_data.actual_exp.exp_line;
+	out_ptr->exp_gain.dummy = cxt_ptr->sensor_exp_data.actual_exp.dummy;
+	out_ptr->exp_gain.gain = cxt_ptr->sensor_exp_data.actual_exp.gain;
+
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld !!!", ret);
+	return ret;
+}
+
 static cmr_int aealtek_get_lib_script_info(struct aealtek_cxt *cxt_ptr, struct ae_output_data_t *from_ptr, struct aealtek_exposure_param *to_ptr)
 {
 	cmr_int ret = ISP_ERROR;
@@ -3293,12 +3345,74 @@ exit:
 	return ret;
 }
 
+static cmr_int aealtek_get_tuning_data(struct aealtek_cxt *cxt_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+	char ae_property[PROPERTY_VALUE_MAX];
+	FILE  *fp = NULL;
+	cmr_s32  tem_value;
+	char str_value[50];
+	char file_name[128];
+	cmr_s32  flag = 0;
+	cmr_s32  exp_num = 0;
+	cmr_s32  gain_num = 0;
+
+	property_get("persist.sys.isp.ae.manual", ae_property, "off");
+	ISP_LOGI("persist.sys.isp.ae.manual: %s", ae_property);
+	if (!strcmp("on", ae_property)) {
+		cxt_ptr->tuning_info.manual_ae_on = 1;
+
+		property_get("persist.sys.isp.ae.tuning.type", ae_property, "none");
+		ISP_LOGI("persist.sys.isp.ae.tuning.type: %s", ae_property);
+		if (!strcmp("exposure_time", ae_property)) {
+			cxt_ptr->tuning_info.tuning_mode = TUNING_MODE_EXPOSURE;
+			sprintf(file_name,"/data/misc/media/exposure.txt");
+		} else if (!strcmp("gain", ae_property)) {
+			cxt_ptr->tuning_info.tuning_mode = TUNING_MODE_GAIN;
+			sprintf(file_name,"/data/misc/media/gain.txt");
+		} else if (!strcmp("obclamp", ae_property)) {
+			cxt_ptr->tuning_info.tuning_mode = TUNING_MODE_OBCLAMP;
+			sprintf(file_name,"/data/misc/media/obclamp.txt");
+		}
+
+		if (0 == cxt_ptr->tuning_info.num) {
+			fp = fopen(file_name, "r");
+			if (NULL == fp) {
+				ISP_LOGE("failed to open tuning file:%s", file_name);
+				goto exit;
+			}
+			while (NULL != fgets(str_value, sizeof(str_value)-1, fp)) {
+				tem_value = atoi(str_value);
+				if (0 == tem_value) {
+					flag = 0;
+				} else if (0 ==  flag) {
+					cxt_ptr->tuning_info.gain[gain_num++] = tem_value;
+					flag++;
+				} else {
+					cxt_ptr->tuning_info.exposure[exp_num++] = tem_value;
+					flag = 0;
+				}
+			}
+			fclose(fp);
+		}
+	} else {
+		cxt_ptr->tuning_info.manual_ae_on = 0;
+	}
+
+	return ISP_SUCCESS;
+exit:
+	cxt_ptr->tuning_info.manual_ae_on = 0;
+	ISP_LOGE("done %ld", ret);
+	return ret;
+}
+
 static cmr_int ae_altek_adpt_init(void *in, void *out, cmr_handle *handle)
 {
 	cmr_int ret = ISP_ERROR;
 	struct aealtek_cxt *cxt_ptr = NULL;
 	struct ae_ctrl_init_in *in_ptr = (struct ae_ctrl_init_in*)in;
 	struct ae_ctrl_init_out *out_ptr = (struct ae_ctrl_init_out*)out;
+
 
 
 	if (!in_ptr || !out_ptr || !handle) {
@@ -3348,6 +3462,10 @@ static cmr_int ae_altek_adpt_init(void *in, void *out, cmr_handle *handle)
 	ret = aealtek_pre_to_sensor(cxt_ptr, 1);
 	if (ret)
 		goto exit;
+
+	ret = aealtek_get_tuning_data(cxt_ptr);
+	if (ret)
+		ISP_LOGW("get tuning data failed %ld", ret);
 
 	*handle = (cmr_handle)cxt_ptr;
 	cxt_ptr->is_inited = 1;
@@ -3514,6 +3632,9 @@ static cmr_int ae_altek_adpt_ioctrl(cmr_handle handle, cmr_int cmd, void *in, vo
 	case AE_CTRL_GET_HW_ISO_SPEED:
 		ret = aealtek_get_hw_iso_speed(cxt_ptr, in_ptr, out_ptr);
 		break;
+	case AE_CTRL_GET_EXP_GAIN:
+		ret = aealtek_get_exp_gain(cxt_ptr, in_ptr, out_ptr);
+		break;
 	default:
 		ISP_LOGE("cmd %ld is not defined!", cmd);
 		break;
@@ -3566,19 +3687,22 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 		goto exit;
 	}
 	//cxt_ptr->update_list. //TBD
-	if (0 == cxt_ptr->is_script_mode) {
-		ret = aealtek_lib_exposure2sensor(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
-		if (ret)
-			goto exit;
-	} else {
-		ret = aealtek_get_lib_script_info(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
-		if (ret)
-			goto exit;
-	}
 
-	ret = aealtek_set_dummy(cxt_ptr, &cxt_ptr->sensor_exp_data.lib_exp);
-	if (ret)
-		ISP_LOGW("warning set_dummy ret=%ld !!!", ret);
+	if (!cxt_ptr->tuning_info.manual_ae_on) {
+		if (0 == cxt_ptr->is_script_mode) {
+			ret = aealtek_lib_exposure2sensor(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
+			if (ret)
+				goto exit;
+		} else {
+			ret = aealtek_get_lib_script_info(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
+			if (ret)
+				goto exit;
+		}
+
+		ret = aealtek_set_dummy(cxt_ptr, &cxt_ptr->sensor_exp_data.lib_exp);
+		if (ret)
+			ISP_LOGW("warning set_dummy ret=%ld !!!", ret);
+	}
 
 	aealtek_change_ae_state(cxt_ptr, cxt_ptr->ae_state, ISP3A_AE_CTRL_ST_SEARCHING);
 
@@ -3634,7 +3758,7 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 					struct isp_flash_cfg flash_cfg;
 					struct isp_flash_element  flash_element;
 
-					ISP_LOGI("========flash pre exp:%d,%d,%d,%d\n",
+					ISP_LOGI("========flash pre exp:%d,%d,%d,%d",
 							cxt_ptr->flash_param.pre_flash_before.exp_cell.gain,cxt_ptr->flash_param.pre_flash_before.exp_cell.exp_line
 							,cxt_ptr->flash_param.pre_flash_before.exp_cell.exp_time,cxt_ptr->flash_param.pre_flash_before.exp_cell.iso);
 
@@ -3683,7 +3807,7 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 				cxt_ptr->flash_param.main_flash_est.exp_cell.exp_time = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.snapshot_exp_dat.exposure_time;
 				cxt_ptr->flash_param.main_flash_est.exp_cell.iso = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.snapshot_exp_dat.ISO;
 
-				ISP_LOGI("========flash main exp:%d,%d,%d,%d\n",
+				ISP_LOGI("========flash main exp:%d,%d,%d,%d",
 						cxt_ptr->flash_param.main_flash_est.exp_cell.gain,cxt_ptr->flash_param.main_flash_est.exp_cell.exp_line
 						,cxt_ptr->flash_param.main_flash_est.exp_cell.exp_time,cxt_ptr->flash_param.main_flash_est.exp_cell.iso);
 			}
