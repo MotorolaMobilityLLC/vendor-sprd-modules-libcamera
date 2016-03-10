@@ -3850,13 +3850,14 @@ cmr_int sns_cfg_otp_update_isparam(struct sensor_drv_context *sensor_cxt,
 						cmr_u32 sensor_id)
 {
 	cmr_int                      ret = 0;
+	struct _sensor_val_tag	     param;
 
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 	if ((NULL != sensor_cxt->sensor_info_ptr)
 			&& (NULL != sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr)){
-
+		param.type = SENSOR_VAL_TYPE_INIT_OTP;
 		if(PNULL != sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr->cfg_otp){
-			sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr->cfg_otp(0);
+			sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr->cfg_otp(&param);
 		}
 	}else{
 		CMR_LOGE("invalid param failed!");
