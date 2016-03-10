@@ -260,6 +260,7 @@ static cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data);
 static cmr_int isp3a_start_ae_process(cmr_handle isp_3a_handle, struct isp3a_statistics_data *stats_data);
 static cmr_int isp3a_start_af_process(cmr_handle isp_3a_handle, struct isp3a_statistics_data *stats_data);
 static cmr_int isp3a_start_afl_process(cmr_handle isp_3a_handle, struct isp3a_statistics_data *stats_data);
+static cmr_int isp3a_start_yhis_process(cmr_handle isp_3a_handle, struct isp3a_statistics_data *stats_data);
 static cmr_int isp3a_start_awb_process(cmr_handle isp_3a_handle, struct isp3a_statistics_data *stats_data, struct ae_ctrl_callback_in *ae_info);
 static cmr_int isp3a_handle_ae_result(cmr_handle isp_3a_handle, struct ae_ctrl_callback_in *result_ptr);
 static cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start* input_ptr);
@@ -2180,12 +2181,15 @@ cmr_int isp3a_init_statistics_buf(cmr_handle isp_3a_handle)
 	struct isp3a_statistics_data                *buf_head = NULL;
 
 	sem_wait(&cxt->statistics_data_sm);
-	ae_buf_addr = malloc(ISP3A_STATISTICS_BUF_NUM*AE_STATS_BUFFER_SIZE);
-	awb_buf_addr = malloc(ISP3A_STATISTICS_BUF_NUM*AWB_STATS_BUFFER_SIZE);
-	af_buf_addr = malloc(ISP3A_STATISTICS_BUF_NUM*AF_STATS_BUFFER_SIZE);
-	afl_buf_addr = malloc(ISP3A_STATISTICS_AFL_BUF_NUM*AFL_STATS_BUFFER_SIZE);
-	subsample_buf_addr = malloc(ISP3A_STATISTICS_BUF_NUM*SUBIMG_STATS_BUFFER_SIZE);
-	if (!ae_buf_addr || !awb_buf_addr || !af_buf_addr || !afl_buf_addr || !subsample_buf_addr) {
+	ae_buf_addr = malloc(ISP3A_STATISTICS_BUF_NUM * AE_STATS_BUFFER_SIZE);
+	awb_buf_addr = malloc(ISP3A_STATISTICS_BUF_NUM * AWB_STATS_BUFFER_SIZE);
+	af_buf_addr = malloc(ISP3A_STATISTICS_BUF_NUM * AF_STATS_BUFFER_SIZE);
+	afl_buf_addr = malloc(ISP3A_STATISTICS_AFL_BUF_NUM * AFL_STATS_BUFFER_SIZE);
+	subsample_buf_addr = malloc(ISP3A_STATISTICS_BUF_NUM * SUBIMG_STATS_BUFFER_SIZE);
+	yhis_buf_addr = malloc(ISP3A_STATISTICS_BUF_NUM * YHIST_STATS_BUFFER_SIZE);
+	if (!ae_buf_addr || !awb_buf_addr || !af_buf_addr
+			|| !afl_buf_addr || !subsample_buf_addr
+			|| !yhis_buf_addr) {
 		ISP_LOGE("failed to malloc stats");
 		ret = ISP_ALLOC_ERROR;
 		goto exit;
@@ -2241,7 +2245,7 @@ cmr_int isp3a_init_statistics_buf(cmr_handle isp_3a_handle)
 	for (i=0 ; i<ISP3A_STATISTICS_BUF_NUM ; i++) {
 		cmr_bzero((void*)&buf_head[i], sizeof(struct isp3a_statistics_data));
 		buf_head[i].size = SUBIMG_STATS_BUFFER_SIZE;
-		buf_head[i].addr = NULL;
+		buf_head[i].addr = (void*)((cmr_int)yhis_buf_addr + i*YHIST_STATS_BUFFER_SIZE);
 	}
 
 exit:
@@ -2354,29 +2358,29 @@ cmr_int isp3a_get_statistics_buf(cmr_handle isp_3a_handle, cmr_int type, struct 
 		goto exit;
 	}
 	switch (type) {
-		case ISP3A_AE:
-			buf_head = &cxt->ae_cxt.statistics_buffer[0];
-			break;
-		case ISP3A_AWB:
-			buf_head = &cxt->awb_cxt.statistics_buffer[0];
-			break;
-		case ISP3A_AF:
-			buf_head = &cxt->af_cxt.statistics_buffer[0];
-			break;
-		case ISP3A_AFL:
-			buf_head = &cxt->afl_cxt.statistics_buffer[0];
-			break;
-		case ISP3A_YHIS:
-			 buf_head = &cxt->other_stats_cxt.yhis_buffer[0];
-			break;
-		case ISP3A_SUB_SAMPLE:
-			buf_head = &cxt->other_stats_cxt.sub_sample_buffer[0];
-			break;
-		default:
-			*buf_ptr = NULL;
-			i = 0xFF;
-			goto exit;
-			break;
+	case ISP3A_AE:
+		buf_head = &cxt->ae_cxt.statistics_buffer[0];
+		break;
+	case ISP3A_AWB:
+		buf_head = &cxt->awb_cxt.statistics_buffer[0];
+		break;
+	case ISP3A_AF:
+		buf_head = &cxt->af_cxt.statistics_buffer[0];
+		break;
+	case ISP3A_AFL:
+		buf_head = &cxt->afl_cxt.statistics_buffer[0];
+		break;
+	case ISP3A_YHIS:
+		buf_head = &cxt->other_stats_cxt.yhis_buffer[0];
+		break;
+	case ISP3A_SUB_SAMPLE:
+		buf_head = &cxt->other_stats_cxt.sub_sample_buffer[0];
+		break;
+	default:
+		*buf_ptr = NULL;
+		i = 0xFF;
+		goto exit;
+		break;
 	}
 	sem_wait(&cxt->statistics_data_sm);
 	*buf_ptr = NULL;
@@ -2557,6 +2561,7 @@ cmr_int isp3a_get_3a_stats_buf(cmr_handle isp_3a_handle)
 	cxt->stats_buf_cxt.awb_stats_buf_ptr = NULL;
 	cxt->stats_buf_cxt.af_stats_buf_ptr = NULL;
 	cxt->stats_buf_cxt.afl_stats_buf_ptr = NULL;
+	cxt->stats_buf_cxt.yhis_stats_buf_ptr = NULL;
 
 	ret = isp3a_get_statistics_buf(isp_3a_handle, ISP3A_AE, &cxt->stats_buf_cxt.ae_stats_buf_ptr);
 	if (ret) {
@@ -2571,12 +2576,17 @@ cmr_int isp3a_get_3a_stats_buf(cmr_handle isp_3a_handle)
 	}
 	ret = isp3a_get_statistics_buf(isp_3a_handle, ISP3A_AF, &cxt->stats_buf_cxt.af_stats_buf_ptr);
 	if (ret) {
-		ISP_LOGE("failed to get ae stats buf");
+		ISP_LOGE("failed to get af stats buf");
 		goto exit;
 	}
 	ret = isp3a_get_statistics_buf(isp_3a_handle, ISP3A_AFL, &cxt->stats_buf_cxt.afl_stats_buf_ptr);
 	if (ret) {
-		ISP_LOGE("failed to get ae stats buf");
+		ISP_LOGE("failed to get afl stats buf");
+		goto exit;
+	}
+	ret = isp3a_get_statistics_buf(isp_3a_handle, ISP3A_YHIS, &cxt->stats_buf_cxt.yhis_stats_buf_ptr);
+	if (ret) {
+		ISP_LOGE("failed to get yhis stats buf");
 		goto exit;
 	}
 /*
@@ -2598,6 +2608,9 @@ exit:
 	}
 	if (cxt->stats_buf_cxt.afl_stats_buf_ptr) {
 		isp3a_put_statistics_buf(isp_3a_handle, ISP3A_AFL, cxt->stats_buf_cxt.afl_stats_buf_ptr);
+	}
+	if (cxt->stats_buf_cxt.yhis_stats_buf_ptr) {
+		isp3a_put_statistics_buf(isp_3a_handle, ISP3A_YHIS, cxt->stats_buf_cxt.yhis_stats_buf_ptr);
 	}
 	if (cxt->stats_buf_cxt.subsample_stats_buf_ptr) {
 		isp3a_put_statistics_buf(isp_3a_handle, ISP3A_SUB_SAMPLE, cxt->stats_buf_cxt.subsample_stats_buf_ptr);
@@ -2624,6 +2637,9 @@ cmr_int isp3a_put_3a_stats_buf(cmr_handle isp_3a_handle)
 	if (cxt->stats_buf_cxt.afl_stats_buf_ptr) {
 		isp3a_put_statistics_buf(isp_3a_handle, ISP3A_AFL, cxt->stats_buf_cxt.afl_stats_buf_ptr);
 	}
+	if (cxt->stats_buf_cxt.yhis_stats_buf_ptr) {
+		isp3a_put_statistics_buf(isp_3a_handle, ISP3A_YHIS, cxt->stats_buf_cxt.yhis_stats_buf_ptr);
+	}
 	if (cxt->stats_buf_cxt.subsample_stats_buf_ptr) {
 		isp3a_put_statistics_buf(isp_3a_handle, ISP3A_SUB_SAMPLE, cxt->stats_buf_cxt.subsample_stats_buf_ptr);
 	}
@@ -2642,6 +2658,7 @@ cmr_int isp3a_handle_stats(cmr_handle isp_3a_handle, void *data)
 	struct isp3a_statistics_data                *awb_stats_buf_ptr = NULL;
 	struct isp3a_statistics_data                *af_stats_buf_ptr = NULL;
 	struct isp3a_statistics_data                *afl_stats_buf_ptr = NULL;
+	struct isp3a_statistics_data                *yhis_stats_buf_ptr = NULL;
 	struct isp_statis_frame_output              *dev_stats = (struct isp_statis_frame_output*)data;
 	cmr_u32                                     is_set_stats_buf = 0;
 	cmr_int                                     test_tbd;
@@ -2666,13 +2683,14 @@ cmr_int isp3a_handle_stats(cmr_handle isp_3a_handle, void *data)
 	awb_stats_buf_ptr = cxt->stats_buf_cxt.awb_stats_buf_ptr;
 	af_stats_buf_ptr = cxt->stats_buf_cxt.af_stats_buf_ptr;
 	afl_stats_buf_ptr = cxt->stats_buf_cxt.afl_stats_buf_ptr;
+	yhis_stats_buf_ptr = cxt->stats_buf_cxt.yhis_stats_buf_ptr;
 	af_stats_buf_ptr->timestamp.sec = dev_stats->time_stamp.sec;
 	af_stats_buf_ptr->timestamp.usec = dev_stats->time_stamp.usec;
 	ae_stats_buf_ptr->timestamp = af_stats_buf_ptr->timestamp;
 	awb_stats_buf_ptr->timestamp = af_stats_buf_ptr->timestamp;
 	test_tbd = (cmr_int)dev_stats->vir_addr;
 	ret = isp_dispatch_stats((void*)test_tbd, ae_stats_buf_ptr->addr, awb_stats_buf_ptr->addr, af_stats_buf_ptr->addr,
-							 NULL, afl_stats_buf_ptr->addr, NULL, cxt->sof_idx);
+							 yhis_stats_buf_ptr->addr, afl_stats_buf_ptr->addr, NULL, cxt->sof_idx);
 	if (ret) {
 		ret = isp3a_put_3a_stats_buf(isp_3a_handle);
 		goto exit;
@@ -2700,6 +2718,11 @@ cmr_int isp3a_handle_stats(cmr_handle isp_3a_handle, void *data)
 	}
 	//start AFl process
 	ret= isp3a_start_afl_process(isp_3a_handle, afl_stats_buf_ptr);
+	if (ret) {
+		ISP_LOGE("failed to start afl process");
+	}
+	//start YHIS process
+	ret= isp3a_start_yhis_process(isp_3a_handle, yhis_stats_buf_ptr);
 	if (ret) {
 		ISP_LOGE("failed to start afl process");
 	}
@@ -2829,7 +2852,7 @@ cmr_int isp3a_start_af_process(cmr_handle isp_3a_handle, struct isp3a_statistics
 	return ret;
 }
 
-cmr_int isp3a_start_afl_process(cmr_handle isp_3a_handle, struct isp3a_statistics_data *stats_data)//TBD
+cmr_int isp3a_start_afl_process(cmr_handle isp_3a_handle, struct isp3a_statistics_data *stats_data)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
@@ -2844,6 +2867,25 @@ cmr_int isp3a_start_afl_process(cmr_handle isp_3a_handle, struct isp3a_statistic
 		ISP_LOGE("failed to afl process");
 	}
 
+	/*
+	 * we don't exe isp3a_release_statistics_buf
+	 * afl will use the buff for queue working
+	 * */
+
+	return ret;
+}
+
+cmr_int isp3a_start_yhis_process(cmr_handle isp_3a_handle, struct isp3a_statistics_data *stats_data)//TBD
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
+	struct afl_ctrl_proc_in                     input;
+	struct afl_ctrl_proc_out                    output;
+
+	input.stat_data_ptr = stats_data;
+	isp3a_hold_statistics_buf(isp_3a_handle, ISP3A_YHIS, stats_data);
+
+	ret = isp3a_release_statistics_buf(isp_3a_handle, ISP3A_YHIS, stats_data);
 	return ret;
 }
 
