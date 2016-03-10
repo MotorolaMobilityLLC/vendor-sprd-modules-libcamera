@@ -242,6 +242,7 @@ static cmr_int isp3a_set_dzoom(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_convergence_req(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_snapshot_finished(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_get_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr);
+static cmr_int isp3a_get_adgain_exp_info(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_init_statistics_buf(cmr_handle isp_3a_handle);
 static cmr_int isp3a_deinit_statistics_buf(cmr_handle isp_3a_handle);
 static cmr_int isp3a_get_statistics_buf(cmr_handle isp_3a_handle, cmr_int type, struct isp3a_statistics_data **buf_ptr);
@@ -340,6 +341,7 @@ static struct isp3a_ctrl_io_func s_isp3a_ioctrl_tab[ISP_CTRL_MAX] = {
 	{ISP_CTRL_SET_CONVERGENCE_REQ,     isp3a_set_convergence_req},
 	{ISP_CTRL_SET_SNAPSHOT_FINISHED,   isp3a_set_snapshot_finished},
 	{ISP_CTRL_GET_EXIF_DEBUG_INFO,     isp3a_get_exif_debug_info},
+	{ISP_CTRL_GET_CUR_ADGAIN_EXP,      isp3a_get_adgain_exp_info},
 };
 
 /*************************************INTERNAK FUNCTION ***************************************/
@@ -2107,6 +2109,25 @@ cmr_int isp3a_get_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr)
 exit:
 	ISP_LOGI("exif debug info size %ld", exif_info_ptr->size);
 
+	return ret;
+}
+
+cmr_int isp3a_get_adgain_exp_info(cmr_handle isp_3a_handle, void *param_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
+	struct isp_adgain_exp_info                  *info_ptr = (struct isp_adgain_exp_info*)param_ptr;
+	struct ae_ctrl_param_out                    ae_out;
+
+	ae_out.exp_gain.exposure_line = 0;
+	ae_out.exp_gain.exposure_time = 0;
+	ae_out.exp_gain.gain = 0;
+	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_GET_EXP_GAIN, NULL, &ae_out);
+	if (!ret) {
+		info_ptr->adgain = ae_out.exp_gain.gain;
+		info_ptr->exp_time = ae_out.exp_gain.exposure_time;
+	}
+	ISP_LOGI("adgain = %d, exp = %d", info_ptr->adgain, info_ptr->exp_time);
 	return ret;
 }
 

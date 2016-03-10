@@ -256,6 +256,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SET_CONVERGENCE_REQ,
 	ISP_CTRL_SET_SNAPSHOT_FINISHED,
 	ISP_CTRL_GET_EXIF_DEBUG_INFO,
+	ISP_CTRL_GET_CUR_ADGAIN_EXP,
 	ISP_CTRL_MAX
 };
 
@@ -380,6 +381,11 @@ struct isp_sensor_fps_info{
 	cmr_u32 high_fps_skip_num;
 	cmr_u32 max_fps;    //x100
 	cmr_u32 min_fps;     //x100
+};
+
+struct isp_adgain_exp_info {
+	cmr_u32 adgain;
+	cmr_u32 exp_time;
 };
 
 struct isp_init_param {
