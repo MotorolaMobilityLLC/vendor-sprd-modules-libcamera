@@ -199,6 +199,79 @@ static const SENSOR_REG_T s5k3p3sm_4632x3480_4lane_setting[] = {
  //{ 0x0100, 0x0100 }, //steam on
 };
 
+// 60 fps
+static const SENSOR_REG_T s5k3p3sm_2304x1740_4lane_setting[] = {
+	{0x6028,0x2000},
+	{0x602A,0x2E26},
+	{0x6F12,0x0103},
+	{0x6028,0x4000},
+	{0x3D7C,0x0010},
+	{0x3D88,0x0064},
+	{0x3D8A,0x0068},
+	{0x0344,0x000C},
+	{0x0346,0x0008},
+	{0x0348,0x121B},
+	{0x034A,0x0D9F},
+	{0x034C,0x0900},
+	{0x034E,0x06CC},
+	{0x0408,0x0004},
+	{0x0900,0x0122},
+	{0x0380,0x0001},
+	{0x0382,0x0003},
+	{0x0384,0x0001},
+	{0x0386,0x0003},
+	{0x0400,0x0001},
+	{0x0404,0x0010},
+	{0x0114,0x0300},
+	{0x0110,0x0002},
+	{0x0136,0x1800},
+	{0x0304,0x0006},
+	{0x0306,0x008C},
+	{0x0302,0x0001},
+	{0x0300,0x0004},
+	{0x030C,0x0004},
+	{0x030E,0x0037},
+	{0x030A,0x0001},
+	{0x0308,0x0008},
+	{0x0342,0x14A2},
+	{0x0340,0x0DC8},
+	{0x0B0E,0x0100},
+	{0x0216,0x0000},
+};
+
+/* 2320 x 1748 30fps 720Mbps */
+static const SENSOR_REG_T s5k3p3sm_2320x1748_4lane_setting[] = {
+#if 1
+
+#else
+	{ 0x6028, 0x4000},
+	{ 0x0344, 0x0000},
+	{ 0x0346, 0x0000},
+	{ 0x0348, 0x090F},
+	{ 0x034A, 0x06D3},
+	{ 0x034C, 0x0910},
+	{ 0x034E, 0x06D4},
+	{ 0x3002, 0x0001},
+	{ 0x0136, 0x1800},
+	{ 0x0304, 0x0006},
+	{ 0x0306, 0x008C},
+	{ 0x0302, 0x0001},
+	{ 0x0300, 0x0008},
+	{ 0x030C, 0x0004},
+	{ 0x030E, 0x0078},
+	{ 0x030A, 0x0001},
+	{ 0x0308, 0x0008},
+	{ 0x3008, 0x0001},
+	{ 0x0800, 0x0000},
+	{ 0x0200, 0x0200},
+	{ 0x0202, 0x0100},
+	{ 0x021C, 0x0200},
+	{ 0x021E, 0x0100},
+	{ 0x0342, 0x141C},
+	{ 0x0340, 0x0708},
+	{ 0x3072, 0x03C0},
+#endif
+};
 
 // 1920X1080 60FPS v560M mipi660M 4lane 2x2binning
 // frame length	0x06E7
@@ -288,29 +361,28 @@ static const SENSOR_REG_T s5k3p3sm_1280x720_4lane_setting[] = {
 // { 0x0100, 0x0100 },//steam on
 };
 
-static SENSOR_REG_TAB_INFO_T s_s5k3p3sm_resolution_Tab_RAW[] = {
+static SENSOR_REG_TAB_INFO_T s_s5k3p3sm_resolution_Tab_RAW[9] = {
 	{ADDR_AND_LEN_OF_ARRAY(s5k3p3sm_common_init), 0, 0, 24, SENSOR_IMAGE_FORMAT_RAW},
 	//{ADDR_AND_LEN_OF_ARRAY(s5k3p3sm_2592x1944_2lane_setting), 2592, 1944, 24, SENSOR_IMAGE_FORMAT_RAW},
-	{ADDR_AND_LEN_OF_ARRAY(s5k3p3sm_1920x1080_4lane_setting), 1920, 1080, 24, SENSOR_IMAGE_FORMAT_RAW},
-	{PNULL, 0, 0, 0, 0, 0},
-	{PNULL, 0, 0, 0, 0, 0},
-	{PNULL, 0, 0, 0, 0, 0},
+	//{ADDR_AND_LEN_OF_ARRAY(s5k3p3sm_1920x1080_4lane_setting), 1920, 1080, 24, SENSOR_IMAGE_FORMAT_RAW},
+	//{ADDR_AND_LEN_OF_ARRAY(s5k3p3sm_2320x1748_4lane_setting), 2320, 1748, 24, SENSOR_IMAGE_FORMAT_RAW},
+	{ADDR_AND_LEN_OF_ARRAY(s5k3p3sm_2304x1740_4lane_setting), 2304, 1740, 24, SENSOR_IMAGE_FORMAT_RAW},
 	{PNULL, 0, 0, 0, 0, 0},
 	{PNULL, 0, 0, 0, 0, 0},
 	{PNULL, 0, 0, 0, 0, 0},
 	{PNULL, 0, 0, 0, 0, 0},
 };
 
-static SENSOR_TRIM_T s_s5k3p3sm_Resolution_Trim_Tab[] = {
+static SENSOR_TRIM_T s_s5k3p3sm_Resolution_Trim_Tab[9] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	//{0, 0, 2592, 1944, 267, 750, 1248, {0, 0, 1632, 1224}},
-	{0, 0, 1920, 1080, 94, 1320, 1767, {0, 0, 1920, 1080}},
+	//{0, 0, 1920, 1080, 94, 1320, 1767, {0, 0, 1920, 1080}},
+	//{0, 0, 2320, 1748, 183, 1440, 1800, {0, 0, 2320, 1748}},
+	{0, 0, 2304, 1740, 94, 1320, 0x0dc8, {0, 0, 2304, 1740}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}}
 };
 
 static const SENSOR_REG_T s_s5k3p3sm_2576x1932_video_tab[SENSOR_VIDEO_MODE_MAX][1] = {
