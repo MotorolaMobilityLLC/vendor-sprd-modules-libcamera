@@ -174,6 +174,7 @@ static cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_
 	                                                      cmr_uint is_snapshot, struct preview_param *out_param_ptr);
 static cmr_int camera_get_snapshot_param(cmr_handle oem_handle, struct snapshot_param *out_ptr);
 static cmr_int camera_get_sensor_info(cmr_handle oem_handle, cmr_uint sensor_id, struct sensor_exp_info *exp_info_ptr);
+cmr_int camera_get_tuning_info(cmr_handle oem_handle, struct isp_adgain_exp_info *adgain_exp_info_ptr);
 static cmr_int camera_get_sensor_autotest_mode(cmr_handle oem_handle, cmr_uint sensor_id, cmr_uint *is_autotest);
 static cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id, cmr_uint param);
 static void camera_set_hdr_flag(struct camera_context *cxt, cmr_u32 hdr_flag);
@@ -2859,6 +2860,7 @@ cmr_int camera_snapshot_init(cmr_handle  oem_handle)
 	init_param.ops.channel_stop = camera_channel_stop;
 	init_param.ops.channel_buff_cfg = camera_channel_buff_cfg;
 	init_param.ops.get_sensor_info = camera_get_sensor_info;
+	init_param.ops.get_tuning_info = camera_get_tuning_info;
 	init_param.ops.stop_codec = camera_stop_codec;
 	init_param.private_data = NULL;
 	ret = cmr_snapshot_init(&init_param, &snp_cxt->snapshot_handle);
@@ -4745,6 +4747,21 @@ exit:
 	return ret;
 }
 
+cmr_int camera_get_tuning_info(cmr_handle oem_handle, struct isp_adgain_exp_info *adgain_exp_info_ptr)
+{
+	cmr_int                        ret = CMR_CAMERA_SUCCESS;
+	struct camera_context          *cxt = (struct camera_context*)oem_handle;
+	struct isp_context             *isp_cxt = &cxt->isp_cxt;
+	struct common_isp_cmd_param    isp_param;
+
+	ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CUR_ADGAIN_EXP, &isp_param);
+	adgain_exp_info_ptr->adgain = isp_param.isp_adgain.adgain;
+	adgain_exp_info_ptr->exp_time = isp_param.isp_adgain.exp_time;
+	CMR_LOGV("adgain=%d, exp_time=%d",
+		adgain_exp_info_ptr->adgain, adgain_exp_info_ptr->exp_time);
+	return ret;
+}
+
 cmr_int camera_get_sensor_autotest_mode(cmr_handle oem_handle, cmr_uint sensor_id, cmr_uint *is_autotest)
 {
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
@@ -5257,6 +5274,11 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type, struct common
 		isp_cmd = ISP_CTRL_GET_EXIF_DEBUG_INFO;
 		ptr_flag = 1;
 		isp_param_ptr = (void*)&param_ptr->isp_dbg_info;
+		break;
+	case COM_ISP_GET_CUR_ADGAIN_EXP:
+		isp_cmd = ISP_CTRL_GET_CUR_ADGAIN_EXP;
+		ptr_flag = 1;
+		isp_param_ptr = (void*)&param_ptr->isp_adgain;
 		break;
 	case COM_ISP_SET_AF:
 		isp_cmd = ISP_CTRL_AF;

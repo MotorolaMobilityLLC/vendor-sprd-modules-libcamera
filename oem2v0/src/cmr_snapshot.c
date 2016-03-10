@@ -1463,6 +1463,136 @@ static int camera_save_raw_to_file(char *name, uint32_t img_fmt,
 
 }
 
+static int snp_dump_mipi_raw(cmr_handle snp_handle, char *name, uint32_t img_fmt,
+			uint32_t width, uint32_t height, struct img_addr *addr)
+{
+	struct snp_context         *snp_cxt = (struct snp_context*)snp_handle;
+#define FILE_DIR "/data/misc/media/"
+#define FILE_NAME_LEN 200
+	int ret = CMR_CAMERA_SUCCESS;
+	char file_name[FILE_NAME_LEN] = {0};
+	char tmp_str[20] = {0};
+	FILE *fp = NULL;
+	uint32_t gain = 0;
+	uint32_t shutter = 0;
+	struct isp_awbc_cfg_test awbc_cfg;
+	void *   isp_handle = ispvideo_GetIspHandle();
+	uint32_t pos = 0;
+	struct isp_adgain_exp_info adgain_exp_info;
+
+	snp_cxt->ops.get_tuning_info(snp_cxt->oem_handle, &adgain_exp_info);
+	gain = adgain_exp_info.adgain;
+	shutter = adgain_exp_info.exp_time;
+
+	read_otp_awb_gain(isp_handle, (void*)&awbc_cfg);
+	read_position(isp_handle, &pos);
+
+	CMR_LOGI("name %s, format %d, width %d, heght %d",
+			name, img_fmt, width, height);
+
+	strcpy(file_name, FILE_DIR);
+	sprintf(tmp_str, "%d", width);
+	strcat(file_name, tmp_str);
+	strcat(file_name, "X");
+	sprintf(tmp_str, "%d", height);
+	strcat(file_name, tmp_str);
+
+	strcat(file_name, "_");
+	sprintf(tmp_str, "%s", name);
+	strcat(file_name, tmp_str);
+
+	strcat(file_name, "_");
+	strcat(file_name, "gain");
+	strcat(file_name, "_");
+	sprintf(tmp_str, "%d", gain);
+	strcat(file_name, tmp_str);
+	strcat(file_name, "_");
+	strcat(file_name, "shutter");
+	strcat(file_name, "_");
+	sprintf(tmp_str, "%d", shutter);
+	strcat(file_name, tmp_str);
+
+	strcat(file_name, ".mipi_raw");
+	CMR_LOGI("file name %s", file_name);
+
+	fp = fopen(file_name, "wb");
+	if (NULL == fp) {
+		CMR_LOGE("can not open file: %s errno = %d\n", file_name, errno);
+		return -1;
+	}
+
+	fwrite((void *)addr->addr_y, 1, (uint32_t)width * height * 2, fp);
+	fclose(fp);
+
+	return 0;
+
+}
+
+static int snp_dump_mipi_raw2(cmr_handle snp_handle, char *name, uint32_t img_fmt,
+			uint32_t width, uint32_t height, struct img_addr *addr)
+{
+	struct snp_context         *snp_cxt = (struct snp_context*)snp_handle;
+#define FILE_DIR "/data/misc/media/"
+#define FILE_NAME_LEN 200
+	int ret = CMR_CAMERA_SUCCESS;
+	char file_name[FILE_NAME_LEN] = {0};
+	char tmp_str[20] = {0};
+	FILE *fp = NULL;
+	uint32_t gain = 0;
+	uint32_t shutter = 0;
+	struct isp_awbc_cfg_test awbc_cfg;
+	void *   isp_handle = ispvideo_GetIspHandle();
+	uint32_t pos = 0;
+	struct isp_adgain_exp_info adgain_exp_info;
+
+	snp_cxt->ops.get_tuning_info(snp_cxt->oem_handle, &adgain_exp_info);
+	gain = adgain_exp_info.adgain;
+	shutter = adgain_exp_info.exp_time;
+
+	read_otp_awb_gain(isp_handle, (void*)&awbc_cfg);
+	read_position(isp_handle, &pos);
+
+	CMR_LOGI("name %s, format %d, width %d, heght %d",
+			name, img_fmt, width, height);
+
+	strcpy(file_name, FILE_DIR);
+	sprintf(tmp_str, "%d", width);
+	strcat(file_name, tmp_str);
+	strcat(file_name, "X");
+	sprintf(tmp_str, "%d", height);
+	strcat(file_name, tmp_str);
+
+	strcat(file_name, "_");
+	sprintf(tmp_str, "%s", name);
+	strcat(file_name, tmp_str);
+
+	strcat(file_name, "_");
+	strcat(file_name, "gain");
+	strcat(file_name, "_");
+	sprintf(tmp_str, "%d", gain);
+	strcat(file_name, tmp_str);
+	strcat(file_name, "_");
+	strcat(file_name, "shutter");
+	strcat(file_name, "_");
+	sprintf(tmp_str, "%d", shutter);
+	strcat(file_name, tmp_str);
+
+	strcat(file_name, ".altek_raw");
+	CMR_LOGI("file name %s", file_name);
+
+	fp = fopen(file_name, "wb");
+	if (NULL == fp) {
+		CMR_LOGE("can not open file: %s errno = %d\n", file_name, errno);
+		return -1;
+	}
+
+	fwrite((void *)addr->addr_y, 1, (uint32_t)width * height * 4 / 3, fp);
+	fclose(fp);
+
+	return 0;
+
+}
+
 static int camera_save_raw2_to_file(char *name, uint32_t img_fmt,
 					uint32_t width, uint32_t height, struct img_addr *addr)
 {
@@ -1712,13 +1842,21 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data)
 #else
 			if ((CAMERA_ISP_TUNING_MODE == snp_cxt->req_param.mode) || (CAMERA_ISP_SIMULATION_MODE == snp_cxt->req_param.mode)) {
 				char datetime[15] = {0};
-				CMR_LOGI("ISP save raw to file");
+				CMR_LOGI("save mipi raw to file");
 				camera_get_system_time(datetime);
+				snp_dump_mipi_raw(snp_handle,
+					datetime,
+					IMG_DATA_TYPE_RAW,
+					mem_ptr->cap_raw.size.width,
+					mem_ptr->cap_raw.size.height,
+					&mem_ptr->cap_raw.addr_vir);
+/*
 				camera_save_raw_to_file(datetime,
-										IMG_DATA_TYPE_RAW,
-										mem_ptr->cap_raw.size.width,
-										mem_ptr->cap_raw.size.height,
-										&mem_ptr->cap_raw.addr_vir);
+							IMG_DATA_TYPE_RAW,
+							mem_ptr->cap_raw.size.width,
+							mem_ptr->cap_raw.size.height,
+							&mem_ptr->cap_raw.addr_vir);
+*/
 			}
 #endif
 		}
@@ -4288,14 +4426,27 @@ cmr_int snp_post_proc_for_isp_tuning(cmr_handle snp_handle, void *data)
 	struct cmr_cap_mem   *mem_ptr = &cxt->req_param.post_proc_setting.mem[cxt->index];
 	if (CAMERA_ISP_TUNING_MODE == cxt->req_param.mode) {
 		char datetime[15] = {0};
-		CMR_LOGI("ISP save altek raw to file");
+		CMR_LOGI("save altek raw to file");
 		camera_get_system_time(datetime);
-		camera_save_raw2_to_file(datetime,
-					IMG_DATA_TYPE_RAW,
-					mem_ptr->cap_raw2.size.width,
-					mem_ptr->cap_raw2.size.height,
-					&mem_ptr->cap_raw2.addr_vir);
+		snp_dump_mipi_raw2(snp_handle,
+				datetime,
+				IMG_DATA_TYPE_RAW,
+				mem_ptr->cap_raw2.size.width,
+				mem_ptr->cap_raw2.size.height,
+				&mem_ptr->cap_raw2.addr_vir);
 	}
+
+#if 0
+	if (CAMERA_ISP_TUNING_MODE == cxt->req_param.mode) {
+		char datetime[15] = {0};
+		CMR_LOGI("save yuv to file");
+		CMR_LOGD("y=0x%lx", mem_ptr->target_yuv.addr_vir.addr_y);
+		camera_save_to_file(SNP_ENCODE_SRC_DATA, IMG_DATA_TYPE_YUV420,
+					mem_ptr->target_yuv.size.width,
+					mem_ptr->target_yuv.size.height,
+					&mem_ptr->target_yuv.addr_vir);
+	}
+#endif
 
 	CMR_LOGV("post_proc_setting.data_endian.uv_endian=%d",
 		cxt->req_param.post_proc_setting.data_endian.uv_endian);

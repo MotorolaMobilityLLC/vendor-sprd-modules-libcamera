@@ -3354,7 +3354,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame)
 					}
 				}
 
-				if (mDumpJpegFlag)
+				if (mCaptureMode == CAMERA_ISP_TUNING_MODE)
 					dump_jpeg_file((void *)pic_addr_vir, encInfo->size+isp_info_size);
 
 				pic_stream->getHeapSize(&heap_size);
