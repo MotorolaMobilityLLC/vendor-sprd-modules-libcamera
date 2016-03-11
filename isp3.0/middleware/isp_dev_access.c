@@ -523,6 +523,7 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	cmr_u32                                iso_gain = 0;
 	struct isp_awb_gain_info               awb_gain_info;
 	cmr_u32                                dcam_id = 0;
+	struct isp_sensor_resolution_info      *resolution_ptr = NULL;
 #ifdef FPGA_TEST
 	struct isp_cfg_img_param               img_buf_param;
 	cmr_u32 img_size, cnt;
@@ -539,6 +540,19 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 
 	isp_dev_set_capture_mode(cxt->isp_driver_handle, param_ptr->common_in.capture_mode);
 
+	memset(&tSecnarioInfo, 0, sizeof(tSecnarioInfo));
+	resolution_ptr = &param_ptr->common_in.resolution_info;
+	tSecnarioInfo.tSensorInfo.uwOriginalWidth = resolution_ptr->sensor_max_size.w;
+	tSecnarioInfo.tSensorInfo.uwOriginalHeight = resolution_ptr->sensor_max_size.h;
+	tSecnarioInfo.tSensorInfo.uwWidth = resolution_ptr->sensor_output_size.w;
+	tSecnarioInfo.tSensorInfo.uwHeight = resolution_ptr->sensor_output_size.h;
+	tSecnarioInfo.tSensorInfo.uwCropStartX = resolution_ptr->crop.st_x;
+	tSecnarioInfo.tSensorInfo.uwCropStartY = resolution_ptr->crop.st_y;
+	tSecnarioInfo.tSensorInfo.uwCropEndX = resolution_ptr->crop.width + resolution_ptr->crop.st_x - 1;
+	tSecnarioInfo.tSensorInfo.uwCropEndY = resolution_ptr->crop.height + resolution_ptr->crop.st_y - 1;
+	tSecnarioInfo.tSensorInfo.udLineTime = resolution_ptr->line_time*10;
+	tSecnarioInfo.tSensorInfo.uwClampLevel = cxt->input_param.init_param.ex_info.clamp_level;
+	tSecnarioInfo.tSensorInfo.uwFrameRate = resolution_ptr->fps.max_fps*100;
 #ifndef FPGA_TEST
 	ret = isp_dev_cfg_scenario_info(cxt->isp_driver_handle, &input_data);//TBD
 	if (ret) {
@@ -548,16 +562,9 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 #endif
 
 #ifdef FPGA_TEST
-	memset(&tSecnarioInfo, 0, sizeof(tSecnarioInfo));
 	tSecnarioInfo.tSensorInfo.ucSensorMode = 0;
 	tSecnarioInfo.tSensorInfo.ucSensorMouduleType = 0;//0-sensor1  1-sensor2
-	tSecnarioInfo.tSensorInfo.uwWidth = cxt->input_param.init_param.size.w;
-	tSecnarioInfo.tSensorInfo.uwHeight = cxt->input_param.init_param.size.h;
-	tSecnarioInfo.tSensorInfo.udLineTime = 1315;//param_ptr->common_in.resolution_info.line_time * 10;
-	tSecnarioInfo.tSensorInfo.uwFrameRate = 3000;//param_ptr->common_in.resolution_info.fps.max_fps * 100;
 	tSecnarioInfo.tSensorInfo.nColorOrder = COLOR_ORDER_GR;
-	tSecnarioInfo.tSensorInfo.uwClampLevel = 64;
-
 	tSecnarioInfo.tScenarioOutBypassFlag.bBypassLV = 0;
 	tSecnarioInfo.tScenarioOutBypassFlag.bBypassVideo = 0;
 	tSecnarioInfo.tScenarioOutBypassFlag.bBypassStill = 0;
@@ -565,8 +572,12 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 
 	tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutWidth = 0;
 	tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutHeight = 0;
-	ISP_LOGE("size %dx%d, line time %d frameRate %d", tSecnarioInfo.tSensorInfo.uwWidth, tSecnarioInfo.tSensorInfo.uwHeight,
-		tSecnarioInfo.tSensorInfo.udLineTime, tSecnarioInfo.tSensorInfo.uwFrameRate);
+	ISP_LOGE("size %dx%d, line time %d frameRate %d clamp %d", tSecnarioInfo.tSensorInfo.uwWidth, tSecnarioInfo.tSensorInfo.uwHeight,
+		tSecnarioInfo.tSensorInfo.udLineTime, tSecnarioInfo.tSensorInfo.uwFrameRate, tSecnarioInfo.tSensorInfo.uwClampLevel);
+	ISP_LOGI("sensor out %d %d %d %d %d %d",tSecnarioInfo.tSensorInfo.uwCropStartX,
+		tSecnarioInfo.tSensorInfo.uwCropStartY, tSecnarioInfo.tSensorInfo.uwCropEndX,
+		tSecnarioInfo.tSensorInfo.uwCropEndY, tSecnarioInfo.tSensorInfo.uwOriginalWidth,
+		tSecnarioInfo.tSensorInfo.uwOriginalHeight);
 	ret = isp_dev_cfg_scenario_info(cxt->isp_driver_handle, &tSecnarioInfo);
 	if (ISP_SUCCESS != ret) {
 		ISP_LOGE("isp_dev_cfg_scenario_info error %ld", ret);
