@@ -259,7 +259,6 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId,
 	m_pPowerModule(NULL),
 	mHDRPowerHint(0),
 	mHDRPowerHintFlag(0),
-	mDumpJpegFlag(0),
 	mIsRecording(false)
 {
 	//mIsPerformanceTestable = sprd_isPerformanceTestable();
@@ -4662,14 +4661,6 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode, uint32_t fr
 				mCaptureMode = CAMERA_ISP_SIMULATION_MODE;
 			}
 
-			property_get("persist.sys.camera.dump.jpg", value2, "no");
-			if (!strcmp(value2, "yes")) {
-				HAL_LOGD("dump jpeg for tuning");
-				mDumpJpegFlag = true;
-			} else {
-				mDumpJpegFlag = false;
-			}
-
 			break;
 		case CAMERA_CAPTURE_MODE_CONTINUE_NON_ZSL_SNAPSHOT:
 			mTakePictureMode = SNAPSHOT_NO_ZSL_MODE;
@@ -4685,14 +4676,6 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode, uint32_t fr
 			} else if (!strcmp(value, "sim")) {
 				HAL_LOGE("enter isp simulation mode ");
 				mCaptureMode = CAMERA_ISP_SIMULATION_MODE;
-			}
-
-			property_get("persist.sys.camera.dump.jpg", value2, "no");
-			if (!strcmp(value2, "yes")) {
-				HAL_LOGD("dump jpeg for tuning");
-				mDumpJpegFlag = true;
-			} else {
-				mDumpJpegFlag = false;
 			}
 
 			break;

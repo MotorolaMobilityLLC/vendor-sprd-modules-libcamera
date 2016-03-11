@@ -591,9 +591,6 @@ private:
 
 	bool                          mIOMMUEnabled;
 	int                             mIOMMUID;
-
-	/* for isp tuning */
-	bool                       mDumpJpegFlag;
 };
 
 }; // namespace sprdcamera

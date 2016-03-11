@@ -1474,7 +1474,7 @@ static int snp_dump_mipi_raw(cmr_handle snp_handle, char *name, uint32_t img_fmt
 	char tmp_str[20] = {0};
 	FILE *fp = NULL;
 	uint32_t gain = 0;
-	uint32_t shutter = 0;
+	uint32_t exp = 0;
 	struct isp_awbc_cfg_test awbc_cfg;
 	void *   isp_handle = ispvideo_GetIspHandle();
 	uint32_t pos = 0;
@@ -1482,7 +1482,7 @@ static int snp_dump_mipi_raw(cmr_handle snp_handle, char *name, uint32_t img_fmt
 
 	snp_cxt->ops.get_tuning_info(snp_cxt->oem_handle, &adgain_exp_info);
 	gain = adgain_exp_info.adgain;
-	shutter = adgain_exp_info.exp_time;
+	exp = adgain_exp_info.exp_time;
 
 	read_otp_awb_gain(isp_handle, (void*)&awbc_cfg);
 	read_position(isp_handle, &pos);
@@ -1507,9 +1507,9 @@ static int snp_dump_mipi_raw(cmr_handle snp_handle, char *name, uint32_t img_fmt
 	sprintf(tmp_str, "%d", gain);
 	strcat(file_name, tmp_str);
 	strcat(file_name, "_");
-	strcat(file_name, "shutter");
+	strcat(file_name, "exp");
 	strcat(file_name, "_");
-	sprintf(tmp_str, "%d", shutter);
+	sprintf(tmp_str, "%d", exp);
 	strcat(file_name, tmp_str);
 
 	strcat(file_name, ".mipi_raw");
@@ -1539,7 +1539,7 @@ static int snp_dump_mipi_raw2(cmr_handle snp_handle, char *name, uint32_t img_fm
 	char tmp_str[20] = {0};
 	FILE *fp = NULL;
 	uint32_t gain = 0;
-	uint32_t shutter = 0;
+	uint32_t exp = 0;
 	struct isp_awbc_cfg_test awbc_cfg;
 	void *   isp_handle = ispvideo_GetIspHandle();
 	uint32_t pos = 0;
@@ -1547,7 +1547,7 @@ static int snp_dump_mipi_raw2(cmr_handle snp_handle, char *name, uint32_t img_fm
 
 	snp_cxt->ops.get_tuning_info(snp_cxt->oem_handle, &adgain_exp_info);
 	gain = adgain_exp_info.adgain;
-	shutter = adgain_exp_info.exp_time;
+	exp = adgain_exp_info.exp_time;
 
 	read_otp_awb_gain(isp_handle, (void*)&awbc_cfg);
 	read_position(isp_handle, &pos);
@@ -1572,9 +1572,9 @@ static int snp_dump_mipi_raw2(cmr_handle snp_handle, char *name, uint32_t img_fm
 	sprintf(tmp_str, "%d", gain);
 	strcat(file_name, tmp_str);
 	strcat(file_name, "_");
-	strcat(file_name, "shutter");
+	strcat(file_name, "exp");
 	strcat(file_name, "_");
-	sprintf(tmp_str, "%d", shutter);
+	sprintf(tmp_str, "%d", exp);
 	strcat(file_name, tmp_str);
 
 	strcat(file_name, ".altek_raw");
