@@ -46,7 +46,8 @@ enum aealtek_work_mode{
 enum ae_tuning_mode {
 	TUNING_MODE_EXPOSURE,
 	TUNING_MODE_GAIN,
-	TUNING_MODE_OBCLAMP
+	TUNING_MODE_OBCLAMP,
+	TUNING_MODE_USER_DEF
 };
 
 struct aealtek_lib_ops {
@@ -2307,12 +2308,14 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 	if (ret)
 		goto exit;
 	if (cxt_ptr->tuning_info.manual_ae_on && ISP3A_WORK_MODE_PREVIEW == work_mode) {
-		cxt_ptr->sensor_exp_data.lib_exp.exp_time = cxt_ptr->tuning_info.exposure[cxt_ptr->tuning_info.num];
-		cxt_ptr->sensor_exp_data.lib_exp.exp_line = 10*cxt_ptr->tuning_info.exposure[cxt_ptr->tuning_info.num]/cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time;
-		cxt_ptr->sensor_exp_data.lib_exp.gain = cxt_ptr->tuning_info.gain[cxt_ptr->tuning_info.num];
-		ISP_LOGI("get num:%d tuning exp_gain:%d,%d", cxt_ptr->tuning_info.num
-				,cxt_ptr->sensor_exp_data.lib_exp.exp_line,cxt_ptr->sensor_exp_data.lib_exp.gain);
-		cxt_ptr->tuning_info.num++;
+		if (TUNING_MODE_USER_DEF != cxt_ptr->tuning_info.tuning_mode) {
+			cxt_ptr->sensor_exp_data.lib_exp.exp_time = cxt_ptr->tuning_info.exposure[cxt_ptr->tuning_info.num];
+			cxt_ptr->sensor_exp_data.lib_exp.exp_line = 10*cxt_ptr->tuning_info.exposure[cxt_ptr->tuning_info.num]/cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time;
+			cxt_ptr->sensor_exp_data.lib_exp.gain = cxt_ptr->tuning_info.gain[cxt_ptr->tuning_info.num];
+			ISP_LOGI("get num:%d tuning exp_gain:%d,%d", cxt_ptr->tuning_info.num
+					,cxt_ptr->sensor_exp_data.lib_exp.exp_line,cxt_ptr->sensor_exp_data.lib_exp.gain);
+			cxt_ptr->tuning_info.num++;
+		}
 
 	}
 
@@ -2828,6 +2831,8 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	struct seq_item in_est;
 	struct seq_cell out_actual;
 	struct seq_cell out_write;
+	char ae_exp[PROPERTY_VALUE_MAX];
+	char ae_gain[PROPERTY_VALUE_MAX];
 
 
 	if (!cxt_ptr || !in_ptr || !out_ptr) {
@@ -2846,9 +2851,18 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 
 	in_est.work_mode = SEQ_WORK_PREVIEW;
 	in_est.cell.frame_id = in_ptr->sof_param.frame_index;
-	in_est.cell.exp_line = cxt_ptr->sensor_exp_data.lib_exp.exp_line;
-	in_est.cell.exp_time = cxt_ptr->sensor_exp_data.lib_exp.exp_time;
-	in_est.cell.gain = cxt_ptr->sensor_exp_data.lib_exp.gain;
+	if (cxt_ptr->tuning_info.manual_ae_on && TUNING_MODE_USER_DEF == cxt_ptr->tuning_info.tuning_mode) {
+		property_get("persist.sys.isp.ae.exp_time", ae_exp, "100");
+		property_get("persist.sys.isp.ae.gain", ae_gain, "100");
+		in_est.cell.exp_time = atoi(ae_exp);
+		in_est.cell.exp_line = 10*in_est.cell.exp_time/cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time;
+		in_est.cell.gain = atoi(ae_gain);
+	} else {
+		in_est.cell.exp_line = cxt_ptr->sensor_exp_data.lib_exp.exp_line;
+		in_est.cell.exp_time = cxt_ptr->sensor_exp_data.lib_exp.exp_time;
+		in_est.cell.gain = cxt_ptr->sensor_exp_data.lib_exp.gain;
+	}
+
 	ret = seq_put(cxt_ptr->seq_handle, &in_est, &out_actual, &out_write);
 	if (ret) {
 		ISP_LOGW("warning seq_put=%ld !!!", ret);
@@ -3327,6 +3341,8 @@ static cmr_int aealtek_get_exp_gain(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 	out_ptr->exp_gain.dummy = cxt_ptr->sensor_exp_data.actual_exp.dummy;
 	out_ptr->exp_gain.gain = cxt_ptr->sensor_exp_data.actual_exp.gain;
 
+	ISP_LOGI("exp:%d,gain:%d", out_ptr->exp_gain.exposure_time,out_ptr->exp_gain.gain);
+
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld !!!", ret);
@@ -3383,28 +3399,33 @@ static cmr_int aealtek_get_tuning_data(struct aealtek_cxt *cxt_ptr)
 		} else if (!strcmp("obclamp", ae_property)) {
 			cxt_ptr->tuning_info.tuning_mode = TUNING_MODE_OBCLAMP;
 			sprintf(file_name,"/data/misc/media/obclamp.txt");
+		} else if (!strcmp("user_def", ae_property)) {
+			cxt_ptr->tuning_info.tuning_mode = TUNING_MODE_USER_DEF;
 		}
 
-		if (0 == cxt_ptr->tuning_info.num) {
-			fp = fopen(file_name, "r");
-			if (NULL == fp) {
-				ISP_LOGE("failed to open tuning file:%s", file_name);
-				goto exit;
-			}
-			while (NULL != fgets(str_value, sizeof(str_value)-1, fp)) {
-				tem_value = atoi(str_value);
-				if (0 == tem_value) {
-					flag = 0;
-				} else if (0 ==  flag) {
-					cxt_ptr->tuning_info.gain[gain_num++] = tem_value;
-					flag++;
-				} else {
-					cxt_ptr->tuning_info.exposure[exp_num++] = tem_value;
-					flag = 0;
+		 if (TUNING_MODE_USER_DEF != cxt_ptr->tuning_info.tuning_mode) {
+			if (0 == cxt_ptr->tuning_info.num) {
+				fp = fopen(file_name, "r");
+				if (NULL == fp) {
+					ISP_LOGE("failed to open tuning file:%s", file_name);
+					goto exit;
 				}
+				while (NULL != fgets(str_value, sizeof(str_value)-1, fp)) {
+					tem_value = atoi(str_value);
+					if (0 == tem_value) {
+						flag = 0;
+					} else if (0 ==  flag) {
+						cxt_ptr->tuning_info.gain[gain_num++] = tem_value;
+						flag++;
+					} else {
+						cxt_ptr->tuning_info.exposure[exp_num++] = tem_value;
+						flag = 0;
+					}
+				}
+				fclose(fp);
 			}
-			fclose(fp);
-		}
+		 }
+
 	} else {
 		cxt_ptr->tuning_info.manual_ae_on = 0;
 	}
