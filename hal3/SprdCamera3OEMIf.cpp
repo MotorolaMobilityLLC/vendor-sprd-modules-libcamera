@@ -3354,7 +3354,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame)
 				}
 
 				if (mCaptureMode == CAMERA_ISP_TUNING_MODE)
-					dump_jpeg_file((void *)pic_addr_vir, encInfo->size+isp_info_size);
+					dump_jpeg_file((void *)pic_addr_vir, encInfo->size+isp_info_size, mCaptureWidth, mCaptureHeight);
 
 				pic_stream->getHeapSize(&heap_size);
 				jpegBlob = (camera3_jpeg_blob*)((char *)pic_addr_vir + (heap_size - sizeof(camera3_jpeg_blob)));
@@ -5934,19 +5934,24 @@ int SprdCamera3OEMIf::SetDimensionCapture(cam_dimension_t capture_size)
 {
 	char value[PROPERTY_VALUE_MAX];
 	property_get("persist.sys.camera.raw.mode", value, "jpeg");
+	struct img_rect trim = {0,0,0,0};
 
+	HAL_LOGD("capture_size.width = %d, capture_size.height = %d",
+		capture_size.width, capture_size.height);
 	if((mCaptureWidth != capture_size.width) || (mCaptureHeight != capture_size.height)) {
 		mCaptureWidth = capture_size.width;
 		mCaptureHeight = capture_size.height;
 		mRestartFlag = true;
 	}
 
-	HAL_LOGD("mCaptureWidth=%d, mCaptureHeight=%d", mCaptureWidth, mCaptureHeight);
 	if (!strcmp(value, "raw")) {
-		HAL_LOGD("camera isp tuning mode:");
+		HAL_LOGD("isp tuning mode, just use sensor trim size for capture");
+		camera_get_sensor_trim(mCameraHandle, &trim);
+		HAL_LOGV("startx=%d, starty=%d, width=%d, height=%d",
+			trim.start_x, trim.start_y, trim.width, trim.height);
+		mCaptureWidth = trim.width;
+		mCaptureHeight = trim.height;
 		HAL_LOGD("mCaptureWidth=%d, mCaptureHeight=%d", mCaptureWidth, mCaptureHeight);
-		mCaptureWidth = ISP_TUNING_MODE_WIDTH;
-		mCaptureHeight = ISP_TUNING_MODE_HEIGHT;
 	}
 
 	return NO_ERROR;

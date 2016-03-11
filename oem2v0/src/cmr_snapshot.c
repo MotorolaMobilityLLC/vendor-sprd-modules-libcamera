@@ -699,12 +699,12 @@ cmr_int snp_jpeg_enc_cb_handle(cmr_handle snp_handle, void *data)
 			//							cxt->req_param.post_proc_setting.actual_snp_size.width,
 			//							cxt->req_param.post_proc_setting.actual_snp_size.height,
 			//							&mem_ptr->target_jpeg.addr_vir);
-			ret = camera_save_jpg_to_file(isp_get_saved_file_count(snp_handle),
-							IMG_DATA_TYPE_JPEG,
-							cxt->req_param.post_proc_setting.actual_snp_size.width,
-							cxt->req_param.post_proc_setting.actual_snp_size.height,
-							enc_out_ptr->stream_size,
-							&mem_ptr->target_jpeg.addr_vir);
+			//ret = camera_save_jpg_to_file(isp_get_saved_file_count(snp_handle),
+			//				IMG_DATA_TYPE_JPEG,
+			//				cxt->req_param.post_proc_setting.actual_snp_size.width,
+			//				cxt->req_param.post_proc_setting.actual_snp_size.height,
+			//				enc_out_ptr->stream_size,
+			//				&mem_ptr->target_jpeg.addr_vir);
 
 		}
 		cxt->jpeg_stream_size = enc_out_ptr->stream_size;

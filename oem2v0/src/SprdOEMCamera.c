@@ -865,11 +865,11 @@ cmr_int camera_get_gain_thrs(cmr_handle camera_handle, cmr_u32 *is_over_thrs)
 	return ret;
 }
 
-void dump_jpeg_file(void *virt_addr, unsigned int size)
+void dump_jpeg_file(void *virt_addr, unsigned int size, int width, int height)
 {
 	char str_buf[100];
 	FILE* fp;
-
+	char tmp_str[20] = {0};
 	char datetime[100];
 	time_t timep;
 	struct tm *p;
@@ -882,6 +882,13 @@ void dump_jpeg_file(void *virt_addr, unsigned int size)
 			p->tm_hour,
 			p->tm_min,
 			p->tm_sec);
+
+	strcat(datetime, "_");
+	sprintf(tmp_str, "%d", width);
+	strcat(datetime, tmp_str);
+	strcat(datetime, "X");
+	sprintf(tmp_str, "%d", height);
+	strcat(datetime, tmp_str);
 
 	snprintf(str_buf, sizeof(str_buf), "/data/misc/media/%s.jpg", datetime);
 	fp = fopen(str_buf, "ab+");
