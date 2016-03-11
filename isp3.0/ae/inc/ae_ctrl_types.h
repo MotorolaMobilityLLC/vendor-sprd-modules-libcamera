@@ -279,9 +279,17 @@ struct ae_ctrl_param_hdr_ev {
 	cmr_s32 level;
 };
 
+struct ae_ctrl_stat_info {
+	cmr_u32 *statsy_ptr;
+	cmr_u32 *statsr_ptr;
+	cmr_u32 *statsg_ptr;
+	cmr_u32 *statsb_ptr;
+};
+
 struct ae_ctrl_param_ae_frame {
 	cmr_u32 is_skip_cur_frame;
 	void *stats_buff_ptr;
+	struct ae_ctrl_stat_info stat_info;
 };
 
 struct ae_ctrl_param_raw_cell {

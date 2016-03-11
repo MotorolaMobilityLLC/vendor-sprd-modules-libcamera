@@ -161,6 +161,13 @@ struct aealtek_update_list {
 	cmr_s32 is_flicker:1;
 };
 
+struct aealtek_stat_info {
+	cmr_u32 statsy[AL_MAX_AE_STATS_NUM];
+	cmr_u32 statsr[AL_MAX_AE_STATS_NUM];
+	cmr_u32 statsg[AL_MAX_AE_STATS_NUM];
+	cmr_u32 statsb[AL_MAX_AE_STATS_NUM];
+};
+
 struct aealtek_lib_data {
 	cmr_s32 is_called_hwisp_cfg; //called default hw isp config
 	struct alhw3a_ae_cfginfo_t hwisp_cfg;
@@ -210,6 +217,8 @@ struct aealtek_cxt {
 	struct aealtek_sensor_exp_data sensor_exp_data;
 	struct aealtek_exposure_param pre_write_exp_data;
 	struct aealtek_tuning_info tuning_info;
+	struct aealtek_stat_info stat_info[20];
+	cmr_u32 stat_info_num;
 };
 
 
@@ -1154,7 +1163,7 @@ static cmr_int aealtek_set_boost(struct aealtek_cxt *cxt_ptr, cmr_u32 is_speed)
 	if (is_speed)
 		param_ct_ptr->converge_speedlv = AE_CONVERGE_FAST;
 	else
-		param_ct_ptr->converge_speedlv = AE_CONVERGE_NORMAL;;
+		param_ct_ptr->converge_speedlv = AE_CONVERGE_NORMAL;
 	type = AE_SET_PARAM_CONVERGE_SPD;
 	in_param.ae_set_param_type = type;
 	if (obj_ptr && obj_ptr->set_param)
@@ -1191,10 +1200,10 @@ static cmr_int aealtek_set_iso(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 
 
 	param_ct_ptr->isolevel = in_ptr->iso.iso_mode;
-	param_ct_ptr->adgainlevel = AE_ADGAIN_AUTO;
-	ISP_LOGI("ISOLevel=%d, AdgainLevel=%d",
-		param_ct_ptr->isolevel, param_ct_ptr->adgainlevel);
+	ISP_LOGI("ISOLevel=%d",
+		param_ct_ptr->isolevel);
 	type = AE_SET_PARAM_ISO_MODE;
+	in_param.ae_set_param_type = type;
 	if (obj_ptr && obj_ptr->set_param)
 		lib_ret = obj_ptr->set_param(&in_param, output_param_ptr, obj_ptr->ae);
 	if (lib_ret)
@@ -3651,6 +3660,8 @@ static cmr_int aealtek_pre_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 
 	cmr_uint lib_ret = 0;
 	struct alaeruntimeobj_t *obj_ptr = NULL;
+	cmr_u32 data_length = 0;
+	struct al3awrapper_stats_ae_t *ppatched_aedat;
 
 
 	if (!cxt_ptr || !in_ptr) {
@@ -3658,6 +3669,17 @@ static cmr_int aealtek_pre_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 		goto exit;
 	}
 	obj_ptr = &cxt_ptr->al_obj;
+	data_length = ARRAY_SIZE(cxt_ptr->stat_info) - 1;
+	ppatched_aedat = &cxt_ptr->lib_data.stats_data;
+	ppatched_aedat->ptstatsy = cxt_ptr->stat_info[cxt_ptr->stat_info_num].statsy;
+	ppatched_aedat->ptstatsr = cxt_ptr->stat_info[cxt_ptr->stat_info_num].statsr;
+	ppatched_aedat->ptstatsg = cxt_ptr->stat_info[cxt_ptr->stat_info_num].statsg;
+	ppatched_aedat->ptstatsb = cxt_ptr->stat_info[cxt_ptr->stat_info_num].statsb;
+	if (data_length == cxt_ptr->stat_info_num) {
+		cxt_ptr->stat_info_num = 0;
+	} else {
+		cxt_ptr->stat_info_num ++;
+	}
 
 	if (obj_ptr) {
 		if (!in_ptr->stat_data_ptr->addr) {
@@ -3831,6 +3853,10 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 
 		callback_in.proc_out.ae_frame.is_skip_cur_frame = 0;
 		callback_in.proc_out.ae_frame.stats_buff_ptr = in_ptr->stat_data_ptr;
+		callback_in.proc_out.ae_frame.stat_info.statsy_ptr = (cmr_u32 *)cxt_ptr->lib_data.stats_data.ptstatsy;
+		callback_in.proc_out.ae_frame.stat_info.statsr_ptr = (cmr_u32 *)cxt_ptr->lib_data.stats_data.ptstatsr;
+		callback_in.proc_out.ae_frame.stat_info.statsg_ptr = (cmr_u32 *)cxt_ptr->lib_data.stats_data.ptstatsg;
+		callback_in.proc_out.ae_frame.stat_info.statsb_ptr = (cmr_u32 *)cxt_ptr->lib_data.stats_data.ptstatsb;
 		cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRL_CB_PROC_OUT, &callback_in);
 	}
 

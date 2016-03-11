@@ -161,23 +161,23 @@ uint32 al3awrapper_dispatchhw3a_aestats( struct isp_drv_meta_ae_t * alisp_metada
 
 	/* patching R/G/G/B from WB or calibration WB to Y/R/G/B, */
 	/* here is the sample which use array passing insetad of pointer passing of prepared buffer from AE ctrl layer */
-	ppatched_aedat->bisstatsbyaddr = FALSE;
+	ppatched_aedat->bisstatsbyaddr = TRUE;
 	for ( j =0; j <banks; j++ ) {
 		udoffset = udbanksize*j;
 		for ( i = 0; i <blocks; i++ ) {
 			/* due to data from HW, use direct address instead of casting */
-			ppatched_aedat->statsr[index] = ( stats[udoffset] + (stats[udoffset+1]<<8) + (stats[udoffset+2]<<16) + (stats[udoffset+3]<<24) )/udpixelsperblocks;  /* 10 bits */
-			ppatched_aedat->statsg[index] = (( ( stats[udoffset+4] + (stats[udoffset+5]<<8) + (stats[udoffset+6]<<16) + (stats[udoffset+7]<<24) ) +
+			((uint32*)ppatched_aedat->ptstatsr)[index] = ( stats[udoffset] + (stats[udoffset+1]<<8) + (stats[udoffset+2]<<16) + (stats[udoffset+3]<<24) )/udpixelsperblocks;  /* 10 bits */
+			((uint32*)ppatched_aedat->ptstatsg)[index] = (( ( stats[udoffset+4] + (stats[udoffset+5]<<8) + (stats[udoffset+6]<<16) + (stats[udoffset+7]<<24) ) +
 			                                   ( stats[udoffset+8] + (stats[udoffset+9]<<8) + (stats[udoffset+10]<<16) + (stats[udoffset+11]<<24) ) )/udpixelsperblocks)>>1; /* 10 bits */
-			ppatched_aedat->statsb[index] = ( stats[udoffset+12] + (stats[udoffset+13]<<8) + (stats[udoffset+14]<<16) + (stats[udoffset+15]<<24) )/udpixelsperblocks;    /* 10 bits */
+			((uint32*)ppatched_aedat->ptstatsb)[index] = ( stats[udoffset+12] + (stats[udoffset+13]<<8) + (stats[udoffset+14]<<16) + (stats[udoffset+15]<<24) )/udpixelsperblocks;    /* 10 bits */
 
 			/* calculate Y */
-			ppatched_aedat->statsy[index] = ( ppatched_aedat->statsr[index]* wb_gain.r + ppatched_aedat->statsg[index] * wb_gain.g +
-			                                  ppatched_aedat->statsb[index] * wb_gain.b ) >> 8;  /* 10 bits */
+			((uint32*)ppatched_aedat->ptstatsy)[index] = (((uint32*)ppatched_aedat->ptstatsr)[index]* wb_gain.r + ((uint32*)ppatched_aedat->ptstatsg)[index] * wb_gain.g +
+					((uint32*)ppatched_aedat->ptstatsb)[index] * wb_gain.b ) >> 8;  /* 10 bits */
 #if print_ae_log
 			/* debug printf, removed for release version */
 			ISP_LOGI( "al3awrapper_dispatchhw3a_aestats stats[%d] y/r/g/b: %d, %d, %d, %d \r\n", index,
-			        ppatched_aedat->statsy[index],ppatched_aedat->statsr[index], ppatched_aedat->statsg[index], ppatched_aedat->statsb[index] );
+					((uint32*)ppatched_aedat->ptstatsy)[index],((uint32*)ppatched_aedat->ptstatsr)[index], ((uint32*)ppatched_aedat->ptstatsg)[index], ((uint32*)ppatched_aedat->ptstatsb)[index] );
 #endif
 			index++;
 			udoffset += 16;
