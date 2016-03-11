@@ -2298,6 +2298,7 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 	if (ret)
 		goto exit;
 	if (cxt_ptr->tuning_info.manual_ae_on && ISP3A_WORK_MODE_PREVIEW == work_mode) {
+		cxt_ptr->sensor_exp_data.lib_exp.exp_time = cxt_ptr->tuning_info.exposure[cxt_ptr->tuning_info.num];
 		cxt_ptr->sensor_exp_data.lib_exp.exp_line = 10*cxt_ptr->tuning_info.exposure[cxt_ptr->tuning_info.num]/cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time;
 		cxt_ptr->sensor_exp_data.lib_exp.gain = cxt_ptr->tuning_info.gain[cxt_ptr->tuning_info.num];
 		ISP_LOGI("get num:%d tuning exp_gain:%d,%d", cxt_ptr->tuning_info.num
