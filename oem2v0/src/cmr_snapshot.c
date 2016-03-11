@@ -1491,14 +1491,15 @@ static int snp_dump_mipi_raw(cmr_handle snp_handle, char *name, uint32_t img_fmt
 			name, img_fmt, width, height);
 
 	strcpy(file_name, FILE_DIR);
+
+	sprintf(tmp_str, "%s", name);
+	strcat(file_name, tmp_str);
+	strcat(file_name, "_");
+
 	sprintf(tmp_str, "%d", width);
 	strcat(file_name, tmp_str);
 	strcat(file_name, "X");
 	sprintf(tmp_str, "%d", height);
-	strcat(file_name, tmp_str);
-
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%s", name);
 	strcat(file_name, tmp_str);
 
 	strcat(file_name, "_");
@@ -1556,14 +1557,14 @@ static int snp_dump_mipi_raw2(cmr_handle snp_handle, char *name, uint32_t img_fm
 			name, img_fmt, width, height);
 
 	strcpy(file_name, FILE_DIR);
+	sprintf(tmp_str, "%s", name);
+	strcat(file_name, tmp_str);
+	strcat(file_name, "_");
+
 	sprintf(tmp_str, "%d", width);
 	strcat(file_name, tmp_str);
 	strcat(file_name, "X");
 	sprintf(tmp_str, "%d", height);
-	strcat(file_name, tmp_str);
-
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%s", name);
 	strcat(file_name, tmp_str);
 
 	strcat(file_name, "_");
