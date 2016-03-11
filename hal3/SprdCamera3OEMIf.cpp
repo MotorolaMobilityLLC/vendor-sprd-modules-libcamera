@@ -4005,17 +4005,11 @@ int SprdCamera3OEMIf::flush_buffer(camera_flush_mem_type_e  type, int index, voi
 
 	case CAMERA_FLUSH_RAW_HEAP_ALL:
 		for ( i=0 ; i<mSubRawHeapNum ; i++) {
-#ifdef SC_IOMMU_PF
-			pmem = mSubRawHeapArray[i][0];
-			v_addr = (void*)mSubRawHeapArray[i][0]->data;
-			p_addr = (void*)mSubRawHeapArray[i][0]->phys_addr;
-			size = (int)mSubRawHeapArray[i][0]->phys_size;
-#else
+
 			pmem = mSubRawHeapArray[i];
 			v_addr = (void*)mSubRawHeapArray[i]->data;
 			p_addr = (void*)mSubRawHeapArray[i]->phys_addr;
 			size = (int)mSubRawHeapArray[i]->phys_size;
-#endif
 
 			if (pmem) {
 				pHeapIon = pmem->ion_heap;
@@ -5218,20 +5212,12 @@ int SprdCamera3OEMIf::Callback_CaptureFree(cmr_uint *phy_addr, cmr_uint *vir_add
 	Mutex::Autolock l(&mCapBufLock);
 
 	for (i=0 ; i<mSubRawHeapNum ; i++) {
-#ifdef SC_IOMMU_PF
-		if (NULL != mSubRawHeapArray[i][0]) {
-			freeCameraMem(mSubRawHeapArray[i][0]);
-		}
-		if (NULL != mSubRawHeapArray[i][1]) {
-			freeCameraMem(mSubRawHeapArray[i][1]);
-		}
-		memset(mSubRawHeapArray, 0, sizeof(mSubRawHeapArray));
-#else
+
 		if (NULL != mSubRawHeapArray[i]) {
 			freeCameraMem(mSubRawHeapArray[i]);
 		}
 		mSubRawHeapArray[i] = NULL;
-#endif
+
 
 	}
 	mSubRawHeapNum = 0;
@@ -5265,40 +5251,24 @@ int SprdCamera3OEMIf::Callback_CaptureMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint
 	if (0 == mSubRawHeapNum) {
 		for (i=0 ; i<(cmr_int)sum ; i++) {
 #ifdef SC_IOMMU_PF
-			memory = allocCameraMem(size, 1, true);
-			if (NULL == memory) {
-				LOGE("Callback_CaptureMalloc: error memory is null.");
-				goto mem_fail;
-			}
-			//if (NULL == memory->handle) {
-			//	LOGE("Callback_CaptureMalloc: error memory->handle is null.");
-			//	goto mem_fail;
-			//}
-			mSubRawHeapArray[mSubRawHeapNum][0] = memory;
+			memory = allocCameraMem(size, 1,true);
 
-			*phy_addr++ = 0; //(cmr_uint)memory->phys_addr;
-			*vir_addr++ = (cmr_uint)memory->data;
-			if (NULL != mfd)
-				*mfd++ = (cmr_s32)memory->mfd;
-			/*
-			memory = allocCameraMem(size/3, 1, true);
 			if (NULL == memory) {
-				LOGE("Callback_CaptureMalloc: error memory is null.");
+				HAL_LOGE("error memory is null.");
 				goto mem_fail;
 			}
-			if (NULL == memory->handle) {
+
+			mSubRawHeapArray[mSubRawHeapNum] = memory;
+			mSubRawHeapNum++;
+			/*if (NULL == memory->handle) {
 				LOGE("Callback_CaptureMalloc: error memory->handle is null.");
 				goto mem_fail;
-			}
-			*/
-			mSubRawHeapArray[mSubRawHeapNum][1] = memory;
-			//mjx note ,can not set offset to here because of capture memry is bigger size.
-			*phy_addr++ = 0; //(cmr_uint)memory->phys_addr;
-			*vir_addr++ = (cmr_uint)memory->data;
+			}*/
+			phy_addr[i] = 0;
+			vir_addr[i] = (cmr_uint)memory->data;
 			if (NULL != mfd)
-				*mfd++ = (cmr_s32)memory->mfd;
+				mfd[i] = (cmr_s32)memory->mfd;
 
-			mSubRawHeapNum++;
 #else
 			memory = allocCameraMem(size, 1,true);
 
@@ -5325,15 +5295,11 @@ int SprdCamera3OEMIf::Callback_CaptureMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint
 			HAL_LOGD("use pre-alloc cap mem");
 			for (i=0 ; i<(cmr_int)sum ; i++) {
 #ifdef SC_IOMMU_PF	
-				*phy_addr++ = 0;//(cmr_uint)mSubRawHeapArray[i][0]->phys_addr;
-				*vir_addr++ = (cmr_uint)mSubRawHeapArray[i][0]->data;
+				phy_addr[i] = 0;
+				vir_addr[i] = (cmr_uint)mSubRawHeapArray[i]->data;
 				if (NULL != mfd)
-					*mfd++ = (cmr_s32)mSubRawHeapArray[i][0]->mfd;
+					mfd[i] = (cmr_s32)mSubRawHeapArray[i]->mfd;
 
-				*phy_addr++ = 0;//(cmr_uint)mSubRawHeapArray[i][1]->phys_addr;
-				*vir_addr++ = (cmr_uint)mSubRawHeapArray[i][1]->data;
-				if (NULL != mfd)
-					*mfd++ = (cmr_s32)mSubRawHeapArray[i][1]->mfd;
 #else
 				*phy_addr++ = (cmr_uint)mSubRawHeapArray[i]->phys_addr;
 				*vir_addr++ = (cmr_uint)mSubRawHeapArray[i]->data;

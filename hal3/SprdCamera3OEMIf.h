@@ -419,11 +419,7 @@ private:
 	sprd_camera_memory_t            *mRawHeap;
 	uint32_t                        mRawHeapSize;
 
-#ifdef SC_IOMMU_PF
-	sprd_camera_memory_t            *mSubRawHeapArray[MAX_SUB_RAWHEAP_NUM][2];
-#else
 	sprd_camera_memory_t			*mSubRawHeapArray[MAX_SUB_RAWHEAP_NUM];
-#endif
 	sprd_zsl_capture_info_t                 mZSLCapInfo[MAX_SUB_RAWHEAP_NUM];
 	sprd_camera_memory_t            *mReDisplayHeap;
 	//TODO: put the picture dimensions in the CameraParameters object;

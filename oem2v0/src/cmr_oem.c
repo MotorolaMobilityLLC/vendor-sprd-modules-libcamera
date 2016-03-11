@@ -209,7 +209,7 @@ void camera_malloc(cmr_u32 mem_type, cmr_handle oem_handle, cmr_u32 *size_ptr,
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 
 	if (!oem_handle || !phy_addr || !vir_addr || !size_ptr || !sum_ptr || !mfd) {
-		CMR_LOGE("error param 0x%lx 0x%lx 0x%lx, 0x%lx", (cmr_uint)oem_handle, (cmr_uint)phy_addr, (cmr_uint)vir_addr, mfd);
+		CMR_LOGE("error param mem_type 0x%lx,oem_handle 0x%lx phy_addr 0x%lx  vir_addr 0x%lx, mfd 0x%lx", mem_type,(cmr_uint)oem_handle, (cmr_uint)phy_addr, (cmr_uint)vir_addr, mfd);
 		return;
 	}
 	CMR_LOGI("mem type %d size %d sum %d", mem_type, *size_ptr, *sum_ptr);
@@ -228,7 +228,7 @@ void camera_free(cmr_u32 mem_type, cmr_handle oem_handle,cmr_uint *phy_addr,
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 
 	if (!oem_handle || !phy_addr || !vir_addr) {
-		CMR_LOGE("error param 0x%lx 0x%lx 0x%lx", (cmr_uint)oem_handle, (cmr_uint)phy_addr, (cmr_uint)vir_addr);
+		CMR_LOGE("error param mem_type 0x%lx,oem_handle 0x%lx phy_addr 0x%lx  vir_addr 0x%lx", mem_type,(cmr_uint)oem_handle, (cmr_uint)phy_addr, (cmr_uint)vir_addr);
 		return;
 	}
 	CMR_LOGI("mem type %d sum %d", mem_type, sum);
