@@ -1257,6 +1257,54 @@ cmr_int isp_dev_cfg_special_effect(isp_handle handle, cmr_u32 mode)
 	return ret;
 }
 
+cmr_int isp_dev_cfg_brightness_gain(isp_handle handle, struct isp_brightness_gain *data)
+{
+	cmr_int ret = 0;
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle) {
+		CMR_LOGE("handle is null error.");
+		return -1;
+	}
+
+	param.sub_id = ISP_CFG_SET_BRIGHTNESS_GAIN;
+	param.property_param = data;
+
+	file = (struct isp_file *)(handle);
+
+	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
+	if (ret)
+		CMR_LOGE("isp_dev_cfg_brightness_gain error.");
+
+	return ret;
+}
+
+cmr_int isp_dev_cfg_brightness_mode(isp_handle handle, cmr_u32 mode)
+{
+	cmr_int ret = 0;
+	cmr_u32 temp_mode = 0;
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle) {
+		CMR_LOGE("handle is null error.");
+		return -1;
+	}
+
+	temp_mode = mode;
+	param.sub_id = ISP_CFG_SET_BRIGHTNESS_MODE;
+	param.property_param = &temp_mode;
+
+	file = (struct isp_file *)(handle);
+
+	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
+	if (ret)
+		CMR_LOGE("isp_dev_cfg_brightness_mode error.");
+
+	return ret;
+}
+
 cmr_int isp_dev_capability_fw_size(isp_handle handle, cmr_int *size)
 {
 	cmr_int ret = 0;

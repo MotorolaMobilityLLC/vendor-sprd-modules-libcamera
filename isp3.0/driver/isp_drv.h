@@ -88,6 +88,8 @@ cmr_int isp_dev_cfg_sharpness(isp_handle handle, cmr_u32 mode);
 cmr_int isp_dev_cfg_saturation(isp_handle handle, cmr_u32 mode);
 cmr_int isp_dev_cfg_contrast(isp_handle handle, cmr_u32 mode);
 cmr_int isp_dev_cfg_special_effect(isp_handle handle, cmr_u32 mode);
+cmr_int isp_dev_cfg_brightness_gain(isp_handle handle, struct isp_brightness_gain *data);
+cmr_int isp_dev_cfg_brightness_mode(isp_handle handle, cmr_u32 mode);
 cmr_int isp_dev_capability_fw_size(isp_handle handle, cmr_int *size);
 cmr_int isp_dev_capability_statis_buf_size(isp_handle handle, cmr_int *size);
 cmr_int isp_dev_capability_dram_buf_size(isp_handle handle, cmr_int *size);
