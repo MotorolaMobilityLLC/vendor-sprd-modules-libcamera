@@ -967,7 +967,7 @@ static cmr_int afaltek_adpt_pre_start(cmr_handle adpt_handle, struct isp_af_win 
 	lib_roi.weight[0] = 1;
 	lib_roi.src_img_sz.uw_width = 2592;	/* TBD */
 	lib_roi.src_img_sz.uw_height = 1944;
-
+	al3awrapperaf_translateroitoaflibtype(cxt->frame_id, &lib_roi); /* TBD will del*/
 	ret = afaltek_adpt_set_roi(adpt_handle, &lib_roi);
 	if (ret)
 		ISP_LOGE("failed to set roi");
