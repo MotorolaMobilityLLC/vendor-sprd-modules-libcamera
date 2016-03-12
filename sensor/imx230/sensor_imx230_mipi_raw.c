@@ -21,6 +21,7 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 
+#include "sensor_imx230_raw_param_v3.c"
 
 #define DW9800_VCM_SLAVE_ADDR (0x0c)
 
@@ -85,7 +86,7 @@ static uint32_t s_current_default_frame_length;
 struct sensor_ev_info_t s_sensor_ev_info;
 
 static SENSOR_IOCTL_FUNC_TAB_T s_imx230_ioctl_func_tab;
-struct sensor_raw_info *s_imx230_mipi_raw_info_ptr = NULL;
+struct sensor_raw_info *s_imx230_mipi_raw_info_ptr = &s_imx230_mipi_raw_info;
 
 static const SENSOR_REG_T imx230_init_setting[] = {
 	{0x0136, 0x18},
