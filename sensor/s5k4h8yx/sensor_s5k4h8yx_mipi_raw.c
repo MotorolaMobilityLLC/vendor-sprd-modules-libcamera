@@ -449,7 +449,7 @@ SENSOR_INFO_T g_s5k4h8yx_mipi_raw_info = {
 	SENSOR_IMAGE_FORMAT_RAW,	// define in SENSOR_IMAGE_FORMAT_E enum,SENSOR_IMAGE_FORMAT_MAX
 	// if set to SENSOR_IMAGE_FORMAT_MAX here, image format depent on SENSOR_REG_TAB_INFO_T
 
-	SENSOR_IMAGE_PATTERN_RAWRGB_GR,//SENSOR_IMAGE_PATTERN_RAWRGB_R,// pattern of input image form sensor;
+	SENSOR_IMAGE_PATTERN_RAWRGB_GB,//SENSOR_IMAGE_PATTERN_RAWRGB_R,// pattern of input image form sensor;
 
 	s_s5k4h8yx_resolution_Tab_RAW,	// point to resolution table information structure
 	&s_s5k4h8yx_ioctl_func_tab,	// point to ioctl function table
@@ -1287,7 +1287,7 @@ static unsigned long _s5k4h8yx_StreamOn(unsigned long param)
 {
 	SENSOR_PRINT_ERR("SENSOR_s5k4h8yx: StreamOn");
 
-	Sensor_WriteReg(0x0100, 0x0100);
+	Sensor_WriteReg(0x0100, 0x0103);
 
 	return 0;
 }
@@ -1296,7 +1296,7 @@ static unsigned long _s5k4h8yx_StreamOff(unsigned long param)
 {
 	SENSOR_PRINT_ERR("SENSOR_s5k4h8yx: StreamOff");
 
-	Sensor_WriteReg(0x0100, 0x0000);
+	Sensor_WriteReg(0x0100, 0x0003);
 	usleep(30*1000);
 
 	return 0;
