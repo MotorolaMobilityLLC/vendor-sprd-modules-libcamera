@@ -28,6 +28,7 @@
 #define AL_MAX_AWB_STATS_NUM            (3072)	/* 64 x 48 total blocks */
 #define AL_MAX_AE_STATS_NUM             (256)	/* 16 x 16 total blocks */
 #define AL_MAX_AF_STATS_NUM             (480)	/* 16 x 30 total blocks */
+#define AL_MAX_HIST_NUM                 (256)	/* 256, 8 bits value array */
 
 #define AL_AE_HW3A_BIT_DEPTH            (10)	/* bit depth for AE algo of HW3A stats, usually 10 */
 #define AL_AWB_HW3A_BIT_DEPTH           (8)	/* bit depth for AWB algo of HW3A stats, usually 8 */
