@@ -853,7 +853,6 @@ static unsigned long _s5k4h8yx_PowerOn(unsigned long power_on)
 		Sensor_SetResetLevel(reset_level);
 		Sensor_PowerDown(power_down);
 		Sensor_SetVoltage(dvdd_val, avdd_val, iovdd_val);
-		Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
 		usleep(10*1000);
 		Sensor_PowerDown(!power_down);
 		Sensor_SetResetLevel(!reset_level);
@@ -865,7 +864,6 @@ static unsigned long _s5k4h8yx_PowerOn(unsigned long power_on)
 		Sensor_SetResetLevel(reset_level);
 		Sensor_PowerDown(power_down);
 		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
-		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 	}
 
 	SENSOR_PRINT_ERR("SENSOR_S5K4H8YX: _s5k4h8yx_Power_On(1:on, 0:off): %d, reset_level %d, dvdd_val %d", power_on, reset_level, dvdd_val);
