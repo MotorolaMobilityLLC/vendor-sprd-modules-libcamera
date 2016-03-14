@@ -3561,6 +3561,7 @@ cmr_int prev_free_prev_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 
 		cmr_bzero(prev_cxt->prev_phys_addr_array, (PREV_FRM_CNT + PREV_ROT_FRM_CNT)*sizeof(cmr_uint));
 		cmr_bzero(prev_cxt->prev_virt_addr_array, (PREV_FRM_CNT + PREV_ROT_FRM_CNT)*sizeof(cmr_uint));
+		cmr_bzero(prev_cxt->prev_mfd_array, (PREV_FRM_CNT + PREV_ROT_FRM_CNT)*sizeof(cmr_s32));
 		mem_ops->free_mem(CAMERA_PREVIEW_RESERVED,
 				  handle->oem_handle,
 				  (cmr_uint *)prev_cxt->prev_reserved_phys_addr,
