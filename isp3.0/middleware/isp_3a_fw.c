@@ -1368,6 +1368,8 @@ cmr_int isp3a_set_flicker(cmr_handle isp_3a_handle, void *param_ptr)
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
 	struct ae_ctrl_param_in                     ae_in;
+	struct ae_ctrl_param_out                    ae_out;
+	struct afl_ctrl_param_in                    afl_in;
 
 	if (!param_ptr) {
 		ISP_LOGW("input is NULL");
@@ -1375,6 +1377,12 @@ cmr_int isp3a_set_flicker(cmr_handle isp_3a_handle, void *param_ptr)
 	}
 	ae_in.flicker.flicker_mode = *(cmr_u32*)param_ptr;
 	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_FLICKER, &ae_in, NULL);
+
+	if (AE_CTRL_FLICKER_AUTO == (*(cmr_u32*)param_ptr)) {
+		ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_GET_FLICKER_MODE, NULL, &ae_out);
+		afl_in.mode.flicker_mode = ae_out.flicker_mode;
+		ret = afl_ctrl_ioctrl(cxt->afl_cxt.handle, AFL_CTRL_SET_FLICKER, &afl_in, NULL);
+	}
 
 exit:
 	return ret;

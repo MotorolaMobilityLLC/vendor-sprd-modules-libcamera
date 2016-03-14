@@ -2648,6 +2648,10 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 		CMR_LOGE("get sensor static info failed %ld", ret);
 		goto exit;
 	}
+	if (IMG_DATA_TYPE_RAW == sn_cxt->sensor_info.image_format) {
+		isp_param.ex_info.preview_skip_num = 0;
+		isp_param.ex_info.capture_skip_num = 0;
+	}
 	CMR_LOGD("get static info:sensor name: %s, version: %s.",
 			isp_param.ex_info.name,isp_param.ex_info.sensor_version_info);
 	CMR_LOGD("w %d h %d", isp_param.size.w,isp_param.size.h);

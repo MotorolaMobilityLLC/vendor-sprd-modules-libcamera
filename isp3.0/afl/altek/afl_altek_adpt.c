@@ -224,26 +224,15 @@ static cmr_int aflaltek_set_current_frequency(struct aflaltek_cxt *cxt_ptr, stru
 
 	cmr_int lib_ret = 0;
 	struct alflickerruntimeobj_t *obj_ptr = NULL;
-	struct flicker_set_param_t in_param;
-	struct flicker_output_data_t *output_param_ptr = NULL;
-	enum flicker_set_param_type_t type = 0;
-	struct flicker_set_param_content_t *param_ct_ptr = NULL;
-
 
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
 		goto exit;
 	}
 	obj_ptr = &cxt_ptr->afl_obj;
-	output_param_ptr = &cxt_ptr->lib_data.output_data;
-	param_ct_ptr = &in_param.set_param;
 
-	param_ct_ptr->currentfreq = in_ptr->mode.flicker_mode;
-
-	type = FLICKER_SET_PARAM_CURRENT_FREQUENCY;
-	in_param.flicker_set_param_type = type;
 	if (obj_ptr && obj_ptr->set_param)
-		lib_ret = obj_ptr->set_param(&in_param, output_param_ptr, cxt_ptr->lib_run_data);
+		lib_ret = al3awrapper_antif_set_flickermode(in_ptr->mode.flicker_mode, obj_ptr, cxt_ptr->lib_run_data);
 	if (lib_ret)
 		goto exit;
 
@@ -672,6 +661,7 @@ static cmr_int afl_altek_adpt_process(cmr_handle handle, void *in, void *out)
 	struct afl_ctrl_proc_in *in_ptr = (struct afl_ctrl_proc_in*)in;
 	struct afl_ctrl_proc_out *out_ptr = (struct afl_ctrl_proc_out*)out;
 	struct afl_ctrl_callback_in callback_in;
+	enum ae_antiflicker_mode_t temp_flicker_mode;
 
 	if (!handle || !in) {
 		ISP_LOGE("param is NULL error!");
@@ -694,11 +684,11 @@ static cmr_int afl_altek_adpt_process(cmr_handle handle, void *in, void *out)
 		goto exit;
 	if (cxt_ptr->init_in_param.ops_in.afl_callback) {
 		ISP_LOGI("FinalFreq=%d", cxt_ptr->lib_data.output_data.finalfreq);
-		if (cxt_ptr->lib_data.output_data.finalfreq < 57)
-			callback_in.flicker_mode = AFL_CTRL_FLICKER_50HZ;
-		else
-			callback_in.flicker_mode = AFL_CTRL_FLICKER_60HZ;
-		//cxt_ptr->init_in_param.ops_in.afl_callback(cxt_ptr->caller_handle, AFL_CTRL_CB_FLICKER_MODE, &callback_in);
+		lib_ret = al3awrapper_antif_get_flickermode(cxt_ptr->lib_data.output_data.finalfreq, &temp_flicker_mode);
+		if (ERR_WPR_FLICKER_SUCCESS == lib_ret) {
+			callback_in.flicker_mode = temp_flicker_mode;
+			//cxt_ptr->init_in_param.ops_in.afl_callback(cxt_ptr->caller_handle, AFL_CTRL_CB_FLICKER_MODE, &callback_in);
+		}
 	}
 
 	ret = aflaltek_stat_queue_process(cxt_ptr, in_ptr->stat_data_ptr);

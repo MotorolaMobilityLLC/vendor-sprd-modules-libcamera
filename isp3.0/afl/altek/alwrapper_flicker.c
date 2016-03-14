@@ -217,7 +217,7 @@ uint32 al3awrapper_antif_set_flickermode( enum ae_antiflicker_mode_t flicker_mod
 	local_setparam.flicker_set_param_type = FLICKER_SET_PARAM_CURRENT_FREQUENCY;   /* ask Flicker lib for HW3A setting */
 	local_setparam.set_param.currentfreq = flicker_hz;
 
-	ret = aflickerlibcallback->set_param( &local_setparam, &outputparam, &flicker_runtimedat );
+	ret = aflickerlibcallback->set_param( &local_setparam, &outputparam, flicker_runtimedat );
 	if ( ret != ERR_WPR_FLICKER_SUCCESS )
 		return ret;
 

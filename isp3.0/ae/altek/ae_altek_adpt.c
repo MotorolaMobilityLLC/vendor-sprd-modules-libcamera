@@ -2925,6 +2925,22 @@ exit:
 	return ret;
 }
 
+static cmr_int aealtek_get_flicker_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+
+	if (!cxt_ptr || !out_ptr) {
+		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, out_ptr);
+		goto exit;
+	}
+	out_ptr->flicker_mode = cxt_ptr->nxt_status.lib_ui_param.flicker;
+	ISP_LOGI("flicker_mode=%d", out_ptr->flicker_mode);
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld !!!", ret);
+	return ret;
+}
+
 static cmr_int aealtek_set_fd_param(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr)
 {
 	cmr_int ret = ISP_ERROR;
@@ -3621,6 +3637,7 @@ static cmr_int ae_altek_adpt_ioctrl(cmr_handle handle, cmr_int cmd, void *in, vo
 	case AE_CTRL_GET_MONITOR_INFO:
 		break;
 	case AE_CTRL_GET_FLICKER_MODE:
+		ret = aealtek_get_flicker_mode(cxt_ptr, in_ptr, out_ptr);
 		break;
 	case AE_CTRL_SET_FD_ENABLE:
 		break;
