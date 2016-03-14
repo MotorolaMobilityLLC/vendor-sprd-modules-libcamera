@@ -1357,7 +1357,7 @@ static uint32_t _s5k3p3sm_get_fps_info(uint32_t *param)
 	struct sensor_fps_info *fps_info;
 	fps_info = (struct sensor_fps_info*)param;
 	fps_info->max_fps = 60;
-	fps_info->min_fps = 15;
+	fps_info->min_fps = 1;
 	fps_info->is_high_fps = 1;
 	fps_info->high_fps_skip_num = 4;
 	SENSOR_PRINT("SENSOR_s5k3p3sm: max_fps: %d", fps_info->max_fps);

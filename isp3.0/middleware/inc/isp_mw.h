@@ -477,6 +477,8 @@ struct ips_in_param {
 	struct isp_img_frm dst2_frame;
 	cmr_u32 dst_slice_height;
 	cmr_u32 dst2_slice_height;
+	struct isp_sensor_resolution_info resolution_info;
+	struct isp_sensor_fps_info sensor_fps;
 };
 
 struct ips_out_param {
