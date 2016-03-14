@@ -10,19 +10,10 @@
 #ifndef _AL_3AWRAPPER_H_
 #define _AL_3AWRAPPER_H_
 
-#ifdef LOCAL_NDK_BUILD   /* test build in local */
-
-#include ".\..\..\INCLUDE\mtype.h"
-#include ".\..\..\INCLUDE\frmwk_hw3a_event_type.h"
-#include ".\..\..\INCLUDE\hw3a_stats.h"
-
-#else  /* normal release in AP */
-
 #include "mtype.h"
 #include "frmwk_hw3a_event_type.h"
 #include "hw3a_stats.h"
 
-#endif
 #include <sys/time.h>
 
 #ifdef __cplusplus
@@ -30,7 +21,7 @@ extern "C"
 {
 #endif
 
-#define _WRAPPER_VER 0.8020
+#define _WRAPPER_VER 0.8040
 
 /*
  * API name: al3awrapper_dispatchhw3astats
@@ -88,6 +79,4 @@ uint32 al3awrapper_getversion( float *fwrapversion );
 }  // extern "C"
 #endif
 
-void Separate3ABin(uint32* a_pc3ABinAdd, uint32** a_pcAEAdd, uint32** a_pcAFAdd, uint32** a_pcAWBAdd);
-void SeparateShadingIRPBin(uint32* a_pcShadingIRPBinAdd, uint32** a_pcShadingAdd, uint32** a_pcIRPAdd);
 #endif // _AL_3AWRAPPER_H_
