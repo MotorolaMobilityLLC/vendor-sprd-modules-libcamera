@@ -1587,6 +1587,8 @@ static cmr_int afaltek_adpt_process(cmr_handle adpt_handle, void *in, void *out)
 	struct af_ctrl_process_in *proc_in = (struct af_ctrl_process_in *)in;
 	struct af_ctrl_process_out *proc_out = (struct af_ctrl_process_out *)out;
 
+	return 0;
+
 	ISP_LOGI("E");
 	ret = al3awrapper_dispatchhw3a_afstats(proc_in->statistics_data->addr,
 					       (void *)(&cxt->af_stats));
