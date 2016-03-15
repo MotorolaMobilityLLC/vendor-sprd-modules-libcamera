@@ -397,9 +397,23 @@ static SENSOR_IOCTL_FUNC_TAB_T s_s5k4h8yx_ioctl_func_tab = {
 	PNULL,//get_status
 	_s5k4h8yx_StreamOn,
 	_s5k4h8yx_StreamOff,
-	PNULL,//_s5k4h8yx_access_val,
+	_s5k4h8yx_access_val
 };
 
+static SENSOR_LENS_EXT_INFO_T s_s5k4h8yx_lens_extend_info = {
+	200,	//f-number,focal ratio
+	287,	//focal_length;
+	60,	//max_fps,max fps of sensor's all settings
+	1,	//min_fps,normally it set to 1.
+	16,	//max_adgain,AD-gain
+	0,	//ois_supported;
+	0,	//pdaf_supported;
+	1,	//exp_valid_frame_num;N+2-1
+	64,	//clamp_level,black level
+	0,	//adgain_valid_frame_num;N+1-1
+	1,	//is_high_fps
+	2	//high_fps_skip_num = max_fps/30;
+};
 
 SENSOR_INFO_T g_s5k4h8yx_mipi_raw_info = {
 	S5K4H8YX_I2C_ADDR_W,	// salve i2c write address
@@ -444,7 +458,7 @@ SENSOR_INFO_T g_s5k4h8yx_mipi_raw_info = {
 
 	3264,			// max width of source image
 	2448,			// max height of source image
-	"s5k4h8yx_mipi_raw",		// name of sensor
+	(cmr_s8 *)"s5k4h8yx_mipi_raw",		// name of sensor
 
 	SENSOR_IMAGE_FORMAT_RAW,	// define in SENSOR_IMAGE_FORMAT_E enum,SENSOR_IMAGE_FORMAT_MAX
 	// if set to SENSOR_IMAGE_FORMAT_MAX here, image format depent on SENSOR_REG_TAB_INFO_T
@@ -477,6 +491,7 @@ SENSOR_INFO_T g_s5k4h8yx_mipi_raw_info = {
 	1,			// skip frame num while change setting
 	48,			// horizontal view angle
 	48,			// vertical view angle
+	(cmr_s8 *)"s5k4h8yx_truly_v1",		// version info of sensor
 };
 
 static struct sensor_raw_info* Sensor_GetContext(void)
@@ -1778,6 +1793,55 @@ static uint32_t _s5k4h8yx_get_golden_data(unsigned long param)
 	return rtn;
 }
 
+static uint32_t _s5k4h8yx_get_static_info(uint32_t *param)
+{
+	uint32_t rtn = SENSOR_SUCCESS;
+	struct sensor_ex_info *ex_info;
+	ex_info = (struct sensor_ex_info*)param;
+	ex_info->f_num = s_s5k4h8yx_lens_extend_info.f_num;
+	ex_info->focal_length = s_s5k4h8yx_lens_extend_info.focal_length;
+	ex_info->max_fps = s_s5k4h8yx_lens_extend_info.max_fps;
+	ex_info->max_adgain = s_s5k4h8yx_lens_extend_info.max_adgain;
+	ex_info->ois_supported = s_s5k4h8yx_lens_extend_info.ois_supported;
+	ex_info->pdaf_supported = s_s5k4h8yx_lens_extend_info.pdaf_supported;
+	ex_info->exp_valid_frame_num = s_s5k4h8yx_lens_extend_info.exp_valid_frame_num;
+	ex_info->clamp_level = s_s5k4h8yx_lens_extend_info.clamp_level;
+	ex_info->adgain_valid_frame_num = s_s5k4h8yx_lens_extend_info.adgain_valid_frame_num;
+	ex_info->preview_skip_num = g_s5k4h8yx_mipi_raw_info.preview_skip_num;
+	ex_info->capture_skip_num = g_s5k4h8yx_mipi_raw_info.capture_skip_num;
+	ex_info->name = g_s5k4h8yx_mipi_raw_info.name;
+	ex_info->sensor_version_info = g_s5k4h8yx_mipi_raw_info.sensor_version_info;
+	SENSOR_PRINT("SENSOR_s5k4h8yx: f_num: %d", ex_info->f_num);
+	SENSOR_PRINT("SENSOR_s5k4h8yx: max_fps: %d", ex_info->max_fps);
+	SENSOR_PRINT("SENSOR_s5k4h8yx: max_adgain: %d", ex_info->max_adgain);
+	SENSOR_PRINT("SENSOR_s5k4h8yx: ois_supported: %d", ex_info->ois_supported);
+	SENSOR_PRINT("SENSOR_s5k4h8yx: pdaf_supported: %d", ex_info->pdaf_supported);
+	SENSOR_PRINT("SENSOR_s5k4h8yx: exp_valid_frame_num: %d", ex_info->exp_valid_frame_num);
+	SENSOR_PRINT("SENSOR_s5k4h8yx: clam_level: %d", ex_info->clamp_level);
+	SENSOR_PRINT("SENSOR_s5k4h8yx: adgain_valid_frame_num: %d", ex_info->adgain_valid_frame_num);
+	SENSOR_PRINT("SENSOR_s5k4h8yx: sensor name is: %s", ex_info->name);
+	SENSOR_PRINT("SENSOR_s5k4h8yx: sensor version info is: %s", ex_info->sensor_version_info);
+
+	return rtn;
+}
+
+static uint32_t _s5k4h8yx_get_fps_info(uint32_t *param)
+{
+	uint32_t rtn = SENSOR_SUCCESS;
+	struct sensor_fps_info *fps_info;
+	fps_info = (struct sensor_fps_info*)param;
+	fps_info->max_fps = s_s5k4h8yx_lens_extend_info.max_fps;
+	fps_info->min_fps = s_s5k4h8yx_lens_extend_info.min_fps;
+	fps_info->is_high_fps = s_s5k4h8yx_lens_extend_info.is_high_fps;
+	fps_info->high_fps_skip_num = s_s5k4h8yx_lens_extend_info.high_fps_skip_num;
+	SENSOR_PRINT("SENSOR_s5k4h8yx: max_fps: %d", fps_info->max_fps);
+	SENSOR_PRINT("SENSOR_s5k4h8yx: min_fps: %d", fps_info->min_fps);
+	SENSOR_PRINT("SENSOR_s5k4h8yx: is_high_fps: %d", fps_info->is_high_fps);
+	SENSOR_PRINT("SENSOR_s5k4h8yx: high_fps_skip_num: %d", fps_info->high_fps_skip_num);
+
+	return rtn;
+}
+
 static unsigned long _s5k4h8yx_access_val(unsigned long param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
@@ -1833,6 +1897,12 @@ static unsigned long _s5k4h8yx_access_val(unsigned long param)
 			break;
 		case SENSOR_VAL_TYPE_GET_GOLDEN_LSC_DATA:
 			//*(uint32_t*)param_ptr->pval = s5k4h8_lsc_golden_data;
+			break;
+		case SENSOR_VAL_TYPE_GET_STATIC_INFO:
+			rtn = _s5k4h8yx_get_static_info(param_ptr->pval);
+			break;
+		case SENSOR_VAL_TYPE_GET_FPS_INFO:
+			rtn = _s5k4h8yx_get_fps_info(param_ptr->pval);
 			break;
 		default:
 			break;

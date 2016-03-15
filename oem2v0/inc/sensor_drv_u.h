@@ -693,6 +693,23 @@ typedef struct sensor_exp_info_tag {
 	const cmr_s8 *sensor_version_info;
 } SENSOR_EXP_INFO_T, *SENSOR_EXP_INFO_T_PTR;
 
+//yy-param needed by ips3.0-start
+typedef struct sensor_lens_ext_info_tag {
+        cmr_u32 f_num;                          //f-number,focal ratio,actual f-number*100
+        cmr_u32 focal_length;                   //actual focal_length*100
+        cmr_u32 max_fps;                        //max fps of sensor's all settings
+        cmr_u32 min_fps;                        //min fps, we set it to 1.
+        cmr_u32 max_adgain;                     //AD-gain
+        cmr_u32 ois_supported;
+        cmr_u32 pdaf_supported;
+        cmr_u32 exp_valid_frame_num;
+        cmr_u32 clamp_level;                    //black level
+        cmr_u32 adgain_valid_frame_num;
+        cmr_u32 is_high_fps;                    //if max_fps > 60,then is high fps.
+        cmr_u32 high_fps_skip_num;              //max_fps/30
+} SENSOR_LENS_EXT_INFO_T;
+//yy-param needed by ips3.0-end
+
 typedef struct sensor_info_tag {
 	cmr_u8 salve_i2c_addr_w;
 	cmr_u8 salve_i2c_addr_r;

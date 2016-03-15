@@ -470,6 +470,20 @@ static SENSOR_IOCTL_FUNC_TAB_T s_s5k3p3sm_ioctl_func_tab = {
 	_s5k3p3sm_ex_write_exposure
 };
 
+static SENSOR_LENS_EXT_INFO_T s_s5k3p3sm_lens_extend_info = {
+	200,	//f-number,focal ratio
+	357,	//focal_length;
+	60,	//max_fps,max fps of sensor's all settings
+	1,	//min_fps,normally it set to 1.
+	16,	//max_adgain,AD-gain
+	0,	//ois_supported;
+	0,	//pdaf_supported;
+	1,	//exp_valid_frame_num;N+2-1
+	64,	//clamp_level,black level
+	0,	//adgain_valid_frame_num;N+1-1
+	1,	//is_high_fps
+	1	//high_fps_skip_num = max_fps/30;
+};
 
 SENSOR_INFO_T g_s5k3p3sm_mipi_raw_info = {
 	S5K3P3SM_I2C_ADDR_W,	// salve i2c write address
@@ -1324,15 +1338,15 @@ static uint32_t _s5k3p3sm_get_static_info(uint32_t *param)
 	uint32_t rtn = SENSOR_SUCCESS;
 	struct sensor_ex_info *ex_info;
 	ex_info = (struct sensor_ex_info*)param;
-	ex_info->f_num = 200;
-	ex_info->focal_length = 10;
-	ex_info->max_fps = 30;
-	ex_info->max_adgain = 16;
-	ex_info->ois_supported = 0;
-	ex_info->pdaf_supported = 0;
-	ex_info->exp_valid_frame_num = 1;
-	ex_info->clamp_level = 64;
-	ex_info->adgain_valid_frame_num = 1;
+	ex_info->f_num = s_s5k3p3sm_lens_extend_info.f_num;
+	ex_info->focal_length = s_s5k3p3sm_lens_extend_info.focal_length;
+	ex_info->max_fps = s_s5k3p3sm_lens_extend_info.max_fps;
+	ex_info->max_adgain = s_s5k3p3sm_lens_extend_info.max_adgain;
+	ex_info->ois_supported = s_s5k3p3sm_lens_extend_info.ois_supported;
+	ex_info->pdaf_supported = s_s5k3p3sm_lens_extend_info.pdaf_supported;
+	ex_info->exp_valid_frame_num = s_s5k3p3sm_lens_extend_info.exp_valid_frame_num;
+	ex_info->clamp_level = s_s5k3p3sm_lens_extend_info.clamp_level;
+	ex_info->adgain_valid_frame_num = s_s5k3p3sm_lens_extend_info.adgain_valid_frame_num;
 	ex_info->preview_skip_num = g_s5k3p3sm_mipi_raw_info.preview_skip_num;
 	ex_info->capture_skip_num = g_s5k3p3sm_mipi_raw_info.capture_skip_num;
 	ex_info->name = g_s5k3p3sm_mipi_raw_info.name;
@@ -1344,7 +1358,7 @@ static uint32_t _s5k3p3sm_get_static_info(uint32_t *param)
 	SENSOR_PRINT("SENSOR_s5k3p3sm: pdaf_supported: %d", ex_info->pdaf_supported);
 	SENSOR_PRINT("SENSOR_s5k3p3sm: exp_valid_frame_num: %d", ex_info->exp_valid_frame_num);
 	SENSOR_PRINT("SENSOR_s5k3p3sm: clam_level: %d", ex_info->clamp_level);
-//	SENSOR_PRINT("SENSOR_s5k3p3sm: adgain_valid_frame_num: %d", ex_info->adgain_valid_frame_num);
+	SENSOR_PRINT("SENSOR_s5k3p3sm: adgain_valid_frame_num: %d", ex_info->adgain_valid_frame_num);
 	SENSOR_PRINT("SENSOR_s5k3p3sm: sensor name is: %s", ex_info->name);
 	SENSOR_PRINT("SENSOR_s5k3p3sm: sensor version info is: %s", ex_info->sensor_version_info);
 
@@ -1356,10 +1370,10 @@ static uint32_t _s5k3p3sm_get_fps_info(uint32_t *param)
 	uint32_t rtn = SENSOR_SUCCESS;
 	struct sensor_fps_info *fps_info;
 	fps_info = (struct sensor_fps_info*)param;
-	fps_info->max_fps = 60;
-	fps_info->min_fps = 1;
-	fps_info->is_high_fps = 1;
-	fps_info->high_fps_skip_num = 4;
+	fps_info->max_fps = s_s5k3p3sm_lens_extend_info.max_fps;
+	fps_info->min_fps = s_s5k3p3sm_lens_extend_info.min_fps;
+	fps_info->is_high_fps = s_s5k3p3sm_lens_extend_info.is_high_fps;
+	fps_info->high_fps_skip_num = s_s5k3p3sm_lens_extend_info.high_fps_skip_num;
 	SENSOR_PRINT("SENSOR_s5k3p3sm: max_fps: %d", fps_info->max_fps);
 	SENSOR_PRINT("SENSOR_s5k3p3sm: min_fps: %d", fps_info->min_fps);
 	SENSOR_PRINT("SENSOR_s5k3p3sm: is_high_fps: %d", fps_info->is_high_fps);
