@@ -105,7 +105,7 @@ private:
 	void flushRequest(uint32_t frame_num);
 
 public:
-	static SprdCamera3Setting *mSetting;
+	SprdCamera3Setting *mSetting;
 	uint32_t				mFrameNum;
 
 private:

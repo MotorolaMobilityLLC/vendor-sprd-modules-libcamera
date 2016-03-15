@@ -95,7 +95,7 @@ LOCAL void JPEGDEC_init_fw_param(JPEGDEC_PARAMS_T *jpegdec_params,
 	dec_fw_info_ptr->pingpong_buf_len = jpegdec_params->stream_size + 256 ;
 
 
-	//****************************** TONY
+	//******************************
 	dec_fw_info_ptr->read_bitstream  = NULL;
 	dec_fw_info_ptr->bitstream_ptr = (uint8_t *)jpegdec_params->stream_virt_buf[0];
 

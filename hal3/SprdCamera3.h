@@ -193,6 +193,8 @@ static tags_info_t android_add_parameters[VENDOR_SECTION_END - VENDOR_SECTION_ST
     { "notify-flag-rec -sync",         TYPE_BYTE },
     { "sprdZslEnabled",         TYPE_BYTE },
     { "mirror",                TYPE_BYTE },
+    { "sprdPipVivEnabled", TYPE_BYTE },
+    { "sprdHighIsoEnabled", TYPE_BYTE },
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {

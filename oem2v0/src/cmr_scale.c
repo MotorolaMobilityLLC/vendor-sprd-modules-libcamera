@@ -413,7 +413,7 @@ cmr_int cmr_scale_open(cmr_handle *scale_handle)
 	for ( ; time_out > 0; time_out--) {
 		//fd = cmr_grab_get_cpp_fd(*scale_handle);
 		fd = open(scaler_dev_name, O_RDWR, 0);
-		CMR_LOGE("----tony----cpp device.scale_open : %ld", fd);
+		CMR_LOGE("cpp device.scale_open : %ld", fd);
 		ret = ioctl(fd, SPRD_CPP_IO_OPEN_SCALE, &val);
 		if (ret)
 			usleep(50*1000);

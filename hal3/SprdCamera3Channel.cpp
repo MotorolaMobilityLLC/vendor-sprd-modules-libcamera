@@ -897,6 +897,14 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number)
 			HAL_LOGD("ANDROID_CONTROL_AE_LOCK");
 			mOEMIf->SetCameraParaTag(ANDROID_CONTROL_AE_LOCK);
 			break;
+		case ANDROID_SPRD_PIPVIV_ENABLED:
+			HAL_LOGV("ANDROID_SPRD_PIPVIV_ENABLED");
+			mOEMIf->SetCameraParaTag(ANDROID_SPRD_PIPVIV_ENABLED);
+			break;
+			case ANDROID_SPRD_HIGHISO_ENABLED:
+			HAL_LOGV("ANDROID_SPRD_HIGHISO_ENABLED");
+			mOEMIf->SetCameraParaTag(ANDROID_SPRD_HIGHISO_ENABLED);
+			break;
 		default:
 			HAL_LOGV("other tag");
 			break;

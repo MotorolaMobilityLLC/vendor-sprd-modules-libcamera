@@ -912,7 +912,7 @@ static uint32_t imx230_set_video_mode(uint32_t param)
 	if (param >= SENSOR_VIDEO_MODE_MAX)
 		return 0;
 
-	if (SENSOR_SUCCESS != Sensor_GetMode(&mode)) {
+	if (SENSOR_SUCCESS != Sensor_GetMode_Ex(&mode, SENSOR_MAIN)) {
 		SENSOR_PRINT("fail.");
 		return SENSOR_FAIL;
 	}
@@ -930,7 +930,7 @@ static uint32_t imx230_set_video_mode(uint32_t param)
 
 	for (i = 0x00; (0xffff != sensor_reg_ptr[i].reg_addr)
 	     || (0xff != sensor_reg_ptr[i].reg_value); i++) {
-		Sensor_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
+		Sensor_WriteReg_Ex(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value, SENSOR_MAIN);
 	}
 
 	return 0;
@@ -1082,7 +1082,7 @@ static uint16_t imx230_read_gain(void)
 {
 	uint16_t gain_l = 0;
 
-	gain_l = Sensor_ReadReg(0x0205);
+	gain_l = Sensor_ReadReg_Ex(0x0205, SENSOR_MAIN);
 
 	return gain_l;
 }
@@ -1102,7 +1102,7 @@ static void imx230_write_gain(uint32_t gain)
 	if (SENSOR_MAX_GAIN < sensor_again)
 			sensor_again = SENSOR_MAX_GAIN;
 	SENSOR_PRINT("sensor_again=0x%x",sensor_again);
-	Sensor_WriteReg(0x0205, sensor_again);
+	Sensor_WriteReg_Ex(0x0205, sensor_again, SENSOR_MAIN);
 
 	imx230_group_hold_off();
 
@@ -1118,8 +1118,8 @@ static uint16_t imx230_read_frame_length(void)
 	uint16_t frame_len_h = 0;
 	uint16_t frame_len_l = 0;
 
-	frame_len_h = Sensor_ReadReg(0x0340) & 0xff;
-	frame_len_l = Sensor_ReadReg(0x0341) & 0xff;
+	frame_len_h = Sensor_ReadReg_Ex(0x0340, SENSOR_MAIN) & 0xff;
+	frame_len_l = Sensor_ReadReg_Ex(0x0341, SENSOR_MAIN) & 0xff;
 
 	return ((frame_len_h << 8) | frame_len_l);
 }
@@ -1131,8 +1131,8 @@ static uint16_t imx230_read_frame_length(void)
  *============================================================================*/
 static void imx230_write_frame_length(uint32_t frame_len)
 {
-	Sensor_WriteReg(0x0340, (frame_len >> 8) & 0xff);
-	Sensor_WriteReg(0x0341, frame_len & 0xff);
+	Sensor_WriteReg_Ex(0x0340, (frame_len >> 8) & 0xff, SENSOR_MAIN);
+	Sensor_WriteReg_Ex(0x0341, frame_len & 0xff, SENSOR_MAIN);
 }
 
 /*==============================================================================
@@ -1145,8 +1145,8 @@ static uint32_t imx230_read_shutter(void)
 	uint16_t shutter_h = 0;
 	uint16_t shutter_l = 0;
 
-	shutter_h = Sensor_ReadReg(0x0202) & 0xff;
-	shutter_l = Sensor_ReadReg(0x0203) & 0xff;
+	shutter_h = Sensor_ReadReg_Ex(0x0202, SENSOR_MAIN) & 0xff;
+	shutter_l = Sensor_ReadReg_Ex(0x0203, SENSOR_MAIN) & 0xff;
 
 	return (shutter_h << 8) | shutter_l;
 }
@@ -1159,8 +1159,8 @@ static uint32_t imx230_read_shutter(void)
  *============================================================================*/
 static void imx230_write_shutter(uint32_t shutter)
 {
-	Sensor_WriteReg(0x0202, (shutter >> 8) & 0xff);
-	Sensor_WriteReg(0x0203, shutter & 0xff);
+	Sensor_WriteReg_Ex(0x0202, (shutter >> 8) & 0xff, SENSOR_MAIN);
+	Sensor_WriteReg_Ex(0x0203, shutter & 0xff, SENSOR_MAIN);
 }
 
 /*==============================================================================
@@ -1210,25 +1210,25 @@ static unsigned long imx230_power_on(unsigned long power_on)
 	BOOLEAN reset_level = g_imx230_mipi_raw_info.reset_pulse_level;
 
 	if (SENSOR_TRUE == power_on) {
-		Sensor_PowerDown(power_down);
-		Sensor_SetResetLevel(reset_level);
-		Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
-		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
+		Sensor_PowerDown_Ex(power_down ,SENSOR_MAIN);
+		Sensor_SetResetLevel_Ex(reset_level, SENSOR_MAIN);
+		Sensor_SetMCLK_Ex(SENSOR_DISABLE_MCLK, SENSOR_MAIN);
+		Sensor_SetVoltage_Ex(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_MAIN);
 		usleep(10 * 1000);
-		Sensor_SetVoltage(dvdd_val, avdd_val, iovdd_val);
+		Sensor_SetVoltage_Ex(dvdd_val, avdd_val, iovdd_val, SENSOR_MAIN);
 		usleep(10 * 1000);
-		Sensor_SetMCLK(SENSOR_DEFALUT_MCLK);
+		Sensor_SetMCLK_Ex(SENSOR_DEFALUT_MCLK, SENSOR_MAIN);
 		usleep(10 * 1000);
-		Sensor_PowerDown(!power_down);
-		Sensor_SetResetLevel(!reset_level);
+		Sensor_PowerDown_Ex(!power_down, SENSOR_MAIN);
+		Sensor_SetResetLevel_Ex(!reset_level, SENSOR_MAIN);
 		//Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
 	} else {
 		return 0;
-		Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
-		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
-		Sensor_Reset(reset_level);
-		Sensor_PowerDown(power_down);
-		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
+		Sensor_SetMCLK_Ex(SENSOR_DISABLE_MCLK, SENSOR_MAIN);
+		Sensor_SetVoltage_Ex(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_MAIN);
+		Sensor_Reset_Ex(reset_level, SENSOR_MAIN);
+		Sensor_PowerDown_Ex(power_down, SENSOR_MAIN);
+		Sensor_SetMonitorVoltage_Ex(SENSOR_AVDD_CLOSED, SENSOR_MAIN);
 	}
 	SENSOR_PRINT("(1:on, 0:off): %ld", power_on);
 	return SENSOR_SUCCESS;
@@ -1249,10 +1249,10 @@ static unsigned long imx230_identify(unsigned long param)
 
 	SENSOR_PRINT("mipi raw identify");
 
-	pid_value = Sensor_ReadReg(imx230_PID_ADDR);
+	pid_value = Sensor_ReadReg_Ex(imx230_PID_ADDR, SENSOR_MAIN);
 
 	if (imx230_PID_VALUE == pid_value) {
-		ver_value = Sensor_ReadReg(imx230_VER_ADDR);
+		ver_value = Sensor_ReadReg_Ex(imx230_VER_ADDR, SENSOR_MAIN);
 		SENSOR_PRINT("Identify: PID = %x, VER = %x", pid_value, ver_value);
 		if (imx230_VER_VALUE == ver_value) {
 			ret_value = SENSOR_SUCCESS;
@@ -1307,8 +1307,8 @@ static unsigned long imx230_before_snapshot(unsigned long param)
 	prv_shutter = s_sensor_ev_info.preview_shutter;	//imx132_read_shutter();
 	gain = s_sensor_ev_info.preview_gain;	//imx132_read_gain();
 
-	Sensor_SetMode(capture_mode);
-	Sensor_SetMode_WaitDone();
+	Sensor_SetMode_Ex(capture_mode, SENSOR_MAIN);
+	Sensor_SetMode_WaitDone_Ex(SENSOR_MAIN);
 
 	cap_shutter = prv_shutter * prv_linetime / cap_linetime * BINNING_FACTOR;
 
@@ -1334,7 +1334,7 @@ snapshot_info:
 	 */
 	s_hdr_info.capture_max_shutter = 1000000 / cap_linetime;
 
-	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, cap_shutter);
+	Sensor_SetSensorExifInfo_Ex(SENSOR_EXIF_CTRL_EXPOSURETIME, cap_shutter, SENSOR_MAIN);
 
 	return SENSOR_SUCCESS;
 }
@@ -1514,7 +1514,7 @@ static unsigned long imx230_stream_on(unsigned long param)
 {
 	SENSOR_PRINT("E");
 	UNUSED(param);
-	Sensor_WriteReg(0x0100, 0x01);
+	Sensor_WriteReg_Ex(0x0100, 0x01, SENSOR_MAIN);
 	/*delay*/
 	usleep(10 * 1000);
 
@@ -1530,7 +1530,7 @@ static unsigned long imx230_stream_off(unsigned long param)
 {
 	SENSOR_PRINT("E");
 	UNUSED(param);
-	Sensor_WriteReg(0x0100, 0x00);
+	Sensor_WriteReg_Ex(0x0100, 0x00, SENSOR_MAIN);
 	/*delay*/
 	usleep(10 * 1000);
 
@@ -1550,11 +1550,11 @@ static unsigned long imx230_write_af(unsigned long param)
 	cmd_val[0] = 0x03;
 	cmd_val[1] = (param&0x3ff0)>>4;
 	cmd_len = 2;
-	ret_value = Sensor_WriteI2C(slave_addr, cmd_val,cmd_len);
+	ret_value = Sensor_WriteI2C_Ex(slave_addr, cmd_val,cmd_len, SENSOR_MAIN);
 	cmd_val[0] = 0x04;
 	cmd_val[1] = ((param&0x0f)<<4)|0x05;
 	cmd_len = 2;
-	ret_value = Sensor_WriteI2C(slave_addr, cmd_val, cmd_len);
+	ret_value = Sensor_WriteI2C_Ex(slave_addr, cmd_val, cmd_len, SENSOR_MAIN);
 
 	SENSOR_PRINT("SENSOR_IMX230: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
 	return ret_value;

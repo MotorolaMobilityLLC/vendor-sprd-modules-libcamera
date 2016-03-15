@@ -387,6 +387,8 @@ private:
 	int32_t                           mZslMapNum;
 	Mutex                             mZslBufLock;
 #endif
+	bool                              mSprdPipVivEnabled;
+	bool                              mSprdHighIsoEnabled;
 
 	void yuvNv12ConvertToYv12(struct camera_frame_type *frame, char* tmpbuf);
 

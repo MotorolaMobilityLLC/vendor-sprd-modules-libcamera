@@ -164,6 +164,7 @@ struct snapshot_param {
 	struct snp_proc_param    post_proc_setting;
 	cmr_u32                  lls_shot_mode;
 	cmr_u32                  is_vendor_hdr;
+	cmr_u32                  is_pipviv_mode;
 };
 
 struct encode_cb_param {

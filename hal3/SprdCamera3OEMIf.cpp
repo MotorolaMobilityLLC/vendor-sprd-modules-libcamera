@@ -3681,6 +3681,27 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb,
 	}
 	case CAMERA_EVT_CB_SNAPSHOT_JPEG_DONE:
 		exitFromPostProcess();
+		if (mSprdPipVivEnabled) {
+			Sprd_camera_state tmpCapState = getCaptureState();
+			LOGI("PIP HandleTakePicture state = %d, need_free = %d",
+				  tmpCapState, ((struct camera_frame_type *)parm4)->need_free);
+			if ((SPRD_WAITING_JPEG == tmpCapState)
+				|| (SPRD_INTERNAL_CAPTURE_STOPPING == tmpCapState)) {
+			if (((struct camera_frame_type *)parm4)->need_free) {
+					setCameraState(SPRD_IDLE,
+						STATE_CAPTURE);
+				} else {
+					setCameraState(SPRD_INTERNAL_RAW_REQUESTED,
+						STATE_CAPTURE);
+				}
+			} else if (SPRD_IDLE != tmpCapState) {
+				LOGE("HandleEncode: CAMERA_EXIT_CB_DONE error cap status, %s",
+					getCameraStateStr(tmpCapState));
+				transitionState(tmpCapState,
+					SPRD_ERROR,
+					STATE_CAPTURE);
+			}
+		}
 		break;
 	case CAMERA_EVT_CB_SNAPSHOT_DONE:
 		HAL_LOGD("CAMERA_EVT_CB_SNAPSHOT_DONE");
@@ -4566,6 +4587,32 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_uint cameraParaTag)
 		}
 		break;
 #endif
+	case ANDROID_SPRD_PIPVIV_ENABLED:
+		{
+			SPRD_DEF_Tag sprddefInfo;
+			mSetting->getSPRDDEFTag(&sprddefInfo);
+			if(sprddefInfo.sprd_pipviv_enabled == 1) {
+				mSprdPipVivEnabled = true;
+				SET_PARM(mCameraHandle, CAMERA_PARAM_SPRD_PIPVIV_ENABLED, 1);
+			} else {
+				mSprdPipVivEnabled = false;
+				SET_PARM(mCameraHandle, CAMERA_PARAM_SPRD_PIPVIV_ENABLED, 0);
+			}
+		}
+		break;
+		case ANDROID_SPRD_HIGHISO_ENABLED:
+		{
+			SPRD_DEF_Tag sprddefInfo;
+			mSetting->getSPRDDEFTag(&sprddefInfo);
+			if(sprddefInfo.sprd_highiso_enabled == 1) {
+				mSprdHighIsoEnabled = true;
+			SET_PARM(mCameraHandle, CAMERA_PARAM_SPRD_HIGHISO_ENABLED, 1);
+			} else {
+					mSprdHighIsoEnabled = false;
+					SET_PARM(mCameraHandle, CAMERA_PARAM_SPRD_HIGHISO_ENABLED, 0);
+			}
+		}
+		break;
 
 	default:
 		ret = BAD_VALUE;
