@@ -473,28 +473,28 @@ private:
 	sprd_camera_memory_t            mRawHeapInfoBak;
 	uint32_t                        mRawHeapBakUseFlag;
 #ifdef SC_IOMMU_PF
-	uintptr_t                       mPreviewHeapArray_phy[kPreviewBufferCount+kPreviewRotBufferCount+1][2];
-	uintptr_t                       mPreviewHeapArray_vir[kPreviewBufferCount+kPreviewRotBufferCount+1][2];
+	uintptr_t                        mPreviewHeapArray_phy[kPreviewBufferCount+kPreviewRotBufferCount+1][2];
+	uintptr_t                        mPreviewHeapArray_vir[kPreviewBufferCount+kPreviewRotBufferCount+1][2];
 	uint32_t                        mPreviewHeapArray_size[kPreviewBufferCount+kPreviewRotBufferCount+1][2];
-	uintptr_t                       mVideoHeapArray_phy[kPreviewBufferCount+kPreviewRotBufferCount+1][2];
-	uintptr_t                       mVideoHeapArray_vir[kPreviewBufferCount+kPreviewRotBufferCount+1][2];
+	uintptr_t                        mVideoHeapArray_phy[kPreviewBufferCount+kPreviewRotBufferCount+1][2];
+	uintptr_t                        mVideoHeapArray_vir[kPreviewBufferCount+kPreviewRotBufferCount+1][2];
 	uint32_t                        mVideoHeapArray_size[kPreviewBufferCount+kPreviewRotBufferCount+1][2];
-	uintptr_t                       mZslHeapArray_phy[kPreviewBufferCount+kPreviewRotBufferCount+1][2];
-	uintptr_t                       mZslHeapArray_vir[kPreviewBufferCount+kPreviewRotBufferCount+1][2];
-	uint32_t                        mZslHeapArray_size[kPreviewBufferCount+kPreviewRotBufferCount+1][2];
 	cmr_s32                       mPreviewMfdArray[kPreviewBufferCount+kPreviewRotBufferCount+1][2];
 #else
-	uintptr_t                       mPreviewHeapArray_phy[kPreviewBufferCount+kPreviewRotBufferCount+1];
-	uintptr_t                       mPreviewHeapArray_vir[kPreviewBufferCount+kPreviewRotBufferCount+1];
+	uintptr_t                        mPreviewHeapArray_phy[kPreviewBufferCount+kPreviewRotBufferCount+1];
+	uintptr_t                        mPreviewHeapArray_vir[kPreviewBufferCount+kPreviewRotBufferCount+1];
 	uint32_t                        mPreviewHeapArray_size[kPreviewBufferCount+kPreviewRotBufferCount+1];
 	uint32_t                        mVideoHeapArray_phy[kPreviewBufferCount+kPreviewRotBufferCount+1];
 	uint32_t                        mVideoHeapArray_vir[kPreviewBufferCount+kPreviewRotBufferCount+1];
 	uint32_t                        mVideoHeapArray_size[kPreviewBufferCount+kPreviewRotBufferCount+1];
-	uintptr_t                       mZslHeapArray_phy[kPreviewBufferCount+kPreviewRotBufferCount+1];
-	uintptr_t                       mZslHeapArray_vir[kPreviewBufferCount+kPreviewRotBufferCount+1];
-	uint32_t                        mZslHeapArray_size[kPreviewBufferCount+kPreviewRotBufferCount+1];
 	cmr_s32                       mPreviewMfdArray[kPreviewBufferCount+kPreviewRotBufferCount+1];
 #endif
+
+	uint32_t                        mZslHeapArray_mfd[kPreviewBufferCount+kPreviewRotBufferCount+1];
+	uintptr_t                        mZslHeapArray_phy[kPreviewBufferCount+kPreviewRotBufferCount+1];
+	uintptr_t                        mZslHeapArray_vir[kPreviewBufferCount+kPreviewRotBufferCount+1];
+	uint32_t                        mZslHeapArray_size[kPreviewBufferCount+kPreviewRotBufferCount+1];
+
 #if(MINICAMERA != 1)
 	buffer_handle_t                 *mPreviewBufferHandle[kPreviewBufferCount];
 	buffer_handle_t                 *mPreviewCancelBufHandle[kPreviewBufferCount];
@@ -513,12 +513,7 @@ private:
 
 	sprd_camera_memory_t            *mRawHeap;
 	uint32_t                        mRawHeapSize;
-
-#ifdef SC_IOMMU_PF
-	sprd_camera_memory_t            *mSubRawHeapArray[MAX_SUB_RAWHEAP_NUM][2];
-#else
 	sprd_camera_memory_t			*mSubRawHeapArray[MAX_SUB_RAWHEAP_NUM];
-#endif
 	uint32_t                        mSubRawHeapNum;
 	uint32_t                        mSubRawHeapSize;
 
