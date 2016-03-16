@@ -1305,6 +1305,104 @@ cmr_int isp_dev_cfg_brightness_mode(isp_handle handle, cmr_u32 mode)
 	return ret;
 }
 
+cmr_int isp_dev_cfg_color_temp(isp_handle handle, cmr_u32 mode)
+{
+	cmr_int ret = 0;
+	cmr_u32 color_t = 0;
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle) {
+		CMR_LOGE("handle is null error.");
+		return -1;
+	}
+
+	color_t = mode;
+	param.sub_id = ISP_CFG_SET_COLOR_TEMPERATURE;
+	param.property_param = &color_t;
+
+	file = (struct isp_file *)(handle);
+
+	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
+	if (ret)
+		CMR_LOGE("isp_dev_cfg_color_temp error.");
+
+	return ret;
+}
+
+cmr_int isp_dev_cfg_ccm(isp_handle handle, struct isp_iq_ccm_info *data)
+{
+	cmr_int ret = 0;
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle) {
+		CMR_LOGE("handle is null error.");
+		return -1;
+	}
+
+	param.sub_id = ISP_CFG_SET_CCM;
+	param.property_param = data;
+
+	file = (struct isp_file *)(handle);
+
+	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
+	if (ret)
+		CMR_LOGE("isp_dev_cfg_ccm error.");
+
+	return ret;
+}
+
+cmr_int isp_dev_cfg_valid_adgain(isp_handle handle, cmr_u32 mode)
+{
+	cmr_int ret = 0;
+	cmr_u32 ad_gain = 0;
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle) {
+		CMR_LOGE("handle is null error.");
+		return -1;
+	}
+
+	ad_gain = mode;
+	param.sub_id = ISP_CFG_SET_VALID_ADGAIN;
+	param.property_param = &ad_gain;
+
+	file = (struct isp_file *)(handle);
+
+	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
+	if (ret)
+		CMR_LOGE("isp_dev_cfg_color_temp error.");
+
+	return ret;
+}
+
+cmr_int isp_dev_cfg_exp_time(isp_handle handle, cmr_u32 mode)
+{
+	cmr_int ret = 0;
+	cmr_u32 exposure_time = 0;
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle) {
+		CMR_LOGE("handle is null error.");
+		return -1;
+	}
+
+	exposure_time = mode;
+	param.sub_id = ISP_CFG_SET_VALID_EXP_TIME;
+	param.property_param = &exposure_time;
+
+	file = (struct isp_file *)(handle);
+
+	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
+	if (ret)
+		CMR_LOGE("isp_dev_cfg_color_temp error.");
+
+	return ret;
+}
+
 cmr_int isp_dev_capability_fw_size(isp_handle handle, cmr_int *size)
 {
 	cmr_int ret = 0;
@@ -1466,38 +1564,6 @@ cmr_int isp_dev_capability_single_size(isp_handle handle, struct isp_img_size *s
 
 	return ret;
 }
-#if 0
-cmr_int isp_dev_get_irq(isp_handle handle, cmr_int *evt_ptr)
-{
-	cmr_int ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_irq *ptr = (struct isp_irq *)evt_ptr;
-
-	if (!handle) {
-		CMR_LOGE("handle is null error.");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-
-	while (1) {
-		ret = ioctl(file->fd, ISP_IO_IRQ, ptr);
-		if (0 == ret) {
-			break;
-		} else {
-			if (-EINTR == ptr->ret_val) {
-				cmr_usleep(5000);
-				CMR_LOGE("continue.");
-				continue;
-			}
-			CMR_LOGE("ret_val=%d", ptr->ret_val);
-			break;
-		}
-	}
-
-	return ret;
-}
-#endif
 
 cmr_int isp_dev_set_dcam_id(isp_handle handle, cmr_u32 dcam_id)
 {
