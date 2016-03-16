@@ -55,16 +55,22 @@ namespace sprdcamera {
 
 #define MAX_NUM_STREAMS          8
 
-#define HD_STR     "L %d, %s: "
-#define HD_ARGS    __LINE__,__FUNCTION__
+extern volatile uint32_t gHALLogLevel;
 
+#define HAL_LOGE(fmt, args...) \
+	ALOGE("%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
 
-#define HAL_LOGE(format,...) ALOGE(HD_STR format, HD_ARGS, ##__VA_ARGS__)
-#define HAL_LOGW(format,...) ALOGW(HD_STR format, HD_ARGS, ##__VA_ARGS__)
-#define HAL_LOGI(format,...) ALOGI(HD_STR format, HD_ARGS, ##__VA_ARGS__)
-#define HAL_LOGD(format,...) ALOGD(HD_STR format, HD_ARGS, ##__VA_ARGS__)
-#define HAL_LOGV(format,...) ALOGV(HD_STR format, HD_ARGS, ##__VA_ARGS__)
+#define HAL_LOGW(fmt, args...) \
+	ALOGW_IF(gHALLogLevel >= 2, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
 
+#define HAL_LOGI(fmt, args...) \
+	ALOGI_IF(gHALLogLevel >= 3, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
+
+#define HAL_LOGD(fmt, args...) \
+	ALOGD_IF(gHALLogLevel >= 4, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
+
+#define HAL_LOGV(fmt, args...) \
+	ALOGD_IF(gHALLogLevel >= 5, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
 
 class SprdCamera3Channel;
 

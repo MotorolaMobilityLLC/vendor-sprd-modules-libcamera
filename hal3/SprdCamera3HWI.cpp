@@ -60,6 +60,16 @@ namespace sprdcamera {
 
 unsigned int SprdCamera3HWI::mCameraSessionActive = 0;
 
+// gHALLogLevel(default is 4):
+//   1 - only show ALOGE, err log is always show
+//   2 - show ALOGE and ALOGW
+//   3 - show ALOGE, ALOGW and ALOGI
+//   4 - show ALOGE, ALOGW, ALOGI and ALOGD
+//   5 - show ALOGE, ALOGW, ALOGI and ALOGD, ALOGV
+// use the following command to change gHALLogLevel:
+//   adb shell setprop persist.sys.camera.hal.log 1
+volatile uint32_t gHALLogLevel = 4;
+
 camera3_device_ops_t SprdCamera3HWI::mCameraOps = {
 	initialize:	                        SprdCamera3HWI::initialize,
 	configure_streams:                  SprdCamera3HWI::configure_streams,
@@ -93,7 +103,8 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
 	mRecSkipNum(0),
 	mIsSkipFrm(false)
 {
-	HAL_LOGD("E");
+	getLogLevel();
+	HAL_LOGD("mCameraId %d",mCameraId);
 	mCameraDevice.common.tag = HARDWARE_DEVICE_TAG;
 	mCameraDevice.common.version = CAMERA_DEVICE_API_VERSION_3_2;//CAMERA_DEVICE_API_VERSION_3_0;
 	mCameraDevice.common.close = close_camera_device;
@@ -833,6 +844,18 @@ void SprdCamera3HWI::flushRequest(uint32_t frame_num)
 		picChannel->channelClearAllQBuff(timestamp, CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT);
 	}
 	HAL_LOGD("exit");
+}
+
+void SprdCamera3HWI::getLogLevel()
+{
+	char prop[PROPERTY_VALUE_MAX];
+	int val = 0;
+
+	property_get("persist.sys.camera.hal.log", prop, "0");
+	val = atoi(prop);
+	if (val > 0) {
+		gHALLogLevel = (uint32_t)val;
+	}
 }
 
 int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)

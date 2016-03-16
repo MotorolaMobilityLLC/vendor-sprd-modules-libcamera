@@ -41,6 +41,23 @@ extern "C"
 #endif
 #endif
 
+extern volatile uint32_t gCMRLogLevel;
+
+#define CMR_LOGE(fmt, args...) \
+	ALOGE("%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
+
+#define CMR_LOGW(fmt, args...) \
+	ALOGW_IF(gCMRLogLevel >= 2, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
+
+#define CMR_LOGI(fmt, args...) \
+	ALOGI_IF(gCMRLogLevel >= 3, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
+
+#define CMR_LOGD(fmt, args...) \
+	ALOGD_IF(gCMRLogLevel >= 4, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
+
+#define CMR_LOGV(fmt, args...) \
+	ALOGD_IF(gCMRLogLevel >= 5, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
+
 #define UNUSED(x) (void)x
 
 

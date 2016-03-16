@@ -103,6 +103,7 @@ private:
 	int32_t tranStreamAndChannelType(camera3_stream_t* new_stream, camera_stream_type_t* stream_type, camera_channel_type_t* channel_type);
 	int32_t checkStreamSizeAndFormat(camera3_stream_t* new_stream);
 	void flushRequest(uint32_t frame_num);
+	void getLogLevel();
 
 public:
 	static SprdCamera3Setting *mSetting;
