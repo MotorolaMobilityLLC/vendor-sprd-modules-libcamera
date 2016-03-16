@@ -344,7 +344,7 @@ cmr_int snp_main_thread_proc(struct cmr_msg *message, void* p_data)
 		CMR_LOGI("need to stop snp");
 		ret = snp_stop_proc(snp_handle);
 		cxt->err_code = ret;
-		if (ret) {
+		if (ret && ret != CMR_CAMERA_NORNAL_EXIT) {
 			CMR_LOGE("fail to stop %ld", ret);
 		}
 		break;

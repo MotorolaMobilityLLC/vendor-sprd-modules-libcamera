@@ -2583,7 +2583,7 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 		CMR_LOGE("fail to get sensor info ret %ld", ret);
 		goto exit;
 	}
-	CMR_LOGE("  get sensor info ret %ld  name %s version %s", ret,sn_cxt->sensor_info.name,sn_cxt->sensor_info.sensor_version_info);
+	CMR_LOGV("get sensor info ret %ld  name %s version %s", ret,sn_cxt->sensor_info.name,sn_cxt->sensor_info.sensor_version_info);
 
 	if (IMG_DATA_TYPE_RAW != sn_cxt->sensor_info.image_format) {
 		CMR_LOGD("no need to init isp %d ", sn_cxt->sensor_info.image_format);
@@ -3664,7 +3664,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 			CMR_LOGE("failed to get perfect skinlevel %ld, setting_cxt->setting_handle is 0x%x", ret, setting_cxt->setting_handle);
 		} else {
 			PerfectSkinLevel = setting_param.cmd_type_value;
-			CMR_LOGE("kinlin perfectskinlevel is %d", PerfectSkinLevel);
+			CMR_LOGV("kinlin perfectskinlevel is %d", PerfectSkinLevel);
 		}
 		int skinWhitenLevel = PerfectSkinLevel;
 		int skinCleanLevel = PerfectSkinLevel;
@@ -4925,7 +4925,7 @@ cmr_int camera_sensor_ioctl(cmr_handle oem_handle, cmr_uint cmd_type, struct com
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}
-	CMR_LOGE("cmd_type =%ld",cmd_type);
+	CMR_LOGV("cmd_type =%ld",cmd_type);
 
 	switch (cmd_type) {
 	case COM_SN_GET_AUTO_FLASH_STATE:

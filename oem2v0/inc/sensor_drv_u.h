@@ -59,11 +59,6 @@ extern	 "C"
 #define SENSOR_TRACE                                  SENSOR_PRINT
 
 
-#define HD_STR     "L %d, %s: "
-#define HD_ARGS    __LINE__,__FUNCTION__
-#define HAL_LOGD(format,...) ALOGD(HD_STR format, HD_ARGS, ##__VA_ARGS__)
-
-
 #define NUMBER_OF_ARRAY(a)                            (sizeof(a)/sizeof(a[0]))
 #define ADDR_AND_LEN_OF_ARRAY(a)                      (SENSOR_REG_T*)a, NUMBER_OF_ARRAY(a)
 

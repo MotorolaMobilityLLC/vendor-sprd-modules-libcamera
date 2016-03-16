@@ -100,7 +100,7 @@ cmr_int cmr_msg_queue_create(cmr_u32 count, cmr_handle *queue_handle)
 		msg_cur++;
 	}
 	*queue_handle = (cmr_handle)msg_cxt;
-	CMR_LOGD("queue_handle 0x%lx", (cmr_uint)*queue_handle);
+	CMR_LOGV("queue_handle 0x%lx", (cmr_uint)*queue_handle);
 
 	return CMR_MSG_SUCCESS;
 }
@@ -300,7 +300,7 @@ cmr_int cmr_msg_queue_destroy(cmr_handle queue_handle)
 {
 	struct cmr_msg_cxt       *msg_cxt = (struct cmr_msg_cxt*)queue_handle;
 
-	CMR_LOGD("queue_handle 0x%lx", (cmr_uint)queue_handle);
+	CMR_LOGV("queue_handle 0x%lx", (cmr_uint)queue_handle);
 
 	if (0 == queue_handle) {
 		CMR_LOGE("zero queue_handle");

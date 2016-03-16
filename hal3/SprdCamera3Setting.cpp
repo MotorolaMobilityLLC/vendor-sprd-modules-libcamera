@@ -3891,7 +3891,7 @@ int SprdCamera3Setting::androidAfModeToDrvAfMode(uint8_t androidAfMode, int8_t *
 {
 	int ret = 0;
 
-	ALOGD("afMode %d",androidAfMode);
+	HAL_LOGD("afMode %d",androidAfMode);
 
 	switch (androidAfMode) {
 	case ANDROID_CONTROL_AF_MODE_AUTO:

@@ -639,7 +639,7 @@ cmr_int cmr_sensor_focus_init(cmr_handle sensor_handle, cmr_u32 sensor_id)
 
 	CMR_MSG_INIT(message);
 	struct cmr_sensor_handle *handle = (struct cmr_sensor_handle *)sensor_handle;
-	CMR_LOGE("E");
+	CMR_LOGV("E");
 
 	CHECK_HANDLE_VALID(handle);
 
@@ -651,7 +651,7 @@ cmr_int cmr_sensor_focus_init(cmr_handle sensor_handle, cmr_u32 sensor_id)
 		CMR_LOGE("send msg failed!");
 		return CMR_CAMERA_FAIL;
 	}
-	CMR_LOGE("x ret= %ld",ret);
+	CMR_LOGV("x ret= %ld",ret);
 	return ret;
 }
 
@@ -773,7 +773,7 @@ cmr_int cmr_sns_thread_proc(struct cmr_msg *message, void *p_data)
 		{
 		struct cmr_sns_ioctl_param *p_ioctl_param = (struct cmr_sns_ioctl_param *)message->data;
 		camera_id = (cmr_u32)message->sub_msg_type;
-		CMR_LOGE("camera_id=%d",camera_id);
+		CMR_LOGV("camera_id=%d",camera_id);
 		sensor_set_cxt_common(&handle->sensor_cxt[camera_id]);
 		cmr_sns_ioctl(&handle->sensor_cxt[camera_id], p_ioctl_param->cmd, p_ioctl_param->arg);
 		}
@@ -880,7 +880,7 @@ cmr_int cmr_sns_open(struct cmr_sensor_handle *handle, cmr_u32 sensor_id_bits)
 		pthread_debug_setname(handle->monitor_thread_cxt.thread_handle, "sns_monitor");
 		for (cameraId = 0; cameraId < CAMERA_ID_MAX; cameraId++) {
 			if (0 != (sensor_id_bits & (1 << cameraId))) {
-				CMR_LOGE("sensor format =%d",handle->sensor_cxt[cameraId].sensor_info_ptr->image_format);
+				CMR_LOGD("sensor format =%d",handle->sensor_cxt[cameraId].sensor_info_ptr->image_format);
 				if (SENSOR_IMAGE_FORMAT_RAW != handle->sensor_cxt[cameraId].sensor_info_ptr->image_format) {
 				ret = cmr_sns_create_fmove_thread(handle);
 				if (ret)
@@ -1005,7 +1005,7 @@ cmr_int cmr_sns_get_ioctl_cmd(SENSOR_IOCTL_CMD_E *sns_cmd, enum sensor_cmd in_cm
 
 		case SENSOR_FOCUS:
 			*sns_cmd = SENSOR_IOCTL_FOCUS;
-			CMR_LOGE("SENSOR_FOCUS --> SENSOR_IOCTL_FOCUS ");
+			CMR_LOGD("SENSOR_FOCUS --> SENSOR_IOCTL_FOCUS ");
 			break;
 
 		case SENSOR_ANTI_BANDING:

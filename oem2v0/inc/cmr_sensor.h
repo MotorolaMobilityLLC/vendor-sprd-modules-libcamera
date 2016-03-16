@@ -26,9 +26,6 @@ extern "C"
 
 #define CAP_MODE_BITS                16
 
-#define HD_STR     "L %d, %s: "
-#define HD_ARGS    __LINE__,__FUNCTION__
-#define HAL_LOGD(format,...) ALOGD(HD_STR format, HD_ARGS, ##__VA_ARGS__)
 
 enum sensor_cmd {
 	SENSOR_WRITE_REG,

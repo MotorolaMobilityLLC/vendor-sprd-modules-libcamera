@@ -7211,7 +7211,6 @@ cmr_int prev_set_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id, c
 	CHECK_HANDLE_VALID(handle);
 	CHECK_CAMERA_ID(camera_id);
 
-	CMR_LOGE("prev_set_preview_buffer IN");
 	if (/*!src_phy_addr ||*/ !src_vir_addr) {
 		CMR_LOGE("in parm error");
 		ret = CMR_CAMERA_INVALID_PARAM;
@@ -8559,7 +8558,7 @@ cmr_int prev_fd_open(struct prev_handle *handle, cmr_u32 camera_id)
 		prev_cxt->prev_param.is_fd_on);
 
 	if (!prev_cxt->prev_param.is_support_fd) {
-		CMR_LOGE("not support fd");
+		CMR_LOGD("not support fd");
 		ret = CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}

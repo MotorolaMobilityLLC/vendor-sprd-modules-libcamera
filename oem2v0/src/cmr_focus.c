@@ -630,7 +630,7 @@ cmr_int cmr_focus_set_param(cmr_handle af_handle, cmr_u32 came_id, enum camera_p
 			struct cmr_focus_param temp =*(struct cmr_focus_param *)param;
 
 			for(loop = 0; loop < temp.zone_cnt; loop++)
-				CMR_LOGE("temp.zone_cnt=%d x=%d ,y=%d, w=%d ,h=%d ",temp.zone_cnt, temp.zone[loop].start_x, temp.zone[loop].start_y, temp.zone[loop].width, temp.zone[loop].height);
+				CMR_LOGV("temp.zone_cnt=%d x=%d ,y=%d, w=%d ,h=%d ",temp.zone_cnt, temp.zone[loop].start_x, temp.zone[loop].start_y, temp.zone[loop].width, temp.zone[loop].height);
 
 			cmr_copy((void*)&af_cxt->focus_zone_param[0], param, CAMERA_FOCUS_RECT_PARAM_LEN);
 
@@ -844,7 +844,7 @@ cmr_int af_set_mode(cmr_handle af_handle, cmr_u32 came_id, cmr_u32 af_mode)
 		af_mode_to_isp(af_mode, &isp_af_mode);
 		isp_cmd.cmd_value = isp_af_mode;
 
-		CMR_LOGE("isp_af_mode %d ",isp_af_mode);
+		CMR_LOGD("isp_af_mode %d ",isp_af_mode);
 		ret = af_cxt->ops.af_isp_ioctrl(af_cxt->oem_handle, COM_ISP_SET_AF_MODE, &isp_cmd);
 
 	} else {
@@ -1284,7 +1284,7 @@ cmr_int focus_rect_parse(cmr_handle af_handle, SENSOR_EXT_FUN_PARAM_T_PTR p_focu
 			af_param.zone[0].y = *ptr++;
 			af_param.zone[0].w = *ptr++;
 			af_param.zone[0].h = *ptr++;
-			CMR_LOGE("x %d y %d ,w %d h %d",af_param.zone[0].x,af_param.zone[0].y,af_param.zone[0].w,af_param.zone[0].h);
+			CMR_LOGV("x %d y %d ,w %d h %d",af_param.zone[0].x,af_param.zone[0].y,af_param.zone[0].w,af_param.zone[0].h);
 
 			af_rect_zone[0].start_x = af_param.zone[0].x;
 			af_rect_zone[0].start_y = af_param.zone[0].y;
@@ -1294,7 +1294,7 @@ cmr_int focus_rect_parse(cmr_handle af_handle, SENSOR_EXT_FUN_PARAM_T_PTR p_focu
 			if (CMR_CAMERA_SUCCESS != af_check_area(af_handle, &const_sensor_rect, (struct img_rect*)&af_rect_zone[0],1)) {
 				af_param.zone_cnt = 0;
 
-				CMR_LOGE("af_check_area af_param.zone_cnt=%d",af_param.zone_cnt);
+				CMR_LOGV("af_check_area af_param.zone_cnt=%d",af_param.zone_cnt);
 			}
 		}
 		break;

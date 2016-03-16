@@ -15,7 +15,7 @@
  */
 
 //#define LOG_NDEBUG 0
-#define LOG_TAG "SprdCamera3EOMIf"
+#define LOG_TAG "SprdCamera3OEMIf"
 
 #include <camera/Camera.h>
 #include "SprdCamera3OEMIf.h"
@@ -3615,8 +3615,7 @@ void SprdCamera3OEMIf::HandleStopPreview(enum camera_cb_type cb,
 	controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_INACTIVE;
 	controlInfo.awb_state = ANDROID_CONTROL_AWB_STATE_INACTIVE;
 	mSetting->setCONTROLTag(controlInfo);
-	LOGI("HandleStopPreview out, state = %s", getCameraStateStr(getPreviewState()));
-	HAL_LOGD("out, state = %s", getCameraStateStr(getPreviewState()));
+	HAL_LOGD("state = %s", getCameraStateStr(getPreviewState()));
 }
 
 void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb,
@@ -5826,7 +5825,6 @@ int SprdCamera3OEMIf::Callback_Malloc(enum camera_mem_cb_type type, cmr_u32 *siz
 		return BAD_VALUE;
 	}
 
-	HAL_LOGE("mem type  %ld", (cmr_uint)type);
 	if (CAMERA_PREVIEW == type) {
 		ret = camera->Callback_PreviewMalloc(size, sum, phy_addr, vir_addr, mfd);
 	} else if (CAMERA_SNAPSHOT == type){

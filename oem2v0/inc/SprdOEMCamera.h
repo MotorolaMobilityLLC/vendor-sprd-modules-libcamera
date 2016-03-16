@@ -26,10 +26,6 @@ extern "C"
 
 #define FACE_DETECT_NUM                              10
 
-#define HD_STR     "L %d, %s: "
-#define HD_ARGS    __LINE__,__FUNCTION__
-#define HAL_LOGD(format,...) ALOGD(HD_STR format, HD_ARGS, ##__VA_ARGS__)
-
 
 /* White balancing type, used for CAMERA_PARM_WHITE_BALANCING */
 enum {

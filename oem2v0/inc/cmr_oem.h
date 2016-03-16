@@ -49,10 +49,6 @@ extern "C"
 #define ISP_B4AWB_BUF_SIZE                           640 * 480 * 2
 
 
-#define HD_STR     "L %d, %s: "
-#define HD_ARGS    __LINE__,__FUNCTION__
-#define HAL_LOGD(format,...) ALOGD(HD_STR format, HD_ARGS, ##__VA_ARGS__)
-
 struct grab_context {
 	cmr_handle               grab_handle;
 /*	struct process_status    proc_status;*/

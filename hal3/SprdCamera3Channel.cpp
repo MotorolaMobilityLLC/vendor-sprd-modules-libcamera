@@ -597,7 +597,6 @@ int32_t SprdCamera3PicChannel::request(camera3_stream_t *stream, buffer_handle_t
 	int i;
 	camera_stream_type_t stream_type;
 
-	HAL_LOGE("request, IN");
 	for(i=0; i<CHANNEL_MAX_STREAM_NUM; i++)
 	{
 		if(mCamera3Stream[i])
@@ -607,11 +606,9 @@ int32_t SprdCamera3PicChannel::request(camera3_stream_t *stream, buffer_handle_t
 
 			if(new_stream == stream) {
 				if (i == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT - PIC_STREAM_TYPE_BASE) {
-					HAL_LOGE("request, 111");
 					ret = mCamera3Stream[i]->buffDoneQ2(frameNumber, buffer);
 					return ret;
 				} else if (i == CAMERA_STREAM_TYPE_PICTURE_CALLBACK - PIC_STREAM_TYPE_BASE) {
-					HAL_LOGE("request, 222");
 					ret = mCamera3Stream[i]->buffDoneQ(frameNumber, buffer);
 					return ret;
 				}
@@ -691,7 +688,7 @@ int SprdCamera3PicChannel::getStream(camera_stream_type_t stream_type, SprdCamer
 
 	if(mCamera3Stream[index] == NULL)
 	{
-		HAL_LOGE("channel has no valied stream(type is %d)", stream_type);
+		HAL_LOGW("channel has no valied stream(type is %d)", stream_type);
 		return INVALID_OPERATION;
 	}
 

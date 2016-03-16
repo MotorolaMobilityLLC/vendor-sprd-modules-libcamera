@@ -1713,12 +1713,12 @@ cmr_int sns_register(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E sensor_i
 			sensor_strinfo_tab_ptr = (SENSOR_MATCH_T*)Sensor_GetInforTab(sensor_cxt, sensor_id);
 			sensor_info_ptr = sensor_strinfo_tab_ptr[sensor_index].sensor_info;
 			if (NULL == sensor_info_ptr) {
-				HAL_LOGD("index %d info of Sensor table %d is null", sensor_index, sensor_id);
+				CMR_LOGE("index %d info of Sensor table %d is null", sensor_index, sensor_id);
 				return SENSOR_FAIL;
 			}
 
 			if (NULL == sensor_info_ptr->raw_info_ptr) {
-				HAL_LOGD("index %d info of Sensor table %d raw_info_ptr  is null", sensor_index, sensor_id);
+				CMR_LOGE("index %d info of Sensor table %d raw_info_ptr  is null", sensor_index, sensor_id);
 				return SENSOR_FAIL;
 			}
 			sensor_cxt->sensor_info_ptr = sensor_info_ptr;
