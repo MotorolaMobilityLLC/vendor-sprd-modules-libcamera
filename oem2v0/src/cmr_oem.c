@@ -5424,6 +5424,12 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type, struct common
 		CMR_LOGI("ISP_CTRL_SET_SNAPSHOT_FINISHED");
 		break;
 
+	case COM_ISP_SET_FLASH_MODE:
+		isp_cmd = ISP_CTRL_SET_FLASH_MODE;
+		isp_param = param_ptr->cmd_value;
+		CMR_LOGI("flash mode %d", param_ptr->cmd_value);
+		break;
+
 	default:
 		CMR_LOGE("don't support cmd %ld", cmd_type);
 		ret = CMR_CAMERA_NO_SUPPORT;

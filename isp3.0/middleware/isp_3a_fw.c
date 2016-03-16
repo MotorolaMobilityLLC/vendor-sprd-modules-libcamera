@@ -244,6 +244,7 @@ static cmr_int isp3a_set_convergence_req(cmr_handle isp_3a_handle, void *param_p
 static cmr_int isp3a_set_snapshot_finished(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_get_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_get_adgain_exp_info(cmr_handle isp_3a_handle, void *param_ptr);
+static cmr_int isp3a_set_flash_mode(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_init_statistics_buf(cmr_handle isp_3a_handle);
 static cmr_int isp3a_deinit_statistics_buf(cmr_handle isp_3a_handle);
 static cmr_int isp3a_get_statistics_buf(cmr_handle isp_3a_handle, cmr_int type, struct isp3a_statistics_data **buf_ptr);
@@ -343,6 +344,7 @@ static struct isp3a_ctrl_io_func s_isp3a_ioctrl_tab[ISP_CTRL_MAX] = {
 	{ISP_CTRL_SET_SNAPSHOT_FINISHED,   isp3a_set_snapshot_finished},
 	{ISP_CTRL_GET_EXIF_DEBUG_INFO,     isp3a_get_exif_debug_info},
 	{ISP_CTRL_GET_CUR_ADGAIN_EXP,      isp3a_get_adgain_exp_info},
+	{ISP_CTRL_SET_FLASH_MODE,          isp3a_set_flash_mode},
 };
 
 /*************************************INTERNAK FUNCTION ***************************************/
@@ -2146,6 +2148,23 @@ cmr_int isp3a_get_adgain_exp_info(cmr_handle isp_3a_handle, void *param_ptr)
 	ISP_LOGI("adgain = %d, exp = %d", info_ptr->adgain, info_ptr->exp_time);
 	return ret;
 }
+
+static cmr_int isp3a_set_flash_mode(cmr_handle isp_3a_handle, void *param_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
+	struct ae_ctrl_param_in                     ae_in;
+
+	if (!param_ptr) {
+		ISP_LOGW("input is NULL");
+		goto exit;
+	}
+	ae_in.flash.flash_mode = *(cmr_u32*)param_ptr;
+	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_FLASH_MODE, &ae_in, NULL);
+exit:
+	return ret;
+}
+
 
 cmr_int isp3a_init_statistics_buf(cmr_handle isp_3a_handle)
 {

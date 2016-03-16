@@ -203,6 +203,7 @@ struct aealtek_cxt {
 	cmr_s32 lock_cnt;
 	cmr_s32 ae_state;
 	cmr_s32 is_script_mode;
+	cmr_s32 flash_skip_number;
 
 	struct aealtek_status prv_status;
 	struct aealtek_status cur_status;
@@ -2476,7 +2477,7 @@ exit:
 	return ret;
 }
 
-static cmr_int aealtek_set_ui_flash_mode(struct aealtek_cxt *cxt_ptr, enum isp_ui_flash_status ui_flash_status)
+static cmr_int aealtek_set_lib_ui_flash_mode(struct aealtek_cxt *cxt_ptr, enum isp_ui_flash_status ui_flash_status)
 {
 	cmr_int ret = ISP_ERROR;
 
@@ -2515,6 +2516,8 @@ static cmr_int aealtek_set_ui_flash_mode(struct aealtek_cxt *cxt_ptr, enum isp_u
 		ISP_LOGW("NOT defined ui flash status %ld!", (cmr_int)ui_flash_status);
 		break;
 	}
+
+	ISP_LOGI("lib_flash_mode=%d", lib_flash_mode);
 	param_ct_ptr->flash_mode = lib_flash_mode;
 	type = AE_SET_PARAM_FLASH_MODE;
 	in_param.ae_set_param_type = type;
@@ -2635,11 +2638,6 @@ static cmr_int aealtek_set_flash_notice(struct aealtek_cxt *cxt_ptr, struct ae_c
 		ret = aealtek_set_preflash_before(cxt_ptr, notice_ptr);
 		if (ret)
 			goto exit;
-		notice_ptr->ui_flash_status = ISP_UI_FLASH_STATUS_ON;
-		ret = aealtek_set_ui_flash_mode(cxt_ptr, notice_ptr->ui_flash_status);
-		if (ret)
-			goto exit;
-
 		ret = aealtek_set_flash_prepare_on(cxt_ptr);
 		if (ret)
 			goto exit;
@@ -2654,12 +2652,14 @@ static cmr_int aealtek_set_flash_notice(struct aealtek_cxt *cxt_ptr, struct ae_c
 		ret = aealtek_set_lock(cxt_ptr, 0);
 		if (ret)
 			goto exit;
-		ret = aealtek_set_flash_est(cxt_ptr, 0);
+
+		/*ret = aealtek_set_flash_est(cxt_ptr, 0);
 		if (ret)
 			goto exit;
-		aealtek_set_hw_flash_status(cxt_ptr, 1);
+		aealtek_set_hw_flash_status(cxt_ptr, 1);*/
 
 		aealtek_change_flash_state(cxt_ptr, cxt_ptr->flash_param.flash_state, AEALTEK_FLASH_STATE_LIGHTING);
+		cxt_ptr->flash_skip_number = 4;
 		ISP_LOGI("=========pre flash lighting end");
 
 		break;
@@ -3365,6 +3365,24 @@ exit:
 	return ret;
 }
 
+static cmr_int aealtek_set_ui_flash_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+
+	if (!cxt_ptr || !in_ptr) {
+		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
+		goto exit;
+	}
+
+	ret = aealtek_set_lib_ui_flash_mode(cxt_ptr, in_ptr->flash.flash_mode);
+	if (ret)
+		goto exit;
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld !!!", ret);
+	return ret;
+}
+
 static cmr_int aealtek_get_lib_script_info(struct aealtek_cxt *cxt_ptr, struct ae_output_data_t *from_ptr, struct aealtek_exposure_param *to_ptr)
 {
 	cmr_int ret = ISP_ERROR;
@@ -3683,6 +3701,9 @@ static cmr_int ae_altek_adpt_ioctrl(cmr_handle handle, cmr_int cmd, void *in, vo
 	case AE_CTRL_GET_EXP_GAIN:
 		ret = aealtek_get_exp_gain(cxt_ptr, in_ptr, out_ptr);
 		break;
+	case AE_CTRL_SET_FLASH_MODE:
+		ret = aealtek_set_ui_flash_mode(cxt_ptr, in_ptr, out_ptr);
+		break;
 	default:
 		ISP_LOGE("cmd %ld is not defined!", cmd);
 		break;
@@ -3967,6 +3988,15 @@ static cmr_int ae_altek_adpt_process(cmr_handle handle, void *in, void *out)
 	ret = aealtek_post_process(cxt_ptr, in_ptr);
 	if (ret)
 		goto exit;
+
+	if (cxt_ptr->flash_skip_number > 0) {
+		cxt_ptr->flash_skip_number--;
+		ISP_LOGI("flash skip_number:%d, flash_state:%d\n",cxt_ptr->flash_skip_number, cxt_ptr->flash_param.flash_state);
+		if (0==cxt_ptr->flash_skip_number && AEALTEK_FLASH_STATE_LIGHTING==cxt_ptr->flash_param.flash_state) {
+			ret = aealtek_set_flash_est(cxt_ptr, 0);
+			ret = aealtek_set_hw_flash_status(cxt_ptr, 1);
+		}
+	}
 
 	return ISP_SUCCESS;
 exit:

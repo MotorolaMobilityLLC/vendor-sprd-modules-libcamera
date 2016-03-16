@@ -762,6 +762,17 @@ static cmr_int setting_set_flash_mode(struct setting_component *cpt,
 	flash_param->flash_mode = flash_mode;
 	setting_flash_handle(cpt, parm, flash_param->flash_mode);
 
+	if (setting_is_rawrgb_format(cpt, parm)) {
+		struct setting_init_in              *init_in = &cpt->init_in;
+		struct common_isp_cmd_param         isp_param;
+
+		if (init_in->setting_isp_ioctl) {
+			isp_param.camera_id = parm->camera_id;
+			isp_param.cmd_value = parm->cmd_type_value;
+			ret = (*init_in->setting_isp_ioctl)(init_in->oem_handle, COM_ISP_SET_FLASH_MODE, &isp_param);
+		}
+	}
+
 	return ret;
 }
 

@@ -79,6 +79,7 @@ enum ae_ctrl_cmd {
 	AE_CTRL_GET_EXT_DEBUG_INFO,
 	AE_CTRL_GET_HW_ISO_SPEED,
 	AE_CTRL_GET_EXP_GAIN,
+	AE_CTRL_SET_FLASH_MODE,
 	AE_CTRL_CMD_MAX
 };
 
@@ -196,6 +197,10 @@ struct ae_ctrl_param_exp_comp {
 
 struct ae_ctrl_param_iso {
 	cmr_int iso_mode;
+};
+
+struct ae_ctrl_param_flash {
+	cmr_int flash_mode;
 };
 
 struct ae_ctrl_param_flicker {
@@ -404,6 +409,7 @@ struct ae_ctrl_param_in {
 	struct ae_ctrl_param_awb_gain awb_report;
 	struct ae_ctrl_param_af af_report;
 	struct ae_ctrl_param_gyro gyro;
+	struct ae_ctrl_param_flash flash;
 	};
 };
 
