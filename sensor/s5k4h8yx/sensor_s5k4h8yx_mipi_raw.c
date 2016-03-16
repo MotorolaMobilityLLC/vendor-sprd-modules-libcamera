@@ -403,16 +403,26 @@ static SENSOR_IOCTL_FUNC_TAB_T s_s5k4h8yx_ioctl_func_tab = {
 static SENSOR_LENS_EXT_INFO_T s_s5k4h8yx_lens_extend_info = {
 	200,	//f-number,focal ratio
 	287,	//focal_length;
-	60,	//max_fps,max fps of sensor's all settings
-	1,	//min_fps,normally it set to 1.
+	0,	//max_fps,max fps of sensor's all settings
 	16,	//max_adgain,AD-gain
 	0,	//ois_supported;
 	0,	//pdaf_supported;
 	1,	//exp_valid_frame_num;N+2-1
 	64,	//clamp_level,black level
 	0,	//adgain_valid_frame_num;N+1-1
-	1,	//is_high_fps
-	2	//high_fps_skip_num = max_fps/30;
+};
+
+static SENSOR_MODE_FPS_INFO_T s_s5k4h8yx_mode_fps_info = {
+	0,	//is_init;
+	{{SENSOR_MODE_COMMON_INIT,0,1,0,0},
+	{SENSOR_MODE_PREVIEW_ONE,0,1,0,0},
+	{SENSOR_MODE_SNAPSHOT_ONE_FIRST,0,1,0,0},
+	{SENSOR_MODE_SNAPSHOT_ONE_SECOND,0,1,0,0},
+	{SENSOR_MODE_SNAPSHOT_ONE_THIRD,0,1,0,0},
+	{SENSOR_MODE_PREVIEW_TWO,0,1,0,0},
+	{SENSOR_MODE_SNAPSHOT_TWO_FIRST,0,1,0,0},
+	{SENSOR_MODE_SNAPSHOT_TWO_SECOND,0,1,0,0},
+	{SENSOR_MODE_SNAPSHOT_TWO_THIRD,0,1,0,0}}
 };
 
 SENSOR_INFO_T g_s5k4h8yx_mipi_raw_info = {
@@ -959,6 +969,45 @@ static uint32_t _s5k4h8yx_GetMaxFrameLine(uint32_t index)
 	return max_line;
 }
 
+static uint32_t _s5k4h8yx_init_mode_fps_info()
+{
+	uint32_t rtn = SENSOR_SUCCESS;
+	SENSOR_PRINT("_s5k4h8yx_init_mode_fps_info:E");
+	if(!s_s5k4h8yx_mode_fps_info.is_init) {
+		uint32_t i,modn,tempfps = 0;
+		SENSOR_PRINT("_s5k4h8yx_init_mode_fps_info:start init");
+		for(i = 0;i < SENSOR_MODE_MAX; i++) {
+			//max fps should be multiple of 30,it calulated from line_time and frame_line
+			tempfps = 10000000/(s_s5k4h8yx_Resolution_Trim_Tab[i].line_time*s_s5k4h8yx_Resolution_Trim_Tab[i].frame_line);
+			modn = tempfps/30;
+			if(tempfps > modn*30)
+				modn++;
+			s_s5k4h8yx_mode_fps_info.sensor_mode_fps[i].max_fps = modn * 30;
+			if(s_s5k4h8yx_mode_fps_info.sensor_mode_fps[i].max_fps > 30) {
+				s_s5k4h8yx_mode_fps_info.sensor_mode_fps[i].is_high_fps = 1;
+				s_s5k4h8yx_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num = 
+					s_s5k4h8yx_mode_fps_info.sensor_mode_fps[i].max_fps/30;
+			}
+			if(s_s5k4h8yx_mode_fps_info.sensor_mode_fps[i].max_fps >
+					s_s5k4h8yx_lens_extend_info.max_fps) {
+				s_s5k4h8yx_lens_extend_info.max_fps =
+					s_s5k4h8yx_mode_fps_info.sensor_mode_fps[i].max_fps;
+			}
+			SENSOR_PRINT("mode %d,tempfps %d,frame_len %d,line_time: %d ",i,tempfps,
+					s_s5k4h8yx_Resolution_Trim_Tab[i].frame_line,
+					s_s5k4h8yx_Resolution_Trim_Tab[i].line_time);
+			SENSOR_PRINT("_s5k4h8yx:init_mode_fps_info:mode %d,max_fps: %d ",
+					i,s_s5k4h8yx_mode_fps_info.sensor_mode_fps[i].max_fps);
+			SENSOR_PRINT("_s5k4h8yx:init_mode_fps_info:is_high_fps: %d,highfps_skip_num %d",
+					s_s5k4h8yx_mode_fps_info.sensor_mode_fps[i].is_high_fps,
+					s_s5k4h8yx_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num);
+		}
+		s_s5k4h8yx_mode_fps_info.is_init = 1;
+	}
+	SENSOR_PRINT("_s5k4h8yx_init_mode_fps_info:X");
+	return rtn;
+}
+
 static unsigned long _s5k4h8yx_Identify(unsigned long param)
 {
 #define S5K4H8YX_PID_VALUE    0x4088
@@ -987,6 +1036,7 @@ static unsigned long _s5k4h8yx_Identify(unsigned long param)
 				SENSOR_PRINT_ERR("SENSOR_S5K4H8YX: the module is unknow error !");
 			}
 //			Sensor_s5k4h8yx_InitRawTuneInfo();
+			_s5k4h8yx_init_mode_fps_info();
 		} else {
 			SENSOR_PRINT_ERR("SENSOR_S5K4H8YX: Identify this is hm%x%x sensor !", pid_value, ver_value);
 			return ret_value;
@@ -1793,6 +1843,29 @@ static uint32_t _s5k4h8yx_get_golden_data(unsigned long param)
 	return rtn;
 }
 
+
+static uint32_t _s5k4h8yx_get_fps_info(uint32_t *param)
+{
+	uint32_t rtn = SENSOR_SUCCESS;
+	SENSOR_MODE_FPS_T *fps_info;
+	//make sure have inited fps of every sensor mode.
+	if(!s_s5k4h8yx_mode_fps_info.is_init) {
+		_s5k4h8yx_init_mode_fps_info();
+	}
+	fps_info = (SENSOR_MODE_FPS_T*)param;
+	uint32_t sensor_mode = fps_info->mode;
+	fps_info->max_fps = s_s5k4h8yx_mode_fps_info.sensor_mode_fps[sensor_mode].max_fps;
+	fps_info->min_fps = s_s5k4h8yx_mode_fps_info.sensor_mode_fps[sensor_mode].min_fps;
+	fps_info->is_high_fps = s_s5k4h8yx_mode_fps_info.sensor_mode_fps[sensor_mode].is_high_fps;
+	fps_info->high_fps_skip_num = s_s5k4h8yx_mode_fps_info.sensor_mode_fps[sensor_mode].high_fps_skip_num;
+	SENSOR_PRINT("SENSOR_s5k4h8yx: mode %d, max_fps: %d",fps_info->mode, fps_info->max_fps);
+	SENSOR_PRINT("SENSOR_s5k4h8yx: min_fps: %d", fps_info->min_fps);
+	SENSOR_PRINT("SENSOR_s5k4h8yx: is_high_fps: %d", fps_info->is_high_fps);
+	SENSOR_PRINT("SENSOR_s5k4h8yx: high_fps_skip_num: %d", fps_info->high_fps_skip_num);
+
+	return rtn;
+}
+
 static uint32_t _s5k4h8yx_get_static_info(uint32_t *param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
@@ -1825,22 +1898,6 @@ static uint32_t _s5k4h8yx_get_static_info(uint32_t *param)
 	return rtn;
 }
 
-static uint32_t _s5k4h8yx_get_fps_info(uint32_t *param)
-{
-	uint32_t rtn = SENSOR_SUCCESS;
-	struct sensor_fps_info *fps_info;
-	fps_info = (struct sensor_fps_info*)param;
-	fps_info->max_fps = s_s5k4h8yx_lens_extend_info.max_fps;
-	fps_info->min_fps = s_s5k4h8yx_lens_extend_info.min_fps;
-	fps_info->is_high_fps = s_s5k4h8yx_lens_extend_info.is_high_fps;
-	fps_info->high_fps_skip_num = s_s5k4h8yx_lens_extend_info.high_fps_skip_num;
-	SENSOR_PRINT("SENSOR_s5k4h8yx: max_fps: %d", fps_info->max_fps);
-	SENSOR_PRINT("SENSOR_s5k4h8yx: min_fps: %d", fps_info->min_fps);
-	SENSOR_PRINT("SENSOR_s5k4h8yx: is_high_fps: %d", fps_info->is_high_fps);
-	SENSOR_PRINT("SENSOR_s5k4h8yx: high_fps_skip_num: %d", fps_info->high_fps_skip_num);
-
-	return rtn;
-}
 
 static unsigned long _s5k4h8yx_access_val(unsigned long param)
 {

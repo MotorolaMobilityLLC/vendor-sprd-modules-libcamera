@@ -124,6 +124,7 @@ struct sensor_ex_info {
 };
 
 struct sensor_fps_info {
+	cmr_u32 sensor_mode;
 	cmr_u32 is_high_fps;
 	cmr_u32 high_fps_skip_num;
 	cmr_u32 max_fps;	//x100

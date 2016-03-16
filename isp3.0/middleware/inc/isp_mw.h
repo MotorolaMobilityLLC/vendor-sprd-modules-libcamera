@@ -378,11 +378,13 @@ struct  isp_sensor_ex_info{
 	cmr_s8 *sensor_version_info;
 };
 
+//Be Careful:struct isp_sensor_fps_info is the same as SENSOR_MODE_FPS_T;
 struct isp_sensor_fps_info{
+	cmr_u32 sensor_mode;
+	cmr_u32 max_fps;
+	cmr_u32 min_fps;
 	cmr_u32 is_high_fps;
 	cmr_u32 high_fps_skip_num;
-	cmr_u32 max_fps;    //x100
-	cmr_u32 min_fps;     //x100
 };
 
 struct isp_adgain_exp_info {
@@ -405,6 +407,7 @@ struct isp_init_param {
 	void* setting_param_list_ptr[3];//0:back,1:front,2:dual back,
 	struct isp_sensor_ex_info ex_info;
 	struct sensor_otp_cust_info *otp_data;
+	cmr_u32 image_pattern;
 };
 
 struct isp_video_limit {

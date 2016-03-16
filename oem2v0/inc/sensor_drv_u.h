@@ -693,16 +693,26 @@ typedef struct sensor_lens_ext_info_tag {
         cmr_u32 f_num;                          //f-number,focal ratio,actual f-number*100
         cmr_u32 focal_length;                   //actual focal_length*100
         cmr_u32 max_fps;                        //max fps of sensor's all settings
-        cmr_u32 min_fps;                        //min fps, we set it to 1.
         cmr_u32 max_adgain;                     //AD-gain
         cmr_u32 ois_supported;
         cmr_u32 pdaf_supported;
         cmr_u32 exp_valid_frame_num;
         cmr_u32 clamp_level;                    //black level
         cmr_u32 adgain_valid_frame_num;
-        cmr_u32 is_high_fps;                    //if max_fps > 60,then is high fps.
-        cmr_u32 high_fps_skip_num;              //max_fps/30
 } SENSOR_LENS_EXT_INFO_T;
+
+typedef struct sensor_mode_fps_tag {
+	enum sensor_mode mode;
+        cmr_u32 max_fps;		//max fps in current sensor mode,10*1000000/(line_time*frame_line)
+        cmr_u32 min_fps;		//min fps, we set it to 1.
+        cmr_u32 is_high_fps;		//if max_fps > 30,then is high fps.
+        cmr_u32 high_fps_skip_num;	//max_fps/30
+} SENSOR_MODE_FPS_T;
+
+typedef struct sensor_mode_fps_info_tag {
+	cmr_u32 is_init;	
+	SENSOR_MODE_FPS_T sensor_mode_fps[SENSOR_MODE_MAX];
+} SENSOR_MODE_FPS_INFO_T;
 //yy-param needed by ips3.0-end
 
 typedef struct sensor_info_tag {

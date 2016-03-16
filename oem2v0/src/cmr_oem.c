@@ -2651,6 +2651,8 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 	isp_param.camera_id = cxt->camera_id;
 	isp_param.alloc_cb = camera_malloc;
 	isp_param.free_cb  = camera_free;
+	isp_param.image_pattern = sensor_info_ptr->image_pattern; 
+	CMR_LOGD("image_pattern: %d", isp_param.image_pattern);
 	val.type               = SENSOR_VAL_TYPE_GET_STATIC_INFO;
 	val.pval               = &isp_param.ex_info;
 	ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_ACCESS_VAL, (cmr_uint)&val);
@@ -4243,7 +4245,8 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle, struct 
 		ret = cmr_sensor_get_mode(cxt->sn_cxt.sensor_handle, cxt->camera_id, &sn_mode);
 		//we think OEM has get sensor info and save it into sensor context,so we get mode info from cxt
 		sensor_mode_info = &cxt->sn_cxt.sensor_info.mode_info[sn_mode];
-		ret = cmr_sensor_get_fps_info(cxt->sn_cxt.sensor_handle,cxt->camera_id,&in_param.sensor_fps);
+		ret = cmr_sensor_get_fps_info(cxt->sn_cxt.sensor_handle,cxt->camera_id,
+				sn_mode,&in_param.sensor_fps);
 		if (ret) {
 			CMR_LOGE("get sensor fps info failed %ld", ret);
 			goto exit;
@@ -4459,11 +4462,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 	isp_param.resolution_info.sensor_max_size.h = cxt->sn_cxt.sensor_info.source_height_max;
 	isp_param.resolution_info.sensor_output_size.w = sensor_mode_info->out_width;
 	isp_param.resolution_info.sensor_output_size.h = sensor_mode_info->out_height;
-	//yy-param needed by isp3.0-end
-}
-	CMR_LOGI("work_mode %ld, dv_mode %ld, capture_mode %ld", work_mode, dv_mode, isp_param.capture_mode);
-	CMR_LOGI("isp w h, %d %d", isp_param.size.w, isp_param.size.h);
-	//yy-param needed by ips3.0-start
+
 	CMR_LOGI("isp sensor max w h, %d %d", isp_param.resolution_info.sensor_max_size.w,
 		isp_param.resolution_info.sensor_max_size.h);
 	CMR_LOGI("isp sensor output w h, %d %d", isp_param.resolution_info.sensor_output_size.w,
@@ -4472,7 +4471,8 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 		isp_param.resolution_info.crop.st_y,isp_param.resolution_info.crop.width,
 		isp_param.resolution_info.crop.height);
 
-	ret = cmr_sensor_get_fps_info(cxt->sn_cxt.sensor_handle,cxt->camera_id,&isp_param.sensor_fps);
+	ret = cmr_sensor_get_fps_info(cxt->sn_cxt.sensor_handle,cxt->camera_id,
+			sn_mode,&isp_param.sensor_fps);
 	if (ret) {
 		CMR_LOGE("get sensor fps info failed %ld", ret);
 		goto exit;
@@ -4482,6 +4482,9 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 		isp_param.sensor_fps.high_fps_skip_num,isp_param.sensor_fps.max_fps,
 		isp_param.sensor_fps.min_fps);
 	//yy-param needed by ips3.0-end
+}
+	CMR_LOGI("work_mode %ld, dv_mode %ld, capture_mode %ld", work_mode, dv_mode, isp_param.capture_mode);
+	CMR_LOGI("isp w h, %d %d", isp_param.size.w, isp_param.size.h);
 	ret = isp_video_start(isp_cxt->isp_handle, &isp_param);
 	if (!ret) {
 		isp_cxt->is_work = 1;

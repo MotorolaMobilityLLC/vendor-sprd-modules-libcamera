@@ -76,6 +76,7 @@ LOCAL unsigned long _dw9174_SRCInit(unsigned long mode);
 LOCAL unsigned long _ov2680_flash(unsigned long param);
 LOCAL uint32_t _ov2680_com_Identify_otp(void* param_ptr);
 LOCAL unsigned long _ov2680_cfg_otp(unsigned long  param);
+LOCAL unsigned long _ov2680_access_val(unsigned long param);
 
 LOCAL const struct raw_param_info_tab s_ov2680_raw_param_tab[]={
 	//{ov2680_RAW_PARAM_Sunny, &s_ov2680_mipi_raw_info, _ov2680_Sunny_Identify_otp, update_otp},
@@ -528,9 +529,33 @@ LOCAL SENSOR_IOCTL_FUNC_TAB_T s_ov2680_ioctl_func_tab = {
 	PNULL, //get_status
 	_ov2680_StreamOn,
 	_ov2680_StreamOff,
-	PNULL,//_ov2680_cfg_otp,
+	_ov2680_access_val,//_ov2680_access_val
 };
 
+static SENSOR_LENS_EXT_INFO_T s_ov2680_lens_extend_info = {
+	240,	//f-number,focal ratio
+	200,	//focal_length;
+	0,	//max_fps,max fps of sensor's all settings,it will be calculated from sensor mode fps
+	8,	//max_adgain,AD-gain
+	0,	//ois_supported;
+	0,	//pdaf_supported;
+	1,	//exp_valid_frame_num;N+2-1
+	16,	//clamp_level,black level
+	0,	//adgain_valid_frame_num;N+1-1
+};
+
+static SENSOR_MODE_FPS_INFO_T s_ov2680_mode_fps_info = {
+	0,	//is_init;
+	{{SENSOR_MODE_COMMON_INIT,0,1,0,0},
+	{SENSOR_MODE_PREVIEW_ONE,0,1,0,0},
+	{SENSOR_MODE_SNAPSHOT_ONE_FIRST,0,1,0,0},
+	{SENSOR_MODE_SNAPSHOT_ONE_SECOND,0,1,0,0},
+	{SENSOR_MODE_SNAPSHOT_ONE_THIRD,0,1,0,0},
+	{SENSOR_MODE_PREVIEW_TWO,0,1,0,0},
+	{SENSOR_MODE_SNAPSHOT_TWO_FIRST,0,1,0,0},
+	{SENSOR_MODE_SNAPSHOT_TWO_SECOND,0,1,0,0},
+	{SENSOR_MODE_SNAPSHOT_TWO_THIRD,0,1,0,0}}
+};
 
 SENSOR_INFO_T g_ov2680_mipi_raw_info = {
 	ov2680_I2C_ADDR_W,	// salve i2c write address
@@ -619,6 +644,45 @@ LOCAL unsigned long _ov2680_GetResolutionTrimTab(unsigned long param)
 {
 	SENSOR_PRINT("0x%lx", (unsigned long)s_ov2680_Resolution_Trim_Tab);
 	return (unsigned long) s_ov2680_Resolution_Trim_Tab;
+}
+
+LOCAL uint32_t _ov2680_init_mode_fps_info()
+{
+	uint32_t rtn = SENSOR_SUCCESS;
+	SENSOR_PRINT("_ov2680_init_mode_fps_info:E");
+	if(!s_ov2680_mode_fps_info.is_init) {
+		uint32_t i,modn,tempfps = 0;
+		SENSOR_PRINT("_ov2680_init_mode_fps_info:start init");
+		for(i = 0;i < SENSOR_MODE_MAX; i++) {
+			//max fps should be multiple of 30,it calulated from line_time and frame_line
+			tempfps = 10000000/(s_ov2680_Resolution_Trim_Tab[i].line_time*s_ov2680_Resolution_Trim_Tab[i].frame_line);
+			modn = tempfps / 30;
+			if(tempfps > modn*30)
+				modn++;
+			s_ov2680_mode_fps_info.sensor_mode_fps[i].max_fps = modn*30;
+			if(s_ov2680_mode_fps_info.sensor_mode_fps[i].max_fps > 30) {
+				s_ov2680_mode_fps_info.sensor_mode_fps[i].is_high_fps = 1;
+				s_ov2680_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num = 
+					s_ov2680_mode_fps_info.sensor_mode_fps[i].max_fps/30;
+			}
+			if(s_ov2680_mode_fps_info.sensor_mode_fps[i].max_fps > 
+					s_ov2680_lens_extend_info.max_fps) {
+				s_ov2680_lens_extend_info.max_fps =
+					s_ov2680_mode_fps_info.sensor_mode_fps[i].max_fps;
+			}
+			SENSOR_PRINT("mode %d,tempfps %d,frame_len %d,line_time: %d ",i,tempfps,
+					s_ov2680_Resolution_Trim_Tab[i].frame_line,
+					s_ov2680_Resolution_Trim_Tab[i].line_time);
+			SENSOR_PRINT("mode %d,max_fps: %d ",
+					i,s_ov2680_mode_fps_info.sensor_mode_fps[i].max_fps);
+			SENSOR_PRINT("is_high_fps: %d,highfps_skip_num %d",
+					s_ov2680_mode_fps_info.sensor_mode_fps[i].is_high_fps,
+					s_ov2680_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num);
+		}
+		s_ov2680_mode_fps_info.is_init = 1;
+	}
+	SENSOR_PRINT("_ov2680_init_mode_fps_info:X");
+	return rtn;
 }
 
 LOCAL unsigned long _ov2680_PowerOn(unsigned long power_on)
@@ -1133,6 +1197,7 @@ LOCAL unsigned long _ov2680_Identify(unsigned long param)
 		if (ov2680_VER_VALUE == ver_value) {
 			ret_value=_ov2680_GetRawInof();
 			Sensor_InitRawTuneInfo();
+			_ov2680_init_mode_fps_info();
 			ret_value = SENSOR_SUCCESS;
 			SENSOR_PRINT("SENSOR_ov2680: this is ov2680 sensor !");
 		} else {
@@ -1512,3 +1577,92 @@ LOCAL unsigned long _dw9174_SRCInit(unsigned long mode)
 
 	return ret_value;
 }
+
+LOCAL uint32_t _ov2680_get_static_info(uint32_t *param)
+{
+	uint32_t rtn = SENSOR_SUCCESS;
+	struct sensor_ex_info *ex_info;
+	//make sure we have get max fps of all settings.
+	if(!s_ov2680_mode_fps_info.is_init) {
+		_ov2680_init_mode_fps_info();
+	}
+	ex_info = (struct sensor_ex_info*)param;
+	ex_info->f_num = s_ov2680_lens_extend_info.f_num;
+	ex_info->focal_length = s_ov2680_lens_extend_info.focal_length;
+	ex_info->max_fps = s_ov2680_lens_extend_info.max_fps;
+	ex_info->max_adgain = s_ov2680_lens_extend_info.max_adgain;
+	ex_info->ois_supported = s_ov2680_lens_extend_info.ois_supported;
+	ex_info->pdaf_supported = s_ov2680_lens_extend_info.pdaf_supported;
+	ex_info->exp_valid_frame_num = s_ov2680_lens_extend_info.exp_valid_frame_num;
+	ex_info->clamp_level = s_ov2680_lens_extend_info.clamp_level;
+	ex_info->adgain_valid_frame_num = s_ov2680_lens_extend_info.adgain_valid_frame_num;
+	ex_info->preview_skip_num = g_ov2680_mipi_raw_info.preview_skip_num;
+	ex_info->capture_skip_num = g_ov2680_mipi_raw_info.capture_skip_num;
+	ex_info->name = g_ov2680_mipi_raw_info.name;
+	ex_info->sensor_version_info = g_ov2680_mipi_raw_info.sensor_version_info;
+	SENSOR_PRINT("SENSOR_ov2680: f_num: %d", ex_info->f_num);
+	SENSOR_PRINT("SENSOR_ov2680: max_fps: %d", ex_info->max_fps);
+	SENSOR_PRINT("SENSOR_ov2680: max_adgain: %d", ex_info->max_adgain);
+	SENSOR_PRINT("SENSOR_ov2680: ois_supported: %d", ex_info->ois_supported);
+	SENSOR_PRINT("SENSOR_ov2680: pdaf_supported: %d", ex_info->pdaf_supported);
+	SENSOR_PRINT("SENSOR_ov2680: exp_valid_frame_num: %d", ex_info->exp_valid_frame_num);
+	SENSOR_PRINT("SENSOR_ov2680: clam_level: %d", ex_info->clamp_level);
+	SENSOR_PRINT("SENSOR_ov2680: adgain_valid_frame_num: %d", ex_info->adgain_valid_frame_num);
+	SENSOR_PRINT("SENSOR_ov2680: sensor name is: %s", ex_info->name);
+	SENSOR_PRINT("SENSOR_ov2680: sensor version info is: %s", ex_info->sensor_version_info);
+
+	return rtn;
+}
+
+
+LOCAL uint32_t _ov2680_get_fps_info(uint32_t *param)
+{
+	uint32_t rtn = SENSOR_SUCCESS;
+	SENSOR_MODE_FPS_T *fps_info;
+	//make sure have inited fps of every sensor mode.
+	if(!s_ov2680_mode_fps_info.is_init) {
+		_ov2680_init_mode_fps_info();
+	}
+	fps_info = (SENSOR_MODE_FPS_T*)param;
+	uint32_t sensor_mode = fps_info->mode;
+	fps_info->max_fps = s_ov2680_mode_fps_info.sensor_mode_fps[sensor_mode].max_fps;
+	fps_info->min_fps = s_ov2680_mode_fps_info.sensor_mode_fps[sensor_mode].min_fps;
+	fps_info->is_high_fps = s_ov2680_mode_fps_info.sensor_mode_fps[sensor_mode].is_high_fps;
+	fps_info->high_fps_skip_num = s_ov2680_mode_fps_info.sensor_mode_fps[sensor_mode].high_fps_skip_num;
+	SENSOR_PRINT("SENSOR_ov2680: mode %d, max_fps: %d",fps_info->mode, fps_info->max_fps);
+	SENSOR_PRINT("SENSOR_ov2680: min_fps: %d", fps_info->min_fps);
+	SENSOR_PRINT("SENSOR_ov2680: is_high_fps: %d", fps_info->is_high_fps);
+	SENSOR_PRINT("SENSOR_ov2680: high_fps_skip_num: %d", fps_info->high_fps_skip_num);
+
+	return rtn;
+}
+
+LOCAL unsigned long _ov2680_access_val(unsigned long param)
+{
+	uint32_t rtn = SENSOR_SUCCESS;
+	SENSOR_VAL_T* param_ptr = (SENSOR_VAL_T*)param;
+	uint16_t tmp;
+
+	SENSOR_PRINT("SENSOR_ov2680: _ov2680_access_val E param_ptr = %p", param_ptr);
+	if(!param_ptr){
+		return rtn;
+	}
+
+	SENSOR_PRINT("SENSOR_ov2680: param_ptr->type=%x", param_ptr->type);
+	switch(param_ptr->type)
+	{
+		case SENSOR_VAL_TYPE_GET_STATIC_INFO:
+			rtn = _ov2680_get_static_info(param_ptr->pval);
+			break;
+		case SENSOR_VAL_TYPE_GET_FPS_INFO:
+			rtn = _ov2680_get_fps_info(param_ptr->pval);
+			break;
+		default:
+			break;
+	}
+
+	SENSOR_PRINT("SENSOR_ov2680: _ov2680_access_val X");
+
+	return rtn;
+}
+
