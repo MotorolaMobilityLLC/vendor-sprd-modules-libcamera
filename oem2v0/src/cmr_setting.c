@@ -162,8 +162,6 @@ struct setting_hal_param {
 #ifdef CONFIG_MEM_OPTIMIZATION
 	cmr_uint                       sprd_zsl_enabled;
 #endif
-	cmr_uint                       sprd_pipviv_enabled;
-	cmr_uint                       sprd_highiso_enabled;
 	cmr_uint                       is_ae_lock;
 };
 
@@ -1638,26 +1636,6 @@ static cmr_int setting_get_sprd_zsl_enabled(struct setting_component *cpt,
 }
 #endif
 
-static cmr_int setting_get_sprd_pipviv_enabled(struct setting_component *cpt,
-								struct setting_cmd_parameter *parm)
-{
-	cmr_int ret = 0;
-	struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
-
-	parm->cmd_type_value = hal_param->sprd_pipviv_enabled;
-	return ret;
-}
-
-static cmr_int setting_get_sprd_highiso_enabled(struct setting_component *cpt,
-								struct setting_cmd_parameter *parm)
-{
-	cmr_int ret = 0;
-	struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
-
-	parm->cmd_type_value = hal_param->sprd_highiso_enabled;
-	return ret;
-}
-
 static cmr_int setting_set_ae_lock_unlock(struct setting_component *cpt,
 								struct setting_cmd_parameter *parm)
 {
@@ -1726,29 +1704,6 @@ static cmr_int setting_set_sprd_zsl_enabled(struct setting_component *cpt,
 	return ret;
 }
 #endif
-
-static cmr_int setting_set_sprd_pipviv_enabled(struct setting_component *cpt,
-								struct setting_cmd_parameter *parm)
-{
-	cmr_int ret = 0;
-	struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
-
-	hal_param->sprd_pipviv_enabled = parm->cmd_type_value;
-
-	CMR_LOGD("sprd_pipviv_enabled=%ld", hal_param->sprd_pipviv_enabled);
-	 return ret;
-}
-
-static cmr_int setting_set_sprd_highiso_enabled(struct setting_component *cpt,
-								struct setting_cmd_parameter *parm)
-{
-	cmr_int ret = 0;
-	struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
-
-	hal_param->sprd_highiso_enabled = parm->cmd_type_value;
-	CMR_LOGD("sprd_highiso_enabled=%ld", hal_param->sprd_highiso_enabled);
-	return ret;
-}
 
 static cmr_int setting_set_capture_size(struct setting_component *cpt,
 					                    struct setting_cmd_parameter *parm)
@@ -3001,8 +2956,6 @@ cmr_int cmr_setting_ioctl(cmr_handle setting_handle, cmr_uint cmd_type,
 #ifdef CONFIG_MEM_OPTIMIZATION
 		{CAMERA_PARAM_SPRD_ZSL_ENABLED,   setting_set_sprd_zsl_enabled},
 #endif
-		{CAMERA_PARAM_SPRD_PIPVIV_ENABLED, setting_set_sprd_pipviv_enabled},
-		{CAMERA_PARAM_SPRD_HIGHISO_ENABLED, setting_set_sprd_highiso_enabled},
 		{CAMERA_PARAM_ISP_AE_LOCK_UNLOCK, setting_set_ae_lock_unlock},
 		{CAMERA_PARAM_TYPE_MAX,                NULL},
 		{SETTING_GET_PREVIEW_ANGLE,            setting_get_preview_angle},
@@ -3036,8 +2989,6 @@ cmr_int cmr_setting_ioctl(cmr_handle setting_handle, cmr_uint cmd_type,
 		{SETTING_GET_SPRD_ZSL_ENABLED,            setting_get_sprd_zsl_enabled},
 #endif
 		{SETTING_SET_ROI_CONVERGENCE_REQ,           setting_set_roi_convergence_req},
-		{SETTING_GET_SPRD_PIPVIV_ENABLED, setting_get_sprd_pipviv_enabled},
-		{SETTING_GET_SPRD_HIGHISO_ENABLED, setting_get_sprd_highiso_enabled},
 	};
 	struct setting_item          *item = NULL;
 	struct setting_component     *cpt =	 (struct setting_component *)setting_handle;

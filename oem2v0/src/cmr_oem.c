@@ -1218,7 +1218,7 @@ void camera_snapshot_channel_handle(cmr_handle oem_handle, void* param)
 			}
 
 			struct camera_frame_type *frame_type = (struct camera_frame_type *)param;
-			if (((cxt->lls_shot_mode)|| (cxt->is_vendor_hdr) || cxt->is_pipviv_mode) && (1 != frame_type->need_free)) {
+			if (((cxt->lls_shot_mode)|| (cxt->is_vendor_hdr)) && (1 != frame_type->need_free)) {
 				is_need_resume = 1;
 			}
 		} else {
@@ -1388,7 +1388,7 @@ void camera_snapshot_cb(cmr_handle oem_handle, enum snapshot_cb_type cb, enum sn
 			camera_snapshot_channel_handle(oem_handle, param);
 		}
 
-		if (cxt->lls_shot_mode || cxt->is_vendor_hdr || cxt->is_pipviv_mode) {
+		if (cxt->lls_shot_mode || cxt->is_vendor_hdr) {
 			if ((SNAPSHOT_FUNC_TAKE_PICTURE == func) && (SNAPSHOT_EVT_CB_SNAPSHOT_JPEG_DONE == cb) && param) {
 		        struct camera_frame_type *frame_type = (struct camera_frame_type *)param;
 
@@ -2618,6 +2618,11 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 	}
 
 	isp_param.setting_param_ptr = sensor_info_ptr->raw_info_ptr;
+	if (sensor_info_ptr->raw_info_ptr != NULL) {
+		CMR_LOGE("raw_info_ptr Not null ");
+		if (sensor_info_ptr->raw_info_ptr->ioctrl_ptr != NULL) CMR_LOGE("tony ioctrl_ptr Not null ");
+	}
+	
 	if (0 != sensor_info_ptr->mode_info[SENSOR_MODE_COMMON_INIT].width) {
 		isp_param.size.w = sensor_info_ptr->mode_info[SENSOR_MODE_COMMON_INIT].width;
 		isp_param.size.h = sensor_info_ptr->mode_info[SENSOR_MODE_COMMON_INIT].height;
@@ -5742,22 +5747,6 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	}
 #endif
 
-	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_SPRD_PIPVIV_ENABLED, &setting_param);
-	 if (ret) {
-	 	CMR_LOGE("failed to get preview sprd pipviv enabled flag %ld", ret);
-		goto exit;
-	}
-	out_param_ptr->sprd_pipviv_enabled = setting_param.cmd_type_value;
-	cxt->is_pipviv_mode = setting_param.cmd_type_value;
-	CMR_LOGI("sprd pipviv_enabled flag %d", out_param_ptr->sprd_pipviv_enabled);
-	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_SPRD_HIGHISO_ENABLED, &setting_param);
-	if (ret) {
-		CMR_LOGE("failed to get preview sprd high iso enabled flag %ld", ret);
-		goto exit;
-	}
-	out_param_ptr->sprd_highiso_enabled = setting_param.cmd_type_value;
-	CMR_LOGI("sprd highiso_enabled flag %d", out_param_ptr->sprd_highiso_enabled);
-
 exit:
 	CMR_LOGI("prev size %d %d pic size %d %d", out_param_ptr->preview_size.width, out_param_ptr->preview_size.height,
 		     out_param_ptr->picture_size.width, out_param_ptr->picture_size.height);
@@ -5845,7 +5834,6 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle, struct snapshot_param *
 	out_ptr->post_proc_setting.data_endian = cxt->snp_cxt.data_endian;
 	out_ptr->lls_shot_mode = cxt->lls_shot_mode;
 	out_ptr->is_vendor_hdr = cxt->is_vendor_hdr;
-	out_ptr->is_pipviv_mode = cxt->is_pipviv_mode;
 	setting_param.camera_id = cxt->camera_id;
 	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_HDR, &setting_param);
 	if (ret) {
@@ -6119,14 +6107,6 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id, cmr
 #endif
 	case CAMERA_PARAM_ISP_AE_LOCK_UNLOCK:
 		CMR_LOGD("CAMERA_PARAM_ISP_AE_LOCK_UNLOCK");
-		setting_param.cmd_type_value = param;
-		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);
-		break;
-	case CAMERA_PARAM_SPRD_PIPVIV_ENABLED:
-		setting_param.cmd_type_value = param;
-		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);
-		break;
-	case CAMERA_PARAM_SPRD_HIGHISO_ENABLED:
 		setting_param.cmd_type_value = param;
 		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);
 		break;

@@ -561,7 +561,7 @@ cmr_int snp_scale_cb_handle(cmr_handle snp_handle, void *data)
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct snp_context             *cxt = (struct snp_context*)snp_handle;
 	struct img_frm                 *scale_out_ptr = (struct img_frm*)data;
-	if (cxt->req_param.lls_shot_mode || cxt->req_param.is_vendor_hdr || cxt->req_param.is_pipviv_mode) {
+	if (cxt->req_param.lls_shot_mode || cxt->req_param.is_vendor_hdr) {
 		ret = snp_take_picture_done(snp_handle, &cxt->cur_frame_info);
 		snp_post_proc_done(snp_handle);
 		return ret;
@@ -3948,7 +3948,7 @@ cmr_int camera_set_frame_type(cmr_handle snp_handle, struct camera_frame_type *f
 	req_param_ptr = &cxt->req_param;
 	mem_ptr = &req_param_ptr->post_proc_setting.mem[frm_id];
 	frame_type->buf_id = info->frame_real_id;
-	if (cxt->req_param.lls_shot_mode || cxt->req_param.is_vendor_hdr || cxt->req_param.is_pipviv_mode) {
+	if (cxt->req_param.lls_shot_mode || cxt->req_param.is_vendor_hdr) {
 	    frame_type->width = req_param_ptr->post_proc_setting.dealign_actual_snp_size.width;
 	    frame_type->height = req_param_ptr->post_proc_setting.dealign_actual_snp_size.height;
 	} else {
@@ -4003,7 +4003,7 @@ cmr_int camera_set_frame_type(cmr_handle snp_handle, struct camera_frame_type *f
 	if (cxt->req_param.lls_shot_mode || cxt->req_param.is_vendor_hdr) {
 		CMR_LOGI("vendor capture cap_cnt = %d, total_num = %d",
 					cxt->cap_cnt, cxt->req_param.total_num);
-		if (0 == snp_get_request(snp_handle) || (cxt->cap_cnt == cxt->req_param.total_num)  || cxt->req_param.is_pipviv_mode) {
+		if (0 == snp_get_request(snp_handle) || (cxt->cap_cnt == cxt->req_param.total_num)) {
 			frame_type->need_free = 1;
 		} else {
 			frame_type->need_free = 0;
@@ -4143,7 +4143,7 @@ cmr_int snp_take_picture_done(cmr_handle snp_handle, struct frm_info *data)
 								SNAPSHOT_EXIT_CB_FAILED,NULL);
 	}
 
-	if (cxt->req_param.lls_shot_mode || cxt->req_param.is_vendor_hdr || cxt->req_param.is_pipviv_mode) {
+	if (cxt->req_param.lls_shot_mode || cxt->req_param.is_vendor_hdr) {
 		snp_notify_redisplay_proc(snp_handle,
 						SNAPSHOT_FUNC_TAKE_PICTURE,
 						SNAPSHOT_EVT_CB_SNAPSHOT_JPEG_DONE,
@@ -4216,7 +4216,7 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data)
 	}
 	snp_set_status(snp_handle, POST_PROCESSING);
 
-	if (cxt->req_param.lls_shot_mode || cxt->req_param.is_vendor_hdr || cxt->req_param.is_pipviv_mode ) {
+	if (cxt->req_param.lls_shot_mode || cxt->req_param.is_vendor_hdr) {
 		if (chn_param_ptr->is_rot) {
 			CMR_LOGI("need rotate");
 			ret = snp_start_rot(snp_handle, data);

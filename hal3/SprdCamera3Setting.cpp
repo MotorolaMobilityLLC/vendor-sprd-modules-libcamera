@@ -1260,7 +1260,7 @@ const CameraInfo kCameraInfo[] = {
 
 SprdCameraParameters SprdCamera3Setting::mDefaultParameters;
 camera_metadata_t *SprdCamera3Setting::mStaticMetadata[CAMERA_ID_COUNT];
-//camera_metadata_t *SprdCamera3Setting::mDefaultMetadata[CAMERA3_TEMPLATE_COUNT];
+camera_metadata_t *SprdCamera3Setting::mDefaultMetadata[CAMERA3_TEMPLATE_COUNT];
 CameraMetadata SprdCamera3Setting::mStaticInfo[CAMERA_ID_COUNT];
 
 const int64_t USEC = 1000LL;
@@ -2714,10 +2714,6 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
 	uint8_t sprdZslEnabled= 0;
 	requestInfo.update(ANDROID_SPRD_ZSL_ENABLED, &sprdZslEnabled, 1);
 #endif
-	uint8_t sprdPipVivEnabled= 0;
-	requestInfo.update(ANDROID_SPRD_PIPVIV_ENABLED, &sprdPipVivEnabled, 1);
-	uint8_t sprdHighIsoEnabled= 0;
-	requestInfo.update(ANDROID_SPRD_PIPVIV_ENABLED, &sprdHighIsoEnabled, 1);
 
 	mDefaultMetadata[type] = requestInfo.release();
 	*metadata = mDefaultMetadata[type];
@@ -3327,16 +3323,6 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 		s_setting[mCameraId].statisticsInfo.face_detect_mode = valueU8;
 		pushAndroidParaTag(ANDROID_STATISTICS_FACE_DETECT_MODE);
 		HAL_LOGV("fd mode %d", valueU8);
-	}
-	if (frame_settings.exists(ANDROID_SPRD_PIPVIV_ENABLED)) {
-		s_setting[mCameraId].sprddefInfo.sprd_pipviv_enabled = 0;
-		pushAndroidParaTag(ANDROID_SPRD_PIPVIV_ENABLED);
-		HAL_LOGD("sprd pipviv enabled is %d", s_setting[mCameraId].sprddefInfo.sprd_pipviv_enabled);
-	}
-	if (frame_settings.exists(ANDROID_SPRD_HIGHISO_ENABLED)) {
-		s_setting[mCameraId].sprddefInfo.sprd_highiso_enabled = 0;
-		pushAndroidParaTag(ANDROID_SPRD_HIGHISO_ENABLED);
-		HAL_LOGD("sprd high iso enabled is %d", s_setting[mCameraId].sprddefInfo.sprd_highiso_enabled);
 	}
 	#undef GET_VALUE_IF_DIF
 	return rc;

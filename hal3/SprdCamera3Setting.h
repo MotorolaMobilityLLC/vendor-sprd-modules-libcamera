@@ -340,8 +340,6 @@ typedef struct {
 	uint8_t sprd_zsl_enabled;
 #endif
         uint8_t flip_on;
-	uint8_t sprd_pipviv_enabled;
-	uint8_t sprd_highiso_enabled;
 } SPRD_DEF_Tag;
 
 typedef struct {
@@ -517,7 +515,7 @@ public:
 	static uint8_t mMaxCameraCount;
 	static camera_metadata_t *mStaticMetadata[CAMERA_ID_COUNT];
 	static SprdCameraParameters mDefaultParameters;
-	camera_metadata_t *mDefaultMetadata[CAMERA3_TEMPLATE_COUNT];
+	static camera_metadata_t *mDefaultMetadata[CAMERA3_TEMPLATE_COUNT];
 	static sprd_setting_info_t      s_setting[CAMERA_ID_COUNT];
 	static CameraMetadata mStaticInfo[CAMERA_ID_COUNT];
 

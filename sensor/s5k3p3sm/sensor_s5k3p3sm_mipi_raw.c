@@ -866,8 +866,8 @@ static unsigned long _s5k3p3sm_Identify(unsigned long param)
 
 	SENSOR_PRINT_ERR("SENSOR_S5K3P3SM: mipi raw identify\n");
 
-	pid_value = Sensor_ReadReg_Ex(S5K3P3SM_PID_ADDR, SENSOR_MAIN);
-	ver_value = Sensor_ReadReg_Ex(S5K3P3SM_VER_ADDR,SENSOR_MAIN);
+	pid_value = Sensor_ReadReg(S5K3P3SM_PID_ADDR);
+	ver_value = Sensor_ReadReg(S5K3P3SM_VER_ADDR);
 
 	if (S5K3P3SM_PID_VALUE == pid_value) {
 		SENSOR_PRINT("SENSOR_S5K3P3SM: Identify: PID = %x, VER = %x", pid_value, ver_value);
@@ -923,13 +923,13 @@ static unsigned long _s5k3p3sm_write_exp_dummy(uint16_t expsure_line,
 		frame_len+=0x01;
 	}
 
-	frame_len_cur = Sensor_ReadReg_Ex(0x0340, SENSOR_MAIN);
+	frame_len_cur = Sensor_ReadReg(0x0340);
 
 	if(frame_len_cur != frame_len) {
-		ret_value = Sensor_WriteReg_Ex(0x0340, frame_len, SENSOR_MAIN);
+		ret_value = Sensor_WriteReg(0x0340, frame_len);
 	}
 
-	ret_value = Sensor_WriteReg_Ex(0x202, expsure_line, SENSOR_MAIN);
+	ret_value = Sensor_WriteReg(0x202, expsure_line);
 
 
 	/*if (frame_len_cur > frame_len) {
@@ -939,7 +939,7 @@ static unsigned long _s5k3p3sm_write_exp_dummy(uint16_t expsure_line,
 	//ret_value = Sensor_WriteReg(0x104, 0x00);
 	s_capture_shutter = expsure_line;
 	linetime=s_s5k3p3sm_Resolution_Trim_Tab[size_index].line_time;
-	Sensor_SetSensorExifInfo_Ex(SENSOR_EXIF_CTRL_EXPOSURETIME, s_capture_shutter, SENSOR_MAIN);
+	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, s_capture_shutter);
 	s_exposure_time = s_capture_shutter * linetime / 10;
 
 	return ret_value;
@@ -971,7 +971,7 @@ static struct sensor_otp_cust_info s5k3p3_otp_info;
 
 static cmr_u8 s5k3p3sm_i2c_read_otp(cmr_u16 addr)
 {
-	return sensor_grc_read_i2c_Ex(0xA0 >> 1, addr, BITS_REG8_ADDR16, SENSOR_MAIN);
+	return sensor_grc_read_i2c(0xA0 >> 1, addr, BITS_REG8_ADDR16);
 }
 
 static int s5k3p3sm_otp_init(void)
@@ -1120,7 +1120,7 @@ static unsigned long _s5k3p3sm_write_gain(unsigned long param)
 		d_gain = real_gain>>1;
 	}
 
-	ret_value = Sensor_WriteReg_Ex(0x204, a_gain, SENSOR_MAIN);
+	ret_value = Sensor_WriteReg(0x204, a_gain);
 #if 0
 	ret_value = Sensor_WriteReg(0x20e, d_gain);
 	ret_value = Sensor_WriteReg(0x210, d_gain);
@@ -1161,7 +1161,7 @@ static unsigned long _s5k3p3sm_BeforeSnapshot(unsigned long param)
 
 	CFG_INFO:
 	s_capture_shutter = _s5k3p3sm_get_shutter();
-	Sensor_SetSensorExifInfo_Ex(SENSOR_EXIF_CTRL_EXPOSURETIME, s_capture_shutter, SENSOR_MAIN);
+	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, s_capture_shutter);
 	s_exposure_time = s_capture_shutter * cap_linetime / 10;
 
 	return SENSOR_SUCCESS;
@@ -1215,7 +1215,7 @@ static unsigned long _s5k3p3sm_StreamOn(unsigned long param)
 {
 	SENSOR_PRINT_ERR("SENSOR_S5K3P3SM: StreamOn");
 
-	Sensor_WriteReg_Ex(0x0100, 0x0100, SENSOR_MAIN);
+	Sensor_WriteReg(0x0100, 0x0100);
 
 	SENSOR_PRINT_ERR("SENSOR_S5K3P3SM: StreamOn end");
 
@@ -1226,7 +1226,7 @@ static unsigned long _s5k3p3sm_StreamOff(unsigned long param)
 {
 	SENSOR_PRINT_ERR("SENSOR_S5K3P3SM: StreamOff");
 
-	Sensor_WriteReg_Ex(0x0100, 0x0000, SENSOR_MAIN);
+	Sensor_WriteReg(0x0100, 0x0000);
 	usleep(120*1000);
 
 	return 0;
@@ -1260,24 +1260,24 @@ static unsigned long _s5k3p3sm_PowerOn(unsigned long power_on)
 	uint8_t pid_value = 0x00;
 
 	if (SENSOR_TRUE == power_on) {
-		Sensor_SetResetLevel_Ex(reset_level, SENSOR_MAIN);
-		Sensor_PowerDown_Ex(power_down, SENSOR_MAIN);
-		Sensor_SetVoltage_Ex(dvdd_val, avdd_val, iovdd_val, SENSOR_MAIN);
-		Sensor_SetMonitorVoltage_Ex(SENSOR_AVDD_3000MV, SENSOR_MAIN);
+		Sensor_SetResetLevel(reset_level);
+		Sensor_PowerDown(power_down);
+		Sensor_SetVoltage(dvdd_val, avdd_val, iovdd_val);
+		Sensor_SetMonitorVoltage(SENSOR_AVDD_3000MV);
 		usleep(50*1000);
 
-		Sensor_SetResetLevel_Ex(!reset_level, SENSOR_MAIN);
-		Sensor_PowerDown_Ex(!power_down, SENSOR_MAIN);
+		Sensor_SetResetLevel(!reset_level);
+		Sensor_PowerDown(!power_down);
 		usleep(50*1000);
 		//_dw9807_SRCInit(2);
-		Sensor_SetMCLK_Ex(SENSOR_DEFALUT_MCLK, SENSOR_MAIN);
+		Sensor_SetMCLK(SENSOR_DEFALUT_MCLK);
 		usleep(50*1000);
 	} else {
-		Sensor_SetMCLK_Ex(SENSOR_DISABLE_MCLK, SENSOR_MAIN);
-		Sensor_SetResetLevel_Ex(reset_level, SENSOR_MAIN);
-		Sensor_PowerDown_Ex(power_down, SENSOR_MAIN);
-		Sensor_SetVoltage_Ex(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_MAIN);
-		Sensor_SetMonitorVoltage_Ex(SENSOR_AVDD_CLOSED, SENSOR_MAIN);
+		Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
+		Sensor_SetResetLevel(reset_level);
+		Sensor_PowerDown(power_down);
+		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
+		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 	}
 
 	SENSOR_PRINT_ERR("SENSOR_S5K3P3SM: _s5k3p3sm_PowerOn(1:on, 0:off): %ld, reset_level %d, dvdd_val %d", power_on, reset_level, dvdd_val);
@@ -1293,10 +1293,10 @@ static uint32_t _s5k3p3sm_write_otp_gain(uint32_t *param)
 
 	//ret_value = Sensor_WriteReg(0x104, 0x01);
 	value = (*param)>>0x08;
-	ret_value = Sensor_WriteReg_Ex(0x204, value, SENSOR_MAIN);
+	ret_value = Sensor_WriteReg(0x204, value);
 	value = (*param)&0xff;
-	ret_value = Sensor_WriteReg_Ex(0x205, value, SENSOR_MAIN);
-	ret_value = Sensor_WriteReg_Ex(0x104, 0x00, SENSOR_MAIN);
+	ret_value = Sensor_WriteReg(0x205, value);
+	ret_value = Sensor_WriteReg(0x104, 0x00);
 
 	return ret_value;
 }
@@ -1307,8 +1307,8 @@ static uint32_t _s5k3p3sm_read_otp_gain(uint32_t *param)
 	uint16_t gain_h = 0;
 	uint16_t gain_l = 0;
 	#if 1 // for MP tool //!??
-	gain_h = Sensor_ReadReg_Ex(0x0204, SENSOR_MAIN) & 0xff;
-	gain_l = Sensor_ReadReg_Ex(0x0205, SENSOR_MAIN) & 0xff;
+	gain_h = Sensor_ReadReg(0x0204) & 0xff;
+	gain_l = Sensor_ReadReg(0x0205) & 0xff;
 	*param = ((gain_h << 8) | gain_l);
 	#else
 	*param = s_set_gain;
@@ -1324,8 +1324,8 @@ static uint16_t _s5k3p3sm_get_shutter(void)
 	uint16_t shutter_h = 0;
 	uint16_t shutter_l = 0;
 #if 1  // MP tool //!??
-	shutter_h = Sensor_ReadReg_Ex(0x0202, SENSOR_MAIN) & 0xff;
-	shutter_l = Sensor_ReadReg_Ex(0x0203, SENSOR_MAIN) & 0xff;
+	shutter_h = Sensor_ReadReg(0x0202) & 0xff;
+	shutter_l = Sensor_ReadReg(0x0203) & 0xff;
 
 	return (shutter_h << 8) | shutter_l;
 #else

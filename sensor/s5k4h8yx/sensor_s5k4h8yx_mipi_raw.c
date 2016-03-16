@@ -321,7 +321,7 @@ static unsigned long _s5k4h8yx_set_video_mode(unsigned long param)
 	if (param >= SENSOR_VIDEO_MODE_MAX)
 		return 0;
 
-	if (SENSOR_SUCCESS != Sensor_GetMode_Ex(&mode, SENSOR_SUB)) {
+	if (SENSOR_SUCCESS != Sensor_GetMode(&mode)) {
 		SENSOR_PRINT("fail.");
 		return SENSOR_FAIL;
 	}
@@ -801,14 +801,14 @@ static uint32_t _dw9807_SRCInit(uint32_t mode)
 
 		cmd_val[0] = 0x02;
 		cmd_val[1] = 0x01;
-		ret_value = Sensor_WriteI2C_Ex(slave_addr,(uint8_t*)&cmd_val[0], cmd_len, SENSOR_SUB);
+		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 		if(ret_value){
 			SENSOR_PRINT("SENSOR_S5K4H8YX: _dw9807_SRCInit 0 fail!");
 		}
 
 		cmd_val[0] = 0x02;
 		cmd_val[1] = 0x00;
-		ret_value = Sensor_WriteI2C_Ex(slave_addr,(uint8_t*)&cmd_val[0], cmd_len, SENSOR_SUB);
+		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 		if(ret_value){
 			SENSOR_PRINT("SENSOR_S5K4H8YX: _dw9807_SRCInit 1 fail!");
 		}
@@ -817,14 +817,14 @@ static uint32_t _dw9807_SRCInit(uint32_t mode)
 
 		cmd_val[0] = 0x02;
 		cmd_val[1] = 0x02;
-		ret_value = Sensor_WriteI2C_Ex(slave_addr,(uint8_t*)&cmd_val[0], cmd_len, SENSOR_SUB);
+		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 		if(ret_value){
 			SENSOR_PRINT("SENSOR_S5K4H8YX: _dw9807_SRCInit 2 fail!");
 		}
 
 		cmd_val[0] = 0x06;
 		cmd_val[1] = 0x61;
-		ret_value = Sensor_WriteI2C_Ex(slave_addr,(uint8_t*)&cmd_val[0], cmd_len, SENSOR_SUB);
+		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 		if(ret_value){
 			SENSOR_PRINT("SENSOR_S5K4H8YX: _dw9807_SRCInit 3 fail!");
 		}
@@ -832,7 +832,7 @@ static uint32_t _dw9807_SRCInit(uint32_t mode)
 
 		cmd_val[0] = 0x07;
 		cmd_val[1] = 0x30;
-		ret_value = Sensor_WriteI2C_Ex(slave_addr,(uint8_t*)&cmd_val[0], cmd_len, SENSOR_SUB);
+		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 		if(ret_value){
 			SENSOR_PRINT("SENSOR_S5K4H8YX: _dw9807_SRCInit 4 fail!");
 		}
@@ -865,20 +865,20 @@ static unsigned long _s5k4h8yx_PowerOn(unsigned long power_on)
 
 	SENSOR_PRINT_ERR("In");
 	if (SENSOR_TRUE == power_on) {
-		Sensor_SetResetLevel_Ex(reset_level, SENSOR_SUB);
-		Sensor_PowerDown_Ex(power_down, SENSOR_SUB);
-		Sensor_SetVoltage_Ex(dvdd_val, avdd_val, iovdd_val, SENSOR_SUB);
+		Sensor_SetResetLevel(reset_level);
+		Sensor_PowerDown(power_down);
+		Sensor_SetVoltage(dvdd_val, avdd_val, iovdd_val);
 		usleep(10*1000);
-		Sensor_PowerDown_Ex(!power_down, SENSOR_SUB);
-		Sensor_SetResetLevel_Ex(!reset_level, SENSOR_SUB);
+		Sensor_PowerDown(!power_down);
+		Sensor_SetResetLevel(!reset_level);
 		usleep(10*1000);
-		Sensor_SetMCLK_Ex(SENSOR_DEFALUT_MCLK, SENSOR_SUB);
+		Sensor_SetMCLK(SENSOR_DEFALUT_MCLK);
 		usleep(10*1000);
 	} else {
-		Sensor_SetMCLK_Ex(SENSOR_DISABLE_MCLK, SENSOR_SUB);
-		Sensor_SetResetLevel_Ex(reset_level, SENSOR_SUB);
-		Sensor_PowerDown_Ex(power_down, SENSOR_SUB);
-		Sensor_SetVoltage_Ex(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_SUB);
+		Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
+		Sensor_SetResetLevel(reset_level);
+		Sensor_PowerDown(power_down);
+		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
 	}
 
 	SENSOR_PRINT_ERR("SENSOR_S5K4H8YX: _s5k4h8yx_Power_On(1:on, 0:off): %d, reset_level %d, dvdd_val %d", power_on, reset_level, dvdd_val);
@@ -972,8 +972,8 @@ static unsigned long _s5k4h8yx_Identify(unsigned long param)
 	SENSOR_PRINT_ERR("SENSOR_S5K4H8YX: mipi raw identify\n");
 
 //	while(1) {
-	pid_value = Sensor_ReadReg_Ex(S5K4H8YX_PID_ADDR, SENSOR_SUB);
-	ver_value = Sensor_ReadReg_Ex(S5K4H8YX_VER_ADDR, SENSOR_SUB);
+	pid_value = Sensor_ReadReg(S5K4H8YX_PID_ADDR);
+	ver_value = Sensor_ReadReg(S5K4H8YX_VER_ADDR);
 	SENSOR_PRINT("SENSOR_S5K4H8YX: Identify: PID = %x, VER = %x", pid_value, ver_value);
 	usleep(50*1000);
 //	}
@@ -1067,21 +1067,21 @@ static unsigned long _s5k4h8yx_write_exposure(unsigned long param)
 		frame_len+=0x01;
 	}
 
-	frame_len_cur = (Sensor_ReadReg_Ex(0x0341, SENSOR_SUB))&0xff;
-	frame_len_cur |= (Sensor_ReadReg_Ex(0x0340, SENSOR_SUB)<<0x08)&0xff00;
+	frame_len_cur = (Sensor_ReadReg(0x0341))&0xff;
+	frame_len_cur |= (Sensor_ReadReg(0x0340)<<0x08)&0xff00;
 
 
-	ret_value = Sensor_WriteReg_Ex(0x104, 0x01, SENSOR_SUB);
+	ret_value = Sensor_WriteReg(0x104, 0x01);
 	if (frame_len_cur != frame_len) {
-		ret_value = Sensor_WriteReg_Ex(0x0341, frame_len & 0xff, SENSOR_SUB);
-		ret_value = Sensor_WriteReg_Ex(0x0340, (frame_len >> 0x08) & 0xff, SENSOR_SUB);
+		ret_value = Sensor_WriteReg(0x0341, frame_len & 0xff);
+		ret_value = Sensor_WriteReg(0x0340, (frame_len >> 0x08) & 0xff);
 	}
 
-	ret_value = Sensor_WriteReg_Ex(0x203, expsure_line & 0xff, SENSOR_SUB);
-	ret_value = Sensor_WriteReg_Ex(0x202, (expsure_line >> 0x08) & 0xff, SENSOR_SUB);
+	ret_value = Sensor_WriteReg(0x203, expsure_line & 0xff);
+	ret_value = Sensor_WriteReg(0x202, (expsure_line >> 0x08) & 0xff);
 	s_capture_shutter = expsure_line;
 	linetime=s_s5k4h8yx_Resolution_Trim_Tab[size_index].line_time;
-	Sensor_SetSensorExifInfo_Ex(SENSOR_EXIF_CTRL_EXPOSURETIME, s_capture_shutter, SENSOR_SUB);
+	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, s_capture_shutter);
 	s_exposure_time = s_capture_shutter * linetime / 10;
 
 	/*if (frame_len_cur > frame_len) {
@@ -1149,31 +1149,31 @@ static unsigned long _s5k4h8yx_write_gain(unsigned long param)
 
 	//ret_value = Sensor_WriteReg(0x104, 0x01);
 	value = a_gain>>0x08;
-	ret_value = Sensor_WriteReg_Ex(0x204, value, SENSOR_SUB);
+	ret_value = Sensor_WriteReg(0x204, value);
 	value = a_gain&0xff;
-	ret_value = Sensor_WriteReg_Ex(0x205, value, SENSOR_SUB);
+	ret_value = Sensor_WriteReg(0x205, value);
 
 	value = d_gain>>0x08;
-	ret_value = Sensor_WriteReg_Ex(0x20e, value, SENSOR_SUB);
+	ret_value = Sensor_WriteReg(0x20e, value);
 	value = d_gain&0xff;
-	ret_value = Sensor_WriteReg_Ex(0x20f, value, SENSOR_SUB);
+	ret_value = Sensor_WriteReg(0x20f, value);
 
 	value = d_gain>>0x08;
-	ret_value = Sensor_WriteReg_Ex(0x210, value, SENSOR_SUB);
+	ret_value = Sensor_WriteReg(0x210, value);
 	value = d_gain&0xff;
-	ret_value = Sensor_WriteReg_Ex(0x211, value, SENSOR_SUB);
+	ret_value = Sensor_WriteReg(0x211, value);
 
 	value = d_gain>>0x08;
-	ret_value = Sensor_WriteReg_Ex(0x212, value, SENSOR_SUB);
+	ret_value = Sensor_WriteReg(0x212, value);
 	value = d_gain&0xff;
-	ret_value = Sensor_WriteReg_Ex(0x213, value, SENSOR_SUB);
+	ret_value = Sensor_WriteReg(0x213, value);
 
 	value = d_gain>>0x08;
-	ret_value = Sensor_WriteReg_Ex(0x214, value, SENSOR_SUB);
+	ret_value = Sensor_WriteReg(0x214, value);
 	value = d_gain&0xff;
-	ret_value = Sensor_WriteReg_Ex(0x215, value, SENSOR_SUB);
+	ret_value = Sensor_WriteReg(0x215, value);
 
-	ret_value = Sensor_WriteReg_Ex(0x104, 0x00, SENSOR_SUB);
+	ret_value = Sensor_WriteReg(0x104, 0x00);
 
 	return ret_value;
 #endif
@@ -1192,14 +1192,14 @@ static unsigned long _s5k4h8yx_write_af(unsigned long param)
 	cmd_val[0] = 0x03;
 	cmd_val[1] = (param>>8)&0x03;
 	cmd_len = 2;
-	ret_value = Sensor_WriteI2C_Ex(slave_addr,(uint8_t*)&cmd_val[0], cmd_len, SENSOR_SUB);
+	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 	SENSOR_PRINT("SENSOR_S5K4H8YX: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
 
 
 	cmd_val[0] = 0x04;
 	cmd_val[1] = param&0xff;
 	cmd_len = 2;
-	ret_value = Sensor_WriteI2C_Ex(slave_addr,(uint8_t*)&cmd_val[0], cmd_len, SENSOR_SUB);
+	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 
 	SENSOR_PRINT("SENSOR_S5K4H8YX: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
 	return ret_value;
@@ -1225,8 +1225,8 @@ static unsigned long _s5k4h8yx_BeforeSnapshot(unsigned long param)
 	preview_exposure = _s5k4h8yx_get_shutter();
 	preview_maxline	= _s5k4h8yx_get_VTS();
 
-	Sensor_SetMode_Ex(capture_mode, SENSOR_SUB);
-	Sensor_SetMode_WaitDone_Ex(SENSOR_SUB);
+	Sensor_SetMode(capture_mode);
+	Sensor_SetMode_WaitDone();
 
 	if (prv_linetime == cap_linetime) {
 		SENSOR_PRINT("SENSOR_S5K4H8YX: prvline equal to capline");
@@ -1263,7 +1263,7 @@ static unsigned long _s5k4h8yx_BeforeSnapshot(unsigned long param)
 	s_capture_shutter = _s5k4h8yx_get_shutter();
 	s_capture_VTS = _s5k4h8yx_get_VTS();
 	_s5k4h8yx_ReadGain(capture_mode);
-	Sensor_SetSensorExifInfo_Ex(SENSOR_EXIF_CTRL_EXPOSURETIME, s_capture_shutter, SENSOR_SUB);
+	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, s_capture_shutter);
 	s_exposure_time = s_capture_shutter * cap_linetime / 10;
 
 	return SENSOR_SUCCESS;
@@ -1272,7 +1272,7 @@ static unsigned long _s5k4h8yx_BeforeSnapshot(unsigned long param)
 static unsigned long _s5k4h8yx_after_snapshot(unsigned long param)
 {
 	SENSOR_PRINT("SENSOR_s5k4h8yx: after_snapshot mode:%ld", param);
-	Sensor_SetMode_Ex((uint32_t)param, SENSOR_SUB);
+	Sensor_SetMode((uint32_t)param);
 	return SENSOR_SUCCESS;
 }
 
@@ -1300,7 +1300,7 @@ static unsigned long _s5k4h8yx_StreamOn(unsigned long param)
 {
 	SENSOR_PRINT_ERR("SENSOR_s5k4h8yx: StreamOn");
 
-	Sensor_WriteReg_Ex(0x0100, 0x0100, SENSOR_SUB);
+	Sensor_WriteReg(0x0100, 0x0103);
 
 	return 0;
 }
@@ -1309,7 +1309,7 @@ static unsigned long _s5k4h8yx_StreamOff(unsigned long param)
 {
 	SENSOR_PRINT_ERR("SENSOR_s5k4h8yx: StreamOff");
 
-	Sensor_WriteReg_Ex(0x0100, 0x0000, SENSOR_SUB);
+	Sensor_WriteReg(0x0100, 0x0003);
 	usleep(30*1000);
 
 	return 0;
@@ -1321,8 +1321,8 @@ static uint16_t _s5k4h8yx_get_shutter(void)
 	uint16_t shutter_h = 0;
 	uint16_t shutter_l = 0;
 #if 1  // MP tool //!??
-	shutter_h = Sensor_ReadReg_Ex(0x0202, SENSOR_SUB) & 0xff;
-	shutter_l = Sensor_ReadReg_Ex(0x0203, SENSOR_SUB) & 0xff;
+	shutter_h = Sensor_ReadReg(0x0202) & 0xff;
+	shutter_l = Sensor_ReadReg(0x0203) & 0xff;
 
 	return (shutter_h << 8) | shutter_l;
 #else
@@ -1332,11 +1332,11 @@ static uint16_t _s5k4h8yx_get_shutter(void)
 
 static uint32_t _s5k4h8yx_set_shutter(uint16_t shutter)
 {
-	Sensor_WriteReg_Ex(0x104, 0x01, SENSOR_SUB);
+	Sensor_WriteReg(0x104, 0x01);
 	// write shutter, in number of line period
-	Sensor_WriteReg_Ex(0x0202, (shutter >> 8) & 0xff, SENSOR_SUB);
-	Sensor_WriteReg_Ex(0x0203, shutter & 0xff, SENSOR_SUB);
-	Sensor_WriteReg_Ex(0x104, 0x00, SENSOR_SUB);
+	Sensor_WriteReg(0x0202, (shutter >> 8) & 0xff);
+	Sensor_WriteReg(0x0203, shutter & 0xff);
+	Sensor_WriteReg(0x104, 0x00);
 
 	return 0;
 }
@@ -1346,7 +1346,7 @@ static uint32_t _s5k4h8yx_get_gain16(void)
 	// read gain, 16 = 1x
 	uint32_t gain16;
 
-	gain16 = (256*16)/(256 - Sensor_ReadReg_Ex(0x0157, SENSOR_SUB)); // a_gain= 256/(256-x);
+	gain16 = (256*16)/(256 - Sensor_ReadReg(0x0157)); // a_gain= 256/(256-x);
 
 	return gain16;
 }
@@ -1363,7 +1363,7 @@ static uint16_t _s5k4h8yx_set_gain16(uint32_t gain16)
 		gain16 = 170;
 
 	temp = (256*(gain16- 16))/gain16;
-	Sensor_WriteReg_Ex(0x0157, temp&0xff, SENSOR_SUB);
+	Sensor_WriteReg(0x0157, temp&0xff);
 
 	return 0;
 }
@@ -1393,19 +1393,19 @@ static unsigned long _s5k4h8yx_write_exposure_ev(unsigned long param)
 		frame_len+=0x01;
 	}
 
-	frame_len_cur = (Sensor_ReadReg_Ex(0x0341, SENSOR_SUB))&0xff;
-	frame_len_cur |= (Sensor_ReadReg_Ex(0x0340, SENSOR_SUB)<<0x08)&0xff00;
+	frame_len_cur = (Sensor_ReadReg(0x0341))&0xff;
+	frame_len_cur |= (Sensor_ReadReg(0x0340)<<0x08)&0xff00;
 
 
-	ret_value = Sensor_WriteReg_Ex(0x104, 0x01, SENSOR_SUB);
+	ret_value = Sensor_WriteReg(0x104, 0x01);
 	if (frame_len_cur != frame_len) {
-		ret_value = Sensor_WriteReg_Ex(0x0341, frame_len & 0xff, SENSOR_SUB);
-		ret_value = Sensor_WriteReg_Ex(0x0340, (frame_len >> 0x08) & 0xff, SENSOR_SUB);
+		ret_value = Sensor_WriteReg(0x0341, frame_len & 0xff);
+		ret_value = Sensor_WriteReg(0x0340, (frame_len >> 0x08) & 0xff);
 	}
 
-	ret_value = Sensor_WriteReg_Ex(0x203, expsure_line & 0xff, SENSOR_SUB);
-	ret_value = Sensor_WriteReg_Ex(0x202, (expsure_line >> 0x08) & 0xff, SENSOR_SUB);
-	ret_value = Sensor_WriteReg_Ex(0x104, 0x00, SENSOR_SUB);
+	ret_value = Sensor_WriteReg(0x203, expsure_line & 0xff);
+	ret_value = Sensor_WriteReg(0x202, (expsure_line >> 0x08) & 0xff);
+	ret_value = Sensor_WriteReg(0x104, 0x00);
 	return ret_value;
 
 }
@@ -1496,8 +1496,8 @@ static uint16_t _s5k4h8yx_get_VTS(void)
 	// read VTS from register settings
 	uint16_t VTS;
 
-	VTS = Sensor_ReadReg_Ex(0x0160, SENSOR_SUB);				//total vertical size[15:8] high byte
-	VTS = (VTS<<8) + Sensor_ReadReg_Ex(0x0161, SENSOR_SUB);
+	VTS = Sensor_ReadReg(0x0160);				//total vertical size[15:8] high byte
+	VTS = (VTS<<8) + Sensor_ReadReg(0x0161);
 
 	return VTS;
 }
@@ -1505,8 +1505,8 @@ static uint16_t _s5k4h8yx_get_VTS(void)
 static uint32_t _s5k4h8yx_set_VTS(uint16_t VTS)
 {
 	// write VTS to registers
-	Sensor_WriteReg_Ex(0x0161, (VTS & 0xff), SENSOR_SUB);
-	Sensor_WriteReg_Ex(0x0160, ((VTS>>8)& 0xff), SENSOR_SUB);
+	Sensor_WriteReg(0x0161, (VTS & 0xff));
+	Sensor_WriteReg(0x0160, ((VTS>>8)& 0xff));
 
 	return 0;
 }
@@ -1516,7 +1516,7 @@ static uint32_t _s5k4h8yx_ReadGain(uint32_t param)
 	uint32_t rtn = SENSOR_SUCCESS;
 	uint32_t gain = 0;
 
-	gain = Sensor_ReadReg_Ex(0x0157, SENSOR_SUB);
+	gain = Sensor_ReadReg(0x0157);
 
 	s_s5k4h8yx_gain=(int)gain;
 
@@ -1534,10 +1534,10 @@ static uint32_t _s5k4h8yx_write_otp_gain(uint32_t *param)
 
 	//ret_value = Sensor_WriteReg(0x104, 0x01);
 	value = (*param)>>0x08;
-	ret_value = Sensor_WriteReg_Ex(0x204, value, SENSOR_SUB);
+	ret_value = Sensor_WriteReg(0x204, value);
 	value = (*param)&0xff;
-	ret_value = Sensor_WriteReg_Ex(0x205, value, SENSOR_SUB);
-	ret_value = Sensor_WriteReg_Ex(0x104, 0x00, SENSOR_SUB);
+	ret_value = Sensor_WriteReg(0x205, value);
+	ret_value = Sensor_WriteReg(0x104, 0x00);
 
 	return ret_value;
 }
@@ -1548,11 +1548,11 @@ static uint32_t _s5k4h8yx_read_otp_gain(uint32_t *param)
 	uint16_t gain_h = 0;
 	uint16_t gain_l = 0;
 	#if 1 // for MP tool //!??
-	gain_h = Sensor_ReadReg_Ex(0x0204, SENSOR_SUB) & 0xff;
-	gain_l = Sensor_ReadReg_Ex(0x0205, SENSOR_SUB) & 0xff;
+	gain_h = Sensor_ReadReg(0x0204) & 0xff;
+	gain_l = Sensor_ReadReg(0x0205) & 0xff;
 	*param = ((gain_h << 8) | gain_l);
-	gain_h = Sensor_ReadReg_Ex(0x020e, SENSOR_SUB) & 0xff;
-	gain_l = Sensor_ReadReg_Ex(0x020f, SENSOR_SUB) & 0xff;
+	gain_h = Sensor_ReadReg(0x020e) & 0xff;
+	gain_l = Sensor_ReadReg(0x020f) & 0xff;
 	*param *= (uint32_t)((gain_h << 8) | gain_l);
 	*param >>= 8;
 	#else
@@ -1592,7 +1592,7 @@ static uint32_t _s5k4h8yx_write_vcm(uint32_t *param)
 	cmd_len = 2;
 	cmd_val[0] = ((*param)>>16) & 0xff;
 	cmd_val[1] = (*param) & 0xff;
-	ret_value = Sensor_WriteI2C_Ex(slave_addr,(uint8_t*)&cmd_val[0], cmd_len, SENSOR_SUB);
+	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 
 	SENSOR_PRINT("SENSOR_s5k4h8yx: _write_vcm, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
 
@@ -1631,7 +1631,7 @@ LOCAL uint32_t _s5k4h8yx_erase_otp(unsigned long param)
 	cmd_len = 2;
 	cmd_val[0] = 0x81;
 	cmd_val[1] = 0xEE;
-	Sensor_WriteI2C_Ex(DW9807_EEPROM_SLAVE_ADDR,(uint8_t*)&cmd_val[0], cmd_len, SENSOR_SUB);
+	Sensor_WriteI2C(DW9807_EEPROM_SLAVE_ADDR,(uint8_t*)&cmd_val[0], cmd_len);
 	usleep(100*1000);
 
 	CMR_LOGI("SENSOR_s5k4h8yx: _s5k4h8yx_erase_otp X");
@@ -1660,7 +1660,7 @@ LOCAL uint32_t _s5k4h8yx_write_otp(unsigned long param)
 		cmd_val[0] = ((start_addr + i) >> 8) & 0xff;
 		cmd_val[1] = (start_addr + i) & 0xff;
 		cmd_val[2] = buff[i];
-		Sensor_WriteI2C_Ex(DW9807_EEPROM_SLAVE_ADDR,(uint8_t*)&cmd_val[0], cmd_len, SENSOR_SUB);
+		Sensor_WriteI2C(DW9807_EEPROM_SLAVE_ADDR,(uint8_t*)&cmd_val[0], cmd_len);
 	}
 
 	CMR_LOGI("SENSOR_s5k4h8yx: _s5k4h8yx_write_otp X");

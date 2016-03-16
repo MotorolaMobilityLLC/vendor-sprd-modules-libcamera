@@ -125,8 +125,6 @@ struct preview_param {
 #ifdef CONFIG_MEM_OPTIMIZATION
 	cmr_u32                  sprd_zsl_enabled;
 #endif
-	cmr_u32                  sprd_pipviv_enabled;
-	cmr_u32                  sprd_highiso_enabled;
 };
 
 struct preview_out_param {
