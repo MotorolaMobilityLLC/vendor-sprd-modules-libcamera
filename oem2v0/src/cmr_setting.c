@@ -2348,6 +2348,10 @@ static cmr_int setting_get_capture_mode(struct setting_component *cpt,
 	struct setting_hal_param    *hal_param = get_hal_param(cpt, parm->camera_id);
 
 	parm->cmd_type_value = hal_param->capture_mode;
+
+	if (hal_param->is_hdr) {
+		parm->cmd_type_value = CAMERA_CAP_MODE_HDR;
+	}
 	return ret;
 }
 
