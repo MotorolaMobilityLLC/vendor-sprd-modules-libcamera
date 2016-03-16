@@ -23,8 +23,13 @@
 #include "isp_drv.h"
 
 /**************************************** MACRO DEFINE *****************************************/
-
-
+#define ISP_BRITNESS_GAIN_0            50
+#define ISP_BRITNESS_GAIN_1            70
+#define ISP_BRITNESS_GAIN_2            90
+#define ISP_BRITNESS_GAIN_3            100
+#define ISP_BRITNESS_GAIN_4            120
+#define ISP_BRITNESS_GAIN_5            160
+#define ISP_BRITNESS_GAIN_6            200
 /************************************* INTERNAL DATA TYPE ***************************************/
 struct iommu_mem {
 	cmr_uint virt_addr;
@@ -298,6 +303,46 @@ cmr_u32 _isp_dev_access_convert_effect(cmr_u32 value)
 	return convert_value;
 }
 
+cmr_int isp_dev_access_set_brightness(cmr_handle isp_dev_handle, union isp_dev_ctrl_cmd_in *input_ptr)
+{
+	cmr_int                                ret = ISP_SUCCESS;
+	cmr_u32                                mode = 0;
+	struct isp_brightness_gain             brightness_gain;
+	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context*)isp_dev_handle;
+
+	brightness_gain.uw_gain[0] = ISP_BRITNESS_GAIN_0;
+	brightness_gain.uw_gain[1] = ISP_BRITNESS_GAIN_1;
+	brightness_gain.uw_gain[2] = ISP_BRITNESS_GAIN_2;
+	brightness_gain.uw_gain[3] = ISP_BRITNESS_GAIN_3;
+	brightness_gain.uw_gain[4] = ISP_BRITNESS_GAIN_4;
+	brightness_gain.uw_gain[5] = ISP_BRITNESS_GAIN_5;
+	brightness_gain.uw_gain[6] = ISP_BRITNESS_GAIN_6;
+	switch (input_ptr->value) {
+	case 0:
+	case 1:
+	case 2:
+	case 3:
+	case 4:
+	case 5:
+	case 6:
+		mode = input_ptr->value;
+		break;
+	default:
+		ISP_LOGE("don't support %d", input_ptr->value);
+		goto exit;
+	}
+	ret = isp_dev_cfg_brightness_gain(cxt->isp_driver_handle, &brightness_gain);
+	if (ret) {
+		ISP_LOGE("failed to set brightness gain %ld", ret);
+		goto exit;
+	}
+	ret = isp_dev_cfg_brightness_mode(cxt->isp_driver_handle, mode);
+	ISP_LOGI("mode %d, done %ld", mode, ret);
+exit:
+	return ret;
+}
+
+
 cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, enum isp_dev_access_ctrl_cmd cmd, union isp_dev_ctrl_cmd_in *input_ptr, union isp_dev_ctrl_cmd_out *output_ptr)
 {
 	cmr_int                                ret = ISP_SUCCESS;
@@ -325,6 +370,7 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, enum isp_dev_access_ctrl
 	case ISP_DEV_ACCESS_SET_YHIS_PARAM:
 		break;
 	case ISP_DEV_ACCESS_SET_BRIGHTNESS:
+		ret = isp_dev_access_set_brightness(isp_dev_handle, input_ptr);
 		break;
 	case ISP_DEV_ACCESS_SET_SATURATION:
 		if (!input_ptr) {

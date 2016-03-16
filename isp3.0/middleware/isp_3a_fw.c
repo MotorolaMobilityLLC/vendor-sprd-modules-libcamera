@@ -1444,12 +1444,15 @@ exit:
 cmr_int isp3a_set_brightness(cmr_handle isp_3a_handle, void *param_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
+	union isp_dev_ctrl_cmd_in                   dev_ioctrl_in;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
 
 	if (!param_ptr) {
 		ISP_LOGW("input is NULL");
 		goto exit;
 	}
+	dev_ioctrl_in.value = *((cmr_u32*)param_ptr);
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_ACCESS_SET_BRIGHTNESS, &dev_ioctrl_in, NULL);
 
 exit:
 	return ret;
