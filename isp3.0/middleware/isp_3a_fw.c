@@ -151,6 +151,7 @@ struct isp3a_fw_bin_context {
 struct isp3a_fw_context {
 	cmr_u32 camera_id;
 	cmr_u32 is_inited;
+	cmr_int err_code;
 	cmr_handle caller_handle;
 	cmr_handle dev_access_handle;
 	proc_callback caller_callback;
@@ -2902,6 +2903,7 @@ cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start* input_ptr)
 	cxt->ae_cxt.hw_cfg = ae_out.proc_out.hw_cfg;
 	if (ret) {
 		ISP_LOGE("failed to set work to AE");
+		goto exit;
 	}
 	//HW AE cfg  TBD
 	awb_in.work_param.work_mode = input_ptr->work_mode;
@@ -2911,10 +2913,10 @@ cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start* input_ptr)
 	ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_WORK_MODE, &awb_in, &awb_out);
 	if (ret) {
 		ISP_LOGE("failed to set work mode to AWB");
+		goto exit;
 	} else {
 //		cxt->awb_cxt.hw_cfg = awb_out.hw_cfg;
 	}
-	// cfg AWB gain[TBD]
 
 	afl_in.work_param.work_mode = input_ptr->work_mode;
 	afl_in.work_param.capture_mode = input_ptr->capture_mode;
@@ -2927,7 +2929,8 @@ cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start* input_ptr)
 	} else {
 		cxt->afl_cxt.hw_cfg = afl_out.hw_cfg;
 	}
-
+exit:
+	cxt->err_code = ret;
 	return ret;
 }
 
@@ -3154,7 +3157,9 @@ cmr_int isp_3a_fw_start(cmr_handle isp_3a_handle, struct isp_video_start *input_
 	message.alloc_flag = 0;
 	message.data = (void*)input_ptr;
 	ret = cmr_thread_msg_send(cxt->thread_cxt.process_thr_handle, &message);
-
+	if(!ret) {
+		ret = cxt->err_code;
+	}
 exit:
 	ISP_LOGI("done %ld", ret);
 	return ret;

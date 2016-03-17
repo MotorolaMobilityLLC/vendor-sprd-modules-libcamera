@@ -246,6 +246,7 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 	cxt->alloc_cb = input_ptr->alloc_cb;
 	cxt->free_cb = input_ptr->free_cb;
 
+	cmr_bzero(&isp_dev_input, sizeof(isp_dev_input));
 	isp_dev_input.camera_id = input_ptr->camera_id;
 	isp_dev_input.caller_handle = (cmr_handle)cxt;
 	isp_dev_input.mem_cb_handle = input_ptr->oem_handle;
@@ -254,7 +255,7 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 	if (ret) {
 		goto exit;
 	}
-
+	cmr_bzero(&isp3a_input, sizeof(isp3a_input));
 	isp3a_input.setting_param_ptr = input_ptr->setting_param_ptr;
 	isp3a_input.isp_mw_callback = input_ptr->ctrl_callback;
 	isp3a_input.caller_handle = input_ptr->oem_handle;
