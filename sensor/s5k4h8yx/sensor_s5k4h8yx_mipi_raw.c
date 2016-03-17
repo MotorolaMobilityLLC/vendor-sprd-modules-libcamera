@@ -1885,6 +1885,7 @@ static uint32_t _s5k4h8yx_get_static_info(uint32_t *param)
 	ex_info->name = g_s5k4h8yx_mipi_raw_info.name;
 	ex_info->sensor_version_info = g_s5k4h8yx_mipi_raw_info.sensor_version_info;
 	SENSOR_PRINT("SENSOR_s5k4h8yx: f_num: %d", ex_info->f_num);
+	SENSOR_PRINT("SENSOR_s5k4h8yx: focal_length: %d", ex_info->focal_length);
 	SENSOR_PRINT("SENSOR_s5k4h8yx: max_fps: %d", ex_info->max_fps);
 	SENSOR_PRINT("SENSOR_s5k4h8yx: max_adgain: %d", ex_info->max_adgain);
 	SENSOR_PRINT("SENSOR_s5k4h8yx: ois_supported: %d", ex_info->ois_supported);

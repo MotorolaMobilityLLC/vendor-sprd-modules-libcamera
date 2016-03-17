@@ -882,7 +882,7 @@ static uint32_t _s5k3p3sm_init_mode_fps_info()
 				s_s5k3p3sm_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num = 
 					s_s5k3p3sm_mode_fps_info.sensor_mode_fps[i].max_fps/30;
 			}
-			if(s_s5k3p3sm_mode_fps_info.sensor_mode_fps[i].max_fps > 
+			if(s_s5k3p3sm_mode_fps_info.sensor_mode_fps[i].max_fps >
 					s_s5k3p3sm_lens_extend_info.max_fps) {
 				s_s5k3p3sm_lens_extend_info.max_fps =
 					s_s5k3p3sm_mode_fps_info.sensor_mode_fps[i].max_fps;

@@ -707,7 +707,7 @@ typedef struct sensor_mode_fps_tag {
         cmr_u32 min_fps;		//min fps, we set it to 1.
         cmr_u32 is_high_fps;		//if max_fps > 30,then is high fps.
         cmr_u32 high_fps_skip_num;	//max_fps/30
-} SENSOR_MODE_FPS_T;
+} SENSOR_MODE_FPS_T, *SENSOR_MODE_FPS_T_PTR;
 
 typedef struct sensor_mode_fps_info_tag {
 	cmr_u32 is_init;	

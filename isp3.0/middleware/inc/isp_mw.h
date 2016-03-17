@@ -378,9 +378,8 @@ struct  isp_sensor_ex_info{
 	cmr_s8 *sensor_version_info;
 };
 
-//Be Careful:struct isp_sensor_fps_info is the same as SENSOR_MODE_FPS_T;
 struct isp_sensor_fps_info{
-	cmr_u32 sensor_mode;
+	cmr_u32 mode;	//sensor mode
 	cmr_u32 max_fps;
 	cmr_u32 min_fps;
 	cmr_u32 is_high_fps;

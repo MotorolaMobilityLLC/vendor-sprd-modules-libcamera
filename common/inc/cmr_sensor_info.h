@@ -123,14 +123,6 @@ struct sensor_ex_info {
 	cmr_s8 *sensor_version_info;
 };
 
-struct sensor_fps_info {
-	cmr_u32 sensor_mode;
-	cmr_u32 is_high_fps;
-	cmr_u32 high_fps_skip_num;
-	cmr_u32 max_fps;	//x100
-	cmr_u32 min_fps;	//x100
-};
-
 struct sensor_raw_resolution_info_tab {
 	cmr_u32 image_pattern;
 	struct sensor_raw_resolution_info tab[10];

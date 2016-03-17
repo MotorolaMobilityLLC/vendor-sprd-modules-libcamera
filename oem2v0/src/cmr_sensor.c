@@ -581,18 +581,18 @@ cmr_int cmr_sensor_get_raw_settings(cmr_handle sensor_handle, void *raw_setting,
 
 //yy-param needed by ips3.0-start
 cmr_int cmr_sensor_get_fps_info(cmr_handle sensor_handle, cmr_u32 camera_id,
-		cmr_u32 sensor_mode, struct sensor_fps_info *sensor_fps_info_ptr)
+		cmr_u32 sn_mode, SENSOR_MODE_FPS_T_PTR fps_info_ptr)
 {
 	cmr_int ret = CMR_CAMERA_SUCCESS;
 	CHECK_HANDLE_VALID(sensor_handle);
-	if(NULL == sensor_fps_info_ptr) {
+	if(NULL == fps_info_ptr) {
 		CMR_LOGE("out param-sensor fps info ptr is null!You should input valid address for sensor fps.");
 		return CMR_CAMERA_INVALID_PARAM;
 	}
-	sensor_fps_info_ptr->sensor_mode = sensor_mode;
+	fps_info_ptr->mode = sn_mode;
 	SENSOR_VAL_T           val;
 	val.type               = SENSOR_VAL_TYPE_GET_FPS_INFO;
-	val.pval               = sensor_fps_info_ptr;
+	val.pval               = fps_info_ptr;
 	ret = cmr_sensor_ioctl(sensor_handle, camera_id, SENSOR_ACCESS_VAL, (cmr_uint)&val);
 	return ret;
 }

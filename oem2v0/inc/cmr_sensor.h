@@ -112,7 +112,7 @@ cmr_int cmr_sensor_get_flash_info(cmr_handle sensor_handle, cmr_u32 sensor_id, s
 
 //yy-param needed by ips3.0-start
 cmr_int cmr_sensor_get_fps_info(cmr_handle sensor_handle, cmr_u32 camera_id,
-		cmr_u32 sensor_mode, struct sensor_fps_info *sensor_fps_info_ptr);
+		cmr_u32 sn_mode, SENSOR_MODE_FPS_T_PTR fps_info_ptr);
 //yy-param needed by ips3.0-end
 
 #ifdef __cplusplus

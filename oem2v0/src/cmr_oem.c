@@ -206,6 +206,10 @@ static void camera_snapshot_started(cmr_handle oem_handle);
 static cmr_uint camera_param_to_isp(cmr_uint cmd, struct common_isp_cmd_param *parm);
 static cmr_int camera_restart_rot(cmr_handle oem_handle);
 static cmr_uint camera_set_vendor_hdr_ev(cmr_handle oem_handle);
+static cmr_uint camera_copy_sensor_fps_info_to_isp(struct isp_sensor_fps_info *out_isp_fps,
+		SENSOR_MODE_FPS_T *in_fps);
+static cmr_uint camera_copy_sensor_ex_info_to_isp(struct isp_sensor_ex_info *out_isp_sn_ex_info,
+		struct sensor_ex_info *in_sn_ex_info);
 
 extern int32_t isp_calibration_get_info(struct isp_data_t *golden_info, struct isp_cali_info_t *cali_info);
 extern int32_t isp_calibration(struct isp_cali_param *param, struct isp_data_t *result);
@@ -2653,19 +2657,30 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 	isp_param.free_cb  = camera_free;
 	isp_param.image_pattern = sensor_info_ptr->image_pattern; 
 	CMR_LOGD("image_pattern: %d", isp_param.image_pattern);
+	struct sensor_ex_info sn_ex_info;
 	val.type               = SENSOR_VAL_TYPE_GET_STATIC_INFO;
-	val.pval               = &isp_param.ex_info;
+	val.pval               = &sn_ex_info;
 	ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_ACCESS_VAL, (cmr_uint)&val);
 	if (ret) {
 		CMR_LOGE("get sensor static info failed %ld", ret);
 		goto exit;
 	}
+	camera_copy_sensor_ex_info_to_isp(&isp_param.ex_info,&sn_ex_info);
 	if (IMG_DATA_TYPE_RAW == sn_cxt->sensor_info.image_format) {
 		isp_param.ex_info.preview_skip_num = 0;
 		isp_param.ex_info.capture_skip_num = 0;
 	}
 	CMR_LOGD("get static info:sensor name: %s, version: %s.",
 			isp_param.ex_info.name,isp_param.ex_info.sensor_version_info);
+	CMR_LOGD("get static info:f_num: %d,focal_length %d,max_fps: %d,max_adgain: %d",
+			isp_param.ex_info.f_num,isp_param.ex_info.focal_length,
+			isp_param.ex_info.max_fps,isp_param.ex_info.max_adgain);
+	CMR_LOGD("get static info:ois_supported: %d,pdaf_supported %d,exp_valid_frame_num %d,clamp_level %d",
+			isp_param.ex_info.ois_supported,isp_param.ex_info.pdaf_supported,
+			isp_param.ex_info.exp_valid_frame_num,isp_param.ex_info.clamp_level);
+	CMR_LOGD("get static info:adgain_valid_frame_num %d,preview_skip_num %d,capture_skip_num %d",
+			isp_param.ex_info.adgain_valid_frame_num,isp_param.ex_info.preview_skip_num,
+			isp_param.ex_info.capture_skip_num);
 	CMR_LOGD("w %d h %d", isp_param.size.w,isp_param.size.h);
 	val.type = SENSOR_VAL_TYPE_READ_OTP;
 	val.pval = NULL;
@@ -4245,8 +4260,10 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle, struct 
 		ret = cmr_sensor_get_mode(cxt->sn_cxt.sensor_handle, cxt->camera_id, &sn_mode);
 		//we think OEM has get sensor info and save it into sensor context,so we get mode info from cxt
 		sensor_mode_info = &cxt->sn_cxt.sensor_info.mode_info[sn_mode];
+		SENSOR_MODE_FPS_T fps_info;
 		ret = cmr_sensor_get_fps_info(cxt->sn_cxt.sensor_handle,cxt->camera_id,
-				sn_mode,&in_param.sensor_fps);
+				sn_mode,&fps_info);
+		camera_copy_sensor_fps_info_to_isp(&in_param.sensor_fps,&fps_info);
 		if (ret) {
 			CMR_LOGE("get sensor fps info failed %ld", ret);
 			goto exit;
@@ -4470,13 +4487,14 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 	CMR_LOGI("isp sensor crop startx start w h, %d %d %d %d", isp_param.resolution_info.crop.st_x,
 		isp_param.resolution_info.crop.st_y,isp_param.resolution_info.crop.width,
 		isp_param.resolution_info.crop.height);
-
+	SENSOR_MODE_FPS_T fps_info;
 	ret = cmr_sensor_get_fps_info(cxt->sn_cxt.sensor_handle,cxt->camera_id,
-			sn_mode,&isp_param.sensor_fps);
+			sn_mode,&fps_info);
 	if (ret) {
 		CMR_LOGE("get sensor fps info failed %ld", ret);
 		goto exit;
 	}
+	camera_copy_sensor_fps_info_to_isp(&isp_param.sensor_fps,&fps_info);
 	CMR_LOGI("isp_param:sensor fps info, is_high_fps %d, high_fps_skip_num is  %d, \
 		max_fps is %d, min_fps is %d", isp_param.sensor_fps.is_high_fps,
 		isp_param.sensor_fps.high_fps_skip_num,isp_param.sensor_fps.max_fps,
@@ -7146,4 +7164,44 @@ cmr_int camera_isp_set_sensor_info_to_af(cmr_handle oem_handle, void* sensor_inf
 		ret = isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_SET_AUX_SENSOR_INFO, (void*)sensor_info);
 	}
 	return ret;
+}
+
+static cmr_uint camera_copy_sensor_fps_info_to_isp(struct isp_sensor_fps_info *out_isp_fps,
+		SENSOR_MODE_FPS_T *in_fps)
+{
+	if(NULL == in_fps || NULL == out_isp_fps) {
+		CMR_LOGE("input param or out param is null!");
+		return  CMR_CAMERA_FAIL;
+	}
+	out_isp_fps->mode = in_fps->mode;
+	out_isp_fps->max_fps = in_fps->max_fps;
+	out_isp_fps->min_fps = in_fps->min_fps;
+	out_isp_fps->is_high_fps = in_fps->is_high_fps;
+	out_isp_fps->high_fps_skip_num = in_fps->high_fps_skip_num;
+
+	return CMR_CAMERA_SUCCESS;
+}
+
+static cmr_uint camera_copy_sensor_ex_info_to_isp(struct isp_sensor_ex_info *out_isp_sn_ex_info,
+		struct sensor_ex_info *in_sn_ex_info)
+{
+	if(NULL == in_sn_ex_info || NULL == out_isp_sn_ex_info) {
+		CMR_LOGE("input param or out param is null!");
+		return  CMR_CAMERA_FAIL;
+	}
+	out_isp_sn_ex_info->f_num = in_sn_ex_info->f_num;
+	out_isp_sn_ex_info->focal_length = in_sn_ex_info->focal_length;
+	out_isp_sn_ex_info->max_fps = in_sn_ex_info->max_fps;
+	out_isp_sn_ex_info->max_adgain = in_sn_ex_info->max_adgain;
+	out_isp_sn_ex_info->ois_supported = in_sn_ex_info->ois_supported;
+	out_isp_sn_ex_info->pdaf_supported = in_sn_ex_info->pdaf_supported;
+	out_isp_sn_ex_info->exp_valid_frame_num = in_sn_ex_info->exp_valid_frame_num;
+	out_isp_sn_ex_info->clamp_level = in_sn_ex_info->clamp_level;
+	out_isp_sn_ex_info->adgain_valid_frame_num = in_sn_ex_info->adgain_valid_frame_num;
+	out_isp_sn_ex_info->preview_skip_num = in_sn_ex_info->preview_skip_num;
+	out_isp_sn_ex_info->capture_skip_num = in_sn_ex_info->capture_skip_num;
+	out_isp_sn_ex_info->name = in_sn_ex_info->name;
+	out_isp_sn_ex_info->sensor_version_info = in_sn_ex_info->sensor_version_info;
+
+	return CMR_CAMERA_SUCCESS;
 }
