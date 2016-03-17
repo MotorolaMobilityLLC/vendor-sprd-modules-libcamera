@@ -93,6 +93,7 @@ struct af_altek_vcm_tune_info {
 };
 
 struct af_altek_context {
+	cmr_u8 inited;
 	cmr_u32 camera_id;
 	cmr_u32 frame_id;
 	cmr_handle caller_handle;
@@ -1451,6 +1452,7 @@ static cmr_int afaltek_adpt_init(void *in, void *out, cmr_handle * adpt_handle)
 	}
 
 	cmr_bzero(cxt, sizeof(*cxt));
+	cxt->inited = 0;
 	cxt->caller_handle = in_p->caller_handle;
 	cxt->camera_id = in_p->ctrl_in->camera_id;
 	cxt->cb_ops.set_pos = in_p->cb_ctrl_ops.set_pos;
@@ -1498,6 +1500,7 @@ static cmr_int afaltek_adpt_init(void *in, void *out, cmr_handle * adpt_handle)
 		ISP_LOGE("ret = %ld", ret);
 
 	*adpt_handle = (cmr_handle)cxt;
+	cxt->inited = 1;
 	return ret;
 
 error_lib_init:
@@ -1528,6 +1531,62 @@ static cmr_int afaltek_adpt_deinit(cmr_handle adpt_handle)
 	return ISP_SUCCESS;
 }
 
+static cmr_int afaltek_adpt_proc_report_status(cmr_handle adpt_handle,
+					       struct allib_af_output_report_t *report)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+
+	ISP_LOGI("focus_status.t_status = %d", report->focus_status.t_status);
+	if (alAFLib_STATUS_UNKNOWN == report->focus_status.t_status) {
+		ret = afaltek_adpt_af_done(cxt, 0);
+	} else if (alAFLib_STATUS_FOCUSED == report->focus_status.t_status) {
+		ret = afaltek_adpt_af_done(cxt, 1);
+	} else {
+		ISP_LOGI("unkown status = %d", report->focus_status.t_status);
+	}
+
+	return ret;
+}
+
+static cmr_int afaltek_adpt_proc_report_stats_cfg(cmr_handle adpt_handle,
+						  struct allib_af_output_report_t *report)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+	struct alhw3a_af_cfginfo_t af_cfg;
+	struct allib_af_input_special_event event;
+	cmr_bzero(&af_cfg, sizeof(af_cfg));
+	al3awrapperaf_updateispconfig_af(&report->stats_config, &af_cfg);
+	cxt->stats_config.token_id = af_cfg.tokenid;
+	cxt->stats_config.need_update_token = 1;
+	ISP_LOGI("token_id = %d", cxt->stats_config.token_id);
+
+	/* send stats config to framework */
+	afaltek_adpt_config_af_stats(cxt, &af_cfg);
+
+	cmr_bzero(&event, sizeof(event));
+	event.flag = 0;
+	event.type = alAFLib_AF_STATS_CONFIG_UPDATED;
+	ret = afaltek_adpt_set_special_event(cxt, &event);
+	return ret;
+}
+
+static cmr_int afaltek_adpt_proc_report_debug_info(struct allib_af_output_report_t *report,
+						   struct af_altek_report_t *out)
+{
+	cmr_int ret = ISP_SUCCESS;
+
+	if (out) {
+		ret = al3awrapper_updateafreport(&report->focus_status, &out->report_out);
+		ISP_LOGI("ret = %ld", ret);
+		if (ERR_WPR_AF_SUCCESS == ret)
+			ret = ISP_SUCCESS;
+		out->need_report = 1;
+	}
+	return ret;
+}
+
 static cmr_int afaltek_adpt_proc_out_report(cmr_handle adpt_handle,
 					    struct allib_af_output_report_t *report,
 					    void *report_out)
@@ -1537,44 +1596,16 @@ static cmr_int afaltek_adpt_proc_out_report(cmr_handle adpt_handle,
 
 	ISP_LOGI("report->type = 0x%x", report->type);
 	if (alAFLIB_OUTPUT_STATUS & report->type) {
-		ISP_LOGI("focus_status.t_status = %d", report->focus_status.t_status);
-		if (alAFLib_STATUS_UNKNOWN == report->focus_status.t_status) {
-			ret = afaltek_adpt_af_done(cxt, 0);
-		} else if (alAFLib_STATUS_FOCUSED == report->focus_status.t_status) {
-			ret = afaltek_adpt_af_done(cxt, 1);
-		} else {
-			ISP_LOGI("unkown status = %d", report->focus_status.t_status);
-		}
+		ret = afaltek_adpt_proc_report_status(cxt, report);
 	}
 
 	if (alAFLIB_OUTPUT_STATS_CONFIG & report->type) {
-		struct alhw3a_af_cfginfo_t aAFConfig;
-		struct allib_af_input_special_event event;
-		cmr_bzero(&aAFConfig, sizeof(aAFConfig));
-		al3awrapperaf_updateispconfig_af(&report->stats_config, &aAFConfig);
-		cxt->stats_config.token_id = aAFConfig.tokenid;
-		cxt->stats_config.need_update_token = 1;
-		ISP_LOGI("token_id = %d", cxt->stats_config.token_id);
-
-		/* send stats config to framework */
-		afaltek_adpt_config_af_stats(cxt, &aAFConfig);
-
-		cmr_bzero(&event, sizeof(event));
-		event.flag = 0;
-		event.type = alAFLib_AF_STATS_CONFIG_UPDATED;
-		ret = afaltek_adpt_set_special_event(cxt, &event);
+		if (cxt->inited)
+			ret = afaltek_adpt_proc_report_stats_cfg(cxt, report);
 	}
 
 	if (alAFLIB_OUTPUT_DEBUG_INFO & report->type) {
-		ret = ISP_SUCCESS;
-		if (report_out) {
-			struct af_altek_report_t *out = (struct af_altek_report_t *)report_out;
-			ret = al3awrapper_updateafreport(&report->focus_status, &out->report_out);
-			ISP_LOGI("ret = %ld", ret);
-			if (ERR_WPR_AF_SUCCESS == ret)
-				ret = ISP_SUCCESS;
-			out->need_report = 1;
-		}
+		ret = afaltek_adpt_proc_report_debug_info(report, report_out);
 	}
 
 	return ret;
