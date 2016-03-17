@@ -3380,8 +3380,7 @@ cmr_int prev_alloc_prev_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 				prev_cxt->prev_virt_addr_array[i][0],
 				prev_cxt->prev_mfd_array[i][0]);
 
-			if (((0 == prev_cxt->prev_virt_addr_array[i][0]) || (0 == prev_cxt->prev_phys_addr_array[i][0])) 
-				&& (prev_cxt->prev_mfd_array[i][0] == 0)) {
+			if (((0 == prev_cxt->prev_virt_addr_array[i][0])) || (prev_cxt->prev_mfd_array[i][0] == 0)) {
 				if (i >= PREV_FRM_CNT) {
 					CMR_LOGE("memory is invalid");
 					return  CMR_CAMERA_NO_MEM;
@@ -3412,8 +3411,7 @@ cmr_int prev_alloc_prev_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 				prev_cxt->prev_virt_addr_array[i],
 				prev_cxt->prev_mfd_array[i]);
 
-			if (((0 == prev_cxt->prev_virt_addr_array[i]) || (0 == prev_cxt->prev_phys_addr_array[i])) 
-				&& (prev_cxt->prev_mfd_array[i] == 0)) {
+			if ((0 == prev_cxt->prev_virt_addr_array[i]) || (prev_cxt->prev_mfd_array[i][0] == 0)){
 				if (i >= PREV_FRM_CNT) {
 					CMR_LOGE("memory is invalid");
 					return  CMR_CAMERA_NO_MEM;
@@ -3698,7 +3696,7 @@ cmr_int prev_alloc_video_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_
 				prev_cxt->video_virt_addr_array[i],
 				prev_cxt->video_mfd_array[i]);
 
-			if ((0 == prev_cxt->video_virt_addr_array[i]) || (0 == prev_cxt->video_phys_addr_array[i]) || prev_cxt->video_mfd_array[i]) {
+			if ((0 == prev_cxt->video_virt_addr_array[i]) || prev_cxt->video_mfd_array[i]) {
 				if (i >= PREV_FRM_CNT) {
 					CMR_LOGE("memory is invalid");
 					return  CMR_CAMERA_NO_MEM;
@@ -3991,7 +3989,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 				prev_cxt->cap_mfd_array[i]);
 
 
-			if ((0 == prev_cxt->cap_virt_addr_array[i]) || (0 == prev_cxt->cap_phys_addr_array[i]) || prev_cxt->cap_mfd_array[i]) {
+			if ((0 == prev_cxt->cap_virt_addr_array[i]) || prev_cxt->cap_mfd_array[i]) {
 				CMR_LOGE("memory is invalid");
 				return  CMR_CAMERA_NO_MEM;
 			}
@@ -4016,7 +4014,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 				prev_cxt->cap_phys_addr_path_array[i],
 				prev_cxt->cap_virt_addr_path_array[i],
 				prev_cxt->cap_mfd_path_array[i]);
-				if ((0 == prev_cxt->cap_virt_addr_path_array[i]) || (0 == prev_cxt->cap_phys_addr_path_array[i]) || prev_cxt->cap_mfd_path_array[i]) {
+				if ((0 == prev_cxt->cap_virt_addr_path_array[i]) || prev_cxt->cap_mfd_path_array[i]) {
 					CMR_LOGE("CAMERA_SNAPSHOT_PATH memory is invalid");
 					return CMR_CAMERA_NO_MEM;
 				}
@@ -7343,8 +7341,7 @@ cmr_int prev_pop_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id, s
 		CMR_LOGE("cnt error valid_num %ld", valid_num);
 		goto exit;
 	}
-	if (((prev_cxt->prev_frm[0].addr_phy.addr_y == data->yaddr) || (prev_cxt->prev_frm[0].mfd.y == data->mfd[0])) 
-		&& valid_num > 0) {
+	if ( (prev_cxt->prev_frm[0].mfd.y == data->mfd[0]) && valid_num > 0) {
 #ifdef SC_IOMMU_PF
 		cmr_uint						phys_addr_array_0[2];
 		cmr_uint						virt_addr_array_0[2];
@@ -7519,7 +7516,7 @@ cmr_int prev_pop_video_buffer(struct prev_handle *handle, cmr_u32 camera_id, str
 	prev_cxt  = &handle->prev_cxt[camera_id];
 	valid_num = prev_cxt->video_mem_valid_num;
 
-	if (prev_cxt->video_frm[0].addr_phy.addr_y == data->yaddr && valid_num > 0) {
+	if ((prev_cxt->video_frm[0].mfd.y == data->mfd[0]) && valid_num > 0) {
 #ifdef SC_IOMMU_PF
 		cmr_uint						phys_addr_array_0[2];
 		cmr_uint						virt_addr_array_0[2];
