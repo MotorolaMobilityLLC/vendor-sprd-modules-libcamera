@@ -123,27 +123,26 @@ include $(BUILD_MULTI_PREBUILT)
 endif
 endif
 
-
-
-
 ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
-ifeq ($(strip $(TARGET_ARCH)),arm64)
-include $(CLEAR_VARS)
-LOCAL_MODULE := libmorpho_easy_hdr
-LOCAL_MODULE_CLASS := SHARED_LIBRARIES
-LOCAL_MODULE_TAGS := optional
-LOCAL_MULTILIB := both
-LOCAL_MODULE_STEM_32 := libmorpho_easy_hdr.so
-LOCAL_MODULE_STEM_64 := libmorpho_easy_hdr.so
-LOCAL_SRC_FILES_32 :=  arithmetic/libmorpho_easy_hdr.so
-LOCAL_SRC_FILES_64 :=  arithmetic/lib64/libmorpho_easy_hdr.so
-include $(BUILD_PREBUILT)
-else
-include $(CLEAR_VARS)
-LOCAL_PREBUILT_LIBS := arithmetic/libmorpho_easy_hdr.so
-LOCAL_MODULE_TAGS := optional
-include $(BUILD_MULTI_PREBUILT)
-endif
+	ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_SPRD_LIB)),true)
+		ifeq ($(strip $(TARGET_ARCH)),arm64)
+			include $(CLEAR_VARS)
+			LOCAL_MODULE := libsprd_easy_hdr
+			LOCAL_MODULE_CLASS := SHARED_LIBRARIES
+			LOCAL_MODULE_TAGS := optional
+			LOCAL_MULTILIB := both
+			LOCAL_MODULE_STEM_32 := libsprd_easy_hdr.so
+			LOCAL_MODULE_STEM_64 := libsprd_easy_hdr.so
+			LOCAL_SRC_FILES_32 :=  arithmetic/libsprd_easy_hdr.so
+			LOCAL_SRC_FILES_64 :=  arithmetic/lib64/libsprd_easy_hdr.so
+			include $(BUILD_PREBUILT)
+		else
+			include $(CLEAR_VARS)
+			LOCAL_PREBUILT_LIBS := arithmetic/libsprd_easy_hdr.so
+			LOCAL_MODULE_TAGS := optional
+			include $(BUILD_MULTI_PREBUILT)
+		endif #end ARCH64
+	endif #end SPRD_LIB
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)

@@ -16,7 +16,8 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
-LOCAL_SHARED_LIBRARIES += libmorpho_easy_hdr
+LOCAL_CFLAGS += -DCONFIG_SPRD_HDR_LIB
+LOCAL_SHARED_LIBRARIES += libsprd_easy_hdr
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_UV_DENOISE)),true)
