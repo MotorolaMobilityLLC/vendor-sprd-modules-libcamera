@@ -2167,12 +2167,6 @@ void SprdCamera3OEMIf::stopPreviewInternal()
 		}
 	}
 
-#ifdef CONFIG_CAMERA_GSP_SCALING
-	//stop video, we need to notify GSP to close HWC
-	if(camera_notify_closing_gsp_hwc(0))
-		HAL_LOGE("stopPreviewInternal: stop GSP failed!");
-#endif
-
 	if(isPreviewStart()) {
 		HAL_LOGV("Preview not start! wait preview start");
 		WaitForPreviewStart();
@@ -2810,16 +2804,10 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 	SENSOR_Tag sensorInfo;
 
 #ifdef CONFIG_MEM_OPTIMIZATION
-	struct img_frm scale_src, scale_dst;
-	struct cmr_op_mean mean;
 	cmr_uint videobuf_phy = 0;
 	cmr_uint videobuf_vir = 0;
 	cmr_uint prebuf_phy = 0;
 	cmr_uint prebuf_vir = 0;
-	struct private_handle_t* private_handle = NULL;
-	int src_fd = 0;
-	int dst_fd = 0;
-	size_t ion_size;
 #endif
 
 	mSetting->getSENSORTag(&sensorInfo);
@@ -2874,10 +2862,6 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 				HAL_LOGD("prev buff 0x%lx, num %d, ret %d, time 0x%llx, type = %d rec=%lld", buff_vir, frame_num,
 							ret, buffer_timestamp,frame->type, mSlowPara.rec_timestamp);
 				if(frame->type == PREVIEW_FRAME && frame_num >= mPreviewFrameNum && (frame_num > mPictureFrameNum ||frame_num == 0)) {
-
-					//for(size_t m = 0; m < (mPreviewWidth * mPreviewHeight); m++)
-					//	*((uint8_t*)((uint32_t)buff_vir + m)) += 0x30;
-					//memset((void*)((uint32_t)buff_vir + (uint32_t)(mPreviewWidth * mPreviewHeight)), 0x80, (mPreviewWidth * mPreviewHeight / 2));
 					if (mVideoWidth > mCaptureWidth && mVideoHeight > mCaptureHeight) {
 						if(mVideoShotFlag)
 							PushVideoSnapShotbuff(frame_num, CAMERA_STREAM_TYPE_PREVIEW);
@@ -2905,75 +2889,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 						pre_stream->getQBufAddrForNum(frame_num, &prebuf_vir, &prebuf_phy);
 						HAL_LOGD("frame_num=%d, videobuf_phy=0x%lx, videobuf_vir=0x%lx", frame_num, videobuf_phy, videobuf_vir);
 						HAL_LOGD("frame_num=%d, prebuf_phy=0x%lx, prebuf_vir=0x%lx", frame_num, prebuf_phy, prebuf_vir);
-
-#ifdef CONFIG_CAMERA_GSP_SCALING
-						// get preview phy address
-						pre_stream->getQBufHandleForNum(frame_num, &buff_handle);
-						private_handle = (struct private_handle_t*) (*buff_handle);
-						if (NULL == private_handle) {
-							HAL_LOGE("receivePreviewFrame: preview NULL buffer handle!");
-							return;
-						}
-						src_fd = private_handle->share_fd;
-						// get video phy address
-						rec_stream->getQBufHandleForNum(frame_num, &buff_handle);
-						private_handle = (struct private_handle_t*) (*buff_handle);
-						if (NULL == private_handle) {
-							HAL_LOGE("receivePreviewFrame: video NULL buffer handle!");
-							return;
-						}
-						dst_fd = private_handle->share_fd;
-						HAL_LOGD("src_fd=%d, dst_fd=%d", src_fd, dst_fd);
-
-						scale_src.fmt = IMG_DATA_TYPE_YUV420;
-						scale_src.buf_size = mPreviewWidth * mPreviewHeight * 3 / 2;
-						scale_src.rect.start_x = 0;
-						scale_src.rect.start_y = 0;
-						scale_src.rect.width = mPreviewWidth;
-						scale_src.rect.height = mPreviewHeight;
-						scale_src.size.width= mPreviewWidth;
-						scale_src.size.height= mPreviewHeight;
-						scale_src.addr_phy.addr_y = prebuf_phy;
-						scale_src.addr_phy.addr_u= prebuf_phy + mPreviewWidth * mPreviewHeight;
-						scale_src.addr_phy.addr_v= scale_src.addr_phy.addr_u;
-						scale_src.addr_vir.addr_y = prebuf_vir;
-						scale_src.addr_vir.addr_u = prebuf_vir + mPreviewWidth * mPreviewHeight;
-						scale_src.addr_vir.addr_v = scale_src.addr_vir.addr_u;
-						scale_src.data_end.y_endian = 1;
-						scale_src.data_end.uv_endian = 2;
-
-						scale_dst.fmt = IMG_DATA_TYPE_YUV420;
-						scale_dst.buf_size = mPreviewWidth * mPreviewHeight * 3 / 2;
-						scale_dst.rect.start_x = 0;
-						scale_dst.rect.start_y = 0;
-						scale_dst.rect.width = mPreviewWidth;
-						scale_dst.rect.height = mPreviewHeight;
-						scale_dst.size.width= mPreviewWidth;
-						scale_dst.size.height= mPreviewHeight;
-						scale_dst.addr_phy.addr_y = videobuf_phy;
-						scale_dst.addr_phy.addr_u= videobuf_phy + mPreviewWidth * mPreviewHeight;
-						scale_dst.addr_phy.addr_v= scale_dst.addr_phy.addr_u;
-						scale_dst.addr_vir.addr_y = videobuf_vir;
-						scale_dst.addr_vir.addr_u = videobuf_vir + mPreviewWidth * mPreviewHeight;
-						scale_dst.addr_vir.addr_v = scale_dst.addr_vir.addr_u;
-						scale_dst.data_end.y_endian = 1;
-						scale_dst.data_end.uv_endian = 2;
-
-						mean.is_sync = 1;
-						mean.slice_height = (mPreviewHeight + 0xf) & ~0xf;
-
-						//start vedio, we need to notify GSP to close HWC
-						if(camera_notify_closing_gsp_hwc(1))
-							ALOGD("processCaptureRequest: start GSP HWC failed!");
-						ret=camera_start_scaling_in_gsp( &scale_src, &scale_dst, src_fd, dst_fd);
-						if(ret){
-							HAL_LOGE("camera_start_scaling_in_gsp failed!");
-							return;
-						}
-#else
 						memcpy((void*)videobuf_vir, (void*)prebuf_vir, mPreviewWidth * mPreviewHeight * 3 / 2);
-#endif
-
 						channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp, CAMERA_STREAM_TYPE_VIDEO);
 
 						if(frame_num == (mDropVideoFrameNum+1)) //for IOMMU error

@@ -886,19 +886,6 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 		mHDRProcessFlag = false;
 	}
 
-#ifdef CONFIG_CAMERA_GSP_SCALING
-	//stop video, we need to notify GSP to close HWC
-	if((ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD!=capturePara.cap_intent
-		&& ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT!=capturePara.cap_intent)
-	|| (request->num_output_buffers==1 &&
-	(ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD==capturePara.cap_intent
-	|| ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT==capturePara.cap_intent))
-	){
-		if(camera_notify_closing_gsp_hwc(0))
-			HAL_LOGE("processCaptureRequest: stop GSP failed!");
-	}
-#endif
-
 	switch(capturePara.cap_intent)
 	{
 		case ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW:

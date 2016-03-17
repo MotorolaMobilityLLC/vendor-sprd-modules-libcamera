@@ -3892,28 +3892,6 @@ exit:
 	return ret;
 }
 
-#ifdef CONFIG_MEM_OPTIMIZATION
-cmr_int camera_start_scale2(cmr_handle oem_handle, cmr_handle caller_handle, struct img_frm *src,
-                                      struct img_frm *dst, struct cmr_op_mean *mean)
-{
-	return camera_start_scale(oem_handle, caller_handle, src, dst, mean);
-}
-
-cmr_int camera_start_scale_in_gsp(struct img_frm *src,
-                                      struct img_frm *dst, int src_fd, int dst_fd)
-{
-	//return cmr_gsp_start_scale(src, dst, src_fd,dst_fd);
-	return 0;
-}
-cmr_int camera_notify_close_gsp_hwc(cmr_int need_close)
-{
-	//return cmr_notify_close_gsp_hwc(need_close);
-	return 0;
-}
-
-#endif
-
-
 cmr_int camera_start_rot(cmr_handle oem_handle, cmr_handle caller_handle, struct img_frm *src,
                                    struct img_frm *dst, struct cmr_op_mean *mean)
 {

@@ -825,28 +825,6 @@ cmr_int camera_get_isp_info(cmr_handle camera_handle, void **addr, int *size)
 	return ret;
 }
 
-#ifdef CONFIG_MEM_OPTIMIZATION
-cmr_int camera_start_scaling(cmr_handle camera_handle, cmr_handle caller_handle, struct img_frm *src, struct img_frm *dst, struct cmr_op_mean *mean)
-{
-	cmr_int                          ret = CMR_CAMERA_SUCCESS;
-
-	ret = camera_start_scale2(camera_handle, caller_handle, src, dst, mean);
-	return ret;
-}
-cmr_int camera_start_scaling_in_gsp(struct img_frm *src, struct img_frm *dst, int srd_fd, int dst_fd)
-{
-	cmr_int                          ret = CMR_CAMERA_SUCCESS;
-
-	ret = camera_start_scale_in_gsp(src, dst, srd_fd,dst_fd);
-	return ret;
-}
-
-cmr_int camera_notify_closing_gsp_hwc(cmr_int need_close)
-{
-	return camera_notify_close_gsp_hwc(need_close);
-}
-#endif
-
 void camera_start_burst_notice(cmr_handle camera_handle){
 	camera_local_start_burst_notice(camera_handle);
 }
