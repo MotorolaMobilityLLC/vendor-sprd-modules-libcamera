@@ -631,7 +631,10 @@ cmr_int isp3a_end_af_notify(cmr_handle handle, struct af_result_param *data)
 	}
 	af_notice.mode = ISP_FOCUS_MOVE_END;
 	af_notice.valid_win = data->suc_win;
-	ret = cxt->caller_callback(cxt->caller_handle, ISP_CALLBACK_EVT|ISP_AF_NOTICE_CALLBACK,(void*)&af_notice, sizeof(struct isp_af_notice));
+	ret = cxt->caller_callback(cxt->caller_handle,
+				   ISP_CALLBACK_EVT|ISP_AF_NOTICE_CALLBACK,
+				   (void*)&af_notice,
+				   sizeof(struct isp_af_notice));
 exit:
 	ISP_LOGI("done %ld", ret);
 	return ret;
@@ -2834,6 +2837,9 @@ cmr_int isp3a_start_af_process(cmr_handle isp_3a_handle, struct isp3a_statistics
 	struct af_ctrl_process_out                  output;
 	union awb_ctrl_cmd_in                       awb_in;
 
+	ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_SET_UPDATE_AWB, NULL, NULL);
+	ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_SET_UPDATE_AE, (void *)&cxt->ae_cxt.proc_out.ae_info, NULL);
+	ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_SET_PROC_START, NULL, NULL);
 	ret = isp3a_hold_statistics_buf(isp_3a_handle, ISP3A_AF, stats_data);
 	input.statistics_data = stats_data;
 	output.data = NULL;
@@ -2940,9 +2946,6 @@ cmr_int isp3a_handle_ae_result(cmr_handle isp_3a_handle, struct ae_ctrl_callback
 	} else {
 		cxt->ae_cxt.proc_out = result_ptr->proc_out;
 		ret = isp3a_start_awb_process(isp_3a_handle, cxt->stats_buf_cxt.awb_stats_buf_ptr, result_ptr);
-		ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_SET_UPDATE_AWB, NULL, NULL);
-		ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_SET_UPDATE_AE, (void *)&result_ptr->proc_out.ae_info, NULL);
-		ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_SET_PROC_START, NULL, NULL);
 	}
 	return ret;
 }

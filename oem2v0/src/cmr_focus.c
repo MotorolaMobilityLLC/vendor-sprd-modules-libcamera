@@ -956,12 +956,11 @@ cmr_int af_start(cmr_handle af_handle, cmr_u32 camera_id)
 			pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
 		}else{
 			pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
-			/* TBD open when af is ok
 			ret = af_cxt->ops.af_isp_ioctrl(af_cxt->oem_handle, COM_ISP_SET_AF, &com_isp_af);
 
 			CMR_LOGD("wait for af_isp_ioctrl");
 			ret = cmr_focus_clear_sem(af_handle);
-			ret = wait_isp_focus_result(af_handle, camera_id, 0);*/
+			ret = wait_isp_focus_result(af_handle, camera_id, 0);
 		}
 	} else {
 		CMR_LOGV("TYPE_YUV");

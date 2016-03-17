@@ -32,7 +32,7 @@
 #define AFCTRL_EVT_PROCESS			(AFCTRL_EVT_BASE + 3)
 #define AFCTRL_EVT_EXIT				(AFCTRL_EVT_BASE + 4)
 
-#define AFCTRL_VCM_EVT_BASE			(AFCTRL_EVT_BASE + 20)
+#define AFCTRL_VCM_EVT_BASE			(AFCTRL_EVT_BASE + 0x20)
 #define AFCTRL_VCM_EVT_INIT			AFCTRL_VCM_EVT_BASE
 #define AFCTRL_VCM_EVT_PROCESS			(AFCTRL_VCM_EVT_BASE + 1)
 #define AFCTRL_VCM_EVT_EXIT			(AFCTRL_VCM_EVT_BASE + 2)
@@ -52,14 +52,23 @@ struct afctrl_context {
 	cmr_handle adpt_handle;
 	cmr_handle caller_handle;
 	struct af_ctrl_thread_context thread_cxt;
-	struct af_ctrl_param_out ioctrl_out;
-	struct af_ctrl_process_out process_out;
 	//enum af_ctrl_scene_mode af_scene_mode;
 	struct af_ctrl_roi_info_type af_roi_info;
 	//struct af_ctrl_sensor_info_type sensor_info;
 	//struct af_ctrl_auxiliary_info auxiliary_info;
 	struct af_ctrl_cb_ops_type cb_ops;
 	struct adpt_ops_type *af_adpt_ops;
+};
+
+struct af_ctrl_msg_ctrl {
+	cmr_int cmd;
+	struct af_ctrl_param_in *in;
+	struct af_ctrl_param_out *out;
+};
+
+struct af_ctrl_msg_proc {
+	struct af_ctrl_process_in *in;
+	struct af_ctrl_process_out *out;
 };
 
 static cmr_int afctrl_start_notify(cmr_handle handle, void *data)
@@ -84,7 +93,7 @@ static cmr_int afctrl_end_notify(cmr_handle handle,
 	struct afctrl_context *cxt = (struct afctrl_context *)handle;
 
 	if (cxt->cb_ops.end_notify) {
-		ret = cxt->cb_ops.end_notify(cxt->caller_handle, NULL);
+		ret = cxt->cb_ops.end_notify(cxt->caller_handle, data);
 	} else {
 		ISP_LOGE("cb is null");
 		ret = -ISP_CALLBACK_NULL;
@@ -144,6 +153,7 @@ static cmr_int afctrl_vcm_process(cmr_handle handle, void *pos)
 	struct afctrl_context *cxt = (struct afctrl_context *)handle;
 	struct af_ctrl_motor_pos *pos_info = (struct af_ctrl_motor_pos *)pos;
 
+	ISP_LOGI("pos_info->motor_pos = %d", pos_info->motor_pos);
 	/* set pos via fw callback */
 	if (cxt->cb_ops.set_pos) {
 		ret = cxt->cb_ops.set_pos(cxt->caller_handle, pos_info);
@@ -152,7 +162,8 @@ static cmr_int afctrl_vcm_process(cmr_handle handle, void *pos)
 		ret = -ISP_CALLBACK_NULL;
 	}
 	/* wait for stabilizing vcm form tuning param */
-	cmr_msleep(pos_info->wait_time_ms);
+	cmr_msleep(pos_info->vcm_wait_ms);
+	ISP_LOGI("pos_info->vcm_wait_ms = %d", pos_info->vcm_wait_ms);
 
 	/* notify lib vcm moving finished */
 	ret = cxt->af_adpt_ops->adpt_ioctrl(cxt->adpt_handle,
@@ -224,6 +235,8 @@ static cmr_int afctrl_thread_proc(struct cmr_msg *message, void *p_data)
 	cmr_int ret = ISP_SUCCESS;
 	cmr_handle handle = (cmr_handle) p_data;
 	struct afctrl_context *cxt = (struct afctrl_context *)handle;
+	struct af_ctrl_msg_ctrl *msg_ctrl = NULL;
+	struct af_ctrl_msg_proc *msg_proc = NULL;
 
 	if (!message || !p_data) {
 		ISP_LOGE("param error message = %p, p_data = %p", message, p_data);
@@ -240,12 +253,14 @@ static cmr_int afctrl_thread_proc(struct cmr_msg *message, void *p_data)
 	case AFCTRL_EVT_EXIT:
 		break;
 	case AFCTRL_EVT_IOCTRL:
-		ret = afctrl_evtctrl(handle, message->sub_msg_type,
-				   message->data, (void *)&(cxt->ioctrl_out));
+		msg_ctrl = (struct af_ctrl_msg_ctrl *)message->data;
+		ret = afctrl_evtctrl(handle, msg_ctrl->cmd,
+				   msg_ctrl->in, msg_ctrl->out);
 		break;
 	case AFCTRL_EVT_PROCESS:
-		ret = afctrl_evtprocess(handle, message->data,
-				      (void *)&(cxt->ioctrl_out));
+		msg_proc = (struct af_ctrl_msg_proc *)message->data;
+		ret = afctrl_evtprocess(handle, msg_proc->in,
+					msg_proc->out);
 		break;
 	default:
 		ISP_LOGE("don't support msg");
@@ -463,29 +478,28 @@ exit:
 	return 0;
 }
 
-cmr_int af_ctrl_process(cmr_handle handle, struct af_ctrl_process_in * in,
-			struct af_ctrl_process_out * out)
+cmr_int af_ctrl_process(cmr_handle handle, struct af_ctrl_process_in *in,
+			struct af_ctrl_process_out *out)
 {
 #ifdef SUPPORT_AF_THREAD
 	cmr_int ret = ISP_SUCCESS;
 	struct afctrl_context *cxt = (struct afctrl_context *)handle;
+	struct af_ctrl_msg_proc msg_proc;
 	CMR_MSG_INIT(message);
 
-	if (!in || !out) {
-		ISP_LOGI("param error in = %p, out = %p", in, out);
-		goto exit;
-	}
+	msg_proc.in = in;
+	msg_proc.out = out;
 
 	message.msg_type = AFCTRL_EVT_PROCESS;
-	message.sync_flag = CMR_MSG_SYNC_NONE;
+	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+	//message.sync_flag = CMR_MSG_SYNC_NONE;
 	message.alloc_flag = 0;
-	message.data = (void *)in;
+	message.data = &msg_proc;
 	ret = cmr_thread_msg_send(cxt->thread_cxt.ctrl_thr_handle, &message);
 	if (ret) {
 		ISP_LOGE("failed to send msg to main thr %ld", ret);
 		goto exit;
 	}
-	*out = cxt->process_out;
 exit:
 	return ret;
 #else
@@ -498,26 +512,31 @@ cmr_int af_ctrl_ioctrl(cmr_handle handle, cmr_int cmd,
 		       struct af_ctrl_param_out * out)
 {
 #ifdef SUPPORT_AF_THREAD
-	cmr_int ret = -1;
+	cmr_int ret = -ISP_ERROR;
 	struct afctrl_context *cxt = (struct afctrl_context *)handle;
+	struct af_ctrl_msg_ctrl msg_ctrl;
 	CMR_MSG_INIT(message);
 
-	if (!in || !out) {
-		ISP_LOGI("param error in = %p, out = %p", in, out);
-		goto exit;
+	msg_ctrl.cmd = cmd;
+	msg_ctrl.in = in;
+	msg_ctrl.out = out;
+	if (AF_CTRL_CMD_SET_PROC_START == cmd) {
+		message.data = malloc(sizeof(msg_ctrl));
+		message.msg_type = AFCTRL_EVT_IOCTRL;
+		message.sync_flag = CMR_MSG_SYNC_NONE;
+		message.alloc_flag = 1;
+		memcpy(message.data, &msg_ctrl, sizeof(msg_ctrl));
+	} else {
+		message.msg_type = AFCTRL_EVT_IOCTRL;
+		message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+		message.alloc_flag = 0;
+		message.data = &msg_ctrl;
 	}
-
-	message.msg_type = AFCTRL_EVT_IOCTRL;
-	message.sub_msg_type = cmd;
-	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
-	message.alloc_flag = 0;
-	message.data = (void *)in;
 	ret = cmr_thread_msg_send(cxt->thread_cxt.ctrl_thr_handle, &message);
 	if (ret) {
 		ISP_LOGE("failed to send msg to main thr %ld", ret);
 		goto exit;
 	}
-	*out = cxt->ioctrl_out;
 exit:
 	return ret;
 #else

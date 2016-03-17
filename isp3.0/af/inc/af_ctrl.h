@@ -140,7 +140,7 @@ enum af_lib_fun_type {
 struct af_ctrl_motor_pos {
 	cmr_u32 motor_pos;
 	cmr_u32 skip_frame;
-	cmr_u32 wait_time_ms;
+	cmr_u32 vcm_wait_ms;
 };
 
 struct af_ctrl_cb_ops_type {

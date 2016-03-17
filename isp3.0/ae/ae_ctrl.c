@@ -333,8 +333,7 @@ cmr_int ae_ctrl_ioctrl(cmr_handle handle, enum ae_ctrl_cmd cmd, struct ae_ctrl_p
 		memcpy(message.data, in_ptr, sizeof(*in_ptr));
 		message.alloc_flag = 1;
 		message.sync_flag = CMR_MSG_SYNC_NONE;
-	}
-	else {
+	} else {
 		message.sync_flag = CMR_MSG_SYNC_PROCESSED;
 		message.alloc_flag = 0;
 		message.data = (void*)in_ptr;

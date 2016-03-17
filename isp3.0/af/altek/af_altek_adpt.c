@@ -100,7 +100,7 @@ struct af_altek_context {
 	cmr_handle altek_lib_handle;
 	cmr_handle caf_lib_handle;
 	caf_alg_handle_t caf_trigger_handle;
-	cmr_u32 vcm_wait_ms;
+	struct af_ctrl_motor_pos motor_info;
 	cmr_int ae_awb_lock_cnt;
 	struct af_altek_lib_api lib_api;
 	struct af_altek_lib_ops ops;
@@ -776,8 +776,8 @@ static cmr_int afaltek_adpt_update_awb(cmr_handle adpt_handle, void *in)
 	struct allib_af_input_awb_info_t awb_info = { 0x00 };
 	ISP_LOGI("E");
 
-	memcpy(&awb_info, in, sizeof(awb_info)); /* TBD */
-	ret = afaltek_adpt_update_awb_info(cxt, &awb_info);
+	//memcpy(&awb_info, in, sizeof(awb_info)); /* TBD */
+	ret = 0;//afaltek_adpt_update_awb_info(cxt, &awb_info);
 	return ret;
 }
 
@@ -890,7 +890,8 @@ static cmr_u8 afaltek_adpt_set_pos(cmr_handle adpt_handle, cmr_s16 dac, cmr_u8 s
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct af_ctrl_motor_pos pos_info = { 0x00 };
 	pos_info.motor_pos = dac;
-	pos_info.wait_time_ms = cxt->vcm_wait_ms;
+	pos_info.vcm_wait_ms = cxt->motor_info.vcm_wait_ms;
+	cxt->motor_info.motor_pos = dac;
 	UNUSED(sensor_id);
 
 	/* call af ctrl callback to move lens */
@@ -908,9 +909,13 @@ static cmr_int afaltek_adpt_end_notify(cmr_handle adpt_handle)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+	struct af_result_param af_result = { 0 };
+
+	af_result.motor_pos = cxt->motor_info.motor_pos;
+	af_result.suc_win = 1; /* TBD */
 
 	if (cxt->cb_ops.end_notify) {
-		ret = cxt->cb_ops.end_notify(cxt->caller_handle, NULL);
+		ret = cxt->cb_ops.end_notify(cxt->caller_handle, &af_result);
 	} else {
 		ISP_LOGE("cb is null");
 		ret = -ISP_CALLBACK_NULL;
@@ -958,17 +963,21 @@ static cmr_int afaltek_adpt_pre_start(cmr_handle adpt_handle, struct isp_af_win 
 	lib_roi.frame_id = cxt->frame_id;
 	/* only support value 1 */
 	lib_roi.num_roi = roi->valid_win;
+	ISP_LOGI("lib_roi.num_roi = %d", lib_roi.num_roi);
 	/* only support array 0 */
 	for (i = 0; i < roi->valid_win; i++) {
 		lib_roi.roi[i].uw_top = roi->win[i].start_x;
 		lib_roi.roi[i].uw_left = roi->win[i].start_y;
 		lib_roi.roi[i].uw_dx = roi->win[i].end_x;
 		lib_roi.roi[i].uw_dy = roi->win[i].end_y;
+		ISP_LOGI("top = %d, left = %d, dx = %d, dy = %d",
+			 lib_roi.roi[i].uw_top, lib_roi.roi[i].uw_left,
+			 lib_roi.roi[i].uw_dx, lib_roi.roi[i].uw_dy);
 	}
 	lib_roi.weight[0] = 1;
 	lib_roi.src_img_sz.uw_width = 2592;	/* TBD */
 	lib_roi.src_img_sz.uw_height = 1944;
-	al3awrapperaf_translateroitoaflibtype(cxt->frame_id, &lib_roi); /* TBD will del*/
+	//al3awrapperaf_translateroitoaflibtype(cxt->frame_id, &lib_roi); /* TBD will del*/
 	ret = afaltek_adpt_set_roi(adpt_handle, &lib_roi);
 	if (ret)
 		ISP_LOGE("failed to set roi");
@@ -1006,7 +1015,7 @@ static cmr_int afaltek_adpt_post_start(cmr_handle adpt_handle)
 
 static cmr_int afaltek_adpt_proc_start(cmr_handle adpt_handle)
 {
-	cmr_int ret = -ISP_ERROR;
+	cmr_int ret = ISP_SUCCESS;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	cmr_u32 sec = 0;
 	cmr_u32 usec = 0;
@@ -1150,7 +1159,7 @@ static cmr_int afaltek_adpt_inctrl(cmr_handle adpt_handle, cmr_int cmd,
 	case AF_CTRL_CMD_SET_FLASH_NOTICE:
 		break;
 	case AF_CTRL_CMD_SET_TUNING_MODE:
-		ret = afaltek_adpt_set_tuning_enable(adpt_handle, *(cmr_int *) in);
+		ret = afaltek_adpt_set_tuning_enable(adpt_handle, *(cmr_int *)in);
 		break;
 	case AF_CTRL_CMD_SET_SOF_FRAME_IDX:
 		ret = afaltek_adpt_update_sof(adpt_handle, in);
@@ -1162,7 +1171,7 @@ static cmr_int afaltek_adpt_inctrl(cmr_handle adpt_handle, cmr_int cmd,
 		ret = afaltek_adpt_proc_start(adpt_handle);
 		break;
 	case AF_CTRL_CMD_SET_UPDATE_AWB:
-		//ret = afaltek_adpt_update_awb(adpt_handle, in);
+		ret = afaltek_adpt_update_awb(adpt_handle, in);
 		break;
 	default:
 		ISP_LOGE("failed to case cmd = %ld", cmd);
@@ -1333,14 +1342,14 @@ static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 	/* init otp */
 	otp_info = (struct allib_af_input_init_info_t *) in->otp_info.otp_data;
 	if (otp_info) {
-		cxt->vcm_wait_ms = otp_info->calib_data.lens_move_stable_time;
+		cxt->motor_info.vcm_wait_ms = otp_info->calib_data.lens_move_stable_time;
 		ret = afaltek_adpt_set_cali_data(cxt, in->otp_info.otp_data);
 		if (ret)
 			ISP_LOGI("ret = %ld", ret);
 	} else {
 		ISP_LOGI("there is no OTP in this module");
 	}
-#if 1 //TBD
+#if 0 //TBD
 	in->tuning_info.tuning_file = malloc(0x10);
 	in->tuning_info.size = 0x10;
 	memset(in->tuning_info.tuning_file, 0x0f, 0x10);
