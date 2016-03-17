@@ -85,6 +85,9 @@ uint32 al3awrapper_dispatchhw3a_aestats( struct isp_drv_meta_ae_t * alisp_metada
 
 	udpixelsperblocks = pmetadata_ae->ae_stats_info.udpixelsperblocks;
 
+	if (0 == udpixelsperblocks)
+		return ERR_WRP_AE_INVALID_PIXEL_PER_BLOCKS;
+
 	/* query AWB from AE libs */
 	memset( &localparam, 0, sizeof(struct ae_get_param_t) );
 	localparam.ae_get_param_type = AE_GET_CURRENT_CALIB_WB;		/* ask AE lib for HW3A setting */

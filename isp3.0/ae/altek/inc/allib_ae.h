@@ -112,6 +112,22 @@ enum ae_script_mode_t {
 };
 
 /*
+ *@typedef ae_script_st_t
+ *@brief AE script status
+ */
+enum ae_script_st_t {
+	/* normal control  */
+	SCRIPT_IDLE,	/* Init */
+	SCRIPT_WAIT_EXPOSURE_VALID,
+	SCRIPT_WAIT_LED_TURNON,
+	SCRIPT_WAIT_LED_TURNOFF,
+	SCRIPT_LOG_MSG,
+	SCRIPT_WAIT_NEXT_ROUND,
+	SCRIPT_DONE,
+};
+
+
+/*
  *@typedef ae_converge_level_type_t
  *@brief AE converge speed level
  */
@@ -501,12 +517,13 @@ struct ae_script_param_t {
 
 	/* flash script request parameter */
 	uint32 udled1index;
-	uint32 udled1current;	/* scale 100, ex: 87.5 mA --> 8750 */
+	float fled1current;	/* ex: 87.5 mA*/
 	uint32 udled2index;
-	uint32 udled2current;	/* scale 100, ex: 87.5 mA --> 8750 */
+	float fled2current;	/* ex: 87.5 mA*/
 	uint32 udTotalIndex;
 
 	uint8   ucFlashMode;	/* 0: not defined,  1: torch mode, 2: main-flash mode */
+	enum ae_script_st_t scriptstate;  /*idle,  running , success done or fail(return error msg)*/
 };
 #pragma pack(pop)  /* restore old alignment setting from stack  */
 

@@ -13,7 +13,7 @@
  *       4. packed output report from AWB lib to framework
  *       5. translate input parameter from AP framework to AP
  ******************************************************************************/
- 
+
 #include <math.h>   /* math lib, depends on AP OS */
 #include <string.h>
 #include "alwrapper_3a.h"
@@ -25,7 +25,7 @@
  * This API used for patching HW3A stats from ISP(Altek) for AWB libs(Altek),
  * after patching completed, AWB ctrl should prepare patched
  * stats to AWB libs
- * param alISP_MetaData_AWB[In]: patched data after calling al3AWrapper_DispatchHW3AStats, 
+ * param alISP_MetaData_AWB[In]: patched data after calling al3AWrapper_DispatchHW3AStats,
  *                               used for patch AWB stats for AWB lib
  * param alWrappered_AWB_Dat[Out]: result AWB stats
  * return: error code
@@ -191,7 +191,7 @@ uint32 al3awrapperawb_getdefaultcfg(struct alhw3a_awb_cfginfo_t *aawbconfig)
  * API name: al3awrapperawb_queryispconfig_awb
  * This API is used for query ISP config before calling al3awrapperawb_updateispconfig_awb
  * param aAWBConfig[out]: API would manage parameter and return via this pointer
- * param aAWBLibCallback[in]: callback lookup table, 
+ * param aAWBLibCallback[in]: callback lookup table,
  * must passing correct table into this API for querying HW3A config
  * return: error code
  */
@@ -202,7 +202,7 @@ uint32 al3awrapperawb_queryispconfig_awb(struct alhw3a_awb_cfginfo_t *aawbconfig
 
 	if (aawbconfig == NULL || aawblibcallback == NULL || aawblibcallback->awb == NULL)
 		return ERR_WRP_AWB_INVALID_INPUT_PARAM;
-	
+
 	localparam.type = alawb_get_param_init_isp_config;
 	ret = aawblibcallback->get_param(&localparam, aawblibcallback->awb);
 
@@ -224,8 +224,8 @@ uint32 al3awrapperawb_queryispconfig_awb(struct alhw3a_awb_cfginfo_t *aawbconfig
 uint32 al3awrapperawb_updateispconfig_awb(uint8 a_ucSensor, struct alhw3a_awb_cfginfo_t *aawbconfig)
 {
 	uint32 ret = ERR_WPR_AWB_SUCCESS;
-#ifndef LOCAL_NDK_BUILD
-//	ret = ISPDRV_AP3AMGR_SetAWBCfg(a_ucSensor, aawbconfig);
+#if 0//ndef LOCAL_NDK_BUILD
+	ret = ISPDRV_AP3AMGR_SetAWBCfg(a_ucSensor, aawbconfig);
 #endif
 	return ret;
 }

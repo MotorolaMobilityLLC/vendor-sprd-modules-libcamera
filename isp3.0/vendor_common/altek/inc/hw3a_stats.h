@@ -165,6 +165,8 @@ struct rect_roi_wt_t {
 struct rect_roi_config_t {
 	struct rect_roi_wt_t roi[AL_MAX_ROI_NUM];
 	uint16  roi_count;		/* total valid ROI region numbers */
+	uint16  ref_frame_width;
+	uint16  ref_frame_height;
 } ;
 #pragma pack(pop)  /* restore old alignment setting from stack */
 
@@ -719,6 +721,28 @@ struct al3awrapper_stats_awb_t {
 	uint8   ucvalidbanks;
 	uint8   ucstatsdepth;		/* 8: 8 bits, 10: 10 bits */
 	uint8   ucstats_format;		/* 0: ISP format */
+};
+#pragma pack(pop)  /* restore old alignment setting from stack */
+
+/* For YHist wrapper of HW3A stats */
+#pragma pack(push) /* push current alignment setting to stack */
+#pragma pack(4)    /* new alignment setting */
+struct al3awrapper_stats_yhist_t {
+	uint32  ustructuresize;		/* here for confirmation */
+	/* Common info */
+	uint32 umagicnum;
+	uint16 uhwengineid;
+	uint16 uframeidx;		/* HW3a_frame_idx */
+	/* yhist info */
+	uint16 u_yhist_tokenid;
+	uint32 u_yhist_statssize;
+	/* framework time/frame idx info */
+	struct timeval systemtime;
+	uint32 udsys_sof_idx;
+	/* yhist stats */
+	uint8  b_is_stats_byaddr;      /* true: use addr to passing stats, flase: use array define */
+	uint32 hist_y[AL_MAX_HIST_NUM];  /* Y histogram accumulate pixel number */
+	void* pt_hist_y;			/* store stats Y, each element should be uint32, 256 elements */
 };
 #pragma pack(pop)  /* restore old alignment setting from stack */
 

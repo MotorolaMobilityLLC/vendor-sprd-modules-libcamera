@@ -35,18 +35,18 @@
 
 /* Debug only */
 #if 0
-#define WRAP_LOG(...) printf(__VA_ARGS__)
+#define WRAP_LOG(...) __android_log_print(ANDROID_LOG_DEBUG, "af_wrapper", __VA_ARGS__)
 #else
 #define WRAP_LOG(...) do { } while(0)
 #endif
 
-/* VCM inf step */
+/* VCM inf step*/
 #define VCM_INF_STEP_ADDR_OFFSET (1714)
-/* VCM macro step */
+/*VCM macro step*/
 #define VCM_MACRO_STEP_ADDR_OFFSET (1715)
-/* VCM calibration inf distance in mm */
+/*VCM calibration inf distance in mm.*/
 #define VCM_INF_STEP_CALIB_DISTANCE (20000)
-/* VCM calibration macro distance in mm */
+/*VCM calibration macro distance in mm.*/
 #define VCM_MACRO_STEP_CALIB_DISTANCE (700)
 /* f-number, ex. f2.0, then input 2.0*/
 #define MODULE_F_NUMBER (2.0)
@@ -113,7 +113,7 @@ uint32 al3awrapper_dispatchhw3a_afstats(void *isp_meta_data,void *alaf_stats)
 	uint64 *stats_addr_64;
 	WRAP_LOG("al3awrapper_dispatchhw3a_afstats start\n");
 
-	/* check input parameter validity */
+	/* check input parameter validity*/
 	if(isp_meta_data == NULL) {
 		WRAP_LOG("ERR_WRP_AF_EMPTY_METADATA\n");
 		return ERR_WRP_AF_EMPTY_METADATA;
@@ -331,7 +331,7 @@ uint32 al3awrapperaf_translatecalibdattoaflibtype(void *eeprom_addr,struct allib
  */
 uint32 al3awrapperaf_translateroitoaflibtype(unsigned int frame_id,struct allib_af_input_roi_info_t *roi_info)
 {
-	/* Sample code for continuous AF default setting in sensor raw size  1280*960 , 30% * 30% crop */
+	/*Sample code for continuous AF default setting in sensor raw size  1280*960 , 30% * 30% crop*/
 	roi_info->roi_updated = TRUE;
 	roi_info->type = alAFLib_ROI_TYPE_NORMAL;
 	roi_info->frame_id = frame_id;
@@ -367,9 +367,14 @@ uint32 al3awrapperaf_updateispconfig_af(struct allib_af_out_stats_config_t *lib_
 	isp_config->tafregion.uwblknumy = lib_config->num_blk_ver;
 	WRAP_LOG("uwblknumy%d\n",isp_config->tafregion.uwblknumy);
 
+	if(0 == lib_config->src_img_sz.uw_width)
+		return ERR_WRP_AF_ZERO_SRC_IMG_WIDTH;
+
+	if(0 == lib_config->src_img_sz.uw_height)
+		return ERR_WRP_AF_ZERO_SRC_IMG_HEIGHT;
+
 	udTemp = 100*((uint32)(lib_config->roi.uw_dx))/((uint32)(lib_config->src_img_sz.uw_width));
 	WRAP_LOG("uw_dx%d uwWidth%d \n",lib_config->roi.uw_dx,lib_config->src_img_sz.uw_width);
-
 	isp_config->tafregion.uwsizeratiox = (uint16)udTemp;
 	WRAP_LOG("uwsizeratiox%d\n",isp_config->tafregion.uwsizeratiox);
 	udTemp = 100*((uint32)(lib_config->roi.uw_dy))/((uint32)(lib_config->src_img_sz.uw_height));

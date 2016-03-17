@@ -3827,9 +3827,9 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 
 				cxt_ptr->flash_param.pre_flash_before.led_num = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.preflash_ctrldat.ucDICTotal_idx;
 				cxt_ptr->flash_param.pre_flash_before.led_0.idx = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.preflash_ctrldat.ucDIC1_idx;
-				cxt_ptr->flash_param.pre_flash_before.led_0.current = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.preflash_ctrldat.udLED1Current;
+				//cxt_ptr->flash_param.pre_flash_before.led_0.current = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.preflash_ctrldat.udLED1Current;
 				cxt_ptr->flash_param.pre_flash_before.led_1.idx = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.preflash_ctrldat.ucDIC2_idx;
-				cxt_ptr->flash_param.pre_flash_before.led_1.current = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.preflash_ctrldat.udLED2Current;
+				//cxt_ptr->flash_param.pre_flash_before.led_1.current = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.preflash_ctrldat.udLED2Current;
 
 				cxt_ptr->flash_param.pre_flash_before.exp_cell.gain = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.flash_off_exp_dat.ad_gain;
 				cxt_ptr->flash_param.pre_flash_before.exp_cell.exp_line = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.flash_off_exp_dat.exposure_line;
@@ -3880,9 +3880,9 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 
 				cxt_ptr->flash_param.main_flash_est.led_num = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.mainflash_ctrldat.ucDICTotal_idx;
 				cxt_ptr->flash_param.main_flash_est.led_0.idx = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.mainflash_ctrldat.ucDIC1_idx;
-				cxt_ptr->flash_param.main_flash_est.led_0.current = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.mainflash_ctrldat.udLED1Current;
+				//cxt_ptr->flash_param.main_flash_est.led_0.current = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.mainflash_ctrldat.udLED1Current;
 				cxt_ptr->flash_param.main_flash_est.led_1.idx = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.mainflash_ctrldat.ucDIC2_idx;
-				cxt_ptr->flash_param.main_flash_est.led_1.current = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.mainflash_ctrldat.udLED2Current;
+				//cxt_ptr->flash_param.main_flash_est.led_1.current = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.mainflash_ctrldat.udLED2Current;
 
 				cxt_ptr->flash_param.main_flash_est.exp_cell.gain = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.snapshot_exp_dat.ad_gain;
 				cxt_ptr->flash_param.main_flash_est.exp_cell.exp_line = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.snapshot_exp_dat.exposure_line;

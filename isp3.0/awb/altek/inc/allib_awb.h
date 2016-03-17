@@ -5,7 +5,7 @@
  * Comment:
  * Describe common difinition of alAWBLib algo type definition / interface
  *****************************************************************************/
- 
+
 #ifndef _ALTEK_AWB_LIB_
 #define _ALTEK_AWB_LIB_
 

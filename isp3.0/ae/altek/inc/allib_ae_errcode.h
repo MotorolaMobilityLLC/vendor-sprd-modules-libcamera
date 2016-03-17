@@ -14,6 +14,7 @@
 
 #define _AL_AELIB_GLOBAL_ERR_OFFSET        ( 0xA000 )
 #define _AL_AELIB_SETTINGFILE                    (  _AL_AELIB_GLOBAL_ERR_OFFSET + 0x100 )
+#define _AL_AELIB_LIBPROCESS                     (  _AL_AELIB_GLOBAL_ERR_OFFSET + 0x200 )
 
 
 #define _AL_AELIB_CHKERR                    ( _AL_AELIB_GLOBAL_ERR_OFFSET  + 0x01 )
@@ -30,7 +31,6 @@
 #define _AL_AELIB_INVALID_ISOLEVEL          ( _AL_AELIB_GLOBAL_ERR_OFFSET  + 0x0B )
 #define _AL_AELIB_INVALID_CALIB_GAIN          ( _AL_AELIB_GLOBAL_ERR_OFFSET  + 0x0C )
 #define _AL_AELIB_INVALID_STATS_ADDR         ( _AL_AELIB_GLOBAL_ERR_OFFSET  + 0x0D )
-
 
 /* for setting file  */
 #define _AL_AELIB_INVALID_GDCALIB_GAIN                        ( _AL_AELIB_SETTINGFILE + 0x01 )
@@ -49,5 +49,12 @@
 #define _AL_AELIB_INVALID_CAPTUREPCURVE_PARAM         ( _AL_AELIB_SETTINGFILE + 0x0E )
 #define _AL_AELIB_INVALID_FE_NODE                                  ( _AL_AELIB_SETTINGFILE + 0x0F )
 #define _AL_AELIB_INVALID_FE_PARAM                                ( _AL_AELIB_SETTINGFILE + 0x10 )
+#define _AL_AELIB_INVALID_INTAE_SKYPROTECT_PARAM            ( _AL_AELIB_SETTINGFILE + 0x11 )
+
+
+/* for Lib processing */
+#define _AL_AELIB_PURE_DARK_IMAGE                                  (_AL_AELIB_LIBPROCESS + 0x01 )
+#define _AL_AELIB_ERR_PROCESS_REGEN                              (_AL_AELIB_LIBPROCESS + 0x02 )
+#define _AL_AELIB_ERR_PROCESS_BLOCKS                             (_AL_AELIB_LIBPROCESS + 0x03 )
 
 #endif /* ALAELIB_ERR_H_ */

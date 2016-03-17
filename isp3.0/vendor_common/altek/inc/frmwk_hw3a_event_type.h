@@ -194,9 +194,9 @@ struct flash_control_data_t {
 	int16  ucDIC1_idx;          /* driving IC LED1 index, -1 : invalid index */
 	int16  ucDIC2_idx;          /* driving IC LED2 index, -1 : invalid index */
 
-	int32  udLEDTotalCurrent;   /* -1 : invalid index */
-	int32  udLED1Current;       /* scale 100, -1 : invalid index */
-	int32  udLED2Current;       /* scale 100, -1 : invalid index */
+	float  fLEDTotalCurrent;   /* -1 : invalid index */
+	float  fLED1Current;       /* -1 : invalid index */
+	float  fLED2Current;       /* -1 : invalid index */
 
 };
 #pragma pack(pop)  /* restore old alignment setting from stack */

@@ -555,21 +555,21 @@ uint32 al3awrapper_setdlsequence( struct alisp_dldsequence_t adldsequence )
 	UINT8 ucahbsensoreid, ucIsSingle3AMode;
 
 	ucahbsensoreid = adldsequence.ucahbsensoreid;
-#ifndef LOCAL_NDK_BUILD   /* test build in local   */
+#if 0//ndef LOCAL_NDK_BUILD   /* test build in local   */
 	/* W9 config */
-//	ret = ISPDRV_SetBasicPreivewDldSeq( ucahbsensoreid, (UINT8 *)(&adldsequence.aucpreview_baisc_dldseq[0]), adldsequence.ucpreview_baisc_dldseqlength );
+	ret = ISPDRV_SetBasicPreivewDldSeq( ucahbsensoreid, (UINT8 *)(&adldsequence.aucpreview_baisc_dldseq[0]), adldsequence.ucpreview_baisc_dldseqlength );
 	if ( ret!= ERR_WRP_SUCCESS )
 		return ret;
 	/* W10 Config */
-//	ret = ISPDRV_SetAdvPreivewDldSeq( ucahbsensoreid, (UINT8 *)(&adldsequence.aucpreview_adv_dldseq[0]), adldsequence.ucpreview_adv_dldseqlength );
+	ret = ISPDRV_SetAdvPreivewDldSeq( ucahbsensoreid, (UINT8 *)(&adldsequence.aucpreview_adv_dldseq[0]), adldsequence.ucpreview_adv_dldseqlength );
 	if ( ret!= ERR_WRP_SUCCESS )
 		return ret;
 	/* Fast W9 config */
-//	ret = ISPDRV_SetBasicFastConvergeDldSeq( ucahbsensoreid, (UINT8 *)(&adldsequence.aucpreview_baisc_dldseq[0]), adldsequence.ucpreview_baisc_dldseqlength );
+	ret = ISPDRV_SetBasicFastConvergeDldSeq( ucahbsensoreid, (UINT8 *)(&adldsequence.aucpreview_baisc_dldseq[0]), adldsequence.ucpreview_baisc_dldseqlength );
 	if ( ret!= ERR_WRP_SUCCESS )
 		return ret;
 #endif
-    return ret;
+	return ret;
 }
 
 /*
@@ -581,8 +581,8 @@ uint32 al3awrapper_setdlsequence( struct alisp_dldsequence_t adldsequence )
 UINT32 al3awrapper_getversion( float *fwrapversion )
 {
 	UINT32 ret = ERR_WRP_SUCCESS;
-	
+
 	*fwrapversion = _WRAPPER_VER;
-	
+
 	return ret;
 }
