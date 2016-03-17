@@ -342,6 +342,20 @@ exit:
 	return ret;
 }
 
+cmr_int _isp_dev_access_set_ccm(cmr_handle isp_dev_handle, union isp_dev_ctrl_cmd_in *input_ptr)
+{
+	cmr_int                                ret = ISP_SUCCESS;
+	cmr_u32                                i = 0, len = MIN(IQ_CCM_INFO, CCM_TABLE_LEN);
+	struct isp_iq_ccm_info                 ccm_info;
+	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context*)isp_dev_handle;
+
+	for ( i= 0 ; i<len ; i++) {
+		ccm_info.ad_ccm[i] = input_ptr->ccm_table[i];
+	}
+	ret = isp_dev_cfg_ccm(cxt->isp_driver_handle, &ccm_info);
+
+	return ret;
+}
 
 cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, enum isp_dev_access_ctrl_cmd cmd, union isp_dev_ctrl_cmd_in *input_ptr, union isp_dev_ctrl_cmd_out *output_ptr)
 {
@@ -407,6 +421,13 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, enum isp_dev_access_ctrl
 	case ISP_DEV_ACCESS_SET_SUB_SAMPLE:
 		break;
 	case ISP_DEV_ACCESS_SET_STATIS_BUF:
+		break;
+	case ISP_DEV_ACCESS_SET_COLOR_TEMP:
+		ISP_LOGV("color temp %d", input_ptr->value);
+		ret = isp_dev_cfg_color_temp(cxt->isp_driver_handle, input_ptr->value);
+		break;
+	case ISP_DEV_ACCESS_SET_CCM:
+		ret = _isp_dev_access_set_ccm(isp_dev_handle, input_ptr);
 		break;
 	case ISP_DEV_ACCESS_GET_STATIS_BUF:
 		break;

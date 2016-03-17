@@ -24,6 +24,8 @@
 #include "isp_drv.h"
 #include "isp_3a_fw.h"
 
+#define CCM_TABLE_LEN                    9
+
 enum isp_dev_access_ctrl_cmd {
 	ISP_DEV_ACCESS_SET_AWB_GAIN,
 	ISP_DEV_ACCESS_SET_ISP_SPEED,
@@ -40,6 +42,8 @@ enum isp_dev_access_ctrl_cmd {
 	ISP_DEV_ACCESS_SET_SPECIAL_EFFECT,
 	ISP_DEV_ACCESS_SET_SUB_SAMPLE,
 	ISP_DEV_ACCESS_SET_STATIS_BUF,
+	ISP_DEV_ACCESS_SET_CCM,
+	ISP_DEV_ACCESS_SET_COLOR_TEMP,
 	ISP_DEV_ACCESS_GET_STATIS_BUF,
 	ISP_DEV_ACCESS_GET_TIME,
 	ISP_DEV_ACCESS_CMD_MAX
@@ -76,6 +80,7 @@ struct dev_time {
 };
 union isp_dev_ctrl_cmd_in {
 	cmr_u32 value;
+	cmr_s32 ccm_table[CCM_TABLE_LEN];
 };
 
 union isp_dev_ctrl_cmd_out {

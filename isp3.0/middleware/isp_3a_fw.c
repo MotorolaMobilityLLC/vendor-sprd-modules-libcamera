@@ -2714,10 +2714,13 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 	ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_SOF_FRAME_IDX, &awb_in, &awb_out);
 	if (cxt->awb_cxt.proc_out.is_update) {
 		struct isp_awb_gain gain;
+		union isp_dev_ctrl_cmd_in input_data;
 		gain = cxt->awb_cxt.proc_out.gain;
 		ret = isp_dev_access_cfg_awb_gain(cxt->dev_access_handle, &gain);
 		gain = cxt->awb_cxt.proc_out.gain_balanced;
 		ret = isp_dev_access_cfg_awb_gain_balanced(cxt->dev_access_handle, &gain);
+		input_data.value = cxt->awb_cxt.proc_out.ct;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_ACCESS_SET_COLOR_TEMP, &input_data, NULL);
 	}
 
 	ae_in.sof_param.frame_index = cxt->sof_idx;
