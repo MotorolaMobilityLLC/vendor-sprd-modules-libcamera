@@ -4451,8 +4451,8 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 	isp_param.resolution_info.crop.st_y = sensor_mode_info->trim_start_y;
 	isp_param.resolution_info.crop.width = sensor_mode_info->trim_width;
 	isp_param.resolution_info.crop.height = sensor_mode_info->trim_height;
-	isp_param.resolution_info.fps.max_fps = 15;
-	isp_param.resolution_info.fps.min_fps = 1;
+	isp_param.resolution_info.fps.max_fps = 30;
+	isp_param.resolution_info.fps.min_fps = 10;
 	isp_param.resolution_info.max_gain = 16;
 	//yy-param needed by ips3.0-start
 	isp_param.resolution_info.sensor_max_size.w = cxt->sn_cxt.sensor_info.source_width_max;
