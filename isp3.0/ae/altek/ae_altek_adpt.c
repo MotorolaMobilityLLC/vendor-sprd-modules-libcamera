@@ -893,10 +893,10 @@ static cmr_int aealtek_init(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_init_in 
 	if (ret)
 		goto exit;
 
-	/* TBD
 	ret = aealtek_set_tuning_param(cxt_ptr, in_ptr->tuning_param);
 	if (ret)
-		goto exit;*/
+		ISP_LOGW("ae set tuning bin failed");
+
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld", ret);
