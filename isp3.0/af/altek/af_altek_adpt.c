@@ -997,11 +997,12 @@ static cmr_int afaltek_adpt_post_start(cmr_handle adpt_handle)
 
 	ISP_LOGI("E");
 	cxt->af_cur_status = AF_ADPT_FOCUSING;
+#if 0
 	/* notify oem to show box */
 	ret = afaltek_adpt_start_notify(adpt_handle);
 	if (ret)
 		ISP_LOGE("failed to notify");
-
+#endif
 	ret = afaltek_adpt_set_start(adpt_handle);
 	if (ret)
 		ISP_LOGE("failed to start");
@@ -1039,6 +1040,7 @@ static cmr_int afaltek_adpt_proc_start(cmr_handle adpt_handle)
 			struct allib_af_input_special_event event;
 			cmr_bzero(&event, sizeof(event));
 			event.flag = 1;
+			event.type = alAFLib_AE_IS_LOCK;
 			ret = afaltek_adpt_set_special_event(cxt, &event);
 			cxt->af_cur_status = AF_ADPT_FOCUSED;
 			ISP_LOGI("cxt->af_cur_status = %d", cxt->af_cur_status);
@@ -1094,6 +1096,7 @@ static cmr_int afaltek_adpt_af_done(cmr_handle adpt_handle, cmr_int success)
 
 	cmr_bzero(&event, sizeof(event));
 	event.flag = 0;
+	event.type = alAFLib_AE_IS_LOCK;
 	ret = afaltek_adpt_set_special_event(cxt, &event);
 	if (ret)
 	    ISP_LOGI("failed to set special event %ld", ret);
