@@ -246,32 +246,24 @@ PUBLIC void JpegEnc_HwSubModuleCfg(void)
 {
 	int32 cmd = 0;
 	JPEG_CODEC_T *jpeg_fw_codec = Get_JPEGEncCodec();
-	int32 stream_buffer_size;
+	uint32 stream_buffer_size = 0;
 
 	SCI_ASSERT(jpeg_fw_codec != PNULL);
 
 	//BSM Module cfg
 
-		/*the max size is 0x1FFFFF word
-		pingpang_buf_len < 8M bytes
-		8M <  pingpang_buf_len < 16M bytes
-		pingpang_buf_len > 16M bytes
-		*/
+		/*the max size is 0x3FFFFFF word for whale*/
 
-	if((jpeg_fw_codec->pingpang_buf_len>>2) <=  0x1FFFFF)
+	if((jpeg_fw_codec->pingpang_buf_len>>2) <=  0x3FFFFFF)
 	{
-		cmd  =  (1<<31) |(jpeg_fw_codec->pingpang_buf_len>>2);   //bit30 :0
+		cmd  =  (1<<31) |(jpeg_fw_codec->pingpang_buf_len>>2);   //bit26:0; uint: word
 		stream_buffer_size = 0;
-	}
-	else if((jpeg_fw_codec->pingpang_buf_len>>3) <=  0x1FFFFF)
-	{
-		cmd  =  (1<<31) |(jpeg_fw_codec->pingpang_buf_len>>3);   //bit30 :0
-		stream_buffer_size = (jpeg_fw_codec->pingpang_buf_len>>3)<<2;
 	}else
 	{
-		cmd  =  (1<<31) |0x1FFFFF;   //bit30 :0
-		stream_buffer_size = (0x1FFFFF)<<2;
+		cmd  =  (1<<31) |0x3FFFFFF;
+		stream_buffer_size = ((uint32)0x3FFFFFF) << 2;
 	}
+
         SCI_TRACE_LOW("%s,%d,stream_buffer_size 0x%x",__FUNCTION__,__LINE__,stream_buffer_size);
 	/*cmd = (0<<31) | ((jpeg_fw_codec->pingpang_buf_len+3)>>2);*/
 	JPG_WRITE_REG(JPG_BSM_REG_BASE+BSM_CFG0_OFFSET, cmd, "BSM_CFG0: buffer0 for write, and the max buffer size");
