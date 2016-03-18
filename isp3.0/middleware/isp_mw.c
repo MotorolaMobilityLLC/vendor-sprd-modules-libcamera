@@ -37,6 +37,7 @@ struct isp_mw_tunng_file_info {
 	void *af_tuning_addr;
 	void *shading_addr;
 	void *irp_addr;
+	struct bin2_sep_info isp_dev_bin_info;
 };
 
 struct isp_mw_context {
@@ -103,10 +104,12 @@ cmr_int ispmw_parse_tuning_bin(cmr_handle isp_mw_handle)
 	}
 	if (cxt->tuning_bin.isp_shading_addr
 		&& (0 != cxt->tuning_bin.isp_shading_size)) {
-		ret = isp_separate_drv_bin(cxt->tuning_bin.isp_shading_addr,
-								&cxt->tuning_bin.shading_addr,
-								&cxt->tuning_bin.irp_addr);
-		ISP_LOGI("shading bin %p, irp bin %p", cxt->tuning_bin.shading_addr, cxt->tuning_bin.irp_addr);
+		ret = isp_separate_drv_bin_2(cxt->tuning_bin.isp_shading_addr,
+								cxt->tuning_bin.isp_shading_size,
+								&cxt->tuning_bin.isp_dev_bin_info);
+		ISP_LOGI("shading bin %p size %d, irp bin %p size %d",
+				cxt->tuning_bin.isp_dev_bin_info.puc_shading_bin_addr,cxt->tuning_bin.isp_dev_bin_info.uw_shading_bin_size,
+				cxt->tuning_bin.isp_dev_bin_info.puc_irp_bin_addr, cxt->tuning_bin.isp_dev_bin_info.uw_irp_bin_size);
 	}
 	return ret;
 }

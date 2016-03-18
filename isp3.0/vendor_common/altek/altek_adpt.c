@@ -56,3 +56,11 @@ cmr_int isp_separate_drv_bin(void *bin, void **shading_buf, void **irp_buf)
 	al3awrapper_com_separate_shadingirp_bin((uint8*)bin, (uint8**)shading_buf, (uint8**)irp_buf);
 	return ret;
 }
+
+cmr_int isp_separate_drv_bin_2(void *bin, cmr_u32 bin_size, struct bin2_sep_info *bin_info)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+
+	al3awrapper_com_separate_shadingirp_bin_type2((uint8*)bin, bin_size, bin_info);
+	return ret;
+}
