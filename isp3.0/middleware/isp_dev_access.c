@@ -736,8 +736,15 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	awb_gain_info.r = param_ptr->hw_cfg.awb_gain.r;
 	awb_gain_info.g = param_ptr->hw_cfg.awb_gain.g;
 	awb_gain_info.b = param_ptr->hw_cfg.awb_gain.b;
-
 	ret = isp_dev_cfg_awb_gain(cxt->isp_driver_handle, &awb_gain_info);
+	if (ret) {
+		ISP_LOGE("failed to set awb gain %ld", ret);
+		goto exit;
+	}
+	awb_gain_info.r = param_ptr->hw_cfg.awb_gain_balanced.r;
+	awb_gain_info.g = param_ptr->hw_cfg.awb_gain_balanced.g;
+	awb_gain_info.b = param_ptr->hw_cfg.awb_gain_balanced.b;
+	ret = isp_dev_cfg_awb_gain_balanced(cxt->isp_driver_handle, &awb_gain_info);
 
 #if 0
 	if (0 == cxt->camera_id)
@@ -973,6 +980,14 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 	ret = isp_dev_cfg_awb_gain(cxt->isp_driver_handle, &awb_gain);
 	if (ret) {
 		ISP_LOGE("failed to cfg awb gain");
+		goto exit;
+	}
+	awb_gain.r = input_ptr->awb_gain_balanced.r;
+	awb_gain.g = input_ptr->awb_gain_balanced.g;
+	awb_gain.b = input_ptr->awb_gain_balanced.b;
+	ret = isp_dev_cfg_awb_gain_balanced(cxt->isp_driver_handle, &awb_gain);
+	if (ret) {
+		ISP_LOGE("failed to cfg awb gain balanced");
 		goto exit;
 	}
 #if 0

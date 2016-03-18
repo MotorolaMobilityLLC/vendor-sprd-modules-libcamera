@@ -2805,8 +2805,6 @@ cmr_int isp3a_start_ae_process(cmr_handle isp_3a_handle, struct isp3a_statistics
 	struct ae_ctrl_proc_out                     output;
 	struct ae_ctrl_param_in                     param_in;
 
-
-
 	param_in.awb_report.color_temp = cxt->awb_cxt.proc_out.ct;
 	param_in.awb_report.normal_gain.r = cxt->awb_cxt.proc_out.gain.r;
 	param_in.awb_report.normal_gain.g = cxt->awb_cxt.proc_out.gain.g;

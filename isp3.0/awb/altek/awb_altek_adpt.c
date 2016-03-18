@@ -694,6 +694,9 @@ normal_flow:
 	output_ptr->gain.r = get_init_param.para.awb_init_data.initial_wbgain.r_gain;
 	output_ptr->gain.g = get_init_param.para.awb_init_data.initial_wbgain.g_gain;
 	output_ptr->gain.b = get_init_param.para.awb_init_data.initial_wbgain.b_gain;
+	output_ptr->gain_balanced.r = get_init_param.para.awb_init_data.initial_wbgain.r_gain;
+	output_ptr->gain_balanced.g = get_init_param.para.awb_init_data.initial_wbgain.g_gain;
+	output_ptr->gain_balanced.b = get_init_param.para.awb_init_data.initial_wbgain.b_gain;
 	ISP_LOGI("awb lib processing frame %d %d", get_init_param.hw3a_curframeidx, get_init_param.sys_cursof_frameidx);
 	ISP_LOGI("gain %d, %d, %d, %d", output_ptr->gain.r, output_ptr->gain.g, output_ptr->gain.b, output_ptr->ct);
 
