@@ -30,7 +30,7 @@
 #include "debug_structure.h"
 
 typedef void*           isp_handle;
-typedef void (*isp_evt_cb)(cmr_int evt, void *data, void *privdata);
+typedef void (*isp_evt_cb)(cmr_int evt, void *data, cmr_u32 data_len, void *privdata);
 
 enum isp_drv_evt {
 	ISP_DRV_STATISTICE,

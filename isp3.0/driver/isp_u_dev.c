@@ -327,7 +327,7 @@ static void* isp_dev_thread_proc(void *data)
 						statis_frame.time_stamp.usec = irq_info.time_stamp.usec;
 						pthread_mutex_lock(&file->cb_mutex);
 						if(file->isp_event_cb) {
-							(*file->isp_event_cb)(ISP_DRV_STATISTICE, &statis_frame, (void *)file->evt_3a_handle);
+							(*file->isp_event_cb)(ISP_DRV_STATISTICE, &statis_frame, sizeof(statis_frame), (void *)file->evt_3a_handle);
 						}
 						pthread_mutex_unlock(&file->cb_mutex);
 					} else if (irq_info.irq_type == ISP_IRQ_3A_SOF) {
@@ -339,7 +339,7 @@ static void* isp_dev_thread_proc(void *data)
 						irq_node.time_stamp.usec = irq_info.time_stamp.usec;
 						pthread_mutex_lock(&file->cb_mutex);
 						if(file->isp_event_cb) {
-							(*file->isp_event_cb)(ISP_DRV_SENSOR_SOF, &irq_node, (void *)file->evt_3a_handle);
+							(*file->isp_event_cb)(ISP_DRV_SENSOR_SOF, &irq_node, sizeof(irq_node), (void *)file->evt_3a_handle);
 						}
 						pthread_mutex_unlock(&file->cb_mutex);
 					}

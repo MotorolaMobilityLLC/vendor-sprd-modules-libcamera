@@ -252,7 +252,7 @@ static cmr_int isp3a_put_statistics_buf(cmr_handle isp_3a_handle, cmr_int type, 
 static cmr_int isp3a_hold_statistics_buf(cmr_handle isp_3a_handle, cmr_int type, struct isp3a_statistics_data *buf_ptr);
 static cmr_int isp3a_release_statistics_buf(cmr_handle isp_3a_handle, cmr_int type, struct isp3a_statistics_data *buf_ptr);
 static cmr_int isp3a_callback_func (cmr_handle handle, cmr_u32 cb_type, void *param_ptr, cmr_u32 param_len);
-static void isp3a_dev_evt_cb(cmr_int evt, void* data, void* privdata);
+static void isp3a_dev_evt_cb(cmr_int evt, void* data, cmr_u32 data_len, void* privdata);
 static cmr_int isp3a_get_3a_stats_buf(cmr_handle isp_3a_handle);
 static cmr_int isp3a_put_3a_stats_buf(cmr_handle isp_3a_handle);
 static cmr_int isp3a_handle_stats(cmr_handle isp_3a_handle, void *data);
@@ -2495,10 +2495,11 @@ exit:
 	return ret;
  }
 
-void isp3a_dev_evt_cb(cmr_int evt, void *data, void *privdata)
+void isp3a_dev_evt_cb(cmr_int evt, void *data, cmr_u32 data_len, void *privdata)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)privdata;
+	void                                        *data_buffer = NULL;
 	CMR_MSG_INIT(message);
 
 	if (!cxt || !data) {
@@ -2514,13 +2515,20 @@ void isp3a_dev_evt_cb(cmr_int evt, void *data, void *privdata)
 		break;
 	default:
 		ISP_LOGI("don't support evt %ld", evt);
+		goto err_handle;
 	}
-
+	data_buffer = malloc(data_len);
+	if (NULL == data_buffer) {
+		ret = ISP_ALLOC_ERROR;
+		goto err_handle;
+	}
+	memcpy(data_buffer, data, data_len);
 	message.sub_msg_type = 0;
 	message.sync_flag = CMR_MSG_SYNC_NONE;
-	message.alloc_flag = 0;
-	message.data = data;
+	message.alloc_flag = 1;
+	message.data = data_buffer;
 	ret = cmr_thread_msg_send(cxt->thread_cxt.process_thr_handle, &message);
+err_handle:
 	if (ret) {
 		ISP_LOGE("failed to send a message, evt is %ld", evt);
 		if (ISP_DRV_STATISTICE == evt) {
