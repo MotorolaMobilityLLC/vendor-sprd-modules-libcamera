@@ -5426,13 +5426,9 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32
 		*vir_addr++ = (cmr_uint)mZslHeapReserved->data;
 		if (NULL != mfd)
 			*mfd++ = (cmr_s32)mZslHeapReserved->mfd;
-		*phy_addr++ = size*2/3;
-		*vir_addr++ = (cmr_uint)mZslHeapReserved->data;
-		if (NULL != mfd)
-			*mfd++ = (cmr_s32)mZslHeapReserved->mfd;
-		HAL_LOGD("malloc CAMERA_SNAPSHOT_ZSL_RESERVED memory, malloced vir_addr0 %d,vir_addr1 %d, mfd0 0x%x, mfd1 0x%x",
-			(cmr_uint)mZslHeapReserved->data, (cmr_uint)mZslHeapReserved->data,
-			(cmr_s32)mZslHeapReserved->mfd, (cmr_s32)mZslHeapReserved->mfd);
+		HAL_LOGD("malloc CAMERA_SNAPSHOT_ZSL_RESERVED memory, malloced vir_addr 0x%x, mfd 0x%x",
+			(cmr_uint)mZslHeapReserved->data,
+			(cmr_s32)mZslHeapReserved->mfd);
 	}
 #endif
 	else if (type == CAMERA_ISP_LSC) {
