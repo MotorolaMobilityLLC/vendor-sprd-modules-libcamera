@@ -480,7 +480,7 @@ static SENSOR_LENS_EXT_INFO_T s_s5k3p3sm_lens_extend_info = {
 	0,	//pdaf_supported;
 	1,	//exp_valid_frame_num;N+2-1
 	64,	//clamp_level,black level
-	0,	//adgain_valid_frame_num;N+1-1
+	1,	//adgain_valid_frame_num;N+1-1
 	1,	//is_high_fps
 	1	//high_fps_skip_num = max_fps/30;
 };
