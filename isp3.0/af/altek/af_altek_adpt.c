@@ -678,7 +678,7 @@ static cmr_int afaltek_adpt_update_isp_info(cmr_handle adpt_handle, void *in)
 	return ret;
 }
 
-static cmr_int afaltek_vcm_tuning_param(cmr_handle adpt_handle)
+static cmr_int afaltek_adpt_vcm_tuning_param(cmr_handle adpt_handle)
 {
 	cmr_int ret = ISP_SUCCESS;
 	cmr_s8 value[PROPERTY_VALUE_MAX];
@@ -717,7 +717,7 @@ static cmr_int afaltek_adpt_update_sof(cmr_handle adpt_handle, void *in)
 	struct af_ctrl_sof_info *sof_info = (struct af_ctrl_sof_info *)in;
 	struct allib_af_input_set_param_t p = { 0x00 };
 
-	ret = afaltek_vcm_tuning_param(adpt_handle);
+	ret = afaltek_adpt_vcm_tuning_param(adpt_handle);
 	if (ret) {
 		ISP_LOGE("set vcm tuning position error");
 	}
@@ -1352,11 +1352,7 @@ static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 	} else {
 		ISP_LOGI("there is no OTP in this module");
 	}
-#if 0 //TBD
-	in->tuning_info.tuning_file = malloc(0x10);
-	in->tuning_info.size = 0x10;
-	memset(in->tuning_info.tuning_file, 0x0f, 0x10);
-#endif
+
 	/* tuning file setting */
 	ret = afaltek_adpt_set_setting_file(cxt, &in->tuning_info);
 	if (ret)
