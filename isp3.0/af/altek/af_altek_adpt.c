@@ -966,18 +966,17 @@ static cmr_int afaltek_adpt_pre_start(cmr_handle adpt_handle, struct isp_af_win 
 	ISP_LOGI("lib_roi.num_roi = %d", lib_roi.num_roi);
 	/* only support array 0 */
 	for (i = 0; i < roi->valid_win; i++) {
-		lib_roi.roi[i].uw_top = roi->win[i].start_x;
-		lib_roi.roi[i].uw_left = roi->win[i].start_y;
-		lib_roi.roi[i].uw_dx = roi->win[i].end_x;
-		lib_roi.roi[i].uw_dy = roi->win[i].end_y;
+		lib_roi.roi[i].uw_left = roi->win[i].start_x;
+		lib_roi.roi[i].uw_top = roi->win[i].start_y;
+		lib_roi.roi[i].uw_dx = roi->win[i].end_x - roi->win[i].start_x;
+		lib_roi.roi[i].uw_dy = roi->win[i].end_y - roi->win[i].start_y;
 		ISP_LOGI("top = %d, left = %d, dx = %d, dy = %d",
 			 lib_roi.roi[i].uw_top, lib_roi.roi[i].uw_left,
 			 lib_roi.roi[i].uw_dx, lib_roi.roi[i].uw_dy);
 	}
 	lib_roi.weight[0] = 1;
-	lib_roi.src_img_sz.uw_width = 2592;	/* TBD */
-	lib_roi.src_img_sz.uw_height = 1944;
-	//al3awrapperaf_translateroitoaflibtype(cxt->frame_id, &lib_roi); /* TBD will del*/
+	lib_roi.src_img_sz.uw_width = 2304;	/* TBD */
+	lib_roi.src_img_sz.uw_height = 1740;
 	ret = afaltek_adpt_set_roi(adpt_handle, &lib_roi);
 	if (ret)
 		ISP_LOGE("failed to set roi");
