@@ -861,8 +861,8 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 	scenario_in.tBayerSCLOutInfo.uwBayerSCLOutHeight = 0;
 	if (ISP_CAP_MODE_RAW_DATA == isp_raw_mem.capture_mode) {
 		ISP_LOGE("bayer scaler wxh %dx%d\n", cxt->input_param.init_param.size.w, cxt->input_param.init_param.size.h);
-		scenario_in.tBayerSCLOutInfo.uwBayerSCLOutWidth = cxt->input_param.init_param.size.w;
-		scenario_in.tBayerSCLOutInfo.uwBayerSCLOutHeight = cxt->input_param.init_param.size.h;
+		scenario_in.tBayerSCLOutInfo.uwBayerSCLOutWidth = 960;//cxt->input_param.init_param.size.w;
+		scenario_in.tBayerSCLOutInfo.uwBayerSCLOutHeight = 720;//cxt->input_param.init_param.size.h;
 	}
 	ISP_LOGE("size %dx%d, line time %d frameRate %d", scenario_in.tSensorInfo.uwWidth, scenario_in.tSensorInfo.uwHeight,
 		scenario_in.tSensorInfo.udLineTime, scenario_in.tSensorInfo.uwFrameRate);
@@ -898,8 +898,8 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 		img_buf_param.img_id = ISP_IMG_PREVIEW;
 		img_buf_param.dram_eb = 0;
 		img_buf_param.buf_num = 4;
-		img_buf_param.width = cxt->input_param.init_param.size.w;
-		img_buf_param.height = cxt->input_param.init_param.size.h;
+		img_buf_param.width = 960;//cxt->input_param.init_param.size.w;
+		img_buf_param.height = 720;//cxt->input_param.init_param.size.h;
 		img_buf_param.line_offset = (2 * cxt->input_param.init_param.size.w);
 		img_buf_param.addr[0].chn0 = 0x2FFFFFFF;
 		img_buf_param.addr[1].chn0 = 0x2FFFFFFF;
