@@ -220,6 +220,7 @@ struct aealtek_cxt {
 	struct aealtek_exposure_param pre_write_exp_data;
 	struct aealtek_tuning_info tuning_info;
 	struct aealtek_stat_info stat_info[20];
+	struct isp_ae_statistic_info ae_stats;
 	cmr_u32 stat_info_num;
 };
 
@@ -3393,12 +3394,13 @@ static cmr_int aealtek_set_y_hist_stats(struct aealtek_cxt *cxt_ptr, struct ae_c
 		goto exit;
 	}
 
+	memset(&wrapper_y_hist, 0x00, sizeof(wrapper_y_hist));
 	ret = al3awrapper_dispatchhw3a_yhiststats((struct isp_drv_meta_yhist_t *)in_ptr->y_hist_stat.y_hist_data_ptr, &wrapper_y_hist);
 	if (ret) {
 		ISP_LOGE("failed to dispatch yhist");
 		goto exit;
 	}
-	//memcpy(cxt_ptr->ae_statc.y_hist, wrapper_y_hist.hist_y, sizeof(cxt_ptr->ae_statc.y_hist));
+	memcpy(cxt_ptr->ae_stats.y_hist, wrapper_y_hist.hist_y, sizeof(cxt_ptr->ae_stats.y_hist));
 
 	return ISP_SUCCESS;
 exit:
@@ -3776,7 +3778,14 @@ static cmr_int aealtek_pre_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 			ret = ISP_ERROR;
 			ISP_LOGE("dispatch lib_ret=%ld", lib_ret);
 			goto exit;
-		}
+		} else {
+			memcpy(cxt_ptr->ae_stats.r_info, cxt_ptr->lib_data.stats_data.ptstatsr,
+				sizeof(cxt_ptr->ae_stats.r_info));
+			memcpy(cxt_ptr->ae_stats.g_info, cxt_ptr->lib_data.stats_data.ptstatsg,
+				sizeof(cxt_ptr->ae_stats.g_info));
+			memcpy(cxt_ptr->ae_stats.b_info, cxt_ptr->lib_data.stats_data.ptstatsb,
+				sizeof(cxt_ptr->ae_stats.b_info));
+ 		}
 	}
 	return ISP_SUCCESS;
 exit:
@@ -3942,6 +3951,8 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 		callback_in.proc_out.ae_frame.stat_info.statsr_ptr = (cmr_u32 *)cxt_ptr->lib_data.stats_data.ptstatsr;
 		callback_in.proc_out.ae_frame.stat_info.statsg_ptr = (cmr_u32 *)cxt_ptr->lib_data.stats_data.ptstatsg;
 		callback_in.proc_out.ae_frame.stat_info.statsb_ptr = (cmr_u32 *)cxt_ptr->lib_data.stats_data.ptstatsb;
+
+		callback_in.proc_out.ae_info.report_data.rgb_stats = &cxt_ptr->ae_stats; /* TBD */
 		cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRL_CB_PROC_OUT, &callback_in);
 	}
 

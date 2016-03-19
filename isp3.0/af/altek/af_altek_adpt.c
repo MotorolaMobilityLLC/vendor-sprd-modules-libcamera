@@ -27,6 +27,8 @@
 #include "af_alg.h"
 #include "cutils/properties.h"
 
+#define FEATRUE_SPRD_CAF_TRIGGER
+
 #define LIBRARY_PATH "libalAFLib.so"
 #define CAF_LIBRARY_PATH "libspcaftrigger.so"
 #define SEC_TO_US	1000000L
@@ -96,6 +98,7 @@ struct af_altek_context {
 	cmr_u8 inited;
 	cmr_u32 camera_id;
 	cmr_u32 frame_id;
+	cmr_u32 af_mode;
 	cmr_handle caller_handle;
 	cmr_handle altek_lib_handle;
 	cmr_handle caf_lib_handle;
@@ -114,6 +117,7 @@ struct af_altek_context {
 	struct af_altek_report_t report_data;
 	struct allib_af_hw_stats_t af_stats; /* TBD */
 	struct af_altek_vcm_tune_info vcm_tune;
+	struct caf_alg_result caf_result;
 };
 
 /************************************ INTERNAK DECLARATION ************************************/
@@ -456,6 +460,18 @@ static cmr_int afaltek_adpt_stop(cmr_handle adpt_handle)
 	return ret;
 }
 
+static cmr_int afaltek_adpt_caf_set_mode(cmr_handle adpt_handle, cmr_int mode)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+
+	/* for caf trigger */
+	cxt->caf_ops.trigger_ioctrl(cxt->caf_trigger_handle,
+				    AF_ALG_CMD_SET_AF_MODE, &mode, NULL);
+
+	return ret;
+}
+
 /* TBD */
 static cmr_int afaltek_adpt_set_mode(cmr_handle adpt_handle, cmr_int mode)
 {
@@ -467,16 +483,25 @@ static cmr_int afaltek_adpt_set_mode(cmr_handle adpt_handle, cmr_int mode)
 	p.u_set_data.focus_mode_type = alAFLib_AF_MODE_AUTO;
 
 	ISP_LOGI("mode = %ld", mode);
+	cxt->af_mode = mode;
 
 	switch (mode) {
 	case AF_CTRL_MODE_MACRO:
 		p.u_set_data.focus_mode_type = alAFLib_AF_MODE_MACRO;
+		ret = afaltek_adpt_set_parameters(cxt, &p);
 		break;
 	case AF_CTRL_MODE_AUTO:
 		p.u_set_data.focus_mode_type = alAFLib_AF_MODE_AUTO;
+		ret = afaltek_adpt_set_parameters(cxt, &p);
 		break;
 	case AF_CTRL_MODE_CAF:
+#ifdef FEATRUE_SPRD_CAF_TRIGGER
+		afaltek_adpt_caf_set_mode(cxt, AF_ALG_MODE_CONTINUE);
+		afaltek_adpt_caf_set_mode(cxt, AF_ALG_CMD_SET_CAF_RESET);
+#else
 		p.u_set_data.focus_mode_type = alAFLib_AF_MODE_CONTINUOUS_PICTURE;
+		ret = afaltek_adpt_set_parameters(cxt, &p);
+#endif
 		break;
 /*
 	case AF_CTRL_MODE_INFINITY:
@@ -485,6 +510,7 @@ static cmr_int afaltek_adpt_set_mode(cmr_handle adpt_handle, cmr_int mode)
 */
 	case AF_CTRL_MODE_MANUAL:
 		p.u_set_data.focus_mode_type = alAFLib_AF_MODE_MANUAL;
+		ret = afaltek_adpt_set_parameters(cxt, &p);
 		break;
 /*
 	case AF_CTRL_MODE_AUTO_VIDEO:
@@ -492,17 +518,26 @@ static cmr_int afaltek_adpt_set_mode(cmr_handle adpt_handle, cmr_int mode)
 		break;
 */
 	case AF_CTRL_MODE_CONTINUOUS_VIDEO:
+#ifdef FEATRUE_SPRD_CAF_TRIGGER
+		afaltek_adpt_caf_set_mode(cxt, AF_ALG_MODE_CONTINUE);
+		afaltek_adpt_caf_set_mode(cxt, AF_ALG_CMD_SET_CAF_RESET);
+#else
 		p.u_set_data.focus_mode_type = alAFLib_AF_MODE_CONTINUOUS_VIDEO;
+		ret = afaltek_adpt_set_parameters(cxt, &p);
+#endif
 		break;
 	case AF_CTRL_MODE_CONTINUOUS_PICTURE_HYBRID:
 		p.u_set_data.focus_mode_type = alAFLib_AF_MODE_HYBRID_CONTINUOUS_PICTURE;
+		ret = afaltek_adpt_set_parameters(cxt, &p);
 		break;
 	case AF_CTRL_MODE_CONTINUOUS_VIDEO_HYBRID:
 		p.u_set_data.focus_mode_type =
 		    alAFLib_AF_MODE_HYBRID_CONTINUOUS_VIDEO;
+		ret = afaltek_adpt_set_parameters(cxt, &p);
 		break;
 	case AF_CTRL_MODE_AUTO_HYBRID:
 		p.u_set_data.focus_mode_type = alAFLib_AF_MODE_HYBRID_AUTO;
+		ret = afaltek_adpt_set_parameters(cxt, &p);
 		break;
 /*
 	case AF_CTRL_MODE_AUTO_INSTANT_HYBRID:
@@ -511,12 +546,12 @@ static cmr_int afaltek_adpt_set_mode(cmr_handle adpt_handle, cmr_int mode)
 */
 	case AF_CTRL_MODE_BYPASS:
 		p.u_set_data.focus_mode_type = alAFLib_AF_MODE_MANUAL;
+		ret = afaltek_adpt_set_parameters(cxt, &p);
 		break;
 	default:
 		ISP_LOGE("error mode");
 		break;
 	}
-	ret = afaltek_adpt_set_parameters(cxt, &p);
 
 	return ret;
 }
@@ -735,7 +770,8 @@ static cmr_int afaltek_adpt_update_sof(cmr_handle adpt_handle, void *in)
 	return ret;
 }
 
-static void afaltek_ae_info_to_af_lib(struct isp3a_ae_info *ae_info, struct allib_af_input_aec_info_t *af_ae_info)
+static void afaltek_ae_info_to_af_lib(struct isp3a_ae_info *ae_info,
+				      struct allib_af_input_aec_info_t *af_ae_info)
 {
 	af_ae_info->ae_settled = ae_info->report_data.ae_converge_st;
 	af_ae_info->cur_intensity = (float)(ae_info->report_data.cur_mean);
@@ -744,6 +780,58 @@ static void afaltek_ae_info_to_af_lib(struct isp3a_ae_info *ae_info, struct alli
 	af_ae_info->cur_gain = (float)(ae_info->report_data.sensor_ad_gain);
 	af_ae_info->exp_time = (float)(ae_info->report_data.exp_time);
 	af_ae_info->preview_fr = ae_info->report_data.fps;
+}
+
+static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
+					struct caf_alg_calc_param *cal_in,
+					struct caf_alg_result cal_out)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+
+	ret = cxt->caf_ops.trigger_calc(cxt->caf_trigger_handle, cal_in, &cal_out);
+
+	if ((!cxt->caf_result.is_caf_trig) && cal_out.is_caf_trig) {
+		ret = afaltek_adpt_start_notify(adpt_handle);
+		if (ret)
+			ISP_LOGE("failed to notify");
+		struct isp_af_win roi;
+		//afaltek_adpt_pre_start(cxt, &roi);
+		ret = cxt->caf_ops.trigger_ioctrl(cxt->caf_trigger_handle,
+						  AF_ALG_CMD_SET_CAF_STOP,
+						  NULL, NULL);
+	}
+	cxt->caf_result = cal_out;
+
+	ISP_LOGI("caf_out.is_caf_trig %d", cal_out.is_caf_trig);
+
+	return ret;
+}
+
+static cmr_int afaltek_adpt_caf_update_ae_info(cmr_handle adpt_handle, void *in)
+{
+	cmr_int ret = ISP_SUCCESS;
+#if 0
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+	struct caf_alg_calc_param caf_in = { 0};
+	struct caf_alg_result caf_out = { 0 };
+	struct isp_ae_statistic_info *af_ae_rgb_stat = NULL;
+
+	if (NULL == ae_info) {
+		ISP_LOGE("paramter err: ae_info %p", ae_info);
+		ret = -ISP_PARAM_NULL;
+	}
+
+	af_ae_rgb_stat = (struct isp_ae_statistic_info *)ae_info->report_data.rgb_stats;
+
+	caf_in.active_data_type = AF_ALG_DATA_IMG_BLK;
+	caf_in.img_blk_info.block_w = 16;
+	caf_in.img_blk_info.block_h = 16;
+	caf_in.img_blk_info.data = (cmr_u32 *)ae_info->report_data.rgb_stats;
+	caf_in.ae_info.is_stable = 1;
+	ret = afaltek_adpt_caf_process(cxt, &caf_in, caf_out);
+#endif
+	return ret;
 }
 
 static cmr_int afaltek_adpt_update_ae(cmr_handle adpt_handle, void *in)
@@ -810,15 +898,32 @@ static cmr_int afaltek_adpt_lock_caf(cmr_handle adpt_handle, void *in)
 	return ret;
 }
 
+static cmr_int afaltek_adpt_caf_stop(cmr_handle adpt_handle)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+
+#ifdef FEATRUE_SPRD_CAF_TRIGGER
+	ret = cxt->caf_ops.trigger_ioctrl(cxt->caf_trigger_handle,
+				    AF_ALG_CMD_SET_CAF_STOP, NULL, NULL);
+#endif
+	return ret;
+}
+
 static cmr_int afaltek_adpt_reset_caf(cmr_handle adpt_handle)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+#ifdef FEATRUE_SPRD_CAF_TRIGGER
+	ret = cxt->caf_ops.trigger_ioctrl(cxt->caf_trigger_handle,
+				    AF_ALG_CMD_SET_CAF_RESET, NULL, NULL);
+#else
 	struct allib_af_input_set_param_t p = { 0x00 };
 
 	p.type = alAFLIB_SET_PARAM_RESET_CAF;
 
 	ret = afaltek_adpt_set_parameters(cxt, &p);
+#endif
 	return ret;
 }
 
@@ -1079,6 +1184,19 @@ static cmr_int afaltek_adpt_lens_move_done(cmr_handle adpt_handle,
 	return ret;
 }
 
+static cmr_int afaltek_adpt_caf_reset_after_af(cmr_handle adpt_handle)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+
+	if ((AF_CTRL_MODE_CAF == cxt->af_mode) ||
+	     (AF_CTRL_MODE_CONTINUOUS_VIDEO == cxt->af_mode)) {
+		ret = afaltek_adpt_reset_caf(cxt);
+	}
+
+	return ret;
+}
+
 static cmr_int afaltek_adpt_af_done(cmr_handle adpt_handle, cmr_int success)
 {
 	cmr_int ret = -ISP_ERROR;
@@ -1103,6 +1221,9 @@ static cmr_int afaltek_adpt_af_done(cmr_handle adpt_handle, cmr_int success)
 	if (ret)
 	    ISP_LOGI("failed to end notify ret = %ld", ret);
 
+	ret = afaltek_adpt_caf_reset_after_af(cxt);
+	if (ret)
+		ISP_LOGI("failed to caf reset ret = %ld", ret);
 	cxt->af_cur_status = AF_ADPT_DONE;
 	return ret;
 }
@@ -1167,6 +1288,7 @@ static cmr_int afaltek_adpt_inctrl(cmr_handle adpt_handle, cmr_int cmd,
 		ret = afaltek_adpt_update_sof(adpt_handle, in);
 		break;
 	case AF_CTRL_CMD_SET_UPDATE_AE:
+		ret = afaltek_adpt_caf_update_ae_info(adpt_handle, in);
 		ret = afaltek_adpt_update_ae(adpt_handle, in);
 		break;
 	case AF_CTRL_CMD_SET_PROC_START:

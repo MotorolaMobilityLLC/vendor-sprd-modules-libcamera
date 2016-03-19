@@ -67,6 +67,7 @@ extern "C" {
 #define AFL_STATS_BUFFER_SIZE    (10*1024+STATS_OTHER_SIZE)
 #define YHIST_STATS_BUFFER_SIZE  (1*1024+STATS_OTHER_SIZE)
 #define SUBIMG_STATS_BUFFER_SIZE (96000+STATS_OTHER_SIZE)
+#define ISP_AE_BLOCK 256
 /**********************************ENUM************************************/
 enum isp_return_val {
 	ISP_SUCCESS = 0x00,
@@ -169,7 +170,15 @@ struct isp3a_ae_report {
 
 	cmr_u32 debug_data_size;
 	void *debug_data;
+	void *rgb_stats;
 };
+
+struct isp_ae_statistic_info{
+	cmr_u32 r_info[ISP_AE_BLOCK];
+	cmr_u32 g_info[ISP_AE_BLOCK];
+	cmr_u32 b_info[ISP_AE_BLOCK];
+	cmr_u32 y_hist[ISP_AE_BLOCK];
+ };
 
 struct isp3a_ae_info {
 	cmr_u32 ae_ctrl_converged_flag; //0:non converge,  1: converged
