@@ -432,7 +432,7 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, enum isp_dev_access_ctrl
 	case ISP_DEV_ACCESS_GET_STATIS_BUF:
 		break;
 	case ISP_DEV_ACCESS_GET_TIME:
-		if (!input_ptr) {
+		if (!output_ptr) {
 			ISP_LOGI("failed to get dev time,output is null");
 			break;
 		}

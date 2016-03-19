@@ -985,7 +985,7 @@ static cmr_int afaltek_adpt_pre_start(cmr_handle adpt_handle, struct isp_af_win 
 	afaltek_adpt_get_timestamp(cxt,
 				   &cxt->ae_status_info.timestamp.sec,
 				   &cxt->ae_status_info.timestamp.usec);
-	ISP_LOGI("sec = 0x%x, usec = 0x%x", cxt->ae_status_info.timestamp.sec, cxt->ae_status_info.timestamp.usec);
+	ISP_LOGI("sec = %d, usec = %d", cxt->ae_status_info.timestamp.sec, cxt->ae_status_info.timestamp.usec);
 	return ret;
 }
 
