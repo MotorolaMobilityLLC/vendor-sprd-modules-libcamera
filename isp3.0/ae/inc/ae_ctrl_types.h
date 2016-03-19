@@ -80,6 +80,7 @@ enum ae_ctrl_cmd {
 	AE_CTRL_GET_HW_ISO_SPEED,
 	AE_CTRL_GET_EXP_GAIN,
 	AE_CTRL_SET_FLASH_MODE,
+	AE_CTRL_SET_Y_HIST_STATS,
 	AE_CTRL_CMD_MAX
 };
 
@@ -391,6 +392,10 @@ struct ae_ctrl_param_out {
 	};
 };
 
+struct ae_ctrl_param_y_hist {
+	void *y_hist_data_ptr;
+};
+
 struct ae_ctrl_param_in {
 	union {
 	cmr_u32 value;
@@ -410,6 +415,7 @@ struct ae_ctrl_param_in {
 	struct ae_ctrl_param_af af_report;
 	struct ae_ctrl_param_gyro gyro;
 	struct ae_ctrl_param_flash flash;
+	struct ae_ctrl_param_y_hist y_hist_stat;
 	};
 };
 

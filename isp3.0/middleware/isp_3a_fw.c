@@ -2709,6 +2709,12 @@ cmr_int isp3a_handle_stats(cmr_handle isp_3a_handle, void *data)
 	}
 	is_set_stats_buf = 1;
 
+	//start YHIS process
+	ret= isp3a_start_yhis_process(isp_3a_handle, yhis_stats_buf_ptr);
+	if (ret) {
+		ISP_LOGE("failed to start afl process");
+	}
+
 	//start AE process
 	ret= isp3a_start_ae_process(isp_3a_handle, ae_stats_buf_ptr);
 	if (ret) {
@@ -2724,11 +2730,7 @@ cmr_int isp3a_handle_stats(cmr_handle isp_3a_handle, void *data)
 	if (ret) {
 		ISP_LOGE("failed to start afl process");
 	}
-	//start YHIS process
-	ret= isp3a_start_yhis_process(isp_3a_handle, yhis_stats_buf_ptr);
-	if (ret) {
-		ISP_LOGE("failed to start afl process");
-	}
+
 exit:
 	if (0 == is_set_stats_buf) {
 		//free stats buf to isp drv
@@ -2835,9 +2837,15 @@ cmr_int isp3a_start_af_process(cmr_handle isp_3a_handle, struct isp3a_statistics
 	struct af_ctrl_process_out                  output;
 	union awb_ctrl_cmd_in                       awb_in;
 
-	ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_SET_UPDATE_AWB, NULL, NULL);
-	ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_SET_UPDATE_AE, (void *)&cxt->ae_cxt.proc_out.ae_info, NULL);
-	ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_SET_PROC_START, NULL, NULL);
+	ret = af_ctrl_ioctrl(cxt->af_cxt.handle,
+			     AF_CTRL_CMD_SET_UPDATE_AWB,
+			     NULL, NULL);
+	ret = af_ctrl_ioctrl(cxt->af_cxt.handle,
+			     AF_CTRL_CMD_SET_UPDATE_AE,
+			     (void *)&cxt->ae_cxt.proc_out.ae_info, NULL);
+	ret = af_ctrl_ioctrl(cxt->af_cxt.handle,
+			     AF_CTRL_CMD_SET_PROC_START,
+			     NULL, NULL);
 	ret = isp3a_hold_statistics_buf(isp_3a_handle, ISP3A_AF, stats_data);
 	input.statistics_data = stats_data;
 	output.data = NULL;
@@ -2879,15 +2887,18 @@ cmr_int isp3a_start_afl_process(cmr_handle isp_3a_handle, struct isp3a_statistic
 	return ret;
 }
 
-cmr_int isp3a_start_yhis_process(cmr_handle isp_3a_handle, struct isp3a_statistics_data *stats_data)//TBD
+cmr_int isp3a_start_yhis_process(cmr_handle isp_3a_handle, struct isp3a_statistics_data *stats_data)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
-	struct afl_ctrl_proc_in                     input;
-	struct afl_ctrl_proc_out                    output;
+	struct ae_ctrl_param_in                     param_in;
 
-	input.stat_data_ptr = stats_data;
 	isp3a_hold_statistics_buf(isp_3a_handle, ISP3A_YHIS, stats_data);
+
+	param_in.y_hist_stat.y_hist_data_ptr = stats_data;
+	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle,
+			     AE_CTRL_SET_Y_HIST_STATS,
+			     &param_in, NULL);
 
 	ret = isp3a_release_statistics_buf(isp_3a_handle, ISP3A_YHIS, stats_data);
 	return ret;

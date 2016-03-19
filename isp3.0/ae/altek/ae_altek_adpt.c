@@ -23,7 +23,7 @@
 #include "alwrapper_ae.h"
 #include "alwrapper_ae_errcode.h"
 #include "sensor_exposure_queue.h"
-
+#include "alwrapper_yhist.h"
 
 
 #define AELIB_PATH "libalAELib.so"
@@ -3383,6 +3383,29 @@ exit:
 	return ret;
 }
 
+static cmr_int aealtek_set_y_hist_stats(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+	struct al3awrapper_stats_yhist_t  wrapper_y_hist;
+
+	if (!cxt_ptr || !in_ptr) {
+		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
+		goto exit;
+	}
+
+	ret = al3awrapper_dispatchhw3a_yhiststats((struct isp_drv_meta_yhist_t *)in_ptr->y_hist_stat.y_hist_data_ptr, &wrapper_y_hist);
+	if (ret) {
+		ISP_LOGE("failed to dispatch yhist");
+		goto exit;
+	}
+	//memcpy(cxt_ptr->ae_statc.y_hist, wrapper_y_hist.hist_y, sizeof(cxt_ptr->ae_statc.y_hist));
+
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld !!!", ret);
+	return ret;
+}
+
 static cmr_int aealtek_get_lib_script_info(struct aealtek_cxt *cxt_ptr, struct ae_output_data_t *from_ptr, struct aealtek_exposure_param *to_ptr)
 {
 	cmr_int ret = ISP_ERROR;
@@ -3703,6 +3726,9 @@ static cmr_int ae_altek_adpt_ioctrl(cmr_handle handle, cmr_int cmd, void *in, vo
 		break;
 	case AE_CTRL_SET_FLASH_MODE:
 		ret = aealtek_set_ui_flash_mode(cxt_ptr, in_ptr, out_ptr);
+		break;
+	case AE_CTRL_SET_Y_HIST_STATS:
+		ret = aealtek_set_y_hist_stats(cxt_ptr, in_ptr, out_ptr);
 		break;
 	default:
 		ISP_LOGE("cmd %ld is not defined!", cmd);
