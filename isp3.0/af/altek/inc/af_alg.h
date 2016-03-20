@@ -21,9 +21,7 @@
 *-------------------------------------------------------------------------------*/
 #include <sys/types.h>
 
-#ifdef WIN32
-#include "sci_type.h"
-#endif
+//#include "cmr_type.h"
 
 
 /*------------------------------------------------------------------------------*
@@ -43,6 +41,13 @@ extern "C"
 
 typedef void* caf_alg_handle_t;
 
+enum af_posture_type {
+	AF_POSTURE_ACCELEROMETER,
+	AF_POSTURE_MAGNETIC,
+	AF_POSTURE_ORIENTATION,
+	AF_POSTURE_GYRO,
+	AF_POSTURE_MAX
+};
 
 enum af_alg_err_type {
 	AF_ALG_SUCCESS = 0x00,
@@ -63,8 +68,7 @@ enum af_alg_calc_data_type {
 	AF_ALG_DATA_AF,
 	AF_ALG_DATA_IMG_BLK,
 	AF_ALG_DATA_AE,
-	AF_ALG_DATA_GYRO,
-	AF_ALG_DATA_GSENSOR,
+	AF_ALG_DATA_SENSOR,
 	AF_ALG_DATA_MAX
 
 };
@@ -90,8 +94,8 @@ struct af_alg_win_rect {
 };
 
 struct af_alg_filter_data {
-	uint32_t type;
-	uint64_t *data;
+	cmr_u32 type;
+	cmr_u64 *data;
 };
 
 struct af_alg_filter_info {
@@ -117,6 +121,7 @@ struct af_alg_img_blk_info {
 	cmr_u32 pix_per_blk;
 	cmr_u32 chn_num;
 	cmr_u32 *data;
+	cmr_u32 hist_array_y[1024];
 };
 
 
@@ -126,21 +131,14 @@ struct af_alg_ae_info {
 	cmr_u32 cur_lum;
 	cmr_u32 target_lum;
 	cmr_u32 is_stable;
-	cmr_u32 *hist_data;
 };
 
-struct af_alg_gyro_info {
-	cmr_u32 timetamp;
-	cmr_u32 x;
-	cmr_u32 y;
-	cmr_u32 z;
-};
-
-struct af_alg_gsensor_info {
-	cmr_u32 timetamp;
-	cmr_u32 x;
-	cmr_u32 y;
-	cmr_u32 z;
+struct af_alg_sensor_info {
+	cmr_u32 sensor_type;
+//	cmr_s64 timestamp;
+	float x;
+	float y;
+	float z;
 };
 
 struct caf_alg_result {
@@ -154,8 +152,7 @@ struct caf_alg_calc_param {
 	struct af_alg_afm_info afm_info;
 	struct af_alg_img_blk_info img_blk_info;
 	struct af_alg_ae_info ae_info;
-	struct af_alg_gyro_info gyro_info;
-	struct af_alg_gsensor_info gsensor_info;
+	struct af_alg_sensor_info sensor_info;
 };
 
 

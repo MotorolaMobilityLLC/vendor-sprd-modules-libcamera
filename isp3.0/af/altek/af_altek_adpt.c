@@ -126,6 +126,14 @@ static cmr_int afaltek_adpt_proc_out_report(cmr_handle adpt_handle,
 					    void *report_out);
 
 static cmr_u8 afaltek_adpt_set_pos(cmr_handle adpt_handle, cmr_s16 dac, cmr_u8 sensor_id);
+static cmr_int afaltek_adpt_config_roi(cmr_handle adpt_handle,
+				       struct isp_af_win *roi_in,
+				       cmr_int roi_type,
+				       struct allib_af_input_roi_info_t *roi_out);
+static cmr_int afaltek_adpt_pre_start(cmr_handle adpt_handle,
+				      struct allib_af_input_roi_info_t *roi);
+static cmr_int afaltek_adpt_caf_stop(cmr_handle adpt_handle);
+static cmr_int afaltek_adpt_reset_caf(cmr_handle adpt_handle);
 
 /************************************ INTERNAK FUNCTION ***************************************/
 
@@ -472,32 +480,76 @@ static cmr_int afaltek_adpt_caf_set_mode(cmr_handle adpt_handle, cmr_int mode)
 	return ret;
 }
 
-/* TBD */
+static void afaltek_adpt_config_mode(cmr_int mode_in, cmr_int *mode_out)
+{
+	switch (mode_in) {
+	case ISP_FOCUS_NONE:
+		*mode_out = AF_CTRL_MODE_AUTO;
+		break;
+	case ISP_FOCUS_TRIG:
+		*mode_out = AF_CTRL_MODE_AUTO;
+		break;
+	case ISP_FOCUS_ZONE:
+		*mode_out = AF_CTRL_MODE_AUTO;
+		break;
+	case ISP_FOCUS_MULTI_ZONE:
+		*mode_out = AF_CTRL_MODE_AUTO;
+	case ISP_FOCUS_MACRO:
+		*mode_out = AF_CTRL_MODE_MANUAL;
+		break;
+	case ISP_FOCUS_WIN:
+		*mode_out = AF_CTRL_MODE_CAF;
+		break;
+	case ISP_FOCUS_CONTINUE:
+		*mode_out = AF_CTRL_MODE_CAF;
+		break;
+	case ISP_FOCUS_MANUAL:
+		*mode_out = AF_CTRL_MODE_MANUAL;
+		break;
+	case ISP_FOCUS_VIDEO:
+		*mode_out = AF_CTRL_MODE_CONTINUOUS_VIDEO;
+		break;
+	case ISP_FOCUS_BYPASS:
+		*mode_out = AF_CTRL_MODE_MANUAL;
+		break;
+	default:
+		*mode_out = AF_CTRL_MODE_AUTO;
+		ISP_LOGE("oem send a wrong mode");
+		break;
+
+	}
+}
+
 static cmr_int afaltek_adpt_set_mode(cmr_handle adpt_handle, cmr_int mode)
 {
 	cmr_int ret = -1;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct allib_af_input_set_param_t p = { 0x00 };
+	cmr_int ctrl_mode = 0;
 
 	p.type = alAFLIB_SET_PARAM_FOCUS_MODE;
 	p.u_set_data.focus_mode_type = alAFLib_AF_MODE_AUTO;
 
-	ISP_LOGI("mode = %ld", mode);
-	cxt->af_mode = mode;
+	afaltek_adpt_config_mode(mode, &ctrl_mode);
+	ISP_LOGI("mode = %ld ctrl_mode = %ld", mode, ctrl_mode);
+	cxt->af_mode = ctrl_mode;
 
-	switch (mode) {
+	switch (ctrl_mode) {
 	case AF_CTRL_MODE_MACRO:
 		p.u_set_data.focus_mode_type = alAFLib_AF_MODE_MACRO;
 		ret = afaltek_adpt_set_parameters(cxt, &p);
 		break;
 	case AF_CTRL_MODE_AUTO:
+#ifdef FEATRUE_SPRD_CAF_TRIGGER
+		afaltek_adpt_caf_stop(cxt);
+#endif
 		p.u_set_data.focus_mode_type = alAFLib_AF_MODE_AUTO;
 		ret = afaltek_adpt_set_parameters(cxt, &p);
 		break;
 	case AF_CTRL_MODE_CAF:
 #ifdef FEATRUE_SPRD_CAF_TRIGGER
 		afaltek_adpt_caf_set_mode(cxt, AF_ALG_MODE_CONTINUE);
-		afaltek_adpt_caf_set_mode(cxt, AF_ALG_CMD_SET_CAF_RESET);
+		afaltek_adpt_reset_caf(cxt);
 #else
 		p.u_set_data.focus_mode_type = alAFLib_AF_MODE_CONTINUOUS_PICTURE;
 		ret = afaltek_adpt_set_parameters(cxt, &p);
@@ -520,7 +572,7 @@ static cmr_int afaltek_adpt_set_mode(cmr_handle adpt_handle, cmr_int mode)
 	case AF_CTRL_MODE_CONTINUOUS_VIDEO:
 #ifdef FEATRUE_SPRD_CAF_TRIGGER
 		afaltek_adpt_caf_set_mode(cxt, AF_ALG_MODE_CONTINUE);
-		afaltek_adpt_caf_set_mode(cxt, AF_ALG_CMD_SET_CAF_RESET);
+		afaltek_adpt_reset_caf(cxt);
 #else
 		p.u_set_data.focus_mode_type = alAFLib_AF_MODE_CONTINUOUS_VIDEO;
 		ret = afaltek_adpt_set_parameters(cxt, &p);
@@ -788,6 +840,11 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+	struct isp_af_win roi;
+	struct allib_af_input_roi_info_t lib_roi;
+
+	cmr_bzero(&roi, sizeof(roi));
+	cmr_bzero(&lib_roi, sizeof(lib_roi));
 
 	ret = cxt->caf_ops.trigger_calc(cxt->caf_trigger_handle, cal_in, &cal_out);
 
@@ -795,8 +852,9 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 		ret = afaltek_adpt_start_notify(adpt_handle);
 		if (ret)
 			ISP_LOGE("failed to notify");
-		struct isp_af_win roi;
-		//afaltek_adpt_pre_start(cxt, &roi);
+		afaltek_adpt_config_roi(adpt_handle, &roi,
+					alAFLib_ROI_TYPE_TOUCH, &lib_roi);
+		ret = afaltek_adpt_pre_start(adpt_handle, &lib_roi);
 		ret = cxt->caf_ops.trigger_ioctrl(cxt->caf_trigger_handle,
 						  AF_ALG_CMD_SET_CAF_STOP,
 						  NULL, NULL);
@@ -811,26 +869,28 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 static cmr_int afaltek_adpt_caf_update_ae_info(cmr_handle adpt_handle, void *in)
 {
 	cmr_int ret = ISP_SUCCESS;
-#if 0
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct caf_alg_calc_param caf_in = { 0};
 	struct caf_alg_result caf_out = { 0 };
-	struct isp_ae_statistic_info *af_ae_rgb_stat = NULL;
+	struct isp3a_ae_info *isp_ae_info = (struct isp3a_ae_info *)in;
+	struct isp_ae_statistic_info *ae_rgb_stats = NULL;
 
-	if (NULL == ae_info) {
-		ISP_LOGE("paramter err: ae_info %p", ae_info);
-		ret = -ISP_PARAM_NULL;
+	ae_rgb_stats = (struct isp_ae_statistic_info *)isp_ae_info->report_data.rgb_stats;
+	if (NULL == ae_rgb_stats) {
+		ISP_LOGE("failed to get ae rgb stats");
+		return -ISP_ERROR;
 	}
-
-	af_ae_rgb_stat = (struct isp_ae_statistic_info *)ae_info->report_data.rgb_stats;
 
 	caf_in.active_data_type = AF_ALG_DATA_IMG_BLK;
 	caf_in.img_blk_info.block_w = 16;
 	caf_in.img_blk_info.block_h = 16;
-	caf_in.img_blk_info.data = (cmr_u32 *)ae_info->report_data.rgb_stats;
-	caf_in.ae_info.is_stable = 1;
+	caf_in.img_blk_info.data = (cmr_u32 *)ae_rgb_stats;
+	caf_in.ae_info.exp_time = (cmr_u32)(isp_ae_info->report_data.exp_time * 100);
+	caf_in.ae_info.gain = isp_ae_info->report_data.sensor_ad_gain;
+	caf_in.ae_info.cur_lum = isp_ae_info->report_data.cur_mean;
+	caf_in.ae_info.target_lum = isp_ae_info->report_data.target_mean;
+	caf_in.ae_info.is_stable = isp_ae_info->report_data.ae_converge_st;
 	ret = afaltek_adpt_caf_process(cxt, &caf_in, caf_out);
-#endif
 	return ret;
 }
 
@@ -1044,14 +1104,44 @@ static cmr_u8 afaltek_adpt_get_timestamp(cmr_handle adpt_handle, cmr_u32 * sec, 
 	return ret;
 }
 
-static cmr_int afaltek_adpt_pre_start(cmr_handle adpt_handle, struct isp_af_win *roi)
+static cmr_int afaltek_adpt_config_roi(cmr_handle adpt_handle,
+				       struct isp_af_win *roi_in,
+				       cmr_int roi_type,
+				       struct allib_af_input_roi_info_t *roi_out)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_roi_info_t lib_roi;
 	cmr_u8 i = 0;
 
-	cmr_bzero(&lib_roi, sizeof(lib_roi));
+	roi_out->roi_updated = 1;
+	roi_out->type = roi_type;	/* TBD */
+
+	roi_out->frame_id = cxt->frame_id;
+	/* only support value 1 */
+	roi_out->num_roi = roi_in->valid_win;
+	ISP_LOGI("roi_out->num_roi = %d", roi_out->num_roi);
+	/* only support array 0 */
+	for (i = 0; i < roi_in->valid_win; i++) {
+		roi_out->roi[i].uw_left = roi_in->win[i].start_x;
+		roi_out->roi[i].uw_top = roi_in->win[i].start_y;
+		roi_out->roi[i].uw_dx = roi_in->win[i].end_x - roi_in->win[i].start_x;
+		roi_out->roi[i].uw_dy = roi_in->win[i].end_y - roi_in->win[i].start_y;
+		ISP_LOGI("top = %d, left = %d, dx = %d, dy = %d",
+			 roi_out->roi[i].uw_top, roi_out->roi[i].uw_left,
+			 roi_out->roi[i].uw_dx, roi_out->roi[i].uw_dy);
+	}
+	roi_out->weight[0] = 1;
+	roi_out->src_img_sz.uw_width = 2304;	/* TBD */
+	roi_out->src_img_sz.uw_height = 1740;
+
+	return 0;
+}
+
+static cmr_int afaltek_adpt_pre_start(cmr_handle adpt_handle,
+				      struct allib_af_input_roi_info_t *roi)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 
 	if ((AF_ADPT_STARTED == cxt->af_cur_status)
 		|| (AF_ADPT_FOCUSING == cxt->af_cur_status)) {
@@ -1060,29 +1150,8 @@ static cmr_int afaltek_adpt_pre_start(cmr_handle adpt_handle, struct isp_af_win 
 			ISP_LOGE("failed to stop");
 	}
 
-	ret = afaltek_adpt_set_mode(cxt, AF_CTRL_MODE_AUTO);	/* TBD */
-	lib_roi.roi_updated = 1;
-	/*if sprd caf set type alAFLib_ROI_TYPE_TOUCH */
-	lib_roi.type = alAFLib_ROI_TYPE_NORMAL;	/* TBD */
-
-	lib_roi.frame_id = cxt->frame_id;
-	/* only support value 1 */
-	lib_roi.num_roi = roi->valid_win;
-	ISP_LOGI("lib_roi.num_roi = %d", lib_roi.num_roi);
-	/* only support array 0 */
-	for (i = 0; i < roi->valid_win; i++) {
-		lib_roi.roi[i].uw_left = roi->win[i].start_x;
-		lib_roi.roi[i].uw_top = roi->win[i].start_y;
-		lib_roi.roi[i].uw_dx = roi->win[i].end_x - roi->win[i].start_x;
-		lib_roi.roi[i].uw_dy = roi->win[i].end_y - roi->win[i].start_y;
-		ISP_LOGI("top = %d, left = %d, dx = %d, dy = %d",
-			 lib_roi.roi[i].uw_top, lib_roi.roi[i].uw_left,
-			 lib_roi.roi[i].uw_dx, lib_roi.roi[i].uw_dy);
-	}
-	lib_roi.weight[0] = 1;
-	lib_roi.src_img_sz.uw_width = 2304;	/* TBD */
-	lib_roi.src_img_sz.uw_height = 1740;
-	ret = afaltek_adpt_set_roi(adpt_handle, &lib_roi);
+	//ret = afaltek_adpt_set_mode(cxt, AF_CTRL_MODE_AUTO);	/* TBD */
+	ret = afaltek_adpt_set_roi(adpt_handle, roi);
 	if (ret)
 		ISP_LOGE("failed to set roi");
 
@@ -1250,8 +1319,14 @@ static cmr_int afaltek_adpt_inctrl(cmr_handle adpt_handle, cmr_int cmd,
 		ret = afaltek_adpt_lens_move_done(adpt_handle, in);
 		break;
 	case AF_CTRL_CMD_SET_AF_START:
-		ret = afaltek_adpt_pre_start(adpt_handle, in);
+		{
+		struct allib_af_input_roi_info_t lib_roi;
+		cmr_bzero(&lib_roi, sizeof(lib_roi));
+		afaltek_adpt_config_roi(adpt_handle, in,
+					alAFLib_ROI_TYPE_NORMAL, &lib_roi);
+		ret = afaltek_adpt_pre_start(adpt_handle, &lib_roi);
 		break;
+		}
 	case AF_CTRL_CMD_SET_AF_STOP:
 		ret = afaltek_adpt_stop(adpt_handle);
 		break;
@@ -1288,8 +1363,8 @@ static cmr_int afaltek_adpt_inctrl(cmr_handle adpt_handle, cmr_int cmd,
 		ret = afaltek_adpt_update_sof(adpt_handle, in);
 		break;
 	case AF_CTRL_CMD_SET_UPDATE_AE:
-		ret = afaltek_adpt_caf_update_ae_info(adpt_handle, in);
 		ret = afaltek_adpt_update_ae(adpt_handle, in);
+		ret = afaltek_adpt_caf_update_ae_info(adpt_handle, in);
 		break;
 	case AF_CTRL_CMD_SET_PROC_START:
 		ret = afaltek_adpt_proc_start(adpt_handle);
