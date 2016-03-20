@@ -849,6 +849,7 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 	ret = cxt->caf_ops.trigger_calc(cxt->caf_trigger_handle, cal_in, &cal_out);
 
 	if ((!cxt->caf_result.is_caf_trig) && cal_out.is_caf_trig) {
+		/* notify oem to show box */
 		ret = afaltek_adpt_start_notify(adpt_handle);
 		if (ret)
 			ISP_LOGE("failed to notify");
@@ -1170,12 +1171,7 @@ static cmr_int afaltek_adpt_post_start(cmr_handle adpt_handle)
 
 	ISP_LOGI("E");
 	cxt->af_cur_status = AF_ADPT_FOCUSING;
-#if 0
-	/* notify oem to show box */
-	ret = afaltek_adpt_start_notify(adpt_handle);
-	if (ret)
-		ISP_LOGE("failed to notify");
-#endif
+
 	ret = afaltek_adpt_set_start(adpt_handle);
 	if (ret)
 		ISP_LOGE("failed to start");
