@@ -43,7 +43,7 @@ uint32_t bu64297gwz_init(void)
 	    Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
 
 	cmd_val[0] = 0xc8;
-	cmd_val[1] = 0x00;
+	cmd_val[1] = 0x01;
 	cmd_len = 2;
 	ret_value =
 	    Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
@@ -159,7 +159,7 @@ uint32_t bu64297gwz_init(void)
 	ret_value =
 	    Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
 	cmd_val[0] = 0xd0;
-	cmd_val[1] = 0x18;
+	cmd_val[1] = 0x85;
 	cmd_len = 2;
 	ret_value =
 	    Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
@@ -186,7 +186,7 @@ uint32_t bu64297gwz_write_dac_code(int32_t code)
 
 	SENSOR_PRINT("%d", code);
 
-	cmd_val[0] = ((code >> 8) & 0x03) | 0xC0;
+	cmd_val[0] = ((code >> 8) & 0x03) | 0xC4;
 	cmd_val[1] = code & 0xff;
 	cmd_len = 2;
 	ret_value =
