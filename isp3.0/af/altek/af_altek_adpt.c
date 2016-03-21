@@ -1515,16 +1515,23 @@ static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_init_info_t *otp_info;
 	struct allib_af_input_move_lens_cb_t move_lens_info = { 0 };
 	struct allib_af_input_sensor_info_t sensor_info;
-
-#if 1 //TBD
 	struct allib_af_input_init_info_t init_info;
+	struct sensor_otp_af_info *otp_af_info;
+
+	otp_af_info = (struct sensor_otp_af_info *) in->otp_info.otp_data;
+	memset(&init_info, 0x00, sizeof(init_info));
+	if (otp_af_info) {
+		init_info.calib_data.inf_step = otp_af_info->infinite_cali;
+		init_info.calib_data.macro_step = otp_af_info->macro_cali;
+		ISP_LOGI("infinite = %d, macro = %d",
+			 init_info.calib_data.inf_step,
+			 init_info.calib_data.macro_step);
+	}
+#if 1 //TBD
 	init_info.module_info.f_number = 2.0;
 	init_info.module_info.focal_lenth = 4400;
-	init_info.calib_data.inf_step = 100;
-	init_info.calib_data.macro_step = 900;
 	init_info.calib_data.inf_distance = 20000;
 	init_info.calib_data.macro_distance = 700;
 	init_info.calib_data.mech_top = 1023;
@@ -1532,13 +1539,11 @@ static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 	init_info.calib_data.lens_move_stable_time = 20;
 	init_info.calib_data.extend_calib_ptr = NULL;
 	init_info.calib_data.extend_calib_data_size = 0;
-	in->otp_info.otp_data = &init_info;
 #endif
 	/* init otp */
-	otp_info = (struct allib_af_input_init_info_t *) in->otp_info.otp_data;
-	if (otp_info) {
-		cxt->motor_info.vcm_wait_ms = otp_info->calib_data.lens_move_stable_time;
-		ret = afaltek_adpt_set_cali_data(cxt, in->otp_info.otp_data);
+	if (1) {
+		cxt->motor_info.vcm_wait_ms = init_info.calib_data.lens_move_stable_time;
+		ret = afaltek_adpt_set_cali_data(cxt, &init_info);
 		if (ret)
 			ISP_LOGI("ret = %ld", ret);
 	} else {

@@ -659,14 +659,12 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 	cxt = (struct isp3a_fw_context *)isp_3a_handle;
 
 	//OTP TBD
-#ifndef TEST_AWB
 	af_input.camera_id = input_ptr->camera_id;
 	af_input.af_lib_info = input_ptr->af_config;
 	memset(&af_input.af_lib_info, 0x00, sizeof(af_input.af_lib_info)); //TBD
 	af_input.caller_handle = isp_3a_handle;
 //	af_input.otp_info = ?//TBD
 	memset(&af_input.otp_info, 0x00, sizeof(af_input.otp_info));
-//	af_input.tuning_info = ?//TBD
 	memset(&af_input.tuning_info, 0x00, sizeof(af_input.tuning_info));
 	af_input.isp_info.img_width = 1280;//TBD
 	af_input.isp_info.img_height = 960;//TBD
@@ -689,7 +687,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 		goto exit;
 	}
 	cxt->af_cxt.hw_cfg = af_output.hw_cfg;
-#endif
+
 	awb_input.awb_cb = isp3a_awb_callback;
 	awb_input.camera_id = input_ptr->camera_id;
 	awb_input.lib_config = input_ptr->awb_config;
