@@ -298,9 +298,9 @@ cmr_int isp_deinit(cmr_handle isp_handle)
 
 	ISP_CHECK_HANDLE_VALID(isp_handle);
 
-	ispmw_put_tuning_bin((cmr_handle)cxt);
 	isp_3a_fw_deinit(cxt->isp_3a_handle);
 	isp_dev_access_deinit(cxt->isp_dev_handle);
+	ispmw_put_tuning_bin((cmr_handle)cxt);
 	free((void*)cxt);
 
 	return ret;
