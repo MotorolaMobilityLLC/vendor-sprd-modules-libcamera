@@ -7358,7 +7358,7 @@ cmr_int prev_pop_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id, s
 		memcpy(&phys_addr_array_0[0], &prev_cxt->prev_phys_addr_array[0][0], sizeof(cmr_uint)<<1);
 		memcpy(&virt_addr_array_0[0], &prev_cxt->prev_virt_addr_array[0][0], sizeof(cmr_uint)<<1);
 		memcpy(&mfd_array_0[0], &prev_cxt->prev_mfd_array[0][0], sizeof(cmr_s32)<<1);
-		
+
 		for (i = 0; i < (cmr_u32)(valid_num - 1); i++) {
 			memcpy(&prev_cxt->prev_phys_addr_array[i][0], &prev_cxt->prev_phys_addr_array[i+1][0], sizeof(cmr_uint)<<1);
 			memcpy(&prev_cxt->prev_virt_addr_array[i][0], &prev_cxt->prev_virt_addr_array[i+1][0], sizeof(cmr_uint)<<1);

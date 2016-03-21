@@ -81,7 +81,7 @@ LOCAL const SENSOR_REG_T hi544_common_init[] = {
 //	Image size       : 2592x1944
 //	mclk/pclk        : 24mhz / 88Mhz
 //	MIPI speed(Mbps) : 880Mbps (each lane)
-//	MIPI						 : Non-continuous 
+//	MIPI						 : Non-continuous
 //	Frame Length     : 1984
 //	V-Blank          : 546us
 //	Line Length	     : 2880
@@ -3646,8 +3646,8 @@ LOCAL uint32_t Sensor_hi544_InitRawTuneInfo(void)
 			sensor_ptr->af_multi_win.win_pos[i].end_x =(image_width - 1)*af_win_pos_setting[i][2]/1000;
 			sensor_ptr->af_multi_win.win_pos[i].end_y =(image_height - 1)*af_win_pos_setting[i][3]/1000;
 		}
-		
-		
+
+
 	}
 
 	return rtn;

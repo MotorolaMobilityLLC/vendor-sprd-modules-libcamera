@@ -5075,7 +5075,7 @@ static struct sensor_raw_fix_info s_ov8858_fix_info=
 			},
 		},
 	},
-	{		
+	{
 		(uint16_t*)s_ov8858_awb_map,
 		sizeof(s_ov8858_awb_map),
 	},

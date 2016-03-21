@@ -1116,7 +1116,7 @@ void Sensor_SetExportInfo(struct sensor_drv_context *sensor_cxt)
 	exp_info_ptr->horizontal_view_angle = sensor_info_ptr->horizontal_view_angle;
 	exp_info_ptr->vertical_view_angle = sensor_info_ptr->vertical_view_angle;
 	exp_info_ptr->sensor_version_info = sensor_info_ptr->sensor_version_info;
-	
+
 	CMR_LOGI("X");
 }
 
@@ -2405,7 +2405,7 @@ cmr_int sns_destroy_ctrl_thread(struct sensor_drv_context *sensor_cxt)
 
 /*********************************************************************************
  todo:
- now the sensor_open_common only support open one sensor on 1 times, and the function 
+ now the sensor_open_common only support open one sensor on 1 times, and the function
  should be updated when the hardware can supported multiple sensors;
  *********************************************************************************/
  cmr_int sensor_open_common(struct sensor_drv_context *sensor_cxt,
@@ -2497,7 +2497,7 @@ cmr_int sns_destroy_ctrl_thread(struct sensor_drv_context *sensor_cxt)
 	sns_save_sensor_type(sensor_cxt);
 	CMR_LOGI("1 debug %p", sensor_cxt->sensor_info_ptr);    //for debug
 //	CMR_LOGI("2 debug %d", sensor_cxt->sensor_info_ptr->image_format);    //for debug
-	if (sensor_cxt->sensor_info_ptr && 
+	if (sensor_cxt->sensor_info_ptr &&
 		SENSOR_IMAGE_FORMAT_RAW == sensor_cxt->sensor_info_ptr->image_format) {
 		if (SENSOR_SUCCESS == ret_val) {
 			ret_val = _sensor_cali_load_param(sensor_cxt,
@@ -2863,7 +2863,7 @@ cmr_int sns_stream_off(struct sensor_drv_context *sensor_cxt)
 	}
 	sensor_cxt->stream_on = 0;
 
-	
+
 	CMR_LOGI("X");
 	return err;
 }
@@ -3110,7 +3110,7 @@ cmr_int sns_init_defaul_exif(struct sensor_drv_context *sensor_cxt)
 }
 
 cmr_int sensor_set_exif_common(struct sensor_drv_context *sensor_cxt,
-					SENSOR_EXIF_CTRL_E cmd, 
+					SENSOR_EXIF_CTRL_E cmd,
 					cmr_u32 param)
 {
 	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = NULL;

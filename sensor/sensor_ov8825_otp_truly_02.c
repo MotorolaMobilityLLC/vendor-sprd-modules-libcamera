@@ -85,7 +85,7 @@ LOCAL void _ov8825_truly_otp_read(uint16_t otp_addr, uint8_t* otp_data)
 
 /*******************************************************************************
 * Function    :  _ov8825_truly_otp_clear
-* Description :  Clear OTP buffer 
+* Description :  Clear OTP buffer
 * Parameters  :  none
 * Return      :  none
 *******************************************************************************/
@@ -93,7 +93,7 @@ LOCAL void _ov8825_truly_otp_clear(void)
 {
 	// After read/write operation, the OTP buffer should be cleared to avoid accident write
 	uint8_t i;
-	for (i=0; i<32; i++) 
+	for (i=0; i<32; i++)
 	{
 		Sensor_WriteReg(OV8825_TRULY_OTP_DATA_ADDR+i, 0x00);
 	}
@@ -118,14 +118,14 @@ LOCAL int8_t _ov8825_truly_otp_check_wb_group(uint8_t index)
 		SENSOR_PRINT("OTP input wb group index %d error\n", index);
 		return -1;
 	}
-		
+
 	// select bank 0
 	Sensor_WriteReg(OV8825_TRULY_OTP_BANK_ADDR, 0x08);
 
 	_ov8825_truly_otp_read(otp_addr, &flag);
 	_ov8825_truly_otp_clear();
 
-	// Check all bytes of a group. If all bytes are '0', then the group is empty. 
+	// Check all bytes of a group. If all bytes are '0', then the group is empty.
 	// Check from group 1 to group 2, then group 3.
 	if (!flag)
 	{
@@ -146,7 +146,7 @@ LOCAL int8_t _ov8825_truly_otp_check_wb_group(uint8_t index)
 
 /*******************************************************************************
 * Function    :  _ov8825_truly_otp_read_wb_group
-* Description :  Read group value and store it in OTP Struct 
+* Description :  Read group value and store it in OTP Struct
 * Parameters  :  [in] index : index of otp group (0, 1, 2)
 * Return      :  group index (0, 1, 2)
                  -1, error
@@ -404,7 +404,7 @@ LOCAL int8_t _ov8825_truly_otp_check_lenc_group(uint8_t index)
 		SENSOR_PRINT("OTP input lenc group index %d error\n", index);
 		return -1;
 	}
-		
+
 	// select bank: index*2 + 1
 	bank = 0x08 | (index*2 + 1);
 	Sensor_WriteReg(OV8825_TRULY_OTP_BANK_ADDR, bank);
@@ -414,7 +414,7 @@ LOCAL int8_t _ov8825_truly_otp_check_lenc_group(uint8_t index)
 
 	flag = flag & 0xc0;
 
-	// Check all bytes of a group. If all bytes are '0', then the group is empty. 
+	// Check all bytes of a group. If all bytes are '0', then the group is empty.
 	// Check from group 1 to group 2, then group 3.
 	if (!flag)
 	{
@@ -435,7 +435,7 @@ LOCAL int8_t _ov8825_truly_otp_check_lenc_group(uint8_t index)
 
 /*******************************************************************************
 * Function    :  _ov8825_truly_otp_read_lenc_group
-* Description :  Read group value and store it in OTP Struct 
+* Description :  Read group value and store it in OTP Struct
 * Parameters  :  [in] int index : index of otp group (0, 1, 2)
 * Return      :  group index (0, 1, 2)
                  -1, error
@@ -466,7 +466,7 @@ LOCAL int8_t _ov8825_truly_otp_read_lenc_group(int index)
 	}
 	else
 	{
-		if (_ov8825_truly_otp_check_lenc_group(index) != 2) 
+		if (_ov8825_truly_otp_check_lenc_group(index) != 2)
 		{
 			SENSOR_PRINT("read lenc from group %d failed\n", index);
 			return -1;
@@ -480,7 +480,7 @@ LOCAL int8_t _ov8825_truly_otp_read_lenc_group(int index)
 	otp_addr = OV8825_TRULY_OTP_LENC_GROUP_ADDR+1;
 
 	_ov8825_truly_otp_read_enable();
-	for (i=0; i<31; i++) 
+	for (i=0; i<31; i++)
 	{
 		truly_otp_lenc_data[i] = Sensor_ReadReg(otp_addr);
 		otp_addr++;
@@ -495,14 +495,14 @@ LOCAL int8_t _ov8825_truly_otp_read_lenc_group(int index)
 	otp_addr = OV8825_TRULY_OTP_LENC_GROUP_ADDR;
 
 	_ov8825_truly_otp_read_enable();
-	for (i=31; i<62; i++) 
+	for (i=31; i<62; i++)
 	{
 		truly_otp_lenc_data[i] = Sensor_ReadReg(otp_addr);
 		otp_addr++;
 	}
 	_ov8825_truly_otp_read_disable();
 	_ov8825_truly_otp_clear();
-	
+
 	SENSOR_PRINT("read lenc finished\n");
 	return index;
 }
@@ -536,7 +536,7 @@ LOCAL void _ov8825_truly_otp_apply_lenc(void)
 * Parameters  :  none
 * Return      :  1, success; 0, fail
 *******************************************************************************/
-LOCAL uint32_t _ov8825_truly_otp_update_lenc(void) 
+LOCAL uint32_t _ov8825_truly_otp_update_lenc(void)
 {
 	SENSOR_PRINT("start lenc update\n");
 
@@ -557,7 +557,7 @@ LOCAL uint32_t _ov8825_truly_Identify_otp(void* param_ptr)
 	uint16_t otp_addr;
 	uint8_t mid;
 	uint8_t index;
-	
+
 	SENSOR_PRINT("SENSOR_ov8825: _ov8825_truly_Identify_otp");
 
 	for (index=0; index<3; index++)
@@ -577,7 +577,7 @@ LOCAL uint32_t _ov8825_truly_Identify_otp(void* param_ptr)
 
 		_ov8825_truly_otp_read(otp_addr, &mid);
 		mid = mid&0x7f;
-		
+
 		SENSOR_PRINT("SENSOR_ov8825:read ov8825 otp module_id = %x \n", mid);
 
 		if (OV8825_TRULY_OTP_MID == mid) {

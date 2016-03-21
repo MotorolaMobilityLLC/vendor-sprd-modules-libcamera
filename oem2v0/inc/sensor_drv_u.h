@@ -688,7 +688,6 @@ typedef struct sensor_exp_info_tag {
 	const cmr_s8 *sensor_version_info;
 } SENSOR_EXP_INFO_T, *SENSOR_EXP_INFO_T_PTR;
 
-//yy-param needed by ips3.0-start
 typedef struct sensor_lens_ext_info_tag {
         cmr_u32 f_num;                          //f-number,focal ratio,actual f-number*100
         cmr_u32 focal_length;                   //actual focal_length*100
@@ -710,10 +709,9 @@ typedef struct sensor_mode_fps_tag {
 } SENSOR_MODE_FPS_T, *SENSOR_MODE_FPS_T_PTR;
 
 typedef struct sensor_mode_fps_info_tag {
-	cmr_u32 is_init;	
+	cmr_u32 is_init;
 	SENSOR_MODE_FPS_T sensor_mode_fps[SENSOR_MODE_MAX];
 } SENSOR_MODE_FPS_INFO_T;
-//yy-param needed by ips3.0-end
 
 typedef struct sensor_info_tag {
 	cmr_u8 salve_i2c_addr_w;

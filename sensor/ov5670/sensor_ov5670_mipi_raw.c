@@ -104,7 +104,7 @@ LOCAL const SENSOR_REG_T ov5670_com_mipi_raw[] = {
 	{0x301b, 0xf0}, // sclk_blc on, sclk_isp on, sclk_testmode on, sclk_vfifo on
 	{0x301c, 0xf0}, // sclk_mipi on, sclk_dpcm on, sclk_otp on
 	{0x301d, 0xf0}, // sclk_asram_tst on, sclk_grp on, sclk_bist on,
-	{0x301e, 0xf0}, // sclk_ilpwm on, sclk_lvds on, sclk-vfifo on, sclk_mipi on, 
+	{0x301e, 0xf0}, // sclk_ilpwm on, sclk_lvds on, sclk-vfifo on, sclk_mipi on,
 	{0x3030, 0x00}, // sclk normal, pclk normal
 	{0x3031, 0x0a}, // 10-bit mode
 	{0x303c, 0xff}, // reserved
@@ -236,9 +236,9 @@ LOCAL const SENSOR_REG_T ov5670_com_mipi_raw[] = {
 	{0x3a11, 0x01},
 	{0x3a12, 0x78},
 	{0x3b00, 0x00}, // strobe
-	{0x3b02, 0x00}, 
-	{0x3b03, 0x00}, 
-	{0x3b04, 0x00}, 
+	{0x3b02, 0x00},
+	{0x3b03, 0x00},
+	{0x3b04, 0x00},
 	{0x3b05, 0x00}, // strobe
 	{0x3c00, 0x89},
 	{0x3c01, 0xab},
@@ -367,7 +367,7 @@ LOCAL const SENSOR_REG_T ov5670_com_mipi_raw[] = {
 	//Ping
 	{0x3503, 0x00}, // exposure gain/exposure delay not used
 	//added
-	{0x3d85, 0x17}, // OTP power up load data enable, otp power up load setting enable, otp write register load setting 
+	{0x3d85, 0x17}, // OTP power up load data enable, otp power up load setting enable, otp write register load setting
 	//enable
 	{0x3655, 0x20},
 	//{0x0100, 0x01}, // wake up from software standby, stream on
@@ -381,7 +381,7 @@ LOCAL const SENSOR_REG_T ov5670_1296X972_mipi_raw[] = {
 	{0x3623, 0x00}, // analog control
 	{0x366e, 0x08}, // analog control
 	{0x370b, 0x1b}, // sensor control
-	{0x3808, 0x05}, // x output size H 
+	{0x3808, 0x05}, // x output size H
 	{0x3809, 0x10}, // x output size L
 	{0x380a, 0x03}, // y outout size H
 	{0x380b, 0xcc}, // y output size L
@@ -418,7 +418,7 @@ LOCAL const SENSOR_REG_T ov5670_2592X1944_mipi_raw[] = {
 	{0x3623, 0x00}, // analog control
 	{0x366e, 0x10}, // analog control
 	{0x370b, 0x1b}, // sensor control
-	{0x3808, 0x0a}, // x output size H 
+	{0x3808, 0x0a}, // x output size H
 	{0x3809, 0x20}, // x output size L
 	{0x380a, 0x07}, // y outout size H
 	{0x380b, 0x98}, // y output size L
@@ -1469,11 +1469,11 @@ LOCAL uint32_t _ov5670_set_gain(uint32_t gain128)
 		Sensor_WriteReg(0x366a, 0x07);
 	}
 	else if(gain128>=512){
-		// 4x =< gain < 8x 
+		// 4x =< gain < 8x
 		Sensor_WriteReg(0x366a, 0x03);
 	}
 	else if(gain128>=256){
-		// 2x =< gain < 4x 
+		// 2x =< gain < 4x
 		Sensor_WriteReg(0x366a, 0x01);
 	}
 	else{

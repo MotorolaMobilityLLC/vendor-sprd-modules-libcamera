@@ -1016,7 +1016,7 @@ static SENSOR_REG_TAB_INFO_T s_s5k3l2xx_resolution_Tab_RAW[] = {
 	{ADDR_AND_LEN_OF_ARRAY(s5k3l2xx_common_init), 0, 0, 24, SENSOR_IMAGE_FORMAT_RAW},
 //	{ADDR_AND_LEN_OF_ARRAY(s5k3l2xx_2072x1554_setting), 2072, 1554, 24, SENSOR_IMAGE_FORMAT_RAW},
 	{ADDR_AND_LEN_OF_ARRAY(s5k3l2xx_4144x3106_setting), 4144, 3106, 24, SENSOR_IMAGE_FORMAT_RAW},
-	
+
 	{PNULL, 0, 0, 0, 0, 0},
 	{PNULL, 0, 0, 0, 0, 0},
 	{PNULL, 0, 0, 0, 0, 0},
@@ -1474,13 +1474,13 @@ static unsigned long _s5k3l2xx_Identify(unsigned long param)
 		uint32_t pid_value 	= 0x00;
 		uint32_t ver_value 	= 0x00;
 		uint32_t ret_value 	= SENSOR_FAIL;
-	
+
 		SENSOR_PRINT_ERR("SENSOR_S5K3L2XX: mipi raw identify\n");
-	
+
 		pid_value = Sensor_ReadReg(S5K3L2XX_PID_ADDR);
 		ver_value = (Sensor_ReadReg(S5K3L2XX_VER_ADDR) >> 8) & 0xff;
 		SENSOR_PRINT("SENSOR_S5K3L2XX: Identify: PID = %x, VER = %x", pid_value, ver_value);
-	
+
 		if (S5K3L2XX_PID_VALUE == pid_value) {
 			if (S5K3L2XX_VER_VALUE == ver_value) {
 				SENSOR_PRINT_ERR("SENSOR_S5K3L2XX: this is S5K3L2XX sensor !");
@@ -1538,9 +1538,9 @@ static unsigned long _s5k3l2xx_write_exposure(unsigned long param)
 	if(frame_len_cur < frame_len){
 		ret_value = Sensor_WriteReg(0x0340, frame_len);
 	}
-	
+
 	ret_value = Sensor_WriteReg(0x202, expsure_line);
-	
+
 	if(frame_len_cur > frame_len){
 		ret_value = Sensor_WriteReg(0x0340, frame_len);
 	}
@@ -1631,7 +1631,7 @@ static unsigned long _s5k3l2xx_BeforeSnapshot(unsigned long param)
 	capture_exposure = preview_exposure * prv_linetime / cap_linetime;
 
 	frame_len = Sensor_ReadReg(0x340);
-	
+
 	while(gain >= 0x40){
 		capture_exposure = capture_exposure * 2;
 		gain=gain / 2;

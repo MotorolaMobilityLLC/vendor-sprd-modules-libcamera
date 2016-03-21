@@ -394,7 +394,7 @@ int __android_ylog_btwrite(int32_t tag, char type, const void *payload,
 
 		len += vsnprintf(buf + len, LOG_BUF_SIZE - len, fmt, ap);
 		len += sprintf(buf + len, "%s", "\n");
-	
+
 		return __android_ylog_write(prio, tag, buf);
 	}
 

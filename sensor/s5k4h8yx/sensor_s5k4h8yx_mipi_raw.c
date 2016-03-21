@@ -985,7 +985,7 @@ static uint32_t _s5k4h8yx_init_mode_fps_info()
 			s_s5k4h8yx_mode_fps_info.sensor_mode_fps[i].max_fps = modn * 30;
 			if(s_s5k4h8yx_mode_fps_info.sensor_mode_fps[i].max_fps > 30) {
 				s_s5k4h8yx_mode_fps_info.sensor_mode_fps[i].is_high_fps = 1;
-				s_s5k4h8yx_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num = 
+				s_s5k4h8yx_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num =
 					s_s5k4h8yx_mode_fps_info.sensor_mode_fps[i].max_fps/30;
 			}
 			if(s_s5k4h8yx_mode_fps_info.sensor_mode_fps[i].max_fps >

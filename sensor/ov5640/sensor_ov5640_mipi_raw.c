@@ -421,7 +421,7 @@ SENSOR_INFO_T g_ov5640_mipi_raw_info = {
 	0,			// deci frame num during preview
 #else
 	3,
-#endif	
+#endif
 	0,			// deci frame num during video preview
 
 	0,

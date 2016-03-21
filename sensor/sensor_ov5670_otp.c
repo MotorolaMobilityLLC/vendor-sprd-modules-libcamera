@@ -73,7 +73,7 @@ LOCAL int check_otp_info(int index)
 	ov5670_otp_read_begin();
 	// read otp into buffer
 	Sensor_WriteReg(0x3d84, 0xc0); // program disable, manual mode
-	//partial mode OTP write start address 
+	//partial mode OTP write start address
 	Sensor_WriteReg(0x3d88, (address_start>>8));
 	Sensor_WriteReg(0x3d89, (address_start & 0xff));
 	// partial mode OTP write end address
@@ -124,7 +124,7 @@ LOCAL int check_otp_wb(int index)
 	ov5670_otp_read_begin();
 	// read otp into buffer
 	Sensor_WriteReg(0x3d84, 0xc0); // program disable, manual mode
-	//partial mode OTP write start address 
+	//partial mode OTP write start address
 	Sensor_WriteReg(0x3d88, (address_start>>8));
 	Sensor_WriteReg(0x3d89, (address_start & 0xff));
 	// partial mode OTP write end address
@@ -165,7 +165,7 @@ LOCAL int check_otp_wb(int index)
 
 // index: index of otp group. (1, 2, 3)
 // otp_ptr: pointer of otp_struct
-// return: 0, 
+// return: 0,
 LOCAL int read_otp_info(int index, struct otp_struct *otp_ptr)
 {
 	int i;
@@ -190,7 +190,7 @@ LOCAL int read_otp_info(int index, struct otp_struct *otp_ptr)
 		address_start = 0x701b;
 		address_end = 0x701f;
 	}
-	//partial mode OTP write start address 
+	//partial mode OTP write start address
 	Sensor_WriteReg(0x3d88, (address_start>>8));
 	Sensor_WriteReg(0x3d89, (address_start & 0xff));
 	// partial mode OTP write end address
@@ -213,13 +213,13 @@ LOCAL int read_otp_info(int index, struct otp_struct *otp_ptr)
 
 // index: index of otp group. (1, 2, 3)
 // otp_ptr: pointer of otp_struct
-// return:  0, 
+// return:  0,
 LOCAL int read_otp_wb(int index, struct otp_struct *otp_ptr)
 {
 	int i, temp;
 	int address_start = 0;
 	int address_end = 0;
-	
+
 	OTP_PRINT("read_otp_wb : index = %d\n", index);
 	//select group
 	if(index==1)
@@ -240,7 +240,7 @@ LOCAL int read_otp_wb(int index, struct otp_struct *otp_ptr)
 	ov5670_otp_read_begin();
 	// read otp into buffer
 	Sensor_WriteReg(0x3d84, 0xc0); // program disable, manual mode
-	//partial mode OTP write start address 
+	//partial mode OTP write start address
 	Sensor_WriteReg(0x3d88, (address_start>>8));
 	Sensor_WriteReg(0x3d89, (address_start & 0xff));
 	// partial mode OTP write end address
@@ -318,14 +318,14 @@ LOCAL uint32_t update_otp_wb(void* param_ptr)
 	//0x400 = 1x gain
 	if(bg < BG_Ratio_Typical) {
 		if(rg < RG_Ratio_Typical) {
-			// current_otp.bg_ratio < BG_Ratio_typical && 
+			// current_otp.bg_ratio < BG_Ratio_typical &&
 			// current_otp.rg_ratio < RG_Ratio_typical
 			G_gain = 0x400;
 			B_gain = 0x400 * BG_Ratio_Typical / bg;
-			R_gain = 0x400 * RG_Ratio_Typical / rg; 
+			R_gain = 0x400 * RG_Ratio_Typical / rg;
 		}
 		else{
-			// current_otp.bg_ratio < BG_Ratio_typical && 
+			// current_otp.bg_ratio < BG_Ratio_typical &&
 			// current_otp.rg_ratio >= RG_Ratio_typical
 			R_gain = 0x400;
 			G_gain = 0x400 * rg / RG_Ratio_Typical;
@@ -334,14 +334,14 @@ LOCAL uint32_t update_otp_wb(void* param_ptr)
 	}
 	else{
 		if(rg < RG_Ratio_Typical) {
-			// current_otp.bg_ratio >= BG_Ratio_typical && 
+			// current_otp.bg_ratio >= BG_Ratio_typical &&
 			// current_otp.rg_ratio < RG_Ratio_typical
 			B_gain = 0x400;
 			G_gain = 0x400 * bg / BG_Ratio_Typical;
 			R_gain = G_gain * RG_Ratio_Typical / rg;
 		}
 		else{
-			// current_otp.bg_ratio >= BG_Ratio_typical && 
+			// current_otp.bg_ratio >= BG_Ratio_typical &&
 			// current_otp.rg_ratio >= RG_Ratio_typical
 			G_gain_B = 0x400 * bg / BG_Ratio_Typical;
 			G_gain_R = 0x400 * rg / RG_Ratio_Typical;
@@ -355,7 +355,7 @@ LOCAL uint32_t update_otp_wb(void* param_ptr)
 				G_gain = G_gain_R;
 				B_gain = G_gain * BG_Ratio_Typical / bg;
 			}
-		} 
+		}
 	}
 	update_awb_gain(R_gain, G_gain, B_gain);
 	return 0;

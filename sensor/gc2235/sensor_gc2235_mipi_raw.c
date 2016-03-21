@@ -52,7 +52,7 @@ struct sensor_raw_info* s_gc2235_mipi_raw_info_ptr=NULL;
 static uint32_t g_module_id = 0;
 static uint32_t s_gc2235_mipi_gain = 0;
 
-LOCAL const SENSOR_REG_T gc2235_mipi_com_raw[] = 
+LOCAL const SENSOR_REG_T gc2235_mipi_com_raw[] =
 {
 
 	{0xfe, 0x80},
@@ -84,7 +84,7 @@ LOCAL const SENSOR_REG_T gc2235_mipi_com_raw[] =
 	{0x1a, 0x01},
 	{0x1b, 0x4d},//0x48
 	{0x1e, 0x88},
-	{0x1f, 0x48}, 
+	{0x1f, 0x48},
 	{0x20, 0x83}, //07//0x03
 	{0x21, 0x7f},//0x6f
 	{0x22, 0x80},
@@ -96,7 +96,7 @@ LOCAL const SENSOR_REG_T gc2235_mipi_com_raw[] =
 	{0x8b, 0xa0},
 	{0x8c, 0x02},
 	{0x90, 0x01},
-	{0x92, 0x02},	
+	{0x92, 0x02},
 	{0x94, 0x0e},//06
 	{0x95, 0x04},
 	{0x96, 0xb0},
@@ -107,13 +107,13 @@ LOCAL const SENSOR_REG_T gc2235_mipi_com_raw[] =
 	{0x5e, 0x00},//20
 	{0x5f, 0x00},
 	{0x60, 0x00},
-	{0x61, 0x00},	
+	{0x61, 0x00},
 	{0x62, 0x00},
-	{0x63, 0x00},	
+	{0x63, 0x00},
 	{0x64, 0x00},
 	{0x65, 0x00},
 	{0x66, 0x20},
-	{0x67, 0x20},	
+	{0x67, 0x20},
 	{0x68, 0x20},
 	{0x69, 0x20},
 	{0xb2, 0x00},
@@ -313,7 +313,7 @@ SENSOR_INFO_T g_gc2235_mipi_raw_info = {
 
 	// preview mode
 	SENSOR_ENVIROMENT_NORMAL | SENSOR_ENVIROMENT_NIGHT,
-      
+
 	// image effect
 	SENSOR_IMAGE_EFFECT_NORMAL |
 	    SENSOR_IMAGE_EFFECT_BLACKWHITE |
@@ -1488,7 +1488,7 @@ LOCAL uint32_t _gc2235_mipi_PowerOn(uint32_t power_on)
 	BOOLEAN reset_level = g_gc2235_mipi_raw_info.reset_pulse_level;
 
 	if (SENSOR_TRUE == power_on) {
-		
+
 		Sensor_PowerDown(power_down);
 		// Open power
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
@@ -1507,11 +1507,11 @@ LOCAL uint32_t _gc2235_mipi_PowerOn(uint32_t power_on)
 		//Sensor_Reset(!reset_level);
 		//usleep(10*1000);
 	} else {
-	
+
 		Sensor_PowerDown(power_down);
 		Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
 		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
-		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);		
+		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 	}
 	SENSOR_PRINT("SENSOR_gc2235_mipi: _gc2235_mipi_Power_On(1:on, 0:off): %d  ", power_on);
 	return SENSOR_SUCCESS;
@@ -1622,7 +1622,7 @@ LOCAL uint32_t _gc2235_mipi_Identify(uint32_t param)
 	} else {
 		SENSOR_PRINT("SENSOR_gc2235_mipi: identify fail,pid_value=%x", pid_value);
 	}
-	
+
 	return ret_value;
 }
 
@@ -1675,7 +1675,7 @@ LOCAL uint32_t _gc2235_mipi_write_gain(uint32_t param)
 		//Sensor_WriteReg(0xb1, 0xff);//only digital gain 12.13
 	}else{
 		//analogic gain
-		temp = 64*real_gain/256;		
+		temp = 64*real_gain/256;
 		SENSOR_PRINT("_gc2235_mipi_write_gain temp = %d  \n",temp);
 		Sensor_WriteReg(0xb0, temp); // global gain
 		Sensor_WriteReg(0xb1, 0xff);//only digital gain 12.13
@@ -1688,7 +1688,7 @@ LOCAL uint32_t _gc2235_mipi_write_gain(uint32_t param)
 LOCAL uint32_t _gc2235_mipi_SetEV(uint32_t param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
-#if 0	
+#if 0
 	SENSOR_EXT_FUN_T_PTR ext_ptr = (SENSOR_EXT_FUN_T_PTR) param;
 	uint16_t value=0x00;
 	uint32_t gain = s_gc2235_mipi_gain;
@@ -1733,7 +1733,7 @@ LOCAL uint32_t _gc2235_mipi_write_af(uint32_t param)
 	uint16_t cmd_len = 0;
 
 	SENSOR_PRINT("SENSOR_gc2235: _write_af %d", param);
-	
+
 	slave_addr = DW9714_VCM_SLAVE_ADDR;
 	cmd_val[0] = (param&0xfff0)>>4;
 	cmd_val[1] = ((param&0x0f)<<4)|0x09;
@@ -1750,32 +1750,32 @@ LOCAL uint32_t _dw9174_SRCInit(uint32_t mode)
 	uint8_t cmd_val[6] = {0x00};
 	uint16_t  slave_addr = 0;
 	uint16_t cmd_len = 0;
-	uint16_t ret = 0;	
-	uint32_t ret_value = SENSOR_SUCCESS;	
-	
+	uint16_t ret = 0;
+	uint32_t ret_value = SENSOR_SUCCESS;
+
 	slave_addr = DW9714_VCM_SLAVE_ADDR;
-/*	
+/*
 	switch (mode) {
 		case 1:
 		break;
-		
+
 		case 2:
-		{			
+		{
 			cmd_val[0] = 0xec;
 			cmd_val[1] = 0xa3;
 			cmd_val[2] = 0xf2;
 			cmd_val[3] = 0x00;
 			cmd_val[4] = 0xdc;
-			cmd_val[5] = 0x51;			
+			cmd_val[5] = 0x51;
 			cmd_len = 6;
-			ret = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);			
+			ret = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 				SENSOR_PRINT("SENSOR_gc2235:_dw9174_SRCInit, ret =  %d", ret);
 		}
 		break;
-		
+
 		case 3:
 		break;
-		
+
 	}*/
 
 	return ret_value;
@@ -1794,7 +1794,7 @@ LOCAL uint32_t _gc2235_mipi_BeforeSnapshot(uint32_t param)
 	uint32_t gain = 0, value = 0;
 	uint32_t prv_linetime=s_gc2235_mipi_Resolution_Trim_Tab[SENSOR_MODE_PREVIEW_ONE].line_time;
 	uint32_t cap_linetime = s_gc2235_mipi_Resolution_Trim_Tab[param].line_time;
-	
+
 	SENSOR_PRINT("SENSOR_gc2235_mipi: BeforeSnapshot moe: %d",param);
 
 	if (SENSOR_MODE_PREVIEW_ONE >= param){
@@ -1863,10 +1863,10 @@ LOCAL uint32_t _gc2235_mipi_after_snapshot(uint32_t param)
 LOCAL uint32_t _gc2235_mipi_StreamOn(uint32_t param)
 {
 	SENSOR_PRINT("SENSOR_gc2235_mipi: StreamOn");
-	
+
 	Sensor_WriteReg(0xfe, 0x03);
 	Sensor_WriteReg(0x10, 0x91);
-	Sensor_WriteReg(0xfe, 0x00);	
+	Sensor_WriteReg(0xfe, 0x00);
 	return 0;
 }
 
@@ -1876,7 +1876,7 @@ LOCAL uint32_t _gc2235_mipi_StreamOff(uint32_t param)
 
 	Sensor_WriteReg(0xfe, 0x03);
 	Sensor_WriteReg(0x10, 0x81);
-	Sensor_WriteReg(0xfe, 0x00);	
+	Sensor_WriteReg(0xfe, 0x00);
 	usleep(40*1000);
 	return 0;
 }

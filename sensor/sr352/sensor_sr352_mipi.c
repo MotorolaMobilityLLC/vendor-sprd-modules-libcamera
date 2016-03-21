@@ -616,7 +616,7 @@ static const SENSOR_REG_T sr352_common[]=
 	//LSC G channel reg________________________ 20130718 LSC Blending KYLE_VE_Symmetric
 	{0x0e, 0x01}, //BURST_START
 
-	//G Value 
+	//G Value
 	{0x42, 0x27},
 	{0x42, 0x12},
 	{0x42, 0x92},
@@ -1905,7 +1905,7 @@ static const SENSOR_REG_T sr352_common[]=
 
 
 
-	//R Value 
+	//R Value
 
 
 	{0x42, 0x3C},
@@ -3390,7 +3390,7 @@ static const SENSOR_REG_T sr352_common[]=
 
 
 
-	//B Value 
+	//B Value
 
 
 	{0x42, 0x31},
@@ -5496,7 +5496,7 @@ static const SENSOR_REG_T sr352_common[]=
 
 
 
-	{0x36, 0x00}, //EXP Unit 
+	{0x36, 0x00}, //EXP Unit
 
 
 	{0x37, 0x08},
@@ -5856,7 +5856,7 @@ static const SENSOR_REG_T sr352_common[]=
 	{0x03, 0xd9},
 
 
-	{0x7c, 0xe0}, 
+	{0x7c, 0xe0},
 
 
 	{0x8c, 0x60},	//en_ramp_gain_auto 20130722 for D-gain
@@ -8917,28 +8917,28 @@ static const SENSOR_REG_T sr352_common[]=
 
 
 
-	{0x79, 0x15},// CMC_Dark2_LumGain1_R    CMC SP R gain     
+	{0x79, 0x15},// CMC_Dark2_LumGain1_R    CMC SP R gain
 
 
-	{0x7a, 0x18},// CMC_Dark2_LumGain2_R                      
+	{0x7a, 0x18},// CMC_Dark2_LumGain2_R
 
 
-	{0x7b, 0x1e},// CMC_Dark2_LumGain3_R                      
+	{0x7b, 0x1e},// CMC_Dark2_LumGain3_R
 
 
-	{0x7c, 0x1f},// CMC_Dark2_LumGain4_R                      
+	{0x7c, 0x1f},// CMC_Dark2_LumGain4_R
 
 
-	{0x7d, 0x20},// CMC_Dark2_LumGain5_R                      
+	{0x7d, 0x20},// CMC_Dark2_LumGain5_R
 
 
-	{0x7e, 0x20},// CMC_Dark2_LumGain6_R                      
+	{0x7e, 0x20},// CMC_Dark2_LumGain6_R
 
 
-	{0x7f, 0x20},// CMC_Dark2_LumGain7_R                      
+	{0x7f, 0x20},// CMC_Dark2_LumGain7_R
 
 
-	{0x80, 0x20},// CMC_Dark2_LumGain8_R    20 = x1.          
+	{0x80, 0x20},// CMC_Dark2_LumGain8_R    20 = x1.
 
 
 
@@ -12265,43 +12265,43 @@ static const SENSOR_REG_T sr352_common[]=
 	{0x12, 0x11},
 
 
-	{0x13, 0x77}, //Outdoor 1111 add 720p 
+	{0x13, 0x77}, //Outdoor 1111 add 720p
 
 
 	{0x14, 0x14},
 
 
-	{0x15, 0x00}, //Outdoor 1114 add 720p 
+	{0x15, 0x00}, //Outdoor 1114 add 720p
 
 
 	{0x16, 0x15},
 
 
-	{0x17, 0x81}, //Outdoor 1115 add 720p 
+	{0x17, 0x81}, //Outdoor 1115 add 720p
 
 
 	{0x18, 0x16},
 
 
-	{0x19, 0x04}, //Outdoor 1116 add 720p 
+	{0x19, 0x04}, //Outdoor 1116 add 720p
 
 
 	{0x1a, 0x17},
 
 
-	{0x1b, 0x58}, //Outdoor 1117 add 720p 
+	{0x1b, 0x58}, //Outdoor 1117 add 720p
 
 
 	{0x1c, 0x18},
 
 
-	{0x1d, 0x30}, //Outdoor 1118 add 720p 
+	{0x1d, 0x30}, //Outdoor 1118 add 720p
 
 
 	{0x1e, 0x19},
 
 
-	{0x1f, 0x12}, //Outdoor 1119 add 720p 
+	{0x1f, 0x12}, //Outdoor 1119 add 720p
 
 
 	{0x20, 0x37},
@@ -12385,43 +12385,43 @@ static const SENSOR_REG_T sr352_common[]=
 	{0x3a, 0x49},
 
 
-	{0x3b, 0x06}, //Outdoor 1149 add 720p 
+	{0x3b, 0x06}, //Outdoor 1149 add 720p
 
 
 	{0x3c, 0x4a},
 
 
-	{0x3d, 0x0a}, //Outdoor 114a add 720p 
+	{0x3d, 0x0a}, //Outdoor 114a add 720p
 
 
 	{0x3e, 0x4b},
 
 
-	{0x3f, 0x12}, //Outdoor 114b add 720p 
+	{0x3f, 0x12}, //Outdoor 114b add 720p
 
 
 	{0x40, 0x4c},
 
 
-	{0x41, 0x1c}, //Outdoor 114c add 720p 
+	{0x41, 0x1c}, //Outdoor 114c add 720p
 
 
 	{0x42, 0x4d},
 
 
-	{0x43, 0x24}, //Outdoor 114d add 720p 
+	{0x43, 0x24}, //Outdoor 114d add 720p
 
 
 	{0x44, 0x4e},
 
 
-	{0x45, 0x40}, //Outdoor 114e add 720p 
+	{0x45, 0x40}, //Outdoor 114e add 720p
 
 
 	{0x46, 0x4f},
 
 
-	{0x47, 0x80}, //Outdoor 114f add 720p 
+	{0x47, 0x80}, //Outdoor 114f add 720p
 
 
 	{0x48, 0x50},
@@ -12775,31 +12775,31 @@ static const SENSOR_REG_T sr352_common[]=
 	{0xbc, 0xb7},
 
 
-	{0xbd, 0x22}, //Outdoor 11b7 add 720p 
+	{0xbd, 0x22}, //Outdoor 11b7 add 720p
 
 
 	{0xbe, 0xb8},
 
 
-	{0xbf, 0x22}, //Outdoor 11b8 add 720p 
+	{0xbf, 0x22}, //Outdoor 11b8 add 720p
 
 
 	{0xc0, 0xb9},
 
 
-	{0xc1, 0x21}, //Outdoor 11b9 add 720p 
+	{0xc1, 0x21}, //Outdoor 11b9 add 720p
 
 
 	{0xc2, 0xba},
 
 
-	{0xc3, 0x1e}, //Outdoor 11ba add 720p 
+	{0xc3, 0x1e}, //Outdoor 11ba add 720p
 
 
 	{0xc4, 0xbb},
 
 
-	{0xc5, 0x1c}, //Outdoor 11bb add 720p 
+	{0xc5, 0x1c}, //Outdoor 11bb add 720p
 
 
 	{0xc6, 0xbc},
@@ -14923,49 +14923,49 @@ static const SENSOR_REG_T sr352_common[]=
 	{0x12, 0x11},
 
 
-	{0x13, 0x77}, //Indoor 1111 add 720p 
+	{0x13, 0x77}, //Indoor 1111 add 720p
 
 
 	{0x14, 0x14},
 
 
-	{0x15, 0x04}, //Indoor 1114 add 720p 
+	{0x15, 0x04}, //Indoor 1114 add 720p
 
 
 	{0x16, 0x15},
 
 
-	{0x17, 0x44}, //Indoor 1115 add 720p 
+	{0x17, 0x44}, //Indoor 1115 add 720p
 
 
 	{0x18, 0x16},
 
 
-	{0x19, 0x44}, //Indoor 1116 add 720p 
+	{0x19, 0x44}, //Indoor 1116 add 720p
 
 
 	{0x1a, 0x17},
 
 
-	{0x1b, 0x58}, //Indoor 1117 add 720p 
+	{0x1b, 0x58}, //Indoor 1117 add 720p
 
 
 	{0x1c, 0x18},
 
 
-	{0x1d, 0x30}, //Indoor 1118 add 720p 
+	{0x1d, 0x30}, //Indoor 1118 add 720p
 
 
 	{0x1e, 0x19},
 
 
-	{0x1f, 0x12}, //Indoor 1119 add 720p 
+	{0x1f, 0x12}, //Indoor 1119 add 720p
 
 
 	{0x20, 0x37},
 
 
-	{0x21, 0x07}, //Indoor 1137 
+	{0x21, 0x07}, //Indoor 1137
 
 
 	{0x22, 0x38},
@@ -15043,7 +15043,7 @@ static const SENSOR_REG_T sr352_common[]=
 	{0x3a, 0x49},
 
 
-	{0x3b, 0x06}, //Indoor 1149 add 720p 
+	{0x3b, 0x06}, //Indoor 1149 add 720p
 
 
 	{0x3c, 0x4a},
@@ -15085,7 +15085,7 @@ static const SENSOR_REG_T sr352_common[]=
 	{0x48, 0x50},
 
 
-	{0x49, 0x3f}, //Indoor 1150 
+	{0x49, 0x3f}, //Indoor 1150
 
 
 	{0x4a, 0x51},
@@ -15433,37 +15433,37 @@ static const SENSOR_REG_T sr352_common[]=
 	{0xbc, 0xb7},
 
 
-	{0xbd, 0x22}, //Indoor 11b7 add 720p 
+	{0xbd, 0x22}, //Indoor 11b7 add 720p
 
 
 	{0xbe, 0xb8},
 
 
-	{0xbf, 0x22}, //Indoor 11b8 add 720p 
+	{0xbf, 0x22}, //Indoor 11b8 add 720p
 
 
 	{0xc0, 0xb9},
 
 
-	{0xc1, 0x21}, //Indoor 11b9 add 720p 
+	{0xc1, 0x21}, //Indoor 11b9 add 720p
 
 
 	{0xc2, 0xba},
 
 
-	{0xc3, 0x1e}, //Indoor 11ba add 720p 
+	{0xc3, 0x1e}, //Indoor 11ba add 720p
 
 
 	{0xc4, 0xbb},
 
 
-	{0xc5, 0x1c}, //Indoor 11bb add 720p 
+	{0xc5, 0x1c}, //Indoor 11bb add 720p
 
 
 	{0xc6, 0xbc},
 
 
-	{0xc7, 0x1a}, //Indoor 11bc add 720p 
+	{0xc7, 0x1a}, //Indoor 11bc add 720p
 
 
 	{0xc8, 0xc7},
@@ -17584,43 +17584,43 @@ static const SENSOR_REG_T sr352_common[]=
 	{0x12, 0x11},
 
 
-	{0x13, 0x77}, //Dark1 1111 add 720p 
+	{0x13, 0x77}, //Dark1 1111 add 720p
 
 
 	{0x14, 0x14},
 
 
-	{0x15, 0x04}, //Dark1 1114 add 720p 
+	{0x15, 0x04}, //Dark1 1114 add 720p
 
 
 	{0x16, 0x15},
 
 
-	{0x17, 0x44}, //Dark1 1115 add 720p 
+	{0x17, 0x44}, //Dark1 1115 add 720p
 
 
 	{0x18, 0x16},
 
 
-	{0x19, 0x44}, //Dark1 1116 add 720p 
+	{0x19, 0x44}, //Dark1 1116 add 720p
 
 
 	{0x1a, 0x17},
 
 
-	{0x1b, 0x58}, //Dark1 1117 add 720p 
+	{0x1b, 0x58}, //Dark1 1117 add 720p
 
 
 	{0x1c, 0x18},
 
 
-	{0x1d, 0x30}, //Dark1 1118 add 720p 
+	{0x1d, 0x30}, //Dark1 1118 add 720p
 
 
 	{0x1e, 0x19},
 
 
-	{0x1f, 0x12}, //Dark1 1119 add 720p 
+	{0x1f, 0x12}, //Dark1 1119 add 720p
 
 
 	{0x20, 0x37},
@@ -17704,49 +17704,49 @@ static const SENSOR_REG_T sr352_common[]=
 	{0x3a, 0x49},
 
 
-	{0x3b, 0x06}, //Dark1 1149 add 720p 
+	{0x3b, 0x06}, //Dark1 1149 add 720p
 
 
 	{0x3c, 0x4a},
 
 
-	{0x3d, 0x0a}, //Dark1 114a add 720p 
+	{0x3d, 0x0a}, //Dark1 114a add 720p
 
 
 	{0x3e, 0x4b},
 
 
-	{0x3f, 0x12}, //Dark1 114b add 720p 
+	{0x3f, 0x12}, //Dark1 114b add 720p
 
 
 	{0x40, 0x4c},
 
 
-	{0x41, 0x1c}, //Dark1 114c add 720p 
+	{0x41, 0x1c}, //Dark1 114c add 720p
 
 
 	{0x42, 0x4d},
 
 
-	{0x43, 0x24}, //Dark1 114d add 720p 
+	{0x43, 0x24}, //Dark1 114d add 720p
 
 
 	{0x44, 0x4e},
 
 
-	{0x45, 0x40}, //Dark1 114e add 720p 
+	{0x45, 0x40}, //Dark1 114e add 720p
 
 
 	{0x46, 0x4f},
 
 
-	{0x47, 0x80}, //Dark1 114f add 720p 
+	{0x47, 0x80}, //Dark1 114f add 720p
 
 
 	{0x48, 0x50},
 
 
-	{0x49, 0x3f}, //Dark1 1150 
+	{0x49, 0x3f}, //Dark1 1150
 
 
 	{0x4a, 0x51},
@@ -18094,37 +18094,37 @@ static const SENSOR_REG_T sr352_common[]=
 	{0xbc, 0xb7},
 
 
-	{0xbd, 0x22}, //Dark1 11b7 add 720p 
+	{0xbd, 0x22}, //Dark1 11b7 add 720p
 
 
 	{0xbe, 0xb8},
 
 
-	{0xbf, 0x22}, //Dark1 11b8 add 720p 
+	{0xbf, 0x22}, //Dark1 11b8 add 720p
 
 
 	{0xc0, 0xb9},
 
 
-	{0xc1, 0x21}, //Dark1 11b9 add 720p 
+	{0xc1, 0x21}, //Dark1 11b9 add 720p
 
 
 	{0xc2, 0xba},
 
 
-	{0xc3, 0x1e}, //Dark1 11ba add 720p 
+	{0xc3, 0x1e}, //Dark1 11ba add 720p
 
 
 	{0xc4, 0xbb},
 
 
-	{0xc5, 0x1c}, //Dark1 11bb add 720p 
+	{0xc5, 0x1c}, //Dark1 11bb add 720p
 
 
 	{0xc6, 0xbc},
 
 
-	{0xc7, 0x1a}, //Dark1 11bc add 720p 
+	{0xc7, 0x1a}, //Dark1 11bc add 720p
 
 
 	{0xc8, 0xc7},
@@ -20404,7 +20404,7 @@ static const SENSOR_REG_T sr352_common[]=
 	{0x48, 0x50},
 
 
-	{0x49, 0x3f}, //Dark2 1150 
+	{0x49, 0x3f}, //Dark2 1150
 
 
 	{0x4a, 0x51},
@@ -22342,7 +22342,7 @@ static const SENSOR_REG_T sr352_common[]=
 
 	// MIPI TX Setting  //PK 54MHz
 	{0x03, 0x05},  // Page05
-	{0x11, 0x00},  // lvds_ctl_2 //Phone set not continuous           
+	{0x11, 0x00},  // lvds_ctl_2 //Phone set not continuous
 	{0x12, 0x00},  // crc_ctl
 	{0x13, 0x00},  // serial_ctl
 	{0x14, 0x00},  // ser_out_ctl_1

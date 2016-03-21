@@ -90,7 +90,7 @@ LOCAL const SENSOR_REG_T hi544_common_init[] = {
 //	Image size       : 2592x1944
 //	mclk/pclk        : 24mhz / 88Mhz
 //	MIPI speed(Mbps) : 880Mbps (each lane)
-//	MIPI						 : Non-continuous 
+//	MIPI						 : Non-continuous
 //	Frame Length     : 1984
 //	V-Blank          : 546us
 //	Line Length	     : 2880

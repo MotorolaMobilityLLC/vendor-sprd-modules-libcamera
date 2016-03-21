@@ -579,7 +579,6 @@ cmr_int cmr_sensor_get_raw_settings(cmr_handle sensor_handle, void *raw_setting,
 	return CMR_CAMERA_SUCCESS;
 }
 
-//yy-param needed by ips3.0-start
 cmr_int cmr_sensor_get_fps_info(cmr_handle sensor_handle, cmr_u32 camera_id,
 		cmr_u32 sn_mode, SENSOR_MODE_FPS_T_PTR fps_info_ptr)
 {
@@ -596,7 +595,6 @@ cmr_int cmr_sensor_get_fps_info(cmr_handle sensor_handle, cmr_u32 camera_id,
 	ret = cmr_sensor_ioctl(sensor_handle, camera_id, SENSOR_ACCESS_VAL, (cmr_uint)&val);
 	return ret;
 }
-//yy-param needed by ips3.0-end
 
 cmr_int cmr_sensor_ioctl(cmr_handle sensor_handle, cmr_u32 sensor_id, cmr_uint cmd, cmr_uint arg)
 {

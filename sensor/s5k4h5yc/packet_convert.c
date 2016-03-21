@@ -21,7 +21,7 @@ int32_t awb_package_convert(void *src_data, void *target_buf, uint32_t target_bu
 {
 	struct awb_source_packet *awb_packet_src = NULL;
 	struct awb_target_packet *awb_packet_dst = NULL;
-	
+
 	awb_packet_src = (struct awb_source_packet *)src_data;
 	awb_packet_dst = (struct awb_target_packet *)target_buf;
 

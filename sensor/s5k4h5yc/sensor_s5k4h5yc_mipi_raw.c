@@ -668,9 +668,9 @@ static uint32_t Sensor_s5k4h5yc_InitRawTuneInfo(void)
 				static struct sensor_pwd_level pwd_param[SENSOR_SMART_LEVEL_NUM] = {
 					#include "noise/pwd_param.h"
 				};
-				
+
 				param_update("pwd_param",pwd_param);
-				
+
 				block->param_ptr = pwd_param;
 			}
 			break;
@@ -682,9 +682,9 @@ static uint32_t Sensor_s5k4h5yc_InitRawTuneInfo(void)
 				static struct sensor_bpc_level bpc_param[SENSOR_SMART_LEVEL_NUM] = {
 					#include "noise/bpc_param.h"
 				};
-				
+
 				param_update("bpc_param",bpc_param);
-				
+
 				block->param_ptr = bpc_param;
 			}
 			break;
@@ -696,9 +696,9 @@ static uint32_t Sensor_s5k4h5yc_InitRawTuneInfo(void)
 				static struct sensor_bdn_level bdn_param[SENSOR_SMART_LEVEL_NUM] = {
 					#include "noise/bdn_param.h"
 				};
-				
+
 				param_update("bdn_param",bdn_param);
-				
+
 				block->param_ptr = bdn_param;
 			}
 			break;
@@ -709,11 +709,11 @@ static uint32_t Sensor_s5k4h5yc_InitRawTuneInfo(void)
 				static struct sensor_grgb_v1_level grgb_param[SENSOR_SMART_LEVEL_NUM] = {
 					#include "noise/grgb_param.h"
 				};
-				
+
 				param_update("grgb_param",grgb_param);
-				
+
 				block->param_ptr = grgb_param;
-				
+
 			}
 			break;
 
@@ -724,27 +724,27 @@ static uint32_t Sensor_s5k4h5yc_InitRawTuneInfo(void)
 				static struct sensor_nlm_level nlm_param[32] = {
 					#include "noise/nlm_param.h"
 				};
-				
+
 				param_update("nlm_param",nlm_param);
-				
+
 				static struct sensor_vst_level vst_param[32] = {
 					#include "noise/vst_param.h"
 				};
-				
+
 				param_update("vst_param",vst_param);
-				
+
 				static struct sensor_ivst_level ivst_param[32] = {
 					#include "noise/ivst_param.h"
 				};
-				
+
 				param_update("ivst_param",ivst_param);
-				
+
 				static struct sensor_flat_offset_level flat_offset_param[32] = {
 					#include "noise/flat_offset_param.h"
 				};
-				
+
 				param_update("flat_offset_param",flat_offset_param);
-				
+
 				block->param_nlm_ptr = nlm_param;
 				block->param_vst_ptr = vst_param;
 				block->param_ivst_ptr = ivst_param;
@@ -758,9 +758,9 @@ static uint32_t Sensor_s5k4h5yc_InitRawTuneInfo(void)
 				static struct sensor_cfae_level cfae_param[SENSOR_SMART_LEVEL_NUM] = {
 					#include "noise/cfae_param.h"
 				};
-				
+
 				param_update("cfae_param",cfae_param);
-				
+
 				block->param_ptr = cfae_param;
 			}
 			break;
@@ -772,9 +772,9 @@ static uint32_t Sensor_s5k4h5yc_InitRawTuneInfo(void)
 				static struct sensor_rgb_precdn_level precdn_param[SENSOR_SMART_LEVEL_NUM] = {
 					#include "noise/rgb_precdn_param.h"
 				};
-				
+
 				param_update("rgb_precdn_param",precdn_param);
-				
+
 				block->param_ptr = precdn_param;
 			}
 			break;
@@ -786,9 +786,9 @@ static uint32_t Sensor_s5k4h5yc_InitRawTuneInfo(void)
 				static struct sensor_yuv_precdn_level yuv_precdn_param[SENSOR_SMART_LEVEL_NUM] = {
 					#include "noise/yuv_precdn_param.h"
 				};
-				
+
 				param_update("yuv_precdn_param",yuv_precdn_param);
-				
+
 				block->param_ptr = yuv_precdn_param;
 			}
 			break;
@@ -800,9 +800,9 @@ static uint32_t Sensor_s5k4h5yc_InitRawTuneInfo(void)
 				static struct sensor_prfy_level prfy_param[SENSOR_SMART_LEVEL_NUM] = {
 					#include "noise/prfy_param.h"
 				};
-				
+
 				param_update("prfy_param",prfy_param);
-				
+
 				block->param_ptr = prfy_param;
 			}
 			break;
@@ -814,9 +814,9 @@ static uint32_t Sensor_s5k4h5yc_InitRawTuneInfo(void)
 				static struct sensor_uv_cdn_level uv_cdn_param[SENSOR_SMART_LEVEL_NUM] = {
 					#include "noise/yuv_cdn_param.h"
 				};
-				
+
 				param_update("yuv_cdn_param",uv_cdn_param);
-				
+
 				block->param_ptr = uv_cdn_param;
 			}
 			break;
@@ -828,9 +828,9 @@ static uint32_t Sensor_s5k4h5yc_InitRawTuneInfo(void)
 				static struct sensor_ee_level edge_param[SENSOR_SMART_LEVEL_NUM] = {
 					#include "noise/edge_param.h"
 				};
-				
+
 				param_update("edge_param",edge_param);
-				
+
 				block->param_ptr = edge_param;
 			}
 			break;
@@ -842,9 +842,9 @@ static uint32_t Sensor_s5k4h5yc_InitRawTuneInfo(void)
 				static struct sensor_uv_postcdn_level uv_postcdn_param[SENSOR_SMART_LEVEL_NUM] = {
 					#include "noise/yuv_postcdn_param.h"
 				};
-				
+
 				param_update("yuv_postcdn_param",uv_postcdn_param);
-				
+
 				block->param_ptr = uv_postcdn_param;
 			}
 			break;
@@ -856,9 +856,9 @@ static uint32_t Sensor_s5k4h5yc_InitRawTuneInfo(void)
 				static struct sensor_iircnr_level iir_cnr_param[SENSOR_SMART_LEVEL_NUM] = {
 					#include "noise/iircnr_param.h"
 				};
-				
+
 				param_update("iircnr_param",iir_cnr_param);
-				
+
 				block->param_ptr = iir_cnr_param;
 			}
 			break;
@@ -869,9 +869,9 @@ static uint32_t Sensor_s5k4h5yc_InitRawTuneInfo(void)
 				static struct sensor_iircnr_yrandom_level iir_yrandom_param[SENSOR_SMART_LEVEL_NUM] = {
 					#include "noise/iir_yrandom_param.h"
 				};
-				
+
 				param_update("iir_yrandom_param",iir_yrandom_param);
-				
+
 				block->param_ptr = iir_yrandom_param;
 			}
 			break;
@@ -883,9 +883,9 @@ static uint32_t Sensor_s5k4h5yc_InitRawTuneInfo(void)
 				static struct sensor_cce_uvdiv_level cce_uvdiv_param[SENSOR_SMART_LEVEL_NUM] = {
 					#include "noise/cce_uv_param.h"
 				};
-				
+
 				param_update("cce_uv_param",cce_uvdiv_param);
-				
+
 				block->param_ptr = cce_uvdiv_param;
 			}
 			break;
@@ -896,9 +896,9 @@ static uint32_t Sensor_s5k4h5yc_InitRawTuneInfo(void)
 			static struct sensor_y_afm_level y_afm_param[SENSOR_SMART_LEVEL_NUM] = {
 					#include "noise/y_afm_param.h"
 				};
-				
+
 				param_update("y_afm_param",y_afm_param);
-				
+
 				block->param_ptr = y_afm_param;
 			}
 			break;
@@ -907,7 +907,7 @@ static uint32_t Sensor_s5k4h5yc_InitRawTuneInfo(void)
 			break;
 		}
 	}
-	
+
 
 	return rtn;
 }
@@ -1214,7 +1214,7 @@ static unsigned long _s5k4h5yc_write_exposure(unsigned long param)
 	linetime=s_s5k4h5yc_Resolution_Trim_Tab[size_index].line_time;
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, s_capture_shutter);
 	s_exposure_time = s_capture_shutter * linetime / 10;
-	
+
 	/*if (frame_len_cur > frame_len) {
 		ret_value = Sensor_WriteReg(0x0341, frame_len & 0xff);
 		ret_value = Sensor_WriteReg(0x0340, (frame_len >> 0x08) & 0xff);

@@ -152,7 +152,7 @@ SENSOR_REG_T GC0310_MIPI_YUV_COMMON[]=
 	{0x78,0x40},
 	{0x79,0x5f},
 	//DNDD//
-	{0x82,0x14}, 
+	{0x82,0x14},
 	{0x83,0x0b},
 	{0x89,0xf0},
 	//EEINTP//
@@ -174,7 +174,7 @@ SENSOR_REG_T GC0310_MIPI_YUV_COMMON[]=
 	{0xa2,0x32},
 	{0xa4,0x30},
 	{0xa5,0x30},
-	{0xaa,0x10}, 
+	{0xaa,0x10},
 	{0xac,0x22},
 	//GAMMA//
 	{0xfe,0x00},//big gamma
@@ -200,7 +200,7 @@ SENSOR_REG_T GC0310_MIPI_YUV_COMMON[]=
 	{0xd0,0x40},
 	{0xd1,0x28},
 	{0xd2,0x28},
-	{0xd3,0x40}, 
+	{0xd3,0x40},
 	{0xd6,0xf2},
 	{0xd7,0x1b},
 	{0xd8,0x18},
@@ -374,14 +374,14 @@ SENSOR_REG_T GC0310_MIPI_YUV_COMMON[]=
 	{0x07,0x00},
 	{0x08,0x22}, //VB
 	{0xfe,0x01},
-	{0x25,0x00}, //step 
-	{0x26,0x6a}, 
+	{0x25,0x00}, //step
+	{0x26,0x6a},
 	{0x27,0x02}, //20fps
-	{0x28,0x12},  
+	{0x28,0x12},
 	{0x29,0x03}, //12.5fps
-	{0x2a,0x50}, 
+	{0x2a,0x50},
 	{0x2b,0x05}, //7.14fps
-	{0x2c,0xcc}, 
+	{0x2c,0xcc},
 	{0x2d,0x07}, //5.55fps
 	{0x2e,0x74},
 	{0x3c,0x20},
@@ -401,7 +401,7 @@ static SENSOR_REG_TAB_INFO_T s_GC0310_MIPI_resolution_Tab_YUV[]=
 	{PNULL, 0, 0, 0, 0, 0},
 	{PNULL, 0, 0, 0, 0, 0},
 	{PNULL, 0, 0, 0, 0, 0},
-	
+
 	// YUV422 PREVIEW 2
 	{PNULL, 0, 0, 0, 0, 0},
 	{PNULL, 0, 0, 0, 0, 0},
@@ -533,13 +533,13 @@ SENSOR_INFO_T g_GC0310_MIPI_yuv_info =
 	SENSOR_LOW_PULSE_RESET,			// reset pulse level
 	100,								// reset pulse width(ms)
 
-	SENSOR_HIGH_LEVEL_PWDN,			// 1: high level valid; 0: low level valid	
+	SENSOR_HIGH_LEVEL_PWDN,			// 1: high level valid; 0: low level valid
 
 	2,								// count of identify code
 	{{0xf0, 0xa3},					// supply two code to identify sensor.
 	{0xf1, 0x10}},					// for Example: index = 0-> Device id, index = 1 -> version id
 
-	SENSOR_AVDD_2800MV,				// voltage of avdd	
+	SENSOR_AVDD_2800MV,				// voltage of avdd
 
 	640,							// max width of source image
 	480,							// max height of source image
@@ -553,7 +553,7 @@ SENSOR_INFO_T g_GC0310_MIPI_yuv_info =
 	&s_GC0310_MIPI_ioctl_func_tab,		// point to ioctl function table
 
 	PNULL,							// information and table about Rawrgb sensor
-	PNULL,							// extend information about sensor	
+	PNULL,							// extend information about sensor
 	SENSOR_AVDD_1800MV,				// iovdd
 	SENSOR_AVDD_1800MV,				// dvdd
 	2,								// skip frame num before preview
@@ -777,19 +777,19 @@ static unsigned long set_GC0310_MIPI_anti_flicker(unsigned long param)
 		GC0310_MIPI_WriteReg(0x06, 0x60);
 		GC0310_MIPI_WriteReg(0x07, 0x00);
 		GC0310_MIPI_WriteReg(0x08, 0x58);
-		GC0310_MIPI_WriteReg(0xfe, 0x01); 
+		GC0310_MIPI_WriteReg(0xfe, 0x01);
 		GC0310_MIPI_WriteReg(0x25, 0x00);   //anti-flicker step [11:8]
 		GC0310_MIPI_WriteReg(0x26, 0x60);   //anti-flicker step [7:0]
 
 		GC0310_MIPI_WriteReg(0x27, 0x02);   //exp level 0  14.28fps
-		GC0310_MIPI_WriteReg(0x28, 0x40); 
+		GC0310_MIPI_WriteReg(0x28, 0x40);
 		GC0310_MIPI_WriteReg(0x29, 0x03);   //exp level 1  12.50fps
-		GC0310_MIPI_WriteReg(0x2a, 0x60); 
+		GC0310_MIPI_WriteReg(0x2a, 0x60);
 		GC0310_MIPI_WriteReg(0x2b, 0x06);   //exp level 2  6.67fps
-		GC0310_MIPI_WriteReg(0x2c, 0x00); 
+		GC0310_MIPI_WriteReg(0x2c, 0x00);
 		GC0310_MIPI_WriteReg(0x2d, 0x08);   //exp level 3  5.55fps
-		GC0310_MIPI_WriteReg(0x2e, 0x40); 
-		GC0310_MIPI_WriteReg(0xfe, 0x00); 
+		GC0310_MIPI_WriteReg(0x2e, 0x40);
+		GC0310_MIPI_WriteReg(0xfe, 0x00);
 		break;
 
 	default:
@@ -839,7 +839,7 @@ SENSOR_REG_T GC0310_MIPI_awb_tab[][6]=
 		{0x77, 0x60},//40
 		{0x78, 0x48},
 		{0x79, 0x88},//50
-		{0xff, 0xff} 
+		{0xff, 0xff}
 	},
 	//SUN
 	{
@@ -847,7 +847,7 @@ SENSOR_REG_T GC0310_MIPI_awb_tab[][6]=
 		{0x77, 0x80},//50
 		{0x78, 0x40},
 		{0x79, 0x48},//40
-		{0xff, 0xff} 
+		{0xff, 0xff}
 	},
 	//CLOUD
 	{

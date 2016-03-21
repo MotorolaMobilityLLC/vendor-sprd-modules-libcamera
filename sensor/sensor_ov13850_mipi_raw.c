@@ -28,7 +28,7 @@
 #define OV13850_FLIP_MIRROR
 #define DW9714_VCM_SLAVE_ADDR (0x18>>1)
 
-//#define use_sensor_gain	
+//#define use_sensor_gain
 
 #define OV13850_RAW_PARAM_COM  0x0000
 #define OV13850_RAW_PARAM_OFLIM  0x0007
@@ -81,7 +81,7 @@ static uint32_t g_module_id = 0;
 static uint32_t g_flash_mode_en = 0;
 static uint32_t g_af_slewrate = 1;
 
-LOCAL const SENSOR_REG_T ov13850_common_init[] = 
+LOCAL const SENSOR_REG_T ov13850_common_init[] =
 {
 	//XVCLK=24Mhz, SCLK=4x120Mhz, MIPI 640Mbps, DACCLK=240Mhz
 	{0x0103, 0x01}, // software reset
@@ -108,7 +108,7 @@ LOCAL const SENSOR_REG_T ov13850_common_init[] =
 	{0x3509, 0x00}, // use sensor gain
 #else
 	{0x3509, 0x10}, // use real gain
-#endif	
+#endif
 	{0x350a, 0x00}, // gain H
 	{0x350b, 0x10}, // gain L
 	{0x350e, 0x00}, // short gain H
@@ -146,33 +146,33 @@ LOCAL const SENSOR_REG_T ov13850_common_init[] =
 	{0x3767, 0x24},
 	{0x3768, 0x0c},
 	{0x3769, 0x34},
-	{0x3d84, 0x00},  // OTP program disable                                                                   
+	{0x3d84, 0x00},  // OTP program disable
 	{0x3d85, 0x17},  // OTP power up load data enable, power load setting enable, software load setting enable
-	{0x3d8c, 0x73},  // OTP start address H                                                                   
-	{0x3d8d, 0xbf},  // OTP start address L                                                                   
-	{0x3800, 0x00},  // H crop start H                                                                        
-	{0x3801, 0x08},  // H crop start L                                                                        
-	{0x3802, 0x00},  // V crop start H                                                                        
-	{0x3803, 0x04},  // V crop start L                                                                        
-	{0x3804, 0x10},  // H crop end H                                                                          
-	{0x3805, 0x97},  // H crop end L                                                                          
-	{0x3806, 0x0c},  // V crop end H                                                                          
-	{0x3807, 0x4b},  // V crop end L                                                                          
-	{0x3808, 0x08},  // H output size H                                                                       
-	{0x3809, 0x40},  // H output size L                                                                       
-	{0x380a, 0x06},  // V output size H                                                                       
-	{0x380b, 0x20},  // V output size L                                                                       
-	{0x380c, 0x25},  // HTS H                                                                                 
-	{0x380d, 0x80},  // HTS L                                                                                 
-	{0x380e, 0x06},  // VTS H                                                                                 
-	{0x380f, 0x80},  // VTS L                                                                                 
-	{0x3810, 0x00},  // H win off H                                                                           
-	{0x3811, 0x04},  // H win off L                                                                           
-	{0x3812, 0x00},  // V win off H                                                                           
-	{0x3813, 0x02},  // V win off L                                                                           
+	{0x3d8c, 0x73},  // OTP start address H
+	{0x3d8d, 0xbf},  // OTP start address L
+	{0x3800, 0x00},  // H crop start H
+	{0x3801, 0x08},  // H crop start L
+	{0x3802, 0x00},  // V crop start H
+	{0x3803, 0x04},  // V crop start L
+	{0x3804, 0x10},  // H crop end H
+	{0x3805, 0x97},  // H crop end L
+	{0x3806, 0x0c},  // V crop end H
+	{0x3807, 0x4b},  // V crop end L
+	{0x3808, 0x08},  // H output size H
+	{0x3809, 0x40},  // H output size L
+	{0x380a, 0x06},  // V output size H
+	{0x380b, 0x20},  // V output size L
+	{0x380c, 0x25},  // HTS H
+	{0x380d, 0x80},  // HTS L
+	{0x380e, 0x06},  // VTS H
+	{0x380f, 0x80},  // VTS L
+	{0x3810, 0x00},  // H win off H
+	{0x3811, 0x04},  // H win off L
+	{0x3812, 0x00},  // V win off H
+	{0x3813, 0x02},  // V win off L
 	{0x3814, 0x31},  // H inc
 	{0x3815, 0x31},  // V inc
-	{0x3820, 0x06},  // V flip off, V bin off 
+	{0x3820, 0x06},  // V flip off, V bin off
 	{0x3821, 0x01},  // H mirror on, H bin on
 	{0x3834, 0x00},
 	{0x3835, 0x1c},  // cut_en, vts_auto, blk_col_dis
@@ -204,8 +204,8 @@ LOCAL const SENSOR_REG_T ov13850_common_init[] =
 	{0x402f, 0x08},  // BLC
 	{0x4500, 0x82},  // BLC
 	{0x4501, 0x38},  // BLC
-	{0x4603, 0x00},  // VFIFO              
-	{0x4837, 0x14},  // MIPI global timing 
+	{0x4603, 0x00},  // VFIFO
+	{0x4837, 0x14},  // MIPI global timing
 	{0x4d00, 0x04},  // temperature monitor
 	{0x4d01, 0x42},  // temperature monitor
 	{0x4d02, 0xc1},  // temperature monitor
@@ -213,7 +213,7 @@ LOCAL const SENSOR_REG_T ov13850_common_init[] =
 	{0x4d04, 0xf5},  // temperature monitor
 	{0x4d05, 0xc1},  // temperature monitor
 	{0x5000, 0x0f},  // windowing enable, BPC on, WPC on, Lenc on
-	{0x5001, 0x03},  // BLC enable, MWB on                       
+	{0x5001, 0x03},  // BLC enable, MWB on
 	{0x5002, 0x03},
 	{0x5013, 0x40},
 	{0x501c, 0x00},
@@ -235,7 +235,7 @@ LOCAL const SENSOR_REG_T ov13850_common_init[] =
 	{0x0100, 0x00},  // software standby
 };
 
-LOCAL const SENSOR_REG_T ov13850_2112x1568_setting[] = 
+LOCAL const SENSOR_REG_T ov13850_2112x1568_setting[] =
 {
 	// Raw 10bit 2112x1568 30fps 4lane 640M bps/lane
 	//XVCLK=24Mhz, SCLK=4x120Mhz, MIPI 640Mbps, DACCLK=240Mhz
@@ -260,22 +260,22 @@ LOCAL const SENSOR_REG_T ov13850_2112x1568_setting[] =
 	{0x3815, 0x31},  // V inc
 	{0x3820, 0x06},  // V flip off, V bin off
 	{0x3821, 0x01},  // H mirror on, H bin on
-	{0x3836, 0x08}, 
-	{0x3837, 0x02}, 
-	{0x4020, 0x02}, 
-	{0x4021, 0x40}, 
-	{0x4022, 0x03}, 
-	{0x4023, 0x3f}, 
-	{0x4024, 0x06}, 
-	{0x4025, 0xf8}, 
-	{0x4026, 0x07}, 
-	{0x4027, 0xf7}, 
-	{0x4603, 0x00},  // VFIFO             
+	{0x3836, 0x08},
+	{0x3837, 0x02},
+	{0x4020, 0x02},
+	{0x4021, 0x40},
+	{0x4022, 0x03},
+	{0x4023, 0x3f},
+	{0x4024, 0x06},
+	{0x4025, 0xf8},
+	{0x4026, 0x07},
+	{0x4027, 0xf7},
+	{0x4603, 0x00},  // VFIFO
 	{0x4837, 0x14},  // MIPI global timing
 	{0x0100, 0x01},  // wake up, streaming
 };
 
-LOCAL const SENSOR_REG_T ov13850_4208x3120_setting[] = 
+LOCAL const SENSOR_REG_T ov13850_4208x3120_setting[] =
 {
 	// Raw 10bit 4208x3120 15fps 4lane 640M bps/lane
 	//XVCLK=24Mhz, SCLK=4x120Mhz, MIPI 640Mbps, DACCLK=240Mhz
@@ -300,16 +300,16 @@ LOCAL const SENSOR_REG_T ov13850_4208x3120_setting[] =
 	{0x3815, 0x11},  // V inc
 	{0x3820, 0x04},  // V flip on, V bin off
 	{0x3821, 0x00},  // H mirror off, H bin off
-	{0x3836, 0x04}, 
-	{0x3837, 0x01}, 
-	{0x4020, 0x04}, 
-	{0x4021, 0x90}, 
-	{0x4022, 0x0b}, 
-	{0x4023, 0xef}, 
-	{0x4024, 0x0d}, 
-	{0x4025, 0xc0}, 
-	{0x4026, 0x0d}, 
-	{0x4027, 0xc3}, 
+	{0x3836, 0x04},
+	{0x3837, 0x01},
+	{0x4020, 0x04},
+	{0x4021, 0x90},
+	{0x4022, 0x0b},
+	{0x4023, 0xef},
+	{0x4024, 0x0d},
+	{0x4025, 0xc0},
+	{0x4026, 0x0d},
+	{0x4027, 0xc3},
 	{0x4603, 0x01},  // VFIFO
 	{0x4837, 0x14},  // MIPI global timing
 	{0x0100, 0x01},  // wake up, streamin
@@ -1886,11 +1886,11 @@ LOCAL uint32_t OV13850_get_shutter()
 {
 	// read shutter, in number of line period
 	uint32_t shutter = 0;
-	
+
 	shutter = (Sensor_ReadReg(0x03500) & 0x0f);
 	shutter = (shutter<<8) + Sensor_ReadReg(0x3501);
 	shutter = (shutter<<4) + (Sensor_ReadReg(0x3502)>>4);
-	
+
 	return shutter;
 }
 
@@ -1898,7 +1898,7 @@ LOCAL unsigned long  OV13850_set_shutter(unsigned long shutter)
 {
 	// write shutter, in number of line period
 	uint16_t temp = 0;
-	
+
 	shutter = shutter & 0xffff;
 	temp = shutter & 0x0f;
 	temp = temp<<4;
@@ -1908,7 +1908,7 @@ LOCAL unsigned long  OV13850_set_shutter(unsigned long shutter)
 	Sensor_WriteReg(0x3501, temp);
 	temp = (shutter>>12) & 0xf;
 	Sensor_WriteReg(0x3500, temp);
-	
+
 	return 0;
 }
 
@@ -1927,12 +1927,12 @@ LOCAL unsigned long OV13850_set_VTS(unsigned long VTS)
 {
 	// write VTS to registers
 	uint16_t temp = 0;
-	
+
 	temp = VTS & 0xff;
 	Sensor_WriteReg(0x380f, temp);
 	temp = (VTS>>8) & 0x7f;
 	Sensor_WriteReg(0x380e, temp);
-	
+
 	return 0;
 }
 
@@ -1941,26 +1941,26 @@ LOCAL uint16_t OV13850_get_sensor_gain16()
 {
 	// read sensor gain, 16 = 1x
 	uint16_t gain16 = 0;
-	
+
 	gain16 = Sensor_ReadReg(0x350a) & 0x03;
 	gain16 = (gain16<<8) + Sensor_ReadReg( 0x350b);
 	gain16 = ((gain16 >> 4) + 1)*((gain16 & 0x0f) + 16);
-	
+
 	return gain16;
 }
 
 LOCAL uint16_t OV13850_set_sensor_gain16(int gain16)
 {
 	// write sensor gain, 16 = 1x
-	int gain_reg = 0; 
+	int gain_reg = 0;
 	uint16_t temp = 0;
 	int i = 0;
-	
+
 	if(gain16 > 0x7ff)
 	{
 		gain16 = 0x7ff;
 	}
-	
+
 	for(i=0; i<5; i++) {
 		if (gain16>31) {
 			gain16 = gain16/2;
@@ -2003,15 +2003,15 @@ LOCAL unsigned long _ov13850_write_exposure(unsigned long param)
 		frame_len = ((expsure_line+4)> max_frame_len) ? (expsure_line+4) : max_frame_len;
 
 		frame_len_cur = _ov8825_get_VTS();
-		
+
 		SENSOR_PRINT("SENSOR_OV13850: frame_len: %d,   frame_len_cur:%d\n", frame_len, frame_len_cur);
-		
+
 		if(frame_len_cur != frame_len){
 			OV13850_set_VTS(frame_len);
 		}
 	}
 	OV13850_set_shutter(expsure_line);
-	
+
 	return ret_value;
 }
 
@@ -2038,7 +2038,7 @@ LOCAL unsigned long _ov13850_write_gain(unsigned long param)
 	value = (real_gain>>8) & 0x7;
 	Sensor_WriteReg(0x350a, value);
 #endif
-	
+
 
 	return ret_value;
 }
@@ -2055,7 +2055,7 @@ LOCAL unsigned long _ov13850_write_af(unsigned long param)
 	cmd_len = 2;
 	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 
-	SENSOR_PRINT("SENSOR_OV13850: _write_af, ret =  %d, param = %d,  MSL:%x, LSL:%x\n", 
+	SENSOR_PRINT("SENSOR_OV13850: _write_af, ret =  %d, param = %d,  MSL:%x, LSL:%x\n",
 		ret_value, param, cmd_val[0], cmd_val[1]);
 	return ret_value;
 }
@@ -2338,15 +2338,15 @@ LOCAL unsigned long _dw9174_SRCInit(unsigned long mode)
 	uint8_t cmd_val[2] = {0x00};
 	uint16_t  slave_addr = 0;
 	uint16_t cmd_len = 0;
-	uint32_t ret_value = SENSOR_SUCCESS;	
+	uint32_t ret_value = SENSOR_SUCCESS;
 	int i = 0;
-	
+
 	slave_addr = DW9714_VCM_SLAVE_ADDR;
 	SENSOR_PRINT("SENSOR_HI542: _DW9714A_SRCInit: mode = %d\n", mode);
 	switch (mode) {
 		case 1:
 		break;
-		
+
 		case 2:
 		{
 			cmd_val[0] = 0xec;

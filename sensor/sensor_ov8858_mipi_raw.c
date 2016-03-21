@@ -681,7 +681,7 @@ LOCAL const SENSOR_REG_T ov8858_1408X792_setting[] = {
 
 LOCAL const SENSOR_REG_T ov8858_3264X1836_setting[] = {
 	// @@ SIZE_3264X1836_30FPS_MIPI_4LANE
-	//line_time=8.9us   mipi clk = 312M	
+	//line_time=8.9us   mipi clk = 312M
 	{0x0100, 0x01}, // Change 42 to 6c when copy the setting
 	{0x0100, 0x00},
 	{0x0302, 0x1a},
@@ -1430,7 +1430,7 @@ LOCAL uint32_t _ov8858_Identify(uint32_t param)
 		}
 	} else {
 		SENSOR_PRINT("SENSOR_ov8858: identify fail, PID_ADDR = 0x%x, pid_value= 0x%d", ov8858_PID_ADDR_0, pid_value_0);
-		
+
 	}
 
 	return ret_value;
@@ -1476,7 +1476,7 @@ LOCAL uint32_t _ov8858_write_exposure(uint32_t param)
 			ret_value = Sensor_WriteReg(0x380f, value);
 			value=(frame_len>>0x08)&0xff;
 			ret_value = Sensor_WriteReg(0x380e, value);
-			
+
 		}
 	}
 
@@ -1826,13 +1826,13 @@ LOCAL uint32_t _ov8858_dw9714_SRCInit(uint32_t mode)
 	uint16_t cmd_len = 0;
 	uint32_t ret_value = SENSOR_SUCCESS;
 	int i = 0;
-	
+
 	slave_addr = DW9714_VCM_SLAVE_ADDR;
 	SENSOR_PRINT(" _ov8858_dw9714_SRCInit: mode = %d\n", mode);
 	switch (mode) {
 		case 1:
 		break;
-		
+
 		case 2:
 		{
 			cmd_val[0] = 0xec;

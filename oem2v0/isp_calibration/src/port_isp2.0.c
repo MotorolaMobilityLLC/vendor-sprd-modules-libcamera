@@ -113,45 +113,45 @@ int32_t awb_param_unpack(void *pack_data, uint32_t data_size, struct awb_param_t
 
 af_alg_handle_t af_alg_init(struct af_alg_init_param *init_param, struct af_alg_init_result *result)
 {
-}
+}
 
 int32_t af_alg_deinit(af_alg_handle_t handle)
 {
-}
+}
 int32_t af_alg_calculation(af_alg_handle_t handle,
 				struct af_alg_calc_param *alg_calc_in,
 				struct af_alg_result *alg_calc_result)
 {
-}
+}
 uint32_t af_alg_ioctrl(af_alg_handle_t handle, enum af_alg_cmd cmd, void *param0, void *param1)
 {
-}
+}
 
 
 #include "lsc_adv.h"
 lsc_adv_handle_t lsc_adv_init(struct lsc_adv_init_param *param, void *result)
 {
 	return NULL;
-}
-int32_t lsc_adv_pre_calc(lsc_adv_handle_t handle, struct lsc_adv_pre_calc_param *param, 
+}
+int32_t lsc_adv_pre_calc(lsc_adv_handle_t handle, struct lsc_adv_pre_calc_param *param,
 							struct lsc_adv_pre_calc_result *result);
 int32_t lsc_adv_calculation(lsc_adv_handle_t handle, enum lsc_gain_calc_mode mode, struct lsc_adv_calc_param *param,
 							struct lsc_adv_calc_result *result);
 int32_t lsc_adv_deinit(lsc_adv_handle_t handle, void *param, void *result)
 {
 	return 0;
-}
+}
 
 
 #include "isp_calibration_lsc.h"
 int32_t isp_calibration_lsc_calc(struct isp_calibration_lsc_calc_in *in_param, struct isp_calibration_lsc_calc_out *out_param)
 {
 	return 0;
-}
+}
 int32_t isp_calibration_lsc_get_golden_info(void *golden_data, uint32_t golden_data_size, struct isp_calibration_lsc_golden_info *golden_info)
 {
 	return 0;
-}
+}
 
 #endif
 
@@ -194,11 +194,11 @@ void AF_Set_Mode(sft_af_handle_t handle, uint32_t mode)
 void AF_SetDefault(	sft_af_handle_t handle)
 {
 	return;
-}
+}
 void AF_Control_CAF(		AFDATA *afCtl, 	AFDATA_RO *afv, AFDATA_FV *fv,	BYTE bEnb)
 {
 	return;
-}
+}
 
 #endif
 
@@ -207,17 +207,17 @@ void AF_Control_CAF(		AFDATA *afCtl, 	AFDATA_RO *afv, AFDATA_FV *fv,	BYTE bEnb)
 int antiflcker_sw_init()
 {
 	return 0;
-}
+}
 
 int antiflcker_sw_deinit()
 {
 	return 0;
-}
+}
 
 int antiflcker_sw_process(int input_img_width, int input_img_height, int *debug_sat_img_H_scaling, int exposure_time, int reg_flicker_thrd_frame, int reg_flicker_thrd_frame_still, int reg_flicker_thrd_video_still)
 {
 	return 0;
-}
+}
 #endif
 
 

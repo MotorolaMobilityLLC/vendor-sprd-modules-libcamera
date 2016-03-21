@@ -1141,13 +1141,13 @@ LOCAL const SENSOR_REG_T s5k3h7yx_com_mipi_raw[] = {
 	{0x6F12, 0x0005},
 	{0x6F12, 0x0000},
 	//=====================================================================================
-	// Base setfile : Rev - 3126 
-	// Date: 2012-01-05 15:10:35 +0900 (THU, 05 JAN 2012) 
+	// Base setfile : Rev - 3126
+	// Date: 2012-01-05 15:10:35 +0900 (THU, 05 JAN 2012)
 	// 3H7 Analog set file BQ Mode
 	//=====================================================================================
 	{0x6028, 0xD000},
 	//=====================================================================================
-	// APS/Analog setting (Date: 2012-01-05 15:10:35 +0900 (THU, 05 JAN 2012)) 
+	// APS/Analog setting (Date: 2012-01-05 15:10:35 +0900 (THU, 05 JAN 2012))
 	//=====================================================================================
 	//=====================================================================================
 	// START OF FW REGISTERS APS/Analog UPDATING
@@ -1155,17 +1155,17 @@ LOCAL const SENSOR_REG_T s5k3h7yx_com_mipi_raw[] = {
 	// Offset control
 	{0x38FA, 0x0030},  // gisp_offs_gains_bls_offs_0_
 	{0x38FC, 0x0030},  // gisp_offs_gains_bls_offs_1_
-	
+
 	// Sensor XY cordination
 	{0x32CE, 0x0060},    // senHal_usWidthStOfsInit
 	{0x32D0, 0x0024},    // senHal_usHeightStOfsInit
-	
-	{0x0086, 0x01FF},	//#smiaRegs_rd_analog_gain_analogue_gain_code_max	 
-									  
-	{0x012A, 0x0040},	//#smiaRegs_rw_analog_gain_mode_AG_th		 
-	{0x012C, 0x7077},	//#smiaRegs_rw_analog_gain_mode_F430_val	 
-	{0x012E, 0x7777},	//#smiaRegs_rw_analog_gain_mode_F430_default_val 
-	
+
+	{0x0086, 0x01FF},	//#smiaRegs_rd_analog_gain_analogue_gain_code_max
+
+	{0x012A, 0x0040},	//#smiaRegs_rw_analog_gain_mode_AG_th
+	{0x012C, 0x7077},	//#smiaRegs_rw_analog_gain_mode_F430_val
+	{0x012E, 0x7777},	//#smiaRegs_rw_analog_gain_mode_F430_default_val
+
 	// For 35Mhz BQ Mode
 	//========================================================
 	// Setting for MIPI CLK (Don't change)
@@ -1176,8 +1176,8 @@ LOCAL const SENSOR_REG_T s5k3h7yx_com_mipi_raw[] = {
 	// START OF HW REGISTERS APS/Analog UPDATING
 	//=====================================================================================
 	{0xB0C0, 0x000C},
-	{0xF400, 0x0BBC}, 
-	{0xF616, 0x0004}, //aig_tmc_gain 
+	{0xF400, 0x0BBC},
+	{0xF616, 0x0004}, //aig_tmc_gain
 	//=====================================================================================
 	// END OF HW REGISTERS APS/Analog UPDATING
 	//=====================================================================================
@@ -1188,7 +1188,7 @@ LOCAL const SENSOR_REG_T s5k3h7yx_com_mipi_raw[] = {
 	//=====================================================================================//=====================================================================================
 	// START default setting
 	//=====================================================================================
-	
+
 	//=====================================================================================
 	// End default setting
 	//=====================================================================================
@@ -1203,10 +1203,10 @@ LOCAL const SENSOR_REG_T s5k3h7yx_com_mipi_raw[] = {
 	// set PLL
 	//{0x030E, 0x00a2},	// smiaRegs_rw_clocks_secnd_pll_multiplier
 	//{0x030A, 0x0004}, // smiaRegs_rw_clocks_op_sys_clk_div
-	
-	{0x311C, 0x0BB8},	//#skl_uEndFrCyclesNoCfgDiv4	0BB8		//Increase Blank time on account of process time 
-	{0x311E, 0x0BB8},	//#skl_uEndFrCyclesWithCfgDiv4	0BB8		//Increase Blank time on account of process time 
-		
+
+	{0x311C, 0x0BB8},	//#skl_uEndFrCyclesNoCfgDiv4	0BB8		//Increase Blank time on account of process time
+	{0x311E, 0x0BB8},	//#skl_uEndFrCyclesWithCfgDiv4	0BB8		//Increase Blank time on account of process time
+
 
 };
 
@@ -1223,7 +1223,7 @@ LOCAL const SENSOR_REG_T s5k3h7yx_1632x1224_mipi_raw[] = {
 	{0x0382, 0x0003},//WRITE	#smiaRegs_rw_sub_sample_x_odd_inc	0003
 	{0x0386, 0x0003},//WRITE	#smiaRegs_rw_sub_sample_y_odd_inc	0003
 	{0x0900, 0x0022},//WRITE	#smiaRegs_rw_binning_type	22
-	
+
 };
 
 LOCAL const SENSOR_REG_T s5k3h7yx_3264x2448_mipi_raw[] = {
@@ -1239,8 +1239,8 @@ LOCAL const SENSOR_REG_T s5k3h7yx_3264x2448_mipi_raw[] = {
 	{0x0382, 0x0001},//WRITE	#smiaRegs_rw_sub_sample_x_odd_inc	0001
 	{0x0386, 0x0001},//WRITE	#smiaRegs_rw_sub_sample_y_odd_inc	0001
 	{0x0900, 0x0011},//WRITE	#smiaRegs_rw_binning_type	11
-	
-	
+
+
 };
 
 LOCAL SENSOR_REG_TAB_INFO_T s_s5k3h7yx_resolution_Tab_RAW[] = {
@@ -2076,7 +2076,7 @@ LOCAL uint32_t _s5k3h7yx_Identify(uint32_t param)
 {
 #define s5k3h7yx_PID_VALUE    0x3087
 #define s5k3h7yx_PID_ADDR     0x0000
-	
+
 	uint16_t pid_value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
 
@@ -2095,7 +2095,7 @@ LOCAL uint32_t _s5k3h7yx_Identify(uint32_t param)
 	} else {
 		SENSOR_PRINT_ERR("SENSOR_s5k3h7yx: identify fail,pid_value=%x", pid_value);
 	}
-	
+
 	return ret_value;
 }
 
@@ -2134,9 +2134,9 @@ LOCAL uint32_t _s5k3h7yx_write_exposure(uint32_t param)
 	if(frame_len_cur < frame_len){
 		ret_value = Sensor_WriteReg(0x0340, frame_len);
 	}
-	
+
 	ret_value = Sensor_WriteReg(0x202, expsure_line);
-	
+
 	if(frame_len_cur > frame_len){
 		ret_value = Sensor_WriteReg(0x0340, frame_len);
 	}
@@ -2178,7 +2178,7 @@ LOCAL uint32_t _s5k3h7yx_write_af(uint32_t param)
 	slave_addr = DW9714_VCM_SLAVE_ADDR;
 	cmd_val[0] = (param&0xfff0)>>4;
 	cmd_val[1] = ((param&0x0f)<<4)|0x0C;
-	cmd_len = 2;	
+	cmd_len = 2;
 	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 	SENSOR_PRINT("SENSOR_s5k3h7yx: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
 
@@ -2238,7 +2238,7 @@ LOCAL uint32_t _s5k3h7yx_BeforeSnapshot(uint32_t param)
 	capture_exposure = preview_exposure * prv_linetime / cap_linetime;
 
 	frame_len = Sensor_ReadReg(0x340);
-	
+
 	while(gain >= 0x40){
 		capture_exposure = capture_exposure * 2;
 		gain=gain / 2;
@@ -2290,36 +2290,36 @@ LOCAL uint32_t _dw9174_SRCInit(uint32_t mode)
 	uint8_t cmd_val[6] = {0x00};
 	uint16_t  slave_addr = 0;
 	uint16_t cmd_len = 0;
-	uint32_t ret_value = SENSOR_SUCCESS;	
-	
+	uint32_t ret_value = SENSOR_SUCCESS;
+
 	slave_addr = DW9714_VCM_SLAVE_ADDR;
-	
+
 	switch (mode) {
 		case 1:
 		break;
-		
+
 		case 2:
-		{			
+		{
 			cmd_val[0] = 0xec;
 			cmd_val[1] = 0xa3;
 			cmd_len = 2;
-			Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);			
+			Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 			usleep(20*1000);
 			cmd_val[0] = 0xf2;
 			cmd_val[1] = 0x00;
 			cmd_len = 2;
-			Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);			
+			Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 			usleep(20*1000);
 			cmd_val[0] = 0xdc;
-			cmd_val[1] = 0x51;			
+			cmd_val[1] = 0x51;
 			cmd_len = 2;
-			Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);			
+			Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 		}
 		break;
-		
+
 		case 3:
 		break;
-		
+
 	}
 
 	return ret_value;

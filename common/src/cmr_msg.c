@@ -117,7 +117,7 @@ cmr_int cmr_msg_get(cmr_handle queue_handle, struct cmr_msg *message, cmr_u32 lo
 	MSG_CHECK_MSG_MAGIC(queue_handle);
 
 	sem_wait(&msg_cxt->msg_sem);
-	
+
 	pthread_mutex_lock(&msg_cxt->mutex);
 
 	if (msg_cxt->msg_number == 0) {
@@ -125,7 +125,7 @@ cmr_int cmr_msg_get(cmr_handle queue_handle, struct cmr_msg *message, cmr_u32 lo
 		CMR_LOGE("MSG underflow");
 		return CMR_MSG_UNDERFLOW;
 	} else {
-		
+
 		if (msg_cxt->msg_read != msg_cxt->msg_write) {
 			msg_cur = msg_cxt->msg_read;
 

@@ -64,12 +64,12 @@ LOCAL const SENSOR_REG_T hi542_com_mipi_raw[] = {
 	{0x0001, 0x02},/* SW reset *///PWRCTLA//B[1]=soft reset, B[0]=sleep mode(0:normal operation, 1:sleep mode enable)
 	{0x0001, 0x01},/* SW sleep *///PWRCTLA//B[1]=soft reset, B[0]=sleep mode(0:normal operation, 1:sleep mode enable)
 	{0x03d4, 0x18},//[5:4]LDO level control
-	{0x03D2, 0xAD},//PLL reset 
-	{0x0616, 0x00},//D-PHY reset 
+	{0x03D2, 0xAD},//PLL reset
+	{0x0616, 0x00},//D-PHY reset
 	{0x0616, 0x01},//D-PHY reset disable
-	{0x03D2, 0xAC},//PLL reset disable 
+	{0x03D2, 0xAC},//PLL reset disable
 	{0x03D0, 0xe9},
-	{0x03D1, 0x75},//thomaszhang  for 24MHZ  {0x03D1, 0x74},//for 20MHz 
+	{0x03D1, 0x75},//thomaszhang  for 24MHZ  {0x03D1, 0x74},//for 20MHz
 	{0x0800, 0x07},//EMI disable
 	{0x0801, 0x08},
 	{0x0802, 0x02},
@@ -457,7 +457,7 @@ LOCAL const SENSOR_REG_T hi542_com_mipi_raw[] = {
 	{0x0218, 0x00}, //scn_sel
 
 	{0x02ac, 0x00}, //outdoor on
-	{0x02ad, 0x00}, 
+	{0x02ad, 0x00},
 	{0x02ae, 0x00}, //outdoor off
 	{0x02af, 0x00},
 	{0x02b0, 0x00}, //indoor on
@@ -597,10 +597,10 @@ LOCAL const SENSOR_REG_T hi542_2592X1944_mipi_raw[] = {
 	{0x0022, 0x00},
 	{0x0023, 0x08},
 
-	{0x0024, 0x07}, 
-	{0x0025, 0xA0}, 
-	{0x0026, 0x0A}, 
-	{0x0027, 0x20}, 
+	{0x0024, 0x07},
+	{0x0025, 0xA0},
+	{0x0026, 0x0A},
+	{0x0027, 0x20},
 
 	{0x0010, 0x00},
 	{0x0011, 0x14},//thomaszhang debug	{0x0011, 0x04},
@@ -619,7 +619,7 @@ LOCAL SENSOR_REG_TAB_INFO_T s_hi542_resolution_Tab_RAW[] = {
 	{ADDR_AND_LEN_OF_ARRAY(hi542_com_mipi_raw), 0, 0, 24, SENSOR_IMAGE_FORMAT_RAW},
 	{ADDR_AND_LEN_OF_ARRAY(hi542_1280X960_mipi_raw), 1280, 960, 24, SENSOR_IMAGE_FORMAT_RAW},
 	{ADDR_AND_LEN_OF_ARRAY(hi542_2592X1944_mipi_raw), 2592, 1944, 24, SENSOR_IMAGE_FORMAT_RAW},
-	
+
 	{PNULL, 0, 0, 0, 0, 0},
 	{PNULL, 0, 0, 0, 0, 0},
 	{PNULL, 0, 0, 0, 0, 0},
@@ -757,7 +757,7 @@ LOCAL SENSOR_IOCTL_FUNC_TAB_T s_hi542_ioctl_func_tab = {
 	_hi542_write_gain,//PNULL, //
 	PNULL,
 	PNULL,
-	_hi542_write_af,//PNULL,// 
+	_hi542_write_af,//PNULL,//
 	PNULL,
 	PNULL, //_hi542_set_awb,
 	PNULL,
@@ -1983,7 +1983,7 @@ LOCAL uint32_t _hi542_PowerOn(uint32_t power_on)
 		// Reset sensor
 		Sensor_Reset(reset_level);
 		usleep(10*1000);
-		
+
 	} else {
 		Sensor_PowerDown(power_down);
 		Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
@@ -2094,7 +2094,7 @@ LOCAL uint32_t _hi542_Identify(uint32_t param)
 	} else {
 		SENSOR_PRINT("SENSOR_HI542: identify fail,pid_value=%d", pid_value);
 	}
-	
+
 	return ret_value;
 }
 
@@ -2120,15 +2120,15 @@ LOCAL uint32_t _hi542_write_exposure(uint32_t param)
 
 	SENSOR_PRINT("SENSOR_HI542 isp_raw: write_exposure line:%d, dummy:%d", expsure_line, dummy_line);
 
-	line_pixel= 2592 +16 +130 + 53; // 2608 + 130 +HBLANK  Hblank = Reg(0x0040)<< 0x08 +Sensor_ReadReg(0x0041) ; 2791 = 84Mhz(Oplck) => 33.2261905us 
+	line_pixel= 2592 +16 +130 + 53; // 2608 + 130 +HBLANK  Hblank = Reg(0x0040)<< 0x08 +Sensor_ReadReg(0x0041) ; 2791 = 84Mhz(Oplck) => 33.2261905us
 	expsure_pixel=line_pixel*expsure_line;
 	fixed_line_pixel = expsure_pixel + 5582;
-	
+
 	frame_len_cur = (Sensor_ReadReg(0x0042)&0xff)<<8;
 	frame_len_cur |= Sensor_ReadReg(0x0043)&0xff;
-	
+
 	SENSOR_PRINT("SENSOR_HI542: write_exposure line:0x%x, 0x%x\n", expsure_line-971, frame_len_cur);
-	
+
 	if((frame_len_cur+971) < expsure_line)
 	{
 		value=(expsure_line-971)&0xff;
@@ -2138,14 +2138,14 @@ LOCAL uint32_t _hi542_write_exposure(uint32_t param)
 	}
 
 
-	for ( i = 1 ; i < 5; i++ ) 
+	for ( i = 1 ; i < 5; i++ )
 	{
-		values_1[i] = ( 0xff & expsure_pixel ); 
+		values_1[i] = ( 0xff & expsure_pixel );
 		values_2[i] = ( 0xff & fixed_line_pixel);
 		expsure_pixel >>= 8;
 		fixed_line_pixel >>= 8;
 	}
-	
+
 	 /*HI542 fixed time update*/
 	Sensor_WriteReg(0x0120, values_2[4]);
 	Sensor_WriteReg(0x0121, values_2[3]);
@@ -2176,7 +2176,7 @@ LOCAL uint32_t _hi542_write_gain(uint32_t param)
 	uint32_t real_d_gain = 0x80;
 	uint32_t i=0x00;
 	uint32_t gain_bit=0x00;
-	uint8_t values_1[] = { 0, 0, 0, 0, 0 }; 
+	uint8_t values_1[] = { 0, 0, 0, 0, 0 };
 	uint32_t exposure_old = 0; //(hynix)
 	uint16_t frame_len_cur=0x00;
 
@@ -2206,7 +2206,7 @@ LOCAL uint32_t _hi542_write_af(uint32_t param)
 	cmd_len = 2;
 	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 
-	SENSOR_PRINT("SENSOR_HI542: _write_af, ret =  %d, param = %d,  MSL:%x, LSL:%x\n", 
+	SENSOR_PRINT("SENSOR_HI542: _write_af, ret =  %d, param = %d,  MSL:%x, LSL:%x\n",
 		ret_value, param, cmd_val[0], cmd_val[1]);
 	return ret_value;
 }
@@ -2269,7 +2269,7 @@ LOCAL uint32_t _hi542_SetEV(uint32_t param)
 	else
 	{
 		real_a_gain=(256*32*(real_a_gain + 32))/(real_gain*cali) - 32;
-		real_d_gain=0x80; //digital gain = 1x 
+		real_d_gain=0x80; //digital gain = 1x
 	}
 
 	Sensor_WriteReg(0x0129, real_a_gain);
@@ -2328,7 +2328,7 @@ LOCAL uint32_t _hi542_BeforeSnapshot(uint32_t param)
 	uint16_t real_d_gain = 0;
 	uint32_t gain_bit=0x00;
 	uint32_t i=0x00;
-	
+
 	param = param & 0xffff;
 
 	SENSOR_PRINT("SENSOR_HI542: BeforeSnapshot moe: %d",param);
@@ -2354,7 +2354,7 @@ LOCAL uint32_t _hi542_BeforeSnapshot(uint32_t param)
 	_hi542_ReadGain(&gain);
 	Sensor_SetMode(param);
 	Sensor_SetMode_WaitDone();
-	
+
 	if (prv_linetime == cap_linetime) {
 		SENSOR_PRINT("SENSOR_hi542: prvline equal to capline");
 		Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, preview_exposure);
@@ -2428,15 +2428,15 @@ LOCAL uint32_t _DW9714A_SRCInit(uint32_t mode)
 	uint8_t cmd_val[2] = {0x00};
 	uint16_t  slave_addr = 0;
 	uint16_t cmd_len = 0;
-	uint32_t ret_value = SENSOR_SUCCESS;	
+	uint32_t ret_value = SENSOR_SUCCESS;
 	int i = 0;
-	
+
 	slave_addr = DW9714A_VCM_SLAVE_ADDR;
 	SENSOR_PRINT("SENSOR_HI542: _DW9714A_SRCInit: mode = %d\n", mode);
 	switch (mode) {
 		case 1:
 		break;
-		
+
 		case 2:
 		{
 			cmd_val[0] = 0xec;

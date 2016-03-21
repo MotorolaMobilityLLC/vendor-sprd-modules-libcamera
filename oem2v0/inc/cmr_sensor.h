@@ -110,10 +110,8 @@ cmr_int cmr_sensor_get_autotest_mode(cmr_handle sensor_handle, cmr_u32 sensor_id
 
 cmr_int cmr_sensor_get_flash_info(cmr_handle sensor_handle, cmr_u32 sensor_id, struct sensor_flash_level *level);
 
-//yy-param needed by ips3.0-start
 cmr_int cmr_sensor_get_fps_info(cmr_handle sensor_handle, cmr_u32 camera_id,
 		cmr_u32 sn_mode, SENSOR_MODE_FPS_T_PTR fps_info_ptr);
-//yy-param needed by ips3.0-end
 
 #ifdef __cplusplus
 }

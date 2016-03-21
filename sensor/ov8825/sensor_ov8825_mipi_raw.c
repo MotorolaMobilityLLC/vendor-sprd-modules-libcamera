@@ -2486,7 +2486,7 @@ LOCAL uint32_t _ov8825_write_gain(uint32_t param)
 	uint32_t i = 0x00;
 
 	cur_gain = param >> 3;
-	
+
 	for (i = 0x00; i < 11; ++i) {
 		if (32 <= cur_gain) {
 			cur_gain>>=0x01;

@@ -192,7 +192,7 @@ cmr_int cmr_rot_close(cmr_handle rot_handle)
 	cmr_int                 ret = CMR_CAMERA_SUCCESS;
 	struct rot_file         *file = (struct rot_file*)(rot_handle);
 	cmr_u32                 val = 1;
-	
+
 
 	CMR_LOGI("Start to close rotation device.");
 

@@ -2778,14 +2778,14 @@ static struct sensor_raw_fix_info s_ov2680_fix_info=
 			},
 		},
 	},
-	{		
+	{
 		(uint16_t*)s_ov2680_awb_map,
 		sizeof(s_ov2680_awb_map),
 	},
 	{
 		(uint8_t*)s_ov2680_awb_weight_customer,
 		8,
-		8		
+		8
 	}
 };
 

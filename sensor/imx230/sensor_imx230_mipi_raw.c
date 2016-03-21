@@ -1290,10 +1290,10 @@ static uint32_t imx230_init_mode_fps_info()
 			s_imx230_mode_fps_info.sensor_mode_fps[i].max_fps = modn*30;
 			if(s_imx230_mode_fps_info.sensor_mode_fps[i].max_fps > 30) {
 				s_imx230_mode_fps_info.sensor_mode_fps[i].is_high_fps = 1;
-				s_imx230_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num = 
+				s_imx230_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num =
 					s_imx230_mode_fps_info.sensor_mode_fps[i].max_fps/30;
 			}
-			if(s_imx230_mode_fps_info.sensor_mode_fps[i].max_fps > 
+			if(s_imx230_mode_fps_info.sensor_mode_fps[i].max_fps >
 					s_imx230_lens_extend_info.max_fps) {
 				s_imx230_lens_extend_info.max_fps =
 					s_imx230_mode_fps_info.sensor_mode_fps[i].max_fps;

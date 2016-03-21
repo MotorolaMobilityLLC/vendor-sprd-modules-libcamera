@@ -682,7 +682,7 @@ static uint32_t Sensor_s5k4h5yc_jsl_InitRawTuneInfo(void)
 				};
 
 				block->param_ptr = grgb_param;
-				
+
 			}
 			break;
 
@@ -846,8 +846,8 @@ static uint32_t Sensor_s5k4h5yc_jsl_InitRawTuneInfo(void)
 			break;
 		}
 	}
-	
-	
+
+
 
 	return rtn;
 }

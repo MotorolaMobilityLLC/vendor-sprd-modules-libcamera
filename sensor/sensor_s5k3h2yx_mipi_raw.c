@@ -55,100 +55,100 @@ static uint32_t g_module_id = 0;
 
 LOCAL const SENSOR_REG_T s5k3h2yx_com_mipi_raw[] = {
 	//$MIPI[Width:3264,Height:2464,Format:RAW10,Lane:2,ErrorCheck:0,PolarityData:0
-						
-		//Flip/Mirror Setting				 
-		//Address	Data	Comment 			 
+
+		//Flip/Mirror Setting
+		//Address	Data	Comment
 	{0x0100, 0x00}, //
-	
+
 	{0x0103, 0x01},
 	{0x0101, 0x00},
-	
-	{0x3210, 0x81}, // OTP CLK enable. 
+
+	{0x3210, 0x81}, // OTP CLK enable.
 	{0x3200, 0x08},
-					
-		//MIPI Setting					 
-		//Address	Data	Comment 			 
-	{0x3065, 0x35}, 	
-	{0x310E, 0x00}, 	
-	{0x3098, 0xAB}, 	
-	{0x30C7, 0x0A}, 	
-	{0x309A, 0x01}, 	
-	{0x310D, 0xC6}, 	
-	{0x30c3, 0x40}, 	
-	{0x30BB, 0x02}, 	
+
+		//MIPI Setting
+		//Address	Data	Comment
+	{0x3065, 0x35},
+	{0x310E, 0x00},
+	{0x3098, 0xAB},
+	{0x30C7, 0x0A},
+	{0x309A, 0x01},
+	{0x310D, 0xC6},
+	{0x30c3, 0x40},
+	{0x30BB, 0x02},
 	{0x30BC, 0x38}, //According to MCLK, these registers should be changed.
-	{0x30BD, 0x40}, 
-	{0x3110, 0x70}, 
-	{0x3111, 0x80}, 
-	{0x3112, 0x7B}, 
-	{0x3113, 0xC0}, 
-	{0x30C7, 0x1A}, 
-		//Manufacture Setting					 
-		//Address	Data	Comment 				 
-	{0x3000, 0x08}, 	
-	{0x3001, 0x05}, 	
-	{0x3002, 0x0D}, 	
-	{0x3003, 0x21}, 	
-	{0x3004, 0x62}, 	
-	{0x3005, 0x0B}, 	
-	{0x3006, 0x6D}, 	
-	{0x3007, 0x02}, 	
-	{0x3008, 0x62}, 	
-	{0x3009, 0x62}, 	
-	{0x300A, 0x41}, 	
-	{0x300B, 0x10}, 	
-	{0x300C, 0x21}, 	
-	{0x300D, 0x04}, 	
-	{0x307E, 0x03}, 	
-	{0x307F, 0xA5}, 	
-	{0x3080, 0x04}, 	
-	{0x3081, 0x29}, 	
-	{0x3082, 0x03}, 	
-	{0x3083, 0x21}, 	
-	{0x3011, 0x5F}, 	
-	{0x3156, 0xE2}, 	
-	{0x3027, 0xBE}, 	//DBR_CLK enable for EMI	
-	{0x300f, 0x02}, 	
-	{0x3010, 0x10}, 	
-	{0x3017, 0x74}, 	
-	{0x3018, 0x00}, 	
-	{0x3020, 0x02}, 	
-	{0x3021, 0x00}, 	//EMI		
-	{0x3023, 0x80}, 	
-	{0x3024, 0x08}, 	
-	{0x3025, 0x08}, 	
-	{0x301C, 0xD4}, 	
-	{0x315D, 0x00}, 	
-	//s3053, 0xCF}, 	//CF for full ,CB for preview/HD/FHD/QVGA120fps move to  size configure 
-	{0x3054, 0x00}, 	
-	{0x3055, 0x35}, 	
-	{0x3062, 0x04}, 	
-	{0x3063, 0x38}, 	
-	{0x31A4, 0x04}, 	
-	{0x3016, 0x54}, 	
-	{0x3157, 0x02}, 	
-	{0x3158, 0x00}, 	
-	{0x315B, 0x02}, 	
-	{0x315C, 0x00}, 	
-	{0x301B, 0x05}, 	
-	{0x3028, 0x41}, 	
-	{0x302A, 0x10}, 	//20100503 00	
-	{0x3060, 0x00}, 	
-	{0x302D, 0x19}, 		
-	{0x302B, 0x05}, 	
-	{0x3072, 0x13}, 	
-	{0x3073, 0x21}, 	
-	{0x3074, 0x82}, 	
-	{0x3075, 0x20}, 	
-	{0x3076, 0xA2}, 	
-	{0x3077, 0x02}, 	
-	{0x3078, 0x91}, 	
-	{0x3079, 0x91}, 	
-	{0x307A, 0x61}, 	
-	{0x307B, 0x28}, 	
-	{0x307C, 0x31}, 	
-	
-	//black level =64 @ 10bit 
+	{0x30BD, 0x40},
+	{0x3110, 0x70},
+	{0x3111, 0x80},
+	{0x3112, 0x7B},
+	{0x3113, 0xC0},
+	{0x30C7, 0x1A},
+		//Manufacture Setting
+		//Address	Data	Comment
+	{0x3000, 0x08},
+	{0x3001, 0x05},
+	{0x3002, 0x0D},
+	{0x3003, 0x21},
+	{0x3004, 0x62},
+	{0x3005, 0x0B},
+	{0x3006, 0x6D},
+	{0x3007, 0x02},
+	{0x3008, 0x62},
+	{0x3009, 0x62},
+	{0x300A, 0x41},
+	{0x300B, 0x10},
+	{0x300C, 0x21},
+	{0x300D, 0x04},
+	{0x307E, 0x03},
+	{0x307F, 0xA5},
+	{0x3080, 0x04},
+	{0x3081, 0x29},
+	{0x3082, 0x03},
+	{0x3083, 0x21},
+	{0x3011, 0x5F},
+	{0x3156, 0xE2},
+	{0x3027, 0xBE}, 	//DBR_CLK enable for EMI
+	{0x300f, 0x02},
+	{0x3010, 0x10},
+	{0x3017, 0x74},
+	{0x3018, 0x00},
+	{0x3020, 0x02},
+	{0x3021, 0x00}, 	//EMI
+	{0x3023, 0x80},
+	{0x3024, 0x08},
+	{0x3025, 0x08},
+	{0x301C, 0xD4},
+	{0x315D, 0x00},
+	//s3053, 0xCF}, 	//CF for full ,CB for preview/HD/FHD/QVGA120fps move to  size configure
+	{0x3054, 0x00},
+	{0x3055, 0x35},
+	{0x3062, 0x04},
+	{0x3063, 0x38},
+	{0x31A4, 0x04},
+	{0x3016, 0x54},
+	{0x3157, 0x02},
+	{0x3158, 0x00},
+	{0x315B, 0x02},
+	{0x315C, 0x00},
+	{0x301B, 0x05},
+	{0x3028, 0x41},
+	{0x302A, 0x10}, 	//20100503 00
+	{0x3060, 0x00},
+	{0x302D, 0x19},
+	{0x302B, 0x05},
+	{0x3072, 0x13},
+	{0x3073, 0x21},
+	{0x3074, 0x82},
+	{0x3075, 0x20},
+	{0x3076, 0xA2},
+	{0x3077, 0x02},
+	{0x3078, 0x91},
+	{0x3079, 0x91},
+	{0x307A, 0x61},
+	{0x307B, 0x28},
+	{0x307C, 0x31},
+
+	//black level =64 @ 10bit
 	{0x304E, 0x40}, 	//Pedestal
 	{0x304F, 0x01}, 	//Pedestal
 	{0x3050, 0x00}, 	//Pedestal
@@ -156,9 +156,9 @@ LOCAL const SENSOR_REG_T s5k3h2yx_com_mipi_raw[] = {
 	{0x3089, 0x00}, 	//Pedestal
 	{0x3210, 0x81}, 	//Pedestal  -->OTP enable case
 	{0x3211, 0x00}, 	//Pedestal
-	{0x308E, 0x01}, 	//110512 update 	 
-	{0x308F, 0x8F}, 	
-	{0x3064, 0x03}, 	//110323 update 
+	{0x308E, 0x01}, 	//110512 update
+	{0x308F, 0x8F},
+	{0x3064, 0x03}, 	//110323 update
 	{0x31A7, 0x0F}, 	//110323 update
 };
 
@@ -167,31 +167,31 @@ LOCAL const SENSOR_REG_T s5k3h2yx_1632X1224_mipi_raw[] = {
 	//////////   S5K3H2Y EVT0 setting MIPI mode	    //////////
 	//////////						    //////
 	/////////////// 	history     //////////////////////////////
-	
-	
+
+
 	/////////////////////////////////////////////////////////////////////////////////////////
 	//$MIPI[Width:1632,Height:1224,Format:Raw10,Lane:2ErrorCheck:0,PolarityData:0,PolarityClock:0,Buffer:2]
-	
+
 	{0x0100, 0x00},    //streamin off
-	
+
 	{0x0103, 0x01},    // sw rstn
 	//s010103    //Mirror, Flip
-	
+
 	///////////////////////////////////////////////////////////////////
 	///////////////      mode selection	   ////////////////////////
-	
+
 	{0x3065, 0x35},    //sync_mode[4] 0b:SMIA / 1b:parallel [5] HD mode
 	{0x310E, 0x00},    // reg_sel 08h:parallel / 04h: CCP / 00h : MIPI
-	
+
 	{0x3098, 0xAB}, // [7]mipi csi2 enable
 	{0x30C7, 0x0A}, // [1]mipi dphy enable
 	{0x309A, 0x01}, // [0]mipi csi2 packer enable
 	{0x310D, 0xc6}, // [5]No Embedded, [6]mask_corrupted en for y_addr_size
 	{0x30c3, 0x40}, // mipi size auto cal
-	
+
 	// Lane selection
 	{0x30BB, 0x02}, // num of lane 01h : 1-lane / 02h : 2-lane
-	
+
 	// MIPI EXCLK 24MHz
 	{0x30bc, 0x38},
 	{0x30bd, 0x40},
@@ -200,68 +200,68 @@ LOCAL const SENSOR_REG_T s5k3h2yx_1632X1224_mipi_raw[] = {
 	{0x3112, 0x7B},
 	{0x3113, 0xC0},
 	{0x30c7, 0x1A},
-	
-	
-	
+
+
+
 	///////////////////////////////////////////////////////////////////
 	////////////////       PLL	    ///////////////////////////////
 	//PLL setting  ext 24MHz  912Mhz pix_clk =182.4Mhz (raw10)
 	{0x308E, 0x01},
 	{0x308F, 0x8F},
-	
-	{0x0305, 0x04}, //P		
-	{0x0306, 0x00}, //M[MSB]	
-	{0x0307, 0x6c}, //M[LSB]	
-				
+
+	{0x0305, 0x04}, //P
+	{0x0306, 0x00}, //M[MSB]
+	{0x0307, 0x6c}, //M[LSB]
+
 	{0x0303, 0x01}, //vt_sys_clk_div
 	{0x0301, 0x05}, //vt_pix_clk_div
 	{0x030b, 0x01}, //op_sys_clk_div
 	{0x0309, 0x05}, //op_pix_clk_div
-	
+
 	{0x31A1, 0x5A},    // DIV_G CLK 				////////// 3H2 >>>>>>>>>>
-	
+
 	{0x30CC, 0xB0},
 	//////////////////////////////////////////////////////////////////
 	//////////////	      size	   ///////////////////////////////
-	
-	{0x0344, 0x00},//s034400	  
-	{0x0345, 0x08},//s034508	 // x_addr_start (8d)	
+
+	{0x0344, 0x00},//s034400
+	{0x0345, 0x08},//s034508	 // x_addr_start (8d)
 	{0x0346, 0x00},//s034601
 	{0x0347, 0x08},//s03473a		// y_addr_start (314d)
 	{0x0348, 0x0C},//s03480C
 	{0x0349, 0xC7},//Cf		// x_addr_end (3279d)
 	{0x034A, 0x09},//s034A08
 	{0x034B, 0x97},//s034B65		// y_addr_end (2149d)
-	
+
 	{0x0381, 0x01},
 	{0x0383, 0x03}, 	  //X_odd
 	{0x0385, 0x01},
 	{0x0387, 0x03}, 	  //Y_odd
-	
+
 	{0x0401, 0x00}, // Full scaling
 	{0x0405, 0x10}, 	// scaling ratio 27/16
-	{0x0700, 0x05}, 	
+	{0x0700, 0x05},
 	{0x0701, 0x30}, 	// fifo size 1486d
 	{0x034c, 0x06},      //x_output_size 3264d
-	{0x034d, 0x60}, 
+	{0x034d, 0x60},
 	{0x034e, 0x04},      //y_output_size 2448d
-	{0x034f, 0xc8}, 
+	{0x034f, 0xc8},
 	/////////////////////////////////////////////////////////////////////
 	///////Analog initial setting 09.08.26 //////////////////////////////
 	/////////////////////////////////////////////////////////////////////
-	
+
 	//CDS timing
 	//(NOTE!! only optimized for pclk 65MHz or lower frequency)
-	{0x3000, 0x08}, // ct_ld_satart 
+	{0x3000, 0x08}, // ct_ld_satart
 	{0x3001, 0x05}, // ct_sl_start
 	{0x3002, 0x0D}, // ct_rx_start
 	{0x3003, 0x21}, // ct_cds_dtart
 	{0x3004, 0x62}, // ct_smp_width
-	{0x3005, 0x0B}, // ct_az_width 
-	{0x3006, 0x6D}, // ct_s1r_width 
+	{0x3005, 0x0B}, // ct_az_width
+	{0x3006, 0x6D}, // ct_s1r_width
 	{0x3007, 0x02}, // ct_tx_start
-	{0x3008, 0x62}, // ct_tx_width 
-	{0x3009, 0x62}, // ct_stx_width 
+	{0x3008, 0x62}, // ct_tx_width
+	{0x3009, 0x62}, // ct_stx_width
 	{0x300A, 0x41}, // ct_dstx_width
 	{0x300B, 0x10}, // ct_rmp_rst_start
 	{0x300C, 0x21}, // ct_rmp_sig_start
@@ -276,7 +276,7 @@ LOCAL const SENSOR_REG_T s5k3h2yx_1632X1224_mipi_raw[] = {
 	{0x3156, 0xE2}, // [7:5] RST offset, [4:0] SIG offset
 	{0x3027, 0xBE}, // reg_option [3:1] --> rst_mx for ramp
 	{0x300f, 0x02}, // 1'st amp limiter toggle
-	
+
 	//F-HD MODE CDS timing
 	//(NOTE!! only optimized for pclk 193.7MHz or lower frequency)
 	{0x3065, 0x35}, // [5] hd_mode
@@ -291,77 +291,77 @@ LOCAL const SENSOR_REG_T s5k3h2yx_1632X1224_mipi_raw[] = {
 	{0x307A, 0x61}, // ct_hd_dstx_width	61
 	{0x307B, 0x28}, // ct_hd_rmp_rst_start	18 *
 	{0x307C, 0x31}, // ct_hd_rmp_sig_start	31
-	
+
 	//Multiple sampling & Continuous/Sampling mode
-	{0x3010, 0x10}, // [7]msoff_en(0:no MS @<X2), [6:4]ms=1, [2]smp_en=0  
-	
+	{0x3010, 0x10}, // [7]msoff_en(0:no MS @<X2), [6:4]ms=1, [2]smp_en=0
+
 	//Ramp setting
 	{0x3017, 0x74}, // [6:4]RMP_INIT DAC MIN, [3]Ramp reg PD, [2:0]RMP_REG 1.8V
 	{0x3018, 0x00}, // rmp option, [7]ramp monit			////////// 3H2 >>>>>>>>>>
-	
-	//Doubler setting  
-	{0x3020, 0x02}, // pd_inrush_ctrl     
+
+	//Doubler setting
+	{0x3020, 0x02}, // pd_inrush_ctrl
 	{0x3021, 0x24}, // pump ring oscillator set MSB=CP, LSB=NCP	////////// 3H2 >>>>>>>>>>
 	{0x3023, 0x80}, // reg_tune_pix(Vpix voltage 3.16V)		////////// 3H2 >>>>>>>>>>
 	{0x3024, 0x08}, // vtg						////////// 3H2 >>>>>>>>>>
 	{0x3025, 0x08}, // reg_tune_ntg(ntg voltage)
-	
+
 	//clamp
 	{0x301C, 0xD4}, // CLP level
-	{0x315D, 0x00}, // clp_en_cintr 
-	
+	{0x315D, 0x00}, // clp_en_cintr
+
 	//ADLC setting
 	{0x3053, 0xCF}, // L-ADLC on(dB) F&L-ADLC ON(dF) OFF(d3)	////////// 3H2 >>>>>>>>>>
 	{0x3054, 0x00}, // F-adlc max
-	{0x3055, 0x35}, // ADLC BPR threshold 53d 
+	{0x3055, 0x35}, // ADLC BPR threshold 53d
 	{0x3062, 0x04}, // F-ADLC filter A
 	{0x3063, 0x38}, // F-ADLC filter B
-	
+
 	// Dithered L-ADLC //////////				////////// 3H2 >>>>>>>>>>
-	{0x31A4, 0x04}, // [2:0] qec : 1~4 
-	
-	
+	{0x31A4, 0x04}, // [2:0] qec : 1~4
+
+
 	{0x3016, 0x54}, // ADC_SAT(650mV)				////////// 3H2 >>>>>>>>>>
 	{0x3157, 0x02}, // ADC offset[12:8]
 	{0x3158, 0x00}, // ADC offset[7:0]
 	{0x315B, 0x02}, // ADC default[12:8]
 	{0x315C, 0x00}, // ADC default[7:0]
-	
+
 	{0x301B, 0x05}, // Pixel Current 1.5uA				////////// 3H2 >>>>>>>>>>
-		
+
 	{0x301A, 0x77}, // CDS COMP1 BIAS[7:4], COMP2 BIAS[3:0] 	////////// 3H2 >>>>>>>>>>
 	{0x3028, 0x41}, // blst on
 	{0x302a, 0x00}, // blst_en_cintr
 	{0x3060, 0x00}, // F_adlc_tune_total				 ////////// 3H2 >>>>>>>>>>
-	
-	//H_V_bining 
+
+	//H_V_bining
 	{0x300E, 0x2d}, // [2] Horizontal binning enable  CLP On, LD always high , RG low clocking		////////// 3H2_Binning >>>>>>>>>>
 	{0x31A3, 0x40}, // [6]: PLA enable				  ////////// 3H2_Binning >>>>>>>>>>
-	
+
 	///////////////////////////////////////////////////////////////////////////
 	/////////// Digital setting 08.11.17	 //////////////////////////////////
-	
+
 	{0x302d, 0x19},   // Active low for simmian BD on mechanical shutter / default 01h(Active high)
 	//s310d, 0xe6},   // mask_corrupted en for y_addr_size
-	{0x3164, 0x03},  
+	{0x3164, 0x03},
 	{0x31A7, 0x0f},
-	
+
 	///////////////////////////////////////////////////////////////////////////
 	/////////////Int time & Again	       /////////////////////////
 	//66ms
-	
+
 	{0x0200, 0x02},    // cintegeration time
 	{0x0201, 0x50},
 	{0x0202, 0x04},    // cintr //09
 	{0x0203, 0x80}, 	    //a8
 	{0x0204, 0x00},    // Again
 	{0x0205, 0x20},
-	
+
 	{0x0342, 0x0d},    // line_length //3470d
 	{0x0343, 0x80},
 	{0x0340, s5k3h2yx_MIN_FRAME_LEN_PRV>>8},    // frame_length //1792d
 	{0x0341, s5k3h2yx_MIN_FRAME_LEN_PRV&0xff},
-	
+
 	//{0x0100, 0x01},    // streaming on
 };
 
@@ -370,31 +370,31 @@ LOCAL const SENSOR_REG_T s5k3h2yx_3264X2448_mipi_raw[] = {
 	//////////   S5K3H2Y EVT0 setting MIPI mode	    //////////
 	//////////						    //////
 	/////////////// 	history     //////////////////////////////
-	
-	
+
+
 	/////////////////////////////////////////////////////////////////////////////////////////
 	//$MIPI[Width:3264,Height:2448,Format:Raw10,Lane:2ErrorCheck:0,PolarityData:0,PolarityClock:0,Buffer:2]
-	
+
 	{0x0100, 0x00},    //streamin off
-	
+
 	{0x0103, 0x01},    // sw rstn
 	//s0101, 0x03},    //Mirror, Flip
-	
+
 	///////////////////////////////////////////////////////////////////
 	///////////////      mode selection	   ////////////////////////
-	
+
 	{0x3065, 0x35},    //sync_mode[4] 0b:SMIA / 1b:parallel [5] HD mode
 	{0x310E, 0x00},    // reg_sel 08h:parallel / 04h: CCP / 00h : MIPI
-	
+
 	{0x3098, 0xAB}, // [7]mipi csi2 enable
 	{0x30C7, 0x0A}, // [1]mipi dphy enable
 	{0x309A, 0x01}, // [0]mipi csi2 packer enable
 	{0x310D, 0xc6}, // [5]No Embedded, [6]mask_corrupted en for y_addr_size
 	{0x30c3, 0x40}, // mipi size auto cal
-	
+
 	// Lane selection
 	{0x30BB, 0x02}, // num of lane 01h : 1-lane / 02h : 2-lane
-	
+
 	// MIPI EXCLK 24MHz
 	{0x30bc, 0x38},
 	{0x30bd, 0x40},
@@ -403,68 +403,68 @@ LOCAL const SENSOR_REG_T s5k3h2yx_3264X2448_mipi_raw[] = {
 	{0x3112, 0x7B},
 	{0x3113, 0xC0},
 	{0x30c7, 0x1A},
-	
-	
-	
+
+
+
 	///////////////////////////////////////////////////////////////////
 	////////////////       PLL	    ///////////////////////////////
 	//PLL setting  ext 24MHz  912Mhz pix_clk =182.4Mhz (raw10)
 	{0x308E, 0x01},
 	{0x308F, 0x8F},
-	
-	{0x0305, 0x04}, //P		
-	{0x0306, 0x00}, //M[MSB]	
-	{0x0307, 0x6c}, //M[LSB]	
-				
+
+	{0x0305, 0x04}, //P
+	{0x0306, 0x00}, //M[MSB]
+	{0x0307, 0x6c}, //M[LSB]
+
 	{0x0303, 0x01}, //vt_sys_clk_div
 	{0x0301, 0x05}, //vt_pix_clk_div
 	{0x030b, 0x01}, //op_sys_clk_div
 	{0x0309, 0x05}, //op_pix_clk_div
-	
+
 	{0x31A1, 0x5A},    // DIV_G CLK 				////////// 3H2 >>>>>>>>>>
-	
+
 	{0x30CC, 0xB0},
 	//////////////////////////////////////////////////////////////////
 	//////////////	      size	   ///////////////////////////////
-	
-	{0x0344, 0x00},//s034400	  
-	{0x0345, 0x08},//s034508	 // x_addr_start (8d)	
+
+	{0x0344, 0x00},//s034400
+	{0x0345, 0x08},//s034508	 // x_addr_start (8d)
 	{0x0346, 0x00},//s034601
 	{0x0347, 0x08},//s03473a		// y_addr_start (314d)
 	{0x0348, 0x0C},//s03480C
 	{0x0349, 0xC7},//Cf		// x_addr_end (3279d)
 	{0x034A, 0x09},//s034A08
 	{0x034B, 0x97},//s034B65		// y_addr_end (2149d)
-	
+
 	{0x0381, 0x01},
 	{0x0383, 0x01}, 	  //X_odd
 	{0x0385, 0x01},
 	{0x0387, 0x01}, 	  //Y_odd
-	
+
 	{0x0401, 0x00}, // Full scaling
 	{0x0405, 0x1B}, 	// scaling ratio 27/16
-	{0x0700, 0x05}, 	
+	{0x0700, 0x05},
 	{0x0701, 0xce}, 	// fifo size 1486d
 	{0x034c, 0x0c},      //x_output_size 3264d
-	{0x034d, 0xc0}, 
+	{0x034d, 0xc0},
 	{0x034e, 0x09},      //y_output_size 2448d
-	{0x034f, 0x90}, 
+	{0x034f, 0x90},
 	/////////////////////////////////////////////////////////////////////
 	///////Analog initial setting 09.08.26 //////////////////////////////
 	/////////////////////////////////////////////////////////////////////
-	
+
 	//CDS timing
 	//(NOTE!! only optimized for pclk 65MHz or lower frequency)
-	{0x3000, 0x08}, // ct_ld_satart 
+	{0x3000, 0x08}, // ct_ld_satart
 	{0x3001, 0x05}, // ct_sl_start
 	{0x3002, 0x0D}, // ct_rx_start
 	{0x3003, 0x21}, // ct_cds_dtart
 	{0x3004, 0x62}, // ct_smp_width
-	{0x3005, 0x0B}, // ct_az_width 
-	{0x3006, 0x6D}, // ct_s1r_width 
+	{0x3005, 0x0B}, // ct_az_width
+	{0x3006, 0x6D}, // ct_s1r_width
 	{0x3007, 0x02}, // ct_tx_start
-	{0x3008, 0x62}, // ct_tx_width 
-	{0x3009, 0x62}, // ct_stx_width 
+	{0x3008, 0x62}, // ct_tx_width
+	{0x3009, 0x62}, // ct_stx_width
 	{0x300A, 0x41}, // ct_dstx_width
 	{0x300B, 0x10}, // ct_rmp_rst_start
 	{0x300C, 0x21}, // ct_rmp_sig_start
@@ -479,7 +479,7 @@ LOCAL const SENSOR_REG_T s5k3h2yx_3264X2448_mipi_raw[] = {
 	{0x3156, 0xE2}, // [7:5] RST offset, [4:0] SIG offset
 	{0x3027, 0xBE}, // reg_option [3:1] --> rst_mx for ramp
 	{0x300f, 0x02}, // 1'st amp limiter toggle
-	
+
 	//F-HD MODE CDS timing
 	//(NOTE!! only optimized for pclk 193.7MHz or lower frequency)
 	{0x3065, 0x35}, // [5] hd_mode
@@ -494,77 +494,77 @@ LOCAL const SENSOR_REG_T s5k3h2yx_3264X2448_mipi_raw[] = {
 	{0x307A, 0x61}, // ct_hd_dstx_width	61
 	{0x307B, 0x28}, // ct_hd_rmp_rst_start	18 *
 	{0x307C, 0x31}, // ct_hd_rmp_sig_start	31
-	
+
 	//Multiple sampling & Continuous/Sampling mode
-	{0x3010, 0x10}, // [7]msoff_en(0:no MS @<X2), [6:4]ms=1, [2]smp_en=0  
-	
+	{0x3010, 0x10}, // [7]msoff_en(0:no MS @<X2), [6:4]ms=1, [2]smp_en=0
+
 	//Ramp setting
 	{0x3017, 0x74}, // [6:4]RMP_INIT DAC MIN, [3]Ramp reg PD, [2:0]RMP_REG 1.8V
 	{0x3018, 0x00}, // rmp option, [7]ramp monit			////////// 3H2 >>>>>>>>>>
-	
-	//Doubler setting  
-	{0x3020, 0x02}, // pd_inrush_ctrl     
+
+	//Doubler setting
+	{0x3020, 0x02}, // pd_inrush_ctrl
 	{0x3021, 0x24}, // pump ring oscillator set MSB=CP, LSB=NCP	////////// 3H2 >>>>>>>>>>
 	{0x3023, 0x80}, // reg_tune_pix(Vpix voltage 3.16V)		////////// 3H2 >>>>>>>>>>
 	{0x3024, 0x08}, // vtg						////////// 3H2 >>>>>>>>>>
 	{0x3025, 0x08}, // reg_tune_ntg(ntg voltage)
-	
+
 	//clamp
 	{0x301C, 0xD4}, // CLP level
-	{0x315D, 0x00}, // clp_en_cintr 
-	
+	{0x315D, 0x00}, // clp_en_cintr
+
 	//ADLC setting
 	{0x3053, 0xCF}, // L-ADLC on(dB) F&L-ADLC ON(dF) OFF(d3)	////////// 3H2 >>>>>>>>>>
 	{0x3054, 0x00}, // F-adlc max
-	{0x3055, 0x35}, // ADLC BPR threshold 53d 
+	{0x3055, 0x35}, // ADLC BPR threshold 53d
 	{0x3062, 0x04}, // F-ADLC filter A
 	{0x3063, 0x38}, // F-ADLC filter B
-	
+
 	// Dithered L-ADLC //////////				////////// 3H2 >>>>>>>>>>
-	{0x31A4, 0x04}, // [2:0] qec : 1~4 
-	
-	
+	{0x31A4, 0x04}, // [2:0] qec : 1~4
+
+
 	{0x3016, 0x54}, // ADC_SAT(650mV)				////////// 3H2 >>>>>>>>>>
 	{0x3157, 0x02}, // ADC offset[12:8]
 	{0x3158, 0x00}, // ADC offset[7:0]
 	{0x315B, 0x02}, // ADC default[12:8]
 	{0x315C, 0x00}, // ADC default[7:0]
-	
+
 	{0x301B, 0x05}, // Pixel Current 1.5uA				////////// 3H2 >>>>>>>>>>
-		
+
 	{0x301A, 0x77}, // CDS COMP1 BIAS[7:4], COMP2 BIAS[3:0] 	////////// 3H2 >>>>>>>>>>
 	{0x3028, 0x41}, // blst on
 	{0x302a, 0x00}, // blst_en_cintr
 	{0x3060, 0x00}, // F_adlc_tune_total				 ////////// 3H2 >>>>>>>>>>
-	
-	//H_V_bining 
+
+	//H_V_bining
 	{0x300E, 0x29}, // [2] Horizontal binning enable  CLP On, LD always high , RG low clocking		////////// 3H2_Binning >>>>>>>>>>
 	{0x31A3, 0x00}, // [6]: PLA enable				  ////////// 3H2_Binning >>>>>>>>>>
-	
+
 	///////////////////////////////////////////////////////////////////////////
 	/////////// Digital setting 08.11.17	 //////////////////////////////////
-	
+
 	{0x302d, 0x19},   // Active low for simmian BD on mechanical shutter / default 01h(Active high)
 	//s310de6   // mask_corrupted en for y_addr_size
-	{0x3164, 0x03},  
+	{0x3164, 0x03},
 	{0x31A7, 0x0f},
-	
+
 	///////////////////////////////////////////////////////////////////////////
 	/////////////		Int time & Again	  /////////////////////////
 	//66ms
-	
+
 	{0x0200, 0x02},    // cintegeration time
 	{0x0201, 0x50},
 	{0x0202, 0x04},    // cintr //09
 	{0x0203, 0xE7}, 	    //a8
 	{0x0204, 0x00},    // Again
 	{0x0205, 0x20},
-	
+
 	{0x0342, 0x0d},    // line_length 3470d
 	{0x0343, 0x80},
 	{0x0340, s5k3h2yx_MIN_FRAME_LEN_CAP>>8},    // frame_length 2480d
 	{0x0341, s5k3h2yx_MIN_FRAME_LEN_CAP&0xff},
-	
+
 	//{0x0100, 0x01},    // streaming on
 };
 
@@ -1428,7 +1428,7 @@ LOCAL uint32_t _s5k3h2yx_Identify(uint32_t param)
 	} else {
 		SENSOR_PRINT_ERR("SENSOR_s5k3h2yx: identify fail,pid_value=%d", pid_value);
 	}
-	
+
 	return ret_value;
 }
 
@@ -1469,10 +1469,10 @@ LOCAL uint32_t _s5k3h2yx_write_exposure(uint32_t param)
 		ret_value = Sensor_WriteReg(0x0341, frame_len & 0xff);
 		ret_value = Sensor_WriteReg(0x0340, (frame_len >> 0x08) & 0xff);
 	}
-	
+
 	ret_value = Sensor_WriteReg(0x203, expsure_line & 0xff);
 	ret_value = Sensor_WriteReg(0x202, (expsure_line >> 0x08) & 0xff);
-	
+
 	if(frame_len_cur > frame_len){
 		ret_value = Sensor_WriteReg(0x0341, frame_len & 0xff);
 		ret_value = Sensor_WriteReg(0x0340, (frame_len >> 0x08) & 0xff);
@@ -1518,7 +1518,7 @@ LOCAL uint32_t _s5k3h2yx_write_af(uint32_t param)
 	slave_addr = DW9714_VCM_SLAVE_ADDR;
 	cmd_val[0] = (param&0xfff0)>>4;
 	cmd_val[1] = ((param&0x0f)<<4)|0x0C;
-	cmd_len = 2;	
+	cmd_len = 2;
 	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 	SENSOR_PRINT("SENSOR_s5k3h2yx: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
 
@@ -1587,7 +1587,7 @@ LOCAL uint32_t _s5k3h2yx_BeforeSnapshot(uint32_t param)
 	ret_h = (uint8_t) Sensor_ReadReg(0x340);
 	ret_l = (uint8_t) Sensor_ReadReg(0x341);
 	frame_len = (ret_h << 8) + (ret_l);
-	
+
 	while(gain >= 0x40){
 		capture_exposure = capture_exposure * 2;
 		gain=gain / 2;
@@ -1643,36 +1643,36 @@ LOCAL uint32_t _dw9174_SRCInit(uint32_t mode)
 	uint8_t cmd_val[6] = {0x00};
 	uint16_t  slave_addr = 0;
 	uint16_t cmd_len = 0;
-	uint32_t ret_value = SENSOR_SUCCESS;	
-	
+	uint32_t ret_value = SENSOR_SUCCESS;
+
 	slave_addr = DW9714_VCM_SLAVE_ADDR;
-	
+
 	switch (mode) {
 		case 1:
 		break;
-		
+
 		case 2:
-		{			
+		{
 			cmd_val[0] = 0xec;
 			cmd_val[1] = 0xa3;
 			cmd_len = 2;
-			Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);			
+			Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 			usleep(20*1000);
 			cmd_val[0] = 0xf2;
 			cmd_val[1] = 0x00;
 			cmd_len = 2;
-			Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);			
+			Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 			usleep(20*1000);
 			cmd_val[0] = 0xdc;
-			cmd_val[1] = 0x51;			
+			cmd_val[1] = 0x51;
 			cmd_len = 2;
-			Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);			
+			Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 		}
 		break;
-		
+
 		case 3:
 		break;
-		
+
 	}
 
 	return ret_value;

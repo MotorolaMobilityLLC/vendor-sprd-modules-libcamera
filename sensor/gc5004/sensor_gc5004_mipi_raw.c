@@ -84,32 +84,32 @@ LOCAL const SENSOR_REG_T gc5004_mipi_common_init[] = {
 	/////////////////////////////////////////////////////
 	{0x00, 0x40}, //10/[4]rowskip_skip_sh
 	{0x03, 0x06}, //15fps
-	{0x04, 0xd6}, 
+	{0x04, 0xd6},
 	{0x05, 0x01}, //HB
-	{0x06, 0xfa}, 
+	{0x06, 0xfa},
 	{0x07, 0x00}, //VB
 	{0x08, 0x1c},
 	{0x0a, 0x02}, //02//row start
 	{0x0c, 0x00}, //0c//col start
-	{0x0d, 0x07}, 
-	{0x0e, 0xa8}, 
+	{0x0d, 0x07},
+	{0x0e, 0xa8},
 	{0x0f, 0x0a}, //Window setting
-	{0x10, 0x50}, //50 
+	{0x10, 0x50}, //50
 	{0x17, 0x16}, //01//14//[0]mirror [1]flip
 	{0x18, 0x02}, //sdark off
-	{0x19, 0x0c}, 
-	{0x1a, 0x13}, 
-	{0x1b, 0x48}, 
-	{0x1c, 0x05}, 
+	{0x19, 0x0c},
+	{0x1a, 0x13},
+	{0x1b, 0x48},
+	{0x1c, 0x05},
 	{0x1e, 0xb8},
-	{0x1f, 0x78}, 
-	{0x20, 0xc5}, //03/[7:6]ref_r [3:1]comv_r 
+	{0x1f, 0x78},
+	{0x20, 0xc5}, //03/[7:6]ref_r [3:1]comv_r
 	{0x21, 0x4f}, //7f
-	{0x22, 0x82}, //b2 
+	{0x22, 0x82}, //b2
 	{0x23, 0x43}, //f1/[7:3]opa_r [1:0]sRef
-	{0x24, 0x2f}, //PAD drive 
-	{0x2b, 0x01}, 
-	{0x2c, 0x68}, //[6:4]rsgh_r 
+	{0x24, 0x2f}, //PAD drive
+	{0x2b, 0x01},
+	{0x2c, 0x68}, //[6:4]rsgh_r
 
 	/////////////////////////////////////////////////////
 	//////////////////////   ISP   //////////////////////
@@ -190,8 +190,8 @@ LOCAL const SENSOR_REG_T gc5004_mipi_common_init[] = {
 	//////////////////////   DNDD ///////////////////////
 	/////////////////////////////////////////////////////
         {0xfe, 0x02},
-        {0x89, 0x15}, 
-        {0xfe, 0x00}, 
+        {0x89, 0x15},
+        {0xfe, 0x00},
 
 	/////////////////////////////////////////////////////
 	//////////////////////   SCALER   /////////////////////
@@ -245,8 +245,8 @@ LOCAL const SENSOR_REG_T gc5004_mipi_1296X972_mipi_raw[] = {
 	{0x09, 0x00},
 	{0x0a, 0x03},
 	{0x0b, 0x00},
- 	{0x0c, 0x00}, 
-	{0x0d, 0x07}, 
+ 	{0x0c, 0x00},
+	{0x0d, 0x07},
 	{0x0e, 0xa8},
 	{0x0f, 0x0a},
 	{0x10, 0x50},
@@ -254,8 +254,8 @@ LOCAL const SENSOR_REG_T gc5004_mipi_1296X972_mipi_raw[] = {
 	{0x92, 0x00},
 	{0x94, 0x03},
 	{0x95, 0x03},
- 	{0x96, 0xcc}, 
-	{0x97, 0x05}, 
+ 	{0x96, 0xcc},
+	{0x97, 0x05},
 	{0x98, 0x10},
 	{0xfe, 0x03},
 	{0x04, 0x40},
@@ -275,8 +275,8 @@ LOCAL const SENSOR_REG_T gc5004_mipi_2592X1944_mipi_raw[] = {
 	{0x09, 0x00},
 	{0x0a, 0x02},
 	{0x0b, 0x00},
- 	{0x0c, 0x00}, 
-	{0x0d, 0x07}, 
+ 	{0x0c, 0x00},
+	{0x0d, 0x07},
 	{0x0e, 0xa8},
 	{0x0f, 0x0a},
 	{0x10, 0x50},
@@ -284,8 +284,8 @@ LOCAL const SENSOR_REG_T gc5004_mipi_2592X1944_mipi_raw[] = {
 	{0x92, 0x01},
 	{0x94, 0x04},
 	{0x95, 0x07},
- 	{0x96, 0x98}, 
-	{0x97, 0x0a}, 
+ 	{0x96, 0x98},
+	{0x97, 0x0a},
 	{0x98, 0x20},
 	{0xfe, 0x03},
 	{0x04, 0x80},
@@ -302,7 +302,7 @@ LOCAL SENSOR_REG_TAB_INFO_T s_gc5004_mipi_resolution_Tab_RAW[] = {
 	{ADDR_AND_LEN_OF_ARRAY(gc5004_mipi_common_init), 0, 0, 24, SENSOR_IMAGE_FORMAT_RAW},
 	{ADDR_AND_LEN_OF_ARRAY(gc5004_mipi_1296X972_mipi_raw), 1296, 972, 24, SENSOR_IMAGE_FORMAT_RAW},
 	{ADDR_AND_LEN_OF_ARRAY(gc5004_mipi_2592X1944_mipi_raw), 2592, 1944, 24, SENSOR_IMAGE_FORMAT_RAW},
-	
+
 	{PNULL, 0, 0, 0, 0, 0},
 	{PNULL, 0, 0, 0, 0, 0},
 	{PNULL, 0, 0, 0, 0, 0},
@@ -1779,7 +1779,7 @@ LOCAL uint32_t _gc5004_mipi_Identify(uint32_t param)
 	} else {
 		SENSOR_PRINT("SENSOR_gc5004_mipi: identify fail,pid_value=%x", pid_value);
 	}
-	
+
 	return ret_value;
 }
 
@@ -1796,7 +1796,7 @@ LOCAL uint32_t _gc5004_mipi_write_exposure(uint32_t param)
 
 	SENSOR_PRINT("gc5004_mipi_Write_line  dummy_line  = %d \n",dummy_line );
 	if (!expsure_line) expsure_line = 4; /* avoid 0 */
-	
+
 
 	if(expsure_line < 4) expsure_line = 4;
 	if(expsure_line > 8191) expsure_line = 8191;//2    ^ 13
@@ -1810,7 +1810,7 @@ LOCAL uint32_t _gc5004_mipi_write_exposure(uint32_t param)
 
 	SENSOR_PRINT("gc5004_mipi_Write_line  5004line  = %d \n",expsure_line);
 	ret_value = Sensor_WriteReg(0x04, (expsure_line) & 0xFF);
-	ret_value = Sensor_WriteReg(0x03, (expsure_line >> 8) & 0x1F);	
+	ret_value = Sensor_WriteReg(0x03, (expsure_line >> 8) & 0x1F);
 
 	return ret_value;
 }
@@ -1831,21 +1831,21 @@ LOCAL uint32_t _gc5004_mipi_write_gain(uint32_t param)
 
 	SENSOR_PRINT("_gc5004_mipi raw _write_gain real_gain = %d  \n",real_gain);
 	Sensor_WriteReg(0xfe, 0x00);
-	Sensor_WriteReg(0xb6, 0x00); 
+	Sensor_WriteReg(0xb6, 0x00);
 	Sensor_WriteReg(0xb1, 0x01);
 	Sensor_WriteReg(0xb2, 0x00);
 
 	if(real_gain < 64)
 	{
 	real_gain = 64;
-	Sensor_WriteReg(0xb6, 0x00); 
+	Sensor_WriteReg(0xb6, 0x00);
 	Sensor_WriteReg(0xb1, 0x01);
 	Sensor_WriteReg(0xb2, 0x00);
 
 	}
 	else if ((64 <= real_gain)&(real_gain < 90))
 	{
-	Sensor_WriteReg(0xb6, 0x00); 
+	Sensor_WriteReg(0xb6, 0x00);
 	temp = real_gain;
 	SENSOR_PRINT("_gc5004_mipi_write_gain_1 temp = %d  \n",temp);
 	Sensor_WriteReg(0xb1, temp>>6);
@@ -1853,15 +1853,15 @@ LOCAL uint32_t _gc5004_mipi_write_gain(uint32_t param)
 	}
 	else if ((90 <= real_gain)&(real_gain < 128))
 	{
-	Sensor_WriteReg(0xb6, 0x01); 
+	Sensor_WriteReg(0xb6, 0x01);
 	temp = 64*real_gain/90;
 	SENSOR_PRINT("_gc5004_mipi_write_gain_2 temp = %d  \n",temp);
 	Sensor_WriteReg(0xb1, temp>>6);
 	Sensor_WriteReg(0xb2, (temp<<2)&0xfc);
-	}	
+	}
 	else if ((128 <= real_gain)&(real_gain < 178))
 	{
-	Sensor_WriteReg(0xb6, 0x02); 
+	Sensor_WriteReg(0xb6, 0x02);
 	temp = 64*real_gain/128;
 	SENSOR_PRINT("_gc5004_mipi_write_gain_3 temp = %d  \n",temp);
 	Sensor_WriteReg(0xb1, temp>>6);
@@ -1869,7 +1869,7 @@ LOCAL uint32_t _gc5004_mipi_write_gain(uint32_t param)
 	}
 	else if ((178 <= real_gain)&(real_gain < 247))
 	{
-	Sensor_WriteReg(0xb6, 0x03); 
+	Sensor_WriteReg(0xb6, 0x03);
 	temp = 64*real_gain/178;
 	SENSOR_PRINT("_gc5004_mipi_write_gain_4 temp = %d  \n",temp);
 	Sensor_WriteReg(0xb1, temp>>6);
@@ -1877,13 +1877,13 @@ LOCAL uint32_t _gc5004_mipi_write_gain(uint32_t param)
 	}
 	else if (247 <= real_gain)
 	{
-	Sensor_WriteReg(0xb6, 0x04); 
+	Sensor_WriteReg(0xb6, 0x04);
 	temp = 64*real_gain/247;
 	SENSOR_PRINT("_gc5004_mipi_write_gain_5 temp = %d  \n",temp);
 	Sensor_WriteReg(0xb1, temp>>6);
 	Sensor_WriteReg(0xb2, (temp<<2)&0xfc);
-	}	
-	
+	}
+
 	return ret_value;
 }
 
@@ -1899,7 +1899,7 @@ LOCAL uint32_t _gc5004_mipi_write_af(uint32_t param)
 	cmd_len = 2;
 	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 
-	SENSOR_PRINT("SENSOR_Gc5004: _write_af, ret =  %d, param = %d,  MSL:%x, LSL:%x\n", 
+	SENSOR_PRINT("SENSOR_Gc5004: _write_af, ret =  %d, param = %d,  MSL:%x, LSL:%x\n",
 		ret_value, param, cmd_val[0], cmd_val[1]);
 	return ret_value;
 }
@@ -1982,7 +1982,7 @@ LOCAL uint32_t _gc5004_mipi_StreamOff(uint32_t param)
 static uint32_t _gc5004_mipi_SetEV(uint32_t param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
-	
+
 	return rtn;
 }
 LOCAL uint32_t _gc5004_mipi_ExtFunc(uint32_t ctl_param)
@@ -2013,15 +2013,15 @@ LOCAL uint32_t _dw9174_SRCInit(uint32_t mode)
 	uint8_t cmd_val[2] = {0x00};
 	uint16_t  slave_addr = 0;
 	uint16_t cmd_len = 0;
-	uint32_t ret_value = SENSOR_SUCCESS;	
+	uint32_t ret_value = SENSOR_SUCCESS;
 	int i = 0;
-	
+
 	slave_addr = DW9714_VCM_SLAVE_ADDR;
 	SENSOR_PRINT("SENSOR_Gc5004: _DW9714A_SRCInit: mode = %d\n", mode);
 	switch (mode) {
 		case 1:
 		break;
-		
+
 		case 2:
 		{
 			cmd_val[0] = 0xec;

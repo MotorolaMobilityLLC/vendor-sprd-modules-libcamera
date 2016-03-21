@@ -46,7 +46,7 @@ static const SENSOR_REG_T s5k5e3yx_common_init[] = {
 };
 
 static const SENSOR_REG_T s5k5e3yx_2592x1944_2lane_setting[] = {
-	
+
 };
 
 static const SENSOR_REG_T s5k5e3yx_2576x1932_2lane_setting[] = {

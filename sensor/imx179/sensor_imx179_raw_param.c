@@ -2203,6 +2203,6 @@ static struct sensor_raw_info s_imx179_mipi_raw_info={
 	&s_imx179_cali_info,
 	&s_imx179_trim_info,
 	&s_imx179_ioctrl
-	
+
 };
 

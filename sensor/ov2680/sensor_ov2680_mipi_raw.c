@@ -662,10 +662,10 @@ LOCAL uint32_t _ov2680_init_mode_fps_info()
 			s_ov2680_mode_fps_info.sensor_mode_fps[i].max_fps = modn*30;
 			if(s_ov2680_mode_fps_info.sensor_mode_fps[i].max_fps > 30) {
 				s_ov2680_mode_fps_info.sensor_mode_fps[i].is_high_fps = 1;
-				s_ov2680_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num = 
+				s_ov2680_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num =
 					s_ov2680_mode_fps_info.sensor_mode_fps[i].max_fps/30;
 			}
-			if(s_ov2680_mode_fps_info.sensor_mode_fps[i].max_fps > 
+			if(s_ov2680_mode_fps_info.sensor_mode_fps[i].max_fps >
 					s_ov2680_lens_extend_info.max_fps) {
 				s_ov2680_lens_extend_info.max_fps =
 					s_ov2680_mode_fps_info.sensor_mode_fps[i].max_fps;

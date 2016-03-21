@@ -546,7 +546,7 @@ static struct sensor_raw_info s_ov5640_raw_info={
 	&s_ov5640_fix_info,
 	&s_ov5640_cali_info,
 	&s_ov5640_trim_info,
-	&s_ov5640_ioctrl	
+	&s_ov5640_ioctrl
 };
 
 struct sensor_raw_info* s_ov5640_raw_info_ptr = &s_ov5640_raw_info;

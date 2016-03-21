@@ -49,7 +49,7 @@ static uint32_t ov8858_otp_read_otp_info(struct otp_info_t *otp_ptr)
 	Sensor_WriteReg(0x3d8B, 0x0a);
 	Sensor_WriteReg(0x3d81, 0x01); // load otp into buffer
 	usleep(10 * 1000);
-	
+
 	// OTP base information and WB calibration data
 	otp_flag = Sensor_ReadReg(0x7010);
        SENSOR_PRINT_ERR("otp_flag = %d", otp_flag);
@@ -60,7 +60,7 @@ static uint32_t ov8858_otp_read_otp_info(struct otp_info_t *otp_ptr)
 	else if((otp_flag & 0x30) == 0x10) {
 		addr = 0x7019; // base address of info group 2
 	}
-	
+
 	if(addr != 0) {
 		otp_ptr->flag = 0xC0; // valid info and AWB in OTP
 		otp_ptr->module_id = Sensor_ReadReg(addr);
@@ -82,15 +82,15 @@ static uint32_t ov8858_otp_read_otp_info(struct otp_info_t *otp_ptr)
 		otp_ptr->rg_ratio = 0;
 		otp_ptr->bg_ratio = 0;
 	}
-	SENSOR_PRINT("year=0x%x\n", otp_ptr->year);	
-	SENSOR_PRINT("month=0x%x\n",  otp_ptr->month);	
-	SENSOR_PRINT("day=0x%x\n", otp_ptr->day);	
-	SENSOR_PRINT("rg_ratio=0x%x\n", otp_ptr->rg_ratio);	
-	SENSOR_PRINT("bg_ratio=0x%x\n",  otp_ptr->bg_ratio);	
-	SENSOR_PRINT("rg_ratio_typical=0x%x\n",  otp_typical_value.rg_ratio_typical);	
-	SENSOR_PRINT("bg_ratio_typical=0x%x\n",  otp_typical_value.bg_ratio_typical);	
+	SENSOR_PRINT("year=0x%x\n", otp_ptr->year);
+	SENSOR_PRINT("month=0x%x\n",  otp_ptr->month);
+	SENSOR_PRINT("day=0x%x\n", otp_ptr->day);
+	SENSOR_PRINT("rg_ratio=0x%x\n", otp_ptr->rg_ratio);
+	SENSOR_PRINT("bg_ratio=0x%x\n",  otp_ptr->bg_ratio);
+	SENSOR_PRINT("rg_ratio_typical=0x%x\n",  otp_typical_value.rg_ratio_typical);
+	SENSOR_PRINT("bg_ratio_typical=0x%x\n",  otp_typical_value.bg_ratio_typical);
 
-	
+
 	// OTP Lenc Calibration
 	otp_flag = Sensor_ReadReg(0x7028);
 	addr = 0;
@@ -116,20 +116,20 @@ static uint32_t ov8858_otp_read_otp_info(struct otp_info_t *otp_ptr)
 			lenc[i]=0;
 		}
 	}
-	
+
 	for(i=0x7010;i<=0x720a;i++) {
 		Sensor_WriteReg(i,0); // clear OTP buffer, recommended use continuous write to accelarate
 	}
 	//set 0x5002[3] to ¡°1¡±
 	temp1 = Sensor_ReadReg(0x5002);
 	Sensor_WriteReg(0x5002, (0x08 & 0x08) | (temp1 & (~0x08)));
-	
+
        Sensor_WriteReg(0x0100, 0x00);
 
-	
+
 	return rtn;
 }
- 
+
 static uint32_t ov8858_otp_update_otp(void *param_ptr)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
@@ -141,17 +141,17 @@ static uint32_t ov8858_otp_update_otp(void *param_ptr)
 		otp_typical_value.bg_ratio_typical=otp_param_info->typical_value.bg_ratio_typical;
 		otp_typical_value.rg_ratio_typical=otp_param_info->typical_value.rg_ratio_typical;
 	}
-	
+
 	// apply OTP WB Calibration
 	if (otp_info.flag & 0x40) {
 		rg = otp_info.rg_ratio;
 		bg = otp_info.bg_ratio;
-	
+
 	//calculate G gain
 		R_gain = (otp_typical_value.rg_ratio_typical*1000) / rg;
 		B_gain = (otp_typical_value.bg_ratio_typical*1000) / bg;
 		G_gain = 1000;
-	
+
 		if (R_gain < 1000 || B_gain < 1000)
 		{
 		if (R_gain < B_gain)
@@ -167,10 +167,10 @@ static uint32_t ov8858_otp_update_otp(void *param_ptr)
 		B_gain = 0x400 * B_gain / (Base_gain);
 		G_gain = 0x400 * G_gain / (Base_gain);
 
-		SENSOR_PRINT("r_Gain=0x%x\n", R_gain);	
-		SENSOR_PRINT("g_Gain=0x%x\n", G_gain);	
-		SENSOR_PRINT("b_Gain=0x%x\n", B_gain);	
-	
+		SENSOR_PRINT("r_Gain=0x%x\n", R_gain);
+		SENSOR_PRINT("g_Gain=0x%x\n", G_gain);
+		SENSOR_PRINT("b_Gain=0x%x\n", B_gain);
+
 		// update sensor WB gain
 		if (R_gain>0x400) {
 			Sensor_WriteReg(0x5032, R_gain>>8);
@@ -185,10 +185,10 @@ static uint32_t ov8858_otp_update_otp(void *param_ptr)
 			Sensor_WriteReg(0x5037, B_gain & 0x00ff);
 		}
 	}
-	
+
 	// apply OTP Lenc Calibration
 	if (otp_info.flag & 0x10) {
-		SENSOR_PRINT("apply otp lsc \n");	
+		SENSOR_PRINT("apply otp lsc \n");
 		temp = Sensor_ReadReg(0x5000);
 		temp = 0x80 | temp;
 		Sensor_WriteReg(0x5000, temp);
@@ -196,7 +196,7 @@ static uint32_t ov8858_otp_update_otp(void *param_ptr)
 			Sensor_WriteReg(0x5800 + i, lenc[i]);
 		}
 	}
-	
+
 	return rtn;
 }
 static uint32_t ov8858_otp_get_module_id(void)

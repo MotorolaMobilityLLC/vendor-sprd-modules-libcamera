@@ -8983,7 +8983,7 @@ static struct sensor_raw_fix_info s_ov13850_fix_info=
 					{112,175},
 				},
 			},
-		},	
+		},
 	},
 	{
 		{

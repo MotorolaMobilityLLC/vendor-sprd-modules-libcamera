@@ -99,7 +99,7 @@ struct jpeg_enc {
 	cmr_u32             	   slice_mod;
 	cmr_u32             	   quality_level;
 	cmr_uint            	   stream_buf_phy;
-	
+
 	cmr_uint            	   stream_buf_vir;
 	cmr_u32              	   stream_buf_size;
 	cmr_u32             	   stream_real_size;

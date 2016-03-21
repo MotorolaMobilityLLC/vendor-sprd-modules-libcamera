@@ -81,7 +81,7 @@ uint32_t vcm_dw9714A_set_position(uint32_t pos,uint32_t slewrate)
 	cmd_len = 2;
 	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 
-	SENSOR_PRINT("SENSOR_HI542: _write_af, ret =  %d, param = %d,  MSL:%x, LSL:%x\n", 
+	SENSOR_PRINT("SENSOR_HI542: _write_af, ret =  %d, param = %d,  MSL:%x, LSL:%x\n",
 	ret_value, pos, cmd_val[0], cmd_val[1]);
 	return ret_value;
 }
