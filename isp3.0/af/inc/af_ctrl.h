@@ -41,6 +41,7 @@ enum af_ctrl_cmd_type {
 	AF_CTRL_CMD_SET_UPDATE_AWB,
 	AF_CTRL_CMD_SET_PROC_START,
 	AF_CTRL_CMD_SET_DEBUG,
+	AF_CTRL_CMD_SET_UPDATE_AUX_SENSOR,
 	AF_CTRL_CMD_SET_MAX,
 
 	AF_CTRL_CMD_GET_BASE = AF_CTRL_CMD_SET_MAX,
@@ -110,6 +111,28 @@ enum af_ctrl_roi_type_t {
 	AF_CTRL_ROI_TYPE_TOUCH,
 	AF_CTRL_ROI_TYPE_MAX,
 };
+
+enum af_ctrl_aux_sensor_type {
+	AF_CTRL_ACCELEROMETER,
+	AF_CTRL_MAGNETIC_FIELD,
+	AF_CTRL_GYROSCOPE,
+	AF_CTRL_LIGHT,
+	AF_CTRL_PROXIMITY,
+};
+
+struct af_ctrl_gryo_info_t {
+	cmr_int x;
+	cmr_int y;
+	cmr_int z;
+};
+
+struct af_ctrl_aux_sensor_info_t {
+	enum af_ctrl_aux_sensor_type type;
+	union {
+		struct af_ctrl_gryo_info_t gryo_info;
+	};
+};
+
 struct af_result_param {
 	cmr_u32 motor_pos;
 	cmr_u32 suc_win;

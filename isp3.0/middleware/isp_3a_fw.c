@@ -245,6 +245,7 @@ static cmr_int isp3a_set_snapshot_finished(cmr_handle isp_3a_handle, void *param
 static cmr_int isp3a_get_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_get_adgain_exp_info(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_flash_mode(cmr_handle isp_3a_handle, void *param_ptr);
+static cmr_int isp3a_set_aux_sensor_info(cmr_handle isp_3a_handle, void *sensor_info);
 static cmr_int isp3a_init_statistics_buf(cmr_handle isp_3a_handle);
 static cmr_int isp3a_deinit_statistics_buf(cmr_handle isp_3a_handle);
 static cmr_int isp3a_get_statistics_buf(cmr_handle isp_3a_handle, cmr_int type, struct isp3a_statistics_data **buf_ptr);
@@ -346,6 +347,7 @@ static struct isp3a_ctrl_io_func s_isp3a_ioctrl_tab[ISP_CTRL_MAX] = {
 	{ISP_CTRL_GET_EXIF_DEBUG_INFO,     isp3a_get_exif_debug_info},
 	{ISP_CTRL_GET_CUR_ADGAIN_EXP,      isp3a_get_adgain_exp_info},
 	{ISP_CTRL_SET_FLASH_MODE,          isp3a_set_flash_mode},
+	{ISP_CTRL_SET_AUX_SENSOR_INFO,     isp3a_set_aux_sensor_info},
 };
 
 /*************************************INTERNAK FUNCTION ***************************************/
@@ -961,6 +963,7 @@ cmr_int isp3a_destroy_process_thread(cmr_handle isp_3a_handle)
 		ret = ISP_ERROR;
 		goto exit;
 	}
+
 	isp3a_thread_cxt = &cxt->thread_cxt;
 	if (isp3a_thread_cxt->process_thr_handle) {
 		ret = cmr_thread_destroy(isp3a_thread_cxt->process_thr_handle);
@@ -2167,6 +2170,16 @@ exit:
 	return ret;
 }
 
+static cmr_int isp3a_set_aux_sensor_info(cmr_handle isp_3a_handle, void *sensor_info)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
+	ret = af_ctrl_ioctrl(cxt->af_cxt.handle,
+			     AF_CTRL_CMD_SET_UPDATE_AUX_SENSOR,
+			     (void *)sensor_info, NULL);
+
+	return ret;
+}
 
 cmr_int isp3a_init_statistics_buf(cmr_handle isp_3a_handle)
 {

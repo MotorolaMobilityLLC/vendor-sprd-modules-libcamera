@@ -835,20 +835,22 @@ static void afaltek_ae_info_to_af_lib(struct isp3a_ae_info *ae_info,
 }
 
 static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
-					struct caf_alg_calc_param *cal_in,
-					struct caf_alg_result cal_out)
+					struct caf_alg_calc_param *caf_in)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct isp_af_win roi;
 	struct allib_af_input_roi_info_t lib_roi;
+	struct caf_alg_result caf_out;
 
 	cmr_bzero(&roi, sizeof(roi));
 	cmr_bzero(&lib_roi, sizeof(lib_roi));
+	cmr_bzero(&caf_out, sizeof(caf_out));
 
-	ret = cxt->caf_ops.trigger_calc(cxt->caf_trigger_handle, cal_in, &cal_out);
+	ret = cxt->caf_ops.trigger_calc(cxt->caf_trigger_handle, caf_in, &caf_out);
 
-	if ((!cxt->caf_result.is_caf_trig) && cal_out.is_caf_trig) {
+	ISP_LOGI("caf_out.is_caf_trig %d", caf_out.is_caf_trig);
+	if ((!cxt->caf_result.is_caf_trig) && caf_out.is_caf_trig) {
 		/* notify oem to show box */
 		ret = afaltek_adpt_start_notify(adpt_handle);
 		if (ret)
@@ -860,9 +862,7 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 						  AF_ALG_CMD_SET_CAF_STOP,
 						  NULL, NULL);
 	}
-	cxt->caf_result = cal_out;
-
-	ISP_LOGI("caf_out.is_caf_trig %d", cal_out.is_caf_trig);
+	cxt->caf_result = caf_out;
 
 	return ret;
 }
@@ -872,7 +872,6 @@ static cmr_int afaltek_adpt_caf_update_ae_info(cmr_handle adpt_handle, void *in)
 	cmr_int ret = ISP_SUCCESS;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct caf_alg_calc_param caf_in = { 0};
-	struct caf_alg_result caf_out = { 0 };
 	struct isp3a_ae_info *isp_ae_info = (struct isp3a_ae_info *)in;
 	struct isp_ae_statistic_info *ae_rgb_stats = NULL;
 
@@ -891,7 +890,7 @@ static cmr_int afaltek_adpt_caf_update_ae_info(cmr_handle adpt_handle, void *in)
 	caf_in.ae_info.cur_lum = isp_ae_info->report_data.cur_mean;
 	caf_in.ae_info.target_lum = isp_ae_info->report_data.target_mean;
 	caf_in.ae_info.is_stable = isp_ae_info->report_data.ae_converge_st;
-	ret = afaltek_adpt_caf_process(cxt, &caf_in, caf_out);
+	ret = afaltek_adpt_caf_process(cxt, &caf_in);
 	return ret;
 }
 
@@ -928,6 +927,58 @@ static cmr_int afaltek_adpt_update_awb(cmr_handle adpt_handle, void *in)
 	//memcpy(&awb_info, in, sizeof(awb_info)); /* TBD */
 	ret = 0;//afaltek_adpt_update_awb_info(cxt, &awb_info);
 	return ret;
+}
+
+static cmr_int afaltek_adpt_update_aux_sensor(cmr_handle adpt_handle, void *in)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+	struct af_ctrl_aux_sensor_info_t *aux_sensor_info = (struct af_ctrl_aux_sensor_info_t *)in;
+	struct caf_alg_calc_param caf_in;
+
+	memset((void*)&caf_in, 0, sizeof(caf_in));
+#if 1 /* TBD */
+	{
+		struct af_alg_sensor_info *gryo_info = (struct af_alg_sensor_info *)in;
+		ISP_LOGI("gyro E");
+		caf_in.sensor_info.sensor_type = AF_POSTURE_GYRO;
+		caf_in.sensor_info.x = gryo_info->x;
+		caf_in.sensor_info.y = gryo_info->y;
+		caf_in.sensor_info.z = gryo_info->z;
+	}
+#else
+	switch(aux_sensor_info->sensor_type) {
+	case AF_CTRL_ACCELEROMETER:
+		ISP_LOGI("accelerometer E");
+		break;
+	case AF_CTRL_MAGNETIC_FIELD:
+		ISP_LOGI("magnetic field E");
+		break;
+	case AF_CTRL_GYROSCOPE:
+	{
+		struct af_alg_sensor_info *gryo_info = (struct af_alg_sensor_info *)in;
+		ISP_LOGI("gyro E");
+		caf_in.sensor_info.sensor_type = AF_POSTURE_GYRO;
+		caf_in.sensor_info.x = gryo_info->x;
+		caf_in.sensor_info.y = gryo_info->y;
+		caf_in.sensor_info.z = gryo_info->z;
+	}
+		break;
+	case AF_CTRL_LIGHT:
+		ISP_LOGI("light E");
+		break;
+	case AF_CTRL_PROXIMITY:
+		ISP_LOGI("proximity E");
+		break;
+	default:
+		ISP_LOGI("sensor type not support");
+		break;
+	}
+#endif
+	caf_in.active_data_type = AF_ALG_DATA_SENSOR;
+	ret = afaltek_adpt_caf_process(cxt, &caf_in);
+
+	return ISP_SUCCESS;
 }
 
 static cmr_int afaltek_adpt_wait_flash(cmr_handle adpt_handle,
@@ -1367,6 +1418,9 @@ static cmr_int afaltek_adpt_inctrl(cmr_handle adpt_handle, cmr_int cmd,
 		break;
 	case AF_CTRL_CMD_SET_UPDATE_AWB:
 		ret = afaltek_adpt_update_awb(adpt_handle, in);
+		break;
+	case AF_CTRL_CMD_SET_UPDATE_AUX_SENSOR:
+		ret = afaltek_adpt_update_aux_sensor(adpt_handle, in);
 		break;
 	default:
 		ISP_LOGE("failed to case cmd = %ld", cmd);
