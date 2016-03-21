@@ -8,7 +8,7 @@
 
 #include "mtype.h"  /* same as altek 3A lib released */
 
-#define _WRAPPER_COMM_VER 318.8050
+#define _WRAPPER_COMM_VER 0.8050
 
 #pragma pack(push) /* push current alignment setting to stack */
 #pragma pack(4)    /* new alignment setting */

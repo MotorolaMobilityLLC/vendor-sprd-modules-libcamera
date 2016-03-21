@@ -110,6 +110,7 @@ struct allib_awb_manual_flow_setting_t {
 #pragma pack(4)    /* new alignment setting */
 struct allib_awb_initial_data_t {
 	struct wbgain_data_t        initial_wbgain;
+	struct wbgain_data_t        initial_wbgain_balanced;
 	uint16                      color_temperature;
 };
 #pragma pack(pop)  /* restore old alignment setting from stack */

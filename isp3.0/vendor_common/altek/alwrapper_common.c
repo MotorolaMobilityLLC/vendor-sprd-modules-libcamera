@@ -1,8 +1,8 @@
 /******************************************************************************
  * alwrapper_common.c
  *
- *  Created on: 2016/03/05
- *      Author: MarkTseng
+ *  Created on: 2016/03/18
+ *      Author: FishHuang
  *  Latest update:
  *      Reviser:
  *  Comments:
