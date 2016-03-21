@@ -1603,6 +1603,8 @@ static cmr_int aealtek_set_lib_roi(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 	roi_ptr->roi[0].roi.top = in_ptr->touch_zone.zone.y;
 	roi_ptr->roi[0].roi.w = in_ptr->touch_zone.zone.w;
 	roi_ptr->roi[0].roi.h = in_ptr->touch_zone.zone.h;
+	roi_ptr->ref_frame_height = 0;
+	roi_ptr->ref_frame_width = 0;
 	type = AE_SET_PARAM_ROI;
 	in_param.ae_set_param_type = type;
 	if (obj_ptr && obj_ptr->set_param)
@@ -2982,6 +2984,8 @@ static cmr_int aealtek_set_fd_param(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 		roi_ptr->roi[i].roi.top = sy;
 		roi_ptr->roi[i].roi.w = ex - sx + 1;
 		roi_ptr->roi[i].roi.h = ey - sy + 1;
+		roi_ptr->ref_frame_height = 0;
+		roi_ptr->ref_frame_width = 0;
 	}
 
 	type = AE_SET_PARAM_FACE_ROI;
@@ -3793,6 +3797,31 @@ exit:
 	return ret;
 }
 
+static void aealtek_flash_process(struct ae_report_update_t *from_ptr, struct isp3a_ae_report *to_ptr)
+{
+	to_ptr->flash_param_preview.blending_ratio_led1 = from_ptr->preflash_report.flash_ratio;
+	to_ptr->flash_param_preview.blending_ratio_led2 = from_ptr->preflash_report.flash_ratio_led2;
+	to_ptr->flash_param_preview.color_temp_led1 = from_ptr->preflash_report.LED1_CT;
+	to_ptr->flash_param_preview.color_temp_led2 = from_ptr->preflash_report.LED2_CT;
+	to_ptr->flash_param_preview.wbgain_led1.r = from_ptr->preflash_report.flash_gain.r_gain;
+	to_ptr->flash_param_preview.wbgain_led1.g = from_ptr->preflash_report.flash_gain.g_gain;
+	to_ptr->flash_param_preview.wbgain_led1.b = from_ptr->preflash_report.flash_gain.b_gain;
+	to_ptr->flash_param_preview.wbgain_led2.r = from_ptr->preflash_report.flash_gain_led2.r_gain;
+	to_ptr->flash_param_preview.wbgain_led2.g = from_ptr->preflash_report.flash_gain_led2.g_gain;
+	to_ptr->flash_param_preview.wbgain_led2.b = from_ptr->preflash_report.flash_gain_led2.b_gain;
+
+	to_ptr->flash_param_capture.blending_ratio_led1 = from_ptr->mainflash_report.flash_ratio;
+	to_ptr->flash_param_capture.blending_ratio_led2 = from_ptr->mainflash_report.flash_ratio_led2;
+	to_ptr->flash_param_capture.color_temp_led1 = from_ptr->mainflash_report.LED1_CT;
+	to_ptr->flash_param_capture.color_temp_led2 = from_ptr->mainflash_report.LED2_CT;
+	to_ptr->flash_param_capture.wbgain_led1.r = from_ptr->mainflash_report.flash_gain.r_gain;
+	to_ptr->flash_param_capture.wbgain_led1.g = from_ptr->mainflash_report.flash_gain.g_gain;
+	to_ptr->flash_param_capture.wbgain_led1.b = from_ptr->mainflash_report.flash_gain.b_gain;
+	to_ptr->flash_param_capture.wbgain_led2.r = from_ptr->mainflash_report.flash_gain_led2.r_gain;
+	to_ptr->flash_param_capture.wbgain_led2.g = from_ptr->mainflash_report.flash_gain_led2.g_gain;
+	to_ptr->flash_param_capture.wbgain_led2.b = from_ptr->mainflash_report.flash_gain_led2.b_gain;
+}
+
 static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_proc_in *in_ptr)
 {
 	cmr_int ret = ISP_ERROR;
@@ -3900,6 +3929,8 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 				} else {
 					cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRL_CB_CONVERGED, &callback_in);
 				}
+
+				aealtek_flash_process(&cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update, &callback_in.proc_out.ae_info.report_data);
 			}
 			break;
 		case AEALTEK_FLASH_STATE_LIGHTING:
@@ -3927,6 +3958,8 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 				ISP_LOGI("========flash main exp:%d,%d,%d,%d",
 						cxt_ptr->flash_param.main_flash_est.exp_cell.gain,cxt_ptr->flash_param.main_flash_est.exp_cell.exp_line
 						,cxt_ptr->flash_param.main_flash_est.exp_cell.exp_time,cxt_ptr->flash_param.main_flash_est.exp_cell.iso);
+
+				aealtek_flash_process(&cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update, &callback_in.proc_out.ae_info.report_data);
 			}
 			break;
 		default:

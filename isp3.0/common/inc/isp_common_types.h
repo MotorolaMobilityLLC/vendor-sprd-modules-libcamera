@@ -135,12 +135,12 @@ enum isp3a_ae_ctrl_state {
 
 /**********************************STRUCT***********************************/
 struct isp3a_flash_param {
-	float blending_ratio_led1;
+	cmr_u32 blending_ratio_led1;
 	struct isp_awb_gain wbgain_led1;
-	float color_temp_led1;// [TBD]
-	float blending_ratio_led2;
+	cmr_u32 color_temp_led1;// [TBD]
+	cmr_u32 blending_ratio_led2;
 	struct isp_awb_gain wbgain_led2;
-	float color_temp_led2;// [TBD]
+	cmr_u32 color_temp_led2;// [TBD]
 };
 
 struct isp3a_ae_report {
