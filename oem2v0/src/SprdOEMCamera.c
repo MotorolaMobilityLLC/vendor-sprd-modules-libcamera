@@ -843,6 +843,13 @@ cmr_int camera_get_gain_thrs(cmr_handle camera_handle, cmr_u32 *is_over_thrs)
 	return ret;
 }
 
+cmr_int camera_set_sensor_info_to_af(cmr_handle camera_handle,  void* sensor_info)
+{
+	cmr_int ret = CMR_CAMERA_SUCCESS;
+	ret = camera_isp_set_sensor_info_to_af(camera_handle, sensor_info);
+	return ret;
+}
+
 void dump_jpeg_file(void *virt_addr, unsigned int size, int width, int height)
 {
 	char str_buf[100];

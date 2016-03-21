@@ -348,6 +348,7 @@ cmr_int camera_start_scale2(cmr_handle oem_handle, cmr_handle caller_handle, str
 cmr_int camera_start_scale_in_gsp(struct img_frm *src,
                                       struct img_frm *dst, int src_fd, int dst_fd);
 cmr_int camera_notify_close_gsp_hwc(cmr_int need_close);
+cmr_int camera_isp_set_sensor_info_to_af(cmr_handle oem_handle, void* sensor_info);
 #endif
 
 #ifdef __cplusplus

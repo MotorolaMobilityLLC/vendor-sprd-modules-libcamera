@@ -379,6 +379,8 @@ cmr_int camera_transfer_af_to_caf(cmr_handle camera_handle);
 void dump_jpeg_file(void *virt_addr, unsigned int size, int width, int height);
 
 cmr_int camera_get_gain_thrs(cmr_handle camera_handle, cmr_u32 *is_over_thrs);
+
+cmr_int camera_set_sensor_info_to_af(cmr_handle camera_handle,  void* sensor_info);
 #ifdef __cplusplus
 }
 #endif

@@ -45,6 +45,12 @@ extern "C" {
 #include "SprdCamera3Channel.h"
 
 #include <hardware/power.h>
+#ifdef CONFIG_CAMERA_EIS
+#include <android/sensor.h>
+#include <gui/Sensor.h>
+#include <gui/SensorManager.h>
+#include <gui/SensorEventQueue.h>
+#endif
 
 using namespace android;
 
@@ -69,6 +75,14 @@ typedef enum {
 	SNAPSHOT_ONLY_MODE,
 	SNAPSHOT_VIDEO_MODE,
 }snapshot_mode_type_t;
+
+typedef struct af_sensor_info {
+	cmr_u32 sensor_type;
+	//cmr_s64 timestamp;
+	float x;
+	float y;
+	float z;
+}af_sensor_info_t;
 
 typedef struct sprd_camera_memory {
 	MemIon *ion_heap;
@@ -180,6 +194,11 @@ public:
 #endif
 	void            setIspFlashMode(uint32_t mode);
 
+#ifdef CONFIG_CAMERA_EIS
+	static int		gyro_monitor_thread_init(void *p_data);
+	static int		gyro_monitor_thread_deinit(void *p_data);
+	static void*  gyro_monitor_thread_proc( void *p_data);
+#endif
 
 private:
 	inline void print_time();
@@ -587,6 +606,12 @@ private:
 
 	bool                          mIOMMUEnabled;
 	int                             mIOMMUID;
+		/* for eis*/
+#ifdef CONFIG_CAMERA_EIS
+	bool                          mGyroInit;
+	bool                          mGyroDeinit;
+	pthread_t                     mGyroMsgQueHandle;
+#endif
 };
 
 }; // namespace sprdcamera

@@ -479,3 +479,7 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),false)
 else
 LOCAL_CFLAGS += -DCONFIG_FACE_BEAUTY
 endif
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)
+LOCAL_CFLAGS += -DCONFIG_CAMERA_EIS
+endif

@@ -7134,3 +7134,13 @@ void camera_local_end_burst_notice(cmr_handle oem_handle){
 	isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_BURST_NOTICE,&caf_switch);
 #endif
 }
+
+cmr_int camera_isp_set_sensor_info_to_af(cmr_handle oem_handle, void* sensor_info) {
+	cmr_int                        ret = CMR_CAMERA_SUCCESS;
+	struct camera_context *cxt = (struct camera_context*)oem_handle;
+	struct isp_context             *isp_cxt = &cxt->isp_cxt;
+	if (cxt && isp_cxt) {
+		ret = isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_SET_AUX_SENSOR_INFO, (void*)sensor_info);
+	}
+	return ret;
+}

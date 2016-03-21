@@ -259,6 +259,10 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId,
 	m_pPowerModule(NULL),
 	mHDRPowerHint(0),
 	mHDRPowerHintFlag(0),
+	#ifdef CONFIG_CAMERA_EIS
+	mGyroInit(0),
+	mGyroDeinit(0),
+	#endif
 	mIsRecording(false)
 {
 	//mIsPerformanceTestable = sprd_isPerformanceTestable();
@@ -527,6 +531,9 @@ void SprdCamera3OEMIf::closeCamera()
 		}
 	}
 
+#ifdef CONFIG_CAMERA_EIS
+	gyro_monitor_thread_deinit((void *)this);
+#endif
 	if (isCameraInit()) {
 		// When libqcamera detects an error, it calls camera_cb from the
 		// call to camera_stop, which would cause a deadlock if we
@@ -3963,11 +3970,14 @@ int SprdCamera3OEMIf::openCamera()
 #ifdef CONFIG_MEM_OPTIMIZATION
 	ZSLMode_monitor_thread_init((void *)this);
 #endif
+
 	if (!startCameraIfNecessary()) {
 		ret = UNKNOWN_ERROR;
 		HAL_LOGE("start failed");
 	}
-
+#ifdef CONFIG_CAMERA_EIS
+	gyro_monitor_thread_init((void *)this);
+#endif
 	return ret;
 }
 
@@ -6608,4 +6618,116 @@ void * SprdCamera3OEMIf::pre_alloc_cap_mem_thread_proc(void *p_data)
 	return NULL;
 }
 
+#ifdef CONFIG_CAMERA_EIS
+int SprdCamera3OEMIf::gyro_monitor_thread_init(void *p_data)
+{
+	int ret = NO_ERROR;
+	pthread_attr_t attr;
+	SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
+
+	if (!obj) {
+		HAL_LOGE("obj null  error");
+		return -1;
+	}
+
+	HAL_LOGD("E inited=%d", obj->mGyroInit);
+
+	if (!obj->mGyroInit) {
+		obj->mGyroInit = 1;
+		pthread_attr_init(&attr);
+		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+		ret = pthread_create(&obj->mGyroMsgQueHandle,
+							&attr,
+							gyro_monitor_thread_proc,
+							(void *)obj);
+		if (ret) {
+			obj->mGyroInit = 0;
+			HAL_LOGE("fail to send init msg");
+		}
+	}
+
+	return ret;
+}
+
+void * SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data)
+{
+	ssize_t n;
+	ASensorEvent buffer[8];
+	SprdCamera3OEMIf * obj = (SprdCamera3OEMIf *)p_data;
+	HAL_LOGD("E");
+
+	if (!obj) {
+		HAL_LOGE("obj null  error");
+		return NULL;
+	}
+	SensorManager  mgr(String16("EIS intergrate"));
+
+	Sensor const* const* list;
+	ssize_t count = mgr.getSensorList(&list);
+	sp<SensorEventQueue> q = mgr.createEventQueue();
+	Sensor const* gyroscope = mgr.getDefaultSensor(Sensor::TYPE_GYROSCOPE);
+
+	q->enableSensor(gyroscope);
+	q->setEventRate(gyroscope, ms2ns(10));
+
+	af_sensor_info_t sensor_info;
+	while(true){
+		if(obj->mGyroInit == true){
+			q->waitForEvent();
+			if ((n = q->read(buffer, 8)) > 0) {
+				for (int i=0 ; i<n ; i++) {
+					memset((void*)&sensor_info, 0, sizeof(sensor_info));
+					if (buffer[i].type == Sensor::TYPE_GYROSCOPE) {
+						HAL_LOGD("mGyroCamera:%lld\t%8f\t%8f\t%8f\n",buffer[i].timestamp,buffer[i].data[0], buffer[i].data[1], buffer[i].data[2]);
+						sensor_info.sensor_type = 4;
+						//sensor_info.timestamp = buffer[i].timestamp;
+						sensor_info.x = buffer[i].data[0];
+						sensor_info.y = buffer[i].data[1];
+						sensor_info.z = buffer[i].data[2];
+						if (NULL != obj->mCameraHandle) {
+							camera_set_sensor_info_to_af(obj->mCameraHandle, (void*)&sensor_info);
+						}
+					}
+				}
+			}
+		}else{
+			obj->mGyroDeinit = 1;
+			HAL_LOGD("mGyroCamera:exit.");
+			break;
+		}
+	}
+
+	q->disableSensor(gyroscope);
+	//mgr.sensorManagerDied();
+	HAL_LOGD("X");
+
+	return NULL;
+}
+
+int SprdCamera3OEMIf::gyro_monitor_thread_deinit(void *p_data)
+{
+	int ret = NO_ERROR;
+	void *dummy;
+	SprdCamera3OEMIf * obj = (SprdCamera3OEMIf *)p_data;
+
+	if (!obj) {
+		HAL_LOGE("obj null error");
+		return -1;
+	}
+
+	HAL_LOGD("E inited=%d, Deinit = %d", obj->mGyroInit, obj->mGyroDeinit);
+
+	if (obj->mGyroInit) {
+		obj->mGyroInit = 0;
+		while(!obj->mGyroDeinit)
+		{
+			usleep(2*1000);
+		}
+		ret = pthread_join(obj->mGyroMsgQueHandle, &dummy);
+		obj->mGyroMsgQueHandle = 0;
+	}
+
+	return ret ;
+}
+#endif
 }
