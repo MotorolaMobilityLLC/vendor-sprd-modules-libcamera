@@ -3842,10 +3842,12 @@ int SprdCameraHardware::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u
 		*vir_addr++ = (cmr_uint)memory->data;
 		if (NULL != mfd)
 			*mfd++ = (cmr_s32)memory->mfd;
-		*phy_addr++ = mem_size*2/3;
-		*vir_addr++ = (cmr_uint)memory->data;
-		if (NULL != mfd)
-			*mfd++ = (cmr_s32)memory->mfd;
+		if(type != CAMERA_SNAPSHOT_ZSL_RESERVED){
+			*phy_addr++ = mem_size*2/3;
+			*vir_addr++ = (cmr_uint)memory->data;
+			if (NULL != mfd)
+				*mfd++ = (cmr_s32)memory->mfd;
+		}
 	} else if (type == CAMERA_ISP_LSC) {
 		if(mIspLscHeapReserved == NULL) {
 			memory = allocCameraMem(size, true);

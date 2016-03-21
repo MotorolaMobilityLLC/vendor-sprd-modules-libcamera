@@ -7350,6 +7350,7 @@ cmr_int prev_pop_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id, s
 //		frame_type.y_vir_addr = prev_cxt->prev_virt_addr_array[0];
 		frame_type.y_phy_addr = prev_cxt->prev_frm[0].addr_phy.addr_y;
 		frame_type.y_vir_addr = prev_cxt->prev_frm[0].addr_vir.addr_y;
+		frame_type.y_mfd = prev_cxt->prev_frm[0].mfd.y;
 		frame_type.type       = PREVIEW_CANCELED_FRAME;
 
 		CMR_LOGI("phys addr 0x%lx addr 0x%lx", frame_type.y_phy_addr, frame_type.y_vir_addr);
