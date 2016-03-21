@@ -385,6 +385,10 @@ static cmr_u8 afaltek_adpt_lock_ae_awb(cmr_handle adpt_handle, cmr_int lock)
 	else if (ISP_AE_AWB_UNLOCK == lock)
 		cxt->ae_awb_lock_cnt--;
 	ISP_LOGI("lock = %ld, ae_awb_lock_cnt = %ld", lock, cxt->ae_awb_lock_cnt);
+	if (0 > cxt->ae_awb_lock_cnt) {
+		cxt->ae_awb_lock_cnt = 0; /* TBD */
+		return 0;
+	}
 	/* call af ctrl callback to lock ae & awb */
 	if (cxt->cb_ops.lock_ae_awb) {
 		ret = cxt->cb_ops.lock_ae_awb(cxt->caller_handle, &lock);
