@@ -725,11 +725,14 @@ struct ae_output_data_t {
 	uint32 sys_sof_index;		/* current SOF ID, should be maintained by framework */
 	uint32 hw3a_ae_block_nums;	/* total blocks */
 	uint32 hw3a_ae_block_totalpixels;	/* total pixels in each blocks */
+	uint8  hw3a_ae_block_w;		/*block width*/
+	uint8  hw3a_ae_block_h;		/*block height*/
 	void*  pthw3a_ae_stats;		/* store HW3A Y data */
 	int32  hw3a_cur_mask[AL_MAX_AE_STATS_NUM];	/* store HW3A running mask of AE */
 
 	/* AE runing status */
 	uint32  ae_targetmean;
+	uint32  ae_default_target;		/*from tuning param or set cmd param*/
 	uint32  ae_cur_mean;
 	uint32  ae_nonwt_mean;		/* average mean */
 	uint32  ae_center_mean2x2;	/* center 2x2 mean */
@@ -781,6 +784,10 @@ struct ae_output_data_t {
 	/* UI control parameter  */
 	int32  ui_EV_comp;
 	int32  ae_3rd_comp;
+
+	/* AE Compensation */
+	int32  bv_comp;
+	int32  intae_comp;
 
 	/* misc info */
 	uint32    ae_extreme_green_cnt;

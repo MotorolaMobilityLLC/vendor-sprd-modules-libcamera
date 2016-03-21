@@ -15,6 +15,7 @@
 #define ALAF_EXIF_INFO_SIZE (379)
 #define ALAF_DEBUG_INFO_SIZE (7168)
 #define MAX_STATS_ROI_NUM (5)
+#define MAX_AF_DEBUG_DATA_SIZE (7168)
 #define MAX_STATS_COLUMN_NUM (9)
 #define MAX_STATS_ROW_NUM (9)
 #define ALAF_MAX_STATS_NUM (MAX_STATS_COLUMN_NUM*MAX_STATS_ROW_NUM)
@@ -532,7 +533,7 @@ struct allib_af_input_altune_t {
 	void* p_scdet_tuning_ptr;
 	void* p_haf_tuning_ptr;
 };
-/* allib_af_input_altune_t */
+#pragma pack(pop)
 
 /*
  * allib_af_input_special_event_type
