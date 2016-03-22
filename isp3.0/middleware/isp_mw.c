@@ -437,6 +437,7 @@ cmr_int isp_proc_start(cmr_handle isp_handle, struct ips_in_param *input_ptr, st
 	memcpy(&dev_in.src_frame, &input_ptr->src_frame, sizeof(struct isp_img_frm));
 	memcpy(&dev_in.dst_frame, &input_ptr->dst_frame, sizeof(struct isp_img_frm));
 	memcpy(&dev_in.dst2_frame, &input_ptr->dst2_frame, sizeof(struct isp_img_frm));
+	memcpy(&dev_in.resolution_info, &input_ptr->resolution_info, sizeof(struct isp_sensor_resolution_info));
 	ret = isp_dev_access_start_postproc(cxt->isp_dev_handle, &dev_in, &dev_out);
 exit:
 	return ret;

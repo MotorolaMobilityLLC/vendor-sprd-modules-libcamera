@@ -61,6 +61,7 @@ struct isp_dev_postproc_in {
 	struct isp_3a_dld_sequence dldseq;
 	struct isp_awb_gain awb_gain;
 	struct isp_awb_gain awb_gain_balanced;
+	struct isp_sensor_resolution_info resolution_info;
 };
 
 struct isp_dev_postproc_out {
