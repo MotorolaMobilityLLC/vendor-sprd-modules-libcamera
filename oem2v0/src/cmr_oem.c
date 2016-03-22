@@ -2664,6 +2664,7 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 	isp_param.image_pattern = sensor_info_ptr->image_pattern;
 	CMR_LOGD("image_pattern: %d", isp_param.image_pattern);
 	struct sensor_ex_info sn_ex_info;
+	memset(&sn_ex_info,0,sizeof(struct sensor_ex_info));
 	val.type               = SENSOR_VAL_TYPE_GET_STATIC_INFO;
 	val.pval               = &sn_ex_info;
 	ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_ACCESS_VAL, (cmr_uint)&val);
@@ -2676,8 +2677,12 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 		isp_param.ex_info.preview_skip_num = 0;
 		isp_param.ex_info.capture_skip_num = 0;
 	}
-	CMR_LOGD("get static info:sensor name: %s, version: %s.",
+	if((NULL != sn_ex_info.name) && (NULL != sn_ex_info.sensor_version_info)) {
+		CMR_LOGD("get static info:sensor name: %s, version: %s.",
 			isp_param.ex_info.name,isp_param.ex_info.sensor_version_info);
+	} else {
+		CMR_LOGE("maybe fail to get static info: sensor name or sensor version info is null.");
+	}
 	CMR_LOGD("get static info:f_num: %d,focal_length %d,max_fps: %d,max_adgain: %d",
 			isp_param.ex_info.f_num,isp_param.ex_info.focal_length,
 			isp_param.ex_info.max_fps,isp_param.ex_info.max_adgain);
