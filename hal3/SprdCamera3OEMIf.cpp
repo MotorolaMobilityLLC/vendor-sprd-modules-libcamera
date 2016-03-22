@@ -3272,10 +3272,11 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame)
 		}
 
 #ifdef CONFIG_MEM_OPTIMIZATION
-		if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE /*|| mTakePictureMode == SNAPSHOT_ZSL_MODE*/ || mTakePictureMode == SNAPSHOT_DEFAULT_MODE) {
+		if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE /*|| mTakePictureMode == SNAPSHOT_ZSL_MODE*/ || mTakePictureMode == SNAPSHOT_DEFAULT_MODE) 
 #else
-		if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE || mTakePictureMode == SNAPSHOT_ZSL_MODE || mTakePictureMode == SNAPSHOT_DEFAULT_MODE) {
+		if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE || mTakePictureMode == SNAPSHOT_ZSL_MODE || mTakePictureMode == SNAPSHOT_DEFAULT_MODE)
 #endif
+                {
 			SprdCamera3RegularChannel* regularChannel = reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
 			if(regularChannel) {
 				HAL_LOGD("clear preview stream");

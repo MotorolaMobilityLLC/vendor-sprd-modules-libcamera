@@ -56,7 +56,104 @@ static const struct raw_param_info_tab s_s5k5e3yx_raw_param_tab[] = {
 };
 
 static const SENSOR_REG_T s5k5e3yx_common_init[] = {
-
+{0x0100	,0x00},
+{0x3000	,0x04},
+{0x3002	,0x03},
+{0x3003	,0x04},
+{0x3004	,0x05},
+{0x3005	,0x00},
+{0x3006	,0x10},
+{0x3007	,0x0A},
+{0x3008	,0x55},
+{0x3039	,0x00},
+{0x303A	,0x00},
+{0x303B	,0x00},
+{0x3009	,0x05},
+{0x300A	,0x55},
+{0x300B	,0x38},
+{0x300C	,0x10},
+{0x3012	,0x14},
+{0x3013	,0x00},
+{0x3014	,0x22},
+{0x300E	,0x79},
+{0x3010	,0x68},
+{0x3019	,0x03},
+{0x301A	,0x00},
+{0x301B	,0x06},
+{0x301C	,0x00},
+{0x301D	,0x22},
+{0x301E	,0x00},
+{0x301F	,0x10},
+{0x3020	,0x00},
+{0x3021	,0x00},
+{0x3022	,0x0A},
+{0x3023	,0x1E},
+{0x3024	,0x00},
+{0x3025	,0x00},
+{0x3026	,0x00},
+{0x3027	,0x00},
+{0x3028	,0x1A},
+{0x3015	,0x00},
+{0x3016	,0x84},
+{0x3017	,0x00},
+{0x3018	,0xA0},
+{0x302B	,0x10},
+{0x302C	,0x0A},
+{0x302D	,0x06},
+{0x302E	,0x05},
+{0x302F	,0x0E},
+{0x3030	,0x2F},
+{0x3031	,0x08},
+{0x3032	,0x05},
+{0x3033	,0x09},
+{0x3034	,0x05},
+{0x3035	,0x00},
+{0x3036	,0x00},
+{0x3037	,0x00},
+{0x3038	,0x00},
+{0x3088	,0x06},
+{0x308A	,0x08},
+{0x308C	,0x05},
+{0x308E	,0x07},
+{0x3090	,0x06},
+{0x3092	,0x08},
+{0x3094	,0x05},
+{0x3096	,0x21},
+{0x3055	,0x9E},
+{0x3099	,0x06},
+{0x3070	,0x10},
+{0x3085	,0x31},
+{0x3086	,0x01},
+{0x3064	,0x00},
+{0x3062	,0x08},
+{0x3061	,0x15},
+{0x307B	,0x20},
+{0x3068	,0x01},
+{0x3074	,0x00},
+{0x307D	,0x05},
+{0x3045	,0x01},
+{0x3046	,0x05},
+{0x3047	,0x78},
+{0x307F	,0xB1},
+{0x3098	,0x01},
+{0x305C	,0xF6},
+{0x3063	,0x2F},
+{0x3400	,0x01},
+{0x3235	,0x49},
+{0x3233	,0x00},
+{0x3234	,0x00},
+{0x3300	,0x0C},
+{0x3203	,0x45},
+{0x3205	,0x4D},
+{0x320B	,0x40},
+{0x320C	,0x06},
+{0x320D	,0xC0},
+{0x3244	,0x00},
+{0x3245	,0x00},
+{0x3246	,0x01},
+{0x3247	,0x00},
+{0x3268	,0x88},
+{0x3269	,0x01},
 };
 
 static const SENSOR_REG_T s5k5e3yx_2592x1944_2lane_setting[] = {
@@ -64,6 +161,7 @@ static const SENSOR_REG_T s5k5e3yx_2592x1944_2lane_setting[] = {
 };
 
 static const SENSOR_REG_T s5k5e3yx_2576x1932_2lane_setting[] = {
+#if 0
 	{0x0100,	0x00},
 	{0x0305,	0x06},
 	{0x0306,	0x00},
@@ -200,13 +298,62 @@ static const SENSOR_REG_T s5k5e3yx_2576x1932_2lane_setting[] = {
 	{0x3247,	0x00},
 	{0x3268,	0x88},
 	{0x3269,	0x01},
+#endif
+
+{0x0136	,0x1A},
+{0x0137	,0x00},
+{0x0305	,0x06},
+{0x0306	,0x00},
+{0x0307	,0xCF},
+{0x3C1F	,0x00},
+{0x0820	,0x03},
+{0x0821	,0x80},
+{0x3C1C	,0x58},
+{0x0114	,0x01},
+{0x0340	,0x07},
+{0x0341	,0xEB},
+{0x0342	,0x0B},
+{0x0343	,0x86},
+{0x0344	,0x00},
+{0x0345	,0x00},
+{0x0346	,0x00},
+{0x0347	,0x02},
+{0x0348	,0x0A},
+{0x0349	,0x0F},
+{0x034A	,0x07},
+{0x034B	,0x8D},
+{0x034C	,0x0A},
+{0x034D	,0x10},
+{0x034E	,0x07},
+{0x034F	,0x8C},
+{0x0900	,0x00},
+{0x0901	,0x00},
+{0x0383	,0x01},
+{0x0387	,0x01},
+{0x0204	,0x00},
+{0x0205	,0x20},
+{0x0202	,0x02},
+{0x0203	,0x00},
+{0x0200	,0x04},
+{0x0201	,0x98},
+{0x3941	,0x06},
+{0x3942	,0x18},
+{0x3924	,0x3C},
+{0x3925	,0xF0},
+{0x3C31	,0x6D},
+{0x3C32	,0xB0},
+{0x3C08	,0x79},
+{0x3C09	,0xE0},
+{0x3320	,0x02},
+/*{0x0100	,0x01}*/
+
 };
 
 static SENSOR_REG_TAB_INFO_T s_s5k5e3yx_resolution_Tab_RAW[] = {
-	//{ADDR_AND_LEN_OF_ARRAY(s5k5e3yx_common_init), 0, 0, 24, SENSOR_IMAGE_FORMAT_RAW},
+	{ADDR_AND_LEN_OF_ARRAY(s5k5e3yx_common_init), 0, 0, 26, SENSOR_IMAGE_FORMAT_RAW},
 	{PNULL, 0, 0, 0, 24, SENSOR_IMAGE_FORMAT_RAW},
 	//{ADDR_AND_LEN_OF_ARRAY(s5k5e3yx_2592x1944_2lane_setting), 2592, 1944, 24, SENSOR_IMAGE_FORMAT_RAW},
-	{ADDR_AND_LEN_OF_ARRAY(s5k5e3yx_2576x1932_2lane_setting), 2576, 1932, 24, SENSOR_IMAGE_FORMAT_RAW},
+	{ADDR_AND_LEN_OF_ARRAY(s5k5e3yx_2576x1932_2lane_setting), 2576, 1932, 26, SENSOR_IMAGE_FORMAT_RAW},
 	{PNULL, 0, 0, 0, 0, 0},
 	{PNULL, 0, 0, 0, 0, 0},
 	{PNULL, 0, 0, 0, 0, 0},
@@ -260,11 +407,7 @@ static SENSOR_VIDEO_INFO_T s_s5k5e3yx_video_info[] = {
 
 static SENSOR_IOCTL_FUNC_TAB_T s_s5k5e3yx_ioctl_func_tab = {
 	PNULL,
-#ifdef MINICAMERA
 	_s5k5e3yx_PowerOn,
-#else
-	PNULL,
-#endif
 	PNULL,
 	_s5k5e3yx_Identify,
 
@@ -314,6 +457,31 @@ static SENSOR_IOCTL_FUNC_TAB_T s_s5k5e3yx_ioctl_func_tab = {
 	_s5k5e3yx_StreamOn,
 	_s5k5e3yx_StreamOff,
 	_s5k5e3yx_access_val,
+};
+
+static SENSOR_STATIC_INFO_T s_s5k5e3yx_static_info = {
+	200,	//f-number,focal ratio
+	357,	//focal_length;
+	0,	//max_fps,max fps of sensor's all settings,it will be calculated from sensor mode fps
+	16,	//max_adgain,AD-gain
+	0,	//ois_supported;
+	0,	//pdaf_supported;
+	1,	//exp_valid_frame_num;N+2-1
+	64,	//clamp_level,black level
+	1,	//adgain_valid_frame_num;N+1-1
+};
+
+static SENSOR_MODE_FPS_INFO_T s_s5k5e3yx_mode_fps_info = {
+	0,	//is_init;
+	{{SENSOR_MODE_COMMON_INIT,0,1,0,0},
+	{SENSOR_MODE_PREVIEW_ONE,0,1,0,0},
+	{SENSOR_MODE_SNAPSHOT_ONE_FIRST,0,1,0,0},
+	{SENSOR_MODE_SNAPSHOT_ONE_SECOND,0,1,0,0},
+	{SENSOR_MODE_SNAPSHOT_ONE_THIRD,0,1,0,0},
+	{SENSOR_MODE_PREVIEW_TWO,0,1,0,0},
+	{SENSOR_MODE_SNAPSHOT_TWO_FIRST,0,1,0,0},
+	{SENSOR_MODE_SNAPSHOT_TWO_SECOND,0,1,0,0},
+	{SENSOR_MODE_SNAPSHOT_TWO_THIRD,0,1,0,0}}
 };
 
 
@@ -388,6 +556,7 @@ SENSOR_INFO_T g_s5k5e3yx_mipi_raw_info = {
 	3,			// skip frame num while change setting
 	48,			// horizontal view angle
 	48,			// vertical view angle
+	"s5k5e3yx_truly_v1",		// version info of sensor
 };
 
 static struct sensor_raw_info* Sensor_GetContext(void)
@@ -685,6 +854,48 @@ static unsigned long _s5k5e3yx_GetResolutionTrimTab(unsigned long param)
 	return (unsigned long) s_s5k5e3yx_Resolution_Trim_Tab;
 }
 
+static uint32_t _s5k5e3yx_init_mode_fps_info()
+{
+	uint32_t rtn = SENSOR_SUCCESS;
+	SENSOR_PRINT("_s5k5e3yx_init_mode_fps_info:E");
+	if(!s_s5k5e3yx_mode_fps_info.is_init) {
+		uint32_t i,modn,tempfps = 0;
+		SENSOR_PRINT("_s5k5e3yx_init_mode_fps_info:start init");
+		for(i = 0;i < NUMBER_OF_ARRAY(s_s5k5e3yx_Resolution_Trim_Tab); i++) {
+			//max fps should be multiple of 30,it calulated from line_time and frame_line
+			tempfps = s_s5k5e3yx_Resolution_Trim_Tab[i].line_time*s_s5k5e3yx_Resolution_Trim_Tab[i].frame_line;
+			if(0 != tempfps) {
+				tempfps = 10000000/tempfps;
+				modn = tempfps / 30;
+				if(tempfps > modn*30)
+					modn++;
+				s_s5k5e3yx_mode_fps_info.sensor_mode_fps[i].max_fps = modn*30;
+				if(s_s5k5e3yx_mode_fps_info.sensor_mode_fps[i].max_fps > 30) {
+					s_s5k5e3yx_mode_fps_info.sensor_mode_fps[i].is_high_fps = 1;
+					s_s5k5e3yx_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num =
+						s_s5k5e3yx_mode_fps_info.sensor_mode_fps[i].max_fps/30;
+				}
+				if(s_s5k5e3yx_mode_fps_info.sensor_mode_fps[i].max_fps >
+						s_s5k5e3yx_static_info.max_fps) {
+					s_s5k5e3yx_static_info.max_fps =
+						s_s5k5e3yx_mode_fps_info.sensor_mode_fps[i].max_fps;
+				}
+			}
+			SENSOR_PRINT("mode %d,tempfps %d,frame_len %d,line_time: %d ",i,tempfps,
+					s_s5k5e3yx_Resolution_Trim_Tab[i].frame_line,
+					s_s5k5e3yx_Resolution_Trim_Tab[i].line_time);
+			SENSOR_PRINT("mode %d,max_fps: %d ",
+					i,s_s5k5e3yx_mode_fps_info.sensor_mode_fps[i].max_fps);
+			SENSOR_PRINT("is_high_fps: %d,highfps_skip_num %d",
+					s_s5k5e3yx_mode_fps_info.sensor_mode_fps[i].is_high_fps,
+					s_s5k5e3yx_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num);
+		}
+		s_s5k5e3yx_mode_fps_info.is_init = 1;
+	}
+	SENSOR_PRINT("_s5k5e3yx_init_mode_fps_info:X");
+	return rtn;
+}
+
 
 
 static unsigned long _s5k5e3yx_Identify(unsigned long param)
@@ -696,9 +907,11 @@ static unsigned long _s5k5e3yx_Identify(unsigned long param)
 	uint8_t pid_value = 0x00;
 	uint8_t ver_value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
-
+	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)sensor_get_dev_cxt();
+	uint8_t i;
 	SENSOR_PRINT_ERR("SENSOR_S5K5E3YX: mipi raw identify\n");
-
+//while(1){
+	//for(i=0 ;i<100;i++){
 	pid_value = Sensor_ReadReg(S5K5E3YX_PID_ADDR);
 
 	if (S5K5E3YX_PID_VALUE == pid_value) {
@@ -711,6 +924,7 @@ static unsigned long _s5k5e3yx_Identify(unsigned long param)
 				SENSOR_PRINT_ERR("SENSOR_S5K5E3YX: the module is unknow error !");
 			}
 			Sensor_s5k5e3yx_InitRawTuneInfo();
+                             _s5k5e3yx_init_mode_fps_info();
 		} else {
 			SENSOR_PRINT_ERR("SENSOR_S5K5E3YX: Identify this is hm%x%x sensor !", pid_value, ver_value);
 			return ret_value;
@@ -719,6 +933,10 @@ static unsigned long _s5k5e3yx_Identify(unsigned long param)
 		SENSOR_PRINT_ERR("SENSOR_S5K5E3YX: identify fail,pid_value=%d", pid_value);
 	}
 
+	/*SENSOR_PRINT_HIGH("address of sensor = 0x%x", sensor_cxt->i2c_addr);
+	sensor_cxt->i2c_addr = i;
+	sns_dev_set_i2c_addr(sensor_cxt);*/
+//}
 	return ret_value;
 }
 
@@ -932,23 +1150,30 @@ static unsigned long _s5k5e3yx_PowerOn(unsigned long power_on)
 	uint8_t pid_value = 0x00;
 
 	if (SENSOR_TRUE == power_on) {
-		//Sensor_SetResetLevel(reset_level);
+		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
+		Sensor_SetResetLevel(reset_level);
 		Sensor_PowerDown(power_down);
+
+       	/*Sensor_SetDvddVoltage(dvdd_val);
+		usleep(5*1000);
+		Sensor_SetIovddVoltage(iovdd_val);
+		usleep(5*1000);
+        Sensor_SetAvddVoltage(avdd_val);*/
 		Sensor_SetVoltage(dvdd_val, avdd_val, iovdd_val);
-		Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
+		//Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
 		usleep(10*1000);
 		Sensor_PowerDown(!power_down);
-		//Sensor_SetResetLevel(!reset_level);
+		Sensor_SetResetLevel(!reset_level);
 		usleep(10*1000);
 		//_dw9807_SRCInit(2);
-		Sensor_SetMCLK(SENSOR_DEFALUT_MCLK);
+		Sensor_SetMCLK(26);
 		usleep(10*1000);
 	} else {
 		Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
-		//Sensor_SetResetLevel(reset_level);
+		Sensor_SetResetLevel(reset_level);
 		Sensor_PowerDown(power_down);
 		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
-		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
+		//Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 	}
 
 	SENSOR_PRINT_ERR("SENSOR_S5K5E3YX: _s5k5e3yx_PowerOn(1:on, 0:off): %d, reset_level %d, dvdd_val %d", power_on, reset_level, dvdd_val);
@@ -1004,6 +1229,65 @@ static uint16_t _s5k5e3yx_get_shutter(void)
 #endif
 }
 
+static uint32_t _s5k5e3yx_get_static_info(uint32_t *param)
+{
+	uint32_t rtn = SENSOR_SUCCESS;
+	struct sensor_ex_info *ex_info;
+	//make sure we have get max fps of all settings.
+	if(!s_s5k5e3yx_mode_fps_info.is_init) {
+		_s5k5e3yx_init_mode_fps_info();
+	}
+	ex_info = (struct sensor_ex_info*)param;
+	ex_info->f_num = s_s5k5e3yx_static_info.f_num;
+	ex_info->focal_length = s_s5k5e3yx_static_info.focal_length;
+	ex_info->max_fps = s_s5k5e3yx_static_info.max_fps;
+	ex_info->max_adgain = s_s5k5e3yx_static_info.max_adgain;
+	ex_info->ois_supported = s_s5k5e3yx_static_info.ois_supported;
+	ex_info->pdaf_supported = s_s5k5e3yx_static_info.pdaf_supported;
+	ex_info->exp_valid_frame_num = s_s5k5e3yx_static_info.exp_valid_frame_num;
+	ex_info->clamp_level = s_s5k5e3yx_static_info.clamp_level;
+	ex_info->adgain_valid_frame_num = s_s5k5e3yx_static_info.adgain_valid_frame_num;
+	ex_info->preview_skip_num = g_s5k5e3yx_mipi_raw_info.preview_skip_num;
+	ex_info->capture_skip_num = g_s5k5e3yx_mipi_raw_info.capture_skip_num;
+	ex_info->name = g_s5k5e3yx_mipi_raw_info.name;
+	ex_info->sensor_version_info = g_s5k5e3yx_mipi_raw_info.sensor_version_info;
+	SENSOR_PRINT("SENSOR_s5k5e3yx: f_num: %d", ex_info->f_num);
+	SENSOR_PRINT("SENSOR_s5k5e3yx: max_fps: %d", ex_info->max_fps);
+	SENSOR_PRINT("SENSOR_s5k5e3yx: max_adgain: %d", ex_info->max_adgain);
+	SENSOR_PRINT("SENSOR_s5k5e3yx: ois_supported: %d", ex_info->ois_supported);
+	SENSOR_PRINT("SENSOR_s5k5e3yx: pdaf_supported: %d", ex_info->pdaf_supported);
+	SENSOR_PRINT("SENSOR_s5k5e3yx: exp_valid_frame_num: %d", ex_info->exp_valid_frame_num);
+	SENSOR_PRINT("SENSOR_s5k5e3yx: clam_level: %d", ex_info->clamp_level);
+	SENSOR_PRINT("SENSOR_s5k5e3yx: adgain_valid_frame_num: %d", ex_info->adgain_valid_frame_num);
+	SENSOR_PRINT("SENSOR_s5k5e3yx: sensor name is: %s", ex_info->name);
+	SENSOR_PRINT("SENSOR_s5k5e3yx: sensor version info is: %s", ex_info->sensor_version_info);
+
+	return rtn;
+}
+
+
+static uint32_t _s5k5e3yx_get_fps_info(uint32_t *param)
+{
+	uint32_t rtn = SENSOR_SUCCESS;
+	SENSOR_MODE_FPS_T *fps_info;
+	//make sure have inited fps of every sensor mode.
+	if(!s_s5k5e3yx_mode_fps_info.is_init) {
+		_s5k5e3yx_init_mode_fps_info();
+	}
+	fps_info = (SENSOR_MODE_FPS_T*)param;
+	uint32_t sensor_mode = fps_info->mode;
+	fps_info->max_fps = s_s5k5e3yx_mode_fps_info.sensor_mode_fps[sensor_mode].max_fps;
+	fps_info->min_fps = s_s5k5e3yx_mode_fps_info.sensor_mode_fps[sensor_mode].min_fps;
+	fps_info->is_high_fps = s_s5k5e3yx_mode_fps_info.sensor_mode_fps[sensor_mode].is_high_fps;
+	fps_info->high_fps_skip_num = s_s5k5e3yx_mode_fps_info.sensor_mode_fps[sensor_mode].high_fps_skip_num;
+	SENSOR_PRINT("SENSOR_s5k5e3yx: mode %d, max_fps: %d",fps_info->mode, fps_info->max_fps);
+	SENSOR_PRINT("SENSOR_s5k5e3yx: min_fps: %d", fps_info->min_fps);
+	SENSOR_PRINT("SENSOR_s5k5e3yx: is_high_fps: %d", fps_info->is_high_fps);
+	SENSOR_PRINT("SENSOR_s5k5e3yx: high_fps_skip_num: %d", fps_info->high_fps_skip_num);
+
+	return rtn;
+}
+
 static unsigned long _s5k5e3yx_access_val(unsigned long param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
@@ -1028,8 +1312,8 @@ static unsigned long _s5k5e3yx_access_val(unsigned long param)
 			//rtn = _s5k5e3yx_write_vcm(param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_READ_OTP:
-			((SENSOR_OTP_PARAM_T*)param_ptr->pval)->len = 0;
-			rtn=SENSOR_FAIL;
+			//((SENSOR_OTP_PARAM_T*)param_ptr->pval)->len = 0;
+			//rtn=SENSOR_FAIL;
 			//rtn = _hi544_read_otp((uint32_t)param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_WRITE_OTP:
@@ -1049,6 +1333,12 @@ static unsigned long _s5k5e3yx_access_val(unsigned long param)
 			break;
 		case SENSOR_VAL_TYPE_READ_OTP_GAIN:
 			rtn = _s5k5e3yx_read_otp_gain(param_ptr->pval);
+			break;
+            	case SENSOR_VAL_TYPE_GET_STATIC_INFO:
+			rtn = _s5k5e3yx_get_static_info(param_ptr->pval);
+			break;
+		case SENSOR_VAL_TYPE_GET_FPS_INFO:
+			rtn = _s5k5e3yx_get_fps_info(param_ptr->pval);
 			break;
 		default:
 			break;

@@ -719,13 +719,13 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 	mOEMIf->SetDimensionCapture(capture_size);
 
 	// for cts
-	if(preview_size.height * preview_size.width > 3264 * 2448 ||
+	/*if(preview_size.height * preview_size.width > 3264 * 2448 ||
 		raw_size.height * raw_size.width > 3264 * 2448 ||
 		(video_size.height != 0 && video_size.width != 0 &&
 			capture_size.height * capture_size.width > 3264 * 2448)) {
 		mReciveQeqMax = SprdCamera3PicChannel::kMaxBuffers;
 		mOEMIf->decZslMapNum();
-	} else {
+	} else*/ {
 		mReciveQeqMax = SprdCamera3RegularChannel::kMaxBuffers;
 	}
 
@@ -1127,7 +1127,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 		for (size_t i = 0; i < request->num_output_buffers; i++) {
 			camera3_stream_t *stream = request->output_buffers[i].stream;
 			channel = (SprdCamera3Channel *)stream->priv;
-			HAL_LOGD("channel = 0x%lx, mRegularChan = 0x%lx, mCallbackChan = 0x%lx",channel, mRegularChan, mCallbackChan);
+			HAL_LOGD("channel = 0x%lx, mRegularChan = 0x%lx, mCallbackChan = 0x%lx receive_req_max %d mPendingRequest %d",channel, mRegularChan, mCallbackChan,receive_req_max,mPendingRequest);
 			if(channel == mRegularChan || channel == mCallbackChan) {
 				ret = mRegularChan->start(mFrameNum);
 				if(ret != NO_ERROR) {

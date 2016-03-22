@@ -25,7 +25,7 @@
 #include "sensor_s5k3l2xx_raw_param_v3.c"
 //#else
 //#endif
-#include "packet_convert.h"
+//#include "packet_convert.h"
 
 #define CONFIG_S5K3L2XX_XCE  1
 #define S5K3L2XX_4_LANES
@@ -84,8 +84,892 @@ static const struct raw_param_info_tab s_s5k3l2xx_raw_param_tab[] = {
 	{S5K3L2XX_RAW_PARAM_COM, &s_s5k3l2xx_mipi_raw_info, _s5k3l2xx_com_Identify_otp, NULL},
 	{RAW_INFO_END_ID, PNULL, PNULL, PNULL}
 };
+static const SENSOR_REG_T s5k3l2xx_common_init_new[] = {
 
-static const SENSOR_REG_T s5k3l2xx_common_init[] = {
+    // EVT	1.1	
+// Image size	4208(H) x 3120(V)	
+// Frame rate 	30.00 	
+// output format	RAW10	
+// output interface	MIPI	
+// # of lanes	4	
+// SetFile ver	rev 3941	
+// input MCLK 	26 MHz	
+// output clock	1082.25 Mbps	
+// system clock	432.25 Mhz	
+// Bayer Order	GR line Gr First	
+//    The Trap & Patch part and APS/Analog setting are for FACTORY ONLY.       
+//    If you change it without prior notification.                      
+//    YOU are RESPONSIBLE for the FAILURE that will happen in the future."		
+		
+		
+		
+// reset		
+{0xFCFC,0xD000},	
+{0x6010,0x0001},	// Reset
+//p3		// Wait value must be at least 20000 MCLKs
+{0x6214,0x7970},	// Open all clocks
+{0x6218,0x7150},	// Open all clocks
+{0x6004,0x0001},	
+	
+// Trap & Patch part		
+// SVN Rev : 43535-43535		
+{0x6028,0x7000},	
+{0x602A,0x2200},	
+{0x6F12,0x9FE5},	// 70002200
+{0x6F12,0x6810},	// 70002202
+{0x6F12,0x9FE5},	// 70002204
+{0x6F12,0x6800},	// 70002206
+{0x6F12,0x2DE9},	// 70002208
+{0x6F12,0x1040},	// 7000220A
+{0x6F12,0x80E5},	// 7000220C
+{0x6F12,0x0010},	// 7000220E
+{0x6F12,0x90E5},	// 70002210
+{0x6F12,0x2C20},	// 70002212
+{0x6F12,0x42E0},	// 70002214
+{0x6F12,0x0110},	// 70002216
+{0x6F12,0xC0E1},	// 70002218
+{0x6F12,0xB410},	// 7000221A
+{0x6F12,0x9FE5},	// 7000221C
+{0x6F12,0x5410},	// 7000221E
+{0x6F12,0x9FE5},	// 70002220
+{0x6F12,0x5400},	// 70002222
+{0x6F12,0x00EB},	// 70002224
+{0x6F12,0xD100},	// 70002226
+{0x6F12,0x9FE5},	// 70002228
+{0x6F12,0x5010},	// 7000222A
+{0x6F12,0xC1E1},	// 7000222C
+{0x6F12,0xB000},	// 7000222E
+{0x6F12,0x9FE5},	// 70002230
+{0x6F12,0x4C10},	// 70002232
+{0x6F12,0x9FE5},	// 70002234
+{0x6F12,0x4C00},	// 70002236
+{0x6F12,0x00EB},	// 70002238
+{0x6F12,0xCE00},	// 7000223A
+{0x6F12,0x9FE5},	// 7000223C
+{0x6F12,0x4800},	// 7000223E
+{0x6F12,0x9FE5},	// 70002240
+{0x6F12,0x4820},	// 70002242
+{0x6F12,0x9FE5},	// 70002244
+{0x6F12,0x4810},	// 70002246
+{0x6F12,0x82E5},	// 70002248
+{0x6F12,0x1000},	// 7000224A
+{0x6F12,0xA0E3},	// 7000224C
+{0x6F12,0x0000},	// 7000224E
+{0x6F12,0xC1E1},	// 70002250
+{0x6F12,0xB200},	// 70002252
+{0x6F12,0xC1E1},	// 70002254
+{0x6F12,0xB000},	// 70002256
+{0x6F12,0xC1E1},	// 70002258
+{0x6F12,0xB400},	// 7000225A
+{0x6F12,0xC1E1},	// 7000225C
+{0x6F12,0xB600},	// 7000225E
+{0x6F12,0x9FE5},	// 70002260
+{0x6F12,0x3000},	// 70002262
+{0x6F12,0x82E5},	// 70002264
+{0x6F12,0x2400},	// 70002266
+{0x6F12,0xBDE8},	// 70002268
+{0x6F12,0x1040},	// 7000226A
+{0x6F12,0x2FE1},	// 7000226C
+{0x6F12,0x1EFF},	// 7000226E
+{0x6F12,0x0070},	// 70002270
+{0x6F12,0x0426},	// 70002272
+{0x6F12,0x0070},	// 70002274
+{0x6F12,0x6018},	// 70002276
+{0x6F12,0x0070},	// 70002278
+{0x6F12,0xE424},	// 7000227A
+{0x6F12,0x0000},	// 7000227C
+{0x6F12,0xA436},	// 7000227E
+{0x6F12,0x0070},	// 70002280
+{0x6F12,0xF825},	// 70002282
+{0x6F12,0x0070},	// 70002284
+{0x6F12,0x8C24},	// 70002286
+{0x6F12,0x0000},	// 70002288
+{0x6F12,0x08C5},	// 7000228A
+{0x6F12,0x0070},	// 7000228C
+{0x6F12,0x3023},	// 7000228E
+{0x6F12,0x0070},	// 70002290
+{0x6F12,0xF004},	// 70002292
+{0x6F12,0x0070},	// 70002294
+{0x6F12,0xFA25},	// 70002296
+{0x6F12,0x0070},	// 70002298
+{0x6F12,0x9C22},	// 7000229A
+{0x6F12,0x2DE9},	// 7000229C
+{0x6F12,0x3840},	// 7000229E
+{0x6F12,0x9DE5},	// 700022A0
+{0x6F12,0x1040},	// 700022A2
+{0x6F12,0x8DE5},	// 700022A4
+{0x6F12,0x0040},	// 700022A6
+{0x6F12,0x00EB},	// 700022A8
+{0x6F12,0xB400},	// 700022AA
+{0x6F12,0x9FE5},	// 700022AC
+{0x6F12,0x8402},	// 700022AE
+{0x6F12,0xD4E1},	// 700022B0
+{0x6F12,0xB420},	// 700022B2
+{0x6F12,0x90E5},	// 700022B4
+{0x6F12,0x0030},	// 700022B6
+{0x6F12,0xA0E3},	// 700022B8
+{0x6F12,0x0010},	// 700022BA
+{0x6F12,0x83E0},	// 700022BC
+{0x6F12,0x8101},	// 700022BE
+{0x6F12,0x80E2},	// 700022C0
+{0x6F12,0x250E},	// 700022C2
+{0x6F12,0xD0E1},	// 700022C4
+{0x6F12,0xB0C0},	// 700022C6
+{0x6F12,0x5CE1},	// 700022C8
+{0x6F12,0x0200},	// 700022CA
+{0x6F12,0x00CA},	// 700022CC
+{0x6F12,0x1300},	// 700022CE
+{0x6F12,0xD0E1},	// 700022D0
+{0x6F12,0xB2C0},	// 700022D2
+{0x6F12,0x5CE1},	// 700022D4
+{0x6F12,0x0200},	// 700022D6
+{0x6F12,0x00BA},	// 700022D8
+{0x6F12,0x1000},	// 700022DA
+{0x6F12,0xD0E1},	// 700022DC
+{0x6F12,0xF450},	// 700022DE
+{0x6F12,0xD0E1},	// 700022E0
+{0x6F12,0xF610},	// 700022E2
+{0x6F12,0x41E0},	// 700022E4
+{0x6F12,0x0530},	// 700022E6
+{0x6F12,0xD0E1},	// 700022E8
+{0x6F12,0xB210},	// 700022EA
+{0x6F12,0xD0E1},	// 700022EC
+{0x6F12,0xB000},	// 700022EE
+{0x6F12,0x41E0},	// 700022F0
+{0x6F12,0x0010},	// 700022F2
+{0x6F12,0x42E0},	// 700022F4
+{0x6F12,0x0000},	// 700022F6
+{0x6F12,0x00E0},	// 700022F8
+{0x6F12,0x9300},	// 700022FA
+{0x6F12,0x00EB},	// 700022FC
+{0x6F12,0xA100},	// 700022FE
+{0x6F12,0xD4E1},	// 70002300
+{0x6F12,0xB610},	// 70002302
+{0x6F12,0x80E0},	// 70002304
+{0x6F12,0x0500},	// 70002306
+{0x6F12,0x00E0},	// 70002308
+{0x6F12,0x9100},	// 7000230A
+{0x6F12,0xA0E1},	// 7000230C
+{0x6F12,0x0003},	// 7000230E
+{0x6F12,0xA0E1},	// 70002310
+{0x6F12,0x2008},	// 70002312
+{0x6F12,0xC4E1},	// 70002314
+{0x6F12,0xB600},	// 70002316
+{0x6F12,0xBDE8},	// 70002318
+{0x6F12,0x3840},	// 7000231A
+{0x6F12,0x2FE1},	// 7000231C
+{0x6F12,0x1EFF},	// 7000231E
+{0x6F12,0x81E2},	// 70002320
+{0x6F12,0x0110},	// 70002322
+{0x6F12,0x51E3},	// 70002324
+{0x6F12,0x0500},	// 70002326
+{0x6F12,0xFF3A},	// 70002328
+{0x6F12,0xE3FF},	// 7000232A
+{0x6F12,0xFFEA},	// 7000232C
+{0x6F12,0xF9FF},	// 7000232E
+{0x6F12,0x2DE9},	// 70002330
+{0x6F12,0x7040},	// 70002332
+{0x6F12,0x9FE5},	// 70002334
+{0x6F12,0xFC51},	// 70002336
+{0x6F12,0x95E5},	// 70002338
+{0x6F12,0x0000},	// 7000233A
+{0x6F12,0x80E2},	// 7000233C
+{0x6F12,0x020C},	// 7000233E
+{0x6F12,0xD0E1},	// 70002340
+{0x6F12,0xB012},	// 70002342
+{0x6F12,0x51E3},	// 70002344
+{0x6F12,0x0000},	// 70002346
+{0x6F12,0x9F15},	// 70002348
+{0x6F12,0xEC11},	// 7000234A
+{0x6F12,0xD115},	// 7000234C
+{0x6F12,0x0B10},	// 7000234E
+{0x6F12,0x5113},	// 70002350
+{0x6F12,0x0000},	// 70002352
+{0x6F12,0x000A},	// 70002354
+{0x6F12,0x3E00},	// 70002356
+{0x6F12,0x9FE5},	// 70002358
+{0x6F12,0xE011},	// 7000235A
+{0x6F12,0xD1E1},	// 7000235C
+{0x6F12,0xB210},	// 7000235E
+{0x6F12,0xD0E1},	// 70002360
+{0x6F12,0xB222},	// 70002362
+{0x6F12,0x9FE5},	// 70002364
+{0x6F12,0xD841},	// 70002366
+{0x6F12,0x51E1},	// 70002368
+{0x6F12,0x0200},	// 7000236A
+{0x6F12,0xA023},	// 7000236C
+{0x6F12,0x0010},	// 7000236E
+{0x6F12,0xA033},	// 70002370
+{0x6F12,0x0110},	// 70002372
+{0x6F12,0xC4E1},	// 70002374
+{0x6F12,0xB410},	// 70002376
+{0x6F12,0xD0E1},	// 70002378
+{0x6F12,0xB402},	// 7000237A
+{0x6F12,0x00EB},	// 7000237C
+{0x6F12,0x8300},	// 7000237E
+{0x6F12,0xA0E1},	// 70002380
+{0x6F12,0x0060},	// 70002382
+{0x6F12,0x95E5},	// 70002384
+{0x6F12,0x0000},	// 70002386
+{0x6F12,0x80E2},	// 70002388
+{0x6F12,0x020C},	// 7000238A
+{0x6F12,0xD0E1},	// 7000238C
+{0x6F12,0xB602},	// 7000238E
+{0x6F12,0x00EB},	// 70002390
+{0x6F12,0x7E00},	// 70002392
+{0x6F12,0x9FE5},	// 70002394
+{0x6F12,0xAC11},	// 70002396
+{0x6F12,0xA0E3},	// 70002398
+{0x6F12,0x0120},	// 7000239A
+{0x6F12,0xD1E1},	// 7000239C
+{0x6F12,0xB811},	// 7000239E
+{0x6F12,0xA0E3},	// 700023A0
+{0x6F12,0x0030},	// 700023A2
+{0x6F12,0x51E1},	// 700023A4
+{0x6F12,0x0600},	// 700023A6
+{0x6F12,0xC491},	// 700023A8
+{0x6F12,0xB220},	// 700023AA
+{0x6F12,0x009A},	// 700023AC
+{0x6F12,0x0100},	// 700023AE
+{0x6F12,0x51E1},	// 700023B0
+{0x6F12,0x0000},	// 700023B2
+{0x6F12,0xC481},	// 700023B4
+{0x6F12,0xB230},	// 700023B6
+{0x6F12,0x95E5},	// 700023B8
+{0x6F12,0x0010},	// 700023BA
+{0x6F12,0x91E5},	// 700023BC
+{0x6F12,0x3002},	// 700023BE
+{0x6F12,0x50E3},	// 700023C0
+{0x6F12,0x0000},	// 700023C2
+{0x6F12,0x001A},	// 700023C4
+{0x6F12,0x0B00},	// 700023C6
+{0x6F12,0xA0E3},	// 700023C8
+{0x6F12,0x8D0F},	// 700023CA
+{0x6F12,0x90E1},	// 700023CC
+{0x6F12,0xB1E0},	// 700023CE
+{0x6F12,0x9FE5},	// 700023D0
+{0x6F12,0x7401},	// 700023D2
+{0x6F12,0x9FE5},	// 700023D4
+{0x6F12,0x74C1},	// 700023D6
+{0x6F12,0x5EE3},	// 700023D8
+{0x6F12,0x0000},	// 700023DA
+{0x6F12,0xD001},	// 700023DC
+{0x6F12,0xB0E6},	// 700023DE
+{0x6F12,0xD001},	// 700023E0
+{0x6F12,0xB206},	// 700023E2
+{0x6F12,0xD011},	// 700023E4
+{0x6F12,0xB4E5},	// 700023E6
+{0x6F12,0xD011},	// 700023E8
+{0x6F12,0xB605},	// 700023EA
+{0x6F12,0x8EE1},	// 700023EC
+{0x6F12,0x0008},	// 700023EE
+{0x6F12,0x8C05},	// 700023F0
+{0x6F12,0x2C00},	// 700023F2
+{0x6F12,0x8C15},	// 700023F4
+{0x6F12,0x1800},	// 700023F6
+{0x6F12,0x91E5},	// 700023F8
+{0x6F12,0x2CC2},	// 700023FA
+{0x6F12,0x5CE1},	// 700023FC
+{0x6F12,0x0000},	// 700023FE
+{0x6F12,0xC4D1},	// 70002400
+{0x6F12,0xB020},	// 70002402
+{0x6F12,0x00DA},	// 70002404
+{0x6F12,0x0200},	// 70002406
+{0x6F12,0x91E5},	// 70002408
+{0x6F12,0x28C2},	// 7000240A
+{0x6F12,0x5CE1},	// 7000240C
+{0x6F12,0x0000},	// 7000240E
+{0x6F12,0xC4C1},	// 70002410
+{0x6F12,0xB030},	// 70002412
+{0x6F12,0xD4E1},	// 70002414
+{0x6F12,0xB400},	// 70002416
+{0x6F12,0x50E3},	// 70002418
+{0x6F12,0x0000},	// 7000241A
+{0x6F12,0xD411},	// 7000241C
+{0x6F12,0xB200},	// 7000241E
+{0x6F12,0x5013},	// 70002420
+{0x6F12,0x0000},	// 70002422
+{0x6F12,0xD411},	// 70002424
+{0x6F12,0xB000},	// 70002426
+{0x6F12,0x5013},	// 70002428
+{0x6F12,0x0000},	// 7000242A
+{0x6F12,0x9F15},	// 7000242C
+{0x6F12,0x2001},	// 7000242E
+{0x6F12,0x9011},	// 70002430
+{0x6F12,0xB100},	// 70002432
+{0x6F12,0xC411},	// 70002434
+{0x6F12,0xB600},	// 70002436
+{0x6F12,0xD4E1},	// 70002438
+{0x6F12,0xB600},	// 7000243A
+{0x6F12,0x50E3},	// 7000243C
+{0x6F12,0x0000},	// 7000243E
+{0x6F12,0x4012},	// 70002440
+{0x6F12,0x0100},	// 70002442
+{0x6F12,0xC411},	// 70002444
+{0x6F12,0xB600},	// 70002446
+{0x6F12,0x9F15},	// 70002448
+{0x6F12,0x0801},	// 7000244A
+{0x6F12,0xC011},	// 7000244C
+{0x6F12,0xB030},	// 7000244E
+{0x6F12,0xC011},	// 70002450
+{0x6F12,0xB820},	// 70002452
+{0x6F12,0x00EB},	// 70002454
+{0x6F12,0x4F00},	// 70002456
+{0x6F12,0x00EB},	// 70002458
+{0x6F12,0x5000},	// 7000245A
+{0x6F12,0xA0E1},	// 7000245C
+{0x6F12,0x0040},	// 7000245E
+{0x6F12,0x9FE5},	// 70002460
+{0x6F12,0xF400},	// 70002462
+{0x6F12,0x00EB},	// 70002464
+{0x6F12,0x4F00},	// 70002466
+{0x6F12,0x54E1},	// 70002468
+{0x6F12,0x0000},	// 7000246A
+{0x6F12,0x4480},	// 7000246C
+{0x6F12,0x0000},	// 7000246E
+{0x6F12,0xBD88},	// 70002470
+{0x6F12,0x7040},	// 70002472
+{0x6F12,0xA081},	// 70002474
+{0x6F12,0x0018},	// 70002476
+{0x6F12,0xA081},	// 70002478
+{0x6F12,0x2118},	// 7000247A
+{0x6F12,0xA083},	// 7000247C
+{0x6F12,0x2100},	// 7000247E
+{0x6F12,0x008A},	// 70002480
+{0x6F12,0x4A00},	// 70002482
+{0x6F12,0xBDE8},	// 70002484
+{0x6F12,0x7040},	// 70002486
+{0x6F12,0x2FE1},	// 70002488
+{0x6F12,0x1EFF},	// 7000248A
+{0x6F12,0x2DE9},	// 7000248C
+{0x6F12,0x1040},	// 7000248E
+{0x6F12,0x00EB},	// 70002490
+{0x6F12,0x4800},	// 70002492
+{0x6F12,0x50E3},	// 70002494
+{0x6F12,0x0000},	// 70002496
+{0x6F12,0x000B},	// 70002498
+{0x6F12,0x4800},	// 7000249A
+{0x6F12,0x00EA},	// 7000249C
+{0x6F12,0x0100},	// 7000249E
+{0x6F12,0xA0E3},	// 700024A0
+{0x6F12,0x0100},	// 700024A2
+{0x6F12,0x00EB},	// 700024A4
+{0x6F12,0x4700},	// 700024A6
+{0x6F12,0x00EB},	// 700024A8
+{0x6F12,0x4800},	// 700024AA
+{0x6F12,0x50E3},	// 700024AC
+{0x6F12,0x0000},	// 700024AE
+{0x6F12,0xFF0A},	// 700024B0
+{0x6F12,0xFAFF},	// 700024B2
+{0x6F12,0x9FE5},	// 700024B4
+{0x6F12,0xA400},	// 700024B6
+{0x6F12,0xA0E3},	// 700024B8
+{0x6F12,0x0020},	// 700024BA
+{0x6F12,0xA0E3},	// 700024BC
+{0x6F12,0x0810},	// 700024BE
+{0x6F12,0x00EB},	// 700024C0
+{0x6F12,0x4400},	// 700024C2
+{0x6F12,0x9FE5},	// 700024C4
+{0x6F12,0x7000},	// 700024C6
+{0x6F12,0x9FE5},	// 700024C8
+{0x6F12,0x9410},	// 700024CA
+{0x6F12,0xD0E1},	// 700024CC
+{0x6F12,0xB020},	// 700024CE
+{0x6F12,0xC1E1},	// 700024D0
+{0x6F12,0xB421},	// 700024D2
+{0x6F12,0xD0E1},	// 700024D4
+{0x6F12,0xB200},	// 700024D6
+{0x6F12,0xC1E1},	// 700024D8
+{0x6F12,0xB801},	// 700024DA
+{0x6F12,0xBDE8},	// 700024DC
+{0x6F12,0x1040},	// 700024DE
+{0x6F12,0x2FE1},	// 700024E0
+{0x6F12,0x1EFF},	// 700024E2
+{0x6F12,0x2DE9},	// 700024E4
+{0x6F12,0x7040},	// 700024E6
+{0x6F12,0x9FE5},	// 700024E8
+{0x6F12,0x7850},	// 700024EA
+{0x6F12,0x9FE5},	// 700024EC
+{0x6F12,0x6840},	// 700024EE
+{0x6F12,0xD5E1},	// 700024F0
+{0x6F12,0xB000},	// 700024F2
+{0x6F12,0xA0E3},	// 700024F4
+{0x6F12,0x0010},	// 700024F6
+{0x6F12,0x00EB},	// 700024F8
+{0x6F12,0x3800},	// 700024FA
+{0x6F12,0xD4E1},	// 700024FC
+{0x6F12,0xB200},	// 700024FE
+{0x6F12,0xD4E5},	// 70002500
+{0x6F12,0x4210},	// 70002502
+{0x6F12,0x80E0},	// 70002504
+{0x6F12,0x0100},	// 70002506
+{0x6F12,0x00EB},	// 70002508
+{0x6F12,0x3600},	// 7000250A
+{0x6F12,0xD4E1},	// 7000250C
+{0x6F12,0xB612},	// 7000250E
+{0x6F12,0xC0E3},	// 70002510
+{0x6F12,0x0100},	// 70002512
+{0x6F12,0x80E0},	// 70002514
+{0x6F12,0x0100},	// 70002516
+{0x6F12,0x9FE5},	// 70002518
+{0x6F12,0x4C10},	// 7000251A
+{0x6F12,0x81E5},	// 7000251C
+{0x6F12,0x0400},	// 7000251E
+{0x6F12,0xA0E1},	// 70002520
+{0x6F12,0x0400},	// 70002522
+{0x6F12,0x00EB},	// 70002524
+{0x6F12,0x3100},	// 70002526
+{0x6F12,0xD5E1},	// 70002528
+{0x6F12,0xB000},	// 7000252A
+{0x6F12,0xBDE8},	// 7000252C
+{0x6F12,0x7040},	// 7000252E
+{0x6F12,0xA0E3},	// 70002530
+{0x6F12,0x0110},	// 70002532
+{0x6F12,0x00EA},	// 70002534
+{0x6F12,0x2900},	// 70002536
+{0x6F12,0x0070},	// 70002538
+{0x6F12,0x0000},	// 7000253A
+{0x6F12,0x0070},	// 7000253C
+{0x6F12,0x4005},	// 7000253E
+{0x6F12,0x00D0},	// 70002540
+{0x6F12,0x00C2},	// 70002542
+{0x6F12,0x0070},	// 70002544
+{0x6F12,0xFA25},	// 70002546
+{0x6F12,0x0070},	// 70002548
+{0x6F12,0x901F},	// 7000254A
+{0x6F12,0x00D0},	// 7000254C
+{0x6F12,0x0096},	// 7000254E
+{0x6F12,0x0070},	// 70002550
+{0x6F12,0x801E},	// 70002552
+{0x6F12,0x0000},	// 70002554
+{0x6F12,0x3602},	// 70002556
+{0x6F12,0x00D0},	// 70002558
+{0x6F12,0x00A6},	// 7000255A
+{0x6F12,0x0070},	// 7000255C
+{0x6F12,0xE018},	// 7000255E
+{0x6F12,0x0000},	// 70002560
+{0x6F12,0x1662},	// 70002562
+{0x6F12,0x00D0},	// 70002564
+{0x6F12,0x0062},	// 70002566
+{0x6F12,0x0070},	// 70002568
+{0x6F12,0xF825},	// 7000256A
+{0x6F12,0x0070},	// 7000256C
+{0x6F12,0x0014},	// 7000256E
+{0x6F12,0x1FE5},	// 70002570
+{0x6F12,0x04F0},	// 70002572
+{0x6F12,0x0000},	// 70002574
+{0x6F12,0xD0DD},	// 70002576
+{0x6F12,0x1FE5},	// 70002578
+{0x6F12,0x04F0},	// 7000257A
+{0x6F12,0x0000},	// 7000257C
+{0x6F12,0x44DD},	// 7000257E
+{0x6F12,0x1FE5},	// 70002580
+{0x6F12,0x04F0},	// 70002582
+{0x6F12,0x0000},	// 70002584
+{0x6F12,0xA0B1},	// 70002586
+{0x6F12,0x1FE5},	// 70002588
+{0x6F12,0x04F0},	// 7000258A
+{0x6F12,0x0000},	// 7000258C
+{0x6F12,0x7CE4},	// 7000258E
+{0x6F12,0x1FE5},	// 70002590
+{0x6F12,0x04F0},	// 70002592
+{0x6F12,0x0000},	// 70002594
+{0x6F12,0x5055},	// 70002596
+{0x6F12,0x1FE5},	// 70002598
+{0x6F12,0x04F0},	// 7000259A
+{0x6F12,0x0000},	// 7000259C
+{0x6F12,0x9090},	// 7000259E
+{0x6F12,0x1FE5},	// 700025A0
+{0x6F12,0x04F0},	// 700025A2
+{0x6F12,0x0000},	// 700025A4
+{0x6F12,0x50B8},	// 700025A6
+{0x6F12,0x1FE5},	// 700025A8
+{0x6F12,0x04F0},	// 700025AA
+{0x6F12,0x0000},	// 700025AC
+{0x6F12,0x5C9D},	// 700025AE
+{0x6F12,0x1FE5},	// 700025B0
+{0x6F12,0x04F0},	// 700025B2
+{0x6F12,0x0000},	// 700025B4
+{0x6F12,0x1402},	// 700025B6
+{0x6F12,0x1FE5},	// 700025B8
+{0x6F12,0x04F0},	// 700025BA
+{0x6F12,0x0000},	// 700025BC
+{0x6F12,0x187F},	// 700025BE
+{0x6F12,0x1FE5},	// 700025C0
+{0x6F12,0x04F0},	// 700025C2
+{0x6F12,0x0000},	// 700025C4
+{0x6F12,0x00C0},	// 700025C6
+{0x6F12,0x1FE5},	// 700025C8
+{0x6F12,0x04F0},	// 700025CA
+{0x6F12,0x0000},	// 700025CC
+{0x6F12,0x98C4},	// 700025CE
+{0x6F12,0x1FE5},	// 700025D0
+{0x6F12,0x04F0},	// 700025D2
+{0x6F12,0x0000},	// 700025D4
+{0x6F12,0x2C4B},	// 700025D6
+{0x6F12,0x1FE5},	// 700025D8
+{0x6F12,0x04F0},	// 700025DA
+{0x6F12,0x0000},	// 700025DC
+{0x6F12,0xDC0C},	// 700025DE
+{0x6F12,0x1FE5},	// 700025E0
+{0x6F12,0x04F0},	// 700025E2
+{0x6F12,0x0000},	// 700025E4
+{0x6F12,0x68DC},	// 700025E6
+{0x6F12,0x1FE5},	// 700025E8
+{0x6F12,0x04F0},	// 700025EA
+{0x6F12,0x0000},	// 700025EC
+{0x6F12,0xFCE5},	// 700025EE
+{0x6F12,0x1FE5},	// 700025F0
+{0x6F12,0x04F0},	// 700025F2
+{0x6F12,0x0000},	// 700025F4
+{0x6F12,0xA436},	// 700025F6
+		        
+ //APS/,0xAnalog setting		
+{0x6028,0xD000},	
+{0x6004,0x0000},	
+{0x3690,0x0100},	
+{0x369A,0xF446},	
+{0x369C,0x5176},	
+{0x369E,0x5C76},	
+{0x36A0,0x5C76},	
+{0x36AE,0xF40E},	
+{0x36B0,0x0B00},	
+{0x36B2,0x4B00},	
+{0x36B4,0x4B00},	
+{0xF412,0x0040},	
+{0x3664,0x0BB8},	
+{0x35E4,0x4776},	
+{0x3674,0x0776},	
+{0x3672,0x0520},	
+{0x367A,0x00ED},	
+{0x372A,0x0101},	
+{0x3246,0x0092},	
+{0x324A,0x009C},	
+{0x3256,0x01BD},	
+{0x325A,0x01C7},	
+{0x3248,0x0092},	
+{0x324C,0x009C},	
+{0x3258,0x01B2},	
+{0x325C,0x01BC},	
+{0x3792,0x0000},	
+{0x3794,0x0000},	
+{0x3796,0x0000},	
+{0x379A,0x0000},	
+{0x379C,0x0000},	
+{0x379E,0x0000},	
+{0x33DA,0x00BC},	
+{0x33DC,0x00BC},	
+{0x33DE,0x00BE},	
+{0x33E0,0x00BE},	
+{0x33EA,0x00BC},	
+{0x33EC,0x00BC},	
+{0x33EE,0x00D8},	
+{0x33F0,0x00D8},	
+{0x36A2,0x5176},	
+{0x36A4,0x2F76},	
+{0x36A6,0x2F76},	
+{0x36B6,0x0B00},	
+{0x36B8,0x4B00},	
+{0x36BA,0x4B00},	
+{0x3692,0x0060},	
+		       
+// ISP setting		
+{0x0C00,0x0100},	
+{0x0C02,0x01FF},	
+{0x0C04,0x0400},	
+{0x0C06,0x0438},	
+{0x0C08,0x0200},	
+{0x0C0A,0x03FF},	
+{0x0C0C,0x0415},	
+{0x0C0E,0x045B},	
+{0x0C10,0x0400},	
+{0x0C12,0x07FF},	
+{0x0C14,0x0421},	
+{0x0C16,0x043B},	
+{0x0C18,0x0800},	
+{0x0C1A,0x0FFF},	
+{0x0C1C,0x0423},	
+{0x0C1E,0x043B},	
+{0x0C20,0x1000},	
+{0x0C22,0x1FFF},	
+{0x0C24,0x0426},	
+{0x0C26,0x0426},	
+{0x0B80,0x0001},	
+{0x0B86,0x0020},	
+{0x0B84,0x0020},	
+{0x0B82,0x0003},	
+{0x0B8C,0x000A},	
+{0x0B8E,0x0000},	
+{0x0B88,0x0008},	
+{0x0B8A,0x0000},	
+{0x0B96,0x0005},	
+{0x0B94,0x0001},	
+{0x0602,0x03FF},	
+{0x0604,0x03FF},	
+{0x0606,0x03FF},	
+{0x0608,0x03FF},	
+		        
+// BPC Setting		
+{0x0B08,0x0000},	// Dynamic BPC Off (0100 : On, 0000 : Off)
+{0x3BE0,0x03DA},	
+{0x3BE2,0x01D6},	
+{0x3BE4,0x01BF},	
+{0x3BE6,0x0001},	
+{0x3BE8,0x0003},	
+{0x3BEA,0x000A},	
+{0x3BEC,0x0022},	
+{0x3BEE,0x000A},	
+{0x3BF0,0x0022},	
+{0x3BF2,0x000A},	
+{0x3BF4,0x0022},	
+{0x3BF6,0x000A},	
+{0x3BF8,0x0022},	
+{0x3BFA,0x0001},	
+{0x3BFC,0x0003},	
+{0x3BFE,0x000A},	
+{0x3C00,0x0022},	
+{0x3C02,0x000A},	
+{0x3C04,0x0022},	
+{0x3C06,0x000A},	
+{0x3C08,0x0022},	
+{0x3C0A,0x000A},	
+{0x3C0C,0x0022},	
+{0x3C0E,0x0200},	
+{0x3C10,0x0200},	
+{0x3C12,0x0002},	
+{0x3C14,0x0003},	
+{0x3C16,0x0008},	
+{0x3C18,0x0018},	
+{0x3C1A,0x0008},	
+{0x3C1C,0x0018},	
+{0x3C1E,0x0008},	
+{0x3C20,0x0018},	
+{0x3C22,0x0008},	
+{0x3C24,0x0018},	
+{0x3C26,0x0002},	
+{0x3C28,0x0003},	
+{0x3C2A,0x0008},	
+{0x3C2C,0x0018},	
+{0x3C2E,0x0008},	
+{0x3C30,0x0018},	
+{0x3C32,0x0008},	
+{0x3C34,0x0018},	
+{0x3C36,0x0008},	
+{0x3C38,0x0018},	
+{0x3C3A,0x0200},	
+{0x3C3C,0x0200},	
+{0x3C3E,0x0002},	
+{0x3C40,0x0003},	
+{0x3C42,0x0014},	
+{0x3C44,0x0040},	
+{0x3C46,0x0014},	
+{0x3C48,0x0040},	
+{0x3C4A,0x0014},	
+{0x3C4C,0x0040},	
+{0x3C4E,0x0014},	
+{0x3C50,0x0040},	
+{0x3C52,0x0002},	
+{0x3C54,0x0003},	
+{0x3C56,0x0014},	
+{0x3C58,0x0040},	
+{0x3C5A,0x0014},	
+{0x3C5C,0x0040},	
+{0x3C5E,0x0014},	
+{0x3C60,0x0040},	
+{0x3C62,0x0014},	
+{0x3C64,0x0040},	
+{0x3C66,0x0200},	
+{0x3C68,0x0200},	
+{0x3C6A,0x0002},	
+{0x3C6C,0x0003},	
+{0x3C6E,0x0008},	
+{0x3C70,0x0018},	
+{0x3C72,0x0008},	
+{0x3C74,0x0018},	
+{0x3C76,0x0008},	
+{0x3C78,0x0018},	
+{0x3C7A,0x0008},	
+{0x3C7C,0x0018},	
+{0x3C7E,0x0002},	
+{0x3C80,0x0003},	
+{0x3C82,0x0008},	
+{0x3C84,0x0018},	
+{0x3C86,0x0008},	
+{0x3C88,0x0018},	
+{0x3C8A,0x0008},	
+{0x3C8C,0x0018},	
+{0x3C8E,0x0008},	
+{0x3C90,0x0018},	
+{0x3C92,0x0200},	
+{0x3C94,0x0200},	
+{0x3C96,0x0002},	
+{0x3C98,0x0003},	
+{0x3C9A,0x0014},	
+{0x3C9C,0x0040},	
+{0x3C9E,0x0014},	
+{0x3CA0,0x0040},	
+{0x3CA2,0x0014},	
+{0x3CA4,0x0040},	
+{0x3CA6,0x0014},	
+{0x3CA8,0x0040},	
+{0x3CAA,0x0002},	
+{0x3CAC,0x0003},	
+{0x3CAE,0x0014},	
+{0x3CB0,0x0040},	
+{0x3CB2,0x0014},	
+{0x3CB4,0x0040},	
+{0x3CB6,0x0014},	
+{0x3CB8,0x0040},	
+{0x3CBA,0x0014},	
+{0x3CBC,0x0040},	
+{0x3CBE,0x0200},	
+{0x3CC0,0x0200},	
+{0x3CC2,0x0002},	
+{0x3CC4,0x0003},	
+{0x3CC6,0x0008},	
+{0x3CC8,0x0018},	
+{0x3CCA,0x0008},	
+{0x3CCC,0x0018},	
+{0x3CCE,0x0008},	
+{0x3CD0,0x0018},	
+{0x3CD2,0x0008},	
+{0x3CD4,0x0018},	
+{0x3CD6,0x0002},	
+{0x3CD8,0x0003},	
+{0x3CDA,0x0008},	
+{0x3CDC,0x0018},	
+{0x3CDE,0x0008},	
+{0x3CE0,0x0018},	
+{0x3CE2,0x0008},	
+{0x3CE4,0x0018},	
+{0x3CE6,0x0008},	
+{0x3CE8,0x0018},	
+{0x3CEA,0x0200},	
+{0x3CEC,0x0200},	
+{0x3CEE,0x0002},	
+{0x3CF0,0x0003},	
+{0x3CF2,0x0014},	
+{0x3CF4,0x0040},	
+{0x3CF6,0x0014},	
+{0x3CF8,0x0040},	
+{0x3CFA,0x0014},	
+{0x3CFC,0x0040},	
+{0x3CFE,0x0014},	
+{0x3D00,0x0040},	
+{0x3D02,0x0002},	
+{0x3D04,0x0003},	
+{0x3D06,0x0014},	
+{0x3D08,0x0040},	
+{0x3D0A,0x0014},	
+{0x3D0C,0x0040},	
+{0x3D0E,0x0014},	
+{0x3D10,0x0040},	
+{0x3D12,0x0014},	
+{0x3D14,0x0040},	
+{0x3D16,0x0200},	
+{0x3D18,0x0200},	
+{0x3D1A,0x0002},	
+{0x3D1C,0x0003},	
+{0x3D1E,0x0008},	
+{0x3D20,0x0018},	
+{0x3D22,0x0008},	
+{0x3D24,0x0018},	
+{0x3D26,0x0008},	
+{0x3D28,0x0018},	
+{0x3D2A,0x0008},	
+{0x3D2C,0x0018},	
+{0x3D2E,0x0002},	
+{0x3D30,0x0003},	
+{0x3D32,0x0008},	
+{0x3D34,0x0018},	
+{0x3D36,0x0008},	
+{0x3D38,0x0018},	
+{0x3D3A,0x0008},	
+{0x3D3C,0x0018},	
+{0x3D3E,0x0008},	
+{0x3D40,0x0018},	
+{0x3D42,0x0200},	
+{0x3D44,0x0200},	
+{0x3D46,0x0002},	
+{0x3D48,0x0003},	
+{0x3D4A,0x0014},	
+{0x3D4C,0x0040},	
+{0x3D4E,0x0014},	
+{0x3D50,0x0040},	
+{0x3D52,0x0014},	
+{0x3D54,0x0040},	
+{0x3D56,0x0014},	
+{0x3D58,0x0040},	
+{0x3D5A,0x0002},	
+{0x3D5C,0x0003},	
+{0x3D5E,0x0014},	
+{0x3D60,0x0040},	
+{0x3D62,0x0014},	
+{0x3D64,0x0040},	
+{0x3D66,0x0014},	
+{0x3D68,0x0040},	
+{0x3D6A,0x0014},	
+{0x3D6C,0x0040},	
+{0x3D6E,0x0200},	
+{0x3D70,0x0200},	
+{0x3D72,0x0002},	
+{0x3D74,0x0003},	
+{0x3D76,0x0008},	
+{0x3D78,0x0018},	
+{0x3D7A,0x0008},	
+{0x3D7C,0x0018},	
+{0x3D7E,0x0008},	
+{0x3D80,0x0018},	
+{0x3D82,0x0008},	
+{0x3D84,0x0018},	
+{0x3D86,0x0002},	
+{0x3D88,0x0003},	
+{0x3D8A,0x0008},	
+{0x3D8C,0x0018},	
+{0x3D8E,0x0008},	
+{0x3D90,0x0018},	
+{0x3D92,0x0008},	
+{0x3D94,0x0018},	
+{0x3D96,0x0008},	
+{0x3D98,0x0018},	
+{0x3D9A,0x0200},	
+{0x3D9C,0x0200},	
+{0x3D9E,0x0F00},	
+{0x3DA0,0x4B00},	
+{0x3DA2,0x8700},	
+{0x3DA4,0xC300},	
+{0x3DA6,0xFF00},	
+{0x3DA8,0x0032},	
+{0x3DAA,0x42FF},	
+{0x3DAC,0x0800},	
+{0x3DAE,0x0001},	
+{0x3DB0,0x0008},	
+{0x3DB2,0x00FF},	
+{0x3DB4,0x0008},	
+{0x3DB6,0x0100},	
+{0x3DB8,0x0100},	
+{0x3DBA,0x0F00},	
+		          
+//PLL and etc		
+{0x0300,0x0002},	// #smiaRegs_rw_clocks_vt_pix_clk_div
+{0x0302,0x0001},	// #smiaRegs_rw_clocks_vt_sys_clk_div
+{0x0304,0x0008},	// #smiaRegs_rw_clocks_pre_pll_clk_div
+{0x0306,0x010A},	// #smiaRegs_rw_clocks_pll_multiplier
+{0x0308,0x0008},	// #smiaRegs_rw_clocks_op_pix_clk_div
+{0x030A,0x0001},	// #smiaRegs_rw_clocks_op_sys_clk_div
+{0x030C,0x0008},	// #smiaRegs_rw_secnd_pre_pll_clk_div
+{0x030E,0x014D},	// #smiaRegs_rw_clocks_secnd_pll_multiplier
+{0x35D8,0x0000},	// #SenAnalog_AIG_FirstScanConfiguration
+{0x303A,0x02BC},	// #smiaRegs_vendor_bpc_otp_clusters_address
+{0x0B04,0x0101},	// #smiaRegs_rw_isp_mapped_couplet_correct_enable
+{0x38E8,0x0A01},	// #gisp_offs_gains_bMsmOfsEbable
+{0x380E,0x0100},	// #gisp_offs_gains_OfsGainVecSelect
+{0x0114,0x0300},	// #smiaRegs_rw_output_lane_mode
+{0x3026,0x0010},	// #smiaRegs_vendor_sensor_dig_hor_bin_scale_fact
+{0x3BD6,0x1010},	// #gisp_hvbin_Weights_4_0_
+{0x3BD8,0x1010},	// #gisp_hvbin_Weights_4_3_
+};
+static const SENSOR_REG_T s5k3l2xx_common_init_old[] = {
 // reset
 
 {0xFCFC,	0xD000},
@@ -948,7 +1832,38 @@ static const SENSOR_REG_T s5k3l2xx_common_init[] = {
 
 };
 
-static const SENSOR_REG_T s5k3l2xx_4144x3106_setting[] = {
+static const SENSOR_REG_T s5k3l2xx_4144x3106_setting_new[] = {
+
+{0x0136,0x1A00},
+{0x0104,0x0100},
+{0x35D8,0x0000},
+{0x3026,0x0010},
+{0x3690,0x0100},
+{0x372C,0x4848},
+{0x372E,0x0002},
+{0x3730,0x1106},
+{0x0306,0x00C8},
+{0x030A,0x0001},
+{0x030C,0x0006},
+{0x030E,0x00FD},
+{0x0342,0x11A0},
+{0x0340,0x0C76},
+{0x034C,0x1030},
+{0x034E,0x0C22},
+{0x0344,0x0024},
+{0x0346,0x000B},
+{0x0348,0x1053},
+{0x034A,0x0C2C},
+{0x0386,0x0001},
+{0x0900,0x0011},
+{0x0400,0x0000},
+{0x0404,0x0010},
+{0x0104,0x0000},
+
+
+};
+
+static const SENSOR_REG_T s5k3l2xx_4144x3106_setting_old[] = {
 
 {0x0104,	0x0100},
 {0x0112,	0x0A0A},
@@ -980,7 +1895,7 @@ static const SENSOR_REG_T s5k3l2xx_4144x3106_setting[] = {
 
 };
 
-#if 0
+#if 1
 static const SENSOR_REG_T s5k3l2xx_2072x1554_setting[] = {
 {0x0104,	0x0100},
 {0x0112,	0x0A0A},
@@ -1009,14 +1924,47 @@ static const SENSOR_REG_T s5k3l2xx_2072x1554_setting[] = {
 {0x0404,	0x0010},
 {0x0104,	0x0000},
 };
+static const SENSOR_REG_T s5k3l2xx_2072x1554_setting_new[] = {
+    {0x0136,0x1A00},
+    {0x0104,0x0100},
+    {0x35D8,0x0000},
+    {0x3026,0x0020},
+    {0x3690,0x0100},
+    {0x372C,0x4848},
+    {0x372E,0x0002},
+    {0x3730,0x1106},
+    {0x0306,0x00C8},
+    {0x030A,0x0001},
+    {0x030C,0x0006},
+    {0x030E,0x00FD},
+    {0x0342,0x1630},
+    {0x0340,0x13CE},
+    {0x034C,0x0818},
+    {0x034E,0x0612},
+    {0x0344,0x0024},
+    {0x0346,0x000B},
+    {0x0348,0x1053},
+    {0x034A,0x0C2E},
+    {0x0386,0x0003},
+    {0x0900,0x0112},
+    {0x0400,0x0000},
+    {0x0404,0x0010},
+    {0x0104,0x0000},
+
+};
 #endif
+#define MClK_26M_SS	1
 
 static SENSOR_REG_TAB_INFO_T s_s5k3l2xx_resolution_Tab_RAW[] = {
-
-	{ADDR_AND_LEN_OF_ARRAY(s5k3l2xx_common_init), 0, 0, 24, SENSOR_IMAGE_FORMAT_RAW},
-//	{ADDR_AND_LEN_OF_ARRAY(s5k3l2xx_2072x1554_setting), 2072, 1554, 24, SENSOR_IMAGE_FORMAT_RAW},
-	{ADDR_AND_LEN_OF_ARRAY(s5k3l2xx_4144x3106_setting), 4144, 3106, 24, SENSOR_IMAGE_FORMAT_RAW},
-
+#ifdef MClK_26M_SS
+         {ADDR_AND_LEN_OF_ARRAY(s5k3l2xx_common_init_new), 0, 0, 26, SENSOR_IMAGE_FORMAT_RAW},
+      //   {ADDR_AND_LEN_OF_ARRAY(s5k3l2xx_4144x3106_setting_new), 4144, 3106, 26, SENSOR_IMAGE_FORMAT_RAW},
+         	{ADDR_AND_LEN_OF_ARRAY(s5k3l2xx_2072x1554_setting_new), 2072, 1554, 24, SENSOR_IMAGE_FORMAT_RAW},	
+#else
+	{ADDR_AND_LEN_OF_ARRAY(s5k3l2xx_common_init_old), 0, 0, 24, SENSOR_IMAGE_FORMAT_RAW},
+	{ADDR_AND_LEN_OF_ARRAY(s5k3l2xx_4144x3106_setting_old), 4144, 3106, 24, SENSOR_IMAGE_FORMAT_RAW},
+#endif
+	//{ADDR_AND_LEN_OF_ARRAY(s5k3l2xx_2072x1554_setting), 2072, 1554, 24, SENSOR_IMAGE_FORMAT_RAW},	
 	{PNULL, 0, 0, 0, 0, 0},
 	{PNULL, 0, 0, 0, 0, 0},
 	{PNULL, 0, 0, 0, 0, 0},
@@ -1029,8 +1977,8 @@ static SENSOR_REG_TAB_INFO_T s_s5k3l2xx_resolution_Tab_RAW[] = {
 
 static SENSOR_TRIM_T s_s5k3l2xx_Resolution_Trim_Tab[] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-//	{0, 0, 2072, 1554, 134, 900, 1664, {0, 0, 2072, 1554}},
-	{0, 0, 4144, 3106, 104, 950, 3190, {0, 0, 4144, 3106}},
+	{0, 0, 2072, 1554, 134, 900, 1664, {0, 0, 2072, 1554}},
+//	{0, 0, 4144, 3106, 104, 950, 3190, {0, 0, 4144, 3106}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
@@ -1193,7 +2141,7 @@ static SENSOR_IOCTL_FUNC_TAB_T s_s5k3l2xx_ioctl_func_tab = {
 	PNULL,//get_status
 	_s5k3l2xx_StreamOn,
 	_s5k3l2xx_StreamOff,
-	PNULL,//_s5k3l2xx_access_val,
+	_s5k3l2xx_access_val,
 };
 
 
@@ -1240,7 +2188,7 @@ SENSOR_INFO_T g_s5k3l2xx_mipi_raw_info = {
 
 	4144,			// max width of source image
 	3106,			// max height of source image
-	"s5k3l2xx",		// name of sensor
+	"s5k3l2xx_mipi_raw",		// name of sensor
 
 	SENSOR_IMAGE_FORMAT_RAW,	// define in SENSOR_IMAGE_FORMAT_E enum,SENSOR_IMAGE_FORMAT_MAX
 	// if set to SENSOR_IMAGE_FORMAT_MAX here, image format depent on SENSOR_REG_TAB_INFO_T
@@ -1253,8 +2201,8 @@ SENSOR_INFO_T g_s5k3l2xx_mipi_raw_info = {
 	NULL,			//&g_s5k3l2xx_ext_info,                // extend information about sensor
 	SENSOR_AVDD_1800MV,	// iovdd
 	SENSOR_AVDD_1200MV,	// dvdd
-	3,			// skip frame num before preview
-	3,			// skip frame num before capture
+	0,//3,			// skip frame num before preview
+	0,//3,			// skip frame num before capture
 	0,			// deci frame num during preview
 	0,			// deci frame num during video preview
 
@@ -1271,7 +2219,36 @@ SENSOR_INFO_T g_s5k3l2xx_mipi_raw_info = {
 	3,			// skip frame num while change setting
 	48,			// horizontal view angle
 	48,			// vertical view angle
+	"s5k3l2xx_truly_v1",
 };
+static SENSOR_STATIC_INFO_T s_s5k3l2xx_static_info = {
+
+	200,	//f-number,focal ratio
+	357,	//focal_length;
+	60,	//max_fps,max fps of sensor's all settings
+	1,	//min_fps,normally it set to 1.
+	16,	//max_adgain,AD-gain
+	0,	//ois_supported;
+	0,	//pdaf_supported;
+	1,	//exp_valid_frame_num;N+2-1
+	64,	//clamp_level,black level
+	1,	//adgain_valid_frame_num;N+1-1
+	
+    };
+    
+    static SENSOR_MODE_FPS_INFO_T s_s5k3l2xx_mode_fps_info = {
+        0,  //is_init;
+        {{SENSOR_MODE_COMMON_INIT,0,1,0,0},
+        {SENSOR_MODE_PREVIEW_ONE,0,1,0,0},
+        {SENSOR_MODE_SNAPSHOT_ONE_FIRST,0,1,0,0},
+        {SENSOR_MODE_SNAPSHOT_ONE_SECOND,0,1,0,0},
+        {SENSOR_MODE_SNAPSHOT_ONE_THIRD,0,1,0,0},
+        {SENSOR_MODE_PREVIEW_TWO,0,1,0,0},
+        {SENSOR_MODE_SNAPSHOT_TWO_FIRST,0,1,0,0},
+        {SENSOR_MODE_SNAPSHOT_TWO_SECOND,0,1,0,0},
+        {SENSOR_MODE_SNAPSHOT_TWO_THIRD,0,1,0,0}}
+    };
+	
 
 static struct sensor_raw_info* Sensor_GetContext(void)
 {
@@ -1356,6 +2333,48 @@ static unsigned long _s5k3l2xx_GetResolutionTrimTab(unsigned long param)
 	return (unsigned long) s_s5k3l2xx_Resolution_Trim_Tab;
 }
 
+static uint32_t _s5k3l2xx_init_mode_fps_info()
+{
+	uint32_t rtn = SENSOR_SUCCESS;
+	SENSOR_PRINT("_s5k3l2xx_init_mode_fps_info:E");
+	if(!s_s5k3l2xx_mode_fps_info.is_init) {
+		uint32_t i,modn,tempfps = 0;
+		SENSOR_PRINT("_s5k3l2xx_init_mode_fps_info:start init");
+		for(i = 0;i < NUMBER_OF_ARRAY(s_s5k3l2xx_Resolution_Trim_Tab); i++) {
+			//max fps should be multiple of 30,it calulated from line_time and frame_line
+			tempfps = s_s5k3l2xx_Resolution_Trim_Tab[i].line_time*s_s5k3l2xx_Resolution_Trim_Tab[i].frame_line;
+			if(0 != tempfps) {
+				tempfps = 10000000/tempfps;
+				modn = tempfps / 30;
+				if(tempfps > modn*30)
+					modn++;
+				s_s5k3l2xx_mode_fps_info.sensor_mode_fps[i].max_fps = modn*30;
+				if(s_s5k3l2xx_mode_fps_info.sensor_mode_fps[i].max_fps > 30) {
+					s_s5k3l2xx_mode_fps_info.sensor_mode_fps[i].is_high_fps = 1;
+					s_s5k3l2xx_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num =
+						s_s5k3l2xx_mode_fps_info.sensor_mode_fps[i].max_fps/30;
+				}
+				if(s_s5k3l2xx_mode_fps_info.sensor_mode_fps[i].max_fps >
+						s_s5k3l2xx_static_info.max_fps) {
+					s_s5k3l2xx_static_info.max_fps =
+						s_s5k3l2xx_mode_fps_info.sensor_mode_fps[i].max_fps;
+				}
+			}
+			SENSOR_PRINT("mode %d,tempfps %d,frame_len %d,line_time: %d ",i,tempfps,
+					s_s5k3l2xx_Resolution_Trim_Tab[i].frame_line,
+					s_s5k3l2xx_Resolution_Trim_Tab[i].line_time);
+			SENSOR_PRINT("mode %d,max_fps: %d ",
+					i,s_s5k3l2xx_mode_fps_info.sensor_mode_fps[i].max_fps);
+			SENSOR_PRINT("is_high_fps: %d,highfps_skip_num %d",
+					s_s5k3l2xx_mode_fps_info.sensor_mode_fps[i].is_high_fps,
+					s_s5k3l2xx_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num);
+		}
+		s_s5k3l2xx_mode_fps_info.is_init = 1;
+	}
+	SENSOR_PRINT("_s5k3l2xx_init_mode_fps_info:X");
+	return rtn;
+}
+
 static unsigned long _s5k3l2xx_PowerOn(unsigned long power_on)
 {
 	SENSOR_AVDD_VAL_E dvdd_val = g_s5k3l2xx_mipi_raw_info.dvdd_val;
@@ -1369,15 +2388,24 @@ static unsigned long _s5k3l2xx_PowerOn(unsigned long power_on)
 	if (SENSOR_TRUE == power_on) {
 		Sensor_SetResetLevel(reset_level);
 		//Sensor_PowerDown(power_down);
-		Sensor_SetVoltage(dvdd_val, avdd_val, iovdd_val);
+		//Sensor_SetVoltage(dvdd_val, avdd_val, iovdd_val);
+		Sensor_SetAvddVoltage(avdd_val);
+		Sensor_SetIovddVoltage(iovdd_val);
+                   Sensor_SetDvddVoltage(dvdd_val);
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
-		usleep(30*1000);
+		usleep(10*1000);
 		//Sensor_PowerDown(!power_down);
 		Sensor_SetResetLevel(!reset_level);
 		usleep(10*1000);
 		//_dw9807_SRCInit(2);
-		Sensor_SetMCLK(SENSOR_DEFALUT_MCLK);
+#ifdef MClK_26M_SS		
+                  Sensor_SetMCLK(26);//SENSOR_DEFALUT_MCLK);//
+#else
+	         Sensor_SetMCLK(SENSOR_DEFALUT_MCLK);//
+#endif	         
 		usleep(10*1000);
+            
+
 	} else {
 		Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
 		Sensor_SetResetLevel(reset_level);
@@ -1385,8 +2413,13 @@ static unsigned long _s5k3l2xx_PowerOn(unsigned long power_on)
 		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 	}
-	SENSOR_PRINT_ERR("SENSOR_S5K3L2XX: _s5k3l2xx_Power_On(1:on, 0:off): %d, reset_level %d, dvdd_val %d", power_on, reset_level, dvdd_val);
-	return SENSOR_SUCCESS;
+    //while(1)
+        {
+        SENSOR_PRINT_ERR("SENSOR_S5K3L2XX: _s5k3l2xx_Power_On(1:on, 0:off): %d, reset_level %d, dvdd_val %d", power_on, reset_level, dvdd_val);
+            usleep(2000*1000);
+            }
+
+    return SENSOR_SUCCESS;
 }
 
 static uint32_t _s5k3l2xx_cfg_otp(uint32_t  param)
@@ -1474,9 +2507,10 @@ static unsigned long _s5k3l2xx_Identify(unsigned long param)
 		uint32_t pid_value 	= 0x00;
 		uint32_t ver_value 	= 0x00;
 		uint32_t ret_value 	= SENSOR_FAIL;
-
+            	uint32_t num=0;
+              
 		SENSOR_PRINT_ERR("SENSOR_S5K3L2XX: mipi raw identify\n");
-
+	  for(num=0;num<3;num++){
 		pid_value = Sensor_ReadReg(S5K3L2XX_PID_ADDR);
 		ver_value = (Sensor_ReadReg(S5K3L2XX_VER_ADDR) >> 8) & 0xff;
 		SENSOR_PRINT("SENSOR_S5K3L2XX: Identify: PID = %x, VER = %x", pid_value, ver_value);
@@ -1489,6 +2523,9 @@ static unsigned long _s5k3l2xx_Identify(unsigned long param)
 					SENSOR_PRINT_ERR("SENSOR_S5K3L2XX: the module is unknow error !");
 				}
 				Sensor_s5k3l2xx_InitRawTuneInfo();
+                                    _s5k3l2xx_init_mode_fps_info();
+                                  //  _s5k3l2xx_StreamOn(1);
+                                    return ret_value;
 			} else {
 				SENSOR_PRINT_ERR("SENSOR_S5K3L2XX: Identify this is hm%x%x sensor !", pid_value, ver_value);
 				return ret_value;
@@ -1496,7 +2533,7 @@ static unsigned long _s5k3l2xx_Identify(unsigned long param)
 		} else {
 			SENSOR_PRINT_ERR("SENSOR_S5K3L2XX: identify fail,pid_value=0x%x,0x%x", pid_value,ver_value);
 		}
-
+              }
 
 	return ret_value;
 }
@@ -1532,7 +2569,7 @@ static unsigned long _s5k3l2xx_write_exposure(unsigned long param)
 
 	frame_len_cur = Sensor_ReadReg(0x0340);
 
-	SENSOR_PRINT("SENSOR_s5k3h7yx: write_exposure line:%d, frame_len_cur:%d, frame_len:%d", expsure_line, frame_len_cur, frame_len);
+	SENSOR_PRINT("SENSOR_s5k3l2xx: write_exposure line:%d, frame_len_cur:%d, frame_len:%d", expsure_line, frame_len_cur, frame_len);
 
 
 	if(frame_len_cur < frame_len){
@@ -1687,7 +2724,7 @@ static unsigned long _s5k3l2xx_StreamOn(unsigned long param)
 	uint32_t value = 0;
 	SENSOR_PRINT_ERR("SENSOR_s5k3l2xx: StreamOn");
 	Sensor_WriteReg(0x0100, 0x0100);
-	usleep(50*1000);
+	//usleep(50*1000);
 	return 0;
 }
 
@@ -1989,7 +3026,7 @@ static uint32_t _s5k3l2xx_read_vcm(uint32_t *param)
 
 	return ret_value;
 }
-
+#if 0
 LOCAL uint32_t _s5k3l2xx_write_otp(unsigned long param)
 {
 	uint32_t rtn=SENSOR_SUCCESS;
@@ -2090,7 +3127,115 @@ static uint32_t _s5k3l2xx_get_golden_data(unsigned long param)
 
 	return rtn;
 }
+#endif
 
+static uint32_t _s5k3l2xx_get_static_info(uint32_t *param)
+{
+	uint32_t rtn = SENSOR_SUCCESS;
+	struct sensor_ex_info *ex_info;
+	//make sure we have get max fps of all settings.
+	if(!s_s5k3l2xx_mode_fps_info.is_init) {
+		_s5k3l2xx_init_mode_fps_info();
+	}
+	ex_info = (struct sensor_ex_info*)param;
+	ex_info->f_num = s_s5k3l2xx_static_info.f_num;
+	ex_info->focal_length = s_s5k3l2xx_static_info.focal_length;
+	ex_info->max_fps = s_s5k3l2xx_static_info.max_fps;
+	ex_info->max_adgain = s_s5k3l2xx_static_info.max_adgain;
+	ex_info->ois_supported = s_s5k3l2xx_static_info.ois_supported;
+	ex_info->pdaf_supported = s_s5k3l2xx_static_info.pdaf_supported;
+	ex_info->exp_valid_frame_num = s_s5k3l2xx_static_info.exp_valid_frame_num;
+	ex_info->clamp_level = s_s5k3l2xx_static_info.clamp_level;
+	ex_info->adgain_valid_frame_num = s_s5k3l2xx_static_info.adgain_valid_frame_num;
+	ex_info->preview_skip_num = g_s5k3l2xx_mipi_raw_info.preview_skip_num;
+	ex_info->capture_skip_num = g_s5k3l2xx_mipi_raw_info.capture_skip_num;
+	ex_info->name = g_s5k3l2xx_mipi_raw_info.name;
+	ex_info->sensor_version_info = g_s5k3l2xx_mipi_raw_info.sensor_version_info;
+	SENSOR_PRINT("SENSOR_s5k3l2xx: f_num: %d", ex_info->f_num);
+	SENSOR_PRINT("SENSOR_s5k3l2xx: max_fps: %d", ex_info->max_fps);
+	SENSOR_PRINT("SENSOR_s5k3l2xx: max_adgain: %d", ex_info->max_adgain);
+	SENSOR_PRINT("SENSOR_s5k3l2xx: ois_supported: %d", ex_info->ois_supported);
+	SENSOR_PRINT("SENSOR_s5k3l2xx: pdaf_supported: %d", ex_info->pdaf_supported);
+	SENSOR_PRINT("SENSOR_s5k3l2xx: exp_valid_frame_num: %d", ex_info->exp_valid_frame_num);
+	SENSOR_PRINT("SENSOR_s5k3l2xx: clam_level: %d", ex_info->clamp_level);
+	SENSOR_PRINT("SENSOR_s5k3l2xx: adgain_valid_frame_num: %d", ex_info->adgain_valid_frame_num);
+	SENSOR_PRINT("SENSOR_s5k3l2xx: sensor name is: %s", ex_info->name);
+	SENSOR_PRINT("SENSOR_s5k3l2xx: sensor version info is: %s", ex_info->sensor_version_info);
+
+	return rtn;
+}
+
+static uint32_t _s5k3l2xx_get_fps_info(uint32_t *param)
+{
+	uint32_t rtn = SENSOR_SUCCESS;
+	SENSOR_MODE_FPS_T *fps_info;
+	//make sure have inited fps of every sensor mode.
+	if(!s_s5k3l2xx_mode_fps_info.is_init) {
+		_s5k3l2xx_init_mode_fps_info();
+	}
+	fps_info = (SENSOR_MODE_FPS_T*)param;
+	uint32_t sensor_mode = fps_info->mode;
+	fps_info->max_fps = s_s5k3l2xx_mode_fps_info.sensor_mode_fps[sensor_mode].max_fps;
+	fps_info->min_fps = s_s5k3l2xx_mode_fps_info.sensor_mode_fps[sensor_mode].min_fps;
+	fps_info->is_high_fps = s_s5k3l2xx_mode_fps_info.sensor_mode_fps[sensor_mode].is_high_fps;
+	fps_info->high_fps_skip_num = s_s5k3l2xx_mode_fps_info.sensor_mode_fps[sensor_mode].high_fps_skip_num;
+	SENSOR_PRINT("SENSOR_s5k3l2xx: mode %d, max_fps: %d",fps_info->mode, fps_info->max_fps);
+	SENSOR_PRINT("SENSOR_s5k3l2xx: min_fps: %d", fps_info->min_fps);
+	SENSOR_PRINT("SENSOR_s5k3l2xx: is_high_fps: %d", fps_info->is_high_fps);
+	SENSOR_PRINT("SENSOR_s5k3l2xx: high_fps_skip_num: %d", fps_info->high_fps_skip_num);
+
+	return rtn;
+}
+/*
+static uint32_t _s5k3l2xx_get_static_info(uint32_t *param)
+{
+	uint32_t rtn = SENSOR_SUCCESS;
+	struct sensor_ex_info *ex_info;
+	ex_info = (struct sensor_ex_info*)param;
+	ex_info->f_num = s_s5k3l2xx_lens_extend_info.f_num;
+	ex_info->focal_length = s_s5k3l2xx_lens_extend_info.focal_length;
+	ex_info->max_fps = s_s5k3l2xx_lens_extend_info.max_fps;
+	ex_info->max_adgain = s_s5k3l2xx_lens_extend_info.max_adgain;
+	ex_info->ois_supported = s_s5k3l2xx_lens_extend_info.ois_supported;
+	ex_info->pdaf_supported = s_s5k3l2xx_lens_extend_info.pdaf_supported;
+	ex_info->exp_valid_frame_num = s_s5k3l2xx_lens_extend_info.exp_valid_frame_num;
+	ex_info->clamp_level = s_s5k3l2xx_lens_extend_info.clamp_level;
+	ex_info->adgain_valid_frame_num = s_s5k3l2xx_lens_extend_info.adgain_valid_frame_num;
+	ex_info->preview_skip_num = g_s5k3l2xx_mipi_raw_info.preview_skip_num;
+	ex_info->capture_skip_num = g_s5k3l2xx_mipi_raw_info.capture_skip_num;
+	ex_info->name = g_s5k3l2xx_mipi_raw_info.name;
+	ex_info->sensor_version_info = g_s5k3l2xx_mipi_raw_info.sensor_version_info;
+	SENSOR_PRINT("SENSOR_s5k3l2xx: f_num: %d", ex_info->f_num);
+	SENSOR_PRINT("SENSOR_s5k3l2xx: max_fps: %d", ex_info->max_fps);
+	SENSOR_PRINT("SENSOR_s5k3l2xx: max_adgain: %d", ex_info->max_adgain);
+	SENSOR_PRINT("SENSOR_s5k3l2xx: ois_supported: %d", ex_info->ois_supported);
+	SENSOR_PRINT("SENSOR_s5k3l2xx: pdaf_supported: %d", ex_info->pdaf_supported);
+	SENSOR_PRINT("SENSOR_s5k3l2xx: exp_valid_frame_num: %d", ex_info->exp_valid_frame_num);
+	SENSOR_PRINT("SENSOR_s5k3l2xx: clam_level: %d", ex_info->clamp_level);
+	SENSOR_PRINT("SENSOR_s5k3l2xx: adgain_valid_frame_num: %d", ex_info->adgain_valid_frame_num);
+	SENSOR_PRINT("SENSOR_s5k3l2xx: sensor name is: %s", ex_info->name);
+	SENSOR_PRINT("SENSOR_s5k3l2xx: sensor version info is: %s", ex_info->sensor_version_info);
+
+	return rtn;
+}
+
+static uint32_t _s5k3l2xx_get_fps_info(uint32_t *param)
+{
+	uint32_t rtn = SENSOR_SUCCESS;
+	struct sensor_fps_info *fps_info;
+	fps_info = (struct sensor_fps_info*)param;
+	fps_info->max_fps = s_s5k3l2xx_lens_extend_info.max_fps;
+	fps_info->min_fps = s_s5k3l2xx_lens_extend_info.min_fps;
+	fps_info->is_high_fps = s_s5k3l2xx_lens_extend_info.is_high_fps;
+	fps_info->high_fps_skip_num = s_s5k3l2xx_lens_extend_info.high_fps_skip_num;
+	SENSOR_PRINT("SENSOR_s5k3l2xx: max_fps: %d", fps_info->max_fps);
+	SENSOR_PRINT("SENSOR_s5k3l2xx: min_fps: %d", fps_info->min_fps);
+	SENSOR_PRINT("SENSOR_s5k3l2xx: is_high_fps: %d", fps_info->is_high_fps);
+	SENSOR_PRINT("SENSOR_s5k3l2xx: high_fps_skip_num: %d", fps_info->high_fps_skip_num);
+
+	return rtn;
+}
+*/
 static unsigned long _s5k3l2xx_access_val(unsigned long param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
@@ -2109,16 +3254,16 @@ static unsigned long _s5k3l2xx_access_val(unsigned long param)
 			*((uint32_t*)param_ptr->pval) = _s5k3l2xx_get_shutter();
 			break;
 		case SENSOR_VAL_TYPE_READ_VCM:
-			rtn = _s5k3l2xx_read_vcm(param_ptr->pval);
+			//rtn = _s5k3l2xx_read_vcm(param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_WRITE_VCM:
-			rtn = _s5k3l2xx_write_vcm(param_ptr->pval);
+			//rtn = _s5k3l2xx_write_vcm(param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_READ_OTP:
-			rtn = _s5k3l2xx_read_otp((unsigned long)param_ptr->pval);
+			//rtn = _s5k3l2xx_read_otp((unsigned long)param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_WRITE_OTP:
-			rtn = _s5k3l2xx_write_otp((unsigned long)param_ptr->pval);
+			//rtn = _s5k3l2xx_write_otp((unsigned long)param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_GET_RELOADINFO:
 			{
@@ -2136,7 +3281,13 @@ static unsigned long _s5k3l2xx_access_val(unsigned long param)
 			rtn = _s5k3l2xx_read_otp_gain(param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_GET_GOLDEN_DATA:
-			rtn = _s5k3l2xx_get_golden_data((unsigned long)param_ptr->pval);
+			//rtn = _s5k3l2xx_get_golden_data((unsigned long)param_ptr->pval);
+			break;
+            	case SENSOR_VAL_TYPE_GET_STATIC_INFO:
+			rtn = _s5k3l2xx_get_static_info(param_ptr->pval);
+			break;
+		case SENSOR_VAL_TYPE_GET_FPS_INFO:
+			rtn = _s5k3l2xx_get_fps_info(param_ptr->pval);
 			break;
 		default:
 			break;
