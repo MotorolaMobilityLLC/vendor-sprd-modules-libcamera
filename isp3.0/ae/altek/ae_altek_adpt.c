@@ -104,6 +104,7 @@ enum aealtek_flash_state {
 	AEALTEK_FLASH_STATE_PREPARE_ON,
 	AEALTEK_FLASH_STATE_LIGHTING,
 	AEALTEK_FLASH_STATE_CLOSE,
+	AEALTEK_FLASH_STATE_KEEPING,
 	AEALTEK_FLASH_STATE_MAX,
 };
 
@@ -3930,7 +3931,6 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 					cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRL_CB_CONVERGED, &callback_in);
 				}
 
-				aealtek_flash_process(&cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update, &callback_in.proc_out.ae_info.report_data);
 			}
 			break;
 		case AEALTEK_FLASH_STATE_LIGHTING:
@@ -3959,12 +3959,15 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 						cxt_ptr->flash_param.main_flash_est.exp_cell.gain,cxt_ptr->flash_param.main_flash_est.exp_cell.exp_line
 						,cxt_ptr->flash_param.main_flash_est.exp_cell.exp_time,cxt_ptr->flash_param.main_flash_est.exp_cell.iso);
 
-				aealtek_flash_process(&cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update, &callback_in.proc_out.ae_info.report_data);
+				aealtek_change_flash_state(cxt_ptr, cxt_ptr->flash_param.flash_state, AEALTEK_FLASH_STATE_KEEPING);
+
 			}
 			break;
 		default:
 			break;
 		}
+
+		aealtek_flash_process(&cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update, &callback_in.proc_out.ae_info.report_data);
 	}
 
 	if (0 == is_special_converge_flag

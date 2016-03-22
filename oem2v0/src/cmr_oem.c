@@ -1530,6 +1530,7 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture)
 	struct sensor_raw_info          *raw_info_ptr = NULL;
 	struct sensor_libuse_info       *libuse_info = NULL;
 	cmr_int                         product_id = 0;
+	struct common_isp_cmd_param    isp_param;
 
 	/*close flash*/
 	CMR_LOGI("camera_focus_post_proc %ld", will_capture);
@@ -1588,6 +1589,11 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture)
 			ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_CTRL_FLASH, &setting_param);
 			if (ret) {
 				CMR_LOGE("failed to open flash %ld", ret);
+			}
+			if (!will_capture) {
+				ret = camera_isp_ioctl(oem_handle,COM_ISP_SET_SNAPSHOT_FINISHED, &isp_param);
+				if (ret)
+					CMR_LOGE("failed to set snapshot finished %ld", ret);
 			}
 		}
 	}
