@@ -2696,15 +2696,19 @@ static cmr_int aealtek_set_flash_notice(struct aealtek_cxt *cxt_ptr, struct ae_c
 			flash_cfg.type = ISP_FLASH_TYPE_MAIN;
 
 			if (ISP_FLASH_LED_0 & cxt_ptr->flash_param.led_info.led_tag) {
-				flash_element.index = cxt_ptr->flash_param.main_flash_est.led_0.idx;
-				flash_element.val = cxt_ptr->flash_param.main_flash_est.led_0.current;
-				cxt_ptr->init_in_param.ops_in.flash_set_charge(cxt_ptr->caller_handle, &flash_cfg, &flash_element);
+				if (-1 != cxt_ptr->flash_param.main_flash_est.led_0.idx) {
+					flash_element.index = cxt_ptr->flash_param.main_flash_est.led_0.idx;
+					flash_element.val = cxt_ptr->flash_param.main_flash_est.led_0.current;
+					cxt_ptr->init_in_param.ops_in.flash_set_charge(cxt_ptr->caller_handle, &flash_cfg, &flash_element);
+				}
 			}
 
 			if (ISP_FLASH_LED_1 & cxt_ptr->flash_param.led_info.led_tag) {
-				flash_element.index = cxt_ptr->flash_param.main_flash_est.led_1.idx;
-				flash_element.val = cxt_ptr->flash_param.main_flash_est.led_1.current;
-				cxt_ptr->init_in_param.ops_in.flash_set_charge(cxt_ptr->caller_handle, &flash_cfg, &flash_element);
+				if (-1 != cxt_ptr->flash_param.main_flash_est.led_1.idx) {
+					flash_element.index = cxt_ptr->flash_param.main_flash_est.led_1.idx;
+					flash_element.val = cxt_ptr->flash_param.main_flash_est.led_1.current;
+					cxt_ptr->init_in_param.ops_in.flash_set_charge(cxt_ptr->caller_handle, &flash_cfg, &flash_element);
+				}
 			}
 		}
 		ret = aealtek_convert_lib_exposure2outdata(cxt_ptr, &cxt_ptr->flash_param.main_flash_est.exp_cell, &cxt_ptr->lib_data.output_data);
@@ -3798,7 +3802,7 @@ exit:
 	return ret;
 }
 
-static void aealtek_flash_process(struct ae_report_update_t *from_ptr, struct isp3a_ae_report *to_ptr)
+static void aealtek_flash_info_to_awb(struct ae_report_update_t *from_ptr, struct isp3a_ae_report *to_ptr)
 {
 	to_ptr->flash_param_preview.blending_ratio_led1 = from_ptr->preflash_report.flash_ratio;
 	to_ptr->flash_param_preview.blending_ratio_led2 = from_ptr->preflash_report.flash_ratio_led2;
@@ -3821,6 +3825,111 @@ static void aealtek_flash_process(struct ae_report_update_t *from_ptr, struct is
 	to_ptr->flash_param_capture.wbgain_led2.r = from_ptr->mainflash_report.flash_gain_led2.r_gain;
 	to_ptr->flash_param_capture.wbgain_led2.g = from_ptr->mainflash_report.flash_gain_led2.g_gain;
 	to_ptr->flash_param_capture.wbgain_led2.b = from_ptr->mainflash_report.flash_gain_led2.b_gain;
+}
+
+static void aealtek_flash_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_callback_in *callback_in
+		, cmr_u32 *is_special_converge_flag)
+{
+	/*flash*/
+	if (cxt_ptr->flash_param.enable) {
+		ISP_LOGI("======lib flash converged =%d",cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_converged);
+		ISP_LOGI("======lib flash ae_st=%d",
+			cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_LibStates);
+		ISP_LOGI("=====lib flash_st=%d",
+			cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_FlashStates);
+		switch (cxt_ptr->flash_param.flash_state) {
+		case AEALTEK_FLASH_STATE_PREPARE_ON:
+			ISP_LOGI("========flash led prepare on");
+
+			*is_special_converge_flag = 1;
+			if (cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_converged
+				&& AE_EST_WITH_LED_PRE_DONE == cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_FlashStates) {
+				aealtek_set_lock(cxt_ptr, 1);
+				aealtek_change_ae_state(cxt_ptr, cxt_ptr->ae_state, ISP3A_AE_CTRL_ST_FLASH_PREPARE_CONVERGED);
+
+				cxt_ptr->flash_param.pre_flash_before.led_num = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.preflash_ctrldat.ucDICTotal_idx;
+				cxt_ptr->flash_param.pre_flash_before.led_0.idx = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.preflash_ctrldat.ucDIC1_idx;
+				//cxt_ptr->flash_param.pre_flash_before.led_0.current = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.preflash_ctrldat.udLED1Current;
+				cxt_ptr->flash_param.pre_flash_before.led_1.idx = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.preflash_ctrldat.ucDIC2_idx;
+				//cxt_ptr->flash_param.pre_flash_before.led_1.current = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.preflash_ctrldat.udLED2Current;
+
+				cxt_ptr->flash_param.pre_flash_before.exp_cell.gain = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.flash_off_exp_dat.ad_gain;
+				cxt_ptr->flash_param.pre_flash_before.exp_cell.exp_line = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.flash_off_exp_dat.exposure_line;
+				cxt_ptr->flash_param.pre_flash_before.exp_cell.exp_time = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.flash_off_exp_dat.exposure_time;
+				cxt_ptr->flash_param.pre_flash_before.exp_cell.iso = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.flash_off_exp_dat.ISO;
+
+				if (cxt_ptr->init_in_param.ops_in.flash_set_charge) {
+					struct isp_flash_cfg flash_cfg;
+					struct isp_flash_element  flash_element;
+
+					ISP_LOGI("========flash pre exp:%d,%d,%d,%d",
+							cxt_ptr->flash_param.pre_flash_before.exp_cell.gain,cxt_ptr->flash_param.pre_flash_before.exp_cell.exp_line
+							,cxt_ptr->flash_param.pre_flash_before.exp_cell.exp_time,cxt_ptr->flash_param.pre_flash_before.exp_cell.iso);
+
+					flash_cfg.led_idx = 0;
+					flash_cfg.type = ISP_FLASH_TYPE_PREFLASH;
+
+					if (ISP_FLASH_LED_0 & cxt_ptr->flash_param.led_info.led_tag) {
+						if (-1 != cxt_ptr->flash_param.pre_flash_before.led_0.idx) {
+							flash_element.index = cxt_ptr->flash_param.pre_flash_before.led_0.idx;
+							flash_element.val = cxt_ptr->flash_param.pre_flash_before.led_0.current;
+							cxt_ptr->init_in_param.ops_in.flash_set_charge(cxt_ptr->caller_handle, &flash_cfg, &flash_element);
+						}
+					}
+
+					if (ISP_FLASH_LED_1 & cxt_ptr->flash_param.led_info.led_tag) {
+						if (-1 != cxt_ptr->flash_param.pre_flash_before.led_1.idx) {
+							flash_element.index = cxt_ptr->flash_param.pre_flash_before.led_1.idx;
+							flash_element.val = cxt_ptr->flash_param.pre_flash_before.led_1.current;
+							cxt_ptr->init_in_param.ops_in.flash_set_charge(cxt_ptr->caller_handle, &flash_cfg, &flash_element);
+						}
+					}
+				}
+				if (cxt_ptr->touch_param.touch_flag
+					&& cxt_ptr->touch_param.ctrl_roi_changed_flag) {
+					cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRL_CB_CONVERGED, callback_in);
+				} else {
+					cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRL_CB_CONVERGED, callback_in);
+				}
+
+			}
+			break;
+		case AEALTEK_FLASH_STATE_LIGHTING:
+			ISP_LOGI("========flash led on");
+
+			*is_special_converge_flag = 1;
+			if (cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_converged
+				&& AE_EST_WITH_LED_DONE == cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_FlashStates) {
+				aealtek_set_lock(cxt_ptr, 1);
+				aealtek_change_ae_state(cxt_ptr, cxt_ptr->ae_state, ISP3A_AE_CTRL_ST_FLASH_ON_CONVERGED);
+
+				cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRL_CB_FLASHING_CONVERGED, callback_in);
+
+				cxt_ptr->flash_param.main_flash_est.led_num = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.mainflash_ctrldat.ucDICTotal_idx;
+				cxt_ptr->flash_param.main_flash_est.led_0.idx = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.mainflash_ctrldat.ucDIC1_idx;
+				//cxt_ptr->flash_param.main_flash_est.led_0.current = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.mainflash_ctrldat.udLED1Current;
+				cxt_ptr->flash_param.main_flash_est.led_1.idx = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.mainflash_ctrldat.ucDIC2_idx;
+				//cxt_ptr->flash_param.main_flash_est.led_1.current = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.mainflash_ctrldat.udLED2Current;
+
+				cxt_ptr->flash_param.main_flash_est.exp_cell.gain = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.snapshot_exp_dat.ad_gain;
+				cxt_ptr->flash_param.main_flash_est.exp_cell.exp_line = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.snapshot_exp_dat.exposure_line;
+				cxt_ptr->flash_param.main_flash_est.exp_cell.exp_time = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.snapshot_exp_dat.exposure_time;
+				cxt_ptr->flash_param.main_flash_est.exp_cell.iso = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.snapshot_exp_dat.ISO;
+
+				ISP_LOGI("========flash main exp:%d,%d,%d,%d",
+						cxt_ptr->flash_param.main_flash_est.exp_cell.gain,cxt_ptr->flash_param.main_flash_est.exp_cell.exp_line
+						,cxt_ptr->flash_param.main_flash_est.exp_cell.exp_time,cxt_ptr->flash_param.main_flash_est.exp_cell.iso);
+
+				aealtek_change_flash_state(cxt_ptr, cxt_ptr->flash_param.flash_state, AEALTEK_FLASH_STATE_KEEPING);
+
+			}
+			break;
+		default:
+			break;
+		}
+
+		aealtek_flash_info_to_awb(&cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update, &callback_in->proc_out.ae_info.report_data);
+	}
 }
 
 static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_proc_in *in_ptr)
@@ -3873,102 +3982,8 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 			}
 		}
 	}
-	/*flash*/
-	if (cxt_ptr->flash_param.enable) {
-		ISP_LOGI("======lib flash converged =%d",cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_converged);
-		ISP_LOGI("======lib flash ae_st=%d",
-			cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_LibStates);
-		ISP_LOGI("=====lib flash_st=%d",
-			cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_FlashStates);
-		switch (cxt_ptr->flash_param.flash_state) {
-		case AEALTEK_FLASH_STATE_PREPARE_ON:
-			ISP_LOGI("========flash led prepare on");
 
-			is_special_converge_flag = 1;
-			if (cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_converged
-				&& AE_EST_WITH_LED_PRE_DONE == cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_FlashStates) {
-				aealtek_set_lock(cxt_ptr, 1);
-				aealtek_change_ae_state(cxt_ptr, cxt_ptr->ae_state, ISP3A_AE_CTRL_ST_FLASH_PREPARE_CONVERGED);
-
-				cxt_ptr->flash_param.pre_flash_before.led_num = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.preflash_ctrldat.ucDICTotal_idx;
-				cxt_ptr->flash_param.pre_flash_before.led_0.idx = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.preflash_ctrldat.ucDIC1_idx;
-				//cxt_ptr->flash_param.pre_flash_before.led_0.current = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.preflash_ctrldat.udLED1Current;
-				cxt_ptr->flash_param.pre_flash_before.led_1.idx = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.preflash_ctrldat.ucDIC2_idx;
-				//cxt_ptr->flash_param.pre_flash_before.led_1.current = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.preflash_ctrldat.udLED2Current;
-
-				cxt_ptr->flash_param.pre_flash_before.exp_cell.gain = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.flash_off_exp_dat.ad_gain;
-				cxt_ptr->flash_param.pre_flash_before.exp_cell.exp_line = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.flash_off_exp_dat.exposure_line;
-				cxt_ptr->flash_param.pre_flash_before.exp_cell.exp_time = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.flash_off_exp_dat.exposure_time;
-				cxt_ptr->flash_param.pre_flash_before.exp_cell.iso = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.flash_off_exp_dat.ISO;
-
-				if (cxt_ptr->init_in_param.ops_in.flash_set_charge) {
-					struct isp_flash_cfg flash_cfg;
-					struct isp_flash_element  flash_element;
-
-					ISP_LOGI("========flash pre exp:%d,%d,%d,%d",
-							cxt_ptr->flash_param.pre_flash_before.exp_cell.gain,cxt_ptr->flash_param.pre_flash_before.exp_cell.exp_line
-							,cxt_ptr->flash_param.pre_flash_before.exp_cell.exp_time,cxt_ptr->flash_param.pre_flash_before.exp_cell.iso);
-
-					flash_cfg.led_idx = 0;
-					flash_cfg.type = ISP_FLASH_TYPE_PREFLASH;
-
-					if (ISP_FLASH_LED_0 & cxt_ptr->flash_param.led_info.led_tag) {
-						flash_element.index = cxt_ptr->flash_param.pre_flash_before.led_0.idx;
-						flash_element.val = cxt_ptr->flash_param.pre_flash_before.led_0.current;
-						cxt_ptr->init_in_param.ops_in.flash_set_charge(cxt_ptr->caller_handle, &flash_cfg, &flash_element);
-					}
-
-					if (ISP_FLASH_LED_1 & cxt_ptr->flash_param.led_info.led_tag) {
-						flash_element.index = cxt_ptr->flash_param.pre_flash_before.led_1.idx;
-						flash_element.val = cxt_ptr->flash_param.pre_flash_before.led_1.current;
-						cxt_ptr->init_in_param.ops_in.flash_set_charge(cxt_ptr->caller_handle, &flash_cfg, &flash_element);
-					}
-				}
-				if (cxt_ptr->touch_param.touch_flag
-					&& cxt_ptr->touch_param.ctrl_roi_changed_flag) {
-					cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRL_CB_CONVERGED, &callback_in);
-				} else {
-					cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRL_CB_CONVERGED, &callback_in);
-				}
-
-			}
-			break;
-		case AEALTEK_FLASH_STATE_LIGHTING:
-			ISP_LOGI("========flash led on");
-
-			is_special_converge_flag = 1;
-			if (cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_converged
-				&& AE_EST_WITH_LED_DONE == cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_FlashStates) {
-				aealtek_set_lock(cxt_ptr, 1);
-				aealtek_change_ae_state(cxt_ptr, cxt_ptr->ae_state, ISP3A_AE_CTRL_ST_FLASH_ON_CONVERGED);
-
-				cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRL_CB_FLASHING_CONVERGED, &callback_in);
-
-				cxt_ptr->flash_param.main_flash_est.led_num = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.mainflash_ctrldat.ucDICTotal_idx;
-				cxt_ptr->flash_param.main_flash_est.led_0.idx = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.mainflash_ctrldat.ucDIC1_idx;
-				//cxt_ptr->flash_param.main_flash_est.led_0.current = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.mainflash_ctrldat.udLED1Current;
-				cxt_ptr->flash_param.main_flash_est.led_1.idx = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.mainflash_ctrldat.ucDIC2_idx;
-				//cxt_ptr->flash_param.main_flash_est.led_1.current = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.mainflash_ctrldat.udLED2Current;
-
-				cxt_ptr->flash_param.main_flash_est.exp_cell.gain = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.snapshot_exp_dat.ad_gain;
-				cxt_ptr->flash_param.main_flash_est.exp_cell.exp_line = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.snapshot_exp_dat.exposure_line;
-				cxt_ptr->flash_param.main_flash_est.exp_cell.exp_time = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.snapshot_exp_dat.exposure_time;
-				cxt_ptr->flash_param.main_flash_est.exp_cell.iso = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.snapshot_exp_dat.ISO;
-
-				ISP_LOGI("========flash main exp:%d,%d,%d,%d",
-						cxt_ptr->flash_param.main_flash_est.exp_cell.gain,cxt_ptr->flash_param.main_flash_est.exp_cell.exp_line
-						,cxt_ptr->flash_param.main_flash_est.exp_cell.exp_time,cxt_ptr->flash_param.main_flash_est.exp_cell.iso);
-
-				aealtek_change_flash_state(cxt_ptr, cxt_ptr->flash_param.flash_state, AEALTEK_FLASH_STATE_KEEPING);
-
-			}
-			break;
-		default:
-			break;
-		}
-
-		aealtek_flash_process(&cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update, &callback_in.proc_out.ae_info.report_data);
-	}
+	aealtek_flash_process(cxt_ptr, &callback_in, &is_special_converge_flag);
 
 	if (0 == is_special_converge_flag
 		&& cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_converged) {
