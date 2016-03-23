@@ -377,18 +377,25 @@ static cmr_int afaltek_adpt_set_roi(cmr_handle adpt_handle, void *in)
 
 static cmr_u8 afaltek_adpt_lock_ae_awb(cmr_handle adpt_handle, cmr_int lock)
 {
-	cmr_int ret = -ISP_ERROR;
+	cmr_int ret = ISP_SUCCESS;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 
-	if (ISP_AE_AWB_LOCK == lock)
-		cxt->ae_awb_lock_cnt++;
-	else if (ISP_AE_AWB_UNLOCK == lock)
-		cxt->ae_awb_lock_cnt--;
-	ISP_LOGI("lock = %ld, ae_awb_lock_cnt = %ld", lock, cxt->ae_awb_lock_cnt);
-	if (0 > cxt->ae_awb_lock_cnt) {
-		cxt->ae_awb_lock_cnt = 0; /* TBD */
-		return 0;
+	if (ISP_AE_AWB_LOCK == lock){
+		if (cxt->ae_awb_lock_cnt >= 1) {
+			ISP_LOGI("af has already locked ae awb");
+			goto exit;
+		} else if (0 == cxt->ae_awb_lock_cnt)
+			cxt->ae_awb_lock_cnt++;
+	} else if (ISP_AE_AWB_UNLOCK == lock) {
+		if (0 == cxt->ae_awb_lock_cnt) {
+			ISP_LOGI("af has already unlocked ae awb");
+			goto exit;
+		} else if (cxt->ae_awb_lock_cnt > 0)
+			cxt->ae_awb_lock_cnt--;
 	}
+
+	ISP_LOGI("lock = %ld, ae_awb_lock_cnt = %ld", lock, cxt->ae_awb_lock_cnt);
+
 	/* call af ctrl callback to lock ae & awb */
 	if (cxt->cb_ops.lock_ae_awb) {
 		ret = cxt->cb_ops.lock_ae_awb(cxt->caller_handle, &lock);
@@ -397,6 +404,7 @@ static cmr_u8 afaltek_adpt_lock_ae_awb(cmr_handle adpt_handle, cmr_int lock)
 		ret = -ISP_CALLBACK_NULL;
 	}
 
+exit:
 	return ret;
 }
 
@@ -1228,13 +1236,16 @@ static cmr_int afaltek_adpt_post_start(cmr_handle adpt_handle)
 	cxt->af_cur_status = AF_ADPT_FOCUSING;
 
 	ret = afaltek_adpt_set_start(adpt_handle);
-	if (ret)
+	if (ret) {
 		ISP_LOGE("failed to start");
+		goto exit;
+	}
 
 	afaltek_adpt_lock_ae_awb(cxt, ISP_AE_AWB_LOCK);
 	if (ret)
 		ISP_LOGE("failed to lock ret = %ld", ret);
 
+exit:
 	return ret;
 }
 
