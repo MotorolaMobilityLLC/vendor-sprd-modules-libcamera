@@ -245,6 +245,10 @@ static cmr_int isp3a_set_snapshot_finished(cmr_handle isp_3a_handle, void *param
 static cmr_int isp3a_get_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_get_adgain_exp_info(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_flash_mode(cmr_handle isp_3a_handle, void *param_ptr);
+static cmr_int isp3a_set_ae_mode(cmr_handle isp_3a_handle, void *param_ptr);
+static cmr_int isp3a_set_ae_fix_exposure_time(cmr_handle isp_3a_handle, void *param_ptr);
+static cmr_int isp3a_set_ae_fix_sensitivity(cmr_handle isp_3a_handle, void *param_ptr);
+static cmr_int isp3a_set_ae_fix_frame_duration(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_aux_sensor_info(cmr_handle isp_3a_handle, void *sensor_info);
 static cmr_int isp3a_init_statistics_buf(cmr_handle isp_3a_handle);
 static cmr_int isp3a_deinit_statistics_buf(cmr_handle isp_3a_handle);
@@ -347,6 +351,10 @@ static struct isp3a_ctrl_io_func s_isp3a_ioctrl_tab[ISP_CTRL_MAX] = {
 	{ISP_CTRL_GET_EXIF_DEBUG_INFO,     isp3a_get_exif_debug_info},
 	{ISP_CTRL_GET_CUR_ADGAIN_EXP,      isp3a_get_adgain_exp_info},
 	{ISP_CTRL_SET_FLASH_MODE,          isp3a_set_flash_mode},
+	{ISP_CTRL_SET_AE_MODE,             isp3a_set_ae_mode},
+	{ISP_CTRL_SET_AE_FIX_EXP_TIME,     isp3a_set_ae_fix_exposure_time},
+	{ISP_CTRL_SET_AE_FIX_SENSITIVITY,  isp3a_set_ae_fix_sensitivity},
+	{ISP_CTRL_SET_AE_FIX_FRAM_DURA,    isp3a_set_ae_fix_frame_duration},
 	{ISP_CTRL_SET_AUX_SENSOR_INFO,     isp3a_set_aux_sensor_info},
 };
 
@@ -2000,6 +2008,70 @@ cmr_int isp3a_set_ae_lock(cmr_handle isp_3a_handle, void *param_ptr)
 	} else {
 		ISP_LOGI("don't support %d", ae_mode);
 	}
+exit:
+	return ret;
+}
+
+cmr_int isp3a_set_ae_mode(cmr_handle isp_3a_handle, void *param_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                    *cxt = (struct isp3a_fw_context*)isp_3a_handle;
+	struct ae_ctrl_param_in                    ae_in;
+
+	if (!param_ptr) {
+		ISP_LOGW("input is NULL");
+		goto exit;
+	}
+	ae_in.value = *(cmr_u32*)param_ptr;
+	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_BYPASS, &ae_in, NULL);
+exit:
+	return ret;
+}
+
+cmr_int isp3a_set_ae_fix_exposure_time(cmr_handle isp_3a_handle, void *param_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                    *cxt = (struct isp3a_fw_context*)isp_3a_handle;
+	struct ae_ctrl_param_in                    ae_in;
+
+	if (!param_ptr) {
+		ISP_LOGW("input is NULL");
+		goto exit;
+	}
+	ae_in.value = *(cmr_u32*)param_ptr;
+	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_FIX_EXPOSURE_TIME, &ae_in, NULL);
+exit:
+	return ret;
+}
+
+cmr_int isp3a_set_ae_fix_sensitivity(cmr_handle isp_3a_handle, void *param_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                    *cxt = (struct isp3a_fw_context*)isp_3a_handle;
+	struct ae_ctrl_param_in                    ae_in;
+
+	if (!param_ptr) {
+		ISP_LOGW("input is NULL");
+		goto exit;
+	}
+	ae_in.value = *(cmr_u32*)param_ptr;
+	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_FIX_SENSITIVITY, &ae_in, NULL);
+exit:
+	return ret;
+}
+
+cmr_int isp3a_set_ae_fix_frame_duration(cmr_handle isp_3a_handle, void *param_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                    *cxt = (struct isp3a_fw_context*)isp_3a_handle;
+	struct ae_ctrl_param_in                    ae_in;
+
+	if (!param_ptr) {
+		ISP_LOGW("input is NULL");
+		goto exit;
+	}
+	ae_in.value = *(cmr_u32*)param_ptr;
+	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_FIX_FRAME_DURATION, &ae_in, NULL);
 exit:
 	return ret;
 }

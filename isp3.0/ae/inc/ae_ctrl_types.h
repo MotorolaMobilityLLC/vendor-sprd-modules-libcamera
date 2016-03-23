@@ -81,6 +81,9 @@ enum ae_ctrl_cmd {
 	AE_CTRL_GET_EXP_GAIN,
 	AE_CTRL_SET_FLASH_MODE,
 	AE_CTRL_SET_Y_HIST_STATS,
+	AE_CTRL_SET_FIX_EXPOSURE_TIME,
+	AE_CTRL_SET_FIX_SENSITIVITY,
+	AE_CTRL_SET_FIX_FRAME_DURATION,
 	AE_CTRL_CMD_MAX
 };
 
@@ -385,6 +388,7 @@ struct ae_ctrl_param_out {
 	cmr_u32 hw_iso_speed;
 	cmr_u32 bv;
 	cmr_u32 flicker_mode;
+	cmr_u32 ae_state;
 	struct ae_ctrl_debug_param debug_param;
 	struct ae_ctrl_exif_param exif_param;
 	struct ae_ctrl_ext_debug_info debug_info;

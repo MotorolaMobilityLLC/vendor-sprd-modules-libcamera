@@ -1220,6 +1220,67 @@ exit:
 	return ret;
 }
 
+static cmr_int aealtek_set_fix_exposure_time(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+	cmr_u32 exp_time = 0;
+
+	if (!cxt_ptr || !in_ptr) {
+		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
+		goto exit;
+	}
+	ISP_LOGI("exp_time=%d", in_ptr->value);
+	exp_time = in_ptr->value;
+
+	cxt_ptr->sensor_exp_data.lib_exp.exp_line = 10*exp_time/cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time;
+	ISP_LOGI("exp_line=%d", cxt_ptr->sensor_exp_data.lib_exp.exp_line);
+
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld,!!!", ret);
+	return ret;
+}
+
+static cmr_int aealtek_set_fix_sensitivity(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+	cmr_u32 sensitivity = 0;
+
+	if (!cxt_ptr || !in_ptr) {
+		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
+		goto exit;
+	}
+	ISP_LOGI("sensitivity=%d", in_ptr->value);
+	sensitivity = in_ptr->value;
+
+	// TBD
+
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld !!!", ret);
+	return ret;
+}
+
+static cmr_int aealtek_set_fix_frame_duration(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+	cmr_u32 frame_duration = 0;
+
+	if (!cxt_ptr || !in_ptr) {
+		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
+		goto exit;
+	}
+	ISP_LOGI("frame_duration=%d", in_ptr->value);
+	frame_duration = in_ptr->value;
+
+	cxt_ptr->cur_status.min_frame_length = frame_duration / cxt_ptr->cur_status.ui_param.work_info.resolution.line_time;
+
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld !!!", ret);
+	return ret;
+}
+
 static cmr_int aealtek_set_exp_comp(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr)
 {
 	cmr_int ret = ISP_ERROR;
@@ -2894,7 +2955,6 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	ret = aealtek_pre_to_sensor(cxt_ptr, 0);
 	if (ret)
 		goto exit;
-
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld", ret);
@@ -3256,6 +3316,22 @@ static cmr_int aealtek_get_iso(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	}
 	out_ptr->iso_val = cxt_ptr->sensor_exp_data.lib_exp.iso;
 	ISP_LOGI("iso_val=%d", out_ptr->iso_val);
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld !!!", ret);
+	return ret;
+}
+
+static cmr_int aealtek_get_ae_state(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+
+	if (!cxt_ptr || !out_ptr) {
+		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, out_ptr);
+		goto exit;
+	}
+	out_ptr->ae_state = cxt_ptr->lib_data.output_data.ae_est_status;
+	ISP_LOGI("ae_state=%d", out_ptr->ae_state);
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld !!!", ret);
@@ -3667,6 +3743,7 @@ static cmr_int ae_altek_adpt_ioctrl(cmr_handle handle, cmr_int cmd, void *in, vo
 		ret = aealtek_get_flash_effect(cxt_ptr, in_ptr, out_ptr);
 		break;
 	case AE_CTRL_GET_AE_STATE:
+		ret = aealtek_get_ae_state(cxt_ptr, in_ptr, out_ptr);
 		break;
 	case AE_CTRL_GET_FLASH_EB:
 		ret = aealtek_get_flash_eb(cxt_ptr, in_ptr, out_ptr);
@@ -3740,6 +3817,15 @@ static cmr_int ae_altek_adpt_ioctrl(cmr_handle handle, cmr_int cmd, void *in, vo
 		break;
 	case AE_CTRL_SET_Y_HIST_STATS:
 		ret = aealtek_set_y_hist_stats(cxt_ptr, in_ptr, out_ptr);
+		break;
+	case AE_CTRL_SET_FIX_EXPOSURE_TIME:
+		ret = aealtek_set_fix_exposure_time(cxt_ptr, in_ptr, out_ptr);
+		break;
+	case AE_CTRL_SET_FIX_SENSITIVITY:
+		ret = aealtek_set_fix_sensitivity(cxt_ptr, in_ptr, out_ptr);
+		break;
+	case AE_CTRL_SET_FIX_FRAME_DURATION:
+		ret = aealtek_set_fix_frame_duration(cxt_ptr, in_ptr, out_ptr);
 		break;
 	default:
 		ISP_LOGE("cmd %ld is not defined!", cmd);
@@ -3946,9 +4032,11 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 
 	if (!cxt_ptr->tuning_info.manual_ae_on) {
 		if (0 == cxt_ptr->is_script_mode) {
-			ret = aealtek_lib_exposure2sensor(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
-			if (ret)
-				goto exit;
+			if (AE_DISABLED != cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_LibStates) {
+				ret = aealtek_lib_exposure2sensor(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
+				if (ret)
+					goto exit;
+			}
 		} else {
 			ret = aealtek_get_lib_script_info(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
 			if (ret)
