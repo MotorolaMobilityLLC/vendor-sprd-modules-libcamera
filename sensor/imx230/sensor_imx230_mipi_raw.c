@@ -77,6 +77,9 @@ struct sensor_ev_info_t {
 	uint16_t preview_gain;
 };
 
+static unsigned long imx230_access_val(unsigned long param);
+static uint32_t imx230_init_mode_fps_info();
+
 /*==============================================================================
  * Description:
  * global variable
@@ -850,6 +853,13 @@ static SENSOR_TRIM_T s_imx230_resolution_trim_tab[SENSOR_MODE_MAX] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 2672, 2008, 144 , PREVIEW_MIPI_PER_LANE_BPS, 2320, {0, 0, 2672, 2008}},
 //	{0, 0, 5344, 4016, 5008, SNAPSHOT_MIPI_PER_LANE_BPS, 4140, {0, 0, 5344, 4016}},
+	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}}
 };
 
 static const SENSOR_REG_T s_imx230_preview_size_video_tab[SENSOR_VIDEO_MODE_MAX][1] = {
@@ -938,10 +948,10 @@ static uint32_t imx230_set_video_mode(uint32_t param)
 
 /*==============================================================================
  * Description:
- * sensor lens info and other info need by isp
+ * sensor static info need by isp
  * please modify this variable acording your spec
  *============================================================================*/
-static SENSOR_LENS_EXT_INFO_T s_imx230_lens_extend_info = {
+static SENSOR_STATIC_INFO_T s_imx230_static_info = {
 	220,	//f-number,focal ratio
 	462,	//focal_length;
 	0,	//max_fps,max fps of sensor's all settings,it will be calculated from sensor mode fps
@@ -955,7 +965,7 @@ static SENSOR_LENS_EXT_INFO_T s_imx230_lens_extend_info = {
 
 /*==============================================================================
  * Description:
- * sensor lens info and other info need by isp
+ * sensor fps info related to sensor mode need by isp
  * please modify this variable acording your spec
  *============================================================================*/
 static SENSOR_MODE_FPS_INFO_T s_imx230_mode_fps_info = {
@@ -1057,20 +1067,20 @@ SENSOR_INFO_T g_imx230_mipi_raw_info = {
 	0,
 	/* deci frame num during video preview */
 	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	{SENSOR_INTERFACE_TYPE_CSI2, LANE_NUM, RAW_BITS, 0}
-	,
-	0,
+	0,//threshold_eb
+	0,//threshold_mode
+	0,//threshold_start
+	0,//threshold_end
+	0,//i2c_dev_handler
+	{SENSOR_INTERFACE_TYPE_CSI2, LANE_NUM, RAW_BITS, 0},//sensor_interface
+	0,//video_tab_info_ptr
 	/* skip frame num while change setting */
 	1,
 	/* horizontal  view angle*/
 	35,
 	/* vertical view angle*/
-	35
+	35,
+	"imx230v1"//sensor version info
 };
 
 /*==============================================================================
@@ -1281,22 +1291,25 @@ static uint32_t imx230_init_mode_fps_info()
 	if(!s_imx230_mode_fps_info.is_init) {
 		uint32_t i,modn,tempfps = 0;
 		SENSOR_PRINT("imx230_init_mode_fps_info:start init");
-		for(i = 0;i < SENSOR_MODE_MAX; i++) {
+		for(i = 0;i < NUMBER_OF_ARRAY(s_imx230_resolution_trim_tab); i++) {
 			//max fps should be multiple of 30,it calulated from line_time and frame_line
-			tempfps = 10000000/(s_imx230_resolution_trim_tab[i].line_time*s_imx230_resolution_trim_tab[i].frame_line);
-			modn = tempfps / 30;
-			if(tempfps > modn*30)
-				modn++;
-			s_imx230_mode_fps_info.sensor_mode_fps[i].max_fps = modn*30;
-			if(s_imx230_mode_fps_info.sensor_mode_fps[i].max_fps > 30) {
-				s_imx230_mode_fps_info.sensor_mode_fps[i].is_high_fps = 1;
-				s_imx230_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num =
-					s_imx230_mode_fps_info.sensor_mode_fps[i].max_fps/30;
-			}
-			if(s_imx230_mode_fps_info.sensor_mode_fps[i].max_fps >
-					s_imx230_lens_extend_info.max_fps) {
-				s_imx230_lens_extend_info.max_fps =
-					s_imx230_mode_fps_info.sensor_mode_fps[i].max_fps;
+			tempfps = s_imx230_resolution_trim_tab[i].line_time*s_imx230_resolution_trim_tab[i].frame_line;
+				if(0 != tempfps) {
+					tempfps = 10000000/tempfps;
+				modn = tempfps / 30;
+				if(tempfps > modn*30)
+					modn++;
+				s_imx230_mode_fps_info.sensor_mode_fps[i].max_fps = modn*30;
+				if(s_imx230_mode_fps_info.sensor_mode_fps[i].max_fps > 30) {
+					s_imx230_mode_fps_info.sensor_mode_fps[i].is_high_fps = 1;
+					s_imx230_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num =
+						s_imx230_mode_fps_info.sensor_mode_fps[i].max_fps/30;
+				}
+				if(s_imx230_mode_fps_info.sensor_mode_fps[i].max_fps >
+						s_imx230_static_info.max_fps) {
+					s_imx230_static_info.max_fps =
+						s_imx230_mode_fps_info.sensor_mode_fps[i].max_fps;
+				}
 			}
 			SENSOR_PRINT("mode %d,tempfps %d,frame_len %d,line_time: %d ",i,tempfps,
 					s_imx230_resolution_trim_tab[i].frame_line,
@@ -1648,29 +1661,29 @@ static uint32_t imx230_get_static_info(uint32_t *param)
 		imx230_init_mode_fps_info();
 	}
 	ex_info = (struct sensor_ex_info*)param;
-	ex_info->f_num = s_imx230_lens_extend_info.f_num;
-	ex_info->focal_length = s_imx230_lens_extend_info.focal_length;
-	ex_info->max_fps = s_imx230_lens_extend_info.max_fps;
-	ex_info->max_adgain = s_imx230_lens_extend_info.max_adgain;
-	ex_info->ois_supported = s_imx230_lens_extend_info.ois_supported;
-	ex_info->pdaf_supported = s_imx230_lens_extend_info.pdaf_supported;
-	ex_info->exp_valid_frame_num = s_imx230_lens_extend_info.exp_valid_frame_num;
-	ex_info->clamp_level = s_imx230_lens_extend_info.clamp_level;
-	ex_info->adgain_valid_frame_num = s_imx230_lens_extend_info.adgain_valid_frame_num;
+	ex_info->f_num = s_imx230_static_info.f_num;
+	ex_info->focal_length = s_imx230_static_info.focal_length;
+	ex_info->max_fps = s_imx230_static_info.max_fps;
+	ex_info->max_adgain = s_imx230_static_info.max_adgain;
+	ex_info->ois_supported = s_imx230_static_info.ois_supported;
+	ex_info->pdaf_supported = s_imx230_static_info.pdaf_supported;
+	ex_info->exp_valid_frame_num = s_imx230_static_info.exp_valid_frame_num;
+	ex_info->clamp_level = s_imx230_static_info.clamp_level;
+	ex_info->adgain_valid_frame_num = s_imx230_static_info.adgain_valid_frame_num;
 	ex_info->preview_skip_num = g_imx230_mipi_raw_info.preview_skip_num;
 	ex_info->capture_skip_num = g_imx230_mipi_raw_info.capture_skip_num;
 	ex_info->name = g_imx230_mipi_raw_info.name;
 	ex_info->sensor_version_info = g_imx230_mipi_raw_info.sensor_version_info;
-	SENSOR_PRINT("SENSORimx230: f_num: %d", ex_info->f_num);
-	SENSOR_PRINT("SENSORimx230: max_fps: %d", ex_info->max_fps);
-	SENSOR_PRINT("SENSORimx230: max_adgain: %d", ex_info->max_adgain);
-	SENSOR_PRINT("SENSORimx230: ois_supported: %d", ex_info->ois_supported);
-	SENSOR_PRINT("SENSORimx230: pdaf_supported: %d", ex_info->pdaf_supported);
-	SENSOR_PRINT("SENSORimx230: exp_valid_frame_num: %d", ex_info->exp_valid_frame_num);
-	SENSOR_PRINT("SENSORimx230: clam_level: %d", ex_info->clamp_level);
-	SENSOR_PRINT("SENSORimx230: adgain_valid_frame_num: %d", ex_info->adgain_valid_frame_num);
-	SENSOR_PRINT("SENSORimx230: sensor name is: %s", ex_info->name);
-	SENSOR_PRINT("SENSORimx230: sensor version info is: %s", ex_info->sensor_version_info);
+	SENSOR_PRINT("SENSOR_IMX230: f_num: %d", ex_info->f_num);
+	SENSOR_PRINT("SENSOR_IMX230: max_fps: %d", ex_info->max_fps);
+	SENSOR_PRINT("SENSOR_IMX230: max_adgain: %d", ex_info->max_adgain);
+	SENSOR_PRINT("SENSOR_IMX230: ois_supported: %d", ex_info->ois_supported);
+	SENSOR_PRINT("SENSOR_IMX230: pdaf_supported: %d", ex_info->pdaf_supported);
+	SENSOR_PRINT("SENSOR_IMX230: exp_valid_frame_num: %d", ex_info->exp_valid_frame_num);
+	SENSOR_PRINT("SENSOR_IMX230: clam_level: %d", ex_info->clamp_level);
+	SENSOR_PRINT("SENSOR_IMX230: adgain_valid_frame_num: %d", ex_info->adgain_valid_frame_num);
+	SENSOR_PRINT("SENSOR_IMX230: sensor name is: %s", ex_info->name);
+	SENSOR_PRINT("SENSOR_IMX230: sensor version info is: %s", ex_info->sensor_version_info);
 
 	return rtn;
 }
@@ -1690,10 +1703,72 @@ static uint32_t imx230_get_fps_info(uint32_t *param)
 	fps_info->min_fps = s_imx230_mode_fps_info.sensor_mode_fps[sensor_mode].min_fps;
 	fps_info->is_high_fps = s_imx230_mode_fps_info.sensor_mode_fps[sensor_mode].is_high_fps;
 	fps_info->high_fps_skip_num = s_imx230_mode_fps_info.sensor_mode_fps[sensor_mode].high_fps_skip_num;
-	SENSOR_PRINT("SENSORimx230: mode %d, max_fps: %d",fps_info->mode, fps_info->max_fps);
-	SENSOR_PRINT("SENSORimx230: min_fps: %d", fps_info->min_fps);
-	SENSOR_PRINT("SENSORimx230: is_high_fps: %d", fps_info->is_high_fps);
-	SENSOR_PRINT("SENSORimx230: high_fps_skip_num: %d", fps_info->high_fps_skip_num);
+	SENSOR_PRINT("SENSOR_IMX230: mode %d, max_fps: %d",fps_info->mode, fps_info->max_fps);
+	SENSOR_PRINT("SENSOR_IMX230: min_fps: %d", fps_info->min_fps);
+	SENSOR_PRINT("SENSOR_IMX230: is_high_fps: %d", fps_info->is_high_fps);
+	SENSOR_PRINT("SENSOR_IMX230: high_fps_skip_num: %d", fps_info->high_fps_skip_num);
+
+	return rtn;
+}
+
+static unsigned long imx230_access_val(unsigned long param)
+{
+	uint32_t rtn = SENSOR_SUCCESS;
+	SENSOR_VAL_T* param_ptr = (SENSOR_VAL_T*)param;
+	uint16_t tmp;
+
+	SENSOR_PRINT("SENSOR_IMX230: _imx230_access_val E param_ptr = %p", param_ptr);
+	if(!param_ptr){
+		return rtn;
+	}
+
+	SENSOR_PRINT("SENSOR_IMX230: param_ptr->type=%x", param_ptr->type);
+	switch(param_ptr->type)
+	{
+		case SENSOR_VAL_TYPE_INIT_OTP:
+			//imx230_otp_init();
+			break;
+		case SENSOR_VAL_TYPE_SHUTTER:
+			//*((uint32_t*)param_ptr->pval) = imx230_get_shutter();
+			break;
+		case SENSOR_VAL_TYPE_READ_VCM:
+			//rtn = imx230_read_vcm(param_ptr->pval);
+			break;
+		case SENSOR_VAL_TYPE_WRITE_VCM:
+			//rtn = imx230_write_vcm(param_ptr->pval);
+			break;
+		case SENSOR_VAL_TYPE_READ_OTP:
+			//imx230_otp_read(param_ptr);
+			break;
+		case SENSOR_VAL_TYPE_WRITE_OTP:
+			//rtn = _hi544_write_otp((uint32_t)param_ptr->pval);
+			break;
+		case SENSOR_VAL_TYPE_GET_RELOADINFO:
+			{
+//				struct isp_calibration_info **p= (struct isp_calibration_info **)param_ptr->pval;
+//				*p=&calibration_info;
+			}
+			break;
+		case SENSOR_VAL_TYPE_GET_AFPOSITION:
+			//*(uint32_t*)param_ptr->pval = 0;//cur_af_pos;
+			break;
+		case SENSOR_VAL_TYPE_WRITE_OTP_GAIN:
+			//rtn = imx230_write_otp_gain(param_ptr->pval);
+			break;
+		case SENSOR_VAL_TYPE_READ_OTP_GAIN:
+			//rtn = imx230_read_otp_gain(param_ptr->pval);
+			break;
+		case SENSOR_VAL_TYPE_GET_STATIC_INFO:
+			rtn = imx230_get_static_info(param_ptr->pval);
+			break;
+		case SENSOR_VAL_TYPE_GET_FPS_INFO:
+			rtn = imx230_get_fps_info(param_ptr->pval);
+			break;
+		default:
+			break;
+	}
+
+	SENSOR_PRINT("SENSOR_IMX230: _imx230_access_val X");
 
 	return rtn;
 }
@@ -1720,4 +1795,5 @@ static SENSOR_IOCTL_FUNC_TAB_T s_imx230_ioctl_func_tab = {
 	//.af_enable = imx230_write_af,
 	//.group_hold_on = imx132_group_hold_on,
 	//.group_hold_of = imx132_group_hold_off,
+	.cfg_otp = imx230_access_val,
 };

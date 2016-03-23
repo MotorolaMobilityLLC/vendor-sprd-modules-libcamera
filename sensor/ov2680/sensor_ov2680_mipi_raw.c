@@ -532,7 +532,7 @@ LOCAL SENSOR_IOCTL_FUNC_TAB_T s_ov2680_ioctl_func_tab = {
 	_ov2680_access_val,//_ov2680_access_val
 };
 
-static SENSOR_LENS_EXT_INFO_T s_ov2680_lens_extend_info = {
+static SENSOR_STATIC_INFO_T s_ov2680_static_info = {
 	240,	//f-number,focal ratio
 	200,	//focal_length;
 	0,	//max_fps,max fps of sensor's all settings,it will be calculated from sensor mode fps
@@ -626,6 +626,9 @@ SENSOR_INFO_T g_ov2680_mipi_raw_info = {
 	{SENSOR_INTERFACE_TYPE_CSI2, 1, 10, 0},
 	s_ov2680_video_info,
 	1,			// skip frame num while change setting
+	48,			//horizontal_view_angle,need check
+	48,			//vertical_view_angle,need check
+	"ov2680v1"	//sensor version info
 };
 
 LOCAL struct sensor_raw_info* Sensor_GetContext(void)
@@ -653,22 +656,25 @@ LOCAL uint32_t _ov2680_init_mode_fps_info()
 	if(!s_ov2680_mode_fps_info.is_init) {
 		uint32_t i,modn,tempfps = 0;
 		SENSOR_PRINT("_ov2680_init_mode_fps_info:start init");
-		for(i = 0;i < SENSOR_MODE_MAX; i++) {
+		for(i = 0;i < NUMBER_OF_ARRAY(s_ov2680_Resolution_Trim_Tab); i++) {
 			//max fps should be multiple of 30,it calulated from line_time and frame_line
-			tempfps = 10000000/(s_ov2680_Resolution_Trim_Tab[i].line_time*s_ov2680_Resolution_Trim_Tab[i].frame_line);
-			modn = tempfps / 30;
-			if(tempfps > modn*30)
-				modn++;
-			s_ov2680_mode_fps_info.sensor_mode_fps[i].max_fps = modn*30;
-			if(s_ov2680_mode_fps_info.sensor_mode_fps[i].max_fps > 30) {
-				s_ov2680_mode_fps_info.sensor_mode_fps[i].is_high_fps = 1;
-				s_ov2680_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num =
-					s_ov2680_mode_fps_info.sensor_mode_fps[i].max_fps/30;
-			}
-			if(s_ov2680_mode_fps_info.sensor_mode_fps[i].max_fps >
-					s_ov2680_lens_extend_info.max_fps) {
-				s_ov2680_lens_extend_info.max_fps =
-					s_ov2680_mode_fps_info.sensor_mode_fps[i].max_fps;
+			tempfps = s_ov2680_Resolution_Trim_Tab[i].line_time*s_ov2680_Resolution_Trim_Tab[i].frame_line;
+			if(0 != tempfps) {
+				tempfps = 10000000/tempfps;
+				modn = tempfps / 30;
+				if(tempfps > modn*30)
+					modn++;
+				s_ov2680_mode_fps_info.sensor_mode_fps[i].max_fps = modn*30;
+				if(s_ov2680_mode_fps_info.sensor_mode_fps[i].max_fps > 30) {
+					s_ov2680_mode_fps_info.sensor_mode_fps[i].is_high_fps = 1;
+					s_ov2680_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num =
+						s_ov2680_mode_fps_info.sensor_mode_fps[i].max_fps/30;
+				}
+				if(s_ov2680_mode_fps_info.sensor_mode_fps[i].max_fps >
+						s_ov2680_static_info.max_fps) {
+					s_ov2680_static_info.max_fps =
+						s_ov2680_mode_fps_info.sensor_mode_fps[i].max_fps;
+				}
 			}
 			SENSOR_PRINT("mode %d,tempfps %d,frame_len %d,line_time: %d ",i,tempfps,
 					s_ov2680_Resolution_Trim_Tab[i].frame_line,
@@ -1587,15 +1593,15 @@ LOCAL uint32_t _ov2680_get_static_info(uint32_t *param)
 		_ov2680_init_mode_fps_info();
 	}
 	ex_info = (struct sensor_ex_info*)param;
-	ex_info->f_num = s_ov2680_lens_extend_info.f_num;
-	ex_info->focal_length = s_ov2680_lens_extend_info.focal_length;
-	ex_info->max_fps = s_ov2680_lens_extend_info.max_fps;
-	ex_info->max_adgain = s_ov2680_lens_extend_info.max_adgain;
-	ex_info->ois_supported = s_ov2680_lens_extend_info.ois_supported;
-	ex_info->pdaf_supported = s_ov2680_lens_extend_info.pdaf_supported;
-	ex_info->exp_valid_frame_num = s_ov2680_lens_extend_info.exp_valid_frame_num;
-	ex_info->clamp_level = s_ov2680_lens_extend_info.clamp_level;
-	ex_info->adgain_valid_frame_num = s_ov2680_lens_extend_info.adgain_valid_frame_num;
+	ex_info->f_num = s_ov2680_static_info.f_num;
+	ex_info->focal_length = s_ov2680_static_info.focal_length;
+	ex_info->max_fps = s_ov2680_static_info.max_fps;
+	ex_info->max_adgain = s_ov2680_static_info.max_adgain;
+	ex_info->ois_supported = s_ov2680_static_info.ois_supported;
+	ex_info->pdaf_supported = s_ov2680_static_info.pdaf_supported;
+	ex_info->exp_valid_frame_num = s_ov2680_static_info.exp_valid_frame_num;
+	ex_info->clamp_level = s_ov2680_static_info.clamp_level;
+	ex_info->adgain_valid_frame_num = s_ov2680_static_info.adgain_valid_frame_num;
 	ex_info->preview_skip_num = g_ov2680_mipi_raw_info.preview_skip_num;
 	ex_info->capture_skip_num = g_ov2680_mipi_raw_info.capture_skip_num;
 	ex_info->name = g_ov2680_mipi_raw_info.name;

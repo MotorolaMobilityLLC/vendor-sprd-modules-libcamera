@@ -373,7 +373,7 @@ static SENSOR_REG_TAB_INFO_T s_s5k3p3sm_resolution_Tab_RAW[9] = {
 	{PNULL, 0, 0, 0, 0, 0},
 };
 
-static SENSOR_TRIM_T s_s5k3p3sm_Resolution_Trim_Tab[9] = {
+static SENSOR_TRIM_T s_s5k3p3sm_Resolution_Trim_Tab[SENSOR_MODE_MAX] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	//{0, 0, 2592, 1944, 267, 750, 1248, {0, 0, 1632, 1224}},
 	//{0, 0, 1920, 1080, 94, 1320, 1767, {0, 0, 1920, 1080}},
@@ -470,7 +470,7 @@ static SENSOR_IOCTL_FUNC_TAB_T s_s5k3p3sm_ioctl_func_tab = {
 	_s5k3p3sm_ex_write_exposure
 };
 
-static SENSOR_LENS_EXT_INFO_T s_s5k3p3sm_lens_extend_info = {
+static SENSOR_STATIC_INFO_T s_s5k3p3sm_static_info = {
 	200,	//f-number,focal ratio
 	357,	//focal_length;
 	0,	//max_fps,max fps of sensor's all settings,it will be calculated from sensor mode fps
@@ -870,22 +870,25 @@ static uint32_t _s5k3p3sm_init_mode_fps_info()
 	if(!s_s5k3p3sm_mode_fps_info.is_init) {
 		uint32_t i,modn,tempfps = 0;
 		SENSOR_PRINT("_s5k3p3sm_init_mode_fps_info:start init");
-		for(i = 0;i < SENSOR_MODE_MAX; i++) {
+		for(i = 0;i < NUMBER_OF_ARRAY(s_s5k3p3sm_Resolution_Trim_Tab); i++) {
 			//max fps should be multiple of 30,it calulated from line_time and frame_line
-			tempfps = 10000000/(s_s5k3p3sm_Resolution_Trim_Tab[i].line_time*s_s5k3p3sm_Resolution_Trim_Tab[i].frame_line);
-			modn = tempfps / 30;
-			if(tempfps > modn*30)
-				modn++;
-			s_s5k3p3sm_mode_fps_info.sensor_mode_fps[i].max_fps = modn*30;
-			if(s_s5k3p3sm_mode_fps_info.sensor_mode_fps[i].max_fps > 30) {
-				s_s5k3p3sm_mode_fps_info.sensor_mode_fps[i].is_high_fps = 1;
-				s_s5k3p3sm_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num =
-					s_s5k3p3sm_mode_fps_info.sensor_mode_fps[i].max_fps/30;
-			}
-			if(s_s5k3p3sm_mode_fps_info.sensor_mode_fps[i].max_fps >
-					s_s5k3p3sm_lens_extend_info.max_fps) {
-				s_s5k3p3sm_lens_extend_info.max_fps =
-					s_s5k3p3sm_mode_fps_info.sensor_mode_fps[i].max_fps;
+			tempfps = s_s5k3p3sm_Resolution_Trim_Tab[i].line_time*s_s5k3p3sm_Resolution_Trim_Tab[i].frame_line;
+			if(0 != tempfps) {
+				tempfps = 10000000/tempfps;
+				modn = tempfps / 30;
+				if(tempfps > modn*30)
+					modn++;
+				s_s5k3p3sm_mode_fps_info.sensor_mode_fps[i].max_fps = modn*30;
+				if(s_s5k3p3sm_mode_fps_info.sensor_mode_fps[i].max_fps > 30) {
+					s_s5k3p3sm_mode_fps_info.sensor_mode_fps[i].is_high_fps = 1;
+					s_s5k3p3sm_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num =
+						s_s5k3p3sm_mode_fps_info.sensor_mode_fps[i].max_fps/30;
+				}
+				if(s_s5k3p3sm_mode_fps_info.sensor_mode_fps[i].max_fps >
+						s_s5k3p3sm_static_info.max_fps) {
+					s_s5k3p3sm_static_info.max_fps =
+						s_s5k3p3sm_mode_fps_info.sensor_mode_fps[i].max_fps;
+				}
 			}
 			SENSOR_PRINT("mode %d,tempfps %d,frame_len %d,line_time: %d ",i,tempfps,
 					s_s5k3p3sm_Resolution_Trim_Tab[i].frame_line,
@@ -1391,15 +1394,15 @@ static uint32_t _s5k3p3sm_get_static_info(uint32_t *param)
 		_s5k3p3sm_init_mode_fps_info();
 	}
 	ex_info = (struct sensor_ex_info*)param;
-	ex_info->f_num = s_s5k3p3sm_lens_extend_info.f_num;
-	ex_info->focal_length = s_s5k3p3sm_lens_extend_info.focal_length;
-	ex_info->max_fps = s_s5k3p3sm_lens_extend_info.max_fps;
-	ex_info->max_adgain = s_s5k3p3sm_lens_extend_info.max_adgain;
-	ex_info->ois_supported = s_s5k3p3sm_lens_extend_info.ois_supported;
-	ex_info->pdaf_supported = s_s5k3p3sm_lens_extend_info.pdaf_supported;
-	ex_info->exp_valid_frame_num = s_s5k3p3sm_lens_extend_info.exp_valid_frame_num;
-	ex_info->clamp_level = s_s5k3p3sm_lens_extend_info.clamp_level;
-	ex_info->adgain_valid_frame_num = s_s5k3p3sm_lens_extend_info.adgain_valid_frame_num;
+	ex_info->f_num = s_s5k3p3sm_static_info.f_num;
+	ex_info->focal_length = s_s5k3p3sm_static_info.focal_length;
+	ex_info->max_fps = s_s5k3p3sm_static_info.max_fps;
+	ex_info->max_adgain = s_s5k3p3sm_static_info.max_adgain;
+	ex_info->ois_supported = s_s5k3p3sm_static_info.ois_supported;
+	ex_info->pdaf_supported = s_s5k3p3sm_static_info.pdaf_supported;
+	ex_info->exp_valid_frame_num = s_s5k3p3sm_static_info.exp_valid_frame_num;
+	ex_info->clamp_level = s_s5k3p3sm_static_info.clamp_level;
+	ex_info->adgain_valid_frame_num = s_s5k3p3sm_static_info.adgain_valid_frame_num;
 	ex_info->preview_skip_num = g_s5k3p3sm_mipi_raw_info.preview_skip_num;
 	ex_info->capture_skip_num = g_s5k3p3sm_mipi_raw_info.capture_skip_num;
 	ex_info->name = g_s5k3p3sm_mipi_raw_info.name;
