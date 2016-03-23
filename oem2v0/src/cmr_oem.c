@@ -210,6 +210,7 @@ static cmr_uint camera_copy_sensor_fps_info_to_isp(struct isp_sensor_fps_info *o
 		SENSOR_MODE_FPS_T *in_fps);
 static cmr_uint camera_copy_sensor_ex_info_to_isp(struct isp_sensor_ex_info *out_isp_sn_ex_info,
 		struct sensor_ex_info *in_sn_ex_info);
+static cmr_uint camera_sensor_color_to_isp_color(cmr_u32 *isp_color, cmr_u32 sensor_color);
 
 extern int32_t isp_calibration_get_info(struct isp_data_t *golden_info, struct isp_cali_info_t *cali_info);
 extern int32_t isp_calibration(struct isp_cali_param *param, struct isp_data_t *result);
@@ -2661,8 +2662,8 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 	isp_param.camera_id = cxt->camera_id;
 	isp_param.alloc_cb = camera_malloc;
 	isp_param.free_cb  = camera_free;
-	isp_param.image_pattern = sensor_info_ptr->image_pattern;
-	CMR_LOGD("image_pattern: %d", isp_param.image_pattern);
+	camera_sensor_color_to_isp_color(&isp_param.image_pattern,sensor_info_ptr->image_pattern);
+	CMR_LOGD("image_pattern:sensor color is %d, isp color is %d", sensor_info_ptr->image_pattern,isp_param.image_pattern);
 	struct sensor_ex_info sn_ex_info;
 	memset(&sn_ex_info,0,sizeof(struct sensor_ex_info));
 	val.type               = SENSOR_VAL_TYPE_GET_STATIC_INFO;
@@ -7210,5 +7211,28 @@ static cmr_uint camera_copy_sensor_ex_info_to_isp(struct isp_sensor_ex_info *out
 	out_isp_sn_ex_info->name = in_sn_ex_info->name;
 	out_isp_sn_ex_info->sensor_version_info = in_sn_ex_info->sensor_version_info;
 
+	return CMR_CAMERA_SUCCESS;
+}
+
+static cmr_uint camera_sensor_color_to_isp_color(cmr_u32 *isp_color, cmr_u32 sensor_color)
+{
+	switch (sensor_color){
+	case SENSOR_IMAGE_PATTERN_RAWRGB_GR:
+		*isp_color = COLOR_ORDER_GR;
+		break;
+	case SENSOR_IMAGE_PATTERN_RAWRGB_R:
+		*isp_color = COLOR_ORDER_RG;
+		break;
+	case SENSOR_IMAGE_PATTERN_RAWRGB_B:
+		*isp_color = COLOR_ORDER_BG;
+		break;
+	case SENSOR_IMAGE_PATTERN_RAWRGB_GB:
+		*isp_color = COLOR_ORDER_GB;
+		break;
+	default:
+		CMR_LOGE("sensor color maybe error,not found in definition.set isp color to COLOR_ORDER_GR");
+		isp_color = COLOR_ORDER_GR;
+		break;
+	}
 	return CMR_CAMERA_SUCCESS;
 }
