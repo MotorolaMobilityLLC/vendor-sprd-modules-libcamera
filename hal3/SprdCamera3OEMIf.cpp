@@ -6660,7 +6660,7 @@ void * SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data)
 		HAL_LOGE("obj null  error");
 		return NULL;
 	}
-	SensorManager  mgr(String16("EIS intergrate"));
+	SensorManager&  mgr(SensorManager::getInstanceForPackage(String16("EIS intergrate")));
 
 	Sensor const* const* list;
 	ssize_t count = mgr.getSensorList(&list);
