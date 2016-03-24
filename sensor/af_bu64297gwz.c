@@ -36,138 +36,30 @@ uint32_t bu64297gwz_init(void)
 	uint32_t ret_value = SENSOR_SUCCESS;
 
 	slave_addr = bu64297gwz_VCM_SLAVE_ADDR;
-	cmd_val[0] = 0xc2;
-	cmd_val[1] = 0x00;	//0x4b;
+	cmd_val[0] = 0xcc;
+	cmd_val[1] = 0x02;	//0x4b;
 	cmd_len = 2;
 	ret_value =
 	    Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
 
-	cmd_val[0] = 0xc8;
-	cmd_val[1] = 0x01;
+	cmd_val[0] = 0xd4;
+	cmd_val[1] = 0x96;
 	cmd_len = 2;
 	ret_value =
 	    Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
 
-	cmd_val[0] = 0xe8;
-	cmd_val[1] = 0x3f;
+	cmd_val[0] = 0xdc;
+	cmd_val[1] = 0x03;
 	cmd_len = 2;
 	ret_value =
 	    Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
 
-	cmd_val[0] = 0xe8;
-	cmd_val[1] = 0x3f;
+	cmd_val[0] = 0xe4;
+	cmd_val[1] = 0x02;
 	cmd_len = 2;
 	ret_value =
 	    Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
 
-	cmd_val[0] = 0xe8;
-	cmd_val[1] = 0x6f;
-	cmd_len = 2;
-	ret_value =
-	    Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
-
-	cmd_val[0] = 0xe8;
-	cmd_val[1] = 0x6f;
-	cmd_len = 2;
-	ret_value =
-	    Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
-
-	cmd_val[0] = 0xe8;
-	cmd_val[1] = 0xc9;
-	cmd_len = 2;
-	ret_value =
-	    Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
-
-	cmd_val[0] = 0xe8;
-	cmd_val[1] = 0xc9;
-	cmd_len = 2;
-	ret_value =
-	    Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
-	cmd_val[0] = 0xe9;
-	cmd_val[1] = 0x38;
-	cmd_len = 2;
-	ret_value =
-	    Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
-	cmd_val[0] = 0xe9;
-	cmd_val[1] = 0x38;
-	cmd_len = 2;
-	ret_value =
-	    Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
-	cmd_val[0] = 0xe9;
-	cmd_val[1] = 0x83;
-	cmd_len = 2;
-	ret_value =
-	    Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
-	cmd_val[0] = 0xe9;
-	cmd_val[1] = 0x83;
-	cmd_len = 2;
-	ret_value =
-	    Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
-	cmd_val[0] = 0xe9;
-	cmd_val[1] = 0xca;
-	cmd_len = 2;
-	ret_value =
-	    Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
-	cmd_val[0] = 0xe9;
-	cmd_val[1] = 0xca;
-	cmd_len = 2;
-	ret_value =
-	    Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
-	cmd_val[0] = 0xe9;
-	cmd_val[1] = 0xef;
-	cmd_len = 2;
-	ret_value =
-	    Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
-	cmd_val[0] = 0xe9;
-	cmd_val[1] = 0xef;
-	cmd_len = 2;
-	ret_value =
-	    Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
-	cmd_val[0] = 0xea;
-	cmd_val[1] = 0x00;
-	cmd_len = 2;
-	ret_value =
-	    Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
-	cmd_val[0] = 0xea;
-	cmd_val[1] = 0x00;
-	cmd_len = 2;
-	ret_value =
-	    Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
-	cmd_val[0] = 0xea;
-	cmd_val[1] = 0x00;
-	cmd_len = 2;
-	ret_value =
-	    Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
-	cmd_val[0] = 0xea;
-	cmd_val[1] = 0x00;
-	cmd_len = 2;
-	ret_value =
-	    Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
-	cmd_val[0] = 0xea;
-	cmd_val[1] = 0x00;
-	cmd_len = 2;
-	ret_value =
-	    Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
-	cmd_val[0] = 0xea;
-	cmd_val[1] = 0x00;
-	cmd_len = 2;
-	ret_value =
-	    Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
-	cmd_val[0] = 0xea;
-	cmd_val[1] = 0x00;
-	cmd_len = 2;
-	ret_value =
-	    Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
-	cmd_val[0] = 0xd0;
-	cmd_val[1] = 0x85;
-	cmd_len = 2;
-	ret_value =
-	    Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
-	cmd_val[0] = 0xc6;
-	cmd_val[1] = 0x00;
-	cmd_len = 2;
-	ret_value =
-	    Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
 	return ret_value;
 }
 
