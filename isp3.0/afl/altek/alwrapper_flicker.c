@@ -68,8 +68,10 @@ uint32 al3awrapper_dispatchhw3a_flickerstats( struct isp_drv_meta_antif_t * alis
 	/* store frame & timestamp */
 	memcpy( &ppatched_flickerdat->systemtime, &pmetadata_flicker->systemtime, sizeof(struct timeval));
 	ppatched_flickerdat->udsys_sof_idx       = pmetadata_flicker->udsys_sof_idx;
-
-	memcpy( ppatched_flickerdat->pantif_stats, stats, pmetadata_flicker->uantifstatssize );
+	if (pmetadata_flicker->uantifstatssize <= HW3A_ANTIF_STATS_BUFFER_SIZE)
+		memcpy( ppatched_flickerdat->pantif_stats, stats, pmetadata_flicker->uantifstatssize );
+	else
+		return ERR_WRP_FLICKER_INVALID_INPUT_PARAM;
 
 	return ret;
 }
