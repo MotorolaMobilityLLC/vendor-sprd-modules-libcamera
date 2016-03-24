@@ -880,7 +880,7 @@ struct sensor_drv_context {
 	struct sns_thread_cxt               ctrl_thread_cxt;
 	cmr_u32                             exit_flag;
 	cmr_u32                             error_cnt;
-	cmr_uint                             lnc_addr_bakup[8][4];
+	cmr_uint                            lnc_addr_bakup[8][4];
 };
 
 struct sensor_ex_exposure {
@@ -890,10 +890,10 @@ struct sensor_ex_exposure {
 };
 
 enum {
-	BITS_REG8_ADDR8,
-	BITS_REG8_ADDR16,
-	BITS_REG16_ADDR8,
-	BITS_REG16_ADDR16,
+	BITS_ADDR8_REG8,
+	BITS_ADDR8_REG16,
+	BITS_ADDR16_REG8,
+	BITS_ADDR16_REG16,
 };
 
 #define CMR_SENSOR_DEV_NAME "/dev/sprd_sensor"
@@ -985,7 +985,7 @@ cmr_int Sensor_SetFlash(uint32_t is_open);
 cmr_int Sensor_set_calibration(cmr_u32 value);
 
 cmr_u16 sensor_grc_read_i2c(cmr_u16 slave_addr, cmr_u16 addr, cmr_int bits);
-cmr_u16 sensor_grc_write_i2c(cmr_u16 slave_addr, cmr_u16 reg, cmr_u16 addr, cmr_int bits);
+cmr_u16 sensor_grc_write_i2c(cmr_u16 slave_addr, cmr_u16 addr, cmr_u16 reg, cmr_int bits);
 #ifdef	 __cplusplus
 }
 #endif

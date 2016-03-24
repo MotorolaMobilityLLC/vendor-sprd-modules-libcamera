@@ -1023,7 +1023,7 @@ static struct sensor_otp_cust_info s5k3p3_otp_info;
 
 static cmr_u8 s5k3p3sm_i2c_read_otp(cmr_u16 addr)
 {
-	return sensor_grc_read_i2c(0xA0 >> 1, addr, BITS_REG8_ADDR16);
+	return sensor_grc_read_i2c(0xA0 >> 1, addr, BITS_ADDR16_REG8);
 }
 
 static int s5k3p3sm_otp_init(void)

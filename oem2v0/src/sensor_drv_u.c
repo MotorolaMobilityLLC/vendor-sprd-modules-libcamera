@@ -565,7 +565,7 @@ cmr_int Sensor_WriteI2C(cmr_u16 slave_addr, cmr_u8 *cmd, cmr_u16 cmd_length)
 	return ret;
 }
 
-static cmr_int sns_grc_read_i2c(cmr_u16 slave_addr, cmr_u16 *reg, cmr_u16 addr, cmr_int bits)
+static cmr_int sns_grc_read_i2c(cmr_u16 slave_addr, cmr_u16 addr, cmr_u16 *reg, cmr_int bits)
 {
 	cmr_int ret = -SENSOR_FAIL;
 	cmr_u8 cmd[2] = { 0x00 };
@@ -575,14 +575,14 @@ static cmr_int sns_grc_read_i2c(cmr_u16 slave_addr, cmr_u16 *reg, cmr_u16 addr, 
 	i2c_tab.slave_addr = slave_addr;
 
 	switch (bits) {
-	case BITS_REG8_ADDR8:
-	case BITS_REG16_ADDR8:
+	case BITS_ADDR8_REG8:
+	case BITS_ADDR8_REG16:
 		cmd[0] = 0x00ff & addr;
 		i2c_tab.i2c_data = cmd;
 		i2c_tab.i2c_count = 1;
 		break;
-	case BITS_REG8_ADDR16:
-	case BITS_REG16_ADDR16:
+	case BITS_ADDR16_REG8:
+	case BITS_ADDR16_REG16:
 		cmd[0] = (0xff00 & addr) >> 8;
 		cmd[1] = 0x00ff & addr;
 		i2c_tab.i2c_data = cmd;
@@ -599,12 +599,12 @@ static cmr_int sns_grc_read_i2c(cmr_u16 slave_addr, cmr_u16 *reg, cmr_u16 addr, 
 	    goto exit;
 
 	switch (bits) {
-	case BITS_REG8_ADDR8:
-	case BITS_REG8_ADDR16:
+	case BITS_ADDR8_REG8:
+	case BITS_ADDR16_REG8:
 		*reg = i2c_tab.i2c_data[0];
 		break;
-	case BITS_REG16_ADDR8:
-	case BITS_REG16_ADDR16:
+	case BITS_ADDR8_REG16:
+	case BITS_ADDR16_REG16:
 		*reg = (0x00ff & i2c_tab.i2c_data[0]) << 8;
 		*reg = (0x00ff & i2c_tab.i2c_data[1]) | *reg;
 		break;
@@ -622,14 +622,14 @@ cmr_u16 sensor_grc_read_i2c(cmr_u16 slave_addr, cmr_u16 addr, cmr_int bits)
 	cmr_int ret = SENSOR_SUCCESS;
 	cmr_u16 reg = 0;
 
-	ret = sns_grc_read_i2c(slave_addr, &reg, addr, bits);
+	ret = sns_grc_read_i2c(slave_addr, addr, &reg, bits);
 	if (ret)
 		CMR_LOGE("failed to read i2c");
 
 	return reg;
 }
 
-static cmr_int sns_grc_write_i2c(cmr_u16 slave_addr, cmr_u16 reg, cmr_u16 addr, cmr_int bits)
+static cmr_int sns_grc_write_i2c(cmr_u16 slave_addr, cmr_u16 addr, cmr_u16 reg, cmr_int bits)
 {
 	cmr_int ret = -SENSOR_FAIL;
 	cmr_u8 cmd[4] = { 0x00 };
@@ -639,31 +639,31 @@ static cmr_int sns_grc_write_i2c(cmr_u16 slave_addr, cmr_u16 reg, cmr_u16 addr, 
 	i2c_tab.slave_addr = slave_addr;
 
 	switch (bits) {
-	case BITS_REG8_ADDR8:
-		cmd[0] = 0x00ff & reg;
-		cmd[1] = 0x00ff & addr;
+	case BITS_ADDR8_REG8:
+		cmd[0] = 0x00ff & addr;
+		cmd[1] = 0x00ff & reg;
 		i2c_tab.i2c_data = cmd;
 		i2c_tab.i2c_count = 2;
 		break;
-	case BITS_REG8_ADDR16:
-		cmd[0] = 0x00ff & reg;
-		cmd[1] = (0xff00 & addr) >> 8;
-		cmd[2] = 0x00ff & addr;
+	case BITS_ADDR8_REG16:
+		cmd[0] = 0x00ff & addr;
+		cmd[1] = (0xff00 & reg) >> 8;
+		cmd[2] = 0x00ff & reg;
 		i2c_tab.i2c_data = cmd;
 		i2c_tab.i2c_count = 3;
 		break;
-	case BITS_REG16_ADDR8:
-		cmd[0] = (0xff00 & reg) >> 8;
-		cmd[1] = 0x00ff & reg;
-		cmd[2] = 0x00ff & addr;
+	case BITS_ADDR16_REG8:
+		cmd[0] = (0xff00 & addr) >> 8;
+		cmd[1] = 0x00ff & addr;
+		cmd[2] = 0x00ff & reg;
 		i2c_tab.i2c_data = cmd;
 		i2c_tab.i2c_count = 3;
 		break;
-	case BITS_REG16_ADDR16:
-		cmd[0] = (0xff00 & reg) >> 8;
-		cmd[1] = 0x00ff & reg;
-		cmd[2] = (0xff00 & addr) >> 8;
-		cmd[3] = 0x00ff & addr;
+	case BITS_ADDR16_REG16:
+		cmd[0] = (0xff00 & addr) >> 8;
+		cmd[1] = 0x00ff & addr;
+		cmd[2] = (0xff00 & reg) >> 8;
+		cmd[3] = 0x00ff & reg;
 		i2c_tab.i2c_data = cmd;
 		i2c_tab.i2c_count = 4;
 		break;
@@ -677,10 +677,10 @@ exit:
 	return ret;
 }
 
-cmr_u16 sensor_grc_write_i2c(cmr_u16 slave_addr, cmr_u16 reg, cmr_u16 addr, cmr_int bits)
+cmr_u16 sensor_grc_write_i2c(cmr_u16 slave_addr, cmr_u16 addr, cmr_u16 reg, cmr_int bits)
 {
 	cmr_int ret = SENSOR_SUCCESS;
-	ret = sns_grc_write_i2c(slave_addr, reg, addr, bits);
+	ret = sns_grc_write_i2c(slave_addr, addr, reg, bits);
 	if (ret)
 		CMR_LOGE("failed to read i2c");
 
