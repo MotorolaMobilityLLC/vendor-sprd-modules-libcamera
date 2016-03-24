@@ -7536,6 +7536,7 @@ cmr_int prev_pop_video_buffer(struct prev_handle *handle, cmr_u32 camera_id, str
 			memcpy(&prev_cxt->video_phys_addr_array[i][0], &prev_cxt->video_phys_addr_array[i+1][0], sizeof(cmr_uint)<<1);
 			memcpy(&prev_cxt->video_virt_addr_array[i][0], &prev_cxt->video_virt_addr_array[i+1][0], sizeof(cmr_uint)<<1);
 			memcpy(&prev_cxt->video_mfd_array[i][0], &prev_cxt->video_mfd_array[i+1][0], sizeof(cmr_s32)<<1);
+			memcpy(&prev_cxt->video_frm[i], &prev_cxt->video_frm[i+1], sizeof(struct img_frm));
 		}
 		memcpy(&prev_cxt->video_phys_addr_array[i][0], &phys_addr_array_0[0], sizeof(cmr_uint)<<1);
 		memcpy(&prev_cxt->video_virt_addr_array[i][0], &virt_addr_array_0[0], sizeof(cmr_uint)<<1);
