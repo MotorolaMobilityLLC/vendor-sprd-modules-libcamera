@@ -197,9 +197,14 @@ struct af_ctrl_sensor_crop_info_t {
 };
 
 struct af_ctrl_sensor_info_type {
-	uint32_t sensor_res_height;
-	uint32_t sensor_res_width;
+	cmr_u32 sensor_res_height;
+	cmr_u32 sensor_res_width;
 	struct af_ctrl_sensor_crop_info_t crop_info;
+};
+
+struct af_ctrl_module_info_type {
+	cmr_u32 f_num;
+	cmr_u32 focal_length;
 };
 
 struct af_ctrl_gyro_type {
@@ -259,6 +264,7 @@ struct af_ctrl_init_in {
 	struct af_ctrl_tuning_file_t tuning_info;
 	struct af_ctrl_isp_info_t isp_info;
 	struct af_ctrl_sensor_info_type sensor_info;
+	struct af_ctrl_module_info_type module_info;
 	struct af_ctrl_cb_ops_type af_ctrl_cb_ops;
 };
 

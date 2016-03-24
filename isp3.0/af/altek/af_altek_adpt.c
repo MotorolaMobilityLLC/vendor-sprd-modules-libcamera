@@ -881,7 +881,7 @@ static cmr_int afaltek_adpt_caf_update_ae_info(cmr_handle adpt_handle, void *in)
 
 	ae_rgb_stats = (struct isp_ae_statistic_info *)isp_ae_info->report_data.rgb_stats;
 	if (NULL == ae_rgb_stats) {
-		ISP_LOGE("failed to get ae rgb stats");
+		ISP_LOGE("failed to get ae rgb stats if is the first that's ok.");
 		return -ISP_ERROR;
 	}
 
@@ -1587,9 +1587,9 @@ static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 			 init_info.calib_data.inf_step,
 			 init_info.calib_data.macro_step);
 	}
+	init_info.module_info.f_number = in->module_info.f_num * 1.0 / 100;
+	init_info.module_info.focal_lenth = in->module_info.focal_length * 10;
 #if 1 //TBD
-	init_info.module_info.f_number = 2.0;
-	init_info.module_info.focal_lenth = 4400;
 	init_info.calib_data.inf_distance = 20000;
 	init_info.calib_data.macro_distance = 700;
 	init_info.calib_data.mech_top = 1023;
@@ -1597,6 +1597,9 @@ static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 	init_info.calib_data.lens_move_stable_time = 20;
 	init_info.calib_data.extend_calib_ptr = NULL;
 	init_info.calib_data.extend_calib_data_size = 0;
+	ISP_LOGI("f_number = %f focal_lenth = %f",
+		 init_info.module_info.f_number,
+		 init_info.module_info.focal_lenth);
 #endif
 	/* init otp */
 	if (1) {

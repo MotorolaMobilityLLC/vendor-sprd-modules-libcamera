@@ -669,17 +669,17 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 	cxt = (struct isp3a_fw_context *)isp_3a_handle;
 
 	//OTP TBD
+	memset(&af_input, 0x00, sizeof(af_input));
 	af_input.camera_id = input_ptr->camera_id;
 	af_input.af_lib_info = input_ptr->af_config;
-	memset(&af_input.af_lib_info, 0x00, sizeof(af_input.af_lib_info)); //TBD
 	af_input.caller_handle = isp_3a_handle;
 //	af_input.otp_info = ?//TBD
-	memset(&af_input.otp_info, 0x00, sizeof(af_input.otp_info));
-	memset(&af_input.tuning_info, 0x00, sizeof(af_input.tuning_info));
-	af_input.isp_info.img_width = 1280;//TBD
-	af_input.isp_info.img_height = 960;//TBD
+	af_input.isp_info.img_width = sensor_raw_info_ptr->resolution_info_ptr->tab[1].width;
+	af_input.isp_info.img_height = sensor_raw_info_ptr->resolution_info_ptr->tab[1].height;
 	af_input.sensor_info.sensor_res_width = input_ptr->size.w;
 	af_input.sensor_info.sensor_res_height = input_ptr->size.h;
+	af_input.module_info.f_num = input_ptr->ex_info.f_num;
+	af_input.module_info.focal_length = input_ptr->ex_info.focal_length;
 	af_input.af_ctrl_cb_ops.set_pos = isp3a_set_pos;
 	af_input.af_ctrl_cb_ops.start_notify = isp3a_start_af_notify;
 	af_input.af_ctrl_cb_ops.end_notify = isp3a_end_af_notify;
