@@ -447,7 +447,6 @@ exit:
 	return ret;
 }
 
-char test_tuning[20*1024];
 cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr, struct awb_ctrl_init_out *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
@@ -461,7 +460,6 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 	struct alhw3a_awb_cfginfo_t                 cfg_info;
 	struct allib_awb_output_data_t              output;
 	FILE                                        *fp = NULL;
-	cmr_u32                                     is_tuning = 0;
 	cmr_u32                                     tuning_size = 0;
 	cmr_int                                     i = 0;
 
@@ -494,25 +492,6 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 		ISP_LOGE("callback is NULL");
 		goto exit;
 	}
-#if 1
-	memset(&test_tuning[0], 0, 20*1024);
-	fp = fopen("/system/lib/tuning.bin","rb");
-	if (fp) {
-		if(fseek(fp, 0, SEEK_END)) {
-			ISP_LOGE("Error Seek File\n");
-			goto normal_flow;
-		}
-		//get file size
-		tuning_size = ftell(fp);
-		rewind(fp);
-		fread((void *)&test_tuning[0], tuning_size, 1, fp);
-		fclose(fp);
-		is_tuning = 1;
-	} else {
-		ISP_LOGE("failed to open tuning");
-	}
-normal_flow:
-#endif
 	cxt->callback = input_ptr->awb_cb;
 
 	//initialize
@@ -543,16 +522,7 @@ normal_flow:
 	if (ret) {
 		ISP_LOGE("failed to set otp %lx", ret);
 	}
-	if (1 == is_tuning) {
-	    //. Set tuning bin file data
-	    set_param.type = alawb_set_param_tuning_file;
-	    set_param.para.tuning_file = (void*)&test_tuning[0];
-	    ret = (cmr_int)cxt->lib_func.set_param(&set_param, cxt->lib_func.awb);
-		if (ret) {
-			ISP_LOGE("failed to set tuning file %lx", ret);
-		}
-	}
-#if 1
+
 	if (input_ptr->tuning_param) {
 		ISP_LOGI("set tuning file");
 	    set_param.type = alawb_set_param_tuning_file;
@@ -562,7 +532,6 @@ normal_flow:
 			ISP_LOGE("failed to set tuning file %lx", ret);
 		}
 	}
-#endif
 #if TEST_VERSION
 	ret = (cmr_int)al3awrapperawb_getdefaultcfg(&cfg_info);
 	if (ret) {
@@ -709,8 +678,8 @@ normal_flow:
 	}
 #if 0
 	//set SOF index
-    set_param.type = alawb_set_param_sys_sof_frame_idx;
-    set_param.para.sys_sof_frame_idx = 0;
+	set_param.type = alawb_set_param_sys_sof_frame_idx;
+	set_param.para.sys_sof_frame_idx = 0;
 	ret = cxt->lib_func.set_param(&set_param, cxt->lib_func.awb);
 	if (ret) {
 		ISP_LOGE("failed to set sof frame %lx", ret);
