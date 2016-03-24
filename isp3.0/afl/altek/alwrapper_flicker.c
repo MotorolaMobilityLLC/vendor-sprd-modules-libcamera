@@ -21,6 +21,7 @@
 #include <string.h>
 #include "mtype.h"
 #include "hw3a_stats.h"
+#include "isp_common_types.h"
 /* Wrapper define */
 #include "alwrapper_3a.h"
 #include "alwrapper_flicker.h"
@@ -68,10 +69,12 @@ uint32 al3awrapper_dispatchhw3a_flickerstats( struct isp_drv_meta_antif_t * alis
 	/* store frame & timestamp */
 	memcpy( &ppatched_flickerdat->systemtime, &pmetadata_flicker->systemtime, sizeof(struct timeval));
 	ppatched_flickerdat->udsys_sof_idx       = pmetadata_flicker->udsys_sof_idx;
-	if (pmetadata_flicker->uantifstatssize <= HW3A_ANTIF_STATS_BUFFER_SIZE)
+	if (pmetadata_flicker->uantifstatssize <= HW3A_ANTIF_STATS_BUFFER_SIZE) {
 		memcpy( ppatched_flickerdat->pantif_stats, stats, pmetadata_flicker->uantifstatssize );
-	else
+	} else {
+		ISP_LOGE("invalid statssize:%d", pmetadata_flicker->uantifstatssize);
 		return ERR_WRP_FLICKER_INVALID_INPUT_PARAM;
+	}
 
 	return ret;
 }

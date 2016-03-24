@@ -164,10 +164,8 @@ struct aealtek_update_list {
 };
 
 struct aealtek_stat_info {
-	cmr_u32 statsy[AL_MAX_AE_STATS_NUM];
-	cmr_u32 statsr[AL_MAX_AE_STATS_NUM];
-	cmr_u32 statsg[AL_MAX_AE_STATS_NUM];
-	cmr_u32 statsb[AL_MAX_AE_STATS_NUM];
+	struct isp_ae_statistic_info ae_stats;
+	cmr_u32 statsy[ISP_AE_BLOCK];
 };
 
 struct aealtek_lib_data {
@@ -220,8 +218,7 @@ struct aealtek_cxt {
 	struct aealtek_sensor_exp_data sensor_exp_data;
 	struct aealtek_exposure_param pre_write_exp_data;
 	struct aealtek_tuning_info tuning_info;
-	struct aealtek_stat_info stat_info[20];
-	struct isp_ae_statistic_info ae_stats;
+	struct aealtek_stat_info stat_info[10];
 	cmr_u32 stat_info_num;
 };
 
@@ -1233,7 +1230,7 @@ static cmr_int aealtek_set_fix_exposure_time(struct aealtek_cxt *cxt_ptr, struct
 	exp_time = in_ptr->value;
 
 	cxt_ptr->sensor_exp_data.lib_exp.exp_line = 10*exp_time/cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time;
-	ISP_LOGI("exp_line=%d", cxt_ptr->sensor_exp_data.lib_exp.exp_line);
+	cxt_ptr->sensor_exp_data.lib_exp.exp_time = exp_time;
 
 	return ISP_SUCCESS;
 exit:
@@ -3480,12 +3477,13 @@ static cmr_int aealtek_set_y_hist_stats(struct aealtek_cxt *cxt_ptr, struct ae_c
 	}
 
 	memset(&wrapper_y_hist, 0x00, sizeof(wrapper_y_hist));
+	wrapper_y_hist.b_is_stats_byaddr = TRUE;
+	wrapper_y_hist.pt_hist_y = cxt_ptr->stat_info[cxt_ptr->stat_info_num].ae_stats.y_hist;
 	ret = al3awrapper_dispatchhw3a_yhiststats((struct isp_drv_meta_yhist_t *)in_ptr->y_hist_stat.y_hist_data_ptr, &wrapper_y_hist);
 	if (ret) {
 		ISP_LOGE("failed to dispatch yhist");
 		goto exit;
 	}
-	memcpy(cxt_ptr->ae_stats.y_hist, wrapper_y_hist.hist_y, sizeof(cxt_ptr->ae_stats.y_hist));
 
 	return ISP_SUCCESS;
 exit:
@@ -3842,7 +3840,6 @@ static cmr_int aealtek_pre_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 
 	cmr_uint lib_ret = 0;
 	struct alaeruntimeobj_t *obj_ptr = NULL;
-	cmr_u32 data_length = 0;
 	struct al3awrapper_stats_ae_t *ppatched_aedat;
 
 
@@ -3851,17 +3848,12 @@ static cmr_int aealtek_pre_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 		goto exit;
 	}
 	obj_ptr = &cxt_ptr->al_obj;
-	data_length = ARRAY_SIZE(cxt_ptr->stat_info) - 1;
+
 	ppatched_aedat = &cxt_ptr->lib_data.stats_data;
 	ppatched_aedat->ptstatsy = cxt_ptr->stat_info[cxt_ptr->stat_info_num].statsy;
-	ppatched_aedat->ptstatsr = cxt_ptr->stat_info[cxt_ptr->stat_info_num].statsr;
-	ppatched_aedat->ptstatsg = cxt_ptr->stat_info[cxt_ptr->stat_info_num].statsg;
-	ppatched_aedat->ptstatsb = cxt_ptr->stat_info[cxt_ptr->stat_info_num].statsb;
-	if (data_length == cxt_ptr->stat_info_num) {
-		cxt_ptr->stat_info_num = 0;
-	} else {
-		cxt_ptr->stat_info_num ++;
-	}
+	ppatched_aedat->ptstatsr = cxt_ptr->stat_info[cxt_ptr->stat_info_num].ae_stats.r_info;
+	ppatched_aedat->ptstatsg = cxt_ptr->stat_info[cxt_ptr->stat_info_num].ae_stats.g_info;
+	ppatched_aedat->ptstatsb = cxt_ptr->stat_info[cxt_ptr->stat_info_num].ae_stats.b_info;
 
 	if (obj_ptr) {
 		if (!in_ptr->stat_data_ptr->addr) {
@@ -3873,14 +3865,7 @@ static cmr_int aealtek_pre_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 			ret = ISP_ERROR;
 			ISP_LOGE("dispatch lib_ret=%ld", lib_ret);
 			goto exit;
-		} else {
-			memcpy(cxt_ptr->ae_stats.r_info, cxt_ptr->lib_data.stats_data.ptstatsr,
-				sizeof(cxt_ptr->ae_stats.r_info));
-			memcpy(cxt_ptr->ae_stats.g_info, cxt_ptr->lib_data.stats_data.ptstatsg,
-				sizeof(cxt_ptr->ae_stats.g_info));
-			memcpy(cxt_ptr->ae_stats.b_info, cxt_ptr->lib_data.stats_data.ptstatsb,
-				sizeof(cxt_ptr->ae_stats.b_info));
- 		}
+		}
 	}
 	return ISP_SUCCESS;
 exit:
@@ -4023,6 +4008,7 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 	cmr_int ret = ISP_ERROR;
 	struct ae_ctrl_callback_in callback_in;
 	cmr_u32 is_special_converge_flag = 0;
+	cmr_u32 data_length = 0;
 
 	if (!cxt_ptr) {
 		ISP_LOGE("param %p is NULL error!", cxt_ptr);
@@ -4086,13 +4072,14 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 
 		callback_in.proc_out.ae_frame.is_skip_cur_frame = 0;
 		callback_in.proc_out.ae_frame.stats_buff_ptr = in_ptr->stat_data_ptr;
-		callback_in.proc_out.ae_frame.stat_info.statsy_ptr = (cmr_u32 *)cxt_ptr->lib_data.stats_data.ptstatsy;
-		callback_in.proc_out.ae_frame.stat_info.statsr_ptr = (cmr_u32 *)cxt_ptr->lib_data.stats_data.ptstatsr;
-		callback_in.proc_out.ae_frame.stat_info.statsg_ptr = (cmr_u32 *)cxt_ptr->lib_data.stats_data.ptstatsg;
-		callback_in.proc_out.ae_frame.stat_info.statsb_ptr = (cmr_u32 *)cxt_ptr->lib_data.stats_data.ptstatsb;
-
-		callback_in.proc_out.ae_info.report_data.rgb_stats = &cxt_ptr->ae_stats; /* TBD */
+		data_length = ARRAY_SIZE(cxt_ptr->stat_info) - 1;
+		callback_in.proc_out.ae_info.report_data.rgb_stats = &cxt_ptr->stat_info[cxt_ptr->stat_info_num].ae_stats;
 		cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRL_CB_PROC_OUT, &callback_in);
+		if (data_length == cxt_ptr->stat_info_num) {
+			cxt_ptr->stat_info_num = 0;
+		} else {
+			cxt_ptr->stat_info_num ++;
+		}
 	}
 
 	return ISP_SUCCESS;
