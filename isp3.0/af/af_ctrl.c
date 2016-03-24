@@ -417,9 +417,16 @@ cmr_int af_ctrl_init(struct af_ctrl_init_in * in,
 	ret = afctrl_create_thread((cmr_handle) cxt);
 	if (ret) {
 		ISP_LOGE("failed to create thread ret = %ld", ret);
-		goto error_c_thread;
+		goto error_main_thread;
 	}
 #endif
+	/* create vcm thread */
+	ret = afctrl_create_vcm_thread((cmr_handle) cxt);
+	if (ret) {
+		ISP_LOGE("failed to create thread ret = %ld", ret);
+		goto error_vcm_thread;
+	}
+
 	/* adpter init */
 	ret = cxt->af_adpt_ops->adpt_init(&adpt_in, out, &cxt->adpt_handle);
 	if (ret) {
@@ -427,20 +434,17 @@ cmr_int af_ctrl_init(struct af_ctrl_init_in * in,
 		goto error_init_adpt;
 	}
 
-	/* create vcm thread */
-	ret = afctrl_create_vcm_thread((cmr_handle) cxt);
-	if (ret) {
-		ISP_LOGE("failed to create thread ret = %ld", ret);
-		goto error_vcm_thread;
-	}
 	*handle = (cmr_handle) cxt;
 	return ret;
 
-error_vcm_thread:
 	cxt->af_adpt_ops->adpt_deinit(cxt->adpt_handle);
 error_init_adpt:
+	ret = afctrl_destroy_vcm_thread(cxt);
+error_vcm_thread:
+#ifdef SUPPORT_AF_THREAD
 	afctrl_destroy_thread(cxt);
-error_c_thread:
+error_main_thread:
+#endif
 error_get_adpt:
 	free(cxt);
 	cxt = NULL;
