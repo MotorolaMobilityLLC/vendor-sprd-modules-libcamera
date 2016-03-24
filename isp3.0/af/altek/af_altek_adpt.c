@@ -506,6 +506,7 @@ static void afaltek_adpt_config_mode(cmr_int mode_in, cmr_int *mode_out)
 		break;
 	case ISP_FOCUS_MULTI_ZONE:
 		*mode_out = AF_CTRL_MODE_AUTO;
+		break;
 	case ISP_FOCUS_MACRO:
 		*mode_out = AF_CTRL_MODE_MANUAL;
 		break;
@@ -789,6 +790,7 @@ static cmr_int afaltek_adpt_vcm_tuning_param(cmr_handle adpt_handle)
 	property_get("persist.sys.isp.vcm.tuning.mode", (char *)value, "0");
 
 	if (1 == atoi((char *)value)) {
+		cxt->vcm_tune.tuning_enable = 1;
 		memset(pos, '\0', sizeof(pos));
 		property_get("persist.sys.isp.vcm.position", (char *)pos, "0");
 		position = atoi((char *)pos);
@@ -797,8 +799,7 @@ static cmr_int afaltek_adpt_vcm_tuning_param(cmr_handle adpt_handle)
 			ret = afaltek_adpt_set_pos(adpt_handle, position, 0);
 			if (!ret) {
 				cxt->vcm_tune.cur_pos = position;
-				cxt->vcm_tune.tuning_enable = 1;
-				ISP_LOGI("VCM TUNING MODE position %d", position);
+				ISP_LOGI("VCM tuning mode position %d", position);
 			}
 		}
 	} else {
@@ -854,6 +855,11 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 	struct isp_af_win roi;
 	struct allib_af_input_roi_info_t lib_roi;
 	struct caf_alg_result caf_out;
+
+	if (cxt->vcm_tune.tuning_enable) {
+		ISP_LOGI("vcm tuning mode");
+		return ISP_SUCCESS;
+	}
 
 	cmr_bzero(&roi, sizeof(roi));
 	cmr_bzero(&lib_roi, sizeof(lib_roi));
@@ -1214,7 +1220,6 @@ static cmr_int afaltek_adpt_pre_start(cmr_handle adpt_handle,
 			ISP_LOGE("failed to stop");
 	}
 
-	//ret = afaltek_adpt_set_mode(cxt, AF_CTRL_MODE_AUTO);	/* TBD */
 	ret = afaltek_adpt_set_roi(adpt_handle, roi);
 	if (ret)
 		ISP_LOGE("failed to set roi");
