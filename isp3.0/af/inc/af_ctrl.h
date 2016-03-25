@@ -259,6 +259,7 @@ struct af_ctrl_isp_info_t {
 struct af_ctrl_init_in {
 	cmr_u32 camera_id;
 	cmr_handle caller_handle;
+	cmr_u8 af_support;
 	struct isp_lib_config af_lib_info;
 	struct af_ctrl_otp_info_t otp_info;
 	struct af_ctrl_tuning_file_t tuning_info;

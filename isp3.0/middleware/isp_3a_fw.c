@@ -112,6 +112,7 @@ struct ae_info {
 
 struct af_info {
 	cmr_handle handle;
+	cmr_u8 af_support;
 	struct isp3a_af_hw_cfg hw_cfg;
 	struct isp3a_statistics_data statistics_buffer[ISP3A_STATISTICS_BUF_NUM];
 };
@@ -668,12 +669,13 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 
 	cxt = (struct isp3a_fw_context *)isp_3a_handle;
 
+	cxt->af_cxt.af_support = !!cxt->ioctrl_ptr->set_focus;
 	//OTP TBD
 	memset(&af_input, 0x00, sizeof(af_input));
 	af_input.camera_id = input_ptr->camera_id;
 	af_input.af_lib_info = input_ptr->af_config;
 	af_input.caller_handle = isp_3a_handle;
-//	af_input.otp_info = ?//TBD
+	af_input.af_support = cxt->af_cxt.af_support;
 	af_input.isp_info.img_width = sensor_raw_info_ptr->resolution_info_ptr->tab[1].width;
 	af_input.isp_info.img_height = sensor_raw_info_ptr->resolution_info_ptr->tab[1].height;
 	af_input.sensor_info.sensor_res_width = input_ptr->size.w;

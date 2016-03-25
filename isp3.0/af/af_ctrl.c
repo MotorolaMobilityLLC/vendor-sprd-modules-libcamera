@@ -44,6 +44,7 @@ struct af_ctrl_thread_context {
 
 struct afctrl_context {
 	cmr_int camera_id;
+	cmr_u8 af_support;
 	cmr_int af_bypass;
 	cmr_s32 frame_id;
 	enum af_ctrl_mode_type af_mode;
@@ -394,6 +395,12 @@ cmr_int af_ctrl_init(struct af_ctrl_init_in * in,
 	/* init param */
 	cmr_bzero(cxt, sizeof(*cxt));
 	cxt->camera_id = in->camera_id;
+	cxt->af_support = in->af_support;
+	if (!cxt->af_support) {
+		ISP_LOGI("this module isnot support af");
+		ret = ISP_SUCCESS;
+		goto sucess_exit;
+	}
 	/* find vendor adpter */
 	ret = adpt_get_ops(ADPT_LIB_AF, &in->af_lib_info, &cxt->af_adpt_ops);
 	if (ret) {
@@ -434,6 +441,7 @@ cmr_int af_ctrl_init(struct af_ctrl_init_in * in,
 		goto error_init_adpt;
 	}
 
+sucess_exit:
 	*handle = (cmr_handle) cxt;
 	return ret;
 
@@ -461,6 +469,10 @@ cmr_int af_ctrl_deinit(cmr_handle handle)
 		ISP_LOGE("handle is null");
 		goto exit;
 	}
+	if (!cxt->af_support) {
+		ret = ISP_SUCCESS;
+		goto sucess_exit;
+	}
 
 	ret = afctrl_destroy_vcm_thread(cxt);
 	if (ret)
@@ -475,6 +487,7 @@ cmr_int af_ctrl_deinit(cmr_handle handle)
 	if (ret)
 		ISP_LOGE("failed to deinit adapter layer ret = %ld", ret);
 
+sucess_exit:
 	/* free handle */
 	free(handle);
 	handle = NULL;
@@ -485,9 +498,9 @@ exit:
 cmr_int af_ctrl_process(cmr_handle handle, struct af_ctrl_process_in *in,
 			struct af_ctrl_process_out *out)
 {
-#ifdef SUPPORT_AF_THREAD
 	cmr_int ret = ISP_SUCCESS;
 	struct afctrl_context *cxt = (struct afctrl_context *)handle;
+#ifdef SUPPORT_AF_THREAD
 	struct af_ctrl_msg_proc msg_proc;
 	CMR_MSG_INIT(message);
 
@@ -507,7 +520,12 @@ cmr_int af_ctrl_process(cmr_handle handle, struct af_ctrl_process_in *in,
 exit:
 	return ret;
 #else
-	return afctrl_evtprocess(handle, in, out);
+	if (cxt->af_support)
+		ret = afctrl_evtprocess(handle, in, out);
+	else
+		ret = ISP_SUCCESS;
+
+	return ret;
 #endif
 }
 
@@ -515,9 +533,9 @@ cmr_int af_ctrl_ioctrl(cmr_handle handle, cmr_int cmd,
 		       struct af_ctrl_param_in * in,
 		       struct af_ctrl_param_out * out)
 {
-#ifdef SUPPORT_AF_THREAD
 	cmr_int ret = -ISP_ERROR;
 	struct afctrl_context *cxt = (struct afctrl_context *)handle;
+#ifdef SUPPORT_AF_THREAD
 	struct af_ctrl_msg_ctrl msg_ctrl;
 	CMR_MSG_INIT(message);
 
@@ -544,6 +562,11 @@ cmr_int af_ctrl_ioctrl(cmr_handle handle, cmr_int cmd,
 exit:
 	return ret;
 #else
-	return afctrl_evtctrl(handle, cmd, in, out);
+	if (cxt->af_support)
+		ret = afctrl_evtctrl(handle, cmd, in, out);
+	else
+		ret = ISP_SUCCESS;
+
+	return ret;
 #endif
 }
