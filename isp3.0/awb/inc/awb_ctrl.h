@@ -185,6 +185,8 @@ struct awb_ctrl_process_out {
 	struct isp_awb_gain gain_flash_off;
 	struct isp_awb_gain gain_capture;
 	cmr_u32 ct;
+	cmr_u32 ct_flash_off;
+	cmr_u32 ct_capture;
 	cmr_u32 is_update;
 	cmr_u16 light_source;
 	cmr_u32 awb_states;

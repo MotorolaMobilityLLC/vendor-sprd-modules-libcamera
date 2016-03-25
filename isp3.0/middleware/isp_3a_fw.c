@@ -1554,10 +1554,15 @@ cmr_int isp3a_set_awb_flash_off_gain(cmr_handle isp_3a_handle)
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
 	struct isp_awb_gain                         gain;
+	cmr_u32                                     ct;
+	union isp_dev_ctrl_cmd_in                  input_data;
 
 	gain = cxt->awb_cxt.proc_out.gain_flash_off;
 	ret = isp_dev_access_cfg_awb_gain(cxt->dev_access_handle, &gain);
-	ISP_LOGI("set flash off gain %d %d %d", gain.r, gain.g, gain.b);
+	ct = cxt->awb_cxt.proc_out.ct_flash_off;
+	input_data.value = ct;
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_ACCESS_SET_COLOR_TEMP, &input_data, NULL);
+	ISP_LOGI("set flash off gain %d %d %d,ct:%d", gain.r, gain.g, gain.b, ct);
 	return ret;
 }
 
@@ -1566,11 +1571,16 @@ cmr_int isp3a_set_awb_capture_gain(cmr_handle isp_3a_handle)
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
 	struct isp_awb_gain                         gain;
+	cmr_u32                                     ct;
+	union isp_dev_ctrl_cmd_in                  input_data;
 
 	gain = cxt->awb_cxt.proc_out.gain_capture;
 	cxt->awb_cxt.proc_out.gain = cxt->awb_cxt.proc_out.gain_capture;
 	ret = isp_dev_access_cfg_awb_gain(cxt->dev_access_handle, &gain);
-	ISP_LOGI("set capture gain %d %d %d", gain.r, gain.g, gain.b);
+	ct = cxt->awb_cxt.proc_out.ct_capture;
+	input_data.value = ct;
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_ACCESS_SET_COLOR_TEMP, &input_data, NULL);
+	ISP_LOGI("set capture gain %d %d %d,ct:%d", gain.r, gain.g, gain.b, ct);
 
 	return ret;
 }
@@ -1615,6 +1625,7 @@ cmr_int isp3a_notice_flash(cmr_handle isp_3a_handle, void *param_ptr)//TBD
 		//cxt->awb_cxt.skip_num = ISP3A_TURNOFF_FLASH_SKIP_NUM;//TBD
 		break;
 	case ISP_FLASH_PRE_AFTER:
+		isp3a_set_awb_flash_off_gain((cmr_handle)cxt);
 		ae_in.flash_notice.will_capture = isp_notice_ptr->will_capture;
 		awb_in.flash_status = AWB_CTRL_FLASH_PRE_AFTER;
 		ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASH_CLOSE, &awb_in, NULL);

@@ -218,6 +218,10 @@ cmr_int awbaltek_set_flash_close(cmr_handle adpt_handle, union awb_ctrl_cmd_in *
 		}
 	}
 
+	input.type = alawb_set_param_state_under_flash;
+	input.para.state_under_flash = alawb_set_flash_none;
+	ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
+
 exit:
 	return ret;
 }
@@ -910,6 +914,8 @@ cmr_int awbaltek_process(cmr_handle adpt_handle ,struct awb_ctrl_process_in *inp
 		} else {
 			report_ptr = &cxt->cur_process_out.report_3a_update.awb_update;
 			output_ptr->ct = cxt->cur_process_out.color_temp;
+			output_ptr->ct_flash_off = cxt->cur_process_out.color_temp_flash_off;
+			output_ptr->ct_capture = cxt->cur_process_out.color_temp_capture;
 			output_ptr->gain.r = cxt->cur_process_out.wbgain.r_gain;
 			output_ptr->gain.g = cxt->cur_process_out.wbgain.g_gain;
 			output_ptr->gain.b = cxt->cur_process_out.wbgain.b_gain;;
