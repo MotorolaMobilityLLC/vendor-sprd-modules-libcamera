@@ -379,7 +379,7 @@ static SENSOR_IOCTL_FUNC_TAB_T s_s5k4h8yx_ioctl_func_tab = {
 	PNULL,//_s5k4h8yx_write_gain,
 	PNULL,
 	PNULL,
-	_s5k4h8yx_write_af,
+	PNULL, //_s5k4h8yx_write_af,
 	PNULL,
 	PNULL,//_s5k4h8yx_set_awb,
 	PNULL,
