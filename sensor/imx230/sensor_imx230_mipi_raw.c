@@ -1268,12 +1268,11 @@ static unsigned long imx230_power_on(unsigned long power_on)
 		Sensor_SetResetLevel(!reset_level);
 		//Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
 	} else {
-		return 0;
 		Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
 		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
 		Sensor_Reset(reset_level);
 		Sensor_PowerDown(power_down);
-		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
+		//Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 	}
 	SENSOR_PRINT("(1:on, 0:off): %ld", power_on);
 	return SENSOR_SUCCESS;
