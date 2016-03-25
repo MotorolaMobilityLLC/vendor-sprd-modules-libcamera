@@ -60,7 +60,7 @@ extern "C" {
 		} \
 	} while(0)
 
-#define STATS_OTHER_SIZE         (100)
+#define STATS_OTHER_SIZE         (100 + 0xff)
 #define AE_STATS_BUFFER_SIZE     (31*1024+STATS_OTHER_SIZE)
 #define AWB_STATS_BUFFER_SIZE    (26*1024+STATS_OTHER_SIZE)
 #define AF_STATS_BUFFER_SIZE     (19*1024+STATS_OTHER_SIZE)
