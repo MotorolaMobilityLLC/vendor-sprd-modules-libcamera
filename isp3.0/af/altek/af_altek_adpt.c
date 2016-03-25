@@ -556,6 +556,10 @@ static cmr_int afaltek_adpt_set_mode(cmr_handle adpt_handle, cmr_int mode)
 #ifdef FEATRUE_SPRD_CAF_TRIGGER
 		afaltek_adpt_caf_stop(cxt);
 #endif
+		ret = afaltek_adpt_stop(cxt);
+		ret = afaltek_adpt_lock_ae_awb(cxt, ISP_AE_AWB_UNLOCK);
+		cxt->af_cur_status = AF_ADPT_IDLE;
+
 		p.u_set_data.focus_mode_type = alAFLib_AF_MODE_AUTO;
 		ret = afaltek_adpt_set_parameters(cxt, &p);
 		break;
@@ -861,6 +865,10 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 		return ISP_SUCCESS;
 	}
 
+	if ((AF_CTRL_MODE_CAF != cxt->af_mode) &&
+	    (AF_CTRL_MODE_CONTINUOUS_VIDEO != cxt->af_mode))
+		return ISP_SUCCESS;
+
 	cmr_bzero(&roi, sizeof(roi));
 	cmr_bzero(&lib_roi, sizeof(lib_roi));
 	cmr_bzero(&caf_out, sizeof(caf_out));
@@ -958,7 +966,7 @@ static cmr_int afaltek_adpt_update_aux_sensor(cmr_handle adpt_handle, void *in)
 #if 1 /* TBD */
 	{
 		struct af_alg_sensor_info *gryo_info = (struct af_alg_sensor_info *)in;
-		ISP_LOGI("gyro E");
+		ISP_LOGV("gyro E");
 		caf_in.sensor_info.sensor_type = AF_POSTURE_GYRO;
 		caf_in.sensor_info.x = gryo_info->x;
 		caf_in.sensor_info.y = gryo_info->y;
@@ -975,7 +983,7 @@ static cmr_int afaltek_adpt_update_aux_sensor(cmr_handle adpt_handle, void *in)
 	case AF_CTRL_GYROSCOPE:
 	{
 		struct af_alg_sensor_info *gryo_info = (struct af_alg_sensor_info *)in;
-		ISP_LOGI("gyro E");
+		ISP_LOGV("gyro E");
 		caf_in.sensor_info.sensor_type = AF_POSTURE_GYRO;
 		caf_in.sensor_info.x = gryo_info->x;
 		caf_in.sensor_info.y = gryo_info->y;
