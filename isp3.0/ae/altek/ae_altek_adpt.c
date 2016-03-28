@@ -228,6 +228,7 @@ static cmr_int aealtek_set_lock(struct aealtek_cxt *cxt_ptr, cmr_int is_lock);
 static cmr_int aealtek_set_flash_est(struct aealtek_cxt *cxt_ptr, cmr_u32 is_reset);
 static cmr_int aealtek_enable_debug_report(struct aealtek_cxt *cxt_ptr, cmr_int enable);
 static cmr_int aealtek_set_tuning_param(struct aealtek_cxt *cxt_ptr, void *tuning_param);
+static cmr_int aealtek_set_lib_roi(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr);
 /********function start******/
 static void aealtek_print_lib_log(struct aealtek_cxt *cxt_ptr, struct ae_output_data_t *in_ptr)
 {
@@ -1615,6 +1616,7 @@ static cmr_int aealtek_reset_touch_ack(struct aealtek_cxt *cxt_ptr)
 	struct ae_set_param_t in_param;
 	struct ae_output_data_t *output_param_ptr = NULL;
 	enum ae_set_param_type_t type = 0;
+	struct ae_ctrl_param_in param_in;
 
 
 	if (!cxt_ptr) {
@@ -1630,6 +1632,11 @@ static cmr_int aealtek_reset_touch_ack(struct aealtek_cxt *cxt_ptr)
 		lib_ret = obj_ptr->set_param(&in_param, output_param_ptr, obj_ptr->ae);
 	if (lib_ret)
 		goto exit;
+	param_in.touch_zone.zone.x = 0;
+	param_in.touch_zone.zone.y = 0;
+	param_in.touch_zone.zone.w = 0;
+	param_in.touch_zone.zone.h = 0;
+	ret = aealtek_set_lib_roi(cxt_ptr, &param_in, NULL);
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld, lib_ret=%ld !!!", ret, lib_ret);
@@ -1680,20 +1687,33 @@ static cmr_int aealtek_set_touch_zone(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 {
 	cmr_int ret = ISP_ERROR;
 	struct ae_ctrl_param_in temp_param;
+	cmr_s32 end_x;
+	cmr_s32 end_y;
 
 
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
 		goto exit;
 	}
+	ISP_LOGI("x=%d,y=%d,w=%d,h=%d,touch_flag:%d",in_ptr->touch_zone.zone.x,
+			in_ptr->touch_zone.zone.y,
+			in_ptr->touch_zone.zone.w,
+			in_ptr->touch_zone.zone.h,
+			cxt_ptr->touch_param.touch_flag);
+	end_x = in_ptr->touch_zone.zone.w + in_ptr->touch_zone.zone.x;
+	end_y = in_ptr->touch_zone.zone.h + in_ptr->touch_zone.zone.y;
 	if (in_ptr->touch_zone.zone.w <= 0
 		|| in_ptr->touch_zone.zone.h <= 0
-		|| ((cmr_u32)in_ptr->touch_zone.zone.w + in_ptr->touch_zone.zone.x) > cxt_ptr->cur_status.ui_param.work_info.resolution.frame_size.w
-		|| ((cmr_u32)in_ptr->touch_zone.zone.h + in_ptr->touch_zone.zone.y) > cxt_ptr->cur_status.ui_param.work_info.resolution.frame_size.h) {
-		ISP_LOGE("x=%d,y=%d,w=%d,h=%d",in_ptr->touch_zone.zone.x,
-				in_ptr->touch_zone.zone.y,
-				in_ptr->touch_zone.zone.w,
-				in_ptr->touch_zone.zone.h);
+		|| end_x > (cmr_s32)cxt_ptr->cur_status.ui_param.work_info.resolution.frame_size.w
+		|| end_y > (cmr_s32)cxt_ptr->cur_status.ui_param.work_info.resolution.frame_size.h
+		|| end_x <= in_ptr->touch_zone.zone.x
+		|| end_y <= in_ptr->touch_zone.zone.y) {
+		if (cxt_ptr->touch_param.touch_flag) {
+			aealtek_reset_touch_param(cxt_ptr);
+			ret = aealtek_reset_touch_ack(cxt_ptr);
+			if (ret)
+				goto exit;
+		}
 		goto exit;
 	}
 	aealtek_reset_touch_param(cxt_ptr);
@@ -3273,12 +3293,6 @@ static cmr_int aealtek_set_snapshot_finished(struct aealtek_cxt *cxt_ptr, struct
 		cxt_ptr->flash_param.enable = 0;
 		aealtek_set_lock(cxt_ptr, 0);
 	}
-	if (cxt_ptr->touch_param.touch_flag) {
-		aealtek_reset_touch_param(cxt_ptr);
-		ret = aealtek_reset_touch_ack(cxt_ptr);
-		if (ret)
-			goto exit;
-	}
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld !!!", ret);
@@ -4040,6 +4054,9 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 	if (cxt_ptr->touch_param.touch_flag) {
 		if (cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_roi_change_st)
 			cxt_ptr->touch_param.ctrl_roi_changed_flag = 1;
+
+		ISP_LOGI("======touch_req =%d,%d,%d",cxt_ptr->touch_param.ctrl_convergence_req_flag,
+				cxt_ptr->touch_param.ctrl_roi_changed_flag,cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_LibStates);
 
 		/*wait roi converged command*/
 		if (cxt_ptr->touch_param.ctrl_convergence_req_flag) {

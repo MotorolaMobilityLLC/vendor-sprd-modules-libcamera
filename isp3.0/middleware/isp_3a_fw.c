@@ -1694,8 +1694,15 @@ cmr_int isp3a_set_ae_touch(cmr_handle isp_3a_handle, void *param_ptr)
 	rect_ptr = (struct isp_pos_rect*)param_ptr;
 	ae_in.touch_zone.zone.x = rect_ptr->start_x;
 	ae_in.touch_zone.zone.y = rect_ptr->start_y;
-	ae_in.touch_zone.zone.w = rect_ptr->end_x - rect_ptr->start_x + 1;
-	ae_in.touch_zone.zone.h = rect_ptr->end_y - rect_ptr->start_y + 1;
+	if ((cmr_s32)rect_ptr->end_x == rect_ptr->start_x)
+		ae_in.touch_zone.zone.w = 0;
+	else
+		ae_in.touch_zone.zone.w = rect_ptr->end_x - rect_ptr->start_x + 1;
+
+	if ((cmr_s32)rect_ptr->end_y == rect_ptr->start_y)
+		ae_in.touch_zone.zone.h = 0;
+	else
+		ae_in.touch_zone.zone.h = rect_ptr->end_y - rect_ptr->start_y + 1;
 	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_TOUCH_ZONE, &ae_in, NULL);
 exit:
 	return ret;

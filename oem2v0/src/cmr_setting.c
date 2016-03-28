@@ -799,6 +799,7 @@ static cmr_int setting_set_auto_exposure_mode(struct setting_component *cpt,
 	struct isp_pos_rect            trim;
 
 	ret = setting_set_general(cpt, SETTING_GENERAL_AUTO_EXPOSURE_MODE, parm);
+	CMR_LOGI("parm->ae_param.mode:%d)",parm->ae_param.mode );
 	//delete this if because app change metering condition
 	//if (CAMERA_AE_SPOT_METERING == parm->ae_param.mode)
 	{
@@ -810,14 +811,12 @@ static cmr_int setting_set_auto_exposure_mode(struct setting_component *cpt,
 			trim.end_y = isp_param.win_area.rect[0].start_y +  isp_param.win_area.rect[0].height;
 
 			CMR_LOGI("trim rect (%ld,%ld,%ld,%ld)",trim.start_x,trim.start_y,trim.end_x,trim.end_y );
+			cpt->is_touch_focus  =1;
 			if (trim.end_x <= (uint32_t)trim.start_x
 			|| trim.end_y <= (uint32_t)trim.start_y)
 			{
 				cpt->is_touch_focus  = 0;
-				ret  = 1;
-				return ret;
 			}
-			cpt->is_touch_focus  =1;
 
 			if (init_in->setting_isp_ioctl) {
 				isp_param.camera_id = parm->camera_id;
