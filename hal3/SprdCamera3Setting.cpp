@@ -2958,7 +2958,8 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 			if (jpeg_orientation < 0)
 				jpeg_orientation += 360;
 		}
-		GET_VALUE_IF_DIF(s_setting[mCameraId].jpgInfo.orientation, jpeg_orientation, ANDROID_JPEG_ORIENTATION)
+		//GET_VALUE_IF_DIF(s_setting[mCameraId].jpgInfo.orientation, jpeg_orientation, ANDROID_JPEG_ORIENTATION)
+		pushAndroidParaTag(ANDROID_JPEG_ORIENTATION);
 	}
 
 	if (frame_settings.exists(ANDROID_JPEG_GPS_COORDINATES) && is_capture) {
