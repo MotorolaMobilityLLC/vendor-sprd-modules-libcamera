@@ -28,7 +28,6 @@
 
 /**************************************** MACRO DEFINE *****************************************/
 #define LIBRARY_PATH "libalAWBLib.so"
-#define TEST_VERSION   1
 #define AWB_EXIF_DEBUG_INFO_SIZE 5120
 /************************************* INTERNAL DATA TYPE ***************************************/
 struct awb_altek_lib_ops {
@@ -457,7 +456,6 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 	struct allib_awb_set_parameter_t            set_otp_param;
 	struct allib_awb_get_parameter_t            get_init_param;
 	struct allib_awb_get_parameter_t            get_isp_cfg;
-	struct alhw3a_awb_cfginfo_t                 cfg_info;
 	struct allib_awb_output_data_t              output;
 	FILE                                        *fp = NULL;
 	cmr_u32                                     tuning_size = 0;
@@ -532,14 +530,6 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 			ISP_LOGE("failed to set tuning file %lx", ret);
 		}
 	}
-#if TEST_VERSION
-	ret = (cmr_int)al3awrapperawb_getdefaultcfg(&cfg_info);
-	if (ret) {
-		ISP_LOGE("failed to get isp cfg");
-	} else {
-	//	memcpy((void*)&output_ptr->hw_cfg, (void*)&cfg_info, sizeof(struct alhw3a_awb_cfginfo_t));
-	}
-#else
 	//get isp cfg
 	get_isp_cfg.type = alawb_get_param_init_isp_config;
 	ret = (cmr_int)cxt->lib_func.get_param(&get_isp_cfg, &cxt->lib_func.awb);
@@ -549,45 +539,6 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 		memcpy((void*)&output_ptr->hw_cfg, get_isp_cfg.para.awb_hw_config, sizeof(struct isp3a_awb_hw_cfg));
 		ISP_LOGI("cur_frame %d, cur_sof %d", get_isp_cfg.hw3a_curframeidx, get_isp_cfg.sys_cursof_frameidx);
 	}
-#endif
-	for ( i=0 ; i<33 ; i++) {
-		output_ptr->hw_cfg.bbr_factor[i] = cfg_info.bbrfactor[i];
-	}
-	output_ptr->hw_cfg.region.blk_num_X = cfg_info.tawbregion.uwblknumx;
-	output_ptr->hw_cfg.region.blk_num_Y = cfg_info.tawbregion.uwblknumy;
-	output_ptr->hw_cfg.region.border_ratio_X = cfg_info.tawbregion.uwborderratiox;
-	output_ptr->hw_cfg.region.border_ratio_Y = cfg_info.tawbregion.uwborderratioy;
-	output_ptr->hw_cfg.region.offset_ratio_X = cfg_info.tawbregion.uwoffsetratiox;
-	output_ptr->hw_cfg.region.offset_ratio_Y = cfg_info.tawbregion.uwoffsetratioy;
-	output_ptr->hw_cfg.token_id = cfg_info.tokenid;
-	output_ptr->hw_cfg.t_his.benable = cfg_info.tawbhis.benable;
-	output_ptr->hw_cfg.t_his.ccrend = cfg_info.tawbhis.ccrend;
-	output_ptr->hw_cfg.t_his.ccrpurple = cfg_info.tawbhis.ccrpurple;
-	output_ptr->hw_cfg.t_his.ccrstart = cfg_info.tawbhis.ccrstart;
-	output_ptr->hw_cfg.t_his.cgrass_end = cfg_info.tawbhis.cgrassend;
-	output_ptr->hw_cfg.t_his.cgrass_offset = cfg_info.tawbhis.cgrassoffset;
-	output_ptr->hw_cfg.t_his.cgrass_start = cfg_info.tawbhis.cgrassstart;
-	output_ptr->hw_cfg.t_his.coffsetdown = cfg_info.tawbhis.coffsetdown;
-	output_ptr->hw_cfg.t_his.coffset_bbr_w_end = cfg_info.tawbhis.coffset_bbr_w_end;
-	output_ptr->hw_cfg.t_his.coffset_bbr_w_start = cfg_info.tawbhis.coffset_bbr_w_start;
-	output_ptr->hw_cfg.t_his.cooffsetup = cfg_info.tawbhis.coffsetup;
-	output_ptr->hw_cfg.t_his.dhisinterp = cfg_info.tawbhis.dhisinterp;
-	output_ptr->hw_cfg.t_his.ucdampgrass = cfg_info.tawbhis.ucdampgrass;
-	output_ptr->hw_cfg.t_his.ucoffsetpurple = cfg_info.tawbhis.ucoffsetpurple;
-	output_ptr->hw_cfg.t_his.ucyfac_w = cfg_info.tawbhis.ucyfac_w;
-	output_ptr->hw_cfg.uccr_shift = cfg_info.uccrshift;
-	output_ptr->hw_cfg.uc_damp = cfg_info.ucdamp;
-	for ( i=0 ; i<16 ; i++) {
-		output_ptr->hw_cfg.uc_factor[i] = cfg_info.ucyfactor[i];
-	}
-	output_ptr->hw_cfg.uc_offset_shift = cfg_info.ucoffsetshift;
-	output_ptr->hw_cfg.uc_quantize = cfg_info.ucquantize;
-	output_ptr->hw_cfg.uc_sum_shift = cfg_info.ucsumshift;
-	output_ptr->hw_cfg.uwblinear_gain = cfg_info.uwblineargain;
-	output_ptr->hw_cfg.uwrlinear_gain = cfg_info.uwrlineargain;
-	output_ptr->hw_cfg.uw_bgain = cfg_info.uwbgain;
-	output_ptr->hw_cfg.uw_ggain = cfg_info.uwggain;
-	output_ptr->hw_cfg.uw_rgain = cfg_info.uwrgain;
 	ISP_LOGI("token_id = %d\n, uccr_shift = %d\n, uc_damp = %d\n, uc_offset_shift = %d\n",
 		output_ptr->hw_cfg.token_id, output_ptr->hw_cfg.uccr_shift,
 		output_ptr->hw_cfg.uc_damp, output_ptr->hw_cfg.uc_offset_shift);
