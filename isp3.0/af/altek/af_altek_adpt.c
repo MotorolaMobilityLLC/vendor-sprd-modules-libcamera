@@ -1610,6 +1610,10 @@ static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 		ISP_LOGI("infinite = %d, macro = %d",
 			 init_info.calib_data.inf_step,
 			 init_info.calib_data.macro_step);
+	} else {
+		/* defaut value from altek */
+		init_info.calib_data.inf_step = 294;
+		init_info.calib_data.macro_step = 570;
 	}
 	init_info.module_info.f_number = in->module_info.f_num * 1.0 / 100;
 	init_info.module_info.focal_lenth = in->module_info.focal_length * 10;
