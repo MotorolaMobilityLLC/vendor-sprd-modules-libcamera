@@ -68,7 +68,7 @@ namespace android {
 #define PRINT_TIME 0
 #define ROUND_TO_PAGE(x) (((x)+0xfff)&~0xfff)
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(*x))
-#define METADATA_SIZE 28/* (7 * 4) */
+#define METADATA_SIZE 32/* (7 * 4) */
 #define SET_PARM(x,y,z) do {\
 			LOGI("%s: set camera param: %s, %d", __func__, #x, y);\
 			camera_set_param (x, y, z);\
@@ -6585,12 +6585,20 @@ void SprdCameraHardware::handleFDDataCallback(int32_t msg_type,
 		LOGE("data is null");
 		return;
 	}
+
+	if(!data->camera_memory){
+		LOGE("data->camera_memory is null");
+		return;
+	}
+
 	if (frame_index > (mPreviewDcamAllocBufferCnt-1) || (HEAPION_INVALIDPTR == (uintptr_t)data->camera_memory->data)) {
 		LOGE("error,index addr %d array num %d",frame_index, mPreviewDcamAllocBufferCnt);
 		return;
 	}
 
-	mData_cb(msg_type, data->camera_memory, index, metadata, user);
+	if(NULL != mData_cb)
+		mData_cb(msg_type, data->camera_memory, index, metadata, user);
+
 	LOGV("handleFDDataCallback X");
 }
 
@@ -6889,10 +6897,10 @@ void SprdCameraHardware::sendPreviewFrameToVideo(struct camera_frame_type *frame
 	nsecs_t timestamp = frame->timestamp;
 	Mutex::Autolock videoll(&mVideoBufLock);
 
-	LOGI("test timestamp = %lld, mIsStoreMetaData: %d. buffer_id 0x%x",
+	LOGI("test timestamp = %lld, mIsStoreMetaData: %d. buffer_id 0x%x,y_vir_addr 0x%x,y_phy_addr  0x%x, y_mfd 0x%x",
 		timestamp,
 		mIsStoreMetaData,
-		frame->buf_id);
+		frame->buf_id, frame->y_vir_addr,frame->y_phy_addr,frame->y_mfd);
 	if (mTimeCoeff > 1) {
 		if (0 != mRecordingFirstFrameTime) {
 			timestamp = mRecordingFirstFrameTime + (timestamp - mRecordingFirstFrameTime)*mTimeCoeff;
@@ -6918,7 +6926,8 @@ void SprdCameraHardware::sendPreviewFrameToVideo(struct camera_frame_type *frame
 		*data++ = width;
 		*data++ = height;
 		*data++ = mPreviewWidth_trimx;
-		*data = mPreviewHeight_trimy;
+		*data++ = mPreviewHeight_trimy;
+		*data = frame->y_mfd;
 		{
 			Mutex::Autolock l(&mCbPrevDataBusyLock);
 			if(!isPreviewing()) return;

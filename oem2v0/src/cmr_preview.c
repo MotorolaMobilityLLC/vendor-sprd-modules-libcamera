@@ -5235,6 +5235,7 @@ cmr_int prev_construct_frame(struct prev_handle *handle,
 		frame_type->order_buf_id = frm_id;
 		frame_type->y_vir_addr   = prev_cxt->prev_frm[frm_id].addr_vir.addr_y;
 		frame_type->y_phy_addr   = prev_cxt->prev_frm[frm_id].addr_phy.addr_y;
+		frame_type->y_mfd = prev_cxt->prev_frm[frm_id].mfd.y;
 
 		frame_type->width  = prev_cxt->prev_param.preview_size.width;
 		frame_type->height = prev_cxt->prev_param.preview_size.height;
@@ -5308,6 +5309,7 @@ cmr_int prev_construct_video_frame(struct prev_handle *handle,
 		frame_type->uv_vir_addr   = prev_cxt->video_frm[frm_id].addr_vir.addr_u;
 		frame_type->y_phy_addr   = prev_cxt->video_frm[frm_id].addr_phy.addr_y;
 		frame_type->uv_phy_addr   = prev_cxt->video_frm[frm_id].addr_phy.addr_u;
+		frame_type->y_mfd = prev_cxt->video_frm[frm_id].mfd.y;
 		frame_type->width  = prev_cxt->prev_param.video_size.width;
 		frame_type->height = prev_cxt->prev_param.video_size.height;
 		frame_type->timestamp = info->sec * 1000000000LL + info->usec * 1000;
