@@ -745,19 +745,14 @@ cmr_int Sensor_SetVoltage(SENSOR_AVDD_VAL_E dvdd_val, SENSOR_AVDD_VAL_E avdd_val
 	err = sns_dev_set_dvdd(sensor_cxt, (cmr_u32)dvdd_val);
 	if(SENSOR_SUCCESS != err)
 		return err;
-	usleep(50*1000);
 
 	err = sns_dev_set_avdd(sensor_cxt, (cmr_u32)avdd_val);
 	if(SENSOR_SUCCESS != err)
 		return err;
 
-	usleep(50*1000);
-
 	err = sns_dev_set_iovdd(sensor_cxt, (cmr_u32)iodd_val);
 	if(SENSOR_SUCCESS != err)
 		return err;
-
-	usleep(50*1000);
 
 	CMR_LOGI("avdd_val = %d,  dvdd_val=%d, iodd_val=%d ", avdd_val, dvdd_val, iodd_val);
 

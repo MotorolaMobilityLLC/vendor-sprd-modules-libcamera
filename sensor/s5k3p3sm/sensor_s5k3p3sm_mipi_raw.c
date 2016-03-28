@@ -1316,14 +1316,13 @@ static unsigned long _s5k3p3sm_PowerOn(unsigned long power_on)
 		Sensor_PowerDown(power_down);
 		Sensor_SetVoltage(dvdd_val, avdd_val, iovdd_val);
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_3000MV);
-		usleep(50*1000);
-
+		usleep(1);
 		Sensor_SetResetLevel(!reset_level);
 		Sensor_PowerDown(!power_down);
-		usleep(50*1000);
+		usleep(20);
 		//_dw9807_SRCInit(2);
 		Sensor_SetMCLK(SENSOR_DEFALUT_MCLK);
-		usleep(50*1000);
+		usleep(1000);
 	} else {
 		Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
 		Sensor_SetResetLevel(reset_level);

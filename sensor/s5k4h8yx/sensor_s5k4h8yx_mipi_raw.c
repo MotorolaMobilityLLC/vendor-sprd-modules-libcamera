@@ -878,12 +878,12 @@ static unsigned long _s5k4h8yx_PowerOn(unsigned long power_on)
 		Sensor_SetResetLevel(reset_level);
 		Sensor_PowerDown(power_down);
 		Sensor_SetVoltage(dvdd_val, avdd_val, iovdd_val);
-		usleep(10*1000);
+		usleep(1);
 		Sensor_PowerDown(!power_down);
 		Sensor_SetResetLevel(!reset_level);
-		usleep(10*1000);
+		usleep(1000);
 		Sensor_SetMCLK(SENSOR_DEFALUT_MCLK);
-		usleep(10*1000);
+		usleep(1000);
 	} else {
 		Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
 		Sensor_SetResetLevel(reset_level);
