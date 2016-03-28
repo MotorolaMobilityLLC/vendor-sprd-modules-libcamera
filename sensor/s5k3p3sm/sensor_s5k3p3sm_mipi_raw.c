@@ -1190,12 +1190,12 @@ static unsigned long _s5k3p3sm_write_gain(unsigned long param)
 	}
 
 	ret_value = Sensor_WriteReg(0x204, a_gain);
-#if 0
+
 	ret_value = Sensor_WriteReg(0x20e, d_gain);
 	ret_value = Sensor_WriteReg(0x210, d_gain);
 	ret_value = Sensor_WriteReg(0x212, d_gain);
 	ret_value = Sensor_WriteReg(0x214, d_gain);
-#endif
+
 //	ret_value = Sensor_WriteReg(0x104, 0x00);
 	SENSOR_PRINT("SENSOR_S5K3P3SM: a_gain:0x%x, d_gain: 0x%x", a_gain, d_gain);
 

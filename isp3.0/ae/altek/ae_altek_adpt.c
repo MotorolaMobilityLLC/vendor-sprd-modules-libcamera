@@ -1500,13 +1500,16 @@ static cmr_int aealtek_set_fps(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 		lib_ret = obj_ptr->set_param(&in_param, output_param_ptr, obj_ptr->ae);
 	if (lib_ret)
 		goto exit;
-#if 0
+
 	max_fps = cxt_ptr->nxt_status.ui_param.fps.max_fps;
 	line_time = cxt_ptr->cur_status.ui_param.work_info.resolution.line_time;
+	ISP_LOGI("linetime=%d,fps:%f,%f", line_time,cxt_ptr->nxt_status.ui_param.fps.min_fps
+			,cxt_ptr->nxt_status.ui_param.fps.max_fps);
+
 	ret = aealtek_set_min_frame_length(cxt_ptr, max_fps, line_time);
 	if (ret)
 		ISP_LOGW("warning set_min_frame ret=%ld !!!", ret);
-#endif
+
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld, lib_ret=%ld !!!", ret, lib_ret);
@@ -3934,9 +3937,9 @@ static void aealtek_flash_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_ca
 
 				cxt_ptr->flash_param.pre_flash_before.led_num = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.preflash_ctrldat.ucDICTotal_idx;
 				cxt_ptr->flash_param.pre_flash_before.led_0.idx = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.preflash_ctrldat.ucDIC1_idx;
-				//cxt_ptr->flash_param.pre_flash_before.led_0.current = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.preflash_ctrldat.udLED1Current;
+				cxt_ptr->flash_param.pre_flash_before.led_0.current = (cmr_s32)cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.preflash_ctrldat.fLED1Current;
 				cxt_ptr->flash_param.pre_flash_before.led_1.idx = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.preflash_ctrldat.ucDIC2_idx;
-				//cxt_ptr->flash_param.pre_flash_before.led_1.current = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.preflash_ctrldat.udLED2Current;
+				cxt_ptr->flash_param.pre_flash_before.led_1.current = (cmr_s32)cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.preflash_ctrldat.fLED2Current;
 
 				cxt_ptr->flash_param.pre_flash_before.exp_cell.gain = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.flash_off_exp_dat.ad_gain;
 				cxt_ptr->flash_param.pre_flash_before.exp_cell.exp_line = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.flash_off_exp_dat.exposure_line;
@@ -3950,6 +3953,11 @@ static void aealtek_flash_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_ca
 					ISP_LOGI("========flash pre exp:%d,%d,%d,%d",
 							cxt_ptr->flash_param.pre_flash_before.exp_cell.gain,cxt_ptr->flash_param.pre_flash_before.exp_cell.exp_line
 							,cxt_ptr->flash_param.pre_flash_before.exp_cell.exp_time,cxt_ptr->flash_param.pre_flash_before.exp_cell.iso);
+
+					ISP_LOGI("========flash pre led_info:%d,%d,%d,%d,%d,%d",
+							cxt_ptr->flash_param.pre_flash_before.led_num,cxt_ptr->flash_param.led_info.led_tag
+							,cxt_ptr->flash_param.pre_flash_before.led_0.idx,cxt_ptr->flash_param.pre_flash_before.led_0.current
+							,cxt_ptr->flash_param.pre_flash_before.led_1.idx,cxt_ptr->flash_param.pre_flash_before.led_1.current);
 
 					flash_cfg.led_idx = 0;
 					flash_cfg.type = ISP_FLASH_TYPE_PREFLASH;
@@ -3992,9 +4000,9 @@ static void aealtek_flash_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_ca
 
 				cxt_ptr->flash_param.main_flash_est.led_num = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.mainflash_ctrldat.ucDICTotal_idx;
 				cxt_ptr->flash_param.main_flash_est.led_0.idx = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.mainflash_ctrldat.ucDIC1_idx;
-				//cxt_ptr->flash_param.main_flash_est.led_0.current = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.mainflash_ctrldat.udLED1Current;
+				cxt_ptr->flash_param.main_flash_est.led_0.current = (cmr_s32)cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.mainflash_ctrldat.fLED1Current;
 				cxt_ptr->flash_param.main_flash_est.led_1.idx = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.mainflash_ctrldat.ucDIC2_idx;
-				//cxt_ptr->flash_param.main_flash_est.led_1.current = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.mainflash_ctrldat.udLED2Current;
+				cxt_ptr->flash_param.main_flash_est.led_1.current = (cmr_s32)cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.mainflash_ctrldat.fLED2Current;
 
 				cxt_ptr->flash_param.main_flash_est.exp_cell.gain = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.snapshot_exp_dat.ad_gain;
 				cxt_ptr->flash_param.main_flash_est.exp_cell.exp_line = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.snapshot_exp_dat.exposure_line;
@@ -4004,6 +4012,11 @@ static void aealtek_flash_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_ca
 				ISP_LOGI("========flash main exp:%d,%d,%d,%d",
 						cxt_ptr->flash_param.main_flash_est.exp_cell.gain,cxt_ptr->flash_param.main_flash_est.exp_cell.exp_line
 						,cxt_ptr->flash_param.main_flash_est.exp_cell.exp_time,cxt_ptr->flash_param.main_flash_est.exp_cell.iso);
+
+				ISP_LOGI("========flash main led_info:%d,%d,%d,%d,%d,%d",
+						cxt_ptr->flash_param.main_flash_est.led_num,cxt_ptr->flash_param.led_info.led_tag
+						,cxt_ptr->flash_param.main_flash_est.led_0.idx,cxt_ptr->flash_param.main_flash_est.led_0.current
+						,cxt_ptr->flash_param.main_flash_est.led_1.idx,cxt_ptr->flash_param.main_flash_est.led_1.current);
 
 				aealtek_change_flash_state(cxt_ptr, cxt_ptr->flash_param.flash_state, AEALTEK_FLASH_STATE_KEEPING);
 
