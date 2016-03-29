@@ -1120,9 +1120,11 @@ static unsigned long s5k3p3sm_otp_read(SENSOR_VAL_T* param)
 
 	if (0 == otp_info->program_flag) {
 		SENSOR_PRINT_ERR("otp error");
+		param->pval = NULL;
 		return -1;
+	} else {
+		param->pval = (void *)otp_info;
 	}
-	param->pval = (void *)otp_info;
 	SENSOR_PRINT("param->pval = %p", param->pval);
 
 	return 0;
