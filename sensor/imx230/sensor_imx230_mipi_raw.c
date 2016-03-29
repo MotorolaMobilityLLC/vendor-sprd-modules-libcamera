@@ -1454,6 +1454,31 @@ static unsigned long imx230_write_exposure(unsigned long param)
 	return ret_value;
 }
 
+static unsigned long imx230_ex_write_exposure(unsigned long param)
+{
+	uint32_t ret_value = SENSOR_SUCCESS;
+	uint16_t exposure_line = 0x00;
+	uint16_t dummy_line = 0x00;
+	uint16_t mode = 0x00;
+	struct sensor_ex_exposure  *ex = (struct sensor_ex_exposure*)param;
+
+	if (!param) {
+		SENSOR_PRINT_ERR("param is NULL !!!");
+		return ret_value;
+	}
+
+	exposure_line = ex->exposure;
+	dummy_line = ex->dummy;
+	mode = ex->size_index;
+
+	SENSOR_PRINT("current mode = %d, exposure_line = %d, dummy_line=%d", mode, exposure_line,dummy_line);
+	s_current_default_frame_length = imx230_get_default_frame_length(mode);
+
+	s_sensor_ev_info.preview_shutter = imx230_update_exposure(exposure_line,dummy_line);
+
+	return ret_value;
+}
+
 /*==============================================================================
  * Description:
  * get the parameter from isp to real gain
@@ -1485,9 +1510,9 @@ static unsigned long imx230_write_gain_value(unsigned long param)
 	unsigned long ret_value = SENSOR_SUCCESS;
 	uint32_t real_gain = 0;
 
-	real_gain = isp_to_real_gain(param);
+	/*real_gain = isp_to_real_gain(param);*/
 
-	real_gain = real_gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
+	real_gain = param * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
 
 	SENSOR_PRINT("real_gain = 0x%x", real_gain);
 
@@ -1785,8 +1810,8 @@ static SENSOR_IOCTL_FUNC_TAB_T s_imx230_ioctl_func_tab = {
 	.identify = imx230_identify,
 	.get_trim = imx230_get_resolution_trim_tab,
 	.before_snapshort = imx230_before_snapshot,
-	//.write_ae_value = imx230_write_exposure,
-	//.write_gain_value = imx230_write_gain_value,
+	.ex_write_exp = imx230_ex_write_exposure,
+	.write_gain_value = imx230_write_gain_value,
 	//.set_focus = imx230_ext_func,
 	//.set_video_mode = imx132_set_video_mode,
 	.stream_on = imx230_stream_on,
