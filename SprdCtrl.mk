@@ -109,6 +109,15 @@ LOCAL_SRC_FILES+= \
 	sensor/af_bu64297gwz.c \
 	sensor/s5k4h8yx/sensor_s5k4h8yx_mipi_raw.c
 
+ifeq ($(strip $(TARGET_CAMERA_OIS_FUNC)),true)
+	LOCAL_C_INCLUDES += \
+	$(LOCAL_PATH)/sensor/ois/
+
+	LOCAL_SRC_FILES+= \
+	sensor/ois/OIS_func.c \
+	sensor/ois/OIS_user.c \
+	sensor/ois/OIS_main.c
+endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FD_LIB)),omron)
@@ -160,6 +169,9 @@ ifeq ($(strip $(TARGET_BOARD_SC_IOMMU_PF)),1)
 LOCAL_CFLAGS += -DSC_IOMMU_PF=1
 endif
 
+ifeq ($(strip $(TARGET_CAMERA_OIS_FUNC)),true)
+LOCAL_CFLAGS += -DCONFIG_CAMERA_OIS_FUNC
+endif
 
 ifeq ($(TARGET_BOARD_CAMERA_HAL_VERSION), $(filter $(TARGET_BOARD_CAMERA_HAL_VERSION), hal1.0 1.0))
 LOCAL_CFLAGS += -DCONFIG_CAMERA_HAL_VERSION_1

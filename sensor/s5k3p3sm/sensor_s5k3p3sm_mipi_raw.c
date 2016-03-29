@@ -21,7 +21,11 @@
 #include "sensor_raw.h"
 #include "sensor_s5k3p3sm_raw_param.c"
 #include "isp_param_file_update.h"
+#if defined(CONFIG_CAMERA_OIS_FUNC)
+#include "OIS_main.h"
+#else
 #include "af_bu64297gwz.h"
+#endif
 
 #define S5K3P3SM_I2C_ADDR_W        0x10
 #define S5K3P3SM_I2C_ADDR_R        0x10
@@ -914,6 +918,8 @@ static unsigned long _s5k3p3sm_Identify(unsigned long param)
 	uint16_t pid_value = 0x00;
 	uint16_t ver_value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
+	uint16_t i=0;
+	uint16_t ret;
 
 	SENSOR_PRINT_ERR("SENSOR_S5K3P3SM: mipi raw identify\n");
 
@@ -928,7 +934,16 @@ static unsigned long _s5k3p3sm_Identify(unsigned long param)
 			if (SENSOR_SUCCESS != ret_value) {
 				SENSOR_PRINT_ERR("SENSOR_S5K3P3SM: the module is unknow error !");
 			}
-			bu64297gwz_init();
+			#if defined(CONFIG_CAMERA_OIS_FUNC)
+				for(i=0;i<3;i++) {
+					ret=ois_pre_open();
+					if (ret == 0) break;
+					usleep(20*1000);
+				}
+				if (ret == 0) OpenOIS();
+			#else
+				bu64297gwz_init();
+			#endif
 			Sensor_s5k3p3sm_InitRawTuneInfo();
 			_s5k3p3sm_init_mode_fps_info();
 		} else {
@@ -1190,7 +1205,11 @@ static unsigned long _s5k3p3sm_write_gain(unsigned long param)
 
 static unsigned long s5k3p3sm_write_af(unsigned long param)
 {
+#if defined(CONFIG_CAMERA_OIS_FUNC)
+	OIS_write_af(param);
+#else
 	bu64297gwz_write_af(param);
+#endif
 	return 0;
 }
 
