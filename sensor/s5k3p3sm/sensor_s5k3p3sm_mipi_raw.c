@@ -1050,7 +1050,7 @@ static int s5k3p3sm_otp_init(void)
 
 	s5k3p3_otp_info.program_flag = s5k3p3sm_i2c_read_otp(0x0000);
 	SENSOR_PRINT("program_flag = %d", s5k3p3_otp_info.program_flag);
-	if (0 == s5k3p3_otp_info.program_flag) {
+	if (1 != s5k3p3_otp_info.program_flag) {
 		SENSOR_PRINT("failed to read otp or the otp is wrong data");
 		return -1;
 	}
@@ -1133,7 +1133,7 @@ static unsigned long s5k3p3sm_otp_read(SENSOR_VAL_T* param)
 	SENSOR_PRINT("E");
 	otp_info = &s5k3p3_otp_info;
 
-	if (0 == otp_info->program_flag) {
+	if (1 != otp_info->program_flag) {
 		SENSOR_PRINT_ERR("otp error");
 		param->pval = NULL;
 		return -1;
