@@ -271,6 +271,8 @@ static cmr_int isp3a_start_awb_process(cmr_handle isp_3a_handle, struct isp3a_st
 static cmr_int isp3a_handle_ae_result(cmr_handle isp_3a_handle, struct ae_ctrl_callback_in *result_ptr);
 static cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start* input_ptr);
 static cmr_int isp3a_stop(cmr_handle isp_3a_handle);
+static cmr_int isp3a_get_yhist_info(cmr_handle isp_3a_handle, void *param_ptr);
+static cmr_int isp3a_set_prev_yhist(cmr_handle isp_3a_handle, void *param_ptr);
 
 
 static struct isp3a_ctrl_io_func s_isp3a_ioctrl_tab[ISP_CTRL_MAX] = {
@@ -357,6 +359,8 @@ static struct isp3a_ctrl_io_func s_isp3a_ioctrl_tab[ISP_CTRL_MAX] = {
 	{ISP_CTRL_SET_AE_FIX_SENSITIVITY,  isp3a_set_ae_fix_sensitivity},
 	{ISP_CTRL_SET_AE_FIX_FRAM_DURA,    isp3a_set_ae_fix_frame_duration},
 	{ISP_CTRL_SET_AUX_SENSOR_INFO,     isp3a_set_aux_sensor_info},
+	{ISP_CTRL_GET_YSTAT,               isp3a_get_yhist_info},
+	{ISP_CTRL_SET_PREV_YHIST,          isp3a_set_prev_yhist},
 };
 
 /*************************************INTERNAK FUNCTION ***************************************/
@@ -3467,5 +3471,42 @@ cmr_int isp_3a_fw_get_awb_gain(cmr_handle isp_3a_handle, struct isp_awb_gain *ga
 
 	*gain = cxt->awb_cxt.proc_out.gain;
 	*gain_balanced = cxt->awb_cxt.proc_out.gain_balanced;
+	return ret;
+}
+
+cmr_int isp3a_get_yhist_info(cmr_handle isp_3a_handle, void *param_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
+	struct isp_yhist_info                       *info_ptr = (struct isp_yhist_info*)param_ptr;
+	struct af_ctrl_param_out                    af_out;
+
+	//ISP_LOGI("%p", param_ptr);
+	bzero(&af_out, sizeof(af_out));
+	ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_GET_YHIST, NULL, &af_out);
+	if (!ret) {
+		ISP_LOGI("%d", af_out.y_info.in_proc[0]);
+		memcpy(info_ptr->yaddr, af_out.y_info.yaddr, sizeof(info_ptr->yaddr));
+		memcpy(info_ptr->lock, af_out.y_info.in_proc, sizeof(info_ptr->lock));
+	}
+
+	return ret;
+}
+
+static cmr_int isp3a_set_prev_yhist(cmr_handle isp_3a_handle, void *param_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
+	cmr_uint                                    *yhist = param_ptr;
+
+	if (!param_ptr) {
+		ISP_LOGW("input is NULL");
+		goto exit;
+	}
+
+	ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_SET_Y_HIST_INFO, (void *)*yhist, NULL);
+
+
+exit:
 	return ret;
 }

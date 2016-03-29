@@ -143,6 +143,43 @@ cmr_int camera_get_trim_rect2(struct img_rect *src_trim_rect, float zoom_ratio, 
 	return CMR_CAMERA_SUCCESS;
 }
 
+cmr_int camera_save_y_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height, void *addr)
+{
+	cmr_int                      ret = CMR_CAMERA_SUCCESS;
+	char                         file_name[40];
+	char                         tmp_str[10];
+	FILE                         *fp = NULL;
+
+	CMR_LOGI("index %d format %d width %d heght %d", index, img_fmt, width, height);
+
+	cmr_bzero(file_name, 40);
+	strcpy(file_name, "/data/misc/media/");
+	sprintf(tmp_str, "%d", width);
+	strcat(file_name, tmp_str);
+	strcat(file_name, "X");
+	sprintf(tmp_str, "%d", height);
+	strcat(file_name, tmp_str);
+
+	if (IMG_DATA_TYPE_YUV420 == img_fmt ||
+		IMG_DATA_TYPE_YUV422 == img_fmt) {
+		strcat(file_name, "_y_");
+		sprintf(tmp_str, "%d", index);
+		strcat(file_name, tmp_str);
+		strcat(file_name, ".raw");
+		CMR_LOGI("file name %s", file_name);
+		fp = fopen(file_name, "wb");
+
+		if (NULL == fp) {
+			CMR_LOGI("can not open file: %s \n", file_name);
+			return 0;
+		}
+
+		fwrite((void*)addr, 1, width * height, fp);
+		fclose(fp);
+	}
+	return 0;
+}
+
 cmr_int camera_save_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height, struct img_addr *addr)
 {
 	cmr_int                      ret = CMR_CAMERA_SUCCESS;

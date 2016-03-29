@@ -42,6 +42,7 @@ enum af_ctrl_cmd_type {
 	AF_CTRL_CMD_SET_PROC_START,
 	AF_CTRL_CMD_SET_DEBUG,
 	AF_CTRL_CMD_SET_UPDATE_AUX_SENSOR,
+	AF_CTRL_CMD_SET_Y_HIST_INFO,
 	AF_CTRL_CMD_SET_MAX,
 
 	AF_CTRL_CMD_GET_BASE = AF_CTRL_CMD_SET_MAX,
@@ -51,6 +52,7 @@ enum af_ctrl_cmd_type {
 	AF_CTRL_CMD_GET_DEBUG,
 	AF_CTRL_CMD_GET_EXIF_DEBUG_INFO,
 	AF_CTRL_CMD_GET_DEBUG_INFO,
+	AF_CTRL_CMD_GET_YHIST,
 	AF_CTRL_CMD_GET_MAX,
 };
 
@@ -283,6 +285,11 @@ struct af_ctrl_debug_info_t {
 	cmr_u32 size;
 };
 
+struct af_ctrl_y_info_t {
+	cmr_uint yaddr[2];
+	cmr_u32 in_proc[2];
+};
+
 struct af_ctrl_param_in {
 	union {
 		enum af_ctrl_mode_type af_mode;
@@ -306,6 +313,7 @@ struct af_ctrl_param_out {
 		enum af_ctrl_status_type af_ctrl_status;
 		struct af_ctrl_debug_info_t debug_info;
 		struct af_ctrl_debug_info_t exif_info;
+		struct af_ctrl_y_info_t y_info;
 	};
 };
 

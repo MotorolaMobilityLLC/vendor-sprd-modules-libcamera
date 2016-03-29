@@ -27,6 +27,7 @@
 #include "cmr_sensor.h"
 #include "SprdOEMCamera.h"
 
+/* #define Y_IMG_TO_ISP */
 /**************************MCARO DEFINITION********************************************************************/
 #define PREV_FRM_CNT                    GRAB_BUF_MAX
 #define PREV_ROT_FRM_CNT                8
@@ -191,7 +192,13 @@ struct prev_context {
 	cmr_uint                        prev_mem_size;
 	cmr_uint                        prev_mem_num;
 	cmr_int                         prev_mem_valid_num;
-
+#ifdef Y_IMG_TO_ISP
+	cmr_uint                        prev_mem_y_size;
+	cmr_uint                        prev_mem_y_num;
+	cmr_uint                        prev_phys_y_addr_array[2];
+	cmr_uint                        prev_virt_y_addr_array[2];
+	cmr_s32                         prev_mfd_y_array[2];
+#endif
 	/*video*/
 	struct img_size                 actual_video_size;
 	cmr_uint                        video_status;
@@ -3372,6 +3379,19 @@ cmr_int prev_alloc_prev_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 				   prev_cxt->prev_mfd_array);
 		/*check memory valid*/
 		CMR_LOGI("prev_mem_size 0x%lx, mem_num %ld", prev_cxt->prev_mem_size, prev_cxt->prev_mem_num);
+#ifdef Y_IMG_TO_ISP
+		prev_cxt->prev_mem_y_size = prev_cxt->prev_mem_size * 2/3;
+		prev_cxt->prev_mem_y_num = 2;
+		mem_ops->alloc_mem(CAMERA_ISP_PREVIEW_Y,
+				   handle->oem_handle,
+				   (cmr_u32 *)&prev_cxt->prev_mem_y_size,
+				   (cmr_u32 *)&prev_cxt->prev_mem_y_num,
+				   prev_cxt->prev_phys_y_addr_array,
+				   prev_cxt->prev_virt_y_addr_array,
+				   prev_cxt->prev_mfd_y_array);
+		CMR_LOGI("phys 0x%lx, virt %lx", prev_cxt->prev_phys_y_addr_array[0], prev_cxt->prev_virt_y_addr_array[0]);
+		CMR_LOGI("phys 0x%lx, virt %lx", prev_cxt->prev_phys_y_addr_array[1], prev_cxt->prev_virt_y_addr_array[1]);
+#endif
 #ifdef SC_IOMMU_PF
 		for (i = 0; i < prev_cxt->prev_mem_num; i++) {
 			CMR_LOGI("%d, phys_addr 0x%lx, virt_addr 0x%lx, mfd 0x%x",
@@ -3556,7 +3576,13 @@ cmr_int prev_free_prev_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 				  prev_cxt->prev_phys_addr_array,
 				  prev_cxt->prev_virt_addr_array,
 				  prev_cxt->prev_mem_num);
-
+#ifdef Y_IMG_TO_ISP
+		mem_ops->free_mem(CAMERA_ISP_PREVIEW_Y,
+				  handle->oem_handle,
+				  prev_cxt->prev_phys_y_addr_array,
+				  prev_cxt->prev_virt_y_addr_array,
+				  prev_cxt->prev_mem_y_num);
+#endif
 		cmr_bzero(prev_cxt->prev_phys_addr_array, (PREV_FRM_CNT + PREV_ROT_FRM_CNT)*sizeof(cmr_uint));
 		cmr_bzero(prev_cxt->prev_virt_addr_array, (PREV_FRM_CNT + PREV_ROT_FRM_CNT)*sizeof(cmr_uint));
 		cmr_bzero(prev_cxt->prev_mfd_array, (PREV_FRM_CNT + PREV_ROT_FRM_CNT)*sizeof(cmr_s32));
@@ -5180,7 +5206,63 @@ cmr_int prev_get_frm_index(struct img_frm* frame, struct frm_info* data)
 
 	return i;
 }
+#ifdef Y_IMG_TO_ISP
+cmr_int prev_y_info_copy_to_isp(struct prev_handle *handle,
+				    cmr_uint camera_id, struct frm_info *info)
+{
+	cmr_int                 ret = CMR_CAMERA_SUCCESS;
+	cmr_uint                i = 0;
+	cmr_uint                index = 0xff;
+	struct prev_context     *prev_cxt = NULL;
+	struct yhist_info       y_info = {0};
+	struct isp_yhist_info   isp_yhist = {0};
 
+	prev_cxt = &handle->prev_cxt[camera_id];
+
+	if (!handle->ops.get_isp_yhist || !handle->ops.set_preview_yhist) {
+		CMR_LOGE("ops null");
+		goto exit;
+	}
+	/* get isp user buffer status */
+	ret = handle->ops.get_isp_yhist(handle->oem_handle,
+				  camera_id, &isp_yhist);
+	if (ret) {
+		CMR_LOGE("get isp yhist error");
+		goto exit;
+	}
+
+	for (i = 0; i < 2; i++) {
+		if (0 == isp_yhist.lock[i]) {
+			index = i;
+			break;
+		}
+	}
+	if (0xff == index) {
+		CMR_LOGE("two buffer all in lock");
+		goto exit;
+	}
+	CMR_LOGI("index %ld", index);
+	/* set buffer to isp */
+	cmr_bzero(prev_cxt->prev_virt_y_addr_array[index], prev_cxt->prev_mem_y_size);
+	y_info.camera_id = camera_id;
+	y_info.y_size = prev_cxt->prev_mem_y_size;
+	y_info.sec = info->sec;
+	y_info.usec = info->usec;
+	memcpy(prev_cxt->prev_virt_y_addr_array[index],
+		info->yaddr_vir,
+		prev_cxt->prev_mem_y_size);
+	y_info.ready[index] = 1;
+	for (i = 0; i < 2; i++)
+		y_info.y_addr[i] = prev_cxt->prev_virt_y_addr_array[i];
+	ret = handle->ops.set_preview_yhist(handle->oem_handle,
+					    camera_id, &y_info);
+	if (ret)
+		CMR_LOGE("set_preview_yhist err %d", ret);
+
+exit:
+	return ret;
+}
+#endif
 cmr_int prev_construct_frame(struct prev_handle *handle,
 				cmr_u32 camera_id,
 				struct frm_info *info,
@@ -5245,7 +5327,16 @@ cmr_int prev_construct_frame(struct prev_handle *handle,
 		if (prev_cxt->prev_param.is_support_fd && prev_cxt->prev_param.is_fd_on) {
 			prev_fd_send_data(handle, camera_id, frm_ptr);
 		}
-
+#ifdef Y_IMG_TO_ISP
+		prev_y_info_copy_to_isp(handle, camera_id, info);
+#endif
+		#if 0
+		camera_save_y_to_file(prev_cxt->prev_frm_cnt,
+				IMG_DATA_TYPE_YUV420,
+				frame_type->width,
+				frame_type->height,
+				prev_cxt->prev_virt_y_addr_array[0]);
+		#endif
 	} else {
 		CMR_LOGE("ignored, channel id %d, frame id %d", info->channel_id, info->frame_id);
 	}

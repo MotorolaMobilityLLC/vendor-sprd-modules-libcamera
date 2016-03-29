@@ -81,6 +81,8 @@ struct preview_md_ops {
 	cmr_int (*capture_post_proc)(cmr_handle oem_handle, cmr_u32 camera_id);
 	cmr_int (*get_sensor_info)(cmr_handle oem_handle, cmr_uint sensor_id, struct sensor_exp_info *sensor_info);
 	cmr_int (*get_sensor_autotest_mode)(cmr_handle oem_handle, cmr_uint sensor_id, cmr_uint *is_autotest);
+	cmr_int (*get_isp_yhist)(cmr_handle oem_handle, cmr_uint sensor_id, struct isp_yhist_info *yhist);
+	cmr_int (*set_preview_yhist)(cmr_handle oem_handle, cmr_uint sensor_id, struct yhist_info *yhist);
 };
 
 struct preview_init_param {

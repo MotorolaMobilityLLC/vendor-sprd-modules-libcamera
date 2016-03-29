@@ -313,6 +313,8 @@ enum common_isp_cmd_type {
 	COM_ISP_GET_EXIF_DEBUG_INFO,
 	COM_ISP_GET_CUR_ADGAIN_EXP,
 	COM_ISP_SET_FLASH_MODE,
+	COM_ISP_GET_YSTAT,
+	COM_ISP_SET_PREVIEW_YHIST,
 	COM_ISP_TYPE_MAX
 };
 
@@ -679,6 +681,7 @@ struct common_isp_cmd_param {
 		struct cmr_range_fps_param              range_fps;
 		struct isp_info                         isp_dbg_info;
 		struct isp_adgain_exp_info              isp_adgain;
+		struct isp_yhist_info                   isp_yhist;
 	};
 };
 
@@ -827,6 +830,7 @@ cmr_int camera_get_trim_rect2(struct img_rect *src_trim_rect, float zoom_ratio, 
 											cmr_u32 sensor_w, cmr_u32 sensor_h, cmr_u8 rot);
 
 cmr_int camera_save_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height, struct img_addr *addr);
+cmr_int camera_save_y_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height, void *addr);
 
 cmr_int camera_get_data_from_file(char *file_name, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height, struct img_addr *addr);
 

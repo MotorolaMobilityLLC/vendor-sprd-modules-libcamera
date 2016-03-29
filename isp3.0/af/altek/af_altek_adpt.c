@@ -94,6 +94,13 @@ struct af_altek_vcm_tune_info {
 	cmr_u16 cur_pos;
 };
 
+struct af_altek_y_stat{
+	cmr_uint                                  y_addr[2];
+	cmr_u32                                   y_size;
+	cmr_u32                                   ready[2];
+	cmr_u32                                   img_in_proc[2];
+};
+
 struct af_altek_context {
 	cmr_u8 inited;
 	cmr_u32 camera_id;
@@ -118,6 +125,7 @@ struct af_altek_context {
 	struct allib_af_hw_stats_t af_stats; /* TBD */
 	struct af_altek_vcm_tune_info vcm_tune;
 	struct caf_alg_result caf_result;
+	struct af_altek_y_stat y_status;
 };
 
 /************************************ INTERNAK DECLARATION ************************************/
@@ -1082,14 +1090,51 @@ static cmr_int afaltek_adpt_hybird_af_enable(cmr_handle adpt_handle, void *in)
 static cmr_int afaltek_adpt_set_imgbuf(cmr_handle adpt_handle, void *in)
 {
 	cmr_int ret = -ISP_ERROR;
+	cmr_u32 i = 0;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_image_buf_t *imgbuf = (struct allib_af_input_image_buf_t *)in;
+	struct allib_af_input_image_buf_t img_buf;
 	struct allib_af_input_set_param_t p = { 0x00 };
+	struct yhist_info *y_info = (struct yhist_info *)in;
+
+	if (NULL == y_info) {
+		ISP_LOGE("param error %p", y_info);
+		ret = -ISP_PARAM_NULL;
+		goto exit;
+	}
+
+	/* get y img info to cxt */
+	cxt->y_status.y_size = y_info->y_size;
+	memcpy(cxt->y_status.y_addr, y_info->y_addr, sizeof(cxt->y_status.y_addr));
+	memcpy(cxt->y_status.ready, y_info->ready, sizeof(cxt->y_status.ready));
+	ISP_LOGI("0x%lx 0x%lx ready %d %d",
+		cxt->y_status.y_addr[0],cxt->y_status.y_addr[1],
+		cxt->y_status.ready[0], cxt->y_status.ready[1]);
+
+	/* set y info to altek */
+	bzero(&img_buf, sizeof(img_buf));
+	if (y_info->ready[0] || y_info->ready[1])
+		img_buf.frame_ready = 1;
+
+	for (i = 0; i < 2; i++) {
+		if (1 == cxt->y_status.ready[i]) {
+			cxt->y_status.img_in_proc[i] = 1;
+			ISP_LOGI("index lock %d", i);
+		}
+	}
+	img_buf.img_time.time_stamp_sec = y_info->sec;
+	img_buf.img_time.time_stamp_us = y_info->usec;
+	img_buf.p_main_cam = (uint8 *)&cxt->camera_id;
+	img_buf.p_sub_cam = (uint8 *)&cxt->camera_id;
 
 	p.type = alAFLIB_SET_PARAM_SET_IMGBUF;
-	p.u_set_data.img_buf = *imgbuf;
+	p.u_set_data.img_buf = img_buf;
 
 	ret = afaltek_adpt_set_parameters(cxt, &p);
+	if (ret)
+		ISP_LOGE("alAFLIB_SET_PARAM_SET_IMGBUF ERR");
+
+	bzero(cxt->y_status.img_in_proc, sizeof(cxt->y_status.img_in_proc));
+exit:
 	return ret;
 }
 
@@ -1450,6 +1495,9 @@ static cmr_int afaltek_adpt_inctrl(cmr_handle adpt_handle, cmr_int cmd,
 	case AF_CTRL_CMD_SET_UPDATE_AUX_SENSOR:
 		ret = afaltek_adpt_update_aux_sensor(adpt_handle, in);
 		break;
+	case AF_CTRL_CMD_SET_Y_HIST_INFO:
+		ret = afaltek_adpt_set_imgbuf(adpt_handle, in);
+		break;
 	default:
 		ISP_LOGE("failed to case cmd = %ld", cmd);
 		break;
@@ -1541,6 +1589,25 @@ cmr_int afaltek_adpt_get_debug_info(cmr_handle adpt_handle, struct allib_af_get_
 	return ret;
 }
 
+static cmr_int afaltek_adpt_get_yhist(cmr_handle adpt_handle, struct af_ctrl_y_info_t *y_res)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+
+	/* Need to do*/
+	if (NULL == y_res) {
+		CMR_LOGE("param error y_res = %p", y_res);
+		ret = -ISP_PARAM_NULL;
+		goto exit;
+	}
+	//ISP_LOGI("%p 0x%lx", y_res, cxt->y_status.y_addr[0]);
+
+	memcpy(y_res->yaddr, cxt->y_status.y_addr, sizeof(y_res->yaddr));
+	memcpy(y_res->in_proc, cxt->y_status.img_in_proc, sizeof(y_res->in_proc));
+
+exit:
+	return ret;
+}
 static cmr_int afaltek_adpt_outctrl(cmr_handle adpt_handle, cmr_int cmd,
 				    void *in, void *out)
 {
@@ -1567,6 +1634,9 @@ static cmr_int afaltek_adpt_outctrl(cmr_handle adpt_handle, cmr_int cmd,
 		break;
 	case AF_CTRL_CMD_GET_DEBUG_INFO:
 		ret = afaltek_adpt_get_debug_info(adpt_handle, (struct allib_af_get_data_info_t *)out);
+		break;
+	case AF_CTRL_CMD_GET_YHIST:
+		ret = afaltek_adpt_get_yhist(adpt_handle, (struct af_ctrl_y_info_t *)out);
 		break;
 	default:
 		ISP_LOGE("failed to case cmd = %ld", cmd);

@@ -352,6 +352,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId,
 	memset(mGps_processing_method, 0, sizeof(mGps_processing_method));
 	memset(mIspB4awbHeapReserved, 0, sizeof(mIspB4awbHeapReserved));
 	memset(mIspRawAemHeapReserved, 0, sizeof(mIspRawAemHeapReserved));
+	memset(mIspPreviewYReserved, 0, sizeof(mIspPreviewYReserved));
 
 	mJpegRotaSet = false;
 	mPicCaptureCnt = 0;
@@ -477,6 +478,13 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf()
 		if (NULL != mIspB4awbHeapReserved[i]) {
 			freeCameraMem(mIspB4awbHeapReserved[i]);
 			mIspB4awbHeapReserved[i] = NULL;
+		}
+	}
+
+	for (i = 0; i < 2; i++) {
+		if (NULL != mIspPreviewYReserved[i]) {
+			freeCameraMem(mIspPreviewYReserved[i]);
+			mIspPreviewYReserved[i] = NULL;
 		}
 	}
 
@@ -5310,6 +5318,15 @@ int SprdCamera3OEMIf::Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint 
 		mHighIsoSnapshotHeapReserved = NULL;
 	}
 
+	if (type == CAMERA_ISP_PREVIEW_Y) {
+		for (i=0 ; i < 2 ; i++) {
+			if (NULL != mIspPreviewYReserved[i]) {
+				freeCameraMem(mIspPreviewYReserved[i]);
+			}
+			mIspPreviewYReserved[i] = NULL;
+		}
+	}
+
 	return 0;
 }
 
@@ -5521,6 +5538,18 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32
 			*mfd++ = (cmr_s32)mHighIsoSnapshotHeapReserved->mfd;
 		HAL_LOGI("malloc High Iso memory, malloced type %d,request num %d, request size 0x%x, mfd 0x%x",
 			type, sum, size, mfd);
+	} else if (type == CAMERA_ISP_PREVIEW_Y) {
+			for (i = 0; i < sum; i++) {
+				memory = allocCameraMem(size, 1,false);
+				if(NULL == memory) {
+					LOGE("error memory is null,malloced type %d",type);
+					goto mem_fail;
+				}
+				mIspPreviewYReserved[i] = memory;
+				*phy_addr++ = 0;
+				*vir_addr++ = (cmr_uint)memory->data;
+				*mfd++ = (cmr_s32)memory->mfd;
+			}
 	}
 #else
 	#if 0 //def CONFIG_MEM_OPTIMIZATION
@@ -5677,7 +5706,22 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32
 			*mfd++ = (cmr_s32)mHighIsoSnapshotHeapReserved->mfd;
 		HAL_LOGI("malloc High Iso memory, malloced type %d,request num %d, request size 0x%x, mfd 0x%x",
 			type, sum, size, mfd);
+	}  else if (type == CAMERA_ISP_PREVIEW_Y) {
+		cmr_u64* phy_addr_64 = (cmr_u64*)phy_addr;
+		cmr_u64* vir_addr_64 = (cmr_u64*)vir_addr;
+		for (i = 0; i < sum; i++) {
+				memory = allocCameraMem(size, 1, false);
+				if(NULL == memory) {
+					HAL_LOGE("error memory is null,malloced type %d",type);
+					goto mem_fail;
+				}
+			HAL_LOGI("CAMERA_ISP_PREVIEW_Y %p", memory);
+			mIspPreviewYReserved[i] = memory;
+			*phy_addr_64++ = (cmr_u64)memory->phys_addr;
+			*vir_addr_64++ = (cmr_u64)memory->data;
+			}
 	}
+
 	#endif
 
 	return 0;
@@ -5715,7 +5759,7 @@ int SprdCamera3OEMIf::Callback_Free(enum camera_mem_cb_type type, cmr_uint *phy_
 		ret = camera->Callback_ZslFree(phy_addr, vir_addr, sum);
 	} else if (CAMERA_PREVIEW_RESERVED == type || CAMERA_VIDEO_RESERVED == type ||CAMERA_ISP_FIRMWARE == type ||
 		CAMERA_SNAPSHOT_ZSL_RESERVED == type || CAMERA_ISP_LSC == type || CAMERA_ISP_BINGING4AWB == type ||
-		CAMERA_SNAPSHOT_HIGHISO == type) {
+		CAMERA_SNAPSHOT_HIGHISO == type || CAMERA_ISP_PREVIEW_Y == type) {
 		ret = camera->Callback_OtherFree(type, phy_addr, vir_addr, sum);
 	}
 
@@ -5757,7 +5801,7 @@ int SprdCamera3OEMIf::Callback_Malloc(enum camera_mem_cb_type type, cmr_u32 *siz
 		ret = camera->Callback_ZslMalloc(size, sum, phy_addr, vir_addr, mfd);
 	} else if (CAMERA_PREVIEW_RESERVED == type || CAMERA_VIDEO_RESERVED == type || CAMERA_ISP_FIRMWARE == type ||
 		CAMERA_SNAPSHOT_ZSL_RESERVED == type || CAMERA_ISP_LSC == type || CAMERA_ISP_BINGING4AWB == type ||
-		CAMERA_SNAPSHOT_HIGHISO == type) {
+		CAMERA_SNAPSHOT_HIGHISO == type || CAMERA_ISP_PREVIEW_Y == type) {
 		ret = camera->Callback_OtherMalloc(type, size, sum, phy_addr, vir_addr, mfd);
 	}
 

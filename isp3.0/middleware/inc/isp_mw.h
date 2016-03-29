@@ -263,6 +263,8 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SET_AE_FIX_EXP_TIME,
 	ISP_CTRL_SET_AE_FIX_SENSITIVITY,
 	ISP_CTRL_SET_AE_FIX_FRAM_DURA,
+	ISP_CTRL_GET_YSTAT,
+	ISP_CTRL_SET_PREV_YHIST,
 	ISP_CTRL_MAX
 };
 
@@ -393,6 +395,20 @@ struct isp_sensor_fps_info{
 struct isp_adgain_exp_info {
 	cmr_u32 adgain;
 	cmr_u32 exp_time;
+};
+
+struct isp_yhist_info {
+	cmr_uint yaddr[2];
+	cmr_u32 lock[2];
+};
+
+struct yhist_info {
+	cmr_uint                                  y_addr[2];
+	cmr_uint                                  y_size;
+	cmr_s32                                   ready[2];
+	cmr_s32                                   sec;
+	cmr_s32                                   usec;
+	cmr_uint                                  camera_id;
 };
 
 struct isp_init_param {
