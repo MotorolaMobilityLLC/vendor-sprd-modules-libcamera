@@ -3,7 +3,7 @@
  *
  *  Created on: 2016/01/05
  *      Author: Hubert Huang
- *  Latest update: 2016/3/05
+ *  Latest update: 2016/3/24
  *      Reviser: MarkTseng
  *  Comments:
  *       This c file is mainly used for AP framework to:
@@ -21,14 +21,16 @@
 #include <string.h>
 #include "mtype.h"
 #include "hw3a_stats.h"
-#include "isp_common_types.h"
 /* Wrapper define */
 #include "alwrapper_3a.h"
 #include "alwrapper_flicker.h"
 #include "alwrapper_flicker_errcode.h"
 /* Flicker lib define */
 #include "allib_flicker.h"
-
+/* include AP log header */
+#ifndef LOCAL_NDK_BUILD
+#include "isp_common_types.h"
+#endif
 
 /* for Flicker ctrl layer */
 /*
@@ -69,11 +71,17 @@ uint32 al3awrapper_dispatchhw3a_flickerstats( struct isp_drv_meta_antif_t * alis
 	/* store frame & timestamp */
 	memcpy( &ppatched_flickerdat->systemtime, &pmetadata_flicker->systemtime, sizeof(struct timeval));
 	ppatched_flickerdat->udsys_sof_idx       = pmetadata_flicker->udsys_sof_idx;
-	if (pmetadata_flicker->uantifstatssize <= HW3A_ANTIF_STATS_BUFFER_SIZE) {
+
+	/* check size validity, if over defined max number, return error  */
+	if ( pmetadata_flicker->uantifstatssize <= HW3A_ANTIF_STATS_BUFFER_SIZE )
 		memcpy( ppatched_flickerdat->pantif_stats, stats, pmetadata_flicker->uantifstatssize );
-	} else {
+	else {
+		/* AP platform log for invalid flicker stats  */
+#ifndef LOCAL_NDK_BUILD
 		ISP_LOGE("invalid statssize:%d", pmetadata_flicker->uantifstatssize);
-		return ERR_WRP_FLICKER_INVALID_INPUT_PARAM;
+#endif
+		ppatched_flickerdat->uantifstatssize = 0;
+		return ERR_WRP_FLICKER_INVALID_STATS_SIZE;
 	}
 
 	return ret;

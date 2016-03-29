@@ -21,7 +21,21 @@ extern "C"
 {
 #endif
 
-#define _WRAPPER_VER 0.8040
+#define _WRAPPER_VER 0.8070
+
+
+#pragma pack(push) /* push current alignment setting to stack */
+#pragma pack(4)    /* new alignment setting */
+struct wrapper_hw3a_define_sizeinfo_t {
+	uint32 ud_alhw3a_ae_stats_size;
+	uint32 ud_alhw3a_awb_stats_size;
+	uint32 ud_alhw3a_af_stats_size;
+	uint32 ud_alhw3a_yhist_stats_size;
+	uint32 ud_alhw3a_antif_stats_size;
+	uint32 ud_alhw3a_subimg_stats_size;     /* reserved term, subimage is defined by AP buffer allocation, not directly input by HW3A define */
+};
+#pragma pack(pop)  /* restore old alignment setting from stack */
+
 
 /*
  * API name: al3awrapper_dispatchhw3astats
@@ -74,6 +88,17 @@ uint32 al3awrapper_setdlsequence( struct alisp_dldsequence_t adldsequence );
  * return: error code
  */
 uint32 al3awrapper_getversion( float *fwrapversion );
+
+
+/*
+ * API name: al3awrapper_get_define_stats_size
+ * This API would return hw3a defined size
+ * Exception: subimage is decided by AP buffer when set buffer allocation for sub-image engine
+ * a_hw3a_define_size_info[out], return stats size of each HW engine (AE/AWB/etc.)
+ * return: error code
+ */
+uint32 al3awrapper_get_defined_stats_size( struct wrapper_hw3a_define_sizeinfo_t * a_hw3a_define_size_info );
+
 
 #ifdef __cplusplus
 }  // extern "C"

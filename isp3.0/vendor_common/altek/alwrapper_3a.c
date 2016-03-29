@@ -3,7 +3,7 @@
  *
  *  Created on: 2015/12/05
  *      Author: MarkTseng
- *  Latest update: 2016/3/05
+ *  Latest update: 2016/3/28
  *      Reviser: MarkTseng
  *  Comments:
  *       This c file is mainly used for AP framework to:
@@ -22,6 +22,10 @@
 #include "hw3a_stats.h"
 #include "alwrapper_3a.h"
 #include "alwrapper_3a_errcode.h"
+
+#ifndef LOCAL_NDK_BUILD
+#include "isp_common_types.h"
+#endif
 
 /******************************************************************************
  * function prototype
@@ -53,8 +57,8 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
                                       struct isp_drv_meta_yhist_t * alisp_metadata_yhist, struct isp_drv_meta_antif_t * alisp_metadata_antif,
                                       struct isp_drv_meta_subsample_t * alisp_metadata_subsample, uint32 udsof_idx  )
 {
-	UINT32 ret = ERR_WRP_SUCCESS;
-	UINT8 *paddrlocal;
+	uint32 ret = ERR_WRP_SUCCESS;
+	uint8 *paddrlocal;
 	struct isp_drv_meta_t pispmeta;
 	struct isp_drv_meta_ae_t *pispmetaae;
 	struct isp_drv_meta_awb_t *pispmetaawb;
@@ -62,18 +66,23 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 	struct isp_drv_meta_yhist_t *pispmetayhist;
 	struct isp_drv_meta_antif_t *pispmetaantif;
 	struct isp_drv_meta_subsample_t *pispmetasubsample;
+	uint16  uwValidstats_Num =0;
 
-	UINT8 *ptempaddr;
-	UINT32 offset_start, offset, padding;
+	uint8 *ptempaddr;
+	uint32 offset_start, offset, padding;
 
 	struct timeval systemtime;
+
+	/* NULL pointer protection */
+	if ( alisp_metadata == NULL )
+		return ERR_WRP_EMPTY_METADATA;
 
 	/* store timestamp at beginning, for AF usage */
 	gettimeofday(&systemtime, NULL);
 
-	paddrlocal = (UINT8 *)alisp_metadata;
+	paddrlocal = (uint8 *)alisp_metadata;
 	/* by byte parsing, use casting would cause some compiler padding shift issue */
-	/* common Info */
+	/* 0. common Info */
 	memcpy( &pispmeta.umagicnum        , paddrlocal, 4 );
 	paddrlocal+= 4;
 	memcpy( &pispmeta.uhwengineid      , paddrlocal, 2 );
@@ -82,7 +91,7 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 	paddrlocal+= 2;
 	memcpy( &pispmeta.uchecksum        , paddrlocal, 4 );
 	paddrlocal+= 4;
-	/*  ae  stats info */
+	/*  1. ae  stats info */
 	memcpy( &pispmeta.uaetag           , paddrlocal, 2 );
 	paddrlocal+= 2;
 	memcpy( &pispmeta.uaetokenid       , paddrlocal, 2 );
@@ -91,7 +100,7 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 	paddrlocal+= 4;
 	memcpy( &pispmeta.uaestatsaddr     , paddrlocal, 4 );
 	paddrlocal+= 4;
-	/*   awb stats info */
+	/*   2. awb stats info */
 	memcpy( &pispmeta.uawbtag          , paddrlocal, 2 );
 	paddrlocal+= 2;
 	memcpy( &pispmeta.uawbtokenid      , paddrlocal, 2 );
@@ -100,7 +109,7 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 	paddrlocal+= 4;
 	memcpy( &pispmeta.uawbstatsaddr    , paddrlocal, 4 );
 	paddrlocal+= 4;
-	/*   af stats info  */
+	/*   3. af stats info  */
 	memcpy( &pispmeta.uaftag           , paddrlocal, 2 );
 	paddrlocal+= 2;
 	memcpy( &pispmeta.uaftokenid       , paddrlocal, 2 );
@@ -109,7 +118,7 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 	paddrlocal+= 4;
 	memcpy( &pispmeta.uafstatsaddr     , paddrlocal, 4 );
 	paddrlocal+= 4;
-	/*   y-hist stats info  */
+	/*   4. y-hist stats info  */
 	memcpy( &pispmeta.uyhisttag        , paddrlocal, 2 );
 	paddrlocal+= 2;
 	memcpy( &pispmeta.uyhisttokenid    , paddrlocal, 2 );
@@ -118,7 +127,7 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 	paddrlocal+= 4;
 	memcpy( &pispmeta.uyhiststatsaddr  , paddrlocal, 4 );
 	paddrlocal+= 4;
-	/*   anfi-flicker stats info */
+	/*   5. anfi-flicker stats info */
 	memcpy( &pispmeta.uantiftag        , paddrlocal, 2 );
 	paddrlocal+= 2;
 	memcpy( &pispmeta.uantiftokenid    , paddrlocal, 2 );
@@ -127,7 +136,7 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 	paddrlocal+= 4;
 	memcpy( &pispmeta.uantifstatsaddr  , paddrlocal, 4 );
 	paddrlocal+= 4;
-	/*   subsample image info   */
+	/*   6. subsample image info   */
 	memcpy( &pispmeta.usubsampletag        , paddrlocal, 2 );
 	paddrlocal+= 2;
 	memcpy( &pispmeta.usubsampletokenid    , paddrlocal, 2 );
@@ -140,6 +149,29 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 	/* check HW3A stats define version with magic number, which should be maintained & update at each ISP release */
 	if ( pispmeta.umagicnum != HW3A_MAGIC_NUMBER_VERSION )
 		ret =  ERR_WRP_MISMACTHED_STATS_VER;	/* keep error code only in early phase, if need return immediatedly then return here */
+
+	/* check data validity, if data is empty, reset buffer to 3A lib, avoid corrupt data to crash system  */
+	if ( ( pispmeta.uaestatsaddr == 0 || pispmeta.uaestatssize == 0  )   && alisp_metadata_ae != NULL ) {
+		memset( alisp_metadata_ae , 0, sizeof( struct isp_drv_meta_ae_t ));
+	}
+	if ( (pispmeta.uawbstatsaddr == 0 || pispmeta.uawbstatssize == 0  )  &&  alisp_metadata_awb != NULL ) {
+		memset( alisp_metadata_awb , 0, sizeof( struct  isp_drv_meta_awb_t ));
+	}
+	if ( (pispmeta.uafstatsaddr == 0 || pispmeta.uafstatssize == 0  ) && alisp_metadata_af != NULL ) {
+		memset( alisp_metadata_af, 0, sizeof( struct  isp_drv_meta_af_t ));
+	}
+	if ( (pispmeta.uyhiststatsaddr == 0 || pispmeta.uyhiststatssize == 0  ) && alisp_metadata_yhist != NULL ) {
+		memset( alisp_metadata_yhist, 0, sizeof( struct  isp_drv_meta_yhist_t ));
+	}
+	if ( (pispmeta.uantifstatsaddr == 0 || pispmeta.uantifstatssize == 0  ) && alisp_metadata_antif != NULL ) {
+		memset( alisp_metadata_antif, 0, sizeof( struct  isp_drv_meta_antif_t ));
+#ifndef LOCAL_NDK_BUILD
+		ISP_LOGE("al3awrapper_dispatchhw3astats anti-flicker invalid addr: %d , statssize:%d", pispmeta.uantifstatsaddr, pispmeta.uantifstatssize );
+#endif
+	}
+	if ( (pispmeta.usubsamplestatsaddr == 0  || pispmeta.usubsamplestatssize == 0  ) && alisp_metadata_subsample != NULL ) {
+		memset( alisp_metadata_subsample, 0, sizeof( struct  isp_drv_meta_subsample_t ));
+	}
 
 	/* parsing AE if AE pointer is valid */
 	if ( alisp_metadata_ae == NULL )
@@ -189,6 +221,8 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 		ptempaddr = (uint8 *)alisp_metadata + offset_start;
 		/* copy data to buffer addr */
 		memcpy( (void *)alisp_metadata_ae->pae_stats , (void *)ptempaddr, alisp_metadata_ae->uaestatssize  );
+
+		uwValidstats_Num++;
 	} else { /* set pseudo flag, for AE lib progressive runing */
 		pispmetaae = (struct isp_drv_meta_ae_t *)alisp_metadata_ae;
 		/* udpate common info */
@@ -278,6 +312,8 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 		ptempaddr = (uint8 *)alisp_metadata + offset_start;
 		/* copy data to buffer addr */
 		memcpy( (void *)alisp_metadata_awb->pawb_stats , (void *)ptempaddr, alisp_metadata_awb->uawbstatssize );
+
+		uwValidstats_Num++;
 	} else { /* set pseudo flag, for AWB lib progressive runing */
 		pispmetaawb = (struct isp_drv_meta_awb_t *)alisp_metadata_awb;
 		/* udpate common info */
@@ -299,19 +335,19 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 		;	/* do nothing, even if HW3A stats passing valid data */
 	else if ( pispmeta.uafstatssize != 0 && pispmeta.uafstatsaddr != 0 ) {
 		pispmetaaf = (struct isp_drv_meta_af_t *)alisp_metadata_af;
-		// udpate common info
+		/* udpate common info */
 		pispmetaaf->umagicnum = pispmeta.umagicnum;
 		pispmetaaf->uhwengineid = pispmeta.uhwengineid;
 		pispmetaaf->uframeidx = pispmeta.uframeidx;
 
-		// update af info
+		/* update af info */
 		pispmetaaf->uaftokenid = pispmeta.uaftokenid;
 		pispmetaaf->uafstatssize = pispmeta.uafstatssize;
 
 		memcpy( &pispmetaaf->systemtime, &systemtime, sizeof(struct timeval));
 		pispmetaaf->udsys_sof_idx = udsof_idx;
 
-		// retriving af info of stats
+		/* retriving af info of stats */
 		paddrlocal = (uint8 *)alisp_metadata + pispmeta.uafstatsaddr;
 		offset = 0;
 		memcpy( &alisp_metadata_af->af_stats_info.udpixelsperblocks  , paddrlocal, 4 );
@@ -327,20 +363,21 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 		paddrlocal+= 1;
 		offset+= 1;
 
-		// copy af stats to indicated buffer address, make 8 alignment
-		offset_start = pispmeta.uafstatsaddr + offset; // offset is accumulation value of af info of stats
+		/* copy af stats to indicated buffer address, make 8 alignment */
+		offset_start = pispmeta.uafstatsaddr + offset;  /* offset is accumulation value of af info of stats */
 		padding = (offset_start % 8 == 0 ) ? 0:(8- (offset_start % 8));
 		offset_start = offset_start + padding;
 
-		// allocate memory buffer base on meta size of AF stats
+		/* allocate memory buffer base on meta size of AF stats */
 		if ( alisp_metadata_af->uafstatssize > HW3A_AF_STATS_BUFFER_SIZE ) {
 			return ERR_WRP_ALLOCATE_BUFFER;
 		}
 
-		// shift to data addr
+		/* shift to data addr */
 		ptempaddr = (uint8 *)alisp_metadata + offset_start;
-		// copy data to buffer addr
+		/* copy data to buffer addr */
 		memcpy( (void *)alisp_metadata_af->paf_stats , (void *)ptempaddr, alisp_metadata_af->uafstatssize );
+		uwValidstats_Num++;
 	}
 
 	/* parsing YHist if YHist pointer is valid */
@@ -369,6 +406,10 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 		padding = (offset_start % 8 == 0 ) ? 0:(8- (offset_start % 8));
 		offset_start = offset_start + padding;
 
+#ifndef LOCAL_NDK_BUILD
+		ISP_LOGE("al3awrapper_dispatchhw3astats anti-flicker statssize:%d", alisp_metadata_yhist->uyhiststatssize );
+#endif
+
 		/* allocate memory buffer base on meta size of YHist stats */
 		if ( alisp_metadata_yhist->uyhiststatssize > HW3A_YHIST_STATS_BUFFER_SIZE ) {
 			return ERR_WRP_ALLOCATE_BUFFER;
@@ -378,6 +419,7 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 		ptempaddr = (uint8 *)alisp_metadata + offset_start;
 		/* copy data to buffer addr */
 		memcpy( (void *)alisp_metadata_yhist->pyhist_stats , (void *)ptempaddr, alisp_metadata_yhist->uyhiststatssize );
+		uwValidstats_Num++;
 	}
 
 	/* parsing AntiF if AntiF pointer is valid */
@@ -415,6 +457,7 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 		ptempaddr = (uint8 *)alisp_metadata + offset_start;
 		/* copy data to buffer addr */
 		memcpy( (void *)alisp_metadata_antif->pantif_stats , (void *)ptempaddr, alisp_metadata_antif->uantifstatssize );
+		uwValidstats_Num++;
 	}
 
 	/* parsing Subsample if Subsample pointer is valid */
@@ -461,7 +504,11 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 		ptempaddr = (uint8 *)alisp_metadata + offset_start;
 		/* copy data to buffer addr */
 		memcpy( (void *)alisp_metadata_subsample->psubsample_stats , (void *)ptempaddr, alisp_metadata_subsample->usubsamplestatssize );
+		uwValidstats_Num++;
 	}
+
+	if ( uwValidstats_Num == 0 )
+		return ERR_WRP_EMPTY_METADATA;
 
 	return ret;
 }
@@ -483,7 +530,7 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
  */
 uint32 al3awrapper_getcurrentdlsequence( uint8 ucahbsensoreid, struct alisp_dldsequence_t* adldsequence, uint8 aissingle3amode, enum alisp_opmode_idx_t opmode )
 {
-	UINT32 ret = ERR_WRP_SUCCESS;
+	uint32 ret = ERR_WRP_SUCCESS;
 	struct alisp_dldsequence_t* adlselist;
 
 	if ( adldsequence == NULL )
@@ -551,21 +598,21 @@ uint32 al3awrapper_getcurrentdlsequence( uint8 ucahbsensoreid, struct alisp_dlds
  */
 uint32 al3awrapper_setdlsequence( struct alisp_dldsequence_t adldsequence )
 {
-	UINT32 ret = ERR_WRP_SUCCESS;
-	UINT8 ucahbsensoreid, ucIsSingle3AMode;
+	uint32 ret = ERR_WRP_SUCCESS;
+	uint8 ucahbsensoreid, ucIsSingle3AMode;
 
 	ucahbsensoreid = adldsequence.ucahbsensoreid;
-#if 0//ndef LOCAL_NDK_BUILD   /* test build in local   */
+#ifdef LINK_ALTEK_ISP_DRV_DEFINE   /* only build when link to ISP driver define */
 	/* W9 config */
-	ret = ISPDRV_SetBasicPreivewDldSeq( ucahbsensoreid, (UINT8 *)(&adldsequence.aucpreview_baisc_dldseq[0]), adldsequence.ucpreview_baisc_dldseqlength );
+	ret = ISPDRV_SetBasicPreivewDldSeq( ucahbsensoreid, (uint8 *)(&adldsequence.aucpreview_baisc_dldseq[0]), adldsequence.ucpreview_baisc_dldseqlength );
 	if ( ret!= ERR_WRP_SUCCESS )
 		return ret;
 	/* W10 Config */
-	ret = ISPDRV_SetAdvPreivewDldSeq( ucahbsensoreid, (UINT8 *)(&adldsequence.aucpreview_adv_dldseq[0]), adldsequence.ucpreview_adv_dldseqlength );
+	ret = ISPDRV_SetAdvPreivewDldSeq( ucahbsensoreid, (uint8 *)(&adldsequence.aucpreview_adv_dldseq[0]), adldsequence.ucpreview_adv_dldseqlength );
 	if ( ret!= ERR_WRP_SUCCESS )
 		return ret;
 	/* Fast W9 config */
-	ret = ISPDRV_SetBasicFastConvergeDldSeq( ucahbsensoreid, (UINT8 *)(&adldsequence.aucpreview_baisc_dldseq[0]), adldsequence.ucpreview_baisc_dldseqlength );
+	ret = ISPDRV_SetBasicFastConvergeDldSeq( ucahbsensoreid, (uint8 *)(&adldsequence.aucpreview_baisc_dldseq[0]), adldsequence.ucpreview_baisc_dldseqlength );
 	if ( ret!= ERR_WRP_SUCCESS )
 		return ret;
 #endif
@@ -578,11 +625,35 @@ uint32 al3awrapper_setdlsequence( struct alisp_dldsequence_t adldsequence )
  * fWrapVersion[out], return current wapper version
  * return: error code
  */
-UINT32 al3awrapper_getversion( float *fwrapversion )
+uint32 al3awrapper_getversion( float *fwrapversion )
 {
-	UINT32 ret = ERR_WRP_SUCCESS;
+	uint32 ret = ERR_WRP_SUCCESS;
 
 	*fwrapversion = _WRAPPER_VER;
+
+	return ret;
+}
+
+/*
+ * API name: al3awrapper_get_define_stats_size
+ * This API would return hw3a defined size
+ * Exception: subimage is decided by AP buffer when set buffer allocation for sub-image engine
+ * a_hw3a_define_size_info[out], return stats size of each HW engine (AE/AWB/etc.)
+ * return: error code
+ */
+uint32 al3awrapper_get_defined_stats_size( struct wrapper_hw3a_define_sizeinfo_t * a_hw3a_define_size_info )
+{
+	uint32 ret = ERR_WRP_SUCCESS;
+
+	if ( a_hw3a_define_size_info == NULL )
+		return ERR_WRP_INVALID_INPUT_PARAM;
+
+	a_hw3a_define_size_info->ud_alhw3a_ae_stats_size = sizeof ( struct isp_drv_meta_ae_t  );
+	a_hw3a_define_size_info->ud_alhw3a_awb_stats_size = sizeof ( struct isp_drv_meta_awb_t  );
+	a_hw3a_define_size_info->ud_alhw3a_af_stats_size = sizeof ( struct isp_drv_meta_af_t  );
+	a_hw3a_define_size_info->ud_alhw3a_yhist_stats_size = sizeof ( struct isp_drv_meta_yhist_t  );
+	a_hw3a_define_size_info->ud_alhw3a_antif_stats_size = sizeof ( struct isp_drv_meta_antif_t  );
+	a_hw3a_define_size_info->ud_alhw3a_subimg_stats_size = sizeof ( struct isp_drv_meta_subsample_t  );
 
 	return ret;
 }

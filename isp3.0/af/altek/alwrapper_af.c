@@ -138,6 +138,11 @@ uint32 al3awrapper_dispatchhw3a_afstats(void *isp_meta_data,void *alaf_stats)
 	if(blocks > MAX_STATS_COLUMN_NUM)
 		blocks = MAX_STATS_COLUMN_NUM;
 
+	if ( total_blocks == 0 ) {
+		WRAP_LOG("ERR_WRP_AF_INVALID_INPUT_PARAM with total blocks: %d \n", total_blocks );
+		return ERR_WRP_AF_INVALID_INPUT_PARAM;
+	}
+
 	p_patched_stats->valid_column_num = blocks;
 	banks = p_meta_data_af->af_stats_info.ucvalidbanks;
 	WRAP_LOG("banks %d\n",banks);

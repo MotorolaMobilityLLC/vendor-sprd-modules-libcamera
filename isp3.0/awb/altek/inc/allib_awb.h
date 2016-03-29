@@ -138,38 +138,30 @@ enum allib_awb_awb_debug_type {
 };
 
 /* Report */
-enum allib_awb_awb_states_t {
-	alawb_state_unstable = 0,
-	alawb_state_stable,
-	alawb_state_lock,
-	alawb_state_prepare_under_flashon_done,
-	alawb_state_under_flashon_awb_done,
-};
-
 #pragma pack(push) /* push current alignment setting to stack */
 #pragma pack(4)    /* new alignment setting */
 struct allib_awb_output_data_t {
-	struct report_update_t           report_3a_update;          /* update awb information */
-	uint32                           hw3a_curframeidx;          /* hw3a frame Index */
-	uint32                           sys_cursof_frameidx;       /* sof frame Index */
-	uint16                           awb_update;                /* valid awb to update or not */
-	enum awb_mode_type_t             awb_mode;                  /* WB mode, 0: Auto, others are MWB type */
-	struct wbgain_data_t             wbgain;                    /* WB gain for final result */
-	struct wbgain_data_t             wbgain_balanced;           /* All balanced WB gain, for shading or else */
-	struct wbgain_data_t             wbgain_capture;            /* WB gain for single shot */
-	struct wbgain_data_t             wbgain_flash_off;          /* WB gain for flash control, flash off status, all-balanced */
-	uint32                           color_temp;                /* (major) color temperature */
-	uint32                           color_temp_capture;        /* one shot color temperature */
-	uint32                           color_temp_flash_off;      /* flash off color temperature */
-	enum allib_awb_lightsource_t     light_source;              /* light source */
-	uint16                           awb_decision;              /* simple scene detect */
-	uint8                            flag_shading_on;           /* 0: False, 1: True */
-	enum allib_awb_awb_states_t      awb_states;                /* alAWBLib states */
-	enum allib_awb_awb_debug_type    awb_debug_mask;            /* awb debug mask, can print different information with different mask */
-	uint32                           awb_exif_data_size;        /* awb exif data size */
-	void                             *awb_exif_data;            /* awb exif data, Structure1, about 340bytes */
-	uint32                           awb_debug_data_size;       /* awb debug data size */
-	void                             *awb_debug_data;           /* awb debug data, Structure2, about 10240bytes [TBD] */
+	struct report_update_t              report_3a_update;          /* update awb information */
+	uint32                              hw3a_curframeidx;          /* hw3a frame Index */
+	uint32                              sys_cursof_frameidx;       /* sof frame Index */
+	uint16                              awb_update;                /* valid awb to update or not */
+	enum awb_mode_type_t                awb_mode;                  /* WB mode, 0: Auto, others are MWB type */
+	struct wbgain_data_t                wbgain;                    /* WB gain for final result */
+	struct wbgain_data_t                wbgain_balanced;           /* All balanced WB gain, for shading or else */
+	struct wbgain_data_t                wbgain_capture;            /* WB gain for single shot */
+	struct wbgain_data_t                wbgain_flash_off;          /* WB gain for flash control, flash off status, all-balanced */
+	uint32                              color_temp;                /* (major) color temperature */
+	uint32                              color_temp_capture;        /* one shot color temperature */
+	uint32                              color_temp_flash_off;      /* flash off color temperature */
+	enum allib_awb_lightsource_t        light_source;              /* light source */
+	uint16                              awb_decision;              /* simple scene detect */
+	uint8                               flag_shading_on;           /* 0: False, 1: True */
+	enum awb_states_type_t              awb_states;                /* alAWBLib states */
+	enum allib_awb_awb_debug_type       awb_debug_mask;            /* awb debug mask, can print different information with different mask */
+	uint32                              awb_exif_data_size;        /* awb exif data size */
+	void                                *awb_exif_data;            /* awb exif data, Structure1, about 340bytes */
+	uint32                              awb_debug_data_size;       /* awb debug data size */
+	void                                *awb_debug_data;           /* awb debug data, Structure2, about 10240bytes [TBD] */
 };
 #pragma pack(pop)  /* restore old alignment setting from stack */
 
@@ -202,7 +194,7 @@ struct allib_awb_set_parameter_t {
 		uint32                                  sys_sof_frame_idx;      /* alawb_set_param_sys_sof_frame_idx */
 		struct allib_awb_awb_mode_setting_t     awb_mode_setting;       /* alawb_set_param_awb_mode_setting */
 		struct allib_awb_response_setting_t     awb_response_setting;   /* alawb_set_param_response_setting */
-		struct allib_awb_ae_param_setting_t     ae_report_update;       /* alawb_set_param_update_report */
+		struct allib_awb_ae_param_setting_t     ae_report_update;       /* alawb_set_param_update_ae_report */
 		struct af_report_update_t               af_report_update;       /* alawb_set_param_update_af_report */
 		float                                   dzoom_factor;           /* alawb_set_param_dzoom_factor */
 		struct allib_awb_faceinfo_param_t       face_info;              /* alawb_set_param_face_info_setting */
@@ -249,7 +241,7 @@ struct allib_awb_get_parameter_t {
 		uint16                                  awb_decision;           /* alawb_get_param_awb_decision */
 		struct allib_awb_manual_flow_setting_t  awb_manual_flow;        /* alawb_get_param_manual_flow */
 		uint8                                   test_fix_patten;        /* alawb_get_param_test_fix_patten */
-		enum allib_awb_awb_states_t             awb_states;             /* alawb_get_param_awb_states */
+		enum awb_states_type_t                  awb_states;             /* alawb_get_param_awb_states */
 		struct allib_awb_debug_data_t           debug_data;             /* alawb_get_param_debug_data_exif & full */
 	}   para;
 };

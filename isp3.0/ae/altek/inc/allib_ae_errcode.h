@@ -31,6 +31,8 @@
 #define _AL_AELIB_INVALID_ISOLEVEL          ( _AL_AELIB_GLOBAL_ERR_OFFSET  + 0x0B )
 #define _AL_AELIB_INVALID_CALIB_GAIN          ( _AL_AELIB_GLOBAL_ERR_OFFSET  + 0x0C )
 #define _AL_AELIB_INVALID_STATS_ADDR         ( _AL_AELIB_GLOBAL_ERR_OFFSET  + 0x0D )
+#define _AL_AELIB_INVALID_PCURVE_ADDR         ( _AL_AELIB_GLOBAL_ERR_OFFSET  + 0x0D )
+
 
 /* for setting file  */
 #define _AL_AELIB_INVALID_GDCALIB_GAIN                        ( _AL_AELIB_SETTINGFILE + 0x01 )
@@ -50,7 +52,9 @@
 #define _AL_AELIB_INVALID_FE_NODE                                  ( _AL_AELIB_SETTINGFILE + 0x0F )
 #define _AL_AELIB_INVALID_FE_PARAM                                ( _AL_AELIB_SETTINGFILE + 0x10 )
 #define _AL_AELIB_INVALID_INTAE_SKYPROTECT_PARAM            ( _AL_AELIB_SETTINGFILE + 0x11 )
-
+#define _AL_AELIB_INVALID_OTHERS_PCURVE_NODE           ( _AL_AELIB_SETTINGFILE + 0x12 )
+#define _AL_AELIB_INVALID_OTHERS_PCURVE_PARAM         ( _AL_AELIB_SETTINGFILE + 0x13 )
+#define _AL_AELIB_INVALID_PCURVE_BUILD                      ( _AL_AELIB_SETTINGFILE + 0x14 )
 
 /* for Lib processing */
 #define _AL_AELIB_PURE_DARK_IMAGE                                  (_AL_AELIB_LIBPROCESS + 0x01 )

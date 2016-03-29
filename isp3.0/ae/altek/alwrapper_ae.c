@@ -3,7 +3,7 @@
  *
  *  Created on: 2015/12/06
  *      Author: MarkTseng
- *  Latest update: 2016/3/05
+ *  Latest update: 2016/3/24
  *      Reviser: MarkTseng
  *  Comments:
  *       This c file is mainly used for AP framework to:
@@ -60,11 +60,12 @@ uint32 al3awrapper_dispatchhw3a_aestats( struct isp_drv_meta_ae_t * alisp_metada
 	uint32 udoffset;
 	UINT16 i,j,blocks, banks, index;
 	struct ae_get_param_t localparam;
+	uint32 *pt_stats_r, *pt_stats_g, *pt_stats_b, *pt_stats_y;
 
 	/* check input parameter validity */
 	if ( alisp_metadata_ae == NULL )
 		return ERR_WRP_AE_EMPTY_METADATA;
-	if ( alwrappered_ae_dat == NULL || ae_runtimedat == NULL )
+	if ( alwrappered_ae_dat == NULL || ae_runtimedat == NULL || aaelibcallback == NULL )
 		return ERR_WRP_AE_INVALID_INPUT_PARAM;
 
 	pmetadata_ae = (struct isp_drv_meta_ae_t *)alisp_metadata_ae;
@@ -79,7 +80,7 @@ uint32 al3awrapper_dispatchhw3a_aestats( struct isp_drv_meta_ae_t * alisp_metada
 	blocks = pmetadata_ae->ae_stats_info.ucvalidblocks;
 	banks = pmetadata_ae->ae_stats_info.ucvalidbanks;
 
-	// check data AE blocks validity
+	/* check data AE blocks validity */
 	if ( udtotalblocks > AL_MAX_AE_STATS_NUM )
 		return ERR_WRP_AE_INVALID_BLOCKS;
 
@@ -122,14 +123,14 @@ uint32 al3awrapper_dispatchhw3a_aestats( struct isp_drv_meta_ae_t * alisp_metada
 		// printf( "al3AWrapper_DispatchHW3A_AEStats get OTP WB R/G/B : (%d, %d, %d) \r\n", wb_gain.r, wb_gain.g, wb_gain.b );
 	}
 
-	// store to stats info, translate to unit base 1000 (= 1.0x)
+	/* store to stats info, translate to unit base 1000 (= 1.0x) */
 	ppatched_aedat->stat_wb_2y.r = wb_gain.r*1000/256;
 	ppatched_aedat->stat_wb_2y.g = wb_gain.g*1000/256;
 	ppatched_aedat->stat_wb_2y.b = wb_gain.b*1000/256;
 
-	wb_gain.r = (uint32)(wb_gain.r *  0.299 + 0.5);  //  76.544: 0.299 * 256.
-	wb_gain.g = (uint32)(wb_gain.g *  0.587 + 0.5);  // 150.272: 0.587 * 256. , Combine Gr Gb factor
-	wb_gain.b = (uint32)(wb_gain.b *  0.114 + 0.5);  //  29.184: 0.114 * 256.
+	wb_gain.r = (uint32)(wb_gain.r *  0.299 + 0.5);   /*  76.544: 0.299 * 256. */
+	wb_gain.g = (uint32)(wb_gain.g *  0.587 + 0.5);  /* 150.272: 0.587 * 256. , Combine Gr Gb factor */
+	wb_gain.b = (uint32)(wb_gain.b *  0.114 + 0.5);  /*  29.184: 0.114 * 256. */
 
 	/* debug printf, removed for release version */
 	// printf( "al3AWrapper_DispatchHW3A_AEStats get patching WB R/G/B : (%d, %d, %d) \r\n", wb_gain.r, wb_gain.g, wb_gain.b );
@@ -155,7 +156,7 @@ uint32 al3awrapper_dispatchhw3a_aestats( struct isp_drv_meta_ae_t * alisp_metada
 	// ppatched_aedat->umagicnum, ppatched_aedat->uhwengineid, ppatched_aedat->uframeidx, ppatched_aedat->uaetokenid, ppatched_aedat->uaestatssize,
 	// ppatched_aedat->udpixelsperblocks, ppatched_aedat->udbanksize, ppatched_aedat->ucvalidblocks, ppatched_aedat->ucvalidbanks, ppatched_aedat->upseudoflag  );
 
-	// store frame & timestamp
+	/* store frame & timestamp */
 	memcpy( &ppatched_aedat->systemtime, &pmetadata_ae->systemtime, sizeof(struct timeval));
 	ppatched_aedat->udsys_sof_idx       = pmetadata_ae->udsys_sof_idx;
 
@@ -164,29 +165,44 @@ uint32 al3awrapper_dispatchhw3a_aestats( struct isp_drv_meta_ae_t * alisp_metada
 
 	/* patching R/G/G/B from WB or calibration WB to Y/R/G/B, */
 	/* here is the sample which use array passing insetad of pointer passing of prepared buffer from AE ctrl layer */
+	/* SPRD suggest use by addr of pre-allocated buffer as default value */
 	ppatched_aedat->bisstatsbyaddr = TRUE;
+
+	if ( ppatched_aedat->bisstatsbyaddr == FALSE ) {
+		/* patch stats to defined array */
+		pt_stats_r = (uint32 *)(ppatched_aedat->statsr);
+		pt_stats_g = (uint32 *)(ppatched_aedat->statsg);
+		pt_stats_b = (uint32 *)(ppatched_aedat->statsb);
+		pt_stats_y = (uint32 *)(ppatched_aedat->statsy);
+	} else {
+		/* patch stats to pre-allocated buffer addr */
+		pt_stats_r = (uint32 *)(ppatched_aedat->ptstatsr);
+		pt_stats_g = (uint32 *)(ppatched_aedat->ptstatsg);
+		pt_stats_b = (uint32 *)(ppatched_aedat->ptstatsb);
+		pt_stats_y = (uint32 *)(ppatched_aedat->ptstatsy);
+	}
+
 	for ( j =0; j <banks; j++ ) {
 		udoffset = udbanksize*j;
 		for ( i = 0; i <blocks; i++ ) {
 			/* due to data from HW, use direct address instead of casting */
-			((uint32*)ppatched_aedat->ptstatsr)[index] = ( stats[udoffset] + (stats[udoffset+1]<<8) + (stats[udoffset+2]<<16) + (stats[udoffset+3]<<24) )/udpixelsperblocks;  /* 10 bits */
-			((uint32*)ppatched_aedat->ptstatsg)[index] = (( ( stats[udoffset+4] + (stats[udoffset+5]<<8) + (stats[udoffset+6]<<16) + (stats[udoffset+7]<<24) ) +
-			                                   ( stats[udoffset+8] + (stats[udoffset+9]<<8) + (stats[udoffset+10]<<16) + (stats[udoffset+11]<<24) ) )/udpixelsperblocks)>>1; /* 10 bits */
-			((uint32*)ppatched_aedat->ptstatsb)[index] = ( stats[udoffset+12] + (stats[udoffset+13]<<8) + (stats[udoffset+14]<<16) + (stats[udoffset+15]<<24) )/udpixelsperblocks;    /* 10 bits */
+			pt_stats_r[index] = ( stats[udoffset] + (stats[udoffset+1]<<8) + (stats[udoffset+2]<<16) + (stats[udoffset+3]<<24) )/udpixelsperblocks;  /* 10 bits */
+			pt_stats_g[index] = (( ( stats[udoffset+4] + (stats[udoffset+5]<<8) + (stats[udoffset+6]<<16) + (stats[udoffset+7]<<24) ) +
+			                       ( stats[udoffset+8] + (stats[udoffset+9]<<8) + (stats[udoffset+10]<<16) + (stats[udoffset+11]<<24) ) )/udpixelsperblocks)>>1; /* 10 bits */
+			pt_stats_b[index] = ( stats[udoffset+12] + (stats[udoffset+13]<<8) + (stats[udoffset+14]<<16) + (stats[udoffset+15]<<24) )/udpixelsperblocks;    /* 10 bits */
 
 			/* calculate Y */
-			((uint32*)ppatched_aedat->ptstatsy)[index] = (((uint32*)ppatched_aedat->ptstatsr)[index]* wb_gain.r + ((uint32*)ppatched_aedat->ptstatsg)[index] * wb_gain.g +
-					((uint32*)ppatched_aedat->ptstatsb)[index] * wb_gain.b ) >> 8;  /* 10 bits */
-#if print_ae_log
+			pt_stats_y[index] = ( pt_stats_r[index]* wb_gain.r + pt_stats_g[index] * wb_gain.g +
+			                      pt_stats_b[index] * wb_gain.b ) >> 8;  /* 10 bits */
+
 			/* debug printf, removed for release version */
-			ISP_LOGI( "al3awrapper_dispatchhw3a_aestats stats[%d] y/r/g/b: %d, %d, %d, %d \r\n", index,
-					((uint32*)ppatched_aedat->ptstatsy)[index],((uint32*)ppatched_aedat->ptstatsr)[index], ((uint32*)ppatched_aedat->ptstatsg)[index], ((uint32*)ppatched_aedat->ptstatsb)[index] );
-#endif
+			// printf( "al3awrapper_dispatchhw3a_aestats stats[%d] y/r/g/b: %d, %d, %d, %d \r\n", index,
+			//         pt_stats_y[index],pt_stats_r[index], pt_stats_g[index], pt_stats_b[index] );
+
 			index++;
 			udoffset += 16;
 		}
 	}
-
 	return ret;
 }
 
@@ -358,8 +374,8 @@ uint32 al3awrapperae_getdefaultcfg( struct alhw3a_ae_cfginfo_t* aaeconfig)
 uint32 al3awrapperae_updateispconfig_ae( uint8 a_ucsensor, struct alhw3a_ae_cfginfo_t* aaeconfig )
 {
 	uint32 ret = ERR_WPR_AE_SUCCESS;
-#ifndef LOCAL_NDK_BUILD  /* test build in local */
-	//ret = ISPDRV_AP3AMGR_SetAECfg( a_ucSensor, aaeconfig );
+#ifdef LINK_ALTEK_ISP_DRV_DEFINE   /* only build when link to ISP driver define */
+	ret = ISPDRV_AP3AMGR_SetAECfg( a_ucSensor, aaeconfig );
 #endif
 	return ret;
 }

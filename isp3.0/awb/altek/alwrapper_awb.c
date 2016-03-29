@@ -3,7 +3,7 @@
  *
  *  Created on: 2015/12/07
  *      Author: HanTseng
- *  Latest update: 2016/3/05
+ *  Latest update: 2016/3/22
  *      Reviser: MarkTseng
  *  Comments:
  *       This c file is mainly used for AP framework to:
@@ -224,7 +224,7 @@ uint32 al3awrapperawb_queryispconfig_awb(struct alhw3a_awb_cfginfo_t *aawbconfig
 uint32 al3awrapperawb_updateispconfig_awb(uint8 a_ucSensor, struct alhw3a_awb_cfginfo_t *aawbconfig)
 {
 	uint32 ret = ERR_WPR_AWB_SUCCESS;
-#if 0//ndef LOCAL_NDK_BUILD
+#ifdef LINK_ALTEK_ISP_DRV_DEFINE   /* only build when link to ISP driver define */
 	ret = ISPDRV_AP3AMGR_SetAWBCfg(a_ucSensor, aawbconfig);
 #endif
 	return ret;
