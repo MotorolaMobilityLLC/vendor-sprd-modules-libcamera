@@ -41,14 +41,9 @@
 #include "SprdCamera3HALHeader.h"
 #include "SprdCamera3Mem.h"
 
-
-
 using namespace android;
 
 namespace sprdcamera {
-
-//bool SprdCamera3Memory::mIsIOMMU = MemIon::IOMMU_is_enabled(ION_MM) | MemIon::IOMMU_is_enabled(ION_DCAM);
-bool SprdCamera3Memory::mIsIOMMU = 0;
 
 /*===========================================================================
  * FUNCTION   : SprdCamera3Memory
@@ -61,6 +56,7 @@ bool SprdCamera3Memory::mIsIOMMU = 0;
  *==========================================================================*/
 SprdCamera3Memory::SprdCamera3Memory()
 {
+// todo: we dont need it, remove it later, not now because we want stable
 /*
 	if (MemIon::IOMMU_is_enabled(ION_MM)) {
             mIOMMUID = ION_MM;
@@ -69,7 +65,7 @@ SprdCamera3Memory::SprdCamera3Memory()
 	} else 
 */
 	{
-            mIOMMUID = -1;
+		mIOMMUID = -1;
 	}
 }
 
@@ -84,16 +80,7 @@ SprdCamera3Memory::SprdCamera3Memory()
  *==========================================================================*/
 SprdCamera3Memory::~SprdCamera3Memory()
 {
-	if (mIsIOMMU) {
-#if 0
-		ALOGE("free_mm_iova by	allocatePreviewMemByGraphics:%d",i);
-		private_h=(struct private_handle_t*) (*mPreviewBufferHandle[i]);
-		MemIon::Free_mm_iova(private_h->share_fd,mPreviewHeapArray_phy[i],mPreviewHeapArray_size[i]);
-#endif
-	}
-
 }
-
 
 int SprdCamera3Memory::getUsage(int stream_type, cmr_uint &usage)
 {
@@ -109,10 +96,6 @@ int SprdCamera3Memory::getUsage(int stream_type, cmr_uint &usage)
 	case CAMERA3_STREAM_OUTPUT:
 		usage = GRALLOC_USAGE_SW_WRITE_OFTEN ;
 		break;
-	}
-
-	if (!mIsIOMMU) {
-		usage |= GRALLOC_USAGE_CAMERA_BUFFER;
 	}
 
 	return 0;
@@ -233,11 +216,9 @@ int SprdCamera3GrallocMemory::map(buffer_handle_t *buffer_handle ,hal_mem_info_t
 {
 	int ret = NO_ERROR;
 	struct private_handle_t *private_handle = NULL;
-	unsigned long ion_addr=0;
-	size_t ion_size=0;
 	int fd = 0;
 
-	if (0 == mem_info || NULL == buffer_handle) {
+	if (NULL == mem_info || NULL == buffer_handle) {
 		HAL_LOGE("Param invalid handle=%p, info=%p", buffer_handle, mem_info);
 		return -EINVAL;
 	}
@@ -250,32 +231,19 @@ int SprdCamera3GrallocMemory::map(buffer_handle_t *buffer_handle ,hal_mem_info_t
 	}
 
 	fd = private_handle->share_fd;
-	if (0  == mIsIOMMU) {
-		if (0 != MemIon::Get_phy_addr_from_ion(fd,&ion_addr,&ion_size)) {
-			HAL_LOGE("allocatePreviewMemByGraphics: Get_phy_addr_from_ion error");
-			ret =  -EINVAL;
-			goto err_out;
-		}
-	} else {
-	/*
-		if (MemIon::Get_iova(mIOMMUID, fd,&ion_addr,&ion_size)) {
-			HAL_LOGE("allocatePreviewMemByGraphics: Get_mm_iova error");
-			ret = -EINVAL;
-			goto err_out;
-		}
-	*/
-	}
 
 	mem_info->fd = fd;
-	mem_info->addr_phy =  (void*)0;//(void*)ion_addr;
+	// mem_info->addr_phy is offset, always set to 0 for yaddr
+	mem_info->addr_phy =  (void*)0;
 	mem_info->addr_vir = (void*)private_handle->base;
-	mem_info->size = ion_size;
-	HAL_LOGD("IOMMU MAP iova, fd=%d, addr_phy=0x%lx, size=0x%lx, mIOMMUID=%d",
-		mem_info->fd, mem_info->addr_phy, mem_info->size, mIOMMUID);
+	// need to 4k alignment
+	mem_info->size = private_handle->size;;
+	HAL_LOGD("fd=%d, addr_phy offset =0x%lx, buf size=0x%lx",
+		mem_info->fd, mem_info->addr_phy, mem_info->size);
 	return 0;
 
 err_out:
-    	return ret;
+	return ret;
 }
 
 int SprdCamera3GrallocMemory::map2(buffer_handle_t *buffer_handle ,hal_mem_info_t *mem_info)
@@ -298,6 +266,7 @@ int SprdCamera3GrallocMemory::map2(buffer_handle_t *buffer_handle ,hal_mem_info_
 
 	fd = private_handle->share_fd;
 	mem_info->fd = fd;
+	// mem_info->addr_phy is offset, always set to 0 for yaddr
 	mem_info->addr_phy = (void*)0;
 	mem_info->addr_vir = (void*)private_handle->base;
 	HAL_LOGD("dont need iommu addr, mem_info->fd = %d, mem_info->addr_phy =%p, mem_info->addr_vir=%p",
@@ -321,21 +290,6 @@ err_out:
 int SprdCamera3GrallocMemory::unmap(buffer_handle_t *buffer_handle, hal_mem_info_t *mem_info)
 {
 	int ret = 0;
-
-	if (mIsIOMMU) {
-		unsigned long ion_addr = (unsigned long)mem_info->addr_phy;
-		size_t ion_size = mem_info->size;
-		int fd = mem_info->fd;
-		HAL_LOGD("IOMMU UNMAP iova,  fd=%d, addr_phy=0x%lx, size=0x%lx, mIOMMUID=%d",
-			fd, ion_addr, ion_size, mIOMMUID);
-		if(ion_addr != 0 &&  ion_size > 0)   //prevent free mapping fail block
-			;//ret = MemIon::Free_iova(mIOMMUID, fd, ion_addr, ion_size);
-
-		if (ret) {
-			HAL_LOGE("free mm iova failed");
-			return ret;
-		}
-	}
 
 	return ret;
 }

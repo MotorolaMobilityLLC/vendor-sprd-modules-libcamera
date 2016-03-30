@@ -112,8 +112,8 @@ struct jpeg_enc {
 	struct img_addr            src_addr_phy;
 	struct img_addr            src_addr_vir;
 	struct img_data_end        src_endian;
-	struct img_mfd           src_mfd;//
-	cmr_uint                 stream_buf_fd;//
+	int                         src_fd;
+	int                         stream_buf_fd;
 };
 
 static cmr_int _dec_next(cmr_handle dec_handle, struct jpeg_codec_context  *jcontext, struct jpeg_dec_next_param *param_ptr);
@@ -285,9 +285,9 @@ static cmr_int _enc_start(cmr_handle handle, struct jpeg_codec_context *jcontext
 	jenc_parm_ptr->yuv_v_phy_buf = 0;
 	jenc_parm_ptr->y_interleaved = enc_cxt_ptr->src_endian.y_endian;
 	jenc_parm_ptr->uv_interleaved = enc_cxt_ptr->src_endian.uv_endian;
-	jenc_parm_ptr->src_mfd = enc_cxt_ptr->src_mfd;
+	jenc_parm_ptr->src_fd = enc_cxt_ptr->src_fd;
 	jenc_parm_ptr->stream_buf_fd = enc_cxt_ptr->stream_buf_fd;
-	CMR_LOGI("uv endian, %d y endian %d", enc_cxt_ptr->src_endian.uv_endian, enc_cxt_ptr->src_endian.y_endian);
+	CMR_LOGI("uv endian, %d y endian %d, src_fd 0x%x", enc_cxt_ptr->src_endian.uv_endian, enc_cxt_ptr->src_endian.y_endian, jenc_parm_ptr->src_fd);
 #ifdef JPEG_CODE_DEBUG
 	CMR_LOGV("jpeg:enc yuv phy addr,0x%x 0x%x 0x%x,slice height %d.",
 			 jenc_parm_ptr->yuv_phy_buf, jenc_parm_ptr->yuv_u_phy_buf,
@@ -1105,6 +1105,7 @@ static cmr_int _get_enc_start_param(struct jpeg_enc *cxt_ptr,
 	CMR_LOGI("jpeg:img_size: w:%d, h:%d", in_parm_ptr->size.width, in_parm_ptr->size.height);
 #endif
 	CMR_LOGI("jpeg:slice_height:%d", in_parm_ptr->slice_height);
+	CMR_LOGI("jpeg:src_fd:0x%x, stream_buf_fd 0x%x ", in_parm_ptr->src_fd,in_parm_ptr->stream_buf_fd);
 
 	cxt_ptr->stream_buf_phy = in_parm_ptr->stream_buf_phy;
 	cxt_ptr->stream_buf_vir = in_parm_ptr->stream_buf_vir;
@@ -1113,7 +1114,7 @@ static cmr_int _get_enc_start_param(struct jpeg_enc *cxt_ptr,
 
 	cxt_ptr->src_addr_phy = in_parm_ptr->src_addr_phy;
 	cxt_ptr->src_addr_vir = in_parm_ptr->src_addr_vir;
-	cxt_ptr->src_mfd= in_parm_ptr->src_mfd;
+	cxt_ptr->src_fd= in_parm_ptr->src_fd;
 	cxt_ptr->src_endian = in_parm_ptr->src_endian;
 
 	cxt_ptr->src_fmt = in_parm_ptr->src_fmt;

@@ -381,7 +381,7 @@ struct img_frm {
 	struct img_size                         size;
 	struct img_addr                         addr_phy;
 	struct img_addr                         addr_vir;
-	struct img_mfd                          mfd;
+	cmr_u32                                 fd;
 	struct img_data_end                     data_end;
 	cmr_u32                                 format_pattern;
 	void*                                   reserved;
@@ -503,7 +503,7 @@ struct buffer_cfg {
 	cmr_u32                             index[GRAB_BUF_MAX];
 	struct img_addr                     addr[GRAB_BUF_MAX];
 	struct img_addr                     addr_vir[GRAB_BUF_MAX];
-	struct img_mfd						mfd[GRAB_BUF_MAX];
+	cmr_u32                             fd[GRAB_BUF_MAX];
 	cmr_uint                            zsl_private;
 };
 

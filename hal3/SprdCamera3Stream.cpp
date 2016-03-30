@@ -118,6 +118,7 @@ int SprdCamera3Stream::buffDoneQ2(uint32_t frameNumber, buffer_handle_t *buffer)
 		mBuffNum++;
 		buff_hal->buffer_handle = buffer;
 		buff_hal->frame_number = frameNumber;
+		buf_mem_info->fd = 0;
 		buf_mem_info->addr_vir = NULL;
 		buf_mem_info->addr_phy = NULL;
 		mBufferList.add(buff_hal);
@@ -159,6 +160,7 @@ int SprdCamera3Stream::buffDoneQ(uint32_t frameNumber, buffer_handle_t *buffer)
 		mBuffNum++;
 		buff_hal->buffer_handle = buffer;
 		buff_hal->frame_number = frameNumber;
+		buf_mem_info->fd = 0;
 		buf_mem_info->addr_vir = NULL;
 		buf_mem_info->addr_phy = NULL;
 		mBufferList.add(buff_hal);
@@ -322,13 +324,13 @@ int SprdCamera3Stream::getQBuffFirstPhy(cmr_uint* addr_phy)
 	return BAD_VALUE;
 }
 
-int SprdCamera3Stream::getQBuffFirstFd(cmr_uint* priv_data)
+int SprdCamera3Stream::getQBuffFirstFd(cmr_s32* fd)
 {
 	Mutex::Autolock l(mLock);
 	Vector<hal_buff_list_t*>::iterator iter;
 	if(mBufferList.size()) {
 		iter = mBufferList.begin();
-		*priv_data = (cmr_uint)((*iter)->mem_info.fd);
+		*fd = (cmr_s32)((*iter)->mem_info.fd);
 		return NO_ERROR;
 	}
 	return BAD_VALUE;
@@ -349,7 +351,7 @@ int SprdCamera3Stream::getQBuffFirstNum(uint32_t* frameNumber)
 	return BAD_VALUE;
 }
 
-int SprdCamera3Stream::getQBufAddrForNum(uint32_t frameNumber, cmr_uint* addr_vir, cmr_uint* addr_phy)
+int SprdCamera3Stream::getQBufAddrForNum(uint32_t frameNumber, cmr_uint* addr_vir, cmr_uint* addr_phy, cmr_s32* fd)
 {
 	Mutex::Autolock l(mLock);
 	int ret = NO_ERROR;
@@ -361,6 +363,7 @@ int SprdCamera3Stream::getQBufAddrForNum(uint32_t frameNumber, cmr_uint* addr_vi
 		{
 			*addr_vir = (cmr_uint)((*iter)->mem_info.addr_vir);
 			*addr_phy = (cmr_uint)((*iter)->mem_info.addr_phy);
+			*fd = (cmr_s32)((*iter)->mem_info.fd);
 			return ret;
 		}
 	}
@@ -401,7 +404,7 @@ int SprdCamera3Stream::getQBufNumForVir(uintptr_t addr_vir, uint32_t* frameNumbe
 	return BAD_VALUE;
 }
 
-int SprdCamera3Stream::getQBufForHandle(buffer_handle_t* buff, cmr_uint* addr_vir, cmr_uint* addr_phy, cmr_uint* priv_data)
+int SprdCamera3Stream::getQBufForHandle(buffer_handle_t* buff, cmr_uint* addr_vir, cmr_uint* addr_phy, cmr_s32* fd)
 {
 	Mutex::Autolock l(mLock);
 	int ret = NO_ERROR;
@@ -413,7 +416,7 @@ int SprdCamera3Stream::getQBufForHandle(buffer_handle_t* buff, cmr_uint* addr_vi
 		{
 			*addr_vir = (cmr_uint)((*iter)->mem_info.addr_vir);
 			*addr_phy = (cmr_uint)((*iter)->mem_info.addr_phy);
-			*priv_data = (cmr_uint)((*iter)->mem_info.fd);
+			*fd =  (*iter)->mem_info.fd;
 			return ret;
 		}
 	}

@@ -341,7 +341,7 @@ static int eng_test_fb_open(void)
 	return 0;
 }
 
-static unsigned int getPreviewBufferIDForPhy(cmr_uint phy_addr)
+static unsigned int getPreviewBufferIDForFd(cmr_s32 fd)
 {
     unsigned int i = 0;
 
@@ -350,9 +350,9 @@ static unsigned int getPreviewBufferIDForPhy(cmr_uint phy_addr)
     for (i = 0; i < PREVIEW_BUFF_NUM; i++) {
         if (!previewHeapArray[i]) continue;
 
-        if (!(cmr_uint)previewHeapArray[i]->phys_addr) continue;
+        if (!(cmr_uint)previewHeapArray[i]->fd) continue;
 
-        if ((cmr_uint)previewHeapArray[i]->phys_addr == phy_addr) return i;
+        if ((cmr_uint)previewHeapArray[i]->fd == fd) return i;
     }
 
     return 0xFFFFFFFF;
@@ -373,7 +373,7 @@ static void eng_test_fb_update(const camera_frame_type *frame, int num)
 
     //width = frame->width;
     //height = frame->height;
-    buffer_id = getPreviewBufferIDForPhy(frame->y_phy_addr);
+    buffer_id = getPreviewBufferIDForFd(frame->fd);
 
     var.yres_virtual = var.yres * 2;
     var.yoffset = num * var.yres;
@@ -487,7 +487,7 @@ void eng_tst_camera_cb(enum camera_cb_type cb , const void *client_data , enum c
     }
 
     /*get frame buffer id*/
-    frame->buf_id=getPreviewBufferIDForPhy(frame->y_phy_addr);
+    frame->buf_id=getPreviewBufferIDForFd(frame->fd);
 
     /*preview enable or disable?*/
     if(!previewvalid) {
@@ -576,7 +576,7 @@ static int Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint *phy_addr, 
 	return 0;
 }
 
-static int Callback_PreviewFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_u32 sum)
+static int Callback_PreviewFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum)
 {
 	cmr_u32 i;
 
@@ -601,15 +601,15 @@ static int Callback_PreviewFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_u32 
 	return 0;
 }
 
-static cmr_int Callback_Free(enum camera_mem_cb_type type, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_u32 sum, void* private_data)
+static cmr_int Callback_Free(enum camera_mem_cb_type type, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum, void* private_data)
 {
 	cmr_int ret = 0;
 
     ALOGI("Native MMI Test: %s,%d IN\n", __func__, __LINE__);
 
     /*  */
-	if (!private_data || !phy_addr || !vir_addr) {
-		ALOGE("Native MMI Test: %s,%d, error param 0x%lx 0x%lx 0x%lx\n", __func__, __LINE__, (cmr_uint)phy_addr, (cmr_uint)vir_addr, (cmr_uint)private_data);
+	if (!private_data || !vir_addr || !fd) {
+		ALOGE("Native MMI Test: %s,%d, error param 0x%lx 0x%lx 0x%lx 0x%lx\n", __func__, __LINE__, (cmr_uint)phy_addr, (cmr_uint)vir_addr, (cmr_s32)fd, (cmr_uint)private_data);
 		return -1;
 	}
 
@@ -619,9 +619,9 @@ static cmr_int Callback_Free(enum camera_mem_cb_type type, cmr_uint *phy_addr, c
 	}
 
 	if (CAMERA_PREVIEW == type) {
-		ret = Callback_PreviewFree(phy_addr, vir_addr, sum);
+		ret = Callback_PreviewFree(phy_addr, vir_addr, fd, sum);
 	} else if (CAMERA_PREVIEW_RESERVED == type) {
-		ret = Callback_OtherFree(type, phy_addr, vir_addr, sum);
+		ret = Callback_OtherFree(type, phy_addr, vir_addr, fd, sum);
 	} else {
         ALOGI("Native MMI Test: %s,%d, type ignore: %d, do nothing\n", __func__, __LINE__, type);
     }
@@ -646,7 +646,7 @@ static sprd_camera_memory_t* allocCameraMem(int buf_size, int num_bufs, uint32_t
     /*  */
 	mem_size = buf_size * num_bufs ;
 	if(!mem_size) {
-        ALOGE("Native MMI Test: %s,%d, failed: mem size err.\n", __func__, __LINE__);
+		ALOGE("Native MMI Test: %s,%d, failed: mem size err.\n", __func__, __LINE__);
 		return NULL;
 	}
 
@@ -708,7 +708,7 @@ getpmem_end:
 	memory->ion_heap = pHeapIon;
 	memory->phys_addr = paddr;
 	memory->phys_size = psize;
-	memory->mfd = pHeapIon->getHeapID();
+	memory->fd = pHeapIon->getHeapID();
 
     /*  */
 	if (pHeapIon)
@@ -731,7 +731,7 @@ static int Callback_PreviewMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr,
         if (!memory) {
             ALOGE("Native MMI Test: %s,%d, failed: alloc camera mem err.\n", __func__, __LINE__);
 
-            Callback_PreviewFree(0, 0, 0);
+            Callback_PreviewFree(0, 0, 0, 0);
             return -1;
         }
 

@@ -214,6 +214,37 @@ cmr_int cmr_grab_deinit(cmr_handle grab_handle)
 	return 0;
 }
 
+/*
+* get iommu status
+* return val:
+*    0:    has iommu;
+*    else: no iommu
+*/
+cmr_s32 cmr_grab_get_iommu_status(cmr_handle grab_handle)
+{
+	cmr_s32 ret = 0;
+	struct cmr_grab *p_grab;
+	unsigned char has_iommu = 0;
+
+	p_grab = (struct cmr_grab *)grab_handle;
+
+#if 0
+	ret = ioctl(p_grab->fd, SPRD_DCAM_IO_GET_IOMMU_STATUS, &has_iommu);
+	if (ret) {
+		CMR_LOGE("SPRD_DCAM_IO_GET_IOMMU_STATUS failed");
+		return ret;
+	}
+#endif
+
+	if (has_iommu)
+	ret = 0;
+	else
+	ret = -1;
+
+	return ret;
+}
+
+
 void cmr_grab_evt_reg(cmr_handle grab_handle, cmr_evt_cb  grab_event_cb)
 {
 	struct cmr_grab          *p_grab;
@@ -511,7 +542,8 @@ cmr_int cmr_grab_buff_cfg (cmr_handle grab_handle, struct buffer_cfg *buf_cfg)
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
 
-	CMR_LOGI("%d %d 0x%x ", buf_cfg->channel_id, buf_cfg->count, buf_cfg->base_id);
+	CMR_LOGI("channel_id=%d, count=%d, base_id=0x%x ",
+		buf_cfg->channel_id, buf_cfg->count, buf_cfg->base_id);
 
 	/* firstly , set the base index for each channel */
 	parm.frame_base_id = buf_cfg->base_id;
@@ -532,13 +564,13 @@ cmr_int cmr_grab_buff_cfg (cmr_handle grab_handle, struct buffer_cfg *buf_cfg)
 		parm.is_reserved_buf  = buf_cfg->is_reserved_buf;
 		parm.buf_flag         = buf_cfg->flag;
 		parm.reserved[0]      = buf_cfg->zsl_private;
-		parm.reserved[1]	  = buf_cfg->mfd[i].y;
-		parm.reserved[2]	  = buf_cfg->mfd[i].u;
-		parm.reserved[3]	  = buf_cfg->mfd[i].v;
-		CMR_LOGV("buf %d: Y 0x%lx, U 0x%lx, V 0x%lx \n",
-			i, buf_cfg->addr[i].addr_y, buf_cfg->addr[i].addr_u, buf_cfg->addr[i].addr_v);
-		CMR_LOGD("buf %d: Y 0x%lx, mfd 0x%x 0x%x, is_reserved_buf %d", i, buf_cfg->addr[i].addr_y, buf_cfg->mfd[i].y,
-			buf_cfg->mfd[i].u, buf_cfg->is_reserved_buf);
+		parm.reserved[1]      = buf_cfg->fd[i];
+		parm.reserved[2]      = buf_cfg->fd[i];
+		parm.reserved[3]      = buf_cfg->fd[i];
+		CMR_LOGD("i=%d: fd=0x%x, offset: y=0x%lx, u=0x%lx, v=0x%lx, is_reserved_buf=%d\n",
+			i, buf_cfg->fd[i],
+			buf_cfg->addr[i].addr_y, buf_cfg->addr[i].addr_u,
+			buf_cfg->addr[i].addr_v, buf_cfg->is_reserved_buf);
 		if (0 != buf_cfg->addr_vir[i].addr_y) {
 			ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_FRAME_ADDR, &parm);
 			if (ret) {
@@ -575,10 +607,6 @@ cmr_int cmr_grab_cap_start(cmr_handle grab_handle, cmr_u32 skip_num)
 	if (p_grab->stream_on_cb) {
 		(*p_grab->stream_on_cb)(1, p_grab->init_param.oem_handle);
 	}
-
-	//while(1) {
-	//	usleep(1000);
-	//}
 
 exit:
 	CMR_LOGI("ret = %ld.",ret);
@@ -991,7 +1019,7 @@ static void* cmr_grab_thread_proc(void* data)
 						op.parm.frame.sec,
 						op.parm.frame.usec);
 				else
-					CMR_LOGE("got one frame! channel_id 0x%x, id 0x%x, evt_id 0x%x sec %lu usec %lu yaddr 0x%x",
+					CMR_LOGV("got one frame! channel_id 0x%x, id 0x%x, evt_id 0x%x sec %lu usec %lu yaddr 0x%x",
 						op.parm.frame.channel_id,
 						op.parm.frame.index,
 						evt_id,
@@ -1013,24 +1041,19 @@ static void* cmr_grab_thread_proc(void* data)
 				frame.yaddr_vir       = op.parm.frame.yaddr_vir;
 				frame.uaddr_vir       = op.parm.frame.uaddr_vir;
 				frame.vaddr_vir       = op.parm.frame.vaddr_vir;
-				frame.zsl_private     = op.parm.frame.reserved[0];
-				memcpy(frame.mfd, &op.parm.frame.reserved[1], sizeof(uint32_t)*3);
+				frame.fd              = op.parm.frame.reserved[1];
 
-
-				CMR_LOGV("frame.mfd=0x%x, y_virt=0x%lx", frame.mfd[0], frame.yaddr_vir);
+				CMR_LOGV("frame.fd=0x%x, y_virt=0x%lx", frame.fd, frame.yaddr_vir);
 				pthread_mutex_lock(&p_grab->status_mutex);
 				on_flag = p_grab->is_on;
 				pthread_mutex_unlock(&p_grab->status_mutex);
-				CMR_LOGI("cb E");
 				if (on_flag) {
 					pthread_mutex_lock(&p_grab->cb_mutex);
-					CMR_LOGI("cb M");
 					if (p_grab->grab_evt_cb) {
 						(*p_grab->grab_evt_cb)(evt_id, &frame, (void*)p_grab->init_param.oem_handle);
 					}
 					pthread_mutex_unlock(&p_grab->cb_mutex);
 				}
-				CMR_LOGI("cb X");
 			}
 		}
 	}

@@ -55,7 +55,7 @@ struct jpeg_enc_in_param {
 	struct img_size          out_size;
 	struct img_addr          src_addr_phy;
 	struct img_addr          src_addr_vir;
-	struct img_mfd           src_mfd;
+	cmr_u32                 src_fd;
 	struct img_data_end      src_endian;
 };
 
@@ -72,7 +72,7 @@ struct jpeg_dec_in_param {
 	cmr_uint                 stream_buf_phy;
 	cmr_uint                 stream_buf_vir;
 	cmr_u32                  stream_buf_size;
-	cmr_u32                  stream_buf_mfd;
+	cmr_u32                  stream_buf_fd;
 	cmr_u32                  slice_height;
 	cmr_u32                  slice_mod;
 	cmr_u32                  dst_fmt;
@@ -85,7 +85,7 @@ struct jpeg_dec_in_param {
 	struct img_size          size;
 	struct img_addr          dst_addr_phy;
 	struct img_addr          dst_addr_vir;
-	struct img_mfd           dst_mfd;
+	cmr_u32                 dst_fd;
 	struct img_data_end      dst_endian;
 };
 

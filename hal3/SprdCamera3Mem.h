@@ -41,6 +41,7 @@ namespace sprdcamera {
 typedef struct {
 	int fd;
 	size_t size;
+	// offset from fd, always set to 0
 	void *addr_phy;
 	void *addr_vir;
 #ifdef CONFIG_MEM_OPTIMIZATION
@@ -67,8 +68,6 @@ public:
 
 public:
 	static int getUsage(int stream_type, cmr_uint &usage);
-protected:
-    	static bool mIsIOMMU;
 protected:
 
     int cacheOpsInternal(int index, unsigned int cmd, void *vaddr);

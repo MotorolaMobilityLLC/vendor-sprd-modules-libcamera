@@ -129,7 +129,7 @@ struct frm_info {
 	cmr_u32                             uaddr_vir;
 	cmr_u32                             vaddr_vir;
 	cmr_uint                            zsl_private;
-	cmr_u32                             mfd[3];
+	cmr_u32                             fd;
 };
 
 #ifdef __cplusplus

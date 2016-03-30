@@ -238,8 +238,7 @@ struct camera_frame_type {
 	cmr_uint                  y_vir_addr;
 	cmr_uint                  uv_phy_addr;
 	cmr_uint                  uv_vir_addr;
-	cmr_u32                   y_mfd;
-	cmr_u32                   uv_mfd;
+	cmr_u32                   fd;
 	cmr_s64                   timestamp;
 	cmr_int                   status;
 	cmr_int                   type;
@@ -278,7 +277,7 @@ typedef void (*camera_cb_of_type)(enum camera_cb_type cb, const void *client_dat
 
 typedef cmr_int (*camera_cb_of_malloc)(enum camera_mem_cb_type type, cmr_u32 *size_ptr, cmr_u32 *sum_ptr, cmr_uint *phy_addr,
 	                                    cmr_uint *vir_addr, cmr_s32 *mfd, void* private_data);
-typedef cmr_int (*camera_cb_of_free)(enum camera_mem_cb_type type, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_u32 sum, void* private_data);
+typedef cmr_int (*camera_cb_of_free)(enum camera_mem_cb_type type, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum, void* private_data);
 
 cmr_int camera_init(cmr_u32 camera_id, camera_cb_of_type callback, void *client_data,  cmr_uint is_autotest, cmr_handle *camera_handle, void* cb_of_malloc,
                                            void* cb_of_free);
@@ -308,8 +307,9 @@ cmr_int camera_get_sn_trim(cmr_handle camera_handle, cmr_u32 mode, cmr_uint *tri
 
 cmr_int camera_set_mem_func(cmr_handle camera_handle, void* cb_of_malloc, void* cb_of_free, void* private_data);
 
-cmr_int camera_get_redisplay_data(cmr_handle camera_handle, cmr_uint output_addr, cmr_uint output_width, cmr_uint output_height,
-									             cmr_uint input_addr_y, cmr_uint input_addr_uv, cmr_uint input_width, cmr_uint input_height);
+cmr_int camera_get_redisplay_data(cmr_handle camera_handle, cmr_s32 output_fd, cmr_uint output_addr,cmr_uint output_width,
+                                                  cmr_uint output_height, cmr_s32 input_fd,cmr_uint input_addr_y, cmr_uint input_addr_uv,
+                                                  cmr_uint input_width, cmr_uint input_height);
 
 cmr_int camera_is_change_size(cmr_handle camera_handle, cmr_u32 cap_width,
 	                                        cmr_u32 cap_height, cmr_u32 preview_width,
@@ -354,10 +354,11 @@ cmr_int camera_start_preflash(cmr_handle camera_handle);
 cmr_int camera_get_viewangle(cmr_handle camera_handle, struct sensor_view_angle *view_angle);
 
 cmr_uint camera_get_sensor_exif_info(cmr_handle camera_handle, struct exif_info *exif_info);
+cmr_s32 camera_get_iommu_status(cmr_handle camera_handle);
 cmr_int camera_set_preview_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd);
 cmr_int camera_set_video_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd);
 cmr_int camera_set_zsl_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd);
-cmr_int camera_set_video_snapshot_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr);
+cmr_int camera_set_video_snapshot_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd);
 cmr_int camera_set_zsl_snapshot_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd);
 cmr_int camera_zsl_snapshot_need_pause(cmr_handle camera_handle, cmr_int *flag);
 cmr_int camera_get_isp_handle(cmr_handle camera_handle, cmr_handle *isp_handle);

@@ -86,8 +86,8 @@ typedef void*           cmr_handle;
 
 
 typedef void (*cmr_malloc)(cmr_u32 mem_type, cmr_handle oem_handle, cmr_u32 *size,
-	                         cmr_u32 *sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *mfd);
+	                         cmr_u32 *sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
 typedef void (*cmr_free)(cmr_u32 mem_type, cmr_handle oem_handle, cmr_uint *phy_addr,
-	                       cmr_uint *vir_addr, cmr_u32 sum);
+	                       cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum);
 
 #endif

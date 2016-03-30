@@ -454,7 +454,7 @@ cmr_int snp_postproc_thread_proc(struct cmr_msg *message, void* p_data)
 		goto exit;
 	}
 	chn_data_ptr = (struct frm_info*)message->data;
-	CMR_LOGI("message.msg_type 0x%x, data 0x%lx", message->msg_type, (cmr_uint)message->data);
+	CMR_LOGI("message.msg_type 0x%x, data 0x%lx, fd 0x%lx", message->msg_type, (cmr_uint)message->data, chn_data_ptr->fd);
 	switch (message->msg_type) {
 	case SNP_EVT_HDR_SRC_DONE:
 		snp_proc_copy_frame((cmr_handle)p_data, message->data);
@@ -489,9 +489,7 @@ cmr_int snp_postproc_thread_proc(struct cmr_msg *message, void* p_data)
 			buf_cfg.addr_vir[0].addr_y = frame.yaddr_vir;
 			buf_cfg.addr_vir[0].addr_u = frame.uaddr_vir;
 			buf_cfg.addr_vir[0].addr_v = frame.vaddr_vir;
-			buf_cfg.mfd[0].y = frame.mfd[0];
-			buf_cfg.mfd[0].u = frame.mfd[1];
-			buf_cfg.mfd[0].v = 0;
+			buf_cfg.fd[0]  = frame.fd;
 			cxt->ops.channel_buff_cfg(cxt->oem_handle, &buf_cfg);
 			CMR_LOGI("free frame");
 		}
@@ -1013,13 +1011,14 @@ cmr_int snp_start_decode_sync(cmr_handle snp_handle, void *data)
 	struct cmr_op_mean             mean;
 	cmr_s8                         value[PROPERTY_VALUE_MAX];
 
-    CMR_LOGI("index %d phy addr 0x%lx 0x%lx 0x%lx vrit addr 0x%lx 0x%lx 0x%lx length %d",
+    CMR_LOGI("index %d phy addr 0x%lx 0x%lx 0x%lx vrit addr 0x%lx 0x%lx 0x%lx fd 0x%x, length %d",
 			index, chn_param_ptr->jpeg_dec_in[index].src.addr_phy.addr_y,
 			chn_param_ptr->jpeg_dec_in[index].src.addr_phy.addr_u,
 			chn_param_ptr->jpeg_dec_in[index].src.addr_phy.addr_v,
 			chn_param_ptr->jpeg_dec_in[index].src.addr_vir.addr_y,
 			chn_param_ptr->jpeg_dec_in[index].src.addr_vir.addr_u,
 			chn_param_ptr->jpeg_dec_in[index].src.addr_vir.addr_v,
+			chn_param_ptr->jpeg_dec_in[index].src.fd,
 			frm_ptr->length);
 
 	property_get("debug.camera.save.snpfile", value, "0");
@@ -2799,10 +2798,8 @@ cmr_int snp_set_channel_out_param(cmr_handle snp_handle)
 			ret = -CMR_CAMERA_INVALID_PARAM;
 			break;
 		}
-		if ((0 == chn_out_frm_ptr->addr_phy.addr_y || 0 == chn_out_frm_ptr->addr_phy.addr_u
-			|| 0 == chn_out_frm_ptr->addr_vir.addr_y || 0 == chn_out_frm_ptr->addr_vir.addr_u) && (0 == chn_out_frm_ptr->mfd.y)) {
-			CMR_LOGE("err, frm addr 0x%lx 0x%lx 0x%lx 0x%lx", chn_out_frm_ptr->addr_phy.addr_y,
-					chn_out_frm_ptr->addr_phy.addr_u, chn_out_frm_ptr->addr_vir.addr_y,
+		if ((0 == chn_out_frm_ptr->addr_vir.addr_y || 0 == chn_out_frm_ptr->addr_vir.addr_u) || (0 == chn_out_frm_ptr->fd)) {
+			CMR_LOGE("err, frm fd 0x%lx addr_vir 0x%lx 0x%lx", chn_out_frm_ptr->fd,chn_out_frm_ptr->addr_vir.addr_y,
 					chn_out_frm_ptr->addr_vir.addr_u);
 			ret = -CMR_CAMERA_INVALID_PARAM;
 			break;
@@ -2834,8 +2831,7 @@ cmr_int snp_set_channel_out_param(cmr_handle snp_handle)
 	if (!ret) {
 		chn_out_frm_ptr = &cxt->chn_param.chn_frm[0];
 		for (i=0 ; i<1/*CMR_CAPTURE_MEM_SUM*/ ; i++) {
-			CMR_LOGI("phy addr 0x%lx 0x%lx vir addr 0x%lx 0x%lx size %d %d", chn_out_frm_ptr->addr_phy.addr_y,
-					chn_out_frm_ptr->addr_phy.addr_u, chn_out_frm_ptr->addr_vir.addr_y,
+			CMR_LOGI("phy fd 0x%lx vir addr 0x%lx 0x%lx size %d %d", chn_out_frm_ptr->fd,
 					chn_out_frm_ptr->addr_vir.addr_u, chn_out_frm_ptr->size.width, chn_out_frm_ptr->size.height);
 		}
 	}
@@ -2877,6 +2873,7 @@ cmr_int snp_set_scale_param(cmr_handle snp_handle)
 		chn_param_ptr->scale[i].dst_img.data_end = req_param_ptr->post_proc_setting.data_endian;
 		chn_param_ptr->scale[i].src_img.rect = rect[i];
 		chn_param_ptr->scale[i].dst_img.size = req_param_ptr->post_proc_setting.actual_snp_size;
+		chn_param_ptr->scale[i].dst_img.fd = req_param_ptr->post_proc_setting.mem[i].target_yuv.fd;
 		cmr_copy((void*)&chn_param_ptr->scale[i].dst_img.addr_phy, (void*)&req_param_ptr->post_proc_setting.mem[i].target_yuv.addr_phy,
 				sizeof(struct img_addr));
 		cmr_copy((void*)&chn_param_ptr->scale[i].dst_img.addr_vir, (void*)&req_param_ptr->post_proc_setting.mem[i].target_yuv.addr_vir,
@@ -2893,6 +2890,7 @@ cmr_int snp_set_scale_param(cmr_handle snp_handle)
 			chn_param_ptr->scale[i].src_img.addr_vir.addr_y = chn_param_ptr->chn_frm[i].addr_vir.addr_y + offset[i];
 			chn_param_ptr->scale[i].src_img.addr_vir.addr_u = chn_param_ptr->chn_frm[i].addr_vir.addr_u + (offset[i] >> 1);
 			chn_param_ptr->scale[i].src_img.addr_vir.addr_v = chn_param_ptr->chn_frm[i].addr_vir.addr_v + (offset[i] >> 1);
+			chn_param_ptr->scale[i].src_img.fd = chn_param_ptr->chn_frm[i].fd;
 		}
 	} else {//rotation case
 		for (i=0 ; i<CMR_CAPTURE_MEM_SUM ; i++) {
@@ -2903,15 +2901,17 @@ cmr_int snp_set_scale_param(cmr_handle snp_handle)
 			chn_param_ptr->scale[i].src_img.addr_vir.addr_y = chn_param_ptr->rot[i].dst_img.addr_phy.addr_y + offset[i];
 			chn_param_ptr->scale[i].src_img.addr_vir.addr_u = chn_param_ptr->rot[i].dst_img.addr_phy.addr_u + (offset[i] >> 1);
 			chn_param_ptr->scale[i].src_img.addr_vir.addr_v = chn_param_ptr->rot[i].dst_img.addr_phy.addr_v + (offset[i] >> 1);
+			chn_param_ptr->scale[i].src_img.fd = chn_param_ptr->rot[i].dst_img.fd;
 		}
 	}
 
 	for (i=0 ; i<1/*CMR_CAPTURE_MEM_SUM*/ ; i++) {
-		CMR_LOGI("src addr 0x%lx 0x%lx dst add 0x%lx 0x%lx",
+		CMR_LOGI("src addr 0x%lx 0x%lx dst add 0x%lx 0x%lx fd 0x%x",
 			chn_param_ptr->scale[i].src_img.addr_phy.addr_y,
 			chn_param_ptr->scale[i].src_img.addr_phy.addr_u,
 			chn_param_ptr->scale[i].dst_img.addr_phy.addr_y,
-			chn_param_ptr->scale[i].dst_img.addr_phy.addr_u);
+			chn_param_ptr->scale[i].dst_img.addr_phy.addr_u,
+			chn_param_ptr->scale[i].dst_img.fd);
 
 		CMR_LOGI("src size %d %d dst size %d %d",
 			chn_param_ptr->scale[i].src_img.size.width,
@@ -2965,8 +2965,8 @@ cmr_int snp_set_convert_thumb_param(cmr_handle snp_handle)
 	}
 	thumb_ptr = &cxt->chn_param.convert_thumb[0];
 	for (i=0 ; i<1/*CMR_CAPTURE_MEM_SUM*/ ; i++) {
-		CMR_LOGI("src addr 0x%lx 0x%lx dst addr 0x%lx 0x%lx", thumb_ptr->src_img.addr_phy.addr_y, thumb_ptr->src_img.addr_phy.addr_u,
-				thumb_ptr->dst_img.addr_phy.addr_y, thumb_ptr->dst_img.addr_phy.addr_u);
+		CMR_LOGI("src addr 0x%lx 0x%lx dst addr 0x%lx 0x%lx, fd 0x%x", thumb_ptr->src_img.addr_phy.addr_y, thumb_ptr->src_img.addr_phy.addr_u,
+				thumb_ptr->dst_img.addr_phy.addr_y, thumb_ptr->dst_img.addr_phy.addr_u, thumb_ptr->dst_img.fd);
 		CMR_LOGI("src size %d %d dst size %d %d slice height %d", thumb_ptr->src_img.size.width, thumb_ptr->src_img.size.height,
 				thumb_ptr->dst_img.size.width, thumb_ptr->dst_img.size.height, (cmr_u32)thumb_ptr->slice_height);
 		thumb_ptr++;
@@ -3025,8 +3025,8 @@ cmr_int snp_set_rot_param(cmr_handle snp_handle)
 	}
 	rot_ptr = &cxt->chn_param.rot[0];
 	for (i=0 ; i<1/*CMR_CAPTURE_MEM_SUM*/ ; i++) {
-		CMR_LOGI("src addr 0x%lx 0x%lx dst 0x%lx 0x%lx", rot_ptr->src_img.addr_phy.addr_y, rot_ptr->src_img.addr_phy.addr_u,
-				rot_ptr->dst_img.addr_phy.addr_y, rot_ptr->dst_img.addr_phy.addr_u);
+		CMR_LOGI("src addr 0x%lx 0x%lx dst 0x%lx 0x%lx, fd 0x%x", rot_ptr->src_img.addr_phy.addr_y, rot_ptr->src_img.addr_phy.addr_u,
+				rot_ptr->dst_img.addr_phy.addr_y, rot_ptr->dst_img.addr_phy.addr_u, rot_ptr->dst_img.fd);
 		CMR_LOGI("src size %d %d dst size %d %d", rot_ptr->src_img.size.width, rot_ptr->src_img.size.height,
 				rot_ptr->dst_img.size.width, rot_ptr->dst_img.size.height);
 		rot_ptr++;
@@ -3071,8 +3071,8 @@ cmr_int snp_set_jpeg_enc_param(cmr_handle snp_handle)
 	}
 	jpeg_ptr = &chn_param_ptr->jpeg_in[0];
 	for (i=0 ; i<1/*CMR_CAPTURE_MEM_SUM*/ ; i++) {
-		CMR_LOGI("src addr 0x%lx 0x%lx dst 0x%lx", jpeg_ptr->src.addr_phy.addr_y, jpeg_ptr->src.addr_phy.addr_u,
-				jpeg_ptr->dst.addr_phy.addr_y);
+		CMR_LOGI("src addr 0x%lx 0x%lx dst 0x%lx, fd 0x%x", jpeg_ptr->src.addr_phy.addr_y, jpeg_ptr->src.addr_phy.addr_u,
+				jpeg_ptr->dst.addr_phy.addr_y,jpeg_ptr->dst.fd);
 		CMR_LOGI("src size %d %d out size %d %d", jpeg_ptr->src.size.width, jpeg_ptr->src.size.height,
 				jpeg_ptr->dst.size.width, jpeg_ptr->dst.size.height);
 		CMR_LOGI("quality %d slice height %d", jpeg_ptr->mean.quality_level, jpeg_ptr->mean.slice_height);
@@ -3120,8 +3120,8 @@ cmr_int snp_set_jpeg_thumb_param(cmr_handle snp_handle)
 	}
 	jpeg_ptr = &chn_param_ptr->thumb_in[0];
 	for (i=0 ; i<1/*CMR_CAPTURE_MEM_SUM*/ ; i++) {
-		CMR_LOGI("src addr 0x%lx 0x%lx dst 0x%lx", jpeg_ptr->src.addr_phy.addr_y, jpeg_ptr->src.addr_phy.addr_u,
-				jpeg_ptr->dst.addr_phy.addr_y);
+		CMR_LOGI("src addr 0x%lx 0x%lx dst 0x%lx, fd 0x%x", jpeg_ptr->src.addr_phy.addr_y, jpeg_ptr->src.addr_phy.addr_u,
+				jpeg_ptr->dst.addr_phy.addr_y, jpeg_ptr->dst.fd);
 		CMR_LOGI("src size %d %d out size %d %d", jpeg_ptr->src.size.width, jpeg_ptr->src.size.height,
 				jpeg_ptr->dst.size.width, jpeg_ptr->dst.size.height);
 		CMR_LOGI("quality %d slice height %d", jpeg_ptr->mean.quality_level, jpeg_ptr->mean.slice_height);
@@ -3147,8 +3147,8 @@ cmr_int snp_set_jpeg_exif_param(cmr_handle snp_handle)
 	}
 	exif_in_ptr = &chn_param_ptr->exif_in[0];
 	for (i=0 ; i<1/*CMR_CAPTURE_MEM_SUM*/ ; i++) {
-		CMR_LOGI("src addr 0x%lx 0x%lx dst addr 0x%lx", exif_in_ptr->big_pic_stream_src.addr_vir.addr_y,
-				exif_in_ptr->thumb_stream_src.addr_vir.addr_y, exif_in_ptr->dst.addr_vir.addr_y);
+		CMR_LOGI("src addr 0x%lx 0x%lx dst addr 0x%lx, fd 0x%x", exif_in_ptr->big_pic_stream_src.addr_vir.addr_y,
+				exif_in_ptr->thumb_stream_src.addr_vir.addr_y, exif_in_ptr->dst.addr_vir.addr_y,exif_in_ptr->dst.fd);
 		CMR_LOGI("dst buf size %d", exif_in_ptr->dst.buf_size);
 	}
 	return ret;
@@ -3175,9 +3175,11 @@ cmr_int snp_set_jpeg_dec_param(cmr_handle snp_handle)
 			if (req_param_ptr->post_proc_setting.is_need_scaling) {
 				dec_in_ptr->dst.addr_phy = req_param_ptr->post_proc_setting.mem[i].cap_yuv.addr_phy;
 				dec_in_ptr->dst.addr_vir = req_param_ptr->post_proc_setting.mem[i].cap_yuv.addr_vir;
+				dec_in_ptr->dst.fd = req_param_ptr->post_proc_setting.mem[i].cap_yuv.fd;
 			} else {
 				dec_in_ptr->dst.addr_phy = req_param_ptr->post_proc_setting.mem[i].target_yuv.addr_phy;
 				dec_in_ptr->dst.addr_vir = req_param_ptr->post_proc_setting.mem[i].target_yuv.addr_vir;
+				dec_in_ptr->dst.fd = req_param_ptr->post_proc_setting.mem[i].target_yuv.fd;
 			}
 			dec_in_ptr++;
 		}
@@ -3187,9 +3189,11 @@ cmr_int snp_set_jpeg_dec_param(cmr_handle snp_handle)
 				if (req_param_ptr->post_proc_setting.is_need_scaling) {
 					dec_in_ptr->dst.addr_phy = req_param_ptr->post_proc_setting.mem[i].cap_yuv.addr_phy;
 					dec_in_ptr->dst.addr_vir = req_param_ptr->post_proc_setting.mem[i].cap_yuv.addr_vir;
+					dec_in_ptr->dst.fd = req_param_ptr->post_proc_setting.mem[i].cap_yuv.fd;
 				} else {
 					dec_in_ptr->dst.addr_phy = req_param_ptr->post_proc_setting.mem[i].target_yuv.addr_phy;
 					dec_in_ptr->dst.addr_vir = req_param_ptr->post_proc_setting.mem[i].target_yuv.addr_vir;
+					dec_in_ptr->dst.fd = req_param_ptr->post_proc_setting.mem[i].target_yuv.fd;
 				}
 				dec_in_ptr++;
 			}
@@ -3197,12 +3201,14 @@ cmr_int snp_set_jpeg_dec_param(cmr_handle snp_handle)
 			for (i=0 ; i<CMR_CAPTURE_MEM_SUM ; i++) {
 				dec_in_ptr->dst.addr_phy = req_param_ptr->post_proc_setting.mem[i].target_yuv.addr_phy;
 				dec_in_ptr->dst.addr_vir = req_param_ptr->post_proc_setting.mem[i].target_yuv.addr_vir;
+				dec_in_ptr->dst.fd = req_param_ptr->post_proc_setting.mem[i].target_yuv.fd;
 				dec_in_ptr++;
 			}
 		} else {
 			for (i=0 ; i<CMR_CAPTURE_MEM_SUM ; i++) {
 				dec_in_ptr->dst.addr_phy = req_param_ptr->post_proc_setting.mem[i].cap_yuv.addr_phy;
 				dec_in_ptr->dst.addr_vir = req_param_ptr->post_proc_setting.mem[i].cap_yuv.addr_vir;
+				dec_in_ptr->dst.fd = req_param_ptr->post_proc_setting.mem[i].cap_yuv.fd;
 				dec_in_ptr++;
 			}
 		}
@@ -3286,13 +3292,13 @@ cmr_int snp_set_isp_proc_param(cmr_handle snp_handle)
 		}
 	}
 	for (i=0 ; i<1/*CMR_CAPTURE_MEM_SUM*/ ; i++) {
-		CMR_LOGI("src: 0x%x 0x%lx dst: 0x%x 0x%lx 0x%lx dst2: 0x%x 0x%lx w=%d h=%d",
-			chn_param_ptr->isp_proc_in[i].src_frame.mfd.y,
+		CMR_LOGI("src: fd 0x%x addr_y 0x%lx dst: fd 0x%x addr_y 0x%lx 0x%lx dst2: fd 0x%x addr_y 0x%lx w=%d h=%d",
+			chn_param_ptr->isp_proc_in[i].src_frame.fd,
 			chn_param_ptr->isp_proc_in[i].src_frame.addr_phy.addr_y,
-			chn_param_ptr->isp_proc_in[i].dst_frame.mfd.y,
+			chn_param_ptr->isp_proc_in[i].dst_frame.fd,
 			chn_param_ptr->isp_proc_in[i].dst_frame.addr_phy.addr_y,
 			chn_param_ptr->isp_proc_in[i].dst_frame.addr_phy.addr_u,
-			chn_param_ptr->isp_proc_in[i].dst2_frame.mfd.y,
+			chn_param_ptr->isp_proc_in[i].dst2_frame.fd,
 			chn_param_ptr->isp_proc_in[i].dst2_frame.addr_phy.addr_y,
 			req_param_ptr->post_proc_setting.chn_out_frm[i].size.width,
 			req_param_ptr->post_proc_setting.chn_out_frm[i].size.height);
@@ -3432,19 +3438,16 @@ cmr_int snp_update_scale_param(cmr_handle snp_handle, struct img_frm chn_data)
 		chn_param_ptr->scale[i].src_img.addr_vir.addr_y = chn_data.addr_vir.addr_y + offset[i];
 		chn_param_ptr->scale[i].src_img.addr_vir.addr_u = chn_data.addr_vir.addr_u + (offset[i] >> 1);
 		chn_param_ptr->scale[i].src_img.addr_vir.addr_v = chn_data.addr_vir.addr_v + (offset[i] >> 1);
-		chn_param_ptr->scale[i].src_img.mfd.y = chn_data.mfd.y;
-		chn_param_ptr->scale[i].src_img.mfd.u = chn_data.mfd.u;
-		chn_param_ptr->scale[i].src_img.mfd.v = 0;
+		chn_param_ptr->scale[i].src_img.fd = chn_data.fd;
 	}
 
 	for (i=0 ; i<1/*CMR_CAPTURE_MEM_SUM*/ ; i++) {
-		CMR_LOGI("src addr 0x%lx 0x%lx dst add 0x%lx 0x%lx, y u 0x%x 0x%x",
+		CMR_LOGI("src addr 0x%lx 0x%lx dst add 0x%lx 0x%lx, fd 0x%x",
 			chn_param_ptr->scale[i].src_img.addr_phy.addr_y,
 			chn_param_ptr->scale[i].src_img.addr_phy.addr_u,
 			chn_param_ptr->scale[i].dst_img.addr_phy.addr_y,
 			chn_param_ptr->scale[i].dst_img.addr_phy.addr_u,
-			chn_param_ptr->scale[i].src_img.mfd.y,
-			chn_param_ptr->scale[i].src_img.mfd.u);
+			chn_param_ptr->scale[i].src_img.fd);
 
 		CMR_LOGI("src size %d %d dst size %d %d",
 			chn_param_ptr->scale[i].src_img.size.width,
@@ -3969,6 +3972,7 @@ cmr_int camera_set_frame_type(cmr_handle snp_handle, struct camera_frame_type *f
 		{
 		cmr_u32 size = cxt->req_param.post_proc_setting.actual_snp_size.width*cxt->req_param.post_proc_setting.actual_snp_size.height;
 		frame_type->y_vir_addr = mem_ptr->target_yuv.addr_vir.addr_y;
+		frame_type->fd = mem_ptr->target_yuv.fd;
 		frame_type->y_phy_addr = mem_ptr->target_yuv.addr_phy.addr_y;
 		frame_type->uv_vir_addr = mem_ptr->target_yuv.addr_vir.addr_u;
 		frame_type->uv_phy_addr = mem_ptr->target_yuv.addr_phy.addr_u;
@@ -4240,9 +4244,10 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data)
 		goto exit;
 	}
 
-	CMR_LOGI("$$LHC:size %d %d yaddr 0x%x", chn_param_ptr->chn_frm[chn_data_ptr->frame_id-chn_data_ptr->base].size.width,
+	CMR_LOGI("$$LHC:size %d %d yaddr 0x%x, fd 0x%x", chn_param_ptr->chn_frm[chn_data_ptr->frame_id-chn_data_ptr->base].size.width,
 		chn_param_ptr->chn_frm[chn_data_ptr->frame_id-chn_data_ptr->base].size.height,
-		chn_param_ptr->chn_frm[chn_data_ptr->frame_id-chn_data_ptr->base].addr_vir.addr_y);
+		chn_param_ptr->chn_frm[chn_data_ptr->frame_id-chn_data_ptr->base].addr_vir.addr_y,
+		chn_param_ptr->chn_frm[chn_data_ptr->frame_id-chn_data_ptr->base].fd);
 	camera_take_snapshot_step(CMR_STEP_CAP_E);
 	property_get("debug.camera.save.snpfile", value, "0");
 	if (atoi(value) == 1 || atoi(value) == 100) {
@@ -4393,6 +4398,7 @@ cmr_int isp_overwrite_cap_mem(cmr_handle snp_handle)
 
 	frame_type.y_vir_addr = mem_ptr->cap_raw.addr_vir.addr_y;
 	frame_type.y_phy_addr = mem_ptr->cap_raw.addr_phy.addr_y;
+	frame_type.fd = mem_ptr->cap_raw.fd;
 	frame_type.width = mem_ptr->cap_raw.size.width;
 	frame_type.height = mem_ptr->cap_raw.size.height * pixel_width /8;
 
@@ -4597,6 +4603,7 @@ cmr_int snp_post_proc(cmr_handle snp_handle, void *data)
 			buf_cfg.addr_vir[0].addr_y = chn_data_ptr->yaddr_vir;
 			buf_cfg.addr_vir[0].addr_u = chn_data_ptr->uaddr_vir;
 			buf_cfg.addr_vir[0].addr_v = chn_data_ptr->vaddr_vir;
+			buf_cfg.fd[0] = chn_data_ptr->fd;
 			cxt->ops.channel_buff_cfg(cxt->oem_handle, &buf_cfg);
 			CMR_LOGI("free frame");
 		}
@@ -4909,8 +4916,8 @@ cmr_int snp_get_buffer_id(cmr_handle snapshot_handle, void* data)
 	int                             i = 0;
 
 	for (i = 0; i < CMR_CAPTURE_MEM_SUM; i++) {
-		CMR_LOGI("chn y %p data y %p", cxt->req_param.post_proc_setting.chn_out_frm[i].addr_phy.addr_y, frame_info_ptr->yaddr);
-		if (cxt->req_param.post_proc_setting.chn_out_frm[i].addr_phy.addr_y == frame_info_ptr->yaddr) {
+		CMR_LOGI("chn fd 0x%x data fd %p", cxt->req_param.post_proc_setting.chn_out_frm[i].fd, frame_info_ptr->fd);
+		if (cxt->req_param.post_proc_setting.chn_out_frm[i].fd == frame_info_ptr->fd) {
 			id = i;
 			break;
 		}
@@ -4969,9 +4976,10 @@ cmr_int cmr_snapshot_receive_data(cmr_handle snapshot_handle, cmr_int evt, void*
 					chn_data.base       = CMR_CAP1_ID_BASE;
 					chn_data.frame_id   = CMR_CAP1_ID_BASE;
 				}
-
+#ifndef CONFIG_MEM_OPTIMIZATION
 				chn_data.yaddr      = cxt->req_param.post_proc_setting.chn_out_frm[0].addr_phy.addr_y;
 				chn_data.uaddr      = cxt->req_param.post_proc_setting.chn_out_frm[0].addr_phy.addr_u;
+				chn_data.fd         = cxt->req_param.post_proc_setting.chn_out_frm[0].fd;
 
 				src_vir = (unsigned long)chn_data.yaddr_vir;
 				dst_vir = (unsigned long)cxt->req_param.post_proc_setting.chn_out_frm[0].addr_vir.addr_y;
@@ -4993,7 +5001,7 @@ cmr_int cmr_snapshot_receive_data(cmr_handle snapshot_handle, cmr_int evt, void*
 
 				cmr_copy((void *)dst_vir, (void *)src_vir, width * height / 2);
 				cmr_snapshot_memory_flush(cxt);
-
+#endif
 			}
 		}
 		break;

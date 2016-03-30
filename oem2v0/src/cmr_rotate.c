@@ -137,14 +137,12 @@ cmr_int cmr_rot(struct cmr_rot_param *rot_param)
 		goto rot_exit;
 	}
 
-	CMR_LOGI("angle %ld, src 0x%lx 0x%lx, w h %ld %ld, dst 0x%lx 0x%lx",
+	CMR_LOGI("angle %ld, src fd 0x%lx, w h %ld %ld, dst fd 0x%lx",
 		(cmr_int)angle,
-		src_img->addr_phy.addr_y,
-		src_img->addr_phy.addr_u,
+		src_img->fd,
 		(cmr_int)src_img->size.width,
 		(cmr_int)src_img->size.height,
-		dst_img->addr_phy.addr_y,
-		dst_img->addr_phy.addr_u);
+		dst_img->fd);
 
 	if ((cmr_u32)angle < (cmr_u32)(IMG_ANGLE_90)) {
 		CMR_LOGE("Wrong angle %ld", (cmr_int)angle);
@@ -163,11 +161,15 @@ cmr_int cmr_rot(struct cmr_rot_param *rot_param)
 	rot_cfg.src_addr.y = (uint32_t)src_img->addr_phy.addr_y;
 	rot_cfg.src_addr.u = (uint32_t)src_img->addr_phy.addr_u;
 	rot_cfg.src_addr.v = (uint32_t)src_img->addr_phy.addr_v;
-	memcpy(rot_cfg.src_addr.mfd, &src_img->mfd, sizeof(uint32_t)*3);
+	rot_cfg.src_addr.mfd[0] = src_img->fd;
+	rot_cfg.src_addr.mfd[1] = src_img->fd;
+	rot_cfg.src_addr.mfd[2] = src_img->fd;
 	rot_cfg.dst_addr.y = (uint32_t)dst_img->addr_phy.addr_y;
 	rot_cfg.dst_addr.u = (uint32_t)dst_img->addr_phy.addr_u;
 	rot_cfg.dst_addr.v = (uint32_t)dst_img->addr_phy.addr_v;
-	memcpy(rot_cfg.dst_addr.mfd, &dst_img->mfd, sizeof(uint32_t)*3);
+	rot_cfg.dst_addr.mfd[0] = dst_img->fd;
+	rot_cfg.dst_addr.mfd[1] = dst_img->fd;
+	rot_cfg.dst_addr.mfd[2] = dst_img->fd;
 	rot_cfg.size.w = (cmr_u16)src_img->size.width;
 	rot_cfg.size.h = (cmr_u16)src_img->size.height;
 	rot_cfg.src_endian = src_img->data_end.uv_endian;
@@ -192,7 +194,6 @@ cmr_int cmr_rot_close(cmr_handle rot_handle)
 	cmr_int                 ret = CMR_CAMERA_SUCCESS;
 	struct rot_file         *file = (struct rot_file*)(rot_handle);
 	cmr_u32                 val = 1;
-
 
 	CMR_LOGI("Start to close rotation device.");
 

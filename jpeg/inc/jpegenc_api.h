@@ -74,7 +74,7 @@ typedef struct jpegenc_params
 	uint32_t stream_buf_len;
 	uint32_t stream_size;
 	uint32_t stream_buf_fd;
-	struct img_mfd         src_mfd;
+	int       src_fd;
 	JPEGENC_QUALITY_E quality;
 	jpegenc_callback read_callback;
 	uint32_t y_interleaved;

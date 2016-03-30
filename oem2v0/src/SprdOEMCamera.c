@@ -287,10 +287,11 @@ exit:
 	return ret;
 }
 
-cmr_int camera_get_redisplay_data(cmr_handle camera_handle, cmr_uint output_addr,
-                                                  cmr_uint output_width, cmr_uint output_height,
-                                                  cmr_uint input_addr_y, cmr_uint input_addr_uv,
-                                                  cmr_uint input_width, cmr_uint input_height)
+cmr_int camera_get_redisplay_data(cmr_handle camera_handle, cmr_s32 output_fd,
+                                                     cmr_uint output_addr,cmr_uint output_width,
+                                                     cmr_uint output_height, cmr_s32 input_fd,
+                                                     cmr_uint input_addr_y, cmr_uint input_addr_uv,
+                                                     cmr_uint input_width, cmr_uint input_height)
 {
 	cmr_int                          ret = CMR_CAMERA_SUCCESS;
 
@@ -298,13 +299,12 @@ cmr_int camera_get_redisplay_data(cmr_handle camera_handle, cmr_uint output_addr
 			(cmr_uint)output_width, (cmr_uint)output_height, (cmr_uint)input_addr_y, (cmr_uint)input_addr_uv,
 			(cmr_uint)input_width, (cmr_uint)input_height);
 
-	if (!camera_handle || !output_addr || !output_width || !output_height
-		|| !input_addr_y || !input_addr_uv || !input_width || !input_height) {
+	if (!camera_handle || !output_width || !output_height  || !input_width || !input_height) {
 		CMR_LOGE("param error");
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}
-	ret = camera_local_redisplay_data(camera_handle, output_addr, output_width, output_height,
+	ret = camera_local_redisplay_data(camera_handle, output_fd, output_addr, output_width, output_height,input_fd,
 		                              input_addr_y, input_addr_uv, input_width, input_height);
 	if (ret) {
 		CMR_LOGE("failed to redisplay %ld", ret);
@@ -444,6 +444,16 @@ cmr_uint camera_get_sensor_exif_info(cmr_handle camera_handle, struct exif_info 
 exit:
 	CMR_LOGI("done %ld", ret);
 	return ret;
+}
+
+/*
+* get dcam iommu status
+* return val:
+*    0:    has iommu;
+*    else: no iommu
+*/
+cmr_s32 camera_get_iommu_status(cmr_handle camera_handle) {
+	return camera_local_get_iommu_status(camera_handle);
 }
 
 void camera_fd_enable(cmr_handle camera_handle, cmr_u32 is_enable)
@@ -705,7 +715,7 @@ exit:
 cmr_int camera_set_preview_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd)
 {
 	cmr_int    ret = CMR_CAMERA_SUCCESS;
-	if (!camera_handle || /*!src_phy_addr ||*/ !src_vir_addr) {
+	if (!camera_handle || !src_vir_addr) {
 		CMR_LOGE("Invalid param error");
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
@@ -721,7 +731,7 @@ exit:
 cmr_int camera_set_video_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd)
 {
 	cmr_int    ret = CMR_CAMERA_SUCCESS;
-	if (!camera_handle  || !src_vir_addr) {
+	if (!camera_handle || !fd || !src_vir_addr) {
 		CMR_LOGE("Invalid param error");
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
@@ -737,7 +747,7 @@ exit:
 cmr_int camera_set_zsl_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd)
 {
 	cmr_int    ret = CMR_CAMERA_SUCCESS;
-	if (!camera_handle || !src_vir_addr) {
+	if (!camera_handle || !fd || !src_vir_addr) {
 		CMR_LOGE("Invalid param error");
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
@@ -750,15 +760,15 @@ exit:
 	CMR_LOGI("done %ld", ret);
 	return ret;
 }
-cmr_int camera_set_video_snapshot_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr)
+cmr_int camera_set_video_snapshot_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd)
 {
 	cmr_int    ret = CMR_CAMERA_SUCCESS;
-	if (!camera_handle || !src_phy_addr || !src_vir_addr) {
+	if (!camera_handle || !fd || !src_vir_addr) {
 		CMR_LOGE("Invalid param error");
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}
-	ret = camera_local_set_video_snapshot_buffer(camera_handle, src_phy_addr, src_vir_addr);
+	ret = camera_local_set_video_snapshot_buffer(camera_handle, src_phy_addr, src_vir_addr, fd);
 	if (ret) {
 		CMR_LOGE("failed %ld", ret);
 	}

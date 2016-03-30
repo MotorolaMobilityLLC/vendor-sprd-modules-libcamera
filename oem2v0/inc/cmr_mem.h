@@ -23,7 +23,7 @@ extern "C"
 
 #include "cmr_common.h"
 
-typedef int (*alloc_mem_ptr)(void* handle, unsigned int size, unsigned long *addr_phy, unsigned long *addr_vir, signed int *mfd);
+typedef int (*alloc_mem_ptr)(void* handle, unsigned int size, unsigned long *addr_phy, unsigned long *addr_vir, signed int *fd);
 typedef int (*free_mem_ptr)(void* handle);
 
 struct cmr_cap_2_frm {

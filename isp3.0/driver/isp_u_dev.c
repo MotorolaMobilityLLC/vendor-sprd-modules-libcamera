@@ -128,6 +128,7 @@ isp_free:
 cmr_int isp_dev_deinit(isp_handle handle)
 {
 	cmr_int                       ret = 0;
+	int fd = 0;
 	struct isp_file               *file = (struct isp_file*)handle;
 
 	if (!file) {
@@ -153,7 +154,7 @@ cmr_int isp_dev_deinit(isp_handle handle)
 		}
 
 		file->init_param.free_cb(CAMERA_ISP_BINGING4AWB, file->init_param.mem_cb_handle,
-			(cmr_uint*)file->fw_mem.phy_addr, (cmr_uint*)file->fw_mem.virt_addr, file->fw_mem.num);
+			(cmr_uint*)file->fw_mem.phy_addr, (cmr_uint*)file->fw_mem.virt_addr, &fd, file->fw_mem.num);
 	}
 
 	pthread_mutex_lock(&file->cb_mutex);

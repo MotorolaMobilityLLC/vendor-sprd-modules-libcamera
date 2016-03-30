@@ -220,37 +220,38 @@ extern int32_t isp_calibration(struct isp_cali_param *param, struct isp_data_t *
 /**********************************************************************************************/
 
 void camera_malloc(cmr_u32 mem_type, cmr_handle oem_handle, cmr_u32 *size_ptr,
-	                        cmr_u32 *sum_ptr, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *mfd)
+	                        cmr_u32 *sum_ptr, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd)
 {
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 
-	if (!oem_handle || !phy_addr || !vir_addr || !size_ptr || !sum_ptr || !mfd) {
-		CMR_LOGE("error param mem_type 0x%lx,oem_handle 0x%lx phy_addr 0x%lx  vir_addr 0x%lx, mfd 0x%lx", mem_type,(cmr_uint)oem_handle, (cmr_uint)phy_addr, (cmr_uint)vir_addr, mfd);
+	if (!oem_handle || !vir_addr || !size_ptr || !sum_ptr || !fd) {
+		CMR_LOGE("error param mem_type 0x%lx,oem_handle 0x%lx  vir_addr 0x%lx, fd 0x%lx", mem_type,(cmr_uint)oem_handle, (cmr_uint)vir_addr, fd);
 		return;
 	}
 	CMR_LOGI("mem type %d size %d sum %d", mem_type, *size_ptr, *sum_ptr);
 	if (cxt->hal_malloc) {
-		cxt->hal_malloc(mem_type, size_ptr, sum_ptr, phy_addr, vir_addr, mfd, cxt->client_data);
-		CMR_LOGI("0x%lx 0x%lx 0x%lx", (cmr_uint)phy_addr, (cmr_uint)vir_addr, (cmr_uint)mfd);
+		cxt->hal_malloc(mem_type, size_ptr, sum_ptr, phy_addr, vir_addr, fd, cxt->client_data);
+		CMR_LOGI("0x%lx 0x%lx 0x%lx", (cmr_uint)phy_addr, (cmr_uint)vir_addr, (cmr_uint)fd);
 	} else {
 		CMR_LOGE("null");
 	}
 }
 
 void camera_free(cmr_u32 mem_type, cmr_handle oem_handle,cmr_uint *phy_addr,
-						cmr_uint *vir_addr, cmr_u32 sum)
+						cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum)
 {
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 
-	if (!oem_handle || !phy_addr || !vir_addr) {
-		CMR_LOGE("error param mem_type 0x%lx,oem_handle 0x%lx phy_addr 0x%lx  vir_addr 0x%lx", mem_type,(cmr_uint)oem_handle, (cmr_uint)phy_addr, (cmr_uint)vir_addr);
+	if (!oem_handle ||!vir_addr || !fd) {
+		CMR_LOGE("error param mem_type 0x%lx,oem_handle 0x%lx fd 0x%lx  vir_addr 0x%lx",
+			mem_type,(cmr_uint)oem_handle, fd, (cmr_uint)vir_addr);
 		return;
 	}
 	CMR_LOGI("mem type %d sum %d", mem_type, sum);
 	CMR_LOGV("free 0x%lx 0x%lx", (cmr_uint)phy_addr, (cmr_uint)vir_addr);
-	cxt->hal_free(mem_type, phy_addr, vir_addr, sum, cxt->client_data);
+	cxt->hal_free(mem_type, phy_addr, vir_addr, fd, sum, cxt->client_data);
 }
 
 void camera_snapshot_started(cmr_handle oem_handle)
@@ -372,8 +373,12 @@ void camera_send_channel_data(cmr_handle oem_handle, cmr_handle receiver_handle,
 
 	camera_local_zsl_snapshot_need_pause(oem_handle, &need_pause);
 	chn_bit = 1 << frm_ptr->channel_id;
+	CMR_LOGV("chn_id=%d, pre_chn_bits=%d snp_chn_bits=%d, total_num=%d",
+		frm_ptr->channel_id,
+		cxt->prev_cxt.channel_bits,
+		cxt->snp_cxt.channel_bits,
+		cxt->snp_cxt.total_num);
 
-	CMR_LOGV("%d %d %d %d", frm_ptr->channel_id, cxt->prev_cxt.channel_bits, cxt->snp_cxt.channel_bits, cxt->snp_cxt.total_num);
 	if (cxt->prev_cxt.channel_bits & chn_bit) {
 		ret = cmr_preview_receive_data(cxt->prev_cxt.preview_handle, cxt->camera_id, evt, data);
 	}
@@ -382,7 +387,8 @@ void camera_send_channel_data(cmr_handle oem_handle, cmr_handle receiver_handle,
 		ret = cmr_preview_receive_data(cxt->prev_cxt.preview_handle, cxt->camera_id, evt, data);
 	}
 	if (cxt->snp_cxt.channel_bits & chn_bit) {
-		if (TAKE_PICTURE_NEEDED == camera_get_snp_req((cmr_handle)cxt) && CAMERA_ZSL_MODE != cxt->snp_cxt.snp_mode) {
+		if (TAKE_PICTURE_NEEDED == camera_get_snp_req((cmr_handle)cxt) &&
+		    CAMERA_ZSL_MODE != cxt->snp_cxt.snp_mode) {
 			if (need_pause) {
 				camera_set_discard_frame(cxt, 1);
 			}
@@ -577,10 +583,7 @@ void camera_grab_handle(cmr_int evt, void* data, void* privdata)
 		buf_cfg.addr_vir[0].addr_y = frame->yaddr_vir;
 		buf_cfg.addr_vir[0].addr_u = frame->uaddr_vir;
 		buf_cfg.addr_vir[0].addr_v = frame->vaddr_vir;
-		buf_cfg.mfd[0].y = frame->mfd[0];
-		buf_cfg.mfd[0].u = frame->mfd[1];
-		buf_cfg.mfd[0].v = frame->mfd[2];
-		CMR_LOGE("zsl  buf_cfg.mfd[0].y 0x%x, u 0x%x, v 0x%x", buf_cfg.mfd[0].y, buf_cfg.mfd[0].u, buf_cfg.mfd[0].v);
+		buf_cfg.fd[0] = frame->fd;
 		camera_channel_buff_cfg(cxt, &buf_cfg);
 		return;
 	}
@@ -1750,6 +1753,18 @@ exit:
 	return ret;
 }
 
+cmr_s32 camera_local_get_iommu_status(cmr_handle oem_handle) {
+	cmr_s32 ret;
+	struct grab_context *grab_cxt = NULL;
+	struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+	grab_cxt = &cxt->grab_cxt;
+
+	ret = cmr_grab_get_iommu_status(grab_cxt->grab_handle);
+
+	return ret;
+}
+
 cmr_int camera_jpeg_init(cmr_handle  oem_handle)
 {
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
@@ -2642,8 +2657,8 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 
 	isp_param.setting_param_ptr = sensor_info_ptr->raw_info_ptr;
 	if (sensor_info_ptr->raw_info_ptr != NULL) {
-		CMR_LOGE("raw_info_ptr Not null ");
-		if (sensor_info_ptr->raw_info_ptr->ioctrl_ptr != NULL) CMR_LOGE("tony ioctrl_ptr Not null ");
+		if (sensor_info_ptr->raw_info_ptr->ioctrl_ptr != NULL)
+			CMR_LOGV("ioctl not null ");
 	}
 
 	if (0 != sensor_info_ptr->mode_info[SENSOR_MODE_COMMON_INIT].width) {
@@ -2751,6 +2766,7 @@ cmr_int camera_isp_deinit(cmr_handle  oem_handle)
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 	struct isp_context              *isp_cxt;
+	cmr_s32 fd = 0;
 
 	CHECK_HANDLE_VALID(oem_handle);
 	isp_cxt = &cxt->isp_cxt;
@@ -2771,7 +2787,7 @@ cmr_int camera_isp_deinit(cmr_handle  oem_handle)
 #if defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4)
 	if(cxt->isp_malloc_flag == 1) {
 		if (cxt->hal_free) {
-			cxt->hal_free(CAMERA_ISP_LSC,&cxt->isp_lsc_phys_addr,&cxt->isp_lsc_virt_addr,
+			cxt->hal_free(CAMERA_ISP_LSC,&cxt->isp_lsc_phys_addr,&cxt->isp_lsc_virt_addr, &fd,
 				ISP_LSC_BUF_NUM, cxt->client_data);
 		}
 		cxt->isp_malloc_flag = 0;
@@ -2779,7 +2795,7 @@ cmr_int camera_isp_deinit(cmr_handle  oem_handle)
 
 	if(cxt->isp_anti_flicker_flag == 1) {
 		if (cxt->hal_free) {
-			cxt->hal_free(CAMERA_ISP_ANTI_FLICKER,&cxt->isp_anti_flicker_phys_addr,&cxt->isp_anti_flicker_virt_addr,
+			cxt->hal_free(CAMERA_ISP_ANTI_FLICKER,&cxt->isp_anti_flicker_phys_addr,&cxt->isp_anti_flicker_virt_addr, &fd,
 				ISP_ANTI_FLICKER_BUF_NUM, cxt->client_data);
 		}
 		cxt->isp_anti_flicker_flag = 0;
@@ -3670,7 +3686,6 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 	sem_wait(&cxt->access_sm);
 	CMR_LOGI("src phy addr 0x%lx 0x%lx src vir addr 0x%lx 0x%lx", src->addr_phy.addr_y, src->addr_phy.addr_u,
 			 src->addr_vir.addr_y, src->addr_vir.addr_u);
-	CMR_LOGI("dst phr addr 0x%lx vir addr 0x%lx", dst->addr_phy.addr_y, dst->addr_vir.addr_y);
 	CMR_LOGI("src size %d %d", src->size.width, src->size.height);
 	CMR_LOGI("out size %d %d", dst->size.width, dst->size.height);
 	CMR_LOGD("caller_handle 0x%lx jpeg handle 0x%lx", (cmr_uint)caller_handle, (cmr_uint)cxt->jpeg_cxt.jpeg_handle);
@@ -3680,15 +3695,17 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 	enc_in_param.stream_buf_phy = dst->addr_phy.addr_y;
 	enc_in_param.stream_buf_vir = dst->addr_vir.addr_y;
 	enc_in_param.stream_buf_size = dst->buf_size;
-	enc_in_param.stream_buf_fd = dst->mfd.y;
+	enc_in_param.stream_buf_fd = dst->fd;
 	enc_in_param.jpeg_handle = cxt->jpeg_cxt.jpeg_handle;
 	enc_in_param.size = src->size;
 	enc_in_param.out_size = dst->size;/*actual picture size*/
 	enc_in_param.src_addr_phy = src->addr_phy;
 	enc_in_param.src_addr_vir = src->addr_vir;
-	enc_in_param.src_mfd = src->mfd;
+	enc_in_param.src_fd = src->fd;
 	enc_in_param.src_endian = src->data_end;
 	cxt->jpeg_cxt.enc_caller_handle = caller_handle;
+	CMR_LOGI("dst->fd 0x%lx, src->fd 0x%lx enc_in_param.stream_buf_fd 0x%lx,enc_in_param.src_fd 0x%lx", dst->fd,  src->fd,
+			 enc_in_param.stream_buf_fd, enc_in_param.src_fd);
 	if (1 != mean->is_thumb) {
 #ifdef CONFIG_FACE_BEAUTY
 		cmr_int PerfectSkinLevel=0;
@@ -3775,20 +3792,20 @@ cmr_int camera_start_decode(cmr_handle  oem_handle, cmr_handle caller_handle, st
 	dec_in_param.stream_buf_phy = src->addr_phy.addr_y;
 	dec_in_param.stream_buf_vir = src->addr_vir.addr_y;
 	dec_in_param.stream_buf_size = (cmr_uint)src->reserved;
-	dec_in_param.stream_buf_mfd = src->mfd.y;
+	dec_in_param.stream_buf_fd = src->fd;
 	dec_in_param.slice_height = mean->slice_height;
 	dec_in_param.slice_mod = mean->slice_mode;
 	dec_in_param.dst_fmt = dst->fmt;
 	dec_in_param.temp_buf_phy = mean->temp_buf.addr_phy.addr_y;
 	dec_in_param.temp_buf_vir = mean->temp_buf.addr_vir.addr_y;
 	dec_in_param.temp_buf_size = mean->temp_buf.buf_size;
-	dec_in_param.temp_buf_mfd = mean->temp_buf.mfd.y;
+	dec_in_param.temp_buf_mfd = mean->temp_buf.fd;
 	dec_in_param.jpeg_handle = cxt->jpeg_cxt.jpeg_handle;
 	dec_in_param.size = dst->size;
 	dec_in_param.dst_addr_phy = dst->addr_phy;
 	dec_in_param.dst_addr_vir = dst->addr_vir;
 	dec_in_param.dst_endian = dst->data_end;
-	dec_in_param.dst_mfd= dst->mfd;
+	dec_in_param.dst_fd= dst->fd;
 
 	cxt->jpeg_cxt.dec_caller_handle = caller_handle;
 	if (1 != mean->is_sync) {
@@ -3892,11 +3909,7 @@ cmr_int camera_start_scale(cmr_handle oem_handle, cmr_handle caller_handle, stru
 		goto exit;
 	}
 	CMR_LOGI("caller_handle 0x%lx is_sync %d", (cmr_uint)caller_handle, mean->is_sync);
-	CMR_LOGI("src phy addr 0x%lx 0x%lx, dst phy addr 0x%lx 0x%lx",
-		src->addr_phy.addr_y,
-		src->addr_phy.addr_u,
-		dst->addr_phy.addr_y,
-		dst->addr_phy.addr_u);
+	CMR_LOGI("src fd 0x%lx , dst fd 0x%lx",src->fd,dst->fd);
 
 	CMR_LOGI("src size %d %d dst size %d %d rect %d %d %d %d endian %d %d %d %d",
 		src->size.width,
@@ -4232,7 +4245,7 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle, struct 
 		param_ptr->dst_frame.addr_phy.addr_y, param_ptr->dst_frame.addr_phy.addr_u,
 		param_ptr->dst2_frame.addr_phy.addr_y, param_ptr->dst2_frame.addr_phy.addr_u);
 	CMR_LOGI("fd: src.fd=0x%x, dst.fd=0x%x, dst2.fd=0x%x",
-		param_ptr->src_frame.mfd.y, param_ptr->dst_frame.mfd.y, param_ptr->dst2_frame.mfd.y);
+		param_ptr->src_frame.fd, param_ptr->dst_frame.fd, param_ptr->dst2_frame.fd);
 
 	if (1 == param_ptr->slice_num) {
 		struct ips_in_param  in_param;
@@ -4240,8 +4253,8 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle, struct 
 		in_param.src_frame.img_fmt = param_ptr->src_frame.fmt;
 		in_param.src_frame.img_size.w = param_ptr->src_frame.size.width;
 		in_param.src_frame.img_size.h = param_ptr->src_frame.size.height;
-		in_param.src_frame.img_fd.y = param_ptr->src_frame.mfd.y;
-		in_param.src_frame.img_fd.u = param_ptr->src_frame.mfd.u;
+		in_param.src_frame.img_fd.y = param_ptr->src_frame.fd;
+		in_param.src_frame.img_fd.u = param_ptr->src_frame.fd;
 		in_param.src_frame.img_addr_phy.chn0 = param_ptr->src_frame.addr_phy.addr_y;
 		in_param.src_frame.img_addr_phy.chn1 = param_ptr->src_frame.addr_phy.addr_u;
 		in_param.src_frame.img_addr_vir.chn0 = param_ptr->src_frame.addr_vir.addr_y;
@@ -4252,8 +4265,8 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle, struct 
 		in_param.dst_frame.img_fmt = param_ptr->dst_frame.fmt;
 		in_param.dst_frame.img_size.w = param_ptr->dst_frame.size.width;
 		in_param.dst_frame.img_size.h = param_ptr->dst_frame.size.height;
-		in_param.dst_frame.img_fd.y = param_ptr->dst_frame.mfd.y;
-		in_param.dst_frame.img_fd.u = param_ptr->dst_frame.mfd.u;
+		in_param.dst_frame.img_fd.y = param_ptr->dst_frame.fd;
+		in_param.dst_frame.img_fd.u = param_ptr->dst_frame.fd;
 		in_param.dst_frame.img_addr_phy.chn0 = param_ptr->dst_frame.addr_phy.addr_y;
 		in_param.dst_frame.img_addr_phy.chn1 = param_ptr->dst_frame.addr_phy.addr_u;
 		in_param.dst_frame.img_addr_vir.chn0 = param_ptr->dst_frame.addr_vir.addr_y;
@@ -4263,8 +4276,8 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle, struct 
 		in_param.dst2_frame.img_fmt = param_ptr->dst2_frame.fmt;
 		in_param.dst2_frame.img_size.w = param_ptr->dst2_frame.size.width;
 		in_param.dst2_frame.img_size.h = param_ptr->dst2_frame.size.height;
-		in_param.dst2_frame.img_fd.y = param_ptr->dst2_frame.mfd.y;
-		in_param.dst2_frame.img_fd.u = param_ptr->dst2_frame.mfd.u;
+		in_param.dst2_frame.img_fd.y = param_ptr->dst2_frame.fd;
+		in_param.dst2_frame.img_fd.u = param_ptr->dst2_frame.fd;
 		in_param.dst2_frame.img_addr_phy.chn0 = param_ptr->dst2_frame.addr_phy.addr_y;
 		in_param.dst2_frame.img_addr_phy.chn1 = param_ptr->dst2_frame.addr_phy.addr_u;
 		in_param.dst2_frame.img_addr_vir.chn0 = param_ptr->dst2_frame.addr_vir.addr_y;
@@ -6496,9 +6509,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle, enum takepicture_mode
 		frame.yaddr_vir  = isp_cap_raw.addr_vir.addr_y;
 		frame.uaddr_vir  = isp_cap_raw.addr_vir.addr_u;
 		frame.vaddr_vir  = isp_cap_raw.addr_vir.addr_v;
-		frame.mfd[0] = isp_cap_raw.mfd.y;
-		frame.mfd[1] = isp_cap_raw.mfd.u;
-		frame.mfd[2] = 0;
+		frame.fd          = isp_cap_raw.fd;
 
 		// call cmr_snapshot_receive_data for post-processing
 		ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle, SNAPSHOT_EVT_CHANNEL_DONE, (void*)&frame);
@@ -6700,8 +6711,9 @@ exit:
 	return ret;
 }
 
-cmr_int camera_local_redisplay_data(cmr_handle oem_handle, cmr_uint output_addr,
-                                                   cmr_uint output_width, cmr_uint output_height,
+cmr_int camera_local_redisplay_data(cmr_handle oem_handle, cmr_s32 output_fd,
+							    cmr_uint output_addr, cmr_uint output_width,
+							    cmr_uint output_height, cmr_s32 input_fd,
                                                    cmr_uint input_addr_y, cmr_uint input_addr_uv,
                                                    cmr_uint input_width, cmr_uint input_height)
 {
@@ -6731,21 +6743,25 @@ cmr_int camera_local_redisplay_data(cmr_handle oem_handle, cmr_uint output_addr,
 	src_img.size.height = input_height;
 	src_img.fmt = IMG_DATA_TYPE_YUV420;
 	cmr_grab_get_dcam_endian(&cxt->snp_cxt.data_endian, &src_img.data_end);
+	src_img.fd = input_fd;
 	src_img.addr_phy.addr_y = input_addr_y;
 	src_img.addr_phy.addr_u = input_addr_uv;
 	if (IMG_ANGLE_90 == cxt->snp_cxt.cfg_cap_rot || IMG_ANGLE_270 == cxt->snp_cxt.cfg_cap_rot) {
 		dst_img.size.width = output_height;
 		dst_img.size.height = output_width;
+		dst_img.fd = output_fd;
 		dst_img.addr_phy.addr_y = output_addr + ((img_len * 3) >> 1);
 		dst_img.addr_phy.addr_u = dst_img.addr_phy.addr_y + img_len;
 	}else if (IMG_ANGLE_180 == cxt->snp_cxt.cfg_cap_rot) {
 		dst_img.size.width = output_width;
 		dst_img.size.height = output_height;
+		dst_img.fd = output_fd;
 		dst_img.addr_phy.addr_y = output_addr + ((img_len * 3) >> 1);
 		dst_img.addr_phy.addr_u = dst_img.addr_phy.addr_y + img_len;
 	} else {
 		dst_img.size.width = output_width;
 		dst_img.size.height = output_height;
+		dst_img.fd = output_fd;
 		dst_img.addr_phy.addr_y = output_addr;
 		dst_img.addr_phy.addr_u = dst_img.addr_phy.addr_y + img_len;
 	}
@@ -6795,6 +6811,7 @@ cmr_int camera_local_redisplay_data(cmr_handle oem_handle, cmr_uint output_addr,
 		rect.start_y = 0;
 		rect.width = dst_img.size.width;
 		rect.height = dst_img.size.height;
+		src_img.fd = dst_img.fd;
 		src_img.addr_phy.addr_y = dst_img.addr_phy.addr_y;
 		src_img.addr_phy.addr_u = dst_img.addr_phy.addr_u;
 		src_img.addr_phy.addr_v = 0;
@@ -6802,6 +6819,7 @@ cmr_int camera_local_redisplay_data(cmr_handle oem_handle, cmr_uint output_addr,
 		src_img.size.height = dst_img.size.height;
 		src_img.fmt = IMG_DATA_TYPE_YUV420;
 		src_img.data_end = cxt->snp_cxt.data_endian;
+		dst_img.fd = output_fd;
 		dst_img.addr_phy.addr_y = output_addr;
 		dst_img.addr_phy.addr_u = dst_img.addr_phy.addr_y + img_len;
 		dst_img.data_end = cxt->snp_cxt.data_endian;
@@ -6970,7 +6988,7 @@ cmr_int camera_local_set_preview_buffer(cmr_handle oem_handle, cmr_uint src_phy_
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt;
 	struct sensor_exp_info         exp_info;
-	if (!oem_handle || /*!src_phy_addr ||*/ !src_vir_addr) {
+	if (!oem_handle || !fd || !src_vir_addr) {
 		CMR_LOGE("in parm error");
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
@@ -6989,7 +7007,7 @@ cmr_int camera_local_set_video_buffer(cmr_handle oem_handle, cmr_uint src_phy_ad
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt;
 	struct sensor_exp_info         exp_info;
-	if (!oem_handle  || !src_vir_addr) {
+	if (!oem_handle || !fd || !src_vir_addr) {
 		CMR_LOGE("in parm error");
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
@@ -7008,7 +7026,7 @@ cmr_int camera_local_set_zsl_buffer(cmr_handle oem_handle, cmr_uint src_phy_addr
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt;
 	struct sensor_exp_info         exp_info;
-	if (!oem_handle ||!src_vir_addr) {
+	if (!oem_handle || !fd ||!src_vir_addr) {
 		CMR_LOGE("in parm error");
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
@@ -7023,13 +7041,13 @@ exit:
 	return ret;
 }
 
-cmr_int camera_local_set_video_snapshot_buffer(cmr_handle oem_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr)
+cmr_int camera_local_set_video_snapshot_buffer(cmr_handle oem_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd)
 {
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt;
 	struct frm_info                chn_data;
 	cmr_u32                        buffer_size = 0;
-	if (!oem_handle || !src_phy_addr || !src_vir_addr) {
+	if (!oem_handle || !fd || !src_vir_addr) {
 		CMR_LOGE("in parm error");
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
@@ -7045,6 +7063,7 @@ cmr_int camera_local_set_video_snapshot_buffer(cmr_handle oem_handle, cmr_uint s
 			buffer_size = cxt->prev_cxt.actual_video_size.width * cxt->prev_cxt.actual_video_size.height;
 		cmr_bzero(&chn_data, sizeof(struct frm_info));
 		cmr_copy(&chn_data, &cxt->prev_cxt.video_cur_chn_data, sizeof(struct frm_info));
+		chn_data.fd          = fd;
 		chn_data.yaddr      = src_phy_addr;
 		chn_data.uaddr      = src_phy_addr + buffer_size;
 		chn_data.vaddr      = 0;
@@ -7091,14 +7110,12 @@ cmr_int camera_local_set_zsl_snapshot_buffer(cmr_handle oem_handle, cmr_uint src
 		chn_data.yaddr_vir  = src_vir_addr;
 		chn_data.uaddr_vir  = src_vir_addr + buffer_size;
 		chn_data.vaddr_vir  = 0;
-		chn_data.mfd[0] = fd;
-		chn_data.mfd[1] = fd;
-		chn_data.mfd[2] = 0;
+		chn_data.fd = fd;
 
 #ifdef CONFIG_MEM_OPTIMIZATION
 		// update postprocess params
 		struct img_frm img_frame;
-                 memset(&img_frame, 0, sizeof(struct img_frm));
+		memset(&img_frame, 0, sizeof(struct img_frm));
 		img_frame.fmt = chn_data.fmt;
 		img_frame.buf_size = buffer_size *3 / 2; // ? or buffer_size * 3 /2
 		img_frame.rect.start_x = 0;
@@ -7115,12 +7132,10 @@ cmr_int camera_local_set_zsl_snapshot_buffer(cmr_handle oem_handle, cmr_uint src
 		img_frame.addr_vir.addr_v = 0;
 		img_frame.data_end.y_endian = 1; // ?
 		img_frame.data_end.uv_endian = 2; // ?
-		img_frame.mfd.y = fd;
-		img_frame.mfd.u = fd;
-		img_frame.mfd.v = 0;
-		CMR_LOGI("in src_phy_addr 0x%lx src_vir_addr 0x%lx, img_frame.mfd.y 0x%x", src_phy_addr, src_vir_addr, img_frame.mfd.y);
+		img_frame.fd                         = fd;
+		CMR_LOGI("in src_phy_addr 0x%lx src_vir_addr 0x%lx, img_frame.fd 0x%x", src_phy_addr, src_vir_addr, img_frame.fd);
 
-		//zsl_snp_update_post_proc_param(cxt->snp_cxt.snapshot_handle, (void*)&img_frame);
+		zsl_snp_update_post_proc_param(cxt->snp_cxt.snapshot_handle, (void*)&img_frame);
 #endif
 		ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle, SNAPSHOT_EVT_CHANNEL_DONE, (void*)&chn_data);
 		if (need_pause) {

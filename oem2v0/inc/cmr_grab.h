@@ -72,6 +72,7 @@ typedef cmr_int (*grab_stream_on)(cmr_u32 is_on, void *privdata);
 
 cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr, cmr_handle *grab_handle);
 cmr_int cmr_grab_deinit(cmr_handle grab_handle);
+cmr_s32 cmr_grab_get_iommu_status(cmr_handle grab_handle);
 void cmr_grab_evt_reg(cmr_handle grab_handle, cmr_evt_cb  v4l2_event_cb);
 cmr_int cmr_grab_if_cfg(cmr_handle grab_handle, struct sensor_if *sn_if);
 cmr_int cmr_grab_if_decfg(cmr_handle grab_handle, struct sensor_if *sn_if);

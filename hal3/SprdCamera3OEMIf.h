@@ -84,11 +84,15 @@ typedef struct af_sensor_info {
 	float z;
 }af_sensor_info_t;
 
+/*
+*  fd:         ion fd
+*  phys_addr:  offset from fd, always set 0
+*/
 typedef struct sprd_camera_memory {
 	MemIon *ion_heap;
 	cmr_uint phys_addr;
 	cmr_uint phys_size;
-	cmr_s32	mfd;
+	cmr_s32 fd;
 	void *handle;
 	void *data;
 	bool busy_flag;
@@ -203,14 +207,19 @@ public:
 private:
 	inline void print_time();
 
-	struct OneFrameMem {
-		sp<MemIon> input_y_pmem_hp;
-		size_t input_y_pmemory_size;
-		unsigned long input_y_physical_addr ;
-		unsigned char* input_y_virtual_addr;
-		uint32_t width;
-		uint32_t height;
-	};
+/*
+* fd:       ion fd
+* phys_addr phys_addr is offset from fd
+*/
+  struct OneFrameMem {
+	sp<MemIon> pmem_hp;
+	size_t size;
+	int fd;
+	unsigned long phys_addr;
+	unsigned char *virt_addr;
+	uint32_t width;
+	uint32_t height;
+};
 
 	enum shake_test_state {
 		NOT_SHAKE_TEST,
@@ -230,7 +239,7 @@ private:
 	void freePreviewMem();
 	bool allocateCaptureMem(bool initJpegHeap);
 	void freeCaptureMem();
-	uintptr_t getRedisplayMem(uint32_t width,uint32_t height);
+	int  getRedisplayMem(uint32_t width,uint32_t height);
 	void FreeReDisplayMem();
 	static void camera_cb(camera_cb_type cb,
 				const void *client_data,
@@ -243,7 +252,7 @@ private:
 	void receiveCameraExitError(void);
 	void receiveTakePictureError(void);
 	void receiveJpegPictureError(void);
-	bool receiveCallbackPicture(uint32_t width, uint32_t height, uintptr_t phy_addr, char *virtual_addr);
+	bool receiveCallbackPicture(uint32_t width, uint32_t height, cmr_s32 fd, uintptr_t phy_addr, char *virtual_addr);
 	void HandleStopCamera(enum camera_cb_type cb, void* parm4);
 	void HandleStartCamera(enum camera_cb_type cb, void* parm4);
 	void HandleStartPreview(enum camera_cb_type cb, void* parm4);
@@ -336,10 +345,7 @@ private:
 	void setCameraPreviewMode(bool isRecordMode);
 	bool setCameraPreviewFormat();
 	int set_ddr_freq(uint32_t mhzVal);
-	bool displayOneFrameForCapture(uint32_t width,
-						uint32_t height,
-						uintptr_t phy_addr,
-						char *virtual_addr);
+	bool displayOneFrameForCapture(uint32_t width, uint32_t height, int fd, uintptr_t phy_addr, char *virtual_addr);
 	bool iSDisplayCaptureFrame();
 	bool iSCallbackCaptureFrame();
 	bool iSZslMode();
@@ -352,6 +358,7 @@ private:
 	void shakeTestInit(ShakeTest *tmpShakeTest);
 	void setShakeTestState(shake_test_state state);
 	shake_test_state getShakeTestState();
+	int IommuIsEnabled(void);
 	int allocOneFrameMem(struct SprdCamera3OEMIf::OneFrameMem *one_frame_mem_ptr);
 	int relaseOneFrameMem(struct SprdCamera3OEMIf::OneFrameMem *one_frame_mem_ptr);
 	int initDefaultParameters();
@@ -368,19 +375,19 @@ private:
 	void	prepareForPostProcess(void);
 	void	exitFromPostProcess(void);
 
-	int Callback_VideoFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_u32 sum);
-	int Callback_VideoMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *mfd);
-	int Callback_PreviewFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_u32 sum);
-	int Callback_PreviewMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *mfd);
-	int Callback_ZslFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_u32 sum);
-	int Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *mfd);
-	int Callback_CaptureFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_u32 sum);
-	int Callback_CaptureMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *mfd);
-	int Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_u32 sum);
-	int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr,cmr_s32 *mfd);
-	static int Callback_Free(enum camera_mem_cb_type type, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_u32 sum, void* private_data);
+	int Callback_VideoFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum);
+	int Callback_VideoMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
+	int Callback_PreviewFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum);
+	int Callback_PreviewMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
+	int Callback_ZslFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum);
+	int Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
+	int Callback_CaptureFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum);
+	int Callback_CaptureMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
+	int Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum);
+	int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr,cmr_s32 *fd);
+	static int Callback_Free(enum camera_mem_cb_type type, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum, void* private_data);
 	static int Callback_Malloc(enum camera_mem_cb_type type, cmr_u32 *size_ptr, cmr_u32 *sum_ptr, cmr_uint *phy_addr,
-												cmr_uint *vir_addr, cmr_s32 *mfd, void* private_data);
+		                                                cmr_uint *vir_addr, cmr_s32 *fd, void* private_data);
 #ifdef CONFIG_MEM_OPTIMIZATION
 	ZslBufferQueue popZSLQueue();
 	int getZSLQueueFrameNum();
@@ -392,7 +399,7 @@ private:
 	void PushAllZslBuffer();
 	void receiveZslFrame(struct camera_frame_type *frame);
 	void processZslFrame(void *p_data);
-	uint32_t getZslBufferIDForPhy(cmr_uint phy_addr);
+	uint32_t getZslBufferIDForFd(cmr_s32 fd);
 	int releaseZslBuffer(struct camera_frame_type *frame);
 	int getZslBuffer(hal_mem_info_t *mem_info);
 
@@ -527,32 +534,18 @@ private:
 	uint32_t                        mSubRawHeapNum;
 	uint32_t                        mSubRawHeapSize;
 	uint32_t                        mPreviewDcamAllocBufferCnt;
-#ifdef SC_IOMMU_PF
-	sprd_camera_memory_t*           mPreviewHeapArray[kPreviewBufferCount+kPreviewRotBufferCount+1][2];
-#else
 	sprd_camera_memory_t*			mPreviewHeapArray[kPreviewBufferCount+kPreviewRotBufferCount+1];
-#endif
-#ifdef SC_IOMMU_PF
-	sprd_camera_memory_t*           mVideoHeapArray[kVideoBufferCount+kVideoRotBufferCount+1][2];
-#else
 	sprd_camera_memory_t*           mVideoHeapArray[kVideoBufferCount+kVideoRotBufferCount+1];
-#endif
 	sprd_camera_memory_t*           mZslHeapArray[kZslBufferCount+kZslRotBufferCount+1];
 #ifdef CONFIG_MEM_OPTIMIZATION
 	uintptr_t                       mZslHeapArray_phy[kZslBufferCount+kZslRotBufferCount+1];
 	uintptr_t                       mZslHeapArray_vir[kZslBufferCount+kZslRotBufferCount+1];
 	uint32_t                        mZslHeapArray_size[kZslBufferCount+kZslRotBufferCount+1];
-	uint32_t                        mZslHeapArray_mfd[kZslBufferCount+kZslRotBufferCount+1];
+	uint32_t                        mZslHeapArray_fd[kZslBufferCount+kZslRotBufferCount+1];
 #endif
 
-#if 0 //def CONFIG_MEM_OPTIMIZATION
 	/* mCommonHeapReserved for preview, video and zsl reserved buffer*/
 	sprd_camera_memory_t*           mCommonHeapReserved;
-#else
-	sprd_camera_memory_t*           mPreviewHeapReserved;
-	sprd_camera_memory_t*           mVideoHeapReserved;
-	sprd_camera_memory_t*           mZslHeapReserved;
-#endif
 	sprd_camera_memory_t*           mIspLscHeapReserved;
 	sprd_camera_memory_t*           mIspB4awbHeapReserved[kISPB4awbCount];
 	sprd_camera_memory_t*           mIspPreviewYReserved[2];

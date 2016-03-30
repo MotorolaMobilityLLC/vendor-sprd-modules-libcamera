@@ -276,8 +276,8 @@ static cmr_int cmr_scale_thread_proc(struct cmr_msg *message, void *private_data
 							frame.addr_phy.addr_y = (cmr_uint)frame_params->output_addr.y;
 							frame.addr_phy.addr_u = (cmr_uint)frame_params->output_addr.u;
 							frame.addr_phy.addr_v = (cmr_uint)frame_params->output_addr.v;
-							memcpy((void*)&frame.mfd, (void*)&frame_params->output_addr.mfd,
-								sizeof(uint32_t) * 3);
+							frame.fd = (cmr_s32)frame_params->output_addr.mfd[0];
+							CMR_LOGI("scale frame.fd 0x%x", frame.fd);
 						}
 						(*cfg_params->scale_cb)(CMR_IMG_CVT_SC_DONE, &frame, cfg_params->cb_handle);
 					}
@@ -615,11 +615,9 @@ cmr_int cmr_scale_start(cmr_handle scale_handle, struct img_frm *src_img,
 	frame_params->input_addr.y = (uint32_t)src_img->addr_phy.addr_y;
 	frame_params->input_addr.u = (uint32_t)src_img->addr_phy.addr_u;
 	frame_params->input_addr.v = (uint32_t)src_img->addr_phy.addr_v;
-	frame_params->input_addr.mfd[0] = src_img->mfd.y;
-	frame_params->input_addr.mfd[1] = src_img->mfd.y;
-	frame_params->input_addr.mfd[2] = src_img->mfd.y;
-	//memcpy((void*)&frame_params->input_addr.mfd, (void*)&src_img->mfd,
-		//sizeof(uint32_t) * 3);
+	frame_params->input_addr.mfd[0] = src_img->fd;
+	frame_params->input_addr.mfd[1] = src_img->fd;
+	frame_params->input_addr.mfd[2] = 0;
 #endif
 	memcpy((void*)&frame_params->input_endian, (void*)&src_img->data_end,
 		sizeof(struct sprd_cpp_scale_endian_sel));
@@ -637,9 +635,9 @@ cmr_int cmr_scale_start(cmr_handle scale_handle, struct img_frm *src_img,
 	frame_params->output_addr.y = (uint32_t)dst_img->addr_phy.addr_y;
 	frame_params->output_addr.u = (uint32_t)dst_img->addr_phy.addr_u;
 	frame_params->output_addr.v = (uint32_t)dst_img->addr_phy.addr_v;
-	frame_params->output_addr.mfd[0] = dst_img->mfd.y;
-	frame_params->output_addr.mfd[1] = dst_img->mfd.y;
-	frame_params->output_addr.mfd[2] = dst_img->mfd.y;
+	frame_params->output_addr.mfd[0] = dst_img->fd;
+	frame_params->output_addr.mfd[1] = dst_img->fd;
+	frame_params->output_addr.mfd[2] = 0;
 	//memcpy((void*)&frame_params->output_addr.mfd, (void*)&dst_img->mfd,
 		//sizeof(uint32_t) * 3);
 #endif
