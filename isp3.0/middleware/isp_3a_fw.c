@@ -704,6 +704,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 	}
 	cxt->af_cxt.hw_cfg = af_output.hw_cfg;
 
+	memset(&awb_input, 0x00, sizeof(awb_input));
 	awb_input.awb_cb = isp3a_awb_callback;
 	awb_input.camera_id = input_ptr->camera_id;
 	awb_input.lib_config = input_ptr->awb_config;

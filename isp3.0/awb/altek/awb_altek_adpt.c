@@ -512,12 +512,17 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 
 	//set OTP
 	set_otp_param.type = alawb_set_param_camera_calib_data;
-	set_otp_param.para.awb_calib_data.calib_r_gain = 2007;//(cmr_u16)input_ptr->calibration_gain.r;
-	set_otp_param.para.awb_calib_data.calib_g_gain = 1000;//(cmr_u16)input_ptr->calibration_gain.g;
-	set_otp_param.para.awb_calib_data.calib_b_gain = 1460;//(cmr_u16)input_ptr->calibration_gain.b;
-//	set_otp_param.para.awb_calib_data.calib_r_gain = (cmr_u16)input_ptr->calibration_gain.r;
-//	set_otp_param.para.awb_calib_data.calib_g_gain = (cmr_u16)input_ptr->calibration_gain.g;
-//	set_otp_param.para.awb_calib_data.calib_b_gain = (cmr_u16)input_ptr->calibration_gain.b;
+	if (0 == input_ptr->calibration_gain.r
+		&& 0 == input_ptr->calibration_gain.g
+		&& 0 == input_ptr->calibration_gain.b) {
+		set_otp_param.para.awb_calib_data.calib_r_gain = 2007;
+		set_otp_param.para.awb_calib_data.calib_g_gain = 1000;
+		set_otp_param.para.awb_calib_data.calib_b_gain = 1460;
+	} else {
+		set_otp_param.para.awb_calib_data.calib_r_gain = (cmr_u16)input_ptr->calibration_gain.r;
+		set_otp_param.para.awb_calib_data.calib_g_gain = (cmr_u16)input_ptr->calibration_gain.g;
+		set_otp_param.para.awb_calib_data.calib_b_gain = (cmr_u16)input_ptr->calibration_gain.b;
+	}
 	ISP_LOGI("otp gain %d %d %d", set_otp_param.para.awb_calib_data.calib_r_gain,
 		set_otp_param.para.awb_calib_data.calib_g_gain, set_otp_param.para.awb_calib_data.calib_b_gain);
 	ret = (cmr_int)cxt->lib_func.set_param(&set_otp_param, cxt->lib_func.awb);
