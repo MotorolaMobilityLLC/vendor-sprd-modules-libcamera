@@ -1091,6 +1091,7 @@ static cmr_int afaltek_adpt_set_imgbuf(cmr_handle adpt_handle, void *in)
 {
 	cmr_int ret = -ISP_ERROR;
 	cmr_u32 i = 0;
+	cmr_u32 index = 0xff;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct allib_af_input_image_buf_t img_buf;
 	struct allib_af_input_set_param_t p = { 0x00 };
@@ -1118,13 +1119,18 @@ static cmr_int afaltek_adpt_set_imgbuf(cmr_handle adpt_handle, void *in)
 	for (i = 0; i < 2; i++) {
 		if (1 == cxt->y_status.ready[i]) {
 			cxt->y_status.img_in_proc[i] = 1;
-			ISP_LOGI("index lock %d", i);
+			index = i;
+			ISP_LOGI("index lock %d", index);
 		}
+	}
+	if (0xff == index) {
+		ISP_LOGE("no buffer ready");
+		goto exit;
 	}
 	img_buf.img_time.time_stamp_sec = y_info->sec;
 	img_buf.img_time.time_stamp_us = y_info->usec;
-	img_buf.p_main_cam = (uint8 *)&cxt->camera_id;
-	img_buf.p_sub_cam = (uint8 *)&cxt->camera_id;
+	img_buf.p_main_cam = (uint8 *)y_info->y_addr[index];
+	img_buf.p_sub_cam = NULL;
 
 	p.type = alAFLIB_SET_PARAM_SET_IMGBUF;
 	p.u_set_data.img_buf = img_buf;
