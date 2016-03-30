@@ -105,6 +105,7 @@ typedef int64_t nsecs_t;
 #define SPRD_MAX_TONE_CURVE_POINT  64  //>=64
 
 
+#define CAMERA_SETTINGS_CONFIG_ARRAYSIZE 80
 
 typedef struct {
 	uint8_t correction_mode;
@@ -277,9 +278,9 @@ typedef struct {
 	int32_t jpeg_size[20];
 	int64_t jpeg_min_durations[2];
 	int32_t crop_region[4];
-	int32_t available_stream_configurations[240];
-	int64_t min_frame_durations[240];
-	int64_t stall_durations[240];
+	int32_t available_stream_configurations[CAMERA_SETTINGS_CONFIG_ARRAYSIZE*4];
+	int64_t min_frame_durations[CAMERA_SETTINGS_CONFIG_ARRAYSIZE*4];
+	int64_t stall_durations[CAMERA_SETTINGS_CONFIG_ARRAYSIZE*4];
 	uint8_t cropping_type;
 } SCALER_Tag;
 
