@@ -4969,7 +4969,7 @@ cmr_int cmr_snapshot_receive_data(cmr_handle snapshot_handle, cmr_int evt, void*
 					chn_data.base       = CMR_CAP1_ID_BASE;
 					chn_data.frame_id   = CMR_CAP1_ID_BASE;
 				}
-#ifndef CONFIG_MEM_OPTIMIZATION
+
 				chn_data.yaddr      = cxt->req_param.post_proc_setting.chn_out_frm[0].addr_phy.addr_y;
 				chn_data.uaddr      = cxt->req_param.post_proc_setting.chn_out_frm[0].addr_phy.addr_u;
 
@@ -4993,7 +4993,7 @@ cmr_int cmr_snapshot_receive_data(cmr_handle snapshot_handle, cmr_int evt, void*
 
 				cmr_copy((void *)dst_vir, (void *)src_vir, width * height / 2);
 				cmr_snapshot_memory_flush(cxt);
-#endif
+
 			}
 		}
 		break;

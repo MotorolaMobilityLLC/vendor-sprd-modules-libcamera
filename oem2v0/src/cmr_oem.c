@@ -7120,7 +7120,7 @@ cmr_int camera_local_set_zsl_snapshot_buffer(cmr_handle oem_handle, cmr_uint src
 		img_frame.mfd.v = 0;
 		CMR_LOGI("in src_phy_addr 0x%lx src_vir_addr 0x%lx, img_frame.mfd.y 0x%x", src_phy_addr, src_vir_addr, img_frame.mfd.y);
 
-		zsl_snp_update_post_proc_param(cxt->snp_cxt.snapshot_handle, (void*)&img_frame);
+		//zsl_snp_update_post_proc_param(cxt->snp_cxt.snapshot_handle, (void*)&img_frame);
 #endif
 		ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle, SNAPSHOT_EVT_CHANNEL_DONE, (void*)&chn_data);
 		if (need_pause) {
