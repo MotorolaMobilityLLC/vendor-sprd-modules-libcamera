@@ -114,27 +114,6 @@ enum af_ctrl_roi_type_t {
 	AF_CTRL_ROI_TYPE_MAX,
 };
 
-enum af_ctrl_aux_sensor_type {
-	AF_CTRL_ACCELEROMETER,
-	AF_CTRL_MAGNETIC_FIELD,
-	AF_CTRL_GYROSCOPE,
-	AF_CTRL_LIGHT,
-	AF_CTRL_PROXIMITY,
-};
-
-struct af_ctrl_gryo_info_t {
-	cmr_int x;
-	cmr_int y;
-	cmr_int z;
-};
-
-struct af_ctrl_aux_sensor_info_t {
-	enum af_ctrl_aux_sensor_type type;
-	union {
-		struct af_ctrl_gryo_info_t gryo_info;
-	};
-};
-
 struct af_result_param {
 	cmr_u32 motor_pos;
 	cmr_u32 suc_win;
@@ -207,20 +186,6 @@ struct af_ctrl_sensor_info_type {
 struct af_ctrl_module_info_type {
 	cmr_u32 f_num;
 	cmr_u32 focal_length;
-};
-
-struct af_ctrl_gyro_type {
-	void *gyro_info;
-};
-
-struct af_ctrl_gsensor_type {
-	void *gsensor_info;
-};
-
-struct af_ctrl_auxiliary_info {
-	struct af_ctrl_gyro_type gyro;
-	struct af_ctrl_gsensor_type gsensor;
-	void *data;
 };
 
 struct af_ctrl_otp_info_t {

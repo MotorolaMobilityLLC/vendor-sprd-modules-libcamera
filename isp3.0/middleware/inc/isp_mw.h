@@ -258,13 +258,19 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_GET_EXIF_DEBUG_INFO,
 	ISP_CTRL_GET_CUR_ADGAIN_EXP,
 	ISP_CTRL_SET_FLASH_MODE,
-	ISP_CTRL_SET_AUX_SENSOR_INFO,
 	ISP_CTRL_SET_AE_MODE,
 	ISP_CTRL_SET_AE_FIX_EXP_TIME,
 	ISP_CTRL_SET_AE_FIX_SENSITIVITY,
 	ISP_CTRL_SET_AE_FIX_FRAM_DURA,
 	ISP_CTRL_GET_YSTAT,
 	ISP_CTRL_SET_PREV_YHIST,
+
+	/*
+	 * warning if you wanna send async msg
+	 * please add msg id below here
+	 * */
+	ISP_CTRL_SYNC_NONE_MSG_GEGIN,
+	ISP_CTRL_SET_AUX_SENSOR_INFO,
 	ISP_CTRL_MAX
 };
 
@@ -311,6 +317,27 @@ struct isp_af_win {
 	cmr_u32 valid_win;
 	cmr_u32 ae_touch;
 	struct isp_pos_rect ae_touch_rect;
+};
+
+enum af_aux_sensor_type {
+	AF_ACCELEROMETER,
+	AF_MAGNETIC_FIELD,
+	AF_GYROSCOPE,
+	AF_LIGHT,
+	AF_PROXIMITY,
+};
+
+struct af_gryo_info_t {
+	float x;
+	float y;
+	float z;
+};
+
+struct af_aux_sensor_info_t {
+	enum af_aux_sensor_type type;
+	union {
+		struct af_gryo_info_t gryo_info;
+	};
 };
 
 struct isp_face_info {

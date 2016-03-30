@@ -3308,6 +3308,27 @@ cmr_int isp_3a_fw_capability(cmr_handle isp_3a_handle, enum isp_capbility_cmd cm
 	return ret;
 }
 
+static cmr_int isp_3a_fw_assemble_async_msg(enum isp_ctrl_cmd cmd, struct cmr_msg *msg, void *source)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+
+	msg->msg_type = ISP3A_PROC_EVT_IOCTRL;
+	msg->sub_msg_type = cmd;
+	msg->alloc_flag = 1;
+
+	switch (cmd) {
+	case ISP_CTRL_SET_AUX_SENSOR_INFO:
+		msg->data = malloc(sizeof(struct af_aux_sensor_info_t));
+		memcpy(msg->data, source, sizeof(struct af_aux_sensor_info_t));
+		break;
+	default:
+		ret = -ISP_ERROR;
+		break;
+	}
+
+	return ret;
+}
+
 cmr_int isp_3a_fw_ioctl(cmr_handle isp_3a_handle, enum isp_ctrl_cmd cmd, void* param_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
@@ -3326,11 +3347,17 @@ cmr_int isp_3a_fw_ioctl(cmr_handle isp_3a_handle, enum isp_ctrl_cmd cmd, void* p
 		goto exit;
 	}
 
-	message.msg_type = ISP3A_PROC_EVT_IOCTRL;
-	message.sub_msg_type = cmd;
-	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
-	message.alloc_flag = 0;
-	message.data = (void*)param_ptr;
+	if (ISP_CTRL_SYNC_NONE_MSG_GEGIN < cmd) {
+		ret = isp_3a_fw_assemble_async_msg(cmd, &message, param_ptr);
+		if (ret)
+			goto exit;
+	} else {
+		message.msg_type = ISP3A_PROC_EVT_IOCTRL;
+		message.sub_msg_type = cmd;
+		message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+		message.alloc_flag = 0;
+		message.data = (void*)param_ptr;
+	}
 	ret = cmr_thread_msg_send(cxt->thread_cxt.process_thr_handle, &message);
 exit:
 	ISP_LOGI("done %ld", ret);

@@ -126,6 +126,7 @@ struct af_altek_context {
 	struct af_altek_vcm_tune_info vcm_tune;
 	struct caf_alg_result caf_result;
 	struct af_altek_y_stat y_status;
+	struct af_gsensor_info gsensor_info;
 };
 
 /************************************ INTERNAK DECLARATION ************************************/
@@ -967,50 +968,47 @@ static cmr_int afaltek_adpt_update_aux_sensor(cmr_handle adpt_handle, void *in)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct af_ctrl_aux_sensor_info_t *aux_sensor_info = (struct af_ctrl_aux_sensor_info_t *)in;
+	struct af_aux_sensor_info_t *aux_sensor_info = (struct af_aux_sensor_info_t *)in;
 	struct caf_alg_calc_param caf_in;
 
 	memset((void*)&caf_in, 0, sizeof(caf_in));
-#if 1 /* TBD */
-	{
-		struct af_alg_sensor_info *gryo_info = (struct af_alg_sensor_info *)in;
-		ISP_LOGV("gyro E");
-		caf_in.sensor_info.sensor_type = AF_POSTURE_GYRO;
-		caf_in.sensor_info.x = gryo_info->x;
-		caf_in.sensor_info.y = gryo_info->y;
-		caf_in.sensor_info.z = gryo_info->z;
-	}
-#else
-	switch(aux_sensor_info->sensor_type) {
-	case AF_CTRL_ACCELEROMETER:
-		ISP_LOGI("accelerometer E");
+
+	switch (aux_sensor_info->type) {
+	case AF_ACCELEROMETER:
+		ISP_LOGV("accelerometer vertical_up = %f vertical_down = %f horizontal = %f",
+			 aux_sensor_info->gsensor_info.vertical_up,
+			 aux_sensor_info->gsensor_info.vertical_down,
+			 aux_sensor_info->gsensor_info.horizontal);
+		cxt->gsensor_info.vertical_up = aux_sensor_info->gsensor_info.vertical_up;
+		cxt->gsensor_info.vertical_down = aux_sensor_info->gsensor_info.vertical_down;
+		cxt->gsensor_info.horizontal = aux_sensor_info->gsensor_info.horizontal;
 		break;
-	case AF_CTRL_MAGNETIC_FIELD:
+	case AF_MAGNETIC_FIELD:
 		ISP_LOGI("magnetic field E");
 		break;
-	case AF_CTRL_GYROSCOPE:
-	{
-		struct af_alg_sensor_info *gryo_info = (struct af_alg_sensor_info *)in;
-		ISP_LOGV("gyro E");
+	case AF_GYROSCOPE:
+		ISP_LOGV("gyro x = %f y = %f z = %f",
+			 aux_sensor_info->gyro_info.x,
+			 aux_sensor_info->gyro_info.y,
+			 aux_sensor_info->gyro_info.z);
 		caf_in.sensor_info.sensor_type = AF_POSTURE_GYRO;
-		caf_in.sensor_info.x = gryo_info->x;
-		caf_in.sensor_info.y = gryo_info->y;
-		caf_in.sensor_info.z = gryo_info->z;
-	}
+		caf_in.sensor_info.x = aux_sensor_info->gyro_info.x;
+		caf_in.sensor_info.y = aux_sensor_info->gyro_info.y;
+		caf_in.sensor_info.z = aux_sensor_info->gyro_info.z;
+		caf_in.active_data_type = AF_ALG_DATA_SENSOR;
+
+		ret = afaltek_adpt_caf_process(cxt, &caf_in);
 		break;
-	case AF_CTRL_LIGHT:
+	case AF_LIGHT:
 		ISP_LOGI("light E");
 		break;
-	case AF_CTRL_PROXIMITY:
+	case AF_PROXIMITY:
 		ISP_LOGI("proximity E");
 		break;
 	default:
 		ISP_LOGI("sensor type not support");
 		break;
 	}
-#endif
-	caf_in.active_data_type = AF_ALG_DATA_SENSOR;
-	ret = afaltek_adpt_caf_process(cxt, &caf_in);
 
 	return ISP_SUCCESS;
 }
