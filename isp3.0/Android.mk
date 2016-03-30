@@ -48,6 +48,10 @@ LOCAL_C_INCLUDES += \
 # don't modify this code
 LOCAL_SRC_FILES := $(shell find $(LOCAL_PATH) -name '*.c' | sed s:^$(LOCAL_PATH)/::g)
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ANTI_FLICKER)),true)
+LOCAL_CFLAGS += -DCONFIG_CAMERA_AFL_AUTO_DETECTION
+endif
+
 LOCAL_MODULE := libcamisp
 
 LOCAL_MODULE_TAGS := optional

@@ -221,7 +221,7 @@ uint32 al3awrapper_antif_set_flickermode( enum ae_antiflicker_mode_t flicker_mod
 
 	if ( flicker_mode == ANTIFLICKER_50HZ )
 		flicker_hz = _DEFAULT_FLICKER_LIBVALUE_50HZ;
-	else if ( flicker_mode == _DEFAULT_FLICKER_LIBVALUE_60HZ )
+	else if ( flicker_mode == ANTIFLICKER_60HZ )
 		flicker_hz = _DEFAULT_FLICKER_LIBVALUE_60HZ;
 	else
 		return ret;  /*  invalid input Hz range, do nothing to flicker lib  */

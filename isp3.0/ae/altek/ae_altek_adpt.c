@@ -2950,6 +2950,7 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 		in_est.cell.exp_line = cxt_ptr->sensor_exp_data.lib_exp.exp_line;
 		in_est.cell.exp_time = cxt_ptr->sensor_exp_data.lib_exp.exp_time;
 		in_est.cell.gain = cxt_ptr->sensor_exp_data.lib_exp.gain;
+		in_est.cell.dummy = cxt_ptr->sensor_exp_data.lib_exp.dummy;
 	}
 
 	ret = seq_put(cxt_ptr->seq_handle, &in_est, &out_actual, &out_write);
@@ -2964,10 +2965,12 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	cxt_ptr->sensor_exp_data.actual_exp.exp_line = out_actual.exp_line;
 	cxt_ptr->sensor_exp_data.actual_exp.exp_time = out_actual.exp_time;
 	cxt_ptr->sensor_exp_data.actual_exp.gain = out_actual.gain;
+	cxt_ptr->sensor_exp_data.actual_exp.dummy = out_actual.dummy;
 
 	cxt_ptr->sensor_exp_data.write_exp.exp_line = out_write.exp_line;
 	cxt_ptr->sensor_exp_data.write_exp.exp_time = out_write.exp_time;
 	cxt_ptr->sensor_exp_data.write_exp.gain = out_write.gain;
+	cxt_ptr->sensor_exp_data.write_exp.dummy = out_write.dummy;
 
 	ret = aealtek_set_sof_to_lib(cxt_ptr, in_ptr, cxt_ptr->sensor_exp_data.actual_exp);
 	if (ret)

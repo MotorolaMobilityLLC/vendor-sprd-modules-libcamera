@@ -60,6 +60,7 @@ struct aflaltek_cxt {
 	struct aflaltek_lib_ops lib_ops;
 	struct aflaltek_lib_data lib_data;
 	struct aflaltek_statistics_queue stat_queue;
+	enum afl_ctrl_flicker_mode ui_flicker_mode;
 };
 
 /**function**/
@@ -322,6 +323,24 @@ exit:
 	return ret;
 }
 
+static cmr_int aflaltek_set_ui_flicker_mode(struct aflaltek_cxt *cxt_ptr, struct afl_ctrl_param_in *in_ptr, struct afl_ctrl_param_out *out_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+
+	if (!cxt_ptr || !in_ptr) {
+		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
+		goto exit;
+	}
+	cxt_ptr->ui_flicker_mode = in_ptr->mode.flicker_mode;
+
+	ISP_LOGI("ui_flicker_mode:%d", cxt_ptr->ui_flicker_mode);
+
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld !!!", ret);
+	return ret;
+}
+
 
 static cmr_int aflaltek_get_hw_config(struct aflaltek_cxt *cxt_ptr, struct isp3a_afl_hw_cfg *out_ptr)
 {
@@ -500,7 +519,6 @@ static cmr_int afl_altek_adpt_init(void *in, void *out, cmr_handle *handle)
 	struct afl_ctrl_init_in *in_ptr = (struct afl_ctrl_init_in*)in;
 	struct afl_ctrl_init_out *out_ptr = (struct afl_ctrl_init_out*)out;
 
-
 	if (!in_ptr || !out_ptr || !handle) {
 		ISP_LOGE("init param %p %p %p is NULL error!", in_ptr, out_ptr, handle);
 		ret = ISP_PARAM_NULL;
@@ -605,6 +623,9 @@ static cmr_int afl_altek_adpt_ioctrl(cmr_handle handle, cmr_int cmd, void *in, v
 	case AFL_CTRL_SET_STAT_QUEUE_RELEASE:
 		ret = aflaltek_stat_queue_release_all(cxt_ptr, in_ptr, out_ptr);
 		break;
+	case AFL_CTRL_SET_UI_FLICKER_MODE:
+		ret = aflaltek_set_ui_flicker_mode(cxt_ptr, in_ptr, out_ptr);
+		break;
 	default:
 		ISP_LOGE("cmd %ld is not defined!", cmd);
 		break;
@@ -687,7 +708,8 @@ static cmr_int afl_altek_adpt_process(cmr_handle handle, void *in, void *out)
 		lib_ret = al3awrapper_antif_get_flickermode(cxt_ptr->lib_data.output_data.finalfreq, &temp_flicker_mode);
 		if (ERR_WPR_FLICKER_SUCCESS == lib_ret) {
 			callback_in.flicker_mode = temp_flicker_mode;
-			//cxt_ptr->init_in_param.ops_in.afl_callback(cxt_ptr->caller_handle, AFL_CTRL_CB_FLICKER_MODE, &callback_in);
+			if (AFL_CTRL_FLICKER_AUTO == cxt_ptr->ui_flicker_mode)
+				cxt_ptr->init_in_param.ops_in.afl_callback(cxt_ptr->caller_handle, AFL_CTRL_CB_FLICKER_MODE, &callback_in);
 		}
 	}
 

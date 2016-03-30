@@ -128,8 +128,8 @@ enum ae_ctrl_iso_mode {
 enum ae_ctrl_flicker_mode {
 	AE_CTRL_FLICKER_50HZ,
 	AE_CTRL_FLICKER_60HZ,
-	AE_CTRL_FLICKER_OFF,
 	AE_CTRL_FLICKER_AUTO,
+	AE_CTRL_FLICKER_OFF,
 	AE_CTRL_FLICKER_MAX
 };
 #if 0

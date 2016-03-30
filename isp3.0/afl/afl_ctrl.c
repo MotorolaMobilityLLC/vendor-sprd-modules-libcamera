@@ -238,6 +238,11 @@ cmr_int afl_ctrl_init(struct afl_ctrl_init_in *in_ptr, struct afl_ctrl_init_out 
 	cmr_int ret = ISP_SUCCESS;
 	struct aflctrl_cxt *cxt = NULL;
 
+#ifndef CONFIG_CAMERA_AFL_AUTO_DETECTION
+	ISP_LOGI("afl disabled");
+	return ISP_SUCCESS;
+#endif
+
 	if (!in_ptr || !out_ptr || !handle) {
 		ISP_LOGE("init param is null, input_ptr is %p, output_ptr is %p", in_ptr, out_ptr);
 		ret = ISP_PARAM_NULL;
@@ -286,6 +291,10 @@ cmr_int afl_ctrl_deinit(cmr_handle handle)
 	struct aflctrl_cxt *cxt = (struct aflctrl_cxt*)handle;
 	CMR_MSG_INIT(message);
 
+#ifndef CONFIG_CAMERA_AFL_AUTO_DETECTION
+	return ISP_SUCCESS;
+#endif
+
 	ISP_CHECK_HANDLE_VALID(handle);
 
 	if (0 == cxt->is_inited) {
@@ -315,6 +324,10 @@ cmr_int afl_ctrl_ioctrl(cmr_handle handle, enum afl_ctrl_cmd cmd, struct afl_ctr
 	cmr_int ret = ISP_SUCCESS;
 	struct aflctrl_cxt *cxt = (struct aflctrl_cxt*)handle;
 	CMR_MSG_INIT(message);
+
+#ifndef CONFIG_CAMERA_AFL_AUTO_DETECTION
+	return ISP_SUCCESS;
+#endif
 
 	ISP_CHECK_HANDLE_VALID(handle);
 
@@ -346,6 +359,10 @@ cmr_int afl_ctrl_process(cmr_handle handle, struct afl_ctrl_proc_in *in_ptr, str
 	cmr_int ret = ISP_SUCCESS;
 	struct aflctrl_cxt *cxt = (struct aflctrl_cxt*)handle;
 	CMR_MSG_INIT(message);
+
+#ifndef CONFIG_CAMERA_AFL_AUTO_DETECTION
+	return ISP_SUCCESS;
+#endif
 
 	ISP_CHECK_HANDLE_VALID(handle);
 

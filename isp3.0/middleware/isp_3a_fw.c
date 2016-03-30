@@ -1407,6 +1407,9 @@ cmr_int isp3a_set_flicker(cmr_handle isp_3a_handle, void *param_ptr)
 		ret = afl_ctrl_ioctrl(cxt->afl_cxt.handle, AFL_CTRL_SET_FLICKER, &afl_in, NULL);
 	}
 
+	afl_in.mode.flicker_mode = *(cmr_u32*)param_ptr;;
+	ret = afl_ctrl_ioctrl(cxt->afl_cxt.handle, AFL_CTRL_SET_UI_FLICKER_MODE, &afl_in, NULL);
+
 exit:
 	return ret;
 }
@@ -2993,7 +2996,9 @@ cmr_int isp3a_start_afl_process(cmr_handle isp_3a_handle, struct isp3a_statistic
 	 * we don't exe isp3a_release_statistics_buf
 	 * afl will use the buff for queue working
 	 * */
-
+#ifndef CONFIG_CAMERA_AFL_AUTO_DETECTION
+	ret = isp3a_release_statistics_buf(isp_3a_handle, ISP3A_AFL, stats_data);
+#endif
 	return ret;
 }
 
