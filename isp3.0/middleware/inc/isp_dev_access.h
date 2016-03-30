@@ -73,6 +73,10 @@ struct isp_dev_init_in {
 	cmr_handle caller_handle;
 	cmr_handle mem_cb_handle;
 	struct isp_init_param init_param;
+	uint32 shading_bin_size;
+	uint8* shading_bin_addr;
+	uint32 irp_bin_size;
+	uint8* irp_bin_addr;
 };
 
 struct dev_time {

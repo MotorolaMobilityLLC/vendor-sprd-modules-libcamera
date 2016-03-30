@@ -87,6 +87,10 @@ cmr_int isp_dev_access_init(struct isp_dev_init_in *input_ptr, cmr_handle *isp_d
 	input.alloc_cb = input_ptr->init_param.alloc_cb;
 	input.free_cb = input_ptr->init_param.free_cb;
 	input.mem_cb_handle = input_ptr->mem_cb_handle;
+	input.shading_bin_addr = input_ptr->shading_bin_addr;
+	input.shading_bin_size = input_ptr->shading_bin_size;
+	input.irp_bin_addr = input_ptr->irp_bin_addr;
+	input.irp_bin_size = input_ptr->irp_bin_size;
 	memcpy(&cxt->input_param, input_ptr, sizeof(struct isp_dev_init_in));
 
 	ret= isp_dev_init(&input, &cxt->isp_driver_handle);

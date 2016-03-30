@@ -26,7 +26,7 @@
 
 #define DW9800_VCM_SLAVE_ADDR (0x0c)
 
-#define SENSOR_NAME			"imx230"
+#define SENSOR_NAME			"imx230_mipi_raw"
 #define I2C_SLAVE_ADDR			0x20    /* 16bit slave address*/
 
 

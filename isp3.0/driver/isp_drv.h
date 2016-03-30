@@ -47,6 +47,12 @@ struct isp_dev_init_info {
 	cmr_free   free_cb;
 	cmr_handle mem_cb_handle;
 	void* setting_param_list_ptr[3];//0:back,1:front,2:dual back,
+	uint32 shading_bin_size;
+	uint8* shading_bin_addr;
+	uint32 shading_bin_offset;
+	uint32 irp_bin_size;
+	uint8* irp_bin_addr;
+	uint32 irp_bin_offset;
 };
 
 /*ISP driver API */
@@ -100,7 +106,7 @@ cmr_int isp_dev_capability_dram_buf_size(isp_handle handle, cmr_int *size);
 cmr_int isp_dev_capability_highiso_buf_size(isp_handle handle, cmr_int *size);
 cmr_int isp_dev_capability_video_size(isp_handle handle, struct isp_img_size *size);
 cmr_int isp_dev_capability_single_size(isp_handle handle, struct isp_img_size *size);
-cmr_int isp_dev_set_dcam_id(isp_handle handle, cmr_u32 dcam_id);
+cmr_int isp_dev_get_isp_id(isp_handle handle, cmr_u32 *isp_id);
 cmr_int isp_dev_get_iq_param(isp_handle handle, struct debug_info1 *info1, struct debug_info2 *info2);
 cmr_int isp_dev_set_capture_mode(isp_handle handle, cmr_u32 capture_mode);
 

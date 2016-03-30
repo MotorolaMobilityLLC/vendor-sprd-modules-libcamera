@@ -1,6 +1,9 @@
 TUNING_BIN := s5k3p3sm_mipi_raw_3a.bin
 TUNING_BIN += s5k3p3sm_mipi_raw_shading.bin
-
+TUNING_BIN += s5k4h8yx_mipi_raw_3a.bin
+TUNING_BIN += s5k4h8yx_mipi_raw_shading.bin
+TUNING_BIN += imx230_mipi_raw_3a.bin
+TUNING_BIN += imx230_mipi_raw_shading.bin
 
 ALTEK_LIB := libalAWBLib \
 	libalAELib \

@@ -50,6 +50,7 @@ struct isp_file {
 static cmr_int isp_dev_create_thread(isp_handle handle);
 static cmr_int isp_dev_kill_thread(isp_handle handle);
 static void* isp_dev_thread_proc(void* data);
+static cmr_int isp_dev_load_binary(isp_handle handle);
 
 cmr_int isp_dev_init(struct isp_dev_init_info *init_param_ptr, isp_handle *handle)
 {
@@ -72,6 +73,12 @@ cmr_int isp_dev_init(struct isp_dev_init_info *init_param_ptr, isp_handle *handl
 
 	/*file->init_param = *init_param_ptr;*/
 	memcpy((void *)&file->init_param, init_param_ptr, sizeof(struct isp_dev_init_info));
+
+	file->init_param.shading_bin_offset = ISP_FW_BUF_SIZE+ISP_SHARE_BUFF_SIZE+ISP_WORKING_BUF_SIZE+
+		(ISP_STATISTICS_BUF_SIZE*5*2)+ISP_IRP_BIN_BUF_SIZE*2;
+	file->init_param.irp_bin_offset = ISP_FW_BUF_SIZE+ISP_SHARE_BUFF_SIZE+ISP_WORKING_BUF_SIZE+
+		(ISP_STATISTICS_BUF_SIZE*5*2);
+
 	fd = open(isp_dev_name, O_RDWR, 0);
 	if (fd < 0) {
 		ret = -1;
@@ -80,7 +87,6 @@ cmr_int isp_dev_init(struct isp_dev_init_info *init_param_ptr, isp_handle *handl
 	}
 	file->fd = fd;
 
-	CMR_LOGE("isp_dev fd 0x%x", file->fd);
 	init_param.camera_id = init_param_ptr->camera_id;
 	init_param.width = init_param_ptr->width;
 	init_param.height = init_param_ptr->height;
@@ -184,11 +190,10 @@ cmr_int isp_dev_start(isp_handle handle)
 		goto exit;
 	}
 
-	CMR_LOGE("test 1");
 	memset(&load_input, 0x00, sizeof(load_input));
 	file->init_param.alloc_cb(CAMERA_ISP_BINGING4AWB, file->init_param.mem_cb_handle,
-									 (cmr_u32*)&fw_size, &fw_buf_num, (cmr_uint*)kaddr,
-									 &load_input.fw_buf_vir_addr, &load_input.fw_buf_mfd);
+				  (cmr_u32*)&fw_size, &fw_buf_num, (cmr_uint*)kaddr,
+				  &load_input.fw_buf_vir_addr, &load_input.fw_buf_mfd);
 	if (ret) {
 		CMR_LOGE("faield to alloc fw buffer %ld", ret);
 		goto exit;
@@ -196,14 +201,28 @@ cmr_int isp_dev_start(isp_handle handle)
 
 	kaddr_temp = kaddr[1];
 	load_input.fw_buf_phy_addr = (kaddr[0] | kaddr_temp << 32);
-	CMR_LOGE("fw_buf_phy_addr 0x%llx,", load_input.fw_buf_phy_addr);
-	CMR_LOGE("kaddr0 0x%x kaddr1 0x%x", kaddr[0], kaddr[1]);
+	CMR_LOGI("fw_buf_phy_addr 0x%llx,", load_input.fw_buf_phy_addr);
+	CMR_LOGI("kaddr0 0x%x kaddr1 0x%x", kaddr[0], kaddr[1]);
+
 	load_input.fw_buf_size = fw_size;
+	load_input.shading_bin_offset = file->init_param.shading_bin_offset;
+	load_input.irp_bin_offset = file->init_param.irp_bin_offset;
+	CMR_LOGI("shading offset 0x%x irp offset 0x%x", load_input.shading_bin_offset, load_input.irp_bin_offset);
+	CMR_LOGI("shading bin addr 0x%p size 0x%x irq bin addr 0x%p size %x",
+		 file->init_param.shading_bin_addr, file->init_param.shading_bin_size,
+		 file->init_param.irp_bin_addr, file->init_param.irp_bin_size);
+
 	file->fw_mem.virt_addr = load_input.fw_buf_vir_addr;
 	file->fw_mem.phy_addr = load_input.fw_buf_phy_addr;
 	file->fw_mem.mfd = load_input.fw_buf_mfd;
 	file->fw_mem.size = load_input.fw_buf_size;
 	file->fw_mem.num = fw_buf_num;
+
+	ret = isp_dev_load_binary((isp_handle)file);
+	if (0 != ret) {
+		CMR_LOGE("failed to load binary %ld", ret);
+		goto exit;
+	}
 
 	ret = isp_dev_load_firmware((isp_handle)file, &load_input);
 	if ((0 != ret) ||(0 == load_input.fw_buf_phy_addr)) {
@@ -212,6 +231,49 @@ cmr_int isp_dev_start(isp_handle handle)
 	}
 
 	file->isp_is_inited = 1;
+exit:
+	return ret;
+}
+
+static cmr_int isp_dev_load_binary(isp_handle handle)
+{
+	cmr_int                  ret = 0;
+	struct isp_file          *file = (struct isp_file*)handle;
+	cmr_u32                  isp_id = 0;
+	if (!file) {
+		ret = -1;
+		CMR_LOGE("file hand is null error.");
+		return ret;
+	}
+
+	if (!file->init_param.shading_bin_addr || !file->init_param.irp_bin_addr) {
+		ret = -1;
+		CMR_LOGE("param null error");
+		goto exit;
+	}
+	if (file->init_param.shading_bin_size > ISP_SHADING_BIN_BUF_SIZE ||
+		file->init_param.irp_bin_size > ISP_IRP_BIN_BUF_SIZE) {
+		ret = -1;
+		CMR_LOGE("the shading/irp binary size is out of range.");
+		goto exit;
+	}
+
+	ret = isp_dev_get_isp_id(handle, &isp_id);
+	if (0 == isp_id) {
+		memcpy((void*)(file->fw_mem.virt_addr + file->init_param.shading_bin_offset),
+			(void*)file->init_param.shading_bin_addr, file->init_param.shading_bin_size);
+		memcpy((void*)(file->fw_mem.virt_addr + file->init_param.irp_bin_offset),
+			(void*)file->init_param.irp_bin_addr, file->init_param.irp_bin_size);
+	} else if (2 == isp_id) {
+		memcpy((void*)(file->fw_mem.virt_addr + file->init_param.shading_bin_offset + ISP_SHADING_BIN_BUF_SIZE),
+			(void*)file->init_param.shading_bin_addr, file->init_param.shading_bin_size);
+		memcpy((void*)(file->fw_mem.virt_addr + file->init_param.irp_bin_offset + ISP_IRP_BIN_BUF_SIZE),
+		(void*)file->init_param.irp_bin_addr, file->init_param.irp_bin_size);
+	}
+
+	CMR_LOGI("shading check 0x%x", *(cmr_u32*)(file->fw_mem.virt_addr + file->init_param.shading_bin_offset));
+	CMR_LOGI("irp check 0x%x", *(cmr_u32*)(file->fw_mem.virt_addr + file->init_param.irp_bin_offset));
+
 exit:
 	return ret;
 }
@@ -1565,20 +1627,20 @@ cmr_int isp_dev_capability_single_size(isp_handle handle, struct isp_img_size *s
 	return ret;
 }
 
-cmr_int isp_dev_set_dcam_id(isp_handle handle, cmr_u32 dcam_id)
+cmr_int isp_dev_get_isp_id(isp_handle handle, cmr_u32 *isp_id)
 {
 	cmr_int ret = 0;
 	struct isp_file *file = NULL;
 
-	if (!handle) {
+	if (!handle || !isp_id) {
 		CMR_LOGE("handle is null error.");
 		return -1;
 	}
-	CMR_LOGI("dcam_id %d", dcam_id);
+
 	file = (struct isp_file *)(handle);
-	ret = ioctl(file->fd, ISP_IO_SET_DCAM_ID, &dcam_id);
+	ret = ioctl(file->fd, ISP_IO_GET_ISP_ID, isp_id);
 	if (ret) {
-		CMR_LOGE("isp_dev_set_dcam_id error.");
+		CMR_LOGE("isp_dev_get_isp_id error.");
 	}
 
 	return ret;
