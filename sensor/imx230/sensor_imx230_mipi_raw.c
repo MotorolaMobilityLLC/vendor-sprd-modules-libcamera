@@ -20,6 +20,7 @@
 #include "jpeg_exif_header.h"
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
+#include "../vcm/vcm_dw9800.h"
 
 #include "sensor_imx230_raw_param_v3.c"
 
@@ -1266,13 +1267,13 @@ static unsigned long imx230_power_on(unsigned long power_on)
 		usleep(10 * 1000);
 		Sensor_PowerDown(!power_down);
 		Sensor_SetResetLevel(!reset_level);
-		//Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
+		Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
 	} else {
 		Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
 		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
 		Sensor_Reset(reset_level);
 		Sensor_PowerDown(power_down);
-		//Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
+		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 	}
 	SENSOR_PRINT("(1:on, 0:off): %ld", power_on);
 	return SENSOR_SUCCESS;
@@ -1347,6 +1348,7 @@ static unsigned long imx230_identify(unsigned long param)
 		if (imx230_VER_VALUE == ver_value) {
 			ret_value = SENSOR_SUCCESS;
 			SENSOR_PRINT_HIGH("this is imx230 sensor");
+			vcm_dw9800_init();
 			imx230_init_mode_fps_info();
 		} else {
 			SENSOR_PRINT_HIGH("Identify this is %x%x sensor", pid_value, ver_value);
@@ -1655,25 +1657,7 @@ static unsigned long imx230_stream_off(unsigned long param)
 
 static unsigned long imx230_write_af(unsigned long param)
 {
-	uint32_t ret_value = SENSOR_SUCCESS;
-	uint8_t cmd_val[2] = {0x00};
-	uint16_t slave_addr = 0;
-	uint16_t cmd_len = 0;
-
-	SENSOR_PRINT("SENSOR_IMX230: _write_af %d", param);
-	slave_addr = DW9800_VCM_SLAVE_ADDR;
-
-	cmd_val[0] = 0x03;
-	cmd_val[1] = (param&0x3ff0)>>4;
-	cmd_len = 2;
-	ret_value = Sensor_WriteI2C(slave_addr, cmd_val,cmd_len);
-	cmd_val[0] = 0x04;
-	cmd_val[1] = ((param&0x0f)<<4)|0x05;
-	cmd_len = 2;
-	ret_value = Sensor_WriteI2C(slave_addr, cmd_val, cmd_len);
-
-	SENSOR_PRINT("SENSOR_IMX230: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
-	return ret_value;
+	return vcm_dw9800_set_position(param);
 }
 
 static uint32_t imx230_get_static_info(uint32_t *param)
@@ -1816,7 +1800,7 @@ static SENSOR_IOCTL_FUNC_TAB_T s_imx230_ioctl_func_tab = {
 	//.set_video_mode = imx132_set_video_mode,
 	.stream_on = imx230_stream_on,
 	.stream_off = imx230_stream_off,
-	//.af_enable = imx230_write_af,
+	.af_enable = imx230_write_af,
 	//.group_hold_on = imx132_group_hold_on,
 	//.group_hold_of = imx132_group_hold_off,
 	.cfg_otp = imx230_access_val,
