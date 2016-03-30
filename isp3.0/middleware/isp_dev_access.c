@@ -804,7 +804,7 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 	isp_raw_mem.fd = input_ptr->dst2_frame.img_fd.y;
 	isp_raw_mem.phy_addr = input_ptr->dst2_frame.img_addr_phy.chn0;
 	isp_raw_mem.virt_addr = input_ptr->dst2_frame.img_addr_vir.chn0;
-	isp_raw_mem.size = (input_ptr->dst2_frame.img_size.w*input_ptr->dst2_frame.img_size.h)*4*2/3;
+	isp_raw_mem.size = (input_ptr->dst2_frame.img_size.w*input_ptr->dst2_frame.img_size.h)*3*2/2;
 	isp_raw_mem.width = input_ptr->dst2_frame.img_size.w;
 	isp_raw_mem.height = input_ptr->dst2_frame.img_size.h;
 	ret = isp_dev_set_rawaddr(cxt->isp_driver_handle, &isp_raw_mem);

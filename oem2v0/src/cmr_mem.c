@@ -899,7 +899,7 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm,
 	channel_size = (uint32_t)(sn_size->width * sn_size->height);
 	//raw_size = (uint32_t)(channel_size * RAWRGB_BIT_WIDTH / 8);
 	raw_size = (uint32_t)(channel_size * 2);
-	raw2_size = (uint32_t)(channel_size * 4 / 3) * 2;
+	raw2_size = (uint32_t)(channel_size * 3 / 2) * 2;
 	y_to_raw = (uint32_t)(ISP_YUV_TO_RAW_GAP * sn_size->width);
 	uv_size = (channel_size >> 1);
 
