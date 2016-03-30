@@ -60,13 +60,6 @@ extern "C" {
 		} \
 	} while(0)
 
-#define STATS_OTHER_SIZE         (100 + 0xff)
-#define AE_STATS_BUFFER_SIZE     (31*1024+STATS_OTHER_SIZE)
-#define AWB_STATS_BUFFER_SIZE    (26*1024+STATS_OTHER_SIZE)
-#define AF_STATS_BUFFER_SIZE     (19*1024+STATS_OTHER_SIZE)
-#define AFL_STATS_BUFFER_SIZE    (10*1024+STATS_OTHER_SIZE)
-#define YHIST_STATS_BUFFER_SIZE  (1*1024+STATS_OTHER_SIZE)
-#define SUBIMG_STATS_BUFFER_SIZE (96000+STATS_OTHER_SIZE)
 #define ISP_AE_BLOCK 256
 /**********************************ENUM************************************/
 enum isp_return_val {

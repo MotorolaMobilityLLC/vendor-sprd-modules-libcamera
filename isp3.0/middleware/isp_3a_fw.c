@@ -2290,14 +2290,16 @@ cmr_int isp3a_init_statistics_buf(cmr_handle isp_3a_handle)
 	void                                        *subsample_buf_addr = NULL;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
 	struct isp3a_statistics_data                *buf_head = NULL;
+	struct stats_buf_size_list stats_buf_size = { 0x00 };
 
 	sem_wait(&cxt->statistics_data_sm);
-	ae_buf_addr = malloc(ISP3A_STATISTICS_BUF_NUM * AE_STATS_BUFFER_SIZE);
-	awb_buf_addr = malloc(ISP3A_STATISTICS_BUF_NUM * AWB_STATS_BUFFER_SIZE);
-	af_buf_addr = malloc(ISP3A_STATISTICS_BUF_NUM * AF_STATS_BUFFER_SIZE);
-	afl_buf_addr = malloc(ISP3A_STATISTICS_AFL_BUF_NUM * AFL_STATS_BUFFER_SIZE);
-	subsample_buf_addr = malloc(ISP3A_STATISTICS_BUF_NUM * SUBIMG_STATS_BUFFER_SIZE);
-	yhis_buf_addr = malloc(ISP3A_STATISTICS_BUF_NUM * YHIST_STATS_BUFFER_SIZE);
+	isp_get_stats_size(&stats_buf_size);
+	ae_buf_addr = malloc(ISP3A_STATISTICS_BUF_NUM * stats_buf_size.ae_stats_size);
+	awb_buf_addr = malloc(ISP3A_STATISTICS_BUF_NUM * stats_buf_size.awb_stats_size);
+	af_buf_addr = malloc(ISP3A_STATISTICS_BUF_NUM * stats_buf_size.af_stats_size);
+	afl_buf_addr = malloc(ISP3A_STATISTICS_AFL_BUF_NUM * stats_buf_size.antif_stats_size);
+	subsample_buf_addr = malloc(ISP3A_STATISTICS_BUF_NUM * stats_buf_size.subimg_stats_size);
+	yhis_buf_addr = malloc(ISP3A_STATISTICS_BUF_NUM * stats_buf_size.yhist_stats_size);
 	if (!ae_buf_addr || !awb_buf_addr || !af_buf_addr
 			|| !afl_buf_addr || !subsample_buf_addr
 			|| !yhis_buf_addr) {
@@ -2310,8 +2312,8 @@ cmr_int isp3a_init_statistics_buf(cmr_handle isp_3a_handle)
 	buf_head = &cxt->ae_cxt.statistics_buffer[0];
 	for (i=0 ; i<ISP3A_STATISTICS_BUF_NUM ; i++) {
 		cmr_bzero((void*)&buf_head[i], sizeof(struct isp3a_statistics_data));
-		buf_head[i].size = AE_STATS_BUFFER_SIZE;
-		buf_head[i].addr = (void*)((cmr_int)ae_buf_addr + i*AE_STATS_BUFFER_SIZE);
+		buf_head[i].size = stats_buf_size.ae_stats_size;
+		buf_head[i].addr = (void*)((cmr_int)ae_buf_addr + i * stats_buf_size.ae_stats_size);
 		ISP_LOGV("ae: i=%d size=%d addr = %lx", i, buf_head[i].size, (cmr_int)buf_head[i].addr);
 	}
 
@@ -2319,8 +2321,8 @@ cmr_int isp3a_init_statistics_buf(cmr_handle isp_3a_handle)
 	buf_head = &cxt->awb_cxt.statistics_buffer[0];
 	for (i=0 ; i<ISP3A_STATISTICS_BUF_NUM ; i++) {
 		cmr_bzero((void*)&buf_head[i], sizeof(struct isp3a_statistics_data));
-		buf_head[i].size = AWB_STATS_BUFFER_SIZE;
-		buf_head[i].addr = (void*)((cmr_int)awb_buf_addr + i*AWB_STATS_BUFFER_SIZE);
+		buf_head[i].size = stats_buf_size.awb_stats_size;
+		buf_head[i].addr = (void*)((cmr_int)awb_buf_addr + i * stats_buf_size.awb_stats_size);
 		ISP_LOGV("awb: i=%d size=%d addr = %lx", i, buf_head[i].size, (cmr_int)buf_head[i].addr);
 	}
 
@@ -2328,8 +2330,8 @@ cmr_int isp3a_init_statistics_buf(cmr_handle isp_3a_handle)
 	buf_head = &cxt->af_cxt.statistics_buffer[0];
 	for (i=0 ; i<ISP3A_STATISTICS_BUF_NUM ; i++) {
 		cmr_bzero((void*)&buf_head[i], sizeof(struct isp3a_statistics_data));
-		buf_head[i].size = AF_STATS_BUFFER_SIZE;
-		buf_head[i].addr = (void*)((cmr_int)af_buf_addr + i*AF_STATS_BUFFER_SIZE);
+		buf_head[i].size = stats_buf_size.af_stats_size;
+		buf_head[i].addr = (void*)((cmr_int)af_buf_addr + i * stats_buf_size.af_stats_size);
 		ISP_LOGV("af: i=%d size=%d addr = %lx", i, buf_head[i].size, (cmr_int)buf_head[i].addr);
 	}
 
@@ -2337,8 +2339,8 @@ cmr_int isp3a_init_statistics_buf(cmr_handle isp_3a_handle)
 	buf_head = &cxt->afl_cxt.statistics_buffer[0];
 	for (i=0 ; i<ISP3A_STATISTICS_AFL_BUF_NUM ; i++) {
 		cmr_bzero((void*)&buf_head[i], sizeof(struct isp3a_statistics_data));
-		buf_head[i].size = AFL_STATS_BUFFER_SIZE;
-		buf_head[i].addr = (void*)((cmr_int)afl_buf_addr + i*AFL_STATS_BUFFER_SIZE);
+		buf_head[i].size = stats_buf_size.antif_stats_size;
+		buf_head[i].addr = (void*)((cmr_int)afl_buf_addr + i * stats_buf_size.antif_stats_size);
 		ISP_LOGV("afl: i=%d size=%d addr = %lx", i, buf_head[i].size, (cmr_int)buf_head[i].addr);
 	}
 
@@ -2346,8 +2348,8 @@ cmr_int isp3a_init_statistics_buf(cmr_handle isp_3a_handle)
 	buf_head = &cxt->other_stats_cxt.sub_sample_buffer[0];
 	for (i=0 ; i<ISP3A_STATISTICS_BUF_NUM ; i++) {
 		cmr_bzero((void*)&buf_head[i], sizeof(struct isp3a_statistics_data));
-		buf_head[i].size = SUBIMG_STATS_BUFFER_SIZE;
-		buf_head[i].addr = (void*)((cmr_int)subsample_buf_addr + i*SUBIMG_STATS_BUFFER_SIZE);
+		buf_head[i].size = stats_buf_size.subimg_stats_size;
+		buf_head[i].addr = (void*)((cmr_int)subsample_buf_addr + i * stats_buf_size.subimg_stats_size);
 		ISP_LOGV("sub sample: i=%d size=%d addr = %lx", i, buf_head[i].size, (cmr_int)buf_head[i].addr);
 	}
 
@@ -2355,8 +2357,8 @@ cmr_int isp3a_init_statistics_buf(cmr_handle isp_3a_handle)
 	buf_head = &cxt->other_stats_cxt.yhis_buffer[0];
 	for (i=0 ; i<ISP3A_STATISTICS_BUF_NUM ; i++) {
 		cmr_bzero((void*)&buf_head[i], sizeof(struct isp3a_statistics_data));
-		buf_head[i].size = SUBIMG_STATS_BUFFER_SIZE;
-		buf_head[i].addr = (void*)((cmr_int)yhis_buf_addr + i*YHIST_STATS_BUFFER_SIZE);
+		buf_head[i].size = stats_buf_size.yhist_stats_size;
+		buf_head[i].addr = (void*)((cmr_int)yhis_buf_addr + i * stats_buf_size.yhist_stats_size);
 	}
 
 exit:

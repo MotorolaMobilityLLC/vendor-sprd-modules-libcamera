@@ -19,7 +19,9 @@
 #include "isp_common_types.h"
 #include "alwrapper_3a.h"
 #include "hw3a_stats.h"
-#include "alwrapper_common.h"
+#include "isp_3a_adpt.h"
+
+#define STATS_OTHER_SIZE         (100)
 
 cmr_int isp_dispatch_stats(void *isp_stats, void *ae_stats_buf, void *awb_stats_buf, void *af_stats_buf, void *yhist_stats_buf, void *antif_stats_buf, void *subsample, cmr_u32 sof_idx)
 {
@@ -62,5 +64,21 @@ cmr_int isp_separate_drv_bin_2(void *bin, cmr_u32 bin_size, struct bin2_sep_info
 	cmr_int                                     ret = ISP_SUCCESS;
 
 	al3awrapper_com_separate_shadingirp_bin_type2((uint8*)bin, bin_size, bin_info);
+	return ret;
+}
+
+cmr_int isp_get_stats_size(struct stats_buf_size_list *stats_buf_size)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct wrapper_hw3a_define_sizeinfo_t size;
+
+	al3awrapper_get_defined_stats_size(&size);
+	stats_buf_size->ae_stats_size = size.ud_alhw3a_ae_stats_size + STATS_OTHER_SIZE;
+	stats_buf_size->awb_stats_size = size.ud_alhw3a_awb_stats_size + STATS_OTHER_SIZE;
+	stats_buf_size->af_stats_size = size.ud_alhw3a_af_stats_size + STATS_OTHER_SIZE;
+	stats_buf_size->yhist_stats_size = size.ud_alhw3a_yhist_stats_size + STATS_OTHER_SIZE;
+	stats_buf_size->antif_stats_size = size.ud_alhw3a_antif_stats_size + STATS_OTHER_SIZE;
+	stats_buf_size->subimg_stats_size = size.ud_alhw3a_subimg_stats_size + STATS_OTHER_SIZE;
+
 	return ret;
 }
