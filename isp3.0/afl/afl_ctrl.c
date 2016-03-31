@@ -384,6 +384,8 @@ cmr_int afl_ctrl_process(cmr_handle handle, struct afl_ctrl_proc_in *in_ptr, str
 	ret = cmr_thread_msg_send(cxt->ctrl_thr_cxt.thr_handle, &message);
 	if (ret) {
 		ISP_LOGE("failed to send msg to main thr %ld", ret);
+		if (message.data)
+			free(message.data);
 		goto exit;
 	}
 exit:
