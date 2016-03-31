@@ -2117,7 +2117,7 @@ static cmr_int setting_isp_flash_notify(struct setting_component *cpt,
 
 		setting_get_sensor_static_info(cpt, parm, &local_param->sensor_static_info);
 		ret = setting_get_flash_max_capacity(cpt, parm, &max_time, &max_charge);
-		isp_param.flash_notice.led_info.led_tag = ISP_FLASH_LED_0 | ISP_FLASH_LED_1;
+		isp_param.flash_notice.led_info.led_tag = camera_get_flashled_flag(isp_param.camera_id);//ISP_FLASH_LED_0 | ISP_FLASH_LED_1;
 		isp_param.flash_notice.led_info.power_0.max_charge = max_charge;
 		isp_param.flash_notice.led_info.power_0.max_time = max_time;
 		isp_param.flash_notice.led_info.power_1.max_charge = max_charge;
@@ -3012,7 +3012,7 @@ cmr_int cmr_setting_ioctl(cmr_handle setting_handle, cmr_uint cmd_type,
 		|| SETTING_TYPE_MAX != cmr_array_size(setting_list)
 		|| parm->camera_id >= CAMERA_ID_MAX) {
 
-		CMR_LOGE("param has error cpt 0x%p, camera_id %ld, array_size %d, cmd_type %ld",
+		CMR_LOGE("param has error cpt 0x%p, camera_id %ld, array_size %ld, cmd_type %ld",
 			cpt, parm->camera_id, cmr_array_size(setting_list), cmd_type);
 		return -CMR_CAMERA_INVALID_PARAM;
 	}
@@ -3033,3 +3033,21 @@ int camera_set_flashdevice(uint32_t param)
 
 	return ret;
 }
+
+cmr_int camera_get_flashled_flag(cmr_int param)
+{
+	cmr_int ret = 0;
+	cmr_int led0 = 0;
+	cmr_int led1 = 0;
+	UNUSED(param);
+#ifdef CONFIG_CAMERA_FLASH_LED_0
+	led0 =  ISP_FLASH_LED_0;
+#endif
+#ifdef CONFIG_CAMERA_FLASH_LED_1
+	led1 =  ISP_FLASH_LED_1;
+#endif
+	ret =  led0 | led1;
+	return ret;
+}
+
+
