@@ -1478,6 +1478,8 @@ int SprdCamera3Setting::getNumberOfCameras()
 	}
 
 	LOGI("getNumberOfCameras:%d",num);
+	// only display 2 camera numbers  for app
+	num = 2;
 
 	return num;
 }
