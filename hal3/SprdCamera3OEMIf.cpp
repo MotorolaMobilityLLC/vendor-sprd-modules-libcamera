@@ -200,9 +200,7 @@ void SprdCamera3OEMIf::shakeTestInit(ShakeTest *tmpShakeTest)
 
 }
 
-SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId,
-							SprdCamera3Setting *setting)
-	:
+SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mPreviewDcamAllocBufferCnt(0),
 	mRawHeap(NULL),
 	mRawHeapSize(0),
@@ -3953,14 +3951,17 @@ int SprdCamera3OEMIf::openCamera()
 	int ret = NO_ERROR;
 
 	GET_START_TIME;
-#ifdef CONFIG_MEM_OPTIMIZATION
-	ZSLMode_monitor_thread_init((void *)this);
-#endif
 
 	if (!startCameraIfNecessary()) {
 		ret = UNKNOWN_ERROR;
 		HAL_LOGE("start failed");
+		return ret;
 	}
+
+#ifdef CONFIG_MEM_OPTIMIZATION
+	ZSLMode_monitor_thread_init((void *)this);
+#endif
+
 #ifdef CONFIG_CAMERA_EIS
 	gyro_monitor_thread_init((void *)this);
 #endif
@@ -6272,26 +6273,26 @@ void * SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data)
 				for (int i=0 ; i<n ; i++) {
 					memset((void*)&sensor_info, 0, sizeof(sensor_info));
 					if (buffer[i].type == Sensor::TYPE_GYROSCOPE) {
-						HAL_LOGD("mGyroCamera:%lld\t%8f\t%8f\t%8f\n",buffer[i].timestamp,buffer[i].data[0], buffer[i].data[1], buffer[i].data[2]);
+						HAL_LOGV("mGyroCamera:%lld\t%8f\t%8f\t%8f\n",buffer[i].timestamp,buffer[i].data[0], buffer[i].data[1], buffer[i].data[2]);
 						sensor_info.sensor_type = 4;
 						//sensor_info.timestamp = buffer[i].timestamp;
 						sensor_info.x = buffer[i].data[0];
 						sensor_info.y = buffer[i].data[1];
 						sensor_info.z = buffer[i].data[2];
-						if (NULL != obj->mCameraHandle) {
+						if (NULL != obj->mCameraHandle && SPRD_IDLE == obj->mCameraState.capture_state) {
 							camera_set_sensor_info_to_af(obj->mCameraHandle, (void*)&sensor_info);
 						}
 					}
 				}
 			}
 		}else{
-			obj->mGyroDeinit = 1;
 			HAL_LOGD("mGyroCamera:exit.");
 			break;
 		}
 	}
 
 	q->disableSensor(gyroscope);
+	obj->mGyroDeinit = 1;
 	//mgr.sensorManagerDied();
 	HAL_LOGD("X");
 

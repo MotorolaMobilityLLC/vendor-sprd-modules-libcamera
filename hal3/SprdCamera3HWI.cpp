@@ -89,8 +89,8 @@ SprdCamera3Setting *SprdCamera3HWI::mSetting = NULL;
 #define SPRD_CONTROL_CAPTURE_INTENT_FLUSH   0xFE
 #define SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE   0xFF
 
-SprdCamera3HWI::SprdCamera3HWI(int cameraId)
-:	mCameraId(cameraId),
+SprdCamera3HWI::SprdCamera3HWI(int cameraId):
+	mCameraId(cameraId),
 	mOEMIf(NULL),
 	mCameraOpened(false),
 	mCameraInitialized(false),
@@ -345,11 +345,23 @@ int SprdCamera3HWI::openCamera()
 	mOEMIf = new SprdCamera3OEMIf(mCameraId, mSetting);
 	if (!mOEMIf) {
 		HAL_LOGE("alloc oemif failed.");
+		if (mSetting) {
+			delete mSetting;
+			mSetting = NULL;
+		}
 		return NO_MEMORY;
 	}
 	ret = mOEMIf->openCamera();
 	if (NO_ERROR != ret) {
 		HAL_LOGE("camera_open failed.");
+		if (mOEMIf) {
+			delete mOEMIf;
+			mOEMIf = NULL;
+		}
+		if (mSetting) {
+			delete mSetting;
+			mSetting = NULL;
+		}
 		return ret;
 	}
 
