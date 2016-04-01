@@ -1465,6 +1465,29 @@ cmr_int isp_dev_cfg_exp_time(isp_handle handle, cmr_u32 mode)
 	return ret;
 }
 
+cmr_int isp_dev_cfg_otp_info(isp_handle handle, struct isp_iq_otp_info *data)
+{
+	cmr_int ret = 0;
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle) {
+		CMR_LOGE("handle is null error.");
+		return -1;
+	}
+
+	param.sub_id = ISP_CFG_SET_IQ_OTP_INFO;
+	param.property_param = data;
+
+	file = (struct isp_file *)(handle);
+
+	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
+	if (ret)
+		CMR_LOGE("isp_dev_cfg_otp_info error.");
+
+	return ret;
+}
+
 cmr_int isp_dev_capability_fw_size(isp_handle handle, cmr_int *size)
 {
 	cmr_int ret = 0;

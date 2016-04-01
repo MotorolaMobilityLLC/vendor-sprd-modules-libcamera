@@ -100,6 +100,7 @@ cmr_int isp_dev_cfg_color_temp(isp_handle handle, cmr_u32 mode);
 cmr_int isp_dev_cfg_ccm(isp_handle handle, struct isp_iq_ccm_info *data);
 cmr_int isp_dev_cfg_valid_adgain(isp_handle handle, cmr_u32 mode);
 cmr_int isp_dev_cfg_exp_time(isp_handle handle, cmr_u32 mode);
+cmr_int isp_dev_cfg_otp_info(isp_handle handle, struct isp_iq_otp_info *data);
 cmr_int isp_dev_capability_fw_size(isp_handle handle, cmr_int *size);
 cmr_int isp_dev_capability_statis_buf_size(isp_handle handle, cmr_int *size);
 cmr_int isp_dev_capability_dram_buf_size(isp_handle handle, cmr_int *size);

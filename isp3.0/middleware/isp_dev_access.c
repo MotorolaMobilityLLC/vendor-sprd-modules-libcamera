@@ -589,25 +589,16 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	cmr_int                                ret = ISP_SUCCESS;
 	cmr_int                                i = 0;
 	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-	SCENARIO_INFO_AP                       input_data;
 	Cfg3A_Info                             cfg3a_info;
 	DldSequence                            dldseq_info;
 	cmr_u32                                iso_gain = 0;
 	struct isp_awb_gain_info               awb_gain_info;
-	cmr_u32                                dcam_id = 0;
+	cmr_u32                                dcam_id = 0, isp_id = 0;
 	struct isp_sensor_resolution_info      *resolution_ptr = NULL;
-#ifdef FPGA_TEST
 	struct isp_cfg_img_param               img_buf_param;
-	cmr_u32 img_size, cnt;
-	cmr_u8 a_tAFInfo_aucWeight[6] = {0, 2, 6, 4, 1, 2};
-	cmr_u8 a_tAFInfo_aucIndex[82] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
-									0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
-									0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
-									0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-	u16 a_tAFInfo_auwTH[4] = {0, 0, 0, 0};
-	u16 a_tAFInfo_pwTV[4] = {0, 0, 0, 0};
-	SCENARIO_INFO_AP tSecnarioInfo;
-#endif
+	SCENARIO_INFO_AP                       tSecnarioInfo;
+	struct isp_iq_otp_info                 iq_info;
+
 	ISP_CHECK_HANDLE_VALID(isp_dev_handle);
 
 	isp_dev_set_capture_mode(cxt->isp_driver_handle, param_ptr->common_in.capture_mode);
@@ -625,15 +616,6 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	tSecnarioInfo.tSensorInfo.udLineTime = resolution_ptr->line_time*10;
 	tSecnarioInfo.tSensorInfo.uwClampLevel = cxt->input_param.init_param.ex_info.clamp_level;
 	tSecnarioInfo.tSensorInfo.uwFrameRate = resolution_ptr->fps.max_fps*100;
-#ifndef FPGA_TEST
-	ret = isp_dev_cfg_scenario_info(cxt->isp_driver_handle, &input_data);//TBD
-	if (ret) {
-		ISP_LOGE("failed to cfg scenatio info %ld", ret);
-		goto exit;
-	}
-#endif
-
-#ifdef FPGA_TEST
 	tSecnarioInfo.tSensorInfo.ucSensorMode = 0;
 	tSecnarioInfo.tSensorInfo.ucSensorMouduleType = 0;//0-sensor1  1-sensor2
 	tSecnarioInfo.tSensorInfo.nColorOrder = cxt->input_param.init_param.image_pattern;
@@ -656,11 +638,21 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 		return -1;
 	}
 
+	ret = isp_dev_get_isp_id(cxt->isp_driver_handle, &isp_id);
+	if (ISP_SUCCESS != ret) {
+		ISP_LOGE("isp_dev_get_isp_id error %ld", ret);
+		goto exit;
+	}
+
 	/*set still image buffer format*/
 	memset(&img_buf_param, 0, sizeof(img_buf_param));
 
+	if (2 == isp_id) {
+		img_buf_param.img_id = ISP_IMG_PREVIEW;
+	} else {
+		img_buf_param.img_id = ISP_IMG_STILL_CAPTURE;
+	}
 	img_buf_param.format = ISP_OUT_IMG_YUY2;
-	img_buf_param.img_id = ISP_IMG_STILL_CAPTURE;
 	img_buf_param.dram_eb = 0;
 	img_buf_param.buf_num = 4;
 	img_buf_param.width = cxt->input_param.init_param.size.w;
@@ -693,7 +685,6 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	memcpy(&cfg3a_info.hw_cfg.tAntiFlickerInfo, &param_ptr->hw_cfg.afl_cfg, sizeof(AntiFlicker_CfgInfo));
 	memcpy(&cfg3a_info.hw_cfg.tYHisInfo, &param_ptr->hw_cfg.yhis_cfg, sizeof(YHis_CfgInfo);
 	memcpy(&cfg3a_info.hw_cfg.tSubSampleInfo, &param_ptr->hw_cfg.subsample_cfg, sizeof(SubSample_CfgInfo));
-#endif
 #endif
 
 	isp_dev_access_convert_ae_param(&param_ptr->hw_cfg.ae_cfg, &cfg3a_info.tAEInfo);
@@ -750,15 +741,8 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	awb_gain_info.b = param_ptr->hw_cfg.awb_gain_balanced.b;
 	ret = isp_dev_cfg_awb_gain_balanced(cxt->isp_driver_handle, &awb_gain_info);
 
-#if 0
-	if (0 == cxt->camera_id)
-		dcam_id = 0;
-	else if (2 == cxt->camera_id || 1 == cxt->camera_id)
-		dcam_id = 1;
-	ISP_LOGI("dcam_id %d", dcam_id);
-	ret = isp_dev_set_dcam_id(cxt->isp_driver_handle, dcam_id);
-#endif
 	ret = isp_dev_stream_on(cxt->isp_driver_handle);
+
 exit:
 	ISP_LOGI("done %ld", ret);
 	return ret;
@@ -1005,13 +989,6 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 		ISP_LOGE("failed to cfg awb gain balanced");
 		goto exit;
 	}
-#if 0
-	if (0 == cxt->camera_id)
-		dcam_id = 0;
-	else if (2 == cxt->camera_id || 1 == cxt->camera_id)
-		dcam_id = 1;
-	ret = isp_dev_set_dcam_id(cxt->isp_driver_handle, dcam_id);
-#endif
 
 	ret = isp_dev_stream_on(cxt->isp_driver_handle);
 
