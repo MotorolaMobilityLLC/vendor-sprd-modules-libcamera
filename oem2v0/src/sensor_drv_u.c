@@ -576,17 +576,30 @@ static cmr_int sns_grc_read_i2c(cmr_u16 slave_addr, cmr_u16 addr, cmr_u16 *reg, 
 
 	switch (bits) {
 	case BITS_ADDR8_REG8:
+		cmd[0] = 0x00ff & addr;
+		i2c_tab.i2c_data = cmd;
+		i2c_tab.i2c_count = 1;
+		i2c_tab.read_len = 1;
+		break;
 	case BITS_ADDR8_REG16:
 		cmd[0] = 0x00ff & addr;
 		i2c_tab.i2c_data = cmd;
 		i2c_tab.i2c_count = 1;
+		i2c_tab.read_len = 2;
 		break;
 	case BITS_ADDR16_REG8:
+		cmd[0] = (0xff00 & addr) >> 8;
+		cmd[1] = 0x00ff & addr;
+		i2c_tab.i2c_data = cmd;
+		i2c_tab.i2c_count = 2;
+		i2c_tab.read_len = 1;
+		break;
 	case BITS_ADDR16_REG16:
 		cmd[0] = (0xff00 & addr) >> 8;
 		cmd[1] = 0x00ff & addr;
 		i2c_tab.i2c_data = cmd;
 		i2c_tab.i2c_count = 2;
+		i2c_tab.read_len = 2;
 		break;
 	default:
 		CMR_LOGE("failed to set bits");
