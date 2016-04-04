@@ -472,13 +472,12 @@ exit:
 	return ret;
 }
 
-#if 1 //TBD
 struct sensor_ex_exposure {
 	cmr_u32 exposure;
 	cmr_u32 dummy;
 	cmr_u32 size_index;
 };
-#endif
+
 cmr_int isp3a_set_exposure(cmr_handle handle, struct ae_ctrl_param_sensor_exposure *in_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
@@ -781,9 +780,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 	cmr_bzero(&afl_input, sizeof(afl_input));
 	afl_input.camera_id = input_ptr->camera_id;
 	afl_input.caller_handle = isp_3a_handle;
-//	afl_input.lib_param = input_ptr->afl_config;//TBD
-	afl_input.lib_param.product_id = 0;
-	afl_input.lib_param.version_id = 0;
+	afl_input.lib_param = input_ptr->afl_config;
 	afl_input.ops_in.afl_callback = isp3a_afl_callback;
 	afl_input.init_param.resolution.line_time = sensor_raw_info_ptr->resolution_info_ptr->tab[1].line_time;
 	afl_input.init_param.resolution.frame_size.w = sensor_raw_info_ptr->resolution_info_ptr->tab[1].width;
@@ -1597,7 +1594,7 @@ cmr_int isp3a_set_awb_capture_gain(cmr_handle isp_3a_handle)
 	return ret;
 }
 
-cmr_int isp3a_notice_flash(cmr_handle isp_3a_handle, void *param_ptr)//TBD
+cmr_int isp3a_notice_flash(cmr_handle isp_3a_handle, void *param_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
@@ -1631,10 +1628,6 @@ cmr_int isp3a_notice_flash(cmr_handle isp_3a_handle, void *param_ptr)//TBD
 		ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASH_OPEN_P, &awb_in, NULL);
 		ret = isp3a_set_awb_flash_gain(isp_3a_handle);
 	}
-		break;
-	case ISP_FLASH_PRE_AFTER_PRE:
-		isp3a_set_awb_flash_off_gain((cmr_handle)cxt);
-		//cxt->awb_cxt.skip_num = ISP3A_TURNOFF_FLASH_SKIP_NUM;//TBD
 		break;
 	case ISP_FLASH_PRE_AFTER:
 		isp3a_set_awb_flash_off_gain((cmr_handle)cxt);

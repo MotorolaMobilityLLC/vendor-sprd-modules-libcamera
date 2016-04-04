@@ -4053,15 +4053,14 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 		ISP_LOGE("param %p is NULL error!", cxt_ptr);
 		goto exit;
 	}
-	//cxt_ptr->update_list. //TBD
 
-	if (!cxt_ptr->tuning_info.manual_ae_on) {
+	if (!cxt_ptr->tuning_info.manual_ae_on
+			&& AE_DISABLED != cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_LibStates
+			&& AE_LOCKED != cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_LibStates) {
 		if (0 == cxt_ptr->is_script_mode) {
-			if (AE_DISABLED != cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_LibStates) {
-				ret = aealtek_lib_exposure2sensor(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
-				if (ret)
-					goto exit;
-			}
+			ret = aealtek_lib_exposure2sensor(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
+			if (ret)
+				goto exit;
 		} else {
 			ret = aealtek_get_lib_script_info(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
 			if (ret)
