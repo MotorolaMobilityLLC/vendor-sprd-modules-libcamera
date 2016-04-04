@@ -2138,7 +2138,8 @@ static cmr_int setting_isp_flash_notify(struct setting_component *cpt,
 				}
 			}
 			/*because hardware issue high equal to low, so use hight div high */
-			isp_param.flash_notice.flash_ratio = sn_param.flash_level.high_light * 256 / sn_param.flash_level.low_light;
+			if (0 != sn_param.flash_level.low_light)
+				isp_param.flash_notice.flash_ratio = sn_param.flash_level.high_light * 256 / sn_param.flash_level.low_light;
 		}
 		break;
 	default:
