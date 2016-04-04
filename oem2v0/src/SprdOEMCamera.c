@@ -853,10 +853,22 @@ cmr_int camera_get_gain_thrs(cmr_handle camera_handle, cmr_u32 *is_over_thrs)
 	return ret;
 }
 
-cmr_int camera_set_sensor_info_to_af(cmr_handle camera_handle,  void* sensor_info)
+cmr_int camera_set_sensor_info_to_af(cmr_handle camera_handle,  struct cmr_af_aux_sensor_info* sensor_info)
 {
 	cmr_int ret = CMR_CAMERA_SUCCESS;
 	ret = camera_isp_set_sensor_info_to_af(camera_handle, sensor_info);
+	return ret;
+}
+
+cmr_int camera_get_sensor_max_fps(cmr_handle camera_handle,cmr_u32 camera_id, cmr_u32* max_fps)
+{
+	cmr_int ret = CMR_CAMERA_SUCCESS;
+	if(NULL == camera_handle || NULL == max_fps) {
+		CMR_LOGE("input param is null!");
+		ret = CMR_CAMERA_INVALID_PARAM;
+		return ret;
+	}
+	ret = cmr_get_sensor_max_fps(camera_handle,camera_id,max_fps);
 	return ret;
 }
 

@@ -48,6 +48,13 @@ extern "C"
 #define WIN_AREA_COUNT_MAX                  1
 
 
+enum camera_af_aux_sensor_type {
+	CAMERA_AF_ACCELEROMETER,
+	CAMERA_AF_MAGNETIC_FIELD,
+	CAMERA_AF_GYROSCOPE,
+	CAMERA_AF_LIGHT,
+	CAMERA_AF_PROXIMITY,
+};
 
 enum zoom_param_mode {
 	ZOOM_LEVEL = 0,
@@ -130,6 +137,28 @@ struct frm_info {
 	cmr_u32                             vaddr_vir;
 	cmr_uint                            zsl_private;
 	cmr_u32                             fd;
+};
+
+struct cmr_af_gyro_info {
+	cmr_s64 timestamp;
+	float x;
+	float y;
+	float z;
+};
+
+struct cmr_af_gsensor_info {
+	cmr_s64 timestamp;
+	float vertical_up;
+	float vertical_down;
+	float horizontal;
+};
+
+struct cmr_af_aux_sensor_info {
+	enum camera_af_aux_sensor_type type;
+	union {
+		struct cmr_af_gyro_info gyro_info;
+		struct cmr_af_gsensor_info gsensor_info;
+	};
 };
 
 #ifdef __cplusplus

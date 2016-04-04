@@ -7196,12 +7196,50 @@ void camera_local_end_burst_notice(cmr_handle oem_handle){
 #endif
 }
 
-cmr_int camera_isp_set_sensor_info_to_af(cmr_handle oem_handle, void* sensor_info) {
+cmr_int camera_isp_set_sensor_info_to_af(cmr_handle oem_handle, struct cmr_af_aux_sensor_info* sensor_info) {
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context *cxt = (struct camera_context*)oem_handle;
 	struct isp_context             *isp_cxt = &cxt->isp_cxt;
-	if (cxt && isp_cxt) {
-		ret = isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_SET_AUX_SENSOR_INFO, (void*)sensor_info);
+	struct af_aux_sensor_info_t	aux_sensor_info;
+	if (cxt && isp_cxt && sensor_info) {
+		memset(&aux_sensor_info,0,sizeof(aux_sensor_info));
+		switch(sensor_info->type) {
+		case CAMERA_AF_ACCELEROMETER:
+			CMR_LOGD("CAMERA_AF_ACCELEROMETER E:");
+			aux_sensor_info.type = AF_ACCELEROMETER;
+			aux_sensor_info.gsensor_info.timestamp = sensor_info->gsensor_info.timestamp;
+			aux_sensor_info.gsensor_info.vertical_up = sensor_info->gsensor_info.vertical_up;
+			aux_sensor_info.gsensor_info.vertical_down = sensor_info->gsensor_info.vertical_down;
+			aux_sensor_info.gsensor_info.horizontal = sensor_info->gsensor_info.horizontal;
+			ret = isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_SET_AUX_SENSOR_INFO, &aux_sensor_info);
+			CMR_LOGD("CAMERA_AF_ACCELEROMETER X:");
+			break;
+		case CAMERA_AF_MAGNETIC_FIELD:
+			aux_sensor_info.type = AF_MAGNETIC_FIELD;
+			break;
+		case CAMERA_AF_GYROSCOPE:
+			CMR_LOGD("CAMERA_AF_GYROSCOPE E:");
+			aux_sensor_info.type = AF_GYROSCOPE;
+			aux_sensor_info.gyro_info.timestamp = sensor_info->gyro_info.timestamp;
+			aux_sensor_info.gyro_info.x = sensor_info->gyro_info.x;
+			aux_sensor_info.gyro_info.y = sensor_info->gyro_info.y;
+			aux_sensor_info.gyro_info.z = sensor_info->gyro_info.z;
+			ret = isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_SET_AUX_SENSOR_INFO, &aux_sensor_info);
+			CMR_LOGD("CAMERA_AF_GYROSCOPE X:");
+			break;
+		case CAMERA_AF_LIGHT:
+			aux_sensor_info.type = AF_LIGHT;
+			break;
+		case CAMERA_AF_PROXIMITY:
+			aux_sensor_info.type = AF_PROXIMITY;
+			break;
+		default:
+			CMR_LOGE("NO this sensor type: %d ",sensor_info->type);
+			ret = CMR_CAMERA_INVALID_PARAM;
+		}
+	}else {
+		CMR_LOGE("input param is null!");
+		ret = CMR_CAMERA_INVALID_PARAM;
 	}
 	return ret;
 }
@@ -7311,5 +7349,35 @@ cmr_int camera_preview_set_yhist_to_isp(cmr_handle oem_handle, cmr_u32 camera_id
 	ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_PREVIEW_YHIST, &isp_param);
 
 exit:
+	return ret;
+}
+
+cmr_int cmr_get_sensor_max_fps(cmr_handle oem_handle,cmr_u32 camera_id, cmr_u32* max_fps)
+{
+	cmr_int                        ret = CMR_CAMERA_SUCCESS;
+	if(NULL == oem_handle || NULL == max_fps) {
+		CMR_LOGE("in parm error");
+		ret = -CMR_CAMERA_INVALID_PARAM;
+		return ret;
+	}
+	struct camera_context          *cxt = (struct camera_context*)oem_handle;
+	if(cxt->inited && cxt->sn_cxt.sensor_handle) {
+		struct sensor_ex_info sn_ex_info;
+		SENSOR_VAL_T	val;
+		memset(&sn_ex_info,0,sizeof(struct sensor_ex_info));
+		val.type               = SENSOR_VAL_TYPE_GET_STATIC_INFO;
+		val.pval               = &sn_ex_info;
+		ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_ACCESS_VAL, (cmr_uint)&val);
+		if (ret) {
+			*max_fps = 30;
+			CMR_LOGE("get sensor static info failed %ld,we set max fps to default: %d", ret,*max_fps);
+		}else {
+			*max_fps = sn_ex_info.max_fps;
+		}
+
+	} else {
+		*max_fps = 30;
+		CMR_LOGI("oem not init, we set max fps to default: %d ",*max_fps);
+	}
 	return ret;
 }

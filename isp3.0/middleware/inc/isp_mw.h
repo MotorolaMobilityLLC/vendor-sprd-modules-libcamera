@@ -327,16 +327,25 @@ enum af_aux_sensor_type {
 	AF_PROXIMITY,
 };
 
-struct af_gryo_info_t {
+struct af_gyro_info_t {
+	cmr_s64 timestamp;
 	float x;
 	float y;
 	float z;
 };
 
+struct af_gsensor_info {
+	cmr_s64 timestamp;
+	float vertical_up;
+	float vertical_down;
+	float horizontal;
+};
+
 struct af_aux_sensor_info_t {
 	enum af_aux_sensor_type type;
 	union {
-		struct af_gryo_info_t gryo_info;
+		struct af_gyro_info_t gyro_info;
+		struct af_gsensor_info gsensor_info;
 	};
 };
 
@@ -549,7 +558,6 @@ struct isp_snapshot_notice {
 	cmr_u32 preview_line_time;
 	cmr_u32 capture_line_time;
 };
-
 
 cmr_int  isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle);
 cmr_int  isp_deinit(cmr_handle isp_handle);

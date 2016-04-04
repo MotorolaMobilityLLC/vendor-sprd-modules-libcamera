@@ -76,14 +76,6 @@ typedef enum {
 	SNAPSHOT_VIDEO_MODE,
 }snapshot_mode_type_t;
 
-typedef struct af_sensor_info {
-	cmr_u32 sensor_type;
-	//cmr_s64 timestamp;
-	float x;
-	float y;
-	float z;
-}af_sensor_info_t;
-
 /*
 *  fd:         ion fd
 *  phys_addr:  offset from fd, always set 0
@@ -202,6 +194,9 @@ public:
 	static int		gyro_monitor_thread_init(void *p_data);
 	static int		gyro_monitor_thread_deinit(void *p_data);
 	static void*  gyro_monitor_thread_proc( void *p_data);
+	static int		gsensorMonitorThreadInit(void *p_data);
+	static int		gsensorMonitorThreadDeinit(void *p_data);
+	static void*		gsensorMonitorThreadProc( void *p_data);
 #endif
 
 private:
@@ -605,6 +600,9 @@ private:
 	bool                          mGyroInit;
 	bool                          mGyroDeinit;
 	pthread_t                     mGyroMsgQueHandle;
+	bool				mGSensorRunning;
+	bool				mGSensorIsStopped;
+	pthread_t			mGSensorMsgQueHandle;
 #endif
 };
 
