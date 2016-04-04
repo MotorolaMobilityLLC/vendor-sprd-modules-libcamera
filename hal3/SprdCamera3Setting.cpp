@@ -3131,7 +3131,8 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 
 	if (frame_settings.exists(ANDROID_CONTROL_SCENE_MODE)) {
 		valueU8 = frame_settings.find(ANDROID_CONTROL_SCENE_MODE).data.u8[0];
-		GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.scene_mode, valueU8, ANDROID_CONTROL_SCENE_MODE)
+		s_setting[mCameraId].controlInfo.scene_mode = valueU8;
+		pushAndroidParaTag(ANDROID_CONTROL_SCENE_MODE);
 		HAL_LOGV("scene %d", valueU8);
 	}
 
@@ -3163,7 +3164,8 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 
 	if (frame_settings.exists(ANDROID_CONTROL_AE_ANTIBANDING_MODE)) {
 		valueU8 = frame_settings.find(ANDROID_CONTROL_AE_ANTIBANDING_MODE).data.u8[0];
-		GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.ae_abtibanding_mode, valueU8, ANDROID_CONTROL_AE_ANTIBANDING_MODE)
+		s_setting[mCameraId].controlInfo.ae_abtibanding_mode = valueU8;
+		pushAndroidParaTag(ANDROID_CONTROL_AE_ANTIBANDING_MODE);
 		HAL_LOGD("ANDROID_CONTROL_AE_ANTIBANDING_MODE %d",valueU8);
 	}
 //SPRD
