@@ -2198,6 +2198,9 @@ static cmr_int aealtek_capture_hdr(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 	if (ret)
 		goto exit;
 
+	ISP_LOGI("hdr exp_array:%d,%d,%d", cxt_ptr->lib_data.exposure_array.bracket_exp[0].exp_line
+			,cxt_ptr->lib_data.exposure_array.bracket_exp[1].exp_line,cxt_ptr->lib_data.exposure_array.bracket_exp[2].exp_line);
+
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld, lib_ret=%ld !!!", ret, lib_ret);
@@ -2946,6 +2949,7 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 		in_est.cell.exp_time = atoi(ae_exp);
 		in_est.cell.exp_line = 10*in_est.cell.exp_time/cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time;
 		in_est.cell.gain = atoi(ae_gain);
+		in_est.cell.dummy = 0;
 	} else {
 		in_est.cell.exp_line = cxt_ptr->sensor_exp_data.lib_exp.exp_line;
 		in_est.cell.exp_time = cxt_ptr->sensor_exp_data.lib_exp.exp_time;
@@ -2975,9 +2979,11 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	ret = aealtek_set_sof_to_lib(cxt_ptr, in_ptr, cxt_ptr->sensor_exp_data.actual_exp);
 	if (ret)
 		goto exit;
-	ret = aealtek_pre_to_sensor(cxt_ptr, 0);
-	if (ret)
-		goto exit;
+	if (0 == cxt_ptr->nxt_status.is_hdr_status) {
+		ret = aealtek_pre_to_sensor(cxt_ptr, 0);
+		if (ret)
+			goto exit;
+	}
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld", ret);
@@ -3158,6 +3164,9 @@ static cmr_int aealtek_set_hdr_ev(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_pa
 	default:
 		break;
 	}
+	ret = aealtek_set_dummy(cxt_ptr, &cxt_ptr->sensor_exp_data.lib_exp);
+	if (ret)
+		ISP_LOGW("warning set_dummy ret=%ld !!!", ret);
 	ret = aealtek_pre_to_sensor(cxt_ptr, 1);
 
 	return ISP_SUCCESS;
@@ -4141,11 +4150,12 @@ static cmr_int aealtek_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_proc_
 		lib_ret = obj_ptr->estimation(&cxt_ptr->lib_data.stats_data, obj_ptr->ae, out_data_ptr);
 //	if (lib_ret)
 //		goto exit;
-	ISP_LOGI("mean=%d, BV=%d, exposure_line=%d, gain=%d",\
+	ISP_LOGI("mean=%d, BV=%d, exposure_line=%d, gain=%d, ae_states:%d",\
 		out_data_ptr->rpt_3a_update.ae_update.curmean,
 		out_data_ptr->rpt_3a_update.ae_update.bv_val,
 		out_data_ptr->rpt_3a_update.ae_update.exposure_line,
-		out_data_ptr->rpt_3a_update.ae_update.sensor_ad_gain);
+		out_data_ptr->rpt_3a_update.ae_update.sensor_ad_gain,
+		out_data_ptr->rpt_3a_update.ae_update.ae_LibStates);
 
 	aealtek_print_lib_log(cxt_ptr, &cxt_ptr->lib_data.output_data);
 
