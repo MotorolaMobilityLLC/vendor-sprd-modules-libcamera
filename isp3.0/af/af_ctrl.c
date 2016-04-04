@@ -377,8 +377,8 @@ exit:
 	return ret;
 }
 
-cmr_int af_ctrl_init(struct af_ctrl_init_in * in,
-		     struct af_ctrl_init_out * out, cmr_handle * handle)
+cmr_int af_ctrl_init(struct af_ctrl_init_in *in,
+		     struct af_ctrl_init_out *out, cmr_handle *handle)
 {
 	cmr_int ret = -ISP_ERROR;
 	/* create handle */
