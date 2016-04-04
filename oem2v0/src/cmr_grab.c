@@ -1273,15 +1273,18 @@ cmr_int cmr_grab_set_zoom_mode(cmr_handle grab_handle, cmr_u32 opt)
 	return ret;
 }
 
-cmr_int cmr_grab_cfg_flash(cmr_handle grab_handle, void *param)
+cmr_int cmr_grab_cfg_flash(cmr_handle grab_handle, struct sprd_flash_cfg_param *cfg_param)
 {
 	cmr_int                  ret = 0;
 	struct cmr_grab          *p_grab;
+	struct sprd_flash_cfg_param   cfg;
 
 	p_grab = (struct cmr_grab*)grab_handle;
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
-	ret = ioctl(p_grab->fd, SPRD_IMG_IO_CFG_FLASH, param);
+	cfg.io_id= cfg_param->io_id;
+	cfg.real_cell = cfg_param->real_cell;
+	ret = ioctl(p_grab->fd, SPRD_IMG_IO_CFG_FLASH, &cfg);
 	if (ret) {
 		CMR_LOGE("error");
 	}

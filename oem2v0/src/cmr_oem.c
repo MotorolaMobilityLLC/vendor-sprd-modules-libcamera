@@ -2508,7 +2508,7 @@ int32_t camera_isp_flash_set_charge(void *handler, struct isp_flash_cfg *cfg_ptr
 {
 	int32_t ret = 0;
 	struct camera_context		  *cxt = (struct camera_context*)handler;
-#if 0
+#if 1
 
 	struct sprd_flash_cfg_param   cfg;
 	uint8_t                       real_type = 0;
@@ -2521,7 +2521,7 @@ int32_t camera_isp_flash_set_charge(void *handler, struct isp_flash_cfg *cfg_ptr
 		goto out;
 	}
 
-	switch (type) {
+	switch (cfg_ptr->type) {
 	case ISP_FLASH_TYPE_PREFLASH:
 		real_type = FLASH_TYPE_PREFLASH;
 		break;
@@ -2534,12 +2534,12 @@ int32_t camera_isp_flash_set_charge(void *handler, struct isp_flash_cfg *cfg_ptr
 		break;
 	}
 	cmr_bzero(&real_cell, sizeof(real_cell));
-	real_cell.type = real_type;
-	real_cell.count = 1;
-	real_cell.element[0].index = element->index;
-	real_cell.element[0].val = element->val;
+	cfg.real_cell.type = real_type;
+	cfg.real_cell.count = 1;
+	cfg.real_cell.led_idx = cfg_ptr->led_idx;
+	cfg.real_cell.element[0].index = element->index;
+	cfg.real_cell.element[0].val = element->val;
 	cfg.io_id = FLASH_IOID_SET_CHARGE;
-	cfg.data = &real_cell;
 	ret = cmr_grab_cfg_flash(cxt->grab_cxt.grab_handle, &cfg);
 
 out:
