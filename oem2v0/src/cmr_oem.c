@@ -1704,14 +1704,27 @@ cmr_int camera_grab_init(cmr_handle  oem_handle)
 	struct grab_context             *grab_cxt = NULL;
 	cmr_handle                      grab_handle = NULL;
 	struct grab_init_param          grab_param;
+	struct sensor_exp_info sensor_info = {0};
 
 	CHECK_HANDLE_VALID(oem_handle);
 	grab_cxt = &cxt->grab_cxt;
 	CHECK_HANDLE_VALID(grab_cxt);
 
 	if (0 == grab_cxt->inited) {
+		ret = cmr_sensor_get_info(cxt->sn_cxt.sensor_handle, cxt->camera_id, &sensor_info);
+		if (ret) {
+			CMR_LOGE("fail to get sensor info ret %ld", ret);
+			goto exit;
+		}
 		grab_param.oem_handle = oem_handle;
 		grab_param.sensor_id = cxt->camera_id;
+		if(0 != sensor_info.mode_info[SENSOR_MODE_COMMON_INIT].width) {
+			grab_param.width = sensor_info.mode_info[SENSOR_MODE_COMMON_INIT].width;
+			grab_param.height = sensor_info.mode_info[SENSOR_MODE_COMMON_INIT].height;
+		} else {
+			grab_param.width = sensor_info.mode_info[SENSOR_MODE_PREVIEW_ONE].width;
+			grab_param.height = sensor_info.mode_info[SENSOR_MODE_PREVIEW_ONE].height;
+		}
 		ret = cmr_grab_init(&grab_param, &grab_handle);
 		if (ret) {
 			CMR_LOGE("failed to init grab %ld", ret);

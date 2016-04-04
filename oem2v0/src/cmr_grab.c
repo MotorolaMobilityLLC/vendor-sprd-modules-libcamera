@@ -94,6 +94,7 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr, cmr_handle *grab_h
          cmr_int                  i = 0;
 	cmr_u32                  channel_id;
 	struct cmr_grab          *p_grab = NULL;
+	struct sprd_img_res res = {0};
 
 	p_grab = (struct cmr_grab*)malloc(sizeof(struct cmr_grab));
 	if (!p_grab) {
@@ -113,8 +114,17 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr, cmr_handle *grab_h
 		CMR_LOGI("OK to open device.");
 	}
 
-	ioctl(p_grab->fd, SPRD_IMG_IO_ENABLE_MODE, &p_grab->init_param.sensor_id);
 
+	res.width = p_grab->init_param.width;
+	res.height = p_grab->init_param.height;
+	res.sensor_id = p_grab->init_param.sensor_id;
+	ret = ioctl(p_grab->fd, SPRD_IMG_IO_GET_DCAM_RES, &res);
+	if (0 == res.flag) {
+		CMR_LOGE("get dcam res failed!");
+		return -1;
+	}
+
+	ret = ioctl(p_grab->fd, SPRD_IMG_IO_ENABLE_MODE, &p_grab->init_param.sensor_id);
 	ret = pthread_mutex_init(&p_grab->cb_mutex, NULL);
 	if (ret) {
 		CMR_LOGE("Failed to init mutex : %d", errno);
@@ -961,6 +971,7 @@ static void* cmr_grab_thread_proc(void* data)
 	struct cmr_grab          *p_grab;
 	struct img_data_end      endian;
 	struct sprd_img_read_op  op;
+	struct sprd_img_res res = {0};
 
 	p_grab = (struct cmr_grab*)data;
 	if (!p_grab)
@@ -1059,6 +1070,10 @@ static void* cmr_grab_thread_proc(void* data)
 	}
 
 	ioctl(p_grab->fd, SPRD_IMG_IO_DISABLE_MODE, NULL);
+	res.sensor_id = p_grab->init_param.sensor_id;
+	ioctl(p_grab->fd, SPRD_IMG_IO_PUT_DCAM_RES, &res);
+	if (0 == res.flag)
+		CMR_LOGE("put dcam res failed!");
 	sem_post(&p_grab->exit_sem);
 	CMR_LOGI("Out");
 	return NULL;
