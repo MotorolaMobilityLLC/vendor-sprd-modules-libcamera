@@ -157,6 +157,7 @@ static const SENSOR_REG_T s5k3p3sm_common_init[] = {
 { 0x9928, 0x03CB },
 { 0x3D78, 0x396C },
 { 0x3D7A, 0x93C6 },//TnP
+//{ 0x0600, 0x0002 },
 };
 
 // 4632x3480 30FPS v560M mipi1392M 4lane
@@ -367,10 +368,10 @@ static const SENSOR_REG_T s5k3p3sm_1280x720_4lane_setting[] = {
 
 static SENSOR_REG_TAB_INFO_T s_s5k3p3sm_resolution_Tab_RAW[9] = {
 	{ADDR_AND_LEN_OF_ARRAY(s5k3p3sm_common_init), 0, 0, 24, SENSOR_IMAGE_FORMAT_RAW},
-	//{ADDR_AND_LEN_OF_ARRAY(s5k3p3sm_2592x1944_2lane_setting), 2592, 1944, 24, SENSOR_IMAGE_FORMAT_RAW},
+	{ADDR_AND_LEN_OF_ARRAY(s5k3p3sm_4632x3480_4lane_setting), 4632, 3480, 24, SENSOR_IMAGE_FORMAT_RAW},
 	//{ADDR_AND_LEN_OF_ARRAY(s5k3p3sm_1920x1080_4lane_setting), 1920, 1080, 24, SENSOR_IMAGE_FORMAT_RAW},
 	//{ADDR_AND_LEN_OF_ARRAY(s5k3p3sm_2320x1748_4lane_setting), 2320, 1748, 24, SENSOR_IMAGE_FORMAT_RAW},
-	{ADDR_AND_LEN_OF_ARRAY(s5k3p3sm_2304x1740_4lane_setting), 2304, 1740, 24, SENSOR_IMAGE_FORMAT_RAW},
+	//{ADDR_AND_LEN_OF_ARRAY(s5k3p3sm_2304x1740_4lane_setting), 2304, 1740, 24, SENSOR_IMAGE_FORMAT_RAW},
 	{PNULL, 0, 0, 0, 0, 0},
 	{PNULL, 0, 0, 0, 0, 0},
 	{PNULL, 0, 0, 0, 0, 0},
@@ -379,10 +380,10 @@ static SENSOR_REG_TAB_INFO_T s_s5k3p3sm_resolution_Tab_RAW[9] = {
 
 static SENSOR_TRIM_T s_s5k3p3sm_Resolution_Trim_Tab[SENSOR_MODE_MAX] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-	//{0, 0, 2592, 1944, 267, 750, 1248, {0, 0, 1632, 1224}},
+	{0, 0, 4632, 3480, 267, 750, 1248, {0, 0, 4632, 3480}},
 	//{0, 0, 1920, 1080, 94, 1320, 1767, {0, 0, 1920, 1080}},
 	//{0, 0, 2320, 1748, 183, 1440, 1800, {0, 0, 2320, 1748}},
-	{0, 0, 2304, 1740, 94, 1320, 0x0dc8, {0, 0, 2304, 1740}},
+	//{0, 0, 2304, 1740, 94, 1320, 0x0dc8, {0, 0, 2304, 1740}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},

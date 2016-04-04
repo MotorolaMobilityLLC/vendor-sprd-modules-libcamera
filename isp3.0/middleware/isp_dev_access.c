@@ -668,7 +668,7 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 #ifdef FPGA_TEST
 	// SubSample
 	cfg3a_info.tSubSampleInfo.TokenID = 0x100;
-	cfg3a_info.tSubSampleInfo.udBufferImageSize = 320*240;
+	cfg3a_info.tSubSampleInfo.udBufferImageSize = 1158*870;;
 	cfg3a_info.tSubSampleInfo.uwOffsetRatioX =0;
 	cfg3a_info.tSubSampleInfo.uwOffsetRatioY =0;
 
