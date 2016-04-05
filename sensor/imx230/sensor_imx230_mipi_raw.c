@@ -640,6 +640,7 @@ static const SENSOR_REG_T imx230_init_setting[] = {
 	{0x6B49, 0x8C},
 	{0x6B4C, 0x00},
 	{0x6B4D, 0x8C},
+	{0x5041, 0x00},
 };
 
 static const SENSOR_REG_T imx230_5344x4016_setting[] = {
