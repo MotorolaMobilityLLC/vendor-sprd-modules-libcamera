@@ -7275,27 +7275,23 @@ cmr_int camera_isp_set_sensor_info_to_af(cmr_handle oem_handle, struct cmr_af_au
 		memset(&aux_sensor_info,0,sizeof(aux_sensor_info));
 		switch(sensor_info->type) {
 		case CAMERA_AF_ACCELEROMETER:
-			CMR_LOGD("CAMERA_AF_ACCELEROMETER E:");
 			aux_sensor_info.type = AF_ACCELEROMETER;
 			aux_sensor_info.gsensor_info.timestamp = sensor_info->gsensor_info.timestamp;
 			aux_sensor_info.gsensor_info.vertical_up = sensor_info->gsensor_info.vertical_up;
 			aux_sensor_info.gsensor_info.vertical_down = sensor_info->gsensor_info.vertical_down;
 			aux_sensor_info.gsensor_info.horizontal = sensor_info->gsensor_info.horizontal;
 			ret = isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_SET_AUX_SENSOR_INFO, &aux_sensor_info);
-			CMR_LOGD("CAMERA_AF_ACCELEROMETER X:");
 			break;
 		case CAMERA_AF_MAGNETIC_FIELD:
 			aux_sensor_info.type = AF_MAGNETIC_FIELD;
 			break;
 		case CAMERA_AF_GYROSCOPE:
-			CMR_LOGD("CAMERA_AF_GYROSCOPE E:");
 			aux_sensor_info.type = AF_GYROSCOPE;
 			aux_sensor_info.gyro_info.timestamp = sensor_info->gyro_info.timestamp;
 			aux_sensor_info.gyro_info.x = sensor_info->gyro_info.x;
 			aux_sensor_info.gyro_info.y = sensor_info->gyro_info.y;
 			aux_sensor_info.gyro_info.z = sensor_info->gyro_info.z;
 			ret = isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_SET_AUX_SENSOR_INFO, &aux_sensor_info);
-			CMR_LOGD("CAMERA_AF_GYROSCOPE X:");
 			break;
 		case CAMERA_AF_LIGHT:
 			aux_sensor_info.type = AF_LIGHT;

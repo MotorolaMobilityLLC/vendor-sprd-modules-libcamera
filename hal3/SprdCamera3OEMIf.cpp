@@ -259,8 +259,6 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 #ifdef CONFIG_CAMERA_EIS
 	mGyroInit(0),
 	mGyroDeinit(0),
-	mGSensorRunning(false),
-	mGSensorIsStopped(true),
 #endif
 	mIsRecording(false)
 {
@@ -536,7 +534,6 @@ void SprdCamera3OEMIf::closeCamera()
 
 #ifdef CONFIG_CAMERA_EIS
 	gyro_monitor_thread_deinit((void *)this);
-	gsensorMonitorThreadDeinit((void *)this);
 #endif
 	if (isCameraInit()) {
 		// When libqcamera detects an error, it calls camera_cb from the
@@ -3971,7 +3968,6 @@ int SprdCamera3OEMIf::openCamera()
 
 #ifdef CONFIG_CAMERA_EIS
 	gyro_monitor_thread_init((void *)this);
-	gsensorMonitorThreadInit((void *)this);
 #endif
 	return ret;
 }
@@ -6284,35 +6280,61 @@ void * SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data)
 	q->enableSensor(gyroscope);
 	q->setEventRate(gyroscope, ms2ns(10));
 
+	Sensor const* gsensor = mgr.getDefaultSensor(Sensor::TYPE_ACCELEROMETER);
+
+	uint32_t default_max_fps = 30;
+	uint32_t eventRate = default_max_fps;
+	if(NULL != obj->mCameraHandle) {
+		camera_get_sensor_max_fps(obj->mCameraHandle,obj->mCameraId,&eventRate);
+		if(0 == eventRate)
+		      eventRate = default_max_fps;
+		eventRate = 1000/eventRate;//fps->rate:ms
+	}
+	q->enableSensor(gsensor);
+	q->setEventRate(gsensor, ms2ns(eventRate));
+
 	struct cmr_af_aux_sensor_info sensor_info;
-	while(true){
-		if(obj->mGyroInit == true){
-			q->waitForEvent();
-			if ((n = q->read(buffer, 8)) > 0) {
-				for (int i=0 ; i<n ; i++) {
-					memset((void*)&sensor_info, 0, sizeof(sensor_info));
-					if (buffer[i].type == Sensor::TYPE_GYROSCOPE) {
-						HAL_LOGD("mGyroCamera:%lld\t%8f\t%8f\t%8f\n",buffer[i].timestamp,buffer[i].data[0], buffer[i].data[1], buffer[i].data[2]);
-						sensor_info.type = CAMERA_AF_GYROSCOPE;
-						sensor_info.gyro_info.timestamp = buffer[i].timestamp;
-						sensor_info.gyro_info.x = buffer[i].data[0];
-						sensor_info.gyro_info.y = buffer[i].data[1];
-						sensor_info.gyro_info.z = buffer[i].data[2];
-						HAL_LOGD("mGyroCamera:sensor type: from SensorManager %d to camera %d ",
-									Sensor::TYPE_GYROSCOPE,sensor_info.type);
-						if (NULL != obj->mCameraHandle && SPRD_IDLE == obj->mCameraState.capture_state) {
-							camera_set_sensor_info_to_af(obj->mCameraHandle, &sensor_info);
-						}
+	while(true == obj->mGyroInit){
+		q->waitForEvent();
+		if ((n = q->read(buffer, 8)) > 0) {
+			for (int i=0 ; i<n ; i++) {
+				memset((void*)&sensor_info, 0, sizeof(sensor_info));
+				switch(buffer[i].type) {
+				case Sensor::TYPE_GYROSCOPE:
+				{
+					sensor_info.type = CAMERA_AF_GYROSCOPE;
+					sensor_info.gyro_info.timestamp = buffer[i].timestamp;
+					sensor_info.gyro_info.x = buffer[i].data[0];
+					sensor_info.gyro_info.y = buffer[i].data[1];
+					sensor_info.gyro_info.z = buffer[i].data[2];
+					if (NULL != obj->mCameraHandle && SPRD_IDLE == obj->mCameraState.capture_state) {
+						camera_set_sensor_info_to_af(obj->mCameraHandle, &sensor_info);
 					}
+					break;
+				}
+
+				case Sensor::TYPE_ACCELEROMETER:
+				{
+					sensor_info.type = CAMERA_AF_ACCELEROMETER;
+					sensor_info.gsensor_info.timestamp = buffer[i].timestamp;
+					sensor_info.gsensor_info.vertical_up = buffer[i].data[0];
+					sensor_info.gsensor_info.vertical_down = buffer[i].data[1];
+					sensor_info.gsensor_info.horizontal = buffer[i].data[2];
+					if (NULL != obj->mCameraHandle) {
+						camera_set_sensor_info_to_af(obj->mCameraHandle, &sensor_info);
+					}
+					break;
+				}
+
+				default:
+					break;
 				}
 			}
-		}else{
-			HAL_LOGD("mGyroCamera:exit.");
-			break;
 		}
 	}
 
 	q->disableSensor(gyroscope);
+	q->disableSensor(gsensor);
 	obj->mGyroDeinit = 1;
 	//mgr.sensorManagerDied();
 	HAL_LOGD("X");
@@ -6337,129 +6359,15 @@ int SprdCamera3OEMIf::gyro_monitor_thread_deinit(void *p_data)
 		obj->mGyroInit = 0;
 		while(!obj->mGyroDeinit)
 		{
-			usleep(2*1000);
+			usleep(2000);
 		}
 		ret = pthread_join(obj->mGyroMsgQueHandle, &dummy);
 		obj->mGyroMsgQueHandle = 0;
 	}
+	HAL_LOGD("X inited=%d, Deinit = %d", obj->mGyroInit, obj->mGyroDeinit);
 
 	return ret ;
 }
 
-int SprdCamera3OEMIf::gsensorMonitorThreadInit(void *p_data)
-{
-	int ret = NO_ERROR;
-	pthread_attr_t attr;
-	SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
-
-	if (!obj) {
-		HAL_LOGE("obj null  error");
-		return -1;
-	}
-
-	HAL_LOGD("E mGSensorRunning = %d,", obj->mGSensorRunning);
-
-	if (!obj->mGSensorRunning) {
-		pthread_attr_init(&attr);
-		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-		ret = pthread_create(&obj->mGSensorMsgQueHandle,
-							&attr,
-							gsensorMonitorThreadProc,
-							(void *)obj);
-		if (ret) {
-			HAL_LOGE("fail to send init msg");
-		}
-	}
-
-	return ret;
-}
-
-void * SprdCamera3OEMIf::gsensorMonitorThreadProc(void *p_data)
-{
-	ssize_t n;
-	ASensorEvent buffer[8];
-	SprdCamera3OEMIf * obj = (SprdCamera3OEMIf *)p_data;
-	HAL_LOGD("E");
-
-	if (!obj) {
-		HAL_LOGE("obj null  error");
-		return NULL;
-	}
-	SensorManager&  mgr(SensorManager::getInstanceForPackage(String16("EIS intergrate")));
-
-	Sensor const* const* list;
-	ssize_t count = mgr.getSensorList(&list);
-	sp<SensorEventQueue> q = mgr.createEventQueue();
-	Sensor const* gsensor = mgr.getDefaultSensor(Sensor::TYPE_ACCELEROMETER);
-
-	uint32_t default_max_fps = 30;
-	uint32_t eventRate = default_max_fps;
-	if(NULL != obj->mCameraHandle) {
-		camera_get_sensor_max_fps(obj->mCameraHandle,obj->mCameraId,&eventRate);
-		if(0 == eventRate)
-		      eventRate = default_max_fps;
-		eventRate = 1000/eventRate;//fps->rate:ms
-	}
-	q->enableSensor(gsensor);
-	q->setEventRate(gsensor, ms2ns(eventRate));
-
-	struct cmr_af_aux_sensor_info sensor_info;
-	obj->mGSensorRunning = true;
-	obj->mGSensorIsStopped = false;
-	while(obj->mGSensorRunning){
-		q->waitForEvent();
-		if ((n = q->read(buffer, 8)) > 0) {
-			for (int i=0 ; i<n ; i++) {
-				memset((void*)&sensor_info, 0, sizeof(sensor_info));
-				if (buffer[i].type == Sensor::TYPE_ACCELEROMETER) {
-					HAL_LOGD("mGSensorCamera:%lld\t%8f\t%8f\t%8f\n",buffer[i].timestamp,buffer[i].data[0], buffer[i].data[1], buffer[i].data[2]);
-					sensor_info.type = CAMERA_AF_ACCELEROMETER;
-					sensor_info.gsensor_info.timestamp = buffer[i].timestamp;
-					sensor_info.gsensor_info.vertical_up = buffer[i].data[0];
-					sensor_info.gsensor_info.vertical_down = buffer[i].data[1];
-					sensor_info.gsensor_info.horizontal = buffer[i].data[2];
-					HAL_LOGD("mGSensorCamera:sensor type: from SensorManager %d to camera %d ",
-								Sensor::TYPE_ACCELEROMETER,sensor_info.type);
-					if (NULL != obj->mCameraHandle) {
-						camera_set_sensor_info_to_af(obj->mCameraHandle, &sensor_info);
-					}
-				}
-			}
-		}
-	}
-	obj->mGSensorIsStopped = true;
-
-	q->disableSensor(gsensor);
-	//mgr.sensorManagerDied();
-	HAL_LOGD("X");
-
-	return NULL;
-}
-
-int SprdCamera3OEMIf::gsensorMonitorThreadDeinit(void *p_data)
-{
-	int ret = NO_ERROR;
-	void *dummy;
-	SprdCamera3OEMIf * obj = (SprdCamera3OEMIf *)p_data;
-
-	if (!obj) {
-		HAL_LOGE("obj null error");
-		return UNKNOWN_ERROR;
-	}
-
-	HAL_LOGD("E mGSensorRunning = %d", obj->mGSensorRunning);
-
-	if (obj->mGSensorRunning) {
-		obj->mGSensorRunning = false;
-		while(obj->mGSensorIsStopped != true)
-		{
-			usleep(2*1000);
-		}
-		ret = pthread_join(obj->mGSensorMsgQueHandle, &dummy);
-		obj->mGSensorMsgQueHandle= 0;
-	}
-
-	return ret ;
-}
 #endif
 }

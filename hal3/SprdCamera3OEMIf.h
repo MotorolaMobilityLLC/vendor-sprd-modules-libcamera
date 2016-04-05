@@ -194,9 +194,6 @@ public:
 	static int		gyro_monitor_thread_init(void *p_data);
 	static int		gyro_monitor_thread_deinit(void *p_data);
 	static void*  gyro_monitor_thread_proc( void *p_data);
-	static int		gsensorMonitorThreadInit(void *p_data);
-	static int		gsensorMonitorThreadDeinit(void *p_data);
-	static void*		gsensorMonitorThreadProc( void *p_data);
 #endif
 
 private:
@@ -602,9 +599,6 @@ private:
 	bool                          mGyroInit;
 	bool                          mGyroDeinit;
 	pthread_t                     mGyroMsgQueHandle;
-	bool				mGSensorRunning;
-	bool				mGSensorIsStopped;
-	pthread_t			mGSensorMsgQueHandle;
 #endif
 };
 
