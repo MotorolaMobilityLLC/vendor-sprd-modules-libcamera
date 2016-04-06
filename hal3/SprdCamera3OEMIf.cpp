@@ -1915,8 +1915,13 @@ void SprdCamera3OEMIf::freeCameraMem(sprd_camera_memory_t* memory)
 {
 	if (memory) {
 		if (memory->ion_heap) {
+			HAL_LOGD("fd=0x%x, phys_addr=0x%lx, virt_addr=%p, size=0x%lx, heap=%p",
+						memory->fd, memory->phys_addr, memory->data, memory->phys_size,memory->ion_heap);
 			delete memory->ion_heap;
 			memory->ion_heap = NULL;
+		}else {
+			HAL_LOGD("memory->ion_heap is null:fd=0x%x, phys_addr=0x%lx, virt_addr=%p, size=0x%lx",
+						memory->fd, memory->phys_addr, memory->data, memory->phys_size);
 		}
 		free(memory);
 	}
