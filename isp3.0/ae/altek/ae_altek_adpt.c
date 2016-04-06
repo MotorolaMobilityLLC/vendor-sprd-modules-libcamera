@@ -1251,7 +1251,7 @@ static cmr_int aealtek_set_fix_sensitivity(struct aealtek_cxt *cxt_ptr, struct a
 	ISP_LOGI("sensitivity=%d", in_ptr->value);
 	sensitivity = in_ptr->value;
 
-	// TBD
+	cxt_ptr->sensor_exp_data.lib_exp.gain = sensitivity;
 
 	return ISP_SUCCESS;
 exit:
@@ -2931,13 +2931,20 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 		ISP_LOGE("param %p %p %p is NULL error!", cxt_ptr, in_ptr, out_ptr);
 		goto exit;
 	}
-	if (0 == in_ptr->sof_param.frame_index)
+	if (1 == in_ptr->sof_param.frame_index)
 		seq_reset(cxt_ptr->seq_handle);
+
+	if (4 == in_ptr->sof_param.frame_index) {
+		ret = aealtek_set_boost(cxt_ptr, 0);
+		if (ret)
+			ISP_LOGW("set boost failed !!!");
+	}
 
 	cxt_ptr->sensor_exp_data.actual_exp = cxt_ptr->sensor_exp_data.lib_exp;
 	cxt_ptr->sensor_exp_data.write_exp = cxt_ptr->sensor_exp_data.lib_exp;
 
-	ISP_LOGI("gain=%d, exp_line=%d, exp_time=%d", cxt_ptr->sensor_exp_data.write_exp.gain,
+	ISP_LOGI("sof_index:%ld,gain=%d, exp_line=%d, exp_time=%d", in_ptr->sof_param.frame_index,
+				cxt_ptr->sensor_exp_data.write_exp.gain,
 				cxt_ptr->sensor_exp_data.write_exp.exp_line,
 				cxt_ptr->sensor_exp_data.write_exp.exp_time);
 
@@ -2964,7 +2971,11 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 		out_write = in_est.cell;
 	}
 
-	ISP_LOGI("out_actual exp_line=%d, exp_time=%d", out_actual.exp_line, out_actual.exp_time);
+	ISP_LOGI("out_actual exp_line=%d, exp_time=%d, gain=%d", out_actual.exp_line, out_actual.exp_time, out_actual.gain);
+
+	if (0 == out_actual.exp_line || 0 == out_actual.gain) {
+		out_actual = in_est.cell;
+	}
 
 	cxt_ptr->sensor_exp_data.actual_exp.exp_line = out_actual.exp_line;
 	cxt_ptr->sensor_exp_data.actual_exp.exp_time = out_actual.exp_time;
@@ -3668,6 +3679,10 @@ static cmr_int ae_altek_adpt_init(void *in, void *out, cmr_handle *handle)
 	ret = aealtek_get_tuning_data(cxt_ptr);
 	if (ret)
 		ISP_LOGW("get tuning data failed %ld", ret);
+
+	ret = aealtek_set_boost(cxt_ptr, 1);
+	if (ret)
+		ISP_LOGW("set boost failed !!!");
 
 	*handle = (cmr_handle)cxt_ptr;
 	cxt_ptr->is_inited = 1;
