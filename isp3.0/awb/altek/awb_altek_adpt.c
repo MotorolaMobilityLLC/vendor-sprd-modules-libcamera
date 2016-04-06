@@ -479,7 +479,7 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 	if (cxt->lib_func.obj_verification != sizeof(struct allib_awb_output_data_t)) {
 		ISP_LOGE("AWB structure isn't match");
 	}
-	//get versiong
+	/* get version */
 	cxt->ops.get_version(&awb_version);
 	ISP_LOGI("awb version, major %d, minor %d", awb_version.major_version, awb_version.minor_version);
 
@@ -496,13 +496,13 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 	}
 	cxt->callback = input_ptr->awb_cb;
 
-	//initialize
+	/* initialize */
 	ret = (cmr_int)cxt->lib_func.initial(&cxt->lib_func);
 	if (ret) {
 		ISP_LOGE("failed to initialize %lx", ret);
 	}
 
-	//test pattern
+	/* test pattern */
 	set_param.type = alawb_set_param_test_fix_patten;
 	set_param.para.test_fix_patten = 0;
 	ret = (cmr_int)cxt->lib_func.set_param(&set_param, cxt->lib_func.awb);
@@ -510,7 +510,7 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 		ISP_LOGE("failed to set otp %lx", ret);
 	}
 
-	//set OTP
+	/* set OTP */
 	set_otp_param.type = alawb_set_param_camera_calib_data;
 	if (0 == input_ptr->calibration_gain.r
 		&& 0 == input_ptr->calibration_gain.g
@@ -539,7 +539,7 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 			ISP_LOGE("failed to set tuning file %lx", ret);
 		}
 	}
-	//get isp cfg
+	/* get isp cfg */
 	get_isp_cfg.type = alawb_get_param_init_isp_config;
 	ret = (cmr_int)cxt->lib_func.get_param(&get_isp_cfg, cxt->lib_func.awb);
 	if (ret) {
@@ -588,14 +588,7 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 		output_ptr->hw_cfg.t_his.ucoffsetpurple,
 		output_ptr->hw_cfg.t_his.ucyfac_w);
 
-#if 0
-	//set file TBD
-	ret = (cmr_int)al3AWrapperAWB_SetCameraInfoFile(input_ptr->tuning_param, &cxt->lib_func);
-	if (ret) {
-		ISP_LOGE("failed to set file %ld", ret);
-	}
-#endif
-	//set default setting
+	/* set default setting */
 	set_param.type = alawb_set_param_awb_mode_setting;
 	set_param.para.awb_mode_setting.wbmode_type = AL3A_WB_MODE_AUTO;
 	set_param.para.awb_mode_setting.manual_ct = 0;
@@ -604,7 +597,7 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 		ISP_LOGE("failed to set mode %lx %ld", ret, (cmr_int)cxt->lib_func.awb);
 	}
 
-	//set response setting
+	/* set response setting */
 	set_param.type = alawb_set_param_response_setting;
 	set_param.para.awb_response_setting.response_type = alawb_response_stable;
 	set_param.para.awb_response_setting.response_level = alawb_response_level_normal;
@@ -613,7 +606,7 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 		ISP_LOGE("failed to set response setting %lx", ret);
 		goto exit;
 	}
-	//get init param
+	/* get init param */
 	get_init_param.type = alawb_get_param_init_setting;
 	ret = cxt->lib_func.get_param(&get_init_param, cxt->lib_func.awb);
 	if (ret) {
@@ -630,26 +623,17 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 	ISP_LOGI("gain %d, %d, %d, %d", output_ptr->gain.r, output_ptr->gain.g, output_ptr->gain.b, output_ptr->ct);
 
 	set_param.type = alawb_set_param_awb_debug_mask;
-    set_param.para.awb_debug_mask = alawb_dbg_none;
-    ret = cxt->lib_func.set_param(&set_param, cxt->lib_func.awb);
+	set_param.para.awb_debug_mask = alawb_dbg_none;
+	ret = cxt->lib_func.set_param(&set_param, cxt->lib_func.awb);
 	if (ret) {
 		ISP_LOGE("failed to set debug %lx", ret);
 		goto exit;
 	}
-#if 0
-	//set SOF index
-	set_param.type = alawb_set_param_sys_sof_frame_idx;
-	set_param.para.sys_sof_frame_idx = 0;
+
+	/* update Digital zoom factor if changed */
+	set_param.type = alawb_set_param_dzoom_factor;
+	set_param.para.dzoom_factor = 1.0;               //. default 1.0x
 	ret = cxt->lib_func.set_param(&set_param, cxt->lib_func.awb);
-	if (ret) {
-		ISP_LOGE("failed to set sof frame %lx", ret);
-		goto exit;
-	}
-#endif
-	//update Digital zoom factor if changed
-    set_param.type = alawb_set_param_dzoom_factor;
-    set_param.para.dzoom_factor = 1.0;               //. default 1.0x
-    ret = cxt->lib_func.set_param(&set_param, cxt->lib_func.awb);
 	if (ret) {
 		ISP_LOGE("failed to set dzoom %lx", ret);
 		goto exit;
@@ -733,27 +717,15 @@ cmr_int awbaltek_open_pre_flash(cmr_handle adpt_handle)
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
 	struct allib_awb_set_parameter_t            input;
-#if 0
-	if (1 == cxt->is_lock) {
-		ISP_LOGI("unlock awb");
-		input.type = alawb_set_param_manual_flow;
-		input.para.awb_manual_flow.manual_setting = alawb_flow_none;
-		ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
-		if (ret) {
-			ISP_LOGE("failed to unclock %lx", ret);
-		} else {
-			cxt->is_lock = 0;
-		}
-	}
-#endif
-	//set flash state
+
+	/* set flash state */
 	input.type = alawb_set_param_state_under_flash;
 	input.para.state_under_flash = alawb_set_flash_under_flashon;
 	ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
 	if (ret) {
 		ISP_LOGE("failed to set flash state %lx", ret);
 	}
-	//set response level
+	/* set response level */
 	input.type = alawb_set_param_response_setting;
 	input.para.awb_response_setting.response_type = alawb_response_quick_act;
 	input.para.awb_response_setting.response_level = alawb_response_level_normal;
@@ -873,13 +845,13 @@ cmr_int awbaltek_process(cmr_handle adpt_handle ,struct awb_ctrl_process_in *inp
 		goto exit;
 	}
 	if (cxt->lib_func.estimation && cxt->lib_func.set_param) {
-		//dispatch stats
+		/* dispatch stats */
 		ret = al3awrapper_dispatchhw3a_awbstats(input_ptr->statistics_data->addr, (void*)(&cxt->awb_stats));
 		if (ret) {
 			ISP_LOGE("failed to dispatch stats %lx", ret);
 		}
 
-		//set ae param
+		/* set ae param */
 		set_param.type = alawb_set_param_update_ae_report;
 		set_param.para.ae_report_update.ae_state = input_ptr->ae_info.report_data.ae_state;
 		set_param.para.ae_report_update.ae_converge = input_ptr->ae_info.report_data.ae_converge_st;
@@ -912,7 +884,7 @@ cmr_int awbaltek_process(cmr_handle adpt_handle ,struct awb_ctrl_process_in *inp
 		if (ret) {
 			ISP_LOGE("failed to set ae information %lx", ret);
 		}
-		//estimation
+		/* estimation */
 		ret = (cmr_int)cxt->lib_func.estimation((void*)(&cxt->awb_stats), cxt->lib_func.awb, &cxt->cur_process_out);
 		if (ret) {
 			ISP_LOGE("failed %ld", ret);
@@ -940,24 +912,8 @@ cmr_int awbaltek_process(cmr_handle adpt_handle ,struct awb_ctrl_process_in *inp
 			output_ptr->light_source = cxt->cur_process_out.light_source;
 			output_ptr->awb_states = AWB_CTRL_STATUS_NORMAL;
 			if (AL3A_WB_STATE_PREPARE_UNDER_FLASHON_DONE == report_ptr->awb_states
-				|| AL3A_WB_STATE_UNDER_FLASHON_AWB_DONE == report_ptr->awb_states) {
-				union awb_ctrl_cmd_in input;
-
-#if 0
-				ISP_LOGI("lock awb");
-				input.lock_param.lock_flag = 1;
-				input.lock_param.wbgain.r = 0;
-				input.lock_param.wbgain.g = 0;
-				input.lock_param.wbgain.b = 0;
-				awbaltek_ioctrl(adpt_handle, AWB_CTRL_CMD_LOCK, &input, NULL);
-				if (cxt->callback) {
-					ISP_LOGI("awb converge");
-					cxt->callback(cxt->caller_handle, AWB_CTRL_CB_CONVERGE, NULL);
-				}
-#else
+				|| AL3A_WB_STATE_UNDER_FLASHON_AWB_DONE == report_ptr->awb_states)
 				output_ptr->awb_states = AWB_CTRL_STATUS_CONVERGE;
-#endif
-			}
 			ISP_LOGI("awb mode %d, gain %d %d %d, gain_blanced %d %d %d",
 				     output_ptr->awb_mode,output_ptr->gain.r, output_ptr->gain.g, output_ptr->gain.b,
 				     output_ptr->gain_balanced.r, output_ptr->gain_balanced.g, output_ptr->gain_balanced.b);

@@ -433,7 +433,6 @@ cmr_int isp3a_awb_callback(cmr_handle handle, enum ae_ctrl_cb_type cmd, struct a
 
 	switch (cmd) {
 	case AWB_CTRL_CB_CONVERGE:
-		//TBD,need to confirm with AE
 		cxt->awb_cxt.awb_status = AWB_CTRL_STATUS_CONVERGE;
 		break;
 	default:
@@ -673,7 +672,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 	cxt = (struct isp3a_fw_context *)isp_3a_handle;
 
 	cxt->af_cxt.af_support = !!cxt->ioctrl_ptr->set_focus;
-	//OTP TBD
+
 	memset(&af_input, 0x00, sizeof(af_input));
 	af_input.camera_id = input_ptr->camera_id;
 	af_input.af_lib_info = input_ptr->af_config;
@@ -745,7 +744,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 	ae_input.ops_in.flash_set_time = isp3a_flash_set_time;
 	ae_input.ops_in.set_exposure = isp3a_set_exposure;
 	ae_input.ops_in.release_stat_buffer = isp3a_release_statistics_buf;
-#if 1
+
 	ae_input.sensor_static_info.f_num = input_ptr->ex_info.f_num;
 	ae_input.sensor_static_info.exposure_valid_num = input_ptr->ex_info.exp_valid_frame_num;
 	ae_input.sensor_static_info.gain_valid_num = input_ptr->ex_info.adgain_valid_frame_num;
@@ -754,8 +753,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 	ae_input.sensor_static_info.max_fps = input_ptr->ex_info.max_fps;
 	ae_input.sensor_static_info.max_gain = input_ptr->ex_info.max_adgain;
 	ae_input.sensor_static_info.ois_supported = input_ptr->ex_info.ois_supported;
-#endif
-#if 1 //TBD
+
 	ae_input.preview_work.work_mode = 0;
 	ae_input.preview_work.resolution.frame_size.w = sensor_raw_info_ptr->resolution_info_ptr->tab[1].width;
 	ae_input.preview_work.resolution.frame_size.h = sensor_raw_info_ptr->resolution_info_ptr->tab[1].height;
@@ -764,7 +762,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 	ae_input.preview_work.resolution.max_fps = input_ptr->ex_info.max_fps;
 	ae_input.preview_work.resolution.max_gain = input_ptr->ex_info.max_adgain;
 	ae_input.preview_work.resolution.sensor_size_index = 1;
-#endif
+
 	ae_input.tuning_param = input_ptr->bin_info.ae_addr;
 	if (cxt->otp_data) {
 		ae_input.otp_data.r = cxt->otp_data->isp_awb_info.gain_r;
@@ -866,7 +864,7 @@ cmr_int isp3a_ctrl_thread_proc(struct cmr_msg *message, void* p_data)
 		break;
 	case ISP3A_CTRL_EVT_START:
 		break;
-	case ISP3A_CTRL_EVT_STOP://NA
+	case ISP3A_CTRL_EVT_STOP:
 		break;
 	case ISP3A_CTRL_EVT_IOCTRL:
 		ret = isp3a_ioctrl((cmr_handle)cxt, message->sub_msg_type, message->data);
@@ -1045,7 +1043,7 @@ cmr_int isp3a_destroy_receiver_thread(cmr_handle isp_3a_handle)
 		goto exit;
 	}
 
-	//notice kernel destroy thread
+	/* notice kernel destroy thread */
 
 	isp3a_thread_cxt->receiver_thr_handle =(pthread_t)NULL;
 
@@ -1996,7 +1994,7 @@ cmr_int isp3a_set_ae_awb_lock(cmr_handle isp_3a_handle, void *param_ptr)
 		ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_PAUSE, NULL, NULL);
 		awb_in.lock_param.lock_flag = 1;
 		awb_in.lock_param.ct = 0;
-		awb_in.lock_param.wbgain.r = 0;//[TBD]
+		awb_in.lock_param.wbgain.r = 0;
 		awb_in.lock_param.wbgain.g = 0;
 		awb_in.lock_param.wbgain.b = 0;
 		ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_LOCK, &awb_in, NULL);
@@ -2166,24 +2164,24 @@ cmr_int isp3a_get_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr)
 //	exif_ptr->main_ver_minor =   //TBD confirm with Mark
 	if (cxt->otp_data) {
 		exif_ptr->otp_report_debug_info1.current_module_calistatus = cxt->otp_data->program_flag;
-	    exif_ptr->otp_report_debug_info1.current_module_year = cxt->otp_data->module_info.year;
-	    exif_ptr->otp_report_debug_info1.current_module_month = cxt->otp_data->module_info.month;
+		exif_ptr->otp_report_debug_info1.current_module_year = cxt->otp_data->module_info.year;
+		exif_ptr->otp_report_debug_info1.current_module_month = cxt->otp_data->module_info.month;
 		exif_ptr->otp_report_debug_info1.current_module_day = cxt->otp_data->module_info.day;
-	    exif_ptr->otp_report_debug_info1.current_module_mid = cxt->otp_data->module_info.mid;
-	    exif_ptr->otp_report_debug_info1.current_module_lens_id = cxt->otp_data->module_info.lens_id;
-	    exif_ptr->otp_report_debug_info1.current_module_vcm_id = cxt->otp_data->module_info.vcm_id;
-	    exif_ptr->otp_report_debug_info1.current_module_driver_ic = cxt->otp_data->module_info.driver_ic_id;
-	    exif_ptr->otp_report_debug_info1.current_module_iso = cxt->otp_data->isp_awb_info.iso;
-	    exif_ptr->otp_report_debug_info1.current_module_r_gain = cxt->otp_data->isp_awb_info.gain_r;
-	    exif_ptr->otp_report_debug_info1.current_module_g_gain = cxt->otp_data->isp_awb_info.gain_g;
-	    exif_ptr->otp_report_debug_info1.current_module_b_gain = cxt->otp_data->isp_awb_info.gain_b;
-	    exif_ptr->otp_report_debug_info1.current_module_af_flag = cxt->otp_data->af_info.flag;
-	    exif_ptr->otp_report_debug_info1.current_module_infinity = cxt->otp_data->af_info.infinite_cali;
-	    exif_ptr->otp_report_debug_info1.current_module_macro = cxt->otp_data->af_info.macro_cali;
-	    exif_ptr->otp_report_debug_info1.total_check_sum = cxt->otp_data->checksum;
-	} else {
+		exif_ptr->otp_report_debug_info1.current_module_mid = cxt->otp_data->module_info.mid;
+		exif_ptr->otp_report_debug_info1.current_module_lens_id = cxt->otp_data->module_info.lens_id;
+		exif_ptr->otp_report_debug_info1.current_module_vcm_id = cxt->otp_data->module_info.vcm_id;
+		exif_ptr->otp_report_debug_info1.current_module_driver_ic = cxt->otp_data->module_info.driver_ic_id;
+		exif_ptr->otp_report_debug_info1.current_module_iso = cxt->otp_data->isp_awb_info.iso;
+		exif_ptr->otp_report_debug_info1.current_module_r_gain = cxt->otp_data->isp_awb_info.gain_r;
+		exif_ptr->otp_report_debug_info1.current_module_g_gain = cxt->otp_data->isp_awb_info.gain_g;
+		exif_ptr->otp_report_debug_info1.current_module_b_gain = cxt->otp_data->isp_awb_info.gain_b;
+		exif_ptr->otp_report_debug_info1.current_module_af_flag = cxt->otp_data->af_info.flag;
+		exif_ptr->otp_report_debug_info1.current_module_infinity = cxt->otp_data->af_info.infinite_cali;
+		exif_ptr->otp_report_debug_info1.current_module_macro = cxt->otp_data->af_info.macro_cali;
+		exif_ptr->otp_report_debug_info1.total_check_sum = cxt->otp_data->checksum;
+	} else
 		memset(&exif_ptr->otp_report_debug_info1, 0, sizeof(struct otp_report_debug1));
-	}
+
 	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_GET_EXT_DEBUG_INFO, NULL, &ae_out);
 	if (ret) {
 		ISP_LOGE("failed to get ae ext info 0x%lx", ret);
@@ -2308,7 +2306,7 @@ cmr_int isp3a_init_statistics_buf(cmr_handle isp_3a_handle)
 		goto exit;
 	}
 
-	//init AE stats buf
+	/* init AE stats buf */
 	buf_head = &cxt->ae_cxt.statistics_buffer[0];
 	for (i=0 ; i<ISP3A_STATISTICS_BUF_NUM ; i++) {
 		cmr_bzero((void*)&buf_head[i], sizeof(struct isp3a_statistics_data));
@@ -2317,7 +2315,7 @@ cmr_int isp3a_init_statistics_buf(cmr_handle isp_3a_handle)
 		ISP_LOGV("ae: i=%d size=%d addr = %lx", i, buf_head[i].size, (cmr_int)buf_head[i].addr);
 	}
 
-	//init AWB stats buf
+	/* init AWB stats buf */
 	buf_head = &cxt->awb_cxt.statistics_buffer[0];
 	for (i=0 ; i<ISP3A_STATISTICS_BUF_NUM ; i++) {
 		cmr_bzero((void*)&buf_head[i], sizeof(struct isp3a_statistics_data));
@@ -2326,7 +2324,7 @@ cmr_int isp3a_init_statistics_buf(cmr_handle isp_3a_handle)
 		ISP_LOGV("awb: i=%d size=%d addr = %lx", i, buf_head[i].size, (cmr_int)buf_head[i].addr);
 	}
 
-	//init AF stats buf
+	/* init AF stats buf */
 	buf_head = &cxt->af_cxt.statistics_buffer[0];
 	for (i=0 ; i<ISP3A_STATISTICS_BUF_NUM ; i++) {
 		cmr_bzero((void*)&buf_head[i], sizeof(struct isp3a_statistics_data));
@@ -2335,7 +2333,7 @@ cmr_int isp3a_init_statistics_buf(cmr_handle isp_3a_handle)
 		ISP_LOGV("af: i=%d size=%d addr = %lx", i, buf_head[i].size, (cmr_int)buf_head[i].addr);
 	}
 
-	//init AFL stats buf
+	/* init AFL stats buf */
 	buf_head = &cxt->afl_cxt.statistics_buffer[0];
 	for (i=0 ; i<ISP3A_STATISTICS_AFL_BUF_NUM ; i++) {
 		cmr_bzero((void*)&buf_head[i], sizeof(struct isp3a_statistics_data));
@@ -2344,7 +2342,7 @@ cmr_int isp3a_init_statistics_buf(cmr_handle isp_3a_handle)
 		ISP_LOGV("afl: i=%d size=%d addr = %lx", i, buf_head[i].size, (cmr_int)buf_head[i].addr);
 	}
 
-	//init subsample stats buf
+	/* init subsample stats buf */
 	buf_head = &cxt->other_stats_cxt.sub_sample_buffer[0];
 	for (i=0 ; i<ISP3A_STATISTICS_BUF_NUM ; i++) {
 		cmr_bzero((void*)&buf_head[i], sizeof(struct isp3a_statistics_data));
@@ -2353,7 +2351,7 @@ cmr_int isp3a_init_statistics_buf(cmr_handle isp_3a_handle)
 		ISP_LOGV("sub sample: i=%d size=%d addr = %lx", i, buf_head[i].size, (cmr_int)buf_head[i].addr);
 	}
 
-	//init yhis stats buf
+	/* init yhis stats buf */
 	buf_head = &cxt->other_stats_cxt.yhis_buffer[0];
 	for (i=0 ; i<ISP3A_STATISTICS_BUF_NUM ; i++) {
 		cmr_bzero((void*)&buf_head[i], sizeof(struct isp3a_statistics_data));
@@ -2527,7 +2525,7 @@ exit:
 	return ret;
 }
 
-cmr_int isp3a_put_statistics_buf(cmr_handle isp_3a_handle, cmr_int type, struct isp3a_statistics_data *buf_ptr)//reserved
+cmr_int isp3a_put_statistics_buf(cmr_handle isp_3a_handle, cmr_int type, struct isp3a_statistics_data *buf_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	cmr_u32                                     i = 0;
@@ -2775,11 +2773,11 @@ cmr_int isp3a_handle_stats(cmr_handle isp_3a_handle, void *data)
 	struct isp_statis_frame_output              *dev_stats = (struct isp_statis_frame_output*)data;
 	cmr_u32                                     is_set_stats_buf = 0;
 	cmr_int                                     test_tbd;
-	//get buffer
+	/* get buffer */
 	ret = isp3a_get_3a_stats_buf(isp_3a_handle);
 	if (ret) {
 		ISP_LOGE("failed to get stats buf");
-		//free stats buf to isp drv
+		/* free stats buf to isp drv */
 		statis_buf.buf_size = input_buf_ptr->buf_size;
 		statis_buf.phy_addr = input_buf_ptr->phy_addr;
 		statis_buf.vir_addr = input_buf_ptr->vir_addr;
@@ -2791,7 +2789,7 @@ cmr_int isp3a_handle_stats(cmr_handle isp_3a_handle, void *data)
 		is_set_stats_buf = 1;
 		goto exit;
 	}
-	//dispatch stats information
+	/* dispatch stats information */
 	ae_stats_buf_ptr = cxt->stats_buf_cxt.ae_stats_buf_ptr;
 	awb_stats_buf_ptr = cxt->stats_buf_cxt.awb_stats_buf_ptr;
 	af_stats_buf_ptr = cxt->stats_buf_cxt.af_stats_buf_ptr;
@@ -2808,7 +2806,7 @@ cmr_int isp3a_handle_stats(cmr_handle isp_3a_handle, void *data)
 		ret = isp3a_put_3a_stats_buf(isp_3a_handle);
 		goto exit;
 	}
-	//free stats buf to isp drv
+	/* free stats buf to isp drv */
 	statis_buf.buf_size = input_buf_ptr->buf_size;
 	statis_buf.phy_addr = input_buf_ptr->phy_addr;
 	statis_buf.vir_addr = input_buf_ptr->vir_addr;
@@ -2819,23 +2817,23 @@ cmr_int isp3a_handle_stats(cmr_handle isp_3a_handle, void *data)
 	}
 	is_set_stats_buf = 1;
 
-	//start YHIS process
+	/* start YHIS process */
 	ret= isp3a_start_yhis_process(isp_3a_handle, yhis_stats_buf_ptr);
 	if (ret) {
 		ISP_LOGE("failed to start afl process");
 	}
 
-	//start AE process
+	/* start AE process */
 	ret= isp3a_start_ae_process(isp_3a_handle, ae_stats_buf_ptr);
 	if (ret) {
 		ISP_LOGE("failed to start ae process");
 	}
-	//start AF process
+	/* start AF process */
 	ret= isp3a_start_af_process(isp_3a_handle, af_stats_buf_ptr);
 	if (ret) {
 		ISP_LOGE("failed to start af process");
 	}
-	//start AFl process
+	/* start AFl process */
 	ret= isp3a_start_afl_process(isp_3a_handle, afl_stats_buf_ptr);
 	if (ret) {
 		ISP_LOGE("failed to start afl process");
@@ -2843,7 +2841,7 @@ cmr_int isp3a_handle_stats(cmr_handle isp_3a_handle, void *data)
 
 exit:
 	if (0 == is_set_stats_buf) {
-		//free stats buf to isp drv
+		/* free stats buf to isp drv */
 		statis_buf.buf_size = input_buf_ptr->buf_size;
 		statis_buf.phy_addr = input_buf_ptr->phy_addr;
 		statis_buf.vir_addr = input_buf_ptr->vir_addr;
@@ -3025,10 +3023,6 @@ cmr_int isp3a_start_awb_process(cmr_handle isp_3a_handle, struct isp3a_statistic
 
 	input.statistics_data = stats_data;
 	memcpy(&input.ae_info, ae_info, sizeof(struct isp3a_ae_info));
-//	input.awb_process_type = AWB_CTRL_RESPONSE_STABLE;
-//	input.response_level = AWB_CTRL_RESPONSE_NORMAL;
-//	input.report = ae_info->proc_out.priv_data;
-//	input.report_size = ae_info->proc_out.priv_size;
 	isp3a_hold_statistics_buf(isp_3a_handle, ISP3A_AWB, stats_data);
 	ret = awb_ctrl_process(cxt->awb_cxt.handle, &input, &output);
 	if (ret) {
@@ -3071,7 +3065,7 @@ cmr_int isp3a_handle_ae_result(cmr_handle isp_3a_handle, struct ae_ctrl_callback
 	return ret;
 }
 
-cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start* input_ptr)
+cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start *input_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
@@ -3101,7 +3095,7 @@ cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start* input_ptr)
 		ISP_LOGE("failed to set work to AE");
 		goto exit;
 	}
-	//HW AE cfg  TBD
+	/* HW AE cfg */
 	awb_in.work_param.work_mode = input_ptr->work_mode;
 	awb_in.work_param.capture_mode = input_ptr->capture_mode;
 	awb_in.work_param.sensor_size.w = input_ptr->resolution_info.crop.width;
@@ -3110,8 +3104,6 @@ cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start* input_ptr)
 	if (ret) {
 		ISP_LOGE("failed to set work mode to AWB");
 		goto exit;
-	} else {
-//		cxt->awb_cxt.hw_cfg = awb_out.hw_cfg;
 	}
 
 	afl_in.work_param.work_mode = input_ptr->work_mode;
@@ -3151,7 +3143,6 @@ void isp3a_test_stat_buf(cmr_handle isp_3a_handle)
 	cmr_int                                     ret =0;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
 
-	//test get
 	for (i=0 ; i<(ISP3A_STATISTICS_BUF_NUM+1) ; i++) {
 		ret = isp3a_get_statistics_buf((cmr_handle)cxt, ISP3A_AWB, &cxt->stats_buf_cxt.awb_stats_buf_ptr);
 		if (ret) {
@@ -3160,7 +3151,7 @@ void isp3a_test_stat_buf(cmr_handle isp_3a_handle)
 	}
 	isp3a_deinit_statistics_buf(isp_3a_handle);
 	ISP_LOGI("test get stats buf done");
-	//
+
 	ret = isp3a_init_statistics_buf(isp_3a_handle);
 	if (ret) {
 		ISP_LOGE("failed to init stats buffer");
@@ -3175,7 +3166,7 @@ void isp3a_test_stat_buf(cmr_handle isp_3a_handle)
 	}
 	isp3a_deinit_statistics_buf(isp_3a_handle);
 	ISP_LOGI("test get-put stats buf done");
-	//
+
 	ret = isp3a_init_statistics_buf(isp_3a_handle);
 	if (ret) {
 		ISP_LOGE("failed to init stats buffer");
@@ -3195,7 +3186,7 @@ exit:
 	ISP_LOGI("test get stats buffer done");
 }
 /*************************************EXTERNAL FUNCTION ***************************************/
-cmr_int isp_3a_fw_init(struct isp_3a_fw_init_in* input_ptr, cmr_handle* isp_3a_handle)
+cmr_int isp_3a_fw_init(struct isp_3a_fw_init_in *input_ptr, cmr_handle *isp_3a_handle)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = NULL;
@@ -3447,26 +3438,26 @@ cmr_int isp_3a_fw_get_dldseq(cmr_handle isp_3a_handle, struct isp_3a_get_dld_in 
 	data->uc_sensor_id = cxt->camera_id;
 	switch (input->op_mode) {
 	case ISP3A_OPMODE_NORMALLV:
-		// W9 config
+		/* W9 config */
 		data->ucpreview_basic_dsdseqlen = 4;
 		data->aucpreview_basic_dldseq[0] = HA3ACTRL_B_DL_TYPE_AE;
 		data->aucpreview_basic_dldseq[1] = HA3ACTRL_B_DL_TYPE_AWB;
 		data->aucpreview_basic_dldseq[2] = HA3ACTRL_B_DL_TYPE_AF;
 		data->aucpreview_basic_dldseq[3] = HA3ACTRL_B_DL_TYPE_AWB;
-		// W10 config
+		/* W10 config */
 		data->ucpreview_adv_dldseqlen = 1;
 		data->aucpreview_adv_dldseq[0] = HA3ACTRL_B_DL_TYPE_AntiF;
-		// W9
+		/* W9 */
 		data->ucfastcoverge_basic_dldseqlen = 0;
 		data->aucfastconverge_basic_dldseq[0] = HA3ACTRL_B_DL_TYPE_NONE;
-		// W10
+		/* W10 */
 		break;
 	case ISP3A_OPMODE_AF_FLASH_AF:
-		// W9 config
+		/* W9 config */
 		data->ucpreview_basic_dsdseqlen = 2;
 		data->aucpreview_basic_dldseq[0] = HA3ACTRL_B_DL_TYPE_AF;
 		data->aucpreview_basic_dldseq[1] = HA3ACTRL_B_DL_TYPE_AF;
-		// W10 config
+		/* W10 config */
 		data->ucpreview_adv_dldseqlen = 1;
 		data->aucpreview_adv_dldseq[0] = HA3ACTRL_B_DL_TYPE_Sub;
 
@@ -3474,11 +3465,11 @@ cmr_int isp_3a_fw_get_dldseq(cmr_handle isp_3a_handle, struct isp_3a_get_dld_in 
 		data->aucfastconverge_basic_dldseq[0] = HA3ACTRL_B_DL_TYPE_NONE;
 		break;
 	case ISP3A_OPMODE_FLASH_AE:
-		// W9 config
+		/* W9 config */
 		data->ucpreview_basic_dsdseqlen = 2;
 		data->aucpreview_basic_dldseq[0] = HA3ACTRL_B_DL_TYPE_AE;
 		data->aucpreview_basic_dldseq[1] = HA3ACTRL_B_DL_TYPE_AWB;
-		// W10 config
+		/* W10 config */
 		data->ucpreview_adv_dldseqlen = 1;
 		data->aucpreview_adv_dldseq[0] = HA3ACTRL_B_DL_TYPE_AntiF;
 
@@ -3513,7 +3504,6 @@ cmr_int isp3a_get_yhist_info(cmr_handle isp_3a_handle, void *param_ptr)
 	struct isp_yhist_info                       *info_ptr = (struct isp_yhist_info*)param_ptr;
 	struct af_ctrl_param_out                    af_out;
 
-	//ISP_LOGI("%p", param_ptr);
 	bzero(&af_out, sizeof(af_out));
 	ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_GET_YHIST, NULL, &af_out);
 	if (!ret) {

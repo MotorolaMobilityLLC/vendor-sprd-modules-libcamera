@@ -2013,7 +2013,7 @@ static cmr_int aealtek_work_preview(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 	if (ret)
 		ISP_LOGW("warning set_min_frame ret=%ld !!!", ret);
 
-	//preview_sensor_info
+	/* preview_sensor_info */
 	preview_sensor_ptr = &param_ct_ptr->normal_sensor_info;
 	ret = aealtek_sensor_info_ui2lib(cxt_ptr, &in_ptr->work_param.resolution, preview_sensor_ptr);
 	if (ret)
@@ -2028,7 +2028,7 @@ static cmr_int aealtek_work_preview(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 		goto exit;
 	}
 
-	//SET_PARAM_REGEN_EXP_INFO
+	/* SET_PARAM_REGEN_EXP_INFO */
 	type = AE_SET_PARAM_REGEN_EXP_INFO;
 	set_in_param.ae_set_param_type = type;
 	if (obj_ptr && obj_ptr->set_param)
@@ -2148,7 +2148,7 @@ static cmr_int aealtek_capture_hdr(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 	output_data_ptr = &cxt_ptr->lib_data.output_data;
 	param_ct_ptr = &set_in_param.set_param;
 
-	/*get 3 exposure time & gain*/
+	/* get 3 exposure time & gain */
 	param_ct_ptr->ae_bracket_param.valid_exp_num = 3;
 	param_ct_ptr->ae_bracket_param.bracket_evComp[0] = -1000;
 	param_ct_ptr->ae_bracket_param.bracket_evComp[1] =  0;
@@ -2163,7 +2163,7 @@ static cmr_int aealtek_capture_hdr(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 		goto exit;
 	}
 
-	//capture_sensor_info
+	/* capture_sensor_info */
 	cap_sensor_ptr = &param_ct_ptr->capture_sensor_info;
 	ret = aealtek_sensor_info_ui2lib(cxt_ptr, &in_ptr->work_param.resolution, cap_sensor_ptr);
 	if (ret)
@@ -2179,7 +2179,7 @@ static cmr_int aealtek_capture_hdr(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 		goto exit;
 	}
 
-	//SET_PARAM_REGEN_EXP_INFO
+	/* SET_PARAM_REGEN_EXP_INFO */
 	type = AE_SET_PARAM_REGEN_EXP_INFO;
 	set_in_param.ae_set_param_type = type;
 	if (obj_ptr && obj_ptr->set_param)
@@ -2235,7 +2235,7 @@ static cmr_int aealtek_capture_normal(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 	output_data_ptr = &cxt_ptr->lib_data.output_data;
 	param_ct_ptr = &set_in_param.set_param;
 
-	//capture_sensor_info
+	/* capture_sensor_info */
 	cap_sensor_ptr = &param_ct_ptr->capture_sensor_info;
 	ret = aealtek_sensor_info_ui2lib(cxt_ptr, &in_ptr->work_param.resolution, cap_sensor_ptr);
 	if (ret)
@@ -2251,7 +2251,7 @@ static cmr_int aealtek_capture_normal(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 		goto exit;
 	}
 
-	//SET_PARAM_REGEN_EXP_INFO
+	/* SET_PARAM_REGEN_EXP_INFO */
 	type = AE_SET_PARAM_REGEN_EXP_INFO;
 	set_in_param.ae_set_param_type = type;
 	if (obj_ptr && obj_ptr->set_param)
@@ -4089,7 +4089,7 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 
 	aealtek_change_ae_state(cxt_ptr, cxt_ptr->ae_state, ISP3A_AE_CTRL_ST_SEARCHING);
 
-	/*touch*/
+	/* touch */
 	if (cxt_ptr->touch_param.touch_flag) {
 		if (cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_roi_change_st)
 			cxt_ptr->touch_param.ctrl_roi_changed_flag = 1;
@@ -4097,7 +4097,7 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 		ISP_LOGI("======touch_req =%d,%d,%d",cxt_ptr->touch_param.ctrl_convergence_req_flag,
 				cxt_ptr->touch_param.ctrl_roi_changed_flag,cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_LibStates);
 
-		/*wait roi converged command*/
+		/* wait roi converged command */
 		if (cxt_ptr->touch_param.ctrl_convergence_req_flag) {
 			is_special_converge_flag = 1;
 
