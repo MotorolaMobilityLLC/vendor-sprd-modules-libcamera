@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef _AF_ALG_H_
-#define _AF_ALG_H_
+#ifndef _AFT_INTERFACE_H_
+#define _AFT_INTERFACE_H_
 /*------------------------------------------------------------------------------*
 *					Dependencies				*
 *-------------------------------------------------------------------------------*/
 #include <sys/types.h>
 
-//#include "cmr_type.h"
+#include "cmr_types.h"
 
 
 /*------------------------------------------------------------------------------*
@@ -35,97 +35,97 @@ extern "C"
 /*------------------------------------------------------------------------------*
 *					Data Structures				*
 *-------------------------------------------------------------------------------*/
-#define AF_INVALID_HANDLE NULL
+#define AFT_INVALID_HANDLE NULL
 #define MAX_AF_FILTER_CNT 10
 #define MAX_AF_WIN 32
 
-typedef void* caf_alg_handle_t;
+typedef void* aft_proc_handle_t;
 
-enum af_posture_type {
-	AF_POSTURE_ACCELEROMETER,
-	AF_POSTURE_MAGNETIC,
-	AF_POSTURE_ORIENTATION,
-	AF_POSTURE_GYRO,
-	AF_POSTURE_MAX
+enum aft_posture_type {
+	AFT_POSTURE_ACCELEROMETER,
+	AFT_POSTURE_MAGNETIC,
+	AFT_POSTURE_ORIENTATION,
+	AFT_POSTURE_GYRO,
+	AFT_POSTURE_MAX
 };
 
-enum af_alg_err_type {
-	AF_ALG_SUCCESS = 0x00,
-	AF_ALG_ERROR,
-	AF_ALG_HANDLER_NULL,
-	AF_ALG_ERR_MAX
+enum aft_err_type {
+	AFT_SUCCESS = 0x00,
+	AFT_ERROR,
+	AFT_HANDLER_NULL,
+	AFT_ERR_MAX
 };
 
-enum af_alg_mode{
-	AF_ALG_MODE_NORMAL = 0x00,
-	AF_ALG_MODE_MACRO,
-	AF_ALG_MODE_CONTINUE,
-	AF_ALG_MODE_VIDEO,
-	AF_ALG_MODE_MAX
+enum aft_mode{
+	AFT_MODE_NORMAL = 0x00,
+	AFT_MODE_MACRO,
+	AFT_MODE_CONTINUE,
+	AFT_MODE_VIDEO,
+	AFT_MODE_MAX
 };
 
-enum af_alg_calc_data_type {
-	AF_ALG_DATA_AF,
-	AF_ALG_DATA_IMG_BLK,
-	AF_ALG_DATA_AE,
-	AF_ALG_DATA_SENSOR,
-	AF_ALG_DATA_MAX
+enum aft_calc_data_type {
+	AFT_DATA_AF,
+	AFT_DATA_IMG_BLK,
+	AFT_DATA_AE,
+	AFT_DATA_SENSOR,
+	AFT_DATA_MAX
 
 };
 
-enum af_alg_cmd {
-	AF_ALG_CMD_SET_BASE 			= 0x1000,
-	AF_ALG_CMD_SET_AF_MODE			= 0x1001,
-	AF_ALG_CMD_SET_CAF_RESET		= 0x1002,
-	AF_ALG_CMD_SET_CAF_STOP			= 0x1003,
+enum aft_cmd {
+	AFT_CMD_SET_BASE 			= 0x1000,
+	AFT_CMD_SET_AF_MODE			= 0x1001,
+	AFT_CMD_SET_CAF_RESET		= 0x1002,
+	AFT_CMD_SET_CAF_STOP			= 0x1003,
 };
 
-struct af_alg_tuning_block_param {
+struct aft_tuning_block_param {
 	cmr_u8 *data;
 	cmr_u32 data_len;
 };
 
 
-struct af_alg_win_rect {
+struct aft_af_win_rect {
 	cmr_u32 sx;
 	cmr_u32 sy;
 	cmr_u32 ex;
 	cmr_u32 ey;
 };
 
-struct af_alg_filter_data {
+struct aft_af_filter_data {
 	cmr_u32 type;
 	cmr_u64 *data;
 };
 
-struct af_alg_filter_info {
+struct aft_af_filter_info {
 	cmr_u32 filter_num;
-	struct af_alg_filter_data filter_data[MAX_AF_FILTER_CNT];
+	struct aft_af_filter_data filter_data[MAX_AF_FILTER_CNT];
 };
 
-struct af_alg_af_win_cfg {
+struct aft_af_win_cfg {
 	cmr_u32 win_cnt;
-	struct af_alg_win_rect win_pos[MAX_AF_WIN];
+	struct aft_af_win_rect win_pos[MAX_AF_WIN];
 	cmr_u32 win_prio[MAX_AF_WIN];
 	cmr_u32 win_sel_mode;
 };
 
-struct af_alg_afm_info {
-	struct af_alg_af_win_cfg win_cfg;
-	struct af_alg_filter_info filter_info;
+struct aft_afm_info {
+	struct aft_af_win_cfg win_cfg;
+	struct aft_af_filter_info filter_info;
 };
 
-struct af_alg_img_blk_info {
+struct aft_img_blk_info {
 	cmr_u32 block_w;
 	cmr_u32 block_h;
 	cmr_u32 pix_per_blk;
 	cmr_u32 chn_num;
 	cmr_u32 *data;
-	cmr_u32 hist_array_y[1024];
+//	cmr_u32 hist_array_y[1024];
 };
 
 
-struct af_alg_ae_info {
+struct aft_ae_info {
 	cmr_u32 exp_time;  //us
 	cmr_u32 gain;   //256 --> 1X
 	cmr_u32 cur_lum;
@@ -133,7 +133,7 @@ struct af_alg_ae_info {
 	cmr_u32 is_stable;
 };
 
-struct af_alg_sensor_info {
+struct aft_sensor_info {
 	cmr_u32 sensor_type;
 //	cmr_s64 timestamp;
 	float x;
@@ -141,18 +141,19 @@ struct af_alg_sensor_info {
 	float z;
 };
 
-struct caf_alg_result {
+struct aft_proc_result {
 	cmr_u32 is_caf_trig;
 	cmr_u32 is_caf_trig_in_taf;
+	cmr_u32 is_need_rough_search;
 };
 
-struct caf_alg_calc_param {
+struct aft_proc_calc_param {
 	cmr_u32 active_data_type;
 	cmr_u32 af_has_suc_rec;
-	struct af_alg_afm_info afm_info;
-	struct af_alg_img_blk_info img_blk_info;
-	struct af_alg_ae_info ae_info;
-	struct af_alg_sensor_info sensor_info;
+	struct aft_afm_info afm_info;
+	struct aft_img_blk_info img_blk_info;
+	struct aft_ae_info ae_info;
+	struct aft_sensor_info sensor_info;
 };
 
 
@@ -160,12 +161,12 @@ struct caf_alg_calc_param {
 *					Data Prototype				*
 *-------------------------------------------------------------------------------*/
 
-signed int caf_trigger_init(struct af_alg_tuning_block_param *init_param, caf_alg_handle_t *handle);
-signed int caf_trigger_deinit(caf_alg_handle_t handle);
-signed int caf_trigger_calculation(caf_alg_handle_t handle,
-				struct caf_alg_calc_param *alg_calc_in,
-				struct caf_alg_result *alg_calc_result);
-signed int caf_trigger_ioctrl(caf_alg_handle_t handle, enum af_alg_cmd cmd, void *param0, void *param1);
+signed int caf_trigger_init(struct aft_tuning_block_param *init_param, aft_proc_handle_t *handle);
+signed int caf_trigger_deinit(aft_proc_handle_t handle);
+signed int caf_trigger_calculation(aft_proc_handle_t handle,
+				struct aft_proc_calc_param *aft_calc_in,
+				struct aft_proc_result *aft_calc_result);
+signed int caf_trigger_ioctrl(aft_proc_handle_t handle, enum aft_cmd cmd, void *param0, void *param1);
 
 /*------------------------------------------------------------------------------*
 *					Compiler Flag				*
