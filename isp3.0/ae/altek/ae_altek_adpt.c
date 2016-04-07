@@ -3519,6 +3519,7 @@ static cmr_int aealtek_set_y_hist_stats(struct aealtek_cxt *cxt_ptr, struct ae_c
 	memset(&wrapper_y_hist, 0x00, sizeof(wrapper_y_hist));
 	wrapper_y_hist.b_is_stats_byaddr = TRUE;
 	wrapper_y_hist.pt_hist_y = cxt_ptr->stat_info[cxt_ptr->stat_info_num].ae_stats.y_hist;
+
 	ret = al3awrapper_dispatchhw3a_yhiststats((struct isp_drv_meta_yhist_t *)in_ptr->y_hist_stat.y_hist_data_ptr, &wrapper_y_hist);
 	if (ret) {
 		ISP_LOGE("failed to dispatch yhist");
@@ -3894,7 +3895,7 @@ static cmr_int aealtek_pre_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 	obj_ptr = &cxt_ptr->al_obj;
 
 	ppatched_aedat = &cxt_ptr->lib_data.stats_data;
-	ppatched_aedat->ptstatsy = cxt_ptr->stat_info[cxt_ptr->stat_info_num].statsy;
+	ppatched_aedat->ptstatsy = cxt_ptr->stat_info[cxt_ptr->stat_info_num].ae_stats.y_hist;
 	ppatched_aedat->ptstatsr = cxt_ptr->stat_info[cxt_ptr->stat_info_num].ae_stats.r_info;
 	ppatched_aedat->ptstatsg = cxt_ptr->stat_info[cxt_ptr->stat_info_num].ae_stats.g_info;
 	ppatched_aedat->ptstatsb = cxt_ptr->stat_info[cxt_ptr->stat_info_num].ae_stats.b_info;
