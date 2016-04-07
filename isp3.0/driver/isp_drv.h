@@ -101,6 +101,7 @@ cmr_int isp_dev_cfg_ccm(isp_handle handle, struct isp_iq_ccm_info *data);
 cmr_int isp_dev_cfg_valid_adgain(isp_handle handle, cmr_u32 mode);
 cmr_int isp_dev_cfg_exp_time(isp_handle handle, cmr_u32 mode);
 cmr_int isp_dev_cfg_otp_info(isp_handle handle, struct isp_iq_otp_info *data);
+cmr_int isp_dev_cfg_sof_info(isp_handle handle, struct isp_sof_cfg_info *data);
 cmr_int isp_dev_capability_fw_size(isp_handle handle, cmr_int *size);
 cmr_int isp_dev_capability_statis_buf_size(isp_handle handle, cmr_int *size);
 cmr_int isp_dev_capability_dram_buf_size(isp_handle handle, cmr_int *size);
@@ -110,5 +111,7 @@ cmr_int isp_dev_capability_single_size(isp_handle handle, struct isp_img_size *s
 cmr_int isp_dev_get_isp_id(isp_handle handle, cmr_u32 *isp_id);
 cmr_int isp_dev_get_iq_param(isp_handle handle, struct debug_info1 *info1, struct debug_info2 *info2);
 cmr_int isp_dev_set_capture_mode(isp_handle handle, cmr_u32 capture_mode);
+cmr_int isp_dev_set_skip_num(isp_handle handle, cmr_u32 skip_num);
+
 
 #endif
