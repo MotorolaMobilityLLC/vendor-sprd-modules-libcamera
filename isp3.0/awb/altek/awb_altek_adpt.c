@@ -541,7 +541,7 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 	}
 	//get isp cfg
 	get_isp_cfg.type = alawb_get_param_init_isp_config;
-	ret = (cmr_int)cxt->lib_func.get_param(&get_isp_cfg, &cxt->lib_func.awb);
+	ret = (cmr_int)cxt->lib_func.get_param(&get_isp_cfg, cxt->lib_func.awb);
 	if (ret) {
 		ISP_LOGE("failed to get isp cfg");
 	} else {
