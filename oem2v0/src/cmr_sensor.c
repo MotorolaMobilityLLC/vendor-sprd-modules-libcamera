@@ -29,6 +29,7 @@
  **                         MACRO definition                                  *
  **---------------------------------------------------------------------------*/
 #define SENSOR_MSG_QUEUE_SIZE                 10
+#define CMR_ISP_OTP_MAX_SIZE                    (100 * 1024)
 
 #define CMR_SENSOR_EVT_BASE                   (CMR_EVT_SENSOR_BASE + 0x100)
 #define CMR_SENSOR_EVT_INIT                   (CMR_SENSOR_EVT_BASE + 0x0)
@@ -1079,6 +1080,53 @@ cmr_int cmr_sns_get_ioctl_cmd(SENSOR_IOCTL_CMD_E *sns_cmd, enum sensor_cmd in_cm
 	return ret;
 }
 
+cmr_int cmr_get_otp_from_kernel(cmr_int fd_sensor, cmr_uint cmd,
+		cmr_uint arg, SENSOR_IOCTL_FUNC_PTR func_ptr, cmr_u8 *read_flag)
+{
+	cmr_u32 ret = CMR_CAMERA_SUCCESS;
+	struct _sensor_otp_param_tag             param_ptr;
+	struct sensor_data_info              sensor_otp;
+	uint32_t                       otp_data_len = 0;
+	SENSOR_VAL_T	*val = (SENSOR_VAL_T	*)arg;
+
+	*read_flag = 0;
+	if(( SENSOR_ACCESS_VAL == cmd)
+		&& SENSOR_VAL_TYPE_READ_OTP ==  val->type) {
+
+		cmr_bzero(&param_ptr, sizeof(param_ptr));
+		cmr_bzero(&sensor_otp, sizeof(sensor_otp));
+		otp_data_len = CMR_ISP_OTP_MAX_SIZE;
+		sensor_otp.data_ptr = malloc(otp_data_len);
+		if (NULL == sensor_otp.data_ptr){
+			CMR_LOGE("malloc random lsc file failed");
+			return -1;
+		}
+
+		cmr_bzero(sensor_otp.data_ptr, otp_data_len);
+		param_ptr.type = SENSOR_OTP_PARAM_NORMAL;
+		param_ptr.start_addr = 0;
+		param_ptr.len          = 0;
+		param_ptr.buff         = sensor_otp.data_ptr;
+
+		ret = ioctl(fd_sensor, SENSOR_IO_READ_OTPDATA, &param_ptr);
+		if(!ret && 0 != param_ptr.buff [0]) {
+			CMR_LOGD("SENSOR_IO_READ_OTPDATA  OK");
+			val->pval = param_ptr.buff;
+			val->type = SENSOR_VAL_TYPE_PARSE_OTP;
+		}
+		if (PNULL != func_ptr) {
+			ret = func_ptr(arg);
+			*read_flag = 1;
+		}
+		if (NULL != sensor_otp.data_ptr) {
+			CMR_LOGD("SENSOR_IO_READ_OTPDATA  free buff");
+			free(sensor_otp.data_ptr);
+			sensor_otp.data_ptr = NULL;
+		}
+	}
+	return ret;
+}
+
 cmr_int cmr_sns_ioctl(struct sensor_drv_context *sensor_cxt, cmr_uint cmd, cmr_uint arg)
 {
 	SENSOR_IOCTL_FUNC_PTR func_ptr;
@@ -1086,6 +1134,7 @@ cmr_int cmr_sns_ioctl(struct sensor_drv_context *sensor_cxt, cmr_uint cmd, cmr_u
 	cmr_uint temp;
 	cmr_u32 ret = CMR_CAMERA_SUCCESS;
 	cmr_u32 sns_cmd = SENSOR_IOCTL_GET_STATUS;
+	cmr_u8 read_flag = 0;
 
 	ret = cmr_sns_get_ioctl_cmd(&sns_cmd, cmd);
 	if (ret) {
@@ -1122,22 +1171,10 @@ cmr_int cmr_sns_ioctl(struct sensor_drv_context *sensor_cxt, cmr_uint cmd, cmr_u
 #endif
 	func_ptr = (SENSOR_IOCTL_FUNC_PTR) temp;
 
-
-#if (CONFIG_READOTP_METHOD != 0)
-	if( SENSOR_ACCESS_VAL == cmd) {
-		SENSOR_VAL_T	*val = (SENSOR_VAL_T	*)arg;
-		if(val->type == SENSOR_VAL_TYPE_READ_OTP) {
-			SENSOR_OTP_PARAM_T   *param_ptr = (SENSOR_OTP_PARAM_T   *)val->pval;
-			CMR_LOGD("SENSOR_IO_READ_OTPDATA %p, %d", param_ptr, param_ptr->type);
-			ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_READ_OTPDATA, param_ptr);
-			if(!ret && param_ptr->type == SENSOR_OTP_PARAM_NORMAL) {
-				val->type = SENSOR_VAL_TYPE_PARSE_OTP;
-				ret = func_ptr(arg);
-			}
-			return ret;
-		}
+	ret = cmr_get_otp_from_kernel(sensor_cxt->fd_sensor, cmd, arg, func_ptr,&read_flag);
+	if (read_flag) {
+		return ret;
 	}
-#endif
 
 	if (PNULL != func_ptr) {
 		ret = func_ptr(arg);

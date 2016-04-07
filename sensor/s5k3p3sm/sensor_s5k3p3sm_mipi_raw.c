@@ -1046,6 +1046,11 @@ static cmr_u8 s5k3p3sm_i2c_read_otp(cmr_u16 addr)
 
 static int s5k3p3sm_otp_init(void)
 {
+	return 0;
+}
+
+static int s5k3p3sm_otp_read_data(void)
+{
 	cmr_u16 i = 0;
 	cmr_u8 high_val = 0;
 	cmr_u8 low_val = 0;
@@ -1100,6 +1105,7 @@ static int s5k3p3sm_otp_init(void)
 	}
 
 	s5k3p3_otp_info.lsc_info.lsc_data_addr = s5k3p3_opt_lsc_data;
+	s5k3p3_otp_info.lsc_info.lsc_data_size = sizeof(s5k3p3_opt_lsc_data);
 
 	s5k3p3_otp_info.af_info.flag = s5k3p3sm_i2c_read_otp(0x06A0);
 	if (0 == s5k3p3_otp_info.af_info.flag)
@@ -1134,6 +1140,7 @@ static unsigned long s5k3p3sm_otp_read(SENSOR_VAL_T* param)
 {
 	struct sensor_otp_cust_info *otp_info = NULL;
 	SENSOR_PRINT("E");
+	s5k3p3sm_otp_read_data();
 	otp_info = &s5k3p3_otp_info;
 
 	if (1 != otp_info->program_flag) {
@@ -1141,6 +1148,110 @@ static unsigned long s5k3p3sm_otp_read(SENSOR_VAL_T* param)
 		param->pval = NULL;
 		return -1;
 	} else {
+		param->pval = (void *)otp_info;
+	}
+	SENSOR_PRINT("param->pval = %p", param->pval);
+
+	return 0;
+}
+
+static unsigned long s5k3p3sm_parse_otp(SENSOR_VAL_T* param)
+{
+	cmr_u8 *buff = NULL;
+	struct sensor_otp_cust_info *otp_info = NULL;
+	cmr_u16 i = 0;
+	cmr_u16 j = 0;
+	cmr_u8 high_val = 0;
+	cmr_u8 low_val = 0;
+	cmr_u32 checksum = 0;
+
+	SENSOR_PRINT("E");
+	if (NULL == param->pval) {
+		SENSOR_PRINT("s5k3p3sm_parse_otp is NULL data");
+		return -1;
+	}
+	buff = param->pval;
+
+	if (1 != buff[0]) {
+		SENSOR_PRINT("s5k3p3sm_parse_otp is wrong data");
+		param->pval = NULL;
+		return -1;
+	} else {
+		s5k3p3_otp_info.program_flag = buff[i++];
+		SENSOR_PRINT("program_flag = %d", s5k3p3_otp_info.program_flag);
+
+		checksum += s5k3p3_otp_info.program_flag;
+		s5k3p3_otp_info.module_info.year = buff[i++];
+		checksum += s5k3p3_otp_info.module_info.year;
+		s5k3p3_otp_info.module_info.month = buff[i++];
+		checksum += s5k3p3_otp_info.module_info.month;
+		s5k3p3_otp_info.module_info.day = buff[i++];
+		checksum += s5k3p3_otp_info.module_info.day;
+		s5k3p3_otp_info.module_info.mid = buff[i++];
+		checksum += s5k3p3_otp_info.module_info.mid;
+		s5k3p3_otp_info.module_info.lens_id = buff[i++];
+		checksum += s5k3p3_otp_info.module_info.lens_id;
+		s5k3p3_otp_info.module_info.vcm_id = buff[i++];
+		checksum += s5k3p3_otp_info.module_info.vcm_id;
+		s5k3p3_otp_info.module_info.driver_ic_id = buff[i++];
+		checksum += s5k3p3_otp_info.module_info.driver_ic_id;
+
+		high_val = buff[i++];
+		checksum += high_val;
+		low_val = buff[i++];
+		checksum += low_val;
+		s5k3p3_otp_info.isp_awb_info.iso = (high_val << 8 | low_val);
+		high_val = buff[i++];
+		checksum += high_val;
+		low_val = buff[i++];
+		checksum += low_val;
+		s5k3p3_otp_info.isp_awb_info.gain_r = (high_val << 8 | low_val);
+		high_val = buff[i++];
+		checksum += high_val;
+		low_val = buff[i++];
+		checksum += low_val;
+		s5k3p3_otp_info.isp_awb_info.gain_g = (high_val << 8 | low_val);
+		high_val = buff[i++];
+		checksum += high_val;
+		low_val = buff[i++];
+		checksum += low_val;
+		s5k3p3_otp_info.isp_awb_info.gain_b = (high_val << 8 | low_val);
+
+		for (j = 0; j < OTP_LSC_INFO_LEN; j++) {
+			s5k3p3_opt_lsc_data[j] = buff[i++];
+			checksum += s5k3p3_opt_lsc_data[j];
+		}
+		s5k3p3_otp_info.lsc_info.lsc_data_addr = s5k3p3_opt_lsc_data;
+		s5k3p3_otp_info.lsc_info.lsc_data_size = sizeof(s5k3p3_opt_lsc_data);
+
+		s5k3p3_otp_info.af_info.flag = buff[i++];
+		if (0 == s5k3p3_otp_info.af_info.flag)
+			SENSOR_PRINT("af otp is wrong");
+
+		checksum += s5k3p3_otp_info.af_info.flag;
+		/* cause checksum, skip af flag */
+		low_val = buff[i++];
+		checksum += low_val;
+		high_val = buff[i++];
+		checksum += high_val;
+		s5k3p3_otp_info.af_info.infinite_cali = (high_val << 8 | low_val);
+		low_val = buff[i++];
+		checksum += low_val;
+		high_val = buff[i++];
+		checksum += high_val;
+		s5k3p3_otp_info.af_info.macro_cali = (high_val << 8 | low_val);
+
+		s5k3p3_otp_info.checksum = buff[i++];
+		SENSOR_PRINT("checksum = 0x%x s5k3p3_otp_info.checksum = 0x%x,r=%d,g=%d,b=%d", checksum, s5k3p3_otp_info.checksum
+			,s5k3p3_otp_info.isp_awb_info.gain_r,s5k3p3_otp_info.isp_awb_info.gain_g,s5k3p3_otp_info.isp_awb_info.gain_b);
+
+		if ((checksum % 0xff) != s5k3p3_otp_info.checksum) {
+			SENSOR_PRINT_ERR("checksum error!");
+			s5k3p3_otp_info.program_flag = 0;
+			param->pval = NULL;
+			return -1;
+		}
+		otp_info = &s5k3p3_otp_info;
 		param->pval = (void *)otp_info;
 	}
 	SENSOR_PRINT("param->pval = %p", param->pval);
@@ -1495,6 +1606,9 @@ static unsigned long _s5k3p3sm_access_val(unsigned long param)
 			break;
 		case SENSOR_VAL_TYPE_READ_OTP:
 			s5k3p3sm_otp_read(param_ptr);
+			break;
+		case SENSOR_VAL_TYPE_PARSE_OTP:
+			s5k3p3sm_parse_otp(param_ptr);
 			break;
 		case SENSOR_VAL_TYPE_WRITE_OTP:
 			//rtn = _hi544_write_otp((uint32_t)param_ptr->pval);

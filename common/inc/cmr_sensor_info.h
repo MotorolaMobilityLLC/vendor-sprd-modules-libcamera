@@ -317,4 +317,8 @@ struct sensor_otp_cust_info {
 	cmr_u8 checksum;
 };
 
+struct sensor_data_info {
+	void *data_ptr;
+	uint32_t size;
+};
 #endif
