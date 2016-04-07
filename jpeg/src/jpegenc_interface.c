@@ -91,12 +91,12 @@ PUBLIC void JPEG_HWUpdateMBIOBufInfo(void)
 PUBLIC JPEG_RET_E JPEG_HWEncStart(uint32 raw_width, uint32 raw_height, JPEG_ENC_OUTPUT_PARA_T *output_para_ptr)
 {
 	JPEG_CODEC_T *jpeg_fw_codec = Get_JPEGEncCodec();
-	uint16 total_mcu_num = 0;
+	uint32 total_mcu_num = 0;
 
 	SCI_ASSERT(jpeg_fw_codec != PNULL);
 
 	//if(((raw_width & 0xf) == 0) && ((raw_height & 0x7) == 0)){
-		total_mcu_num =(uint16)( jpeg_fw_codec->mcu_num_x*jpeg_fw_codec->mcu_num_y);
+		total_mcu_num =( jpeg_fw_codec->mcu_num_x*jpeg_fw_codec->mcu_num_y);
 //	}else{
 //		JPEG_TRACE("Invalid raw_height, must be interger times of 8 and raw_width must be interger times of 16...\n");
 //		return JPEG_FAILED;

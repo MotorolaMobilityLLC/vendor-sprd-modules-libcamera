@@ -27,7 +27,7 @@
 #endif
 
 		
-PUBLIC void START_HW_ENCODE(uint16 total_mcu_num);
+PUBLIC void START_HW_ENCODE(uint32 total_mcu_num);
 
 
 /**---------------------------------------------------------------------------*

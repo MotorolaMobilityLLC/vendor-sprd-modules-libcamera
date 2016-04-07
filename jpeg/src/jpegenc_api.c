@@ -749,7 +749,7 @@ int JPEGENC_Slice_Start(JPEGENC_PARAMS_T *jpegenc_params,
   int jpg_fd = -1;
   void *jpg_addr = NULL;
   int ret = 0;
-  uint32 value = 0, int_val = 0, temp = 0, jpg_clk = 0;
+  uint32 value = 0, int_val = 0, temp = 0, jpg_clk = 3;
   JPEG_ENC_INPUT_PARA_T input_para_ptr;
   uint32_t slice_height = SLICE_HEIGHT;
   uint32_t slice_num = 0;
@@ -791,6 +791,7 @@ int JPEGENC_Slice_Start(JPEGENC_PARAMS_T *jpegenc_params,
   }
   ioctl(jpg_fd, JPG_ENABLE, NULL);
   ioctl(jpg_fd, JPG_RESET, NULL);
+  jpg_clk = 3;
   ioctl(jpg_fd, JPG_CONFIG_FREQ, &jpg_clk);
   JPG_SetVirtualBaseAddr((unsigned long)jpg_addr);
   JPG_reg_reset_callback(JPG_reset_cb, jpg_fd);

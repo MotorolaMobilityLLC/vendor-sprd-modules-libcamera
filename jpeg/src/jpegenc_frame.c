@@ -136,7 +136,7 @@ void START_SW_ENCODE(uint16 total_mcu_num)
 }
 #endif //_CMODEL_
 
-PUBLIC void START_HW_ENCODE(uint16 total_mcu_num)
+PUBLIC void START_HW_ENCODE(uint32 total_mcu_num)
 {
 	int32 cmd = 0;
 	JPEG_CODEC_T *jpeg_fw_codec = Get_JPEGEncCodec();
