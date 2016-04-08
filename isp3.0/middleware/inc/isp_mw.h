@@ -46,6 +46,7 @@ enum isp_callback_cmd {
 	ISP_AE_STAB_NOTIFY = 0x00000C00,
 	ISP_AE_LOCK_NOTIFY = 0x00000D00,
 	ISP_AE_UNLOCK_NOTIFY = 0x00000E00,
+	ISP_AE_SYNC_INFO = 0x00000F00,
 	ISP_CALLBACK_CMD_MAX = 0xffffffff
 };
 
@@ -508,6 +509,7 @@ struct isp_video_start {
 	struct isp_size size;
 	struct isp_sensor_resolution_info resolution_info;
 	cmr_u16 is_slow_motion;
+	cmr_u16 is_refocus;
 	enum isp_format format;
 	enum isp_video_mode mode;
 	cmr_u32 work_mode;

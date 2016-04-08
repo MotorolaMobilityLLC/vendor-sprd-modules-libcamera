@@ -203,6 +203,7 @@ struct aealtek_cxt {
 	cmr_s32 ae_state;
 	cmr_s32 is_script_mode;
 	cmr_s32 flash_skip_number;
+	cmr_s32 is_refocus;
 
 	struct aealtek_status prv_status;
 	struct aealtek_status cur_status;
@@ -2356,10 +2357,13 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 			in_ptr->work_param.resolution.line_time);
 
 	cxt_ptr->nxt_status.ui_param.work_info = in_ptr->work_param;
+
 	if (in_ptr->work_param.sensor_fps.is_high_fps) {
 		cxt_ptr->nxt_status.ui_param.work_info.resolution.max_fps = in_ptr->work_param.sensor_fps.max_fps;
 		cxt_ptr->nxt_status.ui_param.work_info.resolution.min_fps = in_ptr->work_param.sensor_fps.max_fps;
 	}
+
+	cxt_ptr->is_refocus = in_ptr->work_param.is_refocus;
 
 	work_mode = in_ptr->work_param.work_mode;
 	switch (work_mode) {
@@ -2928,6 +2932,52 @@ exit:
 	return ret;
 }
 
+static cmr_int aealtek_callback_sync_info(struct aealtek_cxt *cxt_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+	struct ae_ctrl_callback_in callback_in;
+	struct isp_ae_simple_sync_input input;
+
+	input.ud_msc_adgain = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.sensor_ad_gain;
+	input.result_bv = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.bv_val;
+	input.ud_msc_exif_iso = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_cur_iso;
+	input.ud_msc_exposure_line = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.exposure_line;
+	input.ud_msc_exposure_time = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.exposure_time/1000; /*ms*/
+
+	input.ud_msc_iso = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_cur_iso;
+
+	input.ud_msc_isp_adgain = 0;
+	input.master_info.cam_info_calib.r_gain = 2300;
+	input.master_info.cam_info_calib.g_gain = 1800;
+	input.master_info.cam_info_calib.b_gain = 2500;
+	input.master_info.cam_info_sensor.fn = 2.0;
+	input.master_info.cam_info_sensor.max_ad_gain = 12800;
+	input.master_info.cam_info_sensor.max_exp_line = 5000;
+	input.master_info.cam_info_sensor.max_fps = 3000;
+	input.master_info.cam_info_sensor.min_ad_gain = 100;
+	input.master_info.cam_info_sensor.min_exp_line = 1;
+	input.master_info.cam_info_sensor.min_fps = 1000;
+
+	input.slave_info.cam_info_calib.r_gain = 1300;
+	input.slave_info.cam_info_calib.g_gain = 990;
+	input.slave_info.cam_info_calib.b_gain = 1500;
+	input.slave_info.cam_info_sensor.fn = 1.9;
+	input.slave_info.cam_info_sensor.max_ad_gain = 6400;
+	input.slave_info.cam_info_sensor.max_exp_line = 10000;
+	input.slave_info.cam_info_sensor.max_fps = 3000;
+	input.slave_info.cam_info_sensor.min_ad_gain = 100;
+	input.slave_info.cam_info_sensor.min_exp_line = 1;
+	input.slave_info.cam_info_sensor.min_fps = 1000;
+
+	callback_in.ae_sync_info = &input;
+	cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRL_CB_SYNC_INFO, &callback_in);
+
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld", ret);
+	return ret;
+}
+
 static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr)
 {
 	cmr_int ret = ISP_ERROR;
@@ -2954,10 +3004,11 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	cxt_ptr->sensor_exp_data.actual_exp = cxt_ptr->sensor_exp_data.lib_exp;
 	cxt_ptr->sensor_exp_data.write_exp = cxt_ptr->sensor_exp_data.lib_exp;
 
-	ISP_LOGI("sof_index:%ld,gain=%d, exp_line=%d, exp_time=%d", in_ptr->sof_param.frame_index,
+	ISP_LOGI("sof_index:%ld,gain=%d,exp_line=%d,exp_time=%d,is_refocus=%d", in_ptr->sof_param.frame_index,
 				cxt_ptr->sensor_exp_data.write_exp.gain,
 				cxt_ptr->sensor_exp_data.write_exp.exp_line,
-				cxt_ptr->sensor_exp_data.write_exp.exp_time);
+				cxt_ptr->sensor_exp_data.write_exp.exp_time,
+				cxt_ptr->is_refocus);
 
 	in_est.work_mode = SEQ_WORK_PREVIEW;
 	in_est.cell.frame_id = in_ptr->sof_param.frame_index;
@@ -3005,6 +3056,10 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 		ret = aealtek_pre_to_sensor(cxt_ptr, 0);
 		if (ret)
 			goto exit;
+	}
+
+	if (cxt_ptr->is_refocus) {
+		ret = aealtek_callback_sync_info(cxt_ptr);
 	}
 	return ISP_SUCCESS;
 exit:

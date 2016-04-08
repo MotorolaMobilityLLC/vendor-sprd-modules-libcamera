@@ -412,11 +412,18 @@ cmr_int isp3a_ae_callback(cmr_handle handle, enum ae_ctrl_cb_type cmd, struct ae
 	case AE_CTRL_CB_PROC_OUT:
 		ret = isp3a_handle_ae_result(handle, in_ptr);
 		break;
+	case AE_CTRL_CB_SYNC_INFO:
+		callback_cmd = ISP_AE_SYNC_INFO;
+		if (cxt->caller_callback) {
+			ret = cxt->caller_callback(cxt->caller_handle, ISP_CALLBACK_EVT|callback_cmd
+					, in_ptr->ae_sync_info, sizeof(*in_ptr->ae_sync_info));
+		}
+		break;
 	default:
 		goto exit;
 		break;
 	}
-	if (AE_CTRL_CB_PROC_OUT == cmd) {
+	if (AE_CTRL_CB_PROC_OUT == cmd || AE_CTRL_CB_SYNC_INFO == cmd) {
 		goto exit;
 	}
 	if (cxt->caller_callback) {
@@ -3080,6 +3087,7 @@ cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start *input_ptr)
 
 	ae_in.work_param.work_mode = input_ptr->work_mode;
 	ae_in.work_param.capture_mode = input_ptr->capture_mode;
+	ae_in.work_param.is_refocus = input_ptr->is_refocus;
 	ae_in.work_param.resolution.frame_size.w = input_ptr->resolution_info.crop.width;
 	ae_in.work_param.resolution.frame_size.h = input_ptr->resolution_info.crop.height;
 	ae_in.work_param.resolution.line_time = input_ptr->resolution_info.line_time;

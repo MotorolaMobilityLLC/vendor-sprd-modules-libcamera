@@ -278,6 +278,39 @@ struct isp3a_subsample_hw_cfg {
 
 };
 
+struct isp_ae_simple_sync_calib_dat {
+	cmr_u32 r_gain;   /* scale by 1000 */
+	cmr_u32 g_gain;   /* scale by 1000 */
+	cmr_u32 b_gain;   /* scale by 1000 */
+};
+
+struct isp_ae_simple_sync_sensor_info {
+	cmr_u32 max_ad_gain;
+	cmr_u32 min_ad_gain;
+	cmr_u32 max_exp_line;
+	cmr_u32 min_exp_line;
+	cmr_u32 max_fps;
+	cmr_u32 min_fps;
+	float fn;
+};
+
+struct isp_ae_simple_sync_cminfo {
+	struct isp_ae_simple_sync_calib_dat  cam_info_calib;
+	struct isp_ae_simple_sync_sensor_info  cam_info_sensor;
+};
+
+struct isp_ae_simple_sync_input {
+	cmr_u32 ud_msc_exposure_time;    /* master camera, exposure time in micro-seconds */
+	cmr_u32 ud_msc_exposure_line;    /* master camera, exposure line */
+	cmr_u32 ud_msc_iso;         /* master camera, real iso speed  */
+	cmr_u32 ud_msc_exif_iso;    /* master camera, exis iso speed  */
+	cmr_u32 ud_msc_adgain;      /* master camera, sensor ad gain  */
+	cmr_u32 ud_msc_isp_adgain;  /* reserved */
+	int  result_bv;
+	struct isp_ae_simple_sync_cminfo   master_info;
+	struct isp_ae_simple_sync_cminfo   slave_info;
+};
+
 //struct isp_statistics_info {
 //	cmr_u32 frame_id;
 //	void *statistics_data;

@@ -853,6 +853,12 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void* data, cmr_u3
 		oem_cb = CAMERA_EVT_CB_AE_UNLOCK_NOTIFY;
 		cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK, NULL);
 		break;
+	case ISP_AE_SYNC_INFO:
+	{
+		struct isp_ae_simple_sync_input *ae_sync_info = (struct isp_ae_simple_sync_input *)data;
+		// TBD write info to al3200
+	}
+		break;
 	default:
 		break;
 	}
@@ -4515,6 +4521,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 	isp_param.resolution_info.sensor_max_size.h = cxt->sn_cxt.sensor_info.source_height_max;
 	isp_param.resolution_info.sensor_output_size.w = sensor_mode_info->out_width;
 	isp_param.resolution_info.sensor_output_size.h = sensor_mode_info->out_height;
+	isp_param.is_refocus = 0;//TBD
 
 	CMR_LOGI("isp sensor max w h, %d %d", isp_param.resolution_info.sensor_max_size.w,
 		isp_param.resolution_info.sensor_max_size.h);

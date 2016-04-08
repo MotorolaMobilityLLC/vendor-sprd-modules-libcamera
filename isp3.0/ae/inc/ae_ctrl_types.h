@@ -160,6 +160,7 @@ enum ae_ctrl_cb_type {
 	AE_CTRL_CB_CLOSE_MAIN_FLASH,
 	AE_CTRL_CB_PROC_OUT,
 	AE_CTRl_CB_TOUCH_CONVERGED,
+	AE_CTRL_CB_SYNC_INFO,
 	AE_CTRL_CB_MAX
 };
 
@@ -247,6 +248,7 @@ struct ae_ctrl_param_resolution {
 struct ae_ctrl_param_work {
 		cmr_int work_mode;
 		cmr_int capture_mode;
+		cmr_int is_refocus;
 		struct ae_ctrl_param_resolution resolution;
 		struct ae_ctrl_param_measure_highflash highflash;
 		struct isp_sensor_fps_info sensor_fps;
@@ -419,7 +421,10 @@ struct ae_ctrl_param_in {
 
 
 struct ae_ctrl_callback_in {
+	union {
 	struct ae_ctrl_proc_out proc_out;
+	struct isp_ae_simple_sync_input *ae_sync_info;
+	};
 };
 
 struct ae_ctrl_ops_in {
