@@ -114,9 +114,9 @@ extern SENSOR_INFO_T g_s5k3p3sm_mipi_raw_info;
 extern SENSOR_INFO_T g_s5k4h8yx_mipi_raw_info;
 extern SENSOR_INFO_T g_imx230_mipi_raw_info;
 extern SENSOR_INFO_T g_ov2680_mipi_raw_info;
-extern SENSOR_INFO_T g_s5k3l2xx_mipi_raw_info;
+//extern SENSOR_INFO_T g_s5k3l2xx_mipi_raw_info;
 //extern SENSOR_INFO_T g_sr552_mipi_raw_info;
-extern SENSOR_INFO_T g_s5k5e3yx_mipi_raw_info;
+//extern SENSOR_INFO_T g_s5k5e3yx_mipi_raw_info;
 
 #define AUTO_TEST_CAMERA 1
 
