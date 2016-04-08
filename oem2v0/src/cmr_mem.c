@@ -154,7 +154,7 @@ static const struct cap_size_to_mem front_cam_raw_mem_size_tab[IMG_SIZE_NUM] = {
 	{PIXEL_5P0_MEGA, (24 << 20)},
 	{PIXEL_6P0_MEGA, (22 << 20)},
 	{PIXEL_7P0_MEGA, (25 << 20)},
-	{PIXEL_8P0_MEGA, (26 << 20)}
+	{PIXEL_8P0_MEGA, (45 << 20)}
 };
 
 /*for ATV*/

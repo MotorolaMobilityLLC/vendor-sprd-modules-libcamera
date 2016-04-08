@@ -79,7 +79,10 @@ namespace sprdcamera {
 #define BACK_SENSOR_ORIG_HEIGHT 1952
 #endif
 
-#ifdef CONFIG_FRONT_CAMERA_SUPPORT_5M
+#ifdef CONFIG_FRONT_CAMERA_SUPPORT_8M
+#define FRONT_SENSOR_ORIG_WIDTH 3264 //select according to max jpg resolution
+#define FRONT_SENSOR_ORIG_HEIGHT 2448
+#elif CONFIG_FRONT_CAMERA_SUPPORT_5M
 #define FRONT_SENSOR_ORIG_WIDTH 2592 //select according to max jpg resolution
 #define FRONT_SENSOR_ORIG_HEIGHT 1944
 #elif CONFIG_FRONT_CAMERA_SUPPORT_3M
