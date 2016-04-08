@@ -530,6 +530,7 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 	cam_dimension_t video_size = {0, 0};
 	cam_dimension_t raw_size = {0, 0};
 	cam_dimension_t capture_size = {0, 0};
+	SPRD_DEF_Tag sprddefInfo;
 
 	ret = checkStreamList(streamList);
 	if (ret) {
@@ -552,11 +553,11 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 	if(mRegularChan == NULL)
 	{
 		mRegularChan = new SprdCamera3RegularChannel(mOEMIf,
-											captureResultCb,
-											mSetting,
-											mMetadataChannel,
-											CAMERA_CHANNEL_TYPE_REGULAR,
-											this);
+				captureResultCb,
+				mSetting,
+				mMetadataChannel,
+				CAMERA_CHANNEL_TYPE_REGULAR,
+				this);
 		if(mRegularChan == NULL) {
 			HAL_LOGE("channel created failed");
 			return INVALID_OPERATION;
@@ -567,11 +568,11 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 	if(mPicChan == NULL)
 	{
 		mPicChan = new SprdCamera3PicChannel(mOEMIf,
-									captureResultCb,
-									mSetting,
-									mMetadataChannel,
-									CAMERA_CHANNEL_TYPE_PICTURE,
-									this);
+				captureResultCb,
+				mSetting,
+				mMetadataChannel,
+				CAMERA_CHANNEL_TYPE_PICTURE,
+				this);
 		if(mPicChan == NULL)
 		{
 			HAL_LOGE("channel created failed");
@@ -583,11 +584,11 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 	if(mCallbackChan == NULL)
 	{
 		mCallbackChan = new SprdCamera3RegularChannel(mOEMIf,
-											captureResultCb,
-											mSetting,
-											mMetadataChannel,
-											CAMERA_CHANNEL_TYPE_RAW_CALLBACK,
-											this);
+				captureResultCb,
+				mSetting,
+				mMetadataChannel,
+				CAMERA_CHANNEL_TYPE_RAW_CALLBACK,
+				this);
 		if(mCallbackChan == NULL)
 		{
 			HAL_LOGE("channel created failed");
@@ -654,6 +655,11 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 					raw_size.height = newStream->height;
 				}
 				newStream->priv = mRegularChan;
+				mSetting->getSPRDDEFTag(&sprddefInfo);
+				if (sprddefInfo.slowmotion > 1)
+					SprdCamera3RegularChannel::kMaxBuffers = 8;
+				HAL_LOGD("slowmotion=%d, kMaxBuffers=%d",
+					sprddefInfo.slowmotion, SprdCamera3RegularChannel::kMaxBuffers);
 				newStream->max_buffers = SprdCamera3RegularChannel::kMaxBuffers;
 				break;
 			}
@@ -699,6 +705,13 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 
 	mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE;
 	mOEMIf->SetChannelHandle(mRegularChan, mPicChan);
+
+	HAL_LOGD("preview: width=%d, height=%d, video: width=%d, height=%d",
+		preview_size.width, preview_size.height,
+		video_size.width, video_size.height);
+	HAL_LOGD("raw: width=%d, height=%d, capture: width=%d, height=%d",
+		raw_size.width, raw_size.height,
+		capture_size.width, capture_size.height);
 
 	mOEMIf->SetDimensionPreview(preview_size);
 	mOEMIf->SetDimensionVideo(video_size);
