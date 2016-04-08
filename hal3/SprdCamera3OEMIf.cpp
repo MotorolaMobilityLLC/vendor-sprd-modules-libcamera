@@ -4075,7 +4075,7 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void)
 #ifdef CONFIG_MEM_OPTIMIZATION
 	if(mSprdZslEnabled == 1 && mCaptureWidth>0 && mCaptureHeight>0) {
 		zoomWidth = mCaptureWidth;
-        	zoomHeight = mCaptureHeight;
+		zoomHeight = mCaptureHeight;
 	}
 #endif
 	zoomInfo.zoom_info.output_ratio = zoomWidth/zoomHeight;
@@ -4487,6 +4487,17 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_uint cameraParaTag)
 		break;
 #endif
 
+	case ANDROID_SPRD_SLOW_MOTION:
+		{
+			SPRD_DEF_Tag sprddefInfo;
+			mSetting->getSPRDDEFTag(&sprddefInfo);
+			if (sprddefInfo.slowmotion > 1) {
+				HAL_LOGD("slow_motion=%d", sprddefInfo.slowmotion);
+				SET_PARM(mCameraHandle, CAMERA_PARAM_SLOW_MOTION_FLAG, 1);
+			}
+		}
+		break;
+
 	default:
 		ret = BAD_VALUE;
 		break;
@@ -4877,7 +4888,7 @@ int SprdCamera3OEMIf::Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *ph
 			memory = allocCameraMem(size, 1, true);
 			if (NULL == memory) {
 				HAL_LOGE("error memory is null.");
-			 	goto mem_fail;
+				goto mem_fail;
 			}
 			mZslHeapArray[mZslHeapNum] = memory;
 			mZslHeapNum++;
@@ -5746,7 +5757,7 @@ void SprdCamera3OEMIf::PushAllZslBuffer()
 {
 	cmr_uint i = 0;
 
-	LOGI("PushAllZslBuffer mZslHeapNum %d", mZslHeapNum);
+	HAL_LOGD("mZslHeapNum %d", mZslHeapNum);
 
 #ifdef CONFIG_NEED_UNMAP
 	//ZslBufferQueue zsl_buffer_q;
@@ -5919,9 +5930,9 @@ void SprdCamera3OEMIf::receiveZslFrame(struct camera_frame_type *frame)
 	camera_zsl_snapshot_need_pause(mCameraHandle, &need_pause);
 	if (PREVIEW_ZSL_FRAME == frame->type) {
 		if (1 == mZslShotPushFlag &&1 == mZslChannelStatus) {
-			LOGI("receiveZslFrame getZSLQueueFrameNum %d", getZSLQueueFrameNum());
+			HAL_LOGV("getZSLQueueFrameNum %d", getZSLQueueFrameNum());
 			for (i=getZSLQueueFrameNum(); i>mZslMaxFrameNum; i--) {
-				LOGI("receiveZslFrame getZSLQueueFrameNum %d", getZSLQueueFrameNum());
+				HAL_LOGV("getZSLQueueFrameNum %d", getZSLQueueFrameNum());
 				zsl_frame = popZSLQueue();
 				if (!need_pause) {
 					camera_set_zsl_buffer(mCameraHandle, zsl_frame.frame.y_phy_addr, zsl_frame.frame.y_vir_addr, zsl_frame.frame.fd);

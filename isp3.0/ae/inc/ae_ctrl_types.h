@@ -241,6 +241,7 @@ struct ae_ctrl_param_resolution {
 	cmr_u32 sensor_size_index;
 	cmr_u32 max_gain;
 	cmr_u32 max_fps;
+	cmr_u32 min_fps;
 };
 
 struct ae_ctrl_param_work {
@@ -248,6 +249,7 @@ struct ae_ctrl_param_work {
 		cmr_int capture_mode;
 		struct ae_ctrl_param_resolution resolution;
 		struct ae_ctrl_param_measure_highflash highflash;
+		struct isp_sensor_fps_info sensor_fps;
 };
 
 struct ae_ctrl_param_scene {

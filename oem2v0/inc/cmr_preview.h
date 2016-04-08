@@ -83,6 +83,7 @@ struct preview_md_ops {
 	cmr_int (*get_sensor_autotest_mode)(cmr_handle oem_handle, cmr_uint sensor_id, cmr_uint *is_autotest);
 	cmr_int (*get_isp_yhist)(cmr_handle oem_handle, cmr_uint sensor_id, struct isp_yhist_info *yhist);
 	cmr_int (*set_preview_yhist)(cmr_handle oem_handle, cmr_uint sensor_id, struct yhist_info *yhist);
+	cmr_int (*get_sensor_fps_info)(cmr_handle oem_handle, cmr_uint sensor_id, cmr_u32 sn_mode, struct sensor_mode_fps_tag *fps_info);
 };
 
 struct preview_init_param {
@@ -118,7 +119,7 @@ struct preview_param {
 	cmr_u32                  preview_eb;
 	cmr_u32                  snapshot_eb;
 	cmr_u32                  video_eb;
-	cmr_u32			 flip_on;
+	cmr_u32                  flip_on;
 	cmr_u32                  tool_eb;
 	struct cmr_zoom_param	 zoom_setting;
 	struct memory_param      memory_setting;
@@ -127,6 +128,7 @@ struct preview_param {
 #ifdef CONFIG_MEM_OPTIMIZATION
 	cmr_u32                  sprd_zsl_enabled;
 #endif
+	cmr_u32                  video_slowmotion_eb;
 };
 
 struct preview_out_param {

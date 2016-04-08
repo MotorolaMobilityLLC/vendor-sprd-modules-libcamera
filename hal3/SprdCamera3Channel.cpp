@@ -850,10 +850,10 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number)
 			HAL_LOGV("ANDROID_SPRD_UCAM_SKIN_LEVEL");
 			mOEMIf->SetCameraParaTag(ANDROID_SPRD_UCAM_SKIN_LEVEL);
 			break;
-                case ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR:
-                        HAL_LOGV("ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR");
-                        mOEMIf->SetCameraParaTag(ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR);
-                        break;
+		case ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR:
+			HAL_LOGV("ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR");
+			mOEMIf->SetCameraParaTag(ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR);
+			break;
 		case ANDROID_FLASH_MODE:
 			HAL_LOGV("ANDROID_FLASH_MODE");
 			mOEMIf->SetCameraParaTag(ANDROID_FLASH_MODE);
@@ -890,6 +890,10 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number)
 			mOEMIf->SetCameraParaTag(ANDROID_SPRD_ZSL_ENABLED);
 			break;
 #endif
+		case ANDROID_SPRD_SLOW_MOTION:
+			HAL_LOGV("ANDROID_SPRD_SLOW_MOTION");
+			mOEMIf->SetCameraParaTag(ANDROID_SPRD_SLOW_MOTION);
+			break;
 		case ANDROID_CONTROL_AE_LOCK:
 			HAL_LOGD("ANDROID_CONTROL_AE_LOCK");
 			mOEMIf->SetCameraParaTag(ANDROID_CONTROL_AE_LOCK);

@@ -184,6 +184,7 @@ static cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_
 	                                                      cmr_uint is_snapshot, struct preview_param *out_param_ptr);
 static cmr_int camera_get_snapshot_param(cmr_handle oem_handle, struct snapshot_param *out_ptr);
 static cmr_int camera_get_sensor_info(cmr_handle oem_handle, cmr_uint sensor_id, struct sensor_exp_info *exp_info_ptr);
+static cmr_int camera_get_sensor_fps_info(cmr_handle oem_handle, cmr_uint sensor_id, cmr_u32 sn_mode, struct sensor_mode_fps_tag *fps_info);
 cmr_int camera_get_tuning_info(cmr_handle oem_handle, struct isp_adgain_exp_info *adgain_exp_info_ptr);
 static cmr_int camera_get_sensor_autotest_mode(cmr_handle oem_handle, cmr_uint sensor_id, cmr_uint *is_autotest);
 static cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id, cmr_uint param);
@@ -1246,7 +1247,7 @@ void camera_snapshot_channel_handle(cmr_handle oem_handle, void* param)
 		}
 
 		if (1 == is_need_resume) {
-			for (i=0 ; i<GRAB_CHANNEL_MAX ; i++) {
+			for (i=0; i<GRAB_CHANNEL_MAX ; i++) {
 				if (cxt->snp_cxt.channel_bits & (1<<i)) {
 					break;
 				}
@@ -1314,7 +1315,7 @@ void camera_snapshot_state_handle(cmr_handle oem_handle, enum snapshot_cb_type c
 			break;
 		case SNAPSHOT_EVT_EXIF_JPEG_DONE:
 			CMR_LOGI("jpeg done with exif");
-	//		camera_snapshot_channel_handle(cxt);
+			//camera_snapshot_channel_handle(cxt);
 			break;
 		case SNAPSHOT_EVT_STATE:
 			cxt->snp_cxt.status = ((struct camera_frame_type *)param)->status;
@@ -1410,7 +1411,7 @@ void camera_snapshot_cb(cmr_handle oem_handle, enum snapshot_cb_type cb, enum sn
 
 		if (cxt->lls_shot_mode || cxt->is_vendor_hdr) {
 			if ((SNAPSHOT_FUNC_TAKE_PICTURE == func) && (SNAPSHOT_EVT_CB_SNAPSHOT_JPEG_DONE == cb) && param) {
-		        struct camera_frame_type *frame_type = (struct camera_frame_type *)param;
+				struct camera_frame_type *frame_type = (struct camera_frame_type *)param;
 
 				if (frame_type->need_free) {
 					camera_set_snp_req(oem_handle, TAKE_PICTURE_NO);
@@ -2860,6 +2861,7 @@ cmr_int camera_preview_init(cmr_handle  oem_handle)
 	init_param.ops.sensor_close = camera_close_sensor;
 	init_param.ops.get_isp_yhist = camera_preview_get_isp_yhist;
 	init_param.ops.set_preview_yhist = camera_preview_set_yhist_to_isp;
+	init_param.ops.get_sensor_fps_info = camera_get_sensor_fps_info;
 	init_param.oem_cb = camera_preview_cb;
 	init_param.private_data = NULL;
 	init_param.sensor_bits = (1 << cxt->camera_id);
@@ -4853,6 +4855,26 @@ exit:
 	return ret;
 }
 
+cmr_int camera_get_sensor_fps_info(cmr_handle oem_handle, cmr_uint sensor_id, cmr_u32 sn_mode, struct sensor_mode_fps_tag *fps_info)
+{
+	cmr_int                        ret = CMR_CAMERA_SUCCESS;
+	struct camera_context          *cxt = (struct camera_context*)oem_handle;
+
+	if (!oem_handle || !fps_info) {
+		CMR_LOGE("in parm error");
+		ret = -CMR_CAMERA_INVALID_PARAM;
+		goto exit;
+	}
+
+	ret = cmr_sensor_get_fps_info(cxt->sn_cxt.sensor_handle, sensor_id, sn_mode, fps_info);
+	if (ret) {
+		CMR_LOGE("failed to get sensor info %ld", ret);
+		goto exit;
+	}
+exit:
+	return ret;
+}
+
 cmr_int camera_get_tuning_info(cmr_handle oem_handle, struct isp_adgain_exp_info *adgain_exp_info_ptr)
 {
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
@@ -5633,6 +5655,17 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 		if (CAMERA_ZSL_MODE == mode) {
 			is_cfg_snp = 1;
 		}
+
+		cmr_bzero(&setting_param, sizeof(setting_param));
+		setting_param.camera_id = cxt->camera_id;
+		ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_SLOW_MOTION_FLAG, &setting_param);
+		if (ret) {
+			CMR_LOGE("failed to get dv mode %ld", ret);
+			goto exit;
+		}
+		out_param_ptr->video_slowmotion_eb = setting_param.cmd_type_value;
+		CMR_LOGD("video_slowmotion_eb = %d", out_param_ptr->video_slowmotion_eb);
+
 	} else {
 		is_cfg_snp = 1;
 	}
@@ -6087,7 +6120,7 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id, cmr
 		setting_param.cmd_type_value = param;
 		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);
 		break;
-        case CAMERA_PARAM_FLIP_ON:
+	case CAMERA_PARAM_FLIP_ON:
 		setting_param.cmd_type_value = param;
 		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);
 		break;
@@ -6171,6 +6204,10 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id, cmr
 		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);
 		break;
 #endif
+	case CAMERA_PARAM_SLOW_MOTION_FLAG:
+		setting_param.cmd_type_value = param;
+		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);
+		break;
 	case CAMERA_PARAM_ISP_AE_LOCK_UNLOCK:
 		CMR_LOGD("CAMERA_PARAM_ISP_AE_LOCK_UNLOCK");
 		setting_param.cmd_type_value = param;

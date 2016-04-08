@@ -672,7 +672,7 @@ static cmr_int aealtek_sensor_info_ui2lib(struct aealtek_cxt *cxt_ptr, struct ae
 	static_sensor_ptr = &cxt_ptr->init_in_param.sensor_static_info;
 
 	/*	sensor info setting, RAW size, fps , etc. */
-	to_ptr->min_fps = 100 * 1;
+	to_ptr->min_fps = 100 * from_ptr->min_fps;
 	to_ptr->max_fps = 100 * from_ptr->max_fps;
 	to_ptr->min_line_cnt = 1;
 	to_ptr->max_line_cnt = MAX_EXP_LINE_CNT;
@@ -1486,6 +1486,10 @@ static cmr_int aealtek_set_fps(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
 		goto exit;
 	}
+	if (cxt_ptr->cur_status.ui_param.work_info.sensor_fps.is_high_fps) {
+		ISP_LOGI("high fps!");
+		return ISP_SUCCESS;
+	}
 	cxt_ptr->nxt_status.ui_param.fps = in_ptr->range_fps;
 
 	obj_ptr = &cxt_ptr->al_obj;
@@ -1979,7 +1983,7 @@ exit:
 	return ret;
 }
 
-static cmr_int aealtek_work_preview(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr)
+static cmr_int aealtek_work_preview(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_work *in_ptr, struct ae_ctrl_param_out *out_ptr)
 {
 	cmr_int ret = ISP_ERROR;
 
@@ -2007,17 +2011,19 @@ static cmr_int aealtek_work_preview(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 	param_ct_ptr = &set_in_param.set_param;
 
 
-	max_fps = in_ptr->work_param.resolution.max_fps;
-	line_time = in_ptr->work_param.resolution.line_time;
+	max_fps = in_ptr->resolution.max_fps;
+	line_time = in_ptr->resolution.line_time;
 	ret = aealtek_set_min_frame_length(cxt_ptr, max_fps, line_time);
 	if (ret)
 		ISP_LOGW("warning set_min_frame ret=%ld !!!", ret);
 
 	/* preview_sensor_info */
 	preview_sensor_ptr = &param_ct_ptr->normal_sensor_info;
-	ret = aealtek_sensor_info_ui2lib(cxt_ptr, &in_ptr->work_param.resolution, preview_sensor_ptr);
+	ret = aealtek_sensor_info_ui2lib(cxt_ptr, &in_ptr->resolution, preview_sensor_ptr);
 	if (ret)
 		goto exit;
+	CMR_LOGE("param min_fps=%d lib min_fps=%d",in_ptr->resolution.min_fps,
+			set_in_param.set_param.normal_sensor_info.min_fps);
 	type = AE_SET_PARAM_SENSOR_INFO;
 	set_in_param.ae_set_param_type = type;
 	if (obj_ptr && obj_ptr->set_param)
@@ -2350,12 +2356,16 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 			in_ptr->work_param.resolution.line_time);
 
 	cxt_ptr->nxt_status.ui_param.work_info = in_ptr->work_param;
+	if (in_ptr->work_param.sensor_fps.is_high_fps) {
+		cxt_ptr->nxt_status.ui_param.work_info.resolution.max_fps = in_ptr->work_param.sensor_fps.max_fps;
+		cxt_ptr->nxt_status.ui_param.work_info.resolution.min_fps = in_ptr->work_param.sensor_fps.max_fps;
+	}
 
 	work_mode = in_ptr->work_param.work_mode;
 	switch (work_mode) {
 	case ISP3A_WORK_MODE_PREVIEW:
 		cxt_ptr->nxt_status.is_hdr_status = 0;
-		ret = aealtek_work_preview(cxt_ptr, in_ptr, out_ptr);
+		ret = aealtek_work_preview(cxt_ptr, &cxt_ptr->nxt_status.ui_param.work_info, out_ptr);
 		break;
 	case ISP3A_WORK_MODE_CAPTURE:
 		ret = aealtek_work_capture(cxt_ptr, in_ptr, out_ptr);

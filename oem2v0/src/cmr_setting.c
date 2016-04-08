@@ -162,6 +162,7 @@ struct setting_hal_param {
 #ifdef CONFIG_MEM_OPTIMIZATION
 	cmr_uint                       sprd_zsl_enabled;
 #endif
+	cmr_uint                       video_slow_motion_flag;
 	cmr_uint                       is_ae_lock;
 };
 
@@ -1646,6 +1647,17 @@ static cmr_int setting_get_sprd_zsl_enabled(struct setting_component *cpt,
 }
 #endif
 
+static cmr_int setting_get_slow_motion_flag(struct setting_component *cpt,
+					                     struct setting_cmd_parameter *parm)
+{
+	cmr_int                     ret = 0;
+	struct setting_hal_param    *hal_param = get_hal_param(cpt, parm->camera_id);
+
+	parm->cmd_type_value = hal_param->video_slow_motion_flag;
+	CMR_LOGE("video_slow_motion_flag=%d", hal_param->video_slow_motion_flag);
+	return ret;
+}
+
 static cmr_int setting_set_ae_lock_unlock(struct setting_component *cpt,
 								struct setting_cmd_parameter *parm)
 {
@@ -1714,6 +1726,17 @@ static cmr_int setting_set_sprd_zsl_enabled(struct setting_component *cpt,
 	return ret;
 }
 #endif
+
+static cmr_int setting_set_slow_motion_flag(struct setting_component *cpt,
+					                      struct setting_cmd_parameter *parm)
+{
+	cmr_int                     ret = 0;
+	struct setting_hal_param    *hal_param = get_hal_param(cpt, parm->camera_id);
+
+	hal_param->video_slow_motion_flag = parm->cmd_type_value;
+	CMR_LOGE("video_slow_motion_flag=%ld", hal_param->video_slow_motion_flag);
+	return ret;
+}
 
 static cmr_int setting_set_capture_size(struct setting_component *cpt,
 					                    struct setting_cmd_parameter *parm)
@@ -2954,7 +2977,7 @@ cmr_int cmr_setting_ioctl(cmr_handle setting_handle, cmr_uint cmd_type,
 		{CAMERA_PARAM_FOCAL_LENGTH,            setting_set_focal_length},
 		{CAMERA_PARAM_SENSOR_ROTATION,         setting_set_capture_angle},
 		{CAMERA_PARAM_PERFECT_SKIN_LEVEL,      setting_set_perfect_skinlevel},
-                {CAMERA_PARAM_FLIP_ON,                 setting_set_flip_on},
+		{CAMERA_PARAM_FLIP_ON,                 setting_set_flip_on},
 		{CAMERA_PARAM_SHOT_NUM,                setting_set_shot_num},
 		{CAMERA_PARAM_ROTATION_CAPTURE,        setting_set_rotation_capture},
 		{CAMERA_PARAM_POSITION,                setting_set_position},
@@ -2969,9 +2992,10 @@ cmr_int cmr_setting_ioctl(cmr_handle setting_handle, cmr_uint cmd_type,
 		{CAMERA_PARAM_RANGE_FPS,               setting_set_range_fps},
 		{CAMERA_PARAM_ISP_FLASH,               setting_set_isp_flash_mode},
 #ifdef CONFIG_MEM_OPTIMIZATION
-		{CAMERA_PARAM_SPRD_ZSL_ENABLED,   setting_set_sprd_zsl_enabled},
+		{CAMERA_PARAM_SPRD_ZSL_ENABLED,        setting_set_sprd_zsl_enabled},
 #endif
-		{CAMERA_PARAM_ISP_AE_LOCK_UNLOCK, setting_set_ae_lock_unlock},
+		{CAMERA_PARAM_ISP_AE_LOCK_UNLOCK,      setting_set_ae_lock_unlock},
+		{CAMERA_PARAM_SLOW_MOTION_FLAG,        setting_set_slow_motion_flag},
 		{CAMERA_PARAM_TYPE_MAX,                NULL},
 		{SETTING_GET_PREVIEW_ANGLE,            setting_get_preview_angle},
 		{SETTING_GET_CAPTURE_ANGLE,            setting_get_capture_angle},
@@ -2996,14 +3020,15 @@ cmr_int cmr_setting_ioctl(cmr_handle setting_handle, cmr_uint cmd_type,
 		{SETTING_GET_DV_MODE,                  setting_get_dv_mode},
 		{SETTING_SET_PRE_LOWFLASH,             setting_set_pre_lowflash},
 		{SETTING_GET_FLASH_STATUS,             setting_get_flash_status},
-		{SETTING_SET_HIGHFLASH_AE_MEASURE,            setting_set_highflash_ae_measure},
-		{SETTING_GET_HW_FLASH_STATUS,             setting_get_HW_flash_status},
-		{SETTING_GET_PERFECT_SKINLEVEL,           setting_get_perfect_skinlevel},
-		{SETTING_GET_FLIP_ON,                     setting_get_flip_on},
+		{SETTING_SET_HIGHFLASH_AE_MEASURE,     setting_set_highflash_ae_measure},
+		{SETTING_GET_HW_FLASH_STATUS,          setting_get_HW_flash_status},
+		{SETTING_GET_PERFECT_SKINLEVEL,        setting_get_perfect_skinlevel},
+		{SETTING_GET_FLIP_ON,                  setting_get_flip_on},
 #ifdef CONFIG_MEM_OPTIMIZATION
-		{SETTING_GET_SPRD_ZSL_ENABLED,            setting_get_sprd_zsl_enabled},
+		{SETTING_GET_SPRD_ZSL_ENABLED,         setting_get_sprd_zsl_enabled},
 #endif
-		{SETTING_SET_ROI_CONVERGENCE_REQ,           setting_set_roi_convergence_req},
+		{SETTING_SET_ROI_CONVERGENCE_REQ,      setting_set_roi_convergence_req},
+		{SETTING_GET_SLOW_MOTION_FLAG,		   setting_get_slow_motion_flag},
 	};
 	struct setting_item          *item = NULL;
 	struct setting_component     *cpt =	 (struct setting_component *)setting_handle;
