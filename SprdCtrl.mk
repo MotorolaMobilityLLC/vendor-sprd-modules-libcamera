@@ -108,9 +108,7 @@ LOCAL_SRC_FILES+= \
 	sensor/ov2680/sensor_ov2680_mipi_raw.c \
 	sensor/af_bu64297gwz.c \
 	sensor/s5k4h8yx/sensor_s5k4h8yx_mipi_raw.c\
-	sensor/vcm/vcm_dw9800.c \
-	sensor/s5k3l2xx/sensor_s5k3l2xx_mipi_raw.c \
-	sensor/s5k5e3yx/sensor_s5k5e3yx_mipi_raw.c 
+	sensor/vcm/vcm_dw9800.c 
 
 ifeq ($(strip $(TARGET_CAMERA_OIS_FUNC)),true)
 	LOCAL_C_INCLUDES += \
