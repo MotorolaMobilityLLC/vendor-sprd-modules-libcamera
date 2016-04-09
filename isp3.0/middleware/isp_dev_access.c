@@ -449,10 +449,10 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, enum isp_dev_access_ctrl
 	return ret;
 }
 
-static void isp_dev_access_set_af_hw_cfg(AF_CfgInfo *af_cfg_info, struct isp3a_af_hw_cfg *af_hw_cfg)
+static void isp_dev_access_set_af_hw_cfg(struct af_cfg_info *af_cfg_info, struct isp3a_af_hw_cfg *af_hw_cfg)
 {
 	cmr_s32 i = 0;
-	memcpy(af_cfg_info, af_hw_cfg, sizeof(AF_CfgInfo));
+	memcpy(af_cfg_info, af_hw_cfg, sizeof(struct af_cfg_info));
 
 	ISP_LOGV("token_id = %d", af_hw_cfg->token_id);
 	ISP_LOGV("uw_size_ratio_x = %d uw_size_ratio_y = %d uw_blk_num_x = %d uw_blk_num_y = %d",
@@ -485,102 +485,102 @@ static void isp_dev_access_set_af_hw_cfg(AF_CfgInfo *af_cfg_info, struct isp3a_a
 	ISP_LOGV("uw_ine_cnt = %d", af_hw_cfg->uw_ine_cnt);
 }
 
-void isp_dev_access_convert_ae_param(struct isp3a_ae_hw_cfg *from, AE_CfgInfo *to)
+void isp_dev_access_convert_ae_param(struct isp3a_ae_hw_cfg *from, struct ae_cfg_info *to)
 {
 	if (!from || !to) {
 		ISP_LOGE("param %p %p is NULL !!!", from, to);
 		return;
 	}
-	to->TokenID = from->tokenID;
-	to->tAERegion.uwBorderRatioX = from->region.border_ratio_X;
-	to->tAERegion.uwBorderRatioY = from->region.border_ratio_Y;
-	to->tAERegion.uwBlkNumX = from->region.blk_num_X;
-	to->tAERegion.uwBlkNumY = from->region.blk_num_Y;
-	to->tAERegion.uwOffsetRatioX = from->region.offset_ratio_X;
-	to->tAERegion.uwOffsetRatioY = from->region.offset_ratio_Y;
+	to->token_id = from->tokenID;
+	to->ae_region.border_ratio_x = from->region.border_ratio_X;
+	to->ae_region.border_ratio_y = from->region.border_ratio_Y;
+	to->ae_region.blk_num_x = from->region.blk_num_X;
+	to->ae_region.blk_num_y = from->region.blk_num_Y;
+	to->ae_region.offset_ratio_x = from->region.offset_ratio_X;
+	to->ae_region.offset_ratio_y = from->region.offset_ratio_Y;
 }
 
-void isp_dev_access_convert_afl_param(struct isp3a_afl_hw_cfg *from, AntiFlicker_CfgInfo *to)
+void isp_dev_access_convert_afl_param(struct isp3a_afl_hw_cfg *from, struct antiflicker_cfg_info *to)
 {
 	if (!from || !to) {
 		ISP_LOGE("param %p %p is NULL !!!", from, to);
 		return;
 	}
-	to->TokenID = from->token_id;
-	to->uwOffsetRatioX = from->offset_ratiox;
-	to->uwOffsetRatioY = from->offset_ratioy;
+	to->token_id = from->token_id;
+	to->offset_ratio_x = from->offset_ratiox;
+	to->offset_ratio_y = from->offset_ratioy;
 }
 
-void isp_dev_access_convert_awb_param(struct isp3a_awb_hw_cfg *data, AWB_CfgInfo *awb_param)
+void isp_dev_access_convert_awb_param(struct isp3a_awb_hw_cfg *data, struct awb_cfg_info *awb_param)
 {
 	cmr_int                                ret = ISP_SUCCESS;
 	cmr_u32                                i = 0;
 
 	//memcpy(&awb_param, data, sizeof(AWB_CfgInfo));
-	awb_param->TokenID = data->token_id;
-	awb_param->tAWBRegion.uwBlkNumX = data->region.blk_num_X;
-	awb_param->tAWBRegion.uwBlkNumY = data->region.blk_num_Y;
-	awb_param->tAWBRegion.uwBorderRatioX = data->region.border_ratio_X;
-	awb_param->tAWBRegion.uwBorderRatioY = data->region.border_ratio_Y;
-	awb_param->tAWBRegion.uwOffsetRatioX = data->region.offset_ratio_X;
-	awb_param->tAWBRegion.uwOffsetRatioY = data->region.offset_ratio_Y;
-	for (i=0 ; i<AWB_UCYFACTOR_NUM ; i++) {
-		awb_param->ucYFactor[i] = data->uc_factor[i];
-	}
-	for (i=0 ; i<AWB_BBRFACTOR_NUM ; i++) {
-		awb_param->BBrFactor[i] = data->bbr_factor[i];
-	}
-	awb_param->uwRGain = data->uw_rgain;
-	awb_param->uwGGain = data->uw_ggain;
-	awb_param->uwBGain = data->uw_bgain;
-	awb_param->ucCrShift = data->uccr_shift;
-	awb_param->ucOffsetShift = data->uc_offset_shift;
-	awb_param->ucQuantize = data->uc_quantize;
-	awb_param->ucDamp = data->uc_damp;
-	awb_param->ucSumShift = data->uc_sum_shift;
-	awb_param->tHis.bEnable = data->t_his.benable;
-	awb_param->tHis.cCrEnd = data->t_his.ccrend;
-	awb_param->tHis.cCrPurple = data->t_his.ccrpurple;
-	awb_param->tHis.cCrStart = data->t_his.ccrstart;
-	awb_param->tHis.cGrassEnd = data->t_his.cgrass_end;
-	awb_param->tHis.cGrassOffset = data->t_his.cgrass_offset;
-	awb_param->tHis.cGrassStart = data->t_his.cgrass_start;
-	awb_param->tHis.cOffsetDown = data->t_his.coffsetdown;
-	awb_param->tHis.cOffsetUp = data->t_his.cooffsetup;
-	awb_param->tHis.cOffset_bbr_w_end = data->t_his.coffset_bbr_w_end;
-	awb_param->tHis.cOffset_bbr_w_start = data->t_his.coffset_bbr_w_start;
-	awb_param->tHis.dHisInterp = data->t_his.dhisinterp;
-	awb_param->tHis.ucDampGrass = data->t_his.ucdampgrass;
-	awb_param->tHis.ucOffsetPurPle = data->t_his.ucoffsetpurple;
-	awb_param->tHis.ucYFac_w = data->t_his.ucyfac_w;
-	awb_param->uwRLinearGain = data->uwrlinear_gain;
-	awb_param->uwBLinearGain = data->uwblinear_gain;
-	ISP_LOGE("token_id = %d, uccr_shift = %d, uc_damp = %d, uc_offset_shift = %d\n",
-		awb_param->TokenID, awb_param->ucCrShift, awb_param->ucDamp, awb_param->ucOffsetShift);
-	ISP_LOGV("uc_quantize = %d\n, uc_sum_shift = %d\n, uwblinear_gain = %d\n, uwrlinear_gain = %d\n,\
-		uw_bgain = %d\n, uw_rgain = %d\n, uw_ggain = %d\n",
-		awb_param->ucQuantize, awb_param->ucSumShift, awb_param->uwBLinearGain, awb_param->uwRLinearGain,
-		awb_param->uwBGain, awb_param->uwRGain, awb_param->uwGGain);
+	awb_param->token_id = data->token_id;
+	awb_param->awb_region.blk_num_x = data->region.blk_num_X;
+	awb_param->awb_region.blk_num_y = data->region.blk_num_Y;
+	awb_param->awb_region.border_ratio_x = data->region.border_ratio_X;
+	awb_param->awb_region.border_ratio_y = data->region.border_ratio_Y;
+	awb_param->awb_region.offset_ratio_x = data->region.offset_ratio_X;
+	awb_param->awb_region.offset_ratio_y = data->region.offset_ratio_Y;
 	for (i=0 ; i<16 ; i++) {
-		ISP_LOGV("uc_factor[%d] = %d\n", i, awb_param->ucYFactor[i]);
+		awb_param->y_factor[i] = data->uc_factor[i];
 	}
 	for (i=0 ; i<33 ; i++) {
-		ISP_LOGV("bbr_factor[%d] = %d\n",i, awb_param->BBrFactor[i]);
+		awb_param->bbr_factor[i] = data->bbr_factor[i];
+	}
+	awb_param->r_gain = data->uw_rgain;
+	awb_param->g_gain = data->uw_ggain;
+	awb_param->b_gain = data->uw_bgain;
+	awb_param->cr_shift = data->uccr_shift;
+	awb_param->offset_shift = data->uc_offset_shift;
+	awb_param->quantize = data->uc_quantize;
+	awb_param->damp = data->uc_damp;
+	awb_param->sum_shift = data->uc_sum_shift;
+	awb_param->t_his.enable = data->t_his.benable;
+	awb_param->t_his.cr_end = data->t_his.ccrend;
+	awb_param->t_his.cr_purple = data->t_his.ccrpurple;
+	awb_param->t_his.cr_start = data->t_his.ccrstart;
+	awb_param->t_his.grass_end = data->t_his.cgrass_end;
+	awb_param->t_his.grass_offset = data->t_his.cgrass_offset;
+	awb_param->t_his.grass_start = data->t_his.cgrass_start;
+	awb_param->t_his.offset_down = data->t_his.coffsetdown;
+	awb_param->t_his.offset_up = data->t_his.cooffsetup;
+	awb_param->t_his.offset_bbr_w_end = data->t_his.coffset_bbr_w_end;
+	awb_param->t_his.offset_bbr_w_start = data->t_his.coffset_bbr_w_start;
+	awb_param->t_his.his_interp = data->t_his.dhisinterp;
+	awb_param->t_his.damp_grass = data->t_his.ucdampgrass;
+	awb_param->t_his.offset_purple = data->t_his.ucoffsetpurple;
+	awb_param->t_his.yfac_w = data->t_his.ucyfac_w;
+	awb_param->r_linear_gain = data->uwrlinear_gain;
+	awb_param->b_linear_gain = data->uwblinear_gain;
+	ISP_LOGE("token_id = %d, uccr_shift = %d, uc_damp = %d, uc_offset_shift = %d\n",
+		awb_param->token_id, awb_param->cr_shift, awb_param->damp, awb_param->offset_shift);
+	ISP_LOGV("uc_quantize = %d\n, uc_sum_shift = %d\n, uwblinear_gain = %d\n, uwrlinear_gain = %d\n,\
+		uw_bgain = %d\n, uw_rgain = %d\n, uw_ggain = %d\n",
+		awb_param->quantize, awb_param->sum_shift, awb_param->b_linear_gain, awb_param->r_linear_gain,
+		awb_param->b_gain, awb_param->g_gain, awb_param->r_gain);
+	for (i=0 ; i<16 ; i++) {
+		ISP_LOGV("uc_factor[%d] = %d\n", i, awb_param->y_factor[i]);
+	}
+	for (i=0 ; i<33 ; i++) {
+		ISP_LOGV("bbr_factor[%d] = %d\n",i, awb_param->bbr_factor[i]);
 	}
 	ISP_LOGV("region:blk_num_X = %d, blk_num_Y = %d\n, border_ratio_X = %d, border_ratio_Y = %d\n,\
 		offset_ratio_X = %d, offset_ratio_Y = %d\n",
-		awb_param->tAWBRegion.uwBlkNumX, awb_param->tAWBRegion.uwBlkNumY,
-		awb_param->tAWBRegion.uwBorderRatioX, awb_param->tAWBRegion.uwBorderRatioY,
-		awb_param->tAWBRegion.uwOffsetRatioX, awb_param->tAWBRegion.uwOffsetRatioY);
+		awb_param->awb_region.blk_num_x, awb_param->awb_region.blk_num_y,
+		awb_param->awb_region.border_ratio_x, awb_param->awb_region.border_ratio_y,
+		awb_param->awb_region.offset_ratio_x, awb_param->awb_region.offset_ratio_y);
 	ISP_LOGV("t_his:benable = %d\n ccrend = %d\n ccrpurple = %d\n ccrstart = %d\n \
 		cgrass_end = %d\n cgrass_offset = %d\n cgrass_start = %d\n coffsetdown = %d\n \
 		coffset_bbr_w_end = %d\n coffset_bbr_w_start = %d\n cooffsetup = %d\n \
 		dhisinterp = %d\n ucdampgrass = %d\n ucoffsetpurple = %d\n ucyfac_w = %d\n",
-		awb_param->tHis.bEnable, awb_param->tHis.cCrEnd, awb_param->tHis.cCrPurple,
-		awb_param->tHis.cCrStart, awb_param->tHis.cGrassEnd, awb_param->tHis.cGrassOffset,
-		awb_param->tHis.cGrassStart, awb_param->tHis.cOffsetDown, awb_param->tHis.cOffset_bbr_w_end,
-		awb_param->tHis.cOffset_bbr_w_start, awb_param->tHis.cOffsetUp, awb_param->tHis.dHisInterp,
-		awb_param->tHis.ucDampGrass, awb_param->tHis.ucOffsetPurPle, awb_param->tHis.ucYFac_w);
+		awb_param->t_his.enable, awb_param->t_his.cr_end, awb_param->t_his.cr_purple,
+		awb_param->t_his.cr_start, awb_param->t_his.grass_end, awb_param->t_his.grass_offset,
+		awb_param->t_his.grass_start, awb_param->t_his.offset_down, awb_param->t_his.offset_bbr_w_end,
+		awb_param->t_his.offset_bbr_w_start, awb_param->t_his.offset_up, awb_param->t_his.his_interp,
+		awb_param->t_his.damp_grass, awb_param->t_his.offset_purple, awb_param->t_his.yfac_w);
 
 }
 #define FPGA_TEST     1
@@ -589,8 +589,9 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	cmr_int                                ret = ISP_SUCCESS;
 	cmr_int                                i = 0;
 	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-	Cfg3A_Info                             cfg3a_info;
-	DldSequence                            dldseq_info;
+	SCENARIO_INFO_AP                       input_data;
+	struct cfg_3a_info			cfg3a_info;
+	struct dld_sequence                     dldseq_info;
 	cmr_u32                                iso_gain = 0;
 	struct isp_awb_gain_info               awb_gain_info;
 	cmr_u32                                dcam_id = 0, isp_id = 0;
@@ -667,30 +668,29 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 
 #ifdef FPGA_TEST
 	// SubSample
-	cfg3a_info.tSubSampleInfo.TokenID = 0x100;
-	cfg3a_info.tSubSampleInfo.udBufferImageSize = 1158*870;;
-	cfg3a_info.tSubSampleInfo.uwOffsetRatioX =0;
-	cfg3a_info.tSubSampleInfo.uwOffsetRatioY =0;
-
+	cfg3a_info.subsample_info.token_id = 0x100;
+	cfg3a_info.subsample_info.buffer_image_size = 1158*870;
+	cfg3a_info.subsample_info.offset_ratio_x =0;
+	cfg3a_info.subsample_info.offset_ratio_y =0;
 
 	// Yhis configuration:
-	cfg3a_info.tYHisInfo.TokenID = 0x120;
-	cfg3a_info.tYHisInfo.tYHisRegion.uwBorderRatioX = 100;
-	cfg3a_info.tYHisInfo.tYHisRegion.uwBorderRatioY = 100;
-	cfg3a_info.tYHisInfo.tYHisRegion.uwBlkNumX = 16;
-	cfg3a_info.tYHisInfo.tYHisRegion.uwBlkNumY = 16;
-	cfg3a_info.tYHisInfo.tYHisRegion.uwOffsetRatioX = 0;
-	cfg3a_info.tYHisInfo.tYHisRegion.uwOffsetRatioY = 0;
+	cfg3a_info.yhis_info.token_id = 0x120;
+	cfg3a_info.yhis_info.yhis_region.border_ratio_x = 100;
+	cfg3a_info.yhis_info.yhis_region.border_ratio_y = 100;
+	cfg3a_info.yhis_info.yhis_region.blk_num_x = 16;
+	cfg3a_info.yhis_info.yhis_region.blk_num_y = 16;
+	cfg3a_info.yhis_info.yhis_region.offset_ratio_x = 0;
+	cfg3a_info.yhis_info.yhis_region.offset_ratio_y = 0;
 #else
-	memcpy(&cfg3a_info.hw_cfg.tAntiFlickerInfo, &param_ptr->hw_cfg.afl_cfg, sizeof(AntiFlicker_CfgInfo));
-	memcpy(&cfg3a_info.hw_cfg.tYHisInfo, &param_ptr->hw_cfg.yhis_cfg, sizeof(YHis_CfgInfo);
-	memcpy(&cfg3a_info.hw_cfg.tSubSampleInfo, &param_ptr->hw_cfg.subsample_cfg, sizeof(SubSample_CfgInfo));
+	memcpy(&cfg3a_info.hw_cfg.antiflicker_info, &param_ptr->hw_cfg.afl_cfg, sizeof(struct antiflicker_cfg_info));
+	memcpy(&cfg3a_info.hw_cfg.yhis_info, &param_ptr->hw_cfg.yhis_cfg, sizeof(struct yhis_cfg_info);
+	memcpy(&cfg3a_info.hw_cfg.subsample_info, &param_ptr->hw_cfg.subsample_cfg, sizeof(struct subsample_cfg_info));
 #endif
 
-	isp_dev_access_convert_ae_param(&param_ptr->hw_cfg.ae_cfg, &cfg3a_info.tAEInfo);
-	isp_dev_access_convert_afl_param(&param_ptr->hw_cfg.afl_cfg, &cfg3a_info.tAntiFlickerInfo);
-	isp_dev_access_convert_awb_param(&param_ptr->hw_cfg.awb_cfg, &cfg3a_info.tAWBInfo);
-	isp_dev_access_set_af_hw_cfg(&cfg3a_info.tAFInfo, &param_ptr->hw_cfg.af_cfg);
+	isp_dev_access_convert_ae_param(&param_ptr->hw_cfg.ae_cfg, &cfg3a_info.ae_info);
+	isp_dev_access_convert_afl_param(&param_ptr->hw_cfg.afl_cfg, &cfg3a_info.antiflicker_info);
+	isp_dev_access_convert_awb_param(&param_ptr->hw_cfg.awb_cfg, &cfg3a_info.awb_info);
+	isp_dev_access_set_af_hw_cfg(&cfg3a_info.af_info, &param_ptr->hw_cfg.af_cfg);
 
 	ret = isp_dev_cfg_3a_param(cxt->isp_driver_handle, &cfg3a_info);
 	if (ret) {
@@ -698,22 +698,22 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 		goto exit;
 	}
 #ifdef FPGA_TEST
-	dldseq_info.ucPreview_Baisc_DldSeqLength = 4;
-	dldseq_info.aucPreview_Baisc_DldSeq[0] = 1;
-	dldseq_info.aucPreview_Baisc_DldSeq[1] = 1;
-	dldseq_info.aucPreview_Baisc_DldSeq[2] = 1;
-	dldseq_info.aucPreview_Baisc_DldSeq[3] = 1;
+	dldseq_info.preview_baisc_dld_seq_length = 4;
+	dldseq_info.preview_baisc_dld_seq[0] = 1;
+	dldseq_info.preview_baisc_dld_seq[1] = 1;
+	dldseq_info.preview_baisc_dld_seq[2] = 1;
+	dldseq_info.preview_baisc_dld_seq[3] = 1;
 
-	dldseq_info.ucPreview_Adv_DldSeqLength = 3;
-	dldseq_info.aucPreview_Adv_DldSeq[0] = 1;
-	dldseq_info.aucPreview_Adv_DldSeq[1] = 1;
-	dldseq_info.aucPreview_Adv_DldSeq[2] = 1;
+	dldseq_info.preview_adv_dld_seq_length = 3;
+	dldseq_info.preview_adv_dld_seq[0] = 1;
+	dldseq_info.preview_adv_dld_seq[1] = 1;
+	dldseq_info.preview_adv_dld_seq[2] = 1;
 
-	dldseq_info.ucFastConverge_Baisc_DldSeqLength = 2;
-	dldseq_info.aucFastConverge_Baisc_DldSeq[0] = 3;
-	dldseq_info.aucFastConverge_Baisc_DldSeq[1] = 3;
+	dldseq_info.fast_converge_baisc_dld_seq_length = 2;
+	dldseq_info.fast_converge_baisc_dld_seq[0] = 3;
+	dldseq_info.fast_converge_baisc_dld_seq[1] = 3;
 #else
-	memcpy(&dldseq_info, &param_ptr->dld_seq, sizeof(DldSequence));
+	memcpy(&dldseq_info, &param_ptr->dld_seq, sizeof(struct dld_sequence));
 #endif
 	ret = isp_dev_cfg_dld_seq(cxt->isp_driver_handle, &dldseq_info);
 	if (ret) {
@@ -765,10 +765,10 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 	cmr_int                                ret = ISP_SUCCESS;
 	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 	SCENARIO_INFO_AP                       scenario_in;
-	Cfg3A_Info                             cfg_info;
+	struct cfg_3a_info                             cfg_info;
 	struct isp_cfg_img_param               img_param;
 	struct isp_awb_gain_info               awb_gain;
-	DldSequence                            dldseq;
+	struct dld_sequence                            dldseq;
 	cmr_u32                                dcam_id = 0;
 	struct isp_cfg_img_param               img_buf_param;
 	cmr_u32                                iso_gain = 0;
@@ -918,26 +918,26 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 	}
 #endif
 #ifdef FPGA_TEST
-	cfg_info.tSubSampleInfo.TokenID = 0x100;
-	cfg_info.tSubSampleInfo.udBufferImageSize = 320*240;
-	cfg_info.tSubSampleInfo.uwOffsetRatioX =0;
-	cfg_info.tSubSampleInfo.uwOffsetRatioY =0;
-	cfg_info.tYHisInfo.TokenID = 0x120;
-	cfg_info.tYHisInfo.tYHisRegion.uwBorderRatioX = 100;
-	cfg_info.tYHisInfo.tYHisRegion.uwBorderRatioY = 100;
-	cfg_info.tYHisInfo.tYHisRegion.uwBlkNumX = 16;
-	cfg_info.tYHisInfo.tYHisRegion.uwBlkNumY = 16;
-	cfg_info.tYHisInfo.tYHisRegion.uwOffsetRatioX = 0;
-	cfg_info.tYHisInfo.tYHisRegion.uwOffsetRatioY = 0;
+	cfg_info.subsample_info.token_id = 0x100;
+	cfg_info.subsample_info.buffer_image_size = 320*240;
+	cfg_info.subsample_info.offset_ratio_x =0;
+	cfg_info.subsample_info.offset_ratio_y =0;
+	cfg_info.yhis_info.token_id = 0x120;
+	cfg_info.yhis_info.yhis_region.border_ratio_x = 100;
+	cfg_info.yhis_info.yhis_region.border_ratio_y = 100;
+	cfg_info.yhis_info.yhis_region.blk_num_x = 16;
+	cfg_info.yhis_info.yhis_region.blk_num_y = 16;
+	cfg_info.yhis_info.yhis_region.offset_ratio_x = 0;
+	cfg_info.yhis_info.yhis_region.offset_ratio_y = 0;
 #else
-	memcpy(&cfg_info.hw_cfg.tAntiFlickerInfo, input_ptr.hw_cfg.afl_cfg, sizeof(AntiFlicker_CfgInfo));
-	memcpy(&cfg_info.hw_cfg.tYHisInfo, input_ptr.hw_cfg.yhis_cfg, sizeof(YHis_CfgInfo);
-	memcpy(&cfg_info.hw_cfg.tSubSampleInfo, input_ptr.hw_cfg.subsample_cfg, sizeof(SubSample_CfgInfo));
+	memcpy(&cfg_info.hw_cfg.tAntiFlickerInfo, input_ptr.hw_cfg.afl_cfg, sizeof(struct antiflicker_cfg_info));
+	memcpy(&cfg_info.hw_cfg.tYHisInfo, input_ptr.hw_cfg.yhis_cfg, sizeof(struct yhis_cfg_info);
+	memcpy(&cfg_info.hw_cfg.tSubSampleInfo, input_ptr.hw_cfg.subsample_cfg, sizeof(struct subsample_cfg_info));
 #endif
-	isp_dev_access_convert_ae_param(&input_ptr->hw_cfg.ae_cfg, &cfg_info.tAEInfo);
-	isp_dev_access_convert_afl_param(&input_ptr->hw_cfg.afl_cfg, &cfg_info.tAntiFlickerInfo);
-	isp_dev_access_convert_awb_param(&input_ptr->hw_cfg.awb_cfg, &cfg_info.tAWBInfo);
-	isp_dev_access_set_af_hw_cfg(&cfg_info.tAFInfo, &input_ptr->hw_cfg.af_cfg);
+	isp_dev_access_convert_ae_param(&input_ptr->hw_cfg.ae_cfg, &cfg_info.ae_info);
+	isp_dev_access_convert_afl_param(&input_ptr->hw_cfg.afl_cfg, &cfg_info.antiflicker_info);
+	isp_dev_access_convert_awb_param(&input_ptr->hw_cfg.awb_cfg, &cfg_info.awb_info);
+	isp_dev_access_set_af_hw_cfg(&cfg_info.af_info, &input_ptr->hw_cfg.af_cfg);
 	ret = isp_dev_cfg_3a_param(cxt->isp_driver_handle, &cfg_info);
 	if (ret) {
 		ISP_LOGE("failed to cfg 3a %ld", ret);
@@ -945,20 +945,20 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 	}
 //	img_param.img_id = ;//0-preview, 1-video, 2-still capture 3-statistics
 #ifdef FPGA_TEST
-	dldseq.ucPreview_Baisc_DldSeqLength = 4;
-	dldseq.aucPreview_Baisc_DldSeq[0] = 1;
-	dldseq.aucPreview_Baisc_DldSeq[1] = 1;
-	dldseq.aucPreview_Baisc_DldSeq[2] = 1;
-	dldseq.aucPreview_Baisc_DldSeq[3] = 1;
-	dldseq.ucPreview_Adv_DldSeqLength = 3;
-	dldseq.aucPreview_Adv_DldSeq[0] = 1;
-	dldseq.aucPreview_Adv_DldSeq[1] = 1;
-	dldseq.aucPreview_Adv_DldSeq[2] = 1;
-	dldseq.ucFastConverge_Baisc_DldSeqLength = 2;
-	dldseq.aucFastConverge_Baisc_DldSeq[0] = 3;
-	dldseq.aucFastConverge_Baisc_DldSeq[1] = 3;
+	dldseq.preview_baisc_dld_seq_length = 4;
+	dldseq.preview_baisc_dld_seq[0] = 1;
+	dldseq.preview_baisc_dld_seq[1] = 1;
+	dldseq.preview_baisc_dld_seq[2] = 1;
+	dldseq.preview_baisc_dld_seq[3] = 1;
+	dldseq.preview_adv_dld_seq_length = 3;
+	dldseq.preview_adv_dld_seq[0] = 1;
+	dldseq.preview_adv_dld_seq[1] = 1;
+	dldseq.preview_adv_dld_seq[2] = 1;
+	dldseq.fast_converge_baisc_dld_seq_length = 2;
+	dldseq.fast_converge_baisc_dld_seq[0] = 3;
+	dldseq.fast_converge_baisc_dld_seq[1] = 3;
 #else
-	memcpy(&dldseq, &input_ptr->dldseq, sizeof(DldSequence));
+	memcpy(&dldseq, &input_ptr->dldseq, sizeof(struct dld_sequence));
 #endif
 	ret = isp_dev_cfg_dld_seq(cxt->isp_driver_handle, &dldseq);
 	if (ret) {
@@ -1015,60 +1015,61 @@ cmr_int isp_dev_access_cfg_awb_param(cmr_handle isp_dev_handle, struct isp3a_awb
 {
 	cmr_int                                ret = ISP_SUCCESS;
 	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-	AWB_CfgInfo                            awb_param;
+	struct awb_cfg_info                            awb_param;
 	cmr_u32                                i = 0;
 
 	//memcpy(&awb_param, data, sizeof(AWB_CfgInfo));
-	awb_param.TokenID = data->token_id;
-	awb_param.tAWBRegion.uwBlkNumX = data->region.blk_num_X;
-	awb_param.tAWBRegion.uwBlkNumY = data->region.blk_num_Y;
-	awb_param.tAWBRegion.uwBorderRatioX = data->region.border_ratio_X;
-	awb_param.tAWBRegion.uwBorderRatioY = data->region.border_ratio_Y;
-	awb_param.tAWBRegion.uwOffsetRatioX = data->region.offset_ratio_X;
-	awb_param.tAWBRegion.uwOffsetRatioY = data->region.offset_ratio_Y;
-	for (i=0 ; i<AWB_UCYFACTOR_NUM ; i++) {
-		awb_param.ucYFactor[i] = data->uc_factor[i];
+	awb_param.token_id = data->token_id;
+	awb_param.awb_region.blk_num_x = data->region.blk_num_X;
+	awb_param.awb_region.blk_num_y = data->region.blk_num_Y;
+	awb_param.awb_region.border_ratio_x = data->region.border_ratio_X;
+	awb_param.awb_region.border_ratio_y = data->region.border_ratio_Y;
+	awb_param.awb_region.offset_ratio_x = data->region.offset_ratio_X;
+	awb_param.awb_region.offset_ratio_y = data->region.offset_ratio_Y;
+	for (i=0 ; i</*AWB_UCYFACTOR_NUM*/16 ; i++) {
+		awb_param.y_factor[i] = data->uc_factor[i];
 	}
-	for (i=0 ; i<AWB_BBRFACTOR_NUM ; i++) {
-		awb_param.BBrFactor[i] = data->bbr_factor[i];
+	for (i=0 ; i < 33 ; i++) {
+		awb_param.bbr_factor[i] = data->bbr_factor[i];
 	}
-	awb_param.uwRGain = data->uw_rgain;
-	awb_param.uwGGain = data->uw_ggain;
-	awb_param.uwBGain = data->uw_bgain;
-	awb_param.ucCrShift = data->uccr_shift;
-	awb_param.ucOffsetShift = data->uc_offset_shift;
-	awb_param.ucQuantize = data->uc_quantize;
-	awb_param.ucDamp = data->uc_damp;
-	awb_param.ucSumShift = data->uc_sum_shift;
-	awb_param.tHis.bEnable = data->t_his.benable;
-	awb_param.tHis.cCrEnd = data->t_his.ccrend;
-	awb_param.tHis.cCrPurple = data->t_his.ccrpurple;
-	awb_param.tHis.cCrStart = data->t_his.ccrstart;
-	awb_param.tHis.cGrassEnd = data->t_his.cgrass_end;
-	awb_param.tHis.cGrassOffset = data->t_his.cgrass_offset;
-	awb_param.tHis.cGrassStart = data->t_his.cgrass_start;
-	awb_param.tHis.cOffsetDown = data->t_his.coffsetdown;
-	awb_param.tHis.cOffsetUp = data->t_his.cooffsetup;
-	awb_param.tHis.cOffset_bbr_w_end = data->t_his.coffset_bbr_w_end;
-	awb_param.tHis.cOffset_bbr_w_start = data->t_his.coffset_bbr_w_start;
-	awb_param.tHis.dHisInterp = data->t_his.dhisinterp;
-	awb_param.tHis.ucDampGrass = data->t_his.ucdampgrass;
-	awb_param.tHis.ucOffsetPurPle = data->t_his.ucoffsetpurple;
-	awb_param.tHis.ucYFac_w = data->t_his.ucyfac_w;
-	awb_param.uwRLinearGain = data->uwrlinear_gain;
-	awb_param.uwBLinearGain = data->uwblinear_gain;
+	awb_param.r_gain = data->uw_rgain;
+	awb_param.g_gain = data->uw_ggain;
+	awb_param.b_gain = data->uw_bgain;
+	awb_param.cr_shift = data->uccr_shift;
+	awb_param.offset_shift = data->uc_offset_shift;
+	awb_param.quantize = data->uc_quantize;
+	awb_param.damp    = data->uc_damp;
+	awb_param.sum_shift = data->uc_sum_shift;
+	awb_param.t_his.enable = data->t_his.benable;
+	awb_param.t_his.cr_end = data->t_his.ccrend;
+	awb_param.t_his.cr_purple = data->t_his.ccrpurple;
+	awb_param.t_his.cr_start = data->t_his.ccrstart;
+	awb_param.t_his.grass_end = data->t_his.cgrass_end;
+	awb_param.t_his.grass_offset = data->t_his.cgrass_offset;
+	awb_param.t_his.grass_start = data->t_his.cgrass_start;
+	awb_param.t_his.offset_down = data->t_his.coffsetdown;
+	awb_param.t_his.offset_up = data->t_his.cooffsetup;
+	awb_param.t_his.offset_bbr_w_end = data->t_his.coffset_bbr_w_end;
+	awb_param.t_his.offset_bbr_w_start = data->t_his.coffset_bbr_w_start;
+	awb_param.t_his.his_interp = data->t_his.dhisinterp;
+	awb_param.t_his.damp_grass = data->t_his.ucdampgrass;
+	awb_param.t_his.offset_purple = data->t_his.ucoffsetpurple;
+	awb_param.t_his.yfac_w = data->t_his.ucyfac_w;
+	awb_param.r_linear_gain = data->uwrlinear_gain;
+	awb_param.b_linear_gain = data->uwblinear_gain;
 	ISP_LOGV("token_id = %d, uccr_shift = %d, uc_damp = %d, uc_offset_shift = %d\n",
-		awb_param.TokenID, awb_param.ucCrShift, awb_param.ucDamp, awb_param.ucOffsetShift);
+		awb_param.token_id, awb_param.cr_shift, awb_param.damp, awb_param.offset_shift);
 	ISP_LOGV("uc_quantize = %d\n, uc_sum_shift = %d\n, uwblinear_gain = %d\n, uwrlinear_gain = %d\n,\
 		uw_bgain = %d\n, uw_rgain = %d\n, uw_ggain = %d\n",
-		awb_param.ucQuantize, awb_param.ucSumShift, awb_param.uwBLinearGain, awb_param.uwRLinearGain,
-		awb_param.uwBGain, awb_param.uwRGain, awb_param.uwGGain);
+		awb_param.quantize, awb_param.sum_shift, awb_param.b_linear_gain, awb_param.r_linear_gain,
+		awb_param.b_gain, awb_param.r_gain, awb_param.g_gain);
 	for (i=0 ; i<16 ; i++) {
-		ISP_LOGV("uc_factor[%d] = %d\n", i, awb_param.ucYFactor[i]);
+		ISP_LOGV("uc_factor[%d] = %d\n", i, awb_param.y_factor[i]);
 	}
 	for (i=0 ; i<33 ; i++) {
-		ISP_LOGV("bbr_factor[%d] = %d\n",i, awb_param.BBrFactor[i]);
+		ISP_LOGV("bbr_factor[%d] = %d\n",i, awb_param.bbr_factor[i]);
 	}
+/*
 	ISP_LOGV("region:blk_num_X = %d, blk_num_Y = %d\n, border_ratio_X = %d, border_ratio_Y = %d\n,\
 		offset_ratio_X = %d, offset_ratio_Y = %d\n",
 		awb_param.tAWBRegion.uwBlkNumX, awb_param.tAWBRegion.uwBlkNumY,
@@ -1083,7 +1084,7 @@ cmr_int isp_dev_access_cfg_awb_param(cmr_handle isp_dev_handle, struct isp3a_awb
 		awb_param.tHis.cGrassStart, awb_param.tHis.cOffsetDown, awb_param.tHis.cOffset_bbr_w_end,
 		awb_param.tHis.cOffset_bbr_w_start, awb_param.tHis.cOffsetUp, awb_param.tHis.dHisInterp,
 		awb_param.tHis.ucDampGrass, awb_param.tHis.ucOffsetPurPle, awb_param.tHis.ucYFac_w);
-
+*/
 	ret = isp_dev_cfg_awb_param(cxt->isp_driver_handle, &awb_param);//TBD
 
 	return ret;
@@ -1132,9 +1133,9 @@ cmr_int isp_dev_access_cfg_af_param(cmr_handle isp_dev_handle, struct isp3a_af_h
 {
 	cmr_int                                ret = ISP_SUCCESS;
 	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-	AF_CfgInfo                             af_param;
+	struct af_cfg_info                              af_param;
 
-	memcpy(&af_param, data, sizeof(AF_CfgInfo));
+	memcpy(&af_param, data, sizeof(struct af_cfg_info ));
 	ret = isp_dev_cfg_af_param(cxt->isp_driver_handle, &af_param);//TBD
 
 	return ret;
