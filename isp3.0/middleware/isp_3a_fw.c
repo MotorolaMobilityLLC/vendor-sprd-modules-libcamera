@@ -2603,12 +2603,12 @@ exit:
 }
 
 
- cmr_int isp3a_callback_func (cmr_handle handle, cmr_u32 cb_type, void *param_ptr, cmr_u32 param_len)
- {
+cmr_int isp3a_callback_func (cmr_handle handle, cmr_u32 cb_type, void *param_ptr, cmr_u32 param_len)
+{
 	cmr_int                                     ret = ISP_SUCCESS;
 
 	return ret;
- }
+}
 
 void isp3a_dev_evt_cb(cmr_int evt, void *data, cmr_u32 data_len, void *privdata)
 {
@@ -3022,7 +3022,7 @@ cmr_int isp3a_start_awb_process(cmr_handle isp_3a_handle, struct isp3a_statistic
 	struct awb_ctrl_process_out                 output;
 
 	input.statistics_data = stats_data;
-	memcpy(&input.ae_info, ae_info, sizeof(struct isp3a_ae_info));
+	memcpy(&input.ae_info, &ae_info->proc_out.ae_info, sizeof(struct isp3a_ae_info));
 	isp3a_hold_statistics_buf(isp_3a_handle, ISP3A_AWB, stats_data);
 	ret = awb_ctrl_process(cxt->awb_cxt.handle, &input, &output);
 	if (ret) {
