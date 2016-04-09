@@ -84,7 +84,7 @@ extern volatile uint32_t gCMRLogLevel;
 #define CMR_SLICE_HEIGHT                   256
 #define CMR_SHARK_SCALING_TH               2048
 #define CMR_DOLPHIN_SCALING_TH             1280
-#define GRAB_BUF_MAX                       8
+#define GRAB_BUF_MAX                       32
 #define GRAB_CHANNEL_MAX                   6
 #define SESNOR_NAME_LEN                    40
 #define CMR_CAPTURE_MEM_SUM                4
