@@ -348,15 +348,6 @@ cmr_s32 camera_local_get_iommu_status(cmr_handle oem_handle);
 cmr_int camera_isp_set_sensor_info_to_af(cmr_handle oem_handle, struct cmr_af_aux_sensor_info* sensor_info);
 cmr_int cmr_get_sensor_max_fps(cmr_handle oem_handle,cmr_u32 camera_id, cmr_u32* max_fps);
 
-#ifdef CONFIG_MEM_OPTIMIZATION
-cmr_int camera_start_scale2(cmr_handle oem_handle, cmr_handle caller_handle, struct img_frm *src,
-                                      struct img_frm *dst, struct cmr_op_mean *mean);
-cmr_int camera_start_scale_in_gsp(struct img_frm *src,
-                                      struct img_frm *dst, int src_fd, int dst_fd);
-cmr_int camera_notify_close_gsp_hwc(cmr_int need_close);
-
-#endif
-
 #ifdef __cplusplus
 }
 #endif

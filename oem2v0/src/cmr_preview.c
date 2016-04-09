@@ -167,6 +167,7 @@ struct prev_context {
 	cmr_uint                        prev_mode;
 	struct img_rect                 prev_rect;
 	cmr_uint                        skip_mode;
+	cmr_uint                        prev_channel_deci;
 	cmr_uint                        prev_skip_num;
 	cmr_uint                        prev_channel_id;
 	cmr_uint                        prev_channel_status;
@@ -254,15 +255,15 @@ struct prev_context {
 	struct img_size                 cap_sn_size;
 	struct img_rect                 cap_scale_src_rect;
 
-	cmr_uint						cap_phys_addr_array[CMR_CAPTURE_MEM_SUM];
-	cmr_uint						cap_virt_addr_array[CMR_CAPTURE_MEM_SUM];
-	cmr_s32 					  cap_fd_array[CMR_CAPTURE_MEM_SUM];
-	cmr_uint						cap_phys_addr_path_array[CMR_CAPTURE_MEM_SUM];
-	cmr_uint						cap_virt_addr_path_array[CMR_CAPTURE_MEM_SUM];
-	cmr_s32 			   cap_fd_path_array[CMR_CAPTURE_MEM_SUM];
+	cmr_uint                        cap_phys_addr_array[CMR_CAPTURE_MEM_SUM];
+	cmr_uint                        cap_virt_addr_array[CMR_CAPTURE_MEM_SUM];
+	cmr_s32                         cap_fd_array[CMR_CAPTURE_MEM_SUM];
+	cmr_uint                        cap_phys_addr_path_array[CMR_CAPTURE_MEM_SUM];
+	cmr_uint                        cap_virt_addr_path_array[CMR_CAPTURE_MEM_SUM];
+	cmr_s32                         cap_fd_path_array[CMR_CAPTURE_MEM_SUM];
 
-	struct cmr_cap_mem				cap_mem[CMR_CAPTURE_MEM_SUM];
-	struct img_frm					cap_frm[CMR_CAPTURE_MEM_SUM];
+	struct cmr_cap_mem              cap_mem[CMR_CAPTURE_MEM_SUM];
+	struct img_frm                  cap_frm[CMR_CAPTURE_MEM_SUM];
 	cmr_uint                        is_zsl_frm;
 	cmr_uint                        cap_zsl_buf_id;
 	cmr_s64                         cap_zsl_restart_timestamp;
@@ -1940,7 +1941,6 @@ cmr_int prev_receive_data(struct prev_handle *handle,
 		}
 		break;
 
-
 	case CMR_GRAB_TX_ERROR:
 	case CMR_GRAB_TX_NO_MEM:
 	case CMR_GRAB_CSI2_ERR:
@@ -1949,11 +1949,9 @@ cmr_int prev_receive_data(struct prev_handle *handle,
 		ret = prev_error_handle(handle, camera_id, evt);
 		break;
 
-
 	case PREVIEW_CHN_PAUSE:
 		ret = prev_pause_cap_channel(handle, camera_id, data);
 		break;
-
 
 	case PREVIEW_CHN_RESUME:
 		ret = prev_resume_cap_channel(handle, camera_id, data);
@@ -4507,7 +4505,9 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id)
 	cmr_u32                 is_cfg_rot_cap = 0;
 	cmr_u32                 aligned_type = 0;
 	cmr_u32                 mode_flag = 0;
-	cmr_u32 				flip_on;
+	cmr_u32                 flip_on;
+	cmr_int                 sn_mode = 0;
+	struct sensor_mode_fps_tag fps_info;
 
 	CHECK_HANDLE_VALID(handle);
 
@@ -4626,6 +4626,40 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id)
 			handle->prev_cxt[camera_id].video_mode = handle->prev_cxt[camera_id].prev_mode;
 		} else {
 			handle->prev_cxt[camera_id].prev_mode = handle->prev_cxt[camera_id].video_mode;
+		}
+	}
+
+	if (handle->prev_cxt[camera_id].prev_param.video_slowmotion_eb) {
+		for (sn_mode = SENSOR_MODE_PREVIEW_ONE; sn_mode < SENSOR_MODE_MAX; sn_mode++) {
+			ret = handle->ops.get_sensor_fps_info(handle->oem_handle,
+						camera_id, sn_mode, &fps_info);
+			if (ret) {
+				CMR_LOGE("get_sensor info failed!");
+				ret = CMR_CAMERA_FAIL;
+				goto exit;
+			}
+
+			CMR_LOGD("mode=%d, max_fps=%d, min_fps=%d, is_high_fps=%d, high_fps_skip_num=%d",
+				fps_info.mode, fps_info.max_fps, fps_info.min_fps,
+				fps_info.is_high_fps, fps_info.high_fps_skip_num);
+
+			CMR_LOGD("trim_height=%d, video_height=%d, prev_height=%d",
+					sensor_info->mode_info[fps_info.mode].trim_height,
+					act_video_size->height, act_prev_size->height);
+
+			/* we want to make sure that high fps setting is bigger than preview and video size */
+			if (fps_info.is_high_fps &&
+				sensor_info->mode_info[fps_info.mode].trim_height >= act_prev_size->height &&
+				sensor_info->mode_info[fps_info.mode].trim_height >= act_video_size->height) {
+				CMR_LOGD("slow motion, find a high fps setting: %d", fps_info.mode);
+				CMR_LOGD("prev_mode=%d, video_mode=%d, prev_channel_deci=%d",
+					fps_info.mode, fps_info.mode, fps_info.high_fps_skip_num);
+				handle->prev_cxt[camera_id].prev_mode = fps_info.mode;
+				if (handle->prev_cxt[camera_id].prev_param.video_eb)
+					handle->prev_cxt[camera_id].video_mode = fps_info.mode;
+				handle->prev_cxt[camera_id].prev_channel_deci = fps_info.high_fps_skip_num -1;
+				break;
+			}
 		}
 	}
 
@@ -5229,15 +5263,6 @@ cmr_int prev_construct_video_frame(struct prev_handle *handle,
 		frame_type->ae_time = ae_time;
 		CMR_LOGI("ae_time: %lld, zoom_ratio: %f", frame_type->ae_time, frame_type->zoom_ratio);
 		frame_type->type      = PREVIEW_VIDEO_FRAME;
-
-		#if 0
-		camera_save_to_file(prev_cxt->prev_frm_cnt,
-				IMG_DATA_TYPE_YUV420,
-				frame_type->width,
-				frame_type->height,
-				&prev_cxt->video_frm[frm_id].addr_vir);
-		#endif
-
 	} else {
 		CMR_LOGE("ignored, channel id %d, frame id %d", info->channel_id, info->frame_id);
 	}
@@ -5442,6 +5467,9 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 		chn_param.skip_num   = prev_cxt->prev_skip_num;
 	}
 
+	/* in slowmotion, we want do decimation in preview channel,
+	bug video buffer and preview buffer is in one request, so we cant
+	do decimation for now, otherwise the fps is low */
 	chn_param.cap_inf_cfg.chn_deci_factor  = 0;
 	chn_param.cap_inf_cfg.frm_num          = -1;
 	chn_param.cap_inf_cfg.cfg.need_binning = 0;
@@ -5533,7 +5561,7 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 		goto exit;
 	}
 
-        chn_param.cap_inf_cfg.cfg.flip_on = 0;
+	chn_param.cap_inf_cfg.cfg.flip_on = 0;
 
 	/*config channel*/
 	ret = handle->ops.channel_cfg(handle->oem_handle, handle, camera_id, &chn_param, &channel_id, &endian);
@@ -5885,12 +5913,12 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_
 		goto exit;
 	}
 
-        if ((handle->prev_cxt[camera_id].prev_param.flip_on)&&(1 == camera_id)){
-               chn_param.cap_inf_cfg.cfg.flip_on = handle->prev_cxt[camera_id].prev_param.flip_on;
-        }else {
-                chn_param.cap_inf_cfg.cfg.flip_on = 0;
-        }
-	CMR_LOGE("channel config flip:%d",chn_param.cap_inf_cfg.cfg.flip_on);
+	if ((handle->prev_cxt[camera_id].prev_param.flip_on)&&(1 == camera_id)){
+		chn_param.cap_inf_cfg.cfg.flip_on = handle->prev_cxt[camera_id].prev_param.flip_on;
+	}else {
+		chn_param.cap_inf_cfg.cfg.flip_on = 0;
+	}
+	CMR_LOGD("channel config flip:%d",chn_param.cap_inf_cfg.cfg.flip_on);
 
 	/*config channel*/
 	ret = handle->ops.channel_cfg(handle->oem_handle, handle, camera_id, &chn_param, &channel_id, &endian);
@@ -6117,9 +6145,7 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 		/*zsl*/
 		if (FRAME_CONTINUE == prev_cxt->prev_param.frame_ctrl) {
 			chn_param.frm_num = prev_cxt->prev_param.frame_count;
-			if (!prev_cxt->prev_param.video_eb){
-				is_capture_zsl = 1;
-			}
+			is_capture_zsl = 1;
 		} else {
 			CMR_LOGE("wrong cap param!");
 		}

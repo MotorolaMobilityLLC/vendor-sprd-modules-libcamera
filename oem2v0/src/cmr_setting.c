@@ -1697,7 +1697,6 @@ static cmr_int setting_get_slow_motion_flag(struct setting_component *cpt,
 	struct setting_hal_param    *hal_param = get_hal_param(cpt, parm->camera_id);
 
 	parm->cmd_type_value = hal_param->video_slow_motion_flag;
-	CMR_LOGE("video_slow_motion_flag=%d", hal_param->video_slow_motion_flag);
 	return ret;
 }
 
@@ -1811,7 +1810,7 @@ static cmr_int setting_set_slow_motion_flag(struct setting_component *cpt,
 	struct setting_hal_param    *hal_param = get_hal_param(cpt, parm->camera_id);
 
 	hal_param->video_slow_motion_flag = parm->cmd_type_value;
-	CMR_LOGE("video_slow_motion_flag=%ld", hal_param->video_slow_motion_flag);
+	CMR_LOGD("video_slow_motion_flag=%ld", hal_param->video_slow_motion_flag);
 	return ret;
 }
 
@@ -3054,7 +3053,7 @@ cmr_int cmr_setting_ioctl(cmr_handle setting_handle, cmr_uint cmd_type,
 		{CAMERA_PARAM_FOCAL_LENGTH,            setting_set_focal_length},
 		{CAMERA_PARAM_SENSOR_ROTATION,         setting_set_capture_angle},
 		{CAMERA_PARAM_PERFECT_SKIN_LEVEL,      setting_set_perfect_skinlevel},
-		{CAMERA_PARAM_FLIP_ON,                 setting_set_flip_on},
+                {CAMERA_PARAM_FLIP_ON,                 setting_set_flip_on},
 		{CAMERA_PARAM_SHOT_NUM,                setting_set_shot_num},
 		{CAMERA_PARAM_ROTATION_CAPTURE,        setting_set_rotation_capture},
 		{CAMERA_PARAM_POSITION,                setting_set_position},
@@ -3108,7 +3107,7 @@ cmr_int cmr_setting_ioctl(cmr_handle setting_handle, cmr_uint cmd_type,
 		{SETTING_GET_SPRD_ZSL_ENABLED,         setting_get_sprd_zsl_enabled},
 #endif
 		{SETTING_SET_ROI_CONVERGENCE_REQ,      setting_set_roi_convergence_req},
-		{SETTING_GET_SLOW_MOTION_FLAG,		   setting_get_slow_motion_flag},
+		{SETTING_GET_SLOW_MOTION_FLAG,         setting_get_slow_motion_flag},
 		{SETTING_GET_SPRD_PIPVIV_ENABLED, 	setting_get_sprd_pipviv_enabled},
 		{SETTING_GET_SPRD_HIGHISO_ENABLED, 	setting_get_sprd_highiso_enabled},
 		{SETTING_GET_ENCODE_ROTATION,             setting_get_encode_rotation},

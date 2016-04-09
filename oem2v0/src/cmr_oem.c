@@ -1233,11 +1233,8 @@ void camera_snapshot_channel_handle(cmr_handle oem_handle, void* param)
 #ifdef CAMERA_PATH_SHARE
 	camera_local_zsl_snapshot_need_pause(oem_handle, &need_pause);
 	if (need_pause) {
-		if (CAMERA_ZSL_MODE == cxt->snp_cxt.snp_mode && 0 == cxt->prev_cxt.video_size.width) {
-			camera_channel_path_capability(oem_handle, &capability);
-			if (!(0 != cxt->prev_cxt.video_size.width && 0 != cxt->prev_cxt.video_size.height && !capability.is_video_prev_diff)) {
-				is_need_resume = 1;
-			}
+		if (CAMERA_ZSL_MODE == cxt->snp_cxt.snp_mode) {
+			is_need_resume = 1;
 		} else if (1 != cxt->snp_cxt.total_num) {
 			if (jpeg_param_ptr) {
 				if (1 != jpeg_param_ptr->need_free && TAKE_PICTURE_NEEDED == camera_get_snp_req((cmr_handle)cxt)) {
@@ -1384,10 +1381,10 @@ void camera_wait_share_path_available(cmr_handle oem_handle)
 	if (CAMERA_ZSL_MODE == cxt->snp_cxt.snp_mode && !need_pause) {
 		CMR_LOGI("no need wait");
 	} else {
-		if (!(0 != cxt->prev_cxt.video_size.width && 0 != cxt->prev_cxt.video_size.height && !capability.is_video_prev_diff)) {
+		//if (!(0 != cxt->prev_cxt.video_size.width && 0 != cxt->prev_cxt.video_size.height && !capability.is_video_prev_diff)) {
 			camera_set_share_path_sm_flag(oem_handle, 1);
 			sem_wait(&cxt->share_path_sm);
-		}
+		//}
 	}
 	CMR_LOGI("wait end");
 }
@@ -5645,7 +5642,21 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	out_param_ptr->memory_setting.alloc_mem = camera_malloc;
 	out_param_ptr->memory_setting.free_mem = camera_free;
 
+#ifdef CONFIG_MEM_OPTIMIZATION
+	cmr_bzero(&setting_param, sizeof(setting_param));
+	setting_param.camera_id = cxt->camera_id;
+	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_SPRD_ZSL_ENABLED, &setting_param);
+	if (ret) {
+		CMR_LOGE("failed to get preview sprd zsl enabled flag %ld", ret);
+		goto exit;
+	}
+	out_param_ptr->sprd_zsl_enabled = setting_param.cmd_type_value;
+	CMR_LOGI("sprd zsl_enabled flag %d", out_param_ptr->sprd_zsl_enabled);
+#endif
+
 	if (CAMERA_SNAPSHOT != is_snapshot) {
+		cmr_bzero(&setting_param, sizeof(setting_param));
+		setting_param.camera_id = cxt->camera_id;
 		ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_PREVIEW_FORMAT, &setting_param);
 		if (ret) {
 			CMR_LOGE("failed to get preview fmt %ld", ret);
@@ -5690,9 +5701,6 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 		if ((0 != out_param_ptr->video_size.width) && (0 != out_param_ptr->video_size.height)) {
 			out_param_ptr->video_eb = 1;
 		}
-		if (CAMERA_ZSL_MODE == mode) {
-			is_cfg_snp = 1;
-		}
 
 		cmr_bzero(&setting_param, sizeof(setting_param));
 		setting_param.camera_id = cxt->camera_id;
@@ -5704,6 +5712,15 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 		out_param_ptr->video_slowmotion_eb = setting_param.cmd_type_value;
 		CMR_LOGD("video_slowmotion_eb = %d", out_param_ptr->video_slowmotion_eb);
 
+#ifdef CONFIG_MEM_OPTIMIZATION
+		if (CAMERA_ZSL_MODE == mode && out_param_ptr->sprd_zsl_enabled) {
+			is_cfg_snp = 1;
+		}
+#else
+		if (CAMERA_ZSL_MODE == mode) {
+			is_cfg_snp = 1;
+		}
+#endif
 	} else {
 		is_cfg_snp = 1;
 	}
@@ -5839,16 +5856,6 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 		}
 	}
 	//bug500099 front cam mirror end
-
-#ifdef CONFIG_MEM_OPTIMIZATION
-	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_SPRD_ZSL_ENABLED, &setting_param);
-	if (ret) {
-		CMR_LOGE("failed to get preview sprd zsl enabled flag %ld", ret);
-		goto exit;
-	}
-	out_param_ptr->sprd_zsl_enabled = setting_param.cmd_type_value;
-	CMR_LOGI("sprd zsl_enabled flag %d", out_param_ptr->sprd_zsl_enabled);
-#endif
 
 	if (1 == camera_get_hdr_flag(cxt)) {
 		struct ipm_open_in  in_param;
@@ -6060,14 +6067,14 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle, struct snapshot_param *
 	out_ptr->is_cfg_rot_cap = cxt->snp_cxt.is_cfg_rot_cap;
 	out_ptr->jpeg_setting = jpeg_cxt->param;
 	out_ptr->req_size = cxt->snp_cxt.request_size;
-	if ((0 != cxt->prev_cxt.video_size.width) && (0 != cxt->prev_cxt.video_size.height)) {
-		chn_bits = cxt->prev_cxt.video_channel_bits;
-		out_ptr->is_video_snapshot = 1;
-	} else if (CAMERA_ZSL_MODE == cxt->snp_cxt.snp_mode) {
+
+	if (CAMERA_ZSL_MODE == cxt->snp_cxt.snp_mode) {
 		out_ptr->is_zsl_snapshot = 1;
 	}
-	CMR_LOGI("chn_bits %d actual size %d %d", chn_bits, out_ptr->post_proc_setting.actual_snp_size.width,
-			out_ptr->post_proc_setting.actual_snp_size.height);
+
+	CMR_LOGI("chn_bits %d actual size %d %d", chn_bits,
+		out_ptr->post_proc_setting.actual_snp_size.width,
+		out_ptr->post_proc_setting.actual_snp_size.height);
 	out_ptr->channel_id = GRAB_CHANNEL_MAX+1;
 	for ( i=0 ; i<GRAB_CHANNEL_MAX ; i++) {
 		if (chn_bits & (1 << i)) {
@@ -7194,10 +7201,15 @@ cmr_int camera_local_set_video_snapshot_buffer(cmr_handle oem_handle, cmr_uint s
 	}
 
 	cxt = (struct camera_context*)oem_handle;
-	CMR_LOGI("in video w=%d h=%d cap w=%d h=%d", cxt->prev_cxt.actual_video_size.width, cxt->prev_cxt.actual_video_size.height, cxt->snp_cxt.actual_capture_size.width, cxt->snp_cxt.actual_capture_size.height);
+	CMR_LOGI("in video w=%d h=%d cap w=%d h=%d",
+		cxt->prev_cxt.actual_video_size.width,
+		cxt->prev_cxt.actual_video_size.height,
+		cxt->snp_cxt.actual_capture_size.width,
+		cxt->snp_cxt.actual_capture_size.height);
+
 	if (TAKE_PICTURE_NEEDED == camera_get_snp_req((cmr_handle)cxt)) {
-		if (cxt->snp_cxt.actual_capture_size.width * cxt->snp_cxt.actual_capture_size.height
-				< cxt->prev_cxt.actual_video_size.width * cxt->prev_cxt.actual_video_size.height)
+		if (cxt->snp_cxt.actual_capture_size.width * cxt->snp_cxt.actual_capture_size.height <
+			cxt->prev_cxt.actual_video_size.width * cxt->prev_cxt.actual_video_size.height)
 			buffer_size = cxt->snp_cxt.actual_capture_size.width * cxt->snp_cxt.actual_capture_size.height;
 		else
 			buffer_size = cxt->prev_cxt.actual_video_size.width * cxt->prev_cxt.actual_video_size.height;

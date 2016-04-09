@@ -4244,17 +4244,19 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data)
 		goto exit;
 	}
 
-	CMR_LOGI("$$LHC:size %d %d yaddr 0x%x, fd 0x%x", chn_param_ptr->chn_frm[chn_data_ptr->frame_id-chn_data_ptr->base].size.width,
+	CMR_LOGI("$$LHC:size %d %d yaddr 0x%x, fd 0x%x",
+		chn_param_ptr->chn_frm[chn_data_ptr->frame_id-chn_data_ptr->base].size.width,
 		chn_param_ptr->chn_frm[chn_data_ptr->frame_id-chn_data_ptr->base].size.height,
 		chn_param_ptr->chn_frm[chn_data_ptr->frame_id-chn_data_ptr->base].addr_vir.addr_y,
 		chn_param_ptr->chn_frm[chn_data_ptr->frame_id-chn_data_ptr->base].fd);
 	camera_take_snapshot_step(CMR_STEP_CAP_E);
 	property_get("debug.camera.save.snpfile", value, "0");
 	if (atoi(value) == 1 || atoi(value) == 100) {
-		camera_save_to_file(SNP_CHN_OUT_DATA, IMG_DATA_TYPE_YUV420,
-							chn_param_ptr->chn_frm[chn_data_ptr->frame_id-chn_data_ptr->base].size.width,
-							chn_param_ptr->chn_frm[chn_data_ptr->frame_id-chn_data_ptr->base].size.height,
-							&chn_param_ptr->chn_frm[chn_data_ptr->frame_id-chn_data_ptr->base].addr_vir);
+		camera_save_to_file(SNP_CHN_OUT_DATA,
+			IMG_DATA_TYPE_YUV420,
+			chn_param_ptr->chn_frm[chn_data_ptr->frame_id-chn_data_ptr->base].size.width,
+			chn_param_ptr->chn_frm[chn_data_ptr->frame_id-chn_data_ptr->base].size.height,
+			&chn_param_ptr->chn_frm[chn_data_ptr->frame_id-chn_data_ptr->base].addr_vir);
 	}
 
 	if (CMR_CAMERA_NORNAL_EXIT == snp_checkout_exit(snp_handle)) {

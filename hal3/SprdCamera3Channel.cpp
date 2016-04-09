@@ -315,11 +315,7 @@ int SprdCamera3RegularChannel::request(camera3_stream_t *stream, buffer_handle_t
 				if(i == 0)
 					mOEMIf->PushPreviewbuff(buffer);
 				else if(i == (CAMERA_STREAM_TYPE_VIDEO - REGULAR_STREAM_TYPE_BASE)) {
-#ifdef CONFIG_MEM_OPTIMIZATION
-					HAL_LOGV("not set video buffer, copy preview buffer to video buffer");
-#else
 					mOEMIf->PushVideobuff(buffer);
-#endif
 				} else if(i == (CAMERA_STREAM_TYPE_CALLBACK - REGULAR_STREAM_TYPE_BASE))
 					mOEMIf->PushZslbuff(buffer);
 

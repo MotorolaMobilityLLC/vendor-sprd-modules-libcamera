@@ -21,14 +21,7 @@
 #include "cmr_type.h"
 #include "cmr_msg.h"
 #include "cmr_cvt.h"
-//#include "sprd_scale_k.h"
-
 #include "sprd_cpp.h"
-
-#ifdef CONFIG_MEM_OPTIMIZATION
-//#include "../hwcomposer/sc8830/gsp_hal.h"
-#include <sys/ioctl.h>
-#endif
 
 #define CMR_EVT_SCALE_INIT              (CMR_EVT_OEM_BASE + 16)
 #define CMR_EVT_SCALE_START             (CMR_EVT_OEM_BASE + 17)
