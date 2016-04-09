@@ -2786,11 +2786,11 @@ static cmr_int aealtek_set_flash_notice(struct aealtek_cxt *cxt_ptr, struct ae_c
 			struct isp_flash_cfg flash_cfg;
 			struct isp_flash_element  flash_element;
 
-			flash_cfg.led_idx = 0;
 			flash_cfg.type = ISP_FLASH_TYPE_MAIN;
 
 			if (ISP_FLASH_LED_0 & cxt_ptr->flash_param.led_info.led_tag) {
 				if (-1 != cxt_ptr->flash_param.main_flash_est.led_0.idx) {
+					flash_cfg.led_idx = 0;
 					flash_element.index = cxt_ptr->flash_param.main_flash_est.led_0.idx;
 					flash_element.val = cxt_ptr->flash_param.main_flash_est.led_0.current;
 					cxt_ptr->init_in_param.ops_in.flash_set_charge(cxt_ptr->caller_handle, &flash_cfg, &flash_element);
@@ -2799,6 +2799,7 @@ static cmr_int aealtek_set_flash_notice(struct aealtek_cxt *cxt_ptr, struct ae_c
 
 			if (ISP_FLASH_LED_1 & cxt_ptr->flash_param.led_info.led_tag) {
 				if (-1 != cxt_ptr->flash_param.main_flash_est.led_1.idx) {
+					flash_cfg.led_idx = 1;
 					flash_element.index = cxt_ptr->flash_param.main_flash_est.led_1.idx;
 					flash_element.val = cxt_ptr->flash_param.main_flash_est.led_1.current;
 					cxt_ptr->init_in_param.ops_in.flash_set_charge(cxt_ptr->caller_handle, &flash_cfg, &flash_element);
@@ -3997,11 +3998,11 @@ static void aealtek_flash_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_ca
 							,cxt_ptr->flash_param.pre_flash_before.led_0.idx,cxt_ptr->flash_param.pre_flash_before.led_0.current
 							,cxt_ptr->flash_param.pre_flash_before.led_1.idx,cxt_ptr->flash_param.pre_flash_before.led_1.current);
 
-					flash_cfg.led_idx = 0;
 					flash_cfg.type = ISP_FLASH_TYPE_PREFLASH;
 
 					if (ISP_FLASH_LED_0 & cxt_ptr->flash_param.led_info.led_tag) {
 						if (-1 != cxt_ptr->flash_param.pre_flash_before.led_0.idx) {
+							flash_cfg.led_idx = 0;
 							flash_element.index = cxt_ptr->flash_param.pre_flash_before.led_0.idx;
 							flash_element.val = cxt_ptr->flash_param.pre_flash_before.led_0.current;
 							cxt_ptr->init_in_param.ops_in.flash_set_charge(cxt_ptr->caller_handle, &flash_cfg, &flash_element);
@@ -4010,6 +4011,7 @@ static void aealtek_flash_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_ca
 
 					if (ISP_FLASH_LED_1 & cxt_ptr->flash_param.led_info.led_tag) {
 						if (-1 != cxt_ptr->flash_param.pre_flash_before.led_1.idx) {
+							flash_cfg.led_idx = 1;
 							flash_element.index = cxt_ptr->flash_param.pre_flash_before.led_1.idx;
 							flash_element.val = cxt_ptr->flash_param.pre_flash_before.led_1.current;
 							cxt_ptr->init_in_param.ops_in.flash_set_charge(cxt_ptr->caller_handle, &flash_cfg, &flash_element);

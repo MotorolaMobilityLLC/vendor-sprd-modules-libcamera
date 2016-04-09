@@ -1232,9 +1232,16 @@ cmr_int cmr_grab_flash_cb(cmr_handle grab_handle, cmr_u32 opt)
 	CMR_CHECK_FD;
 
 	bzero(&set_flash, sizeof(struct sprd_img_set_flash));
-	/*temp code, it should be removed later*/
+	if (FLASH_TORCH == opt) {
+		set_flash.led1_ctrl = 1;
+	} else {
+#ifdef CONFIG_CAMERA_FLASH_LED_0
 	set_flash.led0_ctrl = 1;
+#endif
+#ifdef CONFIG_CAMERA_FLASH_LED_1
 	set_flash.led1_ctrl = 1;
+#endif
+	}
 	set_flash.led0_status = opt;
 	set_flash.led1_status = opt;
 	ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_FLASH, &set_flash);
