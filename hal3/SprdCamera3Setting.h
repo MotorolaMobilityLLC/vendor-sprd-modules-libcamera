@@ -347,6 +347,8 @@ typedef struct {
 	uint8_t sprd_zsl_enabled;
 #endif
         uint8_t flip_on;
+	uint8_t sprd_pipviv_enabled;
+	uint8_t sprd_highiso_enabled;
 } SPRD_DEF_Tag;
 
 typedef struct {

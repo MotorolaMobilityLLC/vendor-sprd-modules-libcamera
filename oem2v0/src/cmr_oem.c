@@ -5841,6 +5841,22 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	}
 #endif
 
+	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_SPRD_PIPVIV_ENABLED, &setting_param);
+	if (ret) {
+		CMR_LOGE("failed to get preview sprd pipviv enabled flag %ld", ret);
+		goto exit;
+	}
+	out_param_ptr->sprd_pipviv_enabled = setting_param.cmd_type_value;
+	cxt->is_pipviv_mode = setting_param.cmd_type_value;
+	CMR_LOGI("sprd pipviv_enabled flag %d", out_param_ptr->sprd_pipviv_enabled);
+	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_SPRD_HIGHISO_ENABLED, &setting_param);
+	if (ret) {
+		CMR_LOGE("failed to get preview sprd high iso enabled flag %ld", ret);
+		goto exit;
+	}
+	out_param_ptr->sprd_highiso_enabled = setting_param.cmd_type_value;
+	CMR_LOGI("sprd highiso_enabled flag %d", out_param_ptr->sprd_highiso_enabled);
+
 exit:
 	CMR_LOGI("prev size %d %d pic size %d %d", out_param_ptr->preview_size.width, out_param_ptr->preview_size.height,
 		     out_param_ptr->picture_size.width, out_param_ptr->picture_size.height);
@@ -6206,6 +6222,14 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id, cmr
 		break;
 	case CAMERA_PARAM_ISP_AE_LOCK_UNLOCK:
 		CMR_LOGD("CAMERA_PARAM_ISP_AE_LOCK_UNLOCK");
+		setting_param.cmd_type_value = param;
+		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);
+		break;
+	case CAMERA_PARAM_SPRD_PIPVIV_ENABLED:
+		setting_param.cmd_type_value = param;
+		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);
+		break;
+	case CAMERA_PARAM_SPRD_HIGHISO_ENABLED:
 		setting_param.cmd_type_value = param;
 		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);
 		break;
