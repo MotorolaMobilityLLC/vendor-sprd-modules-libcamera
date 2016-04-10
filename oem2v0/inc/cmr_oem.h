@@ -256,6 +256,7 @@ struct camera_context {
 	cmr_u32                  is_lls_enable;
 	cmr_u32                  lls_shot_mode;
 	cmr_u32                  is_vendor_hdr;
+	cmr_u32                  is_pipviv_mode;
 	cmr_int                  cap_cnt;
 
 	/*memory func*/

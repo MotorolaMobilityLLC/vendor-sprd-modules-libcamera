@@ -1378,7 +1378,6 @@ const CameraInfo kCameraInfo[] = {
 
 SprdCameraParameters SprdCamera3Setting::mDefaultParameters;
 camera_metadata_t *SprdCamera3Setting::mStaticMetadata[CAMERA_ID_COUNT];
-camera_metadata_t *SprdCamera3Setting::mDefaultMetadata[CAMERA3_TEMPLATE_COUNT];
 CameraMetadata SprdCamera3Setting::mStaticInfo[CAMERA_ID_COUNT];
 
 const int64_t USEC = 1000LL;

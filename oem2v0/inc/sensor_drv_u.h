@@ -933,49 +933,69 @@ cmr_int sns_dev_get_flash_level(struct sensor_drv_context *sensor_cxt,
 
 /*for 3rd party functions*/
 cmr_int Sensor_WriteData(cmr_u8 *regPtr, cmr_u32 length);
+cmr_int Sensor_WriteData_Ex(cmr_u8 *regPtr, cmr_u32 length, cmr_u32 camera_id);
 
 cmr_int Sensor_WriteReg(cmr_u16 subaddr, cmr_u16 data);
+cmr_int Sensor_WriteReg_Ex(cmr_u16 subaddr, cmr_u16 data,cmr_u32 camera_id);
 
 cmr_u32 Sensor_ReadReg(cmr_u16 subaddr);  /*the return value need to be setted to uin32*/
+cmr_u32 Sensor_ReadReg_Ex(cmr_u16 reg_addr, cmr_u32 camera_id);
 
 cmr_int Sensor_SetMCLK(cmr_u32 mclk);
+cmr_int Sensor_SetMCLK_Ex(cmr_u32 mclk, cmr_u32 camera_id);
 
 cmr_int Sensor_SetVoltage(SENSOR_AVDD_VAL_E dvdd_val,
 			SENSOR_AVDD_VAL_E avdd_val, SENSOR_AVDD_VAL_E iodd_val);
+cmr_int Sensor_SetVoltage_Ex(SENSOR_AVDD_VAL_E dvdd_val, SENSOR_AVDD_VAL_E avdd_val,
+			SENSOR_AVDD_VAL_E iodd_val, cmr_u32 camera_id);
 
 cmr_int Sensor_SetAvddVoltage(SENSOR_AVDD_VAL_E vdd_val);
+cmr_int Sensor_SetAvddVoltage_Ex(SENSOR_AVDD_VAL_E vdd_val,cmr_u32 camera_id);
 
 cmr_int Sensor_SetDvddVoltage(SENSOR_AVDD_VAL_E vdd_val);
+cmr_int Sensor_SetDvddVoltage_Ex(SENSOR_AVDD_VAL_E vdd_val,cmr_u32 camera_id);
 
 cmr_int Sensor_SetIovddVoltage(SENSOR_AVDD_VAL_E vdd_val);
+cmr_int Sensor_SetIovddVoltage_Ex(SENSOR_AVDD_VAL_E vdd_val,cmr_u32 camera_id);
 
 cmr_int Sensor_PowerDown(BOOLEAN power_down);
+cmr_int Sensor_PowerDown_Ex(cmr_u32 power_level, cmr_u32 camera_id);
 
 cmr_int Sensor_SetResetLevel(BOOLEAN plus_level);
+cmr_int Sensor_SetResetLevel_Ex(cmr_u32 plus_level,cmr_u32 camera_id);
 
 void Sensor_Reset(cmr_u32 level);
+void Sensor_Reset_Ex(cmr_u32 level, cmr_u32 camera_id);
 
 cmr_int Sensor_SetMonitorVoltage(SENSOR_AVDD_VAL_E vdd_val);
+cmr_int Sensor_SetMonitorVoltage_Ex(SENSOR_AVDD_VAL_E vdd_val, cmr_u32 camera_id);
 
 cmr_int Sensor_WriteReg_8bits(cmr_u16 reg_addr, cmr_u8 value);
 
 cmr_int Sensor_ReadReg_8bits(cmr_u8 reg_addr, cmr_u8 * reg_val);
 
 cmr_int Sensor_SendRegTabToSensor(SENSOR_REG_TAB_INFO_T *sensor_reg_tab_info_ptr);
+cmr_int Sensor_SendRegTabToSensor_Ex(SENSOR_REG_TAB_INFO_T *sensor_reg_tab_info_ptr,cmr_u32 camera_id);
 
 cmr_int Sensor_Device_WriteRegTab(SENSOR_REG_TAB_PTR reg_tab);
+cmr_int Sensor_Device_WriteRegTab_Ex(SENSOR_REG_TAB_PTR reg_tab,cmr_u32 camera_id);
 
 cmr_int Sensor_WriteI2C(cmr_u16 slave_addr, cmr_u8 *cmd, cmr_u16 cmd_length);
+cmr_int Sensor_WriteI2C_Ex(cmr_u16 slave_addr, cmr_u8 *cmd, cmr_u16 cmd_length, cmr_u32 camera_id);
 
 cmr_int Sensor_GetMode(cmr_u32 *mode);
+cmr_int Sensor_GetMode_Ex(cmr_u32 *mode, cmr_u32 camera_id);
 
 cmr_int Sensor_SetMode_WaitDone(void);
+cmr_int Sensor_SetMode_WaitDone_Ex(cmr_u32 camera_id);
 
 cmr_int Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_E cmd, cmr_u32 param);
+cmr_int Sensor_SetSensorExifInfo_Ex(SENSOR_EXIF_CTRL_E cmd, cmr_u32 param, cmr_u32 camera_id);
 
 EXIF_SPEC_PIC_TAKING_COND_T *Sensor_GetSensorExifInfo(void);
 
 cmr_int Sensor_SetMode(cmr_u32 mode);
+cmr_int Sensor_SetMode_Ex(cmr_u32 mode, cmr_u32 camera_id);
 
 SENSOR_EXP_INFO_T *Sensor_GetInfo(void);
 
@@ -985,7 +1005,9 @@ cmr_int Sensor_SetFlash(uint32_t is_open);
 cmr_int Sensor_set_calibration(cmr_u32 value);
 
 cmr_u16 sensor_grc_read_i2c(cmr_u16 slave_addr, cmr_u16 addr, cmr_int bits);
+cmr_u16 sensor_grc_read_i2c_Ex(cmr_u16 slave_addr, cmr_u16 addr, cmr_int bits, cmr_u32 camera_id);
 cmr_u16 sensor_grc_write_i2c(cmr_u16 slave_addr, cmr_u16 addr, cmr_u16 reg, cmr_int bits);
+cmr_u16 sensor_grc_write_i2c_Ex(cmr_u16 slave_addr, cmr_u16 addr, cmr_u16 reg, cmr_int bits, cmr_u32 camera_id);
 #ifdef	 __cplusplus
 }
 #endif

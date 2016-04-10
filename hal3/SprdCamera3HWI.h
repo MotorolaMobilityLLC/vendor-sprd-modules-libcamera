@@ -106,7 +106,7 @@ private:
 	void getLogLevel();
 
 public:
-	static SprdCamera3Setting *mSetting;
+	SprdCamera3Setting *mSetting;
 	uint32_t				mFrameNum;
 
 private:

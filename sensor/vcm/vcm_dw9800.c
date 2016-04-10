@@ -32,15 +32,15 @@ uint32_t vcm_dw9800_init(void)
 	cmd_len = 2;
 	cmd_val[0] = 0x02;
 	cmd_val[1] = 0x02;
-	Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
+	Sensor_WriteI2C_Ex(slave_addr,(uint8_t*)&cmd_val[0], cmd_len, SENSOR_MAIN);
 	usleep(1000);
 	cmd_val[0] = 0x06;
 	cmd_val[1] = 0x80;
-	Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
+	Sensor_WriteI2C_Ex(slave_addr,(uint8_t*)&cmd_val[0], cmd_len, SENSOR_MAIN);
 	usleep(1000);
 	cmd_val[0] = 0x07;
 	cmd_val[1] = 0x75;
-	Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
+	Sensor_WriteI2C_Ex(slave_addr,(uint8_t*)&cmd_val[0], cmd_len, SENSOR_MAIN);
 
 	return ret_value;
 }
@@ -58,10 +58,10 @@ uint32_t vcm_dw9800_set_position(uint32_t pos)
 	cmd_len = 2;
 	cmd_val[0] = 0x03;
 	cmd_val[1] = (pos&0x300)>>8;
-	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
+	ret_value = Sensor_WriteI2C_Ex(slave_addr,(uint8_t*)&cmd_val[0], cmd_len, SENSOR_MAIN);
 	cmd_val[0] = 0x04;
 	cmd_val[1] = (pos&0xff);
-	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
+	ret_value = Sensor_WriteI2C_Ex(slave_addr,(uint8_t*)&cmd_val[0], cmd_len, SENSOR_MAIN);
 
 	return ret_value;
 }

@@ -522,7 +522,7 @@ public:
 	static uint8_t mMaxCameraCount;
 	static camera_metadata_t *mStaticMetadata[CAMERA_ID_COUNT];
 	static SprdCameraParameters mDefaultParameters;
-	static camera_metadata_t *mDefaultMetadata[CAMERA3_TEMPLATE_COUNT];
+	camera_metadata_t *mDefaultMetadata[CAMERA3_TEMPLATE_COUNT];
 	static sprd_setting_info_t      s_setting[CAMERA_ID_COUNT];
 	static CameraMetadata mStaticInfo[CAMERA_ID_COUNT];
 

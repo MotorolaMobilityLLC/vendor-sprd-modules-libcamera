@@ -1023,20 +1023,22 @@ static void* cmr_grab_thread_proc(void* data)
 
 				if ((p_grab->is_prev_trace && CHN_1 == frame.channel_id)
 					|| (p_grab->is_cap_trace && CHN_1 != frame.channel_id))
-					CMR_LOGI("got one frame! channel_id 0x%x, id 0x%x, evt_id 0x%x sec %d usec %d",
+					CMR_LOGI("got one frame! sensor_id %d, channel_id 0x%x, id 0x%x, evt_id 0x%x sec %d usec %d",
+						p_grab->init_param.sensor_id,
 						op.parm.frame.channel_id,
 						op.parm.frame.index,
 						evt_id,
 						op.parm.frame.sec,
 						op.parm.frame.usec);
 				else
-					CMR_LOGV("got one frame! channel_id 0x%x, id 0x%x, evt_id 0x%x sec %lu usec %lu yaddr 0x%x",
+					CMR_LOGV("got one frame! sensor_id %d, channel_id 0x%x, id 0x%x, evt_id 0x%x sec %lu usec %lu fd 0x%x",
+						p_grab->init_param.sensor_id,
 						op.parm.frame.channel_id,
 						op.parm.frame.index,
 						evt_id,
 						op.parm.frame.sec,
 						op.parm.frame.usec,
-						op.parm.frame.yaddr);
+						op.parm.frame.reserved[1]);
 
 				frame.height          = op.parm.frame.height;
 				frame.frame_id        = op.parm.frame.index;

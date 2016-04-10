@@ -907,7 +907,6 @@ static unsigned long _s5k5e3yx_Identify(unsigned long param)
 	uint8_t pid_value = 0x00;
 	uint8_t ver_value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
-	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)sensor_get_dev_cxt();
 	uint8_t i;
 	SENSOR_PRINT_ERR("SENSOR_S5K5E3YX: mipi raw identify\n");
 //while(1){
