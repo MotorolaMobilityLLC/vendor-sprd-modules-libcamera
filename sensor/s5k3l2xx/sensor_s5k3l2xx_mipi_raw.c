@@ -78,6 +78,7 @@ static uint32_t _s5k3l2xx_com_Identify_otp(void* param_ptr);
 static unsigned long _s5k3l2xx_access_val(unsigned long param);
 static uint32_t _s5k3l2xx_read_otp(unsigned long param);
 static uint32_t _s5k3l2xx_write_otp(unsigned long param);
+static unsigned long _s5k3l2xx_ex_write_exposure(unsigned long param);
 
 
 static const struct raw_param_info_tab s_s5k3l2xx_raw_param_tab[] = {
@@ -1953,13 +1954,13 @@ static const SENSOR_REG_T s5k3l2xx_2072x1554_setting_new[] = {
 
 };
 #endif
-#define MClK_26M_SS	1
+//#define MClK_26M_SS	1
 
 static SENSOR_REG_TAB_INFO_T s_s5k3l2xx_resolution_Tab_RAW[] = {
 #ifdef MClK_26M_SS
          {ADDR_AND_LEN_OF_ARRAY(s5k3l2xx_common_init_new), 0, 0, 26, SENSOR_IMAGE_FORMAT_RAW},
-      //   {ADDR_AND_LEN_OF_ARRAY(s5k3l2xx_4144x3106_setting_new), 4144, 3106, 26, SENSOR_IMAGE_FORMAT_RAW},
-         	{ADDR_AND_LEN_OF_ARRAY(s5k3l2xx_2072x1554_setting_new), 2072, 1554, 24, SENSOR_IMAGE_FORMAT_RAW},	
+         {ADDR_AND_LEN_OF_ARRAY(s5k3l2xx_4144x3106_setting_new), 4144, 3106, 26, SENSOR_IMAGE_FORMAT_RAW},
+       //  	{ADDR_AND_LEN_OF_ARRAY(s5k3l2xx_2072x1554_setting_new), 2072, 1554, 24, SENSOR_IMAGE_FORMAT_RAW},	
 #else
 	{ADDR_AND_LEN_OF_ARRAY(s5k3l2xx_common_init_old), 0, 0, 24, SENSOR_IMAGE_FORMAT_RAW},
 	{ADDR_AND_LEN_OF_ARRAY(s5k3l2xx_4144x3106_setting_old), 4144, 3106, 24, SENSOR_IMAGE_FORMAT_RAW},
@@ -1977,8 +1978,8 @@ static SENSOR_REG_TAB_INFO_T s_s5k3l2xx_resolution_Tab_RAW[] = {
 
 static SENSOR_TRIM_T s_s5k3l2xx_Resolution_Trim_Tab[] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-	{0, 0, 2072, 1554, 134, 900, 1664, {0, 0, 2072, 1554}},
-//	{0, 0, 4144, 3106, 104, 950, 3190, {0, 0, 4144, 3106}},
+//	{0, 0, 2072, 1554, 134, 900, 1664, {0, 0, 2072, 1554}},
+	{0, 0, 4144, 3106, 104, 950, 3190, {0, 0, 4144, 3106}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
@@ -2123,7 +2124,7 @@ static SENSOR_IOCTL_FUNC_TAB_T s_s5k3l2xx_ioctl_func_tab = {
 	_s5k3l2xx_write_gain,
 	PNULL,
 	PNULL,
-	PNULL,//_s5k3l2xx_write_af,
+	_s5k3l2xx_write_af,
 	PNULL,
 	PNULL,//_s5k3l2xx_set_awb,
 	PNULL,
@@ -2308,7 +2309,7 @@ static uint32_t _dw9807_SRCInit(uint32_t mode)
 
 
 		cmd_val[0] = 0x07;
-		cmd_val[1] = 0x30;
+		cmd_val[1] = 0x36;
 		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 		if(ret_value){
 			SENSOR_PRINT("SENSOR_S5K3L2XX: _dw9807_SRCInit 4 fail!");
@@ -2394,7 +2395,7 @@ static unsigned long _s5k3l2xx_PowerOn(unsigned long power_on)
 		//Sensor_PowerDown(!power_down);
 		Sensor_SetResetLevel(!reset_level);
 		usleep(10*1000);
-		//_dw9807_SRCInit(2);
+		_dw9807_SRCInit(2);
 #ifdef MClK_26M_SS		
                   Sensor_SetMCLK(26);//SENSOR_DEFALUT_MCLK);//
 #else
@@ -2410,11 +2411,8 @@ static unsigned long _s5k3l2xx_PowerOn(unsigned long power_on)
 		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 	}
-    //while(1)
-        {
+
         SENSOR_PRINT_ERR("SENSOR_S5K3L2XX: _s5k3l2xx_Power_On(1:on, 0:off): %d, reset_level %d, dvdd_val %d", power_on, reset_level, dvdd_val);
-            usleep(2000*1000);
-            }
 
     return SENSOR_SUCCESS;
 }
@@ -2581,26 +2579,110 @@ static unsigned long _s5k3l2xx_write_exposure(unsigned long param)
 	return ret_value;
 
 }
+static unsigned long _s5k3l2xx_write_exp_dummy(uint16_t expsure_line,
+								uint16_t dummy_line, uint16_t size_index)
+
+{
+	uint32_t ret_value = SENSOR_SUCCESS;
+	uint32_t frame_len_cur = 0x00;
+	uint32_t frame_len = 0x00;
+	uint32_t max_frame_len=0x00;
+	uint32_t linetime = 0;
+
+	SENSOR_PRINT("SENSOR_s5k3l2xx: write_exp_dummy line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
+	max_frame_len=_s5k3l2xx_GetMaxFrameLine(size_index);
+	if (expsure_line < 3) {
+		expsure_line = 3;
+	}
+
+	frame_len = expsure_line + dummy_line;
+	frame_len = (frame_len > (uint32_t)(expsure_line + 8)) ? frame_len : (uint32_t)(expsure_line + 8);
+	frame_len = (frame_len > max_frame_len) ? frame_len : max_frame_len;
+	if (0x00!=(0x01&frame_len)) {
+		frame_len+=0x01;
+	}
+
+	frame_len_cur = Sensor_ReadReg(0x0340);
+
+	if(frame_len_cur != frame_len) {
+		ret_value = Sensor_WriteReg(0x0340, frame_len);
+	}
+
+	ret_value = Sensor_WriteReg(0x202, expsure_line);
+
+
+	/*if (frame_len_cur > frame_len) {
+		ret_value = Sensor_WriteReg(0x0341, frame_len & 0xff);
+		ret_value = Sensor_WriteReg(0x0340, (frame_len >> 0x08) & 0xff);
+	}*/
+	//ret_value = Sensor_WriteReg(0x104, 0x00);
+	s_capture_shutter = expsure_line;
+	linetime=s_s5k3l2xx_Resolution_Trim_Tab[size_index].line_time;
+	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, s_capture_shutter);
+	s_exposure_time = s_capture_shutter * linetime / 10;
+
+	return ret_value;
+}
+
+static unsigned long _s5k3l2xx_ex_write_exposure(unsigned long param)
+{
+	uint32_t ret_value = SENSOR_SUCCESS;
+	uint16_t exposure_line = 0x00;
+	uint16_t dummy_line = 0x00;
+	uint16_t size_index=0x00;
+	struct sensor_ex_exposure  *ex = (struct sensor_ex_exposure*)param;
+
+
+	if (!param) {
+		SENSOR_PRINT_ERR("param is NULL !!!");
+		return ret_value;
+	}
+
+	exposure_line = ex->exposure;
+	dummy_line = ex->dummy;
+	size_index = ex->size_index;
+
+	ret_value = _s5k3l2xx_write_exp_dummy(exposure_line, dummy_line, size_index);
+
+	return ret_value;
+}
 
 static unsigned long _s5k3l2xx_write_gain(unsigned long param)
 {
 
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint16_t value=0x00;
-	uint32_t real_gain = 0;
+	float real_gain = 0;
+	float a_gain = 0;
+	float d_gain = 0;
 
-	real_gain = ((param&0xf)+16)*(((param>>4)&0x01)+1)*(((param>>5)&0x01)+1);
-	real_gain = real_gain*(((param>>6)&0x01)+1)*(((param>>7)&0x01)+1)*(((param>>8)&0x01)+1);
 
 //	real_gain = real_gain<<1;
-	real_gain = param/4;
+	real_gain = param/4.0f;
 
-	SENSOR_PRINT("_s5k3l2xx: real_gain:0x%x, param: 0x%x", real_gain, param);
+	SENSOR_PRINT("_s5k3l2xx: real_gain:0x%x, param: 0x%x", (uint32_t)real_gain, param);
 
-	//ret_value = Sensor_WriteReg(0x104, 0x01);
-	value = real_gain;
-	ret_value = Sensor_WriteReg(0x204, value);
-	//ret_value = Sensor_WriteReg(0x104, 0x00);
+	if (real_gain <= 16*32) {
+		a_gain = real_gain;
+		d_gain = 256;
+          	ret_value = Sensor_WriteReg(0x204,(uint32_t)a_gain);//0x100);//a_gain);
+	} else {
+		a_gain = 16*32;
+		d_gain = 256.0*real_gain/a_gain;
+        	        SENSOR_PRINT("_s5k3l2xx: real_gain:0x%x, a_gain: 0x%x, d_gain: 0x%x", (uint32_t)real_gain, (uint32_t)a_gain,(uint32_t)d_gain);
+                   if((uint32_t)d_gain>512)
+                        d_gain=512;  //d_gain < 2x
+	}
+
+        ret_value = Sensor_WriteReg(0x204,(uint32_t)a_gain);//0x100);//a_gain); 
+        ret_value = Sensor_WriteReg(0x20e,(uint32_t) d_gain);
+        ret_value = Sensor_WriteReg(0x210, (uint32_t)d_gain);
+        ret_value = Sensor_WriteReg(0x212, (uint32_t)d_gain);
+        ret_value = Sensor_WriteReg(0x214, (uint32_t)d_gain);
+
+        
+        // SENSOR_PRINT("_s5k3l2xx: real_gain a_gain:0x%x read_reg 0x204:0x%x, 0x20e:0x%x, 0x1086:0x%x, 0x1088:0x%x", (uint32_t)a_gain,Sensor_ReadReg(0x0204),Sensor_ReadReg(0x020e),Sensor_ReadReg(0x1086),Sensor_ReadReg(0x1087));
+
 	return ret_value;
 
 }
@@ -3291,6 +3373,6 @@ static unsigned long _s5k3l2xx_access_val(unsigned long param)
 	}
 
 	SENSOR_PRINT("SENSOR_s5k3l2xx: _s5k3l2xx_access_val X");
-
 	return rtn;
 }
+
