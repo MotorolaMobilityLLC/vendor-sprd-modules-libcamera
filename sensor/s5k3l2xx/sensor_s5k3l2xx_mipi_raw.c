@@ -2222,18 +2222,15 @@ SENSOR_INFO_T g_s5k3l2xx_mipi_raw_info = {
 	"s5k3l2xx_truly_v1",
 };
 static SENSOR_STATIC_INFO_T s_s5k3l2xx_static_info = {
-
 	200,	//f-number,focal ratio
 	357,	//focal_length;
-	60,	//max_fps,max fps of sensor's all settings
-	1,	//min_fps,normally it set to 1.
+	0,	//max_fps,max fps of sensor's all settings,it will be calculated from sensor mode fps
 	16,	//max_adgain,AD-gain
 	0,	//ois_supported;
 	0,	//pdaf_supported;
 	1,	//exp_valid_frame_num;N+2-1
 	64,	//clamp_level,black level
 	1,	//adgain_valid_frame_num;N+1-1
-	
     };
     
     static SENSOR_MODE_FPS_INFO_T s_s5k3l2xx_mode_fps_info = {
