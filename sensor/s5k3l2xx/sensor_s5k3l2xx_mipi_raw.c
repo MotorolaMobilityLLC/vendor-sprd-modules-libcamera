@@ -3015,7 +3015,7 @@ static uint32_t _s5k3l2xx_read_vcm(uint32_t *param)
 
 	cmd_len = 1;
 	cmd_val[0] = ((*param)>>16) & 0xff;
-	ret_value = (uint32_t)Sensor_ReadI2C(slave_addr,(cmr_u8*)&cmd_val[0], cmd_len);
+//	ret_value = (uint32_t)Sensor_ReadI2C(slave_addr,(cmr_u8*)&cmd_val[0], cmd_len);
 	if (SENSOR_SUCCESS == ret_value)
 		*param |= cmd_val[0];
 
