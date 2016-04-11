@@ -256,6 +256,13 @@ enum ae_set_param_type_t {
 
 	AE_SET_PARAM_REGEN_EXP_INFO,		/* for sensor mode change, UI/Ctrl force to reset sensor info, this set command let AE re-generate exposure time/line/gain again based on updated information */
 
+	/* for dual camera sync usage   */
+	AE_SET_PARAM_OTP_WB_DAT_SLV,	       /* update OTP calibration data, for dual cam sync mode */
+	AE_SET_PARAM_SENSOR_INFO_SLV,            /* update slave sensor info */
+	AE_SET_PARAM_CAPTURE_SENSOR_INFO_SLV,     /* update slave sensor info */
+	AE_SET_PARAM_SOF_NOTIFY_SLV,              /* update slave SOF notify */
+	AE_SET_PARAM_SYNC_MODE,                       /* update sync mdoe flag */
+
 	AE_SET_PARAM_MAX
 };
 
@@ -589,6 +596,7 @@ struct ae_set_param_content_t {
 	struct ae_set_parameter_init_t  ae_initial_setting;
 	struct ae_sensor_info_t    normal_sensor_info;		/* normal mode, preview sensor info */
 	struct ae_sensor_info_t    capture_sensor_info;
+
 	struct calibration_data_t   ae_calib_wb_gain;
 
 	void   *ae_setting_data;	/* this data should be parsed via wrapper to seperated AE setting data, check basic alignment and read error, if no error, passing to lib directly */
@@ -656,6 +664,13 @@ struct ae_set_param_content_t {
 	/* advanced control command  */
 	uint8  ucforceconvegeswt;		/* 0: normal AE, 1: always report converge in each
 						 * AE state (such as prepare, do with flash, nromal AE), switch would be hold untill release via set_parmeter again */
+
+	/*  for dual cam sync command  */
+	uint8  us_dual_sync_mode;     /* 0: normal single sensor mode, 1: turn on sync mode, for tagging only */
+	struct ae_sensor_info_t    slave_sensor_info;              /* for slave sensor info, used for dual cam sync mode */
+	struct ae_sensor_info_t    slave_capture_sensor_info;              /* for slave sensor info, used for dual cam sync mode */
+	struct calibration_data_t   ae_calib_wb_gain_slv_sensor;              /* for slave OTP, used for dual cam sync mode */
+	struct ae_sof_notify_param_t  sof_notify_param_slv_sensor;   /* current sof notify param, should be updated for each SOF received */
 
 	struct ae_hw_config_t ae_hw_config;  /* reserved,  sensor info, hw3a info */
 };
@@ -822,6 +837,26 @@ struct ae_output_data_t {
 };
 #pragma pack(pop)  /* restore old alignment setting from stack  */
 
+
+
+#pragma pack(push) /* push current alignment setting to stack */
+#pragma pack(4)    /* new alignment setting */
+struct ae_match_runtime_data_t {
+	uint32  ISO;		              /* ISO speed */
+	uint32  EXIF_ISO;              /*  Exif ISO speed */
+	uint32  exposure_time;	/* exposure time */
+	uint32  exposure_line;	/* exposure line */
+	uint32  sensor_ad_gain;	/* AD gain */
+	uint32  ISP_D_gain;	       /* reserved, for stats from ISP platform used  */
+	uint16  uwCur_fps;		/* current FPS, from framework control information, copying from master camera module */
+	int32    bv_val;                   /* current BV value, copy from master camera module */
+
+	uint8    uc_sensor_mode;      /* 0: normal preview (master/slave), 1: capture mode ( master/slave), AP should indicate correct mode to get correct transform result  */
+
+};
+#pragma pack(pop)  /* restore old alignment setting from stack */
+
+
 /*
  *@typedef alaelib_version_t
  *@brief AE lib version number
@@ -843,6 +878,7 @@ typedef void (* allib_ae_deinit )( void * ae_obj );
 typedef uint32 (* allib_ae_set_param )( struct ae_set_param_t *param, struct ae_output_data_t *ae_output , void *ae_runtime_dat );
 typedef uint32 (* allib_ae_get_param )( struct ae_get_param_t *param, void *ae_runtime_dat );
 typedef uint32 (* allib_ae_estimation )( void * hw3a_stats_data, void *ae_runtime_dat, struct ae_output_data_t *ae_output );
+typedef uint32 (* allib_ae_match_func )( struct ae_match_runtime_data_t *master_dat, void *ae_runtime_dat, struct ae_match_runtime_data_t *slave_dat );
 
 /*
  *@typedef alaeruntimeobj_t
@@ -859,6 +895,7 @@ struct alaeruntimeobj_t {
 	allib_ae_set_param   set_param;
 	allib_ae_get_param   get_param;
 	allib_ae_estimation  estimation;
+	allib_ae_match_func  sync_process;
 };
 #pragma pack(pop)  /* restore old alignment setting from stack  */
 

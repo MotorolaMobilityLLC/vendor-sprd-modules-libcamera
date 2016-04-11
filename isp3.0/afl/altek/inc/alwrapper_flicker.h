@@ -21,7 +21,7 @@
 #include "alwrapper_3a.h"
 
 
-#define _WRAPPER_ANTIF_VER 0.8060
+#define _WRAPPER_ANTIF_VER 0.8070
 
 #define _DEFAULT_FLICKER_50HZ_TH_LOWER  (47)
 #define _DEFAULT_FLICKER_50HZ_TH_UPPER  (53)

@@ -34,6 +34,7 @@ enum flicker_set_param_type_t {
 	FLICKER_SET_PARAM_LINE_TIME,
 	FLICKER_SET_PARAM_CURRENT_FREQUENCY,
 	FLICKER_SET_PARAM_REFERENCE_DATA_INTERVAL,
+	FLICKER_SET_PARAM_ENABLE_DEBUG_REPORT,
 	FLICKER_SET_PARAM_MAX,
 
 };
@@ -53,6 +54,7 @@ struct flicker_set_param_content_t {
 	/* initial setting, basic setting related */
 	/* basic command */
 	uint8 flicker_enable;
+	uint8 flicker_enableDebugLog;
 
 	/* threshold command */
 	uint8 totalqueue;               /* number of total queues */
@@ -104,6 +106,7 @@ struct flicker_get_param_t {
 #pragma pack(push) /* push current alignment setting to stack */
 #pragma pack(4)    /* new alignment setting  */
 struct flicker_output_data_t {
+	struct report_update_t rpt_flicker_update;   // store each module report update result
 	unsigned char finalfreq;
 
 };

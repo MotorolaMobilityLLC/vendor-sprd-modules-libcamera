@@ -130,7 +130,7 @@ enum allib_awb_set_flash_states_t {
 	alawb_set_flash_under_flashon_capture,
 };
 
-enum allib_awb_awb_debug_type {
+enum allib_awb_awb_debug_type_t {
 	alawb_dbg_none = 0,
 	alawb_dbg_enable_log,
 	alawb_dbg_manual,
@@ -157,7 +157,7 @@ struct allib_awb_output_data_t {
 	uint16                              awb_decision;              /* simple scene detect */
 	uint8                               flag_shading_on;           /* 0: False, 1: True */
 	enum awb_states_type_t              awb_states;                /* alAWBLib states */
-	enum allib_awb_awb_debug_type       awb_debug_mask;            /* awb debug mask, can print different information with different mask */
+	enum allib_awb_awb_debug_type_t     awb_debug_mask;            /* awb debug mask, can print different information with different mask */
 	uint32                              awb_exif_data_size;        /* awb exif data size */
 	void                                *awb_exif_data;            /* awb exif data, Structure1, about 340bytes */
 	uint32                              awb_debug_data_size;       /* awb debug data size */
@@ -181,6 +181,7 @@ enum allib_awb_set_parameter_type_t {
 	alawb_set_param_manual_flow,
 	alawb_set_param_test_fix_patten,
 	alawb_set_param_state_under_flash,
+	alawb_set_param_slave_calib_data,
 	alawb_set_param_max
 };
 
@@ -199,7 +200,7 @@ struct allib_awb_set_parameter_t {
 		float                                   dzoom_factor;           /* alawb_set_param_dzoom_factor */
 		struct allib_awb_faceinfo_param_t       face_info;              /* alawb_set_param_face_info_setting */
 		uint8                                   flag_shading;           /* alawb_set_param_flag_shading */
-		enum allib_awb_awb_debug_type           awb_debug_mask;         /* alawb_set_param_awb_debug_mask */
+		enum allib_awb_awb_debug_type_t         awb_debug_mask;         /* alawb_set_param_awb_debug_mask */
 		struct allib_awb_manual_flow_setting_t  awb_manual_flow;        /* alawb_set_param_manual_flow */
 		uint8                                   test_fix_patten;        /* alawb_set_param_test_fix_patten */
 		enum allib_awb_set_flash_states_t       state_under_flash;      /* alawb_set_param_state_under_flash */
@@ -247,6 +248,18 @@ struct allib_awb_get_parameter_t {
 };
 #pragma pack(pop)  /* restore old alignment setting from stack */
 
+/* match structure */
+
+#pragma pack(push) /* push current alignment setting to stack */
+#pragma pack(4)    /* new alignment setting */
+struct allib_match_output_data_t {
+	struct wbgain_data_t                    wbgain;
+	uint32                                  color_temp;                 /* (major) color temperature */
+};
+#pragma pack(pop)  /* restore old alignment setting from stack */
+
+
+
 /* public APIs */
 #pragma pack(push) /* push current alignment setting to stack */
 #pragma pack(4)    /* new alignment setting */
@@ -263,6 +276,7 @@ typedef uint32 (*allib_awb_deinit_func)(void *awb_obj);
 typedef uint32 (*allib_awb_set_param_func)(struct allib_awb_set_parameter_t *param, void *awb_dat);
 typedef uint32 (*allib_awb_get_param_func)(struct allib_awb_get_parameter_t *param, void *awb_dat);
 typedef uint32 (*allib_awb_estimation_func)(void *hw3a_stats_data, void *awb_dat, struct allib_awb_output_data_t *awb_output);
+typedef uint32 (*allib_awb_match_func)(void *awb_dat, struct allib_match_output_data_t *match_output);
 
 #pragma pack(push) /* push current alignment setting to stack */
 #pragma pack(4)    /* new alignment setting */
@@ -275,6 +289,7 @@ struct allib_awb_runtime_obj_t {
 	allib_awb_set_param_func    set_param;
 	allib_awb_get_param_func    get_param;
 	allib_awb_estimation_func   estimation;
+	allib_awb_match_func        match;
 };
 #pragma pack(pop)  /* restore old alignment setting from stack */
 

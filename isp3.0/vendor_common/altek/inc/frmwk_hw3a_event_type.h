@@ -347,11 +347,27 @@ struct af_report_update_t {
 
 #pragma pack(push) /* push current alignment setting to stack */
 #pragma pack(4)    /* new alignment setting */
+struct flicker_report_update_t {
+	uint8   IsEnableFlickerDebugReport;             /* 0: disable debug report, 1: enable debug report */
+
+	/* common exif info for Altek exif reader */
+	uint32  flicker_exif_valid_size;
+	void* flicker_exif_data;
+
+	/* debug message for altek advanced debug reader info */
+	uint32  flicker_debug_valid_size;
+	void* flicker_debug_data;
+};
+#pragma pack(pop)  /* restore old alignment setting from stack */
+
+#pragma pack(push) /* push current alignment setting to stack */
+#pragma pack(4)    /* new alignment setting */
 struct report_update_t {
-	/* broadcase to other ISP/Modules */
+	/* broadcast to other ISP/Modules */
 	struct ae_report_update_t ae_update;      /* latest AE update */
 	struct awb_report_update_t awb_update;    /* latest AWB update */
 	struct af_report_update_t  af_update;     /* latest AF update */
+	struct flicker_report_update_t flicker_update;      /* latest Flicker update */
 
 };
 #pragma pack(pop)  /* restore old alignment setting from stack */
