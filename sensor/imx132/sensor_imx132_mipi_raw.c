@@ -28,7 +28,7 @@
 #endif
 
 
-#define SENSOR_NAME			"imx132"
+#define SENSOR_NAME			"imx132_mipi_raw"
 #define I2C_SLAVE_ADDR			0x6c    /* 8bit slave address*/
 
 #define imx132_PID_ADDR			0x0000
@@ -210,22 +210,22 @@ static const SENSOR_REG_T imx132_preview_setting[] = {
 static const SENSOR_REG_T imx132_snapshot_setting[] = {
 };
 
-static SENSOR_REG_TAB_INFO_T s_imx132_resolution_tab_raw[SENSOR_MODE_MAX] = {
+static SENSOR_REG_TAB_INFO_T s_imx132_resolution_tab_raw[] = {
 	{ADDR_AND_LEN_OF_ARRAY(imx132_init_setting), 0, 0, EX_MCLK,
 	 SENSOR_IMAGE_FORMAT_RAW},
-	{ADDR_AND_LEN_OF_ARRAY(imx132_preview_setting),
+	/*{ADDR_AND_LEN_OF_ARRAY(imx132_preview_setting),
 	 PREVIEW_WIDTH, PREVIEW_HEIGHT, EX_MCLK,
-	 SENSOR_IMAGE_FORMAT_RAW},
+	 SENSOR_IMAGE_FORMAT_RAW},*/
 	{ADDR_AND_LEN_OF_ARRAY(imx132_snapshot_setting),
 	 SNAPSHOT_WIDTH, SNAPSHOT_HEIGHT, EX_MCLK,
 	 SENSOR_IMAGE_FORMAT_RAW},
 };
 
-static SENSOR_TRIM_T s_imx132_resolution_trim_tab[SENSOR_MODE_MAX] = {
+static SENSOR_TRIM_T s_imx132_resolution_trim_tab[] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-	{0, 0, PREVIEW_WIDTH, PREVIEW_HEIGHT,
+	/*{0, 0, PREVIEW_WIDTH, PREVIEW_HEIGHT,
 	 PREVIEW_LINE_TIME, PREVIEW_MIPI_PER_LANE_BPS, PREVIEW_FRAME_LENGTH,
-	 {0, 0, PREVIEW_WIDTH, PREVIEW_HEIGHT}},
+	 {0, 0, PREVIEW_WIDTH, PREVIEW_HEIGHT}},*/
 	{0, 0, SNAPSHOT_WIDTH, SNAPSHOT_HEIGHT,
 	 SNAPSHOT_LINE_TIME, SNAPSHOT_MIPI_PER_LANE_BPS, SNAPSHOT_FRAME_LENGTH,
 	 {0, 0, SNAPSHOT_WIDTH, SNAPSHOT_HEIGHT}},
@@ -315,6 +315,71 @@ static uint32_t imx132_set_video_mode(uint32_t param)
 	return 0;
 }
 
+static SENSOR_STATIC_INFO_T s_imx132_static_info = {
+   200,    //f-number,focal ratio
+   357,    //focal_length;
+   0,  //max_fps,max fps of sensor's all settings,it will be calculated from sensor mode fps
+   16, //max_adgain,AD-gain
+   0,  //ois_supported;
+   0,  //pdaf_supported;
+   1,  //exp_valid_frame_num;N+2-1
+   64, //clamp_level,black level
+   1,  //adgain_valid_frame_num;N+1-1
+};
+
+static SENSOR_MODE_FPS_INFO_T s_imx132_mode_fps_info = {
+   0,  //is_init;
+   {{SENSOR_MODE_COMMON_INIT,0,1,0,0},
+   {SENSOR_MODE_PREVIEW_ONE,0,1,0,0},
+   {SENSOR_MODE_SNAPSHOT_ONE_FIRST,0,1,0,0},
+   {SENSOR_MODE_SNAPSHOT_ONE_SECOND,0,1,0,0},
+   {SENSOR_MODE_SNAPSHOT_ONE_THIRD,0,1,0,0},
+   {SENSOR_MODE_PREVIEW_TWO,0,1,0,0},
+   {SENSOR_MODE_SNAPSHOT_TWO_FIRST,0,1,0,0},
+   {SENSOR_MODE_SNAPSHOT_TWO_SECOND,0,1,0,0},
+   {SENSOR_MODE_SNAPSHOT_TWO_THIRD,0,1,0,0}}
+};
+
+static uint32_t imx132_init_mode_fps_info()
+{
+   uint32_t rtn = SENSOR_SUCCESS;
+   SENSOR_PRINT("imx132_init_mode_fps_info:E");
+   if(!s_imx132_mode_fps_info.is_init) {
+       uint32_t i,modn,tempfps = 0;
+   SENSOR_PRINT("imx132_init_mode_fps_info:start init");
+   for(i = 0;i < NUMBER_OF_ARRAY(s_imx132_resolution_trim_tab); i++) {
+    //max fps should be multiple of 30,it calulated from line_time and frame_line
+   tempfps = s_imx132_resolution_trim_tab[i].line_time * s_imx132_resolution_trim_tab[i].frame_line;
+   if(0 != tempfps) {
+   tempfps = 10000000/tempfps;
+   modn = tempfps / 30;
+   if(tempfps > modn*30)
+     modn++;
+   s_imx132_mode_fps_info.sensor_mode_fps[i].max_fps = modn*30;
+   if(s_imx132_mode_fps_info.sensor_mode_fps[i].max_fps > 30) {
+   s_imx132_mode_fps_info.sensor_mode_fps[i].is_high_fps = 1;
+   s_imx132_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num =
+   s_imx132_mode_fps_info.sensor_mode_fps[i].max_fps/30;
+   }
+   if(s_imx132_mode_fps_info.sensor_mode_fps[i].max_fps >
+   s_imx132_static_info.max_fps) {
+   s_imx132_static_info.max_fps = s_imx132_mode_fps_info.sensor_mode_fps[i].max_fps;
+	}
+
+   }
+    SENSOR_PRINT("mode %d,tempfps %d,frame_len %d,line_time: %d ",i,tempfps,
+    s_imx132_resolution_trim_tab[i].frame_line,
+    s_imx132_resolution_trim_tab[i].line_time);
+    SENSOR_PRINT("mode %d,max_fps: %d ",i,s_imx132_mode_fps_info.sensor_mode_fps[i].max_fps);
+	SENSOR_PRINT("is_high_fps: %d,highfps_skip_num %d",
+			s_imx132_mode_fps_info.sensor_mode_fps[i].is_high_fps,
+          s_imx132_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num);
+     }
+      s_imx132_mode_fps_info.is_init = 1;
+   }
+   SENSOR_PRINT("_imx132_init_mode_fps_info:X");
+   return rtn;
+}
 /*==============================================================================
  * Description:
  * sensor all info
@@ -416,6 +481,8 @@ SENSOR_INFO_T g_imx132_mipi_raw_info = {
 	/* vertical view angle*/
 	35
 };
+
+
 
 /*==============================================================================
  * Description:
@@ -595,7 +662,7 @@ static uint32_t imx132_power_on(uint32_t power_on)
 		usleep(2 * 1000);
 		Sensor_SetMCLK(SENSOR_DEFALUT_MCLK);
 		usleep(2 * 1000);
-		Sensor_SetMIPILevel(1);
+		//Sensor_SetMIPILevel(1);
 		Sensor_PowerDown(!power_down);
 		Sensor_SetResetLevel(!reset_level);
 
@@ -625,6 +692,7 @@ static uint32_t imx132_identify(uint32_t param)
 	SENSOR_PRINT("mipi raw identify");
 
 	pid_value = Sensor_ReadReg(imx132_PID_ADDR);
+	ver_value = Sensor_ReadReg(imx132_VER_ADDR);
 
 	if (imx132_PID_VALUE == pid_value) {
 		ver_value = Sensor_ReadReg(imx132_VER_ADDR);
@@ -911,6 +979,124 @@ static uint32_t imx132_stream_off(uint32_t param)
 	return 0;
 }
 
+static uint32_t imx132_get_static_info(uint32_t *param)
+{
+   uint32_t rtn = SENSOR_SUCCESS;
+   struct sensor_ex_info *ex_info;
+   //make sure we have get max fps of all settings.
+   if(!s_imx132_mode_fps_info.is_init) {
+      imx132_init_mode_fps_info();
+   }
+   ex_info = (struct sensor_ex_info*)param;
+   ex_info->f_num = s_imx132_static_info.f_num;
+   ex_info->focal_length = s_imx132_static_info.focal_length;
+   ex_info->max_fps = s_imx132_static_info.max_fps;
+   ex_info->max_adgain = s_imx132_static_info.max_adgain;
+   ex_info->ois_supported = s_imx132_static_info.ois_supported;
+   ex_info->pdaf_supported = s_imx132_static_info.pdaf_supported;
+   ex_info->exp_valid_frame_num = s_imx132_static_info.exp_valid_frame_num;
+   ex_info->clamp_level = s_imx132_static_info.clamp_level;
+   ex_info->adgain_valid_frame_num = s_imx132_static_info.adgain_valid_frame_num;
+   ex_info->preview_skip_num = g_imx132_mipi_raw_info.preview_skip_num;
+   ex_info->capture_skip_num = g_imx132_mipi_raw_info.capture_skip_num;
+   ex_info->name = g_imx132_mipi_raw_info.name;
+   ex_info->sensor_version_info = g_imx132_mipi_raw_info.sensor_version_info;
+   SENSOR_PRINT("SENSOR_imx132: f_num: %d", ex_info->f_num);
+   SENSOR_PRINT("SENSOR_imx132: max_fps: %d", ex_info->max_fps);
+   SENSOR_PRINT("SENSOR_imx132: max_adgain: %d", ex_info->max_adgain);
+   SENSOR_PRINT("SENSOR_imx132: ois_supported: %d", ex_info->ois_supported);
+   SENSOR_PRINT("SENSOR_imx132: pdaf_supported: %d", ex_info->pdaf_supported);
+   SENSOR_PRINT("SENSOR_imx132: exp_valid_frame_num: %d", ex_info->exp_valid_frame_num);
+   SENSOR_PRINT("SENSOR_imx132: clam_level: %d", ex_info->clamp_level);
+   SENSOR_PRINT("SENSOR_imx132: adgain_valid_frame_num: %d", ex_info->adgain_valid_frame_num);
+   SENSOR_PRINT("SENSOR_imx132: sensor name is: %s", ex_info->name);
+   SENSOR_PRINT("SENSOR_imx132: sensor version info is: %s", ex_info->sensor_version_info);
+
+   return rtn;
+}
+
+static uint32_t imx132_get_fps_info(uint32_t *param)
+{
+   uint32_t rtn = SENSOR_SUCCESS;
+   SENSOR_MODE_FPS_T *fps_info;
+   //make sure have inited fps of every sensor mode.
+   if(!s_imx132_mode_fps_info.is_init) {
+    imx132_init_mode_fps_info();
+   }
+   fps_info = (SENSOR_MODE_FPS_T*)param;
+   uint32_t sensor_mode = fps_info->mode;
+   fps_info->max_fps = s_imx132_mode_fps_info.sensor_mode_fps[sensor_mode].max_fps;
+   fps_info->min_fps = s_imx132_mode_fps_info.sensor_mode_fps[sensor_mode].min_fps;
+   fps_info->is_high_fps = s_imx132_mode_fps_info.sensor_mode_fps[sensor_mode].is_high_fps;
+   fps_info->high_fps_skip_num = s_imx132_mode_fps_info.sensor_mode_fps[sensor_mode].high_fps_skip_num;
+   SENSOR_PRINT("SENSOR_imx132: mode %d, max_fps: %d",fps_info->mode, fps_info->max_fps);
+   SENSOR_PRINT("SENSOR_imx132: min_fps: %d", fps_info->min_fps);
+   SENSOR_PRINT("SENSOR_imx132: is_high_fps: %d", fps_info->is_high_fps);
+   SENSOR_PRINT("SENSOR_imx132: high_fps_skip_num: %d", fps_info->high_fps_skip_num);
+   return rtn;
+}
+
+static unsigned long imx132_access_val(unsigned long param)
+{
+	uint32_t rtn = SENSOR_SUCCESS;
+	SENSOR_VAL_T* param_ptr = (SENSOR_VAL_T*)param;
+	uint16_t tmp;
+
+	SENSOR_PRINT("SENSOR_imx132: _imx132_access_val E");
+	if(!param_ptr){
+		return rtn;
+	}
+
+	SENSOR_PRINT("SENSOR_imx132: param_ptr->type=%x", param_ptr->type);
+	switch(param_ptr->type)
+	{
+		case SENSOR_VAL_TYPE_SHUTTER:
+			//*((uint32_t*)param_ptr->pval) = imx132_get_shutter();
+			break;
+		case SENSOR_VAL_TYPE_READ_VCM:
+			//rtn = _imx132_read_vcm(param_ptr->pval);
+			break;
+		case SENSOR_VAL_TYPE_WRITE_VCM:
+			//rtn = _imx132_write_vcm(param_ptr->pval);
+			break;
+		case SENSOR_VAL_TYPE_READ_OTP:
+			//((SENSOR_OTP_PARAM_T*)param_ptr->pval)->len = 0;
+			//rtn=SENSOR_FAIL;
+			//rtn = _hi544_read_otp((uint32_t)param_ptr->pval);
+			break;
+		case SENSOR_VAL_TYPE_WRITE_OTP:
+			//rtn = _hi544_write_otp((uint32_t)param_ptr->pval);
+			break;
+		case SENSOR_VAL_TYPE_GET_RELOADINFO:
+			{
+			//struct isp_calibration_info **p= (struct isp_calibration_info **)param_ptr->pval;
+			//*p=&calibration_info;
+			}
+			break;
+		case SENSOR_VAL_TYPE_GET_AFPOSITION:
+			*(uint32_t*)param_ptr->pval = 0;//cur_af_pos;
+			break;
+		case SENSOR_VAL_TYPE_WRITE_OTP_GAIN:
+			//rtn = imx132_write_otp_gain(param_ptr->pval);
+			break;
+		case SENSOR_VAL_TYPE_READ_OTP_GAIN:
+			//rtn = imx132_read_otp_gain(param_ptr->pval);
+			break;
+		case SENSOR_VAL_TYPE_GET_STATIC_INFO:
+		    rtn = imx132_get_static_info(param_ptr->pval);
+		    break;
+		case SENSOR_VAL_TYPE_GET_FPS_INFO:
+		    rtn = imx132_get_fps_info(param_ptr->pval);
+		    break;
+		default:
+			break;
+	}
+
+	SENSOR_PRINT("SENSOR_imx132: _imx132_access_val X");
+
+	return rtn;
+
+}
 /*==============================================================================
  * Description:
  * all ioctl functoins
@@ -933,4 +1119,5 @@ static SENSOR_IOCTL_FUNC_TAB_T s_imx132_ioctl_func_tab = {
 
 	//.group_hold_on = imx132_group_hold_on,
 	//.group_hold_of = imx132_group_hold_off,
+	.cfg_otp = imx132_access_val,
 };

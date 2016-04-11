@@ -133,6 +133,7 @@ const SENSOR_MATCH_T main_sensor_infor_tab[]=
 
 const SENSOR_MATCH_T sub_sensor_infor_tab[]=
 {
+	{"imx132_mipi_raw", &g_imx132_mipi_raw_info},
 	{"s5k4h8yx_mipi_raw", &g_s5k4h8yx_mipi_raw_info},
     //{"s5k5e3yx_mipi_raw", &g_s5k5e3yx_mipi_raw_info},
 	PNULL
