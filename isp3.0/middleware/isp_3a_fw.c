@@ -693,6 +693,8 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 	af_input.sensor_info.crop_info.height = sensor_raw_info_ptr->resolution_info_ptr->tab[1].height;
 	af_input.sensor_info.sensor_res_width = sensor_raw_info_ptr->resolution_info_ptr->tab[1].width;
 	af_input.sensor_info.sensor_res_height = sensor_raw_info_ptr->resolution_info_ptr->tab[1].height;
+	af_input.sensor_info.pose_dis.up2hori = input_ptr->ex_info.pos_dis.up2hori;
+	af_input.sensor_info.pose_dis.hori2down = input_ptr->ex_info.pos_dis.hori2down;
 	af_input.module_info.f_num = input_ptr->ex_info.f_num;
 	af_input.module_info.focal_length = input_ptr->ex_info.focal_length;
 	af_input.af_ctrl_cb_ops.set_pos = isp3a_set_pos;

@@ -15,3 +15,4 @@
  */
 uint32_t vcm_dw9800_init(void);
 uint32_t vcm_dw9800_set_position(uint32_t pos);
+uint32_t vcm_dw9800_get_pose_dis(uint32_t *up2h, uint32_t *h2down);

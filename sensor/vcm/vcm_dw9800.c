@@ -19,6 +19,9 @@
 
 #define DW9800_VCM_SLAVE_ADDR (0x18 >> 1)
 #define SENSOR_SUCCESS      0
+/* accroding to vcm module spec */
+#define POSE_UP_HORIZONTAL 32
+#define POSE_DOWN_HORIZONTAL 37
 
 uint32_t vcm_dw9800_init(void)
 {
@@ -64,4 +67,12 @@ uint32_t vcm_dw9800_set_position(uint32_t pos)
 	ret_value = Sensor_WriteI2C_Ex(slave_addr,(uint8_t*)&cmd_val[0], cmd_len, SENSOR_MAIN);
 
 	return ret_value;
+}
+
+uint32_t vcm_dw9800_get_pose_dis(uint32_t *up2h, uint32_t *h2down)
+{
+	*up2h = POSE_UP_HORIZONTAL;
+	*h2down = POSE_DOWN_HORIZONTAL;
+
+	return 0;
 }

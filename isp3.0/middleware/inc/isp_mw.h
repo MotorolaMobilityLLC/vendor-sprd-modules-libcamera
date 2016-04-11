@@ -340,6 +340,7 @@ struct af_gsensor_info {
 	float vertical_up;
 	float vertical_down;
 	float horizontal;
+	cmr_u32 valid;
 };
 
 struct af_aux_sensor_info_t {
@@ -419,6 +420,7 @@ struct  isp_sensor_ex_info{
 	cmr_u32 capture_skip_num;
 	cmr_s8 *name;
 	cmr_s8 *sensor_version_info;
+	struct af_pose_dis pos_dis;
 };
 
 struct isp_sensor_fps_info{

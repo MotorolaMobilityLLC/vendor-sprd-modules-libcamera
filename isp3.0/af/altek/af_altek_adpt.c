@@ -16,6 +16,7 @@
 #define LOG_TAG "alk_adpt_af"
 
 #include <dlfcn.h>
+#include <math.h>
 #include "isp_type.h"
 #include "af_ctrl.h"
 #include "af_adpt.h"
@@ -28,6 +29,7 @@
 #include "cutils/properties.h"
 
 #define FEATRUE_SPRD_CAF_TRIGGER
+#define FEATURE_SPRD_AF_POSE_COMPENSATOR
 
 #define LIBRARY_PATH "libalAFLib.so"
 #define CAF_LIBRARY_PATH "libspcaftrigger.so"
@@ -989,6 +991,7 @@ static cmr_int afaltek_adpt_update_aux_sensor(cmr_handle adpt_handle, void *in)
 		cxt->gsensor_info.vertical_up = aux_sensor_info->gsensor_info.vertical_up;
 		cxt->gsensor_info.vertical_down = aux_sensor_info->gsensor_info.vertical_down;
 		cxt->gsensor_info.horizontal = aux_sensor_info->gsensor_info.horizontal;
+		cxt->gsensor_info.valid = 1;
 		break;
 	case AF_MAGNETIC_FIELD:
 		ISP_LOGI("magnetic field E");
@@ -1183,16 +1186,83 @@ static cmr_int afaltek_adpt_set_special_event(cmr_handle adpt_handle, void *in)
 	return ret;
 }
 
+static cmr_int af_gsensor_value_to_theta(float valuex, float valuey, float valuez)
+{
+	short costheta = 0;
+	float dsqrt_result =0;
+
+	dsqrt_result = sqrt((float)valuex*valuex + valuey*valuey+ valuez*valuez);
+	if (0 == dsqrt_result)
+		return 0;
+	/* original X, change to Z to check */
+	costheta = -valuez*256/(cmr_s32)dsqrt_result;
+
+	return costheta;
+}
+
+/**
+ * return : the pose compensation value
+ * a_wCosTheta : G-sensor data, 256:phone down Lens up, -256:phone up Lens down
+ * a_wPoseCompensatorValue : the step difference between up and horizontal.
+ * a_bIsCaliUp : the calibration pose is up or horizontal.
+ */
+static cmr_int get_pose_compensator(cmr_s32 a_wcostheta, cmr_s32 a_wposecompensatorvalue, cmr_u32 a_biscaliup)
+{
+	if (a_biscaliup)
+		return ((a_wcostheta*a_wposecompensatorvalue)/(cmr_s32)256 - a_wposecompensatorvalue);
+	else
+		return ((a_wcostheta*a_wposecompensatorvalue)/(cmr_s32)256);
+}
+
+static cmr_int afaltek_adpt_postion_compensator(cmr_handle adpt_handle, cmr_s32 *pos_offset)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+	float x = 0.0;
+	float y = 0.0;
+	float z = 0.0;
+	short costheta = 0;
+	cmr_s32 pose_dis_value = 0;
+
+	if (0 == cxt->gsensor_info.valid) {
+		ISP_LOGE("gsensor info error");
+		ret = -ISP_PARAM_ERROR;
+		goto exit;
+	}
+	x = cxt->gsensor_info.vertical_up;
+	y = cxt->gsensor_info.vertical_down;
+	z = cxt->gsensor_info.horizontal;
+	costheta = af_gsensor_value_to_theta(x, y, z);
+	if (costheta < 0)
+		/* Honri2DownDis */
+		pose_dis_value = cxt->sensor_info.pose_dis.hori2down;
+	 else
+		/* Up2HonriDis */
+		pose_dis_value = cxt->sensor_info.pose_dis.up2hori;
+	*pos_offset = (cmr_s32)get_pose_compensator(costheta, pose_dis_value, 0);
+
+exit:
+	return ret;
+}
+
 static cmr_u8 afaltek_adpt_set_pos(cmr_handle adpt_handle, cmr_s16 dac, cmr_u8 sensor_id)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct af_ctrl_motor_pos pos_info = { 0x00 };
-	pos_info.motor_pos = dac;
-	pos_info.vcm_wait_ms = cxt->motor_info.vcm_wait_ms;
-	cxt->motor_info.motor_pos = dac;
+	cmr_s32 offset = 0;
 	UNUSED(sensor_id);
 
+	pos_info.vcm_wait_ms = cxt->motor_info.vcm_wait_ms;
+	cxt->motor_info.motor_pos = dac;
+#ifdef FEATURE_SPRD_AF_POSE_COMPENSATOR
+	ret = afaltek_adpt_postion_compensator(cxt, &offset);
+	ISP_LOGI("dac %d offset %d", dac, offset);
+#endif
+	if ((dac+offset) >= 0)
+		pos_info.motor_pos = dac + offset;
+	else
+		pos_info.motor_pos = 0;
 	/* call af ctrl callback to move lens */
 	if (cxt->cb_ops.set_pos) {
 		ret = cxt->cb_ops.set_pos(cxt->caller_handle, &pos_info);

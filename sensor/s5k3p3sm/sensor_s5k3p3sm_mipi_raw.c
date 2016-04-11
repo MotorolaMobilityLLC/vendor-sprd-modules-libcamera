@@ -1523,6 +1523,8 @@ static uint32_t _s5k3p3sm_get_static_info(uint32_t *param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	struct sensor_ex_info *ex_info;
+	uint32_t up = 0;
+	uint32_t down = 0;
 	//make sure we have get max fps of all settings.
 	if(!s_s5k3p3sm_mode_fps_info.is_init) {
 		_s5k3p3sm_init_mode_fps_info();
@@ -1541,6 +1543,9 @@ static uint32_t _s5k3p3sm_get_static_info(uint32_t *param)
 	ex_info->capture_skip_num = g_s5k3p3sm_mipi_raw_info.capture_skip_num;
 	ex_info->name = g_s5k3p3sm_mipi_raw_info.name;
 	ex_info->sensor_version_info = g_s5k3p3sm_mipi_raw_info.sensor_version_info;
+	bu64297gwz_get_pose_dis(&up, &down);
+	ex_info->pos_dis.up2hori = up;
+	ex_info->pos_dis.hori2down = down;
 	SENSOR_PRINT("SENSOR_s5k3p3sm: f_num: %d", ex_info->f_num);
 	SENSOR_PRINT("SENSOR_s5k3p3sm: max_fps: %d", ex_info->max_fps);
 	SENSOR_PRINT("SENSOR_s5k3p3sm: max_adgain: %d", ex_info->max_adgain);
@@ -1551,6 +1556,7 @@ static uint32_t _s5k3p3sm_get_static_info(uint32_t *param)
 	SENSOR_PRINT("SENSOR_s5k3p3sm: adgain_valid_frame_num: %d", ex_info->adgain_valid_frame_num);
 	SENSOR_PRINT("SENSOR_s5k3p3sm: sensor name is: %s", ex_info->name);
 	SENSOR_PRINT("SENSOR_s5k3p3sm: sensor version info is: %s", ex_info->sensor_version_info);
+	SENSOR_PRINT("SENSOR_s5k3p3sm: up2h %d h2down %d", ex_info->pos_dis.up2hori, ex_info->pos_dis.hori2down);
 
 	return rtn;
 }

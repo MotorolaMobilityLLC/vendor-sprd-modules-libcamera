@@ -16,4 +16,5 @@
 
 extern uint32_t bu64297gwz_init(void);
 extern uint32_t bu64297gwz_write_af(uint32_t param);
+uint32_t bu64297gwz_get_pose_dis(uint32_t *up2h, uint32_t *h2down);
 extern uint32_t bu64297gwz_deinit(uint32_t mode);

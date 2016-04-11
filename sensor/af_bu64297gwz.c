@@ -22,7 +22,9 @@ ver: 1.0
 #define bu64297gwz_VCM_SLAVE_ADDR (0x18 >> 1)
 #define MOVE_CODE_STEP_MAX 40
 #define WAIT_STABLE_TIME  20	//ms
-
+/* accroding to vcm module spec */
+#define POSE_UP_HORIZONTAL 23
+#define POSE_DOWN_HORIZONTAL 30
 /*==============================================================================
  * Description:
  * init vcm driver
@@ -102,6 +104,14 @@ uint32_t bu64297gwz_write_af(uint32_t param)
 	bu64297gwz_write_dac_code(target_code);
 
 	return ret_value;
+}
+
+uint32_t bu64297gwz_get_pose_dis(uint32_t *up2h, uint32_t *h2down)
+{
+	*up2h = POSE_UP_HORIZONTAL;
+	*h2down = POSE_DOWN_HORIZONTAL;
+
+	return 0;
 }
 
 /*==============================================================================

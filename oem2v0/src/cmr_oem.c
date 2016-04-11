@@ -7353,6 +7353,8 @@ static cmr_uint camera_copy_sensor_ex_info_to_isp(struct isp_sensor_ex_info *out
 	out_isp_sn_ex_info->capture_skip_num = in_sn_ex_info->capture_skip_num;
 	out_isp_sn_ex_info->name = in_sn_ex_info->name;
 	out_isp_sn_ex_info->sensor_version_info = in_sn_ex_info->sensor_version_info;
+	out_isp_sn_ex_info->pos_dis.up2hori = in_sn_ex_info->pos_dis.up2hori;
+	out_isp_sn_ex_info->pos_dis.hori2down= in_sn_ex_info->pos_dis.hori2down;
 
 	return CMR_CAMERA_SUCCESS;
 }

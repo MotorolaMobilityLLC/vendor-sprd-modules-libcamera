@@ -2078,6 +2078,8 @@ static uint32_t imx230_get_static_info(uint32_t *param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	struct sensor_ex_info *ex_info;
+	uint32_t up = 0;
+	uint32_t down = 0;
 	//make sure we have get max fps of all settings.
 	if(!s_imx230_mode_fps_info.is_init) {
 		imx230_init_mode_fps_info();
@@ -2096,6 +2098,9 @@ static uint32_t imx230_get_static_info(uint32_t *param)
 	ex_info->capture_skip_num = g_imx230_mipi_raw_info.capture_skip_num;
 	ex_info->name = g_imx230_mipi_raw_info.name;
 	ex_info->sensor_version_info = g_imx230_mipi_raw_info.sensor_version_info;
+	vcm_dw9800_get_pose_dis(&up, &down);
+	ex_info->pos_dis.up2hori = up;
+	ex_info->pos_dis.hori2down = down;
 	SENSOR_PRINT("SENSOR_IMX230: f_num: %d", ex_info->f_num);
 	SENSOR_PRINT("SENSOR_IMX230: max_fps: %d", ex_info->max_fps);
 	SENSOR_PRINT("SENSOR_IMX230: max_adgain: %d", ex_info->max_adgain);

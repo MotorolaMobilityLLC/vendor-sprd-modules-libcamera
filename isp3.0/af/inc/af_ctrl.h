@@ -181,6 +181,7 @@ struct af_ctrl_sensor_info_type {
 	cmr_u32 sensor_res_height;
 	cmr_u32 sensor_res_width;
 	struct af_ctrl_sensor_crop_info_t crop_info;
+	struct af_pose_dis pose_dis;
 };
 
 struct af_ctrl_module_info_type {
