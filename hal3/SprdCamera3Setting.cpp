@@ -3175,21 +3175,22 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 
 	if (frame_settings.exists(ANDROID_CONTROL_SCENE_MODE)) {
 		valueU8 = frame_settings.find(ANDROID_CONTROL_SCENE_MODE).data.u8[0];
+
 		s_setting[mCameraId].controlInfo.scene_mode = valueU8;
 		pushAndroidParaTag(ANDROID_CONTROL_SCENE_MODE);
 		HAL_LOGV("scene %d", valueU8);
 	}
 
 	if (frame_settings.exists(ANDROID_CONTROL_EFFECT_MODE)) {
-		valueU8 = frame_settings.find(ANDROID_CONTROL_EFFECT_MODE).data.u8[0];
-		GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.effect_mode, valueU8, ANDROID_CONTROL_EFFECT_MODE)
-		HAL_LOGV("effect %d", valueU8);
+		s_setting[mCameraId].controlInfo.effect_mode = frame_settings.find(ANDROID_CONTROL_EFFECT_MODE).data.u8[0];
+		pushAndroidParaTag(ANDROID_CONTROL_EFFECT_MODE);
+		HAL_LOGV("effect %d", s_setting[mCameraId].controlInfo.effect_mode);
 	}
 
 	if (frame_settings.exists(ANDROID_CONTROL_AWB_MODE)) {
-		valueU8 = frame_settings.find(ANDROID_CONTROL_AWB_MODE).data.u8[0];
-		GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.awb_mode, valueU8, ANDROID_CONTROL_AWB_MODE)
-		HAL_LOGV("awb %d", valueU8);
+		s_setting[mCameraId].controlInfo.awb_mode = frame_settings.find(ANDROID_CONTROL_AWB_MODE).data.u8[0];
+		pushAndroidParaTag(ANDROID_CONTROL_AWB_MODE);
+		HAL_LOGV("awb %d", s_setting[mCameraId].controlInfo.awb_mode);
 	}
 
 	if (frame_settings.exists(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)) {
