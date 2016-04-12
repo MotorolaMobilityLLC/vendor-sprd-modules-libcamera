@@ -5477,7 +5477,7 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 	prev_cxt->prev_rect.height  = chn_param.cap_inf_cfg.cfg.src_img_rect.height;
 
 	/*get sensor interface info*/
-	ret = prev_get_sn_inf(handle, camera_id, chn_param.cap_inf_cfg.chn_deci_factor, &chn_param.sn_if);
+	ret = prev_get_sn_inf(handle, camera_id, chn_param.skip_num, &chn_param.sn_if);
 	if (ret) {
 		CMR_LOGE("get sn inf failed");
 		goto exit;
@@ -5819,7 +5819,7 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_
 	prev_cxt->video_rect.height  = chn_param.cap_inf_cfg.cfg.src_img_rect.height;
 
 	/*get sensor interface info*/
-	ret = prev_get_sn_inf(handle, camera_id, chn_param.cap_inf_cfg.chn_deci_factor, &chn_param.sn_if);
+	ret = prev_get_sn_inf(handle, camera_id, chn_param.skip_num, &chn_param.sn_if);
 	if (ret) {
 		CMR_LOGE("get sn inf failed");
 		goto exit;
@@ -6458,7 +6458,7 @@ cmr_int prev_set_cap_param_raw(struct prev_handle *handle,
 	}
 
 	/*get sensor interface info*/
-	ret = prev_get_sn_inf(handle, camera_id, chn_param.cap_inf_cfg.chn_deci_factor, &chn_param.sn_if);
+	ret = prev_get_sn_inf(handle, camera_id, chn_param.skip_num, &chn_param.sn_if);
 	if (ret) {
 		CMR_LOGE("get sn inf failed");
 		goto exit;
