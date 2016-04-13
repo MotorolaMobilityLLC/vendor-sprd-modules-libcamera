@@ -195,7 +195,7 @@ cmr_int awbaltek_set_unlock(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input
 	struct allib_awb_set_parameter_t            input;
 
 	ISP_LOGI("is_lock %d", cxt->is_lock);
-
+	cmr_bzero(&input, sizeof(input));
 	input.type = alawb_set_param_manual_flow;
 	input.para.awb_manual_flow.manual_setting = alawb_flow_none;
 	ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
