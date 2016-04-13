@@ -29,8 +29,18 @@
 
 /* #define Y_IMG_TO_ISP */
 /**************************MCARO DEFINITION********************************************************************/
-#define PREV_FRM_CNT                    8
-#define PREV_ROT_FRM_CNT                8
+// abilty, max support buf num
+#define PREV_FRM_CNT                    GRAB_BUF_MAX
+#define PREV_ROT_FRM_CNT                GRAB_BUF_MAX
+#define ZSL_FRM_CNT                     8
+#define ZSL_ROT_FRM_CNT                 8
+
+// actually, the num alloced for preview/video/zsl, hal1.0 will use this
+#define PREV_FRM_ALLOC_CNT              8
+#define PREV_ROT_FRM_ALLOC_CNT          8
+#define ZSL_FRM_ALLOC_CNT               8
+#define ZSL_ROT_FRM_ALLOC_CNT           8
+
 #define PREV_MSG_QUEUE_SIZE             50
 #define PREV_RECOVERY_CNT               3
 
@@ -259,15 +269,15 @@ struct prev_context {
 	cmr_uint                        cap_zsl_restart_skip_cnt;
 	cmr_uint                        cap_zsl_restart_skip_en;
 	cmr_uint                        cap_zsl_frm_cnt;
-	struct img_frm                  cap_zsl_frm[PREV_FRM_CNT];
+	struct img_frm                  cap_zsl_frm[ZSL_FRM_CNT];
 	struct img_frm                  cap_zsl_reserved_frm;
 	cmr_uint                        cap_zsl_rot_index;
-	cmr_uint                        cap_zsl_rot_frm_is_lock[PREV_ROT_FRM_CNT];
-	struct img_frm                  cap_zsl_rot_frm[PREV_ROT_FRM_CNT];
+	cmr_uint                        cap_zsl_rot_frm_is_lock[ZSL_ROT_FRM_CNT];
+	struct img_frm                  cap_zsl_rot_frm[ZSL_ROT_FRM_CNT];
 
-	cmr_uint                        cap_zsl_phys_addr_array[PREV_FRM_CNT + PREV_ROT_FRM_CNT];
-	cmr_uint                        cap_zsl_virt_addr_array[PREV_FRM_CNT + PREV_ROT_FRM_CNT];
-	cmr_s32                         cap_zsl_fd_array[PREV_FRM_CNT + PREV_ROT_FRM_CNT];
+	cmr_uint                        cap_zsl_phys_addr_array[ZSL_FRM_CNT + ZSL_ROT_FRM_CNT];
+	cmr_uint                        cap_zsl_virt_addr_array[ZSL_FRM_CNT + ZSL_ROT_FRM_CNT];
+	cmr_s32                         cap_zsl_fd_array[ZSL_FRM_CNT + ZSL_ROT_FRM_CNT];
 	cmr_uint                        cap_zsl_reserved_phys_addr;
 	cmr_uint                        cap_zsl_reserved_virt_addr;
 	cmr_s32                         cap_zsl_reserved_fd;
@@ -3340,10 +3350,10 @@ cmr_int prev_alloc_prev_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 		return CMR_CAMERA_INVALID_PARAM;
 	}
 
-	prev_cxt->prev_mem_num = PREV_FRM_CNT;
+	prev_cxt->prev_mem_num = PREV_FRM_ALLOC_CNT;
 	if (prev_cxt->prev_param.prev_rot) {
 		CMR_LOGI("need increase buf for rotation");
-		prev_cxt->prev_mem_num += PREV_ROT_FRM_CNT;
+		prev_cxt->prev_mem_num += PREV_ROT_FRM_ALLOC_CNT;
 	}
 
 	/*alloc preview buffer*/
@@ -3383,12 +3393,12 @@ cmr_int prev_alloc_prev_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 				prev_cxt->prev_fd_array[i]);
 
 			if ((0 == prev_cxt->prev_virt_addr_array[i]) || (0 == prev_cxt->prev_fd_array[i])){
-				if (i >= PREV_FRM_CNT) {
+				if (i >= PREV_FRM_ALLOC_CNT) {
 					CMR_LOGE("memory is invalid");
 					return  CMR_CAMERA_NO_MEM;
 				}
 			} else {
-				if (i < PREV_FRM_CNT) {
+				if (i < PREV_FRM_ALLOC_CNT) {
 					prev_cxt->prev_mem_valid_num++;
 				}
 			}
@@ -3409,7 +3419,7 @@ cmr_int prev_alloc_prev_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 	frame_size = prev_cxt->prev_mem_size;
 	prev_num   = prev_cxt->prev_mem_num;
 	if (prev_cxt->prev_param.prev_rot) {
-		prev_num = prev_cxt->prev_mem_num - PREV_ROT_FRM_CNT;
+		prev_num = prev_cxt->prev_mem_num - PREV_ROT_FRM_ALLOC_CNT;
 	}
 
 	/*arrange the buffer*/
@@ -3451,7 +3461,7 @@ cmr_int prev_alloc_prev_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 	prev_cxt->prev_reserved_frm.addr_phy.addr_v = 0;
 
 	if (prev_cxt->prev_param.prev_rot) {
-		for (i = 0; i < PREV_ROT_FRM_CNT; i++) {
+		for (i = 0; i < PREV_ROT_FRM_ALLOC_CNT; i++) {
 			prev_cxt->prev_rot_frm[i].buf_size            = frame_size;
 			prev_cxt->prev_rot_frm[i].addr_vir.addr_y = prev_cxt->prev_virt_addr_array[prev_num +i];
 			prev_cxt->prev_rot_frm[i].addr_vir.addr_u = prev_cxt->prev_rot_frm[i].addr_vir.addr_y + buffer_size;
@@ -3575,10 +3585,10 @@ cmr_int prev_alloc_video_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_
 		return CMR_CAMERA_INVALID_PARAM;
 	}
 
-	prev_cxt->video_mem_num = PREV_FRM_CNT;
+	prev_cxt->video_mem_num = PREV_FRM_ALLOC_CNT;
 	if (prev_cxt->prev_param.prev_rot) {
 		CMR_LOGI("need increase buf for rotation");
-		prev_cxt->video_mem_num += PREV_ROT_FRM_CNT;
+		prev_cxt->video_mem_num += PREV_ROT_FRM_ALLOC_CNT;
 	}
 
 	/*alloc preview buffer*/
@@ -3609,12 +3619,12 @@ cmr_int prev_alloc_video_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_
 				prev_cxt->video_fd_array[i]);
 
 			if ((0 == prev_cxt->video_virt_addr_array[i]) || (0 == prev_cxt->video_fd_array[i])) {
-				if (i >= PREV_FRM_CNT) {
+				if (i >= PREV_FRM_ALLOC_CNT) {
 					CMR_LOGE("memory is invalid");
 					return  CMR_CAMERA_NO_MEM;
 				}
 			} else {
-				if (i < PREV_FRM_CNT) {
+				if (i < PREV_FRM_ALLOC_CNT) {
 					prev_cxt->video_mem_valid_num++;
 				}
 			}
@@ -3632,7 +3642,7 @@ cmr_int prev_alloc_video_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_
 	frame_size = prev_cxt->video_mem_size;
 	prev_num   = prev_cxt->video_mem_num;
 	if (prev_cxt->prev_param.prev_rot) {
-		prev_num = prev_cxt->video_mem_num - PREV_ROT_FRM_CNT;
+		prev_num = prev_cxt->video_mem_num - PREV_ROT_FRM_ALLOC_CNT;
 	}
 
 	/*arrange the buffer*/
@@ -3676,7 +3686,7 @@ cmr_int prev_alloc_video_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_
 	prev_cxt->video_reserved_frm.addr_phy.addr_v = 0;
 
 	if (prev_cxt->prev_param.prev_rot) {
-		for (i = 0; i < PREV_ROT_FRM_CNT; i++) {
+		for (i = 0; i < PREV_ROT_FRM_ALLOC_CNT; i++) {
 			prev_cxt->video_rot_frm[i].buf_size 	   = frame_size;
 			prev_cxt->video_rot_frm[i].addr_vir.addr_y = prev_cxt->video_virt_addr_array[prev_num +i];
 			prev_cxt->video_rot_frm[i].addr_vir.addr_u = prev_cxt->video_rot_frm[i].addr_vir.addr_y + buffer_size;
@@ -4244,7 +4254,7 @@ cmr_int prev_alloc_cap_reserve_buf(struct prev_handle *handle, cmr_u32 camera_id
 		return CMR_CAMERA_INVALID_PARAM;
 	}
 
-	prev_cxt->cap_zsl_mem_num = PREV_FRM_CNT;
+	prev_cxt->cap_zsl_mem_num = ZSL_FRM_ALLOC_CNT;
 
 	/*alloc preview buffer*/
 	if (!mem_ops->alloc_mem || !mem_ops->free_mem) {
@@ -4352,7 +4362,7 @@ cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 		return CMR_CAMERA_INVALID_PARAM;
 	}
 
-	prev_cxt->cap_zsl_mem_num = PREV_FRM_CNT;
+	prev_cxt->cap_zsl_mem_num = ZSL_FRM_ALLOC_CNT;
 	if (prev_cxt->prev_param.cap_rot) {
 		CMR_LOGI("need increase buf for rotation");
 		//prev_cxt->cap_zsl_mem_num += PREV_ROT_FRM_CNT;
@@ -4382,12 +4392,12 @@ cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 				prev_cxt->cap_zsl_fd_array[i]);
 
 			if ((0 == prev_cxt->cap_zsl_virt_addr_array[i]) || 0 == prev_cxt->cap_zsl_fd_array[i]) {
-				if (i >= PREV_FRM_CNT) {
+				if (i >= ZSL_FRM_ALLOC_CNT) {
 					CMR_LOGE("memory is invalid");
 					return  CMR_CAMERA_NO_MEM;
 				}
 			} else {
-				if (i < PREV_FRM_CNT) {
+				if (i < ZSL_FRM_ALLOC_CNT) {
 					prev_cxt->cap_zsl_mem_valid_num++;
 				}
 			}
@@ -4465,10 +4475,10 @@ cmr_int prev_free_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32
 				  prev_cxt->cap_zsl_fd_array,
 				  prev_cxt->cap_zsl_mem_num);
 
-		cmr_bzero(prev_cxt->cap_zsl_phys_addr_array, (PREV_FRM_CNT + PREV_ROT_FRM_CNT)*sizeof(cmr_uint));
-		cmr_bzero(prev_cxt->cap_zsl_virt_addr_array, (PREV_FRM_CNT + PREV_ROT_FRM_CNT)*sizeof(cmr_uint));
-		cmr_bzero(prev_cxt->cap_zsl_fd_array, (PREV_FRM_CNT + PREV_ROT_FRM_CNT)*sizeof(cmr_s32));
-		cmr_bzero(&prev_cxt->cap_zsl_frm[0], sizeof(struct img_frm) * PREV_FRM_CNT);
+		cmr_bzero(prev_cxt->cap_zsl_phys_addr_array, (ZSL_FRM_CNT + ZSL_ROT_FRM_CNT)*sizeof(cmr_uint));
+		cmr_bzero(prev_cxt->cap_zsl_virt_addr_array, (ZSL_FRM_CNT + ZSL_ROT_FRM_CNT)*sizeof(cmr_uint));
+		cmr_bzero(prev_cxt->cap_zsl_fd_array, (ZSL_FRM_CNT + ZSL_ROT_FRM_CNT)*sizeof(cmr_s32));
+		cmr_bzero(&prev_cxt->cap_zsl_frm[0], sizeof(struct img_frm) * ZSL_FRM_CNT);
 		prev_cxt->cap_zsl_reserved_phys_addr = 0;
 		prev_cxt->cap_zsl_reserved_virt_addr = 0;
 		prev_cxt->cap_zsl_reserved_fd = 0;
@@ -4997,6 +5007,21 @@ cmr_int prev_get_frm_index(struct img_frm* frame, struct frm_info* data)
 
 	return i;
 }
+
+cmr_int prev_zsl_get_frm_index(struct img_frm* frame, struct frm_info* data)
+{
+	cmr_int                         i;
+
+	for (i = 0; i < ZSL_FRM_CNT; i++) {
+		if(data->fd == (frame+i)->fd) {
+			break;
+		}
+	}
+	CMR_LOGV("frm id %ld", i);
+
+	return i;
+}
+
 #ifdef Y_IMG_TO_ISP
 cmr_int prev_y_info_copy_to_isp(struct prev_handle *handle,
 				    cmr_uint camera_id, struct frm_info *info)
@@ -5234,7 +5259,7 @@ cmr_int prev_construct_zsl_frame(struct prev_handle *handle,
 	prev_cxt    = &handle->prev_cxt[camera_id];
 	prev_capture_zoom_post_cap(handle, &zoom_post_proc);
 	if (cap_chn_id == info->channel_id) {
-		frm_id = prev_get_frm_index(prev_cxt->cap_zsl_frm, info);
+		frm_id = prev_zsl_get_frm_index(prev_cxt->cap_zsl_frm, info);
 		frm_ptr = &prev_cxt->cap_zsl_frm[frm_id];
 
 		frame_type->buf_id       = frm_id;
