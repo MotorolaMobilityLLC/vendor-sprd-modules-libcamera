@@ -2947,23 +2947,23 @@ static cmr_int aealtek_callback_sync_info(struct aealtek_cxt *cxt_ptr)
 	input.ud_msc_iso = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_cur_iso;
 
 	input.ud_msc_isp_adgain = 0;
-	input.master_info.cam_info_calib.r_gain = 2300;
-	input.master_info.cam_info_calib.g_gain = 1800;
-	input.master_info.cam_info_calib.b_gain = 2500;
-	input.master_info.cam_info_sensor.fn = 2.0;
-	input.master_info.cam_info_sensor.max_ad_gain = 12800;
-	input.master_info.cam_info_sensor.max_exp_line = 5000;
-	input.master_info.cam_info_sensor.max_fps = 3000;
+	input.master_info.cam_info_calib.r_gain = cxt_ptr->lib_data.ae_otp_data.r;
+	input.master_info.cam_info_calib.g_gain = cxt_ptr->lib_data.ae_otp_data.g;
+	input.master_info.cam_info_calib.b_gain = cxt_ptr->lib_data.ae_otp_data.b;
+	input.master_info.cam_info_sensor.fn = (float)(1.0 * cxt_ptr->init_in_param.sensor_static_info.f_num / F_NUM_BASE);
+	input.master_info.cam_info_sensor.max_ad_gain = cxt_ptr->nxt_status.ui_param.work_info.resolution.max_gain * 100;
+	input.master_info.cam_info_sensor.max_exp_line = MAX_EXP_LINE_CNT;
+	input.master_info.cam_info_sensor.max_fps = cxt_ptr->nxt_status.ui_param.work_info.resolution.max_fps * 100;
 	input.master_info.cam_info_sensor.min_ad_gain = 100;
 	input.master_info.cam_info_sensor.min_exp_line = 1;
-	input.master_info.cam_info_sensor.min_fps = 1000;
+	input.master_info.cam_info_sensor.min_fps = cxt_ptr->nxt_status.ui_param.work_info.resolution.min_fps * 100;
 
-	input.slave_info.cam_info_calib.r_gain = 1300;
-	input.slave_info.cam_info_calib.g_gain = 990;
-	input.slave_info.cam_info_calib.b_gain = 1500;
-	input.slave_info.cam_info_sensor.fn = 1.9;
-	input.slave_info.cam_info_sensor.max_ad_gain = 6400;
-	input.slave_info.cam_info_sensor.max_exp_line = 10000;
+	input.slave_info.cam_info_calib.r_gain = 1485;
+	input.slave_info.cam_info_calib.g_gain = 988;
+	input.slave_info.cam_info_calib.b_gain = 1497;
+	input.slave_info.cam_info_sensor.fn = 2.4;
+	input.slave_info.cam_info_sensor.max_ad_gain = 800;
+	input.slave_info.cam_info_sensor.max_exp_line = MAX_EXP_LINE_CNT;
 	input.slave_info.cam_info_sensor.max_fps = 3000;
 	input.slave_info.cam_info_sensor.min_ad_gain = 100;
 	input.slave_info.cam_info_sensor.min_exp_line = 1;
