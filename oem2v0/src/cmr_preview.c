@@ -29,7 +29,7 @@
 
 /* #define Y_IMG_TO_ISP */
 /**************************MCARO DEFINITION********************************************************************/
-#define PREV_FRM_CNT                    GRAB_BUF_MAX
+#define PREV_FRM_CNT                    8
 #define PREV_ROT_FRM_CNT                8
 #define PREV_MSG_QUEUE_SIZE             50
 #define PREV_RECOVERY_CNT               3
