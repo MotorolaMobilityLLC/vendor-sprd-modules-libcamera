@@ -418,8 +418,8 @@ private:
 	static const int                kPreviewRotBufferCount = 32;
 	static const int                kVideoBufferCount    = 32;
 	static const int                kVideoRotBufferCount = 32;
-	static const int                kZslBufferCount    = 8;
-	static const int                kZslRotBufferCount = 8;
+	static const int                kZslBufferCount    = 32;
+	static const int                kZslRotBufferCount = 32;
 	static const int                kRawBufferCount        = 1;
 	static const int                kJpegBufferCount       = 1;
 	static const int                kRawFrameHeaderSize    = 0x0;

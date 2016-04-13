@@ -32,8 +32,8 @@
 // abilty, max support buf num
 #define PREV_FRM_CNT                    GRAB_BUF_MAX
 #define PREV_ROT_FRM_CNT                GRAB_BUF_MAX
-#define ZSL_FRM_CNT                     8
-#define ZSL_ROT_FRM_CNT                 8
+#define ZSL_FRM_CNT                     GRAB_BUF_MAX
+#define ZSL_ROT_FRM_CNT                 GRAB_BUF_MAX
 
 // actually, the num alloced for preview/video/zsl, hal1.0 will use this
 #define PREV_FRM_ALLOC_CNT              8
