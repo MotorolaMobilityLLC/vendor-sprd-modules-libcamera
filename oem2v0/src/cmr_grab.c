@@ -552,7 +552,7 @@ cmr_int cmr_grab_buff_cfg (cmr_handle grab_handle, struct buffer_cfg *buf_cfg)
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
 
-	CMR_LOGI("channel_id=%d, count=%d, base_id=0x%x ",
+	CMR_LOGV("channel_id=%d, count=%d, base_id=0x%x ",
 		buf_cfg->channel_id, buf_cfg->count, buf_cfg->base_id);
 
 	/* firstly , set the base index for each channel */
@@ -577,8 +577,8 @@ cmr_int cmr_grab_buff_cfg (cmr_handle grab_handle, struct buffer_cfg *buf_cfg)
 		parm.reserved[1]      = buf_cfg->fd[i];
 		parm.reserved[2]      = buf_cfg->fd[i];
 		parm.reserved[3]      = buf_cfg->fd[i];
-		CMR_LOGD("i=%d: fd=0x%x, offset: y=0x%lx, u=0x%lx, v=0x%lx, is_reserved_buf=%d\n",
-			i, buf_cfg->fd[i],
+		CMR_LOGD("chn_id=%d, i=%d, fd=0x%x, offset: y=0x%lx, u=0x%lx, v=0x%lx, is_reserved_buf=%d\n",
+			buf_cfg->channel_id, i, buf_cfg->fd[i],
 			buf_cfg->addr[i].addr_y, buf_cfg->addr[i].addr_u,
 			buf_cfg->addr[i].addr_v, buf_cfg->is_reserved_buf);
 		if (0 != buf_cfg->addr_vir[i].addr_y) {
