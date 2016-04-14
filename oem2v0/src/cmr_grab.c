@@ -59,7 +59,6 @@ struct cmr_grab
 	cmr_u32                 is_on;
 	pthread_t               thread_handle;
 	cmr_u32                 chn_status[CHN_MAX];
-	cmr_s32                 chn_frm_num[CHN_MAX];
 	cmr_u32                 is_prev_trace;
 	cmr_u32                 is_cap_trace;
 	struct grab_init_param  init_param;
@@ -402,15 +401,6 @@ static cmr_int cmr_grab_cap_cfg_common(cmr_handle grab_handle, struct cap_cfg *c
 	ret = ioctl(p_grab->fd, SPRD_IMG_IO_PATH_FRM_DECI, &parm);
 	CMR_LOGI("channel_id  %d, deci_factor %d, ret %ld \n", channel_id, config->chn_deci_factor, ret);
 
-	if (CHN_1 == channel_id) {
-		p_grab->chn_frm_num[1] = config->frm_num;
-	} else  if (CHN_2 == channel_id) {
-		p_grab->chn_frm_num[2] = config->frm_num;
-	} else {
-		/* CHN_0 */
-		p_grab->chn_frm_num[0] = config->frm_num;
-	}
-
 	parm.crop_rect.x = config->cfg.src_img_rect.start_x;
 	parm.crop_rect.y = config->cfg.src_img_rect.start_y;
 	parm.crop_rect.w = config->cfg.src_img_rect.width;
@@ -687,15 +677,6 @@ cmr_int cmr_grab_cap_resume(cmr_handle grab_handle, cmr_u32 channel_id, cmr_u32 
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
 	CMR_LOGI("channel_id %d, frm_num %d, status %d", channel_id, frm_num, p_grab->chn_status[channel_id]);
-
-	if (CHN_1 == channel_id) {
-		p_grab->chn_frm_num[1] = frm_num;
-	} else  if (CHN_2 == channel_id) {
-		p_grab->chn_frm_num[2] = frm_num;
-	} else {
-		/* CHN_0 */
-		p_grab->chn_frm_num[0] = frm_num;
-	}
 
 	ch_id = channel_id;
 	pthread_mutex_lock(&p_grab->path_mutex[channel_id]);
@@ -1003,23 +984,6 @@ static void* cmr_grab_thread_proc(void* data)
 				}
 
 				frame.channel_id = op.parm.frame.channel_id;
-				frm_num = p_grab->chn_frm_num[op.parm.frame.channel_id];
-				frame.free = 0;
-				if (CMR_GRAB_TX_DONE == evt_id) {
-					if (frm_num == 0) {
-						frame.free = 1;
-					} else if (-1 != frm_num) {
-						frm_num--;
-					}
-				}
-
-				if (CHN_1 == frame.channel_id) {
-					p_grab->chn_frm_num[CHN_1] = frm_num;
-				} else if (CHN_2 == frame.channel_id) {
-					p_grab->chn_frm_num[CHN_2] = frm_num;
-				} else if (CHN_0 == frame.channel_id) {
-					p_grab->chn_frm_num[CHN_0] = frm_num;
-				}
 
 				if ((p_grab->is_prev_trace && CHN_1 == frame.channel_id)
 					|| (p_grab->is_cap_trace && CHN_1 != frame.channel_id))

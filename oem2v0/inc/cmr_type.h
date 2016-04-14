@@ -126,7 +126,6 @@ struct frm_info {
 	cmr_uint                            sec;
 	cmr_uint                            usec;
 	cmr_u32                             length;
-	cmr_u32                             free;
 	cmr_u32                             base;
 	cmr_u32                             fmt;
 	cmr_u32                             yaddr;

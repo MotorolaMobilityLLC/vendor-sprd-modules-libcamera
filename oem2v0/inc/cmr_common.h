@@ -457,6 +457,7 @@ enum channel_num {
 	CHN_0 = 0,
 	CHN_1,
 	CHN_2,
+	CHN_3,
 	CHN_MAX
 };
 
