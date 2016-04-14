@@ -75,9 +75,9 @@ cmr_int isp_dev_init(struct isp_dev_init_info *init_param_ptr, isp_handle *handl
 	memcpy((void *)&file->init_param, init_param_ptr, sizeof(struct isp_dev_init_info));
 
 	file->init_param.shading_bin_offset = ISP_FW_BUF_SIZE+ISP_SHARE_BUFF_SIZE+ISP_WORKING_BUF_SIZE+
-		(ISP_STATISTICS_BUF_SIZE*5*2)+ISP_IRP_BIN_BUF_SIZE*2;
+		(ISP_STATISTICS_BUF_SIZE*5*3)+ISP_IRP_BIN_BUF_SIZE*3;
 	file->init_param.irp_bin_offset = ISP_FW_BUF_SIZE+ISP_SHARE_BUFF_SIZE+ISP_WORKING_BUF_SIZE+
-		(ISP_STATISTICS_BUF_SIZE*5*2);
+		(ISP_STATISTICS_BUF_SIZE*5*3);
 
 	fd = open(isp_dev_name, O_RDWR, 0);
 	if (fd < 0) {
@@ -260,17 +260,11 @@ static cmr_int isp_dev_load_binary(isp_handle handle)
 	}
 
 	ret = isp_dev_get_isp_id(handle, &isp_id);
-	if (0 == isp_id) {
-		memcpy((void*)(file->fw_mem.virt_addr + file->init_param.shading_bin_offset),
-			(void*)file->init_param.shading_bin_addr, file->init_param.shading_bin_size);
-		memcpy((void*)(file->fw_mem.virt_addr + file->init_param.irp_bin_offset),
-			(void*)file->init_param.irp_bin_addr, file->init_param.irp_bin_size);
-	} else if (2 == isp_id) {
-		memcpy((void*)(file->fw_mem.virt_addr + file->init_param.shading_bin_offset + ISP_SHADING_BIN_BUF_SIZE),
-			(void*)file->init_param.shading_bin_addr, file->init_param.shading_bin_size);
-		memcpy((void*)(file->fw_mem.virt_addr + file->init_param.irp_bin_offset + ISP_IRP_BIN_BUF_SIZE),
+
+	memcpy((void*)(file->fw_mem.virt_addr + file->init_param.shading_bin_offset + ISP_SHADING_BIN_BUF_SIZE * isp_id),
+		(void*)file->init_param.shading_bin_addr, file->init_param.shading_bin_size);
+	memcpy((void*)(file->fw_mem.virt_addr + file->init_param.irp_bin_offset + ISP_IRP_BIN_BUF_SIZE * isp_id),
 		(void*)file->init_param.irp_bin_addr, file->init_param.irp_bin_size);
-	}
 
 	CMR_LOGI("shading check 0x%x", *(cmr_u32*)(file->fw_mem.virt_addr + file->init_param.shading_bin_offset));
 	CMR_LOGI("irp check 0x%x", *(cmr_u32*)(file->fw_mem.virt_addr + file->init_param.irp_bin_offset));
