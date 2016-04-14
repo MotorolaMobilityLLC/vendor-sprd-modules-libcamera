@@ -263,7 +263,7 @@ static cmr_int isp3a_get_3a_stats_buf(cmr_handle isp_3a_handle);
 static cmr_int isp3a_put_3a_stats_buf(cmr_handle isp_3a_handle);
 static cmr_int isp3a_handle_stats(cmr_handle isp_3a_handle, void *data);
 static cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data);
-static cmr_int isp3a_start_ae_process(cmr_handle isp_3a_handle, struct isp3a_statistics_data *stats_data);
+static cmr_int isp3a_start_ae_process(cmr_handle isp_3a_handle, struct isp3a_statistics_data *stats_data, struct isp3a_statistics_data *awb_stats_data);
 static cmr_int isp3a_start_af_process(cmr_handle isp_3a_handle, struct isp3a_statistics_data *stats_data);
 static cmr_int isp3a_start_afl_process(cmr_handle isp_3a_handle, struct isp3a_statistics_data *stats_data);
 static cmr_int isp3a_start_yhis_process(cmr_handle isp_3a_handle, struct isp3a_statistics_data *stats_data);
@@ -2781,7 +2781,7 @@ cmr_int isp3a_handle_stats(cmr_handle isp_3a_handle, void *data)
 	struct isp3a_statistics_data                *yhis_stats_buf_ptr = NULL;
 	struct isp_statis_frame_output              *dev_stats = (struct isp_statis_frame_output*)data;
 	cmr_u32                                     is_set_stats_buf = 0;
-	cmr_int                                     test_tbd;
+	cmr_int                                     isp_stats;
 	/* get buffer */
 	ret = isp3a_get_3a_stats_buf(isp_3a_handle);
 	if (ret) {
@@ -2808,8 +2808,8 @@ cmr_int isp3a_handle_stats(cmr_handle isp_3a_handle, void *data)
 	af_stats_buf_ptr->timestamp.usec = dev_stats->time_stamp.usec;
 	ae_stats_buf_ptr->timestamp = af_stats_buf_ptr->timestamp;
 	awb_stats_buf_ptr->timestamp = af_stats_buf_ptr->timestamp;
-	test_tbd = (cmr_int)dev_stats->vir_addr;
-	ret = isp_dispatch_stats((void*)test_tbd, ae_stats_buf_ptr->addr, awb_stats_buf_ptr->addr, af_stats_buf_ptr->addr,
+	isp_stats = (cmr_int)dev_stats->vir_addr;
+	ret = isp_dispatch_stats((void*)isp_stats, ae_stats_buf_ptr->addr, awb_stats_buf_ptr->addr, af_stats_buf_ptr->addr,
 							 yhis_stats_buf_ptr->addr, afl_stats_buf_ptr->addr, NULL, cxt->sof_idx);
 	if (ret) {
 		ret = isp3a_put_3a_stats_buf(isp_3a_handle);
@@ -2833,7 +2833,7 @@ cmr_int isp3a_handle_stats(cmr_handle isp_3a_handle, void *data)
 	}
 
 	/* start AE process */
-	ret= isp3a_start_ae_process(isp_3a_handle, ae_stats_buf_ptr);
+	ret= isp3a_start_ae_process(isp_3a_handle, ae_stats_buf_ptr, awb_stats_buf_ptr);
 	if (ret) {
 		ISP_LOGE("failed to start ae process");
 	}
@@ -2919,7 +2919,7 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 	return ret;
 }
 
-cmr_int isp3a_start_ae_process(cmr_handle isp_3a_handle, struct isp3a_statistics_data *stats_data)
+cmr_int isp3a_start_ae_process(cmr_handle isp_3a_handle, struct isp3a_statistics_data *stats_data, struct isp3a_statistics_data *awb_stats_data)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
@@ -2939,8 +2939,9 @@ cmr_int isp3a_start_ae_process(cmr_handle isp_3a_handle, struct isp3a_statistics
 		ISP_LOGW("set awb report failed!!!");
 
 	ret = isp3a_hold_statistics_buf(isp_3a_handle, ISP3A_AE, stats_data);
+	ret = isp3a_hold_statistics_buf(isp_3a_handle, ISP3A_AWB, awb_stats_data);
 	input.stat_data_ptr = stats_data;
-
+	input.awb_stat_data_ptr = awb_stats_data;
 	ret = ae_ctrl_process(cxt->ae_cxt.handle, &input, &output);
 	if (ret) {
 		ISP_LOGE("failed to ae process %ld", ret);
@@ -3035,7 +3036,6 @@ cmr_int isp3a_start_awb_process(cmr_handle isp_3a_handle, struct isp3a_statistic
 
 	input.statistics_data = stats_data;
 	memcpy(&input.ae_info, &ae_info->proc_out.ae_info, sizeof(struct isp3a_ae_info));
-	isp3a_hold_statistics_buf(isp_3a_handle, ISP3A_AWB, stats_data);
 	ret = awb_ctrl_process(cxt->awb_cxt.handle, &input, &output);
 	if (ret) {
 		ISP_LOGE("failed to awb process %ld", ret);
@@ -3062,17 +3062,19 @@ cmr_int isp3a_handle_ae_result(cmr_handle isp_3a_handle, struct ae_ctrl_callback
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
+	struct isp3a_statistics_data *awb_stats_data;
 
+	awb_stats_data = (struct isp3a_statistics_data * )result_ptr->proc_out.ae_frame.awb_stats_buff_ptr;
 	ret = isp3a_release_statistics_buf(isp_3a_handle, ISP3A_AE, (struct isp3a_statistics_data * )result_ptr->proc_out.ae_frame.stats_buff_ptr);
 	if (ret) {
 		ISP_LOGE("failed to releae ae stats buf %ld", ret);
 	}
 	if (result_ptr->proc_out.ae_frame.is_skip_cur_frame) {
 		ISP_LOGI("ae skip frame");
-		ret = isp3a_release_statistics_buf(isp_3a_handle, ISP3A_AWB, cxt->stats_buf_cxt.awb_stats_buf_ptr);
+		ret = isp3a_release_statistics_buf(isp_3a_handle, ISP3A_AWB, awb_stats_data);
 	} else {
 		cxt->ae_cxt.proc_out = result_ptr->proc_out;
-		ret = isp3a_start_awb_process(isp_3a_handle, cxt->stats_buf_cxt.awb_stats_buf_ptr, result_ptr);
+		ret = isp3a_start_awb_process(isp_3a_handle, awb_stats_data, result_ptr);
 	}
 	return ret;
 }

@@ -4218,6 +4218,7 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 
 		callback_in.proc_out.ae_frame.is_skip_cur_frame = 0;
 		callback_in.proc_out.ae_frame.stats_buff_ptr = in_ptr->stat_data_ptr;
+		callback_in.proc_out.ae_frame.awb_stats_buff_ptr = in_ptr->awb_stat_data_ptr;
 		data_length = ARRAY_SIZE(cxt_ptr->stat_info) - 1;
 		callback_in.proc_out.ae_info.report_data.rgb_stats = &cxt_ptr->stat_info[cxt_ptr->stat_info_num].ae_stats;
 		cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRL_CB_PROC_OUT, &callback_in);

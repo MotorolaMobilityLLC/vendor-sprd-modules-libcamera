@@ -295,6 +295,7 @@ struct ae_ctrl_param_hdr_ev {
 struct ae_ctrl_param_ae_frame {
 	cmr_u32 is_skip_cur_frame;
 	void *stats_buff_ptr;
+	void *awb_stats_buff_ptr;
 };
 
 struct ae_ctrl_param_raw_cell {
@@ -371,6 +372,7 @@ struct ae_ctrl_proc_in {
 	struct isp3a_statistics_data *stat_data_ptr;
 	struct ae_ctrl_param_awb_gain awb_gain;
 	struct ae_ctrl_param_af af_info;
+	struct isp3a_statistics_data *awb_stat_data_ptr;
 };
 
 
