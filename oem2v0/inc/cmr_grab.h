@@ -60,8 +60,6 @@ enum
 struct grab_init_param {
 	cmr_handle               oem_handle;
 	cmr_u32                  sensor_id;
-	cmr_u32                  width;
-	cmr_u32                  height;
 };
 
 struct sn_cfg {

@@ -599,8 +599,17 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	struct isp_cfg_img_param               img_buf_param;
 	SCENARIO_INFO_AP                       tSecnarioInfo;
 	struct isp_iq_otp_info                 iq_info;
+	struct isp_dev_init_param              init_param;
 
 	ISP_CHECK_HANDLE_VALID(isp_dev_handle);
+
+	init_param.width = param_ptr->common_in.resolution_info.sensor_size.w;
+	init_param.height = param_ptr->common_in.resolution_info.sensor_size.h;
+	init_param.camera_id = cxt->camera_id;
+	isp_dev_set_init_param(cxt->isp_driver_handle, &init_param);
+
+	cxt->input_param.init_param.size.w = param_ptr->common_in.resolution_info.sensor_size.w;
+	cxt->input_param.init_param.size.h = param_ptr->common_in.resolution_info.sensor_size.h;
 
 	isp_dev_set_capture_mode(cxt->isp_driver_handle, param_ptr->common_in.capture_mode);
 

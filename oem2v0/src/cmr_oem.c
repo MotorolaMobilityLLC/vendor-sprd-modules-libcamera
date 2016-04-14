@@ -1718,20 +1718,8 @@ cmr_int camera_grab_init(cmr_handle  oem_handle)
 	CHECK_HANDLE_VALID(grab_cxt);
 
 	if (0 == grab_cxt->inited) {
-		ret = cmr_sensor_get_info(cxt->sn_cxt.sensor_handle, cxt->camera_id, &sensor_info);
-		if (ret) {
-			CMR_LOGE("fail to get sensor info ret %ld", ret);
-			goto exit;
-		}
 		grab_param.oem_handle = oem_handle;
 		grab_param.sensor_id = cxt->camera_id;
-		if(0 != sensor_info.mode_info[SENSOR_MODE_COMMON_INIT].width) {
-			grab_param.width = sensor_info.mode_info[SENSOR_MODE_COMMON_INIT].width;
-			grab_param.height = sensor_info.mode_info[SENSOR_MODE_COMMON_INIT].height;
-		} else {
-			grab_param.width = sensor_info.mode_info[SENSOR_MODE_PREVIEW_ONE].width;
-			grab_param.height = sensor_info.mode_info[SENSOR_MODE_PREVIEW_ONE].height;
-		}
 		ret = cmr_grab_init(&grab_param, &grab_handle);
 		if (ret) {
 			CMR_LOGE("failed to init grab %ld", ret);
@@ -4543,6 +4531,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 		isp_param.sensor_fps.high_fps_skip_num,isp_param.sensor_fps.max_fps,
 		isp_param.sensor_fps.min_fps);
 }
+
 	CMR_LOGI("work_mode %ld, dv_mode %ld, capture_mode %ld", work_mode, dv_mode, isp_param.capture_mode);
 	CMR_LOGI("isp w h, %d %d", isp_param.size.w, isp_param.size.h);
 	ret = isp_video_start(isp_cxt->isp_handle, &isp_param);
@@ -4609,11 +4598,6 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle, cmr_
 
 	//cmr_grab_set_zoom_mode(cxt->grab_cxt.grab_handle, 1);
 
-	ret = cmr_grab_if_cfg(cxt->grab_cxt.grab_handle, &param_ptr->sn_if);
-	if (ret) {
-		CMR_LOGE("failed interface cfg %ld", ret);
-		goto exit;
-	}
 	ret = cmr_sensor_get_info(sn_cxt->sensor_handle, camera_id, &sensor_info);
 	if (ret) {
 		CMR_LOGE("failed to get sensor info %ld", ret);
@@ -4630,6 +4614,14 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle, cmr_
 	sensor_cfg.sn_trim.start_y = sensor_mode_info->trim_start_y;
 	sensor_cfg.sn_trim.width = sensor_mode_info->trim_width;
 	sensor_cfg.sn_trim.height = sensor_mode_info->trim_height;
+
+	param_ptr->sn_if.sensor_width = sensor_mode_info->width;
+	param_ptr->sn_if.sensor_height = sensor_mode_info->height;
+	ret = cmr_grab_if_cfg(cxt->grab_cxt.grab_handle, &param_ptr->sn_if);
+	if (ret) {
+		CMR_LOGE("failed interface cfg %ld", ret);
+		goto exit;
+	}
 	ret = cmr_grab_sn_cfg(cxt->grab_cxt.grab_handle, &sensor_cfg);
 	if (ret) {
 		CMR_LOGE("failed to sn cfg %ld", ret);

@@ -372,6 +372,7 @@ static const SENSOR_REG_T s5k3p3sm_1280x720_4lane_setting[] = {
 
 static SENSOR_REG_TAB_INFO_T s_s5k3p3sm_resolution_Tab_RAW[9] = {
 	{ADDR_AND_LEN_OF_ARRAY(s5k3p3sm_common_init), 0, 0, 24, SENSOR_IMAGE_FORMAT_RAW},
+	{ADDR_AND_LEN_OF_ARRAY(s5k3p3sm_2304x1740_4lane_setting), 2304, 1740, 24, SENSOR_IMAGE_FORMAT_RAW},
 	{ADDR_AND_LEN_OF_ARRAY(s5k3p3sm_4632x3480_4lane_setting), 4632, 3480, 24, SENSOR_IMAGE_FORMAT_RAW},
 	//{ADDR_AND_LEN_OF_ARRAY(s5k3p3sm_1280x720_4lane_setting), 1280, 720, 24, SENSOR_IMAGE_FORMAT_RAW},
 	//{ADDR_AND_LEN_OF_ARRAY(s5k3p3sm_1920x1080_4lane_setting), 1920, 1080, 24, SENSOR_IMAGE_FORMAT_RAW},
@@ -385,6 +386,7 @@ static SENSOR_REG_TAB_INFO_T s_s5k3p3sm_resolution_Tab_RAW[9] = {
 
 static SENSOR_TRIM_T s_s5k3p3sm_Resolution_Trim_Tab[SENSOR_MODE_MAX] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+	{0, 0, 2304, 1740, 94, 1320, 0x0dc8, {0, 0, 2304, 1740}},
 	{0, 0, 4632, 3480, 92, 2784, 3626, {0, 0, 4632, 3480}},
 	//{0, 0, 1280, 720, 92, 1320, 901, {0, 0, 1280, 720}},
 	//{0, 0, 1920, 1080, 94, 1320, 1767, {0, 0, 1920, 1080}},
@@ -1105,7 +1107,8 @@ static unsigned long _s5k3p3sm_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned 
 		SENSOR_PRINT("SENSOR_s5k3p3sm: prv mode equal to capmode");
 		goto CFG_INFO;
 	}
-
+	Sensor_SetMode(capture_mode);
+	Sensor_SetMode_WaitDone();
 
 	CFG_INFO:
 	s_capture_shutter = _s5k3p3sm_get_shutter(handle);

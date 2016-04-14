@@ -473,6 +473,8 @@ struct  sensor_if {
 	cmr_u8                              img_fmt;
 	cmr_u8                              img_ptn;
 	cmr_u8                              frm_deci;
+	cmr_u16                             sensor_width;
+	cmr_u16                             sensor_height;
 	cmr_u8                              res[4];
 	union  {
 	struct ccir_if                      ccir;

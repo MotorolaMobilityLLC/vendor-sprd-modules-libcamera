@@ -1763,3 +1763,46 @@ cmr_int isp_dev_get_iq_param(isp_handle handle, struct debug_info1 *info1, struc
 
 	return ret;
 }
+
+cmr_int isp_dev_set_init_param(isp_handle *handle, struct isp_dev_init_param *init_param_ptr)
+{
+	cmr_int                        ret = 0;
+	struct isp_dev_init_param      init_param;
+	struct isp_file                *file = NULL;
+
+	if (!handle) {
+		CMR_LOGE("handle is null error.");
+		return -1;
+	}
+	if (!init_param_ptr) {
+		CMR_LOGE("init_param_ptr is null error.");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+
+	CMR_LOGI("w %d h %d camera id %d", init_param_ptr->width,
+		init_param_ptr->height,
+		init_param_ptr->camera_id);
+	if (init_param_ptr->width == file->init_param.width
+		&& init_param_ptr->height == file->init_param.height
+		&& init_param_ptr->camera_id == file->init_param.camera_id) {
+		CMR_LOGI("same param.");
+		return ret;
+	}
+
+	file->init_param.width = init_param_ptr->width;
+	file->init_param.height = init_param_ptr->height;
+	file->init_param.camera_id = init_param_ptr->camera_id;
+
+	init_param.camera_id = init_param_ptr->camera_id;
+	init_param.width = init_param_ptr->width;
+	init_param.height = init_param_ptr->height;
+	ret= ioctl(file->fd, ISP_IO_SET_INIT_PARAM, &init_param);
+	if (ret) {
+		CMR_LOGE("isp set initial param error.");
+	}
+
+	return ret;
+}
+

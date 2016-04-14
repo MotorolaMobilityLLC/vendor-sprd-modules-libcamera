@@ -112,6 +112,6 @@ cmr_int isp_dev_get_isp_id(isp_handle handle, cmr_u32 *isp_id);
 cmr_int isp_dev_get_iq_param(isp_handle handle, struct debug_info1 *info1, struct debug_info2 *info2);
 cmr_int isp_dev_set_capture_mode(isp_handle handle, cmr_u32 capture_mode);
 cmr_int isp_dev_set_skip_num(isp_handle handle, cmr_u32 skip_num);
-
+cmr_int isp_dev_set_init_param(isp_handle *handle, struct isp_dev_init_param *init_param_ptr);
 
 #endif
