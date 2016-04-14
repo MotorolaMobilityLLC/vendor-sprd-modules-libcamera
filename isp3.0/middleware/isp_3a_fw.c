@@ -2871,8 +2871,9 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 	struct ae_ctrl_param_in                     ae_in;
 	struct ae_ctrl_param_out                    ae_out;
 	struct isp_irq                              *sof_info = (struct isp_irq*)data;
+	struct isp_sof_cfg_info                     sof_cfg_info;
 
-	cxt->sof_idx++;
+	cxt->sof_idx = sof_info->reserved + 1;
 	af_in.sof_info.sof_frame_idx = cxt->sof_idx;
 	af_in.sof_info.timestamp.sec = sof_info->time_stamp.sec;
 	af_in.sof_info.timestamp.usec = sof_info->time_stamp.usec;
@@ -2882,15 +2883,16 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 	}
 	awb_in.sof_frame_idx = cxt->sof_idx;
 	ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_SOF_FRAME_IDX, &awb_in, &awb_out);
+	sof_cfg_info.is_update = 0;
 	if (cxt->awb_cxt.proc_out.is_update) {
-		struct isp_awb_gain gain;
-		union isp_dev_ctrl_cmd_in input_data;
-		gain = cxt->awb_cxt.proc_out.gain;
-		ret = isp_dev_access_cfg_awb_gain(cxt->dev_access_handle, &gain);
-		gain = cxt->awb_cxt.proc_out.gain_balanced;
-		ret = isp_dev_access_cfg_awb_gain_balanced(cxt->dev_access_handle, &gain);
-		input_data.value = cxt->awb_cxt.proc_out.ct;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_ACCESS_SET_COLOR_TEMP, &input_data, NULL);
+		sof_cfg_info.awb_gain.r = cxt->awb_cxt.proc_out.gain.r;
+		sof_cfg_info.awb_gain.g = cxt->awb_cxt.proc_out.gain.g;
+		sof_cfg_info.awb_gain.b = cxt->awb_cxt.proc_out.gain.b;
+		sof_cfg_info.awb_b_gain.r = cxt->awb_cxt.proc_out.gain_balanced.r;
+		sof_cfg_info.awb_b_gain.g = cxt->awb_cxt.proc_out.gain_balanced.g;
+		sof_cfg_info.awb_b_gain.b = cxt->awb_cxt.proc_out.gain_balanced.b;
+		sof_cfg_info.color_temp = cxt->awb_cxt.proc_out.ct;
+		sof_cfg_info.is_update = 1;
 	}
 
 	ae_in.sof_param.frame_index = cxt->sof_idx;
@@ -2900,17 +2902,18 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 	if (ret) {
 		ISP_LOGE("failed to set ae sof");
 	}
-	ISP_LOGE("test msg 0");
+	ISP_LOGI("test msg 0");
 	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_GET_HW_ISO_SPEED, NULL, &ae_out);
 	if (ret) {
 		ISP_LOGE("failed to get hw_iso_speed");
 	}
-	ISP_LOGE("test msg 1");
-	ret = isp_dev_access_cfg_iso_speed(cxt->dev_access_handle, &ae_out.hw_iso_speed);
+	ISP_LOGI("test msg 1");
+	sof_cfg_info.iso_val = ae_out.hw_iso_speed;
+	ret = isp_dev_access_cfg_sof_info(cxt->dev_access_handle, &sof_cfg_info);
 	if (ret) {
-		ISP_LOGE("failed to cfg iso speed");
+		ISP_LOGE("failed to cfg sof info");
 	}
-	ISP_LOGE("test msg 2");
+	ISP_LOGI("test msg 2");
 	return ret;
 }
 
@@ -3084,6 +3087,13 @@ cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start *input_ptr)
 	struct afl_ctrl_param_out                   afl_out;
 
 	cxt->sof_idx = 0;
+
+	if (input_ptr->sensor_fps.is_high_fps) {
+		ret = isp_dev_access_set_skip_num(cxt->dev_access_handle, input_ptr->sensor_fps.high_fps_skip_num);
+		if (ret) {
+			ISP_LOGE("failed to isp_dev_access_set_skip_num");
+		}
+	}
 
 	ae_in.work_param.work_mode = input_ptr->work_mode;
 	ae_in.work_param.capture_mode = input_ptr->capture_mode;
