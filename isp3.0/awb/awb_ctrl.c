@@ -451,6 +451,8 @@ cmr_int awbctrl_set_flash_close(cmr_handle awb_ctrl_handle, void *input_ptr, voi
 		ret = cxt->awb_adpt_ops->adpt_ioctrl(cxt->lib_handle, AWB_CTRL_CMD_FLASH_CLOSE, input_ptr, output_ptr);
 	}
 
+	ret = awbctrl_set_unlock(awb_ctrl_handle, NULL, NULL);
+
 	return ret;
 }
 
@@ -458,6 +460,8 @@ static cmr_int awbctrl_set_lock(cmr_handle awb_ctrl_handle, void *input_ptr, voi
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+
+	ISP_LOGI("lock_flag %d %d", cxt->lock_flag, cxt->lock_num);
 
 	if (1 == cxt->lock_flag) {
 		cxt->lock_num++;
@@ -478,6 +482,8 @@ static cmr_int awbctrl_set_unlock(cmr_handle awb_ctrl_handle, void *input_ptr, v
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+
+	ISP_LOGI("lock_flag %d %d", cxt->lock_flag, cxt->lock_num);
 
 	if (0 == cxt->lock_flag) {
 		cxt->lock_num = 0;

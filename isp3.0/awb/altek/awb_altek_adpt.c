@@ -166,6 +166,8 @@ cmr_int awbaltek_set_lock(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_p
 	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
 	struct allib_awb_set_parameter_t            input;
 
+	ISP_LOGI("is_lock %d", cxt->is_lock);
+
 	if (1 != cxt->is_lock) {
 		input.type = alawb_set_param_manual_flow;
 		input.para.awb_manual_flow.manual_setting = alawb_flow_lock;
@@ -192,6 +194,8 @@ cmr_int awbaltek_set_unlock(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input
 	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
 	struct allib_awb_set_parameter_t            input;
 
+	ISP_LOGI("is_lock %d", cxt->is_lock);
+
 	input.type = alawb_set_param_manual_flow;
 	input.para.awb_manual_flow.manual_setting = alawb_flow_none;
 	ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
@@ -208,15 +212,6 @@ cmr_int awbaltek_set_flash_close(cmr_handle adpt_handle, union awb_ctrl_cmd_in *
 
 	cxt->flash_info.flash_status = input_ptr->flash_status;
 	cxt->flash_info.flash_mode = AWB_CTRL_FLASH_END;
-	ISP_LOGI("is lock %d", cxt->is_lock);
-	if (1 == cxt->is_lock) {
-		input.type = alawb_set_param_manual_flow;
-		input.para.awb_manual_flow.manual_setting = alawb_flow_none;
-		ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
-		if (!ret) {
-			cxt->is_lock = 0;
-		}
-	}
 
 	input.type = alawb_set_param_state_under_flash;
 	input.para.state_under_flash = alawb_set_flash_none;
@@ -912,10 +907,15 @@ cmr_int awbaltek_process(cmr_handle adpt_handle ,struct awb_ctrl_process_in *inp
 			output_ptr->light_source = cxt->cur_process_out.light_source;
 			output_ptr->awb_states = AWB_CTRL_STATUS_NORMAL;
 			if (AL3A_WB_STATE_PREPARE_UNDER_FLASHON_DONE == report_ptr->awb_states
-				|| AL3A_WB_STATE_UNDER_FLASHON_AWB_DONE == report_ptr->awb_states)
+				|| AL3A_WB_STATE_UNDER_FLASHON_AWB_DONE == report_ptr->awb_states) {
 				output_ptr->awb_states = AWB_CTRL_STATUS_CONVERGE;
-			ISP_LOGI("awb mode %d, gain %d %d %d, gain_blanced %d %d %d",
-				     output_ptr->awb_mode,output_ptr->gain.r, output_ptr->gain.g, output_ptr->gain.b,
+				ISP_LOGI("flash_off ct:%d,rgb:%d %d %d,flash_capture ct:%d,rgb:%d %d %d",
+						output_ptr->ct_flash_off,output_ptr->gain_flash_off.r,output_ptr->gain_flash_off.g,output_ptr->gain_flash_off.b,
+						output_ptr->ct_capture,output_ptr->gain_capture.r,output_ptr->gain_capture.g,output_ptr->gain_capture.b);
+			}
+
+			ISP_LOGI("awb mode %d, awb_states:%d, gain %d %d %d, gain_blanced %d %d %d",
+				     output_ptr->awb_mode,report_ptr->awb_states,output_ptr->gain.r, output_ptr->gain.g, output_ptr->gain.b,
 				     output_ptr->gain_balanced.r, output_ptr->gain_balanced.g, output_ptr->gain_balanced.b);
 			ISP_LOGV("awb update %d, frame id %d", output_ptr->is_update, output_ptr->hw3a_frame_id);
 			ISP_LOGV("awb ct %d, light source %d", output_ptr->ct, output_ptr->light_source);
