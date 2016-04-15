@@ -352,6 +352,7 @@ typedef struct {
         uint8_t flip_on;
 	uint8_t sprd_pipviv_enabled;
 	uint8_t sprd_highiso_enabled;
+	uint8_t availabe_smile_enable;
 } SPRD_DEF_Tag;
 
 typedef struct {

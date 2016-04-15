@@ -286,6 +286,7 @@ const uint8_t availableContrast[] = {
 const uint8_t availableSaturation[] = {
 	0, 1, 2, 3, 4, 5, 6
 };
+
 const uint8_t availableSlowMotion[] = {
 	0, 1, 2, 3
 };
@@ -1980,6 +1981,11 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId)
 	s_setting[cameraId].sprddefInfo.big_pre_rec_size_support = 0;
 	#endif
 
+    #ifdef CONFIG_CAMERA_FACE_DETECT_OMRON
+	s_setting[cameraId].sprddefInfo.availabe_smile_enable = 0;
+	#else
+	s_setting[cameraId].sprddefInfo.availabe_smile_enable = 1;
+	#endif
 	return ret;
 }
 
@@ -2214,6 +2220,8 @@ int SprdCamera3Setting::initStaticMetadata(int32_t cameraId, camera_metadata_t *
 	staticInfo.update(ANDROID_SPRD_AVAILABLE_SATURATION,
 			s_setting[cameraId].sprddefInfo.availabe_saturation,
 			ARRAY_SIZE(s_setting[cameraId].sprddefInfo.availabe_saturation));
+	staticInfo.update(ANDROID_SPRD_AVAILABLE_SMILEENABLE,
+			&(s_setting[cameraId].sprddefInfo.availabe_smile_enable),1);
 	if (cameraId == 0 ||cameraId == 1) {
 		staticInfo.update(ANDROID_SPRD_AVAILABLE_ISO,
 				s_setting[cameraId].sprddefInfo.availabe_iso,

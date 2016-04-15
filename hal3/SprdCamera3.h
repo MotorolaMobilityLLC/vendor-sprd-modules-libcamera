@@ -197,6 +197,7 @@ static tags_info_t android_add_parameters[VENDOR_SECTION_END - VENDOR_SECTION_ST
     { "eisCrop",                TYPE_INT32 },
     { "sprdPipVivEnabled",      TYPE_BYTE },
     { "sprdHighIsoEnabled",     TYPE_BYTE },
+    { "availableSmileEnable",                TYPE_BYTE },
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {
