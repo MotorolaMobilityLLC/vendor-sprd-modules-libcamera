@@ -14,7 +14,6 @@
 //#include <kernel/stdio.h>
 #include "OIS_head.h"
 //#include <linux/kernel.h>
-#include "sensor_drv_u.h"
 #include "OIS_main.h"
 
 // GLOBAL variable ( Upper Level Host Set this Global variables )
@@ -41,7 +40,7 @@ static unsigned char pre_ois_mode=0;
 // MAIN
 ////////////////////////////////////////////////////////////////////////////////
 
-int ois_main( void ){
+int ois_main( SENSOR_HW_HANDLE handle ){
 
 	_FACT_ADJ	fadj;
 	OIS_UWORD 	ret;
@@ -52,7 +51,7 @@ int ois_main( void ){
 	// Get Factory adjusted data
 	//------------------------------------------------------
 
-	fadj = get_FADJ_MEM_from_non_volatile_memory();// Initialize by Factory adjusted value.
+	fadj = get_FADJ_MEM_from_non_volatile_memory(handle);// Initialize by Factory adjusted value.
 
 	//------------------------------------------------------
 	// Source Power and Negate the Power save pin
@@ -63,28 +62,28 @@ int ois_main( void ){
 	//------------------------------------------------------
 	// PLL setting to use external CLK
 	//------------------------------------------------------
-	VCOSET0();
+	VCOSET0(handle);
 
 	//------------------------------------------------------
 	// Download Program and Coefficient
 	//------------------------------------------------------
 	SENSOR_PRINT("hope_call func_PROGRAM_DOWNLOAD\n");
-	OIS_MAIN_STS = func_PROGRAM_DOWNLOAD( );// Program Download
+	OIS_MAIN_STS = func_PROGRAM_DOWNLOAD(handle);// Program Download
 	//if ( OIS_MAIN_STS <= ADJ_ERR ) return OIS_MAIN_STS;
 
 	SENSOR_PRINT("hope_call func_COEF_DOWNLOAD\n");
-	func_COEF_DOWNLOAD( 0 );// Download Coefficient
+	func_COEF_DOWNLOAD(handle, 0 );// Download Coefficient
 
 	//------------------------------------------------------
 	// Change Clock to external pin CLK_PS
 	//------------------------------------------------------
-	VCOSET1();
-	SET_FADJ_PARAM( &FADJ_MEM );
+	VCOSET1(handle);
+	SET_FADJ_PARAM( handle, &FADJ_MEM );
 
 	//------------------------------------------------------
 	// Issue DSP start command.
 	//------------------------------------------------------
-	I2C_OIS_spcl_cmnd( 1, _cmd_8C_EI );						// DSP calculation START
+	I2C_OIS_spcl_cmnd(handle, 1, _cmd_8C_EI );						// DSP calculation START
 
 	//ret = I2C_OIS_mem__read( _M_OIS_STS );
 	//SENSOR_PRINT(" read mem 0x84f7 :: %x", ret);   //0X0104
@@ -118,7 +117,7 @@ int ois_main( void ){
 	//I2C_OIS_F0123_wr_( 0x90,0x00, 0x0130 );					// AF Control ( Value is example )
 	//func_SET_SCENE_PARAM_for_NewGYRO_Fil( _SCENE_TEST___, 1, 0, 0, &fadj );	// Set default SCENE ( Just example )
 
-	func_SET_SCENE_PARAM( _SCENE_SPORT_3, 1, 0, 0, &FADJ_MEM );// Set default SCENE ( Just example )
+	func_SET_SCENE_PARAM( handle, _SCENE_SPORT_3, 1, 0, 0, &FADJ_MEM );// Set default SCENE ( Just example )
 	ois_mode=_SCENE_SPORT_3;
 	//ret = I2C_OIS_mem__read( _M_EQCTL );
 	//SENSOR_PRINT(" read mem 0x847f :: %x", ret);  // ois open :0x0d0d close 0x0c0c
@@ -132,20 +131,20 @@ int ois_main( void ){
 *
 */
 
-uint32_t ois_pre_open(void)
+uint32_t ois_pre_open(SENSOR_HW_HANDLE handle)
 {
 	OIS_UWORD 	ret;
 
 	SENSOR_PRINT("ois_pre_open()\n");
-	ret = I2C_OIS_per__read(0);
+	ret = I2C_OIS_per__read(handle, 0);
 	if (0x735 != ret) {
 		SENSOR_PRINT(" [hope] is 0x735   err ret =%x\n",ret );//0x0735
 		return ADJ_ERR;
 	}
 	SENSOR_PRINT(" [hope] is 0x735    ret =%x\n",ret );//0x0735
 
-	I2C_OIS_per_write(0x20, 0x1234);
-	ret = I2C_OIS_per__read(0x20);
+	I2C_OIS_per_write( 0x20, 0x1234);
+	ret = I2C_OIS_per__read(handle, 0x20);
 
 	if (0x1234 != ret) {
 		SENSOR_PRINT(" [hope] is 0x1234   err ret =%x\n",ret );//0x1234
@@ -156,14 +155,14 @@ uint32_t ois_pre_open(void)
 	return ADJ_OK;
 }
 
-uint32_t OpenOIS(void)
+uint32_t OpenOIS(SENSOR_HW_HANDLE handle)
 {
 	SENSOR_PRINT("OpenOIS");
-	ois_main();
+	ois_main(handle);
 	return 0;
 }
 
-uint32_t CloseOIS(void)
+uint32_t CloseOIS(SENSOR_HW_HANDLE handle)
 {
 	OIS_UWORD u16_dat;
 
@@ -176,7 +175,7 @@ uint32_t CloseOIS(void)
 	return 0;
 }
 
-uint32_t  SetOisMode(unsigned char mode)
+uint32_t  SetOisMode(SENSOR_HW_HANDLE handle, unsigned char mode)
 {
 
 	SENSOR_PRINT(" SetOisMode %d\n",mode);
@@ -187,39 +186,39 @@ uint32_t  SetOisMode(unsigned char mode)
 		SENSOR_PRINT(" mode not change %d",mode);
 		return 0;
 	}
-	if (0 == mode) CloseOIS();
+	if (0 == mode) CloseOIS(handle);
 
-	func_SET_SCENE_PARAM( mode, 1, 0, 0, &FADJ_MEM );
+	func_SET_SCENE_PARAM( handle, mode, 1, 0, 0, &FADJ_MEM );
 
 	return 0;
 }
 
-unsigned char GetOisMode(void)
+unsigned char GetOisMode(SENSOR_HW_HANDLE handle)
 {
 	return ois_mode;
 }
 // lens
-unsigned short  OisLensRead(unsigned short  cmd)
+unsigned short  OisLensRead(SENSOR_HW_HANDLE handle, unsigned short  cmd)
 {
-	cmd=I2C_OIS_F0123__rd();
+	cmd=I2C_OIS_F0123__rd(handle);
 	SENSOR_PRINT("OisLensRead = %x",cmd);
 	return cmd;
 }
 
-uint32_t OisLensWrite(unsigned short  cmd)
+uint32_t OisLensWrite(SENSOR_HW_HANDLE handle, unsigned short  cmd)
 {
-	I2C_OIS_F0123_wr_( 0x90,0x00, cmd);
+	I2C_OIS_F0123_wr_( handle, 0x90,0x00, cmd);
 	SENSOR_PRINT("OisLensWrite %x",cmd);
 	return 0;
 
 }
 
-uint32_t OIS_write_af(uint32_t param)
+uint32_t OIS_write_af(SENSOR_HW_HANDLE handle, uint32_t param)
 {
 	OIS_UWORD target_code = param & 0x3FF;
 
 	SENSOR_PRINT("write target_code = %d",target_code);
-	I2C_OIS_F0123_wr_( 0x90,0x00, target_code);
+	I2C_OIS_F0123_wr_( handle, 0x90,0x00, target_code);
 	//target_code=I2C_OIS_F0123__rd();
 	//SENSOR_PRINT("read target_code = %x",target_code);
 	return 0;

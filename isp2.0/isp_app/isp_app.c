@@ -400,7 +400,7 @@ static int32_t ae_set_exposure(void *handler, struct ae_exposure *in_param)
 			return ISP_ERROR;
 	}
 
-	ctrl_context->ioctrl_ptr->set_exposure(in_param->exposure);
+	ctrl_context->ioctrl_ptr->set_exposure(ctrl_context->ioctrl_ptr->caller_handler, in_param->exposure);
 
 	return 0;
 }
@@ -428,7 +428,7 @@ static int32_t ae_set_again(void *handler, struct ae_gain *in_param)
 	/* temp code begin */
 	g_cur_real_gain = in_param->gain;
 	/* temp code end */
-	ctrl_context->ioctrl_ptr->set_gain(in_param->gain);
+	ctrl_context->ioctrl_ptr->set_gain(ctrl_context->ioctrl_ptr->caller_handler ,in_param->gain);
 
 	return 0;
 }
@@ -811,7 +811,7 @@ static int32_t af_set_pos(void* handle, struct af_motor_pos* in_param)
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)handle;
 
 	if (ctrl_context->ioctrl_ptr->set_focus) {
-		ctrl_context->ioctrl_ptr->set_focus(in_param->motor_pos);
+		ctrl_context->ioctrl_ptr->set_focus(ctrl_context->ioctrl_ptr->caller_handler, in_param->motor_pos);
 	}
 
 	return ISP_SUCCESS;
@@ -3167,7 +3167,7 @@ static int32_t _ispHdrIOCtrl(isp_handle isp_handler, void *param_ptr, int(*call_
 
 	smart_ctl_block_eb(ctrl_context->handle_smart, &smart_block_eb,0);
 	awb_ctrl_ioctrl(ctrl_context->handle_awb, AWB_CTRL_CMD_LOCK, NULL,NULL);
-	ctrl_context->ioctrl_ptr->ext_fuc(&hdr_ev_param);
+	ctrl_context->ioctrl_ptr->ext_fuc(ctrl_context->ioctrl_ptr->caller_handler, &hdr_ev_param);
 	awb_ctrl_ioctrl(ctrl_context->handle_awb, AWB_CTRL_CMD_UNLOCK, NULL,NULL);
 	smart_ctl_block_eb(ctrl_context->handle_smart, &smart_block_eb, 1);
 

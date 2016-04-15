@@ -29,19 +29,19 @@
 #define ov5640_I2C_ADDR_W        0x3c
 #define ov5640_I2C_ADDR_R         0x3c
 
-LOCAL unsigned long _ov5640_GetResolutionTrimTab(unsigned long param);
-LOCAL unsigned long _ov5640_PowerOn(unsigned long power_on);
-LOCAL unsigned long _ov5640_Identify(unsigned long param);
-LOCAL unsigned long _ov5640_BeforeSnapshot(unsigned long param);
-LOCAL unsigned long _ov5640_after_snapshot(unsigned long param);
-LOCAL unsigned long _ov5640_StreamOn(unsigned long param);
-LOCAL unsigned long _ov5640_StreamOff(unsigned long param);
-LOCAL unsigned long _ov5640_write_exposure(unsigned long param);
-LOCAL unsigned long _ov5640_write_gain(unsigned long param);
-LOCAL unsigned long _ov5640_write_af(unsigned long param);
-LOCAL uint32_t _ov5640_ReadGain(uint32_t param);
-LOCAL uint32_t _ov5640_SetEV(unsigned long param);
-LOCAL unsigned long _ov5640_ExtFunc(unsigned long ctl_param);
+LOCAL unsigned long _ov5640_GetResolutionTrimTab(SENSOR_HW_HANDLE handle, unsigned long param);
+LOCAL unsigned long _ov5640_PowerOn(SENSOR_HW_HANDLE handle, unsigned long power_on);
+LOCAL unsigned long _ov5640_Identify(SENSOR_HW_HANDLE handle, unsigned long param);
+LOCAL unsigned long _ov5640_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned long param);
+LOCAL unsigned long _ov5640_after_snapshot(SENSOR_HW_HANDLE handle, unsigned long param);
+LOCAL unsigned long _ov5640_StreamOn(SENSOR_HW_HANDLE handle, unsigned long param);
+LOCAL unsigned long _ov5640_StreamOff(SENSOR_HW_HANDLE handle, unsigned long param);
+LOCAL unsigned long _ov5640_write_exposure(SENSOR_HW_HANDLE handle, unsigned long param);
+LOCAL unsigned long _ov5640_write_gain(SENSOR_HW_HANDLE handle, unsigned long param);
+LOCAL unsigned long _ov5640_write_af(SENSOR_HW_HANDLE handle, unsigned long param);
+LOCAL uint32_t _ov5640_ReadGain(SENSOR_HW_HANDLE handle, uint32_t param);
+LOCAL uint32_t _ov5640_SetEV(SENSOR_HW_HANDLE handle, unsigned long param);
+LOCAL unsigned long _ov5640_ExtFunc(SENSOR_HW_HANDLE handle, unsigned long ctl_param);
 
 
 static uint32_t s_ov5640_gain = 0;
@@ -436,16 +436,16 @@ SENSOR_INFO_T g_ov5640_mipi_raw_info = {
 	48,			// vertical view angle
 };
 
-LOCAL struct sensor_raw_info* Sensor_GetContext(void)
+LOCAL struct sensor_raw_info* Sensor_GetContext(SENSOR_HW_HANDLE handle)
 {
 	return s_ov5640_mipi_raw_info_ptr;
 }
 
-LOCAL uint32_t Sensor_InitRawTuneInfo_ispv1(void)
+LOCAL uint32_t Sensor_InitRawTuneInfo_ispv1(SENSOR_HW_HANDLE handle)
 {
 	uint32_t rtn=0x00;
 #if !(defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4))
-	struct sensor_raw_info* raw_sensor_ptr=Sensor_GetContext();
+	struct sensor_raw_info* raw_sensor_ptr=Sensor_GetContext(handle);
 	struct sensor_raw_tune_info* sensor_ptr=raw_sensor_ptr->tune_ptr;
 
 	SENSOR_PRINT("E");
@@ -981,7 +981,7 @@ LOCAL uint32_t Sensor_InitRawTuneInfo_ispv1(void)
 	return rtn;
 }
 
-LOCAL uint32_t Sensor_InitRawTuneInfo_ispv2(void)
+LOCAL uint32_t Sensor_InitRawTuneInfo_ispv2(SENSOR_HW_HANDLE handle)
 {
 	uint32_t rtn=0x00;
 
@@ -1576,21 +1576,21 @@ LOCAL uint32_t Sensor_InitRawTuneInfo_ispv2(void)
 	return rtn;
 }
 
-LOCAL uint32_t Sensor_Init_ov5640_RawTuneInfo(void)
+LOCAL uint32_t Sensor_Init_ov5640_RawTuneInfo(SENSOR_HW_HANDLE handle)
 {
 	uint32_t rtn=0x00;
 
-	rtn = Sensor_InitRawTuneInfo_ispv1();
-	rtn |= Sensor_InitRawTuneInfo_ispv2();
+	rtn = Sensor_InitRawTuneInfo_ispv1(handle);
+	rtn |= Sensor_InitRawTuneInfo_ispv2(handle);
 	return rtn;
 }
 
-LOCAL unsigned long _ov5640_GetResolutionTrimTab(unsigned long param)
+LOCAL unsigned long _ov5640_GetResolutionTrimTab(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	SENSOR_PRINT("0x%x", (unsigned long)s_ov5640_Resolution_Trim_Tab);
 	return (unsigned long) s_ov5640_Resolution_Trim_Tab;
 }
-LOCAL unsigned long _ov5640_PowerOn(unsigned long power_on)
+LOCAL unsigned long _ov5640_PowerOn(SENSOR_HW_HANDLE handle, unsigned long power_on)
 {
 	SENSOR_AVDD_VAL_E dvdd_val = g_ov5640_mipi_raw_info.dvdd_val;
 	SENSOR_AVDD_VAL_E avdd_val = g_ov5640_mipi_raw_info.avdd_val;
@@ -1620,7 +1620,7 @@ LOCAL unsigned long _ov5640_PowerOn(unsigned long power_on)
 	return SENSOR_SUCCESS;
 }
 
-LOCAL unsigned long _ov5640_Identify(unsigned long param)
+LOCAL unsigned long _ov5640_Identify(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 #define ov5640_PID_VALUE    0x56
 #define ov5640_PID_ADDR     0x300A
@@ -1639,7 +1639,7 @@ LOCAL unsigned long _ov5640_Identify(unsigned long param)
 		ver_value = Sensor_ReadReg(ov5640_VER_ADDR);
 		SENSOR_PRINT("SENSOR_OV5640: Identify: PID = %x, VER = %x", pid_value, ver_value);
 		if (ov5640_VER_VALUE == ver_value) {
-			Sensor_Init_ov5640_RawTuneInfo();
+			Sensor_Init_ov5640_RawTuneInfo(handle);
 			ret_value = SENSOR_SUCCESS;
 			SENSOR_PRINT("SENSOR_OV5640: this is ov5640 mipi raw sensor !");
 		} else {
@@ -1653,7 +1653,7 @@ LOCAL unsigned long _ov5640_Identify(unsigned long param)
 	return ret_value;
 }
 
-LOCAL unsigned long _ov5640_write_exposure(unsigned long param)
+LOCAL unsigned long _ov5640_write_exposure(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint16_t expsure_line=0x00;
@@ -1678,7 +1678,7 @@ LOCAL unsigned long _ov5640_write_exposure(unsigned long param)
 	return ret_value;
 }
 
-LOCAL unsigned long _ov5640_write_gain(unsigned long param)
+LOCAL unsigned long _ov5640_write_gain(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint16_t value=0x00;
@@ -1700,7 +1700,7 @@ LOCAL unsigned long _ov5640_write_gain(unsigned long param)
 	return ret_value;
 }
 
-LOCAL unsigned long _ov5640_write_af(unsigned long param)
+LOCAL unsigned long _ov5640_write_af(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint16_t value=0x00;
@@ -1715,7 +1715,7 @@ LOCAL unsigned long _ov5640_write_af(unsigned long param)
 	return ret_value;
 }
 
-LOCAL uint32_t _ov5640_ReadGain(uint32_t param)
+LOCAL uint32_t _ov5640_ReadGain(SENSOR_HW_HANDLE handle, uint32_t param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	uint16_t value=0x00;
@@ -1733,7 +1733,7 @@ LOCAL uint32_t _ov5640_ReadGain(uint32_t param)
 	return rtn;
 }
 
-LOCAL uint32_t _ov5640_SetEV(unsigned long param)
+LOCAL uint32_t _ov5640_SetEV(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_T_PTR ext_ptr = (SENSOR_EXT_FUN_T_PTR) param;
@@ -1753,7 +1753,7 @@ LOCAL uint32_t _ov5640_SetEV(unsigned long param)
 	return rtn;
 }
 
-LOCAL unsigned long _ov5640_ExtFunc(unsigned long ctl_param)
+LOCAL unsigned long _ov5640_ExtFunc(SENSOR_HW_HANDLE handle, unsigned long ctl_param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr = (SENSOR_EXT_FUN_PARAM_T_PTR) ctl_param;
@@ -1761,7 +1761,7 @@ LOCAL unsigned long _ov5640_ExtFunc(unsigned long ctl_param)
 	switch (ext_ptr->cmd) {
 		//case SENSOR_EXT_EV:
 		case 10:
-			rtn = _ov5640_SetEV(ctl_param);
+			rtn = _ov5640_SetEV(handle, ctl_param);
 			break;
 		default:
 			break;
@@ -1770,7 +1770,7 @@ LOCAL unsigned long _ov5640_ExtFunc(unsigned long ctl_param)
 	return rtn;
 }
 
-LOCAL unsigned long _ov5640_BeforeSnapshot(unsigned long param)
+LOCAL unsigned long _ov5640_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t cap_mode = (param>>CAP_MODE_BITS);
 	uint8_t ret_l, ret_m, ret_h;
@@ -1784,7 +1784,7 @@ LOCAL unsigned long _ov5640_BeforeSnapshot(unsigned long param)
 	cap_linetime = s_ov5640_Resolution_Trim_Tab[param].line_time;
 
 	if (SENSOR_MODE_PREVIEW_ONE >= param){
-		_ov5640_ReadGain(0x00);
+		_ov5640_ReadGain(handle, 0x00);
 		SENSOR_PRINT("SENSOR_OV5640: prvmode equal to capmode");
 		return SENSOR_SUCCESS;
 	}
@@ -1822,21 +1822,21 @@ LOCAL unsigned long _ov5640_BeforeSnapshot(unsigned long param)
 	Sensor_WriteReg(0x3501, ret_m);
 	Sensor_WriteReg(0x3500, ret_h);
 
-	_ov5640_ReadGain(0x00);
+	_ov5640_ReadGain(handle, 0x00);
 
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, capture_exposure);
 
 	return SENSOR_SUCCESS;
 }
 
-LOCAL unsigned long _ov5640_after_snapshot(unsigned long param)
+LOCAL unsigned long _ov5640_after_snapshot(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	SENSOR_PRINT("SENSOR_OV5640: after_snapshot mode:%d", param);
 	Sensor_SetMode((uint32_t)param);
 	return SENSOR_SUCCESS;
 }
 
-LOCAL unsigned long _ov5640_StreamOn(unsigned long param)
+LOCAL unsigned long _ov5640_StreamOn(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	SENSOR_PRINT("SENSOR_OV5640: StreamOn");
 
@@ -1845,7 +1845,7 @@ LOCAL unsigned long _ov5640_StreamOn(unsigned long param)
 	return 0;
 }
 
-LOCAL unsigned long _ov5640_StreamOff(unsigned long param)
+LOCAL unsigned long _ov5640_StreamOff(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	SENSOR_PRINT("SENSOR_OV5640: StreamOff");
 

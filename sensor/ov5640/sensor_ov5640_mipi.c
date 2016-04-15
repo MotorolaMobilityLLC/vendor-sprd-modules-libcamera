@@ -50,33 +50,33 @@ static uint32_t preview_hts;
 static uint32_t af_quit_flag = 0;
 
 LOCAL uint32_t s_is_streamoff = 0;
-LOCAL uint32_t _ov5640_InitExifInfo(void);
-LOCAL unsigned long _ov5640_GetResolutionTrimTab(unsigned long param);
-LOCAL unsigned long _ov5640_PowerOn(unsigned long power_on);
-LOCAL unsigned long _ov5640_Identify(unsigned long param);
-LOCAL unsigned long _ov5640_set_brightness(unsigned long level);
-LOCAL unsigned long _ov5640_set_contrast(unsigned long level);
+LOCAL uint32_t _ov5640_InitExifInfo(SENSOR_HW_HANDLE handle);
+LOCAL unsigned long _ov5640_GetResolutionTrimTab(SENSOR_HW_HANDLE handle, unsigned long param);
+LOCAL unsigned long _ov5640_PowerOn(SENSOR_HW_HANDLE handle, unsigned long power_on);
+LOCAL unsigned long _ov5640_Identify(SENSOR_HW_HANDLE handle, unsigned long param);
+LOCAL unsigned long _ov5640_set_brightness(SENSOR_HW_HANDLE handle, unsigned long level);
+LOCAL unsigned long _ov5640_set_contrast(SENSOR_HW_HANDLE handle, unsigned long level);
 /*LOCAL uint32_t _ov5640_set_sharpness(uint32_t level);*/
-LOCAL unsigned long _ov5640_set_saturation(unsigned long level);
-LOCAL unsigned long _ov5640_set_image_effect(unsigned long effect_type);
-LOCAL unsigned long _ov5640_set_ev(unsigned long level);
-LOCAL unsigned long _ov5640_set_anti_flicker(unsigned long mode);
-LOCAL unsigned long _ov5640_set_video_mode(unsigned long mode);
-LOCAL unsigned long _ov5640_set_awb(unsigned long mode);
-LOCAL unsigned long _ov5640_set_work_mode(unsigned long mode);
-LOCAL unsigned long _ov5640_BeforeSnapshot(unsigned long param);
-LOCAL unsigned long _ov5640_check_image_format_support(unsigned long param);
-LOCAL unsigned long _ov5640_pick_out_jpeg_stream(unsigned long param);
-LOCAL unsigned long _ov5640_after_snapshot(unsigned long param);
-LOCAL uint32_t _ov5640_get_cur_af_gain(void);
+LOCAL unsigned long _ov5640_set_saturation(SENSOR_HW_HANDLE handle, unsigned long level);
+LOCAL unsigned long _ov5640_set_image_effect(SENSOR_HW_HANDLE handle, unsigned long effect_type);
+LOCAL unsigned long _ov5640_set_ev(SENSOR_HW_HANDLE handle, unsigned long level);
+LOCAL unsigned long _ov5640_set_anti_flicker(SENSOR_HW_HANDLE handle, unsigned long mode);
+LOCAL unsigned long _ov5640_set_video_mode(SENSOR_HW_HANDLE handle, unsigned long mode);
+LOCAL unsigned long _ov5640_set_awb(SENSOR_HW_HANDLE handle, unsigned long mode);
+LOCAL unsigned long _ov5640_set_work_mode(SENSOR_HW_HANDLE handle, unsigned long mode);
+LOCAL unsigned long _ov5640_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned long param);
+LOCAL unsigned long _ov5640_check_image_format_support(SENSOR_HW_HANDLE handle, unsigned long param);
+LOCAL unsigned long _ov5640_pick_out_jpeg_stream(SENSOR_HW_HANDLE handle, unsigned long param);
+LOCAL unsigned long _ov5640_after_snapshot(SENSOR_HW_HANDLE handle, unsigned long param);
+LOCAL uint32_t _ov5640_get_cur_af_gain(SENSOR_HW_HANDLE handle);
 /*LOCAL uint32_t _ov540_flash(uint32_t param);*/
-LOCAL unsigned long _ov5640_GetExifInfo(unsigned long param);
-LOCAL unsigned long _ov5640_ExtFunc(unsigned long ctl_param);
-LOCAL unsigned long _ov5640_StreamOn(unsigned long param);
-LOCAL unsigned long _ov5640_StreamOff(unsigned long param);
-LOCAL unsigned long _ov5640_set_iso(unsigned long mode);
-LOCAL unsigned long _ov5640_ReadGain(unsigned long param);
-LOCAL unsigned long _ov5640_flash(unsigned long param);
+LOCAL unsigned long _ov5640_GetExifInfo(SENSOR_HW_HANDLE handle, unsigned long param);
+LOCAL unsigned long _ov5640_ExtFunc(SENSOR_HW_HANDLE handle, unsigned long ctl_param);
+LOCAL unsigned long _ov5640_StreamOn(SENSOR_HW_HANDLE handle, unsigned long param);
+LOCAL unsigned long _ov5640_StreamOff(SENSOR_HW_HANDLE handle, unsigned long param);
+LOCAL unsigned long _ov5640_set_iso(SENSOR_HW_HANDLE handle, unsigned long mode);
+LOCAL unsigned long _ov5640_ReadGain(SENSOR_HW_HANDLE handle, unsigned long param);
+LOCAL unsigned long _ov5640_flash(SENSOR_HW_HANDLE handle, unsigned long param);
 
 LOCAL const SENSOR_REG_T ov5640_common_init[] = {
 	{0x3103, 0x11},		/* sysclk from pad*/
@@ -1310,11 +1310,11 @@ SENSOR_INFO_T g_ov5640_mipi_yuv_info = {
 	48,			// vertical view angle
 };
 
-LOCAL unsigned long _ov5640_GetExifInfo(unsigned long param)
+LOCAL unsigned long _ov5640_GetExifInfo(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	return (unsigned long) & s_ov5640_exif;
 }
-LOCAL uint32_t _ov5640_InitExifInfo(void)
+LOCAL uint32_t _ov5640_InitExifInfo(SENSOR_HW_HANDLE handle)
 {
 #if 1
 	EXIF_SPEC_PIC_TAKING_COND_T *exif_ptr = &s_ov5640_exif;
@@ -1392,11 +1392,11 @@ LOCAL uint32_t _ov5640_InitExifInfo(void)
 	return SENSOR_SUCCESS;
 }
 
-LOCAL unsigned long _ov5640_GetResolutionTrimTab(unsigned long param)
+LOCAL unsigned long _ov5640_GetResolutionTrimTab(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	return (unsigned long) s_ov5640_Resolution_Trim_Tab;
 }
-LOCAL unsigned long _ov5640_PowerOn(unsigned long power_on)
+LOCAL unsigned long _ov5640_PowerOn(SENSOR_HW_HANDLE handle, unsigned long power_on)
 {
 	SENSOR_AVDD_VAL_E dvdd_val = g_ov5640_mipi_yuv_info.dvdd_val;
 	SENSOR_AVDD_VAL_E avdd_val = g_ov5640_mipi_yuv_info.avdd_val;
@@ -1431,7 +1431,7 @@ LOCAL unsigned long _ov5640_PowerOn(unsigned long power_on)
 	return SENSOR_SUCCESS;
 }
 
-LOCAL unsigned long _ov5640_Identify(unsigned long param)
+LOCAL unsigned long _ov5640_Identify(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 #define ov5640_PID_VALUE    0x56
 #define ov5640_PID_ADDR     0x300A
@@ -1459,7 +1459,7 @@ LOCAL unsigned long _ov5640_Identify(unsigned long param)
 	} else {
 		SENSOR_PRINT_ERR("fail,pid_value=%d", pid_value);
 	}
-	_ov5640_InitExifInfo();
+	_ov5640_InitExifInfo(handle);
 	return ret_value;
 }
 
@@ -1494,7 +1494,7 @@ LOCAL const SENSOR_REG_BITS_T ov5640_brightness_tab[][7] = {
 	 }
 };
 
-LOCAL unsigned long _ov5640_set_brightness(unsigned long level)
+LOCAL unsigned long _ov5640_set_brightness(SENSOR_HW_HANDLE handle, unsigned long level)
 {
 	uint16_t i = 0x00;
 	uint32_t reg_bits = 0;
@@ -1563,7 +1563,7 @@ LOCAL const SENSOR_REG_BITS_T ov5640_contrast_tab[][6] = {
 	 }
 };
 
-LOCAL unsigned long _ov5640_set_contrast(unsigned long level)
+LOCAL unsigned long _ov5640_set_contrast(SENSOR_HW_HANDLE handle, unsigned long level)
 {
 	uint16_t i = 0x00;
 	uint32_t reg_bits = 0;
@@ -1631,7 +1631,7 @@ LOCAL const SENSOR_REG_BITS_T ov5640_saturation_tab[][6] = {
 	 }
 };
 
-LOCAL unsigned long _ov5640_set_saturation(unsigned long level)
+LOCAL unsigned long _ov5640_set_saturation(SENSOR_HW_HANDLE handle, unsigned long level)
 {
 	uint16_t i = 0x00;
 	uint32_t reg_bits = 0;
@@ -1704,7 +1704,7 @@ LOCAL const SENSOR_REG_BITS_T ov5640_image_effect_tab[][5] = {
 	 }
 };
 
-LOCAL unsigned long _ov5640_set_image_effect(unsigned long effect_type)
+LOCAL unsigned long _ov5640_set_image_effect(SENSOR_HW_HANDLE handle, unsigned long effect_type)
 {
 	uint16_t i = 0x00;
 	uint32_t reg_bits = 0;
@@ -1766,7 +1766,7 @@ LOCAL const SENSOR_REG_T ov5640_ev_tab[][7] = {
 	 }
 };
 
-LOCAL unsigned long _ov5640_set_ev(unsigned long level)
+LOCAL unsigned long _ov5640_set_ev(SENSOR_HW_HANDLE handle, unsigned long level)
 {
 	SENSOR_REG_T_PTR sensor_reg_ptr =
 	    (SENSOR_REG_T_PTR) ov5640_ev_tab[level];
@@ -1797,7 +1797,7 @@ LOCAL const SENSOR_REG_T ov5640_anti_banding_flicker_tab[][10] = {
 	 }
 };
 
-LOCAL unsigned long _ov5640_set_anti_flicker(unsigned long mode)
+LOCAL unsigned long _ov5640_set_anti_flicker(SENSOR_HW_HANDLE handle, unsigned long mode)
 {
 	SENSOR_REG_T_PTR sensor_reg_ptr =
 	    (SENSOR_REG_T_PTR) ov5640_anti_banding_flicker_tab[mode];
@@ -1830,7 +1830,7 @@ LOCAL const SENSOR_REG_T ov5640_video_mode_tab[][3]=
 	}
 };
 
-LOCAL unsigned long _ov5640_set_video_mode(unsigned long mode)
+LOCAL unsigned long _ov5640_set_video_mode(SENSOR_HW_HANDLE handle, unsigned long mode)
 {
 	SENSOR_REG_T_PTR sensor_reg_ptr=(SENSOR_REG_T_PTR)ov5640_video_mode_tab[mode];
 	uint16_t i=0x00;
@@ -1890,7 +1890,7 @@ LOCAL const SENSOR_REG_BITS_T ov5640_awb_tab[][8] = {
 	 }
 };
 
-LOCAL unsigned long _ov5640_set_awb(unsigned long mode)
+LOCAL unsigned long _ov5640_set_awb(SENSOR_HW_HANDLE handle, unsigned long mode)
 {
 	uint16_t i = 0x00;
 	uint32_t reg_bits = 0;
@@ -2112,7 +2112,7 @@ LOCAL const SENSOR_REG_BITS_T ov5640_work_mode_tab[][30] = {
 	 }
 };
 
-LOCAL unsigned long _ov5640_set_work_mode(unsigned long mode)
+LOCAL unsigned long _ov5640_set_work_mode(SENSOR_HW_HANDLE handle, unsigned long mode)
 {
 	uint16_t i = 0x00;
 	uint32_t reg_bits = 0;
@@ -2144,7 +2144,7 @@ LOCAL unsigned long _ov5640_set_work_mode(unsigned long mode)
 	return 0;
 }
 
-int OV5640_get_sysclk(void)
+int OV5640_get_sysclk(SENSOR_HW_HANDLE handle)
 {
 	// calculate sysclk
 	int temp1, temp2;
@@ -2189,7 +2189,7 @@ int OV5640_get_sysclk(void)
 	return sysclk;
 }
 
-int OV5640_get_HTS(void)
+int OV5640_get_HTS(SENSOR_HW_HANDLE handle)
 {
 	// read HTS from register settings
 	int HTS;
@@ -2200,7 +2200,7 @@ int OV5640_get_HTS(void)
 	return HTS;
 }
 
-int OV5640_get_VTS(void)
+int OV5640_get_VTS(SENSOR_HW_HANDLE handle)
 {
 	// read VTS from register settings
 	int VTS;
@@ -2212,7 +2212,7 @@ int OV5640_get_VTS(void)
 	return VTS;
 }
 
-int OV5640_set_VTS(int VTS)
+int OV5640_set_VTS(SENSOR_HW_HANDLE handle, int VTS)
 {
 	// write VTS to registers
 	int temp;
@@ -2226,7 +2226,7 @@ int OV5640_set_VTS(int VTS)
 	return 0;
 }
 
-int OV5640_get_shutter(void)
+int OV5640_get_shutter(SENSOR_HW_HANDLE handle)
 {
 	// read shutter, in number of line period
 	int shutter;
@@ -2238,7 +2238,7 @@ int OV5640_get_shutter(void)
 	return shutter;
 }
 
-int OV5640_set_shutter(int shutter)
+int OV5640_set_shutter(SENSOR_HW_HANDLE handle, int shutter)
 {
 	// write shutter, in number of line period
 	int temp;
@@ -2259,7 +2259,7 @@ int OV5640_set_shutter(int shutter)
 	return 0;
 }
 
-int OV5640_get_gain16(void)
+int OV5640_get_gain16(SENSOR_HW_HANDLE handle)
 {
 	// read gain, 16 = 1x
 	int gain16;
@@ -2270,7 +2270,7 @@ int OV5640_get_gain16(void)
 	return gain16;
 }
 
-int OV5640_set_gain16(int gain16)
+int OV5640_set_gain16(SENSOR_HW_HANDLE handle, int gain16)
 {
 	// write gain, 16 = 1x
 	int temp;
@@ -2285,7 +2285,7 @@ int OV5640_set_gain16(int gain16)
 	return 0;
 }
 
-int OV5640_get_light_frequency(void)
+int OV5640_get_light_frequency(SENSOR_HW_HANDLE handle)
 {
 	int temp, temp1, light_frequency;
 
@@ -2315,22 +2315,22 @@ int OV5640_get_light_frequency(void)
 	return light_frequency;
 }
 
-void OV5640_set_bandingfilter(void)
+void OV5640_set_bandingfilter(SENSOR_HW_HANDLE handle)
 {
 	int preview_VTS;
 	int band_step60, max_band60, band_step50, max_band50;
 
 	// read preview PCLK
-	preview_sysclk = OV5640_get_sysclk();
+	preview_sysclk = OV5640_get_sysclk(handle);
 
 	// read preview HTS
-	preview_hts = OV5640_get_HTS();
+	preview_hts = OV5640_get_HTS(handle);
 
 	SENSOR_PRINT("preview_sysclk %d, preview_hts %d",
 		preview_sysclk,
 		preview_hts);
 	// read preview VTS
-	preview_VTS = OV5640_get_VTS();
+	preview_VTS = OV5640_get_VTS(handle);
 
 	// calculate banding filter
 	// 60Hz
@@ -2350,7 +2350,7 @@ void OV5640_set_bandingfilter(void)
 	Sensor_WriteReg(0x3a0e, max_band50);
 }
 
-int OV5640_set_AE_target(int target)
+int OV5640_set_AE_target(SENSOR_HW_HANDLE handle, int target)
 {
 	int fast_high, fast_low;
 
@@ -2375,13 +2375,13 @@ int OV5640_set_AE_target(int target)
 	return 0;
 }
 
-LOCAL int OV5640_set_AF_gain(uint32_t gain)
+LOCAL int OV5640_set_AF_gain(SENSOR_HW_HANDLE handle, uint32_t gain)
 {
 	s_af_gain = gain;
 
 	return 0;
 }
-int OV5640_capture(unsigned long param)
+int OV5640_capture(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	int ae_ag_ctrl;
 	int preview_shutter, preview_gain16, average;
@@ -2398,10 +2398,10 @@ int OV5640_capture(unsigned long param)
 	SENSOR_PRINT("after, ae_ag_ctrl 0x%x", ae_ag_ctrl);
 
 	// read preview shutter
-	preview_shutter = OV5640_get_shutter();
+	preview_shutter = OV5640_get_shutter(handle);
 
 	// read preview gain
-	preview_gain16 = OV5640_get_gain16();
+	preview_gain16 = OV5640_get_gain16(handle);
 
 	SENSOR_PRINT("preview_shutter %d, preview_gain16 %d",
 		preview_shutter,
@@ -2414,9 +2414,9 @@ int OV5640_capture(unsigned long param)
 	Sensor_SetMode_WaitDone();
 
 	// read capture VTS
-	capture_VTS = OV5640_get_VTS();
-	capture_HTS = OV5640_get_HTS();
-	capture_sysclk = OV5640_get_sysclk();
+	capture_VTS = OV5640_get_VTS(handle);
+	capture_HTS = OV5640_get_HTS(handle);
+	capture_sysclk = OV5640_get_sysclk(handle);
 
 	SENSOR_PRINT("capture_VTS %d, capture_HTS %d, capture_sysclk %d",
 		capture_VTS,
@@ -2424,7 +2424,7 @@ int OV5640_capture(unsigned long param)
 		capture_sysclk);
 
 	// calculate capture banding filter
-	light_frequency = OV5640_get_light_frequency();
+	light_frequency = OV5640_get_light_frequency(handle);
 	if (light_frequency == 60) {
 		// 60Hz
 		capture_bandingfilter = capture_sysclk * 100 / capture_HTS * 100 / 120;
@@ -2473,23 +2473,23 @@ int OV5640_capture(unsigned long param)
 		capture_gain16);
 
 	// write capture gain
-	OV5640_set_gain16(capture_gain16);
+	OV5640_set_gain16(handle, capture_gain16);
 
 	// write capture shutter
 	if (capture_shutter > (capture_VTS - 4)) {
 		capture_VTS = capture_shutter + 4;
-		OV5640_set_VTS(capture_VTS);
+		OV5640_set_VTS(handle, capture_VTS);
 	}
-	OV5640_set_shutter(capture_shutter);
+	OV5640_set_shutter(handle, capture_shutter);
 	s_capture_shutter = capture_shutter;
 	s_capture_VTS = capture_VTS;
-	_ov5640_ReadGain(param);
+	_ov5640_ReadGain(handle, param);
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME,
 				 (uint32_t) capture_shutter);
 	return 0;
 }
 
-LOCAL unsigned long _ov5640_BeforeSnapshot(unsigned long param)
+LOCAL unsigned long _ov5640_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t cap_mode = (param>>CAP_MODE_BITS);
 
@@ -2499,12 +2499,12 @@ LOCAL unsigned long _ov5640_BeforeSnapshot(unsigned long param)
 		SENSOR_PRINT("No need to switch mode");
 		return SENSOR_SUCCESS;
 	}
-	OV5640_capture(param);
+	OV5640_capture(handle, param);
 	usleep(15*1000);
 	return SENSOR_SUCCESS;
 }
 
-LOCAL unsigned long _ov5640_check_image_format_support(unsigned long param)
+LOCAL unsigned long _ov5640_check_image_format_support(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t ret_val = SENSOR_FAIL;
 
@@ -2521,7 +2521,7 @@ LOCAL unsigned long _ov5640_check_image_format_support(unsigned long param)
 	return ret_val;
 }
 
-LOCAL unsigned long _ov5640_pick_out_jpeg_stream(unsigned long param)
+LOCAL unsigned long _ov5640_pick_out_jpeg_stream(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 #if 0
 	uint8_t *p_frame =
@@ -2563,7 +2563,7 @@ LOCAL unsigned long _ov5640_pick_out_jpeg_stream(unsigned long param)
 	return 0;
 }
 
-LOCAL unsigned long _ov5640_after_snapshot(unsigned long param)
+LOCAL unsigned long _ov5640_after_snapshot(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	int ae_ag_ctrl;
 	Sensor_SetMode((uint32_t)param);
@@ -2577,7 +2577,7 @@ LOCAL unsigned long _ov5640_after_snapshot(unsigned long param)
 	return SENSOR_SUCCESS;
 }
 
-LOCAL uint32_t _ov5640_MatchZone(SENSOR_EXT_FUN_T_PTR param_ptr)
+LOCAL uint32_t _ov5640_MatchZone(SENSOR_HW_HANDLE handle, SENSOR_EXT_FUN_T_PTR param_ptr)
 {
 	SENSOR_RECT_T zone_rect;
 	uint32_t      rtn = SENSOR_SUCCESS;
@@ -2632,7 +2632,7 @@ LOCAL uint32_t _ov5640_MatchZone(SENSOR_EXT_FUN_T_PTR param_ptr)
 	return rtn;
 }
 
-LOCAL uint32_t _ov5640_AutoFocusTrig(SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
+LOCAL uint32_t _ov5640_AutoFocusTrig(SENSOR_HW_HANDLE handle, SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	uint16_t i=300;
@@ -2668,7 +2668,7 @@ LOCAL uint32_t _ov5640_AutoFocusTrig(SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
 	return rtn;
 }
 
-LOCAL uint32_t _ov5640_AutoFocusZone(SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
+LOCAL uint32_t _ov5640_AutoFocusZone(SENSOR_HW_HANDLE handle, SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
 {
 	uint32_t i = 20;	// 10 * 100 = 3 seconds
 	uint16_t reg_value = 0x00;
@@ -2688,7 +2688,7 @@ LOCAL uint32_t _ov5640_AutoFocusZone(SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
 	ext_param.zone.w = param_ptr->zone[0].w;
 	ext_param.zone.h = param_ptr->zone[0].h;
 
-	rtn = _ov5640_MatchZone(&ext_param);
+	rtn = _ov5640_MatchZone(handle, &ext_param);
 
 	if (SENSOR_SUCCESS == rtn) {
 		Sensor_WriteReg(CMD_PARAM0, ext_param.zone.x);
@@ -2736,7 +2736,7 @@ LOCAL uint32_t _ov5640_AutoFocusZone(SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
 	return rtn;
 }
 
-LOCAL uint32_t _ov5640_AutoFocusMultiZone(SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
+LOCAL uint32_t _ov5640_AutoFocusMultiZone(SENSOR_HW_HANDLE handle, SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_T ext_param[5];
@@ -2756,7 +2756,7 @@ LOCAL uint32_t _ov5640_AutoFocusMultiZone(SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
 		ext_param[i].zone.h = param_ptr->zone[i].h;
 		SENSOR_PRINT("x=%d,y=%d",
 		       ext_param[i].zone.x, ext_param[i].zone.y);
-		rtn = _ov5640_MatchZone(&ext_param[i]);
+		rtn = _ov5640_MatchZone(handle, &ext_param[i]);
 		if (SENSOR_SUCCESS != rtn) {
 			SENSOR_PRINT_ERR
 			    ("match zone error!");
@@ -2809,7 +2809,7 @@ LOCAL uint32_t _ov5640_AutoFocusMultiZone(SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
 	return rtn;
 }
 
-LOCAL uint32_t _ov5640_AutoFocusMacro(SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
+LOCAL uint32_t _ov5640_AutoFocusMacro(SENSOR_HW_HANDLE handle, SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	uint16_t i=30;
@@ -2850,14 +2850,14 @@ LOCAL uint32_t _ov5640_AutoFocusMacro(SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
 	return rtn;
 }
 
-LOCAL uint32_t _ov5640_CheckAFGain(SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
+LOCAL uint32_t _ov5640_CheckAFGain(SENSOR_HW_HANDLE handle, SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr = (SENSOR_EXT_FUN_PARAM_T_PTR) param_ptr;
 	uint32_t cur_af_gain = 0;
 	uint32_t delta_gain = 0;
 
-	cur_af_gain = _ov5640_get_cur_af_gain();
+	cur_af_gain = _ov5640_get_cur_af_gain(handle);
 	delta_gain = ABS((int32_t)cur_af_gain - (int32_t)s_af_gain);
 	SENSOR_PRINT("delta_gain %d, s_is_dv_mode %d", delta_gain, s_is_dv_mode);
 	if ((delta_gain > FOCUS_MOVE_GAIN_CHECK)
@@ -2871,7 +2871,7 @@ LOCAL uint32_t _ov5640_CheckAFGain(SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
 	return rtn;
 }
 
-LOCAL uint32_t _ov5640_StartAutoFocus(unsigned long param)
+LOCAL uint32_t _ov5640_StartAutoFocus(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr = (SENSOR_EXT_FUN_PARAM_T_PTR) param;
@@ -2880,19 +2880,19 @@ LOCAL uint32_t _ov5640_StartAutoFocus(unsigned long param)
 	switch (ext_ptr->param) {
 	case SENSOR_EXT_FOCUS_TRIG:
 	case SENSOR_EXT_FOCUS_CAF:
-		rtn = _ov5640_AutoFocusTrig(ext_ptr);
+		rtn = _ov5640_AutoFocusTrig(handle, ext_ptr);
 		break;
 	case SENSOR_EXT_FOCUS_ZONE:
-		rtn = _ov5640_AutoFocusZone(ext_ptr);
+		rtn = _ov5640_AutoFocusZone(handle, ext_ptr);
 		break;
 	case SENSOR_EXT_FOCUS_MULTI_ZONE:
-		rtn = _ov5640_AutoFocusMultiZone(ext_ptr);
+		rtn = _ov5640_AutoFocusMultiZone(handle, ext_ptr);
 		break;
 	case SENSOR_EXT_FOCUS_MACRO:
-		rtn = _ov5640_AutoFocusMacro(ext_ptr);
+		rtn = _ov5640_AutoFocusMacro(handle, ext_ptr);
 		break;
 	case SENSOR_EXT_FOCUS_CHECK_AF_GAIN:
-		rtn = _ov5640_CheckAFGain(ext_ptr);
+		rtn = _ov5640_CheckAFGain(handle, ext_ptr);
 		break;
 	default:
 		break;
@@ -2900,7 +2900,7 @@ LOCAL uint32_t _ov5640_StartAutoFocus(unsigned long param)
 	return rtn;
 }
 
-LOCAL uint32_t _ov5640_QuitAutoFocus(void)
+LOCAL uint32_t _ov5640_QuitAutoFocus(SENSOR_HW_HANDLE handle)
 {
 	uint32_t ret = SENSOR_SUCCESS;
 	af_quit_flag = 0x1;
@@ -2909,7 +2909,7 @@ LOCAL uint32_t _ov5640_QuitAutoFocus(void)
 }
 
 
-LOCAL uint32_t _ov5640_ExposureAuto(void)
+LOCAL uint32_t _ov5640_ExposureAuto(SENSOR_HW_HANDLE handle)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 
@@ -2917,7 +2917,7 @@ LOCAL uint32_t _ov5640_ExposureAuto(void)
 	Sensor_WriteReg(0x501d, 0x00);
 	return rtn;
 }
-LOCAL uint32_t _ov5640_ExposureZone(SENSOR_EXT_FUN_T_PTR param_ptr)
+LOCAL uint32_t _ov5640_ExposureZone(SENSOR_HW_HANDLE handle, SENSOR_EXT_FUN_T_PTR param_ptr)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_T_PTR ext_ptr = (SENSOR_EXT_FUN_T_PTR) param_ptr;
@@ -2925,7 +2925,7 @@ LOCAL uint32_t _ov5640_ExposureZone(SENSOR_EXT_FUN_T_PTR param_ptr)
 
 	SENSOR_PRINT("%d, %d", ext_ptr->zone.x, ext_ptr->zone.y);
 
-	rtn = _ov5640_MatchZone(ext_ptr);
+	rtn = _ov5640_MatchZone(handle, ext_ptr);
 
 	if (SENSOR_SUCCESS == rtn) {
 		// h zone
@@ -2982,7 +2982,7 @@ LOCAL uint32_t _ov5640_ExposureZone(SENSOR_EXT_FUN_T_PTR param_ptr)
 	return rtn;
 }
 
-LOCAL uint32_t _ov5640_StartExposure(unsigned long param)
+LOCAL uint32_t _ov5640_StartExposure(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_T_PTR ext_ptr = (SENSOR_EXT_FUN_T_PTR) param;
@@ -2992,10 +2992,10 @@ LOCAL uint32_t _ov5640_StartExposure(unsigned long param)
 
 	switch (ext_ptr->param) {
 	case SENSOR_EXT_EXPOSURE_AUTO:
-		rtn = _ov5640_ExposureAuto();
+		rtn = _ov5640_ExposureAuto(handle);
 		break;
 	case SENSOR_EXT_EXPOSURE_ZONE:
-		rtn = _ov5640_ExposureZone(ext_ptr);
+		rtn = _ov5640_ExposureZone(handle, ext_ptr);
 		break;
 	default:
 		break;
@@ -3003,7 +3003,7 @@ LOCAL uint32_t _ov5640_StartExposure(unsigned long param)
 	return rtn;
 }
 
-LOCAL unsigned long _ov5640_ReadGain(unsigned long param)
+LOCAL unsigned long _ov5640_ReadGain(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	uint16_t value=0x00;
@@ -3020,20 +3020,20 @@ LOCAL unsigned long _ov5640_ReadGain(unsigned long param)
 
 	return rtn;
 }
-LOCAL void _calculate_hdr_exposure(int capture_gain16,int capture_VTS, int capture_shutter)
+LOCAL void _calculate_hdr_exposure(SENSOR_HW_HANDLE handle, int capture_gain16,int capture_VTS, int capture_shutter)
 {
 	// write capture gain
-	OV5640_set_gain16(capture_gain16);
+	OV5640_set_gain16(handle, capture_gain16);
 
 	// write capture shutter
 	if (capture_shutter > (capture_VTS - 4)) {
 		capture_VTS = capture_shutter + 4;
-		OV5640_set_VTS(capture_VTS);
+		OV5640_set_VTS(handle, capture_VTS);
 	}
-	OV5640_set_shutter(capture_shutter);
+	OV5640_set_shutter(handle, capture_shutter);
 }
 
-LOCAL uint32_t _ov5640_SetEV(unsigned long param)
+LOCAL uint32_t _ov5640_SetEV(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr = (SENSOR_EXT_FUN_PARAM_T_PTR) param;
@@ -3053,13 +3053,13 @@ LOCAL uint32_t _ov5640_SetEV(unsigned long param)
 #endif
 	switch(ev) {
 	case SENSOR_HDR_EV_LEVE_0:
-		_calculate_hdr_exposure(s_ov5640_gain/4,s_capture_VTS,s_capture_shutter/2);
+		_calculate_hdr_exposure(handle, s_ov5640_gain/4,s_capture_VTS,s_capture_shutter/2);
 		break;
 	case SENSOR_HDR_EV_LEVE_1:
-		_calculate_hdr_exposure(s_ov5640_gain,s_capture_VTS,s_capture_shutter);
+		_calculate_hdr_exposure(handle, s_ov5640_gain,s_capture_VTS,s_capture_shutter);
 		break;
 	case SENSOR_HDR_EV_LEVE_2:
-		_calculate_hdr_exposure(s_ov5640_gain*3/2,s_capture_VTS,s_capture_shutter);
+		_calculate_hdr_exposure(handle, s_ov5640_gain*3/2,s_capture_VTS,s_capture_shutter);
 		break;
 	default:
 		break;
@@ -7159,7 +7159,7 @@ LOCAL uint8_t af_firmware[] = {
 		0x06
 };
 
-LOCAL int _ov5640_init_firmware(unsigned long param)
+LOCAL int _ov5640_init_firmware(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t i = 0;
 	int ret = 0;
@@ -7203,7 +7203,7 @@ LOCAL int _ov5640_init_firmware(unsigned long param)
 	return ret;
 }
 
-LOCAL unsigned long _ov5640_ExtFunc(unsigned long ctl_param)
+LOCAL unsigned long _ov5640_ExtFunc(SENSOR_HW_HANDLE handle, unsigned long ctl_param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr =
@@ -7212,22 +7212,22 @@ LOCAL unsigned long _ov5640_ExtFunc(unsigned long ctl_param)
 
 	switch (ext_ptr->cmd) {
 	case SENSOR_EXT_FUNC_INIT:
-		OV5640_set_AE_target(52);
-		OV5640_set_bandingfilter();
-		OV5640_set_AF_gain(0);
-		rtn = _ov5640_init_firmware(ctl_param);
+		OV5640_set_AE_target(handle, 52);
+		OV5640_set_bandingfilter(handle);
+		OV5640_set_AF_gain(handle, 0);
+		rtn = _ov5640_init_firmware(handle, ctl_param);
 		break;
 	case SENSOR_EXT_FOCUS_START:
-		rtn = _ov5640_StartAutoFocus(ctl_param);
+		rtn = _ov5640_StartAutoFocus(handle, ctl_param);
 		break;
 	case SENSOR_EXT_FOCUS_QUIT:
-		rtn = _ov5640_QuitAutoFocus();
+		rtn = _ov5640_QuitAutoFocus(handle);
 		break;
 	case SENSOR_EXT_EXPOSURE_START:
-		rtn = _ov5640_StartExposure(ctl_param);
+		rtn = _ov5640_StartExposure(handle, ctl_param);
 		break;
 	case SENSOR_EXT_EV:
-		rtn = _ov5640_SetEV(ctl_param);
+		rtn = _ov5640_SetEV(handle, ctl_param);
 		break;
 	default:
 		break;
@@ -7235,7 +7235,7 @@ LOCAL unsigned long _ov5640_ExtFunc(unsigned long ctl_param)
 	return rtn;
 }
 
-LOCAL unsigned long _ov5640_StreamOn(unsigned long param)
+LOCAL unsigned long _ov5640_StreamOn(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	SENSOR_PRINT("Start");
 
@@ -7245,7 +7245,7 @@ LOCAL unsigned long _ov5640_StreamOn(unsigned long param)
 	return 0;
 }
 
-LOCAL unsigned long _ov5640_StreamOff(unsigned long param)
+LOCAL unsigned long _ov5640_StreamOff(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	SENSOR_PRINT("Stop");
 
@@ -7293,7 +7293,7 @@ LOCAL const SENSOR_REG_BITS_T ov5640_iso_tab[][8] =
 	}
 };
 
-LOCAL unsigned long _ov5640_set_iso(unsigned long mode)
+LOCAL unsigned long _ov5640_set_iso(SENSOR_HW_HANDLE handle, unsigned long mode)
 {
 	uint16_t i=0x00;
 	uint32_t reg_bits = 0;
@@ -7323,19 +7323,19 @@ LOCAL unsigned long _ov5640_set_iso(unsigned long mode)
 	return 0;
 }
 
-LOCAL uint32_t _ov5640_get_cur_af_gain(void)
+LOCAL uint32_t _ov5640_get_cur_af_gain(SENSOR_HW_HANDLE handle)
 {
 	int preview_shutter, preview_gain16 = 0;
 	uint32_t af_gain = 0;
 
-	preview_shutter = OV5640_get_shutter();
-	preview_gain16  = OV5640_get_gain16();
+	preview_shutter = OV5640_get_shutter(handle);
+	preview_gain16  = OV5640_get_gain16(handle);
 	af_gain = preview_shutter * preview_gain16;
 
 	return af_gain;
 }
 
-LOCAL unsigned long _ov5640_flash(unsigned long param)
+LOCAL unsigned long _ov5640_flash(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint16_t value = 0;
 	uint32_t *autoflash;

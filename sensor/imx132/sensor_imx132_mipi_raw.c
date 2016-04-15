@@ -282,7 +282,7 @@ static SENSOR_VIDEO_INFO_T s_imx132_video_info[SENSOR_MODE_MAX] = {
  * set video mode
  *
  *============================================================================*/
-static uint32_t imx132_set_video_mode(uint32_t param)
+static uint32_t imx132_set_video_mode(SENSOR_HW_HANDLE handle, uint32_t param)
 {
 	SENSOR_REG_T_PTR sensor_reg_ptr;
 	uint16_t i = 0x00;
@@ -340,7 +340,7 @@ static SENSOR_MODE_FPS_INFO_T s_imx132_mode_fps_info = {
    {SENSOR_MODE_SNAPSHOT_TWO_THIRD,0,1,0,0}}
 };
 
-static uint32_t imx132_init_mode_fps_info()
+static uint32_t imx132_init_mode_fps_info(SENSOR_HW_HANDLE handle)
 {
    uint32_t rtn = SENSOR_SUCCESS;
    SENSOR_PRINT("imx132_init_mode_fps_info:E");
@@ -489,7 +489,7 @@ SENSOR_INFO_T g_imx132_mipi_raw_info = {
  * get default frame length
  *
  *============================================================================*/
-static uint32_t imx132_get_default_frame_length(uint32_t mode)
+static uint32_t imx132_get_default_frame_length(SENSOR_HW_HANDLE handle, uint32_t mode)
 {
 	return s_imx132_resolution_trim_tab[mode].frame_line;
 }
@@ -499,7 +499,7 @@ static uint32_t imx132_get_default_frame_length(uint32_t mode)
  * write group-hold on to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void imx132_group_hold_on(void)
+static void imx132_group_hold_on(SENSOR_HW_HANDLE handle)
 {
 	SENSOR_PRINT("E");
 
@@ -511,7 +511,7 @@ static void imx132_group_hold_on(void)
  * write group-hold off to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void imx132_group_hold_off(void)
+static void imx132_group_hold_off(SENSOR_HW_HANDLE handle)
 {
 	SENSOR_PRINT("E");
 
@@ -524,7 +524,7 @@ static void imx132_group_hold_off(void)
  * read gain from sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static uint16_t imx132_read_gain(void)
+static uint16_t imx132_read_gain(SENSOR_HW_HANDLE handle)
 {
 	uint16_t gain_l = 0;
 
@@ -538,7 +538,7 @@ static uint16_t imx132_read_gain(void)
  * write gain to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void imx132_write_gain(uint32_t gain)
+static void imx132_write_gain(SENSOR_HW_HANDLE handle, uint32_t gain)
 {
 	uint32_t sensor_again = 0;
 
@@ -550,7 +550,7 @@ static void imx132_write_gain(uint32_t gain)
 	SENSOR_PRINT("sensor_again=0x%x",sensor_again);
 	Sensor_WriteReg(0x0205, sensor_again);
 
-	imx132_group_hold_off();
+	imx132_group_hold_off(handle);
 
 }
 
@@ -559,7 +559,7 @@ static void imx132_write_gain(uint32_t gain)
  * read frame length from sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static uint16_t imx132_read_frame_length(void)
+static uint16_t imx132_read_frame_length(SENSOR_HW_HANDLE handle)
 {
 	uint16_t frame_len_h = 0;
 	uint16_t frame_len_l = 0;
@@ -575,7 +575,7 @@ static uint16_t imx132_read_frame_length(void)
  * write frame length to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void imx132_write_frame_length(uint32_t frame_len)
+static void imx132_write_frame_length(SENSOR_HW_HANDLE handle, uint32_t frame_len)
 {
 	Sensor_WriteReg(0x0340, (frame_len >> 8) & 0xff);
 	Sensor_WriteReg(0x0341, frame_len & 0xff);
@@ -586,7 +586,7 @@ static void imx132_write_frame_length(uint32_t frame_len)
  * read shutter from sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t imx132_read_shutter(void)
+static uint32_t imx132_read_shutter(SENSOR_HW_HANDLE handle)
 {
 	uint16_t shutter_h = 0;
 	uint16_t shutter_l = 0;
@@ -603,7 +603,7 @@ static uint32_t imx132_read_shutter(void)
  * please pay attention to the frame length
  * please modify this function acording your spec
  *============================================================================*/
-static void imx132_write_shutter(uint32_t shutter)
+static void imx132_write_shutter(SENSOR_HW_HANDLE handle, uint32_t shutter)
 {
 	Sensor_WriteReg(0x0202, (shutter >> 8) & 0xff);
 	Sensor_WriteReg(0x0203, shutter & 0xff);
@@ -615,29 +615,29 @@ static void imx132_write_shutter(uint32_t shutter)
  * please pay attention to the frame length
  * please don't change this function if it's necessary
  *============================================================================*/
-static uint16_t imx132_update_exposure(uint32_t shutter,uint32_t dummy_line)
+static uint16_t imx132_update_exposure(SENSOR_HW_HANDLE handle, uint32_t shutter,uint32_t dummy_line)
 {
 	uint32_t dest_fr_len = 0;
 	uint32_t cur_fr_len = 0;
 	uint32_t fr_len = s_current_default_frame_length;
 
-	imx132_group_hold_on();
+	imx132_group_hold_on(handle);
 
 	if (1 == SUPPORT_AUTO_FRAME_LENGTH)
 		goto write_sensor_shutter;
 
 	dest_fr_len = ((shutter + dummy_line+FRAME_OFFSET) > fr_len) ? (shutter +dummy_line+ FRAME_OFFSET) : fr_len;
 
-	cur_fr_len = imx132_read_frame_length();
+	cur_fr_len = imx132_read_frame_length(handle);
 
 	if (shutter < SENSOR_MIN_SHUTTER)
 		shutter = SENSOR_MIN_SHUTTER;
 
 	if (dest_fr_len != cur_fr_len)
-		imx132_write_frame_length(dest_fr_len);
+		imx132_write_frame_length(handle, dest_fr_len);
 write_sensor_shutter:
 	/* write shutter to sensor registers */
-	imx132_write_shutter(shutter);
+	imx132_write_shutter(handle, shutter);
 	return shutter;
 }
 
@@ -646,7 +646,7 @@ write_sensor_shutter:
  * sensor power on
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t imx132_power_on(uint32_t power_on)
+static uint32_t imx132_power_on(SENSOR_HW_HANDLE handle, uint32_t power_on)
 {
 	SENSOR_AVDD_VAL_E dvdd_val = g_imx132_mipi_raw_info.dvdd_val;
 	SENSOR_AVDD_VAL_E avdd_val = g_imx132_mipi_raw_info.avdd_val;
@@ -683,7 +683,7 @@ static uint32_t imx132_power_on(uint32_t power_on)
  * identify sensor id
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t imx132_identify(uint32_t param)
+static uint32_t imx132_identify(SENSOR_HW_HANDLE handle, uint32_t param)
 {
 	uint8_t pid_value = 0x00;
 	uint8_t ver_value = 0x00;
@@ -715,7 +715,7 @@ static uint32_t imx132_identify(uint32_t param)
  * get resolution trim
  *
  *============================================================================*/
-static unsigned long imx132_get_resolution_trim_tab(uint32_t param)
+static unsigned long imx132_get_resolution_trim_tab(SENSOR_HW_HANDLE handle, uint32_t param)
 {
 	return (unsigned long) s_imx132_resolution_trim_tab;
 }
@@ -725,7 +725,7 @@ static unsigned long imx132_get_resolution_trim_tab(uint32_t param)
  * before snapshot
  * you can change this function if it's necessary
  *============================================================================*/
-static uint32_t imx132_before_snapshot(uint32_t param)
+static uint32_t imx132_before_snapshot(SENSOR_HW_HANDLE handle, uint32_t param)
 {
 	uint32_t cap_shutter = 0;
 	uint32_t prv_shutter = 0;
@@ -737,7 +737,7 @@ static uint32_t imx132_before_snapshot(uint32_t param)
 	uint32_t prv_linetime = s_imx132_resolution_trim_tab[preview_mode].line_time;
 	uint32_t cap_linetime = s_imx132_resolution_trim_tab[capture_mode].line_time;
 
-	s_current_default_frame_length = imx132_get_default_frame_length(capture_mode);
+	s_current_default_frame_length = imx132_get_default_frame_length(handle, capture_mode);
 	SENSOR_PRINT("capture_mode = %d", capture_mode);
 
 	if (preview_mode == capture_mode) {
@@ -761,9 +761,9 @@ static uint32_t imx132_before_snapshot(uint32_t param)
 		gain = gain / 2;
 	}
 
-	cap_shutter = imx132_update_exposure(cap_shutter,0);
+	cap_shutter = imx132_update_exposure(handle, cap_shutter,0);
 	cap_gain = gain;
-	imx132_write_gain(cap_gain);
+	imx132_write_gain(handle, cap_gain);
 	SENSOR_PRINT("preview_shutter = 0x%x, preview_gain = 0x%x",
 		     s_sensor_ev_info.preview_shutter, s_sensor_ev_info.preview_gain);
 
@@ -786,7 +786,7 @@ snapshot_info:
  * get the shutter from isp
  * please don't change this function unless it's necessary
  *============================================================================*/
-static uint32_t imx132_write_exposure(uint32_t param)
+static uint32_t imx132_write_exposure(SENSOR_HW_HANDLE handle, uint32_t param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint16_t exposure_line = 0x00;
@@ -798,9 +798,9 @@ static uint32_t imx132_write_exposure(uint32_t param)
 	mode = (param >> 0x1c) & 0x0f;
 
 	SENSOR_PRINT("current mode = %d, exposure_line = %d, dummy_line=%d", mode, exposure_line,dummy_line);
-	s_current_default_frame_length = imx132_get_default_frame_length(mode);
+	s_current_default_frame_length = imx132_get_default_frame_length(handle, mode);
 
-	s_sensor_ev_info.preview_shutter = imx132_update_exposure(exposure_line,dummy_line);
+	s_sensor_ev_info.preview_shutter = imx132_update_exposure(handle, exposure_line,dummy_line);
 
 	return ret_value;
 }
@@ -810,7 +810,7 @@ static uint32_t imx132_write_exposure(uint32_t param)
  * get the parameter from isp to real gain
  * you mustn't change the funcion !
  *============================================================================*/
-static uint32_t isp_to_real_gain(uint32_t param)
+static uint32_t isp_to_real_gain(SENSOR_HW_HANDLE handle, uint32_t param)
 {
 	uint32_t real_gain = 0;
 #if defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4)
@@ -831,19 +831,19 @@ static uint32_t isp_to_real_gain(uint32_t param)
  * write gain value to sensor
  * you can change this function if it's necessary
  *============================================================================*/
-static uint32_t imx132_write_gain_value(uint32_t param)
+static uint32_t imx132_write_gain_value(SENSOR_HW_HANDLE handle, uint32_t param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint32_t real_gain = 0;
 
-	real_gain = isp_to_real_gain(param);
+	real_gain = isp_to_real_gain(handle, param);
 
 	real_gain = real_gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
 
 	SENSOR_PRINT("real_gain = 0x%x", real_gain);
 
 	s_sensor_ev_info.preview_gain = real_gain;
-	imx132_write_gain(real_gain);
+	imx132_write_gain(handle, real_gain);
 
 	return ret_value;
 }
@@ -853,7 +853,7 @@ static uint32_t imx132_write_gain_value(uint32_t param)
  * increase gain or shutter for hdr
  *
  *============================================================================*/
-static void imx132_increase_hdr_exposure(uint8_t ev_multiplier)
+static void imx132_increase_hdr_exposure(SENSOR_HW_HANDLE handle, uint8_t ev_multiplier)
 {
 	uint32_t shutter_multiply = s_hdr_info.capture_max_shutter / s_hdr_info.capture_shutter;
 	uint32_t gain = 0;
@@ -862,12 +862,12 @@ static void imx132_increase_hdr_exposure(uint8_t ev_multiplier)
 		shutter_multiply = 1;
 
 	if (shutter_multiply >= ev_multiplier) {
-		imx132_update_exposure(s_hdr_info.capture_shutter * ev_multiplier,0);
-		imx132_write_gain(s_hdr_info.capture_gain);
+		imx132_update_exposure(handle, s_hdr_info.capture_shutter * ev_multiplier,0);
+		imx132_write_gain(handle, s_hdr_info.capture_gain);
 	} else {
 		gain = s_hdr_info.capture_gain * ev_multiplier / shutter_multiply;
-		imx132_update_exposure(s_hdr_info.capture_shutter * shutter_multiply,0);
-		imx132_write_gain(gain);
+		imx132_update_exposure(handle, s_hdr_info.capture_shutter * shutter_multiply,0);
+		imx132_write_gain(handle, gain);
 	}
 }
 
@@ -876,20 +876,20 @@ static void imx132_increase_hdr_exposure(uint8_t ev_multiplier)
  * decrease gain or shutter for hdr
  *
  *============================================================================*/
-static void imx132_decrease_hdr_exposure(uint8_t ev_divisor)
+static void imx132_decrease_hdr_exposure(SENSOR_HW_HANDLE handle, uint8_t ev_divisor)
 {
 	uint16_t gain_multiply = 0;
 	uint32_t shutter = 0;
 	gain_multiply = s_hdr_info.capture_gain / SENSOR_BASE_GAIN;
 
 	if (gain_multiply >= ev_divisor) {
-		imx132_update_exposure(s_hdr_info.capture_shutter,0);
-		imx132_write_gain(s_hdr_info.capture_gain / ev_divisor);
+		imx132_update_exposure(handle, s_hdr_info.capture_shutter,0);
+		imx132_write_gain(handle, s_hdr_info.capture_gain / ev_divisor);
 
 	} else {
 		shutter = s_hdr_info.capture_shutter * gain_multiply / ev_divisor;
-		imx132_update_exposure(shutter,0);
-		imx132_write_gain(s_hdr_info.capture_gain / gain_multiply);
+		imx132_update_exposure(handle, shutter,0);
+		imx132_write_gain(handle, s_hdr_info.capture_gain / gain_multiply);
 	}
 }
 
@@ -898,7 +898,7 @@ static void imx132_decrease_hdr_exposure(uint8_t ev_divisor)
  * set hdr ev
  * you can change this function if it's necessary
  *============================================================================*/
-static uint32_t imx132_set_hdr_ev(unsigned long param)
+static uint32_t imx132_set_hdr_ev(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t ret = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr = (SENSOR_EXT_FUN_PARAM_T_PTR) param;
@@ -909,15 +909,15 @@ static uint32_t imx132_set_hdr_ev(unsigned long param)
 	switch (ev) {
 	case SENSOR_HDR_EV_LEVE_0:
 		ev_divisor = 2;
-		imx132_decrease_hdr_exposure(ev_divisor);
+		imx132_decrease_hdr_exposure(handle, ev_divisor);
 		break;
 	case SENSOR_HDR_EV_LEVE_1:
 		ev_multiplier = 2;
-		imx132_increase_hdr_exposure(ev_multiplier);
+		imx132_increase_hdr_exposure(handle, ev_multiplier);
 		break;
 	case SENSOR_HDR_EV_LEVE_2:
 		ev_multiplier = 1;
-		imx132_increase_hdr_exposure(ev_multiplier);
+		imx132_increase_hdr_exposure(handle, ev_multiplier);
 		break;
 	default:
 		break;
@@ -930,7 +930,7 @@ static uint32_t imx132_set_hdr_ev(unsigned long param)
  * extra functoin
  * you can add functions reference SENSOR_EXT_FUNC_CMD_E which from sensor_drv_u.h
  *============================================================================*/
-static uint32_t imx132_ext_func(unsigned long param)
+static uint32_t imx132_ext_func(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr = (SENSOR_EXT_FUN_PARAM_T_PTR) param;
@@ -938,7 +938,7 @@ static uint32_t imx132_ext_func(unsigned long param)
 	SENSOR_PRINT("ext_ptr->cmd: %d", ext_ptr->cmd);
 	switch (ext_ptr->cmd) {
 	case SENSOR_EXT_EV:
-		rtn = imx132_set_hdr_ev(param);
+		rtn = imx132_set_hdr_ev(handle, param);
 		break;
 	default:
 		break;
@@ -952,7 +952,7 @@ static uint32_t imx132_ext_func(unsigned long param)
  * mipi stream on
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t imx132_stream_on(uint32_t param)
+static uint32_t imx132_stream_on(SENSOR_HW_HANDLE handle, uint32_t param)
 {
 	SENSOR_PRINT("E");
 
@@ -968,7 +968,7 @@ static uint32_t imx132_stream_on(uint32_t param)
  * mipi stream off
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t imx132_stream_off(uint32_t param)
+static uint32_t imx132_stream_off(SENSOR_HW_HANDLE handle, uint32_t param)
 {
 	SENSOR_PRINT("E");
 
@@ -979,13 +979,13 @@ static uint32_t imx132_stream_off(uint32_t param)
 	return 0;
 }
 
-static uint32_t imx132_get_static_info(uint32_t *param)
+static uint32_t imx132_get_static_info(SENSOR_HW_HANDLE handle, uint32_t *param)
 {
    uint32_t rtn = SENSOR_SUCCESS;
    struct sensor_ex_info *ex_info;
    //make sure we have get max fps of all settings.
    if(!s_imx132_mode_fps_info.is_init) {
-      imx132_init_mode_fps_info();
+      imx132_init_mode_fps_info(handle);
    }
    ex_info = (struct sensor_ex_info*)param;
    ex_info->f_num = s_imx132_static_info.f_num;
@@ -1015,13 +1015,13 @@ static uint32_t imx132_get_static_info(uint32_t *param)
    return rtn;
 }
 
-static uint32_t imx132_get_fps_info(uint32_t *param)
+static uint32_t imx132_get_fps_info(SENSOR_HW_HANDLE handle, uint32_t *param)
 {
    uint32_t rtn = SENSOR_SUCCESS;
    SENSOR_MODE_FPS_T *fps_info;
    //make sure have inited fps of every sensor mode.
    if(!s_imx132_mode_fps_info.is_init) {
-    imx132_init_mode_fps_info();
+    imx132_init_mode_fps_info(handle);
    }
    fps_info = (SENSOR_MODE_FPS_T*)param;
    uint32_t sensor_mode = fps_info->mode;
@@ -1036,7 +1036,7 @@ static uint32_t imx132_get_fps_info(uint32_t *param)
    return rtn;
 }
 
-static unsigned long imx132_access_val(unsigned long param)
+static unsigned long imx132_access_val(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_VAL_T* param_ptr = (SENSOR_VAL_T*)param;
@@ -1083,10 +1083,10 @@ static unsigned long imx132_access_val(unsigned long param)
 			//rtn = imx132_read_otp_gain(param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_GET_STATIC_INFO:
-		    rtn = imx132_get_static_info(param_ptr->pval);
+		    rtn = imx132_get_static_info(handle, param_ptr->pval);
 		    break;
 		case SENSOR_VAL_TYPE_GET_FPS_INFO:
-		    rtn = imx132_get_fps_info(param_ptr->pval);
+		    rtn = imx132_get_fps_info(handle, param_ptr->pval);
 		    break;
 		default:
 			break;

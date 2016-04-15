@@ -74,11 +74,11 @@ OIS_UWORD 		u16_ofs_tbl[] = {						// RHM_HT 2013.03.13	[Improvement of Loop Gai
 //  *****************************************************
 //  **** Program Download Function
 //  *****************************************************
-ADJ_STS		func_PROGRAM_DOWNLOAD( void ){	// RHM_HT 2013/04/15	Change "typedef" of return value
+ADJ_STS		func_PROGRAM_DOWNLOAD( SENSOR_HW_HANDLE handle ){	// RHM_HT 2013/04/15	Change "typedef" of return value
 
 	OIS_UWORD	sts;						// RHM_HT 2013/04/15	Change "typedef".
 
-	download( 0, 0 );						// Program Download
+	download(handle, 0, 0 );						// Program Download
 	sts = I2C_OIS_mem__read( _M_OIS_STS );	// Check Status
 
 	if ( ( sts & 0x0004 ) == 0x0004 ){
@@ -101,11 +101,11 @@ ADJ_STS		func_PROGRAM_DOWNLOAD( void ){	// RHM_HT 2013/04/15	Change "typedef" of
 //  *****************************************************
 //  **** COEF Download function
 //  *****************************************************
-void	func_COEF_DOWNLOAD( OIS_UWORD u16_coef_type ){
+void	func_COEF_DOWNLOAD(SENSOR_HW_HANDLE handle, OIS_UWORD u16_coef_type ){
 
 //	OIS_UWORD u16_i, u16_dat;
 
-	download( 1, u16_coef_type );			// COEF Download
+	download(handle, 1, u16_coef_type );			// COEF Download
 
 /*	//Darcy Mask
 	for( u16_i = 1; u16_i <= 256; u16_i++){
@@ -131,7 +131,7 @@ void	func_COEF_DOWNLOAD( OIS_UWORD u16_coef_type ){
 //  *****************************************************
 //  **** Download the data
 //  *****************************************************
-void	download( OIS_UWORD u16_type, OIS_UWORD u16_coef_type ){
+void	download(SENSOR_HW_HANDLE handle, OIS_UWORD u16_type, OIS_UWORD u16_coef_type ){
 
 	// Data Transfer Size per one I2C access
 	#define		DWNLD_TRNS_SIZE		(6)
@@ -195,7 +195,7 @@ OIS_UWORD	INTG__INPUT;			// Integral Input value	szx_2014/12/24_2
 OIS_UWORD	KGNTG_VALUE;			// KgxTG / KgyTG		szx_2014/12/24_2
 // <== RHM_HT 2015/01/08	Added
 
-void SET_FADJ_PARAM( const _FACT_ADJ *param )
+void SET_FADJ_PARAM( SENSOR_HW_HANDLE handle, const _FACT_ADJ *param )
 {
 	//*********************
 	// HALL ADJUST
@@ -256,7 +256,7 @@ void SET_FADJ_PARAM( const _FACT_ADJ *param )
 // #define	KGNTG_VALUE	(0x3879)			// KgxTG / KgyTG		szx_2014/12/24_2
 // <== RHM_HT 2015/01/08	Changed to global variables
 #define	G_SENSE		131				// [LSB/dps] for ICG20660
-ADJ_STS	func_SET_SCENE_PARAM(OIS_UBYTE u16_scene, OIS_UBYTE u16_mode, OIS_UBYTE filter, OIS_UBYTE range, const _FACT_ADJ *param)	// RHM_HT 2013/04/15	Change "typedef" of return value
+ADJ_STS	func_SET_SCENE_PARAM(SENSOR_HW_HANDLE handle, OIS_UBYTE u16_scene, OIS_UBYTE u16_mode, OIS_UBYTE filter, OIS_UBYTE range, const _FACT_ADJ *param)	// RHM_HT 2013/04/15	Change "typedef" of return value
 {
 	OIS_UWORD u16_i;
 	OIS_UWORD u16_dat;
@@ -364,7 +364,7 @@ ADJ_STS	func_SET_SCENE_PARAM(OIS_UBYTE u16_scene, OIS_UBYTE u16_mode, OIS_UBYTE 
 }
 
 
-ADJ_STS	func_SET_SCENE_PARAM_for_NewGYRO_Fil(OIS_UBYTE u16_scene, OIS_UBYTE u16_mode, OIS_UBYTE filter, OIS_UBYTE range, const _FACT_ADJ *param)	// RHM_HT 2013/04/15	Change "typedef" of return value
+ADJ_STS	func_SET_SCENE_PARAM_for_NewGYRO_Fil(SENSOR_HW_HANDLE handle, OIS_UBYTE u16_scene, OIS_UBYTE u16_mode, OIS_UBYTE filter, OIS_UBYTE range, const _FACT_ADJ *param)	// RHM_HT 2013/04/15	Change "typedef" of return value
 {
 	OIS_UWORD u16_i;
 	OIS_UWORD u16_dat;
@@ -536,7 +536,7 @@ ADJ_STS	func_SET_SCENE_PARAM_for_NewGYRO_Fil(OIS_UBYTE u16_scene, OIS_UBYTE u16_
 //  *****************************************************
 //  **** Enable HalfShutter
 //  *****************************************************
-void	HalfShutterOn( void )
+void	HalfShutterOn( SENSOR_HW_HANDLE handle )
 {
 	OIS_UWORD u16_dat = 0;
 
@@ -552,7 +552,7 @@ void	HalfShutterOn( void )
 //  **** OIS_UBYTE	adr	Peripheral Address
 //  **** OIS_UWORD	dat	Write data
 //  *****************************************************
-void	I2C_OIS_per_write( OIS_UBYTE u08_adr, OIS_UWORD u16_dat ){
+void	I2C_OIS_per_write_para( SENSOR_HW_HANDLE handle, OIS_UBYTE u08_adr, OIS_UWORD u16_dat ){
 
 	OIS_UBYTE	out[4];
 
@@ -561,7 +561,7 @@ void	I2C_OIS_per_write( OIS_UBYTE u08_adr, OIS_UWORD u16_dat ){
 	out[2] = ( u16_dat      ) & 0xFF;
 	out[3] = ( u16_dat >> 8 ) & 0xFF;
 
-	WR_I2C( _SLV_OIS_, 4, out );
+	WR_I2C(handle,  _SLV_OIS_, 4, out );
 }
 
 //  *****************************************************
@@ -570,7 +570,7 @@ void	I2C_OIS_per_write( OIS_UBYTE u08_adr, OIS_UWORD u16_dat ){
 //  **** OIS_UBYTE	adr	Memory Address
 //  **** OIS_UWORD	dat	Write data
 //  *****************************************************
-void	I2C_OIS_mem_write( OIS_UBYTE u08_adr, OIS_UWORD u16_dat){
+void	I2C_OIS_mem_write_para(SENSOR_HW_HANDLE handle, OIS_UBYTE u08_adr, OIS_UWORD u16_dat){
 
 	OIS_UBYTE	out[4];
 
@@ -579,7 +579,7 @@ void	I2C_OIS_mem_write( OIS_UBYTE u08_adr, OIS_UWORD u16_dat){
 	out[2] = ( u16_dat      ) & 0xFF;
 	out[3] = ( u16_dat >> 8 ) & 0xFF;
 
-	WR_I2C( _SLV_OIS_, 4, out );
+	WR_I2C( handle, _SLV_OIS_, 4, out );
 }
 
 //  *****************************************************
@@ -588,14 +588,14 @@ void	I2C_OIS_mem_write( OIS_UBYTE u08_adr, OIS_UWORD u16_dat){
 //  **** OIS_UBYTE	adr	Peripheral Address
 //  **** OIS_UWORD	dat	Read data
 //  *****************************************************
-OIS_UWORD	I2C_OIS_per__read( OIS_UBYTE u08_adr ){
+OIS_UWORD	I2C_OIS_per__read( SENSOR_HW_HANDLE handle, OIS_UBYTE u08_adr ){
 
 	OIS_UBYTE	u08_dat[2];
 
 	u08_dat[0] = _OP_Periphe_RW;// Op-code
 	u08_dat[1] = u08_adr;// target address
 
-	return RD_I2C(_SLV_OIS_, 2, u08_dat);
+	return RD_I2C(handle, _SLV_OIS_, 2, u08_dat);
 }
 
 
@@ -605,14 +605,14 @@ OIS_UWORD	I2C_OIS_per__read( OIS_UBYTE u08_adr ){
 //  **** OIS_UBYTE	adr	Memory Address
 //  **** OIS_UWORD	dat	Read data
 //  *****************************************************
-OIS_UWORD	I2C_OIS_mem__read( OIS_UBYTE u08_adr){
+OIS_UWORD	I2C_OIS_mem__read_para(SENSOR_HW_HANDLE handle, OIS_UBYTE u08_adr){
 
 	OIS_UBYTE	u08_dat[2];
 
 	u08_dat[0] = _OP_Memory__RW;	// Op-code
 	u08_dat[1] = u08_adr;			// target address
 
-	return RD_I2C( _SLV_OIS_, 2, u08_dat );
+	return RD_I2C( handle, _SLV_OIS_, 2, u08_dat );
 }
 
 
@@ -621,7 +621,7 @@ OIS_UWORD	I2C_OIS_mem__read( OIS_UBYTE u08_adr){
 // 		_cmd_8C_EI			0	// 0x0001
 // 		_cmd_8C_DI			1	// 0x0002
 //  *****************************************************
-void	I2C_OIS_spcl_cmnd( OIS_UBYTE u08_on, OIS_UBYTE u08_dat ){
+void	I2C_OIS_spcl_cmnd( SENSOR_HW_HANDLE handle, OIS_UBYTE u08_on, OIS_UBYTE u08_dat ){
 
 
 	uint8_t cmd_val[2] = { 0x00 };
@@ -642,7 +642,7 @@ void	I2C_OIS_spcl_cmnd( OIS_UBYTE u08_on, OIS_UBYTE u08_dat ){
 //  *****************************************************
 //  **** F0-F3h Command NonAssertClockStretch Function
 //  *****************************************************
-void	I2C_OIS_F0123_wr_( OIS_UBYTE u08_dat0, OIS_UBYTE u08_dat1, OIS_UWORD u16_dat2 ){
+void	I2C_OIS_F0123_wr_( SENSOR_HW_HANDLE handle, OIS_UBYTE u08_dat0, OIS_UBYTE u08_dat1, OIS_UWORD u16_dat2 ){
 
 #if 1
 	uint8_t cmd_val[5] = { 0x00 };
@@ -678,7 +678,7 @@ void	I2C_OIS_F0123_wr_( OIS_UBYTE u08_dat0, OIS_UBYTE u08_dat1, OIS_UWORD u16_da
 
 }
 
-OIS_UWORD	I2C_OIS_F0123__rd( void ){
+OIS_UWORD	I2C_OIS_F0123__rd( SENSOR_HW_HANDLE handle ){
 
 	OIS_UBYTE	u08_dat;
 	OIS_UBYTE read_data_h,read_data_l;

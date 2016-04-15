@@ -135,15 +135,16 @@ struct sensor_raw_resolution_info_tab {
 };
 
 struct sensor_raw_ioctrl {
-	cmr_u32(*set_focus) (cmr_u32 param);
-	cmr_u32(*set_exposure) (cmr_u32 param);
-	cmr_u32(*set_gain) (cmr_u32 param);
-	cmr_u32(*ext_fuc) (void *param);
-	cmr_int(*write_i2c) (cmr_u16 slave_addr, cmr_u8 * cmd,
+	cmr_handle caller_handler;
+	cmr_u32(*set_focus) (cmr_handle caller_handler, cmr_u32 param);
+	cmr_u32(*set_exposure) (cmr_handle caller_handler, cmr_u32 param);
+	cmr_u32(*set_gain) (cmr_handle caller_handler, cmr_u32 param);
+	cmr_u32(*ext_fuc) (cmr_handle caller_handler, void *param);
+	cmr_int(*write_i2c) (cmr_handle caller_handler, cmr_u16 slave_addr, cmr_u8 * cmd,
 			     cmr_u16 cmd_length);
-	cmr_int(*read_i2c) (cmr_u16 slave_addr, cmr_u8 * cmd,
+	cmr_int(*read_i2c) (cmr_handle caller_handler, cmr_u16 slave_addr, cmr_u8 * cmd,
 			    cmr_u16 cmd_length);
-	uint32_t(*ex_set_exposure) (uint32_t param);
+	uint32_t(*ex_set_exposure) (cmr_handle caller_handler, uint32_t param);
 };
 
 /*************new***************************/

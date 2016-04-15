@@ -1080,7 +1080,7 @@ cmr_int cmr_sns_get_ioctl_cmd(SENSOR_IOCTL_CMD_E *sns_cmd, enum sensor_cmd in_cm
 	return ret;
 }
 
-cmr_int cmr_get_otp_from_kernel(cmr_int fd_sensor, cmr_uint cmd,
+cmr_int cmr_get_otp_from_kernel(struct sensor_drv_context *sensor_cxt, cmr_uint cmd,
 		cmr_uint arg, SENSOR_IOCTL_FUNC_PTR func_ptr, cmr_u8 *read_flag)
 {
 	cmr_u32 ret = CMR_CAMERA_SUCCESS;
@@ -1088,6 +1088,7 @@ cmr_int cmr_get_otp_from_kernel(cmr_int fd_sensor, cmr_uint cmd,
 	struct sensor_data_info              sensor_otp;
 	uint32_t                       otp_data_len = 0;
 	SENSOR_VAL_T	*val = (SENSOR_VAL_T	*)arg;
+	cmr_int fd_sensor = sensor_cxt->fd_sensor;
 
 	*read_flag = 0;
 	if(( SENSOR_ACCESS_VAL == cmd)
@@ -1115,7 +1116,7 @@ cmr_int cmr_get_otp_from_kernel(cmr_int fd_sensor, cmr_uint cmd,
 			val->type = SENSOR_VAL_TYPE_PARSE_OTP;
 		}
 		if (PNULL != func_ptr) {
-			ret = func_ptr(arg);
+			ret = func_ptr(sensor_cxt->sensor_hw_handler, arg);
 			*read_flag = 1;
 		}
 		if (NULL != sensor_otp.data_ptr) {
@@ -1171,13 +1172,13 @@ cmr_int cmr_sns_ioctl(struct sensor_drv_context *sensor_cxt, cmr_uint cmd, cmr_u
 #endif
 	func_ptr = (SENSOR_IOCTL_FUNC_PTR) temp;
 
-	ret = cmr_get_otp_from_kernel(sensor_cxt->fd_sensor, cmd, arg, func_ptr,&read_flag);
+	ret = cmr_get_otp_from_kernel(sensor_cxt, cmd, arg, func_ptr,&read_flag);
 	if (read_flag) {
 		return ret;
 	}
 
 	if (PNULL != func_ptr) {
-		ret = func_ptr(arg);
+		ret = func_ptr(sensor_cxt->sensor_hw_handler, arg);
 	}
 	return ret;
 }

@@ -37,7 +37,7 @@ OIS_UWORD			FOCUS_VAL	= 0x0122;				// Focus Value
 //		none
 //
 // =========================================================
-void	VCOSET0( void )
+void	VCOSET0( SENSOR_HW_HANDLE handle )
 {
 
     OIS_UWORD 	CLK_PS = 24000;            					// Input Frequency [kHz] of CLK/PS terminal (Depend on your system)
@@ -59,7 +59,7 @@ void	VCOSET0( void )
 }
 
 
-void	VCOSET1( void )
+void	VCOSET1( SENSOR_HW_HANDLE handle )
 {
 //
 //     OIS_UWORD 	CLK_PS = 23880;            						// Input Frequency [kHz] of CLK/PS terminal (Depend on your system)	RHM_HT 2013.05.09	Change 12M -> 6.75M
@@ -90,7 +90,7 @@ void	VCOSET1( void )
  *
  *
  */
-void	WR_I2C( OIS_UBYTE slvadr, OIS_UBYTE size, OIS_UBYTE *dat )
+void	WR_I2C( SENSOR_HW_HANDLE handle, OIS_UBYTE slvadr, OIS_UBYTE size, OIS_UBYTE *dat )
 {
 
 	if (4 == size) {
@@ -103,7 +103,7 @@ void	WR_I2C( OIS_UBYTE slvadr, OIS_UBYTE size, OIS_UBYTE *dat )
 
 }
 
-OIS_UWORD	RD_I2C( OIS_UBYTE slvadr, OIS_UBYTE size, OIS_UBYTE *dat )
+OIS_UWORD	RD_I2C( SENSOR_HW_HANDLE handle, OIS_UBYTE slvadr, OIS_UBYTE size, OIS_UBYTE *dat )
 {
 	OIS_UWORD	read_data = 0;
        OIS_UWORD       addr;
@@ -137,7 +137,7 @@ OIS_UWORD	RD_I2C( OIS_UBYTE slvadr, OIS_UBYTE size, OIS_UBYTE *dat )
 //		You have to port your own system.
 //
 // *********************************************************
-void	store_FADJ_MEM_to_non_volatile_memory( _FACT_ADJ param )
+void	store_FADJ_MEM_to_non_volatile_memory( SENSOR_HW_HANDLE handle, _FACT_ADJ param )
 {
 	/* 	Write to the non-vollatile memory such as EEPROM or internal of the CMOS sensor... */
 }
@@ -162,7 +162,7 @@ void	store_FADJ_MEM_to_non_volatile_memory( _FACT_ADJ param )
 //
 // *********************************************************
 
-_FACT_ADJ	get_FADJ_MEM_from_non_volatile_memory( void )
+_FACT_ADJ	get_FADJ_MEM_from_non_volatile_memory( SENSOR_HW_HANDLE handle )
 {
 #if 1  //for module EEPROM correction data
 	/* 	Read from the non-vollatile memory such as EEPROM or internal of the CMOS sensor... */

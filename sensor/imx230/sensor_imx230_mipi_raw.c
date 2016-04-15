@@ -67,6 +67,8 @@
 /* please don't change it */
 #define EX_MCLK				24
 
+#define  imx230_i2c_read_otp(addr)    imx230_i2c_read_otp_set(handle, addr)
+
 struct hdr_info_t {
 	uint32_t capture_max_shutter;
 	uint32_t capture_shutter;
@@ -78,8 +80,8 @@ struct sensor_ev_info_t {
 	uint16_t preview_gain;
 };
 
-static unsigned long imx230_access_val(unsigned long param);
-static uint32_t imx230_init_mode_fps_info();
+static unsigned long imx230_access_val(SENSOR_HW_HANDLE handle, unsigned long param);
+static uint32_t imx230_init_mode_fps_info(SENSOR_HW_HANDLE handle);
 
 /*==============================================================================
  * Description:
@@ -1185,7 +1187,7 @@ static SENSOR_VIDEO_INFO_T s_imx230_video_info[SENSOR_MODE_MAX] = {
  * set video mode
  *
  *============================================================================*/
-static uint32_t imx230_set_video_mode(uint32_t param)
+static uint32_t imx230_set_video_mode(SENSOR_HW_HANDLE handle, uint32_t param)
 {
 	SENSOR_REG_T_PTR sensor_reg_ptr;
 	uint16_t i = 0x00;
@@ -1194,7 +1196,7 @@ static uint32_t imx230_set_video_mode(uint32_t param)
 	if (param >= SENSOR_VIDEO_MODE_MAX)
 		return 0;
 
-	if (SENSOR_SUCCESS != Sensor_GetMode_Ex(&mode, SENSOR_MAIN)) {
+	if (SENSOR_SUCCESS != Sensor_GetMode(&mode)) {
 		SENSOR_PRINT("fail.");
 		return SENSOR_FAIL;
 	}
@@ -1212,7 +1214,7 @@ static uint32_t imx230_set_video_mode(uint32_t param)
 
 	for (i = 0x00; (0xffff != sensor_reg_ptr[i].reg_addr)
 	     || (0xff != sensor_reg_ptr[i].reg_value); i++) {
-		Sensor_WriteReg_Ex(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value, SENSOR_MAIN);
+		Sensor_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
 	return 0;
@@ -1360,7 +1362,7 @@ SENSOR_INFO_T g_imx230_mipi_raw_info = {
  * get default frame length
  *
  *============================================================================*/
-static uint32_t imx230_get_default_frame_length(uint32_t mode)
+static uint32_t imx230_get_default_frame_length(SENSOR_HW_HANDLE handle, uint32_t mode)
 {
 	return s_imx230_resolution_trim_tab[mode].frame_line;
 }
@@ -1370,7 +1372,7 @@ static uint32_t imx230_get_default_frame_length(uint32_t mode)
  * write group-hold on to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void imx230_group_hold_on(void)
+static void imx230_group_hold_on(SENSOR_HW_HANDLE handle)
 {
 	SENSOR_PRINT("E");
 
@@ -1382,7 +1384,7 @@ static void imx230_group_hold_on(void)
  * write group-hold off to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void imx230_group_hold_off(void)
+static void imx230_group_hold_off(SENSOR_HW_HANDLE handle)
 {
 	SENSOR_PRINT("E");
 
@@ -1395,16 +1397,16 @@ static void imx230_group_hold_off(void)
  * read gain from sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static uint16_t imx230_read_gain(void)
+static uint16_t imx230_read_gain(SENSOR_HW_HANDLE handle)
 {
 	uint16_t gain_l = 0;
 
-	gain_l = Sensor_ReadReg_Ex(0x0205, SENSOR_MAIN);
+	gain_l = Sensor_ReadReg(0x0205);
 
 	return gain_l;
 }
 
-static uint16_t gain2reg(const uint16_t gain)
+static uint16_t gain2reg(SENSOR_HW_HANDLE handle, const uint16_t gain)
 {
 	uint16_t i;
 
@@ -1422,7 +1424,7 @@ static uint16_t gain2reg(const uint16_t gain)
  * write gain to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void imx230_write_gain(uint32_t gain)
+static void imx230_write_gain(SENSOR_HW_HANDLE handle, uint32_t gain)
 {
 	uint32_t sensor_again = 0;
 
@@ -1435,14 +1437,14 @@ static void imx230_write_gain(uint32_t gain)
 	SENSOR_PRINT("sensor_again=0x%x",sensor_again);
 	Sensor_WriteReg_Ex(0x0205, sensor_again & 0xFF, SENSOR_MAIN);
 */
-	sensor_again = gain2reg(gain);
+	sensor_again = gain2reg(handle, gain);
 
 	SENSOR_PRINT("sensor_again=%d", sensor_again);
 
-	Sensor_WriteReg_Ex(0x0204, (sensor_again>>8)& 0xFF, SENSOR_MAIN);
-	Sensor_WriteReg_Ex(0x0205, sensor_again & 0xFF, SENSOR_MAIN);
+	Sensor_WriteReg(0x0204, (sensor_again>>8)& 0xFF);
+	Sensor_WriteReg(0x0205, sensor_again & 0xFF);
 
-	imx230_group_hold_off();
+	imx230_group_hold_off(handle);
 
 }
 
@@ -1451,13 +1453,13 @@ static void imx230_write_gain(uint32_t gain)
  * read frame length from sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static uint16_t imx230_read_frame_length(void)
+static uint16_t imx230_read_frame_length(SENSOR_HW_HANDLE handle)
 {
 	uint16_t frame_len_h = 0;
 	uint16_t frame_len_l = 0;
 
-	frame_len_h = Sensor_ReadReg_Ex(0x0340, SENSOR_MAIN) & 0xff;
-	frame_len_l = Sensor_ReadReg_Ex(0x0341, SENSOR_MAIN) & 0xff;
+	frame_len_h = Sensor_ReadReg(0x0340) & 0xff;
+	frame_len_l = Sensor_ReadReg(0x0341) & 0xff;
 
 	return ((frame_len_h << 8) | frame_len_l);
 }
@@ -1467,10 +1469,10 @@ static uint16_t imx230_read_frame_length(void)
  * write frame length to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void imx230_write_frame_length(uint32_t frame_len)
+static void imx230_write_frame_length(SENSOR_HW_HANDLE handle, uint32_t frame_len)
 {
-	Sensor_WriteReg_Ex(0x0340, (frame_len >> 8) & 0xff, SENSOR_MAIN);
-	Sensor_WriteReg_Ex(0x0341, frame_len & 0xff, SENSOR_MAIN);
+	Sensor_WriteReg(0x0340, (frame_len >> 8) & 0xff);
+	Sensor_WriteReg(0x0341, frame_len & 0xff);
 }
 
 /*==============================================================================
@@ -1478,13 +1480,13 @@ static void imx230_write_frame_length(uint32_t frame_len)
  * read shutter from sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t imx230_read_shutter(void)
+static uint32_t imx230_read_shutter(SENSOR_HW_HANDLE handle)
 {
 	uint16_t shutter_h = 0;
 	uint16_t shutter_l = 0;
 
-	shutter_h = Sensor_ReadReg_Ex(0x0202, SENSOR_MAIN) & 0xff;
-	shutter_l = Sensor_ReadReg_Ex(0x0203, SENSOR_MAIN) & 0xff;
+	shutter_h = Sensor_ReadReg(0x0202) & 0xff;
+	shutter_l = Sensor_ReadReg(0x0203) & 0xff;
 
 	return (shutter_h << 8) | shutter_l;
 }
@@ -1495,10 +1497,10 @@ static uint32_t imx230_read_shutter(void)
  * please pay attention to the frame length
  * please modify this function acording your spec
  *============================================================================*/
-static void imx230_write_shutter(uint32_t shutter)
+static void imx230_write_shutter(SENSOR_HW_HANDLE handle, uint32_t shutter)
 {
-	Sensor_WriteReg_Ex(0x0202, (shutter >> 8) & 0xff, SENSOR_MAIN);
-	Sensor_WriteReg_Ex(0x0203, shutter & 0xff, SENSOR_MAIN);
+	Sensor_WriteReg(0x0202, (shutter >> 8) & 0xff);
+	Sensor_WriteReg(0x0203, shutter & 0xff);
 }
 
 /*==============================================================================
@@ -1507,29 +1509,29 @@ static void imx230_write_shutter(uint32_t shutter)
  * please pay attention to the frame length
  * please don't change this function if it's necessary
  *============================================================================*/
-static uint16_t imx230_update_exposure(uint32_t shutter,uint32_t dummy_line)
+static uint16_t imx230_update_exposure(SENSOR_HW_HANDLE handle, uint32_t shutter,uint32_t dummy_line)
 {
 	uint32_t dest_fr_len = 0;
 	uint32_t cur_fr_len = 0;
 	uint32_t fr_len = s_current_default_frame_length;
 
-	imx230_group_hold_on();
+	imx230_group_hold_on(handle);
 /*
 	if (1 == SUPPORT_AUTO_FRAME_LENGTH)
 		goto write_sensor_shutter;
 */
 	dest_fr_len = ((shutter + dummy_line+FRAME_OFFSET) > fr_len) ? (shutter +dummy_line+ FRAME_OFFSET) : fr_len;
 
-	cur_fr_len = imx230_read_frame_length();
+	cur_fr_len = imx230_read_frame_length(handle);
 
 	if (shutter < SENSOR_MIN_SHUTTER)
 		shutter = SENSOR_MIN_SHUTTER;
 
 	if (dest_fr_len != cur_fr_len)
-		imx230_write_frame_length(dest_fr_len);
+		imx230_write_frame_length(handle, dest_fr_len);
 write_sensor_shutter:
 	/* write shutter to sensor registers */
-	imx230_write_shutter(shutter);
+	imx230_write_shutter(handle, shutter);
 	return shutter;
 }
 
@@ -1539,7 +1541,7 @@ write_sensor_shutter:
  * sensor power on
  * please modify this function acording your spec
  *============================================================================*/
-static unsigned long imx230_power_on(unsigned long power_on)
+static unsigned long imx230_power_on(SENSOR_HW_HANDLE handle, unsigned long power_on)
 {
 	SENSOR_AVDD_VAL_E dvdd_val = g_imx230_mipi_raw_info.dvdd_val;
 	SENSOR_AVDD_VAL_E avdd_val = g_imx230_mipi_raw_info.avdd_val;
@@ -1548,24 +1550,24 @@ static unsigned long imx230_power_on(unsigned long power_on)
 	BOOLEAN reset_level = g_imx230_mipi_raw_info.reset_pulse_level;
 
 	if (SENSOR_TRUE == power_on) {
-		Sensor_PowerDown_Ex(power_down ,SENSOR_MAIN);
-		Sensor_SetResetLevel_Ex(reset_level, SENSOR_MAIN);
-		Sensor_SetMCLK_Ex(SENSOR_DISABLE_MCLK, SENSOR_MAIN);
-		Sensor_SetVoltage_Ex(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_MAIN);
+		Sensor_PowerDown(power_down);
+		Sensor_SetResetLevel(reset_level);
+		Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
+		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
 		usleep(10 * 1000);
-		Sensor_SetVoltage_Ex(dvdd_val, avdd_val, iovdd_val, SENSOR_MAIN);
+		Sensor_SetVoltage(dvdd_val, avdd_val, iovdd_val);
 		usleep(10 * 1000);
-		Sensor_SetMCLK_Ex(SENSOR_DEFALUT_MCLK, SENSOR_MAIN);
+		Sensor_SetMCLK(SENSOR_DEFALUT_MCLK);
 		usleep(10 * 1000);
-		Sensor_PowerDown_Ex(!power_down, SENSOR_MAIN);
-		Sensor_SetResetLevel_Ex(!reset_level, SENSOR_MAIN);
-		Sensor_SetMonitorVoltage_Ex(SENSOR_AVDD_2800MV, SENSOR_MAIN);
+		Sensor_PowerDown(!power_down);
+		Sensor_SetResetLevel(!reset_level);
+		Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
 	} else {
-		Sensor_SetMCLK_Ex(SENSOR_DISABLE_MCLK, SENSOR_MAIN);
-		Sensor_SetVoltage_Ex(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_MAIN);
-		Sensor_Reset_Ex(reset_level, SENSOR_MAIN);
-		Sensor_PowerDown_Ex(power_down, SENSOR_MAIN);
-		Sensor_SetMonitorVoltage_Ex(SENSOR_AVDD_CLOSED, SENSOR_MAIN);
+		Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
+		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
+		Sensor_Reset(reset_level);
+		Sensor_PowerDown(power_down);
+		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 	}
 	SENSOR_PRINT("(1:on, 0:off): %ld", power_on);
 	return SENSOR_SUCCESS;
@@ -1576,7 +1578,7 @@ static unsigned long imx230_power_on(unsigned long power_on)
  * calculate fps for every sensor mode according to frame_line and line_time
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t imx230_init_mode_fps_info()
+static uint32_t imx230_init_mode_fps_info(SENSOR_HW_HANDLE handle)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_PRINT("imx230_init_mode_fps_info:E");
@@ -1623,7 +1625,7 @@ static uint32_t imx230_init_mode_fps_info()
  * identify sensor id
  * please modify this function acording your spec
  *============================================================================*/
-static unsigned long imx230_identify(unsigned long param)
+static unsigned long imx230_identify(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint8_t pid_value = 0x00;
 	uint8_t ver_value = 0x00;
@@ -1632,16 +1634,16 @@ static unsigned long imx230_identify(unsigned long param)
 
 	SENSOR_PRINT("mipi raw identify");
 
-	pid_value = Sensor_ReadReg_Ex(imx230_PID_ADDR, SENSOR_MAIN);
+	pid_value = Sensor_ReadReg(imx230_PID_ADDR);
 
 	if (imx230_PID_VALUE == pid_value) {
-		ver_value = Sensor_ReadReg_Ex(imx230_VER_ADDR, SENSOR_MAIN);
+		ver_value = Sensor_ReadReg(imx230_VER_ADDR);
 		SENSOR_PRINT("Identify: PID = %x, VER = %x", pid_value, ver_value);
 		if (imx230_VER_VALUE == ver_value) {
 			ret_value = SENSOR_SUCCESS;
 			SENSOR_PRINT_HIGH("this is imx230 sensor");
-			vcm_dw9800_init();
-			imx230_init_mode_fps_info();
+			vcm_dw9800_init(handle);
+			imx230_init_mode_fps_info(handle);
 		} else {
 			SENSOR_PRINT_HIGH("Identify this is %x%x sensor", pid_value, ver_value);
 		}
@@ -1657,7 +1659,7 @@ static unsigned long imx230_identify(unsigned long param)
  * get resolution trim
  *
  *============================================================================*/
-static unsigned long imx230_get_resolution_trim_tab(unsigned long param)
+static unsigned long imx230_get_resolution_trim_tab(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	UNUSED(param);
 	return (unsigned long) s_imx230_resolution_trim_tab;
@@ -1668,7 +1670,7 @@ static unsigned long imx230_get_resolution_trim_tab(unsigned long param)
  * before snapshot
  * you can change this function if it's necessary
  *============================================================================*/
-static unsigned long imx230_before_snapshot(unsigned long param)
+static unsigned long imx230_before_snapshot(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t cap_shutter = 0;
 	uint32_t prv_shutter = 0;
@@ -1680,7 +1682,7 @@ static unsigned long imx230_before_snapshot(unsigned long param)
 	uint32_t prv_linetime = s_imx230_resolution_trim_tab[preview_mode].line_time;
 	uint32_t cap_linetime = s_imx230_resolution_trim_tab[capture_mode].line_time;
 
-	s_current_default_frame_length = imx230_get_default_frame_length(capture_mode);
+	s_current_default_frame_length = imx230_get_default_frame_length(handle, capture_mode);
 	SENSOR_PRINT("capture_mode = %d", capture_mode);
 
 	if (preview_mode == capture_mode) {
@@ -1692,8 +1694,8 @@ static unsigned long imx230_before_snapshot(unsigned long param)
 	prv_shutter = s_sensor_ev_info.preview_shutter;	//imx132_read_shutter();
 	gain = s_sensor_ev_info.preview_gain;	//imx132_read_gain();
 
-	Sensor_SetMode_Ex(capture_mode, SENSOR_MAIN);
-	Sensor_SetMode_WaitDone_Ex(SENSOR_MAIN);
+	Sensor_SetMode(capture_mode);
+	Sensor_SetMode_WaitDone();
 
 	cap_shutter = prv_shutter * prv_linetime / cap_linetime * BINNING_FACTOR;
 
@@ -1704,9 +1706,9 @@ static unsigned long imx230_before_snapshot(unsigned long param)
 		gain = gain / 2;
 	}
 
-	cap_shutter = imx230_update_exposure(cap_shutter,0);
+	cap_shutter = imx230_update_exposure(handle, cap_shutter,0);
 	cap_gain = gain;
-	imx230_write_gain(cap_gain);
+	imx230_write_gain(handle, cap_gain);
 	SENSOR_PRINT("preview_shutter = 0x%x, preview_gain = 0x%x",
 		     s_sensor_ev_info.preview_shutter, s_sensor_ev_info.preview_gain);
 
@@ -1719,7 +1721,7 @@ snapshot_info:
 	 */
 	s_hdr_info.capture_max_shutter = 1000000 / cap_linetime;
 
-	Sensor_SetSensorExifInfo_Ex(SENSOR_EXIF_CTRL_EXPOSURETIME, cap_shutter, SENSOR_MAIN);
+	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, cap_shutter);
 
 	return SENSOR_SUCCESS;
 }
@@ -1728,17 +1730,17 @@ snapshot_info:
 static cmr_u8 imx230_opt_lsc_data[OTP_LSC_INFO_LEN];
 static struct sensor_otp_cust_info imx230_otp_info;
 
-static cmr_u8 imx230_i2c_read_otp(cmr_u16 addr)
+static cmr_u8 imx230_i2c_read_otp_set(SENSOR_HW_HANDLE handle, cmr_u16 addr)
 {
 	return sensor_grc_read_i2c(0xA0 >> 1, addr, BITS_ADDR16_REG8);
 }
 
-static int imx230_otp_init(void)
+static int imx230_otp_init(SENSOR_HW_HANDLE handle)
 {
 	return 0;
 }
 
-static int imx230_otp_read_data(void)
+static int imx230_otp_read_data(SENSOR_HW_HANDLE handle)
 {
 	cmr_u16 i = 0;
 	cmr_u8 high_val = 0;
@@ -1826,12 +1828,12 @@ static int imx230_otp_read_data(void)
 	return 0;
 }
 
-static unsigned long imx230_otp_read(SENSOR_VAL_T* param)
+static unsigned long imx230_otp_read(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* param)
 {
 	struct sensor_otp_cust_info *otp_info = NULL;
 
 	SENSOR_PRINT("E");
-	imx230_otp_read_data();
+	imx230_otp_read_data(handle);
 	otp_info = &imx230_otp_info;
 
 	if (1 != otp_info->program_flag) {
@@ -1851,7 +1853,7 @@ static unsigned long imx230_otp_read(SENSOR_VAL_T* param)
  * get the shutter from isp
  * please don't change this function unless it's necessary
  *============================================================================*/
-static unsigned long imx230_write_exposure(unsigned long param)
+static unsigned long imx230_write_exposure(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint16_t exposure_line = 0x00;
@@ -1863,14 +1865,14 @@ static unsigned long imx230_write_exposure(unsigned long param)
 	mode = (param >> 0x1c) & 0x0f;
 
 	SENSOR_PRINT("current mode = %d, exposure_line = %d, dummy_line=%d", mode, exposure_line,dummy_line);
-	s_current_default_frame_length = imx230_get_default_frame_length(mode);
+	s_current_default_frame_length = imx230_get_default_frame_length(handle, mode);
 
-	s_sensor_ev_info.preview_shutter = imx230_update_exposure(exposure_line,dummy_line);
+	s_sensor_ev_info.preview_shutter = imx230_update_exposure(handle, exposure_line,dummy_line);
 
 	return ret_value;
 }
 
-static unsigned long imx230_ex_write_exposure(unsigned long param)
+static unsigned long imx230_ex_write_exposure(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint16_t exposure_line = 0x00;
@@ -1888,9 +1890,9 @@ static unsigned long imx230_ex_write_exposure(unsigned long param)
 	mode = ex->size_index;
 
 	SENSOR_PRINT("current mode = %d, exposure_line = %d, dummy_line=%d", mode, exposure_line,dummy_line);
-	s_current_default_frame_length = imx230_get_default_frame_length(mode);
+	s_current_default_frame_length = imx230_get_default_frame_length(handle, mode);
 
-	s_sensor_ev_info.preview_shutter = imx230_update_exposure(exposure_line,dummy_line);
+	s_sensor_ev_info.preview_shutter = imx230_update_exposure(handle, exposure_line,dummy_line);
 
 	return ret_value;
 }
@@ -1900,7 +1902,7 @@ static unsigned long imx230_ex_write_exposure(unsigned long param)
  * get the parameter from isp to real gain
  * you mustn't change the funcion !
  *============================================================================*/
-static uint32_t isp_to_real_gain(uint32_t param)
+static uint32_t isp_to_real_gain(SENSOR_HW_HANDLE handle, uint32_t param)
 {
 	uint32_t real_gain = 0;
 #if defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4)
@@ -1921,7 +1923,7 @@ static uint32_t isp_to_real_gain(uint32_t param)
  * write gain value to sensor
  * you can change this function if it's necessary
  *============================================================================*/
-static unsigned long imx230_write_gain_value(unsigned long param)
+static unsigned long imx230_write_gain_value(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	unsigned long ret_value = SENSOR_SUCCESS;
 	uint32_t real_gain = 0;
@@ -1933,7 +1935,7 @@ static unsigned long imx230_write_gain_value(unsigned long param)
 	SENSOR_PRINT("real_gain = %d", real_gain);
 
 	s_sensor_ev_info.preview_gain = real_gain;
-	imx230_write_gain(real_gain);
+	imx230_write_gain(handle, real_gain);
 
 	return ret_value;
 }
@@ -1943,7 +1945,7 @@ static unsigned long imx230_write_gain_value(unsigned long param)
  * increase gain or shutter for hdr
  *
  *============================================================================*/
-static void imx230_increase_hdr_exposure(uint8_t ev_multiplier)
+static void imx230_increase_hdr_exposure(SENSOR_HW_HANDLE handle, uint8_t ev_multiplier)
 {
 	uint32_t shutter_multiply = s_hdr_info.capture_max_shutter / s_hdr_info.capture_shutter;
 	uint32_t gain = 0;
@@ -1952,12 +1954,12 @@ static void imx230_increase_hdr_exposure(uint8_t ev_multiplier)
 		shutter_multiply = 1;
 
 	if (shutter_multiply >= ev_multiplier) {
-		imx230_update_exposure(s_hdr_info.capture_shutter * ev_multiplier,0);
-		imx230_write_gain(s_hdr_info.capture_gain);
+		imx230_update_exposure(handle, s_hdr_info.capture_shutter * ev_multiplier,0);
+		imx230_write_gain(handle, s_hdr_info.capture_gain);
 	} else {
 		gain = s_hdr_info.capture_gain * ev_multiplier / shutter_multiply;
-		imx230_update_exposure(s_hdr_info.capture_shutter * shutter_multiply,0);
-		imx230_write_gain(gain);
+		imx230_update_exposure(handle, s_hdr_info.capture_shutter * shutter_multiply,0);
+		imx230_write_gain(handle, gain);
 	}
 }
 
@@ -1966,20 +1968,20 @@ static void imx230_increase_hdr_exposure(uint8_t ev_multiplier)
  * decrease gain or shutter for hdr
  *
  *============================================================================*/
-static void imx230_decrease_hdr_exposure(uint8_t ev_divisor)
+static void imx230_decrease_hdr_exposure(SENSOR_HW_HANDLE handle, uint8_t ev_divisor)
 {
 	uint16_t gain_multiply = 0;
 	uint32_t shutter = 0;
 	gain_multiply = s_hdr_info.capture_gain / SENSOR_BASE_GAIN;
 
 	if (gain_multiply >= ev_divisor) {
-		imx230_update_exposure(s_hdr_info.capture_shutter,0);
-		imx230_write_gain(s_hdr_info.capture_gain / ev_divisor);
+		imx230_update_exposure(handle, s_hdr_info.capture_shutter,0);
+		imx230_write_gain(handle, s_hdr_info.capture_gain / ev_divisor);
 
 	} else {
 		shutter = s_hdr_info.capture_shutter * gain_multiply / ev_divisor;
-		imx230_update_exposure(shutter,0);
-		imx230_write_gain(s_hdr_info.capture_gain / gain_multiply);
+		imx230_update_exposure(handle, shutter,0);
+		imx230_write_gain(handle, s_hdr_info.capture_gain / gain_multiply);
 	}
 }
 
@@ -1988,7 +1990,7 @@ static void imx230_decrease_hdr_exposure(uint8_t ev_divisor)
  * set hdr ev
  * you can change this function if it's necessary
  *============================================================================*/
-static uint32_t imx230_set_hdr_ev(unsigned long param)
+static uint32_t imx230_set_hdr_ev(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t ret = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr = (SENSOR_EXT_FUN_PARAM_T_PTR) param;
@@ -1999,15 +2001,15 @@ static uint32_t imx230_set_hdr_ev(unsigned long param)
 	switch (ev) {
 	case SENSOR_HDR_EV_LEVE_0:
 		ev_divisor = 2;
-		imx230_decrease_hdr_exposure(ev_divisor);
+		imx230_decrease_hdr_exposure(handle, ev_divisor);
 		break;
 	case SENSOR_HDR_EV_LEVE_1:
 		ev_multiplier = 2;
-		imx230_increase_hdr_exposure(ev_multiplier);
+		imx230_increase_hdr_exposure(handle, ev_multiplier);
 		break;
 	case SENSOR_HDR_EV_LEVE_2:
 		ev_multiplier = 1;
-		imx230_increase_hdr_exposure(ev_multiplier);
+		imx230_increase_hdr_exposure(handle, ev_multiplier);
 		break;
 	default:
 		break;
@@ -2020,7 +2022,7 @@ static uint32_t imx230_set_hdr_ev(unsigned long param)
  * extra functoin
  * you can add functions reference SENSOR_EXT_FUNC_CMD_E which from sensor_drv_u.h
  *============================================================================*/
-static unsigned long imx230_ext_func(unsigned long param)
+static unsigned long imx230_ext_func(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	unsigned long rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr = (SENSOR_EXT_FUN_PARAM_T_PTR) param;
@@ -2028,7 +2030,7 @@ static unsigned long imx230_ext_func(unsigned long param)
 	SENSOR_PRINT("ext_ptr->cmd: %d", ext_ptr->cmd);
 	switch (ext_ptr->cmd) {
 	case SENSOR_EXT_EV:
-		rtn = imx230_set_hdr_ev(param);
+		rtn = imx230_set_hdr_ev(handle, param);
 		break;
 	default:
 		break;
@@ -2042,11 +2044,11 @@ static unsigned long imx230_ext_func(unsigned long param)
  * mipi stream on
  * please modify this function acording your spec
  *============================================================================*/
-static unsigned long imx230_stream_on(unsigned long param)
+static unsigned long imx230_stream_on(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	SENSOR_PRINT("E");
 	UNUSED(param);
-	Sensor_WriteReg_Ex(0x0100, 0x01, SENSOR_MAIN);
+	Sensor_WriteReg(0x0100, 0x01);
 	/*delay*/
 	usleep(10 * 1000);
 
@@ -2058,23 +2060,23 @@ static unsigned long imx230_stream_on(unsigned long param)
  * mipi stream off
  * please modify this function acording your spec
  *============================================================================*/
-static unsigned long imx230_stream_off(unsigned long param)
+static unsigned long imx230_stream_off(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	SENSOR_PRINT("E");
 	UNUSED(param);
-	Sensor_WriteReg_Ex(0x0100, 0x00, SENSOR_MAIN);
+	Sensor_WriteReg(0x0100, 0x00);
 	/*delay*/
 	usleep(10 * 1000);
 
 	return 0;
 }
 
-static unsigned long imx230_write_af(unsigned long param)
+static unsigned long imx230_write_af(SENSOR_HW_HANDLE handle, unsigned long param)
 {
-	return vcm_dw9800_set_position(param);
+	return vcm_dw9800_set_position(handle, param);
 }
 
-static uint32_t imx230_get_static_info(uint32_t *param)
+static uint32_t imx230_get_static_info(SENSOR_HW_HANDLE handle, uint32_t *param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	struct sensor_ex_info *ex_info;
@@ -2082,7 +2084,7 @@ static uint32_t imx230_get_static_info(uint32_t *param)
 	uint32_t down = 0;
 	//make sure we have get max fps of all settings.
 	if(!s_imx230_mode_fps_info.is_init) {
-		imx230_init_mode_fps_info();
+		imx230_init_mode_fps_info(handle);
 	}
 	ex_info = (struct sensor_ex_info*)param;
 	ex_info->f_num = s_imx230_static_info.f_num;
@@ -2098,7 +2100,7 @@ static uint32_t imx230_get_static_info(uint32_t *param)
 	ex_info->capture_skip_num = g_imx230_mipi_raw_info.capture_skip_num;
 	ex_info->name = g_imx230_mipi_raw_info.name;
 	ex_info->sensor_version_info = g_imx230_mipi_raw_info.sensor_version_info;
-	vcm_dw9800_get_pose_dis(&up, &down);
+	vcm_dw9800_get_pose_dis(handle, &up, &down);
 	ex_info->pos_dis.up2hori = up;
 	ex_info->pos_dis.hori2down = down;
 	SENSOR_PRINT("SENSOR_IMX230: f_num: %d", ex_info->f_num);
@@ -2116,13 +2118,13 @@ static uint32_t imx230_get_static_info(uint32_t *param)
 }
 
 
-static uint32_t imx230_get_fps_info(uint32_t *param)
+static uint32_t imx230_get_fps_info(SENSOR_HW_HANDLE handle, uint32_t *param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_MODE_FPS_T *fps_info;
 	//make sure have inited fps of every sensor mode.
 	if(!s_imx230_mode_fps_info.is_init) {
-		imx230_init_mode_fps_info();
+		imx230_init_mode_fps_info(handle);
 	}
 	fps_info = (SENSOR_MODE_FPS_T*)param;
 	uint32_t sensor_mode = fps_info->mode;
@@ -2138,7 +2140,7 @@ static uint32_t imx230_get_fps_info(uint32_t *param)
 	return rtn;
 }
 
-static unsigned long imx230_access_val(unsigned long param)
+static unsigned long imx230_access_val(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_VAL_T* param_ptr = (SENSOR_VAL_T*)param;
@@ -2153,22 +2155,22 @@ static unsigned long imx230_access_val(unsigned long param)
 	switch(param_ptr->type)
 	{
 		case SENSOR_VAL_TYPE_INIT_OTP:
-			imx230_otp_init();
+			imx230_otp_init(handle);
 			break;
 		case SENSOR_VAL_TYPE_SHUTTER:
 			//*((uint32_t*)param_ptr->pval) = imx230_get_shutter();
 			break;
 		case SENSOR_VAL_TYPE_READ_VCM:
-			//rtn = imx230_read_vcm(param_ptr->pval);
+			//rtn = imx230_read_vcm(handle, param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_WRITE_VCM:
-			//rtn = imx230_write_vcm(param_ptr->pval);
+			//rtn = imx230_write_vcm(handle, param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_READ_OTP:
-			imx230_otp_read(param_ptr);
+			imx230_otp_read(handle,param_ptr);
 			break;
 		case SENSOR_VAL_TYPE_WRITE_OTP:
-			//rtn = _hi544_write_otp((uint32_t)param_ptr->pval);
+			//rtn = _hi544_write_otp(handle, (uint32_t)param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_GET_RELOADINFO:
 			{
@@ -2180,16 +2182,16 @@ static unsigned long imx230_access_val(unsigned long param)
 			//*(uint32_t*)param_ptr->pval = 0;//cur_af_pos;
 			break;
 		case SENSOR_VAL_TYPE_WRITE_OTP_GAIN:
-			//rtn = imx230_write_otp_gain(param_ptr->pval);
+			//rtn = imx230_write_otp_gain(handle, param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_READ_OTP_GAIN:
-			//rtn = imx230_read_otp_gain(param_ptr->pval);
+			//rtn = imx230_read_otp_gain(handle, param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_GET_STATIC_INFO:
-			rtn = imx230_get_static_info(param_ptr->pval);
+			rtn = imx230_get_static_info(handle, param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_GET_FPS_INFO:
-			rtn = imx230_get_fps_info(param_ptr->pval);
+			rtn = imx230_get_fps_info(handle, param_ptr->pval);
 			break;
 		default:
 			break;

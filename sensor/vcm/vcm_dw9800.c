@@ -23,7 +23,7 @@
 #define POSE_UP_HORIZONTAL 32
 #define POSE_DOWN_HORIZONTAL 37
 
-uint32_t vcm_dw9800_init(void)
+uint32_t vcm_dw9800_init(SENSOR_HW_HANDLE handle)
 {
 	uint8_t cmd_val[2] = {0x00};
 	uint16_t  slave_addr = 0;
@@ -35,20 +35,20 @@ uint32_t vcm_dw9800_init(void)
 	cmd_len = 2;
 	cmd_val[0] = 0x02;
 	cmd_val[1] = 0x02;
-	Sensor_WriteI2C_Ex(slave_addr,(uint8_t*)&cmd_val[0], cmd_len, SENSOR_MAIN);
+	Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 	usleep(1000);
 	cmd_val[0] = 0x06;
 	cmd_val[1] = 0x80;
-	Sensor_WriteI2C_Ex(slave_addr,(uint8_t*)&cmd_val[0], cmd_len, SENSOR_MAIN);
+	Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 	usleep(1000);
 	cmd_val[0] = 0x07;
 	cmd_val[1] = 0x75;
-	Sensor_WriteI2C_Ex(slave_addr,(uint8_t*)&cmd_val[0], cmd_len, SENSOR_MAIN);
+	Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 
 	return ret_value;
 }
 
-uint32_t vcm_dw9800_set_position(uint32_t pos)
+uint32_t vcm_dw9800_set_position(SENSOR_HW_HANDLE handle, uint32_t pos)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint8_t cmd_val[2] = {0x00};
@@ -61,15 +61,15 @@ uint32_t vcm_dw9800_set_position(uint32_t pos)
 	cmd_len = 2;
 	cmd_val[0] = 0x03;
 	cmd_val[1] = (pos&0x300)>>8;
-	ret_value = Sensor_WriteI2C_Ex(slave_addr,(uint8_t*)&cmd_val[0], cmd_len, SENSOR_MAIN);
+	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 	cmd_val[0] = 0x04;
 	cmd_val[1] = (pos&0xff);
-	ret_value = Sensor_WriteI2C_Ex(slave_addr,(uint8_t*)&cmd_val[0], cmd_len, SENSOR_MAIN);
+	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 
 	return ret_value;
 }
 
-uint32_t vcm_dw9800_get_pose_dis(uint32_t *up2h, uint32_t *h2down)
+uint32_t vcm_dw9800_get_pose_dis(SENSOR_HW_HANDLE handle, uint32_t *up2h, uint32_t *h2down)
 {
 	*up2h = POSE_UP_HORIZONTAL;
 	*h2down = POSE_DOWN_HORIZONTAL;

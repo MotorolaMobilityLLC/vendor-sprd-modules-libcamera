@@ -30,7 +30,7 @@ ver: 1.0
  * init vcm driver
  * you can change this function acording your spec if it's necessary
  *============================================================================*/
-uint32_t bu64297gwz_init(void)
+uint32_t bu64297gwz_init(SENSOR_HW_HANDLE handle)
 {
 	uint8_t cmd_val[2] = { 0x00 };
 	uint16_t slave_addr = 0;
@@ -71,7 +71,7 @@ uint32_t bu64297gwz_init(void)
  * you can change this function acording your spec if it's necessary
  * code: Dac code for vcm driver
  *============================================================================*/
-uint32_t bu64297gwz_write_dac_code(int32_t code)
+uint32_t bu64297gwz_write_dac_code(SENSOR_HW_HANDLE handle, int32_t code)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint8_t cmd_val[2] = { 0x00 };
@@ -95,18 +95,18 @@ uint32_t bu64297gwz_write_dac_code(int32_t code)
  *
  * Param: ISP write dac code
  *============================================================================*/
-uint32_t bu64297gwz_write_af(uint32_t param)
+uint32_t bu64297gwz_write_af(SENSOR_HW_HANDLE handle, uint32_t param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	int32_t target_code = param & 0x3FF;
 
 	SENSOR_PRINT("%d", target_code);
-	bu64297gwz_write_dac_code(target_code);
+	bu64297gwz_write_dac_code(handle, target_code);
 
 	return ret_value;
 }
 
-uint32_t bu64297gwz_get_pose_dis(uint32_t *up2h, uint32_t *h2down)
+uint32_t bu64297gwz_get_pose_dis(SENSOR_HW_HANDLE handle, uint32_t *up2h, uint32_t *h2down)
 {
 	*up2h = POSE_UP_HORIZONTAL;
 	*h2down = POSE_DOWN_HORIZONTAL;
@@ -122,9 +122,9 @@ uint32_t bu64297gwz_get_pose_dis(uint32_t *up2h, uint32_t *h2down)
  * 1: PWM Mode
  * 2: Linear Mode
  *============================================================================*/
-uint32_t bu64297gwz_deinit(uint32_t mode)
+uint32_t bu64297gwz_deinit(SENSOR_HW_HANDLE handle, uint32_t mode)
 {
-	bu64297gwz_write_af(0);
+	bu64297gwz_write_af(handle, 0);
 
 	return 0;
 }

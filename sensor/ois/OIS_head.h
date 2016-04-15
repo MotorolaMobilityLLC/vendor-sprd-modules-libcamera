@@ -9,12 +9,13 @@
 #ifndef OIS_HEAD_H
 #define OIS_HEAD_H
 
+#include "sensor_drv_u.h"
+
 // Compile Switch Purpose
 // #define		CENTER_OF_HALL_OUT			// RHM_HT 2013.03.15	Enable to detect hall output center and set shifted offset value
 #define		ENABLE_GYRO_DRIFT_COMP					// RHM_HT 2013/11/25	Added
 
 #define	_STR_AREA_		"F:\\DEBUGBMP\\"			// For Image save (Debug purpose)
-
 
 // ==> RHM_HT 2013/04/15	Add to the report for error details
 // #define		OIS_TRUE	0
@@ -135,29 +136,32 @@ typedef struct tagApproxResult{
 
 //#define Wait(a)     Wait_usec(a*1000UL)		//Darcy mask/20140620
 
-ADJ_STS		func_PROGRAM_DOWNLOAD( void );												// RHM_HT 2013/04/15	Change "typedef" of return value
-void		func_COEF_DOWNLOAD( OIS_UWORD u16_coef_type );								// RHM_HT 2013/11/26	Reverted
-void		download( OIS_UWORD u16_type, OIS_UWORD u16_coef_type );
+ADJ_STS		func_PROGRAM_DOWNLOAD( SENSOR_HW_HANDLE handle );												// RHM_HT 2013/04/15	Change "typedef" of return value
+void		func_COEF_DOWNLOAD(SENSOR_HW_HANDLE handle, OIS_UWORD u16_coef_type );								// RHM_HT 2013/11/26	Reverted
+void		download(SENSOR_HW_HANDLE handle, OIS_UWORD u16_type, OIS_UWORD u16_coef_type );
 
-ADJ_STS		func_SET_SCENE_PARAM(OIS_UBYTE u16_scene, OIS_UBYTE u16_mode, OIS_UBYTE filter, OIS_UBYTE range, const _FACT_ADJ *param );	// RHM_HT 2013/04/15	Change "typedef" of return value
-void		SET_FADJ_PARAM( const _FACT_ADJ *param );
+ADJ_STS		func_SET_SCENE_PARAM(SENSOR_HW_HANDLE handle, OIS_UBYTE u16_scene, OIS_UBYTE u16_mode, OIS_UBYTE filter, OIS_UBYTE range, const _FACT_ADJ *param );	// RHM_HT 2013/04/15	Change "typedef" of return value
+void		SET_FADJ_PARAM(SENSOR_HW_HANDLE handle, const _FACT_ADJ *param );
 
-void		I2C_OIS_per_write( OIS_UBYTE u08_adr,  OIS_UWORD u16_dat );
-void		I2C_OIS_mem_write( OIS_UBYTE u08_adr,  OIS_UWORD u16_dat);
-OIS_UWORD	I2C_OIS_per__read( OIS_UBYTE u08_adr );
-OIS_UWORD	I2C_OIS_mem__read( OIS_UBYTE u08_adr );
-void		I2C_OIS_spcl_cmnd( OIS_UBYTE u08_on,   OIS_UBYTE u08_dat );
-void		I2C_OIS_F0123_wr_( OIS_UBYTE u08_dat0, OIS_UBYTE u08_dat1, OIS_UWORD u16_dat2 );
-OIS_UWORD	I2C_OIS_F0123__rd( void );
+void		I2C_OIS_per_write_para(SENSOR_HW_HANDLE handle, OIS_UBYTE u08_adr,  OIS_UWORD u16_dat );
+#define    I2C_OIS_per_write(u08_adr, u16_dat )    I2C_OIS_per_write_para(handle, u08_adr, u16_dat )
+void		I2C_OIS_mem_write_para(SENSOR_HW_HANDLE handle, OIS_UBYTE u08_adr,  OIS_UWORD u16_dat);
+#define   I2C_OIS_mem_write( u08_adr,  u16_dat)    I2C_OIS_mem_write_para( handle,  u08_adr,  u16_dat)
+OIS_UWORD	I2C_OIS_per__read(SENSOR_HW_HANDLE handle, OIS_UBYTE u08_adr );
+OIS_UWORD	I2C_OIS_mem__read_para(SENSOR_HW_HANDLE handle, OIS_UBYTE u08_adr );
+#define   I2C_OIS_mem__read(u08_adr )    I2C_OIS_mem__read_para(handle, u08_adr )
+void		I2C_OIS_spcl_cmnd(SENSOR_HW_HANDLE handle, OIS_UBYTE u08_on,   OIS_UBYTE u08_dat );
+void		I2C_OIS_F0123_wr_( SENSOR_HW_HANDLE handle, OIS_UBYTE u08_dat0, OIS_UBYTE u08_dat1, OIS_UWORD u16_dat2 );
+OIS_UWORD	I2C_OIS_F0123__rd( SENSOR_HW_HANDLE handle );
 
 //void		POWER_UP_AND_PS_DISABLE( void );					//Darcy mask/20140620
 //void		POWER_DOWN_AND_PS_ENABLE( void );				//Darcy mask/20140620
-void		VCOSET0( void );
-void		VCOSET1( void );
-void		WR_I2C( OIS_UBYTE slvadr, OIS_UBYTE size, OIS_UBYTE *dat );
-OIS_UWORD	RD_I2C( OIS_UBYTE slvadr, OIS_UBYTE size, OIS_UBYTE *dat );
-void		store_FADJ_MEM_to_non_volatile_memory( _FACT_ADJ param );
-_FACT_ADJ	get_FADJ_MEM_from_non_volatile_memory( void );
+void		VCOSET0( SENSOR_HW_HANDLE handle );
+void		VCOSET1( SENSOR_HW_HANDLE handle );
+void		WR_I2C( SENSOR_HW_HANDLE handle, OIS_UBYTE slvadr, OIS_UBYTE size, OIS_UBYTE *dat );
+OIS_UWORD	RD_I2C( SENSOR_HW_HANDLE handle, OIS_UBYTE slvadr, OIS_UBYTE size, OIS_UBYTE *dat );
+void		store_FADJ_MEM_to_non_volatile_memory(SENSOR_HW_HANDLE handle, _FACT_ADJ param );
+_FACT_ADJ	get_FADJ_MEM_from_non_volatile_memory( SENSOR_HW_HANDLE handle );
 //void		Wait_usec( OIS_ULONG time );						//Darcy mask/20140620
 int 		debug_print(const char *format, ...);					// RHM_HT 2013/04/15	Add for DEBUG
 

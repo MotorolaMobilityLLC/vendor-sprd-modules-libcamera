@@ -502,13 +502,13 @@ cmr_int isp3a_set_exposure(cmr_handle handle, struct ae_ctrl_param_sensor_exposu
 		ex_exp.dummy = in_ptr->dummy;
 		ex_exp.size_index = in_ptr->size_index;
 
-		ret = cxt->ioctrl_ptr->ex_set_exposure((unsigned long)&ex_exp);
+		ret = cxt->ioctrl_ptr->ex_set_exposure(cxt->ioctrl_ptr->caller_handler, (unsigned long)&ex_exp);
 	} else if (cxt->ioctrl_ptr->set_exposure) {
 		sensor_param = in_ptr->exp_line& 0x0000ffff;
 		sensor_param |= (in_ptr->dummy << 0x10) & 0x0fff0000;
 		sensor_param |= (in_ptr->size_index << 0x1c) & 0xf0000000;
 
-		ret = cxt->ioctrl_ptr->set_exposure(sensor_param);
+		ret = cxt->ioctrl_ptr->set_exposure(cxt->ioctrl_ptr->caller_handler, sensor_param);
 	}
 exit:
 	ISP_LOGI("done %ld", ret);
@@ -524,7 +524,7 @@ cmr_int isp3a_ae_set_gain(cmr_handle handle, struct ae_ctrl_param_sensor_gain *i
 		ISP_LOGE("don't have io interface");
 		goto exit;
 	}
-	ret = cxt->ioctrl_ptr->set_gain(in_ptr->gain);
+	ret = cxt->ioctrl_ptr->set_gain(cxt->ioctrl_ptr->caller_handler, in_ptr->gain);
 exit:
 	ISP_LOGI("done %ld", ret);
 	return ret;
@@ -600,7 +600,7 @@ cmr_int isp3a_set_pos(cmr_handle handle, struct af_ctrl_motor_pos * in)
 		ISP_LOGE("don't have io interface");
 		goto exit;
 	}
-	ret = cxt->ioctrl_ptr->set_focus(in->motor_pos);
+	ret = cxt->ioctrl_ptr->set_focus(cxt->ioctrl_ptr->caller_handler, in->motor_pos);
 exit:
 	ISP_LOGI("done %ld", ret);
 	return ret;

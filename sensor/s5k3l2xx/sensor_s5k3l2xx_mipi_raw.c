@@ -55,30 +55,30 @@ static struct sensor_raw_info* s_s5k3l2xx_mipi_raw_info_ptr = NULL;
 static uint32_t s_set_gain;
 static uint32_t s_set_exposure;
 
-static unsigned long _s5k3l2xx_GetResolutionTrimTab(unsigned long param);
-static unsigned long _s5k3l2xx_PowerOn(unsigned long power_on);
-static unsigned long _s5k3l2xx_Identify(unsigned long param);
-static unsigned long _s5k3l2xx_BeforeSnapshot(unsigned long param);
-static unsigned long _s5k3l2xx_after_snapshot(unsigned long param);
-static unsigned long _s5k3l2xx_StreamOn(unsigned long param);
-static unsigned long _s5k3l2xx_StreamOff(unsigned long param);
-static unsigned long _s5k3l2xx_write_exposure(unsigned long param);
-static unsigned long _s5k3l2xx_write_gain(unsigned long param);
-static unsigned long _s5k3l2xx_write_af(unsigned long param);
-static unsigned long _s5k3l2xx_flash(unsigned long param);
-static unsigned long _s5k3l2xx_GetExifInfo(unsigned long param);
-static unsigned long _s5k3l2xx_ExtFunc(unsigned long ctl_param);
-static uint16_t _s5k3l2xx_get_VTS(void);
-static uint32_t _s5k3l2xx_set_VTS(uint16_t VTS);
-static uint32_t _s5k3l2xx_ReadGain(uint32_t param);
-static unsigned long _s5k3l2xx_set_video_mode(unsigned long param);
-static uint16_t _s5k3l2xx_get_shutter(void);
-static uint32_t _s5k3l2xx_set_shutter(uint16_t shutter);
-static uint32_t _s5k3l2xx_com_Identify_otp(void* param_ptr);
-static unsigned long _s5k3l2xx_access_val(unsigned long param);
-static uint32_t _s5k3l2xx_read_otp(unsigned long param);
-static uint32_t _s5k3l2xx_write_otp(unsigned long param);
-static unsigned long _s5k3l2xx_ex_write_exposure(unsigned long param);
+static unsigned long _s5k3l2xx_GetResolutionTrimTab(SENSOR_HW_HANDLE handle, unsigned long param);
+static unsigned long _s5k3l2xx_PowerOn(SENSOR_HW_HANDLE handle, unsigned long power_on);
+static unsigned long _s5k3l2xx_Identify(SENSOR_HW_HANDLE handle, unsigned long param);
+static unsigned long _s5k3l2xx_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned long param);
+static unsigned long _s5k3l2xx_after_snapshot(SENSOR_HW_HANDLE handle, unsigned long param);
+static unsigned long _s5k3l2xx_StreamOn(SENSOR_HW_HANDLE handle, unsigned long param);
+static unsigned long _s5k3l2xx_StreamOff(SENSOR_HW_HANDLE handle, unsigned long param);
+static unsigned long _s5k3l2xx_write_exposure(SENSOR_HW_HANDLE handle, unsigned long param);
+static unsigned long _s5k3l2xx_write_gain(SENSOR_HW_HANDLE handle, unsigned long param);
+static unsigned long _s5k3l2xx_write_af(SENSOR_HW_HANDLE handle, unsigned long param);
+static unsigned long _s5k3l2xx_flash(SENSOR_HW_HANDLE handle, unsigned long param);
+static unsigned long _s5k3l2xx_GetExifInfo(SENSOR_HW_HANDLE handle, unsigned long param);
+static unsigned long _s5k3l2xx_ExtFunc(SENSOR_HW_HANDLE handle, unsigned long ctl_param);
+static uint16_t _s5k3l2xx_get_VTS(SENSOR_HW_HANDLE handle);
+static uint32_t _s5k3l2xx_set_VTS(SENSOR_HW_HANDLE handle, uint16_t VTS);
+static uint32_t _s5k3l2xx_ReadGain(SENSOR_HW_HANDLE handle, uint32_t param);
+static unsigned long _s5k3l2xx_set_video_mode(SENSOR_HW_HANDLE handle, unsigned long param);
+static uint16_t _s5k3l2xx_get_shutter(SENSOR_HW_HANDLE handle);
+static uint32_t _s5k3l2xx_set_shutter(SENSOR_HW_HANDLE handle, uint16_t shutter);
+static uint32_t _s5k3l2xx_com_Identify_otp(SENSOR_HW_HANDLE handle, void* param_ptr);
+static unsigned long _s5k3l2xx_access_val(SENSOR_HW_HANDLE handle, unsigned long param);
+static uint32_t _s5k3l2xx_read_otp(SENSOR_HW_HANDLE handle, unsigned long param);
+static uint32_t _s5k3l2xx_write_otp(SENSOR_HW_HANDLE handle, unsigned long param);
+static unsigned long _s5k3l2xx_ex_write_exposure(SENSOR_HW_HANDLE handle, unsigned long param);
 
 
 static const struct raw_param_info_tab s_s5k3l2xx_raw_param_tab[] = {
@@ -2057,7 +2057,7 @@ static SENSOR_VIDEO_INFO_T s_s5k3l2xx_video_info[] = {
 	{{{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}}, PNULL}
 };
 
-static unsigned long _s5k3l2xx_set_video_mode(unsigned long param)
+static unsigned long _s5k3l2xx_set_video_mode(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	SENSOR_REG_T_PTR sensor_reg_ptr;
 	uint16_t i = 0;
@@ -2248,19 +2248,19 @@ static SENSOR_STATIC_INFO_T s_s5k3l2xx_static_info = {
     };
 	
 
-static struct sensor_raw_info* Sensor_GetContext(void)
+static struct sensor_raw_info* Sensor_GetContext(SENSOR_HW_HANDLE handle)
 {
 	return s_s5k3l2xx_mipi_raw_info_ptr;
 }
 
-static uint32_t Sensor_s5k3l2xx_InitRawTuneInfo(void)
+static uint32_t Sensor_s5k3l2xx_InitRawTuneInfo(SENSOR_HW_HANDLE handle)
 {
 	uint32_t rtn=0x00;
 
 	return rtn;
 }
 
-static uint32_t _dw9807_SRCInit(uint32_t mode)
+static uint32_t _dw9807_SRCInit(SENSOR_HW_HANDLE handle, uint32_t mode)
 {
 	uint8_t cmd_val[2] = {0x00};
 	uint16_t slave_addr = 0;
@@ -2325,13 +2325,13 @@ static uint32_t _dw9807_SRCInit(uint32_t mode)
 	return ret_value;
 }
 
-static unsigned long _s5k3l2xx_GetResolutionTrimTab(unsigned long param)
+static unsigned long _s5k3l2xx_GetResolutionTrimTab(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	SENSOR_PRINT("0x%lx",  (unsigned long)s_s5k3l2xx_Resolution_Trim_Tab);
 	return (unsigned long) s_s5k3l2xx_Resolution_Trim_Tab;
 }
 
-static uint32_t _s5k3l2xx_init_mode_fps_info()
+static uint32_t _s5k3l2xx_init_mode_fps_info(SENSOR_HW_HANDLE handle)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_PRINT("_s5k3l2xx_init_mode_fps_info:E");
@@ -2373,7 +2373,7 @@ static uint32_t _s5k3l2xx_init_mode_fps_info()
 	return rtn;
 }
 
-static unsigned long _s5k3l2xx_PowerOn(unsigned long power_on)
+static unsigned long _s5k3l2xx_PowerOn(SENSOR_HW_HANDLE handle, unsigned long power_on)
 {
 	SENSOR_AVDD_VAL_E dvdd_val = g_s5k3l2xx_mipi_raw_info.dvdd_val;
 	SENSOR_AVDD_VAL_E avdd_val = g_s5k3l2xx_mipi_raw_info.avdd_val;
@@ -2395,7 +2395,7 @@ static unsigned long _s5k3l2xx_PowerOn(unsigned long power_on)
 		//Sensor_PowerDown(!power_down);
 		Sensor_SetResetLevel(!reset_level);
 		usleep(10*1000);
-		_dw9807_SRCInit(2);
+		_dw9807_SRCInit(handle, 2);
 #ifdef MClK_26M_SS		
                   Sensor_SetMCLK(26);//SENSOR_DEFALUT_MCLK);//
 #else
@@ -2417,7 +2417,7 @@ static unsigned long _s5k3l2xx_PowerOn(unsigned long power_on)
     return SENSOR_SUCCESS;
 }
 
-static uint32_t _s5k3l2xx_cfg_otp(uint32_t  param)
+static uint32_t _s5k3l2xx_cfg_otp(SENSOR_HW_HANDLE handle, uint32_t  param)
 {
 	uint32_t rtn=SENSOR_SUCCESS;
 	struct raw_param_info_tab* tab_ptr = (struct raw_param_info_tab*)s_s5k3l2xx_raw_param_tab;
@@ -2432,7 +2432,7 @@ static uint32_t _s5k3l2xx_cfg_otp(uint32_t  param)
 	return rtn;
 }
 
-static uint32_t _s5k3l2xx_com_Identify_otp(void* param_ptr)
+static uint32_t _s5k3l2xx_com_Identify_otp(SENSOR_HW_HANDLE handle, void* param_ptr)
 {
 	uint32_t rtn=SENSOR_FAIL;
 	uint32_t param_id;
@@ -2449,7 +2449,7 @@ static uint32_t _s5k3l2xx_com_Identify_otp(void* param_ptr)
 	return rtn;
 }
 
-static uint32_t _s5k3l2xx_GetRawInof(void)
+static uint32_t _s5k3l2xx_GetRawInof(SENSOR_HW_HANDLE handle)
 {
 	uint32_t rtn=SENSOR_SUCCESS;
 	struct raw_param_info_tab* tab_ptr = (struct raw_param_info_tab*)s_s5k3l2xx_raw_param_tab;
@@ -2481,7 +2481,7 @@ static uint32_t _s5k3l2xx_GetRawInof(void)
 	return rtn;
 }
 
-static uint32_t _s5k3l2xx_GetMaxFrameLine(uint32_t index)
+static uint32_t _s5k3l2xx_GetMaxFrameLine(SENSOR_HW_HANDLE handle, uint32_t index)
 {
 	uint32_t max_line=0x00;
 	SENSOR_TRIM_T_PTR trim_ptr=s_s5k3l2xx_Resolution_Trim_Tab;
@@ -2491,7 +2491,7 @@ static uint32_t _s5k3l2xx_GetMaxFrameLine(uint32_t index)
 	return max_line;
 }
 
-static unsigned long _s5k3l2xx_Identify(unsigned long param)
+static unsigned long _s5k3l2xx_Identify(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 #define S5K3L2XX_PID_ADDR     	0x0000
 #define S5K3L2XX_VER_ADDR     	0x0004
@@ -2513,12 +2513,12 @@ static unsigned long _s5k3l2xx_Identify(unsigned long param)
 		if (S5K3L2XX_PID_VALUE == pid_value) {
 			if (S5K3L2XX_VER_VALUE == ver_value) {
 				SENSOR_PRINT_ERR("SENSOR_S5K3L2XX: this is S5K3L2XX sensor !");
-				ret_value=_s5k3l2xx_GetRawInof();
+				ret_value=_s5k3l2xx_GetRawInof(handle);
 				if (SENSOR_SUCCESS != ret_value) {
 					SENSOR_PRINT_ERR("SENSOR_S5K3L2XX: the module is unknow error !");
 				}
-				Sensor_s5k3l2xx_InitRawTuneInfo();
-                                    _s5k3l2xx_init_mode_fps_info();
+				Sensor_s5k3l2xx_InitRawTuneInfo(handle);
+                                    _s5k3l2xx_init_mode_fps_info(handle);
                                   //  _s5k3l2xx_StreamOn(1);
                                     return ret_value;
 			} else {
@@ -2534,7 +2534,7 @@ static unsigned long _s5k3l2xx_Identify(unsigned long param)
 }
 
 //uint32_t s_af_step=0x00;
-static unsigned long _s5k3l2xx_write_exposure(unsigned long param)
+static unsigned long _s5k3l2xx_write_exposure(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 
 	uint32_t ret_value = SENSOR_SUCCESS;
@@ -2549,7 +2549,7 @@ static unsigned long _s5k3l2xx_write_exposure(unsigned long param)
 	dummy_line=(param>>0x10)&0x0fff;
 	size_index=(param>>0x1c)&0x0f;
 	SENSOR_PRINT("_s5k3l2xx: write_exposure line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
-	max_frame_len=_s5k3l2xx_GetMaxFrameLine(size_index);
+	max_frame_len=_s5k3l2xx_GetMaxFrameLine(handle, size_index);
 	if(expsure_line < 4){
 		expsure_line = 4;
 	}
@@ -2579,7 +2579,7 @@ static unsigned long _s5k3l2xx_write_exposure(unsigned long param)
 	return ret_value;
 
 }
-static unsigned long _s5k3l2xx_write_exp_dummy(uint16_t expsure_line,
+static unsigned long _s5k3l2xx_write_exp_dummy(SENSOR_HW_HANDLE handle, uint16_t expsure_line,
 								uint16_t dummy_line, uint16_t size_index)
 
 {
@@ -2590,7 +2590,7 @@ static unsigned long _s5k3l2xx_write_exp_dummy(uint16_t expsure_line,
 	uint32_t linetime = 0;
 
 	SENSOR_PRINT("SENSOR_s5k3l2xx: write_exp_dummy line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
-	max_frame_len=_s5k3l2xx_GetMaxFrameLine(size_index);
+	max_frame_len=_s5k3l2xx_GetMaxFrameLine(handle, size_index);
 	if (expsure_line < 3) {
 		expsure_line = 3;
 	}
@@ -2624,7 +2624,7 @@ static unsigned long _s5k3l2xx_write_exp_dummy(uint16_t expsure_line,
 	return ret_value;
 }
 
-static unsigned long _s5k3l2xx_ex_write_exposure(unsigned long param)
+static unsigned long _s5k3l2xx_ex_write_exposure(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint16_t exposure_line = 0x00;
@@ -2642,12 +2642,12 @@ static unsigned long _s5k3l2xx_ex_write_exposure(unsigned long param)
 	dummy_line = ex->dummy;
 	size_index = ex->size_index;
 
-	ret_value = _s5k3l2xx_write_exp_dummy(exposure_line, dummy_line, size_index);
+	ret_value = _s5k3l2xx_write_exp_dummy(handle, exposure_line, dummy_line, size_index);
 
 	return ret_value;
 }
 
-static unsigned long _s5k3l2xx_write_gain(unsigned long param)
+static unsigned long _s5k3l2xx_write_gain(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 
 	uint32_t ret_value = SENSOR_SUCCESS;
@@ -2687,7 +2687,7 @@ static unsigned long _s5k3l2xx_write_gain(unsigned long param)
 
 }
 
-static unsigned long _s5k3l2xx_write_af(unsigned long param)
+static unsigned long _s5k3l2xx_write_af(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint8_t cmd_val[2] = {0x00};
@@ -2713,7 +2713,7 @@ static unsigned long _s5k3l2xx_write_af(unsigned long param)
 	return ret_value;
 }
 
-static unsigned long _s5k3l2xx_BeforeSnapshot(unsigned long param)
+static unsigned long _s5k3l2xx_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 
 	uint16_t ret;
@@ -2739,7 +2739,7 @@ static unsigned long _s5k3l2xx_BeforeSnapshot(unsigned long param)
 
 
 	preview_exposure = Sensor_ReadReg(0x202);
-	_s5k3l2xx_ReadGain(&gain);
+	_s5k3l2xx_ReadGain(handle, &gain);
 
 	Sensor_SetMode(param);
 	Sensor_SetMode_WaitDone();
@@ -2770,14 +2770,14 @@ static unsigned long _s5k3l2xx_BeforeSnapshot(unsigned long param)
 
 }
 
-static unsigned long _s5k3l2xx_after_snapshot(unsigned long param)
+static unsigned long _s5k3l2xx_after_snapshot(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	SENSOR_PRINT("SENSOR_s5k3l2xx: after_snapshot mode:%ld", param);
 	Sensor_SetMode((uint32_t)param);
 	return SENSOR_SUCCESS;
 }
 
-static unsigned long _s5k3l2xx_flash(unsigned long param)
+static unsigned long _s5k3l2xx_flash(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	SENSOR_PRINT("Start:param=%ld", param);
 
@@ -2788,7 +2788,7 @@ static unsigned long _s5k3l2xx_flash(unsigned long param)
 	return SENSOR_SUCCESS;
 }
 
-static unsigned long _s5k3l2xx_GetExifInfo(unsigned long param)
+static unsigned long _s5k3l2xx_GetExifInfo(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	LOCAL EXIF_SPEC_PIC_TAKING_COND_T sexif;
 
@@ -2798,7 +2798,7 @@ static unsigned long _s5k3l2xx_GetExifInfo(unsigned long param)
 	return (unsigned long) & sexif;
 }
 
-static unsigned long _s5k3l2xx_StreamOn(unsigned long param)
+static unsigned long _s5k3l2xx_StreamOn(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t value = 0;
 	SENSOR_PRINT_ERR("SENSOR_s5k3l2xx: StreamOn");
@@ -2807,7 +2807,7 @@ static unsigned long _s5k3l2xx_StreamOn(unsigned long param)
 	return 0;
 }
 
-static unsigned long _s5k3l2xx_StreamOff(unsigned long param)
+static unsigned long _s5k3l2xx_StreamOff(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	SENSOR_PRINT_ERR("SENSOR_s5k3l2xx: StreamOff");
 	Sensor_WriteReg(0x0100, 0x0000);
@@ -2815,7 +2815,7 @@ static unsigned long _s5k3l2xx_StreamOff(unsigned long param)
 	return 0;
 }
 
-static uint16_t _s5k3l2xx_get_shutter(void)
+static uint16_t _s5k3l2xx_get_shutter(SENSOR_HW_HANDLE handle)
 {
 	// read shutter, in number of line period
 	uint16_t shutter_h = 0;
@@ -2830,7 +2830,7 @@ static uint16_t _s5k3l2xx_get_shutter(void)
 #endif
 }
 
-static uint32_t _s5k3l2xx_set_shutter(uint16_t shutter)
+static uint32_t _s5k3l2xx_set_shutter(SENSOR_HW_HANDLE handle, uint16_t shutter)
 {
 	uint16_t temp1,temp2;
 	Sensor_WriteReg(0x104, 0x0100);
@@ -2846,7 +2846,7 @@ static uint32_t _s5k3l2xx_set_shutter(uint16_t shutter)
 	return 0;
 }
 
-static uint32_t _s5k3l2xx_get_gain16(void)
+static uint32_t _s5k3l2xx_get_gain16(SENSOR_HW_HANDLE handle)
 {
 	// read gain, 16 = 1x
 	uint32_t gain16;
@@ -2856,7 +2856,7 @@ static uint32_t _s5k3l2xx_get_gain16(void)
 	return gain16;
 }
 
-static uint16_t _s5k3l2xx_set_gain16(uint32_t gain16)
+static uint16_t _s5k3l2xx_set_gain16(SENSOR_HW_HANDLE handle, uint32_t gain16)
 {
 	// write gain, 16 = 1x
 	uint16_t temp;
@@ -2874,7 +2874,7 @@ static uint16_t _s5k3l2xx_set_gain16(uint32_t gain16)
 }
 
 //uint32_t s_af_step=0x00;
-static unsigned long _s5k3l2xx_write_exposure_ev(unsigned long param)
+static unsigned long _s5k3l2xx_write_exposure_ev(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint16_t expsure_line = 0x00;
@@ -2914,7 +2914,7 @@ static unsigned long _s5k3l2xx_write_exposure_ev(unsigned long param)
 	return ret_value;
 
 }
-static void _calculate_hdr_exposure(int capture_gain16,int capture_VTS, int capture_shutter)
+static void _calculate_hdr_exposure(SENSOR_HW_HANDLE handle, int capture_gain16,int capture_VTS, int capture_shutter)
 {
 	// write capture gain
 	//_s5k3l2xx_set_gain16(capture_gain16);
@@ -2925,10 +2925,10 @@ static void _calculate_hdr_exposure(int capture_gain16,int capture_VTS, int capt
 		OV5640_set_VTS(capture_VTS);
 	}*/
 	//_s5k3l2xx_set_shutter(capture_shutter);
-	_s5k3l2xx_write_exposure_ev(capture_shutter);
+	_s5k3l2xx_write_exposure_ev(handle, capture_shutter);
 }
 
-static uint32_t _s5k3l2xx_SetEV(unsigned long param)
+static uint32_t _s5k3l2xx_SetEV(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr = (SENSOR_EXT_FUN_PARAM_T_PTR) param;
@@ -2941,13 +2941,13 @@ static uint32_t _s5k3l2xx_SetEV(unsigned long param)
 
 	switch(ev) {
 	case SENSOR_HDR_EV_LEVE_0:
-		_calculate_hdr_exposure(s_s5k3l2xx_gain/4,s_capture_VTS,s_capture_shutter/2);
+		_calculate_hdr_exposure(handle, s_s5k3l2xx_gain/4,s_capture_VTS,s_capture_shutter/2);
 		break;
 	case SENSOR_HDR_EV_LEVE_1:
-		_calculate_hdr_exposure(s_s5k3l2xx_gain,s_capture_VTS,s_capture_shutter);
+		_calculate_hdr_exposure(handle, s_s5k3l2xx_gain,s_capture_VTS,s_capture_shutter);
 		break;
 	case SENSOR_HDR_EV_LEVE_2:
-		_calculate_hdr_exposure(s_s5k3l2xx_gain*3/2,s_capture_VTS,s_capture_shutter*2);
+		_calculate_hdr_exposure(handle, s_s5k3l2xx_gain*3/2,s_capture_VTS,s_capture_shutter*2);
 		break;
 	default:
 		break;
@@ -2956,7 +2956,7 @@ static uint32_t _s5k3l2xx_SetEV(unsigned long param)
 	return rtn;
 }
 
-static unsigned long _s5k3l2xx_ExtFunc(unsigned long ctl_param)
+static unsigned long _s5k3l2xx_ExtFunc(SENSOR_HW_HANDLE handle, unsigned long ctl_param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr =
@@ -2971,7 +2971,7 @@ static unsigned long _s5k3l2xx_ExtFunc(unsigned long ctl_param)
 	case SENSOR_EXT_EXPOSURE_START:
 		break;
 	case SENSOR_EXT_EV:
-		rtn = _s5k3l2xx_SetEV(ctl_param);
+		rtn = _s5k3l2xx_SetEV(handle, ctl_param);
 		break;
 	default:
 		break;
@@ -2979,7 +2979,7 @@ static unsigned long _s5k3l2xx_ExtFunc(unsigned long ctl_param)
 	return rtn;
 }
 
-static uint16_t _s5k3l2xx_get_VTS(void)
+static uint16_t _s5k3l2xx_get_VTS(SENSOR_HW_HANDLE handle)
 {
 	// read VTS from register settings
 	uint16_t VTS;
@@ -2990,7 +2990,7 @@ static uint16_t _s5k3l2xx_get_VTS(void)
 	return VTS;
 }
 
-static uint32_t _s5k3l2xx_set_VTS(uint16_t VTS)
+static uint32_t _s5k3l2xx_set_VTS(SENSOR_HW_HANDLE handle, uint16_t VTS)
 {
 // write VTS to registers
 	uint16_t temp1,temp2;
@@ -3004,7 +3004,7 @@ static uint32_t _s5k3l2xx_set_VTS(uint16_t VTS)
 	return 0;
 }
 
-static uint32_t _s5k3l2xx_ReadGain(uint32_t param)
+static uint32_t _s5k3l2xx_ReadGain(SENSOR_HW_HANDLE handle, uint32_t param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	uint32_t gain = 0;
@@ -3016,7 +3016,7 @@ static uint32_t _s5k3l2xx_ReadGain(uint32_t param)
 
 }
 
-static uint32_t _s5k3l2xx_write_otp_gain(uint32_t *param)
+static uint32_t _s5k3l2xx_write_otp_gain(SENSOR_HW_HANDLE handle, uint32_t *param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint16_t value = 0x00;
@@ -3033,7 +3033,7 @@ static uint32_t _s5k3l2xx_write_otp_gain(uint32_t *param)
 	return ret_value;
 }
 
-static uint32_t _s5k3l2xx_read_otp_gain(uint32_t *param)
+static uint32_t _s5k3l2xx_read_otp_gain(SENSOR_HW_HANDLE handle, uint32_t *param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	uint16_t gain_h = 0;
@@ -3067,7 +3067,7 @@ static uint32_t _s5k3l2xx_read_otp_gain(uint32_t *param)
 	return rtn;
 }
 
-static uint32_t _s5k3l2xx_write_vcm(uint32_t *param)
+static uint32_t _s5k3l2xx_write_vcm(SENSOR_HW_HANDLE handle, uint32_t *param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint8_t cmd_val[2] = {0x00};
@@ -3086,7 +3086,7 @@ static uint32_t _s5k3l2xx_write_vcm(uint32_t *param)
 	return ret_value;
 }
 
-static uint32_t _s5k3l2xx_read_vcm(uint32_t *param)
+static uint32_t _s5k3l2xx_read_vcm(SENSOR_HW_HANDLE handle, uint32_t *param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint8_t cmd_val[2] = {0x00};
@@ -3208,13 +3208,13 @@ static uint32_t _s5k3l2xx_get_golden_data(unsigned long param)
 }
 #endif
 
-static uint32_t _s5k3l2xx_get_static_info(uint32_t *param)
+static uint32_t _s5k3l2xx_get_static_info(SENSOR_HW_HANDLE handle, uint32_t *param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	struct sensor_ex_info *ex_info;
 	//make sure we have get max fps of all settings.
 	if(!s_s5k3l2xx_mode_fps_info.is_init) {
-		_s5k3l2xx_init_mode_fps_info();
+		_s5k3l2xx_init_mode_fps_info(handle);
 	}
 	ex_info = (struct sensor_ex_info*)param;
 	ex_info->f_num = s_s5k3l2xx_static_info.f_num;
@@ -3244,13 +3244,13 @@ static uint32_t _s5k3l2xx_get_static_info(uint32_t *param)
 	return rtn;
 }
 
-static uint32_t _s5k3l2xx_get_fps_info(uint32_t *param)
+static uint32_t _s5k3l2xx_get_fps_info(SENSOR_HW_HANDLE handle, uint32_t *param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_MODE_FPS_T *fps_info;
 	//make sure have inited fps of every sensor mode.
 	if(!s_s5k3l2xx_mode_fps_info.is_init) {
-		_s5k3l2xx_init_mode_fps_info();
+		_s5k3l2xx_init_mode_fps_info(handle);
 	}
 	fps_info = (SENSOR_MODE_FPS_T*)param;
 	uint32_t sensor_mode = fps_info->mode;
@@ -3315,7 +3315,7 @@ static uint32_t _s5k3l2xx_get_fps_info(uint32_t *param)
 	return rtn;
 }
 */
-static unsigned long _s5k3l2xx_access_val(unsigned long param)
+static unsigned long _s5k3l2xx_access_val(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_VAL_T* param_ptr = (SENSOR_VAL_T*)param;
@@ -3330,7 +3330,7 @@ static unsigned long _s5k3l2xx_access_val(unsigned long param)
 	switch(param_ptr->type)
 	{
 		case SENSOR_VAL_TYPE_SHUTTER:
-			*((uint32_t*)param_ptr->pval) = _s5k3l2xx_get_shutter();
+			*((uint32_t*)param_ptr->pval) = _s5k3l2xx_get_shutter(handle);
 			break;
 		case SENSOR_VAL_TYPE_READ_VCM:
 			//rtn = _s5k3l2xx_read_vcm(param_ptr->pval);
@@ -3354,19 +3354,19 @@ static unsigned long _s5k3l2xx_access_val(unsigned long param)
 			*(uint32_t*)param_ptr->pval = 0;//cur_af_pos;
 			break;
 		case SENSOR_VAL_TYPE_WRITE_OTP_GAIN:
-			rtn = _s5k3l2xx_write_otp_gain(param_ptr->pval);
+			rtn = _s5k3l2xx_write_otp_gain(handle, param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_READ_OTP_GAIN:
-			rtn = _s5k3l2xx_read_otp_gain(param_ptr->pval);
+			rtn = _s5k3l2xx_read_otp_gain(handle, param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_GET_GOLDEN_DATA:
 			//rtn = _s5k3l2xx_get_golden_data((unsigned long)param_ptr->pval);
 			break;
             	case SENSOR_VAL_TYPE_GET_STATIC_INFO:
-			rtn = _s5k3l2xx_get_static_info(param_ptr->pval);
+			rtn = _s5k3l2xx_get_static_info(handle, param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_GET_FPS_INFO:
-			rtn = _s5k3l2xx_get_fps_info(param_ptr->pval);
+			rtn = _s5k3l2xx_get_fps_info(handle, param_ptr->pval);
 			break;
 		default:
 			break;

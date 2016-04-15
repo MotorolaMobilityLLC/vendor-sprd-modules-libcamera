@@ -417,7 +417,7 @@ int32_t sp_write_i2c(sft_af_handle_t handle,uint16_t slave_addr, uint8_t *cmd, u
 			return ISP_ERROR;
 	}
 
-	ctrl_context->ioctrl_ptr->write_i2c(slave_addr,cmd,cmd_length);
+	ctrl_context->ioctrl_ptr->write_i2c(ctrl_context->ioctrl_ptr->caller_handler, slave_addr,cmd,cmd_length);
 
 	return rtn;
 
@@ -439,7 +439,7 @@ int32_t sp_read_i2c(sft_af_handle_t handle,uint16_t slave_addr, uint8_t *cmd, ui
 			return ISP_ERROR;
 	}
 
-	ctrl_context->ioctrl_ptr->read_i2c(slave_addr,cmd,cmd_length);
+	ctrl_context->ioctrl_ptr->read_i2c(ctrl_context->ioctrl_ptr->caller_handler, slave_addr,cmd,cmd_length);
 
 	return rtn;
 
@@ -561,7 +561,7 @@ int32_t set_motor_pos(sft_af_handle_t handle, uint32_t pos)
 	}
 
 	SFT_AF_LOG("pos %d",pos);
-	ctrl_context->ioctrl_ptr->set_focus(pos);
+	ctrl_context->ioctrl_ptr->set_focus(ctrl_context->ioctrl_ptr->caller_handler, pos);
 	af_cxt->cur_pos = pos;
 
 	return rtn;

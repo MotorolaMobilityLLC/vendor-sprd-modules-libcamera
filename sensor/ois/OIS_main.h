@@ -17,14 +17,16 @@
 #ifndef __OIS_MAIN_H__
 #define __OIS_MAIN_H__
 
-uint32_t ois_pre_open(void);
-uint32_t OpenOIS(void);
-uint32_t CloseOIS(void);
-uint32_t  SetOisMode(unsigned char mode);
-unsigned char GetOisMode(void);
-unsigned short  OisLensRead(unsigned short  cmd);
-uint32_t OisLensWrite(unsigned short  cmd);
-uint32_t OIS_write_af(uint32_t param);
+#include "sensor_drv_u.h"
+
+uint32_t ois_pre_open(SENSOR_HW_HANDLE handle);
+uint32_t OpenOIS(SENSOR_HW_HANDLE handle);
+uint32_t CloseOIS(SENSOR_HW_HANDLE handle);
+uint32_t  SetOisMode(SENSOR_HW_HANDLE handle, unsigned char mode);
+unsigned char GetOisMode(SENSOR_HW_HANDLE handle);
+unsigned short  OisLensRead(SENSOR_HW_HANDLE handle, unsigned short  cmd);
+uint32_t OisLensWrite(SENSOR_HW_HANDLE handle, unsigned short  cmd);
+uint32_t OIS_write_af(SENSOR_HW_HANDLE handle, uint32_t param);
 
 #endif // __OIS_MAIN_H__
 
