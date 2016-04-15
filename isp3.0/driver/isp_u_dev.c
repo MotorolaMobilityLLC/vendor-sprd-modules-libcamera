@@ -396,7 +396,7 @@ static void* isp_dev_thread_proc(void *data)
 					} else if (irq_info.irq_type == ISP_IRQ_3A_SOF) {
 						CMR_LOGI("got one sof");
 						irq_node.irq_val0 = irq_info.irq_id;
-						irq_node.reserved = irq_info.frm_index;
+						irq_node.reserved = 0;
 						irq_node.ret_val = 0;
 						irq_node.time_stamp.sec = irq_info.time_stamp.sec;
 						irq_node.time_stamp.usec = irq_info.time_stamp.usec;

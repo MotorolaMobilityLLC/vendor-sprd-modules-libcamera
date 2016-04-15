@@ -115,8 +115,6 @@ cmr_int isp_dev_access_cfg_af_param(cmr_handle isp_dev_handle, struct isp3a_af_h
 cmr_int isp_dev_access_cfg_iso_speed(cmr_handle isp_dev_handle, cmr_u32 *data);
 cmr_int isp_dev_access_get_exif_debug_info(cmr_handle isp_dev_handle, struct debug_info1 *exif_info);
 cmr_int isp_dev_access_get_debug_info(cmr_handle isp_dev_handle, struct debug_info2 *debug_info);
-cmr_int isp_dev_access_set_skip_num(isp_handle handle, cmr_u32 skip_num);
-cmr_int isp_dev_access_cfg_sof_info(isp_handle handle, struct isp_sof_cfg_info *data);
 /**---------------------------------------------------------------------------*/
 
 #endif
