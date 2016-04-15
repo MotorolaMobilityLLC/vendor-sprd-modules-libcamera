@@ -2343,8 +2343,8 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 	struct ae_output_data_t output_param;
 	enum ae_set_param_type_t type = 0;
 	struct ae_set_param_content_t param_ct;
-
 	enum isp3a_work_mode work_mode = 0;
+	struct seq_init_in seq_in;
 
 
 	if (!cxt_ptr || !in_ptr || !out_ptr) {
@@ -2361,6 +2361,26 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 	if (in_ptr->work_param.sensor_fps.is_high_fps) {
 		cxt_ptr->nxt_status.ui_param.work_info.resolution.max_fps = in_ptr->work_param.sensor_fps.max_fps;
 		cxt_ptr->nxt_status.ui_param.work_info.resolution.min_fps = in_ptr->work_param.sensor_fps.max_fps;
+
+		seq_deinit(cxt_ptr->seq_handle);
+		seq_in.capture_skip_num = cxt_ptr->init_in_param.sensor_static_info.capture_skip_num;
+		seq_in.preview_skip_num = cxt_ptr->init_in_param.sensor_static_info.capture_skip_num;
+		if (in_ptr->work_param.sensor_fps.high_fps_skip_num >= seq_in.exp_valid_num)
+			seq_in.exp_valid_num = 0;
+		else
+			seq_in.exp_valid_num = seq_in.exp_valid_num - in_ptr->work_param.sensor_fps.high_fps_skip_num;
+		if (in_ptr->work_param.sensor_fps.high_fps_skip_num >= seq_in.gain_valid_num)
+			seq_in.gain_valid_num = 0;
+		else
+			seq_in.gain_valid_num = seq_in.gain_valid_num - in_ptr->work_param.sensor_fps.high_fps_skip_num;
+		seq_in.idx_start_from = 1;
+
+		ISP_LOGI("cap skip num=%d, preview skip num=%d, exp_valid_num=%d,gain_valid_num=%d",
+				seq_in.capture_skip_num, seq_in.preview_skip_num,
+				seq_in.exp_valid_num, seq_in.gain_valid_num);
+
+		ret = seq_init(10, &seq_in, &cxt_ptr->seq_handle);
+		ret = aealtek_set_boost(cxt_ptr, 0);
 	}
 
 	cxt_ptr->is_refocus = in_ptr->work_param.is_refocus;
@@ -2401,7 +2421,9 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 	if (ret)
 		goto exit;
 
-	if (!cxt_ptr->tuning_info.manual_ae_on) {
+	if (!cxt_ptr->tuning_info.manual_ae_on
+			&& AE_DISABLED != cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_LibStates
+			&& AE_LOCKED != cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_LibStates) {
 		ret = aealtek_lib_exposure2sensor(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
 		if (ret)
 			goto exit;
@@ -2952,7 +2974,7 @@ static cmr_int aealtek_callback_sync_info(struct aealtek_cxt *cxt_ptr)
 	input.master_info.cam_info_calib.b_gain = cxt_ptr->lib_data.ae_otp_data.b;
 	input.master_info.cam_info_sensor.fn = (float)(1.0 * cxt_ptr->init_in_param.sensor_static_info.f_num / F_NUM_BASE);
 	input.master_info.cam_info_sensor.max_ad_gain = cxt_ptr->nxt_status.ui_param.work_info.resolution.max_gain * 100;
-	input.master_info.cam_info_sensor.max_exp_line = MAX_EXP_LINE_CNT;
+	input.master_info.cam_info_sensor.max_exp_line = SENSOR_EXP_US_BASE/cxt_ptr->nxt_status.ui_param.work_info.resolution.min_fps/cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time;
 	input.master_info.cam_info_sensor.max_fps = cxt_ptr->nxt_status.ui_param.work_info.resolution.max_fps * 100;
 	input.master_info.cam_info_sensor.min_ad_gain = 100;
 	input.master_info.cam_info_sensor.min_exp_line = 1;
@@ -2963,7 +2985,7 @@ static cmr_int aealtek_callback_sync_info(struct aealtek_cxt *cxt_ptr)
 	input.slave_info.cam_info_calib.b_gain = 1497;
 	input.slave_info.cam_info_sensor.fn = 2.4;
 	input.slave_info.cam_info_sensor.max_ad_gain = 800;
-	input.slave_info.cam_info_sensor.max_exp_line = MAX_EXP_LINE_CNT;
+	input.slave_info.cam_info_sensor.max_exp_line = SENSOR_EXP_US_BASE/10/258;
 	input.slave_info.cam_info_sensor.max_fps = 3000;
 	input.slave_info.cam_info_sensor.min_ad_gain = 100;
 	input.slave_info.cam_info_sensor.min_exp_line = 1;
