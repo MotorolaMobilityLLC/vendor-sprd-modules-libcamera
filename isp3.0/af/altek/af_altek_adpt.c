@@ -851,7 +851,7 @@ static cmr_int afaltek_adpt_update_sof(cmr_handle adpt_handle, void *in)
 	return ret;
 }
 
-static void afaltek_ae_info_to_af_lib(struct isp3a_ae_info *ae_info,
+static void afaltek_adpt_ae_info_to_af_lib(struct isp3a_ae_info *ae_info,
 				      struct allib_af_input_aec_info_t *af_ae_info)
 {
 	af_ae_info->ae_settled = ae_info->report_data.ae_converge_st;
@@ -945,7 +945,7 @@ static cmr_int afaltek_adpt_update_ae(cmr_handle adpt_handle, void *in)
 	struct allib_af_input_aec_info_t ae_info = { 0x00 };
 	struct isp3a_ae_info *isp_ae_info = (struct isp3a_ae_info *)in;
 
-	afaltek_ae_info_to_af_lib(isp_ae_info, &ae_info);
+	afaltek_adpt_ae_info_to_af_lib(isp_ae_info, &ae_info);
 	ret = afaltek_adpt_update_ae_info(cxt, &ae_info);
 	if (ret)
 		ISP_LOGE("failed to update ae info");
@@ -1186,16 +1186,16 @@ static cmr_int afaltek_adpt_set_special_event(cmr_handle adpt_handle, void *in)
 	return ret;
 }
 
-static cmr_int af_gsensor_value_to_theta(float valuex, float valuey, float valuez)
+static cmr_int afaltek_adpt_gsensor_value_to_theta(float x, float y, float z)
 {
 	short costheta = 0;
 	float dsqrt_result =0;
 
-	dsqrt_result = sqrt((float)valuex*valuex + valuey*valuey+ valuez*valuez);
+	dsqrt_result = sqrt((float)x * x + y * y+ z * z);
 	if (0 == dsqrt_result)
 		return 0;
 	/* original X, change to Z to check */
-	costheta = -valuez*256/(cmr_s32)dsqrt_result;
+	costheta = -z * 256 / (cmr_s32)dsqrt_result;
 
 	return costheta;
 }
@@ -1206,12 +1206,12 @@ static cmr_int af_gsensor_value_to_theta(float valuex, float valuey, float value
  * a_wPoseCompensatorValue : the step difference between up and horizontal.
  * a_bIsCaliUp : the calibration pose is up or horizontal.
  */
-static cmr_int get_pose_compensator(cmr_s32 a_wcostheta, cmr_s32 a_wposecompensatorvalue, cmr_u32 a_biscaliup)
+static cmr_int afaltek_adpt_get_pose_compensator(cmr_s32 wcostheta, cmr_s32 wposecompensatorvalue, cmr_u32 biscaliup)
 {
-	if (a_biscaliup)
-		return ((a_wcostheta*a_wposecompensatorvalue)/(cmr_s32)256 - a_wposecompensatorvalue);
+	if (biscaliup)
+		return ((wcostheta * wposecompensatorvalue) / (cmr_s32)256 - wposecompensatorvalue);
 	else
-		return ((a_wcostheta*a_wposecompensatorvalue)/(cmr_s32)256);
+		return ((wcostheta * wposecompensatorvalue) / (cmr_s32)256);
 }
 
 static cmr_int afaltek_adpt_postion_compensator(cmr_handle adpt_handle, cmr_s32 *pos_offset)
@@ -1232,14 +1232,14 @@ static cmr_int afaltek_adpt_postion_compensator(cmr_handle adpt_handle, cmr_s32 
 	x = cxt->gsensor_info.vertical_up;
 	y = cxt->gsensor_info.vertical_down;
 	z = cxt->gsensor_info.horizontal;
-	costheta = af_gsensor_value_to_theta(x, y, z);
+	costheta = afaltek_adpt_gsensor_value_to_theta(x, y, z);
 	if (costheta < 0)
 		/* Honri2DownDis */
 		pose_dis_value = cxt->sensor_info.pose_dis.hori2down;
 	 else
 		/* Up2HonriDis */
 		pose_dis_value = cxt->sensor_info.pose_dis.up2hori;
-	*pos_offset = (cmr_s32)get_pose_compensator(costheta, pose_dis_value, 0);
+	*pos_offset = (cmr_s32)afaltek_adpt_get_pose_compensator(costheta, pose_dis_value, 0);
 
 exit:
 	return ret;
@@ -1259,7 +1259,7 @@ static cmr_u8 afaltek_adpt_set_pos(cmr_handle adpt_handle, cmr_s16 dac, cmr_u8 s
 	ret = afaltek_adpt_postion_compensator(cxt, &offset);
 	ISP_LOGI("dac %d offset %d", dac, offset);
 #endif
-	if ((dac+offset) >= 0)
+	if ((dac + offset) >= 0)
 		pos_info.motor_pos = dac + offset;
 	else
 		pos_info.motor_pos = 0;
@@ -1735,7 +1735,7 @@ static cmr_int afaltek_adpt_outctrl(cmr_handle adpt_handle, cmr_int cmd,
 	return ret;
 }
 
-static cmr_int afaltek_get_hw_config(struct isp3a_af_hw_cfg *out)
+static cmr_int afaltek_adpt_get_hw_config(struct isp3a_af_hw_cfg *out)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct alhw3a_af_cfginfo_t *af_cfg = (struct alhw3a_af_cfginfo_t *)out;
@@ -1942,7 +1942,7 @@ static cmr_int afaltek_adpt_init(void *in, void *out, cmr_handle * adpt_handle)
 	if (ret)
 		ISP_LOGE("ret = %ld", ret);
 
-	ret = afaltek_get_hw_config(&out_p->hw_cfg);
+	ret = afaltek_adpt_get_hw_config(&out_p->hw_cfg);
 	if (ret)
 		ISP_LOGE("ret = %ld", ret);
 
