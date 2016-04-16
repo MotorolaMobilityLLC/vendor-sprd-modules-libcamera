@@ -180,6 +180,7 @@ struct isp3a_ae_info {
 	cmr_u32 ae_ctrl_stability;  //0:unstability,   1: stability
 
 	struct isp3a_ae_report report_data;
+	cmr_u8 valid;
 };
 
 

@@ -1020,7 +1020,7 @@ exit:
 		cxt->is_inited = 1;
 		*adpt_handle = (cmr_handle)cxt;
 	}
-	ISP_LOGE("done %ld", ret);
+	ISP_LOGI("done %ld", ret);
 	return ret;
 }
 

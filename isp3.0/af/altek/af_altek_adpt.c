@@ -97,10 +97,10 @@ struct af_altek_vcm_tune_info {
 };
 
 struct af_altek_y_stat{
-	cmr_uint                                  y_addr[2];
-	cmr_u32                                   y_size;
-	cmr_u32                                   ready[2];
-	cmr_u32                                   img_in_proc[2];
+	cmr_uint  y_addr[2];
+	cmr_u32 y_size;
+	cmr_u32 ready[2];
+	cmr_u32 img_in_proc[2];
 };
 
 struct af_altek_context {
@@ -124,7 +124,6 @@ struct af_altek_context {
 	enum af_altek_adpt_status_t af_cur_status;
 	struct af_altek_stats_config_t stats_config;
 	struct af_altek_report_t report_data;
-	struct allib_af_hw_stats_t af_stats; /* TBD */
 	struct af_altek_vcm_tune_info vcm_tune;
 	struct aft_proc_result aft_proc_result;
 	struct af_altek_y_stat y_status;
@@ -483,12 +482,13 @@ static cmr_int afaltek_adpt_stop(cmr_handle adpt_handle)
 
 	ret = afaltek_adpt_set_parameters(cxt, &p);
 	ISP_LOGI("ret = %ld", ret);
+#if 0
 	status = cxt->af_out_obj.focus_status.t_status;
 	if (alAFLib_STATUS_UNKNOWN != status) {
 		ISP_LOGI("failed to stop af focus_status = %ld", status);
 		ret = -ISP_ERROR;
 	}
-
+#endif
 	return ret;
 }
 
@@ -919,9 +919,12 @@ static cmr_int afaltek_adpt_caf_update_ae_info(cmr_handle adpt_handle, void *in)
 	struct isp3a_ae_info *isp_ae_info = (struct isp3a_ae_info *)in;
 	struct isp_ae_statistic_info *ae_rgb_stats = NULL;
 
+	if (!isp_ae_info->valid)
+		return ISP_SUCCESS;
+
 	ae_rgb_stats = (struct isp_ae_statistic_info *)isp_ae_info->report_data.rgb_stats;
 	if (NULL == ae_rgb_stats) {
-		ISP_LOGE("failed to get ae rgb stats if is the first that's ok.");
+		ISP_LOGE("failed to get ae rgb stats");
 		return -ISP_ERROR;
 	}
 
@@ -1915,7 +1918,7 @@ static cmr_int afaltek_adpt_init(void *in, void *out, cmr_handle * adpt_handle)
 		goto error_libops_init;
 	}
 
-#if 1
+#if 1 /* TBD */
 	struct aft_tuning_block_param tt;
 	tt.data = malloc(20);
 	memset(tt.data, 0x00, 20);
@@ -2034,6 +2037,15 @@ static cmr_int afaltek_adpt_proc_report_debug_info(struct allib_af_output_report
 	return ret;
 }
 
+static cmr_int afaltek_adpt_proc_output_error_handler(struct allib_af_output_report_t *report)
+{
+	cmr_int ret = ISP_SUCCESS;
+
+	ISP_LOGI("report->wrap_result = 0x%x param_result = 0x%x", report->wrap_result, report-> param_result);
+
+	return ret;
+}
+
 static cmr_int afaltek_adpt_proc_out_report(cmr_handle adpt_handle,
 					    struct allib_af_output_report_t *report,
 					    void *report_out)
@@ -2055,6 +2067,10 @@ static cmr_int afaltek_adpt_proc_out_report(cmr_handle adpt_handle,
 		ret = afaltek_adpt_proc_report_debug_info(report, report_out);
 	}
 
+	if (alAFLIB_OUTPUT_UNKNOW & report->type) {
+		ret = afaltek_adpt_proc_output_error_handler(report);
+	}
+
 	return ret;
 }
 
@@ -2064,10 +2080,11 @@ static cmr_int afaltek_adpt_process(cmr_handle adpt_handle, void *in, void *out)
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct af_ctrl_process_in *proc_in = (struct af_ctrl_process_in *)in;
 	struct af_ctrl_process_out *proc_out = (struct af_ctrl_process_out *)out;
+	struct allib_af_hw_stats_t af_stats;
 
 	ISP_LOGI("E");
 	ret = al3awrapper_dispatchhw3a_afstats(proc_in->statistics_data->addr,
-					       (void *)(&cxt->af_stats));
+					       (void *)(&af_stats));
 	if (ERR_WPR_AF_SUCCESS != ret) {
 		ISP_LOGE("failed to dispatch af stats");
 		ret = -ISP_PARAM_ERROR;
@@ -2076,8 +2093,8 @@ static cmr_int afaltek_adpt_process(cmr_handle adpt_handle, void *in, void *out)
 
 	if (cxt->stats_config.need_update_token) {
 		ISP_LOGI("af_token_id = %d, token_id = %d",
-				cxt->af_stats.af_token_id, cxt->stats_config.token_id);
-		if (cxt->af_stats.af_token_id == cxt->stats_config.token_id) {
+				af_stats.af_token_id, cxt->stats_config.token_id);
+		if (af_stats.af_token_id == cxt->stats_config.token_id) {
 			struct allib_af_input_special_event event;
 
 			cmr_bzero(&event, sizeof(event));
@@ -2088,7 +2105,7 @@ static cmr_int afaltek_adpt_process(cmr_handle adpt_handle, void *in, void *out)
 		}
 	}
 
-	if (cxt->ops.process(&cxt->af_stats, &cxt->af_out_obj, cxt->af_runtime_obj)) {
+	if (cxt->ops.process(&af_stats, &cxt->af_out_obj, cxt->af_runtime_obj)) {
 		if (cxt->af_out_obj.result) {
 			cxt->report_data.need_report = 0;
 			ret = afaltek_adpt_proc_out_report(cxt, &cxt->af_out_obj, &cxt->report_data);

@@ -4158,7 +4158,7 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 		ISP_LOGE("param %p is NULL error!", cxt_ptr);
 		goto exit;
 	}
-
+	memset(&callback_in, 0x00, sizeof(callback_in));
 	if (!cxt_ptr->tuning_info.manual_ae_on
 			&& AE_DISABLED != cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_LibStates
 			&& AE_LOCKED != cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_LibStates) {
@@ -4221,6 +4221,7 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 		callback_in.proc_out.ae_frame.awb_stats_buff_ptr = in_ptr->awb_stat_data_ptr;
 		data_length = ARRAY_SIZE(cxt_ptr->stat_info) - 1;
 		callback_in.proc_out.ae_info.report_data.rgb_stats = &cxt_ptr->stat_info[cxt_ptr->stat_info_num].ae_stats;
+		callback_in.proc_out.ae_info.valid = 1;
 		cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRL_CB_PROC_OUT, &callback_in);
 		if (data_length == cxt_ptr->stat_info_num) {
 			cxt_ptr->stat_info_num = 0;

@@ -509,6 +509,7 @@ cmr_int af_ctrl_process(cmr_handle handle, struct af_ctrl_process_in *in,
 
 	message.msg_type = AFCTRL_EVT_PROCESS;
 	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+	/* if use SYNC_NONE, please modify stats release */
 	//message.sync_flag = CMR_MSG_SYNC_NONE;
 	message.alloc_flag = 0;
 	message.data = &msg_proc;

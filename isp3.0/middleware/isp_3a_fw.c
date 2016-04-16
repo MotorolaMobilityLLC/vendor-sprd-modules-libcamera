@@ -624,7 +624,7 @@ cmr_int isp3a_start_af_notify(cmr_handle handle, void *data)
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)handle;
 	struct isp_af_notice                        af_notice = {0x00};
 
-	ISP_LOGE("move start");
+	ISP_LOGI("move start");
 	if (!cxt || !cxt->caller_callback) {
 		ISP_LOGE("calllback is NULL");
 		goto exit;
@@ -644,7 +644,7 @@ cmr_int isp3a_end_af_notify(cmr_handle handle, struct af_result_param *data)
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)handle;
 	struct isp_af_notice                        af_notice = {0x00};
 
-	ISP_LOGE("move end");
+	ISP_LOGI("move end");
 	if (!cxt || !cxt->caller_callback) {
 		ISP_LOGE("calllback is NULL");
 		goto exit;
@@ -729,7 +729,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 		awb_input.calibration_gain.g = cxt->otp_data->isp_awb_info.gain_g;
 		awb_input.calibration_gain.b = cxt->otp_data->isp_awb_info.gain_b;
 	}
-	ISP_LOGE("awb bin %p", awb_input.tuning_param);
+	ISP_LOGI("awb bin %p", awb_input.tuning_param);
 	ret = awb_ctrl_init(&awb_input, &awb_output, &cxt->awb_cxt.handle);
 	if (ret) {
 		ISP_LOGE("failed to AWB initialize");
@@ -3161,54 +3161,6 @@ cmr_int isp3a_stop(cmr_handle isp_3a_handle)
 	return ret;
 }
 
-void isp3a_test_stat_buf(cmr_handle isp_3a_handle)
-{
-	cmr_u32                                     i = 0;
-	cmr_int                                     ret =0;
-	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
-
-	for (i=0 ; i<(ISP3A_STATISTICS_BUF_NUM+1) ; i++) {
-		ret = isp3a_get_statistics_buf((cmr_handle)cxt, ISP3A_AWB, &cxt->stats_buf_cxt.awb_stats_buf_ptr);
-		if (ret) {
-			break;
-		}
-	}
-	isp3a_deinit_statistics_buf(isp_3a_handle);
-	ISP_LOGI("test get stats buf done");
-
-	ret = isp3a_init_statistics_buf(isp_3a_handle);
-	if (ret) {
-		ISP_LOGE("failed to init stats buffer");
-		goto exit;
-	}
-	for (i=0 ; i<(ISP3A_STATISTICS_BUF_NUM+1) ; i++) {
-		ret = isp3a_get_statistics_buf((cmr_handle)cxt, ISP3A_AWB, &cxt->stats_buf_cxt.awb_stats_buf_ptr);
-		if (ret) {
-			break;
-		}
-		ret = isp3a_put_statistics_buf(isp_3a_handle, ISP3A_AWB, cxt->stats_buf_cxt.awb_stats_buf_ptr);
-	}
-	isp3a_deinit_statistics_buf(isp_3a_handle);
-	ISP_LOGI("test get-put stats buf done");
-
-	ret = isp3a_init_statistics_buf(isp_3a_handle);
-	if (ret) {
-		ISP_LOGE("failed to init stats buffer");
-		goto exit;
-	}
-	for (i=0 ; i<(ISP3A_STATISTICS_BUF_NUM+1) ; i++) {
-		ret = isp3a_get_statistics_buf((cmr_handle)cxt, ISP3A_AWB, &cxt->stats_buf_cxt.awb_stats_buf_ptr);
-		if (ret) {
-			break;
-		}
-		ret = isp3a_hold_statistics_buf(isp_3a_handle, ISP3A_AWB, cxt->stats_buf_cxt.awb_stats_buf_ptr);
-		ret = isp3a_release_statistics_buf(isp_3a_handle, ISP3A_AWB, cxt->stats_buf_cxt.awb_stats_buf_ptr);
-	}
-	isp3a_deinit_statistics_buf(isp_3a_handle);
-	ISP_LOGI("test get-hold-release stats buf done");
-exit:
-	ISP_LOGI("test get stats buffer done");
-}
 /*************************************EXTERNAL FUNCTION ***************************************/
 cmr_int isp_3a_fw_init(struct isp_3a_fw_init_in *input_ptr, cmr_handle *isp_3a_handle)
 {
@@ -3249,9 +3201,7 @@ cmr_int isp_3a_fw_init(struct isp_3a_fw_init_in *input_ptr, cmr_handle *isp_3a_h
 	if (ret) {
 		goto exit;
 	}
-#if 0
-	isp3a_test_stat_buf((cmr_handle)cxt);
-#endif
+
 	ret = isp3a_alg_init((cmr_handle)cxt, input_ptr);
 	if (ret) {
 		goto exit;
@@ -3347,7 +3297,7 @@ cmr_int isp_3a_fw_ioctl(cmr_handle isp_3a_handle, enum isp_ctrl_cmd cmd, void* p
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
 	CMR_MSG_INIT(message);
 
-	if (!isp_3a_handle){
+	if (!isp_3a_handle) {
 		ISP_LOGE("input is NULL");
 		ret = ISP_PARAM_NULL;
 		goto exit;
@@ -3372,7 +3322,7 @@ cmr_int isp_3a_fw_ioctl(cmr_handle isp_3a_handle, enum isp_ctrl_cmd cmd, void* p
 	}
 	ret = cmr_thread_msg_send(cxt->thread_cxt.process_thr_handle, &message);
 exit:
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGI("cmd = %d done %ld", cmd, ret);
 	return ret;
 }
 
