@@ -739,7 +739,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 	cxt->awb_cxt.proc_out.gain_balanced = awb_output.gain_balanced;
 	cxt->awb_cxt.proc_out.ct = awb_output.ct;
 	cxt->awb_cxt.hw_cfg = awb_output.hw_cfg;
-#ifndef TEST_AWB
+
 	cmr_bzero(&ae_input, sizeof(ae_input));
 	ae_input.camera_id = input_ptr->camera_id;
 	ae_input.caller_handle = isp_3a_handle;
@@ -783,7 +783,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 		ISP_LOGE("failed to AE initialize");
 	}
 	cxt->ae_cxt.hw_cfg = ae_output.hw_cfg;
-#endif
+
 	cmr_bzero(&afl_input, sizeof(afl_input));
 	afl_input.camera_id = input_ptr->camera_id;
 	afl_input.caller_handle = isp_3a_handle;
