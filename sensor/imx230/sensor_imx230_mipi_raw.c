@@ -1267,8 +1267,8 @@ static void imx230_write_gain(SENSOR_HW_HANDLE handle, float gain)
 	Sensor_WriteReg(0x0205, sensor_again & 0xFF);
 
 	temp_gain = gain/8;
-	if (temp_gain > 4.0)
-		temp_gain = 4.0;
+	if (temp_gain >16.0)
+		temp_gain = 16.0;
 	else if (temp_gain < 1.0)
 		temp_gain = 1.0;
 	sensor_dgain = (uint16_t)(256 * temp_gain);
@@ -1536,15 +1536,15 @@ static unsigned long imx230_before_snapshot(SENSOR_HW_HANDLE handle, unsigned lo
 	Sensor_SetMode(capture_mode);
 	Sensor_SetMode_WaitDone();
 
-	cap_shutter = prv_shutter * prv_linetime / cap_linetime * BINNING_FACTOR;
+	cap_shutter = prv_shutter * prv_linetime / cap_linetime;// * BINNING_FACTOR;
 
-	while (gain >= (2 * SENSOR_BASE_GAIN)) {
+/*	while (gain >= (2 * SENSOR_BASE_GAIN)) {
 		if (cap_shutter * 2 > s_current_default_frame_length)
 			break;
 		cap_shutter = cap_shutter * 2;
 		gain = gain / 2;
 	}
-
+*/
 	cap_shutter = imx230_update_exposure(handle, cap_shutter,0);
 	cap_gain = gain;
 	imx230_write_gain(handle, cap_gain);

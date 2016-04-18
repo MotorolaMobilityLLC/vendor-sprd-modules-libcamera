@@ -1091,6 +1091,24 @@ static unsigned long s5k3p3sm_write_af(SENSOR_HW_HANDLE handle, unsigned long pa
 	return 0;
 }
 
+static uint32_t _s5k3p3sm_ReadGain(SENSOR_HW_HANDLE handle, uint32_t param)
+{
+	uint32_t rtn = SENSOR_SUCCESS;
+	uint32_t again = 0;
+         uint32_t dgain = 0;
+         uint32_t gain = 0;
+
+#if 1 // for MP tool //!??
+	again = Sensor_ReadReg(0x0204) ;
+	dgain = Sensor_ReadReg(0x0210) ;
+          gain=again*dgain;
+
+ #endif
+	//s_s5k3p3sm_gain=(int)gain;
+	SENSOR_PRINT("SENSOR_s5k3p3sm: _s5k3p3sm_ReadGain gain: 0x%x", gain);
+	return rtn;
+
+}
 
 static unsigned long _s5k3p3sm_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned long param)
 {
@@ -1101,6 +1119,8 @@ static unsigned long _s5k3p3sm_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned 
 	uint32_t preview_mode = (param >> 0x10 ) & 0xffff;
 	uint32_t prv_linetime=s_s5k3p3sm_Resolution_Trim_Tab[preview_mode].line_time;
 	uint32_t cap_linetime = s_s5k3p3sm_Resolution_Trim_Tab[capture_mode].line_time;
+	uint32_t frame_len = 0x00;
+	uint32_t gain = 0;
 
 	SENSOR_PRINT("SENSOR_s5k3p3sm: BeforeSnapshot mode: 0x%08lx",param);
 
@@ -1108,8 +1128,39 @@ static unsigned long _s5k3p3sm_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned 
 		SENSOR_PRINT("SENSOR_s5k3p3sm: prv mode equal to capmode");
 		goto CFG_INFO;
 	}
+
 	Sensor_SetMode(capture_mode);
 	Sensor_SetMode_WaitDone();
+
+
+	preview_exposure = Sensor_ReadReg(0x202);
+	_s5k3p3sm_ReadGain(handle, &gain);
+
+	Sensor_SetMode(param);
+	Sensor_SetMode_WaitDone();
+
+	capture_exposure = preview_exposure * prv_linetime / cap_linetime;
+
+	frame_len = Sensor_ReadReg(0x340);
+/*
+	while(gain >= 0x40){
+		capture_exposure = capture_exposure * 2;
+		gain=gain / 2;
+		if(capture_exposure > frame_len*2)
+			break;
+	}*/
+	SENSOR_PRINT("SENSOR_s5k3p3sm: cap moe: %d,FL: %x,exp=%d,g=%x",param,frame_len,capture_exposure,gain);
+
+	if(capture_exposure >= (frame_len - 4)){
+		frame_len = capture_exposure+4;
+		frame_len = ((frame_len+1)>>1)<<1;
+		Sensor_WriteReg(0x0340, frame_len);
+	}
+	Sensor_WriteReg(0x202, capture_exposure);
+	Sensor_WriteReg(0x204, gain);
+
+	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, capture_exposure);
+
 
 	CFG_INFO:
 	s_capture_shutter = _s5k3p3sm_get_shutter(handle);
@@ -1247,7 +1298,7 @@ static uint32_t _s5k3p3sm_write_otp_gain(SENSOR_HW_HANDLE handle, uint32_t *para
 	ret_value = Sensor_WriteReg(0x204, value);
 	value = (*param)&0xff;
 	ret_value = Sensor_WriteReg(0x205, value);
-	ret_value = Sensor_WriteReg(0x104, 0x00);
+	//ret_value = Sensor_WriteReg(0x104, 0x00);
 
 	return ret_value;
 }

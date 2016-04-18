@@ -35,7 +35,8 @@
 #define DW9807_EEPROM_SLAVE_ADDR  (0xB0 >> 1)
 #define S5K4H8YX_RAW_PARAM_COM     0x0000
 
-#define S5K4H8YX_2_LANES
+//#define S5K4H8YX_2_LANES
+#define S5K4H8YX_4_LANES
 
 static int s_s5k4h8yx_gain = 0;
 static int s_capture_shutter = 0;
@@ -80,6 +81,436 @@ static uint32_t _s5k4h8yx_write_otp(SENSOR_HW_HANDLE handle, unsigned long param
 static const struct raw_param_info_tab s_s5k4h8yx_raw_param_tab[] = {
 	{S5K4H8YX_RAW_PARAM_COM, &s_s5k4h8yx_mipi_raw_info, _s5k4h8yx_com_Identify_otp, NULL},
 	{RAW_INFO_END_ID, PNULL, PNULL, PNULL}
+};
+////initial setting V24 F1X9
+static const SENSOR_REG_T s5k4h8yx_common_init_new[] = {
+    {0x6028,0x2000},
+    {0x602A,0x1FD0},
+    {0x6F12,0x0448},
+    {0x6F12,0x0349},
+    {0x6F12,0x0160},
+    {0x6F12,0xC26A},
+    {0x6F12,0x511A},
+    {0x6F12,0x8180},
+    {0x6F12,0x00F0},
+    {0x6F12,0x60B8},
+    {0x6F12,0x2000},
+    {0x6F12,0x20E8},
+    {0x6F12,0x2000},
+    {0x6F12,0x13A0},
+    {0x6F12,0x0000},
+    {0x6F12,0x0000},
+    {0x6F12,0x0000},
+    {0x6F12,0x0000},
+    {0x6F12,0x38B5},
+    {0x6F12,0x0021},
+    {0x6F12,0x0446},
+    {0x6F12,0x8DF8},
+    {0x6F12,0x0010},
+    {0x6F12,0x00F5},
+    {0x6F12,0xB470},
+    {0x6F12,0x0122},
+    {0x6F12,0x6946},
+    {0x6F12,0x00F0},
+    {0x6F12,0x59F8},
+    {0x6F12,0x9DF8},
+    {0x6F12,0x0000},
+    {0x6F12,0xFF28},
+    {0x6F12,0x05D0},
+    {0x6F12,0x0020},
+    {0x6F12,0x08B1},
+    {0x6F12,0x04F2},
+    {0x6F12,0x6914},
+    {0x6F12,0x2046},
+    {0x6F12,0x38BD},
+    {0x6F12,0x0120},
+    {0x6F12,0xF8E7},
+    {0x6F12,0x10B5},
+    {0x6F12,0x92B0},
+    {0x6F12,0x0C46},
+    {0x6F12,0x4822},
+    {0x6F12,0x6946},
+    {0x6F12,0x00F0},
+    {0x6F12,0x46F8},
+    {0x6F12,0x0020},
+    {0x6F12,0x6946},
+    {0x6F12,0x04EB},
+    {0x6F12,0x4003},
+    {0x6F12,0x0A5C},
+    {0x6F12,0x02F0},
+    {0x6F12,0x0F02},
+    {0x6F12,0x04F8},
+    {0x6F12,0x1020},
+    {0x6F12,0x0A5C},
+    {0x6F12,0x401C},
+    {0x6F12,0x1209},
+    {0x6F12,0x5A70},
+    {0x6F12,0x4828},
+    {0x6F12,0xF2D3},
+    {0x6F12,0x12B0},
+    {0x6F12,0x10BD},
+    {0x6F12,0x2DE9},
+    {0x6F12,0xF041},
+    {0x6F12,0x164E},
+    {0x6F12,0x0F46},
+    {0x6F12,0x06F1},
+    {0x6F12,0x1105},
+    {0x6F12,0xA236},
+    {0x6F12,0xB0B1},
+    {0x6F12,0x1449},
+    {0x6F12,0x1248},
+    {0x6F12,0x0968},
+    {0x6F12,0x0078},
+    {0x6F12,0xB1F8},
+    {0x6F12,0x6A10},
+    {0x6F12,0xC007},
+    {0x6F12,0x0ED0},
+    {0x6F12,0x0846},
+    {0x6F12,0xFFF7},
+    {0x6F12,0xBEFF},
+    {0x6F12,0x84B2},
+    {0x6F12,0x2946},
+    {0x6F12,0x2046},
+    {0x6F12,0xFFF7},
+    {0x6F12,0xD0FF},
+    {0x6F12,0x4FF4},
+    {0x6F12,0x9072},
+    {0x6F12,0x3146},
+    {0x6F12,0x04F1},
+    {0x6F12,0x4800},
+    {0x6F12,0x00F0},
+    {0x6F12,0x16F8},
+    {0x6F12,0x002F},
+    {0x6F12,0x05D0},
+    {0x6F12,0x3146},
+    {0x6F12,0x2846},
+    {0x6F12,0xBDE8},
+    {0x6F12,0xF041},
+    {0x6F12,0x00F0},
+    {0x6F12,0x13B8},
+    {0x6F12,0xBDE8},
+    {0x6F12,0xF081},
+    {0x6F12,0x0022},
+    {0x6F12,0xAFF2},
+    {0x6F12,0x5501},
+    {0x6F12,0x0348},
+    {0x6F12,0x00F0},
+    {0x6F12,0x10B8},
+    {0x6F12,0x2000},
+    {0x6F12,0x0C40},
+    {0x6F12,0x2000},
+    {0x6F12,0x0560},
+    {0x6F12,0x0000},
+    {0x6F12,0x152D},
+    {0x6F12,0x48F6},
+    {0x6F12,0x296C},
+    {0x6F12,0xC0F2},
+    {0x6F12,0x000C},
+    {0x6F12,0x6047},
+    {0x6F12,0x41F2},
+    {0x6F12,0x950C},
+    {0x6F12,0xC0F2},
+    {0x6F12,0x000C},
+    {0x6F12,0x6047},
+    {0x6F12,0x49F2},
+    {0x6F12,0x514C},
+    {0x6F12,0xC0F2},
+    {0x6F12,0x000C},
+    {0x6F12,0x6047},
+    {0x6F12,0x0000},
+    {0x6F12,0x0000},
+    {0x6F12,0x0000},
+    {0x6F12,0x0000},
+    {0x6F12,0x0000},
+    {0x6F12,0x4088},
+    {0x6F12,0x0166},
+    {0x6F12,0x0000},
+    {0x6F12,0x0002},
+    {0x5360,0x0004},
+    {0x3078,0x0059},
+    {0x307C,0x0025},
+    {0x36D0,0x00DD},
+    {0x36D2,0x0100},
+    {0x306A,0x00EF},
+
+};
+
+static const SENSOR_REG_T s5k4h8yx_3264x2448_2lane_setting_new[] = {
+    /*
+    3264x2448_15fps_vt140M_2lane_mipi642M
+    width   3264
+    height  2448
+    frame rate  14.97
+    mipi_lane_num   2
+    mipi_per_lane_bps   642
+    line time(0.1us unit)   267.4285714
+    frame length    2498
+    Extclk  24M
+    max gain    0x0200
+    base gain   0x0020
+    raw bits    raw10 
+    bayer patter    Gr first
+    OB level    64
+    offset  8
+    min shutter 4
+    address data    */
+    {0x6028,0x4000},
+    {0x602A,0x6214},
+    {0x6F12,0x7971},
+    {0x602A,0x6218},
+    {0x6F12,0x7150},
+    {0x6028,0x2000},
+    {0x602A,0x0EC6},
+    {0x6F12,0x0000},
+    {0xF490,0x0030},
+    {0xF47A,0x0012},
+    {0xF428,0x0200},
+    {0xF48E,0x0010},
+    {0xF45C,0x0004},
+    {0x0B04,0x0101},
+    {0x0B00,0x0080},
+    {0x6028,0x2000},
+    {0x602A,0x0C40},
+    {0x6F12,0x0140},
+    {0x31FA,0x0000},
+    {0x0200,0x0800},
+    {0x0202,0x0465},
+    {0x31AA,0x0004},
+    {0x1006,0x0006},
+    {0x31FA,0x0000},
+    {0x0204,0x0020},
+    {0x0344,0x0008},
+    {0x0348,0x0CC7},
+    {0x0346,0x0008},
+    {0x034A,0x0997},
+    {0x034C,0x0CC0},
+    {0x034E,0x0990},
+    {0x0342,0x0EA0},
+    {0x0340,0x09C2},
+    {0x0900,0x0111},
+    {0x0380,0x0001},
+    {0x0382,0x0001},
+    {0x0384,0x0001},
+    {0x0386,0x0001},
+    {0x0400,0x0002},
+    {0x0404,0x0010},
+    {0x0114,0x0130},
+    {0x0136,0x1800},
+    {0x0300,0x0005},
+    {0x0302,0x0002},
+    {0x0304,0x0004},
+    {0x0306,0x0075},
+    {0x030C,0x0004},
+    {0x030E,0x006B},
+    {0x3008,0x0000},
+
+};
+static const SENSOR_REG_T s5k4h8yx_3264x2448_4lane_setting_new[] = {
+    /*3264x2448_30fps_vt280M_4lane_mipi700M 
+    width   3264                            
+    height  2448                          
+    frame rate  29.94                     
+    mipi_lane_num   4                       
+    mipi_per_lane_bps   700                 
+    line time(0.1us unit)   133.71          
+    frame length    2498                    
+    Extclk  24M                           
+     max gain   0x0200                      
+    base gain   0x0020                      
+    raw bits    raw10                       
+    bayer patter    Gr first                
+    OB level    64                          
+    offset  8                             
+    min shutter 4                         
+    address data  */                        
+    {0x6028,0x4000},
+    {0x602A,0x6214},
+    {0x6F12,0x7971},
+    {0x602A,0x6218},
+    {0x6F12,0x7150},
+    {0x6028,0x2000},
+    {0x602A,0x0EC6},
+    {0x6F12,0x0000},
+    {0xF490,0x0030},
+    {0xF47A,0x0012},
+    {0xF428,0x0200},
+    {0xF48E,0x0010},
+    {0xF45C,0x0004},
+    {0x0B04,0x0101},
+    {0x0B00,0x0080},
+    {0x6028,0x2000},
+    {0x602A,0x0C40},
+    {0x6F12,0x0140},
+    {0x0200,0x0618},
+    {0x0202,0x0904},
+    {0x31AA,0x0004},
+    {0x1006,0x0006},
+    {0x31FA,0x0000},
+    {0x0204,0x0020},
+    {0x0344,0x0008},
+    {0x0348,0x0CC7},
+    {0x0346,0x0008},
+    {0x034A,0x0997},
+    {0x034C,0x0CC0},
+    {0x034E,0x0990},
+    {0x0342,0x0EA0},
+    {0x0340,0x09C2},
+    {0x0900,0x0111},
+    {0x0380,0x0001},
+    {0x0382,0x0001},
+    {0x0384,0x0001},
+    {0x0386,0x0001},
+    {0x0400,0x0002},
+    {0x0404,0x0010},
+    {0x0114,0x0330},
+    {0x0136,0x1800},
+    {0x0300,0x0005},
+    {0x0302,0x0001},
+    {0x0304,0x0006},
+    {0x0306,0x00AF},
+    {0x030C,0x0006},
+    {0x030E,0x00AF},
+    {0x3008,0x0000},
+
+};
+static const SENSOR_REG_T s5k4h8yx_common_init_new1[] = {
+    /*for V22	FGX9
+address	data*/
+{0x6028,0x4000},
+{0x602A,0x6214},
+{0x6F12,0x7971},
+{0x602A,0x6218},
+{0x6F12,0x7150},
+};
+static const SENSOR_REG_T s5k4h8yx_3264x2448_2lane_setting_new1[] = {
+    /*full size	
+3264x2448_15fps_vt140M_2lane_mipi642M	
+width	3264
+height	2448
+frame rate	29.94
+mipi_lane_num	2
+mipi_per_lane_bps	642
+line time(0.1us unit)	267.4285714
+frame length	2498
+Extclk	24M
+ max gain	0x0200
+base gain	0x0020
+raw bits	raw10
+bayer patter 	Gr first
+OB level	64
+offset	8
+min shutter	4
+address	data*/
+{0x6028,0x2000},
+{0x602A,0x0EC6},
+{0x6F12,0x0000},
+{0xFCFC,0x4000},
+{0xF490,0x0030},
+{0xF47A,0x0012},
+{0xF428,0x0200},
+{0xF48E,0x0010},
+{0xF45C,0x0004},
+{0x0B04,0x0101},
+{0x0B00,0x0080},
+{0x6028,0x2000},
+{0x602A,0x0C40},
+{0x6F12,0x0140},
+{0xFCFC,0x4000},
+{0x0200,0x0618},
+{0x0202,0x0465},
+{0x31AA,0x0004},
+{0x1006,0x0006},
+{0x31FA,0x0000},
+{0x0204,0x0020},
+{0x0344,0x0008},
+{0x0348,0x0CC7},
+{0x0346,0x0008},
+{0x034A,0x0997},
+{0x034C,0x0CC0},
+{0x034E,0x0990},
+{0x0342,0x0EA0},
+{0x0340,0x09C2},
+{0x0900,0x0111},
+{0x0380,0x0001},
+{0x0382,0x0001},
+{0x0384,0x0001},
+{0x0386,0x0001},
+{0x0400,0x0002},
+{0x0404,0x0010},
+{0x0114,0x0130},
+{0x0136,0x1800},
+{0x0300,0x0005},
+{0x0302,0x0002},
+{0x0304,0x0004},
+{0x0306,0x0075},
+{0x030C,0x0004},
+{0x030E,0x006B},
+{0x3008,0x0000},
+};
+static const SENSOR_REG_T s5k4h8yx_3264x2448_4lane_setting_new1[] = {
+    /*full size	
+3264x2448_30fps_vt280M_4lane_mipi700M	
+width	3264
+height	2448
+frame rate	29.94
+mipi_lane_num	4
+mipi_per_lane_bps	700
+line time(0.1us unit)	133.7142857
+frame length	2498
+Extclk	24M
+ max gain	0x0200
+base gain	0x0020
+raw bits	raw10
+bayer patter 	Gr first
+OB level	64
+offset	8
+min shutter	4
+address	data*/
+{0x6028,0x2000},
+{0x602A,0x0EC6},
+{0x6F12,0x0000},
+{0xFCFC,0x4000},
+{0xF490,0x0030},
+{0xF47A,0x0012},
+{0xF428,0x0200},
+{0xF48E,0x0010},
+{0xF45C,0x0004},
+{0x0B04,0x0101},
+{0x0B00,0x0080},
+{0x6028,0x2000},
+{0x602A,0x0C40},
+{0x6F12,0x0140},
+{0xFCFC,0x4000},
+{0x0200,0x0618},
+{0x0202,0x0904},
+{0x31AA,0x0004},
+{0x1006,0x0006},
+{0x31FA,0x0000},
+{0x0204,0x0020},
+{0x0344,0x0008},
+{0x0348,0x0CC7},
+{0x0346,0x0008},
+{0x034A,0x0997},
+{0x034C,0x0CC0},
+{0x034E,0x0990},
+{0x0342,0x0EA0},
+{0x0340,0x09C2},
+{0x0900,0x0111},
+{0x0380,0x0001},
+{0x0382,0x0001},
+{0x0384,0x0001},
+{0x0386,0x0001},
+{0x0400,0x0002},
+{0x0404,0x0010},
+{0x0114,0x0330},
+{0x0136,0x1800},
+{0x0300,0x0005},
+{0x0302,0x0001},
+{0x0304,0x0006},
+{0x0306,0x00AF},
+{0x030C,0x0006},
+{0x030E,0x00AF},
+{0x3008,0x0000},
 };
 
 ////initial setting
@@ -224,9 +655,14 @@ static const SENSOR_REG_T s5k4h8yx_1632x1224_4lane_setting[] = {
 };
 
 static SENSOR_REG_TAB_INFO_T s_s5k4h8yx_resolution_Tab_RAW[] = {
-	{ADDR_AND_LEN_OF_ARRAY(s5k4h8yx_common_init), 0, 0, 24, SENSOR_IMAGE_FORMAT_RAW},
-	{ADDR_AND_LEN_OF_ARRAY(s5k4h8yx_3264x2448_2lane_setting), 3264, 2448, 24, SENSOR_IMAGE_FORMAT_RAW},
+    #ifdef  S5K4H8YX_4_LANES
+	{ADDR_AND_LEN_OF_ARRAY(s5k4h8yx_common_init_new1), 0, 0, 24, SENSOR_IMAGE_FORMAT_RAW},
+	{ADDR_AND_LEN_OF_ARRAY(s5k4h8yx_3264x2448_4lane_setting_new1), 3264, 2448, 24, SENSOR_IMAGE_FORMAT_RAW},
+    #else
+	//{ADDR_AND_LEN_OF_ARRAY(s5k4h8yx_common_init), 0, 0, 24, SENSOR_IMAGE_FORMAT_RAW},
+	//{ADDR_AND_LEN_OF_ARRAY(s5k4h8yx_3264x2448_4lane_setting), 3264, 2448, 24, SENSOR_IMAGE_FORMAT_RAW},
 	//{ADDR_AND_LEN_OF_ARRAY(s5k4h8yx_1632x1224_4lane_setting), 1632, 1224, 24, SENSOR_IMAGE_FORMAT_RAW},
+    #endif
 	{PNULL, 0, 0, 0, 0, 0},
 	{PNULL, 0, 0, 0, 0, 0},
 	{PNULL, 0, 0, 0, 0, 0},
@@ -238,8 +674,13 @@ static SENSOR_REG_TAB_INFO_T s_s5k4h8yx_resolution_Tab_RAW[] = {
 
 static SENSOR_TRIM_T s_s5k4h8yx_Resolution_Trim_Tab[] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+        #ifdef S5K4H8YX_2_LANES
+	{0, 0, 3264, 2448, 267, 700, 2498, {0, 0, 3264, 2448}},
+	//{0, 0, 1632, 1224, 267, 700, 1246, {0, 0, 1632, 1224}},
+	#else
 	{0, 0, 3264, 2448, 134, 700, 2498, {0, 0, 3264, 2448}},
 	//{0, 0, 1632, 1224, 134, 700, 1246, {0, 0, 1632, 1224}},
+	#endif
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
@@ -1149,7 +1590,7 @@ static unsigned long _s5k4h8yx_write_exp_dummy(SENSOR_HW_HANDLE handle, uint16_t
 
 	frame_len_cur = Sensor_ReadReg(0x0340) & 0xffff;
 
-	// ret_value = Sensor_WriteReg(0x104, 0x01); //group_hold_on
+	//ret_value = Sensor_WriteReg(0x104, 0x01); //group_hold_on
 
 	if (frame_len_cur != frame_len) {
 		Sensor_WriteReg(0x0340, frame_len & 0xffff);
@@ -1165,7 +1606,7 @@ static unsigned long _s5k4h8yx_write_exp_dummy(SENSOR_HW_HANDLE handle, uint16_t
 		ret_value = Sensor_WriteReg(0x0341, frame_len & 0xff);
 		ret_value = Sensor_WriteReg(0x0340, (frame_len >> 0x08) & 0xff);
 	}*/
-	//ret_value = Sensor_WriteReg(0x104, 0x00);
+//	ret_value = Sensor_WriteReg(0x104, 0x00);
 
 #if 0
 	_s5k4h8yx_write_af(s_af_step);
@@ -1182,16 +1623,35 @@ static unsigned long _s5k4h8yx_write_exp_dummy(SENSOR_HW_HANDLE handle, uint16_t
 static unsigned long _s5k4h8yx_write_gain(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
-	uint32_t real_gain = 0;
+	//uint32_t real_gain = 0;
+	float real_gain = 0;
+	float a_gain = 0;
+	float d_gain = 0;
 
-	real_gain = param * 0x0020 / 0x80;
+	real_gain = 1.0f*param * 0x0020 / 0x80;
 
-	SENSOR_PRINT("real_gain = 0x%x", real_gain);
+        SENSOR_PRINT("_s5k4h8yx: real_gain:0x%x, param: 0x%x", (uint32_t)real_gain, param);
 
-	if (0x0200 < real_gain)
-		real_gain = 0x0200;
+            if ((uint32_t)real_gain <= 16*32) {
+                a_gain = real_gain;
+                d_gain = 256;
+                    //ret_value = Sensor_WriteReg(0x204,(uint32_t)a_gain);//0x100);//a_gain);
+            } else {
+                a_gain = 16*32;
+                d_gain = 256.0*real_gain/a_gain;
+                            SENSOR_PRINT("_s5k4h8yx: real_gain:0x%x, a_gain: 0x%x, d_gain: 0x%x", (uint32_t)real_gain, (uint32_t)a_gain,(uint32_t)d_gain);
+                           if((uint32_t)d_gain>256*256)
+                                d_gain=256*256;  //d_gain < 256x
+            }
 
-	Sensor_WriteReg(0x0204, real_gain & 0xffff);
+            ret_value = Sensor_WriteReg(0x204,(uint32_t)a_gain);//0x100);//a_gain);
+            ret_value = Sensor_WriteReg(0x20e,(uint32_t) d_gain);
+            ret_value = Sensor_WriteReg(0x210, (uint32_t)d_gain);
+            ret_value = Sensor_WriteReg(0x212, (uint32_t)d_gain);
+            ret_value = Sensor_WriteReg(0x214, (uint32_t)d_gain);
+   //         SENSOR_PRINT("_s5k3l2xx: real_gain a_gain:0x%x read_reg 0x204:0x%x, 0x20e:0x%x, 0x202:0x%x, 0x1086:0x%x", (uint32_t)a_gain,Sensor_ReadReg(0x0204),Sensor_ReadReg(0x020e),Sensor_ReadReg(0x202),Sensor_ReadReg(0x1086));
+
+//	Sensor_WriteReg(0x0104, 0x00);
 
 	return ret_value;
 }
@@ -1349,11 +1809,11 @@ static uint16_t _s5k4h8yx_get_shutter(SENSOR_HW_HANDLE handle)
 
 static uint32_t _s5k4h8yx_set_shutter(SENSOR_HW_HANDLE handle, uint16_t shutter)
 {
-	Sensor_WriteReg(0x104, 0x01);
+	//Sensor_WriteReg(0x104, 0x01);
 	// write shutter, in number of line period
 	Sensor_WriteReg(0x0202, (shutter >> 8) & 0xff);
 	Sensor_WriteReg(0x0203, shutter & 0xff);
-	Sensor_WriteReg(0x104, 0x00);
+	//Sensor_WriteReg(0x104, 0x00);
 
 	return 0;
 }
@@ -1414,7 +1874,7 @@ static unsigned long _s5k4h8yx_write_exposure_ev(SENSOR_HW_HANDLE handle, unsign
 	frame_len_cur |= (Sensor_ReadReg(0x0340)<<0x08)&0xff00;
 
 
-	ret_value = Sensor_WriteReg(0x104, 0x01);
+	//ret_value = Sensor_WriteReg(0x104, 0x01);
 	if (frame_len_cur != frame_len) {
 		ret_value = Sensor_WriteReg(0x0341, frame_len & 0xff);
 		ret_value = Sensor_WriteReg(0x0340, (frame_len >> 0x08) & 0xff);
@@ -1422,7 +1882,7 @@ static unsigned long _s5k4h8yx_write_exposure_ev(SENSOR_HW_HANDLE handle, unsign
 
 	ret_value = Sensor_WriteReg(0x203, expsure_line & 0xff);
 	ret_value = Sensor_WriteReg(0x202, (expsure_line >> 0x08) & 0xff);
-	ret_value = Sensor_WriteReg(0x104, 0x00);
+	//ret_value = Sensor_WriteReg(0x104, 0x00);
 	return ret_value;
 
 }
@@ -1532,10 +1992,17 @@ static uint32_t _s5k4h8yx_ReadGain(SENSOR_HW_HANDLE handle, uint32_t param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	uint32_t gain = 0;
+	uint16_t a_gain = 0;
+	uint16_t d_gain = 0;
+	a_gain = Sensor_ReadReg(0x0204) ;
+	d_gain = Sensor_ReadReg(0x0210) ;
+	gain= a_gain*d_gain;
 
-	gain = Sensor_ReadReg(0x0157);
+	//gain = Sensor_ReadReg(0x0204);
+         //gain = gain<<8|Sensor_ReadReg(0x205);/*8*/
 
 	s_s5k4h8yx_gain=(int)gain;
+         param=(int)gain;
 
 	SENSOR_PRINT("SENSOR_s5k4h8yx: _s5k4h8yx_ReadGain gain: 0x%x", s_s5k4h8yx_gain);
 
@@ -1546,7 +2013,30 @@ static uint32_t _s5k4h8yx_write_otp_gain(SENSOR_HW_HANDLE handle, uint32_t *para
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint16_t value = 0x00;
+         float a_gain = 0;
+        float d_gain = 0;
+        float real_gain=0.0f;
+        SENSOR_PRINT("SENSOR_s5k4h8yx: write_gain:0x%x\n", *param);
 
+        //ret_value = Sensor_WriteReg(0x104, 0x01);
+        if( (*param/4)>0x200){
+                    a_gain=16*32;
+                    d_gain=(*param/4.0)*256/a_gain;
+                    if(d_gain>256*256)
+                        d_gain=256*256;
+           }
+            else{
+                a_gain=*param/4;
+                 d_gain=256;
+                }
+            ret_value = Sensor_WriteReg(0x204,(uint32_t)a_gain);//0x100);//a_gain);
+            ret_value = Sensor_WriteReg(0x20e,(uint32_t) d_gain);
+            ret_value = Sensor_WriteReg(0x210, (uint32_t)d_gain);
+            ret_value = Sensor_WriteReg(0x212, (uint32_t)d_gain);
+            ret_value = Sensor_WriteReg(0x214, (uint32_t)d_gain);
+
+  //          SENSOR_PRINT("_s5k3l2xx: real_gain a_gain:0x%x read_reg 0x204:0x%x, 0x20e:0x%x, 0x202:0x%x, 0x1088:0x%x", (uint32_t)a_gain,Sensor_ReadReg(0x0204),Sensor_ReadReg(0x020e),Sensor_ReadReg(0x202),Sensor_ReadReg(0x1086));
+/*
 	SENSOR_PRINT("SENSOR_s5k4h8yx: write_gain:0x%x\n", *param);
 
 	//ret_value = Sensor_WriteReg(0x104, 0x01);
@@ -1555,23 +2045,27 @@ static uint32_t _s5k4h8yx_write_otp_gain(SENSOR_HW_HANDLE handle, uint32_t *para
 	value = (*param)&0xff;
 	ret_value = Sensor_WriteReg(0x205, value);
 	ret_value = Sensor_WriteReg(0x104, 0x00);
-
+*/
 	return ret_value;
 }
 
 static uint32_t _s5k4h8yx_read_otp_gain(SENSOR_HW_HANDLE handle, uint32_t *param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
-	uint16_t gain_h = 0;
-	uint16_t gain_l = 0;
+         uint32_t gain = 0;
+	uint16_t a_gain = 0;
+	uint16_t d_gain = 0;
+	a_gain = Sensor_ReadReg(0x0204) ;
+	d_gain = Sensor_ReadReg(0x0210) ;
+	*param= a_gain*d_gain;
 	#if 1 // for MP tool //!??
-	gain_h = Sensor_ReadReg(0x0204) & 0xff;
+/*	gain_h = Sensor_ReadReg(0x0204) & 0xff;
 	gain_l = Sensor_ReadReg(0x0205) & 0xff;
 	*param = ((gain_h << 8) | gain_l);
 	gain_h = Sensor_ReadReg(0x020e) & 0xff;
 	gain_l = Sensor_ReadReg(0x020f) & 0xff;
 	*param *= (uint32_t)((gain_h << 8) | gain_l);
-	*param >>= 8;
+	*param >>= 8;*/
 	#else
 	uint8_t cmd_val[3]            = {0x00};
 	uint16_t cmd_len;

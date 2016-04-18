@@ -2143,6 +2143,7 @@ static SENSOR_IOCTL_FUNC_TAB_T s_s5k3l2xx_ioctl_func_tab = {
 	_s5k3l2xx_StreamOn,
 	_s5k3l2xx_StreamOff,
 	_s5k3l2xx_access_val,
+	_s5k3l2xx_ex_write_exposure
 };
 
 
@@ -2662,16 +2663,16 @@ static unsigned long _s5k3l2xx_write_gain(SENSOR_HW_HANDLE handle, unsigned long
 
 	SENSOR_PRINT("_s5k3l2xx: real_gain:0x%x, param: 0x%x", (uint32_t)real_gain, param);
 
-	if (real_gain <= 16*32) {
+	if ((uint32_t)real_gain <= 16*32) {
 		a_gain = real_gain;
 		d_gain = 256;
-          	ret_value = Sensor_WriteReg(0x204,(uint32_t)a_gain);//0x100);//a_gain);
+        //ret_value = Sensor_WriteReg(0x204,(uint32_t)a_gain);//0x100);//a_gain);
 	} else {
 		a_gain = 16*32;
 		d_gain = 256.0*real_gain/a_gain;
         	        SENSOR_PRINT("_s5k3l2xx: real_gain:0x%x, a_gain: 0x%x, d_gain: 0x%x", (uint32_t)real_gain, (uint32_t)a_gain,(uint32_t)d_gain);
-                   if((uint32_t)d_gain>512)
-                        d_gain=512;  //d_gain < 2x
+                   if((uint32_t)d_gain>256*256)
+                        d_gain=256*256;  //d_gain < 256x
 	}
 
         ret_value = Sensor_WriteReg(0x204,(uint32_t)a_gain);//0x100);//a_gain); 
@@ -2680,7 +2681,7 @@ static unsigned long _s5k3l2xx_write_gain(SENSOR_HW_HANDLE handle, unsigned long
         ret_value = Sensor_WriteReg(0x212, (uint32_t)d_gain);
         ret_value = Sensor_WriteReg(0x214, (uint32_t)d_gain);
 
-        
+       // Sensor_WriteReg(0x0104, 0x00);
         // SENSOR_PRINT("_s5k3l2xx: real_gain a_gain:0x%x read_reg 0x204:0x%x, 0x20e:0x%x, 0x1086:0x%x, 0x1088:0x%x", (uint32_t)a_gain,Sensor_ReadReg(0x0204),Sensor_ReadReg(0x020e),Sensor_ReadReg(0x1086),Sensor_ReadReg(0x1087));
 
 	return ret_value;
@@ -2747,13 +2748,13 @@ static unsigned long _s5k3l2xx_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned 
 	capture_exposure = preview_exposure * prv_linetime / cap_linetime;
 
 	frame_len = Sensor_ReadReg(0x340);
-
+/*
 	while(gain >= 0x40){
 		capture_exposure = capture_exposure * 2;
 		gain=gain / 2;
 		if(capture_exposure > frame_len*2)
 			break;
-	}
+	}*/
 	SENSOR_PRINT("SENSOR_s5k3h7yx: cap moe: %d,FL: %x,exp=%d,g=%x",param,frame_len,capture_exposure,gain);
 
 	if(capture_exposure >= (frame_len - 4)){
@@ -2833,7 +2834,7 @@ static uint16_t _s5k3l2xx_get_shutter(SENSOR_HW_HANDLE handle)
 static uint32_t _s5k3l2xx_set_shutter(SENSOR_HW_HANDLE handle, uint16_t shutter)
 {
 	uint16_t temp1,temp2;
-	Sensor_WriteReg(0x104, 0x0100);
+//	Sensor_WriteReg(0x104, 0x0100);
 	// write shutter, in number of line period
 //	Sensor_WriteReg(0x0202, (shutter >> 8) & 0xff);
 //	Sensor_WriteReg(0x0203, shutter & 0xff);
@@ -2841,7 +2842,7 @@ static uint32_t _s5k3l2xx_set_shutter(SENSOR_HW_HANDLE handle, uint16_t shutter)
 	temp2=(shutter>>8)&0xff;
 	shutter=temp1|temp2;
 	Sensor_WriteReg(0x0202, shutter);
-	Sensor_WriteReg(0x104, 0x00);
+//	Sensor_WriteReg(0x104, 0x00);
 
 	return 0;
 }
@@ -2902,7 +2903,7 @@ static unsigned long _s5k3l2xx_write_exposure_ev(SENSOR_HW_HANDLE handle, unsign
 	frame_len_cur |= (Sensor_ReadReg(0x0340)<<0x08)&0xff00;
 
 
-	ret_value = Sensor_WriteReg(0x104, 0x01);
+	//ret_value = Sensor_WriteReg(0x104, 0x01);
 	if (frame_len_cur != frame_len) {
 		ret_value = Sensor_WriteReg(0x0341, frame_len & 0xff);
 		ret_value = Sensor_WriteReg(0x0340, (frame_len >> 0x08) & 0xff);
@@ -2910,7 +2911,7 @@ static unsigned long _s5k3l2xx_write_exposure_ev(SENSOR_HW_HANDLE handle, unsign
 
 	ret_value = Sensor_WriteReg(0x203, expsure_line & 0xff);
 	ret_value = Sensor_WriteReg(0x202, (expsure_line >> 0x08) & 0xff);
-	ret_value = Sensor_WriteReg(0x104, 0x00);
+	//ret_value = Sensor_WriteReg(0x104, 0x00);
 	return ret_value;
 
 }
@@ -3007,10 +3008,18 @@ static uint32_t _s5k3l2xx_set_VTS(SENSOR_HW_HANDLE handle, uint16_t VTS)
 static uint32_t _s5k3l2xx_ReadGain(SENSOR_HW_HANDLE handle, uint32_t param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
-	uint32_t gain = 0;
+	uint32_t again = 0;
+         uint32_t dgain = 0;
+         uint32_t gain = 0;
 
-	gain = Sensor_ReadReg(0x204);/*8*/
+#if 1 // for MP tool //!??
+	again = Sensor_ReadReg(0x0204) ;
+	dgain = Sensor_ReadReg(0x0210) ;
+          gain=again*dgain;
+
+ #endif
 	s_s5k3l2xx_gain=(int)gain;
+        param=(int)gain;
 	SENSOR_PRINT("SENSOR_s5k3l2xx: _s5k3l2xx_ReadGain gain: 0x%x", s_s5k3l2xx_gain);
 	return rtn;
 
@@ -3020,15 +3029,28 @@ static uint32_t _s5k3l2xx_write_otp_gain(SENSOR_HW_HANDLE handle, uint32_t *para
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint16_t value = 0x00;
-
+	float a_gain = 0;
+	float d_gain = 0;
+         float real_gain=0.0f;
 	SENSOR_PRINT("SENSOR_s5k3l2xx: write_gain:0x%x\n", *param);
 
 	//ret_value = Sensor_WriteReg(0x104, 0x01);
-	value = (*param)>>0x08;
-	ret_value = Sensor_WriteReg(0x204, value);
-	value = (*param)&0xff;
-	ret_value = Sensor_WriteReg(0x205, value);
-	ret_value = Sensor_WriteReg(0x104, 0x00);
+	if( (*param/4)>0x200){
+                a_gain=16*32;
+                d_gain=(*param/4.0)*256/a_gain;
+                if(d_gain>256*256)
+                    d_gain=256*256;
+       }
+        else{
+                 d_gain=256;
+                 a_gain=*param/4;
+            }
+        ret_value = Sensor_WriteReg(0x204,(uint32_t)a_gain);//0x100);//a_gain);
+        ret_value = Sensor_WriteReg(0x20e,(uint32_t) d_gain);
+        ret_value = Sensor_WriteReg(0x210, (uint32_t)d_gain);
+        ret_value = Sensor_WriteReg(0x212, (uint32_t)d_gain);
+        ret_value = Sensor_WriteReg(0x214, (uint32_t)d_gain);
+
 
 	return ret_value;
 }
@@ -3036,12 +3058,12 @@ static uint32_t _s5k3l2xx_write_otp_gain(SENSOR_HW_HANDLE handle, uint32_t *para
 static uint32_t _s5k3l2xx_read_otp_gain(SENSOR_HW_HANDLE handle, uint32_t *param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
-	uint16_t gain_h = 0;
-	uint16_t gain_l = 0;
+	uint16_t a_gain = 0;
+	uint16_t d_gain = 0;
 	#if 1 // for MP tool //!??
-	gain_h = Sensor_ReadReg(0x0204) & 0xff;
-	gain_l = Sensor_ReadReg(0x0205) & 0xff;
-	*param = ((gain_h << 8) | gain_l);
+	a_gain = Sensor_ReadReg(0x0204);
+         d_gain = Sensor_ReadReg(0x0210);
+        *param =a_gain*d_gain;
 	#else
 	uint8_t cmd_val[3]            = {0x00};
 	uint16_t cmd_len;
