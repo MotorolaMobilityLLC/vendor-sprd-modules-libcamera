@@ -1,20 +1,21 @@
 /******************************************************************************
  *  File name: debug_structure.h
- *  Latest Update Date:2016/03/10
+ *  Latest Update Date:2016/04/14
  *
  *  Comment:
- *  Describe structure difinition of debug information
+ *  Describe structure definition of debug information
  *****************************************************************************/
 #include "mtype.h"
 
-#define DEBUG_STRUCT_VERSION               (500)
+#define DEBUG_STRUCT_VERSION               (501)
 
-#define MAX_AEFE_DEBUG_SIZE_STRUCT1        (615)
+#define MAX_AEFE_DEBUG_SIZE_STRUCT1        (669)
 #define MAX_AEFE_DEBUG_SIZE_STRUCT2        (5120)
-#define MAX_GENERAL_DEBUG_SIZE_STRUCT1     (46)
-#define MAX_AWB_DEBUG_SIZE_STRUCT1         (340)
+#define MAX_FLICKER_DEBUG_SIZE_STRUCT1     (8)
+#define MAX_FLICKER_DEBUG_SIZE_STRUCT2     (600)
+#define MAX_AWB_DEBUG_SIZE_STRUCT1         (348)
 #define MAX_AWB_DEBUG_SIZE_STRUCT2         (10240)
-#define MAX_AF_DEBUG_SIZE_STRUCT1          (379)
+#define MAX_AF_DEBUG_SIZE_STRUCT1          (385)
 #define MAX_AF_DEBUG_SIZE_STRUCT2          (7168)
 #define MAX_BIN1_DEBUG_SIZE_STRUCT2        (30000)
 #define MAX_BIN2_DEBUG_SIZE_STRUCT2        (1137144)
@@ -144,20 +145,23 @@ struct shading_debug {
 #pragma pack(push) /* push current alignment setting to stack */
 #pragma pack(4)    /* new alignment setting  */
 struct irp_tuning_debug {
+	/*uint32 qmerge_ver;
+	uint32 tool_ver;
+	uint32 tuning_ver;*/
 	uint8 sensor_id;	/* sensor: 0 (rear 0)
 				 * sensor: 1 (rear1)
 				 * lite: 2 (front, no YCC NRE)
 				 */
-	uint16 sensor_type;  /* User definition by senosr vendor/type serial number */
+	uint16 sensor_type;  /* User definition by sensor vendor/type serial number */
 	uint8 sensor_mode;  /* for FR, video/preview size, depend on projects; default (FR + preview) */
 	uint8 tuning_id;  /* Normal mode;Saturation mode;contrast mode... */
 	uint8 level_type;	/* +2 ;+1.5;+1.0...;-1.5;-2.0
-				 * Nggative ; Grayscale ; Sepia ...
+				 * Negative ; Grayscale ; Sepia ...
 				 */
-	uint8 quality_path;  /* Normal quallity ;high quality */
+	uint8 quality_path;  /* Normal quality ;high quality */
 	uint16 bayer_scalar_w;  /* Bayer Scalar width */
 	uint16 bayer_scalar_h;  /* Bayer Scalar height */
-	uint8 debug_info[IRP_TUNING_DEBUG_INFO];  /* verify flag;HDR flag;RDN flag;NRE flag;Asharp flag;GEG flag */
+	uint8 DebugFlag[IRP_TUNING_DEBUG_INFO];  /* verify flag;HDR flag;RDN flag;NRE flag;Asharp flag;GEG flag */
 	uint16 wb_r_gain;  /* (10-bit), 1x: 256, WB gain for final result */
 	uint16 wb_g_gain;  /* (10-bit), 1x: 256, WB gain for final result */
 	uint16 wb_b_gain;  /* (10-bit), 1x: 256, WB gain for final result */
@@ -223,10 +227,10 @@ struct debug_info1 {
 								 * ae_output_data_t -> rpt_3a_update -> ae_update-> ae_commonexif_data
 								 * Real size:  ae_output_data_t->rpt_3a_update->ae_update->ae_commonexif_valid_size
 								 */
-	uint8 general_debug_info1[MAX_GENERAL_DEBUG_SIZE_STRUCT1];	/* Update @ each report update
-									 * ae_output_data_t -> rpt_3a_update -> ae_update-> ae_commonexif_data
-									 * Real size:  ae_output_data_t->rpt_3a_update->ae_update->ae_commonexif_valid_size
-									 */
+	uint8 flicker_debug_info1[MAX_FLICKER_DEBUG_SIZE_STRUCT1];	/* Update @ each report update
+									* flicker_output_data_t -> rpt_update -> flicker_update-> flicker_debug_info1(Exif data)
+									* Real size:  flicker_output_data_t -> rpt_update -> flicker_update->flicker_debug_info1_valid_size
+									*/
 	uint8 awb_debug_info1[MAX_AWB_DEBUG_SIZE_STRUCT1];	/* Update @ each report update
 								 * AWB debug_info(Exif data)  is "awb_debug_data_array[]" in the structure "alAWBLib_output_data_t" from alAWBRuntimeObj_t-> estimation
 								 */
@@ -235,7 +239,7 @@ struct debug_info1 {
 								 * alAFLib_output_report_t->alAF_EXIF_data_size
 								 */
 	struct otp_report_debug1 otp_report_debug_info1;
-	struct raw_img_debug raw_debug_info1;	/* Senosr/ISP, included into S_ISP_DEBUG_INFO of ISP API: u32 ISPDrv_GetOutputBuffer(u8 a_ucSensor,
+	struct raw_img_debug raw_debug_info1;	/* Sensor/ISP, included into S_ISP_DEBUG_INFO of ISP API: u32 ISPDrv_GetOutputBuffer(u8 a_ucSensor,
 						 * u8 a_ucOutputImage, u32 a_pudOutputBuffer, S_SCENARIO_SIZE a_ptCropSize, S_ISP_DEBUG_INFO * a_ptIspDebugInfo)
 						 */
 	struct shading_debug shading_debug_info1;	/* Included into S_ISP_DEBUG_INFO of ISP API: u32 ISPDrv_GetOutputBuffer(u8 a_ucSensor, u8 a_ucOutputImage,
@@ -261,6 +265,10 @@ struct debug_info2 {
 								 * ae_output_data_t->rpt_3a_update->ae_update->ae_debug_data
 								 * Real size: ae_output_data_t->rpt_3a_update->ae_update->ae_debug_valid_size
 								 */
+	uint8 flicker_debug_info2[MAX_FLICKER_DEBUG_SIZE_STRUCT2];	/* Update @ each report update
+									* flicker_output_data_t -> rpt_update -> flicker_update-> flicker_debug_info2
+									* Real size:  flicker_output_data_t -> rpt_update -> flicker_update->flicker_debug_info2_valid_size
+									*/
 	uint8 awb_debug_info2[MAX_AWB_DEBUG_SIZE_STRUCT2];	/* Update @ each report update
 								 * AWB debug_info (Structure 2)  is "*awb_debug_data_full" in the structure "alAWBLib_output_data_t" from alAWBRuntimeObj_t-> estimation
 								 */
