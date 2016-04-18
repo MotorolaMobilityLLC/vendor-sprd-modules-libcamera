@@ -144,7 +144,7 @@ struct isp3a_ae_report {
 	cmr_u32 ae_state;
 	cmr_u32 fe_state;
 	cmr_u16 ae_converge_st;
-	cmr_u32 BV;
+	cmr_s32 BV;
 	cmr_u32 non_comp_BV;
 	cmr_u32 ISO;
 	cmr_u32 flash_ratio;

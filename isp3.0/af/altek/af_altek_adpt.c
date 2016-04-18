@@ -857,7 +857,12 @@ static void afaltek_adpt_ae_info_to_af_lib(struct isp3a_ae_info *ae_info,
 	af_ae_info->ae_settled = ae_info->report_data.ae_converge_st;
 	af_ae_info->cur_intensity = (float)(ae_info->report_data.cur_mean);
 	af_ae_info->target_intensity = (float)(ae_info->report_data.target_mean);
-	af_ae_info->brightness = (float)(ae_info->report_data.BV);
+	if (ae_info->report_data.BV + 5000 > 30000)
+		af_ae_info ->brightness = 30000;
+	else if (ae_info->report_data.BV - 5000 < -30000)
+		af_ae_info ->brightness = -30000;
+	else
+		af_ae_info ->brightness = (short)(ae_info->report_data.BV + 5000);
 	af_ae_info->cur_gain = (float)(ae_info->report_data.sensor_ad_gain);
 	af_ae_info->exp_time = (float)(ae_info->report_data.exp_time);
 	af_ae_info->preview_fr = ae_info->report_data.fps;
