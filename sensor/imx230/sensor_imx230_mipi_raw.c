@@ -953,168 +953,6 @@ static const SENSOR_REG_T imx230_1280x720_setting[] = {
 	{0x3013, 0x01}
 };
 
-static uint16_t sensorGainMapping[159][2] = {
-	{64 , 1  },
-	{65 , 8  },
-	{66 , 13 },
-	{67 , 23 },
-	{68 , 27 },
-	{69 , 36 },
-	{70 , 41 },
-	{71 , 49 },
-	{72 , 53 },
-	{73 , 61 },
-	{74 , 69 },
-	{75 , 73 },
-	{76 , 80 },
-	{77 , 88 },
-	{78 , 91 },
-	{79 , 98 },
-	{80 , 101},
-	{81 , 108},
-	{82 , 111},
-	{83 , 117},
-	{84 , 120},
-	{85 , 126},
-	{86 , 132},
-	{87 , 135},
-	{88 , 140},
-	{89 , 143},
-	{90 , 148},
-	{91 , 151},
-	{92 , 156},
-	{93 , 161},
-	{94 , 163},
-	{95 , 168},
-	{96 , 170},
-	{97 , 175},
-	{98 , 177},
-	{99 , 181},
-	{100, 185},
-	{101, 187},
-	{102, 191},
-	{103, 193},
-	{104, 197},
-	{105, 199},
-	{106, 203},
-	{107, 205},
-	{108, 207},
-	{109, 212},
-	{110, 214},
-	{111, 217},
-	{112, 219},
-	{113, 222},
-	{114, 224},
-	{115, 227},
-	{116, 230},
-	{117, 232},
-	{118, 234},
-	{119, 236},
-	{120, 239},
-	{122, 244},
-	{123, 245},
-	{124, 248},
-	{125, 249},
-	{126, 252},
-	{127, 253},
-	{128, 256},
-	{129, 258},
-	{130, 260},
-	{131, 262},
-	{132, 263},
-	{133, 266},
-	{134, 268},
-	{136, 272},
-	{138, 274},
-	{139, 276},
-	{140, 278},
-	{141, 280},
-	{143, 282},
-	{144, 284},
-	{145, 286},
-	{147, 288},
-	{148, 290},
-	{149, 292},
-	{150, 294},
-	{152, 296},
-	{153, 298},
-	{155, 300},
-	{156, 302},
-	{157, 304},
-	{159, 306},
-	{161, 308},
-	{162, 310},
-	{164, 312},
-	{166, 314},
-	{167, 316},
-	{169, 318},
-	{171, 320},
-	{172, 322},
-	{174, 324},
-	{176, 326},
-	{178, 328},
-	{180, 330},
-	{182, 332},
-	{184, 334},
-	{186, 336},
-	{188, 338},
-	{191, 340},
-	{193, 342},
-	{195, 344},
-	{197, 346},
-	{200, 348},
-	{202, 350},
-	{205, 352},
-	{207, 354},
-	{210, 356},
-	{212, 358},
-	{216, 360},
-	{218, 362},
-	{221, 364},
-	{225, 366},
-	{228, 368},
-	{231, 370},
-	{234, 372},
-	{237, 374},
-	{241, 376},
-	{244, 378},
-	{248, 380},
-	{252, 382},
-	{256, 384},
-	{260, 386},
-	{264, 388},
-	{269, 390},
-	{273, 392},
-	{278, 394},
-	{282, 396},
-	{287, 398},
-	{292, 400},
-	{298, 402},
-	{303, 404},
-	{309, 406},
-	{315, 408},
-	{321, 410},
-	{328, 412},
-	{334, 414},
-	{341, 416},
-	{349, 418},
-	{356, 420},
-	{364, 422},
-	{372, 424},
-	{381, 426},
-	{390, 428},
-	{399, 430},
-	{410, 432},
-	{420, 434},
-	{431, 436},
-	{443, 438},
-	{455, 440},
-	{468, 442},
-	{482, 444},
-	{497, 446},
-	{512, 448}
-};
-
 static SENSOR_REG_TAB_INFO_T s_imx230_resolution_tab_raw[SENSOR_MODE_MAX] = {
 	{ADDR_AND_LEN_OF_ARRAY(imx230_init_setting), 0, 0, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
 //	{ADDR_AND_LEN_OF_ARRAY(imx230_1280x720_setting), 1280, 720, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
@@ -1406,43 +1244,44 @@ static uint16_t imx230_read_gain(SENSOR_HW_HANDLE handle)
 	return gain_l;
 }
 
-static uint16_t gain2reg(SENSOR_HW_HANDLE handle, const uint16_t gain)
-{
-	uint16_t i;
-
-	for (i = 0; i < (159-1); i++) {
-		if (gain <= sensorGainMapping[i][0]){
-			break;
-		}
-	}
-
-	return sensorGainMapping[i][1];
-}
-
 /*==============================================================================
  * Description:
  * write gain to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void imx230_write_gain(SENSOR_HW_HANDLE handle, uint32_t gain)
+static void imx230_write_gain(SENSOR_HW_HANDLE handle, float gain)
 {
 	uint32_t sensor_again = 0;
+	uint32_t sensor_dgain = 0;
+	float temp_gain;
 
-/*
-	sensor_again=256-(256*SENSOR_BASE_GAIN/gain);
-	sensor_again=sensor_again&0xFF;
+	gain = gain/32.0;
 
-	if (SENSOR_MAX_GAIN < sensor_again)
-			sensor_again = SENSOR_MAX_GAIN;
-	SENSOR_PRINT("sensor_again=0x%x",sensor_again);
-	Sensor_WriteReg_Ex(0x0205, sensor_again & 0xFF, SENSOR_MAIN);
-*/
-	sensor_again = gain2reg(handle, gain);
-
-	SENSOR_PRINT("sensor_again=%d", sensor_again);
-
+	temp_gain = gain;
+	if (temp_gain < 1.0)
+		temp_gain = 1.0;
+	else if (temp_gain > 8.0)
+		temp_gain = 8.0;
+	sensor_again = (uint16_t)(512.0 - 512.0 / temp_gain);
 	Sensor_WriteReg(0x0204, (sensor_again>>8)& 0xFF);
 	Sensor_WriteReg(0x0205, sensor_again & 0xFF);
+
+	temp_gain = gain/8;
+	if (temp_gain > 4.0)
+		temp_gain = 4.0;
+	else if (temp_gain < 1.0)
+		temp_gain = 1.0;
+	sensor_dgain = (uint16_t)(256 * temp_gain);
+	Sensor_WriteReg(0x020e, (sensor_dgain>>8)& 0xFF);
+	Sensor_WriteReg(0x020f, sensor_dgain & 0xFF);
+	Sensor_WriteReg(0x0210, (sensor_dgain>>8)& 0xFF);
+	Sensor_WriteReg(0x0211, sensor_dgain & 0xFF);
+	Sensor_WriteReg(0x0212, (sensor_dgain>>8)& 0xFF);
+	Sensor_WriteReg(0x0213, sensor_dgain & 0xFF);
+	Sensor_WriteReg(0x0214, (sensor_dgain>>8)& 0xFF);
+	Sensor_WriteReg(0x0215, sensor_dgain & 0xFF);
+
+	SENSOR_PRINT("realgain=%f,again=%d,dgain=%f", gain, sensor_again, temp_gain);
 
 	imx230_group_hold_off(handle);
 
@@ -1926,13 +1765,11 @@ static uint32_t isp_to_real_gain(SENSOR_HW_HANDLE handle, uint32_t param)
 static unsigned long imx230_write_gain_value(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	unsigned long ret_value = SENSOR_SUCCESS;
-	uint32_t real_gain = 0;
+	float real_gain = 0;
 
-	/*real_gain = isp_to_real_gain(param);*/
+	real_gain = (float)param * SENSOR_BASE_GAIN / ISP_BASE_GAIN*1.0;
 
-	real_gain = param * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
-
-	SENSOR_PRINT("real_gain = %d", real_gain);
+	SENSOR_PRINT("real_gain = %f", real_gain);
 
 	s_sensor_ev_info.preview_gain = real_gain;
 	imx230_write_gain(handle, real_gain);
