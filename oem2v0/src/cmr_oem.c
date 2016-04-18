@@ -5818,8 +5818,8 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	if (1 == camera_get_hdr_flag(cxt)) {
 		struct ipm_open_in  in_param;
 		struct ipm_open_out out_param;
-		in_param.frame_size.width = CAMERA_ALIGNED_16(cxt->snp_cxt.request_size.width);
-		in_param.frame_size.height = CAMERA_ALIGNED_16(cxt->snp_cxt.request_size.height);
+		in_param.frame_size.width = CAMERA_ALIGNED_16(cxt->snp_cxt.request_size.width)+16;
+		in_param.frame_size.height = CAMERA_ALIGNED_16(cxt->snp_cxt.request_size.height)+16;
 		in_param.frame_rect.start_x = 0;
 		in_param.frame_rect.start_y = 0;
 		in_param.frame_rect.width = in_param.frame_size.width;
