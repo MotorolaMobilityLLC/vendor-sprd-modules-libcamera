@@ -653,6 +653,16 @@ static cmr_int setting_get_encode_angle(struct setting_component *cpt,
 	return ret;
 }
 
+static cmr_int setting_get_encode_rotation(struct setting_component *cpt,
+					                    struct setting_cmd_parameter *parm)
+{
+	cmr_int                      ret = 0;
+	struct setting_hal_param     *hal_param = get_hal_param(cpt, parm->camera_id);;
+
+	parm->cmd_type_value = hal_param->encode_rotation;
+	return ret;
+}
+
 static cmr_uint setting_flash_mode_to_status(struct setting_component *cpt,
 											struct setting_cmd_parameter *parm,
                                              enum cmr_flash_mode f_mode)
@@ -3078,6 +3088,7 @@ cmr_int cmr_setting_ioctl(cmr_handle setting_handle, cmr_uint cmd_type,
 		{SETTING_GET_SLOW_MOTION_FLAG,		   setting_get_slow_motion_flag},
 		{SETTING_GET_SPRD_PIPVIV_ENABLED, 	setting_get_sprd_pipviv_enabled},
 		{SETTING_GET_SPRD_HIGHISO_ENABLED, 	setting_get_sprd_highiso_enabled},
+		{SETTING_GET_ENCODE_ROTATION,             setting_get_encode_rotation},
 	};
 	struct setting_item          *item = NULL;
 	struct setting_component     *cpt =	 (struct setting_component *)setting_handle;

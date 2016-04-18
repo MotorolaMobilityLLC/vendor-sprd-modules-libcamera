@@ -5602,6 +5602,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	struct snapshot_context        *snp_cxt = &cxt->snp_cxt;
 	struct setting_cmd_parameter   setting_param;
 	cmr_u32                        is_cfg_snp = 0;
+	cmr_u32                        rotation = 0;
 
 	setting_param.camera_id = cxt->camera_id;
 	cmr_bzero((void*)out_param_ptr, sizeof(*out_param_ptr));
@@ -5780,13 +5781,28 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	}
 	cxt->snp_cxt.total_num = setting_param.cmd_type_value;
 
-    /*for bug500099*/
-    ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_FLIP_ON, &setting_param);
-    if (ret) {
-            CMR_LOGE("failed to get preview sprd flip_on enabled flag %ld", ret);
-            goto exit;
-    }
-    out_param_ptr->flip_on = setting_param.cmd_type_value;
+	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_ENCODE_ROTATION, &setting_param);
+	if (ret) {
+		CMR_LOGE("failed to get enc rotation %ld", ret);
+		goto exit;
+	}
+	rotation = setting_param.cmd_type_value;
+
+	/*for bug500099*/
+	ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_FLIP_ON, &setting_param);
+	if (ret) {
+		CMR_LOGE("failed to get preview sprd flip_on enabled flag %ld", ret);
+		goto exit;
+	}
+	out_param_ptr->flip_on = setting_param.cmd_type_value;
+	if (out_param_ptr->flip_on) {
+		CMR_LOGI("encode_rotation:%d, flip:%d", rotation, out_param_ptr->flip_on);
+		if (90 == rotation || 270 == rotation) {
+			out_param_ptr->flip_on = 0x1; // flip
+		} else if (0 == rotation || 180 == rotation) {
+			out_param_ptr->flip_on = 0x3; // mirror
+		}
+	}
 	//bug500099 front cam mirror end
 
 #ifdef CONFIG_MEM_OPTIMIZATION
