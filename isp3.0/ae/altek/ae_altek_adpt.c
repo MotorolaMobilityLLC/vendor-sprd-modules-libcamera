@@ -2156,6 +2156,9 @@ static cmr_int aealtek_capture_hdr(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 	param_ct_ptr = &set_in_param.set_param;
 
 	/* get 3 exposure time & gain */
+	cmr_bzero(param_ct_ptr->ae_bracket_param.bracket_evComp, sizeof(param_ct_ptr->ae_bracket_param.bracket_evComp));
+	set_in_param.bforceupdateflg   = 1;
+	param_ct_ptr->capture_mode = CAPTURE_MODE_BRACKET;
 	param_ct_ptr->ae_bracket_param.valid_exp_num = 3;
 	param_ct_ptr->ae_bracket_param.bracket_evComp[0] = -1000;
 	param_ct_ptr->ae_bracket_param.bracket_evComp[1] =  0;
