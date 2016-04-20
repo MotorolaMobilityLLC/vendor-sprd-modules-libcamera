@@ -354,6 +354,7 @@ typedef struct {
 	uint8_t sprd_highiso_enabled;
 	uint8_t availabe_smile_enable;
 	uint8_t sprd_eis_enabled;
+	uint8_t availabe_antiband_auto_supported;
 } SPRD_DEF_Tag;
 
 typedef struct {

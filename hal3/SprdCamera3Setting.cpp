@@ -1986,6 +1986,12 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId)
 	#else
 	s_setting[cameraId].sprddefInfo.availabe_smile_enable = 1;
 	#endif
+
+	#ifdef CONFIG_CAMERA_AFL_AUTO_DETECTION
+	s_setting[cameraId].sprddefInfo.availabe_antiband_auto_supported = 1;
+	#else
+	s_setting[cameraId].sprddefInfo.availabe_antiband_auto_supported = 0;
+	#endif
 	return ret;
 }
 
@@ -2222,6 +2228,8 @@ int SprdCamera3Setting::initStaticMetadata(int32_t cameraId, camera_metadata_t *
 			ARRAY_SIZE(s_setting[cameraId].sprddefInfo.availabe_saturation));
 	staticInfo.update(ANDROID_SPRD_AVAILABLE_SMILEENABLE,
 			&(s_setting[cameraId].sprddefInfo.availabe_smile_enable),1);
+	staticInfo.update(ANDROID_SPRD_AVAILABLE_ANTIBAND_AUTOSUPPORTED,
+			&(s_setting[cameraId].sprddefInfo.availabe_antiband_auto_supported),1);
 	if (cameraId == 0 ||cameraId == 1) {
 		staticInfo.update(ANDROID_SPRD_AVAILABLE_ISO,
 				s_setting[cameraId].sprddefInfo.availabe_iso,
