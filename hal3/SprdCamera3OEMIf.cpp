@@ -4861,8 +4861,15 @@ int SprdCamera3OEMIf::Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *ph
 	sprd_camera_memory_t *memory = NULL;
 	cmr_int              i = 0;
 
+	SPRD_DEF_Tag sprddefInfo;
+	int     BufferCount = kZslBufferCount;
 
-	HAL_LOGD("size %d sum %d mZslHeapNum %d", size, sum, mZslHeapNum);
+	mSetting->getSPRDDEFTag(&sprddefInfo);
+	if (sprddefInfo.slowmotion <= 1)
+		BufferCount = 8;
+
+
+	HAL_LOGD("size %d sum %d mZslHeapNum %d, BufferCount %d", size, sum, mZslHeapNum, BufferCount);
 
 	*phy_addr = 0;
 	*vir_addr = 0;
@@ -4897,11 +4904,12 @@ int SprdCamera3OEMIf::Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *ph
 		return 0;
 	}
 #endif
-	if (sum > kZslBufferCount) {
-		mZslHeapNum = kZslBufferCount;
-		phy_addr += kZslBufferCount;
-		vir_addr += kZslBufferCount;
-		for (i=kZslBufferCount; i<(cmr_int)sum ; i++) {
+	if (sum > BufferCount) {
+		mZslHeapNum = BufferCount;
+		phy_addr += BufferCount;
+		vir_addr += BufferCount;
+		fd += BufferCount;
+		for (i=BufferCount; i<(cmr_int)sum ; i++) {
 			memory = allocCameraMem(size, 1, true);
 
 			if (NULL == memory) {
@@ -4950,9 +4958,14 @@ int SprdCamera3OEMIf::Callback_PreviewMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint
 {
 	sprd_camera_memory_t *memory = NULL;
 	cmr_uint i = 0;
+	SPRD_DEF_Tag sprddefInfo;
+	int     BufferCount = kPreviewBufferCount;
 
+	mSetting->getSPRDDEFTag(&sprddefInfo);
+	if (sprddefInfo.slowmotion <= 1)
+		BufferCount = 8;
 
-	HAL_LOGD("size %d sum %d mPreviewHeapNum %d", size, sum, mPreviewHeapNum);
+	HAL_LOGD("size %d sum %d mPreviewHeapNum %d, BufferCount %d", size, sum, mPreviewHeapNum, BufferCount);
 
 	*phy_addr = 0;
 	*vir_addr = 0;
@@ -4968,13 +4981,14 @@ int SprdCamera3OEMIf::Callback_PreviewMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint
 		return BAD_VALUE;
 	}
 
-	 if (sum > kPreviewBufferCount) {
+	 if (sum > BufferCount) {
 		int start;
-		mPreviewHeapNum = kPreviewBufferCount;
-		phy_addr += kPreviewBufferCount;
-		vir_addr += kPreviewBufferCount;
+		mPreviewHeapNum = BufferCount;
+		phy_addr += BufferCount;
+		vir_addr += BufferCount;
+		fd += BufferCount;
 
-		for (i = kPreviewBufferCount; i <(cmr_int)sum ; i++) {
+		for (i = BufferCount; i <(cmr_int)sum ; i++) {
 			memory = allocCameraMem(size, 1, true);
 
 			if (NULL == memory) {

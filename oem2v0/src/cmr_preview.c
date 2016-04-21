@@ -5818,7 +5818,12 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_
 				&trim_sz);
 	} else {
 		struct cmr_zoom_param zoom_info = *zoom_param;
-		zoom_info.zoom_info.output_ratio = (float)prev_cxt->actual_video_size.width / (float)prev_cxt->actual_video_size.height;
+		cmr_s8 value[PROPERTY_VALUE_MAX];
+		property_get("volte.incall.camera.enable", value, "false");
+		if (!strcmp(value, "true"))
+			CMR_LOGI("volte incall, don't need to reset zoom_info ");
+		else
+			zoom_info.zoom_info.output_ratio = (float)prev_cxt->actual_video_size.width / (float)prev_cxt->actual_video_size.height;
 		ret = prev_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
 				sensor_mode_info->scaler_trim.width,
 				sensor_mode_info->scaler_trim.height,
@@ -7157,7 +7162,7 @@ cmr_int prev_set_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id, c
 	buf_cfg.flag        = BUF_FLAG_RUNNING;
 	if (prev_cxt->prev_param.prev_rot) {
 		if (CMR_CAMERA_SUCCESS == prev_search_rot_buffer(prev_cxt, CAMERA_PREVIEW)) {
-			rot_index                  = prev_cxt->prev_rot_index % PREV_ROT_FRM_CNT;
+			rot_index                  = prev_cxt->prev_rot_index % PREV_ROT_FRM_ALLOC_CNT;
 			buf_cfg.addr[0].addr_y     = prev_cxt->prev_rot_frm[rot_index].addr_phy.addr_y;
 			buf_cfg.addr[0].addr_u     = prev_cxt->prev_rot_frm[rot_index].addr_phy.addr_u;
 			buf_cfg.addr_vir[0].addr_y = prev_cxt->prev_rot_frm[rot_index].addr_vir.addr_y;
@@ -7623,7 +7628,7 @@ cmr_uint prev_set_rot_buffer_flag(struct prev_context *prev_cxt, cmr_uint type, 
 			ret = CMR_CAMERA_INVALID_STATE;
 		}
 	}
-	if (!ret && (index >= 0 && index < PREV_ROT_FRM_CNT) && (NULL != frm_is_lock)) {
+	if (!ret && (index >= 0 && index < PREV_ROT_FRM_ALLOC_CNT) && (NULL != frm_is_lock)) {
 		*(frm_is_lock + index) = flag;
 	} else {
 		CMR_LOGE("error index %ld", index);
@@ -7667,9 +7672,9 @@ cmr_uint prev_search_rot_buffer(struct prev_context *prev_cxt, cmr_uint type)
 		}
 	}
 	if (!ret && (NULL != frm_is_lock)) {
-		for (count = 0; count < PREV_ROT_FRM_CNT; count++){
+		for (count = 0; count < PREV_ROT_FRM_ALLOC_CNT; count++){
 			search_index += count;
-			search_index %= PREV_ROT_FRM_CNT;
+			search_index %= PREV_ROT_FRM_ALLOC_CNT;
 			if (0 == *(frm_is_lock + search_index)) {
 				*rot_index = search_index;
 				CMR_LOGI("[prev_rot] find %ld", search_index);
@@ -7750,7 +7755,7 @@ cmr_uint prev_get_src_rot_buffer(struct prev_context *prev_cxt, struct frm_info 
 	}
 
 	if (!ret && (frm_ptr != NULL)) {
-		for (count = 0; count < PREV_ROT_FRM_CNT; count++){
+		for (count = 0; count < PREV_ROT_FRM_ALLOC_CNT; count++){
 			CMR_LOGI("[prev_rot] fd 0x%lx 0x%x %ld", (frm_ptr + count)->fd, data->fd, *(frm_is_lock + count));
 			if (1 == *(frm_is_lock + count) && data->fd == (frm_ptr + count)->fd) {
 				*index = count;

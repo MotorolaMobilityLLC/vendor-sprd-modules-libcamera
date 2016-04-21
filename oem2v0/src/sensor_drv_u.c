@@ -726,7 +726,6 @@ exit:
 
 cmr_u16 hw_sensor_grc_read_i2c(SENSOR_HW_HANDLE handle, cmr_u16 slave_addr, cmr_u16 addr, cmr_int bits)
 {
-	CMR_LOGE("tony");
 	cmr_int ret = SENSOR_SUCCESS;
 	cmr_u16 reg = 0;
 	if (NULL == handle || NULL == handle->privatedata)
@@ -839,7 +838,6 @@ cmr_u16 hw_sensor_grc_write_i2c(SENSOR_HW_HANDLE handle, cmr_u16 slave_addr, cmr
 {
 	cmr_int ret = SENSOR_SUCCESS;
 
-	CMR_LOGE("tony In");
 	if (NULL == handle || NULL == handle->privatedata)
 		return SENSOR_CTX_ERROR;
 	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)(handle->privatedata);
@@ -1341,8 +1339,6 @@ cmr_u32 hw_Sensor_ReadReg(SENSOR_HW_HANDLE handle, cmr_u16 reg_addr)
 	cmr_u16 ret_val = 0xffff;
 	cmr_int ret = -1;
 	SENSOR_IOCTL_FUNC_PTR read_reg_func;
-
-	CMR_LOGE("tony E");
 
 	if (NULL == handle || NULL == handle->privatedata)
 		return SENSOR_CTX_ERROR;
@@ -2618,24 +2614,21 @@ cmr_int sns_destroy_ctrl_thread(struct sensor_drv_context *sensor_cxt)
 	sensor_cxt->fd_sensor = SENSOR_FD_INIT;
 	sensor_cxt->i2c_addr = 0xff;
 
-{
-			// first, create one SENSOR_HW_HANDLE object. and save
-			//---
-			// sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr->create(sensor_cxt);
-			// create funciton will malloc one sensor_hw_handle, and save the sensor_cxt as privatedata.
-			//---
-			SENSOR_HW_HANDLE sensor_hw_handle = (SENSOR_HW_HANDLE)malloc(sizeof(SENSOR_HW_HANDLE));
-			if (NULL == sensor_hw_handle) {
-				CMR_LOGE("failed to create context");
-				return CMR_CAMERA_NO_MEM;
-			}
-			cmr_bzero(sensor_hw_handle, sizeof(*sensor_hw_handle));
-			sensor_hw_handle->privatedata = sensor_cxt;
+	// first, create one SENSOR_HW_HANDLE object. and save
+	//---
+	// sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr->create(sensor_cxt);
+	// create funciton will malloc one sensor_hw_handle, and save the sensor_cxt as privatedata.
+	//---
+	SENSOR_HW_HANDLE sensor_hw_handle = (SENSOR_HW_HANDLE)malloc(sizeof(SENSOR_HW_HANDLE));
+	if (NULL == sensor_hw_handle) {
+		CMR_LOGE("failed to create context");
+		return CMR_CAMERA_NO_MEM;
+	}
+	cmr_bzero(sensor_hw_handle, sizeof(*sensor_hw_handle));
+	sensor_hw_handle->privatedata = sensor_cxt;
 
-			// sencod, save the sensor_hw_handle in sensor_cxt.
-			sensor_cxt->sensor_hw_handler = (cmr_handle)sensor_hw_handle;
-}
-
+	// sencod, save the sensor_hw_handle in sensor_cxt.
+	sensor_cxt->sensor_hw_handler = (cmr_handle)sensor_hw_handle;
 
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 	{
