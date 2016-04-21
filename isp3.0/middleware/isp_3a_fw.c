@@ -3018,7 +3018,7 @@ cmr_int isp3a_start_yhis_process(cmr_handle isp_3a_handle, struct isp3a_statisti
 
 	isp3a_hold_statistics_buf(isp_3a_handle, ISP3A_YHIS, stats_data);
 
-	param_in.y_hist_stat.y_hist_data_ptr = stats_data;
+	param_in.y_hist_stat = stats_data;
 	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle,
 			     AE_CTRL_SET_Y_HIST_STATS,
 			     &param_in, NULL);

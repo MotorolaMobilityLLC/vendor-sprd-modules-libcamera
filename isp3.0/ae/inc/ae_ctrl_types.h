@@ -394,10 +394,6 @@ struct ae_ctrl_param_out {
 	};
 };
 
-struct ae_ctrl_param_y_hist {
-	void *y_hist_data_ptr;
-};
-
 struct ae_ctrl_param_in {
 	union {
 	cmr_u32 value;
@@ -417,7 +413,7 @@ struct ae_ctrl_param_in {
 	struct ae_ctrl_param_af af_report;
 	struct ae_ctrl_param_gyro gyro;
 	struct ae_ctrl_param_flash flash;
-	struct ae_ctrl_param_y_hist y_hist_stat;
+	struct isp3a_statistics_data *y_hist_stat;
 	};
 };
 

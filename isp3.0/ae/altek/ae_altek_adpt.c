@@ -3611,7 +3611,11 @@ static cmr_int aealtek_set_y_hist_stats(struct aealtek_cxt *cxt_ptr, struct ae_c
 	wrapper_y_hist.b_is_stats_byaddr = TRUE;
 	wrapper_y_hist.pt_hist_y = cxt_ptr->stat_info[cxt_ptr->stat_info_num].ae_stats.y_hist;
 
-	ret = al3awrapper_dispatchhw3a_yhiststats((struct isp_drv_meta_yhist_t *)in_ptr->y_hist_stat.y_hist_data_ptr, &wrapper_y_hist);
+	if (!in_ptr->y_hist_stat->addr) {
+		ISP_LOGE("y hist stat data is NULL");
+		goto exit;
+	}
+	ret = al3awrapper_dispatchhw3a_yhiststats((struct isp_drv_meta_yhist_t *)in_ptr->y_hist_stat->addr, &wrapper_y_hist);
 	if (ret) {
 		ISP_LOGE("failed to dispatch yhist");
 		goto exit;
