@@ -4015,7 +4015,7 @@ static cmr_int aealtek_pre_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 	obj_ptr = &cxt_ptr->al_obj;
 
 	ppatched_aedat = &cxt_ptr->lib_data.stats_data;
-	ppatched_aedat->ptstatsy = cxt_ptr->stat_info[cxt_ptr->stat_info_num].ae_stats.y_hist;
+	ppatched_aedat->ptstatsy = cxt_ptr->stat_info[cxt_ptr->stat_info_num].statsy;
 	ppatched_aedat->ptstatsr = cxt_ptr->stat_info[cxt_ptr->stat_info_num].ae_stats.r_info;
 	ppatched_aedat->ptstatsg = cxt_ptr->stat_info[cxt_ptr->stat_info_num].ae_stats.g_info;
 	ppatched_aedat->ptstatsb = cxt_ptr->stat_info[cxt_ptr->stat_info_num].ae_stats.b_info;
