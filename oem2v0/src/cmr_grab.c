@@ -1282,6 +1282,7 @@ cmr_int cmr_grab_flash_cb(cmr_handle grab_handle, cmr_u32 opt)
 	}
 	set_flash.led0_status = opt;
 	set_flash.led1_status = opt;
+	set_flash.flash_index = (opt >> 8);
 	ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_FLASH, &set_flash);
 	if (ret) {
 		CMR_LOGE("error");

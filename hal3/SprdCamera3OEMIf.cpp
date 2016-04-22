@@ -5037,7 +5037,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag)
 		break;
 
 	case ANDROID_CONTROL_AE_MODE:
-		if (mCameraId == 0) {
+		if (mCameraId == 0 || mCameraId == 1) {
 			int8_t drvAeMode;
 			mSetting->androidAeModeToDrvAeMode(controlInfo.ae_mode, &drvAeMode);
 
@@ -5067,7 +5067,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag)
 		break;
 
 	case ANDROID_FLASH_MODE:
-		if (mCameraId == 0) {
+		if (mCameraId == 0 || mCameraId == 1) {
 			int8_t flashMode;
 			FLASH_Tag flashInfo;
 			mSetting->getFLASHTag(&flashInfo);

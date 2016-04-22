@@ -4497,7 +4497,7 @@ cmr_int camera_preview_post_proc(cmr_handle oem_handle, cmr_u32 camera_id)
 	struct setting_cmd_parameter    setting_param;
 	cmr_int                        flash_status;
 
-	if(camera_id == 0) {
+	if (0 == camera_id || 1 == camera_id) {
 		setting_param.camera_id = camera_id;
 		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_HW_FLASH_STATUS, &setting_param);
 		if (ret) {
@@ -5735,7 +5735,7 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type, struc
 		} else {
 			//cmr_sensor_set_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_EXIF_CTRL_FLASH, 0);
 		}
-		cmr_grab_flash_cb(grab_handle, param_ptr->cmd_value);
+		cmr_grab_flash_cb(grab_handle, param_ptr->cmd_value|(cxt->camera_id<<8));
 		break;
 	case SETTING_IO_GET_PREVIEW_MODE:
 		param_ptr->cmd_value = cxt->prev_cxt.preview_sn_mode;

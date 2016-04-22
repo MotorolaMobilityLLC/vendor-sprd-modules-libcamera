@@ -1893,8 +1893,16 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId)
 	s_setting[cameraId].flashInfo.firing_power = 10;
 
 	//flash_info
-	s_setting[cameraId].flash_InfoInfo.available = (cameraId == 0) ? 1 : 0;
-
+	//s_setting[cameraId].flash_InfoInfo.available = (cameraId == 0) ? 1 : 0;
+	if (cameraId == 0) {
+		s_setting[cameraId].flash_InfoInfo.available = 1;
+	} else if (cameraId == 1) {
+#ifdef CONFIG_FRONT_FLASH_SUPPORT
+		s_setting[cameraId].flash_InfoInfo.available = 1;
+#else
+		s_setting[cameraId].flash_InfoInfo.available = 0;
+#endif
+	}
 
 	if (s_setting[cameraId].flash_InfoInfo.available) {
 		memcpy(s_setting[cameraId].controlInfo.ae_available_modes, camera3_default_info.common.availableAeModes, sizeof(camera3_default_info.common.availableAeModes));
@@ -3703,8 +3711,20 @@ SprdCamera3Setting::translateLocalToFwMetadata()
 
 	if((s_setting[mCameraId].metaInfo.flash_mode))
 		s_setting[mCameraId].flashInfo.state = ANDROID_FLASH_STATE_FIRED;
-	else
-		s_setting[mCameraId].flashInfo.state = mCameraId == 0 ? ANDROID_FLASH_STATE_READY : ANDROID_FLASH_STATE_UNAVAILABLE;
+	else{
+		//s_setting[mCameraId].flashInfo.state = mCameraId == 0 ? ANDROID_FLASH_STATE_READY : ANDROID_FLASH_STATE_UNAVAILABLE;
+		if (mCameraId == 0) {
+				s_setting[mCameraId].flashInfo.state = ANDROID_FLASH_STATE_READY;
+			} else if (mCameraId == 1) {
+#ifdef CONFIG_FRONT_FLASH_SUPPORT
+		s_setting[mCameraId].flashInfo.state = ANDROID_FLASH_STATE_READY;
+#else
+		s_setting[mCameraId].flashInfo.state = ANDROID_FLASH_STATE_UNAVAILABLE;
+#endif
+	} else {
+		s_setting[mCameraId].flashInfo.state = ANDROID_FLASH_STATE_UNAVAILABLE;
+		}
+	}
 	camMetadata.update(ANDROID_FLASH_STATE, &(s_setting[mCameraId].flashInfo.state), 1);
 	camMetadata.update(ANDROID_FLASH_MODE, &(s_setting[mCameraId].metaInfo.flash_mode), 1);
 	camMetadata.update(ANDROID_EDGE_MODE, &(s_setting[mCameraId].edgeInfo.mode), 1);
