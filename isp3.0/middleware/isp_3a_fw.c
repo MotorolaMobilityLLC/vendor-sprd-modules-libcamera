@@ -750,6 +750,10 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 		awb_input.calibration_gain.r = cxt->otp_data->isp_awb_info.gain_r;
 		awb_input.calibration_gain.g = cxt->otp_data->isp_awb_info.gain_g;
 		awb_input.calibration_gain.b = cxt->otp_data->isp_awb_info.gain_b;
+	} else if (input_ptr->bin_info.otp_data_addr) {
+		awb_input.calibration_gain.r = input_ptr->bin_info.otp_data_addr->gain_r;
+		awb_input.calibration_gain.g = input_ptr->bin_info.otp_data_addr->gain_g;
+		awb_input.calibration_gain.b = input_ptr->bin_info.otp_data_addr->gain_b;
 	}
 	ISP_LOGI("awb bin %p", awb_input.tuning_param);
 	ret = awb_ctrl_init(&awb_input, &awb_output, &cxt->awb_cxt.handle);
@@ -800,6 +804,10 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 		ae_input.otp_data.r = cxt->otp_data->isp_awb_info.gain_r;
 		ae_input.otp_data.g = cxt->otp_data->isp_awb_info.gain_g;
 		ae_input.otp_data.b = cxt->otp_data->isp_awb_info.gain_b;
+	} else if (input_ptr->bin_info.otp_data_addr) {
+		ae_input.otp_data.r = input_ptr->bin_info.otp_data_addr->gain_r;
+		ae_input.otp_data.g = input_ptr->bin_info.otp_data_addr->gain_g;
+		ae_input.otp_data.b = input_ptr->bin_info.otp_data_addr->gain_b;
 	}
 	ret = ae_ctrl_init(&ae_input, &ae_output, &cxt->ae_cxt.handle);
 	if (ret) {
@@ -1995,6 +2003,12 @@ cmr_int isp3a_get_info(cmr_handle isp_3a_handle, void *param_ptr)
 	    otp_info->current_module_infinity = cxt->otp_data->af_info.infinite_cali;
 	    otp_info->current_module_macro = cxt->otp_data->af_info.macro_cali;
 		otp_info->total_check_sum = cxt->otp_data->checksum;
+	} else if (cxt->bin_cxt.bin_info.otp_data_addr) {
+		memset(otp_info, 0, sizeof(struct otp_report_debug2));
+		otp_info->current_module_iso = cxt->bin_cxt.bin_info.otp_data_addr->iso;
+		otp_info->current_module_r_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_r;
+		otp_info->current_module_g_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_g;
+		otp_info->current_module_b_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_b;
 	} else {
 		memset(otp_info, 0, sizeof(struct otp_report_debug2));
 	}
@@ -2227,8 +2241,15 @@ cmr_int isp3a_get_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr)
 		exif_ptr->otp_report_debug_info1.current_module_infinity = cxt->otp_data->af_info.infinite_cali;
 		exif_ptr->otp_report_debug_info1.current_module_macro = cxt->otp_data->af_info.macro_cali;
 		exif_ptr->otp_report_debug_info1.total_check_sum = cxt->otp_data->checksum;
-	} else
+	} else if (cxt->bin_cxt.bin_info.otp_data_addr) {
 		memset(&exif_ptr->otp_report_debug_info1, 0, sizeof(struct otp_report_debug1));
+		exif_ptr->otp_report_debug_info1.current_module_iso = cxt->bin_cxt.bin_info.otp_data_addr->iso;
+		exif_ptr->otp_report_debug_info1.current_module_r_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_r;
+		exif_ptr->otp_report_debug_info1.current_module_g_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_g;
+		exif_ptr->otp_report_debug_info1.current_module_b_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_b;
+	} else {
+		memset(&exif_ptr->otp_report_debug_info1, 0, sizeof(struct otp_report_debug1));
+	}
 
 	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_GET_EXT_DEBUG_INFO, NULL, &ae_out);
 	if (ret) {

@@ -348,6 +348,7 @@ struct isp_bin_info {
 	void *isp_shading_addr;
 	cmr_u32 isp_shading_size;
 	cmr_u32 size;
+	struct sensor_otp_iso_awb_info * otp_data_addr;
 };
 /**********************************FUNCTION***********************************/
 typedef cmr_int (*isp3a_callback) (cmr_handle handle, cmr_u32 cb_type,
