@@ -1,5 +1,5 @@
 LOCAL_SHARED_LIBRARIES := libutils libmemion libcamera_client libcutils libhardware libcamera_metadata
-LOCAL_SHARED_LIBRARIES += libui libbinder libdl libgui libandroid
+LOCAL_SHARED_LIBRARIES += libui libbinder libdl
 
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),3)
@@ -16,7 +16,7 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)
-LOCAL_SHARED_LIBRARIES += libgyrostab
+LOCAL_SHARED_LIBRARIES += libgyrostab libgui libandroid
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
