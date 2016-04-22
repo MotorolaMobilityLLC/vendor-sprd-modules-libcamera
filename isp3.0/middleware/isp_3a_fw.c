@@ -576,6 +576,21 @@ exit:
 	return ret;
 }
 
+cmr_int isp3a_flash_ctrl(cmr_handle handle, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)handle;
+
+	if (!cxt->ops.flash_ctrl) {
+		ISP_LOGI("failed to call flash_ctrl");
+		goto exit;
+	}
+	ret = cxt->ops.flash_ctrl(cxt->caller_handle, cfg_ptr, element_ptr);
+exit:
+	ISP_LOGI("done %ld", ret);
+	return ret;
+}
+
 cmr_int isp3a_flash_set_time(cmr_handle handle, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
@@ -750,6 +765,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 	ae_input.ops_in.flash_get_charge = isp3a_flash_get_charge;
 	ae_input.ops_in.flash_get_time = isp3a_flash_get_time;
 	ae_input.ops_in.flash_set_charge = isp3a_flash_set_charge;
+	ae_input.ops_in.flash_ctrl = isp3a_flash_ctrl;
 	ae_input.ops_in.flash_set_time = isp3a_flash_set_time;
 	ae_input.ops_in.set_exposure = isp3a_set_exposure;
 	ae_input.ops_in.release_stat_buffer = isp3a_release_statistics_buf;

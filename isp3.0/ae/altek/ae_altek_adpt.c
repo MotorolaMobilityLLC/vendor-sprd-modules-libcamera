@@ -186,6 +186,13 @@ struct aealtek_tuning_info {
 	cmr_s32 gain[TUNING_EXPOSURE_NUM];
 };
 
+struct aealtek_script_info {
+	cmr_u8 is_script_mode;
+	enum ae_script_mode_t pre_script_mode;
+	enum ae_script_mode_t script_mode;
+	cmr_u8 is_flash_on;
+};
+
 /*ae altek context*/
 struct aealtek_cxt {
 	cmr_u32 is_inited;
@@ -201,10 +208,10 @@ struct aealtek_cxt {
 
 	cmr_s32 lock_cnt;
 	cmr_s32 ae_state;
-	cmr_s32 is_script_mode;
+
 	cmr_s32 flash_skip_number;
 	cmr_s32 is_refocus;
-
+	struct aealtek_script_info script_info;
 	struct aealtek_status prv_status;
 	struct aealtek_status cur_status;
 	struct aealtek_status nxt_status;
@@ -2407,18 +2414,6 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 		ISP_LOGE("not support work mode %d", work_mode);
 		break;
 	}
-	if (ISP_CAP_MODE_MAX == in_ptr->work_param.capture_mode) {
-		ret = aealtek_set_script_mode(cxt_ptr, AE_SCRIPT_ON); //TBD FE_SCRIPT_ON
-		if (ret)
-			goto exit;
-		cxt_ptr->is_script_mode = 1;
-	} else {
-		if (cxt_ptr->is_script_mode) {
-			ret = aealtek_set_script_mode(cxt_ptr, AE_SCRIPT_OFF);
-			if (ret)
-				goto exit;
-		}
-	}
 
 	ret = aealtek_get_hwisp_cfg( cxt_ptr, &out_ptr->proc_out.hw_cfg);
 	if (ret)
@@ -3038,6 +3033,8 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	in_est.work_mode = SEQ_WORK_PREVIEW;
 	in_est.cell.frame_id = in_ptr->sof_param.frame_index;
 	if (cxt_ptr->tuning_info.manual_ae_on && TUNING_MODE_USER_DEF == cxt_ptr->tuning_info.tuning_mode) {
+		cmr_bzero(ae_exp, sizeof(ae_exp));
+		cmr_bzero(ae_gain, sizeof(ae_gain));
 		property_get("persist.sys.isp.ae.exp_time", ae_exp, "100");
 		property_get("persist.sys.isp.ae.gain", ae_gain, "100");
 		in_est.cell.exp_time = atoi(ae_exp);
@@ -3049,6 +3046,24 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 		in_est.cell.exp_time = cxt_ptr->sensor_exp_data.lib_exp.exp_time;
 		in_est.cell.gain = cxt_ptr->sensor_exp_data.lib_exp.gain;
 		in_est.cell.dummy = cxt_ptr->sensor_exp_data.lib_exp.dummy;
+	}
+
+	if (cxt_ptr->script_info.is_script_mode) {
+		cmr_bzero(ae_exp, sizeof(ae_exp));
+		property_get("persist.sys.isp.ae.script_mode", ae_exp, "none");
+		if (!strcmp("ae", ae_exp)) {
+			cxt_ptr->script_info.script_mode = AE_SCRIPT_ON;
+		} else if (!strcmp("fe", ae_exp)) {
+			cxt_ptr->script_info.script_mode = FE_SCRIPT_ON;
+		} else {
+			cxt_ptr->script_info.script_mode = AE_SCRIPT_OFF;
+		}
+
+		if (cxt_ptr->script_info.pre_script_mode != cxt_ptr->script_info.script_mode) {
+			ret = aealtek_set_script_mode(cxt_ptr, cxt_ptr->script_info.script_mode);
+		}
+
+		cxt_ptr->script_info.pre_script_mode = cxt_ptr->script_info.script_mode;
 	}
 
 	ret = seq_put(cxt_ptr->seq_handle, &in_est, &out_actual, &out_write);
@@ -3661,11 +3676,12 @@ static cmr_int aealtek_get_tuning_data(struct aealtek_cxt *cxt_ptr)
 	cmr_s32  exp_num = 0;
 	cmr_s32  gain_num = 0;
 
+	cmr_bzero(ae_property, sizeof(ae_property));
 	property_get("persist.sys.isp.ae.manual", ae_property, "off");
 	ISP_LOGI("persist.sys.isp.ae.manual: %s", ae_property);
 	if (!strcmp("on", ae_property)) {
 		cxt_ptr->tuning_info.manual_ae_on = 1;
-
+		cmr_bzero(ae_property, sizeof(ae_property));
 		property_get("persist.sys.isp.ae.tuning.type", ae_property, "none");
 		ISP_LOGI("persist.sys.isp.ae.tuning.type: %s", ae_property);
 		if (!strcmp("exposure_time", ae_property)) {
@@ -3706,6 +3722,15 @@ static cmr_int aealtek_get_tuning_data(struct aealtek_cxt *cxt_ptr)
 
 	} else {
 		cxt_ptr->tuning_info.manual_ae_on = 0;
+	}
+
+	cmr_bzero(ae_property, sizeof(ae_property));
+	property_get("persist.sys.isp.ae.script", ae_property, "off");
+	ISP_LOGI("persist.sys.isp.ae.script: %s", ae_property);
+	if (!strcmp("on", ae_property)) {
+		cxt_ptr->script_info.is_script_mode = 1;
+	} else {
+		cxt_ptr->script_info.is_script_mode = 0;
 	}
 
 	return ISP_SUCCESS;
@@ -4160,6 +4185,7 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 	struct ae_ctrl_callback_in callback_in;
 	cmr_u32 is_special_converge_flag = 0;
 	cmr_u32 data_length = 0;
+	struct ae_script_param_t  *ae_script_info = NULL;
 
 	if (!cxt_ptr) {
 		ISP_LOGE("param %p is NULL error!", cxt_ptr);
@@ -4169,14 +4195,67 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 	if (!cxt_ptr->tuning_info.manual_ae_on
 			&& AE_DISABLED != cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_LibStates
 			&& AE_LOCKED != cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_LibStates) {
-		if (0 == cxt_ptr->is_script_mode) {
-			ret = aealtek_lib_exposure2sensor(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
-			if (ret)
-				goto exit;
-		} else {
+		ret = aealtek_lib_exposure2sensor(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
+		if (ret)
+			goto exit;
+
+		ret = aealtek_set_dummy(cxt_ptr, &cxt_ptr->sensor_exp_data.lib_exp);
+		if (ret)
+			ISP_LOGW("warning set_dummy ret=%ld !!!", ret);
+	}
+
+	if (cxt_ptr->script_info.is_script_mode) {
+		ae_script_info = &cxt_ptr->lib_data.output_data.ae_script_info;
+		ISP_LOGI("scriptstate:%d, mode:%d,flashon:%d,flashmode:%d"
+				, ae_script_info->scriptstate
+				, cxt_ptr->script_info.script_mode
+				, ae_script_info->bisneedflashTurnOn
+				, ae_script_info->ucFlashMode);
+		if (AE_SCRIPT_ON == cxt_ptr->script_info.script_mode || FE_SCRIPT_ON == cxt_ptr->script_info.script_mode) {
 			ret = aealtek_get_lib_script_info(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
 			if (ret)
 				goto exit;
+
+			if (FE_SCRIPT_ON == cxt_ptr->script_info.script_mode) {
+				struct isp_flash_cfg flash_cfg;
+				struct isp_flash_element  flash_element;
+
+				if (0 == ae_script_info->ucFlashMode) {
+					flash_cfg.type = ISP_FLASH_TYPE_PREFLASH;
+				} else if (1 == ae_script_info->ucFlashMode) {
+					flash_cfg.type = ISP_FLASH_TYPE_MAIN;
+				}
+
+				if (cxt_ptr->script_info.is_flash_on != ae_script_info->bisneedflashTurnOn) {
+					if (ae_script_info->bisneedflashTurnOn) {
+						ISP_LOGI("script led1:%d,%f,led2:%d,%f"
+								, ae_script_info->udled1index
+								, ae_script_info->fled1current
+								, ae_script_info->udled2index
+								, ae_script_info->fled2current);
+						flash_cfg.led_idx = 0;
+						flash_element.index = ae_script_info->udled1index;
+						flash_element.val = ae_script_info->fled1current;
+						cxt_ptr->init_in_param.ops_in.flash_set_charge(cxt_ptr->caller_handle, &flash_cfg, &flash_element);
+						flash_cfg.led_idx = 1;
+						flash_element.index = ae_script_info->udled2index;
+						flash_element.val = ae_script_info->fled2current;
+						cxt_ptr->init_in_param.ops_in.flash_set_charge(cxt_ptr->caller_handle, &flash_cfg, &flash_element);
+
+						flash_cfg.led_idx = 1; /*turn on flash*/
+					} else {
+						flash_cfg.led_idx = 0; /*close flash*/
+					}
+					cxt_ptr->init_in_param.ops_in.flash_ctrl(cxt_ptr->caller_handle, &flash_cfg, NULL);
+					cxt_ptr->script_info.is_flash_on = ae_script_info->bisneedflashTurnOn;
+				}
+			}
+		}
+
+		if (SCRIPT_DONE == ae_script_info->scriptstate) {
+			cxt_ptr->script_info.script_mode = AE_SCRIPT_OFF;
+			ret = aealtek_set_script_mode(cxt_ptr, AE_SCRIPT_OFF);
+			cxt_ptr->script_info.is_script_mode = 0;
 		}
 
 		ret = aealtek_set_dummy(cxt_ptr, &cxt_ptr->sensor_exp_data.lib_exp);

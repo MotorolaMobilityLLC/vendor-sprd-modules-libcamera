@@ -2545,6 +2545,45 @@ out:
 	return ret;
 }
 
+int32_t camera_isp_flash_ctrl(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element)
+{
+	int32_t ret = 0;
+	struct camera_context		  *cxt = (struct camera_context*)handler;
+	uint8_t                       real_type = 0;
+
+
+	if (!cxt || !cfg_ptr) {
+		CMR_LOGE("err param, %p %p", cxt, cfg_ptr);
+		ret = -CMR_CAMERA_INVALID_PARAM;
+		goto out;
+	}
+
+	switch (cfg_ptr->type) {
+	case ISP_FLASH_TYPE_PREFLASH:
+		if (cfg_ptr->led_idx) {
+			real_type = FLASH_OPEN;
+		} else {
+			real_type = FLASH_CLOSE_AFTER_OPEN;
+		}
+		break;
+	case ISP_FLASH_TYPE_MAIN:
+		if (cfg_ptr->led_idx) {
+			real_type = FLASH_HIGH_LIGHT;
+		} else {
+			real_type = FLASH_CLOSE_AFTER_OPEN;
+		}
+		break;
+	default:
+		CMR_LOGE("not support the type");
+		goto out;
+		break;
+	}
+
+	ret = cmr_grab_flash_cb(cxt->grab_cxt.grab_handle, real_type);
+out:
+	return ret;
+}
+
 int32_t camera_isp_flash_set_time(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element)
 {
 	int32_t ret = 0;
@@ -2677,6 +2716,7 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 
 	isp_param.ops.flash_get_charge = camera_isp_flash_get_charge;
 	isp_param.ops.flash_set_charge = camera_isp_flash_set_charge;
+	isp_param.ops.flash_ctrl = camera_isp_flash_ctrl;
 	isp_param.ops.flash_get_time = camera_isp_flash_get_time;
 	isp_param.ops.flash_set_time = camera_isp_flash_set_time;
 
