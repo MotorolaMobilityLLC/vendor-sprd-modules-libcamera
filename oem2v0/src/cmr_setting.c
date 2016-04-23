@@ -566,7 +566,7 @@ static cmr_int setting_set_general(struct setting_component *cpt,
 					isoParm.camera_id = parm->camera_id;
 					isoParm.cmd_type_value = 5;
 					if (setting_is_rawrgb_format(cpt, &isoParm)) {
-						ret = setting_isp_ctrl(cpt, COM_ISP_SET_ISO, &isoParm);
+						// ret = setting_isp_ctrl(cpt, COM_ISP_SET_ISO, &isoParm); // remove ISO 1600 in video mode
 						if (ret) {
 							CMR_LOGE("iso set failed %ld", ret);
 							goto setting_out;
@@ -2114,7 +2114,7 @@ static cmr_int setting_set_environment(struct setting_component *cpt,
                                 isoParm.camera_id = parm->camera_id;
                                 isoParm.cmd_type_value = 5;
                                 if (setting_is_rawrgb_format(cpt, &isoParm)) {
-                                        ret = setting_isp_ctrl(cpt, COM_ISP_SET_ISO, &isoParm);
+                                       // ret = setting_isp_ctrl(cpt, COM_ISP_SET_ISO, &isoParm); // remove ISO 1600 in video mode
                                         if (ret) {
                                                 CMR_LOGE("iso set failed %ld", ret);
                                         }

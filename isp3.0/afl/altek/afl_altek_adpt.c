@@ -341,6 +341,42 @@ exit:
 	return ret;
 }
 
+static cmr_int aflaltek_get_debug_data(struct aflaltek_cxt *cxt_ptr, struct afl_ctrl_param_in *in_ptr, struct afl_ctrl_param_out *out_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+
+
+	if (!cxt_ptr || !out_ptr) {
+		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, out_ptr);
+		goto exit;
+	}
+	out_ptr->debug_param.size = cxt_ptr->lib_data.output_data.rpt_flicker_update.flicker_update.flicker_debug_valid_size;
+	out_ptr->debug_param.data = cxt_ptr->lib_data.output_data.rpt_flicker_update.flicker_update.flicker_debug_data;
+
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld !!!", ret);
+	return ret;
+}
+
+static cmr_int aflaltek_get_exif_data(struct aflaltek_cxt *cxt_ptr, struct afl_ctrl_param_in *in_ptr, struct afl_ctrl_param_out *out_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+
+
+	if (!cxt_ptr || !out_ptr) {
+		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, out_ptr);
+		goto exit;
+	}
+	out_ptr->exif_param.size = cxt_ptr->lib_data.output_data.rpt_flicker_update.flicker_update.flicker_exif_valid_size;
+	out_ptr->exif_param.data = cxt_ptr->lib_data.output_data.rpt_flicker_update.flicker_update.flicker_exif_data;
+
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld !!!", ret);
+	return ret;
+}
+
 
 static cmr_int aflaltek_get_hw_config(struct aflaltek_cxt *cxt_ptr, struct isp3a_afl_hw_cfg *out_ptr)
 {
@@ -625,6 +661,12 @@ static cmr_int afl_altek_adpt_ioctrl(cmr_handle handle, cmr_int cmd, void *in, v
 		break;
 	case AFL_CTRL_SET_UI_FLICKER_MODE:
 		ret = aflaltek_set_ui_flicker_mode(cxt_ptr, in_ptr, out_ptr);
+		break;
+	case AFL_CTRL_GET_DEBUG_DATA:
+		ret = aflaltek_get_debug_data(cxt_ptr, in_ptr, out_ptr);
+		break;
+	case AFL_CTRL_GET_EXIF_DATA:
+		ret = aflaltek_get_exif_data(cxt_ptr, in_ptr, out_ptr);
 		break;
 	default:
 		ISP_LOGE("cmd %ld is not defined!", cmd);

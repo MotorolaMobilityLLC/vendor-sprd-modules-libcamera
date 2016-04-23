@@ -1076,7 +1076,8 @@ exit:
 	return ret;
 }
 
-static cmr_int aealtek_write_to_sensor(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_sensor_exposure *exp_ptr, struct ae_ctrl_param_sensor_gain *gain_ptr)
+static cmr_int aealtek_write_to_sensor(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_sensor_exposure *exp_ptr
+		, struct ae_ctrl_param_sensor_gain *gain_ptr, cmr_int force_write_sensor)
 {
 	cmr_int ret = ISP_ERROR;
 
@@ -1087,14 +1088,14 @@ static cmr_int aealtek_write_to_sensor(struct aealtek_cxt *cxt_ptr, struct ae_ct
 	}
 
 	if (cxt_ptr->init_in_param.ops_in.set_exposure) {
-		if (0 != exp_ptr->exp_line && (cxt_ptr->pre_write_exp_data.exp_line != exp_ptr->exp_line
+		if (0 != exp_ptr->exp_line && (force_write_sensor || cxt_ptr->pre_write_exp_data.exp_line != exp_ptr->exp_line
 				|| cxt_ptr->pre_write_exp_data.dummy != exp_ptr->dummy)) {
 			(*cxt_ptr->init_in_param.ops_in.set_exposure)(cxt_ptr->caller_handle, exp_ptr);
 		}
 	}
 
 	if (cxt_ptr->init_in_param.ops_in.set_again) {
-		if (0 != gain_ptr->gain && cxt_ptr->pre_write_exp_data.gain != gain_ptr->gain) {
+		if (0 != gain_ptr->gain && (force_write_sensor || cxt_ptr->pre_write_exp_data.gain != gain_ptr->gain)) {
 			(*cxt_ptr->init_in_param.ops_in.set_again)(cxt_ptr->caller_handle, gain_ptr);
 		}
 	}
@@ -1110,7 +1111,7 @@ exit:
 	return ret;
 }
 
-static cmr_int aealtek_pre_to_sensor(struct aealtek_cxt *cxt_ptr, cmr_int is_sync_call)
+static cmr_int aealtek_pre_to_sensor(struct aealtek_cxt *cxt_ptr, cmr_int is_sync_call, cmr_int force_write_sensor)
 {
 	cmr_int ret = ISP_ERROR;
 	struct ae_ctrl_param_sensor_exposure sensor_exp;
@@ -1132,7 +1133,7 @@ static cmr_int aealtek_pre_to_sensor(struct aealtek_cxt *cxt_ptr, cmr_int is_syn
 		sensor_exp.size_index = cxt_ptr->sensor_exp_data.lib_exp.size_index;
 		sensor_gain.gain = cxt_ptr->sensor_exp_data.lib_exp.gain * SENSOR_GAIN_BASE / LIB_GAIN_BASE;
 	}
-	ret = aealtek_write_to_sensor(cxt_ptr, &sensor_exp, &sensor_gain);
+	ret = aealtek_write_to_sensor(cxt_ptr, &sensor_exp, &sensor_gain, force_write_sensor);
 	if (ret)
 		goto exit;
 	return ISP_SUCCESS;
@@ -2355,6 +2356,7 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 	struct ae_set_param_content_t param_ct;
 	enum isp3a_work_mode work_mode = 0;
 	struct seq_init_in seq_in;
+	cmr_int force_write_sensor = 0;
 
 
 	if (!cxt_ptr || !in_ptr || !out_ptr) {
@@ -2400,6 +2402,7 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 	case ISP3A_WORK_MODE_PREVIEW:
 		cxt_ptr->nxt_status.is_hdr_status = 0;
 		ret = aealtek_work_preview(cxt_ptr, &cxt_ptr->nxt_status.ui_param.work_info, out_ptr);
+		force_write_sensor = 1;
 		break;
 	case ISP3A_WORK_MODE_CAPTURE:
 		ret = aealtek_work_capture(cxt_ptr, in_ptr, out_ptr);
@@ -2444,7 +2447,7 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 
 	if (cxt_ptr->tuning_info.manual_ae_on && ISP3A_WORK_MODE_CAPTURE == work_mode) {
 	} else {
-		ret = aealtek_pre_to_sensor(cxt_ptr, 1);
+		ret = aealtek_pre_to_sensor(cxt_ptr, 1, force_write_sensor);
 		if (ret)
 			goto exit;
 	}
@@ -2837,7 +2840,7 @@ static cmr_int aealtek_set_flash_notice(struct aealtek_cxt *cxt_ptr, struct ae_c
 		if (ret)
 			goto exit;
 		cxt_ptr->sensor_exp_data.write_exp = cxt_ptr->sensor_exp_data.lib_exp;
-		aealtek_pre_to_sensor(cxt_ptr, 1);
+		aealtek_pre_to_sensor(cxt_ptr, 1, 0);
 		ISP_LOGI("=========main flash before end");
 		break;
 
@@ -2962,7 +2965,7 @@ static cmr_int aealtek_callback_sync_info(struct aealtek_cxt *cxt_ptr)
 	input.result_bv = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.bv_val;
 	input.ud_msc_exif_iso = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_cur_iso;
 	input.ud_msc_exposure_line = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.exposure_line;
-	input.ud_msc_exposure_time = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.exposure_time/1000; /*ms*/
+	input.ud_msc_exposure_time = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.exposure_time;
 
 	input.ud_msc_iso = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_cur_iso;
 
@@ -3024,11 +3027,11 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	cxt_ptr->sensor_exp_data.actual_exp = cxt_ptr->sensor_exp_data.lib_exp;
 	cxt_ptr->sensor_exp_data.write_exp = cxt_ptr->sensor_exp_data.lib_exp;
 
-	ISP_LOGI("sof_index:%ld,gain=%d,exp_line=%d,exp_time=%d,is_refocus=%d", in_ptr->sof_param.frame_index,
-				cxt_ptr->sensor_exp_data.write_exp.gain,
+	ISP_LOGI("sof_index:%ld,exp_line=%d,gain=%d,exp_time=%d,camera_id=%d", in_ptr->sof_param.frame_index,
 				cxt_ptr->sensor_exp_data.write_exp.exp_line,
+				cxt_ptr->sensor_exp_data.write_exp.gain,
 				cxt_ptr->sensor_exp_data.write_exp.exp_time,
-				cxt_ptr->is_refocus);
+				cxt_ptr->camera_id);
 
 	in_est.work_mode = SEQ_WORK_PREVIEW;
 	in_est.cell.frame_id = in_ptr->sof_param.frame_index;
@@ -3093,7 +3096,7 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	if (ret)
 		goto exit;
 	if (0 == cxt_ptr->nxt_status.is_hdr_status) {
-		ret = aealtek_pre_to_sensor(cxt_ptr, 0);
+		ret = aealtek_pre_to_sensor(cxt_ptr, 0, 0);
 		if (ret)
 			goto exit;
 	}
@@ -3284,7 +3287,7 @@ static cmr_int aealtek_set_hdr_ev(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_pa
 	ret = aealtek_set_dummy(cxt_ptr, &cxt_ptr->sensor_exp_data.lib_exp);
 	if (ret)
 		ISP_LOGW("warning set_dummy ret=%ld !!!", ret);
-	ret = aealtek_pre_to_sensor(cxt_ptr, 1);
+	ret = aealtek_pre_to_sensor(cxt_ptr, 1, 0);
 
 	return ISP_SUCCESS;
 exit:
@@ -3793,7 +3796,7 @@ static cmr_int ae_altek_adpt_init(void *in, void *out, cmr_handle *handle)
 	if (ret)
 		goto exit;
 
-	ret = aealtek_pre_to_sensor(cxt_ptr, 1);
+	ret = aealtek_pre_to_sensor(cxt_ptr, 1, 0);
 	if (ret)
 		goto exit;
 
@@ -4342,12 +4345,13 @@ static cmr_int aealtek_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_proc_
 		lib_ret = obj_ptr->estimation(&cxt_ptr->lib_data.stats_data, obj_ptr->ae, out_data_ptr);
 //	if (lib_ret)
 //		goto exit;
-	ISP_LOGI("mean=%d, BV=%d, exposure_line=%d, gain=%d, ae_states:%d",\
+	ISP_LOGI("mean=%d, BV=%d, exposure_line=%d, gain=%d, ae_states:%d, camera_id:%d",\
 		out_data_ptr->rpt_3a_update.ae_update.curmean,
 		out_data_ptr->rpt_3a_update.ae_update.bv_val,
 		out_data_ptr->rpt_3a_update.ae_update.exposure_line,
 		out_data_ptr->rpt_3a_update.ae_update.sensor_ad_gain,
-		out_data_ptr->rpt_3a_update.ae_update.ae_LibStates);
+		out_data_ptr->rpt_3a_update.ae_update.ae_LibStates,
+		cxt_ptr->camera_id);
 
 	aealtek_print_lib_log(cxt_ptr, &cxt_ptr->lib_data.output_data);
 

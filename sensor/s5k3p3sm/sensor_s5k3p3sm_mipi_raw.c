@@ -44,6 +44,13 @@ static struct sensor_raw_info* s_s5k3p3sm_mipi_raw_info_ptr = NULL;
 static int s_capture_shutter = 0;
 static int s_exposure_time = 0;
 
+struct sensor_ev_info_t {
+	uint16_t preview_shutter;
+	uint16_t preview_gain;
+};
+
+struct sensor_ev_info_t s_sensor_ev_info;
+
 SENSOR_HW_HANDLE _s5k3p3sm_Create(void *privatedata);
 void _s5k3p3sm_Destroy(SENSOR_HW_HANDLE handle);
 static unsigned long _s5k3p3sm_GetResolutionTrimTab(SENSOR_HW_HANDLE handle, unsigned long param);
@@ -795,6 +802,8 @@ static unsigned long _s5k3p3sm_write_exposure(SENSOR_HW_HANDLE handle, unsigned 
 
 	ret_value = _s5k3p3sm_write_exp_dummy(handle, expsure_line, dummy_line, size_index);
 
+	s_sensor_ev_info.preview_shutter = s_capture_shutter;
+
 	return ret_value;
 }
 
@@ -1043,6 +1052,8 @@ static unsigned long _s5k3p3sm_ex_write_exposure(SENSOR_HW_HANDLE handle, unsign
 
 	ret_value = _s5k3p3sm_write_exp_dummy(handle, exposure_line, dummy_line, size_index);
 
+	s_sensor_ev_info.preview_shutter = s_capture_shutter;
+
 	return ret_value;
 }
 
@@ -1076,6 +1087,8 @@ static unsigned long _s5k3p3sm_write_gain(SENSOR_HW_HANDLE handle, unsigned long
 
 //	ret_value = Sensor_WriteReg(0x104, 0x00);
 	SENSOR_PRINT("SENSOR_S5K3P3SM: a_gain:0x%x, d_gain: 0x%x", a_gain, d_gain);
+
+	s_sensor_ev_info.preview_gain = real_gain;
 
 	return ret_value;
 
@@ -1122,7 +1135,7 @@ static unsigned long _s5k3p3sm_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned 
 	uint32_t frame_len = 0x00;
 	uint32_t gain = 0;
 
-	SENSOR_PRINT("SENSOR_s5k3p3sm: BeforeSnapshot mode: 0x%08lx",param);
+	SENSOR_PRINT("SENSOR_s5k3p3sm: BeforeSnapshot mode: 0x%08lx,capture_mode:%d",param,capture_mode);
 
 	if (preview_mode == capture_mode) {
 		SENSOR_PRINT("SENSOR_s5k3p3sm: prv mode equal to capmode");
@@ -1133,15 +1146,10 @@ static unsigned long _s5k3p3sm_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned 
 	Sensor_SetMode_WaitDone();
 
 
-	preview_exposure = Sensor_ReadReg(0x202);
-	_s5k3p3sm_ReadGain(handle, &gain);
-
-	Sensor_SetMode(param);
-	Sensor_SetMode_WaitDone();
+	preview_exposure = s_sensor_ev_info.preview_shutter;
+	gain = s_sensor_ev_info.preview_gain;
 
 	capture_exposure = preview_exposure * prv_linetime / cap_linetime;
-
-	frame_len = Sensor_ReadReg(0x340);
 /*
 	while(gain >= 0x40){
 		capture_exposure = capture_exposure * 2;
@@ -1149,15 +1157,10 @@ static unsigned long _s5k3p3sm_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned 
 		if(capture_exposure > frame_len*2)
 			break;
 	}*/
-	SENSOR_PRINT("SENSOR_s5k3p3sm: cap moe: %d,FL: %x,exp=%d,g=%x",param,frame_len,capture_exposure,gain);
+	SENSOR_PRINT("SENSOR_s5k3p3sm: prev_exp=%d,cap_exp=%d,gain=%x",preview_exposure,capture_exposure,gain);
 
-	if(capture_exposure >= (frame_len - 4)){
-		frame_len = capture_exposure+4;
-		frame_len = ((frame_len+1)>>1)<<1;
-		Sensor_WriteReg(0x0340, frame_len);
-	}
-	Sensor_WriteReg(0x202, capture_exposure);
-	Sensor_WriteReg(0x204, gain);
+	_s5k3p3sm_write_exp_dummy(handle, capture_exposure, 0, capture_mode);
+	//Sensor_WriteReg(0x204, gain);
 
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, capture_exposure);
 

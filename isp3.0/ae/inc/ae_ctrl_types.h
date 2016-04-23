@@ -333,11 +333,6 @@ struct ae_ctrl_debug_param {
 	void   *data;
 };
 
-struct ae_ctrl_exif_param {
-	cmr_u32  size;
-	void   *data;
-};
-
 struct ae_ctrl_ext_debug_info {
 	cmr_u32 flash_flag;
 	cmr_u32 fn_value;
@@ -388,7 +383,7 @@ struct ae_ctrl_param_out {
 	cmr_u32 flicker_mode;
 	cmr_u32 ae_state;
 	struct ae_ctrl_debug_param debug_param;
-	struct ae_ctrl_exif_param exif_param;
+	struct ae_ctrl_debug_param exif_param;
 	struct ae_ctrl_ext_debug_info debug_info;
 	struct ae_ctrl_exp_gain_param exp_gain;
 	};

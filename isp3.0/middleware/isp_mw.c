@@ -213,6 +213,7 @@ cmr_int ispmw_put_tuning_bin(cmr_handle isp_mw_handle)
 	}
 	return ret;
 }
+
 /*************************************EXTERNAL FUNCTION ***************************************/
 cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 {
@@ -371,6 +372,7 @@ cmr_int isp_video_start(cmr_handle isp_handle, struct isp_video_start *param_ptr
 		ISP_LOGE("error,input is NULL");
 		goto exit;
 	}
+
 	ret = isp_3a_fw_start(cxt->isp_3a_handle, param_ptr);
 	if (ret) {
 		ISP_LOGE("failed to start 3a");

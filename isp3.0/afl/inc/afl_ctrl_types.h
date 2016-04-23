@@ -44,6 +44,8 @@ enum afl_ctrl_cmd {
 	AFL_CTRL_GET_SUCCESS_NUM,
 	AFL_CTRL_SET_STAT_QUEUE_RELEASE,
 	AFL_CTRL_SET_UI_FLICKER_MODE,
+	AFL_CTRL_GET_DEBUG_DATA,
+	AFL_CTRL_GET_EXIF_DATA,
 	AFL_CTRL_CMD_MAX
 };
 
@@ -95,6 +97,11 @@ struct afl_ctrl_work_param {
 	struct afl_ctrl_param_resolution resolution;
 };
 
+struct afl_ctrl_debug_param {
+	cmr_u32  size;
+	void    *data;
+};
+
 
 struct afl_ctrl_ops_in {
 	cmr_int (*afl_callback)(cmr_handle handler, enum afl_ctrl_cb_type cmd, struct afl_ctrl_callback_in *in_ptr);
@@ -116,6 +123,8 @@ struct afl_ctrl_param_out {
 	union {
 	cmr_u32 flicker_mode;
 	struct isp3a_afl_hw_cfg hw_cfg;
+	struct afl_ctrl_debug_param debug_param;
+	struct afl_ctrl_debug_param exif_param;
 	};
 };
 
