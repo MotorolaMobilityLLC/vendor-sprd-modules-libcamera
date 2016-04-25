@@ -18,6 +18,7 @@
 #include "cmr_mem.h"
 #include "cmr_oem.h"
 #include <unistd.h>
+#include "cutils/properties.h"
 
 /*
           to add more.........
@@ -95,14 +96,21 @@ struct cap_size_to_mem {
 };
 
 static const struct cap_size_to_mem back_cam_mem_size_tab[IMG_SIZE_NUM] = {
-	{PIXEL_1P3_MEGA, (7  << 20)},
-	{PIXEL_2P0_MEGA, (9  << 20)},
-	{PIXEL_3P0_MEGA, (15 << 20)},
-	{PIXEL_4P0_MEGA, (16 << 20)},
-	{PIXEL_5P0_MEGA, (23 << 20)},
-	{PIXEL_6P0_MEGA, (21 << 20)},
-	{PIXEL_7P0_MEGA, (25 << 20)},
-	{PIXEL_8P0_MEGA, (26 << 20)}
+	{PIXEL_1P3_MEGA, (25 << 20)},
+	{PIXEL_2P0_MEGA, (25 << 20)},
+	{PIXEL_3P0_MEGA, (25 << 20)},
+	{PIXEL_4P0_MEGA, (25 << 20)},
+	{PIXEL_5P0_MEGA, (25 << 20)},
+	{PIXEL_6P0_MEGA, (45 << 20)},
+	{PIXEL_7P0_MEGA, (45 << 20)},
+	{PIXEL_8P0_MEGA, (45 << 20)},
+	{PIXEL_9P0_MEGA, (60 << 20)},
+	{PIXEL_AP0_MEGA, (60 << 20)},
+	{PIXEL_BP0_MEGA, (60 << 20)},
+	{PIXEL_CP0_MEGA, (60 << 20)},
+	{PIXEL_DP0_MEGA, (60 << 20)},
+	{PIXEL_10P0_MEGA, (70 << 20)},
+	{PIXEL_15P0_MEGA, (100 << 20)}
 };
 
 /* for whale2, how to calculate cap size(raw capture):
@@ -401,12 +409,22 @@ int camera_pre_capture_buf_size(cmr_u32 camera_id,
 		return -1;
 	}
 
+	cmr_u32 is_raw_capture = 0;
+	char value[PROPERTY_VALUE_MAX];
+	property_get("persist.sys.camera.raw.mode", value, "jpeg");
+	if (!strcmp(value, "raw")) {
+		is_raw_capture = 1;
+	}
+
 	*mem_sum = 1;
 
 	if (BACK_CAMERA_ID == camera_id) {
 		mem_tab_ptr = (struct cap_size_to_mem*)&back_cam_raw_mem_size_tab[0];
 		yuv_mem_tab_ptr = (struct cap_size_to_mem*)&back_cam_mem_size_tab[0];
-		*mem_size = MAX(mem_tab_ptr[mem_size_id].mem_size, yuv_mem_tab_ptr[mem_size_id].mem_size);
+		if (is_raw_capture)
+			*mem_size = MAX(mem_tab_ptr[mem_size_id].mem_size, yuv_mem_tab_ptr[mem_size_id].mem_size);
+		else
+			*mem_size = yuv_mem_tab_ptr[mem_size_id].mem_size;
 	} else if (FRONT_CAMERA_ID == camera_id || camera_id == DEV2_CAMERA_ID) {
 		mem_tab_ptr = (struct cap_size_to_mem*)&front_cam_raw_mem_size_tab[0];
 		yuv_mem_tab_ptr = (struct cap_size_to_mem*)&front_cam_mem_size_tab[0];
