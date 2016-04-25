@@ -3,8 +3,8 @@
  *
  *  Created on: 2015/12/06
  *      Author: MarkTseng
- *  Latest update: 2016/3/24
- *      Reviser: MarkTseng
+ *  Latest update: 2016/4/21
+ *      Reviser: Allenwang
  *  Comments:
  *       This c file is mainly used for AP framework to:
  *       1. Query HW3A config setting
@@ -70,7 +70,14 @@ uint32 al3awrapper_dispatchhw3a_aestats( struct isp_drv_meta_ae_t * alisp_metada
 
 	pmetadata_ae = (struct isp_drv_meta_ae_t *)alisp_metadata_ae;
 	ppatched_aedat = (struct al3awrapper_stats_ae_t *)alwrappered_ae_dat;
-	stats = (uint8 *)pmetadata_ae->pae_stats;
+
+	/* check if stats from allocated buffer */
+	if ( pmetadata_ae->b_isstats_byaddr == 1 ) {
+		if ( pmetadata_ae->puc_ae_stats == NULL )
+			return ERR_WRP_AE_INVALID_STATS_ADDR;
+		stats = (uint8 *)pmetadata_ae->puc_ae_stats;
+	} else
+		stats = (uint8 *)pmetadata_ae->pae_stats;
 
 	/* update sturcture size, this would be double checked in AE libs */
 	ppatched_aedat->ustructuresize = sizeof( struct al3awrapper_stats_ae_t );

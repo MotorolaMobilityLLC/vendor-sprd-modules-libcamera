@@ -3,8 +3,8 @@
  *
  *  Created on: 2015/12/06
  *      Author: ZenoKuo
- *  Latest update: 2016/3/05
- *      Reviser: MarkTseng
+ *  Latest update: 2016/4/21
+ *      Reviser: Allenwang
  *  Comments:
  *       This c file is mainly used for AP framework to:
  *       1. Query HW3A config setting
@@ -32,6 +32,7 @@
 #include <string.h>
 #include <time.h>
 #include <stdio.h>
+#include <android/log.h>
 
 /* Debug only */
 #if 0
@@ -39,6 +40,7 @@
 #else
 #define WRAP_LOG(...) do { } while(0)
 #endif
+
 
 /* VCM inf step*/
 #define VCM_INF_STEP_ADDR_OFFSET (1714)
@@ -109,8 +111,13 @@ uint32 al3awrapper_dispatchhw3a_afstats(void *isp_meta_data,void *alaf_stats)
 	uint32 total_blocks;
 	uint32 bank_size;
 	uint16 i = 0,j = 0,blocks, banks, index;
+	uint8  *stats;
 	uint32 *stats_addr_32;
 	uint64 *stats_addr_64;
+	int64   addr_diff;
+	uint8 *add_stat_32, *add_stat_64;
+	uint32  udoffset;
+
 	WRAP_LOG("al3awrapper_dispatchhw3a_afstats start\n");
 
 	/* check input parameter validity*/
@@ -154,14 +161,29 @@ uint32 al3awrapper_dispatchhw3a_afstats(void *isp_meta_data,void *alaf_stats)
 	index = 0;
 	WRAP_LOG("uhwengineid %d\n",p_meta_data_af->uhwengineid);
 
+	if ( p_meta_data_af->b_isstats_byaddr == 1 ) {
+		if ( p_meta_data_af->puc_af_stats == NULL )
+			return ERR_WRP_AF_INVALID_STATS_ADDR;
+		stats = p_meta_data_af->puc_af_stats;
+	} else
+		stats = p_meta_data_af->paf_stats;
+
+
+
 	/* AP3AMGR_HW3A_A_0 and AP3AMGR_HW3A_B_0, see the AP3AMgr.h*/
 	if(AL3A_HW3A_DEV_ID_A_0 == p_meta_data_af->uhwengineid) {
 		for(j = 0; j < banks; j++) {
-			stats_addr_32 = (uint32 *)(p_meta_data_af->paf_stats)+j* bank_size/4;
+			stats_addr_32 = (uint32 *)(stats)+j* bank_size/4;
+
 			stats_addr_64 = (uint64 *)stats_addr_32;
+
+			add_stat_32 = stats + j* bank_size/4;
+			add_stat_64 = add_stat_32;
 
 			for(i = 0; i < blocks; i++) {
 				index = i+j*banks;
+
+#if 0
 				p_patched_stats->cnt_hor[index] = stats_addr_32[1];
 				p_patched_stats->cnt_ver[index] = stats_addr_32[0];
 				p_patched_stats->filter_value1[index] = stats_addr_64[3];
@@ -169,18 +191,45 @@ uint32 al3awrapper_dispatchhw3a_afstats(void *isp_meta_data,void *alaf_stats)
 				p_patched_stats->y_factor[index] = stats_addr_64[1];
 				p_patched_stats->fv_hor[index] = stats_addr_32[5];
 				p_patched_stats->fv_ver[index] = stats_addr_32[4];
+#else
+				udoffset = 4;
+				p_patched_stats->cnt_hor[index] = ( add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24) );
+				udoffset = 0;
+				p_patched_stats->cnt_ver[index] = ( add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24) );
+				udoffset = 3 * 8;
+				p_patched_stats->filter_value1[index] = ( (uint64)(add_stat_64[udoffset]) + ((uint64)(add_stat_64[udoffset+1])<<8) + ((uint64)(add_stat_64[udoffset+2])<<16) + ((uint64)(add_stat_64[udoffset+3])<<24) +
+				                                        ((uint64)(add_stat_64[udoffset+4])<<32) + ((uint64)(add_stat_64[udoffset+5])<<40) + ((uint64)(add_stat_64[udoffset+6])<<48) + ((uint64)(add_stat_64[udoffset+7])<<56) );
+				udoffset = 4 * 8;
+				p_patched_stats->filter_value2[index] = ( (uint64)(add_stat_64[udoffset]) + ((uint64)(add_stat_64[udoffset+1])<<8) + ((uint64)(add_stat_64[udoffset+2])<<16) + ((uint64)(add_stat_64[udoffset+3])<<24) +
+				                                        ((uint64)(add_stat_64[udoffset+4])<<32) + ((uint64)(add_stat_64[udoffset+5])<<40) + ((uint64)(add_stat_64[udoffset+6])<<48) + ((uint64)(add_stat_64[udoffset+7])<<56) );
+				udoffset = 1 * 8;
+				p_patched_stats->y_factor[index] = ( (uint64)(add_stat_64[udoffset]) + ((uint64)(add_stat_64[udoffset+1])<<8) + ((uint64)(add_stat_64[udoffset+2])<<16) + ((uint64)(add_stat_64[udoffset+3])<<24) +
+				                                     ((uint64)(add_stat_64[udoffset+4])<<32) + ((uint64)(add_stat_64[udoffset+5])<<40) + ((uint64)(add_stat_64[udoffset+6])<<48) + ((uint64)(add_stat_64[udoffset+7])<<56) );
+				udoffset = 5 * 4;
+				p_patched_stats->fv_hor[index] = ( add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24) );
+				udoffset = 4 * 4;
+				p_patched_stats->fv_ver[index] = ( add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24) );
+
+#endif
 				/*40 Bytes(HW3A AF Block Size) = 10 * uint32(4 Bytes)*/
 				stats_addr_32+= 10;
 				/*40 Bytes(HW3A AF Block Size) = 5 * uint64(8 Bytes)*/
 				stats_addr_64+= 5;
+
+				add_stat_32 += 40;
+				add_stat_64 += 40;
+
 				WRAP_LOG("fv_hor[%d] %d\n",index,p_patched_stats->fv_hor[index]);
 			}
 		}
 	} else if(AL3A_HW3A_DEV_ID_B_0 == p_meta_data_af->uhwengineid) {
 		for(j = 0; j < banks; j++) {
-			stats_addr_32 = (uint32 *)(p_meta_data_af->paf_stats)+j*bank_size/4;
+			stats_addr_32 = (uint32 *)(stats)+j*bank_size/4;
+			add_stat_32 = stats + j* bank_size/4;
 			for(i = 0; i < blocks; i++) {
 				index = i+j*banks;
+
+#if 0
 				p_patched_stats->cnt_hor[index] = stats_addr_32[1];
 				p_patched_stats->cnt_ver[index] = stats_addr_32[0];
 				p_patched_stats->filter_value1[index] = 0;
@@ -188,8 +237,24 @@ uint32 al3awrapper_dispatchhw3a_afstats(void *isp_meta_data,void *alaf_stats)
 				p_patched_stats->y_factor[index] = stats_addr_32[2];
 				p_patched_stats->fv_hor[index] = stats_addr_32[4];
 				p_patched_stats->fv_ver[index] = stats_addr_32[3];
+#else
+				udoffset = 4;
+				p_patched_stats->cnt_hor[index] = ( add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24) );
+				udoffset = 0;
+				p_patched_stats->cnt_ver[index] = ( add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24) );
+				p_patched_stats->filter_value1[index] = 0;
+				p_patched_stats->filter_value2[index] = 0;
+				udoffset = 2 * 4;
+				p_patched_stats->y_factor[index] = ( add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24) );
+				udoffset = 4 * 4;
+				p_patched_stats->fv_hor[index] = ( add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24) );
+				udoffset = 3 * 4;
+				p_patched_stats->fv_ver[index] = ( add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24) );
+#endif
 				/*24 Bytes(HW3A AF Block Size) = 6 * uint32(4 Bytes)*/
 				stats_addr_32+= 6;
+
+				add_stat_32 += 24;
 				WRAP_LOG("fv_hor[%d] %d\n",index,p_patched_stats->fv_hor[index]);
 			}
 		}
@@ -392,14 +457,14 @@ uint32 al3awrapperaf_updateispconfig_af(struct allib_af_out_stats_config_t *lib_
 	isp_config->tafregion.uwoffsetratioy = (uint16)udTemp;
 	WRAP_LOG("uwoffsetratioy%d\n",isp_config->tafregion.uwoffsetratioy);
 	isp_config->benableaflut = lib_config->b_enable_af_lut;
-	WRAP_LOG("benableaflut%d\n",isp_config->b_enable_af_lut);
+	WRAP_LOG("benableaflut%d\n",isp_config->benableaflut);
 	memcpy(isp_config->auwlut,lib_config->auw_lut,sizeof(uint16)*259);
 	memcpy(isp_config->auwaflut,lib_config->auw_af_lut,sizeof(uint16)*259);
 	memcpy(isp_config->aucweight,lib_config->auc_weight,sizeof(uint8)*6);
 	isp_config->uwsh = lib_config->uw_sh;
-	WRAP_LOG("uwsh%d\n",isp_config->uw_sh);
+	WRAP_LOG("uwsh%d\n",isp_config->uwsh);
 	isp_config->ucthmode = lib_config->uc_th_mode;
-	WRAP_LOG("ucthmode%d\n",isp_config->uc_th_mode);
+	WRAP_LOG("ucthmode%d\n",isp_config->ucthmode);
 	memcpy(isp_config->aucindex,lib_config->auc_index,sizeof(uint8)*82);
 	memcpy(isp_config->auwth,lib_config->auw_th,sizeof(uint16)*4);
 	memcpy(isp_config->pwtv,lib_config->pw_tv,sizeof(uint16)*4);

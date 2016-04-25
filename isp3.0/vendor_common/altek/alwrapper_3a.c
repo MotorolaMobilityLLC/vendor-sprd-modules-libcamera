@@ -3,8 +3,8 @@
  *
  *  Created on: 2015/12/05
  *      Author: MarkTseng
- *  Latest update: 2016/3/28
- *      Reviser: MarkTseng
+ *  Latest update: 2016/4/21
+ *      Reviser: Allenwang
  *  Comments:
  *       This c file is mainly used for AP framework to:
  *       1. Dispatch ISP stats to seperated stats
@@ -27,6 +27,8 @@
 #include "isp_common_types.h"
 #endif
 
+
+#define _ENABLE_STATS_PRE_ALLOC_BUF 1
 /******************************************************************************
  * function prototype
  ******************************************************************************/
@@ -71,7 +73,8 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 	uint8 *ptempaddr;
 	uint32 offset_start, offset, padding;
 
-	struct timeval systemtime;
+	struct timeval systemtime, systemtime_e;
+	uint64  time_s, time_e;
 
 	/* NULL pointer protection */
 	if ( alisp_metadata == NULL )
@@ -79,6 +82,7 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 
 	/* store timestamp at beginning, for AF usage */
 	gettimeofday(&systemtime, NULL);
+	time_s = systemtime.tv_sec * 1000000 + systemtime.tv_usec;
 
 	paddrlocal = (uint8 *)alisp_metadata;
 	/* by byte parsing, use casting would cause some compiler padding shift issue */
@@ -219,8 +223,23 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 
 		/* shift to data addr */
 		ptempaddr = (uint8 *)alisp_metadata + offset_start;
-		/* copy data to buffer addr */
-		memcpy( (void *)alisp_metadata_ae->pae_stats , (void *)ptempaddr, alisp_metadata_ae->uaestatssize  );
+
+		alisp_metadata_ae->b_isstats_byaddr = 0;
+
+		/* check pre-allocated buffer validity */
+#ifdef _ENABLE_STATS_PRE_ALLOC_BUF
+#if ( _ENABLE_STATS_PRE_ALLOC_BUF )
+		alisp_metadata_ae->b_isstats_byaddr = 1;
+#endif
+#endif
+
+		if ( alisp_metadata_ae->b_isstats_byaddr == 0 ) {
+			/* copy data to buffer addr */
+			memcpy( (void *)alisp_metadata_ae->pae_stats , (void *)ptempaddr, alisp_metadata_ae->uaestatssize  );
+		} else {
+			/* assign by addr if buffer is allocated from 3A ctrl layer  */
+			alisp_metadata_ae->puc_ae_stats = (uint8 *)ptempaddr;
+		}
 
 		uwValidstats_Num++;
 	} else { /* set pseudo flag, for AE lib progressive runing */
@@ -234,6 +253,8 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 		pispmetaae->uaetokenid = pispmeta.uaetokenid;
 		pispmetaae->uaestatssize = pispmeta.uaestatssize;
 		pispmetaae->upseudoflag = 1;
+
+		pispmetaae->b_isstats_byaddr = 0;
 
 		memcpy( &pispmetaae->systemtime, &systemtime, sizeof(struct timeval));
 		pispmetaae->udsys_sof_idx = udsof_idx;
@@ -256,7 +277,6 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 
 		memcpy( &pispmetaawb->systemtime, &systemtime, sizeof(struct timeval));
 		pispmetaawb->udsys_sof_idx = udsof_idx;
-
 
 		/* retriving awb info of stats */
 		paddrlocal = (uint8 *)alisp_metadata + pispmeta.uawbstatsaddr;
@@ -310,8 +330,22 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 
 		/* shift to data addr */
 		ptempaddr = (uint8 *)alisp_metadata + offset_start;
-		/* copy data to buffer addr */
-		memcpy( (void *)alisp_metadata_awb->pawb_stats , (void *)ptempaddr, alisp_metadata_awb->uawbstatssize );
+
+		alisp_metadata_awb->b_isstats_byaddr = 0;
+		/* check pre-allocated buffer validity */
+#ifdef _ENABLE_STATS_PRE_ALLOC_BUF
+#if ( _ENABLE_STATS_PRE_ALLOC_BUF )
+		alisp_metadata_awb->b_isstats_byaddr = 1;
+#endif
+#endif
+
+		if ( alisp_metadata_awb->b_isstats_byaddr == 0 ) {
+			/* copy data to buffer addr */
+			memcpy( (void *)alisp_metadata_awb->pawb_stats , (void *)ptempaddr, alisp_metadata_awb->uawbstatssize );
+		} else {
+			/* assign by addr if buffer is allocated from 3A ctrl layer  */
+			alisp_metadata_awb->puc_awb_stats = (uint8 *)ptempaddr;
+		}
 
 		uwValidstats_Num++;
 	} else { /* set pseudo flag, for AWB lib progressive runing */
@@ -325,7 +359,7 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 		pispmetaawb->uawbtokenid = pispmeta.uawbtokenid;
 		pispmetaawb->uawbstatssize = pispmeta.uawbstatssize;
 		pispmetaawb->upseudoflag  = 1;
-
+		pispmetaawb->b_isstats_byaddr = 0;
 		memcpy( &pispmetaawb->systemtime, &systemtime, sizeof(struct timeval));
 		pispmetaawb->udsys_sof_idx = udsof_idx;
 	}
@@ -375,8 +409,23 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 
 		/* shift to data addr */
 		ptempaddr = (uint8 *)alisp_metadata + offset_start;
-		/* copy data to buffer addr */
-		memcpy( (void *)alisp_metadata_af->paf_stats , (void *)ptempaddr, alisp_metadata_af->uafstatssize );
+
+		alisp_metadata_af->b_isstats_byaddr = 0;
+
+#ifdef _ENABLE_STATS_PRE_ALLOC_BUF
+#if ( _ENABLE_STATS_PRE_ALLOC_BUF )
+		alisp_metadata_af->b_isstats_byaddr = 1;
+#endif
+#endif
+
+		if ( alisp_metadata_af->b_isstats_byaddr == 0 ) {
+			/* copy data to buffer addr */
+			memcpy( (void *)alisp_metadata_af->paf_stats , (void *)ptempaddr, alisp_metadata_af->uafstatssize );
+		} else {
+			/* assign by addr if buffer is allocated from 3A ctrl layer  */
+			alisp_metadata_af->puc_af_stats = (uint8 *)ptempaddr;
+		}
+
 		uwValidstats_Num++;
 	}
 
@@ -509,6 +558,15 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 
 	if ( uwValidstats_Num == 0 )
 		return ERR_WRP_EMPTY_METADATA;
+
+	gettimeofday(&systemtime_e, NULL);
+
+	time_e = systemtime_e.tv_sec * 1000000 + systemtime_e.tv_usec;
+
+#ifndef LOCAL_NDK_BUILD
+	ISP_LOGE("al3awrapper_dispatchhw3astats end %d!", (uint32)(time_e - time_s));
+#endif
+
 
 	return ret;
 }

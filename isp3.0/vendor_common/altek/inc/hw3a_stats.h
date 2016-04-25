@@ -435,7 +435,9 @@ struct isp_drv_meta_ae_t {
 	uint16 uframeidx;		/* HW3a_frame_idx */
 
 	/* AE info */
+	uint8  b_isstats_byaddr;   // 0: use pae_stats, 1: use puc_ae_stats
 	uint8  pae_stats[HW3A_AE_STATS_BUFFER_SIZE];
+	uint8  *puc_ae_stats;
 	uint16 uaetokenid;
 	uint32 uaestatssize;
 	uint16 upseudoflag;		/* 0: normal stats, 1: PseudoFlag flag
@@ -478,7 +480,9 @@ struct isp_drv_meta_awb_t {
 	uint16 uframeidx;		/* HW3a_frame_idx */
 
 	/* AWB info */
-	uint8 pawb_stats[HW3A_AWB_STATS_BUFFER_SIZE];
+	uint8  b_isstats_byaddr;   // 0: use pae_stats, 1: use puc_ae_stats
+	uint8  pawb_stats[HW3A_AWB_STATS_BUFFER_SIZE];
+	uint8  *puc_awb_stats;
 	uint16 uawbtokenid;
 	uint32 uawbstatssize;
 	uint16 upseudoflag;		/* 0: normal stats, 1: PseudoFlag flag
@@ -513,7 +517,9 @@ struct isp_drv_meta_af_t {
 	uint16 uframeidx;		/* HW3a_frame_idx */
 
 	/* AF info */
+	uint8  b_isstats_byaddr;   // 0: use pae_stats, 1: use puc_ae_stats
 	uint8  paf_stats[HW3A_AF_STATS_BUFFER_SIZE];
+	uint8  *puc_af_stats;
 	uint16 uaftokenid;
 	uint32 uafstatssize;
 

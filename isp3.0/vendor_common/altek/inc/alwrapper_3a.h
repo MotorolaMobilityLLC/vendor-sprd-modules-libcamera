@@ -21,7 +21,7 @@ extern "C"
 {
 #endif
 
-#define _WRAPPER_VER 0.8070
+#define _WRAPPER_VER 0.8080
 
 
 #pragma pack(push) /* push current alignment setting to stack */

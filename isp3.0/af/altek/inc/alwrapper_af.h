@@ -8,7 +8,7 @@
  *  Comments:
 ********************************************************************************/
 
-#define _WRAPPER_AF_VER 0.8040
+#define _WRAPPER_AF_VER 0.8050
 
 /*
  * API name: al3AWrapper_dispatch_af_stats

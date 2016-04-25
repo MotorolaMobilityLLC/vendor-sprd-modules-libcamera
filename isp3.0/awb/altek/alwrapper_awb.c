@@ -3,8 +3,8 @@
  *
  *  Created on: 2015/12/07
  *      Author: HanTseng
- *  Latest update: 2016/3/22
- *      Reviser: MarkTseng
+ *  Latest update: 2016/4/21
+ *      Reviser: Allenwang
  *  Comments:
  *       This c file is mainly used for AP framework to:
  *       1. Query HW3A config setting
@@ -59,7 +59,13 @@ uint32 al3awrapper_dispatchhw3a_awbstats(void *alisp_metadata_awb, void *alwrapp
 	pwrapper_stat_awb->uframeidx   = pmetadata_awb->uframeidx;
 
 	/*  AWB info */
-	pwrapper_stat_awb->pawb_stats    = pmetadata_awb->pawb_stats;
+	if ( pmetadata_awb->b_isstats_byaddr == 1 ) {
+		if ( pmetadata_awb->puc_awb_stats == NULL )
+			return ERR_WRP_AWB_INVALID_STATS_ADDR;
+		pwrapper_stat_awb->pawb_stats    = pmetadata_awb->puc_awb_stats;
+	} else
+		pwrapper_stat_awb->pawb_stats    = pmetadata_awb->pawb_stats;
+
 	pwrapper_stat_awb->uawbtokenid   = pmetadata_awb->uawbtokenid;
 	pwrapper_stat_awb->uawbstatssize = pmetadata_awb->uawbstatssize;
 	/* uPseudoFlag 0: normal stats, 1: PseudoFlag flag (for lib, smoothing/progressive run) */
