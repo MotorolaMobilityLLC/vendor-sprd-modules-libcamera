@@ -3308,7 +3308,9 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame)
 	SprdCamera3PicChannel* picChannel = reinterpret_cast<SprdCamera3PicChannel *>(mPictureChan);
 	uint32_t frame_num = 0;
 	char value[PROPERTY_VALUE_MAX];
+	char debug_value[PROPERTY_VALUE_MAX];
 	property_get("persist.sys.camera.raw.mode", value, "jpeg");
+	property_get("persist.sys.camera.debug.mode", debug_value, "non-debug");
 
 	if(picChannel && ((mCaptureMode != CAMERA_ISP_TUNING_MODE) || ((mCaptureMode == CAMERA_ISP_TUNING_MODE)&&(!strcmp(value, "raw")))
 		|| ((mCaptureMode == CAMERA_ISP_SIMULATION_MODE)&&(!strcmp(value, "sim"))))) {
@@ -3322,7 +3324,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame)
 				int isp_info_size = 0;
 				if(encInfo->outPtr != NULL) {
 					memcpy((char *)pic_addr_vir, (char *)(encInfo->outPtr), encInfo->size);
-					if(mCaptureMode == CAMERA_ISP_TUNING_MODE) {
+					if((mCaptureMode == CAMERA_ISP_TUNING_MODE) || (!strcmp(debug_value, "debug"))) {
 						if (!camera_get_isp_info(mCameraHandle, &isp_info_addr, &isp_info_size) && (0 != isp_info_size)) {
 							mJpegSize = encInfo->size;
 							memcpy(((char *)pic_addr_vir+mJpegSize),(char *)isp_info_addr,isp_info_size);
@@ -3330,8 +3332,9 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame)
 					}
 				}
 
-				if (mCaptureMode == CAMERA_ISP_TUNING_MODE)
+				if ((mCaptureMode == CAMERA_ISP_TUNING_MODE) || (!strcmp(debug_value, "debug"))) {
 					dump_jpeg_file((void *)pic_addr_vir, encInfo->size+isp_info_size, mCaptureWidth, mCaptureHeight);
+				}
 
 				pic_stream->getHeapSize(&heap_size);
 				jpegBlob = (camera3_jpeg_blob*)((char *)pic_addr_vir + (heap_size - sizeof(camera3_jpeg_blob)));
