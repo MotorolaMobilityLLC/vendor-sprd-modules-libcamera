@@ -145,9 +145,9 @@ struct shading_debug {
 #pragma pack(push) /* push current alignment setting to stack */
 #pragma pack(4)    /* new alignment setting  */
 struct irp_tuning_debug {
-	/*uint32 qmerge_ver;
+	uint32 qmerge_ver;
 	uint32 tool_ver;
-	uint32 tuning_ver;*/
+	uint32 tuning_ver;
 	uint8 sensor_id;	/* sensor: 0 (rear 0)
 				 * sensor: 1 (rear1)
 				 * lite: 2 (front, no YCC NRE)
