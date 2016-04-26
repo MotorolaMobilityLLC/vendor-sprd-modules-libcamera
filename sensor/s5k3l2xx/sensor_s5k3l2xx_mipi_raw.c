@@ -1978,8 +1978,8 @@ static SENSOR_REG_TAB_INFO_T s_s5k3l2xx_resolution_Tab_RAW[] = {
 
 static SENSOR_TRIM_T s_s5k3l2xx_Resolution_Trim_Tab[] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-//	{0, 0, 2072, 1554, 134, 900, 1664, {0, 0, 2072, 1554}},
-	{0, 0, 4144, 3106, 104, 950, 3190, {0, 0, 4144, 3106}},
+//	{0, 0, 2072, 1554, 13400, 900, 1664, {0, 0, 2072, 1554}},
+	{0, 0, 4144, 3106, 10400, 950, 3190, {0, 0, 4144, 3106}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
@@ -2343,7 +2343,7 @@ static uint32_t _s5k3l2xx_init_mode_fps_info(SENSOR_HW_HANDLE handle)
 			//max fps should be multiple of 30,it calulated from line_time and frame_line
 			tempfps = s_s5k3l2xx_Resolution_Trim_Tab[i].line_time*s_s5k3l2xx_Resolution_Trim_Tab[i].frame_line;
 			if(0 != tempfps) {
-				tempfps = 10000000/tempfps;
+				tempfps = 1000000000/tempfps;
 				modn = tempfps / 30;
 				if(tempfps > modn*30)
 					modn++;
@@ -2620,7 +2620,7 @@ static unsigned long _s5k3l2xx_write_exp_dummy(SENSOR_HW_HANDLE handle, uint16_t
 	s_capture_shutter = expsure_line;
 	linetime=s_s5k3l2xx_Resolution_Trim_Tab[size_index].line_time;
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, s_capture_shutter);
-	s_exposure_time = s_capture_shutter * linetime / 10;
+	s_exposure_time = s_capture_shutter * linetime / 1000;
 
 	return ret_value;
 }

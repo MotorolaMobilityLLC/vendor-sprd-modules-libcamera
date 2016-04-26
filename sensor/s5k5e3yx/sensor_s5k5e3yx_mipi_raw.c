@@ -365,8 +365,8 @@ static SENSOR_REG_TAB_INFO_T s_s5k5e3yx_resolution_Tab_RAW[] = {
 
 static SENSOR_TRIM_T s_s5k5e3yx_Resolution_Trim_Tab[] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-	//{0, 0, 2592, 1944, 267, 750, 1248, {0, 0, 1632, 1224}},
-	{0, 0, 2576, 1932, 164, 750, 2480, {0, 0, 2576, 1932}},
+	//{0, 0, 2592, 1944, 26700, 750, 1248, {0, 0, 1632, 1224}},
+	{0, 0, 2576, 1932, 16400, 750, 2480, {0, 0, 2576, 1932}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
@@ -865,7 +865,7 @@ static uint32_t _s5k5e3yx_init_mode_fps_info()
 			//max fps should be multiple of 30,it calulated from line_time and frame_line
 			tempfps = s_s5k5e3yx_Resolution_Trim_Tab[i].line_time*s_s5k5e3yx_Resolution_Trim_Tab[i].frame_line;
 			if(0 != tempfps) {
-				tempfps = 10000000/tempfps;
+				tempfps = 1000000000/tempfps;
 				modn = tempfps / 30;
 				if(tempfps > modn*30)
 					modn++;
@@ -999,7 +999,7 @@ static unsigned long _s5k5e3yx_write_exposure(SENSOR_HW_HANDLE handle,unsigned l
 	s_capture_shutter = expsure_line;
 	linetime=s_s5k5e3yx_Resolution_Trim_Tab[size_index].line_time;
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, s_capture_shutter);
-	s_exposure_time = s_capture_shutter * linetime / 10;
+	s_exposure_time = s_capture_shutter * linetime / 1000;
 
 	return ret_value;
 }
@@ -1053,7 +1053,7 @@ static unsigned long _s5k5e3yx_BeforeSnapshot(SENSOR_HW_HANDLE handle,unsigned l
 	CFG_INFO:
 	s_capture_shutter = _s5k5e3yx_get_shutter(handle);
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, s_capture_shutter);
-	s_exposure_time = s_capture_shutter * cap_linetime / 10;
+	s_exposure_time = s_capture_shutter * cap_linetime / 1000;
 
 	return SENSOR_SUCCESS;
 

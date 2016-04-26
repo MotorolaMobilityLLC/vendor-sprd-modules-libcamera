@@ -675,11 +675,11 @@ static SENSOR_REG_TAB_INFO_T s_s5k4h8yx_resolution_Tab_RAW[] = {
 static SENSOR_TRIM_T s_s5k4h8yx_Resolution_Trim_Tab[] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
         #ifdef S5K4H8YX_2_LANES
-	{0, 0, 3264, 2448, 267, 700, 2498, {0, 0, 3264, 2448}},
-	//{0, 0, 1632, 1224, 267, 700, 1246, {0, 0, 1632, 1224}},
+	{0, 0, 3264, 2448, 26742, 700, 2498, {0, 0, 3264, 2448}},
+	//{0, 0, 1632, 1224, 26742, 700, 1246, {0, 0, 1632, 1224}},
 	#else
-	{0, 0, 3264, 2448, 134, 700, 2498, {0, 0, 3264, 2448}},
-	//{0, 0, 1632, 1224, 134, 700, 1246, {0, 0, 1632, 1224}},
+	{0, 0, 3264, 2448, 13371, 700, 2498, {0, 0, 3264, 2448}},
+	//{0, 0, 1632, 1224, 13371, 700, 1246, {0, 0, 1632, 1224}},
 	#endif
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
@@ -1457,7 +1457,7 @@ static uint32_t _s5k4h8yx_init_mode_fps_info(SENSOR_HW_HANDLE handle)
 			//max fps should be multiple of 30,it calulated from line_time and frame_line
 			tempfps = s_s5k4h8yx_Resolution_Trim_Tab[i].line_time*s_s5k4h8yx_Resolution_Trim_Tab[i].frame_line;
 			if(0 != tempfps) {
-				tempfps = 10000000/tempfps;
+				tempfps = 1000000000/tempfps;
 				modn = tempfps/30;
 				if(tempfps > modn*30)
 					modn++;
@@ -1600,7 +1600,7 @@ static unsigned long _s5k4h8yx_write_exp_dummy(SENSOR_HW_HANDLE handle, uint16_t
 	s_capture_shutter = expsure_line;
 	linetime=s_s5k4h8yx_Resolution_Trim_Tab[size_index].line_time;
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, s_capture_shutter);
-	s_exposure_time = s_capture_shutter * linetime / 10;
+	s_exposure_time = s_capture_shutter * linetime / 1000;
 
 	/*if (frame_len_cur > frame_len) {
 		ret_value = Sensor_WriteReg(0x0341, frame_len & 0xff);
@@ -1741,7 +1741,7 @@ static unsigned long _s5k4h8yx_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned 
 	s_capture_VTS = _s5k4h8yx_get_VTS(handle);
 	_s5k4h8yx_ReadGain(handle, capture_mode);
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, s_capture_shutter);
-	s_exposure_time = s_capture_shutter * cap_linetime / 10;
+	s_exposure_time = s_capture_shutter * cap_linetime / 1000;
 
 	return SENSOR_SUCCESS;
 }

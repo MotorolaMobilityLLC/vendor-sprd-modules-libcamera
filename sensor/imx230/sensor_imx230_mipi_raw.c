@@ -962,9 +962,9 @@ static SENSOR_REG_TAB_INFO_T s_imx230_resolution_tab_raw[SENSOR_MODE_MAX] = {
 
 static SENSOR_TRIM_T s_imx230_resolution_trim_tab[SENSOR_MODE_MAX] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-//	{0, 0, 1280, 720, 100 , PREVIEW_MIPI_PER_LANE_BPS, 828, {0, 0, 1280, 720}},
-	{0, 0, 2672, 2008, 144 , PREVIEW_MIPI_PER_LANE_BPS, 2320, {0, 0, 2672, 2008}},
-	{0, 0, 5344, 4016, 100, SNAPSHOT_MIPI_PER_LANE_BPS, 4140, {0, 0, 5344, 4016}},
+//	{0, 0, 1280, 720, 10000 , PREVIEW_MIPI_PER_LANE_BPS, 828, {0, 0, 1280, 720}},
+	{0, 0, 2672, 2008, 14400 , PREVIEW_MIPI_PER_LANE_BPS, 2320, {0, 0, 2672, 2008}},
+	{0, 0, 5344, 4016, 10000, SNAPSHOT_MIPI_PER_LANE_BPS, 4140, {0, 0, 5344, 4016}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
@@ -1428,7 +1428,7 @@ static uint32_t imx230_init_mode_fps_info(SENSOR_HW_HANDLE handle)
 			//max fps should be multiple of 30,it calulated from line_time and frame_line
 			tempfps = s_imx230_resolution_trim_tab[i].line_time*s_imx230_resolution_trim_tab[i].frame_line;
 				if(0 != tempfps) {
-					tempfps = 10000000/tempfps;
+					tempfps = 1000000000/tempfps;
 				modn = tempfps / 30;
 				if(tempfps > modn*30)
 					modn++;

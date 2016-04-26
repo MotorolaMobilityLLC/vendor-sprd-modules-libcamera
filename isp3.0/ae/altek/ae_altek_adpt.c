@@ -33,7 +33,8 @@
 #define F_NUM_BASE             100
 #define MAX_EXP_LINE_CNT       65535
 #define BRACKET_NUM            5
-#define SENSOR_EXP_US_BASE     10000000 /*x10us*/
+#define SENSOR_EXP_US_BASE     1000000000 /*x1000us*/
+#define SENSOR_EXP_BASE     1000 /*x1000us*/
 #define TUNING_EXPOSURE_NUM    300
 
 enum aealtek_work_mode{
@@ -576,7 +577,7 @@ static cmr_int aealtek_get_default_param(struct aealtek_cxt *cxt_ptr, struct ae_
 		st_ptr->ui_param.work_info.resolution.frame_size.w = 1600;
 		st_ptr->ui_param.work_info.resolution.frame_size.h = 1200;
 		st_ptr->ui_param.work_info.resolution.frame_line = 1600;
-		st_ptr->ui_param.work_info.resolution.line_time = 100; //dummy
+		st_ptr->ui_param.work_info.resolution.line_time = 10 * SENSOR_EXP_BASE; //dummy
 		st_ptr->ui_param.work_info.resolution.sensor_size_index = 1;
 		st_ptr->ui_param.work_info.resolution.max_fps = 30;
 		st_ptr->ui_param.work_info.resolution.max_gain = 8;
@@ -684,7 +685,7 @@ static cmr_int aealtek_sensor_info_ui2lib(struct aealtek_cxt *cxt_ptr, struct ae
 	to_ptr->max_fps = 100 * from_ptr->max_fps;
 	to_ptr->min_line_cnt = 1;
 	to_ptr->max_line_cnt = MAX_EXP_LINE_CNT;
-	to_ptr->exposuretime_per_exp_line_ns = 1000 * from_ptr->line_time / 10; //base x10 us
+	to_ptr->exposuretime_per_exp_line_ns = from_ptr->line_time;
 	to_ptr->min_gain = 100 * 1;
 	to_ptr->max_gain = 100 * from_ptr->max_gain;
 
@@ -1239,7 +1240,7 @@ static cmr_int aealtek_set_fix_exposure_time(struct aealtek_cxt *cxt_ptr, struct
 	ISP_LOGI("exp_time=%d", in_ptr->value);
 	exp_time = in_ptr->value;
 
-	cxt_ptr->sensor_exp_data.lib_exp.exp_line = 10*exp_time/cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time;
+	cxt_ptr->sensor_exp_data.lib_exp.exp_line = SENSOR_EXP_BASE*exp_time/cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time;
 	cxt_ptr->sensor_exp_data.lib_exp.exp_time = exp_time;
 
 	return ISP_SUCCESS;
@@ -2436,7 +2437,7 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 	if (cxt_ptr->tuning_info.manual_ae_on && ISP3A_WORK_MODE_PREVIEW == work_mode) {
 		if (TUNING_MODE_USER_DEF != cxt_ptr->tuning_info.tuning_mode) {
 			cxt_ptr->sensor_exp_data.lib_exp.exp_time = cxt_ptr->tuning_info.exposure[cxt_ptr->tuning_info.num];
-			cxt_ptr->sensor_exp_data.lib_exp.exp_line = 10*cxt_ptr->tuning_info.exposure[cxt_ptr->tuning_info.num]/cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time;
+			cxt_ptr->sensor_exp_data.lib_exp.exp_line = SENSOR_EXP_BASE*cxt_ptr->tuning_info.exposure[cxt_ptr->tuning_info.num]/cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time;
 			cxt_ptr->sensor_exp_data.lib_exp.gain = cxt_ptr->tuning_info.gain[cxt_ptr->tuning_info.num];
 			ISP_LOGI("get num:%d tuning exp_gain:%d,%d", cxt_ptr->tuning_info.num
 					,cxt_ptr->sensor_exp_data.lib_exp.exp_line,cxt_ptr->sensor_exp_data.lib_exp.gain);
@@ -2986,7 +2987,7 @@ static cmr_int aealtek_callback_sync_info(struct aealtek_cxt *cxt_ptr)
 	input.slave_info.cam_info_calib.b_gain = 1497;
 	input.slave_info.cam_info_sensor.fn = 2.4;
 	input.slave_info.cam_info_sensor.max_ad_gain = 800;
-	input.slave_info.cam_info_sensor.max_exp_line = SENSOR_EXP_US_BASE/10/258;
+	input.slave_info.cam_info_sensor.max_exp_line = SENSOR_EXP_US_BASE/10/25800;
 	input.slave_info.cam_info_sensor.max_fps = 3000;
 	input.slave_info.cam_info_sensor.min_ad_gain = 100;
 	input.slave_info.cam_info_sensor.min_exp_line = 1;
@@ -3041,7 +3042,7 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 		property_get("persist.sys.isp.ae.exp_time", ae_exp, "100");
 		property_get("persist.sys.isp.ae.gain", ae_gain, "100");
 		in_est.cell.exp_time = atoi(ae_exp);
-		in_est.cell.exp_line = 10*in_est.cell.exp_time/cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time;
+		in_est.cell.exp_line = SENSOR_EXP_BASE*in_est.cell.exp_time/cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time;
 		in_est.cell.gain = atoi(ae_gain);
 		in_est.cell.dummy = 0;
 	} else {

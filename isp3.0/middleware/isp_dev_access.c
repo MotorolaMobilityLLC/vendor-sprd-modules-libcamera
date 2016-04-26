@@ -623,7 +623,7 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	tSecnarioInfo.tSensorInfo.uwCropStartY = resolution_ptr->crop.st_y;
 	tSecnarioInfo.tSensorInfo.uwCropEndX = resolution_ptr->sensor_max_size.w + resolution_ptr->crop.st_x - 1;
 	tSecnarioInfo.tSensorInfo.uwCropEndY = resolution_ptr->sensor_max_size.h + resolution_ptr->crop.st_y - 1;
-	tSecnarioInfo.tSensorInfo.udLineTime = resolution_ptr->line_time*10;
+	tSecnarioInfo.tSensorInfo.udLineTime = resolution_ptr->line_time/10;
 	tSecnarioInfo.tSensorInfo.uwClampLevel = cxt->input_param.init_param.ex_info.clamp_level;
 	tSecnarioInfo.tSensorInfo.uwFrameRate = resolution_ptr->fps.max_fps*100;
 	tSecnarioInfo.tSensorInfo.ucSensorMode = 0;
@@ -846,7 +846,7 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 	scenario_in.tSensorInfo.ucSensorMouduleType = 0;//0-sensor1  1-sensor2
 	scenario_in.tSensorInfo.uwWidth = cxt->input_param.init_param.size.w;
 	scenario_in.tSensorInfo.uwHeight = cxt->input_param.init_param.size.h;
-	scenario_in.tSensorInfo.udLineTime = resolution_ptr->line_time*10;
+	scenario_in.tSensorInfo.udLineTime = resolution_ptr->line_time/10;
 	scenario_in.tSensorInfo.uwFrameRate = resolution_ptr->fps.max_fps*100;
 	scenario_in.tSensorInfo.nColorOrder = cxt->input_param.init_param.image_pattern;
 	scenario_in.tSensorInfo.uwClampLevel = 64;

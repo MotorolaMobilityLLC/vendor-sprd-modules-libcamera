@@ -394,12 +394,12 @@ static SENSOR_REG_TAB_INFO_T s_s5k3p3sm_resolution_Tab_RAW[9] = {
 
 static SENSOR_TRIM_T s_s5k3p3sm_Resolution_Trim_Tab[SENSOR_MODE_MAX] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-	{0, 0, 2304, 1740, 94, 1320, 0x0dc8, {0, 0, 2304, 1740}},
-	{0, 0, 4632, 3480, 92, 2784, 3626, {0, 0, 4632, 3480}},
-	//{0, 0, 1280, 720, 92, 1320, 901, {0, 0, 1280, 720}},
-	//{0, 0, 1920, 1080, 94, 1320, 1767, {0, 0, 1920, 1080}},
-	//{0, 0, 2320, 1748, 183, 1440, 1800, {0, 0, 2320, 1748}},
-	//{0, 0, 2304, 1740, 94, 1320, 0x0dc8, {0, 0, 2304, 1740}},
+	{0, 0, 2304, 1740, 9430, 1320, 0x0dc8, {0, 0, 2304, 1740}},
+	{0, 0, 4632, 3480, 9190, 2784, 3626, {0, 0, 4632, 3480}},
+	//{0, 0, 1280, 720, 9190, 1320, 901, {0, 0, 1280, 720}},
+	//{0, 0, 1920, 1080, 9430, 1320, 1767, {0, 0, 1920, 1080}},
+	//{0, 0, 2320, 1748, 18300, 1440, 1800, {0, 0, 2320, 1748}},
+	//{0, 0, 2304, 1740, 9430, 1320, 0x0dc8, {0, 0, 2304, 1740}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
@@ -625,7 +625,7 @@ static uint32_t _s5k3p3sm_init_mode_fps_info(SENSOR_HW_HANDLE handle)
 			//max fps should be multiple of 30,it calulated from line_time and frame_line
 			tempfps = s_s5k3p3sm_Resolution_Trim_Tab[i].line_time*s_s5k3p3sm_Resolution_Trim_Tab[i].frame_line;
 			if(0 != tempfps) {
-				tempfps = 10000000/tempfps;
+				tempfps = 1000000000/tempfps;
 				modn = tempfps / 30;
 				if(tempfps > modn*30)
 					modn++;
@@ -781,7 +781,7 @@ static unsigned long _s5k3p3sm_write_exp_dummy(SENSOR_HW_HANDLE handle, uint16_t
 	s_capture_shutter = expsure_line;
 	linetime=s_s5k3p3sm_Resolution_Trim_Tab[size_index].line_time;
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, s_capture_shutter);
-	s_exposure_time = s_capture_shutter * linetime / 10;
+	s_exposure_time = s_capture_shutter * linetime / 1000;
 
 	return ret_value;
 }
@@ -1168,7 +1168,7 @@ static unsigned long _s5k3p3sm_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned 
 	CFG_INFO:
 	s_capture_shutter = _s5k3p3sm_get_shutter(handle);
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, s_capture_shutter);
-	s_exposure_time = s_capture_shutter * cap_linetime / 10;
+	s_exposure_time = s_capture_shutter * cap_linetime / 1000;
 
 	return SENSOR_SUCCESS;
 

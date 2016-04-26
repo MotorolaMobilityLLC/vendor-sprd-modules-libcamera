@@ -25,7 +25,7 @@
 
 #define AFLLIB_PATH "libalFlickerLib.so"
 
-#define AFL_NSECOND_BASE       100 // x10us
+#define AFL_NSECOND_BASE       1 // x1000us
 
 struct aflaltek_lib_ops {
 	BOOL (*load_func)(struct alflickerruntimeobj_t *flicker_run_obj, unsigned long identityID);

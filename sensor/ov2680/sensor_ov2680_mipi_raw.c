@@ -387,8 +387,8 @@ LOCAL SENSOR_REG_TAB_INFO_T s_ov2680_resolution_Tab_RAW[] = {
 
 LOCAL SENSOR_TRIM_T s_ov2680_Resolution_Trim_Tab[] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-	//{0, 0, 800, 600, 518, 330, 644, {0, 0, 800, 600}},
-	{0, 0, 1600, 1200, 258, 628, 1294, {0, 0, 1600, 1200}},
+	//{0, 0, 800, 600, 51800, 330, 644, {0, 0, 800, 600}},
+	{0, 0, 1600, 1200, 25800, 628, 1294, {0, 0, 1600, 1200}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
@@ -660,7 +660,7 @@ LOCAL uint32_t _ov2680_init_mode_fps_info(SENSOR_HW_HANDLE handle)
 			//max fps should be multiple of 30,it calulated from line_time and frame_line
 			tempfps = s_ov2680_Resolution_Trim_Tab[i].line_time*s_ov2680_Resolution_Trim_Tab[i].frame_line;
 			if(0 != tempfps) {
-				tempfps = 10000000/tempfps;
+				tempfps = 1000000000/tempfps;
 				modn = tempfps / 30;
 				if(tempfps > modn*30)
 					modn++;
