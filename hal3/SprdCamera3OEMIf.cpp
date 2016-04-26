@@ -4825,6 +4825,12 @@ int SprdCamera3OEMIf::Callback_VideoMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *
 {
 	sprd_camera_memory_t *memory = NULL;
 	cmr_int              i = 0;
+	SPRD_DEF_Tag sprddefInfo;
+	int     BufferCount = kVideoBufferCount;
+
+	mSetting->getSPRDDEFTag(&sprddefInfo);
+	if (sprddefInfo.slowmotion <= 1)
+		BufferCount = 8;
 
 	HAL_LOGD("size %d sum %d mVideoHeapNum %d", size, sum, mVideoHeapNum);
 
@@ -4842,11 +4848,12 @@ int SprdCamera3OEMIf::Callback_VideoMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *
 		return BAD_VALUE;
 	}
 
-	if (sum > kVideoBufferCount) {
-		mVideoHeapNum = kVideoBufferCount;
-		phy_addr += kVideoBufferCount;
-		vir_addr += kVideoBufferCount;
-		for (i=kVideoBufferCount ; i<(cmr_int)sum ; i++) {
+	if (sum > BufferCount) {
+		mVideoHeapNum = BufferCount;
+		phy_addr += BufferCount;
+		vir_addr += BufferCount;
+		fd += BufferCount;
+		for (i=BufferCount ; i<(cmr_int)sum ; i++) {
 			memory = allocCameraMem(size, 1, true);
 			if (NULL == memory) {
 				HAL_LOGE("error memory is null.");
