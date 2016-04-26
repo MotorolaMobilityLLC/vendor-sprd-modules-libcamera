@@ -1,5 +1,7 @@
 TUNING_BIN := s5k3l2xx_mipi_raw_3a.bin
 TUNING_BIN += s5k3l2xx_mipi_raw_shading.bin
+TUNING_BIN := s5k5e3yx_mipi_raw_3a.bin
+TUNING_BIN += s5k5e3yx_mipi_raw_shading.bin
 TUNING_BIN += imx132_mipi_raw_3a.bin
 TUNING_BIN += imx132_mipi_raw_shading.bin
 TUNING_BIN += s5k3p3sm_mipi_raw_3a.bin
