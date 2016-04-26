@@ -99,6 +99,10 @@ LOCAL_SRC_FILES+= \
 	oem2v0/isp_calibration/src/isp_calibration.c \
 	oem2v0/isp_calibration/src/isp_cali_interface.c
 
+LOCAL_SRC_FILES += test.cpp
+#LOCAL_STATIC_LIBRARIES += libftminui
+LOCAL_C_INCLUDES += vendor/sprd/proprietories-source/factorytest/minui
+
 #include $(LOCAL_PATH)/isp2.0/isp2_0.mk
 LOCAL_SRC_FILES+= \
 	sensor/ov5640/sensor_ov5640_mipi.c \
