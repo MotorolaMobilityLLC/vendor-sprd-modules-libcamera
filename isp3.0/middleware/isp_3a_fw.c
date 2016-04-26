@@ -1275,7 +1275,9 @@ cmr_int isp3a_destroy_thread(cmr_handle isp_3a_handle)
 		goto exit;
 	}
 //	isp3a_destroy_ctrl_thread(isp_3a_handle);
-	isp3a_destroy_process_thread(isp_3a_handle);
+	ret = isp3a_destroy_process_thread(isp_3a_handle);
+	if (ret)
+		ISP_LOGE("destroy process thread fail %ld", ret);
 //	isp3a_destroy_af_thread(isp_3a_handle);
 //	isp3a_destroy_afl_thread(isp_3a_handle);
 //	isp3a_destroy_receiver_thread(isp_3a_handle);
@@ -2922,6 +2924,12 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 	struct isp_irq                              *sof_info = (struct isp_irq*)data;
 	struct isp_sof_cfg_info                     sof_cfg_info;
 
+	if (NULL == cxt) {
+		ISP_LOGE("error cxt NULL");
+		ret = -ISP_PARAM_NULL;
+		return ret;
+	}
+
 	cxt->sof_idx = sof_info->reserved + 1;
 	af_in.sof_info.sof_frame_idx = cxt->sof_idx;
 	af_in.sof_info.timestamp.sec = sof_info->time_stamp.sec;
@@ -3261,8 +3269,8 @@ cmr_int isp_3a_fw_init(struct isp_3a_fw_init_in *input_ptr, cmr_handle *isp_3a_h
 	ret = isp3a_create_thread((cmr_handle)cxt);
 exit:
 	if (ret) {
-		isp3a_alg_deinit((cmr_handle)cxt);
 		isp3a_destroy_thread((cmr_handle)cxt);
+		isp3a_alg_deinit((cmr_handle)cxt);
 		isp3a_deinit_statistics_buf((cmr_handle)cxt);
 		if (cxt) {
 			free((void*)cxt);
@@ -3285,8 +3293,8 @@ cmr_int isp_3a_fw_deinit(cmr_handle isp_3a_handle)
 		ISP_LOGE("input is NULL");
 		goto exit;
 	}
-	isp3a_alg_deinit((cmr_handle)cxt);
 	isp3a_destroy_thread((cmr_handle)cxt);
+	isp3a_alg_deinit((cmr_handle)cxt);
 	isp3a_deinit_statistics_buf((cmr_handle)cxt);
 	sem_destroy(&cxt->statistics_data_sm);
 	free((void*)cxt);
