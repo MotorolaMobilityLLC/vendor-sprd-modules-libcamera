@@ -1731,7 +1731,7 @@ static cmr_int aealtek_set_touch_zone(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 			if (ret)
 				goto exit;
 		}
-		goto exit;
+		return ISP_SUCCESS;
 	}
 	aealtek_reset_touch_param(cxt_ptr);
 
@@ -2987,7 +2987,7 @@ static cmr_int aealtek_callback_sync_info(struct aealtek_cxt *cxt_ptr)
 	input.slave_info.cam_info_calib.b_gain = 1497;
 	input.slave_info.cam_info_sensor.fn = 2.4;
 	input.slave_info.cam_info_sensor.max_ad_gain = 800;
-	input.slave_info.cam_info_sensor.max_exp_line = SENSOR_EXP_US_BASE/10/25800;
+	input.slave_info.cam_info_sensor.max_exp_line = SENSOR_EXP_US_BASE/10/25758;
 	input.slave_info.cam_info_sensor.max_fps = 3000;
 	input.slave_info.cam_info_sensor.min_ad_gain = 100;
 	input.slave_info.cam_info_sensor.min_exp_line = 1;
