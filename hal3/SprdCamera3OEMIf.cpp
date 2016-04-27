@@ -2727,56 +2727,63 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 	}
 
 #ifdef CONFIG_FACE_BEAUTY
-	faceDectect(1);
-	FACE_Tag faceInfo;
-	TSRect Tsface;
-	memset(&Tsface,0,sizeof(TSRect));
-	mSetting->getFACETag(&faceInfo);
-	if(faceInfo.face_num>0){
-		CameraConvertCoordinateFromFramework(faceInfo.face[0].rect);
-		Tsface.left = faceInfo.face[0].rect[0];
-		Tsface.top = faceInfo.face[0].rect[1];
-		Tsface.right = faceInfo.face[0].rect[2];
-		Tsface.bottom = faceInfo.face[0].rect[3];
-		HAL_LOGD("FACE_BEAUTY rect:%d-%d-%d-%d",Tsface.left,Tsface.top,Tsface.right,Tsface.bottom);
-	}
-
 	SPRD_DEF_Tag sprddefInfo;
 	mSetting->getSPRDDEFTag(&sprddefInfo);
-	HAL_LOGV("perfect_skin_level = %d", sprddefInfo.perfect_skin_level);
+	HAL_LOGD("perfect_skin_level = %d", sprddefInfo.perfect_skin_level);
+	if(sprddefInfo.perfect_skin_level > 0) {
+		faceDectect(1);
+		FACE_Tag faceInfo;
+		TSRect Tsface;
+		memset(&Tsface,0,sizeof(TSRect));
+		mSetting->getFACETag(&faceInfo);
+		if(faceInfo.face_num>0){
+			CameraConvertCoordinateFromFramework(faceInfo.face[0].rect);
+			Tsface.left = faceInfo.face[0].rect[0];
+			Tsface.top = faceInfo.face[0].rect[1];
+			Tsface.right = faceInfo.face[0].rect[2];
+			Tsface.bottom = faceInfo.face[0].rect[3];
+			HAL_LOGD("FACE_BEAUTY rect:%d-%d-%d-%d",Tsface.left,Tsface.top,Tsface.right,Tsface.bottom);
 
-		int skinWhitenLevel = sprddefInfo.perfect_skin_level;
-		int skinCleanLevel = skinWhitenLevel;
-		HAL_LOGV("UCAM skinWhitenLevel is %d, skinCleanLevel is %d", skinWhitenLevel, skinCleanLevel);
-		if( skinWhitenLevel > 0 ){
-		TSMakeupData  inMakeupData, outMakeupData;
-		unsigned char *yBuf = (unsigned char *)(frame->y_vir_addr);
-		unsigned char *uvBuf = (unsigned char *)(frame->y_vir_addr) + frame->width*frame->height ;
-		unsigned char * tmpBuf = new unsigned char[frame->width*frame->height* 3 / 2];
+			int skinWhitenLevel = sprddefInfo.perfect_skin_level;
+			int skinCleanLevel = skinWhitenLevel;
 
-		inMakeupData.frameWidth = frame->width;
-		inMakeupData.frameHeight = frame->height;
-		inMakeupData.yBuf = yBuf;
-		inMakeupData.uvBuf = uvBuf;
+			HAL_LOGD("UCAM skinWhitenLevel is %d, skinCleanLevel is %d", skinWhitenLevel, skinCleanLevel);
 
-		outMakeupData.frameWidth = frame->width;
-		outMakeupData.frameHeight = frame->height;
-		outMakeupData.yBuf = tmpBuf;
-		outMakeupData.uvBuf = tmpBuf + frame->width*frame->height ;
-		HAL_LOGV("UCAM frameWidth is %d, frameHeight is %d", frame->width, frame->height);
+			TSMakeupData  inMakeupData, outMakeupData;
+			unsigned char *yBuf = (unsigned char *)(frame->y_vir_addr);
+			unsigned char *uvBuf = (unsigned char *)(frame->y_vir_addr) + frame->width*frame->height ;
+			unsigned char * tmpBuf = new unsigned char[frame->width*frame->height* 3 / 2];
 
-		if (frame->width > 0 && frame->height > 0) {
-			int mu_retVal = ts_face_beautify(&inMakeupData, &outMakeupData, skinCleanLevel, skinWhitenLevel, &Tsface,0);
-			if(mu_retVal !=  TS_OK) {
-				HAL_LOGD("UCAM ts_face_beautify ret is %d", ret);
+			inMakeupData.frameWidth = frame->width;
+			inMakeupData.frameHeight = frame->height;
+			inMakeupData.yBuf = yBuf;
+			inMakeupData.uvBuf = uvBuf;
+
+			outMakeupData.frameWidth = frame->width;
+			outMakeupData.frameHeight = frame->height;
+			outMakeupData.yBuf = tmpBuf;
+			outMakeupData.uvBuf = tmpBuf + frame->width*frame->height ;
+
+			if (frame->width > 0 && frame->height > 0 && NULL != outMakeupData.yBuf) {
+				int mu_retVal = ts_face_beautify(&inMakeupData, &outMakeupData, skinCleanLevel, skinWhitenLevel, &Tsface,0);
+				if(mu_retVal !=  TS_OK) {
+					HAL_LOGE("UCAM ts_face_beautify ret is %d", mu_retVal);
+				} else {
+					HAL_LOGD("UCAM ts_face_beautify return OK");
+					memcpy((unsigned char *)(frame->y_vir_addr), tmpBuf, frame->width * frame->height * 3 / 2);
+				}
 			} else {
-				HAL_LOGD("UCAM ts_face_beautify return OK");
-				memcpy((unsigned char *)(frame->y_vir_addr), tmpBuf, frame->width * frame->height * 3 / 2);
+				HAL_LOGE("No face beauty! frame size %d, %d. If size is not zero, then outMakeupData.yBuf is null!");
 			}
+			if(NULL != tmpBuf) {
+				delete tmpBuf;
+				tmpBuf = NULL;
+			}
+		} else {
+			HAL_LOGD("Not detect face!");
 		}
-		delete tmpBuf;
-		tmpBuf = NULL;
-		}
+
+	}
 #endif
 
 #ifdef CONFIG_CAMERA_ISP
