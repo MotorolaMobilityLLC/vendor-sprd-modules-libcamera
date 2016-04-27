@@ -25,6 +25,13 @@
 #define AE_WEIGHT_TABLE_NUM 3
 #define AE_SCENE_NUM 8
 #define SNR_NAME_MAX_LEN 64
+
+#define SENSOR_DUAL_OTP_TOTAL_SIZE 8192
+#define SENSOR_DUAL_OTP_MASTER_SLAVE_SIZE 2074
+#define SENSOR_DUAL_OTP_DATA3D_SIZE 2142
+#define SENSOR_DUAL_OTP_MASTER_SLAVE_OFFSET 1702
+#define SENSOR_DUAL_OTP_DATA3D_OFFSET 4384
+
 struct isp_block_header {
 	cmr_u8 block_name[8];
 
@@ -327,5 +334,11 @@ struct sensor_otp_cust_info {
 struct sensor_data_info {
 	void *data_ptr;
 	uint32_t size;
+};
+
+struct sensor_dual_otp_info {
+	struct sensor_data_info dual_otp;
+	struct sensor_data_info master_slave_otp;
+	struct sensor_data_info data_3d;
 };
 #endif

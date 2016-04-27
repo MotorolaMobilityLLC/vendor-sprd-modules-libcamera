@@ -23,6 +23,7 @@
 #include "../vcm/vcm_dw9800.h"
 
 #include "sensor_imx230_raw_param_v3.c"
+#include "sensor_imx230_otp_truly.h"
 
 #define DW9800_VCM_SLAVE_ADDR (0x0c)
 
@@ -66,8 +67,6 @@
 
 /* please don't change it */
 #define EX_MCLK				24
-
-#define  imx230_i2c_read_otp(addr)    imx230_i2c_read_otp_set(handle, addr)
 
 struct hdr_info_t {
 	uint32_t capture_max_shutter;
@@ -1578,128 +1577,6 @@ snapshot_info:
 	return SENSOR_SUCCESS;
 }
 
-#define OTP_LSC_INFO_LEN 1658
-static cmr_u8 imx230_opt_lsc_data[OTP_LSC_INFO_LEN];
-static struct sensor_otp_cust_info imx230_otp_info;
-
-static cmr_u8 imx230_i2c_read_otp_set(SENSOR_HW_HANDLE handle, cmr_u16 addr)
-{
-	return sensor_grc_read_i2c(0xA0 >> 1, addr, BITS_ADDR16_REG8);
-}
-
-static int imx230_otp_init(SENSOR_HW_HANDLE handle)
-{
-	return 0;
-}
-
-static int imx230_otp_read_data(SENSOR_HW_HANDLE handle)
-{
-	cmr_u16 i = 0;
-	cmr_u8 high_val = 0;
-	cmr_u8 low_val = 0;
-	cmr_u32 checksum = 0;
-
-	imx230_otp_info.program_flag = imx230_i2c_read_otp(0x0000);
-	SENSOR_PRINT("program_flag = %d", imx230_otp_info.program_flag);
-	if (1 != imx230_otp_info.program_flag) {
-		SENSOR_PRINT("failed to read otp or the otp is wrong data");
-		return -1;
-	}
-	checksum += imx230_otp_info.program_flag;
-	imx230_otp_info.module_info.year = imx230_i2c_read_otp(0x0001);
-	checksum += imx230_otp_info.module_info.year;
-	imx230_otp_info.module_info.month = imx230_i2c_read_otp(0x0002);
-	checksum += imx230_otp_info.module_info.month;
-	imx230_otp_info.module_info.day = imx230_i2c_read_otp(0x0003);
-	checksum += imx230_otp_info.module_info.day;
-	imx230_otp_info.module_info.mid = imx230_i2c_read_otp(0x0004);
-	checksum += imx230_otp_info.module_info.mid;
-	imx230_otp_info.module_info.lens_id = imx230_i2c_read_otp(0x0005);
-	checksum += imx230_otp_info.module_info.lens_id;
-	imx230_otp_info.module_info.vcm_id = imx230_i2c_read_otp(0x0006);
-	checksum += imx230_otp_info.module_info.vcm_id;
-	imx230_otp_info.module_info.driver_ic_id = imx230_i2c_read_otp(0x0007);
-	checksum += imx230_otp_info.module_info.driver_ic_id;
-
-	high_val = imx230_i2c_read_otp(0x0010);
-	checksum += high_val;
-	low_val = imx230_i2c_read_otp(0x0011);
-	checksum += low_val;
-	imx230_otp_info.isp_awb_info.iso = (high_val << 8 | low_val);
-	high_val = imx230_i2c_read_otp(0x0012);
-	checksum += high_val;
-	low_val = imx230_i2c_read_otp(0x0013);
-	checksum += low_val;
-	imx230_otp_info.isp_awb_info.gain_r = (high_val << 8 | low_val);
-	high_val = imx230_i2c_read_otp(0x0014);
-	checksum += high_val;
-	low_val = imx230_i2c_read_otp(0x0015);
-	checksum += low_val;
-	imx230_otp_info.isp_awb_info.gain_g = (high_val << 8 | low_val);
-	high_val = imx230_i2c_read_otp(0x0016);
-	checksum += high_val;
-	low_val = imx230_i2c_read_otp(0x0017);
-	checksum += low_val;
-	imx230_otp_info.isp_awb_info.gain_b = (high_val << 8 | low_val);
-
-	for (i = 0; i < OTP_LSC_INFO_LEN; i++) {
-		imx230_opt_lsc_data[i] = imx230_i2c_read_otp(0x0020 + i);
-		checksum += imx230_opt_lsc_data[i];
-	}
-
-	imx230_otp_info.lsc_info.lsc_data_addr = imx230_opt_lsc_data;
-	imx230_otp_info.lsc_info.lsc_data_size = sizeof(imx230_opt_lsc_data);
-
-	imx230_otp_info.af_info.flag = imx230_i2c_read_otp(0x06A0);
-	if (0 == imx230_otp_info.af_info.flag)
-		SENSOR_PRINT("af otp is wrong");
-
-	checksum += imx230_otp_info.af_info.flag;
-
-	low_val = imx230_i2c_read_otp(0x06A1);
-	checksum += low_val;
-	high_val = imx230_i2c_read_otp(0x06A2);
-	checksum += high_val;
-	imx230_otp_info.af_info.infinite_cali = (high_val << 8 | low_val);
-	low_val = imx230_i2c_read_otp(0x06A3);
-	checksum += low_val;
-	high_val = imx230_i2c_read_otp(0x06A4);
-	checksum += high_val;
-	imx230_otp_info.af_info.macro_cali = (high_val << 8 | low_val);
-
-	imx230_otp_info.checksum = imx230_i2c_read_otp(0x06A5);
-
-	SENSOR_PRINT("checksum = 0x%x imx230_otp_info.checksum = 0x%x", checksum, imx230_otp_info.checksum);
-
-	if ((checksum % 0xff) != imx230_otp_info.checksum) {
-		SENSOR_PRINT_ERR("checksum error!");
-		imx230_otp_info.program_flag = 0;
-		return -1;
-	}
-
-	return 0;
-}
-
-static unsigned long imx230_otp_read(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* param)
-{
-	struct sensor_otp_cust_info *otp_info = NULL;
-
-	SENSOR_PRINT("E");
-	imx230_otp_read_data(handle);
-	otp_info = &imx230_otp_info;
-
-	if (1 != otp_info->program_flag) {
-		SENSOR_PRINT_ERR("otp error");
-		param->pval = NULL;
-		return -1;
-	} else {
-		param->pval = (void *)otp_info;
-	}
-	SENSOR_PRINT("param->pval = %p", param->pval);
-
-	return 0;
-}
-
 /*==============================================================================
  * Description:
  * get the shutter from isp
@@ -2018,6 +1895,19 @@ static unsigned long imx230_access_val(SENSOR_HW_HANDLE handle, unsigned long pa
 			break;
 		case SENSOR_VAL_TYPE_READ_OTP:
 			imx230_otp_read(handle,param_ptr);
+			break;
+		case SENSOR_VAL_TYPE_READ_DUAL_OTP:
+			#if IMX230_DUAL_OTP
+				imx230_dual_otp_read(handle, param_ptr);
+			#endif
+			break;
+		case SENSOR_VAL_TYPE_PARSE_OTP:
+			imx230_parse_otp(handle, param_ptr);
+			break;
+		case SENSOR_VAL_TYPE_PARSE_DUAL_OTP:
+			#if IMX230_DUAL_OTP
+				imx230_parse_dual_otp(handle, param_ptr);
+			#endif
 			break;
 		case SENSOR_VAL_TYPE_WRITE_OTP:
 			//rtn = _hi544_write_otp(handle, (uint32_t)param_ptr->pval);

@@ -1108,7 +1108,8 @@ cmr_int cmr_get_otp_from_kernel(struct sensor_drv_context *sensor_cxt, cmr_uint 
 
 	*read_flag = 0;
 	if(( SENSOR_ACCESS_VAL == cmd)
-		&& SENSOR_VAL_TYPE_READ_OTP ==  val->type) {
+		&& (SENSOR_VAL_TYPE_READ_OTP ==  val->type
+		||SENSOR_VAL_TYPE_READ_DUAL_OTP ==  val->type)) {
 
 		cmr_bzero(&param_ptr, sizeof(param_ptr));
 		cmr_bzero(&sensor_otp, sizeof(sensor_otp));
@@ -1129,7 +1130,12 @@ cmr_int cmr_get_otp_from_kernel(struct sensor_drv_context *sensor_cxt, cmr_uint 
 		if(!ret && 0 != param_ptr.buff [0]) {
 			CMR_LOGD("SENSOR_IO_READ_OTPDATA  OK");
 			val->pval = param_ptr.buff;
-			val->type = SENSOR_VAL_TYPE_PARSE_OTP;
+			if (SENSOR_VAL_TYPE_READ_OTP ==  val->type) {
+				val->type = SENSOR_VAL_TYPE_PARSE_OTP;
+			}
+			else if (SENSOR_VAL_TYPE_READ_DUAL_OTP ==  val->type) {
+				val->type = SENSOR_VAL_TYPE_PARSE_DUAL_OTP;
+			}
 		}
 		if (PNULL != func_ptr) {
 			ret = func_ptr(sensor_cxt->sensor_hw_handler, arg);
