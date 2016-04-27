@@ -256,14 +256,12 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	m_pPowerModule(NULL),
 	mHDRPowerHint(0),
 	mHDRPowerHintFlag(0),
-#ifdef CONFIG_CAMERA_EIS
 	mGyroInit(0),
 	mGyroDeinit(0),
 	mGyrostart(0),
 	mGyroend(0),
 	mEisInit(0),
 	mSprdEisEnabled(false),
-#endif
 	mIsRecording(false)
 
 {
@@ -554,7 +552,7 @@ void SprdCamera3OEMIf::closeCamera()
 		}
 	}
 
-#ifdef CONFIG_CAMERA_EIS
+#ifdef CONFIG_CAMERA_GYRO
 	gyro_monitor_thread_deinit((void *)this);
 #endif
 	if (isCameraInit()) {
@@ -2745,9 +2743,10 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 
 	}
 
+SPRD_DEF_Tag sprddefInfo;
+mSetting->getSPRDDEFTag(&sprddefInfo);
+
 #ifdef CONFIG_FACE_BEAUTY
-	SPRD_DEF_Tag sprddefInfo;
-	mSetting->getSPRDDEFTag(&sprddefInfo);
 	HAL_LOGD("perfect_skin_level = %d", sprddefInfo.perfect_skin_level);
 	if(sprddefInfo.perfect_skin_level > 0) {
 		faceDectect(1);
@@ -2805,13 +2804,14 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 	}
 #endif
 
+
 #ifdef CONFIG_CAMERA_ISP
 	send_img_data(ISP_TOOL_YVU420_2FRAME, mPreviewWidth, mPreviewHeight, (char *)frame->y_vir_addr, frame->width * frame->height * 3 /2);
 #endif
 
 #ifdef CONFIG_CAMERA_EIS
 	int64_t buffer_timestamp;
-	if(mSprdEisEnabled){
+	if(sprddefInfo.sprd_eis_enabled){
 		buffer_timestamp = frame->timestamp -frame->ae_time/2;
 	}else{
 		buffer_timestamp = frame->timestamp;
@@ -2866,8 +2866,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 						calculateTimestampForSlowmotion(buffer_timestamp);
 					}
 #ifdef CONFIG_CAMERA_EIS
-					HAL_LOGI("eis_enable = %d", mSprdEisEnabled);
-					if(mSprdEisEnabled){
+					HAL_LOGI("eis_enable = %d", sprddefInfo.sprd_eis_enabled);
+					if(sprddefInfo.sprd_eis_enabled){
 						int64_t boot_time = frame->monoboottime;
 						int64_t ae_time =frame->ae_time;
 						//int64_t sleep_time = boot_time -buffer_timestamp;
@@ -2913,35 +2913,39 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 					}
 
 #ifdef CONFIG_CAMERA_EIS
-					HAL_LOGI("eis_enable = %d", mSprdEisEnabled);
-					if(mRecordingMode && mSprdEisEnabled){
-						int64_t boot_time = frame->monoboottime;
-						int64_t ae_time =frame->ae_time;
-						int64_t sleep_time = boot_time -buffer_timestamp;
-						float zoom_ratio = frame->zoom_ratio;
-						HAL_LOGV("prev_timestamp = %lld, boot_time = %lld\n", buffer_timestamp, boot_time);
-						HAL_LOGV("ae_time = %lld, zoom_ratio = %f\n", ae_time, zoom_ratio);
-						if(!mEisInit){
-							EIS_init();
-							mEisInit = true;
-						}
-						vsInFrame frame_in;
-						vsOutFrame frame_out;
-						frame_in.frame_data = NULL;
-						frame_out.frame_data = NULL;
-						frame_in.frame_data = (uint8_t*)buff_vir;
-						frame_in.timestamp = (double)(boot_time - ae_time/2);
-						frame_in.timestamp = frame_in.timestamp /1000000000;
-						frame_in.zoom = (double)zoom_ratio;
-						frame_out = processEIS(frame_in);
-						HAL_LOGD("transfer_matrix wrap %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf", frame_out.warp.dat[0][0], frame_out.warp.dat[0][1], frame_out.warp.dat[0][2], frame_out.warp.dat[1][0], frame_out.warp.dat[1][1], frame_out.warp.dat[1][2], frame_out.warp.dat[2][0], frame_out.warp.dat[2][1], frame_out.warp.dat[2][2]);
+					HAL_LOGI("eis_enable = %d", sprddefInfo.sprd_eis_enabled);
+					if(mGyroInit && !mGyroDeinit){
+						if(mRecordingMode && sprddefInfo.sprd_eis_enabled){
+							int64_t boot_time = frame->monoboottime;
+							int64_t ae_time =frame->ae_time;
+							int64_t sleep_time = boot_time -buffer_timestamp;
+							float zoom_ratio = frame->zoom_ratio;
+							HAL_LOGV("prev_timestamp = %lld, boot_time = %lld\n", buffer_timestamp, boot_time);
+							HAL_LOGV("ae_time = %lld, zoom_ratio = %f\n", ae_time, zoom_ratio);
+							if(!mEisInit){
+								EIS_init();
+								mEisInit = true;
+							}
+							vsInFrame frame_in;
+							vsOutFrame frame_out;
+							frame_in.frame_data = NULL;
+							frame_out.frame_data = NULL;
+							frame_in.frame_data = (uint8_t*)buff_vir;
+							frame_in.timestamp = (double)(boot_time - ae_time/2);
+							frame_in.timestamp = frame_in.timestamp /1000000000;
+							frame_in.zoom = (double)zoom_ratio;
+							frame_out = processEIS(frame_in);
+							HAL_LOGD("transfer_matrix wrap %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf", frame_out.warp.dat[0][0], frame_out.warp.dat[0][1], frame_out.warp.dat[0][2], frame_out.warp.dat[1][0], frame_out.warp.dat[1][1], frame_out.warp.dat[1][2], frame_out.warp.dat[2][0], frame_out.warp.dat[2][1], frame_out.warp.dat[2][2]);
 
-						EIS_CROP_Tag eiscrop_Info;
-						eiscrop_Info.crop[0] = (int)((float) mParam.src_w /12 + 0.5) + frame_out.warp.dat[0][2];
-						eiscrop_Info.crop[1] = (int)((float) mParam.src_h /12 + 0.5)+frame_out.warp.dat[1][2];
-						eiscrop_Info.crop[2] = (int)((float) mParam.src_w /12 + 0.5) + frame_out.warp.dat[0][2] + mParam.dst_w;
-						eiscrop_Info.crop[3] = (int)((float) mParam.src_h /12 + 0.5) +frame_out.warp.dat[1][2] + mParam.dst_h;
-						mSetting->setEISCROPTag(eiscrop_Info);
+							EIS_CROP_Tag eiscrop_Info;
+							eiscrop_Info.crop[0] = (int)((float) mParam.src_w /12 + 0.5) + frame_out.warp.dat[0][2];
+							eiscrop_Info.crop[1] = (int)((float) mParam.src_h /12 + 0.5)+frame_out.warp.dat[1][2];
+							eiscrop_Info.crop[2] = (int)((float) mParam.src_w /12 + 0.5) + frame_out.warp.dat[0][2] + mParam.dst_w;
+							eiscrop_Info.crop[3] = (int)((float) mParam.src_h /12 + 0.5) +frame_out.warp.dat[1][2] + mParam.dst_h;
+							mSetting->setEISCROPTag(eiscrop_Info);
+						}
+					}else{
+						HAL_LOGW("gyro is not enable, eis process is not work");
 					}
 #endif
 
@@ -4043,7 +4047,7 @@ int SprdCamera3OEMIf::openCamera()
 	ZSLMode_monitor_thread_init((void *)this);
 #endif
 
-#ifdef CONFIG_CAMERA_EIS
+#ifdef CONFIG_CAMERA_GYRO
 	gyro_monitor_thread_init((void *)this);
 #endif
 	return ret;
@@ -6546,7 +6550,7 @@ vsOutFrame SprdCamera3OEMIf::processEIS(vsInFrame frame_in)
 	frame_out_preview.frame_data = NULL;
 
 	HAL_LOGD("frame_in.timestamp: %lf, mGyromaxtimestamp %lf",frame_in.timestamp,mGyromaxtimestamp);
-	while(mGyromaxtimestamp < (frame_in.timestamp + mParam.td + mParam.ts /2)){
+	while(mGyroInit && !mGyroDeinit && mGyromaxtimestamp < (frame_in.timestamp + mParam.td + mParam.ts /2)){
 		usleep(5*1000);
 	}
 	gyro_start = mGyrostart;
@@ -6580,7 +6584,9 @@ vsOutFrame SprdCamera3OEMIf::processEIS(vsInFrame frame_in)
 
 	return frame_out_preview;
 }
+#endif
 
+#ifdef CONFIG_CAMERA_GYRO
 int SprdCamera3OEMIf::gyro_monitor_thread_init(void *p_data)
 {
 	int ret = NO_ERROR;
@@ -6613,8 +6619,11 @@ int SprdCamera3OEMIf::gyro_monitor_thread_init(void *p_data)
 
 void * SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data)
 {
+	int ret = 0;
 	ssize_t n;
 	ASensorEvent buffer[8];
+	uint32_t default_max_fps = 30;
+	uint32_t eventRate = default_max_fps;
 	SprdCamera3OEMIf * obj = (SprdCamera3OEMIf *)p_data;
 	HAL_LOGD("E");
 
@@ -6629,25 +6638,32 @@ void * SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data)
 
 	SensorManager&  mgr(SensorManager::getInstanceForPackage(String16("EIS intergrate")));
 
+
 	Sensor const* const* list;
 	ssize_t count = mgr.getSensorList(&list);
 	sp<SensorEventQueue> q = mgr.createEventQueue();
 	Sensor const* gyroscope = mgr.getDefaultSensor(Sensor::TYPE_GYROSCOPE);
-
-	q->enableSensor(gyroscope);
-	q->setEventRate(gyroscope, ms2ns(10));
-
 	Sensor const* gsensor = mgr.getDefaultSensor(Sensor::TYPE_ACCELEROMETER);
 
-	uint32_t default_max_fps = 30;
-	uint32_t eventRate = default_max_fps;
+	ret = q->enableSensor(gyroscope);
+	if (ret) {
+		HAL_LOGE("enable gyroscope fail");
+		goto exit;
+	}
+	q->setEventRate(gyroscope, ms2ns(10));
+
 	if(NULL != obj->mCameraHandle) {
 		camera_get_sensor_max_fps(obj->mCameraHandle,obj->mCameraId,&eventRate);
 		if(0 == eventRate)
 		      eventRate = default_max_fps;
 		eventRate = 1000/eventRate;//fps->rate:ms
 	}
-	q->enableSensor(gsensor);
+	ret = q->enableSensor(gsensor);
+	if (ret) {
+		HAL_LOGE("enable gsensor fail");
+		q->disableSensor(gyroscope);
+		goto exit;
+	}
 	q->setEventRate(gsensor, ms2ns(eventRate));
 
 	struct cmr_af_aux_sensor_info sensor_info;
@@ -6703,6 +6719,7 @@ void * SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data)
 
 	q->disableSensor(gyroscope);
 	q->disableSensor(gsensor);
+exit:
 	obj->mGyroDeinit = 1;
 	//mgr.sensorManagerDied();
 	HAL_LOGD("X");
@@ -6730,10 +6747,12 @@ int SprdCamera3OEMIf::gyro_monitor_thread_deinit(void *p_data)
 		}
 		ret = pthread_join(obj->mGyroMsgQueHandle, &dummy);
 		obj->mGyroMsgQueHandle = 0;
+#ifdef CONFIG_CAMERA_EIS
 		if(obj->mEisInit){
 			video_stab_close(obj->mInst);
 			obj->mEisInit = 0;
 		}
+#endif
 	}
 	HAL_LOGD("X inited=%d, Deinit = %d", obj->mGyroInit, obj->mGyroDeinit);
 

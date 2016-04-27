@@ -45,13 +45,16 @@ extern "C" {
 #include "SprdCamera3Channel.h"
 
 #include <hardware/power.h>
-#ifdef CONFIG_CAMERA_EIS
+#ifdef CONFIG_CAMERA_GYRO
 #include <android/sensor.h>
 #include <gui/Sensor.h>
 #include <gui/SensorManager.h>
 #include <gui/SensorEventQueue.h>
+#endif
+#ifdef CONFIG_CAMERA_EIS
 #include "sprd_eis.h"
 #endif
+
 
 using namespace android;
 
@@ -194,6 +197,9 @@ public:
 #ifdef CONFIG_CAMERA_EIS
 	virtual void EIS_init();
 	vsOutFrame processEIS(vsInFrame frame_in);
+#endif
+
+#ifdef CONFIG_CAMERA_GYRO
 	static int		gyro_monitor_thread_init(void *p_data);
 	static int		gyro_monitor_thread_deinit(void *p_data);
 	static void*  gyro_monitor_thread_proc( void *p_data);
@@ -609,7 +615,6 @@ private:
 	bool                          mIOMMUEnabled;
 	int                             mIOMMUID;
 	/* for eis*/
-#ifdef CONFIG_CAMERA_EIS
 	bool                          mGyroInit;
 	bool                          mGyroDeinit;
 	bool                          mEisInit;
@@ -618,10 +623,11 @@ private:
 	int                           mGyrostart;
 	int                           mGyroend;
 	double                        mGyromaxtimestamp;
+#ifdef CONFIG_CAMERA_EIS
 	vsParam                       mParam;
 	vsInst                        mInst;
-	bool                          mSprdEisEnabled;
 #endif
+	bool                          mSprdEisEnabled;
 };
 
 }; // namespace sprdcamera
