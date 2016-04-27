@@ -51,8 +51,8 @@
 #define PREVIEW_MIPI_PER_LANE_BPS	600
 
 /*line time unit: 0.1us*/
-#define SNAPSHOT_LINE_TIME		187
-#define PREVIEW_LINE_TIME		187
+#define SNAPSHOT_LINE_TIME		18700
+#define PREVIEW_LINE_TIME		18700
 
 /* frame length*/
 #define SNAPSHOT_FRAME_LENGTH		1780
@@ -351,7 +351,7 @@ static uint32_t imx132_init_mode_fps_info(SENSOR_HW_HANDLE handle)
     //max fps should be multiple of 30,it calulated from line_time and frame_line
    tempfps = s_imx132_resolution_trim_tab[i].line_time * s_imx132_resolution_trim_tab[i].frame_line;
    if(0 != tempfps) {
-   tempfps = 10000000/tempfps;
+   tempfps = 1000000000/tempfps;
    modn = tempfps / 30;
    if(tempfps > modn*30)
      modn++;
