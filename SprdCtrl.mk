@@ -101,7 +101,7 @@ LOCAL_SRC_FILES+= \
 
 LOCAL_SRC_FILES += test.cpp
 #LOCAL_STATIC_LIBRARIES += libftminui
-LOCAL_C_INCLUDES += vendor/sprd/proprietories-source/factorytest/minui
+#LOCAL_C_INCLUDES += vendor/sprd/proprietories-source/factorytest/minui
 
 #include $(LOCAL_PATH)/isp2.0/isp2_0.mk
 LOCAL_SRC_FILES+= \

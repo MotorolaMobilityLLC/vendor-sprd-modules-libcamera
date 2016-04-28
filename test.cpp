@@ -15,11 +15,38 @@
 #include "SprdOEMCamera.h"
 #include "sprd_ion.h"
 #include "hal3/SprdCamera3Setting.h"
-#include "graphics.h"
+//#include "graphics.h"
 #include <linux/fb.h>
 //#include "sprd_rot_k.h"
 #include "sprd_cpp.h"
 using namespace sprdcamera;
+
+typedef struct {
+    int width;
+    int height;
+    int row_bytes;
+    int pixel_bytes;
+    unsigned char* data;
+} GRSurface;
+
+typedef GRSurface* gr_surface;
+
+typedef struct minui_backend {
+    // Initializes the backend and returns a gr_surface to draw into.
+    gr_surface (*init)(struct minui_backend*);
+
+    // Causes the current drawing surface (returned by the most recent
+    // call to flip() or init()) to be displayed, and returns a new
+    // drawing surface.
+    gr_surface (*flip)(struct minui_backend*);
+
+    // Blank (or unblank) the screen.
+    void (*blank)(struct minui_backend*, bool);
+
+    // Device cleanup when drawing is done.
+    void (*exit)(struct minui_backend*);
+} minui_backend;
+
 static minui_backend* gr_backend = NULL;
 static GRSurface* gr_draw = NULL;
 
