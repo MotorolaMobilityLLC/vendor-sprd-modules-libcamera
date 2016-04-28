@@ -288,7 +288,7 @@ const uint8_t availableSaturation[] = {
 };
 
 const uint8_t availableSlowMotion[] = {
-	0, 1, 2, 3
+	0, 1, 4, 8
 };
 
 enum {
