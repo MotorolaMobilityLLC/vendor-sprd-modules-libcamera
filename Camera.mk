@@ -123,6 +123,26 @@ include $(BUILD_MULTI_PREBUILT)
 endif
 endif
 
+ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RE_FOCUS)),true)
+ifeq ($(strip $(TARGET_ARCH)),arm64)
+include $(CLEAR_VARS)
+LOCAL_MODULE :=libalRnBLV
+LOCAL_MODULE_CLASS := SHARED_LIBRARIES
+LOCAL_MODULE_TAGS := optional
+LOCAL_MULTILIB := both
+LOCAL_MODULE_STEM_32 := libalRnBLV.so
+LOCAL_MODULE_STEM_64 := libalRnBLV.so
+LOCAL_SRC_FILES_32 :=  arithmetic/libalRnBLV.so
+LOCAL_SRC_FILES_64 :=  arithmetic/libalRnBLV_v8a.so
+include $(BUILD_PREBUILT)
+else
+include $(CLEAR_VARS)
+LOCAL_PREBUILT_LIBS := arithmetic/libalRnBLV.so
+LOCAL_MODULE_TAGS := optional
+include $(BUILD_MULTI_PREBUILT)
+endif
+endif
+
 ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
 	ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_SPRD_LIB)),true)
 		ifeq ($(strip $(TARGET_ARCH)),arm64)

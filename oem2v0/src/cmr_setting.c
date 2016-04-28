@@ -167,6 +167,8 @@ struct setting_hal_param {
 	cmr_uint                       sprd_highiso_enabled;
 	cmr_uint                       sprd_eis_enabled;
 	cmr_uint                       is_ae_lock;
+	cmr_uint			    refoucs_enable;
+	struct touch_coordinate              touch_info;
 };
 
 struct setting_camera_info {
@@ -1709,7 +1711,17 @@ static cmr_int setting_set_ae_lock_unlock(struct setting_component *cpt,
 
 	return ret;
 }
+static cmr_int setting_get_refocus_enable(struct setting_component *cpt,
+					                     struct setting_cmd_parameter *parm)
+{
+	cmr_int                     ret = 0;
+	struct setting_hal_param    *hal_param = get_hal_param(cpt, parm->camera_id);
 
+	parm->cmd_type_value = hal_param->refoucs_enable;
+	CMR_LOGD("format=%ld", hal_param->preview_format);
+	return ret;
+
+}
 static cmr_int setting_get_capture_format(struct setting_component *cpt,
 					                     struct setting_cmd_parameter *parm)
 {
@@ -1813,6 +1825,49 @@ static cmr_int setting_set_slow_motion_flag(struct setting_component *cpt,
 	CMR_LOGD("video_slow_motion_flag=%ld", hal_param->video_slow_motion_flag);
 	return ret;
 }
+
+static cmr_int setting_set_refocus_enable(struct setting_component *cpt,
+					                      struct setting_cmd_parameter *parm)
+{
+	cmr_int                     ret = 0;
+	struct setting_hal_param    *hal_param = get_hal_param(cpt, parm->camera_id);
+
+	hal_param->refoucs_enable = parm->cmd_type_value;
+	CMR_LOGD("refoucs_enable=%ld", hal_param->refoucs_enable);
+	return ret;
+}
+
+static cmr_int setting_set_touch_xy(struct setting_component *cpt,
+                                        struct setting_cmd_parameter *parm)
+{
+
+	cmr_int 					 ret = 0;
+	struct setting_init_in		 *init_in = &cpt->init_in;
+	struct setting_io_parameter  io_param = {0};
+	struct setting_hal_param    *hal_param = get_hal_param(cpt, parm->camera_id);
+
+	if (init_in->io_cmd_ioctl) {
+		io_param.touch_xy.touchX = parm->touch_param.touchX;
+		io_param.touch_xy.touchY = parm->touch_param.touchY;
+		hal_param->touch_info.touchX = parm->touch_param.touchX;
+		hal_param->touch_info.touchY = parm->touch_param.touchY;
+		CMR_LOGD("touch_param %ld %ld",parm->touch_param.touchX,parm->touch_param.touchY);
+		ret = (*init_in->io_cmd_ioctl)(init_in->oem_handle, SETTING_IO_SET_TOUCH, &io_param);
+	}
+	return ret;
+}
+static cmr_int setting_get_touch_info(struct setting_component *cpt,
+                                        struct setting_cmd_parameter *parm)
+{
+	cmr_int                     ret = 0;
+	struct setting_hal_param    *hal_param = get_hal_param(cpt, parm->camera_id);
+
+	 parm->touch_param.touchX = hal_param->touch_info.touchX;
+	 parm->touch_param.touchY = hal_param->touch_info.touchY;
+	 CMR_LOGD("touch_param %ld %ld",parm->touch_param.touchX,parm->touch_param.touchY);
+	return ret;
+}
+
 
 static cmr_int setting_set_capture_size(struct setting_component *cpt,
 					                    struct setting_cmd_parameter *parm)
@@ -3075,6 +3130,8 @@ cmr_int cmr_setting_ioctl(cmr_handle setting_handle, cmr_uint cmd_type,
 		{CAMERA_PARAM_SPRD_PIPVIV_ENABLED, setting_set_sprd_pipviv_enabled},
 		{CAMERA_PARAM_SPRD_HIGHISO_ENABLED, setting_set_sprd_highiso_enabled},
 		{CAMERA_PARAM_SPRD_EIS_ENABLED, setting_set_sprd_eis_enabled},
+		{CAMERA_PARAM_REFOCUS_ENABLE,   setting_set_refocus_enable},
+		{CAMERA_PARAM_TOUCH_XY,            setting_set_touch_xy},
 		{CAMERA_PARAM_TYPE_MAX,                NULL},
 		{SETTING_GET_PREVIEW_ANGLE,            setting_get_preview_angle},
 		{SETTING_GET_CAPTURE_ANGLE,            setting_get_capture_angle},
@@ -3112,6 +3169,8 @@ cmr_int cmr_setting_ioctl(cmr_handle setting_handle, cmr_uint cmd_type,
 		{SETTING_GET_SPRD_HIGHISO_ENABLED, 	setting_get_sprd_highiso_enabled},
 		{SETTING_GET_ENCODE_ROTATION,             setting_get_encode_rotation},
 		{SETTING_GET_SPRD_EIS_ENABLED, 	setting_get_sprd_eis_enabled},
+		{SETTING_GET_REFOCUS_ENABLE,			  setting_get_refocus_enable},
+		{SETTING_GET_TOUCH_XY,			  setting_get_touch_info},
 	};
 	struct setting_item          *item = NULL;
 	struct setting_component     *cpt =	 (struct setting_component *)setting_handle;

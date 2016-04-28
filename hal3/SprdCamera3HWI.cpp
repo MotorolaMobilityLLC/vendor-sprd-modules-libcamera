@@ -619,6 +619,18 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 		*/
 		tranStreamAndChannelType(newStream, &stream_type, &channel_type);
 
+		/*temp code; for debug refocus depth map, del it if depth map quality is OK*/
+#ifdef CONFIG_CAMERA_RE_FOCUS
+		char	value[PROPERTY_VALUE_MAX];
+		char	value1[PROPERTY_VALUE_MAX];
+		property_get("debug.camera.save.refocus", value, "0");
+		property_get("persist.camera.save.refocus", value1, "0");
+		if ((atoi(value) == 2 ||atoi(value1) == 2)&& stream_type == CAMERA_STREAM_TYPE_PREVIEW ) {
+			newStream->width = 480;
+			newStream->height = 360;
+		}
+#endif
+
 		if(newStream->width > 2048 && newStream->format != HAL_PIXEL_FORMAT_BLOB) {
 			if(support_bigsize_flag == false)
 				support_bigsize_flag = true;

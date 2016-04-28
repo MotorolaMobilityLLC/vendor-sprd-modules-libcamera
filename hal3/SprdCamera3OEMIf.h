@@ -376,6 +376,8 @@ private:
 	int Callback_PreviewMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
 	int Callback_ZslFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum);
 	int Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
+	int Callback_RefocusFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_u32 sum);
+	int Callback_RefocusMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
 	int Callback_CaptureFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum);
 	int Callback_CaptureMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
 	int Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum);
@@ -417,12 +419,13 @@ private:
 	for preview and raw, and need to be updated when libqcamera
 	changes.
 	*/
-	static const int                kPreviewBufferCount    = 32;
-	static const int                kPreviewRotBufferCount = 32;
-	static const int                kVideoBufferCount    = 32;
-	static const int                kVideoRotBufferCount = 32;
-	static const int                kZslBufferCount    = 32;
-	static const int                kZslRotBufferCount = 32;
+	static const int                kPreviewBufferCount    = 24;
+	static const int                kPreviewRotBufferCount = 24;
+	static const int                kVideoBufferCount    = 24;
+	static const int                kVideoRotBufferCount = 24;
+	static const int                kZslBufferCount    = 24;
+	static const int                kZslRotBufferCount = 24;
+	static const int                kRefocusBufferCount    = 24;
 	static const int                kRawBufferCount        = 1;
 	static const int                kJpegBufferCount       = 1;
 	static const int                kRawFrameHeaderSize    = 0x0;
@@ -528,18 +531,24 @@ private:
 	uint32_t                        mPreviewHeapNum;
 	uint32_t                        mVideoHeapNum;
 	uint32_t                        mZslHeapNum;
+	uint32_t                        mRefocusHeapNum;
 	uint32_t                        mSubRawHeapNum;
 	uint32_t                        mSubRawHeapSize;
 	uint32_t                        mPreviewDcamAllocBufferCnt;
 	sprd_camera_memory_t*			mPreviewHeapArray[kPreviewBufferCount+kPreviewRotBufferCount+1];
 	sprd_camera_memory_t*           mVideoHeapArray[kVideoBufferCount+kVideoRotBufferCount+1];
 	sprd_camera_memory_t*           mZslHeapArray[kZslBufferCount+kZslRotBufferCount+1];
+	sprd_camera_memory_t*           mRefocusHeapArray[kRefocusBufferCount+1];
 #ifdef CONFIG_MEM_OPTIMIZATION
 	uintptr_t                       mZslHeapArray_phy[kZslBufferCount+kZslRotBufferCount+1];
 	uintptr_t                       mZslHeapArray_vir[kZslBufferCount+kZslRotBufferCount+1];
 	uint32_t                        mZslHeapArray_size[kZslBufferCount+kZslRotBufferCount+1];
 	uint32_t                        mZslHeapArray_fd[kZslBufferCount+kZslRotBufferCount+1];
 #endif
+	uintptr_t                       mRefocusHeapArray_phy[kRefocusBufferCount+1];
+	uintptr_t                       mRefocusHeapArray_vir[kRefocusBufferCount+1];
+	uint32_t                        mRefocusHeapArray_size[kRefocusBufferCount+1];
+	uint32_t                        mRefocusHeapArray_mfd[kRefocusBufferCount+1];
 
 	/* mCommonHeapReserved for preview, video and zsl reserved buffer*/
 	sprd_camera_memory_t*           mCommonHeapReserved;

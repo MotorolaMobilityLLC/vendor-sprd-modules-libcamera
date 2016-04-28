@@ -317,6 +317,7 @@ static cmr_int camera_open_uvde(struct camera_context *cxt, struct ipm_open_in *
 static cmr_int camera_close_uvde(struct camera_context *cxt);
 static cmr_int camera_start_uvde(struct camera_context *cxt, struct img_frm *src);
 static cmr_int camera_start_yde(struct camera_context *cxt, struct img_frm *src);
+static cmr_int camera_start_refocus(struct camera_context *cxt, struct img_frm *src);
 static cmr_int camera_save_jpg_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height, cmr_u32 stream_size, struct img_addr *addr);
 static int32_t snp_img_padding(struct img_frm *src, struct img_frm *dst,
 						   struct cmr_op_mean *mean);
@@ -925,6 +926,16 @@ cmr_int snp_start_encode(cmr_handle snp_handle, void *data)
 			CMR_LOGE("camera_start_yde fail");
 			goto exit;
 		}
+#endif
+#ifdef CONFIG_CAMERA_RE_FOCUS
+				struct camera_context		   *cxt = (struct camera_context*)snp_cxt->oem_handle;
+				if (cxt->camera_id == 0 && cxt->is_refocus_mode == 1) {
+					ret = camera_start_refocus(cxt, &jpeg_in_ptr->src);
+					if (ret != CMR_CAMERA_SUCCESS) {
+						CMR_LOGE("camera_start_refocus fail");
+						goto exit;
+					}
+				}
 #endif
 		if ((!snp_cxt->req_param.is_video_snapshot) && (!snp_cxt->req_param.is_zsl_snapshot) && (snp_cxt->req_param.mode != CAMERA_ISP_TUNING_MODE)) {
 			snp_img_padding(&jpeg_in_ptr->src, &jpeg_in_ptr->dst, NULL);
@@ -5285,6 +5296,75 @@ static cmr_int camera_start_yde(struct camera_context *cxt, struct img_frm *src)
 		return ret;
 	}
 	camera_take_snapshot_step(CMR_STEP_YDENOISE_E);
+	CMR_LOGI("ydenoise end");
+	return ret;
+}
+
+cmr_int camera_open_refocus(struct camera_context *cxt, struct ipm_open_in *in_ptr, struct ipm_open_out *out_ptr)
+{
+	cmr_int                         ret = CMR_CAMERA_SUCCESS;
+	struct ipm_open_in in_ptr1;
+	struct ipm_open_out out_ptr1;
+	if ((NULL == cxt) || (NULL == cxt->ipm_cxt.ipm_handle)) {
+		CMR_LOGE("param invalid");
+		return CMR_CAMERA_INVALID_PARAM;
+	}
+	in_ptr1.frame_size.width   = cxt->snp_cxt.post_proc_setting.actual_snp_size.width;
+	in_ptr1.frame_size.height  = cxt->snp_cxt.post_proc_setting.actual_snp_size.height;
+	in_ptr1.otp_data.otp_size =8192;//otp_data->size;//TBD
+	in_ptr1.otp_data.otp_ptr = NULL;//TBD
+	in_ptr1.frame_cnt = 0;
+	ret = cmr_ipm_open(cxt->ipm_cxt.ipm_handle, IPM_TYPE_REFOCUS, &in_ptr1, &out_ptr1, &cxt->ipm_cxt.refocus_handle);
+
+	return ret;
+}
+
+cmr_int camera_close_refocus(struct camera_context *cxt)
+{
+	cmr_int                         ret = CMR_CAMERA_SUCCESS;
+
+	if (cxt->ipm_cxt.refocus_handle) {
+		ret = cmr_ipm_close(cxt->ipm_cxt.refocus_handle);
+		cxt->ipm_cxt.refocus_handle = 0;
+	}
+	return ret;
+}
+
+static cmr_int camera_start_refocus(struct camera_context *cxt, struct img_frm *src)
+{
+	cmr_int                         ret = CMR_CAMERA_SUCCESS;
+	struct ipm_frame_in           ipm_in_param;
+
+	CMR_LOGI("ydenoise start");
+	if ((NULL == cxt) || (NULL == src)) {
+		CMR_LOGE("param invalid");
+		return CMR_CAMERA_INVALID_PARAM;
+	}
+	camera_take_snapshot_step(CMR_STEP_REFOCUS_S);
+	ret = camera_open_refocus(cxt, NULL, NULL);
+	if (ret) {
+		CMR_LOGE("failed to open ydenoise %ld", ret);
+		return ret;
+	}
+
+	ipm_in_param.src_frame = *src;
+	ipm_in_param.touch_x =  cxt->snp_cxt.touch_xy.touchX;
+	ipm_in_param.touch_y =  cxt->snp_cxt.touch_xy.touchY;
+	ipm_in_param.depth_map.width= 480;//TBD
+	ipm_in_param.depth_map.height= 360;//TBD
+	ipm_in_param.depth_map.depth_map_ptr = NULL; //TBD
+	ret = ipm_transfer_frame(cxt->ipm_cxt.refocus_handle, &ipm_in_param, NULL);
+	if (ret) {
+		CMR_LOGE("failed to transfer frame to ipm %ld", ret);
+		return ret;
+	}
+
+	ret = camera_close_refocus(cxt);
+	if (ret) {
+		CMR_LOGE("fail to close ydenoise %ld", ret);
+		return ret;
+	}
+	camera_take_snapshot_step(CMR_STEP_REFOCUS_E);
 	CMR_LOGI("ydenoise end");
 	return ret;
 }

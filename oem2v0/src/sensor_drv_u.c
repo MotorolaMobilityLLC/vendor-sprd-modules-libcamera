@@ -1807,7 +1807,14 @@ void sns_set_status(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E sensor_id
 
 			/*when use the camera vendor functions, the sensor_cxt should be set at first */
 			sensor_set_cxt_common(sensor_cxt);
-
+#ifdef CONFIG_CAMERA_RE_FOCUS
+			if(i == SENSOR_SUB)
+			{
+				hw_Sensor_SetResetLevel(sensor_cxt->sensor_hw_handler,(cmr_u32)sensor_cxt->sensor_info_ptr->reset_pulse_level);
+				usleep(10*1000);
+				CMR_LOGI("Sensor_sleep of id %d",i);
+			}
+#endif
 			hw_Sensor_PowerDown(sensor_cxt->sensor_hw_handler, (cmr_u32)sensor_cxt->sensor_info_ptr->power_down_level);
 			CMR_LOGI("Sensor_sleep of id %d",i);
 		}
@@ -2983,6 +2990,7 @@ cmr_int sns_stream_on(struct sensor_drv_context *sensor_cxt)
 		stream_on_func = sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr->stream_on;
 
 		if (PNULL != stream_on_func) {
+			param = sensor_cxt->bypass_mode;
 			err = stream_on_func(sensor_cxt->sensor_hw_handler, param);
 		}
 

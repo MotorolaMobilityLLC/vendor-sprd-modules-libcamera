@@ -33,6 +33,10 @@ LOCAL_SHARED_LIBRARIES += libynoise
 endif
 
 
+ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RE_FOCUS)),true)
+LOCAL_SHARED_LIBRARIES += libalRnBLV
+endif
+
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),false)
 else
 LOCAL_SHARED_LIBRARIES += libts_face_beautify_hal

@@ -66,6 +66,12 @@ struct preview_md_ops {
 	cmr_int (*channel_free_frame)(cmr_handle oem_handle, cmr_u32 channel_id, cmr_u32 index);
 	cmr_int (*channel_stop)(cmr_handle oem_handle, cmr_u32 channel_bits);
 	cmr_int (*channel_buff_cfg) (cmr_handle oem_handle, struct buffer_cfg *buf_cfg);
+	cmr_int (*channel_cap_cfg) (cmr_handle oem_handle,
+									cmr_handle caller_handle,
+									cmr_u32 camera_id,
+									struct cap_cfg *cap_cfg,
+									cmr_u32 *channel_id,
+									struct img_data_end *endian);
 	cmr_int (*channel_scale_capability)(cmr_handle oem_handle, cmr_u32 *width, cmr_u32 *sc_factor, cmr_u32 *sc_threshold);
 	cmr_int (*channel_path_capability)(cmr_handle oem_handle, struct cmr_path_capability *capability);
 	cmr_int (*channel_get_cap_time)(cmr_handle oem_handle, cmr_u32 *sec, cmr_u32 *usec);
@@ -84,6 +90,7 @@ struct preview_md_ops {
 	cmr_int (*get_isp_yhist)(cmr_handle oem_handle, cmr_uint sensor_id, struct isp_yhist_info *yhist);
 	cmr_int (*set_preview_yhist)(cmr_handle oem_handle, cmr_uint sensor_id, struct yhist_info *yhist);
 	cmr_int (*get_sensor_fps_info)(cmr_handle oem_handle, cmr_uint sensor_id, cmr_u32 sn_mode, struct sensor_mode_fps_tag *fps_info);
+	cmr_int (*get_sensor_otp)(cmr_handle  oem_handle,struct isp_cali_param *cali_param, struct isp_data_info *cali_result);
 };
 
 struct preview_init_param {
@@ -121,6 +128,7 @@ struct preview_param {
 	cmr_u32                  video_eb;
 	cmr_u32                  flip_on;
 	cmr_u32                  tool_eb;
+	cmr_u32                  refocus_eb;
 	struct cmr_zoom_param	 zoom_setting;
 	struct memory_param      memory_setting;
 	void                     *private_data;
@@ -147,6 +155,7 @@ struct preview_out_param {
 	cmr_u32                  video_sn_mode;
 	struct img_data_end      video_data_endian;
 	struct img_size          actual_video_size;
+	cmr_u32                  depthmap_chn_bits;
 	struct snp_proc_param    post_proc_setting;
 };
 

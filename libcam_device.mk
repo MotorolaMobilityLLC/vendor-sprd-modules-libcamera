@@ -17,7 +17,8 @@ ALTEK_LIB := libalAWBLib \
 	libalAELib \
 	libalAFLib \
 	libalFlickerLib \
-	libspcaftrigger
+	libspcaftrigger \
+	libalRnBLV
 
 ALTEK_FW := TBM_G2v1DDR.bin \
 	TBM_Qmerge_Sensor1.bin \

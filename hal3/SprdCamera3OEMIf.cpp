@@ -368,6 +368,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mPreviewHeapNum = 0;
 	mVideoHeapNum = 0;
 	mZslHeapNum = 0;
+	mRefocusHeapNum = 0;
 	mSubRawHeapSize = 0;
 
 	mCommonHeapReserved = NULL;
@@ -4592,6 +4593,28 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_uint cameraParaTag)
 		}
 		break;
 #endif
+	case ANDROID_SPRD_CONTROL_REFOCUS_ENABLE:
+		{
+			SPRD_DEF_Tag sprddefInfo;
+			mSetting->getSPRDDEFTag(&sprddefInfo);
+
+			SET_PARM(mCameraHandle, CAMERA_PARAM_REFOCUS_ENABLE, sprddefInfo.refocus_enable);
+
+		}
+		break;
+	case ANDROID_SPRD_SET_TOUCH_INFO:
+		{
+			SPRD_DEF_Tag sprddefInfo;
+			mSetting->getSPRDDEFTag(&sprddefInfo);
+			struct touch_coordinate touch_param;
+			touch_param.touchX = sprddefInfo.touchxy[0];
+			touch_param.touchY = sprddefInfo.touchxy[1];
+			HAL_LOGD("ANDROID_SPRD_SET_TOUCH_INFO, touchX = %d, touchY %d",touch_param.touchX,touch_param.touchY);
+
+			SET_PARM(mCameraHandle, CAMERA_PARAM_TOUCH_XY, (cmr_uint)&touch_param);
+
+		}
+		break;
 	default:
 		ret = BAD_VALUE;
 		break;
@@ -5039,6 +5062,77 @@ mem_fail:
 	return BAD_VALUE;
 }
 
+int SprdCamera3OEMIf::Callback_RefocusFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_u32 sum)
+{
+	cmr_u32 i;
+	Mutex::Autolock l(&mPrevBufLock);
+
+	HAL_LOGD("mRefocusHeapNum %d sum %d", mRefocusHeapNum, sum);
+
+	for (i=0 ; i<mRefocusHeapNum ; i++) {
+		if (NULL != mRefocusHeapArray[i]) {
+			freeCameraMem(mRefocusHeapArray[i]);
+		}
+		mRefocusHeapArray[i] = NULL;
+	}
+	mRefocusHeapNum = 0;
+
+	return 0;
+}
+
+int SprdCamera3OEMIf::Callback_RefocusMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd)
+{
+	sprd_camera_memory_t *memory = NULL;
+	cmr_int              i = 0;
+
+	HAL_LOGD("size %d sum %d mRefocusHeapNum %d", size, sum, mRefocusHeapNum);
+
+	*phy_addr = 0;
+	*vir_addr = 0;
+
+	if (mRefocusHeapNum >= (kRefocusBufferCount+1)) {
+		HAL_LOGE("error mRefocusHeapNum %d", mRefocusHeapNum);
+		return BAD_VALUE;
+	}
+
+	if ((mRefocusHeapNum+sum) >= (kRefocusBufferCount+1)) {
+		HAL_LOGE("malloc is too more %d %d", mRefocusHeapNum, sum);
+		return BAD_VALUE;
+	}
+
+	if (sum >= kRefocusBufferCount) {
+		//mRefocusHeapNum = kRefocusBufferCount;
+		//phy_addr += kRefocusBufferCount;
+		//vir_addr += kRefocusBufferCount;
+		for (i=mRefocusHeapNum; i<(cmr_int)sum ; i++) {
+			memory = allocCameraMem(size, 1, true);
+
+			if (NULL == memory) {
+				HAL_LOGE("error memory is null.");
+				goto mem_fail;
+			}
+
+			mRefocusHeapArray[mRefocusHeapNum] = memory;
+			mRefocusHeapNum++;
+			*phy_addr++ = 0;//(cmr_uint)memory->phys_addr;
+			*vir_addr++ = (cmr_uint)memory->data;
+			if (NULL != fd)
+				*fd++ = (cmr_s32)memory->fd;
+		}
+	} else {
+		HAL_LOGD("Do not need malloc, malloced num %d,request num %d, request size 0x%x",
+				mRefocusHeapNum, sum, size);
+		goto mem_fail;
+	}
+
+	return 0;
+
+mem_fail:
+	Callback_RefocusFree(0, 0, 0);
+	return BAD_VALUE;
+}
+
+
 int SprdCamera3OEMIf::Callback_PreviewFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum)
 {
 	cmr_u32 i;
@@ -5277,7 +5371,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32
 	*vir_addr = 0;
 	*fd = 0;
 
-	if (type == CAMERA_PREVIEW_RESERVED || type == CAMERA_VIDEO_RESERVED || type == CAMERA_SNAPSHOT_ZSL_RESERVED) {
+	if (type == CAMERA_PREVIEW_RESERVED || type == CAMERA_VIDEO_RESERVED || type == CAMERA_SNAPSHOT_ZSL_RESERVED || type == CAMERA_DEPTH_MAP_RESERVED) {
 		if(NULL == mCommonHeapReserved) {
 			buffer_id = camera_pre_capture_get_buffer_id(mCameraId);
 			if (camera_get_reserve_buffer_size(mCameraId, buffer_id, &mem_size, &mem_sum) != CMR_CAMERA_SUCCESS) {
@@ -5434,9 +5528,11 @@ int SprdCamera3OEMIf::Callback_Free(enum camera_mem_cb_type type, cmr_uint *phy_
 		ret = camera->Callback_VideoFree(phy_addr, vir_addr, fd, sum);
 	} else if(CAMERA_SNAPSHOT_ZSL == type) {
 		ret = camera->Callback_ZslFree(phy_addr, vir_addr, fd, sum);
+	} else if(CAMERA_DEPTH_MAP == type) {
+		ret = camera->Callback_RefocusFree(phy_addr, vir_addr, sum);
 	} else if (CAMERA_PREVIEW_RESERVED == type || CAMERA_VIDEO_RESERVED == type ||CAMERA_ISP_FIRMWARE == type ||
-		CAMERA_SNAPSHOT_ZSL_RESERVED == type || CAMERA_ISP_LSC == type || CAMERA_ISP_BINGING4AWB == type ||
-		CAMERA_SNAPSHOT_HIGHISO == type) {
+		CAMERA_SNAPSHOT_ZSL_RESERVED == type  || type == CAMERA_DEPTH_MAP_RESERVED ||CAMERA_ISP_LSC == type ||
+		CAMERA_ISP_BINGING4AWB == type ||CAMERA_SNAPSHOT_HIGHISO == type) {
 		ret = camera->Callback_OtherFree(type, phy_addr, vir_addr, fd, sum);
 	}
 
@@ -5479,6 +5575,8 @@ int SprdCamera3OEMIf::Callback_Malloc(enum camera_mem_cb_type type,
 		ret = camera->Callback_VideoMalloc(size, sum, phy_addr, vir_addr, fd);
 	} else if(CAMERA_SNAPSHOT_ZSL == type) {
 		ret = camera->Callback_ZslMalloc(size, sum, phy_addr, vir_addr, fd);
+	} else if(CAMERA_DEPTH_MAP == type) {
+		ret = camera->Callback_RefocusMalloc(size, sum, phy_addr, vir_addr, fd);
 	} else if (CAMERA_PREVIEW_RESERVED == type || CAMERA_VIDEO_RESERVED == type || CAMERA_ISP_FIRMWARE == type ||
 		CAMERA_SNAPSHOT_ZSL_RESERVED == type || CAMERA_ISP_LSC == type || CAMERA_ISP_BINGING4AWB == type ||
 		CAMERA_SNAPSHOT_HIGHISO == type) {

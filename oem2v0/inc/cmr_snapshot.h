@@ -131,6 +131,12 @@ struct snapshot_md_ops {
 	cmr_int (*channel_free_frame)(cmr_handle oem_handle, cmr_u32 channel_id, cmr_u32 index);
 	cmr_int (*channel_stop)(cmr_handle oem_handle, cmr_u32 channel_bits);
 	cmr_int (*channel_buff_cfg) (cmr_handle oem_handle, struct buffer_cfg *buf_cfg);
+	cmr_int (*channel_cap_cfg) (cmr_handle oem_handle,
+									cmr_handle caller_handle,
+									cmr_u32 camera_id,
+									struct cap_cfg *cap_cfg,
+									cmr_u32 *channel_id,
+									struct img_data_end *endian);
 	cmr_int (*get_sensor_info)(cmr_handle oem_handle, cmr_uint sensor_id, struct sensor_exp_info *exp_info_ptr);
 	cmr_int (*get_tuning_info)(cmr_handle oem_handle, struct isp_adgain_exp_info *adgain_exp_info_ptr);
 };

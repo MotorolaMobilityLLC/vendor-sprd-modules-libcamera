@@ -36,6 +36,8 @@ struct CAMERA_TAKEPIC_STAT cap_stp[CMR_STEP_MAX] ={
 		{"uv denoise end",     0, 0, 0},
 		{"y denoise start",    0, 0, 0},
 		{"y denoise end",      0, 0, 0},
+		{"refocus start",    0, 0, 0},
+		{"refocus end",      0, 0, 0},
 		{"jpeg enc start",     0, 0, 0},
 		{"jpeg enc end",       0, 0, 0},
 		{"cvt thumb start",    0, 0, 0},
@@ -270,6 +272,43 @@ cmr_int camera_save_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u
 		fclose(fp);
 	}
 	return 0;
+}
+
+cmr_int read_file(const char* file_name, void *data_buf,uint32_t buf_size)
+{
+	FILE* pf = NULL;
+	uint32_t file_len = 0;
+	pf = fopen(file_name,"rb");
+
+	if (NULL == pf || NULL == data_buf)
+		return 0;
+
+	fseek(pf,0,SEEK_END);
+	file_len = ftell(pf);
+	fseek(pf,0,SEEK_SET);
+
+	if (buf_size >= file_len)
+		file_len = fread(data_buf, 1, file_len, pf);
+	else
+		file_len = 0;
+
+	fclose(pf);
+
+	return file_len;
+}
+
+cmr_int save_file(const char *file_name, void *data, uint32_t data_size)
+{
+	FILE *pf = fopen(file_name, "wb");
+	uint32_t write_bytes = 0;
+
+	if (NULL == pf)
+		return 0;
+
+	write_bytes = fwrite(data, 1, data_size, pf);
+	fclose(pf);
+
+	return write_bytes;
 }
 
 

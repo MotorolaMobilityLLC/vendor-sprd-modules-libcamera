@@ -355,6 +355,9 @@ typedef struct {
 	uint8_t availabe_smile_enable;
 	uint8_t sprd_eis_enabled;
 	uint8_t availabe_antiband_auto_supported;
+	uint8_t is_support_refocus;
+	uint8_t refocus_enable;
+	uint32_t touchxy[2];
 } SPRD_DEF_Tag;
 
 typedef struct {

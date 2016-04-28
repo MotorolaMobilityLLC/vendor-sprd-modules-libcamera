@@ -352,6 +352,7 @@ typedef enum {
 	SENSOR_VAL_TYPE_WRITE_VCM,
 	SENSOR_VAL_TYPE_WRITE_OTP,
 	SENSOR_VAL_TYPE_READ_OTP,
+	SENSOR_VAL_TYPE_READ_DUAL_OTP,
 	SENSOR_VAL_TYPE_ERASE_OTP,
 	SENSOR_VAL_TYPE_PARSE_OTP,
 	SENSOR_VAL_TYPE_GET_RELOADINFO,
@@ -889,6 +890,7 @@ struct sensor_drv_context {
 	cmr_u32                             exit_flag;
 	cmr_u32                             error_cnt;
 	cmr_uint                            lnc_addr_bakup[8][4];
+	cmr_u32                             bypass_mode;
 };
 
 struct sensor_ex_exposure {

@@ -31,6 +31,10 @@ struct ipm_class_tab {
 struct ipm_frame_in {
 	struct img_frm          src_frame;
 	struct img_frm          dst_frame;
+	struct   img_depth_map                 depth_map;
+	cmr_uint                touch_x;
+	cmr_uint                touch_y;
+	cmr_uint                frame_cnt;
 	cmr_handle              caller_handle;
 	void                    *private_data;
 };
@@ -57,6 +61,7 @@ struct ipm_open_in {
 	struct img_size         frame_size;
 	struct img_rect         frame_rect;
 	cmr_uint                frame_cnt;
+	struct   img_otp_data                 otp_data;
 };
 
 struct ipm_open_out {

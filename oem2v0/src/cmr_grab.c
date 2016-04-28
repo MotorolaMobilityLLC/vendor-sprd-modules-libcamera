@@ -61,6 +61,7 @@ struct cmr_grab
 	cmr_u32                 chn_status[CHN_MAX];
 	cmr_u32                 is_prev_trace;
 	cmr_u32                 is_cap_trace;
+	cmr_u32                 is_rt_refocus;
 	struct grab_init_param  init_param;
 	grab_stream_on          stream_on_cb;
 	cmr_u8                  mode_enable;
@@ -159,6 +160,7 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr, cmr_handle *grab_h
 	p_grab->stream_on_cb = NULL;
 	p_grab->is_prev_trace = 0;
 	p_grab->is_cap_trace = 0;
+	p_grab->is_rt_refocus = 0;
 	p_grab->mode_enable = 0;
 	memset(p_grab->chn_status, 0, sizeof(p_grab->chn_status));
 	*grab_handle = (cmr_handle)p_grab;
@@ -202,6 +204,7 @@ cmr_int cmr_grab_deinit(cmr_handle grab_handle)
 	p_grab->grab_evt_cb = NULL;
 	p_grab->is_prev_trace = 0;
 	p_grab->is_cap_trace = 0;
+	p_grab->is_rt_refocus = 0;
 	p_grab->mode_enable = 0;
 	pthread_mutex_unlock(&p_grab->cb_mutex);
 	pthread_mutex_destroy(&p_grab->cb_mutex);
@@ -404,6 +407,13 @@ static cmr_int cmr_grab_cap_cfg_common(cmr_handle grab_handle, struct cap_cfg *c
 	CMR_LOGI("channel_id  %d, regular_mode %d, ret %ld \n", channel_id, config->cfg.regular_desc.regular_mode, ret);
 
 	parm.channel_id = channel_id;
+	parm.pdaf_ctrl.mode            = config->cfg.pdaf_ctrl.mode;
+	parm.pdaf_ctrl.phase_data_type = config->cfg.pdaf_ctrl.phase_data_type;
+	ret = ioctl(p_grab->fd, SPRD_IMG_IO_PDAF_CONTROL, &parm);
+	CMR_LOGI("channel_id  %d, pdaf_ctrl %d %d, ret %ld \n",
+		channel_id, config->cfg.pdaf_ctrl.mode, config->cfg.pdaf_ctrl.phase_data_type, ret);
+
+	parm.channel_id = channel_id;
 	parm.deci = config->chn_deci_factor;
 	ret = ioctl(p_grab->fd, SPRD_IMG_IO_PATH_FRM_DECI, &parm);
 	CMR_LOGI("channel_id  %d, deci_factor %d, ret %ld \n", channel_id, config->chn_deci_factor, ret);
@@ -500,6 +510,7 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config, cmr_u32
 	parm.need_isp_tool = config->cfg.need_isp_tool;
 	parm.need_isp = config->cfg.need_isp;
 	parm.regular_desc = config->cfg.regular_desc;
+	parm.rt_refocus = config->cfg.pdaf_ctrl.mode;
 	parm.crop_rect.x = config->cfg.src_img_rect.start_x;
 	parm.crop_rect.y = config->cfg.src_img_rect.start_y;
 	parm.crop_rect.w = config->cfg.src_img_rect.width;
@@ -680,6 +691,22 @@ cmr_int cmr_grab_set_trace_flag(cmr_handle grab_handle, cmr_u32 trace_owner, cmr
 	} else {
 		CMR_LOGE("unknown trace owner!");
 	}
+	return ret;
+}
+
+cmr_int cmr_grab_set_rt_refocus(cmr_handle grab_handle, cmr_u32 rt_refocus)
+{
+	struct cmr_grab          *p_grab;
+	cmr_int                  ret = 0;
+
+	p_grab = (struct cmr_grab*)grab_handle;
+	CMR_CHECK_HANDLE;
+	CMR_CHECK_FD;
+
+	p_grab->is_rt_refocus = rt_refocus;
+
+	CMR_LOGI("rt_refocus %d", rt_refocus);
+
 	return ret;
 }
 

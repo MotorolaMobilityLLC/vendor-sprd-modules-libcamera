@@ -118,6 +118,16 @@ struct img_data_end {
 	//cmr_u32                                 padding;
 };
 
+struct refocus_info {
+	cmr_u32                             channel_id;
+	cmr_uint                            sec;
+	cmr_uint                            usec;
+	cmr_u32                             base;
+	cmr_u32                             yaddr;
+	cmr_u32                             yaddr_vir;
+	cmr_u32                             mfd;
+};
+
 struct frm_info {
 	cmr_u32                             channel_id;
 	cmr_u32                             frame_id;
@@ -159,6 +169,12 @@ struct cmr_af_aux_sensor_info {
 		struct cmr_af_gyro_info gyro_info;
 		struct cmr_af_gsensor_info gsensor_info;
 	};
+	struct refocus_info                 refocus;
+};
+
+struct touch_coordinate {
+	cmr_u32                                 touchX;
+	cmr_u32                                 touchY;
 };
 
 #ifdef __cplusplus

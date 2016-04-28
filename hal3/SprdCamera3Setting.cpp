@@ -1992,6 +1992,11 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId)
 	#else
 	s_setting[cameraId].sprddefInfo.availabe_antiband_auto_supported = 0;
 	#endif
+	#ifdef CONFIG_CAMERA_RE_FOCUS
+	s_setting[cameraId].sprddefInfo.is_support_refocus = 1;
+	#else
+	s_setting[cameraId].sprddefInfo.is_support_refocus = 0;
+	#endif
 	return ret;
 }
 
@@ -2246,6 +2251,8 @@ int SprdCamera3Setting::initStaticMetadata(int32_t cameraId, camera_metadata_t *
 			&(s_setting[cameraId].sprddefInfo.rec_snap_support), 1);
 	staticInfo.update(ANDROID_SPRD_SUPPORT_BIG_PRE_REC_SIZE,
 			&(s_setting[cameraId].sprddefInfo.big_pre_rec_size_support), 1);
+	staticInfo.update(ANDROID_SPRD_IS_SUPPORT_REFOCUS,
+			&(s_setting[cameraId].sprddefInfo.is_support_refocus), 1);
 
 	*static_metadata = staticInfo.release();
 	#undef FILL_CAM_INFO
@@ -3542,6 +3549,18 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 		s_setting[mCameraId].statisticsInfo.face_detect_mode = valueU8;
 		pushAndroidParaTag(ANDROID_STATISTICS_FACE_DETECT_MODE);
 		HAL_LOGV("fd mode %d", valueU8);
+	}
+	if (frame_settings.exists(ANDROID_SPRD_CONTROL_REFOCUS_ENABLE)) {
+		valueU8 = frame_settings.find(ANDROID_SPRD_CONTROL_REFOCUS_ENABLE).data.u8[0];
+		s_setting[mCameraId].sprddefInfo.refocus_enable = valueU8;
+		pushAndroidParaTag(ANDROID_SPRD_CONTROL_REFOCUS_ENABLE);
+		HAL_LOGD("refocus mode %d", valueU8);
+	}
+	if (frame_settings.exists(ANDROID_SPRD_SET_TOUCH_INFO)) {
+		s_setting[mCameraId].sprddefInfo.touchxy[0] = frame_settings.find(ANDROID_SPRD_SET_TOUCH_INFO).data.i32[0];
+		s_setting[mCameraId].sprddefInfo.touchxy[1]  = frame_settings.find(ANDROID_SPRD_SET_TOUCH_INFO).data.i32[1];
+		pushAndroidParaTag(ANDROID_SPRD_SET_TOUCH_INFO);
+		HAL_LOGD("touch info %d %d", s_setting[mCameraId].sprddefInfo.touchxy[0],s_setting[mCameraId].sprddefInfo.touchxy[1]);
 	}
 	#undef GET_VALUE_IF_DIF
 	return rc;

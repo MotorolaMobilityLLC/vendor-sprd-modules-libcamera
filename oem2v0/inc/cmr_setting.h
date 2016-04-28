@@ -67,6 +67,8 @@ enum setting_cmd_type {
 	SETTING_GET_SPRD_HIGHISO_ENABLED,
 	SETTING_GET_ENCODE_ROTATION,
 	SETTING_GET_SPRD_EIS_ENABLED,
+	SETTING_GET_REFOCUS_ENABLE,
+	SETTING_GET_TOUCH_XY,
 	SETTING_TYPE_MAX
 };
 
@@ -76,6 +78,7 @@ enum setting_io_type {
 	SETTING_IO_CTRL_FLASH,
 	SETTING_IO_GET_PREVIEW_MODE,
 	SETTING_IO_GET_FLASH_MAX_CAPACITY,
+	SETTING_IO_SET_TOUCH,
 	SETTING_IO_TYPE_MAX
 };
 
@@ -108,6 +111,7 @@ struct setting_cmd_parameter {
 		struct exif_info_tag                     *exif_all_info_ptr;
 		struct cmr_ae_param                      ae_param;
 		struct cmr_range_fps_param               range_fps;
+		struct touch_coordinate              touch_param;
 	};
 };
 
@@ -122,6 +126,7 @@ struct setting_io_parameter {
 		cmr_uint            cmd_value;
 		struct img_size     size_param;
 		struct setting_flash_max_capacity flash_capacity;
+		struct touch_coordinate     touch_xy;
 	};
 };
 

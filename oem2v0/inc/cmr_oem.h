@@ -103,6 +103,7 @@ struct ipm_context {
 	cmr_handle               hdr_handle;
 	cmr_handle               uvde_handle;
 	cmr_handle               yde_handle;
+	cmr_handle               refocus_handle;
 	cmr_u32                  inited;
 	cmr_u32                  frm_num;
 	cmr_u32                  hdr_num;
@@ -117,6 +118,7 @@ struct preview_context {
 	cmr_u32                  skip_num;
 	cmr_u32                  channel_bits;
 	cmr_u32                  video_channel_bits;
+	cmr_u32                  depthmap_channel_bits;
 	cmr_uint                 status;
 	struct img_size          size;
 	struct img_size          video_size;
@@ -149,6 +151,7 @@ struct snapshot_context {
 	struct snp_proc_param    post_proc_setting;
 	struct img_data_end      data_endian;
 	struct frm_info          cur_chn_data;
+	struct touch_coordinate touch_xy;
 };
 
 struct focus_context {
@@ -258,6 +261,7 @@ struct camera_context {
 	cmr_u32                  is_vendor_hdr;
 	cmr_u32                  is_pipviv_mode;
 	cmr_int                  cap_cnt;
+	cmr_u32                  is_refocus_mode;
 
 	/*memory func*/
 	camera_cb_of_malloc      hal_malloc;
@@ -348,6 +352,7 @@ cmr_s32 camera_local_get_iommu_status(cmr_handle oem_handle);
 cmr_int camera_isp_set_sensor_info_to_af(cmr_handle oem_handle, struct cmr_af_aux_sensor_info* sensor_info);
 cmr_int cmr_get_sensor_max_fps(cmr_handle oem_handle,cmr_u32 camera_id, cmr_u32* max_fps);
 
+cmr_int prev_set_preview_touch_info(cmr_handle preview_handle, cmr_u32 camera_id, struct touch_coordinate *touch_xy);
 #ifdef __cplusplus
 }
 #endif

@@ -199,6 +199,9 @@ static tags_info_t android_add_parameters[VENDOR_SECTION_END - VENDOR_SECTION_ST
     { "sprdHighIsoEnabled",     TYPE_BYTE },
     { "availableSmileEnable",                TYPE_BYTE },
     { "availableAntibandAutoSupported",                TYPE_BYTE },
+    { "refocusMode",                TYPE_BYTE },
+    { "refocusValue",                TYPE_INT32 },
+    { "isSupportRefocus",                TYPE_BYTE },
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {

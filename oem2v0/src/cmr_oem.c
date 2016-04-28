@@ -168,6 +168,12 @@ static cmr_int camera_channel_resume(cmr_handle oem_handle, cmr_uint channel_id,
 static cmr_int camera_channel_free_frame(cmr_handle oem_handle, cmr_u32 channel_id, cmr_u32 index);
 static cmr_int camera_channel_stop(cmr_handle oem_handle, cmr_u32 channel_bits);
 static cmr_int camera_channel_buff_cfg (cmr_handle oem_handle, struct buffer_cfg *buf_cfg);
+static cmr_int camera_channel_cap_cfg(cmr_handle oem_handle,
+									cmr_handle caller_handle,
+									cmr_u32 camera_id,
+									struct cap_cfg *cap_cfg,
+									cmr_u32 *channel_id,
+									struct img_data_end *endian);
 static cmr_int camera_channel_scale_capability(cmr_handle oem_handle, cmr_u32 *width, cmr_u32 *sc_factor, cmr_u32 *sc_threshold);
 static cmr_int camera_channel_path_capability(cmr_handle oem_handle, struct cmr_path_capability *capability);
 static cmr_int camera_channel_get_cap_time(cmr_handle oem_handle, cmr_u32 *sec, cmr_u32 *usec);
@@ -383,6 +389,9 @@ void camera_send_channel_data(cmr_handle oem_handle, cmr_handle receiver_handle,
 	if (cxt->prev_cxt.channel_bits & chn_bit) {
 		ret = cmr_preview_receive_data(cxt->prev_cxt.preview_handle, cxt->camera_id, evt, data);
 	}
+	if (cxt->prev_cxt.depthmap_channel_bits & chn_bit) {
+		ret = cmr_preview_receive_data(cxt->prev_cxt.preview_handle, cxt->camera_id, evt, data);
+	}
 	if (cxt->prev_cxt.video_channel_bits & chn_bit) {
 		cmr_copy(&cxt->prev_cxt.video_cur_chn_data, frm_ptr, sizeof(struct frm_info));
 		ret = cmr_preview_receive_data(cxt->prev_cxt.preview_handle, cxt->camera_id, evt, data);
@@ -437,6 +446,33 @@ cmr_int camera_sensor_streamctrl(cmr_u32 on_off, void *privdata)
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}
+
+#ifdef CONFIG_CAMERA_RE_FOCUS
+/*temp define, will del it when al3200 be merged into code*/
+#define	AL3200_CMD_DEPTH_MAP_MODE 2
+#define	AL3200_CMD_BYPASS_MODE  3
+/*temp define, end*/
+
+	if(cxt->camera_id == SENSOR_MAIN ) {
+		CMR_LOGI("open 2 camera");
+		if(cxt->is_refocus_mode == 1){
+			ret = cmr_sensor_set_bypass_mode(cxt->sn_cxt.sensor_handle, SENSOR_DEVICE2, AL3200_CMD_DEPTH_MAP_MODE);
+			if (ret) {
+				CMR_LOGE("set_bypass_mode %d sensor failed %ld", cxt->camera_id, ret);
+			}
+		}else{
+			ret = cmr_sensor_set_bypass_mode(cxt->sn_cxt.sensor_handle,SENSOR_DEVICE2, AL3200_CMD_BYPASS_MODE);
+			if (ret) {
+				CMR_LOGE("set_bypass_mode %d sensor failed %ld", cxt->camera_id, ret);
+			}
+		}
+		ret = cmr_sensor_stream_ctrl(cxt->sn_cxt.sensor_handle, SENSOR_DEVICE2, on_off);
+		if (ret) {
+			CMR_LOGE("err to set stream %ld", ret);
+		}
+
+	}
+#endif
 	ret = cmr_sensor_stream_ctrl(cxt->sn_cxt.sensor_handle, cxt->camera_id, on_off);
 	if (ret) {
 		CMR_LOGE("err to set stream %ld", ret);
@@ -1220,6 +1256,14 @@ cmr_int camera_close_hdr(struct camera_context *cxt)
 	return ret;
 }
 
+
+void camera_set_touch_xy(struct camera_context *cxt, struct touch_coordinate  touch_info)
+{
+	CMR_LOGI("touch_info.touchX %d touch_info.touchY %d" , touch_info.touchX,touch_info.touchY);
+	cxt->snp_cxt.touch_xy.touchX= touch_info.touchX;
+	cxt->snp_cxt.touch_xy.touchY= touch_info.touchY;
+}
+
 void camera_snapshot_channel_handle(cmr_handle oem_handle, void* param)
 {
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
@@ -1669,6 +1713,17 @@ cmr_int camera_sensor_init(cmr_handle  oem_handle, cmr_uint is_autotest)
 		CMR_LOGE("open %d sensor failed %ld", cxt->camera_id, ret);
 		goto sensor_exit;
 	}
+#ifdef CONFIG_CAMERA_RE_FOCUS
+	if (cxt->camera_id == SENSOR_MAIN)
+	{
+		camera_id_bits = 1 << SENSOR_DEVICE2;
+		ret = cmr_sensor_open(sensor_handle, camera_id_bits);
+		if (ret) {
+			CMR_LOGE("open %d sensor failed %ld", cxt->camera_id, ret);
+			goto sensor_exit;
+		}
+	}
+#endif
 	cmr_sensor_event_reg(sensor_handle, cxt->camera_id, camera_sensor_evt_cb);
 	cxt->sn_cxt.sensor_handle = sensor_handle;
     goto exit;
@@ -1697,6 +1752,16 @@ cmr_int camera_sensor_deinit(cmr_handle  oem_handle)
 	}
 	sensor_handle = sn_cxt->sensor_handle;
 	cmr_sensor_close(sensor_handle, (1 << cxt->camera_id));
+#ifdef CONFIG_CAMERA_RE_FOCUS
+	if (cxt->camera_id == SENSOR_MAIN)
+	{
+		ret = cmr_sensor_close(sensor_handle, 1 << SENSOR_DEVICE2);
+		if (ret) {
+			CMR_LOGE("close %d sensor failed %ld", cxt->camera_id, ret);
+			goto exit;
+		}
+	}
+#endif
     cmr_sensor_deinit(sensor_handle);
 	cmr_bzero(sn_cxt,sizeof(*sn_cxt));
 
@@ -2019,8 +2084,11 @@ static int camera_get_otpinfo(cmr_handle  oem_handle,struct isp_cali_param *cali
 		CMR_LOGE("malloc af  failed");
 		goto EXIT;
 	}
-
+#ifdef CONFIG_CAMERA_RE_FOCUS
+	val.type               = SENSOR_VAL_TYPE_READ_DUAL_OTP;
+#else
 	val.type               = SENSOR_VAL_TYPE_READ_OTP;
+#endif
 	val.pval               = param;
 	ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_ACCESS_VAL, (cmr_uint)&val);
 	if (0 != ret) {
@@ -2029,6 +2097,10 @@ static int camera_get_otpinfo(cmr_handle  oem_handle,struct isp_cali_param *cali
 	}
 	cali_result->data_ptr = (void *)param;
 	cali_result->size = sizeof(struct sensor_otp_data);
+#ifdef CONFIG_CAMERA_RE_FOCUS
+	cali_result->data_ptr = val.pval;
+	CMR_LOGD("read otp data  0x%x val.pval 0x%x", cali_result->data_ptr,val.pval);
+#endif
 	return ret;
 EXIT:
 	if (NULL != param) {
@@ -2874,6 +2946,7 @@ cmr_int camera_preview_init(cmr_handle  oem_handle)
 	init_param.ops.channel_free_frame = camera_channel_free_frame;
 	init_param.ops.channel_stop = camera_channel_stop;
 	init_param.ops.channel_buff_cfg = camera_channel_buff_cfg;
+	init_param.ops.channel_cap_cfg = camera_channel_cap_cfg;
 	init_param.ops.isp_start_video = camera_isp_start_video;
 	init_param.ops.isp_stop_video = camera_isp_stop_video;
 	init_param.ops.start_rot = camera_start_rot;
@@ -2891,6 +2964,7 @@ cmr_int camera_preview_init(cmr_handle  oem_handle)
 	init_param.ops.get_isp_yhist = camera_preview_get_isp_yhist;
 	init_param.ops.set_preview_yhist = camera_preview_set_yhist_to_isp;
 	init_param.ops.get_sensor_fps_info = camera_get_sensor_fps_info;
+	init_param.ops.get_sensor_otp = camera_get_otpinfo;
 	init_param.oem_cb = camera_preview_cb;
 	init_param.private_data = NULL;
 	init_param.sensor_bits = (1 << cxt->camera_id);
@@ -2966,6 +3040,7 @@ cmr_int camera_snapshot_init(cmr_handle  oem_handle)
 	init_param.ops.channel_free_frame = camera_channel_free_frame;
 	init_param.ops.channel_stop = camera_channel_stop;
 	init_param.ops.channel_buff_cfg = camera_channel_buff_cfg;
+	init_param.ops.channel_cap_cfg = camera_channel_cap_cfg;
 	init_param.ops.get_sensor_info = camera_get_sensor_info;
 	init_param.ops.get_tuning_info = camera_get_tuning_info;
 	init_param.ops.stop_codec = camera_stop_codec;
@@ -4713,6 +4788,31 @@ exit:
 	CMR_LOGV("done %ld", ret);
 	return ret;
 }
+
+cmr_int camera_channel_cap_cfg(cmr_handle oem_handle,
+									cmr_handle caller_handle,
+									cmr_u32 camera_id,
+									struct cap_cfg *cap_cfg,
+									cmr_u32 *channel_id,
+									struct img_data_end *endian)
+{
+	cmr_int                        ret = CMR_CAMERA_SUCCESS;
+	struct camera_context          *cxt = (struct camera_context*)oem_handle;
+	if (!oem_handle) {
+		CMR_LOGE("in parm error");
+		ret = -CMR_CAMERA_INVALID_PARAM;
+		goto exit;
+	}
+	ret = cmr_grab_cap_cfg(cxt->grab_cxt.grab_handle, cap_cfg, channel_id, endian);
+	if (ret) {
+		CMR_LOGE("failed to buf cfg %ld", ret);
+		goto exit;
+	}
+exit:
+	CMR_LOGV("done %ld", ret);
+	return ret;
+}
+
 cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits, cmr_uint skip_number)
 {
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
@@ -4991,6 +5091,9 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type, struc
 			param_ptr->flash_capacity.max_time = capacity.max_time;
 		}
 #endif
+	}
+		case SETTING_IO_SET_TOUCH:	{
+		prev_set_preview_touch_info(cxt->prev_cxt.preview_handle,cxt->camera_id,&param_ptr->touch_xy);
 	}
 		break;
 
@@ -5725,6 +5828,19 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 		is_cfg_snp = 1;
 	}
 
+	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_REFOCUS_ENABLE, &setting_param);
+	if (ret) {
+		CMR_LOGE("failed to get preview refocus enabled flag %ld", ret);
+		goto exit;
+	}
+	cxt->is_refocus_mode =  setting_param.cmd_type_value;
+	CMR_LOGI("sprd refocus_enable flag %d", cxt->is_refocus_mode);
+
+	 /*TBD need to get refocus flag*/
+	out_param_ptr->refocus_eb = cxt->is_refocus_mode;
+	 CMR_LOGI("sprd refocus_eb flag %d", out_param_ptr->refocus_eb);
+
+
 	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_CAPTURE_FORMAT, &setting_param);
 	if (ret) {
 		CMR_LOGE("failed to get cap fmt %ld", ret);
@@ -5983,6 +6099,7 @@ cmr_int camera_set_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	prev_cxt->data_endian = preview_out.preview_data_endian;
 	prev_cxt->video_sn_mode = preview_out.video_sn_mode;
 	prev_cxt->video_channel_bits = preview_out.video_chn_bits;
+	prev_cxt->depthmap_channel_bits = preview_out.depthmap_chn_bits;
 	prev_cxt->actual_video_size = preview_out.actual_video_size;
 	prev_cxt->video_data_endian = preview_out.video_data_endian;
 	snp_cxt->snapshot_sn_mode = preview_out.snapshot_sn_mode;
@@ -6054,6 +6171,13 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle, struct snapshot_param *
 	}
 	out_ptr->rot_angle = setting_param.cmd_type_value;
 	jpeg_cxt->param.set_encode_rotation = setting_param.cmd_type_value;
+
+	ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_TOUCH_XY, &setting_param);
+	if (ret) {
+		CMR_LOGE("failed to open flash");
+	}
+	camera_set_touch_xy(cxt, setting_param.touch_param);
+
 	ret = cmr_preview_get_post_proc_param(cxt->prev_cxt.preview_handle, cxt->camera_id,
 									(cmr_u32)setting_param.cmd_type_value, &out_ptr->post_proc_setting);
 	if (ret) {
@@ -6309,6 +6433,19 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id, cmr
 	case CAMERA_PARAM_SPRD_EIS_ENABLED:
 		setting_param.cmd_type_value = param;
 		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);
+		break;
+	case CAMERA_PARAM_REFOCUS_ENABLE:
+		setting_param.cmd_type_value = param;
+		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);
+		break;
+	case CAMERA_PARAM_TOUCH_XY:
+		if (param) {
+			setting_param.size_param = *(struct img_size*)param;
+			ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);
+		} else {
+			CMR_LOGE("err, video size param is null");
+			ret = -CMR_CAMERA_INVALID_PARAM;
+		}
 		break;
 	default:
 		CMR_LOGI("don't support %d", id);

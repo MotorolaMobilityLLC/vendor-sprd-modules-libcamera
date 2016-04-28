@@ -156,6 +156,12 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/oem2v0/inc/ydenoise_paten
 LOCAL_SRC_FILES+= oem2v0/src/cmr_ydenoise.c
 endif
 
+ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RE_FOCUS)),true)
+LOCAL_SRC_FILES+= oem2v0/src/cmr_refocus.c
+endif
+
+
+
 ifeq ($(TARGET_BOARD_CAMERA_HAL_VERSION), $(filter $(TARGET_BOARD_CAMERA_HAL_VERSION), HAL1.0 hal1.0 1.0))
 LOCAL_SRC_FILES += hal1.0/src/SprdCameraHardwareInterface.cpp
 else
@@ -533,3 +539,9 @@ endif
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FLASH_LED_1)),true)
 LOCAL_CFLAGS += -DCONFIG_CAMERA_FLASH_LED_1
 endif
+
+ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RE_FOCUS)),true)
+LOCAL_CFLAGS += -DCONFIG_CAMERA_RE_FOCUS
+endif
+
+#LOCAL_CFLAGS += -DCONFIG_SYNC_FIX_FPS=20

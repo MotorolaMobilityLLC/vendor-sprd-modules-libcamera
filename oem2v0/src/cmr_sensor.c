@@ -43,6 +43,7 @@
 #define CMR_SENSOR_EVT_STREAM                 (CMR_SENSOR_EVT_BASE + 0x8)
 #define CMR_SENSOR_EVT_SETEXIF                (CMR_SENSOR_EVT_BASE + 0x9)
 #define CMR_SENSOR_EVT_ISPARAM_FROM_FILE      (CMR_SENSOR_EVT_BASE + 0xa)
+#define CMR_SENSOR_EVT_BYPASS_MODE     (CMR_SENSOR_EVT_BASE + 0xb)
 
 
 #define CMR_SENSOR_MONITOR_BASE               (CMR_EVT_SENSOR_BASE + 0x200)
@@ -296,6 +297,21 @@ cmr_int cmr_sensor_stream_ctrl(cmr_handle sensor_handle, cmr_uint sensor_id, cmr
 		return CMR_CAMERA_FAIL;
 	}
 	CMR_LOGI("X ret %ld", ret);
+	return ret;
+}
+
+cmr_int cmr_sensor_set_bypass_mode(cmr_handle sensor_handle, cmr_uint sensor_id, cmr_u32 bypass_mode)
+{
+	CMR_MSG_INIT(message);
+	cmr_int                   ret = CMR_CAMERA_SUCCESS;
+	struct cmr_sensor_handle  *handle = (struct cmr_sensor_handle *)sensor_handle;
+	cmr_u32                   cameraId = 0;
+	CMR_LOGI("E");
+
+	CHECK_HANDLE_VALID(handle);
+
+	handle->sensor_cxt[sensor_id].bypass_mode = bypass_mode;
+
 	return ret;
 }
 

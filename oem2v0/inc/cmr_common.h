@@ -77,6 +77,7 @@ extern volatile uint32_t gCMRLogLevel;
 #define CMR_CAP0_ID_BASE                   0x2000
 #define CMR_CAP1_ID_BASE                   0x4000
 #define CMR_VIDEO_ID_BASE                  0x8000
+#define CMR_REFOCUS_ID_BASE                0xF000
 #define CMR_BASE_ID(x)                     ((x) & 0xF000)
 #define JPEG_EXIF_SIZE	                   (64*1024)
 #define RAWRGB_BIT_WIDTH                   10
@@ -91,6 +92,8 @@ extern volatile uint32_t gCMRLogLevel;
 #define CAMERA_PIXEL_ALIGNED               4
 #define CAMERA_SENSOR_INFO_2_ISP_NUM  3
 #define CMR_MAX_SKIP_NUM                   10
+#define CAMERA_DEPTH_META_SIZE             (480 * 360 + 1280)
+#define CAMERA_DEPTH_META_DATA_TYPE        0x35
 
 #define HDR_CAP_NUM                        3
 #define FACE_DETECT_NUM                    10
@@ -490,8 +493,9 @@ struct img_frm_cap {
 	cmr_u32                             need_isp;
 	cmr_u32                             need_binning;
 	cmr_u32                             need_isp_tool;
-	struct dcam_regular_desc regular_desc;
-	cmr_u32				                flip_on;
+	struct dcam_regular_desc            regular_desc;
+	cmr_u32                             flip_on;
+	struct sprd_pdaf_control            pdaf_ctrl;
 };
 
 struct buffer_cfg {
@@ -733,6 +737,7 @@ enum ipm_class_type {
 	IPM_TYPE_FD = 0x00000002,
 	IPM_TYPE_UVDE = 0x00000004,
 	IPM_TYPE_YDE = 0x00000008,
+	IPM_TYPE_REFOCUS = 0x00000010,
 };
 
 enum img_fmt {
@@ -768,6 +773,19 @@ struct img_face_area {
 	cmr_uint                face_count;
 	struct face_finder_data range[FACE_DETECT_NUM];
 };
+
+struct img_otp_data {
+	cmr_uint                otp_size;
+	void  *otp_ptr;
+};
+
+struct img_depth_map {
+	cmr_uint                width;
+	cmr_uint                height;
+	void  *depth_map_ptr;
+};
+
+
 /*************************** ipm data type **************************/
 
 
@@ -807,6 +825,8 @@ enum CAMERA_TAKEPIC_STEP {
 		CMR_STEP_UVDENOISE_E,
 		CMR_STEP_YDENOISE_S,
 		CMR_STEP_YDENOISE_E,
+		CMR_STEP_REFOCUS_S,
+		CMR_STEP_REFOCUS_E,
 		CMR_STEP_JPG_ENC_S,
 		CMR_STEP_JPG_ENC_E,
 		CMR_STEP_CVT_THUMB_S,
@@ -833,6 +853,11 @@ cmr_int camera_get_trim_rect2(struct img_rect *src_trim_rect, float zoom_ratio, 
 											cmr_u32 sensor_w, cmr_u32 sensor_h, cmr_u8 rot);
 
 cmr_int camera_save_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height, struct img_addr *addr);
+
+cmr_int read_file(const char* file_name, void *data_buf,uint32_t buf_size);
+
+cmr_int save_file(const char *file_name, void *data, uint32_t data_size);
+
 cmr_int camera_save_y_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height, void *addr);
 
 cmr_int camera_get_data_from_file(char *file_name, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height, struct img_addr *addr);
