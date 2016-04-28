@@ -102,9 +102,9 @@ extern volatile uint32_t gCMRLogLevel;
 #define INVALID_FORMAT_PATTERN            255
 
 #define CAMERA_SAFE_SCALE_DOWN(w)          (cmr_u32)((w)*11/10)
-#define CAMERA_START(w)                    ((w)& ~(4 - 1))
-#define CAMERA_WIDTH(w)                    ((w)& ~(16 - 1))
-#define CAMERA_HEIGHT(h)                   ((h)& ~(16 - 1))
+#define CAMERA_START(w)                    ((w)& ~(2 - 1))
+#define CAMERA_WIDTH(w)                    ((w)& ~(8 - 1))
+#define CAMERA_HEIGHT(h)                   ((h)& ~(4 - 1))
 #define CMR_ADDR_ALIGNED(x)                ((((x) + 256 - 1) >> 8) << 8)
 
 #define CMR_JPEG_SZIE(w,h)                 (cmr_u32)((w)*(h)*3/2)

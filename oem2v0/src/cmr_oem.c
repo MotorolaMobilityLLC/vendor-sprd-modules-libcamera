@@ -3954,7 +3954,7 @@ cmr_int camera_start_scale(cmr_handle oem_handle, cmr_handle caller_handle, stru
 	}
 	CMR_LOGI("caller_handle 0x%lx is_sync %d", (cmr_uint)caller_handle, mean->is_sync);
 	CMR_LOGI("src fd 0x%lx , dst fd 0x%lx",src->fd,dst->fd);
-
+	CMR_LOGI("src 0x%lx 0x%lx , dst 0x%lx 0x%lx",src->addr_phy.addr_y, src->addr_phy.addr_u, dst->addr_phy.addr_y, dst->addr_phy.addr_u);
 	CMR_LOGI("src size %d %d dst size %d %d rect %d %d %d %d endian %d %d %d %d",
 		src->size.width,
 		src->size.height,

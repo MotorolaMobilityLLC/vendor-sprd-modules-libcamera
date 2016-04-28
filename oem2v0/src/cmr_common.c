@@ -127,12 +127,12 @@ cmr_int camera_get_trim_rect2(struct img_rect *src_trim_rect, float zoom_ratio, 
 	CMR_LOGI("sensor_ratio %f, minOutputRatio %f, zoom_ratio %f", sensor_ratio, minOutputRatio, zoom_ratio);
 	CMR_LOGI("trim_width %d, trim_height %d", trim_width, trim_height);
 
-	src_trim_rect->start_x += (src_trim_rect->width - CAMERA_START(trim_width)) >> 1;
-	src_trim_rect->start_y += (src_trim_rect->height - CAMERA_START(trim_height)) >> 1;
+	src_trim_rect->start_x += (src_trim_rect->width - trim_width) >> 1;
+	src_trim_rect->start_y += (src_trim_rect->height - trim_height) >> 1;
 	src_trim_rect->start_x = CAMERA_START(src_trim_rect->start_x);
 	src_trim_rect->start_y = CAMERA_START(src_trim_rect->start_y);
-	src_trim_rect->width = CAMERA_START(trim_width);
-	src_trim_rect->height = CAMERA_START(trim_height);
+	src_trim_rect->width = CAMERA_WIDTH(trim_width);
+	src_trim_rect->height = CAMERA_HEIGHT(trim_height);
 	CMR_LOGI("zoom_level %f trim rect %d %d %d %d",
 			zoom_ratio,
 			src_trim_rect->start_x,
