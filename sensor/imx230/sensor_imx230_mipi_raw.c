@@ -845,6 +845,19 @@ static const SENSOR_REG_T imx230_2672x2008_setting[] = {
 	{0x3A21, 0x00},
 	{0x3011, 0x00},
 	{0x3013, 0x01},
+#ifdef CONFIG_CAMERA_RE_FOCUS
+	/*for sensor sync start*/
+	{0x440C, 0x00}, // Lo-Activate
+	{0x440D, 0x07}, // pulse width(2000cycle)
+	// V-sync output pin settings: FSTROBE setting
+	{0x4073, 0xFF},
+	{0x5ED0, 0x00},
+	{0x5E69, 0xFF},
+	{0x5E6A, 0x00},
+	{0x5E6B, 0x00},
+	{0x5E70, 0x02},
+	/*for sensor sync end*/
+#endif
 };
 
 /**
@@ -963,7 +976,7 @@ static SENSOR_REG_TAB_INFO_T s_imx230_resolution_tab_raw[SENSOR_MODE_MAX] = {
 static SENSOR_TRIM_T s_imx230_resolution_trim_tab[SENSOR_MODE_MAX] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 //	{0, 0, 1280, 720, 10000 , PREVIEW_MIPI_PER_LANE_BPS, 828, {0, 0, 1280, 720}},
-	{0, 0, 2672, 2008, 14343 , PREVIEW_MIPI_PER_LANE_BPS, 2320, {0, 0, 2672, 2008}},
+	{0, 0, 2672, 2008, 14343, PREVIEW_MIPI_PER_LANE_BPS, 2320, {0, 0, 2672, 2008}},
 	{0, 0, 5344, 4016, 10040, SNAPSHOT_MIPI_PER_LANE_BPS, 4140, {0, 0, 5344, 4016}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
