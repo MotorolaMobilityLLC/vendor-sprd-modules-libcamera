@@ -46,7 +46,7 @@ static int s_exposure_time = 0;
 
 struct sensor_ev_info_t {
 	uint16_t preview_shutter;
-	uint16_t preview_gain;
+	uint32_t preview_gain;
 };
 
 struct sensor_ev_info_t s_sensor_ev_info;
@@ -1057,7 +1057,7 @@ static unsigned long _s5k3p3sm_ex_write_exposure(SENSOR_HW_HANDLE handle, unsign
 	return ret_value;
 }
 
-static unsigned long _s5k3p3sm_write_gain(SENSOR_HW_HANDLE handle, unsigned long param)
+static unsigned long _s5k3p3sm_update_gain(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint32_t real_gain = 0;
@@ -1067,7 +1067,7 @@ static unsigned long _s5k3p3sm_write_gain(SENSOR_HW_HANDLE handle, unsigned long
 
 	real_gain = param >> 2; // / 128 * 32;
 
-	SENSOR_PRINT("SENSOR_S5K3P3SM: real_gain:0x%x, param: 0x%lx", real_gain, param);
+	SENSOR_PRINT("SENSOR_S5K3P3SM: real_gain:%d, param: %d", real_gain, param);
 
 
 	if (real_gain <= 16*32) {
@@ -1088,7 +1088,16 @@ static unsigned long _s5k3p3sm_write_gain(SENSOR_HW_HANDLE handle, unsigned long
 //	ret_value = Sensor_WriteReg(0x104, 0x00);
 	SENSOR_PRINT("SENSOR_S5K3P3SM: a_gain:0x%x, d_gain: 0x%x", a_gain, d_gain);
 
-	s_sensor_ev_info.preview_gain = real_gain;
+	return ret_value;
+
+}
+
+static unsigned long _s5k3p3sm_write_gain(SENSOR_HW_HANDLE handle, unsigned long param)
+{
+	uint32_t ret_value = SENSOR_SUCCESS;
+	SENSOR_PRINT("SENSOR_S5K3P3SM: param: %d", param);
+	_s5k3p3sm_update_gain(handle, param);
+	s_sensor_ev_info.preview_gain = param;
 
 	return ret_value;
 
@@ -1157,10 +1166,10 @@ static unsigned long _s5k3p3sm_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned 
 		if(capture_exposure > frame_len*2)
 			break;
 	}*/
-	SENSOR_PRINT("SENSOR_s5k3p3sm: prev_exp=%d,cap_exp=%d,gain=%x",preview_exposure,capture_exposure,gain);
+	SENSOR_PRINT("SENSOR_s5k3p3sm: prev_exp=%d,cap_exp=%d,gain=%d",preview_exposure,capture_exposure,gain);
 
 	_s5k3p3sm_write_exp_dummy(handle, capture_exposure, 0, capture_mode);
-	//Sensor_WriteReg(0x204, gain);
+	_s5k3p3sm_update_gain(handle, gain);
 
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, capture_exposure);
 

@@ -3016,6 +3016,11 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 		ISP_LOGE("param %p %p %p is NULL error!", cxt_ptr, in_ptr, out_ptr);
 		goto exit;
 	}
+
+	if (ISP3A_WORK_MODE_CAPTURE == cxt_ptr->cur_status.ui_param.work_info.work_mode) {
+		return ISP_SUCCESS;
+	}
+
 	if (1 == in_ptr->sof_param.frame_index)
 		seq_reset(cxt_ptr->seq_handle);
 

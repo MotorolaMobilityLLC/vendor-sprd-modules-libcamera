@@ -77,7 +77,7 @@ struct hdr_info_t {
 
 struct sensor_ev_info_t {
 	uint16_t preview_shutter;
-	uint16_t preview_gain;
+	float preview_gain;
 };
 
 static unsigned long imx230_access_val(SENSOR_HW_HANDLE handle, unsigned long param);
@@ -1526,8 +1526,8 @@ static unsigned long imx230_before_snapshot(SENSOR_HW_HANDLE handle, unsigned lo
 {
 	uint32_t cap_shutter = 0;
 	uint32_t prv_shutter = 0;
-	uint32_t gain = 0;
-	uint32_t cap_gain = 0;
+	float gain = 0;
+	float cap_gain = 0;
 	uint32_t capture_mode = param & 0xffff;
 	uint32_t preview_mode = (param >> 0x10) & 0xffff;
 
@@ -1535,7 +1535,7 @@ static unsigned long imx230_before_snapshot(SENSOR_HW_HANDLE handle, unsigned lo
 	uint32_t cap_linetime = s_imx230_resolution_trim_tab[capture_mode].line_time;
 
 	s_current_default_frame_length = imx230_get_default_frame_length(handle, capture_mode);
-	SENSOR_PRINT("capture_mode = %d", capture_mode);
+	SENSOR_PRINT("capture_mode = %d,preview_mode=%d\n", capture_mode, preview_mode);
 
 	if (preview_mode == capture_mode) {
 		cap_shutter = s_sensor_ev_info.preview_shutter;
@@ -1561,10 +1561,10 @@ static unsigned long imx230_before_snapshot(SENSOR_HW_HANDLE handle, unsigned lo
 	cap_shutter = imx230_update_exposure(handle, cap_shutter,0);
 	cap_gain = gain;
 	imx230_write_gain(handle, cap_gain);
-	SENSOR_PRINT("preview_shutter = 0x%x, preview_gain = 0x%x",
+	SENSOR_PRINT("preview_shutter = %d, preview_gain = %f",
 		     s_sensor_ev_info.preview_shutter, s_sensor_ev_info.preview_gain);
 
-	SENSOR_PRINT("capture_shutter = 0x%x, capture_gain = 0x%x", cap_shutter, cap_gain);
+	SENSOR_PRINT("capture_shutter = %d, capture_gain = %f", cap_shutter, cap_gain);
 snapshot_info:
 	s_hdr_info.capture_shutter = cap_shutter; //imx132_read_shutter();
 	s_hdr_info.capture_gain = cap_gain; //imx132_read_gain();
