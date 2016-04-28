@@ -281,23 +281,47 @@ cmr_u32 _isp_dev_access_convert_effect(cmr_u32 value)
 	cmr_u32 convert_value = ISP_SPECIAL_EFFECT_OFF;
 
 	switch (value) {
-	case 0://CAMERA_EFFECT_NONE
+	case CAMERA_EFFECT_NONE:
 		convert_value = ISP_SPECIAL_EFFECT_OFF;
 		break;
-	case 1://CAMERA_EFFECT_MONO
+	case CAMERA_EFFECT_MONO:
 		convert_value = ISP_SPECIAL_EFFECT_GRAYSCALE;
 		break;
-	case 2://CAMERA_EFFECT_RED
-	case 3://CAMERA_EFFECT_GREEN
-	case 4://CAMERA_EFFECT_BLUE
-	case 5://CAMERA_EFFECT_YELLOW
-		ISP_LOGE("don't support effect %d", value);
+	case CAMERA_EFFECT_RED:
+		convert_value = ISP_SPECIAL_EFFECT_REDPOINTS;
 		break;
-	case 6://CAMERA_EFFECT_NEGATIVE
+	case CAMERA_EFFECT_GREEN:
+		convert_value = ISP_SPECIAL_EFFECT_GREENPOINTS;
+		break;
+	case CAMERA_EFFECT_BLUE:
+		convert_value = ISP_SPECIAL_EFFECT_BLUEPOINTS;
+		break;
+	case CAMERA_EFFECT_YELLOW:
+		convert_value = ISP_SPECIAL_EFFECT_REDYELLOWPOINTS;
+		break;
+	case CAMERA_EFFECT_NEGATIVE:
 		convert_value = ISP_SPECIAL_EFFECT_NEGATIVE;
 		break;
-	case 7://CAMERA_EFFECT_SEPIA
+	case CAMERA_EFFECT_SEPIA:
 		convert_value = ISP_SPECIAL_EFFECT_SEPIA;
+		break;
+	case CAMERA_EFFECT_SOLARIZE:
+		convert_value = ISP_SPECIAL_EFFECT_SOLARIZE;
+		break;
+	case CAMERA_EFFECT_WARMVINTAGE:
+		convert_value = ISP_SPECIAL_EFFECT_WARMVINTAGE;
+		break;
+	case CAMERA_EFFECT_COLDVINTAGE:
+		convert_value = ISP_SPECIAL_EFFECT_COLDVINTAGE;
+		break;
+	case CAMERA_EFFECT_WASHOUT:
+		convert_value = ISP_SPECIAL_EFFECT_WASHOUT;
+		break;
+	case CAMERA_EFFECT_POSTERISE:
+		convert_value = ISP_SPECIAL_EFFECT_POSTERISE;
+		break;
+	case CAMERA_EFFECT_USERDEFINED:
+		convert_value = ISP_SPECIAL_EFFECT_USERDEFINED;
 		break;
 	default:
 		ISP_LOGI("don't support %d", value);
