@@ -50,7 +50,7 @@
 #define SNAPSHOT_MIPI_PER_LANE_BPS	600
 #define PREVIEW_MIPI_PER_LANE_BPS	600
 
-/*line time unit: 0.1us*/
+/*line time unit: 1ns*/
 #define SNAPSHOT_LINE_TIME		18700
 #define PREVIEW_LINE_TIME		18700
 

@@ -963,8 +963,8 @@ static SENSOR_REG_TAB_INFO_T s_imx230_resolution_tab_raw[SENSOR_MODE_MAX] = {
 static SENSOR_TRIM_T s_imx230_resolution_trim_tab[SENSOR_MODE_MAX] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 //	{0, 0, 1280, 720, 10000 , PREVIEW_MIPI_PER_LANE_BPS, 828, {0, 0, 1280, 720}},
-	{0, 0, 2672, 2008, 14400 , PREVIEW_MIPI_PER_LANE_BPS, 2320, {0, 0, 2672, 2008}},
-	{0, 0, 5344, 4016, 10000, SNAPSHOT_MIPI_PER_LANE_BPS, 4140, {0, 0, 5344, 4016}},
+	{0, 0, 2672, 2008, 14343 , PREVIEW_MIPI_PER_LANE_BPS, 2320, {0, 0, 2672, 2008}},
+	{0, 0, 5344, 4016, 10040, SNAPSHOT_MIPI_PER_LANE_BPS, 4140, {0, 0, 5344, 4016}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},

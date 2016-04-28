@@ -1834,6 +1834,21 @@ static const SENSOR_REG_T s5k3l2xx_common_init_old[] = {
 };
 
 static const SENSOR_REG_T s5k3l2xx_4144x3106_setting_new[] = {
+    /*Full Size 30fps [4:3]
+    Pixel Clock Output Clock
+    433.3333333 1096
+    1H time [Dec]   1H time [us]
+    4512    10.412
+    Ext 1H time [Dec]   Ext 1H time [us]
+    4566.144    10.412
+    1V time [Dec]   1V time [ms]
+    3190    33.215
+    Frame rate  30.107
+    VBI [ms]    0.875
+    Width   4144
+    Height  3106
+#  of  lane	4
+    Address Value */
 
 {0x0136,0x1A00},
 {0x0104,0x0100},
@@ -1926,6 +1941,21 @@ static const SENSOR_REG_T s5k3l2xx_2072x1554_setting[] = {
 {0x0104,	0x0000},
 };
 static const SENSOR_REG_T s5k3l2xx_2072x1554_setting_new[] = {
+    /*Binning 15fps [4:3]
+Pixel Clock	Output Clock
+433.3333333	1096
+1H time [Dec]	1H time [us]
+5680	13.108
+Ext 1H time [Dec]	Ext 1H time [us]
+5748.16	13.108
+1V time [Dec]	1V time [ms]
+5070	66.456
+Frame rate	15.048
+VBI [ms]	46.087
+Width	2072
+Height	1554
+#  of  lane	4
+Address	Value     */
     {0x0136,0x1A00},
     {0x0104,0x0100},
     {0x35D8,0x0000},
@@ -1978,8 +2008,13 @@ static SENSOR_REG_TAB_INFO_T s_s5k3l2xx_resolution_Tab_RAW[] = {
 
 static SENSOR_TRIM_T s_s5k3l2xx_Resolution_Trim_Tab[] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-//	{0, 0, 2072, 1554, 13400, 900, 1664, {0, 0, 2072, 1554}},
-	{0, 0, 4144, 3106, 10400, 950, 3190, {0, 0, 4144, 3106}},
+        #ifdef MClK_26M_SS
+        //	{0, 0, 2072, 1554, 13108, 900, 1664, {0, 0, 2072, 1554}},//line time 13108 for 26m 13148 for 24m
+	{0, 0, 4144, 3106, 10412, 950, 3190, {0, 0, 4144, 3106}},//line time 10412 for 26m
+        #else
+//	{0, 0, 2072, 1554, 13148, 900, 1664, {0, 0, 2072, 1554}},//line time 13108 for 26m 13148 for 24m
+	{0, 0, 4144, 3106, 11326, 950, 3190, {0, 0, 4144, 3106}},//line time 10412 for 26m
+	#endif
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
@@ -2388,6 +2423,9 @@ static unsigned long _s5k3l2xx_PowerOn(SENSOR_HW_HANDLE handle, unsigned long po
 		Sensor_SetResetLevel(reset_level);
 		//Sensor_PowerDown(power_down);
 		//Sensor_SetVoltage(dvdd_val, avdd_val, iovdd_val);
+		Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
+		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
+		usleep(10 * 1000);
 		Sensor_SetAvddVoltage(avdd_val);
 		Sensor_SetIovddVoltage(iovdd_val);
                    Sensor_SetDvddVoltage(dvdd_val);
