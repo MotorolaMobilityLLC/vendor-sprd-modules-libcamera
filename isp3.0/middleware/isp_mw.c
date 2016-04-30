@@ -281,10 +281,11 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 	isp3a_input.ex_info = input_ptr->ex_info;
 	isp3a_input.otp_data = input_ptr->otp_data;
 	if (cxt->tuning_bin.isp_dev_bin_info.puc_shading_bin_addr
-		&& cxt->tuning_bin.isp_dev_bin_info.uw_shading_bin_size >= (114 + sizeof(struct sensor_otp_iso_awb_info))) {
+		&& cxt->tuning_bin.isp_dev_bin_info.uw_shading_bin_size >= (114 + sizeof(struct sensor_otp_iso_awb_info) + OTP_LSC_DATA_SIZE)) {
 		/*for bin otp data: shading addr offset +114*/
 		isp3a_input.bin_info.otp_data_addr = (struct sensor_otp_iso_awb_info *)(cxt->tuning_bin.isp_dev_bin_info.puc_shading_bin_addr + 114);
-		ISP_LOGI("bin otp data iso=%d, r=%d,g=%d,b=%d",isp3a_input.bin_info.otp_data_addr->iso, isp3a_input.bin_info.otp_data_addr->gain_r,
+		isp3a_input.bin_info.lsc_otp_addr = cxt->tuning_bin.isp_dev_bin_info.puc_shading_bin_addr + 114 + sizeof(struct sensor_otp_iso_awb_info);
+		ISP_LOGV("bin otp data iso=%d, r=%d,g=%d,b=%d",isp3a_input.bin_info.otp_data_addr->iso, isp3a_input.bin_info.otp_data_addr->gain_r,
 													isp3a_input.bin_info.otp_data_addr->gain_g, isp3a_input.bin_info.otp_data_addr->gain_b);
 	}
 	ret = isp_3a_fw_init(&isp3a_input, &cxt->isp_3a_handle);

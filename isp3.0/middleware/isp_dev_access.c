@@ -1194,6 +1194,22 @@ cmr_int isp_dev_access_get_exif_debug_info(cmr_handle isp_dev_handle, struct deb
 	return ret;
 }
 
+cmr_int isp_dev_access_set_cfg_otp_info(cmr_handle isp_dev_handle, struct isp_iq_otp_info *data)
+{
+	cmr_int                                ret = ISP_SUCCESS;
+	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+
+	if (!data) {
+		CMR_LOGE("data is null error.");
+		return -1;
+	}
+
+	ret = isp_dev_cfg_otp_info(cxt->isp_driver_handle, data);
+
+	ISP_LOGI("done %ld" ,ret);
+	return ret;
+}
+
 cmr_int isp_dev_access_get_debug_info(cmr_handle isp_dev_handle, struct debug_info2 *debug_info)
 {
 	cmr_int                                ret = ISP_SUCCESS;

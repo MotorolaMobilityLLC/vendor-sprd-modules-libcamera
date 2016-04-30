@@ -190,6 +190,7 @@ static cmr_int isp3a_set_pos(cmr_handle handle, struct af_ctrl_motor_pos * in);
 static cmr_int isp3a_start_af_notify(cmr_handle handle, void *data);
 static cmr_int isp3a_end_af_notify(cmr_handle handle, struct af_result_param *data);
 static cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input_ptr);
+static cmr_int isp3a_set_cfg_otp_info(cmr_handle isp_3a_handle);
 static cmr_int isp3a_alg_deinit(cmr_handle isp_3a_handle);
 static cmr_int isp3a_create_ctrl_thread(cmr_handle isp_3a_handle);
 static cmr_int isp3a_ctrl_thread_proc(struct cmr_msg *message, void* p_data);
@@ -674,6 +675,47 @@ cmr_int isp3a_end_af_notify(cmr_handle handle, struct af_result_param *data)
 				   sizeof(struct isp_af_notice));
 exit:
 	ISP_LOGI("done %ld", ret);
+	return ret;
+}
+
+cmr_int isp3a_set_cfg_otp_info(cmr_handle isp_3a_handle)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                     *cxt = NULL;
+	struct isp_iq_otp_info                 iq_info;
+	cmr_u16 size;
+
+	ISP_CHECK_HANDLE_VALID(isp_3a_handle);
+
+	cxt = (struct isp3a_fw_context *)isp_3a_handle;
+	memset(&iq_info, 0x00, sizeof(iq_info));
+	if (cxt->otp_data) {
+		iq_info.cali_status = cxt->otp_data->program_flag;
+		iq_info.iso = cxt->otp_data->isp_awb_info.iso;
+		iq_info.r_gain = cxt->otp_data->isp_awb_info.gain_r;
+		iq_info.g_gain = cxt->otp_data->isp_awb_info.gain_g;
+		iq_info.b_gain = cxt->otp_data->isp_awb_info.gain_b;
+		if (cxt->otp_data->lsc_info.lsc_data_addr) {
+			size = MIN(cxt->otp_data->lsc_info.lsc_data_size, OTP_LSC_DATA_SIZE);
+			memcpy(&iq_info.lsc[0], cxt->otp_data->lsc_info.lsc_data_addr, size);
+			iq_info.lsc_length = size;
+		}
+	} else if (cxt->bin_cxt.bin_info.otp_data_addr) {
+		ISP_LOGV("use bin otp data");
+		iq_info.cali_status = 1;
+		iq_info.iso = cxt->bin_cxt.bin_info.otp_data_addr->iso;
+		iq_info.r_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_r;
+		iq_info.g_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_g;
+		iq_info.b_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_b;
+		if (cxt->bin_cxt.bin_info.lsc_otp_addr) {
+			memcpy(&iq_info.lsc[0], cxt->bin_cxt.bin_info.lsc_otp_addr, OTP_LSC_DATA_SIZE);
+			iq_info.lsc_length = OTP_LSC_DATA_SIZE;
+		}
+	}
+	ret = isp_dev_access_set_cfg_otp_info(cxt->dev_access_handle, &iq_info);
+	if (ret)
+		ISP_LOGE("failed to set cfg otp info");
+
 	return ret;
 }
 
@@ -1982,35 +2024,36 @@ cmr_int isp3a_get_info(cmr_handle isp_3a_handle, void *param_ptr)
 		ISP_LOGI("af debug size is %d", size);
 	}
 	otp_info = &cxt->debug_data.debug_info.otp_report_debug_info2;
+	memset(otp_info, 0, sizeof(struct otp_report_debug2));
 	if (cxt->otp_data) {
 		otp_info->current_module_calistatus = cxt->otp_data->program_flag;
-	    otp_info->current_module_year = cxt->otp_data->module_info.year;
-	    otp_info->current_module_month = cxt->otp_data->module_info.month;
-	    otp_info->current_module_day = cxt->otp_data->module_info.day;
-	    otp_info->current_module_mid = cxt->otp_data->module_info.mid;
-	    otp_info->current_module_lens_id = cxt->otp_data->module_info.lens_id;
-	    otp_info->current_module_vcm_id = cxt->otp_data->module_info.vcm_id;
-	    otp_info->current_module_driver_ic = cxt->otp_data->module_info.driver_ic_id;
-	    otp_info->current_module_iso = cxt->otp_data->isp_awb_info.iso;
-	    otp_info->current_module_r_gain = cxt->otp_data->isp_awb_info.gain_r;
-	    otp_info->current_module_g_gain = cxt->otp_data->isp_awb_info.gain_g;
-	    otp_info->current_module_b_gain = cxt->otp_data->isp_awb_info.gain_b;
+		otp_info->current_module_year = cxt->otp_data->module_info.year;
+		otp_info->current_module_month = cxt->otp_data->module_info.month;
+		otp_info->current_module_day = cxt->otp_data->module_info.day;
+		otp_info->current_module_mid = cxt->otp_data->module_info.mid;
+		otp_info->current_module_lens_id = cxt->otp_data->module_info.lens_id;
+		otp_info->current_module_vcm_id = cxt->otp_data->module_info.vcm_id;
+		otp_info->current_module_driver_ic = cxt->otp_data->module_info.driver_ic_id;
+		otp_info->current_module_iso = cxt->otp_data->isp_awb_info.iso;
+		otp_info->current_module_r_gain = cxt->otp_data->isp_awb_info.gain_r;
+		otp_info->current_module_g_gain = cxt->otp_data->isp_awb_info.gain_g;
+		otp_info->current_module_b_gain = cxt->otp_data->isp_awb_info.gain_b;
 		if (cxt->otp_data->lsc_info.lsc_data_addr) {
 			size = MIN(cxt->otp_data->lsc_info.lsc_data_size, OTP_LSC_DATA_SIZE);
 			memcpy(&otp_info->current_module_lsc[0], cxt->otp_data->lsc_info.lsc_data_addr, size);
 		}
-	    otp_info->current_module_af_flag = cxt->otp_data->af_info.flag;
-	    otp_info->current_module_infinity = cxt->otp_data->af_info.infinite_cali;
-	    otp_info->current_module_macro = cxt->otp_data->af_info.macro_cali;
+		otp_info->current_module_af_flag = cxt->otp_data->af_info.flag;
+		otp_info->current_module_infinity = cxt->otp_data->af_info.infinite_cali;
+		otp_info->current_module_macro = cxt->otp_data->af_info.macro_cali;
 		otp_info->total_check_sum = cxt->otp_data->checksum;
 	} else if (cxt->bin_cxt.bin_info.otp_data_addr) {
-		memset(otp_info, 0, sizeof(struct otp_report_debug2));
 		otp_info->current_module_iso = cxt->bin_cxt.bin_info.otp_data_addr->iso;
 		otp_info->current_module_r_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_r;
 		otp_info->current_module_g_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_g;
 		otp_info->current_module_b_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_b;
-	} else {
-		memset(otp_info, 0, sizeof(struct otp_report_debug2));
+		if (cxt->bin_cxt.bin_info.lsc_otp_addr) {
+			memcpy(&otp_info->current_module_lsc[0], cxt->bin_cxt.bin_info.lsc_otp_addr, OTP_LSC_DATA_SIZE);
+		}
 	}
 	cxt->debug_data.debug_info.structure_size2 = sizeof(struct debug_info2);
 	info_ptr->size = sizeof(struct debug_info2);
@@ -2224,6 +2267,7 @@ cmr_int isp3a_get_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr)
 		exif_ptr->main_ver_major = (uint16)libVersion;
 		exif_ptr->main_ver_minor = (libVersion - exif_ptr->main_ver_major) * 10000;
 	}
+	memset(&exif_ptr->otp_report_debug_info1, 0, sizeof(struct otp_report_debug1));
 	if (cxt->otp_data) {
 		exif_ptr->otp_report_debug_info1.current_module_calistatus = cxt->otp_data->program_flag;
 		exif_ptr->otp_report_debug_info1.current_module_year = cxt->otp_data->module_info.year;
@@ -2242,13 +2286,10 @@ cmr_int isp3a_get_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr)
 		exif_ptr->otp_report_debug_info1.current_module_macro = cxt->otp_data->af_info.macro_cali;
 		exif_ptr->otp_report_debug_info1.total_check_sum = cxt->otp_data->checksum;
 	} else if (cxt->bin_cxt.bin_info.otp_data_addr) {
-		memset(&exif_ptr->otp_report_debug_info1, 0, sizeof(struct otp_report_debug1));
 		exif_ptr->otp_report_debug_info1.current_module_iso = cxt->bin_cxt.bin_info.otp_data_addr->iso;
 		exif_ptr->otp_report_debug_info1.current_module_r_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_r;
 		exif_ptr->otp_report_debug_info1.current_module_g_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_g;
 		exif_ptr->otp_report_debug_info1.current_module_b_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_b;
-	} else {
-		memset(&exif_ptr->otp_report_debug_info1, 0, sizeof(struct otp_report_debug1));
 	}
 
 	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_GET_EXT_DEBUG_INFO, NULL, &ae_out);
@@ -3287,6 +3328,8 @@ cmr_int isp_3a_fw_init(struct isp_3a_fw_init_in *input_ptr, cmr_handle *isp_3a_h
 	if (ret) {
 		goto exit;
 	}
+	ret = isp3a_set_cfg_otp_info((cmr_handle)cxt);
+
 	ret = isp3a_create_thread((cmr_handle)cxt);
 exit:
 	if (ret) {
