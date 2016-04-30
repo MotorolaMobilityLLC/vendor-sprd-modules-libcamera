@@ -232,6 +232,9 @@ uint32 al3awrapperawb_updateispconfig_awb(uint8 a_ucSensor, struct alhw3a_awb_cf
 	uint32 ret = ERR_WPR_AWB_SUCCESS;
 #ifdef LINK_ALTEK_ISP_DRV_DEFINE   /* only build when link to ISP driver define */
 	ret = ISPDRV_AP3AMGR_SetAWBCfg(a_ucSensor, aawbconfig);
+#else
+	UNUSED(a_ucSensor);
+	UNUSED(aawbconfig);
 #endif
 	return ret;
 }

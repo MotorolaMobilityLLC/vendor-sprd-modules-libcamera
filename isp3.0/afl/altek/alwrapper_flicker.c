@@ -50,6 +50,7 @@ uint32 al3awrapper_dispatchhw3a_flickerstats( struct isp_drv_meta_antif_t * alis
 	struct al3awrapper_stats_flicker_t *ppatched_flickerdat;
 	uint8 *stats;
 
+	UNUSED(aflickerlibcallback);
 	/* check input parameter validity */
 	if ( alisp_metadata_flicker == NULL )
 		return ERR_WRP_FLICKER_EMPTY_METADATA;
@@ -120,6 +121,8 @@ uint32 al3awrapperflicker_updateispconfig_flicker( uint8 a_ucsensor, struct alhw
 {
 	uint32 ret = ERR_WPR_FLICKER_SUCCESS;
 
+	UNUSED(a_ucsensor);
+	UNUSED(aflickerconfig);
 	return ret;
 }
 

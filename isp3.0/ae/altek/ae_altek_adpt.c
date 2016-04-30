@@ -914,11 +914,13 @@ exit:
 
 static void aealtek_change_ae_state(struct aealtek_cxt *cxt_ptr, enum isp3a_ae_ctrl_state from, enum isp3a_ae_ctrl_state to)
 {
+	UNUSED(from);
 	cxt_ptr->ae_state = to;
 }
 
 static void aealtek_change_flash_state(struct aealtek_cxt *cxt_ptr, enum aealtek_flash_state from, enum aealtek_flash_state to)
 {
+	UNUSED(from);
 	cxt_ptr->flash_param.flash_state = to;
 }
 
@@ -1199,7 +1201,7 @@ static cmr_int aealtek_set_iso(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	enum ae_set_param_type_t type = 0;
 	struct ae_set_param_content_t *param_ct_ptr = NULL;
 
-
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param is NULL error!");
 		goto exit;
@@ -1233,6 +1235,7 @@ static cmr_int aealtek_set_fix_exposure_time(struct aealtek_cxt *cxt_ptr, struct
 	cmr_int ret = ISP_ERROR;
 	cmr_u32 exp_time = 0;
 
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
 		goto exit;
@@ -1254,6 +1257,7 @@ static cmr_int aealtek_set_fix_sensitivity(struct aealtek_cxt *cxt_ptr, struct a
 	cmr_int ret = ISP_ERROR;
 	cmr_u32 sensitivity = 0;
 
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
 		goto exit;
@@ -1274,6 +1278,7 @@ static cmr_int aealtek_set_fix_frame_duration(struct aealtek_cxt *cxt_ptr, struc
 	cmr_int ret = ISP_ERROR;
 	cmr_u32 frame_duration = 0;
 
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
 		goto exit;
@@ -1301,6 +1306,7 @@ static cmr_int aealtek_set_exp_comp(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 	struct ae_set_param_content_t *param_ct_ptr = NULL;
 	cmr_s32 lib_ev_comp = 0;
 
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
 		goto exit;
@@ -1357,7 +1363,7 @@ static cmr_int aealtek_set_bypass(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_pa
 	enum ae_set_param_type_t type = 0;
 	struct ae_set_param_content_t *param_ct_ptr = NULL;
 
-
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
 		goto exit;
@@ -1393,7 +1399,7 @@ static cmr_int aealtek_set_flicker(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 	struct ae_set_param_content_t *param_ct_ptr = NULL;
 	enum ae_antiflicker_mode_t lib_flicker_mode = 0;
 
-
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
 		goto exit;
@@ -1433,7 +1439,7 @@ static cmr_int aealtek_set_scene_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 	struct ae_set_param_content_t *param_ct_ptr = NULL;
 	enum ae_scene_mode_t lib_scene_mode = 0;
 
-
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param is NULL error!");
 		goto exit;
@@ -1491,7 +1497,7 @@ static cmr_int aealtek_set_fps(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	cmr_u32 max_fps = 0;
 	cmr_u32 line_time = 0;
 
-
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
 		goto exit;
@@ -1570,7 +1576,7 @@ static cmr_int aealtek_set_measure_lum(struct aealtek_cxt *cxt_ptr, struct ae_ct
 {
 	cmr_int ret = ISP_ERROR;
 
-
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
 		goto exit;
@@ -1614,6 +1620,7 @@ static cmr_int aealtek_set_stat_trim(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 	enum ae_set_param_type_t type = 0;
 	struct ae_set_param_content_t param_ct;
 
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param is NULL error!");
 		goto exit;
@@ -1671,7 +1678,7 @@ static cmr_int aealtek_set_lib_roi(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 	enum ae_set_param_type_t type = 0;
 	struct rect_roi_config_t *roi_ptr = NULL;
 
-
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
 		goto exit;
@@ -1786,7 +1793,8 @@ static cmr_int aealtek_set_convergence_req(struct aealtek_cxt *cxt_ptr, struct a
 {
 	cmr_int ret = ISP_ERROR;
 
-
+	UNUSED(in_ptr);
+	UNUSED(out_ptr);
 	if (!cxt_ptr) {
 		ISP_LOGE("param %p is NULL error!", cxt_ptr);
 		goto exit;
@@ -1951,6 +1959,8 @@ static cmr_int aealtek_first_work(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_pa
 	cmr_u32 max_fps = 0;
 	cmr_u32 line_time = 0;
 
+	UNUSED(in_ptr);
+	UNUSED(out_ptr);
 	if (!cxt_ptr) {
 		ISP_LOGE("param is NULL error!");
 		goto exit;
@@ -2010,7 +2020,7 @@ static cmr_int aealtek_work_preview(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 	cmr_u32 max_fps = 0;
 	cmr_u32 line_time = 0;
 
-
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
 		goto exit;
@@ -2148,7 +2158,7 @@ static cmr_int aealtek_capture_hdr(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 
 	struct aealtek_lib_exposure_data ae_exposure;
 
-
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
 		goto exit;
@@ -2240,7 +2250,7 @@ static cmr_int aealtek_capture_normal(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 
 	struct aealtek_lib_exposure_data ae_exposure;
 
-
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
 		goto exit;
@@ -2335,7 +2345,7 @@ static cmr_int aealtek_work_video(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_pa
 
 	enum isp3a_work_mode work_mode = 0;
 
-
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param is NULL error!");
 		goto exit;
@@ -2751,6 +2761,7 @@ static cmr_int aealtek_set_flash_notice(struct aealtek_cxt *cxt_ptr, struct ae_c
 
 	enum isp_flash_mode mode = 0;
 
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !notice_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, notice_ptr);
 		goto exit;
@@ -2877,6 +2888,7 @@ static cmr_int aealtek_get_flash_effect(struct aealtek_cxt *cxt_ptr, struct ae_c
 	enum ae_set_param_type_t type = 0;
 	struct ae_set_param_content_t param_ct;
 
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param is NULL error!");
 		goto exit;
@@ -3120,7 +3132,7 @@ static cmr_int aealtek_get_bv_by_lum(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 {
 	cmr_int ret = ISP_ERROR;
 
-
+	UNUSED(in_ptr);
 	if (!cxt_ptr || !out_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, out_ptr);
 		goto exit;
@@ -3137,7 +3149,7 @@ static cmr_int aealtek_get_bv_by_gain(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 {
 	cmr_int ret = ISP_ERROR;
 
-
+	UNUSED(in_ptr);
 	if (!cxt_ptr || !out_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, out_ptr);
 		goto exit;
@@ -3152,6 +3164,7 @@ static cmr_int aealtek_get_flicker_mode(struct aealtek_cxt *cxt_ptr, struct ae_c
 {
 	cmr_int ret = ISP_ERROR;
 
+	UNUSED(in_ptr);
 	if (!cxt_ptr || !out_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, out_ptr);
 		goto exit;
@@ -3181,6 +3194,7 @@ static cmr_int aealtek_set_fd_param(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 	cmr_u32 ex = 0;
 	cmr_u32 ey = 0;
 
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
 		goto exit;
@@ -3232,6 +3246,7 @@ static cmr_int aealtek_set_gyro_param(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 	struct ae_set_param_content_t *param_ct_ptr = NULL;
 	cmr_int i = 0;
 
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param is NULL error!");
 		goto exit;
@@ -3270,6 +3285,7 @@ static cmr_int aealtek_set_hdr_ev(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_pa
 	enum ae_set_param_type_t type = 0;
 	struct ae_set_param_content_t *param_ct_ptr = NULL;
 
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param is NULL error!");
 		goto exit;
@@ -3367,6 +3383,7 @@ static cmr_int aealtek_set_awb_report(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 {
 	cmr_int ret = ISP_ERROR;
 
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param is NULL error!");
 		goto exit;
@@ -3391,7 +3408,7 @@ static cmr_int aealtek_set_af_report(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 	enum ae_set_param_type_t type = 0;
 	struct ae_set_param_content_t *param_ct_ptr = NULL;
 
-
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
 		goto exit;
@@ -3421,7 +3438,8 @@ static cmr_int aealtek_set_snapshot_finished(struct aealtek_cxt *cxt_ptr, struct
 {
 	cmr_int ret = ISP_ERROR;
 
-
+	UNUSED(in_ptr);
+	UNUSED(out_ptr);
 	if (!cxt_ptr) {
 		ISP_LOGE("param %p is NULL error!", cxt_ptr);
 		goto exit;
@@ -3444,7 +3462,7 @@ static cmr_int aealtek_get_flash_eb(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 {
 	cmr_int ret = ISP_ERROR;
 
-
+	UNUSED(in_ptr);
 	if (!cxt_ptr || !out_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, out_ptr);
 		goto exit;
@@ -3461,7 +3479,7 @@ static cmr_int aealtek_get_iso(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 {
 	cmr_int ret = ISP_ERROR;
 
-
+	UNUSED(in_ptr);
 	if (!cxt_ptr || !out_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, out_ptr);
 		goto exit;
@@ -3478,6 +3496,7 @@ static cmr_int aealtek_get_ae_state(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 {
 	cmr_int ret = ISP_ERROR;
 
+	UNUSED(in_ptr);
 	if (!cxt_ptr || !out_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, out_ptr);
 		goto exit;
@@ -3494,7 +3513,7 @@ static cmr_int aealtek_get_ev_table(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 {
 	cmr_int ret = ISP_ERROR;
 
-
+	UNUSED(in_ptr);
 	if (!cxt_ptr || !out_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, out_ptr);
 		goto exit;
@@ -3509,7 +3528,7 @@ static cmr_int aealtek_get_debug_data(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 {
 	cmr_int ret = ISP_ERROR;
 
-
+	UNUSED(in_ptr);
 	if (!cxt_ptr || !out_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, out_ptr);
 		goto exit;
@@ -3527,7 +3546,7 @@ static cmr_int aealtek_get_exif_data(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 {
 	cmr_int ret = ISP_ERROR;
 
-
+	UNUSED(in_ptr);
 	if (!cxt_ptr || !out_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, out_ptr);
 		goto exit;
@@ -3545,7 +3564,7 @@ static cmr_int aealtek_get_ext_debug_info(struct aealtek_cxt *cxt_ptr, struct ae
 {
 	cmr_int ret = ISP_ERROR;
 
-
+	UNUSED(in_ptr);
 	if (!cxt_ptr || !out_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, out_ptr);
 		goto exit;
@@ -3566,7 +3585,7 @@ static cmr_int aealtek_get_hw_iso_speed(struct aealtek_cxt *cxt_ptr, struct ae_c
 {
 	cmr_int ret = ISP_ERROR;
 
-
+	UNUSED(in_ptr);
 	if (!cxt_ptr || !out_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, out_ptr);
 		goto exit;
@@ -3585,7 +3604,7 @@ static cmr_int aealtek_get_exp_gain(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 {
 	cmr_int ret = ISP_ERROR;
 
-
+	UNUSED(in_ptr);
 	if (!cxt_ptr || !out_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, out_ptr);
 		goto exit;
@@ -3607,6 +3626,7 @@ static cmr_int aealtek_set_ui_flash_mode(struct aealtek_cxt *cxt_ptr, struct ae_
 {
 	cmr_int ret = ISP_ERROR;
 
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
 		goto exit;
@@ -3626,6 +3646,7 @@ static cmr_int aealtek_set_y_hist_stats(struct aealtek_cxt *cxt_ptr, struct ae_c
 	cmr_int ret = ISP_ERROR;
 	struct al3awrapper_stats_yhist_t  wrapper_y_hist;
 
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
 		goto exit;
@@ -4339,7 +4360,7 @@ static cmr_int aealtek_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_proc_
 	struct alaeruntimeobj_t *obj_ptr = NULL;
 	struct ae_output_data_t *out_data_ptr = NULL;
 
-
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
 		goto exit;

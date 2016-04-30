@@ -597,7 +597,7 @@ uint32 al3awrapper_getcurrentdlsequence( uint8 ucahbsensoreid, struct alisp_dlds
 	adlselist = (struct alisp_dldsequence_t* )adldsequence;
 
 	adlselist->ucahbsensoreid = ucahbsensoreid;	/* fulfill AHB sensor index which would be used when calling al3AWrapper_SetDLSequence */
-
+	UNUSED(aissingle3amode);
 	switch ( opmode ) {
 	case OPMODE_NORMALLV:
 		/* W9 config */

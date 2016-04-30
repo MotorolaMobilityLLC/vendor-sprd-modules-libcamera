@@ -441,6 +441,7 @@ cmr_int isp3a_awb_callback(cmr_handle handle, enum ae_ctrl_cb_type cmd, struct a
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)handle;
 
+	UNUSED(in_ptr);
 	switch (cmd) {
 	case AWB_CTRL_CB_CONVERGE:
 		cxt->awb_cxt.awb_status = AWB_CTRL_STATUS_CONVERGE;
@@ -642,6 +643,7 @@ cmr_int isp3a_start_af_notify(cmr_handle handle, void *data)
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)handle;
 	struct isp_af_notice                        af_notice = {0x00};
 
+	UNUSED(data);
 	ISP_LOGI("move start");
 	if (!cxt || !cxt->caller_callback) {
 		ISP_LOGE("calllback is NULL");
@@ -2222,6 +2224,7 @@ cmr_int isp3a_set_convergence_req(cmr_handle isp_3a_handle, void *param_ptr)
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
 
+	UNUSED(param_ptr);
 	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_CONVERGENCE_REQ, NULL, NULL);
 exit:
 	return ret;
@@ -2232,6 +2235,7 @@ cmr_int isp3a_set_snapshot_finished(cmr_handle isp_3a_handle, void *param_ptr)
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
 
+	UNUSED(param_ptr);
 	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_SNAPSHOT_FINISHED, NULL, NULL);
 exit:
 	return ret;
@@ -2675,6 +2679,7 @@ cmr_int isp3a_hold_statistics_buf(cmr_handle isp_3a_handle, cmr_int type, struct
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
 
+	UNUSED(type);
 	ISP_CHECK_HANDLE_VALID(isp_3a_handle);
 
 	if (!buf_ptr) {
@@ -2697,6 +2702,7 @@ cmr_int isp3a_release_statistics_buf(cmr_handle isp_3a_handle, cmr_int type, str
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
 
+	UNUSED(type);
 	ISP_CHECK_HANDLE_VALID(isp_3a_handle);
 
 	if (!buf_ptr) {
@@ -2727,6 +2733,10 @@ cmr_int isp3a_callback_func (cmr_handle handle, cmr_u32 cb_type, void *param_ptr
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 
+	UNUSED(handle);
+	UNUSED(cb_type);
+	UNUSED(param_ptr);
+	UNUSED(param_len);
 	return ret;
 }
 
@@ -3501,6 +3511,8 @@ cmr_int isp_3a_fw_receive_data(cmr_handle isp_3a_handle, cmr_int evt, void *data
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
 
+	UNUSED(evt);
+	UNUSED(data);
 	ISP_CHECK_HANDLE_VALID(isp_3a_handle);
 
 	ISP_LOGI("done %ld", ret);

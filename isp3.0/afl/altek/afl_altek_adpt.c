@@ -154,7 +154,7 @@ static cmr_int aflaltek_set_init_setting(struct aflaltek_cxt *cxt_ptr, struct af
 	enum flicker_set_param_type_t type = 0;
 	struct flicker_set_param_content_t *param_ct_ptr = NULL;
 
-
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
 		goto exit;
@@ -195,7 +195,7 @@ static cmr_int aflaltek_set_enable(struct aflaltek_cxt *cxt_ptr, struct afl_ctrl
 	enum flicker_set_param_type_t type = 0;
 	struct flicker_set_param_content_t *param_ct_ptr = NULL;
 
-
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
 		goto exit;
@@ -226,6 +226,7 @@ static cmr_int aflaltek_set_current_frequency(struct aflaltek_cxt *cxt_ptr, stru
 	cmr_int lib_ret = 0;
 	struct alflickerruntimeobj_t *obj_ptr = NULL;
 
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
 		goto exit;
@@ -254,7 +255,7 @@ static cmr_int aflaltek_set_reference_data_interval(struct aflaltek_cxt *cxt_ptr
 	enum flicker_set_param_type_t type = 0;
 	struct flicker_set_param_content_t *param_ct_ptr = NULL;
 
-
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
 		goto exit;
@@ -301,6 +302,8 @@ static cmr_int aflaltek_stat_queue_release_all(struct aflaltek_cxt *cxt_ptr, str
 	struct afl_ctrl_callback_in callback_in;
 	cmr_u32 data_length;
 
+	UNUSED(in_ptr);
+	UNUSED(out_ptr);
 	if (!cxt_ptr) {
 		ISP_LOGE("param %p is NULL error!", cxt_ptr);
 		goto exit;
@@ -327,6 +330,7 @@ static cmr_int aflaltek_set_ui_flicker_mode(struct aflaltek_cxt *cxt_ptr, struct
 {
 	cmr_int ret = ISP_ERROR;
 
+	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
 		goto exit;
@@ -345,7 +349,7 @@ static cmr_int aflaltek_get_debug_data(struct aflaltek_cxt *cxt_ptr, struct afl_
 {
 	cmr_int ret = ISP_ERROR;
 
-
+	UNUSED(in_ptr);
 	if (!cxt_ptr || !out_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, out_ptr);
 		goto exit;
@@ -363,7 +367,7 @@ static cmr_int aflaltek_get_exif_data(struct aflaltek_cxt *cxt_ptr, struct afl_c
 {
 	cmr_int ret = ISP_ERROR;
 
-
+	UNUSED(in_ptr);
 	if (!cxt_ptr || !out_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, out_ptr);
 		goto exit;
@@ -428,7 +432,8 @@ static cmr_int aflaltek_get_success_num(struct aflaltek_cxt *cxt_ptr, struct afl
 	enum flicker_get_param_type_t type = 0;
 	struct flicker_get_param_content_t *param_ct_ptr = NULL;
 
-
+	UNUSED(out_ptr);
+	UNUSED(in_ptr);
 	if (!cxt_ptr) {
 		ISP_LOGE("param %p is NULL error!", cxt_ptr);
 		goto exit;

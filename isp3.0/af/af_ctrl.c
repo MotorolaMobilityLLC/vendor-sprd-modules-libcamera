@@ -77,6 +77,7 @@ static cmr_int afctrl_start_notify(cmr_handle handle, void *data)
 	cmr_int ret = -ISP_ERROR;
 	struct afctrl_context *cxt = (struct afctrl_context *)handle;
 
+	UNUSED(data);
 	if (cxt->cb_ops.start_notify) {
 		ret = cxt->cb_ops.start_notify(cxt->caller_handle, NULL);
 	} else {

@@ -253,6 +253,7 @@ uint32 al3awrapper_updateaestate( struct ae_report_update_t* aaereport )
 {
 	uint32 ret = ERR_WPR_AE_SUCCESS;
 
+	UNUSED(aaereport);
 	/* state should follow framework define */
 	/* initial state, before AE running, state should be non-initialed state */
 
@@ -382,7 +383,10 @@ uint32 al3awrapperae_updateispconfig_ae( uint8 a_ucsensor, struct alhw3a_ae_cfgi
 {
 	uint32 ret = ERR_WPR_AE_SUCCESS;
 #ifdef LINK_ALTEK_ISP_DRV_DEFINE   /* only build when link to ISP driver define */
-	ret = ISPDRV_AP3AMGR_SetAECfg( a_ucSensor, aaeconfig );
+	ret = ISPDRV_AP3AMGR_SetAECfg( a_ucsensor, aaeconfig );
+#else
+	UNUSED(a_ucsensor);
+	UNUSED(aaeconfig);
 #endif
 	return ret;
 }

@@ -60,6 +60,7 @@ cmr_int ispmw_create_thread(cmr_handle isp_mw_handle)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 
+	UNUSED(isp_mw_handle);
 	return ret;
 }
 
@@ -440,6 +441,7 @@ cmr_int isp_proc_start(cmr_handle isp_handle, struct ips_in_param *input_ptr, st
 	struct isp_3a_get_dld_in                    dld_in;
 
 	ISP_LOGE("isp_proc_start");
+	UNUSED(output_ptr);
 	ret = isp_3a_fw_get_cfg(cxt->isp_3a_handle, &dev_in.hw_cfg);
 	if (ret) {
 		ISP_LOGE("failed to get cfg");
@@ -471,5 +473,7 @@ cmr_int isp_proc_next(cmr_handle isp_handle, struct ipn_in_param *input_ptr, str
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp_mw_context                       *cxt = (struct isp_mw_context *)isp_handle;
 
+	UNUSED(input_ptr);
+	UNUSED(output_ptr);
 	return ret;
 }

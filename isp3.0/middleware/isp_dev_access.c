@@ -810,6 +810,7 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 	cmr_int                                cnt = 0;
 	struct isp_sensor_resolution_info      *resolution_ptr = NULL;
 
+	UNUSED(output_ptr);
 	ISP_CHECK_HANDLE_VALID(isp_dev_handle);
 	ret = isp_dev_start(cxt->isp_driver_handle);
 	if (ret) {

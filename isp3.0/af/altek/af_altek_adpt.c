@@ -974,6 +974,8 @@ static cmr_int afaltek_adpt_update_awb(cmr_handle adpt_handle, void *in)
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct allib_af_input_awb_info_t awb_info = { 0x00 };
+
+	UNUSED(in);
 	ISP_LOGV("E");
 
 	//memcpy(&awb_info, in, sizeof(awb_info)); /* TBD */
@@ -1177,6 +1179,7 @@ static cmr_int afaltek_adpt_set_trigger_stats(cmr_handle adpt_handle, void *in)
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 
+	UNUSED(in);
 	return ret;
 }
 
