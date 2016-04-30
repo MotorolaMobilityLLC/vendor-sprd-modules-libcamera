@@ -432,10 +432,9 @@ static cmr_int prev_free_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id, 
 
 static cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id);
 
-static cmr_int prev_get_sn_preview_mode(struct sensor_exp_info *sensor_info,
-					struct img_size *target_size,
-					cmr_uint *work_mode);
-
+static cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
+					struct sensor_exp_info *sensor_info,
+					struct img_size *target_size, cmr_uint *work_mode);
 static cmr_int prev_get_sn_capture_mode(struct sensor_exp_info *sensor_info,
 					struct img_size *target_size,
 					cmr_uint *work_mode);
@@ -4983,7 +4982,8 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id)
 
 	/*get sensor preview work mode*/
 	if (handle->prev_cxt[camera_id].prev_param.preview_eb) {
-		ret = prev_get_sn_preview_mode(sensor_info, act_prev_size, &handle->prev_cxt[camera_id].prev_mode);
+		ret = prev_get_sn_preview_mode(handle, camera_id, sensor_info, act_prev_size,
+						&handle->prev_cxt[camera_id].prev_mode);
 		if (ret) {
 			CMR_LOGE("get preview mode failed!");
 			ret = CMR_CAMERA_FAIL;
@@ -4993,7 +4993,8 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id)
 
 	/*get sensor video work mode*/
 	if (handle->prev_cxt[camera_id].prev_param.video_eb) {
-		ret = prev_get_sn_preview_mode(sensor_info, act_video_size, &handle->prev_cxt[camera_id].video_mode);
+		ret = prev_get_sn_preview_mode(handle, camera_id, sensor_info, act_video_size,
+						&handle->prev_cxt[camera_id].video_mode);
 		if (ret) {
 			CMR_LOGE("get video mode failed!");
 			ret = CMR_CAMERA_FAIL;
@@ -5076,13 +5077,16 @@ exit:
 	return ret;
 }
 
-cmr_int prev_get_sn_preview_mode(struct sensor_exp_info *sensor_info, struct img_size *target_size, cmr_uint *work_mode)
+cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
+				struct sensor_exp_info *sensor_info,
+				struct img_size *target_size, cmr_uint *work_mode)
 {
 	cmr_int                  ret = CMR_CAMERA_FAIL;
 	cmr_u32                  width = 0, height = 0, i, last_one = 0;
 	cmr_u32                  search_height;
 	cmr_u32                  target_mode = SENSOR_MODE_MAX;
 	cmr_int                  offset1 = 0, offset2 = 0;
+	struct sensor_mode_fps_tag fps_info;
 
 	if (!sensor_info) {
 		CMR_LOGE("sn info is null!");
@@ -5095,10 +5099,19 @@ cmr_int prev_get_sn_preview_mode(struct sensor_exp_info *sensor_info, struct img
 	for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
 		if (SENSOR_MODE_MAX != sensor_info->mode_info[i].mode) {
 			height = sensor_info->mode_info[i].trim_height;
-			CMR_LOGI("height = %d", height);
+			CMR_LOGI("candidate height = %d", height);
 			height = CAMERA_ALIGNED_16(height);
 			if (IMG_DATA_TYPE_JPEG != sensor_info->mode_info[i].image_format) {
 				if (search_height <= height) {
+					/* dont choose high fps setting for no-slowmotion */
+					ret = handle->ops.get_sensor_fps_info(handle->oem_handle,
+						camera_id, i, &fps_info);
+					CMR_LOGV("mode=%d, is_high_fps=%d", i, fps_info.is_high_fps);
+					if (fps_info.is_high_fps) {
+						CMR_LOGD("dont choose high fps setting");
+						continue;
+					}
+
 					target_mode = i;
 					ret = CMR_CAMERA_SUCCESS;
 					break;
@@ -5113,18 +5126,9 @@ cmr_int prev_get_sn_preview_mode(struct sensor_exp_info *sensor_info, struct img
 		CMR_LOGI("can't find the right mode, %d", i);
 		target_mode = last_one;
 		ret = CMR_CAMERA_SUCCESS;
-	} else {
-		if (i > 1 && IS_RESEARCH(search_height, height)) {
-			offset1 = sensor_info->mode_info[i].trim_height - search_height;
-			offset2 = search_height - sensor_info->mode_info[i-1].trim_height;
-			CMR_LOGI("second_search_height = %d offset %ld %ld", search_height, offset1, offset2);
-			if (offset1 > offset2) {
-				target_mode = i - 1;
-			}
-		}
 	}
-	CMR_LOGI("target_mode %d", target_mode);
 
+	CMR_LOGI("target_mode %d", target_mode);
 	*work_mode = target_mode;
 
 	return ret;
@@ -5150,10 +5154,6 @@ cmr_int prev_get_sn_capture_mode(struct sensor_exp_info *sensor_info, struct img
 	CMR_LOGI("search_height = %d", search_height);
 	for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
 		if (SENSOR_MODE_MAX != sensor_info->mode_info[i].mode) {
-/*			if (sensor_info->mode_info[i].image_format == IMG_DATA_TYPE_JPEG) {
-				i = SENSOR_MODE_MAX;
-				break;
-			}*/
 			height = sensor_info->mode_info[i].trim_height;
 			CMR_LOGI("height = %d", height);
 			height = CAMERA_ALIGNED_16(height);
