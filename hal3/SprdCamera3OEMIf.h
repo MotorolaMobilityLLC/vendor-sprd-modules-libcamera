@@ -550,8 +550,10 @@ private:
 	uint32_t                        mRefocusHeapArray_size[kRefocusBufferCount+1];
 	uint32_t                        mRefocusHeapArray_mfd[kRefocusBufferCount+1];
 
-	/* mCommonHeapReserved for preview, video and zsl reserved buffer*/
-	sprd_camera_memory_t*           mCommonHeapReserved;
+	sprd_camera_memory_t*           mPreviewHeapReserved;
+	sprd_camera_memory_t*           mVideoHeapReserved;
+	sprd_camera_memory_t*           mZslHeapReserved;
+	sprd_camera_memory_t*           mDepthHeapReserved;
 	sprd_camera_memory_t*           mIspLscHeapReserved;
 	sprd_camera_memory_t*           mIspB4awbHeapReserved[kISPB4awbCount];
 	sprd_camera_memory_t*           mIspPreviewYReserved[2];

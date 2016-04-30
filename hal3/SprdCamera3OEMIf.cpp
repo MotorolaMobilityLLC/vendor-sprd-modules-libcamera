@@ -371,7 +371,10 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mRefocusHeapNum = 0;
 	mSubRawHeapSize = 0;
 
-	mCommonHeapReserved = NULL;
+	mPreviewHeapReserved= NULL;
+	mVideoHeapReserved= NULL;
+	mZslHeapReserved= NULL;
+	mDepthHeapReserved= NULL;
 	mIspLscHeapReserved = NULL;
 	mIspFirmwareReserved = NULL;
 	mHighIsoSnapshotHeapReserved = NULL;
@@ -519,11 +522,26 @@ void SprdCamera3OEMIf::closeCamera()
 		stopPreviewInternal();
 	}
 
-	// Free mCommonHeapReserved for preview, video, and zsl
-	if (NULL != mCommonHeapReserved) {
-		freeCameraMem(mCommonHeapReserved);
-		mCommonHeapReserved = NULL;
+	if (NULL != mPreviewHeapReserved) {
+		freeCameraMem(mPreviewHeapReserved);
+		mPreviewHeapReserved = NULL;
 	}
+
+	if (NULL != mVideoHeapReserved) {
+		freeCameraMem(mVideoHeapReserved);
+		mVideoHeapReserved = NULL;
+	}
+
+	if (NULL != mZslHeapReserved) {
+		freeCameraMem(mZslHeapReserved);
+		mZslHeapReserved = NULL;
+	}
+
+	if (NULL != mDepthHeapReserved) {
+		freeCameraMem(mDepthHeapReserved);
+		mDepthHeapReserved = NULL;
+	}
+
 
 	// Performance optimization:move Callback_CaptureFree to closeCamera function
 	Callback_CaptureFree(0, 0, 0, 0);
@@ -5370,29 +5388,78 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32
 	*phy_addr = 0;
 	*vir_addr = 0;
 	*fd = 0;
-
-	if (type == CAMERA_PREVIEW_RESERVED || type == CAMERA_VIDEO_RESERVED || type == CAMERA_SNAPSHOT_ZSL_RESERVED || type == CAMERA_DEPTH_MAP_RESERVED) {
-		if(NULL == mCommonHeapReserved) {
-			buffer_id = camera_pre_capture_get_buffer_id(mCameraId);
-			if (camera_get_reserve_buffer_size(mCameraId, buffer_id, &mem_size, &mem_sum) != CMR_CAMERA_SUCCESS) {
-				HAL_LOGE("camera_get_reserve_buffer_size failed");
-				goto mem_fail;
-			}
+	if (type == CAMERA_PREVIEW_RESERVED) {
+		if(mPreviewHeapReserved == NULL) {
 			memory = allocCameraMem(size, 1, true);
 			if (NULL == memory) {
-				LOGE("error memory is null.");
-				goto mem_fail;
+					HAL_LOGE("error memory is null.");
+					goto mem_fail;
 			}
-			mCommonHeapReserved = (sprd_camera_memory_t*)memory;
+			mPreviewHeapReserved = memory;
 			*phy_addr++ = (cmr_uint)memory->phys_addr;
 			*vir_addr++ = (cmr_uint)memory->data;
 			*fd++ = memory->fd;
 		} else {
-			HAL_LOGD("malloc Common memory for preview, video, and zsl, malloced type %d,request num %d, request size 0x%x",
-				type, sum, size);
-			*phy_addr++ = (cmr_uint)mCommonHeapReserved->phys_addr;
-			*vir_addr++ = (cmr_uint)mCommonHeapReserved->data;
-			*fd++ = mCommonHeapReserved->fd;
+			HAL_LOGD("malloc Preview memory, malloced type %d,request num %d, request size 0x%x",
+					type, sum, size);
+			*phy_addr++ = (cmr_uint)mPreviewHeapReserved->phys_addr;
+			*vir_addr++ = (cmr_uint)mPreviewHeapReserved->data;
+			*fd++ = mPreviewHeapReserved->fd;
+		}
+	} else if (type == CAMERA_VIDEO_RESERVED) {
+		if(mVideoHeapReserved == NULL) {
+			memory = allocCameraMem(size, 1, true);
+			if (NULL == memory) {
+					HAL_LOGE("error memory is null.");
+					goto mem_fail;
+			}
+			mVideoHeapReserved = memory;
+			*phy_addr++ = (cmr_uint)memory->phys_addr;
+			*vir_addr++ = (cmr_uint)memory->data;
+			*fd++ = memory->fd;
+		} else {
+			HAL_LOGD("malloc Video memory, malloced type %d,request num %d, request size 0x%x",
+					type, sum, size);
+			*phy_addr++ = (cmr_uint)mVideoHeapReserved->phys_addr;
+			*vir_addr++ = (cmr_uint)mVideoHeapReserved->data;
+			*fd++ = mVideoHeapReserved->fd;
+		}
+
+	} else if(type == CAMERA_SNAPSHOT_ZSL_RESERVED) {
+		if(mZslHeapReserved == NULL) {
+			memory = allocCameraMem(size, 1, true);
+			if (NULL == memory) {
+					HAL_LOGE("error memory is null.");
+					goto mem_fail;
+			}
+			mZslHeapReserved = memory;
+			*phy_addr++ = (cmr_uint)memory->phys_addr;
+			*vir_addr++ = (cmr_uint)memory->data;
+			*fd++ = memory->fd;
+		} else {
+			HAL_LOGD("malloc ZSL memory, malloced type %d,request num %d, request size 0x%x",
+					type, sum, size);
+			*phy_addr++ = (cmr_uint)mZslHeapReserved->phys_addr;
+			*vir_addr++ = (cmr_uint)mZslHeapReserved->data;
+			*fd++ = mZslHeapReserved->fd;
+		}
+	} else if(type == CAMERA_DEPTH_MAP_RESERVED) {
+		if(mDepthHeapReserved == NULL) {
+			memory = allocCameraMem(size, 1, true);
+			if (NULL == memory) {
+					HAL_LOGE("error memory is null.");
+					goto mem_fail;
+			}
+			mDepthHeapReserved = memory;
+			*phy_addr++ = (cmr_uint)memory->phys_addr;
+			*vir_addr++ = (cmr_uint)memory->data;
+			*fd++ = memory->fd;
+		} else {
+			HAL_LOGD("malloc depthmap memory, malloced type %d,request num %d, request size 0x%x",
+					type, sum, size);
+			*phy_addr++ = (cmr_uint)mDepthHeapReserved->phys_addr;
+			*vir_addr++ = (cmr_uint)mDepthHeapReserved->data;
+			*fd++ = mDepthHeapReserved->fd;
 		}
 	} else if (type == CAMERA_ISP_LSC) {
 		if(mIspLscHeapReserved == NULL) {
