@@ -8048,12 +8048,13 @@ cmr_int prev_pop_video_buffer(struct prev_handle *handle, cmr_u32 camera_id, str
 		}
 	}else {
 		ret = CMR_CAMERA_INVALID_FRAME;
-		CMR_LOGE("error data, video_frm[0]  fd 0x%lx",data->fd,  prev_cxt->video_frm[0].fd);
+		CMR_LOGE("data->fd=0x%lx, prev_cxt->video_frm[0].fd=0x%lx",
+			data->fd, prev_cxt->video_frm[0].fd);
 		goto exit;
 	}
 
 exit:
-	CMR_LOGD("out fd 0x%x uaddr 0x%x cnt %ld", data->fd, prev_cxt->video_mem_valid_num);
+	CMR_LOGD("fd=0x%x, cnt=%ld", data->fd, prev_cxt->video_mem_valid_num);
 	return ret;
 }
 

@@ -1392,7 +1392,7 @@ static int camera_save_raw_to_file(char *name, uint32_t img_fmt,
 	read_otp_awb_gain(isp_handle, (void*)&awbc_cfg);
 	read_position(isp_handle, &pos);
 
-	CMR_LOGE("gain = %d shutter = %d\n",gain, shutter);
+	CMR_LOGD("gain = %d shutter = %d\n",gain, shutter);
 	CMR_LOGI("name %s, format %d, width %d, heght %d",
 			name, img_fmt, width, height);
 
@@ -1625,7 +1625,7 @@ static int camera_save_raw2_to_file(char *name, uint32_t img_fmt,
 	read_otp_awb_gain(isp_handle, (void*)&awbc_cfg);
 	read_position(isp_handle, &pos);
 
-	CMR_LOGE("gain = %d shutter = %d\n",gain, shutter);
+	CMR_LOGD("gain = %d shutter = %d\n",gain, shutter);
 	CMR_LOGI("name %s, format %d, width %d, heght %d",
 			name, img_fmt, width, height);
 
@@ -1729,7 +1729,7 @@ static cmr_int camera_save_jpg_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 w
 	read_sensor_shutter(&shutter);
 	read_otp_awb_gain(isp_handle, (void*)&awbc_cfg);
 	read_position(isp_handle, &pos);
-	CMR_LOGE("gain = %d shutter = %d\n",gain, shutter);
+	CMR_LOGD("gain = %d shutter = %d\n",gain, shutter);
 	CMR_LOGI("index %d, format %d, width %d, heght %d",
 			index, img_fmt, width, height);
 
@@ -4366,7 +4366,7 @@ cmr_int isp_is_have_src_data_from_picture(void)
 		fclose(fp);
 		CMR_LOGI("have input_raw source file");
 	} else {
-		CMR_LOGE("no input_raw source file");
+		CMR_LOGD("no input_raw source file");
 		return -CMR_CAMERA_FAIL;
 	}
 
