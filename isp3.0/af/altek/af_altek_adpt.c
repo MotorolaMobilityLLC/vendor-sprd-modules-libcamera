@@ -275,7 +275,7 @@ static cmr_int afaltek_adpt_set_parameters(cmr_handle adpt_handle,
 	if (cxt->ops.set_parameters(p, &cxt->af_out_obj, cxt->af_runtime_obj)) {
 		if (cxt->af_out_obj.result) {
 			ret = afaltek_adpt_proc_out_report(cxt, &cxt->af_out_obj, NULL);
-			ISP_LOGI("need repot result type = %d ret = %ld", p->type, ret);
+			ISP_LOGV("need repot result type = %d ret = %ld", p->type, ret);
 		} else {
 			ret = ISP_SUCCESS;
 		}
@@ -424,7 +424,7 @@ static cmr_u8 afaltek_adpt_config_af_stats(cmr_handle adpt_handle, void *data)
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 
-	ISP_LOGI("E");
+	ISP_LOGV("E");
 	if (cxt->cb_ops.cfg_af_stats) {
 		ret = cxt->cb_ops.cfg_af_stats(cxt->caller_handle, data);
 	} else {
@@ -974,7 +974,7 @@ static cmr_int afaltek_adpt_update_awb(cmr_handle adpt_handle, void *in)
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct allib_af_input_awb_info_t awb_info = { 0x00 };
-	ISP_LOGI("E");
+	ISP_LOGV("E");
 
 	//memcpy(&awb_info, in, sizeof(awb_info)); /* TBD */
 	ret = 0;//afaltek_adpt_update_awb_info(cxt, &awb_info);
@@ -1520,7 +1520,7 @@ static cmr_int afaltek_adpt_inctrl(cmr_handle adpt_handle, cmr_int cmd,
 	cmr_int ret = -ISP_ERROR;
 	UNUSED(out);
 
-	ISP_LOGI("cmd = %ld", cmd);
+	ISP_LOGV("cmd = %ld", cmd);
 
 	switch (cmd) {
 	case AF_CTRL_CMD_SET_DEBUG:
@@ -2034,9 +2034,10 @@ static cmr_int afaltek_adpt_proc_report_debug_info(struct allib_af_output_report
 
 	if (out) {
 		ret = al3awrapper_updateafreport(&report->focus_status, &out->report_out);
-		ISP_LOGI("ret = %ld", ret);
 		if (ERR_WPR_AF_SUCCESS == ret)
 			ret = ISP_SUCCESS;
+		else
+			ISP_LOGI("ret = %ld", ret);
 		out->need_report = 1;
 	}
 	return ret;
@@ -2087,7 +2088,7 @@ static cmr_int afaltek_adpt_process(cmr_handle adpt_handle, void *in, void *out)
 	struct af_ctrl_process_out *proc_out = (struct af_ctrl_process_out *)out;
 	struct allib_af_hw_stats_t af_stats;
 
-	ISP_LOGI("E");
+	ISP_LOGV("E");
 	ret = al3awrapper_dispatchhw3a_afstats(proc_in->statistics_data->addr,
 					       (void *)(&af_stats));
 	if (ERR_WPR_AF_SUCCESS != ret) {
@@ -2114,7 +2115,8 @@ static cmr_int afaltek_adpt_process(cmr_handle adpt_handle, void *in, void *out)
 		if (cxt->af_out_obj.result) {
 			cxt->report_data.need_report = 0;
 			ret = afaltek_adpt_proc_out_report(cxt, &cxt->af_out_obj, &cxt->report_data);
-			ISP_LOGI("process need repot result ret = %ld", ret);
+			if (ret != ISP_SUCCESS)
+				ISP_LOGI("process need repot result ret = %ld", ret);
 			if (cxt->report_data.need_report) {
 				proc_out->data = &cxt->report_data.report_out;
 				proc_out->size = sizeof(cxt->report_data.report_out);
