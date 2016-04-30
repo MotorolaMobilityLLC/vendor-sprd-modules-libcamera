@@ -558,7 +558,7 @@ LOCAL const SENSOR_REG_T ov2680_1600X1200_mipi_raw[] = {
 LOCAL SENSOR_REG_TAB_INFO_T s_ov2680_resolution_Tab_RAW[] = {
 	{ADDR_AND_LEN_OF_ARRAY(ov2680_com_mipi_raw), 0, 0, 24, SENSOR_IMAGE_FORMAT_RAW},
 	//{ADDR_AND_LEN_OF_ARRAY(ov2680_800X600_mipi_raw), 800, 600, 24, SENSOR_IMAGE_FORMAT_RAW},
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#if 1//def CONFIG_CAMERA_RE_FOCUS
 	{ADDR_AND_LEN_OF_ARRAY(ov2680_1600X1200_altek_mipi_raw), 1600, 1200, 24, SENSOR_IMAGE_FORMAT_RAW},
 #else
 	{ADDR_AND_LEN_OF_ARRAY(ov2680_1600X1200_mipi_raw), 1600, 1200, 24, SENSOR_IMAGE_FORMAT_RAW},
@@ -792,12 +792,12 @@ SENSOR_INFO_T g_ov2680_mipi_raw_info = {
 
 	1600,			// max width of source image
 	1200,			// max height of source image
-	"ov2680",		// name of sensor
+	"ov2680_mipi_raw",		// name of sensor
 
 	SENSOR_IMAGE_FORMAT_RAW,	// define in SENSOR_IMAGE_FORMAT_E enum,SENSOR_IMAGE_FORMAT_MAX
 	// if set to SENSOR_IMAGE_FORMAT_MAX here, image format depent on SENSOR_REG_TAB_INFO_T
 
-	SENSOR_IMAGE_PATTERN_RAWRGB_B,// pattern of input image form sensor;
+	SENSOR_IMAGE_PATTERN_RAWRGB_R,// pattern of input image form sensor;
 
 	s_ov2680_resolution_Tab_RAW,	// point to resolution table information structure
 	&s_ov2680_ioctl_func_tab,	// point to ioctl function table
