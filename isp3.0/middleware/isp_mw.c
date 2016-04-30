@@ -281,6 +281,11 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 	isp3a_input.bin_info.isp_shading_size = cxt->tuning_bin.isp_shading_size;
 	isp3a_input.ex_info = input_ptr->ex_info;
 	isp3a_input.otp_data = input_ptr->otp_data;
+#ifdef CONFIG_CAMERA_RE_FOCUS
+	isp3a_input.setting_param_ptr_slv = input_ptr->setting_param_ptr_slv;
+	isp3a_input.ex_info_slv = input_ptr->ex_info_slv;
+	isp3a_input.otp_data_slv = input_ptr->otp_data_slv;
+#endif
 	if (cxt->tuning_bin.isp_dev_bin_info.puc_shading_bin_addr
 		&& cxt->tuning_bin.isp_dev_bin_info.uw_shading_bin_size >= (114 + sizeof(struct sensor_otp_iso_awb_info) + OTP_LSC_DATA_SIZE)) {
 		/*for bin otp data: shading addr offset +114*/

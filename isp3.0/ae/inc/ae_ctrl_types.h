@@ -416,13 +416,17 @@ struct ae_ctrl_param_in {
 struct ae_ctrl_callback_in {
 	union {
 	struct ae_ctrl_proc_out proc_out;
-	struct isp_ae_simple_sync_input *ae_sync_info;
+	struct ispae_sync_info_output *ae_sync_info;
 	};
 };
 
 struct ae_ctrl_ops_in {
 	cmr_int (*set_exposure)(cmr_handle handler, struct ae_ctrl_param_sensor_exposure *in_ptr);
 	cmr_int (*set_again)(cmr_handle handler, struct ae_ctrl_param_sensor_gain *in_ptr);
+#ifdef CONFIG_CAMERA_RE_FOCUS
+	cmr_int (*set_exposure_slv)(cmr_handle handler, struct ae_ctrl_param_sensor_exposure *in_ptr);
+	cmr_int (*set_again_slv)(cmr_handle handler, struct ae_ctrl_param_sensor_gain *in_ptr);
+#endif
 	cmr_int (*ae_callback)(cmr_handle handler, enum ae_ctrl_cb_type, struct ae_ctrl_callback_in *in_ptr);
 
 	cmr_int (*get_system_time)(cmr_handle handler, cmr_u32 *sec_ptr, cmr_u32 *usec_ptr);
@@ -446,11 +450,16 @@ struct ae_ctrl_init_in {
 	cmr_u32 camera_id;
 	void *tuning_param;
 	struct ae_ctrl_otp_data otp_data;
+	struct ae_ctrl_otp_data otp_data_slv;
 	cmr_handle caller_handle;
 	struct ae_ctrl_ops_in  ops_in;
 	struct isp_lib_config  lib_param;
 	struct ae_ctrl_param_sensor_static_info sensor_static_info;
 	struct ae_ctrl_param_work preview_work;
+#ifdef CONFIG_CAMERA_RE_FOCUS
+	struct ae_ctrl_param_sensor_static_info sensor_static_info_slv; // slave sensor
+	struct ae_ctrl_param_work preview_work_slv; // slave sensor
+#endif
 };
 
 /**----------------------------------------------------------------------------*

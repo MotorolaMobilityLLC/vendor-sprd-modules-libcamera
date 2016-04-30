@@ -891,7 +891,7 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void* data, cmr_u3
 		break;
 	case ISP_AE_SYNC_INFO:
 	{
-		struct isp_ae_simple_sync_input *ae_sync_info = (struct isp_ae_simple_sync_input *)data;
+		struct ispae_sync_info_output *info_output = (struct ispae_sync_info_output *)data;
 		// TBD write info to al3200
 	}
 	case ISP_AE_EXP_TIME:

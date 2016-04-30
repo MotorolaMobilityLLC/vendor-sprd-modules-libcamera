@@ -467,6 +467,11 @@ struct isp_init_param {
 	void* setting_param_list_ptr[3];//0:back,1:front,2:dual back,
 	struct isp_sensor_ex_info ex_info;
 	struct sensor_otp_cust_info *otp_data;
+#ifdef CONFIG_CAMERA_RE_FOCUS
+	struct isp_sensor_ex_info ex_info_slv;
+	void* setting_param_ptr_slv; // slave sensor
+	struct sensor_otp_cust_info *otp_data_slv;
+#endif
 	cmr_u32 image_pattern;
 };
 
