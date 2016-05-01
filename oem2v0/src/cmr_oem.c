@@ -2064,6 +2064,10 @@ static cmr_int camera_get_dual_otpinfo(cmr_handle  oem_handle,struct sensor_dual
 		dual_otp_data->master_slave_otp.size = SENSOR_DUAL_OTP_MASTER_SLAVE_SIZE;
 		dual_otp_data->data_3d.data_ptr = (void *)((cmr_u8 *)val.pval + SENSOR_DUAL_OTP_DATA3D_OFFSET);
 		dual_otp_data->data_3d.size = SENSOR_DUAL_OTP_DATA3D_SIZE;
+	} else {
+		ret = -1;
+		CMR_LOGI("%d, no dual otp data", ret);
+		goto exit;
 	}
 exit:
 	return ret;
