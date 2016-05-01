@@ -187,7 +187,10 @@ const SENSOR_MATCH_T  at_main_sensor_infor_tab[]=
 #endif
 #else
 #ifdef CONFIG_BACK_CAMERA_MIPI
-        {"s5k3m2xxm3_mipi_raw", &g_s5k3m2xxm3_mipi_raw_info},
+        {"at_s5k3m2xxm3_mipi_raw", &g_s5k3m2xxm3_mipi_raw_info},
+	{"at_s5k3p3sm_mipi_raw", &g_s5k3p3sm_mipi_raw_info},
+	{"at_imx230_mipi_raw", &g_imx230_mipi_raw_info},
+	{"at_s5k3l2xx_mipi_raw", &g_s5k3l2xx_mipi_raw_info},
 
 #endif
 #endif
@@ -216,6 +219,9 @@ const SENSOR_MATCH_T  at_sub_sensor_infor_tab[]=
 #ifdef CONFIG_FRONT_CAMERA_MIPI
         {"ov5648_mipi_raw", &g_ov5648_mipi_raw_info},
         {"ov5648_darling_mipi_raw",&g_ov5648_darling_mipi_raw_info},
+	{"at_imx132_mipi_raw", &g_imx132_mipi_raw_info},
+	{"at_s5k4h8yx_mipi_raw", &g_s5k4h8yx_mipi_raw_info},
+          {"at_s5k5e3yx_mipi_raw", &g_s5k5e3yx_mipi_raw_info},
 
 #endif
 #endif
