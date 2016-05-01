@@ -2998,7 +2998,7 @@ cmr_int camera_preview_init(cmr_handle  oem_handle)
 	init_param.ops.get_isp_yhist = camera_preview_get_isp_yhist;
 	init_param.ops.set_preview_yhist = camera_preview_set_yhist_to_isp;
 	init_param.ops.get_sensor_fps_info = camera_get_sensor_fps_info;
-	init_param.ops.get_sensor_otp = camera_get_otpinfo;
+	init_param.ops.get_dual_sensor_otp = camera_get_dual_otpinfo;
 	init_param.oem_cb = camera_preview_cb;
 	init_param.private_data = NULL;
 	init_param.sensor_bits = (1 << cxt->camera_id);

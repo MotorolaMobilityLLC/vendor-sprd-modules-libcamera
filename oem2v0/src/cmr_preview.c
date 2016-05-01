@@ -570,7 +570,7 @@ static cmr_int prev_fd_ctrl(struct prev_handle *handle,
 				cmr_u32 camera_id,
 				cmr_u32 on_off);
 
-static cmr_int prev_depthmap_open(struct prev_handle *handle, cmr_u32 camera_id, struct isp_data_info otp_data);
+static cmr_int prev_depthmap_open(struct prev_handle *handle, cmr_u32 camera_id, struct sensor_data_info otp_data);
 
 static cmr_int prev_depthmap_close(struct prev_handle *handle, cmr_u32 camera_id);
 
@@ -3313,14 +3313,15 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_res
 #if 1
 		if ( prev_cxt->prev_param.refocus_eb) {
 			/* get otp  buffer  */
-			struct isp_data_info sensor_otp;
-			ret = handle->ops.get_sensor_otp(handle->oem_handle,NULL, &sensor_otp);
+			struct sensor_dual_otp_info sensor_otp;
+			ret = handle->ops.get_dual_sensor_otp(handle->oem_handle, &sensor_otp);
 			if (ret) {
 				CMR_LOGE("get sensor otp error");
 				goto exit;
 			}
-			CMR_LOGI("sensor_otp 0x%x",  sensor_otp.data_ptr);
-			prev_depthmap_open(handle, camera_id, sensor_otp);
+			CMR_LOGI("sensor_otp 0x%x",  sensor_otp.dual_otp.data_ptr);
+			if(sensor_otp.dual_otp.data_ptr !=NULL)
+				prev_depthmap_open(handle, camera_id, sensor_otp.dual_otp);
 		}
 #endif
 	}
@@ -9218,7 +9219,7 @@ cmr_int prev_fd_ctrl(struct prev_handle *handle,
 	return ret;
 }
 
-cmr_int prev_depthmap_open(struct prev_handle *handle, cmr_u32 camera_id,struct isp_data_info  otp_data)
+cmr_int prev_depthmap_open(struct prev_handle *handle, cmr_u32 camera_id,struct sensor_data_info  otp_data)
 {
 	cmr_int                     ret = CMR_CAMERA_SUCCESS;
 	struct prev_context         *prev_cxt = NULL;
