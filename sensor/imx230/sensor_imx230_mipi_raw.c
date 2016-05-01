@@ -1793,7 +1793,7 @@ static unsigned long imx230_stream_off(SENSOR_HW_HANDLE handle, unsigned long pa
 	UNUSED(param);
 	Sensor_WriteReg(0x0100, 0x00);
 	/*delay*/
-	usleep(10 * 1000);
+	usleep(100 * 1000);
 
 	return 0;
 }

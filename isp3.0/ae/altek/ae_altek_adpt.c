@@ -431,7 +431,7 @@ static cmr_int aealtek_lib_exposure2sensor(struct aealtek_cxt *cxt_ptr, struct a
 	to_ptr->exp_time = from_ptr->rpt_3a_update.ae_update.exposure_time;
 	to_ptr->gain = from_ptr->rpt_3a_update.ae_update.sensor_ad_gain;
 	to_ptr->iso = from_ptr->rpt_3a_update.ae_update.ae_cur_iso;
-	to_ptr->size_index = cxt_ptr->cur_status.ui_param.work_info.resolution.sensor_size_index;
+	to_ptr->size_index = cxt_ptr->nxt_status.ui_param.work_info.resolution.sensor_size_index;
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld, lib_ret=%ld !!!", ret, lib_ret);
@@ -885,7 +885,7 @@ static cmr_int aealtek_init(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_init_in 
 	cxt_ptr->nxt_status = cxt_ptr->cur_status;
 
 	seq_in.capture_skip_num = cxt_ptr->init_in_param.sensor_static_info.capture_skip_num;
-	seq_in.preview_skip_num = cxt_ptr->init_in_param.sensor_static_info.capture_skip_num;
+	seq_in.preview_skip_num = cxt_ptr->init_in_param.sensor_static_info.preview_skip_num;
 	seq_in.exp_valid_num = cxt_ptr->init_in_param.sensor_static_info.exposure_valid_num;
 	seq_in.gain_valid_num = cxt_ptr->init_in_param.sensor_static_info.gain_valid_num;
 	seq_in.idx_start_from = 1;
@@ -1905,6 +1905,7 @@ static cmr_int aealtek_get_lib_expousre(struct aealtek_cxt *cxt_ptr, enum aealte
 			exposure_ptr->bracket_exp[i].gain = in_param.para.ae_get_expo_param.bracket_expo[i].ad_gain;
 			exposure_ptr->bracket_exp[i].exp_line = in_param.para.ae_get_expo_param.bracket_expo[i].exp_linecount;
 			exposure_ptr->bracket_exp[i].exp_time = in_param.para.ae_get_expo_param.bracket_expo[i].exp_time;
+			exposure_ptr->bracket_exp[i].size_index = cxt_ptr->nxt_status.ui_param.work_info.resolution.sensor_size_index;
 		}
 		break;
 	default:
@@ -2387,7 +2388,9 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 
 		seq_deinit(cxt_ptr->seq_handle);
 		seq_in.capture_skip_num = cxt_ptr->init_in_param.sensor_static_info.capture_skip_num;
-		seq_in.preview_skip_num = cxt_ptr->init_in_param.sensor_static_info.capture_skip_num;
+		seq_in.preview_skip_num = cxt_ptr->init_in_param.sensor_static_info.preview_skip_num;
+		seq_in.exp_valid_num = cxt_ptr->init_in_param.sensor_static_info.exposure_valid_num;
+		seq_in.gain_valid_num = cxt_ptr->init_in_param.sensor_static_info.gain_valid_num;
 		if (in_ptr->work_param.sensor_fps.high_fps_skip_num >= seq_in.exp_valid_num)
 			seq_in.exp_valid_num = 0;
 		else
@@ -2418,6 +2421,8 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 	case ISP3A_WORK_MODE_CAPTURE:
 		ret = aealtek_work_capture(cxt_ptr, in_ptr, out_ptr);
 		ret = 0;
+		if (cxt_ptr->nxt_status.is_hdr_status)
+			force_write_sensor = 1;
 		break;
 	case ISP3A_WORK_MODE_VIDEO:
 		cxt_ptr->nxt_status.is_hdr_status = 0;
@@ -2456,8 +2461,7 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 
 	}
 
-	if (cxt_ptr->tuning_info.manual_ae_on && ISP3A_WORK_MODE_CAPTURE == work_mode) {
-	} else {
+	if (ISP3A_WORK_MODE_CAPTURE != work_mode || cxt_ptr->nxt_status.is_hdr_status) {
 		ret = aealtek_pre_to_sensor(cxt_ptr, 1, force_write_sensor);
 		if (ret)
 			goto exit;
