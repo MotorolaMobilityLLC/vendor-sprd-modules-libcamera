@@ -2015,15 +2015,19 @@ cmr_int isp3a_get_info(cmr_handle isp_3a_handle, void *param_ptr)
 		memcpy(cxt->debug_data.debug_info.flicker_debug_info2, afl_out.debug_param.data, size);
 		ISP_LOGI("afl debug size is %d", size);
 	}
-	ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_GET_DEBUG_INFO, NULL, &af_out);
-	if (ret) {
-		ISP_LOGE("failed to get af debug info 0x%lx", ret);
-		goto exit;
-	}
-	if (af_out.debug_info.addr) {
-		size = MIN(MAX_AF_DEBUG_SIZE_STRUCT2, af_out.debug_info.size);
-		memcpy(cxt->debug_data.debug_info.af_debug_info2, af_out.debug_info.addr, size);
-		ISP_LOGI("af debug size is %d", size);
+	if (cxt->af_cxt.af_support) {
+		ret = af_ctrl_ioctrl(cxt->af_cxt.handle,
+				     AF_CTRL_CMD_GET_DEBUG_INFO,
+				     NULL, (void *)&af_out.debug_info);
+		if (ret) {
+			ISP_LOGE("failed to get af debug info 0x%lx", ret);
+			goto exit;
+		}
+		if (af_out.debug_info.addr) {
+			size = MIN(MAX_AF_DEBUG_SIZE_STRUCT2, af_out.debug_info.size);
+			memcpy(cxt->debug_data.debug_info.af_debug_info2, af_out.debug_info.addr, size);
+			ISP_LOGI("af debug size is %d", size);
+		}
 	}
 	otp_info = &cxt->debug_data.debug_info.otp_report_debug_info2;
 	memset(otp_info, 0, sizeof(struct otp_report_debug2));
@@ -2336,14 +2340,18 @@ cmr_int isp3a_get_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr)
 		ISP_LOGI("awb exif debug size is %d", size);
 	}
 
-	ret= af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_GET_EXIF_DEBUG_INFO, NULL, &af_out);
-	if (ret) {
-		ISP_LOGE("failed to get af exif info 0x%lx", ret);
-	}
-	if (af_out.exif_info.addr) {
-		size = MIN(MAX_AF_DEBUG_SIZE_STRUCT1, af_out.exif_info.size);
-		memcpy((void*)&exif_ptr->af_debug_info1[0], af_out.exif_info.addr, size);
-		ISP_LOGI("af exif debug size is %d", size);
+	if (cxt->af_cxt.af_support) {
+		ret= af_ctrl_ioctrl(cxt->af_cxt.handle,
+				    AF_CTRL_CMD_GET_EXIF_DEBUG_INFO,
+				    NULL, (void *)&af_out.exif_info);
+		if (ret) {
+			ISP_LOGE("failed to get af exif info 0x%lx", ret);
+		}
+		if (af_out.exif_info.addr) {
+			size = MIN(MAX_AF_DEBUG_SIZE_STRUCT1, af_out.exif_info.size);
+			memcpy((void*)&exif_ptr->af_debug_info1[0], af_out.exif_info.addr, size);
+			ISP_LOGI("af exif debug size is %d", size);
+		}
 	}
 	cxt->debug_data.exif_debug_info.structure_size1 = sizeof(cxt->debug_data.exif_debug_info);
 	exif_info_ptr->size = sizeof(cxt->debug_data.exif_debug_info);
