@@ -36,6 +36,7 @@
 #include <utils/KeyedVector.h>
 #include <hardware/camera3.h>
 #include <camera/CameraMetadata.h>
+#include "include/SprdCamera3Tags.h"
 #include "SprdCamera3HALHeader.h"
 #include "SprdCameraParameters.h"
 
@@ -454,6 +455,7 @@ public:
 	int updateWorkParameters(const CameraMetadata &frame_settings);
 	int getDefaultParameters(SprdCameraParameters &params);
 	int popAndroidParaTag();
+	int popSprdParaTag();
 	void releaseAndroidParaTag();
 
 	int setPreviewSize(cam_dimension_t size);
@@ -553,9 +555,11 @@ public:
 
 private:
 	void pushAndroidParaTag(camera_metadata_tag_t tag);
+	void pushAndroidParaTag(sprd_camera_metadata_tag_t tag);
 
 	Mutex                           mLock;
 	List<camera_metadata_tag_t>     mParaChangedTagQueue;
+	List<sprd_camera_metadata_tag_t>     mSprdParaChangedTagQueue;
 	uint8_t mCameraId;
 
 	static int parse_int(const char *str, int *data, char delim, char **endptr = NULL);

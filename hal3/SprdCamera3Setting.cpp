@@ -3133,10 +3133,28 @@ int SprdCamera3Setting::popAndroidParaTag()
 	mParaChangedTagQueue.erase(tag);
 	return ret;
 }
+int SprdCamera3Setting::popSprdParaTag()
+{
+	List<sprd_camera_metadata_tag_t>::iterator tag;
+	int ret;
+
+	if(mSprdParaChangedTagQueue.size() == 0)
+		return -1;
+
+	tag = mSprdParaChangedTagQueue.begin()++;
+	ret = static_cast<int>(*tag);
+	mSprdParaChangedTagQueue.erase(tag);
+	return ret;
+}
+
 
 void SprdCamera3Setting::pushAndroidParaTag(camera_metadata_tag_t tag)
 {
 	mParaChangedTagQueue.push_back(tag);
+}
+void SprdCamera3Setting::pushAndroidParaTag(sprd_camera_metadata_tag_t tag)
+{
+	mSprdParaChangedTagQueue.push_back(tag);
 }
 
 void SprdCamera3Setting::releaseAndroidParaTag()
