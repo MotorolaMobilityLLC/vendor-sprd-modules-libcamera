@@ -53,7 +53,7 @@
 #define PREVIEW_MIPI_PER_LANE_BPS	800
 
 /* please ref your spec */
-#define FRAME_OFFSET			5
+#define FRAME_OFFSET			10
 #define SENSOR_MAX_GAIN			0xF0
 #define SENSOR_BASE_GAIN		0x20
 #define SENSOR_MIN_SHUTTER		4
@@ -974,7 +974,7 @@ static SENSOR_REG_TAB_INFO_T s_imx230_resolution_tab_raw[SENSOR_MODE_MAX] = {
 
 static SENSOR_TRIM_T s_imx230_resolution_trim_tab[SENSOR_MODE_MAX] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-	{0, 0, 1280, 720, 10000 , PREVIEW_MIPI_PER_LANE_BPS, 828, {0, 0, 1280, 720}},
+	{0, 0, 1280, 720, 10188 , PREVIEW_MIPI_PER_LANE_BPS, 828, {0, 0, 1280, 720}},
 	{0, 0, 2672, 2008, 14343, PREVIEW_MIPI_PER_LANE_BPS, 2320, {0, 0, 2672, 2008}},
 	{0, 0, 5344, 4016, 10040, SNAPSHOT_MIPI_PER_LANE_BPS, 4140, {0, 0, 5344, 4016}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
@@ -1079,7 +1079,7 @@ static SENSOR_STATIC_INFO_T s_imx230_static_info = {
 	220,	//f-number,focal ratio
 	462,	//focal_length;
 	0,	//max_fps,max fps of sensor's all settings,it will be calculated from sensor mode fps
-	16,	//max_adgain,AD-gain
+	32,	//max_adgain,AD-gain
 	0,	//ois_supported;
 	0,	//pdaf_supported;
 	1,	//exp_valid_frame_num;N+2-1
@@ -1224,8 +1224,6 @@ static uint32_t imx230_get_default_frame_length(SENSOR_HW_HANDLE handle, uint32_
  *============================================================================*/
 static void imx230_group_hold_on(SENSOR_HW_HANDLE handle)
 {
-	SENSOR_PRINT("E");
-
 	//Sensor_WriteReg(0x0104, 0x01);
 }
 
@@ -1236,8 +1234,6 @@ static void imx230_group_hold_on(SENSOR_HW_HANDLE handle)
  *============================================================================*/
 static void imx230_group_hold_off(SENSOR_HW_HANDLE handle)
 {
-	SENSOR_PRINT("E");
-
 	//Sensor_WriteReg(0x0104, 0x00);
 }
 
@@ -1365,13 +1361,15 @@ static uint16_t imx230_update_exposure(SENSOR_HW_HANDLE handle, uint32_t shutter
 	uint32_t dest_fr_len = 0;
 	uint32_t cur_fr_len = 0;
 	uint32_t fr_len = s_current_default_frame_length;
+	int32_t offset = 0;
 
 	imx230_group_hold_on(handle);
-/*
-	if (1 == SUPPORT_AUTO_FRAME_LENGTH)
-		goto write_sensor_shutter;
-*/
-	dest_fr_len = ((shutter + dummy_line+FRAME_OFFSET) > fr_len) ? (shutter +dummy_line+ FRAME_OFFSET) : fr_len;
+
+	if (dummy_line > FRAME_OFFSET)
+		offset = dummy_line;
+	else
+		offset = FRAME_OFFSET;
+	dest_fr_len = ((shutter + offset) > fr_len) ? (shutter + offset) : fr_len;
 
 	cur_fr_len = imx230_read_frame_length(handle);
 
