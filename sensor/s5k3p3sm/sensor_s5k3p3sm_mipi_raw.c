@@ -396,7 +396,7 @@ static SENSOR_TRIM_T s_s5k3p3sm_Resolution_Trim_Tab[SENSOR_MODE_MAX] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 2304, 1740, 9430, 1320, 0x0dc8, {0, 0, 2304, 1740}},
 	{0, 0, 4632, 3480, 9190, 2784, 3626, {0, 0, 4632, 3480}},
-	//{0, 0, 1280, 720, 9190, 1320, 901, {0, 0, 1280, 720}},
+	//{0, 0, 1280, 720, 9248, 1320, 906, {0, 0, 1280, 720}},
 	//{0, 0, 1920, 1080, 9430, 1320, 1767, {0, 0, 1920, 1080}},
 	//{0, 0, 2320, 1748, 18300, 1440, 1800, {0, 0, 2320, 1748}},
 	//{0, 0, 2304, 1740, 9430, 1320, 0x0dc8, {0, 0, 2304, 1740}},
@@ -758,7 +758,7 @@ static unsigned long _s5k3p3sm_write_exp_dummy(SENSOR_HW_HANDLE handle, uint16_t
 	}
 
 	frame_len = expsure_line + dummy_line;
-	frame_len = (frame_len > (uint32_t)(expsure_line + 8)) ? frame_len : (uint32_t)(expsure_line + 8);
+	frame_len = (frame_len > (uint32_t)(expsure_line + 5)) ? frame_len : (uint32_t)(expsure_line + 5);
 	frame_len = (frame_len > max_frame_len) ? frame_len : max_frame_len;
 	if (0x00!=(0x01&frame_len)) {
 		frame_len+=0x01;
