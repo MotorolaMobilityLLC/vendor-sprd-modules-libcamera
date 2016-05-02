@@ -48,7 +48,6 @@ static unsigned long _ov13870_StreamOn(SENSOR_HW_HANDLE handle, unsigned long pa
 static unsigned long _ov13870_StreamOff(SENSOR_HW_HANDLE handle, unsigned long param);
 static uint32_t _ov13870_com_Identify_otp(SENSOR_HW_HANDLE handle, void* param_ptr);
 static unsigned long _ov13870_PowerOn(SENSOR_HW_HANDLE handle, unsigned long power_on);
-static unsigned long _ov13870_write_exposure(SENSOR_HW_HANDLE handle, unsigned long param);
 static unsigned long _ov13870_write_gain(SENSOR_HW_HANDLE handle, unsigned long param);
 static unsigned long _ov13870_access_val(SENSOR_HW_HANDLE handle, unsigned long param);
 static unsigned long ov13870_write_af(SENSOR_HW_HANDLE handle, unsigned long param);
@@ -1305,7 +1304,7 @@ static const SENSOR_REG_T ov13870_1280x720_4lane_setting[] = {
 
 static SENSOR_REG_TAB_INFO_T s_ov13870_resolution_Tab_RAW[9] = {
 	{ADDR_AND_LEN_OF_ARRAY(ov13870_common_init), 0, 0, 24, SENSOR_IMAGE_FORMAT_RAW},
-	//{ADDR_AND_LEN_OF_ARRAY(ov13870_1280x720_4lane_setting), 1280, 720, 24, SENSOR_IMAGE_FORMAT_RAW},
+	{ADDR_AND_LEN_OF_ARRAY(ov13870_1280x720_4lane_setting), 1280, 720, 24, SENSOR_IMAGE_FORMAT_RAW},
 	//{ADDR_AND_LEN_OF_ARRAY(ov13870_2112x1568_4lane_setting), 2112, 1568, 24, SENSOR_IMAGE_FORMAT_RAW},
 	{ADDR_AND_LEN_OF_ARRAY(ov13870_4144x3106_4lane_setting), 4144, 3106, 24, SENSOR_IMAGE_FORMAT_RAW},
 	{PNULL, 0, 0, 0, 0, 0},
@@ -1316,7 +1315,7 @@ static SENSOR_REG_TAB_INFO_T s_ov13870_resolution_Tab_RAW[9] = {
 
 static SENSOR_TRIM_T s_ov13870_Resolution_Trim_Tab[SENSOR_MODE_MAX] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-	//{0, 0, 1280, 720, 10000, 640, 1634, {0, 0,  1280, 720}},
+	{0, 0, 1280, 720, 3416, 1280, 1634, {0, 0,  1280, 720}},
 	//{0, 0, 2112, 1568, 10000, 640, 3328, {0, 0,  2112, 1568}},
 	{0, 0, 4144, 3106, 10000, 1200, 3328, {0, 0, 4144, 3106}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
@@ -1660,11 +1659,12 @@ static unsigned long _ov13870_set_VTS(SENSOR_HW_HANDLE handle,  unsigned long VT
 	// write VTS to registers
 	uint16_t temp = 0;
 
-	temp = VTS & 0xff;
-	Sensor_WriteReg(0x380f, temp);
-	temp = (VTS>>8) & 0x7f;
+
+	temp = (VTS >> 8) & 0x7f;
 	Sensor_WriteReg(0x380e, temp);
 
+	temp = VTS & 0xff;
+	Sensor_WriteReg(0x380f, temp);
 	return 0;
 }
 
@@ -1674,14 +1674,11 @@ LOCAL unsigned long  OV13870_set_shutter(SENSOR_HW_HANDLE handle, unsigned long 
 	uint16_t temp = 0;
 
 	shutter = shutter & 0xffff;
-	temp = shutter & 0x0f;
-	temp = temp<<4;
+	temp = shutter & 0xff;
 	Sensor_WriteReg(0x3502, temp);
-	temp = shutter & 0xfff;
-	temp = temp>>4;
+
+	temp = (shutter >> 8) & 0xff;
 	Sensor_WriteReg(0x3501, temp);
-	temp = (shutter>>12) & 0xf;
-	Sensor_WriteReg(0x3500, temp);
 
 	return 0;
 }
@@ -1691,21 +1688,28 @@ static unsigned long _ov13870_write_exp_dummy(SENSOR_HW_HANDLE handle, uint16_t 
 
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
-	uint32_t frame_len_cur = 0x00;
-	uint32_t frame_len = 0x00;
-	uint32_t max_frame_len=0x00;
+	uint32_t frame_len_cur = 0;
+	uint32_t frame_len = 0;
+	uint32_t max_frame_len = 0;
 	uint32_t linetime = 0;
+	uint32_t frame_offset = 8;
+	uint32_t offset = 0;
 
-	SENSOR_PRINT("SENSOR_OV13870: write_exposure line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
 
-	/*max_frame_len=_ov13870_GetMaxFrameLine(size_index);
-	if(0x00!=max_frame_len)
-	{
-		frame_len = ((expsure_line+dummy_line+8)> max_frame_len) ? (expsure_line+dummy_line+8) : max_frame_len;
+	SENSOR_PRINT("exp line:%d, dummy:%d, size_index:%d",
+				expsure_line, dummy_line, size_index);
+
+	max_frame_len =_ov13870_GetMaxFrameLine(size_index);
+	if (0 != max_frame_len) {
+		if (dummy_line > frame_offset)
+			offset = dummy_line;
+		else
+			offset = frame_offset;
+		frame_len = ((expsure_line + offset) > max_frame_len) ? (expsure_line + offset) : max_frame_len;
 
 		frame_len_cur = _ov13870_get_VTS(handle);
 
-		SENSOR_PRINT("SENSOR_OV13870: frame_len: %d,   frame_len_cur:%d\n", frame_len, frame_len_cur);
+		SENSOR_PRINT("frame_len: %d, frame_len_cur:%d", frame_len, frame_len_cur);
 
 		if(frame_len_cur != frame_len){
 			_ov13870_set_VTS(handle, frame_len);
@@ -1716,26 +1720,7 @@ static unsigned long _ov13870_write_exp_dummy(SENSOR_HW_HANDLE handle, uint16_t 
 	s_capture_shutter = expsure_line;
 	linetime=s_ov13870_Resolution_Trim_Tab[size_index].line_time;
 	s_exposure_time = s_capture_shutter * linetime / 1000;
-	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, s_capture_shutter);*/
-
-	return ret_value;
-}
-
-static unsigned long _ov13870_write_exposure(SENSOR_HW_HANDLE handle, unsigned long param)
-{
-	uint32_t ret_value = SENSOR_SUCCESS;
-	uint32_t expsure_line = 0x00;
-	uint32_t dummy_line = 0x00;
-	uint32_t size_index=0x00;
-
-
-	expsure_line=param&0xffff;
-	dummy_line=(param>>0x10)&0x0fff;
-	size_index=(param>>0x1c)&0x0f;
-
-	SENSOR_PRINT("SENSOR_ov13870: write_exposure line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
-
-	ret_value = _ov13870_write_exp_dummy(handle, expsure_line, dummy_line, size_index);
+	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, s_capture_shutter);
 
 	return ret_value;
 }
@@ -1805,16 +1790,36 @@ static unsigned long _ov13870_ex_write_exposure(SENSOR_HW_HANDLE handle, unsigne
 static unsigned long _ov13870_write_gain(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
-	uint16_t value=0x00;
+	uint16_t value = 0x00;
 	uint32_t real_gain = 0;
+	uint32_t a_gain = 0;
+	uint32_t d_gain = 0;
 
-	real_gain = param>>3;
-	if(real_gain > 0xf8)
-	{
-		real_gain = 0xf8;
-	}
+
+	real_gain = param >> 2;
+
 	SENSOR_PRINT("SENSOR_OV13870: real_gain:0x%x, param: 0x%x", real_gain, param);
 
+	if (real_gain < 16 * 32) {
+		a_gain = real_gain;
+		d_gain = 1 * 32;
+	} else {
+		a_gain = 512;
+		d_gain = real_gain / 256;
+	}
+
+	value = (a_gain >> 8) & 0xff;
+	Sensor_WriteReg(0x3508, value);
+	value = a_gain & 0xff;
+	Sensor_WriteReg(0x3509, value);
+
+
+#if 0
+	value = (d_gain >> 8) & 0x0f;
+	Sensor_WriteReg(0x350e, value);
+	value = d_gain & 0xff;
+	Sensor_WriteReg(0x350f, value);
+#endif
 
 	return ret_value;
 }
