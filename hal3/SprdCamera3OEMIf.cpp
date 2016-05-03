@@ -262,6 +262,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mGyroend(0),
 	mEisInit(0),
 	mSprdEisEnabled(false),
+	mSprdPipVivEnabled(0),
+	mSprdHighIsoEnabled(0),
 	mIsRecording(false)
 
 {
@@ -3653,7 +3655,7 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb,
 		exitFromPostProcess();
 		if (mSprdPipVivEnabled) {
 			Sprd_camera_state tmpCapState = getCaptureState();
-			LOGI("PIP HandleTakePicture state = %d, need_free = %d",
+			HAL_LOGD("PIP HandleTakePicture state = %d, need_free = %d",
 				  tmpCapState, ((struct camera_frame_type *)parm4)->need_free);
 			if ((SPRD_WAITING_JPEG == tmpCapState)
 				|| (SPRD_INTERNAL_CAPTURE_STOPPING == tmpCapState)) {
