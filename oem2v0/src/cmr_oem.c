@@ -5358,16 +5358,24 @@ cmr_uint camera_param_to_isp(cmr_uint cmd, struct common_isp_cmd_param *parm)
 				out_param = 2;
 				break;
 
-			case 3:
+			case 2:
 				out_param = 3;
 				break;
 
-			case 5:
+			case 3:
 				out_param = 4;
 				break;
 
-			case 7:
+			case 4:
 				out_param = 5;
+				break;
+
+			case 5:
+				out_param = 6;
+				break;
+
+			case 6:
+				out_param = 7;
 				break;
 
 			default:

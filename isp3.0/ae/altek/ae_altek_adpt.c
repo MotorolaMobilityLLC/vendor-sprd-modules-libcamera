@@ -1472,19 +1472,25 @@ static cmr_int aealtek_set_exp_comp(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 
 	switch (in_ptr->exp_comp.level) {
 	case AE_CTRL_ATTR_LEVEL_1:
-		lib_ev_comp = -2000;
+		lib_ev_comp = -3000;
 		break;
 	case AE_CTRL_ATTR_LEVEL_2:
-		lib_ev_comp = -1000;
+		lib_ev_comp = -2000;
 		break;
 	case AE_CTRL_ATTR_LEVEL_3:
-		lib_ev_comp = 0;
+		lib_ev_comp = -1000;
 		break;
 	case AE_CTRL_ATTR_LEVEL_4:
-		lib_ev_comp = 1000;
+		lib_ev_comp = 0;
 		break;
 	case AE_CTRL_ATTR_LEVEL_5:
+		lib_ev_comp = 1000;
+		break;
+	case AE_CTRL_ATTR_LEVEL_6:
 		lib_ev_comp = 2000;
+		break;
+	case AE_CTRL_ATTR_LEVEL_7:
+		lib_ev_comp = 3000;
 		break;
 	default:
 		ISP_LOGW("UI level =%ld",in_ptr->exp_comp.level);
