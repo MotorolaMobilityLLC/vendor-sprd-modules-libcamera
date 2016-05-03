@@ -573,6 +573,13 @@ typedef struct sensor_ioctl_func_tab_tag {
 	cmr_uint(*ex_write_exp) (SENSOR_HW_HANDLE handle, cmr_uint param);
 } SENSOR_IOCTL_FUNC_TAB_T, *SENSOR_IOCTL_FUNC_TAB_T_PTR;
 
+struct raw_param_info_tab {
+	cmr_u32 param_id;
+	struct sensor_raw_info *info_ptr;
+	cmr_u32(*identify_otp) (SENSOR_HW_HANDLE handle, void *param_ptr);
+	cmr_u32(*cfg_otp) (SENSOR_HW_HANDLE handle, void *param_ptr);
+};
+
 typedef struct sensor_trim_tag {
 	cmr_u16 trim_start_x;
 	cmr_u16 trim_start_y;

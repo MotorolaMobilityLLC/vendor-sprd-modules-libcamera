@@ -2506,7 +2506,7 @@ static uint32_t _s5k3l2xx_cfg_otp(SENSOR_HW_HANDLE handle, uint32_t  param)
 	SENSOR_PRINT("SENSOR_S5K3L2XX: _s5k3l2xx_cfg_otp");
 
 	if(PNULL!=tab_ptr[module_id].cfg_otp){
-		tab_ptr[module_id].cfg_otp(0);
+		tab_ptr[module_id].cfg_otp(handle, 0);
 		}
 
 	return rtn;
@@ -2550,7 +2550,7 @@ static uint32_t _s5k3l2xx_GetRawInof(SENSOR_HW_HANDLE handle)
 			break;
 		}
 		else if (PNULL!=tab_ptr[i].identify_otp) {
-			if (SENSOR_SUCCESS==tab_ptr[i].identify_otp(0)) {
+			if (SENSOR_SUCCESS==tab_ptr[i].identify_otp(handle, 0)) {
 				s_s5k3l2xx_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
 				SENSOR_PRINT("SENSOR_S5K3L2XX: s5k3l2xx_GetRawInof success");
 				break;

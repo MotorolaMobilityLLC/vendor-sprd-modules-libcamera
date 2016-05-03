@@ -37,7 +37,7 @@ static int s_exposure_time = 0;
 
 static unsigned long _s5k5e3yx_GetResolutionTrimTab(SENSOR_HW_HANDLE handle,unsigned long param);
 static unsigned long _s5k5e3yx_Identify(SENSOR_HW_HANDLE handle,unsigned long param);
-static uint32_t _s5k5e3yx_GetRawInof(void);
+static uint32_t _s5k5e3yx_GetRawInof(SENSOR_HW_HANDLE handle);
 static unsigned long _s5k5e3yx_StreamOn(SENSOR_HW_HANDLE handle,unsigned long param);
 static unsigned long _s5k5e3yx_StreamOff(SENSOR_HW_HANDLE handle,unsigned long param);
 static uint32_t _s5k5e3yx_com_Identify_otp(SENSOR_HW_HANDLE handle,void* param_ptr);
@@ -918,7 +918,7 @@ static unsigned long _s5k5e3yx_Identify(SENSOR_HW_HANDLE handle,unsigned long pa
 		SENSOR_PRINT("SENSOR_S5K5E3YX: Identify: PID = %x, VER = %x", pid_value, ver_value);
 		if (S5K5E3YX_VER_VALUE == ver_value) {
 			SENSOR_PRINT_ERR("SENSOR_S5K5E3YX: this is S5K5E3YX sensor !");
-			ret_value=_s5k5e3yx_GetRawInof();
+			ret_value=_s5k5e3yx_GetRawInof(handle);
 			if (SENSOR_SUCCESS != ret_value) {
 				SENSOR_PRINT_ERR("SENSOR_S5K5E3YX: the module is unknow error !");
 			}
@@ -1059,7 +1059,7 @@ static unsigned long _s5k5e3yx_BeforeSnapshot(SENSOR_HW_HANDLE handle,unsigned l
 
 }
 
-static uint32_t _s5k5e3yx_GetRawInof(void)
+static uint32_t _s5k5e3yx_GetRawInof(SENSOR_HW_HANDLE handle)
 {
 	uint32_t rtn=SENSOR_SUCCESS;
 	struct raw_param_info_tab* tab_ptr = (struct raw_param_info_tab*)s_s5k5e3yx_raw_param_tab;
@@ -1080,7 +1080,7 @@ static uint32_t _s5k5e3yx_GetRawInof(void)
 			break;
 		}
 		else if (PNULL!=tab_ptr[i].identify_otp) {
-			if (SENSOR_SUCCESS==tab_ptr[i].identify_otp(0)) {
+			if (SENSOR_SUCCESS==tab_ptr[i].identify_otp(handle, 0)) {
 				s_s5k5e3yx_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
 				SENSOR_PRINT("SENSOR_S5K5E3YX: _s5k5e3yx_GetRawInof success");
 				break;

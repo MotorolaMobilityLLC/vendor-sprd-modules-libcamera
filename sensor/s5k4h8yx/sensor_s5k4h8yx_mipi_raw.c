@@ -33,7 +33,6 @@
 #define S5K4H8YX_I2C_ADDR_R        0x10
 #define DW9807_VCM_SLAVE_ADDR     (0x18 >> 1)
 #define DW9807_EEPROM_SLAVE_ADDR  (0xB0 >> 1)
-#define S5K4H8YX_RAW_PARAM_COM     0x0000
 
 //#define S5K4H8YX_2_LANES
 #define S5K4H8YX_4_LANES
@@ -44,7 +43,7 @@ static int s_capture_VTS = 0;
 static int s_exposure_time = 0;
 static uint32_t g_module_id = 0;
 static uint32_t g_flash_mode_en = 0;
-static struct sensor_raw_info* s_s5k4h8yx_mipi_raw_info_ptr = NULL;
+static struct sensor_raw_info* s_s5k4h8yx_mipi_raw_info_ptr = &s_s5k4h8yx_mipi_raw_info;
 static uint32_t s_set_gain;
 static uint32_t s_set_exposure;
 
@@ -72,16 +71,49 @@ static uint32_t _s5k4h8yx_ReadGain(SENSOR_HW_HANDLE handle, uint32_t param);
 static unsigned long _s5k4h8yx_set_video_mode(SENSOR_HW_HANDLE handle, unsigned long param);
 static uint16_t _s5k4h8yx_get_shutter(SENSOR_HW_HANDLE handle);
 static uint32_t _s5k4h8yx_set_shutter(SENSOR_HW_HANDLE handle, uint16_t shutter);
-static uint32_t _s5k4h8yx_com_Identify_otp(SENSOR_HW_HANDLE handle, void* param_ptr);
 static unsigned long _s5k4h8yx_access_val(SENSOR_HW_HANDLE handle, unsigned long param);
 static uint32_t _s5k4h8yx_read_otp(SENSOR_HW_HANDLE handle, unsigned long param);
 static uint32_t _s5k4h8yx_write_otp(SENSOR_HW_HANDLE handle, unsigned long param);
 
+#define FEATURE_OTP    /*OTP function switch*/
+
+#ifdef FEATURE_OTP
+#define MODULE_ID_s5k4h8yx_ofilm		0x0007
+#define MODULE_ID_s5k4h8yx_truly		0x0002
+#define LSC_PARAM_QTY 240
+
+struct otp_info_t {
+	uint16_t flag;
+	uint16_t module_id;
+	uint16_t lens_id;
+	uint16_t vcm_id;
+	uint16_t vcm_driver_id;
+	uint16_t year;
+	uint16_t month;
+	uint16_t day;
+	uint16_t rg_ratio_current;
+	uint16_t bg_ratio_current;
+	uint16_t rg_ratio_typical;
+	uint16_t bg_ratio_typical;
+	uint16_t r_current;
+	uint16_t g_current;
+	uint16_t b_current;
+	uint16_t r_typical;
+	uint16_t g_typical;
+	uint16_t b_typical;
+	uint16_t vcm_dac_start;
+	uint16_t vcm_dac_inifity;
+	uint16_t vcm_dac_macro;
+	uint16_t lsc_param[LSC_PARAM_QTY];
+};
+
+#include "sensor_s5k4h8yx_ofilm_otp.c"
 
 static const struct raw_param_info_tab s_s5k4h8yx_raw_param_tab[] = {
-	{S5K4H8YX_RAW_PARAM_COM, &s_s5k4h8yx_mipi_raw_info, _s5k4h8yx_com_Identify_otp, NULL},
+	{MODULE_ID_s5k4h8yx_truly, &s_s5k4h8yx_mipi_raw_info, s5k4h8yx_ofilm_identify_otp, s5k4h8yx_ofilm_update_otp},
 	{RAW_INFO_END_ID, PNULL, PNULL, PNULL}
 };
+#endif
 ////initial setting V24 F1X9
 static const SENSOR_REG_T s5k4h8yx_common_init_new[] = {
     {0x6028,0x2000},
@@ -1372,68 +1404,100 @@ static unsigned long _s5k4h8yx_PowerOn(SENSOR_HW_HANDLE handle, unsigned long po
 	return SENSOR_SUCCESS;
 }
 
-static uint32_t _s5k4h8yx_cfg_otp(SENSOR_HW_HANDLE handle, uint32_t  param)
+#ifdef FEATURE_OTP
+/*==============================================================================
+ * Description:
+ * get  parameters from otp
+ * please modify this function acording your spec
+ *============================================================================*/
+static int s5k4h8yx_get_otp_info(SENSOR_HW_HANDLE handle, struct otp_info_t *otp_info)
 {
-	uint32_t rtn=SENSOR_SUCCESS;
-	struct raw_param_info_tab* tab_ptr = (struct raw_param_info_tab*)s_s5k4h8yx_raw_param_tab;
-	uint32_t module_id=g_module_id;
+	uint32_t ret = SENSOR_FAIL;
+	uint32_t i = 0x00;
 
-	SENSOR_PRINT("SENSOR_S5K4H8YX: _s5k4h8yx_cfg_otp");
+	//identify otp information
+	for (i = 0; i < NUMBER_OF_ARRAY(s_s5k4h8yx_raw_param_tab); i++) {
+		SENSOR_PRINT("identify module_id=0x%x",s_s5k4h8yx_raw_param_tab[i].param_id);
 
-	if(PNULL!=tab_ptr[module_id].cfg_otp){
-		tab_ptr[module_id].cfg_otp(0);
-		}
+		if(PNULL!=s_s5k4h8yx_raw_param_tab[i].identify_otp) {
+			//set default value;
+			memset(otp_info, 0x00, sizeof(struct otp_info_t));
 
-	return rtn;
-}
-
-static uint32_t _s5k4h8yx_com_Identify_otp(SENSOR_HW_HANDLE handle, void* param_ptr)
-{
-	uint32_t rtn=SENSOR_FAIL;
-	uint32_t param_id;
-
-	SENSOR_PRINT("SENSOR_S5K4H8YX: _s5k4h8yx_com_Identify_otp");
-
-	/*read param id from sensor omap*/
-	param_id=S5K4H8YX_RAW_PARAM_COM;
-
-	if(S5K4H8YX_RAW_PARAM_COM==param_id){
-		rtn=SENSOR_SUCCESS;
-	}
-
-	return rtn;
-}
-
-static uint32_t _s5k4h8yx_GetRawInof(SENSOR_HW_HANDLE handle)
-{
-	uint32_t rtn=SENSOR_SUCCESS;
-	struct raw_param_info_tab* tab_ptr = (struct raw_param_info_tab*)s_s5k4h8yx_raw_param_tab;
-	uint32_t param_id;
-	uint32_t i=0x00;
-
-	/*read param id from sensor omap*/
-	param_id=S5K4H8YX_RAW_PARAM_COM;
-
-	for (i=0x00; ; i++) {
-		g_module_id = i;
-		if (RAW_INFO_END_ID==tab_ptr[i].param_id) {
-			if (NULL==s_s5k4h8yx_mipi_raw_info_ptr) {
-				SENSOR_PRINT("SENSOR_S5K4H8YX: ov5647_GetRawInof no param error");
-				rtn=SENSOR_FAIL;
+			if(SENSOR_SUCCESS == s_s5k4h8yx_raw_param_tab[i].identify_otp(handle, otp_info)) {
+				if (s_s5k4h8yx_raw_param_tab[i].param_id == otp_info->module_id) {
+					SENSOR_PRINT("identify otp sucess! module_id=0x%x",s_s5k4h8yx_raw_param_tab[i].param_id);
+					ret = SENSOR_SUCCESS;
+					break;
+				} else {
+					SENSOR_PRINT("identify module_id failed! table module_id=0x%x, otp module_id=0x%x",s_s5k4h8yx_raw_param_tab[i].param_id,otp_info->module_id);
+				}
+			} else {
+				SENSOR_PRINT("identify_otp failed!");
 			}
-			SENSOR_PRINT("SENSOR_S5K4H8YX: s5k4h8yx_GetRawInof end");
-			break;
-		}
-		else if (PNULL!=tab_ptr[i].identify_otp) {
-			if (SENSOR_SUCCESS==tab_ptr[i].identify_otp(0)) {
-				s_s5k4h8yx_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
-				SENSOR_PRINT("SENSOR_S5K4H8YX: s5k4h8yx_GetRawInof success");
-				break;
-			}
+		} else {
+			SENSOR_PRINT("no identify_otp function!");
 		}
 	}
 
-	return rtn;
+	if (SENSOR_SUCCESS == ret)
+		return i;
+	else
+		return -1;
+}
+
+/*==============================================================================
+ * Description:
+ * apply otp parameters to sensor register
+ * please modify this function acording your spec
+ *============================================================================*/
+static uint32_t s5k4h8yx_apply_otp(SENSOR_HW_HANDLE handle, struct otp_info_t *otp_info, int id)
+{
+	uint32_t ret = SENSOR_FAIL;
+	//apply otp parameters
+	SENSOR_PRINT("otp_table_id = %d", id);
+	if (PNULL != s_s5k4h8yx_raw_param_tab[id].cfg_otp) {
+		if(SENSOR_SUCCESS == s_s5k4h8yx_raw_param_tab[id].cfg_otp(handle, otp_info)) {
+			SENSOR_PRINT("apply otp parameters sucess! module_id=0x%x",s_s5k4h8yx_raw_param_tab[id].param_id);
+			ret = SENSOR_SUCCESS;
+		} else {
+			SENSOR_PRINT("update_otp failed!");
+		}
+	} else {
+		SENSOR_PRINT("no update_otp function!");
+	}
+
+	return ret;
+}
+
+static uint32_t s5k4h8yx_cfg_otp(SENSOR_HW_HANDLE handle)
+{
+	uint32_t ret = SENSOR_FAIL;
+	struct otp_info_t otp_info={0x00};
+	int table_id = 0;
+
+	table_id = s5k4h8yx_get_otp_info(handle, &otp_info);
+	if (-1 != table_id) {
+		ret = s5k4h8yx_apply_otp(handle, &otp_info, table_id);
+	}
+	//checking OTP apply result
+	if (SENSOR_SUCCESS != ret) {//disable lsc
+		//Sensor_WriteReg(0x0B00,0x0080);
+	} else {//enable lsc
+		//Sensor_WriteReg(0x0B00,0x0180);
+		//s5k4h8yx_power_on(SENSOR_FALSE);
+	}
+
+	return ret;
+}
+#endif
+
+static  uint32_t _s5k4h8yx_init_otp(SENSOR_HW_HANDLE handle)
+{
+	uint32_t ret = SENSOR_SUCCESS;
+#ifdef FEATURE_OTP
+	ret = s5k4h8yx_cfg_otp(handle);
+#endif
+	return ret;
 }
 
 static uint32_t _s5k4h8yx_GetMaxFrameLine(SENSOR_HW_HANDLE handle, uint32_t index)
@@ -1509,12 +1573,9 @@ static unsigned long _s5k4h8yx_Identify(SENSOR_HW_HANDLE handle, unsigned long p
 
 	if (S5K4H8YX_PID_VALUE == pid_value) {
 		if (S5K4H8YX_VER_VALUE == ver_value) {
+			ret_value = SENSOR_SUCCESS;
 			SENSOR_PRINT_ERR("SENSOR_S5K4H8YX: this is S5K4H8YX sensor !");
 //			_dw9807_SRCInit(2);
-			ret_value=_s5k4h8yx_GetRawInof(handle);
-			if (SENSOR_SUCCESS != ret_value) {
-				SENSOR_PRINT_ERR("SENSOR_S5K4H8YX: the module is unknow error !");
-			}
 //			Sensor_s5k4h8yx_InitRawTuneInfo();
 			_s5k4h8yx_init_mode_fps_info(handle);
 		} else {
@@ -2375,6 +2436,8 @@ static unsigned long _s5k4h8yx_access_val(SENSOR_HW_HANDLE handle, unsigned long
 	SENSOR_PRINT("SENSOR_s5k4h8yx: param_ptr->type=%x", param_ptr->type);
 	switch(param_ptr->type)
 	{
+		case SENSOR_VAL_TYPE_INIT_OTP:
+			rtn = _s5k4h8yx_init_otp(handle);
 		case SENSOR_VAL_TYPE_SHUTTER:
 			*((uint32_t*)param_ptr->pval) = _s5k4h8yx_get_shutter(handle);
 			break;

@@ -287,13 +287,6 @@ struct sensor_raw_info {
 	struct sensor_raw_note_info note_ptr[MAX_MODE_NUM];
 };
 
-struct raw_param_info_tab {
-	cmr_u32 param_id;
-	struct sensor_raw_info *info_ptr;
-	cmr_u32(*identify_otp) (void *param_ptr);
-	cmr_u32(*cfg_otp) (void *param_ptr);
-};
-
 struct sensor_otp_module_info {
 	cmr_u8 year;
 	cmr_u8 month;

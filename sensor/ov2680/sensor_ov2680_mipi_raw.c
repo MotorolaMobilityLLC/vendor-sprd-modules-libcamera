@@ -928,7 +928,7 @@ LOCAL unsigned long _ov2680_cfg_otp(SENSOR_HW_HANDLE handle, unsigned long  para
 	SENSOR_PRINT("SENSOR_ov2680: _ov2680_cfg_otp");
 
 	if(PNULL!=tab_ptr[module_id].cfg_otp){
-		tab_ptr[module_id].cfg_otp(0);
+		tab_ptr[module_id].cfg_otp(handle ,0);
 		}
 
 	return rtn;
@@ -1351,7 +1351,7 @@ LOCAL uint32_t _ov2680_GetRawInof(SENSOR_HW_HANDLE handle)
 			break;
 		}
 		else if(PNULL!=tab_ptr[i].identify_otp){
-			if(SENSOR_SUCCESS==tab_ptr[i].identify_otp(0))
+			if(SENSOR_SUCCESS==tab_ptr[i].identify_otp(handle, 0))
 			{
 				s_ov2680_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
 				SENSOR_PRINT("SENSOR_ov2680: ov2680_GetRawInof success");

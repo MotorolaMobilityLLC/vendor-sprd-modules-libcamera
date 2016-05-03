@@ -1879,7 +1879,7 @@ static uint32_t _ov13870_GetRawInof(SENSOR_HW_HANDLE handle)
 			break;
 		}
 		else if (PNULL!=tab_ptr[i].identify_otp) {
-			if (SENSOR_SUCCESS==tab_ptr[i].identify_otp(0)) {
+			if (SENSOR_SUCCESS==tab_ptr[i].identify_otp(handle, 0)) {
 				s_ov13870_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
 				SENSOR_PRINT("SENSOR_ov13870: _ov13870_GetRawInof success");
 				break;
