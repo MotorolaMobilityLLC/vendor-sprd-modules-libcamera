@@ -412,7 +412,7 @@ static cmr_int aflaltek_get_hw_config(struct aflaltek_cxt *cxt_ptr, struct isp3a
 	ret = aflaltek_to_afl_hw_cfg(&cxt_ptr->lib_data.hwisp_cfg, out_ptr);
 	if (ret)
 		goto exit;
-	ISP_LOGI("token=%d, ratiox=%d, ratioy=%d",
+	ISP_LOGV("token=%d, ratiox=%d, ratioy=%d",
 		out_ptr->token_id,
 		out_ptr->offset_ratiox,
 		out_ptr->offset_ratioy);

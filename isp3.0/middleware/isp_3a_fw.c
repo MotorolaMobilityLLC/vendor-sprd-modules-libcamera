@@ -1071,7 +1071,7 @@ cmr_int isp3a_destroy_ctrl_thread(cmr_handle isp_3a_handle)
 		}
 	}
 exit:
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGV("done %ld", ret);
 	return ret;
 }
 
@@ -1158,7 +1158,7 @@ cmr_int isp3a_destroy_process_thread(cmr_handle isp_3a_handle)
 		}
 	}
 exit:
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGV("done %ld", ret);
 	return ret;
 }
 
@@ -2079,7 +2079,7 @@ cmr_int isp3a_get_info(cmr_handle isp_3a_handle, void *param_ptr)
 	if (awb_out.debug_info.addr) {
 		size = MIN(awb_out.debug_info.size, MAX_AWB_DEBUG_SIZE_STRUCT2);
 		memcpy(&cxt->debug_data.debug_info.awb_debug_info2[0], awb_out.debug_info.addr, size);
-		ISP_LOGI("awb debug size is %d", size);
+		ISP_LOGV("awb debug size is %d", size);
 	}
 	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_GET_DEBUG_DATA, NULL, &ae_out);
 	if (ret) {
@@ -2089,7 +2089,7 @@ cmr_int isp3a_get_info(cmr_handle isp_3a_handle, void *param_ptr)
 	if (ae_out.debug_param.data) {
 		size = MIN(ae_out.debug_param.size, MAX_AEFE_DEBUG_SIZE_STRUCT2);
 		memcpy(cxt->debug_data.debug_info.ae_fe_debug_info2, ae_out.debug_param.data, size);
-		ISP_LOGI("ae debug size is %d", size);
+		ISP_LOGV("ae debug size is %d", size);
 	}
 	ret = afl_ctrl_ioctrl(cxt->afl_cxt.handle, AFL_CTRL_GET_DEBUG_DATA, NULL, &afl_out);
 	if (ret) {
@@ -2099,7 +2099,7 @@ cmr_int isp3a_get_info(cmr_handle isp_3a_handle, void *param_ptr)
 	if (afl_out.debug_param.data) {
 		size = MIN(afl_out.debug_param.size, MAX_FLICKER_DEBUG_SIZE_STRUCT2);
 		memcpy(cxt->debug_data.debug_info.flicker_debug_info2, afl_out.debug_param.data, size);
-		ISP_LOGI("afl debug size is %d", size);
+		ISP_LOGV("afl debug size is %d", size);
 	}
 	if (cxt->af_cxt.af_support) {
 		ret = af_ctrl_ioctrl(cxt->af_cxt.handle,
@@ -2403,7 +2403,7 @@ cmr_int isp3a_get_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr)
 	if (ae_out.exif_param.data) {
 		size = MIN(ae_out.exif_param.size, MAX_AEFE_DEBUG_SIZE_STRUCT1);
 		memcpy((void*)&exif_ptr->ae_fe_debug_info1[0], (void*)ae_out.exif_param.data, size);
-		ISP_LOGI("ae exif debug size is %d", size);
+		ISP_LOGV("ae exif debug size is %d", size);
 	}
 
 	ret = afl_ctrl_ioctrl(cxt->afl_cxt.handle, AFL_CTRL_GET_EXIF_DATA, NULL, &afl_out);
@@ -2413,7 +2413,7 @@ cmr_int isp3a_get_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr)
 	if (afl_out.exif_param.data) {
 		size = MIN(afl_out.exif_param.size, MAX_FLICKER_DEBUG_SIZE_STRUCT1);
 		memcpy((void*)&exif_ptr->flicker_debug_info1[0], (void*)afl_out.exif_param.data, size);
-		ISP_LOGI("afl exif debug size is %d", size);
+		ISP_LOGV("afl exif debug size is %d", size);
 	}
 
 	ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_EXIF_DEBUG_INFO, NULL, &awb_out);
@@ -2423,7 +2423,7 @@ cmr_int isp3a_get_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr)
 	if (awb_out.debug_info.addr) {
 		size = MIN(awb_out.debug_info.size, MAX_AEFE_DEBUG_SIZE_STRUCT1);
 		memcpy((void*)&exif_ptr->awb_debug_info1[0], awb_out.debug_info.addr, size);
-		ISP_LOGI("awb exif debug size is %d", size);
+		ISP_LOGV("awb exif debug size is %d", size);
 	}
 
 	if (cxt->af_cxt.af_support) {
@@ -2436,7 +2436,7 @@ cmr_int isp3a_get_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr)
 		if (af_out.exif_info.addr) {
 			size = MIN(MAX_AF_DEBUG_SIZE_STRUCT1, af_out.exif_info.size);
 			memcpy((void*)&exif_ptr->af_debug_info1[0], af_out.exif_info.addr, size);
-			ISP_LOGI("af exif debug size is %d", size);
+			ISP_LOGV("af exif debug size is %d", size);
 		}
 	}
 	cxt->debug_data.exif_debug_info.structure_size1 = sizeof(cxt->debug_data.exif_debug_info);

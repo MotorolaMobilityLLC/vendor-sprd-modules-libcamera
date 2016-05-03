@@ -1061,7 +1061,7 @@ cmr_int awb_altek_adpt_deinit(cmr_handle adpt_handle)
 	awbaltek_unload_library(adpt_handle);
 	free((void*)cxt);
 exit:
-	ISP_LOGE("done %ld", ret);
+	ISP_LOGV("done %ld", ret);
 	return ret;
 }
 

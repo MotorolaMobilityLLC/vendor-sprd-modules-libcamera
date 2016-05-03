@@ -3016,7 +3016,7 @@ static cmr_int aealtek_set_flash_notice(struct aealtek_cxt *cxt_ptr, struct ae_c
 	ISP_LOGI("mode=%d", mode);
 	switch (mode) {
 	case ISP_FLASH_PRE_BEFORE:
-		ISP_LOGI("=========pre flash before start");
+		ISP_LOGI("=========pre flash before");
 		ret = aealtek_set_preflash_before(cxt_ptr, notice_ptr);
 		if (ret)
 			goto exit;
@@ -3026,11 +3026,10 @@ static cmr_int aealtek_set_flash_notice(struct aealtek_cxt *cxt_ptr, struct ae_c
 		ret = aealtek_set_boost(cxt_ptr, 1);
 		if (ret)
 			goto exit;
-		ISP_LOGI("=========pre flash before end");
 		break;
 
 	case ISP_FLASH_PRE_LIGHTING:
-		ISP_LOGI("=========pre flash lighting start");
+		ISP_LOGI("=========pre flash lighting");
 		ret = aealtek_set_lock(cxt_ptr, 0);
 		if (ret)
 			goto exit;
@@ -3042,12 +3041,11 @@ static cmr_int aealtek_set_flash_notice(struct aealtek_cxt *cxt_ptr, struct ae_c
 
 		aealtek_change_flash_state(cxt_ptr, cxt_ptr->flash_param.flash_state, AEALTEK_FLASH_STATE_LIGHTING);
 		cxt_ptr->flash_skip_number = 4;
-		ISP_LOGI("=========pre flash lighting end");
 
 		break;
 
 	case ISP_FLASH_PRE_AFTER:
-		ISP_LOGI("=========pre flash close start");
+		ISP_LOGI("=========pre flash after");
 		aealtek_change_flash_state(cxt_ptr, cxt_ptr->flash_param.flash_state, AEALTEK_FLASH_STATE_CLOSE);
 
 		aealtek_set_hw_flash_status(cxt_ptr, 0);
@@ -3059,11 +3057,10 @@ static cmr_int aealtek_set_flash_notice(struct aealtek_cxt *cxt_ptr, struct ae_c
 		ret = aealtek_lib_exposure2sensor(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
 		if (ret)
 			goto exit;
-		ISP_LOGI("=========pre flash close end");
 		break;
 
 	case ISP_FLASH_MAIN_BEFORE:
-		ISP_LOGI("=========main flash before start");
+		ISP_LOGI("=========main flash before");
 		aealtek_change_flash_state(cxt_ptr, cxt_ptr->flash_param.flash_state, AEALTEK_FLASH_STATE_MAX);
 
 		if (cxt_ptr->init_in_param.ops_in.flash_set_charge) {
@@ -3098,13 +3095,12 @@ static cmr_int aealtek_set_flash_notice(struct aealtek_cxt *cxt_ptr, struct ae_c
 			goto exit;
 		cxt_ptr->sensor_exp_data.write_exp = cxt_ptr->sensor_exp_data.lib_exp;
 		aealtek_pre_to_sensor(cxt_ptr, 1, 0);
-		ISP_LOGI("=========main flash before end");
 		break;
 
 	case ISP_FLASH_MAIN_LIGHTING:
 		break;
 	case ISP_FLASH_MAIN_AFTER:
-		ISP_LOGI("=========main flash after start");
+		ISP_LOGI("=========main flash after");
 		aealtek_set_hw_flash_status(cxt_ptr, 0);
 		ret = aealtek_convert_lib_exposure2outdata(cxt_ptr, &cxt_ptr->flash_param.pre_flash_before.exp_cell, &cxt_ptr->lib_data.output_data);
 		if (ret)
@@ -3112,7 +3108,6 @@ static cmr_int aealtek_set_flash_notice(struct aealtek_cxt *cxt_ptr, struct ae_c
 		ret = aealtek_lib_exposure2sensor(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
 		if (ret)
 			goto exit;
-		ISP_LOGI("=========main flash after end");
 		break;
 	default:
 		break;
@@ -4168,8 +4163,8 @@ static cmr_int aealtek_get_lib_script_info(struct aealtek_cxt *cxt_ptr, struct a
 		ISP_LOGE("param %p %p %p is NULL error!", cxt_ptr, from_ptr, to_ptr);
 		goto exit;
 	}
-	ISP_LOGI("ae_script_mode=%d", from_ptr->ae_script_mode);
-	ISP_LOGI("max_cnt=%d, cur_cnt=%d", from_ptr->ae_script_info.udmaxscriptcnt,
+	ISP_LOGV("ae_script_mode=%d", from_ptr->ae_script_mode);
+	ISP_LOGV("max_cnt=%d, cur_cnt=%d", from_ptr->ae_script_info.udmaxscriptcnt,
 			from_ptr->ae_script_info.udcurrentscriptcnt);
 
 	to_ptr->exp_line = from_ptr->ae_script_info.udcurrentscriptexpline;
@@ -4592,7 +4587,7 @@ static void aealtek_flash_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_ca
 			cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_FlashStates);
 		switch (cxt_ptr->flash_param.flash_state) {
 		case AEALTEK_FLASH_STATE_PREPARE_ON:
-			ISP_LOGI("========flash led prepare on");
+			ISP_LOGV("========flash led prepare on");
 
 			*is_special_converge_flag = 1;
 			if (cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_converged
@@ -4654,7 +4649,7 @@ static void aealtek_flash_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_ca
 			}
 			break;
 		case AEALTEK_FLASH_STATE_LIGHTING:
-			ISP_LOGI("========flash led on");
+			ISP_LOGV("========flash led on");
 
 			*is_special_converge_flag = 1;
 			if (cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_converged
