@@ -718,10 +718,10 @@ static sprd_camera_memory_t* allocCameraMem(int buf_size, int num_bufs, uint32_t
 	memory->data = pHeapIon->getBase();
 
 	if (0 == s_mem_method) {
-		HAL_LOGD("fd=0x%x, phys_addr=0x%lx, virt_addr=%p, size=0x%lx, heap=%p",
+		ALOGD("fd=0x%x, phys_addr=0x%lx, virt_addr=%p, size=0x%lx, heap=%p",
 		memory->fd, memory->phys_addr, memory->data, memory->phys_size, pHeapIon);
 	} else {
-		HAL_LOGD("iommu: fd=0x%x, phys_addr=0x%lx, virt_addr=%p, size=0x%lx, heap=%p",
+		ALOGD("iommu: fd=0x%x, phys_addr=0x%lx, virt_addr=%p, size=0x%lx, heap=%p",
 		memory->fd, memory->phys_addr, memory->data, memory->phys_size, pHeapIon);
 	}
 
@@ -778,7 +778,7 @@ static int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size, cmr_
 	cmr_u32 mem_size;
 	cmr_u32 mem_sum;
 	int buffer_id;
-	HAL_LOGD("size %d sum %d mPreviewHeapNum %d, type %d", size, sum, mPreviewHeapNum,type);
+	ALOGD("size %d sum %d mPreviewHeapNum %d, type %d", size, sum, mPreviewHeapNum,type);
 	*phy_addr = 0;
 	*vir_addr = 0;
 	*fd = 0;
@@ -810,7 +810,7 @@ static int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size, cmr_
 			memory = allocCameraMem(size, 1, false);
 			if (NULL == memory) {
 				ALOGE("Native MMI Test: %s,%d, failed: alloc camera mem err.\n", __func__, __LINE__);
-				HAL_LOGE("error memory is null,malloced type %d",type);
+				ALOGE("error memory is null,malloced type %d",type);
 				goto mem_fail;
 			}
 			mIspLscHeapReserved = memory;
@@ -818,7 +818,7 @@ static int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size, cmr_
 			*vir_addr++ = (cmr_uint)memory->data;
 			*fd++ = memory->fd;
 		} else {
-			HAL_LOGI("malloc isp lsc memory, malloced type %d,request num %d, request size 0x%x", type, sum, size);
+			ALOGI("malloc isp lsc memory, malloced type %d,request num %d, request size 0x%x", type, sum, size);
 			*phy_addr++ = (cmr_uint)mIspLscHeapReserved->phys_addr;
 			*vir_addr++ = (cmr_uint)mIspLscHeapReserved->data;
 			*fd++ = mIspLscHeapReserved->fd;
@@ -875,7 +875,7 @@ static int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size, cmr_
 			*vir_addr++ = (cmr_uint)memory->data;
 			*fd++ = memory->fd;
 		} else {
-			HAL_LOGI("malloc isp afl memory, malloced type %d,request num %d, request size 0x%x", type, sum, size);
+			ALOGI("malloc isp afl memory, malloced type %d,request num %d, request size 0x%x", type, sum, size);
 			*phy_addr++ = (cmr_uint)mIspAFLHeapReserved->phys_addr;
 			*vir_addr++ = (cmr_uint)mIspAFLHeapReserved->data;
 			*fd++ = mIspAFLHeapReserved->fd;
