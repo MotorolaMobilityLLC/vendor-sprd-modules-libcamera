@@ -1684,6 +1684,7 @@ cmr_int camera_sensor_init(cmr_handle  oem_handle, cmr_uint is_autotest)
 	struct sensor_init_param        init_param;
 	cmr_handle                      sensor_handle;
 	cmr_u32                         camera_id_bits = 0;
+	struct sensor_ex_info           *sns_ex_info_ptr = NULL;
 
 	CHECK_HANDLE_VALID(oem_handle);
 	sn_cxt = &cxt->sn_cxt;
@@ -1704,9 +1705,6 @@ cmr_int camera_sensor_init(cmr_handle  oem_handle, cmr_uint is_autotest)
 	}
 	sn_cxt->sensor_handle = sensor_handle;
 	sn_cxt->inited = 1;
-	if (ret) {
-		CMR_LOGE("failed to set auto test mode %ld", ret);
-	}
 	camera_id_bits = 1 << cxt->camera_id;
 	ret = cmr_sensor_open(sensor_handle, camera_id_bits);
 	if (ret) {
@@ -1726,9 +1724,17 @@ cmr_int camera_sensor_init(cmr_handle  oem_handle, cmr_uint is_autotest)
 #endif
 	cmr_sensor_event_reg(sensor_handle, cxt->camera_id, camera_sensor_evt_cb);
 	cxt->sn_cxt.sensor_handle = sensor_handle;
-    goto exit;
+
+	sns_ex_info_ptr = &sn_cxt->cur_sns_ex_info;
+	ret = cmr_sensor_init_static_info(cxt);
+	if(ret) {
+		CMR_LOGE("init static info of  %d sensor failed %ld", cxt->camera_id, ret);
+		goto sensor_exit;
+	}
+	goto exit;
 
 sensor_exit:
+	cmr_sensor_deinit_static_info(cxt);
 	cmr_sensor_deinit(sn_cxt->sensor_handle);
 	sn_cxt->inited = 0;
 exit:
@@ -1762,7 +1768,8 @@ cmr_int camera_sensor_deinit(cmr_handle  oem_handle)
 		}
 	}
 #endif
-    cmr_sensor_deinit(sensor_handle);
+	cmr_sensor_deinit_static_info(cxt);
+	cmr_sensor_deinit(sensor_handle);
 	cmr_bzero(sn_cxt,sizeof(*sn_cxt));
 
 exit:
@@ -2734,9 +2741,10 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 	struct isp_context              *isp_cxt = NULL;
 	struct sensor_context           *sn_cxt = NULL;
 	struct sensor_exp_info          *sensor_info_ptr;
+	struct sensor_ex_info           *sns_ex_info_ptr = NULL;
 	struct isp_init_param           isp_param;
 	struct isp_video_limit          isp_limit;
-	SENSOR_VAL_T                   val;
+	SENSOR_VAL_T                    val;
 
 #if defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4)
 	struct isp_cali_param cali_param;
@@ -2830,21 +2838,30 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 	isp_param.free_cb  = camera_free;
 	camera_sensor_color_to_isp_color(&isp_param.image_pattern,sensor_info_ptr->image_pattern);
 	CMR_LOGD("image_pattern:sensor color is %d, isp color is %d", sensor_info_ptr->image_pattern,isp_param.image_pattern);
-	struct sensor_ex_info sn_ex_info;
-	memset(&sn_ex_info,0,sizeof(struct sensor_ex_info));
-	val.type               = SENSOR_VAL_TYPE_GET_STATIC_INFO;
-	val.pval               = &sn_ex_info;
-	ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_ACCESS_VAL, (cmr_uint)&val);
-	if (ret) {
-		CMR_LOGE("get sensor static info failed %ld", ret);
+
+	sns_ex_info_ptr = &sn_cxt->cur_sns_ex_info;
+	if(NULL != sns_ex_info_ptr) {
+		if((NULL == sns_ex_info_ptr->name) || (NULL == sns_ex_info_ptr->sensor_version_info)) {
+			ret = cmr_sensor_init_static_info(cxt);
+			if (ret) {
+				cmr_sensor_deinit_static_info(cxt);
+				CMR_LOGE("get sensor static info failed %ld", ret);
+				goto exit;
+			}
+		} else {
+			camera_copy_sensor_ex_info_to_isp(&isp_param.ex_info,sns_ex_info_ptr);
+		}
+	}else {
+		CMR_LOGE("sns_ex_info_ptr is null,it is impossible error!");
+		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}
-	camera_copy_sensor_ex_info_to_isp(&isp_param.ex_info,&sn_ex_info);
+
 	if (IMG_DATA_TYPE_RAW == sn_cxt->sensor_info.image_format) {
 		isp_param.ex_info.preview_skip_num = 0;
 		isp_param.ex_info.capture_skip_num = 0;
 	}
-	if((NULL != sn_ex_info.name) && (NULL != sn_ex_info.sensor_version_info)) {
+	if((NULL != sns_ex_info_ptr->name) && (NULL != sns_ex_info_ptr->sensor_version_info)) {
 		CMR_LOGD("get static info:sensor name: %s, version: %s.",
 			isp_param.ex_info.name,isp_param.ex_info.sensor_version_info);
 	} else {
@@ -2860,6 +2877,7 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 			isp_param.ex_info.adgain_valid_frame_num,isp_param.ex_info.preview_skip_num,
 			isp_param.ex_info.capture_skip_num);
 	CMR_LOGD("w %d h %d", isp_param.size.w,isp_param.size.h);
+
 	val.type = SENSOR_VAL_TYPE_READ_OTP;
 	val.pval = NULL;
 	ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_ACCESS_VAL, (cmr_uint)&val);
@@ -4444,9 +4462,11 @@ cmr_int camera_close_sensor(cmr_handle oem_handle, cmr_u32 camera_id)
 
 cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle, struct raw_proc_param *param_ptr)
 {
-	cmr_int                        ret = CMR_CAMERA_SUCCESS;
-	struct camera_context          *cxt = (struct camera_context*)oem_handle;
-	struct isp_context             *isp_cxt = &cxt->isp_cxt;
+	cmr_int                         ret = CMR_CAMERA_SUCCESS;
+	struct camera_context           *cxt = (struct camera_context*)oem_handle;
+	struct isp_context              *isp_cxt = &cxt->isp_cxt;
+	struct sensor_ex_info           *sns_ex_info_ptr = NULL;
+
 	if (!oem_handle || !param_ptr || !caller_handle) {
 		CMR_LOGE("in parm error");
 		ret = -CMR_CAMERA_INVALID_PARAM;
@@ -4523,15 +4543,14 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle, struct 
 		in_param.resolution_info.crop.height = sensor_mode_info->trim_height;
 		in_param.resolution_info.fps.max_fps = in_param.sensor_fps.max_fps;
 		in_param.resolution_info.fps.min_fps = in_param.sensor_fps.min_fps;
-		in_param.resolution_info.max_gain = 16;
 		in_param.resolution_info.sensor_max_size.w = cxt->sn_cxt.sensor_info.source_width_max;
 		in_param.resolution_info.sensor_max_size.h = cxt->sn_cxt.sensor_info.source_height_max;
 		in_param.resolution_info.sensor_output_size.w = sensor_mode_info->out_width;
 		in_param.resolution_info.sensor_output_size.h = sensor_mode_info->out_height;
-		CMR_LOGI("ips_in_param:sensor fps info, is_high_fps %d, high_fps_skip_num is  %d,\
-			max_fps is %d, min_fps is %d", in_param.sensor_fps.is_high_fps,
-			in_param.sensor_fps.high_fps_skip_num,in_param.sensor_fps.max_fps,
-			in_param.sensor_fps.min_fps);
+		CMR_LOGI("ips_in_param:sensor fps info: is_high_fps %d, high_fps_skip_num is %d",
+					in_param.sensor_fps.is_high_fps,in_param.sensor_fps.high_fps_skip_num);
+		CMR_LOGI("ips_in_param:sensor fps info:	max_fps is %d, min_fps is %d",
+					in_param.sensor_fps.max_fps,in_param.sensor_fps.min_fps);
 		CMR_LOGI("ips_in_param: sensor max w h, %d %d", in_param.resolution_info.sensor_max_size.w,
 			in_param.resolution_info.sensor_max_size.h);
 		CMR_LOGI("ips_in_param sensor output w h, %d %d", in_param.resolution_info.sensor_output_size.w,
@@ -4539,6 +4558,23 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle, struct 
 		CMR_LOGI("ips_in_param: sensor crop startx start w h, %d %d %d %d", in_param.resolution_info.crop.st_x,
 			in_param.resolution_info.crop.st_y,in_param.resolution_info.crop.width,
 			in_param.resolution_info.crop.height);
+
+		sns_ex_info_ptr = &cxt->sn_cxt.cur_sns_ex_info;
+		if(NULL == sns_ex_info_ptr) {
+			CMR_LOGE("sns_ex_info_ptr is null, It is impossible error!");
+			ret = -CMR_CAMERA_INVALID_PARAM;
+			goto exit;
+		}
+		if((NULL == sns_ex_info_ptr->name) || (NULL == sns_ex_info_ptr->sensor_version_info)) {
+			ret = cmr_sensor_init_static_info(cxt);
+			if (ret) {
+				cmr_sensor_deinit_static_info(cxt);
+				CMR_LOGE("init sensor static info failed %ld", ret);
+				goto exit;
+			}
+		}
+		in_param.resolution_info.max_gain = sns_ex_info_ptr->max_adgain;
+		CMR_LOGI("ips_in_param:max_gain:%d ",in_param.resolution_info.max_gain);
 
 		ret = isp_proc_start(isp_cxt->isp_handle, &in_param, &out_param);
 
@@ -4569,14 +4605,14 @@ exit:
 
 cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *param_ptr)
 {
-	cmr_int                        ret = CMR_CAMERA_SUCCESS;
-	struct camera_context          *cxt = (struct camera_context*)oem_handle;
-	struct isp_context             *isp_cxt = &cxt->isp_cxt;
-	struct isp_video_start         isp_param;
-	cmr_int                        work_mode = 0;
-	cmr_int                        dv_mode = 0;
-	struct setting_cmd_parameter   setting_param;
-	SENSOR_VAL_T                   val;
+	cmr_int                         ret = CMR_CAMERA_SUCCESS;
+	struct camera_context           *cxt = (struct camera_context*)oem_handle;
+	struct isp_context              *isp_cxt = &cxt->isp_cxt;
+	struct isp_video_start          isp_param;
+	cmr_int                         work_mode = 0;
+	cmr_int                         dv_mode = 0;
+	struct setting_cmd_parameter    setting_param;
+	struct sensor_ex_info           *sns_ex_info_ptr;
 
 #if !(defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4))
 	struct isp_ae_info             isp_ae_info;
@@ -4698,7 +4734,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 		}
 	isp_param.capture_mode =  setting_param.cmd_type_value;
 //	isp_param.dv_mode = dv_mode;
-{ //TBD
+{
 	struct sensor_mode_info        *sensor_mode_info;
 	cmr_uint                       sn_mode = 0;
 	ret = cmr_sensor_get_mode(cxt->sn_cxt.sensor_handle, cxt->camera_id, &sn_mode);
@@ -4714,14 +4750,11 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 	isp_param.resolution_info.crop.st_y = sensor_mode_info->trim_start_y;
 	isp_param.resolution_info.crop.width = sensor_mode_info->trim_width;
 	isp_param.resolution_info.crop.height = sensor_mode_info->trim_height;
-	isp_param.resolution_info.fps.max_fps = 30;
-	isp_param.resolution_info.fps.min_fps = 10;
-	isp_param.resolution_info.max_gain = 16;
 	isp_param.resolution_info.sensor_max_size.w = cxt->sn_cxt.sensor_info.source_width_max;
 	isp_param.resolution_info.sensor_max_size.h = cxt->sn_cxt.sensor_info.source_height_max;
 	isp_param.resolution_info.sensor_output_size.w = sensor_mode_info->out_width;
 	isp_param.resolution_info.sensor_output_size.h = sensor_mode_info->out_height;
-	isp_param.is_refocus = cxt->is_refocus_mode;//TBD
+	isp_param.is_refocus = cxt->is_refocus_mode;
 
 	CMR_LOGI("isp sensor max w h, %d %d", isp_param.resolution_info.sensor_max_size.w,
 		isp_param.resolution_info.sensor_max_size.h);
@@ -4738,10 +4771,28 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 		goto exit;
 	}
 	camera_copy_sensor_fps_info_to_isp(&isp_param.sensor_fps,&fps_info);
-	CMR_LOGI("isp_param:sensor fps info, is_high_fps %d, high_fps_skip_num is  %d, \
-		max_fps is %d, min_fps is %d", isp_param.sensor_fps.is_high_fps,
-		isp_param.sensor_fps.high_fps_skip_num,isp_param.sensor_fps.max_fps,
-		isp_param.sensor_fps.min_fps);
+	CMR_LOGI("isp_param:sensor fps info:is_high_fps %d, high_fps_skip_num is  %d",
+				isp_param.sensor_fps.is_high_fps,isp_param.sensor_fps.high_fps_skip_num);
+	CMR_LOGI("isp_param:sensor fps info:max_fps is %d, min_fps is %d",isp_param.sensor_fps.max_fps,isp_param.sensor_fps.min_fps);
+	isp_param.resolution_info.fps.max_fps = isp_param.sensor_fps.max_fps;
+	isp_param.resolution_info.fps.min_fps = isp_param.sensor_fps.min_fps;
+
+	sns_ex_info_ptr = &cxt->sn_cxt.cur_sns_ex_info;
+	if(NULL == sns_ex_info_ptr) {
+		CMR_LOGE("sns_ex_info_ptr is null, It is impossible error!");
+		ret = -CMR_CAMERA_INVALID_PARAM;
+		goto exit;
+	}
+	if((NULL == sns_ex_info_ptr->name) || (NULL == sns_ex_info_ptr->sensor_version_info)) {
+		ret = cmr_sensor_init_static_info(cxt);
+		if (ret) {
+			cmr_sensor_deinit_static_info(cxt);
+			CMR_LOGE("init sensor static info failed %ld", ret);
+			goto exit;
+		}
+	}
+	isp_param.resolution_info.max_gain = sns_ex_info_ptr->max_adgain;
+	CMR_LOGI("isp_param:max_gain:%d ",isp_param.resolution_info.max_gain);
 }
 
 	CMR_LOGI("work_mode %ld, dv_mode %ld, capture_mode %ld", work_mode, dv_mode, isp_param.capture_mode);
@@ -7780,32 +7831,63 @@ exit:
 	return ret;
 }
 
-cmr_int cmr_get_sensor_max_fps(cmr_handle oem_handle,cmr_u32 camera_id, cmr_u32* max_fps)
+cmr_int cmr_sensor_init_static_info(cmr_handle oem_handle)
 {
-	cmr_int                        ret = CMR_CAMERA_SUCCESS;
-	if(NULL == oem_handle || NULL == max_fps) {
-		CMR_LOGE("in parm error");
-		ret = -CMR_CAMERA_INVALID_PARAM;
-		return ret;
-	}
-	struct camera_context          *cxt = (struct camera_context*)oem_handle;
-	if(cxt->inited && cxt->sn_cxt.sensor_handle) {
-		struct sensor_ex_info sn_ex_info;
-		SENSOR_VAL_T	val;
-		memset(&sn_ex_info,0,sizeof(struct sensor_ex_info));
+	cmr_int                 ret = CMR_CAMERA_SUCCESS;
+	struct camera_context   *cxt = NULL;
+	struct sensor_ex_info   *sns_ex_info_ptr = NULL;
+	SENSOR_VAL_T            val;
+	CHECK_HANDLE_VALID(oem_handle);
+	cxt = (struct camera_context*)oem_handle;
+	sns_ex_info_ptr = &cxt->sn_cxt.cur_sns_ex_info;
+	cmr_bzero(sns_ex_info_ptr,sizeof(struct sensor_ex_info));
+	if(cxt->sn_cxt.inited && cxt->sn_cxt.sensor_handle) {
 		val.type               = SENSOR_VAL_TYPE_GET_STATIC_INFO;
-		val.pval               = &sn_ex_info;
+		val.pval               = sns_ex_info_ptr;
 		ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_ACCESS_VAL, (cmr_uint)&val);
-		if (ret) {
-			*max_fps = 30;
-			CMR_LOGE("get sensor static info failed %ld,we set max fps to default: %d", ret,*max_fps);
-		}else {
-			*max_fps = sn_ex_info.max_fps;
-		}
 
 	} else {
+		ret = CMR_CAMERA_FAIL;
+	}
+	if(ret) {
+		CMR_LOGE("oem not init or get sensor static info failed, we set sn_ex_info to zero. ");
+	}
+	return ret;
+}
+
+cmr_int cmr_sensor_deinit_static_info(cmr_handle oem_handle)
+{
+	cmr_int                        ret = CMR_CAMERA_SUCCESS;
+	struct camera_context          *cxt = NULL;
+	SENSOR_VAL_T	val;
+	CHECK_HANDLE_VALID(oem_handle);
+	cxt = (struct camera_context*)oem_handle;
+	cmr_bzero(&cxt->sn_cxt.cur_sns_ex_info,sizeof(struct sensor_ex_info));
+	return ret;
+}
+
+cmr_int cmr_get_sensor_max_fps(cmr_handle oem_handle,cmr_u32 camera_id, cmr_u32* max_fps)
+{
+	cmr_int                 ret = CMR_CAMERA_SUCCESS;
+	struct camera_context   *cxt = NULL;
+	struct sensor_ex_info   *sns_ex_info_ptr = NULL;
+	CHECK_HANDLE_VALID(oem_handle);
+	CHECK_HANDLE_VALID(max_fps);
+	cxt = (struct camera_context*)oem_handle;
+	sns_ex_info_ptr = &cxt->sn_cxt.cur_sns_ex_info;
+	if(NULL == sns_ex_info_ptr) {
+		CMR_LOGE("sns_ex_info_ptr is null, It is impossible error!");
+		return -CMR_CAMERA_INVALID_PARAM;
+	}
+
+	if((NULL == sns_ex_info_ptr->name) || (NULL == sns_ex_info_ptr->sensor_version_info)) {
+		ret = cmr_sensor_init_static_info(cxt);
+	}
+	if(ret) {
+		CMR_LOGE("failed to init sensor static info,we set max fps to default: %d ",*max_fps);
 		*max_fps = 30;
-		CMR_LOGI("oem not init, we set max fps to default: %d ",*max_fps);
+	} else {
+		*max_fps = sns_ex_info_ptr->max_fps;
 	}
 	return ret;
 }

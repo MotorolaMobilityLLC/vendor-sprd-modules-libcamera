@@ -1061,7 +1061,7 @@ cmr_int hw_Sensor_PowerDown(SENSOR_HW_HANDLE handle, cmr_u32 power_level)
 		return SENSOR_CTX_ERROR;
 	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)(handle->privatedata);
 
-	CMR_LOGE("cur_id = %d ", sensor_cxt->sensor_register_info.cur_id);
+	CMR_LOGD("cur_id = %d ", sensor_cxt->sensor_register_info.cur_id);
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 	if (PNULL == sensor_cxt->sensor_info_ptr) {
 		CMR_LOGE("No sensor info ");

@@ -58,12 +58,13 @@ struct grab_context {
 };
 
 struct sensor_context {
-	cmr_handle                  sensor_handle;
-	cmr_u32                     cur_id;
-	cmr_u32                     inited;
-	struct sensor_if            sn_if;
-	struct sensor_exp_info      sensor_info;
-	EXIF_SPEC_PIC_TAKING_COND_T exif_info;
+	cmr_handle                      sensor_handle;
+	cmr_u32                         cur_id;
+	cmr_u32                         inited;
+	struct sensor_if                sn_if;
+	struct sensor_exp_info          sensor_info;
+	EXIF_SPEC_PIC_TAKING_COND_T     exif_info;
+	struct sensor_ex_info           cur_sns_ex_info;
 };
 
 struct isp_context {
@@ -353,6 +354,8 @@ void camera_local_end_burst_notice(cmr_handle oem_handle);
 cmr_s32 camera_local_get_iommu_status(cmr_handle oem_handle);
 cmr_int camera_isp_set_sensor_info_to_af(cmr_handle oem_handle, struct cmr_af_aux_sensor_info* sensor_info);
 cmr_int cmr_get_sensor_max_fps(cmr_handle oem_handle,cmr_u32 camera_id, cmr_u32* max_fps);
+cmr_int cmr_sensor_init_static_info(cmr_handle oem_handle);
+cmr_int cmr_sensor_deinit_static_info(cmr_handle oem_handle);
 
 cmr_int prev_set_preview_touch_info(cmr_handle preview_handle, cmr_u32 camera_id, struct touch_coordinate *touch_xy);
 #ifdef __cplusplus
