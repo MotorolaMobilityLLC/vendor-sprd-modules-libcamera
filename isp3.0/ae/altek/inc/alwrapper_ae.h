@@ -19,7 +19,7 @@
 /* Wrapper define */
 #include "alwrapper_3a.h"
 
-#define _WRAPPER_AE_VER 0.8070
+#define _WRAPPER_AE_VER 0.8080
 
 #ifdef __cplusplus
 extern "C"

@@ -184,6 +184,7 @@ struct exposure_data_t {
 	uint32  exposure_time;      /* exposure time */
 	uint32  exposure_line;      /* exposure line */
 	uint32  ISO;
+	uint32  ExifISO;
 };
 #pragma pack(pop)  /* restore old alignment setting from stack */
 
@@ -253,6 +254,8 @@ struct ae_report_update_t {
 	uint32 exposure_line;               /* current exposure line */
 	uint32 exposure_max_line;           /* max exposure line in current sensor mode */
 	uint32 ae_cur_iso;                  /* current ISO speed */
+	uint32  udExifISO;			/* EXIF ISO speed */
+
 
 	/* AE control status */
 	int16  ae_roi_change_st;            /* 0 : no response to ROI change, 1: ROI changed and taken,

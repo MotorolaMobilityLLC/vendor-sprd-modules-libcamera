@@ -670,9 +670,9 @@ struct al3awrapper_stats_ae_t {
 	uint32 statsg[AL_MAX_AE_STATS_NUM];
 	uint32 statsb[AL_MAX_AE_STATS_NUM];
 	void* ptstatsy;			/* store stats Y, each element should be uint32, 256 elements */
-	void* ptstatsr;			/* store stats Y, each element should be uint32, 256 elements */
-	void* ptstatsg;			/* store stats Y, each element should be uint32, 256 elements */
-	void* ptstatsb;			/* store stats Y, each element should be uint32, 256 elements */
+	void* ptstatsr;			/* store stats R, each element should be uint32, 256 elements */
+	void* ptstatsg;			/* store stats G, each element should be uint32, 256 elements */
+	void* ptstatsb;			/* store stats B, each element should be uint32, 256 elements */
 
 };
 #pragma pack(pop)  /* restore old alignment setting from stack */

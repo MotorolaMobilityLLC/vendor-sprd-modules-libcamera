@@ -3,7 +3,7 @@
  *
  *  Created on: 2015/12/06
  *      Author: MarkTseng
- *  Latest update: 2016/4/21
+ *  Latest update: 2016/4/29
  *      Reviser: Allenwang
  *  Comments:
  *       This c file is mainly used for AP framework to:
@@ -70,6 +70,44 @@ uint32 al3awrapper_dispatchhw3a_aestats( struct isp_drv_meta_ae_t * alisp_metada
 
 	pmetadata_ae = (struct isp_drv_meta_ae_t *)alisp_metadata_ae;
 	ppatched_aedat = (struct al3awrapper_stats_ae_t *)alwrappered_ae_dat;
+
+	/* pseudo flag processing */
+	if ( pmetadata_ae->upseudoflag == 1 ) {
+		/* update sturcture size, this would be double checked in AE libs */
+		ppatched_aedat->ustructuresize = sizeof( struct al3awrapper_stats_ae_t );
+
+		ppatched_aedat->umagicnum           = pmetadata_ae->umagicnum;
+		ppatched_aedat->uhwengineid         = pmetadata_ae->uhwengineid;
+		ppatched_aedat->uframeidx           = pmetadata_ae->uframeidx;
+		ppatched_aedat->uaetokenid          = pmetadata_ae->uaetokenid;
+		ppatched_aedat->uaestatssize        = pmetadata_ae->uaestatssize;
+		ppatched_aedat->udpixelsperblocks   = pmetadata_ae->ae_stats_info.udpixelsperblocks;
+		ppatched_aedat->udbanksize          = pmetadata_ae->ae_stats_info.udbanksize;
+		ppatched_aedat->ucvalidblocks       = pmetadata_ae->ae_stats_info.ucvalidblocks;
+		ppatched_aedat->ucvalidbanks        = pmetadata_ae->ae_stats_info.ucvalidbanks;
+		ppatched_aedat->upseudoflag         = pmetadata_ae->upseudoflag;
+
+		/* store to stats info, translate to unit base 1000 (= 1.0x) */
+		ppatched_aedat->stat_wb_2y.r = 1000;
+		ppatched_aedat->stat_wb_2y.g = 1000;
+		ppatched_aedat->stat_wb_2y.b = 1000;
+
+		/* store frame & timestamp */
+		memcpy( &ppatched_aedat->systemtime, &pmetadata_ae->systemtime, sizeof(struct timeval));
+		ppatched_aedat->udsys_sof_idx       = pmetadata_ae->udsys_sof_idx;
+
+
+		/* reset flag */
+		ppatched_aedat->bisstatsbyaddr = FALSE;
+		/* patch stats to defined array */
+		pt_stats_r = (uint32 *)(ppatched_aedat->statsr);
+		pt_stats_g = (uint32 *)(ppatched_aedat->statsg);
+		pt_stats_b = (uint32 *)(ppatched_aedat->statsb);
+		pt_stats_y = (uint32 *)(ppatched_aedat->statsy);
+
+		return ret;
+	}
+
 
 	/* check if stats from allocated buffer */
 	if ( pmetadata_ae->b_isstats_byaddr == 1 ) {
@@ -187,6 +225,17 @@ uint32 al3awrapper_dispatchhw3a_aestats( struct isp_drv_meta_ae_t * alisp_metada
 		pt_stats_g = (uint32 *)(ppatched_aedat->ptstatsg);
 		pt_stats_b = (uint32 *)(ppatched_aedat->ptstatsb);
 		pt_stats_y = (uint32 *)(ppatched_aedat->ptstatsy);
+
+		if ( (pt_stats_r == NULL) || (pt_stats_g == NULL) || (pt_stats_b == NULL) || (pt_stats_y == NULL) ) {
+			/* reset flag */
+			ppatched_aedat->bisstatsbyaddr = FALSE;
+			/* patch stats to defined array */
+			pt_stats_r = (uint32 *)(ppatched_aedat->statsr);
+			pt_stats_g = (uint32 *)(ppatched_aedat->statsg);
+			pt_stats_b = (uint32 *)(ppatched_aedat->statsb);
+			pt_stats_y = (uint32 *)(ppatched_aedat->statsy);
+		}
+
 	}
 
 	for ( j =0; j <banks; j++ ) {

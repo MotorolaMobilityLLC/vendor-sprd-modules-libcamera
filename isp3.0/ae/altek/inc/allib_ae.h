@@ -398,6 +398,7 @@ struct ae_single_expo_set_t {
 	uint32  exp_linecount;
 	uint32  exp_time;
 	uint32  ISO;
+	uint32  ExifISO;
 };
 #pragma pack(pop)  /* restore old alignment setting from stack  */
 
@@ -769,6 +770,7 @@ struct ae_output_data_t {
 
 	/* Next AE exposure parameter */
 	uint32  udISO;			/* current ISO speed */
+	uint32  udExifISO;			/* EXIF ISO speed */
 	uint32  udexposure_time;
 	uint32  udexposure_line;
 	uint32  udsensor_ad_gain;
