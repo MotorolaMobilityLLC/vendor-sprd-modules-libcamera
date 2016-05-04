@@ -3477,6 +3477,7 @@ static cmr_int aealtek_callback_sync_info(struct aealtek_cxt *cxt_ptr, struct ae
 	sensor_exp.dummy = 0;
 	sensor_exp.size_index = cxt_ptr->cur_status.ui_param.work_info_slv.resolution.sensor_size_index;
 #ifdef CONFIG_AE_SYNC_INFO_MAPPING
+	UNUSED(in_ptr);
 	aealtek_get_sync_info_from_mapping(cxt_ptr, &ae_sync_info, &sensor_exp.exp_line, &slv_exp_time, &sensor_gain.gain);
 #else
 	aealtek_get_sync_info_from_lib(cxt_ptr, &ae_sync_info, &sensor_exp.exp_line, &slv_exp_time, &sensor_gain.gain);
