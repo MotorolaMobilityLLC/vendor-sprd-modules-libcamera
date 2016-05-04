@@ -627,18 +627,16 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type, uint32_t frame_n
 				mRecordingFirstFrameTime = 0;
 
 #ifdef CONFIG_MEM_OPTIMIZATION
-			if (mRecordingMode == true) {
-				HAL_LOGD("slowmotion=%d", sprddefInfo.slowmotion);
-				if (sprddefInfo.slowmotion > 1) {
-					mSprdZslEnabled = false;
-				} else if (mRawWidth != 0 && mRawHeight != 0) {
-					mSprdZslEnabled = false;
-				} else if (mVideoWidth != 0 && mVideoHeight != 0) {
-					mSprdZslEnabled = true;
-				} else {
-					mSprdZslEnabled = false;
-				}
-			} else if (sprddefInfo.sprd_zsl_enabled == 1) {
+			HAL_LOGV("slowmotion=%d", sprddefInfo.slowmotion);
+			if (mRecordingMode == false && sprddefInfo.sprd_zsl_enabled == 1) {
+				mSprdZslEnabled = true;
+			} else if (mRecordingMode == true && sprddefInfo.slowmotion > 1) {
+				mSprdZslEnabled = false;
+			} else if (mRecordingMode == true &&
+				   mVideoWidth != 0 &&
+				   mVideoHeight != 0 &&
+				   mCaptureWidth != 0 &&
+				   mCaptureHeight != 0) {
 				mSprdZslEnabled = true;
 			} else {
 				mSprdZslEnabled = false;
