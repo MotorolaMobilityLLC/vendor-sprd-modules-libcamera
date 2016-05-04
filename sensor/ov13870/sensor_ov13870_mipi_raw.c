@@ -1411,13 +1411,13 @@ static SENSOR_IOCTL_FUNC_TAB_T s_ov13870_ioctl_func_tab = {
 
 static SENSOR_STATIC_INFO_T s_ov13870_static_info = {
 	200,	//f-number,focal ratio
-	357,	//focal_length;
+	404,	//focal_length;
 	0,	//max_fps,max fps of sensor's all settings,it will be calculated from sensor mode fps
-	16,	//max_adgain,AD-gain
+	32,	//max_adgain,AD-gain
 	0,	//ois_supported;
 	0,	//pdaf_supported;
 	1,	//exp_valid_frame_num;N+2-1
-	64,	//clamp_level,black level
+	32,	//clamp_level,black level
 	1,	//adgain_valid_frame_num;N+1-1
 };
 
@@ -1790,36 +1790,22 @@ static unsigned long _ov13870_ex_write_exposure(SENSOR_HW_HANDLE handle, unsigne
 static unsigned long _ov13870_write_gain(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
-	uint16_t value = 0x00;
 	uint32_t real_gain = 0;
-	uint32_t a_gain = 0;
-	uint32_t d_gain = 0;
+	uint16_t gain_h = 0;
+	uint16_t gain_l = 0;
 
-
-	real_gain = param >> 2;
+	real_gain = param;
 
 	SENSOR_PRINT("SENSOR_OV13870: real_gain:0x%x, param: 0x%x", real_gain, param);
 
-	if (real_gain < 16 * 32) {
-		a_gain = real_gain;
-		d_gain = 1 * 32;
-	} else {
-		a_gain = 512;
-		d_gain = real_gain / 256;
-	}
-
-	value = (a_gain >> 8) & 0xff;
-	Sensor_WriteReg(0x3508, value);
-	value = a_gain & 0xff;
-	Sensor_WriteReg(0x3509, value);
+	gain_h = (real_gain >> 8) & 0x7f;
+	Sensor_WriteReg(0x3508, gain_h);
+	gain_l = real_gain & 0xff;
+	Sensor_WriteReg(0x3509, gain_l);
 
 
-#if 0
-	value = (d_gain >> 8) & 0x0f;
-	Sensor_WriteReg(0x350e, value);
-	value = d_gain & 0xff;
-	Sensor_WriteReg(0x350f, value);
-#endif
+	Sensor_WriteReg(0x350c, gain_h);
+	Sensor_WriteReg(0x350d, gain_l);
 
 	return ret_value;
 }
