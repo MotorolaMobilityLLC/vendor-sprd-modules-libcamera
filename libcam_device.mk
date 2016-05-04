@@ -37,3 +37,7 @@ PRODUCT_PACKAGES += tuning.bin
 
 ### face beautify lib
 PRODUCT_PACKAGES += libts_face_beautify_hal
+
+# AL3200_FW
+PRODUCT_PACKAGES += miniBoot.bin \
+		    TBM_D2.bin

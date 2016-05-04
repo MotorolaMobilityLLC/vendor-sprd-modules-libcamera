@@ -157,6 +157,9 @@ LOCAL_SRC_FILES+= oem2v0/src/cmr_ydenoise.c
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RE_FOCUS)),true)
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/sensor/al3200
+LOCAL_SRC_FILES += sensor/al3200/al3200.c
+
 LOCAL_SRC_FILES+= oem2v0/src/cmr_refocus.c
 endif
 

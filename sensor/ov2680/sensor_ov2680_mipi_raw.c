@@ -24,7 +24,9 @@
 #else
 #include "sensor_ov2680_raw_param_v2.c"
 #endif
-
+#ifdef CONFIG_CAMERA_RE_FOCUS
+#include "al3200.h"
+#endif
 #define ov2680_I2C_ADDR_W        (0x6c>>1)
 #define ov2680_I2C_ADDR_R         (0x6c>>1)
 #define RAW_INFO_END_ID 0x71717567
@@ -558,7 +560,7 @@ LOCAL const SENSOR_REG_T ov2680_1600X1200_mipi_raw[] = {
 LOCAL SENSOR_REG_TAB_INFO_T s_ov2680_resolution_Tab_RAW[] = {
 	{ADDR_AND_LEN_OF_ARRAY(ov2680_com_mipi_raw), 0, 0, 24, SENSOR_IMAGE_FORMAT_RAW},
 	//{ADDR_AND_LEN_OF_ARRAY(ov2680_800X600_mipi_raw), 800, 600, 24, SENSOR_IMAGE_FORMAT_RAW},
-#if 1//def CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RE_FOCUS
 	{ADDR_AND_LEN_OF_ARRAY(ov2680_1600X1200_altek_mipi_raw), 1600, 1200, 24, SENSOR_IMAGE_FORMAT_RAW},
 #else
 	{ADDR_AND_LEN_OF_ARRAY(ov2680_1600X1200_mipi_raw), 1600, 1200, 24, SENSOR_IMAGE_FORMAT_RAW},
@@ -1752,6 +1754,11 @@ LOCAL unsigned long _ov2680_StreamOn(SENSOR_HW_HANDLE handle, unsigned long para
 {
 	SENSOR_PRINT("SENSOR_ov2680: StreamOn");
 
+#ifdef CONFIG_CAMERA_RE_FOCUS
+	al3200_mini_ctrl(param);
+	al3200_mini_ctrl(1);
+#endif
+	usleep(100 * 1000);
 	Sensor_WriteReg(0x0100, 0x01);
 
 	return 0;
