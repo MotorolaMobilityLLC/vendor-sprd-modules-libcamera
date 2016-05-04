@@ -2948,6 +2948,12 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 						}
 					}else{
 						HAL_LOGW("gyro is not enable, eis process is not work");
+						EIS_CROP_Tag eiscrop_Info;
+						eiscrop_Info.crop[0] = 0;
+						eiscrop_Info.crop[1] = 0;
+						eiscrop_Info.crop[2] = mParam.src_w;
+						eiscrop_Info.crop[3] = mParam.src_h;
+						mSetting->setEISCROPTag(eiscrop_Info);
 					}
 #endif
 

@@ -6214,12 +6214,7 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_
 	chn_param.cap_inf_cfg.frm_num          = -1;
 	chn_param.cap_inf_cfg.cfg.need_binning = 0;
 	chn_param.cap_inf_cfg.cfg.need_isp     = 0;
-	if( prev_cxt->prev_param.sprd_eis_enabled ){
-		CMR_LOGI("eis Mode preview format is NV12");
-		chn_param.cap_inf_cfg.cfg.dst_img_fmt  = IMG_DATA_TYPE_YVU420;
-	} else {
-		chn_param.cap_inf_cfg.cfg.dst_img_fmt  = prev_cxt->prev_param.preview_fmt;
-	}
+	chn_param.cap_inf_cfg.cfg.dst_img_fmt  = prev_cxt->prev_param.preview_fmt;
 	chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode= 1;
 
 	if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {

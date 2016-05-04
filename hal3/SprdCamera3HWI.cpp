@@ -529,7 +529,9 @@ int32_t SprdCamera3HWI::checkStreamSizeAndFormat(camera3_stream_t* new_stream)
 int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 {
 	int ret = NO_ERROR;
+	HAL_LOGD("E configureStreams");
 	Mutex::Autolock l(mLock);
+	HAL_LOGD("E Mutex::Autolock");
 	bool preview_stream_flag = false;
 	bool callback_stream_flag = false;
 	bool support_bigsize_flag = false;
@@ -1389,8 +1391,13 @@ int SprdCamera3HWI::flush()
 	timer_set(this, 20);
 	mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_FLUSH;
 	ret = mFlushSignal.waitRelative(mLock, 500000000); //500ms
-	if (ret == TIMED_OUT)
+	if (ret == TIMED_OUT) {
+		HAL_LOGE("Flush is time out");
+		if(mHDRProcessFlag == false) {
+			mLock.unlock();
+		}
 		return -ENODEV;
+	}
 
 	if(mHDRProcessFlag == false) {
 		mLock.unlock();
