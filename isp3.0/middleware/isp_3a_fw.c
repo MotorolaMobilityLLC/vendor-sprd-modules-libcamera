@@ -1101,7 +1101,7 @@ cmr_int isp3a_process_thread_proc(struct cmr_msg *message, void* p_data)
 		ISP_LOGE("param error");
 		goto exit;
 	}
-	ISP_LOGI("message.msg_type 0x%x, data %p", message->msg_type, message->data);
+	ISP_LOGV("message.msg_type 0x%x, data %p", message->msg_type, message->data);
 
 	switch (message->msg_type) {
 	case ISP3A_PROC_EVT_INIT:
@@ -1132,7 +1132,7 @@ cmr_int isp3a_process_thread_proc(struct cmr_msg *message, void* p_data)
 		break;
 	}
 exit:
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGV("done %ld", ret);
 	return ret;
 }
 
@@ -1455,7 +1455,7 @@ cmr_int isp3a_ioctrl(cmr_handle isp_3a_handle, enum isp_ctrl_cmd cmd, void *para
 		ISP_LOGI("ioctrl fun is NULL");
 	}
 exit:
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGV("done %ld", ret);
 	return ret;
 }
 
@@ -3562,7 +3562,7 @@ cmr_int isp_3a_fw_ioctl(cmr_handle isp_3a_handle, enum isp_ctrl_cmd cmd, void* p
 	}
 	ret = cmr_thread_msg_send(cxt->thread_cxt.process_thr_handle, &message);
 exit:
-	ISP_LOGI("cmd = %d done %ld", cmd, ret);
+	ISP_LOGV("cmd = %d done %ld", cmd, ret);
 	return ret;
 }
 
