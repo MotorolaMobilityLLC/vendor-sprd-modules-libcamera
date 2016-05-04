@@ -96,21 +96,21 @@ struct cap_size_to_mem {
 };
 
 static const struct cap_size_to_mem back_cam_mem_size_tab[IMG_SIZE_NUM] = {
-	{PIXEL_1P3_MEGA, (25 << 20)},
-	{PIXEL_2P0_MEGA, (25 << 20)},
-	{PIXEL_3P0_MEGA, (25 << 20)},
-	{PIXEL_4P0_MEGA, (25 << 20)},
-	{PIXEL_5P0_MEGA, (25 << 20)},
-	{PIXEL_6P0_MEGA, (45 << 20)},
-	{PIXEL_7P0_MEGA, (45 << 20)},
-	{PIXEL_8P0_MEGA, (45 << 20)},
-	{PIXEL_9P0_MEGA, (60 << 20)},
-	{PIXEL_AP0_MEGA, (60 << 20)},
-	{PIXEL_BP0_MEGA, (60 << 20)},
-	{PIXEL_CP0_MEGA, (60 << 20)},
-	{PIXEL_DP0_MEGA, (60 << 20)},
-	{PIXEL_10P0_MEGA, (70 << 20)},
-	{PIXEL_15P0_MEGA, (100 << 20)}
+	{PIXEL_1P3_MEGA, (20 << 20)},
+	{PIXEL_2P0_MEGA, (20 << 20)},
+	{PIXEL_3P0_MEGA, (20 << 20)},
+	{PIXEL_4P0_MEGA, (20 << 20)},
+	{PIXEL_5P0_MEGA, (20 << 20)},
+	{PIXEL_6P0_MEGA, (35 << 20)},
+	{PIXEL_7P0_MEGA, (35 << 20)},
+	{PIXEL_8P0_MEGA, (35 << 20)},
+	{PIXEL_9P0_MEGA, (45 << 20)},
+	{PIXEL_AP0_MEGA, (45 << 20)},
+	{PIXEL_BP0_MEGA, (45 << 20)},
+	{PIXEL_CP0_MEGA, (45 << 20)},
+	{PIXEL_DP0_MEGA, (45 << 20)},
+	{PIXEL_10P0_MEGA, (55 << 20)},
+	{PIXEL_15P0_MEGA, (65 << 20)}
 };
 
 /* for whale2, how to calculate cap size(raw capture):
@@ -607,7 +607,7 @@ int camera_arrange_capture_buf(struct cmr_cap_2_frm *cap_2_frm,
 				return -1;
 			}
 		} else {
-#if 0//def CONFIG_MEM_OPTIMIZATION
+#ifdef CONFIG_MEM_OPTIMIZATION
 	ret = arrange_yuv_buf_optimization(cap_2_frm,
 						sn_size,
 						sn_trim,
