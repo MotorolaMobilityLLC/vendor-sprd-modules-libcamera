@@ -1990,7 +1990,7 @@ static unsigned long imx230_access_val(SENSOR_HW_HANDLE handle, unsigned long pa
 	switch(param_ptr->type)
 	{
 		case SENSOR_VAL_TYPE_INIT_OTP:
-			imx230_otp_init(handle);
+			rtn = imx230_otp_init(handle);
 			break;
 		case SENSOR_VAL_TYPE_SHUTTER:
 			//*((uint32_t*)param_ptr->pval) = imx230_get_shutter();
@@ -2002,19 +2002,19 @@ static unsigned long imx230_access_val(SENSOR_HW_HANDLE handle, unsigned long pa
 			//rtn = imx230_write_vcm(handle, param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_READ_OTP:
-			imx230_otp_read(handle,param_ptr);
+			rtn = imx230_otp_read(handle,param_ptr);
 			break;
 		case SENSOR_VAL_TYPE_READ_DUAL_OTP:
-			#if IMX230_DUAL_OTP
-				imx230_dual_otp_read(handle, param_ptr);
+			#ifdef IMX230_DUAL_OTP
+				rtn = imx230_dual_otp_read(handle, param_ptr);
 			#endif
 			break;
 		case SENSOR_VAL_TYPE_PARSE_OTP:
-			imx230_parse_otp(handle, param_ptr);
+			rtn = imx230_parse_otp(handle, param_ptr);
 			break;
 		case SENSOR_VAL_TYPE_PARSE_DUAL_OTP:
-			#if IMX230_DUAL_OTP
-				imx230_parse_dual_otp(handle, param_ptr);
+			#ifdef IMX230_DUAL_OTP
+				rtn = imx230_parse_dual_otp(handle, param_ptr);
 			#endif
 			break;
 		case SENSOR_VAL_TYPE_WRITE_OTP:

@@ -1116,24 +1116,33 @@ cmr_int cmr_get_otp_from_kernel(struct sensor_drv_context *sensor_cxt, cmr_uint 
 		otp_data_len = CMR_ISP_OTP_MAX_SIZE;
 		sensor_otp.data_ptr = malloc(otp_data_len);
 		if (NULL == sensor_otp.data_ptr){
-			CMR_LOGE("malloc random lsc file failed");
+			CMR_LOGE("malloc file failed");
 			return -1;
 		}
 
 		cmr_bzero(sensor_otp.data_ptr, otp_data_len);
-		param_ptr.type = SENSOR_OTP_PARAM_NORMAL;
-		param_ptr.start_addr = 0;
-		param_ptr.len          = 0;
-		param_ptr.buff         = sensor_otp.data_ptr;
+		if (SENSOR_VAL_TYPE_READ_OTP ==  val->type) {
+			param_ptr.type = SENSOR_OTP_PARAM_NORMAL;
+			param_ptr.start_addr = 0;
+			param_ptr.len          = 0;
+			param_ptr.buff         = sensor_otp.data_ptr;
 
-		ret = ioctl(fd_sensor, SENSOR_IO_READ_OTPDATA, &param_ptr);
-		if(!ret && 0 != param_ptr.buff [0]) {
-			CMR_LOGD("SENSOR_IO_READ_OTPDATA  OK");
-			val->pval = param_ptr.buff;
-			if (SENSOR_VAL_TYPE_READ_OTP ==  val->type) {
+			ret = ioctl(fd_sensor, SENSOR_IO_READ_OTPDATA, &param_ptr);
+			if(!ret && 0 != param_ptr.buff [0]) {
+				CMR_LOGD("SENSOR_IO_READ_OTPDATA  OK");
+				val->pval = param_ptr.buff;
 				val->type = SENSOR_VAL_TYPE_PARSE_OTP;
 			}
-			else if (SENSOR_VAL_TYPE_READ_DUAL_OTP ==  val->type) {
+		} else if (SENSOR_VAL_TYPE_READ_DUAL_OTP ==  val->type) {
+			param_ptr.type = SENSOR_OTP_PARAM_DUAL;
+			param_ptr.start_addr = 0;
+			param_ptr.dual_len = 0;
+			param_ptr.dual_buff = sensor_otp.data_ptr;
+
+			ret = ioctl(fd_sensor, SENSOR_IO_READ_OTPDATA, &param_ptr);
+			if(!ret && 0 != param_ptr.dual_buff [0]) {
+				CMR_LOGD("SENSOR_IO_READ_OTPDATA dual OK");
+				val->pval = param_ptr.dual_buff;
 				val->type = SENSOR_VAL_TYPE_PARSE_DUAL_OTP;
 			}
 		}

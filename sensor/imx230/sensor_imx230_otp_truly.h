@@ -17,13 +17,15 @@
 #ifndef _SENSOR_IMX230_OTP_TRULY_H_
 #define _SENSOR_IMX230_OTP_TRULY_H_
 
-/*use dual otp info*/
-#define IMX230_DUAL_OTP        1
+#if defined(CONFIG_CAMERA_RE_FOCUS)
+	/*use dual otp info*/
+	#define IMX230_DUAL_OTP
+#endif
 
 #define OTP_LSC_INFO_LEN 1658
 static cmr_u8 imx230_opt_lsc_data[OTP_LSC_INFO_LEN];
 static struct sensor_otp_cust_info imx230_otp_info;
-#if IMX230_DUAL_OTP
+#ifdef IMX230_DUAL_OTP
 #define OTP_DUAL_SIZE 8192
 static cmr_u8 imx230_dual_otp_data[OTP_DUAL_SIZE];
 #endif
@@ -32,9 +34,8 @@ static cmr_u8 imx230_i2c_read_otp_set(SENSOR_HW_HANDLE handle, cmr_u16 addr);
 static int imx230_otp_init(SENSOR_HW_HANDLE handle);
 static int imx230_otp_read_data(SENSOR_HW_HANDLE handle);
 static unsigned long imx230_otp_read(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* param);
-static unsigned long imx230_parse_single_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* param);
 static unsigned long imx230_parse_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* param);
-#if IMX230_DUAL_OTP
+#ifdef IMX230_DUAL_OTP
 static unsigned long imx230_otp_dual_to_single(SENSOR_HW_HANDLE handle);
 static int imx230_dual_otp_read_data(SENSOR_HW_HANDLE handle);
 static unsigned long imx230_dual_otp_read(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* param);
@@ -152,26 +153,20 @@ static unsigned long imx230_otp_read(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* para
 	struct sensor_otp_cust_info *otp_info = NULL;
 
 	SENSOR_PRINT("E");
-#if IMX230_DUAL_OTP
-	imx230_dual_otp_read_data(handle);
-	imx230_otp_dual_to_single(handle);
-#else
 	imx230_otp_read_data(handle);
-#endif
 	otp_info = &imx230_otp_info;
 
 	if (1 != otp_info->program_flag) {
 		SENSOR_PRINT_ERR("otp error");
 		param->pval = NULL;
 		return -1;
-	} else {
-		param->pval = (void *)otp_info;
 	}
+	param->pval = (void *)otp_info;
 	SENSOR_PRINT("param->pval = %p", param->pval);
 	return 0;
 }
 
-static unsigned long imx230_parse_single_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* param)
+static unsigned long imx230_parse_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* param)
 {
 	struct sensor_otp_cust_info *otp_info = NULL;
 	cmr_u8 *buff = NULL;
@@ -183,13 +178,13 @@ static unsigned long imx230_parse_single_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL
 
 	SENSOR_PRINT("E");
 	if (NULL == param->pval) {
-		SENSOR_PRINT("imx230_parse_single_otp is NULL data");
+		SENSOR_PRINT("imx230_parse_otp is NULL data");
 		return -1;
 	}
 	buff = param->pval;
 
 	if (1 != buff[0]) {
-		SENSOR_PRINT("imx230_parse_single_otp is wrong data");
+		SENSOR_PRINT("imx230_parse_otp is wrong data");
 		param->pval = NULL;
 		return -1;
 	} else {
@@ -274,38 +269,7 @@ static unsigned long imx230_parse_single_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL
 	return 0;
 }
 
-static unsigned long imx230_parse_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* param)
-{
-	struct sensor_otp_cust_info *otp_info = NULL;
-	cmr_u16 i = 0;
-	cmr_u8 *buff = NULL;
-
-	SENSOR_PRINT("E");
-#if IMX230_DUAL_OTP
-	imx230_parse_dual_otp(handle, param);
-	if (NULL == param->pval) {
-		SENSOR_PRINT("imx230_parse_otp is NULL data");
-		return -1;
-	}
-	imx230_otp_dual_to_single(handle);
-	otp_info = &imx230_otp_info;
-
-	if (1 != otp_info->program_flag) {
-		SENSOR_PRINT_ERR("otp error");
-		param->pval = NULL;
-		return -1;
-	} else {
-		param->pval = (void *)otp_info;
-	}
-	SENSOR_PRINT("param->pval = %p", param->pval);
-#else
-	imx230_parse_single_otp(handle, param);
-#endif
-
-	return 0;
-}
-
-#if IMX230_DUAL_OTP
+#ifdef IMX230_DUAL_OTP
 static unsigned long imx230_otp_dual_to_single(SENSOR_HW_HANDLE handle)
 {
 	cmr_u16 i = 0;
@@ -399,6 +363,8 @@ static int imx230_dual_otp_read_data(SENSOR_HW_HANDLE handle)
 {
 	cmr_u16 i = 0;
 	static cmr_u8 first_flag = 1;
+	cmr_u16 checksum = 0;
+	cmr_u32 checksum_total = 0;
 
 	SENSOR_PRINT("E");
 	if (first_flag)
@@ -408,8 +374,17 @@ static int imx230_dual_otp_read_data(SENSOR_HW_HANDLE handle)
 			SENSOR_PRINT("failed to read otp or the otp is wrong data");
 			return -1;
 		}
+		checksum_total += imx230_dual_otp_data[0];
 		for (i = 1; i < OTP_DUAL_SIZE; i++) {
 			imx230_dual_otp_data[i] = imx230_i2c_read_otp(0x0000 + i);
+			if (i < OTP_DUAL_SIZE - 2)
+				checksum_total += imx230_dual_otp_data[i] ;
+		}
+		checksum = imx230_dual_otp_data[OTP_DUAL_SIZE-2] << 8 | imx230_dual_otp_data[OTP_DUAL_SIZE-1];
+		SENSOR_PRINT("checksum_total=0x%x, checksum=0x%x", checksum_total, checksum);
+		if ((checksum_total & 0xffff) != checksum ) {
+			SENSOR_PRINT_ERR("checksum error!");
+			return -1;
 		}
 		first_flag = 0;
 	}
@@ -420,13 +395,14 @@ static int imx230_dual_otp_read_data(SENSOR_HW_HANDLE handle)
 static unsigned long imx230_dual_otp_read(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* param)
 {
 	cmr_u16 i = 0;
+	uint32_t ret_value = SENSOR_SUCCESS;
 
 	SENSOR_PRINT("E");
-	imx230_dual_otp_read_data(handle);
-	if (1 != imx230_dual_otp_data[0]) {
+	ret_value = imx230_dual_otp_read_data(handle);
+	if (ret_value) {
 		SENSOR_PRINT_ERR("otp error");
 		param->pval = NULL;
-		return -1;
+		return ret_value;
 	}
 	param->pval = (void *)imx230_dual_otp_data;
 	SENSOR_PRINT("param->pval = %p", param->pval);
@@ -437,6 +413,8 @@ static unsigned long imx230_parse_dual_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL_T
 {
 	cmr_u16 i = 0;
 	cmr_u8 *buff = NULL;
+	cmr_u16 checksum = 0;
+	cmr_u32 checksum_total = 0;
 
 	SENSOR_PRINT("E");
 	if (NULL == param->pval) {
@@ -450,8 +428,18 @@ static unsigned long imx230_parse_dual_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL_T
 		param->pval = NULL;
 		return -1;
 	}
+	checksum_total += imx230_dual_otp_data[0];
 	for (i = 1; i < OTP_DUAL_SIZE; i++) {
 		imx230_dual_otp_data[i] = buff[i];
+		if (i < OTP_DUAL_SIZE - 2)
+			checksum_total += imx230_dual_otp_data[i] ;
+	}
+	checksum = imx230_dual_otp_data[OTP_DUAL_SIZE-2] << 8 | imx230_dual_otp_data[OTP_DUAL_SIZE-1];
+	SENSOR_PRINT("checksum_total=0x%x, checksum=0x%x", checksum_total, checksum);
+	if ((checksum_total & 0xffff) != checksum ) {
+		SENSOR_PRINT_ERR("checksum error!");
+		param->pval = NULL;
+		return -1;
 	}
 	param->pval = (void *)imx230_dual_otp_data;
 	SENSOR_PRINT("param->pval = %p", param->pval);
