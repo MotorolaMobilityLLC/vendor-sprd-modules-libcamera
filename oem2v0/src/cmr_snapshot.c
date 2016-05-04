@@ -1532,7 +1532,7 @@ static int snp_dump_mipi_raw(cmr_handle snp_handle, char *name, uint32_t img_fmt
 		return -1;
 	}
 
-	fwrite((void *)addr->addr_y, 1, (uint32_t)width * height * 2, fp);
+	fwrite((void *)addr->addr_y, 1, (uint32_t)width * height * 10 / 8, fp);
 	fclose(fp);
 
 	return 0;
