@@ -5374,8 +5374,8 @@ cmr_int prev_get_cap_max_size(struct prev_handle *handle,
 		}
 
 		tmp_width = (cmr_u32)(sc_factor * img_rc.width);
-		if ((img_rc.width >= CAMERA_SAFE_SCALE_DOWN(cap_size->width)
-			|| cap_size->width <= sc_threshold) && ZOOM_BY_CAP == zoom_proc_mode) {
+		if ((img_rc.width >= cap_size->width || cap_size->width <= sc_threshold) &&
+		    ZOOM_BY_CAP == zoom_proc_mode) {
 			/*if the out size is smaller than the in size, try to use scaler on the fly*/
 			if (cap_size->width > tmp_width) {
 				if (tmp_width > sc_capability) {
@@ -7282,8 +7282,8 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id, struct i
 
 		tmp_width = (cmr_u32)(sc_factor * img_cap->src_img_rect.width);
 		CMR_LOGI("%d, %d, %d, %d, %d", tmp_width, img_cap->src_img_rect.width, cap_size->width, cap_size->height, sc_threshold);
-		if ((img_cap->src_img_rect.width >= CAMERA_SAFE_SCALE_DOWN(cap_size->width)
-			|| cap_size->width <= sc_threshold) && ZOOM_BY_CAP == prev_cxt->cap_zoom_mode) {
+		if ((img_cap->src_img_rect.width >= cap_size->width || cap_size->width <= sc_threshold) &&
+		    ZOOM_BY_CAP == prev_cxt->cap_zoom_mode) {
 			/*if the out size is smaller than the in size, try to use scaler on the fly*/
 			if (cap_size->width > tmp_width) {
 				if (tmp_width > sc_capability) {
@@ -7310,7 +7310,7 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id, struct i
 	CMR_LOGI("cap_orig_size %d %d", prev_cxt->cap_org_size.width, prev_cxt->cap_org_size.height);
 
 exit:
-	CMR_LOGD(" out");
+	CMR_LOGD("out");
 	return ret;
 }
 
