@@ -4683,7 +4683,8 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode, uint32_t fr
 			break;
 		case CAMERA_CAPTURE_MODE_VIDEO:
 			mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
-			mCaptureMode = CAMERA_ZSL_MODE;
+			// change it to CAMERA_ZSL_MODE when start video record
+			mCaptureMode = CAMERA_NORMAL_MODE;
 			mTakePictureMode = SNAPSHOT_DEFAULT_MODE;
 			mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DV;
 			mRecordingMode = true;

@@ -5787,21 +5787,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	out_param_ptr->memory_setting.alloc_mem = camera_malloc;
 	out_param_ptr->memory_setting.free_mem = camera_free;
 
-#ifdef CONFIG_MEM_OPTIMIZATION
-	cmr_bzero(&setting_param, sizeof(setting_param));
-	setting_param.camera_id = cxt->camera_id;
-	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_SPRD_ZSL_ENABLED, &setting_param);
-	if (ret) {
-		CMR_LOGE("failed to get preview sprd zsl enabled flag %ld", ret);
-		goto exit;
-	}
-	out_param_ptr->sprd_zsl_enabled = setting_param.cmd_type_value;
-	CMR_LOGI("sprd zsl_enabled flag %d", out_param_ptr->sprd_zsl_enabled);
-#endif
-
 	if (CAMERA_SNAPSHOT != is_snapshot) {
-		cmr_bzero(&setting_param, sizeof(setting_param));
-		setting_param.camera_id = cxt->camera_id;
 		ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_PREVIEW_FORMAT, &setting_param);
 		if (ret) {
 			CMR_LOGE("failed to get preview fmt %ld", ret);
@@ -5857,15 +5843,10 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 		out_param_ptr->video_slowmotion_eb = setting_param.cmd_type_value;
 		CMR_LOGD("video_slowmotion_eb = %d", out_param_ptr->video_slowmotion_eb);
 
-#ifdef CONFIG_MEM_OPTIMIZATION
-		if (CAMERA_ZSL_MODE == mode && out_param_ptr->sprd_zsl_enabled) {
-			is_cfg_snp = 1;
-		}
-#else
 		if (CAMERA_ZSL_MODE == mode) {
 			is_cfg_snp = 1;
 		}
-#endif
+
 	} else {
 		is_cfg_snp = 1;
 	}
@@ -6014,6 +5995,18 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 		}
 	}
 	//bug500099 front cam mirror end
+
+#ifdef CONFIG_MEM_OPTIMIZATION
+	cmr_bzero(&setting_param, sizeof(setting_param));
+	setting_param.camera_id = cxt->camera_id;
+	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_SPRD_ZSL_ENABLED, &setting_param);
+	if (ret) {
+		CMR_LOGE("failed to get preview sprd zsl enabled flag %ld", ret);
+		goto exit;
+	}
+	out_param_ptr->sprd_zsl_enabled = setting_param.cmd_type_value;
+	CMR_LOGI("sprd zsl_enabled flag %d", out_param_ptr->sprd_zsl_enabled);
+#endif
 
 	if (1 == camera_get_hdr_flag(cxt)) {
 		struct ipm_open_in  in_param;
