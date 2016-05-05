@@ -765,7 +765,8 @@ static cmr_int afl_altek_adpt_process(cmr_handle handle, void *in, void *out)
 		goto exit;
 	return ISP_SUCCESS;
 exit:
-	ISP_LOGI("done %ld, lib_ret=%ld", ret, lib_ret);
+	ret = aflaltek_stat_queue_process(cxt_ptr, in_ptr->stat_data_ptr);
+	ISP_LOGE("done %ld, lib_ret=%ld", ret, lib_ret);
 	return ret;
 }
 
