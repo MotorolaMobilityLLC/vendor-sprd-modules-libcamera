@@ -456,7 +456,7 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 		offset_start = offset_start + padding;
 
 #ifndef LOCAL_NDK_BUILD
-		ISP_LOGE("al3awrapper_dispatchhw3astats anti-flicker statssize:%d", alisp_metadata_yhist->uyhiststatssize );
+		ISP_LOGI("al3awrapper_dispatchhw3astats anti-flicker statssize:%d", alisp_metadata_yhist->uyhiststatssize );
 #endif
 
 		/* allocate memory buffer base on meta size of YHist stats */
@@ -564,7 +564,7 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 	time_e = systemtime_e.tv_sec * 1000000 + systemtime_e.tv_usec;
 
 #ifndef LOCAL_NDK_BUILD
-	ISP_LOGE("al3awrapper_dispatchhw3astats end %d!", (uint32)(time_e - time_s));
+	ISP_LOGI("al3awrapper_dispatchhw3astats end %d!", (uint32)(time_e - time_s));
 #endif
 
 
