@@ -745,6 +745,114 @@ static const SENSOR_REG_T imx230_5344x4016_setting[] = {
 	{0x3013, 0x01},
 };
 
+static const SENSOR_REG_T imx230_4272x2404_setting[] = {
+    /*4Lane
+    reg_A4
+    4K2K 30fps
+    H: 4272
+    V: 2404
+    Mode Setting*/
+        {0x0114,0x03},
+        {0x0220,0x00},
+        {0x0221,0x11},
+        {0x0222,0x01},
+        {0x0340,0x0C},
+        {0x0341,0x20},
+        {0x0342,0x17},
+        {0x0343,0x88},
+        {0x0344,0x00},
+        {0x0345,0x00},
+        {0x0346,0x01},
+        {0x0347,0xF8},
+        {0x0348,0x14},
+        {0x0349,0xDF},
+        {0x034A,0x0D},
+        {0x034B,0xB7},
+        {0x0381,0x01},
+        {0x0383,0x01},
+        {0x0385,0x01},
+        {0x0387,0x01},
+        {0x0900,0x00},
+        {0x0901,0x11},
+        {0x0902,0x00},
+        {0x3000,0x74},
+        {0x3001,0x00},
+        {0x305C,0x11},//Output Size Setting
+        {0x0112,0x0A},
+        {0x0113,0x0A},
+        {0x034C,0x10},
+        {0x034D,0xB0},
+        {0x034E,0x09},
+        {0x034F,0x64},
+        {0x0401,0x02},
+        {0x0404,0x00},
+        {0x0405,0x14},
+        {0x0408,0x00},
+        {0x0409,0x02},
+        {0x040A,0x00},
+        {0x040B,0x02},
+        {0x040C,0x14},
+        {0x040D,0xDE},
+        {0x040E,0x0B},
+        {0x040F,0xBE}, //Clock Setting
+        {0x0301,0x04},
+        {0x0303,0x02},
+        {0x0305,0x04},
+        {0x0306,0x00},
+        {0x0307,0xBB},
+        {0x0309,0x0A},
+        {0x030B,0x01},
+        {0x030D,0x0F},
+        {0x030E,0x02},
+        {0x030F,0xAF},
+        {0x0310,0x01},//Data Rate Setting
+        {0x0820,0x11},
+        {0x0821,0x2C},
+        {0x0822,0xCC},
+        {0x0823,0xCC},//Integration Time Setting
+        {0x0202,0x0C},
+        {0x0203,0x16},
+        {0x0224,0x01},
+        {0x0225,0xF4},//Gain Setting
+        {0x0204,0x00},
+        {0x0205,0x00},
+        {0x0216,0x00},
+        {0x0217,0x00},
+        {0x020E,0x01},
+        {0x020F,0x00},
+        {0x0210,0x01},
+        {0x0211,0x00},
+        {0x0212,0x01},
+        {0x0213,0x00},
+        {0x0214,0x01},
+        {0x0215,0x00},//HDR Setting
+        {0x3006,0x01},
+        {0x3007,0x02},
+        {0x31E0,0x03},
+        {0x31E1,0xFF},
+        {0x31E4,0x02},//DPC2D Setting
+        {0x3A22,0x20},
+        {0x3A23,0x14},
+        {0x3A24,0xE0},
+        {0x3A25,0x0B},
+        {0x3A26,0xC0},
+        {0x3A2F,0x00},
+        {0x3A30,0x00},
+        {0x3A31,0x01},
+        {0x3A32,0xF8},
+        {0x3A33,0x14},
+        {0x3A34,0xDF},
+        {0x3A35,0x0D},
+        {0x3A36,0xB7},
+        {0x3A37,0x00},
+        {0x3A38,0x00},
+        {0x3A39,0x00},//LSC Setting
+        {0x3A21,0x00},//Stats Setting
+        {0x3011,0x00},
+        {0x3013,0x01},
+
+};
+
 static const SENSOR_REG_T imx230_2672x2008_setting[] = {
 	{0x0114, 0x03},
 	{0x0220, 0x00},
@@ -968,14 +1076,16 @@ static const SENSOR_REG_T imx230_1280x720_setting[] = {
 static SENSOR_REG_TAB_INFO_T s_imx230_resolution_tab_raw[SENSOR_MODE_MAX] = {
 	{ADDR_AND_LEN_OF_ARRAY(imx230_init_setting), 0, 0, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
 	{ADDR_AND_LEN_OF_ARRAY(imx230_1280x720_setting), 1280, 720, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
-	{ADDR_AND_LEN_OF_ARRAY(imx230_2672x2008_setting), 2672, 2008, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
+//	{ADDR_AND_LEN_OF_ARRAY(imx230_2672x2008_setting), 2672, 2008, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
+	{ADDR_AND_LEN_OF_ARRAY(imx230_4272x2404_setting), 4272, 2404, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
 	{ADDR_AND_LEN_OF_ARRAY(imx230_5344x4016_setting), 5344, 4016, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
 };
 
 static SENSOR_TRIM_T s_imx230_resolution_trim_tab[SENSOR_MODE_MAX] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 1280, 720, 10188 , PREVIEW_MIPI_PER_LANE_BPS, 828, {0, 0, 1280, 720}},
-	{0, 0, 2672, 2008, 14343, PREVIEW_MIPI_PER_LANE_BPS, 2320, {0, 0, 2672, 2008}},
+//	{0, 0, 2672, 2008, 14343, PREVIEW_MIPI_PER_LANE_BPS, 2320, {0, 0, 2672, 2008}},
+	{0, 0, 4272, 2404, 10739, 1099, 3104, {0, 0, 4272, 2404}},
 	{0, 0, 5344, 4016, 10040, SNAPSHOT_MIPI_PER_LANE_BPS, 4140, {0, 0, 5344, 4016}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
