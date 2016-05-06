@@ -511,6 +511,40 @@ exit:
 	return ret;
 }
 
+static cmr_int aflaltek_enable_debug_report(struct aflaltek_cxt *cxt_ptr, cmr_int enable)
+{
+	cmr_int ret = ISP_ERROR;
+
+	cmr_int lib_ret = 0;
+	struct alflickerruntimeobj_t *obj_ptr = NULL;
+	struct flicker_set_param_t in_param;
+	struct flicker_output_data_t *output_param_ptr = NULL;
+	enum flicker_set_param_type_t type = 0;
+	struct flicker_set_param_content_t *param_ct_ptr = NULL;
+
+	if (!cxt_ptr) {
+		ISP_LOGE("param %p is NULL error!", cxt_ptr);
+		goto exit;
+	}
+	obj_ptr = &cxt_ptr->afl_obj;
+	output_param_ptr = &cxt_ptr->lib_data.output_data;
+	param_ct_ptr = &in_param.set_param;
+
+	param_ct_ptr->flicker_enableDebugLog = enable;
+
+	type = FLICKER_SET_PARAM_ENABLE_DEBUG_REPORT;
+	in_param.flicker_set_param_type = type;
+	if (obj_ptr && obj_ptr->set_param)
+		lib_ret = obj_ptr->set_param(&in_param, output_param_ptr, cxt_ptr->lib_run_data);
+	if (lib_ret)
+		goto exit;
+
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld, lib_ret=%ld !!!", ret, lib_ret);
+	return ret;
+}
+
 static cmr_int aflaltek_init(struct aflaltek_cxt *cxt_ptr, struct afl_ctrl_init_in *in_ptr)
 {
 	cmr_int ret = ISP_ERROR;
@@ -545,6 +579,9 @@ static cmr_int aflaltek_init(struct aflaltek_cxt *cxt_ptr, struct afl_ctrl_init_
 	in_param.init.resolution.frame_size.h = in_ptr->init_param.resolution.frame_size.h;
 
 	ret = aflaltek_set_init_setting(cxt_ptr, &in_param, NULL);
+	if (ret)
+		goto exit;
+	ret = aflaltek_enable_debug_report(cxt_ptr, 1);
 	if (ret)
 		goto exit;
 	return ISP_SUCCESS;

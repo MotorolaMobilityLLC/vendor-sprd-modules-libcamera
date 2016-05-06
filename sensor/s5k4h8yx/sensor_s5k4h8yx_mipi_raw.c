@@ -545,6 +545,73 @@ address	data*/
 {0x3008,0x0000},
 };
 
+static const SENSOR_REG_T s5k4h8yx_1632x1224_4lane_setting_new1[] = {
+    /*binning size
+1632x1224_60fps_vt280M_4lane_mipi700M
+width	3264
+height	2448
+frame rate	60.02
+mipi_lane_num	4
+mipi_per_lane_bps	700
+line time(0.1us unit)	133.7142857
+frame length	1246
+Extclk	24M
+ max gain	0x0200
+base gain	0x0020
+raw bits	raw10
+bayer patter 	Gr first
+OB level	64
+offset	8
+min shutter	4
+address	data*/
+{0x6028,0x2000},
+{0x602A,0x0EC6},
+{0x6F12,0x0000},
+{0xFCFC,0x4000},
+{0xF490,0x0030},
+{0xF47A,0x0012},
+{0xF428,0x0200},
+{0xF48E,0x0010},
+{0xF45C,0x0004},
+{0x0B04,0x0101},
+{0x0B00,0x0080},
+{0x6028,0x2000},
+{0x602A,0x0C40},
+{0x6F12,0x0140},
+{0xFCFC,0x4000},
+{0x0200,0x0618},
+{0x0202,0x0904},
+{0x31AA,0x0004},
+{0x1006,0x0006},
+{0x31FA,0x0000},
+{0x0204,0x0020},
+{0x0344,0x0008},
+{0x0348,0x0CC7},
+{0x0346,0x0008},
+{0x034A,0x0997},
+{0x034C,0x0660},
+{0x034E,0x04C8},
+{0x0342,0x0EA0},
+{0x0340,0x04DE},
+{0x0900,0x0212},
+{0x0380,0x0001},
+{0x0382,0x0001},
+{0x0384,0x0001},
+{0x0386,0x0003},
+{0x0400,0x0002},
+{0x0404,0x0020},
+{0x0114,0x0330},
+{0x0136,0x1800},
+{0x0300,0x0005},
+{0x0302,0x0001},
+{0x0304,0x0006},
+{0x0306,0x00AF},
+{0x030C,0x0006},
+{0x030E,0x00AF},
+{0x3008,0x0000},
+
+};
+
 ////initial setting
 static const SENSOR_REG_T s5k4h8yx_common_init[] = {
  { 0x6028, 0x4000 },
@@ -689,6 +756,7 @@ static const SENSOR_REG_T s5k4h8yx_1632x1224_4lane_setting[] = {
 static SENSOR_REG_TAB_INFO_T s_s5k4h8yx_resolution_Tab_RAW[] = {
     #ifdef  S5K4H8YX_4_LANES
 	{ADDR_AND_LEN_OF_ARRAY(s5k4h8yx_common_init_new1), 0, 0, 24, SENSOR_IMAGE_FORMAT_RAW},
+	//{ADDR_AND_LEN_OF_ARRAY(s5k4h8yx_1632x1224_4lane_setting_new1), 1632, 1224, 24, SENSOR_IMAGE_FORMAT_RAW},
 	{ADDR_AND_LEN_OF_ARRAY(s5k4h8yx_3264x2448_4lane_setting_new1), 3264, 2448, 24, SENSOR_IMAGE_FORMAT_RAW},
     #else
 	//{ADDR_AND_LEN_OF_ARRAY(s5k4h8yx_common_init), 0, 0, 24, SENSOR_IMAGE_FORMAT_RAW},
@@ -710,8 +778,8 @@ static SENSOR_TRIM_T s_s5k4h8yx_Resolution_Trim_Tab[] = {
 	{0, 0, 3264, 2448, 26742, 700, 2498, {0, 0, 3264, 2448}},
 	//{0, 0, 1632, 1224, 26742, 700, 1246, {0, 0, 1632, 1224}},
 	#else
-	{0, 0, 3264, 2448, 13371, 700, 2498, {0, 0, 3264, 2448}},
 	//{0, 0, 1632, 1224, 13371, 700, 1246, {0, 0, 1632, 1224}},
+	{0, 0, 3264, 2448, 13371, 700, 2498, {0, 0, 3264, 2448}},
 	#endif
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},

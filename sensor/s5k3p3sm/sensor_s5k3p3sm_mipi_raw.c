@@ -334,6 +334,49 @@ static const SENSOR_REG_T s5k3p3sm_1920x1080_4lane_setting[] = {
 // { 0x0100, 0x0100 },//steam on
 };
 
+// 1920X1080 30FPS v560M mipi660M 4lane 2x2binning
+// frame length	0x0DCE
+// 1H time	94.3
+static const SENSOR_REG_T s5k3p3sm_1920x1080_4lane_30fps_setting[] = {
+	{0x6028,0x2000},
+	{0x602A,0x2E26},
+	{0x6F12,0x0103},
+	{0x6028,0x4000},
+	{0x3D7C,0x0010},
+	{0x3D88,0x0064},
+	{0x3D8A,0x0068},
+	{0x0344,0x018C},
+	{0x0346,0x029C},
+	{0x0348,0x109B},
+	{0x034A,0x0B0B},
+	{0x034C,0x0780},
+	{0x034E,0x0438},
+	{0x0408,0x0004},
+	{0x0900,0x0122},
+	{0x0380,0x0001},
+	{0x0382,0x0003},
+	{0x0384,0x0001},
+	{0x0386,0x0003},
+	{0x0400,0x0001},
+	{0x0404,0x0010},
+	{0x0114,0x0300},
+	{0x0110,0x0002},
+	{0x0136,0x1800},
+	{0x0304,0x0006},
+	{0x0306,0x008C},
+	{0x0302,0x0001},
+	{0x0300,0x0004},
+	{0x030C,0x0004},
+	{0x030E,0x0037},
+	{0x030A,0x0001},
+	{0x0308,0x0008},
+	{0x0342,0x14A2},
+	{0x0340,0x0DCE},
+	{0x0B0E,0x0100},
+	{0x0216,0x0000},
+	//{0x0100,0x0100	}, //steam on
+};
+
 // 1280x720 120FPS v560M mipi660M 4lane 3x3binning
 // frame length	0x038A
 // 1H time	91.9
@@ -383,6 +426,7 @@ static SENSOR_REG_TAB_INFO_T s_s5k3p3sm_resolution_Tab_RAW[9] = {
 	{ADDR_AND_LEN_OF_ARRAY(s5k3p3sm_2304x1740_4lane_setting), 2304, 1740, 24, SENSOR_IMAGE_FORMAT_RAW},
 	{ADDR_AND_LEN_OF_ARRAY(s5k3p3sm_4632x3480_4lane_setting), 4632, 3480, 24, SENSOR_IMAGE_FORMAT_RAW},
 	//{ADDR_AND_LEN_OF_ARRAY(s5k3p3sm_1280x720_4lane_setting), 1280, 720, 24, SENSOR_IMAGE_FORMAT_RAW},
+	//{ADDR_AND_LEN_OF_ARRAY(s5k3p3sm_1920x1080_4lane_30fps_setting), 1920, 1080, 24, SENSOR_IMAGE_FORMAT_RAW},
 	//{ADDR_AND_LEN_OF_ARRAY(s5k3p3sm_1920x1080_4lane_setting), 1920, 1080, 24, SENSOR_IMAGE_FORMAT_RAW},
 	//{ADDR_AND_LEN_OF_ARRAY(s5k3p3sm_2320x1748_4lane_setting), 2320, 1748, 24, SENSOR_IMAGE_FORMAT_RAW},
 	//{ADDR_AND_LEN_OF_ARRAY(s5k3p3sm_2304x1740_4lane_setting), 2304, 1740, 24, SENSOR_IMAGE_FORMAT_RAW},
@@ -397,6 +441,7 @@ static SENSOR_TRIM_T s_s5k3p3sm_Resolution_Trim_Tab[SENSOR_MODE_MAX] = {
 	{0, 0, 2304, 1740, 9430, 1320, 0x0dc8, {0, 0, 2304, 1740}},
 	{0, 0, 4632, 3480, 9190, 2784, 3626, {0, 0, 4632, 3480}},
 	//{0, 0, 1280, 720, 9248, 1320, 906, {0, 0, 1280, 720}},
+	//{0, 0, 1920, 1080, 9430, 1320, 3534, {0, 0, 1920, 1080}},
 	//{0, 0, 1920, 1080, 9430, 1320, 1767, {0, 0, 1920, 1080}},
 	//{0, 0, 2320, 1748, 18300, 1440, 1800, {0, 0, 2320, 1748}},
 	//{0, 0, 2304, 1740, 9430, 1320, 0x0dc8, {0, 0, 2304, 1740}},

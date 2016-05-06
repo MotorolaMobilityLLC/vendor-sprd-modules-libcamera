@@ -3355,9 +3355,11 @@ cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start *input_ptr)
 	cxt->sof_idx = 0;
 
 	if (input_ptr->sensor_fps.is_high_fps) {
-		ret = isp_dev_access_set_skip_num(cxt->dev_access_handle, input_ptr->sensor_fps.high_fps_skip_num);
-		if (ret) {
-			ISP_LOGE("failed to isp_dev_access_set_skip_num");
+		if ((input_ptr->sensor_fps.high_fps_skip_num-1) > 0) {
+			ret = isp_dev_access_set_skip_num(cxt->dev_access_handle, input_ptr->sensor_fps.high_fps_skip_num-1);
+			if (ret) {
+				ISP_LOGE("failed to isp_dev_access_set_skip_num");
+			}
 		}
 	}
 

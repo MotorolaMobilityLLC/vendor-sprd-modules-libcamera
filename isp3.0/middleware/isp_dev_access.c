@@ -579,7 +579,7 @@ void isp_dev_access_convert_awb_param(struct isp3a_awb_hw_cfg *data, struct awb_
 	awb_param->t_his.yfac_w = data->t_his.ucyfac_w;
 	awb_param->r_linear_gain = data->uwrlinear_gain;
 	awb_param->b_linear_gain = data->uwblinear_gain;
-	ISP_LOGE("token_id = %d, uccr_shift = %d, uc_damp = %d, uc_offset_shift = %d\n",
+	ISP_LOGI("token_id = %d, uccr_shift = %d, uc_damp = %d, uc_offset_shift = %d\n",
 		awb_param->token_id, awb_param->cr_shift, awb_param->damp, awb_param->offset_shift);
 	ISP_LOGV("uc_quantize = %d\n, uc_sum_shift = %d\n, uwblinear_gain = %d\n, uwrlinear_gain = %d\n,\
 		uw_bgain = %d\n, uw_rgain = %d\n, uw_ggain = %d\n",
@@ -696,7 +696,7 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	img_buf_param.addr[1].chn0 = 0x2FFFFFFF;
 	img_buf_param.addr[2].chn0 = 0x2FFFFFFF;
 	img_buf_param.addr[3].chn0 = 0x2FFFFFFF;
-	ISP_LOGE("set still image buffer param img_id %d", img_buf_param.img_id);
+	ISP_LOGI("set still image buffer param img_id %d", img_buf_param.img_id);
 	ret = isp_dev_set_img_param(cxt->isp_driver_handle, &img_buf_param);
 
 #ifdef FPGA_TEST
