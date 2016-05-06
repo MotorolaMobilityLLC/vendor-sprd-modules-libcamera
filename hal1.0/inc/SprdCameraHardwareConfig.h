@@ -547,7 +547,7 @@ struct config_element sprd_back_camera_hardware_config[] = {
 	{"picture-size-values", "5312x3984,4000x3000,3264x2448,2592x1936,2048x1536,1600x1200,1280x960,640x480"},
 	{"video-picture-size-values", "2592x1944,2592x1944,2592x1944,2592x1944,2592x1944"},
 #elif defined(CONFIG_CAMERA_SUPPORT_16M)
-	{"picture-size-values", "4624x3472,4000x3000,3264x2448,2592x1936,2048x1536,1600x1200,1280x960,640x480"},
+	{"picture-size-values", "4608x3456,4000x3000,3264x2448,2592x1936,2048x1536,1600x1200,1280x960,640x480"},
 	{"video-picture-size-values", "2592x1944,2592x1944,2592x1944,2592x1944,2592x1944"},
 #elif defined(CONFIG_CAMERA_SUPPORT_13M)
 	{"picture-size-values", "4208x3120,4000x3000,3264x2448,2592x1936,2048x1536,1600x1200,1280x960,640x480"},
