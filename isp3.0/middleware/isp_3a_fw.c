@@ -2063,6 +2063,10 @@ cmr_int isp3a_get_info(cmr_handle isp_3a_handle, void *param_ptr)
 	info_ptr->size = 0;
 	info_ptr->addr = NULL;
 
+	memset(&awb_out, 0, sizeof(awb_out));
+	memset(&ae_out, 0, sizeof(ae_out));
+	memset(&afl_out, 0, sizeof(afl_out));
+	memset(&af_out, 0, sizeof(af_out));
 	if (0 == cxt->bin_cxt.is_write_to_debug_buf) {
 		if (cxt->bin_cxt.bin_info.isp_3a_addr && cxt->bin_cxt.bin_info.isp_shading_addr) {
 			size = MIN(MAX_BIN1_DEBUG_SIZE_STRUCT2, cxt->bin_cxt.bin_info.isp_3a_size);
@@ -2386,6 +2390,12 @@ cmr_int isp3a_get_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr)
 	}
 	exif_info_ptr->size = 0;
 	exif_info_ptr->addr = NULL;
+
+	memset(&awb_out, 0, sizeof(awb_out));
+	memset(&ae_out, 0, sizeof(ae_out));
+	memset(&afl_out, 0, sizeof(afl_out));
+	memset(&af_out, 0, sizeof(af_out));
+
 	strcpy((char*)&exif_ptr->string1[0], "exif_str_g2v1");
 	strcpy((char*)&exif_ptr->end_string[0],"end_exif_str_g2v1");
 	exif_ptr->other_debug_info1.focal_length = cxt->ex_info.focal_length;

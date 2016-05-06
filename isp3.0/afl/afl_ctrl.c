@@ -331,8 +331,8 @@ cmr_int afl_ctrl_ioctrl(cmr_handle handle, enum afl_ctrl_cmd cmd, struct afl_ctr
 
 	ISP_CHECK_HANDLE_VALID(handle);
 
-	if (!in_ptr || (cmd >= AFL_CTRL_CMD_MAX)) {
-		ISP_LOGI("input param is error %p", in_ptr);
+	if (cmd >= AFL_CTRL_CMD_MAX) {
+		ISP_LOGE("input param is error %d", cmd);
 		goto exit;
 	}
 
