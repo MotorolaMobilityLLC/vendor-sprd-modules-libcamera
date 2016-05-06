@@ -167,6 +167,10 @@ SprdCamera3HWI::~SprdCamera3HWI()
 	SprdCamera3PicChannel* picChannel = reinterpret_cast<SprdCamera3PicChannel *>(mPicChan);
 	int64_t timestamp = systemTime();
 
+	if(mHDRProcessFlag == true){
+		Mutex::Autolock l(mLock);
+	}
+
 	HAL_LOGV("E");
 
 	if (mMetadataChannel) {
@@ -1376,10 +1380,17 @@ int SprdCamera3HWI::flush()
 {
 	/*Enable lock when we implement this function */
 	int ret = NO_ERROR;
+	int64_t timestamp = 0;
 	//Mutex::Autolock l(mLock);
-	if(mHDRProcessFlag == false) {
-		mLock.lock();
+	timestamp = systemTime();
+	if(mHDRProcessFlag == true) {
+		if(mPicChan){
+			mPicChan->stop(mFrameNum);
+			mPicChan->channelClearAllQBuff(timestamp, CAMERA_STREAM_TYPE_PICTURE_CALLBACK);
+			mPicChan->channelClearAllQBuff(timestamp, CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT);
+		}
 	}
+	Mutex::Autolock l(mLock);
 
 	if(mMetadataChannel)
 		mMetadataChannel->stop(mFrameNum);
@@ -1393,14 +1404,7 @@ int SprdCamera3HWI::flush()
 	ret = mFlushSignal.waitRelative(mLock, 500000000); //500ms
 	if (ret == TIMED_OUT) {
 		HAL_LOGE("Flush is time out");
-		if(mHDRProcessFlag == false) {
-			mLock.unlock();
-		}
 		return -ENODEV;
-	}
-
-	if(mHDRProcessFlag == false) {
-		mLock.unlock();
 	}
 
 	return 0;

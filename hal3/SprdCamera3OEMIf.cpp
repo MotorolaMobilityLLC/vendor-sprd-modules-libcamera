@@ -2254,6 +2254,7 @@ int SprdCamera3OEMIf::cancelPictureInternal()
 	case SPRD_INTERNAL_RAW_REQUESTED:
 	case SPRD_WAITING_RAW:
 	case SPRD_WAITING_JPEG:
+	case SPRD_FLASH_IN_PROGRESS:
 		HAL_LOGD("camera state is %s, stopping picture.", getCameraStateStr(getCaptureState()));
 
 		setCameraState(SPRD_INTERNAL_CAPTURE_STOPPING, STATE_CAPTURE);
