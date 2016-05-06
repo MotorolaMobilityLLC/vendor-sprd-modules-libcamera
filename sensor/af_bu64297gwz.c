@@ -98,8 +98,13 @@ uint32_t bu64297gwz_write_dac_code(SENSOR_HW_HANDLE handle, int32_t code)
 uint32_t bu64297gwz_write_af(SENSOR_HW_HANDLE handle, uint32_t param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
-	int32_t target_code = param & 0x3FF;
+	int32_t target_code = 0;
 
+	if ((int32_t)param < 0)
+		param = 0;
+	else if ((int32_t)param > 0x3FF)
+		param = 0x3FF;
+	target_code = param & 0x3FF;
 	SENSOR_PRINT("%d", target_code);
 	bu64297gwz_write_dac_code(handle, target_code);
 

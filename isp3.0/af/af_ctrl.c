@@ -155,7 +155,9 @@ static cmr_int afctrl_vcm_process(cmr_handle handle, void *pos)
 	struct afctrl_context *cxt = (struct afctrl_context *)handle;
 	struct af_ctrl_motor_pos *pos_info = (struct af_ctrl_motor_pos *)pos;
 
-	ISP_LOGI("pos_info->motor_pos = %d", pos_info->motor_pos);
+	ISP_LOGI("pos_info->motor_pos = %d offset %d",
+		pos_info->motor_pos, pos_info->motor_offset);
+
 	/* set pos via fw callback */
 	if (cxt->cb_ops.set_pos) {
 		ret = cxt->cb_ops.set_pos(cxt->caller_handle, pos_info);

@@ -673,12 +673,15 @@ cmr_int isp3a_set_pos(cmr_handle handle, struct af_ctrl_motor_pos * in)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)handle;
+	cmr_s32                                     cal_pos = 0;
 
 	if (!cxt || !cxt->ioctrl_ptr || !cxt->ioctrl_ptr->set_focus || !in) {
 		ISP_LOGE("don't have io interface");
 		goto exit;
 	}
-	ret = cxt->ioctrl_ptr->set_focus(cxt->ioctrl_ptr->caller_handler, in->motor_pos);
+
+	cal_pos = in->motor_pos + in->motor_offset;
+	ret = cxt->ioctrl_ptr->set_focus(cxt->ioctrl_ptr->caller_handler, (cmr_u32)cal_pos);
 exit:
 	ISP_LOGI("done %ld", ret);
 	return ret;

@@ -145,6 +145,7 @@ static cmr_int afaltek_adpt_pre_start(cmr_handle adpt_handle,
 				      struct allib_af_input_roi_info_t *roi);
 static cmr_int afaltek_adpt_caf_stop(cmr_handle adpt_handle);
 static cmr_int afaltek_adpt_reset_caf(cmr_handle adpt_handle);
+static cmr_u8 afaltek_adpt_set_vcm_pos(cmr_handle adpt_handle, struct af_ctrl_motor_pos *pos_info);
 
 /************************************ INTERNAK FUNCTION ***************************************/
 
@@ -508,7 +509,7 @@ static void afaltek_adpt_config_mode(cmr_int mode_in, cmr_int *mode_out)
 {
 	switch (mode_in) {
 	case ISP_FOCUS_NONE:
-		*mode_out = AF_CTRL_MODE_AUTO;
+		*mode_out = AF_CTRL_MODE_INFINITY;
 		break;
 	case ISP_FOCUS_TRIG:
 		*mode_out = AF_CTRL_MODE_AUTO;
@@ -520,7 +521,7 @@ static void afaltek_adpt_config_mode(cmr_int mode_in, cmr_int *mode_out)
 		*mode_out = AF_CTRL_MODE_AUTO;
 		break;
 	case ISP_FOCUS_MACRO:
-		*mode_out = AF_CTRL_MODE_MANUAL;
+		*mode_out = AF_CTRL_MODE_MACRO;
 		break;
 	case ISP_FOCUS_WIN:
 		*mode_out = AF_CTRL_MODE_CAF;
@@ -551,6 +552,7 @@ static cmr_int afaltek_adpt_set_mode(cmr_handle adpt_handle, cmr_int mode)
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct allib_af_input_set_param_t p = { 0x00 };
 	cmr_int ctrl_mode = 0;
+	struct af_ctrl_motor_pos pos_info = { 0x00 };
 
 	p.type = alAFLIB_SET_PARAM_FOCUS_MODE;
 	p.u_set_data.focus_mode_type = alAFLib_AF_MODE_AUTO;
@@ -561,8 +563,11 @@ static cmr_int afaltek_adpt_set_mode(cmr_handle adpt_handle, cmr_int mode)
 
 	switch (ctrl_mode) {
 	case AF_CTRL_MODE_MACRO:
-		p.u_set_data.focus_mode_type = alAFLib_AF_MODE_MACRO;
+		p.u_set_data.focus_mode_type = alAFLib_AF_MODE_MANUAL;
 		ret = afaltek_adpt_set_parameters(cxt, &p);
+		pos_info.motor_offset = 0;
+		pos_info.motor_pos = 1023;
+		ret = afaltek_adpt_set_vcm_pos(cxt, &pos_info);
 		break;
 	case AF_CTRL_MODE_AUTO:
 #ifdef FEATRUE_SPRD_CAF_TRIGGER
@@ -584,11 +589,15 @@ static cmr_int afaltek_adpt_set_mode(cmr_handle adpt_handle, cmr_int mode)
 		ret = afaltek_adpt_set_parameters(cxt, &p);
 #endif
 		break;
-/*
+
 	case AF_CTRL_MODE_INFINITY:
-		p.u_set_data.focus_mode_type = AF_MODE_INFINITY;
+		p.u_set_data.focus_mode_type = alAFLib_AF_MODE_MANUAL;
+		ret = afaltek_adpt_set_parameters(cxt, &p);
+		pos_info.motor_offset = 0;
+		pos_info.motor_pos = 0;
+		ret = afaltek_adpt_set_vcm_pos(cxt, &pos_info);
 		break;
-*/
+
 	case AF_CTRL_MODE_MANUAL:
 		p.u_set_data.focus_mode_type = alAFLib_AF_MODE_MANUAL;
 		ret = afaltek_adpt_set_parameters(cxt, &p);
@@ -801,6 +810,7 @@ static cmr_int afaltek_adpt_vcm_tuning_param(cmr_handle adpt_handle)
 	cmr_s8 pos[PROPERTY_VALUE_MAX];
 	cmr_s16 position = 0;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+	struct af_ctrl_motor_pos pos_info = { 0x00 };
 
 	memset(value, '\0', sizeof(value));
 	property_get("persist.sys.isp.vcm.tuning.mode", (char *)value, "0");
@@ -812,7 +822,9 @@ static cmr_int afaltek_adpt_vcm_tuning_param(cmr_handle adpt_handle)
 		position = atoi((char *)pos);
 
 		if (position != cxt->vcm_tune.cur_pos) {
-			ret = afaltek_adpt_set_pos(adpt_handle, position, 0);
+			pos_info.motor_offset = 0;
+			pos_info.motor_pos = position;
+			ret = afaltek_adpt_set_vcm_pos(cxt, &pos_info);
 			if (!ret) {
 				cxt->vcm_tune.cur_pos = position;
 				ISP_LOGI("VCM tuning mode position %d", position);
@@ -1256,6 +1268,27 @@ exit:
 	return ret;
 }
 
+static cmr_u8 afaltek_adpt_set_vcm_pos(cmr_handle adpt_handle, struct af_ctrl_motor_pos *pos_info)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+
+	if (NULL == cxt || NULL == pos_info) {
+		ISP_LOGE("param null");
+		goto exit;
+	}
+
+	if (cxt->cb_ops.set_pos)
+		ret = cxt->cb_ops.set_pos(cxt->caller_handle, pos_info);
+	else {
+		ISP_LOGE("cb is null");
+		ret = -ISP_CALLBACK_NULL;
+	}
+
+exit:
+	return ret;
+}
+
 static cmr_u8 afaltek_adpt_set_pos(cmr_handle adpt_handle, cmr_s16 dac, cmr_u8 sensor_id)
 {
 	cmr_int ret = -ISP_ERROR;
@@ -1270,17 +1303,11 @@ static cmr_u8 afaltek_adpt_set_pos(cmr_handle adpt_handle, cmr_s16 dac, cmr_u8 s
 	ret = afaltek_adpt_postion_compensator(cxt, &offset);
 	ISP_LOGI("dac %d offset %d", dac, offset);
 #endif
-	if ((dac + offset) >= 0)
-		pos_info.motor_pos = dac + offset;
-	else
-		pos_info.motor_pos = 0;
+	cxt->motor_info.motor_offset = offset;
+	pos_info.motor_pos = dac;
+	pos_info.motor_offset = offset;
 	/* call af ctrl callback to move lens */
-	if (cxt->cb_ops.set_pos) {
-		ret = cxt->cb_ops.set_pos(cxt->caller_handle, &pos_info);
-	} else {
-		ISP_LOGE("cb is null");
-		ret = -ISP_CALLBACK_NULL;
-	}
+	afaltek_adpt_set_vcm_pos(cxt, &pos_info);
 
 	return ret;
 }

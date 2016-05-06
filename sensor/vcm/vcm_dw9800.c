@@ -56,6 +56,11 @@ uint32_t vcm_dw9800_set_position(SENSOR_HW_HANDLE handle, uint32_t pos)
 	uint16_t cmd_len = 0;
 	uint32_t time_out = 0;
 
+	if ((int32_t)pos < 0)
+		pos = 0;
+	else if ((int32_t)pos > 0x3FF)
+		pos = 0x3FF;
+
 	SENSOR_PRINT("set position %d", pos);
 	slave_addr = DW9800_VCM_SLAVE_ADDR;
 	cmd_len = 2;
