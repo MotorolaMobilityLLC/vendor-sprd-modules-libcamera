@@ -45,23 +45,3 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),false)
 else
 LOCAL_SHARED_LIBRARIES += libts_face_beautify_hal
 endif
-
-ifeq ($(strip $(isp_use2.0)),1)
-ifeq ($(strip $(TARGET_ARCH)),arm)
-LOCAL_SHARED_LIBRARIES += libAF libsft_af_ctrl libdeflicker
-endif
-else
-LOCAL_SHARED_LIBRARIES += libawb libaf liblsc
-endif
-
-#ALC_S
-ifeq ($(strip $(isp_use2.0)),1)
-ifeq ($(strip $(TARGET_ARCH)),arm)
-ifeq ($(strip $(TARGET_BOARD_USE_ALC_AWB)),true)
-LOCAL_CFLAGS += -DCONFIG_USE_ALC_AWB
-LOCAL_SHARED_LIBRARIES += libAl_Awb libAl_Awb_Sp
-endif
-endif
-endif
-#ALC_E
-

@@ -13,15 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := libalFlickerLib
+LOCAL_MODULE := libgyrostab
 LOCAL_MODULE_CLASS := SHARED_LIBRARIES
 LOCAL_MODULE_TAGS := optional
 LOCAL_MULTILIB := both
-LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE).so
-LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
-LOCAL_SRC_FILES_32 := lib/$(LOCAL_MODULE).so
-LOCAL_SRC_FILES_64 := lib64/$(LOCAL_MODULE).so
+LOCAL_MODULE_STEM_32 := libgyrostab.so
+LOCAL_MODULE_STEM_64 := libgyrostab.so
+LOCAL_SRC_FILES_32 := lib32/libgyrostab.so
+LOCAL_SRC_FILES_64 := lib64/libgyrostab.so
 include $(BUILD_PREBUILT)
+endif
