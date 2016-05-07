@@ -2,7 +2,7 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_CFLAGS += -fno-strict-aliasing -Wno-unused-parameter
+LOCAL_CFLAGS += -fno-strict-aliasing -Werror -Wno-unused-parameter
 
 ifeq ($(strip $(TARGET_BOARD_IS_SC_FPGA)),true)
 LOCAL_CFLAGS += -DSC_FPGA=1

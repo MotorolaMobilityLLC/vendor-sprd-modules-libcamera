@@ -1,6 +1,3 @@
-
-isp_use2.0=1
-
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/vsp/inc \
 	$(LOCAL_PATH)/vsp/src \
@@ -103,7 +100,6 @@ LOCAL_SRC_FILES += test.cpp
 #LOCAL_STATIC_LIBRARIES += libftminui
 #LOCAL_C_INCLUDES += vendor/sprd/proprietories-source/factorytest/minui
 
-#include $(LOCAL_PATH)/isp2.0/isp2_0.mk
 LOCAL_SRC_FILES+= \
 	sensor/ov5640/sensor_ov5640_mipi.c \
 	sensor/ov5640/sensor_ov5640_mipi_raw.c \
@@ -120,7 +116,7 @@ LOCAL_SRC_FILES+= \
 
 ifeq ($(strip $(TARGET_CAMERA_OIS_FUNC)),true)
 	LOCAL_C_INCLUDES += \
-	$(LOCAL_PATH)/sensor/ois/
+	$(LOCAL_PATH)/sensor/ois
 
 	LOCAL_SRC_FILES+= \
 	sensor/ois/OIS_func.c \
@@ -164,21 +160,19 @@ LOCAL_SRC_FILES+= oem2v0/src/cmr_refocus.c
 endif
 
 
-
 ifeq ($(TARGET_BOARD_CAMERA_HAL_VERSION), $(filter $(TARGET_BOARD_CAMERA_HAL_VERSION), HAL1.0 hal1.0 1.0))
 LOCAL_SRC_FILES += hal1.0/src/SprdCameraHardwareInterface.cpp
 else
 LOCAL_SRC_FILES+= \
-        hal3/SprdCamera3Factory.cpp \
-        hal3/SprdCamera3Hal.cpp \
-        hal3/SprdCamera3HWI.cpp \
-        hal3/SprdCamera3Channel.cpp \
+	hal3/SprdCamera3Factory.cpp \
+	hal3/SprdCamera3Hal.cpp \
+	hal3/SprdCamera3HWI.cpp \
+	hal3/SprdCamera3Channel.cpp \
 	hal3/SprdCamera3Mem.cpp \
 	hal3/SprdCamera3OEMIf.cpp \
 	hal3/SprdCamera3Setting.cpp \
 	hal3/SprdCamera3Stream.cpp
 endif
-
 
 LOCAL_CFLAGS += -fno-strict-aliasing -D_VSP_ -DJPEG_ENC -D_VSP_LINUX_ -DCHIP_ENDIAN_LITTLE -Wno-unused-parameter
 
@@ -309,10 +303,6 @@ endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_CAF)),true)
 LOCAL_CFLAGS += -DCONFIG_CAMERA_CAF
-endif
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_AF_ALG_SPRD)),true)
-LOCAL_CFLAGS += -DCONFIG_NEW_AF
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ROTATION_CAPTURE)),true)

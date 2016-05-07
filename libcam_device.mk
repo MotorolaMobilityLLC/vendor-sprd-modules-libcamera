@@ -34,9 +34,6 @@ PRODUCT_PACKAGES += $(ALTEK_LIB)
 PRODUCT_PACKAGES += $(ALTEK_FW)
 PRODUCT_PACKAGES += $(TUNING_BIN)
 
-### face beautify lib
-PRODUCT_PACKAGES += libts_face_beautify_hal
-
 # AL3200_FW
 PRODUCT_PACKAGES += miniBoot.bin \
-		    TBM_D2.bin
+	TBM_D2.bin

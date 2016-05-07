@@ -8,11 +8,11 @@ LOCAL_CFLAGS += -DCONFIG_ISP_3
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
-	ifeq ($(strip $(TARGET_BOARD_CAMERA_FD_LIB)),omron)
-		LOCAL_STATIC_LIBRARIES +=libeUdnDt libeUdnCo
-	else
-		LOCAL_SHARED_LIBRARIES += libface_finder
-	endif
+ifeq ($(strip $(TARGET_BOARD_CAMERA_FD_LIB)),omron)
+LOCAL_STATIC_LIBRARIES += libeUdnDt libeUdnCo
+else
+LOCAL_SHARED_LIBRARIES += libface_finder
+endif
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)
