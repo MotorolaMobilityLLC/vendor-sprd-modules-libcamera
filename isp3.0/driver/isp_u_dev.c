@@ -65,6 +65,8 @@ cmr_int isp_dev_init(struct isp_dev_init_info *init_param_ptr, isp_handle *handl
 		CMR_LOGE("alloc memory error.");
 		return ret;
 	}
+	cmr_bzero(file, sizeof(*file));
+
 	if (NULL == init_param_ptr) {
 		ret = -1;
 		CMR_LOGE("init param null error.");
