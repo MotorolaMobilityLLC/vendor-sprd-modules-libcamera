@@ -489,9 +489,10 @@ cmr_int af_ctrl_deinit(cmr_handle handle)
 		ISP_LOGE("failed to deinit adapter layer ret = %ld", ret);
 
 sucess_exit:
+	cmr_bzero(cxt, sizeof(*cxt));
 	/* free handle */
-	free(handle);
-	handle = NULL;
+	free(cxt);
+	cxt = NULL;
 exit:
 	return 0;
 }

@@ -29,6 +29,11 @@
 /**************************************** MACRO DEFINE *****************************************/
 #define LIBRARY_PATH "libalAWBLib.so"
 #define AWB_EXIF_DEBUG_INFO_SIZE 5120
+#define AWB_OTP_DEFAULT_R_GAIN 2007
+#define AWB_OTP_DEFAULT_G_GAIN 1000
+#define AWB_OTP_DEFAULT_B_GAIN 1460
+
+
 /************************************* INTERNAL DATA TYPE ***************************************/
 struct awb_altek_lib_ops {
 	cmr_int (*load_func)(struct allib_awb_runtime_obj_t *awb_run_obj);
@@ -526,9 +531,9 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 	if (0 == input_ptr->calibration_gain.r
 		&& 0 == input_ptr->calibration_gain.g
 		&& 0 == input_ptr->calibration_gain.b) {
-		set_otp_param.para.awb_calib_data.calib_r_gain = 2007;
-		set_otp_param.para.awb_calib_data.calib_g_gain = 1000;
-		set_otp_param.para.awb_calib_data.calib_b_gain = 1460;
+		set_otp_param.para.awb_calib_data.calib_r_gain = AWB_OTP_DEFAULT_R_GAIN;
+		set_otp_param.para.awb_calib_data.calib_g_gain = AWB_OTP_DEFAULT_G_GAIN;
+		set_otp_param.para.awb_calib_data.calib_b_gain = AWB_OTP_DEFAULT_B_GAIN;
 	} else {
 		set_otp_param.para.awb_calib_data.calib_r_gain = (cmr_u16)input_ptr->calibration_gain.r;
 		set_otp_param.para.awb_calib_data.calib_g_gain = (cmr_u16)input_ptr->calibration_gain.g;
@@ -703,7 +708,7 @@ cmr_int awbaltek_set_face(cmr_handle adpt_handle, enum awb_ctrl_cmd cmd, union a
 		ISP_LOGI("set face num is 0");
 		goto exit;
 	}
-	for ( i=0 ; i <face_data.face_num ; i++) {
+	for (i = 0; i <face_data.face_num; i++) {
 		temp = (face_data.face_info[i].ex-face_data.face_info[i].sx)*(face_data.face_info[i].ey-face_data.face_info[i].ex);
 		if (face_area_max < temp) {
 			face_area_max = temp;
@@ -1059,6 +1064,7 @@ cmr_int awb_altek_adpt_deinit(cmr_handle adpt_handle)
 	}
 	awbaltek_deinit(adpt_handle);
 	awbaltek_unload_library(adpt_handle);
+	cmr_bzero(cxt, sizeof(*cxt));
 	free((void*)cxt);
 exit:
 	ISP_LOGV("done %ld", ret);

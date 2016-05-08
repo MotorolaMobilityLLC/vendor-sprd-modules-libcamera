@@ -993,14 +993,19 @@ cmr_int isp3a_alg_deinit(cmr_handle isp_3a_handle)
 	}
 
 	af_ctrl_deinit(cxt->af_cxt.handle);
+	cxt->af_cxt.handle = NULL;
 	awb_ctrl_deinit(cxt->awb_cxt.handle);
+	cxt->awb_cxt.handle = NULL;
 	ae_ctrl_deinit(cxt->ae_cxt.handle);
+	cxt->ae_cxt.handle = NULL;
 	afl_ctrl_deinit(cxt->afl_cxt.handle);
+	cxt->afl_cxt.handle = NULL;
 
 exit:
 	ISP_LOGI("done %ld", ret);
 	return ret;
 }
+
 cmr_int isp3a_create_ctrl_thread(cmr_handle isp_3a_handle)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
@@ -3502,6 +3507,7 @@ exit:
 		isp3a_deinit_statistics_buf((cmr_handle)cxt);
 		if (cxt) {
 			free((void*)cxt);
+			cxt = NULL;
 		}
 	} else {
 		cxt->is_inited = 1;
@@ -3526,6 +3532,7 @@ cmr_int isp_3a_fw_deinit(cmr_handle isp_3a_handle)
 	isp3a_deinit_statistics_buf((cmr_handle)cxt);
 	sem_destroy(&cxt->statistics_data_sm);
 	free((void*)cxt);
+	cxt = NULL;
 
 exit:
 	return ret;
@@ -3768,7 +3775,7 @@ cmr_int isp3a_get_yhist_info(cmr_handle isp_3a_handle, void *param_ptr)
 	struct isp_yhist_info                       *info_ptr = (struct isp_yhist_info*)param_ptr;
 	struct af_ctrl_param_out                    af_out;
 
-	bzero(&af_out, sizeof(af_out));
+	cmr_bzero(&af_out, sizeof(af_out));
 	ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_GET_YHIST, NULL, &af_out);
 	if (!ret) {
 		ISP_LOGI("%d", af_out.y_info.in_proc[0]);
@@ -3791,7 +3798,6 @@ static cmr_int isp3a_set_prev_yhist(cmr_handle isp_3a_handle, void *param_ptr)
 	}
 
 	ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_SET_Y_HIST_INFO, (void *)*yhist, NULL);
-
 
 exit:
 	return ret;

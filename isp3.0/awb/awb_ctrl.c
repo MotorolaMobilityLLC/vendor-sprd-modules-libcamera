@@ -677,6 +677,7 @@ cmr_int awb_ctrl_deinit(cmr_handle awb_handle)
 	sem_post(&cxt->sync_sm);
 #endif
 	sem_destroy(&cxt->sync_sm);
+	cmr_bzero(cxt, sizeof(*cxt));
 	free((void*)awb_handle);
 exit:
 	ISP_LOGI("done %ld", ret);

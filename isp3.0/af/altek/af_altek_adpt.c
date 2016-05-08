@@ -1982,6 +1982,7 @@ static cmr_int afaltek_adpt_deinit(cmr_handle adpt_handle)
 		/* deinit lib */
 		cxt->ops.deinit(cxt->af_runtime_obj, &cxt->af_out_obj);
 		afaltek_libops_deinit(cxt);
+		cmr_bzero(cxt, sizeof(*cxt));
 		free(cxt);
 		cxt = NULL;
 	}
