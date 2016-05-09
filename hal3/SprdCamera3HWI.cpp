@@ -471,6 +471,7 @@ int32_t SprdCamera3HWI::tranStreamAndChannelType(camera3_stream_t* new_stream, c
 				if (new_stream->usage & GRALLOC_USAGE_HW_VIDEO_ENCODER) {
 					*stream_type = CAMERA_STREAM_TYPE_VIDEO;
 					*channel_type = CAMERA_CHANNEL_TYPE_REGULAR;
+					new_stream->usage |= GRALLOC_USAGE_SW_READ_OFTEN;
 				} else if (new_stream->usage & GRALLOC_USAGE_SW_READ_OFTEN) {
 					*stream_type = CAMERA_STREAM_TYPE_CALLBACK;
 					*channel_type = CAMERA_CHANNEL_TYPE_REGULAR;
@@ -503,9 +504,9 @@ int32_t SprdCamera3HWI::tranStreamAndChannelType(camera3_stream_t* new_stream, c
 		mInputStream = new_stream;
 	}
 
-        if (!mIOMMUEnabled) {
-            new_stream->usage |= GRALLOC_USAGE_CAMERA_BUFFER;
-        }
+	if (!mIOMMUEnabled) {
+		new_stream->usage |= GRALLOC_USAGE_CAMERA_BUFFER;
+	}
 
 	HAL_LOGD("stream_type = %d, channel_type = %d w=%d h=%d",*stream_type, *channel_type, new_stream->width, new_stream->height);
 
