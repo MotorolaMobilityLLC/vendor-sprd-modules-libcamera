@@ -3392,6 +3392,7 @@ cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start *input_ptr)
 	ae_in.work_param.resolution.min_fps = input_ptr->resolution_info.fps.min_fps;
 	//ae_in.work_param.resolution.max_gain = input_ptr->resolution_info.max_gain;
 	ae_in.work_param.sensor_fps = input_ptr->sensor_fps;
+	ae_in.work_param.tuning_param = input_ptr->tuning_ae_addr;
 
 	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_WORK_MODE, &ae_in, &ae_out);
 	cxt->ae_cxt.proc_out = ae_out.proc_out;

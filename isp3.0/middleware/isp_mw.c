@@ -29,12 +29,17 @@
 /************************************* INTERNAL DATA TYPE ***************************************/
 struct isp_mw_tunng_file_info {
 	void *isp_3a_addr;
+	void *isp_second_3a_addr;
 	void *isp_shading_addr;
 	cmr_u32 isp_3a_size;
+	cmr_u32 isp_second_3a_size;
 	cmr_u32 isp_shading_size;
 	void *ae_tuning_addr;
 	void *awb_tuning_addr;
 	void *af_tuning_addr;
+	void *second_ae_tuning_addr;
+	void *second_awb_tuning_addr;
+	void *second_af_tuning_addr;
 	void *shading_addr;
 	void *irp_addr;
 	struct bin2_sep_info isp_dev_bin_info;
@@ -269,6 +274,85 @@ cmr_int ispmw_put_tuning_bin(cmr_handle isp_mw_handle)
 	return ret;
 }
 
+cmr_int ispmw_get_second_tuning_bin(cmr_handle isp_mw_handle, const cmr_s8 *sensor_name)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp_mw_context                       *cxt = (struct isp_mw_context*)isp_mw_handle;
+	FILE                                        *fp = NULL;
+	cmr_u8                                      file_name[ISP_MW_FILE_NAME_LEN];
+
+	//get 3A bin
+	ISP_LOGI("sensor_name %s", sensor_name);
+	sprintf((void*)&file_name[0],"/system/lib/tuning/%s_3a.bin",sensor_name);
+	fp = fopen((void*)&file_name[0], "rb");
+	if (NULL == fp) {
+		ISP_LOGE("failed to open 3a tuning bin");
+		goto exit;
+	}
+	ISP_LOGI("sensor is %s", sensor_name);
+	fseek(fp,0,SEEK_END);
+	cxt->tuning_bin.isp_second_3a_size = ftell(fp);
+	if (0 == cxt->tuning_bin.isp_second_3a_size) {
+		fclose(fp);
+		goto exit;
+	}
+	fseek(fp,0,SEEK_SET);
+	cxt->tuning_bin.isp_second_3a_addr = malloc(cxt->tuning_bin.isp_second_3a_size);
+	if (NULL == cxt->tuning_bin.isp_second_3a_addr) {
+		fclose(fp);
+		ISP_LOGE("failed to malloc");
+		goto exit;
+	}
+	if (cxt->tuning_bin.isp_second_3a_size != fread(cxt->tuning_bin.isp_second_3a_addr, 1, cxt->tuning_bin.isp_second_3a_size, fp)){
+		fclose(fp);
+		CMR_LOGE("failed to read 3a bin");
+		goto exit;
+	}
+	fclose(fp);
+exit:
+	if (ret) {
+		if (cxt->tuning_bin.isp_second_3a_addr) {
+			free(cxt->tuning_bin.isp_second_3a_addr);
+			cxt->tuning_bin.isp_second_3a_addr = NULL;
+			cxt->tuning_bin.isp_second_3a_size = 0;
+		}
+	} else {
+		ISP_LOGI("3a bin size = %d, shading bin size = %d", cxt->tuning_bin.isp_second_3a_size, cxt->tuning_bin.isp_shading_size);
+	}
+	return ret;
+}
+cmr_int ispmw_put_second_tuning_bin(cmr_handle isp_mw_handle)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp_mw_context                       *cxt = (struct isp_mw_context*)isp_mw_handle;
+
+	if (cxt->tuning_bin.isp_second_3a_addr) {
+		free(cxt->tuning_bin.isp_second_3a_addr);
+		cxt->tuning_bin.isp_second_3a_addr = NULL;
+		cxt->tuning_bin.isp_second_3a_size = 0;
+	}
+	return ret;
+}
+cmr_int ispmw_parse_second_tuning_bin(cmr_handle isp_mw_handle)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp_mw_context                       *cxt = (struct isp_mw_context*)isp_mw_handle;
+
+	cxt->tuning_bin.second_ae_tuning_addr = NULL;
+	cxt->tuning_bin.second_awb_tuning_addr = NULL;
+	cxt->tuning_bin.second_af_tuning_addr = NULL;
+	if (cxt->tuning_bin.isp_second_3a_addr
+		&& (0 != cxt->tuning_bin.isp_second_3a_size)) {
+		ret = isp_separate_3a_bin(cxt->tuning_bin.isp_second_3a_addr,
+								&cxt->tuning_bin.second_ae_tuning_addr,
+								&cxt->tuning_bin.second_awb_tuning_addr,
+								&cxt->tuning_bin.second_af_tuning_addr);
+		ISP_LOGI("ae bin %p, awb bin %p, af bin %p",
+				cxt->tuning_bin.second_ae_tuning_addr, cxt->tuning_bin.second_awb_tuning_addr, cxt->tuning_bin.second_af_tuning_addr);
+	}
+	return ret;
+}
+
 /*************************************EXTERNAL FUNCTION ***************************************/
 cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 {
@@ -443,6 +527,7 @@ cmr_int isp_video_start(cmr_handle isp_handle, struct isp_video_start *param_ptr
 	struct isp_3a_get_dld_in                    dld_in;
 	struct isp_3a_dld_sequence                  dld_seq;
 	struct isp_dev_access_start_in              dev_in;
+	char                                        file_name[128];
 
 	ISP_CHECK_HANDLE_VALID(isp_handle);
 
@@ -450,6 +535,19 @@ cmr_int isp_video_start(cmr_handle isp_handle, struct isp_video_start *param_ptr
 		ISP_LOGE("error,input is NULL");
 		goto exit;
 	}
+
+	ISP_LOGI("isp size:%d,%d",param_ptr->size.w, param_ptr->size.h);
+	sprintf(file_name,"imx230_mipi_raw_%d",param_ptr->size.w);
+	ret = ispmw_get_second_tuning_bin((cmr_handle)cxt,(const cmr_s8*)file_name);
+	if (ret) {
+		goto exit;
+	}
+	ret = ispmw_parse_second_tuning_bin((cmr_handle)cxt);
+	if (ret) {
+		goto exit;
+	}
+
+	param_ptr->tuning_ae_addr = cxt->tuning_bin.second_ae_tuning_addr;
 
 	ret = isp_3a_fw_start(cxt->isp_3a_handle, param_ptr);
 	if (ret) {
@@ -489,6 +587,7 @@ cmr_int isp_video_stop(cmr_handle isp_handle)
 
 	ret = isp_dev_access_stop_multiframe(cxt->isp_dev_handle);
 	ret = isp_3a_fw_stop(cxt->isp_3a_handle);
+	ispmw_put_second_tuning_bin((cmr_handle)cxt);
 
 	return ret;
 }

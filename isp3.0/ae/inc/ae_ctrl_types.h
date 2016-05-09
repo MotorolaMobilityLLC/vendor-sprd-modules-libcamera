@@ -254,6 +254,7 @@ struct ae_ctrl_param_work {
 		struct ae_ctrl_param_resolution resolution;
 		struct ae_ctrl_param_measure_highflash highflash;
 		struct isp_sensor_fps_info sensor_fps;
+		void * tuning_param;
 };
 
 struct ae_ctrl_param_scene {

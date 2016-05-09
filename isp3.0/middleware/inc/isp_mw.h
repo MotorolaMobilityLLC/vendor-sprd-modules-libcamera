@@ -540,6 +540,7 @@ struct isp_video_start {
 	cmr_u32 is_need_flash;
 	cmr_u32 capture_skip_num;
 	struct isp_sensor_fps_info sensor_fps;
+	void * tuning_ae_addr;
 };
 
 struct ips_in_param {
