@@ -1028,8 +1028,8 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 
 	usleep(100*1000);
 
-	ret = isp_dev_stream_off(cxt->isp_driver_handle);
-	ret = isp_dev_stop(cxt->isp_driver_handle);
+	isp_dev_stream_off(cxt->isp_driver_handle);
+	isp_dev_stop(cxt->isp_driver_handle);
 
 exit:
 	ISP_LOGI("done %ld", ret);
