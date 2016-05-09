@@ -341,6 +341,8 @@ cmr_int camera_get_preview_rect(cmr_handle camera_handle, cmr_uint *rect_x, cmr_
 
 cmr_int camera_get_zsl_capability(cmr_handle camera_handle, cmr_uint *is_support, cmr_uint *max_widht, cmr_uint *max_height);
 
+cmr_int camera_get_sensor_info_for_raw(cmr_handle camera_handle, struct sensor_mode_info *mode_info);
+
 cmr_int camera_get_sensor_trim(cmr_handle camera_handle, struct img_rect *sn_trim);
 
 cmr_uint camera_get_preview_rot_angle(cmr_handle camera_handle);

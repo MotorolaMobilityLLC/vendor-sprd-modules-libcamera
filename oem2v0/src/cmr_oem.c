@@ -6953,6 +6953,49 @@ exit:
 	return ret;
 }
 
+cmr_int camera_get_sensor_mode_info(cmr_handle oem_handle, struct sensor_mode_info *mode_info)
+{
+	cmr_int                        ret = CMR_CAMERA_SUCCESS;
+	struct camera_context          *cxt = (struct camera_context*)oem_handle;
+	struct sensor_exp_info         *sensor_info = NULL;
+	cmr_uint                       sensor_mode  = SENSOR_MODE_MAX;
+	cmr_uint i;
+
+	if (!oem_handle || !mode_info) {
+		CMR_LOGE("error param");
+		ret = -CMR_CAMERA_INVALID_PARAM;
+		goto exit;
+	}
+
+	sensor_info = (struct sensor_exp_info*)malloc(sizeof(struct sensor_exp_info));
+	if (!sensor_info) {
+		CMR_LOGE("No mem!");
+		ret = CMR_CAMERA_NO_MEM;
+		goto exit;
+	}
+	ret = camera_get_sensor_info(cxt, cxt->camera_id, sensor_info);
+	if (ret) {
+		CMR_LOGE("get_sensor info failed!");
+		ret = CMR_CAMERA_FAIL;
+		goto exit;
+	}
+
+	for (i = SENSOR_MODE_COMMON_INIT; i <= SENSOR_MODE_MAX; i++) {
+		mode_info[i].trim_start_x = sensor_info->mode_info[i].trim_start_x;
+		mode_info[i].trim_start_y = sensor_info->mode_info[i].trim_start_y;
+		mode_info[i].trim_width = sensor_info->mode_info[i].trim_width;
+		mode_info[i].trim_height = sensor_info->mode_info[i].trim_height;
+	}
+
+exit:
+	if (sensor_info) {
+		free(sensor_info);
+		sensor_info = NULL;
+	}
+	CMR_LOGV("done %ld", ret);
+	return ret;
+}
+
 cmr_int camera_get_senor_mode_trim(cmr_handle oem_handle, struct img_rect *sn_trim)
 {
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;

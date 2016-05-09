@@ -307,6 +307,8 @@ cmr_int camera_local_redisplay_data(cmr_handle oem_handle, cmr_s32 output_fd,
 
 cmr_int camera_local_get_prev_rect(cmr_handle oem_handle, struct img_rect *param_ptr);
 
+cmr_int camera_get_sensor_mode_info(cmr_handle oem_handle, struct sensor_mode_info *mode_info);
+
 cmr_int camera_get_senor_mode_trim(cmr_handle oem_handle, struct img_rect *sn_trim);
 
 cmr_uint camera_get_preview_angle(cmr_handle oem_handle);

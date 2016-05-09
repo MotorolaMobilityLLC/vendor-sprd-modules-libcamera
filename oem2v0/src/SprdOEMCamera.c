@@ -397,6 +397,22 @@ exit:
 	return ret;
 }
 
+cmr_int camera_get_sensor_info_for_raw(cmr_handle camera_handle, struct sensor_mode_info *mode_info)
+{
+	cmr_int                  ret = CMR_CAMERA_SUCCESS;
+
+	if (!camera_handle || !mode_info) {
+		CMR_LOGE("error 0x%lx 0x%lx", (cmr_uint)camera_handle, (cmr_uint)mode_info);
+		ret = -CMR_CAMERA_INVALID_PARAM;
+		goto exit;
+	}
+	ret = camera_get_sensor_mode_info(camera_handle, mode_info);
+
+exit:
+	CMR_LOGI("done %ld", ret);
+	return ret;
+}
+
 cmr_int camera_get_sensor_trim(cmr_handle camera_handle, struct img_rect *sn_trim)
 {
 	cmr_int                  ret = CMR_CAMERA_SUCCESS;

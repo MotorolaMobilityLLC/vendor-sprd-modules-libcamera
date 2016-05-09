@@ -5088,10 +5088,17 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
 	cmr_u32                  target_mode = SENSOR_MODE_MAX;
 	cmr_int                  offset1 = 0, offset2 = 0;
 	struct sensor_mode_fps_tag fps_info;
+	char                     value[PROPERTY_VALUE_MAX];
+	cmr_u32                  is_raw_capture = 0;
 
 	if (!sensor_info) {
 		CMR_LOGE("sn info is null!");
 		return CMR_CAMERA_FAIL;
+	}
+
+	property_get("persist.sys.camera.raw.mode", value, "jpeg");
+	if (!strcmp(value, "raw")) {
+		is_raw_capture = 1;
 	}
 
 	search_height = target_size->height;
@@ -5104,13 +5111,15 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
 			height = CAMERA_ALIGNED_16(height);
 			if (IMG_DATA_TYPE_JPEG != sensor_info->mode_info[i].image_format) {
 				if (search_height <= height) {
-					/* dont choose high fps setting for no-slowmotion */
-					ret = handle->ops.get_sensor_fps_info(handle->oem_handle,
-						camera_id, i, &fps_info);
-					CMR_LOGV("mode=%d, is_high_fps=%d", i, fps_info.is_high_fps);
-					if (fps_info.is_high_fps) {
-						CMR_LOGD("dont choose high fps setting");
-						continue;
+					if (is_raw_capture == 0) {
+						/* dont choose high fps setting for no-slowmotion */
+						ret = handle->ops.get_sensor_fps_info(handle->oem_handle,
+										      camera_id, i, &fps_info);
+						CMR_LOGV("mode=%d, is_high_fps=%d", i, fps_info.is_high_fps);
+						if (fps_info.is_high_fps) {
+							CMR_LOGD("dont choose high fps setting");
+							continue;
+						}
 					}
 
 					target_mode = i;

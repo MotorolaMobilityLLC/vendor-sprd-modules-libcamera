@@ -5706,13 +5706,13 @@ int SprdCamera3OEMIf::SetDimensionRaw(cam_dimension_t raw_size)
 	return NO_ERROR;
 }
 
-#define ISP_TUNING_MODE_WIDTH 1920
-#define ISP_TUNING_MODE_HEIGHT 1080
 int SprdCamera3OEMIf::SetDimensionCapture(cam_dimension_t capture_size)
 {
 	char value[PROPERTY_VALUE_MAX];
 	property_get("persist.sys.camera.raw.mode", value, "jpeg");
 	struct img_rect trim = {0,0,0,0};
+	struct sensor_mode_info mode_info[SENSOR_MODE_MAX];
+	int i;
 
 	HAL_LOGD("capture_size.width = %d, capture_size.height = %d",
 		capture_size.width, capture_size.height);
@@ -5723,12 +5723,16 @@ int SprdCamera3OEMIf::SetDimensionCapture(cam_dimension_t capture_size)
 	}
 
 	if (!strcmp(value, "raw")) {
-		HAL_LOGD("isp tuning mode, just use sensor trim size for capture");
-		camera_get_sensor_trim(mCameraHandle, &trim);
-		HAL_LOGV("startx=%d, starty=%d, width=%d, height=%d",
-			trim.start_x, trim.start_y, trim.width, trim.height);
-		mCaptureWidth = trim.width;
-		mCaptureHeight = trim.height;
+		HAL_LOGD("raw capture mode");
+		camera_get_sensor_info_for_raw(mCameraHandle, mode_info);
+		for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
+			HAL_LOGD("trim w=%d, h=%d", mode_info[i].trim_width, mode_info[i].trim_height);
+			if (mode_info[i].trim_height >= mCaptureHeight) {
+				mCaptureWidth = mode_info[i].trim_width;
+				mCaptureHeight = mode_info[i].trim_height;
+				break;
+			}
+		}
 		HAL_LOGD("mCaptureWidth=%d, mCaptureHeight=%d", mCaptureWidth, mCaptureHeight);
 	}
 
