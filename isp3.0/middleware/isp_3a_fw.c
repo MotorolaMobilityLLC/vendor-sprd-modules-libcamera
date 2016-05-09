@@ -832,6 +832,8 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 	af_input.af_ctrl_cb_ops.cfg_af_stats = isp3a_cfg_af_param;
 	af_input.af_ctrl_cb_ops.get_system_time = isp3a_get_dev_time;
 	af_input.tuning_info.tuning_file = input_ptr->bin_info.af_addr;
+	af_input.caf_tuning_info.tuning_file = input_ptr->bin_info.isp_caf_addr;
+	af_input.caf_tuning_info.size = input_ptr->bin_info.isp_caf_size;
 	if (cxt->otp_data) {
 		af_input.otp_info.otp_data = &cxt->otp_data->af_info;
 		af_input.otp_info.size = sizeof(cxt->otp_data->af_info);

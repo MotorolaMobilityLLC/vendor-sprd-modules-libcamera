@@ -235,6 +235,7 @@ struct af_ctrl_init_in {
 	struct af_ctrl_sensor_info_type sensor_info;
 	struct af_ctrl_module_info_type module_info;
 	struct af_ctrl_cb_ops_type af_ctrl_cb_ops;
+	struct af_ctrl_tuning_file_t caf_tuning_info;
 };
 
 struct af_ctrl_init_out {

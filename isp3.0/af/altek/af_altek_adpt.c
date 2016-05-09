@@ -1901,6 +1901,7 @@ static cmr_int afaltek_adpt_init(void *in, void *out, cmr_handle * adpt_handle)
 	struct af_adpt_init_in *in_p = (struct af_adpt_init_in *)in;
 	struct af_ctrl_init_out *out_p = (struct af_ctrl_init_out *)out;
 	struct af_altek_context *cxt = NULL;
+	struct aft_tuning_block_param tt = {0};
 
 	cxt = (struct af_altek_context *)malloc(sizeof(*cxt));
 	if (NULL == cxt) {
@@ -1926,18 +1927,19 @@ static cmr_int afaltek_adpt_init(void *in, void *out, cmr_handle * adpt_handle)
 		goto error_libops_init;
 	}
 
-#if 1 /* TBD */
-	struct aft_tuning_block_param tt;
-	tt.data = malloc(20);
-	memset(tt.data, 0x00, 20);
-	tt.data_len = 20;
-#endif
+	tt.data = in_p->ctrl_in->caf_tuning_info.tuning_file;
+	tt.data_len = in_p->ctrl_in->caf_tuning_info.size;
+	if (NULL == tt.data || 0 == tt.data_len) {
+		ISP_LOGE("caf tuning parater error");
+		tt.data = malloc(300);
+		memset(tt.data, -1, 300);
+		tt.data_len = 300;
+	}
 	ret = cxt->caf_ops.trigger_init(&tt, &cxt->caf_trigger_handle);
 	if (ret) {
 		ISP_LOGE("failed to init caf library");
 		goto error_caf_init;
 	}
-
 	/* show version */
 	afaltek_adpt_get_version(cxt);
 

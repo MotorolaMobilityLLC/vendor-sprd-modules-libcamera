@@ -69,6 +69,7 @@ enum aft_calc_data_type {
 	AFT_DATA_IMG_BLK,
 	AFT_DATA_AE,
 	AFT_DATA_SENSOR,
+	AFT_DATA_CAF,
 	AFT_DATA_MAX
 
 };
@@ -78,6 +79,9 @@ enum aft_cmd {
 	AFT_CMD_SET_AF_MODE			= 0x1001,
 	AFT_CMD_SET_CAF_RESET		= 0x1002,
 	AFT_CMD_SET_CAF_STOP			= 0x1003,
+
+	AFT_CMD_GET_BASE			= 0x2000,
+	AFT_CMD_GET_FV_STATS_CFG	= 0X2001,
 };
 
 struct aft_tuning_block_param {
@@ -121,7 +125,6 @@ struct aft_img_blk_info {
 	cmr_u32 pix_per_blk;
 	cmr_u32 chn_num;
 	cmr_u32 *data;
-//	cmr_u32 hist_array_y[1024];
 };
 
 
@@ -141,6 +144,20 @@ struct aft_sensor_info {
 	float z;
 };
 
+struct caf_time_stamp {
+	cmr_u32 time_stamp_sec;
+	cmr_u32 time_stamp_us;
+};
+
+struct aft_caf_blk_info {
+	cmr_u16 caf_token_id;
+	cmr_u16 frame_id;
+	cmr_u8 valid_column_num;
+	cmr_u8 valid_row_num;
+	struct caf_time_stamp time_stamp;
+	cmr_u32 *data;
+};
+
 struct aft_proc_result {
 	cmr_u32 is_caf_trig;
 	cmr_u32 is_caf_trig_in_taf;
@@ -154,8 +171,17 @@ struct aft_proc_calc_param {
 	struct aft_img_blk_info img_blk_info;
 	struct aft_ae_info ae_info;
 	struct aft_sensor_info sensor_info;
+	struct aft_caf_blk_info caf_blk_info;
 };
 
+struct aft_caf_stats_cfg {
+	cmr_u8 roi_left_ration;
+	cmr_u8 roi_top_ration;
+	cmr_u8 roi_width_ration;
+	cmr_u8 roi_height_ration;
+	cmr_u8 num_blk_hor;
+	cmr_u8 num_blk_ver;
+};
 
 /*------------------------------------------------------------------------------*
 *					Data Prototype				*

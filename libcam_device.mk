@@ -1,17 +1,24 @@
 TUNING_BIN := s5k3l2xx_mipi_raw_3a.bin
 TUNING_BIN += s5k3l2xx_mipi_raw_shading.bin
+TUNING_BIN += s5k3l2xx_mipi_raw_caf.bin
 TUNING_BIN += s5k5e3yx_mipi_raw_3a.bin
 TUNING_BIN += s5k5e3yx_mipi_raw_shading.bin
+TUNING_BIN += s5k5e3yx_mipi_raw_caf.bin
 TUNING_BIN += imx132_mipi_raw_3a.bin
 TUNING_BIN += imx132_mipi_raw_shading.bin
+TUNING_BIN += imx132_mipi_raw_caf.bin
 TUNING_BIN += s5k3p3sm_mipi_raw_3a.bin
 TUNING_BIN += s5k3p3sm_mipi_raw_shading.bin
+TUNING_BIN += s5k3p3sm_mipi_raw_caf.bin
 TUNING_BIN += s5k4h8yx_mipi_raw_3a.bin
 TUNING_BIN += s5k4h8yx_mipi_raw_shading.bin
+TUNING_BIN += s5k4h8yx_mipi_raw_caf.bin
 TUNING_BIN += imx230_mipi_raw_3a.bin
 TUNING_BIN += imx230_mipi_raw_shading.bin
+TUNING_BIN += imx230_mipi_raw_caf.bin
 TUNING_BIN += ov13870_mipi_raw_3a.bin
 TUNING_BIN += ov13870_mipi_raw_shading.bin
+TUNING_BIN += ov13870_mipi_raw_caf.bin
 TUNING_BIN += ov2680_mipi_raw_3a.bin
 TUNING_BIN += ov2680_mipi_raw_shading.bin
 
