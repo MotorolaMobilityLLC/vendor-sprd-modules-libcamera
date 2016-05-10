@@ -5923,7 +5923,7 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 			chn_param.cap_inf_cfg.cfg.dst_img_size.height);
 		ret = camera_get_trim_rect(&chn_param.cap_inf_cfg.cfg.src_img_rect,
 				zoom_param->zoom_level,
-				&trim_sz);
+				&chn_param.cap_inf_cfg.cfg.dst_img_size);
 	} else {
 		ret = prev_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
 				sensor_mode_info->scaler_trim.width,
