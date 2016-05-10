@@ -103,6 +103,11 @@ struct af_altek_y_stat{
 	cmr_u32 img_in_proc[2];
 };
 
+struct caf_context {
+	pthread_mutex_t caf_mutex;
+	cmr_u32 inited;
+};
+
 struct af_altek_context {
 	cmr_u8 inited;
 	cmr_u32 camera_id;
@@ -129,6 +134,7 @@ struct af_altek_context {
 	struct af_altek_y_stat y_status;
 	struct af_gsensor_info gsensor_info;
 	struct af_ctrl_sensor_info_type sensor_info;
+	struct caf_context af_caf_cxt;
 };
 
 /************************************ INTERNAK DECLARATION ************************************/
@@ -880,6 +886,29 @@ static void afaltek_adpt_ae_info_to_af_lib(struct isp3a_ae_info *ae_info,
 	af_ae_info->preview_fr = ae_info->report_data.fps;
 }
 
+static cmr_int afaltek_adpt_caf_init(cmr_handle adpt_handle)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+
+	pthread_mutex_init(&cxt->af_caf_cxt.caf_mutex, NULL);
+#ifdef FEATRUE_SPRD_CAF_TRIGGER
+	cxt->af_caf_cxt.inited = 1;
+#endif
+	return ret;
+}
+
+static cmr_int afaltek_adpt_caf_deinit(cmr_handle adpt_handle)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+
+	pthread_mutex_destroy(&cxt->af_caf_cxt.caf_mutex);
+	cxt->af_caf_cxt.inited = 0;
+
+	return ret;
+}
+
 static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 					struct aft_proc_calc_param *aft_in)
 {
@@ -889,14 +918,18 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 	struct allib_af_input_roi_info_t lib_roi;
 	struct aft_proc_result aft_out;
 
+	pthread_mutex_lock(&cxt->af_caf_cxt.caf_mutex);
 	if (cxt->vcm_tune.tuning_enable) {
 		ISP_LOGI("vcm tuning mode");
-		return -ISP_PARAM_ERROR;
+		goto exit;
 	}
 
 	if ((AF_CTRL_MODE_CAF != cxt->af_mode) &&
 	    (AF_CTRL_MODE_CONTINUOUS_VIDEO != cxt->af_mode))
-		return -ISP_PARAM_ERROR;
+		goto exit;
+
+	if (AF_ADPT_DONE != cxt->af_cur_status && AF_ADPT_IDLE != cxt->af_cur_status)
+		goto exit;
 
 	cmr_bzero(&roi, sizeof(roi));
 	cmr_bzero(&lib_roi, sizeof(lib_roi));
@@ -904,7 +937,7 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 
 	ret = cxt->caf_ops.trigger_calc(cxt->caf_trigger_handle, aft_in, &aft_out);
 
-	ISP_LOGI("aft_out.is_caf_trig %d", aft_out.is_caf_trig);
+	ISP_LOGI("caf_trig %d", aft_out.is_caf_trig);
 	if ((!cxt->aft_proc_result.is_caf_trig) && aft_out.is_caf_trig) {
 		/* notify oem to show box */
 		ret = afaltek_adpt_start_notify(adpt_handle);
@@ -925,36 +958,86 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 	}
 	cxt->aft_proc_result = aft_out;
 
+exit:
+	pthread_mutex_unlock(&cxt->af_caf_cxt.caf_mutex);
+
 	return ret;
 }
 
-static cmr_int afaltek_adpt_caf_update_ae_info(cmr_handle adpt_handle, void *in)
+static cmr_int afaltek_adpt_trans_data_to_caf(cmr_handle adpt_handle, void *in, cmr_u32 caf_type)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct aft_proc_calc_param aft_in = { 0};
-	struct isp3a_ae_info *isp_ae_info = (struct isp3a_ae_info *)in;
-	struct isp_ae_statistic_info *ae_rgb_stats = NULL;
 
-	if (!isp_ae_info->valid)
-		return ISP_SUCCESS;
-
-	ae_rgb_stats = (struct isp_ae_statistic_info *)isp_ae_info->report_data.rgb_stats;
-	if (NULL == ae_rgb_stats) {
-		ISP_LOGE("failed to get ae rgb stats");
-		return -ISP_ERROR;
+	if (NULL == in || NULL == cxt) {
+		ISP_LOGE("error in NULL");
+		ret = -ISP_PARAM_NULL;
+		goto exit;
+	}
+	if (0 == cxt->af_caf_cxt.inited) {
+		ISP_LOGE("caf doesn't init, doesn't support caf");
+		ret = -ISP_PARAM_NULL;
+		goto exit;
 	}
 
-	aft_in.active_data_type = AFT_DATA_IMG_BLK;
-	aft_in.img_blk_info.block_w = 16;
-	aft_in.img_blk_info.block_h = 16;
-	aft_in.img_blk_info.data = (cmr_u32 *)ae_rgb_stats;
-	aft_in.ae_info.exp_time = (cmr_u32)(isp_ae_info->report_data.exp_time * 100);
-	aft_in.ae_info.gain = isp_ae_info->report_data.sensor_ad_gain;
-	aft_in.ae_info.cur_lum = isp_ae_info->report_data.cur_mean;
-	aft_in.ae_info.target_lum = isp_ae_info->report_data.target_mean;
-	aft_in.ae_info.is_stable = isp_ae_info->report_data.ae_converge_st;
-	ret = afaltek_adpt_caf_process(cxt, &aft_in);
+	switch (caf_type) {
+	case AFT_DATA_AF:
+		break;
+	case AFT_DATA_IMG_BLK:
+	{
+		struct isp3a_ae_info *isp_ae_info = (struct isp3a_ae_info *)in;
+		struct isp_ae_statistic_info *ae_rgb_stats = NULL;
+
+		if (!isp_ae_info->valid)
+			return ISP_SUCCESS;
+
+		ae_rgb_stats = (struct isp_ae_statistic_info *)isp_ae_info->report_data.rgb_stats;
+		if (NULL == ae_rgb_stats) {
+			ISP_LOGE("failed to get ae rgb stats if is the first that's ok.");
+			ret = -ISP_ERROR;
+			goto exit;
+		}
+		aft_in.active_data_type = caf_type;
+		aft_in.img_blk_info.block_w = 16;
+		aft_in.img_blk_info.block_h = 16;
+		aft_in.img_blk_info.data = (cmr_u32 *)ae_rgb_stats;
+		aft_in.ae_info.exp_time = (cmr_u32)(isp_ae_info->report_data.exp_time * 100);
+		aft_in.ae_info.gain = isp_ae_info->report_data.sensor_ad_gain;
+		aft_in.ae_info.cur_lum = isp_ae_info->report_data.cur_mean;
+		aft_in.ae_info.target_lum = isp_ae_info->report_data.target_mean;
+		aft_in.ae_info.is_stable = isp_ae_info->report_data.ae_converge_st;
+		break;
+	}
+	case AFT_DATA_AE:
+		break;
+	case AFT_DATA_SENSOR:
+	{
+		struct af_aux_sensor_info_t *aux_sensor_info = (struct af_aux_sensor_info_t *)in;
+
+		if (AF_GYROSCOPE == aux_sensor_info->type) {
+			aft_in.sensor_info.sensor_type = AFT_POSTURE_GYRO;
+			aft_in.sensor_info.x = aux_sensor_info->gyro_info.x;
+			aft_in.sensor_info.y = aux_sensor_info->gyro_info.y;
+			aft_in.sensor_info.z = aux_sensor_info->gyro_info.z;
+		}
+		aft_in.active_data_type = caf_type;
+		break;
+	}
+	case AFT_DATA_CAF:
+		break;
+	default:
+		ret = ISP_PARAM_ERROR;
+		ISP_LOGE("err data type %d", caf_type);
+		break;
+	}
+
+	if (ISP_SUCCESS == ret) {
+		ret = afaltek_adpt_caf_process(cxt, &aft_in);
+		if (ret)
+			ISP_LOGE("fail caf process %ld", ret);
+	}
+exit:
 	return ret;
 }
 
@@ -1019,17 +1102,7 @@ static cmr_int afaltek_adpt_update_aux_sensor(cmr_handle adpt_handle, void *in)
 		ISP_LOGI("magnetic field E");
 		break;
 	case AF_GYROSCOPE:
-		ISP_LOGV("gyro x = %f y = %f z = %f",
-			 aux_sensor_info->gyro_info.x,
-			 aux_sensor_info->gyro_info.y,
-			 aux_sensor_info->gyro_info.z);
-		aft_in.sensor_info.sensor_type = AFT_POSTURE_GYRO;
-		aft_in.sensor_info.x = aux_sensor_info->gyro_info.x;
-		aft_in.sensor_info.y = aux_sensor_info->gyro_info.y;
-		aft_in.sensor_info.z = aux_sensor_info->gyro_info.z;
-		aft_in.active_data_type = AFT_DATA_SENSOR;
-
-		ret = afaltek_adpt_caf_process(cxt, &aft_in);
+		afaltek_adpt_trans_data_to_caf(cxt, aux_sensor_info, AFT_DATA_SENSOR);
 		break;
 	case AF_LIGHT:
 		ISP_LOGI("light E");
@@ -1537,10 +1610,11 @@ static cmr_int afaltek_adpt_af_done(cmr_handle adpt_handle, cmr_int success)
 	if (ret)
 	    ISP_LOGI("failed to end notify ret = %ld", ret);
 
+	cxt->af_cur_status = AF_ADPT_DONE;
 	ret = afaltek_adpt_caf_reset_after_af(cxt);
 	if (ret)
 		ISP_LOGI("failed to caf reset ret = %ld", ret);
-	cxt->af_cur_status = AF_ADPT_DONE;
+
 	return ret;
 }
 
@@ -1611,7 +1685,7 @@ static cmr_int afaltek_adpt_inctrl(cmr_handle adpt_handle, cmr_int cmd,
 		break;
 	case AF_CTRL_CMD_SET_UPDATE_AE:
 		ret = afaltek_adpt_update_ae(adpt_handle, in);
-		ret = afaltek_adpt_caf_update_ae_info(adpt_handle, in);
+		afaltek_adpt_trans_data_to_caf(adpt_handle, in, AFT_DATA_IMG_BLK);
 		break;
 	case AF_CTRL_CMD_SET_PROC_START:
 		ret = afaltek_adpt_proc_start(adpt_handle);
@@ -1967,6 +2041,7 @@ static cmr_int afaltek_adpt_init(void *in, void *out, cmr_handle * adpt_handle)
 		ISP_LOGE("failed to init caf library");
 		goto error_caf_init;
 	}
+	afaltek_adpt_caf_init(cxt);
 	/* show version */
 	afaltek_adpt_get_version(cxt);
 
@@ -2008,6 +2083,7 @@ static cmr_int afaltek_adpt_deinit(cmr_handle adpt_handle)
 	ISP_LOGI("cxt = %p", cxt);
 	if (cxt) {
 		cxt->caf_ops.trigger_deinit(cxt->caf_trigger_handle);
+		afaltek_adpt_caf_deinit(adpt_handle);
 		/* deinit lib */
 		cxt->ops.deinit(cxt->af_runtime_obj, &cxt->af_out_obj);
 		afaltek_libops_deinit(cxt);
