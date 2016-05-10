@@ -1961,8 +1961,8 @@ static cmr_int aealtek_set_touch_zone(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 	end_y = in_ptr->touch_zone.zone.h + in_ptr->touch_zone.zone.y;
 	if (in_ptr->touch_zone.zone.w <= 0
 		|| in_ptr->touch_zone.zone.h <= 0
-		|| end_x > (cmr_s32)cxt_ptr->cur_status.ui_param.work_info.resolution.frame_size.w
-		|| end_y > (cmr_s32)cxt_ptr->cur_status.ui_param.work_info.resolution.frame_size.h
+		|| end_x >= (cmr_s32)cxt_ptr->cur_status.ui_param.work_info.resolution.frame_size.w
+		|| end_y >= (cmr_s32)cxt_ptr->cur_status.ui_param.work_info.resolution.frame_size.h
 		|| end_x <= in_ptr->touch_zone.zone.x
 		|| end_y <= in_ptr->touch_zone.zone.y) {
 		if (cxt_ptr->touch_param.touch_flag) {
@@ -4947,8 +4947,15 @@ static cmr_int aealtek_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_proc_
 
 	if (obj_ptr && obj_ptr->estimation)
 		lib_ret = obj_ptr->estimation(&cxt_ptr->lib_data.stats_data, obj_ptr->ae, out_data_ptr);
-//	if (lib_ret)
-//		goto exit;
+	if (lib_ret) {
+		ISP_LOGW("ae estimation failed lib_ret:0x%x", (cmr_u32)lib_ret);
+		if (_AL_AELIB_INVALID_PARAM == lib_ret) {
+			if (cxt_ptr->touch_param.touch_flag) {
+				aealtek_reset_touch_param(cxt_ptr);
+				ret = aealtek_reset_touch_ack(cxt_ptr);
+			}
+		}
+	}
 	ISP_LOGI("mean=%d, BV=%d, exposure_line=%d, gain=%d, ae_states:%d, camera_id:%d",\
 		out_data_ptr->rpt_3a_update.ae_update.curmean,
 		out_data_ptr->rpt_3a_update.ae_update.bv_val,
