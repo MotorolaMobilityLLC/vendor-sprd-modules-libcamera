@@ -262,6 +262,7 @@ enum ae_set_param_type_t {
 	AE_SET_PARAM_CAPTURE_SENSOR_INFO_SLV,     /* update slave sensor info */
 	AE_SET_PARAM_SOF_NOTIFY_SLV,              /* update slave SOF notify */
 	AE_SET_PARAM_SYNC_MODE,                       /* update sync mdoe flag */
+	AE_SET_PARAM_ENGINEER_MODE,                       /* Turn on/off Engineer mode,1:on;0:off */
 
 	AE_SET_PARAM_MAX
 };
@@ -587,6 +588,19 @@ struct ae_set_parameter_init_t {
 #pragma pack(pop)  /* restore old alignment setting from stack  */
 
 /*
+ *@typedef ae_engineer_mode_param_t
+ *@brief ae engineer mode param
+ */
+#pragma pack(push) /* push current alignment setting to stack */
+#pragma pack(4)    /* new alignment setting */
+struct ae_engineer_mode_param_t {
+	uint32  engineer_type;		 /* see ae_engineer_mode_type_t */
+	uint8   ucengineermode;      /* 0:Off,1:on */
+};
+#pragma pack(pop)  /* restore old alignment setting from stack */
+
+
+/*
  *@typedef ae_set_param_content_t
  *@brief parameter body of set param
  */
@@ -674,6 +688,7 @@ struct ae_set_param_content_t {
 	struct ae_sof_notify_param_t  sof_notify_param_slv_sensor;   /* current sof notify param, should be updated for each SOF received */
 
 	struct ae_hw_config_t ae_hw_config;  /* reserved,  sensor info, hw3a info */
+	struct ae_engineer_mode_param_t ae_engineer_mode_param;
 };
 #pragma pack(pop)  /* restore old alignment setting from stack  */
 

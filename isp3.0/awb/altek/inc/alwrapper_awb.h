@@ -23,7 +23,7 @@ extern "C"
 {
 #endif
 
-#define _WRAPPER_AWB_VER 0.8060
+#define _WRAPPER_AWB_VER 0.8070
 
 /*
  * API name: al3awrapperawb_setotpcalibration

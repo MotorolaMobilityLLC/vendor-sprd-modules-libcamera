@@ -3,8 +3,8 @@
  *
  *  Created on: 2015/12/05
  *      Author: MarkTseng
- *  Latest update: 2016/4/21
- *      Reviser: Allenwang
+ *  Latest update: 2016/5/5
+ *      Reviser: MarkTseng
  *  Comments:
  *       This c file is mainly used for AP framework to:
  *       1. Dispatch ISP stats to seperated stats
@@ -254,10 +254,33 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 		pispmetaae->uaestatssize = pispmeta.uaestatssize;
 		pispmetaae->upseudoflag = 1;
 
-		pispmetaae->b_isstats_byaddr = 0;
-
 		memcpy( &pispmetaae->systemtime, &systemtime, sizeof(struct timeval));
 		pispmetaae->udsys_sof_idx = udsof_idx;
+
+		if ( pispmeta.uaestatsaddr != 0 ) {
+			/* retriving AE info of stats */
+			paddrlocal = (uint8 *)alisp_metadata + pispmeta.uaestatsaddr;
+			offset = 0;
+			memcpy( &alisp_metadata_ae->ae_stats_info.udpixelsperblocks  , paddrlocal, 4 );
+			paddrlocal+= 4;
+			offset+=4;
+			memcpy( &alisp_metadata_ae->ae_stats_info.udbanksize         , paddrlocal, 4 );
+			paddrlocal+= 4;
+			offset+=4;
+			memcpy( &alisp_metadata_ae->ae_stats_info.ucvalidblocks      , paddrlocal, 1 );
+			paddrlocal+= 1;
+			offset+=1;
+			memcpy( &alisp_metadata_ae->ae_stats_info.ucvalidbanks       , paddrlocal, 1 );
+		} else {
+			alisp_metadata_ae->ae_stats_info.udpixelsperblocks = 3000;
+			alisp_metadata_ae->ae_stats_info.udbanksize = 512;
+			alisp_metadata_ae->ae_stats_info.ucvalidblocks = 16;
+			alisp_metadata_ae->ae_stats_info.ucvalidbanks = 16;
+		}
+
+		/* no valid stats data  */
+		pispmetaae->b_isstats_byaddr = 0;
+
 	}
 
 	/* parsing AWB if AWB pointer is valid */
@@ -362,6 +385,47 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 		pispmetaawb->b_isstats_byaddr = 0;
 		memcpy( &pispmetaawb->systemtime, &systemtime, sizeof(struct timeval));
 		pispmetaawb->udsys_sof_idx = udsof_idx;
+
+		if ( pispmeta.uawbstatsaddr != 0) {
+			/* retriving awb info of stats */
+			paddrlocal = (uint8 *)alisp_metadata + pispmeta.uawbstatsaddr;
+			offset = 0;
+			memcpy( &alisp_metadata_awb->awb_stats_info.udpixelsperblocks  , paddrlocal, 4 );
+			paddrlocal+= 4;
+			offset+= 4;
+			memcpy( &alisp_metadata_awb->awb_stats_info.udbanksize         , paddrlocal, 4 );
+			paddrlocal+= 4;
+			offset+= 4;
+			memcpy( &alisp_metadata_awb->awb_stats_info.uwsub_x            , paddrlocal, 2 );
+			paddrlocal+= 2;
+			offset+= 2;
+			memcpy( &alisp_metadata_awb->awb_stats_info.uwsub_y            , paddrlocal, 2 );
+			paddrlocal+= 2;
+			offset+= 2;
+			memcpy( &alisp_metadata_awb->awb_stats_info.uwwin_x            , paddrlocal, 2 );
+			paddrlocal+= 2;
+			offset+= 2;
+			memcpy( &alisp_metadata_awb->awb_stats_info.uwwin_y            , paddrlocal, 2 );
+			paddrlocal+= 2;
+			offset+= 2;
+			memcpy( &alisp_metadata_awb->awb_stats_info.uwwin_w            , paddrlocal, 2 );
+			paddrlocal+= 2;
+			offset+= 2;
+			memcpy( &alisp_metadata_awb->awb_stats_info.uwwin_h            , paddrlocal, 2 );
+			paddrlocal+= 2;
+			offset+= 2;
+			memcpy( &alisp_metadata_awb->awb_stats_info.uwtotalcount       , paddrlocal, 2 );
+			paddrlocal+= 2;
+			offset+= 2;
+			memcpy( &alisp_metadata_awb->awb_stats_info.uwgrasscount       , paddrlocal, 2 );
+			paddrlocal+= 2;
+			offset+= 2;
+			memcpy( &alisp_metadata_awb->awb_stats_info.ucvalidblocks      , paddrlocal, 1 );
+			paddrlocal+= 1;
+			offset+= 1;
+			memcpy( &alisp_metadata_awb->awb_stats_info.ucvalidbanks       , paddrlocal, 1 );
+		}
+
 	}
 
 	/* parsing AF if AF pointer is valid */

@@ -3,7 +3,7 @@
  *
  *  Created on: 2016/01/05
  *      Author: Hubert Huang
- *  Latest update: 2016/3/30
+ *  Latest update: 2016/5/3
  *      Reviser: MarkTseng
  *  Comments:
  *       This c file is mainly used for AP framework to:
