@@ -358,6 +358,8 @@ cmr_int cmr_get_sensor_max_fps(cmr_handle oem_handle,cmr_u32 camera_id, cmr_u32*
 cmr_int cmr_sensor_init_static_info(cmr_handle oem_handle);
 cmr_int cmr_sensor_deinit_static_info(cmr_handle oem_handle);
 
+cmr_int cmr_set_zoom_factor_to_isp(cmr_handle oem_handle,float* zoomFactor);
+
 cmr_int prev_set_preview_touch_info(cmr_handle preview_handle, cmr_u32 camera_id, struct touch_coordinate *touch_xy);
 #ifdef __cplusplus
 }

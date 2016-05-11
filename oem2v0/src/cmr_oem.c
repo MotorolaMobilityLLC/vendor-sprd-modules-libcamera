@@ -7359,6 +7359,7 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
 {
 	cmr_int                          ret = CMR_CAMERA_SUCCESS;
 	struct camera_context            *cxt = (struct camera_context*)oem_handle;
+	CHECK_HANDLE_VALID(oem_handle);
 
 	switch (id) {
 	case CAMERA_PARAM_FOCUS_RECT:
@@ -7370,12 +7371,40 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
 		ret = cmr_focus_set_param(cxt->focus_cxt.focus_handle, cxt->camera_id, id, (void*)param);
 		break;
 	case CAMERA_PARAM_ZOOM:
+	{
+		float zoom_factor = 1.0;
+		const float EPSINON = 0.0001f;
+		struct cmr_zoom_param *zoom_param = NULL;
+		cmr_uint zoom_factor_changed = 0;
+		if(param) {
+			zoom_param = (struct cmr_zoom_param*)param;
+			if(zoom_param->mode == ZOOM_INFO) {
+				ret = cmr_preview_get_zoom_factor(cxt->prev_cxt.preview_handle,cxt->camera_id,&zoom_factor);
+				if (ret) {
+					CMR_LOGE("fail to get zoom factor  %ld", ret);
+				}else {
+					if (fabs(zoom_param->zoom_info.zoom_ratio - zoom_factor) > EPSINON) {
+						zoom_factor_changed = 1;
+					}
+				}
+			}
+		}
 		ret = cmr_preview_update_zoom(cxt->prev_cxt.preview_handle, cxt->camera_id, (struct cmr_zoom_param*)param);
 		if (ret) {
 			CMR_LOGE("failed to update zoom %ld", ret);
 		}
 		ret = camera_set_setting(oem_handle, id, param);
+		if (ret) {
+			CMR_LOGE("failed to set camera setting of zoom %ld", ret);
+		}
+		if(zoom_factor_changed) {
+			ret = cmr_set_zoom_factor_to_isp(oem_handle,&zoom_param->zoom_info.zoom_ratio);
+			if (ret) {
+				CMR_LOGE("failed to set zoom factor to isp  %ld", ret);
+			}
+		}
 		break;
+	}
 	case CAMERA_PARAM_ISO:
 		cxt->setting_cxt.iso_value = param;
 		ret = camera_set_setting(oem_handle, id, param);
@@ -7914,4 +7943,25 @@ cmr_int cmr_get_sensor_max_fps(cmr_handle oem_handle,cmr_u32 camera_id, cmr_u32*
 		*max_fps = sns_ex_info_ptr->max_fps;
 	}
 	return ret;
+}
+
+cmr_int cmr_set_zoom_factor_to_isp(cmr_handle oem_handle,float* zoomFactor)
+{
+        cmr_int         ret = CMR_CAMERA_SUCCESS;
+	struct camera_context   *cxt = NULL;
+	struct isp_context      *isp_cxt = NULL;
+        CHECK_HANDLE_VALID(oem_handle);
+
+	cxt = (struct camera_context*)oem_handle;
+	isp_cxt = &cxt->isp_cxt;
+        if(NULL == isp_cxt->isp_handle || NULL == zoomFactor) {
+                CMR_LOGE("isp handle or zoomFactor is null!");
+                ret = -CMR_CAMERA_INVALID_PARAM;
+                return ret;
+        }
+	ret = isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_SET_DZOOM_FACTOR, zoomFactor);
+        if(ret) {
+                CMR_LOGE("isp_ioctl-ISP_CTRL_SET_DZOOM_FACTOR failed:zoomFactor is %f",zoomFactor);
+        }
+        return ret;
 }

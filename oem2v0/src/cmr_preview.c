@@ -9534,3 +9534,18 @@ cmr_int prev_set_preview_touch_info(cmr_handle preview_handle, cmr_u32 camera_id
 	return ret;
 
 }
+
+cmr_int cmr_preview_get_zoom_factor(cmr_handle preview_handle, cmr_u32 camera_id,float* zoom_factor)
+{
+	cmr_int			ret = CMR_CAMERA_SUCCESS;
+	struct prev_handle	*handle = (struct prev_handle*)preview_handle;
+	struct prev_context	*prev_cxt = NULL;
+
+	CHECK_HANDLE_VALID(handle);
+	CHECK_HANDLE_VALID(zoom_factor);
+	CHECK_CAMERA_ID(camera_id);
+	prev_cxt = &handle->prev_cxt[camera_id];
+	*zoom_factor = prev_cxt->prev_param.zoom_setting.zoom_info.zoom_ratio;
+	CMR_LOGI("zoom_factor is %f ",*zoom_factor);
+	return ret;
+}

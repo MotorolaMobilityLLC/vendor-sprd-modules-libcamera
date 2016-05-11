@@ -217,6 +217,8 @@ cmr_int cmr_preview_set_video_buffer(cmr_handle preview_handle, cmr_u32 camera_i
 cmr_int cmr_preview_set_zsl_buffer(cmr_handle preview_handle, cmr_u32 camera_id, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd);
 
 cmr_int prev_set_ae_time(cmr_handle preview_handle, cmr_u32 camera_id, void *data);
+
+cmr_int cmr_preview_get_zoom_factor(cmr_handle preview_handle, cmr_u32 camera_id,float* zoom_factor);
 #ifdef __cplusplus
 }
 #endif
