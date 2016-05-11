@@ -2803,13 +2803,9 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 	if (ret)
 		goto exit;
 
-	if (!cxt_ptr->tuning_info.manual_ae_on
-			&& AE_DISABLED != cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_LibStates
-			&& AE_LOCKED != cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_LibStates) {
-		ret = aealtek_lib_exposure2sensor(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
-		if (ret)
-			goto exit;
-	}
+	ret = aealtek_lib_exposure2sensor(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
+	if (ret)
+		goto exit;
 
 	ret = aealtek_lib_to_out_info(cxt_ptr, &cxt_ptr->lib_data.output_data, &out_ptr->proc_out.ae_info);
 	if (ret)
