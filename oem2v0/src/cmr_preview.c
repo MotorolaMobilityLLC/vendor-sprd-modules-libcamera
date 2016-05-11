@@ -330,6 +330,7 @@ struct prev_context {
 	struct sensor_exp_info          sensor_info;
 	cmr_uint                        ae_time;
 	void                            *private_data;
+	cmr_uint                        vcm_step;
 };
 
 struct prev_thread_cxt {
@@ -2082,7 +2083,7 @@ cmr_int prev_frame_handle(struct prev_handle *handle, cmr_u32 camera_id, struct 
 		ret = prev_preview_frame_handle(handle, camera_id, data);
 	}
 
-	if (refocus_eb && (data->channel_id == prev_cxt->depthmap_channel_id)) {
+	if ((refocus_eb == 1) && (data->channel_id == prev_cxt->depthmap_channel_id)) {
 		ret = prev_depthmap_frame_handle(handle, camera_id, data);
 	}
 
@@ -3373,7 +3374,7 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_res
 		/*init depthmap*/
 		CMR_LOGI("refocus_eb %ld",  prev_cxt->prev_param.refocus_eb);
 #if 1
-		if ( prev_cxt->prev_param.refocus_eb) {
+		if ( prev_cxt->prev_param.refocus_eb == 1) {
 			/* get otp  buffer  */
 			struct sensor_dual_otp_info sensor_otp;
 			ret = handle->ops.get_dual_sensor_otp(handle->oem_handle, &sensor_otp);
@@ -3482,7 +3483,7 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_rest
 		}
 
 		/*deinit depthmap*/
-		if (prev_cxt->prev_param.refocus_eb) {
+		if (prev_cxt->prev_param.refocus_eb == 1) {
 			prev_depthmap_close(handle, camera_id);
 		}
 	}
@@ -5655,6 +5656,8 @@ cmr_int prev_construct_frame(struct prev_handle *handle,
 		frame_type->zoom_ratio = prev_cxt->prev_param.zoom_setting.zoom_info.zoom_ratio;
 		frame_type->ae_time = ae_time;
 		CMR_LOGV("ae_time: %lld, zoom_ratio: %f", frame_type->ae_time, frame_type->zoom_ratio);
+		frame_type->vcm_step  = prev_cxt->vcm_step;
+		CMR_LOGI("vcm_step: %lld", frame_type->vcm_step);
 		frame_type->type = PREVIEW_FRAME;
 		CMR_LOGV("%lld", frame_type->timestamp);
 		if (prev_cxt->prev_param.is_support_fd && prev_cxt->prev_param.is_fd_on) {
@@ -5672,7 +5675,7 @@ cmr_int prev_construct_frame(struct prev_handle *handle,
 			}
 #endif
 #if 1
-		if (prev_cxt->prev_param.refocus_eb) {
+		if (prev_cxt->prev_param.refocus_eb == 1) {
 			prev_cxt->preview_bakcup_timestamp = frame_type->timestamp;
 			prev_cxt->preview_bakcup_frm = frm_ptr;
 			prev_cxt->preview_bakcup_data = info;
@@ -5912,7 +5915,7 @@ cmr_int prev_set_param_internal(struct prev_handle *handle,
 		}
 	}
 
-	if (handle->prev_cxt[camera_id].prev_param.refocus_eb) {
+	if (handle->prev_cxt[camera_id].prev_param.refocus_eb == 1) {
 		ret = prev_set_depthmap_param(handle, camera_id, is_restart, out_param_ptr);
 		if (ret) {
 			CMR_LOGE("set depthmap param failed");
@@ -9556,7 +9559,7 @@ cmr_int prev_depthmap_open(struct prev_handle *handle, cmr_u32 camera_id,struct 
 	CMR_LOGI("refocus_eb %ld",
 		prev_cxt->prev_param.refocus_eb);
 
-	if (!prev_cxt->prev_param.refocus_eb) {
+	if (prev_cxt->prev_param.refocus_eb != 1) {
 		CMR_LOGD("not support depthmap");
 		ret = CMR_CAMERA_INVALID_PARAM;
 		goto exit;
@@ -9642,7 +9645,7 @@ cmr_int prev_depthmap_send_data(struct prev_handle *handle, cmr_u32 camera_id, s
 	CMR_LOGD("refocus_eb %ld frm %p addr_vir.addr_y %p, touchX %d,touchY %d, depthmap_frm->yaddr_vir 0x%x",
 		prev_cxt->prev_param.refocus_eb,frm,frm->addr_vir.addr_y,prev_cxt->touch_info.touchX,prev_cxt->touch_info.touchY,depthmap_frm->yaddr_vir);
 
-	if (!prev_cxt->prev_param.refocus_eb) {
+	if (prev_cxt->prev_param.refocus_eb != 1) {
 		CMR_LOGE("refoucs unsupport or closed");
 		ret = CMR_CAMERA_INVALID_PARAM;
 		goto exit;
@@ -9694,7 +9697,7 @@ cmr_int prev_depthmap_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param)
 
 	prev_cxt  = &handle->prev_cxt[camera_id];
 
-	if (!prev_cxt->prev_param.refocus_eb) {
+	if ( prev_cxt->prev_param.refocus_eb != 1) {
 		CMR_LOGW("depthmap closed");
 		return CMR_CAMERA_INVALID_PARAM;
 	}
@@ -9862,5 +9865,21 @@ cmr_int cmr_preview_get_zoom_factor(cmr_handle preview_handle, cmr_u32 camera_id
 	prev_cxt = &handle->prev_cxt[camera_id];
 	*zoom_factor = prev_cxt->prev_param.zoom_setting.zoom_info.zoom_ratio;
 	CMR_LOGI("zoom_factor is %f ",*zoom_factor);
+        return ret;
+}
+cmr_int prev_set_vcm_step(cmr_handle preview_handle, cmr_u32 camera_id, void *data)
+{
+	cmr_int                ret = CMR_CAMERA_SUCCESS;
+	struct prev_handle	   *handle = (struct prev_handle*)preview_handle;
+	struct prev_context    *prev_cxt = NULL;
+	cmr_uint   vcm_step = 0;
+
+	CHECK_HANDLE_VALID(handle);
+	CHECK_CAMERA_ID(camera_id);
+	vcm_step = *(cmr_uint*)data;
+
+	prev_cxt = &handle->prev_cxt[camera_id];
+	prev_cxt->vcm_step = vcm_step;
+
 	return ret;
 }

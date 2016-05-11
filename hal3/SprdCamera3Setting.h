@@ -124,6 +124,9 @@ typedef int64_t nsecs_t;
 #else
 #define SPRD_MAX_AVAILABLE_FACE_DETECT_MODES 1
 #endif
+#define SPRD_DUAL_OTP_SIZE  8192
+
+
 
 #define CAMERA_SETTINGS_CONFIG_ARRAYSIZE 80
 #define CAMERA_SETTINGS_THUMBNAILSIZE_ARRAYSIZE 8
@@ -369,6 +372,7 @@ typedef struct {
 	uint8_t refocus_enable;
 	uint32_t touchxy[2];
 	uint8_t is_macro_fixed;
+
 } SPRD_DEF_Tag;
 
 typedef struct {
@@ -383,6 +387,14 @@ typedef struct {
  typedef struct {
 	int32_t crop[4];
 } EIS_CROP_Tag;
+
+ typedef struct {
+	uint8_t otp_data[SPRD_DUAL_OTP_SIZE];
+} OTP_Tag;
+
+typedef struct {
+	int32_t vcm_step;
+} VCM_Tag;
 
 typedef struct {
 	cam_dimension_t preview_size;
@@ -420,6 +432,8 @@ typedef struct {
 	uint8_t supported_hardware_level;
 	uint8_t demosaic_mode;
 	EIS_CROP_Tag eiscrop_Info;
+	OTP_Tag otpInfo;
+	VCM_Tag vcmInfo;
 } sprd_setting_info_t;
 
 class SprdCamera3Setting {
@@ -555,6 +569,13 @@ public:
 
 	int setMETAInfo(meta_info_t metaInfo);/*   for some metadata,   result meta should be  corresponding with request meta */
 	int getMETAInfo(meta_info_t* metaInfo);
+
+	int setOTPTag(OTP_Tag otpInfo);
+	int getOTPTag(OTP_Tag *otpInfo);
+
+	int setVCMTag(VCM_Tag vcmInfo);
+	int getVCMTag(VCM_Tag *vcmInfo);
+
 	static uint8_t mMaxCameraCount;
 	static camera_metadata_t *mStaticMetadata[CAMERA_ID_COUNT];
 	static SprdCameraParameters mDefaultParameters;

@@ -1667,6 +1667,7 @@ int SprdCamera3Setting::setDefaultParaInfo(int32_t cameraId)
 	memcpy(camera3_default_info.common.availableBrightNess, availableBrightNess, sizeof(availableBrightNess));
 	memcpy(camera3_default_info.common.availableIso, availableIso, sizeof(availableIso));
 	memcpy(camera3_default_info.common.availableFaceDetectModes, availableFaceDetectModes, sizeof(availableFaceDetectModes));
+
 	return 0;
 }
 
@@ -1952,6 +1953,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId)
 	#else
 	s_setting[cameraId].sprddefInfo.is_support_refocus = 0;
 	#endif
+
 	return ret;
 }
 
@@ -3764,6 +3766,11 @@ SprdCamera3Setting::translateLocalToFwMetadata()
 	camMetadata.update(ANDROID_TONEMAP_CURVE_GREEN, s_setting[mCameraId].toneInfo.curve_green, SPRD_MAX_TONE_CURVE_POINT);
 	camMetadata.update(ANDROID_TONEMAP_CURVE_RED, s_setting[mCameraId].toneInfo.curve_red, SPRD_MAX_TONE_CURVE_POINT);
 
+	if(mCameraId == 0){
+		camMetadata.update(ANDROID_SPRD_VCM_STEP, &(s_setting[mCameraId].vcmInfo.vcm_step), 1);
+		camMetadata.update(ANDROID_SPRD_OTP_DATA, s_setting[mCameraId].otpInfo.otp_data,SPRD_DUAL_OTP_SIZE);
+	}
+
 	resultMetadata = camMetadata.release();
 	return resultMetadata;
 }
@@ -3979,6 +3986,28 @@ int SprdCamera3Setting::setFLASHTag(FLASH_Tag flashInfo)
 int SprdCamera3Setting::getFLASHTag(FLASH_Tag* flashInfo)
 {
 	*flashInfo = s_setting[mCameraId].flashInfo;
+	return 0;
+}
+
+int SprdCamera3Setting::setOTPTag(OTP_Tag otpInfo)
+{
+	s_setting[mCameraId].otpInfo= otpInfo;
+	return 0;
+}
+int SprdCamera3Setting::getOTPTag(OTP_Tag* otpInfo)
+{
+	*otpInfo = s_setting[mCameraId].otpInfo;
+	return 0;
+}
+
+int SprdCamera3Setting::setVCMTag(VCM_Tag vcmInfo)
+{
+	s_setting[mCameraId].vcmInfo= vcmInfo;
+	return 0;
+}
+int SprdCamera3Setting::getVCMTag(VCM_Tag* vcmInfo)
+{
+	*vcmInfo = s_setting[mCameraId].vcmInfo;
 	return 0;
 }
 

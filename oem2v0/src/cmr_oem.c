@@ -67,6 +67,7 @@ enum oem_ev_level {
 /**********************************************************************************************/
 
 static uint32_t                                      is_support_reload = 0;
+static uint32_t                                      is_dual_capture = 0;
 
 /************************************internal interface ***************************************/
 static void camera_send_channel_data(cmr_handle oem_handle, cmr_handle receiver_handle, cmr_uint evt, void *data);
@@ -916,6 +917,10 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void* data, cmr_u3
 	case ISP_AE_EXP_TIME:
 		CMR_LOGV("ISP_AE_EXP_TIME,data %lld", *(uint64_t *)data);
 		prev_set_ae_time(cxt->prev_cxt.preview_handle, cxt->camera_id, data);
+		break;
+	case ISP_VCM_STEP:
+		CMR_LOGI("ISP_VCM_STEP,data %d", *(uint32_t *)data);
+		prev_set_vcm_step(cxt->prev_cxt.preview_handle, cxt->camera_id, data);
 		break;
 	default:
 		break;
@@ -2140,7 +2145,7 @@ void camera_calibrationconfigure_load (uint32_t *start_addr, uint32_t *data_size
 	CMR_LOGI("done");
 }
 
-static cmr_int camera_get_dual_otpinfo(cmr_handle  oem_handle,struct sensor_dual_otp_info *dual_otp_data)
+cmr_int camera_get_dual_otpinfo(cmr_handle  oem_handle,struct sensor_dual_otp_info *dual_otp_data)
 {
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
@@ -6142,6 +6147,12 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type, struct common
 		isp_cmd = ISP_CTRL_SET_PREV_YUV;
 		isp_param = param_ptr->cmd_value;
 		break;
+	case COM_ISP_GET_VCM_INFO:
+		isp_cmd = ISP_CTRL_GET_VCM_INFO;
+		//isp_param = param_ptr->cmd_value;
+		ptr_flag = 1;
+		isp_param_ptr = (void*)&param_ptr->vcm_step;
+		break;
 
 	default:
 		CMR_LOGE("don't support cmd %ld", cmd_type);
@@ -6546,7 +6557,19 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	}
 	CMR_LOGI("sprd highiso_mode %d", cxt->highiso_mode);
 
-	CMR_LOGI("isp_to_dram  %d", out_param_ptr->isp_to_dram);
+	if(cxt->is_refocus_mode == 2)
+	{
+		out_param_ptr->sprd_pipviv_enabled = 1;
+		cxt->is_pipviv_mode = 1;
+		if(cxt->camera_id == 2)
+		{
+			//cxt->isp_to_dram = 1;
+			//out_param_ptr->isp_to_dram = 1;
+		}
+	}
+
+	CMR_LOGI("camera id = %d, isp_to_dram  %d", cxt->camera_id,out_param_ptr->isp_to_dram);
+
 
 	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_SPRD_EIS_ENABLED, &setting_param);
 	if (ret) {
@@ -7252,6 +7275,28 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle, enum takepicture_mode
 	camera_local_highflash_ae_measure(oem_handle);
 	camera_get_iso_value(oem_handle);
 #endif
+
+#if 0
+	CMR_LOGI("is_refocus_mode=%ld",cxt->is_refocus_mode);
+	if(cxt->is_refocus_mode == 2)
+	{
+		camera_set_discard_frame(cxt, 1);
+		is_dual_capture ++;
+		int i = 0;
+		for(i=0;i<10;i++)
+		{
+			if(is_dual_capture == 2)
+			{
+				CMR_LOGD("dual camera capture is come,cxt->is_refocus_mode %ld, is_dual_capture %ld, i = %d", cxt->is_refocus_mode,is_dual_capture,i);
+				is_dual_capture = 0;
+				break;
+			}
+			usleep(10);
+		}
+		CMR_LOGD("dual camera capture is not come,cxt->is_refocus_mode %ld, is_dual_capture %ld, i = %d", cxt->is_refocus_mode,is_dual_capture,i);
+	}
+#endif
+
 	camera_set_discard_frame(cxt, 0);
 
 	if (CAMERA_ISP_SIMULATION_MODE == mode) {
@@ -8391,3 +8436,29 @@ cmr_int cmr_set_zoom_factor_to_isp(cmr_handle oem_handle,float* zoomFactor)
         }
         return ret;
 }
+
+cmr_int cmr_get_sensor_vcm_step(cmr_handle  oem_handle,cmr_u32 camera_id, cmr_u32* vcm_step)
+{
+	cmr_int                        ret = CMR_CAMERA_SUCCESS;
+	struct camera_context          *cxt = (struct camera_context*)oem_handle;
+	struct common_isp_cmd_param    isp_param = {0};
+
+	if (!oem_handle ) {
+		CMR_LOGE("in parm error");
+		ret = -CMR_CAMERA_INVALID_PARAM;
+		goto exit;
+	}
+	isp_param.camera_id = cxt->camera_id;
+	ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_VCM_INFO, &isp_param);
+	if (ret) {
+		CMR_LOGE("get isp vcm step error %d", ret);
+		goto exit;
+	}
+	CMR_LOGD("isp_param.vcm_step = %d", isp_param.vcm_step);
+	*vcm_step = isp_param.vcm_step;
+
+
+exit:
+	return ret;
+}
+

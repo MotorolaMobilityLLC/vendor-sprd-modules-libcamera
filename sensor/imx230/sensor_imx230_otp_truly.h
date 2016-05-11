@@ -17,10 +17,10 @@
 #ifndef _SENSOR_IMX230_OTP_TRULY_H_
 #define _SENSOR_IMX230_OTP_TRULY_H_
 
-#if defined(CONFIG_CAMERA_RE_FOCUS)
+//#if defined(CONFIG_CAMERA_RE_FOCUS)
 	/*use dual otp info*/
 	#define IMX230_DUAL_OTP
-#endif
+//#endif
 
 #define IMX230_OTP_LSC_INFO_LEN 1658
 static cmr_u8 imx230_opt_lsc_data[IMX230_OTP_LSC_INFO_LEN];

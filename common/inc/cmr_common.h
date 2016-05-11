@@ -303,6 +303,7 @@ enum common_isp_cmd_type {
 	COM_ISP_GET_YIMG_INFO,
 	COM_ISP_SET_PREVIEW_YIMG,
 	COM_ISP_SET_PREVIEW_YUV,
+	COM_ISP_GET_VCM_INFO,
 	COM_ISP_TYPE_MAX
 };
 
@@ -670,6 +671,7 @@ struct common_isp_cmd_param {
 	union {
 		cmr_u32                                 cmd_value;
 		cmr_u32                                 padding;
+		cmr_u32                                 vcm_step;
 		struct isp_af_win                       af_param;
 		struct exif_spec_pic_taking_cond_tag    exif_pic_info;
 		struct cmr_win_area                     win_area;
@@ -1108,6 +1110,7 @@ struct camera_frame_type {
 	float                     zoom_ratio;
 	cmr_s64                   ae_time;
 	cmr_s64                   monoboottime;
+	cmr_u32                   vcm_step;
 };
 /*
 struct camera_cap_frm_info {
@@ -1246,6 +1249,9 @@ void (*dump_jpeg_file)(void *virt_addr, unsigned int size, int width, int height
 cmr_int (*camera_get_gain_thrs)(cmr_handle camera_handle, cmr_u32 *is_over_thrs);
 cmr_int (*camera_set_sensor_info_to_af)(cmr_handle camera_handle,  struct cmr_af_aux_sensor_info* sensor_info);
 cmr_int (*camera_get_sensor_max_fps)(cmr_handle camera_handle,cmr_u32 camera_id, cmr_u32* max_fps);
+cmr_uint(* camera_get_sensor_dual_otp_info)(cmr_handle camera_handle, struct sensor_dual_otp_info *otp_info);
+cmr_uint (*camera_get_sensor_vcm_step)(cmr_handle camera_handle,cmr_u32 camera_id, cmr_u32* vcm_step);
+
 
 cmr_int (*camera_snapshot_is_need_flash)(cmr_handle oem_handle, cmr_u32 camera_id, cmr_u32 *is_need_flash);
 

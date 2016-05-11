@@ -376,6 +376,10 @@ cmr_int cmr_set_zoom_factor_to_isp(cmr_handle oem_handle,float* zoomFactor);
 cmr_int prev_set_preview_touch_info(cmr_handle preview_handle, cmr_u32 camera_id, struct touch_coordinate *touch_xy);
 
 cmr_int camera_local_snapshot_is_need_flash(cmr_handle oem_handle, cmr_u32 camera_id, cmr_u32 *is_need_flash);
+cmr_int camera_get_dual_otpinfo(cmr_handle  oem_handle,struct sensor_dual_otp_info *dual_otp_data);
+cmr_int prev_set_vcm_step(cmr_handle preview_handle, cmr_u32 camera_id, void *data);
+cmr_int cmr_get_sensor_vcm_step(cmr_handle  oem_handle,cmr_u32 camera_id, cmr_u32* max_fps);
+
 
 #ifdef __cplusplus
 }

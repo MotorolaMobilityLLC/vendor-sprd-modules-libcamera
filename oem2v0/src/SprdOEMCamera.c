@@ -911,6 +911,39 @@ cmr_int camera_snapshot_is_need_flash(cmr_handle oem_handle, cmr_u32 camera_id, 
 	return 0;
 }
 
+cmr_uint camera_get_sensor_dual_otp_info(cmr_handle camera_handle, struct sensor_dual_otp_info *otp_info)
+{
+	cmr_uint                  ret = CMR_CAMERA_SUCCESS;
+
+	if (!camera_handle || !otp_info) {
+		CMR_LOGE("error 0x%lx info=%p", (cmr_uint)camera_handle, otp_info);
+		ret = -CMR_CAMERA_INVALID_PARAM;
+		goto exit;
+	}
+	ret = camera_get_dual_otpinfo(camera_handle, otp_info);
+
+exit:
+	CMR_LOGI("done %ld", ret);
+	return ret;
+}
+
+cmr_uint camera_get_sensor_vcm_step(cmr_handle camera_handle,cmr_u32 camera_id, cmr_u32* vcm_step)
+{
+	cmr_int ret = CMR_CAMERA_SUCCESS;
+	if(NULL == camera_handle ) {
+		CMR_LOGE("input param is null!");
+		ret = CMR_CAMERA_INVALID_PARAM;
+		return ret;
+	}
+	ret = cmr_get_sensor_vcm_step(camera_handle,camera_id,vcm_step);
+	CMR_LOGI("vcm_step %ld", *vcm_step);
+	return ret;
+
+
+exit:
+	CMR_LOGI("done %ld", ret);
+	return ret;
+}
 
 void dump_jpeg_file(void *virt_addr, unsigned int size, int width, int height)
 {
@@ -1007,6 +1040,8 @@ static oem_ops_t oem_module_ops = {
 	camera_set_sensor_info_to_af,
 	camera_get_sensor_max_fps,
 	camera_snapshot_is_need_flash,
+	camera_get_sensor_dual_otp_info,
+	camera_get_sensor_vcm_step,
 };
 
 struct oem_module OEM_MODULE_INFO_SYM = {

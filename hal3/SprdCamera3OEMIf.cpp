@@ -153,6 +153,20 @@ static void writeCamInitTimeToApct(char *buf)
 	}
 }
 
+static int save_file(const char *file_name, void *data, uint32_t data_size)
+{
+	FILE *pf = fopen(file_name, "wb");
+	uint32_t write_bytes = 0;
+
+	if (NULL == pf)
+		return 0;
+
+	write_bytes = fwrite(data, 1, data_size, pf);
+	fclose(pf);
+
+	return write_bytes;
+}
+
 static void writeCamInitTimeToProc(float init_time)
 {
 	char cam_time_buf[256] = {0};
@@ -2008,6 +2022,25 @@ bool SprdCamera3OEMIf::startCameraIfNecessary()
 		HAL_LOGD("camera_id: %d.apert %f", mCameraId, lensInfo.aperture);
 		/*get sensor and lens info from oem layer*/
 
+		/*get sensor otp from oem layer*/
+		if(mSprdRefocusEnabled == true){
+			struct sensor_dual_otp_info dual_otp_info = {0};
+			OTP_Tag otpInfo = {0};
+			mHalOem->ops->camera_get_sensor_dual_otp_info(mCameraHandle, &dual_otp_info);
+			if(dual_otp_info.dual_otp.data_ptr != NULL)
+			{
+				mSetting->getOTPTag(&otpInfo);
+				memcpy(otpInfo.otp_data,dual_otp_info.dual_otp.data_ptr,SPRD_DUAL_OTP_SIZE);
+				mSetting->setOTPTag(otpInfo);
+#if 0
+				 char *psPath_OtpData = "data/misc/media/otp.bin";
+			        save_file(psPath_OtpData, dual_otp_info.dual_otp.data_ptr, dual_otp_info.dual_otp.size);
+#endif
+				HAL_LOGD("camera_id: %d,dual_otp_info %p", mCameraId, dual_otp_info);
+			}
+		}
+		/*get sensor otp from oem layer end*/
+
 		HAL_LOGD("initializing param");
 	} else {
 		HAL_LOGD("camera hardware has been started already");
@@ -3014,6 +3047,18 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 	int64_t buffer_timestamp = buffer_timestamp_fps;
 #endif
 
+	VCM_Tag sprdvcmInfo;
+	if(mCameraId == 0)
+	{
+		mSetting->getVCMTag(&sprdvcmInfo);
+		uint32_t vcm_step = 0;
+		 mHalOem->ops->camera_get_sensor_vcm_step(mCameraHandle,mCameraId,&vcm_step);
+		HAL_LOGD("vcm step is%ld", vcm_step);
+		sprdvcmInfo.vcm_step = vcm_step;
+		mSetting->setVCMTag(sprdvcmInfo);
+	}
+
+
 
 	SprdCamera3RegularChannel* channel = reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
 	cmr_uint pre_addr_vir = NULL, rec_addr_vir = NULL, callback_addr_vir = NULL;
@@ -3348,6 +3393,18 @@ bool SprdCamera3OEMIf::receiveCallbackPicture(uint32_t width, uint32_t height, c
 			if(ret == NO_ERROR) {
 				if(addr_vir != NULL && virtual_addr != NULL)
 					memcpy((char *)addr_vir, (char *)virtual_addr, (width * height * 3) / 2);
+#if 0
+                                if(mCameraId  == 0)
+                                {
+					char *psPath_depthData = "data/misc/media/pic0.yvu420";
+					save_file(psPath_depthData, (void *)addr_vir, (width * height * 3) / 2);
+                                }
+                                if(mCameraId  == 2)
+                                {
+					char *psPath_depthData = "data/misc/media/pic2.yvu420";
+					save_file(psPath_depthData, (void *)addr_vir, (width * height * 3) / 2);
+                                }
+#endif
 				pic_channel->channelCbRoutine(frame_num, timestamp, CAMERA_STREAM_TYPE_PICTURE_CALLBACK);
 
 				if(frame_num > mPictureFrameNum)
@@ -4856,7 +4913,12 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag)
 		{
 			SPRD_DEF_Tag sprddefInfo;
 			mSetting->getSPRDDEFTag(&sprddefInfo);
-
+			if(sprddefInfo.refocus_enable != 0) {
+				mSprdRefocusEnabled = true;
+			}else {
+				mSprdRefocusEnabled = false;
+			}
+			HAL_LOGD("sprddefInfo.refocus_enable=%d mSprdRefocusEnabled %d", sprddefInfo.refocus_enable,mSprdRefocusEnabled);
 			SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_REFOCUS_ENABLE, sprddefInfo.refocus_enable);
 
 		}

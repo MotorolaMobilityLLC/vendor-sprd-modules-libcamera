@@ -421,6 +421,8 @@ private:
 	bool                              mSprdPipVivEnabled;
 	bool                              mSprdHighIsoEnabled;
 
+	bool                              mSprdRefocusEnabled;
+
 	void yuvNv12ConvertToYv12(struct camera_frame_type *frame, char* tmpbuf);
 
 	/* These constants reflect the number of buffers that libqcamera requires
