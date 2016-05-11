@@ -5545,7 +5545,9 @@ status_t SprdCameraHardware::setCameraParameters()
 		SET_PARM(mCameraHandle, CAMERA_PARAM_ISO, 0); /*6 = CAMERA_ISO_MAX*/
 	} else {
 		if (mIsDvPreview && mParameters.getRecordingHint()) {
+#ifdef CONFIG_CAMERA_ISP_DIR_2
 			SET_PARM(mCameraHandle, CAMERA_PARAM_ISO, 5); /* dv1600 */
+#endif
 		} else {
 		SET_PARM(mCameraHandle, CAMERA_PARAM_ISO, mParameters.getIso());
 		}
