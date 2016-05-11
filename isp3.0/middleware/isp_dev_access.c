@@ -620,6 +620,8 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	struct isp_awb_gain_info               awb_gain_info;
 	cmr_u32                                dcam_id = 0, isp_id = 0;
 	struct isp_sensor_resolution_info      *resolution_ptr = NULL;
+	struct highiso_data_buf                highiso_info;
+	cmr_u32                                capture_mode = 0;
 	struct isp_cfg_img_param               img_buf_param;
 	SCENARIO_INFO_AP                       tSecnarioInfo;
 	struct isp_iq_otp_info                 iq_info;
@@ -658,8 +660,19 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	tSecnarioInfo.tScenarioOutBypassFlag.bBypassStill = 0;
 	tSecnarioInfo.tScenarioOutBypassFlag.bBypassMetaData = 0;
 
-	tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutWidth = 0;
-	tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutHeight = 0;
+	if(ISP_CAP_MODE_HIGHISO == param_ptr->common_in.capture_mode) {
+		ISP_LOGI("---------is highiso mode!!!!\n");
+		tSecnarioInfo.tScenarioOutBypassFlag.bBypassVideo = 1;
+		tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutWidth = 960;//cxt->input_param.init_param.size.w;
+		tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutHeight = 720;//cxt->input_param.init_param.size.h;
+		ISP_LOGI("---------BayerSCL w %d h %d\n",tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutWidth,
+			 tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutHeight);
+	} else {
+		ISP_LOGE("---------no highiso mode!!!!\n");
+		tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutWidth = 0;
+		tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutHeight = 0;
+	}
+
 	ISP_LOGI("size %dx%d, line time %d frameRate %d clamp %d image_pattern %d ", tSecnarioInfo.tSensorInfo.uwWidth, tSecnarioInfo.tSensorInfo.uwHeight,
 		tSecnarioInfo.tSensorInfo.udLineTime, tSecnarioInfo.tSensorInfo.uwFrameRate, tSecnarioInfo.tSensorInfo.uwClampLevel, tSecnarioInfo.tSensorInfo.nColorOrder);
 	ISP_LOGI("sensor out %d %d %d %d %d %d",tSecnarioInfo.tSensorInfo.uwCropStartX,
@@ -687,11 +700,17 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 		img_buf_param.img_id = ISP_IMG_STILL_CAPTURE;
 	}
 	img_buf_param.format = ISP_OUT_IMG_YUY2;
+	if(ISP_CAP_MODE_HIGHISO == param_ptr->common_in.capture_mode) {
+		img_buf_param.format = ISP_OUT_IMG_NV12;
+	}
 	img_buf_param.dram_eb = 0;
 	img_buf_param.buf_num = 4;
 	img_buf_param.width = cxt->input_param.init_param.size.w;
 	img_buf_param.height = cxt->input_param.init_param.size.h;
-	img_buf_param.line_offset = (2 * cxt->input_param.init_param.size.w);
+	if(ISP_OUT_IMG_YUY2 == img_buf_param.format)
+		img_buf_param.line_offset = (2 * cxt->input_param.init_param.size.w);
+	else if(ISP_OUT_IMG_NV12 == img_buf_param.format)
+		img_buf_param.line_offset = (cxt->input_param.init_param.size.w);
 	img_buf_param.addr[0].chn0 = 0x2FFFFFFF;
 	img_buf_param.addr[1].chn0 = 0x2FFFFFFF;
 	img_buf_param.addr[2].chn0 = 0x2FFFFFFF;
@@ -773,6 +792,43 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	awb_gain_info.g = param_ptr->hw_cfg.awb_gain_balanced.g;
 	awb_gain_info.b = param_ptr->hw_cfg.awb_gain_balanced.b;
 	ret = isp_dev_cfg_awb_gain_balanced(cxt->isp_driver_handle, &awb_gain_info);
+
+	if(ISP_CAP_MODE_HIGHISO == param_ptr->common_in.capture_mode) {
+		/*set still image buffer format*/
+		memset(&img_buf_param, 0, sizeof(img_buf_param));
+
+		img_buf_param.format = ISP_OUT_IMG_YUY2;
+		img_buf_param.img_id = ISP_IMG_PREVIEW;
+		img_buf_param.dram_eb = 0;
+		img_buf_param.buf_num = 4;
+		img_buf_param.width = 960;//cxt->input_param.init_param.size.w;
+		img_buf_param.height = 720;//cxt->input_param.init_param.size.h;
+		img_buf_param.line_offset = (2 * cxt->input_param.init_param.size.w);
+		img_buf_param.addr[0].chn0 = 0x2FFFFFFF;
+		img_buf_param.addr[1].chn0 = 0x2FFFFFFF;
+		img_buf_param.addr[2].chn0 = 0x2FFFFFFF;
+		img_buf_param.addr[3].chn0 = 0x2FFFFFFF;
+		ISP_LOGI("set still image buffer param img_id %d", img_buf_param.img_id);
+
+		ret = isp_dev_set_img_param(cxt->isp_driver_handle, &img_buf_param);
+		highiso_info.capture_mode = param_ptr->common_in.capture_mode;
+		highiso_info.raw_buf.fd = param_ptr->common_in.raw_buf_fd;
+		highiso_info.raw_buf.phy_addr = param_ptr->common_in.raw_buf_phys_addr;
+		highiso_info.raw_buf.virt_addr = param_ptr->common_in.raw_buf_virt_addr;
+		highiso_info.raw_buf.size = param_ptr->common_in.raw_buf_size;
+		highiso_info.raw_buf.width = param_ptr->common_in.raw_buf_width;
+		highiso_info.raw_buf.height = param_ptr->common_in.raw_buf_height;
+		highiso_info.highiso_buf.fd = param_ptr->common_in.highiso_buf_fd;
+		highiso_info.highiso_buf.phy_addr = param_ptr->common_in.highiso_buf_phys_addr;
+		highiso_info.highiso_buf.virt_addr = param_ptr->common_in.highiso_buf_virt_addr;
+		highiso_info.highiso_buf.size = param_ptr->common_in.highiso_buf_size;
+		ret = isp_dev_highiso_mode(cxt->isp_driver_handle, &highiso_info);
+		if (ret) {
+			ISP_LOGE("failed to set highiso mode %ld", ret);
+			goto exit;
+		}
+	}
+	ISP_LOGE("debug highiso isp_dev_access.c end");
 
 	ret = isp_dev_stream_on(cxt->isp_driver_handle);
 
@@ -1028,13 +1084,45 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 
 	usleep(100*1000);
 
-	isp_dev_stream_off(cxt->isp_driver_handle);
-	isp_dev_stop(cxt->isp_driver_handle);
+	ret = isp_dev_stream_off(cxt->isp_driver_handle);
+	ret = isp_dev_stop(cxt->isp_driver_handle);
 
 exit:
 	ISP_LOGI("done %ld", ret);
 	return ret;
 }
+
+ cmr_int isp_dev_access_cap_buf_cfg(cmr_handle isp_dev_handle, struct isp_dev_img_param *parm)
+ {
+	cmr_int                                ret = ISP_SUCCESS;
+	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	struct isp_img_mem                     img_mem;
+
+
+	ISP_CHECK_HANDLE_VALID(isp_dev_handle);
+	memset(&img_mem, 0, sizeof(struct isp_img_mem));
+
+	img_mem.img_fmt = parm->img_fmt;
+	img_mem.channel_id = parm->channel_id;
+	img_mem.base_id = parm->base_id;
+	img_mem.is_reserved_buf = parm->is_reserved_buf;
+	img_mem.yaddr = parm->addr.chn0;
+	img_mem.uaddr = parm->addr.chn1;
+	img_mem.vaddr = parm->addr.chn2;
+	img_mem.yaddr_vir = parm->addr_vir.chn0;
+	img_mem.uaddr_vir = parm->addr_vir.chn1;
+	img_mem.vaddr_vir = parm->addr_vir.chn2;
+	img_mem.img_y_fd = parm->img_fd.y;
+	img_mem.img_u_fd = parm->img_fd.u;
+	img_mem.img_v_fd = parm->img_fd.v;
+	img_mem.width = parm->img_size.w;
+	img_mem.height = parm->img_size.h;
+
+	isp_dev_cfg_cap_buf(cxt->isp_driver_handle, &img_mem);
+
+	return ret;
+
+ }
 
 void isp_dev_access_evt_reg(cmr_handle isp_dev_handle, isp_evt_cb isp_event_cb, void *privdata)
 {
@@ -1043,6 +1131,15 @@ void isp_dev_access_evt_reg(cmr_handle isp_dev_handle, isp_evt_cb isp_event_cb, 
 
 	ISP_LOGI("reg evt callback");
 	isp_dev_evt_reg(cxt->isp_driver_handle, isp_event_cb, privdata);
+}
+
+void isp_dev_access_cfg_buf_evt_reg(cmr_handle isp_dev_handle, cmr_handle grab_handle, isp_evt_cb isp_event_cb)
+{
+	cmr_int                                ret = ISP_SUCCESS;
+	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+
+	ISP_LOGI("reg evt callback");
+	isp_dev_buf_cfg_evt_reg(cxt->isp_driver_handle, grab_handle,  isp_event_cb);
 }
 
 cmr_int isp_dev_access_cfg_awb_param(cmr_handle isp_dev_handle, struct isp3a_awb_hw_cfg *data)

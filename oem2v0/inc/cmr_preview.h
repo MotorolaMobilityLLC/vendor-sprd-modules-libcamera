@@ -91,6 +91,7 @@ struct preview_md_ops {
 	cmr_int (*set_preview_yhist)(cmr_handle oem_handle, cmr_uint sensor_id, struct yhist_info *yhist);
 	cmr_int (*get_sensor_fps_info)(cmr_handle oem_handle, cmr_uint sensor_id, cmr_u32 sn_mode, struct sensor_mode_fps_tag *fps_info);
 	cmr_int (*get_dual_sensor_otp)(cmr_handle  oem_handle,struct sensor_dual_otp_info *dual_otp_data);
+	cmr_int (*isp_buff_cfg) (cmr_handle oem_handle, struct buffer_cfg *buf_cfg);
 };
 
 struct preview_init_param {

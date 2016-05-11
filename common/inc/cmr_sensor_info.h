@@ -32,6 +32,8 @@
 #define SENSOR_DUAL_OTP_MASTER_SLAVE_OFFSET 1702
 #define SENSOR_DUAL_OTP_DATA3D_OFFSET 4384
 
+typedef void (*isp_buf_cfg_evt_cb)(cmr_int evt, void *data, cmr_u32 data_len, void *privdata);
+
 struct isp_block_header {
 	cmr_u8 block_name[8];
 

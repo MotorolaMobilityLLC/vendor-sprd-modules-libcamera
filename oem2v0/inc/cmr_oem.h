@@ -43,6 +43,8 @@ extern "C"
 #define ISP_ANTI_FLICKER_BUF_SIZE                    (750 * 1024)/* 3120*4*61 */
 #define ISP_ANTI_FLICKER_BUF_NUM                     1
 
+#define BUF_BLOCK_SIZE                               (1024 * 1024)
+
 #define CAMERA_FRAME_SKIP_NUM_AFTER_FLASH            6
 
 #define ISP_B4AWB_BUF_CNT                            2
@@ -262,6 +264,7 @@ struct camera_context {
 	cmr_u32                  lls_shot_mode;
 	cmr_u32                  is_vendor_hdr;
 	cmr_u32                  is_pipviv_mode;
+	cmr_u32                  is_highiso_mode;
 	cmr_int                  cap_cnt;
 	cmr_u32                  is_refocus_mode;
 
@@ -286,6 +289,14 @@ struct camera_context {
 	cmr_uint                 b4awb_phys_addr[ISP_B4AWB_BUF_CNT];
 	cmr_uint                 b4awb_virt_addr[ISP_B4AWB_BUF_CNT];
 #endif
+	cmr_u8                   flag_highiso_alloc_mem;
+	cmr_s32                  raw_buf_fd;
+	cmr_uint                 raw_buf_phys_addr;
+	cmr_uint                 raw_buf_virt_addr;
+	cmr_s32                  highiso_buf_fd;
+	cmr_uint                 highiso_buf_phys_addr;
+	cmr_uint                 highiso_buf_virt_addr;
+	cmr_u32                  highiso_mode_active;
 };
 
 cmr_int camera_local_int(cmr_u32 camera_id, camera_cb_of_type callback,  void *client_data, cmr_uint is_autotest, cmr_handle *oem_handle, void* cb_of_malloc, void* cb_of_free);

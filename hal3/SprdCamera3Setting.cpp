@@ -3608,6 +3608,16 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 		pushAndroidParaTag(ANDROID_SPRD_SET_TOUCH_INFO);
 		HAL_LOGD("touch info %d %d", s_setting[mCameraId].sprddefInfo.touchxy[0],s_setting[mCameraId].sprddefInfo.touchxy[1]);
 	}
+	if (frame_settings.exists(ANDROID_SPRD_PIPVIV_ENABLED)) {
+		s_setting[mCameraId].sprddefInfo.sprd_pipviv_enabled = frame_settings.find(ANDROID_SPRD_PIPVIV_ENABLED).data.u8[0];
+		pushAndroidParaTag(ANDROID_SPRD_PIPVIV_ENABLED);
+		HAL_LOGD("sprd pipviv enabled is %d", s_setting[mCameraId].sprddefInfo.sprd_pipviv_enabled);
+	}
+	if (frame_settings.exists(ANDROID_SPRD_HIGHISO_ENABLED)) {
+		s_setting[mCameraId].sprddefInfo.sprd_highiso_enabled =  frame_settings.find(ANDROID_SPRD_HIGHISO_ENABLED).data.u8[0];
+		pushAndroidParaTag(ANDROID_SPRD_HIGHISO_ENABLED);
+		HAL_LOGD("sprd high iso enabled is %d", s_setting[mCameraId].sprddefInfo.sprd_highiso_enabled);
+	}
 	#undef GET_VALUE_IF_DIF
 	return rc;
 }

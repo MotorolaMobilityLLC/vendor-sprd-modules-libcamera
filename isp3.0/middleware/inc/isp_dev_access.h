@@ -117,6 +117,21 @@ struct isp_dev_access_start_in {
 	struct isp_3a_dld_sequence dld_seq;
 };
 
+struct isp_dev_img_param {
+	cmr_u32                    img_fmt;
+	cmr_u32                    channel_id;
+	cmr_u32                    base_id;
+	cmr_u32                    is_reserved_buf;
+	cmr_u32                    count;
+	cmr_u32                    flag;
+	cmr_u32                    index;
+	struct isp_size            img_size;
+	struct isp_img_mfd         img_fd;
+	struct isp_addr            addr;
+	struct isp_addr            addr_vir;
+	cmr_uint                   zsl_private;
+};
+
 cmr_int isp_dev_access_init(struct isp_dev_init_in *input_ptr, cmr_handle *isp_dev_handle);
 cmr_int isp_dev_access_deinit(cmr_handle isp_dev_handle);
 cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, enum isp_dev_access_ctrl_cmd cmd, union isp_dev_ctrl_cmd_in *input_ptr, union isp_dev_ctrl_cmd_out *output_ptr);
@@ -136,6 +151,8 @@ cmr_int isp_dev_access_set_cfg_otp_info(cmr_handle isp_dev_handle, struct isp_iq
 cmr_int isp_dev_access_get_debug_info(cmr_handle isp_dev_handle, struct debug_info2 *debug_info);
 cmr_int isp_dev_access_set_skip_num(isp_handle handle, cmr_u32 skip_num);
 cmr_int isp_dev_access_cfg_sof_info(isp_handle handle, struct isp_sof_cfg_info *data);
+cmr_int isp_dev_access_cap_buf_cfg(cmr_handle isp_dev_handle, struct isp_dev_img_param *parm);
+void isp_dev_access_cfg_buf_evt_reg(cmr_handle isp_dev_handle, cmr_handle grab_handle, isp_evt_cb isp_event_cb);
 /**---------------------------------------------------------------------------*/
 
 #endif

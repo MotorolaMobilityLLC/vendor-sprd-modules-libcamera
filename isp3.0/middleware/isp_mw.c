@@ -93,6 +93,16 @@ void ispmw_dev_evt_cb(cmr_int evt, void* data, void* privdata)
 exit:
 	ISP_LOGI("done");
 }
+
+void ispmv_dev_buf_cfg_evt_cb(cmr_handle isp_handle, isp_buf_cfg_evt_cb grab_event_cb)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp_mw_context                       *cxt = (struct isp_mw_context*)isp_handle;
+
+	isp_dev_access_cfg_buf_evt_reg(cxt->isp_dev_handle, cxt->caller_handle, grab_event_cb);
+
+}
+
 cmr_int ispmw_parse_tuning_bin(cmr_handle isp_mw_handle)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
@@ -635,5 +645,45 @@ cmr_int isp_proc_next(cmr_handle isp_handle, struct ipn_in_param *input_ptr, str
 
 	UNUSED(input_ptr);
 	UNUSED(output_ptr);
+	return ret;
+}
+
+cmr_int isp_cap_buff_cfg (cmr_handle isp_handle, struct isp_img_param *buf_cfg)
+{
+	cmr_int                    ret = ISP_SUCCESS;
+	struct isp_mw_context      *cxt = (struct isp_mw_context *)isp_handle;
+	cmr_u32                  i;
+	struct isp_dev_img_param parm;
+	memset(&parm, 0, sizeof(struct isp_dev_img_param));
+
+	if (NULL == buf_cfg || NULL == cxt->isp_dev_handle) {
+		ISP_LOGE("Para invalid");
+		return -1;
+	}
+
+	parm.channel_id = buf_cfg->channel_id;
+	parm.base_id = buf_cfg->base_id;
+	parm.addr.chn0 = buf_cfg->addr.chn0;
+	parm.addr.chn1 = buf_cfg->addr.chn1;
+	parm.addr.chn2 = buf_cfg->addr.chn2;
+	parm.addr_vir.chn0 = buf_cfg->addr_vir.chn0;
+	parm.addr_vir.chn1 = buf_cfg->addr_vir.chn1;
+	parm.addr_vir.chn2 = buf_cfg->addr_vir.chn2;
+	parm.index           = buf_cfg->index;
+	parm.is_reserved_buf  = buf_cfg->is_reserved_buf;
+	parm.flag         = buf_cfg->flag;
+	parm.zsl_private      = buf_cfg->zsl_private;
+	parm.img_fd.y      = buf_cfg->img_fd.y;
+	parm.img_fd.u      = buf_cfg->img_fd.u;
+	parm.img_fd.v      = buf_cfg->img_fd.v;
+
+
+	ISP_LOGI("fd=0x%x, offset: y=0x%lx, u=0x%lx, v=0x%lx, is_reserved_buf=%d",
+		 buf_cfg->img_fd.y,
+		 buf_cfg->addr.chn0, buf_cfg->addr.chn1,
+		 buf_cfg->addr.chn2, buf_cfg->is_reserved_buf);
+
+	ret = isp_dev_access_cap_buf_cfg(cxt->isp_dev_handle, &parm);
+
 	return ret;
 }

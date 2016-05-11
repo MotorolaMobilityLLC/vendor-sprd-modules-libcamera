@@ -151,6 +151,7 @@ public:
 
 	int flush_buffer(camera_flush_mem_type_e  type, int index, void *v_addr, void *p_addr, int size);
 	sprd_camera_memory_t *allocCameraMem(int buf_size, int num_bufs, uint32_t is_cache);
+	sprd_camera_memory_t *allocReservedMem(int buf_size, int num_bufs, uint32_t is_cache);
 	int start(camera_channel_type_t channel_type, uint32_t frame_number);
 	int stop(camera_channel_type_t channel_type, uint32_t frame_number);
 	int releasePreviewFrame(int i);
@@ -565,6 +566,7 @@ private:
 	sprd_camera_memory_t*           mIspPreviewYReserved[2];
 	sprd_camera_memory_t*           mIspFirmwareReserved;
 	sprd_camera_memory_t*           mHighIsoSnapshotHeapReserved;
+	sprd_camera_memory_t*           mIspRawDataReserved;
 
 	sprd_camera_memory_t*           mIspAntiFlickerHeapReserved;
 	sprd_camera_memory_t*           mIspRawAemHeapReserved[kISPB4awbCount];

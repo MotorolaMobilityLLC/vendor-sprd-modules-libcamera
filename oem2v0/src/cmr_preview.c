@@ -236,6 +236,7 @@ struct prev_context {
 
 	/*capture*/
 	cmr_uint                        cap_mode;
+	cmr_uint                        is_highiso_mode;
 	cmr_uint                        cap_need_isp;
 	cmr_uint                        cap_need_binning;
 	struct img_size                 max_size;
@@ -361,7 +362,6 @@ struct internal_param {
 	void                            *param3;
 	void                            *param4;
 };
-
 
 /**************************LOCAL FUNCTION DECLEARATION*********************************************************/
 static cmr_int prev_create_thread(struct prev_handle *handle);
@@ -598,7 +598,7 @@ static cmr_int prev_set_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id
 
 static cmr_int prev_pop_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id, struct frm_info *data, cmr_u32 is_to_hal);
 
-static cmr_int prev_capture_zoom_post_cap(struct prev_handle *handle, cmr_int *flag);
+static cmr_int prev_capture_zoom_post_cap(struct prev_handle *handle, cmr_int *flag, cmr_u32 camera_id);
 cmr_int prev_get_frm_index(struct img_frm* frame, struct frm_info* data);
 
 
@@ -4029,7 +4029,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 	sensor_mode  = &prev_cxt->sensor_info.mode_info[prev_cxt->cap_mode];
 	zoom_param   = &prev_cxt->prev_param.zoom_setting;
 
-	prev_capture_zoom_post_cap(handle, &zoom_post_proc);
+	prev_capture_zoom_post_cap(handle, &zoom_post_proc, camera_id);
 	if (ZOOM_POST_PROCESS == zoom_post_proc || ZOOM_POST_PROCESS_WITH_TRIM == zoom_post_proc) {
 		channel_size = prev_cxt->max_size.width * prev_cxt->max_size.height;
 	} else {
@@ -4452,7 +4452,7 @@ cmr_int prev_alloc_cap_reserve_buf(struct prev_handle *handle, cmr_u32 camera_id
 	prev_cxt = &handle->prev_cxt[camera_id];
 	CMR_LOGI("is_restart %d", is_restart);
 
-	prev_capture_zoom_post_cap(handle, &zoom_post_proc);
+	prev_capture_zoom_post_cap(handle, &zoom_post_proc, camera_id);
 	mem_ops  = &prev_cxt->prev_param.memory_setting;
 	if (ZOOM_POST_PROCESS == zoom_post_proc) {
 		width    = prev_cxt->max_size.width;
@@ -4556,7 +4556,7 @@ cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 	prev_cxt = &handle->prev_cxt[camera_id];
 	CMR_LOGI("is_restart %d", is_restart);
 
-	prev_capture_zoom_post_cap(handle, &zoom_post_proc);
+	prev_capture_zoom_post_cap(handle, &zoom_post_proc, camera_id);
 	mem_ops  = &prev_cxt->prev_param.memory_setting;
 	if (ZOOM_POST_PROCESS == zoom_post_proc) {
 		width    = prev_cxt->cap_sn_size.width;
@@ -5308,7 +5308,7 @@ cmr_int prev_get_cap_max_size(struct prev_handle *handle,
 	zoom_param      = &handle->prev_cxt[camera_id].prev_param.zoom_setting;
 	cap_size        = &handle->prev_cxt[camera_id].actual_pic_size;
 
-	prev_capture_zoom_post_cap(handle, &zoom_post_proc);
+	prev_capture_zoom_post_cap(handle, &zoom_post_proc, camera_id);
 	if (IMG_DATA_TYPE_YUV422 == sn_mode->image_format) {
 		original_fmt = IMG_DATA_TYPE_YUV420;
 		if (ZOOM_POST_PROCESS == zoom_post_proc) {
@@ -5370,8 +5370,8 @@ cmr_int prev_get_cap_max_size(struct prev_handle *handle,
 
 	if (ZOOM_POST_PROCESS == zoom_proc_mode) {
 		if (zoom_post_proc) {
-			if ((max_size->width < sn_mode->trim_width) ||
-				(max_size->height < sn_mode->trim_height)) {
+			if (((max_size->width < sn_mode->trim_width) ||
+				(max_size->height < sn_mode->trim_height)) && 1 != handle->prev_cxt[camera_id].prev_param.sprd_highiso_enabled) {
 				max_size->width  = sn_mode->trim_width;
 				max_size->height = sn_mode->trim_height;
 			}
@@ -5705,7 +5705,7 @@ cmr_int prev_construct_zsl_frame(struct prev_handle *handle,
 	cap_chn_id  = handle->prev_cxt[camera_id].cap_channel_id;
 	prev_rot    = handle->prev_cxt[camera_id].prev_param.cap_rot;
 	prev_cxt    = &handle->prev_cxt[camera_id];
-	prev_capture_zoom_post_cap(handle, &zoom_post_proc);
+	prev_capture_zoom_post_cap(handle, &zoom_post_proc, camera_id);
 	if (cap_chn_id == info->channel_id) {
 		frm_id = prev_zsl_get_frm_index(prev_cxt->cap_zsl_frm, info);
 		frm_ptr = &prev_cxt->cap_zsl_frm[frm_id];
@@ -7141,11 +7141,12 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id, struct i
 	sn_trim_rect = &prev_cxt->cap_sn_trim_rect;
 	sn_mode_info = &prev_cxt->sensor_info.mode_info[prev_cxt->cap_mode];
 	zoom_param   = &prev_cxt->prev_param.zoom_setting;
-	CMR_LOGI("image_format %d, dst_img_fmt %d", sn_mode_info->image_format, img_cap->dst_img_fmt);
+	CMR_LOGI("image_format %d, dst_img_fmt %d , prev_cxt->prev_param.sprd_highiso_enabled %d", sn_mode_info->image_format, img_cap->dst_img_fmt,
+			prev_cxt->prev_param.sprd_highiso_enabled);
 	img_cap->need_isp   = 0;
 	sensor_size->width  = sn_mode_info->trim_width;
 	sensor_size->height = sn_mode_info->trim_height;
-	prev_capture_zoom_post_cap(handle, &zoom_post_proc);
+	prev_capture_zoom_post_cap(handle, &zoom_post_proc, camera_id);
 
 	switch(sn_mode_info->image_format) {
 	case IMG_DATA_TYPE_YUV422:
@@ -8090,7 +8091,7 @@ cmr_int prev_set_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 		return ret;
 	}
 
-	prev_capture_zoom_post_cap(handle, &zoom_post_proc);
+	prev_capture_zoom_post_cap(handle, &zoom_post_proc, camera_id);
 	cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
 	prev_cxt  = &handle->prev_cxt[camera_id];
 	if (IDLE == prev_cxt->prev_status) {
@@ -9449,10 +9450,11 @@ cmr_int prev_depthmap_ctrl(struct prev_handle *handle,
 }
 #endif
 
-cmr_int prev_capture_zoom_post_cap(struct prev_handle *handle, cmr_int *flag)
+cmr_int prev_capture_zoom_post_cap(struct prev_handle *handle, cmr_int *flag, cmr_u32 camera_id)
 {
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct cmr_path_capability     capability;
+	struct prev_context         *prev_cxt = NULL;
 
 	if (!handle || !flag) {
 		CMR_LOGE("in parm error");
@@ -9474,7 +9476,11 @@ cmr_int prev_capture_zoom_post_cap(struct prev_handle *handle, cmr_int *flag)
 		goto exit;
 	}
 
-	*flag = capability.zoom_post_proc;
+	prev_cxt     = &handle->prev_cxt[camera_id];
+	if (prev_cxt != NULL && prev_cxt->prev_param.sprd_highiso_enabled)
+		*flag = ZOOM_POST_PROCESS;
+	else
+		*flag = capability.zoom_post_proc;
 	CMR_LOGI("out flag %d", *flag);
 exit:
 	return ret;

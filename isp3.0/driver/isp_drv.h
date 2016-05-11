@@ -36,6 +36,7 @@ enum isp_drv_evt {
 	ISP_DRV_STATISTICE,
 	ISP_DRV_SENSOR_SOF,
 	ISP_DRV_RAW10,
+	ISP_DRV_CFG_BUF,
 	ISP_DEV_EVT_MAX
 };
 
@@ -54,6 +55,13 @@ struct isp_dev_init_info {
 	uint8* irp_bin_addr;
 	uint32 irp_bin_offset;
 };
+
+struct isp_img_fd {
+	cmr_u32 y;
+	cmr_u32 u;
+	cmr_u32 v;
+};
+
 
 /*ISP driver API */
 cmr_int isp_dev_init(struct isp_dev_init_info *init_param_ptr, isp_handle *handle);
@@ -75,6 +83,7 @@ cmr_int isp_dev_set_img_buf(isp_handle handle, struct isp_cfg_img_buf *param);
 cmr_int isp_dev_get_img_buf(isp_handle handle, struct isp_img_read_op *param);
 cmr_int isp_dev_set_img_param(isp_handle handle, struct isp_cfg_img_param *param);
 cmr_int isp_dev_get_timestamp(isp_handle handle, cmr_u32 *sec, cmr_u32 *usec);
+cmr_int isp_dev_highiso_mode(isp_handle handle, struct highiso_data_buf *data);
 cmr_int isp_dev_cfg_scenario_info(isp_handle handle, SCENARIO_INFO_AP *data);
 cmr_int isp_dev_cfg_iso_speed(isp_handle handle, cmr_u32 *data);
 cmr_int isp_dev_cfg_awb_gain(isp_handle handle, struct isp_awb_gain_info *data);
@@ -113,5 +122,7 @@ cmr_int isp_dev_get_iq_param(isp_handle handle, struct debug_info1 *info1, struc
 cmr_int isp_dev_set_capture_mode(isp_handle handle, cmr_u32 capture_mode);
 cmr_int isp_dev_set_skip_num(isp_handle handle, cmr_u32 skip_num);
 cmr_int isp_dev_set_init_param(isp_handle *handle, struct isp_dev_init_param *init_param_ptr);
+cmr_int isp_dev_cfg_cap_buf(isp_handle handle, struct isp_img_mem *param);
+void isp_dev_buf_cfg_evt_reg(isp_handle handle, cmr_handle grab_handle, isp_evt_cb isp_event_cb);
 
 #endif

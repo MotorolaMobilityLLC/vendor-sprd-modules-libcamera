@@ -174,6 +174,7 @@ enum preview_param_mode {
 };
 
 typedef void (*cmr_evt_cb)(cmr_int evt, void* data, void* privdata);
+typedef void (*isp_buf_cfg_evt_cb)(cmr_int evt, void *data, cmr_u32 data_len, void *privdata);
 typedef cmr_int  (*cmr_before_set_cb)(cmr_handle oem_handle, enum preview_param_mode mode);
 typedef cmr_int  (*cmr_after_set_cb)(cmr_handle oem_handle, struct after_set_cb_param *param);
 /******************************************************************************/
@@ -426,6 +427,7 @@ struct video_start_param {
 	cmr_u32                                 work_mode;
 	cmr_u32                                 is_need_flash;
 	cmr_u32                                 capture_skip_num;
+	cmr_u32                                 is_highiso_mode;
 };
 
 struct memory_param {

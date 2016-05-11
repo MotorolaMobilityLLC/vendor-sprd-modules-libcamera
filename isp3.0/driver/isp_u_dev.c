@@ -21,6 +21,28 @@
 #include "isp_drv.h"
 #include "isp_common_types.h"
 
+struct img_addr {
+	cmr_uint                                addr_y;
+	cmr_uint                                addr_u;
+	cmr_uint                                addr_v;
+};
+
+enum img_data_type {
+	IMG_DATA_TYPE_YUV422 = 0,
+	IMG_DATA_TYPE_YUV420,
+	IMG_DATA_TYPE_YVU420,
+	IMG_DATA_TYPE_YUV420_3PLANE,
+	IMG_DATA_TYPE_RAW,
+	IMG_DATA_TYPE_RAW2,
+	IMG_DATA_TYPE_RGB565,
+	IMG_DATA_TYPE_RGB666,
+	IMG_DATA_TYPE_RGB888,
+	IMG_DATA_TYPE_JPEG,
+	IMG_DATA_TYPE_YV12,
+	IMG_DATA_TYPE_MAX
+};
+
+
 #define isp_fw_size            0x200000
 
 static char isp_dev_name[50] = "/dev/sprd_isp";
@@ -38,9 +60,11 @@ struct isp_file {
 	int                        fd;
 	int                       camera_id;
 	cmr_handle                 evt_3a_handle;
+	cmr_handle                 grab_handle;
 	pthread_mutex_t            cb_mutex;
 	pthread_t                  thread_handle;
 	isp_evt_cb                 isp_event_cb;  //isp event callback
+	isp_evt_cb                 isp_cfg_buf_cb;  //isp event callback
 	struct isp_dev_init_info   init_param;
 	sem_t                      close_sem;
 	struct isp_fw_mem          fw_mem;
@@ -291,6 +315,23 @@ void isp_dev_evt_reg(isp_handle handle, isp_evt_cb isp_event_cb, void *privdata)
 	return;
 }
 
+void isp_dev_buf_cfg_evt_reg(isp_handle handle, cmr_handle grab_handle, isp_evt_cb isp_event_cb)
+{
+	struct isp_file          *file = (struct isp_file*)handle;
+
+	if (!file) {
+		CMR_LOGE("isp_handle is null error.");
+		return;
+	}
+
+	CMR_LOGE("-------isp_dev_buf_cfg_evt_reg.\n");
+	pthread_mutex_lock(&file->cb_mutex);
+	file->grab_handle = grab_handle;
+	file->isp_cfg_buf_cb = isp_event_cb;
+	pthread_mutex_unlock(&file->cb_mutex);
+	return;
+}
+
 static cmr_int isp_dev_create_thread(isp_handle handle)
 {
 	cmr_int                  ret = 0;
@@ -344,8 +385,10 @@ static void* isp_dev_thread_proc(void *data)
 	struct isp_file                  *file = NULL;
 	struct isp_statis_frame_output    statis_frame;
 	struct isp_statis_frame           statis_frame_buf;
+	struct isp_frm_info        img_frame;
 	struct isp_irq                    irq_node;
 	struct isp_irq_info               irq_info;
+	struct img_addr addr;
 
 	file = (struct isp_file*)data;
 	CMR_LOGI("isp dev thread file %p ", file);
@@ -399,6 +442,27 @@ static void* isp_dev_thread_proc(void *data)
 						pthread_mutex_lock(&file->cb_mutex);
 						if(file->isp_event_cb) {
 							(*file->isp_event_cb)(ISP_DRV_SENSOR_SOF, &irq_node, sizeof(irq_node), (void *)file->evt_3a_handle);
+						}
+						pthread_mutex_unlock(&file->cb_mutex);
+					} else if (irq_info.irq_type == ISP_IRQ_CFG_BUF) {
+						img_frame.channel_id = irq_info.channel_id;
+						img_frame.base= irq_info.base_id;
+						img_frame.frame_id= irq_info.base_id;
+						img_frame.yaddr = irq_info.yaddr;
+						img_frame.uaddr = irq_info.uaddr;
+						img_frame.vaddr = irq_info.vaddr;
+						img_frame.yaddr_vir= irq_info.yaddr_vir;
+						img_frame.uaddr_vir= irq_info.uaddr_vir;
+						img_frame.vaddr_vir= irq_info.vaddr_vir;
+						//img_frame.length= irq_info.buf_size.width*irq_info.buf_size.height;
+						img_frame.fd = irq_info.img_y_fd;
+						img_frame.sec= irq_info.time_stamp.sec;
+						img_frame.usec= irq_info.time_stamp.usec;
+						CMR_LOGI("high iso got one frm vaddr 0x%lx paddr 0x%lx, width %d, height %d",
+							 irq_info.yaddr_vir, irq_info.yaddr, file->init_param.width, file->init_param.height);
+						pthread_mutex_lock(&file->cb_mutex);
+						if(file->isp_cfg_buf_cb) {
+							(*file->isp_cfg_buf_cb)(ISP_DRV_CFG_BUF, &img_frame, sizeof(img_frame), (void *)file->grab_handle);
 						}
 						pthread_mutex_unlock(&file->cb_mutex);
 					}
@@ -778,6 +842,33 @@ cmr_int isp_dev_set_post_yuv_mem(isp_handle handle, struct isp_img_mem *param)
 	}
 
 	return ret;
+}
+
+cmr_int isp_dev_cfg_cap_buf(isp_handle handle, struct isp_img_mem *param)
+{
+	cmr_int ret = 0;
+	cmr_int isp_id = 0;
+	struct isp_file *file = NULL;
+
+	if (!handle) {
+		CMR_LOGE("handle is null error.");
+		return -1;
+	}
+
+	if (!param) {
+		CMR_LOGE("param is null error.");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+
+	ret = ioctl(file->fd, ISP_IO_CFG_CAP_BUF, param);
+	if (ret) {
+		CMR_LOGE("isp_dev_isp_cap error.");
+	}
+
+	return ret;
+
 }
 
 cmr_int isp_dev_set_fetch_src_buf(isp_handle handle, struct isp_img_mem *param)
@@ -1835,3 +1926,49 @@ cmr_int isp_dev_set_init_param(isp_handle *handle, struct isp_dev_init_param *in
 	return ret;
 }
 
+cmr_int isp_dev_highiso_mode(isp_handle handle, struct highiso_data_buf *data)
+{
+	cmr_int ret = 0;
+	struct isp_file *file = NULL;
+	struct isp_raw_data raw_info;
+	struct isp_hiso_data hiso_info;
+
+	if (!handle) {
+		CMR_LOGE("handle is null error.");
+		return -1;
+	}
+	if (!data) {
+		CMR_LOGE("Param is null error.");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+
+	raw_info.fd = data->raw_buf.fd;
+	raw_info.phy_addr = data->raw_buf.phy_addr;
+	raw_info.virt_addr = data->raw_buf.virt_addr;
+	raw_info.size = data->raw_buf.size;
+	raw_info.width = data->raw_buf.width;
+	raw_info.height = data->raw_buf.height;
+	raw_info.capture_mode = data->capture_mode;
+	CMR_LOGE("debug highiso raw fd = 0x%x, phy = 0x%x, vir = 0x%x, size = 0x%x",
+		 raw_info.fd, raw_info.phy_addr, raw_info.virt_addr, raw_info.size);
+
+	hiso_info.fd = data->highiso_buf.fd;
+	hiso_info.phy_addr = data->highiso_buf.phy_addr;
+	hiso_info.virt_addr = data->highiso_buf.virt_addr;
+	hiso_info.size = data->highiso_buf.size;
+	CMR_LOGE("debug highiso fd = 0x%x, highiso phy = 0x%x, highiso vir = 0x%x, size = 0x%x",
+		 hiso_info.fd, hiso_info.phy_addr,hiso_info.virt_addr, hiso_info.size);
+	ret = ioctl(file->fd, ISP_IO_SET_RAW10, &raw_info);
+	if (ret) {
+		CMR_LOGE("ISP_IO_SET_RAW10 error.");
+	}
+
+	ret = ioctl(file->fd, ISP_IO_SET_HISO, &hiso_info);
+	if (ret) {
+		CMR_LOGE("ISP_IO_SET_HISO error.");
+	}
+
+	return ret;
+}
