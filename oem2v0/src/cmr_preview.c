@@ -5850,7 +5850,6 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 	struct video_start_param    video_param;
 	struct img_data_end         endian;
 	struct buffer_cfg           buf_cfg;
-	struct img_size             trim_sz;
 
 	CHECK_HANDLE_VALID(handle);
 	CHECK_CAMERA_ID(camera_id);
@@ -5924,8 +5923,6 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 		chn_param.cap_inf_cfg.cfg.src_img_rect.width,
 		chn_param.cap_inf_cfg.cfg.src_img_rect.height);
 
-	trim_sz.width = sensor_mode_info->scaler_trim.width;
-	trim_sz.height = sensor_mode_info->scaler_trim.height;
 	/*caculate trim rect*/
 	if (ZOOM_INFO != zoom_param->mode) {
 		CMR_LOGI("zoom level %ld, dst_img_size %d %d",

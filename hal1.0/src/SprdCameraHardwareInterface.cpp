@@ -3952,7 +3952,7 @@ int SprdCameraHardware::Callback_ZslFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
 		mZslHeapArray = NULL;
 	}
 	mZslHeapSize = 0;
-	mZslHeapNum = 0;
+	//mZslHeapNum = 0;
 	return 0;
 }
 
