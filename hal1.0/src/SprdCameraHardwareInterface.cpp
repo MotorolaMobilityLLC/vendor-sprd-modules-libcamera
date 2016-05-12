@@ -5164,6 +5164,12 @@ takepicture_mode SprdCameraHardware::getCaptureMode()
 		SET_PARM(mCameraHandle, CAMERA_PARAM_SCENE_MODE, 0);
 		mCaptureMode = CAMERA_ZSL_MODE;
 	}
+
+	/*temp modification flash capture should support zsl*/
+	flash_mode = mParameters.getFlashMode();
+	if ((CAMERA_FLASH_MODE_ON == flash_mode) || (CAMERA_FLASH_MODE_AUTO == flash_mode)) {
+		mCaptureMode = CAMERA_NORMAL_MODE;
+	}
 #else
 	if ((1 == mParameters.getInt("zsl")) || (1 == is_zsl)) {
 		mCaptureMode = CAMERA_ZSL_MODE;
