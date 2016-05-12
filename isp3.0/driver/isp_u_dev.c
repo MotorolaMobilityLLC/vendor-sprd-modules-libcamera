@@ -24,7 +24,7 @@
 #define isp_fw_size            0x200000
 
 static char isp_dev_name[50] = "/dev/sprd_isp";
-static char isp_fw_name[50] = "/system/lib/firmware/TBM_G2v1DDR.bin";
+static char isp_fw_name[50] = "/system/vendor/firmware/TBM_G2v1DDR.bin";
 
 struct isp_fw_mem {
 	cmr_uint virt_addr;
@@ -554,6 +554,8 @@ cmr_int isp_dev_stream_off(isp_handle handle)
 cmr_int isp_dev_load_firmware(isp_handle handle, struct isp_init_mem_param *param)
 {
 	cmr_int ret = 0;
+	cmr_int fw_size = 0;
+	FILE *fp = NULL;
 	struct isp_file *file = NULL;
 
 	if (!handle) {
@@ -564,6 +566,31 @@ cmr_int isp_dev_load_firmware(isp_handle handle, struct isp_init_mem_param *para
 		CMR_LOGE("Param is null error.");
 		return -1;
 	}
+
+	/*load altek isp firmware from user space*/
+
+	fp = fopen(isp_fw_name, "rd");
+	if(NULL == fp) {
+		CMR_LOGE("open altek isp firmware failed.");
+		return -1;
+	}
+
+	fseek(fp, 0, SEEK_END);
+	fw_size = ftell(fp);
+	if(0 == fw_size || isp_fw_size < fw_size) {
+		CMR_LOGE("firmware size fw_size invalid, fw_size = %ld", fw_size);
+		fclose(fp);
+		return -1;
+	}
+	fseek(fp, 0, SEEK_SET);
+
+	ret = fread((void*)param->fw_buf_vir_addr, 1, fw_size, fp);
+	if(ret < 0) {
+		CMR_LOGE("read altek isp firmware failed.");
+		fclose(fp);
+		return -1;
+	}
+	fclose(fp);
 
 	file = (struct isp_file *)(handle);
 	ret = ioctl(file->fd, ISP_IO_LOAD_FW, param);
