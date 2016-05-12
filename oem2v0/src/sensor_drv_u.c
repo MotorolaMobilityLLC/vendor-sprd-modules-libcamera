@@ -3381,6 +3381,10 @@ cmr_int sensor_set_exif_common(struct sensor_drv_context *sensor_cxt,
 			break;
 		}
 	case SENSOR_EXIF_CTRL_FNUMBER:
+                    sensor_exif_info_ptr->valid.FNumber= 1;
+                    sensor_exif_info_ptr->FNumber.numerator = param;
+                    sensor_exif_info_ptr->FNumber.denominator = 10;
+		break;
 		break;
 	case SENSOR_EXIF_CTRL_EXPOSUREPROGRAM:
 		break;
@@ -3404,6 +3408,9 @@ cmr_int sensor_set_exif_common(struct sensor_drv_context *sensor_cxt,
 	case SENSOR_EXIF_CTRL_SHUTTERSPEEDVALUE:
 		break;
 	case SENSOR_EXIF_CTRL_APERTUREVALUE:
+                    sensor_exif_info_ptr->valid.ApertureValue = 1;
+                    sensor_exif_info_ptr->ApertureValue.numerator = param;
+                    sensor_exif_info_ptr->ApertureValue.denominator = 10;
 		break;
 	case SENSOR_EXIF_CTRL_BRIGHTNESSVALUE:
 		{
@@ -3436,6 +3443,9 @@ cmr_int sensor_set_exif_common(struct sensor_drv_context *sensor_cxt,
 	case SENSOR_EXIF_CTRL_EXPOSUREBIASVALUE:
 		break;
 	case SENSOR_EXIF_CTRL_MAXAPERTUREVALUE:
+                    sensor_exif_info_ptr->valid.MaxApertureValue = 1;
+                    sensor_exif_info_ptr->MaxApertureValue.numerator = param;
+                    sensor_exif_info_ptr->MaxApertureValue.denominator = 10;
 		break;
 	case SENSOR_EXIF_CTRL_SUBJECTDISTANCE:
 		break;
@@ -3685,6 +3695,9 @@ cmr_int hw_Sensor_SetSensorExifInfo(SENSOR_HW_HANDLE handle, SENSOR_EXIF_CTRL_E 
 			break;
 		}
 	case SENSOR_EXIF_CTRL_FNUMBER:
+                     sensor_exif_info_ptr->valid.FNumber= 1;
+                    sensor_exif_info_ptr->FNumber.numerator = param;
+                    sensor_exif_info_ptr->FNumber.denominator = 10;
 		break;
 	case SENSOR_EXIF_CTRL_EXPOSUREPROGRAM:
 		break;
@@ -3703,6 +3716,9 @@ cmr_int hw_Sensor_SetSensorExifInfo(SENSOR_HW_HANDLE handle, SENSOR_EXIF_CTRL_E 
 	case SENSOR_EXIF_CTRL_SHUTTERSPEEDVALUE:
 		break;
 	case SENSOR_EXIF_CTRL_APERTUREVALUE:
+                    sensor_exif_info_ptr->valid.ApertureValue= 1;
+                    sensor_exif_info_ptr->ApertureValue.numerator = param;
+                    sensor_exif_info_ptr->ApertureValue.denominator = 10;
 		break;
 	case SENSOR_EXIF_CTRL_BRIGHTNESSVALUE:
 		{
@@ -3735,6 +3751,9 @@ cmr_int hw_Sensor_SetSensorExifInfo(SENSOR_HW_HANDLE handle, SENSOR_EXIF_CTRL_E 
 	case SENSOR_EXIF_CTRL_EXPOSUREBIASVALUE:
 		break;
 	case SENSOR_EXIF_CTRL_MAXAPERTUREVALUE:
+                    sensor_exif_info_ptr->valid.MaxApertureValue= 1;
+                    sensor_exif_info_ptr->MaxApertureValue.numerator = param;
+                    sensor_exif_info_ptr->MaxApertureValue.denominator = 10;
 		break;
 	case SENSOR_EXIF_CTRL_SUBJECTDISTANCE:
 		break;

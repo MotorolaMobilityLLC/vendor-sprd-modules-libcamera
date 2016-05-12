@@ -1870,6 +1870,9 @@ static unsigned long _s5k4h8yx_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned 
 	s_capture_VTS = _s5k4h8yx_get_VTS(handle);
 	_s5k4h8yx_ReadGain(handle, capture_mode);
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, s_capture_shutter);
+         Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_APERTUREVALUE, 20);
+         Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_MAXAPERTUREVALUE, 20);
+         Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_FNUMBER, 20);
 	s_exposure_time = s_capture_shutter * cap_linetime / 1000;
 
 	return SENSOR_SUCCESS;

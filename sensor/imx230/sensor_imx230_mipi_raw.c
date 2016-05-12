@@ -1670,6 +1670,10 @@ static unsigned long imx230_before_snapshot(SENSOR_HW_HANDLE handle, unsigned lo
 	imx230_write_gain(handle, cap_gain);
 	SENSOR_PRINT("preview_shutter = %d, preview_gain = %f",
 		     s_sensor_ev_info.preview_shutter, s_sensor_ev_info.preview_gain);
+	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, cap_shutter);
+         Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_APERTUREVALUE, 22);
+         Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_MAXAPERTUREVALUE, 22);
+         Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_FNUMBER, 22);
 
 	SENSOR_PRINT("capture_shutter = %d, capture_gain = %f", cap_shutter, cap_gain);
 snapshot_info:
@@ -1681,6 +1685,9 @@ snapshot_info:
 	s_hdr_info.capture_max_shutter = 1000000 / cap_linetime;
 
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, cap_shutter);
+         Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_APERTUREVALUE, 22);
+         Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_MAXAPERTUREVALUE, 22);
+         Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_FNUMBER, 22);
 
 	return SENSOR_SUCCESS;
 }

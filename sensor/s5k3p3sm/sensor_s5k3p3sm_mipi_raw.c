@@ -1226,11 +1226,17 @@ static unsigned long _s5k3p3sm_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned 
 	_s5k3p3sm_update_gain(handle, gain);
 
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, capture_exposure);
+        Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_APERTUREVALUE, 20);
+        Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_MAXAPERTUREVALUE, 20);
+        Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_FNUMBER, 20);
 
 
 	CFG_INFO:
 	s_capture_shutter = _s5k3p3sm_get_shutter(handle);
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, s_capture_shutter);
+         Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_APERTUREVALUE, 20);
+         Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_MAXAPERTUREVALUE, 20);
+         Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_FNUMBER, 20);
 	s_exposure_time = s_capture_shutter * cap_linetime / 1000;
 
 	return SENSOR_SUCCESS;

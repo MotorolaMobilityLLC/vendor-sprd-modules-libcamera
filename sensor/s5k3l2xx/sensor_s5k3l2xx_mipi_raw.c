@@ -2676,7 +2676,7 @@ static unsigned long _s5k3l2xx_write_exp_dummy(SENSOR_HW_HANDLE handle, uint16_t
 	}
 
 	frame_len = expsure_line + dummy_line;
-	frame_len = (frame_len > (uint32_t)(expsure_line + 8)) ? frame_len : (uint32_t)(expsure_line + 8);
+	frame_len = (frame_len > (uint32_t)(expsure_line + 5)) ? frame_len : (uint32_t)(expsure_line + 5);
 	frame_len = (frame_len > max_frame_len) ? frame_len : max_frame_len;
 	if (0x00!=(0x01&frame_len)) {
 		frame_len+=0x01;
@@ -2845,6 +2845,9 @@ static unsigned long _s5k3l2xx_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned 
 	Sensor_WriteReg(0x204, gain);
 
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, capture_exposure);
+        Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_APERTUREVALUE,    19);
+        Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_MAXAPERTUREVALUE, 19);
+        Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_FNUMBER, 19);
 
 	return SENSOR_SUCCESS;
 
