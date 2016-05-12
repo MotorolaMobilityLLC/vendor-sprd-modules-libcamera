@@ -263,6 +263,7 @@ static cmr_int isp3a_set_ae_fix_sensitivity(cmr_handle isp_3a_handle, void *para
 static cmr_int isp3a_set_ae_fix_frame_duration(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_ae_manual_exptime(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_ae_manual_gain(cmr_handle isp_3a_handle, void *param_ptr);
+static cmr_int isp3a_set_ae_manual_iso(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_ae_engineer_mode(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_aux_sensor_info(cmr_handle isp_3a_handle, void *sensor_info);
 static cmr_int isp3a_init_statistics_buf(cmr_handle isp_3a_handle);
@@ -374,6 +375,7 @@ static struct isp3a_ctrl_io_func s_isp3a_ioctrl_tab[ISP_CTRL_MAX] = {
 	{ISP_CTRL_SET_AE_FIX_FRAM_DURA,    isp3a_set_ae_fix_frame_duration},
 	{ISP_CTRL_SET_AE_MANUAL_EXPTIME,   isp3a_set_ae_manual_exptime},
 	{ISP_CTRL_SET_AE_MANUAL_GAIN,      isp3a_set_ae_manual_gain},
+	{ISP_CTRL_SET_AE_MANUAL_ISO,      isp3a_set_ae_manual_iso},
 	{ISP_CTRL_SET_AE_ENGINEER_MODE,    isp3a_set_ae_engineer_mode},
 	{ISP_CTRL_SET_AUX_SENSOR_INFO,     isp3a_set_aux_sensor_info},
 	{ISP_CTRL_GET_YSTAT,               isp3a_get_yhist_info},
@@ -2341,6 +2343,22 @@ cmr_int isp3a_set_ae_manual_gain(cmr_handle isp_3a_handle, void *param_ptr)
 	}
 	ae_in.value = *(cmr_u32*)param_ptr;
 	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_MANUAL_GAIN, &ae_in, NULL);
+exit:
+	return ret;
+}
+
+cmr_int isp3a_set_ae_manual_iso(cmr_handle isp_3a_handle, void *param_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                    *cxt = (struct isp3a_fw_context*)isp_3a_handle;
+	struct ae_ctrl_param_in                    ae_in;
+
+	if (!param_ptr) {
+		ISP_LOGW("input is NULL");
+		goto exit;
+	}
+	ae_in.value = *(cmr_u32*)param_ptr;
+	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_MANUAL_ISO, &ae_in, NULL);
 exit:
 	return ret;
 }

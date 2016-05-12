@@ -3658,7 +3658,7 @@ cmr_int hw_Sensor_SetSensorExifInfo(SENSOR_HW_HANDLE handle, SENSOR_EXIF_CTRL_E 
 			cmr_u32 exposureline_num = param;
 			cmr_u32 exposure_time = 0x00;
 
-			exposure_time = exposureline_time * exposureline_num/10;
+			exposure_time = exposureline_time * exposureline_num/1000;
 			sensor_exif_info_ptr->valid.ExposureTime = 1;
 
 			if (0x00 == exposure_time) {

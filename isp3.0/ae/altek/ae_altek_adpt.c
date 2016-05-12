@@ -1521,6 +1521,42 @@ exit:
 	return ret;
 }
 
+static cmr_int aealtek_set_manaul_iso(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+
+	cmr_int lib_ret = 0;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_set_param_t in_param;
+	struct ae_output_data_t *output_param_ptr = NULL;
+	enum ae_set_param_type_t type = 0;
+	struct ae_set_param_content_t *param_ct_ptr = NULL;
+
+	UNUSED(out_ptr);
+	if (!cxt_ptr || !in_ptr) {
+		ISP_LOGE("param is NULL error!");
+		goto exit;
+	}
+
+	obj_ptr = &cxt_ptr->al_obj;
+	output_param_ptr = &cxt_ptr->lib_data.output_data;
+	param_ct_ptr = &in_param.set_param;
+
+
+	param_ct_ptr->manual_iso = in_ptr->value;
+	ISP_LOGI("manual_iso=%d", in_ptr->value);
+	type = AE_SET_PARAM_MANUAL_ISO;
+	in_param.ae_set_param_type = type;
+	if (obj_ptr && obj_ptr->set_param)
+		lib_ret = obj_ptr->set_param(&in_param, output_param_ptr, obj_ptr->ae);
+	if (lib_ret)
+		goto exit;
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld, lib_ret=%ld !!!", ret, lib_ret);
+	return ret;
+}
+
 static cmr_int aealtek_set_engineer_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr)
 {
 	cmr_int ret = ISP_ERROR;
@@ -1542,7 +1578,7 @@ static cmr_int aealtek_set_engineer_mode(struct aealtek_cxt *cxt_ptr, struct ae_
 	output_param_ptr = &cxt_ptr->lib_data.output_data;
 	param_ct_ptr = &in_param.set_param;
 
-	param_ct_ptr->ae_engineer_mode_param.engineer_type = 0;
+	param_ct_ptr->ae_engineer_mode_param.engineer_type = 65535;
 	param_ct_ptr->ae_engineer_mode_param.ucengineermode = in_ptr->value;
 	ISP_LOGI("engineer_mode=%d", in_ptr->value);
 	type = AE_SET_PARAM_ENGINEER_MODE;
@@ -4628,6 +4664,9 @@ static cmr_int ae_altek_adpt_ioctrl(cmr_handle handle, cmr_int cmd, void *in, vo
 		break;
 	case AE_CTRL_SET_MANUAL_GAIN:
 		ret = aealtek_set_manaul_gain(cxt_ptr, in_ptr, out_ptr);
+		break;
+	case AE_CTRL_SET_MANUAL_ISO:
+		ret = aealtek_set_manaul_iso(cxt_ptr, in_ptr, out_ptr);
 		break;
 	case AE_CTRL_SET_ENGINEER_MODE:
 		ret = aealtek_set_engineer_mode(cxt_ptr, in_ptr, out_ptr);
