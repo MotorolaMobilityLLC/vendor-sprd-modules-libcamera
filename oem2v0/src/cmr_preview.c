@@ -582,9 +582,7 @@ static cmr_int prev_depthmap_send_data(struct prev_handle *handle, cmr_u32 camer
 
 static cmr_int prev_depthmap_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param);
 
-static cmr_int prev_depthmap_ctrl(struct prev_handle *handle,
-				cmr_u32 camera_id,
-				cmr_u32 on_off);
+static cmr_int prev_depthmap_ctrl(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 on_off);
 
 static cmr_int prev_set_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id, cmr_uint src_phy_addr, cmr_uint src_vir_addr ,cmr_s32 fd);
 
@@ -1258,7 +1256,7 @@ cmr_int cmr_preview_before_set_param(cmr_handle preview_handle, cmr_u32 camera_i
 	CHECK_HANDLE_VALID(handle);
 	CHECK_CAMERA_ID(camera_id);
 
-       CMR_LOGV("in");
+	CMR_LOGV("in");
 
 	/*deliver the zoom param via internal msg*/
 	inter_param = (struct internal_param*)malloc(sizeof(struct internal_param));
@@ -2412,7 +2410,7 @@ cmr_int prev_depthmap_frame_handle(struct prev_handle *handle, cmr_u32 camera_id
 	}
 #endif
 
-        if(prev_cxt->depthmap_cnt > 2){
+	if(prev_cxt->depthmap_cnt > 2){
 		ret = prev_pop_depthmap_buffer(handle, camera_id, data, 0);
 		ret = prev_set_depthmap_buffer(handle, camera_id, data->yaddr, data->yaddr_vir, data->fd);
 	}else{
@@ -3590,19 +3588,7 @@ cmr_int prev_alloc_prev_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 	mem_ops  = &prev_cxt->prev_param.memory_setting;
 	width    = prev_cxt->actual_prev_size.width;
 	height   = prev_cxt->actual_prev_size.height;
-#ifdef CONFIG_MEM_OPTIMIZATION
-	if ((1 == handle->prev_cxt[camera_id].prev_param.is_dv)||(1 == handle->prev_cxt[camera_id].prev_param.preview_eb && 0 == handle->prev_cxt[camera_id].prev_param.sprd_zsl_enabled)) {
-		aligned_type = CAMERA_MEM_NO_ALIGNED;
-	} else {
-		aligned_type = CAMERA_MEM_ALIGNED;
-	}
-#else
-	if ((1 == handle->prev_cxt[camera_id].prev_param.is_dv)||(1 == handle->prev_cxt[camera_id].prev_param.preview_eb)) {
-		aligned_type = CAMERA_MEM_NO_ALIGNED;
-	} else {
-		aligned_type = CAMERA_MEM_ALIGNED;
-	}
-#endif
+	aligned_type = CAMERA_MEM_NO_ALIGNED;
 
 	/*init preview memory info*/
 	buffer_size = width * height;
@@ -3855,19 +3841,7 @@ cmr_int prev_alloc_video_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_
 	mem_ops  = &prev_cxt->prev_param.memory_setting;
 	width    = prev_cxt->actual_video_size.width;
 	height   = prev_cxt->actual_video_size.height;
-#ifdef CONFIG_MEM_OPTIMIZATION
-	if ((1 == handle->prev_cxt[camera_id].prev_param.is_dv)||(1 == handle->prev_cxt[camera_id].prev_param.preview_eb && 0 == handle->prev_cxt[camera_id].prev_param.sprd_zsl_enabled)) {
-		aligned_type = CAMERA_MEM_NO_ALIGNED;
-	} else {
-		aligned_type = CAMERA_MEM_ALIGNED;
-	}
-#else
-	if ((1 == handle->prev_cxt[camera_id].prev_param.is_dv)||(1 == handle->prev_cxt[camera_id].prev_param.preview_eb)) {
-		aligned_type = CAMERA_MEM_NO_ALIGNED;
-	} else {
-		aligned_type = CAMERA_MEM_ALIGNED;
-	}
-#endif
+	aligned_type = CAMERA_MEM_NO_ALIGNED;
 
 	/*init video memory info*/
 	buffer_size = width * height;
@@ -4185,19 +4159,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 		cap_2_mems.mem_frm.addr_phy.addr_y = prev_cxt->cap_phys_addr_array[i];
 		cap_2_mems.mem_frm.addr_vir.addr_y = prev_cxt->cap_virt_addr_array[i];
 		cap_2_mems.mem_frm.fd              = prev_cxt->cap_fd_array[i];
-#ifdef CONFIG_MEM_OPTIMIZATION
-		if ((1 == handle->prev_cxt[camera_id].prev_param.is_dv)||(1 == handle->prev_cxt[camera_id].prev_param.preview_eb && 0 == handle->prev_cxt[camera_id].prev_param.sprd_zsl_enabled)) {
-			cap_2_mems.type = CAMERA_MEM_NO_ALIGNED;
-		} else {
-			cap_2_mems.type = CAMERA_MEM_ALIGNED;
-		}
-#else
-		if ((1 == handle->prev_cxt[camera_id].prev_param.is_dv)||(1 == handle->prev_cxt[camera_id].prev_param.preview_eb)) {
-			cap_2_mems.type = CAMERA_MEM_NO_ALIGNED;
-		} else {
-			cap_2_mems.type = CAMERA_MEM_ALIGNED;
-		}
-#endif
+		cap_2_mems.type = CAMERA_MEM_NO_ALIGNED;
 		cap_2_mems.zoom_post_proc = zoom_post_proc;
 
 		if (is_normal_cap) {
@@ -4269,9 +4231,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 			u_addr_vir  = y_addr_vir;
 			frame_size  = buffer_size * RAWRGB_BIT_WIDTH / 8;
 			cur_img_frm = &prev_cxt->cap_mem[i].cap_raw;
-
 		} else if (IMG_DATA_TYPE_JPEG == prev_cxt->cap_org_fmt) {
-
 			mem_size = prev_cxt->cap_mem[i].target_jpeg.buf_size;
 			if (CAP_SIM_ROT(handle, camera_id)) {
 				fd          = prev_cxt->cap_mem[i].cap_yuv.fd;
@@ -4287,9 +4247,8 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 			u_addr     = y_addr;
 			u_addr_vir = y_addr_vir;
 			frame_size = CMR_JPEG_SZIE(prev_cxt->actual_pic_size.width, prev_cxt->actual_pic_size.height);
-
-		} else if (IMG_DATA_TYPE_YUV420 == prev_cxt->cap_org_fmt || IMG_DATA_TYPE_YVU420 == prev_cxt->cap_org_fmt) {
-
+		} else if (IMG_DATA_TYPE_YUV420 == prev_cxt->cap_org_fmt ||
+			   IMG_DATA_TYPE_YVU420 == prev_cxt->cap_org_fmt) {
 			if (is_normal_cap) {
 				if ((IMG_ANGLE_0 != prev_cxt->prev_param.cap_rot) || (prev_cxt->prev_param.is_cfg_rot_cap && (IMG_ANGLE_0 != prev_cxt->prev_param.encode_angle))) {
 					mem_size   = prev_cxt->cap_mem[i].cap_yuv_rot.buf_size;
@@ -4300,7 +4259,6 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 					u_addr_vir = prev_cxt->cap_mem[i].cap_yuv_rot.addr_vir.addr_u;
 					frame_size = prev_cxt->cap_org_size.width * prev_cxt->cap_org_size.height * 3 / 2;
 					cur_img_frm = &prev_cxt->cap_mem[i].cap_yuv_rot;
-
 				} else {
 					if (NO_SCALING) {
 						mem_size   = prev_cxt->cap_mem[i].target_yuv.buf_size;
@@ -4524,19 +4482,7 @@ cmr_int prev_alloc_cap_reserve_buf(struct prev_handle *handle, cmr_u32 camera_id
 	}
 	CMR_LOGI("width %d height %d", width, height);
 	cap_rot  = 0; //prev_cxt->prev_param.cap_rot;
-#ifdef CONFIG_MEM_OPTIMIZATION
-	if ((1 == handle->prev_cxt[camera_id].prev_param.is_dv)||(1 == handle->prev_cxt[camera_id].prev_param.preview_eb && 0 == handle->prev_cxt[camera_id].prev_param.sprd_zsl_enabled)) {
-		aligned_type = CAMERA_MEM_NO_ALIGNED;
-	} else {
-		aligned_type = CAMERA_MEM_ALIGNED;
-	}
-#else
-	if ((1 == handle->prev_cxt[camera_id].prev_param.is_dv)||(1 == handle->prev_cxt[camera_id].prev_param.preview_eb)) {
-		aligned_type = CAMERA_MEM_NO_ALIGNED;
-	} else {
-		aligned_type = CAMERA_MEM_ALIGNED;
-	}
-#endif
+	aligned_type = CAMERA_MEM_NO_ALIGNED;
 
 	/*init preview memory info*/
 	buffer_size = width * height;
@@ -4580,7 +4526,7 @@ cmr_int prev_alloc_cap_reserve_buf(struct prev_handle *handle, cmr_u32 camera_id
 	prev_cxt->cap_zsl_reserved_frm.addr_vir.addr_u = prev_cxt->cap_zsl_reserved_frm.addr_vir.addr_y + buffer_size;
 	prev_cxt->cap_zsl_reserved_frm.addr_phy.addr_y = prev_cxt->cap_zsl_reserved_phys_addr;
 	prev_cxt->cap_zsl_reserved_frm.addr_phy.addr_u = prev_cxt->cap_zsl_reserved_frm.addr_phy.addr_y + buffer_size;
-	prev_cxt->cap_zsl_reserved_frm.fd                = prev_cxt->cap_zsl_reserved_fd;
+	prev_cxt->cap_zsl_reserved_frm.fd              = prev_cxt->cap_zsl_reserved_fd;
 	prev_cxt->cap_zsl_reserved_frm.fmt             = prev_cxt->cap_org_fmt;
 	prev_cxt->cap_zsl_reserved_frm.size.width      = width;
 	prev_cxt->cap_zsl_reserved_frm.size.height     = height;
@@ -4631,20 +4577,7 @@ cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 	}
 	CMR_LOGI("width %d height %d", width, height);
 	cap_rot  = 0; //prev_cxt->prev_param.cap_rot;
-
-#ifdef CONFIG_MEM_OPTIMIZATION
-	if ((1 == handle->prev_cxt[camera_id].prev_param.is_dv)||(1 == handle->prev_cxt[camera_id].prev_param.preview_eb && 0 == handle->prev_cxt[camera_id].prev_param.sprd_zsl_enabled)) {
-		aligned_type = CAMERA_MEM_NO_ALIGNED;
-	} else {
-		aligned_type = CAMERA_MEM_ALIGNED;
-	}
-#else
-	if ((1 == handle->prev_cxt[camera_id].prev_param.is_dv)||(1 == handle->prev_cxt[camera_id].prev_param.preview_eb)) {
-		aligned_type = CAMERA_MEM_NO_ALIGNED;
-	} else {
-		aligned_type = CAMERA_MEM_ALIGNED;
-	}
-#endif
+	aligned_type = CAMERA_MEM_NO_ALIGNED;
 
 	/*init preview memory info*/
 	buffer_size = width * height;
@@ -4868,7 +4801,7 @@ cmr_int prev_alloc_depthmap_buf(struct prev_handle *handle, cmr_u32 camera_id, c
 		prev_cxt->depthmap_frm[i].buf_size        = prev_cxt->depthmap_mem_size;
 		prev_cxt->depthmap_frm[i].addr_vir.addr_y = prev_cxt->depthmap_virt_addr_array[i];
 		prev_cxt->depthmap_frm[i].addr_phy.addr_y = prev_cxt->depthmap_phys_addr_array[i];
-		prev_cxt->depthmap_frm[i].fd           = prev_cxt->depthmap_fd_array[i];
+		prev_cxt->depthmap_frm[i].fd              = prev_cxt->depthmap_fd_array[i];
 		prev_cxt->depthmap_frm[i].fmt             = IMG_DATA_TYPE_RAW;
 
 		buffer->addr[i].addr_y     = prev_cxt->depthmap_frm[i].addr_phy.addr_y;
@@ -4945,6 +4878,8 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id)
 	cmr_u32                 mode_flag = 0;
 	cmr_int                 sn_mode = 0;
 	struct sensor_mode_fps_tag fps_info;
+	char                    value[PROPERTY_VALUE_MAX];
+	cmr_u32                 is_raw_capture = 0;
 
 	CHECK_HANDLE_VALID(handle);
 
@@ -4979,23 +4914,18 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id)
 		is_cfg_rot_cap,
 		cfg_cap_rot);
 
-#ifdef CONFIG_MEM_OPTIMIZATION
-	if ((1 == handle->prev_cxt[camera_id].prev_param.is_dv)||(1 == handle->prev_cxt[camera_id].prev_param.preview_eb && 0 == handle->prev_cxt[camera_id].prev_param.sprd_zsl_enabled)) {
-		aligned_type = CAMERA_MEM_NO_ALIGNED;
-	} else {
-		aligned_type = CAMERA_MEM_ALIGNED;
+	property_get("persist.sys.camera.raw.mode", value, "jpeg");
+	if (!strcmp(value, "raw")) {
+		is_raw_capture = 1;
 	}
-#else
-	if (1 == handle->prev_cxt[camera_id].prev_param.is_dv) {
-		aligned_type = CAMERA_MEM_NO_ALIGNED;
-	} else {
-		aligned_type = CAMERA_MEM_ALIGNED;
-	}
-#endif
 
-/*	if (cap_rot == IMG_ANGLE_0) {
+	if (1 == handle->prev_cxt[camera_id].prev_param.is_dv ||
+	    (1 == handle->prev_cxt[camera_id].prev_param.preview_eb && 0 == handle->prev_cxt[camera_id].prev_param.sprd_zsl_enabled) ||
+	    1 == is_raw_capture) {
 		aligned_type = CAMERA_MEM_NO_ALIGNED;
-	}*/
+	} else {
+		aligned_type = CAMERA_MEM_ALIGNED;
+	}
 
 	/* w/h aligned by 16 */
 	alg_pic_size->width  = camera_get_aligned_size(aligned_type, org_pic_size->width);
@@ -6707,15 +6637,10 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 	chn_param.cap_inf_cfg.buffer_cfg_isp = 0;
 	chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
 
-#ifdef CONFIG_MEM_OPTIMIZATION
-	if (prev_cxt->prev_param.video_eb || (prev_cxt->prev_param.preview_eb && prev_cxt->prev_param.snapshot_eb)) {
+	if (prev_cxt->prev_param.video_eb ||
+	    (prev_cxt->prev_param.preview_eb && prev_cxt->prev_param.snapshot_eb)) {
 		prev_get_sensor_mode(handle, camera_id);
 	}
-#else
-	if (prev_cxt->prev_param.video_eb) {
-		prev_get_sensor_mode(handle, camera_id);
-	}
-#endif
 
 	/*config capture ability*/
 	ret = prev_cap_ability(handle, camera_id, &prev_cxt->actual_pic_size, &chn_param.cap_inf_cfg.cfg);
