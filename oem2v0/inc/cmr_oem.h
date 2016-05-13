@@ -255,6 +255,7 @@ struct camera_context {
 	struct camera_settings   cmr_set;
 	cmr_u32                  is_support_fd;
 	cmr_u32                  fd_on_off;
+	struct isp_face_area	 fd_face_area;
 	cmr_u32                  is_android_zsl;
 	cmr_u32                  flip_on;
 	cmr_u32                  is_lls_enable;

@@ -996,13 +996,23 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type, e
 			struct img_rect src_prev_rect;
 			struct sensor_mode_info *sensor_mode_info = NULL;
 			cmr_uint sn_mode = 0;
+			cmr_uint face_info_max_num = sizeof(face_area.face_info)/sizeof(struct isp_face_info);
 
+			//save face info in cmr cxt for other case.such as face beauty takepicture
 			face_area.frame_width = frame_param->width;
 			face_area.frame_height = frame_param->height;
 			face_area.face_num = frame_param->face_num;
 			CMR_LOGD("face_num %d, size:%dx%d", face_area.face_num,
 						face_area.frame_width, face_area.frame_height);
-			for (i = 0; i < face_area.face_num; i++) {
+
+			cxt->fd_face_area.frame_width = frame_param->width;
+			cxt->fd_face_area.frame_height = frame_param->height;
+			cxt->fd_face_area.face_num = frame_param->face_num;
+
+			if(face_info_max_num > face_area.face_num) {
+				face_info_max_num = face_area.face_num;
+			}
+			for (i = 0; i < face_info_max_num; i++) {
 				sx = MIN(MIN(frame_param->face_info[i].sx, frame_param->face_info[i].srx),
 						MIN(frame_param->face_info[i].ex, frame_param->face_info[i].elx));
 				sy = MIN(MIN(frame_param->face_info[i].sy, frame_param->face_info[i].sry),
@@ -1017,6 +1027,12 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type, e
 				face_area.face_info[i].ex = ex;
 				face_area.face_info[i].ey = ey;
 */
+				//save face info in cmr cxt for other case.such as face beauty takepicture
+				cxt->fd_face_area.face_info[i].sx = sx;;
+				cxt->fd_face_area.face_info[i].sy = sy;
+				cxt->fd_face_area.face_info[i].ex = ex;
+				cxt->fd_face_area.face_info[i].ey = ey;
+
 				//note:now we get the preview face crop.but ISP need sensor's crop.so we need recovery crop.
 				cmr_preview_get_prev_rect(cxt->prev_cxt.preview_handle, cxt->camera_id, &src_prev_rect);
 				//CMR_LOGI("%d %d %d %d", src_prev_rect.start_x, src_prev_rect.start_y, src_prev_rect.width, src_prev_rect.height);
@@ -3955,7 +3971,17 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 		int pic_width = src->size.width;
 		int pic_height = src->size.height;
 		CMR_LOGD("perfect skinWhitenLevel is %d, skinCleanLevel is %d", skinWhitenLevel, skinCleanLevel);
-		if( PerfectSkinLevel !=0 ){
+		if( PerfectSkinLevel !=0 && pic_width > 0 && pic_height > 0){
+			TSRect  SkinWhitenTsface;
+			memset(&SkinWhitenTsface,0,sizeof(TSRect));
+			if(cxt->fd_face_area.face_num > 0) {
+				SkinWhitenTsface.left = (cxt->fd_face_area.face_info[0].sx*pic_width)/(cxt->fd_face_area.frame_width);
+				SkinWhitenTsface.top = (cxt->fd_face_area.face_info[0].sy*pic_height)/(cxt->fd_face_area.frame_height);
+				SkinWhitenTsface.right = (cxt->fd_face_area.face_info[0].ex*pic_width)/(cxt->fd_face_area.frame_width);
+				SkinWhitenTsface.bottom = (cxt->fd_face_area.face_info[0].ey*pic_height)/(cxt->fd_face_area.frame_height);
+				CMR_LOGD("UCAM update rect:%d-%d-%d-%d",SkinWhitenTsface.left,SkinWhitenTsface.top,
+					SkinWhitenTsface.right,SkinWhitenTsface.bottom);
+			}
 			TSMakeupData  inMakeupData, outMakeupData;
 			unsigned char *yBuf = (unsigned char *)(src->addr_vir.addr_y);
 			unsigned char *uvBuf = (unsigned char *)(src->addr_vir.addr_u) ;
@@ -3972,15 +3998,13 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 			outMakeupData.uvBuf = tmpBuf + pic_width*pic_height;
 			CMR_LOGD("perfect frameWidth is %d, frameHeight is %d", pic_width, pic_height);
 
-			if (pic_width > 0 && pic_height > 0) {
-				CMR_LOGD("perfect ts_face_beautify will be call");
-				int mu_retVal = ts_face_beautify(&inMakeupData, &outMakeupData, skinCleanLevel, skinWhitenLevel, NULL,1);
-				if(mu_retVal !=  TS_OK) {
-					CMR_LOGD("perfect ts_face_beautify ret is %d", ret);
-				} else {
-					CMR_LOGD("perfect ts_face_beautify return OK");
-					memcpy(yBuf, tmpBuf, pic_width * pic_height * 3 / 2);
-				}
+			CMR_LOGD("perfect ts_face_beautify will be call");
+			int mu_retVal = ts_face_beautify(&inMakeupData, &outMakeupData, skinCleanLevel, skinWhitenLevel, &SkinWhitenTsface,0);
+			if(mu_retVal !=  TS_OK) {
+				CMR_LOGD("perfect ts_face_beautify mu_retVal is %d", mu_retVal);
+			} else {
+				CMR_LOGD("perfect ts_face_beautify return OK");
+				memcpy(yBuf, tmpBuf, pic_width * pic_height * 3 / 2);
 			}
 
 			free(tmpBuf);
