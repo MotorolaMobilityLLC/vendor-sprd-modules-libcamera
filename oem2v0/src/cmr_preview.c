@@ -435,9 +435,9 @@ static cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_i
 static cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
 					struct sensor_exp_info *sensor_info,
 					struct img_size *target_size, cmr_uint *work_mode);
-static cmr_int prev_get_sn_capture_mode(struct sensor_exp_info *sensor_info,
-					struct img_size *target_size,
-					cmr_uint *work_mode);
+cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
+				struct sensor_exp_info *sensor_info,
+				struct img_size *target_size, cmr_uint *work_mode);
 
 static cmr_int prev_get_sn_inf(struct prev_handle *handle,
 				cmr_u32 camera_id,
@@ -5044,20 +5044,12 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id)
 
 	/*get sensor capture work mode*/
 	if (handle->prev_cxt[camera_id].prev_param.snapshot_eb) {
-#ifndef CONFIG_CAMERA_HAL_VERSION_1
-		mode_flag = !handle->prev_cxt[camera_id].prev_param.is_dv;
-#else
-		mode_flag = 1;
-#endif
-		if (mode_flag) {
-			ret = prev_get_sn_capture_mode(sensor_info, act_pic_size, &handle->prev_cxt[camera_id].cap_mode);
-			if (ret) {
-				CMR_LOGE("get capture mode failed!");
-				ret = CMR_CAMERA_FAIL;
-				goto exit;
-			}
-		} else {
-			handle->prev_cxt[camera_id].cap_mode = handle->prev_cxt[camera_id].prev_mode;
+		ret = prev_get_sn_capture_mode(handle, camera_id, sensor_info,
+					       act_pic_size, &handle->prev_cxt[camera_id].cap_mode);
+		if (ret) {
+			CMR_LOGE("get capture mode failed!");
+			ret = CMR_CAMERA_FAIL;
+			goto exit;
 		}
 
 		/*caculate max size for capture*/
@@ -5143,8 +5135,9 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
 
 	return ret;
 }
-
-cmr_int prev_get_sn_capture_mode(struct sensor_exp_info *sensor_info, struct img_size *target_size, cmr_uint *work_mode)
+cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
+				struct sensor_exp_info *sensor_info,
+				struct img_size *target_size, cmr_uint *work_mode)
 {
 	cmr_int                 ret = CMR_CAMERA_FAIL;
 	cmr_u32                 width = 0, height = 0, i;
@@ -5152,6 +5145,9 @@ cmr_int prev_get_sn_capture_mode(struct sensor_exp_info *sensor_info, struct img
 	cmr_u32                 search_height;
 	cmr_u32                 target_mode = SENSOR_MODE_MAX;
 	cmr_u32                 last_mode = SENSOR_MODE_PREVIEW_ONE;
+	struct sensor_mode_fps_tag fps_info;
+	char                     value[PROPERTY_VALUE_MAX];
+	cmr_u32                  is_raw_capture = 0;
 
 	if (!sensor_info) {
 		CMR_LOGE("sn info is null!");
@@ -5161,6 +5157,11 @@ cmr_int prev_get_sn_capture_mode(struct sensor_exp_info *sensor_info, struct img
 	search_width = target_size->width;
 	search_height = target_size->height;
 
+	property_get("persist.sys.camera.raw.mode", value, "jpeg");
+	if (!strcmp(value, "raw")) {
+		is_raw_capture = 1;
+	}
+
 	CMR_LOGI("search_height = %d", search_height);
 	for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
 		if (SENSOR_MODE_MAX != sensor_info->mode_info[i].mode) {
@@ -5168,6 +5169,16 @@ cmr_int prev_get_sn_capture_mode(struct sensor_exp_info *sensor_info, struct img
 			CMR_LOGI("height = %d", height);
 			height = CAMERA_ALIGNED_16(height);
 			if (search_height <= height) {
+				if (is_raw_capture == 0) {
+					/* dont choose high fps setting for no-slowmotion */
+					ret = handle->ops.get_sensor_fps_info(handle->oem_handle,
+									      camera_id, i, &fps_info);
+					CMR_LOGV("mode=%d, is_high_fps=%d", i, fps_info.is_high_fps);
+					if (fps_info.is_high_fps) {
+						CMR_LOGD("dont choose high fps setting");
+						continue;
+					}
+				}
 				target_mode = i;
 				ret = CMR_CAMERA_SUCCESS;
 				break;
