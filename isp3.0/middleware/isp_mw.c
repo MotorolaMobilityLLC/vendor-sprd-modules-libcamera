@@ -94,7 +94,7 @@ exit:
 	ISP_LOGI("done");
 }
 
-void ispmv_dev_buf_cfg_evt_cb(cmr_handle isp_handle, isp_buf_cfg_evt_cb grab_event_cb)
+void ispmw_dev_buf_cfg_evt_cb(cmr_handle isp_handle, isp_buf_cfg_evt_cb grab_event_cb)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp_mw_context                       *cxt = (struct isp_mw_context*)isp_handle;

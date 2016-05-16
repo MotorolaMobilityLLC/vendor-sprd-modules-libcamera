@@ -47,6 +47,7 @@
 #define ONE_HUNDRED                                  100
 #define MS_TO_NANOSEC                                1000
 #define SEC_TO_NANOSEC                               1000000000LL
+#define BUF_BLOCK_SIZE                               (1024 * 1024)
 enum oem_ev_level {
 	OEM_EV_LEVEL_1,
 	OEM_EV_LEVEL_2,
@@ -730,7 +731,6 @@ void camera_isp_dev_evt_cb(cmr_int evt, void *data, cmr_u32 data_len, void *priv
 	struct camera_context           *cxt = (struct camera_context*)privdata;
 	struct frm_info                 *frame = (struct frm_info*)data;
 	cmr_u32                         channel_id;
-	static cmr_int  count = 0;
 	cmr_handle                      receiver_handle;
 
 	cxt->is_highiso_mode = 0;
@@ -739,6 +739,7 @@ void camera_isp_dev_evt_cb(cmr_int evt, void *data, cmr_u32 data_len, void *priv
 		return;
 	}
 
+	CMR_LOGI("handle 0x%lx", (cmr_uint)privdata);
 	camera_send_channel_data((cmr_handle)cxt, receiver_handle, evt, data);
 }
 
@@ -3190,7 +3191,6 @@ cmr_int camera_snapshot_init(cmr_handle  oem_handle)
 	init_param.ops.get_sensor_info = camera_get_sensor_info;
 	init_param.ops.get_tuning_info = camera_get_tuning_info;
 	init_param.ops.stop_codec = camera_stop_codec;
-	init_param.ops.isp_buff_cfg = camera_isp_buff_cfg;
 	init_param.private_data = NULL;
 	ret = cmr_snapshot_init(&init_param, &snp_cxt->snapshot_handle);
 	if (ret) {
@@ -4854,7 +4854,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 	CMR_LOGI("isp_param:max_gain:%d ",isp_param.resolution_info.max_gain);
 }
 
-	ispmv_dev_buf_cfg_evt_cb(isp_cxt->isp_handle, camera_isp_dev_evt_cb);
+	ispmw_dev_buf_cfg_evt_cb(isp_cxt->isp_handle, camera_isp_dev_evt_cb);
 
 	if (cxt->is_highiso_mode == 1) {
 		highiso_buf_num = 1;

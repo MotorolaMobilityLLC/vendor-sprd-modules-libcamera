@@ -139,7 +139,6 @@ struct snapshot_md_ops {
 									struct img_data_end *endian);
 	cmr_int (*get_sensor_info)(cmr_handle oem_handle, cmr_uint sensor_id, struct sensor_exp_info *exp_info_ptr);
 	cmr_int (*get_tuning_info)(cmr_handle oem_handle, struct isp_adgain_exp_info *adgain_exp_info_ptr);
-	cmr_int (*isp_buff_cfg) (cmr_handle oem_handle, struct buffer_cfg *buf_cfg);
 };
 
 struct snapshot_init_param {

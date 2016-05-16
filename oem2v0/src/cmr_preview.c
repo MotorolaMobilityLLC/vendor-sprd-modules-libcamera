@@ -5077,6 +5077,7 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
 	cmr_int                  ret = CMR_CAMERA_FAIL;
 	cmr_u32                  width = 0, height = 0, i, last_one = 0;
 	cmr_u32                  search_height;
+	cmr_u32                  search_width;
 	cmr_u32                  target_mode = SENSOR_MODE_MAX;
 	cmr_int                  offset1 = 0, offset2 = 0;
 	struct sensor_mode_fps_tag fps_info;
@@ -5093,16 +5094,18 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
 		is_raw_capture = 1;
 	}
 
+	search_width = target_size->width;
 	search_height = target_size->height;
 
 	CMR_LOGI("search_height = %d", search_height);
 	for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
 		if (SENSOR_MODE_MAX != sensor_info->mode_info[i].mode) {
 			height = sensor_info->mode_info[i].trim_height;
-			CMR_LOGI("candidate height = %d", height);
+			width = sensor_info->mode_info[i].trim_width;
+			CMR_LOGI("candidate height = %d, width = %d", height, width);
 			height = CAMERA_ALIGNED_16(height);
 			if (IMG_DATA_TYPE_JPEG != sensor_info->mode_info[i].image_format) {
-				if (search_height <= height) {
+				if (search_height <= height && search_width <= width) {
 					if (is_raw_capture == 0) {
 						/* dont choose high fps setting for no-slowmotion */
 						ret = handle->ops.get_sensor_fps_info(handle->oem_handle,
@@ -5166,9 +5169,10 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
 	for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
 		if (SENSOR_MODE_MAX != sensor_info->mode_info[i].mode) {
 			height = sensor_info->mode_info[i].trim_height;
-			CMR_LOGI("height = %d", height);
+			width = sensor_info->mode_info[i].trim_width;
+			CMR_LOGI("height = %d, width = %d", height, width);
 			height = CAMERA_ALIGNED_16(height);
-			if (search_height <= height) {
+			if (search_height <= height && search_width <= width) {
 				if (is_raw_capture == 0) {
 					/* dont choose high fps setting for no-slowmotion */
 					ret = handle->ops.get_sensor_fps_info(handle->oem_handle,
@@ -5370,8 +5374,8 @@ cmr_int prev_get_cap_max_size(struct prev_handle *handle,
 
 	if (ZOOM_POST_PROCESS == zoom_proc_mode) {
 		if (zoom_post_proc) {
-			if (((max_size->width < sn_mode->trim_width) ||
-				(max_size->height < sn_mode->trim_height)) && 1 != handle->prev_cxt[camera_id].prev_param.sprd_highiso_enabled) {
+			if ((max_size->width < sn_mode->trim_width) ||
+				(max_size->height < sn_mode->trim_height)) {
 				max_size->width  = sn_mode->trim_width;
 				max_size->height = sn_mode->trim_height;
 			}

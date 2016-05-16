@@ -43,8 +43,6 @@ extern "C"
 #define ISP_ANTI_FLICKER_BUF_SIZE                    (750 * 1024)/* 3120*4*61 */
 #define ISP_ANTI_FLICKER_BUF_NUM                     1
 
-#define BUF_BLOCK_SIZE                               (1024 * 1024)
-
 #define CAMERA_FRAME_SKIP_NUM_AFTER_FLASH            6
 
 #define ISP_B4AWB_BUF_CNT                            2
