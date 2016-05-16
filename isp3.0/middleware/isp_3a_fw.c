@@ -3188,7 +3188,7 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 		return ret;
 	}
 
-	cxt->sof_idx = sof_info->reserved + 1;
+	cxt->sof_idx = sof_info->reserved;
 	af_in.sof_info.sof_frame_idx = cxt->sof_idx;
 	af_in.sof_info.timestamp.sec = sof_info->time_stamp.sec;
 	af_in.sof_info.timestamp.usec = sof_info->time_stamp.usec;

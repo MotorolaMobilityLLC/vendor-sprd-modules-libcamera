@@ -296,7 +296,6 @@ cmr_int ispmw_get_second_tuning_bin(cmr_handle isp_mw_handle, const cmr_s8 *sens
 	sprintf((void*)&file_name[0],"/system/lib/tuning/%s_3a.bin",sensor_name);
 	fp = fopen((void*)&file_name[0], "rb");
 	if (NULL == fp) {
-		ISP_LOGE("failed to open 3a tuning bin");
 		goto exit;
 	}
 	ISP_LOGI("sensor is %s", sensor_name);

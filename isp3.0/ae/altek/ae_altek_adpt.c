@@ -2764,9 +2764,11 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 	}
 
 	ISP_LOGI("ae second tuning_param:%p", in_ptr->work_param.tuning_param);
-	ret = aealtek_set_tuning_param(cxt_ptr, in_ptr->work_param.tuning_param);
-	if (ret)
-		ISP_LOGW("ae set second tuning bin failed");
+	if (in_ptr->work_param.tuning_param) {
+		ret = aealtek_set_tuning_param(cxt_ptr, in_ptr->work_param.tuning_param);
+		if (ret)
+			ISP_LOGW("ae set second tuning bin failed");
+	}
 
 	ISP_LOGI("frame size:%dx%d, line_time=%d",in_ptr->work_param.resolution.frame_size.w,
 			in_ptr->work_param.resolution.frame_size.h,

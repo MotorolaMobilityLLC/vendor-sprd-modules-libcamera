@@ -3,7 +3,7 @@
  *
  *  Created on: 2015/12/06
  *      Author: ZenoKuo
- *  Latest update: 2016/4/21
+ *  Latest update: 2016/5/13
  *      Reviser: Allenwang
  *  Comments:
  *       This c file is mainly used for AP framework to:
@@ -177,7 +177,7 @@ uint32 al3awrapper_dispatchhw3a_afstats(void *isp_meta_data,void *alaf_stats)
 
 			stats_addr_64 = (uint64 *)stats_addr_32;
 
-			add_stat_32 = stats + j* bank_size/4;
+			add_stat_32 = stats + j* bank_size;
 			add_stat_64 = add_stat_32;
 
 			for(i = 0; i < blocks; i++) {
@@ -225,7 +225,7 @@ uint32 al3awrapper_dispatchhw3a_afstats(void *isp_meta_data,void *alaf_stats)
 	} else if(AL3A_HW3A_DEV_ID_B_0 == p_meta_data_af->uhwengineid) {
 		for(j = 0; j < banks; j++) {
 			stats_addr_32 = (uint32 *)(stats)+j*bank_size/4;
-			add_stat_32 = stats + j* bank_size/4;
+			add_stat_32 = stats + j* bank_size;
 			for(i = 0; i < blocks; i++) {
 				index = i+j*banks;
 
