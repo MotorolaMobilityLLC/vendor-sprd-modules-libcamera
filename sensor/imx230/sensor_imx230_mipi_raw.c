@@ -14,7 +14,7 @@
  * limitations under the License.
  * V2.0
  */
-
+#include "cutils/properties.h"
 #include <utils/Log.h>
 #include "sensor.h"
 #include "jpeg_exif_header.h"
@@ -1892,6 +1892,15 @@ static unsigned long imx230_stream_on(SENSOR_HW_HANDLE handle, unsigned long par
 	SENSOR_PRINT("E");
 	UNUSED(param);
 	Sensor_WriteReg(0x0100, 0x01);
+#if 1
+	cmr_s8 value1[255];
+	property_get("debug.camera.test.mode",value1,"0");
+	if(!strcmp(value1,"1")){
+		SENSOR_PRINT_ERR("SENSOR_imx230: enable test mode");
+		Sensor_WriteReg(0x0600, 0x00);
+		Sensor_WriteReg(0x0601, 0x02);
+	}
+#endif
 
 	return 0;
 }

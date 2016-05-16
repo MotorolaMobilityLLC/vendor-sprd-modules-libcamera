@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include "cutils/properties.h"
 #include <utils/Log.h>
 #include "sensor.h"
 #include "jpeg_exif_header.h"
@@ -1841,7 +1841,7 @@ static unsigned long _s5k4h8yx_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned 
 
 	Sensor_SetMode(capture_mode);
 	Sensor_SetMode_WaitDone();
-	preview_exposure = s_sensor_ev_info.preview_shutter;
+	//preview_exposure = s_sensor_ev_info.preview_shutter;
 	gain = s_sensor_ev_info.preview_gain;
 
 	if (prv_linetime == cap_linetime) {
@@ -1920,6 +1920,14 @@ static unsigned long _s5k4h8yx_StreamOn(SENSOR_HW_HANDLE handle, unsigned long p
 	SENSOR_PRINT_ERR("SENSOR_s5k4h8yx: StreamOn");
 
 	Sensor_WriteReg(0x0100, 0x0103);
+#if 1
+	cmr_s8 value1[255];
+	property_get("debug.camera.test.mode",value1,"0");
+	if(!strcmp(value1,"1")){
+		SENSOR_PRINT_ERR("SENSOR_s5k4h8yx: enable test mode");
+		Sensor_WriteReg(0x0600, 0x0002);
+	}
+#endif
 
 	return 0;
 }

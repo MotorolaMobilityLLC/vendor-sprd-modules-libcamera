@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include "cutils/properties.h"
 #include <utils/Log.h>
 #include "sensor.h"
 #include "jpeg_exif_header.h"
@@ -1771,6 +1771,14 @@ LOCAL unsigned long _ov2680_StreamOn(SENSOR_HW_HANDLE handle, unsigned long para
 #endif
 	usleep(100 * 1000);
 	Sensor_WriteReg(0x0100, 0x01);
+#if 1
+	cmr_s8 value1[255];
+	property_get("debug.camera.test.mode",value1,"0");
+	if(!strcmp(value1,"1")){
+		SENSOR_PRINT_ERR("SENSOR_ov2680: enable test mode");
+		Sensor_WriteReg(0x5080, 0x80);
+	}
+#endif
 
 	return 0;
 }

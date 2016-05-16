@@ -113,6 +113,7 @@ extern SENSOR_INFO_T g_at_ov5670_mipi_raw_info;
 extern SENSOR_INFO_T g_s5k3p3sm_mipi_raw_info;
 extern SENSOR_INFO_T g_s5k4h8yx_mipi_raw_info;
 extern SENSOR_INFO_T g_imx230_mipi_raw_info;
+extern SENSOR_INFO_T g_imx258_mipi_raw_info;
 extern SENSOR_INFO_T g_ov2680_mipi_raw_info;
 extern SENSOR_INFO_T g_s5k3l2xx_mipi_raw_info;
 extern SENSOR_INFO_T g_ov13870_mipi_raw_info;
@@ -128,6 +129,7 @@ const SENSOR_MATCH_T main_sensor_infor_tab[]=
 {
 	{"s5k3p3sm_mipi_raw", &g_s5k3p3sm_mipi_raw_info},
 	{"imx230_mipi_raw", &g_imx230_mipi_raw_info},
+	{"imx258_mipi_raw", &g_imx258_mipi_raw_info},
 	{"s5k3l2xx_mipi_raw", &g_s5k3l2xx_mipi_raw_info},
 	{"ov13870_mipi_raw", &g_ov13870_mipi_raw_info},
 	PNULL
@@ -190,6 +192,7 @@ const SENSOR_MATCH_T  at_main_sensor_infor_tab[]=
         {"at_s5k3m2xxm3_mipi_raw", &g_s5k3m2xxm3_mipi_raw_info},
 	{"at_s5k3p3sm_mipi_raw", &g_s5k3p3sm_mipi_raw_info},
 	{"at_imx230_mipi_raw", &g_imx230_mipi_raw_info},
+	{"at_imx258_mipi_raw", &g_imx258_mipi_raw_info},
 	{"at_s5k3l2xx_mipi_raw", &g_s5k3l2xx_mipi_raw_info},
 
 #endif

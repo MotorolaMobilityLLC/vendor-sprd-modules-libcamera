@@ -103,6 +103,7 @@ LOCAL_SRC_FILES+= \
 	sensor/ov5640/sensor_ov5640_mipi_raw.c \
 	sensor/s5k3p3sm/sensor_s5k3p3sm_mipi_raw.c \
 	sensor/imx230/sensor_imx230_mipi_raw.c \
+	sensor/imx258/sensor_imx258_mipi_raw.c \
 	sensor/imx132/sensor_imx132_mipi_raw.c \
 	sensor/ov2680/sensor_ov2680_mipi_raw.c \
 	sensor/af_bu64297gwz.c \

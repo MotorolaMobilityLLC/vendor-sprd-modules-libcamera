@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include "cutils/properties.h"
 #include <utils/Log.h>
 #include "sensor.h"
 #include "jpeg_exif_header.h"
@@ -2904,7 +2904,7 @@ static unsigned long _s5k3l2xx_StreamOn(SENSOR_HW_HANDLE handle, unsigned long p
 	SENSOR_PRINT_ERR("SENSOR_s5k3l2xx: StreamOn");
 	Sensor_WriteReg(0x0100, 0x0100);
 	//usleep(50*1000);
-#if 0
+#if 1
 	cmr_s8 value1[255];
 	property_get("debug.camera.test.mode",value1,"0");
 	if(!strcmp(value1,"1")){
