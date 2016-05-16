@@ -630,6 +630,11 @@ private:
 	vsInst                        mInst;
 #endif
 	bool                          mSprdEisEnabled;
+	bool                          mIsUpdateRangeFps;
+	int64_t                       mPrvBufferTimestamp;
+	int                           mUpdateRangeFpsCount;
+	int                           mPrvMinFps;
+	int                           mPrvMaxFps;
 };
 
 }; // namespace sprdcamera

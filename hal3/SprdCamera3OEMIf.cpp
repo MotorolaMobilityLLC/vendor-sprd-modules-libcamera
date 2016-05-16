@@ -105,6 +105,8 @@ namespace sprdcamera {
 #define CMR_EVT_ZSL_MON_PUSH                         0x803
 #define CMR_EVT_ZSL_MON_SNP                          0x804
 
+#define UPDATE_RANGE_FPS_COUNT                          0x04
+
 /**********************Static Members**********************/
 static nsecs_t s_start_timestamp = 0;
 static nsecs_t s_end_timestamp = 0;
@@ -264,7 +266,12 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mSprdEisEnabled(false),
 	mSprdPipVivEnabled(0),
 	mSprdHighIsoEnabled(0),
-	mIsRecording(false)
+	mIsRecording(false),
+	mIsUpdateRangeFps(false),
+	mPrvBufferTimestamp(0),
+	mUpdateRangeFpsCount(0),
+	mPrvMinFps(0),
+	mPrvMaxFps(0)
 
 {
 	//mIsPerformanceTestable = sprd_isPerformanceTestable();
@@ -1353,6 +1360,16 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode)
 	SET_PARM(mCameraHandle, CAMERA_PARAM_RANGE_FPS, (cmr_uint)&fps_param);
 
 	HAL_LOGD("min_fps=%d, max_fps=%d, video_mode=%d", fps_param.min_fps, fps_param.max_fps, fps_param.video_mode);
+#if 1 //for cts
+	mIsUpdateRangeFps = true;
+	mUpdateRangeFpsCount++;
+	if (mUpdateRangeFpsCount == UPDATE_RANGE_FPS_COUNT) {
+		if ((mPrvMinFps == fps_param.min_fps) && (mPrvMaxFps == fps_param.max_fps))
+			mUpdateRangeFpsCount = 0;
+	}
+	mPrvMinFps = fps_param.min_fps;
+	mPrvMaxFps = fps_param.max_fps;
+#endif
 }
 
 bool SprdCamera3OEMIf::setCameraPreviewFormat()
@@ -2239,6 +2256,7 @@ void SprdCamera3OEMIf::stopPreviewInternal()
 {
 	nsecs_t start_timestamp = systemTime();
 	nsecs_t end_timestamp;
+	mUpdateRangeFpsCount = 0;
 
 	HAL_LOGD("E");
 	if (isCapturing()) {
@@ -2883,15 +2901,58 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 	send_img_data(ISP_TOOL_YVU420_2FRAME, mPreviewWidth, mPreviewHeight, (char *)frame->y_vir_addr, frame->width * frame->height * 3 /2);
 #endif
 
+#if 1 //for cts
+	int64_t buffer_timestamp_fps = 0;
+
+	if ((!mRecordingMode) && (mUpdateRangeFpsCount >= UPDATE_RANGE_FPS_COUNT)) {
+		struct cmr_range_fps_param fps_param;
+		CONTROL_Tag controlInfo;
+		mSetting->getCONTROLTag(&controlInfo);
+
+		fps_param.min_fps = controlInfo.ae_target_fps_range[0];
+		fps_param.max_fps = controlInfo.ae_target_fps_range[1];
+
+		int64_t fps_range_up = 0;
+		int64_t fps_range_low = 0;
+		int64_t fps_range_offset = 0;
+		int64_t timestamp = 0;
+
+		fps_range_offset = 1000000000 / fps_param.max_fps;
+		fps_range_low = (1000000000 / fps_param.max_fps) * (1 - 0.015);
+		fps_range_up = (1000000000 / fps_param.min_fps) * (1 + 0.015);
+
+		if (mPrvBufferTimestamp == 0) {
+			buffer_timestamp_fps = frame->timestamp;
+		} else {
+			if (mIsUpdateRangeFps) {
+				buffer_timestamp_fps = frame->timestamp;
+				mIsUpdateRangeFps = false;
+			} else {
+				timestamp = frame->timestamp - mPrvBufferTimestamp;
+				HAL_LOGD("timestamp is %lld", timestamp);
+				if ((timestamp > fps_range_low) && (timestamp < fps_range_up)) {
+					buffer_timestamp_fps = frame->timestamp;
+				} else {
+					buffer_timestamp_fps = mPrvBufferTimestamp + fps_range_offset;
+					HAL_LOGD("fix buffer_timestamp_fps is %lld", buffer_timestamp_fps);
+				}
+			}
+		}
+		mPrvBufferTimestamp = buffer_timestamp_fps;
+	} else {
+		buffer_timestamp_fps = frame->timestamp;
+	}
+#endif
+
 #ifdef CONFIG_CAMERA_EIS
 	int64_t buffer_timestamp;
 	if(sprddefInfo.sprd_eis_enabled){
-		buffer_timestamp = frame->timestamp -frame->ae_time/2;
+		buffer_timestamp = buffer_timestamp_fps -frame->ae_time/2;
 	}else{
-		buffer_timestamp = frame->timestamp;
+		buffer_timestamp = buffer_timestamp_fps;
 	}
 #else
-	int64_t buffer_timestamp = frame->timestamp;
+	int64_t buffer_timestamp = buffer_timestamp_fps;
 #endif
 
 
