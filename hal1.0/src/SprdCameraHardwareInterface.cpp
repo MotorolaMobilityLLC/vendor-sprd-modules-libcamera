@@ -8796,7 +8796,6 @@ static int HAL_camera_device_open(const struct hw_module_t* module,
 #endif
 
 done:
-	*device = (hw_device_t *)g_cam_device[cameraId];
 
 	if (!(((SprdCameraHardware *)(g_cam_device[cameraId]->priv))->isCameraInit())) {
 		LOGE("camera init failed!");
@@ -8807,6 +8806,7 @@ done:
 		return -EINVAL;
 	}
 
+	*device = (hw_device_t *)g_cam_device[cameraId];
 	LOGI("%s: opened camera %s (%p)", __func__, id, *device);
 
 	return 0;
