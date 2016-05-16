@@ -661,14 +661,12 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	tSecnarioInfo.tScenarioOutBypassFlag.bBypassMetaData = 0;
 
 	if(ISP_CAP_MODE_HIGHISO == param_ptr->common_in.capture_mode) {
-		ISP_LOGI("---------is highiso mode!!!!\n");
 		tSecnarioInfo.tScenarioOutBypassFlag.bBypassVideo = 1;
 		tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutWidth = 960;//cxt->input_param.init_param.size.w;
 		tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutHeight = 720;//cxt->input_param.init_param.size.h;
-		ISP_LOGI("---------BayerSCL w %d h %d\n",tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutWidth,
+		ISP_LOGI("BayerSCL w %d h %d\n",tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutWidth,
 			 tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutHeight);
 	} else {
-		ISP_LOGE("---------no highiso mode!!!!\n");
 		tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutWidth = 0;
 		tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutHeight = 0;
 	}
@@ -828,7 +826,6 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 			goto exit;
 		}
 	}
-	ISP_LOGE("debug highiso isp_dev_access.c end");
 
 	ret = isp_dev_stream_on(cxt->isp_driver_handle);
 

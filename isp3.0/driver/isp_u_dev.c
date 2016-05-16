@@ -324,7 +324,6 @@ void isp_dev_buf_cfg_evt_reg(isp_handle handle, cmr_handle grab_handle, isp_evt_
 		return;
 	}
 
-	CMR_LOGE("-------isp_dev_buf_cfg_evt_reg.\n");
 	pthread_mutex_lock(&file->cb_mutex);
 	file->grab_handle = grab_handle;
 	file->isp_cfg_buf_cb = isp_event_cb;
@@ -1951,14 +1950,14 @@ cmr_int isp_dev_highiso_mode(isp_handle handle, struct highiso_data_buf *data)
 	raw_info.width = data->raw_buf.width;
 	raw_info.height = data->raw_buf.height;
 	raw_info.capture_mode = data->capture_mode;
-	CMR_LOGE("debug highiso raw fd = 0x%x, phy = 0x%x, vir = 0x%x, size = 0x%x",
+	CMR_LOGD("debug highiso raw fd = 0x%x, phy = 0x%x, vir = 0x%x, size = 0x%x",
 		 raw_info.fd, raw_info.phy_addr, raw_info.virt_addr, raw_info.size);
 
 	hiso_info.fd = data->highiso_buf.fd;
 	hiso_info.phy_addr = data->highiso_buf.phy_addr;
 	hiso_info.virt_addr = data->highiso_buf.virt_addr;
 	hiso_info.size = data->highiso_buf.size;
-	CMR_LOGE("debug highiso fd = 0x%x, highiso phy = 0x%x, highiso vir = 0x%x, size = 0x%x",
+	CMR_LOGD("debug highiso fd = 0x%x, highiso phy = 0x%x, highiso vir = 0x%x, size = 0x%x",
 		 hiso_info.fd, hiso_info.phy_addr,hiso_info.virt_addr, hiso_info.size);
 	ret = ioctl(file->fd, ISP_IO_SET_RAW10, &raw_info);
 	if (ret) {
