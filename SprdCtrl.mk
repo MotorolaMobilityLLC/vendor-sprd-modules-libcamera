@@ -14,7 +14,6 @@ LOCAL_C_INCLUDES := \
 	external/sqlite/dist \
 	system/media/camera/include \
 	$(TOP)vendor/sprd/modules/libmemion \
-	$(TOP)/vendor/sprd/external/kernel-headers \
 	$(TOP)/vendor/sprd/modules/libmemion \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/source/include/video \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/source/include/uapi

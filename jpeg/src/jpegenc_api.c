@@ -12,7 +12,7 @@ extern "C" {
 #endif
 
 #if defined(JPEG_ENC)
-#include "sprd_jpg.h"
+#include <video/sprd_jpg.h>
 
 #define SPRD_JPG_DRIVER "/dev/sprd_jpg"
 

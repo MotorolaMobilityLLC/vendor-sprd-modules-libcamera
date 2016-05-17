@@ -57,7 +57,7 @@ extern "C"
 #define SCI_PASSERT(condition, format...)
 #endif 
 #include <linux/ioctl.h>
-#include <sprd_jpg.h>
+#include <video/sprd_jpg.h>
 /*----------------------------------------------------------------------------*
 **                            Macro Definitions                               *
 **---------------------------------------------------------------------------*/

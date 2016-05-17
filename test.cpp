@@ -13,7 +13,7 @@
 #include <cutils/properties.h>
 #include <media/hardware/MetadataBufferType.h>
 #include "SprdOEMCamera.h"
-#include "sprd_ion.h"
+#include <linux/sprd_ion.h>
 #include "hal3/SprdCamera3Setting.h"
 //#include "graphics.h"
 #include <linux/fb.h>
