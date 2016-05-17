@@ -16,6 +16,8 @@
 //#include <linux/kernel.h>
 #include "OIS_main.h"
 
+#define POSE_UP_HORIZONTAL 0
+#define POSE_DOWN_HORIZONTAL 0
 // GLOBAL variable ( Upper Level Host Set this Global variables )
 ////////////////////////////////////////////////////////////////////////////////
 OIS_UWORD	BOOT_MODE     = _FACTORY_;		// Execute Factory Adjust or not
@@ -224,3 +226,10 @@ uint32_t OIS_write_af(SENSOR_HW_HANDLE handle, uint32_t param)
 	return 0;
 }
 
+uint32_t Ois_get_pose_dis(SENSOR_HW_HANDLE handle, uint32_t *up2h, uint32_t *h2down)
+{
+	*up2h = POSE_UP_HORIZONTAL;
+	*h2down = POSE_DOWN_HORIZONTAL;
+
+	return 0;
+}

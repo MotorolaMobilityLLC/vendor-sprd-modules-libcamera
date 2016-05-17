@@ -1431,7 +1431,11 @@ static uint32_t _s5k3p3sm_get_static_info(SENSOR_HW_HANDLE handle, uint32_t *par
 	ex_info->capture_skip_num = g_s5k3p3sm_mipi_raw_info.capture_skip_num;
 	ex_info->name = g_s5k3p3sm_mipi_raw_info.name;
 	ex_info->sensor_version_info = g_s5k3p3sm_mipi_raw_info.sensor_version_info;
+#if defined(CONFIG_CAMERA_OIS_FUNC)
+	Ois_get_pose_dis(handle, &up, &down);
+#else
 	bu64297gwz_get_pose_dis(handle, &up, &down);
+#endif
 	ex_info->pos_dis.up2hori = up;
 	ex_info->pos_dis.hori2down = down;
 	SENSOR_PRINT("SENSOR_s5k3p3sm: f_num: %d", ex_info->f_num);
