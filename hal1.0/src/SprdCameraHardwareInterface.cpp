@@ -5498,19 +5498,20 @@ status_t SprdCameraHardware::setCameraParameters()
 	SET_PARM(mCameraHandle, CAMERA_PARAM_FOCUS_RECT, (cmr_uint)&focus_param);
 
 	int ae_mode = mParameters.getAutoExposureMode();
-	struct cmr_ae_param ae_param;
+	struct cmr_ae_param ae_param = {0};
 	if (2 == ae_mode) {
 		mParameters.getMeteringAreas(&area[1], &area[0], &preview_size, &preview_rect,
 					kCameraInfo[getCameraIndex()].orientation, is_mirror);
+		ae_param.win_area.count = 1;
+		ae_param.win_area.rect[0].start_x = area[1];
+		ae_param.win_area.rect[0].start_y = area[2];
+		ae_param.win_area.rect[0].width  = area[3];
+		ae_param.win_area.rect[0].height = area[4];
 	}
-	ae_param.mode = ae_mode;
-	ae_param.win_area.count = 1;
-	ae_param.win_area.rect[0].start_x = area[1];
-	ae_param.win_area.rect[0].start_y = area[2];
-	ae_param.win_area.rect[0].width  = area[3];
-	ae_param.win_area.rect[0].height = area[4];
 
+	ae_param.mode = ae_mode;
 	SET_PARM(mCameraHandle, CAMERA_PARAM_AUTO_EXPOSURE_MODE, (cmr_uint)&ae_param);
+	LOGI("ae_param.mode = %d,start_x=%d,start_y =%d,width =%d height=%d",ae_param.mode,ae_param.win_area.rect[0].start_x,ae_param.win_area.rect[0].start_y,ae_param.win_area.rect[0].width,ae_param.win_area.rect[0].height);
 
 	if (0 == getCameraIndex()) {
 		SET_PARM(mCameraHandle, CAMERA_PARAM_AF_MODE, mParameters.getFocusMode());
