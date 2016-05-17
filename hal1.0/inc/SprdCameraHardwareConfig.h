@@ -634,7 +634,7 @@ struct config_element sprd_back_camera_hardware_config[] = {
 #ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
 #if	defined(CONFIG_CAMERA_CAF)
 	{"focus-mode-values", "auto,macro,continuous-picture,continuous-video,infinity"},
-	{"focus-mode", "auto"},
+	{"focus-mode", "continuous-picture"},
 #else
 	{"focus-mode-values", "auto,macro,infinity"},
 	{"focus-mode", "auto"},
