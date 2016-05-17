@@ -590,10 +590,9 @@ static cmr_int afaltek_adpt_set_mode(cmr_handle adpt_handle, cmr_int mode)
 #ifdef FEATRUE_SPRD_CAF_TRIGGER
 		afaltek_adpt_caf_set_mode(cxt, AFT_MODE_CONTINUE);
 		afaltek_adpt_reset_caf(cxt);
-#else
+#endif
 		p.u_set_data.focus_mode_type = alAFLib_AF_MODE_CONTINUOUS_PICTURE;
 		ret = afaltek_adpt_set_parameters(cxt, &p);
-#endif
 		break;
 
 	case AF_CTRL_MODE_INFINITY:
