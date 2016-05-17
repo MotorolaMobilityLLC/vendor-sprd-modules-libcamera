@@ -1694,8 +1694,6 @@ int SprdCamera3Setting::getNumberOfCameras()
 	}
 
 	LOGI("getNumberOfCameras:%d",num);
-	// only display 2 camera numbers  for app
-	num = 2;
 
 	return num;
 }
@@ -1972,7 +1970,12 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId)
 	s_setting[cameraId].quirksInfo.use_parital_result = 1;
 
 	//lens
-	s_setting[cameraId].lensInfo.facing = cameraId ?ANDROID_LENS_FACING_FRONT : ANDROID_LENS_FACING_BACK;
+	if (cameraId == 0)
+		s_setting[cameraId].lensInfo.facing =  ANDROID_LENS_FACING_BACK;
+	else if(cameraId == 1)
+		s_setting[cameraId].lensInfo.facing =  ANDROID_LENS_FACING_FRONT;
+	else
+		s_setting[cameraId].lensInfo.facing =  ANDROID_LENS_FACING_EXTERNAL;
 
 	//jpeg
 	memcpy(s_setting[cameraId].jpgInfo.available_thumbnail_sizes, camera3_default_info.common.jpegThumbnailSizes, sizeof(camera3_default_info.common.jpegThumbnailSizes));
