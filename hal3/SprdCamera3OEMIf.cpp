@@ -3904,7 +3904,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb,
 	{
 		controlInfo.af_state = ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED;
 		mSetting->setCONTROLTag(controlInfo);
-
+		mIsAutoFocus = false;
 		//channel->channelCbRoutine(0, timeStamp, CAMERA_STREAM_TYPE_DEFAULT);
 	}
 		break;
@@ -3915,6 +3915,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb,
 		controlInfo.af_state = ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED;
 		mSetting->setCONTROLTag(controlInfo);
 		//channel->channelCbRoutine(0, timeStamp, CAMERA_STREAM_TYPE_DEFAULT);
+		mIsAutoFocus = false;
 	}
 		break;
 
