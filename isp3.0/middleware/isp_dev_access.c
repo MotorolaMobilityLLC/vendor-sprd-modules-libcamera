@@ -922,8 +922,8 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 	memset(&scenario_in, 0, sizeof(scenario_in));
 	scenario_in.tSensorInfo.ucSensorMode = 0;
 	scenario_in.tSensorInfo.ucSensorMouduleType = 0;//0-sensor1  1-sensor2
-	scenario_in.tSensorInfo.uwWidth = cxt->input_param.init_param.size.w;
-	scenario_in.tSensorInfo.uwHeight = cxt->input_param.init_param.size.h;
+	scenario_in.tSensorInfo.uwWidth = input_ptr->src_frame.img_size.w;
+	scenario_in.tSensorInfo.uwHeight = input_ptr->src_frame.img_size.h;
 	scenario_in.tSensorInfo.udLineTime = resolution_ptr->line_time/10;
 	scenario_in.tSensorInfo.uwFrameRate = resolution_ptr->fps.max_fps*100;
 	scenario_in.tSensorInfo.nColorOrder = cxt->input_param.init_param.image_pattern;
@@ -946,7 +946,7 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 	scenario_in.tBayerSCLOutInfo.uwBayerSCLOutWidth = 0;
 	scenario_in.tBayerSCLOutInfo.uwBayerSCLOutHeight = 0;
 	if (ISP_CAP_MODE_RAW_DATA == isp_raw_mem.capture_mode) {
-		ISP_LOGI("bayer scaler wxh %dx%d\n", cxt->input_param.init_param.size.w, cxt->input_param.init_param.size.h);
+		ISP_LOGI("bayer scaler wxh %dx%d\n", scenario_in.tSensorInfo.uwWidth, scenario_in.tSensorInfo.uwHeight);
 		scenario_in.tBayerSCLOutInfo.uwBayerSCLOutWidth = 960;//cxt->input_param.init_param.size.w;
 		scenario_in.tBayerSCLOutInfo.uwBayerSCLOutHeight = 720;//cxt->input_param.init_param.size.h;
 	}
@@ -965,9 +965,9 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 	img_buf_param.img_id = ISP_IMG_STILL_CAPTURE;
 	img_buf_param.dram_eb = 0;
 	img_buf_param.buf_num = 4;
-	img_buf_param.width = cxt->input_param.init_param.size.w;
-	img_buf_param.height = cxt->input_param.init_param.size.h;
-	img_buf_param.line_offset = (cxt->input_param.init_param.size.w);
+	img_buf_param.width = input_ptr->src_frame.img_size.w;
+	img_buf_param.height = input_ptr->src_frame.img_size.h;
+	img_buf_param.line_offset = input_ptr->src_frame.img_size.w;
 	img_buf_param.addr[0].chn0 = 0x2FFFFFFF;
 	img_buf_param.addr[1].chn0 = 0x2FFFFFFF;
 	img_buf_param.addr[2].chn0 = 0x2FFFFFFF;
@@ -1079,10 +1079,10 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 
 	ret = isp_dev_stream_on(cxt->isp_driver_handle);
 
-	usleep(100*1000);
+	usleep(110*1000);
 
-	ret = isp_dev_stream_off(cxt->isp_driver_handle);
-	ret = isp_dev_stop(cxt->isp_driver_handle);
+	isp_dev_stream_off(cxt->isp_driver_handle);
+	isp_dev_stop(cxt->isp_driver_handle);
 
 exit:
 	ISP_LOGI("done %ld", ret);
