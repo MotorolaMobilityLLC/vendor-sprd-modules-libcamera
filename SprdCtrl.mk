@@ -46,7 +46,6 @@ LOCAL_C_INCLUDES += \
 
 LOCAL_SRC_FILES+= \
 	hal1.0/src/SprdCameraParameters.cpp \
-	common/src/cmr_msg.c \
 	vsp/src/jpg_drv_sc8830.c \
 	jpeg/src/jpegcodec_bufmgr.c \
 	jpeg/src/jpegcodec_global.c \
