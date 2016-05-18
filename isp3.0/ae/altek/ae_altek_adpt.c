@@ -719,6 +719,9 @@ static void aealtek_weight_ui2lib(enum ae_ctrl_measure_lum_mode from, enum ae_me
 	case AE_CTRL_MEASURE_LUM_SPOT:
 		lib_metering = AE_METERING_SPOTWT;
 		break;
+	case AE_CTRL_MEASURE_LUM_INTELLIWT:
+		lib_metering = AE_METERING_INTELLIWT;
+		break;
 	case AE_CTRL_MEASURE_LUM_TOUCH:
 		lib_metering = AE_METERING_INTELLIWT;
 		break;
