@@ -1000,10 +1000,24 @@ status_t SprdCameraHardware::takePicture()
 		struct cmr_zoom_param zoom_param;
 		zoom_param.mode = ZOOM_LEVEL;
 		zoom_param.zoom_level = 0;
+		struct img_rect trim = {0,0,0,0};
+		struct img_size req_size = {0,0};
+
 		SET_PARM(mCameraHandle, CAMERA_PARAM_ZOOM, (cmr_uint)&zoom_param);
 		SET_PARM(mCameraHandle, CAMERA_PARAM_ROTATION_CAPTURE, 0);
 		SET_PARM(mCameraHandle, CAMERA_PARAM_SENSOR_ROTATION,  0);
 		SET_PARM(mCameraHandle, CAMERA_PARAM_SCENE_MODE,  0);
+
+		SET_PARM(mCameraHandle, CAMERA_PARAM_JPEG_QUALITY, 0);
+		SET_PARM(mCameraHandle, CAMERA_PARAM_THUMB_QUALITY, 0);
+		SET_PARM(mCameraHandle, CAMERA_PARAM_THUMB_SIZE, (cmr_uint)&req_size);
+
+		camera_get_sensor_trim(mCameraHandle, &trim);
+
+		LOGI("startx=%d, starty=%d, width=%d, height=%d",trim.start_x, trim.start_y, trim.width, trim.height);
+		req_size.width= trim.width;
+		req_size.height = trim.height;
+		SET_PARM(mCameraHandle, CAMERA_PARAM_CAPTURE_SIZE, (cmr_uint)&req_size);
 	}
 	set_ddr_freq(HIGH_FREQ_REQ);
 
