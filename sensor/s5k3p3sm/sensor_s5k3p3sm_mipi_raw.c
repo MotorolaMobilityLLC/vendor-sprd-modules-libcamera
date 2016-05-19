@@ -1362,28 +1362,49 @@ static uint32_t _s5k3p3sm_write_otp_gain(SENSOR_HW_HANDLE handle, uint32_t *para
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint16_t value = 0x00;
+	float a_gain = 0;
+	float d_gain = 0;
+	float real_gain=0.0f;
+	SENSOR_PRINT("SENSOR_s5k4h8yx: write_gain:0x%x\n", *param);
+
+        //ret_value = Sensor_WriteReg(0x104, 0x01);
+	if( (*param/4)>0x200){
+		a_gain=16*32;
+		d_gain=(*param/4.0)*256/a_gain;
+		if(d_gain>256*256)
+			d_gain=256*256;
+		}
+	else{
+		a_gain=*param/4;
+		d_gain=256;
+	}
+	ret_value = Sensor_WriteReg(0x204,(uint32_t)a_gain);//0x100);//a_gain);
+	ret_value = Sensor_WriteReg(0x20e,(uint32_t) d_gain);
+	ret_value = Sensor_WriteReg(0x210, (uint32_t)d_gain);
+	ret_value = Sensor_WriteReg(0x212, (uint32_t)d_gain);
+	ret_value = Sensor_WriteReg(0x214, (uint32_t)d_gain);
 
 	SENSOR_PRINT("SENSOR_s5k3p3sm: write_gain:0x%x\n", *param);
-
+/*
 	//ret_value = Sensor_WriteReg(0x104, 0x01);
 	value = (*param)>>0x08;
 	ret_value = Sensor_WriteReg(0x204, value);
 	value = (*param)&0xff;
 	ret_value = Sensor_WriteReg(0x205, value);
 	//ret_value = Sensor_WriteReg(0x104, 0x00);
-
+*/
 	return ret_value;
 }
 
 static uint32_t _s5k3p3sm_read_otp_gain(SENSOR_HW_HANDLE handle, uint32_t *param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
-	uint16_t gain_h = 0;
-	uint16_t gain_l = 0;
+	uint16_t gain_a = 0;
+	uint16_t gain_d = 0;
 	#if 1 // for MP tool //!??
-	gain_h = Sensor_ReadReg(0x0204) & 0xff;
-	gain_l = Sensor_ReadReg(0x0205) & 0xff;
-	*param = ((gain_h << 8) | gain_l);
+	gain_a = Sensor_ReadReg(0x0204) & 0xffff;
+	gain_d= Sensor_ReadReg(0x0210) & 0xffff;
+	*param = gain_a * gain_d;
 	#else
 	*param = s_set_gain;
 	#endif
@@ -1395,13 +1416,12 @@ static uint32_t _s5k3p3sm_read_otp_gain(SENSOR_HW_HANDLE handle, uint32_t *param
 static uint16_t _s5k3p3sm_get_shutter(SENSOR_HW_HANDLE handle)
 {
 	// read shutter, in number of line period
-	uint16_t shutter_h = 0;
-	uint16_t shutter_l = 0;
+	uint16_t shutter;
 #if 1  // MP tool //!??
-	shutter_h = Sensor_ReadReg(0x0202) & 0xff;
-	shutter_l = Sensor_ReadReg(0x0203) & 0xff;
+	shutter= Sensor_ReadReg(0x0202) & 0xffff;
+	//shutter_l = Sensor_ReadReg(0x0203) & 0xff;
 
-	return (shutter_h << 8) | shutter_l;
+	return shutter;//(shutter_h << 8) | shutter_l;
 #else
 	return s_set_exposure;
 #endif

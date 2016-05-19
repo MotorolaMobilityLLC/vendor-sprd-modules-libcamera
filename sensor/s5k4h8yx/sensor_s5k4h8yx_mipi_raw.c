@@ -46,6 +46,12 @@ static uint32_t g_flash_mode_en = 0;
 static struct sensor_raw_info* s_s5k4h8yx_mipi_raw_info_ptr = &s_s5k4h8yx_mipi_raw_info;
 static uint32_t s_set_gain;
 static uint32_t s_set_exposure;
+struct sensor_ev_info_t {
+	uint16_t preview_shutter;
+	float preview_gain;
+};
+
+struct sensor_ev_info_t s_sensor_ev_info;
 
 
 SENSOR_HW_HANDLE _s5k4h8yx_Create(void *privatedata);
@@ -1730,6 +1736,7 @@ static unsigned long _s5k4h8yx_write_exp_dummy(SENSOR_HW_HANDLE handle, uint16_t
 	linetime=s_s5k4h8yx_Resolution_Trim_Tab[size_index].line_time;
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, s_capture_shutter);
 	s_exposure_time = s_capture_shutter * linetime / 1000;
+	s_sensor_ev_info.preview_shutter = s_capture_shutter;
 
 	/*if (frame_len_cur > frame_len) {
 		ret_value = Sensor_WriteReg(0x0341, frame_len & 0xff);
@@ -1760,6 +1767,7 @@ static unsigned long _s5k4h8yx_write_gain(SENSOR_HW_HANDLE handle, unsigned long
 	real_gain = 1.0f*param * 0x0020 / 0x80;
 
         SENSOR_PRINT("_s5k4h8yx: real_gain:0x%x, param: 0x%x", (uint32_t)real_gain, param);
+        s_sensor_ev_info.preview_gain = param;
 
             if ((uint32_t)real_gain <= 16*32) {
                 a_gain = real_gain;
@@ -1820,7 +1828,7 @@ static unsigned long _s5k4h8yx_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned 
 	uint32_t preview_mode = (param >> 0x10 ) & 0xffff;
 	uint32_t prv_linetime=s_s5k4h8yx_Resolution_Trim_Tab[preview_mode].line_time;
 	uint32_t cap_linetime = s_s5k4h8yx_Resolution_Trim_Tab[capture_mode].line_time;
-
+	uint32_t gain=0;
 	SENSOR_PRINT("SENSOR_S5K4H8YX: BeforeSnapshot mode: 0x%08x",param);
 
 	if (preview_mode == capture_mode) {
@@ -1833,6 +1841,8 @@ static unsigned long _s5k4h8yx_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned 
 
 	Sensor_SetMode(capture_mode);
 	Sensor_SetMode_WaitDone();
+	preview_exposure = s_sensor_ev_info.preview_shutter;
+	gain = s_sensor_ev_info.preview_gain;
 
 	if (prv_linetime == cap_linetime) {
 		SENSOR_PRINT("SENSOR_S5K4H8YX: prvline equal to capline");
@@ -1866,7 +1876,7 @@ static unsigned long _s5k4h8yx_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned 
 	_s5k4h8yx_set_shutter(handle, capture_exposure);
 
 	CFG_INFO:
-	s_capture_shutter = _s5k4h8yx_get_shutter(handle);
+	//s_capture_shutter = _s5k4h8yx_get_shutter(handle);
 	s_capture_VTS = _s5k4h8yx_get_VTS(handle);
 	_s5k4h8yx_ReadGain(handle, capture_mode);
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, s_capture_shutter);
@@ -1927,13 +1937,11 @@ static unsigned long _s5k4h8yx_StreamOff(SENSOR_HW_HANDLE handle, unsigned long 
 static uint16_t _s5k4h8yx_get_shutter(SENSOR_HW_HANDLE handle)
 {
 	// read shutter, in number of line period
-	uint16_t shutter_h = 0;
-	uint16_t shutter_l = 0;
+	uint16_t shutter= 0;
 #if 1  // MP tool //!??
-	shutter_h = Sensor_ReadReg(0x0202) & 0xff;
-	shutter_l = Sensor_ReadReg(0x0203) & 0xff;
+	shutter = Sensor_ReadReg(0x0202) ;
 
-	return (shutter_h << 8) | shutter_l;
+	return shutter;
 #else
 	return s_set_exposure;
 #endif
@@ -1943,8 +1951,7 @@ static uint32_t _s5k4h8yx_set_shutter(SENSOR_HW_HANDLE handle, uint16_t shutter)
 {
 	//Sensor_WriteReg(0x104, 0x01);
 	// write shutter, in number of line period
-	Sensor_WriteReg(0x0202, (shutter >> 8) & 0xff);
-	Sensor_WriteReg(0x0203, shutter & 0xff);
+	Sensor_WriteReg(0x0202, shutter);
 	//Sensor_WriteReg(0x104, 0x00);
 
 	return 0;
@@ -2002,18 +2009,18 @@ static unsigned long _s5k4h8yx_write_exposure_ev(SENSOR_HW_HANDLE handle, unsign
 		frame_len+=0x01;
 	}
 
-	frame_len_cur = (Sensor_ReadReg(0x0341))&0xff;
-	frame_len_cur |= (Sensor_ReadReg(0x0340)<<0x08)&0xff00;
+	frame_len_cur = (Sensor_ReadReg(0x0340))&0xffff;
+	//frame_len_cur |= (Sensor_ReadReg(0x0340)<<0x08)&0xff00;
 
 
 	//ret_value = Sensor_WriteReg(0x104, 0x01);
 	if (frame_len_cur != frame_len) {
-		ret_value = Sensor_WriteReg(0x0341, frame_len & 0xff);
-		ret_value = Sensor_WriteReg(0x0340, (frame_len >> 0x08) & 0xff);
+		ret_value = Sensor_WriteReg(0x0340, frame_len & 0xffff);
+		//ret_value = Sensor_WriteReg(0x0340, (frame_len >> 0x08) & 0xff);
 	}
 
-	ret_value = Sensor_WriteReg(0x203, expsure_line & 0xff);
-	ret_value = Sensor_WriteReg(0x202, (expsure_line >> 0x08) & 0xff);
+	ret_value = Sensor_WriteReg(0x202, expsure_line & 0xffff);
+	//ret_value = Sensor_WriteReg(0x202, (expsure_line >> 0x08) & 0xff);
 	//ret_value = Sensor_WriteReg(0x104, 0x00);
 	return ret_value;
 
@@ -2106,7 +2113,7 @@ static uint16_t _s5k4h8yx_get_VTS(SENSOR_HW_HANDLE handle)
 	uint16_t VTS;
 
 	VTS = Sensor_ReadReg(0x0160);				//total vertical size[15:8] high byte
-	VTS = (VTS<<8) + Sensor_ReadReg(0x0161);
+	//VTS = (VTS<<8) + Sensor_ReadReg(0x0161);
 
 	return VTS;
 }
@@ -2114,8 +2121,8 @@ static uint16_t _s5k4h8yx_get_VTS(SENSOR_HW_HANDLE handle)
 static uint32_t _s5k4h8yx_set_VTS(SENSOR_HW_HANDLE handle, uint16_t VTS)
 {
 	// write VTS to registers
-	Sensor_WriteReg(0x0161, (VTS & 0xff));
-	Sensor_WriteReg(0x0160, ((VTS>>8)& 0xff));
+	Sensor_WriteReg(0x0160, (VTS & 0xffff));
+	//Sensor_WriteReg(0x0160, ((VTS>>8)& 0xff));
 
 	return 0;
 }

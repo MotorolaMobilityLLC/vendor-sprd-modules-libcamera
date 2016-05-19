@@ -43,6 +43,7 @@ static unsigned long _s5k5e3yx_StreamOff(SENSOR_HW_HANDLE handle,unsigned long p
 static uint32_t _s5k5e3yx_com_Identify_otp(SENSOR_HW_HANDLE handle,void* param_ptr);
 static unsigned long _s5k5e3yx_PowerOn(SENSOR_HW_HANDLE handle,unsigned long power_on);
 static unsigned long _s5k5e3yx_write_exposure(SENSOR_HW_HANDLE handle,unsigned long param);
+static unsigned long _s5k5e3yx_ex_write_exposure(SENSOR_HW_HANDLE handle, unsigned long param);
 static unsigned long _s5k5e3yx_write_gain(SENSOR_HW_HANDLE handle,unsigned long param);
 static unsigned long _s5k5e3yx_access_val(SENSOR_HW_HANDLE handle,unsigned long param);
 static unsigned long _s5k5e3yx_GetExifInfo(SENSOR_HW_HANDLE handle,unsigned long param);
@@ -457,6 +458,7 @@ static SENSOR_IOCTL_FUNC_TAB_T s_s5k5e3yx_ioctl_func_tab = {
 	_s5k5e3yx_StreamOn,
 	_s5k5e3yx_StreamOff,
 	_s5k5e3yx_access_val,
+	_s5k5e3yx_ex_write_exposure
 };
 
 static SENSOR_STATIC_INFO_T s_s5k5e3yx_static_info = {
@@ -948,6 +950,89 @@ static uint32_t _s5k5e3yx_GetMaxFrameLine(SENSOR_HW_HANDLE handle,uint32_t index
 
 	return max_line;
 }
+static unsigned long _s5k5e3yx_write_exp_dummy(SENSOR_HW_HANDLE handle, uint16_t expsure_line,
+								uint16_t dummy_line, uint16_t size_index)
+
+{
+	uint32_t ret_value = SENSOR_SUCCESS;
+	uint32_t frame_len_cur = 0x00;
+	uint32_t frame_len = 0x00;
+	uint32_t max_frame_len=0x00;
+	uint32_t linetime = 0;
+
+	SENSOR_PRINT("SENSOR_s5k5e3yx: write_exp_dummy line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
+	max_frame_len=_s5k5e3yx_GetMaxFrameLine(handle, size_index);
+	if (expsure_line < 3) {
+		expsure_line = 3;
+	}
+
+	frame_len = expsure_line + dummy_line;
+	frame_len = (frame_len > (uint32_t)(expsure_line + 5)) ? frame_len : (uint32_t)(expsure_line + 5);
+	frame_len = (frame_len > max_frame_len) ? frame_len : max_frame_len;
+	if (0x00!=(0x01&frame_len)) {
+		frame_len+=0x01;
+	}
+
+	frame_len_cur = (Sensor_ReadReg(0x0341))&0xff;
+	frame_len_cur |= (Sensor_ReadReg(0x0340)<<0x08)&0xff00;
+
+
+	//ret_value = Sensor_WriteReg(0x104, 0x01);
+	if (frame_len_cur != frame_len) {
+		ret_value = Sensor_WriteReg(0x0341, frame_len & 0xff);
+		ret_value = Sensor_WriteReg(0x0340, (frame_len >> 0x08) & 0xff);
+	}
+
+	ret_value = Sensor_WriteReg(0x203, expsure_line & 0xff);
+	ret_value = Sensor_WriteReg(0x202, (expsure_line >> 0x08) & 0xff);
+
+	/*if (frame_len_cur > frame_len) {
+		ret_value = Sensor_WriteReg(0x0341, frame_len & 0xff);
+		ret_value = Sensor_WriteReg(0x0340, (frame_len >> 0x08) & 0xff);
+	}*/
+	//ret_value = Sensor_WriteReg(0x104, 0x00);
+	s_capture_shutter = expsure_line;
+	linetime=s_s5k5e3yx_Resolution_Trim_Tab[size_index].line_time;
+	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, s_capture_shutter);
+	s_exposure_time = s_capture_shutter * linetime / 1000;
+
+
+
+	/*if (frame_len_cur > frame_len) {
+		ret_value = Sensor_WriteReg(0x0341, frame_len & 0xff);
+		ret_value = Sensor_WriteReg(0x0340, (frame_len >> 0x08) & 0xff);
+	}*/
+	//ret_value = Sensor_WriteReg(0x104, 0x00);
+	s_capture_shutter = expsure_line;
+	linetime=s_s5k5e3yx_Resolution_Trim_Tab[size_index].line_time;
+	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, s_capture_shutter);
+	s_exposure_time = s_capture_shutter * linetime / 1000;
+
+	return ret_value;
+}
+
+static unsigned long _s5k5e3yx_ex_write_exposure(SENSOR_HW_HANDLE handle, unsigned long param)
+{
+	uint32_t ret_value = SENSOR_SUCCESS;
+	uint16_t exposure_line = 0x00;
+	uint16_t dummy_line = 0x00;
+	uint16_t size_index=0x00;
+	struct sensor_ex_exposure  *ex = (struct sensor_ex_exposure*)param;
+
+
+	if (!param) {
+		SENSOR_PRINT_ERR("param is NULL !!!");
+		return ret_value;
+	}
+
+	exposure_line = ex->exposure;
+	dummy_line = ex->dummy;
+	size_index = ex->size_index;
+
+	ret_value = _s5k5e3yx_write_exp_dummy(handle, exposure_line, dummy_line, size_index);
+
+	return ret_value;
+}
 
 //uint32_t s_af_step=0x00;
 static unsigned long _s5k5e3yx_write_exposure(SENSOR_HW_HANDLE handle,unsigned long param)
@@ -982,7 +1067,7 @@ static unsigned long _s5k5e3yx_write_exposure(SENSOR_HW_HANDLE handle,unsigned l
 	frame_len_cur |= (Sensor_ReadReg(0x0340)<<0x08)&0xff00;
 
 
-	ret_value = Sensor_WriteReg(0x104, 0x01);
+	//ret_value = Sensor_WriteReg(0x104, 0x01);
 	if (frame_len_cur != frame_len) {
 		ret_value = Sensor_WriteReg(0x0341, frame_len & 0xff);
 		ret_value = Sensor_WriteReg(0x0340, (frame_len >> 0x08) & 0xff);
@@ -1025,7 +1110,7 @@ static unsigned long _s5k5e3yx_write_gain(SENSOR_HW_HANDLE handle,unsigned long 
 	value = real_gain&0xff;
 	ret_value = Sensor_WriteReg(0x205, value);
 
-	ret_value = Sensor_WriteReg(0x104, 0x00);
+	//ret_value = Sensor_WriteReg(0x104, 0x00);
 
 	return ret_value;
 
@@ -1191,7 +1276,7 @@ static uint32_t _s5k5e3yx_write_otp_gain(SENSOR_HW_HANDLE handle,uint32_t *param
 	ret_value = Sensor_WriteReg(0x204, value);
 	value = (*param)&0xff;
 	ret_value = Sensor_WriteReg(0x205, value);
-	ret_value = Sensor_WriteReg(0x104, 0x00);
+	//ret_value = Sensor_WriteReg(0x104, 0x00);
 
 	return ret_value;
 }

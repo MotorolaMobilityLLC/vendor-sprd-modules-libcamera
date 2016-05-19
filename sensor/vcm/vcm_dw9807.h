@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-uint32_t vcm_dw9807_init(void);
-uint32_t vcm_dw9807_set_position(uint32_t pos);
-
+ #include "sensor_drv_u.h"
+uint32_t vcm_dw9807_init(SENSOR_HW_HANDLE handle,int mode);
+uint32_t vcm_dw9807_set_position(SENSOR_HW_HANDLE handle, uint32_t pos);
+uint32_t vcm_dw9807_get_pose_dis(SENSOR_HW_HANDLE handle, uint32_t *up2h, uint32_t *h2down);

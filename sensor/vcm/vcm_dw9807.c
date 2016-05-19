@@ -19,8 +19,10 @@
 
 #define dw9807_VCM_SLAVE_ADDR (0x18 >> 1)
 #define SENSOR_SUCCESS      0
+#define POSE_UP_HORIZONTAL 32
+#define POSE_DOWN_HORIZONTAL 37
 
-uint32_t vcm_dw9807_init(void)
+uint32_t vcm_dw9807_init(SENSOR_HW_HANDLE handle,int mode)
 {
 	uint8_t cmd_val[2] = {0x00};
 	uint16_t  slave_addr = 0;
@@ -29,39 +31,104 @@ uint32_t vcm_dw9807_init(void)
 
 	slave_addr = dw9807_VCM_SLAVE_ADDR;
 	SENSOR_PRINT("E");
-          usleep(100);
-	cmd_len = 2;
-	cmd_val[0] = 0x02;
-	cmd_val[1] = 0x01;
-	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
-	if(ret_value){
-		SENSOR_PRINT("SENSOR_S5K3L2XX: _dw9807_SRCInit 0 fail!");
-	}
-
-	cmd_val[0] = 0x02;
-	cmd_val[1] = 0x00;
-	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
-	if(ret_value){
-		SENSOR_PRINT("SENSOR_S5K3L2XX: _dw9807_SRCInit 1 fail!");
-	}
-
 	usleep(100);
-	cmd_val[0] = 0x02;
-	cmd_val[1] = 0x02;
-	Sensor_WriteI2C_Ex(slave_addr,(uint8_t*)&cmd_val[0], cmd_len, SENSOR_MAIN);
-	usleep(1000);
-	cmd_val[0] = 0x06;
-	cmd_val[1] = 0x61;
-	Sensor_WriteI2C_Ex(slave_addr,(uint8_t*)&cmd_val[0], cmd_len, SENSOR_MAIN);
-	usleep(1000);
-	cmd_val[0] = 0x07;
-	cmd_val[1] = 0x36;
-	Sensor_WriteI2C_Ex(slave_addr,(uint8_t*)&cmd_val[0], cmd_len, SENSOR_MAIN);
+	switch (mode) {
+	case 1:
+		break;
 
+	case 2:
+	{
+		cmd_len = 2;
+
+		cmd_val[0] = 0x02;
+		cmd_val[1] = 0x01;
+		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
+		if(ret_value){
+			SENSOR_PRINT("SENSOR_S5K3L2XX: _dw9807_SRCInit 0 fail!");
+		}
+
+		cmd_val[0] = 0x02;
+		cmd_val[1] = 0x00;
+		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
+		if(ret_value){
+			SENSOR_PRINT("SENSOR_S5K3L2XX: _dw9807_SRCInit 1 fail!");
+		}
+
+		usleep(200);
+
+		cmd_val[0] = 0x02;
+		cmd_val[1] = 0x02;
+		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
+		if(ret_value){
+			SENSOR_PRINT("SENSOR_S5K3L2XX: _dw9807_SRCInit 2 fail!");
+		}
+
+		cmd_val[0] = 0x06;
+		cmd_val[1] = 0x61;
+		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
+		if(ret_value){
+			SENSOR_PRINT("SENSOR_S5K3L2XX: _dw9807_SRCInit 3 fail!");
+		}
+
+
+		cmd_val[0] = 0x07;
+		cmd_val[1] = 0x36;
+		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
+		if(ret_value){
+			SENSOR_PRINT("SENSOR_S5K3L2XX: _dw9807_SRCInit 4 fail!");
+		}
+
+	}
+		break;
+	case 3:
+	{
+		cmd_len = 2;
+
+		cmd_val[0] = 0x02;
+		cmd_val[1] = 0x01;
+		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
+		if(ret_value){
+			SENSOR_PRINT("SENSOR_S5K3L2XX: _dw9807_SRCInit 0 fail!");
+		}
+
+		cmd_val[0] = 0x02;
+		cmd_val[1] = 0x00;
+		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
+		if(ret_value){
+			SENSOR_PRINT("SENSOR_S5K3L2XX: _dw9807_SRCInit 1 fail!");
+		}
+
+		usleep(200);
+
+		cmd_val[0] = 0x02;
+		cmd_val[1] = 0x02;
+		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
+		if(ret_value){
+			SENSOR_PRINT("SENSOR_S5K3L2XX: _dw9807_SRCInit 2 fail!");
+		}
+
+		cmd_val[0] = 0x06;
+		cmd_val[1] = 0x81;//61;
+		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
+		if(ret_value){
+			SENSOR_PRINT("SENSOR_S5K3L2XX: _dw9807_SRCInit 3 fail!");
+		}
+
+
+		cmd_val[0] = 0x07;
+		cmd_val[1] = 0x36;
+		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
+		if(ret_value){
+			SENSOR_PRINT("SENSOR_S5K3L2XX: _dw9807_SRCInit 4 fail!");
+		}
+	}
+		break;
+
+	}
 	return ret_value;
 }
 
-uint32_t vcm_dw9807_set_position(uint32_t pos)
+uint32_t vcm_dw9807_set_position(SENSOR_HW_HANDLE handle, uint32_t pos)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint8_t cmd_val[2] = {0x00};
@@ -69,16 +136,29 @@ uint32_t vcm_dw9807_set_position(uint32_t pos)
 	uint16_t cmd_len = 0;
 	uint32_t time_out = 0;
 
+	if ((int32_t)pos < 0)
+		pos = 0;
+	else if ((int32_t)pos > 0x3FF)
+		pos = 0x3FF;
+
 	SENSOR_PRINT("set position %d", pos);
 	slave_addr = dw9807_VCM_SLAVE_ADDR;
 	cmd_len = 2;
 	cmd_val[0] = 0x03;
 	cmd_val[1] = (pos&0x300)>>8;
-	ret_value = Sensor_WriteI2C_Ex(slave_addr,(uint8_t*)&cmd_val[0], cmd_len, SENSOR_MAIN);
+	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 	cmd_val[0] = 0x04;
 	cmd_val[1] = (pos&0xff);
-	ret_value = Sensor_WriteI2C_Ex(slave_addr,(uint8_t*)&cmd_val[0], cmd_len, SENSOR_MAIN);
+	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 
 	return ret_value;
+}
+
+uint32_t vcm_dw9807_get_pose_dis(SENSOR_HW_HANDLE handle, uint32_t *up2h, uint32_t *h2down)
+{
+	*up2h = POSE_UP_HORIZONTAL;
+	*h2down = POSE_DOWN_HORIZONTAL;
+
+	return 0;
 }
 

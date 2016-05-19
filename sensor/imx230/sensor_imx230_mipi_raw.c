@@ -1473,7 +1473,7 @@ static uint16_t imx230_update_exposure(SENSOR_HW_HANDLE handle, uint32_t shutter
 	uint32_t fr_len = s_current_default_frame_length;
 	int32_t offset = 0;
 
-	imx230_group_hold_on(handle);
+//	imx230_group_hold_on(handle);
 
 	if (dummy_line > FRAME_OFFSET)
 		offset = dummy_line;

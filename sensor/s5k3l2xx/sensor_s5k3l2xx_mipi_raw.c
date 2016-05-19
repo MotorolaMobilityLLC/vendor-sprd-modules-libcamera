@@ -26,6 +26,7 @@
 //#else
 //#endif
 //#include "packet_convert.h"
+#include "../vcm/vcm_dw9807.h"
 
 #define CONFIG_S5K3L2XX_XCE  1
 #define S5K3L2XX_4_LANES
@@ -1984,13 +1985,18 @@ Address	Value     */
 
 };
 #endif
-//#define MClK_26M_SS	1
+#define MClK_26M_SS	1
 
 static SENSOR_REG_TAB_INFO_T s_s5k3l2xx_resolution_Tab_RAW[] = {
 #ifdef MClK_26M_SS
-         {ADDR_AND_LEN_OF_ARRAY(s5k3l2xx_common_init_new), 0, 0, 26, SENSOR_IMAGE_FORMAT_RAW},
-         {ADDR_AND_LEN_OF_ARRAY(s5k3l2xx_4144x3106_setting_new), 4144, 3106, 26, SENSOR_IMAGE_FORMAT_RAW},
-       //  	{ADDR_AND_LEN_OF_ARRAY(s5k3l2xx_2072x1554_setting_new), 2072, 1554, 24, SENSOR_IMAGE_FORMAT_RAW},	
+#if 1
+	{ADDR_AND_LEN_OF_ARRAY(s5k3l2xx_common_init_old), 0, 0, 26, SENSOR_IMAGE_FORMAT_RAW},
+	{ADDR_AND_LEN_OF_ARRAY(s5k3l2xx_4144x3106_setting_old), 4144, 3106, 26, SENSOR_IMAGE_FORMAT_RAW},
+#else
+	 {ADDR_AND_LEN_OF_ARRAY(s5k3l2xx_common_init_new), 0, 0, 26, SENSOR_IMAGE_FORMAT_RAW},
+	 {ADDR_AND_LEN_OF_ARRAY(s5k3l2xx_4144x3106_setting_new), 4144, 3106, 26, SENSOR_IMAGE_FORMAT_RAW},
+	//{ADDR_AND_LEN_OF_ARRAY(s5k3l2xx_2072x1554_setting_new), 2072, 1554, 24, SENSOR_IMAGE_FORMAT_RAW},
+#endif
 #else
 	{ADDR_AND_LEN_OF_ARRAY(s5k3l2xx_common_init_old), 0, 0, 24, SENSOR_IMAGE_FORMAT_RAW},
 	{ADDR_AND_LEN_OF_ARRAY(s5k3l2xx_4144x3106_setting_old), 4144, 3106, 24, SENSOR_IMAGE_FORMAT_RAW},
@@ -2008,13 +2014,17 @@ static SENSOR_REG_TAB_INFO_T s_s5k3l2xx_resolution_Tab_RAW[] = {
 
 static SENSOR_TRIM_T s_s5k3l2xx_Resolution_Trim_Tab[] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-        #ifdef MClK_26M_SS
-        //	{0, 0, 2072, 1554, 13108, 900, 1664, {0, 0, 2072, 1554}},//line time 13108 for 26m 13148 for 24m
-	{0, 0, 4144, 3106, 10412, 950, 3190, {0, 0, 4144, 3106}},//line time 10412 for 26m
-        #else
-//	{0, 0, 2072, 1554, 13148, 900, 1664, {0, 0, 2072, 1554}},//line time 13108 for 26m 13148 for 24m
+#ifdef MClK_26M_SS
+#if 1
+	{0, 0, 4144, 3106, 10432, 950, 3190, {0, 0, 4144, 3106}},//line time 10412 for 26m //10440 10937
+#else
+	//{0, 0, 2072, 1554, 13108, 900, 1664, {0, 0, 2072, 1554}},//line time 13108 for 26m 13148 for 24m
+	{0, 0, 4144, 3106, 13887/*10412*/, 950, 3190, {0, 0, 4144, 3106}},//line time 10412 for 26m
+#endif
+#else
+	//{0, 0, 2072, 1554, 13148, 900, 1664, {0, 0, 2072, 1554}},//line time 13108 for 26m 13148 for 24m
 	{0, 0, 4144, 3106, 11326, 950, 3190, {0, 0, 4144, 3106}},//line time 10412 for 26m
-	#endif
+#endif
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
@@ -2469,20 +2479,20 @@ static unsigned long _s5k3l2xx_PowerOn(SENSOR_HW_HANDLE handle, unsigned long po
 		usleep(10 * 1000);
 		Sensor_SetAvddVoltage(avdd_val);
 		Sensor_SetIovddVoltage(iovdd_val);
-                   Sensor_SetDvddVoltage(dvdd_val);
+		Sensor_SetDvddVoltage(dvdd_val);
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
 		usleep(10*1000);
 		//Sensor_PowerDown(!power_down);
 		Sensor_SetResetLevel(!reset_level);
 		usleep(10*1000);
-		_dw9807_SRCInit(handle, 3);//2);
+		//_dw9807_SRCInit(handle, 3);//2);
 #ifdef MClK_26M_SS		
-                  Sensor_SetMCLK(26);//SENSOR_DEFALUT_MCLK);//
+		Sensor_SetMCLK(26);//SENSOR_DEFALUT_MCLK);//
 #else
-	         Sensor_SetMCLK(SENSOR_DEFALUT_MCLK);//
+		Sensor_SetMCLK(SENSOR_DEFALUT_MCLK);//
 #endif	         
 		usleep(10*1000);
-            
+
 
 	} else {
 		Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
@@ -2492,9 +2502,9 @@ static unsigned long _s5k3l2xx_PowerOn(SENSOR_HW_HANDLE handle, unsigned long po
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 	}
 
-        SENSOR_PRINT_ERR("SENSOR_S5K3L2XX: _s5k3l2xx_Power_On(1:on, 0:off): %d, reset_level %d, dvdd_val %d", power_on, reset_level, dvdd_val);
+	SENSOR_PRINT_ERR("SENSOR_S5K3L2XX: _s5k3l2xx_Power_On(1:on, 0:off): %d, reset_level %d, dvdd_val %d", power_on, reset_level, dvdd_val);
 
-    return SENSOR_SUCCESS;
+	return SENSOR_SUCCESS;
 }
 
 static uint32_t _s5k3l2xx_cfg_otp(SENSOR_HW_HANDLE handle, uint32_t  param)
@@ -2579,28 +2589,29 @@ static unsigned long _s5k3l2xx_Identify(SENSOR_HW_HANDLE handle, unsigned long p
 #define S5K3L2XX_PID_VALUE    	0x30c2
 #define S5K3L2XX_VER_VALUE     	0x0010
 
-		uint32_t pid_value 	= 0x00;
-		uint32_t ver_value 	= 0x00;
-		uint32_t ret_value 	= SENSOR_FAIL;
-            	uint32_t num=0;
-              
-		SENSOR_PRINT_ERR("SENSOR_S5K3L2XX: mipi raw identify\n");
-	  for(num=0;num<3;num++){
+	uint32_t pid_value 	= 0x00;
+	uint32_t ver_value 	= 0x00;
+	uint32_t ret_value 	= SENSOR_FAIL;
+	uint32_t num=0;
+
+	SENSOR_PRINT_ERR("SENSOR_S5K3L2XX: mipi raw identify\n");
+	for(num=0;num<3;num++){
 		pid_value = Sensor_ReadReg(S5K3L2XX_PID_ADDR);
 		ver_value = (Sensor_ReadReg(S5K3L2XX_VER_ADDR) >> 8) & 0xff;
 		SENSOR_PRINT("SENSOR_S5K3L2XX: Identify: PID = %x, VER = %x", pid_value, ver_value);
 
 		if (S5K3L2XX_PID_VALUE == pid_value) {
 			if (S5K3L2XX_VER_VALUE == ver_value) {
-				SENSOR_PRINT_ERR("SENSOR_S5K3L2XX: this is S5K3L2XX sensor !");
-				ret_value=_s5k3l2xx_GetRawInof(handle);
+			SENSOR_PRINT_ERR("SENSOR_S5K3L2XX: this is S5K3L2XX sensor !");
+			ret_value=_s5k3l2xx_GetRawInof(handle);
 				if (SENSOR_SUCCESS != ret_value) {
 					SENSOR_PRINT_ERR("SENSOR_S5K3L2XX: the module is unknow error !");
 				}
 				Sensor_s5k3l2xx_InitRawTuneInfo(handle);
-                                    _s5k3l2xx_init_mode_fps_info(handle);
-                                  //  _s5k3l2xx_StreamOn(1);
-                                    return ret_value;
+				vcm_dw9807_init(handle,3);
+				_s5k3l2xx_init_mode_fps_info(handle);
+				//  _s5k3l2xx_StreamOn(1);
+				return ret_value;
 			} else {
 				SENSOR_PRINT_ERR("SENSOR_S5K3L2XX: Identify this is hm%x%x sensor !", pid_value, ver_value);
 				return ret_value;
@@ -2608,7 +2619,7 @@ static unsigned long _s5k3l2xx_Identify(SENSOR_HW_HANDLE handle, unsigned long p
 		} else {
 			SENSOR_PRINT_ERR("SENSOR_S5K3L2XX: identify fail,pid_value=0x%x,0x%x", pid_value,ver_value);
 		}
-              }
+	}
 
 	return ret_value;
 }
@@ -2766,7 +2777,7 @@ static unsigned long _s5k3l2xx_write_gain(SENSOR_HW_HANDLE handle, unsigned long
 	return ret_value;
 
 }
-
+#if 0
 static unsigned long _s5k3l2xx_write_af(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
@@ -2792,7 +2803,13 @@ static unsigned long _s5k3l2xx_write_af(SENSOR_HW_HANDLE handle, unsigned long p
 	SENSOR_PRINT("SENSOR_S5K3L2XX: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
 	return ret_value;
 }
+#else
+static unsigned long _s5k3l2xx_write_af(SENSOR_HW_HANDLE handle, unsigned long param)
+{
+	return vcm_dw9807_set_position(handle, param);
+}
 
+#endif
 static unsigned long _s5k3l2xx_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 
@@ -2845,9 +2862,9 @@ static unsigned long _s5k3l2xx_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned 
 	Sensor_WriteReg(0x204, gain);
 
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, capture_exposure);
-        Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_APERTUREVALUE,    19);
-        Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_MAXAPERTUREVALUE, 19);
-        Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_FNUMBER, 19);
+	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_APERTUREVALUE,    19);
+	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_MAXAPERTUREVALUE, 19);
+	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_FNUMBER, 19);
 
 	return SENSOR_SUCCESS;
 
@@ -2887,6 +2904,15 @@ static unsigned long _s5k3l2xx_StreamOn(SENSOR_HW_HANDLE handle, unsigned long p
 	SENSOR_PRINT_ERR("SENSOR_s5k3l2xx: StreamOn");
 	Sensor_WriteReg(0x0100, 0x0100);
 	//usleep(50*1000);
+#if 0
+	cmr_s8 value1[255];
+	property_get("debug.camera.test.mode",value1,"0");
+	if(!strcmp(value1,"1")){
+		SENSOR_PRINT_ERR("SENSOR_s5k3l2xx: enable test mode");
+		Sensor_WriteReg(0x0600, 0x0002);
+	}
+#endif
+
 	return 0;
 }
 
@@ -3315,6 +3341,8 @@ static uint32_t _s5k3l2xx_get_golden_data(unsigned long param)
 static uint32_t _s5k3l2xx_get_static_info(SENSOR_HW_HANDLE handle, uint32_t *param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
+	uint32_t up = 0;
+	uint32_t down = 0;
 	struct sensor_ex_info *ex_info;
 	//make sure we have get max fps of all settings.
 	if(!s_s5k3l2xx_mode_fps_info.is_init) {
@@ -3334,6 +3362,9 @@ static uint32_t _s5k3l2xx_get_static_info(SENSOR_HW_HANDLE handle, uint32_t *par
 	ex_info->capture_skip_num = g_s5k3l2xx_mipi_raw_info.capture_skip_num;
 	ex_info->name = g_s5k3l2xx_mipi_raw_info.name;
 	ex_info->sensor_version_info = g_s5k3l2xx_mipi_raw_info.sensor_version_info;
+	vcm_dw9807_get_pose_dis(handle, &up, &down);
+	ex_info->pos_dis.up2hori = up;
+	ex_info->pos_dis.hori2down = down;
 	SENSOR_PRINT("SENSOR_s5k3l2xx: f_num: %d", ex_info->f_num);
 	SENSOR_PRINT("SENSOR_s5k3l2xx: max_fps: %d", ex_info->max_fps);
 	SENSOR_PRINT("SENSOR_s5k3l2xx: max_adgain: %d", ex_info->max_adgain);
