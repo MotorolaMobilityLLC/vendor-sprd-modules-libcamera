@@ -76,6 +76,7 @@ struct isp_dev_postproc_in {
 	struct isp_img_frm dst_frame;
 	struct isp_img_frm dst2_frame;
 	struct isp_3a_cfg_param hw_cfg;
+	cmr_u32 hw_iso_speed;
 	struct isp_3a_dld_sequence dldseq;
 	struct isp_awb_gain awb_gain;
 	struct isp_awb_gain awb_gain_balanced;
@@ -115,6 +116,7 @@ struct isp_dev_access_start_in {
 	struct isp_video_start common_in;
 	struct isp_3a_cfg_param hw_cfg;
 	struct isp_3a_dld_sequence dld_seq;
+	cmr_u32 hw_iso_speed;
 };
 
 struct isp_dev_img_param {

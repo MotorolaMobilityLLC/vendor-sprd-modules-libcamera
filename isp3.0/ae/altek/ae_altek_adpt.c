@@ -3352,6 +3352,7 @@ static cmr_int aealtek_set_sof_to_lib(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 	param_ct_ptr->sof_notify_param.exp_linecount = exp_param.exp_line;
 	param_ct_ptr->sof_notify_param.exp_adgain = exp_param.gain;
 	param_ct_ptr->sof_notify_param.exp_time = exp_param.exp_time;
+	param_ct_ptr->sof_notify_param.cuFPS = 100*(SENSOR_EXP_US_BASE/((exp_param.exp_line+exp_param.dummy)*cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time));
 
 	in_param.ae_set_param_type = type;
 	if (obj_ptr && obj_ptr->set_param)

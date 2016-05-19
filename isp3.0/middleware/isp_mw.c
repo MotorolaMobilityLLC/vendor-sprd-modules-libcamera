@@ -568,6 +568,11 @@ cmr_int isp_video_start(cmr_handle isp_handle, struct isp_video_start *param_ptr
 		ISP_LOGE("failed to get cfg");
 		goto stop_exit;
 	}
+	ret = isp_3a_fw_get_iso_speed(cxt->isp_3a_handle, &dev_in.hw_iso_speed);
+	if (ret) {
+		ISP_LOGE("failed to get hw_iso_speed");
+		goto stop_exit;
+	}
 	dld_in.op_mode = ISP3A_OPMODE_NORMALLV;
 	ret = isp_3a_fw_get_dldseq(cxt->isp_3a_handle, &dld_in, &dev_in.dld_seq);
 	if (ret) {
@@ -614,6 +619,11 @@ cmr_int isp_proc_start(cmr_handle isp_handle, struct ips_in_param *input_ptr, st
 	ret = isp_3a_fw_get_cfg(cxt->isp_3a_handle, &dev_in.hw_cfg);
 	if (ret) {
 		ISP_LOGE("failed to get cfg");
+		goto exit;
+	}
+	ret = isp_3a_fw_get_iso_speed(cxt->isp_3a_handle, &dev_in.hw_iso_speed);
+	if (ret) {
+		ISP_LOGE("failed to get hw_iso_speed");
 		goto exit;
 	}
 	dld_in.op_mode = ISP3A_OPMODE_NORMALLV;

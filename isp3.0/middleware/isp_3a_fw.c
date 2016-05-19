@@ -108,6 +108,7 @@ struct awb_info {
 struct ae_info {
 	cmr_handle handle;
 	struct isp3a_ae_hw_cfg hw_cfg;
+	cmr_u32 hw_iso_speed;
 	struct ae_ctrl_proc_out proc_out;
 	struct isp3a_statistics_data statistics_buffer[ISP3A_STATISTICS_BUF_NUM];
 };
@@ -957,6 +958,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 		ISP_LOGE("failed to AE initialize");
 	}
 	cxt->ae_cxt.hw_cfg = ae_output.hw_cfg;
+	cxt->ae_cxt.hw_iso_speed = ae_output.hw_iso_speed;
 
 	cmr_bzero(&afl_input, sizeof(afl_input));
 	afl_input.camera_id = input_ptr->camera_id;
@@ -3223,6 +3225,7 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 		ISP_LOGE("failed to get hw_iso_speed");
 	}
 	ISP_LOGI("test msg 1");
+	cxt->ae_cxt.hw_iso_speed = ae_out.hw_iso_speed;
 	sof_cfg_info.iso_val = ae_out.hw_iso_speed;
 	ret = isp_dev_access_cfg_sof_info(cxt->dev_access_handle, &sof_cfg_info);
 	if (ret) {
@@ -3738,6 +3741,18 @@ cmr_int isp_3a_fw_get_cfg(cmr_handle isp_3a_handle, struct isp_3a_cfg_param *dat
 	data->awb_gain = cxt->awb_cxt.proc_out.gain;
 	data->awb_gain_balanced = cxt->awb_cxt.proc_out.gain_balanced;
 	ISP_LOGI("done %ld", ret);
+	return ret;
+}
+
+cmr_int isp_3a_fw_get_iso_speed(cmr_handle isp_3a_handle, cmr_u32 *hw_iso_speed)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
+
+	ISP_CHECK_HANDLE_VALID(isp_3a_handle);
+
+	*hw_iso_speed = cxt->ae_cxt.hw_iso_speed;
+
 	return ret;
 }
 

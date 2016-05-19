@@ -771,7 +771,8 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 		goto exit;
 	}
 
-	iso_gain = 100;
+	iso_gain = param_ptr->hw_iso_speed;
+	ISP_LOGI("cfg hw_iso_speed:%d", iso_gain);
 	ret = isp_dev_cfg_iso_speed(cxt->isp_driver_handle, &iso_gain);
 	if (ret) {
 		ISP_LOGE("failed to cfg iso speed %ld", ret);
@@ -1053,7 +1054,8 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 		goto  exit;
 	}
 
-	iso_gain = 100;
+	iso_gain = input_ptr->hw_iso_speed;
+	ISP_LOGI("cfg hw_iso_speed:%d", iso_gain);
 	ret = isp_dev_cfg_iso_speed(cxt->isp_driver_handle, &iso_gain);
 	if (ret) {
 		ISP_LOGE("failed to cfg iso speed %ld", ret);

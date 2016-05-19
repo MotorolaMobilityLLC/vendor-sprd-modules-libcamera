@@ -99,6 +99,7 @@ cmr_int isp_3a_fw_start(cmr_handle isp_3a_handle, struct isp_video_start *param_
 cmr_int isp_3a_fw_stop(cmr_handle isp_3a_handle);
 cmr_int isp_3a_fw_receive_data(cmr_handle isp_3a_handle, cmr_int evt, void *data);
 cmr_int isp_3a_fw_get_cfg(cmr_handle isp_3a_handle, struct isp_3a_cfg_param *data);
+cmr_int isp_3a_fw_get_iso_speed(cmr_handle isp_3a_handle, cmr_u32 *hw_iso_speed);
 cmr_int isp_3a_fw_get_dldseq(cmr_handle isp_3a_handle, struct isp_3a_get_dld_in *input, struct isp_3a_dld_sequence *data);
 cmr_int isp_3a_fw_get_awb_gain(cmr_handle isp_3a_handle, struct isp_awb_gain *gain, struct isp_awb_gain *gain_balanced);
 
