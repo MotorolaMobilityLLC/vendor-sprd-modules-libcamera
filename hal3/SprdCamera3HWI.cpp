@@ -486,6 +486,7 @@ int32_t SprdCamera3HWI::tranStreamAndChannelType(camera3_stream_t* new_stream, c
 					*stream_type = CAMERA_STREAM_TYPE_PREVIEW;
 					*channel_type = CAMERA_CHANNEL_TYPE_REGULAR;
 					new_stream->usage |= GRALLOC_USAGE_SW_READ_OFTEN;
+					new_stream->usage |= GRALLOC_USAGE_PRIVATE_1;
 				}
 				break;
 			case HAL_PIXEL_FORMAT_YV12:
