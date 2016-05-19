@@ -205,7 +205,31 @@ cmr_int ispmw_get_tuning_bin(cmr_handle isp_mw_handle, const cmr_s8 *sensor_name
 	}
 	fclose(fp);
 
-	memset(&file_name[0], 0, ISP_MW_FILE_NAME_LEN);
+exit:
+	if (ret) {
+		if (cxt->tuning_bin.isp_3a_addr) {
+			free(cxt->tuning_bin.isp_3a_addr);
+			cxt->tuning_bin.isp_3a_addr = NULL;
+			cxt->tuning_bin.isp_3a_size = 0;
+		}
+		if (cxt->tuning_bin.isp_shading_addr) {
+			free(cxt->tuning_bin.isp_shading_addr);
+			cxt->tuning_bin.isp_shading_addr = NULL;
+			cxt->tuning_bin.isp_shading_size = 0;
+		}
+	} else {
+		ISP_LOGI("3a bin size = %d, shading bin size = %d",
+			cxt->tuning_bin.isp_3a_size, cxt->tuning_bin.isp_shading_size);
+	}
+	return ret;
+}
+
+cmr_int ispmw_get_caf_tuning_bin(cmr_handle isp_mw_handle, const cmr_s8 *sensor_name)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp_mw_context                       *cxt = (struct isp_mw_context*)isp_mw_handle;
+	FILE                                        *fp = NULL;
+	cmr_u8                                      file_name[ISP_MW_FILE_NAME_LEN];
 
 	/* get caf tuning bin */
 	sprintf((void*)&file_name[0],"/system/lib/tuning/%s_caf.bin",sensor_name);
@@ -236,27 +260,16 @@ cmr_int ispmw_get_tuning_bin(cmr_handle isp_mw_handle, const cmr_s8 *sensor_name
 	fclose(fp);
 exit:
 	if (ret) {
-		if (cxt->tuning_bin.isp_3a_addr) {
-			free(cxt->tuning_bin.isp_3a_addr);
-			cxt->tuning_bin.isp_3a_addr = NULL;
-			cxt->tuning_bin.isp_3a_size = 0;
-		}
-		if (cxt->tuning_bin.isp_shading_addr) {
-			free(cxt->tuning_bin.isp_shading_addr);
-			cxt->tuning_bin.isp_shading_addr = NULL;
-			cxt->tuning_bin.isp_shading_size = 0;
-		}
 		if (cxt->tuning_bin.isp_caf_addr) {
 			free(cxt->tuning_bin.isp_caf_addr);
 			cxt->tuning_bin.isp_caf_addr = NULL;
 			cxt->tuning_bin.isp_caf_size = 0;
 		}
 	} else {
-		ISP_LOGI("3a bin size = %d, shading bin size = %d",
-			cxt->tuning_bin.isp_3a_size, cxt->tuning_bin.isp_shading_size);
 		ISP_LOGI("3a bin size = %p, caf bin size = %d",
 			cxt->tuning_bin.isp_caf_addr, cxt->tuning_bin.isp_caf_size);
 	}
+
 	return ret;
 }
 
@@ -388,6 +401,13 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 	ret = ispmw_get_tuning_bin((cmr_handle)cxt,(const cmr_s8*)input_ptr->ex_info.name);
 	if (ret) {
 		goto exit;
+	}
+	if (input_ptr->ex_info.af_supported) {
+		ret = ispmw_get_caf_tuning_bin((cmr_handle)cxt, (const cmr_s8*)input_ptr->ex_info.name);
+		if (ret) {
+			ISP_LOGE("get caf tuning bin error");
+			goto exit;
+		}
 	}
 	ret = ispmw_parse_tuning_bin((cmr_handle)cxt);
 	if (ret) {

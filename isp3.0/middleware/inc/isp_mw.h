@@ -428,6 +428,7 @@ struct  isp_sensor_ex_info{
 	cmr_s8 *name;
 	cmr_s8 *sensor_version_info;
 	struct af_pose_dis pos_dis;
+	cmr_u32 af_supported;
 };
 
 struct isp_sensor_fps_info{

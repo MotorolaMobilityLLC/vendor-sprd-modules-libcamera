@@ -157,7 +157,7 @@ static cmr_u8 afaltek_adpt_set_vcm_pos(cmr_handle adpt_handle, struct af_ctrl_mo
 
 static cmr_int load_altek_library(cmr_handle adpt_handle)
 {
-	cmr_int ret = -1;
+	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 
 	cxt->altek_lib_handle = dlopen(LIBRARY_PATH, RTLD_NOW);
@@ -196,7 +196,7 @@ static void unload_altek_library(cmr_handle adpt_handle)
 
 static cmr_int load_caf_library(cmr_handle adpt_handle)
 {
-	cmr_int ret = -1;
+	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 
 	cxt->caf_lib_handle = dlopen(CAF_LIBRARY_PATH, RTLD_NOW);
@@ -817,12 +817,12 @@ static cmr_int afaltek_adpt_vcm_tuning_param(cmr_handle adpt_handle)
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct af_ctrl_motor_pos pos_info = { 0x00 };
 
-	memset(value, '\0', sizeof(value));
+	cmr_bzero(value, sizeof(value));
 	property_get("persist.sys.isp.vcm.tuning.mode", (char *)value, "0");
 
 	if (1 == atoi((char *)value)) {
 		cxt->vcm_tune.tuning_enable = 1;
-		memset(pos, '\0', sizeof(pos));
+		cmr_bzero(pos, sizeof(pos));
 		property_get("persist.sys.isp.vcm.position", (char *)pos, "0");
 		position = atoi((char *)pos);
 
@@ -1084,7 +1084,7 @@ static cmr_int afaltek_adpt_update_aux_sensor(cmr_handle adpt_handle, void *in)
 	struct af_aux_sensor_info_t *aux_sensor_info = (struct af_aux_sensor_info_t *)in;
 	struct aft_proc_calc_param aft_in;
 
-	memset((void*)&aft_in, 0, sizeof(aft_in));
+	cmr_bzero((void*)&aft_in, sizeof(aft_in));
 
 	switch (aux_sensor_info->type) {
 	case AF_ACCELEROMETER:
@@ -1435,18 +1435,26 @@ static cmr_int afaltek_adpt_config_roi(cmr_handle adpt_handle,
 	roi_out->frame_id = cxt->frame_id;
 	/* only support value 1 */
 	roi_out->num_roi = roi_in->valid_win;
-	ISP_LOGI("roi_out->num_roi = %d", roi_out->num_roi);
-	/* only support array 0 */
-	for (i = 0; i < roi_in->valid_win; i++) {
-		roi_out->roi[i].uw_left = roi_in->win[i].start_x;
-		roi_out->roi[i].uw_top = roi_in->win[i].start_y;
-		roi_out->roi[i].uw_dx = roi_in->win[i].end_x - roi_in->win[i].start_x;
-		roi_out->roi[i].uw_dy = roi_in->win[i].end_y - roi_in->win[i].start_y;
-		ISP_LOGI("top = %d, left = %d, dx = %d, dy = %d",
-			 roi_out->roi[i].uw_top, roi_out->roi[i].uw_left,
-			 roi_out->roi[i].uw_dx, roi_out->roi[i].uw_dy);
+	if (roi_out->num_roi) {
+		/* only support array 0 */
+		for (i = 0; i < roi_in->valid_win; i++) {
+			roi_out->roi[i].uw_left = roi_in->win[i].start_x;
+			roi_out->roi[i].uw_top = roi_in->win[i].start_y;
+			roi_out->roi[i].uw_dx = roi_in->win[i].end_x - roi_in->win[i].start_x;
+			roi_out->roi[i].uw_dy = roi_in->win[i].end_y - roi_in->win[i].start_y;
+		}
+		roi_out->weight[0] = 1;
+	} else {
+		roi_out->num_roi = 1;
+		roi_out->roi[0].uw_left = cxt->sensor_info.crop_info.x;
+		roi_out->roi[0].uw_top = cxt->sensor_info.crop_info.y;
+		roi_out->roi[0].uw_dx = cxt->sensor_info.crop_info.width;
+		roi_out->roi[0].uw_dy = cxt->sensor_info.crop_info.height;
+		roi_out->weight[0] = 1;
 	}
-	roi_out->weight[0] = 1;
+	ISP_LOGI("left = %d, top = %d, dx = %d, dy = %d",
+				 roi_out->roi[0].uw_left, roi_out->roi[0].uw_top,
+				 roi_out->roi[0].uw_dx, roi_out->roi[0].uw_dy);
 	if (!sensor_p->sensor_res_width || !sensor_p->sensor_res_height) {
 		ISP_LOGE("error src_img %d %d",
 			sensor_p->sensor_res_width, sensor_p->sensor_res_height);
@@ -1873,7 +1881,7 @@ static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 	struct sensor_otp_af_info *otp_af_info;
 
 	otp_af_info = (struct sensor_otp_af_info *) in->otp_info.otp_data;
-	memset(&init_info, 0x00, sizeof(init_info));
+	cmr_bzero(&init_info, sizeof(init_info));
 	if (otp_af_info) {
 		init_info.calib_data.inf_step = otp_af_info->infinite_cali;
 		init_info.calib_data.macro_step = otp_af_info->macro_cali;

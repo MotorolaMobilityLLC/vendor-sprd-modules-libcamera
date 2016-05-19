@@ -810,7 +810,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input
 
 	cxt = (struct isp3a_fw_context *)isp_3a_handle;
 
-	cxt->af_cxt.af_support = !!cxt->ioctrl_ptr->set_focus;
+	cxt->af_cxt.af_support = input_ptr->ex_info.af_supported;
 
 	if (ERR_3ALIB_VER_SUCCESS == allib_3a_getversion(&libVersion)) {
 		ISP_LOGI("3a version:%f", libVersion);

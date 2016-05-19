@@ -2982,6 +2982,12 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 		isp_param.otp_data_slv = val.pval;
 	}
 #endif
+	if (sensor_info_ptr->raw_info_ptr && sensor_info_ptr->raw_info_ptr->ioctrl_ptr
+		&& sensor_info_ptr->raw_info_ptr->ioctrl_ptr->set_focus)
+		isp_param.ex_info.af_supported = 1;
+	else
+		isp_param.ex_info.af_supported = 0;
+
 	CMR_PRINT_TIME;
 	ret = isp_init(&isp_param, &isp_cxt->isp_handle);
 	if (ret) {
