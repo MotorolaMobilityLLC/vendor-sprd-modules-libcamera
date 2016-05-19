@@ -1523,8 +1523,9 @@ static unsigned long imx230_power_on(SENSOR_HW_HANDLE handle, unsigned long powe
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
 	} else {
 		Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
+		Sensor_SetResetLevel(reset_level);
+		usleep(15);
 		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
-		Sensor_Reset(reset_level);
 		Sensor_PowerDown(power_down);
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 	}
