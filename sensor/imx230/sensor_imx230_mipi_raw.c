@@ -1513,11 +1513,11 @@ static unsigned long imx230_power_on(SENSOR_HW_HANDLE handle, unsigned long powe
 		Sensor_SetResetLevel(reset_level);
 		Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
 		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
-		usleep(10 * 1000);
+		usleep(1000);
 		Sensor_SetVoltage(dvdd_val, avdd_val, iovdd_val);
-		usleep(10 * 1000);
+		usleep(1000);
 		Sensor_SetMCLK(SENSOR_DEFALUT_MCLK);
-		usleep(10 * 1000);
+		usleep(1000);
 		Sensor_PowerDown(!power_down);
 		Sensor_SetResetLevel(!reset_level);
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
@@ -1892,8 +1892,6 @@ static unsigned long imx230_stream_on(SENSOR_HW_HANDLE handle, unsigned long par
 	SENSOR_PRINT("E");
 	UNUSED(param);
 	Sensor_WriteReg(0x0100, 0x01);
-	/*delay*/
-	usleep(10 * 1000);
 
 	return 0;
 }
@@ -1907,9 +1905,13 @@ static unsigned long imx230_stream_off(SENSOR_HW_HANDLE handle, unsigned long pa
 {
 	SENSOR_PRINT("E");
 	UNUSED(param);
-	Sensor_WriteReg(0x0100, 0x00);
-	/*delay*/
-	usleep(100 * 1000);
+	unsigned char value;
+
+	value = Sensor_ReadReg(0x0100);
+	if (value != 0x00) {
+		Sensor_WriteReg(0x0100, 0x00);
+		usleep(50 * 1000);
+	}
 
 	return 0;
 }
