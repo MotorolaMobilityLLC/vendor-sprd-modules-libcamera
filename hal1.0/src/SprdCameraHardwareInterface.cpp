@@ -1000,8 +1000,9 @@ status_t SprdCameraHardware::takePicture()
 		struct cmr_zoom_param zoom_param;
 		zoom_param.mode = ZOOM_LEVEL;
 		zoom_param.zoom_level = 0;
-		struct img_rect trim = {0,0,0,0};
 		struct img_size req_size = {0,0};
+		struct sensor_mode_info mode_info[SENSOR_MODE_MAX] = {0};
+		cmr_int i= 0;
 
 		SET_PARM(mCameraHandle, CAMERA_PARAM_ZOOM, (cmr_uint)&zoom_param);
 		SET_PARM(mCameraHandle, CAMERA_PARAM_ROTATION_CAPTURE, 0);
@@ -1012,12 +1013,27 @@ status_t SprdCameraHardware::takePicture()
 		SET_PARM(mCameraHandle, CAMERA_PARAM_THUMB_QUALITY, 0);
 		SET_PARM(mCameraHandle, CAMERA_PARAM_THUMB_SIZE, (cmr_uint)&req_size);
 
-		camera_get_sensor_trim(mCameraHandle, &trim);
 
-		LOGI("startx=%d, starty=%d, width=%d, height=%d",trim.start_x, trim.start_y, trim.width, trim.height);
-		req_size.width= trim.width;
-		req_size.height = trim.height;
-		SET_PARM(mCameraHandle, CAMERA_PARAM_CAPTURE_SIZE, (cmr_uint)&req_size);
+		if(!camera_get_sensor_info_for_raw(mCameraHandle, mode_info)) {
+			for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
+				LOGI("trim w=%d, h=%d", mode_info[i].trim_width, mode_info[i].trim_height);
+				if (mode_info[i].trim_height >= mRawWidth) {
+					mRawWidth = mode_info[i].trim_width;
+					mRawHeight= mode_info[i].trim_height;
+					break;
+				}
+			}
+
+			if(i == SENSOR_MODE_MAX){
+				mRawWidth = mode_info[SENSOR_MODE_PREVIEW_ONE].trim_width;
+				mRawHeight= mode_info[SENSOR_MODE_PREVIEW_ONE].trim_height;
+			}
+			req_size.width = (cmr_u32)mRawWidth;
+			req_size.height = (cmr_u32)mRawHeight;
+			LOGI("req_size w=%d, h=%d", mRawWidth, mRawHeight);
+
+			SET_PARM(mCameraHandle, CAMERA_PARAM_CAPTURE_SIZE, (cmr_uint)&req_size);
+		}
 	}
 	set_ddr_freq(HIGH_FREQ_REQ);
 
@@ -2659,7 +2675,6 @@ bool SprdCameraHardware::setCameraDimensions()
 				getCameraStateStr(getCaptureState()));
 		return false;
 	}
-
 	return true;
 }
 
@@ -7258,6 +7273,14 @@ void SprdCameraHardware::receiveJpegPicture(struct camera_frame_type *frame)
 				if (isp_info_addr) {
 					memcpy((mem->data+mJpegSize),isp_info_addr,isp_info_size);
 				}
+
+				char debug_value[PROPERTY_VALUE_MAX];
+				property_get("persist.sys.camera.debug.mode", debug_value, "non-debug");
+				if((mCaptureMode == CAMERA_ISP_TUNING_MODE) || (!strcmp(debug_value, "debug"))) {
+					LOGI("CAMERA_ISP_TUNING_MODE,mRawWidth,mRawHeight =%d,%d",mRawWidth,mRawHeight);
+					dump_jpeg_file((void *)mem->data, encInfo->size+isp_info_size, mRawWidth, mRawHeight);
+				}
+
 				mData_cb(CAMERA_MSG_COMPRESSED_IMAGE,mem, 0, NULL, mUser );
 				mem->release(mem);
 			}
