@@ -150,6 +150,7 @@ const sensor_fov_tab_t front_sensor_fov_tab[] =
 const sensor_fov_tab_t third_sensor_fov_tab[] =
 {
 	{"imx132_mipi_raw", {3.629f, 2.722f}, 3.486f},
+	{"ov2680_mipi_raw", {3.50f, 2.625f}, 3.75f},
 	{"", {3.50f, 2.625f}, 3.75f},
 };
 
@@ -645,6 +646,39 @@ const int32_t kavailable_front_stream_configurations[CAMERA_SETTINGS_CONFIG_ARRA
 	{HAL_PIXEL_FORMAT_BLOB, 176, 144, ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
 };
 
+const int32_t kavailable_back_ext_stream_configurations[CAMERA_SETTINGS_CONFIG_ARRAYSIZE][4] = {
+//#ifdef CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_2M
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 1600, 1200, ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 1280, 960, ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 1280, 720, ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 720, 480, ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 640, 480, ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 640, 360, ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 480, 640, ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 352, 288, ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 320, 240, ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 288, 352, ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 240, 320, ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 176, 144, ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
+//#endif
+//#ifdef CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_2M
+	{HAL_PIXEL_FORMAT_YV12, 1600, 1200, ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
+	{HAL_PIXEL_FORMAT_YV12, 1280, 960, ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
+	{HAL_PIXEL_FORMAT_YV12, 1280, 720, ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
+//#endif
+//#ifdef CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_2M
+	{HAL_PIXEL_FORMAT_YCbCr_420_888, 1600, 1200, ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
+	{HAL_PIXEL_FORMAT_YCbCr_420_888, 1280, 960, ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
+	{HAL_PIXEL_FORMAT_YCbCr_420_888, 1280, 720, ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
+//#endif
+//#ifdef CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_2M
+	{HAL_PIXEL_FORMAT_BLOB, 1600, 1200, ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
+	{HAL_PIXEL_FORMAT_BLOB, 1280, 960, ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
+	{HAL_PIXEL_FORMAT_BLOB, 1280, 720, ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
+//#endif
+};
+
+
 const int64_t kavailable_back_min_frame_durations[CAMERA_SETTINGS_CONFIG_ARRAYSIZE][4] = {
 	/*{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 3264, 2448, 33331760L},
 	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 2592, 1952, 33331760L},
@@ -892,6 +926,39 @@ const int64_t kavailable_front_min_frame_durations[CAMERA_SETTINGS_CONFIG_ARRAYS
 	{HAL_PIXEL_FORMAT_BLOB, 1280, 960, 33331760L},
 	{HAL_PIXEL_FORMAT_BLOB, 640, 480, 33331760L},
 };
+
+const int64_t kavailable_back_ext_min_frame_durations[CAMERA_SETTINGS_CONFIG_ARRAYSIZE][4] = {
+//#ifdef CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_2M
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 1600, 1200, 33331760L},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 1280, 960, 33331760L},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 1280, 720, 33331760L},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 720, 480, 33331760L},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 640, 480, 33331760L},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 640, 360, 33331760L},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 480, 640, 33331760L},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 352, 288, 33331760L},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 320, 240, 33331760L},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 288, 352, 33331760L},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 240, 320, 33331760L},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 176, 144, 33331760L},
+//#endif
+//#ifdef CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_2M
+	{HAL_PIXEL_FORMAT_YV12, 1600, 1200, 33331760L},
+	{HAL_PIXEL_FORMAT_YV12, 1280, 960, 33331760L},
+	{HAL_PIXEL_FORMAT_YV12, 1280, 720, 33331760L},
+//#endif
+//#ifdef CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_2M
+	{HAL_PIXEL_FORMAT_YCbCr_420_888, 1600, 1200, 66663520L},
+	{HAL_PIXEL_FORMAT_YCbCr_420_888, 1280, 960, 33331760L},
+	{HAL_PIXEL_FORMAT_YCbCr_420_888, 1280, 720, 33331760L},
+//#endif
+//#ifdef CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_2M
+	{HAL_PIXEL_FORMAT_BLOB, 1600, 1200, 33331760L},
+	{HAL_PIXEL_FORMAT_BLOB, 1280, 960, 33331760L},
+	{HAL_PIXEL_FORMAT_BLOB, 1280, 720, 33331760L},
+//#endif
+};
+
 
 const int64_t kavailable_back_stall_durations[CAMERA_SETTINGS_CONFIG_ARRAYSIZE][4] = {
 	/*{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 3264, 2448, 0L},
@@ -1155,6 +1222,38 @@ const int64_t kavailable_front_stall_durations[CAMERA_SETTINGS_CONFIG_ARRAYSIZE]
 	{HAL_PIXEL_FORMAT_BLOB, 640, 480, 33331760L},
 };
 
+const int64_t kavailable_back_ext_stall_durations[CAMERA_SETTINGS_CONFIG_ARRAYSIZE][4] = {
+//#ifdef CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_2M
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 1600, 1200, 0L},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 1280, 960, 0L},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 1280, 720, 0L},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 720, 480, 0L},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 640, 480, 0L},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 640, 360, 0L},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 480, 640, 0L},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 352, 288, 0L},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 320, 240, 0L},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 288, 352, 0L},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 240, 320, 0L},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 176, 144, 0L},
+//#endif
+//#ifdef CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_2M
+	{HAL_PIXEL_FORMAT_YV12, 1600, 1200, 33331760L},
+	{HAL_PIXEL_FORMAT_YV12, 1280, 960, 33331760L},
+	{HAL_PIXEL_FORMAT_YV12, 1280, 720, 33331760L},
+//#endif
+//#ifdef CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_2M
+	{HAL_PIXEL_FORMAT_YCbCr_420_888, 1600, 1200, 0L},
+	{HAL_PIXEL_FORMAT_YCbCr_420_888, 1280, 960, 0L},
+	{HAL_PIXEL_FORMAT_YCbCr_420_888, 1280, 720, 0L},
+//#endif
+//#ifdef CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_2M
+	{HAL_PIXEL_FORMAT_BLOB, 1600, 1200, 33331760L},
+	{HAL_PIXEL_FORMAT_BLOB, 1280, 960, 33331760L},
+	{HAL_PIXEL_FORMAT_BLOB, 1280, 720, 33331760L},
+//#endif
+};
+
 const float kavailable_lens_info_aperture[] = {
 	1.8, 2.2, 2.6, 2.8, 3.0
 };
@@ -1165,12 +1264,18 @@ const int32_t kavailable_back_pixer_size[2] = {
 const int32_t kavailable_front_pixer_size[2] = {
 	FRONT_SENSOR_ORIG_WIDTH, FRONT_SENSOR_ORIG_HEIGHT
 };
+const int32_t kavailable_back_ext_pixer_size[2] = {
+	BACK_EXT_SENSOR_ORIG_WIDTH, BACK_EXT_SENSOR_ORIG_WIDTH
+};
 
 const int32_t kavailable_back_active_size[4] = {
 	0, 0, BACK_SENSOR_ORIG_WIDTH, BACK_SENSOR_ORIG_HEIGHT
 };
 const int32_t kavailable_front_active_size[4] = {
 	0, 0, FRONT_SENSOR_ORIG_WIDTH, FRONT_SENSOR_ORIG_HEIGHT
+};
+const int32_t kavailable_back_ext_active_size[4] = {
+	0, 0, BACK_EXT_SENSOR_ORIG_WIDTH, BACK_EXT_SENSOR_ORIG_HEIGHT
 };
 
 const int64_t kavailable_min_durations[1] = {
@@ -1732,6 +1837,19 @@ int SprdCamera3Setting::GetFovParam(int32_t cameraId)
 			}
 		}
 	}
+#ifdef CONFIG_DCAM_SENSOR2_SUPPORT
+	else  if (2 == cameraId){
+		SnNum = sizeof(third_sensor_fov_tab)/sizeof(sensor_fov_tab);
+		LOGI("check third sensor numbers %d", SnNum);
+		for(i=0; i<SnNum; i++) {
+			if( strcmp(third_sensor_fov_tab[i].sn_name, CAMERA_SENSOR_TYPE_BACK_EXT) == 0) {
+				LOGI("sensor matched the %dth  is %s", i, CAMERA_SENSOR_TYPE_BACK_EXT);
+				retValue = i;
+				break;
+			}
+		}
+	}
+#endif
 
 	if (i == SnNum) {
 		retValue = SnNum-1;
@@ -1754,9 +1872,12 @@ int SprdCamera3Setting::setDefaultParaInfo(int32_t cameraId)
 		memcpy(camera3_default_info.common.sensor_physical_size,back_sensor_fov_tab[index].physical_size,sizeof(back_sensor_fov_tab[index].physical_size));
 	} else if (cameraId == 1) {
 		memcpy(camera3_default_info.common.sensor_physical_size,front_sensor_fov_tab[index].physical_size,sizeof(front_sensor_fov_tab[index].physical_size));
-	} else if (cameraId == 2) {
+	}
+#ifdef CONFIG_DCAM_SENSOR2_SUPPORT
+	else if (cameraId == 2) {
 	       memcpy(camera3_default_info.common.sensor_physical_size,third_sensor_fov_tab[index].physical_size,sizeof(third_sensor_fov_tab[index].physical_size));
 	}
+#endif
 	HAL_LOGI("Camera %d, physical_size %f, %f", cameraId, camera3_default_info.common.sensor_physical_size[0], camera3_default_info.common.sensor_physical_size[1]);
 
 	//memcpy(camera3_default_info.common.sensor_physical_size,ksensor_physical_size,sizeof(ksensor_physical_size));
@@ -1896,11 +2017,18 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId)
 		memcpy(s_setting[cameraId].sensor_InfoInfo.pixer_array_size, kavailable_back_pixer_size, sizeof(kavailable_back_pixer_size));
 		memcpy(s_setting[cameraId].sensor_InfoInfo.active_array_size, kavailable_back_active_size, sizeof(kavailable_back_active_size));
 	}
-	else if(cameraId == 1 || cameraId == 2)
+	else if(cameraId == 1)
 	{
 		memcpy(s_setting[cameraId].sensor_InfoInfo.pixer_array_size, kavailable_front_pixer_size, sizeof(kavailable_front_pixer_size));
 		memcpy(s_setting[cameraId].sensor_InfoInfo.active_array_size, kavailable_front_active_size, sizeof(kavailable_front_active_size));
 	}
+#ifdef CONFIG_DCAM_SENSOR2_SUPPORT
+	else if(cameraId == 2)
+	{
+		memcpy(s_setting[cameraId].sensor_InfoInfo.pixer_array_size, kavailable_back_ext_pixer_size, sizeof(kavailable_back_ext_pixer_size));
+		memcpy(s_setting[cameraId].sensor_InfoInfo.active_array_size, kavailable_back_ext_active_size, sizeof(kavailable_back_ext_active_size));
+	}
+#endif
 	s_setting[cameraId].sensor_InfoInfo.white_level = default_info->common.white_level;
 	for(size_t i=0;i<4;i++)
 		s_setting[cameraId].sensorInfo.black_level_pattern[i] = default_info->common.black_level;
@@ -1935,11 +2063,18 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId)
 		memcpy(s_setting[cameraId].scalerInfo.stall_durations, kavailable_back_stall_durations, sizeof(kavailable_back_stall_durations));
 		memcpy(s_setting[cameraId].scalerInfo.available_stream_configurations, kavailable_back_stream_configurations, sizeof(kavailable_back_stream_configurations));
 	}
-	else {
+	else if (cameraId == 1) {
 		memcpy(s_setting[cameraId].scalerInfo.min_frame_durations, kavailable_front_min_frame_durations, sizeof(kavailable_front_min_frame_durations));
 		memcpy(s_setting[cameraId].scalerInfo.stall_durations, kavailable_front_stall_durations, sizeof(kavailable_front_stall_durations));
 		memcpy(s_setting[cameraId].scalerInfo.available_stream_configurations, kavailable_front_stream_configurations, sizeof(kavailable_front_stream_configurations));
 	}
+#ifdef CONFIG_DCAM_SENSOR2_SUPPORT
+	else if (cameraId == 2) {
+		memcpy(s_setting[cameraId].scalerInfo.min_frame_durations, kavailable_back_ext_min_frame_durations, sizeof(kavailable_back_ext_min_frame_durations));
+		memcpy(s_setting[cameraId].scalerInfo.stall_durations, kavailable_back_ext_stall_durations, sizeof(kavailable_back_ext_stall_durations));
+		memcpy(s_setting[cameraId].scalerInfo.available_stream_configurations, kavailable_back_ext_stream_configurations, sizeof(kavailable_back_ext_stream_configurations));
+	}
+#endif
 	HAL_LOGI("id=%d format=%d", cameraId, s_setting[cameraId].scalerInfo.available_stream_configurations[0]);
 	memcpy(s_setting[cameraId].scalerInfo.processed_min_durations, kavailable_min_durations, sizeof(kavailable_min_durations));
 	s_setting[cameraId].scalerInfo.max_digital_zoom = 4.0f;

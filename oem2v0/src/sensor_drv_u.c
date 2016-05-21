@@ -1771,7 +1771,7 @@ cmr_int sns_identify(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E sensor_i
 
 IDENTIFY_SEARCH:
 	if ( sensor_cxt->sensor_identified==SCI_FALSE && ((strlen(CAMERA_SENSOR_TYPE_BACK)) || (strlen(CAMERA_SENSOR_TYPE_FRONT)) ||
-		(strlen(AT_CAMERA_SENSOR_TYPE_BACK)) || (strlen(AT_CAMERA_SENSOR_TYPE_FRONT))))
+		strlen(CAMERA_SENSOR_TYPE_BACK_EXT) ||(strlen(AT_CAMERA_SENSOR_TYPE_BACK)) || (strlen(AT_CAMERA_SENSOR_TYPE_FRONT))))
 	{
 		retValue = sns_identify_strsearch(sensor_cxt, sensor_id);
 		if ( retValue == SCI_TRUE) {

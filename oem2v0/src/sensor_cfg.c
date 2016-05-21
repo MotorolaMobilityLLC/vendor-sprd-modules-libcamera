@@ -404,8 +404,8 @@ cmr_u32 Sensor_IndexGet(struct sensor_drv_context *sensor_cxt, cmr_u32 index) {
 			mSnNum = sizeof(sensor2_infor_tab)/sizeof(SENSOR_MATCH_T)-1;
 			CMR_LOGI("sensor sensorTypeMatch main2 is %d", mSnNum );
 			for(i=0; i<mSnNum; i++) {
-				if( strcmp(sensor2_infor_tab[i].sn_name, CAMERA_SENSOR_TYPE_BACK) == 0) {
-					CMR_LOGI("sensor sensor matched  %dth  is %s", i, CAMERA_SENSOR_TYPE_BACK);
+				if( strcmp(sensor2_infor_tab[i].sn_name, CAMERA_SENSOR_TYPE_BACK_EXT) == 0) {
+					CMR_LOGI("sensor sensor matched  %dth  is %s", i, CAMERA_SENSOR_TYPE_BACK_EXT);
 					retValue = i;
 					break;
 				}

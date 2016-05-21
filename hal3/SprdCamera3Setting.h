@@ -100,6 +100,11 @@ namespace sprdcamera {
 
 #endif
 
+//#ifdef CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_2M
+#define BACK_EXT_SENSOR_ORIG_WIDTH 1600 //select according to max jpg resolution
+#define BACK_EXT_SENSOR_ORIG_HEIGHT 1200
+//#endif
+
 /* Time related macros */
 typedef int64_t nsecs_t;
 #define NSEC_PER_SEC 1000000000LL
