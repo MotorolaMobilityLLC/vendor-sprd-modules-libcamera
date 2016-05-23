@@ -1226,6 +1226,8 @@ bool SprdCamera3OEMIf::setCameraPreviewDimensions()
 	uint32_t local_width = 0, local_height = 0;
 	uint32_t mem_size = 0;
 	struct img_size preview_size, video_size = {0, 0}, capture_size = {0, 0};
+	SPRD_DEF_Tag sprddefInfo;
+	mSetting->getSPRDDEFTag(&sprddefInfo);
 
 	if(mPreviewWidth != 0 && mPreviewHeight != 0) {
 		preview_size.width = (cmr_u32)mPreviewWidth;
@@ -1244,7 +1246,8 @@ bool SprdCamera3OEMIf::setCameraPreviewDimensions()
 	if(mVideoWidth != 0 && mVideoHeight != 0) {
 		video_size.width = (cmr_u32)mVideoWidth;
 		video_size.height = (cmr_u32)mVideoHeight;
-		mCaptureMode = CAMERA_ZSL_MODE;
+		if (sprddefInfo.slowmotion <= 1)
+			mCaptureMode = CAMERA_ZSL_MODE;
 	}
 
 	SET_PARM(mCameraHandle, CAMERA_PARAM_VIDEO_SIZE, (cmr_uint)&video_size);
