@@ -132,6 +132,7 @@ const sensor_fov_tab_t back_sensor_fov_tab[] =
 	{"ov13850_mipi_raw", {4.815f, 3.6783f}, 3.95f},
 	{"s5k3m2xxm3_mipi_raw", {4.731f, 3.512f}, 4.544f},
 	{"imx214_mipi_raw",{4.731f, 3.512f}, 4.544f},
+	{"imx230_mipi_raw",{5.985f, 4.498f}, 4.75f},
 	{"", {3.50f, 2.625f}, 3.75f},
 };
 
@@ -142,6 +143,7 @@ const sensor_fov_tab_t front_sensor_fov_tab[] =
 	{"GC0310_MIPI_yuv", {1.44f, 1.08f}, 1.476f},
 	{"sr030pc50_yuv", {3.50f, 2.625f}, 3.75f},
 	{"ov5648_mipi_raw", {3.6736f, 2.7384f}, 2.481f},
+	{"s5k4h8yx_mipi_raw", {3.656f, 2.742f},  3.01f},
 	{"", {3.50f, 2.625f}, 3.75f},
 };
 
