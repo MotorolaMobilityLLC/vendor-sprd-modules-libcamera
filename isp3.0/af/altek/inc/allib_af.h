@@ -84,7 +84,7 @@ struct allib_af_input_lens_info_t {
 	uint8 lens_pos_updated;
 	uint16 lens_pos;
 	enum allib_af_lens_status lens_status;
-	uint16 manual_lens_pos_dac;
+	int16 manual_lens_pos_dac;
 };
 #pragma pack(pop)
 
@@ -579,7 +579,7 @@ struct allib_af_input_special_event {
  * alAFLIB_SET_PARAM_UPDATE_LENS_INFO,	// 7 //        when lens status change, update lens info to inform alAFLib.
  * alAFLIB_SET_PARAM_RESET_LENS_POS,	// 8 //         reset lens position to default.
  * alAFLIB_SET_PARAM_SET_LENS_MOVE_CB,	// 9 //         Set Lens move callback function when initialization
- * alAFLIB_SET_PARAM_SET_MANUAL_FOCUS_DIST,// 10 //         Set Manual focus distance
+ * alAFLIB_SET_PARAM_UPDATE_MANUAL_POS_DAC,// 10 //         update dac value of manual focus. ori: alAFLIB_SET_PARAM_SET_MANUAL_FOCUS_DIST,
  * alAFLIB_SET_PARAM_SET_ROI,		// 11 //         Set Region of interest info, e.q. face roi, Top- Left x,y position and ROI's width Height
  * alAFLIB_SET_PARAM_TUNING_ENABLE,	// 12 //         Enable Tuning, the tuning parameter is send into by tuning header alAFLIB_SET_PARAM_UPDATA_TUNING_PTR
  * alAFLIB_SET_PARAM_UPDATE_TUNING_PTR,	// 13 //         TODO, Update tuning header when enable tuning
@@ -611,7 +611,7 @@ enum allib_af_set_param_type {
 	alAFLIB_SET_PARAM_UPDATE_LENS_INFO,
 	alAFLIB_SET_PARAM_RESET_LENS_POS,
 	alAFLIB_SET_PARAM_SET_LENS_MOVE_CB,
-	alAFLIB_SET_PARAM_SET_MANUAL_FOCUS_DIST,
+	alAFLIB_SET_PARAM_UPDATE_MANUAL_POS_DAC,
 	alAFLIB_SET_PARAM_SET_ROI,
 	alAFLIB_SET_PARAM_TUNING_ENABLE,
 	alAFLIB_SET_PARAM_UPDATE_TUNING_PTR,
