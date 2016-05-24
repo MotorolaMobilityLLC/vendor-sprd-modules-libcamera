@@ -3482,6 +3482,11 @@ cmr_int isp3a_stop(cmr_handle isp_3a_handle)
 		ISP_LOGE("failed to release stat queue to AFL");
 	}
 
+	ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_SET_AF_STOP, NULL, NULL);
+	if (ret) {
+		ISP_LOGE("failed to stop af");
+	}
+
 	return ret;
 }
 
