@@ -27,6 +27,7 @@
 #include "alwrapper_af.h"
 #include "aft_interface.h"
 #include "cutils/properties.h"
+#include "isp_mlog.h"
 
 #define FEATRUE_SPRD_CAF_TRIGGER
 #define FEATURE_SPRD_AF_POSE_COMPENSATOR
@@ -2209,6 +2210,9 @@ static cmr_int afaltek_adpt_process(cmr_handle adpt_handle, void *in, void *out)
 	struct af_ctrl_process_in *proc_in = (struct af_ctrl_process_in *)in;
 	struct af_ctrl_process_out *proc_out = (struct af_ctrl_process_out *)out;
 	struct allib_af_hw_stats_t af_stats;
+	struct isp_drv_meta_af_t *p_meta_data_af;
+	uint32 total_blocks;
+	uint32 focus_value;
 
 	ISP_LOGV("E");
 	ret = al3awrapper_dispatchhw3a_afstats(proc_in->statistics_data->addr,
@@ -2252,6 +2256,14 @@ static cmr_int afaltek_adpt_process(cmr_handle adpt_handle, void *in, void *out)
 	} else {
 		ISP_LOGE("failed to process af stats");
 	}
+	p_meta_data_af = (struct isp_drv_meta_af_t *)proc_in->statistics_data->addr;
+	total_blocks = p_meta_data_af->af_stats_info.ucvalidblocks * p_meta_data_af->af_stats_info.ucvalidbanks;
+	if (9 == total_blocks)
+		focus_value = af_stats.cnt_hor[4];
+	else
+		focus_value = af_stats.cnt_hor[0];
+	isp_mlog(AF_FILE,"focus_status:%d, focus_value:%d, ",
+			cxt->af_out_obj.focus_status.t_status,focus_value);
 exit:
 	return ret;
 }

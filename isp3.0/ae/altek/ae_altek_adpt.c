@@ -24,6 +24,7 @@
 #include "alwrapper_ae_errcode.h"
 #include "sensor_exposure_queue.h"
 #include "alwrapper_yhist.h"
+#include "isp_mlog.h"
 
 
 #define AELIB_PATH "libalAELib.so"
@@ -5045,6 +5046,11 @@ static cmr_int aealtek_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_proc_
 		cxt_ptr->camera_id);
 
 	aealtek_print_lib_log(cxt_ptr, &cxt_ptr->lib_data.output_data);
+	isp_mlog(AE_FILE,"ISO:%d, exp_time:%d, exp_line:%d, again:%d, bv:%d, bg_bv:%d,d_clum:%d, c_lum:%d, t_lum:%d, sys_sof_index:%d", \
+			cxt_ptr->lib_data.output_data.udISO,cxt_ptr->lib_data.output_data.udCur_exposure_time
+			,cxt_ptr->lib_data.output_data.udexposure_line,cxt_ptr->lib_data.output_data.udsensor_ad_gain,
+			cxt_ptr->lib_data.output_data.bvresult,cxt_ptr->lib_data.output_data.bg_bvresult,(cxt_ptr->lib_data.output_data.ae_default_target)*4/100,
+			(cxt_ptr->lib_data.output_data.ae_cur_mean)*4/100,(cxt_ptr->lib_data.output_data.ae_targetmean)*4/100,cxt_ptr->lib_data.output_data.sys_sof_index);
 
 	return ISP_SUCCESS;
 exit:

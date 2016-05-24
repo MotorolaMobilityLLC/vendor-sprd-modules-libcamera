@@ -32,6 +32,7 @@
 #include "isp_3a_adpt.h"
 #include "allib_3a_ver.h"
 #include "allib_3a_ver_errcode.h"
+#include "isp_mlog.h"
 
 /**************************************** MACRO DEFINE *****************************************/
 #define ISP3A_MSG_QUEUE_SIZE                                         100
@@ -133,6 +134,18 @@ struct other_stats_info {
 	struct isp3a_statistics_data sub_sample_buffer[ISP3A_STATISTICS_BUF_NUM];
 };
 
+struct irp_info {
+	cmr_u32 contrast;
+	cmr_u32 saturation;
+	cmr_u32 sharpness;
+	cmr_u32 effect;
+	cmr_u32 mode;
+	cmr_u32 quality;
+	cmr_u32 sensor_id;
+	cmr_u32 s_width;
+	cmr_u32 s_height;
+};
+
 struct stats_buf_context {
 	struct isp3a_statistics_data *ae_stats_buf_ptr;
 	struct isp3a_statistics_data *awb_stats_buf_ptr;
@@ -166,6 +179,7 @@ struct isp3a_fw_context {
 	struct ae_info ae_cxt;
 	struct af_info af_cxt;
 	struct afl_info afl_cxt;
+	struct irp_info irp_cxt;
 	struct stats_buf_context stats_buf_cxt;
 	struct other_stats_info  other_stats_cxt;
 	void *setting_param_ptr;
@@ -1654,6 +1668,7 @@ cmr_int isp3a_set_effect(cmr_handle isp_3a_handle, void *param_ptr)
 	}
 	dev_ioctrl_in.value = *((cmr_u32*)param_ptr);
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_ACCESS_SET_SPECIAL_EFFECT, &dev_ioctrl_in, NULL);
+	cxt->irp_cxt.effect = dev_ioctrl_in.value;
 exit:
 	return ret;
 }
@@ -1688,6 +1703,8 @@ cmr_int isp3a_set_contrast(cmr_handle isp_3a_handle, void *param_ptr)
 	dev_ioctrl_in.value = *((cmr_u32*)param_ptr);
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_ACCESS_SET_CONSTRACT, &dev_ioctrl_in, NULL);
 
+	cxt->irp_cxt.contrast = dev_ioctrl_in.value;
+
 exit:
 	return ret;
 }
@@ -1720,6 +1737,8 @@ cmr_int isp3a_set_saturation(cmr_handle isp_3a_handle, void *param_ptr)
 
 	dev_ioctrl_in.value = *((cmr_u32*)param_ptr);
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_ACCESS_SET_SATURATION, &dev_ioctrl_in, NULL);
+
+	cxt->irp_cxt.saturation = dev_ioctrl_in.value;
 exit:
 	return ret;
 }
@@ -1926,6 +1945,7 @@ cmr_int isp3a_set_sharpness(cmr_handle isp_3a_handle, void *param_ptr)
 	}
 	dev_ioctrl_in.value = *((cmr_u32*)param_ptr);
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_ACCESS_SET_SHARPNESS, &dev_ioctrl_in, NULL);
+	cxt->irp_cxt.sharpness = dev_ioctrl_in.value;
 exit:
 	return ret;
 }
@@ -3232,6 +3252,10 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 		ISP_LOGE("failed to cfg sof info");
 	}
 	ISP_LOGI("test msg 2");
+
+	isp_mlog(IRP_FILE,"contrast:%d,saturation:%d,sharpness:%d,effect:%d,mode:%d,quality:%d,sensor_id:%d,s_width:%d,s_height:%d",
+			cxt->irp_cxt.contrast,cxt->irp_cxt.saturation ,cxt->irp_cxt.sharpness,cxt->irp_cxt.effect
+			,cxt->irp_cxt.mode,cxt->irp_cxt.quality,cxt->irp_cxt.sensor_id,cxt->irp_cxt.s_width,cxt->irp_cxt.s_height);
 	return ret;
 }
 
@@ -3422,6 +3446,10 @@ cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start *input_ptr)
 		}
 	}
 
+	cxt->irp_cxt.mode = input_ptr->work_mode;
+	cxt->irp_cxt.sensor_id = cxt->camera_id;
+	cxt->irp_cxt.s_width = input_ptr->resolution_info.crop.width;
+	cxt->irp_cxt.s_height = input_ptr->resolution_info.crop.height;
 	ae_in.work_param.work_mode = input_ptr->work_mode;
 	ae_in.work_param.capture_mode = input_ptr->capture_mode;
 	ae_in.work_param.is_refocus = input_ptr->is_refocus;
