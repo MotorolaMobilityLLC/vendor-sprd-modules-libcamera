@@ -6555,7 +6555,14 @@ void SprdCameraHardware::sendPreviewFrameToApp(struct camera_frame_type *frame, 
 			{
 				Mutex::Autolock pcpl(&mPrevBufLock);
 				if (mPreviewHeapArray) {
-					LOGD("sendPreviewFrameToApp: data addr is 0x%lx, dataSize = 0x%lx", mPreviewHeapArray[mPreviewDcamAllocBufferCnt -1]->camera_memory->data, dataSize);
+					if(mGetMemory_cb) {
+						camera_memory_t *mem = mGetMemory_cb(-1, dataSize, 1, 0);
+						mPreviewHeapArray[mPreviewDcamAllocBufferCnt -1]->camera_memory = mem;
+					}
+
+					LOGI("sendPreviewFrameToApp: camera_memory addr is 0x%lx, dataSize = %d", mPreviewHeapArray[mPreviewDcamAllocBufferCnt -1]->camera_memory, dataSize);
+					if(!mPreviewHeapArray[mPreviewDcamAllocBufferCnt -1]->camera_memory || !mPreviewHeapArray[mPreviewDcamAllocBufferCnt -1]->camera_memory->data)
+						return;
 					if(0 == strcmp(mParameters.getPreviewFormat(), "yuv420p"))
 						uv420SPTouv420P((char*)mPreviewHeapArray[mPreviewDcamAllocBufferCnt -1]->camera_memory->data,(char *)frame->y_vir_addr, frame->width, frame->height);
 					else
