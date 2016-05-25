@@ -938,12 +938,25 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 
 	ISP_LOGI("caf_trig %d", aft_out.is_caf_trig);
 	if ((!cxt->aft_proc_result.is_caf_trig) && aft_out.is_caf_trig) {
+		/* caf roi 1/16 raw */
+		roi.valid_win = 1;
+		if (!cxt->sensor_info.crop_info.width || !cxt->sensor_info.crop_info.height) {
+			ISP_LOGE("error crop width %d height %d",
+				cxt->sensor_info.crop_info.width,
+				cxt->sensor_info.crop_info.height);
+			goto exit;
+		}
+		roi.win[0].start_x = 3 * cxt->sensor_info.crop_info.width / 8;
+		roi.win[0].start_y = 3 * cxt->sensor_info.crop_info.height / 8;
+		roi.win[0].end_x = 5 * cxt->sensor_info.crop_info.width / 8;
+		roi.win[0].end_y = 5 * cxt->sensor_info.crop_info.height / 8;
+
 		/* notify oem to show box */
 		ret = afaltek_adpt_start_notify(adpt_handle);
 		if (ret)
 			ISP_LOGE("failed to notify");
 		ret = afaltek_adpt_config_roi(adpt_handle, &roi,
-					alAFLib_ROI_TYPE_TOUCH, &lib_roi);
+					alAFLib_ROI_TYPE_NORMAL, &lib_roi);
 		if (ret)
 			ISP_LOGE("failed to config roi");
 		ret = afaltek_adpt_pre_start(adpt_handle, &lib_roi);
@@ -1443,13 +1456,6 @@ static cmr_int afaltek_adpt_config_roi(cmr_handle adpt_handle,
 			roi_out->roi[i].uw_dx = roi_in->win[i].end_x - roi_in->win[i].start_x;
 			roi_out->roi[i].uw_dy = roi_in->win[i].end_y - roi_in->win[i].start_y;
 		}
-		roi_out->weight[0] = 1;
-	} else {
-		roi_out->num_roi = 1;
-		roi_out->roi[0].uw_left = cxt->sensor_info.crop_info.x;
-		roi_out->roi[0].uw_top = cxt->sensor_info.crop_info.y;
-		roi_out->roi[0].uw_dx = cxt->sensor_info.crop_info.width;
-		roi_out->roi[0].uw_dy = cxt->sensor_info.crop_info.height;
 		roi_out->weight[0] = 1;
 	}
 	ISP_LOGI("left = %d, top = %d, dx = %d, dy = %d",
