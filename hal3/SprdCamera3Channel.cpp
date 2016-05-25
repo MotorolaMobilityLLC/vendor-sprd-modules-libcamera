@@ -344,6 +344,13 @@ int SprdCamera3RegularChannel::addStream(camera_stream_type_t stream_type, camer
 		return BAD_VALUE;
 	}
 
+	for(int i = 1; i < CHANNEL_REGULAR_MAX; i ++){
+		if((index != 0 ) && (index != i) && mCamera3Stream[i] != NULL){
+			delete mCamera3Stream[i];
+			mCamera3Stream[i] = NULL;
+		}
+	}
+
 	if(mCamera3Stream[index])
 	{
 		mCamera3Stream[index]->getStreamType(&oldstream_type);
