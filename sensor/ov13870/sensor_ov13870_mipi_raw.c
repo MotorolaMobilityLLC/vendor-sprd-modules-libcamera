@@ -1417,7 +1417,7 @@ static SENSOR_STATIC_INFO_T s_ov13870_static_info = {
 	0,	//ois_supported;
 	0,	//pdaf_supported;
 	1,	//exp_valid_frame_num;N+2-1
-	32,	//clamp_level,black level
+	64,	//clamp_level,black level
 	1,	//adgain_valid_frame_num;N+1-1
 };
 
