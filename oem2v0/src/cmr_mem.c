@@ -116,11 +116,13 @@ static const struct cap_size_to_mem back_cam_mem_size_tab[IMG_SIZE_NUM] = {
 /* for whale2, how to calculate cap size(raw capture):
 * target_yuv = w * h * 3 / 2;
 * cap_yuv = w * h * 3 / 2;
-* cap_raw = w * h * 5 / 4, resue target_yuv or cap_yuv
-* cap_raw2 = w * h * 4 / 3 * 2, altek raw, for tuning
+* cap_raw = w * h * 3 / 2, resue target_yuv or cap_yuv
+* cap_raw2 = w * h * 3 / 2 * 2, altek raw, for tuning
+* thum_yuv = thumW * thumH * 3 / 2; for thumbnail yuv
+* thum_jpeg = thumW * thumH * 3 / 2; for thumbnail jpeg
 * target_jpeg, resue
 * so, the total cap size is:
-* w * h * 3 / 2 + w * h * 3 / 2 + w * h * 4 / 3 * 2 = 17 / 3 * w * h (bytes);
+* w * h * 3 / 2 + w * h * 3 / 2 + w * h * 3 / 2 * 2 + thumW * thumH * 3 = 6 * w * h + thumW * thumH * 3(bytes);
 */
 /* now because isp postproc issue, need nore buffers, when they fix their bugs,
 * we can change it smaller
@@ -131,9 +133,9 @@ static const struct cap_size_to_mem back_cam_raw_mem_size_tab[IMG_SIZE_NUM] = {
 	{PIXEL_3P0_MEGA, (45 << 20)},
 	{PIXEL_4P0_MEGA, (45 << 20)},
 	{PIXEL_5P0_MEGA, (45 << 20)},
-	{PIXEL_6P0_MEGA, (45 << 20)},
-	{PIXEL_7P0_MEGA, (45 << 20)},
-	{PIXEL_8P0_MEGA, (45 << 20)},
+	{PIXEL_6P0_MEGA, (50 << 20)},
+	{PIXEL_7P0_MEGA, (50 << 20)},
+	{PIXEL_8P0_MEGA, (50 << 20)},
 	{PIXEL_9P0_MEGA, (72 << 20)},
 	{PIXEL_AP0_MEGA, (72 << 20)},
 	{PIXEL_BP0_MEGA, (72 << 20)},
@@ -155,14 +157,14 @@ static const struct cap_size_to_mem front_cam_mem_size_tab[IMG_SIZE_NUM] = {
 	{PIXEL_8P0_MEGA, (26 << 20)}
 };
 static const struct cap_size_to_mem front_cam_raw_mem_size_tab[IMG_SIZE_NUM] = {
-	{PIXEL_1P3_MEGA, (10  << 20)},
-	{PIXEL_2P0_MEGA, (10  << 20)},
-	{PIXEL_3P0_MEGA, (15 << 20)},
-	{PIXEL_4P0_MEGA, (20 << 20)},
-	{PIXEL_5P0_MEGA, (24 << 20)},
-	{PIXEL_6P0_MEGA, (22 << 20)},
-	{PIXEL_7P0_MEGA, (25 << 20)},
-	{PIXEL_8P0_MEGA, (45 << 20)}
+	{PIXEL_1P3_MEGA, (50 << 20)},
+	{PIXEL_2P0_MEGA, (50 << 20)},
+	{PIXEL_3P0_MEGA, (50 << 20)},
+	{PIXEL_4P0_MEGA, (50 << 20)},
+	{PIXEL_5P0_MEGA, (50 << 20)},
+	{PIXEL_6P0_MEGA, (50 << 20)},
+	{PIXEL_7P0_MEGA, (50 << 20)},
+	{PIXEL_8P0_MEGA, (50 << 20)}
 };
 
 /*for ATV*/

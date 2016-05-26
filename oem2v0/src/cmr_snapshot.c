@@ -1322,8 +1322,8 @@ cmr_int snp_start_convet_thumb(cmr_handle snp_handle, void *data)
 		property_get("debug.camera.save.snpfile", value, "0");
 		if (atoi(value) == 6) {
 			camera_save_to_file(SNP_THUMB_DATA, IMG_DATA_TYPE_YUV420,
-								src.size.width,
-								src.size.height,
+								dst.size.width,
+								dst.size.height,
 								&dst.addr_vir);
 		}
 	} else {
