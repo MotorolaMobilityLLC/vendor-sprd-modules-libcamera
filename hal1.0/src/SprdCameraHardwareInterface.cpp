@@ -2691,6 +2691,23 @@ void SprdCameraHardware::setCameraPreviewMode(bool isRecordMode)
 		fps_param.video_mode = 0;
 	}
 	SET_PARM(mCameraHandle, CAMERA_PARAM_PREVIEW_FPS, (cmr_uint)&fps_param);
+
+	//set ae target fps
+	struct cmr_range_fps_param ae_fps_param;
+	ae_fps_param.is_recording = isRecordMode;
+	if (isRecordMode) {
+		ae_fps_param.min_fps = 30;
+		ae_fps_param.max_fps = 30;
+		ae_fps_param.video_mode = 1;
+	} else {
+		ae_fps_param.min_fps = 5;
+		ae_fps_param.max_fps =30;
+		ae_fps_param.video_mode = 0;
+	}
+
+	LOGI("setCameraPreviewMode:state: %d, owner: %d", ae_fps_param.min_fps,ae_fps_param.max_fps );
+	SET_PARM(mCameraHandle, CAMERA_PARAM_RANGE_FPS, (cmr_uint)&ae_fps_param);
+
 }
 
 bool SprdCameraHardware::isRecordingMode()
