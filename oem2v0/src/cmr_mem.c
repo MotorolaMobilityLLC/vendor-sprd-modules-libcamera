@@ -946,6 +946,7 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm,
 	cap_mem->target_yuv.fmt = IMG_DATA_TYPE_YUV420;
 
 	/* update io param */
+	CMR_NO_MEM(max_size * 3 / 2 + max_size * 2 + raw2_size, mem_res);
 	*io_mem_res = mem_res - (max_size * 3 / 2 + max_size * 2 + raw2_size);
 	*io_mem_end = mem_end + max_size * 3 / 2 + max_size * 2 + raw2_size;
 	*io_channel_size = channel_size;
