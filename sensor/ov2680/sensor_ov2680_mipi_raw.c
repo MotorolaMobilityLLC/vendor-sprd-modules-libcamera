@@ -79,6 +79,7 @@ LOCAL unsigned long _ov2680_flash(SENSOR_HW_HANDLE handle, unsigned long param);
 LOCAL uint32_t _ov2680_com_Identify_otp(SENSOR_HW_HANDLE handle, void* param_ptr);
 LOCAL unsigned long _ov2680_cfg_otp(SENSOR_HW_HANDLE handle, unsigned long  param);
 LOCAL unsigned long _ov2680_access_val(SENSOR_HW_HANDLE handle, unsigned long param);
+LOCAL unsigned long _ov2680_ex_write_exposure(SENSOR_HW_HANDLE handle, unsigned long param);
 
 LOCAL const struct raw_param_info_tab s_ov2680_raw_param_tab[]={
 	//{ov2680_RAW_PARAM_Sunny, &s_ov2680_mipi_raw_info, _ov2680_Sunny_Identify_otp, update_otp},
@@ -701,7 +702,7 @@ LOCAL SENSOR_IOCTL_FUNC_TAB_T s_ov2680_ioctl_func_tab = {
 	PNULL,
 	PNULL,//_ov2680_write_exposure,
 	PNULL,
-	PNULL,//_ov2680_write_gain,
+	_ov2680_write_gain,
 	PNULL,
 	PNULL,
 	PNULL,//_ov2680_write_af,
@@ -723,7 +724,7 @@ LOCAL SENSOR_IOCTL_FUNC_TAB_T s_ov2680_ioctl_func_tab = {
 	_ov2680_StreamOn,
 	_ov2680_StreamOff,
 	_ov2680_access_val,//_ov2680_access_val
-	//_ov2680_ex_write_exposure,
+	_ov2680_ex_write_exposure,
 };
 
 static SENSOR_STATIC_INFO_T s_ov2680_static_info = {
@@ -1411,23 +1412,18 @@ LOCAL unsigned long _ov2680_Identify(SENSOR_HW_HANDLE handle, unsigned long para
 	return ret_value;
 }
 
-LOCAL unsigned long _ov2680_write_exposure(SENSOR_HW_HANDLE handle, unsigned long param)
+LOCAL unsigned long _ov2680_write_exp_dummy(SENSOR_HW_HANDLE handle, uint16_t expsure_line,
+		uint16_t dummy_line, uint16_t size_index)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
-	uint16_t expsure_line=0x00;
-	uint16_t dummy_line=0x00;
+
 	uint16_t frame_len=0x00;
 	uint16_t frame_len_cur=0x00;
 	uint16_t max_frame_len=0x00;
-	uint16_t size_index=0x00;
 	uint16_t value=0x00;
 	uint16_t value0=0x00;
 	uint16_t value1=0x00;
 	uint16_t value2=0x00;
-
-	expsure_line=param&0xffff;
-	dummy_line=(param>>0x10)&0xffff;
-	size_index=(param>>0x1c)&0x0f;
 
 	SENSOR_PRINT("SENSOR_ov2680: write_exposure line:%d, dummy:%d, size_index:%d\n", expsure_line, dummy_line, size_index);
 	SENSOR_PRINT("SENSOR_ov2680: read reg :0x3820=%x\n", Sensor_ReadReg(0x3820));
@@ -1464,31 +1460,46 @@ LOCAL unsigned long _ov2680_write_exposure(SENSOR_HW_HANDLE handle, unsigned lon
 	return ret_value;
 }
 
-LOCAL unsigned long _ov2680_ex_write_exposure(unsigned long param)
+LOCAL unsigned long _ov2680_write_exposure(SENSOR_HW_HANDLE handle, unsigned long param)
+{
+	uint32_t ret_value = SENSOR_SUCCESS;
+	uint32_t expsure_line = 0x00;
+	uint32_t dummy_line = 0x00;
+	uint32_t size_index=0x00;
+
+
+	expsure_line=param&0xffff;
+	dummy_line=(param>>0x10)&0x0fff;
+	size_index=(param>>0x1c)&0x0f;
+
+	ret_value = _ov2680_write_exp_dummy(handle, expsure_line, dummy_line, size_index);
+
+	return ret_value;
+}
+
+LOCAL unsigned long _ov2680_ex_write_exposure(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint16_t exposure_line = 0x00;
 	uint16_t dummy_line = 0x00;
 	uint16_t size_index=0x00;
 	struct sensor_ex_exposure  *ex = (struct sensor_ex_exposure*)param;
-	float fps = 0.0;
 
 
 	if (!param) {
 		SENSOR_PRINT_ERR("param is NULL !!!");
 		return ret_value;
 	}
+
 	exposure_line = ex->exposure;
 	dummy_line = ex->dummy;
 	size_index = ex->size_index;
-	//if (s_exp == exposure_line && s_dummy == dummy_line)
-	//	return 0;
-	//s_exp = exposure_line;
-	//s_dummy = dummy_line;
-	//ret_value = _ov2680_write_exp_dummy(exposure_line, dummy_line, size_index);
+
+	ret_value = _ov2680_write_exp_dummy(handle, exposure_line, dummy_line, size_index);
 
 	return ret_value;
 }
+
 LOCAL unsigned long _ov2680_write_gain(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
