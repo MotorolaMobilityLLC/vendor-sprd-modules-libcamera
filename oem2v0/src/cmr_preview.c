@@ -4955,13 +4955,8 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id)
 		act_video_size->height = video_size->height;
 	}
 
-	if (IMG_ANGLE_90 == cap_rot || IMG_ANGLE_270 == cap_rot) {
-		act_pic_size->width  = alg_pic_size->height;
-		act_pic_size->height = alg_pic_size->width;
-	} else {
-		act_pic_size->width  = alg_pic_size->width;
-		act_pic_size->height = alg_pic_size->height;
-	}
+	act_pic_size->width  = alg_pic_size->width;
+	act_pic_size->height = alg_pic_size->height;
 
 	CMR_LOGI("org_pic_size %d %d, aligned_pic_size %d %d, actual_pic_size %d %d",
 		org_pic_size->width, org_pic_size->height,
