@@ -545,6 +545,9 @@ static void afaltek_adpt_config_mode(cmr_int mode_in, cmr_int *mode_out)
 	case ISP_FOCUS_BYPASS:
 		*mode_out = AF_CTRL_MODE_MANUAL;
 		break;
+	case ISP_FOCUS_MACRO_FIXED:
+		*mode_out = AF_CTRL_MODE_MACRO_FIXED;
+		break;
 	default:
 		*mode_out = AF_CTRL_MODE_AUTO;
 		ISP_LOGE("oem send a wrong mode");
@@ -570,12 +573,6 @@ static cmr_int afaltek_adpt_set_mode(cmr_handle adpt_handle, cmr_int mode)
 
 	switch (ctrl_mode) {
 	case AF_CTRL_MODE_MACRO:
-		p.u_set_data.focus_mode_type = alAFLib_AF_MODE_MANUAL;
-		ret = afaltek_adpt_set_parameters(cxt, &p);
-		pos_info.motor_offset = 0;
-		pos_info.motor_pos = 1023;
-		ret = afaltek_adpt_set_vcm_pos(cxt, &pos_info);
-		break;
 	case AF_CTRL_MODE_AUTO:
 #ifdef FEATRUE_SPRD_CAF_TRIGGER
 		afaltek_adpt_caf_stop(cxt);
@@ -643,6 +640,13 @@ static cmr_int afaltek_adpt_set_mode(cmr_handle adpt_handle, cmr_int mode)
 	case AF_CTRL_MODE_BYPASS:
 		p.u_set_data.focus_mode_type = alAFLib_AF_MODE_MANUAL;
 		ret = afaltek_adpt_set_parameters(cxt, &p);
+		break;
+	case AF_CTRL_MODE_MACRO_FIXED:
+		p.u_set_data.focus_mode_type = alAFLib_AF_MODE_MANUAL;
+		ret = afaltek_adpt_set_parameters(cxt, &p);
+		pos_info.motor_offset = 0;
+		pos_info.motor_pos = 1023;
+		ret = afaltek_adpt_set_vcm_pos(cxt, &pos_info);
 		break;
 	default:
 		ISP_LOGE("error mode");
