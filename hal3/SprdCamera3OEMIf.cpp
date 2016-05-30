@@ -403,8 +403,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mZslMapNum = 2;
 #else
 	mZslMaxFrameNum = 0;
-	mZslMaxBuffNum = 2;
-	mZslMapNum = 2;
+	mZslMaxBuffNum = 3;
+	mZslMapNum = 3;
 #endif
 	mZslShotPushFlag = 0;
 	mZslChannelStatus = 1;
