@@ -306,6 +306,8 @@ static int ispCtrlFlash(uint32_t param, uint32_t status)
 
 int SprdCamera3HWI::openCamera(struct hw_device_t **hw_device)
 {
+	HAL_LOGD("E");
+
 	int ret = 0;
 	Mutex::Autolock l(mLock);
 
@@ -335,6 +337,7 @@ int SprdCamera3HWI::openCamera(struct hw_device_t **hw_device)
 	} else
 		*hw_device = NULL;
 
+	HAL_LOGD("X");
 	return ret;
 }
 
@@ -383,6 +386,7 @@ int SprdCamera3HWI::openCamera()
 
 int SprdCamera3HWI::closeCamera()
 {
+	HAL_LOGD("E");
 	int ret = NO_ERROR;
 
 	if (mOEMIf) {
@@ -398,6 +402,7 @@ int SprdCamera3HWI::closeCamera()
 
 	mCameraOpened = false;
 
+	HAL_LOGD("X");
 	return ret;
 }
 
