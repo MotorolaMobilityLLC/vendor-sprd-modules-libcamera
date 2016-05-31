@@ -150,7 +150,7 @@ const sensor_fov_tab_t front_sensor_fov_tab[] =
 const sensor_fov_tab_t third_sensor_fov_tab[] =
 {
 	{"imx132_mipi_raw", {3.629f, 2.722f}, 3.486f},
-	{"ov2680_mipi_raw", {3.50f, 2.625f}, 3.75f},
+	{"ov2680_mipi_raw", {2.84f, 2.15f}, 2.15f},
 	{"", {3.50f, 2.625f}, 3.75f},
 };
 
