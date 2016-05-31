@@ -2135,7 +2135,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId)
 	else if(cameraId == 1)
 		s_setting[cameraId].lensInfo.facing =  ANDROID_LENS_FACING_FRONT;
 	else
-		s_setting[cameraId].lensInfo.facing =  ANDROID_LENS_FACING_EXTERNAL;
+		s_setting[cameraId].lensInfo.facing =  ANDROID_LENS_FACING_BACK;
 
 	//jpeg
 	memcpy(s_setting[cameraId].jpgInfo.available_thumbnail_sizes, camera3_default_info.common.jpegThumbnailSizes, sizeof(camera3_default_info.common.jpegThumbnailSizes));
