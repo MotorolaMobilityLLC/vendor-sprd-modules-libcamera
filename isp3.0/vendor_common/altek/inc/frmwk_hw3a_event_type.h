@@ -156,6 +156,15 @@ enum awb_states_type_t {
 	AL3A_WB_STATE_UNDER_FLASHON_AWB_DONE,
 };
 
+/*
+enum flicker_state_t {
+	FLICKER_NOT_INITED = 0,
+	FLICKER_RUNNING,
+	FLICKER_DISABLED,
+	FLICKER_LOCKED,
+	FLICKER_STATE_MAX
+} ;
+*/
 
 #pragma pack(push) /* push current alignment setting to stack */
 #pragma pack(4)    /* new alignment setting */
@@ -351,6 +360,7 @@ struct af_report_update_t {
 #pragma pack(push) /* push current alignment setting to stack */
 #pragma pack(4)    /* new alignment setting */
 struct flicker_report_update_t {
+	//enum flicker_state_t  flicker_LibStates;           /* Flicker running status, refer to ae_state_t */
 	uint8   IsEnableFlickerDebugReport;             /* 0: disable debug report, 1: enable debug report */
 
 	/* common exif info for Altek exif reader */
