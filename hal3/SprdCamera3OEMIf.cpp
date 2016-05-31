@@ -3052,8 +3052,8 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 
 #ifdef CONFIG_CAMERA_EIS
 					HAL_LOGI("eis_enable = %d", sprddefInfo.sprd_eis_enabled);
-					if(mGyroInit && !mGyroDeinit){
-						if(mRecordingMode && sprddefInfo.sprd_eis_enabled){
+					if(mRecordingMode && sprddefInfo.sprd_eis_enabled){
+						if(mGyroInit && !mGyroDeinit){
 							int64_t boot_time = frame->monoboottime;
 							int64_t ae_time =frame->ae_time;
 							int64_t sleep_time = boot_time -buffer_timestamp;
@@ -3073,23 +3073,28 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 							frame_in.timestamp = frame_in.timestamp /1000000000;
 							frame_in.zoom = (double)zoom_ratio;
 							frame_out = processEIS(frame_in);
-							HAL_LOGD("transfer_matrix wrap %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf", frame_out.warp.dat[0][0], frame_out.warp.dat[0][1], frame_out.warp.dat[0][2], frame_out.warp.dat[1][0], frame_out.warp.dat[1][1], frame_out.warp.dat[1][2], frame_out.warp.dat[2][0], frame_out.warp.dat[2][1], frame_out.warp.dat[2][2]);
+							HAL_LOGD("transfer_matrix wrap %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf",
+								frame_out.warp.dat[0][0], frame_out.warp.dat[0][1], frame_out.warp.dat[0][2],
+								frame_out.warp.dat[1][0], frame_out.warp.dat[1][1], frame_out.warp.dat[1][2],
+								frame_out.warp.dat[2][0], frame_out.warp.dat[2][1], frame_out.warp.dat[2][2]);
 
 							EIS_CROP_Tag eiscrop_Info;
-							eiscrop_Info.crop[0] = (int)((float) mParam.src_w /12 + 0.5) + frame_out.warp.dat[0][2];
-							eiscrop_Info.crop[1] = (int)((float) mParam.src_h /12 + 0.5)+frame_out.warp.dat[1][2];
-							eiscrop_Info.crop[2] = (int)((float) mParam.src_w /12 + 0.5) + frame_out.warp.dat[0][2] + mParam.dst_w;
-							eiscrop_Info.crop[3] = (int)((float) mParam.src_h /12 + 0.5) +frame_out.warp.dat[1][2] + mParam.dst_h;
+							double crop_start_w = frame_out.warp.dat[0][2] + mParam.src_w /12;
+							double crop_start_h = frame_out.warp.dat[1][2] + mParam.src_h /12;
+							eiscrop_Info.crop[0] = (int)(crop_start_w + 0.5);
+							eiscrop_Info.crop[1] = (int)(crop_start_h + 0.5);
+							eiscrop_Info.crop[2] = (int)(crop_start_w + 0.5) + mParam.dst_w;
+							eiscrop_Info.crop[3] = (int)(crop_start_h + 0.5) + mParam.dst_h;
+							mSetting->setEISCROPTag(eiscrop_Info);
+						}else{
+							HAL_LOGW("gyro is not enable, eis process is not work");
+							EIS_CROP_Tag eiscrop_Info;
+							eiscrop_Info.crop[0] = 0;
+							eiscrop_Info.crop[1] = 0;
+							eiscrop_Info.crop[2] = mParam.src_w;
+							eiscrop_Info.crop[3] = mParam.src_h;
 							mSetting->setEISCROPTag(eiscrop_Info);
 						}
-					}else{
-						HAL_LOGW("gyro is not enable, eis process is not work");
-						EIS_CROP_Tag eiscrop_Info;
-						eiscrop_Info.crop[0] = 0;
-						eiscrop_Info.crop[1] = 0;
-						eiscrop_Info.crop[2] = mParam.src_w;
-						eiscrop_Info.crop[3] = mParam.src_h;
-						mSetting->setEISCROPTag(eiscrop_Info);
 					}
 #endif
 
@@ -6671,7 +6676,7 @@ void SprdCamera3OEMIf::EIS_init() {
 	mParam.td  = 0.001;
 	mParam.ts  = 0.013;
 	video_stab_open(&mInst, &mParam);
-	HAL_LOGD("mParam src_w: %d, src_h:%d, dst_w:%d, dst_h:%d",mParam.src_w,mParam.src_h, mParam.dst_w, mParam.dst_h);
+	HAL_LOGI("mParam src_w: %d, src_h:%d, dst_w:%d, dst_h:%d",mParam.src_w,mParam.src_h, mParam.dst_w, mParam.dst_h);
 }
 
 vsOutFrame SprdCamera3OEMIf::processEIS(vsInFrame frame_in)
@@ -6680,17 +6685,18 @@ vsOutFrame SprdCamera3OEMIf::processEIS(vsInFrame frame_in)
 	int gyro_end =0;
 	int gyro_num = 0;
 	int i;
+	int ret_eis = -1;
 	vsGyro* gyro =NULL;
 	vsOutFrame frame_out_preview;
 	frame_out_preview.frame_data = NULL;
 
-	HAL_LOGD("frame_in.timestamp: %lf, mGyromaxtimestamp %lf",frame_in.timestamp,mGyromaxtimestamp);
+	HAL_LOGI("frame_in.timestamp: %lf, mGyromaxtimestamp %lf",frame_in.timestamp,mGyromaxtimestamp);
 	while(mGyroInit && !mGyroDeinit && mGyromaxtimestamp < (frame_in.timestamp + mParam.td + mParam.ts /2)){
 		usleep(5*1000);
 	}
 	gyro_start = mGyrostart;
 	gyro_end = mGyroend;
-	HAL_LOGD("gyro_start = %d, gyro_end = %d",gyro_start, gyro_end);
+	HAL_LOGI("gyro_start = %d, gyro_end = %d",gyro_start, gyro_end);
 	mGyrostart = gyro_end;
 	if(gyro_end >= gyro_start)
 		gyro_num = gyro_end -gyro_start;
@@ -6710,8 +6716,15 @@ vsOutFrame SprdCamera3OEMIf::processEIS(vsInFrame frame_in)
 		}
 	}
 	video_stab_write(mInst, &frame_in, gyro, gyro_num);
-	video_stab_read(mInst, &frame_out_preview);
-	HAL_LOGD("frame_in 0x%lx, frame_out 0x%lx", frame_in.frame_data,frame_out_preview.frame_data);
+	ret_eis = video_stab_read(mInst, &frame_out_preview);
+	if(ret_eis == 0){
+		HAL_LOGI("frame_in 0x%lx, frame_out 0x%lx", frame_in.frame_data,frame_out_preview.frame_data);
+	}else{
+		HAL_LOGE("fail to read matrix,use unit matrix instead");
+		frame_out_preview.warp.dat[0][0] = frame_out_preview.warp.dat[1][1] = frame_out_preview.warp.dat[2][2] = 1.0;
+		frame_out_preview.warp.dat[0][1] = frame_out_preview.warp.dat[0][2] = frame_out_preview.warp.dat[1][0] = 0.0;
+		frame_out_preview.warp.dat[1][2] = frame_out_preview.warp.dat[2][0] = frame_out_preview.warp.dat[2][1] = 0.0;
+	}
 	if(gyro){
 		delete gyro;
 		gyro = NULL;
