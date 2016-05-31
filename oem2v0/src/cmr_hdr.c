@@ -157,7 +157,7 @@ static cmr_int hdr_open(cmr_handle ipm_handle, struct ipm_open_in *in, struct ip
 
 	*class_handle = (cmr_handle)hdr_handle;
 #ifdef CONFIG_SPRD_HDR_LIB
-	pool_init ();
+	sprd_hdr_pool_init();
 #endif
 	return ret;
 
@@ -193,7 +193,7 @@ static cmr_int hdr_close(cmr_handle class_handle)
 		free(hdr_handle);
 
 #ifdef CONFIG_SPRD_HDR_LIB
-		pool_destroy();
+		sprd_hdr_pool_destroy();
 #endif
 
 	return ret;

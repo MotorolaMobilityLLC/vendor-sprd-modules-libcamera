@@ -7,9 +7,9 @@
 extern "C"
 {
 #endif
-void pool_init ();//线程初始化
+void sprd_hdr_pool_init();//线程初始化
 int HDR_Function(BYTE *Y0, BYTE *Y1, BYTE *Y2, BYTE* output, int height, int width, char *format);
-int pool_destroy ();//线程销毁
+int sprd_hdr_pool_destroy();//线程销毁
 #ifdef __cplusplus
 }
 #endif
