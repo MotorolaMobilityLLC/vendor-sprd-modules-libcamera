@@ -136,11 +136,11 @@ static const struct cap_size_to_mem back_cam_raw_mem_size_tab[IMG_SIZE_NUM] = {
 	{PIXEL_6P0_MEGA, (50 << 20)},
 	{PIXEL_7P0_MEGA, (50 << 20)},
 	{PIXEL_8P0_MEGA, (50 << 20)},
-	{PIXEL_9P0_MEGA, (72 << 20)},
-	{PIXEL_AP0_MEGA, (72 << 20)},
-	{PIXEL_BP0_MEGA, (72 << 20)},
-	{PIXEL_CP0_MEGA, (72 << 20)},
-	{PIXEL_DP0_MEGA, (72 << 20)},
+	{PIXEL_9P0_MEGA, (78 << 20)},
+	{PIXEL_AP0_MEGA, (78 << 20)},
+	{PIXEL_BP0_MEGA, (78 << 20)},
+	{PIXEL_CP0_MEGA, (78 << 20)},
+	{PIXEL_DP0_MEGA, (78 << 20)},
 	{PIXEL_10P0_MEGA, (105 << 20)},
 	{PIXEL_15P0_MEGA, (144 << 20)}
 };
@@ -918,8 +918,8 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm,
 	cap_mem->cap_raw.fd = cap_mem->cap_yuv.fd;
 	cap_mem->cap_raw.buf_size = raw_size;
 
-	cap_mem->cap_raw2.addr_phy.addr_y = cap_2_frm->mem_frm.addr_phy.addr_y + max_size * 3 / 2 + max_size * 2;
-	cap_mem->cap_raw2.addr_vir.addr_y = cap_2_frm->mem_frm.addr_vir.addr_y + max_size * 3 / 2 + max_size * 2;
+	cap_mem->cap_raw2.addr_phy.addr_y = cap_2_frm->mem_frm.addr_phy.addr_y + max_size * 3 / 2 + max_size * 3/2;
+	cap_mem->cap_raw2.addr_vir.addr_y = cap_2_frm->mem_frm.addr_vir.addr_y + max_size * 3 / 2 + max_size * 3/2;
 	cap_mem->cap_raw2.fd = cap_2_frm->mem_frm.fd;
 	cap_mem->cap_raw2.buf_size = raw2_size;
 
@@ -946,9 +946,9 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm,
 	cap_mem->target_yuv.fmt = IMG_DATA_TYPE_YUV420;
 
 	/* update io param */
-	CMR_NO_MEM(max_size * 3 / 2 + max_size * 2 + raw2_size, mem_res);
-	*io_mem_res = mem_res - (max_size * 3 / 2 + max_size * 2 + raw2_size);
-	*io_mem_end = mem_end + max_size * 3 / 2 + max_size * 2 + raw2_size;
+	CMR_NO_MEM(max_size * 3 / 2 + max_size * 3/2 + raw2_size, mem_res);
+	*io_mem_res = mem_res - (max_size * 3 / 2 + max_size * 3/2 + raw2_size);
+	*io_mem_end = mem_end + max_size * 3 / 2 + max_size * 3/2 + raw2_size;
 	*io_channel_size = channel_size;
 
 	CMR_LOGD("mem_end=%d", *io_mem_end);
