@@ -7799,8 +7799,7 @@ cmr_int prev_pop_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id, s
 	prev_cxt  = &handle->prev_cxt[camera_id];
 	valid_num = prev_cxt->prev_mem_valid_num;
 
-	CMR_LOGI("addr 0x%lx 0x%lx fd 0x%x", data->yaddr_vir, data->uaddr_vir,
-		data->fd);
+	CMR_LOGV("addr 0x%lx 0x%lx fd 0x%x", data->yaddr_vir, data->uaddr_vir, data->fd);
 
 	if (valid_num > PREV_FRM_CNT || valid_num <= 0) {
 		CMR_LOGE("cnt error valid_num %ld", valid_num);
@@ -7812,7 +7811,7 @@ cmr_int prev_pop_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id, s
 		frame_type.fd         = prev_cxt->prev_frm[0].fd;
 		frame_type.type       = PREVIEW_CANCELED_FRAME;
 
-		CMR_LOGI("fd addr 0x%lx addr 0x%lx", frame_type.fd, frame_type.y_vir_addr);
+		CMR_LOGV("fd addr 0x%lx addr 0x%lx", frame_type.fd, frame_type.y_vir_addr);
 
 		for (i = 0; i < (cmr_u32)(valid_num - 1); i++) {
 			prev_cxt->prev_phys_addr_array[i] = prev_cxt->prev_phys_addr_array[i+1];
@@ -7839,7 +7838,7 @@ cmr_int prev_pop_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id, s
 	}
 
 exit:
-	CMR_LOGI("done cnt %ld, fd 0x%x", prev_cxt->prev_mem_valid_num, data->fd);
+	CMR_LOGI("fd=0x%x, cnt=%ld", data->fd, prev_cxt->prev_mem_valid_num);
 	return ret;
 }
 
@@ -8200,8 +8199,7 @@ cmr_int prev_pop_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id, struc
 
 	prev_cxt  = &handle->prev_cxt[camera_id];
 	valid_num = prev_cxt->cap_zsl_mem_valid_num;
-
-	CMR_LOGD("valid_num %ld", valid_num);
+	CMR_LOGV("valid_num %ld", valid_num);
 
 	if ((prev_cxt->cap_zsl_frm[0].fd == data->fd) && valid_num > 0) {
 		frame_type.y_phy_addr = prev_cxt->cap_zsl_phys_addr_array[0];
@@ -8238,7 +8236,7 @@ cmr_int prev_pop_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id, struc
 	}
 
 exit:
-	CMR_LOGD("out fd 0x%x",prev_cxt->cap_zsl_frm[0].fd);
+	CMR_LOGD("fd=0x%x, cnt=%ld",data->fd, prev_cxt->cap_zsl_mem_valid_num);
 	return ret;
 }
 

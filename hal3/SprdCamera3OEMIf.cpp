@@ -2987,8 +2987,8 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 		if(rec_stream) {
 			ret = rec_stream->getQBufNumForVir(buff_vir, &frame_num);
 			if(ret == NO_ERROR) {
-				HAL_LOGD("record, buff_vir = 0x%lx, frame_num = %d, buffer_timestamp = %lld, frame->type = %d rec=%lld",
-						buff_vir, frame_num, buffer_timestamp,frame->type, mSlowPara.rec_timestamp);
+				HAL_LOGD("record, fd=0x%x, buff_vir = 0x%lx, frame_num = %d, buffer_timestamp = %lld, frame->type = %d rec=%lld",
+					 frame->fd, buff_vir, frame_num, buffer_timestamp,frame->type, mSlowPara.rec_timestamp);
 				if(frame->type == PREVIEW_VIDEO_FRAME && frame_num >= mRecordFrameNum && (frame_num > mPictureFrameNum ||frame_num == 0)) {
 					if (mVideoWidth <= mCaptureWidth && mVideoHeight <= mCaptureHeight) {
 						if(mVideoShotFlag)
@@ -3041,8 +3041,8 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 			ret = pre_stream->getQBufNumForVir(buff_vir, &frame_num);
 			HAL_LOGV("preview, buff_vir 0x%lx, frame_num %d, ret 0x%lx", buff_vir, frame_num, ret);
 			if(ret == NO_ERROR) {
-				HAL_LOGD("prev buff 0x%lx, num %d, ret %d, time 0x%llx, type = %d rec=%lld",
-					buff_vir, frame_num, ret, buffer_timestamp,
+				HAL_LOGD("prev buff fd=0x%x, buff_vir=0x%lx, num %d, ret %d, time 0x%llx, frame type = %d rec=%lld, ",
+					frame->fd, buff_vir, frame_num, ret, buffer_timestamp,
 					frame->type, mSlowPara.rec_timestamp);
 				if(frame->type == PREVIEW_FRAME && frame_num >= mPreviewFrameNum && (frame_num > mPictureFrameNum ||frame_num == 0)) {
 					if (mVideoWidth > mCaptureWidth && mVideoHeight > mCaptureHeight) {
@@ -3121,7 +3121,8 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 		if(callback_stream) {//callback stream
 			ret = callback_stream->getQBufNumForVir(buff_vir, &frame_num);
 			if(ret == NO_ERROR) {
-				HAL_LOGD("callback buff 0x%lx, num %d, ret %d, time 0x%llx, type = %d", buff_vir, frame_num, ret, buffer_timestamp,frame->type);
+				HAL_LOGD("callback buff fd=0x%x, vir=0x%lx, num %d, ret %d, time 0x%llx, frame type = %d",
+					frame->fd, buff_vir, frame_num, ret, buffer_timestamp,frame->type);
 
 				if((!pre_stream || (frame->type != PREVIEW_ZSL_CANCELED_FRAME))&& frame_num >= mZslFrameNum && (frame_num > mPictureFrameNum ||frame_num == 0)) {
 					channel->channelCbRoutine(frame_num, buffer_timestamp, CAMERA_STREAM_TYPE_CALLBACK);
@@ -3143,6 +3144,7 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 			CMR_MSG_INIT(message);
 			camera_zsl_snapshot_need_pause(mCameraHandle, &need_pause);
 			if (PREVIEW_ZSL_FRAME == frame->type) {
+				HAL_LOGD("zsl buff fd=0x%x, frame type=%d", frame->fd, frame->type);
 #ifndef CONFIG_NEED_UNMAP
 				receiveZslFrame(frame);
 #else
