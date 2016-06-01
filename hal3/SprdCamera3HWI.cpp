@@ -171,7 +171,9 @@ SprdCamera3HWI::~SprdCamera3HWI()
 		Mutex::Autolock l(mLock);
 	}
 
-	HAL_LOGV("E");
+	HAL_LOGD("E");
+
+	mOEMIf->enablePowerHint();
 
 	if (mMetadataChannel) {
 		mMetadataChannel->stop(mFrameNum);
@@ -207,7 +209,7 @@ SprdCamera3HWI::~SprdCamera3HWI()
 
 	timer_stop();
 
-	HAL_LOGV("X");
+	HAL_LOGD("X");
 }
 
 SprdCamera3RegularChannel*  SprdCamera3HWI::getRegularChan()
@@ -1388,6 +1390,7 @@ int SprdCamera3HWI::flush()
 	int ret = NO_ERROR;
 	int64_t timestamp = 0;
 	//Mutex::Autolock l(mLock);
+
 	timestamp = systemTime();
 	if(mHDRProcessFlag == true) {
 		if(mPicChan){
@@ -1405,7 +1408,7 @@ int SprdCamera3HWI::flush()
 	if(mPicChan)
 		mPicChan->stop(mFrameNum);
 
-	timer_set(this, 20);
+	timer_set(this, 3);
 	mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_FLUSH;
 	ret = mFlushSignal.waitRelative(mLock, 500000000); //500ms
 	if (ret == TIMED_OUT) {

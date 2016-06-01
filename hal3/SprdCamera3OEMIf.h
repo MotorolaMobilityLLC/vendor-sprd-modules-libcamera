@@ -183,6 +183,9 @@ public:
 #ifdef CONFIG_MEM_OPTIMIZATION
 	void SprdZslTakePicture();
 #endif
+	void initPowerHint();
+	void enablePowerHint();
+	void disablePowerHint();
 public:
 	static int      pre_alloc_cap_mem_thread_init(void *p_data);
 	static int      pre_alloc_cap_mem_thread_deinit(void *p_data);

@@ -276,6 +276,10 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 {
 	//mIsPerformanceTestable = sprd_isPerformanceTestable();
 	HAL_LOGD("openCameraHardware: E cameraId: %d.", cameraId);
+
+	initPowerHint();
+	enablePowerHint();
+
 	shakeTestInit(&mShakeTest);
 #if defined(CONFIG_BACK_CAMERA_ROTATION)
 	if (0 == cameraId) {
@@ -411,19 +415,6 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mVideoSnapshotSprdZslEnabled = 0;
 #endif
 
-#ifdef HAS_CAMERA_HINTS
-	if (hw_get_module(POWER_HARDWARE_MODULE_ID, (const hw_module_t **)&m_pPowerModule)) {
-		HAL_LOGE("%s: %s module not found", __func__, POWER_HARDWARE_MODULE_ID);
-	}
-
-	if (m_pPowerModule) {
-		if (m_pPowerModule->powerHint) {
-			m_pPowerModule->powerHint(m_pPowerModule, POWER_HINT_VIDEO_ENCODE,
-				(void *)"state=1");
-		}
-	}
-#endif
-
 	HAL_LOGD("openCameraHardware: X cameraId: %d.", cameraId);
 }
 
@@ -435,29 +426,9 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf()
 	if (!mReleaseFLag) {
 		closeCamera();
 	}
-	// Just in case that exception happen
-	if (miSPreviewFirstFrame == 1) {
-#ifdef HAS_CAMERA_HINTS
-		if (m_pPowerModule) {
-			if (m_pPowerModule->powerHint) {
-				m_pPowerModule->powerHint(m_pPowerModule, POWER_HINT_VIDEO_ENCODE,
-					(void *)"state=0");
-			}
-		}
-#endif
-	}
 
-#ifdef HAS_CAMERA_HINTS
-	if (1 == mHDRPowerHintFlag) {
-		if (m_pPowerModule) {
-			if (m_pPowerModule->powerHint) {
-				m_pPowerModule->powerHint(m_pPowerModule, POWER_HINT_VIDEO_ENCODE,
-					(void *)"state=0");
-			}
-		}
-		mHDRPowerHintFlag = 0;
-	}
-#endif
+	// Just in case that exception happen
+	disablePowerHint();
 
 	// clean memory in case memory leak
 	if(NULL != mReDisplayHeap) {
@@ -725,17 +696,10 @@ int SprdCamera3OEMIf::takePicture()
 	HAL_LOGD("E");
 	print_time();
 
-#ifdef HAS_CAMERA_HINTS
 	if (1 == mHDRPowerHint) {
-		if (m_pPowerModule) {
-			if (m_pPowerModule->powerHint) {
-				m_pPowerModule->powerHint(m_pPowerModule, POWER_HINT_VIDEO_ENCODE,
-					(void *)"state=1");
-			}
-		}
+		enablePowerHint();
 		mHDRPowerHintFlag = 1;
 	}
-#endif
 
 	if (SPRD_ERROR == mCameraState.capture_state) {
 		HAL_LOGE("take picture in error status, deinit capture at first");
@@ -1218,6 +1182,35 @@ void SprdCamera3OEMIf::print_time()
 	struct timeval time;
 	gettimeofday(&time, NULL);
 	HAL_LOGD("time: %lld us.", time.tv_sec * 1000000LL + time.tv_usec);
+#endif
+}
+
+void SprdCamera3OEMIf::initPowerHint()
+{
+#ifdef HAS_CAMERA_HINTS
+	if (hw_get_module(POWER_HARDWARE_MODULE_ID, (const hw_module_t **)&m_pPowerModule)) {
+		HAL_LOGE("%s module not found", POWER_HARDWARE_MODULE_ID);
+	}
+#endif
+}
+
+void SprdCamera3OEMIf::enablePowerHint()
+{
+#ifdef HAS_CAMERA_HINTS
+	if (m_pPowerModule && m_pPowerModule->powerHint) {
+		m_pPowerModule->powerHint(m_pPowerModule, POWER_HINT_VIDEO_ENCODE,
+					  (void *)"state=1");
+	}
+#endif
+}
+
+void SprdCamera3OEMIf::disablePowerHint()
+{
+#ifdef HAS_CAMERA_HINTS
+	if (m_pPowerModule && m_pPowerModule->powerHint) {
+		m_pPowerModule->powerHint(m_pPowerModule, POWER_HINT_VIDEO_ENCODE,
+					  (void *)"state=0");
+	}
 #endif
 }
 
@@ -2827,14 +2820,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 		}
 		miSPreviewFirstFrame = 0;
 
-#ifdef HAS_CAMERA_HINTS
-		if (m_pPowerModule) {
-			if (m_pPowerModule->powerHint) {
-				m_pPowerModule->powerHint(m_pPowerModule, POWER_HINT_VIDEO_ENCODE,
-					(void *)"state=0");
-			}
-		}
-#endif
+		disablePowerHint();
 
 	}
 
@@ -3504,17 +3490,10 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame)
 		}
 	}
 
-#ifdef HAS_CAMERA_HINTS
 	if (1 == mHDRPowerHint) {
-		if (m_pPowerModule) {
-			if (m_pPowerModule->powerHint) {
-				m_pPowerModule->powerHint(m_pPowerModule, POWER_HINT_VIDEO_ENCODE,
-					(void *)"state=0");
-			}
-		}
+		disablePowerHint();
 		mHDRPowerHintFlag = 0;
 	}
-#endif
 
 	HAL_LOGD("X");
 }

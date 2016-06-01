@@ -1327,8 +1327,8 @@ static cmr_int cmr_sns_kill_monitor_thread(struct cmr_sensor_handle *sensor_hand
 	if (sensor_handle->monitor_thread_cxt.thread_handle) {
 		sensor_handle->monitor_thread_cxt.is_exit = 1;
 		while (1 == sensor_handle->monitor_thread_cxt.is_exit) {
-			CMR_LOGW("Wait 10 ms");
-			usleep(10000);
+			CMR_LOGW("Wait 1 ms");
+			usleep(1000);
 		}
 		ret = pthread_join(sensor_handle->monitor_thread_cxt.thread_handle, &dummy);
 		sensor_handle->monitor_thread_cxt.thread_handle = 0;
@@ -1430,8 +1430,8 @@ static cmr_int cmr_sns_kill_fmove_thread(struct cmr_sensor_handle *sensor_handle
 	if (sensor_handle->fmove_thread_cxt.thread_handle) {
 		 sensor_handle->fmove_thread_cxt.is_exit = 1;
 		while (1 == sensor_handle->fmove_thread_cxt.is_exit) {
-			CMR_LOGW("Wait 10 ms");
-			usleep(10000);
+			CMR_LOGW("Wait 1 ms");
+			usleep(1000);
 		}
 		ret = pthread_join(sensor_handle->fmove_thread_cxt.thread_handle, &dummy);
 		sensor_handle->fmove_thread_cxt.thread_handle = 0;
