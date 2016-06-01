@@ -1576,7 +1576,7 @@ bool SprdCamera3OEMIf::isCameraIdle()
 
 bool SprdCamera3OEMIf::isPreviewing()
 {
-	HAL_LOGD("%s", getCameraStateStr(mCameraState.preview_state));
+	HAL_LOGV("%s", getCameraStateStr(mCameraState.preview_state));
 	return (SPRD_PREVIEW_IN_PROGRESS == mCameraState.preview_state);
 }
 
@@ -2843,7 +2843,7 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 
 #ifdef CONFIG_FACE_BEAUTY
 	HAL_LOGV("perfect_skin_level = %d", sprddefInfo.perfect_skin_level);
-	if(sprddefInfo.perfect_skin_level > 0) {
+	if(sprddefInfo.perfect_skin_level > 0 && isPreviewing() && frame->type == PREVIEW_FRAME) {
 		faceDectect(1);
 		FACE_Tag faceInfo;
 		TSRect Tsface;
