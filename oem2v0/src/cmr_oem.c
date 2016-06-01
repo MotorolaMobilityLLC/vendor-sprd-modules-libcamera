@@ -4965,6 +4965,12 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle, cmr_
 		goto exit;
 	}
 
+	if (cxt->is_highiso_mode)
+		param_ptr->cap_inf_cfg.buffer_cfg_isp = 1;
+	else
+		param_ptr->cap_inf_cfg.buffer_cfg_isp = 0;
+
+	CMR_LOGE("param_ptr->cap_inf_cfg.buffer_cfg_isp %ld", param_ptr->cap_inf_cfg.buffer_cfg_isp);
 	if (param_ptr->is_lightly) {
 		ret = cmr_grab_cap_cfg_lightly(cxt->grab_cxt.grab_handle, &param_ptr->cap_inf_cfg, *channel_id);
 		if (ret) {
@@ -5075,6 +5081,11 @@ cmr_int camera_channel_cap_cfg(cmr_handle oem_handle,
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}
+	if (cxt->is_highiso_mode)
+		cap_cfg->buffer_cfg_isp = 1;
+	else
+		cap_cfg->buffer_cfg_isp = 0;
+	CMR_LOGE("cap_cfg->buffer_cfg_isp %ld", cap_cfg->buffer_cfg_isp);
 	ret = cmr_grab_cap_cfg(cxt->grab_cxt.grab_handle, cap_cfg, channel_id, endian);
 	if (ret) {
 		CMR_LOGE("failed to buf cfg %ld", ret);

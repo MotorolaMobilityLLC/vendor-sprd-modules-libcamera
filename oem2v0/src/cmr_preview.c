@@ -5915,6 +5915,7 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 	do decimation for now, otherwise the fps is low */
 	chn_param.cap_inf_cfg.chn_deci_factor  = 0;
 	chn_param.cap_inf_cfg.frm_num          = -1;
+	chn_param.cap_inf_cfg.buffer_cfg_isp = 0;
 	chn_param.cap_inf_cfg.cfg.need_binning = 0;
 	chn_param.cap_inf_cfg.cfg.need_isp     = 0;
 	chn_param.cap_inf_cfg.cfg.dst_img_fmt  = prev_cxt->prev_param.preview_fmt;
@@ -6125,6 +6126,7 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle, cmr_u32 camera_i
 
 	chn_param.cap_inf_cfg.chn_deci_factor  = 0;
 	chn_param.cap_inf_cfg.frm_num	       = -1;
+	chn_param.cap_inf_cfg.buffer_cfg_isp  = 0;
 	chn_param.cap_inf_cfg.cfg.need_binning = 0;
 	chn_param.cap_inf_cfg.cfg.need_isp     = 0;
 	chn_param.cap_inf_cfg.cfg.dst_img_fmt  = prev_cxt->prev_param.preview_fmt;
@@ -6255,6 +6257,7 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_
 
 	chn_param.cap_inf_cfg.chn_deci_factor  = 0;
 	chn_param.cap_inf_cfg.frm_num          = -1;
+	chn_param.cap_inf_cfg.buffer_cfg_isp   = 0;
 	chn_param.cap_inf_cfg.cfg.need_binning = 0;
 	chn_param.cap_inf_cfg.cfg.need_isp     = 0;
 	chn_param.cap_inf_cfg.cfg.dst_img_fmt  = prev_cxt->prev_param.preview_fmt;
@@ -6453,6 +6456,7 @@ cmr_int prev_set_video_param_lightly(struct prev_handle *handle, cmr_u32 camera_
 
 	chn_param.cap_inf_cfg.chn_deci_factor  = 0;
 	chn_param.cap_inf_cfg.frm_num	       = -1;
+	chn_param.cap_inf_cfg.buffer_cfg_isp  = 0;
 	chn_param.cap_inf_cfg.cfg.need_binning = 0;
 	chn_param.cap_inf_cfg.cfg.need_isp     = 0;
 	chn_param.cap_inf_cfg.cfg.dst_img_fmt  = prev_cxt->prev_param.preview_fmt;
@@ -6599,6 +6603,7 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 
 	chn_param.cap_inf_cfg.chn_deci_factor = 0;
 	chn_param.cap_inf_cfg.frm_num         = chn_param.frm_num;
+	chn_param.cap_inf_cfg.buffer_cfg_isp = 0;
 	chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
 
 #ifdef CONFIG_MEM_OPTIMIZATION
@@ -6851,6 +6856,7 @@ cmr_int prev_set_zsl_param_lightly(struct prev_handle *handle, cmr_u32 camera_id
 
 	chn_param.cap_inf_cfg.chn_deci_factor  = 0;
 	chn_param.cap_inf_cfg.frm_num          = -1;
+	chn_param.cap_inf_cfg.buffer_cfg_isp   = 0;
 	chn_param.cap_inf_cfg.cfg.need_binning = 0;
 	chn_param.cap_inf_cfg.cfg.need_isp     = 0;
 	chn_param.cap_inf_cfg.cfg.dst_img_fmt  = prev_cxt->prev_param.cap_fmt;
@@ -6956,6 +6962,7 @@ cmr_int prev_set_cap_param_raw(struct prev_handle *handle,
 
 	chn_param.cap_inf_cfg.chn_deci_factor = 0;
 	chn_param.cap_inf_cfg.frm_num	      = chn_param.frm_num;
+	chn_param.cap_inf_cfg.buffer_cfg_isp = 0;
 
 	/*config capture ability*/
 	chn_param.cap_inf_cfg.cfg.dst_img_fmt   = IMG_DATA_TYPE_RAW;
@@ -7059,6 +7066,7 @@ cmr_int prev_set_depthmap_param(struct prev_handle *handle, cmr_u32 camera_id, c
 
 	chn_param.cap_inf_cfg.chn_deci_factor  = 0;
 	chn_param.cap_inf_cfg.frm_num          = -1;
+	chn_param.cap_inf_cfg.buffer_cfg_isp   = 0;
 	chn_param.cap_inf_cfg.cfg.need_binning = 0;
 	chn_param.cap_inf_cfg.cfg.need_isp     = 0;
 	chn_param.cap_inf_cfg.cfg.dst_img_fmt  = IMG_DATA_TYPE_RAW;

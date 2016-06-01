@@ -518,6 +518,7 @@ struct buffer_cfg {
 struct cap_cfg {
 	cmr_u32                             chn_deci_factor;
 	cmr_u32                             frm_num;
+	cmr_u32                             buffer_cfg_isp;
 	struct img_frm_cap                  cfg;
 };
 

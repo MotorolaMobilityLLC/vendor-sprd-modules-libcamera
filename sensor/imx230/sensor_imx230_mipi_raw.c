@@ -1919,7 +1919,7 @@ static unsigned long imx230_stream_off(SENSOR_HW_HANDLE handle, unsigned long pa
 	value = Sensor_ReadReg(0x0100);
 	if (value != 0x00) {
 		Sensor_WriteReg(0x0100, 0x00);
-		usleep(50 * 1000);
+		usleep(150 * 1000);
 	}
 
 	return 0;

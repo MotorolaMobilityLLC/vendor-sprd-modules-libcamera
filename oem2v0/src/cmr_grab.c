@@ -431,6 +431,7 @@ static cmr_int cmr_grab_cap_cfg_common(cmr_handle grab_handle, struct cap_cfg *c
 	pxl_fmt = cmr_grab_get_4cc(config->cfg.dst_img_fmt);
 	found = 0;
 	fmt_parm.index = 0;
+	CMR_LOGI("config->buffer_cfg_isp  %d, \n", config->buffer_cfg_isp);
 	while (0 == ioctl(p_grab->fd, SPRD_IMG_IO_GET_FMT, &fmt_parm)) {
 		if (fmt_parm.fmt == pxl_fmt) {
 			CMR_LOGV("FourCC 0x%x is supported by the low layer", pxl_fmt);
@@ -448,6 +449,7 @@ static cmr_int cmr_grab_cap_cfg_common(cmr_handle grab_handle, struct cap_cfg *c
 		img_fmt.fourcc     = pxl_fmt; //fourecc
 		img_fmt.need_isp   = config->cfg.need_isp;
 		img_fmt.reserved[0] = config->cfg.flip_on;
+		img_fmt.reserved[1] = config->buffer_cfg_isp ? 0 : 1;
 		if (endian == NULL) {
 			img_fmt.is_lightly = 1;
 		}
@@ -480,7 +482,6 @@ static cmr_int cmr_grab_cap_cfg_common(cmr_handle grab_handle, struct cap_cfg *c
 	} else {
 		CMR_LOGI("fourcc not founded dst_img_fmt=0x%x \n", config->cfg.dst_img_fmt);
 	}
-
 exit:
 	CMR_LOGV("ret %ld", ret);
 	return ret;
