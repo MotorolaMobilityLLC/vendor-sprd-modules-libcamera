@@ -46,7 +46,7 @@ void isp_mlog(enum mlog_file_type name, const char *format, ...)
 		property_get(IRP_SAVE_MLOG_STR, value, "no");
 		sprintf(file_name, "/data/mlog/%s.txt", "irp");
 		break;
-	case SHAING_FILE:
+	case SHADING_FILE:
 		property_get(SHADING_SAVE_MLOG_STR, value, "no");
 		sprintf(file_name, "/data/mlog/%s.txt", "shading");
 		break;

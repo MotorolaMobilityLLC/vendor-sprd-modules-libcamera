@@ -3203,7 +3203,7 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 	struct ae_ctrl_param_out                    ae_out;
 	struct isp_irq                              *sof_info = (struct isp_irq*)data;
 	struct isp_sof_cfg_info                     sof_cfg_info;
-
+	struct debug_info1                          *exif_ptr = &cxt->debug_data.exif_debug_info;
 	if (NULL == cxt) {
 		ISP_LOGE("error cxt NULL");
 		ret = -ISP_PARAM_NULL;
@@ -3253,6 +3253,8 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 	}
 	ISP_LOGI("test msg 2");
 
+	ret = isp_dev_access_get_exif_debug_info(cxt->dev_access_handle, exif_ptr);
+	isp_mlog(SHADING_FILE,"RPrun:%d, BPrun:%d", exif_ptr->shading_debug_info1.rp_run, exif_ptr->shading_debug_info1.bp_run);
 	isp_mlog(IRP_FILE,"contrast:%d,saturation:%d,sharpness:%d,effect:%d,mode:%d,quality:%d,sensor_id:%d,s_width:%d,s_height:%d",
 			cxt->irp_cxt.contrast,cxt->irp_cxt.saturation ,cxt->irp_cxt.sharpness,cxt->irp_cxt.effect
 			,cxt->irp_cxt.mode,cxt->irp_cxt.quality,cxt->irp_cxt.sensor_id,cxt->irp_cxt.s_width,cxt->irp_cxt.s_height);

@@ -28,7 +28,7 @@ enum mlog_file_type {
 	AWB_FILE,
 	AE_FILE,
 	IRP_FILE,
-	SHAING_FILE,
+	SHADING_FILE,
 };
 
 void isp_mlog(enum mlog_file_type name,const char *format, ...);
