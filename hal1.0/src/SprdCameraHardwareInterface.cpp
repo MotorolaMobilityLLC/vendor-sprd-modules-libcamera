@@ -625,6 +625,15 @@ void SprdCameraHardware::release()
 		freeCameraMem(mCommonHeapReserved);
 		mCommonHeapReserved = NULL;
 	}
+	if (NULL != mHighIsoSnapshotHeapReserved) {
+		freeCameraMem(mHighIsoSnapshotHeapReserved);
+		mHighIsoSnapshotHeapReserved = NULL;
+	}
+
+	if (NULL != mIspRawDataReserved) {
+		freeCameraMem(mIspRawDataReserved);
+		mIspRawDataReserved = NULL;
+	}
 	pre_alloc_cap_mem_thread_deinit((void *)this);
 
 	deinitCapture(0);
@@ -3844,7 +3853,7 @@ int SprdCameraHardware::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u
 					LOGE("error memory is null.");
 					return BAD_VALUE;
 			}
-			memory = allocCameraMem(size, true);
+			memory = allocReservedMem(size, true);
 			if (NULL == memory) {
 				LOGI("error memory is null.");
 				goto mem_fail;
@@ -3859,6 +3868,18 @@ int SprdCameraHardware::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u
 		*fd++ = memory->fd;
 		LOGI("malloc High Iso memory, malloced type %d,request num %d, request size 0x%x, fd 0x%x",
 			type, sum, size, fd);
+	}else if (type == CAMERA_ISP_RAW_DATA) {
+		if (mIspRawDataReserved ==  NULL) {
+			memory = allocCameraMem(size, true);
+			if (NULL == memory) {
+				LOGE("allocCameraMem failed");
+				goto mem_fail;
+			}
+			mIspRawDataReserved = memory;
+		}
+		*phy_addr++ = (cmr_uint)mIspRawDataReserved->phys_addr;
+		*vir_addr++ = (cmr_uint)mIspRawDataReserved->data;
+		*fd++ = mIspRawDataReserved->fd;
 	}
 	return 0;
 
@@ -4082,6 +4103,13 @@ int SprdCameraHardware::Callback_OtherFree(enum camera_mem_cb_type type, cmr_uin
 		}
 		mHighIsoSnapshotHeapReserved = NULL;
 	}
+
+	if (type == CAMERA_ISP_RAW_DATA) {
+		if (NULL != mIspRawDataReserved) {
+			freeCameraMem(mIspRawDataReserved);
+			mIspRawDataReserved = NULL;
+		}
+	}
 	return 0;
 }
 
@@ -4115,6 +4143,68 @@ int SprdCameraHardware::Callback_Free(enum camera_mem_cb_type type, cmr_uint *ph
 	}
 	LOGI("done %d", ret);
 	return ret;
+}
+
+sprd_camera_memory_t* SprdCameraHardware::allocReservedMem(int buf_size, uint32_t is_cache)
+{
+	unsigned long paddr = 0;
+	size_t psize = 0;
+	int result = 0;
+	size_t mem_size = 0;
+	MemIon *pHeapIon = NULL;
+
+	LOGI("buf_size %d", buf_size);
+
+	sprd_camera_memory_t *memory = (sprd_camera_memory_t *)malloc(sizeof(sprd_camera_memory_t));
+	if (NULL == memory) {
+		LOGE("fatal error! memory pointer is null.");
+		goto getpmem_fail;
+	}
+	memset(memory, 0 , sizeof(sprd_camera_memory_t));
+	memory->busy_flag = false;
+
+	mem_size = buf_size;
+	// to make it page size aligned
+	mem_size = (mem_size + 4095U) & (~4095U);
+	if(mem_size == 0) {
+		goto getpmem_fail;
+	}
+
+	if (is_cache) {
+		pHeapIon = new MemIon("/dev/ion", mem_size, 0, (1 << 31) | ION_HEAP_ID_MASK_CAM);
+	} else {
+		pHeapIon = new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING, ION_HEAP_ID_MASK_CAM);
+	}
+
+	if (pHeapIon == NULL || pHeapIon->getHeapID() < 0) {
+		LOGE("pHeapIon is null or getHeapID failed");
+		goto getpmem_fail;
+	}
+
+	if (NULL == pHeapIon->getBase() || MAP_FAILED == pHeapIon->getBase()) {
+		LOGE("error getBase is null.");
+		goto getpmem_fail;
+	}
+
+	memory->ion_heap = pHeapIon;
+	memory->fd = pHeapIon->getHeapID();
+	// memory->phys_addr is offset from memory->fd, always set 0 for yaddr
+	memory->phys_addr = 0;
+	memory->phys_size = mem_size;
+	memory->data = pHeapIon->getBase();
+
+	LOGI("fd=0x%x, phys_addr=0x%lx, virt_addr=%p, size=0x%lx, heap=%p",
+	memory->fd, memory->phys_addr, memory->data, memory->phys_size, pHeapIon);
+
+
+	return memory;
+
+getpmem_fail:
+	if (memory != NULL) {
+		free(memory);
+		memory = NULL;
+	}
+	return NULL;
 }
 
 sprd_camera_memory_t* SprdCameraHardware::allocCameraMem(int buf_size, uint32_t is_cache)

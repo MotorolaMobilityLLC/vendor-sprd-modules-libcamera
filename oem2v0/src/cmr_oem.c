@@ -5165,6 +5165,9 @@ cmr_int camera_channel_pause(cmr_handle oem_handle, cmr_uint channel_id, cmr_u32
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 
+	if (cxt->is_highiso_mode)
+		return ret;
+
 	if (!oem_handle) {
 		CMR_LOGE("in parm error");
 		ret = -CMR_CAMERA_INVALID_PARAM;
@@ -5190,6 +5193,9 @@ cmr_int camera_channel_resume(cmr_handle oem_handle, cmr_uint channel_id, cmr_u3
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 	struct common_sn_cmd_param param;
+
+	if (cxt->is_highiso_mode)
+		return ret;
 
 	if (!oem_handle) {
 		CMR_LOGE("in parm error");
