@@ -25,6 +25,8 @@
 #include "hw3a_stats.h"
 #include "alwrapper_af_errcode.h"
 #include "alwrapper_af.h"
+#include "alwrapper_caf_errcode.h"
+#include "alwrapper_caf.h"
 #include "aft_interface.h"
 #include "cutils/properties.h"
 #include "isp_mlog.h"
@@ -106,6 +108,7 @@ struct af_altek_y_stat{
 
 struct caf_context {
 	pthread_mutex_t caf_mutex;
+	struct aft_caf_stats_cfg caf_fv_tune;
 	cmr_u32 inited;
 };
 
@@ -153,6 +156,11 @@ static cmr_int afaltek_adpt_pre_start(cmr_handle adpt_handle,
 static cmr_int afaltek_adpt_caf_stop(cmr_handle adpt_handle);
 static cmr_int afaltek_adpt_reset_caf(cmr_handle adpt_handle);
 static cmr_u8 afaltek_adpt_set_vcm_pos(cmr_handle adpt_handle, struct af_ctrl_motor_pos *pos_info);
+static cmr_int afaltek_adpt_set_caf_fv_cfg(cmr_handle adpt_handle);
+static cmr_int afaltek_adpt_caf_init(cmr_handle adpt_handle);
+static cmr_int afaltek_adpt_caf_deinit(cmr_handle adpt_handle);
+static cmr_int afaltek_adpt_set_special_event(cmr_handle adpt_handle, void *in);
+static cmr_int afaltek_adpt_get_hw_config(struct isp3a_af_hw_cfg *out);
 
 /************************************ INTERNAK FUNCTION ***************************************/
 
@@ -517,6 +525,8 @@ static cmr_int afaltek_adpt_caf_set_mode(cmr_handle adpt_handle, cmr_int mode)
 	/* for caf trigger */
 	ret = cxt->caf_ops.trigger_ioctrl(cxt->caf_trigger_handle,
 				    AFT_CMD_SET_AF_MODE, &mode, NULL);
+
+	afaltek_adpt_set_caf_fv_cfg(cxt);
 
 	return ret;
 }
@@ -918,11 +928,29 @@ static cmr_int afaltek_adpt_caf_init(cmr_handle adpt_handle)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+	struct aft_caf_stats_cfg *caf_cfg_tune = NULL;
+	float caf_wp_ver = 0.0;
 
+	al3awrappercaf_get_version(&caf_wp_ver);
 	pthread_mutex_init(&cxt->af_caf_cxt.caf_mutex, NULL);
+	caf_cfg_tune = &cxt->af_caf_cxt.caf_fv_tune;
+	if (cxt->caf_ops.trigger_ioctrl){
+		ret = cxt->caf_ops.trigger_ioctrl(cxt->caf_trigger_handle,
+				    AFT_CMD_GET_FV_STATS_CFG, caf_cfg_tune, NULL);
+		if (ret)
+			ISP_LOGE("get AFT_CMD_GET_FV_STATS_CFG error %ld", ret);
+	} else {
+		ISP_LOGE("trigger_ioctrl NULL error");
+		ret = -ISP_PARAM_ERROR;
+	}
+
+	if (!ret) {
 #ifdef FEATRUE_SPRD_CAF_TRIGGER
-	cxt->af_caf_cxt.inited = 1;
+		cxt->af_caf_cxt.inited = 1;
 #endif
+	}
+	ISP_LOGI("caf_wp_ver %f init ret %ld", caf_wp_ver, ret);
+
 	return ret;
 }
 
@@ -934,6 +962,55 @@ static cmr_int afaltek_adpt_caf_deinit(cmr_handle adpt_handle)
 	pthread_mutex_destroy(&cxt->af_caf_cxt.caf_mutex);
 	cxt->af_caf_cxt.inited = 0;
 
+	return ret;
+}
+
+static cmr_int afaltek_adpt_set_caf_fv_cfg(cmr_handle adpt_handle)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+	struct alhw3a_af_cfginfo_t af_cfg = {0};
+	struct allib_af_input_special_event event;
+	struct lib_caf_stats_config_t afaltek_cfg = {0};
+	struct aft_caf_stats_cfg *caf_fv = NULL;
+
+	ISP_LOGE("in");
+/*
+	if ((AF_CTRL_MODE_CAF != cxt->af_mode) &&
+	(AF_CTRL_MODE_CONTINUOUS_VIDEO != cxt->af_mode)) {
+		ret = -ISP_NO_READY;
+		goto exit;
+	}
+*/
+	if ((AF_ADPT_DONE != cxt->af_cur_status) &&
+		(AF_ADPT_IDLE != cxt->af_cur_status)) {
+		ret = -ISP_NO_READY;
+		goto exit;
+	}
+	cmr_bzero(&af_cfg, sizeof(af_cfg));
+	if (cxt->af_caf_cxt.inited) {
+		caf_fv = &cxt->af_caf_cxt.caf_fv_tune;
+		afaltek_cfg.roi_left_ratio = caf_fv->roi_left_ration;
+		afaltek_cfg.roi_top_ratio = caf_fv->roi_top_ration;
+		afaltek_cfg.roi_width_ratio = caf_fv->roi_width_ration;
+		afaltek_cfg.roi_height_ratio = caf_fv->roi_height_ration;
+		afaltek_cfg.num_blk_hor = caf_fv->num_blk_hor;
+		afaltek_cfg.num_blk_ver = caf_fv->num_blk_ver;
+	} else {
+		afaltek_cfg.roi_left_ratio = 0;
+		afaltek_cfg.roi_top_ratio = 0;
+		afaltek_cfg.roi_width_ratio = 100;
+		afaltek_cfg.roi_height_ratio = 100;
+		afaltek_cfg.num_blk_hor = 16;
+		afaltek_cfg.num_blk_ver = 16;
+	}
+
+	ret = al3awrapper_caf_transform_cfg(&afaltek_cfg, &af_cfg);
+
+	/* send stats config to framework */
+	ret = afaltek_adpt_config_af_stats(cxt, &af_cfg);
+
+exit:
 	return ret;
 }
 
@@ -965,7 +1042,7 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 
 	ret = cxt->caf_ops.trigger_calc(cxt->caf_trigger_handle, aft_in, &aft_out);
 
-	ISP_LOGV("caf_trig %d", aft_out.is_caf_trig);
+	ISP_LOGD("caf_trig %d", aft_out.is_caf_trig);
 	if ((!cxt->aft_proc_result.is_caf_trig) && aft_out.is_caf_trig) {
 		/* caf roi 1/16 raw */
 		roi.valid_win = 1;
@@ -1067,7 +1144,19 @@ static cmr_int afaltek_adpt_trans_data_to_caf(cmr_handle adpt_handle, void *in, 
 		break;
 	}
 	case AFT_DATA_CAF:
+	{
+		struct lib_caf_stats_t *caf_stat = (struct lib_caf_stats_t *)in;
+
+		aft_in.caf_blk_info.caf_token_id = caf_stat->caf_token_id;
+		aft_in.caf_blk_info.frame_id = caf_stat->frame_id;
+		aft_in.caf_blk_info.valid_column_num = caf_stat->valid_column_num;
+		aft_in.caf_blk_info.valid_row_num = caf_stat->valid_row_num;
+		aft_in.caf_blk_info.time_stamp.time_stamp_sec = caf_stat->time_stamp.time_stamp_sec;
+		aft_in.caf_blk_info.time_stamp.time_stamp_us= caf_stat->time_stamp.time_stamp_us;
+		aft_in.caf_blk_info.data = caf_stat->fv;
+		aft_in.active_data_type = caf_type;
 		break;
+	}
 	default:
 		ret = ISP_PARAM_ERROR;
 		ISP_LOGE("err data type %d", caf_type);
@@ -1519,6 +1608,7 @@ static cmr_int afaltek_adpt_pre_start(cmr_handle adpt_handle,
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+	struct isp3a_af_hw_cfg af_cfg = {0};
 
 	if ((AF_ADPT_STARTED == cxt->af_cur_status)
 		|| (AF_ADPT_FOCUSING == cxt->af_cur_status)) {
@@ -1526,6 +1616,8 @@ static cmr_int afaltek_adpt_pre_start(cmr_handle adpt_handle,
 		if (ret)
 			ISP_LOGE("failed to stop");
 	}
+	afaltek_adpt_get_hw_config(&af_cfg);
+	ret = afaltek_adpt_config_af_stats(cxt, &af_cfg);
 
 	ret = afaltek_adpt_set_roi(adpt_handle, roi);
 	if (ret)
@@ -1669,6 +1761,7 @@ static cmr_int afaltek_adpt_af_done(cmr_handle adpt_handle, cmr_int success)
 	ret = afaltek_adpt_caf_reset_after_af(cxt);
 	if (ret)
 		ISP_LOGI("failed to caf reset ret = %ld", ret);
+	afaltek_adpt_set_caf_fv_cfg(cxt);
 
 	return ret;
 }
@@ -2260,10 +2353,15 @@ static cmr_int afaltek_adpt_process(cmr_handle adpt_handle, void *in, void *out)
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct af_ctrl_process_in *proc_in = (struct af_ctrl_process_in *)in;
 	struct af_ctrl_process_out *proc_out = (struct af_ctrl_process_out *)out;
-	struct allib_af_hw_stats_t af_stats;
+	struct allib_af_hw_stats_t af_stats = {0};
 	struct isp_drv_meta_af_t *p_meta_data_af;
 	uint32 total_blocks;
 	uint32 focus_value;
+	struct lib_caf_stats_t caf_stat;
+	struct aft_proc_calc_param aft_in;
+	struct alhw3a_af_cfginfo_t af_cfg = {0};
+	struct lib_caf_stats_config_t afaltek_cfg = {0};
+	struct aft_caf_stats_cfg *caf_fv = NULL;
 
 	ISP_LOGV("E");
 	ret = al3awrapper_dispatchhw3a_afstats(proc_in->statistics_data->addr,
@@ -2273,40 +2371,72 @@ static cmr_int afaltek_adpt_process(cmr_handle adpt_handle, void *in, void *out)
 		ret = -ISP_PARAM_ERROR;
 		goto exit;
 	}
-
-	if (cxt->stats_config.need_update_token) {
-		ISP_LOGI("af_token_id = %d, token_id = %d",
-				af_stats.af_token_id, cxt->stats_config.token_id);
-		if (af_stats.af_token_id == cxt->stats_config.token_id) {
-			struct allib_af_input_special_event event;
-
-			cmr_bzero(&event, sizeof(event));
-			event.flag = 1;
-			event.type = alAFLib_AF_STATS_CONFIG_UPDATED;
-			ret = afaltek_adpt_set_special_event(cxt, &event);
-			cxt->stats_config.need_update_token = 0;
-		}
-	}
-
-	if (cxt->ops.process(&af_stats, &cxt->af_out_obj, cxt->af_runtime_obj)) {
-		if (cxt->af_out_obj.result) {
-			cxt->report_data.need_report = 0;
-			ret = afaltek_adpt_proc_out_report(cxt, &cxt->af_out_obj, &cxt->report_data);
-			if (ret != ISP_SUCCESS)
-				ISP_LOGI("process need repot result ret = %ld", ret);
-			if (cxt->report_data.need_report) {
-				proc_out->data = &cxt->report_data.report_out;
-				proc_out->size = sizeof(cxt->report_data.report_out);
-			} else {
-				proc_out->data = NULL;
-				proc_out->size = 0;
-			}
+	bzero(&caf_stat, sizeof(caf_stat));
+	if (CAF_CONFIG_ID == af_stats.af_token_id) {
+		cmr_bzero(&af_cfg, sizeof(af_cfg));
+		if ( cxt->af_caf_cxt.inited) {
+		    caf_fv = &cxt->af_caf_cxt.caf_fv_tune;
+		    afaltek_cfg.roi_left_ratio = caf_fv->roi_left_ration;
+		    afaltek_cfg.roi_top_ratio = caf_fv->roi_top_ration;
+		    afaltek_cfg.roi_width_ratio = caf_fv->roi_width_ration;
+		    afaltek_cfg.roi_height_ratio = caf_fv->roi_height_ration;
+		    afaltek_cfg.num_blk_hor = caf_fv->num_blk_hor;
+		    afaltek_cfg.num_blk_ver = caf_fv->num_blk_ver;
 		} else {
-			ret = ISP_SUCCESS;
+		    afaltek_cfg.roi_left_ratio = 0;
+		    afaltek_cfg.roi_top_ratio = 0;
+		    afaltek_cfg.roi_width_ratio = 100;
+		    afaltek_cfg.roi_height_ratio = 100;
+		    afaltek_cfg.num_blk_hor = 16;
+		    afaltek_cfg.num_blk_ver = 16;
+		}
+		ret = al3awrapper_caf_transform_cfg(&afaltek_cfg, &af_cfg);
+
+		ret = al3awrapper_dispatch_caf_stats(proc_in->statistics_data->addr, &afaltek_cfg, &caf_stat);
+		if (ret) {
+			ISP_LOGE("get caf_stat error 0x%lx", ret);
+		} else {
+			ret = afaltek_adpt_trans_data_to_caf(cxt, &caf_stat, AFT_DATA_CAF);
+			if (ret) {
+				ISP_LOGE("caf trans fv err %ld", ret);
+			}
 		}
 	} else {
-		ISP_LOGE("failed to process af stats");
+		if (cxt->stats_config.need_update_token) {
+			ISP_LOGI("af_token_id = %d, token_id = %d",
+					af_stats.af_token_id, cxt->stats_config.token_id);
+			if (af_stats.af_token_id == cxt->stats_config.token_id) {
+				struct allib_af_input_special_event event;
+
+				cmr_bzero(&event, sizeof(event));
+				event.flag = 1;
+				event.type = alAFLib_AF_STATS_CONFIG_UPDATED;
+				ret = afaltek_adpt_set_special_event(cxt, &event);
+				cxt->stats_config.need_update_token = 0;
+			}
+		}
+
+		if (cxt->ops.process(&af_stats, &cxt->af_out_obj, cxt->af_runtime_obj)) {
+			if (cxt->af_out_obj.result) {
+				cxt->report_data.need_report = 0;
+				ret = afaltek_adpt_proc_out_report(cxt, &cxt->af_out_obj, &cxt->report_data);
+				if (ret != ISP_SUCCESS)
+					ISP_LOGI("process need repot result ret = %ld", ret);
+				if (cxt->report_data.need_report) {
+					proc_out->data = &cxt->report_data.report_out;
+					proc_out->size = sizeof(cxt->report_data.report_out);
+				} else {
+					proc_out->data = NULL;
+					proc_out->size = 0;
+				}
+			} else {
+				ret = ISP_SUCCESS;
+			}
+		} else {
+			ISP_LOGE("failed to process af stats");
+		}
 	}
+
 	p_meta_data_af = (struct isp_drv_meta_af_t *)proc_in->statistics_data->addr;
 	total_blocks = p_meta_data_af->af_stats_info.ucvalidblocks * p_meta_data_af->af_stats_info.ucvalidbanks;
 	if (9 == total_blocks)

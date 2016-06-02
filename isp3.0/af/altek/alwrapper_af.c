@@ -181,7 +181,7 @@ uint32 al3awrapper_dispatchhw3a_afstats(void *isp_meta_data,void *alaf_stats)
 			add_stat_64 = add_stat_32;
 
 			for(i = 0; i < blocks; i++) {
-				index = i+j*banks;
+				index = i+j*blocks;
 
 #if 0
 				p_patched_stats->cnt_hor[index] = stats_addr_32[1];
@@ -227,7 +227,7 @@ uint32 al3awrapper_dispatchhw3a_afstats(void *isp_meta_data,void *alaf_stats)
 			stats_addr_32 = (uint32 *)(stats)+j*bank_size/4;
 			add_stat_32 = stats + j* bank_size;
 			for(i = 0; i < blocks; i++) {
-				index = i+j*banks;
+				index = i+j*blocks;
 
 #if 0
 				p_patched_stats->cnt_hor[index] = stats_addr_32[1];
