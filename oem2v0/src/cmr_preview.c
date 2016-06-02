@@ -6666,7 +6666,7 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 		ret = CMR_CAMERA_FAIL;
 		goto exit;
 	}
-	if (capability.yuv_available_cnt) {
+	if (capability.yuv_available_cnt && !chn_param.is_lightly) {
 		/*config channel*/
 		if (!handle->ops.channel_cfg) {
 			CMR_LOGE("ops channel_cfg is null");
