@@ -1280,12 +1280,6 @@ int arrange_yuv_buf_optimization(struct cmr_cap_2_frm *cap_2_frm,
 	cap_mem->cap_yuv.addr_phy.addr_v = 0;
 	cap_mem->cap_yuv.fd                   = cap_mem->target_yuv.fd;
 
-	offset = (uint32_t)(((max_size * 3) >> 1) + ((max_size * 3) >> 1));
-	CMR_LOGI("offset %d", offset);
-	CMR_NO_MEM(offset, mem_res);
-	mem_end = CMR_ADDR_ALIGNED(offset);
-	mem_res = mem_res - mem_end;
-
 	cap_mem->cap_yuv.buf_size = (max_size * 3) >> 1;
 	cap_mem->cap_yuv.size.width = align16_cap_size.width;
 	cap_mem->cap_yuv.size.height = align16_cap_size.height;
@@ -1296,6 +1290,7 @@ int arrange_yuv_buf_optimization(struct cmr_cap_2_frm *cap_2_frm,
 	cap_mem->target_yuv.size.height = align16_image_size.height;
 	cap_mem->target_yuv.fmt = IMG_DATA_TYPE_YUV420;
 
+
 	cap_mem->target_jpeg.addr_phy.addr_y = cap_mem->cap_yuv.addr_phy.addr_y;
 	cap_mem->target_jpeg.addr_vir.addr_y = cap_mem->cap_yuv.addr_vir.addr_y;
 	cap_mem->target_jpeg.fd                   = cap_mem->cap_yuv.fd;
@@ -1304,6 +1299,15 @@ int arrange_yuv_buf_optimization(struct cmr_cap_2_frm *cap_2_frm,
 		cap_mem->target_jpeg.addr_vir.addr_y,
 		cap_mem->target_jpeg.addr_phy.addr_y,
 		cap_mem->target_jpeg.fd);
+
+
+	tmp = (cap_mem->cap_yuv.buf_size > cap_mem->target_jpeg.buf_size ? cap_mem->cap_yuv.buf_size: cap_mem->target_jpeg.buf_size);
+
+	offset = (uint32_t)(cap_mem->target_yuv.buf_size+ tmp);
+	CMR_LOGI("offset %d", offset);
+	CMR_NO_MEM(offset, mem_res);
+	mem_end = CMR_ADDR_ALIGNED(offset);
+	mem_res = mem_res - mem_end;
 
 	/* update io param */
 	*io_mem_res = mem_res;
