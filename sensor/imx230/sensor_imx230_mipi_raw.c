@@ -1189,7 +1189,7 @@ static SENSOR_STATIC_INFO_T s_imx230_static_info = {
 	220,	//f-number,focal ratio
 	462,	//focal_length;
 	0,	//max_fps,max fps of sensor's all settings,it will be calculated from sensor mode fps
-	32,	//max_adgain,AD-gain
+	8*16,//32,	//max_adgain,AD-gain
 	0,	//ois_supported;
 	0,	//pdaf_supported;
 	1,	//exp_valid_frame_num;N+2-1
@@ -1401,7 +1401,7 @@ static void imx230_write_gain(SENSOR_HW_HANDLE handle, float gain)
 
 	SENSOR_PRINT("realgain=%f,again=%d,dgain=%f", gain, sensor_again, temp_gain);
 
-	imx230_group_hold_off(handle);
+	//imx230_group_hold_off(handle);
 
 }
 

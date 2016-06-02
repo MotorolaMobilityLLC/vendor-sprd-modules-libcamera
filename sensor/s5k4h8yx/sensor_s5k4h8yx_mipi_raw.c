@@ -959,7 +959,7 @@ static SENSOR_STATIC_INFO_T s_s5k4h8yx_static_info = {
 	200,	//f-number,focal ratio
 	287,	//focal_length;
 	0,	//max_fps,max fps of sensor's all settings
-	16,	//max_adgain,AD-gain
+	16*256,	//max_adgain,AD-gain
 	0,	//ois_supported;
 	0,	//pdaf_supported;
 	1,	//exp_valid_frame_num;N+2-1
