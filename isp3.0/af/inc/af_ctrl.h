@@ -43,6 +43,7 @@ enum af_ctrl_cmd_type {
 	AF_CTRL_CMD_SET_DEBUG,
 	AF_CTRL_CMD_SET_UPDATE_AUX_SENSOR,
 	AF_CTRL_CMD_SET_YIMG_INFO,
+	AF_CTRL_CMD_SET_LIVE_VIEW_SIZE,
 	AF_CTRL_CMD_SET_MAX,
 
 	AF_CTRL_CMD_GET_BASE = AF_CTRL_CMD_SET_MAX,
@@ -269,6 +270,7 @@ struct af_ctrl_param_in {
 		struct isp_face_area face_info;
 		struct isp_af_win af_ctrl_roi_info;
 		enum isp_flash_mode flash_mode;
+		struct af_ctrl_isp_info_t live_view_sz;
 	};
 };
 

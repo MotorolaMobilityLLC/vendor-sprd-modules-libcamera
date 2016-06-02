@@ -3459,8 +3459,25 @@ cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start *input_ptr)
 	union awb_ctrl_cmd_out                      awb_out;
 	struct afl_ctrl_param_in                    afl_in;
 	struct afl_ctrl_param_out                   afl_out;
+	struct af_ctrl_param_in                     af_in;
+
+	if ((NULL == cxt) || (NULL == input_ptr)) {
+		ISP_LOGE("param null %p %p", cxt, input_ptr);
+		ret = -ISP_PARAM_NULL;
+		goto exit;
+	}
 
 	cxt->sof_idx = 0;
+#if defined (CONFIG_Y_IMG_TO_ISP)
+	if (input_ptr->live_view_sz.w && input_ptr->live_view_sz.h) {
+		af_in.live_view_sz.img_width = input_ptr->live_view_sz.w;
+		af_in.live_view_sz.img_height = input_ptr->live_view_sz.h;
+		ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_SET_LIVE_VIEW_SIZE, (void *)&af_in.live_view_sz, NULL);
+		if (ret)
+			ISP_LOGE("failed to update isp info w %d h %d",
+				input_ptr->live_view_sz.w, input_ptr->live_view_sz.h);
+	}
+#endif
 
 	if (input_ptr->sensor_fps.is_high_fps) {
 		if ((input_ptr->sensor_fps.high_fps_skip_num-1) > 0) {

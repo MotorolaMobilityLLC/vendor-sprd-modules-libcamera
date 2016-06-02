@@ -1852,6 +1852,9 @@ static cmr_int afaltek_adpt_inctrl(cmr_handle adpt_handle, cmr_int cmd,
 	case AF_CTRL_CMD_SET_YIMG_INFO:
 		ret = afaltek_adpt_set_imgbuf(adpt_handle, in);
 		break;
+	case AF_CTRL_CMD_SET_LIVE_VIEW_SIZE:
+		ret = afaltek_adpt_update_isp_info(adpt_handle, in);
+		break;
 	default:
 		ISP_LOGE("failed to case cmd = %ld", cmd);
 		break;
@@ -2104,12 +2107,13 @@ static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 	if (ret)
 		ISP_LOGI("failed to update sensor info ret = %ld", ret);
 
+#if !defined(CONFIG_Y_IMG_TO_ISP)
 	ISP_LOGI("isp info img_width = %d, img_height = %d", in->isp_info.img_width, in->isp_info.img_height);
 	/* set isp info */
 	ret = afaltek_adpt_update_isp_info(cxt, &in->isp_info);
 	if (ret)
 		ISP_LOGI("failed to update isp info ret = %ld", ret);
-
+#endif
 	/* sync init param */
 	ret = afaltek_adpt_set_param_init(cxt, 1);
 	if (ret)
@@ -2156,7 +2160,7 @@ static void afaltek_libops_deinit(cmr_handle adpt_handle)
 	unload_altek_library(adpt_handle);
 }
 
-static cmr_int afaltek_adpt_init(void *in, void *out, cmr_handle * adpt_handle)
+static cmr_int afaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_adpt_init_in *in_p = (struct af_adpt_init_in *)in;

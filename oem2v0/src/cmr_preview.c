@@ -27,7 +27,6 @@
 #include "cmr_sensor.h"
 #include "SprdOEMCamera.h"
 
-/* #define Y_IMG_TO_ISP */
 #undef YUV_TO_ISP
 /**************************MCARO DEFINITION********************************************************************/
 // abilty, max support buf num
@@ -195,7 +194,7 @@ struct prev_context {
 	cmr_uint                        prev_mem_size;
 	cmr_uint                        prev_mem_num;
 	cmr_int                         prev_mem_valid_num;
-#ifdef Y_IMG_TO_ISP
+#ifdef CONFIG_Y_IMG_TO_ISP
 	cmr_uint                        prev_mem_y_size;
 	cmr_uint                        prev_mem_y_num;
 	cmr_uint                        prev_phys_y_addr_array[2];
@@ -3646,7 +3645,7 @@ cmr_int prev_alloc_prev_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 				   prev_cxt->prev_fd_array);
 		/*check memory valid*/
 		CMR_LOGI("prev_mem_size 0x%lx, mem_num %ld", prev_cxt->prev_mem_size, prev_cxt->prev_mem_num);
-#ifdef Y_IMG_TO_ISP
+#ifdef CONFIG_Y_IMG_TO_ISP
 		prev_cxt->prev_mem_y_size = prev_cxt->prev_mem_size * 2/3;
 		prev_cxt->prev_mem_y_num = 2;
 		mem_ops->alloc_mem(CAMERA_ISP_PREVIEW_Y,
@@ -3791,7 +3790,7 @@ cmr_int prev_free_prev_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 		cmr_bzero(prev_cxt->prev_virt_addr_array, (PREV_FRM_CNT + PREV_ROT_FRM_CNT)*sizeof(cmr_uint));
 		cmr_bzero(prev_cxt->prev_fd_array, (PREV_FRM_CNT + PREV_ROT_FRM_CNT)*sizeof(cmr_s32));
 
-#ifdef Y_IMG_TO_ISP
+#ifdef CONFIG_Y_IMG_TO_ISP
 		mem_ops->free_mem(CAMERA_ISP_PREVIEW_Y,
 				  handle->oem_handle,
 				  prev_cxt->prev_phys_y_addr_array,
@@ -5514,7 +5513,7 @@ cmr_int prev_zsl_get_frm_index(struct img_frm* frame, struct frm_info* data)
 	return i;
 }
 
-#ifdef Y_IMG_TO_ISP
+#ifdef CONFIG_Y_IMG_TO_ISP
 cmr_int prev_y_info_copy_to_isp(struct prev_handle *handle,
 				    cmr_uint camera_id, struct frm_info *info)
 {
@@ -5705,7 +5704,7 @@ cmr_int prev_construct_frame(struct prev_handle *handle,
 		     CMR_LOGV("not depthmap mode, channel id %d, frame id %d", info->channel_id, info->frame_id);
 		}
 #endif
-#ifdef Y_IMG_TO_ISP
+#ifdef CONFIG_Y_IMG_TO_ISP
 		prev_y_info_copy_to_isp(handle, camera_id, info);
 #endif
 #ifdef YUV_TO_ISP
