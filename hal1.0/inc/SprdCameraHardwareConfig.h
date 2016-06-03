@@ -647,8 +647,8 @@ struct config_element sprd_back_camera_hardware_config[] = {
 	{"focus-distances", "2.0,2.5,Infinity"},
 	{"max-num-focus-areas", "0"},
 #endif
-	{"min-exposure-compensation", "-4"},
-	{"max-exposure-compensation", "4"},
+	{"min-exposure-compensation", "-3"},
+	{"max-exposure-compensation", "3"},
 	{"exposure-compensation","0"},
 	{"exposure-compensation-step", "1"},
 //back camera add auto antibanding mode
