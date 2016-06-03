@@ -5065,7 +5065,10 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle, cmr_
 		}
 	}
 
-	param_ptr->buffer.channel_id = *channel_id; /*update the channel id*/
+/*
+	// we will remove the flowing code later
+	// update the channel id
+	param_ptr->buffer.channel_id = *channel_id;
 
 	if (HIGHISO_CAP_MODE == cxt->highiso_mode || cxt->isp_to_dram) {
 		ret = camera_isp_buff_cfg(cxt, &param_ptr->buffer);
@@ -5076,6 +5079,7 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle, cmr_
 		CMR_LOGE("failed to buf cfg %ld", ret);
 		goto exit;
 	}
+*/
 	cxt->grab_cxt.caller_handle[*channel_id] = caller_handle;
 	cxt->grab_cxt.skip_number[*channel_id] = param_ptr->skip_num;
 	CMR_LOGI("channel id %d, caller_handle 0x%lx, skip num %d",

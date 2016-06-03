@@ -4485,6 +4485,8 @@ cmr_int prev_alloc_cap_reserve_buf(struct prev_handle *handle, cmr_u32 camera_id
 			prev_cxt->cap_zsl_mem_size = (width + camera_get_aligned_size(aligned_type, width/2))* height;
 		}
 		prev_cxt->cap_org_fmt = IMG_DATA_TYPE_YUV420;
+	} else if (IMG_DATA_TYPE_RAW == prev_cxt->cap_org_fmt) {
+		prev_cxt->cap_zsl_mem_size = (width * height * 3) >> 1;
 	} else {
 		CMR_LOGE("unsupprot fmt %ld", prev_cxt->cap_org_fmt);
 		return CMR_CAMERA_INVALID_PARAM;
@@ -5921,6 +5923,7 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 	struct video_start_param    video_param;
 	struct img_data_end         endian;
 	struct buffer_cfg           buf_cfg;
+	cmr_u32                     i;
 
 	CHECK_HANDLE_VALID(handle);
 	CHECK_CAMERA_ID(camera_id);
@@ -5971,7 +5974,7 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 		chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
 	}
 	if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
-		prev_cxt->skip_mode = IMG_SKIP_SW;
+		prev_cxt->skip_mode = IMG_SKIP_SW_KER;
 		chn_param.cap_inf_cfg.cfg.need_isp = 1;
 	}
 
@@ -6062,6 +6065,38 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 	prev_cxt->prev_channel_status = PREV_CHN_BUSY;
 	prev_cxt->prev_data_endian = endian;
 
+	if (prev_cxt->skip_mode == IMG_SKIP_SW_KER) {
+		/*config skip num buffer*/
+		for (i = 0; i < prev_cxt->prev_skip_num; i++) {
+			cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
+			buf_cfg.channel_id         = prev_cxt->prev_channel_id;
+			buf_cfg.base_id            = CMR_PREV_ID_BASE;
+			buf_cfg.count              = 1;
+			buf_cfg.length             = prev_cxt->prev_mem_size;
+			buf_cfg.is_reserved_buf    = 0;
+			buf_cfg.flag               = BUF_FLAG_INIT;
+			buf_cfg.addr[0].addr_y     = prev_cxt->prev_reserved_frm.addr_phy.addr_y;
+			buf_cfg.addr[0].addr_u     = prev_cxt->prev_reserved_frm.addr_phy.addr_u;
+			buf_cfg.addr_vir[0].addr_y = prev_cxt->prev_reserved_frm.addr_vir.addr_y;
+			buf_cfg.addr_vir[0].addr_u = prev_cxt->prev_reserved_frm.addr_vir.addr_u;
+			buf_cfg.fd[0]              = prev_cxt->prev_reserved_frm.fd;
+			ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);
+			if (ret) {
+				CMR_LOGE("channel buff config failed");
+				ret = CMR_CAMERA_FAIL;
+				goto exit;
+			}
+		}
+	}
+
+	chn_param.buffer.channel_id = prev_cxt->prev_channel_id;
+	ret = handle->ops.channel_buff_cfg(handle->oem_handle, &chn_param.buffer);
+	if (ret) {
+		CMR_LOGE("channel buff config failed");
+		ret = CMR_CAMERA_FAIL;
+		goto exit;
+	}
+
 	/*config reserved buffer*/
 	cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
 	buf_cfg.channel_id         = prev_cxt->prev_channel_id;
@@ -6074,8 +6109,7 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 	buf_cfg.addr[0].addr_u     = prev_cxt->prev_reserved_frm.addr_phy.addr_u;
 	buf_cfg.addr_vir[0].addr_y = prev_cxt->prev_reserved_frm.addr_vir.addr_y;
 	buf_cfg.addr_vir[0].addr_u = prev_cxt->prev_reserved_frm.addr_vir.addr_u;
-	buf_cfg.fd[0]               = prev_cxt->prev_reserved_frm.fd;
-
+	buf_cfg.fd[0]              = prev_cxt->prev_reserved_frm.fd;
 	ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);
 	if (ret) {
 		CMR_LOGE("channel buff config failed");
@@ -6184,7 +6218,7 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle, cmr_u32 camera_i
 	}
 
 	if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
-		prev_cxt->skip_mode = IMG_SKIP_SW;
+		prev_cxt->skip_mode = IMG_SKIP_SW_KER;
 		chn_param.cap_inf_cfg.cfg.need_isp = 1;
 	}
 
@@ -6267,6 +6301,7 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_
 	struct img_data_end         endian;
 	struct buffer_cfg           buf_cfg;
 	struct img_size             trim_sz;
+	cmr_u32                     i;
 
 	CHECK_HANDLE_VALID(handle);
 	CHECK_CAMERA_ID(camera_id);
@@ -6310,13 +6345,12 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_
 	chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode= 1;
 
 	if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
-		prev_cxt->skip_mode = IMG_SKIP_SW;
+		prev_cxt->skip_mode = IMG_SKIP_SW_KER;
 		chn_param.cap_inf_cfg.cfg.need_isp = 1;
 	}
 
 	chn_param.cap_inf_cfg.cfg.dst_img_size.width   = prev_cxt->actual_video_size.width;
 	chn_param.cap_inf_cfg.cfg.dst_img_size.height  = prev_cxt->actual_video_size.height;
-
 	chn_param.cap_inf_cfg.cfg.notice_slice_height  = chn_param.cap_inf_cfg.cfg.dst_img_size.height;
 	chn_param.cap_inf_cfg.cfg.src_img_rect.start_x = sensor_mode_info->scaler_trim.start_x;
 	chn_param.cap_inf_cfg.cfg.src_img_rect.start_y = sensor_mode_info->scaler_trim.start_y;
@@ -6417,6 +6451,38 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_
 	prev_cxt->video_channel_status = PREV_CHN_BUSY;
 	prev_cxt->video_data_endian = endian;
 
+	if (prev_cxt->skip_mode == IMG_SKIP_SW_KER) {
+		/*config skip buffer*/
+		for (i = 0; i < prev_cxt->prev_skip_num; i++) {
+			cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
+			buf_cfg.channel_id         = prev_cxt->video_channel_id;
+			buf_cfg.base_id            = CMR_VIDEO_ID_BASE;
+			buf_cfg.count              = 1;
+			buf_cfg.length             = prev_cxt->video_mem_size;
+			buf_cfg.is_reserved_buf    = 0;
+			buf_cfg.flag               = BUF_FLAG_INIT;
+			buf_cfg.addr[0].addr_y     = prev_cxt->video_reserved_frm.addr_phy.addr_y;
+			buf_cfg.addr[0].addr_u     = prev_cxt->video_reserved_frm.addr_phy.addr_u;
+			buf_cfg.addr_vir[0].addr_y = prev_cxt->video_reserved_frm.addr_vir.addr_y;
+			buf_cfg.addr_vir[0].addr_u = prev_cxt->video_reserved_frm.addr_vir.addr_u;
+			buf_cfg.fd[0]              = prev_cxt->video_reserved_frm.fd;
+			ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);
+			if (ret) {
+				CMR_LOGE("channel buff config failed");
+				ret = CMR_CAMERA_FAIL;
+				goto exit;
+			}
+		}
+	}
+
+	chn_param.buffer.channel_id = prev_cxt->video_channel_id;
+	ret = handle->ops.channel_buff_cfg(handle->oem_handle, &chn_param.buffer);
+	if (ret) {
+		CMR_LOGE("channel buff config failed");
+		ret = CMR_CAMERA_FAIL;
+		goto exit;
+	}
+
 	/*config reserved buffer*/
 	cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
 	buf_cfg.channel_id         = prev_cxt->video_channel_id;
@@ -6429,8 +6495,7 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_
 	buf_cfg.addr[0].addr_u     = prev_cxt->video_reserved_frm.addr_phy.addr_u;
 	buf_cfg.addr_vir[0].addr_y = prev_cxt->video_reserved_frm.addr_vir.addr_y;
 	buf_cfg.addr_vir[0].addr_u = prev_cxt->video_reserved_frm.addr_vir.addr_u;
-	buf_cfg.fd[0]			   = prev_cxt->video_reserved_frm.fd;
-
+	buf_cfg.fd[0]              = prev_cxt->video_reserved_frm.fd;
 	ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);
 	if (ret) {
 		CMR_LOGE("channel buff config failed");
@@ -6509,7 +6574,7 @@ cmr_int prev_set_video_param_lightly(struct prev_handle *handle, cmr_u32 camera_
 	chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode= 1;
 
 	if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
-		prev_cxt->skip_mode = IMG_SKIP_SW;
+		prev_cxt->skip_mode = IMG_SKIP_SW_KER;
 		chn_param.cap_inf_cfg.cfg.need_isp = 1;
 	}
 
@@ -6593,10 +6658,10 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 	struct cmr_path_capability  capability;
 	cmr_u32                     is_capture_zsl = 0;
 	struct buffer_cfg           buf_cfg;
+	cmr_u32                     i;
 
 	CHECK_HANDLE_VALID(handle);
 	CHECK_CAMERA_ID(camera_id);
-	CMR_LOGD(" in");
 
 	cmr_bzero(&chn_param, sizeof(struct channel_start_param));
 	cmr_bzero(&video_param, sizeof(struct video_start_param));
@@ -6613,6 +6678,7 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 
 	chn_param.is_lightly   = is_lightly;;
 	chn_param.sensor_mode  = prev_cxt->cap_mode;
+	prev_cxt->skip_mode    = IMG_SKIP_SW_KER;
 	prev_cxt->cap_skip_num = sensor_info->capture_skip_num;
 	if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
 		chn_param.skip_num = 0;
@@ -6735,6 +6801,43 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 		prev_cxt->cap_channel_status = PREV_CHN_BUSY;
 		prev_cxt->cap_data_endian = endian;
 
+		/* for capture, not skip frame for now, for cts testMandatoryOutputCombinations issue */
+		if ((prev_cxt->skip_mode == IMG_SKIP_SW_KER) && 0) {
+			/*config skip num buffer*/
+			for (i = 0; i < prev_cxt->cap_skip_num; i++) {
+				cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
+				buf_cfg.channel_id         = prev_cxt->cap_channel_id;
+				if (is_capture_zsl) {
+					buf_cfg.base_id            = CMR_CAP1_ID_BASE;
+				} else {
+					buf_cfg.base_id            = CMR_CAP0_ID_BASE;
+				}
+				buf_cfg.count              = 1;
+				buf_cfg.length             = prev_cxt->cap_zsl_mem_size;
+				buf_cfg.is_reserved_buf    = 0;
+				buf_cfg.flag               = BUF_FLAG_INIT;
+				buf_cfg.addr[0].addr_y     = prev_cxt->cap_zsl_reserved_frm.addr_phy.addr_y;
+				buf_cfg.addr[0].addr_u     = prev_cxt->cap_zsl_reserved_frm.addr_phy.addr_u;
+				buf_cfg.addr_vir[0].addr_y = prev_cxt->cap_zsl_reserved_frm.addr_vir.addr_y;
+				buf_cfg.addr_vir[0].addr_u = prev_cxt->cap_zsl_reserved_frm.addr_vir.addr_u;
+				buf_cfg.fd[0]              = prev_cxt->cap_zsl_reserved_frm.fd;
+				ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);
+				if (ret) {
+					CMR_LOGE("channel buff config failed");
+					ret = CMR_CAMERA_FAIL;
+					goto exit;
+				}
+			}
+		}
+
+		chn_param.buffer.channel_id = prev_cxt->cap_channel_id;
+		ret = handle->ops.channel_buff_cfg(handle->oem_handle, &chn_param.buffer);
+		if (ret) {
+			CMR_LOGE("channel buff config failed");
+			ret = CMR_CAMERA_FAIL;
+			goto exit;
+		}
+
 		/*config reserved buffer*/
 		cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
 		buf_cfg.channel_id         = prev_cxt->cap_channel_id;
@@ -6752,7 +6855,6 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 		buf_cfg.addr_vir[0].addr_y = prev_cxt->cap_zsl_reserved_frm.addr_vir.addr_y;
 		buf_cfg.addr_vir[0].addr_u = prev_cxt->cap_zsl_reserved_frm.addr_vir.addr_u;
 		buf_cfg.fd[0]              = prev_cxt->cap_zsl_reserved_frm.fd;
-
 		ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);
 		if (ret) {
 			CMR_LOGE("channel buff config failed");
@@ -6907,7 +7009,7 @@ cmr_int prev_set_zsl_param_lightly(struct prev_handle *handle, cmr_u32 camera_id
 	chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
 
 	if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
-		prev_cxt->skip_mode = IMG_SKIP_SW;
+		prev_cxt->skip_mode = IMG_SKIP_SW_KER;
 		chn_param.cap_inf_cfg.cfg.need_isp = 1;
 	}
 
@@ -6955,6 +7057,7 @@ cmr_int prev_set_cap_param_raw(struct prev_handle *handle,
 	struct video_start_param    video_param;
 	cmr_uint                    is_autotest = 0;
 	struct img_data_end         endian;
+	struct buffer_cfg           buf_cfg;
 
 	CHECK_HANDLE_VALID(handle);
 	CHECK_CAMERA_ID(camera_id);
@@ -7033,6 +7136,13 @@ cmr_int prev_set_cap_param_raw(struct prev_handle *handle,
 		goto exit;
 	}
 
+	ret = prev_alloc_cap_reserve_buf(handle, camera_id, is_restart);
+	if (ret) {
+		CMR_LOGE("alloc cap reserve buf failed");
+		ret = CMR_CAMERA_FAIL;
+		goto exit;
+	}
+
 	/*config channel*/
 	if (!handle->ops.channel_cfg) {
 		CMR_LOGE("ops channel_cfg is null");
@@ -7055,6 +7165,33 @@ cmr_int prev_set_cap_param_raw(struct prev_handle *handle,
 		prev_cxt->cap_data_endian =  endian;
 	}
 
+	chn_param.buffer.channel_id = prev_cxt->cap_channel_id;
+	ret = handle->ops.channel_buff_cfg(handle->oem_handle, &chn_param.buffer);
+	if (ret) {
+		CMR_LOGE("channel buff config failed");
+		ret = CMR_CAMERA_FAIL;
+		goto exit;
+	}
+
+	/*config reserved buffer*/
+	cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
+	buf_cfg.channel_id         = prev_cxt->cap_channel_id;
+	buf_cfg.base_id            = CMR_CAP0_ID_BASE;
+	buf_cfg.count              = 1;
+	buf_cfg.length             = prev_cxt->cap_zsl_mem_size;
+	buf_cfg.is_reserved_buf    = 1;
+	buf_cfg.flag               = BUF_FLAG_INIT;
+	buf_cfg.addr[0].addr_y     = prev_cxt->cap_zsl_reserved_frm.addr_phy.addr_y;
+	buf_cfg.addr[0].addr_u     = prev_cxt->cap_zsl_reserved_frm.addr_phy.addr_u;
+	buf_cfg.addr_vir[0].addr_y = prev_cxt->cap_zsl_reserved_frm.addr_vir.addr_y;
+	buf_cfg.addr_vir[0].addr_u = prev_cxt->cap_zsl_reserved_frm.addr_vir.addr_u;
+	buf_cfg.fd[0]              = prev_cxt->cap_zsl_reserved_frm.fd;
+	ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);
+	if (ret) {
+		CMR_LOGE("channel buff config failed");
+		ret = CMR_CAMERA_FAIL;
+		goto exit;
+	}
 
 	/*save channel start param for restart*/
 	cmr_copy(&prev_cxt->restart_chn_param, &chn_param, sizeof(struct channel_start_param));
@@ -7171,7 +7308,6 @@ cmr_int prev_set_depthmap_param(struct prev_handle *handle, cmr_u32 camera_id, c
 	buf_cfg.addr_vir[0].addr_y = prev_cxt->depthmap_reserved_frm.addr_vir.addr_y;
 	buf_cfg.addr_vir[0].addr_u = prev_cxt->depthmap_reserved_frm.addr_vir.addr_u;
 	buf_cfg.fd[0]              = prev_cxt->depthmap_reserved_frm.fd;
-
 	ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);
 	if (ret) {
 		CMR_LOGE("channel buff config failed");
@@ -7212,7 +7348,6 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id, struct i
 		return CMR_CAMERA_FAIL;
 	}
 
-	CMR_LOGD(" in");
 	CMR_LOGI("camera_id %d", camera_id);
 	prev_cxt     = &handle->prev_cxt[camera_id];
 	sensor_size  = &prev_cxt->cap_sn_size;
@@ -8202,7 +8337,6 @@ cmr_int prev_set_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 	prev_cxt->cap_zsl_frm[valid_num].addr_phy.addr_y = prev_cxt->cap_zsl_phys_addr_array[valid_num];
 	prev_cxt->cap_zsl_frm[valid_num].addr_phy.addr_u = prev_cxt->cap_zsl_frm[valid_num].addr_phy.addr_y + buffer_size;
 	prev_cxt->cap_zsl_frm[valid_num].fd              = prev_cxt->cap_zsl_fd_array[valid_num];
-
 	prev_cxt->cap_zsl_frm[valid_num].fmt             = prev_cxt->cap_org_fmt;
 	prev_cxt->cap_zsl_frm[valid_num].size.width      = width;
 	prev_cxt->cap_zsl_frm[valid_num].size.height     = height;
@@ -8213,13 +8347,11 @@ cmr_int prev_set_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 	buf_cfg.count       = 1;
 	buf_cfg.length      = frame_size;
 	buf_cfg.flag        = BUF_FLAG_RUNNING;
-
 	buf_cfg.addr[0].addr_y     = prev_cxt->cap_zsl_frm[valid_num].addr_phy.addr_y;
 	buf_cfg.addr[0].addr_u     = prev_cxt->cap_zsl_frm[valid_num].addr_phy.addr_u;
 	buf_cfg.addr_vir[0].addr_y = prev_cxt->cap_zsl_frm[valid_num].addr_vir.addr_y;
 	buf_cfg.addr_vir[0].addr_u = prev_cxt->cap_zsl_frm[valid_num].addr_vir.addr_u;
 	buf_cfg.fd[0]              = prev_cxt->cap_zsl_frm[valid_num].fd;
-
 	ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);
 	if (ret) {
 		CMR_LOGE("channel_buff_cfg failed");
@@ -9063,6 +9195,9 @@ cmr_int prev_restart_cap_channel(struct prev_handle *handle,
 	struct video_start_param    video_param;
 	struct sensor_mode_info     *sensor_mode_info = NULL;
 	struct img_data_end         endian;
+	struct buffer_cfg           buf_cfg;
+	cmr_u32                     is_capture_zsl = 0;
+	cmr_u32                     i;
 
 	CHECK_HANDLE_VALID(handle);
 	CHECK_CAMERA_ID(camera_id);
@@ -9079,6 +9214,13 @@ cmr_int prev_restart_cap_channel(struct prev_handle *handle,
 		prev_cxt->cap_channel_id,
 		prev_cxt->isp_status);
 
+	if (prev_cxt->prev_param.preview_eb && prev_cxt->prev_param.snapshot_eb) {
+		/*zsl*/
+		if (FRAME_CONTINUE == prev_cxt->prev_param.frame_ctrl) {
+			is_capture_zsl = 1;
+		}
+	}
+
 	if (snapshot_enable && (data->channel_id == prev_cxt->cap_channel_id)) {
 
 		/*reconfig the channel with the params saved before*/
@@ -9090,6 +9232,67 @@ cmr_int prev_restart_cap_channel(struct prev_handle *handle,
 		}
 		CMR_LOGI("cap chn id is %ld", prev_cxt->cap_channel_id );
 		prev_cxt->cap_channel_status = PREV_CHN_BUSY;
+
+		/* for capture, not skip frame for now, for cts testMandatoryOutputCombinations issue */
+		if ((prev_cxt->skip_mode == IMG_SKIP_SW_KER) && 0) {
+			/*config skip num buffer*/
+			for (i = 0; i < prev_cxt->cap_skip_num; i++) {
+				cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
+				buf_cfg.channel_id         = prev_cxt->cap_channel_id;
+				if (is_capture_zsl) {
+					buf_cfg.base_id            = CMR_CAP1_ID_BASE;
+				} else {
+					buf_cfg.base_id            = CMR_CAP0_ID_BASE;
+				}
+				buf_cfg.count              = 1;
+				buf_cfg.length             = prev_cxt->cap_zsl_mem_size;
+				buf_cfg.is_reserved_buf    = 0;
+				buf_cfg.flag               = BUF_FLAG_INIT;
+				buf_cfg.addr[0].addr_y     = prev_cxt->cap_zsl_reserved_frm.addr_phy.addr_y;
+				buf_cfg.addr[0].addr_u     = prev_cxt->cap_zsl_reserved_frm.addr_phy.addr_u;
+				buf_cfg.addr_vir[0].addr_y = prev_cxt->cap_zsl_reserved_frm.addr_vir.addr_y;
+				buf_cfg.addr_vir[0].addr_u = prev_cxt->cap_zsl_reserved_frm.addr_vir.addr_u;
+				buf_cfg.fd[0]              = prev_cxt->cap_zsl_reserved_frm.fd;
+				ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);
+				if (ret) {
+					CMR_LOGE("channel buff config failed");
+					ret = CMR_CAMERA_FAIL;
+					goto exit;
+				}
+			}
+		}
+
+		prev_cxt->restart_chn_param.buffer.channel_id = channel_id;
+		ret = handle->ops.channel_buff_cfg(handle->oem_handle, &prev_cxt->restart_chn_param.buffer);
+		if (ret) {
+			CMR_LOGE("channel buff config failed");
+			ret = CMR_CAMERA_FAIL;
+			goto exit;
+		}
+
+		/*config reserved buffer*/
+		cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
+		buf_cfg.channel_id         = prev_cxt->cap_channel_id;
+		if (is_capture_zsl) {
+			buf_cfg.base_id            = CMR_CAP1_ID_BASE;
+		} else {
+			buf_cfg.base_id            = CMR_CAP0_ID_BASE;
+		}
+		buf_cfg.count              = 1;
+		buf_cfg.length             = prev_cxt->cap_zsl_mem_size;
+		buf_cfg.is_reserved_buf    = 1;
+		buf_cfg.flag               = BUF_FLAG_INIT;
+		buf_cfg.addr[0].addr_y     = prev_cxt->cap_zsl_reserved_frm.addr_phy.addr_y;
+		buf_cfg.addr[0].addr_u     = prev_cxt->cap_zsl_reserved_frm.addr_phy.addr_u;
+		buf_cfg.addr_vir[0].addr_y = prev_cxt->cap_zsl_reserved_frm.addr_vir.addr_y;
+		buf_cfg.addr_vir[0].addr_u = prev_cxt->cap_zsl_reserved_frm.addr_vir.addr_u;
+		buf_cfg.fd[0]              = prev_cxt->cap_zsl_reserved_frm.fd;
+		ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);
+		if (ret) {
+			CMR_LOGE("channel buff config failed");
+			ret = CMR_CAMERA_FAIL;
+			goto exit;
+		}
 
 		ret = prev_start(handle, camera_id, 1, 0);
 		if (ret) {

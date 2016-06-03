@@ -578,7 +578,7 @@ static cmr_int setting_set_general(struct setting_component *cpt,
 				//setting_sn_ctrl(cpt, item->sn_cmd, parm);
 			}
 
-			skip_mode = IMG_SKIP_SW;
+			skip_mode = IMG_SKIP_SW_KER;
 			is_check_night_mode = 0;
 			if (SETTING_GENERAL_SENSOR_ROTATION == type){
 				is_check_night_mode = 1;
@@ -1086,7 +1086,7 @@ static cmr_int setting_process_zoom(struct setting_component *cpt,
 				goto setting_out;
 			}
 
-			skip_mode = IMG_SKIP_SW;
+			skip_mode = IMG_SKIP_SW_KER;
 			skip_number = setting_get_skip_number(cpt, parm, 1);
 			after_cb_param.re_mode = PARAM_ZOOM;
 			after_cb_param.skip_mode = skip_mode;

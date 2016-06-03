@@ -124,9 +124,6 @@ static const struct cap_size_to_mem back_cam_mem_size_tab[IMG_SIZE_NUM] = {
 * so, the total cap size is:
 * w * h * 3 / 2 + w * h * 3 / 2 + w * h * 3 / 2 * 2 + thumW * thumH * 3 = 6 * w * h + thumW * thumH * 3(bytes);
 */
-/* now because isp postproc issue, need nore buffers, when they fix their bugs,
-* we can change it smaller
-*/
 static const struct cap_size_to_mem back_cam_raw_mem_size_tab[IMG_SIZE_NUM] = {
 	{PIXEL_1P3_MEGA, (45 << 20)},
 	{PIXEL_2P0_MEGA, (45 << 20)},
@@ -141,8 +138,8 @@ static const struct cap_size_to_mem back_cam_raw_mem_size_tab[IMG_SIZE_NUM] = {
 	{PIXEL_BP0_MEGA, (78 << 20)},
 	{PIXEL_CP0_MEGA, (78 << 20)},
 	{PIXEL_DP0_MEGA, (78 << 20)},
-	{PIXEL_10P0_MEGA, (105 << 20)},
-	{PIXEL_15P0_MEGA, (144 << 20)}
+	{PIXEL_10P0_MEGA, (95 << 20)},
+	{PIXEL_15P0_MEGA, (125 << 20)}
 };
 
 

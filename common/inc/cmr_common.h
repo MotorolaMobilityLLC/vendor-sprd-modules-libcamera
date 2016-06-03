@@ -198,7 +198,10 @@ enum img_data_endian {
 
 enum img_skip_mode {
 	IMG_SKIP_HW = 0,
-	IMG_SKIP_SW
+	IMG_SKIP_SW,
+	/* skip frame in kernel driver */
+	IMG_SKIP_SW_KER,
+	IMG_SKIP_MAX
 };
 
 enum restart_mode {
