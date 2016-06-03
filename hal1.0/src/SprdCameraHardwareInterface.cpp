@@ -438,6 +438,7 @@ SprdCameraHardware::SprdCameraHardware(int cameraId)
 	mIspLscHeapReserved(NULL),
 	mIspFirmwareReserved(NULL),
 	mHighIsoSnapshotHeapReserved(NULL),
+	mIspRawDataReserved(NULL),
 	mIspAntiFlickerHeapReserved(NULL),
 	mVideoShotPushFlag(0),
 	mZslShotPushFlag(0),
@@ -3849,10 +3850,6 @@ int SprdCameraHardware::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u
 			return 0;
 	}	else if (type == CAMERA_SNAPSHOT_HIGHISO) {
 		if(mHighIsoSnapshotHeapReserved == NULL) {
-			if(!memory){
-					LOGE("error memory is null.");
-					return BAD_VALUE;
-			}
 			memory = allocReservedMem(size, true);
 			if (NULL == memory) {
 				LOGI("error memory is null.");
@@ -3868,7 +3865,7 @@ int SprdCameraHardware::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u
 		*fd++ = memory->fd;
 		LOGI("malloc High Iso memory, malloced type %d,request num %d, request size 0x%x, fd 0x%x",
 			type, sum, size, fd);
-	}else if (type == CAMERA_ISP_RAW_DATA) {
+	} else if (type == CAMERA_ISP_RAW_DATA) {
 		if (mIspRawDataReserved ==  NULL) {
 			memory = allocCameraMem(size, true);
 			if (NULL == memory) {
@@ -3914,7 +3911,7 @@ int SprdCameraHardware::Callback_Malloc(enum camera_mem_cb_type type, cmr_u32 *s
 		ret = camera->Callback_CaptureMalloc(size, sum, phy_addr, vir_addr, fd);
 	} else if (CAMERA_PREVIEW_RESERVED == type || CAMERA_VIDEO_RESERVED == type || CAMERA_ISP_FIRMWARE == type ||
 		CAMERA_SNAPSHOT_ZSL_RESERVED == type || CAMERA_ISP_LSC == type || CAMERA_ISP_BINGING4AWB == type ||
-		CAMERA_SNAPSHOT_HIGHISO == type) {
+		CAMERA_SNAPSHOT_HIGHISO == type || CAMERA_ISP_RAW_DATA == type) {
 		ret = camera->Callback_OtherMalloc(type, size, sum, phy_addr, vir_addr, fd);
 	} else if (CAMERA_VIDEO == type) {
 		ret = camera->Callback_VideoMalloc(size, sum, phy_addr, vir_addr, fd);
@@ -4132,7 +4129,8 @@ int SprdCameraHardware::Callback_Free(enum camera_mem_cb_type type, cmr_uint *ph
 		ret = camera->Callback_CaptureFree(phy_addr, vir_addr, fd, sum);
 	} else if (CAMERA_PREVIEW_RESERVED == type || CAMERA_VIDEO_RESERVED == type ||
 		CAMERA_SNAPSHOT_ZSL_RESERVED == type || CAMERA_ISP_LSC == type ||
-		CAMERA_ISP_BINGING4AWB == type || CAMERA_ISP_ANTI_FLICKER == type || CAMERA_ISP_RAWAE == type) {
+		CAMERA_ISP_BINGING4AWB == type || CAMERA_ISP_ANTI_FLICKER == type || CAMERA_ISP_RAWAE == type ||
+		CAMERA_SNAPSHOT_HIGHISO == type || CAMERA_ISP_RAW_DATA == type) {
 		ret = camera->Callback_OtherFree(type, phy_addr, vir_addr, fd, sum);
 	} else if (CAMERA_VIDEO == type) {
 		ret = camera->Callback_VideoFree(phy_addr, vir_addr, fd, sum);
