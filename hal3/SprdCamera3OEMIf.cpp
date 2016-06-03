@@ -3235,6 +3235,11 @@ bool SprdCamera3OEMIf::receiveCallbackPicture(uint32_t width, uint32_t height, c
 				if(frame_num > mPictureFrameNum)
 					mPictureFrameNum = frame_num;
 			}
+			if ((mTakePictureMode == SNAPSHOT_NO_ZSL_MODE)||(mTakePictureMode == SNAPSHOT_DEFAULT_MODE)){
+				SprdCamera3RegularChannel* regularChannel = reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
+				if (regularChannel)
+					regularChannel->channelClearInvalidQBuff(mPictureFrameNum, timestamp, CAMERA_STREAM_TYPE_PREVIEW);
+			}
 		}
 	}
 
