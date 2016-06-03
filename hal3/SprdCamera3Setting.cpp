@@ -2444,7 +2444,7 @@ int SprdCamera3Setting::initStaticMetadata(int32_t cameraId, camera_metadata_t *
 			&(s_setting[cameraId].sprddefInfo.availabe_smile_enable),1);
 	staticInfo.update(ANDROID_SPRD_AVAILABLE_ANTIBAND_AUTOSUPPORTED,
 			&(s_setting[cameraId].sprddefInfo.availabe_antiband_auto_supported),1);
-	if (cameraId == 0 ||cameraId == 1) {
+	if (cameraId == 0 ||cameraId == 1||cameraId == 2) {
 		staticInfo.update(ANDROID_SPRD_AVAILABLE_ISO,
 				s_setting[cameraId].sprddefInfo.availabe_iso,
 				ARRAY_SIZE(s_setting[cameraId].sprddefInfo.availabe_iso));
