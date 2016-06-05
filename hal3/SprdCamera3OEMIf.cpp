@@ -6877,8 +6877,8 @@ int SprdCamera3OEMIf::gyro_monitor_thread_deinit(void *p_data)
 
 	if (obj->mGyroInit) {
 		obj->mGyroInit = 0;
-		while(!obj->mGyroDeinit){
-			usleep(2000);
+		if (!obj->mGyroDeinit){
+			usleep(100 * 1000);
 		}
 		ret = pthread_join(obj->mGyroMsgQueHandle, &dummy);
 		obj->mGyroMsgQueHandle = 0;
