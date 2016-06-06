@@ -50,6 +50,9 @@ extern "C" {
 #include <gui/Sensor.h>
 #include <gui/SensorManager.h>
 #include <gui/SensorEventQueue.h>
+#include <utils/Errors.h>
+#include <utils/RefBase.h>
+#include <utils/Looper.h>
 #endif
 #ifdef CONFIG_CAMERA_EIS
 #include "sprd_eis.h"
