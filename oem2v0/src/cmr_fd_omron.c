@@ -134,7 +134,7 @@ static cmr_int set_dt_param(HDETECTION hDT)
 	}
 
 	/* Sets the Face Detection Threshold */
-	nRet = UDN_SetDtThreshold(hDT, 500, 500);
+	nRet = UDN_SetDtThreshold(hDT, 500, 400);
 	if (nRet != UDN_NORMAL) {
 		CMR_LOGE("UDN_SetDtThreshold() Error : %d", nRet);
 		return nRet;
@@ -154,7 +154,7 @@ static cmr_int set_dt_param(HDETECTION hDT)
 		return nRet;
 	}
 	/* Sets Motion Face Detection Retry Count, Motion Head Detection Retry Count and Hold Count at lost time */
-	nRet = UDN_SetDtLostParam(hDT, 1, 1, 0);
+	nRet = UDN_SetDtLostParam(hDT, 4, 4, 4);
 	if (nRet != UDN_NORMAL) {
 		CMR_LOGE("UDN_SetDtLostParam() Error : %d", nRet);
 		return nRet;
