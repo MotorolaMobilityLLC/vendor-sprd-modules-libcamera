@@ -7989,7 +7989,7 @@ static cmr_uint camera_sensor_color_to_isp_color(cmr_u32 *isp_color, cmr_u32 sen
 		break;
 	default:
 		CMR_LOGE("sensor color maybe error,not found in definition.set isp color to COLOR_ORDER_GR");
-		isp_color = COLOR_ORDER_GR;
+		*isp_color = COLOR_ORDER_GR;
 		break;
 	}
 	return CMR_CAMERA_SUCCESS;
@@ -8032,7 +8032,7 @@ cmr_int camera_preview_set_yhist_to_isp(cmr_handle oem_handle, cmr_u32 camera_id
 	}
 
 	isp_param.camera_id = camera_id;
-	isp_param.cmd_value = yhist;
+	isp_param.cmd_value = (unsigned long)yhist;
 	CMR_LOGI("piano addr 0x%lx", yhist->y_addr[0]);
 	ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_PREVIEW_YHIST, &isp_param);
 

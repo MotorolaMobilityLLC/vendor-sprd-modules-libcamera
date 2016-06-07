@@ -854,7 +854,7 @@ void hw_Sensor_Reset(SENSOR_HW_HANDLE handle, cmr_u32 level)
 	cmr_u32 rst_val[2];
 	SENSOR_IOCTL_FUNC_PTR reset_func;
 	if (NULL == handle || NULL == handle->privatedata)
-		return SENSOR_CTX_ERROR;
+		return;
 	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)(handle->privatedata);
 
 	CMR_LOGI("in.");
@@ -3965,7 +3965,7 @@ cmr_int sensor_get_exif_common(struct sensor_drv_context *sensor_cxt, EXIF_SPEC_
 EXIF_SPEC_PIC_TAKING_COND_T *hw_Sensor_GetSensorExifInfo(SENSOR_HW_HANDLE handle)
 {
 	if (NULL == handle || NULL == handle->privatedata)
-		return SENSOR_CTX_ERROR;
+		return NULL;
 	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)(handle->privatedata);
 	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = NULL;
 	EXIF_SPEC_PIC_TAKING_COND_T *sensor_exif_info_ptr = PNULL;
@@ -4083,7 +4083,7 @@ cmr_int sensor_read_otp_info(struct sensor_drv_context *sensor_cxt,
 			&& (NULL != sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr)) {
 		param.type = SENSOR_VAL_TYPE_READ_OTP;
 		if (PNULL != sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr->cfg_otp)
-			sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr->cfg_otp(sensor_cxt->sensor_hw_handler, &param);
+			sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr->cfg_otp(sensor_cxt->sensor_hw_handler, (cmr_uint)&param);
 		*otp_info = param.pval;
 	} else {
 		CMR_LOGE("invalid param failed!");
@@ -4103,7 +4103,7 @@ cmr_int sns_cfg_otp_update_isparam(struct sensor_drv_context *sensor_cxt,
 			&& (NULL != sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr)){
 		param.type = SENSOR_VAL_TYPE_INIT_OTP;
 		if(PNULL != sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr->cfg_otp){
-			sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr->cfg_otp(sensor_cxt->sensor_hw_handler, &param);
+			sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr->cfg_otp(sensor_cxt->sensor_hw_handler, (cmr_uint)&param);
 		}
 	}else{
 		CMR_LOGE("invalid param failed!");

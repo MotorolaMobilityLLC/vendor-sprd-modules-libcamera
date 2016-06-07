@@ -44,7 +44,7 @@ extern	 "C"
 #define SENSOR_MEMSET                                 memset
 
 #define BOOLEAN                                       cmr_u32
-#define PNULL                                         ((void *)0)
+#define PNULL                                         0
 #define LOCAL                                         static
 
 #define DEBUG_SENSOR_DRV                              1

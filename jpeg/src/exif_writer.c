@@ -446,7 +446,7 @@ LOCAL JPEG_RET_E Jpeg_WriteExifInteroperabilityInfo(JPEG_WRITE_STREAM_CONTEXT_T 
     /***********************************************************************/
 
     if (valid.InteroperabilityIndex
-        && PNULL != inter_ptr->InteroperabilityIndex.ptr
+        /*&& PNULL != inter_ptr->InteroperabilityIndex.ptr*/
         && inter_ptr->InteroperabilityIndex.count > 0)
     {
         ifd_info.tag = IFD_INTEROPERABILITYINDEX;
@@ -618,7 +618,7 @@ LOCAL JPEG_RET_E Jpeg_WriteExifSpecInfo(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr
     }
 
     if (PNULL != pic_taking_cond_ptr && pic_taking_cond_ptr->valid.ISOSpeedRatings
-        && PNULL != pic_taking_cond_ptr->ISOSpeedRatings.ptr
+        /*&& PNULL != pic_taking_cond_ptr->ISOSpeedRatings.ptr*/
         && pic_taking_cond_ptr->ISOSpeedRatings.count > 0)
     {
         //size of any
@@ -638,7 +638,7 @@ LOCAL JPEG_RET_E Jpeg_WriteExifSpecInfo(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr
 
 
     if (PNULL != pic_taking_cond_ptr && pic_taking_cond_ptr->valid.OECF
-        && PNULL != pic_taking_cond_ptr->OECF.ptr
+        /*&& PNULL != pic_taking_cond_ptr->OECF.ptr*/
         && pic_taking_cond_ptr->OECF.count > 0)
     {
         //size of any
@@ -899,7 +899,7 @@ LOCAL JPEG_RET_E Jpeg_WriteExifSpecInfo(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr
     }
 
     if (PNULL != pic_taking_cond_ptr && pic_taking_cond_ptr->valid.SubjectArea
-        && PNULL != pic_taking_cond_ptr->SubjectArea.ptr
+        /*&& PNULL != pic_taking_cond_ptr->SubjectArea.ptr*/
         && pic_taking_cond_ptr->SubjectArea.count > 0)
     {
         ifd_info.tag = IFD_SUBJECTAREA;
@@ -916,7 +916,8 @@ LOCAL JPEG_RET_E Jpeg_WriteExifSpecInfo(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr
         entries++;
     }
 
-    if (PNULL != user_ptr && user_ptr->MakerNote.ptr
+    if (PNULL != user_ptr
+        /*&& user_ptr->MakerNote.ptr*/
         && user_ptr->MakerNote.count > 0)
     {
         ifd_info.tag = IFD_MAKERNOTE;
@@ -933,7 +934,8 @@ LOCAL JPEG_RET_E Jpeg_WriteExifSpecInfo(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr
         entries++;
     }
 
-    if (PNULL != user_ptr && user_ptr->UserComment.ptr
+    if (PNULL != user_ptr
+        /*&& user_ptr->UserComment.ptr*/
         && user_ptr->UserComment.count > 0)
     {
         ifd_info.tag = IFD_USERCOMMENT;
@@ -1121,7 +1123,7 @@ LOCAL JPEG_RET_E Jpeg_WriteExifSpecInfo(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr
     }
 
     if (PNULL != pic_taking_cond_ptr && pic_taking_cond_ptr->valid.SpatialFrequencyResponse
-        && PNULL != pic_taking_cond_ptr->SpatialFrequencyResponse.ptr
+        /*&& PNULL != pic_taking_cond_ptr->SpatialFrequencyResponse.ptr*/
         && pic_taking_cond_ptr->SpatialFrequencyResponse.count > 0)
     {
         ifd_info.tag = IFD_SPATIALFREQUENCYRESPONSE;
@@ -1267,7 +1269,7 @@ LOCAL JPEG_RET_E Jpeg_WriteExifSpecInfo(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr
     }
 
     if (PNULL != pic_taking_cond_ptr && pic_taking_cond_ptr->valid.CFAPattern
-        && PNULL != pic_taking_cond_ptr->CFAPattern.ptr
+        /*&& PNULL != pic_taking_cond_ptr->CFAPattern.ptr*/
         && pic_taking_cond_ptr->CFAPattern.count > 0)
     {
         ifd_info.tag = IFD_CFAPATTERN;
@@ -1445,7 +1447,7 @@ LOCAL JPEG_RET_E Jpeg_WriteExifSpecInfo(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr
     }
 
     if (PNULL != pic_taking_cond_ptr && pic_taking_cond_ptr->valid.DeviceSettingDescription
-        && PNULL != pic_taking_cond_ptr->DeviceSettingDescription.ptr
+        /*&& PNULL != pic_taking_cond_ptr->DeviceSettingDescription.ptr*/
         && pic_taking_cond_ptr->DeviceSettingDescription.count > 0)
     {
         ifd_info.tag = IFD_DEVICESETTINGDESCRIPTION;
@@ -1990,7 +1992,7 @@ LOCAL JPEG_RET_E Jpeg_WriteExifGPSInfo(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr,
     }
 
     if (valid.GPSProcessingMethod
-        && PNULL != gps_ptr->GPSProcessingMethod.ptr
+        /*&& PNULL != gps_ptr->GPSProcessingMethod.ptr*/
         && gps_ptr->GPSProcessingMethod.count > 0)
     {
         ifd_info.tag = IFD_GPSPROCESSINGMETHOD;
@@ -2008,7 +2010,7 @@ LOCAL JPEG_RET_E Jpeg_WriteExifGPSInfo(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr,
     }
 
     if (valid.GPSAreaInformation
-        && PNULL != gps_ptr->GPSAreaInformation.ptr
+        /*&& PNULL != gps_ptr->GPSAreaInformation.ptr*/
         && gps_ptr->GPSAreaInformation.count > 0)
     {
         ifd_info.tag = IFD_GPSAREAINFORMATION;

@@ -4812,9 +4812,9 @@ cmr_int prev_alloc_depthmap_buf(struct prev_handle *handle, cmr_u32 camera_id, c
 				   handle->oem_handle,
 				   (cmr_u32 *)&prev_cxt->depthmap_mem_size,
 				   (cmr_u32 *)&reserved_count,
-				   prev_cxt->depthmap_reserved_phys_addr,
-				   prev_cxt->depthmap_reserved_virt_addr,
-				   prev_cxt->depthmap_reserved_fd);
+				   &prev_cxt->depthmap_reserved_phys_addr,
+				   &prev_cxt->depthmap_reserved_virt_addr,
+				   &prev_cxt->depthmap_reserved_fd);
 		prev_cxt->depthmap_mem_alloc_flag = 1;
 		CMR_LOGI("reserved, phys_addr 0x%lx, virt_addr 0x%lx, fd 0x%x",
 			prev_cxt->depthmap_reserved_phys_addr,
@@ -4908,7 +4908,6 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id)
 	cmr_u32                 is_cfg_rot_cap = 0;
 	cmr_u32                 aligned_type = 0;
 	cmr_u32                 mode_flag = 0;
-	cmr_u32                 flip_on;
 	cmr_int                 sn_mode = 0;
 	struct sensor_mode_fps_tag fps_info;
 
@@ -4926,7 +4925,6 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id)
 	cfg_cap_rot    = handle->prev_cxt[camera_id].prev_param.encode_angle;
 	is_cfg_rot_cap = handle->prev_cxt[camera_id].prev_param.is_cfg_rot_cap;
 	sensor_info    = &handle->prev_cxt[camera_id].sensor_info;
-	flip_on        = &handle->prev_cxt[camera_id].prev_param.flip_on;
 
 	CMR_LOGI("preview_eb %d, snapshot_eb %d, video_eb %d",
 		handle->prev_cxt[camera_id].prev_param.preview_eb,
@@ -9404,7 +9402,7 @@ cmr_int prev_depthmap_send_data(struct prev_handle *handle, cmr_u32 camera_id, s
 	ipm_in_param.touch_y =  prev_cxt->touch_info.touchY;
 	ipm_in_param.depth_map.width= 480;//TBD
 	ipm_in_param.depth_map.height= 360;//TBD
-	ipm_in_param.depth_map.depth_map_ptr = depthmap_frm->yaddr_vir; //TBD
+	ipm_in_param.depth_map.depth_map_ptr = (void*)((unsigned long)depthmap_frm->yaddr_vir); //TBD
 	ipm_in_param.caller_handle = (void*)handle;
 	ipm_in_param.private_data  = (void*)((unsigned long)camera_id);
 

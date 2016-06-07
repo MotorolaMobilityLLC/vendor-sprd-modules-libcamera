@@ -529,7 +529,7 @@ void pthread_debug_setname(pthread_t handle, const char *format, ...)
 	char	threadname[256];
 //	unsigned char *ptc = (unsigned char*)handle;
 
-	sprintf(threadname, format);
+	sprintf(threadname,"%s", format);
 	pthread_setname_np(handle, threadname);
 	__android_ylog_print(ANDROID_LOG_INFO, "tdebug", "thread %x name %s\n", (long)handle, threadname);
 //	__android_ylog_print(ANDROID_LOG_INFO, "tdebug", "thread %s name %s\n", ptc, threadname);

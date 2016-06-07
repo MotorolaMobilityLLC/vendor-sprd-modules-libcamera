@@ -4394,7 +4394,7 @@ int SprdCamera3OEMIf::CameraConvertCropRegion(uint32_t sensorWidth, uint32_t sen
 	return ret;
 }
 
-int SprdCamera3OEMIf::SetCameraParaTag(cmr_uint cameraParaTag)
+int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag)
 {
 	int ret = 0;
 	CONTROL_Tag controlInfo;

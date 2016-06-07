@@ -10,7 +10,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#ifndef bool
 typedef char bool;
+#endif
     /*
      * PARAMETERS :
      *   @param[in] pInData : The TSMakeupData pointer.MUST not NULL.
