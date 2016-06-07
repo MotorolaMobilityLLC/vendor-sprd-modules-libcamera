@@ -18,8 +18,6 @@ void send_img_data(uint32_t format, uint32_t width, uint32_t height,
 
 void send_capture_complete_msg()
 {
-	int x = 0;
-	x = x;
 }
 
 void send_capture_data(uint32_t format, uint32_t width, uint32_t height,

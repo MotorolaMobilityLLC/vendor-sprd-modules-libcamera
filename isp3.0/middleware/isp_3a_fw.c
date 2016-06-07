@@ -722,7 +722,7 @@ cmr_int isp3a_start_af_notify(cmr_handle handle, void *data)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)handle;
-	struct isp_af_notice                        af_notice = {0x00};
+	struct isp_af_notice                        af_notice;
 
 	UNUSED(data);
 	ISP_LOGI("move start");
@@ -730,6 +730,8 @@ cmr_int isp3a_start_af_notify(cmr_handle handle, void *data)
 		ISP_LOGE("calllback is NULL");
 		goto exit;
 	}
+
+	cmr_bzero(&af_notice, sizeof(af_notice));
 	af_notice.mode = ISP_FOCUS_MOVE_START;
 	af_notice.valid_win = 0x00;
 
@@ -743,13 +745,15 @@ cmr_int isp3a_end_af_notify(cmr_handle handle, struct af_result_param *data)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)handle;
-	struct isp_af_notice                        af_notice = {0x00};
+	struct isp_af_notice                        af_notice;
 
 	ISP_LOGI("move end");
 	if (!cxt || !cxt->caller_callback) {
 		ISP_LOGE("calllback is NULL");
 		goto exit;
 	}
+
+	cmr_bzero(&af_notice, sizeof(af_notice));
 	af_notice.mode = ISP_FOCUS_MOVE_END;
 	af_notice.valid_win = data->suc_win;
 	ret = cxt->caller_callback(cxt->caller_handle,
@@ -2622,8 +2626,9 @@ cmr_int isp3a_init_statistics_buf(cmr_handle isp_3a_handle)
 	void                                        *subsample_buf_addr = NULL;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
 	struct isp3a_statistics_data                *buf_head = NULL;
-	struct stats_buf_size_list stats_buf_size = { 0x00 };
+	struct stats_buf_size_list                  stats_buf_size;
 
+	cmr_bzero(&stats_buf_size, sizeof(stats_buf_size));
 	sem_wait(&cxt->statistics_data_sm);
 	isp_get_stats_size(&stats_buf_size);
 	ae_buf_addr = malloc(ISP3A_STATISTICS_BUF_NUM * stats_buf_size.ae_stats_size);

@@ -386,7 +386,7 @@ cmr_int af_ctrl_init(struct af_ctrl_init_in *in,
 	cmr_int ret = -ISP_ERROR;
 	/* create handle */
 	struct afctrl_context *cxt = NULL;
-	struct af_adpt_init_in adpt_in = { 0x00 };
+	struct af_adpt_init_in adpt_in;
 
 	cxt = (struct afctrl_context *)malloc(sizeof(*cxt));
 	if (NULL == cxt) {
@@ -413,6 +413,7 @@ cmr_int af_ctrl_init(struct af_ctrl_init_in *in,
 	cxt->caller_handle = in->caller_handle;
 	cxt->cb_ops = in->af_ctrl_cb_ops;
 
+	cmr_bzero(&adpt_in, sizeof(adpt_in));
 	adpt_in.ctrl_in = in;
 	adpt_in.caller_handle = cxt;
 	adpt_in.cb_ctrl_ops.set_pos = afctrl_set_pos;

@@ -247,9 +247,10 @@ static void unload_caf_library(cmr_handle adpt_handle)
 static void afaltek_adpt_get_version(cmr_handle adpt_handle)
 {
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_version_t version = { 0x00 };
+	struct allib_af_version_t version;
 	float wrapper_ver = 0.0;
 
+	cmr_bzero(&version, sizeof(version));
 	cxt->lib_api.af_altek_version(&version);
 	al3awrapperaf_get_version(&wrapper_ver);
 
@@ -260,8 +261,9 @@ static cmr_int afaltek_adpt_load_ops(cmr_handle adpt_handle)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_ops_t af_run_obj = { 0x00 };
+	struct allib_af_ops_t af_run_obj;
 
+	cmr_bzero(&af_run_obj, sizeof(af_run_obj));
 	if (cxt->lib_api.af_altek_load_func(&af_run_obj)) {
 		cxt->ops.init = af_run_obj.initial;
 		cxt->ops.deinit = af_run_obj.deinit;
@@ -313,8 +315,9 @@ static cmr_int afaltek_adpt_set_nothing(cmr_handle adpt_handle)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_set_param_t p = { 0x00 };
+	struct allib_af_input_set_param_t p;
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_UNKNOWN;
 
 	ret = afaltek_adpt_set_parameters(cxt, &p);
@@ -325,13 +328,14 @@ static cmr_int afaltek_adpt_set_cali_data(cmr_handle adpt_handle, void *data)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_set_param_t p = { 0x00 };
+	struct allib_af_input_set_param_t p;
 
 	if (!data) {
 		ISP_LOGE("otp data is null");
 		return -ISP_PARAM_NULL;
 	}
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_SET_CALIBDATA;
 	memcpy(&p.u_set_data.init_info, data, sizeof(struct allib_af_input_init_info_t));
 	ret = afaltek_adpt_set_parameters(cxt, &p);
@@ -342,7 +346,7 @@ static cmr_int afaltek_adpt_set_setting_file(cmr_handle adpt_handle, void *data)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_set_param_t p = { 0x00 };
+	struct allib_af_input_set_param_t p;
 	struct allib_af_input_initial_set_t *init_set = (struct allib_af_input_initial_set_t *)data;
 
 	if (!init_set || !init_set->p_initial_set_data) {
@@ -350,6 +354,7 @@ static cmr_int afaltek_adpt_set_setting_file(cmr_handle adpt_handle, void *data)
 		return -ISP_PARAM_NULL;
 	}
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_SET_SETTING_FILE;
 	p.u_set_data.init_set = *init_set;
 	ret = afaltek_adpt_set_parameters(cxt, &p);
@@ -361,8 +366,9 @@ static cmr_int afaltek_adpt_set_param_init(cmr_handle adpt_handle,
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_set_param_t p = { 0x00 };
+	struct allib_af_input_set_param_t p;
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_INIT;
 	p.u_set_data.afctrl_initialized = initialized;
 	ret = afaltek_adpt_set_parameters(cxt, &p);
@@ -374,8 +380,9 @@ static cmr_int afaltek_adpt_set_roi(cmr_handle adpt_handle, void *in)
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct allib_af_input_roi_info_t *roi = (struct allib_af_input_roi_info_t *)in;
-	struct allib_af_input_set_param_t p = { 0x00 };
+	struct allib_af_input_set_param_t p;
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_SET_ROI;
 	p.u_set_data.roi_info = *roi;
 	ISP_LOGI("roi_updated = %d type = %d frame_id = %d num_roi = %d",
@@ -463,9 +470,10 @@ static cmr_int afaltek_adpt_set_start(cmr_handle adpt_handle)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_set_param_t p = { 0x00 };
+	struct allib_af_input_set_param_t p;
 	cmr_int status = 0;
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_AF_START;
 
 	ret = afaltek_adpt_set_parameters(cxt, &p);
@@ -483,9 +491,10 @@ static cmr_int afaltek_adpt_stop(cmr_handle adpt_handle)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_set_param_t p = { 0x00 };
+	struct allib_af_input_set_param_t p;
 	cmr_int status = 0;
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_CANCEL_FOCUS;
 
 	ret = afaltek_adpt_set_parameters(cxt, &p);
@@ -560,10 +569,12 @@ static cmr_int afaltek_adpt_set_mode(cmr_handle adpt_handle, cmr_int mode)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_set_param_t p = { 0x00 };
+	struct allib_af_input_set_param_t p;
 	cmr_int ctrl_mode = 0;
-	struct af_ctrl_motor_pos pos_info = { 0x00 };
+	struct af_ctrl_motor_pos pos_info;
 
+	cmr_bzero(&pos_info, sizeof(pos_info));
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_FOCUS_MODE;
 	p.u_set_data.focus_mode_type = alAFLib_AF_MODE_AUTO;
 
@@ -661,8 +672,9 @@ static cmr_int afaltek_adpt_update_lens_info(cmr_handle adpt_handle,
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_set_param_t p = { 0x00 };
+	struct allib_af_input_set_param_t p;
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_UPDATE_LENS_INFO;
 	p.u_set_data.lens_info = *lens_info;
 	ret = afaltek_adpt_set_parameters(cxt, &p);
@@ -673,8 +685,9 @@ static cmr_int afaltek_adpt_reset_lens(cmr_handle adpt_handle)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_set_param_t p = { 0x00 };
+	struct allib_af_input_set_param_t p;
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_RESET_LENS_POS;
 	ret = afaltek_adpt_set_parameters(cxt, &p);
 	return ret;
@@ -685,8 +698,9 @@ static cmr_int afaltek_adpt_set_move_lens_info(cmr_handle adpt_handle, void *in)
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct allib_af_input_move_lens_cb_t *move_lens_info = (struct allib_af_input_move_lens_cb_t *)in;
-	struct allib_af_input_set_param_t p = { 0x00 };
+	struct allib_af_input_set_param_t p;
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_SET_LENS_MOVE_CB;
 
 	p.u_set_data.move_lens = *move_lens_info;
@@ -700,8 +714,9 @@ static cmr_int afaltek_adpt_set_tuning_enable(cmr_handle adpt_handle,
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_set_param_t p = { 0x00 };
+	struct allib_af_input_set_param_t p;
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_TUNING_ENABLE;
 	p.u_set_data.al_af_tuning_enable = enable;
 	ret = afaltek_adpt_set_parameters(cxt, &p);
@@ -712,8 +727,9 @@ static cmr_int afaltek_adpt_update_tuning_file(cmr_handle adpt_handle)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_set_param_t p = { 0x00 };
+	struct allib_af_input_set_param_t p;
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_UPDATE_TUNING_PTR;
 	ret = afaltek_adpt_set_parameters(cxt, &p);
 	return ret;
@@ -724,8 +740,9 @@ static cmr_int afaltek_adpt_update_ae_info(cmr_handle adpt_handle, void *in)
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct allib_af_input_aec_info_t *ae_info = (struct allib_af_input_aec_info_t *)in;
-	struct allib_af_input_set_param_t p = { 0x00 };
+	struct allib_af_input_set_param_t p;
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_UPDATE_AEC_INFO;
 	p.u_set_data.aec_info = *ae_info;
 
@@ -738,8 +755,9 @@ static cmr_int afaltek_adpt_update_awb_info(cmr_handle adpt_handle, void *in)
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct allib_af_input_awb_info_t *awb_info = (struct allib_af_input_awb_info_t *)in;
-	struct allib_af_input_set_param_t p = { 0x00 };
+	struct allib_af_input_set_param_t p;
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_UPDATE_AWB_INFO;
 	p.u_set_data.awb_info = *awb_info;
 
@@ -752,8 +770,9 @@ static cmr_int afaltek_adpt_update_sensor_info(cmr_handle adpt_handle, void *in)
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct allib_af_input_sensor_info_t *sensor_info = (struct allib_af_input_sensor_info_t *)in;
-	struct allib_af_input_set_param_t p = { 0x00 };
+	struct allib_af_input_set_param_t p;
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_UPDATE_SENSOR_INFO;
 	p.u_set_data.sensor_info = *sensor_info;
 
@@ -766,8 +785,9 @@ static cmr_int afaltek_adpt_update_gyro_info(cmr_handle adpt_handle, void *in)
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct allib_af_input_gyro_info_t *gyro_info = (struct allib_af_input_gyro_info_t *)in;
-	struct allib_af_input_set_param_t p = { 0x00 };
+	struct allib_af_input_set_param_t p;
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_UPDATE_GYRO_INFO;
 	p.u_set_data.gyro_info = *gyro_info;
 
@@ -780,8 +800,9 @@ static cmr_int afaltek_adpt_update_gsensor(cmr_handle adpt_handle, void *in)
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct allib_af_input_gravity_vector_t *gsensor_info = (struct allib_af_input_gravity_vector_t *)in;
-	struct allib_af_input_set_param_t p = { 0x00 };
+	struct allib_af_input_set_param_t p;
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_UPDATE_GRAVITY_VECTOR;
 	p.u_set_data.gravity_info = *gsensor_info;
 
@@ -794,13 +815,14 @@ static cmr_int afaltek_adpt_update_isp_info(cmr_handle adpt_handle, void *in)
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct af_ctrl_isp_info_t *in_isp_info = (struct af_ctrl_isp_info_t *)in;
-	struct allib_af_input_set_param_t p = { 0x00 };
+	struct allib_af_input_set_param_t p;
 
 	if (!in) {
 		ISP_LOGE("isp info is null");
 		return -ISP_PARAM_NULL;
 	}
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_UPDATE_ISP_INFO;
 	p.u_set_data.isp_info.liveview_img_sz.uw_width = in_isp_info->img_width;
 	p.u_set_data.isp_info.liveview_img_sz.uw_height = in_isp_info->img_height;
@@ -820,8 +842,9 @@ static cmr_int afaltek_adpt_vcm_tuning_param(cmr_handle adpt_handle)
 	cmr_s8 pos[PROPERTY_VALUE_MAX];
 	cmr_s16 position = 0;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct af_ctrl_motor_pos pos_info = { 0x00 };
+	struct af_ctrl_motor_pos pos_info;
 
+	cmr_bzero(&pos_info, sizeof(pos_info));
 	cmr_bzero(value, sizeof(value));
 	property_get("persist.sys.isp.vcm.tuning.mode", (char *)value, "0");
 
@@ -853,13 +876,14 @@ static cmr_int afaltek_adpt_update_sof(cmr_handle adpt_handle, void *in)
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct af_ctrl_sof_info *sof_info = (struct af_ctrl_sof_info *)in;
-	struct allib_af_input_set_param_t p = { 0x00 };
+	struct allib_af_input_set_param_t p;
 
 	ret = afaltek_adpt_vcm_tuning_param(adpt_handle);
 	if (ret) {
 		ISP_LOGE("set vcm tuning position error");
 	}
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_UPDATE_SOF;
 
 	p.u_set_data.sof_id.sof_frame_id = sof_info->sof_frame_idx;
@@ -985,8 +1009,9 @@ static cmr_int afaltek_adpt_trans_data_to_caf(cmr_handle adpt_handle, void *in, 
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct aft_proc_calc_param aft_in = { 0};
+	struct aft_proc_calc_param aft_in;
 
+	cmr_bzero(&aft_in, sizeof(aft_in));
 	if (NULL == in || NULL == cxt) {
 		ISP_LOGE("error in NULL");
 		ret = -ISP_PARAM_NULL;
@@ -1062,9 +1087,10 @@ static cmr_int afaltek_adpt_update_ae(cmr_handle adpt_handle, void *in)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_aec_info_t ae_info = { 0x00 };
+	struct allib_af_input_aec_info_t ae_info;
 	struct isp3a_ae_info *isp_ae_info = (struct isp3a_ae_info *)in;
 
+	cmr_bzero(&ae_info, sizeof(ae_info));
 	afaltek_adpt_ae_info_to_af_lib(isp_ae_info, &ae_info);
 	ret = afaltek_adpt_update_ae_info(cxt, &ae_info);
 	if (ret)
@@ -1085,10 +1111,11 @@ static cmr_int afaltek_adpt_update_awb(cmr_handle adpt_handle, void *in)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_awb_info_t awb_info = { 0x00 };
+	struct allib_af_input_awb_info_t awb_info;
 
 	UNUSED(in);
 	ISP_LOGV("E");
+	cmr_bzero(&awb_info, sizeof(awb_info));
 
 	//memcpy(&awb_info, in, sizeof(awb_info)); /* TBD */
 	ret = 0;//afaltek_adpt_update_awb_info(cxt, &awb_info);
@@ -1140,8 +1167,9 @@ static cmr_int afaltek_adpt_wait_flash(cmr_handle adpt_handle,
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_set_param_t p = { 0x00 };
+	struct allib_af_input_set_param_t p;
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_WAIT_FOR_FLASH;
 
 	p.u_set_data.wait_for_flash = wait_flash;
@@ -1154,8 +1182,9 @@ static cmr_int afaltek_adpt_lock_caf(cmr_handle adpt_handle, void *in)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_set_param_t p = { 0x00 };
+	struct allib_af_input_set_param_t p;
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_LOCK_CAF;
 
 	p.u_set_data.lock_caf = *(cmr_s32 *) in;
@@ -1198,8 +1227,9 @@ static cmr_int afaltek_adpt_hybird_af_enable(cmr_handle adpt_handle, void *in)
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct allib_af_input_enable_hybrid_t *hybrid = (struct allib_af_input_enable_hybrid_t *)in;
-	struct allib_af_input_set_param_t p = { 0x00 };
+	struct allib_af_input_set_param_t p;
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_HYBIRD_AF_ENABLE;
 	p.u_set_data.haf_info = *hybrid;
 
@@ -1214,7 +1244,7 @@ static cmr_int afaltek_adpt_set_imgbuf(cmr_handle adpt_handle, void *in)
 	cmr_u32 index = 0xff;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct allib_af_input_image_buf_t img_buf;
-	struct allib_af_input_set_param_t p = { 0x00 };
+	struct allib_af_input_set_param_t p;
 	struct yhist_info *y_info = (struct yhist_info *)in;
 
 	if (NULL == y_info) {
@@ -1252,6 +1282,7 @@ static cmr_int afaltek_adpt_set_imgbuf(cmr_handle adpt_handle, void *in)
 	img_buf.p_main_cam = (uint8 *)y_info->y_addr[index];
 	img_buf.p_sub_cam = NULL;
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_SET_IMGBUF;
 	p.u_set_data.img_buf = img_buf;
 
@@ -1268,8 +1299,9 @@ static cmr_int afaltek_adpt_reset_af_setting(cmr_handle adpt_handle)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_set_param_t p = { 0x00 };
+	struct allib_af_input_set_param_t p;
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_SET_DEFAULT_SETTING;
 
 	ret = afaltek_adpt_set_parameters(cxt, &p);
@@ -1290,8 +1322,9 @@ static cmr_int afaltek_adpt_set_special_event(cmr_handle adpt_handle, void *in)
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct allib_af_input_special_event *event = (struct allib_af_input_special_event *)in;
-	struct allib_af_input_set_param_t p = { 0x00 };
+	struct allib_af_input_set_param_t p;
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_SPECIAL_EVENT;
 	p.u_set_data.special_event = *event;
 
@@ -1383,10 +1416,11 @@ static cmr_u8 afaltek_adpt_set_pos(cmr_handle adpt_handle, cmr_s16 dac, cmr_u8 s
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct af_ctrl_motor_pos pos_info = { 0x00 };
+	struct af_ctrl_motor_pos pos_info;
 	cmr_s32 offset = 0;
 	UNUSED(sensor_id);
 
+	cmr_bzero(&pos_info, sizeof(pos_info));
 	pos_info.vcm_wait_ms = cxt->motor_info.vcm_wait_ms;
 	cxt->motor_info.motor_pos = dac;
 #ifdef FEATURE_SPRD_AF_POSE_COMPENSATOR
@@ -1406,8 +1440,9 @@ static cmr_int afaltek_adpt_end_notify(cmr_handle adpt_handle, cmr_int success)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct af_result_param af_result = { 0 };
+	struct af_result_param af_result;
 
+	cmr_bzero(&af_result, sizeof(af_result));
 	af_result.motor_pos = cxt->motor_info.motor_pos;
 	af_result.suc_win = success;
 
@@ -1569,8 +1604,9 @@ static cmr_int afaltek_adpt_move_lens(cmr_handle adpt_handle)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_set_param_t p = { 0x00 };
+	struct allib_af_input_set_param_t p;
 
+	cmr_bzero(&p, sizeof(p));
 	//p.type = alAFLIB_SET_PARAM_MOVE_LENS;
 
 	ret = afaltek_adpt_set_parameters(cxt, &p);
@@ -1730,8 +1766,9 @@ static cmr_int afaltek_adpt_get_mode(cmr_handle adpt_handle, cmr_int *mode)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_get_param_t p = { 0x00 };
+	struct allib_af_input_get_param_t p;
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_GET_PARAM_FOCUS_MODE;
 
 	ret = afaltek_adpt_get_parameters(cxt, &p);
@@ -1744,8 +1781,9 @@ static cmr_int afaltek_adpt_get_default_pos(cmr_handle adpt_handle, cmr_int *pos
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_get_param_t p = { 0x00 };
+	struct allib_af_input_get_param_t p;
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_GET_PARAM_DEFAULT_LENS_POS;
 
 	ret = afaltek_adpt_get_parameters(cxt, &p);
@@ -1758,8 +1796,9 @@ static cmr_int afaltek_adpt_get_cur_pos(cmr_handle adpt_handle, cmr_int *pos)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_get_param_t p = { 0x00 };
+	struct allib_af_input_get_param_t p;
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_GET_PARAM_GET_CUR_LENS_POS;
 
 	ret = afaltek_adpt_get_parameters(cxt, &p);
@@ -1772,8 +1811,9 @@ static cmr_int afaltek_adpt_get_nothing(cmr_handle adpt_handle)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_get_param_t p = { 0x00 };
+	struct allib_af_input_get_param_t p;
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_GET_PARAM_NOTHING;
 
 	ret = afaltek_adpt_get_parameters(cxt, &p);
@@ -1785,8 +1825,9 @@ cmr_int afaltek_adpt_get_exif_info(cmr_handle adpt_handle, struct allib_af_get_d
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_get_param_t p = { 0x00 };
+	struct allib_af_input_get_param_t p;
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_GET_PARAM_EXIF_INFO;
 
 	ret = afaltek_adpt_get_parameters(cxt, &p);
@@ -1799,8 +1840,9 @@ cmr_int afaltek_adpt_get_debug_info(cmr_handle adpt_handle, struct allib_af_get_
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_get_param_t p = { 0x00 };
+	struct allib_af_input_get_param_t p;
 
+	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_GET_PARAM_DEBUG_INFO;
 
 	ret = afaltek_adpt_get_parameters(cxt, &p);
@@ -1887,11 +1929,12 @@ static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_move_lens_cb_t move_lens_info = { 0 };
+	struct allib_af_input_move_lens_cb_t move_lens_info;
 	struct allib_af_input_sensor_info_t sensor_info;
 	struct allib_af_input_init_info_t init_info;
 	struct sensor_otp_af_info *otp_af_info;
 
+	cmr_bzero(&move_lens_info, sizeof(move_lens_info));
 	otp_af_info = (struct sensor_otp_af_info *) in->otp_info.otp_data;
 	cmr_bzero(&init_info, sizeof(init_info));
 	if (otp_af_info) {
@@ -2021,7 +2064,7 @@ static cmr_int afaltek_adpt_init(void *in, void *out, cmr_handle * adpt_handle)
 	struct af_adpt_init_in *in_p = (struct af_adpt_init_in *)in;
 	struct af_ctrl_init_out *out_p = (struct af_ctrl_init_out *)out;
 	struct af_altek_context *cxt = NULL;
-	struct aft_tuning_block_param tt = {0};
+	struct aft_tuning_block_param aft_param;
 
 	cxt = (struct af_altek_context *)malloc(sizeof(*cxt));
 	if (NULL == cxt) {
@@ -2047,15 +2090,16 @@ static cmr_int afaltek_adpt_init(void *in, void *out, cmr_handle * adpt_handle)
 		goto error_libops_init;
 	}
 
-	tt.data = in_p->ctrl_in->caf_tuning_info.tuning_file;
-	tt.data_len = in_p->ctrl_in->caf_tuning_info.size;
-	if (NULL == tt.data || 0 == tt.data_len) {
+	cmr_bzero(&aft_param, sizeof(aft_param));
+	aft_param.data = in_p->ctrl_in->caf_tuning_info.tuning_file;
+	aft_param.data_len = in_p->ctrl_in->caf_tuning_info.size;
+	if (NULL == aft_param.data || 0 == aft_param.data_len) {
 		ISP_LOGE("caf tuning parater error");
-		tt.data = malloc(300);
-		memset(tt.data, -1, 300);
-		tt.data_len = 300;
+		aft_param.data = malloc(300);
+		memset(aft_param.data, -1, 300);
+		aft_param.data_len = 300;
 	}
-	ret = cxt->caf_ops.trigger_init(&tt, &cxt->caf_trigger_handle);
+	ret = cxt->caf_ops.trigger_init(&aft_param, &cxt->caf_trigger_handle);
 	if (ret) {
 		ISP_LOGE("failed to init caf library");
 		goto error_caf_init;
@@ -2139,6 +2183,7 @@ static cmr_int afaltek_adpt_proc_report_stats_cfg(cmr_handle adpt_handle,
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct alhw3a_af_cfginfo_t af_cfg;
 	struct allib_af_input_special_event event;
+
 	cmr_bzero(&af_cfg, sizeof(af_cfg));
 	al3awrapperaf_updateispconfig_af(&report->stats_config, &af_cfg);
 	cxt->stats_config.token_id = af_cfg.tokenid;
