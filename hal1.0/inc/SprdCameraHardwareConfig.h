@@ -365,7 +365,6 @@ const struct str_map focus_mode_map[] = {
 	{"infinity",           CAMERA_FOCUS_MODE_INFINITY},
 	{"continuous-picture", CAMERA_FOCUS_MODE_CAF},
 	{"continuous-video",   CAMERA_FOCUS_MODE_CAF_VIDEO},
-	{"macro-fixed",        CAMERA_FOCUS_MODE_MACRO_FIXED},
 	{NULL,                 0}
 };
 

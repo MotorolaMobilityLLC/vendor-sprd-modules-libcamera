@@ -74,10 +74,6 @@ int androidAfModeToDrvAfMode(camera_metadata_enum_android_control_af_mode_t andr
 		*convertDrvMode = CAMERA_FOCUS_MODE_MACRO;
 		break;
 
-	case ANDROID_CONTROL_AF_MODE_MACRO_FIXED:
-		*convertDrvMode = CAMERA_FOCUS_MODE_MACRO_FIXED;
-		break;
-
 	case ANDROID_CONTROL_AF_MODE_EDOF:
 	case ANDROID_CONTROL_AF_MODE_OFF:
 		*convertDrvMode = CAMERA_FOCUS_MODE_INFINITY; //OFF
