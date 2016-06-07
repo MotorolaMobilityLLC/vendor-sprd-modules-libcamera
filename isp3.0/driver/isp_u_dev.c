@@ -226,6 +226,8 @@ cmr_int isp_dev_start(isp_handle handle)
 		goto exit;
 	}
 
+	file->isp_is_inited = 1;
+
 	kaddr_temp = kaddr[1];
 	load_input.fw_buf_phy_addr = (kaddr[0] | kaddr_temp << 32);
 	CMR_LOGI("fw_buf_phy_addr 0x%llx,", load_input.fw_buf_phy_addr);
@@ -257,7 +259,6 @@ cmr_int isp_dev_start(isp_handle handle)
 		goto exit;
 	}
 
-	file->isp_is_inited = 1;
 exit:
 	return ret;
 }
