@@ -1523,7 +1523,8 @@ static int snp_dump_mipi_raw(cmr_handle snp_handle, char *name, uint32_t img_fmt
 	sprintf(tmp_str, "%d", exp);
 	strcat(file_name, tmp_str);
 
-	strcat(file_name, ".mipi_raw");
+	/* modify filename extession to .raw from .mipi_raw for ALTEK Tool */
+	strcat(file_name, ".raw");
 	CMR_LOGI("file name %s", file_name);
 
 	fp = fopen(file_name, "wb");
@@ -4443,6 +4444,8 @@ cmr_int snp_post_proc_for_isp_tuning(cmr_handle snp_handle, void *data)
 		CMR_LOGE("failed to send start cvt msg to cvt thr %ld", ret);
 	}
 
+/* dont need altek raw now, keep these code for debug */
+#if 0
 	struct cmr_cap_mem   *mem_ptr = &cxt->req_param.post_proc_setting.mem[cxt->index];
 	if (CAMERA_ISP_TUNING_MODE == cxt->req_param.mode) {
 		char datetime[15] = {0};
@@ -4456,7 +4459,6 @@ cmr_int snp_post_proc_for_isp_tuning(cmr_handle snp_handle, void *data)
 				&mem_ptr->cap_raw2.addr_vir);
 	}
 
-#if 0
 	if (CAMERA_ISP_TUNING_MODE == cxt->req_param.mode) {
 		char datetime[15] = {0};
 		CMR_LOGI("save yuv to file");
