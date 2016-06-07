@@ -1536,7 +1536,8 @@ static cmr_int afaltek_adpt_proc_start(cmr_handle adpt_handle)
 	cmr_uint time_delta = 0;
 
 	if (AF_ADPT_STARTED == cxt->af_cur_status) {
-		if (cxt->ae_status_info.ae_converged) {
+		if (cxt->ae_status_info.ae_converged ||
+		    cxt->aft_proc_result.is_caf_trig) {
 			afaltek_adpt_post_start(cxt);
 		} else {
 			afaltek_adpt_get_timestamp(cxt, &sec, &usec);
@@ -1901,8 +1902,8 @@ static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 			 init_info.calib_data.macro_step);
 	} else {
 		/* defaut value from altek */
-		init_info.calib_data.inf_step = 294;
-		init_info.calib_data.macro_step = 570;
+		init_info.calib_data.inf_step = 401;//294;
+		init_info.calib_data.macro_step = 634;//570;
 	}
 	init_info.module_info.f_number = in->module_info.f_num * 1.0 / 100;
 	init_info.module_info.focal_lenth = in->module_info.focal_length * 10;
