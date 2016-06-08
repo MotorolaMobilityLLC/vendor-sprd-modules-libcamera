@@ -21,6 +21,7 @@
 #define SENSOR_SUCCESS      0
 #define POSE_UP_HORIZONTAL 32
 #define POSE_DOWN_HORIZONTAL 37
+static uint32_t m_cur_pos=0;
 
 uint32_t vcm_dw9807_init(SENSOR_HW_HANDLE handle,int mode)
 {
@@ -140,6 +141,7 @@ uint32_t vcm_dw9807_set_position(SENSOR_HW_HANDLE handle, uint32_t pos)
 		pos = 0;
 	else if ((int32_t)pos > 0x3FF)
 		pos = 0x3FF;
+	m_cur_pos=pos&0x3FF;
 
 	SENSOR_PRINT("set position %d", pos);
 	slave_addr = dw9807_VCM_SLAVE_ADDR;
@@ -160,5 +162,24 @@ uint32_t vcm_dw9807_get_pose_dis(SENSOR_HW_HANDLE handle, uint32_t *up2h, uint32
 	*h2down = POSE_DOWN_HORIZONTAL;
 
 	return 0;
+}
+
+uint32_t vcm_dw9807_deinit(SENSOR_HW_HANDLE handle)
+{
+	uint32_t ret_value = SENSOR_SUCCESS;
+	uint32_t pos = m_cur_pos;
+	uint32_t vcm_last_pos = pos & 0xffff;
+	uint32_t vcm_last_delay = pos & 0xffff0000;
+
+
+	while(vcm_last_pos > 0) {
+		vcm_last_pos = vcm_last_pos >> 2;
+		SENSOR_PRINT("vcm_last_pos=%d  ,%d",vcm_last_pos,(vcm_last_pos|vcm_last_delay));
+		vcm_dw9807_set_position(handle,vcm_last_pos|vcm_last_delay);
+		usleep(1*1000);
+	}
+
+	SENSOR_PRINT("vcm_dw9807_deinit");
+	return ret_value;
 }
 

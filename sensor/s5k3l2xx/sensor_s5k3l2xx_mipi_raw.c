@@ -2460,6 +2460,8 @@ static uint32_t _s5k3l2xx_init_mode_fps_info(SENSOR_HW_HANDLE handle)
 	return rtn;
 }
 
+static uint32_t m_vcm_pos = 0;
+
 static unsigned long _s5k3l2xx_PowerOn(SENSOR_HW_HANDLE handle, unsigned long power_on)
 {
 	SENSOR_AVDD_VAL_E dvdd_val = g_s5k3l2xx_mipi_raw_info.dvdd_val;
@@ -2485,7 +2487,9 @@ static unsigned long _s5k3l2xx_PowerOn(SENSOR_HW_HANDLE handle, unsigned long po
 		//Sensor_PowerDown(!power_down);
 		Sensor_SetResetLevel(!reset_level);
 		usleep(10*1000);
-		//_dw9807_SRCInit(handle, 3);//2);
+		_dw9807_SRCInit(handle, 3);//2);
+		usleep(1*1000);
+		_s5k3l2xx_write_af( handle, 300);
 #ifdef MClK_26M_SS		
 		Sensor_SetMCLK(26);//SENSOR_DEFALUT_MCLK);//
 #else
@@ -2495,6 +2499,7 @@ static unsigned long _s5k3l2xx_PowerOn(SENSOR_HW_HANDLE handle, unsigned long po
 
 
 	} else {
+		_s5k3l2xx_write_af(handle,0);
 		Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
 		Sensor_SetResetLevel(reset_level);
 		//Sensor_PowerDown(power_down);
@@ -2581,6 +2586,7 @@ static uint32_t _s5k3l2xx_GetMaxFrameLine(SENSOR_HW_HANDLE handle, uint32_t inde
 	return max_line;
 }
 
+
 static unsigned long _s5k3l2xx_Identify(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 #define S5K3L2XX_PID_ADDR     	0x0000
@@ -2608,7 +2614,7 @@ static unsigned long _s5k3l2xx_Identify(SENSOR_HW_HANDLE handle, unsigned long p
 					SENSOR_PRINT_ERR("SENSOR_S5K3L2XX: the module is unknow error !");
 				}
 				Sensor_s5k3l2xx_InitRawTuneInfo(handle);
-				vcm_dw9807_init(handle,3);
+				//vcm_dw9807_init(handle,3);
 				_s5k3l2xx_init_mode_fps_info(handle);
 				//  _s5k3l2xx_StreamOn(1);
 				return ret_value;
@@ -2624,7 +2630,6 @@ static unsigned long _s5k3l2xx_Identify(SENSOR_HW_HANDLE handle, unsigned long p
 	return ret_value;
 }
 
-//uint32_t s_af_step=0x00;
 static unsigned long _s5k3l2xx_write_exposure(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 
@@ -2804,8 +2809,30 @@ static unsigned long _s5k3l2xx_write_af(SENSOR_HW_HANDLE handle, unsigned long p
 	return ret_value;
 }
 #else
+
 static unsigned long _s5k3l2xx_write_af(SENSOR_HW_HANDLE handle, unsigned long param)
 {
+	uint16_t target_pos = 0, cur_pos = 0, steplen = 0x04;//need tuning
+	uint16_t step = 0,flag = 0,j = 0;
+	target_pos= param & 0xffff;
+	cur_pos = m_vcm_pos;
+	flag = target_pos > cur_pos ? 1 : 0;
+	step = flag==1? target_pos- cur_pos : cur_pos - target_pos;
+	if ( step > 20 ) { //need tuning
+		step /= steplen;
+		for( j = 1; j <= step; j ++){
+			if (flag ==1){
+				m_vcm_pos = cur_pos + j * steplen ;
+			}else{
+				m_vcm_pos = cur_pos - j * steplen ;
+			}
+			//SENSOR_PRINT("SENSOR_S5K3L2XX: _write_af, m_vcm_pos =  %d, steplen:%x, step:%x param %d target_pos %d\n", m_vcm_pos, steplen, step,param,target_pos);
+			vcm_dw9807_set_position(handle, m_vcm_pos+(param&0xfffc0000));
+			usleep(10); //need tuning
+		}
+	}
+	SENSOR_PRINT("SENSOR_S5K3L2XX: _write_af, m_vcm_pos =  %d, steplen:%x, step:%x\n", m_vcm_pos, steplen, step);
+	m_vcm_pos = target_pos;
 	return vcm_dw9807_set_position(handle, param);
 }
 
@@ -2903,6 +2930,7 @@ static unsigned long _s5k3l2xx_StreamOn(SENSOR_HW_HANDLE handle, unsigned long p
 	uint32_t value = 0;
 	SENSOR_PRINT_ERR("SENSOR_s5k3l2xx: StreamOn");
 	Sensor_WriteReg(0x0100, 0x0100);
+
 	//usleep(50*1000);
 #if 1
 	cmr_s8 value1[255];
@@ -2921,6 +2949,7 @@ static unsigned long _s5k3l2xx_StreamOff(SENSOR_HW_HANDLE handle, unsigned long 
 	SENSOR_PRINT_ERR("SENSOR_s5k3l2xx: StreamOff");
 	Sensor_WriteReg(0x0100, 0x0000);
 	usleep(50*1000);
+
 	return 0;
 }
 

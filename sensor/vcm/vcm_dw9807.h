@@ -17,3 +17,4 @@
 uint32_t vcm_dw9807_init(SENSOR_HW_HANDLE handle,int mode);
 uint32_t vcm_dw9807_set_position(SENSOR_HW_HANDLE handle, uint32_t pos);
 uint32_t vcm_dw9807_get_pose_dis(SENSOR_HW_HANDLE handle, uint32_t *up2h, uint32_t *h2down);
+uint32_t vcm_dw9807_deinit(SENSOR_HW_HANDLE handle);
