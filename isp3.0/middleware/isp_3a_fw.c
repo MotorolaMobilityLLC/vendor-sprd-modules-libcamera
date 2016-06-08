@@ -1841,8 +1841,10 @@ cmr_int isp3a_notice_flash(cmr_handle isp_3a_handle, void *param_ptr)
 	case ISP_FLASH_PRE_AFTER:
 		isp3a_set_awb_flash_off_gain((cmr_handle)cxt);
 		ae_in.flash_notice.will_capture = isp_notice_ptr->will_capture;
-		awb_in.flash_status = AWB_CTRL_FLASH_PRE_AFTER;
-		ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASH_CLOSE, &awb_in, NULL);
+		if (!isp_notice_ptr->will_capture) {
+			awb_in.flash_status = AWB_CTRL_FLASH_PRE_AFTER;
+			ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASH_CLOSE, &awb_in, NULL);
+		}
 		break;
 	case ISP_FLASH_MAIN_BEFORE:
 		awb_in.flash_status = AWB_CTRL_FLASH_MAIN_BEFORE;

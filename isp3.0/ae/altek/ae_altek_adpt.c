@@ -4751,9 +4751,11 @@ static void aealtek_flash_info_to_awb(struct ae_report_update_t *from_ptr, struc
 	to_ptr->flash_param_capture.wbgain_led2.b = from_ptr->mainflash_report.flash_gain_led2.b_gain;
 }
 
-static void aealtek_flash_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_callback_in *callback_in
+static cmr_u32 aealtek_flash_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_callback_in *callback_in
 		, cmr_u32 *is_special_converge_flag)
 {
+	cmr_u32 is_callback = 0;
+
 	/*flash*/
 	if (cxt_ptr->flash_param.enable) {
 		ISP_LOGI("======lib flash converged =%d",cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_converged);
@@ -4815,12 +4817,13 @@ static void aealtek_flash_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_ca
 						}
 					}
 				}
-				if (cxt_ptr->touch_param.touch_flag
+				/*if (cxt_ptr->touch_param.touch_flag
 					&& cxt_ptr->touch_param.ctrl_roi_changed_flag) {
 					cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRL_CB_CONVERGED, callback_in);
 				} else {
 					cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRL_CB_CONVERGED, callback_in);
-				}
+				}*/
+				is_callback = 1;
 
 			}
 			break;
@@ -4833,7 +4836,8 @@ static void aealtek_flash_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_ca
 				aealtek_set_lock(cxt_ptr, 1);
 				aealtek_change_ae_state(cxt_ptr, cxt_ptr->ae_state, ISP3A_AE_CTRL_ST_FLASH_ON_CONVERGED);
 
-				cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRL_CB_FLASHING_CONVERGED, callback_in);
+				/*cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRL_CB_FLASHING_CONVERGED, callback_in);*/
+				is_callback = 1;
 
 				cxt_ptr->flash_param.main_flash_est.led_num = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.mainflash_ctrldat.ucDICTotal_idx;
 				cxt_ptr->flash_param.main_flash_est.led_0.idx = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.mainflash_ctrldat.ucDIC1_idx;
@@ -4865,6 +4869,8 @@ static void aealtek_flash_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_ca
 
 		aealtek_flash_info_to_awb(&cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update, &callback_in->proc_out.ae_info.report_data);
 	}
+
+	return is_callback;
 }
 
 static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_proc_in *in_ptr)
@@ -4874,6 +4880,7 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 	cmr_u32 is_special_converge_flag = 0;
 	cmr_u32 data_length = 0;
 	struct ae_script_param_t  *ae_script_info = NULL;
+	cmr_u32 flash_callback = 0;
 
 	if (!cxt_ptr) {
 		ISP_LOGE("param %p is NULL error!", cxt_ptr);
@@ -4977,7 +4984,7 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 		}
 	}
 
-	aealtek_flash_process(cxt_ptr, &callback_in, &is_special_converge_flag);
+	flash_callback = aealtek_flash_process(cxt_ptr, &callback_in, &is_special_converge_flag);
 
 	if (0 == is_special_converge_flag
 		&& cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_converged) {
@@ -5002,6 +5009,9 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 		} else {
 			cxt_ptr->stat_info_num ++;
 		}
+
+		if (flash_callback)
+			cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRL_CB_CONVERGED, &callback_in);
 	}
 
 	return ISP_SUCCESS;
