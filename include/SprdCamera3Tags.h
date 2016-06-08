@@ -47,4 +47,10 @@ typedef enum sprd_camera_ext_tags{
         /*sprd add flag end*/
         }sprd_camera_metadata_tag_t;
 }
+
+// ANDROID_SPRD_VIDEO_SNAPSHOT_SUPPORT
+typedef enum camera_metadata_enum_android_sprd_video_snapshot_support {
+    ANDROID_SPRD_VIDEO_SNAPSHOT_SUPPORT_OFF,
+    ANDROID_SPRD_VIDEO_SNAPSHOT_SUPPORT_ON,
+} camera_metadata_enum_android_sprd_video_snapshot_support_t;
 #endif
