@@ -887,6 +887,32 @@ cmr_int cmr_preview_get_prev_rect(cmr_handle preview_handle, cmr_u32 camera_id, 
 	return ret;
 }
 
+cmr_int cmr_camera_isp_stop_video(cmr_handle  preview_handle, cmr_u32 camera_id) {
+	cmr_int                         ret = CMR_CAMERA_SUCCESS;
+	struct prev_handle     *handle = (struct prev_handle*)preview_handle;
+	struct prev_context      *prev_cxt = NULL;
+	CHECK_HANDLE_VALID(handle);
+
+	prev_cxt     = &handle->prev_cxt[camera_id];
+
+	if (!handle->ops.isp_stop_video) {
+		CMR_LOGE("ops is null");
+		ret = CMR_CAMERA_INVALID_PARAM;
+	}
+
+	/*stop isp*/
+	if (PREV_ISP_COWORK == prev_cxt->isp_status) {
+		ret = handle->ops.isp_stop_video(handle->oem_handle);
+		prev_cxt->isp_status = PREV_ISP_IDLE;
+		if (ret) {
+			CMR_LOGE("Failed to stop ISP video mode, %ld", ret);
+		}
+	}
+
+	return ret;
+}
+
+
 cmr_int cmr_preview_receive_data(cmr_handle preview_handle, cmr_u32 camera_id, cmr_uint evt, void *data)
 {
 	CMR_MSG_INIT(message);
