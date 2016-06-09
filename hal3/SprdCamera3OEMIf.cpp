@@ -6652,8 +6652,8 @@ void SprdCamera3OEMIf::EIS_init() {
 	mParam.wdx = 0;
 	mParam.wdy = 0;
 	mParam.wdz = 0;
-	mParam.f   = 1300;
-	mParam.td  = 0.001;
+	mParam.f   = 1230;
+	mParam.td  = -0.001;
 	mParam.ts  = 0.013;
 	video_stab_open(&mInst, &mParam);
 	HAL_LOGI("mParam src_w: %d, src_h:%d, dst_w:%d, dst_h:%d",mParam.src_w,mParam.src_h, mParam.dst_w, mParam.dst_h);
@@ -6666,6 +6666,7 @@ vsOutFrame SprdCamera3OEMIf::processEIS(vsInFrame frame_in)
 	int gyro_num = 0;
 	int i;
 	int ret_eis = -1;
+	uint count = 0;
 	vsGyro* gyro =NULL;
 	vsOutFrame frame_out_preview;
 	frame_out_preview.frame_data = NULL;
@@ -6673,15 +6674,27 @@ vsOutFrame SprdCamera3OEMIf::processEIS(vsInFrame frame_in)
 	HAL_LOGI("frame_in.timestamp: %lf, mGyromaxtimestamp %lf",frame_in.timestamp,mGyromaxtimestamp);
 	while(mGyroInit && !mGyroDeinit && mGyromaxtimestamp < (frame_in.timestamp + mParam.td + mParam.ts /2)){
 		usleep(5*1000);
+		if(++count >= 6) {
+			HAL_LOGW("gyro data is too slow for eis process");
+			gyro_start = mGyrostart;
+			gyro_end = mGyroend;
+			HAL_LOGV("gyro_start = %d, gyro_end = %d",gyro_start, gyro_end);
+			mGyrostart = gyro_end;
+			frame_out_preview.warp.dat[0][0] = frame_out_preview.warp.dat[1][1] = frame_out_preview.warp.dat[2][2] = 1.0;
+			frame_out_preview.warp.dat[0][1] = frame_out_preview.warp.dat[0][2] = frame_out_preview.warp.dat[1][0] = 0.0;
+			frame_out_preview.warp.dat[1][2] = frame_out_preview.warp.dat[2][0] = frame_out_preview.warp.dat[2][1] = 0.0;
+			return frame_out_preview;
+		}
 	}
+
 	gyro_start = mGyrostart;
 	gyro_end = mGyroend;
-	HAL_LOGI("gyro_start = %d, gyro_end = %d",gyro_start, gyro_end);
+	HAL_LOGV("gyro_start = %d, gyro_end = %d",gyro_start, gyro_end);
 	mGyrostart = gyro_end;
 	if(gyro_end >= gyro_start)
-		gyro_num = gyro_end -gyro_start;
+		gyro_num = gyro_end - gyro_start;
 	else
-		gyro_num = gyro_end -gyro_start + 30;
+		gyro_num = gyro_end - gyro_start + 30;
 	if(gyro_num){
 		gyro = new vsGyro[gyro_num];
 		for(i = 0; i < gyro_num; i++)
@@ -6690,7 +6703,7 @@ vsOutFrame SprdCamera3OEMIf::processEIS(vsInFrame frame_in)
 			gyro[i].w[0] =mGyro[1][gyro_start];
 			gyro[i].w[1] =mGyro[2][gyro_start];
 			gyro[i].w[2] =mGyro[3][gyro_start];
-			HAL_LOGD("gyro i %d,timestamp %lf, x: %lf, y: %lf, z: %lf", i, gyro[i].t, gyro[i].w[0], gyro[i].w[1], gyro[i].w[2]);
+			HAL_LOGV("gyro i %d,timestamp %lf, x: %lf, y: %lf, z: %lf", i, gyro[i].t, gyro[i].w[0], gyro[i].w[1], gyro[i].w[2]);
 			gyro_start ++;
 			if(gyro_start >=30) gyro_start = 0;
 		}
