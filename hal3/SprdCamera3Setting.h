@@ -122,6 +122,7 @@ typedef int64_t nsecs_t;
 
 
 #define CAMERA_SETTINGS_CONFIG_ARRAYSIZE 80
+#define CAMERA_SETTINGS_THUMBNAILSIZE_ARRAYSIZE 8
 
 typedef struct {
 	uint8_t correction_mode;
@@ -221,7 +222,7 @@ typedef struct {
 	int32_t thumbnail_size[2];
 	int32_t orientation_original;
 	int32_t orientation;
-	int32_t available_thumbnail_sizes[6];
+	int32_t available_thumbnail_sizes[CAMERA_SETTINGS_THUMBNAILSIZE_ARRAYSIZE];
 	int32_t max_size;
 	double gps_coordinates[3];
 	uint8_t gps_processing_method[36];

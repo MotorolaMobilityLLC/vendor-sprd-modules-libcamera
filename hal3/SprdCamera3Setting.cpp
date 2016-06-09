@@ -71,7 +71,7 @@ typedef struct
 	camera_metadata_rational exposureCompensationStep;
 	int32_t exposureCompensationRange[2];
 	int32_t available_processed_sizes[16];
-	int32_t jpegThumbnailSizes[6];
+	int32_t jpegThumbnailSizes[CAMERA_SETTINGS_THUMBNAILSIZE_ARRAYSIZE];
 	int64_t FrameDurationRange[2];
 	uint8_t availableFaceDetectModes[2];
 	uint8_t availableVideoStabModes[2];
@@ -194,7 +194,7 @@ int32_t jpeg_stream_size = ((2048 * 1536 + (2*1024-1)) & ~(2*1024-1));
 int32_t jpeg_stream_size = ((1920 * 1088 + (2*1024-1)) & ~(2*1024-1));
 #endif
 
-const int32_t kjpegThumbnailSizes[6] = {0, 0, 320,240, 360, 240};
+const int32_t kjpegThumbnailSizes[CAMERA_SETTINGS_THUMBNAILSIZE_ARRAYSIZE] = {0, 0, 256, 144, 320, 240, 360, 240};
 const int64_t kFrameDurationRange[2] = {33331760L,500000000L};//{33331760L,30000000000L}; // ~1/30 s - 1/5 sec
 camera_metadata_rational kexposureCompensationStep = {1,1};
 const uint8_t availableFaceDetectModes[] = {
