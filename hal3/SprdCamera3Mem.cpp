@@ -56,17 +56,6 @@ namespace sprdcamera {
  *==========================================================================*/
 SprdCamera3Memory::SprdCamera3Memory()
 {
-// todo: we dont need it, remove it later, not now because we want stable
-/*
-	if (MemIon::IOMMU_is_enabled(ION_MM)) {
-            mIOMMUID = ION_MM;
-	} else if (MemIon::IOMMU_is_enabled(ION_DCAM)) {
-            mIOMMUID = ION_DCAM;
-	} else 
-*/
-	{
-		mIOMMUID = -1;
-	}
 }
 
 /*===========================================================================

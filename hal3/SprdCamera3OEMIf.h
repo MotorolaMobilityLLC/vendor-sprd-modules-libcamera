@@ -183,6 +183,7 @@ public:
 	void initPowerHint();
 	void enablePowerHint();
 	void disablePowerHint();
+	int IommuIsEnabled(void);
 public:
 	static int      pre_alloc_cap_mem_thread_init(void *p_data);
 	static int      pre_alloc_cap_mem_thread_deinit(void *p_data);
@@ -359,7 +360,7 @@ private:
 	void shakeTestInit(ShakeTest *tmpShakeTest);
 	void setShakeTestState(shake_test_state state);
 	shake_test_state getShakeTestState();
-	int IommuIsEnabled(void);
+
 	int allocOneFrameMem(struct SprdCamera3OEMIf::OneFrameMem *one_frame_mem_ptr);
 	int relaseOneFrameMem(struct SprdCamera3OEMIf::OneFrameMem *one_frame_mem_ptr);
 	int initDefaultParameters();
@@ -607,8 +608,6 @@ private:
 	/* 1- start acceleration, 0 - finish acceleration*/
 	bool                       mHDRPowerHintFlag;
 
-	bool                          mIOMMUEnabled;
-	int                             mIOMMUID;
 	/* for eis*/
 	bool                          mGyroInit;
 	bool                          mGyroDeinit;
@@ -628,6 +627,8 @@ private:
 	int                           mUpdateRangeFpsCount;
 	int                           mPrvMinFps;
 	int                           mPrvMaxFps;
+
+	bool                          mIommuEnabled;
 };
 
 }; // namespace sprdcamera

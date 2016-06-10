@@ -177,8 +177,6 @@ private:
 	uint8_t				mReciveQeqMax;
 	bool					mHDRProcessFlag;
 
-	bool                mIOMMUEnabled;
-	int                 mIOMMUID;
 };
 
 };				// namespace sprdcamera

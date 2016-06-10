@@ -137,19 +137,6 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId):
 	mPrvTimerID = NULL;
 	mFrameNum = 0;
 	mSetting = NULL;
-/*
-	if (MemIon::IOMMU_is_enabled(ION_MM)) {
-            mIOMMUEnabled = true;
-            mIOMMUID = ION_MM;
-	} else if (MemIon::IOMMU_is_enabled(ION_DCAM)) {
-            mIOMMUEnabled = true;
-            mIOMMUID = ION_DCAM;
-	} else 
-*/
-	{
-            mIOMMUEnabled = false;
-            mIOMMUID = -1;
-	}
 
 	HAL_LOGD("X");
 }
@@ -513,7 +500,7 @@ int32_t SprdCamera3HWI::tranStreamAndChannelType(camera3_stream_t* new_stream, c
 		mInputStream = new_stream;
 	}
 
-	if (!mIOMMUEnabled) {
+	if (!mOEMIf->IommuIsEnabled()) {
 		new_stream->usage |= GRALLOC_USAGE_CAMERA_BUFFER;
 	}
 

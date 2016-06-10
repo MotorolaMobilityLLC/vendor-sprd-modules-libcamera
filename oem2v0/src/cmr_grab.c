@@ -92,7 +92,7 @@ cmr_int cmr_grap_free_grab(struct cmr_grab *p_grab)
 cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr, cmr_handle *grab_handle)
 {
 	cmr_int                  ret = 0;
-         cmr_int                  i = 0;
+	cmr_int                  i = 0;
 	cmr_u32                  channel_id;
 	struct cmr_grab          *p_grab = NULL;
 
@@ -240,9 +240,9 @@ cmr_s32 cmr_grab_get_iommu_status(cmr_handle grab_handle)
 #endif
 
 	if (has_iommu)
-	ret = 0;
+		ret = 0;
 	else
-	ret = -1;
+		ret = -1;
 
 	return ret;
 }

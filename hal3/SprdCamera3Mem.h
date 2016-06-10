@@ -61,7 +61,6 @@ public:
 
 	virtual int map(buffer_handle_t *buffer_handle ,hal_mem_info_t *mem_info) = 0;
 	virtual int unmap(buffer_handle_t *buffer_handle ,hal_mem_info_t *mem_info) = 0;
-	int mIOMMUID;
 
 public:
 	static int getUsage(int stream_type, cmr_uint &usage);

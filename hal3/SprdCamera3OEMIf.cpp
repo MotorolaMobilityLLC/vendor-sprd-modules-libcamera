@@ -113,7 +113,6 @@ namespace sprdcamera {
 static nsecs_t s_start_timestamp = 0;
 static nsecs_t s_end_timestamp = 0;
 static int s_use_time = 0;
-static int s_mem_method = 0; /*0: physical address, 1: iommu  address*/
 static nsecs_t cam_init_begin_time = 0;
 bool gIsApctCamInitTimeShow = false;
 bool gIsApctRead = false;
@@ -272,7 +271,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mPrvBufferTimestamp(0),
 	mUpdateRangeFpsCount(0),
 	mPrvMinFps(0),
-	mPrvMaxFps(0)
+	mPrvMaxFps(0),
+	mIommuEnabled(false)
 
 {
 	//mIsPerformanceTestable = sprd_isPerformanceTestable();
@@ -300,20 +300,6 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 
 	mOriginalPreviewBufferUsage = mPreviewBufferUsage;
 
-// todo: will remove it later, ust ioctl to detect iommu enabled or not
-/*
-	if (MemIon::IOMMU_is_enabled(ION_MM)) {
-            mIOMMUEnabled = true;
-            mIOMMUID = ION_MM;
-	} else if (MemIon::IOMMU_is_enabled(ION_DCAM)) {
-            mIOMMUEnabled = true;
-            mIOMMUID = ION_DCAM;
-	} else
-*/
-	{
-            mIOMMUEnabled = false;
-            mIOMMUID = -1;
-	}
 	memset(mSubRawHeapArray, 0, sizeof(mSubRawHeapArray));
 	memset(mZslHeapArray, 0, sizeof(mZslHeapArray));
 	memset(mPreviewHeapArray, 0, sizeof(mPreviewHeapArray));
@@ -1924,6 +1910,9 @@ bool SprdCamera3OEMIf::startCameraIfNecessary()
 		HAL_LOGD("camera hardware has been started already");
 	}
 
+	mIommuEnabled = IommuIsEnabled();
+	HAL_LOGD("mIommuEnabled=%d", mIommuEnabled);
+
 	return true;
 }
 
@@ -1999,7 +1988,6 @@ sprd_camera_memory_t* SprdCamera3OEMIf::allocCameraMem(int buf_size, int num_buf
 	MemIon *pHeapIon = NULL;
 
 	HAL_LOGD("buf_size %d, num_bufs %d", buf_size, num_bufs);
-
 	sprd_camera_memory_t *memory = (sprd_camera_memory_t *)malloc(sizeof(sprd_camera_memory_t));
 	if (NULL == memory) {
 		HAL_LOGE("fatal error! memory pointer is null.");
@@ -2015,7 +2003,7 @@ sprd_camera_memory_t* SprdCamera3OEMIf::allocCameraMem(int buf_size, int num_buf
 		goto getpmem_fail;
 	}
 
-	if (0 == s_mem_method) {
+	if (!mIommuEnabled) {
 		if (is_cache) {
 			pHeapIon = new MemIon("/dev/ion", mem_size, 0, (1 << 31) | ION_HEAP_ID_MASK_MM);
 		} else {
@@ -2046,13 +2034,8 @@ sprd_camera_memory_t* SprdCamera3OEMIf::allocCameraMem(int buf_size, int num_buf
 	memory->phys_size = mem_size;
 	memory->data = pHeapIon->getBase();
 
-	if (0 == s_mem_method) {
-		HAL_LOGD("fd=0x%x, phys_addr=0x%lx, virt_addr=%p, size=0x%lx, heap=%p",
-		memory->fd, memory->phys_addr, memory->data, memory->phys_size, pHeapIon);
-	} else {
-		HAL_LOGD("iommu: fd=0x%x, phys_addr=0x%lx, virt_addr=%p, size=0x%lx, heap=%p",
-		memory->fd, memory->phys_addr, memory->data, memory->phys_size, pHeapIon);
-	}
+	HAL_LOGD("fd=0x%x, phys_addr=0x%lx, virt_addr=%p, size=0x%lx, heap=%p",
+		     memory->fd, memory->phys_addr, memory->data, memory->phys_size, pHeapIon);
 
 	return memory;
 
@@ -2077,6 +2060,7 @@ void SprdCamera3OEMIf::freeCameraMem(sprd_camera_memory_t* memory)
 						memory->fd, memory->phys_addr, memory->data, memory->phys_size);
 		}
 		free(memory);
+		memory = NULL;
 	}
 }
 
@@ -2591,12 +2575,11 @@ int SprdCamera3OEMIf::IommuIsEnabled(void)
 int SprdCamera3OEMIf::allocOneFrameMem(struct SprdCamera3OEMIf::OneFrameMem *one_frame_mem_ptr)
 {
 	struct SprdCamera3OEMIf::OneFrameMem *ptr = one_frame_mem_ptr;
-	int iommuIsEnabled = IommuIsEnabled();
 	int ret = 0;
 
 	/* alloc input y buffer */
-	HAL_LOGD(" %d  %d  %d\n", iommuIsEnabled, ptr->width, ptr->height);
-	if (0 == iommuIsEnabled) {
+	HAL_LOGD(" %d  %d  %d\n", mIommuEnabled, ptr->width, ptr->height);
+	if (!mIommuEnabled) {
 		ptr->pmem_hp = new MemIon("/dev/ion", ptr->width * ptr->height, MemIon::NO_CACHING, ION_HEAP_ID_MASK_MM);
 	} else {
 		ptr->pmem_hp = new MemIon("/dev/ion", ptr->width * ptr->height, MemIon::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
@@ -2620,12 +2603,11 @@ int SprdCamera3OEMIf::allocOneFrameMem(struct SprdCamera3OEMIf::OneFrameMem *one
 
 int SprdCamera3OEMIf::relaseOneFrameMem(struct SprdCamera3OEMIf::OneFrameMem *one_frame_mem_ptr)
 {
-	int iommuEnabled = IommuIsEnabled();
 	struct SprdCamera3OEMIf::OneFrameMem *ptr = one_frame_mem_ptr;
 	if (!ptr)
 		return 0;
 
-	if (ptr->fd && !iommuEnabled) {
+	if (ptr->fd && !mIommuEnabled) {
 		ptr->pmem_hp.clear();
 	}
 
