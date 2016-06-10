@@ -1442,6 +1442,10 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
 	if (NULL != p_exif_info->spec_ptr) {
 		p_exif_info->spec_ptr->basic.PixelXDimension = exif_unit->picture_size.width;
 		p_exif_info->spec_ptr->basic.PixelYDimension = exif_unit->picture_size.height;
+		if(IMG_ANGLE_90 == hal_param->encode_angle || IMG_ANGLE_270 == hal_param->encode_angle){
+			p_exif_info->spec_ptr->basic.PixelXDimension = exif_unit->picture_size.height;
+			p_exif_info->spec_ptr->basic.PixelYDimension = exif_unit->picture_size.width;
+		}
 	}
 	rotation_angle = setting_get_exif_orientation(hal_param->encode_rotation);
 	if(rotation_angle == ORIENTATION_ROTATE_90 ||rotation_angle == ORIENTATION_ROTATE_270){

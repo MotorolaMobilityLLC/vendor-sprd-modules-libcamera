@@ -4292,7 +4292,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 		} else if (IMG_DATA_TYPE_YUV420 == prev_cxt->cap_org_fmt || IMG_DATA_TYPE_YVU420 == prev_cxt->cap_org_fmt) {
 
 			if (is_normal_cap) {
-				if ((IMG_ANGLE_0 != prev_cxt->prev_param.cap_rot) || prev_cxt->prev_param.is_cfg_rot_cap) {
+				if ((IMG_ANGLE_0 != prev_cxt->prev_param.cap_rot) || (prev_cxt->prev_param.is_cfg_rot_cap && (IMG_ANGLE_0 != prev_cxt->prev_param.encode_angle))) {
 					mem_size   = prev_cxt->cap_mem[i].cap_yuv_rot.buf_size;
 					fd         = prev_cxt->cap_mem[i].cap_yuv_rot.fd;
 					y_addr     = prev_cxt->cap_mem[i].cap_yuv_rot.addr_phy.addr_y;
@@ -4994,9 +4994,9 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id)
 	}
 #endif
 
-	if (cap_rot == IMG_ANGLE_0) {
+/*	if (cap_rot == IMG_ANGLE_0) {
 		aligned_type = CAMERA_MEM_NO_ALIGNED;
-	}
+	}*/
 
 	/* w/h aligned by 16 */
 	alg_pic_size->width  = camera_get_aligned_size(aligned_type, org_pic_size->width);

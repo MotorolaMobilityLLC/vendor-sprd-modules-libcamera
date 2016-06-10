@@ -6255,6 +6255,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 		CMR_LOGE("failed to get enc angle %ld", ret);
 		goto exit;
 	}
+	out_param_ptr->encode_angle = setting_param.cmd_type_value;
 	jpeg_cxt->param.set_encode_rotation = setting_param.cmd_type_value;
 	if (cxt->snp_cxt.is_cfg_rot_cap) {
 		cxt->snp_cxt.cfg_cap_rot = jpeg_cxt->param.set_encode_rotation;
@@ -6269,7 +6270,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	}
 	cxt->snp_cxt.total_num = setting_param.cmd_type_value;
 
-	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_ENCODE_ROTATION, &setting_param);
+	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_ENCODE_ANGLE, &setting_param);
 	if (ret) {
 		CMR_LOGE("failed to get enc rotation %ld", ret);
 		goto exit;
@@ -6285,9 +6286,9 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	out_param_ptr->flip_on = setting_param.cmd_type_value;
 	if (out_param_ptr->flip_on) {
 		CMR_LOGI("encode_rotation:%d, flip:%d", rotation, out_param_ptr->flip_on);
-		if (90 == rotation || 270 == rotation) {
+		if (IMG_ANGLE_90 == rotation || IMG_ANGLE_270 == rotation) {
 			out_param_ptr->flip_on = 0x1; // flip
-		} else if (0 == rotation || 180 == rotation) {
+		} else if (IMG_ANGLE_0 == rotation || IMG_ANGLE_180 == rotation) {
 			out_param_ptr->flip_on = 0x3; // mirror
 		}
 	}
@@ -6507,6 +6508,12 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle, struct snapshot_param *
 	}
 	jpeg_cxt->param.thum_size = setting_param.size_param;
 
+	ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_TOUCH_XY, &setting_param);
+	if (ret) {
+		        CMR_LOGE("failed to open flash");
+	}
+	camera_set_touch_xy(cxt, setting_param.touch_param);
+
 	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_ENCODE_ANGLE, &setting_param);
 	if (ret) {
 		CMR_LOGE("failed to get enc angle %ld", ret);
@@ -6514,12 +6521,6 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle, struct snapshot_param *
 	}
 	out_ptr->rot_angle = setting_param.cmd_type_value;
 	jpeg_cxt->param.set_encode_rotation = setting_param.cmd_type_value;
-
-	ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_TOUCH_XY, &setting_param);
-	if (ret) {
-		CMR_LOGE("failed to open flash");
-	}
-	camera_set_touch_xy(cxt, setting_param.touch_param);
 
 	ret = cmr_preview_get_post_proc_param(cxt->prev_cxt.preview_handle, cxt->camera_id,
 									(cmr_u32)setting_param.cmd_type_value, &out_ptr->post_proc_setting);

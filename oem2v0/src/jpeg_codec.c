@@ -25,7 +25,7 @@
 
 #define JPEG_MSG_QUEUE_SIZE                   40
 #define JPEG_EXIT_THREAD_FLAG                 1
-#define JPEG_SLICE_HEIGHT                     4224
+#define JPEG_SLICE_HEIGHT                     8176
 #define JPEG_BUF_RES_SIZE                     256
 #define JPEG_DECODE_FW_BUF_SIZE               (20*1024)
 #define JPEG_WEXIF_TEMP_MARGIN                (21*1024)
@@ -1677,6 +1677,5 @@ cmr_int jpeg_enc_thumbnail(struct jpeg_enc_in_param *in_parm_ptr, cmr_uint *stre
 	}
 	/*savedata(in_parm_ptr->stream_buf_vir,jcontext.thumbnail_info.stream_size);*/
 	CMR_LOGV("jpeg:return %d.", (cmr_u32)ret);
-
 	return ret;
 }
