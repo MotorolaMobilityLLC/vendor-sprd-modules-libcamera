@@ -941,7 +941,7 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 
 	ret = cxt->caf_ops.trigger_calc(cxt->caf_trigger_handle, aft_in, &aft_out);
 
-	ISP_LOGI("caf_trig %d", aft_out.is_caf_trig);
+	ISP_LOGV("caf_trig %d", aft_out.is_caf_trig);
 	if ((!cxt->aft_proc_result.is_caf_trig) && aft_out.is_caf_trig) {
 		/* caf roi 1/16 raw */
 		roi.valid_win = 1;
