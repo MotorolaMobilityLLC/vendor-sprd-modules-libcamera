@@ -546,7 +546,6 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 	HAL_LOGD("E Mutex::Autolock");
 	bool preview_stream_flag = false;
 	bool callback_stream_flag = false;
-	bool support_bigsize_flag = false;
 	cam_dimension_t preview_size = {0, 0};
 	cam_dimension_t video_size = {0, 0};
 	cam_dimension_t raw_size = {0, 0};
@@ -645,14 +644,6 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 		}
 #endif
 
-		if(newStream->width > 2048 && newStream->format != HAL_PIXEL_FORMAT_BLOB) {
-			if(support_bigsize_flag == false)
-				support_bigsize_flag = true;
-			else {
-				HAL_LOGE("Hardware not support two big size stream");
-				return BAD_VALUE;
-			}
-		}
 		if(stream_type == CAMERA_STREAM_TYPE_PREVIEW) { //for CTS MultiViewTest
 			if(preview_stream_flag == false)
 				preview_stream_flag = true;
