@@ -73,7 +73,7 @@ static unsigned long _s5k4h8yx_GetExifInfo(SENSOR_HW_HANDLE handle, unsigned lon
 static unsigned long _s5k4h8yx_ExtFunc(SENSOR_HW_HANDLE handle, unsigned long ctl_param);
 static uint16_t _s5k4h8yx_get_VTS(SENSOR_HW_HANDLE handle);
 static uint32_t _s5k4h8yx_set_VTS(SENSOR_HW_HANDLE handle, uint16_t VTS);
-static uint32_t _s5k4h8yx_ReadGain(SENSOR_HW_HANDLE handle, uint32_t param);
+static uint32_t _s5k4h8yx_ReadGain(SENSOR_HW_HANDLE handle, uint32_t *param);
 static unsigned long _s5k4h8yx_set_video_mode(SENSOR_HW_HANDLE handle, unsigned long param);
 static uint16_t _s5k4h8yx_get_shutter(SENSOR_HW_HANDLE handle);
 static uint32_t _s5k4h8yx_set_shutter(SENSOR_HW_HANDLE handle, uint16_t shutter);
@@ -1878,11 +1878,11 @@ static unsigned long _s5k4h8yx_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned 
 	CFG_INFO:
 	//s_capture_shutter = _s5k4h8yx_get_shutter(handle);
 	s_capture_VTS = _s5k4h8yx_get_VTS(handle);
-	_s5k4h8yx_ReadGain(handle, capture_mode);
+	_s5k4h8yx_ReadGain(handle, &gain);
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, s_capture_shutter);
-         Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_APERTUREVALUE, 20);
-         Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_MAXAPERTUREVALUE, 20);
-         Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_FNUMBER, 20);
+	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_APERTUREVALUE, 20);
+	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_MAXAPERTUREVALUE, 20);
+	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_FNUMBER, 20);
 	s_exposure_time = s_capture_shutter * cap_linetime / 1000;
 
 	return SENSOR_SUCCESS;
@@ -2135,7 +2135,7 @@ static uint32_t _s5k4h8yx_set_VTS(SENSOR_HW_HANDLE handle, uint16_t VTS)
 	return 0;
 }
 
-static uint32_t _s5k4h8yx_ReadGain(SENSOR_HW_HANDLE handle, uint32_t param)
+static uint32_t _s5k4h8yx_ReadGain(SENSOR_HW_HANDLE handle, uint32_t *param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	uint32_t gain = 0;
@@ -2149,7 +2149,7 @@ static uint32_t _s5k4h8yx_ReadGain(SENSOR_HW_HANDLE handle, uint32_t param)
          //gain = gain<<8|Sensor_ReadReg(0x205);/*8*/
 
 	s_s5k4h8yx_gain=(int)gain;
-         param=(int)gain;
+	*param=gain;
 
 	SENSOR_PRINT("SENSOR_s5k4h8yx: _s5k4h8yx_ReadGain gain: 0x%x", s_s5k4h8yx_gain);
 
@@ -2160,27 +2160,27 @@ static uint32_t _s5k4h8yx_write_otp_gain(SENSOR_HW_HANDLE handle, uint32_t *para
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint16_t value = 0x00;
-         float a_gain = 0;
-        float d_gain = 0;
-        float real_gain=0.0f;
-        SENSOR_PRINT("SENSOR_s5k4h8yx: write_gain:0x%x\n", *param);
+	float a_gain = 0;
+	float d_gain = 0;
+	float real_gain=0.0f;
+	SENSOR_PRINT("SENSOR_s5k4h8yx: write_gain:0x%x\n", *param);
 
-        //ret_value = Sensor_WriteReg(0x104, 0x01);
-        if( (*param/4)>0x200){
-                    a_gain=16*32;
-                    d_gain=(*param/4.0)*256/a_gain;
-                    if(d_gain>256*256)
-                        d_gain=256*256;
-           }
-            else{
-                a_gain=*param/4;
-                 d_gain=256;
-                }
-            ret_value = Sensor_WriteReg(0x204,(uint32_t)a_gain);//0x100);//a_gain);
-            ret_value = Sensor_WriteReg(0x20e,(uint32_t) d_gain);
-            ret_value = Sensor_WriteReg(0x210, (uint32_t)d_gain);
-            ret_value = Sensor_WriteReg(0x212, (uint32_t)d_gain);
-            ret_value = Sensor_WriteReg(0x214, (uint32_t)d_gain);
+	//ret_value = Sensor_WriteReg(0x104, 0x01);
+	if( (*param/4)>0x200){
+		a_gain=16*32;
+		d_gain=(*param/4.0)*256/a_gain;
+		if(d_gain>256*256)
+			d_gain=256*256;
+	}
+	else{
+		a_gain=*param/4;
+		d_gain=256;
+	}
+	ret_value = Sensor_WriteReg(0x204,(uint32_t)a_gain);//0x100);//a_gain);
+	ret_value = Sensor_WriteReg(0x20e,(uint32_t) d_gain);
+	ret_value = Sensor_WriteReg(0x210, (uint32_t)d_gain);
+	ret_value = Sensor_WriteReg(0x212, (uint32_t)d_gain);
+	ret_value = Sensor_WriteReg(0x214, (uint32_t)d_gain);
 
   //          SENSOR_PRINT("_s5k3l2xx: real_gain a_gain:0x%x read_reg 0x204:0x%x, 0x20e:0x%x, 0x202:0x%x, 0x1088:0x%x", (uint32_t)a_gain,Sensor_ReadReg(0x0204),Sensor_ReadReg(0x020e),Sensor_ReadReg(0x202),Sensor_ReadReg(0x1086));
 /*
@@ -2199,7 +2199,7 @@ static uint32_t _s5k4h8yx_write_otp_gain(SENSOR_HW_HANDLE handle, uint32_t *para
 static uint32_t _s5k4h8yx_read_otp_gain(SENSOR_HW_HANDLE handle, uint32_t *param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
-         uint32_t gain = 0;
+	uint32_t gain = 0;
 	uint16_t a_gain = 0;
 	uint16_t d_gain = 0;
 	a_gain = Sensor_ReadReg(0x0204) ;

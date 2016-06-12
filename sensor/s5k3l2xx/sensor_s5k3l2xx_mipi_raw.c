@@ -71,7 +71,7 @@ static unsigned long _s5k3l2xx_GetExifInfo(SENSOR_HW_HANDLE handle, unsigned lon
 static unsigned long _s5k3l2xx_ExtFunc(SENSOR_HW_HANDLE handle, unsigned long ctl_param);
 static uint16_t _s5k3l2xx_get_VTS(SENSOR_HW_HANDLE handle);
 static uint32_t _s5k3l2xx_set_VTS(SENSOR_HW_HANDLE handle, uint16_t VTS);
-static uint32_t _s5k3l2xx_ReadGain(SENSOR_HW_HANDLE handle, uint32_t param);
+static uint32_t _s5k3l2xx_ReadGain(SENSOR_HW_HANDLE handle, uint32_t *param);
 static unsigned long _s5k3l2xx_set_video_mode(SENSOR_HW_HANDLE handle, unsigned long param);
 static uint16_t _s5k3l2xx_get_shutter(SENSOR_HW_HANDLE handle);
 static uint32_t _s5k3l2xx_set_shutter(SENSOR_HW_HANDLE handle, uint16_t shutter);
@@ -2886,7 +2886,8 @@ static unsigned long _s5k3l2xx_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned 
 		Sensor_WriteReg(0x0340, frame_len);
 	}
 	Sensor_WriteReg(0x202, capture_exposure);
-	Sensor_WriteReg(0x204, gain);
+	//Sensor_WriteReg(0x204, gain);
+	_s5k3l2xx_write_gain(handle,gain);
 
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, capture_exposure);
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_APERTUREVALUE,    19);
@@ -3142,21 +3143,21 @@ static uint32_t _s5k3l2xx_set_VTS(SENSOR_HW_HANDLE handle, uint16_t VTS)
 	return 0;
 }
 
-static uint32_t _s5k3l2xx_ReadGain(SENSOR_HW_HANDLE handle, uint32_t param)
+static uint32_t _s5k3l2xx_ReadGain(SENSOR_HW_HANDLE handle, uint32_t *param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	uint32_t again = 0;
-         uint32_t dgain = 0;
-         uint32_t gain = 0;
+	 uint32_t dgain = 0;
+	 uint32_t gain = 0;
 
 #if 1 // for MP tool //!??
 	again = Sensor_ReadReg(0x0204) ;
 	dgain = Sensor_ReadReg(0x0210) ;
-          gain=again*dgain;
+	gain=again*dgain;
 
  #endif
 	s_s5k3l2xx_gain=(int)gain;
-        param=(int)gain;
+	*param=(int)gain;
 	SENSOR_PRINT("SENSOR_s5k3l2xx: _s5k3l2xx_ReadGain gain: 0x%x", s_s5k3l2xx_gain);
 	return rtn;
 
@@ -3173,20 +3174,20 @@ static uint32_t _s5k3l2xx_write_otp_gain(SENSOR_HW_HANDLE handle, uint32_t *para
 
 	//ret_value = Sensor_WriteReg(0x104, 0x01);
 	if( (*param/4)>0x200){
-                a_gain=16*32;
-                d_gain=(*param/4.0)*256/a_gain;
-                if(d_gain>256*256)
-                    d_gain=256*256;
-       }
-        else{
-                 d_gain=256;
-                 a_gain=*param/4;
-            }
-        ret_value = Sensor_WriteReg(0x204,(uint32_t)a_gain);//0x100);//a_gain);
-        ret_value = Sensor_WriteReg(0x20e,(uint32_t) d_gain);
-        ret_value = Sensor_WriteReg(0x210, (uint32_t)d_gain);
-        ret_value = Sensor_WriteReg(0x212, (uint32_t)d_gain);
-        ret_value = Sensor_WriteReg(0x214, (uint32_t)d_gain);
+		a_gain=16*32;
+		d_gain=(*param/4.0)*256/a_gain;
+		if(d_gain>256*256)
+			d_gain=256*256;
+	}
+	else{
+		d_gain=256;
+		a_gain=*param/4;
+	}
+	ret_value = Sensor_WriteReg(0x204,(uint32_t)a_gain);//0x100);//a_gain);
+	ret_value = Sensor_WriteReg(0x20e,(uint32_t) d_gain);
+	ret_value = Sensor_WriteReg(0x210, (uint32_t)d_gain);
+	ret_value = Sensor_WriteReg(0x212, (uint32_t)d_gain);
+	ret_value = Sensor_WriteReg(0x214, (uint32_t)d_gain);
 
 
 	return ret_value;
@@ -3199,8 +3200,8 @@ static uint32_t _s5k3l2xx_read_otp_gain(SENSOR_HW_HANDLE handle, uint32_t *param
 	uint16_t d_gain = 0;
 	#if 1 // for MP tool //!??
 	a_gain = Sensor_ReadReg(0x0204);
-         d_gain = Sensor_ReadReg(0x0210);
-        *param =a_gain*d_gain;
+	 d_gain = Sensor_ReadReg(0x0210);
+	*param =a_gain*d_gain;
 	#else
 	uint8_t cmd_val[3]            = {0x00};
 	uint16_t cmd_len;

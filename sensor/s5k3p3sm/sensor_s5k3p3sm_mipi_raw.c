@@ -1171,13 +1171,13 @@ static uint32_t _s5k3p3sm_ReadGain(SENSOR_HW_HANDLE handle, uint32_t param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	uint32_t again = 0;
-         uint32_t dgain = 0;
-         uint32_t gain = 0;
+	 uint32_t dgain = 0;
+	 uint32_t gain = 0;
 
 #if 1 // for MP tool //!??
 	again = Sensor_ReadReg(0x0204) ;
 	dgain = Sensor_ReadReg(0x0210) ;
-          gain=again*dgain;
+	  gain=again*dgain;
 
  #endif
 	//s_s5k3p3sm_gain=(int)gain;
@@ -1226,17 +1226,17 @@ static unsigned long _s5k3p3sm_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned 
 	_s5k3p3sm_update_gain(handle, gain);
 
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, capture_exposure);
-        Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_APERTUREVALUE, 20);
-        Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_MAXAPERTUREVALUE, 20);
-        Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_FNUMBER, 20);
+	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_APERTUREVALUE, 20);
+	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_MAXAPERTUREVALUE, 20);
+	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_FNUMBER, 20);
 
 
 	CFG_INFO:
 	s_capture_shutter = _s5k3p3sm_get_shutter(handle);
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, s_capture_shutter);
-         Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_APERTUREVALUE, 20);
-         Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_MAXAPERTUREVALUE, 20);
-         Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_FNUMBER, 20);
+	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_APERTUREVALUE, 20);
+	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_MAXAPERTUREVALUE, 20);
+	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_FNUMBER, 20);
 	s_exposure_time = s_capture_shutter * cap_linetime / 1000;
 
 	return SENSOR_SUCCESS;

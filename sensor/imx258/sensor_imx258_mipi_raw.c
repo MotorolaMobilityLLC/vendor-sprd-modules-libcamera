@@ -447,7 +447,7 @@ static SENSOR_STATIC_INFO_T s_imx258_static_info = {
 	220,	//f-number,focal ratio
 	462,	//focal_length;
 	0,	//max_fps,max fps of sensor's all settings,it will be calculated from sensor mode fps
-	32,	//max_adgain,AD-gain
+	8*16,	//max_adgain,AD-gain
 	0,	//ois_supported;
 	0,	//pdaf_supported;
 	1,	//exp_valid_frame_num;N+2-1
@@ -613,11 +613,13 @@ static void imx258_group_hold_off(SENSOR_HW_HANDLE handle)
  *============================================================================*/
 static uint16_t imx258_read_gain(SENSOR_HW_HANDLE handle)
 {
-	uint16_t gain_l = 0;
+	uint16_t gain_a= 0;
+	uint16_t gain_d= 0;
 
-	gain_l = Sensor_ReadReg(0x0205);
+	gain_a = Sensor_ReadReg(0x0205);
+	gain_d = Sensor_ReadReg(0x0210);
 
-	return gain_l;
+	return gain_a*gain_d;
 }
 
 /*==============================================================================
