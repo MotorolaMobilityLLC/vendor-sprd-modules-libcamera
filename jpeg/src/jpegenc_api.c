@@ -789,10 +789,10 @@ int JPEGENC_Slice_Start(JPEGENC_PARAMS_T *jpegenc_params,
       goto error;
     }
   }
-  ioctl(jpg_fd, JPG_ENABLE, NULL);
-  ioctl(jpg_fd, JPG_RESET, NULL);
   jpg_clk = 3;
   ioctl(jpg_fd, JPG_CONFIG_FREQ, &jpg_clk);
+  ioctl(jpg_fd, JPG_ENABLE, NULL);
+  ioctl(jpg_fd, JPG_RESET, NULL);
   JPG_SetVirtualBaseAddr((unsigned long)jpg_addr);
   JPG_reg_reset_callback(JPG_reset_cb, jpg_fd);
 	SCI_TRACE_LOW("fd %x,%x => %x\n",jpegenc_params->src_fd, jpegenc_params->stream_buf_fd);
