@@ -67,27 +67,6 @@ typedef void*           cmr_handle;
 #define UNUSED(x) (void)x
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
-#define DEBUG_STR     "L %d, %s: "
-#define DEBUG_ARGS    __LINE__,__FUNCTION__
-
-
-#if 1//(SC_FPGA == 0)
-#define CMR_LOGE(format,...) ALOGE(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define CMR_LOGW(format,...) ALOGW(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define CMR_LOGI(format,...) ALOGI(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define CMR_LOGD(format,...) ALOGD(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define CMR_LOGV(format,...) ALOGV(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-//#warnning  "SC_FPGA is not set"
-#else
-#include "ylog.h"
-#define CMR_LOGE(format,...) ALOGD(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define CMR_LOGW(format,...) ALOGD(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define CMR_LOGI(format,...) ALOGD(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define CMR_LOGD(format,...) ALOGD(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define CMR_LOGV(format,...) ALOGD(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#endif
-
-
 typedef void (*cmr_malloc)(cmr_u32 mem_type, cmr_handle oem_handle, cmr_u32 *size,
 	                         cmr_u32 *sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
 typedef void (*cmr_free)(cmr_u32 mem_type, cmr_handle oem_handle, cmr_uint *phy_addr,

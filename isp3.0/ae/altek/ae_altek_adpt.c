@@ -2352,7 +2352,7 @@ static cmr_int aealtek_work_preview(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 	ret = aealtek_sensor_info_ui2lib(cxt_ptr, &in_ptr->resolution, preview_sensor_ptr);
 	if (ret)
 		goto exit;
-	CMR_LOGI("param min_fps=%d lib min_fps=%d",in_ptr->resolution.min_fps,
+	ISP_LOGI("param min_fps=%d lib min_fps=%d",in_ptr->resolution.min_fps,
 			set_in_param.set_param.normal_sensor_info.min_fps);
 	type = AE_SET_PARAM_SENSOR_INFO;
 	set_in_param.ae_set_param_type = type;
@@ -2372,7 +2372,7 @@ static cmr_int aealtek_work_preview(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 		ret = aealtek_sensor_info_ui2lib(cxt_ptr, &cxt_ptr->nxt_status.ui_param.work_info_slv.resolution, preview_sensor_ptr);
 		if (ret)
 			goto exit;
-		CMR_LOGI("slv param min_fps=%d lib min_fps=%d",cxt_ptr->nxt_status.ui_param.work_info_slv.resolution.min_fps,
+		ISP_LOGI("slv param min_fps=%d lib min_fps=%d",cxt_ptr->nxt_status.ui_param.work_info_slv.resolution.min_fps,
 				set_in_param.set_param.slave_sensor_info.min_fps);
 		type = AE_SET_PARAM_SENSOR_INFO_SLV;
 		set_in_param.ae_set_param_type = type;
@@ -3500,9 +3500,9 @@ static cmr_int aealtek_get_sync_info_from_mapping(struct aealtek_cxt *cxt_ptr, s
 
 	ret = aealtek_sync_simple_trans(&input, &output);
 	if (_AE_SYNC_SIMPLE_ERR_SUCCESS != ret) {
-		CMR_LOGE("aealtek_sync_simple_trans err: %ld \r\n", ret);
+		ISP_LOGE("aealtek_sync_simple_trans err: %ld \r\n", ret);
 	} else {
-		CMR_LOGI("aealtek_sync_simple_trans BV: %d, ISO : %d, EXIF ISO: %d, gain: %d, Line: %d, Time: %d, ISP D gain: %d \r\n", output.result_bv, output.ud_slv_iso, output.ud_slv_exif_iso,
+		ISP_LOGI("aealtek_sync_simple_trans BV: %d, ISO : %d, EXIF ISO: %d, gain: %d, Line: %d, Time: %d, ISP D gain: %d \r\n", output.result_bv, output.ud_slv_iso, output.ud_slv_exif_iso,
 		               output.ud_slv_adgain, output.ud_slv_exposure_line, output.ud_slv_exposure_time, output.ud_slv_isp_adgain);
 
 		ae_sync_info->master.exposure_time = input.ud_msc_exposure_time;
@@ -3554,7 +3554,7 @@ static cmr_int aealtek_get_sync_info_from_lib(struct aealtek_cxt *cxt_ptr, struc
 	if (obj_ptr && obj_ptr->sync_process)
 		ret = obj_ptr->sync_process(&master_dat, obj_ptr->ae, &slave_dat);
 
-	CMR_LOGI("get_sync_info_from_lib BV: %d, ISO : %d, EXIF ISO: %d, gain: %d, Line: %d, Time: %d, ISP D gain: %d \r\n"
+	ISP_LOGI("get_sync_info_from_lib BV: %d, ISO : %d, EXIF ISO: %d, gain: %d, Line: %d, Time: %d, ISP D gain: %d \r\n"
 			, slave_dat.bv_val, slave_dat.ISO, slave_dat.EXIF_ISO,
 			slave_dat.sensor_ad_gain, slave_dat.exposure_line, slave_dat.exposure_time, slave_dat.ISP_D_gain);
 

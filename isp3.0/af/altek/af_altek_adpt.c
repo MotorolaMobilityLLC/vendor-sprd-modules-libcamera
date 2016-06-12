@@ -1816,7 +1816,7 @@ static cmr_int afaltek_adpt_get_yhist(cmr_handle adpt_handle, struct af_ctrl_y_i
 
 	/* Need to do*/
 	if (NULL == y_res) {
-		CMR_LOGE("param error y_res = %p", y_res);
+		ISP_LOGE("param error y_res = %p", y_res);
 		ret = -ISP_PARAM_NULL;
 		goto exit;
 	}

@@ -702,7 +702,7 @@ cmr_int isp3a_set_pos(cmr_handle handle, struct af_ctrl_motor_pos * in)
 	cal_pos = in->motor_pos + in->motor_offset;
 	ret = cxt->ioctrl_ptr->set_focus(cxt->ioctrl_ptr->caller_handler, (cmr_u32)cal_pos);
 exit:
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGV("done %ld", ret);
 	return ret;
 }
 

@@ -121,10 +121,10 @@ static cmr_int aflctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 	struct aflctrl_cxt *cxt = (struct aflctrl_cxt *)p_data;
 
 	if (!message || !p_data) {
-		CMR_LOGE("param error");
+		ISP_LOGE("param error");
 		goto exit;
 	}
-	CMR_LOGI("message.msg_type 0x%x, data %p", message->msg_type,
+	ISP_LOGI("message.msg_type 0x%x, data %p", message->msg_type,
 		 message->data);
 
 	switch (message->msg_type) {
@@ -142,11 +142,11 @@ static cmr_int aflctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 		ret = aflctrl_process(cxt, (struct afl_ctrl_proc_in*)message->data, &cxt->proc_out);
 		break;
 	default:
-		CMR_LOGE("don't support msg");
+		ISP_LOGE("don't support msg");
 		break;
 	}
 exit:
-	CMR_LOGI("done %ld", ret);
+	ISP_LOGI("done %ld", ret);
 	return ret;
 }
 
@@ -158,11 +158,11 @@ static cmr_int aflctrl_create_thread(struct aflctrl_cxt *cxt)
 				AFLCTRL_MSG_QUEUE_SIZE,
 				aflctrl_ctrl_thr_proc, (void *)cxt);
 	if (CMR_MSG_SUCCESS != ret) {
-		CMR_LOGE("failed to create main thread %ld", ret);
+		ISP_LOGE("failed to create main thread %ld", ret);
 		ret = ISP_ERROR;
 	}
 
-	CMR_LOGV("done %ld", ret);
+	ISP_LOGV("done %ld", ret);
 	return ret;
 }
 static cmr_int aflctrl_destroy_thread(struct aflctrl_cxt *cxt)
@@ -372,7 +372,7 @@ cmr_int afl_ctrl_process(cmr_handle handle, struct afl_ctrl_proc_in *in_ptr, str
 	}
 	message.data = malloc(sizeof(*in_ptr));
 	if (!message.data) {
-		CMR_LOGE("failed to malloc msg");
+		ISP_LOGE("failed to malloc msg");
 		ret = -ISP_ALLOC_ERROR;
 		goto exit;
 	}

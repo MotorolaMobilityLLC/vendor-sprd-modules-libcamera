@@ -25,6 +25,7 @@ extern "C" {
 #include "isp_type.h"
 #include "sprd_isp_altek.h"
 #include "isp_mw.h"
+#include "cmr_log.h"
 
 #define ISP_PRODUCT_NAME_LEN				20
 #define cmr_bzero(b, len)				memset((b), '\0', (len))
@@ -33,24 +34,6 @@ extern "C" {
 
 #ifndef MIN
 #define MIN(x,y) (((x)<(y))?(x):(y))
-#endif
-
-#undef CONFIG_LOG_TO_SHELL
-#ifdef CONFIG_LOG_TO_SHELL
-#define DEBUG_STR     "L %d, %s: "
-#define DEBUG_ARGS    __LINE__,__FUNCTION__
-
-#define ISP_LOGE(format,...) printf(DEBUG_STR format "\n\n", DEBUG_ARGS, ##__VA_ARGS__)
-#define ISP_LOGW(format,...) printf(DEBUG_STR format "\n\n", DEBUG_ARGS, ##__VA_ARGS__)
-#define ISP_LOGI(format,...) printf(DEBUG_STR format "\n\n", DEBUG_ARGS, ##__VA_ARGS__)
-#define ISP_LOGD(format,...) printf(DEBUG_STR format "\n\n", DEBUG_ARGS, ##__VA_ARGS__)
-#define ISP_LOGV(format,...) printf(DEBUG_STR format "\n\n", DEBUG_ARGS, ##__VA_ARGS__)
-#else
-#define ISP_LOGE(format,...) ALOGE(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define ISP_LOGW(format,...) ALOGW(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define ISP_LOGI(format,...) ALOGI(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define ISP_LOGD(format,...) ALOGD(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define ISP_LOGV(format,...) ALOGV(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
 #endif
 
 #define ISP_CHECK_HANDLE_VALID(handle) \

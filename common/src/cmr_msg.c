@@ -17,6 +17,7 @@
 
 #include <stdlib.h>
 #include "cmr_msg.h"
+#include "cmr_log.h"
 
 #define      CMR_MSG_MAGIC_CODE           0xEFFEA55A
 #define      CMR_MSG_WAIT_TIME            1000 //wait for 1 ms

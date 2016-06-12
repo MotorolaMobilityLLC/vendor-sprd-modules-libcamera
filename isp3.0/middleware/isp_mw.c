@@ -166,7 +166,7 @@ cmr_int ispmw_get_tuning_bin(cmr_handle isp_mw_handle, const cmr_s8 *sensor_name
 	}
 	if (cxt->tuning_bin.isp_3a_size != fread(cxt->tuning_bin.isp_3a_addr, 1, cxt->tuning_bin.isp_3a_size, fp)){
 		fclose(fp);
-		CMR_LOGE("failed to read 3a bin");
+		ISP_LOGE("failed to read 3a bin");
 		ret = -ISP_ERROR;
 		goto exit;
 	}
@@ -199,7 +199,7 @@ cmr_int ispmw_get_tuning_bin(cmr_handle isp_mw_handle, const cmr_s8 *sensor_name
 	}
 	if (cxt->tuning_bin.isp_shading_size != fread(cxt->tuning_bin.isp_shading_addr, 1, cxt->tuning_bin.isp_shading_size, fp)){
 		fclose(fp);
-		CMR_LOGE("failed to read shading bin");
+		ISP_LOGE("failed to read shading bin");
 		ret = -ISP_ERROR;
 		goto exit;
 	}
@@ -253,7 +253,7 @@ cmr_int ispmw_get_caf_tuning_bin(cmr_handle isp_mw_handle, const cmr_s8 *sensor_
 	}
 	if (cxt->tuning_bin.isp_caf_size != fread(cxt->tuning_bin.isp_caf_addr, 1, cxt->tuning_bin.isp_caf_size, fp)){
 		fclose(fp);
-		CMR_LOGE("failed to read caf bin");
+		ISP_LOGE("failed to read caf bin");
 		ret = -ISP_ERROR;
 		goto exit;
 	}
@@ -327,7 +327,7 @@ cmr_int ispmw_get_second_tuning_bin(cmr_handle isp_mw_handle, const cmr_s8 *sens
 	}
 	if (cxt->tuning_bin.isp_second_3a_size != fread(cxt->tuning_bin.isp_second_3a_addr, 1, cxt->tuning_bin.isp_second_3a_size, fp)){
 		fclose(fp);
-		CMR_LOGE("failed to read 3a bin");
+		ISP_LOGE("failed to read 3a bin");
 		goto exit;
 	}
 	fclose(fp);
@@ -382,6 +382,8 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 	struct isp_3a_fw_init_in                    isp3a_input;
 	struct isp_dev_init_in                      isp_dev_input;
 	struct isp_mw_context                       *cxt = NULL;
+
+	isp_init_log_level();
 
 	if (!input_ptr || !isp_handle) {
 		ISP_LOGE("init param is null,input_ptr is 0x%lx,isp_handle is 0x%lx", (cmr_uint)input_ptr, (cmr_uint)isp_handle);

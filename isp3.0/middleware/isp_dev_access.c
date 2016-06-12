@@ -1307,7 +1307,7 @@ cmr_int isp_dev_access_set_cfg_otp_info(cmr_handle isp_dev_handle, struct isp_iq
 	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
 	if (!data) {
-		CMR_LOGE("data is null error.");
+		ISP_LOGE("data is null error.");
 		return -1;
 	}
 

@@ -90,7 +90,7 @@ static cmr_int aectrl_ioctrl(struct aectrl_cxt *cxt_ptr, enum ae_ctrl_cmd cmd, s
 		ISP_LOGI("ioctrl fun is NULL");
 	}
 exit:
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGV("done %ld", ret);
 	return ret;
 }
 
@@ -123,7 +123,7 @@ static cmr_int aectrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 		ISP_LOGE("param error");
 		goto exit;
 	}
-	ISP_LOGI("message.msg_type 0x%x, data %p", message->msg_type,
+	ISP_LOGV("message.msg_type 0x%x, data %p", message->msg_type,
 		 message->data);
 
 	switch (message->msg_type) {
@@ -146,7 +146,7 @@ static cmr_int aectrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 	}
 	cxt_ptr->ctrl_thr_cxt.err_code = ret;
 exit:
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGV("done %ld", ret);
 	return ret;
 }
 
@@ -326,7 +326,7 @@ cmr_int ae_ctrl_ioctrl(cmr_handle handle, enum ae_ctrl_cmd cmd, struct ae_ctrl_p
 	if (AE_CTRL_SET_SOF == cmd) {
 		message.data = malloc(sizeof(*in_ptr));
 		if (!message.data) {
-			CMR_LOGE("failed to malloc msg");
+			ISP_LOGE("failed to malloc msg");
 			ret = -ISP_ALLOC_ERROR;
 			goto exit;
 		}
@@ -369,7 +369,7 @@ cmr_int ae_ctrl_process(cmr_handle handle, struct ae_ctrl_proc_in *in_ptr, struc
 	}
 	message.data = malloc(sizeof(*in_ptr));
 	if (!message.data) {
-		CMR_LOGE("failed to malloc msg");
+		ISP_LOGE("failed to malloc msg");
 		ret = -ISP_ALLOC_ERROR;
 		goto exit;
 	}
