@@ -755,19 +755,16 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	}
 #ifdef FPGA_TEST
 	dldseq_info.preview_baisc_dld_seq_length = 4;
-	dldseq_info.preview_baisc_dld_seq[0] = 1;
-	dldseq_info.preview_baisc_dld_seq[1] = 1;
+	dldseq_info.preview_baisc_dld_seq[0] = 2;
+	dldseq_info.preview_baisc_dld_seq[1] = 3;
 	dldseq_info.preview_baisc_dld_seq[2] = 1;
-	dldseq_info.preview_baisc_dld_seq[3] = 1;
+	dldseq_info.preview_baisc_dld_seq[3] = 3;
 
-	dldseq_info.preview_adv_dld_seq_length = 3;
+	dldseq_info.preview_adv_dld_seq_length = 1;
 	dldseq_info.preview_adv_dld_seq[0] = 1;
-	dldseq_info.preview_adv_dld_seq[1] = 1;
-	dldseq_info.preview_adv_dld_seq[2] = 1;
 
-	dldseq_info.fast_converge_baisc_dld_seq_length = 2;
-	dldseq_info.fast_converge_baisc_dld_seq[0] = 3;
-	dldseq_info.fast_converge_baisc_dld_seq[1] = 3;
+	dldseq_info.fast_converge_baisc_dld_seq_length = 0;
+	dldseq_info.fast_converge_baisc_dld_seq[0] = 10;
 #else
 	memcpy(&dldseq_info, &param_ptr->dld_seq, sizeof(struct dld_sequence));
 #endif
