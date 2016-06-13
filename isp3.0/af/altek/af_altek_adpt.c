@@ -2094,9 +2094,10 @@ static cmr_int afaltek_adpt_init(void *in, void *out, cmr_handle * adpt_handle)
 	aft_param.data = in_p->ctrl_in->caf_tuning_info.tuning_file;
 	aft_param.data_len = in_p->ctrl_in->caf_tuning_info.size;
 	if (NULL == aft_param.data || 0 == aft_param.data_len) {
+		cmr_u8 tmp[300];
 		ISP_LOGE("caf tuning parater error");
-		aft_param.data = malloc(300);
-		memset(aft_param.data, -1, 300);
+		memset(tmp, -1, 300);
+		aft_param.data = tmp;
 		aft_param.data_len = 300;
 	}
 	ret = cxt->caf_ops.trigger_init(&aft_param, &cxt->caf_trigger_handle);
