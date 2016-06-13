@@ -5835,7 +5835,7 @@ int SprdCamera3OEMIf::SetDimensionCapture(cam_dimension_t capture_size)
 		camera_get_sensor_info_for_raw(mCameraHandle, mode_info);
 		for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
 			HAL_LOGD("trim w=%d, h=%d", mode_info[i].trim_width, mode_info[i].trim_height);
-			if (mode_info[i].trim_height >= mCaptureHeight) {
+			if (mode_info[i].trim_width * mode_info[i].trim_height >= mCaptureWidth * mCaptureHeight) {
 				mCaptureWidth = mode_info[i].trim_width;
 				mCaptureHeight = mode_info[i].trim_height;
 				break;
