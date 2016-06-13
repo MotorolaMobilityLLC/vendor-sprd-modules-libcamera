@@ -143,7 +143,7 @@ uint32_t vcm_dw9807_set_position(SENSOR_HW_HANDLE handle, uint32_t pos)
 		pos = 0x3FF;
 	m_cur_pos=pos&0x3FF;
 
-	SENSOR_PRINT("set position %d", pos);
+	//SENSOR_PRINT("set position %d", pos);
 	slave_addr = dw9807_VCM_SLAVE_ADDR;
 	cmd_len = 2;
 	cmd_val[0] = 0x03;
@@ -152,6 +152,9 @@ uint32_t vcm_dw9807_set_position(SENSOR_HW_HANDLE handle, uint32_t pos)
 	cmd_val[0] = 0x04;
 	cmd_val[1] = (pos&0xff);
 	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
+	//cmd_len=sensor_grc_read_i2c(dw9807_VCM_SLAVE_ADDR,  0x03, BITS_ADDR8_REG8);
+	//time_out=sensor_grc_read_i2c(dw9807_VCM_SLAVE_ADDR,  0x04, BITS_ADDR8_REG8);
+	//SENSOR_PRINT("set position %d %d", pos,((cmd_len&0x03)<<8)|time_out);
 
 	return ret_value;
 }

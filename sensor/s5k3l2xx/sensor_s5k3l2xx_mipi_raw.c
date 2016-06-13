@@ -2461,7 +2461,8 @@ static uint32_t _s5k3l2xx_init_mode_fps_info(SENSOR_HW_HANDLE handle)
 }
 
 static uint32_t m_vcm_pos = 0;
-
+#define VCM_POS_INF 	400
+#define VCM_POS_MACRO 	634
 static unsigned long _s5k3l2xx_PowerOn(SENSOR_HW_HANDLE handle, unsigned long power_on)
 {
 	SENSOR_AVDD_VAL_E dvdd_val = g_s5k3l2xx_mipi_raw_info.dvdd_val;
@@ -2487,9 +2488,10 @@ static unsigned long _s5k3l2xx_PowerOn(SENSOR_HW_HANDLE handle, unsigned long po
 		//Sensor_PowerDown(!power_down);
 		Sensor_SetResetLevel(!reset_level);
 		usleep(10*1000);
-		_dw9807_SRCInit(handle, 3);//2);
+//		_dw9807_SRCInit(handle, 3);//2);
+		vcm_dw9807_init(handle,3);
 		usleep(1*1000);
-		_s5k3l2xx_write_af( handle, 300);
+		_s5k3l2xx_write_af( handle, VCM_POS_INF);
 #ifdef MClK_26M_SS		
 		Sensor_SetMCLK(26);//SENSOR_DEFALUT_MCLK);//
 #else
@@ -2500,6 +2502,7 @@ static unsigned long _s5k3l2xx_PowerOn(SENSOR_HW_HANDLE handle, unsigned long po
 
 	} else {
 		_s5k3l2xx_write_af(handle,0);
+		usleep(1*1000);
 		Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
 		Sensor_SetResetLevel(reset_level);
 		//Sensor_PowerDown(power_down);
@@ -2814,7 +2817,7 @@ static unsigned long _s5k3l2xx_write_af(SENSOR_HW_HANDLE handle, unsigned long p
 {
 	uint16_t target_pos = 0, cur_pos = 0, steplen = 0x04;//need tuning
 	uint16_t step = 0,flag = 0,j = 0;
-	target_pos= param & 0xffff;
+	target_pos= param & 0xffff;//>634?634:param & 0xffff;
 	cur_pos = m_vcm_pos;
 	flag = target_pos > cur_pos ? 1 : 0;
 	step = flag==1? target_pos- cur_pos : cur_pos - target_pos;
@@ -2827,7 +2830,7 @@ static unsigned long _s5k3l2xx_write_af(SENSOR_HW_HANDLE handle, unsigned long p
 				m_vcm_pos = cur_pos - j * steplen ;
 			}
 			//SENSOR_PRINT("SENSOR_S5K3L2XX: _write_af, m_vcm_pos =  %d, steplen:%x, step:%x param %d target_pos %d\n", m_vcm_pos, steplen, step,param,target_pos);
-			vcm_dw9807_set_position(handle, m_vcm_pos+(param&0xfffc0000));
+			vcm_dw9807_set_position(handle, m_vcm_pos+(param&0xffff0000));
 			usleep(10); //need tuning
 		}
 	}

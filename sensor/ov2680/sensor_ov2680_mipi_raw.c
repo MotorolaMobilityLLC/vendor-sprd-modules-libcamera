@@ -1506,8 +1506,13 @@ LOCAL unsigned long _ov2680_write_gain(SENSOR_HW_HANDLE handle, unsigned long pa
 	uint16_t value=0x00;
 	uint32_t real_gain = 0;
 
-	real_gain = ((param&0xf)+16)*(((param>>4)&0x01)+1)*(((param>>5)&0x01)+1)*(((param>>6)&0x01)+1)*(((param>>7)&0x01)+1);
-	real_gain = real_gain*(((param>>8)&0x01)+1)*(((param>>9)&0x01)+1)*(((param>>10)&0x01)+1)*(((param>>11)&0x01)+1);
+	//real_gain = ((param&0xf)+16)*(((param>>4)&0x01)+1)*(((param>>5)&0x01)+1)*(((param>>6)&0x01)+1)*(((param>>7)&0x01)+1);
+	//real_gain = real_gain*(((param>>8)&0x01)+1)*(((param>>9)&0x01)+1)*(((param>>10)&0x01)+1)*(((param>>11)&0x01)+1);
+	real_gain = param >> 3;
+	if(real_gain > 0x3ff)
+	{
+		real_gain = 0x3ff;
+	}
 
 	SENSOR_PRINT("SENSOR_ov2680: real_gain:0x%x, param: 0x%x", real_gain, param);
 

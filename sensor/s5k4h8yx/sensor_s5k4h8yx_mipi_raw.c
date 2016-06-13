@@ -2524,6 +2524,7 @@ static unsigned long _s5k4h8yx_access_val(SENSOR_HW_HANDLE handle, unsigned long
 	{
 		case SENSOR_VAL_TYPE_INIT_OTP:
 			rtn = _s5k4h8yx_init_otp(handle);
+			break;
 		case SENSOR_VAL_TYPE_SHUTTER:
 			*((uint32_t*)param_ptr->pval) = _s5k4h8yx_get_shutter(handle);
 			break;

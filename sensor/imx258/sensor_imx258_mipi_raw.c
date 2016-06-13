@@ -21,6 +21,7 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 //#include "../vcm/vcm_dw9800.h"
+#include "af_bu64297gwz.h"
 
 #include "sensor_imx258_raw_param_v3.c"
 #include "sensor_imx258_otp_truly.h"
@@ -227,15 +228,20 @@ static const SENSOR_REG_T imx258_4208x3120_setting[] = {
         {0x9419,0x50},
         {0x941B,0x50},
         {0x9519,0x50},
-        {0x951B,0x50},//Added Setting(mode)     
+        {0x951B,0x50},//Added Setting(mode)
+ #ifdef PDAF_TYPE2
+       {0x3030,0x01},
+ #else
         {0x3030,0x00},//1},
+#endif
         {0x3032,0x01},//0},//1},
         {0x0220,0x00},
         {0x4041,0x00},
+ #ifndef PDAF_TYPE2
         {0x3052,0x00},//1},
         {0x7BCB,0x00},
         {0x7BC8,0x00},
-
+#endif
 };
 
 static const SENSOR_REG_T imx258_1048x780_setting[] = {
@@ -862,6 +868,7 @@ static unsigned long imx258_identify(SENSOR_HW_HANDLE handle, unsigned long para
 			ret_value = SENSOR_SUCCESS;
 			SENSOR_PRINT_HIGH("this is imx258 sensor");
 			//vcm_dw9800_init(handle);
+			bu64297gwz_init(handle);
 			imx258_init_mode_fps_info(handle);
 		} else {
 			SENSOR_PRINT_HIGH("Identify this is %x%x sensor", pid_value, ver_value);
@@ -1168,7 +1175,7 @@ static unsigned long imx258_stream_off(SENSOR_HW_HANDLE handle, unsigned long pa
 
 static unsigned long imx258_write_af(SENSOR_HW_HANDLE handle, unsigned long param)
 {
-	return 0;// vcm_dw9800_set_position(handle, param);
+	return bu64297gwz_write_af(handle, param);// vcm_dw9800_set_position(handle, param);
 }
 
 static uint32_t imx258_get_static_info(SENSOR_HW_HANDLE handle, uint32_t *param)
@@ -1196,6 +1203,7 @@ static uint32_t imx258_get_static_info(SENSOR_HW_HANDLE handle, uint32_t *param)
 	ex_info->name = g_imx258_mipi_raw_info.name;
 	ex_info->sensor_version_info = g_imx258_mipi_raw_info.sensor_version_info;
 	//vcm_dw9800_get_pose_dis(handle, &up, &down);
+	bu64297gwz_get_pose_dis(handle, &up, &down);
 	ex_info->pos_dis.up2hori = up;
 	ex_info->pos_dis.hori2down = down;
 	SENSOR_PRINT("SENSOR_IMX230: f_num: %d", ex_info->f_num);
@@ -1329,7 +1337,7 @@ static SENSOR_IOCTL_FUNC_TAB_T s_imx258_ioctl_func_tab = {
 	//.set_video_mode = imx132_set_video_mode,
 	.stream_on = imx258_stream_on,
 	.stream_off = imx258_stream_off,
-	//.af_enable = imx258_write_af,
+	.af_enable = imx258_write_af,
 	//.group_hold_on = imx132_group_hold_on,
 	//.group_hold_of = imx132_group_hold_off,
 	.cfg_otp = imx258_access_val,

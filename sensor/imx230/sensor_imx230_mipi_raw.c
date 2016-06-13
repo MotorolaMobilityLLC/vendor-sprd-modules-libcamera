@@ -88,6 +88,8 @@ static uint32_t imx230_init_mode_fps_info(SENSOR_HW_HANDLE handle);
  *============================================================================*/
 static struct hdr_info_t s_hdr_info;
 static uint32_t s_current_default_frame_length;
+static uint32_t s_current_frame_length=0;
+static uint32_t s_current_default_line_time=0;
 struct sensor_ev_info_t s_sensor_ev_info;
 
 static SENSOR_IOCTL_FUNC_TAB_T s_imx230_ioctl_func_tab;
@@ -1326,6 +1328,15 @@ static uint32_t imx230_get_default_frame_length(SENSOR_HW_HANDLE handle, uint32_
 {
 	return s_imx230_resolution_trim_tab[mode].frame_line;
 }
+/*==============================================================================
+ * Description:
+ * get default line time
+ *
+ *============================================================================*/
+static uint32_t imx230_get_default_line_ime(SENSOR_HW_HANDLE handle, uint32_t mode)
+{
+	return s_imx230_resolution_trim_tab[mode].line_time;
+}
 
 /*==============================================================================
  * Description:
@@ -1355,11 +1366,14 @@ static void imx230_group_hold_off(SENSOR_HW_HANDLE handle)
  *============================================================================*/
 static uint16_t imx230_read_gain(SENSOR_HW_HANDLE handle)
 {
-	uint16_t gain_l = 0;
+	uint16_t gain_a= 0;
+	uint16_t gain_d= 0;
 
-	gain_l = Sensor_ReadReg(0x0205);
+	gain_a = Sensor_ReadReg(0x0205);
+	gain_d = Sensor_ReadReg(0x0210);
 
-	return gain_l;
+	return gain_a*gain_d;
+
 }
 
 /*==============================================================================
@@ -1482,6 +1496,7 @@ static uint16_t imx230_update_exposure(SENSOR_HW_HANDLE handle, uint32_t shutter
 	dest_fr_len = ((shutter + offset) > fr_len) ? (shutter + offset) : fr_len;
 
 	cur_fr_len = imx230_read_frame_length(handle);
+	s_current_frame_length = dest_fr_len;
 
 	if (shutter < SENSOR_MIN_SHUTTER)
 		shutter = SENSOR_MIN_SHUTTER;
@@ -1736,6 +1751,7 @@ static unsigned long imx230_ex_write_exposure(SENSOR_HW_HANDLE handle, unsigned 
 
 	SENSOR_PRINT("current mode = %d, exposure_line = %d, dummy_line=%d", mode, exposure_line,dummy_line);
 	s_current_default_frame_length = imx230_get_default_frame_length(handle, mode);
+	s_current_default_line_time =  imx230_get_default_line_ime( handle,  mode);
 
 	s_sensor_ev_info.preview_shutter = imx230_update_exposure(handle, exposure_line,dummy_line);
 
@@ -1915,13 +1931,18 @@ static unsigned long imx230_stream_off(SENSOR_HW_HANDLE handle, unsigned long pa
 	SENSOR_PRINT("E");
 	UNUSED(param);
 	unsigned char value;
+	unsigned int sleep_time,frame_time;
 
 	value = Sensor_ReadReg(0x0100);
 	if (value != 0x00) {
 		Sensor_WriteReg(0x0100, 0x00);
-		usleep(50 * 1000);
+		frame_time = s_current_default_line_time*s_current_frame_length/1000+1000;
+		sleep_time = frame_time>50?frame_time:50*1000;
+		usleep(sleep_time);//50 * 1000);
+		//usleep(s_current_default_line_time*s_current_frame_length/1000+1000);
+		SENSOR_PRINT("X  sleep_time %d  frame_time %d",sleep_time,frame_time);
 	}
-
+	SENSOR_PRINT("X");
 	return 0;
 }
 
