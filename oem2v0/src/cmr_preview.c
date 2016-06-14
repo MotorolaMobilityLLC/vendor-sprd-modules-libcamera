@@ -1449,7 +1449,7 @@ cmr_int cmr_preview_set_zsl_buffer(cmr_handle preview_handle, cmr_u32 camera_id,
 	CHECK_HANDLE_VALID(handle);
 	CHECK_CAMERA_ID(camera_id);
 
-	CMR_LOGI("in");
+	CMR_LOGV("in");
 
 	/*deliver the zoom param via internal msg*/
 	inter_param = (struct internal_param*)malloc(sizeof(struct internal_param));
@@ -1483,7 +1483,7 @@ exit:
 		}
 	}
 
-	CMR_LOGI("out");
+	CMR_LOGV("out");
 	return ret;
 
 }
@@ -2130,8 +2130,8 @@ cmr_int prev_preview_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
 		return CMR_CAMERA_INVALID_PARAM;
 	}
 
-	CMR_LOGD("got one frame, frame_id 0x%x, frame_real_id %d, channel_id %d yaddr 0x%x",
-		data->frame_id, data->frame_real_id, data->channel_id, data->yaddr);
+	CMR_LOGD("frame_id=0x%x, frame_real_id=%d, channel_id=%d fd=0x%x",
+		  data->frame_id, data->frame_real_id, data->channel_id, data->fd);
 
 	if (0 == prev_cxt->prev_frm_cnt) {
 		/*response*/
@@ -2704,9 +2704,9 @@ cmr_int prev_zsl_frame_handle(struct prev_handle *handle, cmr_u32 camera_id, str
 		return CMR_CAMERA_INVALID_PARAM;
 	}
 
-	CMR_LOGD("got one frame, frame_id 0x%x, frame_real_id %d, channel_id %d",
-		data->frame_id, data->frame_real_id, data->channel_id);
-	CMR_LOGD("cap_zsl_frm_cnt %ld", prev_cxt->cap_zsl_frm_cnt);
+	CMR_LOGD("frame_id=0x%x, frame_real_id=%d, channel_id=%d, fd=0x%x",
+		  data->frame_id, data->frame_real_id, data->channel_id, data->fd);
+	CMR_LOGV("cap_zsl_frm_cnt %ld", prev_cxt->cap_zsl_frm_cnt);
 	if (0 == prev_cxt->cap_zsl_frm_cnt) {
 		/*response*/
 		cb_data_info.cb_type    = PREVIEW_RSP_CB_SUCCESS;
@@ -5599,7 +5599,7 @@ cmr_int prev_construct_frame(struct prev_handle *handle,
 		frame_type->monoboottime = info->monoboottime;
 		frame_type->zoom_ratio = prev_cxt->prev_param.zoom_setting.zoom_info.zoom_ratio;
 		frame_type->ae_time = ae_time;
-		CMR_LOGI("ae_time: %lld, zoom_ratio: %f", frame_type->ae_time, frame_type->zoom_ratio);
+		CMR_LOGV("ae_time: %lld, zoom_ratio: %f", frame_type->ae_time, frame_type->zoom_ratio);
 		frame_type->type = PREVIEW_FRAME;
 		CMR_LOGV("%lld", frame_type->timestamp);
 		if (prev_cxt->prev_param.is_support_fd && prev_cxt->prev_param.is_fd_on) {
@@ -5770,8 +5770,8 @@ cmr_int prev_construct_zsl_frame(struct prev_handle *handle,
 		}
 		frame_type->timestamp = info->sec * 1000000000LL + info->usec * 1000;
 		frame_type->type      = PREVIEW_ZSL_FRAME;
-		//frame_type->zsl_private = info->zsl_private;
-		CMR_LOGI("%lld width %d height %d, fd 0x%x", frame_type->timestamp, frame_type->width, frame_type->height, frame_type->fd);
+		CMR_LOGV("timestamp=%lld, width=%d, height=%d, fd=0x%x",
+			  frame_type->timestamp, frame_type->width, frame_type->height, frame_type->fd);
 #if 0
 		cmr_s8 value[PROPERTY_VALUE_MAX];
 		property_get("debug.camera.dump.frame",value,"video");
@@ -5783,8 +5783,6 @@ cmr_int prev_construct_zsl_frame(struct prev_handle *handle,
 				&prev_cxt->cap_zsl_frm[frm_id].addr_vir);
 		}
 #endif
-
-
 	} else {
 		CMR_LOGE("ignored, channel id %d, frame id %d", info->channel_id, info->frame_id);
 	}
@@ -7805,8 +7803,10 @@ cmr_int prev_set_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id, c
 	}
 
 exit:
-	CMR_LOGI("done cnt %ld width %d height %d fd 0x%x", prev_cxt->prev_mem_valid_num, width, height,
-		prev_cxt->prev_frm[valid_num].fd);
+	CMR_LOGI("fd=0x%x, channel_id=0x%x, valid_num=%ld",
+		prev_cxt->prev_frm[valid_num].fd,
+		prev_cxt->prev_channel_id,
+		prev_cxt->prev_mem_valid_num);
 	return ret;
 }
 
@@ -7829,8 +7829,6 @@ cmr_int prev_pop_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id, s
 
 	prev_cxt  = &handle->prev_cxt[camera_id];
 	valid_num = prev_cxt->prev_mem_valid_num;
-
-	CMR_LOGV("addr 0x%lx 0x%lx fd 0x%x", data->yaddr_vir, data->uaddr_vir, data->fd);
 
 	if (valid_num > PREV_FRM_CNT || valid_num <= 0) {
 		CMR_LOGE("cnt error valid_num %ld", valid_num);
@@ -7869,7 +7867,8 @@ cmr_int prev_pop_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id, s
 	}
 
 exit:
-	CMR_LOGI("fd=0x%x, cnt=%ld", data->fd, prev_cxt->prev_mem_valid_num);
+	CMR_LOGI("fd=0x%x, channel_id=0x%x, valid_num=%ld",
+		data->fd, data->channel_id, prev_cxt->prev_mem_valid_num);
 	return ret;
 }
 
@@ -7930,9 +7929,7 @@ cmr_int prev_set_depthmap_buffer(struct prev_handle *handle, cmr_u32 camera_id, 
 	}
 
 exit:
-	CMR_LOGI("done cnt %ld addr_y 0x%lx, addr_u 0x%lx fd 0x%x", prev_cxt->depthmap_mem_valid_num,
-		prev_cxt->depthmap_frm[valid_num].addr_phy.addr_y, prev_cxt->depthmap_frm[valid_num].addr_phy.addr_u,
-		prev_cxt->depthmap_frm[valid_num].fd);
+	CMR_LOGI("fd=0x%x, valid_num=%ld", prev_cxt->depthmap_frm[valid_num].fd, prev_cxt->depthmap_mem_valid_num);
 	return ret;
 }
 
@@ -7954,9 +7951,6 @@ cmr_int prev_pop_depthmap_buffer(struct prev_handle *handle, cmr_u32 camera_id, 
 
 	prev_cxt  = &handle->prev_cxt[camera_id];
 	valid_num = prev_cxt->depthmap_mem_valid_num;
-
-	CMR_LOGV("phys addr 0x%lx 0x%lx addr 0x%lx 0x%lx fd 0x%x", data->yaddr, data->uaddr, data->yaddr_vir, data->uaddr_vir,
-		data->fd);
 
 	if (valid_num > PREV_FRM_CNT || valid_num <= 0) {
 		CMR_LOGE("cnt error valid_num %ld", valid_num);
@@ -7982,8 +7976,7 @@ cmr_int prev_pop_depthmap_buffer(struct prev_handle *handle, cmr_u32 camera_id, 
 	}
 
 exit:
-	CMR_LOGI("done cnt %ld yaddr 0x%lx uaddr 0x%x fd 0x%x", prev_cxt->depthmap_mem_valid_num, data->yaddr, data->uaddr,
-		data->fd);
+	CMR_LOGI("fd=0x%x, valid_num=%ld", data->fd, prev_cxt->depthmap_mem_valid_num);
 	return ret;
 }
 
@@ -8067,8 +8060,10 @@ cmr_int prev_set_video_buffer(struct prev_handle *handle, cmr_u32 camera_id, cmr
 	}
 
 exit:
-	CMR_LOGD("out cnt %ld width %d height %d fd 0x%lx", prev_cxt->video_mem_valid_num, width, height,
-		prev_cxt->video_frm[valid_num].fd);
+	CMR_LOGD("fd=0x%x, channel_id=0x%x, valid_num=%ld",
+		prev_cxt->video_frm[valid_num].fd,
+		prev_cxt->video_channel_id,
+		prev_cxt->video_mem_valid_num);
 	return ret;
 }
 
@@ -8124,7 +8119,8 @@ cmr_int prev_pop_video_buffer(struct prev_handle *handle, cmr_u32 camera_id, str
 	}
 
 exit:
-	CMR_LOGD("fd=0x%x, cnt=%ld", data->fd, prev_cxt->video_mem_valid_num);
+	CMR_LOGD("fd=0x%x, channel_id=0x%x, valid_num=%ld",
+		data->fd, data->channel_id, prev_cxt->video_mem_valid_num);
 	return ret;
 }
 
@@ -8207,7 +8203,10 @@ cmr_int prev_set_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 	}
 
 exit:
-	CMR_LOGD("out cnt %ld width %ld height %ld fd 0x%lx", prev_cxt->cap_zsl_mem_valid_num, width, height,fd);
+	CMR_LOGD("fd=0x%x, channel_id=0x%x, valid_num=%ld",
+		prev_cxt->cap_zsl_frm[valid_num].fd,
+		prev_cxt->cap_channel_id,
+		prev_cxt->cap_zsl_mem_valid_num);
 	return ret;
 }
 
@@ -8230,7 +8229,6 @@ cmr_int prev_pop_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id, struc
 
 	prev_cxt  = &handle->prev_cxt[camera_id];
 	valid_num = prev_cxt->cap_zsl_mem_valid_num;
-	CMR_LOGV("valid_num %ld", valid_num);
 
 	if ((prev_cxt->cap_zsl_frm[0].fd == data->fd) && valid_num > 0) {
 		frame_type.y_phy_addr = prev_cxt->cap_zsl_phys_addr_array[0];
@@ -8267,7 +8265,8 @@ cmr_int prev_pop_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id, struc
 	}
 
 exit:
-	CMR_LOGD("fd=0x%x, cnt=%ld",data->fd, prev_cxt->cap_zsl_mem_valid_num);
+	CMR_LOGD("fd=0x%x, channel_id=0x%x, valid_num=%ld",
+		data->fd, data->channel_id, prev_cxt->cap_zsl_mem_valid_num);
 	return ret;
 }
 
@@ -9536,7 +9535,8 @@ cmr_int prev_capture_zoom_post_cap(struct prev_handle *handle, cmr_int *flag, cm
 		*flag = ZOOM_POST_PROCESS;
 	else
 		*flag = capability.zoom_post_proc;
-	CMR_LOGI("out flag %d", *flag);
+
+	CMR_LOGV("out flag %d", *flag);
 exit:
 	return ret;
 }

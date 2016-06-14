@@ -425,7 +425,7 @@ cmr_int camera_get_sensor_trim(cmr_handle camera_handle, struct img_rect *sn_tri
 	ret = camera_get_senor_mode_trim(camera_handle, sn_trim);
 
 exit:
-	CMR_LOGI("done %ld", ret);
+	CMR_LOGV("done %ld", ret);
 	return ret;
 }
 
@@ -476,7 +476,7 @@ void camera_fd_enable(cmr_handle camera_handle, cmr_u32 is_enable)
 	cmr_int                          ret = CMR_CAMERA_SUCCESS;
 	struct camera_context            *cxt = (struct camera_context *)camera_handle;
 
-	CMR_LOGI("%d", is_enable);
+	CMR_LOGV("%d", is_enable);
 	if (camera_handle) {
 		cxt->is_support_fd = is_enable;
 	} else {
@@ -772,7 +772,7 @@ cmr_int camera_set_zsl_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr, c
 		CMR_LOGE("failed %ld", ret);
 	}
 exit:
-	CMR_LOGI("done %ld", ret);
+	CMR_LOGV("done %ld", ret);
 	return ret;
 }
 cmr_int camera_set_video_snapshot_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd)
@@ -788,7 +788,7 @@ cmr_int camera_set_video_snapshot_buffer(cmr_handle camera_handle, cmr_uint src_
 		CMR_LOGE("failed %ld", ret);
 	}
 exit:
-	CMR_LOGI("done %ld", ret);
+	CMR_LOGV("done %ld", ret);
 	return ret;
 }
 cmr_int camera_set_zsl_snapshot_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd)
@@ -804,7 +804,7 @@ cmr_int camera_set_zsl_snapshot_buffer(cmr_handle camera_handle, cmr_uint src_ph
 		CMR_LOGE("failed %ld", ret);
 	}
 exit:
-	CMR_LOGI("done %ld", ret);
+	CMR_LOGV("done %ld", ret);
 	return ret;
 }
 

@@ -4217,14 +4217,14 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data)
 	cxt->cap_cnt++;
 
 	snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
-								SNAPSHOT_EVT_CB_CAPTURE_FRAME_DONE, NULL, 0);
+			        SNAPSHOT_EVT_CB_CAPTURE_FRAME_DONE, NULL, 0);
 	if (CMR_CAMERA_NORNAL_EXIT == snp_checkout_exit(snp_handle)) {
 		CMR_LOGI("post proc has been cancel");
 		ret = CMR_CAMERA_NORNAL_EXIT;
 		goto exit;
 	}
 	snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
-							SNAPSHOT_RSP_CB_SUCCESS, NULL, 0);
+			        SNAPSHOT_RSP_CB_SUCCESS, NULL, 0);
 	if (CMR_CAMERA_NORNAL_EXIT == snp_checkout_exit(snp_handle)) {
 		CMR_LOGI("post proc has been cancel");
 		ret = CMR_CAMERA_NORNAL_EXIT;

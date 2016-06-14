@@ -399,7 +399,7 @@ int SprdCamera3RegularChannel::getStream(camera_stream_type_t stream_type, SprdC
 
 	if(mCamera3Stream[index] == NULL)
 	{
-		HAL_LOGW("channel has no valied stream(type is %d)", stream_type);
+		HAL_LOGV("channel has no valied stream(type is %d)", stream_type);
 		return INVALID_OPERATION;
 	}
 
@@ -731,7 +731,7 @@ int SprdCamera3MetadataChannel::request(const CameraMetadata &metadata)
 
 int SprdCamera3MetadataChannel::channelCbRoutine(uint32_t frame_number, int64_t timestamp, camera_stream_type_t stream_type)
 {
-	HAL_LOGD(" E");
+	HAL_LOGD("E");
 
 	cam_result_data_info_t  result_info;
 	memset(&result_info, 0, sizeof(result_info));
@@ -740,7 +740,7 @@ int SprdCamera3MetadataChannel::channelCbRoutine(uint32_t frame_number, int64_t 
 	result_info.timestamp = timestamp;
 	result_info.frame_number = 0;
 	mChannelCB(&result_info, mUserData);
-	HAL_LOGD(" X");
+	HAL_LOGD("X");
 
 	return NO_ERROR;
 }
@@ -757,7 +757,7 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number)
 		switch (tag) {
 		case ANDROID_CONTROL_AF_TRIGGER:
 			mSetting->getCONTROLTag(&controlInfo);
-			HAL_LOGD("AF_TRIGGER %d", controlInfo.af_trigger);
+			HAL_LOGV("AF_TRIGGER %d", controlInfo.af_trigger);
 			if (controlInfo.af_trigger == ANDROID_CONTROL_AF_TRIGGER_START) {
 				mOEMIf->autoFocus(this);
 			} else if (controlInfo.af_trigger == ANDROID_CONTROL_AF_TRIGGER_CANCEL) {
@@ -774,7 +774,7 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number)
 			break;
 
 		case ANDROID_SCALER_CROP_REGION:
-			HAL_LOGD("SCALER_CROP_REGION");
+			HAL_LOGV("SCALER_CROP_REGION");
 			mOEMIf->setCameraConvertCropRegion();
 			break;
 		case ANDROID_CONTROL_CAPTURE_INTENT:
@@ -845,7 +845,7 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number)
 			mOEMIf->SetCameraParaTag(ANDROID_CONTROL_AE_TARGET_FPS_RANGE);
 			break;
 		case ANDROID_CONTROL_AE_LOCK:
-			HAL_LOGD("ANDROID_CONTROL_AE_LOCK");
+			HAL_LOGV("ANDROID_CONTROL_AE_LOCK");
 			mOEMIf->SetCameraParaTag(ANDROID_CONTROL_AE_LOCK);
 			break;
 		default:
@@ -868,7 +868,7 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number)
 			mOEMIf->SetCameraParaTag(ANDROID_SPRD_SATURATION);
 			break;
 		case ANDROID_SPRD_CAPTURE_MODE:
-			HAL_LOGD("ANDROID_SPRD_CAPTURE_MODE");
+			HAL_LOGV("ANDROID_SPRD_CAPTURE_MODE");
 			mOEMIf->SetCameraParaTag(ANDROID_SPRD_CAPTURE_MODE);
 			break;
 		case ANDROID_SPRD_SENSOR_ORIENTATION:
@@ -910,7 +910,7 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number)
 			mOEMIf->SetCameraParaTag(ANDROID_SPRD_CONTROL_REFOCUS_ENABLE);
 			break;
 		case ANDROID_SPRD_SET_TOUCH_INFO:
-			HAL_LOGD("ANDROID_SPRD_SET_TOUCH_INFO");
+			HAL_LOGV("ANDROID_SPRD_SET_TOUCH_INFO");
 			mOEMIf->SetCameraParaTag(ANDROID_SPRD_SET_TOUCH_INFO);
 			break;
 		case ANDROID_SPRD_PIPVIV_ENABLED:

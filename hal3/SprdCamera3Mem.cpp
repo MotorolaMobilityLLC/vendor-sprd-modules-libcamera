@@ -27,7 +27,7 @@
  *
  */
 
-#define LOG_TAG "SprdCamera3HAL_Mem"
+#define LOG_TAG "SprdCamera3Mem"
 
 #include <string.h>
 #include <fcntl.h>

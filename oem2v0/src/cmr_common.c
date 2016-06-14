@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#define LOG_TAG "cmr_common"
+
 #include <stdlib.h>
 #include "cmr_common.h"
 
@@ -439,13 +441,13 @@ void camera_snapshot_step_statisic(struct img_size *image_size)
 		ALOGE("image_size is null,para invalid");
 		return;
 	}
-	ALOGE("*********************Take picture statistic*******Start****%4d*%4d*****",
+	ALOGI("*********************Take picture statistic*******Start****%4d*%4d*****",
 		  image_size->width,
 		  image_size->height);
 
 	for (i = 0; i < CMR_STEP_MAX; i++) {
 		if (i == 0) {
-			ALOGE("%20s, %10d",
+			ALOGI("%20s, %10d",
 				cap_stp[i].step_name,
 				0);
 			continue;
@@ -453,13 +455,13 @@ void camera_snapshot_step_statisic(struct img_size *image_size)
 
 		if (1 == cap_stp[i].valid) {
 			time_delta = (int)((cap_stp[i].timestamp - cap_stp[CMR_STEP_TAKE_PIC].timestamp)/1000000);
-			ALOGE("%20s, %10ld",
+			ALOGI("%20s, %10ld",
 				cap_stp[i].step_name,
 				time_delta);
 			cap_stp[i].valid = 0;
 		}
 	}
-	ALOGE("*********************Take picture statistic********End*******************");
+	ALOGI("*********************Take picture statistic********End*******************");
 }
 
 void camera_take_snapshot_step(enum CAMERA_TAKEPIC_STEP step)

@@ -352,7 +352,6 @@ private:
 	bool setCameraCaptureDimensions();
 	void setCameraPreviewMode(bool isRecordMode);
 	bool setCameraPreviewFormat();
-	int set_ddr_freq(uint32_t mhzVal);
 	bool displayOneFrameForCapture(uint32_t width, uint32_t height, int fd, uintptr_t phy_addr, char *virtual_addr);
 	bool iSDisplayCaptureFrame();
 	bool iSCallbackCaptureFrame();
@@ -503,9 +502,6 @@ private:
 	uint32_t                        mTimeCoeff;
 	uint32_t                        mPreviewBufferUsage;
 	uint32_t                        mOriginalPreviewBufferUsage;
-	int                             mSetDDRFreqCount;
-	uint32_t                        mSetDDRFreq;
-	uint32_t                        mCPURaised;
 
 	/*callback thread*/
 	cmr_handle               mCameraHandle;

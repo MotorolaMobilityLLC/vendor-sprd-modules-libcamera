@@ -255,7 +255,7 @@ SENSOR_MATCH_T * Sensor_GetInforTab(struct sensor_drv_context *sensor_cxt, SENSO
 	SENSOR_MATCH_T * sensor_infor_tab_ptr=NULL;
 	cmr_u32 index = 0;
 	cmr_int at_flag = sensor_cxt->is_autotest;
-	CMR_LOGE("at %d",at_flag);
+	CMR_LOGD("at %d",at_flag);
 
 	if (AUTO_TEST_CAMERA == at_flag) {
 		switch ( sensor_id) {

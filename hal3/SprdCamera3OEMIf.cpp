@@ -194,7 +194,7 @@ void SprdCamera3OEMIf::shakeTestInit(ShakeTest *tmpShakeTest)
 		HAL_LOGD("SHAKE_TEST come in");
 		setShakeTestState(SHAKE_TEST);
 	} else {
-		HAL_LOGD("SHAKE_TEST not come in");
+		HAL_LOGV("SHAKE_TEST not come in");
 		setShakeTestState(NOT_SHAKE_TEST);
 	}
 
@@ -233,8 +233,6 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mReleaseFLag(false),
 	mTimeCoeff(1),
 	mPreviewBufferUsage(PREVIEW_BUFFER_USAGE_GRAPHICS),
-	mSetDDRFreqCount(0),
-	mSetDDRFreq(NO_FREQ_REQ),
 	mSetting(setting),
 #if defined(CONFIG_PRE_ALLOC_CAPTURE_MEM)
 	mIsPreAllocCapMem(1),
@@ -275,7 +273,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 
 {
 	//mIsPerformanceTestable = sprd_isPerformanceTestable();
-	HAL_LOGD("openCameraHardware: E cameraId: %d.", cameraId);
+	HAL_LOGI("openCameraHardware: E cameraId: %d.", cameraId);
 
 	initPowerHint();
 	enablePowerHint();
@@ -415,13 +413,13 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mVideoSnapshotSprdZslEnabled = 0;
 #endif
 
-	HAL_LOGD("openCameraHardware: X cameraId: %d.", cameraId);
+	HAL_LOGI("openCameraHardware: X cameraId: %d.", cameraId);
 }
 
 SprdCamera3OEMIf::~SprdCamera3OEMIf()
 {
 	int i;
-	HAL_LOGD("closeCameraHardware: E cameraId: %d.", mCameraId);
+	HAL_LOGI("closeCameraHardware: E cameraId: %d.", mCameraId);
 
 	if (!mReleaseFLag) {
 		closeCamera();
@@ -477,13 +475,13 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf()
 		}
 	}
 
-	HAL_LOGD("closeCameraHardware: X cameraId: %d.", mCameraId);
+	HAL_LOGI("closeCameraHardware: X cameraId: %d.", mCameraId);
 	timer_stop();
 }
 
 void SprdCamera3OEMIf::closeCamera()
 {
-	HAL_LOGD("E");
+	HAL_LOGI("E");
 	Mutex::Autolock l(&mLock);
 
 	// Either preview was ongoing, or we are in the middle or taking a
@@ -534,14 +532,6 @@ void SprdCamera3OEMIf::closeCamera()
 	// Performance optimization:move Callback_CaptureFree to closeCamera function
 	Callback_CaptureFree(0, 0, 0, 0);
 
-	while (0 < mSetDDRFreqCount) {
-		if (BAD_VALUE == set_ddr_freq(NO_FREQ_REQ)) {
-			mSetDDRFreqCount = 0;
-			HAL_LOGW("ddr set fail, quit yet!");
-			break;
-		}
-	}
-
 #ifdef CONFIG_CAMERA_GYRO
 	gyro_monitor_thread_deinit((void *)this);
 #endif
@@ -573,7 +563,7 @@ void SprdCamera3OEMIf::closeCamera()
 
 	mReleaseFLag = true;
 
-	HAL_LOGD("X");
+	HAL_LOGI("X");
 }
 
 int SprdCamera3OEMIf::getCameraId() const
@@ -600,12 +590,10 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type, uint32_t frame_n
 	int ret = NO_ERROR;
 	Mutex::Autolock l(&mLock);
 
-#ifdef CONFIG_MEM_OPTIMIZATION
 	SPRD_DEF_Tag sprddefInfo;
 	mSetting->getSPRDDEFTag(&sprddefInfo);
-#endif
 
-	HAL_LOGD("E: channel_type = %d, frame_number = %d", channel_type, frame_number);
+	HAL_LOGI("channel_type = %d, frame_number = %d", channel_type, frame_number);
 	mStartFrameNum = frame_number;
 
 	switch (channel_type) {
@@ -614,8 +602,6 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type, uint32_t frame_n
 			if (mParaDCDVMode == CAMERA_PREVIEW_FORMAT_DV)
 				mRecordingFirstFrameTime = 0;
 
-#ifdef CONFIG_MEM_OPTIMIZATION
-			HAL_LOGV("slowmotion=%d", sprddefInfo.slowmotion);
 			if (mRecordingMode == false && sprddefInfo.sprd_zsl_enabled == 1) {
 				mSprdZslEnabled = true;
 			} else if (mRecordingMode == true && sprddefInfo.slowmotion > 1) {
@@ -629,7 +615,6 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type, uint32_t frame_n
 			} else {
 				mSprdZslEnabled = false;
 			}
-#endif
 
 #ifdef CONFIG_CAMERA_EIS
 			SPRD_DEF_Tag sprddefInfo;
@@ -649,11 +634,8 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type, uint32_t frame_n
 			if(mTakePictureMode == SNAPSHOT_NO_ZSL_MODE || mTakePictureMode == SNAPSHOT_ONLY_MODE)
 				ret = takePicture();
 			else if(mTakePictureMode == SNAPSHOT_ZSL_MODE)
-				//mZSLTakePicture = true;
 				ret = zslTakePicture();
 			else if(mTakePictureMode == SNAPSHOT_VIDEO_MODE) {
-				//mVideoShotNum = frame_number;
-				//mVideoShotFlag = 1;
 				ret = VideoTakePicture();
 			}
 			break;
@@ -662,7 +644,7 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type, uint32_t frame_n
 			break;
 	}
 
-	HAL_LOGD("X");
+	HAL_LOGI("X");
 	return ret;
 }
 
@@ -671,7 +653,7 @@ int SprdCamera3OEMIf::stop(camera_channel_type_t channel_type, uint32_t frame_nu
 	int ret = NO_ERROR;
 	int capture_intent = 0;
 
-	HAL_LOGD("channel_type = %d, frame_number = %d", channel_type, frame_number);
+	HAL_LOGI("channel_type = %d, frame_number = %d", channel_type, frame_number);
 	mStopFrameNum = frame_number;
 
 	switch(channel_type)
@@ -692,8 +674,9 @@ int SprdCamera3OEMIf::stop(camera_channel_type_t channel_type, uint32_t frame_nu
 int SprdCamera3OEMIf::takePicture()
 {
 	bool result = true, wait_raw = true;
+
+	HAL_LOGI("E");
 	GET_START_TIME;
-	HAL_LOGD("E");
 	print_time();
 
 	if (1 == mHDRPowerHint) {
@@ -714,30 +697,33 @@ int SprdCamera3OEMIf::takePicture()
 
 	setCameraState(SPRD_FLASH_IN_PROGRESS, STATE_CAPTURE);
 
-	if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE || mTakePictureMode == SNAPSHOT_PREVIEW_MODE || mTakePictureMode == SNAPSHOT_ONLY_MODE) {
+	if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE ||
+	    mTakePictureMode == SNAPSHOT_PREVIEW_MODE ||
+	    mTakePictureMode == SNAPSHOT_ONLY_MODE) {
 		if (((mCaptureMode == CAMERA_ISP_TUNING_MODE) || (mCaptureMode == CAMERA_ISP_SIMULATION_MODE)) && !mIspToolStart) {
 			mIspToolStart = true;
 			timer_set(this, ISP_TUNING_WAIT_MAX_TIME, timer_hand);
 		}
+
 		if(isPreviewStart()) {
 			HAL_LOGV("Preview not start! wait preview start");
 			WaitForPreviewStart();
 		}
+
 		if (isPreviewing()) {
 			HAL_LOGD("call stopPreviewInternal in takePicture().");
-//#ifdef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
 			if (CAMERA_ZSL_MODE != mCaptureMode) {
 				camera_start_preflash(mCameraHandle);
 			}
-//#endif
 			stopPreviewInternal();
 		}
-		HAL_LOGD("ok to stopPreviewInternal in takePicture. preview state = %d", getPreviewState());
+		HAL_LOGI("finish stopPreviewInternal in takePicture. preview state = %d", getPreviewState());
 
 		if (isPreviewing()) {
 			HAL_LOGE("takePicture: stop preview error!, preview state = %d", getPreviewState());
 			return UNKNOWN_ERROR;
 		}
+
 		if (!setCameraCaptureDimensions()) {
 			deinitCapture(mIsPreAllocCapMem);
 			HAL_LOGE("takePicture initCapture failed. Not taking picture.");
@@ -749,55 +735,46 @@ int SprdCamera3OEMIf::takePicture()
 		WaitForCaptureDone();
 	}
 
-	set_ddr_freq(HIGH_FREQ_REQ);
 	SET_PARM(mCameraHandle, CAMERA_PARAM_SHOT_NUM, mPicCaptureCnt);
-{
+
 	LENS_Tag lensInfo;
 	mSetting->getLENSTag(&lensInfo);
-	if(lensInfo.focal_length)
-	{
+	if(lensInfo.focal_length) {
 		SET_PARM(mCameraHandle, CAMERA_PARAM_FOCAL_LENGTH,  (int32_t)(lensInfo.focal_length * 1000));
 		HAL_LOGD("lensInfo.focal_length = %f",lensInfo.focal_length);
 	}
+
 	JPEG_Tag jpgInfo;
+	struct img_size jpeg_thumb_size;
+	struct img_size capture_size;
 	mSetting->getJPEGTag(&jpgInfo);
-	{
-		SET_PARM(mCameraHandle, CAMERA_PARAM_JPEG_QUALITY, jpgInfo.quality);
-		HAL_LOGD("JPEG quality = %d",jpgInfo.quality);
-	}
-	{
-		SET_PARM(mCameraHandle, CAMERA_PARAM_THUMB_QUALITY, jpgInfo.thumbnail_quality);
-		HAL_LOGD("JPEG thumbnail quality = %d",jpgInfo.thumbnail_quality);
-	}
-	{
-		struct img_size jpeg_thumb_size;
-		struct img_size capture_size;
-		jpeg_thumb_size.width = jpgInfo.thumbnail_size[0];
-		jpeg_thumb_size.height = jpgInfo.thumbnail_size[1];
-		if(mCaptureWidth != 0 && mCaptureHeight != 0) {
-			if(mVideoWidth != 0 && mVideoHeight != 0 && mCaptureMode != CAMERA_ISP_TUNING_MODE &&
-				mCaptureMode != CAMERA_ISP_SIMULATION_MODE) {
-				capture_size.width = (cmr_u32)mPreviewWidth;//mVideoWidth;
-				capture_size.height = (cmr_u32)mPreviewHeight;//mVideoHeight;
-			} else {
-				capture_size.width = (cmr_u32)mCaptureWidth;
-				capture_size.height = (cmr_u32)mCaptureHeight;
-			}
+	HAL_LOGV("JPEG quality = %d",jpgInfo.quality);
+	SET_PARM(mCameraHandle, CAMERA_PARAM_JPEG_QUALITY, jpgInfo.quality);
+	HAL_LOGV("JPEG thumbnail quality = %d",jpgInfo.thumbnail_quality);
+	SET_PARM(mCameraHandle, CAMERA_PARAM_THUMB_QUALITY, jpgInfo.thumbnail_quality);
+	jpeg_thumb_size.width = jpgInfo.thumbnail_size[0];
+	jpeg_thumb_size.height = jpgInfo.thumbnail_size[1];
+	if(mCaptureWidth != 0 && mCaptureHeight != 0) {
+		if(mVideoWidth != 0 && mVideoHeight != 0 &&
+		   mCaptureMode != CAMERA_ISP_TUNING_MODE &&
+		   mCaptureMode != CAMERA_ISP_SIMULATION_MODE) {
+			capture_size.width = (cmr_u32)mPreviewWidth;
+			capture_size.height = (cmr_u32)mPreviewHeight;
 		} else {
+			capture_size.width = (cmr_u32)mCaptureWidth;
+			capture_size.height = (cmr_u32)mCaptureHeight;
+		}
+	} else {
 		capture_size.width = (cmr_u32)mRawWidth;
 		capture_size.height = (cmr_u32)mRawHeight;
-		}
-		if (jpeg_thumb_size.width>capture_size.width  &&jpeg_thumb_size.height > capture_size.height )
-		{
-			jpeg_thumb_size.width = 0;
-			jpeg_thumb_size.height = 0;
-		}
-
-		SET_PARM(mCameraHandle, CAMERA_PARAM_THUMB_SIZE, (cmr_uint)&jpeg_thumb_size);
-		//camera_set_thumbnail_properties(jpgInfo.thumbnail_size[0], jpgInfo.thumbnail_size[1], jpgInfo.thumbnail_quality);
-		HAL_LOGD("JPEG thumbnail size = %d x %d", jpeg_thumb_size.width, jpeg_thumb_size.height);
 	}
-}
+	if (jpeg_thumb_size.width > capture_size.width &&
+	    jpeg_thumb_size.height > capture_size.height ) {
+		jpeg_thumb_size.width = 0;
+		jpeg_thumb_size.height = 0;
+	}
+	HAL_LOGI("JPEG thumbnail size = %d x %d", jpeg_thumb_size.width, jpeg_thumb_size.height);
+	SET_PARM(mCameraHandle, CAMERA_PARAM_THUMB_SIZE, (cmr_uint)&jpeg_thumb_size);
 
 	setCameraPreviewFormat();
 	setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
@@ -817,32 +794,28 @@ int SprdCamera3OEMIf::takePicture()
 		result = WaitForCaptureStart();
 
 	print_time();
+	HAL_LOGI("X, wait_raw=%d", wait_raw);
 
-	HAL_LOGD("X, wait_raw=%d", wait_raw);
 	return result ? NO_ERROR : UNKNOWN_ERROR;
 }
 
 int SprdCamera3OEMIf::zslTakePicture()
 {
+	HAL_LOGI("E");
 	GET_START_TIME;
-	HAL_LOGD("E");
 	print_time();
 
 	if (SPRD_ERROR == mCameraState.capture_state) {
 		HAL_LOGE("in error status, deinit capture at first ");
 		deinitCapture(mIsPreAllocCapMem);
-	}/* else if (SPRD_IDLE != mCameraState.capture_state) {
-		HAL_LOGE("take picture: action alread exist, direct return!");
-		return ALREADY_EXISTS;
-	}*/
+	}
 
 	if (isCapturing()) {
 		WaitForCaptureDone();
 	}
 
-	set_ddr_freq(HIGH_FREQ_REQ);
 	SET_PARM(mCameraHandle, CAMERA_PARAM_SHOT_NUM, mPicCaptureCnt);
-{
+
 	LENS_Tag lensInfo;
 	mSetting->getLENSTag(&lensInfo);
 	if(lensInfo.focal_length)
@@ -850,24 +823,18 @@ int SprdCamera3OEMIf::zslTakePicture()
 		SET_PARM(mCameraHandle, CAMERA_PARAM_FOCAL_LENGTH,  (int32_t)(lensInfo.focal_length * 1000));
 		HAL_LOGD("lensInfo.focal_length = %f",lensInfo.focal_length);
 	}
+
 	JPEG_Tag jpgInfo;
+	struct img_size jpeg_thumb_size;
 	mSetting->getJPEGTag(&jpgInfo);
-	{
-		SET_PARM(mCameraHandle, CAMERA_PARAM_JPEG_QUALITY, jpgInfo.quality);
-		HAL_LOGD("JPEG quality = %d",jpgInfo.quality);
-	}
-	{
-		SET_PARM(mCameraHandle, CAMERA_PARAM_THUMB_QUALITY, jpgInfo.thumbnail_quality);
-		HAL_LOGD("JPEG thumbnail quality = %d",jpgInfo.thumbnail_quality);
-	}
-	{
-		struct img_size jpeg_thumb_size;
-		jpeg_thumb_size.width = jpgInfo.thumbnail_size[0];
-		jpeg_thumb_size.height = jpgInfo.thumbnail_size[1];
-		SET_PARM(mCameraHandle, CAMERA_PARAM_THUMB_SIZE, (cmr_uint)&jpeg_thumb_size);
-		HAL_LOGD("JPEG thumbnail size = %d x %d", jpgInfo.thumbnail_size[0], jpgInfo.thumbnail_size[1]);
-	}
-}
+	HAL_LOGV("JPEG quality = %d",jpgInfo.quality);
+	SET_PARM(mCameraHandle, CAMERA_PARAM_JPEG_QUALITY, jpgInfo.quality);
+	HAL_LOGV("JPEG thumbnail quality = %d",jpgInfo.thumbnail_quality);
+	SET_PARM(mCameraHandle, CAMERA_PARAM_THUMB_QUALITY, jpgInfo.thumbnail_quality);
+	jpeg_thumb_size.width = jpgInfo.thumbnail_size[0];
+	jpeg_thumb_size.height = jpgInfo.thumbnail_size[1];
+	HAL_LOGI("JPEG thumbnail size = %d x %d", jpgInfo.thumbnail_size[0], jpgInfo.thumbnail_size[1]);
+	SET_PARM(mCameraHandle, CAMERA_PARAM_THUMB_SIZE, (cmr_uint)&jpeg_thumb_size);
 
 	setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
 	if (CMR_CAMERA_SUCCESS != camera_take_picture(mCameraHandle, mCaptureMode)) {
@@ -876,87 +843,67 @@ int SprdCamera3OEMIf::zslTakePicture()
 		return UNKNOWN_ERROR;
 	}
 
-#ifdef CONFIG_MEM_OPTIMIZATION
 	if(mSprdZslEnabled == true) {
-			CMR_MSG_INIT(message);
-			uint32_t ret = 0;
+		CMR_MSG_INIT(message);
+		uint32_t ret = 0;
 
-			HAL_LOGD("start send CMR_EVT_ZSL_MON_SNP");
-			mZslShotPushFlag = 1;
-			message.msg_type = CMR_EVT_ZSL_MON_SNP;
-			message.sync_flag = CMR_MSG_SYNC_NONE;
-			message.data = NULL;
-			HAL_LOGD("msg_type = 0x%x\n", message.msg_type);
-
-			// fot cts, mZslMapNum == 1 means iommu address space is not enough
-			if(mZslMapNum > 1) {
-				ret = cmr_thread_msg_send((cmr_handle)mZSLModeMonitorMsgQueHandle, &message);
-				if (ret) {
-					HAL_LOGE("Fail to send one msg!");
-					return NO_ERROR;
-				}
+		mZslShotPushFlag = 1;
+		message.msg_type = CMR_EVT_ZSL_MON_SNP;
+		message.sync_flag = CMR_MSG_SYNC_NONE;
+		message.data = NULL;
+		// fot cts, mZslMapNum == 1 means iommu address space is not enough
+		if(mZslMapNum > 1) {
+			ret = cmr_thread_msg_send((cmr_handle)mZSLModeMonitorMsgQueHandle, &message);
+			if (ret) {
+				HAL_LOGE("Fail to send one msg!");
+				return NO_ERROR;
 			}
-			HAL_LOGD("mZslShotPushFlag %d",mZslShotPushFlag);
-	} else
-#endif
-	{
+		}
+		HAL_LOGD("mZslShotPushFlag %d",mZslShotPushFlag);
+	} else {
 		PushZslSnapShotbuff();
 	}
 
-	//bool result = WaitForCaptureStart();
 	print_time();
-
-	HAL_LOGD("X");
-	//return result ? NO_ERROR : UNKNOWN_ERROR;
+	HAL_LOGI("X");
 	return NO_ERROR;
 }
 
 int SprdCamera3OEMIf::VideoTakePicture()
 {
+	HAL_LOGI("E");
 	GET_START_TIME;
-	HAL_LOGD("E");
 	print_time();
 
 	if (SPRD_ERROR == mCameraState.capture_state) {
 		HAL_LOGE("in error status, deinit capture at first ");
 		deinitCapture(mIsPreAllocCapMem);
-	}/* else if (SPRD_IDLE != mCameraState.capture_state) {
-		HAL_LOGE("take picture: action alread exist, direct return!");
-		return ALREADY_EXISTS;
-	}*/
+	}
 
 	if (isCapturing()) {
 		WaitForCaptureDone();
 	}
 
-	set_ddr_freq(HIGH_FREQ_REQ);
 	SET_PARM(mCameraHandle, CAMERA_PARAM_SHOT_NUM, mPicCaptureCnt);
-{
+
 	LENS_Tag lensInfo;
 	mSetting->getLENSTag(&lensInfo);
-	if(lensInfo.focal_length)
-	{
+	if(lensInfo.focal_length) {
 		SET_PARM(mCameraHandle, CAMERA_PARAM_FOCAL_LENGTH,  (int32_t)(lensInfo.focal_length * 1000));
 		HAL_LOGD("lensInfo.focal_length = %f",lensInfo.focal_length);
 	}
+
 	JPEG_Tag jpgInfo;
+	struct img_size jpeg_thumb_size;
 	mSetting->getJPEGTag(&jpgInfo);
-	{
-		SET_PARM(mCameraHandle, CAMERA_PARAM_JPEG_QUALITY, jpgInfo.quality);
-		HAL_LOGD("JPEG quality = %d",jpgInfo.quality);
-	}
-	{
-		SET_PARM(mCameraHandle, CAMERA_PARAM_THUMB_QUALITY, jpgInfo.thumbnail_quality);
-		HAL_LOGD("JPEG thumbnail quality = %d",jpgInfo.thumbnail_quality);
-	}
-	{
-		struct img_size jpeg_thumb_size;
-		jpeg_thumb_size.width = jpgInfo.thumbnail_size[0];
-		jpeg_thumb_size.height = jpgInfo.thumbnail_size[1];
-		SET_PARM(mCameraHandle, CAMERA_PARAM_THUMB_SIZE, (cmr_uint)&jpeg_thumb_size);
-		HAL_LOGD("JPEG thumbnail size = %d x %d", jpgInfo.thumbnail_size[0], jpgInfo.thumbnail_size[1]);
-	}
-}
+	HAL_LOGV("JPEG quality = %d",jpgInfo.quality);
+	SET_PARM(mCameraHandle, CAMERA_PARAM_JPEG_QUALITY, jpgInfo.quality);
+	HAL_LOGV("JPEG thumbnail quality = %d",jpgInfo.thumbnail_quality);
+	SET_PARM(mCameraHandle, CAMERA_PARAM_THUMB_QUALITY, jpgInfo.thumbnail_quality);
+	jpeg_thumb_size.width = jpgInfo.thumbnail_size[0];
+	jpeg_thumb_size.height = jpgInfo.thumbnail_size[1];
+	HAL_LOGD("JPEG thumbnail size = %d x %d", jpgInfo.thumbnail_size[0], jpgInfo.thumbnail_size[1]);
+	SET_PARM(mCameraHandle, CAMERA_PARAM_THUMB_SIZE, (cmr_uint)&jpeg_thumb_size);
 
 	setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
 	if (CMR_CAMERA_SUCCESS != camera_take_picture(mCameraHandle, mCaptureMode)) {
@@ -969,9 +916,10 @@ int SprdCamera3OEMIf::VideoTakePicture()
 	mVideoShotWait.signal();
 
 	bool result = WaitForCaptureStart();
-	print_time();
 
-	HAL_LOGD("X");
+	print_time();
+	HAL_LOGI("X");
+
 	return result ? NO_ERROR : UNKNOWN_ERROR;
 }
 
@@ -1481,19 +1429,14 @@ void SprdCamera3OEMIf::setCameraState(Sprd_camera_state state, state_owner owner
 	}
 
 	if (org_state != state)
-        //mStateWait.signal();              /*if state changed should broadcasting*/
-        //use broadcast can make sure all wait thread can recive this message.
-        /** SPRD: add { */
-        mStateWait.broadcast();
-        /** SPRD: add } */
+		mStateWait.broadcast();
 
 	HAL_LOGD("X: camera state = %s, preview state = %s, capture state = %s focus state = %s set param state = %s",
-				getCameraStateStr(mCameraState.camera_state),
-				getCameraStateStr(mCameraState.preview_state),
-				getCameraStateStr(mCameraState.capture_state),
-				getCameraStateStr(mCameraState.focus_state),
-				getCameraStateStr(mCameraState.setParam_state));
-
+		getCameraStateStr(mCameraState.camera_state),
+		getCameraStateStr(mCameraState.preview_state),
+		getCameraStateStr(mCameraState.capture_state),
+		getCameraStateStr(mCameraState.focus_state),
+		getCameraStateStr(mCameraState.setParam_state));
 }
 
 SprdCamera3OEMIf::Sprd_camera_state SprdCamera3OEMIf::getCameraState()
@@ -1540,7 +1483,7 @@ SprdCamera3OEMIf::Sprd_camera_state SprdCamera3OEMIf::getPreviewState()
 SprdCamera3OEMIf::Sprd_camera_state SprdCamera3OEMIf::getCaptureState()
 {
 	Mutex::Autolock stateLock(&mStateLock);
-	HAL_LOGD("%s", getCameraStateStr(mCameraState.capture_state));
+	HAL_LOGV("%s", getCameraStateStr(mCameraState.capture_state));
 	return mCameraState.capture_state;
 }
 
@@ -1583,7 +1526,7 @@ bool SprdCamera3OEMIf::isPreviewStart()
 bool SprdCamera3OEMIf::isCapturing()
 {
 	bool ret = false;
-	HAL_LOGD("%s", getCameraStateStr(mCameraState.capture_state));
+	HAL_LOGV("%s", getCameraStateStr(mCameraState.capture_state));
 	if (SPRD_FLASH_IN_PROGRESS == mCameraState.capture_state) {
 		return false;
 	}
@@ -1874,7 +1817,6 @@ bool SprdCamera3OEMIf::startCameraIfNecessary()
 		mSetting->setLENSTag(lensInfo);
 		HAL_LOGD("camera_id: %d.apert %f", mCameraId, lensInfo.aperture);
 		/*get sensor and lens info from oem layer*/
-		set_ddr_freq(BASE_FREQ_REQ);
 
 		HAL_LOGD("initializing param");
 	} else {
@@ -2092,82 +2034,6 @@ void SprdCamera3OEMIf::deinitCapture(bool isPreAllocCapMem)
 	*/
 }
 
-int SprdCamera3OEMIf::set_ddr_freq(uint32_t mhzVal)
-{
-	const char*     freq_in_khz = NO_FREQ_STR;
-	uint32_t        tmpSetFreqCount = mSetDDRFreqCount;
-
-	HAL_LOGD("to %d now count %d freq %d E", mhzVal, mSetDDRFreqCount, mSetDDRFreq);
-	if (mhzVal == mSetDDRFreq && NO_FREQ_REQ != mhzVal) {
-		HAL_LOGW("set_ddr_freq same freq %d need not set", mhzVal);
-		return NO_ERROR;
-	}
-
-	const char* const set_freq = "/sys/devices/platform/scxx30-dmcfreq.0/devfreq/scxx30-dmcfreq.0/ondemand/set_freq";
-
-	FILE* fp = fopen(set_freq, "wb");
-	if (NULL == fp) {
-		HAL_LOGW("failed to open %s X", set_freq);
-		return BAD_VALUE;
-	}
-
-	switch (mhzVal) {
-		case NO_FREQ_REQ:
-			tmpSetFreqCount--;
-			break;
-
-		case BASE_FREQ_REQ:
-			if (NO_FREQ_REQ == mSetDDRFreq) {
-				tmpSetFreqCount++;
-			} else {
-				HAL_LOGV("clear freq for change!");
-				fprintf(fp, "%s", NO_FREQ_STR);
-			}
-			freq_in_khz = BASE_FREQ_STR;
-			break;
-
-		case MEDIUM_FREQ_REQ:
-			if (NO_FREQ_REQ == mSetDDRFreq) {
-				tmpSetFreqCount++;
-			} else {
-				HAL_LOGV("clear freq for change!");
-				fprintf(fp, "%s", NO_FREQ_STR);
-			}
-			freq_in_khz = MEDIUM_FREQ_STR;
-			break;
-
-		case HIGH_FREQ_REQ:
-			if (NO_FREQ_REQ == mSetDDRFreq) {
-				tmpSetFreqCount++;
-			} else {
-				HAL_LOGV("clear freq for change!");
-				fprintf(fp, "%s", NO_FREQ_STR);
-			}
-			freq_in_khz = HIGH_FREQ_STR;
-			break;
-
-		default:
-			HAL_LOGE("unrecognize set frequency, error!");
-			break;
-	}
-
-	fclose(fp);
-	fp = NULL;
-
-	fp = fopen(set_freq, "wb");
-	if (NULL == fp) {
-		HAL_LOGE("failed to open %s X", set_freq);
-		return BAD_VALUE;
-	}
-
-	fprintf(fp, "%s", freq_in_khz);
-	mSetDDRFreq = mhzVal;
-	mSetDDRFreqCount = tmpSetFreqCount;
-	HAL_LOGD("to %skhz now count %d freq %d X", freq_in_khz, mSetDDRFreqCount, mSetDDRFreq);
-	fclose(fp);
-	return NO_ERROR;
-}
-
 int SprdCamera3OEMIf::startPreviewInternal()
 {
 	bool is_push_zsl = false;
@@ -2201,15 +2067,12 @@ int SprdCamera3OEMIf::startPreviewInternal()
 		return UNKNOWN_ERROR;
 	}
 
-	set_ddr_freq(BASE_FREQ_REQ);
 	if (mCaptureMode == CAMERA_ZSL_MODE) {
 		memset(mZSLCapInfo, 0, sizeof(mZSLCapInfo));
 		struct img_size jpeg_thumb_size;
 		jpeg_thumb_size.width = 320;
 		jpeg_thumb_size.height = 240;
 		SET_PARM(mCameraHandle, CAMERA_PARAM_THUMB_SIZE, (cmr_uint)&jpeg_thumb_size);
-
-		set_ddr_freq(HIGH_FREQ_REQ);
 	}
 
 	setCameraState(SPRD_INTERNAL_PREVIEW_REQUESTED, STATE_PREVIEW);
@@ -2360,8 +2223,6 @@ int SprdCamera3OEMIf::cancelPictureInternal()
 		HAL_LOGW("not taking a picture (state %s)", getCameraStateStr(getCaptureState()));
 		break;
 	}
-
-	set_ddr_freq(BASE_FREQ_REQ);
 
 	HAL_LOGD("X");
 	return result ? NO_ERROR : UNKNOWN_ERROR;
@@ -2706,36 +2567,11 @@ void SprdCamera3OEMIf::cpu_dvfs_disable(uint8_t is_disable)
 
 void  SprdCamera3OEMIf::prepareForPostProcess(void)
 {
-	int b_need_raise = 0;
-
-#ifdef CONFIG_CAPTURE_DENOISE
-	b_need_raise = 1;
-#endif
-
-	if (0/* == strcmp("hdr",mSetParameters.get_SceneMode())*/) {
-		b_need_raise = 1;
-	}
-
-	HAL_LOGD("prepareForPostProcess %d %d", b_need_raise, mCPURaised);
-
-	if (b_need_raise && !mCPURaised) {
-		cpu_hotplug_disable(1);
-		cpu_dvfs_disable(1);
-		mCPURaised = 1;
-	}
-
 	return;
 }
 
 void  SprdCamera3OEMIf::exitFromPostProcess(void)
 {
-	HAL_LOGD("mCPURaised = %d", mCPURaised);
-	if (mCPURaised) {
-		cpu_dvfs_disable(0);
-		cpu_hotplug_disable(0);
-		mCPURaised = 0;
-	}
-
 	return;
 }
 
@@ -2803,8 +2639,6 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 		return;
 	}
 
-	HAL_LOGV("E");
-
 	if(SHAKE_TEST == getShakeTestState()) {
 		overwritePreviewFrame(frame);
 	}
@@ -2842,7 +2676,7 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 			Tsface.top = faceInfo.face[0].rect[1];
 			Tsface.right = faceInfo.face[0].rect[2];
 			Tsface.bottom = faceInfo.face[0].rect[3];
-			HAL_LOGD("FACE_BEAUTY rect:%d-%d-%d-%d",Tsface.left,Tsface.top,Tsface.right,Tsface.bottom);
+			HAL_LOGV("FACE_BEAUTY rect:%d-%d-%d-%d",Tsface.left,Tsface.top,Tsface.right,Tsface.bottom);
 
 			int skinWhitenLevel = sprddefInfo.perfect_skin_level;
 			int skinCleanLevel = skinWhitenLevel;
@@ -2974,7 +2808,7 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 		if(rec_stream) {
 			ret = rec_stream->getQBufNumForVir(buff_vir, &frame_num);
 			if(ret == NO_ERROR) {
-				HAL_LOGD("record, fd=0x%x, buff_vir = 0x%lx, frame_num = %d, buffer_timestamp = %lld, frame->type = %d rec=%lld",
+				HAL_LOGI("record, fd=0x%x, buff_vir = 0x%lx, frame_num = %d, buffer_timestamp = %lld, frame->type = %d rec=%lld",
 					 frame->fd, buff_vir, frame_num, buffer_timestamp,frame->type, mSlowPara.rec_timestamp);
 				if(frame->type == PREVIEW_VIDEO_FRAME && frame_num >= mRecordFrameNum && (frame_num > mPictureFrameNum ||frame_num == 0)) {
 					if (mVideoWidth <= mCaptureWidth && mVideoHeight <= mCaptureHeight) {
@@ -2991,7 +2825,7 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 						calculateTimestampForSlowmotion(buffer_timestamp);
 					}
 #ifdef CONFIG_CAMERA_EIS
-					HAL_LOGI("eis_enable = %d", sprddefInfo.sprd_eis_enabled);
+					HAL_LOGV("eis_enable = %d", sprddefInfo.sprd_eis_enabled);
 					if(sprddefInfo.sprd_eis_enabled){
 						int64_t boot_time = frame->monoboottime;
 						int64_t ae_time =frame->ae_time;
@@ -3002,7 +2836,7 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 						//nsecs_t time = systemTime(CLOCK_MONOTONIC);
 						//HAL_LOGD("CLOCK_MONOTONIC = %lld\n", time);
 						HAL_LOGV("rec_timestamp = %lld, boot_time = %lld\n", buffer_timestamp, boot_time);
-						HAL_LOGI("ae_time = %lld, zoom_ratio = %d\n", ae_time, zoom_ratio);
+						HAL_LOGV("ae_time = %lld, zoom_ratio = %d\n", ae_time, zoom_ratio);
 						private_handle->phyaddr = zoom_ratio;
 					}
 #endif
@@ -3026,9 +2860,8 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 		// preview stream
 		if(pre_stream) {
 			ret = pre_stream->getQBufNumForVir(buff_vir, &frame_num);
-			HAL_LOGV("preview, buff_vir 0x%lx, frame_num %d, ret 0x%lx", buff_vir, frame_num, ret);
 			if(ret == NO_ERROR) {
-				HAL_LOGD("prev buff fd=0x%x, buff_vir=0x%lx, num %d, ret %d, time 0x%llx, frame type = %d rec=%lld, ",
+				HAL_LOGI("prev buff fd=0x%x, buff_vir=0x%lx, num %d, ret %d, time 0x%llx, frame type = %d rec=%lld, ",
 					frame->fd, buff_vir, frame_num, ret, buffer_timestamp,
 					frame->type, mSlowPara.rec_timestamp);
 				if(frame->type == PREVIEW_FRAME && frame_num >= mPreviewFrameNum && (frame_num > mPictureFrameNum ||frame_num == 0)) {
@@ -3038,7 +2871,7 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 					}
 
 #ifdef CONFIG_CAMERA_EIS
-					HAL_LOGI("eis_enable = %d", sprddefInfo.sprd_eis_enabled);
+					HAL_LOGV("eis_enable = %d", sprddefInfo.sprd_eis_enabled);
 					if(mRecordingMode && sprddefInfo.sprd_eis_enabled){
 						if(mGyroInit && !mGyroDeinit){
 							int64_t boot_time = frame->monoboottime;
@@ -3113,7 +2946,7 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 		if(callback_stream) {//callback stream
 			ret = callback_stream->getQBufNumForVir(buff_vir, &frame_num);
 			if(ret == NO_ERROR) {
-				HAL_LOGD("callback buff fd=0x%x, vir=0x%lx, num %d, ret %d, time 0x%llx, frame type = %d",
+				HAL_LOGI("callback buff fd=0x%x, vir=0x%lx, num %d, ret %d, time 0x%llx, frame type = %d",
 					frame->fd, buff_vir, frame_num, ret, buffer_timestamp,frame->type);
 
 				if((!pre_stream || (frame->type != PREVIEW_ZSL_CANCELED_FRAME))&& frame_num >= mZslFrameNum && (frame_num > mPictureFrameNum ||frame_num == 0)) {
@@ -3136,7 +2969,7 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 			CMR_MSG_INIT(message);
 			camera_zsl_snapshot_need_pause(mCameraHandle, &need_pause);
 			if (PREVIEW_ZSL_FRAME == frame->type) {
-				HAL_LOGD("zsl buff fd=0x%x, frame type=%d", frame->fd, frame->type);
+				HAL_LOGI("zsl buff fd=0x%x, frame type=%d", frame->fd, frame->type);
 #ifndef CONFIG_NEED_UNMAP
 				receiveZslFrame(frame);
 #else
@@ -3402,14 +3235,14 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame)
 
 void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame)
 {
-	HAL_LOGD("E");
 	print_time();
 	Mutex::Autolock cbLock(&mCaptureCbLock);
 	Mutex::Autolock cbPreviewLock(&mPreviewCbLock);
 	struct camera_jpeg_param *encInfo = &frame->jpeg_param;
 	int64_t temp = 0, temp1 = 0;;
-	//camera_encode_mem_type *enc = (camera_encode_mem_type *)encInfo->outPtr;
-	HAL_LOGD("encInfo->size = %d, enc->buffer = 0x%lx, encInfo->need_free = %d time=%lld",encInfo->size, encInfo->outPtr, encInfo->need_free, frame->timestamp);
+
+	HAL_LOGD("E encInfo->size = %d, enc->buffer = 0x%lx, encInfo->need_free = %d time=%lld",
+		encInfo->size, encInfo->outPtr, encInfo->need_free, frame->timestamp);
 
 	SENSOR_Tag sensorInfo;
 	mSetting->getSENSORTag(&sensorInfo);
@@ -3437,7 +3270,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame)
 		if(pic_stream) {
 			ret = pic_stream->getQBuffFirstVir(&pic_addr_vir);
 			pic_stream->getQBuffFirstNum(&frame_num);
-			HAL_LOGD("pic_addr_vir = 0x%lx, frame_num = %d", pic_addr_vir, frame_num);
+			HAL_LOGV("pic_addr_vir = 0x%lx, frame_num = %d", pic_addr_vir, frame_num);
 			if(ret == NO_ERROR && pic_addr_vir != NULL) {
 				void *isp_info_addr;
 				int isp_info_size = 0;
@@ -3466,19 +3299,11 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame)
 			}
 		}
 
-#ifdef CONFIG_MEM_OPTIMIZATION
-		if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE /*|| mTakePictureMode == SNAPSHOT_ZSL_MODE*/ || mTakePictureMode == SNAPSHOT_DEFAULT_MODE) 
-#else
-		if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE || mTakePictureMode == SNAPSHOT_ZSL_MODE || mTakePictureMode == SNAPSHOT_DEFAULT_MODE)
-#endif
-		{
+		if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE || mTakePictureMode == SNAPSHOT_DEFAULT_MODE) {
 			SprdCamera3RegularChannel* regularChannel = reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
 			if(regularChannel) {
-				HAL_LOGD("clear preview stream");
 				regularChannel->channelClearInvalidQBuff(mPictureFrameNum, timestamp, CAMERA_STREAM_TYPE_PREVIEW);
-				HAL_LOGD("clear video stream");
 				regularChannel->channelClearInvalidQBuff(mPictureFrameNum, timestamp, CAMERA_STREAM_TYPE_VIDEO);
-				HAL_LOGD("clear callback stream");
 				regularChannel->channelClearInvalidQBuff(mPictureFrameNum, timestamp, CAMERA_STREAM_TYPE_CALLBACK);
 			}
 		}
@@ -3486,7 +3311,6 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame)
 		if (encInfo->need_free) {
 			if (!iSZslMode()) {
 				deinitCapture(mIsPreAllocCapMem);
-				set_ddr_freq(BASE_FREQ_REQ);
 			}
 		}
 	}
@@ -3501,7 +3325,6 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame)
 
 void SprdCamera3OEMIf::receiveJpegPictureError(void)
 {
-	HAL_LOGD("E");
 	print_time();
 	Mutex::Autolock cbLock(&mCaptureCbLock);
 	if (!checkPreviewStateForCapture()) {
@@ -3517,7 +3340,6 @@ void SprdCamera3OEMIf::receiveJpegPictureError(void)
 	// to keep the heap around until the encoding is complete.
 
 	print_time();
-	HAL_LOGD("X");
 }
 
 void SprdCamera3OEMIf::receiveCameraExitError(void)
@@ -3555,11 +3377,10 @@ SprdCamera3OEMIf::transitionState(SprdCamera3OEMIf::Sprd_camera_state from,
 		SprdCamera3OEMIf::state_owner owner, bool lock)
 {
 	volatile SprdCamera3OEMIf::Sprd_camera_state *which_ptr = NULL;
-	HAL_LOGD("E");
 
 	if (lock) mStateLock.lock();
-	HAL_LOGD("owner = %d, lock = %d", owner, lock);
 
+	HAL_LOGD("owner = %d, lock = %d", owner, lock);
 	switch (owner) {
 	case STATE_CAMERA:
 		which_ptr = &mCameraState.camera_state;
@@ -3598,7 +3419,6 @@ SprdCamera3OEMIf::transitionState(SprdCamera3OEMIf::Sprd_camera_state from,
 	}
 
 	if (lock) mStateLock.unlock();
-	HAL_LOGD("X");
 
 	return to;
 }
@@ -3635,8 +3455,7 @@ void SprdCamera3OEMIf::HandleStartPreview(enum camera_cb_type cb,
 			break;
 
 		case SPRD_INTERNAL_PREVIEW_STOPPING:
-			HAL_LOGD("camera cb: discarding preview frame "
-			"while stopping preview");
+			HAL_LOGD("camera cb: discarding preview frame while stopping preview");
 			break;
 
 		default:
@@ -3646,7 +3465,7 @@ void SprdCamera3OEMIf::HandleStartPreview(enum camera_cb_type cb,
 		break;
 
 	case CAMERA_EVT_CB_FD:
-		HAL_LOGD("CAMERA_EVT_CB_FD");
+		HAL_LOGV("CAMERA_EVT_CB_FD");
 		if (isPreviewing()) {
 			receivePreviewFDFrame((struct camera_frame_type *)parm4);
 		}
@@ -3660,7 +3479,7 @@ void SprdCamera3OEMIf::HandleStartPreview(enum camera_cb_type cb,
 		break;
 
 	case CAMERA_EVT_CB_FLUSH:
-		HAL_LOGE("CAMERA_EVT_CB_FLUSH");
+		HAL_LOGV("CAMERA_EVT_CB_FLUSH");
 		{
 			struct camera_frame_type *frame = (struct camera_frame_type *)parm4;
 			mPrevBufLock.lock();
@@ -3690,13 +3509,11 @@ void SprdCamera3OEMIf::HandleStartPreview(enum camera_cb_type cb,
 		break;
 	}
 
-	HAL_LOGD("out, state = %s", getCameraStateStr(getPreviewState()));
+	HAL_LOGV("out, state = %s", getCameraStateStr(getPreviewState()));
 }
 
-void SprdCamera3OEMIf::HandleStopPreview(enum camera_cb_type cb,
-										void*  parm4)
+void SprdCamera3OEMIf::HandleStopPreview(enum camera_cb_type cb, void*  parm4)
 {
-	HAL_LOGD("debug cb = %d parm4 = 0x%x", cb, (cmr_uint)parm4);
 	Mutex::Autolock cbPreviewLock(&mPreviewCbLock);
 	Sprd_camera_state tmpPrevState = SPRD_IDLE;
 	tmpPrevState = getPreviewState();
@@ -3733,7 +3550,7 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb,
 		prepareForPostProcess();
 		break;
 	case CAMERA_EVT_CB_FLUSH:
-		HAL_LOGD("CAMERA_EVT_CB_FLUSH");
+		HAL_LOGV("CAMERA_EVT_CB_FLUSH");
 		mCapBufLock.lock();
 		if (mCapBufIsAvail == 1) {
 			flush_buffer(CAMERA_FLUSH_RAW_HEAP_ALL, 0,(void*)0,(void*)0,0);
@@ -3742,7 +3559,7 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb,
 		break;
 	case CAMERA_RSP_CB_SUCCESS:
 	{
-		HAL_LOGD("CAMERA_RSP_CB_SUCCESS");
+		HAL_LOGV("CAMERA_RSP_CB_SUCCESS");
 
 		Sprd_camera_state tmpCapState= SPRD_INIT;
 		tmpCapState = getCaptureState();
@@ -3757,7 +3574,7 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb,
 	}
 	case CAMERA_EVT_CB_CAPTURE_FRAME_DONE:
 	{
-		HAL_LOGD("CAMERA_EVT_CB_CAPTURE_FRAME_DONE");
+		HAL_LOGV("CAMERA_EVT_CB_CAPTURE_FRAME_DONE");
 		JPEG_Tag jpegInfo;
 		mSetting->getJPEGTag(&jpegInfo);
 		if(jpeg_gps_location)
@@ -3769,7 +3586,7 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb,
 			memcpy(mGps_processing_method, jpegInfo.gps_processing_method, sizeof(mGps_processing_method));
 			pt.process_method = reinterpret_cast<const char *>(&mGps_processing_method[0]);
 			pt.timestamp = jpegInfo.gps_timestamp;
-			HAL_LOGD("gps pt.latitude = %f, pt.altitude = %f, pt.longitude = %f, pt.process_method = %s, jpegInfo.gps_timestamp = %lld", pt.latitude, pt.altitude, pt.longitude, pt.process_method, jpegInfo.gps_timestamp);
+			HAL_LOGV("gps pt.latitude = %f, pt.altitude = %f, pt.longitude = %f, pt.process_method = %s, jpegInfo.gps_timestamp = %lld", pt.latitude, pt.altitude, pt.longitude, pt.process_method, jpegInfo.gps_timestamp);
 
 			/*if (camera_set_position(&pt, NULL, NULL) != CAMERA_SUCCESS) {
 				HAL_LOGE("receiveRawPicture: camera_set_position: error");
@@ -3805,7 +3622,7 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb,
 		}
 		break;
 	case CAMERA_EVT_CB_SNAPSHOT_DONE:
-		HAL_LOGD("CAMERA_EVT_CB_SNAPSHOT_DONE");
+		HAL_LOGV("CAMERA_EVT_CB_SNAPSHOT_DONE");
 		if (checkPreviewStateForCapture() && (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE || mTakePictureMode == SNAPSHOT_DEFAULT_MODE)) {
 			receiveRawPicture((struct camera_frame_type *)parm4);
 		} else {
@@ -3814,7 +3631,7 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb,
 		break;
 
 	case CAMERA_EXIT_CB_DONE:
-		HAL_LOGD("CAMERA_EXIT_CB_DONE");
+		HAL_LOGV("CAMERA_EXIT_CB_DONE");
 
 		if (SPRD_WAITING_RAW == getCaptureState())
 		{
@@ -3833,10 +3650,9 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb,
 		break;
 
 	case CAMERA_EVT_CB_ZSL_FRM:
-	{
-		HAL_LOGD("CAMERA_EVT_CB_HAL2_ZSL_NEW_FRM");
+		HAL_LOGV("CAMERA_EVT_CB_HAL2_ZSL_NEW_FRM");
 		break;
-	}
+
 	default:
 		HAL_LOGE("unkown cb = %d", cb);
 		transitionState(getCaptureState(), SPRD_ERROR, STATE_CAPTURE);
@@ -3875,8 +3691,7 @@ void SprdCamera3OEMIf::HandleEncode(enum camera_cb_type cb,
 		break;
 
 	case CAMERA_EXIT_CB_DONE:
-		HAL_LOGD("CAMERA_EXIT_CB_DONE");
-
+		HAL_LOGV("CAMERA_EXIT_CB_DONE");
 		if (!WaitForCaptureJpegState()) {
 			//HAL_LOGE("state error");
 			break;
@@ -3947,11 +3762,11 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb,
 
 	switch (cb) {
 	case CAMERA_RSP_CB_SUCCESS:
-		HAL_LOGD("camera cb: autofocus has started.");
+		HAL_LOGV("camera cb: autofocus has started.");
 		break;
 
 	case CAMERA_EXIT_CB_DONE:
-		HAL_LOGD("camera cb: autofocus succeeded.");
+		HAL_LOGV("camera cb: autofocus succeeded.");
 	{
 		controlInfo.af_state = ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED;
 		mSetting->setCONTROLTag(controlInfo);
@@ -3971,7 +3786,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb,
 		break;
 
 	case CAMERA_EVT_CB_FOCUS_MOVE:
-		HAL_LOGD("camera cb: autofocus focus moving  %d autofocus=%d", parm4, mIsAutoFocus);
+		HAL_LOGV("camera cb: autofocus focus moving  %d autofocus=%d", parm4, mIsAutoFocus);
 		if (!mIsAutoFocus) {
 			if (parm4) {
 				controlInfo.af_state = ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN;
@@ -4057,8 +3872,8 @@ void SprdCamera3OEMIf::camera_cb(enum camera_cb_type cb,
 					void* parm4)
 {
 	SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)client_data;
-	HAL_LOGD("E");
-	HAL_LOGD("debug cb = %d func = %d parm4 = 0x%x", cb, func, (cmr_uint)parm4);
+	HAL_LOGV("E");
+	HAL_LOGV("cb = %d func = %d parm4 = 0x%x", cb, func, (cmr_uint)parm4);
 	switch(func) {
 	case CAMERA_FUNC_START_PREVIEW:
 		obj->HandleStartPreview(cb, parm4);
@@ -4100,7 +3915,7 @@ void SprdCamera3OEMIf::camera_cb(enum camera_cb_type cb,
 		HAL_LOGE("Unknown camera-callback status %d", cb);
 		break;
 	}
-	HAL_LOGD("X");
+	HAL_LOGV("X");
 }
 
 int SprdCamera3OEMIf::flush_buffer(camera_flush_mem_type_e  type, int index, void *v_addr, void *p_addr, int size)
@@ -5649,7 +5464,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32
 		for (i = 0; i < sum; i++) {
 			memory = allocCameraMem(size, 1,false);
 			if(NULL == memory) {
-				LOGE("error memory is null,malloced type %d",type);
+				HAL_LOGE("error memory is null,malloced type %d",type);
 				goto mem_fail;
 			}
 			mIspPreviewYReserved[i] = memory;
@@ -5679,11 +5494,12 @@ mem_fail:
 }
 
 
-int SprdCamera3OEMIf::Callback_Free(enum camera_mem_cb_type type, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum, void* private_data)
+int SprdCamera3OEMIf::Callback_Free(enum camera_mem_cb_type type, cmr_uint *phy_addr,
+			              cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum, void* private_data)
 {
 	SprdCamera3OEMIf* camera = (SprdCamera3OEMIf*)private_data;
-	int                 ret = 0;
-	HAL_LOGD("E");
+	int ret = 0;
+	HAL_LOGV("E");
 
 	if (!private_data || !vir_addr || !fd) {
 		HAL_LOGE("error param 0x%lx 0x%lx 0x%lx", fd, (cmr_uint)vir_addr, (cmr_uint)private_data);
@@ -5718,24 +5534,24 @@ int SprdCamera3OEMIf::Callback_Free(enum camera_mem_cb_type type, cmr_uint *phy_
 		ret = camera->Callback_OtherFree(type, phy_addr, vir_addr, fd, sum);
 	}
 
-	HAL_LOGD("X");
+	HAL_LOGV("X");
 	return ret;
 }
 
 int SprdCamera3OEMIf::Callback_Malloc(enum camera_mem_cb_type type,
-					cmr_u32 *size_ptr, cmr_u32 *sum_ptr,
-					cmr_uint *phy_addr, cmr_uint *vir_addr,
-					cmr_s32 *fd, void* private_data)
+				cmr_u32 *size_ptr, cmr_u32 *sum_ptr,
+				cmr_uint *phy_addr, cmr_uint *vir_addr,
+				cmr_s32 *fd, void* private_data)
 {
 	SprdCamera3OEMIf *camera = (SprdCamera3OEMIf *)private_data;
-	int                 ret = 0, i = 0;
-	uint32_t            size, sum;
+	int ret = 0, i = 0;
+	uint32_t size, sum;
 	SprdCamera3RegularChannel *channel = NULL;
-	HAL_LOGD("E");
+	HAL_LOGV("E");
 
 	if (!private_data || !vir_addr || !fd || !size_ptr ||
-		!sum_ptr || (0 == *size_ptr) || (0 == *sum_ptr)) {
-		HAL_LOGE("error param 0x%lx 0x%lx 0x%lx 0x%lx 0x%lx",
+	    !sum_ptr || (0 == *size_ptr) || (0 == *sum_ptr)) {
+		HAL_LOGE("param error 0x%lx 0x%lx 0x%lx 0x%lx 0x%lx",
 			fd, (cmr_uint)vir_addr, (cmr_uint)private_data,
 			(cmr_uint)*size_ptr, (cmr_uint)*sum_ptr);
 		return BAD_VALUE;
@@ -5770,7 +5586,7 @@ int SprdCamera3OEMIf::Callback_Malloc(enum camera_mem_cb_type type,
 		ret = camera->Callback_OtherMalloc(type, size, sum, phy_addr, vir_addr, fd);
 	}
 
-	HAL_LOGD("X");
+	HAL_LOGV("X");
 	return ret;
 }
 
@@ -5831,7 +5647,6 @@ int SprdCamera3OEMIf::SetDimensionCapture(cam_dimension_t capture_size)
 	}
 
 	if (!strcmp(value, "raw")) {
-		HAL_LOGD("raw capture mode");
 		camera_get_sensor_info_for_raw(mCameraHandle, mode_info);
 		for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
 			HAL_LOGD("trim w=%d, h=%d", mode_info[i].trim_width, mode_info[i].trim_height);
@@ -5841,7 +5656,8 @@ int SprdCamera3OEMIf::SetDimensionCapture(cam_dimension_t capture_size)
 				break;
 			}
 		}
-		HAL_LOGD("mCaptureWidth=%d, mCaptureHeight=%d", mCaptureWidth, mCaptureHeight);
+		HAL_LOGD("raw capture mode: mCaptureWidth=%d, mCaptureHeight=%d",
+			mCaptureWidth, mCaptureHeight);
 	}
 
 	return NO_ERROR;
@@ -5864,7 +5680,7 @@ int SprdCamera3OEMIf::PushPreviewbuff(buffer_handle_t * buff_handle)
 
 		if(stream) {
 			ret = stream->getQBufForHandle(buff_handle, &addr_vir, &addr_phy, &fd);
-			HAL_LOGD("addr_phy = 0x%lx, addr_vir = 0x%lx, fd = 0x%lx, ret = %d",addr_phy, addr_vir, fd, ret);
+			HAL_LOGV("addr_phy = 0x%lx, addr_vir = 0x%lx, fd = 0x%lx, ret = %d",addr_phy, addr_vir, fd, ret);
 			if(ret == NO_ERROR) {
 				if(addr_vir != NULL)
 					camera_set_preview_buffer(mCameraHandle, addr_phy, addr_vir,fd);
@@ -5887,7 +5703,7 @@ int SprdCamera3OEMIf::PushVideobuff(buffer_handle_t * buff_handle)
 	SprdCamera3Stream *stream = NULL;
 	int ret = NO_ERROR;
 
-	HAL_LOGD("E, previewState = %d", getPreviewState());
+	HAL_LOGV("E, previewState = %d", getPreviewState());
 
 	if(channel &&
 		(getPreviewState() == SPRD_INTERNAL_PREVIEW_REQUESTED
@@ -5896,7 +5712,7 @@ int SprdCamera3OEMIf::PushVideobuff(buffer_handle_t * buff_handle)
 
 		if(stream) {
 			ret = stream->getQBufForHandle(buff_handle, &addr_vir, &addr_phy, &fd);
-			HAL_LOGD("addr_phy = 0x%lx, addr_vir = 0x%lx, fd = 0x%lx, ret = %d",addr_phy, addr_vir, fd, ret);
+			HAL_LOGV("addr_phy = 0x%lx, addr_vir = 0x%lx, fd = 0x%lx, ret = %d",addr_phy, addr_vir, fd, ret);
 			if(ret == NO_ERROR) {
 				if(addr_vir != NULL)
 					camera_set_video_buffer(mCameraHandle, addr_phy, addr_vir, fd);
@@ -5919,7 +5735,7 @@ int SprdCamera3OEMIf::PushZslbuff(buffer_handle_t * buff_handle)
 	SprdCamera3Stream *stream = NULL;
 	int ret = NO_ERROR;
 
-	HAL_LOGD("E, previewState = %d", getPreviewState());
+	HAL_LOGV("E, previewState = %d", getPreviewState());
 
 	if(channel &&
 		(getPreviewState() == SPRD_INTERNAL_PREVIEW_REQUESTED
@@ -5928,7 +5744,7 @@ int SprdCamera3OEMIf::PushZslbuff(buffer_handle_t * buff_handle)
 
 		if(stream) {
 			ret = stream->getQBufForHandle(buff_handle, &addr_vir, &addr_phy, &fd);
-			HAL_LOGD("addr_phy = 0x%lx, addr_vir = 0x%lx, fd = 0x%lx, ret = %d",addr_phy, addr_vir, fd, ret);
+			HAL_LOGV("addr_phy = 0x%lx, addr_vir = 0x%lx, fd = 0x%lx, ret = %d",addr_phy, addr_vir, fd, ret);
 			if(ret == NO_ERROR) {
 				if(addr_vir != NULL)
 					camera_set_zsl_buffer(mCameraHandle, addr_phy, addr_vir, fd);
@@ -5938,7 +5754,7 @@ int SprdCamera3OEMIf::PushZslbuff(buffer_handle_t * buff_handle)
 		}
 	}
 
-	HAL_LOGD("X");
+	HAL_LOGV("X");
 
 	return NO_ERROR;
 }
@@ -5950,8 +5766,6 @@ int SprdCamera3OEMIf::PushFirstPreviewbuff()
 	cmr_s32 fd = 0;
 	SprdCamera3Stream *stream = NULL;
 	int ret = NO_ERROR;
-
-	HAL_LOGD("E");
 
 	if(channel) {
 		ret = channel->getStream(CAMERA_STREAM_TYPE_PREVIEW, &stream);
@@ -5970,8 +5784,6 @@ int SprdCamera3OEMIf::PushFirstPreviewbuff()
 		}
 	}
 
-	HAL_LOGD("X");
-
 	return ret;
 }
 
@@ -5983,8 +5795,6 @@ int SprdCamera3OEMIf::PushFirstVideobuff()
 	SprdCamera3Stream *stream = NULL;
 	uint32_t frame_number = 0;
 	int ret = NO_ERROR;
-
-	HAL_LOGD("E");
 
 	if(channel) {
 		channel->getStream(CAMERA_STREAM_TYPE_VIDEO, &stream);
@@ -6003,8 +5813,6 @@ int SprdCamera3OEMIf::PushFirstVideobuff()
 		}
 	}
 
-	HAL_LOGD("X");
-
 	return NO_ERROR;
 }
 
@@ -6016,8 +5824,6 @@ int SprdCamera3OEMIf::PushFirstZslbuff()
 	SprdCamera3Stream *stream = NULL;
 	uint32_t frame_number = 0;
 	int ret = NO_ERROR;
-
-	HAL_LOGV("E");
 
 	if(channel) {
 		channel->getStream(CAMERA_STREAM_TYPE_CALLBACK, &stream);
@@ -6034,8 +5840,6 @@ int SprdCamera3OEMIf::PushFirstZslbuff()
 					stream->getQBuffFirstNum(&mDropZslFrameNum);
 		}
 	}
-
-	HAL_LOGV("X");
 
 	return NO_ERROR;
 }
@@ -6109,7 +5913,7 @@ int SprdCamera3OEMIf::getZSLQueueFrameNum()
 {
 	int ret = 0;
 	ret = mZSLQueue.size();
-	HAL_LOGD("%d",ret);
+	HAL_LOGV("%d",ret);
 	return ret;
 }
 

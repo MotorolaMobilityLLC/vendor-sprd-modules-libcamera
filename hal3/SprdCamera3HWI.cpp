@@ -163,6 +163,8 @@ int SprdCamera3HWI::getNumberOfCameras()
 
 SprdCamera3HWI::~SprdCamera3HWI()
 {
+	HAL_LOGD("E");
+
 	SprdCamera3RegularChannel* regularChannel = reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
 	SprdCamera3PicChannel* picChannel = reinterpret_cast<SprdCamera3PicChannel *>(mPicChan);
 	int64_t timestamp = systemTime();
@@ -170,8 +172,6 @@ SprdCamera3HWI::~SprdCamera3HWI()
 	if(mHDRProcessFlag == true){
 		Mutex::Autolock l(mLock);
 	}
-
-	HAL_LOGD("E");
 
 	mOEMIf->enablePowerHint();
 
@@ -541,10 +541,10 @@ int32_t SprdCamera3HWI::checkStreamSizeAndFormat(camera3_stream_t* new_stream)
 
 int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 {
-	int ret = NO_ERROR;
-	HAL_LOGD("E configureStreams");
+	HAL_LOGD("E");
 	Mutex::Autolock l(mLock);
-	HAL_LOGD("E Mutex::Autolock");
+
+	int ret = NO_ERROR;
 	bool preview_stream_flag = false;
 	bool callback_stream_flag = false;
 	cam_dimension_t preview_size = {0, 0};
@@ -624,13 +624,7 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 		camera_channel_type_t channel_type;
 		cam_dimension_t channel_size;
 		bool chan_created = false;
-		/*
-		ret = checkStreamSizeAndFormat(newStream);
-		HAL_LOGI("@check checkStreamSizeAndFormat ret %d", ret);
-		if(ret) {
-			return ret;
-		}
-		*/
+
 		tranStreamAndChannelType(newStream, &stream_type, &channel_type);
 
 		/*temp code; for debug refocus depth map, del it if depth map quality is OK*/
@@ -645,7 +639,8 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 		}
 #endif
 
-		if(stream_type == CAMERA_STREAM_TYPE_PREVIEW) { //for CTS MultiViewTest
+		//for CTS MultiViewTest
+		if(stream_type == CAMERA_STREAM_TYPE_PREVIEW) {
 			if(preview_stream_flag == false)
 				preview_stream_flag = true;
 			else {
@@ -653,7 +648,10 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 				channel_type = CAMERA_CHANNEL_TYPE_RAW_CALLBACK;
 			}
 		}
-		if((stream_type == CAMERA_STREAM_TYPE_DEFAULT) && (channel_type == CAMERA_CHANNEL_TYPE_RAW_CALLBACK)) { //for CTS
+
+		//for CTS
+		if((stream_type == CAMERA_STREAM_TYPE_DEFAULT) &&
+		   (channel_type == CAMERA_CHANNEL_TYPE_RAW_CALLBACK)) {
 			if(callback_stream_flag == false)
 				callback_stream_flag = true;
 			else {
@@ -667,8 +665,10 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 			case CAMERA_CHANNEL_TYPE_REGULAR:
 			{
 				mRegularChan->stop(mFrameNum);
-
 				ret = mRegularChan->addStream(stream_type, newStream);
+				if (ret) {
+					HAL_LOGE("addStream failed");
+				}
 				if (stream_type == CAMERA_STREAM_TYPE_PREVIEW) {
 					preview_size.width = newStream->width;
 					preview_size.height = newStream->height;
@@ -687,6 +687,7 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 					SprdCamera3RegularChannel::kMaxBuffers = 4;
 				HAL_LOGD("slowmotion=%d, kMaxBuffers=%d",
 					sprddefInfo.slowmotion, SprdCamera3RegularChannel::kMaxBuffers);
+
 				newStream->max_buffers = SprdCamera3RegularChannel::kMaxBuffers;
 				newStream->priv = mRegularChan;
 				break;
@@ -694,8 +695,10 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 			case CAMERA_CHANNEL_TYPE_PICTURE:
 			{
 				mPicChan->stop(mFrameNum);
-
 				ret = mPicChan->addStream(stream_type, newStream);
+				if (ret) {
+					HAL_LOGE("addStream failed");
+				}
 				if (stream_type == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT) {
 					capture_size.width = newStream->width;
 					capture_size.height = newStream->height;
@@ -713,9 +716,14 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 			{
 				mRegularChan->stop(mFrameNum);
 				mPicChan->stop(mFrameNum);
-
 				ret = mRegularChan->addStream(CAMERA_STREAM_TYPE_CALLBACK, newStream);
+				if (ret) {
+					HAL_LOGE("addStream failed");
+				}
 				ret = mPicChan->addStream(CAMERA_STREAM_TYPE_PICTURE_CALLBACK, newStream);
+				if (ret) {
+					HAL_LOGE("addStream failed");
+				}
 				raw_size.width = newStream->width;
 				raw_size.height = newStream->height;
 
@@ -734,10 +742,10 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 	mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE;
 	mOEMIf->SetChannelHandle(mRegularChan, mPicChan);
 
-	HAL_LOGD("preview: width=%d, height=%d, video: width=%d, height=%d",
+	HAL_LOGI("preview: width=%d, height=%d, video: width=%d, height=%d",
 		preview_size.width, preview_size.height,
 		video_size.width, video_size.height);
-	HAL_LOGD("raw: width=%d, height=%d, capture: width=%d, height=%d",
+	HAL_LOGI("raw: width=%d, height=%d, capture: width=%d, height=%d",
 		raw_size.width, raw_size.height,
 		capture_size.width, capture_size.height);
 
@@ -746,21 +754,11 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 	mOEMIf->SetDimensionRaw(raw_size);
 	mOEMIf->SetDimensionCapture(capture_size);
 
-	// for cts
-	/*if(preview_size.height * preview_size.width > 3264 * 2448 ||
-		raw_size.height * raw_size.width > 3264 * 2448 ||
-		(video_size.height != 0 && video_size.width != 0 &&
-			capture_size.height * capture_size.width > 3264 * 2448)) {
-		mReciveQeqMax = SprdCamera3PicChannel::kMaxBuffers;
-		mOEMIf->decZslMapNum();
-	} else*/ {
-		mReciveQeqMax = SprdCamera3RegularChannel::kMaxBuffers;
-	}
+	mReciveQeqMax = SprdCamera3RegularChannel::kMaxBuffers;
 
 	/* Initialize mPendingRequestInfo and mPendnigBuffersMap */
 	mPendingRequestsList.clear();
 
-	HAL_LOGD("ret = %d, mCallbackChan = 0x%lx", ret, mCallbackChan);
 	return ret;
 }
 
@@ -932,8 +930,9 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 	mMetadataChannel->request(meta);
 	mMetadataChannel->getCapRequestPara(meta, &capturePara);
 
-	if(capturePara.cap_intent == ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE
-		&& capturePara.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR) {//for BUG459753 HDR capture
+	//for BUG459753 HDR capture
+	if(capturePara.cap_intent == ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE &&
+	   capturePara.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR) {
 		mHDRProcessFlag = true;
 	} else {
 		mHDRProcessFlag = false;
@@ -946,17 +945,16 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 				mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_PREVIEW, mFrameNum);
 				mFirstRegularRequest = true;
 			}
-#ifdef CONFIG_MEM_OPTIMIZATION
+
 			if(capturePara.sprd_zsl_enabled == true && mOldCapIntent != capturePara.cap_intent) {
 				mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_SPRD_ZSL_PREVIEW, mFrameNum);
 				if(mOldCapIntent == ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE) {
 					mFirstRegularRequest = false;
-				}
-				else {
+				} else {
 					mFirstRegularRequest = true;
 				}
 			}
-#endif
+
 			break;
 		case ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD:
 			if(mOldCapIntent != capturePara.cap_intent) {
@@ -970,24 +968,21 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 				mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_CONTINUE_NON_ZSL_SNAPSHOT, mFrameNum);
 				mPictureRequest = true;
 			}
-#ifdef CONFIG_MEM_OPTIMIZATION
+
 			if(capturePara.sprd_zsl_enabled == true) {
-				//if(mOldCapIntent != capturePara.cap_intent) {
-					mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_SPRD_ZSL_SNAPSHOT, mFrameNum);
-					mPictureRequest = true;
-				//}else {
-				//	mOEMIf->SprdZslTakePicture();
-				//	mPictureRequest = false;
-				//}
+				mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_SPRD_ZSL_SNAPSHOT, mFrameNum);
+				mPictureRequest = true;
 			}
-#endif
+
 			break;
 		case ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT:
-			if(mOldCapIntent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD) { //for CTS
+			//for CTS
+			if(mOldCapIntent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD) {
 				mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_VIDEO_SNAPSHOT, mFrameNum);
 				mPictureRequest = true;
 			}
-			else if(mOldCapIntent != ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE && mOldCapIntent != ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT) {
+			else if(mOldCapIntent != ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE &&
+			           mOldCapIntent != ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT) {
 				mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_CONTINUE_NON_ZSL_SNAPSHOT, mFrameNum);
 				mPictureRequest = true;
 			}
@@ -1002,23 +997,24 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 			break;
 	}
 
-	if(mOldCapIntent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD && capturePara.cap_intent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT) {
+	if(mOldCapIntent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD &&
+	   capturePara.cap_intent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT) {
 		mOldCapIntent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD;
 	} else if(mOldCapIntent != SPRD_CONTROL_CAPTURE_INTENT_FLUSH) {
 		mOldCapIntent = capturePara.cap_intent;
 	} else {
-                mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE;
+		mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE;
 		invaildRequest = true;
-        }
+	}
 
 	if(capturePara.cap_request_id == 0)
 		capturePara.cap_request_id = mOldRequesId;
 	else
 		mOldRequesId = capturePara.cap_request_id;
 
-	HAL_LOGD("output_buffers = %d, frame_num = %d, input_buffer = 0x%lx PicReq %d CaptureIntent = %d prvReq=%d",
-			request->num_output_buffers, request->frame_number, request->input_buffer, mPictureRequest,
-					capturePara.cap_intent, mFirstRegularRequest);
+	HAL_LOGI("num_output_buffers=%d, frame_num=%d, mPictureRequest=%d, captureIntent=%d, mFirstRegularRequest=%d",
+		     request->num_output_buffers, request->frame_number,
+		     mPictureRequest,capturePara.cap_intent, mFirstRegularRequest);
 
 #ifndef MINICAMERA
 	for (size_t i = 0; i < request->num_output_buffers; i++) {
@@ -1065,7 +1061,6 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 			}
 
 			if(channel != mCallbackChan) {
-				HAL_LOGV("channel != mCallbackChan");
 				ret = channel->request(stream, output.buffer, frameNumber);
 				if(ret){
 					HAL_LOGE("request buff 0x%lx (%d)failed", output.buffer, frameNumber);
@@ -1091,7 +1086,6 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 				if(capturePara.cap_intent == ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW
 					|| capturePara.cap_intent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD
 					|| capturePara.cap_intent == ANDROID_CONTROL_CAPTURE_INTENT_ZERO_SHUTTER_LAG) {
-					HAL_LOGE("request buff 0x%lx (%d)", output.buffer, frameNumber);
 					ret = mRegularChan->request(stream, output.buffer, frameNumber);
 					if(ret){
 						HAL_LOGE("request buff 0x%lx (%d)failed", output.buffer, frameNumber);
@@ -1099,7 +1093,6 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 					}
 				} else if(capturePara.cap_intent == ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE
 					|| capturePara.cap_intent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT) {
-					HAL_LOGE("request buff 0x%lx (%d)  1111", output.buffer, frameNumber);
 					ret = mPicChan->request(stream, output.buffer, frameNumber);
 					if(ret){
 						HAL_LOGE("request buff 0x%lx (%d)failed", output.buffer, frameNumber);
@@ -1128,7 +1121,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 				return INVALID_OPERATION;
 			}
 
-			HAL_LOGD("zsl input buff 0x%lx (%d)", input->buffer, frameNumber);
+			HAL_LOGD("input buff 0x%lx (%d)", input->buffer, frameNumber);
 			mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_ZSL_SNAPSHOT, frameNumber);
 			mPictureRequest = true;
 			ret = mRegularChan->setZSLInputBuff(input->buffer);
@@ -1143,7 +1136,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 		mFirstRegularRequest = false;
 		mPictureRequest = false;
 		timer_set(this, 1);
-                usleep(200*1000);
+		usleep(200*1000);
 		return NO_ERROR;
 	}
 
@@ -1155,7 +1148,6 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 		for (size_t i = 0; i < request->num_output_buffers; i++) {
 			camera3_stream_t *stream = request->output_buffers[i].stream;
 			channel = (SprdCamera3Channel *)stream->priv;
-			HAL_LOGD("channel = 0x%lx, mRegularChan = 0x%lx, mCallbackChan = 0x%lx receive_req_max %d mPendingRequest %d",channel, mRegularChan, mCallbackChan,receive_req_max,mPendingRequest);
 			if(channel == mRegularChan || channel == mCallbackChan) {
 				ret = mRegularChan->start(mFrameNum);
 				if(ret != NO_ERROR) {
@@ -1170,11 +1162,9 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 	// For take picture channel request
 	if(mPictureRequest) {
 		SprdCamera3Channel *channel;
-
 		for (size_t i = 0; i < request->num_output_buffers; i++) {
 			camera3_stream_t *stream = request->output_buffers[i].stream;
 			channel = (SprdCamera3Channel *)stream->priv;
-
 			if(channel == mPicChan || channel == mCallbackChan) {
 				ret = mPicChan->start(mFrameNum);
 				if(ret != NO_ERROR) {
@@ -1200,7 +1190,6 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 		flushRequest(request->frame_number);
 	mHDRProcessFlag = false;
 
-	HAL_LOGV("X");
 	return ret;
 }
 
@@ -1225,7 +1214,8 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info)
 	{
 		camera3_capture_result_t result;
 		camera3_notify_msg_t notify_msg;
-		HAL_LOGD("i->frame_number = %d, frame_number = %d,  i->request_id = %d", i->frame_number, frame_number,  i->request_id);
+		HAL_LOGI("i->frame_number = %d, frame_number = %d, i->request_id = %d",
+			     i->frame_number, frame_number,  i->request_id);
 
 		if (i->frame_number < frame_number) {
 			if (!i->bNotified) {
@@ -1269,7 +1259,8 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info)
 				notify_msg.message.shutter.timestamp = capture_time;
 				mCallbackOps->notify(mCallbackOps, &notify_msg);
 				i->bNotified = true;
-				HAL_LOGD("notified frame_num = %d, timestamp = %lld",i->frame_number, notify_msg.message.shutter.timestamp);
+				HAL_LOGV("notified frame_num = %d, timestamp = %lld",
+					      i->frame_number, notify_msg.message.shutter.timestamp);
 
 				SENSOR_Tag sensorInfo;
 				REQUEST_Tag requestInfo;
@@ -1328,7 +1319,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info)
 				}
 			}
 
-			HAL_LOGD("num_buffers =%d, mPendingRequest =%d",i->num_buffers, mPendingRequest);
+			HAL_LOGI("num_buffers =%d, mPendingRequest =%d",i->num_buffers, mPendingRequest);
 
 			if (0 == i->num_buffers) {
 				receive_req_max = i->receive_req_max;
@@ -1345,12 +1336,10 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info)
 		}
 	}
 
-	if (mPendingRequest != oldrequest
-		&& oldrequest >= receive_req_max) {
-		HAL_LOGI("signal request=%d", oldrequest);
+	if (mPendingRequest != oldrequest && oldrequest >= receive_req_max) {
+		HAL_LOGV("signal request=%d", oldrequest);
 		mRequestSignal.signal();
 	}
-	//HAL_LOGI("X");
 }
 
 void SprdCamera3HWI::getMetadataVendorTagOps(vendor_tag_query_ops_t * ops)
@@ -1502,7 +1491,7 @@ SprdCamera3HWI::construct_default_request_settings(const struct camera3_device *
 int SprdCamera3HWI::process_capture_request(const struct camera3_device *device,
 						camera3_capture_request_t * request)
 {
-	HAL_LOGD("mCameraOps E");
+	HAL_LOGV("mCameraOps E");
 	SprdCamera3HWI *hw = reinterpret_cast < SprdCamera3HWI * >(device->priv);
 	if (!hw) {
 		HAL_LOGE("NULL camera device");
@@ -1510,7 +1499,7 @@ int SprdCamera3HWI::process_capture_request(const struct camera3_device *device,
 	}
 
 	int ret = hw->processCaptureRequest(request);
-	HAL_LOGD("mCameraOps X");
+	HAL_LOGV("mCameraOps X");
 	return ret;
 }
 
@@ -1563,18 +1552,16 @@ int SprdCamera3HWI::close_camera_device(struct hw_device_t *device)
 {
 	int ret = NO_ERROR;
 	int id;
-	HAL_LOGI("S");
+	HAL_LOGI("E");
+
 	SprdCamera3HWI *hw = reinterpret_cast<SprdCamera3HWI *>(reinterpret_cast <camera3_device_t *>(device)->priv);
 	if (!hw) {
 		HAL_LOGE("NULL camera device");
 		return BAD_VALUE;
 	}
-	id = 	hw->mCameraId;
+	id = hw->mCameraId;
 	delete hw;
-   // after delete this object, set it is NULL.
-   /** SPRD: add { */
-   hw = NULL;
-   /** SPRD: add }*/
+	hw = NULL;
 
 #ifdef CONFIG_CAMERA_ISP
 	stopispserver();
@@ -1591,7 +1578,7 @@ int SprdCamera3HWI::close_camera_device(struct hw_device_t *device)
 	}
 
 	mCameraSessionActive = 0;
-	HAL_LOGV("X");
+	HAL_LOGI("X");
 	return ret;
 }
 

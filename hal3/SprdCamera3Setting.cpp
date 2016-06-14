@@ -3192,7 +3192,7 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 		}
 
 	tagCnt = frame_settings.entryCount();
-	HAL_LOGD("cnt %d", tagCnt);
+	HAL_LOGV("cnt %d", tagCnt);
 
 	if (tagCnt == 0) {
 		return rc;
@@ -3867,7 +3867,7 @@ SprdCamera3Setting::translateLocalToFwMetadata()
 			area[4] = s_setting[mCameraId].metaInfo.af_regions[4];
 			area[2] += area[0];
 			area[3] += area[1];
-			HAL_LOGD("AF_REGIONS, area %d %d %d %d %d", area[0], area[1], area[2], area[3], area[4]);
+			HAL_LOGV("AF_REGIONS, area %d %d %d %d %d", area[0], area[1], area[2], area[3], area[4]);
 			if(mCameraId == 0)
 				camMetadata.update(ANDROID_CONTROL_AF_REGIONS, area, 5);
 		}
@@ -3879,7 +3879,7 @@ SprdCamera3Setting::translateLocalToFwMetadata()
 			area[2] = s_setting[mCameraId].metaInfo.ae_regions[2];
 			area[3] = s_setting[mCameraId].metaInfo.ae_regions[3];
 			area[4] = s_setting[mCameraId].metaInfo.ae_regions[4];
-			HAL_LOGD("AE_REGIONS, area %d %d %d %d %d", area[0], area[1], area[2], area[3], area[4]);
+			HAL_LOGV("AE_REGIONS, area %d %d %d %d %d", area[0], area[1], area[2], area[3], area[4]);
 			camMetadata.update(ANDROID_CONTROL_AE_REGIONS, area, 5);
 		}
 	}

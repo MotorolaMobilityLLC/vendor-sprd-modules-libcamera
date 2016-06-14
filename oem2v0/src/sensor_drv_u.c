@@ -587,7 +587,7 @@ cmr_int hw_Sensor_WriteI2C(SENSOR_HW_HANDLE handle, cmr_u16 slave_addr, cmr_u8 *
 	i2c_tab.i2c_data	= cmd;
 	i2c_tab.i2c_count	= cmd_length;
 
-	CMR_LOGI("slave_addr=0x%x, ptr=0x%p, count=%d",
+	CMR_LOGV("slave_addr=0x%x, ptr=0x%p, count=%d",
 		i2c_tab.slave_addr, i2c_tab.i2c_data, i2c_tab.i2c_count);
 
 	ret = sns_dev_i2c_write(sensor_cxt, &i2c_tab);
@@ -3094,7 +3094,7 @@ cmr_int sensor_get_info_common(struct sensor_drv_context *sensor_cxt,
 		return SENSOR_FAIL;
 	}
 
-	CMR_LOGI("info = 0x%lx ", (void*)&sensor_cxt->sensor_exp_info);
+	CMR_LOGV("info = 0x%lx ", (void*)&sensor_cxt->sensor_exp_info);
 	*sensor_exp_info_pptr = &sensor_cxt->sensor_exp_info;
 	return SENSOR_SUCCESS;
 }
@@ -3342,7 +3342,7 @@ cmr_int sensor_set_exif_common(struct sensor_drv_context *sensor_cxt,
 		sensor_exif_info_ptr =
 			(EXIF_SPEC_PIC_TAKING_COND_T *)sensor_info_ptr->ioctl_func_ptr->get_exif(sensor_cxt->sensor_hw_handler, 0x00);
 	} else {
-		CMR_LOGI("the fun is null, set it to default");
+		CMR_LOGV("the fun is null, set it to default");
 		sensor_exif_info_ptr = &sensor_cxt->default_exif;
 	}
 	switch (cmd) {

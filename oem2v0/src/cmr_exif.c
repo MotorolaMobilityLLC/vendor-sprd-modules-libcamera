@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
+#define LOG_TAG "cmr_exif"
+
 #include "cmr_common.h"
 #include "cmr_exif.h"
 
-
-
-
 #define ARR_MAX_LEN 100
-
-
 
 EXIF_PRIMARY_INFO_T     exif_primary_info;
 EXIF_SPECIFIC_INFO_T    exif_specific_info;

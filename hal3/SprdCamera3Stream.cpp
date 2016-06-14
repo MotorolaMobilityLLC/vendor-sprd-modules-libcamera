@@ -128,7 +128,8 @@ int SprdCamera3Stream::buffDoneQ2(uint32_t frameNumber, buffer_handle_t *buffer)
 		mBuffNum++;
 		buff_hal->buffer_handle = buffer;
 		buff_hal->frame_number = frameNumber;
-		HAL_LOGD("Fnumber %d, handle 0x%lx, SType %d",buff_hal->frame_number,buffer, mStreamType);
+		HAL_LOGV("frame_number %d, handle 0x%lx, mStreamType %d",
+			     buff_hal->frame_number,buffer, mStreamType);
 		mBufferList.add(buff_hal);
 	}
 
@@ -170,7 +171,8 @@ int SprdCamera3Stream::buffDoneQ(uint32_t frameNumber, buffer_handle_t *buffer)
 		mBuffNum++;
 		buff_hal->buffer_handle = buffer;
 		buff_hal->frame_number = frameNumber;
-		HAL_LOGD("Fnumber %d, handle 0x%lx, SType %d",buff_hal->frame_number,buffer, mStreamType);
+		HAL_LOGV("frame_number %d, handle 0x%lx, mStreamType %d",
+		          buff_hal->frame_number,buffer, mStreamType);
 		mBufferList.add(buff_hal);
 	}
 
@@ -194,7 +196,8 @@ int SprdCamera3Stream::buffDoneDQ(uint32_t frameNumber, buffer_handle_t **buffer
 		{
 			*buffer = (*iter)->buffer_handle;
 			mMemory->unmap((*iter)->buffer_handle, &((*iter)->mem_info));
-			HAL_LOGD("Fnumber %d, SType %d",(*iter)->frame_number, mStreamType);
+			HAL_LOGV("frame_number %d, mStreamType %d",
+			          (*iter)->frame_number, mStreamType);
 			delete *iter;
 			mBufferList.erase(iter);
 
@@ -222,7 +225,8 @@ int SprdCamera3Stream::buffFirstDoneDQ(uint32_t *frameNumber, buffer_handle_t **
 		*frameNumber = (uint32_t)((*iter)->frame_number);
 		mMemory->unmap((*iter)->buffer_handle, &((*iter)->mem_info));
 
-		HAL_LOGD("buffer queue First Done DQ frame_number = %d, mStreamType = %d",(*iter)->frame_number, mStreamType);
+		HAL_LOGV("buffer queue First Done DQ frame_number = %d, mStreamType = %d",
+			  (*iter)->frame_number, mStreamType);
 
 		delete *iter;
 		mBufferList.erase(iter);

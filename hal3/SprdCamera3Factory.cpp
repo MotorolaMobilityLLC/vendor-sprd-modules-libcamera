@@ -154,7 +154,7 @@ int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info)
 	info->device_version = CAMERA_DEVICE_API_VERSION_3_2;//CAMERA_DEVICE_API_VERSION_3_0;
 	info->static_camera_characteristics = mStaticMetadata;
 	
-	HAL_LOGD("X");
+	HAL_LOGV("X");
 	return rc;
 }
 
