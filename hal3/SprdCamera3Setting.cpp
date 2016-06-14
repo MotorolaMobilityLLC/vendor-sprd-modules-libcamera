@@ -3128,12 +3128,13 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 		int32_t ae_compensat = 3;
 
 		org_ae_compensat = frame_settings.find(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION).data.i32[0];
-		GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.org_ae_exposure_compensation, org_ae_compensat, ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)
-
+		//GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.org_ae_exposure_compensation, org_ae_compensat, ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)
+		s_setting[mCameraId].controlInfo.org_ae_exposure_compensation = org_ae_compensat;
 		ae_compensat = frame_settings.find(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION).data.i32[0] + 3;
 		ae_compensat = ae_compensat<0?0:ae_compensat;
-		GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.ae_exposure_compensation, ae_compensat, ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)
-
+		//GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.ae_exposure_compensation, ae_compensat, ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)
+		s_setting[mCameraId].controlInfo.ae_exposure_compensation = ae_compensat;
+		pushAndroidParaTag(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION);
 		HAL_LOGV("ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION %d %d",  org_ae_compensat, ae_compensat);
 	}
 
