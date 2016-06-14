@@ -365,6 +365,13 @@ enum take_picture_flag {
 	TAKE_PICTURE_NEEDED
 };
 
+enum highiso_mode_type {
+	HIGHISO_MODE_NONE = 0,
+	HIGHISO_CAP_MODE,
+	HIGHISO_RAWDATA_MODE,
+	HIGHISO_MODE_MAX
+};
+
 struct img_addr {
 	cmr_uint                                addr_y;
 	cmr_uint                                addr_u;
@@ -426,7 +433,6 @@ struct video_start_param {
 	cmr_u32                                 work_mode;
 	cmr_u32                                 is_need_flash;
 	cmr_u32                                 capture_skip_num;
-	cmr_u32                                 is_highiso_mode;
 };
 
 struct memory_param {

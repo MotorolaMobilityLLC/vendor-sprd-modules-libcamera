@@ -67,6 +67,7 @@ struct isp_img_fd {
 cmr_int isp_dev_init(struct isp_dev_init_info *init_param_ptr, isp_handle *handle);
 cmr_int isp_dev_deinit(isp_handle handle);
 cmr_int isp_dev_start(isp_handle handle);
+cmr_int isp_dev_alloc_highiso_mem(isp_handle handle, struct isp_raw_data *buf, struct isp_img_size *size);
 void isp_dev_evt_reg(isp_handle handle, isp_evt_cb isp_event_cb, void *privdata);
 cmr_int isp_dev_open(isp_handle *handle, struct isp_dev_init_param *param);
 cmr_int isp_dev_close(isp_handle handle);
@@ -83,7 +84,7 @@ cmr_int isp_dev_set_img_buf(isp_handle handle, struct isp_cfg_img_buf *param);
 cmr_int isp_dev_get_img_buf(isp_handle handle, struct isp_img_read_op *param);
 cmr_int isp_dev_set_img_param(isp_handle handle, struct isp_cfg_img_param *param);
 cmr_int isp_dev_get_timestamp(isp_handle handle, cmr_u32 *sec, cmr_u32 *usec);
-cmr_int isp_dev_highiso_mode(isp_handle handle, struct highiso_data_buf *data);
+cmr_int isp_dev_highiso_mode(isp_handle handle, struct isp_raw_data *param);
 cmr_int isp_dev_cfg_scenario_info(isp_handle handle, SCENARIO_INFO_AP *data);
 cmr_int isp_dev_cfg_iso_speed(isp_handle handle, cmr_u32 *data);
 cmr_int isp_dev_cfg_awb_gain(isp_handle handle, struct isp_awb_gain_info *data);

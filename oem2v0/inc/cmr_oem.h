@@ -262,7 +262,8 @@ struct camera_context {
 	cmr_u32                  lls_shot_mode;
 	cmr_u32                  is_vendor_hdr;
 	cmr_u32                  is_pipviv_mode;
-	cmr_u32                  is_highiso_mode;
+	enum highiso_mode_type   highiso_mode;  /*highiso mode HIGHISO_CAP_MODE: normal high iso cap mode,
+                                                                         HIGHISO_RAWDATA_MODE:raw data cap on high iso mode*/
 	cmr_int                  cap_cnt;
 	cmr_u32                  is_refocus_mode;
 
@@ -294,7 +295,6 @@ struct camera_context {
 	cmr_s32                  highiso_buf_fd;
 	cmr_uint                 highiso_buf_phys_addr;
 	cmr_uint                 highiso_buf_virt_addr;
-	cmr_u32                  highiso_mode_active;
 };
 
 cmr_int camera_local_int(cmr_u32 camera_id, camera_cb_of_type callback,  void *client_data, cmr_uint is_autotest, cmr_handle *oem_handle, void* cb_of_malloc, void* cb_of_free);

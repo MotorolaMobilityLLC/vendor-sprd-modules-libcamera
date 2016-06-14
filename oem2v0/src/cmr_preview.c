@@ -236,7 +236,6 @@ struct prev_context {
 
 	/*capture*/
 	cmr_uint                        cap_mode;
-	cmr_uint                        is_highiso_mode;
 	cmr_uint                        cap_need_isp;
 	cmr_uint                        cap_need_binning;
 	struct img_size                 max_size;

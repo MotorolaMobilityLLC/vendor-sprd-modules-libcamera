@@ -611,16 +611,15 @@ void isp_dev_access_convert_awb_param(struct isp3a_awb_hw_cfg *data, struct awb_
 cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_dev_access_start_in* param_ptr)
 {
 	cmr_int                                ret = ISP_SUCCESS;
-	cmr_int                                i = 0;
 	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 	SCENARIO_INFO_AP                       input_data;
 	struct cfg_3a_info			cfg3a_info;
 	struct dld_sequence                     dldseq_info;
 	cmr_u32                                iso_gain = 0;
 	struct isp_awb_gain_info               awb_gain_info;
-	cmr_u32                                dcam_id = 0, isp_id = 0;
+	cmr_u32                                isp_id = 0;
 	struct isp_sensor_resolution_info      *resolution_ptr = NULL;
-	struct highiso_data_buf                highiso_info;
+	struct isp_raw_data                    isp_raw_mem;
 	cmr_u32                                capture_mode = 0;
 	struct isp_cfg_img_param               img_buf_param;
 	SCENARIO_INFO_AP                       tSecnarioInfo;
@@ -811,20 +810,27 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 		img_buf_param.addr[2].chn0 = 0x2FFFFFFF;
 		img_buf_param.addr[3].chn0 = 0x2FFFFFFF;
 		ISP_LOGI("set still image buffer param img_id %d", img_buf_param.img_id);
-
 		ret = isp_dev_set_img_param(cxt->isp_driver_handle, &img_buf_param);
-		highiso_info.capture_mode = param_ptr->common_in.capture_mode;
-		highiso_info.raw_buf.fd = param_ptr->common_in.raw_buf_fd;
-		highiso_info.raw_buf.phy_addr = param_ptr->common_in.raw_buf_phys_addr;
-		highiso_info.raw_buf.virt_addr = param_ptr->common_in.raw_buf_virt_addr;
-		highiso_info.raw_buf.size = param_ptr->common_in.raw_buf_size;
-		highiso_info.raw_buf.width = param_ptr->common_in.raw_buf_width;
-		highiso_info.raw_buf.height = param_ptr->common_in.raw_buf_height;
-		highiso_info.highiso_buf.fd = param_ptr->common_in.highiso_buf_fd;
-		highiso_info.highiso_buf.phy_addr = param_ptr->common_in.highiso_buf_phys_addr;
-		highiso_info.highiso_buf.virt_addr = param_ptr->common_in.highiso_buf_virt_addr;
-		highiso_info.highiso_buf.size = param_ptr->common_in.highiso_buf_size;
-		ret = isp_dev_highiso_mode(cxt->isp_driver_handle, &highiso_info);
+
+		memset(&isp_raw_mem, 0, sizeof(isp_raw_mem));
+		isp_raw_mem.fd = param_ptr->common_in.raw_buf_fd;
+		isp_raw_mem.phy_addr = param_ptr->common_in.raw_buf_phys_addr;
+		isp_raw_mem.virt_addr = param_ptr->common_in.raw_buf_virt_addr;
+		isp_raw_mem.size = param_ptr->common_in.raw_buf_size;
+		isp_raw_mem.width = param_ptr->common_in.raw_buf_width;
+		isp_raw_mem.height = param_ptr->common_in.raw_buf_height;
+		ret = isp_dev_set_rawaddr(cxt->isp_driver_handle, &isp_raw_mem);
+		ISP_LOGI("raw10_buf fd 0x%x phy_addr 0x%x virt_addr 0x%x", isp_raw_mem.fd,
+		isp_raw_mem.phy_addr, isp_raw_mem.virt_addr);
+
+		memset(&isp_raw_mem, 0, sizeof(isp_raw_mem));
+		isp_raw_mem.fd = param_ptr->common_in.highiso_buf_fd;
+		isp_raw_mem.phy_addr = param_ptr->common_in.highiso_buf_phys_addr;
+		isp_raw_mem.virt_addr = param_ptr->common_in.highiso_buf_virt_addr;
+		isp_raw_mem.size = param_ptr->common_in.highiso_buf_size;
+		isp_raw_mem.width = param_ptr->common_in.raw_buf_width;
+		isp_raw_mem.height = param_ptr->common_in.raw_buf_height;
+		ret = isp_dev_highiso_mode(cxt->isp_driver_handle, &isp_raw_mem);
 		if (ret) {
 			ISP_LOGE("failed to set highiso mode %ld", ret);
 			goto exit;
@@ -859,13 +865,14 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 	struct isp_cfg_img_param               img_param;
 	struct isp_awb_gain_info               awb_gain;
 	struct dld_sequence                            dldseq;
-	cmr_u32                                dcam_id = 0;
 	struct isp_cfg_img_param               img_buf_param;
 	cmr_u32                                iso_gain = 0;
+	cmr_u32                                cap_mode = 0;
 	struct isp_raw_data                    isp_raw_mem;
 	struct isp_img_mem                     img_mem;
-	cmr_int                                cnt = 0;
 	struct isp_sensor_resolution_info      *resolution_ptr = NULL;
+	struct isp_raw_data                    highiso_info;
+	struct isp_img_size                    size;
 
 	UNUSED(output_ptr);
 	ISP_CHECK_HANDLE_VALID(isp_dev_handle);
@@ -875,11 +882,14 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 		goto exit;
 	}
 
-	memset(&isp_raw_mem, 0, sizeof(struct isp_raw_data));
-	isp_raw_mem.capture_mode = ISP_CAP_MODE_RAW_DATA;
-	isp_dev_set_capture_mode(cxt->isp_driver_handle, isp_raw_mem.capture_mode);
+	if (2 == input_ptr->cap_mode)
+		cap_mode = ISP_CAP_MODE_HIGHISO_RAW_CAP;
+	else
+		cap_mode = ISP_CAP_MODE_RAW_DATA;
+	isp_dev_set_capture_mode(cxt->isp_driver_handle, cap_mode);
+	ISP_LOGI("cap_mode = %d", cap_mode);
 
-	ISP_LOGI("isp_raw_data.capture_mode = %d", isp_raw_mem.capture_mode);
+	memset(&isp_raw_mem, 0, sizeof(struct isp_raw_data));
 	isp_raw_mem.fd = input_ptr->dst2_frame.img_fd.y;
 	isp_raw_mem.phy_addr = input_ptr->dst2_frame.img_addr_phy.chn0;
 	isp_raw_mem.virt_addr = input_ptr->dst2_frame.img_addr_vir.chn0;
@@ -921,6 +931,22 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 
 	isp_dev_set_fetch_src_buf(cxt->isp_driver_handle, &img_mem);
 
+	if (ISP_CAP_MODE_HIGHISO_RAW_CAP == cap_mode) {
+		size.height = input_ptr->src_frame.img_size.h;
+		size.width = input_ptr->src_frame.img_size.w;
+		ret = isp_dev_alloc_highiso_mem(cxt->isp_driver_handle, &highiso_info, &size);
+		if (ret) {
+			ISP_LOGE("failed to alloc highiso mem %ld", ret);
+			goto exit;
+		}
+
+		ret = isp_dev_highiso_mode(cxt->isp_driver_handle, &highiso_info);
+		if (ret) {
+			ISP_LOGE("failed to set highiso mode %ld", ret);
+			goto exit;
+		}
+	}
+
 #ifdef FPGA_TEST
 	resolution_ptr = &input_ptr->resolution_info;
 	memset(&scenario_in, 0, sizeof(scenario_in));
@@ -953,10 +979,10 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 
 	scenario_in.tBayerSCLOutInfo.uwBayerSCLOutWidth = 0;
 	scenario_in.tBayerSCLOutInfo.uwBayerSCLOutHeight = 0;
-	if (ISP_CAP_MODE_RAW_DATA == isp_raw_mem.capture_mode) {
-		ISP_LOGI("bayer scaler wxh %dx%d\n", scenario_in.tSensorInfo.uwWidth, scenario_in.tSensorInfo.uwHeight);
+	if (ISP_CAP_MODE_RAW_DATA == cap_mode || ISP_CAP_MODE_HIGHISO_RAW_CAP == cap_mode) {
 		scenario_in.tBayerSCLOutInfo.uwBayerSCLOutWidth = 960;//cxt->input_param.init_param.size.w;
 		scenario_in.tBayerSCLOutInfo.uwBayerSCLOutHeight = 720;//cxt->input_param.init_param.size.h;
+		ISP_LOGI("bayer scaler wxh %dx%d\n", scenario_in.tSensorInfo.uwWidth, scenario_in.tSensorInfo.uwHeight);
 	}
 	ISP_LOGI("size %dx%d, line time %d frameRate %d", scenario_in.tSensorInfo.uwWidth, scenario_in.tSensorInfo.uwHeight,
 		scenario_in.tSensorInfo.udLineTime, scenario_in.tSensorInfo.uwFrameRate);
@@ -986,8 +1012,7 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 
 	/*set preview image buffer format*/
 	memset(&img_buf_param, 0, sizeof(img_buf_param));
-	ISP_LOGV("set isp_raw_data capture mode = %d", isp_raw_mem.capture_mode);
-	if (ISP_CAP_MODE_RAW_DATA == isp_raw_mem.capture_mode) {
+	if (ISP_CAP_MODE_RAW_DATA == cap_mode || ISP_CAP_MODE_HIGHISO_RAW_CAP == cap_mode) {
 		img_buf_param.format = ISP_OUT_IMG_YUY2;
 		img_buf_param.img_id = ISP_IMG_PREVIEW;
 		img_buf_param.dram_eb = 0;
@@ -1087,8 +1112,11 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 	}
 
 	ret = isp_dev_stream_on(cxt->isp_driver_handle);
-
-	usleep(110*1000);
+	if (ISP_CAP_MODE_HIGHISO_RAW_CAP == cap_mode) {
+		usleep(500*1000);
+	} else {
+		usleep(110*1000);
+	}
 
 	isp_dev_stream_off(cxt->isp_driver_handle);
 	isp_dev_stop(cxt->isp_driver_handle);

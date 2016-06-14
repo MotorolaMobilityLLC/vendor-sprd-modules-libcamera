@@ -660,6 +660,7 @@ cmr_int isp_proc_start(cmr_handle isp_handle, struct ips_in_param *input_ptr, st
 		goto  exit;
 	}
 
+	dev_in.cap_mode = input_ptr->cap_mode;
 	memcpy(&dev_in.src_frame, &input_ptr->src_frame, sizeof(struct isp_img_frm));
 	memcpy(&dev_in.dst_frame, &input_ptr->dst_frame, sizeof(struct isp_img_frm));
 	memcpy(&dev_in.dst2_frame, &input_ptr->dst2_frame, sizeof(struct isp_img_frm));

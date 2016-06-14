@@ -290,6 +290,7 @@ enum isp_capture_mode {
 	ISP_CAP_MODE_BRACKET,
 	ISP_CAP_MODE_RAW_DATA,
 	ISP_CAP_MODE_HIGHISO,
+	ISP_CAP_MODE_HIGHISO_RAW_CAP,
 	ISP_CAP_MODE_MAX
 };
 
@@ -568,6 +569,7 @@ struct ips_in_param {
 	cmr_u32 dst2_slice_height;
 	struct isp_sensor_resolution_info resolution_info;
 	struct isp_sensor_fps_info sensor_fps;
+	cmr_u32 cap_mode;
 };
 
 struct ips_out_param {

@@ -733,7 +733,7 @@ void camera_isp_dev_evt_cb(cmr_int evt, void *data, cmr_u32 data_len, void *priv
 	cmr_u32                         channel_id;
 	cmr_handle                      receiver_handle;
 
-	cxt->is_highiso_mode = 0;
+	cxt->highiso_mode = 0;
 	if (!cxt || !data || !privdata) {
 		CMR_LOGE("error param, handle 0x%lx data 0x%lx ", (cmr_uint)cxt, (cmr_uint)data);
 		return;
@@ -4631,6 +4631,8 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle, struct 
 		in_param.resolution_info.max_gain = sns_ex_info_ptr->max_adgain;
 		CMR_LOGI("ips_in_param:max_gain:%d ",in_param.resolution_info.max_gain);
 
+		in_param.cap_mode = cxt->highiso_mode;
+		CMR_LOGI("ips_in_param:cap_mode %d", in_param.cap_mode);
 		ret = isp_proc_start(isp_cxt->isp_handle, &in_param, &out_param);
 
 		if (ret) {
@@ -4864,7 +4866,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 
 	ispmw_dev_buf_cfg_evt_cb(isp_cxt->isp_handle, camera_isp_dev_evt_cb);
 
-	if (cxt->is_highiso_mode == 1) {
+	if (HIGHISO_CAP_MODE == cxt->highiso_mode) {
 		highiso_buf_num = 1;
 		isp_raw_buf_num = 1;
 		raw_buf_size = isp_param.size.w * isp_param.size.h * 4 / 3 * 2;
@@ -4967,7 +4969,7 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle, cmr_
 		goto exit;
 	}
 
-	if (cxt->is_highiso_mode)
+	if (HIGHISO_CAP_MODE == cxt->highiso_mode)
 		param_ptr->cap_inf_cfg.buffer_cfg_isp = 1;
 	else
 		param_ptr->cap_inf_cfg.buffer_cfg_isp = 0;
@@ -5028,7 +5030,7 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle, cmr_
 
 	param_ptr->buffer.channel_id = *channel_id; /*update the channel id*/
 
-	if (cxt->is_highiso_mode) {
+	if (HIGHISO_CAP_MODE == cxt->highiso_mode) {
 		ret = camera_isp_buff_cfg(cxt, &param_ptr->buffer);
 	}
 	else
@@ -5055,7 +5057,7 @@ cmr_int camera_channel_buff_cfg (cmr_handle oem_handle, struct buffer_cfg *buf_c
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}
-	if (cxt->is_highiso_mode) {
+	if (HIGHISO_CAP_MODE == cxt->highiso_mode) {
 		ret = camera_isp_buff_cfg(cxt, buf_cfg);
 	}
 	else
@@ -5083,7 +5085,7 @@ cmr_int camera_channel_cap_cfg(cmr_handle oem_handle,
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}
-	if (cxt->is_highiso_mode)
+	if (HIGHISO_CAP_MODE == cxt->highiso_mode)
 		cap_cfg->buffer_cfg_isp = 1;
 	else
 		cap_cfg->buffer_cfg_isp = 0;
@@ -6071,6 +6073,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	struct jpeg_context            *jpeg_cxt = &cxt->jpeg_cxt;
 	struct snapshot_context        *snp_cxt = &cxt->snp_cxt;
 	struct setting_cmd_parameter   setting_param;
+	char                     value[PROPERTY_VALUE_MAX];
 	cmr_u32                        is_cfg_snp = 0;
 	cmr_u32                        rotation = 0;
 
@@ -6363,9 +6366,19 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 		CMR_LOGE("failed to get preview sprd high iso enabled flag %ld", ret);
 		goto exit;
 	}
-	out_param_ptr->sprd_highiso_enabled = setting_param.cmd_type_value;
-	cxt->is_highiso_mode = setting_param.cmd_type_value;
-	CMR_LOGI("sprd highiso_enabled flag %d", out_param_ptr->sprd_highiso_enabled);
+	//camera apk open high iso feature, cmd_type_value value is 1,the high iso mode set HIGHISO_CAP_MODE
+	if (setting_param.cmd_type_value) {
+		property_get("persist.sys.camera.raw.mode", value, "jpeg");
+		//on high iso mode,take  raw data picture,the high iso mode set HIGHISO_RAWDATA_MODE
+		if (!strcmp(value, "raw")) {
+			out_param_ptr->sprd_highiso_enabled = 0;
+			cxt->highiso_mode = HIGHISO_RAWDATA_MODE;
+		} else {
+			out_param_ptr->sprd_highiso_enabled = 1;
+			cxt->highiso_mode = HIGHISO_CAP_MODE;
+		}
+	}
+	CMR_LOGI("sprd highiso_mode %d", cxt->highiso_mode);
 
 	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_SPRD_EIS_ENABLED, &setting_param);
 	if (ret) {

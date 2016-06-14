@@ -21,6 +21,8 @@
 #include "isp_drv.h"
 #include "isp_common_types.h"
 
+#define BUF_BLOCK_SIZE                               (1024 * 1024)
+
 struct img_addr {
 	cmr_uint                                addr_y;
 	cmr_uint                                addr_u;
@@ -260,6 +262,41 @@ cmr_int isp_dev_start(isp_handle handle)
 	}
 
 exit:
+	return ret;
+}
+
+cmr_int isp_dev_alloc_highiso_mem(isp_handle handle, struct isp_raw_data *buf, struct isp_img_size *size)
+{
+	cmr_int                  ret = 0;
+	struct isp_file          *file = (struct isp_file*)handle;
+	cmr_u32                  buf_num = 1;
+	cmr_u32                  buf_size = 0, num = 0;
+
+	if (!file || !buf || !size) {
+		ISP_LOGE("param is null error.");
+		return -1;
+	}
+	if (file->init_param.alloc_cb) {
+		buf_size = size->width * size->height * 27 / 10;
+		num = buf_size / BUF_BLOCK_SIZE;
+		if (buf_size >  num * BUF_BLOCK_SIZE)
+			num++;
+		buf_size = num * BUF_BLOCK_SIZE;
+		file->init_param.alloc_cb(CAMERA_SNAPSHOT_HIGHISO,
+					  file->init_param.mem_cb_handle,
+					  &buf_size, &buf_num,
+					  (cmr_uint*)&buf->phy_addr,
+					  (cmr_uint*)&buf->virt_addr,
+					  &buf->fd);
+		buf->width = size->width;
+		buf->height = size->height;
+		buf->size = buf_size;
+		ISP_LOGD("highiso_buf fd 0x%x phy_addr 0x%x virt_addr 0x%x size 0x%x",
+			buf->fd, buf->phy_addr, buf->virt_addr, buf_size);
+	}
+
+	ISP_LOGE("done");
+
 	return ret;
 }
 
@@ -1926,46 +1963,22 @@ cmr_int isp_dev_set_init_param(isp_handle *handle, struct isp_dev_init_param *in
 	return ret;
 }
 
-cmr_int isp_dev_highiso_mode(isp_handle handle, struct highiso_data_buf *data)
+cmr_int isp_dev_highiso_mode(isp_handle handle, struct isp_raw_data *param)
 {
 	cmr_int ret = 0;
 	struct isp_file *file = NULL;
-	struct isp_raw_data raw_info;
-	struct isp_hiso_data hiso_info;
 
 	if (!handle) {
 		ISP_LOGE("handle is null error.");
 		return -1;
 	}
-	if (!data) {
+	if (!param) {
 		ISP_LOGE("Param is null error.");
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
-
-	raw_info.fd = data->raw_buf.fd;
-	raw_info.phy_addr = data->raw_buf.phy_addr;
-	raw_info.virt_addr = data->raw_buf.virt_addr;
-	raw_info.size = data->raw_buf.size;
-	raw_info.width = data->raw_buf.width;
-	raw_info.height = data->raw_buf.height;
-	raw_info.capture_mode = data->capture_mode;
-	ISP_LOGD("debug highiso raw fd = 0x%x, phy = 0x%x, vir = 0x%x, size = 0x%x",
-		 raw_info.fd, raw_info.phy_addr, raw_info.virt_addr, raw_info.size);
-
-	hiso_info.fd = data->highiso_buf.fd;
-	hiso_info.phy_addr = data->highiso_buf.phy_addr;
-	hiso_info.virt_addr = data->highiso_buf.virt_addr;
-	hiso_info.size = data->highiso_buf.size;
-	ISP_LOGD("debug highiso fd = 0x%x, highiso phy = 0x%x, highiso vir = 0x%x, size = 0x%x",
-		 hiso_info.fd, hiso_info.phy_addr,hiso_info.virt_addr, hiso_info.size);
-	ret = ioctl(file->fd, ISP_IO_SET_RAW10, &raw_info);
-	if (ret) {
-		ISP_LOGE("ISP_IO_SET_RAW10 error.");
-	}
-
-	ret = ioctl(file->fd, ISP_IO_SET_HISO, &hiso_info);
+	ret = ioctl(file->fd, ISP_IO_SET_HISO, param);
 	if (ret) {
 		ISP_LOGE("ISP_IO_SET_HISO error.");
 	}
