@@ -827,7 +827,9 @@ static cmr_int setting_set_auto_exposure_mode(struct setting_component *cpt,
 			CMR_LOGI("trim rect (%ld,%ld,%ld,%ld)",trim.start_x,trim.start_y,trim.end_x,trim.end_y );
 			cpt->is_touch_focus  =1;
 			if (trim.end_x <= (uint32_t)trim.start_x
-			|| trim.end_y <= (uint32_t)trim.start_y)
+			|| trim.end_y <= (uint32_t)trim.start_y
+			||(cmr_s32)trim.end_x <=0
+			||(cmr_s32)trim.end_y <=0)
 			{
 				cpt->is_touch_focus  = 0;
 			}
