@@ -316,8 +316,8 @@ enum common_isp_cmd_type {
 	COM_ISP_GET_EXIF_DEBUG_INFO,
 	COM_ISP_GET_CUR_ADGAIN_EXP,
 	COM_ISP_SET_FLASH_MODE,
-	COM_ISP_GET_YSTAT,
-	COM_ISP_SET_PREVIEW_YHIST,
+	COM_ISP_GET_YIMG_INFO,
+	COM_ISP_SET_PREVIEW_YIMG,
 	COM_ISP_TYPE_MAX
 };
 
@@ -697,7 +697,7 @@ struct common_isp_cmd_param {
 		struct cmr_range_fps_param              range_fps;
 		struct isp_info                         isp_dbg_info;
 		struct isp_adgain_exp_info              isp_adgain;
-		struct isp_yhist_info                   isp_yhist;
+		struct isp_yimg_info                    isp_yimg;
 	};
 };
 

@@ -301,8 +301,8 @@ static cmr_int isp3a_start_awb_process(cmr_handle isp_3a_handle, struct isp3a_st
 static cmr_int isp3a_handle_ae_result(cmr_handle isp_3a_handle, struct ae_ctrl_callback_in *result_ptr);
 static cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start* input_ptr);
 static cmr_int isp3a_stop(cmr_handle isp_3a_handle);
-static cmr_int isp3a_get_yhist_info(cmr_handle isp_3a_handle, void *param_ptr);
-static cmr_int isp3a_set_prev_yhist(cmr_handle isp_3a_handle, void *param_ptr);
+static cmr_int isp3a_get_yimg_info(cmr_handle isp_3a_handle, void *param_ptr);
+static cmr_int isp3a_set_prev_yimg(cmr_handle isp_3a_handle, void *param_ptr);
 
 
 static struct isp3a_ctrl_io_func s_isp3a_ioctrl_tab[ISP_CTRL_MAX] = {
@@ -390,11 +390,11 @@ static struct isp3a_ctrl_io_func s_isp3a_ioctrl_tab[ISP_CTRL_MAX] = {
 	{ISP_CTRL_SET_AE_FIX_FRAM_DURA,    isp3a_set_ae_fix_frame_duration},
 	{ISP_CTRL_SET_AE_MANUAL_EXPTIME,   isp3a_set_ae_manual_exptime},
 	{ISP_CTRL_SET_AE_MANUAL_GAIN,      isp3a_set_ae_manual_gain},
-	{ISP_CTRL_SET_AE_MANUAL_ISO,      isp3a_set_ae_manual_iso},
+	{ISP_CTRL_SET_AE_MANUAL_ISO,       isp3a_set_ae_manual_iso},
 	{ISP_CTRL_SET_AE_ENGINEER_MODE,    isp3a_set_ae_engineer_mode},
 	{ISP_CTRL_SET_AUX_SENSOR_INFO,     isp3a_set_aux_sensor_info},
-	{ISP_CTRL_GET_YSTAT,               isp3a_get_yhist_info},
-	{ISP_CTRL_SET_PREV_YHIST,          isp3a_set_prev_yhist},
+	{ISP_CTRL_GET_YIMG_INFO,           isp3a_get_yimg_info},
+	{ISP_CTRL_SET_PREV_YIMG,           isp3a_set_prev_yimg},
 };
 
 /*************************************INTERNAK FUNCTION ***************************************/
@@ -3867,15 +3867,15 @@ cmr_int isp_3a_fw_get_awb_gain(cmr_handle isp_3a_handle, struct isp_awb_gain *ga
 	return ret;
 }
 
-cmr_int isp3a_get_yhist_info(cmr_handle isp_3a_handle, void *param_ptr)
+cmr_int isp3a_get_yimg_info(cmr_handle isp_3a_handle, void *param_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
-	struct isp_yhist_info                       *info_ptr = (struct isp_yhist_info*)param_ptr;
+	struct isp_yimg_info                        *info_ptr = (struct isp_yimg_info*)param_ptr;
 	struct af_ctrl_param_out                    af_out;
 
 	cmr_bzero(&af_out, sizeof(af_out));
-	ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_GET_YHIST, NULL, &af_out);
+	ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_GET_YIMG, NULL, &af_out);
 	if (!ret) {
 		ISP_LOGI("%d", af_out.y_info.in_proc[0]);
 		memcpy(info_ptr->yaddr, af_out.y_info.yaddr, sizeof(info_ptr->yaddr));
@@ -3885,18 +3885,18 @@ cmr_int isp3a_get_yhist_info(cmr_handle isp_3a_handle, void *param_ptr)
 	return ret;
 }
 
-static cmr_int isp3a_set_prev_yhist(cmr_handle isp_3a_handle, void *param_ptr)
+static cmr_int isp3a_set_prev_yimg(cmr_handle isp_3a_handle, void *param_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
-	cmr_uint                                    *yhist = param_ptr;
+	cmr_uint                                    *yimg = param_ptr;
 
 	if (!param_ptr) {
 		ISP_LOGW("input is NULL");
 		goto exit;
 	}
 
-	ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_SET_Y_HIST_INFO, (void *)*yhist, NULL);
+	ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_SET_YIMG_INFO, (void *)*yimg, NULL);
 
 exit:
 	return ret;

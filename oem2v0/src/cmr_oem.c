@@ -220,8 +220,8 @@ static cmr_uint camera_copy_sensor_fps_info_to_isp(struct isp_sensor_fps_info *o
 static cmr_uint camera_copy_sensor_ex_info_to_isp(struct isp_sensor_ex_info *out_isp_sn_ex_info,
 		struct sensor_ex_info *in_sn_ex_info);
 static cmr_uint camera_sensor_color_to_isp_color(cmr_u32 *isp_color, cmr_u32 sensor_color);
-static cmr_int camera_preview_get_isp_yhist(cmr_handle oem_handle, cmr_u32 camera_id, struct isp_yhist_info *yhist);
-static cmr_int camera_preview_set_yhist_to_isp(cmr_handle oem_handle, cmr_u32 camera_id, struct yhist_info *yhist);
+static cmr_int camera_preview_get_isp_yimg(cmr_handle oem_handle, cmr_u32 camera_id, struct isp_yimg_info *yimg);
+static cmr_int camera_preview_set_yimg_to_isp(cmr_handle oem_handle, cmr_u32 camera_id, struct yimg_info *yimg);
 
 extern int32_t isp_calibration_get_info(struct isp_data_t *golden_info, struct isp_cali_info_t *cali_info);
 extern int32_t isp_calibration(struct isp_cali_param *param, struct isp_data_t *result);
@@ -3112,8 +3112,8 @@ cmr_int camera_preview_init(cmr_handle  oem_handle)
 	init_param.ops.capture_post_proc = camera_capture_post_proc;
 	init_param.ops.sensor_open = camera_open_sensor;
 	init_param.ops.sensor_close = camera_close_sensor;
-	init_param.ops.get_isp_yhist = camera_preview_get_isp_yhist;
-	init_param.ops.set_preview_yhist = camera_preview_set_yhist_to_isp;
+	init_param.ops.get_isp_yimg = camera_preview_get_isp_yimg;
+	init_param.ops.set_preview_yimg = camera_preview_set_yimg_to_isp;
 	init_param.ops.get_sensor_fps_info = camera_get_sensor_fps_info;
 	init_param.ops.get_dual_sensor_otp = camera_get_dual_otpinfo;
 	init_param.ops.isp_buff_cfg = camera_isp_buff_cfg;
@@ -5963,14 +5963,14 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type, struct common
 		isp_param = param_ptr->cmd_value;
 		CMR_LOGI("flash mode %d", param_ptr->cmd_value);
 		break;
-	case COM_ISP_GET_YSTAT:
-		isp_cmd = ISP_CTRL_GET_YSTAT;
+	case COM_ISP_GET_YIMG_INFO:
+		isp_cmd = ISP_CTRL_GET_YIMG_INFO;
 		ptr_flag = 1;
-		isp_param_ptr = (void*)&param_ptr->isp_yhist;
-		CMR_LOGE("COM_ISP_GET_YSTAT %p %d", isp_param, isp_param_ptr);
+		isp_param_ptr = (void*)&param_ptr->isp_yimg;
+		CMR_LOGE("COM_ISP_GET_YIMG_INFO %p %d", isp_param, isp_param_ptr);
 		break;
-	case COM_ISP_SET_PREVIEW_YHIST:
-		isp_cmd = ISP_CTRL_SET_PREV_YHIST;
+	case COM_ISP_SET_PREVIEW_YIMG:
+		isp_cmd = ISP_CTRL_SET_PREV_YIMG;
 		isp_param = param_ptr->cmd_value;
 		break;
 
@@ -8005,45 +8005,45 @@ static cmr_uint camera_sensor_color_to_isp_color(cmr_u32 *isp_color, cmr_u32 sen
 	return CMR_CAMERA_SUCCESS;
 }
 
-cmr_int camera_preview_get_isp_yhist(cmr_handle oem_handle, cmr_u32 camera_id, struct isp_yhist_info *yhist)
+cmr_int camera_preview_get_isp_yimg(cmr_handle oem_handle, cmr_u32 camera_id, struct isp_yimg_info *yimg)
 {
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 	struct common_isp_cmd_param    isp_param = {0};
 
-	if (!oem_handle || NULL == yhist) {
+	if (!oem_handle || NULL == yimg) {
 		CMR_LOGE("in parm error");
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}
 	isp_param.camera_id = camera_id;
-	ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_YSTAT, &isp_param);
+	ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_YIMG_INFO, &isp_param);
 	if (ret) {
 		CMR_LOGE("get isp y stat error %d", ret);
 		goto exit;
 	}
-	memcpy(yhist, &isp_param.isp_yhist, sizeof(struct isp_yhist_info));
-	CMR_LOGI("%d", isp_param.isp_yhist.lock[0]);
+	memcpy(yimg, &isp_param.isp_yimg, sizeof(struct isp_yimg_info));
+	CMR_LOGI("%d", isp_param.isp_yimg.lock[0]);
 
 exit:
 	return ret;
 }
 
-cmr_int camera_preview_set_yhist_to_isp(cmr_handle oem_handle, cmr_u32 camera_id, struct yhist_info *yhist)
+cmr_int camera_preview_set_yimg_to_isp(cmr_handle oem_handle, cmr_u32 camera_id, struct yimg_info *yimg)
 {
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 	struct common_isp_cmd_param    isp_param = {0};
 
-	if (!oem_handle || NULL == yhist) {
+	if (!oem_handle || NULL == yimg) {
 		CMR_LOGE("in parm error");
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}
 
 	isp_param.camera_id = camera_id;
-	isp_param.cmd_value = (cmr_uint)yhist;
-	ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_PREVIEW_YHIST, &isp_param);
+	isp_param.cmd_value = (cmr_uint)yimg;
+	ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_PREVIEW_YIMG, &isp_param);
 
 exit:
 	return ret;

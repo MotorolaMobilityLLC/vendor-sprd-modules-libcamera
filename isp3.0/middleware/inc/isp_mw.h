@@ -269,8 +269,8 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SET_AE_MANUAL_GAIN,
 	ISP_CTRL_SET_AE_MANUAL_ISO,
 	ISP_CTRL_SET_AE_ENGINEER_MODE,
-	ISP_CTRL_GET_YSTAT,
-	ISP_CTRL_SET_PREV_YHIST,
+	ISP_CTRL_GET_YIMG_INFO,
+	ISP_CTRL_SET_PREV_YIMG,
 
 	/*
 	 * warning if you wanna send async msg
@@ -446,12 +446,12 @@ struct isp_adgain_exp_info {
 	cmr_u32 exp_time;
 };
 
-struct isp_yhist_info {
+struct isp_yimg_info {
 	cmr_uint yaddr[2];
 	cmr_u32 lock[2];
 };
 
-struct yhist_info {
+struct yimg_info {
 	cmr_uint                                  y_addr[2];
 	cmr_uint                                  y_size;
 	cmr_s32                                   ready[2];

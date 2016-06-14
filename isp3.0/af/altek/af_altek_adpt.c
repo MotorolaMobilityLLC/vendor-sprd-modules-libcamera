@@ -1245,7 +1245,7 @@ static cmr_int afaltek_adpt_set_imgbuf(cmr_handle adpt_handle, void *in)
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct allib_af_input_image_buf_t img_buf;
 	struct allib_af_input_set_param_t p;
-	struct yhist_info *y_info = (struct yhist_info *)in;
+	struct yimg_info *y_info = (struct yimg_info *)in;
 
 	if (NULL == y_info) {
 		ISP_LOGE("param error %p", y_info);
@@ -1751,7 +1751,7 @@ static cmr_int afaltek_adpt_inctrl(cmr_handle adpt_handle, cmr_int cmd,
 	case AF_CTRL_CMD_SET_UPDATE_AUX_SENSOR:
 		ret = afaltek_adpt_update_aux_sensor(adpt_handle, in);
 		break;
-	case AF_CTRL_CMD_SET_Y_HIST_INFO:
+	case AF_CTRL_CMD_SET_YIMG_INFO:
 		ret = afaltek_adpt_set_imgbuf(adpt_handle, in);
 		break;
 	default:
@@ -1851,7 +1851,7 @@ cmr_int afaltek_adpt_get_debug_info(cmr_handle adpt_handle, struct allib_af_get_
 	return ret;
 }
 
-static cmr_int afaltek_adpt_get_yhist(cmr_handle adpt_handle, struct af_ctrl_y_info_t *y_res)
+static cmr_int afaltek_adpt_get_yimg(cmr_handle adpt_handle, struct af_ctrl_y_info_t *y_res)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
@@ -1897,8 +1897,8 @@ static cmr_int afaltek_adpt_outctrl(cmr_handle adpt_handle, cmr_int cmd,
 	case AF_CTRL_CMD_GET_DEBUG_INFO:
 		ret = afaltek_adpt_get_debug_info(adpt_handle, (struct allib_af_get_data_info_t *)out);
 		break;
-	case AF_CTRL_CMD_GET_YHIST:
-		ret = afaltek_adpt_get_yhist(adpt_handle, (struct af_ctrl_y_info_t *)out);
+	case AF_CTRL_CMD_GET_YIMG:
+		ret = afaltek_adpt_get_yimg(adpt_handle, (struct af_ctrl_y_info_t *)out);
 		break;
 	default:
 		ISP_LOGE("failed to case cmd = %ld", cmd);

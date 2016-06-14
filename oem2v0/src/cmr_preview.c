@@ -5487,25 +5487,25 @@ cmr_int prev_y_info_copy_to_isp(struct prev_handle *handle,
 	cmr_uint                i = 0;
 	cmr_uint                index = 0xff;
 	struct prev_context     *prev_cxt = NULL;
-	struct yhist_info       y_info = {0};
-	struct isp_yhist_info   isp_yhist = {0};
+	struct yimg_info        y_info = { 0 };
+	struct isp_yimg_info    isp_yimg = { 0 };
 
 	prev_cxt = &handle->prev_cxt[camera_id];
 
-	if (!handle->ops.get_isp_yhist || !handle->ops.set_preview_yhist) {
+	if (!handle->ops.get_isp_yimg || !handle->ops.set_preview_yimg) {
 		CMR_LOGE("ops null");
 		goto exit;
 	}
 	/* get isp user buffer status */
-	ret = handle->ops.get_isp_yhist(handle->oem_handle,
-				  camera_id, &isp_yhist);
+	ret = handle->ops.get_isp_yimg(handle->oem_handle,
+				  camera_id, &isp_yimg);
 	if (ret) {
-		CMR_LOGE("get isp yhist error");
+		CMR_LOGE("get isp yimg error");
 		goto exit;
 	}
 
 	for (i = 0; i < 2; i++) {
-		if (0 == isp_yhist.lock[i]) {
+		if (0 == isp_yimg.lock[i]) {
 			index = i;
 			break;
 		}
@@ -5527,15 +5527,16 @@ cmr_int prev_y_info_copy_to_isp(struct prev_handle *handle,
 	y_info.ready[index] = 1;
 	for (i = 0; i < 2; i++)
 		y_info.y_addr[i] = prev_cxt->prev_virt_y_addr_array[i];
-	ret = handle->ops.set_preview_yhist(handle->oem_handle,
+	ret = handle->ops.set_preview_yimg(handle->oem_handle,
 					    camera_id, &y_info);
 	if (ret)
-		CMR_LOGE("set_preview_yhist err %d", ret);
+		CMR_LOGE("set_preview_yimg err %d", ret);
 
 exit:
 	return ret;
 }
 #endif
+
 cmr_int prev_construct_frame(struct prev_handle *handle,
 				cmr_u32 camera_id,
 				struct frm_info *info,
