@@ -3305,7 +3305,8 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_res
 				ret = CMR_CAMERA_FAIL;
 				goto exit;
 			}
-
+			video_param.live_view_sz.width = prev_cxt->actual_prev_size.width;
+			video_param.live_view_sz.height = prev_cxt->actual_prev_size.height;
 			ret = handle->ops.isp_start_video(handle->oem_handle, &video_param);
 			if (ret) {
 				CMR_LOGE("isp start video failed");
@@ -3773,6 +3774,7 @@ cmr_int prev_free_prev_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 				  handle->oem_handle,
 				  prev_cxt->prev_phys_y_addr_array,
 				  prev_cxt->prev_virt_y_addr_array,
+				  prev_cxt->prev_mfd_y_array,
 				  prev_cxt->prev_mem_y_num);
 #endif
 		cmr_bzero(prev_cxt->prev_phys_addr_array, (PREV_FRM_CNT + PREV_ROT_FRM_CNT)*sizeof(cmr_uint));
@@ -6077,7 +6079,8 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 			goto exit;
 		}
 
-
+		video_param.live_view_sz.width = prev_cxt->actual_prev_size.width;
+		video_param.live_view_sz.height = prev_cxt->actual_prev_size.height;
 		ret = handle->ops.isp_start_video(handle->oem_handle, &video_param);
 		if (ret) {
 			CMR_LOGE("isp start video failed");

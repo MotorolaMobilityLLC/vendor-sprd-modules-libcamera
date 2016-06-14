@@ -4910,6 +4910,8 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 			isp_param.highiso_buf_fd, isp_param.highiso_buf_phys_addr,
 			isp_param.highiso_buf_virt_addr, isp_param.highiso_buf_size);
 	}
+	isp_param.live_view_sz.w = param_ptr->live_view_sz.width;
+	isp_param.live_view_sz.h = param_ptr->live_view_sz.height;
 	CMR_LOGI("work_mode %ld, dv_mode %ld, capture_mode %ld", work_mode, dv_mode, isp_param.capture_mode);
 	CMR_LOGI("isp w h, %d %d", isp_param.size.w, isp_param.size.h);
 	ret = isp_video_start(isp_cxt->isp_handle, &isp_param);
@@ -8040,8 +8042,7 @@ cmr_int camera_preview_set_yhist_to_isp(cmr_handle oem_handle, cmr_u32 camera_id
 	}
 
 	isp_param.camera_id = camera_id;
-	isp_param.cmd_value = (unsigned long)yhist;
-	CMR_LOGI("piano addr 0x%lx", yhist->y_addr[0]);
+	isp_param.cmd_value = (cmr_uint)yhist;
 	ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_PREVIEW_YHIST, &isp_param);
 
 exit:

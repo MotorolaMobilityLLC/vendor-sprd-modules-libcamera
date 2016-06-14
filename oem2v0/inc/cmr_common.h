@@ -433,6 +433,7 @@ struct video_start_param {
 	cmr_u32                                 work_mode;
 	cmr_u32                                 is_need_flash;
 	cmr_u32                                 capture_skip_num;
+	struct img_size                         live_view_sz;
 };
 
 struct memory_param {

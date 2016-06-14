@@ -557,6 +557,7 @@ struct isp_video_start {
 	cmr_uint highiso_buf_phys_addr;
 	cmr_uint highiso_buf_virt_addr;
 	cmr_uint highiso_buf_size;
+	struct isp_size live_view_sz;
 };
 
 struct ips_in_param {

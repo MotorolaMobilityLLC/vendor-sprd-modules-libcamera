@@ -5311,7 +5311,7 @@ int SprdCamera3OEMIf::Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint 
 	}
 
 	if (type == CAMERA_ISP_PREVIEW_Y) {
-		for (i=0 ; i < 2 ; i++) {
+		for (i = 0; i < sum; i++) {
 			if (NULL != mIspPreviewYReserved[i]) {
 				freeCameraMem(mIspPreviewYReserved[i]);
 			}
@@ -5530,7 +5530,8 @@ int SprdCamera3OEMIf::Callback_Free(enum camera_mem_cb_type type, cmr_uint *phy_
 		   CAMERA_ISP_LSC == type ||
 		   CAMERA_ISP_BINGING4AWB == type ||
 		   CAMERA_SNAPSHOT_HIGHISO == type ||
-		   CAMERA_ISP_RAW_DATA == type) {
+		   CAMERA_ISP_RAW_DATA == type ||
+		   CAMERA_ISP_PREVIEW_Y == type) {
 		ret = camera->Callback_OtherFree(type, phy_addr, vir_addr, fd, sum);
 	}
 
@@ -5582,7 +5583,8 @@ int SprdCamera3OEMIf::Callback_Malloc(enum camera_mem_cb_type type,
 		   CAMERA_ISP_LSC == type ||
 		   CAMERA_ISP_BINGING4AWB == type ||
 		   CAMERA_SNAPSHOT_HIGHISO == type ||
-		   CAMERA_ISP_RAW_DATA == type) {
+		   CAMERA_ISP_RAW_DATA == type ||
+		   CAMERA_ISP_PREVIEW_Y == type) {
 		ret = camera->Callback_OtherMalloc(type, size, sum, phy_addr, vir_addr, fd);
 	}
 
