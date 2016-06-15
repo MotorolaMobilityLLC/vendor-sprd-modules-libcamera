@@ -41,6 +41,7 @@ typedef enum sprd_camera_ext_tags{
         ANDROID_SPRD_CONTROL_REFOCUS_ENABLE,
         ANDROID_SPRD_SET_TOUCH_INFO,
         ANDROID_SPRD_IS_SUPPORT_REFOCUS,
+        ANDROID_SPRD_AF_MODE_MACRO_FIXED,
         VENDOR_SECTION_END,
         /*not parameter but only flag between framework and hal*/
         /*sprd add flag end*/

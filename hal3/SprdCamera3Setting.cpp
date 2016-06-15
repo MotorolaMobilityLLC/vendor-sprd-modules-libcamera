@@ -3566,6 +3566,11 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 
 		HAL_LOGD("AM region %d %d %d %d %d cnt %d",area[0],area[1],area[2],area[3],area[4],frame_settings.find(ANDROID_SPRD_METERING_AREA).count);
 	}*/
+	if (frame_settings.exists(ANDROID_SPRD_AF_MODE_MACRO_FIXED)) {
+		valueU8 = frame_settings.find(ANDROID_SPRD_AF_MODE_MACRO_FIXED).data.u8[0];
+		GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.is_macro_fixed, valueU8, ANDROID_SPRD_AF_MODE_MACRO_FIXED)
+		HAL_LOGD("is_macro_fixed is %d", valueU8);
+	}
 #ifdef CONFIG_MEM_OPTIMIZATION
 	if (frame_settings.exists(ANDROID_SPRD_ZSL_ENABLED)) {
 		s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled = frame_settings.find(ANDROID_SPRD_ZSL_ENABLED).data.u8[0];
@@ -4384,7 +4389,10 @@ int SprdCamera3Setting::androidAfModeToDrvAfMode(uint8_t androidAfMode, int8_t *
 		break;
 
 	case ANDROID_CONTROL_AF_MODE_MACRO:
-		*convertDrvMode = CAMERA_FOCUS_MODE_MACRO;
+		if(s_setting[mCameraId].sprddefInfo.is_macro_fixed == 0)
+			*convertDrvMode = CAMERA_FOCUS_MODE_MACRO;
+		else
+			*convertDrvMode = CAMERA_FOCUS_MODE_MACRO_FIXED;
 		break;
 
 	case ANDROID_CONTROL_AF_MODE_EDOF:

@@ -202,6 +202,7 @@ static tags_info_t android_add_parameters[VENDOR_SECTION_END - VENDOR_SECTION_ST
     { "refocusMode",                TYPE_BYTE },
     { "refocusValue",                TYPE_INT32 },
     { "isSupportRefocus",                TYPE_BYTE },
+    { "afModeMacroFixed",               TYPE_BYTE},
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {

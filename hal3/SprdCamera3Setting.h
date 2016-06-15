@@ -364,6 +364,7 @@ typedef struct {
 	uint8_t is_support_refocus;
 	uint8_t refocus_enable;
 	uint32_t touchxy[2];
+	uint8_t is_macro_fixed;
 } SPRD_DEF_Tag;
 
 typedef struct {
