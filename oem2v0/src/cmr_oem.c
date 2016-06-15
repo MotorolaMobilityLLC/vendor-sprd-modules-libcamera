@@ -222,6 +222,7 @@ static cmr_uint camera_copy_sensor_ex_info_to_isp(struct isp_sensor_ex_info *out
 static cmr_uint camera_sensor_color_to_isp_color(cmr_u32 *isp_color, cmr_u32 sensor_color);
 static cmr_int camera_preview_get_isp_yimg(cmr_handle oem_handle, cmr_u32 camera_id, struct isp_yimg_info *yimg);
 static cmr_int camera_preview_set_yimg_to_isp(cmr_handle oem_handle, cmr_u32 camera_id, struct yimg_info *yimg);
+static cmr_int camera_preview_set_yuv_to_isp(cmr_handle oem_handle, cmr_u32 camera_id, struct yuv_info_t *yuv);
 
 extern int32_t isp_calibration_get_info(struct isp_data_t *golden_info, struct isp_cali_info_t *cali_info);
 extern int32_t isp_calibration(struct isp_cali_param *param, struct isp_data_t *result);
@@ -3113,6 +3114,7 @@ cmr_int camera_preview_init(cmr_handle  oem_handle)
 	init_param.ops.sensor_close = camera_close_sensor;
 	init_param.ops.get_isp_yimg = camera_preview_get_isp_yimg;
 	init_param.ops.set_preview_yimg = camera_preview_set_yimg_to_isp;
+	init_param.ops.set_preview_yuv = camera_preview_set_yuv_to_isp;
 	init_param.ops.get_sensor_fps_info = camera_get_sensor_fps_info;
 	init_param.ops.get_dual_sensor_otp = camera_get_dual_otpinfo;
 	init_param.ops.isp_buff_cfg = camera_isp_buff_cfg;
@@ -5962,14 +5964,21 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type, struct common
 		isp_param = param_ptr->cmd_value;
 		CMR_LOGI("flash mode %d", param_ptr->cmd_value);
 		break;
+
 	case COM_ISP_GET_YIMG_INFO:
 		isp_cmd = ISP_CTRL_GET_YIMG_INFO;
 		ptr_flag = 1;
 		isp_param_ptr = (void*)&param_ptr->isp_yimg;
 		CMR_LOGE("COM_ISP_GET_YIMG_INFO %p %d", isp_param, isp_param_ptr);
 		break;
+
 	case COM_ISP_SET_PREVIEW_YIMG:
 		isp_cmd = ISP_CTRL_SET_PREV_YIMG;
+		isp_param = param_ptr->cmd_value;
+		break;
+
+	case COM_ISP_SET_PREVIEW_YUV:
+		isp_cmd = ISP_CTRL_SET_PREV_YUV;
 		isp_param = param_ptr->cmd_value;
 		break;
 
@@ -8039,6 +8048,26 @@ cmr_int camera_preview_set_yimg_to_isp(cmr_handle oem_handle, cmr_u32 camera_id,
 	isp_param.camera_id = camera_id;
 	isp_param.cmd_value = (cmr_uint)yimg;
 	ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_PREVIEW_YIMG, &isp_param);
+
+exit:
+	return ret;
+}
+
+cmr_int camera_preview_set_yuv_to_isp(cmr_handle oem_handle, cmr_u32 camera_id, struct yuv_info_t *yuv)
+{
+	cmr_int                        ret = CMR_CAMERA_SUCCESS;
+	struct camera_context          *cxt = (struct camera_context*)oem_handle;
+	struct common_isp_cmd_param    isp_param = {0};
+
+	if (!oem_handle || NULL == yuv) {
+		CMR_LOGE("in parm error");
+		ret = -CMR_CAMERA_INVALID_PARAM;
+		goto exit;
+	}
+
+	isp_param.camera_id = camera_id;
+	isp_param.cmd_value = (cmr_uint)yuv;
+	ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_PREVIEW_YUV, &isp_param);
 
 exit:
 	return ret;

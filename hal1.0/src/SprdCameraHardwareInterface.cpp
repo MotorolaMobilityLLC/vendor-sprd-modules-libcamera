@@ -439,6 +439,7 @@ SprdCameraHardware::SprdCameraHardware(int cameraId)
 	mIspFirmwareReserved(NULL),
 	mHighIsoSnapshotHeapReserved(NULL),
 	mIspRawDataReserved(NULL),
+	mIspYUVReserved (NULL),
 	mIspAntiFlickerHeapReserved(NULL),
 	mVideoShotPushFlag(0),
 	mZslShotPushFlag(0),
@@ -635,6 +636,12 @@ void SprdCameraHardware::release()
 		freeCameraMem(mIspRawDataReserved);
 		mIspRawDataReserved = NULL;
 	}
+
+	if (NULL != mIspYUVReserved) {
+		freeCameraMem(mIspYUVReserved);
+		mIspYUVReserved = NULL;
+	}
+
 	pre_alloc_cap_mem_thread_deinit((void *)this);
 
 	deinitCapture(0);
@@ -3877,6 +3884,18 @@ int SprdCameraHardware::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u
 		*phy_addr++ = (cmr_uint)mIspRawDataReserved->phys_addr;
 		*vir_addr++ = (cmr_uint)mIspRawDataReserved->data;
 		*fd++ = mIspRawDataReserved->fd;
+	}else if (type == CAMERA_ISP_PREVIEW_YUV) {
+		if (mIspYUVReserved ==  NULL) {
+			memory = allocCameraMem(size, true);
+			if (NULL == memory) {
+				LOGE("allocCameraMem failed");
+				goto mem_fail;
+			}
+			mIspYUVReserved = memory;
+		}
+		*phy_addr++ = (cmr_uint)mIspYUVReserved->phys_addr;
+		*vir_addr++ = (cmr_uint)mIspYUVReserved->data;
+		*fd++ = mIspYUVReserved->fd;
 	}
 	return 0;
 
@@ -4105,6 +4124,13 @@ int SprdCameraHardware::Callback_OtherFree(enum camera_mem_cb_type type, cmr_uin
 		if (NULL != mIspRawDataReserved) {
 			freeCameraMem(mIspRawDataReserved);
 			mIspRawDataReserved = NULL;
+		}
+	}
+
+	if (type == CAMERA_ISP_PREVIEW_YUV) {
+		if (NULL != mIspYUVReserved) {
+			freeCameraMem(mIspYUVReserved);
+			mIspYUVReserved = NULL;
 		}
 	}
 	return 0;

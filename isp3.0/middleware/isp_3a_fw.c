@@ -303,6 +303,7 @@ static cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start* inp
 static cmr_int isp3a_stop(cmr_handle isp_3a_handle);
 static cmr_int isp3a_get_yimg_info(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_prev_yimg(cmr_handle isp_3a_handle, void *param_ptr);
+static cmr_int isp3a_set_prev_yuv(cmr_handle isp_3a_handle, void *param_ptr);
 
 
 static struct isp3a_ctrl_io_func s_isp3a_ioctrl_tab[ISP_CTRL_MAX] = {
@@ -395,6 +396,7 @@ static struct isp3a_ctrl_io_func s_isp3a_ioctrl_tab[ISP_CTRL_MAX] = {
 	{ISP_CTRL_SET_AUX_SENSOR_INFO,     isp3a_set_aux_sensor_info},
 	{ISP_CTRL_GET_YIMG_INFO,           isp3a_get_yimg_info},
 	{ISP_CTRL_SET_PREV_YIMG,           isp3a_set_prev_yimg},
+	{ISP_CTRL_SET_PREV_YUV,            isp3a_set_prev_yuv},
 };
 
 /*************************************INTERNAK FUNCTION ***************************************/
@@ -3897,6 +3899,22 @@ static cmr_int isp3a_set_prev_yimg(cmr_handle isp_3a_handle, void *param_ptr)
 	}
 
 	ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_SET_YIMG_INFO, (void *)*yimg, NULL);
+
+exit:
+	return ret;
+}
+
+static cmr_int isp3a_set_prev_yuv(cmr_handle isp_3a_handle, void *param_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
+	cmr_uint                                    *yuv_int = param_ptr;
+	struct yuv_info_t                           *yuv = (struct yuv_info_t *)*yuv_int;
+
+	if (!param_ptr) {
+		ISP_LOGW("input is NULL");
+		goto exit;
+	}
 
 exit:
 	return ret;

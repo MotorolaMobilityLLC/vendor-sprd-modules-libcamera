@@ -388,6 +388,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mIspFirmwareReserved = NULL;
 	mHighIsoSnapshotHeapReserved = NULL;
 	mIspRawDataReserved = NULL;
+	mIspYUVReserved = NULL;
 
 	mVideoShotFlag = 0;
 	mVideoShotNum = 0;
@@ -459,6 +460,11 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf()
 		}
 	}
 
+	if (NULL != mIspYUVReserved) {
+		freeCameraMem(mIspYUVReserved);
+		mIspYUVReserved = NULL;
+	}
+
 	for (i = 0; i < kISPB4awbCount; i++) {
 		if (NULL != mIspRawAemHeapReserved[i]) {
 			mIspRawAemHeapReserved[i]->ion_heap->free_kaddr();
@@ -514,6 +520,18 @@ void SprdCamera3OEMIf::closeCamera()
 	if (NULL != mHighIsoSnapshotHeapReserved) {
 		freeCameraMem(mHighIsoSnapshotHeapReserved);
 		mHighIsoSnapshotHeapReserved = NULL;
+	}
+
+	for (int i = 0; i < 2; i++) {
+		if (NULL != mIspPreviewYReserved[i]) {
+			freeCameraMem(mIspPreviewYReserved[i]);
+			mIspPreviewYReserved[i] = NULL;
+		}
+	}
+
+	if (NULL != mIspYUVReserved) {
+		freeCameraMem(mIspYUVReserved);
+		mIspYUVReserved = NULL;
 	}
 
 	if (NULL != mIspRawDataReserved) {
@@ -5268,6 +5286,13 @@ int SprdCamera3OEMIf::Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint 
 		}
 	}
 
+	if (type == CAMERA_ISP_PREVIEW_YUV) {
+		if (NULL != mIspYUVReserved) {
+			freeCameraMem(mIspYUVReserved);
+		}
+		mIspYUVReserved = NULL;
+	}
+
 	if (type == CAMERA_ISP_RAW_DATA) {
 		if (NULL != mIspRawDataReserved) {
 			freeCameraMem(mIspRawDataReserved);
@@ -5421,6 +5446,18 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32
 			*vir_addr++ = (cmr_uint)memory->data;
 			*fd++ = memory->fd;
 		}
+	} else if (type == CAMERA_ISP_PREVIEW_YUV) {
+		if (mIspYUVReserved == NULL) {
+			memory = allocCameraMem(size, 1, false);
+			if (NULL == memory) {
+				HAL_LOGE("memory is null.");
+				goto mem_fail;
+			}
+			mIspYUVReserved = memory;
+		}
+		*phy_addr++ = 0;
+		*vir_addr++ = (cmr_uint)mIspYUVReserved->data;
+		*fd++ = mIspYUVReserved->fd;
 	} else if (type == CAMERA_ISP_RAW_DATA) {
 		if (mIspRawDataReserved ==  NULL) {
 			memory = allocCameraMem(size, 1, true);
@@ -5480,7 +5517,8 @@ int SprdCamera3OEMIf::Callback_Free(enum camera_mem_cb_type type, cmr_uint *phy_
 		   CAMERA_ISP_BINGING4AWB == type ||
 		   CAMERA_SNAPSHOT_HIGHISO == type ||
 		   CAMERA_ISP_RAW_DATA == type ||
-		   CAMERA_ISP_PREVIEW_Y == type) {
+		   CAMERA_ISP_PREVIEW_Y == type ||
+		   CAMERA_ISP_PREVIEW_YUV == type) {
 		ret = camera->Callback_OtherFree(type, phy_addr, vir_addr, fd, sum);
 	}
 
@@ -5533,7 +5571,8 @@ int SprdCamera3OEMIf::Callback_Malloc(enum camera_mem_cb_type type,
 		   CAMERA_ISP_BINGING4AWB == type ||
 		   CAMERA_SNAPSHOT_HIGHISO == type ||
 		   CAMERA_ISP_RAW_DATA == type ||
-		   CAMERA_ISP_PREVIEW_Y == type) {
+		   CAMERA_ISP_PREVIEW_Y == type ||
+		   CAMERA_ISP_PREVIEW_YUV == type) {
 		ret = camera->Callback_OtherMalloc(type, size, sum, phy_addr, vir_addr, fd);
 	}
 

@@ -271,6 +271,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SET_AE_ENGINEER_MODE,
 	ISP_CTRL_GET_YIMG_INFO,
 	ISP_CTRL_SET_PREV_YIMG,
+	ISP_CTRL_SET_PREV_YUV,
 
 	/*
 	 * warning if you wanna send async msg
@@ -458,6 +459,13 @@ struct yimg_info {
 	cmr_s32                                   sec;
 	cmr_s32                                   usec;
 	cmr_uint                                  camera_id;
+};
+
+struct yuv_info_t {
+	cmr_uint                                  camera_id;
+	cmr_u8                                    *yuv_addr;
+	cmr_u32                                   width;
+	cmr_u32                                   height;
 };
 
 struct isp_init_param {
