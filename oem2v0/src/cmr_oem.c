@@ -7345,7 +7345,7 @@ cmr_uint camera_get_exif_info(cmr_handle oem_handle, struct exif_info *exif_info
 	exif_spec = setting_param.exif_all_info_ptr->spec_ptr->pic_taking_cond_ptr;
 	exif_info->aperture = (float)exif_spec->ApertureValue.numerator / (float)exif_spec->ApertureValue.denominator;
 	exif_info->focus_distance = (float)exif_spec->FocalLength.numerator / (float)exif_spec->FocalLength.denominator;
-	ret = setting_param.cmd_type_value;
+
 exit:
 	CMR_LOGI("apet %f focus dist %f", exif_info->aperture, exif_info->focus_distance);
 	return ret;
