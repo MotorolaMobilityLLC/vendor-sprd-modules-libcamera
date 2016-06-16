@@ -3121,10 +3121,8 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
 	uint8_t amMode = 0;
 	requestInfo.update(ANDROID_SPRD_METERING_MODE, &amMode, 1);
 
-#ifdef CONFIG_MEM_OPTIMIZATION
 	uint8_t sprdZslEnabled= 0;
 	requestInfo.update(ANDROID_SPRD_ZSL_ENABLED, &sprdZslEnabled, 1);
-#endif
 
 	uint8_t sprdEisEnabled= 0;
 	requestInfo.update(ANDROID_SPRD_EIS_ENABLED, &sprdEisEnabled, 1);
@@ -3566,18 +3564,19 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 
 		HAL_LOGD("AM region %d %d %d %d %d cnt %d",area[0],area[1],area[2],area[3],area[4],frame_settings.find(ANDROID_SPRD_METERING_AREA).count);
 	}*/
+
 	if (frame_settings.exists(ANDROID_SPRD_AF_MODE_MACRO_FIXED)) {
 		valueU8 = frame_settings.find(ANDROID_SPRD_AF_MODE_MACRO_FIXED).data.u8[0];
 		GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.is_macro_fixed, valueU8, ANDROID_SPRD_AF_MODE_MACRO_FIXED)
 		HAL_LOGD("is_macro_fixed is %d", valueU8);
 	}
-#ifdef CONFIG_MEM_OPTIMIZATION
+
 	if (frame_settings.exists(ANDROID_SPRD_ZSL_ENABLED)) {
 		s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled = frame_settings.find(ANDROID_SPRD_ZSL_ENABLED).data.u8[0];
 		pushAndroidParaTag(ANDROID_SPRD_ZSL_ENABLED);
 		HAL_LOGD("sprd zsl enabled is %d", s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled);
 	}
-#endif
+
 //SCALER
 	if (frame_settings.exists(ANDROID_SCALER_CROP_REGION)) {
 		int32_t x = frame_settings.find(ANDROID_SCALER_CROP_REGION).data.i32[0];

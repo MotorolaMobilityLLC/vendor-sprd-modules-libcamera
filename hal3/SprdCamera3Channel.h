@@ -54,9 +54,7 @@ typedef struct{
 	uint8_t cap_intent;
 	uint8_t takepicture_cnt;
 	uint8_t scene_mode;
-#ifdef CONFIG_MEM_OPTIMIZATION
 	uint8_t sprd_zsl_enabled;
-#endif
 } CapRequestPara;
 
 class SprdCamera3OEMIf;

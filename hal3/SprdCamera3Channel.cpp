@@ -898,12 +898,10 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number)
 		case ANDROID_SPRD_ISO:
 			mOEMIf->SetCameraParaTag(ANDROID_SPRD_ISO);
 			break;
-#ifdef CONFIG_MEM_OPTIMIZATION
 		case ANDROID_SPRD_ZSL_ENABLED:
 			HAL_LOGV("ANDROID_SPRD_ZSL_ENABLED");
 			mOEMIf->SetCameraParaTag(ANDROID_SPRD_ZSL_ENABLED);
 			break;
-#endif
 		case ANDROID_SPRD_SLOW_MOTION:
 			HAL_LOGV("ANDROID_SPRD_SLOW_MOTION");
 			mOEMIf->SetCameraParaTag(ANDROID_SPRD_SLOW_MOTION);
@@ -985,14 +983,13 @@ int SprdCamera3MetadataChannel::getCapRequestPara(const CameraMetadata &metadata
 		request_para->scene_mode = controlInfo.scene_mode;
 	}
 
-#ifdef CONFIG_MEM_OPTIMIZATION
 	if (metadata.exists(ANDROID_SPRD_ZSL_ENABLED)) {
 		request_para->sprd_zsl_enabled= metadata.find(ANDROID_SPRD_ZSL_ENABLED).data.u8[0];
 	}
 	else {
 		request_para->sprd_zsl_enabled = 0;
 	}
-#endif
+
 	return NO_ERROR;
 }
 

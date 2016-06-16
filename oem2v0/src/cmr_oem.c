@@ -1587,7 +1587,7 @@ cmr_int camera_focus_pre_proc(cmr_handle oem_handle)
 	cxt->is_enter_focus = 1;
 	/*open flash*/
 	setting_param.camera_id = cxt->camera_id;
-#ifdef CONFIG_MEM_OPTIMIZATION
+
 	ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_SPRD_ZSL_ENABLED, &setting_param);
 	if (ret) {
 		CMR_LOGE("failed to get preview sprd zsl enabled flag %ld", ret);
@@ -1596,7 +1596,7 @@ cmr_int camera_focus_pre_proc(cmr_handle oem_handle)
 	if (CAMERA_ZSL_MODE == cxt->snp_cxt.snp_mode && 1 == setting_param.cmd_type_value) {
 		need_pre_flash = 0;
 	}
-#endif
+
 	//wait  AOI converged
 	ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_SET_ROI_CONVERGENCE_REQ, &setting_param);
 	if (ret) {
@@ -1629,7 +1629,7 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture)
 	/*close flash*/
 	CMR_LOGI("camera_focus_post_proc %ld", will_capture);
 	setting_param.camera_id = cxt->camera_id;
-#ifdef CONFIG_MEM_OPTIMIZATION
+
 	ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_SPRD_ZSL_ENABLED, &setting_param);
 	if (ret) {
 		CMR_LOGE("failed to get preview sprd zsl enabled flag %ld", ret);
@@ -1638,7 +1638,6 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture)
 	if (CAMERA_ZSL_MODE == cxt->snp_cxt.snp_mode && 1 == setting_param.cmd_type_value) {
 		need_close_flash = 0;
 	}
-#endif
 
 	/*for third ae*/
 	raw_info_ptr = cxt->sn_cxt.sensor_info.raw_info_ptr;
@@ -6290,7 +6289,6 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	}
 	//bug500099 front cam mirror end
 
-#ifdef CONFIG_MEM_OPTIMIZATION
 	cmr_bzero(&setting_param, sizeof(setting_param));
 	setting_param.camera_id = cxt->camera_id;
 	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_SPRD_ZSL_ENABLED, &setting_param);
@@ -6300,7 +6298,6 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	}
 	out_param_ptr->sprd_zsl_enabled = setting_param.cmd_type_value;
 	CMR_LOGI("sprd zsl_enabled flag %d", out_param_ptr->sprd_zsl_enabled);
-#endif
 
 	if (1 == camera_get_hdr_flag(cxt)) {
 		struct ipm_open_in  in_param;
@@ -6747,12 +6744,10 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id, cmr
 			ret = -CMR_CAMERA_INVALID_PARAM;
 		}
 		break;
-#ifdef CONFIG_MEM_OPTIMIZATION
 	case CAMERA_PARAM_SPRD_ZSL_ENABLED:
 		setting_param.cmd_type_value = param;
 		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);
 		break;
-#endif
 	case CAMERA_PARAM_SLOW_MOTION_FLAG:
 		setting_param.cmd_type_value = param;
 		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);

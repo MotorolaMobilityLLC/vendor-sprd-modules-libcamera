@@ -134,9 +134,7 @@ struct preview_param {
 	struct memory_param      memory_setting;
 	void                     *private_data;
 	cmr_u32                  is_lls_enable;
-#ifdef CONFIG_MEM_OPTIMIZATION
 	cmr_u32                  sprd_zsl_enabled;
-#endif
 	cmr_u32                  video_slowmotion_eb;
 	cmr_u32                  sprd_pipviv_enabled;
 	cmr_u32                  sprd_highiso_enabled;

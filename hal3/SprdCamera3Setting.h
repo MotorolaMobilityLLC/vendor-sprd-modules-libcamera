@@ -352,10 +352,8 @@ typedef struct {
 	int32_t sensor_rotation;
 	int32_t am_regions[5];
 	int32_t perfect_skin_level;
-#ifdef CONFIG_MEM_OPTIMIZATION
 	uint8_t sprd_zsl_enabled;
-#endif
-        uint8_t flip_on;
+	uint8_t flip_on;
 	uint8_t sprd_pipviv_enabled;
 	uint8_t sprd_highiso_enabled;
 	uint8_t availabe_smile_enable;

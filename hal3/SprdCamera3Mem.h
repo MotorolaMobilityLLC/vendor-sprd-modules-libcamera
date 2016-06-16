@@ -44,9 +44,6 @@ typedef struct {
 	// offset from fd, always set to 0
 	void *addr_phy;
 	void *addr_vir;
-#ifdef CONFIG_MEM_OPTIMIZATION
-	uint32_t valid;
-#endif
 }hal_mem_info_t;
 
 // Base class for all memory types. Abstract.

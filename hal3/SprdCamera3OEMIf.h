@@ -97,13 +97,10 @@ typedef struct sprd_camera_memory {
 	bool busy_flag;
 } sprd_camera_memory_t;
 
-#ifdef CONFIG_MEM_OPTIMIZATION
 struct ZslBufferQueue {
 	camera_frame_type frame;
 	sprd_camera_memory_t* heap_array;
-	uint32_t valid;
 };
-#endif
 
 typedef struct {
 	int32_t			preWidth;
@@ -180,12 +177,9 @@ public:
 	int PushFirstZslbuff();
 	int PushVideoSnapShotbuff(int32_t frame_number, camera_stream_type_t type);
 	int PushZslSnapShotbuff();
-	void decZslMapNum();
 	snapshot_mode_type_t GetTakePictureMode();
 	camera_status_t GetCameraStatus(camera_status_type_t state);
-#ifdef CONFIG_MEM_OPTIMIZATION
-	void SprdZslTakePicture();
-#endif
+
 	void initPowerHint();
 	void enablePowerHint();
 	void disablePowerHint();
@@ -194,11 +188,11 @@ public:
 	static int      pre_alloc_cap_mem_thread_deinit(void *p_data);
 	static void*    pre_alloc_cap_mem_thread_proc(void *p_data);
 	uint32_t        isPreAllocCapMem();
-#ifdef CONFIG_MEM_OPTIMIZATION
+
 	static int      ZSLMode_monitor_thread_init(void *p_data);
 	static int      ZSLMode_monitor_thread_deinit(void *p_data);
 	static cmr_int  ZSLMode_monitor_thread_proc(struct cmr_msg *message, void *p_data);
-#endif
+
 	void            setIspFlashMode(uint32_t mode);
 
 #ifdef CONFIG_CAMERA_EIS
@@ -397,31 +391,31 @@ private:
 	static int Callback_Free(enum camera_mem_cb_type type, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum, void* private_data);
 	static int Callback_Malloc(enum camera_mem_cb_type type, cmr_u32 *size_ptr, cmr_u32 *sum_ptr, cmr_uint *phy_addr,
 		                                                cmr_uint *vir_addr, cmr_s32 *fd, void* private_data);
-#ifdef CONFIG_MEM_OPTIMIZATION
-	ZslBufferQueue popZSLQueue();
+
+	// zsl start
 	int getZSLQueueFrameNum();
-	int map(sprd_camera_memory_t* camera_memory, hal_mem_info_t *mem_info);
-	int unmap(sprd_camera_memory_t* camera_memory, hal_mem_info_t *mem_info);
-	int getZSLSnapshotFrame(hal_mem_info_t *mem_info);
+	ZslBufferQueue popZSLQueue();
 	void pushZSLQueue(ZslBufferQueue frame);
 	void releaseZSLQueue();
-	void PushAllZslBuffer();
+	void setZslBuffers();
 	void receiveZslFrame(struct camera_frame_type *frame);
 	void processZslFrame(void *p_data);
+	void snapshotZsl(void *p_data);
 	uint32_t getZslBufferIDForFd(cmr_s32 fd);
-	int releaseZslBuffer(struct camera_frame_type *frame);
-	int getZslBuffer(hal_mem_info_t *mem_info);
+	int pushZslFrame(struct camera_frame_type *frame);
+	struct camera_frame_type popZslFrame();
 
-	List<ZslBufferQueue>              mZSLQueue;
+	List<ZslBufferQueue> mZSLQueue;
 	bool                              mSprdZslEnabled;
-	bool                              mVideoSnapshotSprdZslEnabled;
 	uint32_t                          mZslChannelStatus;
 	int32_t                           mZslShotPushFlag;
+	// we want to keep mZslMaxFrameNum buffers in mZSLQueue, for snapshot use
 	int32_t                           mZslMaxFrameNum;
-	int32_t                           mZslMaxBuffNum;
-	int32_t                           mZslMapNum;
+	// total zsl buffer num
+	int32_t                           mZslNum;
 	Mutex                             mZslBufLock;
-#endif
+	// zsl end
+
 	bool                              mSprdPipVivEnabled;
 	bool                              mSprdHighIsoEnabled;
 
@@ -548,12 +542,7 @@ private:
 	sprd_camera_memory_t*           mVideoHeapArray[kVideoBufferCount+kVideoRotBufferCount+1];
 	sprd_camera_memory_t*           mZslHeapArray[kZslBufferCount+kZslRotBufferCount+1];
 	sprd_camera_memory_t*           mRefocusHeapArray[kRefocusBufferCount+1];
-#ifdef CONFIG_MEM_OPTIMIZATION
-	uintptr_t                       mZslHeapArray_phy[kZslBufferCount+kZslRotBufferCount+1];
-	uintptr_t                       mZslHeapArray_vir[kZslBufferCount+kZslRotBufferCount+1];
-	uint32_t                        mZslHeapArray_size[kZslBufferCount+kZslRotBufferCount+1];
-	uint32_t                        mZslHeapArray_fd[kZslBufferCount+kZslRotBufferCount+1];
-#endif
+
 	uintptr_t                       mRefocusHeapArray_phy[kRefocusBufferCount+1];
 	uintptr_t                       mRefocusHeapArray_vir[kRefocusBufferCount+1];
 	uint32_t                        mRefocusHeapArray_size[kRefocusBufferCount+1];

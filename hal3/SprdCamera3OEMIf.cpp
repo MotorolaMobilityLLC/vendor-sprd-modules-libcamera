@@ -397,21 +397,13 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mReDisplayHeap = NULL;
 
 	mZslPreviewMode = false;
-#ifdef CONFIG_MEM_OPTIMIZATION
+
 	mSprdZslEnabled = false;
-#ifdef CONFIG_NEED_UNMAP
-	mZslMaxFrameNum = 2;
-	mZslMaxBuffNum = 4;
-	mZslMapNum = 2;
-#else
-	mZslMaxFrameNum = 0;
-	mZslMaxBuffNum = 2;
-	mZslMapNum = 2;
-#endif
+	mZslMaxFrameNum = 1;
+	mZslNum = 2;
 	mZslShotPushFlag = 0;
 	mZslChannelStatus = 1;
-	mVideoSnapshotSprdZslEnabled = 0;
-#endif
+	mZSLQueue.clear();
 
 	HAL_LOGI("openCameraHardware: X cameraId: %d.", cameraId);
 }
@@ -555,9 +547,8 @@ void SprdCamera3OEMIf::closeCamera()
 	}
 
 	pre_alloc_cap_mem_thread_deinit((void *)this);
-#ifdef CONFIG_MEM_OPTIMIZATION
 	ZSLMode_monitor_thread_deinit((void *)this);
-#endif
+
 	deinitCapture(0);
 	FreeReDisplayMem();
 
@@ -851,13 +842,10 @@ int SprdCamera3OEMIf::zslTakePicture()
 		message.msg_type = CMR_EVT_ZSL_MON_SNP;
 		message.sync_flag = CMR_MSG_SYNC_NONE;
 		message.data = NULL;
-		// fot cts, mZslMapNum == 1 means iommu address space is not enough
-		if(mZslMapNum > 1) {
-			ret = cmr_thread_msg_send((cmr_handle)mZSLModeMonitorMsgQueHandle, &message);
-			if (ret) {
-				HAL_LOGE("Fail to send one msg!");
-				return NO_ERROR;
-			}
+		ret = cmr_thread_msg_send((cmr_handle)mZSLModeMonitorMsgQueHandle, &message);
+		if (ret) {
+			HAL_LOGE("Fail to send one msg!");
+			return NO_ERROR;
 		}
 		HAL_LOGD("mZslShotPushFlag %d",mZslShotPushFlag);
 	} else {
@@ -1195,32 +1183,29 @@ bool SprdCamera3OEMIf::setCameraPreviewDimensions()
 	SET_PARM(mCameraHandle, CAMERA_PARAM_VIDEO_SIZE, (cmr_uint)&video_size);
 
 	if(mZslPreviewMode == false) {
-#ifdef CONFIG_MEM_OPTIMIZATION
 		if(mSprdZslEnabled == false) {
-#endif
-		if(mRawWidth != 0 && mRawHeight != 0) {
-			capture_size.width = (cmr_u32)mRawWidth;
-			capture_size.height = (cmr_u32)mRawHeight;
-			mCaptureMode = CAMERA_ZSL_MODE;
-		} else {
-			if(mVideoWidth != 0 && mVideoHeight != 0) { //capture size must equal with video size
-				if (mVideoWidth <= mCaptureWidth && mVideoHeight <= mCaptureHeight) {
-					capture_size.width = (cmr_u32)mVideoWidth;
-					capture_size.height = (cmr_u32)mVideoHeight;
-				} else {
-					capture_size.width = (cmr_u32)mPreviewWidth;
-					capture_size.height = (cmr_u32)mPreviewHeight;
-				}
+			if(mRawWidth != 0 && mRawHeight != 0) {
+				capture_size.width = (cmr_u32)mRawWidth;
+				capture_size.height = (cmr_u32)mRawHeight;
+				mCaptureMode = CAMERA_ZSL_MODE;
 			} else {
-				if (mCaptureWidth != 0 && mCaptureHeight != 0) {
-					if ((mPreviewWidth >= 1920 && mPreviewHeight >= 1088) && (mCaptureWidth > 720 && mCaptureHeight > 480)) {
-						capture_size.width = 720;
-						capture_size.height = 480;
+				if(mVideoWidth != 0 && mVideoHeight != 0) { //capture size must equal with video size
+					if (mVideoWidth <= mCaptureWidth && mVideoHeight <= mCaptureHeight) {
+						capture_size.width = (cmr_u32)mVideoWidth;
+						capture_size.height = (cmr_u32)mVideoHeight;
+					} else {
+						capture_size.width = (cmr_u32)mPreviewWidth;
+						capture_size.height = (cmr_u32)mPreviewHeight;
+					}
+				} else {
+					if (mCaptureWidth != 0 && mCaptureHeight != 0) {
+						if ((mPreviewWidth >= 1920 && mPreviewHeight >= 1088) && (mCaptureWidth > 720 && mCaptureHeight > 480)) {
+							capture_size.width = 720;
+							capture_size.height = 480;
+						}
 					}
 				}
 			}
-			}
-#ifdef CONFIG_MEM_OPTIMIZATION
 		}else {
 			if (mCaptureWidth != 0 && mCaptureHeight != 0) {
 				capture_size.width = mCaptureWidth;
@@ -1228,7 +1213,6 @@ bool SprdCamera3OEMIf::setCameraPreviewDimensions()
 				mCaptureMode = CAMERA_ZSL_MODE;
 			}
 		}
-#endif
 	} else {
 		if(mCaptureWidth != 0 && mCaptureHeight != 0) {//API 1.0 ZSL
 			/*if(mCaptureWidth > 2592 || mCaptureHeight >1952) {
@@ -2085,9 +2069,8 @@ int SprdCamera3OEMIf::startPreviewInternal()
 	SET_PARM(mCameraHandle, CAMERA_PARAM_ROTATION_CAPTURE, 0);
 #endif
 
-#ifdef CONFIG_MEM_OPTIMIZATION
 	SET_PARM(mCameraHandle, CAMERA_PARAM_SPRD_ZSL_ENABLED, (cmr_uint)mSprdZslEnabled);
-#endif
+
 	cmr_int qret = camera_start_preview(mCameraHandle, mCaptureMode);
 	if (qret != CMR_CAMERA_SUCCESS) {
 		HAL_LOGE("failed: sensor error.");
@@ -2963,31 +2946,22 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 					mZslFrameNum = frame_num;
 			}
 		}
-#ifdef CONFIG_MEM_OPTIMIZATION
+
 		if(mSprdZslEnabled) {
 			cmr_int need_pause;
 			CMR_MSG_INIT(message);
 			camera_zsl_snapshot_need_pause(mCameraHandle, &need_pause);
 			if (PREVIEW_ZSL_FRAME == frame->type) {
 				HAL_LOGI("zsl buff fd=0x%x, frame type=%d", frame->fd, frame->type);
-#ifndef CONFIG_NEED_UNMAP
-				receiveZslFrame(frame);
-#else
-				ret = releaseZslBuffer(frame);
-				if (ret != 0) {
-					HAL_LOGE("releaseZslBuffer failed");
-				}
-
+				pushZslFrame(frame);
 				message.msg_type = CMR_EVT_ZSL_MON_PUSH;
 				message.sync_flag = CMR_MSG_SYNC_NONE;
 				message.data = NULL;
-				HAL_LOGD("msg_type = 0x%x\n", message.msg_type);
 				ret = cmr_thread_msg_send((cmr_handle)mZSLModeMonitorMsgQueHandle, &message);
 				if(ret){
 					HAL_LOGE("Fail to send one msg!");
 					return;
 				}
-#endif
 			} else if (PREVIEW_ZSL_CANCELED_FRAME == frame->type) {
 				if (!isCapturing() || !need_pause) {
 					camera_set_zsl_buffer(mCameraHandle, frame->y_phy_addr, frame->y_vir_addr, frame->fd);
@@ -2995,7 +2969,6 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 			}
 
 		}
-#endif
 	}
 
 	HAL_LOGV("X");
@@ -3497,7 +3470,7 @@ void SprdCamera3OEMIf::HandleStartPreview(enum camera_cb_type cb,
 		HAL_LOGD("CAMERA_EVT_CB_RESUME");
 #ifdef CONFIG_MEM_OPTIMIZATION
 		if (isPreviewing() && iSZslMode()) {
-			PushAllZslBuffer();
+			setZslBuffers();
 			mZslChannelStatus = 1;
 		}
 #endif
@@ -3989,9 +3962,7 @@ int SprdCamera3OEMIf::openCamera()
 		return ret;
 	}
 
-#ifdef CONFIG_MEM_OPTIMIZATION
 	ZSLMode_monitor_thread_init((void *)this);
-#endif
 
 #ifdef CONFIG_CAMERA_GYRO
 	gyro_monitor_thread_init((void *)this);
@@ -4096,12 +4067,12 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void)
 		zoomWidth = mCaptureWidth;
 		zoomHeight = mCaptureHeight;
 	}
-#ifdef CONFIG_MEM_OPTIMIZATION
+
 	if(mSprdZslEnabled == 1 && mCaptureWidth>0 && mCaptureHeight>0) {
 		zoomWidth = mCaptureWidth;
 		zoomHeight = mCaptureHeight;
 	}
-#endif
+
 	zoomInfo.zoom_info.output_ratio = zoomWidth/zoomHeight;
 	mZoomInfo = zoomInfo;
 	SET_PARM(mCameraHandle, CAMERA_PARAM_ZOOM,(cmr_uint)&mZoomInfo);
@@ -4511,7 +4482,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag)
 	case ANDROID_CONTROL_AE_TARGET_FPS_RANGE:
 		setCameraPreviewMode(mRecordingMode);
 		break;
-#ifdef CONFIG_MEM_OPTIMIZATION
+
 	case ANDROID_SPRD_ZSL_ENABLED:
 		{
 			SPRD_DEF_Tag sprddefInfo;
@@ -4522,7 +4493,6 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag)
 			}
 		}
 		break;
-#endif
 
 	case ANDROID_SPRD_SLOW_MOTION:
 		{
@@ -4693,7 +4663,6 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode, uint32_t fr
 			mPicCaptureCnt = 1;
 			mZslPreviewMode = false;
 			break;
-#ifdef CONFIG_MEM_OPTIMIZATION
 		case CAMERA_CAPTURE_MODE_VIDEO_SNAPSHOT:
 			mTakePictureMode = SNAPSHOT_ZSL_MODE;
 			mCaptureMode = CAMERA_ZSL_MODE;
@@ -4703,19 +4672,6 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode, uint32_t fr
 			mPicCaptureCnt = 1;
 			mZslPreviewMode = false;
 			break;
-#else
-		case CAMERA_CAPTURE_MODE_VIDEO_SNAPSHOT:
-			mTakePictureMode = SNAPSHOT_VIDEO_MODE;
-			mCaptureMode = CAMERA_ZSL_MODE;
-			mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DV;
-			mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
-			mRecordingMode = true;
-			mPicCaptureCnt = 1;
-			mZslPreviewMode = false;
-			mVideoShotNum = frame_number;
-			mVideoShotFlag = 1;
-			break;
-#endif
 		case CAMERA_CAPTURE_MODE_ISP_TUNING_TOOL:
 			mTakePictureMode = SNAPSHOT_NO_ZSL_MODE;
 			mCaptureMode = CAMERA_ISP_TUNING_MODE;
@@ -4743,7 +4699,6 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode, uint32_t fr
 			mPicCaptureCnt = 1;
 			mZslPreviewMode = false;
 			break;
-#ifdef CONFIG_MEM_OPTIMIZATION
 		case CAMERA_CAPTURE_MODE_SPRD_ZSL_SNAPSHOT:
 			mTakePictureMode = SNAPSHOT_ZSL_MODE;
 			mCaptureMode = CAMERA_ZSL_MODE;
@@ -4761,7 +4716,6 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode, uint32_t fr
 			mRecordingMode = false;
 			mZslPreviewMode = false;
 			break;
-#endif
 		default:
 			break;
 	}
@@ -4935,22 +4889,19 @@ int SprdCamera3OEMIf::Callback_ZslFree(cmr_uint *phy_addr, cmr_uint *vir_addr, c
 {
 	cmr_u32 i;
 	Mutex::Autolock l(&mPrevBufLock);
-#ifdef CONFIG_MEM_OPTIMIZATION
 	Mutex::Autolock zsllock(&mZslBufLock);
-#endif
-	HAL_LOGD("mZslHeapNum %d sum %d", mZslHeapNum, sum);
 
+	HAL_LOGD("mZslHeapNum %d sum %d", mZslHeapNum, sum);
 	for (i=0 ; i<mZslHeapNum ; i++) {
 		if (NULL != mZslHeapArray[i]) {
 			freeCameraMem(mZslHeapArray[i]);
 		}
 		mZslHeapArray[i] = NULL;
 	}
-	mZslHeapNum = 0;
 
-#ifdef CONFIG_MEM_OPTIMIZATION
+	mZslHeapNum = 0;
 	releaseZSLQueue();
-#endif
+
 	return 0;
 }
 
@@ -4983,11 +4934,9 @@ int SprdCamera3OEMIf::Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *ph
 		return BAD_VALUE;
 	}
 
-#ifdef CONFIG_MEM_OPTIMIZATION
 	if (mSprdZslEnabled == true) {
 		releaseZSLQueue();
-		sum = mZslMaxBuffNum;
-		for (i = 0; i < (cmr_int)sum; i++) {
+		for (i = 0; i < (cmr_int)mZslNum; i++) {
 			memory = allocCameraMem(size, 1, true);
 			if (NULL == memory) {
 				HAL_LOGE("error memory is null.");
@@ -5001,7 +4950,7 @@ int SprdCamera3OEMIf::Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *ph
 		}
 		return 0;
 	}
-#endif
+
 	if (sum > BufferCount) {
 		mZslHeapNum = BufferCount;
 		phy_addr += BufferCount;
@@ -5898,16 +5847,18 @@ int SprdCamera3OEMIf::PushZslSnapShotbuff()
 	return NO_ERROR;
 }
 
-#ifdef CONFIG_MEM_OPTIMIZATION
 ZslBufferQueue SprdCamera3OEMIf::popZSLQueue()
 {
 	List<ZslBufferQueue>::iterator frame;
-	ZslBufferQueue ret;
+	ZslBufferQueue ret = {0};
+
 	if(mZSLQueue.size() == 0)
 		return ret;
+
 	frame = mZSLQueue.begin()++;
 	ret = static_cast<ZslBufferQueue>(*frame);
 	mZSLQueue.erase(frame);
+
 	return ret;
 }
 
@@ -5929,135 +5880,20 @@ void SprdCamera3OEMIf::releaseZSLQueue()
 	List<ZslBufferQueue>::iterator round;
 	HAL_LOGD("para changed.size : %d", mZSLQueue.size());
 	while (mZSLQueue.size() > 0) {
-		round  = mZSLQueue.begin()++;
+		round = mZSLQueue.begin()++;
 		mZSLQueue.erase(round);
 	}
 }
 
-int SprdCamera3OEMIf::getZSLSnapshotFrame(hal_mem_info_t *mem_info)
-{
-	int ret = -1;
-	int j = 0;
-	int buf_id;
-	ZslBufferQueue zsl_frame;
-
-	for (List < ZslBufferQueue >::iterator i = mZSLQueue.begin(); i != mZSLQueue.end(); i++) {
-		zsl_frame = static_cast<ZslBufferQueue>(*i);
-		HAL_LOGD("j = %d", j);
-		if (1 == i->valid && j >= mZslHeapNum - mZslMaxFrameNum - 1) {
-			mZSLQueue.erase(i);
-
-			buf_id = zsl_frame.frame.buf_id;
-			ret = map(zsl_frame.heap_array, mem_info);
-			if (ret < 0) {
-				HAL_LOGE("map failed");
-				return ret;
-			}
-			mZslHeapArray_phy[buf_id] = (uintptr_t)mem_info->addr_phy;
-			mZslHeapArray_vir[buf_id] = (uintptr_t)mem_info->addr_vir;
-			mZslHeapArray_fd[buf_id] = mem_info->fd;
-			mem_info->valid = zsl_frame.valid;
-			ret = 0;
-			break;
-		}
-		j++;
-	}
-
-	return ret;
-}
-
-void SprdCamera3OEMIf::PushAllZslBuffer()
+void SprdCamera3OEMIf::setZslBuffers()
 {
 	cmr_uint i = 0;
 
 	HAL_LOGD("mZslHeapNum %d", mZslHeapNum);
-
-#ifdef CONFIG_NEED_UNMAP
-	//ZslBufferQueue zsl_buffer_q;
-	for (i = 0; i < mZslHeapNum; i++) {
-		if (0 != mZslHeapArray[i]->fd) {
-			HAL_LOGD("i %d fd 0x%x", i, (cmr_uint)mZslHeapArray[i]->fd);
-			camera_set_zsl_buffer(mCameraHandle, (cmr_uint)mZslHeapArray[i]->phys_addr, (cmr_uint)mZslHeapArray[i]->data, (cmr_uint)mZslHeapArray[i]->fd);
-		}/*else {
-				memset(&zsl_buffer_q, 0, sizeof(zsl_buffer_q));
-				zsl_buffer_q.valid = 0;
-				zsl_buffer_q.heap_array = mZslHeapArray[i];
-				zsl_buffer_q.frame.buf_id = i;
-				pushZSLQueue(zsl_buffer_q);
-		}*/
-	}
-#else
 	releaseZSLQueue();
 	for (i = 0; i < mZslHeapNum; i++) {
-		camera_set_zsl_buffer(mCameraHandle, (cmr_uint)mZslHeapArray[i]->phys_addr, (cmr_uint)mZslHeapArray[i]->data, (cmr_uint)mZslHeapArray[i]->fd);
+		camera_set_zsl_buffer(mCameraHandle, mZslHeapArray[i]->phys_addr, (cmr_uint)mZslHeapArray[i]->data, mZslHeapArray[i]->fd);
 	}
-#endif
-
-}
-
-void SprdCamera3OEMIf::SprdZslTakePicture()
-{
-	mZslShotPushFlag = 1;
-}
-
-int SprdCamera3OEMIf::map(sprd_camera_memory_t* camera_memory, hal_mem_info_t *mem_info)
-{
-	if (NULL == camera_memory || !mem_info) {
-		HAL_LOGE("Fatal error! memory pointer is null camera_memory 0x%lx mem_info 0x%lx.", camera_memory, mem_info);
-		return -1;
-	}
-
-	unsigned long paddr = 0;
-	uintptr_t tmp_fd = 0;
-	size_t psize = 0;
-	int result = 0;
-	HAL_LOGD("E: camera_memory 0x%x", camera_memory);
-
-	if (!mIOMMUEnabled) {
-		result = camera_memory->ion_heap->get_phy_addr_from_ion(&paddr, &psize);
-	} else {
-		//result = camera_memory->ion_heap->get_iova(ION_MM, &paddr, &psize);
-	}
-
-	if (result < 0) {
-		HAL_LOGE("error get pHeapIon addr - method %d result 0x%x ",mIOMMUEnabled, result);
-		return result;
-	}
-
-	mem_info->addr_phy = (void*)paddr;
-	mem_info->addr_vir = camera_memory->ion_heap->getBase();
-	tmp_fd = (uintptr_t)camera_memory;
-	mem_info->fd = tmp_fd;
-
-	camera_memory->phys_addr = (uintptr_t)mem_info->addr_phy;
-	camera_memory->phys_size = (uint32_t)psize;
-
-	HAL_LOGD("phys_addr 0x%lx, data: 0x%lx", (unsigned long)mem_info->addr_phy, (unsigned long)mem_info->addr_vir);
-	HAL_LOGV("X");
-
-	return result;
-}
-
-int SprdCamera3OEMIf::unmap(sprd_camera_memory_t* camera_memory, hal_mem_info_t *mem_info)
-{
-	if (NULL == camera_memory || !mem_info) {
-		HAL_LOGE("fatal error! memory pointer is null camera_memory 0x%lx mem_info 0x%lx.", camera_memory, mem_info);
-		return -1;
-	}
-	int result = 0;
-	if(camera_memory->ion_heap) {
-		if (mIOMMUEnabled) {
-			HAL_LOGD("free_mm_iova: 0x%lx,data: 0x%lx, 0x%x", (unsigned long)camera_memory->phys_addr, (unsigned long)camera_memory->data,camera_memory->phys_size);
-			#if 0
-			result = camera_memory->ion_heap->free_iova(ION_MM, camera_memory->phys_addr, camera_memory->phys_size);
-			if (0 == result) {
-				camera_memory->phys_addr = 0;
-			}
-			#endif
-		}
-	}
-	HAL_LOGD("result %d.", result);
-	return result;
 }
 
 uint32_t SprdCamera3OEMIf::getZslBufferIDForFd(cmr_s32 fd)
@@ -6065,8 +5901,7 @@ uint32_t SprdCamera3OEMIf::getZslBufferIDForFd(cmr_s32 fd)
 	uint32_t id = 0xFFFFFFFF;
 	int i = 0;
 	for (i = 0; i < kPreviewBufferCount+kPreviewRotBufferCount+1; i++) {
-		if ((NULL != mZslHeapArray_fd[i]) &&
-			(mZslHeapArray_fd[i] == fd)) {
+		if (0 != mZslHeapArray[i]->fd && mZslHeapArray[i]->fd == fd) {
 			id = i;
 			break;
 		}
@@ -6075,61 +5910,29 @@ uint32_t SprdCamera3OEMIf::getZslBufferIDForFd(cmr_s32 fd)
 	return id;
 }
 
-int SprdCamera3OEMIf::releaseZslBuffer(struct camera_frame_type *frame)
+int SprdCamera3OEMIf::pushZslFrame(struct camera_frame_type *frame)
 {
 	int ret = 0;
-	hal_mem_info_t mem_info;
 	ZslBufferQueue zsl_buffer_q;
-	if (NULL == frame) {
-		HAL_LOGE("error param frame 0x%lx.", frame);
-		return -1;
-	}
 
 	frame->buf_id = getZslBufferIDForFd(frame->fd);
-
-	memset(&mem_info, 0, sizeof(mem_info));
 	memset(&zsl_buffer_q, 0, sizeof(zsl_buffer_q));
-	ret = unmap(mZslHeapArray[frame->buf_id], &mem_info);
-	if (ret != 0) {
-		HAL_LOGE("unmap failed");
-		return -1;
-	}
-	mZslHeapArray_phy[frame->buf_id] = (uintptr_t)0;//(uintptr_t)mem_info.addr_phy;
-	mZslHeapArray_vir[frame->buf_id] = (uintptr_t)0;//(uintptr_t)mem_info.addr_vir;
-	mZslHeapArray_fd[frame->buf_id]  = (cmr_s32)0;
 	zsl_buffer_q.frame = *frame;
 	zsl_buffer_q.heap_array = mZslHeapArray[frame->buf_id];
-	zsl_buffer_q.valid = 1;
 	pushZSLQueue(zsl_buffer_q);
 
-	return 0;
+	return ret;
 }
 
-int SprdCamera3OEMIf::getZslBuffer(hal_mem_info_t *mem_info)
+struct camera_frame_type SprdCamera3OEMIf::popZslFrame()
 {
-	int ret = 0;
-	int buf_id;
-	ZslBufferQueue zsl_frame;
+	ZslBufferQueue zslFrame = {0};
+	struct camera_frame_type zsl_frame = {0};
 
-	if (NULL == mem_info) {
-		HAL_LOGE("Error param mem_info 0x%lx.", mem_info);
-		return -1;
-	}
+	zslFrame = popZSLQueue();
+	zsl_frame = zslFrame.frame;
 
-	zsl_frame = popZSLQueue();
-	buf_id = zsl_frame.frame.buf_id;
-	ret = map(zsl_frame.heap_array, mem_info);
-	if (ret < 0) {
-		HAL_LOGE("map failed.");
-		return ret;
-	}
-
-	mZslHeapArray_phy[buf_id] = (uintptr_t)mem_info->addr_phy;
-	mZslHeapArray_vir[buf_id] = (uintptr_t)mem_info->addr_vir;
-	mZslHeapArray_fd[buf_id]  = (cmr_s32)mem_info->fd;
-	mem_info->valid = zsl_frame.valid;
-
-	return ret;
+	return zsl_frame;
 }
 
 void SprdCamera3OEMIf::receiveZslFrame(struct camera_frame_type *frame)
@@ -6190,40 +5993,37 @@ void SprdCamera3OEMIf::receiveZslFrame(struct camera_frame_type *frame)
 	}
 }
 
-void SprdCamera3OEMIf::processZslFrame(void *p_data)
+void SprdCamera3OEMIf::snapshotZsl(void *p_data)
 {
 	SprdCamera3OEMIf * obj = (SprdCamera3OEMIf *)p_data;
-	ZslBufferQueue zsl_buffer_q;
-	hal_mem_info_t mem_info;
 	cmr_int need_pause;
-	int i;
-	int ret = 0;
+	struct camera_frame_type zsl_frame;
 
-	memset(&mem_info, 0, sizeof(mem_info));
 	camera_zsl_snapshot_need_pause(obj->mCameraHandle, &need_pause);
 	if (1 == obj->mZslShotPushFlag && 1 == obj->mZslChannelStatus) {
-		HAL_LOGD("processZslFrame getZSLQueueFrameNum %d", obj->getZSLQueueFrameNum());
-		ret = obj->getZSLSnapshotFrame(&mem_info);
-		if (0 == ret) {
-			camera_set_zsl_snapshot_buffer(obj->mCameraHandle, (cmr_uint)mem_info.addr_phy, (cmr_uint)mem_info.addr_vir, mem_info.fd);
+		zsl_frame = popZslFrame();
+		if (zsl_frame.y_vir_addr != 0) {
+			camera_set_zsl_snapshot_buffer(obj->mCameraHandle, zsl_frame.y_phy_addr,
+						       zsl_frame.y_vir_addr, zsl_frame.fd);
 			obj->mZslShotPushFlag = 0;
 			obj->mZslChannelStatus = 0;
 		}
-	} else {
-		if (SPRD_INTERNAL_RAW_REQUESTED == obj->getCaptureState()) {
-			if (obj->mZslMaxFrameNum < obj->getZSLQueueFrameNum() && 1 == obj->mZslChannelStatus) {
-				ret = obj->getZslBuffer(&mem_info);
-				if(0 == ret) {
-					camera_set_zsl_buffer(obj->mCameraHandle, (cmr_uint)mem_info.addr_phy, (cmr_uint)mem_info.addr_vir, (cmr_uint)mem_info.fd);
-				}
-			}
-		}
 	}
-	if (!obj->isCapturing() || !need_pause) {
+}
+
+void SprdCamera3OEMIf::processZslFrame(void *p_data)
+{
+	SprdCamera3OEMIf * obj = (SprdCamera3OEMIf *)p_data;
+	struct camera_frame_type zsl_frame;
+	cmr_int need_pause;
+
+	camera_zsl_snapshot_need_pause(obj->mCameraHandle, &need_pause);
+	if (SPRD_INTERNAL_RAW_REQUESTED == obj->getCaptureState() || !obj->isCapturing() || !need_pause) {
 		if (obj->mZslMaxFrameNum < obj->getZSLQueueFrameNum() && 1 == obj->mZslChannelStatus) {
-			ret = obj->getZslBuffer(&mem_info);
-			if(0 == ret) {
-				camera_set_zsl_buffer(obj->mCameraHandle, (cmr_uint)mem_info.addr_phy, (cmr_uint)mem_info.addr_vir, (cmr_uint)mem_info.fd);
+			zsl_frame = popZslFrame();
+			if (zsl_frame.y_vir_addr != 0) {
+				camera_set_zsl_buffer(obj->mCameraHandle, zsl_frame.y_phy_addr,
+						     zsl_frame.y_vir_addr, zsl_frame.fd);
 			}
 		}
 	}
@@ -6280,12 +6080,9 @@ int SprdCamera3OEMIf::ZSLMode_monitor_thread_deinit(void *p_data)
 
 cmr_int SprdCamera3OEMIf::ZSLMode_monitor_thread_proc(struct cmr_msg *message, void *p_data)
 {
-	//CMR_MSG_INIT(message);
 	int exit_flag = 0;
 	int ret = NO_ERROR;
 	SprdCamera3OEMIf * obj = (SprdCamera3OEMIf *)p_data;
-	camera_frame_type *zsl_frame;
-	int i = 0;
 	cmr_int need_pause;
 
 	HAL_LOGD("zsl thread message.msg_type 0x%x, sub-type 0x%x, ret %d",
@@ -6295,50 +6092,31 @@ cmr_int SprdCamera3OEMIf::ZSLMode_monitor_thread_proc(struct cmr_msg *message, v
 
 	switch (message->msg_type) {
 		case CMR_EVT_ZSL_MON_INIT:
-			HAL_LOGD("zsl thread msg INITED!");
+			HAL_LOGD("zsl thread msg init");
 			break;
 
 		case CMR_EVT_ZSL_MON_PUSH:
-			if(obj->getPreviewState() != SPRD_INTERNAL_PREVIEW_STOPPING)
-			{
-				HAL_LOGD("zsl thread CMR_EVT_ZSL_MON_PUSH!");
+			if(obj->getPreviewState() != SPRD_INTERNAL_PREVIEW_STOPPING) {
 				obj->processZslFrame(p_data);
 			}
 			break;
 		case CMR_EVT_ZSL_MON_SNP:
-			HAL_LOGD("zsl thread CMR_EVT_ZSL_MON_SNP!");
-#ifdef CONFIG_NEED_UNMAP
-			obj->processZslFrame(p_data);
-#endif
+			obj->snapshotZsl(p_data);
 			break;
-
 		case CMR_EVT_ZSL_MON_EXIT:
-			HAL_LOGD("zsl thread msg EXIT!");
+			HAL_LOGD("zsl thread msg exit");
 			exit_flag = 1;
 			break;
 
 		default:
-			HAL_LOGE("Unsupported ZSLMode monitorMSG");
+			HAL_LOGE("unsupported zsl message");
 			break;
 	}
 
 	if(exit_flag){
-		HAL_LOGD("ZSLMode monitor thread exit ");
+		HAL_LOGD("zsl monitor thread exit ");
 	}
 	return NULL;
-}
-#endif
-
-void SprdCamera3OEMIf::decZslMapNum()
-{
-#ifdef CONFIG_MEM_OPTIMIZATION
-#ifdef CONFIG_NEED_UNMAP
-		mZslMapNum = 1;
-#else
-		mZslMapNum = 1;
-		mZslMaxBuffNum = 1;
-#endif
-#endif
 }
 
 uint32_t SprdCamera3OEMIf::isPreAllocCapMem()
