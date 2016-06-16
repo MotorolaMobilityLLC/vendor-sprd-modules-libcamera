@@ -2488,21 +2488,23 @@ static unsigned long _s5k3l2xx_PowerOn(SENSOR_HW_HANDLE handle, unsigned long po
 		//Sensor_PowerDown(!power_down);
 		Sensor_SetResetLevel(!reset_level);
 		usleep(10*1000);
-//		_dw9807_SRCInit(handle, 3);//2);
-		vcm_dw9807_init(handle,3);
-		usleep(1*1000);
-		_s5k3l2xx_write_af( handle, VCM_POS_INF);
 #ifdef MClK_26M_SS		
 		Sensor_SetMCLK(26);//SENSOR_DEFALUT_MCLK);//
 #else
 		Sensor_SetMCLK(SENSOR_DEFALUT_MCLK);//
 #endif	         
 		usleep(10*1000);
+//		_dw9807_SRCInit(handle, 3);//2);
+		vcm_dw9807_init(handle,3);
+		usleep(1*1000);
+		//_s5k3l2xx_write_af( handle, VCM_POS_INF);
 
 
 	} else {
-		_s5k3l2xx_write_af(handle,0);
-		usleep(1*1000);
+		if(m_vcm_pos>0){
+			_s5k3l2xx_write_af(handle,0);
+			usleep(1*1000);
+		}
 		Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
 		Sensor_SetResetLevel(reset_level);
 		//Sensor_PowerDown(power_down);

@@ -85,7 +85,7 @@ uint32_t vcm_dw9807_init(SENSOR_HW_HANDLE handle,int mode)
 	{
 		cmd_len = 2;
 
-		cmd_val[0] = 0x02;
+/*		cmd_val[0] = 0x02;
 		cmd_val[1] = 0x01;
 		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 		if(ret_value){
@@ -98,7 +98,7 @@ uint32_t vcm_dw9807_init(SENSOR_HW_HANDLE handle,int mode)
 		if(ret_value){
 			SENSOR_PRINT("SENSOR_S5K3L2XX: _dw9807_SRCInit 1 fail!");
 		}
-
+*/
 		usleep(200);
 
 		cmd_val[0] = 0x02;

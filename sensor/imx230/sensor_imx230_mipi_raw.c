@@ -1937,7 +1937,7 @@ static unsigned long imx230_stream_off(SENSOR_HW_HANDLE handle, unsigned long pa
 	if (value != 0x00) {
 		Sensor_WriteReg(0x0100, 0x00);
 		frame_time = s_current_default_line_time*s_current_frame_length/1000+1000;
-		sleep_time = frame_time>50?frame_time:50*1000;
+		sleep_time = frame_time>50*1000?frame_time:50*1000;
 		usleep(sleep_time);//50 * 1000);
 		//usleep(s_current_default_line_time*s_current_frame_length/1000+1000);
 		SENSOR_PRINT("X  sleep_time %d  frame_time %d",sleep_time,frame_time);
