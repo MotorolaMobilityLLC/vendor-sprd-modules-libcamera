@@ -17,7 +17,7 @@
 /* Wrapper define */
 #include "alwrapper_3a.h"
 
-#define _WRAPPER_YHIST_VER 0.8040
+#define _WRAPPER_YHIST_VER 0.8050
 
 #ifdef __cplusplus
 extern "C"
@@ -33,6 +33,13 @@ extern "C"
  */
 uint32 al3awrapper_dispatchhw3a_yhiststats( struct isp_drv_meta_yhist_t * alisp_metadata_yhist, struct al3awrapper_stats_yhist_t * alwrappered_yhist_dat );
 
+/*
+ * API name: al3awrapper_yhist_getdefaultcfg
+ * This API is used for query default ISP config before updating ISP config of Yhist stats engine
+ * param ayhistconfig[out]: input buffer, API would manage parameter and return via this pointer
+ * return: error code
+ */
+uint32 al3awrapper_yhist_getdefaultcfg( struct alhw3a_yhist_cfginfo_t* ayhistconfig);
 
 /*
  * API name: al3awrapper_yhist_getversion

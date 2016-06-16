@@ -106,6 +106,15 @@ uint32 al3awrapper_antif_get_flickermode( uint8 flicker_libresult, enum ae_antif
 */
 uint32 al3awrapper_antif_set_flickermode( enum ae_antiflicker_mode_t flicker_mode, struct alflickerruntimeobj_t *aflickerlibcallback, void * flicker_runtimedat );
 
+/**
+ * API name: al3awrapperflicker_reference_setting
+ * This API would provide recommended fps setting
+ * param flicker_mode[in], flicker_reference_input_setting_t
+ * param aFlickerLibCallback[in]: flicker_reference_output_setting_t
+ * return: error code
+ */
+uint32 al3awrapperflicker_reference_setting(struct flicker_reference_output_setting_t *out, struct flicker_reference_input_setting_t *in);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

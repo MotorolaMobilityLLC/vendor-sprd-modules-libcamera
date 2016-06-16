@@ -35,6 +35,7 @@ enum flicker_set_param_type_t {
 	FLICKER_SET_PARAM_CURRENT_FREQUENCY,
 	FLICKER_SET_PARAM_REFERENCE_DATA_INTERVAL,
 	FLICKER_SET_PARAM_ENABLE_DEBUG_REPORT,
+	FLICKER_SET_PARAM_SHIFT_INFO,
 	FLICKER_SET_PARAM_MAX,
 
 };
@@ -46,6 +47,55 @@ enum flicker_get_param_type_t {
 	FLICKER_GET_PARAM_MAX,
 
 };
+
+#pragma pack(push) /* push current alignment setting to stack */
+#pragma pack(4)    /* new alignment setting  */
+struct flicker_sensor_info_t {
+	uint8 enable;	/* 0:disable, 1:enable */
+	uint8 precision;
+	double data[3];
+};
+#pragma pack(pop)  /* restore old alignment setting from stack  */
+
+#pragma pack(push) /* push current alignment setting to stack */
+#pragma pack(4)    /* new alignment setting  */
+struct flicker_shift_input_setting_t {
+	struct flicker_sensor_info_t gyro_info;
+	struct flicker_sensor_info_t gsensor_info;
+	uint32 avgmean;
+	uint32 center_mean2x2;
+	int32 bv;
+	uint32 exposure_time;
+	uint16 adgain;
+	uint16 iso;
+	uint8 BlockData[2][256];
+};
+#pragma pack(pop)  /* restore old alignment setting from stack  */
+
+#pragma pack(push) /* push current alignment setting to stack */
+#pragma pack(4)    /* new alignment setting  */
+struct flicker_shift_output_setting_t {
+	uint8 status;	/* 0:UnStable, 1:Stable */
+};
+#pragma pack(pop)  /* restore old alignment setting from stack  */
+
+#pragma pack(push) /* push current alignment setting to stack */
+#pragma pack(4)    /* new alignment setting  */
+struct flicker_reference_input_setting_t {
+	uint16 current_max_fps;
+	uint16 current_min_fps;
+	enum ae_antiflicker_mode_t flicker_freq;
+};
+#pragma pack(pop)  /* restore old alignment setting from stack  */
+
+#pragma pack(push) /* push current alignment setting to stack */
+#pragma pack(4)    /* new alignment setting  */
+struct flicker_reference_output_setting_t {
+	/* Recommend Output Setting */
+	uint16 recmd_max_fps;
+	uint16 recmd_min_fps;
+};
+#pragma pack(pop)  /* restore old alignment setting from stack  */
 
 #pragma pack(push) /* push current alignment setting to stack */
 #pragma pack(4)    /* new alignment setting  */
@@ -69,6 +119,8 @@ struct flicker_set_param_content_t {
 	uint32 line_time;               /* unit: nano second */
 	uint16 currentfreq;
 
+	/* For Shift Detection */
+	struct flicker_shift_input_setting_t shift_info;
 };
 #pragma pack(pop)  /* restore old alignment setting from stack  */
 

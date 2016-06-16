@@ -239,3 +239,32 @@ uint32 al3awrapper_antif_set_flickermode( enum ae_antiflicker_mode_t flicker_mod
 
 	return ret;
 }
+
+/*
+ * API name: al3awrapperflicker_reference_setting
+ * This API would provide recommended fps setting
+ * param flicker_mode[in], flicker_reference_input_setting_t
+ * param aFlickerLibCallback[in]: flicker_reference_output_setting_t
+ * return: error code
+ */
+uint32 al3awrapperflicker_reference_setting(struct flicker_reference_output_setting_t *out, struct flicker_reference_input_setting_t *in)
+{
+	uint32 ret = ERR_WPR_FLICKER_SUCCESS;
+	uint16 max_fps, min_fps;
+	double tmp_fps;
+
+	if(in->flicker_freq == ANTIFLICKER_50HZ) {
+		max_fps = 2500;
+		min_fps = in->current_min_fps;
+	} else if(in->flicker_freq == ANTIFLICKER_60HZ) {
+		max_fps = 3000;
+		min_fps = in->current_min_fps;
+	} else {
+		max_fps = 3000;
+		min_fps = in->current_min_fps;
+	}
+	out->recmd_max_fps = max_fps;
+	out->recmd_min_fps = min_fps;
+
+	return ret;
+}

@@ -47,6 +47,7 @@ enum allib_af_param_result_err_list {
 	PARAM_ERR_INVALID_FOCUS_TYPE = (1 << 5),
 	PARAM_ERR_ISP_NO_CHANGE = (1 << 6),
 	PARAM_ERR_INVALID_SPECIAL_EVENT = (1 << 7),
-	PARAM_ERR_INVALIDE_IMG_BUFFER = (1 << 8)
+	PARAM_ERR_INVALIDE_IMG_BUFFER = (1 << 8),
+	PARAM_ERR_INVALID_MANUAL_DAC  = (1 << 9)
 };
 #pragma pack(pop)

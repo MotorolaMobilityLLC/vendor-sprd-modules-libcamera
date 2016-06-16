@@ -351,9 +351,6 @@ struct af_report_update_t {
 	uint16     status;        /* refer to af_status_type define */
 	float f_distance;
 
-	/* debug message */
-	uint32 af_debug_data[MAX_RUNTIME_AF_DEBUG_DATA];
-
 };
 #pragma pack(pop)  /* restore old alignment setting from stack */
 

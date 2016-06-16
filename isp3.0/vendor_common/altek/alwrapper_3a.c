@@ -3,7 +3,7 @@
  *
  *  Created on: 2015/12/05
  *      Author: MarkTseng
- *  Latest update: 2016/5/5
+ *  Latest update: 2016/5/31
  *      Reviser: MarkTseng
  *  Comments:
  *       This c file is mainly used for AP framework to:
@@ -170,7 +170,7 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 	if ( (pispmeta.uantifstatsaddr == 0 || pispmeta.uantifstatssize == 0  ) && alisp_metadata_antif != NULL ) {
 		memset( alisp_metadata_antif, 0, sizeof( struct  isp_drv_meta_antif_t ));
 #ifndef LOCAL_NDK_BUILD
-		ISP_LOGE("al3awrapper_dispatchhw3astats anti-flicker invalid addr: %d , statssize:%d", pispmeta.uantifstatsaddr, pispmeta.uantifstatssize );
+		ISP_LOGI("al3awrapper_dispatchhw3astats anti-flicker invalid addr: %d , statssize:%d", pispmeta.uantifstatsaddr, pispmeta.uantifstatssize );
 #endif
 	}
 	if ( (pispmeta.usubsamplestatsaddr == 0  || pispmeta.usubsamplestatssize == 0  ) && alisp_metadata_subsample != NULL ) {
@@ -520,7 +520,7 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 		offset_start = offset_start + padding;
 
 #ifndef LOCAL_NDK_BUILD
-		ISP_LOGI("al3awrapper_dispatchhw3astats anti-flicker statssize:%d", alisp_metadata_yhist->uyhiststatssize );
+		ISP_LOGI("al3awrapper_dispatchhw3astats y-hist statssize:%d", alisp_metadata_yhist->uyhiststatssize );
 #endif
 
 		/* allocate memory buffer base on meta size of YHist stats */
@@ -628,7 +628,7 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 	time_e = systemtime_e.tv_sec * 1000000 + systemtime_e.tv_usec;
 
 #ifndef LOCAL_NDK_BUILD
-	ISP_LOGI("al3awrapper_dispatchhw3astats end %d!", (uint32)(time_e - time_s));
+	ISP_LOGI("al3awrapper_dispatchhw3astats process time %d!", (uint32)(time_e - time_s));
 #endif
 
 

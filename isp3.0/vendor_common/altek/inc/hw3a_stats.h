@@ -362,6 +362,14 @@ struct alhw3a_flicker_cfginfo_t {
 };
 #pragma pack(pop)  /* restore old alignment setting from stack */
 
+#pragma pack(push) /* push current alignment setting to stack */
+#pragma pack(4)    /* new alignment setting */
+struct alhw3a_yhist_cfginfo_t {
+	uint16 tokenid;
+	struct alhw3a_statisticsdldregion_t tyhistregion;
+};
+#pragma pack(pop)  /* restore old alignment setting from stack */
+
 /** HW3A stats info of packed data
 \Total size should refer to define of HW3A_MAX_TOTAL_STATS_BUFFER_SIZE
 \Here only partial stats info, not including stats data
