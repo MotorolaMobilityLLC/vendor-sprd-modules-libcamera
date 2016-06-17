@@ -1019,7 +1019,7 @@ status_t SprdCameraHardware::takePicture()
 		SET_PARM(mCameraHandle, CAMERA_PARAM_SENSOR_ROTATION,  0);
 		SET_PARM(mCameraHandle, CAMERA_PARAM_SCENE_MODE,  0);
 
-		SET_PARM(mCameraHandle, CAMERA_PARAM_JPEG_QUALITY, 0);
+		SET_PARM(mCameraHandle, CAMERA_PARAM_JPEG_QUALITY, 95);
 		SET_PARM(mCameraHandle, CAMERA_PARAM_THUMB_QUALITY, 0);
 		SET_PARM(mCameraHandle, CAMERA_PARAM_THUMB_SIZE, (cmr_uint)&req_size);
 
