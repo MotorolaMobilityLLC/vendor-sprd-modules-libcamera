@@ -969,12 +969,14 @@ static cmr_int afaltek_adpt_set_caf_fv_cfg(cmr_handle adpt_handle)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct alhw3a_af_cfginfo_t af_cfg = {0};
+	struct alhw3a_af_cfginfo_t af_cfg;
 	struct allib_af_input_special_event event;
-	struct lib_caf_stats_config_t afaltek_cfg = {0};
+	struct lib_caf_stats_config_t afaltek_cfg;
 	struct aft_caf_stats_cfg *caf_fv = NULL;
 
 	ISP_LOGE("in");
+	cmr_bzero(&af_cfg, sizeof(af_cfg));
+	cmr_bzero(&afaltek_cfg, sizeof(afaltek_cfg));
 /*
 	if ((AF_CTRL_MODE_CAF != cxt->af_mode) &&
 	(AF_CTRL_MODE_CONTINUOUS_VIDEO != cxt->af_mode)) {
@@ -1608,8 +1610,9 @@ static cmr_int afaltek_adpt_pre_start(cmr_handle adpt_handle,
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct isp3a_af_hw_cfg af_cfg = {0};
+	struct isp3a_af_hw_cfg af_cfg;
 
+	bzero(&af_cfg, sizeof(af_cfg));
 	if ((AF_ADPT_STARTED == cxt->af_cur_status)
 		|| (AF_ADPT_FOCUSING == cxt->af_cur_status)) {
 		ret = afaltek_adpt_stop(cxt);
@@ -2353,16 +2356,19 @@ static cmr_int afaltek_adpt_process(cmr_handle adpt_handle, void *in, void *out)
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct af_ctrl_process_in *proc_in = (struct af_ctrl_process_in *)in;
 	struct af_ctrl_process_out *proc_out = (struct af_ctrl_process_out *)out;
-	struct allib_af_hw_stats_t af_stats = {0};
+	struct allib_af_hw_stats_t af_stats;
 	struct isp_drv_meta_af_t *p_meta_data_af;
 	uint32 total_blocks;
 	uint32 focus_value;
 	struct lib_caf_stats_t caf_stat;
 	struct aft_proc_calc_param aft_in;
-	struct alhw3a_af_cfginfo_t af_cfg = {0};
-	struct lib_caf_stats_config_t afaltek_cfg = {0};
+	struct alhw3a_af_cfginfo_t af_cfg;
+	struct lib_caf_stats_config_t afaltek_cfg;
 	struct aft_caf_stats_cfg *caf_fv = NULL;
 
+	cmr_bzero(&af_stats, sizeof(af_stats));
+	cmr_bzero(&af_cfg, sizeof(af_cfg));
+	cmr_bzero(&afaltek_cfg, sizeof(afaltek_cfg));
 	ISP_LOGV("E");
 	ret = al3awrapper_dispatchhw3a_afstats(proc_in->statistics_data->addr,
 					       (void *)(&af_stats));
