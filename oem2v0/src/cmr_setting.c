@@ -1675,7 +1675,7 @@ static cmr_int setting_get_sprd_highiso_enabled(struct setting_component *cpt,
 	cmr_s8                         value[PROPERTY_VALUE_MAX];
 	struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
-	property_get("debug.camera.highiso", value, "0");
+	property_get("persist.camera.highiso", value, "0");
 	if (atoi(value) == 1)
 		parm->cmd_type_value = 1;
 	else
