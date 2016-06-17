@@ -47,6 +47,7 @@ struct cmr_msg_cxt
 	struct cmr_msg_in          *msg_head;
 	struct cmr_msg_in          *msg_write;
 	struct cmr_msg_in          *msg_read;
+	cmr_u8                     will_destroy_msg_queue_flag;
 };
 
 struct cmr_thread
@@ -96,6 +97,7 @@ cmr_int cmr_msg_queue_create(cmr_u32 count, cmr_handle *queue_handle)
 	pthread_mutex_init(&msg_cxt->mutex, NULL);
 	sem_init(&msg_cxt->msg_sem, 0, 0);
 	msg_cur = msg_cxt->msg_head;
+	msg_cxt->will_destroy_msg_queue_flag = 0;
 	for (i = 0; i < count; i++) {
 		sem_init(&msg_cur->sem, 0, 0);
 		msg_cur++;
@@ -126,7 +128,6 @@ cmr_int cmr_msg_get(cmr_handle queue_handle, struct cmr_msg *message, cmr_u32 lo
 		CMR_LOGE("MSG underflow");
 		return CMR_MSG_UNDERFLOW;
 	} else {
-
 		if (msg_cxt->msg_read != msg_cxt->msg_write) {
 			msg_cur = msg_cxt->msg_read;
 
@@ -242,6 +243,7 @@ cmr_int cmr_msg_post(cmr_handle queue_handle, struct cmr_msg *message, cmr_u32 l
 	struct cmr_msg_in        *ori_node;
 	struct cmr_msg_in        *msg_cur = NULL;
 	cmr_int                  rtn = CMR_MSG_SUCCESS;
+	cmr_int                  reserved_msg_entry;
 
 	if (0 == queue_handle || NULL == message) {
 		CMR_LOGW("post msg to NULL queue! discard");
@@ -266,7 +268,19 @@ cmr_int cmr_msg_post(cmr_handle queue_handle, struct cmr_msg *message, cmr_u32 l
 
 	pthread_mutex_lock(&msg_cxt->mutex);
 
-	if ((msg_cxt->msg_number + 1) >= msg_cxt->msg_count) {
+	if (msg_cxt->will_destroy_msg_queue_flag){
+		CMR_LOGI("will_destroy_msg_queue_flag %d, queus destroyed", msg_cxt->will_destroy_msg_queue_flag);
+		pthread_mutex_unlock(&msg_cxt->mutex);
+		return CMR_MSG_QUEUE_DESTROYED;
+	}
+
+	//always reserve one more place in message queue for possible CMR_THREAD_EXIT_EVT
+	if(message->msg_type != CMR_THREAD_EXIT_EVT){
+		reserved_msg_entry = 2;
+	} else {
+		reserved_msg_entry = 1;
+	}
+	if ((msg_cxt->msg_number + reserved_msg_entry) >= msg_cxt->msg_count) {
 		pthread_mutex_unlock(&msg_cxt->mutex);
 		CMR_LOGE("MSG Overflow queue_handle = %p, msg type = 0x%x", queue_handle, message->msg_type);
 		return CMR_MSG_OVERFLOW;
@@ -285,6 +299,11 @@ cmr_int cmr_msg_post(cmr_handle queue_handle, struct cmr_msg *message, cmr_u32 l
 		msg_cxt->msg_number ++;
 	}
 
+	if(message->msg_type == CMR_THREAD_EXIT_EVT){
+		msg_cxt->will_destroy_msg_queue_flag = 1;
+		CMR_LOGI("posting CMR_THREAD_EXIT_EVT, set will_destroy_msg_queue_flag");
+	}
+
 	pthread_mutex_unlock(&msg_cxt->mutex);
 
 /*	CMR_LOGD("msg_cur 0x%lx", (cmr_uint)msg_cur);*/
@@ -300,6 +319,7 @@ cmr_int cmr_msg_post(cmr_handle queue_handle, struct cmr_msg *message, cmr_u32 l
 cmr_int cmr_msg_queue_destroy(cmr_handle queue_handle)
 {
 	struct cmr_msg_cxt       *msg_cxt = (struct cmr_msg_cxt*)queue_handle;
+	struct cmr_msg_in        *msg_cur = NULL;
 
 	CMR_LOGV("queue_handle 0x%lx", (cmr_uint)queue_handle);
 
@@ -309,6 +329,23 @@ cmr_int cmr_msg_queue_destroy(cmr_handle queue_handle)
 	}
 
 	MSG_CHECK_MSG_MAGIC(queue_handle);
+
+	if(msg_cxt->msg_number != 0){
+		CMR_LOGE("destroying an unempty msg queue, might cause mem leak!!!");
+		while(msg_cxt->msg_read != msg_cxt->msg_write){
+			msg_cur = msg_cxt->msg_read;
+			if(msg_cur->msg.alloc_flag == 1){
+				if(msg_cur->msg.data){
+					free(msg_cur->msg.data);
+				}
+			}
+			sem_post(&msg_cur->sem);
+			msg_cxt->msg_read++;
+			if (msg_cxt->msg_read > msg_cxt->msg_head + msg_cxt->msg_count - 1) {
+				msg_cxt->msg_read = msg_cxt->msg_head;
+			}
+		}
+	}
 
 	if (msg_cxt->msg_head) {
 		free(msg_cxt->msg_head);
@@ -447,6 +484,9 @@ cmr_int cmr_thread_destroy(cmr_handle thread_handle)
 	message.msg_type = CMR_THREAD_EXIT_EVT;
 	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
 	ret = cmr_thread_msg_send(thread_handle, &message);
+	if(ret){
+		CMR_LOGE("failed sending CMR_THREAD_EXIT_EVT!!! ");
+	}
 	if (thread_handle) {
 		cmr_msg_queue_destroy(thread->queue_handle);
 		free(thread_handle);
