@@ -5580,9 +5580,9 @@ static cmr_int prev_yuv_info_copy_to_isp(struct prev_handle *handle,
 	cmr_uint                index = 0xff;
 	struct prev_context     *prev_cxt = NULL;
 	struct yuv_info_t       yuv_info = { 0 };
-	char                    *info_yaddr = NULL;
-	char                    *info_uaddr = NULL;
-	char                    *uv_addr = NULL;
+	cmr_u8                  *info_yaddr = NULL;
+	cmr_u8                  *info_uaddr = NULL;
+	cmr_u8                  *uv_addr = NULL;
 	cmr_uint                uv_size = 0;
 
 	prev_cxt = &handle->prev_cxt[camera_id];
@@ -5595,9 +5595,8 @@ static cmr_int prev_yuv_info_copy_to_isp(struct prev_handle *handle,
 	yuv_info.yuv_addr = (cmr_u8 *)prev_cxt->prev_virt_yuv_addr;
 	yuv_info.width = prev_cxt->actual_prev_size.width;
 	yuv_info.height = prev_cxt->actual_prev_size.height;
-
-	info_yaddr = info->yaddr_vir;
-	info_uaddr = info->uaddr_vir;
+	info_yaddr = (cmr_u8 *)((cmr_uint)info->yaddr_vir);
+	info_uaddr = (cmr_u8 *)((cmr_uint)info->uaddr_vir);
 	memcpy(yuv_info.yuv_addr, info_yaddr, yuv_info.width * yuv_info.height);
 	uv_addr = yuv_info.yuv_addr + yuv_info.width * yuv_info.height;
 	uv_size = yuv_info.width * yuv_info.height / 2;
@@ -5606,7 +5605,7 @@ static cmr_int prev_yuv_info_copy_to_isp(struct prev_handle *handle,
 	ret = handle->ops.set_preview_yuv(handle->oem_handle,
 					    camera_id, &yuv_info);
 	if (ret)
-		CMR_LOGE("set_preview_yimg err %d", ret);
+		CMR_LOGE("set_preview_yimg err %ld", ret);
 
 exit:
 	return ret;
