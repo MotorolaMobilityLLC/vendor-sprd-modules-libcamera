@@ -1801,26 +1801,26 @@ static unsigned long _s5k4h8yx_write_gain(SENSOR_HW_HANDLE handle, unsigned long
 
 	real_gain = 1.0f*param * 0x0020 / 0x80;
 
-        SENSOR_LOGI("_s5k4h8yx: real_gain:0x%x, param: 0x%x", (uint32_t)real_gain, param);
-        s_sensor_ev_info.preview_gain = param;
+	SENSOR_LOGI("_s5k4h8yx: real_gain:0x%x, param: 0x%x", (uint32_t)real_gain, param);
+	s_sensor_ev_info.preview_gain = param;
 
-            if ((uint32_t)real_gain <= 16*32) {
-                a_gain = real_gain;
-                d_gain = 256;
-                    //ret_value = Sensor_WriteReg(0x204,(uint32_t)a_gain);//0x100);//a_gain);
-            } else {
-                a_gain = 16*32;
-                d_gain = 256.0*real_gain/a_gain;
-                            SENSOR_LOGI("_s5k4h8yx: real_gain:0x%x, a_gain: 0x%x, d_gain: 0x%x", (uint32_t)real_gain, (uint32_t)a_gain,(uint32_t)d_gain);
-                           if((uint32_t)d_gain>256*256)
-                                d_gain=256*256;  //d_gain < 256x
-            }
+	if ((uint32_t)real_gain <= 16*32) {
+		a_gain = real_gain;
+		d_gain = 256;
+		//ret_value = Sensor_WriteReg(0x204,(uint32_t)a_gain);//0x100);//a_gain);
+	} else {
+		a_gain = 16*32;
+		d_gain = 256.0*real_gain/a_gain;
+		SENSOR_LOGI("_s5k4h8yx: real_gain:0x%x, a_gain: 0x%x, d_gain: 0x%x", (uint32_t)real_gain, (uint32_t)a_gain,(uint32_t)d_gain);
+		if((uint32_t)d_gain>256*256)
+			d_gain=256*256;  //d_gain < 256x
+	}
 
-            ret_value = Sensor_WriteReg(0x204,(uint32_t)a_gain);//0x100);//a_gain);
-            ret_value = Sensor_WriteReg(0x20e,(uint32_t) d_gain);
-            ret_value = Sensor_WriteReg(0x210, (uint32_t)d_gain);
-            ret_value = Sensor_WriteReg(0x212, (uint32_t)d_gain);
-            ret_value = Sensor_WriteReg(0x214, (uint32_t)d_gain);
+	ret_value = Sensor_WriteReg(0x204,(uint32_t)a_gain);//0x100);//a_gain);
+	ret_value = Sensor_WriteReg(0x20e,(uint32_t) d_gain);
+	ret_value = Sensor_WriteReg(0x210, (uint32_t)d_gain);
+	ret_value = Sensor_WriteReg(0x212, (uint32_t)d_gain);
+	ret_value = Sensor_WriteReg(0x214, (uint32_t)d_gain);
    //         SENSOR_LOGI("_s5k3l2xx: real_gain a_gain:0x%x read_reg 0x204:0x%x, 0x20e:0x%x, 0x202:0x%x, 0x1086:0x%x", (uint32_t)a_gain,Sensor_ReadReg(0x0204),Sensor_ReadReg(0x020e),Sensor_ReadReg(0x202),Sensor_ReadReg(0x1086));
 
 //	Sensor_WriteReg(0x0104, 0x00);

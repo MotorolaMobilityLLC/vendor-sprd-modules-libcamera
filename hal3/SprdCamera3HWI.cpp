@@ -82,7 +82,7 @@ camera3_device_ops_t SprdCamera3HWI::mCameraOps = {
 	reserved:{0},
 };
 
-static camera3_device_t *g_cam_device[2] = {0, 0};
+static camera3_device_t *g_cam_device[4] = {0, 0,0,0};
 
 //SprdCamera3Setting *SprdCamera3HWI::mSetting = NULL;
 
@@ -112,8 +112,12 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId):
 	mCameraDevice.priv = this;
 	if (SENSOR_MAIN ==  cameraId) {
 		g_cam_device[0] = &mCameraDevice;
-	} else {
+	} else if (SENSOR_SUB ==  cameraId) {
 		g_cam_device[1] = &mCameraDevice;
+	}else if (SENSOR_DEVICE2 ==  cameraId) {
+		g_cam_device[2] = &mCameraDevice;
+	}else if (SENSOR_DEVICE3 ==  cameraId) {
+		g_cam_device[3] = &mCameraDevice;
 	}
 	mPendingRequest = 0;
 	mCurrentRequestId = -1;

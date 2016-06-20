@@ -161,6 +161,7 @@ enum camera_index {
 	CAMERA_ID_0 = 0,
 	CAMERA_ID_1,
 	CAMERA_ID_2,
+	CAMERA_ID_3,
 	CAMERA_ID_MAX
 };
 

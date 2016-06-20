@@ -1206,16 +1206,16 @@ static uint32_t imx258_get_static_info(SENSOR_HW_HANDLE handle, uint32_t *param)
 	bu64297gwz_get_pose_dis(handle, &up, &down);
 	ex_info->pos_dis.up2hori = up;
 	ex_info->pos_dis.hori2down = down;
-	SENSOR_LOGI("SENSOR_IMX230: f_num: %d", ex_info->f_num);
-	SENSOR_LOGI("SENSOR_IMX230: max_fps: %d", ex_info->max_fps);
-	SENSOR_LOGI("SENSOR_IMX230: max_adgain: %d", ex_info->max_adgain);
-	SENSOR_LOGI("SENSOR_IMX230: ois_supported: %d", ex_info->ois_supported);
-	SENSOR_LOGI("SENSOR_IMX230: pdaf_supported: %d", ex_info->pdaf_supported);
-	SENSOR_LOGI("SENSOR_IMX230: exp_valid_frame_num: %d", ex_info->exp_valid_frame_num);
-	SENSOR_LOGI("SENSOR_IMX230: clam_level: %d", ex_info->clamp_level);
-	SENSOR_LOGI("SENSOR_IMX230: adgain_valid_frame_num: %d", ex_info->adgain_valid_frame_num);
-	SENSOR_LOGI("SENSOR_IMX230: sensor name is: %s", ex_info->name);
-	SENSOR_LOGI("SENSOR_IMX230: sensor version info is: %s", ex_info->sensor_version_info);
+	SENSOR_LOGI("SENSOR_imx258: f_num: %d", ex_info->f_num);
+	SENSOR_LOGI("SENSOR_imx258: max_fps: %d", ex_info->max_fps);
+	SENSOR_LOGI("SENSOR_imx258: max_adgain: %d", ex_info->max_adgain);
+	SENSOR_LOGI("SENSOR_imx258: ois_supported: %d", ex_info->ois_supported);
+	SENSOR_LOGI("SENSOR_imx258: pdaf_supported: %d", ex_info->pdaf_supported);
+	SENSOR_LOGI("SENSOR_imx258: exp_valid_frame_num: %d", ex_info->exp_valid_frame_num);
+	SENSOR_LOGI("SENSOR_imx258: clam_level: %d", ex_info->clamp_level);
+	SENSOR_LOGI("SENSOR_imx258: adgain_valid_frame_num: %d", ex_info->adgain_valid_frame_num);
+	SENSOR_LOGI("SENSOR_imx258: sensor name is: %s", ex_info->name);
+	SENSOR_LOGI("SENSOR_imx258: sensor version info is: %s", ex_info->sensor_version_info);
 
 	return rtn;
 }
@@ -1235,10 +1235,10 @@ static uint32_t imx258_get_fps_info(SENSOR_HW_HANDLE handle, uint32_t *param)
 	fps_info->min_fps = s_imx258_mode_fps_info.sensor_mode_fps[sensor_mode].min_fps;
 	fps_info->is_high_fps = s_imx258_mode_fps_info.sensor_mode_fps[sensor_mode].is_high_fps;
 	fps_info->high_fps_skip_num = s_imx258_mode_fps_info.sensor_mode_fps[sensor_mode].high_fps_skip_num;
-	SENSOR_LOGI("SENSOR_IMX230: mode %d, max_fps: %d",fps_info->mode, fps_info->max_fps);
-	SENSOR_LOGI("SENSOR_IMX230: min_fps: %d", fps_info->min_fps);
-	SENSOR_LOGI("SENSOR_IMX230: is_high_fps: %d", fps_info->is_high_fps);
-	SENSOR_LOGI("SENSOR_IMX230: high_fps_skip_num: %d", fps_info->high_fps_skip_num);
+	SENSOR_LOGI("SENSOR_imx258: mode %d, max_fps: %d",fps_info->mode, fps_info->max_fps);
+	SENSOR_LOGI("SENSOR_imx258: min_fps: %d", fps_info->min_fps);
+	SENSOR_LOGI("SENSOR_imx258: is_high_fps: %d", fps_info->is_high_fps);
+	SENSOR_LOGI("SENSOR_imx258: high_fps_skip_num: %d", fps_info->high_fps_skip_num);
 
 	return rtn;
 }
@@ -1249,12 +1249,12 @@ static unsigned long imx258_access_val(SENSOR_HW_HANDLE handle, unsigned long pa
 	SENSOR_VAL_T* param_ptr = (SENSOR_VAL_T*)param;
 	uint16_t tmp;
 
-	SENSOR_LOGI("SENSOR_IMX230: _imx258_access_val E param_ptr = %p", param_ptr);
+	SENSOR_LOGI("SENSOR_imx258: _imx258_access_val E param_ptr = %p", param_ptr);
 	if(!param_ptr){
 		return rtn;
 	}
 
-	SENSOR_LOGI("SENSOR_IMX230: param_ptr->type=%x", param_ptr->type);
+	SENSOR_LOGI("SENSOR_imx258: param_ptr->type=%x", param_ptr->type);
 	switch(param_ptr->type)
 	{
 		case SENSOR_VAL_TYPE_INIT_OTP:
@@ -1313,7 +1313,7 @@ static unsigned long imx258_access_val(SENSOR_HW_HANDLE handle, unsigned long pa
 			break;
 	}
 
-	SENSOR_LOGI("SENSOR_IMX230: _imx258_access_val X");
+	SENSOR_LOGI("SENSOR_imx258: _imx258_access_val X");
 
 	return rtn;
 }

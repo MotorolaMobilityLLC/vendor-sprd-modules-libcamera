@@ -116,9 +116,11 @@ extern SENSOR_INFO_T g_imx230_mipi_raw_info;
 extern SENSOR_INFO_T g_imx258_mipi_raw_info;
 extern SENSOR_INFO_T g_ov2680_mipi_raw_info;
 extern SENSOR_INFO_T g_s5k3l2xx_mipi_raw_info;
+extern SENSOR_INFO_T g_s5k3l8xxm3_mipi_raw_info;
 extern SENSOR_INFO_T g_ov13870_mipi_raw_info;
-//extern SENSOR_INFO_T g_sr552_mipi_raw_info;
-//extern SENSOR_INFO_T g_s5k5e3yx_mipi_raw_info;
+extern SENSOR_INFO_T g_sp2509_mipi_raw_info;
+extern SENSOR_INFO_T g_s5k5e3yx_mipi_raw_info;
+extern SENSOR_INFO_T g_ov8856_mipi_raw_info;
 
 #define AUTO_TEST_CAMERA 1
 
@@ -131,6 +133,7 @@ const SENSOR_MATCH_T main_sensor_infor_tab[]=
 	{"imx230_mipi_raw", &g_imx230_mipi_raw_info},
 	{"imx258_mipi_raw", &g_imx258_mipi_raw_info},
 	{"s5k3l2xx_mipi_raw", &g_s5k3l2xx_mipi_raw_info},
+	{"s5k3l8xxm3_mipi_raw", &g_s5k3l8xxm3_mipi_raw_info},
 	{"ov13870_mipi_raw", &g_ov13870_mipi_raw_info},
 	PNULL
 };
@@ -139,18 +142,21 @@ const SENSOR_MATCH_T sub_sensor_infor_tab[]=
 {
 	{"imx132_mipi_raw", &g_imx132_mipi_raw_info},
 	{"s5k4h8yx_mipi_raw", &g_s5k4h8yx_mipi_raw_info},
-    {"s5k5e3yx_mipi_raw", &g_s5k5e3yx_mipi_raw_info},
+	{"s5k5e3yx_mipi_raw", &g_s5k5e3yx_mipi_raw_info},
+	{"ov8856_mipi_raw", &g_ov8856_mipi_raw_info},
 	PNULL
 };
 
 const SENSOR_MATCH_T sensor2_infor_tab[]=
 {
 	{"ov2680_mipi_raw", &g_ov2680_mipi_raw_info},
+	{"sp2509_mipi_raw", &g_sp2509_mipi_raw_info},
 	PNULL
 };
 
 const SENSOR_MATCH_T sensor3_infor_tab[]=
 {
+	{"ov8856_mipi_raw", &g_ov8856_mipi_raw_info},
 #ifdef SC_FPGA
 	{"ov5640_mipi_yuv", &g_ov5640_mipi_yuv_info},
 	{"ov5640_mipi_raw", &g_ov5640_mipi_raw_info},
@@ -189,11 +195,12 @@ const SENSOR_MATCH_T  at_main_sensor_infor_tab[]=
 #endif
 #else
 #ifdef CONFIG_BACK_CAMERA_MIPI
-        {"at_s5k3m2xxm3_mipi_raw", &g_s5k3m2xxm3_mipi_raw_info},
+	{"at_s5k3m2xxm3_mipi_raw", &g_s5k3m2xxm3_mipi_raw_info},
 	{"at_s5k3p3sm_mipi_raw", &g_s5k3p3sm_mipi_raw_info},
 	{"at_imx230_mipi_raw", &g_imx230_mipi_raw_info},
 	{"at_imx258_mipi_raw", &g_imx258_mipi_raw_info},
 	{"at_s5k3l2xx_mipi_raw", &g_s5k3l2xx_mipi_raw_info},
+	{"at_s5k3l8xx3_mipi_raw", &g_s5k3l8xxm3_mipi_raw_info},
 
 #endif
 #endif
@@ -205,8 +212,8 @@ PNULL
 const SENSOR_MATCH_T  at_sub_sensor_infor_tab[]=
 {
 #ifndef SC_FPGA
-    {"autotest_ov5648_mipi_raw", &g_at_ov5648_mipi_raw_info},
-    {"autotest_GC0310_MIPI_yuv", &g_GC0310_MIPI_yuv_info},
+	{"autotest_ov5648_mipi_raw", &g_at_ov5648_mipi_raw_info},
+	{"autotest_GC0310_MIPI_yuv", &g_GC0310_MIPI_yuv_info},
 #if !(defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4))
 #ifdef CONFIG_FRONT_CAMERA_CCIR
 	{"GC0308_yuv", &g_GC0308_yuv_info},
@@ -220,11 +227,12 @@ const SENSOR_MATCH_T  at_sub_sensor_infor_tab[]=
 #endif
 #else
 #ifdef CONFIG_FRONT_CAMERA_MIPI
-        {"ov5648_mipi_raw", &g_ov5648_mipi_raw_info},
-        {"ov5648_darling_mipi_raw",&g_ov5648_darling_mipi_raw_info},
+	{"ov5648_mipi_raw", &g_ov5648_mipi_raw_info},
+	{"ov5648_darling_mipi_raw",&g_ov5648_darling_mipi_raw_info},
+	{"ov8856_mipi_raw", &g_ov8856_mipi_raw_info},
 	{"at_imx132_mipi_raw", &g_imx132_mipi_raw_info},
 	{"at_s5k4h8yx_mipi_raw", &g_s5k4h8yx_mipi_raw_info},
-          {"at_s5k5e3yx_mipi_raw", &g_s5k5e3yx_mipi_raw_info},
+	{"at_s5k5e3yx_mipi_raw", &g_s5k5e3yx_mipi_raw_info},
 
 #endif
 #endif
@@ -235,6 +243,9 @@ PNULL
 };
 const SENSOR_MATCH_T  at_dev2_sensor_infor_tab[]=
 {
+	{"at_ov2680_mipi_raw", &g_ov2680_mipi_raw_info},
+	{"at_sp2509_mipi_raw", &g_sp2509_mipi_raw_info},
+
 PNULL
 };
 

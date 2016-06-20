@@ -64,6 +64,9 @@ LOCAL_SRC_FILES += \
 				s5k5e3yx/sensor_s5k5e3yx_mipi_raw.c \
 				vcm/vcm_dw9800.c \
 				s5k3l2xx/sensor_s5k3l2xx_mipi_raw.c \
+				s5k3l8xxm3/sensor_s5k3l8xxm3_mipi_raw.c\
+				sp2509/sensor_sp2509_mipi_raw.c \
+				ov8856/sensor_ov8856_mipi_raw.c \
 				vcm/vcm_dw9807.c \
 				ov13870/sensor_ov13870_mipi_raw.c \
 				dummy/isp_otp_calibration.c \

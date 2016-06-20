@@ -2373,13 +2373,13 @@ static uint32_t _dw9807_SRCInit(SENSOR_HW_HANDLE handle, uint32_t mode)
             {
                 cmd_len = 2;
 
-		cmd_val[0] = 0x02;
+	/*	cmd_val[0] = 0x02;
 		cmd_val[1] = 0x01;
 		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 		if(ret_value){
-			SENSOR_LOGI("SENSOR_S5K3L2XX: _dw9807_SRCInit 0 fail!");
+			SENSOR_PRINT("SENSOR_S5K3L2XX: _dw9807_SRCInit 0 fail!");
 		}
-
+*/
 		cmd_val[0] = 0x02;
 		cmd_val[1] = 0x00;
 		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
@@ -2389,27 +2389,27 @@ static uint32_t _dw9807_SRCInit(SENSOR_HW_HANDLE handle, uint32_t mode)
 
 		usleep(200);
 
-		cmd_val[0] = 0x02;
-		cmd_val[1] = 0x02;
+		cmd_val[0] = 0x05;
+		cmd_val[1] = 0x04;
 		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 		if(ret_value){
 			SENSOR_LOGI("SENSOR_S5K3L2XX: _dw9807_SRCInit 2 fail!");
 		}
 
 		cmd_val[0] = 0x06;
-		cmd_val[1] = 0x81;//61;
+		cmd_val[1] = 0x75;//61;
 		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 		if(ret_value){
 			SENSOR_LOGI("SENSOR_S5K3L2XX: _dw9807_SRCInit 3 fail!");
 		}
 
-
+/*
 		cmd_val[0] = 0x07;
 		cmd_val[1] = 0x36;
 		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 		if(ret_value){
 			SENSOR_LOGI("SENSOR_S5K3L2XX: _dw9807_SRCInit 4 fail!");
-		}
+		}*/
                 }
 		break;
 
@@ -2500,8 +2500,8 @@ static unsigned long _s5k3l2xx_PowerOn(SENSOR_HW_HANDLE handle, unsigned long po
 		Sensor_SetMCLK(SENSOR_DEFALUT_MCLK);//
 #endif	         
 		usleep(10*1000);
-//		_dw9807_SRCInit(handle, 3);//2);
-		vcm_dw9807_init(handle,3);
+		_dw9807_SRCInit(handle, 3);//2);
+		//vcm_dw9807_init(handle,3);
 		usleep(1*1000);
 		//_s5k3l2xx_write_af( handle, VCM_POS_INF);
 

@@ -41,7 +41,7 @@
 /**---------------------------------------------------------------------------*
  **                         Local Variables                                   *
  **---------------------------------------------------------------------------*/
-struct sensor_drv_context s_local_sensor_cxt[2];
+struct sensor_drv_context s_local_sensor_cxt[4];
 /**---------------------------------------------------------------------------*
  **                         Local Functions                                   *
  **---------------------------------------------------------------------------*/
@@ -82,8 +82,18 @@ void sensor_set_cxt_common(struct sensor_drv_context *sensor_cxt)
 #else
 	if (sensor_id == 0)
 		s_local_sensor_cxt[0] = *(struct sensor_drv_context *)sensor_cxt;
-	else
+	else if (sensor_id == 1)
 		s_local_sensor_cxt[1] = *(struct sensor_drv_context *)sensor_cxt;
+//#ifdef CONFIG_DCAM_SENSOR2_SUPPORT
+	else if (sensor_id == 2)
+		s_local_sensor_cxt[2] = *(struct sensor_drv_context *)sensor_cxt;
+//#endif
+//#ifdef CONFIG_DCAM_SENSOR3_SUPPORT
+	else if (sensor_id == 3)
+		s_local_sensor_cxt[3] = *(struct sensor_drv_context *)sensor_cxt;
+//#endif
+	//else
+	//	s_local_sensor_cxt[1] = *(struct sensor_drv_context *)sensor_cxt;
 #endif
 
 	return;
@@ -104,8 +114,18 @@ void *sensor_get_dev_cxt_Ex(cmr_u32 camera_id)
 #else
 	if (camera_id ==0)
 		p_sensor_cxt = &s_local_sensor_cxt[0];
-	else
+	else if (camera_id ==1)
 		p_sensor_cxt = &s_local_sensor_cxt[1];
+//#ifdef CONFIG_DCAM_SENSOR2_SUPPORT
+	else if (camera_id == 2)
+		p_sensor_cxt = &s_local_sensor_cxt[2] ;
+//#endif
+//#ifdef CONFIG_DCAM_SENSOR3_SUPPORT
+	else if (camera_id == 3)
+		p_sensor_cxt = &s_local_sensor_cxt[3];// = *(struct sensor_drv_context *)sensor_cxt;
+//#endif
+	//else
+	//	p_sensor_cxt = &s_local_sensor_cxt[1];
 #endif
 
 	return (void *)p_sensor_cxt;
@@ -303,7 +323,7 @@ cmr_int sns_dev_mipi_lvl(struct sensor_drv_context *sensor_cxt,
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 
 	SENSOR_LOGV("fd 0x%lx", sensor_cxt->fd_sensor);
-//	ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_SET_MIPI_SWITCH, &level);
+	ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_SET_MIPI_SWITCH, &level);
 	if (0 != ret) {
 		SENSOR_LOGE("failed,  level = %d, ret=%ld ", level, ret);
 		ret = -1;
@@ -1097,14 +1117,14 @@ cmr_int hw_Sensor_SetResetLevel(SENSOR_HW_HANDLE handle, cmr_u32 plus_level)
 
 cmr_int hw_Sensor_SetMIPILevel(SENSOR_HW_HANDLE handle, cmr_u32 plus_level)
 {
-	#ifdef CONFIG_DCAM_SENSOR_DEV_2_SUPPORT
+	//#ifdef CONFIG_DCAM_SENSOR_DEV_2_SUPPORT
 	SENSOR_LOGE("Sensor_SetMIPILevel IN");
 	if (NULL == handle || NULL == handle->privatedata)
 		return SENSOR_CTX_ERROR;
 	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)(handle->privatedata);
 	if (-1 == sns_dev_mipi_lvl(sensor_cxt, (cmr_u32)plus_level))
 		return SENSOR_FAIL;
-	#endif
+	//#endif
 
 	return SENSOR_SUCCESS;
 }
@@ -3384,9 +3404,9 @@ cmr_int sensor_set_exif_common(struct sensor_drv_context *sensor_cxt,
 			break;
 		}
 	case SENSOR_EXIF_CTRL_FNUMBER:
-                    sensor_exif_info_ptr->valid.FNumber= 1;
-                    sensor_exif_info_ptr->FNumber.numerator = param;
-                    sensor_exif_info_ptr->FNumber.denominator = 10;
+		sensor_exif_info_ptr->valid.FNumber= 1;
+		sensor_exif_info_ptr->FNumber.numerator = param;
+		sensor_exif_info_ptr->FNumber.denominator = 10;
 		break;
 		break;
 	case SENSOR_EXIF_CTRL_EXPOSUREPROGRAM:
@@ -3411,9 +3431,9 @@ cmr_int sensor_set_exif_common(struct sensor_drv_context *sensor_cxt,
 	case SENSOR_EXIF_CTRL_SHUTTERSPEEDVALUE:
 		break;
 	case SENSOR_EXIF_CTRL_APERTUREVALUE:
-                    sensor_exif_info_ptr->valid.ApertureValue = 1;
-                    sensor_exif_info_ptr->ApertureValue.numerator = param;
-                    sensor_exif_info_ptr->ApertureValue.denominator = 10;
+		sensor_exif_info_ptr->valid.ApertureValue = 1;
+		sensor_exif_info_ptr->ApertureValue.numerator = param;
+		sensor_exif_info_ptr->ApertureValue.denominator = 10;
 		break;
 	case SENSOR_EXIF_CTRL_BRIGHTNESSVALUE:
 		{
@@ -3446,9 +3466,9 @@ cmr_int sensor_set_exif_common(struct sensor_drv_context *sensor_cxt,
 	case SENSOR_EXIF_CTRL_EXPOSUREBIASVALUE:
 		break;
 	case SENSOR_EXIF_CTRL_MAXAPERTUREVALUE:
-                    sensor_exif_info_ptr->valid.MaxApertureValue = 1;
-                    sensor_exif_info_ptr->MaxApertureValue.numerator = param;
-                    sensor_exif_info_ptr->MaxApertureValue.denominator = 10;
+		sensor_exif_info_ptr->valid.MaxApertureValue = 1;
+		sensor_exif_info_ptr->MaxApertureValue.numerator = param;
+		sensor_exif_info_ptr->MaxApertureValue.denominator = 10;
 		break;
 	case SENSOR_EXIF_CTRL_SUBJECTDISTANCE:
 		break;
@@ -3655,6 +3675,7 @@ cmr_int hw_Sensor_SetSensorExifInfo(SENSOR_HW_HANDLE handle, SENSOR_EXIF_CTRL_E 
 		SENSOR_LOGW("sensor not ready yet, direct return");
 		return SENSOR_FAIL;
 	} else if (PNULL != sensor_info_ptr->ioctl_func_ptr->get_exif) {
+		SENSOR_LOGI("get_exif_info enter ioctol");
 		sensor_exif_info_ptr =
 			(EXIF_SPEC_PIC_TAKING_COND_T *)sensor_info_ptr->ioctl_func_ptr->get_exif(sensor_cxt->sensor_hw_handler, 0x00);
 	} else {
@@ -3698,9 +3719,9 @@ cmr_int hw_Sensor_SetSensorExifInfo(SENSOR_HW_HANDLE handle, SENSOR_EXIF_CTRL_E 
 			break;
 		}
 	case SENSOR_EXIF_CTRL_FNUMBER:
-                     sensor_exif_info_ptr->valid.FNumber= 1;
-                    sensor_exif_info_ptr->FNumber.numerator = param;
-                    sensor_exif_info_ptr->FNumber.denominator = 10;
+		sensor_exif_info_ptr->valid.FNumber= 1;
+		sensor_exif_info_ptr->FNumber.numerator = param;
+		sensor_exif_info_ptr->FNumber.denominator = 10;
 		break;
 	case SENSOR_EXIF_CTRL_EXPOSUREPROGRAM:
 		break;
@@ -3719,9 +3740,9 @@ cmr_int hw_Sensor_SetSensorExifInfo(SENSOR_HW_HANDLE handle, SENSOR_EXIF_CTRL_E 
 	case SENSOR_EXIF_CTRL_SHUTTERSPEEDVALUE:
 		break;
 	case SENSOR_EXIF_CTRL_APERTUREVALUE:
-                    sensor_exif_info_ptr->valid.ApertureValue= 1;
-                    sensor_exif_info_ptr->ApertureValue.numerator = param;
-                    sensor_exif_info_ptr->ApertureValue.denominator = 10;
+		sensor_exif_info_ptr->valid.ApertureValue= 1;
+		sensor_exif_info_ptr->ApertureValue.numerator = param;
+		sensor_exif_info_ptr->ApertureValue.denominator = 10;
 		break;
 	case SENSOR_EXIF_CTRL_BRIGHTNESSVALUE:
 		{
@@ -3754,9 +3775,9 @@ cmr_int hw_Sensor_SetSensorExifInfo(SENSOR_HW_HANDLE handle, SENSOR_EXIF_CTRL_E 
 	case SENSOR_EXIF_CTRL_EXPOSUREBIASVALUE:
 		break;
 	case SENSOR_EXIF_CTRL_MAXAPERTUREVALUE:
-                    sensor_exif_info_ptr->valid.MaxApertureValue= 1;
-                    sensor_exif_info_ptr->MaxApertureValue.numerator = param;
-                    sensor_exif_info_ptr->MaxApertureValue.denominator = 10;
+		sensor_exif_info_ptr->valid.MaxApertureValue= 1;
+		sensor_exif_info_ptr->MaxApertureValue.numerator = param;
+		sensor_exif_info_ptr->MaxApertureValue.denominator = 10;
 		break;
 	case SENSOR_EXIF_CTRL_SUBJECTDISTANCE:
 		break;
@@ -4059,6 +4080,7 @@ cmr_int sensor_cfg_otp_update_isparam(struct sensor_drv_context *sensor_cxt,
 {
 	CMR_MSG_INIT(message);
 	cmr_int                  ret = CMR_CAMERA_SUCCESS;
+	SENSOR_LOGE("E");
 
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 
@@ -4071,6 +4093,7 @@ cmr_int sensor_cfg_otp_update_isparam(struct sensor_drv_context *sensor_cxt,
 		SENSOR_LOGE("send msg failed!");
 		return CMR_CAMERA_FAIL;
 	}
+	SENSOR_LOGE("X");
 	return ret;
 }
 
