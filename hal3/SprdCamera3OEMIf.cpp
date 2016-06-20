@@ -1142,9 +1142,9 @@ void SprdCamera3OEMIf::print_time()
 void SprdCamera3OEMIf::initPowerHint()
 {
 #ifdef HAS_CAMERA_HINTS
-	if (hw_get_module(POWER_HARDWARE_MODULE_ID, (const hw_module_t **)&m_pPowerModule)) {
+	if (hw_get_module(POWER_HARDWARE_MODULE_ID,
+			  (const hw_module_t **)&m_pPowerModule)) {
 		HAL_LOGE("%s module not found", POWER_HARDWARE_MODULE_ID);
-		m_pPowerModule = NULL;
 	}
 #endif
 }
@@ -1152,8 +1152,9 @@ void SprdCamera3OEMIf::initPowerHint()
 void SprdCamera3OEMIf::enablePowerHint()
 {
 #ifdef HAS_CAMERA_HINTS
-	if (m_pPowerModule) {
-		m_pPowerModule->powerHint(m_pPowerModule, POWER_HINT_VIDEO_ENCODE,
+	if (m_pPowerModule && m_pPowerModule->powerHint) {
+		m_pPowerModule->powerHint(m_pPowerModule,
+					  POWER_HINT_VIDEO_ENCODE,
 					  (void *)"state=1");
 	}
 #endif
@@ -1162,8 +1163,9 @@ void SprdCamera3OEMIf::enablePowerHint()
 void SprdCamera3OEMIf::disablePowerHint()
 {
 #ifdef HAS_CAMERA_HINTS
-	if (m_pPowerModule) {
-		m_pPowerModule->powerHint(m_pPowerModule, POWER_HINT_VIDEO_ENCODE,
+	if (m_pPowerModule && m_pPowerModule->powerHint) {
+		m_pPowerModule->powerHint(m_pPowerModule,
+					  POWER_HINT_VIDEO_ENCODE,
 					  (void *)"state=0");
 	}
 #endif

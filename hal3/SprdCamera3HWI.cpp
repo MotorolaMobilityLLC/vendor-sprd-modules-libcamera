@@ -173,7 +173,8 @@ SprdCamera3HWI::~SprdCamera3HWI()
 		Mutex::Autolock l(mLock);
 	}
 
-	mOEMIf->enablePowerHint();
+	if (mOEMIf)
+		mOEMIf->enablePowerHint();
 
 	if (mMetadataChannel) {
 		mMetadataChannel->stop(mFrameNum);
