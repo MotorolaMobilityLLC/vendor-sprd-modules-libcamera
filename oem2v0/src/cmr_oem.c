@@ -4015,8 +4015,21 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 			PerfectSkinLevel = setting_param.cmd_type_value;
 			CMR_LOGV("kinlin perfectskinlevel is %d", PerfectSkinLevel);
 		}
-		int skinWhitenLevel = PerfectSkinLevel;
-		int skinCleanLevel = PerfectSkinLevel;
+		// init the parameters table. save the value until the process is restart or the device is restart.
+		int tab_skinWhitenLevel[10]={0,15,25,35,45,55,65,75,85,95};
+		int tab_skinCleanLevel[10]={0,25,45,50,55,60,70,80,85,95};
+
+		int level = PerfectSkinLevel;
+		int skinWhitenLevel = 0;
+		int skinCleanLevel = 0;
+		int level_num = 0;
+		// convert the skin_level set by APP to skinWhitenLevel & skinCleanLevel according to the table saved.
+		level = (level<0)?0:((level>90)?90:level);
+		level_num = level/10;
+
+		skinWhitenLevel = tab_skinWhitenLevel[level_num];
+		skinCleanLevel = tab_skinCleanLevel[level_num];
+
 		int pic_width = src->size.width;
 		int pic_height = src->size.height;
 		CMR_LOGD("perfect skinWhitenLevel is %d, skinCleanLevel is %d", skinWhitenLevel, skinCleanLevel);
