@@ -68,11 +68,7 @@ LOCAL_SRC_FILES+= \
 	src/cmr_preview.c \
 	src/cmr_snapshot.c \
 	src/cmr_ipm.c \
-	src/cmr_focus.c \
-	isp_calibration/src/isp_calibration.c \
-	isp_calibration/src/isp_cali_interface.c
-
-
+	src/cmr_focus.c
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 	ifeq ($(strip $(TARGET_BOARD_CAMERA_FD_LIB)),omron)

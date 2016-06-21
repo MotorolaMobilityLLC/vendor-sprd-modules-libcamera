@@ -1251,31 +1251,10 @@ cmr_int (*camera_get_gain_thrs)(cmr_handle camera_handle, cmr_u32 *is_over_thrs)
 cmr_int (*camera_set_sensor_info_to_af)(cmr_handle camera_handle,  struct cmr_af_aux_sensor_info* sensor_info);
 cmr_int (*camera_get_sensor_max_fps)(cmr_handle camera_handle,cmr_u32 camera_id, cmr_u32* max_fps);
 cmr_int (*camera_snapshot_is_need_flash)(cmr_handle oem_handle, cmr_u32 camera_id, cmr_u32 *is_need_flash);
-cmr_uint(* camera_get_sensor_dual_otp_info)(cmr_handle camera_handle, struct sensor_dual_otp_info *otp_info);
+cmr_uint (*camera_get_sensor_dual_otp_info)(cmr_handle camera_handle, struct sensor_dual_otp_info *otp_info);
 cmr_uint (*camera_get_sensor_vcm_step)(cmr_handle camera_handle,cmr_u32 camera_id, cmr_u32* vcm_step);
 
 }oem_ops_t;
-
-typedef struct isp_cali_ops {
-
-int32_t (*ISP_Cali_GetLensTabs)(struct isp_addr_t img_addr,
-								uint32_t grid,
-								struct isp_size_t img_size,
-								uint32_t* lens_tab,
-								uint32_t x,
-								uint32_t y,
-								uint32_t type);
-
-int32_t (*ISP_Cali_RawRGBStat)(struct isp_addr_t *img_addr,
-				struct isp_rect_t *rect,
-				struct isp_size_t *img_size,
-				struct isp_bayer_ptn_stat_t *stat_param);
-
-void (*ISP_Cali_GetLensTabSize)(struct isp_size_t img_size, uint32_t grid, uint32_t *tab_size);
-
-uint32_t (*ISP_Cali_LensCorrection)(struct isp_addr_t * src_data, struct isp_addr_t * dst_data, struct isp_size_t img_size, uint8_t grid, uint16_t *lnc_tab);
-
-}isp_cali_ops_t;
 
 typedef struct oem_module {
     uint32_t tag;

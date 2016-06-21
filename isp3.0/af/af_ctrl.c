@@ -340,7 +340,7 @@ static cmr_int afctrl_vcm_thread_proc(struct cmr_msg *message, void *p_data)
 		break;
 	}
 exit:
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGV("done %ld", ret);
 	return ret;
 }
 

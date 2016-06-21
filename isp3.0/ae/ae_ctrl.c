@@ -368,7 +368,7 @@ cmr_int ae_ctrl_ioctrl(cmr_handle handle, enum ae_ctrl_cmd cmd, struct ae_ctrl_p
 	ret = cxt_ptr->ctrl_thr_cxt.err_code;
 	pthread_mutex_unlock(&cxt_ptr->ioctrl_out_mutex);
 exit:
-	ISP_LOGI("cmd = %d,done %ld", cmd, ret);
+	ISP_LOGV("cmd = %d,done %ld", cmd, ret);
 	return ret;
 }
 

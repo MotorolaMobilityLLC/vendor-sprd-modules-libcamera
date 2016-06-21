@@ -111,7 +111,7 @@ static cmr_int aflctrl_process(struct aflctrl_cxt *cxt, struct afl_ctrl_proc_in 
 		ISP_LOGI("ioctrl fun is NULL");
 	}
 exit:
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGV("done %ld", ret);
 	return ret;
 }
 

@@ -430,7 +430,7 @@ cmr_int isp3a_ae_callback(cmr_handle handle, enum ae_ctrl_cb_type cmd, struct ae
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)handle;
 	cmr_u32                                     callback_cmd = ISP_CALLBACK_CMD_MAX;
 
-	ISP_LOGI("cmd =%d", cmd);
+	ISP_LOGV("cmd = %d", cmd);
 	switch (cmd) {
 	case AE_CTRL_CB_CONVERGED:
 	case AE_CTRL_CB_FLASHING_CONVERGED:
@@ -503,7 +503,7 @@ cmr_int isp3a_afl_callback(cmr_handle handle, enum afl_ctrl_cb_type cmd, struct 
 		goto exit;
 	}
 
-	ISP_LOGI("cmd =%d", cmd);
+	ISP_LOGV("cmd = %d", cmd);
 	switch (cmd) {
 	case AFL_CTRL_CB_FLICKER_MODE:
 		ISP_LOGI("flicker_mode =%d", in_ptr->flicker_mode);
@@ -511,7 +511,7 @@ cmr_int isp3a_afl_callback(cmr_handle handle, enum afl_ctrl_cb_type cmd, struct 
 		ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_FLICKER, &ae_in, NULL);
 		break;
 	case AFL_CTRL_CB_STAT_DATA:
-		ISP_LOGI("release stat_data =%p", in_ptr->stat_data);
+		ISP_LOGV("release stat_data =%p", in_ptr->stat_data);
 		isp3a_release_statistics_buf(handle, ISP3A_AFL, in_ptr->stat_data);
 		break;
 	default:
@@ -2912,7 +2912,7 @@ cmr_int isp3a_get_statistics_buf(cmr_handle isp_3a_handle, cmr_int type, struct 
 	}
 	sem_post(&cxt->statistics_data_sm);
 exit:
-	ISP_LOGI("type %ld, index %d", type, i);
+	ISP_LOGV("type %ld, index %d", type, i);
 	return ret;
 }
 
@@ -2956,7 +2956,7 @@ cmr_int isp3a_hold_statistics_buf(cmr_handle isp_3a_handle, cmr_int type, struct
 	sem_wait(&cxt->statistics_data_sm);
 	if (1 == buf_ptr->used_flag) {
 		buf_ptr->used_num++;
-		ISP_LOGI("used num %d", buf_ptr->used_num);
+		ISP_LOGV("used num %d", buf_ptr->used_num);
 	}
 
 	sem_post(&cxt->statistics_data_sm);
@@ -3124,7 +3124,7 @@ exit:
 		isp3a_put_statistics_buf(isp_3a_handle, ISP3A_SUB_SAMPLE, cxt->stats_buf_cxt.subsample_stats_buf_ptr);
 	}
 normal_exit:
-	ISP_LOGI("done");
+	ISP_LOGV("done");
 	return ret;
 }
 
