@@ -39,7 +39,7 @@
 #include <gralloc_priv.h>
 #include "SprdCamera3HALHeader.h"
 #include "SprdCamera3Channel.h"
-
+#include "SprdCamera3Flash.h"
 #include <dlfcn.h>
 
 #ifdef CONFIG_FACE_BEAUTY
@@ -564,6 +564,7 @@ void SprdCamera3OEMIf::closeCamera()
 		mIspRawDataReserved = NULL;
 	}
 
+	SprdCamera3Flash::releaseFlash(mCameraId);
 	// Performance optimization:move Callback_CaptureFree to closeCamera function
 	Callback_CaptureFree(0, 0, 0, 0);
 
@@ -596,7 +597,6 @@ void SprdCamera3OEMIf::closeCamera()
 	FreeReDisplayMem();
 
 	mReleaseFLag = true;
-
 	HAL_LOGI("X");
 }
 
@@ -2200,6 +2200,7 @@ int SprdCamera3OEMIf::startPreviewInternal()
 		deinitPreview();
 		return UNKNOWN_ERROR;
 	}
+	SprdCamera3Flash::reserveFlash(mCameraId);
 
 	if (mCaptureMode == CAMERA_ZSL_MODE) {
 		memset(mZSLCapInfo, 0, sizeof(mZSLCapInfo));
@@ -4191,6 +4192,7 @@ int SprdCamera3OEMIf::openCamera()
 #ifdef CONFIG_CAMERA_GYRO
 	gyro_monitor_thread_init((void *)this);
 #endif
+
 	return ret;
 }
 

@@ -89,6 +89,7 @@ LOCAL_SRC_FILES+= \
 	hal3/SprdCamera3OEMIf.cpp \
 	hal3/SprdCamera3Setting.cpp \
 	hal3/SprdCamera3Stream.cpp \
+	hal3/SprdCamera3Flash.cpp \
 #	hal1.0/src/SprdCameraHardwareInterface.cpp
 endif
 
