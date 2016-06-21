@@ -149,7 +149,7 @@ bool gIsApctRead = false;
 gralloc_module_t const* SprdCameraHardware::mGrallocHal = NULL;
 oem_module_t * SprdCameraHardware::mHalOem = NULL;
 
-const CameraInfo SprdCameraHardware::kCameraInfo[] = {
+const camera_info SprdCameraHardware::kCameraInfo[] = {
 	{
 		CAMERA_FACING_BACK,
 		90,/*orientation*/
@@ -193,7 +193,7 @@ const CameraInfo SprdCameraHardware::kCameraInfo[] = {
 };
 
 
-const CameraInfo SprdCameraHardware::kCameraInfo3[] = {
+const camera_info SprdCameraHardware::kCameraInfo3[] = {
 	{
 		CAMERA_FACING_BACK,
 		90,/*orientation*/

@@ -1226,7 +1226,7 @@ const uint8_t kavailable_noise_reduction_modes[] = {
 };
 /**********************Static Members**********************/
 
-const CameraInfo kCameraInfo[] = {
+const camera_info kCameraInfo[] = {
 	{
 		CAMERA_FACING_BACK,
 		90,/*orientation*/
