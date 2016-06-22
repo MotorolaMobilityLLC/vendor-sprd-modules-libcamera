@@ -1285,6 +1285,9 @@ bool SprdCamera3OEMIf::setCameraPreviewDimensions()
 						if ((mPreviewWidth >= 1920 && mPreviewHeight >= 1088) && (mCaptureWidth > 720 && mCaptureHeight > 480)) {
 							capture_size.width = 720;
 							capture_size.height = 480;
+						} else {
+							capture_size.width = (cmr_u32)mPreviewWidth;
+							capture_size.height =(cmr_u32)mPreviewHeight;
 						}
 					}
 				}
