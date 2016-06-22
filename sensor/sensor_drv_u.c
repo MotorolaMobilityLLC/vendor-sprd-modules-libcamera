@@ -3160,6 +3160,7 @@ cmr_int sensor_close_common(struct sensor_drv_context *sensor_cxt, cmr_u32 senso
 			}
 		}
 		Sensor_PowerOn(sensor_cxt, SENSOR_FALSE);
+#if 0
 		if (SENSOR_MAIN == snr_get_cur_id(sensor_cxt)) {
 			SENSOR_LOGI("0.");
 			if (SCI_TRUE == sensor_register_info_ptr->is_register[SENSOR_SUB]) {
@@ -3275,6 +3276,7 @@ cmr_int sensor_close_common(struct sensor_drv_context *sensor_cxt, cmr_u32 senso
 			}
 
 		}
+#endif
 	}
 	SENSOR_LOGI("9.");
 
