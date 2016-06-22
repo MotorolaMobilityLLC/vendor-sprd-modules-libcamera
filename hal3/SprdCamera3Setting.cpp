@@ -164,8 +164,8 @@ const int32_t ksupported_preview_formats[4] = {HAL_PIXEL_FORMAT_RAW16,
 												HAL_PIXEL_FORMAT_YV12,
 												HAL_PIXEL_FORMAT_YCrCb_420_SP};
 
-const int32_t kavailable_fps_ranges_back[] = {5,15, 5,20, 5,30, 15,15, 30,30};//{5, 20, 8, 20, 10, 20, 5, 25, 10, 25, 5, 30, 10, 30};
-const int32_t kavailable_fps_ranges_front[] = {5,15, 5,30, 15,15, 15,30, 30,30};//{5, 15, 5, 20, 10, 20, 5, 25, 10, 25, 5, 30, 10, 30};
+const int32_t kavailable_fps_ranges_back[] = {5,15, 5,20, 5,30, 30,30};//{5, 20, 8, 20, 10, 20, 5, 25, 10, 25, 5, 30, 10, 30};
+const int32_t kavailable_fps_ranges_front[] = {5,15, 5,30, 15,30, 30,30};//{5, 15, 5, 20, 10, 20, 5, 25, 10, 25, 5, 30, 10, 30};
 
 const int32_t kexposureCompensationRange[2] = {-3,3};
 //const int32_t kavailable_processed_sizes[16] = {/*must order from bigger to smaller*/
