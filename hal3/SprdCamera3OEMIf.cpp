@@ -1564,7 +1564,6 @@ SprdCamera3OEMIf::Sprd_camera_state SprdCamera3OEMIf::getPreviewState()
 
 SprdCamera3OEMIf::Sprd_camera_state SprdCamera3OEMIf::getCaptureState()
 {
-	Mutex::Autolock stateLock(&mStateLock);
 	HAL_LOGV("%s", getCameraStateStr(mCameraState.capture_state));
 	return mCameraState.capture_state;
 }
@@ -1809,6 +1808,13 @@ bool SprdCamera3OEMIf::WaitForBurstCaptureDone()
 	HAL_LOGD("jpeg_ret %d, callback_ret %d, NO_ERROR %d", jpeg_ret, callback_ret, NO_ERROR);
 
 	while (NO_ERROR == jpeg_ret || NO_ERROR == callback_ret) {
+		// for cts testMandatoryOutputCombinations
+		if(mTakePictureMode == SNAPSHOT_PREVIEW_MODE ||
+		   mTakePictureMode == SNAPSHOT_ONLY_MODE) {
+			usleep(5);
+			if (mCameraState.capture_state == SPRD_IDLE)
+				return true;
+		}
 
 		HAL_LOGD("waiting for jpeg_ret = %d, callback_ret = %d", jpeg_ret, callback_ret);
 

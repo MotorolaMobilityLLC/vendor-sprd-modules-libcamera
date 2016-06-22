@@ -669,7 +669,9 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 				}
 
 				mSetting->getSPRDDEFTag(&sprddefInfo);
-				if (sprddefInfo.slowmotion > 1)
+				if (preview_size.width > 3264 && preview_size.height > 2448)
+					SprdCamera3RegularChannel::kMaxBuffers = 2;
+				else if (sprddefInfo.slowmotion > 1)
 					SprdCamera3RegularChannel::kMaxBuffers = 8;
 				else
 					SprdCamera3RegularChannel::kMaxBuffers = 4;
@@ -743,13 +745,12 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 	mOEMIf->SetDimensionCapture(capture_size);
 
 	// for cts
-	//if(preview_size.height * preview_size.width > 3264 * 2448 ||
-	//   raw_size.height * raw_size.width > 3264 * 2448 ||
-	//   (video_size.height != 0 && video_size.width != 0 && capture_size.height * capture_size.width > 3264 * 2448)) {
-	//	mReciveQeqMax = SprdCamera3PicChannel::kMaxBuffers;
-	//} else {
+	if(preview_size.height * preview_size.width > 3264 * 2448 ||
+	   raw_size.height * raw_size.width > 3264 * 2448) {
+		mReciveQeqMax = SprdCamera3PicChannel::kMaxBuffers;
+	} else {
 		mReciveQeqMax = SprdCamera3RegularChannel::kMaxBuffers;
-	//}
+	}
 
 	/* Initialize mPendingRequestInfo and mPendnigBuffersMap */
 	mPendingRequestsList.clear();
