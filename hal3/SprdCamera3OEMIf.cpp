@@ -1038,7 +1038,7 @@ status_t SprdCamera3OEMIf::autoFocus(void *user_data)
 	if (!isPreviewing()) {
 		HAL_LOGE("not previewing");
 		controlInfo.af_state = ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED;
-		mSetting->setCONTROLTag(controlInfo);
+		mSetting->setAfCONTROLTag(controlInfo);
 		return INVALID_OPERATION;
 	}
 
@@ -1055,12 +1055,12 @@ status_t SprdCamera3OEMIf::autoFocus(void *user_data)
 		SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE, CAMERA_FOCUS_MODE_AUTO);
 	}
 	controlInfo.af_state = ANDROID_CONTROL_AF_STATE_ACTIVE_SCAN;
-	mSetting->setCONTROLTag(controlInfo);
+	mSetting->setAfCONTROLTag(controlInfo);
 	if (0 != mHalOem->ops->camera_start_autofocus(mCameraHandle)) {
 		HAL_LOGE("auto foucs fail.");
 		setCameraState(SPRD_IDLE, STATE_FOCUS);
 		controlInfo.af_state = ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED;
-		mSetting->setCONTROLTag(controlInfo);
+		mSetting->setAfCONTROLTag(controlInfo);
 	}
 
 	HAL_LOGD("X");
@@ -1104,7 +1104,7 @@ status_t SprdCamera3OEMIf::cancelAutoFocus()
 			mHalOem->ops->camera_transfer_af_to_caf(mCameraHandle);
 		SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE, CAMERA_FOCUS_MODE_CAF);
 	}
-	mSetting->setCONTROLTag(controlInfo);
+	mSetting->setAfCONTROLTag(controlInfo);
 }
 	mIsAutoFocus = false;
 	HAL_LOGD("X");
@@ -1119,7 +1119,7 @@ status_t SprdCamera3OEMIf::setAePrecaptureSta(uint8_t state)
 
 	mSetting->getCONTROLTag(&controlInfo);
 	controlInfo.ae_state = state;
-	mSetting->setCONTROLTag(controlInfo);
+	mSetting->setAeCONTROLTag(controlInfo);
 	HAL_LOGD("ae sta %d", state);
 	return ret;
 }
@@ -3649,7 +3649,8 @@ void SprdCamera3OEMIf::HandleStopPreview(enum camera_cb_type cb, void*  parm4)
 	mSetting->getCONTROLTag(&controlInfo);
 	controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_INACTIVE;
 	controlInfo.awb_state = ANDROID_CONTROL_AWB_STATE_INACTIVE;
-	mSetting->setCONTROLTag(controlInfo);
+	mSetting->setAeCONTROLTag(controlInfo);
+	mSetting->setAwbCONTROLTag(controlInfo);
 	HAL_LOGD("state = %s", getCameraStateStr(getPreviewState()));
 }
 
@@ -3885,7 +3886,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb,
 		HAL_LOGV("camera cb: autofocus succeeded.");
 	{
 		controlInfo.af_state = ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED;
-		mSetting->setCONTROLTag(controlInfo);
+		mSetting->setAfCONTROLTag(controlInfo);
 		mIsAutoFocus = false;
 		//channel->channelCbRoutine(0, timeStamp, CAMERA_STREAM_TYPE_DEFAULT);
 	}
@@ -3895,7 +3896,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb,
 	case CAMERA_EXIT_CB_FAILED:
 	{
 		controlInfo.af_state = ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED;
-		mSetting->setCONTROLTag(controlInfo);
+		mSetting->setAfCONTROLTag(controlInfo);
 		//channel->channelCbRoutine(0, timeStamp, CAMERA_STREAM_TYPE_DEFAULT);
 		mIsAutoFocus = false;
 	}
@@ -3909,7 +3910,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb,
 			} else {
 				controlInfo.af_state = ANDROID_CONTROL_AF_STATE_PASSIVE_FOCUSED;
 			}
-			mSetting->setCONTROLTag(controlInfo);
+			mSetting->setAfCONTROLTag(controlInfo);
 		}
 		break;
 
@@ -3917,7 +3918,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb,
 		HAL_LOGE("camera cb: unknown cb %d for CAMERA_FUNC_START_FOCUS!", cb);
 	{
 		controlInfo.af_state = ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED;
-		mSetting->setCONTROLTag(controlInfo);
+		mSetting->setAfCONTROLTag(controlInfo);
 
 		//channel->channelCbRoutine(0, timeStamp, CAMERA_STREAM_TYPE_DEFAULT);
 	}
@@ -3940,18 +3941,19 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb,
 		if(controlInfo.ae_state != ANDROID_CONTROL_AE_STATE_LOCKED) {
 			controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_CONVERGED;
 			controlInfo.awb_state = ANDROID_CONTROL_AWB_STATE_CONVERGED;
-			mSetting->setCONTROLTag(controlInfo);
+			mSetting->setAeCONTROLTag(controlInfo);
+			mSetting->setAwbCONTROLTag(controlInfo);
 		}
 		HAL_LOGI("CAMERA_EVT_CB_AE_STAB_NOTIFY, ae_state = %d",controlInfo.ae_state);
 		break;
 	case CAMERA_EVT_CB_AE_LOCK_NOTIFY:
 		//controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_LOCKED;
-		//mSetting->setCONTROLTag(controlInfo);
+		//mSetting->setAeCONTROLTag(controlInfo);
 		HAL_LOGI("CAMERA_EVT_CB_AE_LOCK_NOTIFY, ae_state = %d",controlInfo.ae_state);
 		break;
 	case CAMERA_EVT_CB_AE_UNLOCK_NOTIFY:
 		//controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_CONVERGED;
-		//mSetting->setCONTROLTag(controlInfo);
+		//mSetting->setAeCONTROLTag(controlInfo);
 		HAL_LOGI("CAMERA_EVT_CB_AE_UNLOCK_NOTIFY, ae_state = %d",controlInfo.ae_state);
 		break;
 	default:
@@ -4548,10 +4550,10 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag)
 			//SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISP_AE_LOCK_UNLOCK, ae_lock);
 			if(ae_lock == 1) {
 				controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_LOCKED;
-				mSetting->setCONTROLTag(controlInfo);
+				mSetting->setAeCONTROLTag(controlInfo);
 			} else {
 				controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_CONVERGED;
-				mSetting->setCONTROLTag(controlInfo);
+				mSetting->setAeCONTROLTag(controlInfo);
 			}
 		}
 		break;

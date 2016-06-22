@@ -4235,6 +4235,27 @@ int SprdCamera3Setting::setCONTROLTag(CONTROL_Tag controlInfo)
 	return 0;
 }
 
+int SprdCamera3Setting::setAeCONTROLTag(CONTROL_Tag controlInfo)
+{
+	Mutex::Autolock l(mLock);
+	s_setting[mCameraId].controlInfo.ae_state = controlInfo.ae_state;
+	return 0;
+}
+
+int SprdCamera3Setting::setAfCONTROLTag(CONTROL_Tag controlInfo)
+{
+	Mutex::Autolock l(mLock);
+	s_setting[mCameraId].controlInfo.af_state = controlInfo.af_state;
+	return 0;
+}
+
+int SprdCamera3Setting::setAwbCONTROLTag(CONTROL_Tag controlInfo)
+{
+	Mutex::Autolock l(mLock);
+	s_setting[mCameraId].controlInfo.awb_state = controlInfo.awb_state;
+	return 0;
+}
+
 int SprdCamera3Setting::getCONTROLTag(CONTROL_Tag* controlInfo)
 {
 	Mutex::Autolock l(mLock);

@@ -470,6 +470,10 @@ public:
 	int setCONTROLTag(CONTROL_Tag controlInfo);
 	int getCONTROLTag(CONTROL_Tag* controlInfo);
 
+	int setAeCONTROLTag(CONTROL_Tag controlInfo);
+	int setAfCONTROLTag(CONTROL_Tag controlInfo);
+	int setAwbCONTROLTag(CONTROL_Tag controlInfo);
+
 	int setEDGETag(EDGE_Tag edgeInfo);
 	int getEDGETag(EDGE_Tag* edgeInfo);
 
