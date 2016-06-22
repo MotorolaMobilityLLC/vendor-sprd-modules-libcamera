@@ -89,7 +89,7 @@ LOCAL_SRC_FILES+= \
 	hal3/SprdCamera3OEMIf.cpp \
 	hal3/SprdCamera3Setting.cpp \
 	hal3/SprdCamera3Stream.cpp \
-	hal1.0/src/SprdCameraHardwareInterface.cpp
+#	hal1.0/src/SprdCameraHardwareInterface.cpp
 endif
 
 LOCAL_CFLAGS += -fno-strict-aliasing -D_VSP_ -DJPEG_ENC -D_VSP_LINUX_ -DCHIP_ENDIAN_LITTLE -Wno-unused-parameter

@@ -983,7 +983,7 @@ static oem_ops_t oem_module_ops = {
 };
 
 struct oem_module OEM_MODULE_INFO_SYM = {
-	tag : NULL,
+	tag : 0,
 	ops: &oem_module_ops,
 	dso : NULL
 };
