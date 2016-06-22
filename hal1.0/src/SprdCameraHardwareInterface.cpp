@@ -3785,7 +3785,7 @@ int SprdCameraHardware::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u
 
 	LOGD("Callback_OtherMalloc: type %d size %d sum %d", type, size, sum);
 
-        if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
+        if (NULL == mHalOem || NULL == mHalOem->ops) {
                 LOGE("Callback_OtherMalloc: oem is null or oem ops is null");
                 return BAD_VALUE;
         }
