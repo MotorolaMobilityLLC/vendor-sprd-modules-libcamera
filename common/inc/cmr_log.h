@@ -35,11 +35,9 @@ enum {
 #define DEBUG_STR     "%d, %s: "
 #define DEBUG_ARGS    __LINE__,__FUNCTION__
 
-/*
- * ISP LOG config
- */
-
 extern cmr_int g_isp_log_level;
+extern cmr_int g_oem_log_level;
+
 #define ISP_LOGE(format,...) \
 	ALOGE(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
 #define ISP_LOGW(format,...) \
@@ -52,23 +50,19 @@ extern cmr_int g_isp_log_level;
 #define ISP_LOGV(format,...) \
 	ALOGD_IF(g_isp_log_level >= LEVEL_OVER_LOGV, DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
 
+#define CMR_LOGE(format,...) \
+	ALOGE(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+#define CMR_LOGW(format,...) \
+	ALOGW_IF(g_oem_log_level >= LEVEL_OVER_LOGW, DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+#define CMR_LOGI(format,...) \
+	ALOGI_IF(g_oem_log_level >= LEVEL_OVER_LOGI, DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+#define CMR_LOGD(format,...) \
+	ALOGD_IF(g_oem_log_level >= LEVEL_OVER_LOGD, DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+/* CMR_LOGV uses ALOGD_IF */
+#define CMR_LOGV(format,...) \
+	ALOGD_IF(g_oem_log_level >= LEVEL_OVER_LOGV, DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+
 void isp_init_log_level(void);
-
-
-#if 1//(SC_FPGA == 0)
-#define CMR_LOGE(format,...) ALOGE(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define CMR_LOGW(format,...) ALOGW(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define CMR_LOGI(format,...) ALOGI(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define CMR_LOGD(format,...) ALOGD(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define CMR_LOGV(format,...) ALOGV(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-//#warnning  "SC_FPGA is not set"
-#else
-#include "ylog.h"
-#define CMR_LOGE(format,...) ALOGD(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define CMR_LOGW(format,...) ALOGD(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define CMR_LOGI(format,...) ALOGD(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define CMR_LOGD(format,...) ALOGD(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define CMR_LOGV(format,...) ALOGD(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#endif
+void oem_init_log_level(void);
 
 #endif

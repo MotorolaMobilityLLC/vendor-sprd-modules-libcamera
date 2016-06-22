@@ -31,39 +31,12 @@ extern "C"
 #include "../../arithmetic/inc/FaceFinder.h"
 #include <video/sprd_sensor_k.h>
 #include "sprd_img.h"
+#include "cmr_log.h"
 
-//#define NCMRDBG 1
-#ifndef LOG_NDEBUG
-#ifdef NCMRDBG
-#define LOG_NDEBUG 1
-#else
-#define LOG_NDEBUG 0
-#endif
-#endif
 
 #define OEM_LIBRARY_PATH "libcamoem.so"
 
-#define LOG_DEBUG_LEVEL 4
-
-//extern volatile uint32_t gCMRLogLevel;
-
-#define CMR_LOGE(fmt, args...) \
-	ALOGE("%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
-
-#define CMR_LOGW(fmt, args...) \
-	ALOGW_IF(LOG_DEBUG_LEVEL >= 2, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
-
-#define CMR_LOGI(fmt, args...) \
-	ALOGI_IF(LOG_DEBUG_LEVEL >= 3, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
-
-#define CMR_LOGD(fmt, args...) \
-	ALOGD_IF(LOG_DEBUG_LEVEL >= 4, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
-
-#define CMR_LOGV(fmt, args...) \
-	ALOGD_IF(LOG_DEBUG_LEVEL >= 5, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
-
 #define UNUSED(x) (void)x
-
 
 #define CMR_EVT_GRAB_BASE                  (1 << 16)
 #define CMR_EVT_CVT_BASE                   (1 << 17)

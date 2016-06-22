@@ -44,15 +44,6 @@ using namespace android;
 
 namespace sprdcamera {
 
-//#define NHALDBG 1
-#ifndef LOG_NDEBUG
-#ifdef NHALDBG
-#define LOG_NDEBUG 1
-#else
-#define LOG_NDEBUG 0
-#endif
-#endif
-
 #define MAX_NUM_STREAMS          8
 
 extern volatile uint32_t gHALLogLevel;

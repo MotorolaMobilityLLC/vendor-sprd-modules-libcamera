@@ -36,6 +36,8 @@ cmr_int camera_init(cmr_u32 camera_id, camera_cb_of_type callback, void *client_
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}
+	oem_init_log_level();
+
 	CMR_LOGI("camera id %d autotest %ld", camera_id, is_autotest);
 	ret = camera_local_int(camera_id, callback, client_data, is_autotest, camera_handle, cb_of_malloc, cb_of_free);
 	if (ret) {
