@@ -162,6 +162,7 @@ struct aft_proc_result {
 	cmr_u32 is_caf_trig;
 	cmr_u32 is_caf_trig_in_taf;
 	cmr_u32 is_need_rough_search;
+	cmr_u32 is_cancel_caf;
 };
 
 struct aft_proc_calc_param {
