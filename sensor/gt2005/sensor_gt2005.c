@@ -1310,7 +1310,7 @@ static uint32_t GT2005_PowerOn(uint32_t power_on)
 				SENSOR_AVDD_CLOSED);
 	}
 
-	SENSOR_PRINT("(1:on, 0:off): %d", power_on);
+	SENSOR_LOGI("(1:on, 0:off): %d", power_on);
 	return (uint32_t)SENSOR_SUCCESS;
 }
 
@@ -1329,10 +1329,10 @@ static uint32_t GT2005_Identify(uint32_t param)
 	for (i=0; i<3; i++) {
 		sensor_id = Sensor_ReadReg(GT2005_PID_ADDR1) << 8;
 		sensor_id |= Sensor_ReadReg(GT2005_PID_ADDR2);
-		SENSOR_PRINT("%s sensor_id is %x\n", __func__, sensor_id);
+		SENSOR_LOGI("%s sensor_id is %x\n", __func__, sensor_id);
 
 		if (sensor_id == GT2005_SENSOR_ID) {
-			SENSOR_PRINT("the main sensor is GT2005\n");
+			SENSOR_LOGI("the main sensor is GT2005\n");
 			return SENSOR_SUCCESS;
 		}
 	}
@@ -1450,7 +1450,7 @@ static uint32_t set_GT2005_anti_flicker(uint32_t param )
 		return 0;
 	}
 
-	SENSOR_PRINT("set_GT2005_anti_flicker-mode=%d",param);
+	SENSOR_LOGI("set_GT2005_anti_flicker-mode=%d",param);
 //	usleep(200*1000);
 
 	return 0;
@@ -1470,14 +1470,14 @@ static uint32_t set_GT2005_video_mode(uint32_t mode)
 {
 	uint16_t i;
 	SENSOR_REG_T* sensor_reg_ptr = (SENSOR_REG_T*)GT2005_video_mode_nor_tab[mode];
-	SENSOR_PRINT(" E set_GT2005_video_mode=%d",mode);
+	SENSOR_LOGI(" E set_GT2005_video_mode=%d",mode);
 
 	if(mode>2) return 0;
 
 	for (i = 0; (0xFF != sensor_reg_ptr[i].reg_addr) ||(0xFF != sensor_reg_ptr[i].reg_value) ; i++)
 		GT2005_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 
-	SENSOR_PRINT("X set_GT2005_video_mode=%d",mode);
+	SENSOR_LOGI("X set_GT2005_video_mode=%d",mode);
 
 	return 0;
 }
@@ -1634,7 +1634,7 @@ static uint32_t set_saturation(uint32_t level)
 
 static uint32_t set_preview_mode(uint32_t preview_mode)
 {
-	SENSOR_PRINT("set_preview_mode: preview_mode = %d\n", preview_mode);
+	SENSOR_LOGI("set_preview_mode: preview_mode = %d\n", preview_mode);
 
 	return 0;
 }
@@ -1670,13 +1670,13 @@ static uint32_t set_image_effect(uint32_t effect_type)
 	for (i = 0; (0xFF != sensor_reg_ptr[i].reg_addr) && (0xFF != sensor_reg_ptr[i].reg_value); i++)
 		GT2005_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 
-	SENSOR_PRINT("set_GT2005_image_effect: effect_type = %d", effect_type);
+	SENSOR_LOGI("set_GT2005_image_effect: effect_type = %d", effect_type);
 	return 0;
 }
 
 static uint32_t GT2005_After_Snapshot(uint32_t param)
 {
-	SENSOR_PRINT("GT2005_After_Snapshot param = %x \n",param);
+	SENSOR_LOGI("GT2005_After_Snapshot param = %x \n",param);
 
 	Sensor_SetMode(param);
 
@@ -1691,17 +1691,17 @@ static uint32_t GT2005_BeforeSnapshot(uint32_t sensor_snapshot_mode)
 
 	switch (sensor_snapshot_mode) {
 	case SENSOR_MODE_PREVIEW_ONE:
-		SENSOR_PRINT("Capture VGA Size");
+		SENSOR_LOGI("Capture VGA Size");
 		break;
 	case SENSOR_MODE_SNAPSHOT_ONE_FIRST:
 	case SENSOR_MODE_SNAPSHOT_ONE_SECOND:
-		SENSOR_PRINT("Capture 1.3M&2M Size");
+		SENSOR_LOGI("Capture 1.3M&2M Size");
 		break;
 	default:
 		break;
 	}
 
-	SENSOR_PRINT("SENSOR_GT2005: Before Snapshot");
+	SENSOR_LOGI("SENSOR_GT2005: Before Snapshot");
 
 	return 0;
 

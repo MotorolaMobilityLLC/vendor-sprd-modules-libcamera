@@ -15,7 +15,6 @@
  */
 #include "sensor.h"
 
-#define SENSOR_TRACE SENSOR_PRINT
 #define OV2640_I2C_ADDR_W	 0x30
 #define OV2640_I2C_ADDR_R		0x30
 
@@ -609,7 +608,7 @@ LOCAL uint32_t OV2640_set_ae_enable(uint32_t enable)
 {
 	unsigned char value;
 
-	SENSOR_TRACE("OV2640_set_ae_enable: enable = %d", enable);
+	SENSOR_LOGI("OV2640_set_ae_enable: enable = %d", enable);
 	//value = Sensor_ReadReg(0x13);
 	Sensor_ReadReg_8bits(0x13, &value);
 	value &= 0xFE;
@@ -642,7 +641,7 @@ uint32_t set_ov2640_anti_flicker(uint32_t mode)
 				      (uint8_t) sensor_reg_ptr[i].reg_value);
 	}
 	SENSOR_Sleep(10);
-	SENSOR_TRACE("SENSOR: set_ov2640_flicker: 0x%x", mode);
+	SENSOR_LOGI("SENSOR: set_ov2640_flicker: 0x%x", mode);
 	return 0;
 }
 
@@ -881,7 +880,7 @@ LOCAL uint32_t set_ov2640_video_mode(uint32_t mode)
 				      (uint8_t) sensor_reg_ptr[i].reg_value);
 	}
 	SENSOR_Sleep(300);
-	SENSOR_TRACE("SENSOR: set_vodeo_mode: mode : %d", mode);
+	SENSOR_LOGI("SENSOR: set_vodeo_mode: mode : %d", mode);
 	return 0;
 }
 
@@ -970,7 +969,7 @@ LOCAL uint32_t set_ov2640_awb(uint32_t mode)
 				      (uint8_t) sensor_reg_ptr[i].reg_value);
 	}
 	SENSOR_Sleep(20);
-	SENSOR_TRACE("SENSOR: set_awb_mode: mode = %d", mode);
+	SENSOR_LOGI("SENSOR: set_awb_mode: mode = %d", mode);
 	return 0;
 }
 LOCAL const SENSOR_REG_T ov2640_ev_tab[][4] = {
@@ -1013,7 +1012,7 @@ LOCAL uint32_t set_ov2640_ev(uint32_t level)
 				      (uint8_t) sensor_reg_ptr[i].reg_value);
 	}
 	SENSOR_Sleep(200);
-	SENSOR_TRACE("SENSOR: set_ev: level = %d", level);
+	SENSOR_LOGI("SENSOR: set_ev: level = %d", level);
 	return 0;
 }
 
@@ -1056,7 +1055,7 @@ LOCAL uint32_t OV2640_set_vmirror_enable(uint32_t enable)
 
 LOCAL uint32_t OV2640_set_preview_mode(uint32_t preview_mode)
 {
-	SENSOR_TRACE("set_preview_mode: preview_mode = %d", preview_mode);
+	SENSOR_LOGI("set_preview_mode: preview_mode = %d", preview_mode);
 
 	s_preview_mode = preview_mode;
 	switch (preview_mode) {
@@ -1087,21 +1086,21 @@ LOCAL uint32_t OV2640_Identify(uint32_t param)
 	BOOLEAN ret_value = 0XFF;
 	//pid_value = Sensor_ReadReg(OV2640_PID_ADDR);
 	Sensor_ReadReg_8bits(OV2640_PID_ADDR, &pid_value);
-	SENSOR_PRINT("[OV2640_Identify:pid_value=0x%x]\n", pid_value);
+	SENSOR_LOGI("[OV2640_Identify:pid_value=0x%x]\n", pid_value);
 
 	if (OV2640_PID_VALUE == pid_value) {
 		// Get Device Code
 		Sensor_ReadReg_8bits(OV2640_VER_ADDR, &ver_value);
-		SENSOR_PRINT_HIGH("[OV2640_Identify:ver_value=0x%x]\n", ver_value);
+		SENSOR_LOGI("[OV2640_Identify:ver_value=0x%x]\n", ver_value);
 		if (OV2640_VER_VALUE == ver_value) {
-			SENSOR_PRINT_HIGH("That is OV2640 sensor !");
+			SENSOR_LOGI("That is OV2640 sensor !");
 		} else {
-			SENSOR_PRINT_HIGH("OV2640_Identify: That is OV%x%x sensor !",
+			SENSOR_LOGI("OV2640_Identify: That is OV%x%x sensor !",
 				     pid_value, ver_value);
 		}
 		ret_value = 0;
 	}
-	SENSOR_PRINT_HIGH("OV2640_Identify: PID = %x, VER = %x\n",
+	SENSOR_LOGI("OV2640_Identify: PID = %x, VER = %x\n",
 		     pid_value, ver_value);
 	return (uint32_t) ret_value;
 }
@@ -1140,7 +1139,7 @@ LOCAL void OV2640_CalculateExposureGain(SENSOR_MODE_E sensor_preview_mode,
 	tmp &= 0x3f;
 	PrvExp += tmp << 10;
 
-	SENSOR_TRACE("ov2640: prvGain %d, prvExp %d", PrvGain, PrvExp);
+	SENSOR_LOGI("ov2640: prvGain %d, prvExp %d", PrvGain, PrvExp);
 	TgtExp =
 	    (PrvExp * snapshot_xclk / preview_xclk) * (2 * 4 * 1190) / (3 *
 									1922);
@@ -1158,7 +1157,7 @@ LOCAL void OV2640_CalculateExposureGain(SENSOR_MODE_E sensor_preview_mode,
 			PrvGain = PrvGain & 0xf0;
 		}
 	}
-	SENSOR_TRACE("ov2640: PrvGain %d, TgtExp %d", PrvGain, TgtExp);
+	SENSOR_LOGI("ov2640: PrvGain %d, TgtExp %d", PrvGain, TgtExp);
 	//val45 =( (TgtExp>>10) | ((Sensor_ReadReg(0x45) & 0xc0)));     //       val45 = (TgtExp>>10);
 	Sensor_ReadReg_8bits(0x45, &tmp);
 	tmp &= 0xc0;
@@ -1181,7 +1180,7 @@ LOCAL uint32_t OV2640_BeforeSnapshot(uint32_t param)
 	uint32_t cap_mode = (param>>CAP_MODE_BITS);
 
 	param = param&0xffff;
-	SENSOR_PRINT("%d,%d.",cap_mode,param);
+	SENSOR_LOGI("%d,%d.",cap_mode,param);
 
 	preview_mode = (param >= SENSOR_MODE_PREVIEW_TWO) ?
 	    SENSOR_MODE_PREVIEW_TWO : SENSOR_MODE_PREVIEW_ONE;
@@ -1304,7 +1303,7 @@ LOCAL uint32_t OV2640_set_brightness(uint32_t level)
 				      (uint8_t) sensor_reg_ptr[i].reg_value);
 	}
 	SENSOR_Sleep(20);
-	SENSOR_TRACE("set_brightness: level = %d", level);
+	SENSOR_LOGI("set_brightness: level = %d", level);
 	return 0;
 }
 
@@ -1400,7 +1399,7 @@ LOCAL uint32_t OV2640_set_contrast(uint32_t level)
 				      (uint8_t) sensor_reg_ptr[i].reg_value);
 	}
 	SENSOR_Sleep(20);
-	SENSOR_TRACE("set_contrast: level = %d", level);
+	SENSOR_LOGI("set_contrast: level = %d", level);
 	return 0;
 }
 
@@ -1432,7 +1431,7 @@ LOCAL uint32_t OV2640_set_sharpness(uint32_t level)
 		Sensor_WriteReg(sensor_reg_ptr[i].reg_addr,
 				sensor_reg_ptr[i].reg_value);
 	}
-	SENSOR_TRACE("set_sharpness: level = %d", level);
+	SENSOR_LOGI("set_sharpness: level = %d", level);
 	return 0;
 }
 #endif
@@ -1502,7 +1501,7 @@ LOCAL uint32_t OV2640_set_saturation(uint32_t level)
 		Sensor_WriteReg(sensor_reg_ptr[i].reg_addr,
 				sensor_reg_ptr[i].reg_value);
 	}
-	SENSOR_TRACE("set_saturation: level = %d", level);
+	SENSOR_LOGI("set_saturation: level = %d", level);
 	return 0;
 }
 #endif
@@ -1565,7 +1564,7 @@ LOCAL uint32_t OV2640_set_image_effect(uint32_t effect_type)
 		Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr,
 				      (uint8_t) sensor_reg_ptr[i].reg_value);
 	}
-	SENSOR_TRACE("set_image_effect: effect_type = %d", effect_type);
+	SENSOR_LOGI("set_image_effect: effect_type = %d", effect_type);
 	return 0;
 }
 
@@ -1602,7 +1601,7 @@ LOCAL uint32_t OV2640_set_work_mode(uint32_t mode)
 		Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr,
 				      (uint8_t) sensor_reg_ptr[i].reg_value);
 	}
-	SENSOR_TRACE("set_work_mode: mode = %d", mode);
+	SENSOR_LOGI("set_work_mode: mode = %d", mode);
 	return 0;
 }
 
@@ -1626,7 +1625,7 @@ LOCAL uint32_t OV2640_chang_image_format(uint32_t param)
 		ret_val = SENSOR_FAIL;
 		break;
 	default:
-		SENSOR_TRACE
+		SENSOR_LOGI
 		    ("OV2640 only support SENSOR_IMAGE_FORMAT_JPEG & SENSOR_IMAGE_FORMAT_YUV422, input is %d",
 		     param);
 		break;
@@ -1646,7 +1645,7 @@ LOCAL uint32_t OV2640_check_image_format_support(uint32_t param)
 		ret_val = SENSOR_FAIL;
 		break;
 	default:
-		SENSOR_TRACE
+		SENSOR_LOGI
 		    ("OV2640 only support SENSOR_IMAGE_FORMAT_JPEG & SENSOR_IMAGE_FORMAT_YUV422, input is %d",
 		     param);
 		break;
@@ -1664,7 +1663,7 @@ LOCAL uint32_t OV2640_pick_out_jpeg_stream(uint32_t param)
 	    ((DCAMERA_SNAPSHOT_RETURN_PARAM_T *) param)->return_data_len;
 	uint32_t i = 0;
 
-	SENSOR_TRACE("ov3640: jpeg capture head: 0x%x, 0x%x",
+	SENSOR_LOGI("ov3640: jpeg capture head: 0x%x, 0x%x",
 		     *((uint8 *) p_frame), *((uint8 *) p_frame + 1));
 
 	/* Find the tail position */
@@ -1682,11 +1681,11 @@ LOCAL uint32_t OV2640_pick_out_jpeg_stream(uint32_t param)
 
 	/* check if the tail is found */
 	if (i < buf_len) {
-		SENSOR_TRACE("ov3640: Found the jpeg tail at %d: 0x%x 0x%x",
+		SENSOR_LOGI("ov3640: Found the jpeg tail at %d: 0x%x 0x%x",
 			     i + 1, *((uint8 *) p_frame + i),
 			     *((uint8 *) p_frame + i + 1));
 	} else {
-		SENSOR_TRACE("ov3640: can not find the jpeg tail: %d", i);
+		SENSOR_LOGI("ov3640: can not find the jpeg tail: %d", i);
 		i = 0;
 	}
 

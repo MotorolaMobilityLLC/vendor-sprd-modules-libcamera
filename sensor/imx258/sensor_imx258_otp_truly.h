@@ -62,13 +62,13 @@ static int imx258_otp_read_data(SENSOR_HW_HANDLE handle)
 	cmr_u32 checksum = 0;
 	static cmr_u8 first_flag = 1;
 
-	SENSOR_PRINT("E");
+	SENSOR_LOGI("E");
 	if (first_flag)
 	{
 		imx258_otp_info.program_flag = imx258_i2c_read_otp(0x0000);
-		SENSOR_PRINT("program_flag = %d", imx258_otp_info.program_flag);
+		SENSOR_LOGI("program_flag = %d", imx258_otp_info.program_flag);
 		if (1 != imx258_otp_info.program_flag) {
-			SENSOR_PRINT("failed to read otp or the otp is wrong data");
+			SENSOR_LOGI("failed to read otp or the otp is wrong data");
 			return -1;
 		}
 		checksum += imx258_otp_info.program_flag;
@@ -117,7 +117,7 @@ static int imx258_otp_read_data(SENSOR_HW_HANDLE handle)
 
 		imx258_otp_info.af_info.flag = imx258_i2c_read_otp(0x06A0);
 		if (0 == imx258_otp_info.af_info.flag)
-			SENSOR_PRINT("af otp is wrong");
+			SENSOR_LOGI("af otp is wrong");
 
 		checksum += imx258_otp_info.af_info.flag;
 
@@ -134,16 +134,16 @@ static int imx258_otp_read_data(SENSOR_HW_HANDLE handle)
 
 		imx258_otp_info.checksum = imx258_i2c_read_otp(0x06A5);
 
-		SENSOR_PRINT("checksum = 0x%x imx258_otp_info.checksum = 0x%x", checksum, imx258_otp_info.checksum);
+		SENSOR_LOGI("checksum = 0x%x imx258_otp_info.checksum = 0x%x", checksum, imx258_otp_info.checksum);
 
 		if ((checksum % 0xff) != imx258_otp_info.checksum) {
-			SENSOR_PRINT_ERR("checksum error!");
+			SENSOR_LOGI("checksum error!");
 			imx258_otp_info.program_flag = 0;
 			return -1;
 		}
 		first_flag = 0;
 	}
-	SENSOR_PRINT("X");
+	SENSOR_LOGI("X");
 	return 0;
 }
 
@@ -151,7 +151,7 @@ static unsigned long imx258_otp_read(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* para
 {
 	struct sensor_otp_cust_info *otp_info = NULL;
 
-	SENSOR_PRINT("E");
+	SENSOR_LOGI("E");
 #if IMX230_DUAL_OTP
 	imx258_dual_otp_read_data(handle);
 	imx258_otp_dual_to_single(handle);
@@ -161,13 +161,13 @@ static unsigned long imx258_otp_read(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* para
 	otp_info = &imx258_otp_info;
 
 	if (1 != otp_info->program_flag) {
-		SENSOR_PRINT_ERR("otp error");
+		SENSOR_LOGI("otp error");
 		param->pval = NULL;
 		return -1;
 	} else {
 		param->pval = (void *)otp_info;
 	}
-	SENSOR_PRINT("param->pval = %p", param->pval);
+	SENSOR_LOGI("param->pval = %p", param->pval);
 	return 0;
 }
 
@@ -181,20 +181,20 @@ static unsigned long imx258_parse_single_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL
 	cmr_u8 low_val = 0;
 	cmr_u32 checksum = 0;
 
-	SENSOR_PRINT("E");
+	SENSOR_LOGI("E");
 	if (NULL == param->pval) {
-		SENSOR_PRINT("imx258_parse_single_otp is NULL data");
+		SENSOR_LOGI("imx258_parse_single_otp is NULL data");
 		return -1;
 	}
 	buff = param->pval;
 
 	if (1 != buff[0]) {
-		SENSOR_PRINT("imx258_parse_single_otp is wrong data");
+		SENSOR_LOGI("imx258_parse_single_otp is wrong data");
 		param->pval = NULL;
 		return -1;
 	} else {
 		imx258_otp_info.program_flag = buff[i++];
-		SENSOR_PRINT("program_flag = %d", imx258_otp_info.program_flag);
+		SENSOR_LOGI("program_flag = %d", imx258_otp_info.program_flag);
 
 		checksum += imx258_otp_info.program_flag;
 		imx258_otp_info.module_info.year = buff[i++];
@@ -242,7 +242,7 @@ static unsigned long imx258_parse_single_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL
 
 		imx258_otp_info.af_info.flag = buff[i++];
 		if (0 == imx258_otp_info.af_info.flag)
-			SENSOR_PRINT("af otp is wrong");
+			SENSOR_LOGI("af otp is wrong");
 
 		checksum += imx258_otp_info.af_info.flag;
 		/* cause checksum, skip af flag */
@@ -258,10 +258,10 @@ static unsigned long imx258_parse_single_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL
 		imx258_otp_info.af_info.macro_cali = (high_val << 8 | low_val);
 
 		imx258_otp_info.checksum = buff[i++];
-		SENSOR_PRINT("checksum = 0x%x imx258_otp_info.checksum = 0x%x", checksum, imx258_otp_info.checksum);
+		SENSOR_LOGI("checksum = 0x%x imx258_otp_info.checksum = 0x%x", checksum, imx258_otp_info.checksum);
 
 		if ((checksum % 0xff) != imx258_otp_info.checksum) {
-			SENSOR_PRINT_ERR("checksum error!");
+			SENSOR_LOGI("checksum error!");
 			imx258_otp_info.program_flag = 0;
 			param->pval = NULL;
 			return -1;
@@ -269,7 +269,7 @@ static unsigned long imx258_parse_single_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL
 		otp_info = &imx258_otp_info;
 		param->pval = (void *)otp_info;
 	}
-	SENSOR_PRINT("param->pval = %p", param->pval);
+	SENSOR_LOGI("param->pval = %p", param->pval);
 
 	return 0;
 }
@@ -280,24 +280,24 @@ static unsigned long imx258_parse_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* par
 	cmr_u16 i = 0;
 	cmr_u8 *buff = NULL;
 
-	SENSOR_PRINT("E");
+	SENSOR_LOGI("E");
 #if IMX230_DUAL_OTP
 	imx258_parse_dual_otp(handle, param);
 	if (NULL == param->pval) {
-		SENSOR_PRINT("imx258_parse_otp is NULL data");
+		SENSOR_LOGI("imx258_parse_otp is NULL data");
 		return -1;
 	}
 	imx258_otp_dual_to_single(handle);
 	otp_info = &imx258_otp_info;
 
 	if (1 != otp_info->program_flag) {
-		SENSOR_PRINT_ERR("otp error");
+		SENSOR_LOGI("otp error");
 		param->pval = NULL;
 		return -1;
 	} else {
 		param->pval = (void *)otp_info;
 	}
-	SENSOR_PRINT("param->pval = %p", param->pval);
+	SENSOR_LOGI("param->pval = %p", param->pval);
 #else
 	imx258_parse_single_otp(handle, param);
 #endif
@@ -313,11 +313,11 @@ static unsigned long imx258_otp_dual_to_single(SENSOR_HW_HANDLE handle)
 	cmr_u8 low_val = 0;
 	cmr_u32 checksum = 0;
 
-	SENSOR_PRINT("E");
+	SENSOR_LOGI("E");
 	imx258_otp_info.program_flag = imx258_dual_otp_data[0];
-	SENSOR_PRINT("program_flag = %d", imx258_otp_info.program_flag);
+	SENSOR_LOGI("program_flag = %d", imx258_otp_info.program_flag);
 	if (1 != imx258_otp_info.program_flag) {
-		SENSOR_PRINT("failed to read otp or the otp is wrong data");
+		SENSOR_LOGI("failed to read otp or the otp is wrong data");
 		return -1;
 	}
 	checksum += imx258_otp_info.program_flag;
@@ -367,7 +367,7 @@ static unsigned long imx258_otp_dual_to_single(SENSOR_HW_HANDLE handle)
 
 	imx258_otp_info.af_info.flag = imx258_dual_otp_data[1696];
 	if (0 == imx258_otp_info.af_info.flag)
-		SENSOR_PRINT("af otp is wrong");
+		SENSOR_LOGI("af otp is wrong");
 
 	checksum += imx258_otp_info.af_info.flag;
 
@@ -384,14 +384,14 @@ static unsigned long imx258_otp_dual_to_single(SENSOR_HW_HANDLE handle)
 
 	imx258_otp_info.checksum = imx258_dual_otp_data[1701];
 
-	SENSOR_PRINT("checksum = 0x%x imx258_otp_info.checksum = 0x%x", checksum, imx258_otp_info.checksum);
+	SENSOR_LOGI("checksum = 0x%x imx258_otp_info.checksum = 0x%x", checksum, imx258_otp_info.checksum);
 
 	if ((checksum % 0xff) != imx258_otp_info.checksum) {
-		SENSOR_PRINT_ERR("checksum error!");
+		SENSOR_LOGI("checksum error!");
 		imx258_otp_info.program_flag = 0;
 		return -1;
 	}
-	SENSOR_PRINT("X");
+	SENSOR_LOGI("X");
 	return 0;
 }
 
@@ -400,12 +400,12 @@ static int imx258_dual_otp_read_data(SENSOR_HW_HANDLE handle)
 	cmr_u16 i = 0;
 	static cmr_u8 first_flag = 1;
 
-	SENSOR_PRINT("E");
+	SENSOR_LOGI("E");
 	if (first_flag)
 	{
 		imx258_dual_otp_data[0] = imx258_i2c_read_otp(0x0000);
 		if (1 != imx258_dual_otp_data[0]) {
-			SENSOR_PRINT("failed to read otp or the otp is wrong data");
+			SENSOR_LOGI("failed to read otp or the otp is wrong data");
 			return -1;
 		}
 		for (i = 1; i < OTP_DUAL_SIZE; i++) {
@@ -413,7 +413,7 @@ static int imx258_dual_otp_read_data(SENSOR_HW_HANDLE handle)
 		}
 		first_flag = 0;
 	}
-	SENSOR_PRINT("X");
+	SENSOR_LOGI("X");
 	return 0;
 }
 
@@ -421,15 +421,15 @@ static unsigned long imx258_dual_otp_read(SENSOR_HW_HANDLE handle, SENSOR_VAL_T*
 {
 	cmr_u16 i = 0;
 
-	SENSOR_PRINT("E");
+	SENSOR_LOGI("E");
 	imx258_dual_otp_read_data(handle);
 	if (1 != imx258_dual_otp_data[0]) {
-		SENSOR_PRINT_ERR("otp error");
+		SENSOR_LOGI("otp error");
 		param->pval = NULL;
 		return -1;
 	}
 	param->pval = (void *)imx258_dual_otp_data;
-	SENSOR_PRINT("param->pval = %p", param->pval);
+	SENSOR_LOGI("param->pval = %p", param->pval);
 	return 0;
 }
 
@@ -438,15 +438,15 @@ static unsigned long imx258_parse_dual_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL_T
 	cmr_u16 i = 0;
 	cmr_u8 *buff = NULL;
 
-	SENSOR_PRINT("E");
+	SENSOR_LOGI("E");
 	if (NULL == param->pval) {
-		SENSOR_PRINT("imx258_parse_dual_otp is NULL data");
+		SENSOR_LOGI("imx258_parse_dual_otp is NULL data");
 		return -1;
 	}
 	buff = param->pval;
 	imx258_dual_otp_data[0] = buff[0];
 	if (1 != imx258_dual_otp_data[0]) {
-		SENSOR_PRINT_ERR("otp error");
+		SENSOR_LOGI("otp error");
 		param->pval = NULL;
 		return -1;
 	}
@@ -454,7 +454,7 @@ static unsigned long imx258_parse_dual_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL_T
 		imx258_dual_otp_data[i] = buff[i];
 	}
 	param->pval = (void *)imx258_dual_otp_data;
-	SENSOR_PRINT("param->pval = %p", param->pval);
+	SENSOR_LOGI("param->pval = %p", param->pval);
 	return 0;
 }
 #endif

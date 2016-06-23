@@ -1591,7 +1591,7 @@ LOCAL unsigned long HI255_InitExt(unsigned long param)	//wujinyou, 2012.11.14
 	nsecs_t 			timestamp_old;
 	nsecs_t				timestamp_new;
 
-	SENSOR_PRINT("HI255_InitExt start ;%ld;\n",param);
+	SENSOR_LOGI("HI255_InitExt start ;%ld;\n",param);
 
 	setmode = param;
 
@@ -1617,7 +1617,7 @@ LOCAL unsigned long HI255_InitExt(unsigned long param)	//wujinyou, 2012.11.14
 	}
 
 	timestamp_new = systemTime(CLOCK_MONOTONIC);
-	SENSOR_PRINT("SENSOR: HI255_InitExt end, ret=%d, time=%d us\n", ret, (uint32_t)((timestamp_new-timestamp_old)/1000));
+	SENSOR_LOGI("SENSOR: HI255_InitExt end, ret=%d, time=%d us\n", ret, (uint32_t)((timestamp_new-timestamp_old)/1000));
 
 	return SENSOR_SUCCESS;
 };
@@ -1772,7 +1772,7 @@ SENSOR_INFO_T g_hi255_yuv_info =
 
 static unsigned long _HI255_GetResolutionTrimTab(unsigned long param)
 {
-	CMR_LOGI("_HI255_GetResolutionTrimTab\n");
+	SENSOR_LOGI("_HI255_GetResolutionTrimTab\n");
 	return (unsigned long) s_HI255_Resolution_Trim_Tab;
 }
 
@@ -1798,7 +1798,7 @@ LOCAL uint32_t _HI255_SetExifInfo_ISO(uint32_t param)
     	Sensor_WriteReg(0x03, 0x20);
 	iso=Sensor_ReadReg(0xb0);
     	Sensor_WriteReg(0x03, 0x00);
-	SENSOR_PRINT("iso=%x;",iso);
+	SENSOR_LOGI("iso=%x;",iso);
 
 	sensor_exif_info_ptr->valid.ISOSpeedRatings = 1;
 	sensor_exif_info_ptr->ISOSpeedRatings.count = 0x02;
@@ -1834,7 +1834,7 @@ LOCAL uint32_t _HI255_SetExifInfo_ISO(uint32_t param)
 /******************************************************************************/
 LOCAL unsigned long _HI255_GetExifInfo(unsigned long param)
 {
-	SENSOR_PRINT("Start");
+	SENSOR_LOGI("Start");
 	return (unsigned long)&s_HI255_exif;
 }
 
@@ -1850,7 +1850,7 @@ LOCAL uint32_t _HI255_InitExifInfo(void)
 
 	memset(&s_HI255_exif , 0, sizeof(EXIF_SPEC_PIC_TAKING_COND_T));
 
-	SENSOR_PRINT("Start");
+	SENSOR_LOGI("Start");
 
 	exif_ptr->valid.FNumber = 1;
 	exif_ptr->FNumber.numerator = 14;
@@ -1946,7 +1946,7 @@ LOCAL unsigned long _HI255_PowerOn(unsigned long power_on)
 	BOOLEAN power_down = g_hi255_yuv_info.power_down_level;
 	BOOLEAN reset_level = g_hi255_yuv_info.reset_pulse_level;
 
-	CMR_LOGI("SENSOR: _HI255_PowerOn (1:on, 0:off): %d \n", power_on);
+	SENSOR_LOGI("SENSOR: _HI255_PowerOn (1:on, 0:off): %d \n", power_on);
 
 	if (SENSOR_TRUE == power_on) {
 		Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
@@ -1994,24 +1994,24 @@ LOCAL unsigned long _HI255_Identify(unsigned long param)
 	uint8_t   err_cnt = 0;
 	uint32_t nLoop = 1000;
 
-	CMR_LOGI("anrry:enter 255_Identify\n");
+	SENSOR_LOGI("anrry:enter 255_Identify\n");
 
 	for(i = 0; i<2; )
 	{
 		nLoop = 1000;
-		CMR_LOGI("anrry:for before hi255\n");
+		SENSOR_LOGI("anrry:for before hi255\n");
 
 		ret = Sensor_ReadReg(reg[i]);
 
-		CMR_LOGI("anrry:for after hi255\n");
-		CMR_LOGI("anrry: hi255 Read reg0x04 = %x\n",ret);
+		SENSOR_LOGI("anrry:for after hi255\n");
+		SENSOR_LOGI("anrry: hi255 Read reg0x04 = %x\n",ret);
 
 		if( ret != value[i])
 		{
 			err_cnt++;
 			if(err_cnt>3)
 			{
-				CMR_LOGI( "255 Fail\n" );
+				SENSOR_LOGI( "255 Fail\n" );
 				return SENSOR_FAIL;
 			}
 			else
@@ -2024,7 +2024,7 @@ LOCAL unsigned long _HI255_Identify(unsigned long param)
 		err_cnt = 0;
 		i++;
 	}
-	CMR_LOGI("255: it is HI255\n");
+	SENSOR_LOGI("255: it is HI255\n");
 
        _HI255_InitExifInfo();
 
@@ -2033,7 +2033,7 @@ LOCAL unsigned long _HI255_Identify(unsigned long param)
 
 LOCAL unsigned long _hi255_StreamOn(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR: _hi255_StreamOn");
+	SENSOR_LOGI("SENSOR: _hi255_StreamOn");
 
 	Sensor_WriteReg(0x03, 0x00);
 	Sensor_WriteReg(0x01, 0x30);
@@ -2043,7 +2043,7 @@ LOCAL unsigned long _hi255_StreamOn(unsigned long param)
 
 LOCAL unsigned long _hi255_StreamOff(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR: _hi255_StreamOff");
+	SENSOR_LOGI("SENSOR: _hi255_StreamOff");
 
 	Sensor_WriteReg(0x03, 0x00);
 	Sensor_WriteReg(0x01, 0x31);
@@ -2111,7 +2111,7 @@ LOCAL unsigned long _HI255_set_brightness(unsigned long level)
 		Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("sensor: terry HI255_set_brightness = 0x%02x.\n", level);
+	SENSOR_LOGI("sensor: terry HI255_set_brightness = 0x%02x.\n", level);
 	return 0;
 }
 
@@ -2182,7 +2182,7 @@ LOCAL unsigned long _HI255_set_saturation(unsigned long level)
 	{
 		Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
-	SENSOR_PRINT("sensor: terry HI255_set_saturation = 0x%02x.\n", level);
+	SENSOR_LOGI("sensor: terry HI255_set_saturation = 0x%02x.\n", level);
 	return 0;
 }
 
@@ -2266,7 +2266,7 @@ LOCAL unsigned long _HI255_set_image_effect(unsigned long effect_type)
 		Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("sensor: terry HI255_set_image_effect = 0x%02x.\n", effect_type);
+	SENSOR_LOGI("sensor: terry HI255_set_image_effect = 0x%02x.\n", effect_type);
 	return 0;
 }
 
@@ -2306,7 +2306,7 @@ LOCAL unsigned long _HI255_set_anti_flicker(unsigned long mode)
 		Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("sensor: terry _HI255_set_anti_flicker = 0x%02x", mode);
+	SENSOR_LOGI("sensor: terry _HI255_set_anti_flicker = 0x%02x", mode);
 
 	return 0;
 }
@@ -2457,7 +2457,7 @@ LOCAL unsigned long _HI255_set_video_mode(unsigned long mode)
 		Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("sensor: terry _HI255_set_video_mode = 0x%02x", mode);
+	SENSOR_LOGI("sensor: terry _HI255_set_video_mode = 0x%02x", mode);
 
 	return 0;
 }
@@ -2558,7 +2558,7 @@ LOCAL unsigned long _HI255_set_awb(unsigned long mode)
 
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_WHITEBALANCE, (uint32_t)mode);
 
-	SENSOR_PRINT("sensor: terry HI255_set_awb = 0x%02x", mode);
+	SENSOR_LOGI("sensor: terry HI255_set_awb = 0x%02x", mode);
 	return 0;
 }
 
@@ -2734,7 +2734,7 @@ LOCAL unsigned long _HI255_set_work_mode(unsigned long mode)
 
 	//   Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_SCENECAPTURETYPE, (uint32)mode);
 
-	CMR_LOGI("sensor: terry set_work_mode: mode = %d.\n", mode);
+	SENSOR_LOGI("sensor: terry set_work_mode: mode = %d.\n", mode);
 	return 0;
 }
 
@@ -2750,14 +2750,14 @@ LOCAL unsigned long _HI255_BeforeSnapshot(unsigned long param)
 	uint32_t cap_mode = (param>>CAP_MODE_BITS);
 
 	param = param&0xffff;
-	CMR_LOGE("%d,%ld.",cap_mode,param);
+	SENSOR_LOGE("%d,%ld.",cap_mode,param);
 
-	CMR_LOGE("HI255: HI255_before_snapshot\n");
+	SENSOR_LOGE("HI255: HI255_before_snapshot\n");
 	if(SENSOR_MODE_PREVIEW_ONE>=param)
 	{
 	 	return SENSOR_SUCCESS;
 	}
-	CMR_LOGE("terry  _HI255_BeforeSnapshot =%ld.\n",param);
+	SENSOR_LOGE("terry  _HI255_BeforeSnapshot =%ld.\n",param);
 
 	  _HI255_SetExifInfo_ISO((uint32_t)param);
 
@@ -2815,7 +2815,7 @@ LOCAL unsigned long _HI255_after_snapshot(unsigned long param)
 	//s_HI255_resolution_Tab_YUV[SENSOR_MODE_PREVIEW_ONE].reg_count = NUMBER_OF_ARRAY(HI255_preview);
        uint32_t exposure;
 
-	SENSOR_PRINT("terry  _HI255_after_snapshot =%ld.\n",param);
+	SENSOR_LOGI("terry  _HI255_after_snapshot =%ld.\n",param);
 
     	Sensor_WriteReg(0x03, 0x20);
 	exposure=Sensor_ReadReg(0x80);
@@ -2861,15 +2861,15 @@ LOCAL uint32_t HI255_InitExt(uint32_t param)
 
 	timestamp_old = systemTime(CLOCK_MONOTONIC);
 
-	SENSOR_PRINT("SENSOR: HI255_InitExt, init_table_size = %d \n", init_table_size);
+	SENSOR_LOGI("SENSOR: HI255_InitExt, init_table_size = %d \n", init_table_size);
 
 	alloc_size = init_table_size*sizeof(uint8_t) + 16;
 	p_reg_val_tmp = (uint8_t*)malloc(alloc_size);
 
-	SENSOR_PRINT("_s5k5ccgx_InitExt: alloc size = %d \n", alloc_size);
+	SENSOR_LOGI("_s5k5ccgx_InitExt: alloc size = %d \n", alloc_size);
 	if(0 == p_reg_val_tmp)
 	{
-		SENSOR_PRINT("_s5k5ccgx_InitExt: alloc failed, size = %d \n", alloc_size);
+		SENSOR_LOGI("_s5k5ccgx_InitExt: alloc failed, size = %d \n", alloc_size);
 		return 1;
 	}
 
@@ -2904,7 +2904,7 @@ LOCAL uint32_t HI255_InitExt(uint32_t param)
 			for (i = 0; i < 4; i++) {
 				ret = Sensor_WriteData(p_reg_val_tmp, wr_num_once);
 				if(ret!=0){
-					SENSOR_PRINT("SENSOR: HI255_InitExt, i2c write error, ret=%d \n", ret);
+					SENSOR_LOGI("SENSOR: HI255_InitExt, i2c write error, ret=%d \n", ret);
 					continue;
 				}else{
 					break;
@@ -2917,9 +2917,9 @@ LOCAL uint32_t HI255_InitExt(uint32_t param)
     free(p_reg_val_tmp);
 
 	timestamp_new = systemTime(CLOCK_MONOTONIC);
-    SENSOR_PRINT("SENSOR: HI255_InitExt time=%d us\n",(timestamp_new-timestamp_old)/1000);
+    SENSOR_LOGI("SENSOR: HI255_InitExt time=%d us\n",(timestamp_new-timestamp_old)/1000);
 
-    SENSOR_PRINT("SENSOR: HI255_InitExt, done: ret=%d \n", ret);
+    SENSOR_LOGI("SENSOR: HI255_InitExt, done: ret=%d \n", ret);
 
     return rtn;
 }
@@ -2983,16 +2983,16 @@ LOCAL uint32_t sensor_tflash_debug(char* filename)
     if (( file = fopen(filename, "rb") ))
     {
 
-        SENSOR_PRINT("%s file=%p.\n",__func__, file);
+        SENSOR_LOGI("%s file=%p.\n",__func__, file);
        fseek(file, 0, TAIL);
 	file_len = ftell(file);
 	if (0 > ((int)file_len)) {
-		SENSOR_PRINT("ftell file length negative %d", (int)file_len);
+		SENSOR_LOGI("ftell file length negative %d", (int)file_len);
 		fclose(file);
 		return file_len;
 	}
        fseek(file, 0, HEAD);
-	SENSOR_PRINT("load sensor setting from file: %s ;file_len=%d;\n", filename,file_len);
+	SENSOR_LOGI("load sensor setting from file: %s ;file_len=%d;\n", filename,file_len);
 
 	for (i = 0 ; i < file_len ; i++) {
 		if (fread((char *)&v, 1, 1,file))
@@ -3121,7 +3121,7 @@ LOCAL uint32_t sensor_tflash_debug(char* filename)
                                {
                                         group = 0;
                                         Sensor_WriteData(p_reg_val_tmp, wr_num_once);
-//				            SENSOR_PRINT(" *%d* \n", wr_num_once);
+//				            SENSOR_LOGI(" *%d* \n", wr_num_once);
                                 }
                                else
                                {
@@ -3133,7 +3133,7 @@ LOCAL uint32_t sensor_tflash_debug(char* filename)
                           {
 
 	SENSOR_Sleep(value);
-	                            SENSOR_PRINT(" SENSOR_WRITE_DELAY =%d; \n",value);
+	                            SENSOR_LOGI(" SENSOR_WRITE_DELAY =%d; \n",value);
                           }
                         else
                          {
@@ -3145,7 +3145,7 @@ LOCAL uint32_t sensor_tflash_debug(char* filename)
                                  else{
 
                                      Sensor_WriteData(p_reg_val_tmp, wr_num_once);
-//				         SENSOR_PRINT(" *%d* \n", wr_num_once);
+//				         SENSOR_LOGI(" *%d* \n", wr_num_once);
                                     }
 
                          }
@@ -3155,23 +3155,23 @@ LOCAL uint32_t sensor_tflash_debug(char* filename)
                               && (reg_addr_value_bits &SENSOR_I2C_VAL_16BIT) != SENSOR_I2C_VAL_16BIT
                              )
                         {
-				SENSOR_PRINT("{0x%02x, 0x%02x}, \n", reg, value);
+				SENSOR_LOGI("{0x%02x, 0x%02x}, \n", reg, value);
                         }
                        else if( (reg_addr_value_bits &SENSOR_I2C_REG_16BIT) == SENSOR_I2C_REG_16BIT
                               && (reg_addr_value_bits &SENSOR_I2C_VAL_16BIT) != SENSOR_I2C_VAL_16BIT
                              )
                         {
-				SENSOR_PRINT("{0x%04x, 0x%02x}, \n", reg, value);
+				SENSOR_LOGI("{0x%04x, 0x%02x}, \n", reg, value);
                         }
                        else if( (reg_addr_value_bits &SENSOR_I2C_REG_16BIT) == SENSOR_I2C_REG_16BIT
                               && (reg_addr_value_bits &SENSOR_I2C_VAL_16BIT) == SENSOR_I2C_VAL_16BIT
                              )
                         {
-				SENSOR_PRINT("{0x%04x, 0x%04x}, \n", reg, value);
+				SENSOR_LOGI("{0x%04x, 0x%04x}, \n", reg, value);
                         }
                        else
                         {
-				SENSOR_PRINT("{0x%02x, 0x%04x}, \n", reg, value);
+				SENSOR_LOGI("{0x%02x, 0x%04x}, \n", reg, value);
                         }
 #endif
 				state = STATE_LINE_IGNORE;
@@ -3204,7 +3204,7 @@ LOCAL uint32_t sensor_InitTflash(uint32_t param)
        SENSOR_IOCTL_FUNC_TAB_T_PTR set_ioctl_func_tab_ptr =&s_HI255_ioctl_func_tab;
 
 
-	SENSOR_PRINT("SENSOR: %s, mode=%d; \n", __func__,param);
+	SENSOR_LOGI("SENSOR: %s, mode=%d; \n", __func__,param);
 
 	timestamp_old = systemTime(CLOCK_MONOTONIC);
     if ( param == SENSOR_MODE_COMMON_INIT )
@@ -3238,7 +3238,7 @@ LOCAL uint32_t sensor_InitTflash(uint32_t param)
             ret =sensor_tflash_debug("/sdcard/DCIM/Camera/c20481536.txt");
 
 	timestamp_new = systemTime(CLOCK_MONOTONIC);
-	SENSOR_PRINT("SENSOR: sensor_InitTflash end, ret=%d, time=%d us\n", ret, (uint32_t)((timestamp_new-timestamp_old)/1000));
+	SENSOR_LOGI("SENSOR: sensor_InitTflash end, ret=%d, time=%d us\n", ret, (uint32_t)((timestamp_new-timestamp_old)/1000));
 
 
        if(ret >0)

@@ -78,7 +78,7 @@ uint32_t bu64297gwz_write_dac_code(SENSOR_HW_HANDLE handle, int32_t code)
 	uint16_t slave_addr = bu64297gwz_VCM_SLAVE_ADDR;
 	uint16_t cmd_len = 0;
 
-	SENSOR_PRINT("%d", code);
+	SENSOR_LOGI("%d", code);
 
 	cmd_val[0] = ((code >> 8) & 0x03) | 0xC4;
 	cmd_val[1] = code & 0xff;
@@ -105,7 +105,7 @@ uint32_t bu64297gwz_write_af(SENSOR_HW_HANDLE handle, uint32_t param)
 	else if ((int32_t)param > 0x3FF)
 		param = 0x3FF;
 	target_code = param & 0x3FF;
-	SENSOR_PRINT("%d", target_code);
+	SENSOR_LOGI("%d", target_code);
 	bu64297gwz_write_dac_code(handle, target_code);
 
 	return ret_value;

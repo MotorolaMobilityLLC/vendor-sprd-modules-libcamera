@@ -730,18 +730,18 @@ LOCAL unsigned long _ov13850_set_video_mode(unsigned long param)
 		return 0;
 
 	if (SENSOR_SUCCESS != Sensor_GetMode(&mode)) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	if (PNULL == s_ov13850_video_info[mode].setting_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	sensor_reg_ptr = (SENSOR_REG_T_PTR)&s_ov13850_video_info[mode].setting_ptr[param];
 	if (PNULL == sensor_reg_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
@@ -749,7 +749,7 @@ LOCAL unsigned long _ov13850_set_video_mode(unsigned long param)
 		Sensor_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("0x%lx", param);
+	SENSOR_LOGI("0x%lx", param);
 	return 0;
 }
 
@@ -888,12 +888,12 @@ LOCAL struct sensor_raw_info* Sensor_GetContext(void)
 				if(0==access(name,R_OK))\
 				{\
 					FILE* fp = NULL;\
-					SENSOR_PRINT("param file %s exists",name);\
+					SENSOR_LOGI("param file %s exists",name);\
 					if( NULL!=(fp=fopen(name,"rb")) ){\
 						fread((void*)x2,1,sizeof(x2),fp);\
 						fclose(fp);\
 					}else{\
-						SENSOR_PRINT("param open %s failure",name);\
+						SENSOR_LOGI("param open %s failure",name);\
 					}\
 				}\
 				memset(name,0,sizeof(name))
@@ -1167,7 +1167,7 @@ LOCAL uint32_t Sensor_ov13850_InitRawTuneInfo(void)
 
 LOCAL unsigned long _ov13850_GetResolutionTrimTab(unsigned long param)
 {
-	SENSOR_PRINT("0x%lx",  (unsigned long)s_ov13850_Resolution_Trim_Tab);
+	SENSOR_LOGI("0x%lx",  (unsigned long)s_ov13850_Resolution_Trim_Tab);
 	return (unsigned long) s_ov13850_Resolution_Trim_Tab;
 }
 
@@ -1220,7 +1220,7 @@ LOCAL unsigned long _ov13850_PowerOn(unsigned long power_on)
 
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 	}
-	SENSOR_PRINT("SENSOR_ov13850: _ov13850_Power_On(1:on, 0:off): %ld", power_on);
+	SENSOR_LOGI("SENSOR_ov13850: _ov13850_Power_On(1:on, 0:off): %ld", power_on);
 	return SENSOR_SUCCESS;
 }
 
@@ -1231,7 +1231,7 @@ LOCAL uint32_t _ov13850_update_otp(void* param_ptr)
 	uint32_t rtn = SENSOR_FAIL;
 
 	stream_value = Sensor_ReadReg(0x0100);
-	SENSOR_PRINT("stream_value = 0x%x  OV13850_OTP_CASE = %d\n", stream_value, OV13850_OTP_CASE);
+	SENSOR_LOGI("stream_value = 0x%x  OV13850_OTP_CASE = %d\n", stream_value, OV13850_OTP_CASE);
 	if(1 != (stream_value & 0x01))
 	{
 		Sensor_WriteReg(0x0100, 0x01);
@@ -1271,7 +1271,7 @@ LOCAL unsigned long _ov13850_cfg_otp(unsigned long  param)
 	struct raw_param_info_tab* tab_ptr = (struct raw_param_info_tab*)s_ov13850_raw_param_tab;
 	uint32_t module_id=g_module_id;
 
-	SENSOR_PRINT("SENSOR_OV13850: _ov13850_cfg_otp");
+	SENSOR_LOGI("SENSOR_OV13850: _ov13850_cfg_otp");
 
 	if(PNULL!=tab_ptr[module_id].cfg_otp){
 		tab_ptr[module_id].cfg_otp(0);
@@ -1287,12 +1287,12 @@ LOCAL unsigned long _ov13850_access_val(unsigned long param)
 	SENSOR_VAL_T* param_ptr = (SENSOR_VAL_T*)param;
 	uint16_t tmp;
 
-	SENSOR_PRINT("SENSOR_OV13850: cfg_otp E");
+	SENSOR_LOGI("SENSOR_OV13850: cfg_otp E");
 	if(!param_ptr){
 		return rtn;
 	}
 
-	SENSOR_PRINT("SENSOR_OV13850: param_ptr->type=%x", param_ptr->type);
+	SENSOR_LOGI("SENSOR_OV13850: param_ptr->type=%x", param_ptr->type);
 	switch(param_ptr->type)
 	{
 		case SENSOR_VAL_TYPE_SHUTTER:
@@ -1305,7 +1305,7 @@ LOCAL unsigned long _ov13850_access_val(unsigned long param)
 			break;
 	}
 
-	SENSOR_PRINT("SENSOR_OV13850: cfg_otp X");
+	SENSOR_LOGI("SENSOR_OV13850: cfg_otp X");
 
 	return rtn;
 }
@@ -1321,7 +1321,7 @@ LOCAL uint32_t _ov13850_Oflim_Identify_otp(void* param_ptr)
 	uint32_t rtn=SENSOR_FAIL;
 
 	stream_value = Sensor_ReadReg(0x0100);
-	SENSOR_PRINT("stream_value = 0x%x\n", stream_value);
+	SENSOR_LOGI("stream_value = 0x%x\n", stream_value);
 	if(1 != (stream_value & 0x01))
 	{
 		Sensor_WriteReg(0x0100, 0x01);
@@ -1335,20 +1335,20 @@ LOCAL uint32_t _ov13850_Oflim_Identify_otp(void* param_ptr)
 		if(OV13850_RAW_PARAM_OFLIM == current_otp.module_integrator_id){
 			rtn=SENSOR_SUCCESS;
 			current_otp.index = i;
-			SENSOR_PRINT("This is OV13850 OFLIM Module ! index = %d\n", current_otp.index);
+			SENSOR_LOGI("This is OV13850 OFLIM Module ! index = %d\n", current_otp.index);
 			break;
 		}
 	}
 	if (i > 3) {
 		// no valid wb OTP data
-		SENSOR_PRINT("ov13850_check_otp_module_id no valid wb OTP data\n");
+		SENSOR_LOGI("ov13850_check_otp_module_id no valid wb OTP data\n");
 		return 1;
 	}
 
 	if(1 != (stream_value & 0x01))
 		Sensor_WriteReg(0x0100, stream_value);
 
-	SENSOR_PRINT("read ov13850 otp  module_id = %x \n", current_otp.module_integrator_id);
+	SENSOR_LOGI("read ov13850 otp  module_id = %x \n", current_otp.module_integrator_id);
 
 	return rtn;
 }
@@ -1359,7 +1359,7 @@ LOCAL uint32_t _ov13850_com_Identify_otp(void* param_ptr)
 	uint32_t rtn=SENSOR_FAIL;
 	uint32_t param_id;
 
-	SENSOR_PRINT("SENSOR_OV13850: _ov13850_com_Identify_otp");
+	SENSOR_LOGI("SENSOR_OV13850: _ov13850_com_Identify_otp");
 
 	/*read param id from sensor omap*/
 	param_id=OV13850_RAW_PARAM_COM;
@@ -1386,17 +1386,17 @@ LOCAL uint32_t _ov13850_GetRawInof(void)
 		g_module_id = i;
 		if(RAW_INFO_END_ID==tab_ptr[i].param_id){
 			if(NULL==s_ov13850_mipi_raw_info_ptr){
-				SENSOR_PRINT("SENSOR_OV13850: ov5647_GetRawInof no param error");
+				SENSOR_LOGI("SENSOR_OV13850: ov5647_GetRawInof no param error");
 				rtn=SENSOR_FAIL;
 			}
-			SENSOR_PRINT("SENSOR_OV13850: ov13850_GetRawInof end");
+			SENSOR_LOGI("SENSOR_OV13850: ov13850_GetRawInof end");
 			break;
 		}
 		else if(PNULL!=tab_ptr[i].identify_otp){
 			if(SENSOR_SUCCESS==tab_ptr[i].identify_otp(0))
 			{
 				s_ov13850_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
-				SENSOR_PRINT("SENSOR_OV13850: ov13850_GetRawInof success");
+				SENSOR_LOGI("SENSOR_OV13850: ov13850_GetRawInof success");
 				break;
 			}
 		}
@@ -1426,27 +1426,27 @@ LOCAL unsigned long _ov13850_Identify(unsigned long param)
 	uint8_t ver_value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
 
-	SENSOR_PRINT("SENSOR_ov13850: mipi raw identify\n");
+	SENSOR_LOGI("SENSOR_ov13850: mipi raw identify\n");
 
-	SENSOR_PRINT("<tang>: sensor_id: %x\n", Sensor_ReadReg(0x302a));
+	SENSOR_LOGI("<tang>: sensor_id: %x\n", Sensor_ReadReg(0x302a));
 
 	pid_value = Sensor_ReadReg(ov13850_PID_ADDR);
 	if (ov13850_PID_VALUE == pid_value) {
 		ver_value = Sensor_ReadReg(ov13850_VER_ADDR);
-		SENSOR_PRINT("SENSOR_ov13850: Identify: PID = %x, VER = %x", pid_value, ver_value);
+		SENSOR_LOGI("SENSOR_ov13850: Identify: PID = %x, VER = %x", pid_value, ver_value);
 		if (ov13850_VER_VALUE == ver_value) {
-			SENSOR_PRINT("SENSOR_ov13850: this is ov13850 sensor !");
+			SENSOR_LOGI("SENSOR_ov13850: this is ov13850 sensor !");
 			ret_value=_ov13850_GetRawInof();
 			if(SENSOR_SUCCESS != ret_value)
 			{
-				SENSOR_PRINT_ERR("SENSOR_ov13850: the module is unknow error !");
+				SENSOR_LOGI("SENSOR_ov13850: the module is unknow error !");
 			}
 			Sensor_ov13850_InitRawTuneInfo();
 		} else {
-			SENSOR_PRINT_HIGH("SENSOR_ov13850: Identify this is OV%x%x sensor !", pid_value, ver_value);
+			SENSOR_LOGI("SENSOR_ov13850: Identify this is OV%x%x sensor !", pid_value, ver_value);
 		}
 	} else {
-		SENSOR_PRINT_ERR("SENSOR_ov13850: identify fail,pid_value=%d", pid_value);
+		SENSOR_LOGI("SENSOR_ov13850: identify fail,pid_value=%d", pid_value);
 	}
 
 	return ret_value;
@@ -1566,7 +1566,7 @@ LOCAL unsigned long _ov13850_write_exposure(unsigned long param)
 	dummy_line=(param>>0x10)&0x0fff;
 	size_index=(param>>0x1c)&0x0f;
 
-	SENSOR_PRINT("SENSOR_OV13850: write_exposure line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
+	SENSOR_LOGI("SENSOR_OV13850: write_exposure line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
 
 	max_frame_len=_ov13850_GetMaxFrameLine(size_index);
 	if(0x00!=max_frame_len)
@@ -1575,7 +1575,7 @@ LOCAL unsigned long _ov13850_write_exposure(unsigned long param)
 
 		frame_len_cur = _ov8825_get_VTS();
 
-		SENSOR_PRINT("SENSOR_OV13850: frame_len: %d,   frame_len_cur:%d\n", frame_len, frame_len_cur);
+		SENSOR_LOGI("SENSOR_OV13850: frame_len: %d,   frame_len_cur:%d\n", frame_len, frame_len_cur);
 
 		if(frame_len_cur != frame_len){
 			OV13850_set_VTS(frame_len);
@@ -1598,7 +1598,7 @@ LOCAL unsigned long _ov13850_write_gain(unsigned long param)
 	uint32_t real_gain = 0;
 
 #ifdef use_sensor_gain
-	SENSOR_PRINT("SENSOR_OV5648: param: 0x%x", param);
+	SENSOR_LOGI("SENSOR_OV5648: param: 0x%x", param);
 	value = param & 0xff;
 	Sensor_WriteReg(0x350b, value);
 	value = (param>>8) & 0x7;
@@ -1615,7 +1615,7 @@ LOCAL unsigned long _ov13850_write_gain(unsigned long param)
 	real_gain = ((param&0xf)+16)*(((param>>4)&0x01)+1)*(((param>>5)&0x01)+1)*(((param>>6)&0x01)+1)*(((param>>7)&0x01)+1);
 	real_gain = real_gain*(((param>>8)&0x01)+1)*(((param>>9)&0x01)+1)*(((param>>10)&0x01)+1)*(((param>>11)&0x01)+1);
 #endif
-	SENSOR_PRINT("SENSOR_OV13850: real_gain:0x%x, param: 0x%x", real_gain, param);
+	SENSOR_LOGI("SENSOR_OV13850: real_gain:0x%x, param: 0x%x", real_gain, param);
 
 	value = real_gain & 0xff;
 	Sensor_WriteReg(0x350b, value);
@@ -1639,7 +1639,7 @@ LOCAL unsigned long _ov13850_write_af(unsigned long param)
 	cmd_len = 2;
 	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 
-	SENSOR_PRINT("SENSOR_OV13850: _write_af, ret =  %d, param = %d,  MSL:%x, LSL:%x\n",
+	SENSOR_LOGI("SENSOR_OV13850: _write_af, ret =  %d, param = %d,  MSL:%x, LSL:%x\n",
 		ret_value, param, cmd_val[0], cmd_val[1]);
 	return ret_value;
 }
@@ -1654,10 +1654,10 @@ LOCAL unsigned long _ov13850_BeforeSnapshot(unsigned long param)
 	uint32_t prv_linetime=s_ov13850_Resolution_Trim_Tab[preview_mode].line_time;
 	uint32_t cap_linetime = s_ov13850_Resolution_Trim_Tab[capture_mode].line_time;
 
-	SENSOR_PRINT("SENSOR_ov13850: BeforeSnapshot mode: 0x%08x",param);
+	SENSOR_LOGI("SENSOR_ov13850: BeforeSnapshot mode: 0x%08x",param);
 
 	if (preview_mode == capture_mode) {
-		SENSOR_PRINT("SENSOR_ov13850: prv mode equal to capmode");
+		SENSOR_LOGI("SENSOR_ov13850: prv mode equal to capmode");
 		goto CFG_INFO;
 	}
 
@@ -1673,10 +1673,10 @@ LOCAL unsigned long _ov13850_BeforeSnapshot(unsigned long param)
 	Sensor_SetMode(capture_mode);
 	Sensor_SetMode_WaitDone();
 
-	SENSOR_PRINT("SENSOR_ov13850: prv_linetime = %d   cap_linetime = %d\n", prv_linetime, cap_linetime);
+	SENSOR_LOGI("SENSOR_ov13850: prv_linetime = %d   cap_linetime = %d\n", prv_linetime, cap_linetime);
 
 	if (prv_linetime == cap_linetime) {
-		SENSOR_PRINT("SENSOR_ov13850: prvline equal to capline");
+		SENSOR_LOGI("SENSOR_ov13850: prvline equal to capline");
 		//goto CFG_INFO;
 	}
 
@@ -1690,7 +1690,7 @@ LOCAL unsigned long _ov13850_BeforeSnapshot(unsigned long param)
 	if(0 == capture_exposure){
 		capture_exposure = 1;
 	}
-	SENSOR_PRINT("SENSOR_ov13850: capture_exposure = %d   capture_maxline = %d\n", capture_exposure, capture_maxline);
+	SENSOR_LOGI("SENSOR_ov13850: capture_exposure = %d   capture_maxline = %d\n", capture_exposure, capture_maxline);
 
 	if(capture_exposure > (capture_maxline - 4)){
 		capture_maxline = capture_exposure + 4;
@@ -1720,7 +1720,7 @@ CFG_INFO:
 
 LOCAL unsigned long _ov13850_after_snapshot(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_ov13850: after_snapshot mode:%ld", param);
+	SENSOR_LOGI("SENSOR_ov13850: after_snapshot mode:%ld", param);
 	Sensor_SetMode((uint32_t)param);
 	return SENSOR_SUCCESS;
 }
@@ -1738,30 +1738,30 @@ static unsigned long _ov13850_GetExifInfo(unsigned long param)
 
 LOCAL unsigned long _ov13850_flash(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_ov13850: param=%d", param);
+	SENSOR_LOGI("SENSOR_ov13850: param=%d", param);
 
 	/* enable flash, disable in _ov13850_BeforeSnapshot */
 	g_flash_mode_en = param;
 	Sensor_SetFlash(param);
-	SENSOR_PRINT("end");
+	SENSOR_LOGI("end");
 	return SENSOR_SUCCESS;
 }
 
 LOCAL unsigned long _ov13850_StreamOn(unsigned long param)
 {
-	SENSOR_PRINT("<tang> hs_prepare&zero :0x%x 0x%x 0x%x 0x%x 0x%x", Sensor_ReadReg(0x4826), Sensor_ReadReg(0x4831),
+	SENSOR_LOGI("<tang> hs_prepare&zero :0x%x 0x%x 0x%x 0x%x 0x%x", Sensor_ReadReg(0x4826), Sensor_ReadReg(0x4831),
 		Sensor_ReadReg(0x4818), Sensor_ReadReg(0x4819), Sensor_ReadReg(0x482a));
 
-	SENSOR_PRINT("<tang> hs_trail&lpx :0x%x 0x%x 0x%x 0x%x 0x%x 0x%x", Sensor_ReadReg(0x481a), Sensor_ReadReg(0x481b),
+	SENSOR_LOGI("<tang> hs_trail&lpx :0x%x 0x%x 0x%x 0x%x 0x%x 0x%x", Sensor_ReadReg(0x481a), Sensor_ReadReg(0x481b),
 		Sensor_ReadReg(0x482b), Sensor_ReadReg(0x4824), Sensor_ReadReg(0x4825),  Sensor_ReadReg(0x4830));
 
 
-	SENSOR_PRINT("<tang> driver_capability :0x%x ", Sensor_ReadReg(0x3009));
+	SENSOR_LOGI("<tang> driver_capability :0x%x ", Sensor_ReadReg(0x3009));
 
 	Sensor_WriteReg(0x3009, (Sensor_ReadReg(0x3009) | 0x60));
-	SENSOR_PRINT("<tang> driver_capability :0x%x ", Sensor_ReadReg(0x3009));
+	SENSOR_LOGI("<tang> driver_capability :0x%x ", Sensor_ReadReg(0x3009));
 
-	SENSOR_PRINT("SENSOR_ov13850: StreamOn");
+	SENSOR_LOGI("SENSOR_ov13850: StreamOn");
 
 
 	Sensor_WriteReg(0x0100, 0x01);
@@ -1771,7 +1771,7 @@ LOCAL unsigned long _ov13850_StreamOn(unsigned long param)
 
 LOCAL unsigned long _ov13850_StreamOff(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_ov13850: StreamOff");
+	SENSOR_LOGI("SENSOR_ov13850: StreamOff");
 
 	Sensor_WriteReg(0x0100, 0x00);
 	usleep(100*1000);
@@ -1860,7 +1860,7 @@ static unsigned long _ov13850_SetEV(unsigned long param)
 	uint32_t gain = s_ov13850_gain;
 	uint32_t ev = ext_ptr->param;
 
-	SENSOR_PRINT("SENSOR_ov13850: _ov13850_SetEV param: 0x%x", ext_ptr->param);
+	SENSOR_LOGI("SENSOR_ov13850: _ov13850_SetEV param: 0x%x", ext_ptr->param);
 
 	switch(ev) {
 	case SENSOR_HDR_EV_LEVE_0:
@@ -1883,7 +1883,7 @@ LOCAL unsigned long _ov13850_ExtFunc(unsigned long ctl_param)
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr =
 	    (SENSOR_EXT_FUN_PARAM_T_PTR) ctl_param;
-	SENSOR_PRINT("0x%x", ext_ptr->cmd);
+	SENSOR_LOGI("0x%x", ext_ptr->cmd);
 
 	switch (ext_ptr->cmd) {
 	case SENSOR_EXT_FUNC_INIT:
@@ -1938,7 +1938,7 @@ LOCAL unsigned long _ov13850_ReadGain(unsigned long param)
 
 	s_ov13850_gain=(int)gain;
 
-	SENSOR_PRINT("SENSOR_ov13850: _ov13850_ReadGain gain: 0x%x", s_ov13850_gain);
+	SENSOR_LOGI("SENSOR_ov13850: _ov13850_ReadGain gain: 0x%x", s_ov13850_gain);
 
 	return rtn;
 }
@@ -1952,7 +1952,7 @@ LOCAL unsigned long _dw9174_SRCInit(unsigned long mode)
 	int i = 0;
 
 	slave_addr = DW9714_VCM_SLAVE_ADDR;
-	SENSOR_PRINT("SENSOR_HI542: _DW9714A_SRCInit: mode = %d\n", mode);
+	SENSOR_LOGI("SENSOR_HI542: _DW9714A_SRCInit: mode = %d\n", mode);
 	switch (mode) {
 		case 1:
 		break;

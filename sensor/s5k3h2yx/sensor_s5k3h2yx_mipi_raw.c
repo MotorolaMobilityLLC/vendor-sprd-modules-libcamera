@@ -1287,7 +1287,7 @@ LOCAL uint32_t Sensor_s5k3h2yx_InitRawTuneInfo(void)
 
 LOCAL uint32_t _s5k3h2yx_GetResolutionTrimTab(uint32_t param)
 {
-	SENSOR_PRINT("0x%x", (uint32_t)s_s5k3h2yx_Resolution_Trim_Tab);
+	SENSOR_LOGI("0x%x", (uint32_t)s_s5k3h2yx_Resolution_Trim_Tab);
 	return (uint32_t) s_s5k3h2yx_Resolution_Trim_Tab;
 }
 LOCAL uint32_t _s5k3h2yx_PowerOn(uint32_t power_on)
@@ -1317,7 +1317,7 @@ LOCAL uint32_t _s5k3h2yx_PowerOn(uint32_t power_on)
 		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 	}
-	SENSOR_PRINT("SENSOR_s5k3h2yx: _s5k3h2yx_Power_On(1:on, 0:off): %d", power_on);
+	SENSOR_LOGI("SENSOR_s5k3h2yx: _s5k3h2yx_Power_On(1:on, 0:off): %d", power_on);
 	return SENSOR_SUCCESS;
 }
 
@@ -1327,7 +1327,7 @@ LOCAL uint32_t _s5k3h2yx_cfg_otp(uint32_t  param)
 	struct raw_param_info_tab* tab_ptr = (struct raw_param_info_tab*)s_s5k3h2yx_raw_param_tab;
 	uint32_t module_id=g_module_id;
 
-	SENSOR_PRINT("SENSOR_s5k3h2yx: _s5k3h2yx_cfg_otp");
+	SENSOR_LOGI("SENSOR_s5k3h2yx: _s5k3h2yx_cfg_otp");
 
 	if(PNULL!=tab_ptr[module_id].cfg_otp){
 		tab_ptr[module_id].cfg_otp(0);
@@ -1341,7 +1341,7 @@ LOCAL uint32_t _s5k3h2yx_com_Identify_otp(void* param_ptr)
 	uint32_t rtn=SENSOR_FAIL;
 	uint32_t param_id;
 
-	SENSOR_PRINT("SENSOR_s5k3h2yx: _s5k3h2yx_com_Identify_otp");
+	SENSOR_LOGI("SENSOR_s5k3h2yx: _s5k3h2yx_com_Identify_otp");
 
 	/*read param id from sensor omap*/
 	param_id=s5k3h2yx_RAW_PARAM_COM;
@@ -1368,17 +1368,17 @@ LOCAL uint32_t _s5k3h2yx_GetRawInof(void)
 		g_module_id = i;
 		if(RAW_INFO_END_ID==tab_ptr[i].param_id){
 			if(NULL==s_s5k3h2yx_mipi_raw_info_ptr){
-				SENSOR_PRINT("SENSOR_s5k3h2yx: ov5647_GetRawInof no param error");
+				SENSOR_LOGI("SENSOR_s5k3h2yx: ov5647_GetRawInof no param error");
 				rtn=SENSOR_FAIL;
 			}
-			SENSOR_PRINT("SENSOR_s5k3h2yx: s5k3h2yx_GetRawInof end");
+			SENSOR_LOGI("SENSOR_s5k3h2yx: s5k3h2yx_GetRawInof end");
 			break;
 		}
 		else if(PNULL!=tab_ptr[i].identify_otp){
 			if(SENSOR_SUCCESS==tab_ptr[i].identify_otp(0))
 			{
 				s_s5k3h2yx_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
-				SENSOR_PRINT("SENSOR_s5k3h2yx: s5k3h2yx_GetRawInof success");
+				SENSOR_LOGI("SENSOR_s5k3h2yx: s5k3h2yx_GetRawInof success");
 				break;
 			}
 		}
@@ -1407,26 +1407,26 @@ LOCAL uint32_t _s5k3h2yx_Identify(uint32_t param)
 	uint8_t ver_value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
 
-	SENSOR_PRINT("SENSOR_s5k3h2yx: mipi raw identify\n");
+	SENSOR_LOGI("SENSOR_s5k3h2yx: mipi raw identify\n");
 
 	pid_value = Sensor_ReadReg(s5k3h2yx_PID_ADDR);
 
 	if (s5k3h2yx_PID_VALUE == pid_value) {
 		ver_value = Sensor_ReadReg(s5k3h2yx_VER_ADDR);
-		SENSOR_PRINT("SENSOR_s5k3h2yx: Identify: PID = %x, VER = %x", pid_value, ver_value);
+		SENSOR_LOGI("SENSOR_s5k3h2yx: Identify: PID = %x, VER = %x", pid_value, ver_value);
 		if (s5k3h2yx_VER_VALUE == ver_value) {
-			SENSOR_PRINT_HIGH("SENSOR_s5k3h2yx: this is s5k3h2yx sensor !");
+			SENSOR_LOGI("SENSOR_s5k3h2yx: this is s5k3h2yx sensor !");
 			ret_value=_s5k3h2yx_GetRawInof();
 			if(SENSOR_SUCCESS != ret_value)
 			{
-				SENSOR_PRINT_ERR("SENSOR_s5k3h2yx: the module is unknow error !");
+				SENSOR_LOGI("SENSOR_s5k3h2yx: the module is unknow error !");
 			}
 			Sensor_s5k3h2yx_InitRawTuneInfo();
 		} else {
-			SENSOR_PRINT_HIGH("SENSOR_s5k3h2yx: identify fail,ver_value=%d", ver_value);
+			SENSOR_LOGI("SENSOR_s5k3h2yx: identify fail,ver_value=%d", ver_value);
 		}
 	} else {
-		SENSOR_PRINT_ERR("SENSOR_s5k3h2yx: identify fail,pid_value=%d", pid_value);
+		SENSOR_LOGI("SENSOR_s5k3h2yx: identify fail,pid_value=%d", pid_value);
 	}
 
 	return ret_value;
@@ -1445,7 +1445,7 @@ LOCAL uint32_t _s5k3h2yx_write_exposure(uint32_t param)
 	expsure_line=param&0xffff;
 	dummy_line=(param>>0x10)&0x0fff;
 	size_index=(param>>0x1c)&0x0f;
-	SENSOR_PRINT("SENSOR_s5k3h2yx: write_exposure line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
+	SENSOR_LOGI("SENSOR_s5k3h2yx: write_exposure line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
 	max_frame_len=_s5k3h2yx_GetMaxFrameLine(size_index);
 	if(expsure_line < 3){
 		expsure_line = 3;
@@ -1492,7 +1492,7 @@ LOCAL uint32_t _s5k3h2yx_write_gain(uint32_t param)
 	real_gain = real_gain*(((param>>6)&0x01)+1)*(((param>>7)&0x01)+1)*(((param>>8)&0x01)+1);
 
 	real_gain = real_gain<<1;
-	SENSOR_PRINT("SENSOR_s5k3h2yx: real_gain:0x%x, param: 0x%x", real_gain, param);
+	SENSOR_LOGI("SENSOR_s5k3h2yx: real_gain:0x%x, param: 0x%x", real_gain, param);
 
 	ret_value = Sensor_WriteReg(0x104, 0x01);
 	value = real_gain>>0x08;
@@ -1512,7 +1512,7 @@ LOCAL uint32_t _s5k3h2yx_write_af(uint32_t param)
 	uint16_t  slave_addr = 0;
 	uint16_t cmd_len = 0;
 
-	SENSOR_PRINT("SENSOR_s5k3h2yx: _write_af %d", param);
+	SENSOR_LOGI("SENSOR_s5k3h2yx: _write_af %d", param);
 
 	//for direct mode
 	slave_addr = DW9714_VCM_SLAVE_ADDR;
@@ -1520,7 +1520,7 @@ LOCAL uint32_t _s5k3h2yx_write_af(uint32_t param)
 	cmd_val[1] = ((param&0x0f)<<4)|0x0C;
 	cmd_len = 2;
 	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
-	SENSOR_PRINT("SENSOR_s5k3h2yx: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
+	SENSOR_LOGI("SENSOR_s5k3h2yx: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
 
 	return ret_value;
 }
@@ -1542,7 +1542,7 @@ LOCAL uint32_t _s5k3h2yx_ReadGain(uint32_t*  gain_ptr)
 		*gain_ptr = gain;
 	}
 
-	SENSOR_PRINT("SENSOR_s5k3h2yx: _ReadGain gain: 0x%x", s_s5k3h2yx_gain);
+	SENSOR_LOGI("SENSOR_s5k3h2yx: _ReadGain gain: 0x%x", s_s5k3h2yx_gain);
 
 	return rtn;
 }
@@ -1562,14 +1562,14 @@ LOCAL uint32_t _s5k3h2yx_BeforeSnapshot(uint32_t param)
 	uint8_t ret_l, ret_m, ret_h;
 
 	param = param&0xffff;
-	SENSOR_PRINT("SENSOR_s5k3h2yx:cap_mode = %d,param = %d.",cap_mode,param);
+	SENSOR_LOGI("SENSOR_s5k3h2yx:cap_mode = %d,param = %d.",cap_mode,param);
 	cap_linetime = s_s5k3h2yx_Resolution_Trim_Tab[param].line_time;
 
 
-	SENSOR_PRINT("SENSOR_s5k3h2yx: BeforeSnapshot moe: %d",param);
+	SENSOR_LOGI("SENSOR_s5k3h2yx: BeforeSnapshot moe: %d",param);
 
 	if (SENSOR_MODE_PREVIEW_ONE >= param){
-		SENSOR_PRINT("SENSOR_s5k3h2yx: prvmode equal to capmode");
+		SENSOR_LOGI("SENSOR_s5k3h2yx: prvmode equal to capmode");
 		return SENSOR_SUCCESS;
 	}
 
@@ -1594,7 +1594,7 @@ LOCAL uint32_t _s5k3h2yx_BeforeSnapshot(uint32_t param)
 		if(capture_exposure > frame_len*2)
 			break;
 	}
-	SENSOR_PRINT("SENSOR_s5k3h2yx: cap moe: %d,FL: %x,exp=%d,g=%x",param,frame_len,capture_exposure,gain);
+	SENSOR_LOGI("SENSOR_s5k3h2yx: cap moe: %d,FL: %x,exp=%d,g=%x",param,frame_len,capture_exposure,gain);
 
 	if(capture_exposure >= (frame_len - 8)){
 		frame_len = capture_exposure+8;
@@ -1614,14 +1614,14 @@ LOCAL uint32_t _s5k3h2yx_BeforeSnapshot(uint32_t param)
 
 LOCAL uint32_t _s5k3h2yx_after_snapshot(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_s5k3h2yx: after_snapshot mode:%d", param);
+	SENSOR_LOGI("SENSOR_s5k3h2yx: after_snapshot mode:%d", param);
 	Sensor_SetMode(param);
 	return SENSOR_SUCCESS;
 }
 
 LOCAL uint32_t _s5k3h2yx_StreamOn(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_s5k3h2yx: StreamOn");
+	SENSOR_LOGI("SENSOR_s5k3h2yx: StreamOn");
 
 	Sensor_WriteReg(0x0100, 0x01);
 
@@ -1630,7 +1630,7 @@ LOCAL uint32_t _s5k3h2yx_StreamOn(uint32_t param)
 
 LOCAL uint32_t _s5k3h2yx_StreamOff(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_s5k3h2yx: StreamOff");
+	SENSOR_LOGI("SENSOR_s5k3h2yx: StreamOff");
 
 	Sensor_WriteReg(0x0100, 0x00);
 	usleep(40*1000);

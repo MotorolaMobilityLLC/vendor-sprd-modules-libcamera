@@ -1219,7 +1219,7 @@ LOCAL uint32_t Sensor_ov8865_InitRawTuneInfo(void)
 
 LOCAL unsigned long _ov8865_GetResolutionTrimTab(unsigned long param)
 {
-	SENSOR_PRINT("0x%lx",  (unsigned long)s_ov8865_Resolution_Trim_Tab);
+	SENSOR_LOGI("0x%lx",  (unsigned long)s_ov8865_Resolution_Trim_Tab);
 	return (unsigned long) s_ov8865_Resolution_Trim_Tab;
 }
 LOCAL unsigned long _ov8865_PowerOn(unsigned long power_on)
@@ -1250,7 +1250,7 @@ LOCAL unsigned long _ov8865_PowerOn(unsigned long power_on)
 		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 	}
-	SENSOR_PRINT("SENSOR_ov8865: _ov8865_Power_On(1:on, 0:off): %ld", power_on);
+	SENSOR_LOGI("SENSOR_ov8865: _ov8865_Power_On(1:on, 0:off): %ld", power_on);
 	return SENSOR_SUCCESS;
 }
 
@@ -1261,10 +1261,10 @@ LOCAL unsigned long _ov8865_cfg_otp(unsigned long  param)
 	uint32_t module_id = g_module_id;
 	uint16_t stream_value = 0;
 
-	SENSOR_PRINT("SENSOR_OV8865: _ov8865_cfg_otp");
+	SENSOR_LOGI("SENSOR_OV8865: _ov8865_cfg_otp");
 
 	stream_value = Sensor_ReadReg(0x0100);
-	SENSOR_PRINT("_ov8865_cfg_otp: stream_value = 0x%x\n", stream_value);
+	SENSOR_LOGI("_ov8865_cfg_otp: stream_value = 0x%x\n", stream_value);
 	if(1 != (stream_value & 0x01)) {
 		Sensor_WriteReg(0x0100, 0x01);
 		usleep(5 * 1000);
@@ -1718,12 +1718,12 @@ LOCAL uint32_t _ov8865_o_film_Identify_otp(void* param_ptr)
 	int32_t temp;
 	int32_t ret;
 
-	SENSOR_PRINT("SENSOR_ov8865: _ov8865_o_film_Identify_otp");
+	SENSOR_LOGI("SENSOR_ov8865: _ov8865_o_film_Identify_otp");
 
 	/*read param id from sensor omap*/
 	for (i=1;i<=3;i++) {
 		temp = _ov8865_check_o_film_otp(0, i);
-		SENSOR_PRINT("_ov8865_o_film_Identify_otp i=%d temp = %d \n",i,temp);
+		SENSOR_LOGI("_ov8865_o_film_Identify_otp i=%d temp = %d \n",i,temp);
 		if (temp == 2) {
 			otp_index = i;
 			break;
@@ -1732,17 +1732,17 @@ LOCAL uint32_t _ov8865_o_film_Identify_otp(void* param_ptr)
 
 	if (i <= 3) {
 		_ov8865_read_o_film_otp(0, otp_index, &current_otp);
-		SENSOR_PRINT("read ov8865 otp  module_id = %x \n", current_otp.module_integrator_id);
+		SENSOR_LOGI("read ov8865 otp  module_id = %x \n", current_otp.module_integrator_id);
 		if (OV8865_RAW_PARAM_O_FILM == current_otp.module_integrator_id) {
-			SENSOR_PRINT("SENSOR_OV8865: This is o_film module!!\n");
+			SENSOR_LOGI("SENSOR_OV8865: This is o_film module!!\n");
 			rtn = SENSOR_SUCCESS;
 		} else {
-			SENSOR_PRINT("SENSOR_OV8865: check module id faided!!\n");
+			SENSOR_LOGI("SENSOR_OV8865: check module id faided!!\n");
 			rtn = SENSOR_FAIL;
 		}
 	} else {
 		/* no valid wb OTP data */
-		SENSOR_PRINT("ov8865_check_otp_module_id no valid wb OTP data\n");
+		SENSOR_LOGI("ov8865_check_otp_module_id no valid wb OTP data\n");
 		rtn = SENSOR_FAIL;
 	}
 
@@ -1752,7 +1752,7 @@ LOCAL uint32_t _ov8865_o_film_Identify_otp(void* param_ptr)
 LOCAL uint32_t  _ov8865_o_film_update_otp(void* param_ptr)
 {
 
-	SENSOR_PRINT("SENSOR_OV8865: _ov8865_o_film_update_otp");
+	SENSOR_LOGI("SENSOR_OV8865: _ov8865_o_film_update_otp");
 
 	//_ov8865_update_o_film_otp_wb();
 	_ov8865_update_o_film_otp_lenc();
@@ -1765,7 +1765,7 @@ LOCAL uint32_t _ov8865_com_Identify_otp(void* param_ptr)
 	uint32_t rtn=SENSOR_FAIL;
 	uint32_t param_id;
 
-	SENSOR_PRINT("SENSOR_OV8865: _ov8865_com_Identify_otp");
+	SENSOR_LOGI("SENSOR_OV8865: _ov8865_com_Identify_otp");
 
 	/*read param id from sensor omap*/
 	param_id=OV8865_RAW_PARAM_COM;
@@ -1785,7 +1785,7 @@ LOCAL uint32_t _ov8865_GetRawInof(void)
 	uint16_t stream_value = 0;
 
 	stream_value = Sensor_ReadReg(0x0100);
-	SENSOR_PRINT("_ov8865_GetRawInof:stream_value = 0x%x\n", stream_value);
+	SENSOR_LOGI("_ov8865_GetRawInof:stream_value = 0x%x\n", stream_value);
 	if (1 != (stream_value & 0x01)) {
 		Sensor_WriteReg(0x0100, 0x01);
 		usleep(5 * 1000);
@@ -1795,17 +1795,17 @@ LOCAL uint32_t _ov8865_GetRawInof(void)
 		g_module_id = i;
 		if(RAW_INFO_END_ID==tab_ptr[i].param_id) {
 			if(NULL==s_ov8865_mipi_raw_info_ptr) {
-				SENSOR_PRINT("SENSOR_OV8865: ov8865_GetRawInof no param error");
+				SENSOR_LOGI("SENSOR_OV8865: ov8865_GetRawInof no param error");
 				rtn=SENSOR_FAIL;
 			}
-			SENSOR_PRINT("SENSOR_OV8865: ov8865_GetRawInof end");
+			SENSOR_LOGI("SENSOR_OV8865: ov8865_GetRawInof end");
 			break;
 		}
 		else if (PNULL!=tab_ptr[i].identify_otp) {
 			if (SENSOR_SUCCESS==tab_ptr[i].identify_otp(0))
 			{
 				s_ov8865_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
-				SENSOR_PRINT("SENSOR_OV8865: ov8865_GetRawInof success");
+				SENSOR_LOGI("SENSOR_OV8865: ov8865_GetRawInof success");
 				break;
 			}
 		}
@@ -1843,27 +1843,27 @@ LOCAL unsigned long _ov8865_Identify(unsigned long param)
 	uint8_t ver_value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
 
-	SENSOR_PRINT("SENSOR_ov8865: mipi raw identify\n");
+	SENSOR_LOGI("SENSOR_ov8865: mipi raw identify\n");
 
 	pid_h_value = Sensor_ReadReg(ov8865_pid_h_addr);
 	pid_l_value = Sensor_ReadReg(ov8865_pid_l_addr);
 	pid_value = (pid_h_value<<8)|pid_l_value;
 	if (ov8865_pid_val == pid_value) {
 		ver_value = Sensor_ReadReg(ov8865_ver_addr);
-		SENSOR_PRINT("SENSOR_ov8865: Identify: PID = %x, VER = %x", pid_value, ver_value);
+		SENSOR_LOGI("SENSOR_ov8865: Identify: PID = %x, VER = %x", pid_value, ver_value);
 		if (ov8865_ver_val == ver_value) {
-			SENSOR_PRINT("SENSOR_ov8865: this is ov8865 sensor !");
+			SENSOR_LOGI("SENSOR_ov8865: this is ov8865 sensor !");
 			ret_value=_ov8865_GetRawInof();
 			if(SENSOR_SUCCESS != ret_value)
 			{
-				SENSOR_PRINT("SENSOR_ov8865: the module is unknow error !");
+				SENSOR_LOGI("SENSOR_ov8865: the module is unknow error !");
 			}
 			Sensor_ov8865_InitRawTuneInfo();
 		} else {
-			SENSOR_PRINT("SENSOR_ov8865: Identify this is OV%x%x sensor !", pid_value, ver_value);
+			SENSOR_LOGI("SENSOR_ov8865: Identify this is OV%x%x sensor !", pid_value, ver_value);
 		}
 	} else {
-		SENSOR_PRINT("SENSOR_ov8865: identify fail,pid_value=%d", pid_value);
+		SENSOR_LOGI("SENSOR_ov8865: identify fail,pid_value=%d", pid_value);
 	}
 
 	return ret_value;
@@ -1884,7 +1884,7 @@ LOCAL unsigned long _ov8865_write_exposure(unsigned long param)
 	dummy_line=(param>>0x10)&0x0fff;
 	size_index=(param>>0x1c)&0x0f;
 
-	SENSOR_PRINT("SENSOR_ov8865: write_exposure line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
+	SENSOR_LOGI("SENSOR_ov8865: write_exposure line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
 
 	max_frame_len=_ov8865_GetMaxFrameLine(size_index);
 
@@ -1895,7 +1895,7 @@ LOCAL unsigned long _ov8865_write_exposure(unsigned long param)
 		frame_len_cur = (Sensor_ReadReg(0x380e)&0xff)<<8;
 		frame_len_cur |= Sensor_ReadReg(0x380f)&0xff;
 
-		SENSOR_PRINT("SENSOR_ov8865: write_exposure max line:%d, cur frame line:%d", max_frame_len, frame_len_cur);
+		SENSOR_LOGI("SENSOR_ov8865: write_exposure max line:%d, cur frame line:%d", max_frame_len, frame_len_cur);
 
 		if(frame_len_cur != frame_len){
 			frame_len = ((frame_len + 1)>>1)<<1;
@@ -1925,7 +1925,7 @@ LOCAL unsigned long _ov8865_write_gain(unsigned long param)
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint16_t gain128 =0x00, tmp_val = 0;
 
-	SENSOR_PRINT("SENSOR_ov8865: write_gain:0x%x", param);
+	SENSOR_LOGI("SENSOR_ov8865: write_gain:0x%x", param);
 
 	gain128 = 0x80|((param&0xf)<<3)|((param&0x1f0)<<4);
 
@@ -1947,7 +1947,7 @@ LOCAL unsigned long _ov8865_write_af(unsigned long param)
 	uint16_t  slave_addr = 0;
 	uint16_t cmd_len = 0;
 
-	SENSOR_PRINT("SENSOR_ov8865: _write_af %d", param);
+	SENSOR_LOGI("SENSOR_ov8865: _write_af %d", param);
 
 	slave_addr = DW9714_VCM_SLAVE_ADDR;
 	cmd_val[0] = (param&0xfff0)>>4;
@@ -1955,7 +1955,7 @@ LOCAL unsigned long _ov8865_write_af(unsigned long param)
 	cmd_len = 2;
 	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 
-	SENSOR_PRINT("SENSOR_ov8865: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
+	SENSOR_LOGI("SENSOR_ov8865: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
 
 	return ret_value;
 }
@@ -1970,10 +1970,10 @@ LOCAL unsigned long _ov8865_BeforeSnapshot(unsigned long param)
 	uint32_t prv_linetime=s_ov8865_Resolution_Trim_Tab[preview_mode].line_time;
 	uint32_t cap_linetime = s_ov8865_Resolution_Trim_Tab[capture_mode].line_time;
 
-	SENSOR_PRINT("SENSOR_ov8865: BeforeSnapshot mode: 0x%08x",param);
+	SENSOR_LOGI("SENSOR_ov8865: BeforeSnapshot mode: 0x%08x",param);
 
 	if (preview_mode == capture_mode) {
-		SENSOR_PRINT("SENSOR_ov8865: prv mode equal to capmode");
+		SENSOR_LOGI("SENSOR_ov8865: prv mode equal to capmode");
 		goto CFG_INFO;
 	}
 
@@ -1986,7 +1986,7 @@ LOCAL unsigned long _ov8865_BeforeSnapshot(unsigned long param)
 	Sensor_SetMode_WaitDone();
 
 	if (prv_linetime == cap_linetime) {
-		SENSOR_PRINT("SENSOR_ov8865: prvline equal to capline");
+		SENSOR_LOGI("SENSOR_ov8865: prvline equal to capline");
 		goto CFG_INFO;
 	}
 
@@ -2026,7 +2026,7 @@ LOCAL unsigned long _ov8865_BeforeSnapshot(unsigned long param)
 
 LOCAL unsigned long _ov8865_after_snapshot(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_ov8865: after_snapshot mode:%ld", param);
+	SENSOR_LOGI("SENSOR_ov8865: after_snapshot mode:%ld", param);
 
 	Sensor_SetMode((uint32_t)param);
 
@@ -2035,17 +2035,17 @@ LOCAL unsigned long _ov8865_after_snapshot(unsigned long param)
 
 LOCAL unsigned long _ov8865_flash(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_ov8865: param=%d", param);
+	SENSOR_LOGI("SENSOR_ov8865: param=%d", param);
 
 	/* enable flash, disable in _ov8865_BeforeSnapshot */
 	Sensor_SetFlash(param);
-	SENSOR_PRINT_HIGH("end");
+	SENSOR_LOGI("end");
 	return SENSOR_SUCCESS;
 }
 
 LOCAL unsigned long _ov8865_StreamOn(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_ov8865: StreamOn");
+	SENSOR_LOGI("SENSOR_ov8865: StreamOn");
 
 	Sensor_WriteReg(0x0100, 0x01);
 
@@ -2054,7 +2054,7 @@ LOCAL unsigned long _ov8865_StreamOn(unsigned long param)
 
 LOCAL unsigned long _ov8865_StreamOff(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_ov8865: StreamOff");
+	SENSOR_LOGI("SENSOR_ov8865: StreamOff");
 
 	Sensor_WriteReg(0x0100, 0x00);
 
@@ -2143,7 +2143,7 @@ LOCAL unsigned long _ov8865_SetEV(unsigned long param)
 	uint32_t capture_shutter = s_capture_shutter;
 	uint32_t capture_vts = s_capture_VTS;
 
-	SENSOR_PRINT("SENSOR_ov8865: _ov8865_SetEV param: 0x%x", ext_ptr->param);
+	SENSOR_LOGI("SENSOR_ov8865: _ov8865_SetEV param: 0x%x", ext_ptr->param);
 
 	ev = ext_ptr->param;
 	switch(ev) {
@@ -2163,7 +2163,7 @@ LOCAL unsigned long _ov8865_SetEV(unsigned long param)
 		_calculate_hdr_exposure(real_gain_128, capture_vts, capture_shutter);
 		break;
 	default:
-		SENSOR_PRINT_ERR("SENSOR_ov8865: _ov8865_SetEV ev is invalidated: 0x%x\n", ev);
+		SENSOR_LOGI("SENSOR_ov8865: _ov8865_SetEV ev is invalidated: 0x%x\n", ev);
 		rtn = SENSOR_FALSE;
 		break;
 	}
@@ -2178,11 +2178,11 @@ LOCAL unsigned long _ov8865_ExtFunc(unsigned long ctl_param)
 
 	if (PNULL == ext_ptr) {
 
-		SENSOR_PRINT_ERR("SENSOR_ov8865: _ov8865_ExtFunc -- ctl_param is NULL\n");
+		SENSOR_LOGI("SENSOR_ov8865: _ov8865_ExtFunc -- ctl_param is NULL\n");
 		return SENSOR_FALSE;
 	}
 
-	SENSOR_PRINT_HIGH("0x%x", ext_ptr->cmd);
+	SENSOR_LOGI("0x%x", ext_ptr->cmd);
 
 	switch (ext_ptr->cmd) {
 	case SENSOR_EXT_FUNC_INIT:
@@ -2195,7 +2195,7 @@ LOCAL unsigned long _ov8865_ExtFunc(unsigned long ctl_param)
 		rtn = _ov8865_SetEV(ctl_param);
 		break;
 	default:
-		SENSOR_PRINT_ERR("SENSOR_ov8865: _ov8865_ExtFunc -- cmd is invalidated: 0x%x\n", ext_ptr->cmd);
+		SENSOR_LOGI("SENSOR_ov8865: _ov8865_ExtFunc -- cmd is invalidated: 0x%x\n", ext_ptr->cmd);
 		rtn = SENSOR_FALSE;
 		break;
 	}
@@ -2245,7 +2245,7 @@ LOCAL uint32_t _ov8865_ReadGain(uint32_t *real_gain)
 		*real_gain = gain128;
 	}
 
-	SENSOR_PRINT("SENSOR_ov8865: _ov8865_ReadGain gain: 0x%x", gain128);
+	SENSOR_LOGI("SENSOR_ov8865: _ov8865_ReadGain gain: 0x%x", gain128);
 
 	return rtn;
 }
@@ -2271,20 +2271,20 @@ LOCAL unsigned long _ov8865_dw9714_SRCInit(unsigned long mode)
 			cmd_val[1] = 0xa3;
 			ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 			if(ret_value){
-				SENSOR_PRINT("SENSOR_OV8865: _dw9174_SRCInit fail!1");
+				SENSOR_LOGI("SENSOR_OV8865: _dw9174_SRCInit fail!1");
 			}
 			cmd_val[0] = 0xf2;
 			cmd_val[1] = 0x00;
 			ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 			if(ret_value){
-				SENSOR_PRINT("SENSOR_OV8865: _dw9174_SRCInit fail!2");
+				SENSOR_LOGI("SENSOR_OV8865: _dw9174_SRCInit fail!2");
 			}
 
 			cmd_val[0] = 0xdc;
 			cmd_val[1] = 0x51;
 			ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 			if(ret_value){
-				SENSOR_PRINT("SENSOR_OV8865: _dw9174_SRCInit fail!3");
+				SENSOR_LOGI("SENSOR_OV8865: _dw9174_SRCInit fail!3");
 			}
 		}
 		break;

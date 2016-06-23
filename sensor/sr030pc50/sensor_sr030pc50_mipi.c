@@ -756,7 +756,7 @@ static unsigned long Sr030pc50_SetExifInfo_ISO(unsigned long param)
 	Sensor_WriteReg(0x03, 0x20);
 	iso=Sensor_ReadReg(0xb0);
 	Sensor_WriteReg(0x03, 0x00);
-	SENSOR_PRINT("iso=%x;",iso);
+	SENSOR_LOGI("iso=%x;",iso);
 
 	sensor_exif_info_ptr->valid.ISOSpeedRatings = 1;
 	sensor_exif_info_ptr->ISOSpeedRatings.count = 0x02;
@@ -895,18 +895,18 @@ static unsigned long Sr030pc50_Identify(unsigned long param)
 	uint16_t chip_id = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
 
-	SENSOR_PRINT_HIGH("sensor_sr030pc50: mipi yuv identify.");
+	SENSOR_LOGI("sensor_sr030pc50: mipi yuv identify.");
 
 	Sensor_WriteReg(0x03, 0x00);
 
 	for (i = 0; i < 3; i++) {
 		chip_id = Sensor_ReadReg(SR030PC50_CHIP_ID_ADDR);
 		if (SR030PC50_CHIP_ID_VALUE == chip_id) {
-			SENSOR_PRINT_HIGH("sensor_sr030pc50: this is sr030pc50 sensor !");
+			SENSOR_LOGI("sensor_sr030pc50: this is sr030pc50 sensor !");
 			Sr030pc50_InitExifInfo();
 			return SENSOR_SUCCESS;
 		} else {
-			SENSOR_PRINT_ERR("sensor_sr030pc50: identify fail, chip_id=%d", chip_id);
+			SENSOR_LOGI("sensor_sr030pc50: identify fail, chip_id=%d", chip_id);
 		}
 	}
 
@@ -915,7 +915,7 @@ static unsigned long Sr030pc50_Identify(unsigned long param)
 
 static unsigned long Sr030pc50_StreamOn(unsigned long param)
 {
-	SENSOR_PRINT_HIGH("sensor: Sr030pc50_StreamOn");
+	SENSOR_LOGI("sensor: Sr030pc50_StreamOn");
 
 	Sensor_WriteReg(0x03, 0x00);
 	Sensor_WriteReg(0x01, 0x70);
@@ -925,7 +925,7 @@ static unsigned long Sr030pc50_StreamOn(unsigned long param)
 
 static unsigned long Sr030pc50_StreamOff(unsigned long param)
 {
-	SENSOR_PRINT("sensor: Sr030pc50_StreamOff");
+	SENSOR_LOGI("sensor: Sr030pc50_StreamOff");
 
 	Sensor_WriteReg(0x03, 0x00);
 	Sensor_WriteReg(0x01, 0x71);
@@ -970,7 +970,7 @@ static unsigned long Sr030pc50_Set_Brightness(unsigned long level)
 		Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("sensor: Sr030pc50_Set_Brightness = %ld", level);
+	SENSOR_LOGI("sensor: Sr030pc50_Set_Brightness = %ld", level);
 
 	return 0;
 }
@@ -1012,7 +1012,7 @@ static unsigned long Sr030pc50_Set_Saturation(unsigned long level)
 		Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("sensor: Sr030pc50_Set_Saturation = %ld", level);
+	SENSOR_LOGI("sensor: Sr030pc50_Set_Saturation = %ld", level);
 
 	return 0;
 }
@@ -1065,7 +1065,7 @@ static unsigned long Sr030pc50_Set_Image_Effect(unsigned long effect_type)
 		Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("sensor: Sr030pc50_Set_Image_Effect = %ld", effect_type);
+	SENSOR_LOGI("sensor: Sr030pc50_Set_Image_Effect = %ld", effect_type);
 
 	return 0;
 }
@@ -1093,7 +1093,7 @@ static unsigned long Sr030pc50_Set_Anti_Flicker(unsigned long mode)
 		Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("sensor: Sr030pc50_Set_Anti_Flicker= %ld", mode);
+	SENSOR_LOGI("sensor: Sr030pc50_Set_Anti_Flicker= %ld", mode);
 
 	return 0;
 }
@@ -1198,7 +1198,7 @@ static unsigned long Sr030pc50_Set_Video_Mode(unsigned long mode)
 		Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("sensor:  Sr030pc50_Set_Video_Mode = %ld", mode);
+	SENSOR_LOGI("sensor:  Sr030pc50_Set_Video_Mode = %ld", mode);
 
 	return 0;
 }
@@ -1249,7 +1249,7 @@ static unsigned long Sr030pc50_Set_Awb(unsigned long mode)
 
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_WHITEBALANCE, (uint32_t)mode);
 
-	SENSOR_PRINT("sensor: Sr030pc50_Set_Awb = %ld", mode);
+	SENSOR_LOGI("sensor: Sr030pc50_Set_Awb = %ld", mode);
 
 	return 0;
 }
@@ -1282,7 +1282,7 @@ LOCAL unsigned long Sr030pc50_Set_Work_Mode(unsigned long mode)
 		Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	CMR_LOGI("sensor: Sr030pc50_Set_Work_Mode = %ld", mode);
+	SENSOR_LOGI("sensor: Sr030pc50_Set_Work_Mode = %ld", mode);
 
 	return 0;
 }
@@ -1302,7 +1302,7 @@ static unsigned long Sr030pc50_AfterSnapshot(unsigned long param)
 {
 	uint32_t exposure;
 
-	SENSOR_PRINT("Sr030pc50_AfterSnapshot =%ld", param);
+	SENSOR_LOGI("Sr030pc50_AfterSnapshot =%ld", param);
 
 	return SENSOR_SUCCESS;
 }

@@ -1105,18 +1105,18 @@ LOCAL uint32_t _ov8858_set_video_mode(uint32_t param)
 		return 0;
 
 	if (SENSOR_SUCCESS != Sensor_GetMode(&mode)) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	if (PNULL == s_ov8858_video_info[mode].setting_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	sensor_reg_ptr = (SENSOR_REG_T_PTR)&s_ov8858_video_info[mode].setting_ptr[param];
 	if (PNULL == sensor_reg_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
@@ -1124,7 +1124,7 @@ LOCAL uint32_t _ov8858_set_video_mode(uint32_t param)
 		Sensor_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("0x%02x", param);
+	SENSOR_LOGI("0x%02x", param);
 	return 0;
 }
 
@@ -1277,7 +1277,7 @@ LOCAL uint32_t Sensor_ov8858_InitRawTuneInfo(void)
 
 LOCAL unsigned long _ov8858_GetResolutionTrimTab(uint32_t param)
 {
-	SENSOR_PRINT("0x%x",  (unsigned long)s_ov8858_Resolution_Trim_Tab);
+	SENSOR_LOGI("0x%x",  (unsigned long)s_ov8858_Resolution_Trim_Tab);
 	return (unsigned long) s_ov8858_Resolution_Trim_Tab;
 }
 LOCAL uint32_t _ov8858_PowerOn(uint32_t power_on)
@@ -1309,7 +1309,7 @@ LOCAL uint32_t _ov8858_PowerOn(uint32_t power_on)
 		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 	}
-	SENSOR_PRINT("SENSOR_ov8858: _ov8858_Power_On(1:on, 0:off): %d", power_on);
+	SENSOR_LOGI("SENSOR_ov8858: _ov8858_Power_On(1:on, 0:off): %d", power_on);
 	return SENSOR_SUCCESS;
 }
 
@@ -1319,7 +1319,7 @@ LOCAL uint32_t _ov8858_cfg_otp(uint32_t  param)
 	struct raw_param_info_tab* tab_ptr = (struct raw_param_info_tab*)s_ov8858_raw_param_tab;
 	uint32_t module_id=g_module_id;
 
-	SENSOR_PRINT("SENSOR_ov8858: _ov8858_cfg_otp");
+	SENSOR_LOGI("SENSOR_ov8858: _ov8858_cfg_otp");
 
 	if(PNULL!=tab_ptr[module_id].cfg_otp){
 		tab_ptr[module_id].cfg_otp(0);
@@ -1333,7 +1333,7 @@ LOCAL uint32_t _ov8858_com_Identify_otp(void* param_ptr)
 	uint32_t rtn=SENSOR_FAIL;
 	uint32_t param_id;
 
-	SENSOR_PRINT("SENSOR_ov8858: _ov8858_com_Identify_otp");
+	SENSOR_LOGI("SENSOR_ov8858: _ov8858_com_Identify_otp");
 
 	/*read param id from sensor omap*/
 	param_id=ov8858_RAW_PARAM_COM;
@@ -1360,17 +1360,17 @@ LOCAL uint32_t _ov8858_GetRawInof(void)
 		g_module_id = i;
 		if(RAW_INFO_END_ID==tab_ptr[i].param_id){
 			if(NULL==s_ov8858_mipi_raw_info_ptr){
-				SENSOR_PRINT("SENSOR_ov8858: ov5647_GetRawInof no param error");
+				SENSOR_LOGI("SENSOR_ov8858: ov5647_GetRawInof no param error");
 				rtn=SENSOR_FAIL;
 			}
-			SENSOR_PRINT("SENSOR_ov8858: ov8858_GetRawInof end");
+			SENSOR_LOGI("SENSOR_ov8858: ov8858_GetRawInof end");
 			break;
 		}
 		else if(PNULL!=tab_ptr[i].identify_otp){
 			if(SENSOR_SUCCESS==tab_ptr[i].identify_otp(0))
 			{
 				s_ov8858_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
-				SENSOR_PRINT("SENSOR_ov8858: ov8858_GetRawInof success");
+				SENSOR_LOGI("SENSOR_ov8858: ov8858_GetRawInof success");
 				break;
 			}
 		}
@@ -1406,30 +1406,30 @@ LOCAL uint32_t _ov8858_Identify(uint32_t param)
 	uint8_t ver_value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
 
-	SENSOR_PRINT("SENSOR_ov8858: mipi raw identify\n");
+	SENSOR_LOGI("SENSOR_ov8858: mipi raw identify\n");
 
 	pid_value_0 = Sensor_ReadReg(ov8858_PID_ADDR_0);
 	if (ov8858_PID_VALUE_0 == pid_value_0) {
 		pid_value_1 = Sensor_ReadReg(ov8858_PID_ADDR_1);
 		if (ov8858_PID_VALUE_1 == pid_value_1) {
 			ver_value = Sensor_ReadReg(ov8858_VER_ADDR);
-			SENSOR_PRINT("SENSOR_ov8858: Identify: PID = 0x%x, VER = 0x%x", pid_value_1, ver_value);
+			SENSOR_LOGI("SENSOR_ov8858: Identify: PID = 0x%x, VER = 0x%x", pid_value_1, ver_value);
 			if (ov8858_VER_VALUE == ver_value) {
-				SENSOR_PRINT("SENSOR_ov8858: this is ov8858 sensor !");
+				SENSOR_LOGI("SENSOR_ov8858: this is ov8858 sensor !");
 				ret_value=_ov8858_GetRawInof();
 				if(SENSOR_SUCCESS != ret_value)
 				{
-					SENSOR_PRINT("SENSOR_ov8858: the module is unknow error !");
+					SENSOR_LOGI("SENSOR_ov8858: the module is unknow error !");
 				}
 				Sensor_ov8858_InitRawTuneInfo();
 			} else {
-				SENSOR_PRINT("SENSOR_ov8858: Identify this is OV%x%x sensor !", pid_value_1, ver_value);
+				SENSOR_LOGI("SENSOR_ov8858: Identify this is OV%x%x sensor !", pid_value_1, ver_value);
 			}
 		} else {
-			SENSOR_PRINT("SENSOR_ov8858: identify fail, PID_ADDR = 0x%x,  pid_value= 0x%d", ov8858_PID_ADDR_1, pid_value_1);
+			SENSOR_LOGI("SENSOR_ov8858: identify fail, PID_ADDR = 0x%x,  pid_value= 0x%d", ov8858_PID_ADDR_1, pid_value_1);
 		}
 	} else {
-		SENSOR_PRINT("SENSOR_ov8858: identify fail, PID_ADDR = 0x%x, pid_value= 0x%d", ov8858_PID_ADDR_0, pid_value_0);
+		SENSOR_LOGI("SENSOR_ov8858: identify fail, PID_ADDR = 0x%x, pid_value= 0x%d", ov8858_PID_ADDR_0, pid_value_0);
 
 	}
 
@@ -1455,7 +1455,7 @@ LOCAL uint32_t _ov8858_write_exposure(uint32_t param)
 	dummy_line=(param>>0x10)&0x0fff;
 	size_index=(param>>0x1c)&0x0f;
 
-	SENSOR_PRINT("SENSOR_ov8858: write_exposure line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
+	SENSOR_LOGI("SENSOR_ov8858: write_exposure line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
 
 	max_frame_len=_ov8858_GetMaxFrameLine(size_index);
 
@@ -1497,13 +1497,13 @@ LOCAL uint32_t _ov8858_write_gain(uint32_t param)
 	uint32_t real_gain = 0;
 
 	//param = Sgain;
-	SENSOR_PRINT("SENSOR_ov8858: write_gain:0x%x", param);
+	SENSOR_LOGI("SENSOR_ov8858: write_gain:0x%x", param);
 //	real_gain = ((param&0xf)+16)*(((param>>4)&0x01)+1)*(((param>>5)&0x01)+1)*(((param>>6)&0x01)+1)*(((param>>7)&0x01)+1);
 //	real_gain = real_gain*(((param>>8)&0x01)+1)*(((param>>9)&0x01)+1)*(((param>>10)&0x01)+1)*(((param>>11)&0x01)+1);
 
 //	value = real_gain*8;
 	value = param;
-	SENSOR_PRINT("SENSOR_ov8858: write_gain:0x%x,  real_gain = 0x%x", param, value);
+	SENSOR_LOGI("SENSOR_ov8858: write_gain:0x%x,  real_gain = 0x%x", param, value);
 	real_gain = value & 0xff;
 	ret_value = Sensor_WriteReg(0x3509, real_gain);/*0-7*/
 	real_gain = (value>>0x08)&0x07;
@@ -1520,8 +1520,8 @@ static uint32_t BU64241GWZ_write_af(uint32_t param)
 	uint16_t slave_addr = BU64241GWZ_VCM_SLAVE_ADDR;
 	uint16_t cmd_len = 2;
 
-	SENSOR_PRINT("%d", param);
-	SENSOR_PRINT("BU64241GWZ_write_af");
+	SENSOR_LOGI("%d", param);
+	SENSOR_LOGI("BU64241GWZ_write_af");
 	ret_value = Sensor_WriteI2C(slave_addr, cmd_val, cmd_len);
 
 	return ret_value;
@@ -1535,8 +1535,8 @@ static uint32_t dw9714_write_af(uint32_t param)
 	uint16_t cmd_len = 2;
 	uint16_t step_4bit = 0x09;
 
-	SENSOR_PRINT("%d", param);
-	SENSOR_PRINT("dw9714_write_af");
+	SENSOR_LOGI("%d", param);
+	SENSOR_LOGI("dw9714_write_af");
 	cmd_val[0] = (param & 0xfff0) >> 4;
 	cmd_val[1] = ((param & 0x0f) << 4) | step_4bit;
 	ret_value = Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
@@ -1546,7 +1546,7 @@ static uint32_t dw9714_write_af(uint32_t param)
 
 LOCAL uint32_t _ov8858_write_af(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_ov8858: _ov8858_write_af %d",param);
+	SENSOR_LOGI("SENSOR_ov8858: _ov8858_write_af %d",param);
 #if defined(CONFIG_VCM_BU64241GWZ)
 	return BU64241GWZ_write_af(param);
 #else
@@ -1564,10 +1564,10 @@ LOCAL uint32_t _ov8858_BeforeSnapshot(uint32_t param)
 	uint32_t prv_linetime=s_ov8858_Resolution_Trim_Tab[preview_mode].line_time;
 	uint32_t cap_linetime = s_ov8858_Resolution_Trim_Tab[capture_mode].line_time;
 
-	SENSOR_PRINT("SENSOR_ov8858: BeforeSnapshot mode: 0x%08x",param);
+	SENSOR_LOGI("SENSOR_ov8858: BeforeSnapshot mode: 0x%08x",param);
 
 	if (preview_mode == capture_mode) {
-		SENSOR_PRINT("SENSOR_ov8858: prv mode equal to capmode");
+		SENSOR_LOGI("SENSOR_ov8858: prv mode equal to capmode");
 		goto CFG_INFO;
 	}
 
@@ -1584,7 +1584,7 @@ LOCAL uint32_t _ov8858_BeforeSnapshot(uint32_t param)
 	Sensor_SetMode_WaitDone();
 
 	if (prv_linetime == cap_linetime) {
-		SENSOR_PRINT("SENSOR_ov8858: prvline equal to capline");
+		SENSOR_LOGI("SENSOR_ov8858: prvline equal to capline");
 		goto CFG_INFO;
 	}
 
@@ -1625,25 +1625,25 @@ LOCAL uint32_t _ov8858_BeforeSnapshot(uint32_t param)
 
 LOCAL uint32_t _ov8858_after_snapshot(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_ov8858: after_snapshot mode:%d", param);
+	SENSOR_LOGI("SENSOR_ov8858: after_snapshot mode:%d", param);
 	Sensor_SetMode(param);
 	return SENSOR_SUCCESS;
 }
 
 LOCAL uint32_t _ov8858_flash(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_ov8858: param=%d", param);
+	SENSOR_LOGI("SENSOR_ov8858: param=%d", param);
 
 	/* enable flash, disable in _ov8858_BeforeSnapshot */
 	g_flash_mode_en = param;
 	Sensor_SetFlash(param);
-	SENSOR_PRINT_HIGH("end");
+	SENSOR_LOGI("end");
 	return SENSOR_SUCCESS;
 }
 
 LOCAL uint32_t _ov8858_StreamOn(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_ov8858: StreamOn");
+	SENSOR_LOGI("SENSOR_ov8858: StreamOn");
 
 	Sensor_WriteReg(0x0100, 0x01);
 
@@ -1652,7 +1652,7 @@ LOCAL uint32_t _ov8858_StreamOn(uint32_t param)
 
 LOCAL uint32_t _ov8858_StreamOff(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_ov8858: StreamOff");
+	SENSOR_LOGI("SENSOR_ov8858: StreamOff");
 
 	Sensor_WriteReg(0x0100, 0x00);
 	usleep(100*1000);
@@ -1741,7 +1741,7 @@ static uint32_t _ov8858_SetEV(unsigned long  param)
 	uint32_t gain = s_ov8858_gain;
 	uint32_t ev = ext_ptr->param;
 
-	SENSOR_PRINT("SENSOR_ov8858: _ov8858_SetEV param: 0x%x", ext_ptr->param);
+	SENSOR_LOGI("SENSOR_ov8858: _ov8858_SetEV param: 0x%x", ext_ptr->param);
 
 	switch(ev) {
 	case SENSOR_HDR_EV_LEVE_0:
@@ -1763,7 +1763,7 @@ LOCAL uint32_t _ov8858_ExtFunc(unsigned long  ctl_param)
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr =
 	    (SENSOR_EXT_FUN_PARAM_T_PTR) ctl_param;
-	SENSOR_PRINT_HIGH("0x%x", ext_ptr->cmd);
+	SENSOR_LOGI("0x%x", ext_ptr->cmd);
 
 	switch (ext_ptr->cmd) {
 	case SENSOR_EXT_FUNC_INIT:
@@ -1814,7 +1814,7 @@ LOCAL uint32_t _ov8858_ReadGain(uint32_t param)
 
 	s_ov8858_gain=(int)gain;
 
-	SENSOR_PRINT("SENSOR_ov8858: _ov8858_ReadGain gain: 0x%x", s_ov8858_gain);
+	SENSOR_LOGI("SENSOR_ov8858: _ov8858_ReadGain gain: 0x%x", s_ov8858_gain);
 
 	return rtn;
 }
@@ -1828,7 +1828,7 @@ LOCAL uint32_t _ov8858_dw9714_SRCInit(uint32_t mode)
 	int i = 0;
 
 	slave_addr = DW9714_VCM_SLAVE_ADDR;
-	SENSOR_PRINT(" _ov8858_dw9714_SRCInit: mode = %d\n", mode);
+	SENSOR_LOGI(" _ov8858_dw9714_SRCInit: mode = %d\n", mode);
 	switch (mode) {
 		case 1:
 		break;

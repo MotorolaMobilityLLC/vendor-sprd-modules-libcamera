@@ -4770,7 +4770,7 @@ LOCAL uint32_t _s5k4ec_InitExifInfo(void)
 
 	memset(&s_s5k4ec_exif, 0, sizeof(EXIF_SPEC_PIC_TAKING_COND_T));
 
-	SENSOR_PRINT("SENSOR: _s5k4ec_InitExifInfo \n");
+	SENSOR_LOGI("SENSOR: _s5k4ec_InitExifInfo \n");
 
 	exif_ptr->valid.FNumber=1;
 	exif_ptr->FNumber.numerator=14;
@@ -4855,7 +4855,7 @@ LOCAL unsigned long _s5k4ec_PowerOn(unsigned long power_on)
 	BOOLEAN reset_level = g_s5k4ec_mipi_yuv_info.reset_pulse_level;
 	//uint32_t reset_width=g_ov5640_yuv_info.reset_pulse_width;
 
-	SENSOR_PRINT("SENSOR_s5k4ec: _s5k4ec_PowerOn:E!!  (1:on, 0:off): %d \n", power_on);
+	SENSOR_LOGI("SENSOR_s5k4ec: _s5k4ec_PowerOn:E!!  (1:on, 0:off): %d \n", power_on);
 
  	if (SENSOR_TRUE == power_on) {
 		Sensor_PowerDown(power_down);
@@ -4882,7 +4882,7 @@ LOCAL unsigned long _s5k4ec_PowerOn(unsigned long power_on)
 		SENSOR_Sleep(10);
         }
 
-	SENSOR_PRINT("SENSOR: _s5k4ec_PowerOn (1:on, 0:off): %ld \n", power_on);
+	SENSOR_LOGI("SENSOR: _s5k4ec_PowerOn (1:on, 0:off): %ld \n", power_on);
 	return SENSOR_SUCCESS;
 }
 
@@ -4898,30 +4898,30 @@ LOCAL unsigned long _s5k4ec_Identify(unsigned long param)
 	uint16_t ver_value=0x00;
 	uint32_t ret_value=SENSOR_FAIL;
 	#if 1
-	SENSOR_PRINT("SENSOR:s5k4ec identify  -----20130610----.\n");
+	SENSOR_LOGI("SENSOR:s5k4ec identify  -----20130610----.\n");
 
 	Sensor_WriteReg(0xfcfc,0xd000);
 	Sensor_WriteReg(0x002c, 0x7000);
 	Sensor_WriteReg(0x002e, 0x01a4);
 	pid_value = Sensor_ReadReg(0x0f12);
 
-	SENSOR_PRINT("=====sonia SENSOR:s5k4ec identify  .pid_value=%x\n",pid_value);
+	SENSOR_LOGI("=====sonia SENSOR:s5k4ec identify  .pid_value=%x\n",pid_value);
 
 	if (s5k4ec_PID_VALUE == pid_value) {
 		Sensor_WriteReg(0x002c, 0x7000);
 		Sensor_WriteReg(0x002e, s5k4ec_VER_ADDR);
 		ver_value = Sensor_ReadReg(0x0f12);
-		SENSOR_PRINT("SENSOR: s5k4ec_Identify: PID = %x, VER = %x \n",
+		SENSOR_LOGI("SENSOR: s5k4ec_Identify: PID = %x, VER = %x \n",
 			     pid_value, ver_value);
 		if (s5k4ec_VER_VALUE == ver_value) {
 			ret_value = SENSOR_SUCCESS;
-			SENSOR_PRINT_HIGH("SENSOR: this is s5k4ec sensor ! \n");
+			SENSOR_LOGI("SENSOR: this is s5k4ec sensor ! \n");
 		} else {
-			SENSOR_PRINT_ERR("SENSOR: s5k4ec_Identify this is xx%x%x sensor ! \n",
+			SENSOR_LOGI("SENSOR: s5k4ec_Identify this is xx%x%x sensor ! \n",
 			     pid_value, ver_value);
 		}
 	} else {
-		SENSOR_PRINT_ERR("SENSOR:s5k4ec identify fail,pid_value=%d .\n",
+		SENSOR_LOGI("SENSOR:s5k4ec identify fail,pid_value=%d .\n",
 			     pid_value);
 	}
 
@@ -4970,7 +4970,7 @@ LOCAL unsigned long _s5k4ec_set_brightness(unsigned long level)
 			Sensor_WriteReg(sensor_reg_ptr[i].reg_addr,sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("SENSOR: _s5k4ec_set_brightness = 0x%02x.\n",level);
+	SENSOR_LOGI("SENSOR: _s5k4ec_set_brightness = 0x%02x.\n",level);
 	return 0;
 }
 
@@ -5014,7 +5014,7 @@ LOCAL unsigned long _s5k4ec_set_contrast(unsigned long level)
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_CONTRAST, (uint32_t) level);
         usleep(100*1000);
 #endif
-	SENSOR_PRINT("SENSOR: _s5k4ec_set_contrast = 0x%lx.\n",level);
+	SENSOR_LOGI("SENSOR: _s5k4ec_set_contrast = 0x%lx.\n",level);
 	return 0;
 }
 /******************************************************************************/
@@ -5059,7 +5059,7 @@ LOCAL unsigned long _s5k4ec_set_iso(unsigned long level)
                         Sensor_WriteReg(sensor_reg_ptr[i].reg_addr,sensor_reg_ptr[i].reg_value);
         }
         //Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_ISO, (uint32_t) level);
-        SENSOR_PRINT("SENSOR: _s5k4ec_set_iso = 0x%lx.\n",level);
+        SENSOR_LOGI("SENSOR: _s5k4ec_set_iso = 0x%lx.\n",level);
         return 0;
 }
 
@@ -5099,7 +5099,7 @@ LOCAL unsigned long _s5k4ec_set_saturation(unsigned long level)
 	{
 			Sensor_WriteReg(sensor_reg_ptr[i].reg_addr,sensor_reg_ptr[i].reg_value);
 	}
-	SENSOR_PRINT("SENSOR: _s5k4ec_set_saturation = 0x%lx.\n",level);
+	SENSOR_LOGI("SENSOR: _s5k4ec_set_saturation = 0x%lx.\n",level);
 	return 0;
 }
 
@@ -5274,7 +5274,7 @@ LOCAL unsigned long _s5k4ec_set_image_effect(unsigned long effect_type)
  			Sensor_WriteReg(sensor_reg_ptr[i].reg_addr,sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("SENSOR: _s5k4ec_set_image_effect = 0x%lx\n",effect_type);
+	SENSOR_LOGI("SENSOR: _s5k4ec_set_image_effect = 0x%lx\n",effect_type);
 	return 0;
 }
 
@@ -5316,7 +5316,7 @@ LOCAL unsigned long _s5k4ec_set_ev(unsigned long level)
  			Sensor_WriteReg(sensor_reg_ptr[i].reg_addr,sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("SENSOR: _s5k4ec_set_ev = 0x%lx \n", level);
+	SENSOR_LOGI("SENSOR: _s5k4ec_set_ev = 0x%lx \n", level);
 	return 0;
 }
 /******************************************************************************/
@@ -5360,7 +5360,7 @@ LOCAL unsigned long _s5k4ec_set_anti_flicker(unsigned long mode)
  			Sensor_WriteReg(sensor_reg_ptr[i].reg_addr,sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("SENSOR: _s5k4ec_set_anti_flicker = 0x%lx \n", mode);
+	SENSOR_LOGI("SENSOR: _s5k4ec_set_anti_flicker = 0x%lx \n", mode);
 
 	return 0;
 }
@@ -5467,7 +5467,7 @@ LOCAL unsigned long _s5k4ec_set_video_mode(unsigned long mode)
 {
 	SENSOR_REG_T_PTR sensor_reg_ptr=(SENSOR_REG_T_PTR)s5k4ec_video_mode_tab[mode];
 	uint16_t i=0x00;
-        SENSOR_PRINT("SENSOR: _s5k4ec_set_video_mode,in = 0x%02x \n", mode);
+        SENSOR_LOGI("SENSOR: _s5k4ec_set_video_mode,in = 0x%02x \n", mode);
 	if(mode>1)
 		return 0;
 
@@ -5476,7 +5476,7 @@ LOCAL unsigned long _s5k4ec_set_video_mode(unsigned long mode)
  			Sensor_WriteReg(sensor_reg_ptr[i].reg_addr,sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("SENSOR: _s5k4ec_set_video_mode = 0x%lx \n", mode);
+	SENSOR_LOGI("SENSOR: _s5k4ec_set_video_mode = 0x%lx \n", mode);
 	return 0;
 }
 
@@ -5565,7 +5565,7 @@ LOCAL unsigned long _s5k4ec_set_awb(unsigned long mode)
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_LIGHTSOURCE, (uint32_t) mode);
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_WHITEBALANCE, (uint32_t) mode);
 #endif
-	SENSOR_PRINT("SENSOR: _s5k4ec_set_awb = 0x%lx\n", mode);
+	SENSOR_LOGI("SENSOR: _s5k4ec_set_awb = 0x%lx\n", mode);
 	return 0;
 }
 
@@ -5640,7 +5640,7 @@ LOCAL unsigned long _s5k4ec_set_work_mode(unsigned long mode)
 	}
 
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_SCENECAPTURETYPE,(uint32_t) mode);
-	SENSOR_PRINT("SENSOR: _s5k4ec_set_work_mode: mode = %ld \n", mode);
+	SENSOR_LOGI("SENSOR: _s5k4ec_set_work_mode: mode = %ld \n", mode);
 	return 0;
 }
 
@@ -5650,21 +5650,21 @@ LOCAL unsigned long _s5k4ec_BeforeSnapshot(unsigned long param)
 {
 	uint32_t capture_mode = param & 0xffff;
 
-	SENSOR_PRINT("SENSOR: _s5k4ec_BeforeSnapshot = %d \n", capture_mode);
+	SENSOR_LOGI("SENSOR: _s5k4ec_BeforeSnapshot = %d \n", capture_mode);
 	if(1 != capture_mode){
         is_cap = 1;
     }
 	Sensor_SetMode(capture_mode);
 	usleep(10*1000);
 
-    SENSOR_PRINT("SENSOR: s_current_shutter,s_current_gain = %x,%x \n", s_current_shutter,s_current_gain);
+    SENSOR_LOGI("SENSOR: s_current_shutter,s_current_gain = %x,%x \n", s_current_shutter,s_current_gain);
     return SENSOR_SUCCESS;
 }
 
 LOCAL unsigned long _s5k4ec_check_image_format_support(unsigned long param)
 {
 	uint32_t ret_val = SENSOR_FAIL;
-	SENSOR_PRINT("SENSOR: _s5k4ec_check_image_format_support \n");
+	SENSOR_LOGI("SENSOR: _s5k4ec_check_image_format_support \n");
 	switch (param) {
 	case SENSOR_IMAGE_FORMAT_YUV422:
 		ret_val = SENSOR_SUCCESS;
@@ -5687,7 +5687,7 @@ LOCAL unsigned long _s5k4ec_pick_out_jpeg_stream(unsigned long param)
 	    ((DCAMERA_SNAPSHOT_RETURN_PARAM_T *) param)->return_data_len;
 	uint32_t i = 0x00;
 
-	SENSOR_PRINT("SENSOR: s5k4ec jpeg capture head: 0x%x, 0x%x \n",
+	SENSOR_LOGI("SENSOR: s5k4ec jpeg capture head: 0x%x, 0x%x \n",
 		     *((uint8 *) p_frame), *((uint8 *) p_frame + 1));
 
 	/* Find the tail position */
@@ -5708,18 +5708,18 @@ LOCAL unsigned long _s5k4ec_pick_out_jpeg_stream(unsigned long param)
 	/* check if the tail is found */
 	if (i < buf_len)
 	{
-		SENSOR_PRINT("SENSOR: s5k4ec Found the jpeg tail at %d: 0x%x 0x%x \n",
+		SENSOR_LOGI("SENSOR: s5k4ec Found the jpeg tail at %d: 0x%x 0x%x \n",
 		     i + 1, *((uint8 *) p_frame + i),*((uint8 *) p_frame + i + 1));
 	}
 	else
 	{
-		SENSOR_PRINT("SENSOR: s5k4ec can not find the jpeg tail: %d \n",i);
+		SENSOR_LOGI("SENSOR: s5k4ec can not find the jpeg tail: %d \n",i);
 		i = 0x00;
 	}
 
 	return i;
 #endif
-        SENSOR_PRINT("SENSOR: _s5k4ec_pick_out_jpeg_stream \n");
+        SENSOR_LOGI("SENSOR: _s5k4ec_pick_out_jpeg_stream \n");
 	return 0;
 }
 
@@ -5731,12 +5731,12 @@ LOCAL uint32_t _s5k4ec_chang_image_format(uint32_t param)
 
 	switch (param) {
 	case SENSOR_IMAGE_FORMAT_YUV422:
-		SENSOR_PRINT("SENSOR: s5k4ec  chang_image_format  YUV422 \n");
+		SENSOR_LOGI("SENSOR: s5k4ec  chang_image_format  YUV422 \n");
 		ret_val = Sensor_SendRegTabToSensor(&st_yuv422_reg_table_info);
 		break;
 
 		case SENSOR_IMAGE_FORMAT_JPEG:
-			SENSOR_PRINT("SENSOR: s5k4ec  chang_image_format  jpg \n");
+			SENSOR_LOGI("SENSOR: s5k4ec  chang_image_format  jpg \n");
 			ret_val = SENSOR_FAIL;//Sensor_SendRegTabToSensor(&st_jpeg_reg_table_info);
 			break;
 
@@ -5750,7 +5750,7 @@ LOCAL uint32_t _s5k4ec_chang_image_format(uint32_t param)
 
 LOCAL unsigned long _s5k4ec_after_snapshot(unsigned long param)
 {
-	SENSOR_PRINT("=========sonia SENSOR: _s5k4ec_after_snapshot =%ld \n",param);
+	SENSOR_LOGI("=========sonia SENSOR: _s5k4ec_after_snapshot =%ld \n",param);
 	uint32_t with,height=0;
 
 	//_s5k4ec_recovery_init();
@@ -5762,21 +5762,21 @@ LOCAL unsigned long _s5k4ec_after_snapshot(unsigned long param)
 	//Sensor_WriteReg(0x002e, 0x1d02);
 	//with   = Sensor_ReadReg(0x0f12);
 	//height = Sensor_ReadReg(0x0f12);
-	//SENSOR_PRINT("SENSOR: _s5k4ec_after_snapshot:with=%x, height=%x.\n",with,height);
+	//SENSOR_LOGI("SENSOR: _s5k4ec_after_snapshot:with=%x, height=%x.\n",with,height);
 
 	return SENSOR_SUCCESS;
 }
 
 LOCAL unsigned long _s5k4ec_flash(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR: _s5k4ec_flash:param=%ld .\n",param);
+	SENSOR_LOGI("SENSOR: _s5k4ec_flash:param=%ld .\n",param);
 
 	/* enable flash, disable in _s5k4ec_BeforeSnapshot */
 	g_flash_mode_en = param;
 
 	Sensor_SetFlash(param);
 
-	SENSOR_PRINT("SENSOR: _s5k4ec_flash:end .\n");
+	SENSOR_LOGI("SENSOR: _s5k4ec_flash:end .\n");
 
 	return SENSOR_SUCCESS;
 }
@@ -5825,11 +5825,11 @@ LOCAL uint32_t _s5k4ec_MatchZone(SENSOR_EXT_FUN_T_PTR param_ptr)
 	}
 	else
 	{
-		SENSOR_PRINT_ERR("SENSOR: _s5k4ec_MatchZone, w:%d, h:%d error \n",zone_rect.w, zone_rect.h);
+		SENSOR_LOGI("SENSOR: _s5k4ec_MatchZone, w:%d, h:%d error \n",zone_rect.w, zone_rect.h);
 		rtn = SENSOR_FAIL;
 	}
 
-	SENSOR_PRINT_HIGH("SENSOR: _s5k4ec_MatchZone, x:%d, y:%d \n",param_ptr->zone.x, param_ptr->zone.y);
+	SENSOR_LOGI("SENSOR: _s5k4ec_MatchZone, x:%d, y:%d \n",param_ptr->zone.x, param_ptr->zone.y);
 	return rtn;
 }
 
@@ -5838,7 +5838,7 @@ LOCAL uint32_t _s5k4ec_AutoFocusTrig(SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
 	uint32_t rtn=SENSOR_SUCCESS;
 	uint16_t i=30;
 	uint16_t reg_value=0x00;
-	SENSOR_PRINT("Start");
+	SENSOR_LOGI("Start");
 	Sensor_WriteReg(0xFCFC, 0xD000);
 	Sensor_WriteReg(0x0028, 0x7000);
 	Sensor_WriteReg(0x002A, 0x028E);
@@ -5852,7 +5852,7 @@ LOCAL uint32_t _s5k4ec_AutoFocusTrig(SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
 		reg_value = Sensor_ReadReg(0x0F12);
 		i--;
 		if ((0x00 == i) || (0x0 == reg_value)) {
-			SENSOR_PRINT("error!");
+			SENSOR_LOGI("error!");
 			rtn = SENSOR_FAIL;
 			break;
 		}
@@ -5895,7 +5895,7 @@ LOCAL unsigned long _s5k4ec_StartAutoFocus(unsigned long param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr = (SENSOR_EXT_FUN_PARAM_T_PTR) param;
-	SENSOR_PRINT("SENSOR: _s5k4ec_StartAutoFocus param =%d", ext_ptr->param);
+	SENSOR_LOGI("SENSOR: _s5k4ec_StartAutoFocus param =%d", ext_ptr->param);
 
 	switch (ext_ptr->param) {
 	case SENSOR_EXT_FOCUS_TRIG:
@@ -5920,7 +5920,7 @@ LOCAL uint32_t _s5k4ec_ExposureAuto(void)
 {
 	uint32_t rtn=SENSOR_SUCCESS;
 
-	SENSOR_PRINT("SENSOR: _s5k4ec_ExposureAuto \n");
+	SENSOR_LOGI("SENSOR: _s5k4ec_ExposureAuto \n");
 
 	//Sensor_WriteReg(0x501d, 0x00);
 
@@ -5936,7 +5936,7 @@ LOCAL uint32_t _s5k4ec_ExposureZone(SENSOR_EXT_FUN_T_PTR param_ptr)
 	SENSOR_EXT_FUN_T_PTR ext_ptr=(SENSOR_EXT_FUN_T_PTR)param_ptr;
 	uint16_t reg_value=0x00;
 
-	SENSOR_PRINT("SENSOR: _s5k4ec_ExposureZone: %d, %d \n",ext_ptr->zone.x,ext_ptr->zone.y);
+	SENSOR_LOGI("SENSOR: _s5k4ec_ExposureZone: %d, %d \n",ext_ptr->zone.x,ext_ptr->zone.y);
 
 	rtn=_s5k4ec_MatchZone(ext_ptr);
 
@@ -5972,7 +5972,7 @@ LOCAL uint32_t _s5k4ec_ExposureZone(SENSOR_EXT_FUN_T_PTR param_ptr)
 			ext_ptr->zone.y=EXPOSURE_ZONE_H-(EXPOSURE_ZONE_H/0x04);
 		}
 
-		SENSOR_PRINT("SENSOR: _s5k4ec_ExposureZone: %d, %d, %d, %d \n",
+		SENSOR_LOGI("SENSOR: _s5k4ec_ExposureZone: %d, %d, %d, %d \n",
 			     ext_ptr->zone.x, ext_ptr->zone.y, ext_ptr->zone.w,
 			     ext_ptr->zone.h);
 
@@ -6009,7 +6009,7 @@ LOCAL unsigned long _s5k4ec_StartExposure(unsigned long param)
     //exposure
     SENSOR_EXT_FUN_T_PTR ext_ptr=(SENSOR_EXT_FUN_T_PTR)param;
 
-	SENSOR_PRINT("SENSOR: _s5k4ec_StartExposure param =%d \n",
+	SENSOR_LOGI("SENSOR: _s5k4ec_StartExposure param =%d \n",
 		     ext_ptr->param);
 #if 0
 	switch (ext_ptr->param) {
@@ -6029,7 +6029,7 @@ LOCAL unsigned long _s5k4ec_SetEV(unsigned long param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr = (SENSOR_EXT_FUN_PARAM_T_PTR) param;
-	SENSOR_PRINT("SENSOR: _s5k4ec_SetEV param: 0x%x", ext_ptr->param);
+	SENSOR_LOGI("SENSOR: _s5k4ec_SetEV param: 0x%x", ext_ptr->param);
 	uint32_t shutter = 0;
 	uint32_t gain = 0;
 
@@ -6042,7 +6042,7 @@ LOCAL unsigned long _s5k4ec_SetEV(unsigned long param)
 		shutter =(uint32_t) s_current_shutter/2;
 		s_current_shutter = s_current_shutter>>2;
 		gain = (uint32_t)s_current_gain/4;
-		SENSOR_PRINT("SENSOR: SENSOR_HDR_EV_LEVE_0: 0x%x,0x%x", (uint16_t)shutter,(uint16_t)gain);
+		SENSOR_LOGI("SENSOR: SENSOR_HDR_EV_LEVE_0: 0x%x,0x%x", (uint16_t)shutter,(uint16_t)gain);
 		Sensor_WriteReg(0x0028, 0x7000);
 		Sensor_WriteReg(0x002A, 0x04AC);
 		Sensor_WriteReg(0x0F12, (uint16_t)shutter);
@@ -6089,10 +6089,10 @@ LOCAL int _s5k4ec_init_firmware(uint32_t param)
 	uint16_t reg_val_1,reg_val_2;
 
 	if (0 == i2c_client) {
-		SENSOR_PRINT_HIGH("SENSOR: _s5k4ec_init_firmware:error,i2c_client is NULL!.\n");
+		SENSOR_LOGI("SENSOR: _s5k4ec_init_firmware:error,i2c_client is NULL!.\n");
 	}
 	//      sc8810_i2c_set_clk(1,400000); //wjp
-	SENSOR_PRINT_HIGH("SENSOR: _s5k4ec_init_firmware: cmd=%d!.\n", ext_ptr->cmd);
+	SENSOR_LOGI("SENSOR: _s5k4ec_init_firmware: cmd=%d!.\n", ext_ptr->cmd);
 	switch (ext_ptr->param)
 	{
 	 case SENSOR_EXT_FOCUS_TRIG:	//auto focus
@@ -6109,7 +6109,7 @@ LOCAL int _s5k4ec_init_firmware(uint32_t param)
 		msg_w.len = init_num;
 		ret = i2c_transfer(i2c_client->adapter, &msg_w, 1);
 		if (ret != 1) {
-			SENSOR_PRINT_ERR
+			SENSOR_LOGI
 			    ("SENSOR: write sensor reg fai, ret : %d, I2C w addr: 0x%x, \n",
 			     ret, i2c_client->addr);
 			continue;
@@ -6131,10 +6131,10 @@ LOCAL int _s5k4ec_init_firmware(uint32_t param)
 	reg_val_1 = Sensor_ReadReg(0x3000);
 	reg_val_2 = Sensor_ReadReg(0x3004);
 	//      sc8810_i2c_set_clk(1,100000); //wjp
-	SENSOR_PRINT_HIGH("SENSOR: _s5k4ec_init_firmware: E!.\n");
+	SENSOR_LOGI("SENSOR: _s5k4ec_init_firmware: E!.\n");
 
-	//SENSOR_PRINT_HIGH("SENSOR: 0x3029=0x%x,0x3000=0x%x,0x3004=0x%x.\n",Sensor_ReadReg(0x3029),reg_val_1,reg_val_2);
-	//SENSOR_PRINT_HIGH("SENSOR: 0x8000=0x%x,0x8002=0x%x,0x8f57=0x%x.\n",Sensor_ReadReg(0x8000),Sensor_ReadReg(0x8002),Sensor_ReadReg(0x8f57));
+	//SENSOR_LOGI("SENSOR: 0x3029=0x%x,0x3000=0x%x,0x3004=0x%x.\n",Sensor_ReadReg(0x3029),reg_val_1,reg_val_2);
+	//SENSOR_LOGI("SENSOR: 0x8000=0x%x,0x8002=0x%x,0x8f57=0x%x.\n",Sensor_ReadReg(0x8000),Sensor_ReadReg(0x8002),Sensor_ReadReg(0x8f57));
 	#endif
 	return ret;
 }
@@ -6145,7 +6145,7 @@ LOCAL unsigned long _s5k4ec_ExtFunc(unsigned long ctl_param)
 	uint32_t rtn = SENSOR_SUCCESS;
 
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr =(SENSOR_EXT_FUN_PARAM_T_PTR) ctl_param;
-	SENSOR_PRINT("SENSOR: _s5k4ec_ExtFunc cmd:0x%x  \n", ext_ptr->cmd);
+	SENSOR_LOGI("SENSOR: _s5k4ec_ExtFunc cmd:0x%x  \n", ext_ptr->cmd);
 
 	switch (ext_ptr->cmd)
 	{
@@ -6167,7 +6167,7 @@ LOCAL unsigned long _s5k4ec_ExtFunc(unsigned long ctl_param)
 
 LOCAL uint32_t _s5k4ec_recovery_init()
 {
-	SENSOR_PRINT("SENSOR: s5k4ec_steamon recovery\n");
+	SENSOR_LOGI("SENSOR: s5k4ec_steamon recovery\n");
 
 	Sensor_WriteReg(0x0028, 0x7000);
 	Sensor_WriteReg(0x002A, 0x0242);
@@ -6185,10 +6185,10 @@ LOCAL uint32_t _s5k4ec_recovery_init()
 
 LOCAL unsigned long _s5k4ec_StreamOn(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR:Start s5k4ec_steamon 1613\n");
+	SENSOR_LOGI("SENSOR:Start s5k4ec_steamon 1613\n");
 
 	if (1 != is_cap) {
-		SENSOR_PRINT("zxdbg preview stream on");
+		SENSOR_LOGI("zxdbg preview stream on");
 		Sensor_WriteReg(0x0028, 0x7000);
 		Sensor_WriteReg(0x002A, 0x023E);
 		Sensor_WriteReg(0x0F12, 0x0001);  //#REG_TC_GP_EnablePreview
@@ -6198,7 +6198,7 @@ LOCAL unsigned long _s5k4ec_StreamOn(unsigned long param)
 		Sensor_WriteReg(0x002A, 0x1000);
 		Sensor_WriteReg(0x0F12, 0x0001);
 	} else {
-		SENSOR_PRINT("zxdbg capture stream on");
+		SENSOR_LOGI("zxdbg capture stream on");
 		Sensor_WriteReg(0x0028, 0x7000);
 		Sensor_WriteReg(0x002A, 0x0242);
 		Sensor_WriteReg(0x0F12, 0x0001); // #REG_TC_GP_EnableCAPTURE // Start CAPTURE
@@ -6213,7 +6213,7 @@ LOCAL unsigned long _s5k4ec_StreamOn(unsigned long param)
 
 LOCAL unsigned long _s5k4ec_StreamOff(unsigned long param)
 {
-	SENSOR_PRINT("Stop");
+	SENSOR_LOGI("Stop");
 	Sensor_WriteReg(0x0028, 0x7000);
 	Sensor_WriteReg(0x002A, 0x023E);
 	Sensor_WriteReg(0x0F12, 0x0000);	//#REG_TC_GP_EnablePreview

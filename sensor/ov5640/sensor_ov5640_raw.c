@@ -1235,12 +1235,12 @@ LOCAL uint32_t _ov5640_PowerOn(uint32_t power_on)
 	BOOLEAN power_down = g_ov5640_raw_info.power_down_level;
 	BOOLEAN reset_level = g_ov5640_raw_info.reset_pulse_level;
 	//uint32_t reset_width=g_ov5640_yuv_info.reset_pulse_width;
-	SENSOR_PRINT("dvdd_val %d, dvdd_val %d, avdd_val %d, iovdd_val %d",
+	SENSOR_LOGI("dvdd_val %d, dvdd_val %d, avdd_val %d, iovdd_val %d",
 			power_on,
 			dvdd_val,
 			avdd_val,
 			iovdd_val);
-	SENSOR_PRINT("power_down %d reset_level %d", power_down, reset_level);
+	SENSOR_LOGI("power_down %d reset_level %d", power_down, reset_level);
 
 	if (SENSOR_TRUE == power_on) {
 		//reset
@@ -1273,7 +1273,7 @@ LOCAL uint32_t _ov5640_PowerOn(uint32_t power_on)
 		Sensor_SetIovddVoltage(SENSOR_AVDD_CLOSED);
 		usleep(20*1000);
 	}
-	SENSOR_PRINT("(1:on, 0:off): %d_end\n ", power_on);
+	SENSOR_LOGI("(1:on, 0:off): %d_end\n ", power_on);
 	return SENSOR_SUCCESS;
 }
 
@@ -1288,23 +1288,23 @@ LOCAL uint32_t _ov5640_Identify(uint32_t param)
 	uint8_t ver_value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
 
-	SENSOR_PRINT("SENSOR:ov5640 identify CCIR RAW .\n");
+	SENSOR_LOGI("SENSOR:ov5640 identify CCIR RAW .\n");
 
 	pid_value = Sensor_ReadReg(ov5640_PID_ADDR);
 
 	if (ov5640_PID_VALUE == pid_value) {
 		ver_value = Sensor_ReadReg(ov5640_VER_ADDR);
-		SENSOR_PRINT("SENSOR: ov5640_Identify: PID = %x, VER = %x",
+		SENSOR_LOGI("SENSOR: ov5640_Identify: PID = %x, VER = %x",
 			     pid_value, ver_value);
 		if (ov5640_VER_VALUE == ver_value) {
 			Sensor_InitRawTuneInfo();
 			ret_value = SENSOR_SUCCESS;
-			SENSOR_PRINT("SENSOR: this is ov5640 ccir raw sensor ! \n");
+			SENSOR_LOGI("SENSOR: this is ov5640 ccir raw sensor ! \n");
 		} else {
-			SENSOR_PRINT ("SENSOR: ov5640_Identify this is OV%x%x sensor ! ", pid_value, ver_value);
+			SENSOR_LOGI ("SENSOR: ov5640_Identify this is OV%x%x sensor ! ", pid_value, ver_value);
 		}
 	} else {
-		SENSOR_PRINT_ERR("fail,pid_value=%d \n", pid_value);
+		SENSOR_LOGI("fail,pid_value=%d \n", pid_value);
 	}
 
 	return ret_value;
@@ -1320,7 +1320,7 @@ LOCAL uint32_t _ov5640_write_exposure(uint32_t param)
 	expsure_line=(param>>0x10)&0xffff;
 	dummy_line=param&0xffff;
 
-	SENSOR_PRINT("ISP_RAW:SENSOR:_ov5640_write_exposure %d, %d\n", expsure_line, dummy_line);
+	SENSOR_LOGI("ISP_RAW:SENSOR:_ov5640_write_exposure %d, %d\n", expsure_line, dummy_line);
 
 	value=(expsure_line<<0x04)&0xff;
 	ret_value = Sensor_WriteReg(0x3502, 0x01);
@@ -1337,7 +1337,7 @@ LOCAL uint32_t _ov5640_write_gain(uint32_t param)
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint16_t value=0x00;
 
-	SENSOR_PRINT("ISP_RAW:SENSOR:_ov5640_write_gain\n");
+	SENSOR_LOGI("ISP_RAW:SENSOR:_ov5640_write_gain\n");
 
 	value = param&0xff;
 	ret_value = Sensor_WriteReg(0x350b, value);//0-7
@@ -1352,7 +1352,7 @@ LOCAL uint32_t _ov5640_write_af(uint32_t param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 
-	SENSOR_PRINT("ISP_RAW:SENSOR:_ov5640_write_af\n");
+	SENSOR_LOGI("ISP_RAW:SENSOR:_ov5640_write_af\n");
 
 	ret_value = Sensor_WriteReg(0x3406, 0x01);
 	ret_value = Sensor_WriteReg(0x3503, 0x07);
@@ -1371,7 +1371,7 @@ LOCAL uint32_t _ov5640_BeforeSnapshot(uint32_t param)
 	uint32_t cap_mode = (param>>CAP_MODE_BITS);
 
 	param = param&0xffff;
-	SENSOR_PRINT("%d,%d.",cap_mode,param);
+	SENSOR_LOGI("%d,%d.",cap_mode,param);
 
 	if (SENSOR_MODE_PREVIEW_ONE >= param) {
 		return SENSOR_SUCCESS;
@@ -1438,7 +1438,7 @@ LOCAL uint32_t _ov5640_BeforeSnapshot(uint32_t param)
 
 LOCAL uint32_t _ov5640_after_snapshot(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR: _ov5640_after_snapshot =%d \n", param);
+	SENSOR_LOGI("SENSOR: _ov5640_after_snapshot =%d \n", param);
 	Sensor_SetMode(param);
 	return SENSOR_SUCCESS;
 }

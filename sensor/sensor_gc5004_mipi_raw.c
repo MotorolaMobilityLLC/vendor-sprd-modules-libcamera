@@ -382,18 +382,18 @@ LOCAL uint32_t _gc5004_mipi_set_video_mode(uint32_t param)
 		return 0;
 
 	if (SENSOR_SUCCESS != Sensor_GetMode(&mode)) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	if (PNULL == s_gc5004_mipi_video_info[mode].setting_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	sensor_reg_ptr = (SENSOR_REG_T_PTR)&s_gc5004_mipi_video_info[mode].setting_ptr[param];
 	if (PNULL == sensor_reg_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
@@ -401,7 +401,7 @@ LOCAL uint32_t _gc5004_mipi_set_video_mode(uint32_t param)
 		Sensor_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("0x%02x", param);
+	SENSOR_LOGI("0x%02x", param);
 	return 0;
 }
 
@@ -1636,7 +1636,7 @@ LOCAL uint32_t Sensor_gc5004_mipi_InitRawTuneInfo(void)
 
 LOCAL uint32_t _gc5004_mipi_GetResolutionTrimTab(uint32_t param)
 {
-	SENSOR_PRINT("0x%x",  (uint32_t)s_gc5004_mipi_Resolution_Trim_Tab);
+	SENSOR_LOGI("0x%x",  (uint32_t)s_gc5004_mipi_Resolution_Trim_Tab);
 	return (uint32_t) s_gc5004_mipi_Resolution_Trim_Tab;
 }
 
@@ -1668,7 +1668,7 @@ LOCAL uint32_t _gc5004_mipi_PowerOn(uint32_t power_on)
 		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 	}
-	SENSOR_PRINT("SENSOR_gc5004_mipi: _gc5004_mipi_Power_On(1:on, 0:off): %d", power_on);
+	SENSOR_LOGI("SENSOR_gc5004_mipi: _gc5004_mipi_Power_On(1:on, 0:off): %d", power_on);
 	return SENSOR_SUCCESS;
 }
 
@@ -1679,7 +1679,7 @@ LOCAL uint32_t _gc5004_mipi_cfg_otp(uint32_t  param)
 	struct raw_param_info_tab* tab_ptr = (struct raw_param_info_tab*)s_gc5004_mipi_raw_param_tab;
 	uint32_t module_id=g_module_id;
 
-	SENSOR_PRINT("SENSOR_gc5004_mipi: _gc5004_mipi_cfg_otp");
+	SENSOR_LOGI("SENSOR_gc5004_mipi: _gc5004_mipi_cfg_otp");
 
 	if(PNULL!=tab_ptr[module_id].cfg_otp){
 		tab_ptr[module_id].cfg_otp(0);
@@ -1694,7 +1694,7 @@ LOCAL uint32_t _gc5004_mipi_com_Identify_otp(void* param_ptr)
 	uint32_t rtn=SENSOR_FAIL;
 	uint32_t param_id;
 
-	SENSOR_PRINT("SENSOR_gc5004_mipi: _gc5004_mipi_com_Identify_otp1111111111111111");
+	SENSOR_LOGI("SENSOR_gc5004_mipi: _gc5004_mipi_com_Identify_otp1111111111111111");
 
 	/*read param id from sensor omap*/
 	param_id=gc5004_mipi_RAW_PARAM_COM;
@@ -1721,17 +1721,17 @@ LOCAL uint32_t _gc5004_mipi_GetRawInof(void)
 		g_module_id = i;
 		if(RAW_INFO_END_ID==tab_ptr[i].param_id){
 			if(NULL==s_gc5004_mipi_raw_info_ptr){
-				SENSOR_PRINT("SENSOR_gc5004_mipi: ov5647_GetRawInof no param error");
+				SENSOR_LOGI("SENSOR_gc5004_mipi: ov5647_GetRawInof no param error");
 				rtn=SENSOR_FAIL;
 			}
-			SENSOR_PRINT("SENSOR_gc5004_mipi: gc5004_mipi_GetRawInof end");
+			SENSOR_LOGI("SENSOR_gc5004_mipi: gc5004_mipi_GetRawInof end");
 			break;
 		}
 		else if(PNULL!=tab_ptr[i].identify_otp){
 			if(SENSOR_SUCCESS==tab_ptr[i].identify_otp(0))
 			{
 				s_gc5004_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
-				SENSOR_PRINT("SENSOR_gc5004_mipi: gc5004_mipi_GetRawInof success");
+				SENSOR_LOGI("SENSOR_gc5004_mipi: gc5004_mipi_GetRawInof success");
 				break;
 			}
 		}
@@ -1761,23 +1761,23 @@ LOCAL uint32_t _gc5004_mipi_Identify(uint32_t param)
 	uint8_t ver_value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
 
-	SENSOR_PRINT("SENSOR_gc5004_mipi: mipi raw identify\n");
+	SENSOR_LOGI("SENSOR_gc5004_mipi: mipi raw identify\n");
 
 	pid_value = Sensor_ReadReg(gc5004_mipi_PID_ADDR);
 	if (gc5004_mipi_PID_VALUE == pid_value) {
 		ver_value = Sensor_ReadReg(gc5004_mipi_VER_ADDR);
-		SENSOR_PRINT("SENSOR_gc5004_mipi: Identify: PID = %x, VER = %x", pid_value, ver_value);
+		SENSOR_LOGI("SENSOR_gc5004_mipi: Identify: PID = %x, VER = %x", pid_value, ver_value);
 		if (gc5004_mipi_VER_VALUE == ver_value) {
 			ret_value=_gc5004_mipi_GetRawInof();
 			Sensor_gc5004_mipi_InitRawTuneInfo();
 			ret_value = SENSOR_SUCCESS;
-			SENSOR_PRINT("SENSOR_gc5004_mipi: this is gc5004_mipi sensor !");
+			SENSOR_LOGI("SENSOR_gc5004_mipi: this is gc5004_mipi sensor !");
 		} else {
-			SENSOR_PRINT
+			SENSOR_LOGI
 			    ("SENSOR_gc5004_mipi: Identify this is GC%x%x sensor !", pid_value, ver_value);
 		}
 	} else {
-		SENSOR_PRINT("SENSOR_gc5004_mipi: identify fail,pid_value=%x", pid_value);
+		SENSOR_LOGI("SENSOR_gc5004_mipi: identify fail,pid_value=%x", pid_value);
 	}
 
 	return ret_value;
@@ -1790,11 +1790,11 @@ LOCAL uint32_t _gc5004_mipi_write_exposure(uint32_t param)
 	uint16_t dummy_line=0x00;
 	uint16_t shutter_temp=0x00;
 
-	SENSOR_PRINT("gc5004_mipi_Write_line  param_exp  = %d \n",param);
+	SENSOR_LOGI("gc5004_mipi_Write_line  param_exp  = %d \n",param);
 	expsure_line=param&0xffff;
 	dummy_line=(param>>0x10)&0xffff;
 
-	SENSOR_PRINT("gc5004_mipi_Write_line  dummy_line  = %d \n",dummy_line );
+	SENSOR_LOGI("gc5004_mipi_Write_line  dummy_line  = %d \n",dummy_line );
 	if (!expsure_line) expsure_line = 4; /* avoid 0 */
 
 
@@ -1808,7 +1808,7 @@ LOCAL uint32_t _gc5004_mipi_write_exposure(uint32_t param)
 	if(shutter_temp >2)
 	expsure_line+=4;
 
-	SENSOR_PRINT("gc5004_mipi_Write_line  5004line  = %d \n",expsure_line);
+	SENSOR_LOGI("gc5004_mipi_Write_line  5004line  = %d \n",expsure_line);
 	ret_value = Sensor_WriteReg(0x04, (expsure_line) & 0xFF);
 	ret_value = Sensor_WriteReg(0x03, (expsure_line >> 8) & 0x1F);
 
@@ -1821,7 +1821,7 @@ LOCAL uint32_t _gc5004_mipi_write_gain(uint32_t param)
 
 	uint16_t temp=0x00;
 	uint32_t real_gain = 0;
-	SENSOR_PRINT("_gc5004_mipi raw _write_gain param = %d  \n",param);
+	SENSOR_LOGI("_gc5004_mipi raw _write_gain param = %d  \n",param);
 
 
 	real_gain = ((param&0xf)+16)*(((param>>4)&0x01)+1)*(((param>>5)&0x01)+1)*(((param>>6)&0x01)+1)*(((param>>7)&0x01)+1);
@@ -1829,7 +1829,7 @@ LOCAL uint32_t _gc5004_mipi_write_gain(uint32_t param)
 
 	real_gain <<= 2;
 
-	SENSOR_PRINT("_gc5004_mipi raw _write_gain real_gain = %d  \n",real_gain);
+	SENSOR_LOGI("_gc5004_mipi raw _write_gain real_gain = %d  \n",real_gain);
 	Sensor_WriteReg(0xfe, 0x00);
 	Sensor_WriteReg(0xb6, 0x00);
 	Sensor_WriteReg(0xb1, 0x01);
@@ -1847,7 +1847,7 @@ LOCAL uint32_t _gc5004_mipi_write_gain(uint32_t param)
 	{
 	Sensor_WriteReg(0xb6, 0x00);
 	temp = real_gain;
-	SENSOR_PRINT("_gc5004_mipi_write_gain_1 temp = %d  \n",temp);
+	SENSOR_LOGI("_gc5004_mipi_write_gain_1 temp = %d  \n",temp);
 	Sensor_WriteReg(0xb1, temp>>6);
 	Sensor_WriteReg(0xb2, (temp<<2)&0xfc);
 	}
@@ -1855,7 +1855,7 @@ LOCAL uint32_t _gc5004_mipi_write_gain(uint32_t param)
 	{
 	Sensor_WriteReg(0xb6, 0x01);
 	temp = 64*real_gain/90;
-	SENSOR_PRINT("_gc5004_mipi_write_gain_2 temp = %d  \n",temp);
+	SENSOR_LOGI("_gc5004_mipi_write_gain_2 temp = %d  \n",temp);
 	Sensor_WriteReg(0xb1, temp>>6);
 	Sensor_WriteReg(0xb2, (temp<<2)&0xfc);
 	}
@@ -1863,7 +1863,7 @@ LOCAL uint32_t _gc5004_mipi_write_gain(uint32_t param)
 	{
 	Sensor_WriteReg(0xb6, 0x02);
 	temp = 64*real_gain/128;
-	SENSOR_PRINT("_gc5004_mipi_write_gain_3 temp = %d  \n",temp);
+	SENSOR_LOGI("_gc5004_mipi_write_gain_3 temp = %d  \n",temp);
 	Sensor_WriteReg(0xb1, temp>>6);
 	Sensor_WriteReg(0xb2, (temp<<2)&0xfc);
 	}
@@ -1871,7 +1871,7 @@ LOCAL uint32_t _gc5004_mipi_write_gain(uint32_t param)
 	{
 	Sensor_WriteReg(0xb6, 0x03);
 	temp = 64*real_gain/178;
-	SENSOR_PRINT("_gc5004_mipi_write_gain_4 temp = %d  \n",temp);
+	SENSOR_LOGI("_gc5004_mipi_write_gain_4 temp = %d  \n",temp);
 	Sensor_WriteReg(0xb1, temp>>6);
 	Sensor_WriteReg(0xb2, (temp<<2)&0xfc);
 	}
@@ -1879,7 +1879,7 @@ LOCAL uint32_t _gc5004_mipi_write_gain(uint32_t param)
 	{
 	Sensor_WriteReg(0xb6, 0x04);
 	temp = 64*real_gain/247;
-	SENSOR_PRINT("_gc5004_mipi_write_gain_5 temp = %d  \n",temp);
+	SENSOR_LOGI("_gc5004_mipi_write_gain_5 temp = %d  \n",temp);
 	Sensor_WriteReg(0xb1, temp>>6);
 	Sensor_WriteReg(0xb2, (temp<<2)&0xfc);
 	}
@@ -1899,7 +1899,7 @@ LOCAL uint32_t _gc5004_mipi_write_af(uint32_t param)
 	cmd_len = 2;
 	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 
-	SENSOR_PRINT("SENSOR_Gc5004: _write_af, ret =  %d, param = %d,  MSL:%x, LSL:%x\n",
+	SENSOR_LOGI("SENSOR_Gc5004: _write_af, ret =  %d, param = %d,  MSL:%x, LSL:%x\n",
 		ret_value, param, cmd_val[0], cmd_val[1]);
 	return ret_value;
 }
@@ -1913,10 +1913,10 @@ LOCAL uint32_t _gc5004_mipi_BeforeSnapshot(uint32_t param)
 	uint32_t prv_linetime=s_gc5004_mipi_Resolution_Trim_Tab[preview_mode].line_time;
 	uint32_t cap_linetime = s_gc5004_mipi_Resolution_Trim_Tab[capture_mode].line_time;
 
-	SENSOR_PRINT("SENSOR_gc5004: BeforeSnapshot mode: 0x%08x",param);
+	SENSOR_LOGI("SENSOR_gc5004: BeforeSnapshot mode: 0x%08x",param);
 
 	if (preview_mode == capture_mode) {
-		SENSOR_PRINT("SENSOR_gc5004: prv mode equal to capmode");
+		SENSOR_LOGI("SENSOR_gc5004: prv mode equal to capmode");
 		goto CFG_INFO;
 	}
 
@@ -1926,7 +1926,7 @@ LOCAL uint32_t _gc5004_mipi_BeforeSnapshot(uint32_t param)
 	Sensor_SetMode_WaitDone();
 
 	if (prv_linetime == cap_linetime) {
-		SENSOR_PRINT("SENSOR_gc5004: prvline equal to capline");
+		SENSOR_LOGI("SENSOR_gc5004: prvline equal to capline");
 		goto CFG_INFO;
 	}
 
@@ -1951,14 +1951,14 @@ LOCAL uint32_t _gc5004_mipi_BeforeSnapshot(uint32_t param)
 
 LOCAL uint32_t _gc5004_mipi_after_snapshot(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_gc5004_mipi: after_snapshot mode:%d", param);
+	SENSOR_LOGI("SENSOR_gc5004_mipi: after_snapshot mode:%d", param);
 	Sensor_SetMode(param);
 	return SENSOR_SUCCESS;
 }
 
 LOCAL uint32_t _gc5004_mipi_StreamOn(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_gc5004_mipi: StreamOn");
+	SENSOR_LOGI("SENSOR_gc5004_mipi: StreamOn");
 
 	Sensor_WriteReg(0xfe, 0x03);
 	Sensor_WriteReg(0x10, 0x93);
@@ -1969,7 +1969,7 @@ LOCAL uint32_t _gc5004_mipi_StreamOn(uint32_t param)
 
 LOCAL uint32_t _gc5004_mipi_StreamOff(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_gc5004_mipi: StreamOff");
+	SENSOR_LOGI("SENSOR_gc5004_mipi: StreamOff");
 
 	Sensor_WriteReg(0xfe, 0x03);
 	Sensor_WriteReg(0x10, 0x81);
@@ -1990,7 +1990,7 @@ LOCAL uint32_t _gc5004_mipi_ExtFunc(uint32_t ctl_param)
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr =
 	    (SENSOR_EXT_FUN_PARAM_T_PTR) ctl_param;
-	SENSOR_PRINT_HIGH("0x%x", ext_ptr->cmd);
+	SENSOR_LOGI("0x%x", ext_ptr->cmd);
 
 	switch (ext_ptr->cmd) {
 	case SENSOR_EXT_FUNC_INIT:
@@ -2017,7 +2017,7 @@ LOCAL uint32_t _dw9174_SRCInit(uint32_t mode)
 	int i = 0;
 
 	slave_addr = DW9714_VCM_SLAVE_ADDR;
-	SENSOR_PRINT("SENSOR_Gc5004: _DW9714A_SRCInit: mode = %d\n", mode);
+	SENSOR_LOGI("SENSOR_Gc5004: _DW9714A_SRCInit: mode = %d\n", mode);
 	switch (mode) {
 		case 1:
 		break;

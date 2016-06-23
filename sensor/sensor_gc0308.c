@@ -714,7 +714,7 @@ static uint32_t GC0308_PowerOn(uint32_t power_on)
 		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED,
 				SENSOR_AVDD_CLOSED);
 	}
-	SENSOR_PRINT("(1:on, 0:off): %d", power_on);
+	SENSOR_LOGI("(1:on, 0:off): %d", power_on);
 	return (uint32_t)SENSOR_SUCCESS;
 }
 
@@ -732,14 +732,14 @@ static uint32_t GC0308_Identify(uint32_t param)
 	uint8_t reg[2] 	= {0x00, 0x00};
 	uint8_t value[2] 	= {0x9b, 0x9b};
 
-	SENSOR_TRACE("GC0308_Identify");
+	SENSOR_LOGI("GC0308_Identify");
 	for(i = 0; i<2; ) {
 		nLoop = 1000;
 		ret = GC0308_ReadReg(reg[i]);
 		if( ret != value[i]) {
 			err_cnt++;
 			if(err_cnt>3) {
-				SENSOR_PRINT_ERR("It is not GC0308\n");
+				SENSOR_LOGI("It is not GC0308\n");
 				return SENSOR_FAIL;
 			} else {
 				while(nLoop--);
@@ -750,7 +750,7 @@ static uint32_t GC0308_Identify(uint32_t param)
 		i++;
 	}
 
-	SENSOR_PRINT_HIGH("GC0308_Identify: it is GC0308\n");
+	SENSOR_LOGI("GC0308_Identify: it is GC0308\n");
 	return (uint32_t)SENSOR_SUCCESS;
 }
 
@@ -808,7 +808,7 @@ static uint32_t set_brightness(uint32_t level)
 	for(i = 0; (0xFF != sensor_reg_ptr[i].reg_addr) && (0xFF != sensor_reg_ptr[i].reg_value); i++) {
 		GC0308_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
-	SENSOR_TRACE("set_brightness: level = %d\n", level);
+	SENSOR_LOGI("set_brightness: level = %d\n", level);
 	return 0;
 }
 
@@ -836,7 +836,7 @@ static uint32_t set_GC0308_ev(uint32_t level)
 		GC0308_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_TRACE("SENSOR: set_ev: level = %d\n", level);
+	SENSOR_LOGI("SENSOR: set_ev: level = %d\n", level);
 	return 0;
 }
 
@@ -886,8 +886,8 @@ static uint32_t set_GC0308_video_mode(uint32_t mode)
 		GC0308_WriteReg(0xec,0x20);
 	else if(1 == mode)
 		GC0308_WriteReg(0xec,0x00);
-	SENSOR_TRACE("SENSOR: GC0308_ReadReg(0xec) = %x\n", GC0308_ReadReg(0xec));
-	SENSOR_TRACE("SENSOR: set_video_mode: mode = %d\n", mode);
+	SENSOR_LOGI("SENSOR: GC0308_ReadReg(0xec) = %x\n", GC0308_ReadReg(0xec));
+	SENSOR_LOGI("SENSOR: set_video_mode: mode = %d\n", mode);
 	return 0;
 }
 
@@ -972,7 +972,7 @@ static uint32_t set_GC0308_awb(uint32_t mode)
 		GC0308_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 	}
-	SENSOR_TRACE("SENSOR: set_awb_mode: mode = %d\n", mode);
+	SENSOR_LOGI("SENSOR: set_awb_mode: mode = %d\n", mode);
 
 	return 0;
 }
@@ -1023,7 +1023,7 @@ static uint32_t set_contrast(uint32_t level)
 		GC0308_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_TRACE("set_contrast: level = %d\n", level);
+	SENSOR_LOGI("set_contrast: level = %d\n", level);
 	return 0;
 }
 
@@ -1039,7 +1039,7 @@ static uint32_t set_saturation(uint32_t level)
 
 static uint32_t set_preview_mode(uint32_t preview_mode)
 {
-        SENSOR_TRACE("set_preview_mode: preview_mode = %d\n", preview_mode);
+        SENSOR_LOGI("set_preview_mode: preview_mode = %d\n", preview_mode);
 
         set_GC0308_anti_flicker(0);
         switch (preview_mode) {
@@ -1115,7 +1115,7 @@ static uint32_t set_image_effect(uint32_t effect_type)
 	for(i = 0; (0xFF != sensor_reg_ptr[i].reg_addr) || (0xFF != sensor_reg_ptr[i].reg_value) ; i++) {
 		Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
-	SENSOR_TRACE("-----------set_image_effect: effect_type = %d------------\n", effect_type);
+	SENSOR_LOGI("-----------set_image_effect: effect_type = %d------------\n", effect_type);
 	return 0;
 }
 

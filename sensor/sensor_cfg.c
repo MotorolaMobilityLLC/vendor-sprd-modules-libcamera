@@ -255,7 +255,7 @@ SENSOR_MATCH_T * Sensor_GetInforTab(struct sensor_drv_context *sensor_cxt, SENSO
 	SENSOR_MATCH_T * sensor_infor_tab_ptr=NULL;
 	cmr_u32 index = 0;
 	cmr_int at_flag = sensor_cxt->is_autotest;
-	CMR_LOGD("at %d",at_flag);
+	SENSOR_LOGD("at %d",at_flag);
 
 	if (AUTO_TEST_CAMERA == at_flag) {
 		switch ( sensor_id) {
@@ -360,10 +360,10 @@ cmr_u32 Sensor_IndexGet(struct sensor_drv_context *sensor_cxt, cmr_u32 index) {
 	if (AUTO_TEST_CAMERA == at_flag) {
 		if(index == SENSOR_MAIN || index == SENSOR_DEVICE2) {
 			mSnNum = sizeof(at_main_sensor_infor_tab)/sizeof(SENSOR_MATCH_T)-1;
-			CMR_LOGI("sensor autotest sensorTypeMatch main is %d", mSnNum );
+			SENSOR_LOGI("sensor autotest sensorTypeMatch main is %d", mSnNum );
 			for(i=0; i<mSnNum; i++) {
 				if( strcmp(at_main_sensor_infor_tab[i].sn_name, AT_CAMERA_SENSOR_TYPE_BACK) == 0) {
-					CMR_LOGI("sensor autotest sensor matched  %dth  is %s", i, AT_CAMERA_SENSOR_TYPE_BACK);
+					SENSOR_LOGI("sensor autotest sensor matched  %dth  is %s", i, AT_CAMERA_SENSOR_TYPE_BACK);
 					retValue = i;
 					break;
 				}
@@ -371,10 +371,10 @@ cmr_u32 Sensor_IndexGet(struct sensor_drv_context *sensor_cxt, cmr_u32 index) {
 		}
 		if(index == SENSOR_SUB || index == SENSOR_DEVICE3) {
 			sSnNum = sizeof(at_sub_sensor_infor_tab)/sizeof(SENSOR_MATCH_T)-1;
-			CMR_LOGI("sensor autotest sensorTypeMatch sub is %d", sSnNum );
+			SENSOR_LOGI("sensor autotest sensorTypeMatch sub is %d", sSnNum );
 			for(i=0; i<sSnNum; i++) {
 				if( strcmp(at_sub_sensor_infor_tab[i].sn_name, AT_CAMERA_SENSOR_TYPE_FRONT) == 0) {
-					CMR_LOGI("sensor autotest matched the %dth  is %s", i, AT_CAMERA_SENSOR_TYPE_FRONT);
+					SENSOR_LOGI("sensor autotest matched the %dth  is %s", i, AT_CAMERA_SENSOR_TYPE_FRONT);
 					retValue = i;
 					break;
 				}
@@ -383,10 +383,10 @@ cmr_u32 Sensor_IndexGet(struct sensor_drv_context *sensor_cxt, cmr_u32 index) {
 	} else {
 		if(index == SENSOR_MAIN) {
 			mSnNum = sizeof(main_sensor_infor_tab)/sizeof(SENSOR_MATCH_T)-1;
-			CMR_LOGI("sensor sensorTypeMatch main is %d", mSnNum );
+			SENSOR_LOGI("sensor sensorTypeMatch main is %d", mSnNum );
 			for(i=0; i<mSnNum; i++) {
 				if( strcmp(main_sensor_infor_tab[i].sn_name, CAMERA_SENSOR_TYPE_BACK) == 0) {
-					CMR_LOGI("sensor sensor matched  %dth  is %s", i, CAMERA_SENSOR_TYPE_BACK);
+					SENSOR_LOGI("sensor sensor matched  %dth  is %s", i, CAMERA_SENSOR_TYPE_BACK);
 					retValue = i;
 					break;
 				}
@@ -394,10 +394,10 @@ cmr_u32 Sensor_IndexGet(struct sensor_drv_context *sensor_cxt, cmr_u32 index) {
 		}
 		if(index == SENSOR_SUB) {
 			sSnNum = sizeof(sub_sensor_infor_tab)/sizeof(SENSOR_MATCH_T)-1;
-			CMR_LOGI("sensor sensorTypeMatch sub is %d", sSnNum );
+			SENSOR_LOGI("sensor sensorTypeMatch sub is %d", sSnNum );
 			for(i=0; i<sSnNum; i++) {
 				if( strcmp(sub_sensor_infor_tab[i].sn_name, CAMERA_SENSOR_TYPE_FRONT) == 0) {
-					CMR_LOGI("sensor sensor matched the %dth  is %s", i, CAMERA_SENSOR_TYPE_FRONT);
+					SENSOR_LOGI("sensor sensor matched the %dth  is %s", i, CAMERA_SENSOR_TYPE_FRONT);
 					retValue = i;
 					break;
 				}
@@ -405,10 +405,10 @@ cmr_u32 Sensor_IndexGet(struct sensor_drv_context *sensor_cxt, cmr_u32 index) {
 		}
 		if(index == SENSOR_DEVICE2) {
 			mSnNum = sizeof(sensor2_infor_tab)/sizeof(SENSOR_MATCH_T)-1;
-			CMR_LOGI("sensor sensorTypeMatch main2 is %d", mSnNum );
+			SENSOR_LOGI("sensor sensorTypeMatch main2 is %d", mSnNum );
 			for(i=0; i<mSnNum; i++) {
 				if( strcmp(sensor2_infor_tab[i].sn_name, CAMERA_SENSOR_TYPE_BACK_EXT) == 0) {
-					CMR_LOGI("sensor sensor matched  %dth  is %s", i, CAMERA_SENSOR_TYPE_BACK_EXT);
+					SENSOR_LOGI("sensor sensor matched  %dth  is %s", i, CAMERA_SENSOR_TYPE_BACK_EXT);
 					retValue = i;
 					break;
 				}
@@ -416,10 +416,10 @@ cmr_u32 Sensor_IndexGet(struct sensor_drv_context *sensor_cxt, cmr_u32 index) {
 		}
 		if(index == SENSOR_DEVICE3) {
 			sSnNum = sizeof(sensor3_infor_tab)/sizeof(SENSOR_MATCH_T)-1;
-			CMR_LOGI("sensor sensorTypeMatch sub2 is %d", sSnNum );
+			SENSOR_LOGI("sensor sensorTypeMatch sub2 is %d", sSnNum );
 			for(i=0; i<sSnNum; i++) {
 				if( strcmp(sensor3_infor_tab[i].sn_name, CAMERA_SENSOR_TYPE_FRONT) == 0) {
-					CMR_LOGI("sensor sensor matched the %dth  is %s", i, CAMERA_SENSOR_TYPE_FRONT);
+					SENSOR_LOGI("sensor sensor matched the %dth  is %s", i, CAMERA_SENSOR_TYPE_FRONT);
 					retValue = i;
 					break;
 				}

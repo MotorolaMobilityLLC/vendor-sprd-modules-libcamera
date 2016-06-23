@@ -983,7 +983,7 @@ static uint32_t GC2035_PowerOn(uint32_t power_on)
 		usleep(5*1000);
 		Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
 	}
-	SENSOR_PRINT("(1:on, 0:off): %d", power_on);
+	SENSOR_LOGI("(1:on, 0:off): %d", power_on);
 	return (uint32_t)SENSOR_SUCCESS;
 }
 
@@ -1002,10 +1002,10 @@ static uint32_t GC2035_Identify(uint32_t param)
 	for (i=0; i<3; i++) {
 		sensor_id = Sensor_ReadReg(GC2035_PID_ADDR1) << 8;
 		sensor_id |= Sensor_ReadReg(GC2035_PID_ADDR2);
-		SENSOR_PRINT_HIGH("%s sensor_id is %x\n", __func__, sensor_id);
+		SENSOR_LOGI("%s sensor_id is %x\n", __func__, sensor_id);
 
 		if (sensor_id == GC2035_SENSOR_ID) {
-			SENSOR_PRINT_HIGH("the main sensor is GC2035\n");
+			SENSOR_LOGI("the main sensor is GC2035\n");
 			return SENSOR_SUCCESS;
 		}
 	}
@@ -1277,7 +1277,7 @@ static uint32_t set_saturation(uint32_t level)
 
 static uint32_t set_preview_mode(uint32_t preview_mode)
 {
-	SENSOR_PRINT("set_preview_mode: preview_mode = %d\n", preview_mode);
+	SENSOR_LOGI("set_preview_mode: preview_mode = %d\n", preview_mode);
 
 	set_GC2035_anti_flicker(0);
 
@@ -1292,7 +1292,7 @@ static uint32_t set_preview_mode(uint32_t preview_mode)
 		GC2035_WriteReg(0xfe , 0x01);
 		GC2035_WriteReg(0x3e , 0x40);
 		GC2035_WriteReg(0xfe , 0x00);
-		SENSOR_PRINT("set_preview_mode: DCAMERA_ENVIRONMENT_NORMAL\n");
+		SENSOR_LOGI("set_preview_mode: DCAMERA_ENVIRONMENT_NORMAL\n");
 		break;
 		}
 	case 1://DCAMERA_ENVIRONMENT_NIGHT://1
@@ -1305,7 +1305,7 @@ static uint32_t set_preview_mode(uint32_t preview_mode)
 		GC2035_WriteReg(0xfe , 0x01);
 		GC2035_WriteReg(0x3e , 0x60);
 		GC2035_WriteReg(0xfe , 0x00);
-		SENSOR_PRINT("set_preview_mode: DCAMERA_ENVIRONMENT_NIGHT\n");
+		SENSOR_LOGI("set_preview_mode: DCAMERA_ENVIRONMENT_NIGHT\n");
 		break;
 		}
 	case 3://SENSOR_ENVIROMENT_PORTRAIT://3
@@ -1318,7 +1318,7 @@ static uint32_t set_preview_mode(uint32_t preview_mode)
 		GC2035_WriteReg(0xfe , 0x01);
 		GC2035_WriteReg(0x3e , 0x40);
 		GC2035_WriteReg(0xfe , 0x00);
-		SENSOR_PRINT("set_preview_mode: SENSOR_ENVIROMENT_PORTRAIT\n");
+		SENSOR_LOGI("set_preview_mode: SENSOR_ENVIROMENT_PORTRAIT\n");
 		break;
 		}
 	case 4://SENSOR_ENVIROMENT_LANDSCAPE://4
@@ -1331,7 +1331,7 @@ static uint32_t set_preview_mode(uint32_t preview_mode)
 		GC2035_WriteReg(0xfe , 0x01);
 		GC2035_WriteReg(0x3e , 0x40);
 		GC2035_WriteReg(0xfe , 0x00);
-		SENSOR_PRINT("set_preview_mode: SENSOR_ENVIROMENT_LANDSCAPE\n");
+		SENSOR_LOGI("set_preview_mode: SENSOR_ENVIROMENT_LANDSCAPE\n");
 		break;
 		}
 	case 2://SENSOR_ENVIROMENT_SPORTS://2
@@ -1345,7 +1345,7 @@ static uint32_t set_preview_mode(uint32_t preview_mode)
 		GC2035_WriteReg(0xfe , 0x01);
 		GC2035_WriteReg(0x3e , 0x40);
 		GC2035_WriteReg(0xfe , 0x00);
-		SENSOR_PRINT("set_preview_mode: SENSOR_ENVIROMENT_SPORTS\n");
+		SENSOR_LOGI("set_preview_mode: SENSOR_ENVIROMENT_SPORTS\n");
 		break;
 		}
 	default:
@@ -1393,7 +1393,7 @@ static uint32_t set_image_effect(uint32_t effect_type)
 
 static uint32_t GC2035_After_Snapshot(uint32_t param)
 {
-	SENSOR_PRINT("GC2035_After_Snapshot param = %x \n",param);
+	SENSOR_LOGI("GC2035_After_Snapshot param = %x \n",param);
 
 	Sensor_SetMode(param);
 
@@ -1408,17 +1408,17 @@ static uint32_t GC2035_BeforeSnapshot(uint32_t sensor_snapshot_mode)
 
 	switch (sensor_snapshot_mode) {
 	case SENSOR_MODE_PREVIEW_ONE:
-		SENSOR_PRINT("Capture VGA Size");
+		SENSOR_LOGI("Capture VGA Size");
 		break;
 	case SENSOR_MODE_SNAPSHOT_ONE_FIRST:
 	case SENSOR_MODE_SNAPSHOT_ONE_SECOND:
-		SENSOR_PRINT("Capture 1.3M&2M Size");
+		SENSOR_LOGI("Capture 1.3M&2M Size");
 		break;
 	default:
 		break;
 	}
 
-	SENSOR_PRINT("SENSOR_GC2035: Before Snapshot");
+	SENSOR_LOGI("SENSOR_GC2035: Before Snapshot");
 
 	return 0;
 
@@ -1426,7 +1426,7 @@ static uint32_t GC2035_BeforeSnapshot(uint32_t sensor_snapshot_mode)
 
 static uint32_t GC2035_StreamOn(uint32_t param)
 {
-	SENSOR_PRINT("Start");
+	SENSOR_LOGI("Start");
 
 
 	Sensor_WriteReg(0xfe , 0x00);
@@ -1440,7 +1440,7 @@ static uint32_t GC2035_StreamOn(uint32_t param)
 
 static uint32_t GC2035_StreamOff(uint32_t param)
 {
-	SENSOR_PRINT("Stop");
+	SENSOR_LOGI("Stop");
 
 	Sensor_WriteReg(0xfe , 0x00);
 	Sensor_WriteReg(0xf2 , 0x00);

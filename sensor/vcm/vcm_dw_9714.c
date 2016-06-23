@@ -63,13 +63,13 @@ uint32_t vcm_dw9714_set_position(uint32_t pos,uint32_t slewrate)
 	uint8_t cmd_val[2] = {0x00};
 	uint16_t  slave_addr = 0;
 	uint16_t cmd_len = 0;
-	SENSOR_PRINT_HIGH("VCM pos %d  ",pos);
+	SENSOR_LOGI("VCM pos %d  ",pos);
 
 	slave_addr = DW9714_VCM_SLAVE_ADDR;
 	cmd_val[0] = (pos&0xfff0)>>4;
 	cmd_val[1] = ((pos&0x0f)<<4)|0x09;
 	cmd_len = 2;
 	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
-	SENSOR_PRINT_HIGH("VCM ret_value%d  ",ret_value);
+	SENSOR_LOGI("VCM ret_value%d  ",ret_value);
 	return ret_value;
 }

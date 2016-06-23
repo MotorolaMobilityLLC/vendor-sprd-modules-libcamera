@@ -1489,18 +1489,18 @@ LOCAL uint32_t _ov8825_set_video_mode(uint32_t param)
 		return 0;
 
 	if (SENSOR_SUCCESS != Sensor_GetMode(&mode)) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	if (PNULL == s_ov8825_video_info[mode].setting_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	sensor_reg_ptr = (SENSOR_REG_T_PTR)&s_ov8825_video_info[mode].setting_ptr[param];
 	if (PNULL == sensor_reg_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
@@ -1508,7 +1508,7 @@ LOCAL uint32_t _ov8825_set_video_mode(uint32_t param)
 		Sensor_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("0x%02x", param);
+	SENSOR_LOGI("0x%02x", param);
 	return 0;
 }
 
@@ -2110,7 +2110,7 @@ LOCAL uint32_t Sensor_ov8825_InitRawTuneInfo(void)
 
 LOCAL unsigned long _ov8825_GetResolutionTrimTab(uint32_t param)
 {
-	SENSOR_PRINT("0x%lx",  (unsigned long)s_ov8825_Resolution_Trim_Tab);
+	SENSOR_LOGI("0x%lx",  (unsigned long)s_ov8825_Resolution_Trim_Tab);
 	return (unsigned long) s_ov8825_Resolution_Trim_Tab;
 }
 LOCAL uint32_t _ov8825_PowerOn(uint32_t power_on)
@@ -2170,7 +2170,7 @@ LOCAL uint32_t _ov8825_PowerOn(uint32_t power_on)
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 		is_stream_on = 0;
 	}
-	SENSOR_PRINT("SENSOR_ov8825: _ov8825_Power_On(1:on, 0:off): %d", power_on);
+	SENSOR_LOGI("SENSOR_ov8825: _ov8825_Power_On(1:on, 0:off): %d", power_on);
 	return SENSOR_SUCCESS;
 }
 
@@ -2180,7 +2180,7 @@ LOCAL uint32_t _ov8825_cfg_otp(uint32_t param)
 	struct raw_param_info_tab* tab_ptr = (struct raw_param_info_tab*)s_ov8825_raw_param_tab;
 	uint32_t module_id=g_ov8825_module_id;
 
-	SENSOR_PRINT("SENSOR_OV8825: _ov8825_cfg_otp module_id:0x%x", module_id);
+	SENSOR_LOGI("SENSOR_OV8825: _ov8825_cfg_otp module_id:0x%x", module_id);
 
 	/*be called in sensor thread, so not call Sensor_SetMode_WaitDone()*/
 	usleep(10 * 1000);
@@ -2193,7 +2193,7 @@ LOCAL uint32_t _ov8825_cfg_otp(uint32_t param)
 	*/
 	Sensor_WriteReg(0x0100, 0x00);
 
-	SENSOR_PRINT("SENSOR_OV8825: _ov8825_cfg_otp end");
+	SENSOR_LOGI("SENSOR_OV8825: _ov8825_cfg_otp end");
 
 	return rtn;
 }
@@ -2210,7 +2210,7 @@ LOCAL uint32_t _ov8825_write_vcm(uint32_t *param)
 	cmd_val[1] = (*param) & 0xff;        //data
 
 	vcm = cmd_val[1];
-	SENSOR_PRINT("SENSOR_ov8825: _write_vcm, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
+	SENSOR_LOGI("SENSOR_ov8825: _write_vcm, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
 	return ret_value;
 }
 
@@ -2224,7 +2224,7 @@ LOCAL uint32_t _ov8825_read_vcm(uint32_t *param)
 	cmd_val[0] = ((*param)>>16) & 0xff;  //addr
 	*param = vcm;
 
-	SENSOR_PRINT("SENSOR_ov8825: _read_vcm, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
+	SENSOR_LOGI("SENSOR_ov8825: _read_vcm, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
 	return ret_value;
 }
 
@@ -2235,9 +2235,9 @@ LOCAL uint32_t _ov8825_write_otp(uint32_t *param)
 	uint32_t start_addr = param_ptr->start_addr;
 	uint32_t len  		= param_ptr->len;
 	uint8_t *buff 		= param_ptr->buff;
-	SENSOR_PRINT("SENSOR_ov8825: _ov8825_write_otp E");
+	SENSOR_LOGI("SENSOR_ov8825: _ov8825_write_otp E");
 	memcpy(otp, buff, len);
-	SENSOR_PRINT("SENSOR_ov8825: _ov8825_write_otp %x, %x",start_addr, len);
+	SENSOR_LOGI("SENSOR_ov8825: _ov8825_write_otp %x, %x",start_addr, len);
 	return rtn;
 }
 
@@ -2248,9 +2248,9 @@ LOCAL uint32_t _ov8825_read_otp(uint32_t *param)
 	uint32_t start_addr = param_ptr->start_addr;
 	uint32_t len  		= param_ptr->len;
 	uint8_t *buff 		= param_ptr->buff;
-	SENSOR_PRINT("SENSOR_ov8825: _ov8825_read_otp E");
+	SENSOR_LOGI("SENSOR_ov8825: _ov8825_read_otp E");
 	memcpy(buff, otp, len);
-	SENSOR_PRINT("SENSOR_ov8825: _ov8825_read_otp %x, %x",start_addr, len);
+	SENSOR_LOGI("SENSOR_ov8825: _ov8825_read_otp %x, %x",start_addr, len);
 	return rtn;
 
 }
@@ -2261,7 +2261,7 @@ LOCAL uint32_t _ov8825_read_af(uint32_t *param)
 	uint16_t value		= 0x00;
 	uint16_t reg_val 	= 0x0;
 
-	SENSOR_PRINT("SENSOR_ov8825: _ov8825_read_af 0x%x", param);
+	SENSOR_LOGI("SENSOR_ov8825: _ov8825_read_af 0x%x", param);
 
 	*param = ((Sensor_ReadReg(0x3619) & 0x3f) << 4) | (Sensor_ReadReg(0x3618) & 0x0f);
 
@@ -2275,13 +2275,13 @@ LOCAL uint32_t _ov8825_access_val(unsigned long param)
 
 	uint16_t tmp;
 
-	SENSOR_PRINT("SENSOR_ov8825: _ov8825_access_val E");
+	SENSOR_LOGI("SENSOR_ov8825: _ov8825_access_val E");
 	if(!param_ptr){
 		_ov8825_cfg_otp(param);
 		return rtn;
 	}
 
-	SENSOR_PRINT("SENSOR_ov8825: param_ptr->type=%x",param_ptr->type);
+	SENSOR_LOGI("SENSOR_ov8825: param_ptr->type=%x",param_ptr->type);
 	switch(param_ptr->type)
 	{
 		case SENSOR_VAL_TYPE_SHUTTER:
@@ -2313,7 +2313,7 @@ LOCAL uint32_t _ov8825_access_val(unsigned long param)
 			break;
 	}
 
-	SENSOR_PRINT("SENSOR_ov8825: _ov8825_access_val X");
+	SENSOR_LOGI("SENSOR_ov8825: _ov8825_access_val X");
 
 	return rtn;
 
@@ -2337,16 +2337,16 @@ LOCAL uint32_t _ov8825_GetRawInof(void)
 		if(RAW_INFO_END_ID==tab_ptr[i].param_id){
 			if(NULL==s_ov8825_mipi_raw_info_ptr){
 				s_ov8825_mipi_raw_info_ptr = &s_ov8825_mipi_raw_info;
-				SENSOR_PRINT("SENSOR_OV8825: ov8825_GetRawInof no param error, set as default");
+				SENSOR_LOGI("SENSOR_OV8825: ov8825_GetRawInof no param error, set as default");
 			}
-			SENSOR_PRINT("SENSOR_OV8825: ov8825_GetRawInof end");
+			SENSOR_LOGI("SENSOR_OV8825: ov8825_GetRawInof end");
 			break;
 		}
 		else if(PNULL!=tab_ptr[i].identify_otp){
 			if(SENSOR_SUCCESS==tab_ptr[i].identify_otp(0))
 			{
 				s_ov8825_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
-				SENSOR_PRINT("SENSOR_OV8825: ov8825_GetRawInof id:0x%x success", g_ov8825_module_id);
+				SENSOR_LOGI("SENSOR_OV8825: ov8825_GetRawInof id:0x%x success", g_ov8825_module_id);
 				break;
 			}
 		}
@@ -2381,25 +2381,25 @@ LOCAL uint32_t _ov8825_Identify(uint32_t param)
 	uint8_t ver_value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
 
-	SENSOR_PRINT_HIGH("SENSOR_ov8825: mipi raw identify\n");
+	SENSOR_LOGI("SENSOR_ov8825: mipi raw identify\n");
 
 	pid_value = Sensor_ReadReg(ov8825_PID_ADDR);
 	if (ov8825_PID_VALUE == pid_value) {
 		ver_value = Sensor_ReadReg(ov8825_VER_ADDR);
-		SENSOR_PRINT("SENSOR_ov8825: Identify: PID = %x, VER = %x", pid_value, ver_value);
+		SENSOR_LOGI("SENSOR_ov8825: Identify: PID = %x, VER = %x", pid_value, ver_value);
 		if (ov8825_VER_VALUE == ver_value) {
-			SENSOR_PRINT_HIGH("SENSOR_ov8825: this is ov8825 sensor !");
+			SENSOR_LOGI("SENSOR_ov8825: this is ov8825 sensor !");
 			ret_value=_ov8825_GetRawInof();
 			if(SENSOR_SUCCESS != ret_value)
 			{
-				SENSOR_PRINT_ERR("SENSOR_ov8825: the module is unknow error !");
+				SENSOR_LOGI("SENSOR_ov8825: the module is unknow error !");
 			}
 			Sensor_ov8825_InitRawTuneInfo();
 		} else {
-			SENSOR_PRINT_HIGH("SENSOR_ov8825: Identify this is OV%x%x sensor !", pid_value, ver_value);
+			SENSOR_LOGI("SENSOR_ov8825: Identify this is OV%x%x sensor !", pid_value, ver_value);
 		}
 	} else {
-		SENSOR_PRINT_ERR("SENSOR_ov8825: identify fail,pid_value=%d", pid_value);
+		SENSOR_LOGI("SENSOR_ov8825: identify fail,pid_value=%d", pid_value);
 	}
 
 	return ret_value;
@@ -2423,7 +2423,7 @@ LOCAL uint32_t _ov8825_write_exposure(uint32_t param)
 	dummy_line=(param>>0x10)&0x0fff;
 	size_index=(param>>0x1c)&0x0f;
 
-	SENSOR_PRINT("SENSOR_ov8825: write_exposure line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
+	SENSOR_LOGI("SENSOR_ov8825: write_exposure line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
 
 	max_frame_len=_ov8825_GetMaxFrameLine(size_index);
 
@@ -2439,13 +2439,13 @@ LOCAL uint32_t _ov8825_write_exposure(uint32_t param)
 			value = (frame_len)&0xff;
 			ret_value = Sensor_WriteReg(0x380f, value);
 			if (ret_value) {
-				SENSOR_PRINT_ERR("Sensor_WriteReg error %d", ret_value);
+				SENSOR_LOGI("Sensor_WriteReg error %d", ret_value);
 				goto exit;
 			}
 			value = (frame_len>>0x08)&0xff;
 			ret_value = Sensor_WriteReg(0x380e, value);
 			if (ret_value) {
-				SENSOR_PRINT_ERR("Sensor_WriteReg error %d", ret_value);
+				SENSOR_LOGI("Sensor_WriteReg error %d", ret_value);
 				goto exit;
 			}
 		}
@@ -2454,19 +2454,19 @@ LOCAL uint32_t _ov8825_write_exposure(uint32_t param)
 	value = (expsure_line<<0x04)&0xff;
 	ret_value = Sensor_WriteReg(0x3502, value);
 	if (ret_value) {
-		SENSOR_PRINT_ERR("Sensor_WriteReg error %d", ret_value);
+		SENSOR_LOGI("Sensor_WriteReg error %d", ret_value);
 		goto exit;
 	}
 	value = (expsure_line>>0x04)&0xff;
 	ret_value = Sensor_WriteReg(0x3501, value);
 	if (ret_value) {
-		SENSOR_PRINT_ERR("Sensor_WriteReg error %d", ret_value);
+		SENSOR_LOGI("Sensor_WriteReg error %d", ret_value);
 		goto exit;
 	}
 	value = (expsure_line>>0x0c)&0x0f;
 	ret_value = Sensor_WriteReg(0x3500, value);
 	if (ret_value) {
-		SENSOR_PRINT_ERR("Sensor_WriteReg error %d", ret_value);
+		SENSOR_LOGI("Sensor_WriteReg error %d", ret_value);
 		goto exit;
 	}
 
@@ -2479,7 +2479,7 @@ LOCAL uint32_t _ov8825_write_gain(uint32_t param)
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint16_t value=0x00;
 
-	SENSOR_PRINT("SENSOR_ov8825: write_gain:0x%x", param);
+	SENSOR_LOGI("SENSOR_ov8825: write_gain:0x%x", param);
 #if 1 // ae table 32
 	uint16_t real_gain = 0;
 	int cur_gain = 0x00;
@@ -2516,7 +2516,7 @@ LOCAL uint32_t _ov8825_write_af(uint32_t param)
 	uint16_t value=0x00;
 	uint16_t reg_val = 0x0;
 
-	SENSOR_PRINT("SENSOR_ov8825: _write_af 0x%x", param);
+	SENSOR_LOGI("SENSOR_ov8825: _write_af 0x%x", param);
 
 	value = (param&0xf)<<0x04;
 	value = value + 8 + (g_af_slewrate&0x7);
@@ -2537,10 +2537,10 @@ LOCAL uint32_t _ov8825_BeforeSnapshot(uint32_t param)
 	uint32_t prv_linetime=s_ov8825_Resolution_Trim_Tab[preview_mode].line_time;
 	uint32_t cap_linetime = s_ov8825_Resolution_Trim_Tab[capture_mode].line_time;
 
-	SENSOR_PRINT("SENSOR_ov8825: BeforeSnapshot mode: 0x%08x",param);
+	SENSOR_LOGI("SENSOR_ov8825: BeforeSnapshot mode: 0x%08x",param);
 
 	if (preview_mode == capture_mode) {
-		SENSOR_PRINT("SENSOR_ov8825: prv mode equal to capmode");
+		SENSOR_LOGI("SENSOR_ov8825: prv mode equal to capmode");
 		goto CFG_INFO;
 	}
 
@@ -2557,7 +2557,7 @@ LOCAL uint32_t _ov8825_BeforeSnapshot(uint32_t param)
 	Sensor_SetMode_WaitDone();
 
 	if (prv_linetime == cap_linetime) {
-		SENSOR_PRINT("SENSOR_ov8825: prvline equal to capline");
+		SENSOR_LOGI("SENSOR_ov8825: prvline equal to capline");
 		goto CFG_INFO;
 	}
 
@@ -2600,25 +2600,25 @@ LOCAL uint32_t _ov8825_BeforeSnapshot(uint32_t param)
 
 LOCAL uint32_t _ov8825_after_snapshot(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_ov8825: after_snapshot mode:%d", param);
+	SENSOR_LOGI("SENSOR_ov8825: after_snapshot mode:%d", param);
 	Sensor_SetMode(param);
 	return SENSOR_SUCCESS;
 }
 
 LOCAL uint32_t _ov8825_flash(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_ov8825: param=%d", param);
+	SENSOR_LOGI("SENSOR_ov8825: param=%d", param);
 
 	/* enable flash, disable in _ov8825_BeforeSnapshot */
 	g_flash_mode_en = param;
 	Sensor_SetFlash(param);
-	SENSOR_PRINT_HIGH("end");
+	SENSOR_LOGI("end");
 	return SENSOR_SUCCESS;
 }
 
 LOCAL uint32_t _ov8825_StreamOn(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_ov8825: StreamOn");
+	SENSOR_LOGI("SENSOR_ov8825: StreamOn");
 
 	Sensor_WriteReg(0x0100, 0x01);
 	is_stream_on = 1;
@@ -2627,7 +2627,7 @@ LOCAL uint32_t _ov8825_StreamOn(uint32_t param)
 
 LOCAL uint32_t _ov8825_StreamOff(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_ov8825: StreamOff");
+	SENSOR_LOGI("SENSOR_ov8825: StreamOff");
 	if (is_stream_on) {
 	Sensor_WriteReg(0x0100, 0x00);
 	usleep(150*1000);
@@ -2718,7 +2718,7 @@ static uint32_t _ov8825_SetEV(unsigned long param)
 	uint32_t gain = s_ov8825_gain;
 	uint32_t ev = ext_ptr->param;
 
-	SENSOR_PRINT("SENSOR_ov8825: _ov8825_SetEV param: 0x%x", ext_ptr->param);
+	SENSOR_LOGI("SENSOR_ov8825: _ov8825_SetEV param: 0x%x", ext_ptr->param);
 
 	switch(ev) {
 	case SENSOR_HDR_EV_LEVE_0:
@@ -2747,7 +2747,7 @@ LOCAL uint32_t _ov8825_saveLoad_exposure(unsigned long param)
 	if (sl_param) {
 //		usleep(180*1000);     /*wait for effect after init stable(AWB)*/
 		/*load exposure params to sensor*/
-		SENSOR_PRINT_HIGH("_ov8825_saveLoad_exposure load shutter 0x%x gain 0x%x",
+		SENSOR_LOGI("_ov8825_saveLoad_exposure load shutter 0x%x gain 0x%x",
 					s_ov8825_shutter_bak,
 					s_ov8825_gain_bak);
 		_ov8825_set_gain16(s_ov8825_gain_bak);
@@ -2764,7 +2764,7 @@ LOCAL uint32_t _ov8825_saveLoad_exposure(unsigned long param)
 		ret_l = (uint8_t) Sensor_ReadReg(0x3502);
 		s_ov8825_shutter_bak = (ret_h << 12) + (ret_m << 4) + (ret_l >> 4);
 		s_ov8825_gain_bak = _ov8825_ReadGain(dummy);
-		SENSOR_PRINT_HIGH("_ov8825_saveLoad_exposure save shutter 0x%x gain 0x%x",
+		SENSOR_LOGI("_ov8825_saveLoad_exposure save shutter 0x%x gain 0x%x",
 					s_ov8825_shutter_bak,
 					s_ov8825_gain_bak);
 	}
@@ -2786,7 +2786,7 @@ LOCAL uint32_t _ov8825_ExtFunc(unsigned long ctl_param)
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr =
 	    (SENSOR_EXT_FUN_PARAM_T_PTR) ctl_param;
-	SENSOR_PRINT_HIGH("0x%x", ext_ptr->cmd);
+	SENSOR_LOGI("0x%x", ext_ptr->cmd);
 
 	switch (ext_ptr->cmd) {
 	case SENSOR_EXT_FUNC_INIT:
@@ -2846,7 +2846,7 @@ LOCAL uint32_t _ov8825_ReadGain(uint32_t param)
 
 	s_ov8825_gain=(int)gain;
 
-	SENSOR_PRINT("SENSOR_ov8825: _ov8825_ReadGain gain: 0x%x", s_ov8825_gain);
+	SENSOR_LOGI("SENSOR_ov8825: _ov8825_ReadGain gain: 0x%x", s_ov8825_gain);
 
 	return rtn;
 }

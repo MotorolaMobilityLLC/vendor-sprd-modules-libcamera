@@ -1074,18 +1074,18 @@ LOCAL uint32_t _hm5040_set_video_mode(uint32_t param)
 		return 0;
 
 	if (SENSOR_SUCCESS != Sensor_GetMode(&mode)) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	if (PNULL == s_hm5040_video_info[mode].setting_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	sensor_reg_ptr = (SENSOR_REG_T_PTR)&s_hm5040_video_info[mode].setting_ptr[param];
 	if (PNULL == sensor_reg_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
@@ -1093,7 +1093,7 @@ LOCAL uint32_t _hm5040_set_video_mode(uint32_t param)
 		Sensor_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("0x%02x", param);
+	SENSOR_LOGI("0x%02x", param);
 	return 0;
 }
 
@@ -2337,7 +2337,7 @@ int _hm5040_get_shutter(void)
 
 LOCAL uint32_t _hm5040_GetResolutionTrimTab(uint32_t param)
 {
-	SENSOR_PRINT("0x%x",  (uint32_t)s_hm5040_Resolution_Trim_Tab);
+	SENSOR_LOGI("0x%x",  (uint32_t)s_hm5040_Resolution_Trim_Tab);
 	return (uint32_t) s_hm5040_Resolution_Trim_Tab;
 }
 LOCAL uint32_t _hm5040_PowerOn(uint32_t power_on)
@@ -2367,7 +2367,7 @@ LOCAL uint32_t _hm5040_PowerOn(uint32_t power_on)
 		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 	}
-	SENSOR_PRINT("SENSOR_hm5040: _hm5040_Power_On(1:on, 0:off): %d", power_on);
+	SENSOR_LOGI("SENSOR_hm5040: _hm5040_Power_On(1:on, 0:off): %d", power_on);
 	return SENSOR_SUCCESS;
 }
 
@@ -2377,7 +2377,7 @@ LOCAL uint32_t _hm5040_cfg_otp(uint32_t  param)
 	struct raw_param_info_tab* tab_ptr = (struct raw_param_info_tab*)s_hm5040_raw_param_tab;
 	uint32_t module_id=g_module_id;
 
-	SENSOR_PRINT("SENSOR_hm5040: _hm5040_cfg_otp");
+	SENSOR_LOGI("SENSOR_hm5040: _hm5040_cfg_otp");
 
 	if(PNULL!=tab_ptr[module_id].cfg_otp){
 		tab_ptr[module_id].cfg_otp(0);
@@ -2391,7 +2391,7 @@ LOCAL uint32_t _hm5040_com_Identify_otp(void* param_ptr)
 	uint32_t rtn=SENSOR_FAIL;
 	uint32_t param_id;
 
-	SENSOR_PRINT("SENSOR_hm5040: _hm5040_com_Identify_otp");
+	SENSOR_LOGI("SENSOR_hm5040: _hm5040_com_Identify_otp");
 
 	/*read param id from sensor omap*/
 	param_id=hm5040_RAW_PARAM_COM;
@@ -2418,17 +2418,17 @@ LOCAL uint32_t _hm5040_GetRawInof(void)
 		g_module_id = i;
 		if(RAW_INFO_END_ID==tab_ptr[i].param_id){
 			if(NULL==s_hm5040_mipi_raw_info_ptr){
-				SENSOR_PRINT("SENSOR_hm5040: hm5040_GetRawInof no param error");
+				SENSOR_LOGI("SENSOR_hm5040: hm5040_GetRawInof no param error");
 				rtn=SENSOR_FAIL;
 			}
-			SENSOR_PRINT("SENSOR_hm5040: hm5040_GetRawInof end");
+			SENSOR_LOGI("SENSOR_hm5040: hm5040_GetRawInof end");
 			break;
 		}
 		else if(PNULL!=tab_ptr[i].identify_otp){
 			if(SENSOR_SUCCESS==tab_ptr[i].identify_otp(0))
 			{
 				s_hm5040_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
-				SENSOR_PRINT("SENSOR_hm5040: hm5040_GetRawInof success");
+				SENSOR_LOGI("SENSOR_hm5040: hm5040_GetRawInof success");
 				break;
 			}
 		}
@@ -2459,31 +2459,31 @@ LOCAL uint32_t _hm5040_Identify(uint32_t param)
 	uint8_t value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
 
-	SENSOR_PRINT("SENSOR_hm5040: mipi raw identify\n");
+	SENSOR_LOGI("SENSOR_hm5040: mipi raw identify\n");
 
 	pid_value = Sensor_ReadReg(hm5040_PID_ADDR);
-	SENSOR_PRINT("SENSOR_hm5040: Identify: PID = %x", pid_value);
+	SENSOR_LOGI("SENSOR_hm5040: Identify: PID = %x", pid_value);
 	ver_value = Sensor_ReadReg(hm5040_VER_ADDR);
-	SENSOR_PRINT("SENSOR_hm5040: Identify: VER = %x", ver_value);
+	SENSOR_LOGI("SENSOR_hm5040: Identify: VER = %x", ver_value);
 
 	for(i = 0; i<3; ) {
 		if (hm5040_PID_VALUE == pid_value) {
 			ver_value = Sensor_ReadReg(hm5040_VER_ADDR);
-			SENSOR_PRINT("SENSOR_hm5040: Identify: PID = %x, VER = %x", pid_value, ver_value);
+			SENSOR_LOGI("SENSOR_hm5040: Identify: PID = %x, VER = %x", pid_value, ver_value);
 			if (hm5040_VER_VALUE == ver_value) {
-				SENSOR_PRINT("SENSOR_hm5040: this is hm5040 sensor !");
+				SENSOR_LOGI("SENSOR_hm5040: this is hm5040 sensor !");
 				ret_value=_hm5040_GetRawInof();
 				if(SENSOR_SUCCESS != ret_value)
 				{
-					SENSOR_PRINT("SENSOR_hm5040: the module is unknow error !");
+					SENSOR_LOGI("SENSOR_hm5040: the module is unknow error !");
 				}
 				Sensor_hm5040_InitRawTuneInfo();
 			} else {
-				SENSOR_PRINT("SENSOR_hm5040: Identify this is hm%x%x sensor !", pid_value, ver_value);
+				SENSOR_LOGI("SENSOR_hm5040: Identify this is hm%x%x sensor !", pid_value, ver_value);
 				return ret_value;
 			}
 		} else {
-			SENSOR_PRINT("SENSOR_hm5040: identify fail,pid_value=%d", pid_value);
+			SENSOR_LOGI("SENSOR_hm5040: identify fail,pid_value=%d", pid_value);
 		}
 		i++;
 	}
@@ -2509,7 +2509,7 @@ LOCAL uint32_t _hm5040_write_exposure(uint32_t param)
 	expsure_line=param&0xffff;
 	dummy_line=(param>>0x10)&0x0fff;
 	size_index=(param>>0x1c)&0x0f;
-	SENSOR_PRINT("SENSOR_hm5040: write_exposure line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
+	SENSOR_LOGI("SENSOR_hm5040: write_exposure line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
 
 	if(expsure_line < 3){
 		expsure_line = 3;
@@ -2524,7 +2524,7 @@ LOCAL uint32_t _hm5040_write_exposure(uint32_t param)
 	value = Sensor_ReadReg(0x0340);
 	frame_len_cur |= (value<<0x08)&0xff00;
 
-	SENSOR_PRINT("SENSOR_hm5040: write_exposure line:%d, frame_len_cur:%d, frame_len:%d", expsure_line, frame_len_cur, frame_len);
+	SENSOR_LOGI("SENSOR_hm5040: write_exposure line:%d, frame_len_cur:%d, frame_len:%d", expsure_line, frame_len_cur, frame_len);
 
 	ret_value = Sensor_WriteReg(0x104, 0x01);
 
@@ -2551,10 +2551,10 @@ LOCAL uint32_t _hm5040_write_gain(uint32_t param)
 	uint16_t value=0x00;
 	uint16_t real_gain = 0x00;
 	uint16_t gain_tmp0 = 0,gain_tmp1=0,Reg_Cgain=0,Reg_Fgain=0;
-	SENSOR_PRINT("SENSOR_hm5040gainparam =%x:", param );
+	SENSOR_LOGI("SENSOR_hm5040gainparam =%x:", param );
 	real_gain = ((param&0xf)+16)*(((param>>4)&0x01)+1)*(((param>>5)&0x01)+1)*(((param>>6)&0x01)+1)*(((param>>7)&0x01)+1);
 	real_gain = real_gain*(((param>>8)&0x01)+1)*(((param>>9)&0x01)+1)*(((param>>10)&0x01)+1)*(((param>>11)&0x01)+1);
-	SENSOR_PRINT("SENSOR_hm5040realgain =%x:", real_gain );
+	SENSOR_LOGI("SENSOR_hm5040realgain =%x:", real_gain );
 	gain_tmp0=(real_gain / 16);
 	gain_tmp1=(real_gain  % 16);
 	if(gain_tmp0 < 2)
@@ -2599,7 +2599,7 @@ LOCAL uint32_t _hm5040_write_gain(uint32_t param)
 
 	ret_value = Sensor_WriteReg(0x104, 0x00);
 
-	SENSOR_PRINT("SENSOR_hm5040writegain: 0x0205:%x,0x204:%x, 0x020f:%x,0x20e:%x", Reg_Cgain,Reg_Cgain>>8,Reg_Fgain,Reg_Fgain>>8 );
+	SENSOR_LOGI("SENSOR_hm5040writegain: 0x0205:%x,0x204:%x, 0x020f:%x,0x20e:%x", Reg_Cgain,Reg_Cgain>>8,Reg_Fgain,Reg_Fgain>>8 );
 	return ret_value;
 }
 
@@ -2610,13 +2610,13 @@ LOCAL uint32_t _hm5040_write_af(uint32_t param)
 	uint8_t cmd_val[2] = {0x00};
 	uint16_t  slave_addr = 0;
 	uint16_t cmd_len = 0;
-	SENSOR_PRINT("SENSOR_hm5040: _write_af %d", param);
+	SENSOR_LOGI("SENSOR_hm5040: _write_af %d", param);
 	slave_addr = DW9714_VCM_SLAVE_ADDR;
 	cmd_val[0] = (param&0xfff0)>>4;
 	cmd_val[1] = ((param&0x0f)<<4)|0x09;
 	cmd_len = 2;
 	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
-	SENSOR_PRINT("SENSOR_hm5040: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
+	SENSOR_LOGI("SENSOR_hm5040: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
 	return ret_value;
 }
 LOCAL uint32_t _hm5040_BeforeSnapshot(uint32_t param)
@@ -2632,10 +2632,10 @@ LOCAL uint32_t _hm5040_BeforeSnapshot(uint32_t param)
 
 	param = param & 0xffff;
 	cap_linetime = s_hm5040_Resolution_Trim_Tab[param].line_time;
-	SENSOR_PRINT("SENSOR_hm5040: BeforeSnapshot moe: %d",param);
+	SENSOR_LOGI("SENSOR_hm5040: BeforeSnapshot moe: %d",param);
 
 	if (SENSOR_MODE_PREVIEW_ONE >= param){
-		SENSOR_PRINT("SENSOR_hm5040: prvmode equal to capmode");
+		SENSOR_LOGI("SENSOR_hm5040: prvmode equal to capmode");
 		return SENSOR_SUCCESS;
 	}
 	preview_exposure = _hm5040_get_shutter();
@@ -2643,7 +2643,7 @@ LOCAL uint32_t _hm5040_BeforeSnapshot(uint32_t param)
 	Sensor_SetMode_WaitDone();
 
 	if (prv_linetime == cap_linetime) {
-		SENSOR_PRINT("SENSOR_hm5040: prvline equal to capline");
+		SENSOR_LOGI("SENSOR_hm5040: prvline equal to capline");
 		Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, preview_exposure);
 		return SENSOR_SUCCESS;
 	}
@@ -2671,19 +2671,19 @@ LOCAL uint32_t _hm5040_BeforeSnapshot(uint32_t param)
 
 LOCAL uint32_t _hm5040_after_snapshot(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_hm5040: after_snapshot mode:%d", param);
+	SENSOR_LOGI("SENSOR_hm5040: after_snapshot mode:%d", param);
 	Sensor_SetMode(param);
 	return SENSOR_SUCCESS;
 }
 
 LOCAL uint32_t _hm5040_flash(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_hm5040: param=%d", param);
+	SENSOR_LOGI("SENSOR_hm5040: param=%d", param);
 
 	/* enable flash, disable in _hm5040_BeforeSnapshot */
 	g_flash_mode_en = param;
 	Sensor_SetFlash(param);
-	SENSOR_PRINT_HIGH("end");
+	SENSOR_LOGI("end");
 	return SENSOR_SUCCESS;
 }
 
@@ -2691,7 +2691,7 @@ LOCAL uint32_t _hm5040_StreamOn(uint32_t param)
 {
 	uint8_t value = 0x00;
 
-	SENSOR_PRINT("SENSOR_hm5040: StreamOn");
+	SENSOR_LOGI("SENSOR_hm5040: StreamOn");
 
 	Sensor_WriteReg(0x0100, 0x01);
 	usleep(100*1000);
@@ -2701,7 +2701,7 @@ LOCAL uint32_t _hm5040_StreamOn(uint32_t param)
 
 LOCAL uint32_t _hm5040_StreamOff(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_hm5040: StreamOff");
+	SENSOR_LOGI("SENSOR_hm5040: StreamOff");
 
 	Sensor_WriteReg(0x0100, 0x00);
 	usleep(100*1000);
@@ -2768,7 +2768,7 @@ static uint32_t _hm5040_SetEV(uint32_t param)
 	uint32_t gain = s_hm5040_gain;
 	uint32_t ev = ext_ptr->param;
 
-	SENSOR_PRINT("SENSOR_hm5040: _hm5040_SetEV param: 0x%x", ext_ptr->param);
+	SENSOR_LOGI("SENSOR_hm5040: _hm5040_SetEV param: 0x%x", ext_ptr->param);
 
 	switch(ev) {
 	case SENSOR_HDR_EV_LEVE_0:
@@ -2791,7 +2791,7 @@ LOCAL uint32_t _hm5040_ExtFunc(uint32_t ctl_param)
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr =
 	    (SENSOR_EXT_FUN_PARAM_T_PTR) ctl_param;
-	SENSOR_PRINT_HIGH("0x%x", ext_ptr->cmd);
+	SENSOR_LOGI("0x%x", ext_ptr->cmd);
 
 	switch (ext_ptr->cmd) {
 	case SENSOR_EXT_FUNC_INIT:
@@ -2847,7 +2847,7 @@ LOCAL uint32_t _hm5040_ReadGain(uint32_t param)
 
 	s_hm5040_gain=(int)gain;
 
-	SENSOR_PRINT("SENSOR_hm5040: _hm5040_ReadGain gain: 0x%x", s_hm5040_gain);
+	SENSOR_LOGI("SENSOR_hm5040: _hm5040_ReadGain gain: 0x%x", s_hm5040_gain);
 
 	return rtn;
 }

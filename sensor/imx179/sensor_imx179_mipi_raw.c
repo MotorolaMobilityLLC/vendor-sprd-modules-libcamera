@@ -1063,18 +1063,18 @@ LOCAL unsigned long _imx179_set_video_mode(unsigned long param)
 		return 0;
 
 	if (SENSOR_SUCCESS != Sensor_GetMode(&mode)) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	if (PNULL == s_imx179_video_info[mode].setting_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	sensor_reg_ptr = (SENSOR_REG_T_PTR)&s_imx179_video_info[mode].setting_ptr[param];
 	if (PNULL == sensor_reg_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
@@ -1082,7 +1082,7 @@ LOCAL unsigned long _imx179_set_video_mode(unsigned long param)
 		Sensor_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("0x%02x", param);
+	SENSOR_LOGI("0x%02x", param);
 	return 0;
 }
 
@@ -1821,20 +1821,20 @@ LOCAL unsigned long _dw9174_SRCInit(unsigned long mode)
 			cmd_val[1] = 0xa3;
 			ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 			if(ret_value){
-				SENSOR_PRINT("SENSOR_IMX179: _dw9174_SRCInit fail!1");
+				SENSOR_LOGI("SENSOR_IMX179: _dw9174_SRCInit fail!1");
 			}
 			cmd_val[0] = 0xf2;
 			cmd_val[1] = 0x00;
 			ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 			if(ret_value){
-				SENSOR_PRINT("SENSOR_IMX179: _dw9174_SRCInit fail!2");
+				SENSOR_LOGI("SENSOR_IMX179: _dw9174_SRCInit fail!2");
 			}
 
 			cmd_val[0] = 0xdc;
 			cmd_val[1] = 0x51;
 			ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 			if(ret_value){
-				SENSOR_PRINT("SENSOR_IMX179: _dw9174_SRCInit fail!3");
+				SENSOR_LOGI("SENSOR_IMX179: _dw9174_SRCInit fail!3");
 			}
 		}
 		break;
@@ -1849,7 +1849,7 @@ LOCAL unsigned long _dw9174_SRCInit(unsigned long mode)
 
 LOCAL unsigned long _imx179_GetResolutionTrimTab(unsigned long param)
 {
-	SENSOR_PRINT("0x%lx",  (unsigned long)s_imx179_Resolution_Trim_Tab);
+	SENSOR_LOGI("0x%lx",  (unsigned long)s_imx179_Resolution_Trim_Tab);
 	return (unsigned long) s_imx179_Resolution_Trim_Tab;
 }
 LOCAL unsigned long _imx179_PowerOn(unsigned long power_on)
@@ -1893,7 +1893,7 @@ LOCAL unsigned long _imx179_PowerOn(unsigned long power_on)
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 	}
 
-	SENSOR_PRINT("SENSOR_IMX179: _imx179_Power_On(1:on, 0:off): %d, reset_level %d, dvdd_val %ld", power_on, reset_level, dvdd_val);
+	SENSOR_LOGI("SENSOR_IMX179: _imx179_Power_On(1:on, 0:off): %d, reset_level %d, dvdd_val %ld", power_on, reset_level, dvdd_val);
 	return SENSOR_SUCCESS;
 }
 
@@ -1903,7 +1903,7 @@ LOCAL unsigned long _imx179_cfg_otp(unsigned long  param)
 	struct raw_param_info_tab* tab_ptr = (struct raw_param_info_tab*)s_imx179_raw_param_tab;
 	uint32_t module_id=g_module_id;
 
-	SENSOR_PRINT("SENSOR_IMX179: _imx179_cfg_otp");
+	SENSOR_LOGI("SENSOR_IMX179: _imx179_cfg_otp");
 
 	if(PNULL!=tab_ptr[module_id].cfg_otp){
 		tab_ptr[module_id].cfg_otp(0);
@@ -1917,7 +1917,7 @@ LOCAL uint32_t _imx179_com_Identify_otp(void* param_ptr)
 	uint32_t rtn=SENSOR_FAIL;
 	uint32_t param_id;
 
-	SENSOR_PRINT("SENSOR_IMX179: _imx179_com_Identify_otp");
+	SENSOR_LOGI("SENSOR_IMX179: _imx179_com_Identify_otp");
 
 	/*read param id from sensor omap*/
 	param_id=IMX179_RAW_PARAM_COM;
@@ -1944,17 +1944,17 @@ LOCAL uint32_t _imx179_GetRawInof(void)
 		g_module_id = i;
 		if(RAW_INFO_END_ID==tab_ptr[i].param_id){
 			if(NULL==s_imx179_mipi_raw_info_ptr){
-				SENSOR_PRINT("SENSOR_IMX179: ov5647_GetRawInof no param error");
+				SENSOR_LOGI("SENSOR_IMX179: ov5647_GetRawInof no param error");
 				rtn=SENSOR_FAIL;
 			}
-			SENSOR_PRINT("SENSOR_IMX179: imx179_GetRawInof end");
+			SENSOR_LOGI("SENSOR_IMX179: imx179_GetRawInof end");
 			break;
 		}
 		else if(PNULL!=tab_ptr[i].identify_otp){
 			if(SENSOR_SUCCESS==tab_ptr[i].identify_otp(0))
 			{
 				s_imx179_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
-				SENSOR_PRINT("SENSOR_IMX179: imx179_GetRawInof success");
+				SENSOR_LOGI("SENSOR_IMX179: imx179_GetRawInof success");
 				break;
 			}
 		}
@@ -1984,22 +1984,22 @@ LOCAL unsigned long _imx179_Identify(unsigned long param)
 	uint8_t ver_value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
 
-	SENSOR_PRINT("SENSOR_IMX179: mipi raw identify\n");
+	SENSOR_LOGI("SENSOR_IMX179: mipi raw identify\n");
 	pid_value = Sensor_ReadReg(IMX179_PID_ADDR);
 	pid_value = pid_value & 0x0f;
 	if (IMX179_PID_VALUE == pid_value) {
 		ver_value = Sensor_ReadReg(IMX179_VER_ADDR);
-		SENSOR_PRINT("SENSOR_IMX179: Identify: PID = %x, VER = %x", pid_value, ver_value);
+		SENSOR_LOGI("SENSOR_IMX179: Identify: PID = %x, VER = %x", pid_value, ver_value);
 		if (IMX179_VER_VALUE == ver_value) {
 			_imx179_GetRawInof();
 			Sensor_imx179_InitRawTuneInfo();
 			ret_value = SENSOR_SUCCESS;
-			SENSOR_PRINT("SENSOR_IMX179: it's IMX179 sensor!");
+			SENSOR_LOGI("SENSOR_IMX179: it's IMX179 sensor!");
 		} else {
-			SENSOR_PRINT("SENSOR_IMX179: Identify this is IMX%x%x sensor !", pid_value, ver_value);
+			SENSOR_LOGI("SENSOR_IMX179: Identify this is IMX%x%x sensor !", pid_value, ver_value);
 		}
 	} else {
-		SENSOR_PRINT("SENSOR_IMX179: identify fail,pid_value=%d", pid_value);
+		SENSOR_LOGI("SENSOR_IMX179: identify fail,pid_value=%d", pid_value);
 	}
 
 	return ret_value;
@@ -2028,7 +2028,7 @@ LOCAL unsigned long _imx179_write_exposure(unsigned long param)
 	frame_len_cur = (Sensor_ReadReg(0x0341)) & 0xff;
 	frame_len_cur |= (Sensor_ReadReg(0x0340) << 0x08) & 0xff00;
 
-	SENSOR_PRINT("SENSOR_IMX179: write_exposure line:0x%x, dummy_line:0x%x, frame_len_cur:0x%x, frame_len:0x%x",
+	SENSOR_LOGI("SENSOR_IMX179: write_exposure line:0x%x, dummy_line:0x%x, frame_len_cur:0x%x, frame_len:0x%x",
 		expsure_line, dummy_line, frame_len_cur, frame_len);
 
 	ret_value = Sensor_WriteReg(0x0104, 0x01);
@@ -2063,11 +2063,11 @@ LOCAL unsigned long _imx179_write_gain(unsigned long param)
 
 	//value = real_gain & 0xff;
 	value = (real_gain -16) * 256/real_gain;
-	SENSOR_PRINT("SENSOR_IMX179: Bill@@@ rea_gain %d, %d", real_gain, real_gain/16);
+	SENSOR_LOGI("SENSOR_IMX179: Bill@@@ rea_gain %d, %d", real_gain, real_gain/16);
 	//ret_value = Sensor_WriteReg(0x0104, 0x01);
 	ret_value = Sensor_WriteReg(0x0205, value);
 	//ret_value = Sensor_WriteReg(0x0104, 0x00);
-	SENSOR_PRINT("SENSOR_IMX179: Bill@@@ param: 0x%x, write_gain:0x%x, ret_value: %d", param, value, ret_value);
+	SENSOR_LOGI("SENSOR_IMX179: Bill@@@ param: 0x%x, write_gain:0x%x, ret_value: %d", param, value, ret_value);
 #endif
 	return ret_value;
 }
@@ -2079,14 +2079,14 @@ LOCAL unsigned long _imx179_write_af(unsigned long param)
 	uint16_t slave_addr = 0;
 	uint16_t cmd_len = 0;
 
-	SENSOR_PRINT("SENSOR_IMX179: _write_af %d", param);
+	SENSOR_LOGI("SENSOR_IMX179: _write_af %d", param);
 	slave_addr = DW9714_VCM_SLAVE_ADDR;
 	cmd_val[0] = (param&0x3ff0)>>4;
 	cmd_val[1] = ((param&0x0f)<<4)|0x05;
 	cmd_len = 2;
 	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 
-	SENSOR_PRINT("SENSOR_IMX179: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
+	SENSOR_LOGI("SENSOR_IMX179: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
 	return ret_value;
 }
 
@@ -2101,9 +2101,9 @@ LOCAL unsigned long _imx179_BeforeSnapshot(unsigned long param)
 	uint32_t frame_len = 0x00;
 
 	param = param & 0xffff;
-	SENSOR_PRINT("SENSOR_IMX179: BeforeSnapshot moe: %d",param);
+	SENSOR_LOGI("SENSOR_IMX179: BeforeSnapshot moe: %d",param);
 	if (SENSOR_MODE_PREVIEW_ONE >= param){
-		SENSOR_PRINT("SENSOR_IMX179: prvmode equal to capmode");
+		SENSOR_LOGI("SENSOR_IMX179: prvmode equal to capmode");
 		return SENSOR_SUCCESS;
 	}
 
@@ -2119,17 +2119,17 @@ LOCAL unsigned long _imx179_BeforeSnapshot(unsigned long param)
 	frame_len = Sensor_ReadReg(0x0341)&0xff;
 	frame_len |= (Sensor_ReadReg(0x0340)<<0x08)&0xff00;
 	if(cap_linetime == prv_linetime){
-		SENSOR_PRINT("SENSOR_IMX179: cap_linetime equal with prv_linetime");
+		SENSOR_LOGI("SENSOR_IMX179: cap_linetime equal with prv_linetime");
 		//return SENSOR_SUCCESS;
 	}
 
-	SENSOR_PRINT("BeforeSnapshot: capture_exposure 0x%x, frame_len 0x%x, preview_exposure 0x%x",
+	SENSOR_LOGI("BeforeSnapshot: capture_exposure 0x%x, frame_len 0x%x, preview_exposure 0x%x",
 		capture_exposure, frame_len, preview_exposure);
 
 	Sensor_WriteReg(0x0104, 0x01);
 	if(capture_exposure >= (frame_len - 4)){
 		frame_len = capture_exposure+4;
-		SENSOR_PRINT("BeforeSnapshot: frame_len 0x%x", frame_len);
+		SENSOR_LOGI("BeforeSnapshot: frame_len 0x%x", frame_len);
 		Sensor_WriteReg(0x0341, frame_len & 0xff);
 		Sensor_WriteReg(0x0340, (frame_len >> 0x08) & 0xff);
 	}
@@ -2143,25 +2143,25 @@ LOCAL unsigned long _imx179_BeforeSnapshot(unsigned long param)
 
 LOCAL unsigned long _imx179_after_snapshot(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_imx179: after_snapshot mode:%ld", param);
+	SENSOR_LOGI("SENSOR_imx179: after_snapshot mode:%ld", param);
 	Sensor_SetMode((uint32_t)param);
 	return SENSOR_SUCCESS;
 }
 
 LOCAL unsigned long _imx179_flash(unsigned long param)
 {
-	SENSOR_PRINT("Start:param=%d", param);
+	SENSOR_LOGI("Start:param=%d", param);
 
 	/* enable flash, disable in _imx179_BeforeSnapshot */
 	g_flash_mode_en = param;
 	Sensor_SetFlash(param);
-	SENSOR_PRINT_HIGH("end");
+	SENSOR_LOGI("end");
 	return SENSOR_SUCCESS;
 }
 
 LOCAL unsigned long _imx179_StreamOn(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_imx179: StreamOn");
+	SENSOR_LOGI("SENSOR_imx179: StreamOn");
 
 	Sensor_WriteReg(0x0100, 0x01);
 
@@ -2170,7 +2170,7 @@ LOCAL unsigned long _imx179_StreamOn(unsigned long param)
 
 LOCAL unsigned long _imx179_StreamOff(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_imx179: StreamOff");
+	SENSOR_LOGI("SENSOR_imx179: StreamOff");
 
 	Sensor_WriteReg(0x0100, 0x00);
 	usleep(10*1000);
@@ -2259,7 +2259,7 @@ static unsigned long _imx179_SetEV(unsigned long param)
 	uint32_t gain = s_imx179_gain;
 	uint32_t ev = ext_ptr->param;
 
-	SENSOR_PRINT("SENSOR: _ov5640_SetEV param: 0x%x", ext_ptr->param);
+	SENSOR_LOGI("SENSOR: _ov5640_SetEV param: 0x%x", ext_ptr->param);
 
 	switch(ev) {
 	case SENSOR_HDR_EV_LEVE_0:
@@ -2281,7 +2281,7 @@ LOCAL unsigned long _imx179_ExtFunc(unsigned long ctl_param)
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr =
 	    (SENSOR_EXT_FUN_PARAM_T_PTR) ctl_param;
-	SENSOR_PRINT_HIGH("0x%x", ext_ptr->cmd);
+	SENSOR_LOGI("0x%x", ext_ptr->cmd);
 
 	switch (ext_ptr->cmd) {
 	case SENSOR_EXT_FUNC_INIT:
@@ -2332,6 +2332,6 @@ LOCAL uint32_t _imx179_ReadGain(uint16_t *data)
 		*data = value;
 	}
 
-	SENSOR_PRINT("_imx179_ReadGain: gain %d", value);
+	SENSOR_LOGI("_imx179_ReadGain: gain %d", value);
 	return value;
 }

@@ -658,29 +658,29 @@ static struct sensor_raw_info* Sensor_GetContext(SENSOR_HW_HANDLE handle)
 				if(0==access(name,R_OK))\
 				{\
 					FILE* fp = NULL;\
-					SENSOR_PRINT("param file %s exists",name);\
+					SENSOR_LOGI("param file %s exists",name);\
 					if( NULL!=(fp=fopen(name,"rb")) ){\
 						fread((void*)x2,1,sizeof(x2),fp);\
 						fclose(fp);\
 					}else{\
-						SENSOR_PRINT("param open %s failure",name);\
+						SENSOR_LOGI("param open %s failure",name);\
 					}\
 				}\
 				memset(name,0,sizeof(name))
 
 static unsigned long _s5k3p3sm_GetResolutionTrimTab(SENSOR_HW_HANDLE handle, unsigned long param)
 {
-	SENSOR_PRINT("0x%lx",  (unsigned long)s_s5k3p3sm_Resolution_Trim_Tab);
+	SENSOR_LOGI("0x%lx",  (unsigned long)s_s5k3p3sm_Resolution_Trim_Tab);
 	return (unsigned long) s_s5k3p3sm_Resolution_Trim_Tab;
 }
 
 static uint32_t _s5k3p3sm_init_mode_fps_info(SENSOR_HW_HANDLE handle)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
-	SENSOR_PRINT("_s5k3p3sm_init_mode_fps_info:E");
+	SENSOR_LOGI("_s5k3p3sm_init_mode_fps_info:E");
 	if(!s_s5k3p3sm_mode_fps_info.is_init) {
 		uint32_t i,modn,tempfps = 0;
-		SENSOR_PRINT("_s5k3p3sm_init_mode_fps_info:start init");
+		SENSOR_LOGI("_s5k3p3sm_init_mode_fps_info:start init");
 		for(i = 0;i < NUMBER_OF_ARRAY(s_s5k3p3sm_Resolution_Trim_Tab); i++) {
 			//max fps should be multiple of 30,it calulated from line_time and frame_line
 			tempfps = s_s5k3p3sm_Resolution_Trim_Tab[i].line_time*s_s5k3p3sm_Resolution_Trim_Tab[i].frame_line;
@@ -701,31 +701,31 @@ static uint32_t _s5k3p3sm_init_mode_fps_info(SENSOR_HW_HANDLE handle)
 						s_s5k3p3sm_mode_fps_info.sensor_mode_fps[i].max_fps;
 				}
 			}
-			SENSOR_PRINT("mode %d,tempfps %d,frame_len %d,line_time: %d ",i,tempfps,
+			SENSOR_LOGI("mode %d,tempfps %d,frame_len %d,line_time: %d ",i,tempfps,
 					s_s5k3p3sm_Resolution_Trim_Tab[i].frame_line,
 					s_s5k3p3sm_Resolution_Trim_Tab[i].line_time);
-			SENSOR_PRINT("mode %d,max_fps: %d ",
+			SENSOR_LOGI("mode %d,max_fps: %d ",
 					i,s_s5k3p3sm_mode_fps_info.sensor_mode_fps[i].max_fps);
-			SENSOR_PRINT("is_high_fps: %d,highfps_skip_num %d",
+			SENSOR_LOGI("is_high_fps: %d,highfps_skip_num %d",
 					s_s5k3p3sm_mode_fps_info.sensor_mode_fps[i].is_high_fps,
 					s_s5k3p3sm_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num);
 		}
 		s_s5k3p3sm_mode_fps_info.is_init = 1;
 	}
-	SENSOR_PRINT("_s5k3p3sm_init_mode_fps_info:X");
+	SENSOR_LOGI("_s5k3p3sm_init_mode_fps_info:X");
 	return rtn;
 }
 
 SENSOR_HW_HANDLE _s5k3p3sm_Create(void *privatedata)
 {
-	SENSOR_PRINT("_s5k3p3sm_Create  IN");
+	SENSOR_LOGI("_s5k3p3sm_Create  IN");
 	if (NULL == privatedata) {
-		SENSOR_PRINT("_s5k3p3sm_Create invalied para");
+		SENSOR_LOGI("_s5k3p3sm_Create invalied para");
 		return NULL;
 	}
 	SENSOR_HW_HANDLE sensor_hw_handle = (SENSOR_HW_HANDLE)malloc(sizeof(SENSOR_HW_HANDLE));
 	if (NULL == sensor_hw_handle) {
-		SENSOR_PRINT("failed to create sensor_hw_handle");
+		SENSOR_LOGI("failed to create sensor_hw_handle");
 		return NULL;
 	}
 	cmr_bzero(sensor_hw_handle, sizeof(SENSOR_HW_HANDLE));
@@ -736,9 +736,9 @@ SENSOR_HW_HANDLE _s5k3p3sm_Create(void *privatedata)
 
 void _s5k3p3sm_Destroy(SENSOR_HW_HANDLE handle)
 {
-	SENSOR_PRINT("_s5k3p3sm_Destroy  IN");
+	SENSOR_LOGI("_s5k3p3sm_Destroy  IN");
 	if (NULL == handle) {
-		SENSOR_PRINT("_s5k3p3sm_Destroy handle null");
+		SENSOR_LOGI("_s5k3p3sm_Destroy handle null");
 	}
 	free((void*)handle->privatedata);
 	handle->privatedata = NULL;
@@ -756,18 +756,18 @@ static unsigned long _s5k3p3sm_Identify(SENSOR_HW_HANDLE handle, unsigned long p
 	uint16_t i=0;
 	uint16_t ret;
 
-	SENSOR_PRINT_ERR("SENSOR_S5K3P3SM: mipi raw identify\n");
+	SENSOR_LOGI("SENSOR_S5K3P3SM: mipi raw identify\n");
 
 	pid_value = Sensor_ReadReg(S5K3P3SM_PID_ADDR);
 	ver_value = Sensor_ReadReg(S5K3P3SM_VER_ADDR);
 
 	if (S5K3P3SM_PID_VALUE == pid_value) {
-		SENSOR_PRINT("SENSOR_S5K3P3SM: Identify: PID = %x, VER = %x", pid_value, ver_value);
+		SENSOR_LOGI("SENSOR_S5K3P3SM: Identify: PID = %x, VER = %x", pid_value, ver_value);
 		if (S5K3P3SM_VER_VALUE == ver_value) {
-			SENSOR_PRINT_ERR("SENSOR_S5K3P3SM: this is S5K3P3SM sensor !");
+			SENSOR_LOGI("SENSOR_S5K3P3SM: this is S5K3P3SM sensor !");
 			ret_value=_s5k3p3sm_GetRawInof(handle);
 			if (SENSOR_SUCCESS != ret_value) {
-				SENSOR_PRINT_ERR("SENSOR_S5K3P3SM: the module is unknow error !");
+				SENSOR_LOGI("SENSOR_S5K3P3SM: the module is unknow error !");
 			}
 			#if defined(CONFIG_CAMERA_OIS_FUNC)
 				for(i=0;i<3;i++) {
@@ -781,11 +781,11 @@ static unsigned long _s5k3p3sm_Identify(SENSOR_HW_HANDLE handle, unsigned long p
 			#endif
 			_s5k3p3sm_init_mode_fps_info(handle);
 		} else {
-			SENSOR_PRINT_ERR("SENSOR_S5K3P3SM: Identify this is hm%x%x sensor !", pid_value, ver_value);
+			SENSOR_LOGI("SENSOR_S5K3P3SM: Identify this is hm%x%x sensor !", pid_value, ver_value);
 			return ret_value;
 		}
 	} else {
-		SENSOR_PRINT_ERR("SENSOR_S5K3P3SM: identify fail,pid_value=%d, ver_value = %d", pid_value, ver_value);
+		SENSOR_LOGI("SENSOR_S5K3P3SM: identify fail,pid_value=%d, ver_value = %d", pid_value, ver_value);
 	}
 
 	return ret_value;
@@ -811,7 +811,7 @@ static unsigned long _s5k3p3sm_write_exp_dummy(SENSOR_HW_HANDLE handle, uint16_t
 	uint32_t max_frame_len=0x00;
 	uint32_t linetime = 0;
 
-	SENSOR_PRINT("SENSOR_S5K3P3SM: write_exp_dummy line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
+	SENSOR_LOGI("SENSOR_S5K3P3SM: write_exp_dummy line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
 	max_frame_len=_s5k3p3sm_GetMaxFrameLine(size_index);
 	if (expsure_line < 3) {
 		expsure_line = 3;
@@ -858,7 +858,7 @@ static unsigned long _s5k3p3sm_write_exposure(SENSOR_HW_HANDLE handle, unsigned 
 	dummy_line=(param>>0x10)&0x0fff;
 	size_index=(param>>0x1c)&0x0f;
 
-	SENSOR_PRINT("SENSOR_S5K3P3SM: write_exposure line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
+	SENSOR_LOGI("SENSOR_S5K3P3SM: write_exposure line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
 
 	ret_value = _s5k3p3sm_write_exp_dummy(handle, expsure_line, dummy_line, size_index);
 
@@ -890,9 +890,9 @@ static int s5k3p3sm_otp_read_data(SENSOR_HW_HANDLE handle)
 	cmr_u32 checksum = 0;
 
 	s5k3p3_otp_info.program_flag = s5k3p3sm_i2c_read_otp(0x0000);
-	SENSOR_PRINT("program_flag = %d", s5k3p3_otp_info.program_flag);
+	SENSOR_LOGI("program_flag = %d", s5k3p3_otp_info.program_flag);
 	if (1 != s5k3p3_otp_info.program_flag) {
-		SENSOR_PRINT("failed to read otp or the otp is wrong data");
+		SENSOR_LOGI("failed to read otp or the otp is wrong data");
 		return -1;
 	}
 	checksum += s5k3p3_otp_info.program_flag;
@@ -942,7 +942,7 @@ static int s5k3p3sm_otp_read_data(SENSOR_HW_HANDLE handle)
 
 	s5k3p3_otp_info.af_info.flag = s5k3p3sm_i2c_read_otp(0x06A0);
 	if (0 == s5k3p3_otp_info.af_info.flag)
-		SENSOR_PRINT("af otp is wrong");
+		SENSOR_LOGI("af otp is wrong");
 
 	checksum += s5k3p3_otp_info.af_info.flag;
 	/* cause checksum, skip af flag */
@@ -958,10 +958,10 @@ static int s5k3p3sm_otp_read_data(SENSOR_HW_HANDLE handle)
 	s5k3p3_otp_info.af_info.macro_cali = (high_val << 8 | low_val);
 
 	s5k3p3_otp_info.checksum = s5k3p3sm_i2c_read_otp(0x06A5);
-	SENSOR_PRINT("checksum = 0x%x s5k3p3_otp_info.checksum = 0x%x", checksum, s5k3p3_otp_info.checksum);
+	SENSOR_LOGI("checksum = 0x%x s5k3p3_otp_info.checksum = 0x%x", checksum, s5k3p3_otp_info.checksum);
 
 	if ((checksum % 0xff) != s5k3p3_otp_info.checksum) {
-		SENSOR_PRINT_ERR("checksum error!");
+		SENSOR_LOGI("checksum error!");
 		s5k3p3_otp_info.program_flag = 0;
 		return -1;
 	}
@@ -972,18 +972,18 @@ static int s5k3p3sm_otp_read_data(SENSOR_HW_HANDLE handle)
 static unsigned long s5k3p3sm_otp_read(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* param)
 {
 	struct sensor_otp_cust_info *otp_info = NULL;
-	SENSOR_PRINT("E");
+	SENSOR_LOGI("E");
 	s5k3p3sm_otp_read_data(handle);
 	otp_info = &s5k3p3_otp_info;
 
 	if (1 != otp_info->program_flag) {
-		SENSOR_PRINT_ERR("otp error");
+		SENSOR_LOGI("otp error");
 		param->pval = NULL;
 		return -1;
 	} else {
 		param->pval = (void *)otp_info;
 	}
-	SENSOR_PRINT("param->pval = %p", param->pval);
+	SENSOR_LOGI("param->pval = %p", param->pval);
 
 	return 0;
 }
@@ -998,20 +998,20 @@ static unsigned long s5k3p3sm_parse_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* p
 	cmr_u8 low_val = 0;
 	cmr_u32 checksum = 0;
 
-	SENSOR_PRINT("E");
+	SENSOR_LOGI("E");
 	if (NULL == param->pval) {
-		SENSOR_PRINT("s5k3p3sm_parse_otp is NULL data");
+		SENSOR_LOGI("s5k3p3sm_parse_otp is NULL data");
 		return -1;
 	}
 	buff = param->pval;
 
 	if (1 != buff[0]) {
-		SENSOR_PRINT("s5k3p3sm_parse_otp is wrong data");
+		SENSOR_LOGI("s5k3p3sm_parse_otp is wrong data");
 		param->pval = NULL;
 		return -1;
 	} else {
 		s5k3p3_otp_info.program_flag = buff[i++];
-		SENSOR_PRINT("program_flag = %d", s5k3p3_otp_info.program_flag);
+		SENSOR_LOGI("program_flag = %d", s5k3p3_otp_info.program_flag);
 
 		checksum += s5k3p3_otp_info.program_flag;
 		s5k3p3_otp_info.module_info.year = buff[i++];
@@ -1059,7 +1059,7 @@ static unsigned long s5k3p3sm_parse_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* p
 
 		s5k3p3_otp_info.af_info.flag = buff[i++];
 		if (0 == s5k3p3_otp_info.af_info.flag)
-			SENSOR_PRINT("af otp is wrong");
+			SENSOR_LOGI("af otp is wrong");
 
 		checksum += s5k3p3_otp_info.af_info.flag;
 		/* cause checksum, skip af flag */
@@ -1075,11 +1075,11 @@ static unsigned long s5k3p3sm_parse_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* p
 		s5k3p3_otp_info.af_info.macro_cali = (high_val << 8 | low_val);
 
 		s5k3p3_otp_info.checksum = buff[i++];
-		SENSOR_PRINT("checksum = 0x%x s5k3p3_otp_info.checksum = 0x%x,r=%d,g=%d,b=%d", checksum, s5k3p3_otp_info.checksum
+		SENSOR_LOGI("checksum = 0x%x s5k3p3_otp_info.checksum = 0x%x,r=%d,g=%d,b=%d", checksum, s5k3p3_otp_info.checksum
 			,s5k3p3_otp_info.isp_awb_info.gain_r,s5k3p3_otp_info.isp_awb_info.gain_g,s5k3p3_otp_info.isp_awb_info.gain_b);
 
 		if ((checksum % 0xff) != s5k3p3_otp_info.checksum) {
-			SENSOR_PRINT_ERR("checksum error!");
+			SENSOR_LOGI("checksum error!");
 			s5k3p3_otp_info.program_flag = 0;
 			param->pval = NULL;
 			return -1;
@@ -1087,7 +1087,7 @@ static unsigned long s5k3p3sm_parse_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* p
 		otp_info = &s5k3p3_otp_info;
 		param->pval = (void *)otp_info;
 	}
-	SENSOR_PRINT("param->pval = %p", param->pval);
+	SENSOR_LOGI("param->pval = %p", param->pval);
 
 	return 0;
 }
@@ -1102,7 +1102,7 @@ static unsigned long _s5k3p3sm_ex_write_exposure(SENSOR_HW_HANDLE handle, unsign
 
 
 	if (!param) {
-		SENSOR_PRINT_ERR("param is NULL !!!");
+		SENSOR_LOGI("param is NULL !!!");
 		return ret_value;
 	}
 
@@ -1127,7 +1127,7 @@ static unsigned long _s5k3p3sm_update_gain(SENSOR_HW_HANDLE handle, unsigned lon
 
 	real_gain = param >> 2; // / 128 * 32;
 
-	SENSOR_PRINT("SENSOR_S5K3P3SM: real_gain:%d, param: %d", real_gain, param);
+	SENSOR_LOGI("SENSOR_S5K3P3SM: real_gain:%d, param: %d", real_gain, param);
 
 
 	if (real_gain <= 16*32) {
@@ -1146,7 +1146,7 @@ static unsigned long _s5k3p3sm_update_gain(SENSOR_HW_HANDLE handle, unsigned lon
 	ret_value = Sensor_WriteReg(0x214, d_gain);
 
 //	ret_value = Sensor_WriteReg(0x104, 0x00);
-	SENSOR_PRINT("SENSOR_S5K3P3SM: a_gain:0x%x, d_gain: 0x%x", a_gain, d_gain);
+	SENSOR_LOGI("SENSOR_S5K3P3SM: a_gain:0x%x, d_gain: 0x%x", a_gain, d_gain);
 
 	return ret_value;
 
@@ -1155,7 +1155,7 @@ static unsigned long _s5k3p3sm_update_gain(SENSOR_HW_HANDLE handle, unsigned lon
 static unsigned long _s5k3p3sm_write_gain(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
-	SENSOR_PRINT("SENSOR_S5K3P3SM: param: %d", param);
+	SENSOR_LOGI("SENSOR_S5K3P3SM: param: %d", param);
 	_s5k3p3sm_update_gain(handle, param);
 	s_sensor_ev_info.preview_gain = param;
 
@@ -1187,7 +1187,7 @@ static uint32_t _s5k3p3sm_ReadGain(SENSOR_HW_HANDLE handle, uint32_t param)
 
  #endif
 	//s_s5k3p3sm_gain=(int)gain;
-	SENSOR_PRINT("SENSOR_s5k3p3sm: _s5k3p3sm_ReadGain gain: 0x%x", gain);
+	SENSOR_LOGI("SENSOR_s5k3p3sm: _s5k3p3sm_ReadGain gain: 0x%x", gain);
 	return rtn;
 
 }
@@ -1204,10 +1204,10 @@ static unsigned long _s5k3p3sm_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned 
 	uint32_t frame_len = 0x00;
 	uint32_t gain = 0;
 
-	SENSOR_PRINT("SENSOR_s5k3p3sm: BeforeSnapshot mode: 0x%08lx,capture_mode:%d",param,capture_mode);
+	SENSOR_LOGI("SENSOR_s5k3p3sm: BeforeSnapshot mode: 0x%08lx,capture_mode:%d",param,capture_mode);
 
 	if (preview_mode == capture_mode) {
-		SENSOR_PRINT("SENSOR_s5k3p3sm: prv mode equal to capmode");
+		SENSOR_LOGI("SENSOR_s5k3p3sm: prv mode equal to capmode");
 		goto CFG_INFO;
 	}
 
@@ -1226,7 +1226,7 @@ static unsigned long _s5k3p3sm_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned 
 		if(capture_exposure > frame_len*2)
 			break;
 	}*/
-	SENSOR_PRINT("SENSOR_s5k3p3sm: prev_exp=%d,cap_exp=%d,gain=%d",preview_exposure,capture_exposure,gain);
+	SENSOR_LOGI("SENSOR_s5k3p3sm: prev_exp=%d,cap_exp=%d,gain=%d",preview_exposure,capture_exposure,gain);
 
 	_s5k3p3sm_write_exp_dummy(handle, capture_exposure, 0, capture_mode);
 	_s5k3p3sm_update_gain(handle, gain);
@@ -1263,10 +1263,10 @@ static uint32_t _s5k3p3sm_GetRawInof(SENSOR_HW_HANDLE handle)
 		g_module_id = i;
 		if (RAW_INFO_END_ID==tab_ptr[i].param_id) {
 			if (NULL==s_s5k3p3sm_mipi_raw_info_ptr) {
-				SENSOR_PRINT("SENSOR_S5K3P3SM: _s5k3p3sm_GetRawInof no param error");
+				SENSOR_LOGI("SENSOR_S5K3P3SM: _s5k3p3sm_GetRawInof no param error");
 				rtn=SENSOR_FAIL;
 			}
-			SENSOR_PRINT("SENSOR_S5K3P3SM: _s5k3p3sm_GetRawInof end");
+			SENSOR_LOGI("SENSOR_S5K3P3SM: _s5k3p3sm_GetRawInof end");
 			break;
 		}
 		else if (PNULL!=tab_ptr[i].identify_otp) {
@@ -1283,10 +1283,10 @@ static uint32_t _s5k3p3sm_GetRawInof(SENSOR_HW_HANDLE handle)
 
 				s_s5k3p3sm_mipi_raw_info_ptr = (oem_module_t *)dlsym(handle, sym);
 				if (s_s5k3p3sm_mipi_raw_info_ptr == NULL) {
-					SENSOR_PRINT("load: couldn't find symbol %s", sym);
+					SENSOR_LOGI("load: couldn't find symbol %s", sym);
 				} else {
 					//s_s5k3p3sm_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
-					SENSOR_PRINT("SENSOR_S5K3P3SM: _s5k3p3sm_GetRawInof success");
+					SENSOR_LOGI("SENSOR_S5K3P3SM: _s5k3p3sm_GetRawInof success");
 				}
 				break;
 			}
@@ -1309,26 +1309,26 @@ static unsigned long _s5k3p3sm_GetExifInfo(SENSOR_HW_HANDLE handle, unsigned lon
 
 static unsigned long _s5k3p3sm_StreamOn(SENSOR_HW_HANDLE handle, unsigned long param)
 {
-	SENSOR_PRINT_ERR("SENSOR_S5K3P3SM: StreamOn");
+	SENSOR_LOGI("SENSOR_S5K3P3SM: StreamOn");
 
 	Sensor_WriteReg(0x0100, 0x0100);
 #if 1
 	cmr_s8 value1[255];
 	property_get("debug.camera.test.mode",value1,"0");
 	if(!strcmp(value1,"1")){
-		SENSOR_PRINT_ERR("SENSOR_s5k3p3sm: enable test mode");
+		SENSOR_LOGI("SENSOR_s5k3p3sm: enable test mode");
 		Sensor_WriteReg(0x0600, 0x0002);
 	}
 #endif
 
-	SENSOR_PRINT_ERR("SENSOR_S5K3P3SM: StreamOn end");
+	SENSOR_LOGI("SENSOR_S5K3P3SM: StreamOn end");
 
 	return 0;
 }
 
 static unsigned long _s5k3p3sm_StreamOff(SENSOR_HW_HANDLE handle, unsigned long param)
 {
-	SENSOR_PRINT_ERR("SENSOR_S5K3P3SM: StreamOff");
+	SENSOR_LOGI("SENSOR_S5K3P3SM: StreamOff");
 
 	Sensor_WriteReg(0x0100, 0x0000);
 	usleep(120*1000);
@@ -1341,7 +1341,7 @@ static uint32_t _s5k3p3sm_com_Identify_otp(SENSOR_HW_HANDLE handle, void* param_
 	uint32_t rtn=SENSOR_FAIL;
 	uint32_t param_id;
 
-	SENSOR_PRINT("SENSOR_S5K3P3SM: _s5k3p3sm_com_Identify_otp");
+	SENSOR_LOGI("SENSOR_S5K3P3SM: _s5k3p3sm_com_Identify_otp");
 
 	/*read param id from sensor omap*/
 	param_id=S5K3P3SM_RAW_PARAM_COM;
@@ -1383,7 +1383,7 @@ static unsigned long _s5k3p3sm_PowerOn(SENSOR_HW_HANDLE handle, unsigned long po
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 	}
 
-	SENSOR_PRINT_ERR("SENSOR_S5K3P3SM: _s5k3p3sm_PowerOn(1:on, 0:off): %ld, reset_level %d, dvdd_val %d", power_on, reset_level, dvdd_val);
+	SENSOR_LOGI("SENSOR_S5K3P3SM: _s5k3p3sm_PowerOn(1:on, 0:off): %ld, reset_level %d, dvdd_val %d", power_on, reset_level, dvdd_val);
 	return SENSOR_SUCCESS;
 }
 
@@ -1394,7 +1394,7 @@ static uint32_t _s5k3p3sm_write_otp_gain(SENSOR_HW_HANDLE handle, uint32_t *para
 	float a_gain = 0;
 	float d_gain = 0;
 	float real_gain=0.0f;
-	SENSOR_PRINT("SENSOR_s5k4h8yx: write_gain:0x%x\n", *param);
+	SENSOR_LOGI("SENSOR_s5k4h8yx: write_gain:0x%x\n", *param);
 
         //ret_value = Sensor_WriteReg(0x104, 0x01);
 	if( (*param/4)>0x200){
@@ -1413,7 +1413,7 @@ static uint32_t _s5k3p3sm_write_otp_gain(SENSOR_HW_HANDLE handle, uint32_t *para
 	ret_value = Sensor_WriteReg(0x212, (uint32_t)d_gain);
 	ret_value = Sensor_WriteReg(0x214, (uint32_t)d_gain);
 
-	SENSOR_PRINT("SENSOR_s5k3p3sm: write_gain:0x%x\n", *param);
+	SENSOR_LOGI("SENSOR_s5k3p3sm: write_gain:0x%x\n", *param);
 /*
 	//ret_value = Sensor_WriteReg(0x104, 0x01);
 	value = (*param)>>0x08;
@@ -1437,7 +1437,7 @@ static uint32_t _s5k3p3sm_read_otp_gain(SENSOR_HW_HANDLE handle, uint32_t *param
 	#else
 	*param = s_set_gain;
 	#endif
-	SENSOR_PRINT("SENSOR_s5k3p3sm: gain: %d", *param);
+	SENSOR_LOGI("SENSOR_s5k3p3sm: gain: %d", *param);
 
 	return rtn;
 }
@@ -1487,17 +1487,17 @@ static uint32_t _s5k3p3sm_get_static_info(SENSOR_HW_HANDLE handle, uint32_t *par
 #endif
 	ex_info->pos_dis.up2hori = up;
 	ex_info->pos_dis.hori2down = down;
-	SENSOR_PRINT("SENSOR_s5k3p3sm: f_num: %d", ex_info->f_num);
-	SENSOR_PRINT("SENSOR_s5k3p3sm: max_fps: %d", ex_info->max_fps);
-	SENSOR_PRINT("SENSOR_s5k3p3sm: max_adgain: %d", ex_info->max_adgain);
-	SENSOR_PRINT("SENSOR_s5k3p3sm: ois_supported: %d", ex_info->ois_supported);
-	SENSOR_PRINT("SENSOR_s5k3p3sm: pdaf_supported: %d", ex_info->pdaf_supported);
-	SENSOR_PRINT("SENSOR_s5k3p3sm: exp_valid_frame_num: %d", ex_info->exp_valid_frame_num);
-	SENSOR_PRINT("SENSOR_s5k3p3sm: clam_level: %d", ex_info->clamp_level);
-	SENSOR_PRINT("SENSOR_s5k3p3sm: adgain_valid_frame_num: %d", ex_info->adgain_valid_frame_num);
-	SENSOR_PRINT("SENSOR_s5k3p3sm: sensor name is: %s", ex_info->name);
-	SENSOR_PRINT("SENSOR_s5k3p3sm: sensor version info is: %s", ex_info->sensor_version_info);
-	SENSOR_PRINT("SENSOR_s5k3p3sm: up2h %d h2down %d", ex_info->pos_dis.up2hori, ex_info->pos_dis.hori2down);
+	SENSOR_LOGI("SENSOR_s5k3p3sm: f_num: %d", ex_info->f_num);
+	SENSOR_LOGI("SENSOR_s5k3p3sm: max_fps: %d", ex_info->max_fps);
+	SENSOR_LOGI("SENSOR_s5k3p3sm: max_adgain: %d", ex_info->max_adgain);
+	SENSOR_LOGI("SENSOR_s5k3p3sm: ois_supported: %d", ex_info->ois_supported);
+	SENSOR_LOGI("SENSOR_s5k3p3sm: pdaf_supported: %d", ex_info->pdaf_supported);
+	SENSOR_LOGI("SENSOR_s5k3p3sm: exp_valid_frame_num: %d", ex_info->exp_valid_frame_num);
+	SENSOR_LOGI("SENSOR_s5k3p3sm: clam_level: %d", ex_info->clamp_level);
+	SENSOR_LOGI("SENSOR_s5k3p3sm: adgain_valid_frame_num: %d", ex_info->adgain_valid_frame_num);
+	SENSOR_LOGI("SENSOR_s5k3p3sm: sensor name is: %s", ex_info->name);
+	SENSOR_LOGI("SENSOR_s5k3p3sm: sensor version info is: %s", ex_info->sensor_version_info);
+	SENSOR_LOGI("SENSOR_s5k3p3sm: up2h %d h2down %d", ex_info->pos_dis.up2hori, ex_info->pos_dis.hori2down);
 
 	return rtn;
 }
@@ -1517,10 +1517,10 @@ static uint32_t _s5k3p3sm_get_fps_info(SENSOR_HW_HANDLE handle, uint32_t *param)
 	fps_info->min_fps = s_s5k3p3sm_mode_fps_info.sensor_mode_fps[sensor_mode].min_fps;
 	fps_info->is_high_fps = s_s5k3p3sm_mode_fps_info.sensor_mode_fps[sensor_mode].is_high_fps;
 	fps_info->high_fps_skip_num = s_s5k3p3sm_mode_fps_info.sensor_mode_fps[sensor_mode].high_fps_skip_num;
-	SENSOR_PRINT("SENSOR_s5k3p3sm: mode %d, max_fps: %d",fps_info->mode, fps_info->max_fps);
-	SENSOR_PRINT("SENSOR_s5k3p3sm: min_fps: %d", fps_info->min_fps);
-	SENSOR_PRINT("SENSOR_s5k3p3sm: is_high_fps: %d", fps_info->is_high_fps);
-	SENSOR_PRINT("SENSOR_s5k3p3sm: high_fps_skip_num: %d", fps_info->high_fps_skip_num);
+	SENSOR_LOGI("SENSOR_s5k3p3sm: mode %d, max_fps: %d",fps_info->mode, fps_info->max_fps);
+	SENSOR_LOGI("SENSOR_s5k3p3sm: min_fps: %d", fps_info->min_fps);
+	SENSOR_LOGI("SENSOR_s5k3p3sm: is_high_fps: %d", fps_info->is_high_fps);
+	SENSOR_LOGI("SENSOR_s5k3p3sm: high_fps_skip_num: %d", fps_info->high_fps_skip_num);
 
 	return rtn;
 }
@@ -1531,12 +1531,12 @@ static unsigned long _s5k3p3sm_access_val(SENSOR_HW_HANDLE handle, unsigned long
 	SENSOR_VAL_T* param_ptr = (SENSOR_VAL_T*)param;
 	uint16_t tmp;
 
-	SENSOR_PRINT("SENSOR_s5k3p3sm: _s5k3p3sm_access_val E param_ptr = %p", param_ptr);
+	SENSOR_LOGI("SENSOR_s5k3p3sm: _s5k3p3sm_access_val E param_ptr = %p", param_ptr);
 	if(!param_ptr){
 		return rtn;
 	}
 
-	SENSOR_PRINT("SENSOR_s5k3p3sm: param_ptr->type=%x", param_ptr->type);
+	SENSOR_LOGI("SENSOR_s5k3p3sm: param_ptr->type=%x", param_ptr->type);
 	switch(param_ptr->type)
 	{
 		case SENSOR_VAL_TYPE_INIT_OTP:
@@ -1585,7 +1585,7 @@ static unsigned long _s5k3p3sm_access_val(SENSOR_HW_HANDLE handle, unsigned long
 			break;
 	}
 
-	SENSOR_PRINT("SENSOR_s5k3p3sm: _s5k3p3sm_access_val X");
+	SENSOR_LOGI("SENSOR_s5k3p3sm: _s5k3p3sm_access_val X");
 
 	return rtn;
 }

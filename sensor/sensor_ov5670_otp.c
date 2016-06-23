@@ -370,7 +370,7 @@ LOCAL uint32_t ov5670_check_otp_module_id(void)
 	uint16_t stream_value = 0;
 
 	stream_value = Sensor_ReadReg(0x0100);
-	SENSOR_PRINT("ov5670_check_otp_module_id:stream_value = 0x%x\n", stream_value);
+	SENSOR_LOGI("ov5670_check_otp_module_id:stream_value = 0x%x\n", stream_value);
 	if(1 != (stream_value & 0x01))
 	{
 		Sensor_WriteReg(0x0100, 0x01);
@@ -394,7 +394,7 @@ LOCAL uint32_t ov5670_check_otp_module_id(void)
 	if(1 != (stream_value & 0x01))
 		Sensor_WriteReg(0x0100, stream_value);
 
-	SENSOR_PRINT("read ov5670 otp  module_id = %x \n", current_otp.module_integrator_id);
+	SENSOR_LOGI("read ov5670 otp  module_id = %x \n", current_otp.module_integrator_id);
 
 	return current_otp.module_integrator_id;
 }
@@ -404,13 +404,13 @@ LOCAL uint32_t _ov5670_Truly_Identify_otp(void* param_ptr)
 	uint32_t rtn=SENSOR_FAIL;
 	uint32_t param_id;
 
-	SENSOR_PRINT("SENSOR_OV5670: _ov5670_Truly_Identify_otp");
+	SENSOR_LOGI("SENSOR_OV5670: _ov5670_Truly_Identify_otp");
 
 	/*read param id from sensor omap*/
 	param_id=ov5670_check_otp_module_id();;
 
 	if(OV5670_RAW_PARAM_Truly==param_id){
-		SENSOR_PRINT("SENSOR_OV5670: This is Truly module!!\n");
+		SENSOR_LOGI("SENSOR_OV5670: This is Truly module!!\n");
 		RG_Ratio_Typical = 0x152;
 		BG_Ratio_Typical = 0x137;
 		rtn=SENSOR_SUCCESS;
@@ -424,13 +424,13 @@ LOCAL uint32_t _ov5670_Sunny_Identify_otp(void* param_ptr)
 	uint32_t rtn=SENSOR_FAIL;
 	uint32_t param_id;
 
-	SENSOR_PRINT("SENSOR_OV5670: _ov5670_Sunny_Identify_otp");
+	SENSOR_LOGI("SENSOR_OV5670: _ov5670_Sunny_Identify_otp");
 
 	/*read param id from sensor omap*/
 	param_id=ov5670_check_otp_module_id();
 
 	if(OV5670_RAW_PARAM_Sunny==param_id){
-		SENSOR_PRINT("SENSOR_OV5670: This is Sunny module!!\n");
+		SENSOR_LOGI("SENSOR_OV5670: This is Sunny module!!\n");
 		RG_Ratio_Typical = 386;
 		BG_Ratio_Typical = 367;
 		rtn=SENSOR_SUCCESS;

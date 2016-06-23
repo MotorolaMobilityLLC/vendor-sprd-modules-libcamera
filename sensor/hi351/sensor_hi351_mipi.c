@@ -7024,7 +7024,7 @@ LOCAL uint32_t HI351_InitExt(uint32_t param)	//wujinyou, 2012.11.14
 	nsecs_t 			timestamp_old;
 	nsecs_t				timestamp_new;
 
-	SENSOR_PRINT("HI351_InitExt start \n");
+	SENSOR_LOGI("HI351_InitExt start \n");
 
 	timestamp_old = systemTime(CLOCK_MONOTONIC);
 
@@ -7041,11 +7041,11 @@ LOCAL uint32_t HI351_InitExt(uint32_t param)	//wujinyou, 2012.11.14
 		ret = Sensor_Device_WriteRegTab(&regTab);
 	}
 
-	//SENSOR_PRINT("SENSOR: Sensor_SendRegValueToSensor -> reg_count = %d, g_is_main_sensor: %d.\n",
+	//SENSOR_LOGI("SENSOR: Sensor_SendRegValueToSensor -> reg_count = %d, g_is_main_sensor: %d.\n",
 	     			//sensor_reg_tab_info_ptr->reg_count, g_is_main_sensor);
 
 	timestamp_new = systemTime(CLOCK_MONOTONIC);
-	SENSOR_PRINT("SENSOR: HI351_InitExt end, ret=%d, time=%d us\n", ret, (uint32_t)(timestamp_new-timestamp_old)/1000);
+	SENSOR_LOGI("SENSOR: HI351_InitExt end, ret=%d, time=%d us\n", ret, (uint32_t)(timestamp_new-timestamp_old)/1000);
 
 	return SENSOR_SUCCESS;
 }
@@ -7260,7 +7260,7 @@ LOCAL uint32_t _HI351_PowerOn(uint32_t power_on)
 		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED,
 				  SENSOR_AVDD_CLOSED);
 	}
-	SENSOR_PRINT("SENSOR: s5k5ccgx_Power_Ctrl (1:on, 0:off): %d \n", power_on);
+	SENSOR_LOGI("SENSOR: s5k5ccgx_Power_Ctrl (1:on, 0:off): %d \n", power_on);
 	return SENSOR_SUCCESS;
 }
 
@@ -7279,25 +7279,25 @@ LOCAL uint32_t _HI351_Identify(uint32_t param)
 	uint32_t i;
     uint8_t   err_cnt = 0;
     uint32_t nLoop = 1000;
-SENSOR_PRINT("anrry:enter 351_Identify\n");
+SENSOR_LOGI("anrry:enter 351_Identify\n");
     //GC0329_DELAY_MS(10);
 
     for(i = 0; i<2; )
     {
         nLoop = 1000;
-		SENSOR_PRINT("anrry:for before hi351\n");
+		SENSOR_LOGI("anrry:for before hi351\n");
 
         ret = Sensor_ReadReg(reg[i]);
 
-		SENSOR_PRINT("anrry:for after hi351\n");
-       	SENSOR_PRINT("anrry: hi351 Read reg0x04 = %x\n",ret);
+		SENSOR_LOGI("anrry:for after hi351\n");
+		SENSOR_LOGI("anrry: hi351 Read reg0x04 = %x\n",ret);
 
         if( ret != value[i])
         {
             err_cnt++;
             if(err_cnt>3)
             {
-            	SENSOR_PRINT( "351 Fail\n" );
+				SENSOR_LOGI( "351 Fail\n" );
 	             return SENSOR_FAIL;
             }
             else
@@ -7311,13 +7311,13 @@ SENSOR_PRINT("anrry:enter 351_Identify\n");
         err_cnt = 0;
         i++;
     }
-	SENSOR_PRINT("351: it is HI351\n");
+	SENSOR_LOGI("351: it is HI351\n");
 	return (uint32_t)SENSOR_SUCCESS;
 }
 
 LOCAL uint32_t _hi351_StreamOn(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR: _hi351_StreamOn");
+	SENSOR_LOGI("SENSOR: _hi351_StreamOn");
 
 	Sensor_WriteReg(0x01, 0xf0);
 
@@ -7326,7 +7326,7 @@ LOCAL uint32_t _hi351_StreamOn(uint32_t param)
 
 LOCAL uint32_t _hi351_StreamOff(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR: _hi351_StreamOff");
+	SENSOR_LOGI("SENSOR: _hi351_StreamOff");
 
 	Sensor_WriteReg(0x01, 0xf1);
 
@@ -7398,7 +7398,7 @@ LOCAL uint32_t _HI351_set_brightness(uint32_t level)
 		Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("sensor: terry HI351_set_brightness = 0x%02x.\n", level);
+	SENSOR_LOGI("sensor: terry HI351_set_brightness = 0x%02x.\n", level);
 	return 0;
 }
 
@@ -7462,7 +7462,7 @@ LOCAL uint32_t _HI351_set_contrast(uint32_t level)
 
 	//    Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_CONTRAST, (uint32)level);
 
-	SENSOR_PRINT("sensor: terry HI351_set_contrast = 0x%02x.\n", level);
+	SENSOR_LOGI("sensor: terry HI351_set_contrast = 0x%02x.\n", level);
 	return 0;
 }
 #if 0
@@ -7724,7 +7724,7 @@ LOCAL uint32_t _HI351_set_saturation(uint32_t level)
 	{
 		Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
-	SENSOR_PRINT("sensor: terry HI351_set_saturation = 0x%02x.\n", level);
+	SENSOR_LOGI("sensor: terry HI351_set_saturation = 0x%02x.\n", level);
 	return 0;
 }
 
@@ -7830,7 +7830,7 @@ LOCAL uint32_t _HI351_set_image_effect(uint32_t effect_type)
 		Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("sensor: terry HI351_set_image_effect = 0x%02x.\n", effect_type);
+	SENSOR_LOGI("sensor: terry HI351_set_image_effect = 0x%02x.\n", effect_type);
 	return 0;
 }
 
@@ -7896,7 +7896,7 @@ LOCAL uint32_t _HI351_set_ev(uint32_t level)
 		Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("sensor: terry HI351_set_ev = 0x%02x.\n", level);
+	SENSOR_LOGI("sensor: terry HI351_set_ev = 0x%02x.\n", level);
 
 	return 0;
 }
@@ -7931,7 +7931,7 @@ LOCAL uint32_t _HI351_set_anti_flicker(uint32_t mode)
 		Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("sensor: terry _HI351_set_anti_flicker = 0x%02x", mode);
+	SENSOR_LOGI("sensor: terry _HI351_set_anti_flicker = 0x%02x", mode);
 
 	return 0;
 }
@@ -7968,7 +7968,7 @@ LOCAL uint32_t _HI351_set_video_mode(uint32_t mode)
 		Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("sensor: terry _HI351_set_video_mode = 0x%02x", mode);
+	SENSOR_LOGI("sensor: terry _HI351_set_video_mode = 0x%02x", mode);
 
 	return 0;
 }
@@ -8111,7 +8111,7 @@ LOCAL uint32_t _HI351_set_awb(uint32_t mode)
 
 	//   Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_LIGHTSOURCE, (uint32)mode);
 
-	SENSOR_PRINT("sensor: terry HI351_set_awb = 0x%02x", mode);
+	SENSOR_LOGI("sensor: terry HI351_set_awb = 0x%02x", mode);
 	return 0;
 }
 
@@ -8835,7 +8835,7 @@ LOCAL uint32_t _HI351_set_work_mode(uint32_t mode)
 
 	//   Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_SCENECAPTURETYPE, (uint32)mode);
 
-	SENSOR_PRINT("sensor: terry set_work_mode: mode = %d.\n", mode);
+	SENSOR_LOGI("sensor: terry set_work_mode: mode = %d.\n", mode);
 	return 0;
 }
 
@@ -8852,17 +8852,17 @@ LOCAL uint32_t _HI351_BeforeSnapshot(uint32_t param)
 	uint32_t cap_mode = (param>>CAP_MODE_BITS);
 
 	param = param&0xffff;
-	SENSOR_PRINT("%d,%d.",cap_mode,param);
+	SENSOR_LOGI("%d,%d.",cap_mode,param);
 
 	preview_mode = (param >= SENSOR_MODE_PREVIEW_TWO) ? \
 	                        SENSOR_MODE_PREVIEW_TWO:SENSOR_MODE_PREVIEW_ONE;
 
-	SENSOR_PRINT("HI351: HI351_before_snapshot\n");
+	SENSOR_LOGI("HI351: HI351_before_snapshot\n");
 	if(SENSOR_MODE_PREVIEW_ONE>=param)
 	{
 	 	return SENSOR_SUCCESS;
 	}
-	SENSOR_PRINT("terry  _HI351_BeforeSnapshot =%d.\n",param);
+	SENSOR_LOGI("terry  _HI351_BeforeSnapshot =%d.\n",param);
 
 	Sensor_SetMode(param);
 
@@ -8917,7 +8917,7 @@ LOCAL uint32_t _HI351_after_snapshot(uint32_t param)
 	//s_HI351_resolution_Tab_YUV[SENSOR_MODE_PREVIEW_ONE].sensor_reg_tab_ptr = (SENSOR_REG_T*)HI351_preview;
 	//s_HI351_resolution_Tab_YUV[SENSOR_MODE_PREVIEW_ONE].reg_count = NUMBER_OF_ARRAY(HI351_preview);
 
-	SENSOR_PRINT("terry  _HI351_after_snapshot =%d.\n",param);
+	SENSOR_LOGI("terry  _HI351_after_snapshot =%d.\n",param);
 
 	Sensor_SetMode(param);
 	return SENSOR_SUCCESS;
@@ -8957,15 +8957,15 @@ LOCAL uint32_t HI351_InitExt(uint32_t param)
 
 	timestamp_old = systemTime(CLOCK_MONOTONIC);
 
-	SENSOR_PRINT("SENSOR: HI351_InitExt, init_table_size = %d \n", init_table_size);
+	SENSOR_LOGI("SENSOR: HI351_InitExt, init_table_size = %d \n", init_table_size);
 
 	alloc_size = init_table_size*sizeof(uint8_t) + 16;
 	p_reg_val_tmp = (uint8_t*)malloc(alloc_size);
 
-	SENSOR_PRINT("_s5k5ccgx_InitExt: alloc size = %d \n", alloc_size);
+	SENSOR_LOGI("_s5k5ccgx_InitExt: alloc size = %d \n", alloc_size);
 	if(0 == p_reg_val_tmp)
 	{
-		SENSOR_PRINT("_s5k5ccgx_InitExt: alloc failed, size = %d \n", alloc_size);
+		SENSOR_LOGI("_s5k5ccgx_InitExt: alloc failed, size = %d \n", alloc_size);
 		return 1;
 	}
 
@@ -9000,7 +9000,7 @@ LOCAL uint32_t HI351_InitExt(uint32_t param)
 			for (i = 0; i < 4; i++) {
 				ret = Sensor_WriteData(p_reg_val_tmp, wr_num_once);
 				if(ret!=0){
-					SENSOR_PRINT("SENSOR: HI351_InitExt, i2c write error, ret=%d \n", ret);
+					SENSOR_LOGI("SENSOR: HI351_InitExt, i2c write error, ret=%d \n", ret);
 					continue;
 				}else{
 					break;
@@ -9013,9 +9013,9 @@ LOCAL uint32_t HI351_InitExt(uint32_t param)
     free(p_reg_val_tmp);
 
 	timestamp_new = systemTime(CLOCK_MONOTONIC);
-    SENSOR_PRINT("SENSOR: HI351_InitExt time=%d us\n",(timestamp_new-timestamp_old)/1000);
+    SENSOR_LOGI("SENSOR: HI351_InitExt time=%d us\n",(timestamp_new-timestamp_old)/1000);
 
-    SENSOR_PRINT("SENSOR: HI351_InitExt, done: ret=%d \n", ret);
+    SENSOR_LOGI("SENSOR: HI351_InitExt, done: ret=%d \n", ret);
 
     return rtn;
 }

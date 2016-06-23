@@ -17,7 +17,6 @@
 /**---------------------------------------------------------------------------*
  ** 						   Macro Define
  **---------------------------------------------------------------------------*/
-#define SENSOR_TRACE SENSOR_PRINT
 #define OV2655_I2C_ADDR_W	0x30	//wxz: for nex I2C
 #define OV2655_I2C_ADDR_R		0x30
 
@@ -614,7 +613,7 @@ LOCAL uint32_t set_ov2655_anti_flicker(uint32_t mode)
 				sensor_reg_ptr[i].reg_value);
 	}
 	SENSOR_Sleep(10);
-	SENSOR_TRACE("SENSOR: set_ov2655_flicker: 0x%x", mode);
+	SENSOR_LOGI("SENSOR: set_ov2655_flicker: 0x%x", mode);
 	return 0;
 }
 
@@ -706,7 +705,7 @@ LOCAL uint32_t set_ov2655_awb(uint32_t mode)
 				sensor_reg_ptr[i].reg_value);
 	}
 	SENSOR_Sleep(10);
-	SENSOR_TRACE("SENSOR: set_awb_mode: mode = %d", mode);
+	SENSOR_LOGI("SENSOR: set_awb_mode: mode = %d", mode);
 	return 0;
 }
 
@@ -745,7 +744,7 @@ LOCAL uint32_t set_ov2655_ev(uint32_t level)
 	//OS_TickDelay(100);
 	SENSOR_Sleep(10);
 
-	SENSOR_TRACE("SENSOR: set_ev: level = %d", level);
+	SENSOR_LOGI("SENSOR: set_ev: level = %d", level);
 	return 0;
 }
 
@@ -801,7 +800,7 @@ LOCAL uint32_t OV2655_set_vmirror_enable(uint32_t enable)
 /******************************************************************************/
 LOCAL uint32_t OV2655_set_preview_mode(uint32_t preview_mode)
 {
-	SENSOR_TRACE("set_preview_mode: preview_mode = %d", preview_mode);
+	SENSOR_LOGI("set_preview_mode: preview_mode = %d", preview_mode);
 
 	switch (preview_mode) {
 	case DCAMERA_ENVIRONMENT_NORMAL:
@@ -842,9 +841,9 @@ LOCAL uint32_t OV2655_Identify(uint32_t param)
 
 	OV2655_InitExifInfo();
 	if (SENSOR_OP_SUCCESS == ret) {
-		SENSOR_TRACE("It Is OV2655 Sensor !");
+		SENSOR_LOGI("It Is OV2655 Sensor !");
 	} else {
-		SENSOR_TRACE("It Is not OV2655 Sensor !");
+		SENSOR_LOGI("It Is not OV2655 Sensor !");
 	}
 	return ret;
 }
@@ -916,8 +915,8 @@ LOCAL void OV2655_CalculateExposureGain(SENSOR_MODE_E sensor_preview_mode,
 	//Read back preview shutter
 	Reg0x3002 = Sensor_ReadReg(0x3002);
 	Reg0x3003 = Sensor_ReadReg(0x3003);
-	SENSOR_TRACE("Reg0x3002=0x%x", Reg0x3002);
-	SENSOR_TRACE("Reg0x3003=0x%x", Reg0x3003);
+	SENSOR_LOGI("Reg0x3002=0x%x", Reg0x3002);
+	SENSOR_LOGI("Reg0x3003=0x%x", Reg0x3003);
 	tmp1 = (uint16_t) Reg0x3002;
 	tmp1 <<= 8;
 	tmp2 = (uint16_t) Reg0x3003;
@@ -969,7 +968,7 @@ LOCAL uint32_t OV2655_BeforeSnapshot(uint32_t param)
 	uint32_t cap_mode = (param>>CAP_MODE_BITS);
 
 	param = param&0xffff;
-	SENSOR_PRINT("%d,%d.",cap_mode,param);
+	SENSOR_LOGI("%d,%d.",cap_mode,param);
 
 	preview_mode = (param >= SENSOR_MODE_PREVIEW_TWO) ?
 	    SENSOR_MODE_PREVIEW_TWO : SENSOR_MODE_PREVIEW_ONE;
@@ -1007,7 +1006,7 @@ const SENSOR_REG_T ov2655_sharpness_tab[][2] = {
 	{
 		Sensor_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
-	SENSOR_TRACE("set_sharpness: level = %d", level);
+	SENSOR_LOGI("set_sharpness: level = %d", level);
 #endif
 	return 0;
 }*/
@@ -1060,7 +1059,7 @@ LOCAL uint32_t OV2655_set_saturation(uint32_t level)
 	{
 		Sensor_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
-	SENSOR_TRACE("set_saturation: level = %d", level);
+	SENSOR_LOGI("set_saturation: level = %d", level);
 #endif
 	return 0;
 }
@@ -1141,7 +1140,7 @@ LOCAL uint32_t OV2655_set_image_effect(uint32_t effect_type)
 					sensor_reg_ptr[i].reg_value);
 		}
 	}
-	SENSOR_TRACE("set_image_effect: effect_type = %d", effect_type);
+	SENSOR_LOGI("set_image_effect: effect_type = %d", effect_type);
 	return 0;
 }
 
@@ -1202,7 +1201,7 @@ LOCAL uint32_t OV2655_set_brightness(uint32_t level)
 			    reg_value;
 			reg_value |= sensor_reg_ptr[i].reg_value;
 			Sensor_WriteReg(sensor_reg_ptr[i].reg_addr, reg_value);
-			SENSOR_TRACE("set_brightness: reg3391 = %d", reg_value);
+			SENSOR_LOGI("set_brightness: reg3391 = %d", reg_value);
 		} else if (sensor_reg_ptr[i].reg_addr == 0x3390) {
 			reg_value = Sensor_ReadReg(sensor_reg_ptr[i].reg_addr);
 			if (level < 3) {
@@ -1217,7 +1216,7 @@ LOCAL uint32_t OV2655_set_brightness(uint32_t level)
 		}
 	}
 	SENSOR_Sleep(10);
-	SENSOR_TRACE("set_brightness: level = %d", level);
+	SENSOR_LOGI("set_brightness: level = %d", level);
 	return 0;
 }
 
@@ -1277,7 +1276,7 @@ LOCAL uint32_t OV2655_set_contrast(uint32_t level)
 			    reg_value;
 			reg_value |= sensor_reg_ptr[i].reg_value;
 			Sensor_WriteReg(sensor_reg_ptr[i].reg_addr, reg_value);
-			SENSOR_TRACE("set_contrast: reg3391 = %d", reg_value);
+			SENSOR_LOGI("set_contrast: reg3391 = %d", reg_value);
 		} else if (sensor_reg_ptr[i].reg_addr == 0x3390) {
 			reg_value = Sensor_ReadReg(sensor_reg_ptr[i].reg_addr);
 			reg_value = reg_value | S_BIT_2;
@@ -1289,7 +1288,7 @@ LOCAL uint32_t OV2655_set_contrast(uint32_t level)
 	}
 	//Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_CONTRAST, (uint32_t)level);
 	SENSOR_Sleep(5);
-	SENSOR_TRACE("set_contrast: level = %d", level);
+	SENSOR_LOGI("set_contrast: level = %d", level);
 	return 0;
 }
 
@@ -1369,7 +1368,7 @@ LOCAL uint32_t OV2655_set_work_mode(uint32_t mode)
 				sensor_reg_ptr[i].reg_value);
 	}
 	// Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_SCENECAPTURETYPE, (uint32_t)mode);
-	SENSOR_TRACE("set_work_mode: mode = %d", mode);
+	SENSOR_LOGI("set_work_mode: mode = %d", mode);
 	return 0;
 }
 
@@ -1420,7 +1419,7 @@ LOCAL uint32_t OV2655_InitExifInfo(void)
 #if 0
 	EXIF_SPEC_PIC_TAKING_COND_T *exif_ptr = &s_ov2655_exif;
 
-	SENSOR_TRACE("SENSOR: OV2655_InitExifInfo");
+	SENSOR_LOGI("SENSOR: OV2655_InitExifInfo");
 
 	exif_ptr->valid.FNumber = 1;
 	exif_ptr->FNumber.numerator = 14;
@@ -1493,7 +1492,7 @@ LOCAL uint32_t OV2655_InitExifInfo(void)
 
 LOCAL uint32_t OV2655_GetExifInfo(uint32_t param)
 {
-	SENSOR_TRACE("###########*****SENSOR: OV2655_GetExifInfo*****");
+	SENSOR_LOGI("###########*****SENSOR: OV2655_GetExifInfo*****");
 	return 0;
 	//return (uint32_t)&s_ov2655_exif;
 }

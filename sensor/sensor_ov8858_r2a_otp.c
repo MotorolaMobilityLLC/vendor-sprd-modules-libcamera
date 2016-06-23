@@ -38,8 +38,8 @@ static uint32_t ov8858_otp_read_otp_info(struct otp_info_t *otp_ptr)
 	int temp1;
        Sensor_WriteReg(0x0100, 0x01);
 	temp1 = Sensor_ReadReg(0x5002);
-       SENSOR_PRINT_ERR("temp1 = %d", temp1);
-       SENSOR_PRINT_ERR("(0x00 & 0x08) | (temp1 & (~0x08) = %d", (0x00 & 0x08) | (temp1 & (~0x08)));
+       SENSOR_LOGI("temp1 = %d", temp1);
+       SENSOR_LOGI("(0x00 & 0x08) | (temp1 & (~0x08) = %d", (0x00 & 0x08) | (temp1 & (~0x08)));
 	Sensor_WriteReg(0x5002, (0x00 & 0x08) | (temp1 & (~0x08)));
 	// read OTP into buffer
 	Sensor_WriteReg(0x3d84, 0xC0);
@@ -52,7 +52,7 @@ static uint32_t ov8858_otp_read_otp_info(struct otp_info_t *otp_ptr)
 
 	// OTP base information and WB calibration data
 	otp_flag = Sensor_ReadReg(0x7010);
-       SENSOR_PRINT_ERR("otp_flag = %d", otp_flag);
+       SENSOR_LOGI("otp_flag = %d", otp_flag);
 	addr = 0;
 	if((otp_flag & 0xc0) == 0x40) {
 		addr = 0x7011; // base address of info group 1
@@ -82,13 +82,13 @@ static uint32_t ov8858_otp_read_otp_info(struct otp_info_t *otp_ptr)
 		otp_ptr->rg_ratio = 0;
 		otp_ptr->bg_ratio = 0;
 	}
-	SENSOR_PRINT("year=0x%x\n", otp_ptr->year);
-	SENSOR_PRINT("month=0x%x\n",  otp_ptr->month);
-	SENSOR_PRINT("day=0x%x\n", otp_ptr->day);
-	SENSOR_PRINT("rg_ratio=0x%x\n", otp_ptr->rg_ratio);
-	SENSOR_PRINT("bg_ratio=0x%x\n",  otp_ptr->bg_ratio);
-	SENSOR_PRINT("rg_ratio_typical=0x%x\n",  otp_typical_value.rg_ratio_typical);
-	SENSOR_PRINT("bg_ratio_typical=0x%x\n",  otp_typical_value.bg_ratio_typical);
+	SENSOR_LOGI("year=0x%x\n", otp_ptr->year);
+	SENSOR_LOGI("month=0x%x\n",  otp_ptr->month);
+	SENSOR_LOGI("day=0x%x\n", otp_ptr->day);
+	SENSOR_LOGI("rg_ratio=0x%x\n", otp_ptr->rg_ratio);
+	SENSOR_LOGI("bg_ratio=0x%x\n",  otp_ptr->bg_ratio);
+	SENSOR_LOGI("rg_ratio_typical=0x%x\n",  otp_typical_value.rg_ratio_typical);
+	SENSOR_LOGI("bg_ratio_typical=0x%x\n",  otp_typical_value.bg_ratio_typical);
 
 
 	// OTP Lenc Calibration
@@ -167,9 +167,9 @@ static uint32_t ov8858_otp_update_otp(void *param_ptr)
 		B_gain = 0x400 * B_gain / (Base_gain);
 		G_gain = 0x400 * G_gain / (Base_gain);
 
-		SENSOR_PRINT("r_Gain=0x%x\n", R_gain);
-		SENSOR_PRINT("g_Gain=0x%x\n", G_gain);
-		SENSOR_PRINT("b_Gain=0x%x\n", B_gain);
+		SENSOR_LOGI("r_Gain=0x%x\n", R_gain);
+		SENSOR_LOGI("g_Gain=0x%x\n", G_gain);
+		SENSOR_LOGI("b_Gain=0x%x\n", B_gain);
 
 		// update sensor WB gain
 		if (R_gain>0x400) {
@@ -188,7 +188,7 @@ static uint32_t ov8858_otp_update_otp(void *param_ptr)
 
 	// apply OTP Lenc Calibration
 	if (otp_info.flag & 0x10) {
-		SENSOR_PRINT("apply otp lsc \n");
+		SENSOR_LOGI("apply otp lsc \n");
 		temp = Sensor_ReadReg(0x5000);
 		temp = 0x80 | temp;
 		Sensor_WriteReg(0x5000, temp);
@@ -209,7 +209,7 @@ static uint32_t ov8858_otp_get_module_id(void)
 	// check first OTP with valid data
 	ov8858_otp_read_otp_info(&otp_info);
 
-	SENSOR_PRINT("read ov8858 otp  module_id = %x \n", otp_info.module_id);
+	SENSOR_LOGI("read ov8858 otp  module_id = %x \n", otp_info.module_id);
 
 	return otp_info.module_id;
 }
@@ -218,7 +218,7 @@ static uint32_t ov8858_otp_identify_otp(void *param_ptr)
 	uint32_t module_id;
 	struct otp_param_info_tab *tab_ptr = (struct otp_param_info_tab *)param_ptr;
 
-	SENSOR_PRINT("SENSOR_ov8858: _ov8858_com_Identify_otp");
+	SENSOR_LOGI("SENSOR_ov8858: _ov8858_com_Identify_otp");
 
 	/*read param id from sensor omap */
 	module_id = ov8858_otp_get_module_id();

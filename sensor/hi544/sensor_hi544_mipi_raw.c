@@ -2292,18 +2292,18 @@ LOCAL unsigned long _hi544_set_video_mode(unsigned long param)
 		return 0;
 
 	if (SENSOR_SUCCESS != Sensor_GetMode(&mode)) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	if (PNULL == s_hi544_video_info[mode].setting_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	sensor_reg_ptr = (SENSOR_REG_T_PTR)&s_hi544_video_info[mode].setting_ptr[param];
 	if (PNULL == sensor_reg_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
@@ -2311,7 +2311,7 @@ LOCAL unsigned long _hi544_set_video_mode(unsigned long param)
 		Sensor_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("0x%02x", param);
+	SENSOR_LOGI("0x%02x", param);
 	return 0;
 }
 
@@ -2906,7 +2906,7 @@ LOCAL uint32_t Sensor_hi544_InitRawTuneInfo(void)
 
 LOCAL unsigned long _hi544_GetResolutionTrimTab(unsigned long param)
 {
-	SENSOR_PRINT("0x%lx",  (unsigned long)s_hi544_Resolution_Trim_Tab);
+	SENSOR_LOGI("0x%lx",  (unsigned long)s_hi544_Resolution_Trim_Tab);
 	return (unsigned long) s_hi544_Resolution_Trim_Tab;
 }
 LOCAL unsigned long _hi544_PowerOn(unsigned long power_on)
@@ -2967,7 +2967,7 @@ LOCAL unsigned long _hi544_PowerOn(unsigned long power_on)
 		Sensor_SetIovddVoltage(SENSOR_AVDD_CLOSED);
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 	}
-	SENSOR_PRINT("SENSOR_hi544: _hi544_Power_On(1:on, 0:off): %d", power_on);
+	SENSOR_LOGI("SENSOR_hi544: _hi544_Power_On(1:on, 0:off): %d", power_on);
 	return SENSOR_SUCCESS;
 }
 
@@ -2977,7 +2977,7 @@ LOCAL uint32_t _hi544_cfg_otp(uint32_t param)
 	struct raw_param_info_tab* tab_ptr = (struct raw_param_info_tab*)s_hi544_raw_param_tab;
 	uint32_t module_id=g_hi544_module_id;
 
-	SENSOR_PRINT("SENSOR_hi544: _hi544_cfg_otp module_id:0x%x", module_id);
+	SENSOR_LOGI("SENSOR_hi544: _hi544_cfg_otp module_id:0x%x", module_id);
 
 	/*be called in sensor thread, so not call Sensor_SetMode_WaitDone()*/
 	usleep(10 * 1000);
@@ -2991,7 +2991,7 @@ LOCAL uint32_t _hi544_cfg_otp(uint32_t param)
 	*/
 	Sensor_WriteReg(0x0100, 0x00);
 
-	SENSOR_PRINT("SENSOR_hi544: _hi544_cfg_otp end");
+	SENSOR_LOGI("SENSOR_hi544: _hi544_cfg_otp end");
 
 	return rtn;
 }
@@ -3007,7 +3007,7 @@ LOCAL uint32_t _hi544_write_otp(unsigned long param)
 	uint16_t cmd_len;
 	uint32_t i;
 
-	CMR_LOGI("SENSOR_hi544: _hi544_write_otp E");
+	SENSOR_LOGI("SENSOR_hi544: _hi544_write_otp E");
 
 	cmd_len = 3;
 
@@ -3080,7 +3080,7 @@ LOCAL uint32_t _hi544_write_otp(unsigned long param)
 		//ms_sleep(100*1000*2);
 	}
 
-	CMR_LOGI("SENSOR_hi544: _hi544_write_otp X");
+	SENSOR_LOGI("SENSOR_hi544: _hi544_write_otp X");
 
 	return rtn;
 }
@@ -3098,7 +3098,7 @@ LOCAL uint32_t _hi544_read_otp(unsigned long param)
 	uint16_t cmd_len;
 	uint32_t i;
 
-	CMR_LOGI("SENSOR_hi544: _hi544_read_otp E");
+	SENSOR_LOGI("SENSOR_hi544: _hi544_read_otp E");
 
 	cmd_len = 3;
 
@@ -3159,7 +3159,7 @@ LOCAL uint32_t _hi544_read_otp(unsigned long param)
 
 	}
 
-	CMR_LOGI("SENSOR_hi544: _hi544_read_otp X");
+	SENSOR_LOGI("SENSOR_hi544: _hi544_read_otp X");
 
 	return rtn;
 
@@ -3182,7 +3182,7 @@ LOCAL uint32_t _hi544_write_vcm(uint32_t *param)
 		cmd_val[1] = (*param) & 0xff;
 		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 
-		SENSOR_PRINT("SENSOR_hi544: _write_vcm, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
+		SENSOR_LOGI("SENSOR_hi544: _write_vcm, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
 
 #endif
 		return ret_value;
@@ -3206,7 +3206,7 @@ LOCAL uint32_t _hi544_read_vcm(uint32_t *param)
 		if (SENSOR_SUCCESS == ret_value)
 			*param |= cmd_val[0];
 
-		SENSOR_PRINT("SENSOR_hi544: _read_vcm, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
+		SENSOR_LOGI("SENSOR_hi544: _read_vcm, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
 
 #endif
 		return ret_value;
@@ -3220,12 +3220,12 @@ LOCAL unsigned long _hi544_access_val(unsigned long param)
 
 	uint16_t tmp;
 
-	SENSOR_PRINT("SENSOR_hi544: _hi544_access_val E");
+	SENSOR_LOGI("SENSOR_hi544: _hi544_access_val E");
 	if(!param_ptr){
 		return rtn;
 	}
 
-	SENSOR_PRINT("SENSOR_hi544: param_ptr->type=%x",param_ptr->type);
+	SENSOR_LOGI("SENSOR_hi544: param_ptr->type=%x",param_ptr->type);
 	switch(param_ptr->type)
 	{
 		case SENSOR_VAL_TYPE_SHUTTER:
@@ -3262,7 +3262,7 @@ LOCAL unsigned long _hi544_access_val(unsigned long param)
 			break;
 	}
 
-	SENSOR_PRINT("SENSOR_hi544: _hi544_access_val X");
+	SENSOR_LOGI("SENSOR_hi544: _hi544_access_val X");
 
 	return rtn;
 
@@ -3273,7 +3273,7 @@ LOCAL uint32_t _hi544_com_Identify_otp(void* param_ptr)
 	uint32_t rtn=SENSOR_FAIL;
 	uint32_t param_id;
 
-	SENSOR_PRINT("SENSOR_HI544: _hi544_com_Identify_otp");
+	SENSOR_LOGI("SENSOR_HI544: _hi544_com_Identify_otp");
 
 	/*read param id from sensor omap*/
 	param_id=hi544_RAW_PARAM_COM;
@@ -3303,17 +3303,17 @@ LOCAL uint32_t _hi544_GetRawInof(void)
 		g_hi544_module_id = i;
 		if(RAW_INFO_END_ID==tab_ptr[i].param_id){
 			if(NULL==s_hi544_mipi_raw_info_ptr){
-				SENSOR_PRINT("SENSOR_hi544: hi544_GetRawInof no param error");
+				SENSOR_LOGI("SENSOR_hi544: hi544_GetRawInof no param error");
 				rtn=SENSOR_FAIL;
 			}
-			SENSOR_PRINT("SENSOR_hi544: hi544_GetRawInof end");
+			SENSOR_LOGI("SENSOR_hi544: hi544_GetRawInof end");
 			break;
 		}
 		else if(PNULL!=tab_ptr[i].identify_otp){
 			if(SENSOR_SUCCESS==tab_ptr[i].identify_otp(0))
 			{
 				s_hi544_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
-				SENSOR_PRINT("SENSOR_hi544: hi544_GetRawInof id:0x%x success", g_hi544_module_id);
+				SENSOR_LOGI("SENSOR_hi544: hi544_GetRawInof id:0x%x success", g_hi544_module_id);
 				break;
 			}
 		}
@@ -3346,20 +3346,20 @@ LOCAL unsigned long _hi544_Identify(unsigned long param)
 	uint8_t ver_value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
 
-	SENSOR_PRINT("SENSOR_HI544: mipi raw identify\n");
+	SENSOR_LOGI("SENSOR_HI544: mipi raw identify\n");
 
 	pid_value = Sensor_ReadReg(hi544_PID_ADDR);
 	if (hi544_PID_VALUE == pid_value) {
-		SENSOR_PRINT("SENSOR_HI544: this is hi544 sensor !");
+		SENSOR_LOGI("SENSOR_HI544: this is hi544 sensor !");
 		ret_value=_hi544_GetRawInof();
 		if(SENSOR_SUCCESS != ret_value)
 		{
-			SENSOR_PRINT("SENSOR_HI544: the module is unknow error !");
+			SENSOR_LOGI("SENSOR_HI544: the module is unknow error !");
 		}
 		Sensor_hi544_InitRawTuneInfo();
 	} else {
-            SENSOR_PRINT("SENSOR_HI544: identify fail,pid_value=%d", pid_value);
-            SENSOR_PRINT("SENSOR_HI544: slave id :0x%x(7bit)\n", Sensor_ReadReg(0x0f17)); //0x0f14
+            SENSOR_LOGI("SENSOR_HI544: identify fail,pid_value=%d", pid_value);
+            SENSOR_LOGI("SENSOR_HI544: slave id :0x%x(7bit)\n", Sensor_ReadReg(0x0f17)); //0x0f14
 	}
 	return ret_value;
 }
@@ -3383,7 +3383,7 @@ LOCAL unsigned long _hi544_write_exposure(unsigned long param)
 	dummy_line=(param>>0x10)&0x0fff;
 	size_index=(param>>0x1c)&0x0f;
 
-	SENSOR_PRINT("SENSOR_hi544: write_exposure line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
+	SENSOR_LOGI("SENSOR_hi544: write_exposure line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
 
 	line_length = Sensor_ReadReg(0x0008);
 	max_frame_len=_hi544_GetMaxFrameLine(size_index);
@@ -3401,7 +3401,7 @@ LOCAL unsigned long _hi544_write_exposure(unsigned long param)
 	}
 
 	value = expsure_line;
-	SENSOR_PRINT("SENSOR_hi544:line_length = %d  coarse = %d\n", line_length, value);
+	SENSOR_LOGI("SENSOR_hi544:line_length = %d  coarse = %d\n", line_length, value);
 	ret_value = Sensor_WriteReg(0x0046, 0x01);
 	ret_value = Sensor_WriteReg(0x0004, value);
 
@@ -3421,7 +3421,7 @@ LOCAL unsigned long _hi544_write_gain(unsigned long param)
 	real_gain = ((param&0xf)+16)*(((param>>4)&0x01)+1)*(((param>>5)&0x01)+1)*(((param>>6)&0x01)+1)*(((param>>7)&0x01)+1);
 	real_gain = real_gain*(((param>>8)&0x01)+1)*(((param>>9)&0x01)+1)*(((param>>10)&0x01)+1)*(((param>>11)&0x01)+1);
 #endif
-	SENSOR_PRINT("SENSOR_hi544: write_gain:0x%lx, real_gain:0x%x\n", param, real_gain);
+	SENSOR_LOGI("SENSOR_hi544: write_gain:0x%lx, real_gain:0x%x\n", param, real_gain);
 
 	value = real_gain - 16;
 	ret_value = Sensor_WriteReg(0x003a, (value&0xff)<<8);  /* code */
@@ -3435,7 +3435,7 @@ LOCAL uint32_t _hi544_write_otp_gain(uint32_t *param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 
-	SENSOR_PRINT("SENSOR_hi544: write_gain:0x%x\n", *param);
+	SENSOR_LOGI("SENSOR_hi544: write_gain:0x%x\n", *param);
 
 	ret_value = Sensor_WriteReg(0x003a, (*param&0xff)<<8);  /* code */
 	ret_value = Sensor_WriteReg(0x0046, 0x00);
@@ -3452,7 +3452,7 @@ LOCAL unsigned long _hi544_write_af(unsigned long param)
 		uint16_t cmd_len = 0;
 		uint32_t time_out = 0;
 
-		SENSOR_PRINT("SENSOR_hi544: _write_af %d", param);
+		SENSOR_LOGI("SENSOR_hi544: _write_af %d", param);
 
 		slave_addr = DW9804_VCM_SLAVE_ADDR;
 
@@ -3464,7 +3464,7 @@ LOCAL unsigned long _hi544_write_af(unsigned long param)
 		cmd_val[1] = (param&0xff);
 		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 
-		SENSOR_PRINT("SENSOR_hi544: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
+		SENSOR_LOGI("SENSOR_hi544: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
 
 		return ret_value;
 #endif
@@ -3476,7 +3476,7 @@ LOCAL unsigned long _hi544_write_af(unsigned long param)
 	uint16_t cmd_len = 0;
 	uint32_t time_out = 0;
 
-	SENSOR_PRINT("SENSOR_hi544: _write_af %ld", param);
+	SENSOR_LOGI("SENSOR_hi544: _write_af %ld", param);
 
 	slave_addr = DW9806_VCM_SLAVE_ADDR;
 	do{
@@ -3495,7 +3495,7 @@ LOCAL unsigned long _hi544_write_af(unsigned long param)
 	cmd_val[1] = (param&0xff);
 	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 
-	SENSOR_PRINT("SENSOR_hi544: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
+	SENSOR_LOGI("SENSOR_hi544: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
 
 	return ret_value;
 #endif
@@ -3505,7 +3505,7 @@ LOCAL unsigned long _hi544_write_af(unsigned long param)
 	uint16_t  slave_addr = 0;
 	uint16_t cmd_len = 0;
 
-	SENSOR_PRINT("SENSOR_hi544: _write_af %ld", param);
+	SENSOR_LOGI("SENSOR_hi544: _write_af %ld", param);
 
 	slave_addr = DW9714_VCM_SLAVE_ADDR;
 	cmd_val[0] = (param&0xfff0)>>4;
@@ -3513,7 +3513,7 @@ LOCAL unsigned long _hi544_write_af(unsigned long param)
 	cmd_len = 2;
 	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 
-	SENSOR_PRINT("SENSOR_hi544: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
+	SENSOR_LOGI("SENSOR_hi544: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
 
 	return ret_value;
 #endif
@@ -3531,10 +3531,10 @@ LOCAL unsigned long _hi544_BeforeSnapshot(unsigned long param)
 	uint32_t prv_gain;
 
 
-	SENSOR_PRINT("SENSOR_hi544: BeforeSnapshot mode: 0x%08x",param);
+	SENSOR_LOGI("SENSOR_hi544: BeforeSnapshot mode: 0x%08x",param);
 
 	if (preview_mode == capture_mode) {
-		SENSOR_PRINT("SENSOR_hi544: prv mode equal to capmode");
+		SENSOR_LOGI("SENSOR_hi544: prv mode equal to capmode");
 		//goto CFG_INFO;
 	}
 
@@ -3546,7 +3546,7 @@ LOCAL unsigned long _hi544_BeforeSnapshot(unsigned long param)
 	Sensor_SetMode_WaitDone();
 
 	if (prv_linetime == cap_linetime) {
-		SENSOR_PRINT("SENSOR_hi544: prvline equal to capline");
+		SENSOR_LOGI("SENSOR_hi544: prvline equal to capline");
 		//goto CFG_INFO;
 	}
 
@@ -3585,25 +3585,25 @@ CFG_INFO:
 
 LOCAL unsigned long _hi544_after_snapshot(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_hi544: after_snapshot mode:%ld", param);
+	SENSOR_LOGI("SENSOR_hi544: after_snapshot mode:%ld", param);
 	Sensor_SetMode((uint32_t)param);
 	return SENSOR_SUCCESS;
 }
 
 LOCAL unsigned long _hi544_flash(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_hi544: param=%ld", param);
+	SENSOR_LOGI("SENSOR_hi544: param=%ld", param);
 
 	/* enable flash, disable in _hi544_BeforeSnapshot */
 	g_flash_mode_en = (uint32_t)param;
 	Sensor_SetFlash((uint32_t)param);
-	SENSOR_PRINT_HIGH("end");
+	SENSOR_LOGI("end");
 	return SENSOR_SUCCESS;
 }
 
 LOCAL unsigned long _hi544_StreamOn(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_hi544: StreamOn");
+	SENSOR_LOGI("SENSOR_hi544: StreamOn");
 
 	Sensor_WriteReg(0x0118, 0x0100);
 
@@ -3612,7 +3612,7 @@ LOCAL unsigned long _hi544_StreamOn(unsigned long param)
 
 LOCAL unsigned long _hi544_StreamOff(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_hi544: StreamOff");
+	SENSOR_LOGI("SENSOR_hi544: StreamOff");
 
 	Sensor_WriteReg(0x0118, 0x0000);
 	usleep(100*1000);
@@ -3627,7 +3627,7 @@ int _hi544_get_shutter(void)
 
 	shutter = (Sensor_ReadReg(0x0004) & 0xffff);
 
-	SENSOR_PRINT("SENSOR_hi544: _hi544_get_shutter %d", shutter);
+	SENSOR_LOGI("SENSOR_hi544: _hi544_get_shutter %d", shutter);
 
 	return shutter;
 }
@@ -3657,7 +3657,7 @@ static uint32_t _hi544_SetEV(unsigned long param)
 	uint32_t gain = s_hi544_gain;
 	uint32_t ev = ext_ptr->param;
 
-	SENSOR_PRINT("SENSOR_hi544: _hi544_SetEV param: 0x%x", ext_ptr->param);
+	SENSOR_LOGI("SENSOR_hi544: _hi544_SetEV param: 0x%x", ext_ptr->param);
 
 	switch(ev) {
 	case SENSOR_HDR_EV_LEVE_0:
@@ -3679,7 +3679,7 @@ LOCAL unsigned long _hi544_ExtFunc(unsigned long ctl_param)
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr =
 	    (SENSOR_EXT_FUN_PARAM_T_PTR) ctl_param;
-	SENSOR_PRINT_HIGH("0x%x", ext_ptr->cmd);
+	SENSOR_LOGI("0x%x", ext_ptr->cmd);
 
 	switch (ext_ptr->cmd) {
 	case SENSOR_EXT_FUNC_INIT:
@@ -3729,7 +3729,7 @@ LOCAL unsigned long _hi544_ReadGain(unsigned long param)
 
 	s_hi544_gain=(int)gain;
 
-	SENSOR_PRINT("SENSOR_hi544: _hi544_ReadGain gain: 0x%x", s_hi544_gain);
+	SENSOR_LOGI("SENSOR_hi544: _hi544_ReadGain gain: 0x%x", s_hi544_gain);
 
 	return gain;
 }
@@ -3743,7 +3743,7 @@ LOCAL uint32_t _hi544_read_otp_gain(uint32_t *param)
 	value = (value>>8) & 0xff;
 
 	*param = value;
-	SENSOR_PRINT("SENSOR_hi544: gain: 0x%x", value);
+	SENSOR_LOGI("SENSOR_hi544: gain: 0x%x", value);
 
 	return rtn;
 }

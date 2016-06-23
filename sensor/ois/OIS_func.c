@@ -179,7 +179,7 @@ void	download(SENSOR_HW_HANDLE handle, OIS_UWORD u16_type, OIS_UWORD u16_coef_ty
 			// Data Transfer
 			cmd_len=lp+1;
 			Sensor_WriteI2C(_SLV_OIS_, (uint8_t *) & temp[0], cmd_len);
-			//SENSOR_PRINT("DL_I2C");
+			//SENSOR_LOGI("DL_I2C");
 		}
 
 		// Block Counter Decrement
@@ -351,13 +351,13 @@ ADJ_STS	func_SET_SCENE_PARAM(SENSOR_HW_HANDLE handle, OIS_UBYTE u16_scene, OIS_U
 		u16_dat = I2C_OIS_mem__read( _M_EQCTL );
 		u16_dat = ( u16_dat |  0x0101 );
 		I2C_OIS_mem_write( _M_EQCTL, u16_dat );
-		SENSOR_PRINT("SET : EQCTL:%.4x\n", u16_dat );
+		SENSOR_LOGI("SET : EQCTL:%.4x\n", u16_dat );
 	}
 	else{														// ==> RHM_HT 2013.03.23	Add for OIS controll
 		u16_dat = I2C_OIS_mem__read( _M_EQCTL );
 		u16_dat = ( u16_dat &  0xFEFE );
 		I2C_OIS_mem_write( _M_EQCTL, u16_dat );
-		SENSOR_PRINT("SET : EQCTL:%.4x\n", u16_dat );
+		SENSOR_LOGI("SET : EQCTL:%.4x\n", u16_dat );
 	}															// <== RHM_HT 2013.03.23	Add for OIS controll
 
 	return ADJ_OK;												// RHM_HT 2013/04/15	Change return value
@@ -515,19 +515,19 @@ ADJ_STS	func_SET_SCENE_PARAM_for_NewGYRO_Fil(SENSOR_HW_HANDLE handle, OIS_UBYTE 
 		u16_dat = ( u16_dat &  0xEFFF );						// Clear Halfshutter mode
 		u16_dat = ( u16_dat |  0x0101 );
 		I2C_OIS_mem_write( _M_EQCTL, u16_dat );
-		SENSOR_PRINT("SET : EQCTL:%.4x\n", u16_dat );
+		SENSOR_LOGI("SET : EQCTL:%.4x\n", u16_dat );
 	}
 	else if	( u16_mode == 2 ){	// Half Shutter		// szx_2014/09/19 --->
 		u16_dat = I2C_OIS_mem__read( _M_EQCTL );
 		u16_dat = ( u16_dat |  0x1101 );
 		I2C_OIS_mem_write( _M_EQCTL, u16_dat );
-		SENSOR_PRINT("SET : EQCTL:%.4x\n", u16_dat );
+		SENSOR_LOGI("SET : EQCTL:%.4x\n", u16_dat );
 	}	// <--- szx_2014/09/19
 	else{														// ==> RHM_HT 2013.03.23	Add for OIS controll
 		u16_dat = I2C_OIS_mem__read( _M_EQCTL );
 		u16_dat = ( u16_dat &  0xFEFE );
 		I2C_OIS_mem_write( _M_EQCTL, u16_dat );
-		SENSOR_PRINT("SET : EQCTL:%.4x\n", u16_dat );
+		SENSOR_LOGI("SET : EQCTL:%.4x\n", u16_dat );
 	}															// <== RHM_HT 2013.03.23	Add for OIS controll
 
 	return ADJ_OK;												// RHM_HT 2013/04/15	Change return value
@@ -543,7 +543,7 @@ void	HalfShutterOn( SENSOR_HW_HANDLE handle )
 	u16_dat = I2C_OIS_mem__read( _M_EQCTL );
 	u16_dat = ( u16_dat |  0x1101 );
 	I2C_OIS_mem_write( _M_EQCTL, u16_dat );
-	SENSOR_PRINT("SET : EQCTL:%.4x\n", u16_dat );
+	SENSOR_LOGI("SET : EQCTL:%.4x\n", u16_dat );
 }
 // <== RHM_HT 2014/11/27	Added
 //  *****************************************************
@@ -633,7 +633,7 @@ void	I2C_OIS_spcl_cmnd( SENSOR_HW_HANDLE handle, OIS_UBYTE u08_on, OIS_UBYTE u08
 		cmd_val[0] = _OP_SpecialCMD;
 		cmd_val[1] = u08_dat;
 
-		//SENSOR_PRINT("SPCL  0x%x 0x%x", cmd_val[0], cmd_val[1]);
+		//SENSOR_LOGI("SPCL  0x%x 0x%x", cmd_val[0], cmd_val[1]);
 		Sensor_WriteI2C(_SLV_OIS_, (uint8_t *) & cmd_val[0], cmd_len);
 	}
 }

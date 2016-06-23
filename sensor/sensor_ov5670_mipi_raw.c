@@ -519,18 +519,18 @@ LOCAL unsigned long _ov5670_set_video_mode(unsigned long param)
 		return 0;
 
 	if (SENSOR_SUCCESS != Sensor_GetMode(&mode)) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	if (PNULL == s_ov5670_video_info[mode].setting_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	sensor_reg_ptr = (SENSOR_REG_T_PTR)&s_ov5670_video_info[mode].setting_ptr[param];
 	if (PNULL == sensor_reg_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
@@ -538,7 +538,7 @@ LOCAL unsigned long _ov5670_set_video_mode(unsigned long param)
 		Sensor_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("0x%02x", param);
+	SENSOR_LOGI("0x%02x", param);
 	return 0;
 }
 
@@ -1769,7 +1769,7 @@ LOCAL uint32_t Sensor_InitRawTuneInfo(void)
 
 LOCAL unsigned long _ov5670_GetResolutionTrimTab(unsigned long param)
 {
-	SENSOR_PRINT("0x%lx", (unsigned long)s_ov5670_Resolution_Trim_Tab);
+	SENSOR_LOGI("0x%lx", (unsigned long)s_ov5670_Resolution_Trim_Tab);
 	return (unsigned long) s_ov5670_Resolution_Trim_Tab;
 }
 
@@ -1799,7 +1799,7 @@ LOCAL unsigned long _ov5670_PowerOn(unsigned long power_on)
 		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
 		//_dw9174_SRCDeinit();
 	}
-	SENSOR_PRINT("SENSOR_OV5670: _ov5670_Power_On(1:on, 0:off): %d", power_on);
+	SENSOR_LOGI("SENSOR_OV5670: _ov5670_Power_On(1:on, 0:off): %d", power_on);
 	return SENSOR_SUCCESS;
 }
 
@@ -1809,7 +1809,7 @@ LOCAL unsigned long _ov5670_cfg_otp(unsigned long  param)
 	struct raw_param_info_tab* tab_ptr = (struct raw_param_info_tab*)s_ov5670_raw_param_tab;
 	uint32_t module_id=g_module_id;
 
-	SENSOR_PRINT("SENSOR_OV5670: _ov5670_cfg_otp");
+	SENSOR_LOGI("SENSOR_OV5670: _ov5670_cfg_otp");
 
 	if(PNULL!=tab_ptr[module_id].cfg_otp){
 		tab_ptr[module_id].cfg_otp(0);
@@ -1823,7 +1823,7 @@ LOCAL uint32_t _ov5670_com_Identify_otp(void* param_ptr)
 	uint32_t rtn=SENSOR_FAIL;
 	uint32_t param_id;
 
-	SENSOR_PRINT("SENSOR_OV5670: _ov5670_com_Identify_otp");
+	SENSOR_LOGI("SENSOR_OV5670: _ov5670_com_Identify_otp");
 
 	/*read param id from sensor omap*/
 	param_id=OV5670_RAW_PARAM_COM;
@@ -1849,17 +1849,17 @@ LOCAL uint32_t _ov5670_GetRawInof(void)
 		g_module_id = i;
 		if(RAW_INFO_END_ID==tab_ptr[i].param_id){
 			if(NULL==s_ov5670_mipi_raw_info_ptr){
-				SENSOR_PRINT("SENSOR_OV5670: ov5647_GetRawInof no param error");
+				SENSOR_LOGI("SENSOR_OV5670: ov5647_GetRawInof no param error");
 				rtn=SENSOR_FAIL;
 			}
-			SENSOR_PRINT("SENSOR_OV5670: ov5670_GetRawInof end");
+			SENSOR_LOGI("SENSOR_OV5670: ov5670_GetRawInof end");
 			break;
 		}
 		else if(PNULL!=tab_ptr[i].identify_otp){
 			if(SENSOR_SUCCESS==tab_ptr[i].identify_otp(0))
 			{
 				s_ov5670_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
-				SENSOR_PRINT("SENSOR_OV5670: ov5670_GetRawInof success");
+				SENSOR_LOGI("SENSOR_OV5670: ov5670_GetRawInof success");
 				break;
 			}
 		}
@@ -1889,24 +1889,24 @@ LOCAL unsigned long _ov5670_Identify(unsigned long param)
 	uint8_t ver_value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
 
-	SENSOR_PRINT("SENSOR_OV5670: mipi raw identify\n");
+	SENSOR_LOGI("SENSOR_OV5670: mipi raw identify\n");
 
 	pid_value = Sensor_ReadReg(ov5670_PID_ADDR);
 
 	if (ov5670_PID_VALUE == pid_value) {
 		ver_value = Sensor_ReadReg(ov5670_VER_ADDR);
-		SENSOR_PRINT("SENSOR_OV5670: Identify: PID = %x, VER = %x", pid_value, ver_value);
+		SENSOR_LOGI("SENSOR_OV5670: Identify: PID = %x, VER = %x", pid_value, ver_value);
 		if (ov5670_VER_VALUE == ver_value) {
 			ret_value=_ov5670_GetRawInof();
 			Sensor_InitRawTuneInfo();
 			ret_value = SENSOR_SUCCESS;
-			SENSOR_PRINT("SENSOR_OV5670: this is ov5670 sensor !");
+			SENSOR_LOGI("SENSOR_OV5670: this is ov5670 sensor !");
 		} else {
-			SENSOR_PRINT
+			SENSOR_LOGI
 			    ("SENSOR_OV5670: Identify this is OV%x%x sensor !", pid_value, ver_value);
 		}
 	} else {
-		SENSOR_PRINT("SENSOR_OV5670: identify fail,pid_value=%d", pid_value);
+		SENSOR_LOGI("SENSOR_OV5670: identify fail,pid_value=%d", pid_value);
 	}
 
 	return ret_value;
@@ -1930,7 +1930,7 @@ LOCAL unsigned long _ov5670_write_exposure(unsigned long param)
 	dummy_line=(param>>0x10)&0x0fff;
 	size_index=(param>>0x1c)&0x0f;
 
-	SENSOR_PRINT("SENSOR_OV5670: write_exposure line:%d, dummy:%d, size_index:%d\n", expsure_line, dummy_line, size_index);
+	SENSOR_LOGI("SENSOR_OV5670: write_exposure line:%d, dummy:%d, size_index:%d\n", expsure_line, dummy_line, size_index);
 
 	max_frame_len=_ov5670_GetMaxFrameLine(size_index);
 
@@ -1979,7 +1979,7 @@ LOCAL unsigned long _ov5670_write_gain(unsigned long param)
 	real_gain = real_gain*(((param>>8)&0x01)+1)*(((param>>9)&0x01)+1)*(((param>>10)&0x01)+1)*(((param>>11)&0x01)+1);
 	real_gain = real_gain<<3;
 
-	SENSOR_PRINT("SENSOR_OV5670: real_gain:0x%x, param: 0x%x", real_gain, param);
+	SENSOR_LOGI("SENSOR_OV5670: real_gain:0x%x, param: 0x%x", real_gain, param);
 
 	ret_value = _ov5670_set_gain(real_gain);
 
@@ -1995,7 +1995,7 @@ LOCAL unsigned long _ov5670_write_af(unsigned long param)
 	uint16_t  slave_addr = 0;
 	uint16_t cmd_len = 0;
 
-	SENSOR_PRINT("SENSOR_OV5670: _write_af %d", param);
+	SENSOR_LOGI("SENSOR_OV5670: _write_af %d", param);
 
 	slave_addr = DW9714_VCM_SLAVE_ADDR;
 	cmd_val[0] = (param&0xfff0)>>4;
@@ -2003,7 +2003,7 @@ LOCAL unsigned long _ov5670_write_af(unsigned long param)
 	cmd_len = 2;
 	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 
-	SENSOR_PRINT("SENSOR_OV5670: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
+	SENSOR_LOGI("SENSOR_OV5670: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
 
 	return ret_value;
 }
@@ -2047,7 +2047,7 @@ LOCAL uint32_t _ov5670_get_gain(void)
 	int gain128;
 	gain128 = Sensor_ReadReg(0x3508) & 0x1f;
 	gain128 = (gain128<<8) + Sensor_ReadReg(0x3509);
-	SENSOR_PRINT("SENSOR: _ov5670_get_gain gain: 0x%x", gain128);
+	SENSOR_LOGI("SENSOR: _ov5670_get_gain gain: 0x%x", gain128);
 
 	return gain128;
 }
@@ -2122,7 +2122,7 @@ LOCAL unsigned long _ov5670_SetEV(unsigned long param)
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr = (SENSOR_EXT_FUN_PARAM_T_PTR) param;
 	uint32_t ev = ext_ptr->param;
 
-	SENSOR_PRINT("SENSOR_ov5670: _ov5670_SetEV param: 0x%x", ext_ptr->param);
+	SENSOR_LOGI("SENSOR_ov5670: _ov5670_SetEV param: 0x%x", ext_ptr->param);
 
 	switch(ev) {
 		case SENSOR_HDR_EV_LEVE_0:
@@ -2153,7 +2153,7 @@ LOCAL unsigned long _ov5670_saveLoad_exposure(unsigned long param)
 	uint32_t sl_param = sl_ptr->param;
 	if (sl_param) {
 		/*load exposure params to sensor*/
-		SENSOR_PRINT_HIGH("_ov5670_saveLoad_exposure load shutter 0x%x gain 0x%x",
+		SENSOR_LOGI("_ov5670_saveLoad_exposure load shutter 0x%x gain 0x%x",
 							s_ov5670_shutter_bak,
 							s_ov5670_gain_bak);
 
@@ -2163,7 +2163,7 @@ LOCAL unsigned long _ov5670_saveLoad_exposure(unsigned long param)
 		/*save exposure params from sensor*/
 		s_ov5670_shutter_bak = _ov5670_get_shutter();
 		s_ov5670_gain_bak = _ov5670_get_gain();
-		SENSOR_PRINT_HIGH("_ov5670_saveLoad_exposure save shutter 0x%x gain 0x%x",
+		SENSOR_LOGI("_ov5670_saveLoad_exposure save shutter 0x%x gain 0x%x",
 							s_ov5670_shutter_bak,
 							s_ov5670_gain_bak);
 	}
@@ -2201,10 +2201,10 @@ LOCAL unsigned long _ov5670_BeforeSnapshot(unsigned long param)
 	uint32_t prv_linetime=s_ov5670_Resolution_Trim_Tab[preview_mode].line_time;
 	uint32_t cap_linetime = s_ov5670_Resolution_Trim_Tab[capture_mode].line_time;
 
-	SENSOR_PRINT("SENSOR_OV5670: BeforeSnapshot mode: 0x%x, prv_linetime:%d, cap_linetime:%d",param, prv_linetime, cap_linetime);
+	SENSOR_LOGI("SENSOR_OV5670: BeforeSnapshot mode: 0x%x, prv_linetime:%d, cap_linetime:%d",param, prv_linetime, cap_linetime);
 
 	if (preview_mode == capture_mode) {
-		SENSOR_PRINT("SENSOR_OV5670: prv mode equal to cap mode");
+		SENSOR_LOGI("SENSOR_OV5670: prv mode equal to cap mode");
 		goto CFG_INFO;
 	}
 
@@ -2217,7 +2217,7 @@ LOCAL unsigned long _ov5670_BeforeSnapshot(unsigned long param)
 	Sensor_SetMode_WaitDone();
 
 	if (prv_linetime == cap_linetime) {
-		SENSOR_PRINT("SENSOR_OV5670: prvline equal to capline");
+		SENSOR_LOGI("SENSOR_OV5670: prvline equal to capline");
 		//goto CFG_INFO;
 	}
 
@@ -2234,7 +2234,7 @@ LOCAL unsigned long _ov5670_BeforeSnapshot(unsigned long param)
 		gain = gain / 2;
 	}
 
-	SENSOR_PRINT("SENSOR_OV5670: BeforeSnapshot,  capture_exposure = %d, capture_maxline = %d", capture_exposure, capture_maxline);
+	SENSOR_LOGI("SENSOR_OV5670: BeforeSnapshot,  capture_exposure = %d, capture_maxline = %d", capture_exposure, capture_maxline);
 
 	if(capture_exposure > (capture_maxline - 4)){
 		capture_maxline = capture_exposure + 4;
@@ -2256,7 +2256,7 @@ CFG_INFO:
 
 LOCAL unsigned long _ov5670_after_snapshot(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_OV5670: after_snapshot mode:%d", param);
+	SENSOR_LOGI("SENSOR_OV5670: after_snapshot mode:%d", param);
 	Sensor_SetMode((uint32_t)param);
 
 	return SENSOR_SUCCESS;
@@ -2264,7 +2264,7 @@ LOCAL unsigned long _ov5670_after_snapshot(unsigned long param)
 
 LOCAL unsigned long _ov5670_StreamOn(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_OV5670: StreamOn");
+	SENSOR_LOGI("SENSOR_OV5670: StreamOn");
 
 	Sensor_WriteReg(0x0100, 0x01);
 
@@ -2273,7 +2273,7 @@ LOCAL unsigned long _ov5670_StreamOn(unsigned long param)
 
 LOCAL unsigned long _ov5670_StreamOff(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_OV5670: StreamOff");
+	SENSOR_LOGI("SENSOR_OV5670: StreamOff");
 
 	Sensor_WriteReg(0x0100, 0x00);
 	usleep(80*1000);
@@ -2314,19 +2314,19 @@ LOCAL unsigned long _dw9174_SRCInit(unsigned long mode)
 			cmd_val[1] = 0xa3;
 			ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 			if(ret_value){
-				SENSOR_PRINT("SENSOR_OV5670: _dw9714_SRCInit fail!1");
+				SENSOR_LOGI("SENSOR_OV5670: _dw9714_SRCInit fail!1");
 			}
 			cmd_val[0] = 0xf2;
 			cmd_val[1] = 0x00;
 			ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 			if(ret_value){
-				SENSOR_PRINT("SENSOR_OV5670: _dw9714_SRCInit fail!2");
+				SENSOR_LOGI("SENSOR_OV5670: _dw9714_SRCInit fail!2");
 			}
 			cmd_val[0] = 0xdc;
 			cmd_val[1] = 0x51;
 			ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 			if(ret_value){
-				SENSOR_PRINT("SENSOR_OV5670: _dw9714_SRCInit fail!3");
+				SENSOR_LOGI("SENSOR_OV5670: _dw9714_SRCInit fail!3");
 			}
 		}
 		break;

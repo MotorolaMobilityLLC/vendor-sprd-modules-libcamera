@@ -120,7 +120,7 @@ cmr_int sns_dev_pwdn(struct sensor_drv_context *sensor_cxt,
 
 	ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_PD, &local_power_level);
 	if (0 != ret) {
-		CMR_LOGE("failed,  power_level = %d, ret=%ld ", power_level, ret);
+		SENSOR_LOGE("failed,  power_level = %d, ret=%ld ", power_level, ret);
 		ret = -1;
 	}
 
@@ -135,7 +135,7 @@ cmr_int sns_dev_set_motor_val(struct sensor_drv_context *sensor_cxt,
 
 	ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_SET_CAMMOT, &vdd_value);
 	if (0 != ret) {
-		CMR_LOGE("failed,  vdd_value = %d, ret=%ld ",
+		SENSOR_LOGE("failed,  vdd_value = %d, ret=%ld ",
 			vdd_value, ret);
 		ret = -1;
 	}
@@ -151,7 +151,7 @@ cmr_int sns_dev_set_avdd(struct sensor_drv_context *sensor_cxt,
 
 	ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_SET_AVDD, &vdd_value);
 	if (0 != ret) {
-		CMR_LOGE("failed,  vdd_value = %d, ret=%ld ", vdd_value, ret);
+		SENSOR_LOGE("failed,  vdd_value = %d, ret=%ld ", vdd_value, ret);
 		ret = -1;
 	}
 
@@ -166,7 +166,7 @@ cmr_int sns_dev_set_dvdd(struct sensor_drv_context *sensor_cxt,
 
 	ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_SET_DVDD, &vdd_value);
 	if (0 != ret) {
-		CMR_LOGE("failed,  vdd_value = %d, ret=%ld ", vdd_value, ret);
+		SENSOR_LOGE("failed,  vdd_value = %d, ret=%ld ", vdd_value, ret);
 		ret = -1;
 	}
 
@@ -181,7 +181,7 @@ cmr_int sns_dev_set_iovdd(struct sensor_drv_context *sensor_cxt,
 
 	ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_SET_IOVDD, &vdd_value);
 	if (0 != ret) {
-		CMR_LOGE("failed,  vdd_value = %d, ret=%ld ", vdd_value, ret);
+		SENSOR_LOGE("failed,  vdd_value = %d, ret=%ld ", vdd_value, ret);
 		ret = -1;
 	}
 
@@ -208,7 +208,7 @@ cmr_int sns_device_write(struct sensor_drv_context *sensor_cxt,
 	ret = write(sensor_cxt->fd_sensor, buff, size);
 
 	if (0 != ret) {
-		CMR_LOGE("failed,  buff[0] = %d, size=%d, ret=%ld ", buff[0], size, ret);
+		SENSOR_LOGE("failed,  buff[0] = %d, size=%d, ret=%ld ", buff[0], size, ret);
 		ret = -1;
 	}
 
@@ -224,7 +224,7 @@ cmr_int sns_dev_set_mclk(struct sensor_drv_context *sensor_cxt,
 	ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_SET_MCLK, &mclk);
 
 	if (0 != ret) {
-		CMR_LOGE("failed,  mclk = %d, ret = %ld  ", mclk, ret);
+		SENSOR_LOGE("failed,  mclk = %d, ret = %ld  ", mclk, ret);
 		ret = -1;
 	}
 
@@ -237,7 +237,7 @@ cmr_int sns_dev_reset(struct sensor_drv_context *sensor_cxt,
 	cmr_int ret = SENSOR_SUCCESS;
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 
-	CMR_LOGI("level %d, width %d",reset_val[0],reset_val[1]);
+	SENSOR_LOGI("level %d, width %d",reset_val[0],reset_val[1]);
 
 	ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_RST, reset_val);
 	if (ret) {
@@ -253,14 +253,14 @@ cmr_int sns_dev_i2c_init(struct sensor_drv_context *sensor_cxt,
 	cmr_int ret = SENSOR_SUCCESS;
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 
-	CMR_LOGV("E");
+	SENSOR_LOGV("E");
 /*	ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_I2C_INIT, &senor_id);*/
 	ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_SET_ID, &sensor_id);
 	if (0 != ret) {
-		CMR_LOGE("failed,  senor_id = %d, ret=%ld", sensor_id, ret);
+		SENSOR_LOGE("failed,  senor_id = %d, ret=%ld", sensor_id, ret);
 		ret = -1;
 	}
-	CMR_LOGV("X");
+	SENSOR_LOGV("X");
 	return ret;
 }
 
@@ -273,9 +273,9 @@ cmr_int sns_dev_i2c_deinit(struct sensor_drv_context *sensor_cxt,
 	cmr_int ret = SENSOR_SUCCESS;
 	/*SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 
-	CMR_LOGI("E");
+	SENSOR_LOGI("E");
 
-	CMR_LOGI("X, now dummy handle");*/
+	SENSOR_LOGI("X, now dummy handle");*/
 	return ret;
 }
 
@@ -286,10 +286,10 @@ cmr_int sns_dev_rst_lvl(struct sensor_drv_context *sensor_cxt,
 	cmr_int ret = SENSOR_SUCCESS;
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 
-	CMR_LOGV("fd 0x%lx", sensor_cxt->fd_sensor);
+	SENSOR_LOGV("fd 0x%lx", sensor_cxt->fd_sensor);
 	ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_RST_LEVEL, &level);
 	if (0 != ret) {
-		CMR_LOGE("failed,  level = %d, ret=%ld ", level, ret);
+		SENSOR_LOGE("failed,  level = %d, ret=%ld ", level, ret);
 		ret = -1;
 	}
 
@@ -302,10 +302,10 @@ cmr_int sns_dev_mipi_lvl(struct sensor_drv_context *sensor_cxt,
 	cmr_int ret = SENSOR_SUCCESS;
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 
-	CMR_LOGV("fd 0x%lx", sensor_cxt->fd_sensor);
+	SENSOR_LOGV("fd 0x%lx", sensor_cxt->fd_sensor);
 //	ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_SET_MIPI_SWITCH, &level);
 	if (0 != ret) {
-		CMR_LOGE("failed,  level = %d, ret=%ld ", level, ret);
+		SENSOR_LOGE("failed,  level = %d, ret=%ld ", level, ret);
 		ret = -1;
 	}
 
@@ -318,7 +318,7 @@ cmr_int sns_dev_set_i2c_addr(struct sensor_drv_context *sensor_cxt)
 
 	ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_I2C_ADDR, &sensor_cxt->i2c_addr);
 	if (0 != ret) {
-		CMR_LOGE("failed,  addr = 0x%x, ret=%ld ",
+		SENSOR_LOGE("failed,  addr = 0x%x, ret=%ld ",
 			sensor_cxt->i2c_addr,
 			ret);
 		ret = -1;
@@ -335,7 +335,7 @@ cmr_int sns_dev_read_reg(struct sensor_drv_context *sensor_cxt,
 
 	ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_I2C_READ, reg);
 	if (0 != ret) {
-		CMR_LOGE("failed,  addr = 0x%x, value=0x%x, bit=%d, ret=%ld ",
+		SENSOR_LOGE("failed,  addr = 0x%x, value=0x%x, bit=%d, ret=%ld ",
 			reg->reg_addr, reg->reg_value, reg->reg_bits, ret);
 		ret = -1;
 	}
@@ -351,7 +351,7 @@ cmr_int sns_dev_write_reg(struct sensor_drv_context *sensor_cxt,
 
 	ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_I2C_WRITE, reg);
 	if (0 != ret) {
-		CMR_LOGE("failed,  addr = 0x%x, value=%x, bit=%d, ret=%ld ",
+		SENSOR_LOGE("failed,  addr = 0x%x, value=%x, bit=%d, ret=%ld ",
 			reg->reg_addr, reg->reg_value, reg->reg_bits, ret);
 		ret = -1;
 	}
@@ -367,7 +367,7 @@ cmr_int sns_dev_get_flash_level (struct sensor_drv_context *sensor_cxt,
 
 	ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_GET_FLASH_LEVEL, level);
 	if (0 != ret) {
-		CMR_LOGE("_Sensor_Device_GetFlashLevel failed, ret=%d \n",  ret);
+		SENSOR_LOGE("_Sensor_Device_GetFlashLevel failed, ret=%d \n",  ret);
 		ret = -1;
 	}
 
@@ -386,7 +386,7 @@ cmr_int hw_Sensor_Device_WriteRegTab(SENSOR_HW_HANDLE handle, SENSOR_REG_TAB_PTR
 
 	ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_I2C_WRITE_REGS, reg_tab);
 	if (0 != ret) {
-		CMR_LOGE("failed,  ptr=%p, count=%d, bits=%d, burst=%d ",
+		SENSOR_LOGE("failed,  ptr=%p, count=%d, bits=%d, burst=%d ",
 			reg_tab->sensor_reg_tab_ptr, reg_tab->reg_count, reg_tab->reg_bits, reg_tab->burst_mode);
 
 		ret = -1;
@@ -403,7 +403,7 @@ cmr_int sns_dev_set_i2c_clk(struct sensor_drv_context *sensor_cxt,
 
 	ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_SET_I2CCLOCK, &clock);
 	if (0 != ret) {
-		CMR_LOGE("failed,  clock = %d, ret=%ld ", clock, ret);
+		SENSOR_LOGE("failed,  clock = %d, ret=%ld ", clock, ret);
 		ret = -1;
 	}
 
@@ -418,7 +418,7 @@ cmr_int sns_set_i2c_clk(struct sensor_drv_context *sensor_cxt)
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 
 	if (PNULL == sensor_cxt->sensor_info_ptr) {
-		CMR_LOGE("No sensor info ");
+		SENSOR_LOGE("No sensor info ");
 		return -1;
 	}
 
@@ -448,11 +448,11 @@ cmr_int sns_set_i2c_clk(struct sensor_drv_context *sensor_cxt)
 
 		default:
 			clock = 100000;
-			CMR_LOGI("no valid freq, set clock to 100k ");
+			SENSOR_LOGI("no valid freq, set clock to 100k ");
 			break;
 	}
 
-	CMR_LOGI("clock = %d ", clock);
+	SENSOR_LOGI("clock = %d ", clock);
 
 	ret = sns_dev_set_i2c_clk(sensor_cxt, clock);
 
@@ -467,7 +467,7 @@ cmr_int sns_dev_i2c_write(struct sensor_drv_context *sensor_cxt,
 
 	ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_GRC_I2C_WRITE, i2c_tag);
 	if (0 != ret) {
-		CMR_LOGE("failed to write i2c, slave_addr=0x%x, ptr=0x%p, count=%d",
+		SENSOR_LOGE("failed to write i2c, slave_addr=0x%x, ptr=0x%p, count=%d",
 			i2c_tag->slave_addr, i2c_tag->i2c_data, i2c_tag->i2c_count);
 		ret = -1;
 	}
@@ -483,7 +483,7 @@ cmr_int sns_dev_i2c_read(struct sensor_drv_context *sensor_cxt,
 
 	ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_GRC_I2C_READ, i2c_tag);
 	if (0 != ret) {
-		CMR_LOGE("failed to read i2c, slave_addr=0x%x, ptr=0x%p, count=%d\n",
+		SENSOR_LOGE("failed to read i2c, slave_addr=0x%x, ptr=0x%p, count=%d\n",
 			i2c_tag->slave_addr, i2c_tag->i2c_data, i2c_tag->i2c_count);
 		ret = -1;
 	}
@@ -504,7 +504,7 @@ cmr_u32 sns_get_mipi_phy_id(struct sensor_drv_context *sensor_cxt)
 #elif defined(CONFIG_BACK_CAMERA_MIPI_PHYAB)
 		phy_id = 0x03;
 #endif
-		CMR_LOGI("main phy_id:%x \n", phy_id);
+		SENSOR_LOGI("main phy_id:%x \n", phy_id);
 	} else if (SENSOR_SUB == sensor_id){
 #if defined(CONFIG_FRONT_CAMERA_MIPI_PHYA)
 		phy_id = 0x01;
@@ -515,13 +515,13 @@ cmr_u32 sns_get_mipi_phy_id(struct sensor_drv_context *sensor_cxt)
 #elif defined(CONFIG_FRONT_CAMERA_MIPI_PHYC)
 		phy_id = 0x04;
 #endif
-		CMR_LOGI("sub phy_id:%x \n", phy_id);
+		SENSOR_LOGI("sub phy_id:%x \n", phy_id);
 	} else if (SENSOR_DEVICE2 == sensor_id) {
 		phy_id = 0x03;
-		CMR_LOGI("main2 phy_id:%x \n", phy_id);
+		SENSOR_LOGI("main2 phy_id:%x \n", phy_id);
 	} else if (SENSOR_DEVICE3 == sensor_id){
 		phy_id = 0x03;
-		CMR_LOGI("sub2 phy_id:%x \n", phy_id);
+		SENSOR_LOGI("sub2 phy_id:%x \n", phy_id);
 	}
 
 	return phy_id;
@@ -544,10 +544,10 @@ cmr_int sns_dev_mipi_init(struct sensor_drv_context *sensor_cxt,
 	if_cfg.lane_num     = lane_num;
 	if_cfg.phy_id       = sns_get_mipi_phy_id(sensor_cxt);
 	if_cfg.bps_per_lane = bps;
-	CMR_LOGI("Lane num %d, bps %d phy id %d", lane_num, bps, if_cfg.phy_id);
+	SENSOR_LOGI("Lane num %d, bps %d phy id %d", lane_num, bps, if_cfg.phy_id);
 	ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_IF_CFG, &if_cfg);
 	if (0 != ret) {
-		CMR_LOGE("failed, ret=%ld, lane=%d, bps=%d", ret, lane_num, bps);
+		SENSOR_LOGE("failed, ret=%ld, lane=%d, bps=%d", ret, lane_num, bps);
 		ret = -1;
 	}
 	//usleep(15*1000);
@@ -564,13 +564,13 @@ cmr_int sns_dev_mipi_deinit(struct sensor_drv_context *sensor_cxt)
 	if_cfg.if_type      = INTERFACE_MIPI;
 	if_cfg.is_open      = INTERFACE_CLOSE;
 	if_cfg.phy_id       = sns_get_mipi_phy_id(sensor_cxt);
-	CMR_LOGI("phy id %d", if_cfg.phy_id);
+	SENSOR_LOGI("phy id %d", if_cfg.phy_id);
 	ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_IF_CFG, &if_cfg);
 	if (0 != ret) {
-		CMR_LOGE("failed, 0x%lx", ret);
+		SENSOR_LOGE("failed, 0x%lx", ret);
 		ret = -1;
 	}
-	CMR_LOGI("close mipi");
+	SENSOR_LOGI("close mipi");
 
 	return ret;
 }
@@ -587,7 +587,7 @@ cmr_int hw_Sensor_WriteI2C(SENSOR_HW_HANDLE handle, cmr_u16 slave_addr, cmr_u8 *
 	i2c_tab.i2c_data	= cmd;
 	i2c_tab.i2c_count	= cmd_length;
 
-	CMR_LOGV("slave_addr=0x%x, ptr=0x%p, count=%d",
+	SENSOR_LOGV("slave_addr=0x%x, ptr=0x%p, count=%d",
 		i2c_tab.slave_addr, i2c_tab.i2c_data, i2c_tab.i2c_count);
 
 	ret = sns_dev_i2c_write(sensor_cxt, &i2c_tab);
@@ -631,7 +631,7 @@ static cmr_int sns_grc_read_i2c(struct sensor_drv_context *sensor_cxt, cmr_u16 s
 		i2c_tab.read_len = 2;
 		break;
 	default:
-		CMR_LOGE("failed to set bits");
+		SENSOR_LOGE("failed to set bits");
 		goto exit;
 		break;
 	}
@@ -651,7 +651,7 @@ static cmr_int sns_grc_read_i2c(struct sensor_drv_context *sensor_cxt, cmr_u16 s
 		*reg = (0x00ff & i2c_tab.i2c_data[1]) | *reg;
 		break;
 	default:
-		CMR_LOGE("failed to set bits");
+		SENSOR_LOGE("failed to set bits");
 		break;
 	}
 
@@ -696,7 +696,7 @@ static cmr_int sns_grc_read_i2c_Ex(cmr_u16 slave_addr, cmr_u16 addr, cmr_u16 *re
 		i2c_tab.read_len = 2;
 		break;
 	default:
-		CMR_LOGE("failed to set bits");
+		SENSOR_LOGE("failed to set bits");
 		goto exit;
 		break;
 	}
@@ -716,7 +716,7 @@ static cmr_int sns_grc_read_i2c_Ex(cmr_u16 slave_addr, cmr_u16 addr, cmr_u16 *re
 		*reg = (0x00ff & i2c_tab.i2c_data[1]) | *reg;
 		break;
 	default:
-		CMR_LOGE("failed to set bits");
+		SENSOR_LOGE("failed to set bits");
 		break;
 	}
 
@@ -734,7 +734,7 @@ cmr_u16 hw_sensor_grc_read_i2c(SENSOR_HW_HANDLE handle, cmr_u16 slave_addr, cmr_
 
 	ret = sns_grc_read_i2c(sensor_cxt, slave_addr, addr, &reg, bits);
 	if (ret)
-		CMR_LOGE("failed to read i2c");
+		SENSOR_LOGE("failed to read i2c");
 
 	return reg;
 }
@@ -777,7 +777,7 @@ static cmr_int sns_grc_write_i2c(struct sensor_drv_context *sensor_cxt, cmr_u16 
 		i2c_tab.i2c_count = 4;
 		break;
 	default:
-		CMR_LOGE("failed to set bits");
+		SENSOR_LOGE("failed to set bits");
 		goto exit;
 		break;
 	}
@@ -825,7 +825,7 @@ static cmr_int sns_grc_write_i2c_Ex(cmr_u16 slave_addr, cmr_u16 addr, cmr_u16 re
 		i2c_tab.i2c_count = 4;
 		break;
 	default:
-		CMR_LOGE("failed to set bits");
+		SENSOR_LOGE("failed to set bits");
 		goto exit;
 		break;
 	}
@@ -843,7 +843,7 @@ cmr_u16 hw_sensor_grc_write_i2c(SENSOR_HW_HANDLE handle, cmr_u16 slave_addr, cmr
 	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)(handle->privatedata);
 	ret = sns_grc_write_i2c(sensor_cxt, slave_addr, addr, reg, bits);
 	if (ret)
-		CMR_LOGE("failed to read i2c");
+		SENSOR_LOGE("failed to read i2c");
 
 	return reg;
 }
@@ -857,12 +857,12 @@ void hw_Sensor_Reset(SENSOR_HW_HANDLE handle, cmr_u32 level)
 		return;
 	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)(handle->privatedata);
 
-	CMR_LOGI("in.");
+	SENSOR_LOGI("in.");
 
 	SENSOR_DRV_CHECK_ZERO_VOID(sensor_cxt);
 
 	if (PNULL == sensor_cxt->sensor_info_ptr) {
-		CMR_LOGE("Sensor_SetI2CClock: No sensor info ");
+		SENSOR_LOGE("Sensor_SetI2CClock: No sensor info ");
 		return;
 	}
 
@@ -880,7 +880,7 @@ void hw_Sensor_Reset(SENSOR_HW_HANDLE handle, cmr_u32 level)
 		}
 		sns_dev_reset(sensor_cxt, rst_val);
 	}
-	CMR_LOGI("OK out.");
+	SENSOR_LOGI("OK out.");
 }
 
 cmr_int hw_Sensor_SetMCLK(SENSOR_HW_HANDLE handle, cmr_u32 mclk)
@@ -890,11 +890,11 @@ cmr_int hw_Sensor_SetMCLK(SENSOR_HW_HANDLE handle, cmr_u32 mclk)
 		return SENSOR_CTX_ERROR;
 	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)(handle->privatedata);
 
-	CMR_LOGV("mclk %d ", mclk);
+	SENSOR_LOGV("mclk %d ", mclk);
 
 	ret = sns_dev_set_mclk(sensor_cxt, mclk);
 
-	CMR_LOGI("mclk %d, ret %ld ", mclk, ret );
+	SENSOR_LOGI("mclk %d, ret %ld ", mclk, ret );
 
 	return ret;
 }
@@ -921,7 +921,7 @@ cmr_int hw_Sensor_SetVoltage(SENSOR_HW_HANDLE handle, SENSOR_AVDD_VAL_E dvdd_val
 		return err;
 
 
-	CMR_LOGI("avdd_val = %d,  dvdd_val=%d, iodd_val=%d ", avdd_val, dvdd_val, iodd_val);
+	SENSOR_LOGI("avdd_val = %d,  dvdd_val=%d, iodd_val=%d ", avdd_val, dvdd_val, iodd_val);
 
 	return err;
 }
@@ -934,7 +934,7 @@ cmr_int hw_Sensor_SetAvddVoltage(SENSOR_HW_HANDLE handle, SENSOR_AVDD_VAL_E vdd_
 	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)(handle->privatedata);
 
 	rtn = sns_dev_set_avdd(sensor_cxt, (cmr_u32)vdd_val);
-	CMR_LOGI("vdd_val is %d, set result is =%ld ", vdd_val, rtn);
+	SENSOR_LOGI("vdd_val is %d, set result is =%ld ", vdd_val, rtn);
 	return rtn;
 }
 
@@ -946,7 +946,7 @@ cmr_int hw_Sensor_SetDvddVoltage(SENSOR_HW_HANDLE handle, SENSOR_AVDD_VAL_E vdd_
 	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)(handle->privatedata);
 
 	rtn = sns_dev_set_dvdd(sensor_cxt, (cmr_u32)vdd_val);
-	CMR_LOGI("vdd_val is %d, set result is =%ld ", vdd_val, rtn);
+	SENSOR_LOGI("vdd_val is %d, set result is =%ld ", vdd_val, rtn);
 	return rtn;
 }
 
@@ -958,7 +958,7 @@ cmr_int hw_Sensor_SetIovddVoltage(SENSOR_HW_HANDLE handle, SENSOR_AVDD_VAL_E vdd
 	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)(handle->privatedata);
 
 	rtn = sns_dev_set_iovdd(sensor_cxt, (cmr_u32)vdd_val);
-	CMR_LOGI("vdd_val is %d, set result is =%ld ", vdd_val, rtn);
+	SENSOR_LOGI("vdd_val is %d, set result is =%ld ", vdd_val, rtn);
 	return rtn;
 }
 
@@ -970,7 +970,7 @@ cmr_int hw_Sensor_SetMonitorVoltage(SENSOR_HW_HANDLE handle, SENSOR_AVDD_VAL_E v
 	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)(handle->privatedata);
 
 	err = sns_dev_set_motor_val(sensor_cxt, (cmr_u32)vdd_val);
-	CMR_LOGI("vdd_val = %d ", vdd_val);
+	SENSOR_LOGI("vdd_val = %d ", vdd_val);
 
 	return err;
 }
@@ -987,7 +987,7 @@ void Sensor_PowerOn(struct sensor_drv_context *sensor_cxt, cmr_u32 power_on)
 	SENSOR_DRV_CHECK_ZERO_VOID(sensor_cxt);
 
 	if (PNULL == sensor_cxt->sensor_info_ptr) {
-		CMR_LOGE("No sensor info!");
+		SENSOR_LOGE("No sensor info!");
 		return;
 	}
 	rst_lvl = sensor_cxt->sensor_info_ptr->reset_pulse_level;
@@ -997,7 +997,7 @@ void Sensor_PowerOn(struct sensor_drv_context *sensor_cxt, cmr_u32 power_on)
 	iovdd_val = sensor_cxt->sensor_info_ptr->iovdd_val;
 	power_func = sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr->power;
 
-	CMR_LOGI("power_on = %d, power_down_level = %d, avdd_val = %d",
+	SENSOR_LOGI("power_on = %d, power_down_level = %d, avdd_val = %d",
 		power_on, power_down, avdd_val);
 
 	/*when use the camera vendor functions, the sensor_cxt should be set at first */
@@ -1040,7 +1040,7 @@ void Sensor_PowerOn_Ex(struct sensor_drv_context *sensor_cxt,
 	iovdd_val = sensor_cxt->sensor_info_ptr->iovdd_val;
 	power_func = sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr->power;
 
-	CMR_LOGI("power_down_level = %d, avdd_val = %d", power_down, avdd_val);
+	SENSOR_LOGI("power_down_level = %d, avdd_val = %d", power_down, avdd_val);
 	/*when use the camera vendor functions, the sensor_cxt should be set at first */
 	sensor_set_cxt_common(sensor_cxt);
 
@@ -1061,16 +1061,16 @@ cmr_int hw_Sensor_PowerDown(SENSOR_HW_HANDLE handle, cmr_u32 power_level)
 		return SENSOR_CTX_ERROR;
 	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)(handle->privatedata);
 
-	CMR_LOGD("cur_id = %d ", sensor_cxt->sensor_register_info.cur_id);
+	SENSOR_LOGD("cur_id = %d ", sensor_cxt->sensor_register_info.cur_id);
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 	if (PNULL == sensor_cxt->sensor_info_ptr) {
-		CMR_LOGE("No sensor info ");
+		SENSOR_LOGE("No sensor info ");
 		return SENSOR_FAIL;
 	}
 
 	entersleep_func = sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr->enter_sleep;
 
-	CMR_LOGV("power_level %d", power_level);
+	SENSOR_LOGV("power_level %d", power_level);
 
 	if (entersleep_func) {
 		entersleep_func(sensor_cxt->sensor_hw_handler, power_level);
@@ -1098,7 +1098,7 @@ cmr_int hw_Sensor_SetResetLevel(SENSOR_HW_HANDLE handle, cmr_u32 plus_level)
 cmr_int hw_Sensor_SetMIPILevel(SENSOR_HW_HANDLE handle, cmr_u32 plus_level)
 {
 	#ifdef CONFIG_DCAM_SENSOR_DEV_2_SUPPORT
-	CMR_LOGE("Sensor_SetMIPILevel IN");
+	SENSOR_LOGE("Sensor_SetMIPILevel IN");
 	if (NULL == handle || NULL == handle->privatedata)
 		return SENSOR_CTX_ERROR;
 	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)(handle->privatedata);
@@ -1117,13 +1117,13 @@ void Sensor_SetExportInfo(struct sensor_drv_context *sensor_cxt)
 	SENSOR_VIDEO_INFO_T          *video_info_ptr = PNULL;
 	cmr_u32 i = 0;
 
-	CMR_LOGI("E");
+	SENSOR_LOGI("E");
 	SENSOR_DRV_CHECK_ZERO_VOID(sensor_cxt);
 
 	SENSOR_EXP_INFO_T            *exp_info_ptr = &sensor_cxt->sensor_exp_info;
 
 	if (PNULL == sensor_cxt->sensor_info_ptr) {
-		CMR_LOGE("X. sensor_info_ptr is null.");
+		SENSOR_LOGE("X. sensor_info_ptr is null.");
 		return;
 	} else {
 		sensor_info_ptr = sensor_cxt->sensor_info_ptr;
@@ -1294,7 +1294,7 @@ void Sensor_SetExportInfo(struct sensor_drv_context *sensor_cxt)
 	exp_info_ptr->vertical_view_angle = sensor_info_ptr->vertical_view_angle;
 	exp_info_ptr->sensor_version_info = sensor_info_ptr->sensor_version_info;
 
-	CMR_LOGI("X");
+	SENSOR_LOGI("X");
 }
 
 cmr_int hw_Sensor_WriteReg(SENSOR_HW_HANDLE handle, cmr_u16 subaddr, cmr_u16 data)
@@ -1308,7 +1308,7 @@ cmr_int hw_Sensor_WriteReg(SENSOR_HW_HANDLE handle, cmr_u16 subaddr, cmr_u16 dat
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 
 	if (PNULL == sensor_cxt->sensor_info_ptr) {
-		CMR_LOGE("SENSOR: sensor_info_ptr is null.");
+		SENSOR_LOGE("SENSOR: sensor_info_ptr is null.");
 		return 0xFF;
 	}
 
@@ -1316,7 +1316,7 @@ cmr_int hw_Sensor_WriteReg(SENSOR_HW_HANDLE handle, cmr_u16 subaddr, cmr_u16 dat
 
 	if (PNULL != write_reg_func) {
 		if (SENSOR_OP_SUCCESS != write_reg_func(sensor_cxt->sensor_hw_handler, (subaddr << S_BIT_4) + data)) {
-			CMR_LOGI("SENSOR: IIC write : reg:0x%04x, val:0x%04x error",
+			SENSOR_LOGI("SENSOR: IIC write : reg:0x%04x, val:0x%04x error",
 					subaddr, data);
 		}
 	} else {
@@ -1346,7 +1346,7 @@ cmr_u32 hw_Sensor_ReadReg(SENSOR_HW_HANDLE handle, cmr_u16 reg_addr)
 	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)(handle->privatedata);
 
 	if (PNULL == sensor_cxt->sensor_info_ptr) {
-		CMR_LOGE("No sensor info!");
+		SENSOR_LOGE("No sensor info!");
 		return 0xFF;
 	}
 	read_reg_func = sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr->read_reg;
@@ -1378,7 +1378,7 @@ cmr_int hw_Sensor_WriteReg_8bits(SENSOR_HW_HANDLE handle, cmr_u16 reg_addr, cmr_
 
 	if (0xFFFF == reg_addr) {
 		SENSOR_Sleep(value);
-		CMR_LOGI("wait %d ms.", value);
+		SENSOR_LOGI("wait %d ms.", value);
 		return 0;
 	}
 
@@ -1422,14 +1422,14 @@ cmr_int hw_Sensor_SendRegTabToSensor(SENSOR_HW_HANDLE handle, SENSOR_REG_TAB_INF
 	cmr_u16 data;
 	cmr_u8 ret = -1;
 
-	CMR_LOGI("E");
+	SENSOR_LOGI("E");
 	if (NULL == handle || NULL == handle->privatedata)
 		return SENSOR_CTX_ERROR;
 	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)(handle->privatedata);
 
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 	if (PNULL == sensor_cxt->sensor_info_ptr) {
-		CMR_LOGE("No sensor info!");
+		SENSOR_LOGE("No sensor info!");
 		return 0xFF;
 	}
 
@@ -1440,7 +1440,7 @@ cmr_int hw_Sensor_SendRegTabToSensor(SENSOR_HW_HANDLE handle, SENSOR_REG_TAB_INF
 			subaddr = sensor_reg_tab_info_ptr->sensor_reg_tab_ptr[i].reg_addr;
 			data	= sensor_reg_tab_info_ptr->sensor_reg_tab_ptr[i].reg_value;
 			if (SENSOR_OP_SUCCESS != write_reg_func(sensor_cxt->sensor_hw_handler, (subaddr << S_BIT_4) + data))
-				CMR_LOGI("SENSOR: IIC write : reg:0x%04x, val:0x%04x error", subaddr, data);
+				SENSOR_LOGI("SENSOR: IIC write : reg:0x%04x, val:0x%04x error", subaddr, data);
 		}
 	}else{
 		SENSOR_REG_TAB_T regTab;
@@ -1452,10 +1452,10 @@ cmr_int hw_Sensor_SendRegTabToSensor(SENSOR_HW_HANDLE handle, SENSOR_REG_TAB_INF
 		ret = Sensor_Device_WriteRegTab(&regTab);
 	}
 
-	CMR_LOGI("reg_count %d, is_main_sensor: %ld",
+	SENSOR_LOGI("reg_count %d, is_main_sensor: %ld",
 		sensor_reg_tab_info_ptr->reg_count, sensor_cxt->is_main_sensor);
 
-	CMR_LOGI("X");
+	SENSOR_LOGI("X");
 
 	return SENSOR_SUCCESS;
 }
@@ -1490,7 +1490,7 @@ cmr_int sns_set_id(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E sensor_id)
 	sensor_register_info_ptr->cur_id = sensor_id;
 
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
-	CMR_LOGI("id %d,is_register_sensor %ld",
+	SENSOR_LOGI("id %d,is_register_sensor %ld",
 		sensor_id, sensor_cxt->is_register_sensor);
 
 	if (1 == sensor_cxt->is_register_sensor) {
@@ -1532,10 +1532,10 @@ cmr_int sns_set_id(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E sensor_id)
 			} else if (SENSOR_DEVICE2 == sensor_id) {
 				sensor_cxt->is_main2_sensor = 0;
 			}
-			CMR_LOGI("add I2C error");
+			SENSOR_LOGI("add I2C error");
 			return SENSOR_FAIL;
 		} else {
-			CMR_LOGV("add I2C OK.");
+			SENSOR_LOGV("add I2C OK.");
 			sensor_cxt->is_register_sensor = 1;
 		}
 	}
@@ -1549,7 +1549,7 @@ SENSOR_ID_E snr_get_cur_id(struct sensor_drv_context *sensor_cxt)
 
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 	sensor_register_info_ptr = &sensor_cxt->sensor_register_info;
-	CMR_LOGV("id %d", sensor_register_info_ptr->cur_id);
+	SENSOR_LOGV("id %d", sensor_register_info_ptr->cur_id);
 	return (SENSOR_ID_E) sensor_register_info_ptr->cur_id;
 }
 
@@ -1571,17 +1571,17 @@ void sns_i2c_init(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E sensor_id)
 		if ((SENSOR_MAIN <= sensor_id) || (SENSOR_DEVICE3 >= sensor_id)) {
 
 			if(sns_dev_i2c_init(sensor_cxt, sensor_id)){
-				CMR_LOGE("SENSOR: add I2C driver error");
+				SENSOR_LOGE("SENSOR: add I2C driver error");
 				return;
 			} else {
-				CMR_LOGI("SENSOR: add I2C driver OK");
+				SENSOR_LOGI("SENSOR: add I2C driver OK");
 				sensor_cxt->is_register_sensor = 1;
 			}
 		}
 	} else {
-		CMR_LOGI("Sensor: Init I2c %d ternimal! exits", sensor_id);
+		SENSOR_LOGI("Sensor: Init I2c %d ternimal! exits", sensor_id);
 	}
-	CMR_LOGI("sensor_id=%d, is_register_sensor=%ld",
+	SENSOR_LOGI("sensor_id=%d, is_register_sensor=%ld",
 				sensor_id, sensor_cxt->is_register_sensor);
 }
 
@@ -1592,10 +1592,10 @@ cmr_int sns_i2c_deinit(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E sensor
 		if ((SENSOR_MAIN <= sensor_id) || (SENSOR_DEVICE3 >= sensor_id)) {
 			sns_dev_i2c_deinit(sensor_cxt, sensor_id);
 			sensor_cxt->is_register_sensor = 0;
-			CMR_LOGI("delete I2C %d driver OK", sensor_id);
+			SENSOR_LOGI("delete I2C %d driver OK", sensor_id);
 		}
 	} else {
-		CMR_LOGI("delete I2C %d driver OK", SENSOR_ID_MAX);
+		SENSOR_LOGI("delete I2C %d driver OK", SENSOR_ID_MAX);
 	}
 
 	return SENSOR_SUCCESS;
@@ -1609,7 +1609,7 @@ cmr_u32 sns_identify_search(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E s
 	cmr_u32 retValue = SCI_FALSE;
 	SENSOR_REGISTER_INFO_T_PTR sensor_register_info_ptr =  &sensor_cxt->sensor_register_info;
 
-	CMR_LOGI("search all sensor...");
+	SENSOR_LOGI("search all sensor...");
 	sensor_strinfo_tab_ptr = (SENSOR_MATCH_T*)Sensor_GetInforTab(sensor_cxt, sensor_id);
 	valid_tab_index_max = Sensor_GetInforTabLenght(sensor_cxt, sensor_id) - SENSOR_ONE_I2C;
 	sns_i2c_init(sensor_cxt, sensor_id);
@@ -1618,7 +1618,7 @@ cmr_u32 sns_identify_search(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E s
 	for (sensor_index = 0x00; sensor_index < valid_tab_index_max; sensor_index++) {
 		sensor_info_ptr = sensor_strinfo_tab_ptr[sensor_index].sensor_info;
 		if (NULL==sensor_info_ptr) {
-			CMR_LOGW("%d info of Sensor table %d is null", sensor_index, sensor_id);
+			SENSOR_LOGW("%d info of Sensor table %d is null", sensor_index, sensor_id);
 			continue ;
 		}
 		sensor_cxt->sensor_info_ptr = sensor_info_ptr;
@@ -1629,7 +1629,7 @@ cmr_u32 sns_identify_search(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E s
 				sensor_cxt->i2c_addr = (sensor_cxt->sensor_info_ptr->salve_i2c_addr_w & 0xFF);
 				sns_dev_set_i2c_addr(sensor_cxt);
 			}
-			CMR_LOGI("identify  Sensor 01");
+			SENSOR_LOGI("identify  Sensor 01");
 			if (SENSOR_SUCCESS == sensor_info_ptr->ioctl_func_tab_ptr->identify(sensor_cxt->sensor_hw_handler,SENSOR_ZERO_I2C)) {
 				sensor_cxt->sensor_list_ptr[sensor_id] = sensor_info_ptr;
 				sensor_register_info_ptr->is_register[sensor_id] = SCI_TRUE;
@@ -1638,7 +1638,7 @@ cmr_u32 sns_identify_search(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E s
 				sensor_register_info_ptr->img_sensor_num++;
 				Sensor_PowerOn(sensor_cxt, SCI_FALSE);
 				retValue = SCI_TRUE;
-				CMR_LOGI("sensor_id :%d,img_sensor_num=%d",
+				SENSOR_LOGI("sensor_id :%d,img_sensor_num=%d",
 					sensor_id, sensor_register_info_ptr->img_sensor_num);
 				break ;
 			}
@@ -1647,10 +1647,10 @@ cmr_u32 sns_identify_search(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E s
 	}
 	sns_i2c_deinit(sensor_cxt, sensor_id);
 	if (SCI_TRUE == sensor_register_info_ptr->is_register[sensor_id]) {
-		CMR_LOGI("SENSOR TYPE of %d indentify OK",(cmr_u32)sensor_id);
+		SENSOR_LOGI("SENSOR TYPE of %d indentify OK",(cmr_u32)sensor_id);
 		sensor_cxt->sensor_param_saved = SCI_TRUE;
 	} else {
-		CMR_LOGI("SENSOR TYPE of %d indentify failed!",(cmr_u32)sensor_id);
+		SENSOR_LOGI("SENSOR TYPE of %d indentify failed!",(cmr_u32)sensor_id);
 	}
 
 	return retValue;
@@ -1675,7 +1675,7 @@ cmr_u32 sns_identify_strsearch(struct sensor_drv_context *sensor_cxt, SENSOR_ID_
 	sensor_info_ptr = sensor_strinfo_tab_ptr[index_get].sensor_info;
 
 	if (NULL==sensor_info_ptr) {
-		CMR_LOGW("%d info of Sensor table %d is null", index_get, sensor_id);
+		SENSOR_LOGW("%d info of Sensor table %d is null", index_get, sensor_id);
 		return retValue ;
 	}
 	sensor_cxt->sensor_info_ptr = sensor_info_ptr;
@@ -1685,7 +1685,7 @@ cmr_u32 sns_identify_strsearch(struct sensor_drv_context *sensor_cxt, SENSOR_ID_
 			sensor_cxt->i2c_addr = (sensor_cxt->sensor_info_ptr->salve_i2c_addr_w & 0xFF);
 			sns_dev_set_i2c_addr(sensor_cxt);
 		}
-		CMR_LOGI("identify  Sensor 01");
+		SENSOR_LOGI("identify  Sensor 01");
 		if (SENSOR_SUCCESS == sensor_info_ptr->ioctl_func_tab_ptr->identify(sensor_cxt->sensor_hw_handler,SENSOR_ZERO_I2C)) {
 			sensor_cxt->sensor_list_ptr[sensor_id] = sensor_info_ptr;
 			sensor_register_info_ptr->is_register[sensor_id] = SCI_TRUE;
@@ -1694,17 +1694,17 @@ cmr_u32 sns_identify_strsearch(struct sensor_drv_context *sensor_cxt, SENSOR_ID_
 			sensor_register_info_ptr->img_sensor_num++;
 			//Sensor_PowerOn(sensor_cxt, SCI_FALSE);
 			retValue = SCI_TRUE;
-			CMR_LOGI("sensor_id :%d,img_sensor_num=%d",
+			SENSOR_LOGI("sensor_id :%d,img_sensor_num=%d",
 				sensor_id, sensor_register_info_ptr->img_sensor_num);
 		}
 	}
 	Sensor_PowerOn(sensor_cxt, SCI_FALSE);
 	sns_i2c_deinit(sensor_cxt, sensor_id);
 	if (SCI_TRUE == sensor_register_info_ptr->is_register[sensor_id]) {
-		CMR_LOGI("SENSOR TYPE of %d indentify OK",(cmr_u32)sensor_id);
+		SENSOR_LOGI("SENSOR TYPE of %d indentify OK",(cmr_u32)sensor_id);
 		sensor_cxt->sensor_param_saved = SCI_TRUE;
 	} else {
-		CMR_LOGI("SENSOR TYPE of %d indentify failed!",(cmr_u32)sensor_id);
+		SENSOR_LOGI("SENSOR TYPE of %d indentify failed!",(cmr_u32)sensor_id);
 	}
 
 	return retValue;
@@ -1718,7 +1718,7 @@ cmr_int sns_identify(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E sensor_i
 	cmr_u32 retValue = SCI_FALSE;
 	SENSOR_REGISTER_INFO_T_PTR sensor_register_info_ptr = PNULL;
 
-	CMR_LOGI("sensor identifing %d", sensor_id);
+	SENSOR_LOGI("sensor identifing %d", sensor_id);
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 	sensor_register_info_ptr = &sensor_cxt->sensor_register_info;
 
@@ -1727,18 +1727,18 @@ cmr_int sns_identify(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E sensor_i
 
 	//if already identified
 	if (SCI_TRUE == sensor_register_info_ptr->is_register[sensor_id]) {
-		CMR_LOGI("sensor identified");
+		SENSOR_LOGI("sensor identified");
 		return SCI_TRUE;
 	}
 	if (sensor_cxt->sensor_identified && (SENSOR_ATV != sensor_id)) {
 		sensor_index = sensor_cxt->sensor_index[sensor_id];
-		CMR_LOGI("sensor_index = %d",sensor_index);
+		SENSOR_LOGI("sensor_index = %d",sensor_index);
 		if (0xFF != sensor_index) {
 			sensor_strinfo_tab_ptr = (SENSOR_MATCH_T*)Sensor_GetInforTab(sensor_cxt, sensor_id);
 			sns_i2c_init(sensor_cxt, sensor_id);
 			sensor_info_ptr = sensor_strinfo_tab_ptr[sensor_index].sensor_info;
 			if (NULL == sensor_info_ptr) {
-				CMR_LOGW("%d info of Sensor table %d is null", sensor_index, sensor_id);
+				SENSOR_LOGW("%d info of Sensor table %d is null", sensor_index, sensor_id);
 				sns_i2c_deinit(sensor_cxt, sensor_id);
 				goto IDENTIFY_SEARCH;
 			}
@@ -1748,18 +1748,18 @@ cmr_int sns_identify(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E sensor_i
 				sensor_cxt->i2c_addr = (sensor_cxt->sensor_info_ptr->salve_i2c_addr_w & 0xFF);
 				sns_dev_set_i2c_addr(sensor_cxt);
 
-				CMR_LOGI("identify  Sensor 01");
+				SENSOR_LOGI("identify  Sensor 01");
 				if(SENSOR_SUCCESS == sensor_info_ptr->ioctl_func_tab_ptr->identify(sensor_cxt->sensor_hw_handler,SENSOR_ZERO_I2C)) {
 					sensor_cxt->sensor_list_ptr[sensor_id] = sensor_info_ptr;
 					sensor_register_info_ptr->is_register[sensor_id] = SCI_TRUE;
 					sensor_register_info_ptr->img_sensor_num++;
 					retValue = SCI_TRUE;
-					CMR_LOGI("sensor_id :%d,img_sensor_num=%d",
+					SENSOR_LOGI("sensor_id :%d,img_sensor_num=%d",
 								sensor_id, sensor_register_info_ptr->img_sensor_num);
 				} else {
 					Sensor_PowerOn(sensor_cxt, SCI_FALSE);
 					sns_i2c_deinit(sensor_cxt, sensor_id);
-					CMR_LOGI("identify failed!");
+					SENSOR_LOGI("identify failed!");
 					goto IDENTIFY_SEARCH;
 				}
 			}
@@ -1792,7 +1792,7 @@ void sns_set_status(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E sensor_id
 	sensor_register_info_ptr = &sensor_cxt->sensor_register_info;
 
 	/*pwdn all the sensor to avoid confilct as the sensor output*/
-	CMR_LOGV("1");
+	SENSOR_LOGV("1");
 	for (i=0; i<=SENSOR_DEVICE2; i++) {
 		if (i == sensor_id) {
 			continue;
@@ -1812,28 +1812,28 @@ void sns_set_status(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E sensor_id
 			{
 				hw_Sensor_SetResetLevel(sensor_cxt->sensor_hw_handler,(cmr_u32)sensor_cxt->sensor_info_ptr->reset_pulse_level);
 				usleep(10*1000);
-				CMR_LOGI("Sensor_sleep of id %d",i);
+				SENSOR_LOGI("Sensor_sleep of id %d",i);
 			}
 #endif
 			hw_Sensor_PowerDown(sensor_cxt->sensor_hw_handler, (cmr_u32)sensor_cxt->sensor_info_ptr->power_down_level);
-			CMR_LOGI("Sensor_sleep of id %d",i);
+			SENSOR_LOGI("Sensor_sleep of id %d",i);
 		}
 	}
 
 	/*Give votage according the target sensor*/
 	/*For dual sensor solution, the dual sensor should share all the power*/
-	CMR_LOGV("1_1");
+	SENSOR_LOGV("1_1");
 
 	Sensor_PowerOn_Ex(sensor_cxt, sensor_id);
 
-	CMR_LOGI("2");
+	SENSOR_LOGI("2");
 
 	sns_set_id(sensor_cxt, sensor_id);
 	sensor_cxt->sensor_info_ptr = sensor_cxt->sensor_list_ptr[sensor_id];
-	CMR_LOGI("3");
+	SENSOR_LOGI("3");
 	//reset target sensor. and make normal.
 	Sensor_SetExportInfo(sensor_cxt);
-	CMR_LOGI("4");
+	SENSOR_LOGI("4");
 }
 
 cmr_int sns_device_init(struct sensor_drv_context *sensor_cxt, cmr_u32 sensor_id)
@@ -1841,21 +1841,21 @@ cmr_int sns_device_init(struct sensor_drv_context *sensor_cxt, cmr_u32 sensor_id
 	cmr_int                    ret = SENSOR_SUCCESS;
 	cmr_s8                     sensor_dev_name[50] = CMR_SENSOR_DEV_NAME;
 
-	CMR_LOGV("To open sensor device.");
+	SENSOR_LOGV("To open sensor device.");
 
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 	if (SENSOR_FD_INIT == sensor_cxt->fd_sensor) {
 		sensor_cxt->fd_sensor = open(CMR_SENSOR_DEV_NAME, O_RDWR, 0);
-		CMR_LOGV("fd 0x%lx", sensor_cxt->fd_sensor);
+		SENSOR_LOGV("fd 0x%lx", sensor_cxt->fd_sensor);
 		if (SENSOR_FD_INIT == sensor_cxt->fd_sensor) {
-			CMR_LOGE("Failed to open sensor device.errno : %d", errno);
+			SENSOR_LOGE("Failed to open sensor device.errno : %d", errno);
 			fprintf(stderr, "Cannot open '%s': %d, %s", sensor_dev_name, errno,  strerror(errno));
 		} else {
-			CMR_LOGV("OK to open device.");
+			SENSOR_LOGV("OK to open device.");
 			/*the sensor id should be set after open OK*/
 			ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_SET_ID, &sensor_id);
 			if (0 != ret) {
-				CMR_LOGE("SENSOR_IO_SET_ID %u failed %ld", sensor_id, ret);
+				SENSOR_LOGE("SENSOR_IO_SET_ID %u failed %ld", sensor_id, ret);
 				ret = SENSOR_FAIL;
 			}
 		}
@@ -1871,7 +1871,7 @@ cmr_int sns_device_deinit(struct sensor_drv_context *sensor_cxt)
 	if (-1 != sensor_cxt->fd_sensor) {
 		ret = close(sensor_cxt->fd_sensor);
 		sensor_cxt->fd_sensor = SENSOR_FD_INIT;
-		CMR_LOGI("is done, ret = %ld ", ret);
+		SENSOR_LOGI("is done, ret = %ld ", ret);
 	}
 	return 0;
 }
@@ -1887,31 +1887,31 @@ cmr_int sns_register(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E sensor_i
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 	sensor_register_info_ptr = &sensor_cxt->sensor_register_info;
 
-	CMR_LOGI("id %d ", sensor_id);
+	SENSOR_LOGI("id %d ", sensor_id);
 	//if already identified
 	if (SCI_TRUE == sensor_register_info_ptr->is_register[sensor_id]) {
-		CMR_LOGI("identified ");
+		SENSOR_LOGI("identified ");
 		return SENSOR_SUCCESS;
 	}
 	if (sensor_cxt->sensor_identified && (SENSOR_ATV != sensor_id)) {
 		sensor_index = sensor_cxt->sensor_index[sensor_id];
-		CMR_LOGI("sensor_index = %d.", sensor_index);
+		SENSOR_LOGI("sensor_index = %d.", sensor_index);
 		if (0xFF != sensor_index) {
 			valid_tab_index_max = Sensor_GetInforTabLenght(sensor_cxt, sensor_id) - SENSOR_ONE_I2C;
 			if (sensor_index>=valid_tab_index_max) {
-				CMR_LOGE("saved index is larger than sensor sum.");
+				SENSOR_LOGE("saved index is larger than sensor sum.");
 				return SENSOR_FAIL;
 			}
 
 			sensor_strinfo_tab_ptr = (SENSOR_MATCH_T*)Sensor_GetInforTab(sensor_cxt, sensor_id);
 			sensor_info_ptr = sensor_strinfo_tab_ptr[sensor_index].sensor_info;
 			if (NULL == sensor_info_ptr) {
-				CMR_LOGE("index %d info of Sensor table %d is null", sensor_index, sensor_id);
+				SENSOR_LOGE("index %d info of Sensor table %d is null", sensor_index, sensor_id);
 				return SENSOR_FAIL;
 			}
 
 			if (NULL == sensor_info_ptr->raw_info_ptr) {
-				CMR_LOGE("index %d info of Sensor table %d raw_info_ptr  is null", sensor_index, sensor_id);
+				SENSOR_LOGE("index %d info of Sensor table %d raw_info_ptr  is null", sensor_index, sensor_id);
 				return SENSOR_FAIL;
 			}
 			sensor_cxt->sensor_info_ptr = sensor_info_ptr;
@@ -1937,12 +1937,12 @@ void sns_load_sensor_type(struct sensor_drv_context *sensor_cxt)
 	if(NULL == fp){
 		fp = fopen(SENSOR_PARA, "wb+");
 		if(NULL == fp){
-			CMR_LOGE("sns_load_sensor_type: file %s open error:%s", SENSOR_PARA, strerror(errno));
+			SENSOR_LOGE("sns_load_sensor_type: file %s open error:%s", SENSOR_PARA, strerror(errno));
 		}
 		cmr_bzero(&sensor_param[0], SENSOR_PARAM_NUM);
 	}else{
 		len = fread(sensor_param, 1, SENSOR_PARAM_NUM, fp);
-		CMR_LOGI("rd sns param len %d %x,%x,%x,%x,%x,%x,%x,%x ",
+		SENSOR_LOGI("rd sns param len %d %x,%x,%x,%x,%x,%x,%x,%x ",
 			len, sensor_param[0], sensor_param[1], sensor_param[2], sensor_param[3],
 			sensor_param[4], sensor_param[5], sensor_param[6], sensor_param[7]);
 	}
@@ -1965,7 +1965,7 @@ void sns_save_sensor_type(struct sensor_drv_context *sensor_cxt)
 	if (is_saved) {
 		fp = fopen(SENSOR_PARA,"wb+");
 		if(NULL == fp){
-			CMR_LOGI("file %s open error:%s ", SENSOR_PARA, strerror(errno));
+			SENSOR_LOGI("file %s open error:%s ", SENSOR_PARA, strerror(errno));
 		} else {
 			fwrite(sensor_param, 1, SENSOR_PARAM_NUM, fp);
 			fclose(fp);
@@ -2034,7 +2034,7 @@ void _sensor_calil_lnc_param_recover(struct sensor_drv_context *sensor_cxt,
 	}
 
 	sensor_cxt->is_calibration = 0;
-	CMR_LOGI("test: is_calibration: %d", sensor_cxt->is_calibration);
+	SENSOR_LOGI("test: is_calibration: %d", sensor_cxt->is_calibration);
 #endif
 }
 
@@ -2069,7 +2069,7 @@ cmr_int _sensor_cali_lnc_param_update(struct sensor_drv_context *sensor_cxt,
 
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 	if (PNULL == sensor_cxt->sensor_info_ptr) {
-		CMR_LOGE("No sensor info!");
+		SENSOR_LOGE("No sensor info!");
 		return -1;
 	}
 
@@ -2097,7 +2097,7 @@ cmr_int _sensor_cali_lnc_param_update(struct sensor_drv_context *sensor_cxt,
 
 		fp = fopen(file_name, "rb");
 		if (0 == fp) {
-			CMR_LOGI("does not find calibration file");
+			SENSOR_LOGI("does not find calibration file");
 			i++;
 			continue;
 		}
@@ -2110,7 +2110,7 @@ cmr_int _sensor_cali_lnc_param_update(struct sensor_drv_context *sensor_cxt,
 			fclose(fp);
 			free(temp_buf_16);
 			temp_buf_16 = NULL;
-			CMR_LOGI("file pointers error!");
+			SENSOR_LOGI("file pointers error!");
 			rtn = SENSOR_FAIL;
 			goto cali_lnc_param_update_exit;
 		}
@@ -2120,7 +2120,7 @@ cmr_int _sensor_cali_lnc_param_update(struct sensor_drv_context *sensor_cxt,
 		fclose(fp);
 
 		if (file_size != raw_fix_info_ptr->lnc.map[i-1][0].len) {
-			CMR_LOGI("file size dis-match, do not replace, w:%d, h:%d, ori: %d, now:%d/n",
+			SENSOR_LOGI("file size dis-match, do not replace, w:%d, h:%d, ori: %d, now:%d/n",
 				width, height, raw_fix_info_ptr->lnc.map[i-1][0].len, file_size);
 		} else {
 			if (sensor_cxt->lnc_addr_bakup[index][1]) {
@@ -2130,7 +2130,7 @@ cmr_int _sensor_cali_lnc_param_update(struct sensor_drv_context *sensor_cxt,
 			sensor_cxt->lnc_addr_bakup[index][1] = (cmr_uint)malloc(file_size);
 			if (0 == sensor_cxt->lnc_addr_bakup[index][1]) {
 				rtn = SENSOR_FAIL;
-				CMR_LOGI("malloc failed i = %d", i);
+				SENSOR_LOGI("malloc failed i = %d", i);
 				goto cali_lnc_param_update_exit;
 			}
 			cmr_bzero((void*)sensor_cxt->lnc_addr_bakup[index][1], file_size);
@@ -2142,7 +2142,7 @@ cmr_int _sensor_cali_lnc_param_update(struct sensor_drv_context *sensor_cxt,
 			raw_fix_info_ptr->lnc.map[i-1][0].param_addr = (cmr_u16*)data_ptr;
 			cmr_copy(data_ptr, temp_buf_16, file_size);
 			index++;
-			CMR_LOGI("replace finished");
+			SENSOR_LOGI("replace finished");
 		}
 		i++;
 	}
@@ -2196,10 +2196,10 @@ cmr_int _sensor_cali_awb_param_update(cmr_s8 *cfg_file_dir,
 
 	sprintf(file_name_ptr, "_awb_rdm.dat");
 
-	CMR_LOGI("file_name: %s", file_name);
+	SENSOR_LOGI("file_name: %s", file_name);
 	fp = fopen(file_name, "rb");
 	if (0 == fp) {
-		CMR_LOGI("does not find calibration file");
+		SENSOR_LOGI("does not find calibration file");
 
 		cali_info_ptr->r_sum = 1024;
 		cali_info_ptr->b_sum = 1024;
@@ -2220,7 +2220,7 @@ cmr_int _sensor_cali_awb_param_update(cmr_s8 *cfg_file_dir,
 			file_size = (cmr_u32)file_pos;
 		} else {
 			fclose(fp);
-			CMR_LOGI("file pointers error!");
+			SENSOR_LOGI("file pointers error!");
 			return SENSOR_FAIL;
 		}
 
@@ -2244,11 +2244,11 @@ cmr_int _sensor_cali_awb_param_update(cmr_s8 *cfg_file_dir,
 
 	sprintf(file_name_ptr, "_awb_gldn.dat");
 
-	CMR_LOGI("file_name: %s", file_name);
+	SENSOR_LOGI("file_name: %s", file_name);
 	cali_info_ptr = (struct sensor_cali_info*)&(((struct sensor_raw_info*)(*(sensor_info_ptr->raw_info_ptr)))->cali_ptr->awb.golden_cali_info);
 	fp = fopen(file_name, "rb");
 	if (0 == fp) {
-		CMR_LOGI("does not find calibration file");
+		SENSOR_LOGI("does not find calibration file");
 
 		cali_info_ptr->r_sum = 1024;
 		cali_info_ptr->b_sum = 1024;
@@ -2270,7 +2270,7 @@ cmr_int _sensor_cali_awb_param_update(cmr_s8 *cfg_file_dir,
 			file_size = (cmr_u32)file_pos;
 		} else {
 			fclose(fp);
-			CMR_LOGI("file pointers error!");
+			SENSOR_LOGI("file pointers error!");
 			return SENSOR_FAIL;
 		}
 		fseek(fp, 0L, SEEK_SET);
@@ -2321,10 +2321,10 @@ cmr_int _sensor_cali_flashlight_param_update(cmr_s8 *cfg_file_dir,
 
 	sprintf(file_name_ptr, "_flashlight_rdm.dat");
 
-	CMR_LOGI("file_name: %s", file_name);
+	SENSOR_LOGI("file_name: %s", file_name);
 	fp = fopen(file_name, "rb");
 	if (0 == fp) {
-		CMR_LOGI("does not find calibration file");
+		SENSOR_LOGI("does not find calibration file");
 
 		cali_info_ptr->r_sum = 1024;
 		cali_info_ptr->b_sum = 1024;
@@ -2346,7 +2346,7 @@ cmr_int _sensor_cali_flashlight_param_update(cmr_s8 *cfg_file_dir,
 			file_size = (cmr_u32)file_pos;
 		} else {
 			fclose(fp);
-			CMR_LOGI("file pointers error!");
+			SENSOR_LOGI("file pointers error!");
 			return SENSOR_FAIL;
 		}
 		fseek(fp, 0L, SEEK_SET);
@@ -2370,11 +2370,11 @@ cmr_int _sensor_cali_flashlight_param_update(cmr_s8 *cfg_file_dir,
 
 	sprintf(file_name_ptr, "_flashlight_gldn.dat");
 
-	CMR_LOGI("file_name: %s", file_name);
+	SENSOR_LOGI("file_name: %s", file_name);
 	cali_info_ptr = (struct sensor_cali_info*)&(((struct sensor_raw_info*)(*(sensor_info_ptr->raw_info_ptr)))->cali_ptr->flashlight.golden_cali_info);
 	fp = fopen(file_name, "rb");
 	if (0 == fp) {
-		CMR_LOGI("does not find calibration file");
+		SENSOR_LOGI("does not find calibration file");
 
 		cali_info_ptr->r_sum = 1024;
 		cali_info_ptr->b_sum = 1024;
@@ -2397,7 +2397,7 @@ cmr_int _sensor_cali_flashlight_param_update(cmr_s8 *cfg_file_dir,
 			file_size = (cmr_u32)file_pos;
 		} else {
 			fclose(fp);
-			CMR_LOGI("file pointers error!");
+			SENSOR_LOGI("file pointers error!");
 			return SENSOR_FAIL;
 		}
 		fseek(fp, 0L, SEEK_SET);
@@ -2481,7 +2481,7 @@ cmr_int sns_create_ctrl_thread(struct sensor_drv_context *sensor_cxt)
 
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 
-	CMR_LOGI("is_inited %ld", sensor_cxt->ctrl_thread_cxt.is_inited);
+	SENSOR_LOGI("is_inited %ld", sensor_cxt->ctrl_thread_cxt.is_inited);
 
 	if (!sensor_cxt->ctrl_thread_cxt.is_inited) {
 		pthread_mutex_init(&sensor_cxt->ctrl_thread_cxt.sensor_mutex, NULL);
@@ -2492,7 +2492,7 @@ cmr_int sns_create_ctrl_thread(struct sensor_drv_context *sensor_cxt)
 					sns_ctrl_thread_proc,
 					(void *)sensor_cxt);
 		if (ret) {
-			CMR_LOGE("send msg failed!");
+			SENSOR_LOGE("send msg failed!");
 			ret = CMR_CAMERA_FAIL;
 			goto end;
 		}
@@ -2508,7 +2508,7 @@ end:
 		sensor_cxt->ctrl_thread_cxt.is_inited = 0;
 	}
 
-	CMR_LOGI("ret %ld", ret);
+	SENSOR_LOGI("ret %ld", ret);
 	return ret;
 }
 
@@ -2524,12 +2524,12 @@ cmr_int sns_ctrl_thread_proc(struct cmr_msg *message, void *p_data)
 	}
 
 	evt = (cmr_u32)message->msg_type;
-	CMR_LOGI("evt %d", evt);
+	SENSOR_LOGI("evt %d", evt);
 
 	switch(evt) {
 	case SENSOR_CTRL_EVT_INIT:
 		/*common control info config*/
-		CMR_LOGI("INIT DONE!");
+		SENSOR_LOGI("INIT DONE!");
 		break;
 
 	case SENSOR_CTRL_EVT_SETMODE:
@@ -2542,7 +2542,7 @@ cmr_int sns_ctrl_thread_proc(struct cmr_msg *message, void *p_data)
 		break;
 
 	case SENSOR_CTRL_EVT_SETMODONE:
-		CMR_LOGI("SENSOR_CTRL_EVT_SETMODONE OK");
+		SENSOR_LOGI("SENSOR_CTRL_EVT_SETMODONE OK");
 		break;
 
 	case SENSOR_CTRL_EVT_CFGOTP:
@@ -2556,11 +2556,11 @@ cmr_int sns_ctrl_thread_proc(struct cmr_msg *message, void *p_data)
 
 	case SENSOR_CTRL_EVT_EXIT:
 		/*common control info clear*/
-		CMR_LOGI("EXIT DONE!");
+		SENSOR_LOGI("EXIT DONE!");
 		break;
 
 	default:
-		CMR_LOGE("jpeg:not correct message");
+		SENSOR_LOGE("jpeg:not correct message");
 		break;
 	}
 
@@ -2574,14 +2574,14 @@ cmr_int sns_destroy_ctrl_thread(struct sensor_drv_context *sensor_cxt)
 
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 
-	CMR_LOGI("is_inited %ld", sensor_cxt->ctrl_thread_cxt.is_inited);
+	SENSOR_LOGI("is_inited %ld", sensor_cxt->ctrl_thread_cxt.is_inited);
 
 	if (sensor_cxt->ctrl_thread_cxt.is_inited) {
 		message.msg_type  = SENSOR_CTRL_EVT_EXIT;
 		message.sync_flag = CMR_MSG_SYNC_PROCESSED;
 		ret = cmr_thread_msg_send(sensor_cxt->ctrl_thread_cxt.thread_handle, &message);
 		if (ret) {
-			CMR_LOGE("send msg failed!");
+			SENSOR_LOGE("send msg failed!");
 		}
 
 		ret = cmr_thread_destroy(sensor_cxt->ctrl_thread_cxt.thread_handle);
@@ -2606,13 +2606,14 @@ cmr_int sns_destroy_ctrl_thread(struct sensor_drv_context *sensor_cxt)
 {
 	cmr_int ret_val = SENSOR_FAIL;
 	cmr_u32 sensor_num = 0;
+	sensor_init_log_level();
 
-	CMR_LOGI("0, start,id %d autotest %ld",sensor_id, is_autotest);
+	SENSOR_LOGI("0, start,id %d autotest %ld",sensor_id, is_autotest);
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 
 	if (NULL != sensor_cxt) {
 		if (SENSOR_TRUE == sensor_is_init_common(sensor_cxt)) {
-			CMR_LOGI("sensor close.");
+			SENSOR_LOGI("sensor close.");
 			sensor_close_common(sensor_cxt, SENSOR_MAIN);
 		}
 	}
@@ -2628,7 +2629,7 @@ cmr_int sns_destroy_ctrl_thread(struct sensor_drv_context *sensor_cxt)
 	//---
 	SENSOR_HW_HANDLE sensor_hw_handle = (SENSOR_HW_HANDLE)malloc(sizeof(SENSOR_HW_HANDLE));
 	if (NULL == sensor_hw_handle) {
-		CMR_LOGE("failed to create context");
+		SENSOR_LOGE("failed to create context");
 		return CMR_CAMERA_NO_MEM;
 	}
 	cmr_bzero(sensor_hw_handle, sizeof(*sensor_hw_handle));
@@ -2644,12 +2645,12 @@ cmr_int sns_destroy_ctrl_thread(struct sensor_drv_context *sensor_cxt)
 		sns_load_sensor_type(sensor_cxt);
 		sensor_cxt->is_autotest = is_autotest;
 		if (sns_create_ctrl_thread(sensor_cxt)) {
-			CMR_LOGE("Failed to create sensor ctrl thread");
+			SENSOR_LOGE("Failed to create sensor ctrl thread");
 			goto init_exit;;
 		}
 		/*now device opened set with ID*/
 		if (sns_device_init(sensor_cxt, sensor_id)) {
-			CMR_LOGE("sns_device_init %d error, return", sensor_id);
+			SENSOR_LOGE("sns_device_init %d error, return", sensor_id);
 			ret_val = SENSOR_FAIL;
 			goto init_exit;
 		}
@@ -2673,7 +2674,7 @@ cmr_int sns_destroy_ctrl_thread(struct sensor_drv_context *sensor_cxt)
 				sensor_num++;
 			}
 #endif
-			CMR_LOGI("1 is identify, register OK");
+			SENSOR_LOGI("1 is identify, register OK");
 			ret_val = sns_open(sensor_cxt, sensor_id);
 			if (ret_val != SENSOR_SUCCESS ) {
 				Sensor_PowerOn(sensor_cxt, SENSOR_FALSE);
@@ -2682,7 +2683,7 @@ cmr_int sns_destroy_ctrl_thread(struct sensor_drv_context *sensor_cxt)
 
 		if (ret_val != SENSOR_SUCCESS) {
 			sensor_num = 0;
-			CMR_LOGI("register sensor fail, start identify");
+			SENSOR_LOGI("register sensor fail, start identify");
 			if (sns_identify(sensor_cxt, SENSOR_MAIN))
 				sensor_num++;
 #ifndef CONFIG_DCAM_SENSOR_NO_FRONT_SUPPORT
@@ -2704,8 +2705,8 @@ cmr_int sns_destroy_ctrl_thread(struct sensor_drv_context *sensor_cxt)
 	}
 
 	sns_save_sensor_type(sensor_cxt);
-	CMR_LOGI("1 debug %p", sensor_cxt->sensor_info_ptr);    //for debug
-//	CMR_LOGI("2 debug %d", sensor_cxt->sensor_info_ptr->image_format);    //for debug
+	SENSOR_LOGI("1 debug %p", sensor_cxt->sensor_info_ptr);    //for debug
+//	SENSOR_LOGI("2 debug %d", sensor_cxt->sensor_info_ptr->image_format);    //for debug
 	if (sensor_cxt->sensor_info_ptr &&
 		SENSOR_IMAGE_FORMAT_RAW == sensor_cxt->sensor_info_ptr->image_format) {
 		if (SENSOR_SUCCESS == ret_val) {
@@ -2714,13 +2715,13 @@ cmr_int sns_destroy_ctrl_thread(struct sensor_drv_context *sensor_cxt)
 				sensor_cxt->sensor_info_ptr,
 				sensor_id);
 			if (ret_val) {
-				CMR_LOGI("load cali data failed!! rtn:%ld",ret_val);
+				SENSOR_LOGI("load cali data failed!! rtn:%ld",ret_val);
 				goto init_exit;
 			}
 		}
 	}
 
-	CMR_LOGI("total camera number %d", sensor_num);
+	SENSOR_LOGI("total camera number %d", sensor_num);
 
 init_exit:
 	if (SENSOR_SUCCESS != ret_val) {
@@ -2728,7 +2729,7 @@ init_exit:
 		sns_device_deinit(sensor_cxt);
 	}
 
-	CMR_LOGI("2 init OK!");
+	SENSOR_LOGI("2 init OK!");
 	return ret_val;
 }
 
@@ -2750,9 +2751,9 @@ cmr_int sns_open(struct sensor_drv_context *sensor_cxt, cmr_u32 sensor_id)
 		is_inited = 1;
 	}
 	if (SENSOR_TRUE == sensor_register_info_ptr->is_register[sensor_id]) {
-		CMR_LOGI("1, sensor register ok");
+		SENSOR_LOGI("1, sensor register ok");
 		sns_set_status(sensor_cxt,sensor_id);
-		CMR_LOGI("2, sensor set status");
+		SENSOR_LOGI("2, sensor set status");
 		sensor_cxt->sensor_isInit = SENSOR_TRUE;
 
 		if (SENSOR_ATV != snr_get_cur_id(sensor_cxt)) {
@@ -2760,7 +2761,7 @@ cmr_int sns_open(struct sensor_drv_context *sensor_cxt, cmr_u32 sensor_id)
 			sns_dev_set_i2c_addr(sensor_cxt);
 		}
 
-		CMR_LOGI("3:sensor_id: %d, addr = 0x%x", sensor_id, sensor_cxt->i2c_addr);
+		SENSOR_LOGI("3:sensor_id: %d, addr = 0x%x", sensor_id, sensor_cxt->i2c_addr);
 		sns_set_i2c_clk(sensor_cxt);
 
 		/*when use the camera vendor functions, the sensor_cxt should be set at first */
@@ -2770,7 +2771,7 @@ cmr_int sns_open(struct sensor_drv_context *sensor_cxt, cmr_u32 sensor_id)
 		if (SENSOR_SUCCESS != sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr->identify(sensor_cxt->sensor_hw_handler, SENSOR_ZERO_I2C)) {
 			sensor_register_info_ptr->is_register[sensor_id] = SENSOR_FALSE;
 			sns_i2c_deinit(sensor_cxt, sensor_id);
-			CMR_LOGI("sensor identify not correct!!");
+			SENSOR_LOGI("sensor identify not correct!!");
 			return SENSOR_FAIL;
 		}
 
@@ -2778,7 +2779,7 @@ cmr_int sns_open(struct sensor_drv_context *sensor_cxt, cmr_u32 sensor_id)
 
 		ret_val = SENSOR_SUCCESS;
 		if (SENSOR_SUCCESS != sensor_set_mode(sensor_cxt, SENSOR_MODE_COMMON_INIT, is_inited)) {
-			CMR_LOGE("Sensor set init mode error!");
+			SENSOR_LOGE("Sensor set init mode error!");
 			sns_i2c_deinit(sensor_cxt, sensor_id);
 			ret_val = SENSOR_FAIL;
 		}
@@ -2786,16 +2787,16 @@ cmr_int sns_open(struct sensor_drv_context *sensor_cxt, cmr_u32 sensor_id)
 			sensor_cfg_otp_update_isparam(sensor_cxt, sensor_id);
 
 			if (SENSOR_SUCCESS != sensor_set_mode(sensor_cxt, SENSOR_MODE_PREVIEW_ONE, is_inited)) {
-				CMR_LOGE("Sensor set init mode error!");
+				SENSOR_LOGE("Sensor set init mode error!");
 				sns_i2c_deinit(sensor_cxt, sensor_id);
 				ret_val = SENSOR_FAIL;
 			}
 		}
 		sensor_cxt->stream_on = 1;
 		sns_stream_ctrl_common(sensor_cxt, 0);
-		CMR_LOGI("4 open success");
+		SENSOR_LOGI("4 open success");
 	} else {
-		CMR_LOGE("Sensor not register, open failed, sensor_id = %d", sensor_id);
+		SENSOR_LOGE("Sensor not register, open failed, sensor_id = %d", sensor_id);
 	}
 
 	if ((SENSOR_SUCCESS == ret_val) && (1 == sensor_cxt->is_autotest)) {
@@ -2816,7 +2817,7 @@ cmr_int sensor_set_mode(struct sensor_drv_context *sensor_cxt, cmr_u32 mode, cmr
 	message.data         = (void *)((cmr_uint)is_inited);
 	ret = cmr_thread_msg_send(sensor_cxt->ctrl_thread_cxt.thread_handle, &message);
 	if (ret) {
-		CMR_LOGE("send msg failed!");
+		SENSOR_LOGE("send msg failed!");
 		return CMR_CAMERA_FAIL;
 	}
 
@@ -2835,7 +2836,7 @@ static cmr_int sensor_set_modone(struct sensor_drv_context *sensor_cxt)
 	message.sync_flag    = CMR_MSG_SYNC_RECEIVED;
 	ret = cmr_thread_msg_send(sensor_cxt->ctrl_thread_cxt.thread_handle, &message);
 	if (ret) {
-		CMR_LOGE("send msg failed!");
+		SENSOR_LOGE("send msg failed!");
 		return CMR_CAMERA_FAIL;
 	}
 	return ret;
@@ -2850,7 +2851,7 @@ cmr_int sns_set_mode(struct sensor_drv_context *sensor_cxt, cmr_u32 mode, cmr_u3
 
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 	if (PNULL == sensor_cxt->sensor_info_ptr) {
-		CMR_LOGE("No sensor info!");
+		SENSOR_LOGE("No sensor info!");
 		return -1;
 	}
 
@@ -2859,14 +2860,14 @@ cmr_int sns_set_mode(struct sensor_drv_context *sensor_cxt, cmr_u32 mode, cmr_u3
 
 	set_reg_tab_func = sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr->cus_func_1;
 
-	CMR_LOGI("mode = %d.", mode);
+	SENSOR_LOGI("mode = %d.", mode);
 	if (SENSOR_FALSE == sensor_is_init_common(sensor_cxt)) {
-		CMR_LOGI("sensor has not init");
+		SENSOR_LOGI("sensor has not init");
 		return SENSOR_OP_STATUS_ERR;
 	}
 
 	if (sensor_cxt->sensor_mode[snr_get_cur_id(sensor_cxt)] == mode) {
-		CMR_LOGI("The sensor mode as before");
+		SENSOR_LOGI("The sensor mode as before");
 	} else {
 		if (PNULL != sensor_cxt->sensor_info_ptr->resolution_tab_info_ptr[mode].sensor_reg_tab_ptr) {
 			mclk = sensor_cxt->sensor_info_ptr->resolution_tab_info_ptr[mode].xclk_to_sensor;
@@ -2882,7 +2883,7 @@ cmr_int sns_set_mode(struct sensor_drv_context *sensor_cxt, cmr_u32 mode, cmr_u3
 		} else {
 			if(set_reg_tab_func)
 				set_reg_tab_func(sensor_cxt->sensor_hw_handler, 0);
-			CMR_LOGI("No this resolution information !!!");
+			SENSOR_LOGI("No this resolution information !!!");
 		}
 	}
 	if (is_inited) {
@@ -2942,7 +2943,7 @@ cmr_int sensor_get_mode_common(struct sensor_drv_context *sensor_cxt, cmr_uint *
 {
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 	if (SENSOR_FALSE == sensor_is_init_common(sensor_cxt)) {
-		CMR_LOGI("sensor has not init");
+		SENSOR_LOGI("sensor has not init");
 		return SENSOR_OP_STATUS_ERR;
 	}
 	*mode = sensor_cxt->sensor_mode[snr_get_cur_id(sensor_cxt)];
@@ -2957,7 +2958,7 @@ cmr_int hw_Sensor_GetMode(SENSOR_HW_HANDLE handle, cmr_u32 *mode)
 
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 	if (SENSOR_FALSE == sensor_is_init_common(sensor_cxt)) {
-		CMR_LOGI("sensor has not init");
+		SENSOR_LOGI("sensor has not init");
 		return SENSOR_OP_STATUS_ERR;
 	}
 	*mode = sensor_cxt->sensor_mode[snr_get_cur_id(sensor_cxt)];
@@ -2970,16 +2971,16 @@ cmr_int sns_stream_on(struct sensor_drv_context *sensor_cxt)
 	cmr_u32               param = 0;
 	SENSOR_IOCTL_FUNC_PTR  stream_on_func;
 
-	CMR_LOGI("E");
+	SENSOR_LOGI("E");
 
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 	if (!sensor_is_init_common(sensor_cxt)) {
-		CMR_LOGE("X: sensor has not been initialized");
+		SENSOR_LOGE("X: sensor has not been initialized");
 		return SENSOR_FAIL;
 	}
 
 	if (PNULL == sensor_cxt->sensor_info_ptr) {
-		CMR_LOGE("X: No sensor info!");
+		SENSOR_LOGE("X: No sensor info!");
 		return -1;
 	}
 
@@ -2999,7 +3000,7 @@ cmr_int sns_stream_on(struct sensor_drv_context *sensor_cxt)
 		}
 	}
 
-	CMR_LOGI("X");
+	SENSOR_LOGI("X");
 	return err;
 }
 
@@ -3016,7 +3017,7 @@ cmr_int sensor_stream_ctrl_common(struct sensor_drv_context *sensor_cxt, cmr_u32
 	message.sub_msg_type = on_off;
 	ret = cmr_thread_msg_send(sensor_cxt->ctrl_thread_cxt.thread_handle, &message);
 	if (ret) {
-		CMR_LOGE("send msg failed!");
+		SENSOR_LOGE("send msg failed!");
 		return CMR_CAMERA_FAIL;
 	}
 	return ret;
@@ -3054,16 +3055,16 @@ cmr_int sns_stream_off(struct sensor_drv_context *sensor_cxt)
 	cmr_u32               param = 0;
 	SENSOR_IOCTL_FUNC_PTR stream_off_func;
 
-	CMR_LOGI("E");
+	SENSOR_LOGI("E");
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 
 	if (!sensor_is_init_common(sensor_cxt)) {
-		CMR_LOGE("X: sensor has not been initialized");
+		SENSOR_LOGE("X: sensor has not been initialized");
 		return SENSOR_FAIL;
 	}
 
 	if (PNULL == sensor_cxt->sensor_info_ptr) {
-		CMR_LOGE("X: No sensor info!");
+		SENSOR_LOGE("X: No sensor info!");
 		return -1;
 	}
 
@@ -3078,7 +3079,7 @@ cmr_int sns_stream_off(struct sensor_drv_context *sensor_cxt)
 	sensor_cxt->stream_on = 0;
 
 
-	CMR_LOGI("X");
+	SENSOR_LOGI("X");
 	return err;
 }
 
@@ -3086,15 +3087,15 @@ cmr_int sensor_get_info_common(struct sensor_drv_context *sensor_cxt,
 			SENSOR_EXP_INFO_T **sensor_exp_info_pptr)
 {
 	if (PNULL == sensor_cxt) {
-		CMR_LOGE("zero pointer ");
+		SENSOR_LOGE("zero pointer ");
 		return SENSOR_FAIL;
 	}
 	if (!sensor_is_init_common(sensor_cxt)) {
-		CMR_LOGE("sensor has not init");
+		SENSOR_LOGE("sensor has not init");
 		return SENSOR_FAIL;
 	}
 
-	CMR_LOGV("info = 0x%lx ", (void*)&sensor_cxt->sensor_exp_info);
+	SENSOR_LOGV("info = 0x%lx ", (void*)&sensor_cxt->sensor_exp_info);
 	*sensor_exp_info_pptr = &sensor_cxt->sensor_exp_info;
 	return SENSOR_SUCCESS;
 }
@@ -3104,15 +3105,15 @@ SENSOR_EXP_INFO_T *Sensor_GetInfo(void)
 	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)sensor_get_dev_cxt();
 
 	if (PNULL == sensor_cxt) {
-		CMR_LOGE("zero pointer ");
+		SENSOR_LOGE("zero pointer ");
 		return PNULL;
 	}
 	if (!sensor_is_init_common(sensor_cxt)) {
-		CMR_LOGI("sensor has not init");
+		SENSOR_LOGI("sensor has not init");
 		return PNULL;
 	}
 
-	CMR_LOGI("info=%lx ", (void*)&sensor_cxt->sensor_exp_info);
+	SENSOR_LOGI("info=%lx ", (void*)&sensor_cxt->sensor_exp_info);
 	return &sensor_cxt->sensor_exp_info;
 }
 
@@ -3127,7 +3128,7 @@ cmr_int sensor_close_common(struct sensor_drv_context *sensor_cxt, cmr_u32 senso
 
 	SENSOR_REGISTER_INFO_T_PTR sensor_register_info_ptr = PNULL;
 
-	CMR_LOGI("E");
+	SENSOR_LOGI("E");
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 
 	sensor_register_info_ptr = &sensor_cxt->sensor_register_info;
@@ -3160,60 +3161,60 @@ cmr_int sensor_close_common(struct sensor_drv_context *sensor_cxt, cmr_u32 senso
 		}
 		Sensor_PowerOn(sensor_cxt, SENSOR_FALSE);
 		if (SENSOR_MAIN == snr_get_cur_id(sensor_cxt)) {
-			CMR_LOGI("0.");
+			SENSOR_LOGI("0.");
 			if (SCI_TRUE == sensor_register_info_ptr->is_register[SENSOR_SUB]) {
-				CMR_LOGI("1.");
+				SENSOR_LOGI("1.");
 				sns_set_id(sensor_cxt, SENSOR_SUB);
 				sensor_cxt->sensor_info_ptr = sensor_cxt->sensor_list_ptr[SENSOR_SUB];
 				Sensor_SetExportInfo(sensor_cxt);
 				Sensor_PowerOn(sensor_cxt, SENSOR_FALSE);
 				if (1 == sensor_cxt->is_register_sensor) {
-					CMR_LOGI ("2.");
+					SENSOR_LOGI ("2.");
 					sns_dev_i2c_deinit(sensor_cxt, SENSOR_SUB);
 					sensor_cxt->is_register_sensor = 0;
 					sensor_cxt->is_main_sensor = 0;
 				}
 			}
 		} else if (SENSOR_SUB == snr_get_cur_id(sensor_cxt)) {
-			CMR_LOGI("3.");
+			SENSOR_LOGI("3.");
 			if (SCI_TRUE == sensor_register_info_ptr->is_register[SENSOR_MAIN]) {
-				CMR_LOGI("4.");
+				SENSOR_LOGI("4.");
 				sns_set_id(sensor_cxt, SENSOR_MAIN);
 				sensor_cxt->sensor_info_ptr = sensor_cxt->sensor_list_ptr[SENSOR_MAIN];
 				Sensor_SetExportInfo(sensor_cxt);
 				Sensor_PowerOn(sensor_cxt, SENSOR_FALSE);
 				if (1 == sensor_cxt->is_register_sensor) {
-					CMR_LOGI ("5.");
+					SENSOR_LOGI ("5.");
 					sns_dev_i2c_deinit(sensor_cxt, SENSOR_MAIN);
 					sensor_cxt->is_register_sensor = 0;
 					sensor_cxt->is_main_sensor = 0;
 				}
 			}
 		} else if (SENSOR_DEVICE2 == snr_get_cur_id(sensor_cxt)) {
-			CMR_LOGI("0.");
+			SENSOR_LOGI("0.");
 			if (SCI_TRUE == sensor_register_info_ptr->is_register[SENSOR_DEVICE3]) {
-				CMR_LOGI("1.");
+				SENSOR_LOGI("1.");
 				sns_set_id(sensor_cxt, SENSOR_DEVICE3);
 				sensor_cxt->sensor_info_ptr = sensor_cxt->sensor_list_ptr[SENSOR_DEVICE3];
 				Sensor_SetExportInfo(sensor_cxt);
 				Sensor_PowerOn(sensor_cxt, SENSOR_FALSE);
 				if (1 == sensor_cxt->is_register_sensor) {
-					CMR_LOGI ("2.");
+					SENSOR_LOGI ("2.");
 					sns_dev_i2c_deinit(sensor_cxt, SENSOR_DEVICE3);
 					sensor_cxt->is_register_sensor = 0;
 					sensor_cxt->is_main2_sensor = 0;
 				}
 			}
 		} else if (SENSOR_DEVICE3 == snr_get_cur_id(sensor_cxt)) {
-			CMR_LOGI("3.");
+			SENSOR_LOGI("3.");
 			if (SCI_TRUE == sensor_register_info_ptr->is_register[SENSOR_DEVICE2]) {
-				CMR_LOGI("4.");
+				SENSOR_LOGI("4.");
 				sns_set_id(sensor_cxt, SENSOR_DEVICE2);
 				sensor_cxt->sensor_info_ptr = sensor_cxt->sensor_list_ptr[SENSOR_DEVICE2];
 				Sensor_SetExportInfo(sensor_cxt);
 				Sensor_PowerOn(sensor_cxt, SENSOR_FALSE);
 				if (1 == sensor_cxt->is_register_sensor) {
-					CMR_LOGI ("5.");
+					SENSOR_LOGI ("5.");
 					sns_dev_i2c_deinit(sensor_cxt, SENSOR_DEVICE2);
 					sensor_cxt->is_register_sensor = 0;
 					sensor_cxt->is_main2_sensor = 0;
@@ -3221,52 +3222,52 @@ cmr_int sensor_close_common(struct sensor_drv_context *sensor_cxt, cmr_u32 senso
 			}
 		} else if (SENSOR_ATV == snr_get_cur_id(sensor_cxt)) {
 			if (SCI_TRUE == sensor_register_info_ptr->is_register[SENSOR_MAIN]) {
-				CMR_LOGI("4.");
+				SENSOR_LOGI("4.");
 				sns_set_id(sensor_cxt, SENSOR_MAIN);
 				sensor_cxt->sensor_info_ptr = sensor_cxt->sensor_list_ptr[SENSOR_MAIN];
 				Sensor_SetExportInfo(sensor_cxt);
 				Sensor_PowerOn(sensor_cxt, SENSOR_FALSE);
 				if (1 == sensor_cxt->is_register_sensor) {
-					CMR_LOGI("6.");
+					SENSOR_LOGI("6.");
 					sns_dev_i2c_deinit(sensor_cxt, SENSOR_MAIN);
 					sensor_cxt->is_register_sensor = 0;
 					sensor_cxt->is_main_sensor = 0;
 				}
 			}
 			if (SCI_TRUE == sensor_register_info_ptr->is_register[SENSOR_SUB]) {
-				CMR_LOGI("7.");
+				SENSOR_LOGI("7.");
 				sns_set_id(sensor_cxt, SENSOR_SUB);
 				sensor_cxt->sensor_info_ptr = sensor_cxt->sensor_list_ptr[SENSOR_SUB];
 				Sensor_SetExportInfo(sensor_cxt);
 				Sensor_PowerOn(sensor_cxt, SENSOR_FALSE);
 				if (1 == sensor_cxt->is_register_sensor) {
-					CMR_LOGI("8.");
+					SENSOR_LOGI("8.");
 					sns_dev_i2c_deinit(sensor_cxt, SENSOR_SUB);
 					sensor_cxt->is_register_sensor = 0;
 					sensor_cxt->is_main_sensor = 0;
 				}
 			}
 			if (SCI_TRUE == sensor_register_info_ptr->is_register[SENSOR_DEVICE2]) {
-				CMR_LOGI("4.");
+				SENSOR_LOGI("4.");
 				sns_set_id(sensor_cxt, SENSOR_DEVICE2);
 				sensor_cxt->sensor_info_ptr = sensor_cxt->sensor_list_ptr[SENSOR_DEVICE2];
 				Sensor_SetExportInfo(sensor_cxt);
 				Sensor_PowerOn(sensor_cxt, SENSOR_FALSE);
 				if (1 == sensor_cxt->is_register_sensor) {
-					CMR_LOGI("6.");
+					SENSOR_LOGI("6.");
 					sns_dev_i2c_deinit(sensor_cxt, SENSOR_DEVICE2);
 					sensor_cxt->is_register_sensor = 0;
 					sensor_cxt->is_main2_sensor = 0;
 				}
 			}
 			if (SCI_TRUE == sensor_register_info_ptr->is_register[SENSOR_DEVICE3]) {
-				CMR_LOGI("7.");
+				SENSOR_LOGI("7.");
 				sns_set_id(sensor_cxt, SENSOR_DEVICE3);
 				sensor_cxt->sensor_info_ptr = sensor_cxt->sensor_list_ptr[SENSOR_DEVICE3];
 				Sensor_SetExportInfo(sensor_cxt);
 				Sensor_PowerOn(sensor_cxt, SENSOR_FALSE);
 				if (1 == sensor_cxt->is_register_sensor) {
-					CMR_LOGI("8.");
+					SENSOR_LOGI("8.");
 					sns_dev_i2c_deinit(sensor_cxt, SENSOR_DEVICE3);
 					sensor_cxt->is_register_sensor = 0;
 					sensor_cxt->is_main2_sensor = 0;
@@ -3275,7 +3276,7 @@ cmr_int sensor_close_common(struct sensor_drv_context *sensor_cxt, cmr_u32 senso
 
 		}
 	}
-	CMR_LOGI("9.");
+	SENSOR_LOGI("9.");
 
 	sns_device_deinit(sensor_cxt);
 	free((void*)sensor_cxt->sensor_hw_handler);
@@ -3285,7 +3286,7 @@ cmr_int sensor_close_common(struct sensor_drv_context *sensor_cxt, cmr_u32 senso
 	sensor_cxt->sensor_mode[SENSOR_SUB] = SENSOR_MODE_MAX;
 	sensor_cxt->sensor_mode[SENSOR_DEVICE2] = SENSOR_MODE_MAX;
 	sensor_cxt->sensor_mode[SENSOR_DEVICE3] = SENSOR_MODE_MAX;
-	CMR_LOGI("X");
+	SENSOR_LOGI("X");
 
 	return SENSOR_SUCCESS;
 }
@@ -3297,7 +3298,7 @@ cmr_int sns_init_defaul_exif(struct sensor_drv_context *sensor_cxt)
 	exif_ptr = &sensor_cxt->default_exif;
 	cmr_bzero(&sensor_cxt->default_exif, sizeof(EXIF_SPEC_PIC_TAKING_COND_T));
 
-	CMR_LOGV("E");
+	SENSOR_LOGV("E");
 
 	exif_ptr->valid.FNumber=1;
 	exif_ptr->FNumber.numerator=14;
@@ -3321,7 +3322,7 @@ cmr_int sns_init_defaul_exif(struct sensor_drv_context *sensor_cxt)
 	exif_ptr->WhiteBalance=0x00;
 	exif_ptr->valid.Flash = 1;
 
-	CMR_LOGV("X");
+	SENSOR_LOGV("X");
 	return SENSOR_SUCCESS;
 }
 
@@ -3336,13 +3337,13 @@ cmr_int sensor_set_exif_common(struct sensor_drv_context *sensor_cxt,
 
 	sensor_get_info_common(sensor_cxt, &sensor_info_ptr);
 	if (PNULL == sensor_info_ptr) {
-		CMR_LOGW("sensor not ready yet, direct return");
+		SENSOR_LOGW("sensor not ready yet, direct return");
 		return SENSOR_FAIL;
 	} else if (PNULL != sensor_info_ptr->ioctl_func_ptr->get_exif) {
 		sensor_exif_info_ptr =
 			(EXIF_SPEC_PIC_TAKING_COND_T *)sensor_info_ptr->ioctl_func_ptr->get_exif(sensor_cxt->sensor_hw_handler, 0x00);
 	} else {
-		CMR_LOGV("the fun is null, set it to default");
+		SENSOR_LOGV("the fun is null, set it to default");
 		sensor_exif_info_ptr = &sensor_cxt->default_exif;
 	}
 	switch (cmd) {
@@ -3649,13 +3650,13 @@ cmr_int hw_Sensor_SetSensorExifInfo(SENSOR_HW_HANDLE handle, SENSOR_EXIF_CTRL_E 
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 	sensor_get_info_common(sensor_cxt, &sensor_info_ptr);
 	if (PNULL == sensor_info_ptr) {
-		CMR_LOGW("sensor not ready yet, direct return");
+		SENSOR_LOGW("sensor not ready yet, direct return");
 		return SENSOR_FAIL;
 	} else if (PNULL != sensor_info_ptr->ioctl_func_ptr->get_exif) {
 		sensor_exif_info_ptr =
 			(EXIF_SPEC_PIC_TAKING_COND_T *)sensor_info_ptr->ioctl_func_ptr->get_exif(sensor_cxt->sensor_hw_handler, 0x00);
 	} else {
-		CMR_LOGI("the fun is null, set it to default");
+		SENSOR_LOGI("the fun is null, set it to default");
 		sensor_exif_info_ptr = &sensor_cxt->default_exif;
 	}
 
@@ -3942,7 +3943,7 @@ cmr_int sensor_get_exif_common(struct sensor_drv_context *sensor_cxt, EXIF_SPEC_
 
 	sensor_get_info_common(sensor_cxt, &sensor_info_ptr);
 	if (!sensor_info_ptr) {
-		CMR_LOGE("ZERO poiner sensor_cxt %p sensor_info_ptr %p",
+		SENSOR_LOGE("ZERO poiner sensor_cxt %p sensor_info_ptr %p",
 			sensor_cxt,
 			sensor_info_ptr);
 		return SENSOR_SUCCESS;
@@ -3952,7 +3953,7 @@ cmr_int sensor_get_exif_common(struct sensor_drv_context *sensor_cxt, EXIF_SPEC_
 		*sensor_exif_info_pptr =
 			(EXIF_SPEC_PIC_TAKING_COND_T *)
 			sensor_info_ptr->ioctl_func_ptr->get_exif(sensor_cxt->sensor_hw_handler, 0x00);
-		CMR_LOGI("get_exif.");
+		SENSOR_LOGI("get_exif.");
 	} else {
 		//struct sensor_drv_context *cur_cxt = (struct sensor_drv_context*)sensor_get_dev_cxt();
 		*sensor_exif_info_pptr = &sensor_cxt->default_exif;
@@ -3971,24 +3972,24 @@ EXIF_SPEC_PIC_TAKING_COND_T *hw_Sensor_GetSensorExifInfo(SENSOR_HW_HANDLE handle
 	EXIF_SPEC_PIC_TAKING_COND_T *sensor_exif_info_ptr = PNULL;
 
 	if (!sensor_cxt) {
-		CMR_LOGE("ZERO poiner sensor_cxt %p", sensor_cxt);
+		SENSOR_LOGE("ZERO poiner sensor_cxt %p", sensor_cxt);
 		return NULL;
 	}
 
 	sensor_get_info_common(sensor_cxt, &sensor_info_ptr);
 
 	if (!sensor_info_ptr) {
-		CMR_LOGE("ZERO poiner sensor_info_ptr %p", sensor_info_ptr);
+		SENSOR_LOGE("ZERO poiner sensor_info_ptr %p", sensor_info_ptr);
 		return NULL;
 	}
 
 	if (PNULL != sensor_info_ptr->ioctl_func_ptr->get_exif) {
 		sensor_exif_info_ptr =
 			(EXIF_SPEC_PIC_TAKING_COND_T *)sensor_info_ptr->ioctl_func_ptr->get_exif(sensor_cxt->sensor_hw_handler, 0x00);
-		CMR_LOGI("get_exif.");
+		SENSOR_LOGI("get_exif.");
 	} else {
 		sensor_exif_info_ptr = &sensor_cxt->default_exif;
-		CMR_LOGI("fun null, so use the default");
+		SENSOR_LOGI("fun null, so use the default");
 	}
 	return sensor_exif_info_ptr;
 }
@@ -4007,7 +4008,7 @@ cmr_int snr_set_mark(struct sensor_drv_context *sensor_cxt, cmr_u8 *buf)
 			sensor_cxt->sensor_index[i] = buf[4+i];
 		}
 	}
-	CMR_LOGI("%d,idex %d,%d.",
+	SENSOR_LOGI("%d,idex %d,%d.",
 		sensor_cxt->sensor_identified,
 		sensor_cxt->sensor_index[SENSOR_MAIN],
 		sensor_cxt->sensor_index[SENSOR_SUB]);
@@ -4031,7 +4032,7 @@ cmr_int snr_get_mark(struct sensor_drv_context *sensor_cxt,
 		for( i=0 ; i<4 ; i++) {
 			*ptr++ = sensor_cxt->sensor_index[i];
 		}
-		CMR_LOGI("index is %d,%d.",
+		SENSOR_LOGI("index is %d,%d.",
 			sensor_cxt->sensor_index[SENSOR_MAIN],
 			sensor_cxt->sensor_index[SENSOR_SUB]);
 	} else {
@@ -4065,7 +4066,7 @@ cmr_int sensor_cfg_otp_update_isparam(struct sensor_drv_context *sensor_cxt,
 	message.sync_flag    = CMR_MSG_SYNC_PROCESSED;
 	ret = cmr_thread_msg_send(sensor_cxt->ctrl_thread_cxt.thread_handle, &message);
 	if (ret) {
-		CMR_LOGE("send msg failed!");
+		SENSOR_LOGE("send msg failed!");
 		return CMR_CAMERA_FAIL;
 	}
 	return ret;
@@ -4086,7 +4087,7 @@ cmr_int sensor_read_otp_info(struct sensor_drv_context *sensor_cxt,
 			sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr->cfg_otp(sensor_cxt->sensor_hw_handler, (cmr_uint)&param);
 		*otp_info = param.pval;
 	} else {
-		CMR_LOGE("invalid param failed!");
+		SENSOR_LOGE("invalid param failed!");
 		return CMR_CAMERA_INVALID_PARAM;
 	}
 	return ret;
@@ -4106,7 +4107,7 @@ cmr_int sns_cfg_otp_update_isparam(struct sensor_drv_context *sensor_cxt,
 			sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr->cfg_otp(sensor_cxt->sensor_hw_handler, (cmr_uint)&param);
 		}
 	}else{
-		CMR_LOGE("invalid param failed!");
+		SENSOR_LOGE("invalid param failed!");
 		return CMR_CAMERA_INVALID_PARAM;
 	}
 	return ret;

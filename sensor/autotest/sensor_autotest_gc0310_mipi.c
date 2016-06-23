@@ -649,7 +649,7 @@ static uint32_t GC0310_MIPI_Identify(uint32_t param)
 		sensor_id |= GC0310_MIPI_ReadReg(GC0310_MIPI_PID_ADDR2);
 		ALOGE("%s sensor_id gc0310 is %x\n", __func__, sensor_id);
 		if (sensor_id == GC0310_MIPI_SENSOR_ID) {
-			SENSOR_PRINT("the main sensor is GC0310_MIPI\n");
+			SENSOR_LOGI("the main sensor is GC0310_MIPI\n");
 			return SENSOR_SUCCESS;
 		}
 	}
@@ -658,7 +658,7 @@ static uint32_t GC0310_MIPI_Identify(uint32_t param)
 }
 static uint32_t GC0310_MIPI_StreamOn(uint32_t param)
 {
-	SENSOR_PRINT("Start");
+	SENSOR_LOGI("Start");
 	GC0310_MIPI_WriteReg(0xfe, 0x03);
 	GC0310_MIPI_WriteReg(0x10, 0x94);
 	GC0310_MIPI_WriteReg(0xfe, 0x00);
@@ -668,7 +668,7 @@ static uint32_t GC0310_MIPI_StreamOn(uint32_t param)
 
 static uint32_t GC0310_MIPI_StreamOff(uint32_t param)
 {
-	SENSOR_PRINT("Stop");
+	SENSOR_LOGI("Stop");
 	GC0310_MIPI_WriteReg(0xfe, 0x03);
 	GC0310_MIPI_WriteReg(0x10, 0x84);
 	GC0310_MIPI_WriteReg(0xfe, 0x00);

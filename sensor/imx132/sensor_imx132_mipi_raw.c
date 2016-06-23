@@ -292,18 +292,18 @@ static uint32_t imx132_set_video_mode(SENSOR_HW_HANDLE handle, uint32_t param)
 		return 0;
 
 	if (SENSOR_SUCCESS != Sensor_GetMode(&mode)) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	if (PNULL == s_imx132_video_info[mode].setting_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	sensor_reg_ptr = (SENSOR_REG_T_PTR) & s_imx132_video_info[mode].setting_ptr[param];
 	if (PNULL == sensor_reg_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
@@ -343,10 +343,10 @@ static SENSOR_MODE_FPS_INFO_T s_imx132_mode_fps_info = {
 static uint32_t imx132_init_mode_fps_info(SENSOR_HW_HANDLE handle)
 {
    uint32_t rtn = SENSOR_SUCCESS;
-   SENSOR_PRINT("imx132_init_mode_fps_info:E");
+   SENSOR_LOGI("imx132_init_mode_fps_info:E");
    if(!s_imx132_mode_fps_info.is_init) {
        uint32_t i,modn,tempfps = 0;
-   SENSOR_PRINT("imx132_init_mode_fps_info:start init");
+   SENSOR_LOGI("imx132_init_mode_fps_info:start init");
    for(i = 0;i < NUMBER_OF_ARRAY(s_imx132_resolution_trim_tab); i++) {
     //max fps should be multiple of 30,it calulated from line_time and frame_line
    tempfps = s_imx132_resolution_trim_tab[i].line_time * s_imx132_resolution_trim_tab[i].frame_line;
@@ -367,17 +367,17 @@ static uint32_t imx132_init_mode_fps_info(SENSOR_HW_HANDLE handle)
 	}
 
    }
-    SENSOR_PRINT("mode %d,tempfps %d,frame_len %d,line_time: %d ",i,tempfps,
+    SENSOR_LOGI("mode %d,tempfps %d,frame_len %d,line_time: %d ",i,tempfps,
     s_imx132_resolution_trim_tab[i].frame_line,
     s_imx132_resolution_trim_tab[i].line_time);
-    SENSOR_PRINT("mode %d,max_fps: %d ",i,s_imx132_mode_fps_info.sensor_mode_fps[i].max_fps);
-	SENSOR_PRINT("is_high_fps: %d,highfps_skip_num %d",
+    SENSOR_LOGI("mode %d,max_fps: %d ",i,s_imx132_mode_fps_info.sensor_mode_fps[i].max_fps);
+	SENSOR_LOGI("is_high_fps: %d,highfps_skip_num %d",
 			s_imx132_mode_fps_info.sensor_mode_fps[i].is_high_fps,
           s_imx132_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num);
      }
       s_imx132_mode_fps_info.is_init = 1;
    }
-   SENSOR_PRINT("_imx132_init_mode_fps_info:X");
+   SENSOR_LOGI("_imx132_init_mode_fps_info:X");
    return rtn;
 }
 /*==============================================================================
@@ -501,7 +501,7 @@ static uint32_t imx132_get_default_frame_length(SENSOR_HW_HANDLE handle, uint32_
  *============================================================================*/
 static void imx132_group_hold_on(SENSOR_HW_HANDLE handle)
 {
-	SENSOR_PRINT("E");
+	SENSOR_LOGI("E");
 
 	//Sensor_WriteReg(0x0104, 0x01);
 }
@@ -513,7 +513,7 @@ static void imx132_group_hold_on(SENSOR_HW_HANDLE handle)
  *============================================================================*/
 static void imx132_group_hold_off(SENSOR_HW_HANDLE handle)
 {
-	SENSOR_PRINT("E");
+	SENSOR_LOGI("E");
 
 	//Sensor_WriteReg(0x0104, 0x00);
 }
@@ -547,7 +547,7 @@ static void imx132_write_gain(SENSOR_HW_HANDLE handle, uint32_t gain)
 
 	if (SENSOR_MAX_GAIN < sensor_again)
 			sensor_again = SENSOR_MAX_GAIN;
-	SENSOR_PRINT("sensor_again=0x%x",sensor_again);
+	SENSOR_LOGI("sensor_again=0x%x",sensor_again);
 	Sensor_WriteReg(0x0205, sensor_again);
 
 	imx132_group_hold_off(handle);
@@ -673,7 +673,7 @@ static uint32_t imx132_power_on(SENSOR_HW_HANDLE handle, uint32_t power_on)
 		Sensor_Reset(reset_level);
 		Sensor_PowerDown(power_down);
 	}
-	SENSOR_PRINT("(1:on, 0:off): %d", power_on);
+	SENSOR_LOGI("(1:on, 0:off): %d", power_on);
 	return SENSOR_SUCCESS;
 }
 
@@ -689,22 +689,22 @@ static uint32_t imx132_identify(SENSOR_HW_HANDLE handle, uint32_t param)
 	uint8_t ver_value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
 
-	SENSOR_PRINT("mipi raw identify");
+	SENSOR_LOGI("mipi raw identify");
 
 	pid_value = Sensor_ReadReg(imx132_PID_ADDR);
 	ver_value = Sensor_ReadReg(imx132_VER_ADDR);
 
 	if (imx132_PID_VALUE == pid_value) {
 		ver_value = Sensor_ReadReg(imx132_VER_ADDR);
-		SENSOR_PRINT("Identify: PID = %x, VER = %x", pid_value, ver_value);
+		SENSOR_LOGI("Identify: PID = %x, VER = %x", pid_value, ver_value);
 		if (imx132_VER_VALUE == ver_value) {
 			ret_value = SENSOR_SUCCESS;
-			SENSOR_PRINT_HIGH("this is imx132 sensor");
+			SENSOR_LOGI("this is imx132 sensor");
 		} else {
-			SENSOR_PRINT_HIGH("Identify this is %x%x sensor", pid_value, ver_value);
+			SENSOR_LOGI("Identify this is %x%x sensor", pid_value, ver_value);
 		}
 	} else {
-		SENSOR_PRINT_HIGH("identify fail, pid_value = %x", pid_value);
+		SENSOR_LOGI("identify fail, pid_value = %x", pid_value);
 	}
 
 	return ret_value;
@@ -738,7 +738,7 @@ static uint32_t imx132_before_snapshot(SENSOR_HW_HANDLE handle, uint32_t param)
 	uint32_t cap_linetime = s_imx132_resolution_trim_tab[capture_mode].line_time;
 
 	s_current_default_frame_length = imx132_get_default_frame_length(handle, capture_mode);
-	SENSOR_PRINT("capture_mode = %d", capture_mode);
+	SENSOR_LOGI("capture_mode = %d", capture_mode);
 
 	if (preview_mode == capture_mode) {
 		cap_shutter = s_sensor_ev_info.preview_shutter;
@@ -764,10 +764,10 @@ static uint32_t imx132_before_snapshot(SENSOR_HW_HANDLE handle, uint32_t param)
 	cap_shutter = imx132_update_exposure(handle, cap_shutter,0);
 	cap_gain = gain;
 	imx132_write_gain(handle, cap_gain);
-	SENSOR_PRINT("preview_shutter = 0x%x, preview_gain = 0x%x",
+	SENSOR_LOGI("preview_shutter = 0x%x, preview_gain = 0x%x",
 		     s_sensor_ev_info.preview_shutter, s_sensor_ev_info.preview_gain);
 
-	SENSOR_PRINT("capture_shutter = 0x%x, capture_gain = 0x%x", cap_shutter, cap_gain);
+	SENSOR_LOGI("capture_shutter = 0x%x, capture_gain = 0x%x", cap_shutter, cap_gain);
 snapshot_info:
 	s_hdr_info.capture_shutter = cap_shutter; //imx132_read_shutter();
 	s_hdr_info.capture_gain = cap_gain; //imx132_read_gain();
@@ -797,7 +797,7 @@ static uint32_t imx132_write_exposure(SENSOR_HW_HANDLE handle, uint32_t param)
 	dummy_line = (param >> 0x10) & 0xfff; /*for cits frame rate test*/
 	mode = (param >> 0x1c) & 0x0f;
 
-	SENSOR_PRINT("current mode = %d, exposure_line = %d, dummy_line=%d", mode, exposure_line,dummy_line);
+	SENSOR_LOGI("current mode = %d, exposure_line = %d, dummy_line=%d", mode, exposure_line,dummy_line);
 	s_current_default_frame_length = imx132_get_default_frame_length(handle, mode);
 
 	s_sensor_ev_info.preview_shutter = imx132_update_exposure(handle, exposure_line,dummy_line);
@@ -840,7 +840,7 @@ static uint32_t imx132_write_gain_value(SENSOR_HW_HANDLE handle, uint32_t param)
 
 	real_gain = real_gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
 
-	SENSOR_PRINT("real_gain = 0x%x", real_gain);
+	SENSOR_LOGI("real_gain = 0x%x", real_gain);
 
 	s_sensor_ev_info.preview_gain = real_gain;
 	imx132_write_gain(handle, real_gain);
@@ -935,7 +935,7 @@ static uint32_t imx132_ext_func(SENSOR_HW_HANDLE handle, unsigned long param)
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr = (SENSOR_EXT_FUN_PARAM_T_PTR) param;
 
-	SENSOR_PRINT("ext_ptr->cmd: %d", ext_ptr->cmd);
+	SENSOR_LOGI("ext_ptr->cmd: %d", ext_ptr->cmd);
 	switch (ext_ptr->cmd) {
 	case SENSOR_EXT_EV:
 		rtn = imx132_set_hdr_ev(handle, param);
@@ -954,7 +954,7 @@ static uint32_t imx132_ext_func(SENSOR_HW_HANDLE handle, unsigned long param)
  *============================================================================*/
 static uint32_t imx132_stream_on(SENSOR_HW_HANDLE handle, uint32_t param)
 {
-	SENSOR_PRINT("E");
+	SENSOR_LOGI("E");
 
 	Sensor_WriteReg(0x0100, 0x01);
 	/*delay*/
@@ -970,7 +970,7 @@ static uint32_t imx132_stream_on(SENSOR_HW_HANDLE handle, uint32_t param)
  *============================================================================*/
 static uint32_t imx132_stream_off(SENSOR_HW_HANDLE handle, uint32_t param)
 {
-	SENSOR_PRINT("E");
+	SENSOR_LOGI("E");
 
 	Sensor_WriteReg(0x0100, 0x00);
 	/*delay*/
@@ -1001,16 +1001,16 @@ static uint32_t imx132_get_static_info(SENSOR_HW_HANDLE handle, uint32_t *param)
    ex_info->capture_skip_num = g_imx132_mipi_raw_info.capture_skip_num;
    ex_info->name = g_imx132_mipi_raw_info.name;
    ex_info->sensor_version_info = g_imx132_mipi_raw_info.sensor_version_info;
-   SENSOR_PRINT("SENSOR_imx132: f_num: %d", ex_info->f_num);
-   SENSOR_PRINT("SENSOR_imx132: max_fps: %d", ex_info->max_fps);
-   SENSOR_PRINT("SENSOR_imx132: max_adgain: %d", ex_info->max_adgain);
-   SENSOR_PRINT("SENSOR_imx132: ois_supported: %d", ex_info->ois_supported);
-   SENSOR_PRINT("SENSOR_imx132: pdaf_supported: %d", ex_info->pdaf_supported);
-   SENSOR_PRINT("SENSOR_imx132: exp_valid_frame_num: %d", ex_info->exp_valid_frame_num);
-   SENSOR_PRINT("SENSOR_imx132: clam_level: %d", ex_info->clamp_level);
-   SENSOR_PRINT("SENSOR_imx132: adgain_valid_frame_num: %d", ex_info->adgain_valid_frame_num);
-   SENSOR_PRINT("SENSOR_imx132: sensor name is: %s", ex_info->name);
-   SENSOR_PRINT("SENSOR_imx132: sensor version info is: %s", ex_info->sensor_version_info);
+   SENSOR_LOGI("SENSOR_imx132: f_num: %d", ex_info->f_num);
+   SENSOR_LOGI("SENSOR_imx132: max_fps: %d", ex_info->max_fps);
+   SENSOR_LOGI("SENSOR_imx132: max_adgain: %d", ex_info->max_adgain);
+   SENSOR_LOGI("SENSOR_imx132: ois_supported: %d", ex_info->ois_supported);
+   SENSOR_LOGI("SENSOR_imx132: pdaf_supported: %d", ex_info->pdaf_supported);
+   SENSOR_LOGI("SENSOR_imx132: exp_valid_frame_num: %d", ex_info->exp_valid_frame_num);
+   SENSOR_LOGI("SENSOR_imx132: clam_level: %d", ex_info->clamp_level);
+   SENSOR_LOGI("SENSOR_imx132: adgain_valid_frame_num: %d", ex_info->adgain_valid_frame_num);
+   SENSOR_LOGI("SENSOR_imx132: sensor name is: %s", ex_info->name);
+   SENSOR_LOGI("SENSOR_imx132: sensor version info is: %s", ex_info->sensor_version_info);
 
    return rtn;
 }
@@ -1029,10 +1029,10 @@ static uint32_t imx132_get_fps_info(SENSOR_HW_HANDLE handle, uint32_t *param)
    fps_info->min_fps = s_imx132_mode_fps_info.sensor_mode_fps[sensor_mode].min_fps;
    fps_info->is_high_fps = s_imx132_mode_fps_info.sensor_mode_fps[sensor_mode].is_high_fps;
    fps_info->high_fps_skip_num = s_imx132_mode_fps_info.sensor_mode_fps[sensor_mode].high_fps_skip_num;
-   SENSOR_PRINT("SENSOR_imx132: mode %d, max_fps: %d",fps_info->mode, fps_info->max_fps);
-   SENSOR_PRINT("SENSOR_imx132: min_fps: %d", fps_info->min_fps);
-   SENSOR_PRINT("SENSOR_imx132: is_high_fps: %d", fps_info->is_high_fps);
-   SENSOR_PRINT("SENSOR_imx132: high_fps_skip_num: %d", fps_info->high_fps_skip_num);
+   SENSOR_LOGI("SENSOR_imx132: mode %d, max_fps: %d",fps_info->mode, fps_info->max_fps);
+   SENSOR_LOGI("SENSOR_imx132: min_fps: %d", fps_info->min_fps);
+   SENSOR_LOGI("SENSOR_imx132: is_high_fps: %d", fps_info->is_high_fps);
+   SENSOR_LOGI("SENSOR_imx132: high_fps_skip_num: %d", fps_info->high_fps_skip_num);
    return rtn;
 }
 
@@ -1042,12 +1042,12 @@ static unsigned long imx132_access_val(SENSOR_HW_HANDLE handle, unsigned long pa
 	SENSOR_VAL_T* param_ptr = (SENSOR_VAL_T*)param;
 	uint16_t tmp;
 
-	SENSOR_PRINT("SENSOR_imx132: _imx132_access_val E");
+	SENSOR_LOGI("SENSOR_imx132: _imx132_access_val E");
 	if(!param_ptr){
 		return rtn;
 	}
 
-	SENSOR_PRINT("SENSOR_imx132: param_ptr->type=%x", param_ptr->type);
+	SENSOR_LOGI("SENSOR_imx132: param_ptr->type=%x", param_ptr->type);
 	switch(param_ptr->type)
 	{
 		case SENSOR_VAL_TYPE_SHUTTER:
@@ -1092,7 +1092,7 @@ static unsigned long imx132_access_val(SENSOR_HW_HANDLE handle, unsigned long pa
 			break;
 	}
 
-	SENSOR_PRINT("SENSOR_imx132: _imx132_access_val X");
+	SENSOR_LOGI("SENSOR_imx132: _imx132_access_val X");
 
 	return rtn;
 

@@ -364,18 +364,18 @@ static unsigned long _imx219_set_video_mode(unsigned long param)
 		return 0;
 
 	if (SENSOR_SUCCESS != Sensor_GetMode(&mode)) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	if (PNULL == s_imx219_video_info[mode].setting_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	sensor_reg_ptr = (SENSOR_REG_T_PTR)&s_imx219_video_info[mode].setting_ptr[param];
 	if (PNULL == sensor_reg_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
@@ -383,7 +383,7 @@ static unsigned long _imx219_set_video_mode(unsigned long param)
 		Sensor_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("0x%02x", param);
+	SENSOR_LOGI("0x%02x", param);
 	return 0;
 }
 
@@ -804,7 +804,7 @@ static unsigned long _dw9714a_SRCInit(unsigned long mode)
 	uint16_t  slave_addr = 0;
 	uint16_t cmd_len = 0;
 	uint32_t ret_value = SENSOR_SUCCESS;
-	SENSOR_PRINT("SENSOR_IMX219: %d",mode);
+	SENSOR_LOGI("SENSOR_IMX219: %d",mode);
 
 	slave_addr = DW9714A_VCM_SLAVE_ADDR;
 	switch (mode) {
@@ -819,7 +819,7 @@ static unsigned long _dw9714a_SRCInit(unsigned long mode)
 			cmd_val[1] = 0xa3;
 			ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 			if(ret_value){
-				SENSOR_PRINT("SENSOR_IMX219: _dw9174_SRCInit fail!1");
+				SENSOR_LOGI("SENSOR_IMX219: _dw9174_SRCInit fail!1");
 			}
 
 			usleep(10*1000);
@@ -827,7 +827,7 @@ static unsigned long _dw9714a_SRCInit(unsigned long mode)
 			cmd_val[1] = 0x00;
 			ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 			if(ret_value){
-				SENSOR_PRINT("SENSOR_IMX219: _dw9174_SRCInit fail!2");
+				SENSOR_LOGI("SENSOR_IMX219: _dw9174_SRCInit fail!2");
 			}
 			usleep(10*1000);
 
@@ -835,7 +835,7 @@ static unsigned long _dw9714a_SRCInit(unsigned long mode)
 			cmd_val[1] = 0x51;
 			ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 			if(ret_value){
-				SENSOR_PRINT("SENSOR_IMX219: _dw9174_SRCInit fail!3");
+				SENSOR_LOGI("SENSOR_IMX219: _dw9174_SRCInit fail!3");
 			}
 
 			usleep(10*1000);
@@ -873,7 +873,7 @@ ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 
 static unsigned long _imx219_GetResolutionTrimTab(unsigned long param)
 {
-	SENSOR_PRINT("0x%lx",  (unsigned long)s_imx219_Resolution_Trim_Tab);
+	SENSOR_LOGI("0x%lx",  (unsigned long)s_imx219_Resolution_Trim_Tab);
 	return (unsigned long) s_imx219_Resolution_Trim_Tab;
 }
 
@@ -904,7 +904,7 @@ static unsigned long _imx219_PowerOn(unsigned long power_on)
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 	}
 
-	SENSOR_PRINT_ERR("SENSOR_IMX219: _imx219_Power_On(1:on, 0:off): %d, reset_level %d, dvdd_val %d", power_on, reset_level, dvdd_val);
+	SENSOR_LOGI("SENSOR_IMX219: _imx219_Power_On(1:on, 0:off): %d, reset_level %d, dvdd_val %d", power_on, reset_level, dvdd_val);
 	return SENSOR_SUCCESS;
 }
 
@@ -914,7 +914,7 @@ static unsigned long _imx219_cfg_otp(unsigned long  param)
 	struct raw_param_info_tab* tab_ptr = (struct raw_param_info_tab*)s_imx219_raw_param_tab;
 	uint32_t module_id=g_module_id;
 
-	SENSOR_PRINT("SENSOR_IMX219: _imx219_cfg_otp");
+	SENSOR_LOGI("SENSOR_IMX219: _imx219_cfg_otp");
 
 	if(PNULL!=tab_ptr[module_id].cfg_otp){
 		tab_ptr[module_id].cfg_otp(0);
@@ -928,7 +928,7 @@ static uint32_t _imx219_com_Identify_otp(void* param_ptr)
 	uint32_t rtn=SENSOR_FAIL;
 	uint32_t param_id;
 
-	SENSOR_PRINT("SENSOR_IMX219: _imx219_com_Identify_otp");
+	SENSOR_LOGI("SENSOR_IMX219: _imx219_com_Identify_otp");
 
 	/*read param id from sensor omap*/
 	param_id=IMX219_RAW_PARAM_COM;
@@ -955,17 +955,17 @@ static uint32_t _imx219_GetRawInof(void)
 		g_module_id = i;
 		if(RAW_INFO_END_ID==tab_ptr[i].param_id){
 			if(NULL==s_imx219_mipi_raw_info_ptr){
-				SENSOR_PRINT("SENSOR_IMX219: ov5647_GetRawInof no param error");
+				SENSOR_LOGI("SENSOR_IMX219: ov5647_GetRawInof no param error");
 				rtn=SENSOR_FAIL;
 			}
-			SENSOR_PRINT("SENSOR_IMX219: imx219_GetRawInof end");
+			SENSOR_LOGI("SENSOR_IMX219: imx219_GetRawInof end");
 			break;
 		}
 		else if(PNULL!=tab_ptr[i].identify_otp){
 			if(SENSOR_SUCCESS==tab_ptr[i].identify_otp(0))
 			{
 				s_imx219_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
-				SENSOR_PRINT("SENSOR_IMX219: imx219_GetRawInof success");
+				SENSOR_LOGI("SENSOR_IMX219: imx219_GetRawInof success");
 				break;
 			}
 		}
@@ -995,28 +995,28 @@ static unsigned long _imx219_Identify(unsigned long param)
 	uint8_t ver_value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
 
-	SENSOR_PRINT_ERR("SENSOR_IMX219: mipi raw identify\n");
+	SENSOR_LOGI("SENSOR_IMX219: mipi raw identify\n");
 //	while (1) {
 	pid_value = Sensor_ReadReg(IMX219_PID_ADDR);
-//	SENSOR_PRINT_ERR("SENSOR_IMX219: Identify: VER = %x", pid_value);
+//	SENSOR_LOGI("SENSOR_IMX219: Identify: VER = %x", pid_value);
 
 	if (IMX219_PID_VALUE == pid_value) {
 		ver_value = Sensor_ReadReg(IMX219_VER_ADDR);
-		SENSOR_PRINT("SENSOR_IMX219: Identify: PID = %x, VER = %x", pid_value, ver_value);
+		SENSOR_LOGI("SENSOR_IMX219: Identify: PID = %x, VER = %x", pid_value, ver_value);
 		if (IMX219_VER_VALUE == ver_value) {
-			SENSOR_PRINT_ERR("SENSOR_IMX219: this is IMX219 sensor !");
+			SENSOR_LOGI("SENSOR_IMX219: this is IMX219 sensor !");
 			ret_value=_imx219_GetRawInof();
 			if(SENSOR_SUCCESS != ret_value)
 			{
-				SENSOR_PRINT_ERR("SENSOR_IMX219: the module is unknow error !");
+				SENSOR_LOGI("SENSOR_IMX219: the module is unknow error !");
 			}
 			Sensor_imx219_InitRawTuneInfo();
 		} else {
-			SENSOR_PRINT_ERR("SENSOR_IMX219: Identify this is hm%x%x sensor !", pid_value, ver_value);
+			SENSOR_LOGI("SENSOR_IMX219: Identify this is hm%x%x sensor !", pid_value, ver_value);
 			return ret_value;
 		}
 	} else {
-		SENSOR_PRINT_ERR("SENSOR_IMX219: identify fail,pid_value=%d", pid_value);
+		SENSOR_LOGI("SENSOR_IMX219: identify fail,pid_value=%d", pid_value);
 	}
 //	usleep(5*1000);
 //	}
@@ -1046,7 +1046,7 @@ static unsigned long _imx219_write_exposure(unsigned long param)
 	frame_len_cur = (Sensor_ReadReg(0x0163)) & 0xff;
 	frame_len_cur |= (Sensor_ReadReg(0x0162) << 0x08) & 0xff00;
 
-	SENSOR_PRINT("SENSOR_IMX219: write_exposure line:0x%x, dummy_line:0x%x, frame_len_cur:0x%x, frame_len:0x%x",
+	SENSOR_LOGI("SENSOR_IMX219: write_exposure line:0x%x, dummy_line:0x%x, frame_len_cur:0x%x, frame_len:0x%x",
 		expsure_line, dummy_line, frame_len_cur, frame_len);
 
 	//ret_value = Sensor_WriteReg(0x0104, 0x01);
@@ -1092,7 +1092,7 @@ static unsigned long _imx219_write_exposure(unsigned long param)
 //	frame_len_cur |= (Sensor_ReadReg(0x0160) << 0x08) & 0xff00;
 //	frame_len_cur *= frame_length_lines_uint;
 
-	SENSOR_PRINT("SENSOR_IMX219: write_exposure line:0x%x, dummy_line:0x%x, frame_len_cur:0x%x, frame_len:0x%x",
+	SENSOR_LOGI("SENSOR_IMX219: write_exposure line:0x%x, dummy_line:0x%x, frame_len_cur:0x%x, frame_len:0x%x",
 	expsure_line, dummy_line, frame_len_cur, frame_len);
 
 	ret_value = Sensor_WriteReg(0x0104, 0x01); //thomaszhang debug 20140527
@@ -1116,7 +1116,7 @@ static unsigned long _imx219_write_exposure(unsigned long param)
 //	frame_len = (frame_len > (expsure_line + 4)) ? frame_len : (expsure_line + 4);
 	frame_len = (frame_len > max_frame_len) ? frame_len :  max_frame_len;
 
-	SENSOR_PRINT("SENSOR_IMX219: write_exposure line:0x%x, dummy_line:0x%x, frame_len_cur:0x%x, frame_len:0x%x",
+	SENSOR_LOGI("SENSOR_IMX219: write_exposure line:0x%x, dummy_line:0x%x, frame_len_cur:0x%x, frame_len:0x%x",
 	expsure_line, dummy_line, frame_len_cur, frame_len);
 
 	ret_value = _imx219_set_VTS(frame_len);
@@ -1142,12 +1142,12 @@ static unsigned long _imx219_write_gain(unsigned long param)
 	real_gain = real_gain*(((param>>6)&0x01)+1)*(((param>>7)&0x01)+1)*(((param>>8)&0x01)+1);
 	real_gain = real_gain*(((param>>9)&0x01)+1)*(((param>>10)&0x01)+1)*(((param>>11)&0x01)+1);
 
-	SENSOR_PRINT("SENSOR_IMX219: rea_gain %d, %d", real_gain, real_gain/16);
+	SENSOR_LOGI("SENSOR_IMX219: rea_gain %d, %d", real_gain, real_gain/16);
 	value = ((real_gain -16) * 256)/real_gain;
 
 	ret_value = Sensor_WriteReg(0x0157, value);
 
-	SENSOR_PRINT("SENSOR_IMX219: param: 0x%x, write_gain:0x%x, ret_value: %d", param, value, ret_value);
+	SENSOR_LOGI("SENSOR_IMX219: param: 0x%x, write_gain:0x%x, ret_value: %d", param, value, ret_value);
 
 	return ret_value;
 }
@@ -1159,14 +1159,14 @@ static unsigned long _imx219_write_af(unsigned long param)
 	uint16_t slave_addr = 0;
 	uint16_t cmd_len = 0;
 
-	SENSOR_PRINT("SENSOR_IMX219: _write_af %d", param);
+	SENSOR_LOGI("SENSOR_IMX219: _write_af %d", param);
 	slave_addr = DW9714A_VCM_SLAVE_ADDR;
 	cmd_val[0] = (param&0x3ff0)>>4;
 	cmd_val[1] = ((param&0x0f)<<4)|0x05;
 	cmd_len = 2;
 	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 
-	SENSOR_PRINT("SENSOR_IMX219: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
+	SENSOR_LOGI("SENSOR_IMX219: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
 	return ret_value;
 }
 
@@ -1180,10 +1180,10 @@ static unsigned long _imx219_BeforeSnapshot(unsigned long param)
 	uint32_t prv_linetime=s_imx219_Resolution_Trim_Tab[preview_mode].line_time;
 	uint32_t cap_linetime = s_imx219_Resolution_Trim_Tab[capture_mode].line_time;
 
-	SENSOR_PRINT("SENSOR_IMX219: BeforeSnapshot mode: 0x%08x",param);
+	SENSOR_LOGI("SENSOR_IMX219: BeforeSnapshot mode: 0x%08x",param);
 
 	if (preview_mode == capture_mode) {
-		SENSOR_PRINT("SENSOR_IMX219: prv mode equal to capmode");
+		SENSOR_LOGI("SENSOR_IMX219: prv mode equal to capmode");
 		goto CFG_INFO;
 	}
 
@@ -1194,7 +1194,7 @@ static unsigned long _imx219_BeforeSnapshot(unsigned long param)
 	Sensor_SetMode_WaitDone();
 
 	if (prv_linetime == cap_linetime) {
-		SENSOR_PRINT("SENSOR_IMX219: prvline equal to capline");
+		SENSOR_LOGI("SENSOR_IMX219: prvline equal to capline");
 		goto CFG_INFO;
 	}
 
@@ -1202,7 +1202,7 @@ static unsigned long _imx219_BeforeSnapshot(unsigned long param)
 
 	capture_exposure = preview_exposure * prv_linetime/cap_linetime;
 
-	SENSOR_PRINT("BeforeSnapshot: capture_exposure 0x%x, capture_maxline 0x%x,preview_maxline 0x%x, preview_exposure 0x%x",
+	SENSOR_LOGI("BeforeSnapshot: capture_exposure 0x%x, capture_maxline 0x%x,preview_maxline 0x%x, preview_exposure 0x%x",
 		capture_exposure,capture_maxline, preview_maxline, preview_exposure);
 
 	if(0 == capture_exposure){
@@ -1235,25 +1235,25 @@ static unsigned long _imx219_BeforeSnapshot(unsigned long param)
 
 static unsigned long _imx219_after_snapshot(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_imx219: after_snapshot mode:%ld", param);
+	SENSOR_LOGI("SENSOR_imx219: after_snapshot mode:%ld", param);
 	Sensor_SetMode((uint32_t)param);
 	return SENSOR_SUCCESS;
 }
 
 static unsigned long _imx219_flash(unsigned long param)
 {
-	SENSOR_PRINT("Start:param=%d", param);
+	SENSOR_LOGI("Start:param=%d", param);
 
 	/* enable flash, disable in _imx219_BeforeSnapshot */
 	g_flash_mode_en = param;
 	Sensor_SetFlash(param);
-	SENSOR_PRINT_HIGH("end");
+	SENSOR_LOGI("end");
 	return SENSOR_SUCCESS;
 }
 
 static unsigned long _imx219_StreamOn(unsigned long param)
 {
-	SENSOR_PRINT_ERR("SENSOR_imx219: StreamOn");
+	SENSOR_LOGI("SENSOR_imx219: StreamOn");
 
 	Sensor_WriteReg(0x0100, 0x01);
 
@@ -1262,7 +1262,7 @@ static unsigned long _imx219_StreamOn(unsigned long param)
 
 static unsigned long _imx219_StreamOff(unsigned long param)
 {
-	SENSOR_PRINT_ERR("SENSOR_imx219: StreamOff");
+	SENSOR_LOGI("SENSOR_imx219: StreamOff");
 
 	Sensor_WriteReg(0x0100, 0x00);
 	usleep(10*1000);
@@ -1338,7 +1338,7 @@ static unsigned long _imx219_SetEV(unsigned long param)
 	uint32_t gain = s_imx219_gain;
 	uint32_t ev = ext_ptr->param;
 
-	SENSOR_PRINT("SENSOR: _imx219_SetEV param: 0x%x", ext_ptr->param);
+	SENSOR_LOGI("SENSOR: _imx219_SetEV param: 0x%x", ext_ptr->param);
 
 	switch(ev) {
 	case SENSOR_HDR_EV_LEVE_0:
@@ -1361,7 +1361,7 @@ static unsigned long _imx219_ExtFunc(unsigned long ctl_param)
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr =
 	    (SENSOR_EXT_FUN_PARAM_T_PTR) ctl_param;
-	SENSOR_PRINT_HIGH("0x%x", ext_ptr->cmd);
+	SENSOR_LOGI("0x%x", ext_ptr->cmd);
 
 	switch (ext_ptr->cmd) {
 	case SENSOR_EXT_FUNC_INIT:
@@ -1408,7 +1408,7 @@ static unsigned long _imx219_ReadGain(unsigned long param)
 
 	s_imx219_gain=(int)gain;
 
-	SENSOR_PRINT("SENSOR_imx219: _imx219_ReadGain gain: 0x%x", s_imx219_gain);
+	SENSOR_LOGI("SENSOR_imx219: _imx219_ReadGain gain: 0x%x", s_imx219_gain);
 
 	return rtn;
 }

@@ -22930,7 +22930,7 @@ static unsigned long sr352_InitExt(unsigned long param)	//wujinyou, 2012.11.14
 	nsecs_t 			timestamp_old;
 	nsecs_t				timestamp_new;
 
-	SENSOR_PRINT("sr352_InitExt start \n");
+	SENSOR_LOGI("sr352_InitExt start \n");
 
 	timestamp_old = systemTime(CLOCK_MONOTONIC);
 	sensor_reg_tab_info_ptr = &s_sr352_resolution_Tab_YUV[param];
@@ -23098,7 +23098,7 @@ static unsigned long _sr352_PowerOn(unsigned long power_on)
 	SENSOR_AVDD_VAL_E iovdd_val = g_sr352_mipi_yuv_info.iovdd_val;
 	BOOLEAN power_down = g_sr352_mipi_yuv_info.power_down_level;
 	BOOLEAN reset_level = g_sr352_mipi_yuv_info.reset_pulse_level;
-	SENSOR_PRINT("SENSOR:sr352_Power_Ctrl_1 (1:on, 0:off): %ld \n", power_on);
+	SENSOR_LOGI("SENSOR:sr352_Power_Ctrl_1 (1:on, 0:off): %ld \n", power_on);
 
 	if (SENSOR_TRUE == power_on) {
 		Sensor_PowerDown(power_down);
@@ -23119,7 +23119,7 @@ static unsigned long _sr352_PowerOn(unsigned long power_on)
 		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED,
 				  SENSOR_AVDD_CLOSED);
 	}
-	SENSOR_PRINT("SENSOR:sr352_Power_Ctrl_2 (1:on, 0:off): %ld \n", power_on);
+	SENSOR_LOGI("SENSOR:sr352_Power_Ctrl_2 (1:on, 0:off): %ld \n", power_on);
 	return SENSOR_SUCCESS;
 }
 
@@ -23131,21 +23131,21 @@ static unsigned long _sr352_Identify(unsigned long param)
 	uint32_t i;
 	uint8_t   err_cnt = 0;
 	uint32_t nLoop = 1000;
-	SENSOR_PRINT("anrry:enter 352_Identify\n");
+	SENSOR_LOGI("anrry:enter 352_Identify\n");
 
 	for(i = 0; i<2; ) {
 		nLoop = 1000;
-		SENSOR_PRINT("anrry:for before sr352\n");
+		SENSOR_LOGI("anrry:for before sr352\n");
 
 		ret = Sensor_ReadReg(reg[i]);
 
-		SENSOR_PRINT("anrry:for after sr352\n");
-		SENSOR_PRINT("anrry: sr352 Read reg0x04 = %x\n",ret);
+		SENSOR_LOGI("anrry:for after sr352\n");
+		SENSOR_LOGI("anrry: sr352 Read reg0x04 = %x\n",ret);
 
 		if ( ret != value[i]) {
 			err_cnt++;
 			if (err_cnt>3) {
-				SENSOR_PRINT( "352 Fail\n" );
+				SENSOR_LOGI( "352 Fail\n" );
 				return SENSOR_FAIL;
 			} else {
 				while(nLoop--);
@@ -23155,13 +23155,13 @@ static unsigned long _sr352_Identify(unsigned long param)
 		err_cnt = 0;
 		i++;
 	}
-	SENSOR_PRINT("352: it is ######sr352#######\n");
+	SENSOR_LOGI("352: it is ######sr352#######\n");
 	return (unsigned long)SENSOR_SUCCESS;
 }
 
 static unsigned long _sr352_StreamOn(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR: _sr352_StreamOn");
+	SENSOR_LOGI("SENSOR: _sr352_StreamOn");
 	Sensor_WriteReg(0x03, 0x00);
 	Sensor_WriteReg(0x01, 0x00);
 
@@ -23170,7 +23170,7 @@ static unsigned long _sr352_StreamOn(unsigned long param)
 
 static unsigned long _sr352_StreamOff(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR: _sr352_StreamOff");
+	SENSOR_LOGI("SENSOR: _sr352_StreamOff");
 	Sensor_WriteReg(0x03, 0x00);
 	Sensor_WriteReg(0x01, 0x01);
 	SENSOR_Sleep(100);
@@ -23200,7 +23200,7 @@ static unsigned long _sr352_set_brightness(unsigned long level)
 		Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("sensor: terry sr352_set_brightness = 0x%lx.\n", level);
+	SENSOR_LOGI("sensor: terry sr352_set_brightness = 0x%lx.\n", level);
 	return 0;
 }
 
@@ -23238,7 +23238,7 @@ static unsigned long _sr352_set_contrast(unsigned long level)
 		Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("sensor: terry sr352_set_contrast = 0x%lx.\n", level);
+	SENSOR_LOGI("sensor: terry sr352_set_contrast = 0x%lx.\n", level);
 	return 0;
 }
 
@@ -23272,7 +23272,7 @@ static unsigned long _sr352_set_saturation(unsigned long level)
 		Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("sensor: terry sr352_set_saturation = 0x%lx.\n", level);
+	SENSOR_LOGI("sensor: terry sr352_set_saturation = 0x%lx.\n", level);
 	return 0;
 }
 
@@ -23323,7 +23323,7 @@ static unsigned long _sr352_set_image_effect(unsigned long effect_type)
 		Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("sensor: terry sr352_set_image_effect = 0x%lx.\n", effect_type);
+	SENSOR_LOGI("sensor: terry sr352_set_image_effect = 0x%lx.\n", effect_type);
 	return 0;
 }
 
@@ -23365,7 +23365,7 @@ static unsigned long _sr352_set_ev(unsigned long level)
 		Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("sensor: terry sr352_set_ev = 0x%lx.\n", level);
+	SENSOR_LOGI("sensor: terry sr352_set_ev = 0x%lx.\n", level);
 	return 0;
 }
 
@@ -23391,7 +23391,7 @@ static unsigned long _sr352_set_anti_flicker(unsigned long mode)
 		Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("sensor: terry _sr352_set_anti_flicker = 0x%lx", mode);
+	SENSOR_LOGI("sensor: terry _sr352_set_anti_flicker = 0x%lx", mode);
 	return 0;
 }
 
@@ -23417,7 +23417,7 @@ static unsigned long _sr352_set_video_mode(unsigned long mode)
 		Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("sensor: terry _sr352_set_video_mode = 0x%lx", mode);
+	SENSOR_LOGI("sensor: terry _sr352_set_video_mode = 0x%lx", mode);
 	return 0;
 }
 
@@ -23469,7 +23469,7 @@ static unsigned long _sr352_set_awb(unsigned long mode)
 		Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("sensor: terry sr352_set_awb = 0x%lx", mode);
+	SENSOR_LOGI("sensor: terry sr352_set_awb = 0x%lx", mode);
 	return 0;
 }
 
@@ -23501,7 +23501,7 @@ static unsigned long _sr352_set_work_mode(unsigned long mode)
 		Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("sensor: terry set_work_mode: mode = %ld.\n", mode);
+	SENSOR_LOGI("sensor: terry set_work_mode: mode = %ld.\n", mode);
 	return 0;
 }
 
@@ -23510,12 +23510,12 @@ static unsigned long _sr352_BeforeSnapshot(unsigned long param)
 	uint32_t  preview_mode = (param >= SENSOR_MODE_PREVIEW_TWO) ? \
 						SENSOR_MODE_PREVIEW_TWO:SENSOR_MODE_PREVIEW_ONE;
 
-	SENSOR_PRINT("sr352: sr352_before_snapshot\n");
+	SENSOR_LOGI("sr352: sr352_before_snapshot\n");
 	if (SENSOR_MODE_PREVIEW_ONE>=param) {
 		return SENSOR_SUCCESS;
 	}
 	param &= 0xffff;
-	SENSOR_PRINT("terry  _sr352_BeforeSnapshot =%ld.\n",param);
+	SENSOR_LOGI("terry  _sr352_BeforeSnapshot =%ld.\n",param);
 	Sensor_SetMode((uint32_t)param);
 
 	return SENSOR_SUCCESS;
@@ -23541,7 +23541,7 @@ static unsigned long _sr352_check_image_format_support(unsigned long param)
 
 static unsigned long _sr352_after_snapshot(unsigned long param)
 {
-	SENSOR_PRINT("terry  _sr352_after_snapshot =%ld.\n",param);
+	SENSOR_LOGI("terry  _sr352_after_snapshot =%ld.\n",param);
 
 	Sensor_SetMode((uint32_t)param);
 	return SENSOR_SUCCESS;

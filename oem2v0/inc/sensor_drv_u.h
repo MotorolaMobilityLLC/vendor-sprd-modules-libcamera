@@ -27,6 +27,7 @@
 #include <sys/types.h>
 #include "cmr_msg.h"
 #include "sensor_raw.h"
+#include "cmr_log.h"
 
 #ifdef	 __cplusplus
 extern	 "C"
@@ -46,17 +47,6 @@ extern	 "C"
 #define BOOLEAN                                       cmr_u32
 #define PNULL                                         0
 #define LOCAL                                         static
-
-#define DEBUG_SENSOR_DRV                              1
-#ifdef DEBUG_SENSOR_DRV
-#define SENSOR_PRINT                                  CMR_LOGI
-#else
-#define SENSOR_PRINT(...)
-#endif
-
-#define SENSOR_PRINT_ERR                              CMR_LOGE
-#define SENSOR_PRINT_HIGH                             CMR_LOGI
-#define SENSOR_TRACE                                  SENSOR_PRINT
 
 
 #define NUMBER_OF_ARRAY(a)                            (sizeof(a)/sizeof(a[0]))
@@ -834,7 +824,7 @@ typedef enum {
 #define SENSOR_DRV_CHECK_ZERO(a)                                   \
 	do {                                                        \
 		if (PNULL == a) {                                    \
-			CMR_LOGE("Sensor_driver_u, zero pointer \n"); \
+			SENSOR_LOGE("Sensor_driver_u, zero pointer \n"); \
 			return SENSOR_CTX_ERROR;                      \
 		}                                                    \
 	} while(0)
@@ -842,7 +832,7 @@ typedef enum {
 #define SENSOR_DRV_CHECK_ZERO_VOID(a)                              \
 	do {                                                        \
 		if (PNULL == a) {                                    \
-			CMR_LOGE("Sensor_driver_u, zero pointer \n"); \
+			SENSOR_LOGE("Sensor_driver_u, zero pointer \n"); \
 			return;                       \
 		}                                                    \
 	} while(0)

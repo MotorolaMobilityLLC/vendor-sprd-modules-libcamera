@@ -606,7 +606,7 @@ LOCAL void HI702_WriteReg( uint8_t  subaddr, uint8_t data )
         DSENSOR_IICWrite((uint16_t)subaddr, (uint16_t)data);
 #endif
 
-        SENSOR_TRACE("SENSOR: HI702_WriteReg reg/value(%x,%x) !!\n", subaddr, data);
+        SENSOR_LOGI("SENSOR: HI702_WriteReg reg/value(%x,%x) !!\n", subaddr, data);
 }
 LOCAL uint8_t HI702_ReadReg( uint8_t  subaddr)
 {
@@ -618,7 +618,7 @@ LOCAL uint8_t HI702_ReadReg( uint8_t  subaddr)
         value = (uint16_t)DSENSOR_IICRead((uint16_t)subaddr);
 #endif
 
-        SENSOR_TRACE("SENSOR: HI702_ReadReg reg/value(%x,%x) !!\n", subaddr, value);
+        SENSOR_LOGI("SENSOR: HI702_ReadReg reg/value(%x,%x) !!\n", subaddr, value);
         return value;
 }
 
@@ -629,7 +629,7 @@ LOCAL uint32_t _hi702_PowerOn(uint32_t power_on)
 	SENSOR_AVDD_VAL_E iovdd_val = g_HI702_yuv_info.iovdd_val;
 	BOOLEAN power_down = g_HI702_yuv_info.power_down_level;
 	BOOLEAN reset_level = g_HI702_yuv_info.reset_pulse_level;
-	SENSOR_PRINT("SENSOR_HI702: _hi702_Power_On:E!!  (1:on, 0:off): %d ------sunaodebug---- =\n", power_on);
+	SENSOR_LOGI("SENSOR_HI702: _hi702_Power_On:E!!  (1:on, 0:off): %d ------sunaodebug---- =\n", power_on);
 
 
 	if (SENSOR_TRUE == power_on) {
@@ -652,7 +652,7 @@ LOCAL uint32_t _hi702_PowerOn(uint32_t power_on)
 		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
 		SENSOR_Sleep(10);
 	}
-	SENSOR_PRINT("SENSOR_HI702: _hi702_Power_On(1:on, 0:off): %d ------sunaodebug----\n", power_on);
+	SENSOR_LOGI("SENSOR_HI702: _hi702_Power_On(1:on, 0:off): %d ------sunaodebug----\n", power_on);
 	return SENSOR_SUCCESS;
 }
 
@@ -673,15 +673,15 @@ LOCAL uint32_t HI702_Identify(uint32_t param)
 	HI702_WriteReg(0x01, 0xf3);
 	HI702_WriteReg(0x01, 0xf1);
 
-        SENSOR_TRACE("HI702_Identify-----sunao702----\n");
+        SENSOR_LOGI("HI702_Identify-----sunao702----\n");
         for(i = 0; i<2; ) {
                 nLoop = 1000;
                 ret = HI702_ReadReg(reg[i]);
-        	   SENSOR_TRACE("HI702 read reg0x00 = 0x%x -----sunao702----\n", ret);
+				SENSOR_LOGI("HI702 read reg0x00 = 0x%x -----sunao702----\n", ret);
                 if( ret != value[i]) {
                         err_cnt++;
                         if(err_cnt>3) {
-                                SENSOR_PRINT_HIGH("It is not HI702\n");
+                                SENSOR_LOGI("It is not HI702\n");
                                 return SENSOR_FAIL;
                         } else {
                                 while(nLoop--);
@@ -692,13 +692,13 @@ LOCAL uint32_t HI702_Identify(uint32_t param)
                 i++;
         }
 
-        SENSOR_TRACE("HI702_Identify: it is HI702----sunao702---\n");
+        SENSOR_LOGI("HI702_Identify: it is HI702----sunao702---\n");
         return (uint32_t)SENSOR_SUCCESS;
 }
 
 LOCAL uint32_t set_hi702_ae_enable(uint32_t enable)
 {
-        SENSOR_TRACE("set_hi702_ae_enable: enable = %d\n", enable);
+        SENSOR_LOGI("set_hi702_ae_enable: enable = %d\n", enable);
         return 0;
 }
 LOCAL uint32_t set_hmirror_enable(uint32_t enable)
@@ -707,7 +707,7 @@ LOCAL uint32_t set_hmirror_enable(uint32_t enable)
         uint8_t value = 0;
         value = HI702_ReadReg(0x14);
         value = (value & 0xFE) | (enable == 1 ? 0 : 1); //landscape
-        SENSOR_TRACE("set_hmirror_enable: enable = %d, 0x14: 0x%x.\n", enable, value);
+        SENSOR_LOGI("set_hmirror_enable: enable = %d, 0x14: 0x%x.\n", enable, value);
         HI702_WriteReg(0x14, value);
 #endif
         return 0;
@@ -718,7 +718,7 @@ LOCAL uint32_t set_vmirror_enable(uint32_t enable)
         uint8_t value = 0;
         value = HI702_ReadReg(0x14);
         value = (value & 0xFD) | ((enable & 0x1) << 1); //portrait
-        SENSOR_TRACE("set_vmirror_enable: enable = %d, 0x14: 0x%x.\n", enable, value);
+        SENSOR_LOGI("set_vmirror_enable: enable = %d, 0x14: 0x%x.\n", enable, value);
         HI702_WriteReg(0x14, value);
 #endif
         return 0;
@@ -774,7 +774,7 @@ LOCAL uint32_t set_brightness(uint32_t level)
                 HI702_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
         }
 #endif
-        SENSOR_TRACE("set_brightness: level = %d\n", level);
+        SENSOR_LOGI("set_brightness: level = %d\n", level);
         return 0;
 }
 
@@ -802,7 +802,7 @@ LOCAL uint32_t set_hi702_ev(uint32_t level)
                 HI702_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
         }
 #endif
-        SENSOR_TRACE("SENSOR: set_ev: level = %d\n", level);
+        SENSOR_LOGI("SENSOR: set_ev: level = %d\n", level);
         return 0;
 }
 
@@ -845,9 +845,9 @@ LOCAL uint32_t set_hi702_video_mode(uint32_t mode)
                 HI702_WriteReg(0xec,0x20);
         else if(1 == mode)
                 HI702_WriteReg(0xec,0x00);
-        SENSOR_TRACE("SENSOR: HI702_ReadReg(0xec) = %x\n", HI702_ReadReg(0xec));
+        SENSOR_LOGI("SENSOR: HI702_ReadReg(0xec) = %x\n", HI702_ReadReg(0xec));
 #endif
-        SENSOR_TRACE("SENSOR: set_video_mode: mode = %d\n", mode);
+        SENSOR_LOGI("SENSOR: set_video_mode: mode = %d\n", mode);
         return 0;
 }
 /******************************************************************************/
@@ -930,7 +930,7 @@ LOCAL uint32_t set_hi702_awb(uint32_t mode)
                 }
         }
 #endif
-        SENSOR_TRACE("SENSOR: set_awb_mode: mode = %d\n", mode);
+        SENSOR_LOGI("SENSOR: set_awb_mode: mode = %d\n", mode);
 
         return 0;
 }
@@ -981,7 +981,7 @@ LOCAL uint32_t set_contrast(uint32_t level)
                 HI702_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
         }
 #endif
-        SENSOR_TRACE("set_contrast: level = %d\n", level);
+        SENSOR_LOGI("set_contrast: level = %d\n", level);
         return 0;
 }
 LOCAL uint32_t set_sharpness(uint32_t level)
@@ -1002,7 +1002,7 @@ LOCAL uint32_t set_saturation(uint32_t level)
 /******************************************************************************/
 LOCAL uint32_t set_preview_mode(uint32_t preview_mode)
 {
-        SENSOR_TRACE("set_preview_mode: preview_mode = %d\n", preview_mode);
+        SENSOR_LOGI("set_preview_mode: preview_mode = %d\n", preview_mode);
 
         set_hi702_anti_flicker(0);
 #if 0
@@ -1081,7 +1081,7 @@ LOCAL uint32_t set_image_effect(uint32_t effect_type)
                 Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
         }
 #endif
-        SENSOR_TRACE("-----------set_image_effect: effect_type = %d------------\n", effect_type);
+        SENSOR_LOGI("-----------set_image_effect: effect_type = %d------------\n", effect_type);
         return 0;
 }
 
@@ -1110,7 +1110,7 @@ LOCAL uint32_t HI702_BeforeSnapshot(uint32_t param)
     BOOLEAN b_AEC_on;
 
 
-    SENSOR_TRACE("HI702_BeforeSnapshot ");
+    SENSOR_LOGI("HI702_BeforeSnapshot ");
     	if(HI702_ReadReg(0X41)  & 0x08 == 0x08)  //AEC on
     		b_AEC_on = SENSOR_TRUE;
     	else
@@ -1133,7 +1133,7 @@ LOCAL uint32_t HI702_BeforeSnapshot(uint32_t param)
 
 	HI702_WriteReg(0x03,shutter/256);
 	HI702_WriteReg(0x04,shutter & 0x00ff);
-   	//SENSOR_TRACE("HI702_BeforeSnapshot, temp_r=%x,temp_reg=%x, final = %x ",temp_r,temp_reg, temp_r*temp_reg/ 0x80);
+		//SENSOR_LOGI("HI702_BeforeSnapshot, temp_r=%x,temp_reg=%x, final = %x ",temp_r,temp_reg, temp_r*temp_reg/ 0x80);
 
 	temp_r = (temp_r*temp_reg) / 0x80;
 	temp_g = (temp_g*temp_reg) / 0x80;
@@ -1144,7 +1144,7 @@ LOCAL uint32_t HI702_BeforeSnapshot(uint32_t param)
 		HI702_WriteReg(0xce, temp_g);
 		HI702_WriteReg(0xcf , temp_b);
 	}
-   	//SENSOR_TRACE("HI702_BeforeSnapshot, temp_r=%x,temp_g=%x, temp_b = %x ",temp_r,temp_g,temp_b);
+		//SENSOR_LOGI("HI702_BeforeSnapshot, temp_r=%x,temp_g=%x, temp_b = %x ",temp_r,temp_g,temp_b);
 
 	SENSOR_Sleep(300);
 #endif

@@ -31,7 +31,7 @@ uint32_t vcm_dw9800_init(SENSOR_HW_HANDLE handle)
 	uint32_t ret_value = SENSOR_SUCCESS;
 
 	slave_addr = DW9800_VCM_SLAVE_ADDR;
-	SENSOR_PRINT("E");
+	SENSOR_LOGI("E");
 	cmd_len = 2;
 	cmd_val[0] = 0x02;
 	cmd_val[1] = 0x02;
@@ -61,7 +61,7 @@ uint32_t vcm_dw9800_set_position(SENSOR_HW_HANDLE handle, uint32_t pos)
 	else if ((int32_t)pos > 0x3FF)
 		pos = 0x3FF;
 
-	SENSOR_PRINT("set position %d", pos);
+	SENSOR_LOGI("set position %d", pos);
 	slave_addr = DW9800_VCM_SLAVE_ADDR;
 	cmd_len = 2;
 	cmd_val[0] = 0x03;

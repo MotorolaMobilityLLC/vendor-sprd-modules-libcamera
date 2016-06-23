@@ -836,7 +836,7 @@ LOCAL struct sensor_raw_info* Sensor_at_GetContext(void)
 LOCAL uint32_t Sensor_at_ov8825_InitRawTuneInfo(void)
 {
 	uint32_t rtn=0x00;
-	CMR_LOGE("debug %s  %d E\n ",__func__,__LINE__);
+	SENSOR_LOGE("debug %s  %d E\n ",__func__,__LINE__);
 	struct sensor_raw_info* raw_sensor_ptr=Sensor_at_GetContext();
 	struct sensor_raw_tune_info* sensor_ptr=raw_sensor_ptr->tune_ptr;
 	struct sensor_raw_cali_info* cali_ptr=raw_sensor_ptr->cali_ptr;
@@ -847,7 +847,7 @@ LOCAL uint32_t Sensor_at_ov8825_InitRawTuneInfo(void)
 
 LOCAL unsigned long _at_ov8825_GetResolutionTrimTab(unsigned long param)
 {
-	SENSOR_PRINT("0x%lx",  (unsigned long)s_at_ov8825_Resolution_Trim_Tab);
+	SENSOR_LOGI("0x%lx",  (unsigned long)s_at_ov8825_Resolution_Trim_Tab);
 	return (unsigned long) s_at_ov8825_Resolution_Trim_Tab;
 }
 
@@ -906,7 +906,7 @@ LOCAL unsigned long _at_ov8825_PowerOn(unsigned long power_on)
 		Sensor_SetIovddVoltage(SENSOR_AVDD_CLOSED);
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 	}
-	SENSOR_PRINT("SENSOR_ov8825: _ov8825_Power_On(1:on, 0:off): %ld", power_on);
+	SENSOR_LOGI("SENSOR_ov8825: _ov8825_Power_On(1:on, 0:off): %ld", power_on);
 	return SENSOR_SUCCESS;
 }
 
@@ -927,15 +927,15 @@ LOCAL uint32_t _at_ov8825_GetRawInof(void)
 		g_ov8825_module_id = i;
 		if (RAW_INFO_END_ID == tab_ptr[i].param_id) {
 			if (NULL == s_at_ov8825_mipi_raw_info_ptr) {
-				SENSOR_PRINT("SENSOR_OV8825: ov8825_GetRawInof no param error");
+				SENSOR_LOGI("SENSOR_OV8825: ov8825_GetRawInof no param error");
 				rtn=SENSOR_FAIL;
 			}
-			SENSOR_PRINT("SENSOR_at_OV8825: _at_ov8825_GetRawInof end");
+			SENSOR_LOGI("SENSOR_at_OV8825: _at_ov8825_GetRawInof end");
 			break;
 		} else if (PNULL!=tab_ptr[i].identify_otp) {
 			if (SENSOR_SUCCESS==tab_ptr[i].identify_otp(0)) {
 				s_at_ov8825_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
-				SENSOR_PRINT("SENSOR_at_OV8825: _at_ov8825_GetRawInof id:0x%x success", g_ov8825_module_id);
+				SENSOR_LOGI("SENSOR_at_OV8825: _at_ov8825_GetRawInof id:0x%x success", g_ov8825_module_id);
 				break;
 			}
 		}
@@ -964,20 +964,20 @@ LOCAL unsigned long _at_ov8825_Identify(unsigned long param)
 	pid_value = Sensor_ReadReg(ov8825_PID_ADDR);
 	if (ov8825_PID_VALUE == pid_value) {
 		ver_value = Sensor_ReadReg(ov8825_VER_ADDR);
-		SENSOR_PRINT("SENSOR_at_ov8825: Identify: PID = %x, VER = %x", pid_value, ver_value);
+		SENSOR_LOGI("SENSOR_at_ov8825: Identify: PID = %x, VER = %x", pid_value, ver_value);
 		if (ov8825_VER_VALUE == ver_value) {
-			SENSOR_PRINT("SENSOR_at_ov8825: this is _at_ov8825 sensor !");
+			SENSOR_LOGI("SENSOR_at_ov8825: this is _at_ov8825 sensor !");
 			ret_value=_at_ov8825_GetRawInof();
 			if (SENSOR_SUCCESS != ret_value)
 			{
-				SENSOR_PRINT("SENSOR_at_ov8825: the module is unknow error !");
+				SENSOR_LOGI("SENSOR_at_ov8825: the module is unknow error !");
 			}
 			Sensor_at_ov8825_InitRawTuneInfo();
 		} else {
-			SENSOR_PRINT("SENSOR_at_ov8825: Identify this is OV%x%x sensor !", pid_value, ver_value);
+			SENSOR_LOGI("SENSOR_at_ov8825: Identify this is OV%x%x sensor !", pid_value, ver_value);
 		}
 	} else {
-		SENSOR_PRINT("SENSOR_at_ov8825: identify fail,pid_value=%d", pid_value);
+		SENSOR_LOGI("SENSOR_at_ov8825: identify fail,pid_value=%d", pid_value);
 	}
 
 	return ret_value;
@@ -986,7 +986,7 @@ LOCAL unsigned long _at_ov8825_Identify(unsigned long param)
 
 LOCAL unsigned long _at_ov8825_StreamOn(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_ov8825: StreamOn");
+	SENSOR_LOGI("SENSOR_ov8825: StreamOn");
 
 	Sensor_WriteReg(0x0100, 0x01);
 
@@ -995,7 +995,7 @@ LOCAL unsigned long _at_ov8825_StreamOn(unsigned long param)
 
 LOCAL unsigned long _at_ov8825_StreamOff(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_ov8825: StreamOff");
+	SENSOR_LOGI("SENSOR_ov8825: StreamOff");
 
 	Sensor_WriteReg(0x0100, 0x00);
 	usleep(100*1000);

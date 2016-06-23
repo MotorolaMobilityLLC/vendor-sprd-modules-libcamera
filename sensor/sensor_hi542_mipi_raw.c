@@ -700,18 +700,18 @@ LOCAL uint32_t _hi542_set_video_mode(uint32_t param)
 		return 0;
 
 	if (SENSOR_SUCCESS != Sensor_GetMode(&mode)) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	if (PNULL == s_hi542_video_info[mode].setting_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	sensor_reg_ptr = (SENSOR_REG_T_PTR)&s_hi542_video_info[mode].setting_ptr[param];
 	if (PNULL == sensor_reg_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
@@ -719,7 +719,7 @@ LOCAL uint32_t _hi542_set_video_mode(uint32_t param)
 		Sensor_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("0x%02x", param);
+	SENSOR_LOGI("0x%02x", param);
 	return 0;
 }
 
@@ -1953,7 +1953,7 @@ LOCAL uint32_t Sensor_hi542_InitRawTuneInfo(void)
 
 LOCAL uint32_t _hi542_GetResolutionTrimTab(uint32_t param)
 {
-	SENSOR_PRINT("0x%x", (uint32_t)s_hi542_Resolution_Trim_Tab);
+	SENSOR_LOGI("0x%x", (uint32_t)s_hi542_Resolution_Trim_Tab);
 	return (uint32_t) s_hi542_Resolution_Trim_Tab;
 }
 
@@ -1965,7 +1965,7 @@ LOCAL uint32_t _hi542_PowerOn(uint32_t power_on)
 	BOOLEAN power_down = g_hi542_mipi_raw_info.power_down_level;
 	BOOLEAN reset_level = g_hi542_mipi_raw_info.reset_pulse_level;
 
-	SENSOR_PRINT("SENSOR_HI542: _hi542_Power_On(1:on, 0:off): %d", power_on);
+	SENSOR_LOGI("SENSOR_HI542: _hi542_Power_On(1:on, 0:off): %d", power_on);
 
 	if (SENSOR_TRUE == power_on) {
 		Sensor_PowerDown(power_down);
@@ -2000,7 +2000,7 @@ LOCAL uint32_t _hi542_cfg_otp(uint32_t  param)
 	struct raw_param_info_tab* tab_ptr=(struct raw_param_info_tab*)s_hi542_raw_param_tab;
 	uint32_t module_id=g_hi542_module_id;
 
-	SENSOR_PRINT("SENSOR_HI542: _hi542_cfg_otp");
+	SENSOR_LOGI("SENSOR_HI542: _hi542_cfg_otp");
 
 	if(PNULL!=tab_ptr[module_id].cfg_otp){
 		tab_ptr[module_id].cfg_otp(0);
@@ -2014,7 +2014,7 @@ LOCAL uint32_t _hi542_com_Identify_otp(void* param_ptr)
 	uint32_t rtn=SENSOR_FAIL;
 	uint32_t param_id;
 
-	SENSOR_PRINT("SENSOR_HI542: _hi542_com_Identify_otp");
+	SENSOR_LOGI("SENSOR_HI542: _hi542_com_Identify_otp");
 
 	/*read param id from sensor omap*/
 	param_id=HI542_RAW_PARAM_COM;
@@ -2041,17 +2041,17 @@ LOCAL uint32_t _hi542_GetRawInof(void)
 		g_hi542_module_id = i;
 		if(RAW_INFO_END_ID==tab_ptr[i].param_id){
 			if(NULL==s_hi542_mipi_raw_info_ptr){
-				SENSOR_PRINT("SENSOR_HI542: _hi542_GetRawInof no param error");
+				SENSOR_LOGI("SENSOR_HI542: _hi542_GetRawInof no param error");
 				rtn=SENSOR_FAIL;
 			}
-			SENSOR_PRINT("SENSOR_HI542: _hi542_GetRawInof end");
+			SENSOR_LOGI("SENSOR_HI542: _hi542_GetRawInof end");
 			break;
 		}
 		else if(PNULL!=tab_ptr[i].identify_otp){
 			if(SENSOR_SUCCESS==tab_ptr[i].identify_otp(0))
 			{
 				s_hi542_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
-				SENSOR_PRINT("SENSOR_HI542: _hi542_GetRawInof success");
+				SENSOR_LOGI("SENSOR_HI542: _hi542_GetRawInof success");
 				break;
 			}
 		}
@@ -2079,20 +2079,20 @@ LOCAL uint32_t _hi542_Identify(uint32_t param)
 	uint8_t ver_value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
 
-	SENSOR_PRINT("SENSOR_HI542: mipi raw identify\n");
+	SENSOR_LOGI("SENSOR_HI542: mipi raw identify\n");
 
 	pid_value = Sensor_ReadReg(hi542_PID_ADDR);
 
 	if (hi542_PID_VALUE == pid_value) {
-		SENSOR_PRINT("SENSOR_HI542: this is hi542 sensor !");
+		SENSOR_LOGI("SENSOR_HI542: this is hi542 sensor !");
 		ret_value=_hi542_GetRawInof();
 		if(SENSOR_SUCCESS != ret_value)
 		{
-			SENSOR_PRINT("SENSOR_HI542: the module is unknow error !");
+			SENSOR_LOGI("SENSOR_HI542: the module is unknow error !");
 		}
 		Sensor_hi542_InitRawTuneInfo();
 	} else {
-		SENSOR_PRINT("SENSOR_HI542: identify fail,pid_value=%d", pid_value);
+		SENSOR_LOGI("SENSOR_HI542: identify fail,pid_value=%d", pid_value);
 	}
 
 	return ret_value;
@@ -2118,7 +2118,7 @@ LOCAL uint32_t _hi542_write_exposure(uint32_t param)
 	if(expsure_line < 4)
 		expsure_line = 4;
 
-	SENSOR_PRINT("SENSOR_HI542 isp_raw: write_exposure line:%d, dummy:%d", expsure_line, dummy_line);
+	SENSOR_LOGI("SENSOR_HI542 isp_raw: write_exposure line:%d, dummy:%d", expsure_line, dummy_line);
 
 	line_pixel= 2592 +16 +130 + 53; // 2608 + 130 +HBLANK  Hblank = Reg(0x0040)<< 0x08 +Sensor_ReadReg(0x0041) ; 2791 = 84Mhz(Oplck) => 33.2261905us
 	expsure_pixel=line_pixel*expsure_line;
@@ -2127,7 +2127,7 @@ LOCAL uint32_t _hi542_write_exposure(uint32_t param)
 	frame_len_cur = (Sensor_ReadReg(0x0042)&0xff)<<8;
 	frame_len_cur |= Sensor_ReadReg(0x0043)&0xff;
 
-	SENSOR_PRINT("SENSOR_HI542: write_exposure line:0x%x, 0x%x\n", expsure_line-971, frame_len_cur);
+	SENSOR_LOGI("SENSOR_HI542: write_exposure line:0x%x, 0x%x\n", expsure_line-971, frame_len_cur);
 
 	if((frame_len_cur+971) < expsure_line)
 	{
@@ -2182,7 +2182,7 @@ LOCAL uint32_t _hi542_write_gain(uint32_t param)
 
 	uint32_t real_gain = 0;
 
-	SENSOR_PRINT("SENSOR_HI542 isp_raw: write gain:0x%08x", param);
+	SENSOR_LOGI("SENSOR_HI542 isp_raw: write gain:0x%08x", param);
 
 	real_gain = ((param&0xf)+16)*(((param>>4)&0x01)+1)*(((param>>5)&0x01)+1)*(((param>>6)&0x01)+1)*(((param>>7)&0x01)+1);
 	real_gain = real_gain*(((param>>8)&0x01)+1)*(((param>>9)&0x01)+1)*(((param>>10)&0x01)+1)*(((param>>11)&0x01)+1);
@@ -2206,7 +2206,7 @@ LOCAL uint32_t _hi542_write_af(uint32_t param)
 	cmd_len = 2;
 	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 
-	SENSOR_PRINT("SENSOR_HI542: _write_af, ret =  %d, param = %d,  MSL:%x, LSL:%x\n",
+	SENSOR_LOGI("SENSOR_HI542: _write_af, ret =  %d, param = %d,  MSL:%x, LSL:%x\n",
 		ret_value, param, cmd_val[0], cmd_val[1]);
 	return ret_value;
 }
@@ -2233,7 +2233,7 @@ LOCAL uint32_t _hi542_ReadGain(uint32_t*  gain_ptr)
 		*gain_ptr = gain;
 	}
 
-	SENSOR_PRINT("SENSOR_HI542: _hi542_ReadGain gain: 0x%x", s_hi542_gain);
+	SENSOR_LOGI("SENSOR_HI542: _hi542_ReadGain gain: 0x%x", s_hi542_gain);
 
 	return rtn;
 }
@@ -2251,7 +2251,7 @@ LOCAL uint32_t _hi542_SetEV(uint32_t param)
 	uint32_t gain_bit=0x00;
 	uint32_t i=0x00;
 
-	SENSOR_PRINT("SENSOR_HI542: _hi542_SetEV param: 0x%x", cali);
+	SENSOR_LOGI("SENSOR_HI542: _hi542_SetEV param: 0x%x", cali);
 
 	real_a_gain=gain&0xff;
 	real_d_gain=(gain>>0x10)&0x3ff;
@@ -2287,7 +2287,7 @@ LOCAL uint32_t _hi542_DWInit(uint32_t param)
 	SENSOR_EXT_FUN_T_PTR ext_ptr = (SENSOR_EXT_FUN_T_PTR) param;
 	uint16_t value=0x00;
 
-	SENSOR_PRINT("SENSOR_HI542: _hi542_DWInit");
+	SENSOR_LOGI("SENSOR_HI542: _hi542_DWInit");
 
 	Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
 	_DW9714A_SRCInit(2);
@@ -2299,7 +2299,7 @@ LOCAL uint32_t _hi542_ExtFunc(uint32_t ctl_param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr = (SENSOR_EXT_FUN_PARAM_T_PTR) ctl_param;
-	SENSOR_PRINT("SENSOR_HI542: _hi542_ExtFunc  cmd: %d ----sunao---\n", ext_ptr->cmd);
+	SENSOR_LOGI("SENSOR_HI542: _hi542_ExtFunc  cmd: %d ----sunao---\n", ext_ptr->cmd);
 	switch (ext_ptr->cmd) {
 		case SENSOR_EXT_FUNC_INIT:
 			//rtn = _hi542_DWInit(ctl_param);
@@ -2331,11 +2331,11 @@ LOCAL uint32_t _hi542_BeforeSnapshot(uint32_t param)
 
 	param = param & 0xffff;
 
-	SENSOR_PRINT("SENSOR_HI542: BeforeSnapshot moe: %d",param);
+	SENSOR_LOGI("SENSOR_HI542: BeforeSnapshot moe: %d",param);
 
 	if (SENSOR_MODE_PREVIEW_ONE >= param){
 		_hi542_ReadGain(&gain);
-		SENSOR_PRINT("SENSOR_HI542: prvmode equal to capmode");
+		SENSOR_LOGI("SENSOR_HI542: prvmode equal to capmode");
 		return SENSOR_SUCCESS;
 	}
 
@@ -2356,14 +2356,14 @@ LOCAL uint32_t _hi542_BeforeSnapshot(uint32_t param)
 	Sensor_SetMode_WaitDone();
 
 	if (prv_linetime == cap_linetime) {
-		SENSOR_PRINT("SENSOR_hi542: prvline equal to capline");
+		SENSOR_LOGI("SENSOR_hi542: prvline equal to capline");
 		Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, preview_exposure);
 		return SENSOR_SUCCESS;
 	}
 
 	real_a_gain=gain&0xff;
 	real_d_gain=(gain>>0x10)&0x3ff;
-	SENSOR_PRINT("SENSOR_HI542: BeforeSnapshot gain: %d , preview_exposure: 0x%x, capture_maxline: 0x%x\n", real_a_gain, preview_exposure, capture_maxline);
+	SENSOR_LOGI("SENSOR_HI542: BeforeSnapshot gain: %d , preview_exposure: 0x%x, capture_maxline: 0x%x\n", real_a_gain, preview_exposure, capture_maxline);
 
 	capture_exposure = preview_exposure *prv_linetime / cap_linetime;
 
@@ -2399,7 +2399,7 @@ LOCAL uint32_t _hi542_BeforeSnapshot(uint32_t param)
 
 LOCAL uint32_t _hi542_after_snapshot(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_HI542: after_snapshot mode:%d", param);
+	SENSOR_LOGI("SENSOR_HI542: after_snapshot mode:%d", param);
 	Sensor_SetMode(param);
 
 	return SENSOR_SUCCESS;
@@ -2407,7 +2407,7 @@ LOCAL uint32_t _hi542_after_snapshot(uint32_t param)
 
 LOCAL uint32_t _hi542_StreamOn(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_HI542: StreamOn");
+	SENSOR_LOGI("SENSOR_HI542: StreamOn");
 
 	Sensor_WriteReg(0x0001, 0x00);
 
@@ -2416,7 +2416,7 @@ LOCAL uint32_t _hi542_StreamOn(uint32_t param)
 
 LOCAL uint32_t _hi542_StreamOff(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_HI542: StreamOff");
+	SENSOR_LOGI("SENSOR_HI542: StreamOff");
 
 	Sensor_WriteReg(0x0001, 0x01);
 
@@ -2432,7 +2432,7 @@ LOCAL uint32_t _DW9714A_SRCInit(uint32_t mode)
 	int i = 0;
 
 	slave_addr = DW9714A_VCM_SLAVE_ADDR;
-	SENSOR_PRINT("SENSOR_HI542: _DW9714A_SRCInit: mode = %d\n", mode);
+	SENSOR_LOGI("SENSOR_HI542: _DW9714A_SRCInit: mode = %d\n", mode);
 	switch (mode) {
 		case 1:
 		break;

@@ -51,12 +51,12 @@ static uint32_t s5k4h8yx_ofilm_read_otp_info(SENSOR_HW_HANDLE handle, void *para
 	usleep(2 * 1000);
 
 	awb_flag1 = (Sensor_ReadReg(0x0A04)>>8);
-	SENSOR_PRINT("awb_flag1 =%d", awb_flag1);
+	SENSOR_LOGI("awb_flag1 =%d", awb_flag1);
 	awb_flag2 = (Sensor_ReadReg(0x0A20)>>8);
-	SENSOR_PRINT("awb_flag2 =%d", awb_flag2);
+	SENSOR_LOGI("awb_flag2 =%d", awb_flag2);
 
 	if (0x1 == awb_flag1) {
-		SENSOR_PRINT("otp is in group 1");
+		SENSOR_LOGI("otp is in group 1");
 		otp_info->flag = awb_flag1;
 		otp_info->module_id=(Sensor_ReadReg(0x0a05)>>8);
 		otp_info->year=(Sensor_ReadReg(0x0a06)>>8);
@@ -68,7 +68,7 @@ static uint32_t s5k4h8yx_ofilm_read_otp_info(SENSOR_HW_HANDLE handle, void *para
 		otp_info->rg_ratio_current = (Sensor_ReadReg(0x0a0d)&0x03ff);
 		otp_info->bg_ratio_current = (Sensor_ReadReg(0x0a0f)&0x03ff);
 	} else if (0x1 == awb_flag2) {
-		SENSOR_PRINT("otp is in group 2");
+		SENSOR_LOGI("otp is in group 2");
 		otp_info->flag = awb_flag2;
 		otp_info->module_id=(Sensor_ReadReg(0x0a21)>>8);
 		otp_info->year=(Sensor_ReadReg(0x0a22)>>8);
@@ -81,30 +81,30 @@ static uint32_t s5k4h8yx_ofilm_read_otp_info(SENSOR_HW_HANDLE handle, void *para
 		otp_info->rg_ratio_current = (Sensor_ReadReg(0x0a29)&0x03ff);
 		otp_info->bg_ratio_current = (Sensor_ReadReg(0x0a2b)&0x03ff);
 	} else {
-		SENSOR_PRINT_ERR("otp all value is wrong");
+		SENSOR_LOGI("otp all value is wrong");
 		rtn=SENSOR_FAIL;
 	}
 	Sensor_WriteReg(0x0a00, 0x00); //otp disable read
 
-	SENSOR_PRINT("flag=0x%x",otp_info->flag);
-	SENSOR_PRINT("module_id=0x%x",otp_info->module_id);
-	SENSOR_PRINT("lens_id=0x%x",otp_info->lens_id);
-	SENSOR_PRINT("vcm_id=0x%x",otp_info->vcm_id);
-	SENSOR_PRINT("vcm_driver_id=0x%x",otp_info->vcm_driver_id);
-	SENSOR_PRINT("date=%d-%d-%d",otp_info->year,otp_info->month,otp_info->day);
-	SENSOR_PRINT("rg_ratio_current=0x%x",otp_info->rg_ratio_current);
-	SENSOR_PRINT("bg_ratio_current=0x%x",otp_info->bg_ratio_current);
-	SENSOR_PRINT("rg_ratio_typical=0x%x",otp_info->rg_ratio_typical);
-	SENSOR_PRINT("bg_ratio_typical=0x%x",otp_info->bg_ratio_typical);
-	SENSOR_PRINT("r_current=0x%x",otp_info->r_current);
-	SENSOR_PRINT("g_current=0x%x",otp_info->g_current);
-	SENSOR_PRINT("b_current=0x%x",otp_info->b_current);
-	SENSOR_PRINT("r_typical=0x%x",otp_info->r_typical);
-	SENSOR_PRINT("g_typical=0x%x",otp_info->g_typical);
-	SENSOR_PRINT("b_typical=0x%x",otp_info->b_typical);
-	SENSOR_PRINT("vcm_dac_start=0x%x",otp_info->vcm_dac_start);
-	SENSOR_PRINT("vcm_dac_inifity=0x%x",otp_info->vcm_dac_inifity);
-	SENSOR_PRINT("vcm_dac_macro=0x%x",otp_info->vcm_dac_macro);
+	SENSOR_LOGI("flag=0x%x",otp_info->flag);
+	SENSOR_LOGI("module_id=0x%x",otp_info->module_id);
+	SENSOR_LOGI("lens_id=0x%x",otp_info->lens_id);
+	SENSOR_LOGI("vcm_id=0x%x",otp_info->vcm_id);
+	SENSOR_LOGI("vcm_driver_id=0x%x",otp_info->vcm_driver_id);
+	SENSOR_LOGI("date=%d-%d-%d",otp_info->year,otp_info->month,otp_info->day);
+	SENSOR_LOGI("rg_ratio_current=0x%x",otp_info->rg_ratio_current);
+	SENSOR_LOGI("bg_ratio_current=0x%x",otp_info->bg_ratio_current);
+	SENSOR_LOGI("rg_ratio_typical=0x%x",otp_info->rg_ratio_typical);
+	SENSOR_LOGI("bg_ratio_typical=0x%x",otp_info->bg_ratio_typical);
+	SENSOR_LOGI("r_current=0x%x",otp_info->r_current);
+	SENSOR_LOGI("g_current=0x%x",otp_info->g_current);
+	SENSOR_LOGI("b_current=0x%x",otp_info->b_current);
+	SENSOR_LOGI("r_typical=0x%x",otp_info->r_typical);
+	SENSOR_LOGI("g_typical=0x%x",otp_info->g_typical);
+	SENSOR_LOGI("b_typical=0x%x",otp_info->b_typical);
+	SENSOR_LOGI("vcm_dac_start=0x%x",otp_info->vcm_dac_start);
+	SENSOR_LOGI("vcm_dac_inifity=0x%x",otp_info->vcm_dac_inifity);
+	SENSOR_LOGI("vcm_dac_macro=0x%x",otp_info->vcm_dac_macro);
 
 	return rtn;
 }
@@ -148,9 +148,9 @@ static uint32_t s5k4h8yx_ofilm_update_awb(SENSOR_HW_HANDLE handle, void *param_p
 	}
 
 	//write to register
-	SENSOR_PRINT("r_Gain=0x%x\n", r_gain);
-	SENSOR_PRINT("g_Gain=0x%x\n", g_gain);
-	SENSOR_PRINT("b_Gain=0x%x\n", b_gain);
+	SENSOR_LOGI("r_Gain=0x%x\n", r_gain);
+	SENSOR_LOGI("g_Gain=0x%x\n", g_gain);
+	SENSOR_LOGI("b_Gain=0x%x\n", b_gain);
 
 	Sensor_WriteReg(0x3058, 0x0100);
 	rtn=Sensor_WriteReg(0x020e, g_gain&0xffff);
@@ -181,7 +181,7 @@ static uint32_t s5k4h8yx_ofilm_update_otp(SENSOR_HW_HANDLE handle, void *param_p
 	rtn=s5k4h8yx_ofilm_update_awb(handle, param_ptr);
 	if(rtn!=SENSOR_SUCCESS)
 	{
-		SENSOR_PRINT_ERR("OTP awb appliy error!");
+		SENSOR_LOGI("OTP awb appliy error!");
 		return rtn;
 	}
 
@@ -190,7 +190,7 @@ static uint32_t s5k4h8yx_ofilm_update_otp(SENSOR_HW_HANDLE handle, void *param_p
 	rtn=s5k4h8yx_ofilm_update_lsc(handle, param_ptr);
 	if(rtn!=SENSOR_SUCCESS)
 	{
-		SENSOR_PRINT_ERR("OTP lsc appliy error!");
+		SENSOR_LOGI("OTP lsc appliy error!");
 		return rtn;
 	}
 	#endif
@@ -204,7 +204,7 @@ static uint32_t s5k4h8yx_ofilm_identify_otp(SENSOR_HW_HANDLE handle, void *param
 	uint32_t rtn = SENSOR_SUCCESS;
 
 	rtn=s5k4h8yx_ofilm_read_otp_info(handle, param_ptr);
-	SENSOR_PRINT("rtn=%d",rtn);
+	SENSOR_LOGI("rtn=%d",rtn);
 
 	return rtn;
 }

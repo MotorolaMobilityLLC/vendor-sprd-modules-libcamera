@@ -484,18 +484,18 @@ LOCAL uint32_t _JX507_set_video_mode(uint32_t param)
 		return 0;
 
 	if (SENSOR_SUCCESS != Sensor_GetMode(&mode)) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	if (PNULL == s_JX507_video_info[mode].setting_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	sensor_reg_ptr = (SENSOR_REG_T_PTR)&s_JX507_video_info[mode].setting_ptr[param];
 	if (PNULL == sensor_reg_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
@@ -503,7 +503,7 @@ LOCAL uint32_t _JX507_set_video_mode(uint32_t param)
 		Sensor_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("_JX507_set_video_mode = 0x%02x", param);
+	SENSOR_LOGI("_JX507_set_video_mode = 0x%02x", param);
 	return 0;
 }
 
@@ -1666,20 +1666,20 @@ LOCAL uint32_t _dw9174_SRCInit(uint32_t mode)
 			cmd_val[1] = 0xa3;
 			ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 			if(ret_value){
-				SENSOR_PRINT("SENSOR_JX507: _dw9174_SRCInit fail!1");
+				SENSOR_LOGI("SENSOR_JX507: _dw9174_SRCInit fail!1");
 			}
 			cmd_val[0] = 0xf2;
 			cmd_val[1] = 0x00;
 			ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 			if(ret_value){
-				SENSOR_PRINT("SENSOR_JX507: _dw9174_SRCInit fail!2");
+				SENSOR_LOGI("SENSOR_JX507: _dw9174_SRCInit fail!2");
 			}
 
 			cmd_val[0] = 0xdc;
 			cmd_val[1] = 0x51;
 			ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 			if(ret_value){
-				SENSOR_PRINT("SENSOR_JX507: _dw9174_SRCInit fail!3");
+				SENSOR_LOGI("SENSOR_JX507: _dw9174_SRCInit fail!3");
 			}
 		}
 		break;
@@ -1694,7 +1694,7 @@ LOCAL uint32_t _dw9174_SRCInit(uint32_t mode)
 
 LOCAL uint32_t _JX507_GetResolutionTrimTab(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_JX507 GetResolutionTrimTab param = 0x%x, param = 0x%x", (uint32_t)s_JX507_Resolution_Trim_Tab, param);
+	SENSOR_LOGI("SENSOR_JX507 GetResolutionTrimTab param = 0x%x, param = 0x%x", (uint32_t)s_JX507_Resolution_Trim_Tab, param);
 	return (uint32_t) s_JX507_Resolution_Trim_Tab;
 }
 
@@ -1725,7 +1725,7 @@ LOCAL uint32_t _JX507_PowerOn(uint32_t power_on)
 		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 	}
-	SENSOR_PRINT("SENSOR_JX507: _JX507_Power_On(1:on, 0:off): %d  ", power_on);
+	SENSOR_LOGI("SENSOR_JX507: _JX507_Power_On(1:on, 0:off): %d  ", power_on);
 	return SENSOR_SUCCESS;
 }
 
@@ -1735,7 +1735,7 @@ LOCAL uint32_t _JX507_cfg_otp(uint32_t  param)
 	struct raw_param_info_tab* tab_ptr = (struct raw_param_info_tab*)s_JX507_raw_param_tab;
 	uint32_t module_id=g_module_id;
 
-	SENSOR_PRINT("SENSOR_JX507: _JX507_cfg_otp");
+	SENSOR_LOGI("SENSOR_JX507: _JX507_cfg_otp");
 
 	if(PNULL!=tab_ptr[module_id].cfg_otp){
 		tab_ptr[module_id].cfg_otp(0);
@@ -1749,7 +1749,7 @@ LOCAL uint32_t _JX507_com_Identify_otp(void* param_ptr)
 	uint32_t rtn=SENSOR_FAIL;
 	uint32_t param_id;
 
-	SENSOR_PRINT("SENSOR_JX507: _JX507_com_Identify_otp");
+	SENSOR_LOGI("SENSOR_JX507: _JX507_com_Identify_otp");
 
 	/*read param id from sensor omap*/
 	param_id=JX507_RAW_PARAM_COM;
@@ -1776,17 +1776,17 @@ LOCAL uint32_t _JX507_GetRawInof(void)
 		g_module_id = i;
 		if(RAW_INFO_END_ID==tab_ptr[i].param_id){
 			if(NULL==s_JX507_raw_info_ptr){
-				SENSOR_PRINT("SENSOR_JX507: JX507_GetRawInof no param error");
+				SENSOR_LOGI("SENSOR_JX507: JX507_GetRawInof no param error");
 				rtn=SENSOR_FAIL;
 			}
-			SENSOR_PRINT("SENSOR_JX507: JX507_GetRawInof end");
+			SENSOR_LOGI("SENSOR_JX507: JX507_GetRawInof end");
 			break;
 		}
 		else if(PNULL!=tab_ptr[i].identify_otp){
 			if(SENSOR_SUCCESS==tab_ptr[i].identify_otp(0))
 			{
 				s_JX507_raw_info_ptr = tab_ptr[i].info_ptr;
-				SENSOR_PRINT("SENSOR_JX507: JX507_GetRawInof success");
+				SENSOR_LOGI("SENSOR_JX507: JX507_GetRawInof success");
 				break;
 
 			}
@@ -1803,7 +1803,7 @@ LOCAL uint32_t _JX507_GetMaxFrameLine(uint32_t index)
 
 	max_line=trim_ptr[index].frame_line;
 
-	SENSOR_PRINT("SENSOR_JX507: _JX507_GetMaxFrameLine maxline = 0x%x, index = 0x%x", max_line, index);
+	SENSOR_LOGI("SENSOR_JX507: _JX507_GetMaxFrameLine maxline = 0x%x, index = 0x%x", max_line, index);
 	return max_line;
 }
 
@@ -1813,24 +1813,24 @@ LOCAL uint32_t _JX507_Identify(uint32_t param)
 	uint8_t ver_value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
 
-	SENSOR_PRINT("SENSOR_JX507:  raw identify \n");
+	SENSOR_LOGI("SENSOR_JX507:  raw identify \n");
 
 	pid_value = Sensor_ReadReg(JX507_PID_ADDR);
 
 	if (JX507_PID_VALUE == pid_value) {
 		ver_value = Sensor_ReadReg(JX507_VER_ADDR);
-		SENSOR_PRINT("SENSOR_JX507: Identify: PID = %x, VER = %x", pid_value, ver_value);
+		SENSOR_LOGI("SENSOR_JX507: Identify: PID = %x, VER = %x", pid_value, ver_value);
 		if (JX507_VER_VALUE == ver_value) {
 			_JX507_GetRawInof();
 			_JX507_InitRawTuneInfo();
 			ret_value = SENSOR_SUCCESS;
-			SENSOR_PRINT("SENSOR_JX507: this is JX507 sensor !");
+			SENSOR_LOGI("SENSOR_JX507: this is JX507 sensor !");
 		} else {
-			SENSOR_PRINT
+			SENSOR_LOGI
 			    ("SENSOR_JX507: Identify this is OV%x%x sensor !", pid_value, ver_value);
 		}
 	} else {
-		SENSOR_PRINT("SENSOR_JX507: identify fail,pid_value=%x", pid_value);
+		SENSOR_LOGI("SENSOR_JX507: identify fail,pid_value=%x", pid_value);
 	}
 
 	return ret_value;
@@ -1880,7 +1880,7 @@ LOCAL uint32_t _JX507_write_exposure(uint32_t param)
 		ret_value = Sensor_WriteReg(0x02, msb);
 	}
 
-	SENSOR_PRINT("SENSOR_JX507: JX507_Write_Shutter expsure_line = 0x%x, max_frame_len = 0x%x", expsure_line, max_frame_len);
+	SENSOR_LOGI("SENSOR_JX507: JX507_Write_Shutter expsure_line = 0x%x, max_frame_len = 0x%x", expsure_line, max_frame_len);
 	return ret_value;
 }
 
@@ -1892,7 +1892,7 @@ LOCAL uint32_t _JX507_write_gain(uint32_t param)
 	uint16_t val;
 	val = Sensor_ReadReg(0x12);
 	if (val & 0x08) {
-		SENSOR_PRINT("SENSOR_JX507: write gain reg[0x12][3] not clear!! (0x%x)", val);
+		SENSOR_LOGI("SENSOR_JX507: write gain reg[0x12][3] not clear!! (0x%x)", val);
 
 	}
 	Sensor_WriteReg(0xc0, 0x00); // gain
@@ -1916,7 +1916,7 @@ LOCAL uint32_t _JX507_write_af(uint32_t param)
 	cmd_val[1] = ((param << 4) & 0xf0) | 0x09;
 	cmd_len = 2;
 	ret_value = Sensor_WriteI2C(slave_addr, (uint8_t*)&cmd_val[0], cmd_len);
-	SENSOR_PRINT("SENSOR_JX507: _JX507_write_af pos = 0x%x", param);
+	SENSOR_LOGI("SENSOR_JX507: _JX507_write_af pos = 0x%x", param);
 	return ret_value;
 }
 
@@ -1933,7 +1933,7 @@ LOCAL uint32_t _JX507_BeforeSnapshot(uint32_t param)
 
 	if (SENSOR_MODE_PREVIEW_ONE >= param){
 		_JX507_ReadGain(0x00);
-		SENSOR_PRINT("SENSOR_JX507: prvmode equal to capmode");
+		SENSOR_LOGI("SENSOR_JX507: prvmode equal to capmode");
 		return SENSOR_SUCCESS;
 	}
 
@@ -1951,7 +1951,7 @@ LOCAL uint32_t _JX507_BeforeSnapshot(uint32_t param)
 	Sensor_SetMode_WaitDone();
 
 	if (prv_linetime == cap_linetime) {
-		SENSOR_PRINT("SENSOR_JX507: prvline equal to capline");
+		SENSOR_LOGI("SENSOR_JX507: prvline equal to capline");
 		return SENSOR_SUCCESS;
 	}
 
@@ -1999,19 +1999,19 @@ LOCAL uint32_t _JX507_after_snapshot(uint32_t param)
 
 LOCAL uint32_t _JX507_flash(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_JX507: param=%d", param);
+	SENSOR_LOGI("SENSOR_JX507: param=%d", param);
 
 	/* enable flash, disable in _JX507_BeforeSnapshot */
 	g_flash_mode_en = param;
 	Sensor_SetFlash(param);
-	SENSOR_PRINT_HIGH("end");
+	SENSOR_LOGI("end");
 	return SENSOR_SUCCESS;
 }
 
 LOCAL uint32_t _JX507_StreamOn(uint32_t param)
 {
 	int val;
-	SENSOR_PRINT("SENSOR_JX507: StreamOn");
+	SENSOR_LOGI("SENSOR_JX507: StreamOn");
 	val = Sensor_ReadReg(0x12);
 	val &= ~(0x40);
 
@@ -2023,7 +2023,7 @@ LOCAL uint32_t _JX507_StreamOn(uint32_t param)
 LOCAL uint32_t _JX507_StreamOff(uint32_t param)
 {
 	int val;
-	SENSOR_PRINT("SENSOR_JX507: StreamOff");
+	SENSOR_LOGI("SENSOR_JX507: StreamOff");
 	val = Sensor_ReadReg(0x12);
 	val |= 0x40;
 	Sensor_WriteReg(0x12, val);
@@ -2039,7 +2039,7 @@ int _JX507_get_shutter(void)
 	shutter = Sensor_ReadReg(0x01);
 	shutter = (shutter<<8) + Sensor_ReadReg(0x02);
 
-	SENSOR_PRINT("SENSOR_JX507: _JX507_get_shutter shutter = 0x%x", shutter);
+	SENSOR_LOGI("SENSOR_JX507: _JX507_get_shutter shutter = 0x%x", shutter);
 	return shutter;
 }
 
@@ -2056,7 +2056,7 @@ int _JX507_set_shutter(int shutter)
 	temp = (shutter >> 8) & 0xff;
 	Sensor_WriteReg(0x02, temp);
 
-	SENSOR_PRINT("SENSOR_JX507: _JX507_set_shutter shutter = 0x%x", shutter);
+	SENSOR_LOGI("SENSOR_JX507: _JX507_set_shutter shutter = 0x%x", shutter);
 	return 0;
 }
 
@@ -2068,7 +2068,7 @@ int _JX507_get_gain16(void)
 	param = Sensor_ReadReg(0x00);
 	gain16 = ((param&0xf)+16)*(((param>>4)&0x01)+1)*(((param>>5)&0x01)+1)*(((param>>6)&0x01)+1);
 
-	SENSOR_PRINT("SENSOR_JX507: _JX507_get_gain16 gain16 = 0x%x", gain16);
+	SENSOR_LOGI("SENSOR_JX507: _JX507_get_gain16 gain16 = 0x%x", gain16);
 	return gain16;
 }
 
@@ -2098,7 +2098,7 @@ int _JX507_set_gain16(int gain16)
 	}
 	Sensor_WriteReg(0x00, (gainMSB << 4) + gainLSB);
 
-	SENSOR_PRINT("SENSOR_JX507: _JX507_set_gain16 gain16 = 0x%x, gainMSB,LSB = 0x%x,0x%x ", gain16,gainMSB,gainLSB);
+	SENSOR_LOGI("SENSOR_JX507: _JX507_set_gain16 gain16 = 0x%x, gainMSB,LSB = 0x%x,0x%x ", gain16,gainMSB,gainLSB);
 	return 0;
 }
 
@@ -2118,7 +2118,7 @@ LOCAL uint32_t _JX507_SetEV(uint32_t param)
 	uint32_t gain = s_JX507_gain;
 	uint32_t ev = ext_ptr->param;
 
-	SENSOR_PRINT("SENSOR: _JX507_SetEV param: 0x%x", ev);
+	SENSOR_LOGI("SENSOR: _JX507_SetEV param: 0x%x", ev);
 
 	switch(ev) {
 	case SENSOR_HDR_EV_LEVE_0:
@@ -2143,7 +2143,7 @@ LOCAL uint32_t _JX507_ExtFunc(uint32_t ctl_param)
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr =
 	    (SENSOR_EXT_FUN_PARAM_T_PTR) ctl_param;
-	SENSOR_PRINT_HIGH("0x%x", ext_ptr->cmd);
+	SENSOR_LOGI("0x%x", ext_ptr->cmd);
 
 	switch (ext_ptr->cmd) {
 	case SENSOR_EXT_FUNC_INIT:
@@ -2194,7 +2194,7 @@ LOCAL uint32_t _JX507_ReadGain(uint32_t param)
 	value = Sensor_ReadReg(0x00);
 	s_JX507_gain=(int)value;
 
-	SENSOR_PRINT("SENSOR_JX507: _JX507_ReadGain gain: 0x%x", s_JX507_gain);
+	SENSOR_LOGI("SENSOR_JX507: _JX507_ReadGain gain: 0x%x", s_JX507_gain);
 
 	return rtn;
 }

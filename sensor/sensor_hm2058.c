@@ -876,7 +876,7 @@ static unsigned long HM2058_Power_On(unsigned long power_on)
 		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
 	}
 
-	SENSOR_PRINT("set_HM2058_Power_On");
+	SENSOR_LOGI("set_HM2058_Power_On");
 	return 0;
 }
 
@@ -887,14 +887,14 @@ static unsigned long HM2058_Identify(unsigned long param)
 	uint32_t ret_value = 0xFF;
 
 	id_h_value = Sensor_ReadReg(0x0001);
-	SENSOR_PRINT("HM2058_Identify-id_h_value %d", id_h_value);
+	SENSOR_LOGI("HM2058_Identify-id_h_value %d", id_h_value);
 
 	id_l_value = Sensor_ReadReg(0x0002);
-	SENSOR_PRINT("HM2058_Identify-id_l_value %d", id_l_value);
+	SENSOR_LOGI("HM2058_Identify-id_l_value %d", id_l_value);
 
 	if ((HM2058_ID_H_VALUE == id_h_value) && (HM2058_ID_L_VALUE == id_l_value)) {
 		ret_value = 0;
-		SENSOR_PRINT("It Is HM2058 Sensor !");
+		SENSOR_LOGI("It Is HM2058 Sensor !");
 	}
 
 	return ret_value;
@@ -911,7 +911,7 @@ static unsigned long set_HM2058_ae_enable(unsigned long enable)
 		Sensor_WriteReg(0x0380, (temp_AE_reg & (~0x01)));
 	}
 
-	SENSOR_PRINT("set_ae_enable: enable = %d", enable);
+	SENSOR_LOGI("set_ae_enable: enable = %d", enable);
 
 	Sensor_WriteReg(0x0000,0x01);
 	Sensor_WriteReg(0x0100,0x01);
@@ -963,13 +963,13 @@ static unsigned long set_HM2058_work_mode(unsigned long mode)
 	Sensor_WriteReg(0x0100,0x01);
 	Sensor_WriteReg(0x0101,0x01);
 
-	SENSOR_PRINT("set_work_mode: mode = %d", mode);
+	SENSOR_LOGI("set_work_mode: mode = %d", mode);
 	return 0;
 }
 
 static unsigned long Set_HM2058_Preview_Mode(unsigned long preview_mode)
 {
-	SENSOR_PRINT("set_preview_mode: preview_mode = %d", preview_mode);
+	SENSOR_LOGI("set_preview_mode: preview_mode = %d", preview_mode);
 
 	switch (preview_mode) {
 	case DCAMERA_ENVIRONMENT_NORMAL:
@@ -1075,7 +1075,7 @@ static unsigned long Set_HM2058_Brightness(unsigned long level)
 		break;
 	}
 
-	SENSOR_PRINT("set_HM2058_brightness: level = %d", level);
+	SENSOR_LOGI("set_HM2058_brightness: level = %d", level);
 	return 0;
 }
 
@@ -1164,7 +1164,7 @@ static unsigned long Set_HM2058_Contrast(unsigned long level)
 		break;
 	}
 
-	SENSOR_PRINT("set_HM2058_contrast: level = %d", level);
+	SENSOR_LOGI("set_HM2058_contrast: level = %d", level);
 	return 0;
 }
 
@@ -1212,7 +1212,7 @@ SENSOR_REG_T HM2058_image_effect_tab[][5] =
 
 static unsigned long Set_HM2058_Image_Effect(unsigned long effect_type)
 {
-	SENSOR_PRINT("set_HM2058_image_effect: effect_type = %d", effect_type);
+	SENSOR_LOGI("set_HM2058_image_effect: effect_type = %d", effect_type);
 
 	switch (effect_type) {
 	case 0:	// effect normal
@@ -1365,7 +1365,7 @@ static unsigned long Set_HM2058_Ev(unsigned long level)
 		break;
 	}
 
-	SENSOR_PRINT("set_HM2058_ev: level = %d", level);
+	SENSOR_LOGI("set_HM2058_ev: level = %d", level);
 	return 0;
 }
 
@@ -1569,7 +1569,7 @@ static unsigned long Set_HM2058_AWB(unsigned long mode)
 		break;
 	}
 
-	SENSOR_PRINT("set_HM2058_awb_mode: mode = %d", mode);
+	SENSOR_LOGI("set_HM2058_awb_mode: mode = %d", mode);
 	return 0;
 }
 
@@ -1577,7 +1577,7 @@ static unsigned long HM2058_Before_Snapshot(unsigned long param)
 {
 	uint32_t cap_mode = (param >> 16);
 
-	CMR_LOGI("SENSOR_HM2058: Before Snapshot 0x%lx", param);
+	SENSOR_LOGI("SENSOR_HM2058: Before Snapshot 0x%lx", param);
 
 	param = param&0xffff;
 
@@ -1613,7 +1613,7 @@ static unsigned long Set_HM2058_Video_Mode(unsigned long mode)
 		Sensor_WriteReg(0x038F, 0x0a);  //20120204 03
 		Sensor_WriteReg(0x0390, 0x00);
 	}
-	SENSOR_PRINT("set_HM2058_video_mode=%d",mode);
+	SENSOR_LOGI("set_HM2058_video_mode=%d",mode);
 
 	return 0;
 }

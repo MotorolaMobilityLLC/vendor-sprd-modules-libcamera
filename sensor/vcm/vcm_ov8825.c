@@ -30,7 +30,7 @@ uint32_t vcm_ov8825_set_position(uint32_t pos,uint32_t slewrate)
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint16_t value=0x00;
 	uint16_t reg_val = 0x00;
-	SENSOR_PRINT("SENSOR_ov8825: _write_af 0x%x", pos);
+	SENSOR_LOGI("SENSOR_ov8825: _write_af 0x%x", pos);
 
 	value = (pos&0xf)<<0x04;
 	value = value + 8 + (slewrate&0x7);

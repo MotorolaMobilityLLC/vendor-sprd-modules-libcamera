@@ -452,18 +452,18 @@ LOCAL unsigned long _ov5648_set_video_mode(unsigned long param)
 		return 0;
 
 	if (SENSOR_SUCCESS != Sensor_GetMode(&mode)) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	if (PNULL == s_ov5648_video_info[mode].setting_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	sensor_reg_ptr = (SENSOR_REG_T_PTR)&s_ov5648_video_info[mode].setting_ptr[param];
 	if (PNULL == sensor_reg_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
@@ -471,7 +471,7 @@ LOCAL unsigned long _ov5648_set_video_mode(unsigned long param)
 		Sensor_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("0x%02x", param);
+	SENSOR_LOGI("0x%02x", param);
 	return 0;
 }
 
@@ -1700,7 +1700,7 @@ LOCAL uint32_t Sensor_InitRawTuneInfo(void)
 
 LOCAL unsigned long _ov5648_GetResolutionTrimTab(unsigned long param)
 {
-	SENSOR_PRINT("0x%lx", (unsigned long)s_ov5648_Resolution_Trim_Tab);
+	SENSOR_LOGI("0x%lx", (unsigned long)s_ov5648_Resolution_Trim_Tab);
 	return (unsigned long) s_ov5648_Resolution_Trim_Tab;
 }
 
@@ -1760,7 +1760,7 @@ LOCAL unsigned long _ov5648_PowerOn(unsigned long power_on)
 		Sensor_SetIovddVoltage(SENSOR_AVDD_CLOSED);
 		_dw9174_SRCDeinit();
 	}
-	SENSOR_PRINT("SENSOR_OV5648: _ov5648_Power_On(1:on, 0:off): %d", power_on);
+	SENSOR_LOGI("SENSOR_OV5648: _ov5648_Power_On(1:on, 0:off): %d", power_on);
 	return SENSOR_SUCCESS;
 }
 
@@ -1770,7 +1770,7 @@ LOCAL unsigned long _ov5648_cfg_otp(unsigned long  param)
 	struct raw_param_info_tab* tab_ptr = (struct raw_param_info_tab*)s_ov5648_raw_param_tab;
 	uint32_t module_id=g_module_id;
 
-	SENSOR_PRINT("SENSOR_OV5648: _ov5648_cfg_otp");
+	SENSOR_LOGI("SENSOR_OV5648: _ov5648_cfg_otp");
 
 	if(PNULL!=tab_ptr[module_id].cfg_otp){
 		tab_ptr[module_id].cfg_otp(0);
@@ -1833,13 +1833,13 @@ LOCAL uint32_t check_otp(int index)
 		rg = Sensor_ReadReg(0x3d09);
 		bg = Sensor_ReadReg(0x3d0a);
 	}
-	SENSOR_PRINT("ov5648 check_otp: flag = 0x%d----index = %d---\n", flag, index);
+	SENSOR_LOGI("ov5648 check_otp: flag = 0x%d----index = %d---\n", flag, index);
 	flag = flag & 0x80;
 	// clear otp buffer
 	for (i=0; i<16; i++) {
 		Sensor_WriteReg(0x3d00 + i, 0x00);
 	}
-	SENSOR_PRINT("ov5648 check_otp: flag = 0x%d  rg = 0x%x, bg = 0x%x,-------\n", flag, rg, bg);
+	SENSOR_LOGI("ov5648 check_otp: flag = 0x%d  rg = 0x%x, bg = 0x%x,-------\n", flag, rg, bg);
 	if (flag) {
 		return 1;
 	}
@@ -1969,7 +1969,7 @@ LOCAL uint32_t update_otp (void* param_ptr)
 	uint16_t reg_value = 0;
 
 	stream_value = Sensor_ReadReg(0x0100);
-	SENSOR_PRINT("ov5648 update_otp:stream_value = 0x%x\n", stream_value);
+	SENSOR_LOGI("ov5648 update_otp:stream_value = 0x%x\n", stream_value);
 	if(1 != (stream_value & 0x01))
 	{
 		Sensor_WriteReg(0x0100, 0x01);
@@ -2013,7 +2013,7 @@ LOCAL uint32_t update_otp (void* param_ptr)
 			// current_otp.bg_ratio < BG_Ratio_typical &&
 			// current_otp.rg_ratio < RG_Ratio_typical
 			if((0 == bg) || (0 == rg)){
-				SENSOR_PRINT("ov5648_otp: update otp failed!!, bg = %d, rg = %d\n", bg, rg);
+				SENSOR_LOGI("ov5648_otp: update otp failed!!, bg = %d, rg = %d\n", bg, rg);
 				return 0;
 			}
 			G_gain = 0x400;
@@ -2022,7 +2022,7 @@ LOCAL uint32_t update_otp (void* param_ptr)
 		}
 		else {
 			if(0 == bg){
-				SENSOR_PRINT("ov5648_otp: update otp failed!!, bg = %d\n", bg);
+				SENSOR_LOGI("ov5648_otp: update otp failed!!, bg = %d\n", bg);
 				return 0;
 			}
 			// current_otp.bg_ratio < BG_Ratio_typical &&
@@ -2037,7 +2037,7 @@ LOCAL uint32_t update_otp (void* param_ptr)
 			// current_otp.bg_ratio >= BG_Ratio_typical &&
 			// current_otp.rg_ratio < RG_Ratio_typical
 			if(0 == rg){
-				SENSOR_PRINT("ov5648_otp: update otp failed!!, rg = %d\n", rg);
+				SENSOR_LOGI("ov5648_otp: update otp failed!!, rg = %d\n", rg);
 				return 0;
 			}
 			B_gain = 0x400;
@@ -2051,7 +2051,7 @@ LOCAL uint32_t update_otp (void* param_ptr)
 			G_gain_R = 0x400 * rg / RG_Ratio_Typical;
 			if(G_gain_B > G_gain_R ) {
 				if(0 == rg){
-					SENSOR_PRINT("ov5648_otp: update otp failed!!, rg = %d\n", rg);
+					SENSOR_LOGI("ov5648_otp: update otp failed!!, rg = %d\n", rg);
 					return 0;
 				}
 				B_gain = 0x400;
@@ -2060,7 +2060,7 @@ LOCAL uint32_t update_otp (void* param_ptr)
 			}
 			else {
 				if(0 == bg){
-					SENSOR_PRINT("ov5648_otp: update otp failed!!, bg = %d\n", bg);
+					SENSOR_LOGI("ov5648_otp: update otp failed!!, bg = %d\n", bg);
 					return 0;
 				}
 				R_gain = 0x400;
@@ -2074,7 +2074,7 @@ LOCAL uint32_t update_otp (void* param_ptr)
 	if(1 != (stream_value & 0x01))
 		Sensor_WriteReg(0x0100, stream_value);
 
-	SENSOR_PRINT("ov5648_otp: R_gain:0x%x, G_gain:0x%x, B_gain:0x%x------\n",R_gain, G_gain, B_gain);
+	SENSOR_LOGI("ov5648_otp: R_gain:0x%x, G_gain:0x%x, B_gain:0x%x------\n",R_gain, G_gain, B_gain);
 	return 0;
 }
 
@@ -2087,7 +2087,7 @@ LOCAL uint32_t ov5648_check_otp_module_id(void)
 	uint16_t stream_value = 0;
 
 	stream_value = Sensor_ReadReg(0x0100);
-	SENSOR_PRINT("ov5648_check_otp_module_id:stream_value = 0x%x\n", stream_value);
+	SENSOR_LOGI("ov5648_check_otp_module_id:stream_value = 0x%x\n", stream_value);
 	if(1 != (stream_value & 0x01))
 	{
 		Sensor_WriteReg(0x0100, 0x01);
@@ -2098,7 +2098,7 @@ LOCAL uint32_t ov5648_check_otp_module_id(void)
 
 	for(i=1;i<=3;i++) {
 		temp = check_otp(i);
-		SENSOR_PRINT("ov5648_check_otp_module_id i=%d temp = %d \n",i,temp);
+		SENSOR_LOGI("ov5648_check_otp_module_id i=%d temp = %d \n",i,temp);
 		if (temp == 2) {
 			otp_index = i;
 			break;
@@ -2106,7 +2106,7 @@ LOCAL uint32_t ov5648_check_otp_module_id(void)
 	}
 	if (i > 3) {
 		// no valid wb OTP data
-		SENSOR_PRINT("ov5648_check_otp_module_id no valid wb OTP data\n");
+		SENSOR_LOGI("ov5648_check_otp_module_id no valid wb OTP data\n");
 		return 1;
 	}
 
@@ -2115,7 +2115,7 @@ LOCAL uint32_t ov5648_check_otp_module_id(void)
 	if(1 != (stream_value & 0x01))
 		Sensor_WriteReg(0x0100, stream_value);
 
-	SENSOR_PRINT("read ov5648 otp  module_id = %x \n", current_otp.module_integrator_id);
+	SENSOR_LOGI("read ov5648 otp  module_id = %x \n", current_otp.module_integrator_id);
 
 	return current_otp.module_integrator_id;
 }
@@ -2125,13 +2125,13 @@ LOCAL uint32_t _ov5648_Truly_Identify_otp(void* param_ptr)
 	uint32_t rtn=SENSOR_FAIL;
 	uint32_t param_id;
 
-	SENSOR_PRINT("SENSOR_OV5648: _ov5648_Truly_Identify_otp");
+	SENSOR_LOGI("SENSOR_OV5648: _ov5648_Truly_Identify_otp");
 
 	/*read param id from sensor omap*/
 	param_id=ov5648_check_otp_module_id();;
 
 	if(OV5648_RAW_PARAM_Truly==param_id){
-		SENSOR_PRINT("SENSOR_OV5648: This is Truly module!!\n");
+		SENSOR_LOGI("SENSOR_OV5648: This is Truly module!!\n");
 		RG_Ratio_Typical = 0x152;
 		BG_Ratio_Typical = 0x137;
 		rtn=SENSOR_SUCCESS;
@@ -2145,13 +2145,13 @@ LOCAL uint32_t _ov5648_Sunny_Identify_otp(void* param_ptr)
 	uint32_t rtn=SENSOR_FAIL;
 	uint32_t param_id;
 
-	SENSOR_PRINT("SENSOR_OV5648: _ov5648_Sunny_Identify_otp");
+	SENSOR_LOGI("SENSOR_OV5648: _ov5648_Sunny_Identify_otp");
 
 	/*read param id from sensor omap*/
 	param_id=ov5648_check_otp_module_id();
 
 	if(OV5648_RAW_PARAM_Sunny==param_id){
-		SENSOR_PRINT("SENSOR_OV5648: This is Sunny module!!\n");
+		SENSOR_LOGI("SENSOR_OV5648: This is Sunny module!!\n");
 		RG_Ratio_Typical = 386;
 		BG_Ratio_Typical = 367;
 		rtn=SENSOR_SUCCESS;
@@ -2166,7 +2166,7 @@ LOCAL uint32_t _ov5648_com_Identify_otp(void* param_ptr)
 	uint32_t rtn=SENSOR_FAIL;
 	uint32_t param_id;
 
-	SENSOR_PRINT("SENSOR_OV5648: _ov5648_com_Identify_otp");
+	SENSOR_LOGI("SENSOR_OV5648: _ov5648_com_Identify_otp");
 
 	/*read param id from sensor omap*/
 	param_id=OV5648_RAW_PARAM_COM;
@@ -2193,17 +2193,17 @@ LOCAL uint32_t _ov5648_GetRawInof(void)
 		g_module_id = i;
 		if(RAW_INFO_END_ID==tab_ptr[i].param_id){
 			if(NULL==s_ov5648_mipi_raw_info_ptr){
-				SENSOR_PRINT("SENSOR_OV5648: ov5647_GetRawInof no param error");
+				SENSOR_LOGI("SENSOR_OV5648: ov5647_GetRawInof no param error");
 				rtn=SENSOR_FAIL;
 			}
-			SENSOR_PRINT("SENSOR_OV5648: ov5648_GetRawInof end");
+			SENSOR_LOGI("SENSOR_OV5648: ov5648_GetRawInof end");
 			break;
 		}
 		else if(PNULL!=tab_ptr[i].identify_otp){
 			if(SENSOR_SUCCESS==tab_ptr[i].identify_otp(0))
 			{
 				s_ov5648_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
-				SENSOR_PRINT("SENSOR_OV5648: ov5648_GetRawInof success");
+				SENSOR_LOGI("SENSOR_OV5648: ov5648_GetRawInof success");
 				break;
 			}
 		}
@@ -2233,24 +2233,24 @@ LOCAL unsigned long _ov5648_Identify(unsigned long param)
 	uint8_t ver_value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
 
-	SENSOR_PRINT("SENSOR_OV5648: mipi raw identify\n");
+	SENSOR_LOGI("SENSOR_OV5648: mipi raw identify\n");
 
 	pid_value = Sensor_ReadReg(ov5648_PID_ADDR);
 
 	if (ov5648_PID_VALUE == pid_value) {
 		ver_value = Sensor_ReadReg(ov5648_VER_ADDR);
-		SENSOR_PRINT("SENSOR_OV5648: Identify: PID = %x, VER = %x", pid_value, ver_value);
+		SENSOR_LOGI("SENSOR_OV5648: Identify: PID = %x, VER = %x", pid_value, ver_value);
 		if (ov5648_VER_VALUE == ver_value) {
 			ret_value=_ov5648_GetRawInof();
 			Sensor_InitRawTuneInfo();
 			ret_value = SENSOR_SUCCESS;
-			SENSOR_PRINT("SENSOR_OV5648: this is ov5648 sensor !");
+			SENSOR_LOGI("SENSOR_OV5648: this is ov5648 sensor !");
 		} else {
-			SENSOR_PRINT
+			SENSOR_LOGI
 			    ("SENSOR_OV5648: Identify this is OV%x%x sensor !", pid_value, ver_value);
 		}
 	} else {
-		SENSOR_PRINT("SENSOR_OV5648: identify fail,pid_value=%d", pid_value);
+		SENSOR_LOGI("SENSOR_OV5648: identify fail,pid_value=%d", pid_value);
 	}
 
 	return ret_value;
@@ -2274,7 +2274,7 @@ LOCAL unsigned long _ov5648_write_exposure(unsigned long param)
 	dummy_line=(param>>0x10)&0xffff;
 	size_index=(param>>0x1c)&0x0f;
 
-	SENSOR_PRINT("SENSOR_OV5648: write_exposure line:%d, dummy:%d, size_index:%d\n", expsure_line, dummy_line, size_index);
+	SENSOR_LOGI("SENSOR_OV5648: write_exposure line:%d, dummy:%d, size_index:%d\n", expsure_line, dummy_line, size_index);
 
 	max_frame_len=_ov5648_GetMaxFrameLine(size_index);
 
@@ -2319,7 +2319,7 @@ LOCAL unsigned long _ov5648_write_gain(unsigned long param)
 	real_gain = ((param&0xf)+16)*(((param>>4)&0x01)+1)*(((param>>5)&0x01)+1)*(((param>>6)&0x01)+1)*(((param>>7)&0x01)+1);
 	real_gain = real_gain*(((param>>8)&0x01)+1)*(((param>>9)&0x01)+1)*(((param>>10)&0x01)+1)*(((param>>11)&0x01)+1);
 #endif
-	SENSOR_PRINT("SENSOR_OV5648: real_gain:0x%x, param: 0x%x", real_gain, param);
+	SENSOR_LOGI("SENSOR_OV5648: real_gain:0x%x, param: 0x%x", real_gain, param);
 
 	value = real_gain&0xff;
 	ret_value = Sensor_WriteReg(0x350b, value);/*0-7*/
@@ -2338,7 +2338,7 @@ LOCAL unsigned long _ov5648_write_af(unsigned long param)
 	uint16_t  slave_addr = 0;
 	uint16_t cmd_len = 0;
 
-	SENSOR_PRINT("SENSOR_OV5648: _write_af %d", param);
+	SENSOR_LOGI("SENSOR_OV5648: _write_af %d", param);
 
 	slave_addr = DW9714_VCM_SLAVE_ADDR;
 	cmd_val[0] = (param&0xfff0)>>4;
@@ -2346,7 +2346,7 @@ LOCAL unsigned long _ov5648_write_af(unsigned long param)
 	cmd_len = 2;
 	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 
-	SENSOR_PRINT("SENSOR_OV5648: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
+	SENSOR_LOGI("SENSOR_OV5648: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
 
 	return ret_value;
 }
@@ -2362,7 +2362,7 @@ LOCAL uint32_t _ov5648_ReadGain(void)
 	gain |= (value<<0x08)&0x300;
 
 
-	SENSOR_PRINT("SENSOR: _ov5648_ReadGain gain: 0x%x", gain);
+	SENSOR_LOGI("SENSOR: _ov5648_ReadGain gain: 0x%x", gain);
 
 	return gain;
 }
@@ -2452,7 +2452,7 @@ LOCAL unsigned long _ov5648_SetEV(unsigned long param)
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr = (SENSOR_EXT_FUN_PARAM_T_PTR) param;
 	uint32_t ev = ext_ptr->param;
 
-	SENSOR_PRINT("SENSOR_ov5648: _ov5648_SetEV param: 0x%x", ext_ptr->param);
+	SENSOR_LOGI("SENSOR_ov5648: _ov5648_SetEV param: 0x%x", ext_ptr->param);
 
 	switch(ev) {
 		case SENSOR_HDR_EV_LEVE_0:
@@ -2483,7 +2483,7 @@ LOCAL unsigned long _ov5648_saveLoad_exposure(unsigned long param)
 	uint32_t sl_param = sl_ptr->param;
 	if (sl_param) {
 		/*load exposure params to sensor*/
-		SENSOR_PRINT_HIGH("_ov5648_saveLoad_exposure load shutter 0x%x gain 0x%x",
+		SENSOR_LOGI("_ov5648_saveLoad_exposure load shutter 0x%x gain 0x%x",
 							s_ov5648_shutter_bak,
 							s_ov5648_gain_bak);
 
@@ -2493,7 +2493,7 @@ LOCAL unsigned long _ov5648_saveLoad_exposure(unsigned long param)
 		/*save exposure params from sensor*/
 		s_ov5648_shutter_bak = _ov5648_get_shutter();
 		s_ov5648_gain_bak = _ov5648_ReadGain();
-		SENSOR_PRINT_HIGH("_ov5648_saveLoad_exposure save shutter 0x%x gain 0x%x",
+		SENSOR_LOGI("_ov5648_saveLoad_exposure save shutter 0x%x gain 0x%x",
 							s_ov5648_shutter_bak,
 							s_ov5648_gain_bak);
 	}
@@ -2531,10 +2531,10 @@ LOCAL unsigned long _ov5648_BeforeSnapshot(unsigned long param)
 	uint32_t prv_linetime=s_ov5648_Resolution_Trim_Tab[preview_mode].line_time;
 	uint32_t cap_linetime = s_ov5648_Resolution_Trim_Tab[capture_mode].line_time;
 
-	SENSOR_PRINT("SENSOR_OV5648: BeforeSnapshot mode: 0x%x, prv_linetime:%d, cap_linetime:%d",param, prv_linetime, cap_linetime);
+	SENSOR_LOGI("SENSOR_OV5648: BeforeSnapshot mode: 0x%x, prv_linetime:%d, cap_linetime:%d",param, prv_linetime, cap_linetime);
 
 	if (preview_mode == capture_mode) {
-		SENSOR_PRINT("SENSOR_OV5648: prv mode equal to cap mode");
+		SENSOR_LOGI("SENSOR_OV5648: prv mode equal to cap mode");
 		goto CFG_INFO;
 	}
 
@@ -2547,7 +2547,7 @@ LOCAL unsigned long _ov5648_BeforeSnapshot(unsigned long param)
 	Sensor_SetMode_WaitDone();
 
 	if (prv_linetime == cap_linetime) {
-		SENSOR_PRINT("SENSOR_OV5648: prvline equal to capline");
+		SENSOR_LOGI("SENSOR_OV5648: prvline equal to capline");
 		goto CFG_INFO;
 	}
 
@@ -2567,7 +2567,7 @@ LOCAL unsigned long _ov5648_BeforeSnapshot(unsigned long param)
 	}
 
 
-	SENSOR_PRINT("SENSOR_OV5648: BeforeSnapshot,  capture_exposure = %d, capture_maxline = %d", capture_exposure, capture_maxline);
+	SENSOR_LOGI("SENSOR_OV5648: BeforeSnapshot,  capture_exposure = %d, capture_maxline = %d", capture_exposure, capture_maxline);
 
 	if(capture_exposure > (capture_maxline - 4)){
 		capture_maxline = capture_exposure + 4;
@@ -2589,7 +2589,7 @@ CFG_INFO:
 
 LOCAL unsigned long _ov5648_after_snapshot(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_OV5648: after_snapshot mode:%d", param);
+	SENSOR_LOGI("SENSOR_OV5648: after_snapshot mode:%d", param);
 	Sensor_SetMode((uint32_t)param);
 
 	return SENSOR_SUCCESS;
@@ -2597,7 +2597,7 @@ LOCAL unsigned long _ov5648_after_snapshot(unsigned long param)
 
 LOCAL unsigned long _ov5648_StreamOn(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_OV5648: StreamOn");
+	SENSOR_LOGI("SENSOR_OV5648: StreamOn");
 
 	Sensor_WriteReg(0x0100, 0x01);
 
@@ -2606,7 +2606,7 @@ LOCAL unsigned long _ov5648_StreamOn(unsigned long param)
 
 LOCAL unsigned long _ov5648_StreamOff(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_OV5648: StreamOff");
+	SENSOR_LOGI("SENSOR_OV5648: StreamOff");
 
 	Sensor_WriteReg(0x0100, 0x00);
 

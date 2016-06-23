@@ -854,7 +854,7 @@ LOCAL uint32_t Sensor_InitRawTuneInfo(void)
 
 LOCAL uint32_t _gc2235_GetResolutionTrimTab(uint32_t param)
 {
-	SENSOR_PRINT("0x%x", (uint32_t)s_gc2235_Resolution_Trim_Tab);
+	SENSOR_LOGI("0x%x", (uint32_t)s_gc2235_Resolution_Trim_Tab);
 	return (uint32_t) s_gc2235_Resolution_Trim_Tab;
 }
 
@@ -889,7 +889,7 @@ LOCAL uint32_t _gc2235_PowerOn(uint32_t power_on)
 
 
 	}
-	SENSOR_PRINT("SENSOR_GC2235: _gc2235_Power_On(1:on, 0:off): %d  ", power_on);
+	SENSOR_LOGI("SENSOR_GC2235: _gc2235_Power_On(1:on, 0:off): %d  ", power_on);
 	return SENSOR_SUCCESS;
 }
 
@@ -904,23 +904,23 @@ LOCAL uint32_t _gc2235_Identify(uint32_t param)
 	uint8_t ver_value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
 
-	SENSOR_PRINT("SENSOR_GC2235:  raw identify \n");
+	SENSOR_LOGI("SENSOR_GC2235:  raw identify \n");
 
 	pid_value = Sensor_ReadReg(gc2235_PID_ADDR);
 
 	if (gc2235_PID_VALUE == pid_value) {
 		ver_value = Sensor_ReadReg(gc2235_VER_ADDR);
-		SENSOR_PRINT("SENSOR_GC2235: Identify: PID = %x, VER = %x", pid_value, ver_value);
+		SENSOR_LOGI("SENSOR_GC2235: Identify: PID = %x, VER = %x", pid_value, ver_value);
 		if (gc2235_VER_VALUE == ver_value) {
 			Sensor_InitRawTuneInfo();
 			ret_value = SENSOR_SUCCESS;
-			SENSOR_PRINT("SENSOR_GC2235: this is gc2235 sensor !");
+			SENSOR_LOGI("SENSOR_GC2235: this is gc2235 sensor !");
 		} else {
-			SENSOR_PRINT
+			SENSOR_LOGI
 			    ("SENSOR_GC2235: Identify this is OV%x%x sensor !", pid_value, ver_value);
 		}
 	} else {
-		SENSOR_PRINT("SENSOR_GC2235: identify fail,pid_value=%x", pid_value);
+		SENSOR_LOGI("SENSOR_GC2235: identify fail,pid_value=%x", pid_value);
 	}
 
 	return ret_value;
@@ -985,7 +985,7 @@ LOCAL uint32_t _gc2235_SetEV(uint32_t param)
 	uint32_t gain = s_gc2235_gain;
 	uint32_t ev = ext_ptr->param;
 
-	SENSOR_PRINT("SENSOR: _gc2235_SetEV param: 0x%x", ev);
+	SENSOR_LOGI("SENSOR: _gc2235_SetEV param: 0x%x", ev);
 
 	gain=(gain*ext_ptr->param)>>0x06;
 
@@ -1025,11 +1025,11 @@ LOCAL uint32_t _gc2235_BeforeSnapshot(uint32_t param)
 	uint32_t prv_linetime=s_gc2235_Resolution_Trim_Tab[SENSOR_MODE_PREVIEW_ONE].line_time;
 	uint32_t cap_linetime = s_gc2235_Resolution_Trim_Tab[param].line_time;
 
-	SENSOR_PRINT("SENSOR_GC2235: BeforeSnapshot moe: %d",param);
+	SENSOR_LOGI("SENSOR_GC2235: BeforeSnapshot moe: %d",param);
 
 	if (SENSOR_MODE_PREVIEW_ONE >= param){
 		_gc2235_ReadGain(0x00);
-		SENSOR_PRINT("SENSOR_GC2235: prvmode equal to capmode");
+		SENSOR_LOGI("SENSOR_GC2235: prvmode equal to capmode");
 		return SENSOR_SUCCESS;
 	}
 
@@ -1046,7 +1046,7 @@ LOCAL uint32_t _gc2235_BeforeSnapshot(uint32_t param)
 	Sensor_SetMode(param);
 
 	if (prv_linetime == cap_linetime) {
-		SENSOR_PRINT("SENSOR_GC2235: prvline equal to capline");
+		SENSOR_LOGI("SENSOR_GC2235: prvline equal to capline");
 		return SENSOR_SUCCESS;
 	}
 
@@ -1084,7 +1084,7 @@ LOCAL uint32_t _gc2235_BeforeSnapshot(uint32_t param)
 
 LOCAL uint32_t _gc2235_after_snapshot(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_GC2235: after_snapshot mode:%d", param);
+	SENSOR_LOGI("SENSOR_GC2235: after_snapshot mode:%d", param);
 	Sensor_SetMode(param);
 
 	return SENSOR_SUCCESS;
@@ -1092,7 +1092,7 @@ LOCAL uint32_t _gc2235_after_snapshot(uint32_t param)
 
 LOCAL uint32_t _gc2235_StreamOn(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_GC2235: StreamOn");
+	SENSOR_LOGI("SENSOR_GC2235: StreamOn");
 
 	//Sensor_WriteReg(0x0100, 0x01);
 
@@ -1101,7 +1101,7 @@ LOCAL uint32_t _gc2235_StreamOn(uint32_t param)
 
 LOCAL uint32_t _gc2235_StreamOff(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_GC2235: StreamOff");
+	SENSOR_LOGI("SENSOR_GC2235: StreamOff");
 
 	//Sensor_WriteReg(0x0100, 0x00);
 

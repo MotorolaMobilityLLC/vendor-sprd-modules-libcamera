@@ -962,7 +962,7 @@ LOCAL uint32_t Sensor_InitRawTuneInfo(void)
 
 LOCAL unsigned long _ov5640_GetResolutionTrimTab(unsigned long param)
 {
-	SENSOR_PRINT("0x%x", (unsigned long)s_ov5640_Resolution_Trim_Tab);
+	SENSOR_LOGI("0x%x", (unsigned long)s_ov5640_Resolution_Trim_Tab);
 	return (unsigned long) s_ov5640_Resolution_Trim_Tab;
 }
 LOCAL unsigned long _ov5640_PowerOn(unsigned long power_on)
@@ -991,7 +991,7 @@ LOCAL unsigned long _ov5640_PowerOn(unsigned long power_on)
 		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 	}
-	SENSOR_PRINT("SENSOR_OV5640: _ov5640_Power_On(1:on, 0:off): %d", power_on);
+	SENSOR_LOGI("SENSOR_OV5640: _ov5640_Power_On(1:on, 0:off): %d", power_on);
 	return SENSOR_SUCCESS;
 }
 
@@ -1006,23 +1006,23 @@ LOCAL unsigned long _ov5640_Identify(unsigned long param)
 	uint8_t ver_value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
 
-	SENSOR_PRINT("SENSOR_OV5640: mipi raw identify\n");
+	SENSOR_LOGI("SENSOR_OV5640: mipi raw identify\n");
 
 	pid_value = Sensor_ReadReg(ov5640_PID_ADDR);
 
 	if (ov5640_PID_VALUE == pid_value) {
 		ver_value = Sensor_ReadReg(ov5640_VER_ADDR);
-		SENSOR_PRINT("SENSOR_OV5640: Identify: PID = %x, VER = %x", pid_value, ver_value);
+		SENSOR_LOGI("SENSOR_OV5640: Identify: PID = %x, VER = %x", pid_value, ver_value);
 		if (ov5640_VER_VALUE == ver_value) {
 			Sensor_InitRawTuneInfo();
 			ret_value = SENSOR_SUCCESS;
-			SENSOR_PRINT("SENSOR_OV5640: this is ov5640 mipi raw sensor !");
+			SENSOR_LOGI("SENSOR_OV5640: this is ov5640 mipi raw sensor !");
 		} else {
-			SENSOR_PRINT
+			SENSOR_LOGI
 			    ("SENSOR_OV5640: Identify this is OV%x%x sensor !", pid_value, ver_value);
 		}
 	} else {
-		SENSOR_PRINT("SENSOR_OV5640: identify fail,pid_value=%d", pid_value);
+		SENSOR_LOGI("SENSOR_OV5640: identify fail,pid_value=%d", pid_value);
 	}
 
 	return ret_value;
@@ -1041,7 +1041,7 @@ LOCAL unsigned long _ov5640_write_exposure(unsigned long param)
 	expsure_line=param&0xffff;
 	dummy_line=(param>>0x10)&0xffff;
 
-	SENSOR_PRINT("SENSOR_OV5640: write_exposure line:%d, dummy:%d", expsure_line, dummy_line);
+	SENSOR_LOGI("SENSOR_OV5640: write_exposure line:%d, dummy:%d", expsure_line, dummy_line);
 
 	value=(expsure_line<<0x04)&0xff;
 	ret_value = Sensor_WriteReg(0x3502, value);
@@ -1062,7 +1062,7 @@ LOCAL unsigned long _ov5640_write_gain(unsigned long param)
 	real_gain = ((param&0xf)+16)*(((param>>4)&0x01)+1)*(((param>>5)&0x01)+1);
 	real_gain = real_gain*(((param>>6)&0x01)+1)*(((param>>7)*0x01)+1)*(((param>>8)*0x01)+1);
 
-	SENSOR_PRINT("SENSOR_OV5640: real_gain:0x%x, param: 0x%x", real_gain, param);
+	SENSOR_LOGI("SENSOR_OV5640: real_gain:0x%x, param: 0x%x", real_gain, param);
 
 	value = real_gain&0xff;
 	ret_value = Sensor_WriteReg(0x350b, value);/*0-7*/
@@ -1077,7 +1077,7 @@ LOCAL unsigned long _ov5640_write_af(unsigned long param)
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint16_t value=0x00;
 
-	SENSOR_PRINT("SENSOR_OV5640: _write_af %d", param);
+	SENSOR_LOGI("SENSOR_OV5640: _write_af %d", param);
 
 	value=(param&0xf)<<0x04;
 	ret_value = Sensor_WriteReg(0x3602, value);
@@ -1100,7 +1100,7 @@ LOCAL uint32_t _ov5640_ReadGain(uint32_t param)
 
 	s_ov5640_gain=gain;
 
-	SENSOR_PRINT("SENSOR: _ov5640_ReadGain gain: 0x%x", s_ov5640_gain);
+	SENSOR_LOGI("SENSOR: _ov5640_ReadGain gain: 0x%x", s_ov5640_gain);
 
 	return rtn;
 }
@@ -1113,7 +1113,7 @@ LOCAL uint32_t _ov5640_SetEV(unsigned long param)
 	uint32_t gain = s_ov5640_gain;
 	uint32_t ev = ext_ptr->param;
 
-	SENSOR_PRINT("SENSOR: _ov5640_SetEV param: 0x%x", ev);
+	SENSOR_LOGI("SENSOR: _ov5640_SetEV param: 0x%x", ev);
 
 	gain=(gain*ext_ptr->param)>>0x06;
 
@@ -1152,12 +1152,12 @@ LOCAL unsigned long _ov5640_BeforeSnapshot(unsigned long param)
 	uint32_t cap_linetime;
 
 	param = param&0xffff;
-	SENSOR_PRINT("%d,%d.",cap_mode,param);
+	SENSOR_LOGI("%d,%d.",cap_mode,param);
 	cap_linetime = s_ov5640_Resolution_Trim_Tab[param].line_time;
 
 	if (SENSOR_MODE_PREVIEW_ONE >= param){
 		_ov5640_ReadGain(0x00);
-		SENSOR_PRINT("SENSOR_OV5640: prvmode equal to capmode");
+		SENSOR_LOGI("SENSOR_OV5640: prvmode equal to capmode");
 		return SENSOR_SUCCESS;
 	}
 
@@ -1173,7 +1173,7 @@ LOCAL unsigned long _ov5640_BeforeSnapshot(unsigned long param)
 	Sensor_SetMode((uint32_t)param);
 
 	if (prv_linetime == cap_linetime) {
-		SENSOR_PRINT("SENSOR_OV5640: prvline equal to capline");
+		SENSOR_LOGI("SENSOR_OV5640: prvline equal to capline");
 		return SENSOR_SUCCESS;
 	}
 
@@ -1203,14 +1203,14 @@ LOCAL unsigned long _ov5640_BeforeSnapshot(unsigned long param)
 
 LOCAL unsigned long _ov5640_after_snapshot(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_OV5640: after_snapshot mode:%d", param);
+	SENSOR_LOGI("SENSOR_OV5640: after_snapshot mode:%d", param);
 	Sensor_SetMode((uint32_t)param);
 	return SENSOR_SUCCESS;
 }
 
 LOCAL unsigned long _ov5640_StreamOn(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_OV5640: StreamOn");
+	SENSOR_LOGI("SENSOR_OV5640: StreamOn");
 
 	Sensor_WriteReg(0x3008, 0x02);
 
@@ -1219,7 +1219,7 @@ LOCAL unsigned long _ov5640_StreamOn(unsigned long param)
 
 LOCAL unsigned long _ov5640_StreamOff(unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_OV5640: StreamOff");
+	SENSOR_LOGI("SENSOR_OV5640: StreamOff");
 
 	Sensor_WriteReg(0x3008, 0x42);
 

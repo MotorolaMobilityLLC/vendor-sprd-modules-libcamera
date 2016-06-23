@@ -31,8 +31,8 @@
 #define SENSOR_VER_ADDR 	    0x04
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
-#define FUN_ENTER               SENSOR_PRINT("sensor_autotst-> %s ++.\n", __FUNCTION__)
-#define FUN_LEAVE               SENSOR_PRINT("sensor_autotst-> %s --.\n", __FUNCTION__)
+#define FUN_ENTER               SENSOR_LOGI("sensor_autotst-> %s ++.\n", __FUNCTION__)
+#define FUN_LEAVE               SENSOR_LOGI("sensor_autotst-> %s --.\n", __FUNCTION__)
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
@@ -202,7 +202,7 @@ LOCAL uint32_t autotst_PowerOn(uint32_t power_on)
 		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
 	}
 
-	SENSOR_PRINT("(1:on, 0:off)xiang: %d", power_on);
+	SENSOR_LOGI("(1:on, 0:off)xiang: %d", power_on);
 	return SENSOR_SUCCESS;
 }
 

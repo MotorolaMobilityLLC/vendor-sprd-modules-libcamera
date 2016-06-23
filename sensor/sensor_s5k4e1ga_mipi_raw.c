@@ -353,18 +353,18 @@ LOCAL uint32_t _s5k4e1ga_set_video_mode(uint32_t param)
 		return 0;
 
 	if (SENSOR_SUCCESS != Sensor_GetMode(&mode)) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	if (PNULL == s_s5k4e1ga_video_info[mode].setting_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	sensor_reg_ptr = (SENSOR_REG_T_PTR)&s_s5k4e1ga_video_info[mode].setting_ptr[param];
 	if (PNULL == sensor_reg_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
@@ -372,7 +372,7 @@ LOCAL uint32_t _s5k4e1ga_set_video_mode(uint32_t param)
 		Sensor_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("0x%02x", param);
+	SENSOR_LOGI("0x%02x", param);
 	return 0;
 }
 
@@ -1609,7 +1609,7 @@ LOCAL uint32_t Sensor_InitRawTuneInfo(void)
 
 LOCAL uint32_t _s5k4e1ga_GetResolutionTrimTab(uint32_t param)
 {
-	SENSOR_PRINT("0x%x", (uint32_t)s_s5k4e1ga_Resolution_Trim_Tab);
+	SENSOR_LOGI("0x%x", (uint32_t)s_s5k4e1ga_Resolution_Trim_Tab);
 	return (uint32_t) s_s5k4e1ga_Resolution_Trim_Tab;
 }
 
@@ -1639,7 +1639,7 @@ LOCAL uint32_t _s5k4e1ga_PowerOn(uint32_t power_on)
 		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 	}
-	SENSOR_PRINT("SENSOR_s5k4e1ga: _s5k4e1ga_Power_On(1:on, 0:off): %d", power_on);
+	SENSOR_LOGI("SENSOR_s5k4e1ga: _s5k4e1ga_Power_On(1:on, 0:off): %d", power_on);
 	return SENSOR_SUCCESS;
 }
 
@@ -1649,7 +1649,7 @@ LOCAL uint32_t _s5k4e1ga_cfg_otp(uint32_t  param)
 	struct raw_param_info_tab* tab_ptr = (struct raw_param_info_tab*)s_s5k4e1ga_raw_param_tab;
 	uint32_t module_id=g_module_id;
 
-	SENSOR_PRINT("SENSOR_s5k4e1ga: _s5k4e1ga_cfg_otp");
+	SENSOR_LOGI("SENSOR_s5k4e1ga: _s5k4e1ga_cfg_otp");
 
 	if(PNULL!=tab_ptr[module_id].cfg_otp){
 		tab_ptr[module_id].cfg_otp(0);
@@ -1663,7 +1663,7 @@ LOCAL uint32_t _s5k4e1ga_com_Identify_otp(void* param_ptr)
 	uint32_t rtn=SENSOR_FAIL;
 	uint32_t param_id;
 
-	SENSOR_PRINT("SENSOR_s5k4e1ga: _s5k4e1ga_com_Identify_otp");
+	SENSOR_LOGI("SENSOR_s5k4e1ga: _s5k4e1ga_com_Identify_otp");
 
 	/*read param id from sensor omap*/
 	param_id=s5k4e1ga_RAW_PARAM_COM;
@@ -1690,17 +1690,17 @@ LOCAL uint32_t _s5k4e1ga_GetRawInof(void)
 		g_module_id = i;
 		if(RAW_INFO_END_ID==tab_ptr[i].param_id){
 			if(NULL==s_s5k4e1ga_mipi_raw_info_ptr){
-				SENSOR_PRINT("SENSOR_s5k4e1ga: ov5647_GetRawInof no param error");
+				SENSOR_LOGI("SENSOR_s5k4e1ga: ov5647_GetRawInof no param error");
 				rtn=SENSOR_FAIL;
 			}
-			SENSOR_PRINT("SENSOR_s5k4e1ga: s5k4e1ga_GetRawInof end");
+			SENSOR_LOGI("SENSOR_s5k4e1ga: s5k4e1ga_GetRawInof end");
 			break;
 		}
 		else if(PNULL!=tab_ptr[i].identify_otp){
 			if(SENSOR_SUCCESS==tab_ptr[i].identify_otp(0))
 			{
 				s_s5k4e1ga_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
-				SENSOR_PRINT("SENSOR_s5k4e1ga: s5k4e1ga_GetRawInof success");
+				SENSOR_LOGI("SENSOR_s5k4e1ga: s5k4e1ga_GetRawInof success");
 				break;
 			}
 		}
@@ -1730,23 +1730,23 @@ LOCAL uint32_t _s5k4e1ga_Identify(uint32_t param)
 	uint8_t ver_value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
 
-	SENSOR_PRINT("SENSOR_s5k4e1ga: mipi raw identify\n");
+	SENSOR_LOGI("SENSOR_s5k4e1ga: mipi raw identify\n");
 
 	pid_value = Sensor_ReadReg(s5k4e1ga_PID_ADDR);
 
 	if (s5k4e1ga_PID_VALUE == pid_value) {
 		ver_value = Sensor_ReadReg(s5k4e1ga_VER_ADDR);
-		SENSOR_PRINT("SENSOR_s5k4e1ga: Identify: PID = %x, VER = %x", pid_value, ver_value);
+		SENSOR_LOGI("SENSOR_s5k4e1ga: Identify: PID = %x, VER = %x", pid_value, ver_value);
 		if (s5k4e1ga_VER_VALUE == ver_value) {
 			ret_value=_s5k4e1ga_GetRawInof();
 			Sensor_InitRawTuneInfo();
 			ret_value = SENSOR_SUCCESS;
-			SENSOR_PRINT_HIGH("SENSOR_s5k4e1ga: this is s5k4e1ga sensor !");
+			SENSOR_LOGI("SENSOR_s5k4e1ga: this is s5k4e1ga sensor !");
 		} else {
-			SENSOR_PRINT_ERR("SENSOR_s5k4e1ga: identify fail,ver_value=%d", ver_value);
+			SENSOR_LOGI("SENSOR_s5k4e1ga: identify fail,ver_value=%d", ver_value);
 		}
 	} else {
-		SENSOR_PRINT_ERR("SENSOR_s5k4e1ga: identify fail,pid_value=%d", pid_value);
+		SENSOR_LOGI("SENSOR_s5k4e1ga: identify fail,pid_value=%d", pid_value);
 	}
 
 	return ret_value;
@@ -1770,7 +1770,7 @@ LOCAL uint32_t _s5k4e1ga_write_exposure(uint32_t param)
 	dummy_line=(param>>0x10)&0x0fff;
 	size_index=(param>>0x1c)&0x0f;
 
-	SENSOR_PRINT("SENSOR_s5k4e1ga: write_exposure line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
+	SENSOR_LOGI("SENSOR_s5k4e1ga: write_exposure line:%d, dummy:%d, size_index:%d", expsure_line, dummy_line, size_index);
 
 	max_frame_len=_s5k4e1ga_GetMaxFrameLine(size_index);
 
@@ -1794,7 +1794,7 @@ LOCAL uint32_t _s5k4e1ga_write_exposure(uint32_t param)
 		value = Sensor_ReadReg(0x0340);
 		frame_len_cur |= (value<<0x08)&0xff00;
 
-		SENSOR_PRINT("SENSOR_s5k4e1ga: write_exposure line:%d, frame_len_cur:%d, frame_len:%d", expsure_line, frame_len_cur, frame_len);
+		SENSOR_LOGI("SENSOR_s5k4e1ga: write_exposure line:%d, frame_len_cur:%d, frame_len:%d", expsure_line, frame_len_cur, frame_len);
 
 		ret_value = Sensor_WriteReg(0x104, 0x01);
 
@@ -1825,7 +1825,7 @@ LOCAL uint32_t _s5k4e1ga_write_gain(uint32_t param)
 
 	real_gain = real_gain<<1;
 
-	SENSOR_PRINT("SENSOR_s5k4e1ga: real_gain:0x%x, param: 0x%x", real_gain, param);
+	SENSOR_LOGI("SENSOR_s5k4e1ga: real_gain:0x%x, param: 0x%x", real_gain, param);
 
 	ret_value = Sensor_WriteReg(0x104, 0x01);
 	value = real_gain>>0x08;
@@ -1846,7 +1846,7 @@ LOCAL uint32_t _s5k4e1ga_write_af(uint32_t param)
 		uint16_t  slave_addr = 0;
 		uint16_t cmd_len = 0;
 
-		SENSOR_PRINT("SENSOR_s5k4e1ga: _write_af %d", param);
+		SENSOR_LOGI("SENSOR_s5k4e1ga: _write_af %d", param);
 
 		//for direct mode
 		slave_addr = DW8714_VCM_SLAVE_ADDR;
@@ -1854,7 +1854,7 @@ LOCAL uint32_t _s5k4e1ga_write_af(uint32_t param)
 		cmd_val[1] = (param&0x0f)<<4;
 		cmd_len = 2;
 		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
-		SENSOR_PRINT("SENSOR_s5k4e1ga: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
+		SENSOR_LOGI("SENSOR_s5k4e1ga: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
 
 		return ret_value;
 
@@ -1873,7 +1873,7 @@ LOCAL uint32_t _s5k4e1ga_ReadGain(uint32_t param)
 
 	s_s5k4e1ga_gain=gain;
 
-	SENSOR_PRINT("SENSOR: _s5k4e1ga_ReadGain gain: 0x%x", s_s5k4e1ga_gain);
+	SENSOR_LOGI("SENSOR: _s5k4e1ga_ReadGain gain: 0x%x", s_s5k4e1ga_gain);
 
 	return rtn;
 }
@@ -1898,7 +1898,7 @@ LOCAL uint32_t _s5k4e1ga_SetEV(uint32_t param)
 	uint32_t gain = s_s5k4e1ga_gain;
 	uint32_t ev = ext_ptr->param;
 
-	SENSOR_PRINT("SENSOR: _s5k4e1ga_SetEV param: 0x%x", ev);
+	SENSOR_LOGI("SENSOR: _s5k4e1ga_SetEV param: 0x%x", ev);
 
 	return rtn;
 }
@@ -1933,10 +1933,10 @@ LOCAL uint32_t _s5k4e1ga_BeforeSnapshot(uint32_t param)
 
 	param = param & 0xffff;
 	cap_linetime = s_s5k4e1ga_Resolution_Trim_Tab[param].line_time;
-	SENSOR_PRINT("SENSOR_s5k4e1ga: BeforeSnapshot moe: %d",param);
+	SENSOR_LOGI("SENSOR_s5k4e1ga: BeforeSnapshot moe: %d",param);
 
 	if (SENSOR_MODE_PREVIEW_ONE >= param){
-		SENSOR_PRINT("SENSOR_s5k4e1ga: prvmode equal to capmode");
+		SENSOR_LOGI("SENSOR_s5k4e1ga: prvmode equal to capmode");
 		return SENSOR_SUCCESS;
 	}
 	preview_exposure = _s5k4e1ga_get_shutter();
@@ -1944,7 +1944,7 @@ LOCAL uint32_t _s5k4e1ga_BeforeSnapshot(uint32_t param)
 	Sensor_SetMode_WaitDone();
 
 	if (prv_linetime == cap_linetime) {
-		SENSOR_PRINT("SENSOR_s5k4e1ga: prvline equal to capline");
+		SENSOR_LOGI("SENSOR_s5k4e1ga: prvline equal to capline");
 		Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, preview_exposure);
 		return SENSOR_SUCCESS;
 	}
@@ -1970,14 +1970,14 @@ LOCAL uint32_t _s5k4e1ga_BeforeSnapshot(uint32_t param)
 
 LOCAL uint32_t _s5k4e1ga_after_snapshot(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_s5k4e1ga: after_snapshot mode:%d", param);
+	SENSOR_LOGI("SENSOR_s5k4e1ga: after_snapshot mode:%d", param);
 	Sensor_SetMode(param);
 	return SENSOR_SUCCESS;
 }
 
 LOCAL uint32_t _s5k4e1ga_StreamOn(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_s5k4e1ga: StreamOn");
+	SENSOR_LOGI("SENSOR_s5k4e1ga: StreamOn");
 
 	Sensor_WriteReg(0x0100, 0x01);
 
@@ -1986,7 +1986,7 @@ LOCAL uint32_t _s5k4e1ga_StreamOn(uint32_t param)
 
 LOCAL uint32_t _s5k4e1ga_StreamOff(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_s5k4e1ga: StreamOff");
+	SENSOR_LOGI("SENSOR_s5k4e1ga: StreamOff");
 
 	Sensor_WriteReg(0x0100, 0x00);
 	usleep(40*1000);

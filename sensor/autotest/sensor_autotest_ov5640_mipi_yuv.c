@@ -593,7 +593,7 @@ LOCAL unsigned long _at_ov5640_PowerOn(unsigned long power_on)
 				  SENSOR_AVDD_CLOSED);
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 	}
-	SENSOR_PRINT("(1:on, 0:off): %ld", power_on);
+	SENSOR_LOGI("(1:on, 0:off): %ld", power_on);
 	return SENSOR_SUCCESS;
 }
 
@@ -608,29 +608,29 @@ LOCAL unsigned long _at_ov5640_Identify(unsigned long param)
 	uint8_t ver_value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
 
-	SENSOR_PRINT("Start");
+	SENSOR_LOGI("Start");
 
 	pid_value = Sensor_ReadReg(ov5640_PID_ADDR);
 
 	if (ov5640_PID_VALUE == pid_value) {
 		ver_value = Sensor_ReadReg(ov5640_VER_ADDR);
-		SENSOR_PRINT("PID = %x, VER = %x",
+		SENSOR_LOGI("PID = %x, VER = %x",
 			     pid_value, ver_value);
 		if (ov5640_VER_VALUE == ver_value) {
 			ret_value = SENSOR_SUCCESS;
-			SENSOR_PRINT("this is ov5640 yuv mipi sensor !");
+			SENSOR_LOGI("this is ov5640 yuv mipi sensor !");
 		} else {
-			SENSOR_PRINT("this is OV%x%x sensor !", pid_value, ver_value);
+			SENSOR_LOGI("this is OV%x%x sensor !", pid_value, ver_value);
 		}
 	} else {
-		SENSOR_PRINT("fail,pid_value=%d", pid_value);
+		SENSOR_LOGI("fail,pid_value=%d", pid_value);
 	}
 	return ret_value;
 }
 
 LOCAL unsigned long _at_ov5640_StreamOn(unsigned long param)
 {
-	SENSOR_PRINT("Start");
+	SENSOR_LOGI("Start");
 
 	Sensor_WriteReg(0x3008, 0x02);
 	s_is_streamoff = 0;
@@ -640,7 +640,7 @@ LOCAL unsigned long _at_ov5640_StreamOn(unsigned long param)
 
 LOCAL unsigned long _at_ov5640_StreamOff(unsigned long param)
 {
-	SENSOR_PRINT("Stop");
+	SENSOR_LOGI("Stop");
 
 	Sensor_WriteReg(0x3008, 0x42);
 	s_is_streamoff = 1;

@@ -1121,7 +1121,7 @@ LOCAL uint32_t Sensor_InitRawTuneInfo(void)
 
 LOCAL uint32_t _ov8830_GetResolutionTrimTab(uint32_t param)
 {
-	SENSOR_PRINT("0x%x",  (uint32_t)s_ov8830_Resolution_Trim_Tab);
+	SENSOR_LOGI("0x%x",  (uint32_t)s_ov8830_Resolution_Trim_Tab);
 	return (uint32_t) s_ov8830_Resolution_Trim_Tab;
 }
 LOCAL uint32_t _ov8830_PowerOn(uint32_t power_on)
@@ -1149,7 +1149,7 @@ LOCAL uint32_t _ov8830_PowerOn(uint32_t power_on)
 		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 	}
-	SENSOR_PRINT("SENSOR_ov8830: _ov8830_Power_On(1:on, 0:off): %d", power_on);
+	SENSOR_LOGI("SENSOR_ov8830: _ov8830_Power_On(1:on, 0:off): %d", power_on);
 	return SENSOR_SUCCESS;
 }
 
@@ -1164,21 +1164,21 @@ LOCAL uint32_t _ov8830_Identify(uint32_t param)
 	uint8_t ver_value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
 
-	SENSOR_PRINT("SENSOR_ov8830: mipi raw identify\n");
+	SENSOR_LOGI("SENSOR_ov8830: mipi raw identify\n");
 
 	pid_value = Sensor_ReadReg(ov8830_PID_ADDR);
 	if (ov8830_PID_VALUE == pid_value) {
 		ver_value = Sensor_ReadReg(ov8830_VER_ADDR);
-		SENSOR_PRINT("SENSOR_ov8830: Identify: PID = %x, VER = %x", pid_value, ver_value);
+		SENSOR_LOGI("SENSOR_ov8830: Identify: PID = %x, VER = %x", pid_value, ver_value);
 		if (ov8830_VER_VALUE == ver_value) {
 			Sensor_InitRawTuneInfo();
 			ret_value = SENSOR_SUCCESS;
-			SENSOR_PRINT("SENSOR_ov8830: this is ov8830 sensor !");
+			SENSOR_LOGI("SENSOR_ov8830: this is ov8830 sensor !");
 		} else {
-			SENSOR_PRINT("SENSOR_ov8830: Identify this is OV%x%x sensor !", pid_value, ver_value);
+			SENSOR_LOGI("SENSOR_ov8830: Identify this is OV%x%x sensor !", pid_value, ver_value);
 		}
 	} else {
-		SENSOR_PRINT("SENSOR_ov8830: identify fail,pid_value=%d", pid_value);
+		SENSOR_LOGI("SENSOR_ov8830: identify fail,pid_value=%d", pid_value);
 	}
 	return ret_value;
 }
@@ -1186,7 +1186,7 @@ LOCAL uint32_t _ov8830_Identify(uint32_t param)
 LOCAL uint32_t _ov8830_write_exposure(uint32_t param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
-	SENSOR_PRINT("SENSOR_ov8830: _ov8830_write_exposure= 0x%x", param);
+	SENSOR_LOGI("SENSOR_ov8830: _ov8830_write_exposure= 0x%x", param);
 
 	return ret_value;
 }
@@ -1195,7 +1195,7 @@ LOCAL uint32_t _ov8830_write_gain(uint32_t param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint16_t value=0x00;
-	SENSOR_PRINT("SENSOR_ov8830: _ov8830_write_gain = 0x%x", param);
+	SENSOR_LOGI("SENSOR_ov8830: _ov8830_write_gain = 0x%x", param);
 
 	return ret_value;
 }
@@ -1206,7 +1206,7 @@ LOCAL uint32_t _ov8830_write_af(uint32_t param)
 	uint16_t value=0x00;
 	uint16_t reg_val = 0x0;
 
-	SENSOR_PRINT("SENSOR_ov8830: _write_af = 0x%x", param);
+	SENSOR_LOGI("SENSOR_ov8830: _write_af = 0x%x", param);
 
 	return ret_value;
 }
@@ -1216,7 +1216,7 @@ LOCAL uint32_t _ov8830_BeforeSnapshot(uint32_t param)
 	uint32_t rtn = SENSOR_SUCCESS;
 	param = param & 0xffff;
 
-	SENSOR_PRINT("SENSOR_ov8830: BeforeSnapshot : %d",param);
+	SENSOR_LOGI("SENSOR_ov8830: BeforeSnapshot : %d",param);
 
 
 
@@ -1225,7 +1225,7 @@ LOCAL uint32_t _ov8830_BeforeSnapshot(uint32_t param)
 
 LOCAL uint32_t _ov8830_after_snapshot(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_ov8830: after_snapshot mode:%d", param);
+	SENSOR_LOGI("SENSOR_ov8830: after_snapshot mode:%d", param);
 
 
 	return SENSOR_SUCCESS;
@@ -1233,16 +1233,16 @@ LOCAL uint32_t _ov8830_after_snapshot(uint32_t param)
 
 LOCAL uint32_t _ov8830_flash(uint32_t param)
 {
-	SENSOR_PRINT("Start:param=%d", param);
+	SENSOR_LOGI("Start:param=%d", param);
 
-	SENSOR_PRINT_HIGH("end");
+	SENSOR_LOGI("end");
 
 	return SENSOR_SUCCESS;
 }
 
 LOCAL uint32_t _ov8830_StreamOn(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_ov8830: StreamOn");
+	SENSOR_LOGI("SENSOR_ov8830: StreamOn");
 
 	Sensor_WriteReg(0x0100, 0x01);
 
@@ -1251,7 +1251,7 @@ LOCAL uint32_t _ov8830_StreamOn(uint32_t param)
 
 LOCAL uint32_t _ov8830_StreamOff(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_ov8830: StreamOff");
+	SENSOR_LOGI("SENSOR_ov8830: StreamOff");
 
 	Sensor_WriteReg(0x0100, 0x00);
 	usleep(50*1000);

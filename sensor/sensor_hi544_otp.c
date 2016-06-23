@@ -115,7 +115,7 @@ LOCAL int8_t _hi544_truly_otp_check_wb_group(uint8_t index)
 
 	if (index > 2)
 	{
-		SENSOR_PRINT("OTP input wb group index %d error\n", index);
+		SENSOR_LOGI("OTP input wb group index %d error\n", index);
 		return -1;
 	}
 
@@ -129,17 +129,17 @@ LOCAL int8_t _hi544_truly_otp_check_wb_group(uint8_t index)
 	// Check from group 1 to group 2, then group 3.
 	if (!flag)
 	{
-		SENSOR_PRINT("wb group %d is empty\n", index);
+		SENSOR_LOGI("wb group %d is empty\n", index);
 		return 0;
 	}
 	else if ((!(flag&0x80)) && (flag&0x7f))
 	{
-		SENSOR_PRINT("wb group %d has valid data\n", index);
+		SENSOR_LOGI("wb group %d has valid data\n", index);
 		return 2;
 	}
 	else
 	{
-		SENSOR_PRINT("wb group %d has invalid data\n", index);
+		SENSOR_LOGI("wb group %d has invalid data\n", index);
 		return 1;
 	}
 }
@@ -163,14 +163,14 @@ LOCAL int8_t _hi544_truly_otp_read_wb_group(int8_t index)
 		{
 			if (_hi544_truly_otp_check_wb_group(index) == 2)
 			{
-				SENSOR_PRINT("read wb from group %d\n", index);
+				SENSOR_LOGI("read wb from group %d\n", index);
 				break;
 			}
 		}
 
 		if (index > 2)
 		{
-			SENSOR_PRINT("no group has valid data\n");
+			SENSOR_LOGI("no group has valid data\n");
 			return -1;
 		}
 	}
@@ -178,7 +178,7 @@ LOCAL int8_t _hi544_truly_otp_read_wb_group(int8_t index)
 	{
 		if (_hi544_truly_otp_check_wb_group(index) != 2)
 		{
-			SENSOR_PRINT("read wb from group %d failed\n", index);
+			SENSOR_LOGI("read wb from group %d failed\n", index);
 			return -1;
 		}
 	}
@@ -198,7 +198,7 @@ LOCAL int8_t _hi544_truly_otp_read_wb_group(int8_t index)
 	_hi544_truly_otp_read(otp_addr+3, &truly_bg_ratio);
 	_hi544_truly_otp_clear();
 
-	SENSOR_PRINT("read wb finished\n");
+	SENSOR_LOGI("read wb finished\n");
 	return index;
 }
 
@@ -221,7 +221,7 @@ LOCAL uint32_t _hi544_truly_otp_apply_wb(uint8_t golden_rg, uint8_t golden_bg)
 
 	if (!golden_rg || !golden_bg)
 	{
-		SENSOR_PRINT("golden_rg / golden_bg can not be zero\n");
+		SENSOR_LOGI("golden_rg / golden_bg can not be zero\n");
 		return 0;
 	}
 
@@ -277,9 +277,9 @@ LOCAL uint32_t _hi544_truly_otp_apply_wb(uint8_t golden_rg, uint8_t golden_bg)
 		Sensor_WriteReg(hi544_TRULY_GAIN_BL_ADDR, gain_b & 0x00ff);
 	}
 
-	SENSOR_PRINT("cmp_rg=%f, cmp_bg=%f\n", cmp_rg, cmp_bg);
-	SENSOR_PRINT("ratio_r=%f, ratio_g=%f, ratio_b=%f\n", ratio_r, ratio_g, ratio_b);
-	SENSOR_PRINT("gain_r=0x%x, gain_g=0x%x, gain_b=0x%x\n", gain_r, gain_g, gain_b);
+	SENSOR_LOGI("cmp_rg=%f, cmp_bg=%f\n", cmp_rg, cmp_bg);
+	SENSOR_LOGI("ratio_r=%f, ratio_g=%f, ratio_b=%f\n", ratio_r, ratio_g, ratio_b);
+	SENSOR_LOGI("gain_r=0x%x, gain_g=0x%x, gain_b=0x%x\n", gain_r, gain_g, gain_b);
 	return 1;
 }
 
@@ -297,7 +297,7 @@ LOCAL uint32_t _hi544_truly_otp_apply_wb(uint8_t golden_rg, uint8_t golden_bg)
 
 	if (!golden_rg || !golden_bg)
 	{
-		SENSOR_PRINT("golden_rg / golden_bg can not be zero\n");
+		SENSOR_LOGI("golden_rg / golden_bg can not be zero\n");
 		return 0;
 	}
 
@@ -353,9 +353,9 @@ LOCAL uint32_t _hi544_truly_otp_apply_wb(uint8_t golden_rg, uint8_t golden_bg)
 		Sensor_WriteReg(hi544_TRULY_GAIN_BL_ADDR, gain_b & 0x00ff);
 	}
 
-	SENSOR_PRINT("cmp_rg=%d, cmp_bg=%d\n", cmp_rg, cmp_bg);
-	SENSOR_PRINT("ratio_r=%d, ratio_g=%d, ratio_b=%d\n", ratio_r, ratio_g, ratio_b);
-	SENSOR_PRINT("gain_r=0x%x, gain_g=0x%x, gain_b=0x%x\n", gain_r, gain_g, gain_b);
+	SENSOR_LOGI("cmp_rg=%d, cmp_bg=%d\n", cmp_rg, cmp_bg);
+	SENSOR_LOGI("ratio_r=%d, ratio_g=%d, ratio_b=%d\n", ratio_r, ratio_g, ratio_b);
+	SENSOR_LOGI("gain_r=0x%x, gain_g=0x%x, gain_b=0x%x\n", gain_r, gain_g, gain_b);
 	return 1;
 }
 #endif /* SUPPORT_FLOATING */
@@ -369,18 +369,18 @@ LOCAL uint32_t _hi544_truly_otp_apply_wb(uint8_t golden_rg, uint8_t golden_bg)
 *******************************************************************************/
 LOCAL uint32_t _hi544_truly_otp_update_wb(uint8_t golden_rg, uint8_t golden_bg)
 {
-//	SENSOR_PRINT("start wb update\n");
+//	SENSOR_LOGI("start wb update\n");
 
 	if (_hi544_truly_otp_read_wb_group(-1) != -1)
 	{
 		if (_hi544_truly_otp_apply_wb(golden_rg, golden_bg) == 1)
 		{
-			SENSOR_PRINT("wb update finished\n");
+			SENSOR_LOGI("wb update finished\n");
 			return 1;
 		}
 	}
 
-//	SENSOR_PRINT("wb update failed\n");
+//	SENSOR_LOGI("wb update failed\n");
 	return 0;
 }
 
@@ -401,7 +401,7 @@ LOCAL int8_t _hi544_truly_otp_check_lenc_group(uint8_t index)
 
 	if (index > 2)
 	{
-		SENSOR_PRINT("OTP input lenc group index %d error\n", index);
+		SENSOR_LOGI("OTP input lenc group index %d error\n", index);
 		return -1;
 	}
 
@@ -418,17 +418,17 @@ LOCAL int8_t _hi544_truly_otp_check_lenc_group(uint8_t index)
 	// Check from group 1 to group 2, then group 3.
 	if (!flag)
 	{
-		SENSOR_PRINT("lenc group %d is empty\n", index);
+		SENSOR_LOGI("lenc group %d is empty\n", index);
 		return 0;
 	}
 	else if (flag == 0x40)
 	{
-		SENSOR_PRINT("lenc group %d has valid data\n", index);
+		SENSOR_LOGI("lenc group %d has valid data\n", index);
 		return 2;
 	}
 	else
 	{
-		SENSOR_PRINT("lenc group %d has invalid data\n", index);
+		SENSOR_LOGI("lenc group %d has invalid data\n", index);
 		return 1;
 	}
 }
@@ -453,14 +453,14 @@ LOCAL int8_t _hi544_truly_otp_read_lenc_group(int index)
 		{
 			if (_hi544_truly_otp_check_lenc_group(index) == 2)
 			{
-				SENSOR_PRINT("read lenc from group %d\n", index);
+				SENSOR_LOGI("read lenc from group %d\n", index);
 				break;
 			}
 		}
 
 		if (index > 2)
 		{
-			SENSOR_PRINT("no group has valid data\n");
+			SENSOR_LOGI("no group has valid data\n");
 			return -1;
 		}
 	}
@@ -468,7 +468,7 @@ LOCAL int8_t _hi544_truly_otp_read_lenc_group(int index)
 	{
 		if (_hi544_truly_otp_check_lenc_group(index) != 2)
 		{
-			SENSOR_PRINT("read lenc from group %d failed\n", index);
+			SENSOR_LOGI("read lenc from group %d failed\n", index);
 			return -1;
 		}
 	}
@@ -503,7 +503,7 @@ LOCAL int8_t _hi544_truly_otp_read_lenc_group(int index)
 	_hi544_truly_otp_read_disable();
 	_hi544_truly_otp_clear();
 
-	SENSOR_PRINT("read lenc finished\n");
+	SENSOR_LOGI("read lenc finished\n");
 	return index;
 }
 
@@ -516,7 +516,7 @@ LOCAL int8_t _hi544_truly_otp_read_lenc_group(int index)
 LOCAL void _hi544_truly_otp_apply_lenc(void)
 {
 	// write lens correction setting to registers
-	//SENSOR_PRINT("apply lenc setting\n");
+	//SENSOR_LOGI("apply lenc setting\n");
 
 	uint8_t data = truly_otp_lenc_data[0] | 0x80;
 	uint8_t i;
@@ -526,7 +526,7 @@ LOCAL void _hi544_truly_otp_apply_lenc(void)
 	for (i=1; i<hi544_TRULY_LENC_REG_SIZE; i++)
 	{
 		Sensor_WriteReg(hi544_TRULY_LENC_START_ADDR+i, truly_otp_lenc_data[i]);
-		//SENSOR_PRINT("0x%x, 0x%x\n", hi544_TRULY_LENC_START_ADDR+i, truly_otp_lenc_data[i]);
+		//SENSOR_LOGI("0x%x, 0x%x\n", hi544_TRULY_LENC_START_ADDR+i, truly_otp_lenc_data[i]);
 	}
 }
 
@@ -538,16 +538,16 @@ LOCAL void _hi544_truly_otp_apply_lenc(void)
 *******************************************************************************/
 LOCAL uint32_t _hi544_truly_otp_update_lenc(void)
 {
-	SENSOR_PRINT("start lenc update\n");
+	SENSOR_LOGI("start lenc update\n");
 
 	if (_hi544_truly_otp_read_lenc_group(-1) != -1)
 	{
 		_hi544_truly_otp_apply_lenc();
-		SENSOR_PRINT("lenc update finished\n");
+		SENSOR_LOGI("lenc update finished\n");
 		return 1;
 	}
 
-	SENSOR_PRINT("lenc update failed\n");
+	SENSOR_LOGI("lenc update failed\n");
 	return 0;
 }
 
@@ -558,13 +558,13 @@ LOCAL uint32_t _hi544_truly_Identify_otp(void* param_ptr)
 	uint8_t mid;
 	uint8_t index;
 
-	SENSOR_PRINT("SENSOR_hi544: _hi544_truly_Identify_otp");
+	SENSOR_LOGI("SENSOR_hi544: _hi544_truly_Identify_otp");
 
 	for (index=0; index<3; index++)
 	{
 		if (_hi544_truly_otp_check_wb_group(index) == 2)
 		{
-			SENSOR_PRINT("SENSOR_hi544:read wb from group %d\n", index);
+			SENSOR_LOGI("SENSOR_hi544:read wb from group %d\n", index);
 			break;
 		}
 	}
@@ -578,18 +578,18 @@ LOCAL uint32_t _hi544_truly_Identify_otp(void* param_ptr)
 		_hi544_truly_otp_read(otp_addr, &mid);
 		mid = mid&0x7f;
 
-		SENSOR_PRINT("SENSOR_hi544:read hi544 otp module_id = %x \n", mid);
+		SENSOR_LOGI("SENSOR_hi544:read hi544 otp module_id = %x \n", mid);
 
 		if (hi544_TRULY_OTP_MID == mid) {
-			//SENSOR_PRINT("SENSOR_hi544: This is truly module!!\n");
+			//SENSOR_LOGI("SENSOR_hi544: This is truly module!!\n");
 			rtn = SENSOR_SUCCESS;
 		} else {
-			SENSOR_PRINT("SENSOR_hi544: check module id faided!!\n");
+			SENSOR_LOGI("SENSOR_hi544: check module id faided!!\n");
 			rtn = SENSOR_FAIL;
 		}
 	} else {
 		/* no valid wb OTP data */
-		SENSOR_PRINT("SENSOR_hi544:hi544_check_otp_module_id no valid wb OTP data\n");
+		SENSOR_LOGI("SENSOR_hi544:hi544_check_otp_module_id no valid wb OTP data\n");
 		rtn = SENSOR_FAIL;
 	}
 
@@ -598,14 +598,14 @@ LOCAL uint32_t _hi544_truly_Identify_otp(void* param_ptr)
 		{
 			if (_hi544_truly_otp_check_lenc_group(index) == 2)
 			{
-				SENSOR_PRINT("SENSOR_hi544:read lenc from group %d\n", index);
-				SENSOR_PRINT("SENSOR_hi544: This is truly module!!\n");
+				SENSOR_LOGI("SENSOR_hi544:read lenc from group %d\n", index);
+				SENSOR_LOGI("SENSOR_hi544: This is truly module!!\n");
 				break;
 			}
 		}
 		if(index >= 3) {
 			/* no valid lenc OTP data */
-			SENSOR_PRINT("SENSOR_hi544:hi544_check_otp_module_id no valid lenc OTP data\n");
+			SENSOR_LOGI("SENSOR_hi544:hi544_check_otp_module_id no valid lenc OTP data\n");
 			rtn = SENSOR_FAIL;
 		}
 
@@ -618,7 +618,7 @@ LOCAL uint32_t  _hi544_truly_update_otp(void* param_ptr)
 {
 	uint16_t temp;
 
-	SENSOR_PRINT("SENSOR_hi544: _hi544_truly_update_otp");
+	SENSOR_LOGI("SENSOR_hi544: _hi544_truly_update_otp");
 
 	temp = Sensor_ReadReg(0x5001);
 	temp = 0x01 | temp;
@@ -633,11 +633,11 @@ LOCAL uint32_t  _hi544_truly_update_otp(void* param_ptr)
 	Sensor_WriteReg(0x5000, temp);
 
 	if (0x00 == _hi544_truly_otp_update_wb(hi544_TRULY_RG_RATIO_TYPICAL,hi544_TRULY_BG_RATIO_TYPICAL)) {
-		SENSOR_PRINT("SENSOR_hi544: otp wb update error");
+		SENSOR_LOGI("SENSOR_hi544: otp wb update error");
 	}
 
 	if (0x00 == _hi544_truly_otp_update_lenc()) {
-		SENSOR_PRINT("SENSOR_hi544: otp lnc update error");
+		SENSOR_LOGI("SENSOR_hi544: otp lnc update error");
 	}
 
 	return 0;

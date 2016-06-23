@@ -20,7 +20,6 @@
 /**---------------------------------------------------------------------------*
  ** 						   Macro Define
  **---------------------------------------------------------------------------*/
- #define SENSOR_TRACE SENSOR_PRINT
 #define OV7675_I2C_ADDR_W	0x21//0x42
 #define OV7675_I2C_ADDR_R		0x21//0x43
 #define SENSOR_GAIN_SCALE		16
@@ -634,13 +633,13 @@ LOCAL SENSOR_IOCTL_FUNC_TAB_T s_OV7675_ioctl_func_tab =
  LOCAL void OV7675_WriteReg( uint8_t  subaddr, uint8_t data )
 {
         Sensor_WriteReg_8bits( subaddr, data);
-   /*     SENSOR_TRACE("SENSOR: OV7675_WriteReg reg/value(%x,%x) !!\n", subaddr, data);*/
+   /*     SENSOR_LOGI("SENSOR: OV7675_WriteReg reg/value(%x,%x) !!\n", subaddr, data);*/
 }
 LOCAL uint8_t OV7675_ReadReg( uint8_t  subaddr)
 {
         uint8_t value = 0;
         value = Sensor_ReadReg(subaddr);
-        //SENSOR_TRACE("SENSOR: OV7675_ReadReg reg/value(%x,%x) !!\n", subaddr, value);
+        //SENSOR_LOGI("SENSOR: OV7675_ReadReg reg/value(%x,%x) !!\n", subaddr, value);
         return value;
 }
 LOCAL unsigned long _ov7675_PowerOn(unsigned long power_on)
@@ -652,12 +651,12 @@ LOCAL unsigned long _ov7675_PowerOn(unsigned long power_on)
 	BOOLEAN reset_level = g_OV7675_yuv_info.reset_pulse_level;
 	//uint32_t reset_width=g_ov5640_yuv_info.reset_pulse_width;
 
-	SENSOR_PRINT("dvdd_val %d, dvdd_val %d, avdd_val %d, iovdd_val %d",
+	SENSOR_LOGI("dvdd_val %d, dvdd_val %d, avdd_val %d, iovdd_val %d",
 			power_on,
 			dvdd_val,
 			avdd_val,
 			iovdd_val);
-	SENSOR_PRINT("power_down %d reset_level %d", power_down, reset_level);
+	SENSOR_LOGI("power_down %d reset_level %d", power_down, reset_level);
 
 	if (SENSOR_TRUE == power_on) {
 		Sensor_PowerDown(power_down);
@@ -678,7 +677,7 @@ LOCAL unsigned long _ov7675_PowerOn(unsigned long power_on)
 		Sensor_SetIovddVoltage(SENSOR_AVDD_CLOSED);
 		usleep(20*1000);
 	}
-	SENSOR_PRINT("(1:on, 0:off): %ld", power_on);
+	SENSOR_LOGI("(1:on, 0:off): %ld", power_on);
 	return SENSOR_SUCCESS;
 }
 LOCAL unsigned long OV7675_Identify(unsigned long param)
@@ -702,7 +701,7 @@ LOCAL unsigned long OV7675_Identify(unsigned long param)
                 if( ret != value[i]) {
                         err_cnt++;
                         if(err_cnt>3) {
-                                SENSOR_PRINT_ERR("Fail to OV7675_Identify: ret: %d, value[%d]: %d", ret, i, value[i]);
+                                SENSOR_LOGI("Fail to OV7675_Identify: ret: %d, value[%d]: %d", ret, i, value[i]);
                                 return SENSOR_FAIL;
                         } else {
                                 //Masked by frank.yang,SENSOR_Sleep() will cause a  Assert when called in boot precedure
@@ -717,7 +716,7 @@ LOCAL unsigned long OV7675_Identify(unsigned long param)
         }
 
         _ov7675_InitExifInfo();
-        SENSOR_PRINT_HIGH("SENSOR: OV7675_Identify: it is OV7675");
+        SENSOR_LOGI("SENSOR: OV7675_Identify: it is OV7675");
         return 0;
 }
 /******************************************************************************/
@@ -731,7 +730,7 @@ LOCAL uint32_t _ov7675_InitExifInfo(void)
 #if 1
     EXIF_SPEC_PIC_TAKING_COND_T* exif_ptr=&s_ov7675_exif;
 
-    SENSOR_TRACE("SENSOR: _ov7675_InitExifInfo");
+    SENSOR_LOGI("SENSOR: _ov7675_InitExifInfo");
     memset(&s_ov7675_exif, 0, sizeof(EXIF_SPEC_PIC_TAKING_COND_T));
 
     exif_ptr->valid.FNumber = 1;
@@ -836,7 +835,7 @@ LOCAL uint32_t _ov7675_Power_On(uint32_t power_on)
         Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
     }
 
-    SENSOR_TRACE("SENSOR: _ov7675_Power_On(1:on, 0:off): %d", power_on);
+    SENSOR_LOGI("SENSOR: _ov7675_Power_On(1:on, 0:off): %d", power_on);
 
     return 0;
 }
@@ -854,7 +853,7 @@ LOCAL unsigned long set_ov7675_ae_enable(unsigned long enable)
                 ae_value|=0x05;
                 OV7675_WriteReg(AE_ENABLE,ae_value);
         }
-        SENSOR_TRACE("SENSOR: set_ae_enable: enable = %ld", enable);
+        SENSOR_LOGI("SENSOR: set_ae_enable: enable = %ld", enable);
         return 0;
 }
 #if 0
@@ -885,7 +884,7 @@ LOCAL uint32_t set_ov7675_ae_awb_enable(uint32_t ae_enable, uint32_t awb_enable)
 
         OV7675_WriteReg(AE_ENABLE,ae_value);
 
-        SENSOR_TRACE("SENSOR: set_ae_awb_enable: ae=%d awb=%d", ae_enable, awb_enable);
+        SENSOR_LOGI("SENSOR: set_ae_awb_enable: ae=%d awb=%d", ae_enable, awb_enable);
 
 	return 0;
 }
@@ -896,7 +895,7 @@ LOCAL unsigned long set_hmirror_enable(unsigned long enable)
         uint8_t value = 0;
         value = OV7675_ReadReg(0x1e);
         value = (value & 0xDF) | ((enable & 0x1) << 5); //landscape
-        SENSOR_TRACE("set_hmirror_enable: enable = %d, 0x1e: 0x%x.\n", enable, value);
+        SENSOR_LOGI("set_hmirror_enable: enable = %d, 0x1e: 0x%x.\n", enable, value);
         OV7675_WriteReg(0x1e, value);
         return 0;
 }
@@ -905,7 +904,7 @@ LOCAL unsigned long set_vmirror_enable(unsigned long enable)
         uint8_t value = 0;
         value = OV7675_ReadReg(0x1e);
         value = (value & 0xEF) | (((enable == 1 ? 0 : 1)) << 4); //portrait
-        SENSOR_TRACE("set_vmirror_enable: enable = %d, 0x1e: 0x%x.\n", enable, value);
+        SENSOR_LOGI("set_vmirror_enable: enable = %d, 0x1e: 0x%x.\n", enable, value);
         OV7675_WriteReg(0x1e, value);
         return 0;
 }
@@ -932,7 +931,7 @@ LOCAL unsigned long set_ov7675_ev(unsigned long level)
         for(i = 0; (0xFF != sensor_reg_ptr[i].reg_addr) && (0xFF != sensor_reg_ptr[i].reg_value) ; i++) {
                 OV7675_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
         }
-        SENSOR_TRACE("SENSOR: set_ev: level = %d", level);
+        SENSOR_LOGI("SENSOR: set_ev: level = %d", level);
         return 0;
 }
 /******************************************************************************/
@@ -959,7 +958,7 @@ LOCAL unsigned long set_ov7675_anti_flicker(unsigned long mode)
         default:
                 break;
         }
-        SENSOR_TRACE("SENSOR: set_banding_mode: mode = %d", mode);
+        SENSOR_LOGI("SENSOR: set_banding_mode: mode = %d", mode);
         return 0;
 }
 /******************************************************************************/
@@ -1009,7 +1008,7 @@ LOCAL unsigned long set_ov7675_video_mode(unsigned long mode)
         sensor_reg_ptr = (SENSOR_REG_T*)ov7675_video_mode_nand_tab[mode];
 
         if(PNULL == sensor_reg_ptr){
-			SENSOR_PRINT("set_ov7675_video_mode: sensor_reg_ptr = NULL, return \n");
+			SENSOR_LOGI("set_ov7675_video_mode: sensor_reg_ptr = NULL, return \n");
 			return 0;
         }
 
@@ -1035,7 +1034,7 @@ LOCAL unsigned long set_ov7675_video_mode(unsigned long mode)
         for(i = 0; (0xFF != sensor_reg_ptr[i].reg_addr) || (0xFF != sensor_reg_ptr[i].reg_value); i++) {
                 OV7675_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
         }
-        SENSOR_TRACE("SENSOR: set_video_mode: mode = %d", mode);
+        SENSOR_LOGI("SENSOR: set_video_mode: mode = %d", mode);
         return 0;
 }
 /******************************************************************************/
@@ -1131,7 +1130,7 @@ LOCAL unsigned long set_ov7675_awb(unsigned long mode)
                 OV7675_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
         }
 		Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_LIGHTSOURCE, (uint32_t)mode);
-        SENSOR_TRACE("SENSOR: set_awb_mode: mode = %d", mode);
+        SENSOR_LOGI("SENSOR: set_awb_mode: mode = %d", mode);
         return 0;
 }
 /******************************************************************************/
@@ -1157,7 +1156,7 @@ LOCAL unsigned long set_brightness(unsigned long level)
         uint16_t i;
         SENSOR_REG_T* sensor_reg_ptr = (SENSOR_REG_T*)ov7675_brightness_tab[level];
 
-		SENSOR_PRINT("0x%x.",OV7675_ReadReg(0x1e));
+		SENSOR_LOGI("0x%x.",OV7675_ReadReg(0x1e));
 
         if(level>6)
                 return 0;
@@ -1214,7 +1213,7 @@ LOCAL unsigned long set_saturation(unsigned long level)
 /******************************************************************************/
 LOCAL unsigned long set_preview_mode(unsigned long preview_mode)
 {
-        SENSOR_TRACE("SENSOR: set_preview_mode: preview_mode = %d", preview_mode);
+        SENSOR_LOGI("SENSOR: set_preview_mode: preview_mode = %d", preview_mode);
 
         s_preview_mode = preview_mode;
 
@@ -1283,7 +1282,7 @@ LOCAL unsigned long set_image_effect(unsigned long effect_type)
         for(i = 0; (0xFF != sensor_reg_ptr[i].reg_addr) && (0xFF != sensor_reg_ptr[i].reg_value) ; i++) {
                 OV7675_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
         }
-        SENSOR_TRACE("SENSOR: set_image_effect: effect_type = %d", effect_type);
+        SENSOR_LOGI("SENSOR: set_image_effect: effect_type = %d", effect_type);
         return 0;
 }
 
@@ -1360,7 +1359,7 @@ LOCAL unsigned long OV7675_set_work_mode(unsigned long mode)
                 OV7675_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
         }
         //Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_SCENECAPTURETYPE, (uint32_t)mode);
-        SENSOR_TRACE("SENSOR: set_work_mode: mode = %d", mode);
+        SENSOR_LOGI("SENSOR: set_work_mode: mode = %d", mode);
         return 0;
 }
 

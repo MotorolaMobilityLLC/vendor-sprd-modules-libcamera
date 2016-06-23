@@ -1297,14 +1297,14 @@ static unsigned long HI253_Identify(unsigned long param)
 	uint8_t reg[2]       = {0x04, 0x04};
 	uint8_t value[2]     = {0x92, 0x92};
 
-	SENSOR_PRINT("HI253_Identify");
+	SENSOR_LOGI("HI253_Identify");
 	for (i = 0; i<2; ) {
 		nLoop = 1000;
 		ret = HI253_ReadReg(reg[i]);
 		if ( ret != value[i]) {
 			err_cnt++;
 			if(err_cnt>3) {
-				SENSOR_PRINT("It is not HI253\n");
+				SENSOR_LOGI("It is not HI253\n");
 				return SENSOR_FAIL;
 			} else {
 				while(nLoop--);
@@ -1314,7 +1314,7 @@ static unsigned long HI253_Identify(unsigned long param)
 		err_cnt = 0;
 		i++;
 	}
-	SENSOR_PRINT("HI253 identify: It is HI253\n");
+	SENSOR_LOGI("HI253 identify: It is HI253\n");
 
 	return SENSOR_SUCCESS;
 }
@@ -1344,7 +1344,7 @@ static uint32_t _hi253_Power_On(uint32_t power_on)
 		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
 	}
 
-	SENSOR_PRINT("SENSOR: _hi253_Power_On(1:on, 0:off): %d", power_on);
+	SENSOR_LOGI("SENSOR: _hi253_Power_On(1:on, 0:off): %d", power_on);
 	return SENSOR_SUCCESS;
 }
 #endif
@@ -1357,7 +1357,7 @@ static uint32_t HI253_InitExifInfo(void)
 {
 	EXIF_SPEC_PIC_TAKING_COND_T *exif_ptr = &s_hi253_exif;
 	memset(&s_hi253_exif, 0, sizeof(EXIF_SPEC_PIC_TAKING_COND_T));
-	SENSOR_PRINT("SENSOR: HI253_InitExifInfo \n");
+	SENSOR_LOGI("SENSOR: HI253_InitExifInfo \n");
 	exif_ptr->valid.FNumber = 1;
 	exif_ptr->FNumber.numerator = 14;
 	exif_ptr->FNumber.denominator = 5;
@@ -1392,7 +1392,7 @@ static unsigned long set_hi253_ae_enable(unsigned long enable)
 		HI253_WriteReg(0x10, 0x9c);//ae on
 	}
 
-	SENSOR_PRINT("HI253_test set_ae_enable: enable = %ld", enable);
+	SENSOR_LOGI("HI253_test set_ae_enable: enable = %ld", enable);
 	return 0;
 }
 
@@ -1415,7 +1415,7 @@ static uint32_t set_hi253_ae_awb_enable(uint32_t ae_enable, uint32_t awb_enable)
 		HI253_WriteReg(0x10, 0xe9);//AWB ON
 	}
 
-	SENSOR_PRINT("HI253_test set_ae_awb_enable: ae=%d awb=%d", ae_enable, awb_enable);
+	SENSOR_LOGI("HI253_test set_ae_awb_enable: ae=%d awb=%d", ae_enable, awb_enable);
 	return 0;
 }
 #endif
@@ -1474,7 +1474,7 @@ static uint32_t set_hi253_hmirror_enable(uint32_t enable)
 		set_back_sensor_yrotate_HI253();
 	}
 
-	SENSOR_PRINT("set_hi253_hmirror_enable: enable = %d", enable);
+	SENSOR_LOGI("set_hi253_hmirror_enable: enable = %d", enable);
 	return 0;
 }
 #endif
@@ -1532,7 +1532,7 @@ static uint32_t set_hi253_vmirror_enable(uint32_t enable)
 		set_back_sensor_xrotate_HI253();
 	}
 
-	SENSOR_PRINT("set_hi253_vmirror_enable: enable = %d", enable);
+	SENSOR_LOGI("set_hi253_vmirror_enable: enable = %d", enable);
 	return 0;
 }
 #endif
@@ -1584,7 +1584,7 @@ static unsigned long HI253_set_brightness(unsigned long level)
 	SENSOR_REG_T* sensor_reg_ptr = (SENSOR_REG_T*)HI253_brightness_tab[level];
 
 	HI253_Write_Group_Regs(sensor_reg_ptr);
-	SENSOR_PRINT("HI253_test set_hi253_brightness_tab: level = %ld", level);
+	SENSOR_LOGI("HI253_test set_hi253_brightness_tab: level = %ld", level);
 	return 0;
 }
 
@@ -1643,14 +1643,14 @@ static unsigned long HI253_set_contrast(unsigned long level)
 	SENSOR_REG_T* sensor_reg_ptr = (SENSOR_REG_T*)HI253_contrast_tab[level];
 
 	HI253_Write_Group_Regs(sensor_reg_ptr);
-	SENSOR_PRINT("HI253_test tianxiaohui set_hi253_contrast_tab: level = %ld\n", level);
+	SENSOR_LOGI("HI253_test tianxiaohui set_hi253_contrast_tab: level = %ld\n", level);
 
 	return 0;
 }
 
 static unsigned long set_hi253_preview_mode(unsigned long  preview_mode)
 {
-	SENSOR_PRINT("HI253_test set_hi253_preview_mode: preview_mode = %ld", preview_mode);
+	SENSOR_LOGI("HI253_test set_hi253_preview_mode: preview_mode = %ld", preview_mode);
 
 	switch (preview_mode) {
 	case SENSOR_PARAM_ENVIRONMENT_NORMAL:
@@ -1761,11 +1761,11 @@ static unsigned long HI253_set_image_effect(unsigned long effect_type)
 {
 	if(effect_type > 7)
 		return 0;
-	SENSOR_PRINT("HI253_test SENSOR: set_image_effect: effect_type_start = %ld\n", effect_type);
+	SENSOR_LOGI("HI253_test SENSOR: set_image_effect: effect_type_start = %ld\n", effect_type);
 	SENSOR_REG_T* sensor_reg_ptr = (SENSOR_REG_T*)HI253_image_effect_tab[effect_type];
 
 	HI253_Write_Group_Regs(sensor_reg_ptr);
-	SENSOR_PRINT("HI253_test SENSOR: set_image_effect: effect_type_end = %ld\n", effect_type);
+	SENSOR_LOGI("HI253_test SENSOR: set_image_effect: effect_type_end = %ld\n", effect_type);
 
 	return 0;
 }
@@ -1777,7 +1777,7 @@ static unsigned long HI253_Before_Snapshot(unsigned long param)
 		g_flash_mode_en = 0;
 	}
 
-	SENSOR_PRINT("HI253_test sensor:HI253_Before_Snapshot");
+	SENSOR_LOGI("HI253_test sensor:HI253_Before_Snapshot");
 
 	if (SENSOR_MODE_SNAPSHOT_ONE_SECOND == param) {
 		Sensor_SetMode((uint32_t)param);
@@ -1786,11 +1786,11 @@ static unsigned long HI253_Before_Snapshot(unsigned long param)
 	if(SENSOR_MODE_SNAPSHOT_ONE_FIRST == param) {
 		Sensor_SetMode((uint32_t)param);
 	} else {
-		SENSOR_PRINT("HI253_test HI253_Before_Snapshot:dont set any");
+		SENSOR_LOGI("HI253_test HI253_Before_Snapshot:dont set any");
 	}
 
 	usleep(200*1000);
-	SENSOR_PRINT("HI253_BeforeSnapshot: Before Snapshot");
+	SENSOR_LOGI("HI253_BeforeSnapshot: Before Snapshot");
 
 	return 0;
 }
@@ -1814,7 +1814,7 @@ static unsigned long HI253_set_work_mode(unsigned long mode)
 	SENSOR_REG_T* sensor_reg_ptr = (SENSOR_REG_T*)HI253_mode_tab[mode];
 
 	if (mode > 1) {
-		SENSOR_PRINT("HI253_test HI253_set_work_mode:param error,mode=%ld .\n",mode);
+		SENSOR_LOGI("HI253_test HI253_set_work_mode:param error,mode=%ld .\n",mode);
 		return SENSOR_FAIL;
 	}
 
@@ -1822,7 +1822,7 @@ static unsigned long HI253_set_work_mode(unsigned long mode)
 		Sensor_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("HI253_test sensor:HI253_set_work_mode: mode = %ld", mode);
+	SENSOR_LOGI("HI253_test sensor:HI253_set_work_mode: mode = %ld", mode);
 		return 0;
 }
 
@@ -1918,7 +1918,7 @@ static unsigned long HI253_set_whitebalance_mode(unsigned long mode )
 
 	HI253_Write_Group_Regs(sensor_reg_ptr);
 
-	SENSOR_PRINT("HI253_test SENSOR: set_awb_mode: mode = %ld", mode);
+	SENSOR_LOGI("HI253_test SENSOR: set_awb_mode: mode = %ld", mode);
 
 	return 0;
 }
@@ -1975,20 +1975,20 @@ static unsigned long set_hi253_ev(unsigned long level)
 	SENSOR_REG_T* sensor_reg_ptr = (SENSOR_REG_T*)HI253_ev_tab[level];
 
 	HI253_Write_Group_Regs(sensor_reg_ptr);
-	SENSOR_PRINT("HI253_test SENSOR: set_hi253_EV_tab: level = %ld", level);
+	SENSOR_LOGI("HI253_test SENSOR: set_hi253_EV_tab: level = %ld", level);
 
 	return 0;
 }
 
 static unsigned long HI253_flash(unsigned long param)
 {
-	SENSOR_PRINT("HI253_flash:param=%ld .\n",param);
+	SENSOR_LOGI("HI253_flash:param=%ld .\n",param);
 
 	g_flash_mode_en = param;
 
 	Sensor_SetFlash(param);
 
-	SENSOR_PRINT("HI253_flash:end .\n");
+	SENSOR_LOGI("HI253_flash:end .\n");
 	return 0;
 }
 

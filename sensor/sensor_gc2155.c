@@ -1089,7 +1089,7 @@ static uint32_t GC2155_PowerOn(uint32_t power_on)
 		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED,
 		SENSOR_AVDD_CLOSED);
 	}
-	SENSOR_PRINT("(1:on, 0:off): %d", power_on);
+	SENSOR_LOGI("(1:on, 0:off): %d", power_on);
 	return SENSOR_SUCCESS;
 }
 
@@ -1108,9 +1108,9 @@ static uint32_t GC2155_Identify(uint32_t param)
 	for (i=0;i<3;i++) {
 		sensor_id = GC2155_ReadReg(GC2155_PID_ADDR1) << 8;
 		sensor_id |= GC2155_ReadReg(GC2155_PID_ADDR2);
-		CMR_LOGI("%s sensor_id is %x\n", __func__, sensor_id);
+		SENSOR_LOGI("%s sensor_id is %x\n", __func__, sensor_id);
 		if(sensor_id == GC2155_SENSOR_ID) {
-			SENSOR_PRINT("the main sensor is GC2155\n");
+			SENSOR_LOGI("the main sensor is GC2155\n");
 			return SENSOR_SUCCESS;
 		}
 	}
@@ -1263,7 +1263,7 @@ static uint32_t set_GC2155_video_mode(uint32_t mode)
 		GC2155_WriteReg(0x2e , 0xb8);
 		GC2155_WriteReg(0xfe , 0x00);
 
-		SENSOR_TRACE("2155 SENSOR: set_video_mode000000");
+		SENSOR_LOGI("2155 SENSOR: set_video_mode000000");
 	} else {
 		GC2155_WriteReg(0xfe , 0x00);
 		GC2155_WriteReg(0xf8 , 0x85);
@@ -1284,7 +1284,7 @@ static uint32_t set_GC2155_video_mode(uint32_t mode)
 		GC2155_WriteReg(0x2e , 0x10);
 		GC2155_WriteReg(0xfe , 0x00);
 
-		SENSOR_TRACE("2155 SENSOR: set_video_mode2222222");
+		SENSOR_LOGI("2155 SENSOR: set_video_mode2222222");
 	}
 #else
 	if (0 == mode) {
@@ -1304,7 +1304,7 @@ static uint32_t set_GC2155_video_mode(uint32_t mode)
 		GC2155_WriteReg(0x2d , 0x0b);//level4
 		GC2155_WriteReg(0x2e , 0xb8);
 		GC2155_WriteReg(0xfe , 0x00);
-		CMR_LOGI("2155 SENSOR: set_video_mode000000");
+		SENSOR_LOGI("2155 SENSOR: set_video_mode000000");
 	} else {
 		GC2155_WriteReg(0x05 , 0x01);//hb
 		GC2155_WriteReg(0x06 , 0x1f);
@@ -1323,7 +1323,7 @@ static uint32_t set_GC2155_video_mode(uint32_t mode)
 		GC2155_WriteReg(0x2e , 0x18);
 		GC2155_WriteReg(0xfe , 0x00);
 
-		CMR_LOGI("2155 SENSOR: set_video_mode2222222");
+		SENSOR_LOGI("2155 SENSOR: set_video_mode2222222");
 	}
 #endif
 	return 0;
@@ -1447,7 +1447,7 @@ static uint32_t set_contrast(uint32_t level)
 
 static uint32_t set_preview_mode(uint32_t preview_mode)
 {
-	SENSOR_PRINT("set_preview_mode: preview_mode = %d\n", preview_mode);
+	SENSOR_LOGI("set_preview_mode: preview_mode = %d\n", preview_mode);
 
 	set_GC2155_anti_flicker(0);
 	switch (preview_mode) {
@@ -1460,7 +1460,7 @@ static uint32_t set_preview_mode(uint32_t preview_mode)
 		GC2155_WriteReg(0xfe , 0x01);
 		GC2155_WriteReg(0x3c , 0x40);
 		GC2155_WriteReg(0xfe , 0x00);
-		SENSOR_PRINT("set_preview_mode: DCAMERA_ENVIRONMENT_NORMAL\n");
+		SENSOR_LOGI("set_preview_mode: DCAMERA_ENVIRONMENT_NORMAL\n");
 		break;
 
 	case 1://DCAMERA_ENVIRONMENT_NIGHT://1
@@ -1472,7 +1472,7 @@ static uint32_t set_preview_mode(uint32_t preview_mode)
 		GC2155_WriteReg(0xfe , 0x01);
 		GC2155_WriteReg(0x3c , 0x60);
 		GC2155_WriteReg(0xfe , 0x00);
-		SENSOR_PRINT("set_preview_mode: DCAMERA_ENVIRONMENT_NIGHT\n");
+		SENSOR_LOGI("set_preview_mode: DCAMERA_ENVIRONMENT_NIGHT\n");
 		break;
 
 	case 3://SENSOR_ENVIROMENT_PORTRAIT://3
@@ -1484,7 +1484,7 @@ static uint32_t set_preview_mode(uint32_t preview_mode)
 		GC2155_WriteReg(0xfe , 0x01);
 		GC2155_WriteReg(0x3c , 0x40);
 		GC2155_WriteReg(0xfe , 0x00);
-		SENSOR_PRINT("set_preview_mode: SENSOR_ENVIROMENT_PORTRAIT\n");
+		SENSOR_LOGI("set_preview_mode: SENSOR_ENVIROMENT_PORTRAIT\n");
 		break;
 
 	case 4://SENSOR_ENVIROMENT_LANDSCAPE://4
@@ -1496,7 +1496,7 @@ static uint32_t set_preview_mode(uint32_t preview_mode)
 		GC2155_WriteReg(0xfe , 0x01);
 		GC2155_WriteReg(0x3c , 0x40);
 		GC2155_WriteReg(0xfe , 0x00);
-		SENSOR_PRINT("set_preview_mode: SENSOR_ENVIROMENT_LANDSCAPE\n");
+		SENSOR_LOGI("set_preview_mode: SENSOR_ENVIROMENT_LANDSCAPE\n");
 		break;
 
 	case 2://SENSOR_ENVIROMENT_SPORTS://2
@@ -1509,7 +1509,7 @@ static uint32_t set_preview_mode(uint32_t preview_mode)
 		GC2155_WriteReg(0xfe , 0x01);
 		GC2155_WriteReg(0x3c , 0x40);
 		GC2155_WriteReg(0xfe , 0x00);
-		SENSOR_PRINT("set_preview_mode: SENSOR_ENVIROMENT_SPORTS\n");
+		SENSOR_LOGI("set_preview_mode: SENSOR_ENVIROMENT_SPORTS\n");
 		break;
 	default:
 		break;
@@ -1558,7 +1558,7 @@ static uint32_t GC2155_After_Snapshot(uint32_t param)
 {
 	GC2155_WriteReg(0xfe,0x00);
 	GC2155_WriteReg(0xb6,0x01);
-	SENSOR_PRINT("GC2155_After_Snapshot param = %x \n",param);
+	SENSOR_LOGI("GC2155_After_Snapshot param = %x \n",param);
 	return 0;
 }
 
@@ -1570,19 +1570,19 @@ static uint32_t GC2155_BeforeSnapshot(uint32_t sensor_snapshot_mode)
 
 	switch (sensor_snapshot_mode) {
 	case SENSOR_MODE_PREVIEW_ONE:
-		SENSOR_PRINT("Capture VGA Size");
+		SENSOR_LOGI("Capture VGA Size");
 		break;
 	case SENSOR_MODE_SNAPSHOT_ONE_FIRST:
 	case SENSOR_MODE_SNAPSHOT_ONE_SECOND:
 		//GC2155_set_shutter();
 		//usleep(100*1000);
-		SENSOR_PRINT("Capture 1.3M&2M Size");
+		SENSOR_LOGI("Capture 1.3M&2M Size");
 		break;
 	default:
 		break;
 	}
 
-	SENSOR_PRINT("SENSOR_GC2155: Before Snapshot");
+	SENSOR_LOGI("SENSOR_GC2155: Before Snapshot");
 
 	return 0;
 }

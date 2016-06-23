@@ -31,7 +31,7 @@ uint32_t vcm_dw9807_init(SENSOR_HW_HANDLE handle,int mode)
 	uint32_t ret_value = SENSOR_SUCCESS;
 
 	slave_addr = dw9807_VCM_SLAVE_ADDR;
-	SENSOR_PRINT("E");
+	SENSOR_LOGI("E");
 	usleep(100);
 	switch (mode) {
 	case 1:
@@ -45,14 +45,14 @@ uint32_t vcm_dw9807_init(SENSOR_HW_HANDLE handle,int mode)
 		cmd_val[1] = 0x01;
 		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 		if(ret_value){
-			SENSOR_PRINT("SENSOR_S5K3L2XX: _dw9807_SRCInit 0 fail!");
+			SENSOR_LOGI("SENSOR_S5K3L2XX: _dw9807_SRCInit 0 fail!");
 		}
 
 		cmd_val[0] = 0x02;
 		cmd_val[1] = 0x00;
 		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 		if(ret_value){
-			SENSOR_PRINT("SENSOR_S5K3L2XX: _dw9807_SRCInit 1 fail!");
+			SENSOR_LOGI("SENSOR_S5K3L2XX: _dw9807_SRCInit 1 fail!");
 		}
 
 		usleep(200);
@@ -61,14 +61,14 @@ uint32_t vcm_dw9807_init(SENSOR_HW_HANDLE handle,int mode)
 		cmd_val[1] = 0x02;
 		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 		if(ret_value){
-			SENSOR_PRINT("SENSOR_S5K3L2XX: _dw9807_SRCInit 2 fail!");
+			SENSOR_LOGI("SENSOR_S5K3L2XX: _dw9807_SRCInit 2 fail!");
 		}
 
 		cmd_val[0] = 0x06;
 		cmd_val[1] = 0x61;
 		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 		if(ret_value){
-			SENSOR_PRINT("SENSOR_S5K3L2XX: _dw9807_SRCInit 3 fail!");
+			SENSOR_LOGI("SENSOR_S5K3L2XX: _dw9807_SRCInit 3 fail!");
 		}
 
 
@@ -76,7 +76,7 @@ uint32_t vcm_dw9807_init(SENSOR_HW_HANDLE handle,int mode)
 		cmd_val[1] = 0x36;
 		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 		if(ret_value){
-			SENSOR_PRINT("SENSOR_S5K3L2XX: _dw9807_SRCInit 4 fail!");
+			SENSOR_LOGI("SENSOR_S5K3L2XX: _dw9807_SRCInit 4 fail!");
 		}
 
 	}
@@ -89,14 +89,14 @@ uint32_t vcm_dw9807_init(SENSOR_HW_HANDLE handle,int mode)
 		cmd_val[1] = 0x01;
 		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 		if(ret_value){
-			SENSOR_PRINT("SENSOR_S5K3L2XX: _dw9807_SRCInit 0 fail!");
+			SENSOR_LOGI("SENSOR_S5K3L2XX: _dw9807_SRCInit 0 fail!");
 		}
 
 		cmd_val[0] = 0x02;
 		cmd_val[1] = 0x00;
 		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 		if(ret_value){
-			SENSOR_PRINT("SENSOR_S5K3L2XX: _dw9807_SRCInit 1 fail!");
+			SENSOR_LOGI("SENSOR_S5K3L2XX: _dw9807_SRCInit 1 fail!");
 		}
 */
 		usleep(200);
@@ -105,14 +105,14 @@ uint32_t vcm_dw9807_init(SENSOR_HW_HANDLE handle,int mode)
 		cmd_val[1] = 0x02;
 		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 		if(ret_value){
-			SENSOR_PRINT("SENSOR_S5K3L2XX: _dw9807_SRCInit 2 fail!");
+			SENSOR_LOGI("SENSOR_S5K3L2XX: _dw9807_SRCInit 2 fail!");
 		}
 
 		cmd_val[0] = 0x06;
 		cmd_val[1] = 0x81;//61;
 		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 		if(ret_value){
-			SENSOR_PRINT("SENSOR_S5K3L2XX: _dw9807_SRCInit 3 fail!");
+			SENSOR_LOGI("SENSOR_S5K3L2XX: _dw9807_SRCInit 3 fail!");
 		}
 
 
@@ -120,7 +120,7 @@ uint32_t vcm_dw9807_init(SENSOR_HW_HANDLE handle,int mode)
 		cmd_val[1] = 0x36;
 		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 		if(ret_value){
-			SENSOR_PRINT("SENSOR_S5K3L2XX: _dw9807_SRCInit 4 fail!");
+			SENSOR_LOGI("SENSOR_S5K3L2XX: _dw9807_SRCInit 4 fail!");
 		}
 	}
 		break;
@@ -143,7 +143,7 @@ uint32_t vcm_dw9807_set_position(SENSOR_HW_HANDLE handle, uint32_t pos)
 		pos = 0x3FF;
 	m_cur_pos=pos&0x3FF;
 
-	//SENSOR_PRINT("set position %d", pos);
+	//SENSOR_LOGI("set position %d", pos);
 	slave_addr = dw9807_VCM_SLAVE_ADDR;
 	cmd_len = 2;
 	cmd_val[0] = 0x03;
@@ -154,7 +154,7 @@ uint32_t vcm_dw9807_set_position(SENSOR_HW_HANDLE handle, uint32_t pos)
 	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 	//cmd_len=sensor_grc_read_i2c(dw9807_VCM_SLAVE_ADDR,  0x03, BITS_ADDR8_REG8);
 	//time_out=sensor_grc_read_i2c(dw9807_VCM_SLAVE_ADDR,  0x04, BITS_ADDR8_REG8);
-	//SENSOR_PRINT("set position %d %d", pos,((cmd_len&0x03)<<8)|time_out);
+	//SENSOR_LOGI("set position %d %d", pos,((cmd_len&0x03)<<8)|time_out);
 
 	return ret_value;
 }
@@ -177,12 +177,12 @@ uint32_t vcm_dw9807_deinit(SENSOR_HW_HANDLE handle)
 
 	while(vcm_last_pos > 0) {
 		vcm_last_pos = vcm_last_pos >> 2;
-		SENSOR_PRINT("vcm_last_pos=%d  ,%d",vcm_last_pos,(vcm_last_pos|vcm_last_delay));
+		SENSOR_LOGI("vcm_last_pos=%d  ,%d",vcm_last_pos,(vcm_last_pos|vcm_last_delay));
 		vcm_dw9807_set_position(handle,vcm_last_pos|vcm_last_delay);
 		usleep(1*1000);
 	}
 
-	SENSOR_PRINT("vcm_dw9807_deinit");
+	SENSOR_LOGI("vcm_dw9807_deinit");
 	return ret_value;
 }
 

@@ -1216,7 +1216,7 @@ LOCAL uint32_t _ov5640_InitExifInfo(void)
 
 	memset(&s_ov5640_exif, 0, sizeof(EXIF_SPEC_PIC_TAKING_COND_T));
 
-	SENSOR_PRINT("Start");
+	SENSOR_LOGI("Start");
 
 	exif_ptr->valid.FNumber = 1;
 	exif_ptr->FNumber.numerator = 14;
@@ -1299,12 +1299,12 @@ LOCAL cmr_uint _ov5640_PowerOn(cmr_uint power_on)
 	BOOLEAN power_down = g_ov5640_yuv_info.power_down_level;
 	BOOLEAN reset_level = g_ov5640_yuv_info.reset_pulse_level;
 
-	SENSOR_PRINT("dvdd_val %ld, dvdd_val %d, avdd_val %d, iovdd_val %d",
+	SENSOR_LOGI("dvdd_val %ld, dvdd_val %d, avdd_val %d, iovdd_val %d",
 			power_on,
 			dvdd_val,
 			avdd_val,
 			iovdd_val);
-	SENSOR_PRINT("power_down %d reset_level %d", power_down, reset_level);
+	SENSOR_LOGI("power_down %d reset_level %d", power_down, reset_level);
 
 	if (SENSOR_TRUE == power_on) {
 		//reset
@@ -1338,7 +1338,7 @@ LOCAL cmr_uint _ov5640_PowerOn(cmr_uint power_on)
 		usleep(20*1000);
 
 	}
-	SENSOR_PRINT("(1:on, 0:off): %d_end\n ", power_on);
+	SENSOR_LOGI("(1:on, 0:off): %d_end\n ", power_on);
 	return SENSOR_SUCCESS;
 }
 
@@ -1353,22 +1353,22 @@ LOCAL cmr_uint _ov5640_Identify(cmr_uint param)
 	uint8_t ver_value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
 
-	SENSOR_PRINT("SENSOR:ov5640 identify CCIR .\n");
+	SENSOR_LOGI("SENSOR:ov5640 identify CCIR .\n");
 
 	pid_value = Sensor_ReadReg(ov5640_PID_ADDR);
 
 	if (ov5640_PID_VALUE == pid_value) {
 		ver_value = Sensor_ReadReg(ov5640_VER_ADDR);
-		SENSOR_PRINT("PID = %x, VER = %x",
+		SENSOR_LOGI("PID = %x, VER = %x",
 			     pid_value, ver_value);
 		if (ov5640_VER_VALUE == ver_value) {
 			ret_value = SENSOR_SUCCESS;
-			SENSOR_PRINT_HIGH("SENSOR: this is ov5640 yuv ccir sensor  ! \n");
+			SENSOR_LOGI("SENSOR: this is ov5640 yuv ccir sensor  ! \n");
 		} else {
-			SENSOR_PRINT_HIGH("this is OV%x%x sensor !", pid_value, ver_value);
+			SENSOR_LOGI("this is OV%x%x sensor !", pid_value, ver_value);
 		}
 	} else {
-		SENSOR_PRINT_ERR("identify fail,pid_value = %d ", pid_value);
+		SENSOR_LOGI("identify fail,pid_value = %d ", pid_value);
 	}
 	_ov5640_InitExifInfo();
 
@@ -1439,7 +1439,7 @@ LOCAL cmr_uint _ov5640_set_brightness(cmr_uint level)
 		}
 	}
 
-	SENSOR_PRINT("0x%02x,data=0x%x", level, reg_value);
+	SENSOR_LOGI("0x%02x,data=0x%x", level, reg_value);
 	return 0;
 }
 
@@ -1507,7 +1507,7 @@ LOCAL cmr_uint _ov5640_set_contrast(cmr_uint level)
 		}
 	}
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_CONTRAST, (uint32_t) level);
-	SENSOR_PRINT("0x%02x,data=0x%x", level, reg_value);
+	SENSOR_LOGI("0x%02x,data=0x%x", level, reg_value);
 	return 0;
 }
 
@@ -1574,7 +1574,7 @@ LOCAL cmr_uint _ov5640_set_saturation(cmr_uint level)
 					(uint16_t) reg_value);
 		}
 	}
-	SENSOR_PRINT("0x%02x,data=0x%x", level, reg_value);
+	SENSOR_LOGI("0x%02x,data=0x%x", level, reg_value);
 	return 0;
 }
 
@@ -1648,7 +1648,7 @@ LOCAL cmr_uint _ov5640_set_image_effect(cmr_uint effect_type)
 		}
 	}
 
-	SENSOR_PRINT("0x%02x,data=0x%x", effect_type, reg_value);
+	SENSOR_LOGI("0x%02x,data=0x%x", effect_type, reg_value);
 	return 0;
 }
 
@@ -1705,7 +1705,7 @@ LOCAL cmr_uint _ov5640_set_ev(cmr_uint level)
 				sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("0x%02x", level);
+	SENSOR_LOGI("0x%02x", level);
 	return 0;
 }
 
@@ -1736,7 +1736,7 @@ LOCAL cmr_uint _ov5640_set_anti_flicker(cmr_uint mode)
 		Sensor_WriteReg(sensor_reg_ptr[i].reg_addr,
 				sensor_reg_ptr[i].reg_value);
 	}
-	SENSOR_PRINT("0x%02x", mode);
+	SENSOR_LOGI("0x%02x", mode);
 	return 0;
 }
 
@@ -1759,7 +1759,7 @@ LOCAL cmr_uint _ov5640_set_video_mode(cmr_uint mode)
 	SENSOR_REG_T_PTR sensor_reg_ptr = (SENSOR_REG_T_PTR)ov5640_video_mode_tab[mode];
 	uint16_t i = 0x00;
 
-	SENSOR_PRINT("0x%02x", mode);
+	SENSOR_LOGI("0x%02x", mode);
 	s_is_dv_mode = mode;
 
 	if (mode>1)
@@ -1850,7 +1850,7 @@ LOCAL cmr_uint _ov5640_set_awb(cmr_uint mode)
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_LIGHTSOURCE, (uint32_t) mode);
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_WHITEBALANCE, (uint32_t) mode);
 
-	SENSOR_PRINT("SENSOR: _ov5640_set_awb = 0x%02x,reg_value=0x%x", mode, reg_value);
+	SENSOR_LOGI("SENSOR: _ov5640_set_awb = 0x%02x,reg_value=0x%x", mode, reg_value);
 	return 0;
 }
 
@@ -2045,7 +2045,7 @@ LOCAL cmr_uint _ov5640_set_work_mode(cmr_uint mode)
 		}
 	}
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_SCENECAPTURETYPE, (uint32_t) mode);
-	SENSOR_PRINT("SENSOR: _ov5640_set_work_mode: mode = %ld", mode);
+	SENSOR_LOGI("SENSOR: _ov5640_set_work_mode: mode = %ld", mode);
 	return 0;
 }
 
@@ -2218,7 +2218,7 @@ LOCAL int OV5640_set_AE_target(int target)
 	Sensor_WriteReg(0x3a11, fast_high);
 	Sensor_WriteReg(0x3a1f, fast_low);
 
-	SENSOR_PRINT("Target ae %d, AE high %d, AE low %d", ae_target, ae_high, ae_low);
+	SENSOR_LOGI("Target ae %d, AE high %d, AE low %d", ae_target, ae_high, ae_low);
 	return 0;
 }
 
@@ -2254,10 +2254,10 @@ LOCAL int OV5640_capture(uint32_t param)
 
 	//turn off AE/AG
 	ae_ag_ctrl = Sensor_ReadReg(0x3503);
-	SENSOR_PRINT("before, ae_ag_ctrl 0x%x", ae_ag_ctrl);
+	SENSOR_LOGI("before, ae_ag_ctrl 0x%x", ae_ag_ctrl);
 	ae_ag_ctrl = ae_ag_ctrl | 0x03;
 	Sensor_WriteReg(0x3503, ae_ag_ctrl);
-	SENSOR_PRINT("after, ae_ag_ctrl 0x%x", ae_ag_ctrl);
+	SENSOR_LOGI("after, ae_ag_ctrl 0x%x", ae_ag_ctrl);
 
 	// read preview shutter
 	preview_shutter = OV5640_get_shutter();
@@ -2265,7 +2265,7 @@ LOCAL int OV5640_capture(uint32_t param)
 	// read preview gain
 	preview_gain16 = OV5640_get_gain16();
 
-	SENSOR_PRINT("preview_shutter %d, preview_gain16 %d",
+	SENSOR_LOGI("preview_shutter %d, preview_gain16 %d",
 		preview_shutter,
 		preview_gain16);
 
@@ -2280,7 +2280,7 @@ LOCAL int OV5640_capture(uint32_t param)
 	capture_HTS = OV5640_get_HTS();
 	capture_sysclk = OV5640_get_sysclk(s_ov5640_resolution_Tab_YUV[param].xclk_to_sensor);
 
-	SENSOR_PRINT("capture_VTS %d, capture_HTS %d, capture_sysclk %d",
+	SENSOR_LOGI("capture_VTS %d, capture_HTS %d, capture_sysclk %d",
 		capture_VTS,
 		capture_HTS,
 		capture_sysclk);
@@ -2296,7 +2296,7 @@ LOCAL int OV5640_capture(uint32_t param)
 	}
 	capture_max_band = (int)((capture_VTS - 4)/capture_bandingfilter);
 
-	SENSOR_PRINT("light_frequency %d, capture_bandingfilter %d, capture_max_band %d",
+	SENSOR_LOGI("light_frequency %d, capture_bandingfilter %d, capture_max_band %d",
 		light_frequency,
 		capture_bandingfilter,
 		capture_max_band);
@@ -2307,7 +2307,7 @@ LOCAL int OV5640_capture(uint32_t param)
 	} else {
 		capture_gain16_shutter = preview_gain16 * preview_shutter * capture_sysclk/preview_sysclk * preview_hts / capture_HTS;
 	}
-	SENSOR_PRINT("capture_gain16_shutter %d", (int)capture_gain16_shutter);
+	SENSOR_LOGI("capture_gain16_shutter %d", (int)capture_gain16_shutter);
 	// gain to shutter
 	if (capture_gain16_shutter < (capture_bandingfilter * 16)) {
 		// shutter < 1/100
@@ -2330,7 +2330,7 @@ LOCAL int OV5640_capture(uint32_t param)
 		}
 	}
 
-	SENSOR_PRINT("capture_shutter %d, capture_gain16 %d",
+	SENSOR_LOGI("capture_shutter %d, capture_gain16 %d",
 		capture_shutter,
 		capture_gain16);
 
@@ -2360,7 +2360,7 @@ LOCAL cmr_uint _ov5640_BeforeSnapshot(cmr_uint param)
 	uint32_t cap_mode = (param>>CAP_MODE_BITS);
 
 	param = param&0xffff;
-	SENSOR_PRINT("%d,%d.",cap_mode,param);
+	SENSOR_LOGI("%d,%d.",cap_mode,param);
 	if (SENSOR_MODE_PREVIEW_ONE >= param) {
 		s_capture_shutter = OV5640_get_shutter();
 		s_capture_VTS = OV5640_get_VTS();
@@ -2369,7 +2369,7 @@ LOCAL cmr_uint _ov5640_BeforeSnapshot(cmr_uint param)
 	}
 	OV5640_capture(param);
 	SENSOR_Sleep(10);//Bug 279043, to skip unstable signal output from sensor
-	SENSOR_PRINT("Sleep out");
+	SENSOR_LOGI("Sleep out");
 
 	return SENSOR_SUCCESS;
 }
@@ -2400,7 +2400,7 @@ LOCAL cmr_uint _ov5640_pick_out_jpeg_stream(cmr_uint param)
 	    ((DCAMERA_SNAPSHOT_RETURN_PARAM_T *) param)->return_data_len;
 	uint32_t i = 0x00;
 
-	SENSOR_PRINT("SENSOR: ov5640 jpeg capture head: 0x%x, 0x%x \n",
+	SENSOR_LOGI("SENSOR: ov5640 jpeg capture head: 0x%x, 0x%x \n",
 		     *((uint8 *) p_frame), *((uint8 *) p_frame + 1));
 
 	/* Find the tail position */
@@ -2418,12 +2418,12 @@ LOCAL cmr_uint _ov5640_pick_out_jpeg_stream(cmr_uint param)
 
 	/* check if the tail is found */
 	if (i < buf_len) {
-		SENSOR_PRINT
+		SENSOR_LOGI
 		    ("SENSOR: ov5640 Found the jpeg tail at %d: 0x%x 0x%x \n",
 		     i + 1, *((uint8 *) p_frame + i),
 		     *((uint8 *) p_frame + i + 1));
 	} else {
-		SENSOR_PRINT("SENSOR: ov5640 can not find the jpeg tail: %d \n",
+		SENSOR_LOGI("SENSOR: ov5640 can not find the jpeg tail: %d \n",
 			     i);
 		i = 0x00;
 	}
@@ -2442,12 +2442,12 @@ LOCAL uint32_t _ov5640_chang_image_format(uint32_t param)
 
 	switch (param) {
 	case SENSOR_IMAGE_FORMAT_YUV422:
-		SENSOR_PRINT("SENSOR: ov5640  chang_image_format  YUV422 \n");
+		SENSOR_LOGI("SENSOR: ov5640  chang_image_format  YUV422 \n");
 		ret_val = Sensor_SendRegTabToSensor(&st_yuv422_reg_table_info);
 		break;
 
 	case SENSOR_IMAGE_FORMAT_JPEG:
-		SENSOR_PRINT("SENSOR: ov5640  chang_image_format  jpg \n");
+		SENSOR_LOGI("SENSOR: ov5640  chang_image_format  jpg \n");
 		ret_val = SENSOR_FAIL;	//Sensor_SendRegTabToSensor(&st_jpeg_reg_table_info);
 		break;
 
@@ -2509,12 +2509,12 @@ LOCAL uint32_t _ov5640_MatchZone(SENSOR_EXT_FUN_T_PTR param_ptr)
 		    (zone_rect.h * param_ptr->zone.y) /
 		    g_ov5640_yuv_info.resolution_tab_info_ptr[SENSOR_MODE_PREVIEW_ONE].height;
 	} else {
-		SENSOR_PRINT("w:%d, h:%d error",
+		SENSOR_LOGI("w:%d, h:%d error",
 			     zone_rect.w, zone_rect.h);
 		rtn = SENSOR_FAIL;
 	}
 
-	SENSOR_PRINT("x:%d, y:%d",
+	SENSOR_LOGI("x:%d, y:%d",
 		     param_ptr->zone.x, param_ptr->zone.y);
 	return rtn;
 }
@@ -2526,18 +2526,18 @@ LOCAL uint32_t _ov5640_AutoFocusTrig(SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
 	uint16_t reg_value = 0x00;
 	af_quit_flag = 0;
 
-	SENSOR_PRINT("Start");
+	SENSOR_LOGI("Start");
 
 	Sensor_WriteReg(CMD_ACK, 0x01);
 	Sensor_WriteReg(CMD_MAIN, 0x03);
 
 	do {
 		if (0x00 == i) {
-			SENSOR_PRINT_ERR("error!");
+			SENSOR_LOGI("error!");
 			rtn = SENSOR_FAIL;
 			break;
 		} else if (af_quit_flag) {
-			SENSOR_PRINT("_ov5640_AutoFocusTrig af will quit!");
+			SENSOR_LOGI("_ov5640_AutoFocusTrig af will quit!");
 			af_quit_flag = 0;
 			break;
 		}
@@ -2549,7 +2549,7 @@ LOCAL uint32_t _ov5640_AutoFocusTrig(SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
 	if (SENSOR_SUCCESS == rtn) {
 		reg_value = Sensor_ReadReg(CMD_PARAM4);
 		if (0x00 == reg_value) {
-			SENSOR_PRINT_ERR("fail!");
+			SENSOR_LOGI("fail!");
 			rtn = SENSOR_FAIL;
 			_ov5640_init_firmware();
 		}
@@ -2564,10 +2564,10 @@ LOCAL uint32_t _ov5640_AutoFocusZone(SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_T ext_param;
 
-	SENSOR_PRINT("%d, %d", param_ptr->zone[0].x, param_ptr->zone[0].y);
-	SENSOR_PRINT("0x3001=0x%x,0x3005=0x%x.",
+	SENSOR_LOGI("%d, %d", param_ptr->zone[0].x, param_ptr->zone[0].y);
+	SENSOR_LOGI("0x3001=0x%x,0x3005=0x%x.",
 		Sensor_ReadReg(0x3001),Sensor_ReadReg(0x3005));
-	SENSOR_PRINT("0x3000=0x%x,0x3004=0x%x,0x3f00=0x%x.",
+	SENSOR_LOGI("0x3000=0x%x,0x3004=0x%x,0x3f00=0x%x.",
 		Sensor_ReadReg(0x3000),Sensor_ReadReg(0x3004),Sensor_ReadReg(0x3f00));
 
 	ext_param.cmd = param_ptr->cmd;
@@ -2595,24 +2595,24 @@ LOCAL uint32_t _ov5640_AutoFocusZone(SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
 
 		do {
 			if (0x00 == i) {
-				SENSOR_PRINT_ERR("error!");
+				SENSOR_LOGI("error!");
 				rtn = SENSOR_FAIL;
 				break;
 			} else if (af_quit_flag) {
-				SENSOR_PRINT("af will be quit!");
+				SENSOR_LOGI("af will be quit!");
 				af_quit_flag = 0;
 				break;
 			}
 			usleep(10*1000);
 			reg_value = Sensor_ReadReg(CMD_ACK);
-			SENSOR_PRINT("cycles %d, reg %d", i, reg_value);
+			SENSOR_LOGI("cycles %d, reg %d", i, reg_value);
 			i--;
 		} while (0x00 != reg_value);
 
 		if(SENSOR_SUCCESS == rtn) {
 			reg_value=Sensor_ReadReg(CMD_PARAM4);
 			if (0 == reg_value) {
-				SENSOR_PRINT_ERR("fail!");
+				SENSOR_LOGI("fail!");
 				rtn=SENSOR_FAIL;
 				_ov5640_init_firmware();
 			}
@@ -2620,10 +2620,10 @@ LOCAL uint32_t _ov5640_AutoFocusZone(SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
 
 		/* 0x3029: 0x00 - auto focusing, 0x10 - success, 0x7f - failed */
 		/*reg_value = Sensor_ReadReg(0x3029);
-		SENSOR_PRINT_ERR("0x3029 = %x", reg_value);*/
+		SENSOR_LOGI("0x3029 = %x", reg_value);*/
 	}
 	if (SENSOR_SUCCESS == rtn)
-		SENSOR_PRINT_HIGH("success!");
+		SENSOR_LOGI("success!");
 	return rtn;
 }
 
@@ -2636,7 +2636,7 @@ LOCAL uint32_t _ov5640_AutoFocusMultiZone(SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
 	uint32_t zone_cnt = 0;
 	uint32_t zone_num = 0x90;
 
-	SENSOR_PRINT("Start");
+	SENSOR_LOGI("Start");
 	zone_cnt = (param_ptr->zone_cnt > 5) ? 5 : param_ptr->zone_cnt;
 	for (i = 0; i < zone_cnt; i++) {
 		ext_param[i].cmd = param_ptr->cmd;
@@ -2645,15 +2645,15 @@ LOCAL uint32_t _ov5640_AutoFocusMultiZone(SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
 		ext_param[i].zone.y = param_ptr->zone[i].y;
 		ext_param[i].zone.w = param_ptr->zone[i].w;
 		ext_param[i].zone.h = param_ptr->zone[i].h;
-		SENSOR_PRINT("x=%d,y=%d",
+		SENSOR_LOGI("x=%d,y=%d",
 		       ext_param[i].zone.x, ext_param[i].zone.y);
 		rtn = _ov5640_MatchZone(&ext_param[i]);
 		if (SENSOR_SUCCESS != rtn) {
-			SENSOR_PRINT_ERR
+			SENSOR_LOGI
 			    ("match zone error!");
 			return SENSOR_FAIL;
 		}
-		SENSOR_PRINT("x=%d,y=%d",
+		SENSOR_LOGI("x=%d,y=%d",
 		       ext_param[i].zone.x, ext_param[i].zone.y);
 	}
 
@@ -2675,11 +2675,11 @@ LOCAL uint32_t _ov5640_AutoFocusMultiZone(SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
 
 	do {
 		if (0x00 == i) {
-			SENSOR_PRINT_ERR("error!");
+			SENSOR_LOGI("error!");
 			rtn = SENSOR_FAIL;
 			break;
 		} else if (af_quit_flag) {
-			SENSOR_PRINT_HIGH("quit!");
+			SENSOR_LOGI("quit!");
 			af_quit_flag = 0;
 			break;
 		}
@@ -2693,7 +2693,7 @@ LOCAL uint32_t _ov5640_AutoFocusMultiZone(SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
 		reg_value=Sensor_ReadReg(CMD_PARAM4);
 		if(0x00==reg_value)
 		{
-			SENSOR_PRINT_ERR("fail!");
+			SENSOR_LOGI("fail!");
 			rtn=SENSOR_FAIL;
 			_ov5640_init_firmware();
 		}
@@ -2707,11 +2707,11 @@ LOCAL uint32_t _ov5640_AutoFocusMacro(SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
 	uint16_t i=30;
 	uint16_t reg_value = 0x00;
 
-	SENSOR_PRINT("In");
+	SENSOR_LOGI("In");
 
 	Sensor_WriteReg(0x3603,0x3f);
 
-	SENSOR_PRINT("Done! rtn = %d", rtn);
+	SENSOR_LOGI("Done! rtn = %d", rtn);
 	return rtn;
 }
 
@@ -2724,7 +2724,7 @@ LOCAL uint32_t _ov5640_CheckAFGain(SENSOR_EXT_FUN_PARAM_T_PTR param_ptr)
 
 	cur_af_gain = _ov5640_get_cur_af_gain();
 	delta_gain = ABS((int32_t)cur_af_gain - (int32_t)s_af_gain);
-	SENSOR_PRINT("delta_gain %d, s_is_dv_mode %d", delta_gain, s_is_dv_mode);
+	SENSOR_LOGI("delta_gain %d, s_is_dv_mode %d", delta_gain, s_is_dv_mode);
 	if ((delta_gain > FOCUS_MOVE_GAIN_CHECK)
 		&& (0 != s_af_gain)
 		&& (0 == s_is_dv_mode)) {
@@ -2740,7 +2740,7 @@ LOCAL uint32_t _ov5640_StartAutoFocus(cmr_uint param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr = (SENSOR_EXT_FUN_PARAM_T_PTR) param;
-	SENSOR_PRINT("SENSOR: _ov5640_StartAutoFocus param =%d", ext_ptr->param);
+	SENSOR_LOGI("SENSOR: _ov5640_StartAutoFocus param =%d", ext_ptr->param);
 
 	switch (ext_ptr->param) {
 	case SENSOR_EXT_FOCUS_TRIG:
@@ -2769,7 +2769,7 @@ LOCAL uint32_t _ov5640_QuitAutoFocus(void)
 {
 	uint32_t ret = SENSOR_SUCCESS;
 	af_quit_flag = 0x1;
-	SENSOR_PRINT("af quit flag setted!");
+	SENSOR_LOGI("af quit flag setted!");
 	return ret;
 }
 
@@ -2778,7 +2778,7 @@ LOCAL uint32_t _ov5640_ExposureAuto(void)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 
-	SENSOR_PRINT("SENSOR: _ov5640_ExposureAuto");
+	SENSOR_LOGI("SENSOR: _ov5640_ExposureAuto");
 	Sensor_WriteReg(0x501d, 0x00);
 	return rtn;
 }
@@ -2789,7 +2789,7 @@ LOCAL uint32_t _ov5640_ExposureZone(SENSOR_EXT_FUN_T_PTR param_ptr)
 	SENSOR_EXT_FUN_T_PTR ext_ptr = (SENSOR_EXT_FUN_T_PTR) param_ptr;
 	uint16_t reg_value = 0x00;
 
-	SENSOR_PRINT("%d, %d", ext_ptr->zone.x, ext_ptr->zone.y);
+	SENSOR_LOGI("%d, %d", ext_ptr->zone.x, ext_ptr->zone.y);
 
 	rtn = _ov5640_MatchZone(ext_ptr);
 
@@ -2817,7 +2817,7 @@ LOCAL uint32_t _ov5640_ExposureZone(SENSOR_EXT_FUN_T_PTR param_ptr)
 			    EXPOSURE_ZONE_H - (EXPOSURE_ZONE_H / 0x04);
 		}
 
-		SENSOR_PRINT("%d, %d, %d, %d",
+		SENSOR_LOGI("%d, %d, %d, %d",
 			     ext_ptr->zone.x,
 			     ext_ptr->zone.y,
 			     ext_ptr->zone.w,
@@ -2853,7 +2853,7 @@ LOCAL uint32_t _ov5640_StartExposure(cmr_uint param)
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_T_PTR ext_ptr = (SENSOR_EXT_FUN_T_PTR) param;
 
-	SENSOR_PRINT("SENSOR: _ov5640_StartExposure param =%d",
+	SENSOR_LOGI("SENSOR: _ov5640_StartExposure param =%d",
 		     ext_ptr->param);
 
 	switch (ext_ptr->param) {
@@ -2882,14 +2882,14 @@ LOCAL uint32_t _ov5640_ReadGain(uint32_t param)
 
 	s_ov5640_gain=(int)gain;
 
-	SENSOR_PRINT("SENSOR: _ov5640_ReadGain gain: 0x%x", s_ov5640_gain);
+	SENSOR_LOGI("SENSOR: _ov5640_ReadGain gain: 0x%x", s_ov5640_gain);
 
 	return rtn;
 }
 
 LOCAL void _calculate_hdr_exposure(int capture_gain16,int capture_VTS, int capture_shutter)
 {
-	SENSOR_PRINT("in param capture_gain16 0x%x, capture_VTS 0x%x capture_shutter 0x%x",
+	SENSOR_LOGI("in param capture_gain16 0x%x, capture_VTS 0x%x capture_shutter 0x%x",
 				capture_gain16,
 				capture_VTS,
 				capture_shutter);
@@ -2899,7 +2899,7 @@ LOCAL void _calculate_hdr_exposure(int capture_gain16,int capture_VTS, int captu
 	// write capture shutter
 	if (capture_shutter > (capture_VTS - 4)) {
 		capture_VTS = capture_shutter + 4;
-		SENSOR_PRINT("actual capture_VTS 0x%x", capture_VTS);
+		SENSOR_LOGI("actual capture_VTS 0x%x", capture_VTS);
 		OV5640_set_VTS_ori(capture_VTS);
 	}
 	OV5640_set_shutter(capture_shutter);
@@ -2914,7 +2914,7 @@ LOCAL uint32_t _ov5640_SetEV(cmr_uint param)
 	uint32_t gain = s_ov5640_gain;
 	uint32_t ev = ext_ptr->param;
 
-	SENSOR_PRINT("SENSOR: _ov5640_SetEV param: 0x%x", ext_ptr->param);
+	SENSOR_LOGI("SENSOR: _ov5640_SetEV param: 0x%x", ext_ptr->param);
 #if 0
 	gain=(gain*ext_ptr->param)>>0x06;
 
@@ -2948,7 +2948,7 @@ LOCAL uint32_t _ov5640_saveLoad_exposure(cmr_uint param)
 	if (sl_param) {
 		usleep(180*1000);     /*wait for effect after init stable(AWB)*/
 		/*load exposure params to sensor*/
-		SENSOR_PRINT_HIGH("_ov5640_saveLoad_exposure load shutter 0x%x gain 0x%x",
+		SENSOR_LOGI("_ov5640_saveLoad_exposure load shutter 0x%x gain 0x%x",
 					s_ov5640_shutter_bak,
 					s_ov5640_gain_bak);
 		OV5640_set_gain16(s_ov5640_gain_bak);
@@ -2957,7 +2957,7 @@ LOCAL uint32_t _ov5640_saveLoad_exposure(cmr_uint param)
 		/*ave exposure params from sensor*/
 		s_ov5640_shutter_bak = OV5640_get_shutter();
 		s_ov5640_gain_bak = OV5640_get_gain16();
-		SENSOR_PRINT_HIGH("_ov5640_saveLoad_exposure save shutter 0x%x gain 0x%x",
+		SENSOR_LOGI("_ov5640_saveLoad_exposure save shutter 0x%x gain 0x%x",
 					s_ov5640_shutter_bak,
 					s_ov5640_gain_bak);
 	}
@@ -7064,14 +7064,14 @@ LOCAL int _ov5640_init_firmware(void)
 	uint8_t *reg_ptr = af_firmware;
 	uint16_t reg_val_1, reg_val_2;
 
-	SENSOR_PRINT_HIGH("init firmware start!");
+	SENSOR_LOGI("init firmware start!");
 	Sensor_WriteReg(0x3000, 0x20);
 
 	for (i = 0; i < 4; i++) {
 		ret = Sensor_WriteData(reg_ptr, init_num);
 
 		if (ret != 0) {
-			SENSOR_PRINT_ERR("write sensor reg fai, ret : %d", ret);
+			SENSOR_LOGI("write sensor reg fai, ret : %d", ret);
 			continue;
 		} else {
 			ret = 0;
@@ -7103,7 +7103,7 @@ LOCAL void OV5640_set_bandingfilter(void)
 	// read preview HTS
 	preview_hts = OV5640_get_HTS();
 
-	SENSOR_PRINT("preview_sysclk %d, preview_hts %d",
+	SENSOR_LOGI("preview_sysclk %d, preview_hts %d",
 		preview_sysclk,
 		preview_hts);
 	// read preview VTS
@@ -7130,10 +7130,10 @@ LOCAL void OV5640_set_bandingfilter(void)
 LOCAL cmr_uint _ov5640_ExtFunc(cmr_uint ctl_param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
-	SENSOR_PRINT("0x%lx", ctl_param);
+	SENSOR_LOGI("0x%lx", ctl_param);
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr =
 		(SENSOR_EXT_FUN_PARAM_T_PTR)ctl_param;
-	SENSOR_PRINT("0x%x", ext_ptr->cmd);
+	SENSOR_LOGI("0x%x", ext_ptr->cmd);
 
 	switch (ext_ptr->cmd) {
 	case SENSOR_EXT_FUNC_INIT:
@@ -7207,7 +7207,7 @@ LOCAL cmr_uint _ov5640_set_iso(cmr_uint mode)
 	uint32_t reg_bits = 0;
 	uint32_t reg_value = 0;
 	SENSOR_REG_BITS_T_PTR sensor_reg_ptr=(SENSOR_REG_BITS_T_PTR)ov5640_iso_tab[mode];
-	SENSOR_PRINT("mode = %ld",mode);
+	SENSOR_LOGI("mode = %ld",mode);
 	iso_mode = mode;
 	if(mode>5)
 		return 0;
@@ -7225,7 +7225,7 @@ LOCAL cmr_uint _ov5640_set_iso(cmr_uint mode)
 		}
 	}
 
-	SENSOR_PRINT("read 0x%x,0x%x", Sensor_ReadReg(0x3a18),Sensor_ReadReg(0x3a19));
+	SENSOR_LOGI("read 0x%x,0x%x", Sensor_ReadReg(0x3a18),Sensor_ReadReg(0x3a19));
 	return 0;
 }
 
@@ -7263,17 +7263,17 @@ LOCAL cmr_uint _ov5640_flash(cmr_uint param)
 			*autoflash = 0;
 		}
 	} else {
-		SENSOR_PRINT("  NULL pointer error! ");
+		SENSOR_LOGI("  NULL pointer error! ");
 		return SENSOR_FAIL;
 	}
 
-	SENSOR_PRINT(" value = %d, autoflash = 0x%x, auto_flash_mode",  value, *autoflash);
+	SENSOR_LOGI(" value = %d, autoflash = 0x%x, auto_flash_mode",  value, *autoflash);
 	return SENSOR_SUCCESS;
 }
 
 LOCAL cmr_uint _ov5640_StreamOn(cmr_uint param)
 {
-	SENSOR_PRINT("SENSOR_OV5640: StreamOn");
+	SENSOR_LOGI("SENSOR_OV5640: StreamOn");
 
 	Sensor_WriteReg(0x4202, 0x00);
 
@@ -7282,7 +7282,7 @@ LOCAL cmr_uint _ov5640_StreamOn(cmr_uint param)
 
 LOCAL cmr_uint _ov5640_StreamOff(cmr_uint param)
 {
-	SENSOR_PRINT("SENSOR_OV5640: StreamOff");
+	SENSOR_LOGI("SENSOR_OV5640: StreamOff");
 
 	Sensor_WriteReg(0x4202, 0x0f);
 

@@ -38,7 +38,7 @@
 #include <string.h>
 #include <sys/stat.h>
  //void    _sp5408_sdcard(char *);
-//#define SENSOR_TRACE printk
+//#define SENSOR_LOGI printk
 int num_sd;
 #endif
 
@@ -651,7 +651,7 @@ int flag_sd =1;
 
 	if(!nptr || (base!=16 && base!=10 && base!=8))
 	{
-		SENSOR_TRACE("%s(): NULL pointer input\n", __FUNCTION__);
+		SENSOR_LOGI("%s(): NULL pointer input\n", __FUNCTION__);
 		return -1;
 	}
 	for(ret=0; *nptr; nptr++)
@@ -686,7 +686,7 @@ unsigned char SP2528_Initialize_from_T_Flash()
 	u8 func_ind[4] = {0};
 	int i=0;
 
-	SENSOR_TRACE("hello:SP2528_Initialize_from_T_Flash(start)\n");
+	SENSOR_LOGI("hello:SP2528_Initialize_from_T_Flash(start)\n");
 
 	curr_ptr = data_buff;
 	while (curr_ptr < (data_buff + file_size))
@@ -767,7 +767,7 @@ unsigned char SP2528_Initialize_from_T_Flash()
 #endif
 	}
 
-	SENSOR_TRACE("hello:SP2528_Initialize_from_T_Flash(end)\n");
+	SENSOR_LOGI("hello:SP2528_Initialize_from_T_Flash(end)\n");
 
 return 1;
 
@@ -780,13 +780,13 @@ return 1;
 
 	int i;
 
-	SENSOR_TRACE("hello:_sp5408_sdcard_reg(start)\n");
+	SENSOR_LOGI("hello:_sp5408_sdcard_reg(start)\n");
 
 	for(i = 0;i<num_sd;i++)
 	{
 		SP2529_YUV_COMMON[i].reg_addr = SP2528_Init_Reg[i].init_reg;
 		SP2529_YUV_COMMON[i].reg_value=SP2528_Init_Reg[i].init_val;
-		//SENSOR_TRACE("gpwreg11 %x = %x\n",SP2529_YUV_COMMON[i].reg_addr ,SP2529_YUV_COMMON[i].reg_value);
+		//SENSOR_LOGI("gpwreg11 %x = %x\n",SP2529_YUV_COMMON[i].reg_addr ,SP2529_YUV_COMMON[i].reg_value);
 	}
 
 	if(num_sd  != 0)
@@ -795,11 +795,11 @@ return 1;
 		{
 			SP2529_YUV_COMMON[i].reg_addr = 0xfd;
 			SP2529_YUV_COMMON[i].reg_value= 0x00;
-			//SENSOR_TRACE("gpwreg %x = %x\n",SP2529_YUV_COMMON[i].reg_addr ,SP2529_YUV_COMMON[i].reg_value);
+			//SENSOR_LOGI("gpwreg %x = %x\n",SP2529_YUV_COMMON[i].reg_addr ,SP2529_YUV_COMMON[i].reg_value);
 		}
 	}
 
-	SENSOR_TRACE("hello:_sp5408_sdcard_reg(end)\n");
+	SENSOR_LOGI("hello:_sp5408_sdcard_reg(end)\n");
 }
 
 
@@ -809,13 +809,13 @@ return 1;
 	 int i;
 	 int cnt;
 
-	SENSOR_TRACE("hello:_sp5408_sdcard(start)\n");
+	SENSOR_LOGI("hello:_sp5408_sdcard(start)\n");
 
 	memset(data_buff,0,sizeof(data_buff));//before use the buffer,clean
 	fp = fopen("/system/lib/sp2529_sd", "r");
 
 	if(NULL == fp){
-		SENSOR_TRACE("open file error\n");
+		SENSOR_LOGI("open file error\n");
 		//_sp5408_no_sdcard();//if no sdcard ,of open file error,use the origianl para
 	}
 	else
@@ -829,7 +829,7 @@ return 1;
 
 	cnt = (int)fread(data_buff, 1, file_size , fp);
 
-	SENSOR_TRACE("open file ok %d\n" ,file_size);
+	SENSOR_LOGI("open file ok %d\n" ,file_size);
 	fclose(fp);
 
 	SP2528_Initialize_from_T_Flash();//Analysis parameters
@@ -838,7 +838,7 @@ return 1;
 
 	}
 
-	SENSOR_TRACE("hello:_sp5408_sdcard(end)\n");
+	SENSOR_LOGI("hello:_sp5408_sdcard(end)\n");
 }
 
 #endif
@@ -1281,7 +1281,7 @@ static unsigned long SP2529_PowerOn(unsigned long power_on)
 		usleep(5*1000);
 		Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
 	}
-	SENSOR_PRINT("(1:on, 0:off): %ld", power_on);
+	SENSOR_LOGI("(1:on, 0:off): %ld", power_on);
 	return (uint32_t)SENSOR_SUCCESS;
 }
 
@@ -1304,12 +1304,12 @@ static unsigned long SP2529_Identify(unsigned long param)
 		sensor_id |= Sensor_ReadReg(SP2529_PID_ADDR2);
 		printf("li_%s sensor_id is %x\n", __func__, sensor_id);
 		usleep(10*1000);
-		//CMR_LOGV("liyj_CMR_LOGV\n");
-		//CMR_LOGE("liyj_CMR_LOGE\n");
-		SENSOR_PRINT("%s sensor_id is %x\n", __func__, sensor_id);
+		//SENSOR_LOGV("liyj_SENSOR_LOGV\n");
+		//SENSOR_LOGE("liyj_SENSOR_LOGE\n");
+		SENSOR_LOGI("%s sensor_id is %x\n", __func__, sensor_id);
 
 		if (sensor_id == SP2529_SENSOR_ID) {
-			SENSOR_PRINT("the main sensor is SP2529\n");
+			SENSOR_LOGI("the main sensor is SP2529\n");
 			ret_value = SENSOR_SUCCESS;
 			break;
 		}
@@ -1541,7 +1541,7 @@ static unsigned long set_SP2529_video_mode(unsigned long mode)
 	if(0 == mode)
 	{
 	       set_preview_mode(SP2529_PRE_MODE);
-		CMR_LOGV("SP2529 SENSOR: set_video_mode000000");
+		SENSOR_LOGV("SP2529 SENSOR: set_video_mode000000");
 	}
   	else
 	{
@@ -1579,7 +1579,7 @@ static unsigned long set_SP2529_video_mode(unsigned long mode)
 		SP2529_WriteReg(0xd1,0x04);
 		SP2529_WriteReg(0xc9,0xc8);
 		SP2529_WriteReg(0xca,0x04);
-		CMR_LOGV("SP2529 SENSOR: set_video_mode1");
+		SENSOR_LOGV("SP2529 SENSOR: set_video_mode1");
 	}
     return 0;
 }
@@ -1663,7 +1663,7 @@ static unsigned long set_SP2529_awb(unsigned long mode)
 
 	//Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_LIGHTSOURCE, (uint32_t)mode);
 	usleep(100);
-	SENSOR_TRACE("SENSOR: set_awb_mode: mode = %ld", mode);
+	SENSOR_LOGI("SENSOR: set_awb_mode: mode = %ld", mode);
 	return 0;
 	/*uint8_t awb_en_value;
 	uint16_t i;
@@ -2212,7 +2212,7 @@ static unsigned long set_image_effect(unsigned long effect_type)
 	uint16_t i;
 
 	SENSOR_REG_T* sensor_reg_ptr = (SENSOR_REG_T*)SP2529_image_effect_tab[effect_type];
-	CMR_LOGE("li SP2529_After_Snapshot effect_type = %x \n",effect_type);//liyj
+	SENSOR_LOGE("li SP2529_After_Snapshot effect_type = %x \n",effect_type);//liyj
 	if (effect_type > 7)
 		return 0;
 
@@ -2334,7 +2334,7 @@ static void SP2529_BeforeCapture(void)
 static unsigned long SP2529_After_Snapshot(unsigned long param)
 {
 
-	SENSOR_PRINT("SP2529_After_Snapshot param = %lx \n",param);
+	SENSOR_LOGI("SP2529_After_Snapshot param = %lx \n",param);
 
 	Sensor_SetMode((uint32_t)param);
 
@@ -2356,19 +2356,19 @@ static unsigned long SP2529_BeforeSnapshot(unsigned long sensor_snapshot_mode)
 
 	switch (sensor_snapshot_mode) {
 	case SENSOR_MODE_PREVIEW_ONE:
-		SENSOR_PRINT("Capture VGA Size");
+		SENSOR_LOGI("Capture VGA Size");
 	       SP2529_Cap_Flag=1;
 		return 0; // hill 0626
 		break;
 	case SENSOR_MODE_SNAPSHOT_ONE_FIRST:
 	case SENSOR_MODE_SNAPSHOT_ONE_SECOND:
-		SENSOR_PRINT("Capture 1.3M&2M Size");
+		SENSOR_LOGI("Capture 1.3M&2M Size");
 		break;
 	default:
 		break;
 	}
 
-	SENSOR_PRINT("SENSOR_SP2529: Before Snapshot");
+	SENSOR_LOGI("SENSOR_SP2529: Before Snapshot");
 #endif
 
        SP2529_BeforeCapture();
@@ -2378,7 +2378,7 @@ static unsigned long SP2529_BeforeSnapshot(unsigned long sensor_snapshot_mode)
 
 static unsigned long SP2529_StreamOn(unsigned long param)
 {
-	SENSOR_PRINT("Start");
+	SENSOR_LOGI("Start");
 
 	Sensor_WriteReg(0xfd , 0x00);
 	Sensor_WriteReg(0x92 , 0x81);
@@ -2390,7 +2390,7 @@ static unsigned long SP2529_StreamOn(unsigned long param)
 
 static unsigned long SP2529_StreamOff(unsigned long param)
 {
-	SENSOR_PRINT("Stop");
+	SENSOR_LOGI("Stop");
 
 	Sensor_WriteReg(0xfd , 0x00);
 	Sensor_WriteReg(0x92 , 0x00);

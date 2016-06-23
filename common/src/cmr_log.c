@@ -20,6 +20,7 @@
 
 cmr_int g_isp_log_level = LEVEL_OVER_LOGD;
 cmr_int g_oem_log_level = LEVEL_OVER_LOGD;
+cmr_int g_sensor_log_level = LEVEL_OVER_LOGD;
 
 void isp_init_log_level(void)
 {
@@ -41,4 +42,15 @@ void oem_init_log_level(void)
 	val = atoi(prop);
 	if (0 < val)
 		g_oem_log_level = val;
+}
+
+void sensor_init_log_level(void)
+{
+	char prop[PROPERTY_VALUE_MAX];
+	int val = 0;
+
+	property_get("persist.sys.camera.hal.log", prop, "0");
+	val = atoi(prop);
+	if (0 < val)
+		g_sensor_log_level = val;
 }

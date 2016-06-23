@@ -537,7 +537,7 @@ LOCAL void GC0309_WriteReg( uint8_t  subaddr, uint8_t data )
         DSENSOR_IICWrite((uint16_t)subaddr, (uint16_t)data);
 #endif
 
-        SENSOR_TRACE("SENSOR: GC0309_WriteReg reg/value(%x,%x) !!\n", subaddr, data);
+        SENSOR_LOGI("SENSOR: GC0309_WriteReg reg/value(%x,%x) !!\n", subaddr, data);
 }
 LOCAL uint8_t GC0309_ReadReg( uint8_t  subaddr)
 {
@@ -549,7 +549,7 @@ LOCAL uint8_t GC0309_ReadReg( uint8_t  subaddr)
         value = (uint16_t)DSENSOR_IICRead((uint16_t)subaddr);
 #endif
 
-        SENSOR_TRACE("SENSOR: GC0309_ReadReg reg/value(%x,%x) !!\n", subaddr, value);
+        SENSOR_LOGI("SENSOR: GC0309_ReadReg reg/value(%x,%x) !!\n", subaddr, value);
         return value;
 }
 LOCAL uint32_t GC0309_Identify(uint32_t param)
@@ -566,14 +566,14 @@ LOCAL uint32_t GC0309_Identify(uint32_t param)
         uint8_t reg[2] 	= {0x00, 0x00};
         uint8_t value[2] 	= {0xa0, 0xa0};
 
-        SENSOR_TRACE("GC0309_Identify");
+        SENSOR_LOGI("GC0309_Identify");
         for(i = 0; i<2; ) {
                 nLoop = 1000;
                 ret = GC0309_ReadReg(reg[i]);
                 if( ret != value[i]) {
                         err_cnt++;
                         if(err_cnt>3) {
-                                SENSOR_PRINT_HIGH("It is not GC0309\n");
+                                SENSOR_LOGI("It is not GC0309\n");
                                 return SENSOR_FAIL;
                         } else {
                                 while(nLoop--);
@@ -585,13 +585,13 @@ LOCAL uint32_t GC0309_Identify(uint32_t param)
         }
 
 
-        SENSOR_TRACE("GC0309_Identify: it is GC0309\n");
+        SENSOR_LOGI("GC0309_Identify: it is GC0309\n");
         return (uint32_t)SENSOR_SUCCESS;
 }
 
 LOCAL uint32_t set_gc0309_ae_enable(uint32_t enable)
 {
-        SENSOR_TRACE("set_gc0309_ae_enable: enable = %d\n", enable);
+        SENSOR_LOGI("set_gc0309_ae_enable: enable = %d\n", enable);
         return 0;
 }
 LOCAL uint32_t set_hmirror_enable(uint32_t enable)
@@ -599,7 +599,7 @@ LOCAL uint32_t set_hmirror_enable(uint32_t enable)
         uint8_t value = 0;
         value = GC0309_ReadReg(0x14);
         value = (value & 0xFE) | (enable == 1 ? 0 : 1); //landscape
-        SENSOR_TRACE("set_hmirror_enable: enable = %d, 0x14: 0x%x.\n", enable, value);
+        SENSOR_LOGI("set_hmirror_enable: enable = %d, 0x14: 0x%x.\n", enable, value);
         GC0309_WriteReg(0x14, value);
         return 0;
 }
@@ -608,7 +608,7 @@ LOCAL uint32_t set_vmirror_enable(uint32_t enable)
         uint8_t value = 0;
         value = GC0309_ReadReg(0x14);
         value = (value & 0xFD) | ((enable & 0x1) << 1); //portrait
-        SENSOR_TRACE("set_vmirror_enable: enable = %d, 0x14: 0x%x.\n", enable, value);
+        SENSOR_LOGI("set_vmirror_enable: enable = %d, 0x14: 0x%x.\n", enable, value);
         GC0309_WriteReg(0x14, value);
         return 0;
 }
@@ -661,7 +661,7 @@ LOCAL uint32_t set_brightness(uint32_t level)
         for(i = 0; (0xFF != sensor_reg_ptr[i].reg_addr) && (0xFF != sensor_reg_ptr[i].reg_value); i++) {
                 GC0309_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
         }
-        SENSOR_TRACE("set_brightness: level = %d\n", level);
+        SENSOR_LOGI("set_brightness: level = %d\n", level);
         return 0;
 }
 
@@ -688,7 +688,7 @@ LOCAL uint32_t set_gc0309_ev(uint32_t level)
                 GC0309_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
         }
 
-        SENSOR_TRACE("SENSOR: set_ev: level = %d\n", level);
+        SENSOR_LOGI("SENSOR: set_ev: level = %d\n", level);
         return 0;
 }
 
@@ -752,8 +752,8 @@ LOCAL uint32_t set_gc0309_video_mode(uint32_t mode)
                 GC0309_WriteReg(0xec,0x20);
         else if(1 == mode)
                 GC0309_WriteReg(0xec,0x00);
-        SENSOR_TRACE("SENSOR: GC0309_ReadReg(0xec) = %x\n", GC0309_ReadReg(0xec));
-        SENSOR_TRACE("SENSOR: set_video_mode: mode = %d\n", mode);
+        SENSOR_LOGI("SENSOR: GC0309_ReadReg(0xec) = %x\n", GC0309_ReadReg(0xec));
+        SENSOR_LOGI("SENSOR: set_video_mode: mode = %d\n", mode);
         return 0;
 }
 /******************************************************************************/
@@ -834,7 +834,7 @@ LOCAL uint32_t set_gc0309_awb(uint32_t mode)
                         GC0309_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
                 }
         }
-        SENSOR_TRACE("SENSOR: set_awb_mode: mode = %d\n", mode);
+        SENSOR_LOGI("SENSOR: set_awb_mode: mode = %d\n", mode);
 
         return 0;
 }
@@ -884,7 +884,7 @@ LOCAL uint32_t set_contrast(uint32_t level)
                 GC0309_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
         }
 
-        SENSOR_TRACE("set_contrast: level = %d\n", level);
+        SENSOR_LOGI("set_contrast: level = %d\n", level);
         return 0;
 }
 LOCAL uint32_t set_sharpness(uint32_t level)
@@ -905,7 +905,7 @@ LOCAL uint32_t set_saturation(uint32_t level)
 /******************************************************************************/
 LOCAL uint32_t set_preview_mode(uint32_t preview_mode)
 {
-        SENSOR_TRACE("set_preview_mode: preview_mode = %d\n", preview_mode);
+        SENSOR_LOGI("set_preview_mode: preview_mode = %d\n", preview_mode);
 
         set_gc0309_anti_flicker(0);
         switch (preview_mode) {
@@ -980,7 +980,7 @@ LOCAL uint32_t set_image_effect(uint32_t effect_type)
         for(i = 0; (0xFF != sensor_reg_ptr[i].reg_addr) || (0xFF != sensor_reg_ptr[i].reg_value) ; i++) {
                 Sensor_WriteReg_8bits(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
         }
-        SENSOR_TRACE("-----------set_image_effect: effect_type = %d------------\n", effect_type);
+        SENSOR_LOGI("-----------set_image_effect: effect_type = %d------------\n", effect_type);
         return 0;
 }
 
@@ -1007,7 +1007,7 @@ LOCAL uint32_t GC0309_BeforeSnapshot(uint32_t param)
     BOOLEAN b_AEC_on;
 
 
-    SENSOR_TRACE("GC0309_BeforeSnapshot ");
+    SENSOR_LOGI("GC0309_BeforeSnapshot ");
     	if(GC0309_ReadReg(0X41)  & 0x08 == 0x08)  //AEC on
     		b_AEC_on = SENSOR_TRUE;
     	else
@@ -1030,7 +1030,7 @@ LOCAL uint32_t GC0309_BeforeSnapshot(uint32_t param)
 
 	GC0309_WriteReg(0x03,shutter/256);
 	GC0309_WriteReg(0x04,shutter & 0x00ff);
-	//SENSOR_TRACE("GC0309_BeforeSnapshot, temp_r=%x,temp_reg=%x, final = %x ",temp_r,temp_reg, temp_r*temp_reg/ 0x80);
+	//SENSOR_LOGI("GC0309_BeforeSnapshot, temp_r=%x,temp_reg=%x, final = %x ",temp_r,temp_reg, temp_r*temp_reg/ 0x80);
 
 	temp_r = (temp_r*temp_reg) / 0x80;
 	temp_g = (temp_g*temp_reg) / 0x80;
@@ -1041,7 +1041,7 @@ LOCAL uint32_t GC0309_BeforeSnapshot(uint32_t param)
 		GC0309_WriteReg(0xce, temp_g);
 		GC0309_WriteReg(0xcf , temp_b);
 	}
-	//SENSOR_TRACE("GC0309_BeforeSnapshot, temp_r=%x,temp_g=%x, temp_b = %x ",temp_r,temp_g,temp_b);
+	//SENSOR_LOGI("GC0309_BeforeSnapshot, temp_r=%x,temp_g=%x, temp_b = %x ",temp_r,temp_g,temp_b);
 
 	SENSOR_Sleep(300);
     	return 0;

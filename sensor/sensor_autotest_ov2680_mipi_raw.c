@@ -1467,7 +1467,7 @@ LOCAL uint32_t Sensor_InitRawTuneInfo(void)
 
 LOCAL uint32_t _ov2680_GetResolutionTrimTab(uint32_t param)
 {
-	SENSOR_PRINT("0x%x", (uint32_t)s_ov2680_Resolution_Trim_Tab);
+	SENSOR_LOGI("0x%x", (uint32_t)s_ov2680_Resolution_Trim_Tab);
 	return (uint32_t) s_ov2680_Resolution_Trim_Tab;
 }
 
@@ -1501,7 +1501,7 @@ LOCAL uint32_t _ov2680_PowerOn(uint32_t power_on)
 		Sensor_SetAvddVoltage(SENSOR_AVDD_CLOSED);
 		Sensor_SetIovddVoltage(SENSOR_AVDD_CLOSED);
 	}
-	SENSOR_PRINT("SENSOR_ov2680: _ov2680_Power_On(1:on, 0:off): %d", power_on);
+	SENSOR_LOGI("SENSOR_ov2680: _ov2680_Power_On(1:on, 0:off): %d", power_on);
 	return SENSOR_SUCCESS;
 }
 
@@ -1510,7 +1510,7 @@ LOCAL uint32_t _ov2680_com_Identify_otp(void* param_ptr)
 	uint32_t rtn=SENSOR_FAIL;
 	uint32_t param_id;
 
-	SENSOR_PRINT("SENSOR_ov2680: _ov2680_com_Identify_otp");
+	SENSOR_LOGI("SENSOR_ov2680: _ov2680_com_Identify_otp");
 
 	/*read param id from sensor omap*/
 	param_id=ov2680_RAW_PARAM_COM;
@@ -1537,17 +1537,17 @@ LOCAL uint32_t _ov2680_GetRawInof(void)
 		g_module_id = i;
 		if(RAW_INFO_END_ID==tab_ptr[i].param_id){
 			if(NULL==s_at_ov2680_mipi_raw_info_ptr){
-				SENSOR_PRINT("SENSOR_ov2680: ov5647_GetRawInof no param error");
+				SENSOR_LOGI("SENSOR_ov2680: ov5647_GetRawInof no param error");
 				rtn=SENSOR_FAIL;
 			}
-			SENSOR_PRINT("SENSOR_ov2680: ov2680_GetRawInof end");
+			SENSOR_LOGI("SENSOR_ov2680: ov2680_GetRawInof end");
 			break;
 		}
 		else if(PNULL!=tab_ptr[i].identify_otp){
 			if(SENSOR_SUCCESS==tab_ptr[i].identify_otp(0))
 			{
 				s_at_ov2680_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
-				SENSOR_PRINT("SENSOR_ov2680: ov2680_GetRawInof success");
+				SENSOR_LOGI("SENSOR_ov2680: ov2680_GetRawInof success");
 				break;
 			}
 		}
@@ -1567,25 +1567,25 @@ LOCAL uint32_t _ov2680_Identify(uint32_t param)
 	uint8_t ver_value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
 
-	SENSOR_PRINT("SENSOR_ov2680: mipi raw identify\n");
+	SENSOR_LOGI("SENSOR_ov2680: mipi raw identify\n");
 	//Sensor_WriteReg(0x0103, 0x01);
 	//usleep(100*1000);
 	pid_value = Sensor_ReadReg(ov2680_PID_ADDR);
 
 	if (ov2680_PID_VALUE == pid_value) {
 		ver_value = Sensor_ReadReg(ov2680_VER_ADDR);
-		SENSOR_PRINT("SENSOR_ov2680: Identify: PID = %x, VER = %x", pid_value, ver_value);
+		SENSOR_LOGI("SENSOR_ov2680: Identify: PID = %x, VER = %x", pid_value, ver_value);
 		if (ov2680_VER_VALUE == ver_value) {
 			ret_value=_ov2680_GetRawInof();
 			Sensor_InitRawTuneInfo();
 			ret_value = SENSOR_SUCCESS;
-			SENSOR_PRINT("SENSOR_ov2680: this is ov2680 sensor !");
+			SENSOR_LOGI("SENSOR_ov2680: this is ov2680 sensor !");
 		} else {
-			SENSOR_PRINT
+			SENSOR_LOGI
 			    ("SENSOR_ov2680: Identify this is OV%x%x sensor !", pid_value, ver_value);
 		}
 	} else {
-		SENSOR_PRINT("SENSOR_ov2680: identify fail,pid_value=%d", pid_value);
+		SENSOR_LOGI("SENSOR_ov2680: identify fail,pid_value=%d", pid_value);
 	}
 
 	return ret_value;
@@ -1593,7 +1593,7 @@ LOCAL uint32_t _ov2680_Identify(uint32_t param)
 
 LOCAL uint32_t _ov2680_StreamOn(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_ov2680: StreamOn");
+	SENSOR_LOGI("SENSOR_ov2680: StreamOn");
 
 	Sensor_WriteReg(0x0100, 0x01);
 
@@ -1602,7 +1602,7 @@ LOCAL uint32_t _ov2680_StreamOn(uint32_t param)
 
 LOCAL uint32_t _ov2680_StreamOff(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR_ov2680: StreamOff");
+	SENSOR_LOGI("SENSOR_ov2680: StreamOff");
 
 	Sensor_WriteReg(0x0100, 0x00);
 	usleep(100*1000);

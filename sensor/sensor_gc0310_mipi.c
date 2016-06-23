@@ -642,7 +642,7 @@ static unsigned long GC0310_MIPI_Identify(unsigned long param)
 		sensor_id |= GC0310_MIPI_ReadReg(GC0310_MIPI_PID_ADDR2);
 		ALOGE("%s sensor_id gc0310 is %x\n", __func__, sensor_id);
 		if (sensor_id == GC0310_MIPI_SENSOR_ID) {
-			SENSOR_PRINT("the main sensor is GC0310_MIPI\n");
+			SENSOR_LOGI("the main sensor is GC0310_MIPI\n");
 			return SENSOR_SUCCESS;
 		}
 	}
@@ -710,7 +710,7 @@ static unsigned long set_GC0310_video_mode(unsigned long mode)
 	SENSOR_REG_T_PTR sensor_reg_ptr=(SENSOR_REG_T_PTR)gc0310_video_mode_tab[mode];
 	uint16_t i=0x00;
 
-	SENSOR_PRINT_ERR("SENSOR: set_video_mode: mode = %d\n", mode);
+	SENSOR_LOGI("SENSOR: set_video_mode: mode = %d\n", mode);
 	if(mode>1 || mode == 0)
 		return 0;
 
@@ -972,7 +972,7 @@ static unsigned long set_saturation(unsigned long level)
 
 static unsigned long set_preview_mode(unsigned long preview_mode)
 {
-	SENSOR_PRINT("set_preview_mode: preview_mode = %ld\n", preview_mode);
+	SENSOR_LOGI("set_preview_mode: preview_mode = %ld\n", preview_mode);
 
 	set_GC0310_MIPI_anti_flicker(0);
 	switch (preview_mode) {
@@ -983,7 +983,7 @@ static unsigned long set_preview_mode(unsigned long preview_mode)
 		GC0310_MIPI_WriteReg(0xfe , 0x01);
 		GC0310_MIPI_WriteReg(0x3c , 0x20);
 		GC0310_MIPI_WriteReg(0xfe , 0x00);
-		SENSOR_PRINT("set_preview_mode: DCAMERA_ENVIRONMENT_NORMAL\n");
+		SENSOR_LOGI("set_preview_mode: DCAMERA_ENVIRONMENT_NORMAL\n");
 		break;
 
 	case 1://DCAMERA_ENVIRONMENT_NIGHT:
@@ -994,7 +994,7 @@ static unsigned long set_preview_mode(unsigned long preview_mode)
 		GC0310_MIPI_WriteReg(0xfe , 0x01);
 		GC0310_MIPI_WriteReg(0x3c , 0x30);
 		GC0310_MIPI_WriteReg(0xfe , 0x00);
-		SENSOR_PRINT("set_preview_mode: DCAMERA_ENVIRONMENT_NIGHT\n");
+		SENSOR_LOGI("set_preview_mode: DCAMERA_ENVIRONMENT_NIGHT\n");
 		break;
 
 	case 3://SENSOR_ENVIROMENT_PORTRAIT:
@@ -1004,7 +1004,7 @@ static unsigned long set_preview_mode(unsigned long preview_mode)
 		GC0310_MIPI_WriteReg(0xfe , 0x01);
 		GC0310_MIPI_WriteReg(0x3c , 0x20);
 		GC0310_MIPI_WriteReg(0xfe , 0x00);
-		SENSOR_PRINT("set_preview_mode: SENSOR_ENVIROMENT_PORTRAIT\n");
+		SENSOR_LOGI("set_preview_mode: SENSOR_ENVIROMENT_PORTRAIT\n");
 		break;
 
 	case 4://SENSOR_ENVIROMENT_LANDSCAPE://4
@@ -1015,7 +1015,7 @@ static unsigned long set_preview_mode(unsigned long preview_mode)
 		GC0310_MIPI_WriteReg(0xfe , 0x01);
 		GC0310_MIPI_WriteReg(0x3c , 0x20);
 		GC0310_MIPI_WriteReg(0xfe , 0x00);
-		SENSOR_PRINT("set_preview_mode: SENSOR_ENVIROMENT_LANDSCAPE\n");
+		SENSOR_LOGI("set_preview_mode: SENSOR_ENVIROMENT_LANDSCAPE\n");
 		break;
 
 	case 2://SENSOR_ENVIROMENT_SPORTS://2
@@ -1027,7 +1027,7 @@ static unsigned long set_preview_mode(unsigned long preview_mode)
 		GC0310_MIPI_WriteReg(0xfe , 0x01);
 		GC0310_MIPI_WriteReg(0x3c , 0x20);
 		GC0310_MIPI_WriteReg(0xfe , 0x00);
-		SENSOR_PRINT("set_preview_mode: SENSOR_ENVIROMENT_SPORTS\n");
+		SENSOR_LOGI("set_preview_mode: SENSOR_ENVIROMENT_SPORTS\n");
 		break;
 
 	default:
@@ -1127,7 +1127,7 @@ static unsigned long GC0310_MIPI_BeforeSnapshot(unsigned long sensor_snapshot_mo
 
 	switch (sensor_snapshot_mode) {
 	case SENSOR_MODE_PREVIEW_ONE:
-		SENSOR_PRINT("Capture VGA Size");
+		SENSOR_LOGI("Capture VGA Size");
 		break;
 	case SENSOR_MODE_SNAPSHOT_ONE_FIRST:
 	case SENSOR_MODE_SNAPSHOT_ONE_SECOND:
@@ -1136,13 +1136,13 @@ static unsigned long GC0310_MIPI_BeforeSnapshot(unsigned long sensor_snapshot_mo
 		break;
 	}
 
-	SENSOR_PRINT("SENSOR_GC0310: Before Snapshot");
+	SENSOR_LOGI("SENSOR_GC0310: Before Snapshot");
 	return 0;
 }
 
 static unsigned long GC0310_MIPI_StreamOn(unsigned long param)
 {
-	SENSOR_PRINT("Start");
+	SENSOR_LOGI("Start");
 	GC0310_MIPI_WriteReg(0xfe, 0x03);
 	GC0310_MIPI_WriteReg(0x10, 0x94);
 	GC0310_MIPI_WriteReg(0xfe, 0x00);
@@ -1152,7 +1152,7 @@ static unsigned long GC0310_MIPI_StreamOn(unsigned long param)
 
 static unsigned long GC0310_MIPI_StreamOff(unsigned long param)
 {
-	SENSOR_PRINT("Stop");
+	SENSOR_LOGI("Stop");
 	GC0310_MIPI_WriteReg(0xfe, 0x03);
 	GC0310_MIPI_WriteReg(0x10, 0x84);
 	GC0310_MIPI_WriteReg(0xfe, 0x00);

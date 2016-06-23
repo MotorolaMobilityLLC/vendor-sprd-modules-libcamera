@@ -1143,7 +1143,7 @@ static unsigned long GC2155_MIPI_PowerOn(unsigned long power_on)
 		usleep(5000);
 		Sensor_SetResetLevel(!reset_level);
 		usleep(5000);
-		CMR_LOGE("eric GC2155_MIPI\n");
+		SENSOR_LOGE("eric GC2155_MIPI\n");
 	} else {
 		Sensor_PowerDown(power_down);
 		usleep(5000);
@@ -1158,7 +1158,7 @@ static unsigned long GC2155_MIPI_PowerOn(unsigned long power_on)
 		Sensor_SetIovddVoltage(SENSOR_AVDD_CLOSED);
 		usleep(5000);
 	}
-	SENSOR_PRINT("(1:on, 0:off): %d", power_on);
+	SENSOR_LOGI("(1:on, 0:off): %d", power_on);
 	return SENSOR_SUCCESS;
 }
 
@@ -1179,9 +1179,9 @@ static unsigned long GC2155_MIPI_Identify(unsigned long param)
 		usleep(1000);
 		sensor_id |= GC2155_MIPI_ReadReg(GC2155_MIPI_PID_ADDR2);
 		usleep(1000);
-		SENSOR_PRINT("%s sensor_id is %x\n", __func__, sensor_id);
+		SENSOR_LOGI("%s sensor_id is %x\n", __func__, sensor_id);
 		if (sensor_id == GC2155_MIPI_SENSOR_ID) {
-			SENSOR_PRINT("the main sensor is GC2155_MIPI\n");
+			SENSOR_LOGI("the main sensor is GC2155_MIPI\n");
 			return SENSOR_SUCCESS;
 		}
 	}
@@ -1339,7 +1339,7 @@ static unsigned long set_GC2155_MIPI_video_mode(unsigned long mode)
 	SENSOR_REG_T_PTR sensor_reg_ptr = (SENSOR_REG_T_PTR)gc2155_video_mode_tab[mode];
 	uint16_t i;
 
-	SENSOR_PRINT("0x%02x", mode);
+	SENSOR_LOGI("0x%02x", mode);
 
 	if (mode>1)
 		return 0;
@@ -1499,7 +1499,7 @@ static unsigned long set_saturation(unsigned long level)
 }
 static unsigned long set_preview_mode(unsigned long preview_mode)
 {
-	SENSOR_PRINT("set_preview_mode: preview_mode = %ld\n", preview_mode);
+	SENSOR_LOGI("set_preview_mode: preview_mode = %ld\n", preview_mode);
 
 	set_GC2155_MIPI_anti_flicker(0);
 	switch (preview_mode) {
@@ -1508,7 +1508,7 @@ static unsigned long set_preview_mode(unsigned long preview_mode)
 		GC2155_MIPI_WriteReg(0xfe , 0x01);
 		GC2155_MIPI_WriteReg(0x3c , 0x40);
 		GC2155_MIPI_WriteReg(0xfe , 0x00);
-		SENSOR_PRINT("set_preview_mode: DCAMERA_ENVIRONMENT_NORMAL\n");
+		SENSOR_LOGI("set_preview_mode: DCAMERA_ENVIRONMENT_NORMAL\n");
 		break;
 
 	case 1://DCAMERA_ENVIRONMENT_NIGHT://1
@@ -1516,7 +1516,7 @@ static unsigned long set_preview_mode(unsigned long preview_mode)
 		GC2155_MIPI_WriteReg(0xfe , 0x01);
 		GC2155_MIPI_WriteReg(0x3c , 0x60);
 		GC2155_MIPI_WriteReg(0xfe , 0x00);
-		SENSOR_PRINT("set_preview_mode: DCAMERA_ENVIRONMENT_NIGHT\n");
+		SENSOR_LOGI("set_preview_mode: DCAMERA_ENVIRONMENT_NIGHT\n");
 		break;
 
 	case 3://SENSOR_ENVIROMENT_PORTRAIT://3
@@ -1524,7 +1524,7 @@ static unsigned long set_preview_mode(unsigned long preview_mode)
 		GC2155_MIPI_WriteReg(0xfe , 0x01);
 		GC2155_MIPI_WriteReg(0x3c , 0x40);
 		GC2155_MIPI_WriteReg(0xfe , 0x00);
-		SENSOR_PRINT("set_preview_mode: SENSOR_ENVIROMENT_PORTRAIT\n");
+		SENSOR_LOGI("set_preview_mode: SENSOR_ENVIROMENT_PORTRAIT\n");
 		break;
 
 	case 4://SENSOR_ENVIROMENT_LANDSCAPE://4
@@ -1532,7 +1532,7 @@ static unsigned long set_preview_mode(unsigned long preview_mode)
 		GC2155_MIPI_WriteReg(0xfe , 0x01);
 		GC2155_MIPI_WriteReg(0x3c , 0x40);
 		GC2155_MIPI_WriteReg(0xfe , 0x00);
-		SENSOR_PRINT("set_preview_mode: SENSOR_ENVIROMENT_LANDSCAPE\n");
+		SENSOR_LOGI("set_preview_mode: SENSOR_ENVIROMENT_LANDSCAPE\n");
 		break;
 
 	case 2://SENSOR_ENVIROMENT_SPORTS://2
@@ -1541,7 +1541,7 @@ static unsigned long set_preview_mode(unsigned long preview_mode)
 		GC2155_MIPI_WriteReg(0xfe , 0x01);
 		GC2155_MIPI_WriteReg(0x3c , 0x40);
 		GC2155_MIPI_WriteReg(0xfe , 0x00);
-		SENSOR_PRINT("set_preview_mode: SENSOR_ENVIROMENT_SPORTS\n");
+		SENSOR_LOGI("set_preview_mode: SENSOR_ENVIROMENT_SPORTS\n");
 		break;
 
 	default:
@@ -1603,22 +1603,22 @@ static unsigned long GC2155_MIPI_BeforeSnapshot(unsigned long sensor_snapshot_mo
 
 	switch (sensor_snapshot_mode) {
 	case SENSOR_MODE_PREVIEW_ONE:
-		SENSOR_PRINT("Capture VGA Size");
+		SENSOR_LOGI("Capture VGA Size");
 		break;
 	case SENSOR_MODE_SNAPSHOT_ONE_FIRST:
 	case SENSOR_MODE_SNAPSHOT_ONE_SECOND:
 #ifdef GC2155_MIPI_2Lane
-		SENSOR_PRINT("GC2155_MIPI_2Lane_beforesnapshoot ");
+		SENSOR_LOGI("GC2155_MIPI_2Lane_beforesnapshoot ");
 #else
 		GC2155_MIPI_set_shutter();
-		SENSOR_PRINT("GC2155_MIPI_1Lane_beforesnapshoot ");
+		SENSOR_LOGI("GC2155_MIPI_1Lane_beforesnapshoot ");
 #endif
 		break;
 	default:
 		break;
 	}
 
-	SENSOR_PRINT("SENSOR_GC2155: Before Snapshot");
+	SENSOR_LOGI("SENSOR_GC2155: Before Snapshot");
 	return 0;
 }
 
@@ -1629,7 +1629,7 @@ static unsigned long read_gain_scale(unsigned long value)
 
 static unsigned long GC2155_MIPI_StreamOn(unsigned long param)
 {
-	SENSOR_PRINT("Start");
+	SENSOR_LOGI("Start");
 #ifdef GC2155_MIPI_2Lane
 	GC2155_MIPI_WriteReg(0xfe, 0x03);
 	GC2155_MIPI_WriteReg(0x10, 0x95);
@@ -1644,7 +1644,7 @@ static unsigned long GC2155_MIPI_StreamOn(unsigned long param)
 
 static unsigned long GC2155_MIPI_StreamOff(unsigned long param)
 {
-	SENSOR_PRINT("Stop");
+	SENSOR_LOGI("Stop");
 #ifdef GC2155_MIPI_2Lane
 	GC2155_MIPI_WriteReg(0xfe, 0x03);
 	GC2155_MIPI_WriteReg(0x10, 0x85);

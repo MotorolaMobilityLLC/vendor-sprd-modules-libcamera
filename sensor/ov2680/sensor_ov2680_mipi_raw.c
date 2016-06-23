@@ -651,18 +651,18 @@ LOCAL unsigned long _ov2680_set_video_mode(SENSOR_HW_HANDLE handle, unsigned lon
 		return 0;
 
 	if (SENSOR_SUCCESS != Sensor_GetMode(&mode)) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	if (PNULL == s_ov2680_video_info[mode].setting_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
 	sensor_reg_ptr = (SENSOR_REG_T_PTR)&s_ov2680_video_info[mode].setting_ptr[param];
 	if (PNULL == sensor_reg_ptr) {
-		SENSOR_PRINT("fail.");
+		SENSOR_LOGI("fail.");
 		return SENSOR_FAIL;
 	}
 
@@ -670,7 +670,7 @@ LOCAL unsigned long _ov2680_set_video_mode(SENSOR_HW_HANDLE handle, unsigned lon
 		Sensor_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_PRINT("0x%02x", param);
+	SENSOR_LOGI("0x%02x", param);
 	return 0;
 }
 
@@ -840,17 +840,17 @@ LOCAL uint32_t Sensor_InitRawTuneInfo(SENSOR_HW_HANDLE handle)
 
 LOCAL unsigned long _ov2680_GetResolutionTrimTab(SENSOR_HW_HANDLE handle, unsigned long param)
 {
-	SENSOR_PRINT("0x%lx", (unsigned long)s_ov2680_Resolution_Trim_Tab);
+	SENSOR_LOGI("0x%lx", (unsigned long)s_ov2680_Resolution_Trim_Tab);
 	return (unsigned long) s_ov2680_Resolution_Trim_Tab;
 }
 
 LOCAL uint32_t _ov2680_init_mode_fps_info(SENSOR_HW_HANDLE handle)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
-	SENSOR_PRINT("_ov2680_init_mode_fps_info:E");
+	SENSOR_LOGI("_ov2680_init_mode_fps_info:E");
 	if(!s_ov2680_mode_fps_info.is_init) {
 		uint32_t i,modn,tempfps = 0;
-		SENSOR_PRINT("_ov2680_init_mode_fps_info:start init");
+		SENSOR_LOGI("_ov2680_init_mode_fps_info:start init");
 		for(i = 0;i < NUMBER_OF_ARRAY(s_ov2680_Resolution_Trim_Tab); i++) {
 			//max fps should be multiple of 30,it calulated from line_time and frame_line
 			tempfps = s_ov2680_Resolution_Trim_Tab[i].line_time*s_ov2680_Resolution_Trim_Tab[i].frame_line;
@@ -871,18 +871,18 @@ LOCAL uint32_t _ov2680_init_mode_fps_info(SENSOR_HW_HANDLE handle)
 						s_ov2680_mode_fps_info.sensor_mode_fps[i].max_fps;
 				}
 			}
-			SENSOR_PRINT("mode %d,tempfps %d,frame_len %d,line_time: %d ",i,tempfps,
+			SENSOR_LOGI("mode %d,tempfps %d,frame_len %d,line_time: %d ",i,tempfps,
 					s_ov2680_Resolution_Trim_Tab[i].frame_line,
 					s_ov2680_Resolution_Trim_Tab[i].line_time);
-			SENSOR_PRINT("mode %d,max_fps: %d ",
+			SENSOR_LOGI("mode %d,max_fps: %d ",
 					i,s_ov2680_mode_fps_info.sensor_mode_fps[i].max_fps);
-			SENSOR_PRINT("is_high_fps: %d,highfps_skip_num %d",
+			SENSOR_LOGI("is_high_fps: %d,highfps_skip_num %d",
 					s_ov2680_mode_fps_info.sensor_mode_fps[i].is_high_fps,
 					s_ov2680_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num);
 		}
 		s_ov2680_mode_fps_info.is_init = 1;
 	}
-	SENSOR_PRINT("_ov2680_init_mode_fps_info:X");
+	SENSOR_LOGI("_ov2680_init_mode_fps_info:X");
 	return rtn;
 }
 
@@ -918,7 +918,7 @@ LOCAL unsigned long _ov2680_PowerOn(SENSOR_HW_HANDLE handle, unsigned long power
 		Sensor_SetAvddVoltage(SENSOR_AVDD_CLOSED);
 		Sensor_SetIovddVoltage(SENSOR_AVDD_CLOSED);
 	}
-	SENSOR_PRINT("SENSOR_ov2680: _ov2680_Power_On(1:on, 0:off): %d", power_on);
+	SENSOR_LOGI("SENSOR_ov2680: _ov2680_Power_On(1:on, 0:off): %d", power_on);
 	return SENSOR_SUCCESS;
 }
 
@@ -928,7 +928,7 @@ LOCAL unsigned long _ov2680_cfg_otp(SENSOR_HW_HANDLE handle, unsigned long  para
 	struct raw_param_info_tab* tab_ptr = (struct raw_param_info_tab*)s_ov2680_raw_param_tab;
 	uint32_t module_id=g_module_id;
 
-	SENSOR_PRINT("SENSOR_ov2680: _ov2680_cfg_otp");
+	SENSOR_LOGI("SENSOR_ov2680: _ov2680_cfg_otp");
 
 	if(PNULL!=tab_ptr[module_id].cfg_otp){
 		tab_ptr[module_id].cfg_otp(handle ,0);
@@ -990,13 +990,13 @@ LOCAL uint32_t check_otp(SENSOR_HW_HANDLE handle, int index)
 		rg = Sensor_ReadReg(0x3d09);
 		bg = Sensor_ReadReg(0x3d0a);
 	}
-	SENSOR_PRINT("ov2680 check_otp: flag = 0x%d----index = %d---\n", flag, index);
+	SENSOR_LOGI("ov2680 check_otp: flag = 0x%d----index = %d---\n", flag, index);
 	flag = flag & 0x80;
 	// clear otp buffer
 	for (i=0; i<16; i++) {
 		Sensor_WriteReg(0x3d00 + i, 0x00);
 	}
-	SENSOR_PRINT("ov2680 check_otp: flag = 0x%d  rg = 0x%x, bg = 0x%x,-------\n", flag, rg, bg);
+	SENSOR_LOGI("ov2680 check_otp: flag = 0x%d  rg = 0x%x, bg = 0x%x,-------\n", flag, rg, bg);
 	if (flag) {
 		return 1;
 	}
@@ -1124,7 +1124,7 @@ LOCAL uint32_t update_otp (SENSOR_HW_HANDLE handle, void* param_ptr)
 	uint16_t reg_value = 0;
 
 	stream_value = Sensor_ReadReg(0x0100);
-	SENSOR_PRINT("ov2680 update_otp:stream_value = 0x%x\n", stream_value);
+	SENSOR_LOGI("ov2680 update_otp:stream_value = 0x%x\n", stream_value);
 	if(1 != (stream_value & 0x01))
 	{
 		Sensor_WriteReg(0x0100, 0x01);
@@ -1168,7 +1168,7 @@ LOCAL uint32_t update_otp (SENSOR_HW_HANDLE handle, void* param_ptr)
 			// current_otp.bg_ratio < BG_Ratio_typical &&
 			// current_otp.rg_ratio < RG_Ratio_typical
 			if((0 == bg) || (0 == rg)){
-				SENSOR_PRINT("ov2680_otp: update otp failed!!, bg = %d, rg = %d\n", bg, rg);
+				SENSOR_LOGI("ov2680_otp: update otp failed!!, bg = %d, rg = %d\n", bg, rg);
 				return 0;
 			}
 			G_gain = 0x400;
@@ -1177,7 +1177,7 @@ LOCAL uint32_t update_otp (SENSOR_HW_HANDLE handle, void* param_ptr)
 		}
 		else {
 			if(0 == bg){
-				SENSOR_PRINT("ov2680_otp: update otp failed!!, bg = %d\n", bg);
+				SENSOR_LOGI("ov2680_otp: update otp failed!!, bg = %d\n", bg);
 				return 0;
 			}
 			// current_otp.bg_ratio < BG_Ratio_typical &&
@@ -1192,7 +1192,7 @@ LOCAL uint32_t update_otp (SENSOR_HW_HANDLE handle, void* param_ptr)
 			// current_otp.bg_ratio >= BG_Ratio_typical &&
 			// current_otp.rg_ratio < RG_Ratio_typical
 			if(0 == rg){
-				SENSOR_PRINT("ov2680_otp: update otp failed!!, rg = %d\n", rg);
+				SENSOR_LOGI("ov2680_otp: update otp failed!!, rg = %d\n", rg);
 				return 0;
 			}
 			B_gain = 0x400;
@@ -1206,7 +1206,7 @@ LOCAL uint32_t update_otp (SENSOR_HW_HANDLE handle, void* param_ptr)
 			G_gain_R = 0x400 * rg / RG_Ratio_Typical;
 			if(G_gain_B > G_gain_R ) {
 				if(0 == rg){
-					SENSOR_PRINT("ov2680_otp: update otp failed!!, rg = %d\n", rg);
+					SENSOR_LOGI("ov2680_otp: update otp failed!!, rg = %d\n", rg);
 					return 0;
 				}
 				B_gain = 0x400;
@@ -1215,7 +1215,7 @@ LOCAL uint32_t update_otp (SENSOR_HW_HANDLE handle, void* param_ptr)
 			}
 			else {
 				if(0 == bg){
-					SENSOR_PRINT("ov2680_otp: update otp failed!!, bg = %d\n", bg);
+					SENSOR_LOGI("ov2680_otp: update otp failed!!, bg = %d\n", bg);
 					return 0;
 				}
 				R_gain = 0x400;
@@ -1229,7 +1229,7 @@ LOCAL uint32_t update_otp (SENSOR_HW_HANDLE handle, void* param_ptr)
 	if(1 != (stream_value & 0x01))
 		Sensor_WriteReg(0x0100, stream_value);
 
-	SENSOR_PRINT("ov2680_otp: R_gain:0x%x, G_gain:0x%x, B_gain:0x%x------\n",R_gain, G_gain, B_gain);
+	SENSOR_LOGI("ov2680_otp: R_gain:0x%x, G_gain:0x%x, B_gain:0x%x------\n",R_gain, G_gain, B_gain);
 	return 0;
 }
 
@@ -1242,7 +1242,7 @@ LOCAL uint32_t ov2680_check_otp_module_id(SENSOR_HW_HANDLE handle)
 	uint16_t stream_value = 0;
 
 	stream_value = Sensor_ReadReg(0x0100);
-	SENSOR_PRINT("ov2680_check_otp_module_id:stream_value = 0x%x\n", stream_value);
+	SENSOR_LOGI("ov2680_check_otp_module_id:stream_value = 0x%x\n", stream_value);
 	if(1 != (stream_value & 0x01))
 	{
 		Sensor_WriteReg(0x0100, 0x01);
@@ -1253,7 +1253,7 @@ LOCAL uint32_t ov2680_check_otp_module_id(SENSOR_HW_HANDLE handle)
 
 	for(i=1;i<=3;i++) {
 		temp = check_otp(handle, i);
-		SENSOR_PRINT("ov2680_check_otp_module_id i=%d temp = %d \n",i,temp);
+		SENSOR_LOGI("ov2680_check_otp_module_id i=%d temp = %d \n",i,temp);
 		if (temp == 2) {
 			otp_index = i;
 			break;
@@ -1261,7 +1261,7 @@ LOCAL uint32_t ov2680_check_otp_module_id(SENSOR_HW_HANDLE handle)
 	}
 	if (i > 3) {
 		// no valid wb OTP data
-		SENSOR_PRINT("ov2680_check_otp_module_id no valid wb OTP data\n");
+		SENSOR_LOGI("ov2680_check_otp_module_id no valid wb OTP data\n");
 		return 1;
 	}
 
@@ -1270,7 +1270,7 @@ LOCAL uint32_t ov2680_check_otp_module_id(SENSOR_HW_HANDLE handle)
 	if(1 != (stream_value & 0x01))
 		Sensor_WriteReg(0x0100, stream_value);
 
-	SENSOR_PRINT("read ov2680 otp  module_id = %x \n", current_otp.module_integrator_id);
+	SENSOR_LOGI("read ov2680 otp  module_id = %x \n", current_otp.module_integrator_id);
 
 	return current_otp.module_integrator_id;
 }
@@ -1280,13 +1280,13 @@ LOCAL uint32_t _ov2680_Truly_Identify_otp(SENSOR_HW_HANDLE handle, void* param_p
 	uint32_t rtn=SENSOR_FAIL;
 	uint32_t param_id;
 
-	SENSOR_PRINT("SENSOR_ov2680: _ov2680_Truly_Identify_otp");
+	SENSOR_LOGI("SENSOR_ov2680: _ov2680_Truly_Identify_otp");
 
 	/*read param id from sensor omap*/
 	param_id=ov2680_check_otp_module_id(handle);;
 
 	if(ov2680_RAW_PARAM_Truly==param_id){
-		SENSOR_PRINT("SENSOR_ov2680: This is Truly module!!\n");
+		SENSOR_LOGI("SENSOR_ov2680: This is Truly module!!\n");
 		RG_Ratio_Typical = 0x152;
 		BG_Ratio_Typical = 0x137;
 		rtn=SENSOR_SUCCESS;
@@ -1300,13 +1300,13 @@ LOCAL uint32_t _ov2680_Sunny_Identify_otp(SENSOR_HW_HANDLE handle, void* param_p
 	uint32_t rtn=SENSOR_FAIL;
 	uint32_t param_id;
 
-	SENSOR_PRINT("SENSOR_ov2680: _ov2680_Sunny_Identify_otp");
+	SENSOR_LOGI("SENSOR_ov2680: _ov2680_Sunny_Identify_otp");
 
 	/*read param id from sensor omap*/
 	param_id=ov2680_check_otp_module_id(handle);
 
 	if(ov2680_RAW_PARAM_Sunny==param_id){
-		SENSOR_PRINT("SENSOR_ov2680: This is Sunny module!!\n");
+		SENSOR_LOGI("SENSOR_ov2680: This is Sunny module!!\n");
 		RG_Ratio_Typical = 386;
 		BG_Ratio_Typical = 367;
 		rtn=SENSOR_SUCCESS;
@@ -1320,7 +1320,7 @@ LOCAL uint32_t _ov2680_com_Identify_otp(SENSOR_HW_HANDLE handle, void* param_ptr
 	uint32_t rtn=SENSOR_FAIL;
 	uint32_t param_id;
 
-	SENSOR_PRINT("SENSOR_ov2680: _ov2680_com_Identify_otp");
+	SENSOR_LOGI("SENSOR_ov2680: _ov2680_com_Identify_otp");
 
 	/*read param id from sensor omap*/
 	param_id=ov2680_RAW_PARAM_COM;
@@ -1347,17 +1347,17 @@ LOCAL uint32_t _ov2680_GetRawInof(SENSOR_HW_HANDLE handle)
 		g_module_id = i;
 		if(RAW_INFO_END_ID==tab_ptr[i].param_id){
 			if(NULL==s_ov2680_mipi_raw_info_ptr){
-				SENSOR_PRINT("SENSOR_ov2680: ov5647_GetRawInof no param error");
+				SENSOR_LOGI("SENSOR_ov2680: ov5647_GetRawInof no param error");
 				rtn=SENSOR_FAIL;
 			}
-			SENSOR_PRINT("SENSOR_ov2680: ov2680_GetRawInof end");
+			SENSOR_LOGI("SENSOR_ov2680: ov2680_GetRawInof end");
 			break;
 		}
 		else if(PNULL!=tab_ptr[i].identify_otp){
 			if(SENSOR_SUCCESS==tab_ptr[i].identify_otp(handle, 0))
 			{
 				s_ov2680_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
-				SENSOR_PRINT("SENSOR_ov2680: ov2680_GetRawInof success");
+				SENSOR_LOGI("SENSOR_ov2680: ov2680_GetRawInof success");
 				break;
 			}
 		}
@@ -1387,26 +1387,26 @@ LOCAL unsigned long _ov2680_Identify(SENSOR_HW_HANDLE handle, unsigned long para
 	uint8_t ver_value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
 
-	SENSOR_PRINT("SENSOR_ov2680: mipi raw identify\n");
+	SENSOR_LOGI("SENSOR_ov2680: mipi raw identify\n");
 	//Sensor_WriteReg(0x0103, 0x01);
 	//usleep(100*1000);
 	pid_value = Sensor_ReadReg(ov2680_PID_ADDR);
 
 	if (ov2680_PID_VALUE == pid_value) {
 		ver_value = Sensor_ReadReg(ov2680_VER_ADDR);
-		SENSOR_PRINT("SENSOR_ov2680: Identify: PID = %x, VER = %x", pid_value, ver_value);
+		SENSOR_LOGI("SENSOR_ov2680: Identify: PID = %x, VER = %x", pid_value, ver_value);
 		if (ov2680_VER_VALUE == ver_value) {
 			ret_value=_ov2680_GetRawInof(handle);
 			Sensor_InitRawTuneInfo(handle);
 			_ov2680_init_mode_fps_info(handle);
 			ret_value = SENSOR_SUCCESS;
-			SENSOR_PRINT("SENSOR_ov2680: this is ov2680 sensor !");
+			SENSOR_LOGI("SENSOR_ov2680: this is ov2680 sensor !");
 		} else {
-			SENSOR_PRINT
+			SENSOR_LOGI
 			    ("SENSOR_ov2680: Identify this is OV%x%x sensor !", pid_value, ver_value);
 		}
 	} else {
-		SENSOR_PRINT("SENSOR_ov2680: identify fail,pid_value=%d", pid_value);
+		SENSOR_LOGI("SENSOR_ov2680: identify fail,pid_value=%d", pid_value);
 	}
 
 	return ret_value;
@@ -1425,9 +1425,9 @@ LOCAL unsigned long _ov2680_write_exp_dummy(SENSOR_HW_HANDLE handle, uint16_t ex
 	uint16_t value1=0x00;
 	uint16_t value2=0x00;
 
-	SENSOR_PRINT("SENSOR_ov2680: write_exposure line:%d, dummy:%d, size_index:%d\n", expsure_line, dummy_line, size_index);
-	SENSOR_PRINT("SENSOR_ov2680: read reg :0x3820=%x\n", Sensor_ReadReg(0x3820));
-	SENSOR_PRINT("SENSOR_ov2680: read reg :0x3821=%x\n", Sensor_ReadReg(0x3821));
+	SENSOR_LOGI("SENSOR_ov2680: write_exposure line:%d, dummy:%d, size_index:%d\n", expsure_line, dummy_line, size_index);
+	SENSOR_LOGI("SENSOR_ov2680: read reg :0x3820=%x\n", Sensor_ReadReg(0x3820));
+	SENSOR_LOGI("SENSOR_ov2680: read reg :0x3821=%x\n", Sensor_ReadReg(0x3821));
 	max_frame_len=_ov2680_GetMaxFrameLine(handle, size_index);
 
 	if(0x00!=max_frame_len)
@@ -1487,7 +1487,7 @@ LOCAL unsigned long _ov2680_ex_write_exposure(SENSOR_HW_HANDLE handle, unsigned 
 
 
 	if (!param) {
-		SENSOR_PRINT_ERR("param is NULL !!!");
+		SENSOR_LOGI("param is NULL !!!");
 		return ret_value;
 	}
 
@@ -1514,7 +1514,7 @@ LOCAL unsigned long _ov2680_write_gain(SENSOR_HW_HANDLE handle, unsigned long pa
 		real_gain = 0x3ff;
 	}
 
-	SENSOR_PRINT("SENSOR_ov2680: real_gain:0x%x, param: 0x%x", real_gain, param);
+	SENSOR_LOGI("SENSOR_ov2680: real_gain:0x%x, param: 0x%x", real_gain, param);
 
 	value = real_gain&0xff;
 	ret_value = Sensor_WriteReg(0x350b, value);/*0-7*/
@@ -1533,7 +1533,7 @@ LOCAL unsigned long _ov2680_write_af(SENSOR_HW_HANDLE handle, unsigned long para
 	uint16_t  slave_addr = 0;
 	uint16_t cmd_len = 0;
 
-	SENSOR_PRINT("SENSOR_ov2680: _write_af %d", param);
+	SENSOR_LOGI("SENSOR_ov2680: _write_af %d", param);
 
 	slave_addr = DW9714_VCM_SLAVE_ADDR;
 	cmd_val[0] = (param&0xfff0)>>4;
@@ -1541,7 +1541,7 @@ LOCAL unsigned long _ov2680_write_af(SENSOR_HW_HANDLE handle, unsigned long para
 	cmd_len = 2;
 	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
 
-	SENSOR_PRINT("SENSOR_ov2680: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
+	SENSOR_LOGI("SENSOR_ov2680: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
 
 	return ret_value;
 }
@@ -1559,7 +1559,7 @@ LOCAL unsigned long _ov2680_ReadGain(SENSOR_HW_HANDLE handle, unsigned long para
 
 	s_ov2680_gain=(int)gain;
 
-	SENSOR_PRINT("SENSOR_ov2680: _ov2680_ReadGain gain: 0x%x", s_ov2680_gain);
+	SENSOR_LOGI("SENSOR_ov2680: _ov2680_ReadGain gain: 0x%x", s_ov2680_gain);
 
 	return rtn;
 }
@@ -1575,7 +1575,7 @@ LOCAL int _ov2680_set_gain16(SENSOR_HW_HANDLE handle, int gain16)
 
 	temp = gain16>>8;
 	Sensor_WriteReg(0x350a, temp);
-	SENSOR_PRINT("gain %d",gain16);
+	SENSOR_LOGI("gain %d",gain16);
 
 	return 0;
 }
@@ -1598,7 +1598,7 @@ LOCAL int _ov2680_set_shutter(SENSOR_HW_HANDLE handle, int shutter)
 	temp = shutter>>12;
 	Sensor_WriteReg(0x3500, temp);
 
-	SENSOR_PRINT("shutter %d",shutter);
+	SENSOR_LOGI("shutter %d",shutter);
 
 	return 0;
 }
@@ -1618,7 +1618,7 @@ LOCAL unsigned long _ov2680_SetEV(SENSOR_HW_HANDLE handle, unsigned long param)
 	uint32_t gain = s_ov2680_gain;
 	uint32_t ev = param;
 
-	SENSOR_PRINT("_ov2680_SetEV param: 0x%x,0x%x,0x%x,0x%x", param, s_ov2680_gain,s_capture_VTS,s_capture_shutter);
+	SENSOR_LOGI("_ov2680_SetEV param: 0x%x,0x%x,0x%x,0x%x", param, s_ov2680_gain,s_capture_VTS,s_capture_shutter);
 
 	switch(ev) {
 	case SENSOR_HDR_EV_LEVE_0:
@@ -1640,7 +1640,7 @@ LOCAL unsigned long _ov2680_ExtFunc(SENSOR_HW_HANDLE handle, unsigned long ctl_p
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr = (SENSOR_EXT_FUN_PARAM_T_PTR) ctl_param;
-	SENSOR_PRINT("cmd %d",ext_ptr->cmd);
+	SENSOR_LOGI("cmd %d",ext_ptr->cmd);
 	switch (ext_ptr->cmd) {
 		case SENSOR_EXT_EV:
 			rtn = _ov2680_SetEV(handle, ext_ptr->param);
@@ -1686,10 +1686,10 @@ LOCAL unsigned long _ov2680_PreBeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned 
 	uint32_t prv_linetime = s_ov2680_Resolution_Trim_Tab[preview_mode].line_time;
 	uint32_t cap_linetime = s_ov2680_Resolution_Trim_Tab[capture_mode].line_time;
 
-	SENSOR_PRINT("SENSOR_ov2680: BeforeSnapshot mode: 0x%08x",param);
+	SENSOR_LOGI("SENSOR_ov2680: BeforeSnapshot mode: 0x%08x",param);
 
 	if (preview_mode == capture_mode) {
-		SENSOR_PRINT("SENSOR_ov2680: prv mode equal to capmode");
+		SENSOR_LOGI("SENSOR_ov2680: prv mode equal to capmode");
 		goto CFG_INFO;
 	}
 
@@ -1706,7 +1706,7 @@ LOCAL unsigned long _ov2680_PreBeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned 
 	Sensor_SetMode_WaitDone();
 
 	if (prv_linetime == cap_linetime) {
-		SENSOR_PRINT("SENSOR_ov2680: prvline equal to capline");
+		SENSOR_LOGI("SENSOR_ov2680: prvline equal to capline");
 		goto CFG_INFO;
 	}
 
@@ -1751,7 +1751,7 @@ LOCAL unsigned long _ov2680_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned lon
 	uint32_t cap_mode = (param>>CAP_MODE_BITS);
 	uint32_t rtn = SENSOR_SUCCESS;
 
-	SENSOR_PRINT("%d,%d.",cap_mode,param);
+	SENSOR_LOGI("%d,%d.",cap_mode,param);
 
 	rtn = _ov2680_PreBeforeSnapshot(handle, param);
 
@@ -1760,7 +1760,7 @@ LOCAL unsigned long _ov2680_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned lon
 
 LOCAL unsigned long _ov2680_after_snapshot(SENSOR_HW_HANDLE handle, unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_ov2680: after_snapshot mode:%ld", param);
+	SENSOR_LOGI("SENSOR_ov2680: after_snapshot mode:%ld", param);
 	Sensor_SetMode((uint32_t)param);
 
 	return SENSOR_SUCCESS;
@@ -1768,7 +1768,7 @@ LOCAL unsigned long _ov2680_after_snapshot(SENSOR_HW_HANDLE handle, unsigned lon
 
 LOCAL unsigned long _ov2680_StreamOn(SENSOR_HW_HANDLE handle, unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_ov2680: StreamOn");
+	SENSOR_LOGI("SENSOR_ov2680: StreamOn");
 
 #ifdef CONFIG_CAMERA_RE_FOCUS
 	al3200_mini_ctrl(param);
@@ -1780,7 +1780,7 @@ LOCAL unsigned long _ov2680_StreamOn(SENSOR_HW_HANDLE handle, unsigned long para
 	cmr_s8 value1[255];
 	property_get("debug.camera.test.mode",value1,"0");
 	if(!strcmp(value1,"1")){
-		SENSOR_PRINT_ERR("SENSOR_ov2680: enable test mode");
+		SENSOR_LOGI("SENSOR_ov2680: enable test mode");
 		Sensor_WriteReg(0x5080, 0x80);
 	}
 #endif
@@ -1790,7 +1790,7 @@ LOCAL unsigned long _ov2680_StreamOn(SENSOR_HW_HANDLE handle, unsigned long para
 
 LOCAL unsigned long _ov2680_StreamOff(SENSOR_HW_HANDLE handle, unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_ov2680: StreamOff");
+	SENSOR_LOGI("SENSOR_ov2680: StreamOff");
 
 	Sensor_WriteReg(0x0100, 0x00);
 	usleep(100*1000);
@@ -1854,16 +1854,16 @@ LOCAL uint32_t _ov2680_get_static_info(SENSOR_HW_HANDLE handle, uint32_t *param)
 	ex_info->capture_skip_num = g_ov2680_mipi_raw_info.capture_skip_num;
 	ex_info->name = g_ov2680_mipi_raw_info.name;
 	ex_info->sensor_version_info = g_ov2680_mipi_raw_info.sensor_version_info;
-	SENSOR_PRINT("SENSOR_ov2680: f_num: %d", ex_info->f_num);
-	SENSOR_PRINT("SENSOR_ov2680: max_fps: %d", ex_info->max_fps);
-	SENSOR_PRINT("SENSOR_ov2680: max_adgain: %d", ex_info->max_adgain);
-	SENSOR_PRINT("SENSOR_ov2680: ois_supported: %d", ex_info->ois_supported);
-	SENSOR_PRINT("SENSOR_ov2680: pdaf_supported: %d", ex_info->pdaf_supported);
-	SENSOR_PRINT("SENSOR_ov2680: exp_valid_frame_num: %d", ex_info->exp_valid_frame_num);
-	SENSOR_PRINT("SENSOR_ov2680: clam_level: %d", ex_info->clamp_level);
-	SENSOR_PRINT("SENSOR_ov2680: adgain_valid_frame_num: %d", ex_info->adgain_valid_frame_num);
-	SENSOR_PRINT("SENSOR_ov2680: sensor name is: %s", ex_info->name);
-	SENSOR_PRINT("SENSOR_ov2680: sensor version info is: %s", ex_info->sensor_version_info);
+	SENSOR_LOGI("SENSOR_ov2680: f_num: %d", ex_info->f_num);
+	SENSOR_LOGI("SENSOR_ov2680: max_fps: %d", ex_info->max_fps);
+	SENSOR_LOGI("SENSOR_ov2680: max_adgain: %d", ex_info->max_adgain);
+	SENSOR_LOGI("SENSOR_ov2680: ois_supported: %d", ex_info->ois_supported);
+	SENSOR_LOGI("SENSOR_ov2680: pdaf_supported: %d", ex_info->pdaf_supported);
+	SENSOR_LOGI("SENSOR_ov2680: exp_valid_frame_num: %d", ex_info->exp_valid_frame_num);
+	SENSOR_LOGI("SENSOR_ov2680: clam_level: %d", ex_info->clamp_level);
+	SENSOR_LOGI("SENSOR_ov2680: adgain_valid_frame_num: %d", ex_info->adgain_valid_frame_num);
+	SENSOR_LOGI("SENSOR_ov2680: sensor name is: %s", ex_info->name);
+	SENSOR_LOGI("SENSOR_ov2680: sensor version info is: %s", ex_info->sensor_version_info);
 
 	return rtn;
 }
@@ -1883,10 +1883,10 @@ LOCAL uint32_t _ov2680_get_fps_info(SENSOR_HW_HANDLE handle, uint32_t *param)
 	fps_info->min_fps = s_ov2680_mode_fps_info.sensor_mode_fps[sensor_mode].min_fps;
 	fps_info->is_high_fps = s_ov2680_mode_fps_info.sensor_mode_fps[sensor_mode].is_high_fps;
 	fps_info->high_fps_skip_num = s_ov2680_mode_fps_info.sensor_mode_fps[sensor_mode].high_fps_skip_num;
-	SENSOR_PRINT("SENSOR_ov2680: mode %d, max_fps: %d",fps_info->mode, fps_info->max_fps);
-	SENSOR_PRINT("SENSOR_ov2680: min_fps: %d", fps_info->min_fps);
-	SENSOR_PRINT("SENSOR_ov2680: is_high_fps: %d", fps_info->is_high_fps);
-	SENSOR_PRINT("SENSOR_ov2680: high_fps_skip_num: %d", fps_info->high_fps_skip_num);
+	SENSOR_LOGI("SENSOR_ov2680: mode %d, max_fps: %d",fps_info->mode, fps_info->max_fps);
+	SENSOR_LOGI("SENSOR_ov2680: min_fps: %d", fps_info->min_fps);
+	SENSOR_LOGI("SENSOR_ov2680: is_high_fps: %d", fps_info->is_high_fps);
+	SENSOR_LOGI("SENSOR_ov2680: high_fps_skip_num: %d", fps_info->high_fps_skip_num);
 
 	return rtn;
 }
@@ -1897,12 +1897,12 @@ LOCAL unsigned long _ov2680_access_val(SENSOR_HW_HANDLE handle, unsigned long pa
 	SENSOR_VAL_T* param_ptr = (SENSOR_VAL_T*)param;
 	uint16_t tmp;
 
-	SENSOR_PRINT("SENSOR_ov2680: _ov2680_access_val E param_ptr = %p", param_ptr);
+	SENSOR_LOGI("SENSOR_ov2680: _ov2680_access_val E param_ptr = %p", param_ptr);
 	if(!param_ptr){
 		return rtn;
 	}
 
-	SENSOR_PRINT("SENSOR_ov2680: param_ptr->type=%x", param_ptr->type);
+	SENSOR_LOGI("SENSOR_ov2680: param_ptr->type=%x", param_ptr->type);
 	switch(param_ptr->type)
 	{
 		case SENSOR_VAL_TYPE_GET_STATIC_INFO:
@@ -1915,7 +1915,7 @@ LOCAL unsigned long _ov2680_access_val(SENSOR_HW_HANDLE handle, unsigned long pa
 			break;
 	}
 
-	SENSOR_PRINT("SENSOR_ov2680: _ov2680_access_val X");
+	SENSOR_LOGI("SENSOR_ov2680: _ov2680_access_val X");
 
 	return rtn;
 }

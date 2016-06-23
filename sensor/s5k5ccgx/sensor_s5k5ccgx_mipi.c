@@ -51,10 +51,10 @@
 //#define CONFIG_LOAD_FILE
 
 #ifdef CONFIG_LOAD_FILE
-#define CAM_DEBUG   SENSOR_PRINT
+#define CAM_DEBUG   SENSOR_LOGI
 #else
 //#define CAM_DEBUG(...)
-#define CAM_DEBUG SENSOR_PRINT
+#define CAM_DEBUG SENSOR_LOGI
 #endif
 
 
@@ -437,7 +437,7 @@ LOCAL uint32_t s5k5ccgx_Power_Ctrl(uint32_t power_on)
 		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED,
 				  SENSOR_AVDD_CLOSED);
 	}
-	SENSOR_PRINT("SENSOR: s5k5ccgx_Power_Ctrl (1:on, 0:off): %d \n", power_on);
+	SENSOR_LOGI("SENSOR: s5k5ccgx_Power_Ctrl (1:on, 0:off): %d \n", power_on);
 	return SENSOR_SUCCESS;
 }
 #else
@@ -445,7 +445,7 @@ LOCAL uint32_t s5k5ccgx_Power_Ctrl(uint32_t power_on)
 {
 	int err = 0xff;
 
-	SENSOR_PRINT("s5k5ccgx-> power_ctrl = %d\n",power_on);
+	SENSOR_LOGI("s5k5ccgx-> power_ctrl = %d\n",power_on);
 
 	if(power_on)
 	{
@@ -503,12 +503,12 @@ LOCAL uint32_t s5k5ccgx_Identify(uint32_t param)
 
         if(value != 0x05CC)
         {
-                SENSOR_PRINT_ERR("The S5K5CCGX sensor is not Connected..!! value=%x \n", value);
+                SENSOR_LOGI("The S5K5CCGX sensor is not Connected..!! value=%x \n", value);
                 return SENSOR_OP_ERR;
         }
         else
         {
-                 SENSOR_PRINT_HIGH("The S5K5CCGX sensor is Connected..!!");
+                 SENSOR_LOGI("The S5K5CCGX sensor is Connected..!!");
                 return SENSOR_OP_SUCCESS;
         }
 
@@ -742,7 +742,7 @@ LOCAL uint32_t s5k5ccgx_set_image_effect(uint32_t level)
 				Sensor_regs_table_write("s5k5ccgx_image_effect_tab_LEVEL_3");
 				break;
 			default:
-				SENSOR_TRACE("[Effect]Invalid value is ordered!!!\n");
+				SENSOR_LOGI("[Effect]Invalid value is ordered!!!\n");
 				break;
 		}
 #else
@@ -1063,7 +1063,7 @@ LOCAL uint32_t s5k5ccgx_BeforeSnapshot(uint32_t param)
 	uint32_t cap_mode = (param>>CAP_MODE_BITS);
 
 	param = param&0xffff;
-	SENSOR_PRINT("%d,%d.",cap_mode,param);
+	SENSOR_LOGI("%d,%d.",cap_mode,param);
 
 	CAM_DEBUG("s5k5ccgx_BeforeSnapsho: mode = %d", param);
 
@@ -1206,7 +1206,7 @@ LOCAL uint32_t s5k5ccgx_set_preview_mode(uint32_t preview_mode)
 						break;
 
 					default:
-						SENSOR_TRACE("[PREVIEW]Invalid value is ordered!!!\n");
+						SENSOR_LOGI("[PREVIEW]Invalid value is ordered!!!\n");
 						break;
 				}
 #else
@@ -1282,7 +1282,7 @@ LOCAL uint32_t s5k5ccgx_set_capture_mode(uint32_t capture_mode)
 						break;
 
 					default:
-						SENSOR_TRACE("[CAPTURE]Invalid value is ordered!!!\n");
+						SENSOR_LOGI("[CAPTURE]Invalid value is ordered!!!\n");
 						break;
 				}
 #else
@@ -1365,7 +1365,7 @@ LOCAL uint32_t s5k5ccgx_Get_Exif_ISO(uint32_t level)
 	else if(iso_gain >=100)
 		iso_value =50;
 
-	SENSOR_TRACE( "iso_value : %d \n",iso_value);
+	SENSOR_LOGI( "iso_value : %d \n",iso_value);
 
 	return iso_value;
 }
@@ -1427,7 +1427,7 @@ I2C_RETRY:
     {
         if(idx > (BURST_MODE_BUFFER_MAX_SIZE-10))
         {
-            SENSOR_PRINT_ERR("s5k5ccgx_sensor_burst_write_buffer_overflow!!!\n");
+            SENSOR_LOGI("s5k5ccgx_sensor_burst_write_buffer_overflow!!!\n");
             return err;
         }
 
@@ -1459,7 +1459,7 @@ I2C_RETRY:
 					msg.len = idx;
                     err = i2c_transfer(i2c_client->adapter, &msg, 1) == 1 ? 0 : -EIO;
 #endif
-                    //SENSOR_PRINT("s5k5ccgx_sensor_burst_write, idx = %d\n",idx);
+                    //SENSOR_LOGI("s5k5ccgx_sensor_burst_write, idx = %d\n",idx);
                     idx=0;
                 }
             break;
@@ -1477,7 +1477,7 @@ I2C_RETRY:
 			{
 				SENSOR_Sleep(value);
 			}
-                SENSOR_PRINT("s5k5ccgx_sensor_burst_write, delay %dms\n",value);
+                SENSOR_LOGI("s5k5ccgx_sensor_burst_write, delay %dms\n",value);
             break;
 
 		default:
@@ -1490,7 +1490,7 @@ I2C_RETRY:
 
 	if (err < 0)
         {
-            SENSOR_PRINT_ERR("[S5K5CCGX]%s: register set failed. try again.\n",__func__);
+            SENSOR_LOGI("[S5K5CCGX]%s: register set failed. try again.\n",__func__);
 		retry++;
             if((retry++)<3) goto I2C_RETRY;
             return err;
@@ -1498,14 +1498,14 @@ I2C_RETRY:
 
     //do_gettimeofday(&time2);
     //printk("SENSOR: _s5k5ccgx_InitExt time=%d.\n",((time2.tv_sec-time1.tv_sec)*1000+(time2.tv_usec-time1.tv_usec)/1000));
-    SENSOR_PRINT("SENSOR: _s5k5ccgx_InitExt, success \n");
+    SENSOR_LOGI("SENSOR: _s5k5ccgx_InitExt, success \n");
 
     return 0;
 }
 
 LOCAL uint32_t s5k5ccgx_streamon(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR: s5k5ccgx_streamon");
+	SENSOR_LOGI("SENSOR: s5k5ccgx_streamon");
 
 	//Sensor_PowerDown(1);
 
@@ -1516,7 +1516,7 @@ LOCAL uint32_t s5k5ccgx_streamon(uint32_t param)
 
 LOCAL uint32_t s5k5ccgx_streamoff(uint32_t param)
 {
-	SENSOR_PRINT("SENSOR: s5k5ccgx_streamoff");
+	SENSOR_LOGI("SENSOR: s5k5ccgx_streamoff");
 
 	//Sensor_WriteReg(0x3008, 0x42);
 	//Sensor_PowerDown(0);
@@ -1620,11 +1620,11 @@ LOCAL uint32_t s5k5ccgx_InitExt(uint32_t param)
 			else
 			{
 #if 0
-				SENSOR_PRINT("SENSOR: _s5k5ccgx_InitExt, i2c write once from %d {0x%x 0x%x}, total %d registers {0x%x 0x%x}",
+				SENSOR_LOGI("SENSOR: _s5k5ccgx_InitExt, i2c write once from %d {0x%x 0x%x}, total %d registers {0x%x 0x%x}",
 				      written_num,cmd[0],cmd[1],wr_num_once,p_reg_val_tmp[0],p_reg_val_tmp[1]);
 				if(wr_num_once > 1)
 				{
-					SENSOR_PRINT("SENSOR: _s5k5ccgx_InitExt, val {0x%x 0x%x} {0x%x 0x%x} {0x%x 0x%x} {0x%x 0x%x} {0x%x 0x%x} {0x%x 0x%x}.\n",
+					SENSOR_LOGI("SENSOR: _s5k5ccgx_InitExt, val {0x%x 0x%x} {0x%x 0x%x} {0x%x 0x%x} {0x%x 0x%x} {0x%x 0x%x} {0x%x 0x%x}.\n",
 				          p_reg_val_tmp[0],p_reg_val_tmp[1],p_reg_val_tmp[2],p_reg_val_tmp[3],
 				          p_reg_val_tmp[4],p_reg_val_tmp[5],p_reg_val_tmp[6],p_reg_val_tmp[7],
 				          p_reg_val_tmp[8],p_reg_val_tmp[9],p_reg_val_tmp[10],p_reg_val_tmp[11]);

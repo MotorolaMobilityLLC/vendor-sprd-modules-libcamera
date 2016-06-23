@@ -384,7 +384,7 @@ static uint32_t Sensor_s5k5e3yx_InitRawTuneInfo(void)
 
 static unsigned long _s5k5e3yx_GetResolutionTrimTab(unsigned long param)
 {
-	SENSOR_PRINT("0x%lx",  (unsigned long)s_s5k5e3yx_Resolution_Trim_Tab);
+	SENSOR_LOGI("0x%lx",  (unsigned long)s_s5k5e3yx_Resolution_Trim_Tab);
 	return (unsigned long) s_s5k5e3yx_Resolution_Trim_Tab;
 }
 
@@ -400,26 +400,26 @@ static unsigned long _s5k5e3yx_Identify(unsigned long param)
 	uint8_t ver_value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
 
-	SENSOR_PRINT_ERR("SENSOR_S5K5E3YX: mipi raw identify\n");
+	SENSOR_LOGI("SENSOR_S5K5E3YX: mipi raw identify\n");
 
 	pid_value = Sensor_ReadReg(S5K5E3YX_PID_ADDR);
 
 	if (S5K5E3YX_PID_VALUE == pid_value) {
 		ver_value = Sensor_ReadReg(S5K5E3YX_VER_ADDR);
-		SENSOR_PRINT("SENSOR_S5K5E3YX: Identify: PID = %x, VER = %x", pid_value, ver_value);
+		SENSOR_LOGI("SENSOR_S5K5E3YX: Identify: PID = %x, VER = %x", pid_value, ver_value);
 		if (S5K5E3YX_VER_VALUE == ver_value) {
-			SENSOR_PRINT_ERR("SENSOR_S5K5E3YX: this is S5K5E3YX sensor !");
+			SENSOR_LOGI("SENSOR_S5K5E3YX: this is S5K5E3YX sensor !");
 			ret_value=_s5k5e3yx_GetRawInof();
 			if (SENSOR_SUCCESS != ret_value) {
-				SENSOR_PRINT_ERR("SENSOR_S5K5E3YX: the module is unknow error !");
+				SENSOR_LOGI("SENSOR_S5K5E3YX: the module is unknow error !");
 			}
 			Sensor_s5k5e3yx_InitRawTuneInfo();
 		} else {
-			SENSOR_PRINT_ERR("SENSOR_S5K5E3YX: Identify this is hm%x%x sensor !", pid_value, ver_value);
+			SENSOR_LOGI("SENSOR_S5K5E3YX: Identify this is hm%x%x sensor !", pid_value, ver_value);
 			return ret_value;
 		}
 	} else {
-		SENSOR_PRINT_ERR("SENSOR_S5K5E3YX: identify fail,pid_value=%d", pid_value);
+		SENSOR_LOGI("SENSOR_S5K5E3YX: identify fail,pid_value=%d", pid_value);
 	}
 
 	return ret_value;
@@ -439,16 +439,16 @@ static uint32_t _s5k5e3yx_GetRawInof(void)
 		g_module_id = i;
 		if (RAW_INFO_END_ID==tab_ptr[i].param_id) {
 			if (NULL==s_s5k5e3yx_mipi_raw_info_ptr) {
-				SENSOR_PRINT("SENSOR_S5K4H5YC: ov5647_GetRawInof no param error");
+				SENSOR_LOGI("SENSOR_S5K4H5YC: ov5647_GetRawInof no param error");
 				rtn=SENSOR_FAIL;
 			}
-			SENSOR_PRINT("SENSOR_S5K4H5YC: s5k5e3yx_GetRawInof end");
+			SENSOR_LOGI("SENSOR_S5K4H5YC: s5k5e3yx_GetRawInof end");
 			break;
 		}
 		else if (PNULL!=tab_ptr[i].identify_otp) {
 			if (SENSOR_SUCCESS==tab_ptr[i].identify_otp(0)) {
 				s_s5k5e3yx_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
-				SENSOR_PRINT("SENSOR_S5K4H5YC: s5k5e3yx_GetRawInof success");
+				SENSOR_LOGI("SENSOR_S5K4H5YC: s5k5e3yx_GetRawInof success");
 				break;
 			}
 		}
@@ -459,7 +459,7 @@ static uint32_t _s5k5e3yx_GetRawInof(void)
 
 static unsigned long _s5k5e3yx_StreamOn(unsigned long param)
 {
-	SENSOR_PRINT_ERR("SENSOR_s5k5e3yx: StreamOn");
+	SENSOR_LOGI("SENSOR_s5k5e3yx: StreamOn");
 
 	Sensor_WriteReg(0x0100, 0x01);
 
@@ -468,7 +468,7 @@ static unsigned long _s5k5e3yx_StreamOn(unsigned long param)
 
 static unsigned long _s5k5e3yx_StreamOff(unsigned long param)
 {
-	SENSOR_PRINT_ERR("SENSOR_s5k5e3yx: StreamOff");
+	SENSOR_LOGI("SENSOR_s5k5e3yx: StreamOff");
 
 	Sensor_WriteReg(0x0100, 0x00);
 	usleep(10*1000);
@@ -481,7 +481,7 @@ static uint32_t _s5k5e3yx_com_Identify_otp(void* param_ptr)
 	uint32_t rtn=SENSOR_FAIL;
 	uint32_t param_id;
 
-	SENSOR_PRINT("SENSOR_s5k5e3yx: _s5k5e3yx_com_Identify_otp");
+	SENSOR_LOGI("SENSOR_s5k5e3yx: _s5k5e3yx_com_Identify_otp");
 
 	/*read param id from sensor omap*/
 	param_id=S5K5E3YX_RAW_PARAM_COM;

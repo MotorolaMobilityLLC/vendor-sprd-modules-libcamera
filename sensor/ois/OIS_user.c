@@ -98,7 +98,7 @@ void	WR_I2C( SENSOR_HW_HANDLE handle, OIS_UBYTE slvadr, OIS_UBYTE size, OIS_UBYT
 		OIS_UWORD       data_uw = (dat[2]<<8) | dat[3];
 
 		sensor_grc_write_i2c(slvadr, addr, data_uw, BITS_ADDR16_REG16);
-		//SENSOR_PRINT("WR_I2C addr:0x%x ,data_uw:0x%x", addr, data_uw);
+		//SENSOR_LOGI("WR_I2C addr:0x%x ,data_uw:0x%x", addr, data_uw);
 	}
 
 }
@@ -171,9 +171,9 @@ _FACT_ADJ	get_FADJ_MEM_from_non_volatile_memory( SENSOR_HW_HANDLE handle )
 	OIS_UBYTE flag=0;
 
 	//flag=sensor_grc_read_i2c(0x50, 0x00, BITS_ADDR16_REG8);
-	//SENSOR_PRINT("EEPROM 0x00:flag=%x", flag);
+	//SENSOR_LOGI("EEPROM 0x00:flag=%x", flag);
 	//flag=sensor_grc_read_i2c(0x50, 0x01, BITS_ADDR16_REG8);
-	//SENSOR_PRINT("EEPROM 0x01:flag=%x", flag);
+	//SENSOR_LOGI("EEPROM 0x01:flag=%x", flag);
 	for(i=0x2; i<=0x27;i++) {
 		read_data [i-2]= sensor_grc_read_i2c(0x50, i, BITS_ADDR16_REG8);
 	}

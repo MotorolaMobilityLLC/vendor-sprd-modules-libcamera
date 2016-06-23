@@ -224,7 +224,7 @@ LOCAL uint32_t Identify(uint32_t param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 
-	SENSOR_PRINT("SENSOR:CCIR  pattern sensor identify   OK.\n");
+	SENSOR_LOGI("SENSOR:CCIR  pattern sensor identify   OK.\n");
 
 	return ret_value;
 }
@@ -235,7 +235,7 @@ LOCAL uint32_t _write(uint32_t param)
 	int ret;
 
 	ret = xioctl(g_fd_pattern, SENSOR_IO_I2C_WRITE, &param);
-	SENSOR_PRINT("SENSOR: ccir pattern  write");
+	SENSOR_LOGI("SENSOR: ccir pattern  write");
 
 	return ret;
 }
@@ -245,7 +245,7 @@ LOCAL uint32_t _read(uint32_t param)
 	int ret;
 
 	ret = xioctl(g_fd_pattern, SENSOR_IO_I2C_READ, &param);
-	SENSOR_PRINT("SENSOR: ccir pattern read");
+	SENSOR_LOGI("SENSOR: ccir pattern read");
 
 	return 0;
 }
@@ -261,7 +261,7 @@ LOCAL uint32_t set_brightness(uint32_t level)
 	uint16_t i = 0x00;
 	uint32_t reg_value = 0;
 
-	SENSOR_PRINT("0x%02x,data=0x%x", level, reg_value);
+	SENSOR_LOGI("0x%02x,data=0x%x", level, reg_value);
 
 	return 0;
 }
@@ -271,7 +271,7 @@ LOCAL uint32_t set_contrast(uint32_t level)
 	uint16_t i = 0x00;
 	uint32_t reg_value = 0;
 
-	SENSOR_PRINT("0x%02x,data=0x%x", level, reg_value);
+	SENSOR_LOGI("0x%02x,data=0x%x", level, reg_value);
 
 	return 0;
 }
@@ -281,7 +281,7 @@ LOCAL uint32_t set_saturation(uint32_t level)
 	uint16_t i = 0x00;
 	uint32_t reg_value = 0;
 
-	SENSOR_PRINT("0x%02x,data=0x%x", level, reg_value);
+	SENSOR_LOGI("0x%02x,data=0x%x", level, reg_value);
 
 	return 0;
 }
@@ -293,7 +293,7 @@ LOCAL uint32_t set_image_effect(uint32_t effect_type)
 
 LOCAL uint32_t set_ev(uint32_t level)
 {
-	SENSOR_PRINT("0x%02x", level);
+	SENSOR_LOGI("0x%02x", level);
 
 	return 0;
 }
@@ -319,12 +319,12 @@ LOCAL uint32_t chang_image_format(uint32_t param)
 
 	switch (param) {
 	case SENSOR_IMAGE_FORMAT_YUV422:
-		SENSOR_PRINT("SENSOR: pattern  chang_image_format  YUV422 \n");
+		SENSOR_LOGI("SENSOR: pattern  chang_image_format  YUV422 \n");
 		ret_val = Sensor_SendRegTabToSensor(&_resolution_Tab_YUV[1]);
 		break;
 
 	case SENSOR_IMAGE_FORMAT_RAW:
-		SENSOR_PRINT("SENSOR: pattern  chang_image_format  YUV422 \n");
+		SENSOR_LOGI("SENSOR: pattern  chang_image_format  YUV422 \n");
 		ret_val = Sensor_SendRegTabToSensor(&sresolution_Tab_RAWRGB[1]);
 		break;
 
@@ -370,21 +370,21 @@ LOCAL uint32_t ExtFunc(uint32_t ctl_param)
 LOCAL uint32_t set_anti_flicker(uint32_t mode)
 {
 
-	SENSOR_PRINT("0x%02x", mode);
+	SENSOR_LOGI("0x%02x", mode);
 
 	return 0;
 }
 
 LOCAL uint32_t set_work_mode(uint32_t mode)
 {
-	SENSOR_PRINT("SENSOR: set_work_mode: mode = %d", mode);
+	SENSOR_LOGI("SENSOR: set_work_mode: mode = %d", mode);
 
 	return 0;
 }
 
 LOCAL uint32_t set_video_mode(uint32_t mode)
 {
-	SENSOR_PRINT("0x%02x", mode);
+	SENSOR_LOGI("0x%02x", mode);
 
 	return 0;
 }
@@ -400,7 +400,7 @@ LOCAL uint32_t streamon(uint32_t param)
 	param = 1;
 
 	ret = xioctl(g_fd_pattern, SENSOR_IO_PD, &param);
-	SENSOR_PRINT("SENSOR: ccir pattern streamon");
+	SENSOR_LOGI("SENSOR: ccir pattern streamon");
 
 	return ret;
 }
@@ -411,7 +411,7 @@ LOCAL uint32_t streamoff(uint32_t param)
 	param = 0;
 
 	ret = xioctl(g_fd_pattern, SENSOR_IO_PD, &param);
-	SENSOR_PRINT("SENSOR: ccir pattern streamoff");
+	SENSOR_LOGI("SENSOR: ccir pattern streamoff");
 
 	return ret;
 }

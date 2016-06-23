@@ -68,7 +68,7 @@ uint32_t vcm_go_position(uint32_t id,uint32_t pos,uint32_t slewrate)
 {
 
 	uint32_t ret_value = SENSOR_SUCCESS;
-	SENSOR_PRINT_HIGH("CCFF vcm_pos  %d",pos);
+	SENSOR_LOGI("CCFF vcm_pos  %d",pos);
 	uint32_t vcm_id_num = vcm_identify(id);
 	if (vcm_id_num == VCM_UNIDENTIFY) {
 		ret_value = SENSOR_FAIL;

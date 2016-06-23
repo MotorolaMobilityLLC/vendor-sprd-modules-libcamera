@@ -1516,29 +1516,29 @@ static struct sensor_raw_info* Sensor_GetContext(SENSOR_HW_HANDLE handle)
 				if(0==access(name,R_OK))\
 				{\
 					FILE* fp = NULL;\
-					SENSOR_PRINT("param file %s exists",name);\
+					SENSOR_LOGI("param file %s exists",name);\
 					if( NULL!=(fp=fopen(name,"rb")) ){\
 						fread((void*)x2,1,sizeof(x2),fp);\
 						fclose(fp);\
 					}else{\
-						SENSOR_PRINT("param open %s failure",name);\
+						SENSOR_LOGI("param open %s failure",name);\
 					}\
 				}\
 				memset(name,0,sizeof(name))
 
 static unsigned long _ov13870_GetResolutionTrimTab(SENSOR_HW_HANDLE handle, unsigned long param)
 {
-	SENSOR_PRINT("0x%lx",  (unsigned long)s_ov13870_Resolution_Trim_Tab);
+	SENSOR_LOGI("0x%lx",  (unsigned long)s_ov13870_Resolution_Trim_Tab);
 	return (unsigned long) s_ov13870_Resolution_Trim_Tab;
 }
 
 static uint32_t _ov13870_init_mode_fps_info(SENSOR_HW_HANDLE handle)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
-	SENSOR_PRINT("_ov13870_init_mode_fps_info:E");
+	SENSOR_LOGI("_ov13870_init_mode_fps_info:E");
 	if(!s_ov13870_mode_fps_info.is_init) {
 		uint32_t i,modn,tempfps = 0;
-		SENSOR_PRINT("_ov13870_init_mode_fps_info:start init");
+		SENSOR_LOGI("_ov13870_init_mode_fps_info:start init");
 		for(i = 0;i < NUMBER_OF_ARRAY(s_ov13870_Resolution_Trim_Tab); i++) {
 			//max fps should be multiple of 30,it calulated from line_time and frame_line
 			tempfps = s_ov13870_Resolution_Trim_Tab[i].line_time*s_ov13870_Resolution_Trim_Tab[i].frame_line;
@@ -1559,31 +1559,31 @@ static uint32_t _ov13870_init_mode_fps_info(SENSOR_HW_HANDLE handle)
 						s_ov13870_mode_fps_info.sensor_mode_fps[i].max_fps;
 				}
 			}
-			SENSOR_PRINT("mode %d,tempfps %d,frame_len %d,line_time: %d ",i,tempfps,
+			SENSOR_LOGI("mode %d,tempfps %d,frame_len %d,line_time: %d ",i,tempfps,
 					s_ov13870_Resolution_Trim_Tab[i].frame_line,
 					s_ov13870_Resolution_Trim_Tab[i].line_time);
-			SENSOR_PRINT("mode %d,max_fps: %d ",
+			SENSOR_LOGI("mode %d,max_fps: %d ",
 					i,s_ov13870_mode_fps_info.sensor_mode_fps[i].max_fps);
-			SENSOR_PRINT("is_high_fps: %d,highfps_skip_num %d",
+			SENSOR_LOGI("is_high_fps: %d,highfps_skip_num %d",
 					s_ov13870_mode_fps_info.sensor_mode_fps[i].is_high_fps,
 					s_ov13870_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num);
 		}
 		s_ov13870_mode_fps_info.is_init = 1;
 	}
-	SENSOR_PRINT("_ov13870_init_mode_fps_info:X");
+	SENSOR_LOGI("_ov13870_init_mode_fps_info:X");
 	return rtn;
 }
 
 SENSOR_HW_HANDLE _ov13870_Create(void *privatedata)
 {
-	SENSOR_PRINT("_ov13870_Create  IN");
+	SENSOR_LOGI("_ov13870_Create  IN");
 	if (NULL == privatedata) {
-		SENSOR_PRINT("_ov13870_Create invalied para");
+		SENSOR_LOGI("_ov13870_Create invalied para");
 		return NULL;
 	}
 	SENSOR_HW_HANDLE sensor_hw_handle = (SENSOR_HW_HANDLE)malloc(sizeof(SENSOR_HW_HANDLE));
 	if (NULL == sensor_hw_handle) {
-		SENSOR_PRINT("failed to create sensor_hw_handle");
+		SENSOR_LOGI("failed to create sensor_hw_handle");
 		return NULL;
 	}
 	cmr_bzero(sensor_hw_handle, sizeof(SENSOR_HW_HANDLE));
@@ -1594,9 +1594,9 @@ SENSOR_HW_HANDLE _ov13870_Create(void *privatedata)
 
 void _ov13870_Destroy(SENSOR_HW_HANDLE handle)
 {
-	SENSOR_PRINT("_ov13870_Destroy  IN");
+	SENSOR_LOGI("_ov13870_Destroy  IN");
 	if (NULL == handle) {
-		SENSOR_PRINT("_ov13870_Destroy handle null");
+		SENSOR_LOGI("_ov13870_Destroy handle null");
 	}
 	free((void*)handle->privatedata);
 	handle->privatedata = NULL;
@@ -1611,23 +1611,23 @@ static unsigned long _ov13870_Identify(SENSOR_HW_HANDLE handle, unsigned long pa
 	uint16_t i=0;
 	uint16_t ret;
 
-	SENSOR_PRINT_ERR("SENSOR_ov13870: mipi raw identify\n");
+	SENSOR_LOGI("SENSOR_ov13870: mipi raw identify\n");
 
 	chip_id0 = Sensor_ReadReg(0x300A);
 	chip_id1 = Sensor_ReadReg(0x300B);
 	chip_id2 = Sensor_ReadReg(0x300C);
 
 	if (0x01 == chip_id0 && 0x38 == chip_id1 && 0x70 == chip_id2) {
-		SENSOR_PRINT_ERR("SENSOR_ov13870: Identify: chip_id:%x%x%x", chip_id0, chip_id1,chip_id2);
-		SENSOR_PRINT_ERR("SENSOR_ov13870: this is ov13870 sensor !");
+		SENSOR_LOGI("SENSOR_ov13870: Identify: chip_id:%x%x%x", chip_id0, chip_id1,chip_id2);
+		SENSOR_LOGI("SENSOR_ov13870: this is ov13870 sensor !");
 		ret_value=_ov13870_GetRawInof(handle);
 		if (SENSOR_SUCCESS != ret_value) {
-			SENSOR_PRINT_ERR("SENSOR_ov13870: the module is unknow error !");
+			SENSOR_LOGI("SENSOR_ov13870: the module is unknow error !");
 		}
 		/*bu64297gwz_init(handle);*/
 		_ov13870_init_mode_fps_info(handle);
 	} else {
-		SENSOR_PRINT_ERR("SENSOR_ov13870: identify fail,chip_id:%x,%x,%x", chip_id0, chip_id1,chip_id2);
+		SENSOR_LOGI("SENSOR_ov13870: identify fail,chip_id:%x,%x,%x", chip_id0, chip_id1,chip_id2);
 	}
 
 	return ret_value;
@@ -1696,7 +1696,7 @@ static unsigned long _ov13870_write_exp_dummy(SENSOR_HW_HANDLE handle, uint16_t 
 	uint32_t offset = 0;
 
 
-	SENSOR_PRINT("exp line:%d, dummy:%d, size_index:%d",
+	SENSOR_LOGI("exp line:%d, dummy:%d, size_index:%d",
 				expsure_line, dummy_line, size_index);
 
 	max_frame_len =_ov13870_GetMaxFrameLine(size_index);
@@ -1709,7 +1709,7 @@ static unsigned long _ov13870_write_exp_dummy(SENSOR_HW_HANDLE handle, uint16_t 
 
 		frame_len_cur = _ov13870_get_VTS(handle);
 
-		SENSOR_PRINT("frame_len: %d, frame_len_cur:%d", frame_len, frame_len_cur);
+		SENSOR_LOGI("frame_len: %d, frame_len_cur:%d", frame_len, frame_len_cur);
 
 		if(frame_len_cur != frame_len){
 			_ov13870_set_VTS(handle, frame_len);
@@ -1774,7 +1774,7 @@ static unsigned long _ov13870_ex_write_exposure(SENSOR_HW_HANDLE handle, unsigne
 	struct sensor_ex_exposure  *ex = (struct sensor_ex_exposure*)param;
 
 	if (!param) {
-		SENSOR_PRINT_ERR("param is NULL !!!");
+		SENSOR_LOGI("param is NULL !!!");
 		return ret_value;
 	}
 
@@ -1796,7 +1796,7 @@ static unsigned long _ov13870_write_gain(SENSOR_HW_HANDLE handle, unsigned long 
 
 	real_gain = param;
 
-	SENSOR_PRINT("SENSOR_OV13870: real_gain:0x%x, param: 0x%x", real_gain, param);
+	SENSOR_LOGI("SENSOR_OV13870: real_gain:0x%x, param: 0x%x", real_gain, param);
 
 	gain_h = (real_gain >> 8) & 0x7f;
 	Sensor_WriteReg(0x3508, gain_h);
@@ -1827,10 +1827,10 @@ static unsigned long _ov13870_BeforeSnapshot(SENSOR_HW_HANDLE handle, unsigned l
 	uint32_t prv_linetime=s_ov13870_Resolution_Trim_Tab[preview_mode].line_time;
 	uint32_t cap_linetime = s_ov13870_Resolution_Trim_Tab[capture_mode].line_time;
 
-	SENSOR_PRINT("SENSOR_ov13870: BeforeSnapshot mode: 0x%08lx",param);
+	SENSOR_LOGI("SENSOR_ov13870: BeforeSnapshot mode: 0x%08lx",param);
 
 	if (preview_mode == capture_mode) {
-		SENSOR_PRINT("SENSOR_ov13870: prv mode equal to capmode");
+		SENSOR_LOGI("SENSOR_ov13870: prv mode equal to capmode");
 		goto CFG_INFO;
 	}
 
@@ -1858,16 +1858,16 @@ static uint32_t _ov13870_GetRawInof(SENSOR_HW_HANDLE handle)
 		g_module_id = i;
 		if (RAW_INFO_END_ID==tab_ptr[i].param_id) {
 			if (NULL==s_ov13870_mipi_raw_info_ptr) {
-				SENSOR_PRINT("SENSOR_ov13870: _ov13870_GetRawInof no param error");
+				SENSOR_LOGI("SENSOR_ov13870: _ov13870_GetRawInof no param error");
 				rtn=SENSOR_FAIL;
 			}
-			SENSOR_PRINT("SENSOR_ov13870: _ov13870_GetRawInof end");
+			SENSOR_LOGI("SENSOR_ov13870: _ov13870_GetRawInof end");
 			break;
 		}
 		else if (PNULL!=tab_ptr[i].identify_otp) {
 			if (SENSOR_SUCCESS==tab_ptr[i].identify_otp(handle, 0)) {
 				s_ov13870_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
-				SENSOR_PRINT("SENSOR_ov13870: _ov13870_GetRawInof success");
+				SENSOR_LOGI("SENSOR_ov13870: _ov13870_GetRawInof success");
 				break;
 			}
 		}
@@ -1889,7 +1889,7 @@ static unsigned long _ov13870_GetExifInfo(SENSOR_HW_HANDLE handle, unsigned long
 
 static unsigned long _ov13870_StreamOn(SENSOR_HW_HANDLE handle, unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_ov13870: StreamOn");
+	SENSOR_LOGI("SENSOR_ov13870: StreamOn");
 
 	Sensor_WriteReg(0x0100, 0x01);
 
@@ -1898,7 +1898,7 @@ static unsigned long _ov13870_StreamOn(SENSOR_HW_HANDLE handle, unsigned long pa
 
 static unsigned long _ov13870_StreamOff(SENSOR_HW_HANDLE handle, unsigned long param)
 {
-	SENSOR_PRINT("SENSOR_ov13870: StreamOff");
+	SENSOR_LOGI("SENSOR_ov13870: StreamOff");
 
 	Sensor_WriteReg(0x0100, 0x00);
 
@@ -1912,7 +1912,7 @@ static uint32_t _ov13870_com_Identify_otp(SENSOR_HW_HANDLE handle, void* param_p
 	uint32_t rtn=SENSOR_FAIL;
 	uint32_t param_id;
 
-	SENSOR_PRINT("SENSOR_ov13870: _ov13870_com_Identify_otp");
+	SENSOR_LOGI("SENSOR_ov13870: _ov13870_com_Identify_otp");
 
 	/*read param id from sensor omap*/
 	param_id=ov13870_RAW_PARAM_COM;
@@ -1974,7 +1974,7 @@ static unsigned long _ov13870_PowerOn(SENSOR_HW_HANDLE handle, unsigned long pow
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 	}
 
-	SENSOR_PRINT_ERR("13870: _ov13870_PowerOn(1:on, 0:off): %ld, reset_level %d, power_down %d", power_on, reset_level, power_down);
+	SENSOR_LOGI("13870: _ov13870_PowerOn(1:on, 0:off): %ld, reset_level %d, power_down %d", power_on, reset_level, power_down);
 	return SENSOR_SUCCESS;
 }
 
@@ -1983,7 +1983,7 @@ static uint32_t _ov13870_write_otp_gain(SENSOR_HW_HANDLE handle, uint32_t *param
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint16_t value = 0x00;
 
-	SENSOR_PRINT("SENSOR_ov13870: write_gain:0x%x\n", *param);
+	SENSOR_LOGI("SENSOR_ov13870: write_gain:0x%x\n", *param);
 
 	//ret_value = Sensor_WriteReg(0x104, 0x01);
 	value = (*param)>>0x08;
@@ -2007,7 +2007,7 @@ static uint32_t _ov13870_read_otp_gain(SENSOR_HW_HANDLE handle, uint32_t *param)
 	#else
 	*param = s_set_gain;
 	#endif
-	SENSOR_PRINT("SENSOR_ov13870: gain: %d", *param);
+	SENSOR_LOGI("SENSOR_ov13870: gain: %d", *param);
 
 	return rtn;
 }
@@ -2054,17 +2054,17 @@ static uint32_t _ov13870_get_static_info(SENSOR_HW_HANDLE handle, uint32_t *para
 	bu64297gwz_get_pose_dis(handle, &up, &down);
 	ex_info->pos_dis.up2hori = up;
 	ex_info->pos_dis.hori2down = down;
-	SENSOR_PRINT("SENSOR_ov13870: f_num: %d", ex_info->f_num);
-	SENSOR_PRINT("SENSOR_ov13870: max_fps: %d", ex_info->max_fps);
-	SENSOR_PRINT("SENSOR_ov13870: max_adgain: %d", ex_info->max_adgain);
-	SENSOR_PRINT("SENSOR_ov13870: ois_supported: %d", ex_info->ois_supported);
-	SENSOR_PRINT("SENSOR_ov13870: pdaf_supported: %d", ex_info->pdaf_supported);
-	SENSOR_PRINT("SENSOR_ov13870: exp_valid_frame_num: %d", ex_info->exp_valid_frame_num);
-	SENSOR_PRINT("SENSOR_ov13870: clam_level: %d", ex_info->clamp_level);
-	SENSOR_PRINT("SENSOR_ov13870: adgain_valid_frame_num: %d", ex_info->adgain_valid_frame_num);
-	SENSOR_PRINT("SENSOR_ov13870: sensor name is: %s", ex_info->name);
-	SENSOR_PRINT("SENSOR_ov13870: sensor version info is: %s", ex_info->sensor_version_info);
-	SENSOR_PRINT("SENSOR_ov13870: up2h %d h2down %d", ex_info->pos_dis.up2hori, ex_info->pos_dis.hori2down);
+	SENSOR_LOGI("SENSOR_ov13870: f_num: %d", ex_info->f_num);
+	SENSOR_LOGI("SENSOR_ov13870: max_fps: %d", ex_info->max_fps);
+	SENSOR_LOGI("SENSOR_ov13870: max_adgain: %d", ex_info->max_adgain);
+	SENSOR_LOGI("SENSOR_ov13870: ois_supported: %d", ex_info->ois_supported);
+	SENSOR_LOGI("SENSOR_ov13870: pdaf_supported: %d", ex_info->pdaf_supported);
+	SENSOR_LOGI("SENSOR_ov13870: exp_valid_frame_num: %d", ex_info->exp_valid_frame_num);
+	SENSOR_LOGI("SENSOR_ov13870: clam_level: %d", ex_info->clamp_level);
+	SENSOR_LOGI("SENSOR_ov13870: adgain_valid_frame_num: %d", ex_info->adgain_valid_frame_num);
+	SENSOR_LOGI("SENSOR_ov13870: sensor name is: %s", ex_info->name);
+	SENSOR_LOGI("SENSOR_ov13870: sensor version info is: %s", ex_info->sensor_version_info);
+	SENSOR_LOGI("SENSOR_ov13870: up2h %d h2down %d", ex_info->pos_dis.up2hori, ex_info->pos_dis.hori2down);
 
 	return rtn;
 }
@@ -2084,10 +2084,10 @@ static uint32_t _ov13870_get_fps_info(SENSOR_HW_HANDLE handle, uint32_t *param)
 	fps_info->min_fps = s_ov13870_mode_fps_info.sensor_mode_fps[sensor_mode].min_fps;
 	fps_info->is_high_fps = s_ov13870_mode_fps_info.sensor_mode_fps[sensor_mode].is_high_fps;
 	fps_info->high_fps_skip_num = s_ov13870_mode_fps_info.sensor_mode_fps[sensor_mode].high_fps_skip_num;
-	SENSOR_PRINT("SENSOR_ov13870: mode %d, max_fps: %d",fps_info->mode, fps_info->max_fps);
-	SENSOR_PRINT("SENSOR_ov13870: min_fps: %d", fps_info->min_fps);
-	SENSOR_PRINT("SENSOR_ov13870: is_high_fps: %d", fps_info->is_high_fps);
-	SENSOR_PRINT("SENSOR_ov13870: high_fps_skip_num: %d", fps_info->high_fps_skip_num);
+	SENSOR_LOGI("SENSOR_ov13870: mode %d, max_fps: %d",fps_info->mode, fps_info->max_fps);
+	SENSOR_LOGI("SENSOR_ov13870: min_fps: %d", fps_info->min_fps);
+	SENSOR_LOGI("SENSOR_ov13870: is_high_fps: %d", fps_info->is_high_fps);
+	SENSOR_LOGI("SENSOR_ov13870: high_fps_skip_num: %d", fps_info->high_fps_skip_num);
 
 	return rtn;
 }
@@ -2098,12 +2098,12 @@ static unsigned long _ov13870_access_val(SENSOR_HW_HANDLE handle, unsigned long 
 	SENSOR_VAL_T* param_ptr = (SENSOR_VAL_T*)param;
 	uint16_t tmp;
 
-	SENSOR_PRINT("SENSOR_ov13870: _ov13870_access_val E param_ptr = %p", param_ptr);
+	SENSOR_LOGI("SENSOR_ov13870: _ov13870_access_val E param_ptr = %p", param_ptr);
 	if(!param_ptr){
 		return rtn;
 	}
 
-	SENSOR_PRINT("SENSOR_ov13870: param_ptr->type=%x", param_ptr->type);
+	SENSOR_LOGI("SENSOR_ov13870: param_ptr->type=%x", param_ptr->type);
 	switch(param_ptr->type)
 	{
 		case SENSOR_VAL_TYPE_INIT_OTP:
@@ -2152,7 +2152,7 @@ static unsigned long _ov13870_access_val(SENSOR_HW_HANDLE handle, unsigned long 
 			break;
 	}
 
-	SENSOR_PRINT("SENSOR_ov13870: _ov13870_access_val X");
+	SENSOR_LOGI("SENSOR_ov13870: _ov13870_access_val X");
 
 	return rtn;
 }

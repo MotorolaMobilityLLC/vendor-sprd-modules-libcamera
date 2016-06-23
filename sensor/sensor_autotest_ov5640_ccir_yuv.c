@@ -511,12 +511,12 @@ LOCAL unsigned long _at_ov5640_ccir_PowerOn(unsigned long power_on)
 	BOOLEAN power_down = g_at_ov5640_ccir_yuv_info.power_down_level;
 	BOOLEAN reset_level = g_at_ov5640_ccir_yuv_info.reset_pulse_level;
 
-	CMR_LOGV("dvdd_val %d,  dvdd_val %d, avdd_val %d, iovdd_val %d",
+	SENSOR_LOGV("dvdd_val %d,  dvdd_val %d, avdd_val %d, iovdd_val %d",
 			power_on,
 			dvdd_val,
 			avdd_val,
 			iovdd_val);
-	CMR_LOGV("power_down %d reset_level %d", power_down, reset_level);
+	SENSOR_LOGV("power_down %d reset_level %d", power_down, reset_level);
 
 	if (SENSOR_TRUE == power_on) {
 		//reset
@@ -548,7 +548,7 @@ LOCAL unsigned long _at_ov5640_ccir_PowerOn(unsigned long power_on)
 		usleep(1*1000);
 		Sensor_SetIovddVoltage(SENSOR_AVDD_CLOSED);
 	}
-	CMR_LOGV("(1:on, 0:off): %ld_end\n ", power_on);
+	SENSOR_LOGV("(1:on, 0:off): %ld_end\n ", power_on);
 	return SENSOR_SUCCESS;
 }
 
@@ -563,22 +563,22 @@ LOCAL unsigned long _at_ov5640_ccir_Identify(unsigned long param)
 	uint8_t ver_value = 0x00;
 	uint32_t ret_value = SENSOR_FAIL;
 
-	SENSOR_PRINT("SENSOR:ov5640 identify CCIR .\n");
+	SENSOR_LOGI("SENSOR:ov5640 identify CCIR .\n");
 
 	pid_value = Sensor_ReadReg(ov5640_PID_ADDR);
 
 	if (ov5640_PID_VALUE == pid_value) {
 		ver_value = Sensor_ReadReg(ov5640_VER_ADDR);
-		SENSOR_PRINT("PID = %x, VER = %x",
+		SENSOR_LOGI("PID = %x, VER = %x",
 			     pid_value, ver_value);
 		if (ov5640_VER_VALUE == ver_value) {
 			ret_value = SENSOR_SUCCESS;
-			SENSOR_PRINT("SENSOR: this is ov5640 yuv ccir sensor  ! \n");
+			SENSOR_LOGI("SENSOR: this is ov5640 yuv ccir sensor  ! \n");
 		} else {
-			SENSOR_PRINT("this is OV%x%x sensor !", pid_value, ver_value);
+			SENSOR_LOGI("this is OV%x%x sensor !", pid_value, ver_value);
 		}
 	} else {
-		SENSOR_PRINT("identify fail,pid_value = %d ", pid_value);
+		SENSOR_LOGI("identify fail,pid_value = %d ", pid_value);
 	}
 
 	return ret_value;
