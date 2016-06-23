@@ -4022,7 +4022,8 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 				CMR_LOGD("perfect ts_face_beautify mu_retVal is %d", mu_retVal);
 			} else {
 				CMR_LOGD("perfect ts_face_beautify return OK");
-				memcpy(yBuf, tmpBuf, pic_width * pic_height * 3 / 2);
+				memcpy(yBuf, tmpBuf, pic_width * pic_height);
+				memcpy(uvBuf, (tmpBuf + pic_width * pic_height), (pic_width * pic_height / 2));
 			}
 
 			free(tmpBuf);
