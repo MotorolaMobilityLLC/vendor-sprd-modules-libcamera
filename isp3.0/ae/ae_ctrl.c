@@ -49,6 +49,7 @@ struct aectrl_cxt {
 	struct aectrl_work_lib work_lib;
 	struct aectrl_ctrl_thr_cxt ctrl_thr_cxt;
 	struct ae_ctrl_param_out ioctrl_out;
+	pthread_mutex_t ioctrl_out_mutex;
 	struct ae_ctrl_proc_out proc_out;
 	struct ae_ctrl_init_in init_in_param;
 };
@@ -256,6 +257,7 @@ cmr_int ae_ctrl_init(struct ae_ctrl_init_in *in_ptr, struct ae_ctrl_init_out *ou
 	cxt_ptr->camera_id = in_ptr->camera_id;
 	cxt_ptr->caller_handle = in_ptr->caller_handle;
 	cxt_ptr->init_in_param = *in_ptr;
+	pthread_mutex_init(&cxt_ptr->ioctrl_out_mutex, NULL);
 
 	ret = aectrl_create_thread(cxt_ptr);
 	if (ret) {
@@ -302,6 +304,7 @@ cmr_int ae_ctrl_deinit(cmr_handle handle)
 	}
 
 	aectrl_destroy_thread(cxt_ptr);
+	pthread_mutex_destroy(&cxt_ptr->ioctrl_out_mutex);
 	free((void*)handle);
 exit:
 	ISP_LOGI("done %ld", ret);
@@ -339,17 +342,21 @@ cmr_int ae_ctrl_ioctrl(cmr_handle handle, enum ae_ctrl_cmd cmd, struct ae_ctrl_p
 		message.data = (void*)in_ptr;
 	}
 
+	pthread_mutex_lock(&cxt_ptr->ioctrl_out_mutex);
 	ret = cmr_thread_msg_send(cxt_ptr->ctrl_thr_cxt.thr_handle, &message);
 	if (ret) {
 		ISP_LOGE("failed to send msg to main thr %ld", ret);
 		if (message.alloc_flag && message.data)
 			free(message.data);
+
+		pthread_mutex_unlock(&cxt_ptr->ioctrl_out_mutex);
 		goto exit;
 	}
 	if (out_ptr) {
 		*out_ptr = cxt_ptr->ioctrl_out;
 	}
 	ret = cxt_ptr->ctrl_thr_cxt.err_code;
+	pthread_mutex_unlock(&cxt_ptr->ioctrl_out_mutex);
 exit:
 	ISP_LOGI("cmd = %d,done %ld", cmd, ret);
 	return ret;
