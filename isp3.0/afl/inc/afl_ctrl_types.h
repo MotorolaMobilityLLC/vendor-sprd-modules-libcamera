@@ -41,6 +41,7 @@ enum afl_ctrl_cmd {
 	AFL_CTRL_SET_FLICKER,
 	AFL_CTRL_SET_ENABLE,
 	AFL_CTRL_SET_PREVIOUS_DATA_INTERVAL,
+	AFL_CTRL_SET_SHIFT_INFO,
 	AFL_CTRL_GET_SUCCESS_NUM,
 	AFL_CTRL_SET_STAT_QUEUE_RELEASE,
 	AFL_CTRL_SET_UI_FLICKER_MODE,
@@ -85,6 +86,15 @@ struct afl_ctrl_param_resolution {
 
 struct afl_ctrl_param_ref_data {
 	cmr_s32 data_interval;
+};
+
+struct afl_ctrl_param_shift_info {
+	cmr_u32 avgmean;
+	cmr_u32 center_mean2x2;
+	cmr_s32 bv;
+	cmr_u32 exposure_time;
+	cmr_u16 adgain;
+	cmr_u16 iso;
 };
 
 struct afl_ctrl_param_init {
@@ -135,6 +145,7 @@ struct afl_ctrl_param_in {
 	struct afl_ctrl_param_mode mode;
 	struct afl_ctrl_param_enable enable;
 	struct afl_ctrl_param_ref_data ref_data;
+	struct afl_ctrl_param_shift_info shift_info;
 	};
 };
 

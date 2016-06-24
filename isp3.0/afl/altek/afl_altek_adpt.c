@@ -279,6 +279,50 @@ exit:
 	return ret;
 }
 
+static cmr_int aflaltek_set_shift_info(struct aflaltek_cxt *cxt_ptr, struct afl_ctrl_param_in *in_ptr, struct afl_ctrl_param_out *out_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+
+	cmr_int lib_ret = 0;
+	struct alflickerruntimeobj_t *obj_ptr = NULL;
+	struct flicker_set_param_t in_param;
+	struct flicker_output_data_t *output_param_ptr = NULL;
+	enum flicker_set_param_type_t type = 0;
+	struct flicker_set_param_content_t *param_ct_ptr = NULL;
+
+	UNUSED(out_ptr);
+	if (!cxt_ptr || !in_ptr) {
+		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
+		goto exit;
+	}
+	obj_ptr = &cxt_ptr->afl_obj;
+	output_param_ptr = &cxt_ptr->lib_data.output_data;
+	param_ct_ptr = &in_param.set_param;
+
+	param_ct_ptr->shift_info.avgmean = in_ptr->shift_info.avgmean;
+	param_ct_ptr->shift_info.center_mean2x2 = in_ptr->shift_info.center_mean2x2;
+	param_ct_ptr->shift_info.bv = in_ptr->shift_info.bv;
+	param_ct_ptr->shift_info.exposure_time = in_ptr->shift_info.exposure_time;
+	param_ct_ptr->shift_info.adgain = in_ptr->shift_info.adgain;
+	param_ct_ptr->shift_info.iso = in_ptr->shift_info.iso;
+
+	ISP_LOGE("shift_info %d,%d,%d,%d,%d,%d", param_ct_ptr->shift_info.avgmean,param_ct_ptr->shift_info.center_mean2x2
+			,param_ct_ptr->shift_info.bv
+			,param_ct_ptr->shift_info.exposure_time,param_ct_ptr->shift_info.adgain,param_ct_ptr->shift_info.iso);
+
+	type = FLICKER_SET_PARAM_SHIFT_INFO;
+	in_param.flicker_set_param_type = type;
+	if (obj_ptr && obj_ptr->set_param)
+		lib_ret = obj_ptr->set_param(&in_param, output_param_ptr, cxt_ptr->lib_run_data);
+	if (lib_ret)
+		goto exit;
+
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld, lib_ret=%ld !!!", ret, lib_ret);
+	return ret;
+}
+
 static cmr_int aflaltek_to_afl_hw_cfg(struct alhw3a_flicker_cfginfo_t *from, struct isp3a_afl_hw_cfg *to)
 {
 	cmr_int ret = ISP_ERROR;
@@ -694,6 +738,9 @@ static cmr_int afl_altek_adpt_ioctrl(cmr_handle handle, cmr_int cmd, void *in, v
 		break;
 	case AFL_CTRL_SET_PREVIOUS_DATA_INTERVAL:
 		ret = aflaltek_set_reference_data_interval(cxt_ptr, in_ptr, out_ptr);
+		break;
+	case AFL_CTRL_SET_SHIFT_INFO:
+		ret = aflaltek_set_shift_info(cxt_ptr, in_ptr, out_ptr);
 		break;
 	case AFL_CTRL_GET_SUCCESS_NUM:
 		ret = aflaltek_get_success_num(cxt_ptr, in_ptr, out_ptr);

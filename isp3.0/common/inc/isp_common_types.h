@@ -131,6 +131,8 @@ struct isp3a_ae_report {
 	cmr_u32 non_comp_BV;
 	cmr_u32 ISO;
 	cmr_u32 flash_ratio;
+	cmr_u32 center_mean2x2;
+	cmr_u32 avg_mean;
 	cmr_u16 cur_mean;
 	cmr_u16 target_mean;
 	cmr_u16 sensor_ad_gain;

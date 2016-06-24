@@ -529,6 +529,8 @@ static cmr_int aealtek_lib_report2out(struct ae_report_update_t *from_ptr, struc
 	to_ptr->BV = from_ptr->bv_val;
 	to_ptr->non_comp_BV = from_ptr->ae_non_comp_bv_val;
 	to_ptr->ISO = from_ptr->ae_cur_iso;
+	to_ptr->avg_mean = from_ptr->avgmean;
+	to_ptr->center_mean2x2 = from_ptr->center_mean2x2;
 	to_ptr->cur_mean = from_ptr->curmean;
 	to_ptr->target_mean = from_ptr->targetmean;
 	to_ptr->sensor_ad_gain = from_ptr->sensor_ad_gain;

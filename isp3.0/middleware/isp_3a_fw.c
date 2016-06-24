@@ -3118,6 +3118,7 @@ cmr_int isp3a_handle_stats(cmr_handle isp_3a_handle, void *data)
 	struct isp3a_statistics_data                *afl_stats_buf_ptr = NULL;
 	struct isp3a_statistics_data                *yhis_stats_buf_ptr = NULL;
 	struct isp_statis_frame_output              *dev_stats = (struct isp_statis_frame_output*)data;
+	struct afl_ctrl_param_in                    afl_in;
 	cmr_u32                                     is_set_stats_buf = 0;
 	cmr_int                                     isp_stats;
 	/* get buffer */
@@ -3180,6 +3181,18 @@ cmr_int isp3a_handle_stats(cmr_handle isp_3a_handle, void *data)
 	if (ret) {
 		ISP_LOGE("failed to start af process");
 	}
+	memset(&afl_in, 0x00, sizeof(afl_in));
+	afl_in.shift_info.adgain = cxt->ae_cxt.proc_out.ae_info.report_data.sensor_ad_gain;
+	afl_in.shift_info.avgmean = cxt->ae_cxt.proc_out.ae_info.report_data.avg_mean;
+	afl_in.shift_info.bv = cxt->ae_cxt.proc_out.ae_info.report_data.BV;
+	afl_in.shift_info.center_mean2x2 = cxt->ae_cxt.proc_out.ae_info.report_data.center_mean2x2;
+	afl_in.shift_info.exposure_time = (cmr_u32)cxt->ae_cxt.proc_out.ae_info.report_data.exp_time;
+	afl_in.shift_info.iso = cxt->ae_cxt.proc_out.ae_info.report_data.ISO;
+	ret = afl_ctrl_ioctrl(cxt->afl_cxt.handle, AFL_CTRL_SET_SHIFT_INFO, &afl_in, NULL);
+	if (ret) {
+		ISP_LOGE("failed to set shift_info to AFL");
+	}
+
 	/* start AFl process */
 	ret= isp3a_start_afl_process(isp_3a_handle, afl_stats_buf_ptr);
 	if (ret) {
@@ -3412,8 +3425,8 @@ exit:
 cmr_int isp3a_handle_ae_result(cmr_handle isp_3a_handle, struct ae_ctrl_callback_in *result_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
-	struct isp3a_statistics_data *awb_stats_data;
+	struct isp3a_fw_context                    *cxt = (struct isp3a_fw_context*)isp_3a_handle;
+	struct isp3a_statistics_data               *awb_stats_data;
 
 	awb_stats_data = (struct isp3a_statistics_data * )result_ptr->proc_out.ae_frame.awb_stats_buff_ptr;
 	ret = isp3a_release_statistics_buf(isp_3a_handle, ISP3A_AE, (struct isp3a_statistics_data * )result_ptr->proc_out.ae_frame.stats_buff_ptr);
@@ -3432,6 +3445,7 @@ cmr_int isp3a_handle_ae_result(cmr_handle isp_3a_handle, struct ae_ctrl_callback
 	if (cxt->caller_callback) {
 		ret = cxt->caller_callback(cxt->caller_handle, ISP_CALLBACK_EVT|ISP_AE_EXP_TIME, &exp_time, 4);
 	}
+
 	return ret;
 }
 
