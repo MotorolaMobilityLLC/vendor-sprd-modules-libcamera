@@ -264,6 +264,7 @@ struct camera_context {
 	cmr_u32                  is_pipviv_mode;
 	enum highiso_mode_type   highiso_mode;  /*highiso mode HIGHISO_CAP_MODE: normal high iso cap mode,
                                                                          HIGHISO_RAWDATA_MODE:raw data cap on high iso mode*/
+	cmr_u32                  isp_to_dram;
 	cmr_int                  cap_cnt;
 	cmr_u32                  is_refocus_mode;
 

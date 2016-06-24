@@ -7279,6 +7279,7 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id, struct i
 	zoom_param   = &prev_cxt->prev_param.zoom_setting;
 	CMR_LOGI("image_format %d, dst_img_fmt %d , prev_cxt->prev_param.sprd_highiso_enabled %d", sn_mode_info->image_format, img_cap->dst_img_fmt,
 			prev_cxt->prev_param.sprd_highiso_enabled);
+	CMR_LOGI("isp_to_dram %d", prev_cxt->prev_param.isp_to_dram);
 	img_cap->need_isp   = 0;
 	sensor_size->width  = sn_mode_info->trim_width;
 	sensor_size->height = sn_mode_info->trim_height;
@@ -9612,7 +9613,8 @@ cmr_int prev_capture_zoom_post_cap(struct prev_handle *handle, cmr_int *flag, cm
 	}
 
 	prev_cxt     = &handle->prev_cxt[camera_id];
-	if (prev_cxt != NULL && prev_cxt->prev_param.sprd_highiso_enabled)
+	if (prev_cxt != NULL && (prev_cxt->prev_param.sprd_highiso_enabled ||
+		prev_cxt->prev_param.isp_to_dram))
 		*flag = ZOOM_POST_PROCESS;
 	else
 		*flag = capability.zoom_post_proc;

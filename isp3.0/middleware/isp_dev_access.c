@@ -703,7 +703,8 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 		img_buf_param.img_id = ISP_IMG_STILL_CAPTURE;
 	}
 	img_buf_param.format = ISP_OUT_IMG_YUY2;
-	if(ISP_CAP_MODE_HIGHISO == param_ptr->common_in.capture_mode) {
+	if(ISP_CAP_MODE_HIGHISO == param_ptr->common_in.capture_mode
+		|| ISP_CAP_MODE_DRAM == param_ptr->common_in.capture_mode) {
 		img_buf_param.format = ISP_OUT_IMG_NV12;
 	}
 	img_buf_param.dram_eb = 0;
