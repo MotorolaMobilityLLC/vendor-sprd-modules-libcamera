@@ -1630,7 +1630,8 @@ static cmr_int afaltek_adpt_pre_start(cmr_handle adpt_handle,
 	afaltek_adpt_get_timestamp(cxt,
 				   &cxt->ae_status_info.timestamp.sec,
 				   &cxt->ae_status_info.timestamp.usec);
-	ISP_LOGI("sec = %d, usec = %d", cxt->ae_status_info.timestamp.sec, cxt->ae_status_info.timestamp.usec);
+	ISP_LOGI("isp_af_start pre sec = %d, usec = %d",
+		 cxt->ae_status_info.timestamp.sec, cxt->ae_status_info.timestamp.usec);
 	return ret;
 }
 
@@ -1639,7 +1640,7 @@ static cmr_int afaltek_adpt_post_start(cmr_handle adpt_handle)
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 
-	ISP_LOGI("E");
+	ISP_LOGI("isp_af_start post E");
 
 	ret = afaltek_adpt_set_start(adpt_handle);
 	if (ret) {
@@ -1675,9 +1676,10 @@ static cmr_int afaltek_adpt_proc_start(cmr_handle adpt_handle)
 			    (sec * SEC_TO_US + usec) -
 			    (cxt->ae_status_info.timestamp.sec * SEC_TO_US +
 			     cxt->ae_status_info.timestamp.usec);
-			ISP_LOGI("time_delta = %lu", time_delta);
-			if (AE_CONVERGE_TIMEOUT <= time_delta)
+			if (AE_CONVERGE_TIMEOUT <= time_delta) {
+				ISP_LOGI("isp_af_start proc ae converge timeout time_delta = %lu", time_delta);
 				afaltek_adpt_post_start(cxt);
+			}
 		}
 	} else if (AF_ADPT_FOCUSING == cxt->af_cur_status) {
 		if (cxt->ae_status_info.ae_locked) {
@@ -1687,7 +1689,7 @@ static cmr_int afaltek_adpt_proc_start(cmr_handle adpt_handle)
 			event.type = alAFLib_AE_IS_LOCK;
 			ret = afaltek_adpt_set_special_event(cxt, &event);
 			cxt->af_cur_status = AF_ADPT_FOCUSED;
-			ISP_LOGI("cxt->af_cur_status = %d", cxt->af_cur_status);
+			ISP_LOGI("isp_af_start proc focusing cxt->af_cur_status = %d", cxt->af_cur_status);
 		}
 	}
 
