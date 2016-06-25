@@ -30,7 +30,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <cutils/properties.h>
-#include <linux/sprd_ion.h>
+#include <sprd_ion.h>
 #include <media/hardware/MetadataBufferType.h>
 #include "cmr_common.h"
 #ifdef SPRD_PERFORMANCE

@@ -29,7 +29,7 @@ extern "C"
 #include "isp_app.h"
 #include "jpeg_exif_header.h"
 #include "../../arithmetic/inc/FaceFinder.h"
-#include <video/sprd_sensor_k.h>
+#include <sprd_sensor_k.h>
 #include "sprd_img.h"
 #include "cmr_log.h"
 

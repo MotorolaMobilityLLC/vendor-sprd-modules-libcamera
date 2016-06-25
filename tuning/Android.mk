@@ -21,8 +21,6 @@ include $(CLEAR_VARS)
 LOCAL_CFLAGS += -fno-strict-aliasing -Wno-unused-parameter #-Werror
 
 LOCAL_C_INCLUDES := \
-	$(TARGET_OUT_INTERMEDIATES)/KERNEL/source/include/video \
-	$(TARGET_OUT_INTERMEDIATES)/KERNEL/source/include/uapi \
 	$(LOCAL_PATH)/../common/inc \
 	$(LOCAL_PATH)/../jpeg/inc \
 	$(LOCAL_PATH)/../vsp/inc \

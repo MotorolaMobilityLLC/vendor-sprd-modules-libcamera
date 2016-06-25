@@ -24,7 +24,7 @@ LOCAL_CFLAGS += -fno-strict-aliasing -Werror
 # external header file
 # ************************************************
 LOCAL_C_INCLUDES := \
-	$(TARGET_OUT_INTERMEDIATES)/KERNEL/source/include/video \
+	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
 	$(LOCAL_PATH)/../common/inc
 
 # ************************************************

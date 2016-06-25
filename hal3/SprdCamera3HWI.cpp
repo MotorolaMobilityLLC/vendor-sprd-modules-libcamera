@@ -46,7 +46,7 @@
 
 #include "SprdCamera3OEMIf.h"
 #include "SprdCamera3Setting.h"
-#include <linux/sprd_ion.h>
+#include <sprd_ion.h>
 
 #ifdef CONFIG_CAMERA_ISP
 extern "C" {

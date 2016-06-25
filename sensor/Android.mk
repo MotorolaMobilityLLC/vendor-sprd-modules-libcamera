@@ -23,8 +23,7 @@ LOCAL_CFLAGS += -fno-strict-aliasing -Wno-unused-parameter #-Werror
 TARGET_BOARD_CAMERA_READOTP_METHOD?=0
 
 LOCAL_C_INCLUDES := \
-	$(TARGET_OUT_INTERMEDIATES)/KERNEL/source/include/video \
-	$(TARGET_OUT_INTERMEDIATES)/KERNEL/source/include/uapi \
+	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
 	$(LOCAL_PATH)/../common/inc \
 	$(LOCAL_PATH)/../jpeg/inc \
 	$(LOCAL_PATH)/../vsp/inc \

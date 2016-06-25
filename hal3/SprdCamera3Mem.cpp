@@ -37,7 +37,7 @@
 #include <gralloc_priv.h>
 #include "MemIon.h"
 #include <binder/MemoryHeapBase.h>
-#include <linux/sprd_ion.h>
+#include <sprd_ion.h>
 #include "SprdCamera3HALHeader.h"
 #include "SprdCamera3Mem.h"
 

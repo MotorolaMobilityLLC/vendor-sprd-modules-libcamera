@@ -21,8 +21,7 @@ LOCAL_C_INCLUDES := \
 	$(TOP)vendor/sprd/modules/libmemion \
 	$(TOP)/vendor/sprd/external/kernel-headers \
 	$(TOP)/vendor/sprd/modules/libmemion \
-	$(TARGET_OUT_INTERMEDIATES)/KERNEL/source/include/video \
-	$(TARGET_OUT_INTERMEDIATES)/KERNEL/source/include/uapi
+	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video
 
 
 ifeq ($(strip $(TARGET_GPU_PLATFORM)),midgard)
