@@ -665,7 +665,7 @@ cmr_int snp_jpeg_enc_cb_handle(cmr_handle snp_handle, void *data)
 	struct snp_context             *cxt = (struct snp_context*)snp_handle;
 	struct jpeg_enc_cb_param       *enc_out_ptr = (struct jpeg_enc_cb_param*)data;
 	struct cmr_cap_mem             *mem_ptr = &cxt->req_param.post_proc_setting.mem[cxt->index];
-	cmr_s8                         value[PROPERTY_VALUE_MAX];
+	char                           value[PROPERTY_VALUE_MAX];
 	struct camera_frame_type       frame_type = {0};
 
 	if (cxt->err_code) {
@@ -899,7 +899,7 @@ cmr_int snp_start_encode(cmr_handle snp_handle, void *data)
 	jpeg_in_ptr = &chn_param_ptr->jpeg_in[index];
 	jpeg_in_ptr->src.data_end = snp_cxt->req_param.post_proc_setting.data_endian;
 	if (snp_cxt->ops.start_encode) {
-		cmr_s8 value[PROPERTY_VALUE_MAX];
+		char value[PROPERTY_VALUE_MAX];
 		property_get("debug.camera.save.snpfile", value, "0");
 		if (atoi(value) == 4 || atoi(value) == 100) {
 			camera_save_to_file(SNP_ENCODE_SRC_DATA, IMG_DATA_TYPE_YUV420,
@@ -992,7 +992,7 @@ cmr_int snp_start_encode_thumb(cmr_handle snp_handle)
 			CMR_LOGE("failed to start thumb enc %ld", ret);
 		} else {
 			snp_cxt->thumb_stream_size = (cmr_u32)((unsigned long)jpeg_in_ptr->dst.reserved);
-			cmr_s8 value[PROPERTY_VALUE_MAX];
+			char value[PROPERTY_VALUE_MAX];
 			property_get("debug.camera.save.snpfile", value, "0");
 			if (atoi(value) == 7) {
 				camera_save_to_file(SNP_THUMB_STREAM+snp_cxt->cap_cnt, IMG_DATA_TYPE_JPEG,
@@ -1020,17 +1020,17 @@ cmr_int snp_start_decode_sync(cmr_handle snp_handle, void *data)
 	cmr_u32                        index = frm_ptr->frame_id - frm_ptr->base;
 	struct img_frm                 src, dst;
 	struct cmr_op_mean             mean;
-	cmr_s8                         value[PROPERTY_VALUE_MAX];
+	char                           value[PROPERTY_VALUE_MAX];
 
-    CMR_LOGI("index %d phy addr 0x%lx 0x%lx 0x%lx vrit addr 0x%lx 0x%lx 0x%lx fd 0x%x, length %d",
-			index, chn_param_ptr->jpeg_dec_in[index].src.addr_phy.addr_y,
-			chn_param_ptr->jpeg_dec_in[index].src.addr_phy.addr_u,
-			chn_param_ptr->jpeg_dec_in[index].src.addr_phy.addr_v,
-			chn_param_ptr->jpeg_dec_in[index].src.addr_vir.addr_y,
-			chn_param_ptr->jpeg_dec_in[index].src.addr_vir.addr_u,
-			chn_param_ptr->jpeg_dec_in[index].src.addr_vir.addr_v,
-			chn_param_ptr->jpeg_dec_in[index].src.fd,
-			frm_ptr->length);
+	CMR_LOGI("index %d phy addr 0x%lx 0x%lx 0x%lx vrit addr 0x%lx 0x%lx 0x%lx fd 0x%x, length %d",
+		 index, chn_param_ptr->jpeg_dec_in[index].src.addr_phy.addr_y,
+		 chn_param_ptr->jpeg_dec_in[index].src.addr_phy.addr_u,
+		 chn_param_ptr->jpeg_dec_in[index].src.addr_phy.addr_v,
+		 chn_param_ptr->jpeg_dec_in[index].src.addr_vir.addr_y,
+		 chn_param_ptr->jpeg_dec_in[index].src.addr_vir.addr_u,
+		 chn_param_ptr->jpeg_dec_in[index].src.addr_vir.addr_v,
+		 chn_param_ptr->jpeg_dec_in[index].src.fd,
+		 frm_ptr->length);
 
 	property_get("debug.camera.save.snpfile", value, "0");
 	if (atoi(value) == 1) {
@@ -1098,7 +1098,7 @@ cmr_int snp_start_rot(cmr_handle snp_handle, void *data)
 	cmr_u32                        index = frm_ptr->frame_id - frm_ptr->base;
 	struct img_frm                 src, dst;
 	struct cmr_op_mean             mean;
-	cmr_s8                         value[PROPERTY_VALUE_MAX];
+	char                           value[PROPERTY_VALUE_MAX];
 
 	if (CMR_CAMERA_NORNAL_EXIT == snp_checkout_exit(snp_handle)) {
 		CMR_LOGI("post proc has been cancel");
@@ -1293,7 +1293,7 @@ cmr_int snp_start_convet_thumb(cmr_handle snp_handle, void *data)
 	cmr_u32                        index = frm_ptr->frame_id - frm_ptr->base;
 	struct img_frm                 src, dst;
 	struct cmr_op_mean             mean;
-	cmr_s8                         value[PROPERTY_VALUE_MAX];
+	char                           value[PROPERTY_VALUE_MAX];
 
 	if (CMR_CAMERA_NORNAL_EXIT == snp_checkout_exit(snp_handle)) {
 		CMR_LOGI("post proc has been cancel");
@@ -2114,7 +2114,7 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data)
 		}
 		{
 			struct img_addr jpeg_addr;
-			cmr_s8 value[PROPERTY_VALUE_MAX];
+			char value[PROPERTY_VALUE_MAX];
 			property_get("debug.camera.save.snpfile", value, "0");
 			if (atoi(value) == 8 || atoi(value) == 100) {
 				jpeg_addr.addr_y = enc_out_param.output_buf_virt_addr;
@@ -3958,7 +3958,7 @@ cmr_int camera_set_frame_type(cmr_handle snp_handle, struct camera_frame_type *f
 	struct snapshot_param          *req_param_ptr;
 	struct cmr_cap_mem             *mem_ptr;
 	cmr_u32                        frm_id = info->frame_id - info->base;
-	cmr_s8                         value[PROPERTY_VALUE_MAX];
+	char                           value[PROPERTY_VALUE_MAX];
 
 	req_param_ptr = &cxt->req_param;
 	mem_ptr = &req_param_ptr->post_proc_setting.mem[frm_id];
@@ -4199,6 +4199,7 @@ exit:
 	sem_post(&cxt->scaler_sync_sm);
 	return ret;
 }
+
 cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data)
 {
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
@@ -4206,7 +4207,7 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data)
 	struct snp_context             *cxt = (struct snp_context*)snp_handle;
 	struct snp_channel_param       *chn_param_ptr = &cxt->chn_param;
 	cmr_u32                        index;
-	cmr_s8                         value[PROPERTY_VALUE_MAX];
+	char                           value[PROPERTY_VALUE_MAX];
 
 	if (CMR_CAMERA_NORNAL_EXIT == snp_checkout_exit(snp_handle)) {
 		CMR_LOGI("post proc has been cancel");
@@ -4428,6 +4429,8 @@ cmr_int snp_post_proc_for_isp_tuning(cmr_handle snp_handle, void *data)
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct frm_info                *chn_data_ptr = (struct frm_info*)data;
 	struct snp_context             *cxt = (struct snp_context*)snp_handle;
+	struct cmr_cap_mem             *mem_ptr = &cxt->req_param.post_proc_setting.mem[cxt->index];
+	char                           value[PROPERTY_VALUE_MAX];
 	CMR_MSG_INIT(message);
 
 	if (!isp_is_have_src_data_from_picture()) {
@@ -4444,21 +4447,22 @@ cmr_int snp_post_proc_for_isp_tuning(cmr_handle snp_handle, void *data)
 		CMR_LOGE("failed to send start cvt msg to cvt thr %ld", ret);
 	}
 
-/* dont need altek raw now, keep these code for debug */
-#if 0
-	struct cmr_cap_mem   *mem_ptr = &cxt->req_param.post_proc_setting.mem[cxt->index];
-	if (CAMERA_ISP_TUNING_MODE == cxt->req_param.mode) {
-		char datetime[15] = {0};
-		CMR_LOGI("save altek raw to file");
-		camera_get_system_time(datetime);
-		snp_dump_mipi_raw2(snp_handle,
-				datetime,
-				IMG_DATA_TYPE_RAW,
-				mem_ptr->cap_raw2.size.width,
-				mem_ptr->cap_raw2.size.height,
-				&mem_ptr->cap_raw2.addr_vir);
+	property_get("persist.sys.camera.alraw.mode", value, "0");
+	if (1 == atoi(value)) {
+		if (CAMERA_ISP_TUNING_MODE == cxt->req_param.mode) {
+			char datetime[15] = {0};
+			CMR_LOGI("save altek raw to file");
+			camera_get_system_time(datetime);
+			snp_dump_mipi_raw2(snp_handle,
+					   datetime,
+					   IMG_DATA_TYPE_RAW,
+					   mem_ptr->cap_raw2.size.width,
+					   mem_ptr->cap_raw2.size.height,
+					   &mem_ptr->cap_raw2.addr_vir);
+		}
 	}
 
+#if 0
 	if (CAMERA_ISP_TUNING_MODE == cxt->req_param.mode) {
 		char datetime[15] = {0};
 		CMR_LOGI("save yuv to file");
