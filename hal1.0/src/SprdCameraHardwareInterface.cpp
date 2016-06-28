@@ -30,7 +30,7 @@
 #include <dlfcn.h>
 
 #include <cutils/properties.h>
-#include <linux/sprd_ion.h>
+#include <sprd_ion.h>
 #if(MINICAMERA != 1)
 #include <gralloc_priv.h>
 #endif
