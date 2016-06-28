@@ -54,6 +54,7 @@ enum snapshot_cb_type {
 	SNAPSHOT_EVT_START_CVT,
 	SNAPSHOT_EVT_CVT_DONE,
 	SNAPSHOT_EVT_STATE,
+	SNAPSHOT_EVT_RETURN_ZSL_BUF,
 	SNAPSHOT_CB_MAX
 };
 
@@ -212,9 +213,8 @@ cmr_int cmr_snapshot_format_convert(cmr_handle snapshot_handle, void *data, stru
 
 cmr_int cmr_snapshot_memory_flush(cmr_handle snapshot_handle);
 
-#ifdef CONFIG_MEM_OPTIMIZATION
+/* performance optimization, use zsl buf to postprocess, not copy */
 cmr_int zsl_snp_update_post_proc_param(cmr_handle snp_handle, struct img_frm *img_frame);
-#endif
 
 #ifdef __cplusplus
 }

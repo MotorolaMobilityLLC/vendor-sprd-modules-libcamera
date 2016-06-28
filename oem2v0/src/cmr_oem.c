@@ -368,7 +368,7 @@ void camera_send_channel_data(cmr_handle oem_handle, cmr_handle receiver_handle,
 		goto exit;
 	}
 
-	camera_local_zsl_snapshot_need_pause(oem_handle, &need_pause);
+	camera_local_normal_snapshot_need_pause(oem_handle, &need_pause);
 	chn_bit = 1 << frm_ptr->channel_id;
 	CMR_LOGV("chn_id=%d, pre_chn_bits=%d snp_chn_bits=%d, total_num=%d",
 		frm_ptr->channel_id,
@@ -932,13 +932,13 @@ void camera_focus_evt_cb(enum af_cb_type cb, cmr_uint param, void *privdata)
 	case AF_CB_DONE:
 		oem_cb = CAMERA_EXIT_CB_DONE;
 		break;
-    case AF_CB_FAILED:
+	case AF_CB_FAILED:
 		oem_cb = CAMERA_EXIT_CB_FAILED;
 		break;
-    case AF_CB_ABORT:
+	case AF_CB_ABORT:
 		oem_cb = CAMERA_EXIT_CB_ABORT;
 		break;
-    case AF_CB_FOCUS_MOVE:
+	case AF_CB_FOCUS_MOVE:
 		oem_cb = CAMERA_EVT_CB_FOCUS_MOVE;
 		break;
 	default:
@@ -1164,13 +1164,13 @@ void camera_snapshot_cb_to_hal(cmr_handle oem_handle, enum snapshot_cb_type cb, 
 	case SNAPSHOT_FUNC_RELEASE_PICTURE:
 		oem_func = CAMERA_FUNC_RELEASE_PICTURE;
 		break;
-    case SNAPSHOT_FUNC_TAKE_PICTURE:
+	case SNAPSHOT_FUNC_TAKE_PICTURE:
 		oem_func = CAMERA_FUNC_TAKE_PICTURE;
 		break;
-    case SNAPSHOT_FUNC_ENCODE_PICTURE:
+	case SNAPSHOT_FUNC_ENCODE_PICTURE:
 		oem_func = CAMERA_FUNC_ENCODE_PICTURE;
 		break;
-    default:
+	default:
 		oem_func = func;
 		break;
 	}
@@ -1204,6 +1204,9 @@ void camera_snapshot_cb_to_hal(cmr_handle oem_handle, enum snapshot_cb_type cb, 
 	case SNAPSHOT_EVT_CB_SNAPSHOT_JPEG_DONE:
 		oem_cb_type = CAMERA_EVT_CB_SNAPSHOT_JPEG_DONE;
 		break;
+	case SNAPSHOT_EVT_RETURN_ZSL_BUF:
+		oem_cb_type = CAMERA_EVT_CB_RETURN_ZSL_BUF;
+		break;
 	default:
 		oem_cb_type = cb;
 		break;
@@ -1226,8 +1229,10 @@ void camera_snapshot_cb_to_hal(cmr_handle oem_handle, enum snapshot_cb_type cb, 
 	message.sub_msg_type = oem_cb_type;
 	if (CAMERA_EVT_CB_CAPTURE_FRAME_DONE == oem_cb_type) {
 		message.sync_flag  = CMR_MSG_SYNC_RECEIVED;
-	} else if ((CAMERA_EXIT_CB_PREPARE == oem_cb_type) || (CAMERA_EVT_CB_SNAPSHOT_JPEG_DONE == oem_cb_type)
-		|| (CAMERA_EVT_CB_SNAPSHOT_DONE == oem_cb_type)) {
+	} else if (CAMERA_EXIT_CB_PREPARE == oem_cb_type ||
+		   CAMERA_EVT_CB_SNAPSHOT_JPEG_DONE == oem_cb_type ||
+		   CAMERA_EVT_CB_SNAPSHOT_DONE == oem_cb_type ||
+		   CAMERA_EVT_CB_RETURN_ZSL_BUF == oem_cb_type) {
 		message.sync_flag  = CMR_MSG_SYNC_NONE;
 	} else {
 		message.sync_flag  = CMR_MSG_SYNC_PROCESSED;
@@ -1302,42 +1307,46 @@ void camera_snapshot_channel_handle(cmr_handle oem_handle, void* param)
 	cmr_uint                        i;
 	cmr_uint                        is_need_resume = 0;
 	struct cmr_path_capability      capability;
-	cmr_int                         need_pause;
+	cmr_int                         zsl_capture_need_pause;
+	cmr_int                         normal_capture_need_pause;
 #ifdef CAMERA_PATH_SHARE
-	camera_local_zsl_snapshot_need_pause(oem_handle, &need_pause);
-	if (need_pause) {
-		if (CAMERA_ZSL_MODE == cxt->snp_cxt.snp_mode) {
+	camera_local_zsl_snapshot_need_pause(oem_handle, &zsl_capture_need_pause);
+	camera_local_normal_snapshot_need_pause(oem_handle, &normal_capture_need_pause);
+
+	if (CAMERA_ZSL_MODE == cxt->snp_cxt.snp_mode) {
+		if (zsl_capture_need_pause) {
 			is_need_resume = 1;
-		} else if (1 != cxt->snp_cxt.total_num) {
+		}
+	} else if (1 != cxt->snp_cxt.total_num) {
+		if (normal_capture_need_pause) {
 			if (jpeg_param_ptr) {
-				if (1 != jpeg_param_ptr->need_free && TAKE_PICTURE_NEEDED == camera_get_snp_req((cmr_handle)cxt)) {
+				if (1 != jpeg_param_ptr->need_free &&
+				    TAKE_PICTURE_NEEDED == camera_get_snp_req((cmr_handle)cxt)) {
 					is_need_resume = 1;
 				}
-			} else {
-				CMR_LOGE("param is error");
 			}
 
 			struct camera_frame_type *frame_type = (struct camera_frame_type *)param;
-			if (((cxt->lls_shot_mode)|| (cxt->is_vendor_hdr) || cxt->is_pipviv_mode) && (1 != frame_type->need_free)) {
+			if ((cxt->lls_shot_mode || cxt->is_vendor_hdr || cxt->is_pipviv_mode) &&
+			    (1 != frame_type->need_free)) {
 				is_need_resume = 1;
 			}
-		} else {
-			is_need_resume = 0;
 		}
+	}
 
-		if (1 == is_need_resume) {
-			for (i=0; i<GRAB_CHANNEL_MAX ; i++) {
-				if (cxt->snp_cxt.channel_bits & (1<<i)) {
-					break;
-				}
+	if (1 == is_need_resume) {
+		for (i = 0; i < GRAB_CHANNEL_MAX; i++) {
+			if (cxt->snp_cxt.channel_bits & (1 << i)) {
+				break;
 			}
-			frame.channel_id = i;
-			ret = cmr_preview_receive_data(cxt->prev_cxt.preview_handle, cxt->camera_id, PREVIEW_CHN_RESUME, &frame);
-			if (ret) {
-				CMR_LOGE("failed to resume path %ld", ret);
-			}
-			CMR_LOGI("done");
 		}
+		frame.channel_id = i;
+		ret = cmr_preview_receive_data(cxt->prev_cxt.preview_handle,
+					       cxt->camera_id, PREVIEW_CHN_RESUME, &frame);
+		if (ret) {
+			CMR_LOGE("failed to resume path %ld", ret);
+		}
+		CMR_LOGI("done");
 	}
 #endif
 }
@@ -7800,7 +7809,7 @@ cmr_int camera_local_set_zsl_snapshot_buffer(cmr_handle oem_handle, cmr_uint src
 		chn_data.vaddr_vir  = 0;
 		chn_data.fd = fd;
 
-#ifdef CONFIG_MEM_OPTIMIZATION
+#ifdef PERFORMANCE_OPTIMIZATION
 		// update postprocess params
 		struct img_frm img_frame;
 		memset(&img_frame, 0, sizeof(struct img_frm));
@@ -7857,13 +7866,33 @@ cmr_int camera_local_zsl_snapshot_need_pause(cmr_handle oem_handle, cmr_int *fla
 	cxt = (struct camera_context*)oem_handle;
 
 	camera_channel_path_capability(oem_handle, &capability);
-	*flag = capability.capture_pause;
+//	*flag = capability.capture_pause;
+	*flag = 0;
 exit:
 	CMR_LOGV("out flag %ld", *flag);
 	return ret;
 }
 
+cmr_int camera_local_normal_snapshot_need_pause(cmr_handle oem_handle, cmr_int *flag)
+{
+	cmr_int                        ret = CMR_CAMERA_SUCCESS;
+	struct camera_context          *cxt;
+	struct cmr_path_capability     capability;
 
+	if (!oem_handle || !flag) {
+		CMR_LOGE("in parm error");
+		ret = -CMR_CAMERA_INVALID_PARAM;
+		goto exit;
+	}
+	CMR_LOGV("in");
+	cxt = (struct camera_context*)oem_handle;
+
+	camera_channel_path_capability(oem_handle, &capability);
+	*flag = capability.capture_pause;
+exit:
+	CMR_LOGV("out flag %ld", *flag);
+	return ret;
+}
 
 void camera_local_start_burst_notice(cmr_handle oem_handle){
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;

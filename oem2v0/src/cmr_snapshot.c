@@ -667,17 +667,50 @@ cmr_int snp_jpeg_enc_cb_handle(cmr_handle snp_handle, void *data)
 	struct cmr_cap_mem             *mem_ptr = &cxt->req_param.post_proc_setting.mem[cxt->index];
 	char                           value[PROPERTY_VALUE_MAX];
 	struct camera_frame_type       frame_type = {0};
+	struct snp_channel_param       *chn_param_ptr = &cxt->chn_param;
+	struct camera_frame_type       zsl_frame = {0};
+	struct img_frm                 rot_src, scale_src;
 
 	if (cxt->err_code) {
 		CMR_LOGE("error exit");
 		sem_post(&cxt->jpeg_sync_sm);
 		return ret;
 	}
+
 	if (CMR_CAMERA_NORNAL_EXIT == snp_checkout_exit(snp_handle)) {
 		CMR_LOGI("post proc has been cancel");
 		ret = CMR_CAMERA_NORNAL_EXIT;
 		goto exit;
 	}
+
+	if (chn_param_ptr->is_rot) {
+		rot_src = chn_param_ptr->rot[0].src_img;
+		CMR_LOGD("fd=0x%x", rot_src.fd);
+		zsl_frame.fd = rot_src.fd;
+		snp_send_msg_notify_thr(snp_handle,
+					SNAPSHOT_FUNC_ENCODE_PICTURE,
+					SNAPSHOT_EVT_RETURN_ZSL_BUF,
+					(void*)&zsl_frame,
+					sizeof(struct camera_frame_type));
+	} else if (chn_param_ptr->is_scaling) {
+		scale_src = chn_param_ptr->scale[0].src_img;
+		CMR_LOGD("fd=0x%x", scale_src.fd);
+		zsl_frame.fd = scale_src.fd;
+		snp_send_msg_notify_thr(snp_handle,
+					SNAPSHOT_FUNC_ENCODE_PICTURE,
+					SNAPSHOT_EVT_RETURN_ZSL_BUF,
+					(void*)&zsl_frame,
+					sizeof(struct camera_frame_type));
+	} else {
+		CMR_LOGD("fd=0x%x", chn_param_ptr->jpeg_in[0].src.fd);
+		zsl_frame.fd = chn_param_ptr->jpeg_in[0].src.fd;
+		snp_send_msg_notify_thr(snp_handle,
+					SNAPSHOT_FUNC_ENCODE_PICTURE,
+					SNAPSHOT_EVT_RETURN_ZSL_BUF,
+					(void*)&zsl_frame,
+					sizeof(struct camera_frame_type));
+	}
+
 	property_get("debug.camera.save.snpfile", value, "0");
 	if (atoi(value) == 5) {
 		camera_save_to_file(SNP_ENCODE_STREAM+cxt->cap_cnt, IMG_DATA_TYPE_JPEG,
@@ -685,25 +718,27 @@ cmr_int snp_jpeg_enc_cb_handle(cmr_handle snp_handle, void *data)
 		cxt->req_param.post_proc_setting.actual_snp_size.height,
 		&mem_ptr->target_jpeg.addr_vir);
 	}
+
 	if (enc_out_ptr->total_height == cxt->req_param.post_proc_setting.actual_snp_size.height) {
-		if ((CAMERA_ISP_TUNING_MODE == cxt->req_param.mode) || (CAMERA_ISP_SIMULATION_MODE == cxt->req_param.mode)) {
+		if ((CAMERA_ISP_TUNING_MODE == cxt->req_param.mode) ||
+		    (CAMERA_ISP_SIMULATION_MODE == cxt->req_param.mode)) {
 			send_capture_data(0x10,/* jpg */
-								cxt->req_param.post_proc_setting.actual_snp_size.width,
-								cxt->req_param.post_proc_setting.actual_snp_size.height,
-								(char *)mem_ptr->target_jpeg.addr_vir.addr_y,
-								enc_out_ptr->stream_size,
-								0, 0, 0, 0);
+				cxt->req_param.post_proc_setting.actual_snp_size.width,
+				cxt->req_param.post_proc_setting.actual_snp_size.height,
+				(char *)mem_ptr->target_jpeg.addr_vir.addr_y,
+				enc_out_ptr->stream_size,
+				0, 0, 0, 0);
 			//ret = camera_save_to_file(isp_get_saved_file_count(snp_handle),
-			//							IMG_DATA_TYPE_JPEG,
-			//							cxt->req_param.post_proc_setting.actual_snp_size.width,
-			//							cxt->req_param.post_proc_setting.actual_snp_size.height,
-			//							&mem_ptr->target_jpeg.addr_vir);
+			//		IMG_DATA_TYPE_JPEG,
+			//		cxt->req_param.post_proc_setting.actual_snp_size.width,
+			//		cxt->req_param.post_proc_setting.actual_snp_size.height,
+			//		&mem_ptr->target_jpeg.addr_vir);
 			//ret = camera_save_jpg_to_file(isp_get_saved_file_count(snp_handle),
-			//				IMG_DATA_TYPE_JPEG,
-			//				cxt->req_param.post_proc_setting.actual_snp_size.width,
-			//				cxt->req_param.post_proc_setting.actual_snp_size.height,
-			//				enc_out_ptr->stream_size,
-			//				&mem_ptr->target_jpeg.addr_vir);
+			//		IMG_DATA_TYPE_JPEG,
+			//		cxt->req_param.post_proc_setting.actual_snp_size.width,
+			//		cxt->req_param.post_proc_setting.actual_snp_size.height,
+			//		enc_out_ptr->stream_size,
+			//		&mem_ptr->target_jpeg.addr_vir);
 
 		}
 		cxt->jpeg_stream_size = enc_out_ptr->stream_size;
@@ -2083,7 +2118,7 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data)
 		exif_in_ptr->thumb_stream_src.buf_size = cxt->thumb_stream_size;
 		camera_take_snapshot_step(CMR_STEP_WR_EXIF_S);
 		ret = cxt->ops.start_exif_encode(cxt->oem_handle, snp_handle, &exif_in_ptr->big_pic_stream_src,
-										&exif_in_ptr->thumb_stream_src, NULL, &exif_in_ptr->dst, &enc_out_param);
+					&exif_in_ptr->thumb_stream_src, NULL, &exif_in_ptr->dst, &enc_out_param);
 		camera_take_snapshot_step(CMR_STEP_WR_EXIF_E);
 		sem_post(&cxt->writer_exif_sm);
 		snp_set_status(snp_handle, POST_PROCESSING);
@@ -3407,7 +3442,8 @@ cmr_int snp_clean_thumb_param(cmr_handle snp_handle)
 	return ret;
 }
 
-#ifdef CONFIG_MEM_OPTIMIZATION
+/* start */
+/* performance optimization, use zsl buf to postprocess, not copy */
 cmr_int snp_update_postproc_src_size(cmr_handle snp_handle, struct img_frm *chn_data)
 {
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
@@ -3559,7 +3595,63 @@ cmr_int snp_update_jpeg_thumb_param(cmr_handle snp_handle, struct img_frm chn_da
 
 	return ret;
 }
-#endif
+
+cmr_int zsl_snp_update_post_proc_param(cmr_handle snp_handle, struct img_frm *img_frame)
+{
+	cmr_int                         ret = CMR_CAMERA_SUCCESS;
+	struct snp_context              *cxt = (struct snp_context*)snp_handle;
+	struct snapshot_param           *req_param_ptr = &cxt->req_param;
+
+	// update src width and height
+	snp_update_postproc_src_size(snp_handle, img_frame);
+
+	if (IMG_ANGLE_0 != req_param_ptr->post_proc_setting.rot_angle) {
+		ret = snp_update_rot_param(snp_handle, *img_frame);
+		if (ret) {
+			CMR_LOGE("failed to set rot param %ld", ret);
+			goto exit;
+		}
+		CMR_LOGV("dont need to update other params");
+		goto exit;
+	}
+
+	if (cxt->chn_param.is_scaling) {
+		ret = snp_update_scale_param(snp_handle, *img_frame);
+		if (ret) {
+			CMR_LOGE("failed to set scale param %ld", ret);
+			goto exit;
+		}
+		CMR_LOGV("dont need to update other params");
+		goto exit;
+	}
+
+	ret = snp_update_jpeg_enc_param(snp_handle, *img_frame);
+	if (ret) {
+		CMR_LOGE("failed to set rot param %ld", ret);
+		goto exit;
+	}
+
+	if (0 != cxt->req_param.jpeg_setting.thum_size.width
+		&& 0 != cxt->req_param.jpeg_setting.thum_size.height) {
+		ret = snp_update_convert_thumb_param(snp_handle, *img_frame);
+		if (ret) {
+			CMR_LOGE("failed to set convert thumb param %ld", ret);
+			goto exit;
+		}
+		ret = snp_update_jpeg_thumb_param(snp_handle, *img_frame);
+		if (ret) {
+			CMR_LOGE("failed to set jpeg thumb param %ld", ret);
+			goto exit;
+		}
+	} else {
+		ret = snp_clean_thumb_param(snp_handle);
+	}
+
+exit:
+	return ret;
+}
+/* performance optimization, use zsl buf to postprocess, not copy */
+/* end */
 
 cmr_int snp_set_post_proc_param(cmr_handle snp_handle, struct snapshot_param *param_ptr)
 {
@@ -3665,63 +3757,6 @@ exit:
 	return ret;
 }
 
-#ifdef CONFIG_MEM_OPTIMIZATION
-cmr_int zsl_snp_update_post_proc_param(cmr_handle snp_handle, struct img_frm *img_frame)
-{
-	cmr_int                         ret = CMR_CAMERA_SUCCESS;
-	struct snp_context              *cxt = (struct snp_context*)snp_handle;
-	struct snapshot_param           *req_param_ptr = &cxt->req_param;
-
-	// update src width and height
-	snp_update_postproc_src_size(snp_handle, img_frame);
-
-	if (IMG_ANGLE_0 != req_param_ptr->post_proc_setting.rot_angle) {
-		ret = snp_update_rot_param(snp_handle, *img_frame);
-		if (ret) {
-			CMR_LOGE("failed to set rot param %ld", ret);
-			goto exit;
-		}
-		CMR_LOGV("dont need to update other params");
-		goto exit;
-	}
-
-	if (cxt->chn_param.is_scaling) {
-		ret = snp_update_scale_param(snp_handle, *img_frame);
-		if (ret) {
-			CMR_LOGE("failed to set scale param %ld", ret);
-			goto exit;
-		}
-		CMR_LOGV("dont need to update other params");
-		goto exit;
-	}
-
-	ret = snp_update_jpeg_enc_param(snp_handle, *img_frame);
-	if (ret) {
-		CMR_LOGE("failed to set rot param %ld", ret);
-		goto exit;
-	}
-
-	if (0 != cxt->req_param.jpeg_setting.thum_size.width
-		&& 0 != cxt->req_param.jpeg_setting.thum_size.height) {
-		ret = snp_update_convert_thumb_param(snp_handle, *img_frame);
-		if (ret) {
-			CMR_LOGE("failed to set convert thumb param %ld", ret);
-			goto exit;
-		}
-		ret = snp_update_jpeg_thumb_param(snp_handle, *img_frame);
-		if (ret) {
-			CMR_LOGE("failed to set jpeg thumb param %ld", ret);
-			goto exit;
-		}
-	} else {
-		ret = snp_clean_thumb_param(snp_handle);
-	}
-
-exit:
-	return ret;
-}
-#endif
-
 void snp_set_request(cmr_handle snp_handle, cmr_u32 is_request)
 {
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
@@ -3810,10 +3845,10 @@ cmr_int snp_send_msg_notify_thr(cmr_handle snp_handle, cmr_int func_type, cmr_in
 	CMR_MSG_INIT(message);
 
 	CMR_LOGI("evt %ld", evt);
-	if (SNAPSHOT_FUNC_STATE == func_type) {
-		sync_flag = CMR_MSG_SYNC_NONE;
-	} else if (((SNAPSHOT_FUNC_TAKE_PICTURE == func_type) || (SNAPSHOT_FUNC_ENCODE_PICTURE == func_type))
-				&& (SNAPSHOT_EXIT_CB_DONE == evt)) {
+	if (SNAPSHOT_FUNC_STATE == func_type ||
+	    SNAPSHOT_FUNC_TAKE_PICTURE == func_type && SNAPSHOT_EXIT_CB_DONE == evt ||
+	    SNAPSHOT_FUNC_ENCODE_PICTURE == func_type && SNAPSHOT_EXIT_CB_DONE == evt ||
+	    SNAPSHOT_FUNC_ENCODE_PICTURE == func_type && SNAPSHOT_EVT_RETURN_ZSL_BUF == evt) {
 		sync_flag = CMR_MSG_SYNC_NONE;
 	} else {
 		switch (evt) {
@@ -3825,6 +3860,7 @@ cmr_int snp_send_msg_notify_thr(cmr_handle snp_handle, cmr_int func_type, cmr_in
 			break;
 		}
 	}
+
 	if (data) {
 		message.data = malloc(data_len);
 		if (!message.data) {
@@ -4995,7 +5031,7 @@ cmr_int cmr_snapshot_receive_data(cmr_handle snapshot_handle, cmr_int evt, void*
 					chn_data.base       = CMR_CAP1_ID_BASE;
 					chn_data.frame_id   = CMR_CAP1_ID_BASE;
 				}
-#ifndef CONFIG_MEM_OPTIMIZATION
+#ifndef PERFORMANCE_OPTIMIZATION
 				chn_data.yaddr      = cxt->req_param.post_proc_setting.chn_out_frm[0].addr_phy.addr_y;
 				chn_data.uaddr      = cxt->req_param.post_proc_setting.chn_out_frm[0].addr_phy.addr_u;
 				chn_data.fd         = cxt->req_param.post_proc_setting.chn_out_frm[0].fd;

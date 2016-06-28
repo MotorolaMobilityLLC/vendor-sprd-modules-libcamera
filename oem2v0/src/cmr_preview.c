@@ -4898,18 +4898,16 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id)
 		is_cfg_rot_cap,
 		cfg_cap_rot);
 
+#ifdef CONFIG_CAMERA_HAL_VERSION_1
+	aligned_type = CAMERA_MEM_NO_ALIGNED;
+#else
 	property_get("persist.sys.camera.raw.mode", value, "jpeg");
 	if (!strcmp(value, "raw")) {
-		is_raw_capture = 1;
-	}
-
-	if (1 == handle->prev_cxt[camera_id].prev_param.is_dv ||
-	    (1 == handle->prev_cxt[camera_id].prev_param.preview_eb && 0 == handle->prev_cxt[camera_id].prev_param.sprd_zsl_enabled) ||
-	    1 == is_raw_capture) {
 		aligned_type = CAMERA_MEM_NO_ALIGNED;
 	} else {
 		aligned_type = CAMERA_MEM_ALIGNED;
 	}
+#endif
 
 	/* w/h aligned by 16 */
 	alg_pic_size->width  = camera_get_aligned_size(aligned_type, org_pic_size->width);
@@ -5750,19 +5748,14 @@ cmr_int prev_construct_zsl_frame(struct prev_handle *handle,
 		frame_type->buf_id       = frm_id;
 		frame_type->order_buf_id = frm_id;
 		frame_type->y_vir_addr   = prev_cxt->cap_zsl_frm[frm_id].addr_vir.addr_y;
-		frame_type->uv_vir_addr   = prev_cxt->cap_zsl_frm[frm_id].addr_vir.addr_u;
-		frame_type->fd                = prev_cxt->cap_zsl_frm[frm_id].fd;
+		frame_type->uv_vir_addr  = prev_cxt->cap_zsl_frm[frm_id].addr_vir.addr_u;
+		frame_type->fd           = prev_cxt->cap_zsl_frm[frm_id].fd;
 		frame_type->y_phy_addr   = prev_cxt->cap_zsl_frm[frm_id].addr_phy.addr_y;
-		frame_type->uv_phy_addr   = prev_cxt->cap_zsl_frm[frm_id].addr_phy.addr_u;
-		if (ZOOM_POST_PROCESS == zoom_post_proc) {
-			frame_type->width  = prev_cxt->max_size.width;
-			frame_type->height = prev_cxt->max_size.height;
-		} else {
-			frame_type->width  = prev_cxt->prev_param.picture_size.width;
-			frame_type->height = prev_cxt->prev_param.picture_size.height;
-		}
-		frame_type->timestamp = info->sec * 1000000000LL + info->usec * 1000;
-		frame_type->type      = PREVIEW_ZSL_FRAME;
+		frame_type->uv_phy_addr  = prev_cxt->cap_zsl_frm[frm_id].addr_phy.addr_u;
+		frame_type->width        = prev_cxt->cap_zsl_frm[frm_id].size.width;
+		frame_type->height       = prev_cxt->cap_zsl_frm[frm_id].size.height;
+		frame_type->timestamp    = info->sec * 1000000000LL + info->usec * 1000;
+		frame_type->type         = PREVIEW_ZSL_FRAME;
 		CMR_LOGV("timestamp=%lld, width=%d, height=%d, fd=0x%x",
 			  frame_type->timestamp, frame_type->width, frame_type->height, frame_type->fd);
 #if 0

@@ -126,6 +126,9 @@ extern "C"
 #ifndef MAX
 #define MAX(x,y) (((x)>(y))?(x):(y))
 #endif
+
+#define PERFORMANCE_OPTIMIZATION              1
+
 /*********************************** common* **********************************/
 #define cmr_bzero(b, len)                     memset((b), '\0', (len))
 #define cmr_copy(b, a, len)                   memcpy((b), (a), (len))
@@ -929,6 +932,7 @@ enum camera_cb_type {
 	CAMERA_EVT_CB_AE_STAB_NOTIFY,
 	CAMERA_EVT_CB_AE_LOCK_NOTIFY,
 	CAMERA_EVT_CB_AE_UNLOCK_NOTIFY,
+	CAMERA_EVT_CB_RETURN_ZSL_BUF,
 	CAMERA_CB_TYPE_MAX
 };
 

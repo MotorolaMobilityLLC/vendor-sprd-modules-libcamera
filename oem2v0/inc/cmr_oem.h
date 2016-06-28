@@ -355,6 +355,7 @@ cmr_int camera_local_set_zsl_buffer(cmr_handle oem_handle, cmr_uint src_phy_addr
 cmr_int camera_local_set_video_snapshot_buffer(cmr_handle oem_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd);
 cmr_int camera_local_set_zsl_snapshot_buffer(cmr_handle oem_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd);
 cmr_int camera_local_zsl_snapshot_need_pause(cmr_handle oem_handle, cmr_int *flag);
+cmr_int camera_local_normal_snapshot_need_pause(cmr_handle oem_handle, cmr_int *flag);
 void camera_calibrationconfigure_save (uint32_t start_addr, uint32_t data_size);
 void camera_set_reload_support(uint32_t is_support);
 cmr_int camera_local_get_isp_info(cmr_handle oem_handle, void **addr, int *size);

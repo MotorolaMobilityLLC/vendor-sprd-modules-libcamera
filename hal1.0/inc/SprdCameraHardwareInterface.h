@@ -239,16 +239,14 @@ private:
 	int Callback_CaptureFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum);
 	int Callback_CapturePathFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum);
 	int Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum);
-	int map(sprd_camera_memory_t* camera_memory, hal_mem_info_t *mem_info);
-	int unmap(sprd_camera_memory_t* camera_memory, hal_mem_info_t *mem_info);
 	void                  freeCameraMem(sprd_camera_memory_t* camera_memory);
 	void                  clearCameraMem(sprd_camera_memory_t* camera_memory);
 	uint32_t              getPreviewBufferID(buffer_handle_t *buffer_handle);
 	uint32_t              getPreviewBufferIDForFd(cmr_s32 fd);
 	uint32_t              getVideoBufferIDForFd(cmr_s32 fd);
 	uint32_t              getZslBufferIDForFd(cmr_s32 fd);
-	uint32_t              releaseZslBuffer(struct camera_frame_type *frame);
-	uint32_t              getZslBuffer(hal_mem_info_t *mem_info);
+	int                   pushZslFrame(struct camera_frame_type *frame);
+	struct camera_frame_type popZslFrame();
 	void                  canclePreviewMem();
 	int                     releasePreviewFrame();
 	bool                  allocatePreviewMemByGraphics();
@@ -272,11 +270,12 @@ private:
 	void                  receiveJpegPosPicture(void);
 	void                  receivePostLpmRawPicture(struct camera_frame_type *frame);
 	void                  receiveRawPicture(struct camera_frame_type *frame);
-	void                  PushAllZslBuffer(void);
+	void                  setZslBuffers(void);
 	void                  receiveJpegPicture(struct camera_frame_type *frame);
 	void                  receivePreviewFrame(struct camera_frame_type *frame);
 	void                  receiveZslFrame(struct camera_frame_type *frame);
 	void                  processZslFrame(void *p_data);
+	void                  snapshotZsl(void *p_data);
 	void                  receivePreviewFDFrame(struct camera_frame_type *frame);
 	void                  receiveCameraExitError(void);
 	void                  receiveTakePictureError(void);
@@ -296,7 +295,6 @@ private:
 	int                   getZSLQueueFrameNum();
 	void                  pushZSLQueue(ZslBufferQueue frame);
 	void                  releaseZSLQueue();
-	int                   getZSLSnapshotFrame(hal_mem_info_t *mem_info);
 
 	enum Sprd_camera_state {
 		SPRD_INIT,
@@ -466,7 +464,6 @@ private:
 	uint32_t                        mPreviewHeapNum;
 	uint32_t                        mVideoHeapNum;
 	uint32_t                        mZslHeapNum;
-	uint32_t                        mZslMapNum;
 	uint32_t                        mZslChannelStatus;
 	uint32_t                        mPreviewDcamAllocBufferCnt;
 	sprd_camera_memory_t*           *mPreviewHeapArray;

@@ -3616,13 +3616,10 @@ void SprdCamera3OEMIf::HandleStartPreview(enum camera_cb_type cb,
 		break;
 
 	case CAMERA_EVT_CB_RESUME:
-		HAL_LOGD("CAMERA_EVT_CB_RESUME");
-#ifdef CONFIG_MEM_OPTIMIZATION
 		if (isPreviewing() && iSZslMode()) {
 			setZslBuffers();
 			mZslChannelStatus = 1;
 		}
-#endif
 		break;
 
 	default:
@@ -3859,6 +3856,26 @@ void SprdCamera3OEMIf::HandleEncode(enum camera_cb_type cb,
 		receiveCameraExitError();
 		break;
 
+	case CAMERA_EVT_CB_RETURN_ZSL_BUF:
+		if (isPreviewing() && iSZslMode()) {
+			cmr_u32 buf_id;
+			struct camera_frame_type *zsl_frame;
+			zsl_frame = (struct camera_frame_type *)parm4;
+			if (zsl_frame->fd <= 0) {
+				HAL_LOGW("zsl lost a buffer, this should not happen");
+				goto handle_encode_exit;
+			}
+			HAL_LOGD("zsl_frame->fd=0x%x", zsl_frame->fd);
+			buf_id = getZslBufferIDForFd(zsl_frame->fd);
+			if (buf_id != 0xFFFFFFFF) {
+				mHalOem->ops->camera_set_zsl_buffer(mCameraHandle,
+								    mZslHeapArray[buf_id]->phys_addr,
+								    (cmr_uint)mZslHeapArray[buf_id]->data,
+								    mZslHeapArray[buf_id]->fd);
+			}
+		}
+		break;
+
 	default:
 		HAL_LOGD("unkown error = %d", cb);
 		transitionState(getCaptureState(), SPRD_ERROR, STATE_CAPTURE);
@@ -3866,6 +3883,7 @@ void SprdCamera3OEMIf::HandleEncode(enum camera_cb_type cb,
 		break;
 	}
 
+handle_encode_exit:
 	HAL_LOGD("X, state = %s", getCameraStateStr(getCaptureState()));
 }
 
@@ -6119,8 +6137,8 @@ void SprdCamera3OEMIf::setZslBuffers()
 uint32_t SprdCamera3OEMIf::getZslBufferIDForFd(cmr_s32 fd)
 {
 	uint32_t id = 0xFFFFFFFF;
-	int i = 0;
-	for (i = 0; i < kPreviewBufferCount+kPreviewRotBufferCount+1; i++) {
+	int i;
+	for (i = 0; i < mZslHeapNum; i++) {
 		if (0 != mZslHeapArray[i]->fd && mZslHeapArray[i]->fd == fd) {
 			id = i;
 			break;
@@ -6227,14 +6245,16 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data)
 		HAL_LOGE("oem is null or oem ops is null");
 		return;
 	}
-	mHalOem->ops->camera_zsl_snapshot_need_pause(obj->mCameraHandle, &need_pause);
-	if (1 == obj->mZslShotPushFlag && 1 == obj->mZslChannelStatus) {
+
+	if (1 == obj->mZslShotPushFlag) {
 		zsl_frame = popZslFrame();
 		if (zsl_frame.y_vir_addr != 0) {
-			mHalOem->ops->camera_set_zsl_snapshot_buffer(obj->mCameraHandle, zsl_frame.y_phy_addr,
-						       zsl_frame.y_vir_addr, zsl_frame.fd);
+			HAL_LOGD("fd=0x%x", zsl_frame.fd);
+			mHalOem->ops->camera_set_zsl_snapshot_buffer(obj->mCameraHandle,
+								     zsl_frame.y_phy_addr,
+								     zsl_frame.y_vir_addr,
+								     zsl_frame.fd);
 			obj->mZslShotPushFlag = 0;
-			obj->mZslChannelStatus = 0;
 		}
 	}
 }
@@ -6252,7 +6272,7 @@ void SprdCamera3OEMIf::processZslFrame(void *p_data)
 
 	mHalOem->ops->camera_zsl_snapshot_need_pause(obj->mCameraHandle, &need_pause);
 	if (SPRD_INTERNAL_RAW_REQUESTED == obj->getCaptureState() || !obj->isCapturing() || !need_pause) {
-		if (obj->mZslMaxFrameNum < obj->getZSLQueueFrameNum() && 1 == obj->mZslChannelStatus) {
+		if (obj->mZslMaxFrameNum < obj->getZSLQueueFrameNum()) {
 			zsl_frame = popZslFrame();
 			if (zsl_frame.y_vir_addr != 0) {
 				mHalOem->ops->camera_set_zsl_buffer(obj->mCameraHandle, zsl_frame.y_phy_addr,
