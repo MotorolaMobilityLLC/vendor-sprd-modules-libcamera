@@ -147,7 +147,7 @@ bool gIsApctCamInitTimeShow = false;
 bool gIsApctRead = false;
 
 gralloc_module_t const* SprdCameraHardware::mGrallocHal = NULL;
-oem_module_t * SprdCameraHardware::mHalOem = NULL;
+//oem_module_t * SprdCameraHardware::mHalOem = NULL;
 
 const camera_info SprdCameraHardware::kCameraInfo[] = {
 	{
@@ -448,6 +448,7 @@ SprdCameraHardware::SprdCameraHardware(int cameraId):
 	mIsRestartPreview(0),
 	mVideoWidth(0),
 	mVideoHeight(0),
+	mHalOem(NULL),
 	mIsSupportCallback(0)
 {
 	mIsPerformanceTestable = sprd_isPerformanceTestable();
@@ -8331,7 +8332,7 @@ void * SprdCameraHardware::pre_alloc_cap_mem_thread_proc(void *p_data)
 	cmr_u32 sum = 0;
 	SprdCameraHardware * obj = (SprdCameraHardware *)p_data;
 
-	if (NULL == mHalOem || NULL == mHalOem->ops) {
+	if (NULL == obj->mHalOem || NULL == obj->mHalOem->ops) {
 			LOGE("pre_alloc_cap_mem_thread_proc: oem is null or oem ops is null");
 			return NULL;
 	}
@@ -8341,9 +8342,9 @@ void * SprdCameraHardware::pre_alloc_cap_mem_thread_proc(void *p_data)
 		return NULL;
 	}
 
-	buffer_id = mHalOem->ops->camera_pre_capture_get_buffer_id(obj->mCameraId);
+	buffer_id = obj->mHalOem->ops->camera_pre_capture_get_buffer_id(obj->mCameraId);
 
-	if (mHalOem->ops->camera_pre_capture_get_buffer_size(obj->mCameraId,
+	if (obj->mHalOem->ops->camera_pre_capture_get_buffer_size(obj->mCameraId,
 		buffer_id, &mem_size, &sum)) {
 		obj->mIsPreAllocCapMem = 0;
 		LOGE("pre_alloc_cap_mem_thread_proc: buffer size error, using normal alloc cap buffer mode");

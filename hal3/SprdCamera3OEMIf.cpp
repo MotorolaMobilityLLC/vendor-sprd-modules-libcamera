@@ -118,7 +118,7 @@ bool gIsApctCamInitTimeShow = false;
 bool gIsApctRead = false;
 
 gralloc_module_t const* SprdCamera3OEMIf::mGrallocHal = NULL;
-oem_module_t   * SprdCamera3OEMIf::mHalOem = NULL;
+//oem_module_t   * SprdCamera3OEMIf::mHalOem = NULL;
 
 static void writeCamInitTimeToApct(char *buf)
 {
@@ -205,6 +205,7 @@ void SprdCamera3OEMIf::shakeTestInit(ShakeTest *tmpShakeTest)
 SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mPreviewDcamAllocBufferCnt(0),
 	mRawHeap(NULL),
+	mHalOem(NULL),
 	mRawHeapSize(0),
 	mSubRawHeapNum(0),
 	mParameters(),
@@ -6458,14 +6459,14 @@ void * SprdCamera3OEMIf::pre_alloc_cap_mem_thread_proc(void *p_data)
 		return NULL;
 	}
 
-	if (NULL == mHalOem || NULL == mHalOem->ops) {
+	if (NULL == obj->mHalOem || NULL == obj->mHalOem->ops) {
 		HAL_LOGE("oem is null or oem ops is null");
 		return NULL;
 	}
 
-	buffer_id = mHalOem->ops->camera_pre_capture_get_buffer_id(obj->mCameraId);
+	buffer_id = obj->mHalOem->ops->camera_pre_capture_get_buffer_id(obj->mCameraId);
 
-	if (mHalOem->ops->camera_pre_capture_get_buffer_size(obj->mCameraId,
+	if (obj->mHalOem->ops->camera_pre_capture_get_buffer_size(obj->mCameraId,
 		buffer_id, &mem_size, &sum)) {
 		obj->mIsPreAllocCapMem = 0;
 		HAL_LOGE("buffer size error, using normal alloc cap buffer mode");
@@ -6630,7 +6631,7 @@ void * SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data)
 		return NULL;
 	}
 
-	if (NULL == obj->mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
+	if (NULL == obj->mCameraHandle || NULL == obj->mHalOem || NULL == obj->mHalOem->ops) {
 		HAL_LOGE("oem is null or oem ops is null");
 		return NULL;
 	}
@@ -6660,7 +6661,7 @@ void * SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data)
 	q->setEventRate(gyroscope, ms2ns(GyroRate));
 
 	if(NULL != obj->mCameraHandle) {
-		mHalOem->ops->camera_get_sensor_max_fps(obj->mCameraHandle,obj->mCameraId,&eventRate);
+		obj->mHalOem->ops->camera_get_sensor_max_fps(obj->mCameraHandle,obj->mCameraId,&eventRate);
 		if(0 == eventRate)
 		      eventRate = default_max_fps;
 		eventRate = 1000/eventRate;//fps->rate:ms
@@ -6713,8 +6714,8 @@ void * SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data)
 					sensor_info.gyro_info.x = buffer[i].data[0];
 					sensor_info.gyro_info.y = buffer[i].data[1];
 					sensor_info.gyro_info.z = buffer[i].data[2];
-					if (NULL != obj->mCameraHandle && SPRD_IDLE == obj->mCameraState.capture_state) {
-						mHalOem->ops->camera_set_sensor_info_to_af(obj->mCameraHandle, &sensor_info);
+					if (NULL != obj->mCameraHandle && SPRD_IDLE == obj->mCameraState.capture_state && NULL!=obj->mHalOem) {
+						obj->mHalOem->ops->camera_set_sensor_info_to_af(obj->mCameraHandle, &sensor_info);
 					}
 					break;
 				}
@@ -6726,8 +6727,8 @@ void * SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data)
 					sensor_info.gsensor_info.vertical_up = buffer[i].data[0];
 					sensor_info.gsensor_info.vertical_down = buffer[i].data[1];
 					sensor_info.gsensor_info.horizontal = buffer[i].data[2];
-					if (NULL != obj->mCameraHandle) {
-						mHalOem->ops->camera_set_sensor_info_to_af(obj->mCameraHandle, &sensor_info);
+					if (NULL != obj->mCameraHandle && NULL!=obj->mHalOem) {
+						obj->mHalOem->ops->camera_set_sensor_info_to_af(obj->mCameraHandle, &sensor_info);
 					}
 					break;
 				}

@@ -484,7 +484,7 @@ private:
 	void                            *mUser;
 	preview_stream_ops              *mPreviewWindow;
 	static gralloc_module_t const   *mGrallocHal;
-	static oem_module_t   			*mHalOem;
+	oem_module_t   			*mHalOem;
 	bool                            mIsStoreMetaData;
 	bool                            mIsFreqChanged;
 	int32_t                         mCameraId;
