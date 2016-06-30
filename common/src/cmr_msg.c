@@ -268,7 +268,7 @@ cmr_int cmr_msg_post(cmr_handle queue_handle, struct cmr_msg *message, cmr_u32 l
 
 	if ((msg_cxt->msg_number + 1) >= msg_cxt->msg_count) {
 		pthread_mutex_unlock(&msg_cxt->mutex);
-		CMR_LOGE("MSG Overflow");
+		CMR_LOGE("MSG Overflow queue_handle = %p, msg type = 0x%x", queue_handle, message->msg_type);
 		return CMR_MSG_OVERFLOW;
 	} else {
 		msg_cur = msg_cxt->msg_write;

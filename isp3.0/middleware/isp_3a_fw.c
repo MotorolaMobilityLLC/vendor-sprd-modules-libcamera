@@ -812,6 +812,7 @@ cmr_int isp3a_set_cfg_otp_info(cmr_handle isp_3a_handle)
 
 	return ret;
 }
+
 cmr_int isp3a_set_pdaf_otp(cmr_handle isp_3a_handle, struct sensor_data_info *pdaf_otp_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;

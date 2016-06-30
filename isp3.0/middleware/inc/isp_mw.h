@@ -411,11 +411,11 @@ struct isp_flash_cfg {
 };
 
 struct isp_ops {
-	cmr_s32  (*flash_get_charge)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell);
-	cmr_s32  (*flash_get_time)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell);
-	cmr_s32  (*flash_set_charge)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element);
-	cmr_s32  (*flash_ctrl)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element);
-	cmr_s32  (*flash_set_time)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element);
+	cmr_s32 (*flash_get_charge)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell);
+	cmr_s32 (*flash_get_time)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell);
+	cmr_s32 (*flash_set_charge)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element);
+	cmr_s32 (*flash_ctrl)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element);
+	cmr_s32 (*flash_set_time)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element);
 };
 
 struct  isp_sensor_ex_info{
@@ -470,14 +470,11 @@ struct yuv_info_t {
 	cmr_u32                                   height;
 };
 
-
 struct pd_frame_in {
 	cmr_handle                                caller_handle;
 	cmr_u32                                   camera_id;
 	void                                      *private_data;
 };
-
-typedef cmr_int (*pd_callback)(struct  pd_frame_in *cb_param);
 
 struct trim_info {
 	cmr_u32 image_width;
@@ -495,8 +492,9 @@ struct pd_raw_info {
 	cmr_u32 pattern;
 	struct trim_info roi;
 	struct pd_frame_in pd_in;
-	pd_callback pd_cb;
+	cmr_int (*pd_callback) (struct pd_frame_in *cb_param);
 };
+
 struct isp_init_param {
 	cmr_u32 camera_id;
 	void* setting_param_ptr;

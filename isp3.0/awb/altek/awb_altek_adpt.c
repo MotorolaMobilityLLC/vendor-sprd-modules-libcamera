@@ -81,17 +81,20 @@ cmr_int awbaltek_load_library(cmr_handle adpt_handle)
 
 	cxt->altek_lib_handle = dlopen(LIBRARY_PATH, RTLD_NOW);
 	if (!cxt->altek_lib_handle) {
+		ret = -ISP_ERROR;
 		ISP_LOGE("failed to dlopen");
 		goto exit;
 	}
 	cxt->ops.load_func = dlsym(cxt->altek_lib_handle, "allib_awb_loadfunc");
 	if (!cxt->ops.load_func) {
+		ret = -ISP_ERROR;
 		ISP_LOGE("failed to dlsym load_func");
 		goto exit;
 	}
 
 	cxt->ops.get_version = dlsym(cxt->altek_lib_handle, "allib_awb_getlib_version");
 	if (!cxt->ops.load_func) {
+		ret = -ISP_ERROR;
 		ISP_LOGE("failed to dlsym get_version");
 		goto exit;
 	}
@@ -483,7 +486,7 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 	cmr_int                                     i = 0;
 
 	if (!cxt->ops.load_func) {
-		ISP_LOGE("error,load func is NULL");
+		ISP_LOGE("failed to load func, it is NULL");
 		ret = ISP_ERROR;
 		goto exit;
 	}
@@ -494,7 +497,7 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 		goto exit;
 	}
 	if (cxt->lib_func.obj_verification != sizeof(struct allib_awb_output_data_t)) {
-		ISP_LOGE("AWB structure isn't match");
+		ISP_LOGE("failed to match, AWB structure isn't match");
 	}
 	/* get version */
 	cxt->ops.get_version(&awb_version);
@@ -502,13 +505,14 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 
 	if (!cxt->lib_func.initial || !cxt->lib_func.deinit || !cxt->lib_func.get_param
 	     || !cxt->lib_func.set_param || !cxt->lib_func.estimation) {
-		ISP_LOGE("failed to get lib functions %ld, %ld, %ld, %ld, %ld", (cmr_int)cxt->lib_func.initial,
-				(cmr_int)cxt->lib_func.deinit, (cmr_int)cxt->lib_func.get_param, (cmr_int)cxt->lib_func.set_param,
-				(cmr_int)cxt->lib_func.estimation);
+		ISP_LOGE("failed to get lib functions %p, %p, %p, %p, %p",
+			 cxt->lib_func.initial, cxt->lib_func.deinit,
+			 cxt->lib_func.get_param, cxt->lib_func.set_param,
+			 cxt->lib_func.estimation);
 		goto exit;
 	}
 	if (!input_ptr->awb_cb) {
-		ISP_LOGE("callback is NULL");
+		ISP_LOGE("failed to callback, it is NULL");
 		goto exit;
 	}
 	cxt->callback = input_ptr->awb_cb;
@@ -549,9 +553,9 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 
 	if (input_ptr->tuning_param) {
 		ISP_LOGI("set tuning file");
-	    set_param.type = alawb_set_param_tuning_file;
-	    set_param.para.tuning_file = input_ptr->tuning_param;
-	    ret = (cmr_int)cxt->lib_func.set_param(&set_param, cxt->lib_func.awb);
+		set_param.type = alawb_set_param_tuning_file;
+		set_param.para.tuning_file = input_ptr->tuning_param;
+		ret = (cmr_int)cxt->lib_func.set_param(&set_param, cxt->lib_func.awb);
 		if (ret) {
 			ISP_LOGE("failed to set tuning file %lx", ret);
 		}
@@ -565,7 +569,7 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 		memcpy((void*)&output_ptr->hw_cfg, get_isp_cfg.para.awb_hw_config, sizeof(struct isp3a_awb_hw_cfg));
 		ISP_LOGI("cur_frame %d, cur_sof %d", get_isp_cfg.hw3a_curframeidx, get_isp_cfg.sys_cursof_frameidx);
 	}
-	ISP_LOGI("token_id = %d\n, uccr_shift = %d\n, uc_damp = %d\n, uc_offset_shift = %d\n",
+	ISP_LOGI("token_id = %d, uccr_shift = %d, uc_damp = %d, uc_offset_shift = %d",
 		output_ptr->hw_cfg.token_id, output_ptr->hw_cfg.uccr_shift,
 		output_ptr->hw_cfg.uc_damp, output_ptr->hw_cfg.uc_offset_shift);
 	ISP_LOGV("uc_quantize = %d\n, uc_sum_shift = %d\n, uwblinear_gain = %d\n, uwrlinear_gain = %d\n,\
@@ -666,7 +670,7 @@ cmr_int awbaltek_deinit(cmr_handle adpt_handle)
 	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
 
 	if (!cxt->lib_func.deinit) {
-		ISP_LOGE("error,deinit func is NULL");
+		ISP_LOGE("failed to deinit, func is NULL");
 		ret = ISP_ERROR;
 		goto exit;
 	}
@@ -709,7 +713,7 @@ cmr_int awbaltek_set_face(cmr_handle adpt_handle, enum awb_ctrl_cmd cmd, union a
 		ISP_LOGI("set face num is 0");
 		goto exit;
 	}
-	for (i = 0; i <face_data.face_num; i++) {
+	for (i = 0; i < face_data.face_num; i++) {
 		temp = (face_data.face_info[i].ex-face_data.face_info[i].sx)*(face_data.face_info[i].ey-face_data.face_info[i].ex);
 		if (face_area_max < temp) {
 			face_area_max = temp;
@@ -849,15 +853,56 @@ cmr_int awbaltek_ioctrl(cmr_handle adpt_handle, enum awb_ctrl_cmd cmd, union awb
 	}
 
 exit:
-	ISP_LOGI("cmd %d, done %ld", cmd, ret);
+	ISP_LOGV("cmd %d, done %ld", cmd, ret);
 	return ret;
 }
 
-cmr_int awbaltek_process(cmr_handle adpt_handle ,struct awb_ctrl_process_in *input_ptr, struct awb_ctrl_process_out *output_ptr)
+cmr_int awbaltek_update_ae_report(cmr_handle adpt_handle, struct isp3a_ae_info *ae_info)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
 	struct allib_awb_set_parameter_t            set_param;
+
+	set_param.type = alawb_set_param_update_ae_report;
+	set_param.para.ae_report_update.ae_state = ae_info->report_data.ae_state;
+	set_param.para.ae_report_update.ae_converge = ae_info->report_data.ae_converge_st;
+	set_param.para.ae_report_update.bv = ae_info->report_data.BV;
+	set_param.para.ae_report_update.non_comp_bv = ae_info->report_data.non_comp_BV;// non compensated bv value
+	set_param.para.ae_report_update.iso = ae_info->report_data.ISO;// ISO Speed
+	set_param.para.ae_report_update.fe_state = ae_info->report_data.fe_state;
+	set_param.para.ae_report_update.flash_param_preview.flash_gain.r_gain = ae_info->report_data.flash_param_preview.wbgain_led1.r;
+	set_param.para.ae_report_update.flash_param_preview.flash_gain.g_gain = ae_info->report_data.flash_param_preview.wbgain_led1.g;
+	set_param.para.ae_report_update.flash_param_preview.flash_gain.b_gain = ae_info->report_data.flash_param_preview.wbgain_led1.b;
+	set_param.para.ae_report_update.flash_param_preview.flash_gain_led2.r_gain = ae_info->report_data.flash_param_preview.wbgain_led2.r;
+	set_param.para.ae_report_update.flash_param_preview.flash_gain_led2.g_gain = ae_info->report_data.flash_param_preview.wbgain_led2.g;
+	set_param.para.ae_report_update.flash_param_preview.flash_gain_led2.b_gain = ae_info->report_data.flash_param_preview.wbgain_led2.b;
+	set_param.para.ae_report_update.flash_param_preview.flash_ratio = (cmr_u32)ae_info->report_data.flash_param_preview.blending_ratio_led1;
+	set_param.para.ae_report_update.flash_param_preview.flash_ratio_led2 = (cmr_u32)ae_info->report_data.flash_param_preview.blending_ratio_led2;
+	set_param.para.ae_report_update.flash_param_preview.LED1_CT = (cmr_u32)ae_info->report_data.flash_param_preview.color_temp_led1;
+	set_param.para.ae_report_update.flash_param_preview.LED2_CT = (cmr_u32)ae_info->report_data.flash_param_preview.color_temp_led2;
+	set_param.para.ae_report_update.flash_param_capture.flash_gain.r_gain = ae_info->report_data.flash_param_capture.wbgain_led1.r;
+	set_param.para.ae_report_update.flash_param_capture.flash_gain.g_gain = ae_info->report_data.flash_param_capture.wbgain_led1.g;
+	set_param.para.ae_report_update.flash_param_capture.flash_gain.b_gain = ae_info->report_data.flash_param_capture.wbgain_led1.b;
+	set_param.para.ae_report_update.flash_param_capture.flash_gain_led2.r_gain = ae_info->report_data.flash_param_capture.wbgain_led1.r;
+	set_param.para.ae_report_update.flash_param_capture.flash_gain_led2.g_gain = ae_info->report_data.flash_param_capture.wbgain_led1.g;
+	set_param.para.ae_report_update.flash_param_capture.flash_gain_led2.b_gain = ae_info->report_data.flash_param_capture.wbgain_led1.b;
+	set_param.para.ae_report_update.flash_param_capture.flash_ratio = (cmr_u32)ae_info->report_data.flash_param_capture.blending_ratio_led1;
+	set_param.para.ae_report_update.flash_param_capture.flash_ratio_led2 = (cmr_u32)ae_info->report_data.flash_param_capture.blending_ratio_led2;
+	set_param.para.ae_report_update.flash_param_capture.LED1_CT = (cmr_u32)ae_info->report_data.flash_param_capture.color_temp_led1;
+	set_param.para.ae_report_update.flash_param_capture.LED2_CT = (cmr_u32)ae_info->report_data.flash_param_capture.color_temp_led2;
+
+	ret = cxt->lib_func.set_param(&set_param, cxt->lib_func.awb);//TBD
+	if (ret) {
+		ISP_LOGE("failed to update ae information %lx", ret);
+	}
+
+	return ret;
+}
+
+cmr_int awbaltek_process(cmr_handle adpt_handle, struct awb_ctrl_process_in *input_ptr, struct awb_ctrl_process_out *output_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct awb_altek_context                    *cxt = (struct awb_altek_context*)adpt_handle;
 	struct awb_report_update_t                  *report_ptr;
 
 	if (cxt->is_bypass) {
@@ -873,42 +918,14 @@ cmr_int awbaltek_process(cmr_handle adpt_handle ,struct awb_ctrl_process_in *inp
 		}
 
 		/* set ae param */
-		set_param.type = alawb_set_param_update_ae_report;
-		set_param.para.ae_report_update.ae_state = input_ptr->ae_info.report_data.ae_state;
-		set_param.para.ae_report_update.ae_converge = input_ptr->ae_info.report_data.ae_converge_st;
-		set_param.para.ae_report_update.bv = input_ptr->ae_info.report_data.BV;
-		set_param.para.ae_report_update.non_comp_bv = input_ptr->ae_info.report_data.non_comp_BV;// non compensated bv value
-		set_param.para.ae_report_update.iso = input_ptr->ae_info.report_data.ISO;// ISO Speed
-		set_param.para.ae_report_update.fe_state = input_ptr->ae_info.report_data.fe_state;
-		set_param.para.ae_report_update.flash_param_preview.flash_gain.r_gain = input_ptr->ae_info.report_data.flash_param_preview.wbgain_led1.r;
-		set_param.para.ae_report_update.flash_param_preview.flash_gain.g_gain = input_ptr->ae_info.report_data.flash_param_preview.wbgain_led1.g;
-		set_param.para.ae_report_update.flash_param_preview.flash_gain.b_gain = input_ptr->ae_info.report_data.flash_param_preview.wbgain_led1.b;
-		set_param.para.ae_report_update.flash_param_preview.flash_gain_led2.r_gain = input_ptr->ae_info.report_data.flash_param_preview.wbgain_led2.r;
-		set_param.para.ae_report_update.flash_param_preview.flash_gain_led2.g_gain = input_ptr->ae_info.report_data.flash_param_preview.wbgain_led2.g;
-		set_param.para.ae_report_update.flash_param_preview.flash_gain_led2.b_gain = input_ptr->ae_info.report_data.flash_param_preview.wbgain_led2.b;
-		set_param.para.ae_report_update.flash_param_preview.flash_ratio = (cmr_u32)input_ptr->ae_info.report_data.flash_param_preview.blending_ratio_led1;
-		set_param.para.ae_report_update.flash_param_preview.flash_ratio_led2 = (cmr_u32)input_ptr->ae_info.report_data.flash_param_preview.blending_ratio_led2;
-		set_param.para.ae_report_update.flash_param_preview.LED1_CT = (cmr_u32)input_ptr->ae_info.report_data.flash_param_preview.color_temp_led1;
-		set_param.para.ae_report_update.flash_param_preview.LED2_CT = (cmr_u32)input_ptr->ae_info.report_data.flash_param_preview.color_temp_led2;
-		set_param.para.ae_report_update.flash_param_capture.flash_gain.r_gain = input_ptr->ae_info.report_data.flash_param_capture.wbgain_led1.r;
-		set_param.para.ae_report_update.flash_param_capture.flash_gain.g_gain = input_ptr->ae_info.report_data.flash_param_capture.wbgain_led1.g;
-		set_param.para.ae_report_update.flash_param_capture.flash_gain.b_gain = input_ptr->ae_info.report_data.flash_param_capture.wbgain_led1.b;
-		set_param.para.ae_report_update.flash_param_capture.flash_gain_led2.r_gain = input_ptr->ae_info.report_data.flash_param_capture.wbgain_led1.r;
-		set_param.para.ae_report_update.flash_param_capture.flash_gain_led2.g_gain = input_ptr->ae_info.report_data.flash_param_capture.wbgain_led1.g;
-		set_param.para.ae_report_update.flash_param_capture.flash_gain_led2.b_gain = input_ptr->ae_info.report_data.flash_param_capture.wbgain_led1.b;
-		set_param.para.ae_report_update.flash_param_capture.flash_ratio = (cmr_u32)input_ptr->ae_info.report_data.flash_param_capture.blending_ratio_led1;
-		set_param.para.ae_report_update.flash_param_capture.flash_ratio_led2 = (cmr_u32)input_ptr->ae_info.report_data.flash_param_capture.blending_ratio_led2;
-		set_param.para.ae_report_update.flash_param_capture.LED1_CT = (cmr_u32)input_ptr->ae_info.report_data.flash_param_capture.color_temp_led1;
-		set_param.para.ae_report_update.flash_param_capture.LED2_CT = (cmr_u32)input_ptr->ae_info.report_data.flash_param_capture.color_temp_led2;
-
-		ret = cxt->lib_func.set_param(&set_param, cxt->lib_func.awb);//TBD
+		ret = awbaltek_update_ae_report(cxt, &input_ptr->ae_info);
 		if (ret) {
-			ISP_LOGE("failed to set ae information %lx", ret);
+			ISP_LOGE("failed to update ae report %lx", ret);
 		}
 		/* estimation */
 		ret = (cmr_int)cxt->lib_func.estimation((void*)(&cxt->awb_stats), cxt->lib_func.awb, &cxt->cur_process_out);
 		if (ret) {
-			ISP_LOGE("failed %ld", ret);
+			ISP_LOGE("failed to estimation %ld", ret);
 		} else {
 			report_ptr = &cxt->cur_process_out.report_3a_update.awb_update;
 			output_ptr->ct = cxt->cur_process_out.color_temp;
@@ -936,18 +953,27 @@ cmr_int awbaltek_process(cmr_handle adpt_handle ,struct awb_ctrl_process_in *inp
 				|| AL3A_WB_STATE_UNDER_FLASHON_AWB_DONE == report_ptr->awb_states) {
 				output_ptr->awb_states = AWB_CTRL_STATUS_CONVERGE;
 				ISP_LOGI("flash_off ct:%d,rgb:%d %d %d,flash_capture ct:%d,rgb:%d %d %d",
-						output_ptr->ct_flash_off,output_ptr->gain_flash_off.r,output_ptr->gain_flash_off.g,output_ptr->gain_flash_off.b,
-						output_ptr->ct_capture,output_ptr->gain_capture.r,output_ptr->gain_capture.g,output_ptr->gain_capture.b);
+						output_ptr->ct_flash_off, output_ptr->gain_flash_off.r,
+						output_ptr->gain_flash_off.g, output_ptr->gain_flash_off.b,
+						output_ptr->ct_capture, output_ptr->gain_capture.r,
+						output_ptr->gain_capture.g, output_ptr->gain_capture.b);
 			}
 
 			ISP_LOGI("awb mode %d, awb_states:%d, gain %d %d %d, gain_blanced %d %d %d",
-				     output_ptr->awb_mode,report_ptr->awb_states,output_ptr->gain.r, output_ptr->gain.g, output_ptr->gain.b,
+				     output_ptr->awb_mode, report_ptr->awb_states,
+				     output_ptr->gain.r, output_ptr->gain.g, output_ptr->gain.b,
 				     output_ptr->gain_balanced.r, output_ptr->gain_balanced.g, output_ptr->gain_balanced.b);
 			ISP_LOGV("awb update %d, frame id %d", output_ptr->is_update, output_ptr->hw3a_frame_id);
 			ISP_LOGV("awb ct %d, light source %d", output_ptr->ct, output_ptr->light_source);
 			isp_mlog(AWB_FILE,"wbgain:(%d, %d, %d), CT:%d, light_source:%d, awb_decision:%d, wbgain_balanced:(%d, %d, %d)",
-					cxt->cur_process_out.wbgain.r_gain,cxt->cur_process_out.wbgain.g_gain,cxt->cur_process_out.wbgain.b_gain,cxt->cur_process_out.color_temp,
-					cxt->cur_process_out.light_source,cxt->cur_process_out.awb_decision,cxt->cur_process_out.wbgain_balanced.r_gain,cxt->cur_process_out.wbgain_balanced.b_gain);
+					cxt->cur_process_out.wbgain.r_gain,
+					cxt->cur_process_out.wbgain.g_gain,
+					cxt->cur_process_out.wbgain.b_gain,
+					cxt->cur_process_out.color_temp,
+					cxt->cur_process_out.light_source,
+					cxt->cur_process_out.awb_decision,
+					cxt->cur_process_out.wbgain_balanced.r_gain,
+					cxt->cur_process_out.wbgain_balanced.b_gain);
 		}
 	} else {
 		ISP_LOGE("don't have process interface");
@@ -1012,12 +1038,12 @@ cmr_int awbaltek_convert_wb_mode(enum awb_ctrl_wb_mode input_mode )
 cmr_int awb_altek_adpt_init(void *input_ptr, void *output_ptr, cmr_handle *adpt_handle)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awb_ctrl_init_in                     *input_param_ptr = (struct awb_ctrl_init_in*)input_ptr;
+	struct awb_ctrl_init_in                     *input_param_ptr = (struct awb_ctrl_init_in *)input_ptr;
 	struct awb_ctrl_init_out                    *output_param_ptr = (struct awb_ctrl_init_out *)output_ptr;
 	struct awb_altek_context                    *cxt = NULL;
 
 	if (!input_ptr || !output_ptr || !adpt_handle) {
-		ISP_LOGE("input param is NULL,input is 0x%lx, output is 0x%lx", (cmr_uint)input_ptr, (cmr_uint)output_ptr);
+		ISP_LOGE("input param is NULL,input is %p, output is %p", input_ptr, output_ptr);
 		ret = ISP_PARAM_NULL;
 		goto exit;
 	}
@@ -1035,7 +1061,7 @@ cmr_int awb_altek_adpt_init(void *input_ptr, void *output_ptr, cmr_handle *adpt_
 	ret = awbaltek_load_library((cmr_handle)cxt);
 	if (ret) {
 		ISP_LOGE("failed to load altek library");
-		ret = ISP_ERROR;
+		ret = -ISP_ERROR;
 		goto exit;
 	}
 	ret = awbaltek_init((cmr_handle)cxt, input_param_ptr, output_param_ptr);
