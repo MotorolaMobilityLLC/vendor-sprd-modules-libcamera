@@ -5029,6 +5029,8 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 
 	if (cxt_ptr->init_in_param.ops_in.ae_callback) {
 		aealtek_lib_to_out_info(cxt_ptr, &cxt_ptr->lib_data.output_data, &callback_in.proc_out.ae_info);
+		if(cxt_ptr->ae_state == AE_CONVERGED || cxt_ptr->ae_state == AE_LOCKED)
+			cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRL_CB_STAB_NOTIFY, &callback_in);
 
 		callback_in.proc_out.priv_size = sizeof(cxt_ptr->lib_data.output_data.rpt_3a_update);
 		callback_in.proc_out.priv_data = &cxt_ptr->lib_data.output_data.rpt_3a_update;
