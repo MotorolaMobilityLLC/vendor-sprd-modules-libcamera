@@ -277,7 +277,7 @@ enum isp_ctrl_cmd {
 	 * warning if you wanna send async msg
 	 * please add msg id below here
 	 * */
-	ISP_CTRL_SYNC_NONE_MSG_GEGIN,
+	ISP_CTRL_SYNC_NONE_MSG_BEGIN,
 	ISP_CTRL_SET_AUX_SENSOR_INFO,
 	ISP_CTRL_MAX
 };

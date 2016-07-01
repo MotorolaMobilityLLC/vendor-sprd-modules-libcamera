@@ -319,14 +319,15 @@ cmr_int ae_ctrl_ioctrl(cmr_handle handle, enum ae_ctrl_cmd cmd, struct ae_ctrl_p
 
 	ISP_CHECK_HANDLE_VALID(handle);
 
-	if (cmd >= AE_CTRL_CMD_MAX) {
+	if (AE_CTRL_CMD_MAX <= cmd) {
 		ISP_LOGI("not support %d command", cmd);
 		goto exit;
 	}
 
 	message.msg_type = AECTRL_EVT_IOCTRL;
 	message.sub_msg_type = cmd;
-	if (AE_CTRL_SET_SOF == cmd) {
+	if ((AE_CTRL_SYNC_NONE_MSG_BEGIN < cmd) &&
+		(AE_CTRL_SYNC_NONE_MSG_END > cmd)) {
 		message.data = malloc(sizeof(*in_ptr));
 		if (!message.data) {
 			ISP_LOGE("failed to malloc msg");
@@ -336,6 +337,11 @@ cmr_int ae_ctrl_ioctrl(cmr_handle handle, enum ae_ctrl_cmd cmd, struct ae_ctrl_p
 		memcpy(message.data, in_ptr, sizeof(*in_ptr));
 		message.alloc_flag = 1;
 		message.sync_flag = CMR_MSG_SYNC_NONE;
+	} else if ((AE_CTRL_DIRECT_MSG_BEGIN < cmd) &&
+		   (AE_CTRL_DIRECT_MSG_END > cmd)) {
+		ret = aectrl_ioctrl(cxt_ptr, cmd, in_ptr, &cxt_ptr->ioctrl_out);
+		if (ret)
+			goto exit;
 	} else {
 		message.sync_flag = CMR_MSG_SYNC_PROCESSED;
 		message.alloc_flag = 0;

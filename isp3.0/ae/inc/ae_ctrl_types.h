@@ -56,7 +56,6 @@ enum ae_ctrl_cmd {
 	AE_CTRL_GET_FLASH_EFFECT,
 	AE_CTRL_GET_AE_STATE,
 	AE_CTRL_GET_FLASH_EB,
-	AE_CTRL_SET_SOF,
 	AE_CTRL_GET_BV_BY_LUM,
 	AE_CTRL_GET_BV_BY_GAIN,
 	AE_CTRL_SET_FORCE_PAUSE,
@@ -77,7 +76,6 @@ enum ae_ctrl_cmd {
 	AE_CTRL_GET_DEBUG_DATA,
 	AE_CTRL_GET_EXIF_DATA,
 	AE_CTRL_GET_EXT_DEBUG_INFO,
-	AE_CTRL_GET_HW_ISO_SPEED,
 	AE_CTRL_GET_EXP_GAIN,
 	AE_CTRL_SET_FLASH_MODE,
 	AE_CTRL_SET_Y_HIST_STATS,
@@ -88,7 +86,25 @@ enum ae_ctrl_cmd {
 	AE_CTRL_SET_MANUAL_GAIN,
 	AE_CTRL_SET_MANUAL_ISO,
 	AE_CTRL_SET_ENGINEER_MODE,
-	AE_CTRL_CMD_MAX
+	AE_CTRL_SYNC_MSG_END,
+
+	/*
+	 * warning if you wanna send async msg
+	 * please add msg id below here
+	 * */
+	AE_CTRL_SYNC_NONE_MSG_BEGIN,
+	AE_CTRL_SET_SOF,
+	AE_CTRL_SYNC_NONE_MSG_END,
+
+	/*
+	 * warning if you wanna set ioctrl directly
+	 * please add msg id below here
+	 * */
+	AE_CTRL_DIRECT_MSG_BEGIN,
+	AE_CTRL_GET_HW_ISO_SPEED,
+	AE_CTRL_DIRECT_MSG_END,
+
+	AE_CTRL_CMD_MAX,
 };
 
 enum ae_ctrl_proc_type {

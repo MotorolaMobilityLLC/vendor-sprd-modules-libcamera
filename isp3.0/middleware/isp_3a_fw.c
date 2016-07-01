@@ -16,7 +16,8 @@
 #define LOG_TAG "isp_3afw"
 
 #include <stdlib.h>
-#include "cutils/properties.h"
+#include <cutils/properties.h>
+#include <utils/Timers.h>
 #include <unistd.h>
 #include "isp_3a_fw.h"
 #include <pthread.h>
@@ -3226,6 +3227,9 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 	struct isp_irq                              *sof_info = (struct isp_irq*)data;
 	struct isp_sof_cfg_info                     sof_cfg_info;
 	struct debug_info1                          *exif_ptr = &cxt->debug_data.exif_debug_info;
+	nsecs_t                                     time_start = 0;
+	nsecs_t                                     time_end = 0;
+
 	if (NULL == cxt) {
 		ISP_LOGE("error cxt NULL");
 		ret = -ISP_PARAM_NULL;
@@ -3269,11 +3273,13 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 	ISP_LOGI("test msg 1");
 	cxt->ae_cxt.hw_iso_speed = ae_out.hw_iso_speed;
 	sof_cfg_info.iso_val = ae_out.hw_iso_speed;
+	time_start = systemTime(CLOCK_MONOTONIC);
 	ret = isp_dev_access_cfg_sof_info(cxt->dev_access_handle, &sof_cfg_info);
 	if (ret) {
 		ISP_LOGE("failed to cfg sof info");
 	}
-	ISP_LOGI("test msg 2");
+	time_end = systemTime(CLOCK_MONOTONIC);
+	ISP_LOGI("test msg 2 time_delta = %d us", (cmr_s32)(time_end - time_start) / 1000);
 
 	ret = isp_dev_access_get_exif_debug_info(cxt->dev_access_handle, exif_ptr);
 	isp_mlog(SHADING_FILE,"RPrun:%d, BPrun:%d", exif_ptr->shading_debug_info1.rp_run, exif_ptr->shading_debug_info1.bp_run);
@@ -3724,7 +3730,7 @@ cmr_int isp_3a_fw_ioctl(cmr_handle isp_3a_handle, enum isp_ctrl_cmd cmd, void* p
 		goto exit;
 	}
 
-	if (ISP_CTRL_SYNC_NONE_MSG_GEGIN < cmd) {
+	if (ISP_CTRL_SYNC_NONE_MSG_BEGIN < cmd) {
 		ret = isp_3a_fw_assemble_async_msg(cmd, &message, param_ptr);
 		if (ret)
 			goto exit;
