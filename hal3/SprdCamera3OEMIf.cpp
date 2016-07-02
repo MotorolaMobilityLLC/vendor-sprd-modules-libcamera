@@ -6744,7 +6744,7 @@ int SprdCamera3OEMIf::gyro_monitor_thread_deinit(void *p_data)
 		while (!obj->mGyroDeinit) {
 			usleep(2000);
 		}
-		ret = pthread_join(obj->mGyroMsgQueHandle, &dummy);
+		//ret = pthread_join(obj->mGyroMsgQueHandle, &dummy);
 		obj->mGyroMsgQueHandle = 0;
 	}
 	HAL_LOGD("X inited=%d, Deinit = %d", obj->mGyroInit, obj->mGyroDeinit);
