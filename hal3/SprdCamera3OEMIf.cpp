@@ -2785,6 +2785,8 @@ SPRD_DEF_Tag sprddefInfo;
 mSetting->getSPRDDEFTag(&sprddefInfo);
 
 #ifdef CONFIG_FACE_BEAUTY
+	if (PREVIEW_ZSL_FRAME != frame->type) {
+
 	HAL_LOGV("perfect_skin_level = %d", sprddefInfo.perfect_skin_level);
 	if(sprddefInfo.perfect_skin_level > 0 && isPreviewing() && frame->type == PREVIEW_FRAME) {
 		faceDectect(1);
@@ -2839,6 +2841,7 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 			HAL_LOGD("Not detect face!");
 		}
 
+	}
 	}
 #endif
 

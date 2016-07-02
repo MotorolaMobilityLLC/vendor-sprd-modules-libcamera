@@ -530,7 +530,7 @@ static cmr_int fd_get_face_overlap(const struct face_finder_data *i_face1,
 		cmr_int overlap_area = (ex - sx + 1) * (ey - sy + 1);
 		cmr_int area1 = (f1_ex - f1_sx + 1) * (f1_ey - f1_sy + 1);
 		cmr_int area2 = (f2_ex - f2_sx + 1) * (f2_ey - f2_sy + 1);
-		percent = (100 * overlap_area) / MIN(area1, area2);
+		percent = (100 * overlap_area *2) / (area1 + area2);
 	}
 
 	return percent;
@@ -540,7 +540,7 @@ static void fd_smooth_fd_results(const struct img_face_area *i_face_area_prev,
 									const struct img_face_area *i_face_area_curr,
 									struct img_face_area *o_face_area)
 {
-	const cmr_int overlap_thr = 50;
+	const cmr_int overlap_thr = 90;
 	cmr_uint prevIdx = 0;
 	cmr_uint currIdx = 0;
 	cmr_int trueCount = 0;
@@ -564,20 +564,21 @@ static void fd_smooth_fd_results(const struct img_face_area *i_face_area_prev,
 			/* output the average of the two faces */
 			struct face_finder_data *outf = &(o_face_area->range[trueCount]);
 			outf->face_id = trueCount;
-		    outf->sx = (f1->sx + f2->sx) >> 1;
-		    outf->sy = (f1->sy + f2->sy) >> 1;
-		    outf->srx = (f1->srx + f2->srx) >> 1;
-		    outf->sry = (f1->sry + f2->sry) >> 1;
-		    outf->ex = (f1->ex + f2->ex) >> 1;
-		    outf->ey = (f1->ey + f2->ey) >> 1;
-		    outf->elx = (f1->elx + f2->elx) >> 1;
-		    outf->ely = (f1->ely + f2->ely) >> 1;
-		    outf->brightness = f1->brightness;
-		    outf->angle = f1->angle;
-		    outf->smile_level = f1->smile_level;
-		    outf->blink_level = f1->blink_level;
+			outf->sx = f2->sx;
+			outf->sy = f2->sy;
+			outf->srx = f2->srx;
+			outf->sry = f2->sry;
+			outf->ex = f2->ex;
+			outf->ey = f2->ey;
+			outf->elx = f2->elx;
+			outf->ely = f2->ely;
+			outf->brightness = f1->brightness;
+			outf->angle = f1->angle;
+			outf->smile_level = f1->smile_level;
+			outf->blink_level = f1->blink_level;
 
-		    trueCount++;
+			memcpy(f1,outf,sizeof(struct face_finder_data));
+			trueCount++;
 		}
 	}
 
@@ -595,7 +596,7 @@ static void fd_get_fd_results(HDTRESULT i_hDtResult,
 	int32_t               ret = UDN_NORMAL;
 	FACEINFO              info;	/* Detection Result */
 	struct img_face_area  curr_face_area;
-	const uint8_t         is_do_smooth = 0;
+	const uint8_t         is_do_smooth = 1;
 	cmr_int sx = 0, ex = 0, sy = 0, ey = 0;
          memset(&curr_face_area, 0, sizeof(struct img_face_area));
 	/* Gets the number of detected face */
