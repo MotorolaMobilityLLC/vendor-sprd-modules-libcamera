@@ -158,6 +158,7 @@ static cmr_int hdr_open(cmr_handle ipm_handle, struct ipm_open_in *in, struct ip
 	*class_handle = (cmr_handle)hdr_handle;
 #ifdef CONFIG_SPRD_HDR_LIB
 	sprd_hdr_pool_init();
+	sprd_hdr_set_stop_flag(HDR_NORMAL);
 #endif
 	return ret;
 
@@ -179,6 +180,10 @@ static cmr_int hdr_close(cmr_handle class_handle)
 	struct class_hdr     *hdr_handle = (struct class_hdr *)class_handle;
 	cmr_int               i;
 	CHECK_HANDLE_VALID(hdr_handle);
+
+#ifdef CONFIG_SPRD_HDR_LIB
+	sprd_hdr_set_stop_flag(HDR_STOP);
+#endif
 
 	ret = hdr_thread_destroy(hdr_handle);
 	if (ret) {
@@ -452,10 +457,16 @@ static cmr_int hdr_arithmetic(cmr_handle class_handle, struct img_addr *dst_addr
 	/*save_input_data(width,height);*/
 
 	if ((NULL != temp_addr0) && (NULL != temp_addr1) && (NULL != temp_addr2)) {
-		if (0 != HDR_Function(temp_addr0, temp_addr1, temp_addr2, temp_addr0,
-			height, width, p_format)) {
-			CMR_LOGE("hdr error!");
-			ret = CMR_CAMERA_FAIL;
+		ret = HDR_Function(temp_addr0, temp_addr1, temp_addr2, temp_addr0,
+				height, width, p_format);
+		if (ret != 0) {
+			if(ret == 1) {
+				CMR_LOGI("hdr not executed completely");
+				ret = CMR_CAMERA_SUCCESS;
+			} else {
+				CMR_LOGE("hdr error!");
+				ret = CMR_CAMERA_FAIL;
+			}
 		}
 	} else {
 			CMR_LOGE("can't handle hdr.");
