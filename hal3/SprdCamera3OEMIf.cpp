@@ -745,6 +745,7 @@ int SprdCamera3OEMIf::takePicture()
 		if(isPreviewStart()) {
 			HAL_LOGV("Preview not start! wait preview start");
 			WaitForPreviewStart();
+			usleep(20*1000);
 		}
 
 		if (isPreviewing()) {
