@@ -1177,13 +1177,15 @@ int arrange_rot_buf(struct cmr_cap_2_frm *cap_2_frm,
 	    ZOOM_POST_PROCESS_WITH_TRIM == cap_2_frm->zoom_post_proc) {
 		cap_mem->cap_yuv_rot.addr_phy.addr_y = cap_mem->target_yuv.addr_phy.addr_y;
 		cap_mem->cap_yuv_rot.addr_vir.addr_y = cap_mem->target_yuv.addr_vir.addr_y;
-		cap_mem->cap_yuv_rot.addr_phy.addr_u = cap_mem->cap_yuv_rot.addr_phy.addr_y + max_size;
-		cap_mem->cap_yuv_rot.addr_vir.addr_u = cap_mem->cap_yuv_rot.addr_vir.addr_y + max_size;
+		cap_mem->cap_yuv_rot.addr_phy.addr_u = cap_mem->cap_yuv_rot.addr_phy.addr_y +
+						       cap_size->width * cap_size->height;
+		cap_mem->cap_yuv_rot.addr_vir.addr_u = cap_mem->cap_yuv_rot.addr_vir.addr_y +
+						       cap_size->width * cap_size->height;
 		cap_mem->cap_yuv_rot.fd = cap_mem->target_yuv.fd;
 
 		cap_mem->cap_yuv_rot.size.width = cap_size->height;
 		cap_mem->cap_yuv_rot.size.height = cap_size->width;
-		cap_mem->cap_yuv_rot.buf_size = max_size * 3 / 2;
+		cap_mem->cap_yuv_rot.buf_size = cap_size->width * cap_size->width * 3 / 2;
 		cap_mem->cap_yuv_rot.fmt = IMG_DATA_TYPE_YUV420;
 
 		cap_mem->target_yuv.addr_phy.addr_y = cap_mem->cap_yuv.addr_phy.addr_y;

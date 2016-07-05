@@ -4317,27 +4317,11 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 			break;
 		}
 
-		CMR_LOGI("%d capture addr, fd 0x%x", i,  cur_img_frm->fd);
+		CMR_LOGI("%d capture addr, fd 0x%x", i, cur_img_frm->fd);
 		if (0 == cur_img_frm->fd ) {
 			ret = CMR_CAMERA_FAIL;
 			CMR_LOGI("cur_img_frm->fd is null");
 			break;
-		}
-
-		if (IMG_DATA_TYPE_JPEG == prev_cxt->cap_org_fmt) {
-			if ((frame_size - JPEG_EXIF_SIZE) > mem_size) {
-				CMR_LOGE("Fail to malloc capture memory. 0x%x 0x%x 0x%x 0x%x",
-					y_addr, u_addr, frame_size, mem_size);
-				ret = CMR_CAMERA_NO_MEM;
-			break;
-			}
-		} else {
-			if (frame_size > mem_size) {
-				CMR_LOGE("Fail to malloc capture memory. 0x%x 0x%x 0x%x 0x%x",
-					y_addr, u_addr, frame_size, mem_size);
-				ret = CMR_CAMERA_NO_MEM;
-			break;
-			}
 		}
 
 		prev_cxt->cap_frm[i].size.width      = prev_cxt->cap_org_size.width;
