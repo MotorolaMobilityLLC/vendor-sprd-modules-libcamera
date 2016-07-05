@@ -721,7 +721,6 @@ void camera_isp_dev_evt_cb(cmr_int evt, void *data, cmr_u32 data_len, void *priv
 	cmr_u32                         channel_id;
 	cmr_handle                      receiver_handle;
 
-	cxt->highiso_mode = 0;
 	cxt->isp_to_dram = 0;
 	if (!cxt || !data || !privdata) {
 		CMR_LOGE("error param, handle 0x%lx data 0x%lx ", (cmr_uint)cxt, (cmr_uint)data);
@@ -3986,8 +3985,8 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 	sem_wait(&cxt->access_sm);
 	CMR_LOGI("src phy addr 0x%lx 0x%lx src vir addr 0x%lx 0x%lx",
 		     src->addr_phy.addr_y, src->addr_phy.addr_u, src->addr_vir.addr_y, src->addr_vir.addr_u);
-	CMR_LOGI("src size %d %d, out size %d %d",
-		     src->size.width, src->size.height, dst->size.width, dst->size.height);
+	CMR_LOGI("src size %d %d, out size %d %d cap_mode %d",
+		     src->size.width, src->size.height, dst->size.width, dst->size.height, cxt->highiso_mode);
 	enc_in_param.slice_height = mean->slice_height;
 	enc_in_param.slice_mod = mean->slice_mode;
 	enc_in_param.quality_level = mean->quality_level;
@@ -4002,6 +4001,10 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 	enc_in_param.src_addr_vir = src->addr_vir;
 	enc_in_param.src_fd = src->fd;
 	enc_in_param.src_endian = src->data_end;
+	//altek high iso mode need set uv_endian as IMG_DATA_ENDIAN_2PLANE_UVUV for jpeg enc
+	if (HIGHISO_CAP_MODE == cxt->highiso_mode) {
+		enc_in_param.src_endian.uv_endian = IMG_DATA_ENDIAN_2PLANE_UVUV;
+	}
 	cxt->jpeg_cxt.enc_caller_handle = caller_handle;
 	CMR_LOGI("dst->fd 0x%lx, src->fd 0x%lx enc_in_param.stream_buf_fd 0x%lx,enc_in_param.src_fd 0x%lx",
 		     dst->fd, src->fd, enc_in_param.stream_buf_fd, enc_in_param.src_fd);
@@ -7238,6 +7241,10 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle)
 		ret = camera_close_hdr(cxt);
 	}
 	cxt->snp_cxt.status = IDLE;
+
+	//take picture end on highiso mode,set the highiso_mode as HIGHISO_MODE_NONE
+	if (cxt->highiso_mode != HIGHISO_MODE_NONE)
+		cxt->highiso_mode = HIGHISO_MODE_NONE;
 
 exit:
 	CMR_LOGV("done %ld", ret);
