@@ -306,7 +306,7 @@ static cmr_int aflaltek_set_shift_info(struct aflaltek_cxt *cxt_ptr, struct afl_
 	param_ct_ptr->shift_info.adgain = in_ptr->shift_info.adgain;
 	param_ct_ptr->shift_info.iso = in_ptr->shift_info.iso;
 
-	ISP_LOGE("shift_info %d,%d,%d,%d,%d,%d", param_ct_ptr->shift_info.avgmean,param_ct_ptr->shift_info.center_mean2x2
+	ISP_LOGV("shift_info %d,%d,%d,%d,%d,%d", param_ct_ptr->shift_info.avgmean,param_ct_ptr->shift_info.center_mean2x2
 			,param_ct_ptr->shift_info.bv
 			,param_ct_ptr->shift_info.exposure_time,param_ct_ptr->shift_info.adgain,param_ct_ptr->shift_info.iso);
 
@@ -612,7 +612,7 @@ static cmr_int aflaltek_init(struct aflaltek_cxt *cxt_ptr, struct afl_ctrl_init_
 		ISP_LOGE("lib init failed !!!");
 		goto exit;
 	}
-	ISP_LOGI("lib run=%p", cxt_ptr->lib_run_data);
+	ISP_LOGV("lib run=%p", cxt_ptr->lib_run_data);
 
 	ret = aflaltek_get_lib_ver(cxt_ptr);
 	if (ret)
@@ -778,7 +778,7 @@ static cmr_int aflaltek_stat_queue_process(struct aflaltek_cxt *cxt_ptr, struct 
 	}
 
 	data_length = ARRAY_SIZE(cxt_ptr->stat_queue.data) - 1;
-	ISP_LOGI("add stat_data =%p,size:%d", stat_data_ptr,cxt_ptr->stat_queue.size);
+	ISP_LOGV("add stat_data =%p,size:%d", stat_data_ptr,cxt_ptr->stat_queue.size);
 	cxt_ptr->stat_queue.data[cxt_ptr->stat_queue.write] = stat_data_ptr;
 	cxt_ptr->stat_queue.size ++;
 	if (data_length == cxt_ptr->stat_queue.write) {
