@@ -2138,7 +2138,7 @@ static cmr_int aealtek_get_lib_init_expousre(struct aealtek_cxt *cxt_ptr, struct
 		goto exit;
 	}
 	obj_ptr = &cxt_ptr->al_obj;
-
+	memset(&in_param, 0x00, sizeof(in_param));
 	type = AE_GET_INIT_EXPOSURE_PARAM;
 	in_param.ae_get_param_type = type;
 	if (obj_ptr && obj_ptr->get_param)
