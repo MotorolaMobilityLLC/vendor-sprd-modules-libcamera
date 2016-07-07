@@ -182,6 +182,9 @@ enum allib_awb_set_parameter_type_t {
 	alawb_set_param_test_fix_patten,
 	alawb_set_param_state_under_flash,
 	alawb_set_param_slave_calib_data,
+	alawb_set_param_slave_tuning_file,
+	alawb_set_param_slave_iso_speed,
+
 	alawb_set_param_max
 };
 
@@ -190,8 +193,8 @@ enum allib_awb_set_parameter_type_t {
 struct allib_awb_set_parameter_t {
 	enum allib_awb_set_parameter_type_t         type;
 	union {
-		struct calibration_data_t               awb_calib_data;         /* alawb_set_param_camera_calib_data */
-		void                                    *tuning_file;           /* alawb_set_param_tuning_file */
+		struct calibration_data_t               awb_calib_data;         /* alawb_set_param_camera_calib_data / alawb_set_param_slave_calib_data */
+		void                                    *tuning_file;           /* alawb_set_param_tuning_file / alawb_set_param_slave_tuning_file */
 		uint32                                  sys_sof_frame_idx;      /* alawb_set_param_sys_sof_frame_idx */
 		struct allib_awb_awb_mode_setting_t     awb_mode_setting;       /* alawb_set_param_awb_mode_setting */
 		struct allib_awb_response_setting_t     awb_response_setting;   /* alawb_set_param_response_setting */
@@ -204,6 +207,7 @@ struct allib_awb_set_parameter_t {
 		struct allib_awb_manual_flow_setting_t  awb_manual_flow;        /* alawb_set_param_manual_flow */
 		uint8                                   test_fix_patten;        /* alawb_set_param_test_fix_patten */
 		enum allib_awb_set_flash_states_t       state_under_flash;      /* alawb_set_param_state_under_flash */
+		uint16                                  slave_iso_speed;        /* alawb_set_param_slave_iso_speed */
 	}   para;
 };
 #pragma pack(pop)  /* restore old alignment setting from stack */
@@ -248,17 +252,6 @@ struct allib_awb_get_parameter_t {
 };
 #pragma pack(pop)  /* restore old alignment setting from stack */
 
-/* match structure */
-
-#pragma pack(push) /* push current alignment setting to stack */
-#pragma pack(4)    /* new alignment setting */
-struct allib_match_output_data_t {
-	struct wbgain_data_t                    wbgain;
-	uint32                                  color_temp;                 /* (major) color temperature */
-};
-#pragma pack(pop)  /* restore old alignment setting from stack */
-
-
 
 /* public APIs */
 #pragma pack(push) /* push current alignment setting to stack */
@@ -276,7 +269,7 @@ typedef uint32 (*allib_awb_deinit_func)(void *awb_obj);
 typedef uint32 (*allib_awb_set_param_func)(struct allib_awb_set_parameter_t *param, void *awb_dat);
 typedef uint32 (*allib_awb_get_param_func)(struct allib_awb_get_parameter_t *param, void *awb_dat);
 typedef uint32 (*allib_awb_estimation_func)(void *hw3a_stats_data, void *awb_dat, struct allib_awb_output_data_t *awb_output);
-typedef uint32 (*allib_awb_match_func)(void *awb_dat, struct allib_match_output_data_t *match_output);
+typedef uint32 (*allib_awb_match_func)(void *awb_dat, struct allib_awb_output_data_t *match_output);
 
 #pragma pack(push) /* push current alignment setting to stack */
 #pragma pack(4)    /* new alignment setting */
