@@ -244,13 +244,11 @@ cmr_s32 cmr_grab_get_iommu_status(cmr_handle grab_handle)
 
 	p_grab = (struct cmr_grab *)grab_handle;
 
-#if 0
-	ret = ioctl(p_grab->fd, SPRD_DCAM_IO_GET_IOMMU_STATUS, &has_iommu);
+	ret = ioctl(p_grab->fd, SPRD_IMG_IO_GET_IOMMU_STATUS, &has_iommu);
 	if (ret) {
-		CMR_LOGE("SPRD_DCAM_IO_GET_IOMMU_STATUS failed");
+		CMR_LOGE("SPRD_IMG_IO_GET_IOMMU_STATUS failed");
 		return ret;
 	}
-#endif
 
 	if (has_iommu)
 		ret = 0;
