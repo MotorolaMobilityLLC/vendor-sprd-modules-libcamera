@@ -1338,14 +1338,14 @@ bool SprdCamera3OEMIf::setCameraCaptureDimensions()
 	}
 
 	HAL_LOGD("E: mCaptureWidth=%d, mCaptureHeight=%d, mPreviewWidth=%d, mPreviewHeight=%d, mVideoWidth=%d, mVideoHeight=%d", mCaptureWidth, mCaptureHeight,mPreviewWidth,mPreviewHeight, mVideoWidth, mVideoHeight);
-	if(mCaptureMode != CAMERA_ZSL_MODE){
-		mVideoWidth = 0;
-		mVideoHeight = 0;
-	}
+//	if(mCaptureMode != CAMERA_ZSL_MODE){
+//		mVideoWidth = 0;
+//		mVideoHeight = 0;
+//	}
 	mHalOem->ops->camera_fast_ctrl(mCameraHandle, CAMERA_FAST_MODE_FD, 0);
 
 	if(mCaptureWidth != 0 && mCaptureHeight != 0) {
-		if(mVideoWidth != 0 && mVideoHeight != 0 && ((mCaptureMode != CAMERA_ISP_TUNING_MODE) && (mCaptureMode != CAMERA_ISP_SIMULATION_MODE))) {
+		if(mVideoWidth != 0 && mVideoHeight != 0 && mRecordingMode == true && ((mCaptureMode != CAMERA_ISP_TUNING_MODE) && (mCaptureMode != CAMERA_ISP_SIMULATION_MODE))) {
 			capture_size.width = (cmr_u32)mPreviewWidth;//mVideoWidth;
 			capture_size.height = (cmr_u32)mPreviewHeight;//mVideoHeight;
 		} else {
