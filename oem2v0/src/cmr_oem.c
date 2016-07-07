@@ -6300,7 +6300,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	}
 	cxt->snp_cxt.total_num = setting_param.cmd_type_value;
 
-	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_ENCODE_ANGLE, &setting_param);
+	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_ENCODE_ROTATION, &setting_param);
 	if (ret) {
 		CMR_LOGE("failed to get enc rotation %ld", ret);
 		goto exit;
@@ -6316,9 +6316,9 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	out_param_ptr->flip_on = setting_param.cmd_type_value;
 	if (out_param_ptr->flip_on) {
 		CMR_LOGI("encode_rotation:%d, flip:%d", rotation, out_param_ptr->flip_on);
-		if (IMG_ANGLE_90 == rotation || IMG_ANGLE_270 == rotation) {
+		if (90 == rotation || 270 == rotation) {
 			out_param_ptr->flip_on = 0x1; // flip
-		} else if (IMG_ANGLE_0 == rotation || IMG_ANGLE_180 == rotation) {
+		} else if (0 == rotation || 180 == rotation) {
 			out_param_ptr->flip_on = 0x3; // mirror
 		}
 	}
