@@ -167,6 +167,7 @@ struct setting_hal_param {
 	cmr_uint                       is_ae_lock;
 	cmr_uint			    refoucs_enable;
 	struct touch_coordinate              touch_info;
+	cmr_uint                       video_snapshot_type;
 };
 
 struct setting_camera_info {
@@ -1738,6 +1739,15 @@ static cmr_int setting_get_capture_format(struct setting_component *cpt,
 	parm->cmd_type_value = hal_param->capture_format;
 	return ret;
 }
+static cmr_int setting_get_video_snapshot_type(struct setting_component *cpt,
+						struct setting_cmd_parameter *parm)
+{
+	cmr_int ret = 0;
+
+	struct setting_hal_param    *hal_param = get_hal_param(cpt, parm->camera_id);
+	parm->cmd_type_value = hal_param->video_snapshot_type;
+	return ret;
+}
 
 static enum img_data_type get_image_format_from_param(cmr_uint param)
 {
@@ -1861,6 +1871,18 @@ static cmr_int setting_set_touch_xy(struct setting_component *cpt,
 	}
 	return ret;
 }
+static cmr_int setting_set_video_snapshot_type(struct setting_component *cpt,
+						struct setting_cmd_parameter *parm)
+{
+	cmr_int                     ret = 0;
+
+	struct setting_hal_param    *hal_param = get_hal_param
+							(cpt, parm->camera_id);
+	hal_param->video_snapshot_type = parm->cmd_type_value;
+	CMR_LOGD("video_snapshot_type=%ld", hal_param->video_snapshot_type);
+	return ret;
+}
+
 static cmr_int setting_get_touch_info(struct setting_component *cpt,
                                         struct setting_cmd_parameter *parm)
 {
@@ -3135,6 +3157,7 @@ cmr_int cmr_setting_ioctl(cmr_handle setting_handle, cmr_uint cmd_type,
 		{CAMERA_PARAM_SPRD_EIS_ENABLED, setting_set_sprd_eis_enabled},
 		{CAMERA_PARAM_REFOCUS_ENABLE,   setting_set_refocus_enable},
 		{CAMERA_PARAM_TOUCH_XY,            setting_set_touch_xy},
+		{CAMERA_PARAM_VIDEO_SNAPSHOT_TYPE,     setting_set_video_snapshot_type},
 		{CAMERA_PARAM_TYPE_MAX,                NULL},
 		{SETTING_GET_PREVIEW_ANGLE,            setting_get_preview_angle},
 		{SETTING_GET_CAPTURE_ANGLE,            setting_get_capture_angle},
@@ -3172,6 +3195,7 @@ cmr_int cmr_setting_ioctl(cmr_handle setting_handle, cmr_uint cmd_type,
 		{SETTING_GET_SPRD_EIS_ENABLED, 	setting_get_sprd_eis_enabled},
 		{SETTING_GET_REFOCUS_ENABLE,			  setting_get_refocus_enable},
 		{SETTING_GET_TOUCH_XY,			  setting_get_touch_info},
+		{SETTING_GET_VIDEO_SNAPSHOT_TYPE,      setting_get_video_snapshot_type},
 	};
 	struct setting_item          *item = NULL;
 	struct setting_component     *cpt =	 (struct setting_component *)setting_handle;

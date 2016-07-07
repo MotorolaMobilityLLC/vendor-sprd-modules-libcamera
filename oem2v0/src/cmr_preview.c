@@ -6593,7 +6593,10 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 		/*zsl*/
 		if (FRAME_CONTINUE == prev_cxt->prev_param.frame_ctrl) {
 			chn_param.frm_num = prev_cxt->prev_param.frame_count;
-			is_capture_zsl = 1;
+			if (prev_cxt->prev_param.video_snapshot_type != VIDEO_SNAPSHOT_VIDEO) {
+				CMR_LOGI("enable zsl for non video snapshot mode");
+				is_capture_zsl = 1;
+			}
 		} else {
 			CMR_LOGE("wrong cap param!");
 		}

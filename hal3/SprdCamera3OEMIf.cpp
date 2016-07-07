@@ -267,6 +267,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mSprdEisEnabled(false),
 	mSprdPipVivEnabled(0),
 	mSprdHighIsoEnabled(0),
+	mVideoSnapshotType(0),
 	mIsRecording(false),
 	mIsUpdateRangeFps(false),
 	mPrvBufferTimestamp(0),
@@ -637,7 +638,8 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type, uint32_t frame_n
 
 			if (mRecordingMode == false && sprddefInfo.sprd_zsl_enabled == 1) {
 				mSprdZslEnabled = true;
-			} else if (mRecordingMode == true && sprddefInfo.slowmotion > 1) {
+			} else if ((mRecordingMode == true && sprddefInfo.slowmotion > 1) ||
+				   (mRecordingMode == true && mVideoSnapshotType == 1)) {
 				mSprdZslEnabled = false;
 			} else if (mRecordingMode == true &&
 				   mVideoWidth != 0 &&
@@ -2192,6 +2194,8 @@ int SprdCamera3OEMIf::startPreviewInternal()
 #endif
 
 	SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ZSL_ENABLED, (cmr_uint)mSprdZslEnabled);
+	HAL_LOGV("mVideoSnapshotType=%d", mVideoSnapshotType);
+	SET_PARM(mHalOem,mCameraHandle, CAMERA_PARAM_VIDEO_SNAPSHOT_TYPE, (cmr_uint)mVideoSnapshotType);
 
 	cmr_int qret = mHalOem->ops->camera_start_preview(mCameraHandle, mCaptureMode);
 
@@ -4863,13 +4867,25 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode, uint32_t fr
 			mZslPreviewMode = false;
 			break;
 		case CAMERA_CAPTURE_MODE_VIDEO_SNAPSHOT:
-			mTakePictureMode = SNAPSHOT_ZSL_MODE;
-			mCaptureMode = CAMERA_ZSL_MODE;
-			mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DV;
-			mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
-			mRecordingMode = true;
-			mPicCaptureCnt = 1;
-			mZslPreviewMode = false;
+			if (mVideoSnapshotType != 1) {
+				mTakePictureMode = SNAPSHOT_ZSL_MODE;
+				mCaptureMode = CAMERA_ZSL_MODE;
+				mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DV;
+				mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
+				mRecordingMode = true;
+				mPicCaptureCnt = 1;
+				mZslPreviewMode = false;
+			} else {
+				mTakePictureMode = SNAPSHOT_VIDEO_MODE;
+				mCaptureMode = CAMERA_ZSL_MODE;
+				mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DV;
+				mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
+				mRecordingMode = true;
+				mPicCaptureCnt = 1;
+				mZslPreviewMode = false;
+				mVideoShotNum = frame_number;
+				mVideoShotFlag = 1;
+			}
 			break;
 		case CAMERA_CAPTURE_MODE_ISP_TUNING_TOOL:
 			mTakePictureMode = SNAPSHOT_NO_ZSL_MODE;
@@ -5787,6 +5803,12 @@ int SprdCamera3OEMIf::SetDimensionVideo(cam_dimension_t video_size)
 		mRestartFlag = true;
 	}
 
+	SPRD_DEF_Tag sprddefInfo;
+	mSetting->getSPRDDEFTag(&sprddefInfo);
+
+	if (mVideoWidth == 3840 && mVideoHeight == 2160) {
+		mVideoSnapshotType = 1;
+	}
 	return NO_ERROR;
 }
 

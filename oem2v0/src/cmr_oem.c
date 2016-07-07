@@ -1302,25 +1302,34 @@ void camera_snapshot_channel_handle(cmr_handle oem_handle, void* param)
 {
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
+	struct setting_context          *setting_cxt = &cxt->setting_cxt;
 	struct frm_info                 frame;
 	struct camera_jpeg_param        *jpeg_param_ptr = &((struct camera_frame_type *)param)->jpeg_param;
 	cmr_uint                        i;
 	cmr_uint                        is_need_resume = 0;
 	struct cmr_path_capability      capability;
 	cmr_int                         zsl_capture_need_pause;
+	cmr_uint                        video_snapshot_type;
+	struct setting_cmd_parameter    setting_param;
 	cmr_int                         normal_capture_need_pause;
 #ifdef CAMERA_PATH_SHARE
+	cmr_bzero(&setting_param, sizeof(setting_param));
+	setting_param.camera_id = cxt->camera_id;
+	cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_VIDEO_SNAPSHOT_TYPE,
+			 &setting_param);
+	video_snapshot_type = setting_param.cmd_type_value;
 	camera_local_zsl_snapshot_need_pause(oem_handle, &zsl_capture_need_pause);
 	camera_local_normal_snapshot_need_pause(oem_handle, &normal_capture_need_pause);
 
-	if (CAMERA_ZSL_MODE == cxt->snp_cxt.snp_mode) {
-		if (zsl_capture_need_pause) {
-			is_need_resume = 1;
-		}
-	} else if (1 != cxt->snp_cxt.total_num) {
-		if (normal_capture_need_pause) {
-			if (jpeg_param_ptr) {
-				if (1 != jpeg_param_ptr->need_free &&
+		if (CAMERA_ZSL_MODE == cxt->snp_cxt.snp_mode &&
+		video_snapshot_type != VIDEO_SNAPSHOT_VIDEO) {
+			if (zsl_capture_need_pause) {
+				is_need_resume = 1;
+			}
+		} else if (1 != cxt->snp_cxt.total_num) {
+			if (normal_capture_need_pause) {
+				if (jpeg_param_ptr) {
+					if (1 != jpeg_param_ptr->need_free &&
 				    TAKE_PICTURE_NEEDED == camera_get_snp_req((cmr_handle)cxt)) {
 					is_need_resume = 1;
 				}
@@ -1331,7 +1340,8 @@ void camera_snapshot_channel_handle(cmr_handle oem_handle, void* param)
 			    (1 != frame_type->need_free)) {
 				is_need_resume = 1;
 			}
-		}
+		} else {
+			is_need_resume = 0;
 	}
 
 	if (1 == is_need_resume) {
@@ -1350,7 +1360,7 @@ void camera_snapshot_channel_handle(cmr_handle oem_handle, void* param)
 	}
 #endif
 }
-
+}
 void camera_snapshot_state_handle(cmr_handle oem_handle, enum snapshot_cb_type cb, enum snapshot_func_type func, void* param)
 {
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
@@ -1454,19 +1464,29 @@ cmr_uint camera_get_share_path_sm_flag(cmr_handle oem_handle)
 void camera_wait_share_path_available(cmr_handle oem_handle)
 {
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
+	struct setting_context         *setting_cxt = &cxt->setting_cxt;
 	struct cmr_path_capability      capability;
 	cmr_int                         need_pause;
+	cmr_uint                        video_snapshot_type;
+	struct setting_cmd_parameter    setting_param;
 
 	CMR_LOGI("wait beging");
+
+
+	cmr_bzero(&setting_param, sizeof(setting_param));
+	setting_param.camera_id = cxt->camera_id;
+	cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_VIDEO_SNAPSHOT_TYPE,
+			 &setting_param);
+	video_snapshot_type = setting_param.cmd_type_value;
 	camera_local_zsl_snapshot_need_pause(oem_handle, &need_pause);
 	camera_channel_path_capability(oem_handle, &capability);
 	if (CAMERA_ZSL_MODE == cxt->snp_cxt.snp_mode && !need_pause) {
 		CMR_LOGI("no need wait");
 	} else {
-		//if (!(0 != cxt->prev_cxt.video_size.width && 0 != cxt->prev_cxt.video_size.height && !capability.is_video_prev_diff)) {
+		 if (video_snapshot_type != VIDEO_SNAPSHOT_VIDEO) {
 			camera_set_share_path_sm_flag(oem_handle, 1);
 			sem_wait(&cxt->share_path_sm);
-		//}
+		}
 	}
 	CMR_LOGI("wait end");
 }
@@ -1639,7 +1659,8 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture)
 	if (CAMERA_ZSL_MODE == cxt->snp_cxt.snp_mode && 1 == setting_param.cmd_type_value) {
 		need_close_flash = 0;
 	}
-
+	if (cxt->snp_cxt.snp_mode == VIDEO_SNAPSHOT_VIDEO)
+		need_close_flash = 0;
 	/*for third ae*/
 	raw_info_ptr = cxt->sn_cxt.sensor_info.raw_info_ptr;
 	if (raw_info_ptr) {
@@ -6398,6 +6419,14 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	}
 	out_param_ptr->sprd_eis_enabled = setting_param.cmd_type_value;
 	CMR_LOGI("sprd eis_enabled flag %d", out_param_ptr->sprd_eis_enabled);
+	ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+				 SETTING_GET_VIDEO_SNAPSHOT_TYPE, &setting_param);
+	if (ret) {
+		CMR_LOGE("failed to get preview sprd eis enabled flag %ld", ret);
+		goto exit;
+	}
+	out_param_ptr->video_snapshot_type = setting_param.cmd_type_value;
+	CMR_LOGI("video_snapshot_type=%d", out_param_ptr->video_snapshot_type);
 
 exit:
 	CMR_LOGI("prev size %d %d pic size %d %d", out_param_ptr->preview_size.width, out_param_ptr->preview_size.height,
@@ -6545,8 +6574,19 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle, struct snapshot_param *
 	out_ptr->jpeg_setting = jpeg_cxt->param;
 	out_ptr->req_size = cxt->snp_cxt.request_size;
 
-	if (CAMERA_ZSL_MODE == cxt->snp_cxt.snp_mode) {
-		out_ptr->is_zsl_snapshot = 1;
+	ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+				 SETTING_GET_VIDEO_SNAPSHOT_TYPE, &setting_param);
+
+	if (ret) {
+		 CMR_LOGE("failed to get preview sprd eis enabled flag %ld", ret);
+		 goto exit;
+	}
+	if (setting_param.cmd_type_value == VIDEO_SNAPSHOT_VIDEO) {
+		chn_bits = cxt->prev_cxt.video_channel_bits;
+		out_ptr->is_video_snapshot = 1;
+	} else if (CAMERA_ZSL_MODE == cxt->snp_cxt.snp_mode) {
+			out_ptr->is_zsl_snapshot = 1;
+
 	}
 
 	CMR_LOGI("chn_bits %d actual size %d %d", chn_bits,
@@ -6797,6 +6837,11 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id, cmr
 			CMR_LOGE("err, video size param is null");
 			ret = -CMR_CAMERA_INVALID_PARAM;
 		}
+		break;
+	case CAMERA_PARAM_VIDEO_SNAPSHOT_TYPE:
+		setting_param.cmd_type_value = param;
+		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+					id, &setting_param);
 		break;
 	default:
 		CMR_LOGI("don't support %d", id);

@@ -836,6 +836,15 @@ struct CAMERA_TAKEPIC_STAT {
 		cmr_u32              padding;
 };
 
+
+enum video_snapshot_tpye {
+	VIDEO_SNAPSHOT_NONE = 0,
+	VIDEO_SNAPSHOT_VIDEO,
+	VIDEO_SNAPSHOT_ZSL,
+	VIDEO_SNAPSHOT_PREVIEW,
+	VIDEO_SNAPSHOT_MAX
+};
+
 /**********************************************************8*******************/
 cmr_int camera_get_trim_rect(struct img_rect *src_trim_rect, cmr_uint zoom_level, struct img_size *dst_size);
 
@@ -1013,6 +1022,7 @@ enum camera_param_type{
 	CAMERA_PARAM_SPRD_EIS_ENABLED,
 	CAMERA_PARAM_REFOCUS_ENABLE,
 	CAMERA_PARAM_TOUCH_XY,
+	CAMERA_PARAM_VIDEO_SNAPSHOT_TYPE,
 	CAMERA_PARAM_TYPE_MAX
 };
 
