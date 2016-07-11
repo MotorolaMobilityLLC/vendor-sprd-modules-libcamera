@@ -434,6 +434,8 @@ static cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
 
 static cmr_int prev_free_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_restart);
 
+static cmr_int prev_free_cap_reserve_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_restart);
+
 static cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id);
 
 static cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
@@ -3368,6 +3370,7 @@ exit:
 
 		if (snapshot_enable) {
 			prev_free_cap_buf(handle, camera_id, 0);
+			prev_free_cap_reserve_buf(handle, camera_id, 0);
 			prev_free_zsl_buf(handle, camera_id, 0);
 		}
 	}
@@ -3487,6 +3490,7 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_rest
 			CMR_LOGE("post proc failed");
 		}
 		prev_free_cap_buf(handle, camera_id, is_restart);
+		prev_free_cap_reserve_buf(handle, camera_id, is_restart);
 	}
 	prev_free_zsl_buf(handle, camera_id, is_restart);
 
@@ -4520,6 +4524,40 @@ cmr_int prev_alloc_cap_reserve_buf(struct prev_handle *handle, cmr_u32 camera_id
 	CMR_LOGI("out %ld", ret);
 	return ret;
 }
+
+cmr_int prev_free_cap_reserve_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_restart)
+{
+	cmr_int                  ret = CMR_CAMERA_SUCCESS;
+	struct prev_context      *prev_cxt = NULL;
+	struct memory_param      *mem_ops = NULL;
+
+	CHECK_HANDLE_VALID(handle);
+	CHECK_CAMERA_ID(camera_id);
+
+	prev_cxt = &handle->prev_cxt[camera_id];
+	mem_ops  = &prev_cxt->prev_param.memory_setting;
+
+	if (!mem_ops->alloc_mem || !mem_ops->free_mem) {
+		CMR_LOGE("mem ops is null, 0x%p, 0x%p", mem_ops->alloc_mem, mem_ops->free_mem);
+		return CMR_CAMERA_INVALID_PARAM;
+	}
+
+	if (!is_restart) {
+		mem_ops->free_mem(CAMERA_SNAPSHOT_ZSL_RESERVED,
+				  handle->oem_handle,
+				  (cmr_uint *)prev_cxt->cap_zsl_reserved_phys_addr,
+				  (cmr_uint *)prev_cxt->cap_zsl_reserved_virt_addr,
+				  &prev_cxt->cap_zsl_reserved_fd,
+				  (cmr_u32)1);
+		prev_cxt->cap_zsl_reserved_phys_addr = 0;
+		prev_cxt->cap_zsl_reserved_virt_addr = 0;
+		prev_cxt->cap_zsl_reserved_fd = 0;
+	}
+
+	CMR_LOGI("out");
+	return ret;
+}
+
 
 cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_restart, struct buffer_cfg *buffer)
 {

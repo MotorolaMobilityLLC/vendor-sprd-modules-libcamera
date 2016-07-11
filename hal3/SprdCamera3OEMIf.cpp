@@ -5475,6 +5475,27 @@ int SprdCamera3OEMIf::Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint 
 
 	HAL_LOGD("sum %d", sum);
 
+	if(type == CAMERA_PREVIEW_RESERVED) {
+		if (NULL != mPreviewHeapReserved) {
+			freeCameraMem(mPreviewHeapReserved);
+			mPreviewHeapReserved = NULL;
+		}
+	}
+
+	if(type == CAMERA_VIDEO_RESERVED) {
+		if (NULL != mVideoHeapReserved) {
+			freeCameraMem(mVideoHeapReserved);
+			mVideoHeapReserved = NULL;
+		}
+	}
+
+	if(type == CAMERA_SNAPSHOT_ZSL_RESERVED) {
+		if (NULL != mZslHeapReserved) {
+			freeCameraMem(mZslHeapReserved);
+			mZslHeapReserved = NULL;
+		}
+	}
+
 	if (type == CAMERA_ISP_LSC) {
 		if (NULL != mIspLscHeapReserved) {
 			freeCameraMem(mIspLscHeapReserved);
