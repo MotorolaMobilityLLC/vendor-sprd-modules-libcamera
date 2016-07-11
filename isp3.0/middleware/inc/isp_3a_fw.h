@@ -43,6 +43,8 @@ struct isp_3a_fw_init_in {
 	struct isp_ops ops;
 	struct isp_sensor_ex_info ex_info;
 	struct sensor_otp_cust_info *otp_data;
+	struct sensor_data_info pdaf_otp;
+	struct sensor_pdaf_info *pdaf_info;
 #ifdef CONFIG_CAMERA_RE_FOCUS
 	void *setting_param_ptr_slv;
 	struct isp_sensor_ex_info ex_info_slv; // slave sensor

@@ -272,6 +272,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_GET_YIMG_INFO,
 	ISP_CTRL_SET_PREV_YIMG,
 	ISP_CTRL_SET_PREV_YUV,
+	ISP_CTRL_SET_PREV_PDAF_RAW,
 
 	/*
 	 * warning if you wanna send async msg
@@ -469,6 +470,33 @@ struct yuv_info_t {
 	cmr_u32                                   height;
 };
 
+
+struct pd_frame_in {
+	cmr_handle                                caller_handle;
+	cmr_u32                                   camera_id;
+	void                                      *private_data;
+};
+
+typedef cmr_int (*pd_callback)(struct  pd_frame_in *cb_param);
+
+struct trim_info {
+	cmr_u32 image_width;
+	cmr_u32 image_height;
+	cmr_u32 trim_start_x;
+	cmr_u32 trim_start_y;
+	cmr_u32 trim_width;
+	cmr_u32 trim_height;
+};
+
+struct pd_raw_info {
+	void *addr;
+	cmr_u32 len;
+	cmr_u32 format;
+	cmr_u32 pattern;
+	struct trim_info roi;
+	struct pd_frame_in pd_in;
+	pd_callback pd_cb;
+};
 struct isp_init_param {
 	cmr_u32 camera_id;
 	void* setting_param_ptr;
@@ -484,6 +512,8 @@ struct isp_init_param {
 	void* setting_param_list_ptr[3];//0:back,1:front,2:dual back,
 	struct isp_sensor_ex_info ex_info;
 	struct sensor_otp_cust_info *otp_data;
+	struct sensor_data_info pdaf_otp;
+	struct sensor_pdaf_info *pdaf_info;
 #ifdef CONFIG_CAMERA_RE_FOCUS
 	struct isp_sensor_ex_info ex_info_slv;
 	void* setting_param_ptr_slv; // slave sensor

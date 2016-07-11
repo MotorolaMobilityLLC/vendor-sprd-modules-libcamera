@@ -215,6 +215,8 @@ static cmr_int isp3a_start_af_notify(cmr_handle handle, void *data);
 static cmr_int isp3a_end_af_notify(cmr_handle handle, struct af_result_param *data);
 static cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in* input_ptr);
 static cmr_int isp3a_set_cfg_otp_info(cmr_handle isp_3a_handle);
+static cmr_int isp3a_set_pdaf_otp(cmr_handle isp_3a_handle, struct sensor_data_info *pdaf_otp_ptr);
+static cmr_int isp3a_set_pdaf_info(cmr_handle isp_3a_handle, struct sensor_pdaf_info *pdaf_info);
 static cmr_int isp3a_alg_deinit(cmr_handle isp_3a_handle);
 static cmr_int isp3a_create_ctrl_thread(cmr_handle isp_3a_handle);
 static cmr_int isp3a_ctrl_thread_proc(struct cmr_msg *message, void* p_data);
@@ -305,6 +307,7 @@ static cmr_int isp3a_stop(cmr_handle isp_3a_handle);
 static cmr_int isp3a_get_yimg_info(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_prev_yimg(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_prev_yuv(cmr_handle isp_3a_handle, void *param_ptr);
+static cmr_int isp3a_set_prev_pdaf_raw(cmr_handle isp_3a_handle, void *param_ptr);
 
 
 static struct isp3a_ctrl_io_func s_isp3a_ioctrl_tab[ISP_CTRL_MAX] = {
@@ -398,6 +401,7 @@ static struct isp3a_ctrl_io_func s_isp3a_ioctrl_tab[ISP_CTRL_MAX] = {
 	{ISP_CTRL_GET_YIMG_INFO,           isp3a_get_yimg_info},
 	{ISP_CTRL_SET_PREV_YIMG,           isp3a_set_prev_yimg},
 	{ISP_CTRL_SET_PREV_YUV,            isp3a_set_prev_yuv},
+	{ISP_CTRL_SET_PREV_PDAF_RAW,       isp3a_set_prev_pdaf_raw},
 };
 
 /*************************************INTERNAK FUNCTION ***************************************/
@@ -805,6 +809,39 @@ cmr_int isp3a_set_cfg_otp_info(cmr_handle isp_3a_handle)
 	ret = isp_dev_access_set_cfg_otp_info(cxt->dev_access_handle, &iq_info);
 	if (ret)
 		ISP_LOGE("failed to set cfg otp info");
+
+	return ret;
+}
+cmr_int isp3a_set_pdaf_otp(cmr_handle isp_3a_handle, struct sensor_data_info *pdaf_otp_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                     *cxt = NULL;
+
+	ISP_CHECK_HANDLE_VALID(isp_3a_handle);
+	if (NULL == pdaf_otp_ptr) {
+		ISP_LOGE("init param err");
+		return -ISP_ERROR;
+	}
+	cxt = (struct isp3a_fw_context *)isp_3a_handle;
+	if (pdaf_otp_ptr->data_ptr && (pdaf_otp_ptr->size > 0)) {
+	//TODO
+	}
+
+	return ret;
+}
+
+cmr_int isp3a_set_pdaf_info(cmr_handle isp_3a_handle, struct sensor_pdaf_info *pdaf_info)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                     *cxt = NULL;
+
+	ISP_CHECK_HANDLE_VALID(isp_3a_handle);
+	if (NULL == pdaf_info) {
+		ISP_LOGE("init param err");
+		return -ISP_ERROR;
+	}
+	cxt = (struct isp3a_fw_context *)isp_3a_handle;
+	//TODO
 
 	return ret;
 }
@@ -3625,6 +3662,20 @@ cmr_int isp_3a_fw_init(struct isp_3a_fw_init_in *input_ptr, cmr_handle *isp_3a_h
 	}
 	ret = isp3a_set_cfg_otp_info((cmr_handle)cxt);
 
+	if (cxt->ex_info.pdaf_supported) {
+		//TODO
+		ret = isp3a_set_pdaf_otp((cmr_handle)cxt, &input_ptr->pdaf_otp);
+		if (ret) {
+			goto exit;
+		}
+
+		//input_ptr->pdaf_info;
+		ret = isp3a_set_pdaf_info((cmr_handle)cxt, input_ptr->pdaf_info);
+		if (ret) {
+			goto exit;
+		}
+	}
+
 	ret = isp3a_create_thread((cmr_handle)cxt);
 exit:
 	if (ret) {
@@ -3952,6 +4003,23 @@ static cmr_int isp3a_set_prev_yuv(cmr_handle isp_3a_handle, void *param_ptr)
 		ISP_LOGW("input is NULL");
 		goto exit;
 	}
+
+exit:
+	return ret;
+}
+
+static cmr_int isp3a_set_prev_pdaf_raw(cmr_handle isp_3a_handle, void *param_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
+	cmr_uint                                    *pd_raw = param_ptr;
+
+	if (!param_ptr) {
+		ISP_LOGW("input is NULL");
+		goto exit;
+	}
+
+	//TODO
 
 exit:
 	return ret;
