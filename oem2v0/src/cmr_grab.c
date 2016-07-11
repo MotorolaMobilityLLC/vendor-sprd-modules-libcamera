@@ -66,6 +66,7 @@ struct cmr_grab
 	struct grab_init_param  init_param;
 	grab_stream_on          stream_on_cb;
 	cmr_u8                  mode_enable;
+	cmr_u8                  res;
 };
 
 static cmr_int cmr_grab_create_thread(cmr_handle grab_handle);
@@ -308,6 +309,7 @@ cmr_int cmr_grab_if_cfg(cmr_handle grab_handle, struct sensor_if *sn_if)
 		res.width = sn_if->sensor_width;
 		res.height = sn_if->sensor_height;
 		res.sensor_id = p_grab->init_param.sensor_id;
+		res.flag = sn_if->res[0];
 		CMR_LOGI("get dcam res w %d h %d sn id %d", res.width, res.height, res.sensor_id);
 		ret = ioctl(p_grab->fd, SPRD_IMG_IO_GET_DCAM_RES, &res);
 		CMR_RTN_IF_ERR(ret);
@@ -316,6 +318,7 @@ cmr_int cmr_grab_if_cfg(cmr_handle grab_handle, struct sensor_if *sn_if)
 			pthread_mutex_unlock(&p_grab->dcam_mutex);
 			return -1;
 		}
+		p_grab->res = res.flag;
 		p_grab->mode_enable = 1;
 	}
 	pthread_mutex_unlock(&p_grab->dcam_mutex);
@@ -678,6 +681,7 @@ cmr_int cmr_grab_cap_stop(cmr_handle grab_handle)
 	pthread_mutex_lock(&p_grab->dcam_mutex);
 	if (0 != p_grab->mode_enable) {
 		res.sensor_id = p_grab->init_param.sensor_id;
+		res.flag = p_grab->res;
 		ret = ioctl(p_grab->fd, SPRD_IMG_IO_PUT_DCAM_RES, &res);
 		CMR_RTN_IF_ERR(ret);
 		if (0 == res.flag) {

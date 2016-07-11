@@ -5157,6 +5157,11 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle, cmr_
 
 	param_ptr->sn_if.sensor_width = sensor_mode_info->width;
 	param_ptr->sn_if.sensor_height = sensor_mode_info->height;
+	if(cxt->isp_to_dram)
+		param_ptr->sn_if.res[0] = 1;
+	else
+		param_ptr->sn_if.res[0] = 0;
+
 	ret = cmr_grab_if_cfg(cxt->grab_cxt.grab_handle, &param_ptr->sn_if);
 	if (ret) {
 		CMR_LOGE("failed interface cfg %ld", ret);

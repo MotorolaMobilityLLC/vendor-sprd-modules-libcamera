@@ -559,7 +559,9 @@ private:
 	sprd_camera_memory_t*           mIspLscHeapReserved;
 	sprd_camera_memory_t*           mIspB4awbHeapReserved[kISPB4awbCount];
 	sprd_camera_memory_t*           mIspPreviewYReserved[2];
-	sprd_camera_memory_t*           mIspFirmwareReserved;
+	static sprd_camera_memory_t*     mIspFirmwareReserved;
+	static uint32_t     			mIspFirmwareReserved_cnt;
+
 	sprd_camera_memory_t*           mHighIsoSnapshotHeapReserved;
 	sprd_camera_memory_t*           mIspYUVReserved;
 	sprd_camera_memory_t*           mIspRawDataReserved;

@@ -646,6 +646,12 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 
 	isp_dev_set_capture_mode(cxt->isp_driver_handle, param_ptr->common_in.capture_mode);
 
+	ret = isp_dev_get_isp_id(cxt->isp_driver_handle, &isp_id);
+	if (ISP_SUCCESS != ret) {
+		ISP_LOGE("isp_dev_get_isp_id error %ld", ret);
+		goto exit;
+	}
+
 	memset(&tSecnarioInfo, 0, sizeof(tSecnarioInfo));
 	resolution_ptr = &param_ptr->common_in.resolution_info;
 	tSecnarioInfo.tSensorInfo.uwOriginalWidth = resolution_ptr->sensor_max_size.w;
@@ -664,7 +670,10 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	tSecnarioInfo.tScenarioOutBypassFlag.bBypassLV = 0;
 	tSecnarioInfo.tScenarioOutBypassFlag.bBypassVideo = 0;
 	tSecnarioInfo.tScenarioOutBypassFlag.bBypassStill = 0;
-	tSecnarioInfo.tScenarioOutBypassFlag.bBypassMetaData = 0;
+	if(isp_id == 0 || isp_id == 1)
+		tSecnarioInfo.tScenarioOutBypassFlag.bBypassMetaData = 0;
+	else
+		tSecnarioInfo.tScenarioOutBypassFlag.bBypassMetaData = 1;
 	if (resolution_ptr->sensor_output_size.w == resolution_ptr->sensor_max_size.w)
 		tSecnarioInfo.tSensorInfo.ucSensorMode = 0;
 	else if (resolution_ptr->sensor_output_size.w < resolution_ptr->sensor_max_size.w)
@@ -694,12 +703,6 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	if (ISP_SUCCESS != ret) {
 		ISP_LOGE("isp_dev_cfg_scenario_info error %ld", ret);
 		return -1;
-	}
-
-	ret = isp_dev_get_isp_id(cxt->isp_driver_handle, &isp_id);
-	if (ISP_SUCCESS != ret) {
-		ISP_LOGE("isp_dev_get_isp_id error %ld", ret);
-		goto exit;
 	}
 
 	/*set still image buffer format*/

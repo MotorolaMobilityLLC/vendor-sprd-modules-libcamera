@@ -130,6 +130,8 @@ bool gIsApctRead = false;
 
 gralloc_module_t const* SprdCamera3OEMIf::mGrallocHal = NULL;
 //oem_module_t   * SprdCamera3OEMIf::mHalOem = NULL;
+sprd_camera_memory_t* SprdCamera3OEMIf::mIspFirmwareReserved = NULL;
+uint32_t     		 SprdCamera3OEMIf::mIspFirmwareReserved_cnt = 0;
 
 static void writeCamInitTimeToApct(char *buf)
 {
@@ -416,7 +418,6 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mZslHeapReserved= NULL;
 	mDepthHeapReserved= NULL;
 	mIspLscHeapReserved = NULL;
-	mIspFirmwareReserved = NULL;
 	mHighIsoSnapshotHeapReserved = NULL;
 	mIspRawDataReserved = NULL;
 	mIspYUVReserved = NULL;
@@ -3841,6 +3842,7 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb,
 	}
 	case CAMERA_EVT_CB_SNAPSHOT_JPEG_DONE:
 		exitFromPostProcess();
+//		mSprdPipVivEnabled = 1;
 		if (mSprdPipVivEnabled) {
 			Sprd_camera_state tmpCapState = getCaptureState();
 			HAL_LOGD("PIP HandleTakePicture state = %d, need_free = %d",
@@ -5595,10 +5597,10 @@ int SprdCamera3OEMIf::Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint 
 	}
 
 	if (type == CAMERA_ISP_FIRMWARE) {
-		if (NULL != mIspFirmwareReserved) {
+		if (NULL != mIspFirmwareReserved && !(--mIspFirmwareReserved_cnt)) {
 			freeCameraMem(mIspFirmwareReserved);
+			mIspFirmwareReserved = NULL;
 		}
-		mIspFirmwareReserved = NULL;
 	}
 
 	if (type == CAMERA_SNAPSHOT_HIGHISO) {
@@ -5741,14 +5743,19 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32
 	} else if (type == CAMERA_ISP_FIRMWARE) {
 		cmr_u64 kaddr = 0;
 		size_t ksize = 0;
-		memory = allocCameraMem(size, 1, false);
-		if (NULL == memory) {
-			LOGE("error memory is null,malloced type %d",type);
-			goto mem_fail;
-		}
-		mIspFirmwareReserved = memory;
-		memory->ion_heap->get_kaddr(&kaddr, &ksize);
 
+		if(++mIspFirmwareReserved_cnt == 1) {
+			memory = allocCameraMem(size, 1, false);
+			if (NULL == memory) {
+				LOGE("error memory is null,malloced type %d",type);
+				goto mem_fail;
+			}
+			mIspFirmwareReserved = memory;
+		} else {
+			memory = mIspFirmwareReserved;
+		}
+		if(memory->ion_heap)
+			memory->ion_heap->get_kaddr(&kaddr, &ksize);
 		*phy_addr++ = kaddr;
 		*phy_addr++ = kaddr >> 32;
 		*vir_addr++ = (cmr_uint)memory->data;
