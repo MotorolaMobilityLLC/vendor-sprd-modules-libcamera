@@ -156,7 +156,7 @@ isp_free:
 cmr_int isp_dev_deinit(isp_handle handle)
 {
 	cmr_int                       ret = 0;
-	int fd = 0;
+	int fd = 0,  user_cnt = 0;
 	struct isp_file               *file = (struct isp_file*)handle;
 
 	if (!file) {
@@ -171,18 +171,26 @@ cmr_int isp_dev_deinit(isp_handle handle)
 		return ret;
 	}
 
+	isp_dev_get_user_cnt((isp_handle)file, &user_cnt);
+	ISP_LOGE("user_cnt %d", user_cnt);
+
 	if (file->isp_is_inited) {
 		if (-1 != file->fd) {
 			sem_wait(&file->close_sem);
 			if (-1 == close(file->fd)) {
 				ISP_LOGE("close error.");
 			}
+
+			user_cnt--;
 		} else {
 			ISP_LOGE("isp_dev_close error.");
 		}
 
-		file->init_param.free_cb(CAMERA_ISP_BINGING4AWB, file->init_param.mem_cb_handle,
-			(cmr_uint*)file->fw_mem.phy_addr, (cmr_uint*)file->fw_mem.virt_addr, &fd, file->fw_mem.num);
+
+		if (0 == user_cnt) {
+			file->init_param.free_cb(CAMERA_ISP_BINGING4AWB, file->init_param.mem_cb_handle,
+				(cmr_uint*)file->fw_mem.phy_addr, (cmr_uint*)file->fw_mem.virt_addr, &fd, file->fw_mem.num);
+		}
 	}
 
 	pthread_mutex_lock(&file->cb_mutex);
@@ -1842,6 +1850,25 @@ cmr_int isp_dev_get_isp_id(isp_handle handle, cmr_u32 *isp_id)
 	ret = ioctl(file->fd, ISP_IO_GET_ISP_ID, isp_id);
 	if (ret) {
 		ISP_LOGE("isp_dev_get_isp_id error.");
+	}
+
+	return ret;
+}
+
+cmr_int isp_dev_get_user_cnt(isp_handle handle, cmr_s32 *cnt)
+{
+	cmr_int ret = 0;
+	struct isp_file *file = NULL;
+
+	if (!handle || !cnt) {
+		ISP_LOGE("handle is null error.");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+	ret = ioctl(file->fd, ISP_IO_GET_USER_CNT, cnt);
+	if (ret) {
+		ISP_LOGE("isp_dev_get_user_cnt error.");
 	}
 
 	return ret;
