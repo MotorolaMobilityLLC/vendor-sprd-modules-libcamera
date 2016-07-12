@@ -556,7 +556,11 @@ static SENSOR_STATIC_INFO_T s_s5k3p3sm_static_info = {
 	357,	//focal_length;
 	0,	//max_fps,max fps of sensor's all settings,it will be calculated from sensor mode fps
 	16*256,	//max_adgain,AD-gain
+#if defined(CONFIG_CAMERA_OIS_FUNC)
+	1,	//ois_supported;
+#else
 	0,	//ois_supported;
+#endif
 	0,	//pdaf_supported;
 	1,	//exp_valid_frame_num;N+2-1
 	64,	//clamp_level,black level
