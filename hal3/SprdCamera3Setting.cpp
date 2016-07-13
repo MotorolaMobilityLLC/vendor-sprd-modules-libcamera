@@ -961,7 +961,7 @@ const int64_t kavailable_back_ext_stall_durations[CAMERA_SETTINGS_CONFIG_ARRAYSI
 };
 
 const float kavailable_lens_info_aperture[] = {
-	1.8, 2.2, 2.6, 2.8, 3.0
+	1.8, 2.0, 2.2, 2.6, 2.8, 3.0
 };
 
 const int32_t kavailable_back_pixer_size[2] = {
