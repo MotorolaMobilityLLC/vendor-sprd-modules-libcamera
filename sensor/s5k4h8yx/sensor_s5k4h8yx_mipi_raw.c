@@ -952,7 +952,7 @@ static SENSOR_IOCTL_FUNC_TAB_T s_s5k4h8yx_ioctl_func_tab = {
 	PNULL,
 	PNULL,
 	PNULL,
-	_s5k4h8yx_GetExifInfo,
+	PNULL,//_s5k4h8yx_GetExifInfo,
 	_s5k4h8yx_ExtFunc,
 	PNULL,//_s5k4h8yx_set_anti_flicker,
 	PNULL,//_s5k4h8yx_set_video_mode,
