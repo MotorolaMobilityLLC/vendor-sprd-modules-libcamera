@@ -1811,15 +1811,15 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId)
 	else
 		memcpy(s_setting[cameraId].controlInfo.ae_available_fps_ranges, kavailable_fps_ranges_front, sizeof(kavailable_fps_ranges_front));
 	s_setting[cameraId].controlInfo.ae_compensation_step.numerator= 1;
-	s_setting[cameraId].controlInfo.ae_compensation_step.denominator = 1;
+	s_setting[cameraId].controlInfo.ae_compensation_step.denominator = 2;
 	memcpy(s_setting[cameraId].controlInfo.available_video_stab_modes, camera3_default_info.common.availableVideoStabModes, sizeof(camera3_default_info.common.availableVideoStabModes));
 	if (cameraId == 0)
 	memcpy(s_setting[cameraId].controlInfo.max_regions, kmax_regions, sizeof(kmax_regions));
 	else
 		memcpy(s_setting[cameraId].controlInfo.max_regions, kmax_front_regions, sizeof(kmax_regions));
 	{
-		s_setting[cameraId].controlInfo.ae_compensation_range[0] = -3;
-		s_setting[cameraId].controlInfo.ae_compensation_range[1] = 3;
+		s_setting[cameraId].controlInfo.ae_compensation_range[0] = -4;
+		s_setting[cameraId].controlInfo.ae_compensation_range[1] = 4;
     }
 	{
 		//s_setting[cameraId].controlInfo.available_effects[0] = ANDROID_CONTROL_EFFECT_MODE_OFF;
