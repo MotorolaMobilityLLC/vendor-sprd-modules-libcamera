@@ -2063,7 +2063,7 @@ static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 	init_info.calib_data.macro_distance = 700;
 	init_info.calib_data.mech_top = 1023;
 	init_info.calib_data.mech_bottom = 0;
-	init_info.calib_data.lens_move_stable_time = 35;
+	init_info.calib_data.lens_move_stable_time = 20;//35
 	init_info.calib_data.extend_calib_ptr = NULL;
 	init_info.calib_data.extend_calib_data_size = 0;
 	ISP_LOGI("f_number = %f focal_lenth = %f",
