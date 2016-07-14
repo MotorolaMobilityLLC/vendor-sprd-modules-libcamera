@@ -988,6 +988,7 @@ const int32_t kavailable_test_pattern_modes[] = {
 
 const uint8_t kavailable_aberration_modes[] = {
 	ANDROID_COLOR_CORRECTION_ABERRATION_MODE_FAST,
+	ANDROID_COLOR_CORRECTION_ABERRATION_MODE_HIGH_QUALITY
 };
 
 const uint8_t kavailable_edge_modes[] = {
@@ -1001,6 +1002,7 @@ const int32_t ksensitivity_range[2] = {
 
 const uint8_t kavailable_tone_map_modes[] = {
 	ANDROID_TONEMAP_MODE_FAST,
+	ANDROID_TONEMAP_MODE_HIGH_QUALITY
 };
 
 const float kcolor_gains[] = {
