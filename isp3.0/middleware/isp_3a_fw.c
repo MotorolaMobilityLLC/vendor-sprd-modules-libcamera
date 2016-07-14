@@ -801,10 +801,7 @@ cmr_int isp3a_set_cfg_otp_info(cmr_handle isp_3a_handle)
 		iq_info.r_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_r;
 		iq_info.g_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_g;
 		iq_info.b_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_b;
-		if (cxt->bin_cxt.bin_info.lsc_otp_addr) {
-			memcpy(&iq_info.lsc[0], cxt->bin_cxt.bin_info.lsc_otp_addr, OTP_LSC_DATA_SIZE);
-			iq_info.lsc_length = OTP_LSC_DATA_SIZE;
-		}
+		iq_info.lsc_length = 0;
 	}
 	ret = isp_dev_access_set_cfg_otp_info(cxt->dev_access_handle, &iq_info);
 	if (ret)
@@ -2234,9 +2231,6 @@ cmr_int isp3a_get_info(cmr_handle isp_3a_handle, void *param_ptr)
 		otp_info->current_module_r_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_r;
 		otp_info->current_module_g_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_g;
 		otp_info->current_module_b_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_b;
-		if (cxt->bin_cxt.bin_info.lsc_otp_addr) {
-			memcpy(&otp_info->current_module_lsc[0], cxt->bin_cxt.bin_info.lsc_otp_addr, OTP_LSC_DATA_SIZE);
-		}
 	}
 	cxt->debug_data.debug_info.structure_size2 = sizeof(struct debug_info2);
 	info_ptr->size = sizeof(struct debug_info2);

@@ -460,10 +460,9 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 	isp3a_input.otp_data_slv = input_ptr->otp_data_slv;
 #endif
 	if (cxt->tuning_bin.isp_dev_bin_info.puc_shading_bin_addr
-		&& cxt->tuning_bin.isp_dev_bin_info.uw_shading_bin_size >= (114 + sizeof(struct sensor_otp_iso_awb_info) + OTP_LSC_DATA_SIZE)) {
+		&& cxt->tuning_bin.isp_dev_bin_info.uw_shading_bin_size >= (114 + sizeof(struct sensor_otp_iso_awb_info))) {
 		/*for bin otp data: shading addr offset +114*/
 		isp3a_input.bin_info.otp_data_addr = (struct sensor_otp_iso_awb_info *)(cxt->tuning_bin.isp_dev_bin_info.puc_shading_bin_addr + 114);
-		isp3a_input.bin_info.lsc_otp_addr = cxt->tuning_bin.isp_dev_bin_info.puc_shading_bin_addr + 114 + sizeof(struct sensor_otp_iso_awb_info);
 		ISP_LOGV("bin otp data iso=%d, r=%d,g=%d,b=%d",isp3a_input.bin_info.otp_data_addr->iso, isp3a_input.bin_info.otp_data_addr->gain_r,
 													isp3a_input.bin_info.otp_data_addr->gain_g, isp3a_input.bin_info.otp_data_addr->gain_b);
 	}
