@@ -1897,6 +1897,10 @@ static cmr_int afaltek_adpt_get_cur_pos(cmr_handle adpt_handle, cmr_int *pos)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+#if 1
+	*pos = cxt->motor_info.motor_pos + cxt->motor_info.motor_offset;
+	ret = ISP_SUCCESS;
+#else
 	struct allib_af_input_get_param_t p;
 
 	cmr_bzero(&p, sizeof(p));
@@ -1904,6 +1908,7 @@ static cmr_int afaltek_adpt_get_cur_pos(cmr_handle adpt_handle, cmr_int *pos)
 
 	ret = afaltek_adpt_get_parameters(cxt, &p);
 	*pos = p.u_get_data.w_current_lens_pos;
+#endif
 
 	return ret;
 }
