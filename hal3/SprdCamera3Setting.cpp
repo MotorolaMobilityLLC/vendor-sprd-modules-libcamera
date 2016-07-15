@@ -993,7 +993,8 @@ const uint8_t kavailable_aberration_modes[] = {
 
 const uint8_t kavailable_edge_modes[] = {
 	ANDROID_EDGE_MODE_OFF,
-	ANDROID_EDGE_MODE_FAST
+	ANDROID_EDGE_MODE_FAST,
+	ANDROID_EDGE_MODE_HIGH_QUALITY
 };
 
 const int32_t ksensitivity_range[2] = {
@@ -1238,6 +1239,7 @@ const uint8_t kavailable_capabilities[] = {
 const uint8_t kavailable_noise_reduction_modes[] = {
 	ANDROID_NOISE_REDUCTION_MODE_OFF,
 	ANDROID_NOISE_REDUCTION_MODE_FAST,
+	ANDROID_NOISE_REDUCTION_MODE_HIGH_QUALITY
 };
 /**********************Static Members**********************/
 
@@ -2135,7 +2137,7 @@ int SprdCamera3Setting::initStaticMetadata(int32_t cameraId, camera_metadata_t *
 	/*NOISE*/
 	staticInfo.update(ANDROID_NOISE_REDUCTION_AVAILABLE_NOISE_REDUCTION_MODES,
 			s_setting[cameraId].noiseInfo.reduction_available_noise_reduction_modes,
-			ARRAY_SIZE(s_setting[cameraId].noiseInfo.reduction_available_noise_reduction_modes) - 1);
+			ARRAY_SIZE(s_setting[cameraId].noiseInfo.reduction_available_noise_reduction_modes) );
 
 	/*SYNC*/
 	staticInfo.update(ANDROID_SYNC_MAX_LATENCY,
