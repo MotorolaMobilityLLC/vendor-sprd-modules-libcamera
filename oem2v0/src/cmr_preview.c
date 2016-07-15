@@ -168,6 +168,7 @@ struct prev_context {
 	struct img_rect                 prev_rect;
 	cmr_uint                        skip_mode;
 	cmr_uint                        prev_channel_deci;
+	cmr_uint                        prev_preflash_skip_en;
 	cmr_uint                        prev_skip_num;
 	cmr_uint                        prev_channel_id;
 	cmr_uint                        prev_channel_status;
@@ -2157,6 +2158,36 @@ cmr_int prev_preview_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
 		}
 	}
 
+	/* skip num frames for pre-flash, because the frame is black*/
+	if (prev_cxt->prev_preflash_skip_en && IMG_SKIP_SW_KER == prev_cxt->skip_mode) {
+		if (prev_cxt->prev_frm_cnt <= prev_cxt->prev_skip_num) {
+			CMR_LOGI("ignore this frame, preview cnt %ld, total skip num %ld, channed_id %d",
+				prev_cxt->prev_frm_cnt, prev_cxt->prev_skip_num, data->channel_id);
+
+			if (IMG_ANGLE_0 != prev_cxt->prev_param.prev_rot) {
+				ret = prev_set_rot_buffer_flag(prev_cxt, CAMERA_PREVIEW, rot_index, 0);
+				if (ret) {
+					CMR_LOGE("prev_set_rot_buffer_flag failed");
+					goto exit;
+				}
+				CMR_LOGI("rot_index %ld prev_rot_frm_is_lock %ld", rot_index, prev_cxt->prev_rot_frm_is_lock[rot_index]);
+				data->fd        = prev_cxt->prev_frm[0].fd;
+				data->yaddr     = prev_cxt->prev_frm[0].addr_phy.addr_y;
+				data->uaddr     = prev_cxt->prev_frm[0].addr_phy.addr_u;
+				data->vaddr     = prev_cxt->prev_frm[0].addr_phy.addr_v;
+				data->yaddr_vir = prev_cxt->prev_frm[0].addr_vir.addr_y;
+				data->uaddr_vir = prev_cxt->prev_frm[0].addr_vir.addr_u;
+				data->vaddr_vir = prev_cxt->prev_frm[0].addr_vir.addr_v;
+			}
+			ret = prev_pop_preview_buffer(handle, camera_id, data, 1);
+			if (ret) {
+				CMR_LOGE("pop frm failed");
+			}
+
+			return ret;
+		}
+	}
+
 	/*skip frame if SW skip mode*/
 	if (IMG_SKIP_SW == prev_cxt->skip_mode) {
 		if (prev_cxt->prev_frm_cnt <= prev_cxt->prev_skip_num) {
@@ -3501,6 +3532,7 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_rest
 		prev_cxt->cap_frm_cnt = 0;
 	}
 	pthread_mutex_lock(&handle->thread_cxt.prev_mutex);
+	prev_cxt->prev_preflash_skip_en = 0;
 	prev_cxt->restart_skip_cnt = 0;
 	prev_cxt->restart_skip_en  = 0;
 	prev_cxt->video_restart_skip_cnt = 0;
@@ -5946,6 +5978,7 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 	cmr_bzero(prev_cxt->prev_rot_frm_is_lock, PREV_ROT_FRM_CNT * sizeof(cmr_uint));
 	prev_cxt->prev_rot_index = 0;
 	prev_cxt->prev_frm_cnt   = 0;
+	prev_cxt->prev_preflash_skip_en = 0;
 	prev_cxt->prev_skip_num  = sensor_info->preview_skip_num;
 	prev_cxt->skip_mode      = IMG_SKIP_HW;
 
@@ -9780,7 +9813,7 @@ cmr_int prev_set_preview_skip_frame_num(cmr_handle preview_handle, cmr_u32 camer
 
 	prev_cxt = &handle->prev_cxt[camera_id];
 	prev_cxt->prev_skip_num = prev_cxt->prev_frm_cnt + skip_num;
-
+	prev_cxt->prev_preflash_skip_en = 1;
 	return ret;
 
 }
