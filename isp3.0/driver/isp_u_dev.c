@@ -420,9 +420,9 @@ static cmr_int isp_dev_kill_thread(isp_handle handle)
 static void* isp_dev_thread_proc(void *data)
 {
 	struct isp_file                  *file = NULL;
-	struct isp_statis_frame_output    statis_frame;
+	struct isp_statis_info            statis_info;
 	struct isp_statis_frame           statis_frame_buf;
-	struct isp_frm_info        img_frame;
+	struct isp_frm_info               img_frame;
 	struct isp_irq                    irq_node;
 	struct isp_irq_info               irq_info;
 	struct img_addr addr;
@@ -436,7 +436,7 @@ static void* isp_dev_thread_proc(void *data)
 	if(-1 == file->fd) {
 		return NULL;
 	}
-
+	cmr_bzero(&statis_info, sizeof(statis_info));
 	ISP_LOGI("isp dev thread in.");
 	while (1) {
 		/*Get irq*/
@@ -457,16 +457,19 @@ static void* isp_dev_thread_proc(void *data)
 			} else {
 				if(ISP_IMG_TX_DONE == irq_info.irq_flag) {
 					if (irq_info.irq_type == ISP_IRQ_STATIS) {
-						ISP_LOGI("got one frame statis vaddr 0x%lx paddr 0x%lx buf_size 0x%lx", irq_info.yaddr_vir, irq_info.yaddr, irq_info.length);
-						statis_frame.format = irq_info.format;
-						statis_frame.buf_size = irq_info.length;
-						statis_frame.phy_addr = irq_info.yaddr;
-						statis_frame.vir_addr = irq_info.yaddr_vir;
-						statis_frame.time_stamp.sec = irq_info.time_stamp.sec;
-						statis_frame.time_stamp.usec = irq_info.time_stamp.usec;
+						statis_info.statis_frame.format = irq_info.format;
+						statis_info.statis_frame.buf_size = irq_info.length;
+						statis_info.statis_frame.phy_addr = irq_info.yaddr;
+						statis_info.statis_frame.vir_addr = irq_info.yaddr_vir;
+						statis_info.statis_frame.time_stamp.sec = irq_info.time_stamp.sec;
+						statis_info.statis_frame.time_stamp.usec = irq_info.time_stamp.usec;
+						statis_info.timestamp = systemTime(CLOCK_MONOTONIC);
+						statis_info.statis_cnt++;
+						ISP_LOGI("got one frame statis vaddr 0x%lx paddr 0x%lx buf_size 0x%lx stats_cnt 0x%lx",
+							 irq_info.yaddr_vir, irq_info.yaddr, irq_info.length, statis_info.statis_cnt);
 						pthread_mutex_lock(&file->cb_mutex);
 						if(file->isp_event_cb) {
-							(*file->isp_event_cb)(ISP_DRV_STATISTICE, &statis_frame, sizeof(statis_frame), (void *)file->evt_3a_handle);
+							(*file->isp_event_cb)(ISP_DRV_STATISTICE, &statis_info, sizeof(statis_info), (void *)file->evt_3a_handle);
 						}
 						pthread_mutex_unlock(&file->cb_mutex);
 					} else if (irq_info.irq_type == ISP_IRQ_3A_SOF) {

@@ -25,6 +25,7 @@
 #include <sys/ioctl.h>
 #include <errno.h>
 #endif
+#include <utils/Timers.h>
 #include "isp_type.h"
 #include "sprd_isp_altek.h"
 #include "debug_structure.h"
@@ -62,6 +63,11 @@ struct isp_img_fd {
 	cmr_u32 v;
 };
 
+struct isp_statis_info {
+	struct isp_statis_frame_output statis_frame;
+	nsecs_t timestamp;
+	cmr_uint statis_cnt;
+};
 
 /*ISP driver API */
 cmr_int isp_dev_init(struct isp_dev_init_info *init_param_ptr, isp_handle *handle);

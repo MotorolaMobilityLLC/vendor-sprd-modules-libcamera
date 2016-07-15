@@ -3028,10 +3028,10 @@ err_handle:
 		ISP_LOGE("failed to send a message, evt is %ld", evt);
 		if (ISP_DRV_STATISTICE == evt) {
 			struct isp_statis_buf statis_buf;
-			struct isp_statis_frame_output *input_buf_ptr = (struct isp_statis_frame_output*)data;
-			statis_buf.buf_size = input_buf_ptr->buf_size;
-			statis_buf.phy_addr = input_buf_ptr->phy_addr;
-			statis_buf.vir_addr = input_buf_ptr->vir_addr;
+			struct isp_statis_info *statis_info = (struct isp_statis_info *)data;
+			statis_buf.buf_size = statis_info->statis_frame.buf_size;
+			statis_buf.phy_addr = statis_info->statis_frame.phy_addr;
+			statis_buf.vir_addr = statis_info->statis_frame.vir_addr;
 
 			ret = isp_dev_access_set_stats_buf(cxt->dev_access_handle, &statis_buf);
 			if (ret) {
@@ -3142,26 +3142,27 @@ cmr_int isp3a_put_3a_stats_buf(cmr_handle isp_3a_handle)
 cmr_int isp3a_handle_stats(cmr_handle isp_3a_handle, void *data)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context*)isp_3a_handle;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
 	struct isp_statis_buf                       statis_buf;
-	struct isp_statis_frame_output              *input_buf_ptr = (struct isp_statis_frame_output*)data;
+	struct isp_statis_info                      *statis_info = (struct isp_statis_info *)data;
 	struct isp3a_statistics_data                *ae_stats_buf_ptr = NULL;
 	struct isp3a_statistics_data                *awb_stats_buf_ptr = NULL;
 	struct isp3a_statistics_data                *af_stats_buf_ptr = NULL;
 	struct isp3a_statistics_data                *afl_stats_buf_ptr = NULL;
 	struct isp3a_statistics_data                *yhis_stats_buf_ptr = NULL;
-	struct isp_statis_frame_output              *dev_stats = (struct isp_statis_frame_output*)data;
 	struct afl_ctrl_param_in                    afl_in;
 	cmr_u32                                     is_set_stats_buf = 0;
-	cmr_int                                     isp_stats;
+	cmr_int                                     isp_stats = 0;
+	nsecs_t                                     time_end = 0;
+
 	/* get buffer */
 	ret = isp3a_get_3a_stats_buf(isp_3a_handle);
 	if (ret) {
 		ISP_LOGE("failed to get stats buf");
 		/* free stats buf to isp drv */
-		statis_buf.buf_size = input_buf_ptr->buf_size;
-		statis_buf.phy_addr = input_buf_ptr->phy_addr;
-		statis_buf.vir_addr = input_buf_ptr->vir_addr;
+		statis_buf.buf_size = statis_info->statis_frame.buf_size;
+		statis_buf.phy_addr = statis_info->statis_frame.phy_addr;
+		statis_buf.vir_addr = statis_info->statis_frame.vir_addr;
 
 		ret = isp_dev_access_set_stats_buf(cxt->dev_access_handle, &statis_buf);
 		if (ret) {
@@ -3176,22 +3177,27 @@ cmr_int isp3a_handle_stats(cmr_handle isp_3a_handle, void *data)
 	af_stats_buf_ptr = cxt->stats_buf_cxt.af_stats_buf_ptr;
 	afl_stats_buf_ptr = cxt->stats_buf_cxt.afl_stats_buf_ptr;
 	yhis_stats_buf_ptr = cxt->stats_buf_cxt.yhis_stats_buf_ptr;
-	af_stats_buf_ptr->timestamp.sec = dev_stats->time_stamp.sec;
-	af_stats_buf_ptr->timestamp.usec = dev_stats->time_stamp.usec;
+	af_stats_buf_ptr->timestamp.sec = statis_info->statis_frame.time_stamp.sec;
+	af_stats_buf_ptr->timestamp.usec = statis_info->statis_frame.time_stamp.usec;
 	ae_stats_buf_ptr->timestamp = af_stats_buf_ptr->timestamp;
 	awb_stats_buf_ptr->timestamp = af_stats_buf_ptr->timestamp;
-	isp_stats = (cmr_int)dev_stats->vir_addr;
-	ret = isp_dispatch_stats((void*)isp_stats, ae_stats_buf_ptr->addr, awb_stats_buf_ptr->addr, af_stats_buf_ptr->addr,
-							 yhis_stats_buf_ptr->addr, afl_stats_buf_ptr->addr, NULL, cxt->sof_idx);
+	isp_stats = (cmr_int)statis_info->statis_frame.vir_addr;
+	ret = isp_dispatch_stats((void*)isp_stats, ae_stats_buf_ptr->addr,
+				 awb_stats_buf_ptr->addr, af_stats_buf_ptr->addr,
+				 yhis_stats_buf_ptr->addr, afl_stats_buf_ptr->addr,
+				 NULL, cxt->sof_idx);
 	if (ret) {
 		ret = isp3a_put_3a_stats_buf(isp_3a_handle);
+		ISP_LOGE("failed to dispatch statis");
 		goto exit;
 	}
-	/* free stats buf to isp drv */
-	statis_buf.buf_size = input_buf_ptr->buf_size;
-	statis_buf.phy_addr = input_buf_ptr->phy_addr;
-	statis_buf.vir_addr = input_buf_ptr->vir_addr;
+	time_end = systemTime(CLOCK_MONOTONIC);
+	ISP_LOGI("test stats thr time_delta = %d us stats_cnt = 0x%lx", (cmr_s32)(time_end - statis_info->timestamp) / 1000, statis_info->statis_cnt);
 
+	/* free stats buf to isp drv */
+	statis_buf.buf_size = statis_info->statis_frame.buf_size;
+	statis_buf.phy_addr = statis_info->statis_frame.phy_addr;
+	statis_buf.vir_addr = statis_info->statis_frame.vir_addr;
 	ret = isp_dev_access_set_stats_buf(cxt->dev_access_handle, &statis_buf);
 	if (ret) {
 		ISP_LOGE("failed to set statis buf");
@@ -3235,9 +3241,9 @@ cmr_int isp3a_handle_stats(cmr_handle isp_3a_handle, void *data)
 exit:
 	if (0 == is_set_stats_buf) {
 		/* free stats buf to isp drv */
-		statis_buf.buf_size = input_buf_ptr->buf_size;
-		statis_buf.phy_addr = input_buf_ptr->phy_addr;
-		statis_buf.vir_addr = input_buf_ptr->vir_addr;
+		statis_buf.buf_size = statis_info->statis_frame.buf_size;
+		statis_buf.phy_addr = statis_info->statis_frame.phy_addr;
+		statis_buf.vir_addr = statis_info->statis_frame.vir_addr;
 		ret = isp_dev_access_set_stats_buf(cxt->dev_access_handle, &statis_buf);
 		if (ret) {
 			ISP_LOGE("failed to set statis buf");
@@ -3297,12 +3303,10 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 	if (ret) {
 		ISP_LOGE("failed to set ae sof");
 	}
-	ISP_LOGI("test msg 0");
 	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_GET_HW_ISO_SPEED, NULL, &ae_out);
 	if (ret) {
 		ISP_LOGE("failed to get hw_iso_speed");
 	}
-	ISP_LOGI("test msg 1");
 	cxt->ae_cxt.hw_iso_speed = ae_out.hw_iso_speed;
 	sof_cfg_info.iso_val = ae_out.hw_iso_speed;
 	time_start = systemTime(CLOCK_MONOTONIC);
@@ -3311,13 +3315,16 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 		ISP_LOGE("failed to cfg sof info");
 	}
 	time_end = systemTime(CLOCK_MONOTONIC);
-	ISP_LOGI("test msg 2 time_delta = %d us", (cmr_s32)(time_end - time_start) / 1000);
+	ISP_LOGI("test sof msg cfg time_delta = %d us", (cmr_s32)(time_end - time_start) / 1000);
 
+	time_start = time_end;
 	ret = isp_dev_access_get_exif_debug_info(cxt->dev_access_handle, exif_ptr);
 	isp_mlog(SHADING_FILE,"RPrun:%d, BPrun:%d", exif_ptr->shading_debug_info1.rp_run, exif_ptr->shading_debug_info1.bp_run);
 	isp_mlog(IRP_FILE,"contrast:%d,saturation:%d,sharpness:%d,effect:%d,mode:%d,quality:%d,sensor_id:%d,s_width:%d,s_height:%d",
 			cxt->irp_cxt.contrast,cxt->irp_cxt.saturation ,cxt->irp_cxt.sharpness,cxt->irp_cxt.effect
 			,cxt->irp_cxt.mode,cxt->irp_cxt.quality,cxt->irp_cxt.sensor_id,cxt->irp_cxt.s_width,cxt->irp_cxt.s_height);
+	time_end = systemTime(CLOCK_MONOTONIC);
+	ISP_LOGI("test sof msg exif time_delta = %d us", (cmr_s32)(time_end - time_start) / 1000);
 	return ret;
 }
 
