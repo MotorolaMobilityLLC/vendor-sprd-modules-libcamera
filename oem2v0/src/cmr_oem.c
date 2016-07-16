@@ -376,11 +376,12 @@ void camera_send_channel_data(cmr_handle oem_handle, cmr_handle receiver_handle,
 
 	camera_local_normal_snapshot_need_pause(oem_handle, &need_pause);
 	chn_bit = 1 << frm_ptr->channel_id;
-	CMR_LOGV("chn_id=%d, pre_chn_bits=%d snp_chn_bits=%d, total_num=%d",
+	CMR_LOGV("chn_id=%d, pre_chn_bits=%d snp_chn_bits=%d, total_num=%d,zsl_frame %d",
 		frm_ptr->channel_id,
 		cxt->prev_cxt.channel_bits,
 		cxt->snp_cxt.channel_bits,
-		cxt->snp_cxt.total_num);
+		cxt->snp_cxt.total_num,
+		cxt->snp_cxt.zsl_frame);
 
 	if (cxt->prev_cxt.channel_bits & chn_bit) {
 		ret = cmr_preview_receive_data(cxt->prev_cxt.preview_handle, cxt->camera_id, evt, data);
@@ -418,6 +419,7 @@ void camera_send_channel_data(cmr_handle oem_handle, cmr_handle receiver_handle,
 			if (cxt->snp_cxt.zsl_frame) {
 				cmr_copy(&cxt->snp_cxt.cur_chn_data, frm_ptr, sizeof(struct frm_info));
 				ret = cmr_preview_receive_data(cxt->prev_cxt.preview_handle, cxt->camera_id, evt, data);
+				CMR_LOGV("camera id = %d,  cur_chn_data.yaddr_vir 0x%x, yaddr_vir 0x%x",cxt->camera_id,cxt->snp_cxt.cur_chn_data.yaddr_vir,frm_ptr->yaddr_vir);
 			} else {
 			ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle, SNAPSHOT_EVT_FREE_FRM, data);
 			}
@@ -6332,6 +6334,10 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	}
 	cxt->is_refocus_mode =  setting_param.cmd_type_value;
 	CMR_LOGI("sprd refocus_enable flag %d", cxt->is_refocus_mode);
+	if(cxt->is_refocus_mode == 2 && cxt->camera_id == 2 && is_snapshot) {
+		//cxt->isp_to_dram = 1;
+		//out_param_ptr->isp_to_dram = 1;
+	}
 
 	 /*TBD need to get refocus flag*/
 	out_param_ptr->refocus_eb = cxt->is_refocus_mode;
@@ -6535,8 +6541,8 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 		CMR_LOGE("failed to get preview sprd pipviv enabled flag %ld", ret);
 		goto exit;
 	}
-	out_param_ptr->sprd_pipviv_enabled = setting_param.cmd_type_value;
-	cxt->is_pipviv_mode = setting_param.cmd_type_value;
+	out_param_ptr->sprd_pipviv_enabled = 1;//setting_param.cmd_type_value;
+	cxt->is_pipviv_mode = 1;//setting_param.cmd_type_value;
 	CMR_LOGI("sprd pipviv_enabled flag %d", out_param_ptr->sprd_pipviv_enabled);
 	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_SPRD_HIGHISO_ENABLED, &setting_param);
 	if (ret) {
@@ -6568,8 +6574,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 		}
 	}
 
-	CMR_LOGI("camera id = %d, isp_to_dram  %d", cxt->camera_id,out_param_ptr->isp_to_dram);
-
+	CMR_LOGI("cxt->is_refocus_mode %d, camera id = %d, isp_to_dram  %d", cxt->is_refocus_mode, cxt->camera_id,out_param_ptr->isp_to_dram);
 
 	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_SPRD_EIS_ENABLED, &setting_param);
 	if (ret) {

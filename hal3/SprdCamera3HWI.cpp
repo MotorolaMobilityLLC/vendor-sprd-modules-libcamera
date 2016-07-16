@@ -976,7 +976,8 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 				mPictureRequest = true;
 			}
 
-			if(capturePara.sprd_zsl_enabled == true) {
+			HAL_LOGD("sprd_zsl_enabled %d, sprd_refocus_enabled %d",capturePara.sprd_zsl_enabled,capturePara.sprd_refocus_enabled);
+			if(capturePara.sprd_zsl_enabled == true || capturePara.sprd_refocus_enabled != 0) {
 				mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_SPRD_ZSL_SNAPSHOT, mFrameNum);
 				mPictureRequest = true;
 			}

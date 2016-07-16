@@ -1380,6 +1380,11 @@ bool SprdCamera3OEMIf::setCameraPreviewDimensions()
 				capture_size.height = mCaptureHeight;
 				mCaptureMode = CAMERA_ZSL_MODE;
 			}
+			if(mRawWidth != 0 && mRawHeight != 0) {
+				capture_size.width = (cmr_u32)mRawWidth;
+				capture_size.height = (cmr_u32)mRawHeight;
+				mCaptureMode = CAMERA_ZSL_MODE;
+			}
 		}
 	} else {
 		if(mCaptureWidth != 0 && mCaptureHeight != 0) {//API 1.0 ZSL
@@ -1401,7 +1406,7 @@ bool SprdCamera3OEMIf::setCameraPreviewDimensions()
 		preview_size.width, preview_size.height,
 		video_size.width, video_size.height,
 		capture_size.width, capture_size.height);
-	HAL_LOGD("mCaptureMode %d", mCaptureMode);
+	HAL_LOGD("mCaptureMode %d mPreviewWidth %d,mPreviewHeight %d, mRawWidth =%d, mRawHeight %d,mCaptureWidth =%d,mCaptureHeight  =%d", mCaptureMode,mPreviewWidth,mPreviewHeight,mRawWidth,mRawHeight,mCaptureWidth,mCaptureHeight);
 
 	return true;
 }
@@ -2032,10 +2037,13 @@ bool SprdCamera3OEMIf::startCameraIfNecessary()
 				mSetting->getOTPTag(&otpInfo);
 				memcpy(otpInfo.otp_data,dual_otp_info.dual_otp.data_ptr,SPRD_DUAL_OTP_SIZE);
 				mSetting->setOTPTag(otpInfo);
-#if 0
-				 char *psPath_OtpData = "data/misc/media/otp.bin";
-			        save_file(psPath_OtpData, dual_otp_info.dual_otp.data_ptr, dual_otp_info.dual_otp.size);
-#endif
+
+				char value[PROPERTY_VALUE_MAX];
+				property_get("persist.sys.camera.refocus.yuv", value, "0");
+				if (!strcmp(value, "1")) {
+				char *psPath_OtpData = "data/misc/media/otp.bin";
+			    save_file(psPath_OtpData, dual_otp_info.dual_otp.data_ptr, dual_otp_info.dual_otp.size);
+				}
 				HAL_LOGD("camera_id: %d,dual_otp_info %p", mCameraId, dual_otp_info);
 			}
 		}
@@ -2328,6 +2336,7 @@ int SprdCamera3OEMIf::startPreviewInternal()
 
 	HAL_LOGV("mVideoSnapshotType=%d", mVideoSnapshotType);
 	SET_PARM(mHalOem,mCameraHandle, CAMERA_PARAM_VIDEO_SNAPSHOT_TYPE, (cmr_uint)mVideoSnapshotType);
+	HAL_LOGD("mCaptureMode=%d", mCaptureMode);
 
 	cmr_int qret = mHalOem->ops->camera_start_preview(mCameraHandle, mCaptureMode);
 
@@ -3393,19 +3402,24 @@ bool SprdCamera3OEMIf::receiveCallbackPicture(uint32_t width, uint32_t height, c
 			if(ret == NO_ERROR) {
 				if(addr_vir != NULL && virtual_addr != NULL)
 					memcpy((char *)addr_vir, (char *)virtual_addr, (width * height * 3) / 2);
-#if 0
-                                if(mCameraId  == 0)
-                                {
-					char *psPath_depthData = "data/misc/media/pic0.yvu420";
-					save_file(psPath_depthData, (void *)addr_vir, (width * height * 3) / 2);
-                                }
-                                if(mCameraId  == 2)
-                                {
-					char *psPath_depthData = "data/misc/media/pic2.yvu420";
-					save_file(psPath_depthData, (void *)addr_vir, (width * height * 3) / 2);
-                                }
-#endif
+
+				char value[PROPERTY_VALUE_MAX];
+				property_get("persist.sys.camera.refocus.yuv", value, "0");
+				if (!strcmp(value, "1")) {
+					if(mCameraId  == 0)
+					{
+						char *psPath_depthData = "data/misc/media/pic0.yvu420";
+						save_file(psPath_depthData, (void *)virtual_addr, (width * height * 3) / 2);
+					}
+					if(mCameraId  == 2)
+					{
+						char *psPath_depthData = "data/misc/media/pic2.yvu420";
+						save_file(psPath_depthData, (void *)virtual_addr, (width * height * 3) / 2);
+					}
+				}
+
 				pic_channel->channelCbRoutine(frame_num, timestamp, CAMERA_STREAM_TYPE_PICTURE_CALLBACK);
+				HAL_LOGD("channelCbRoutine pic_callback_addr_vir = 0x%lx, frame_num = %d", addr_vir, frame_num);
 
 				if(frame_num > mPictureFrameNum)
 					mPictureFrameNum = frame_num;
@@ -3457,7 +3471,7 @@ void SprdCamera3OEMIf::yuvNv12ConvertToYv12(struct camera_frame_type *frame, cha
 
 void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame)
 {
-	HAL_LOGD("E, mReDisplayHeap = %p", mReDisplayHeap);
+	HAL_LOGD("E, mReDisplayHeap = %p,frame->y_vir_addr 0x%x ", mReDisplayHeap,frame->y_vir_addr);
 	Mutex::Autolock cbLock(&mCaptureCbLock);
 	bool display_flag, callback_flag;
 
@@ -3522,8 +3536,14 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame)
 			return;
 		}
 
+		if(mSprdRefocusEnabled)
+		{
+			mReDisplayHeap->data = (void *)frame->y_vir_addr;
+		}
+
 		if(mReDisplayHeap)
 			receiveCallbackPicture(dst_width, dst_height, dst_fd, dst_paddr, (char *)mReDisplayHeap->data);
+
 		FreeReDisplayMem();
 	}
 
@@ -3933,7 +3953,7 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb,
 		mSetting->getLENSTag(&lensInfo);
 		lensInfo.aperture = aperture;
 		mSetting->setLENSTag(lensInfo);
-		if (checkPreviewStateForCapture() && (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE || mTakePictureMode == SNAPSHOT_DEFAULT_MODE)) {
+		if (checkPreviewStateForCapture() && (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE || mTakePictureMode == SNAPSHOT_DEFAULT_MODE ||mTakePictureMode == SNAPSHOT_ZSL_MODE)) {
 			receiveRawPicture((struct camera_frame_type *)parm4);
 		} else {
 			HAL_LOGW("drop current rawPicture");
@@ -4862,6 +4882,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag)
 		{
 			SPRD_DEF_Tag sprddefInfo;
 			mSetting->getSPRDDEFTag(&sprddefInfo);
+			HAL_LOGD("sprd_zsl_enabled=%d", sprddefInfo.sprd_zsl_enabled);
 			if(sprddefInfo.sprd_zsl_enabled == 0 && mRecordingMode == false) {
 				mSprdZslEnabled = false;
 				SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ZSL_ENABLED, 0);
@@ -4962,6 +4983,7 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode, uint32_t fr
 	char value2[PROPERTY_VALUE_MAX];
 	property_get("persist.sys.camera.raw.mode", value, "jpeg");
 	HAL_LOGD("cap_mode = %d",cap_mode);
+
 	switch(cap_mode)
 	{
 		case CAMERA_CAPTURE_MODE_PREVIEW:

@@ -990,6 +990,16 @@ int SprdCamera3MetadataChannel::getCapRequestPara(const CameraMetadata &metadata
 		request_para->sprd_zsl_enabled = 0;
 	}
 
+	if (metadata.exists(ANDROID_SPRD_CONTROL_REFOCUS_ENABLE)) {
+		request_para->sprd_refocus_enabled= metadata.find(ANDROID_SPRD_CONTROL_REFOCUS_ENABLE).data.u8[0];
+		HAL_LOGD("sprd_refocus_enabled %d",request_para->sprd_refocus_enabled);
+	}
+	else {
+		//request_para->sprd_refocus_enabled = 0;
+		request_para->sprd_refocus_enabled = 1; /*temp code, will check with app why not send right ANDROID_SPRD_CONTROL_REFOCUS_ENABLE meta value*/
+		HAL_LOGD("ANDROID_SPRD_CONTROL_REFOCUS_ENABLE is NULL, sprd_refocus_enabled %d",request_para->sprd_refocus_enabled);
+	}
+
 	return NO_ERROR;
 }
 

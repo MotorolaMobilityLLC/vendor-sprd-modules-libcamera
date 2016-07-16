@@ -4974,9 +4974,13 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id)
 
 	aligned_type = CAMERA_MEM_NO_ALIGNED;
 
+	if(handle->prev_cxt->prev_param.refocus_eb)
+		aligned_type = CAMERA_MEM_NO_ALIGNED;
+
 	/* w/h aligned by 16 */
 	alg_pic_size->width  = camera_get_aligned_size(aligned_type, org_pic_size->width);
 	alg_pic_size->height = camera_get_aligned_size(aligned_type, org_pic_size->height);
+
 
 	/*consider preview and capture rotation*/
 	if (IMG_ANGLE_90 == prev_rot || IMG_ANGLE_270 == prev_rot) {
@@ -7993,10 +7997,11 @@ cmr_int prev_set_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id, c
 	}
 
 exit:
-	CMR_LOGI("fd=0x%x, channel_id=0x%x, valid_num=%ld",
+	CMR_LOGI("fd=0x%x, channel_id=0x%x, valid_num=%ld camera id = %ld",
 		prev_cxt->prev_frm[valid_num].fd,
 		prev_cxt->prev_channel_id,
-		prev_cxt->prev_mem_valid_num);
+		prev_cxt->prev_mem_valid_num,
+		prev_cxt->camera_id);
 	return ret;
 }
 

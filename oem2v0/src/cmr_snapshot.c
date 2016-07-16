@@ -3710,7 +3710,13 @@ cmr_int camera_set_frame_type(cmr_handle snp_handle, struct camera_frame_type *f
 	default:
 		{
 		cmr_u32 size = cxt->req_param.post_proc_setting.actual_snp_size.width*cxt->req_param.post_proc_setting.actual_snp_size.height;
-		frame_type->y_vir_addr = mem_ptr->target_yuv.addr_vir.addr_y;
+
+		struct camera_context		   *oem_cxt = (struct camera_context*)cxt->oem_handle;
+		CMR_LOGI("oem_cxt->is_refocus_mode %ld", oem_cxt->is_refocus_mode);
+		if(oem_cxt->is_refocus_mode == 2)
+			frame_type->y_vir_addr = info->yaddr_vir;
+		else
+			frame_type->y_vir_addr = mem_ptr->target_yuv.addr_vir.addr_y;
 		frame_type->fd = mem_ptr->target_yuv.fd;
 		frame_type->y_phy_addr = mem_ptr->target_yuv.addr_phy.addr_y;
 		frame_type->uv_vir_addr = mem_ptr->target_yuv.addr_vir.addr_u;
@@ -3975,6 +3981,7 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data)
 		} else {
 			ret = snp_take_picture_done(snp_handle, chn_data_ptr);
 			snp_post_proc_done(snp_handle);
+			CMR_LOGV("is_pipviv_mode %d chn_data_ptr %p",cxt->req_param.is_pipviv_mode,chn_data_ptr);
 		}
 		goto exit;
 	}
@@ -4697,7 +4704,7 @@ cmr_int cmr_snapshot_receive_data(cmr_handle snapshot_handle, cmr_int evt, void*
 	switch (evt) {
 	case SNAPSHOT_EVT_CHANNEL_DONE:
 		malloc_len = sizeof(struct frm_info);
-		CMR_LOGI("hdr %d, video %d zsl %d", cxt->req_param.is_hdr, cxt->req_param.is_video_snapshot, cxt->req_param.is_zsl_snapshot);
+		CMR_LOGI("hdr %d, video %d zsl %d frame_info_ptr.yaddr_vir 0x%x", cxt->req_param.is_hdr, cxt->req_param.is_video_snapshot, cxt->req_param.is_zsl_snapshot,frame_info_ptr->yaddr_vir);
 		buffer_id = snp_get_buffer_id(snapshot_handle, data);
 		buffer_id += frame_info_ptr->base;
 		if (1 == cxt->req_param.is_hdr) {
