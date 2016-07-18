@@ -721,7 +721,6 @@ void camera_isp_dev_evt_cb(cmr_int evt, void *data, cmr_u32 data_len, void *priv
 	cmr_u32                         channel_id;
 	cmr_handle                      receiver_handle;
 
-	cxt->isp_to_dram = 0;
 	if (!cxt || !data || !privdata) {
 		CMR_LOGE("error param, handle 0x%lx data 0x%lx ", (cmr_uint)cxt, (cmr_uint)data);
 		return;
@@ -729,7 +728,10 @@ void camera_isp_dev_evt_cb(cmr_int evt, void *data, cmr_u32 data_len, void *priv
 
 	CMR_LOGI("handle 0x%lx", (cmr_uint)privdata);
 	//hal1.0 in high iso mode not call isp_stop_video in the process flow, so call it here to stop isp.
-	cmr_camera_isp_stop_video(cxt->prev_cxt.preview_handle, cxt->camera_id);
+	if (!cxt->isp_to_dram) {
+		cmr_camera_isp_stop_video(cxt->prev_cxt.preview_handle, cxt->camera_id);
+	}
+	cxt->isp_to_dram = 0;
 	camera_send_channel_data((cmr_handle)cxt, receiver_handle, evt, data);
 }
 

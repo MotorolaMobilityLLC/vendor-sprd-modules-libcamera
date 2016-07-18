@@ -667,13 +667,14 @@ cmr_int cmr_grab_cap_stop(cmr_handle grab_handle)
 	for (i = 0; i < CHN_MAX; i++) {
 		pthread_mutex_lock(&p_grab->path_mutex[i]);
 	}
+	if (p_grab->stream_on_cb) {
+		(*p_grab->stream_on_cb)(0, p_grab->init_param.oem_handle);
+	}
+
 	ret = ioctl(p_grab->fd, SPRD_IMG_IO_STREAM_OFF, &stream_on);
 	for (i = 0; i < CHN_MAX; i ++) {
 		p_grab->chn_status[i] = CHN_IDLE;
 		pthread_mutex_unlock(&p_grab->path_mutex[i]);
-	}
-	if (p_grab->stream_on_cb) {
-		(*p_grab->stream_on_cb)(0, p_grab->init_param.oem_handle);
 	}
 
 	pthread_mutex_lock(&p_grab->dcam_mutex);
