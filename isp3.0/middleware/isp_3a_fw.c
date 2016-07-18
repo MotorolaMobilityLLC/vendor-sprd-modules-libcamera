@@ -799,7 +799,7 @@ cmr_int isp3a_set_cfg_otp_info(cmr_handle isp_3a_handle)
 		}
 	} else if (cxt->bin_cxt.bin_info.otp_data_addr) {
 		ISP_LOGV("use bin otp data");
-		iq_info.cali_status = 1;
+		iq_info.cali_status = 0;
 		iq_info.iso = cxt->bin_cxt.bin_info.otp_data_addr->iso;
 		iq_info.r_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_r;
 		iq_info.g_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_g;
