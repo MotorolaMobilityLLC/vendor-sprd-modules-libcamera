@@ -2143,6 +2143,13 @@ void SprdCamera3OEMIf::deinitPreview()
 
 	//freePreviewMem();
 	//camera_set_preview_mem(0, 0, 0, 0);
+	//Clean the faceInfo,otherwise it will show face detect rect after startPreview
+	FACE_Tag faceInfo;
+	mSetting->getFACETag(&faceInfo);
+	if(faceInfo.face_num>0) {
+		memset(&faceInfo,0,sizeof(FACE_Tag));
+		mSetting->setFACETag(faceInfo);
+	}
 
 	HAL_LOGV("X");
 }
