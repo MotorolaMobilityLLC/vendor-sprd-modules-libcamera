@@ -4952,10 +4952,11 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id)
 	is_cfg_rot_cap = handle->prev_cxt[camera_id].prev_param.is_cfg_rot_cap;
 	sensor_info    = &handle->prev_cxt[camera_id].sensor_info;
 
-	CMR_LOGI("preview_eb %d, snapshot_eb %d, video_eb %d",
+	CMR_LOGI("preview_eb %d, snapshot_eb %d, video_eb %d, sprd_zsl_enabled %d",
 		handle->prev_cxt[camera_id].prev_param.preview_eb,
 		handle->prev_cxt[camera_id].prev_param.snapshot_eb,
-		handle->prev_cxt[camera_id].prev_param.video_eb);
+		handle->prev_cxt[camera_id].prev_param.video_eb,
+		handle->prev_cxt[camera_id].prev_param.sprd_zsl_enabled);
 
 	CMR_LOGI("camera_id %d, prev size %d %d, cap size %d %d",
 		camera_id,
@@ -4970,16 +4971,7 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id)
 		is_cfg_rot_cap,
 		cfg_cap_rot);
 
-#ifdef CONFIG_CAMERA_HAL_VERSION_1
 	aligned_type = CAMERA_MEM_NO_ALIGNED;
-#else
-	property_get("persist.sys.camera.raw.mode", value, "jpeg");
-	if (!strcmp(value, "raw")) {
-		aligned_type = CAMERA_MEM_NO_ALIGNED;
-	} else {
-		aligned_type = CAMERA_MEM_ALIGNED;
-	}
-#endif
 
 	/* w/h aligned by 16 */
 	alg_pic_size->width  = camera_get_aligned_size(aligned_type, org_pic_size->width);
