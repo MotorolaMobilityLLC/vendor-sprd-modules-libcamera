@@ -123,6 +123,7 @@ static cmr_int afctrl_config_af_stats(cmr_handle handle, void *data)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct afctrl_context *cxt = (struct afctrl_context *)handle;
+
 	ISP_LOGI("E");
 	if (cxt->cb_ops.cfg_af_stats) {
 		ret = cxt->cb_ops.cfg_af_stats(cxt->caller_handle, data);
@@ -536,8 +537,8 @@ exit:
 }
 
 cmr_int af_ctrl_ioctrl(cmr_handle handle, cmr_int cmd,
-		       struct af_ctrl_param_in * in,
-		       struct af_ctrl_param_out * out)
+		       struct af_ctrl_param_in *in,
+		       struct af_ctrl_param_out *out)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct afctrl_context *cxt = (struct afctrl_context *)handle;

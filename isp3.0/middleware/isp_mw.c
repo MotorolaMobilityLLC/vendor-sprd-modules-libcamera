@@ -61,7 +61,7 @@ struct isp_mw_context {
 };
 
 static cmr_int ispmw_create_thread(cmr_handle isp_mw_handle);
-static void ispmw_dev_evt_cb(cmr_int evt, void* data, void* privdata);
+static void ispmw_dev_evt_cb(cmr_int evt, void *data, void *privdata);
 /*************************************INTERNAK FUNCTION ***************************************/
 cmr_int ispmw_create_thread(cmr_handle isp_mw_handle)
 {
@@ -71,11 +71,10 @@ cmr_int ispmw_create_thread(cmr_handle isp_mw_handle)
 	return ret;
 }
 
-
-void ispmw_dev_evt_cb(cmr_int evt, void* data, void* privdata)
+void ispmw_dev_evt_cb(cmr_int evt, void *data, void *privdata)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct isp_mw_context                       *cxt = (struct isp_mw_context*)privdata;
+	struct isp_mw_context                       *cxt = (struct isp_mw_context *)privdata;
 
 	if (!privdata) {
 		ISP_LOGE("error,handle is NULL");
@@ -97,7 +96,7 @@ exit:
 void ispmw_dev_buf_cfg_evt_cb(cmr_handle isp_handle, isp_buf_cfg_evt_cb grab_event_cb)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct isp_mw_context                       *cxt = (struct isp_mw_context*)isp_handle;
+	struct isp_mw_context                       *cxt = (struct isp_mw_context *)isp_handle;
 
 	isp_dev_access_cfg_buf_evt_reg(cxt->isp_dev_handle, cxt->caller_handle, grab_event_cb);
 
@@ -106,7 +105,7 @@ void ispmw_dev_buf_cfg_evt_cb(cmr_handle isp_handle, isp_buf_cfg_evt_cb grab_eve
 cmr_int ispmw_parse_tuning_bin(cmr_handle isp_mw_handle)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct isp_mw_context                       *cxt = (struct isp_mw_context*)isp_mw_handle;
+	struct isp_mw_context                       *cxt = (struct isp_mw_context *)isp_mw_handle;
 
 	cxt->tuning_bin.ae_tuning_addr = NULL;
 	cxt->tuning_bin.awb_tuning_addr = NULL;
@@ -126,8 +125,10 @@ cmr_int ispmw_parse_tuning_bin(cmr_handle isp_mw_handle)
 								cxt->tuning_bin.isp_shading_size,
 								&cxt->tuning_bin.isp_dev_bin_info);
 		ISP_LOGI("shading bin %p size %d, irp bin %p size %d",
-				cxt->tuning_bin.isp_dev_bin_info.puc_shading_bin_addr,cxt->tuning_bin.isp_dev_bin_info.uw_shading_bin_size,
-				cxt->tuning_bin.isp_dev_bin_info.puc_irp_bin_addr, cxt->tuning_bin.isp_dev_bin_info.uw_irp_bin_size);
+				cxt->tuning_bin.isp_dev_bin_info.puc_shading_bin_addr,
+				cxt->tuning_bin.isp_dev_bin_info.uw_shading_bin_size,
+				cxt->tuning_bin.isp_dev_bin_info.puc_irp_bin_addr,
+				cxt->tuning_bin.isp_dev_bin_info.uw_irp_bin_size);
 	}
 	return ret;
 }
@@ -135,28 +136,28 @@ cmr_int ispmw_parse_tuning_bin(cmr_handle isp_mw_handle)
 cmr_int ispmw_get_tuning_bin(cmr_handle isp_mw_handle, const cmr_s8 *sensor_name)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct isp_mw_context                       *cxt = (struct isp_mw_context*)isp_mw_handle;
+	struct isp_mw_context                       *cxt = (struct isp_mw_context *)isp_mw_handle;
 	FILE                                        *fp = NULL;
 	cmr_u8                                      file_name[ISP_MW_FILE_NAME_LEN];
 
 	/* get 3A bin */
 	ISP_LOGI("sensor_name %s", sensor_name);
-	sprintf((void*)&file_name[0],"/system/lib/tuning/%s_3a.bin",sensor_name);
-	fp = fopen((void*)&file_name[0], "rb");
+	sprintf((void *)&file_name[0], "/system/lib/tuning/%s_3a.bin", sensor_name);
+	fp = fopen((void *)&file_name[0], "rb");
 	if (NULL == fp) {
 		ISP_LOGE("failed to open 3a tuning bin");
 		ret = -ISP_ERROR;
 		goto exit;
 	}
 	ISP_LOGV("sensor is %s", sensor_name);
-	fseek(fp,0,SEEK_END);
+	fseek(fp, 0, SEEK_END);
 	cxt->tuning_bin.isp_3a_size = ftell(fp);
 	if (0 == cxt->tuning_bin.isp_3a_size) {
 		fclose(fp);
 		ret = -ISP_ERROR;
 		goto exit;
 	}
-	fseek(fp,0,SEEK_SET);
+	fseek(fp, 0, SEEK_SET);
 	cxt->tuning_bin.isp_3a_addr = malloc(cxt->tuning_bin.isp_3a_size);
 	if (NULL == cxt->tuning_bin.isp_3a_addr) {
 		fclose(fp);
@@ -164,7 +165,7 @@ cmr_int ispmw_get_tuning_bin(cmr_handle isp_mw_handle, const cmr_s8 *sensor_name
 		ret = -ISP_ERROR;
 		goto exit;
 	}
-	if (cxt->tuning_bin.isp_3a_size != fread(cxt->tuning_bin.isp_3a_addr, 1, cxt->tuning_bin.isp_3a_size, fp)){
+	if (cxt->tuning_bin.isp_3a_size != fread(cxt->tuning_bin.isp_3a_addr, 1, cxt->tuning_bin.isp_3a_size, fp)) {
 		fclose(fp);
 		ISP_LOGE("failed to read 3a bin");
 		ret = -ISP_ERROR;
@@ -175,21 +176,21 @@ cmr_int ispmw_get_tuning_bin(cmr_handle isp_mw_handle, const cmr_s8 *sensor_name
 	memset(&file_name[0], 0, ISP_MW_FILE_NAME_LEN);
 
 	/* get Shading bin */
-	sprintf((void*)&file_name[0],"/system/lib/tuning/%s_shading.bin",sensor_name);
-	fp = fopen((void*)&file_name[0], "rb");
+	sprintf((void *)&file_name[0], "/system/lib/tuning/%s_shading.bin", sensor_name);
+	fp = fopen((void *)&file_name[0], "rb");
 	if (NULL == fp) {
 		ISP_LOGE("failed to open shading bin");
 		ret = -ISP_ERROR;
 		goto exit;
 	}
-	fseek(fp,0,SEEK_END);
+	fseek(fp, 0, SEEK_END);
 	cxt->tuning_bin.isp_shading_size = ftell(fp);
 	if (0 == cxt->tuning_bin.isp_shading_size) {
 		fclose(fp);
 		ret = -ISP_ERROR;
 		goto exit;
 	}
-	fseek(fp,0,SEEK_SET);
+	fseek(fp, 0, SEEK_SET);
 	cxt->tuning_bin.isp_shading_addr = malloc(cxt->tuning_bin.isp_shading_size);
 	if (NULL == cxt->tuning_bin.isp_shading_addr) {
 		fclose(fp);
@@ -197,7 +198,7 @@ cmr_int ispmw_get_tuning_bin(cmr_handle isp_mw_handle, const cmr_s8 *sensor_name
 		ret = -ISP_ERROR;
 		goto exit;
 	}
-	if (cxt->tuning_bin.isp_shading_size != fread(cxt->tuning_bin.isp_shading_addr, 1, cxt->tuning_bin.isp_shading_size, fp)){
+	if (cxt->tuning_bin.isp_shading_size != fread(cxt->tuning_bin.isp_shading_addr, 1, cxt->tuning_bin.isp_shading_size, fp)) {
 		fclose(fp);
 		ISP_LOGE("failed to read shading bin");
 		ret = -ISP_ERROR;
@@ -227,31 +228,31 @@ exit:
 cmr_int ispmw_get_caf_tuning_bin(cmr_handle isp_mw_handle, const cmr_s8 *sensor_name)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct isp_mw_context                       *cxt = (struct isp_mw_context*)isp_mw_handle;
+	struct isp_mw_context                       *cxt = (struct isp_mw_context *)isp_mw_handle;
 	FILE                                        *fp = NULL;
 	cmr_u8                                      file_name[ISP_MW_FILE_NAME_LEN];
 
 	/* get caf tuning bin */
-	sprintf((void*)&file_name[0],"/system/lib/tuning/%s_caf.bin",sensor_name);
-	fp = fopen((void*)&file_name[0], "rb");
+	sprintf((void *)&file_name[0], "/system/lib/tuning/%s_caf.bin", sensor_name);
+	fp = fopen((void *)&file_name[0], "rb");
 	if (NULL == fp) {
 		ISP_LOGE("failed to open caf bin");
 		goto exit;
 	}
-	fseek(fp,0,SEEK_END);
+	fseek(fp, 0, SEEK_END);
 	cxt->tuning_bin.isp_caf_size = ftell(fp);
 	if (0 == cxt->tuning_bin.isp_caf_size) {
 		fclose(fp);
 		goto exit;
 	}
-	fseek(fp,0,SEEK_SET);
+	fseek(fp, 0, SEEK_SET);
 	cxt->tuning_bin.isp_caf_addr = malloc(cxt->tuning_bin.isp_caf_size);
 	if (NULL == cxt->tuning_bin.isp_caf_addr) {
 		fclose(fp);
 		ISP_LOGE("failed to malloc");
 		goto exit;
 	}
-	if (cxt->tuning_bin.isp_caf_size != fread(cxt->tuning_bin.isp_caf_addr, 1, cxt->tuning_bin.isp_caf_size, fp)){
+	if (cxt->tuning_bin.isp_caf_size != fread(cxt->tuning_bin.isp_caf_addr, 1, cxt->tuning_bin.isp_caf_size, fp)) {
 		fclose(fp);
 		ISP_LOGE("failed to read caf bin");
 		ret = -ISP_ERROR;
@@ -276,7 +277,7 @@ exit:
 cmr_int ispmw_put_tuning_bin(cmr_handle isp_mw_handle)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct isp_mw_context                       *cxt = (struct isp_mw_context*)isp_mw_handle;
+	struct isp_mw_context                       *cxt = (struct isp_mw_context *)isp_mw_handle;
 
 	if (cxt->tuning_bin.isp_3a_addr) {
 		free(cxt->tuning_bin.isp_3a_addr);
@@ -300,32 +301,33 @@ cmr_int ispmw_put_tuning_bin(cmr_handle isp_mw_handle)
 cmr_int ispmw_get_second_tuning_bin(cmr_handle isp_mw_handle, const cmr_s8 *sensor_name)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct isp_mw_context                       *cxt = (struct isp_mw_context*)isp_mw_handle;
+	struct isp_mw_context                       *cxt = (struct isp_mw_context *)isp_mw_handle;
 	FILE                                        *fp = NULL;
 	cmr_u8                                      file_name[ISP_MW_FILE_NAME_LEN];
 
 	//get 3A bin
 	ISP_LOGI("sensor_name %s", sensor_name);
-	sprintf((void*)&file_name[0],"/system/lib/tuning/%s_3a.bin",sensor_name);
-	fp = fopen((void*)&file_name[0], "rb");
+	sprintf((void *)&file_name[0], "/system/lib/tuning/%s_3a.bin", sensor_name);
+	fp = fopen((void *)&file_name[0], "rb");
 	if (NULL == fp) {
 		goto exit;
 	}
 	ISP_LOGI("sensor is %s", sensor_name);
-	fseek(fp,0,SEEK_END);
+	fseek(fp, 0, SEEK_END);
 	cxt->tuning_bin.isp_second_3a_size = ftell(fp);
 	if (0 == cxt->tuning_bin.isp_second_3a_size) {
 		fclose(fp);
 		goto exit;
 	}
-	fseek(fp,0,SEEK_SET);
+	fseek(fp, 0, SEEK_SET);
 	cxt->tuning_bin.isp_second_3a_addr = malloc(cxt->tuning_bin.isp_second_3a_size);
 	if (NULL == cxt->tuning_bin.isp_second_3a_addr) {
 		fclose(fp);
 		ISP_LOGE("failed to malloc");
 		goto exit;
 	}
-	if (cxt->tuning_bin.isp_second_3a_size != fread(cxt->tuning_bin.isp_second_3a_addr, 1, cxt->tuning_bin.isp_second_3a_size, fp)){
+	if (cxt->tuning_bin.isp_second_3a_size !=
+	    fread(cxt->tuning_bin.isp_second_3a_addr, 1, cxt->tuning_bin.isp_second_3a_size, fp)) {
 		fclose(fp);
 		ISP_LOGE("failed to read 3a bin");
 		goto exit;
@@ -346,7 +348,7 @@ exit:
 cmr_int ispmw_put_second_tuning_bin(cmr_handle isp_mw_handle)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct isp_mw_context                       *cxt = (struct isp_mw_context*)isp_mw_handle;
+	struct isp_mw_context                       *cxt = (struct isp_mw_context *)isp_mw_handle;
 
 	if (cxt->tuning_bin.isp_second_3a_addr) {
 		free(cxt->tuning_bin.isp_second_3a_addr);
@@ -358,7 +360,7 @@ cmr_int ispmw_put_second_tuning_bin(cmr_handle isp_mw_handle)
 cmr_int ispmw_parse_second_tuning_bin(cmr_handle isp_mw_handle)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct isp_mw_context                       *cxt = (struct isp_mw_context*)isp_mw_handle;
+	struct isp_mw_context                       *cxt = (struct isp_mw_context *)isp_mw_handle;
 
 	cxt->tuning_bin.second_ae_tuning_addr = NULL;
 	cxt->tuning_bin.second_awb_tuning_addr = NULL;
@@ -392,7 +394,7 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 	}
 
 	*isp_handle = NULL;
-	cxt = (struct isp_mw_context*)malloc(sizeof(struct isp_mw_context));
+	cxt = (struct isp_mw_context *)malloc(sizeof(struct isp_mw_context));
 	if (NULL == cxt) {
 		ISP_LOGE("failed to malloc");
 		ret = ISP_ALLOC_ERROR;
@@ -400,12 +402,12 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 	}
 	cmr_bzero(cxt, sizeof(*cxt));
 
-	ret = ispmw_get_tuning_bin((cmr_handle)cxt,(const cmr_s8*)input_ptr->ex_info.name);
+	ret = ispmw_get_tuning_bin((cmr_handle)cxt, (const cmr_s8 *)input_ptr->ex_info.name);
 	if (ret) {
 		goto exit;
 	}
 	if (input_ptr->ex_info.af_supported) {
-		ret = ispmw_get_caf_tuning_bin((cmr_handle)cxt, (const cmr_s8*)input_ptr->ex_info.name);
+		ret = ispmw_get_caf_tuning_bin((cmr_handle)cxt, (const cmr_s8 *)input_ptr->ex_info.name);
 		if (ret) {
 			ISP_LOGE("get caf tuning bin error");
 			goto exit;
@@ -463,8 +465,11 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 		&& cxt->tuning_bin.isp_dev_bin_info.uw_shading_bin_size >= (114 + sizeof(struct sensor_otp_iso_awb_info))) {
 		/*for bin otp data: shading addr offset +114*/
 		isp3a_input.bin_info.otp_data_addr = (struct sensor_otp_iso_awb_info *)(cxt->tuning_bin.isp_dev_bin_info.puc_shading_bin_addr + 114);
-		ISP_LOGV("bin otp data iso=%d, r=%d,g=%d,b=%d",isp3a_input.bin_info.otp_data_addr->iso, isp3a_input.bin_info.otp_data_addr->gain_r,
-													isp3a_input.bin_info.otp_data_addr->gain_g, isp3a_input.bin_info.otp_data_addr->gain_b);
+		ISP_LOGV("bin otp data iso=%d, r=%d,g=%d,b=%d",
+			 isp3a_input.bin_info.otp_data_addr->iso,
+			 isp3a_input.bin_info.otp_data_addr->gain_r,
+			 isp3a_input.bin_info.otp_data_addr->gain_g,
+			 isp3a_input.bin_info.otp_data_addr->gain_b);
 	}
 	ret = isp_3a_fw_init(&isp3a_input, &cxt->isp_3a_handle);
 exit:
@@ -477,14 +482,14 @@ exit:
 			ret = isp_3a_fw_deinit(cxt->isp_3a_handle);
 			if (ret)
 				ISP_LOGE("isp_3a_fw_deinit fail %ld", ret);
-			free((void*)cxt);
+			free((void *)cxt);
 		}
 	} else {
 		cxt->is_inited = 1;
 		*isp_handle = (cmr_handle)cxt;
 	}
-	ISP_LOGI("done %ld",ret);
-	return ret;;
+	ISP_LOGI("done %ld", ret);
+	return ret;
 }
 
 cmr_int isp_deinit(cmr_handle isp_handle)
@@ -501,7 +506,7 @@ cmr_int isp_deinit(cmr_handle isp_handle)
 	if (ret)
 		ISP_LOGE("isp_3a_fw_deinit fail %ld", ret);
 	ispmw_put_tuning_bin((cmr_handle)cxt);
-	free((void*)cxt);
+	free((void *)cxt);
 
 	return ret;
 }
@@ -568,9 +573,9 @@ cmr_int isp_video_start(cmr_handle isp_handle, struct isp_video_start *param_ptr
 		goto exit;
 	}
 
-	ISP_LOGI("isp size:%d,%d",param_ptr->size.w, param_ptr->size.h);
-	sprintf(file_name,"imx230_mipi_raw_%d",param_ptr->size.w);
-	ret = ispmw_get_second_tuning_bin((cmr_handle)cxt,(const cmr_s8*)file_name);
+	ISP_LOGI("isp size:%d,%d", param_ptr->size.w, param_ptr->size.h);
+	sprintf(file_name, "imx230_mipi_raw_%d", param_ptr->size.w);
+	ret = ispmw_get_second_tuning_bin((cmr_handle)cxt, (const cmr_s8 *)file_name);
 	if (ret) {
 		goto exit;
 	}
@@ -682,12 +687,13 @@ cmr_int isp_proc_next(cmr_handle isp_handle, struct ipn_in_param *input_ptr, str
 	return ret;
 }
 
-cmr_int isp_cap_buff_cfg (cmr_handle isp_handle, struct isp_img_param *buf_cfg)
+cmr_int isp_cap_buff_cfg(cmr_handle isp_handle, struct isp_img_param *buf_cfg)
 {
 	cmr_int                    ret = ISP_SUCCESS;
 	struct isp_mw_context      *cxt = (struct isp_mw_context *)isp_handle;
 	cmr_u32                  i;
 	struct isp_dev_img_param parm;
+
 	memset(&parm, 0, sizeof(struct isp_dev_img_param));
 
 	if (NULL == buf_cfg || NULL == cxt->isp_dev_handle) {

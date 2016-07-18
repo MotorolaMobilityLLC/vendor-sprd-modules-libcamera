@@ -39,7 +39,7 @@ struct isp_3a_fw_init_in {
 	struct isp_lib_config awb_config;
 	struct isp_lib_config ae_config;
 	struct isp_lib_config afl_config;
-	void* sensor_lsc_golden_data;
+	void *sensor_lsc_golden_data;
 	struct isp_ops ops;
 	struct isp_sensor_ex_info ex_info;
 	struct sensor_otp_cust_info *otp_data;
@@ -93,10 +93,11 @@ struct isp_3a_cfg_param {
 struct isp_3a_get_dld_in {
 	cmr_u32 op_mode;
 };
-cmr_int isp_3a_fw_init(struct isp_3a_fw_init_in* input_ptr, cmr_handle* isp_3a_handle);
+
+cmr_int isp_3a_fw_init(struct isp_3a_fw_init_in *input_ptr, cmr_handle *isp_3a_handle);
 cmr_int isp_3a_fw_deinit(cmr_handle isp_3a_handle);
-cmr_int isp_3a_fw_capability(cmr_handle isp_3a_handle, enum isp_capbility_cmd cmd, void* param_ptr);
-cmr_int isp_3a_fw_ioctl(cmr_handle isp_3a_handle, enum isp_ctrl_cmd cmd, void* param_ptr);
+cmr_int isp_3a_fw_capability(cmr_handle isp_3a_handle, enum isp_capbility_cmd cmd, void *param_ptr);
+cmr_int isp_3a_fw_ioctl(cmr_handle isp_3a_handle, enum isp_ctrl_cmd cmd, void *param_ptr);
 cmr_int isp_3a_fw_start(cmr_handle isp_3a_handle, struct isp_video_start *param_ptr);
 cmr_int isp_3a_fw_stop(cmr_handle isp_3a_handle);
 cmr_int isp_3a_fw_receive_data(cmr_handle isp_3a_handle, cmr_int evt, void *data);

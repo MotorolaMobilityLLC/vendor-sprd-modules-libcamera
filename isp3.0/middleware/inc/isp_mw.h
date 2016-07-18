@@ -21,13 +21,13 @@
 #include "cmr_sensor_info.h"
 
 
-typedef cmr_int ( *proc_callback)(cmr_handle handle, cmr_u32 mode, void* param_ptr, cmr_u32 param_len);
+typedef cmr_int (*proc_callback)(cmr_handle handle, cmr_u32 mode, void *param_ptr, cmr_u32 param_len);
 
 #define ISP_FLASH_MAX_CELL                             40
 #define ISP_MODE_NUM_MAX                               16
 #define ISP_EVT_MASK                                   0x0000FF00
 #define ISP_CALLBACK_EVT                               0x00040000
-#define ISP_SNR_NAME_MAX_LEN							64
+#define ISP_SNR_NAME_MAX_LEN                           64
 
 /*******************************enum type*************************************************/
 enum isp_callback_cmd {
@@ -273,6 +273,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SET_PREV_YIMG,
 	ISP_CTRL_SET_PREV_YUV,
 	ISP_CTRL_SET_PREV_PDAF_RAW,
+	ISP_CTRL_GET_VCM_INFO,
 
 	/*
 	 * warning if you wanna send async msg
@@ -418,7 +419,7 @@ struct isp_ops {
 	cmr_s32 (*flash_set_time)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element);
 };
 
-struct  isp_sensor_ex_info{
+struct  isp_sensor_ex_info {
 	cmr_u32 f_num;
 	cmr_u32 focal_length;
 	cmr_u32 max_fps;
@@ -436,7 +437,7 @@ struct  isp_sensor_ex_info{
 	cmr_u32 af_supported;
 };
 
-struct isp_sensor_fps_info{
+struct isp_sensor_fps_info {
 	cmr_u32 mode;	//sensor mode
 	cmr_u32 max_fps;
 	cmr_u32 min_fps;
@@ -497,24 +498,24 @@ struct pd_raw_info {
 
 struct isp_init_param {
 	cmr_u32 camera_id;
-	void* setting_param_ptr;
+	void *setting_param_ptr;
 	struct isp_size size;
 	proc_callback ctrl_callback;
 	cmr_handle oem_handle;
 	struct isp_data_info calibration_param;
-	void* sensor_lsc_golden_data;
+	void *sensor_lsc_golden_data;
 	struct isp_ops ops;
 	struct isp_data_info mode_ptr[ISP_MODE_NUM_MAX];
 	cmr_malloc alloc_cb;
 	cmr_free   free_cb;
-	void* setting_param_list_ptr[3];//0:back,1:front,2:dual back,
+	void *setting_param_list_ptr[3];//0:back,1:front,2:dual back,
 	struct isp_sensor_ex_info ex_info;
 	struct sensor_otp_cust_info *otp_data;
 	struct sensor_data_info pdaf_otp;
 	struct sensor_pdaf_info *pdaf_info;
 #ifdef CONFIG_CAMERA_RE_FOCUS
 	struct isp_sensor_ex_info ex_info_slv;
-	void* setting_param_ptr_slv; // slave sensor
+	void *setting_param_ptr_slv; // slave sensor
 	struct sensor_otp_cust_info *otp_data_slv;
 #endif
 	cmr_u32 image_pattern;
@@ -583,7 +584,7 @@ struct isp_video_start {
 	cmr_u32 is_need_flash;
 	cmr_u32 capture_skip_num;
 	struct isp_sensor_fps_info sensor_fps;
-	void * tuning_ae_addr;
+	void *tuning_ae_addr;
 	cmr_s32 raw_buf_fd;
 	cmr_uint raw_buf_phys_addr;
 	cmr_uint raw_buf_virt_addr;
@@ -646,15 +647,14 @@ struct isp_img_param {
 	cmr_uint                   zsl_private;
 };
 
-cmr_int  isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle);
-cmr_int  isp_deinit(cmr_handle isp_handle);
-cmr_int  isp_capability(cmr_handle isp_handle, enum isp_capbility_cmd cmd, void *param_ptr);
-cmr_int  isp_ioctl(cmr_handle isp_handle, enum isp_ctrl_cmd cmd, void *param_ptr);
-cmr_int  isp_video_start(cmr_handle isp_handle, struct isp_video_start *param_ptr);
-cmr_int  isp_video_stop(cmr_handle isp_handle);
-cmr_int  isp_proc_start(cmr_handle isp_handle, struct ips_in_param *input_ptr, struct ips_out_param *output_ptr);
-cmr_int  isp_proc_next(cmr_handle isp_handle, struct ipn_in_param *input_ptr, struct ips_out_param *output_ptr);
-cmr_int  isp_cap_buff_cfg (cmr_handle isp_handle, struct isp_img_param *buf_cfg);
+cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle);
+cmr_int isp_deinit(cmr_handle isp_handle);
+cmr_int isp_capability(cmr_handle isp_handle, enum isp_capbility_cmd cmd, void *param_ptr);
+cmr_int isp_ioctl(cmr_handle isp_handle, enum isp_ctrl_cmd cmd, void *param_ptr);
+cmr_int isp_video_start(cmr_handle isp_handle, struct isp_video_start *param_ptr);
+cmr_int isp_video_stop(cmr_handle isp_handle);
+cmr_int isp_proc_start(cmr_handle isp_handle, struct ips_in_param *input_ptr, struct ips_out_param *output_ptr);
+cmr_int isp_proc_next(cmr_handle isp_handle, struct ipn_in_param *input_ptr, struct ips_out_param *output_ptr);
+cmr_int isp_cap_buff_cfg (cmr_handle isp_handle, struct isp_img_param *buf_cfg);
 void ispmw_dev_buf_cfg_evt_cb(cmr_handle isp_handle, isp_buf_cfg_evt_cb grab_event_cb);
 #endif
-

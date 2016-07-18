@@ -60,7 +60,7 @@ cmr_int isp_dev_access_init(struct isp_dev_init_in *input_ptr, cmr_handle *isp_d
 	struct isp_dev_access_context          *cxt = NULL;
 	struct isp_dev_init_info               input;
 	struct isp_init_mem_param              load_input;
-	cmr_int                                fw_size =0;
+	cmr_int                                fw_size = 0;
 	cmr_u32                                fw_buf_num = 1;
 
 	if (!input_ptr || !isp_dev_handle) {
@@ -70,7 +70,7 @@ cmr_int isp_dev_access_init(struct isp_dev_init_in *input_ptr, cmr_handle *isp_d
 	}
 
 	*isp_dev_handle = NULL;
-	cxt = (struct isp_dev_access_context*)malloc(sizeof(struct isp_dev_access_context));
+	cxt = (struct isp_dev_access_context *)malloc(sizeof(struct isp_dev_access_context));
 	if (NULL == cxt) {
 		ISP_LOGE("failed to malloc");
 		ret = ISP_ALLOC_ERROR;
@@ -93,7 +93,7 @@ cmr_int isp_dev_access_init(struct isp_dev_init_in *input_ptr, cmr_handle *isp_d
 	input.irp_bin_size = input_ptr->irp_bin_size;
 	memcpy(&cxt->input_param, input_ptr, sizeof(struct isp_dev_init_in));
 
-	ret= isp_dev_init(&input, &cxt->isp_driver_handle);
+	ret = isp_dev_init(&input, &cxt->isp_driver_handle);
 	if (ret) {
 		ISP_LOGE("failed to dev initialized");
 	}
@@ -107,7 +107,7 @@ exit:
 	if (ret) {
 		if (cxt) {
 			isp_dev_deinit(cxt->isp_driver_handle);
-			free((void*)cxt);
+			free((void *)cxt);
 		}
 	} else {
 		cxt->is_inited = 1;
@@ -119,21 +119,21 @@ exit:
 cmr_int isp_dev_access_deinit(cmr_handle isp_dev_handle)
 {
 	cmr_int                                ret = ISP_SUCCESS;
-	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context*)isp_dev_handle;
+	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
 	ISP_CHECK_HANDLE_VALID(isp_dev_handle);
 
 	ret = isp_dev_deinit(cxt->isp_driver_handle);
-	free((void*)cxt);
+	free((void *)cxt);
 	ISP_LOGI("done %ld", ret);
 	return ret;
 }
 
-cmr_int isp_dev_access_capability(cmr_handle isp_dev_handle, enum isp_capbility_cmd cmd, void* param_ptr)
+cmr_int isp_dev_access_capability(cmr_handle isp_dev_handle, enum isp_capbility_cmd cmd, void *param_ptr)
 {
 	cmr_int                                ret = ISP_SUCCESS;
-	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context*)isp_dev_handle;;
-	struct isp_video_limit                 *limit = (struct isp_video_limit*)param_ptr;
+	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	struct isp_video_limit                 *limit = (struct isp_video_limit *)param_ptr;
 	struct isp_img_size                    size = {0, 0};
 
 	limit->width = 0;
@@ -157,7 +157,7 @@ cmr_int isp_dev_access_capability(cmr_handle isp_dev_handle, enum isp_capbility_
 			limit->height = (cmr_u16)size.height;
 		}
 		break;
-    case ISP_REG_VAL:
+	case ISP_REG_VAL:
 		ISP_LOGI("don't support");
 		break;
 	default:
@@ -336,7 +336,7 @@ cmr_int isp_dev_access_set_brightness(cmr_handle isp_dev_handle, union isp_dev_c
 	cmr_int                                ret = ISP_SUCCESS;
 	cmr_u32                                mode = 0;
 	struct isp_brightness_gain             brightness_gain;
-	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context*)isp_dev_handle;
+	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
 	brightness_gain.uw_gain[0] = ISP_BRITNESS_GAIN_0;
 	brightness_gain.uw_gain[1] = ISP_BRITNESS_GAIN_1;
@@ -375,9 +375,9 @@ cmr_int _isp_dev_access_set_ccm(cmr_handle isp_dev_handle, union isp_dev_ctrl_cm
 	cmr_int                                ret = ISP_SUCCESS;
 	cmr_u32                                i = 0, len = MIN(IQ_CCM_INFO, CCM_TABLE_LEN);
 	struct isp_iq_ccm_info                 ccm_info;
-	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context*)isp_dev_handle;
+	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
-	for ( i= 0 ; i<len ; i++) {
+	for (i = 0; i < len; i++) {
 		ccm_info.ad_ccm[i] = input_ptr->ccm_table[i];
 	}
 	ret = isp_dev_cfg_ccm(cxt->isp_driver_handle, &ccm_info);
@@ -389,7 +389,7 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, enum isp_dev_access_ctrl
 {
 	cmr_int                                ret = ISP_SUCCESS;
 	cmr_u32                                value = 0;
-	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context*)isp_dev_handle;
+	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
 	ISP_CHECK_HANDLE_VALID(isp_dev_handle);
 
@@ -476,6 +476,7 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, enum isp_dev_access_ctrl
 static void isp_dev_access_set_af_hw_cfg(struct af_cfg_info *af_cfg_info, struct isp3a_af_hw_cfg *af_hw_cfg)
 {
 	cmr_s32 i = 0;
+
 	memcpy(af_cfg_info, af_hw_cfg, sizeof(struct af_cfg_info));
 
 	ISP_LOGV("token_id = %d", af_hw_cfg->token_id);
@@ -486,21 +487,21 @@ static void isp_dev_access_set_af_hw_cfg(struct af_cfg_info *af_cfg_info, struct
 		af_hw_cfg->af_region.uw_offset_ratio_x, af_hw_cfg->af_region.uw_offset_ratio_y);
 	ISP_LOGV("enable_af_lut = %d", af_hw_cfg->enable_af_lut);
 
-	for (i = 0; i <259; i++)
-	    ISP_LOGV("auw_lut[%d] = %d", i, af_hw_cfg->auw_lut[i]);
-	for (i = 0; i <259; i++)
-	    ISP_LOGV("auw_af_lut[%d] = %d", i, af_hw_cfg->auw_af_lut[i]);
-	for (i = 0; i <6; i++)
-	    ISP_LOGV("auc_weight[%d] = %d", i, af_hw_cfg->auc_weight[i]);
+	for (i = 0; i < 259; i++)
+		ISP_LOGV("auw_lut[%d] = %d", i, af_hw_cfg->auw_lut[i]);
+	for (i = 0; i < 259; i++)
+		ISP_LOGV("auw_af_lut[%d] = %d", i, af_hw_cfg->auw_af_lut[i]);
+	for (i = 0; i < 6; i++)
+		ISP_LOGV("auc_weight[%d] = %d", i, af_hw_cfg->auc_weight[i]);
 
 	ISP_LOGV("uw_sh = %d", af_hw_cfg->uw_sh);
 	ISP_LOGV("uc_th_mode = %d", af_hw_cfg->uc_th_mode);
-	for (i = 0; i <82; i++)
-	    ISP_LOGV("auc_index[%d] = %d", i, af_hw_cfg->auc_index[i]);
-	for (i = 0; i <4; i++)
-	    ISP_LOGV("auw_th[%d] = %d", i, af_hw_cfg->auw_th[i]);
-	for (i = 0; i <4; i++)
-	    ISP_LOGV("pw_tv[%d] = %d", i, af_hw_cfg->pw_tv[i]);
+	for (i = 0; i < 82; i++)
+		ISP_LOGV("auc_index[%d] = %d", i, af_hw_cfg->auc_index[i]);
+	for (i = 0; i < 4; i++)
+		ISP_LOGV("auw_th[%d] = %d", i, af_hw_cfg->auw_th[i]);
+	for (i = 0; i < 4; i++)
+		ISP_LOGV("pw_tv[%d] = %d", i, af_hw_cfg->pw_tv[i]);
 	ISP_LOGV("ud_af_offset = %d", af_hw_cfg->ud_af_offset);
 	ISP_LOGV("af_py_enable= %d", af_hw_cfg->af_py_enable);
 	ISP_LOGV("af_lpf_enable = %d", af_hw_cfg->af_lpf_enable);
@@ -548,10 +549,10 @@ void isp_dev_access_convert_awb_param(struct isp3a_awb_hw_cfg *data, struct awb_
 	awb_param->awb_region.border_ratio_y = data->region.border_ratio_Y;
 	awb_param->awb_region.offset_ratio_x = data->region.offset_ratio_X;
 	awb_param->awb_region.offset_ratio_y = data->region.offset_ratio_Y;
-	for (i=0 ; i<16 ; i++) {
+	for (i = 0; i < 16; i++) {
 		awb_param->y_factor[i] = data->uc_factor[i];
 	}
-	for (i=0 ; i<33 ; i++) {
+	for (i = 0; i < 33; i++) {
 		awb_param->bbr_factor[i] = data->bbr_factor[i];
 	}
 	awb_param->r_gain = data->uw_rgain;
@@ -585,11 +586,11 @@ void isp_dev_access_convert_awb_param(struct isp3a_awb_hw_cfg *data, struct awb_
 		uw_bgain = %d\n, uw_rgain = %d\n, uw_ggain = %d\n",
 		awb_param->quantize, awb_param->sum_shift, awb_param->b_linear_gain, awb_param->r_linear_gain,
 		awb_param->b_gain, awb_param->g_gain, awb_param->r_gain);
-	for (i=0 ; i<16 ; i++) {
+	for (i = 0; i < 16; i++) {
 		ISP_LOGV("uc_factor[%d] = %d\n", i, awb_param->y_factor[i]);
 	}
-	for (i=0 ; i<33 ; i++) {
-		ISP_LOGV("bbr_factor[%d] = %d\n",i, awb_param->bbr_factor[i]);
+	for (i = 0; i < 33; i++) {
+		ISP_LOGV("bbr_factor[%d] = %d\n", i, awb_param->bbr_factor[i]);
 	}
 	ISP_LOGV("region:blk_num_X = %d, blk_num_Y = %d\n, border_ratio_X = %d, border_ratio_Y = %d\n,\
 		offset_ratio_X = %d, offset_ratio_Y = %d\n",
@@ -608,7 +609,7 @@ void isp_dev_access_convert_awb_param(struct isp3a_awb_hw_cfg *data, struct awb_
 
 }
 #define FPGA_TEST     1
-cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_dev_access_start_in* param_ptr)
+cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_dev_access_start_in *param_ptr)
 {
 	cmr_int                                ret = ISP_SUCCESS;
 	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
@@ -666,7 +667,7 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 		tSecnarioInfo.tScenarioOutBypassFlag.bBypassVideo = 1;
 		tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutWidth = 960;//cxt->input_param.init_param.size.w;
 		tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutHeight = 720;//cxt->input_param.init_param.size.h;
-		ISP_LOGI("BayerSCL w %d h %d\n",tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutWidth,
+		ISP_LOGI("BayerSCL w %d h %d\n", tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutWidth,
 			 tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutHeight);
 	} else {
 		tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutWidth = 0;
@@ -678,7 +679,7 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 		tSecnarioInfo.tSensorInfo.udLineTime, tSecnarioInfo.tSensorInfo.uwFrameRate,
 		tSecnarioInfo.tSensorInfo.uwClampLevel, tSecnarioInfo.tSensorInfo.nColorOrder,
 		tSecnarioInfo.tSensorInfo.ucSensorMode);
-	ISP_LOGI("sensor out %d %d %d %d %d %d",tSecnarioInfo.tSensorInfo.uwCropStartX,
+	ISP_LOGI("sensor out %d %d %d %d %d %d", tSecnarioInfo.tSensorInfo.uwCropStartX,
 		tSecnarioInfo.tSensorInfo.uwCropStartY, tSecnarioInfo.tSensorInfo.uwCropEndX,
 		tSecnarioInfo.tSensorInfo.uwCropEndY, tSecnarioInfo.tSensorInfo.uwOriginalWidth,
 		tSecnarioInfo.tSensorInfo.uwOriginalHeight);
@@ -703,7 +704,7 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 		img_buf_param.img_id = ISP_IMG_STILL_CAPTURE;
 	}
 	img_buf_param.format = ISP_OUT_IMG_YUY2;
-	if(ISP_CAP_MODE_HIGHISO == param_ptr->common_in.capture_mode
+	if (ISP_CAP_MODE_HIGHISO == param_ptr->common_in.capture_mode
 		|| ISP_CAP_MODE_DRAM == param_ptr->common_in.capture_mode) {
 		img_buf_param.format = ISP_OUT_IMG_NV12;
 	}
@@ -711,9 +712,9 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	img_buf_param.buf_num = 4;
 	img_buf_param.width = cxt->input_param.init_param.size.w;
 	img_buf_param.height = cxt->input_param.init_param.size.h;
-	if(ISP_OUT_IMG_YUY2 == img_buf_param.format)
+	if (ISP_OUT_IMG_YUY2 == img_buf_param.format)
 		img_buf_param.line_offset = (2 * cxt->input_param.init_param.size.w);
-	else if(ISP_OUT_IMG_NV12 == img_buf_param.format)
+	else if (ISP_OUT_IMG_NV12 == img_buf_param.format)
 		img_buf_param.line_offset = (cxt->input_param.init_param.size.w);
 	img_buf_param.addr[0].chn0 = 0x2FFFFFFF;
 	img_buf_param.addr[1].chn0 = 0x2FFFFFFF;
@@ -726,8 +727,8 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	// SubSample
 	cfg3a_info.subsample_info.token_id = 0x100;
 	cfg3a_info.subsample_info.buffer_image_size = 1158*870;
-	cfg3a_info.subsample_info.offset_ratio_x =0;
-	cfg3a_info.subsample_info.offset_ratio_y =0;
+	cfg3a_info.subsample_info.offset_ratio_x = 0;
+	cfg3a_info.subsample_info.offset_ratio_y = 0;
 
 	// Yhis configuration:
 	cfg3a_info.yhis_info.token_id = 0x120;
@@ -795,7 +796,7 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	awb_gain_info.b = param_ptr->hw_cfg.awb_gain_balanced.b;
 	ret = isp_dev_cfg_awb_gain_balanced(cxt->isp_driver_handle, &awb_gain_info);
 
-	if(ISP_CAP_MODE_HIGHISO == param_ptr->common_in.capture_mode) {
+	if (ISP_CAP_MODE_HIGHISO == param_ptr->common_in.capture_mode) {
 		/*set still image buffer format*/
 		memset(&img_buf_param, 0, sizeof(img_buf_param));
 
@@ -857,15 +858,15 @@ cmr_int isp_dev_access_stop_multiframe(cmr_handle isp_dev_handle)
 	return ret;
 }
 
-cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_postproc_in* input_ptr, struct isp_dev_postproc_out* output_ptr)
+cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_postproc_in *input_ptr, struct isp_dev_postproc_out *output_ptr)
 {
 	cmr_int                                ret = ISP_SUCCESS;
 	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 	SCENARIO_INFO_AP                       scenario_in;
-	struct cfg_3a_info                             cfg_info;
+	struct cfg_3a_info                     cfg_info;
 	struct isp_cfg_img_param               img_param;
 	struct isp_awb_gain_info               awb_gain;
-	struct dld_sequence                            dldseq;
+	struct dld_sequence                    dldseq;
 	struct isp_cfg_img_param               img_buf_param;
 	cmr_u32                                iso_gain = 0;
 	cmr_u32                                cap_mode = 0;
@@ -1041,8 +1042,8 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 #ifdef FPGA_TEST
 	cfg_info.subsample_info.token_id = 0x100;
 	cfg_info.subsample_info.buffer_image_size = 320*240;
-	cfg_info.subsample_info.offset_ratio_x =0;
-	cfg_info.subsample_info.offset_ratio_y =0;
+	cfg_info.subsample_info.offset_ratio_x = 0;
+	cfg_info.subsample_info.offset_ratio_y = 0;
 	cfg_info.yhis_info.token_id = 0x120;
 	cfg_info.yhis_info.yhis_region.border_ratio_x = 100;
 	cfg_info.yhis_info.yhis_region.border_ratio_y = 100;
@@ -1127,8 +1128,8 @@ exit:
 	return ret;
 }
 
- cmr_int isp_dev_access_cap_buf_cfg(cmr_handle isp_dev_handle, struct isp_dev_img_param *parm)
- {
+cmr_int isp_dev_access_cap_buf_cfg(cmr_handle isp_dev_handle, struct isp_dev_img_param *parm)
+{
 	cmr_int                                ret = ISP_SUCCESS;
 	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 	struct isp_img_mem                     img_mem;
@@ -1157,7 +1158,7 @@ exit:
 
 	return ret;
 
- }
+}
 
 void isp_dev_access_evt_reg(cmr_handle isp_dev_handle, isp_evt_cb isp_event_cb, void *privdata)
 {
@@ -1192,10 +1193,10 @@ cmr_int isp_dev_access_cfg_awb_param(cmr_handle isp_dev_handle, struct isp3a_awb
 	awb_param.awb_region.border_ratio_y = data->region.border_ratio_Y;
 	awb_param.awb_region.offset_ratio_x = data->region.offset_ratio_X;
 	awb_param.awb_region.offset_ratio_y = data->region.offset_ratio_Y;
-	for (i=0 ; i</*AWB_UCYFACTOR_NUM*/16 ; i++) {
+	for (i = 0; i < /*AWB_UCYFACTOR_NUM*/16 ; i++) {
 		awb_param.y_factor[i] = data->uc_factor[i];
 	}
-	for (i=0 ; i < 33 ; i++) {
+	for (i = 0; i < 33; i++) {
 		awb_param.bbr_factor[i] = data->bbr_factor[i];
 	}
 	awb_param.r_gain = data->uw_rgain;
@@ -1229,11 +1230,11 @@ cmr_int isp_dev_access_cfg_awb_param(cmr_handle isp_dev_handle, struct isp3a_awb
 		uw_bgain = %d\n, uw_rgain = %d\n, uw_ggain = %d\n",
 		awb_param.quantize, awb_param.sum_shift, awb_param.b_linear_gain, awb_param.r_linear_gain,
 		awb_param.b_gain, awb_param.r_gain, awb_param.g_gain);
-	for (i=0 ; i<16 ; i++) {
+	for (i = 0; i < 16; i++) {
 		ISP_LOGV("uc_factor[%d] = %d\n", i, awb_param.y_factor[i]);
 	}
-	for (i=0 ; i<33 ; i++) {
-		ISP_LOGV("bbr_factor[%d] = %d\n",i, awb_param.bbr_factor[i]);
+	for (i = 0; i < 33; i++) {
+		ISP_LOGV("bbr_factor[%d] = %d\n", i, awb_param.bbr_factor[i]);
 	}
 /*
 	ISP_LOGV("region:blk_num_X = %d, blk_num_Y = %d\n, border_ratio_X = %d, border_ratio_Y = %d\n,\
@@ -1289,6 +1290,7 @@ cmr_int isp_dev_access_set_stats_buf(cmr_handle isp_dev_handle, struct isp_stati
 {
 	cmr_int                                ret = ISP_SUCCESS;
 	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+
 	ISP_LOGI("s");
 	ret = isp_dev_set_statis_buf(cxt->isp_driver_handle, buf);
 
@@ -1299,10 +1301,10 @@ cmr_int isp_dev_access_cfg_af_param(cmr_handle isp_dev_handle, struct isp3a_af_h
 {
 	cmr_int                                ret = ISP_SUCCESS;
 	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-	struct af_cfg_info                              af_param;
+	struct af_cfg_info                     af_param;
 
-	memcpy(&af_param, data, sizeof(struct af_cfg_info ));
-	ret = isp_dev_cfg_af_param(cxt->isp_driver_handle, &af_param);//TBD
+	memcpy(&af_param, data, sizeof(struct af_cfg_info));
+	ret = isp_dev_cfg_af_param(cxt->isp_driver_handle, &af_param);
 
 	return ret;
 }
@@ -1323,7 +1325,7 @@ cmr_int isp_dev_access_get_exif_debug_info(cmr_handle isp_dev_handle, struct deb
 
 	ret = isp_dev_get_iq_param(cxt->isp_driver_handle, exif_info, NULL);
 
-	ISP_LOGI("done %ld" ,ret);
+	ISP_LOGI("done %ld", ret);
 	return ret;
 }
 
@@ -1339,7 +1341,7 @@ cmr_int isp_dev_access_set_cfg_otp_info(cmr_handle isp_dev_handle, struct isp_iq
 
 	ret = isp_dev_cfg_otp_info(cxt->isp_driver_handle, data);
 
-	ISP_LOGI("done %ld" ,ret);
+	ISP_LOGI("done %ld", ret);
 	return ret;
 }
 
@@ -1350,7 +1352,7 @@ cmr_int isp_dev_access_get_debug_info(cmr_handle isp_dev_handle, struct debug_in
 
 	ret = isp_dev_get_iq_param(cxt->isp_driver_handle, NULL, debug_info);
 
-	ISP_LOGI("done %ld" ,ret);
+	ISP_LOGI("done %ld", ret);
 	return ret;
 }
 

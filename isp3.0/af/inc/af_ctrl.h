@@ -151,15 +151,15 @@ struct af_ctrl_motor_pos {
 };
 
 struct af_ctrl_cb_ops_type {
-	cmr_int (*set_pos) (cmr_handle caller_handle,
-			   struct af_ctrl_motor_pos * in);
-	cmr_int (*start_notify) (cmr_handle caller_handle, void *data);
-	cmr_int (*end_notify) (cmr_handle caller_handle,
-			      struct af_result_param * data);
-	cmr_int (*lock_ae_awb) (cmr_handle caller_handle, void *lock);
+	cmr_int (*set_pos)(cmr_handle caller_handle,
+			   struct af_ctrl_motor_pos *in);
+	cmr_int (*start_notify)(cmr_handle caller_handle, void *data);
+	cmr_int (*end_notify)(cmr_handle caller_handle,
+			      struct af_result_param *data);
+	cmr_int (*lock_ae_awb)(cmr_handle caller_handle, void *lock);
 	cmr_int (*cfg_af_stats)(cmr_handle caller_handle, void *data);
-	cmr_int (*get_system_time) (cmr_handle caller_handler, cmr_u32 * sec_ptr,
-				   cmr_u32 * usec_ptr);
+	cmr_int (*get_system_time)(cmr_handle caller_handler, cmr_u32 *sec_ptr,
+				   cmr_u32 *usec_ptr);
 };
 
 enum af_ctrl_lib_product_id {
@@ -251,7 +251,7 @@ struct af_ctrl_sof_info {
 };
 
 struct af_ctrl_debug_info_t {
-	void* addr;
+	void *addr;
 	cmr_u32 size;
 };
 
@@ -298,7 +298,7 @@ struct af_ctrl_process_out {
 };
 
 cmr_int af_ctrl_init(struct af_ctrl_init_in *in,
-		     struct af_ctrl_init_out *out, cmr_handle * handle);
+		     struct af_ctrl_init_out *out, cmr_handle *handle);
 
 cmr_int af_ctrl_deinit(cmr_handle handle);
 

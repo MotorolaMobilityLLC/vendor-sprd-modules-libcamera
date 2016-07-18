@@ -94,15 +94,16 @@ struct isp_dev_init_in {
 	cmr_handle mem_cb_handle;
 	struct isp_init_param init_param;
 	uint32 shading_bin_size;
-	uint8* shading_bin_addr;
+	uint8 *shading_bin_addr;
 	uint32 irp_bin_size;
-	uint8* irp_bin_addr;
+	uint8 *irp_bin_addr;
 };
 
 struct dev_time {
 	cmr_u32 sec;
 	cmr_u32 usec;
 };
+
 union isp_dev_ctrl_cmd_in {
 	cmr_u32 value;
 	cmr_s32 ccm_table[CCM_TABLE_LEN];
@@ -138,10 +139,10 @@ struct isp_dev_img_param {
 cmr_int isp_dev_access_init(struct isp_dev_init_in *input_ptr, cmr_handle *isp_dev_handle);
 cmr_int isp_dev_access_deinit(cmr_handle isp_dev_handle);
 cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, enum isp_dev_access_ctrl_cmd cmd, union isp_dev_ctrl_cmd_in *input_ptr, union isp_dev_ctrl_cmd_out *output_ptr);
-cmr_int isp_dev_access_capability(cmr_handle isp_dev_handle, enum isp_capbility_cmd cmd, void* param_ptr);
-cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_dev_access_start_in* param_ptr);
+cmr_int isp_dev_access_capability(cmr_handle isp_dev_handle, enum isp_capbility_cmd cmd, void *param_ptr);
+cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_dev_access_start_in *param_ptr);
 cmr_int isp_dev_access_stop_multiframe(cmr_handle isp_dev_handle);
-cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_postproc_in* input_ptr, struct isp_dev_postproc_out* output_ptr);
+cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_postproc_in *input_ptr, struct isp_dev_postproc_out *output_ptr);
 void isp_dev_access_evt_reg(cmr_handle isp_dev_handle, isp_evt_cb isp_event_cb, void *privdata);
 cmr_int isp_dev_access_cfg_awb_param(cmr_handle isp_dev_handle, struct isp3a_awb_hw_cfg *data);
 cmr_int isp_dev_access_cfg_awb_gain(cmr_handle isp_dev_handle, struct isp_awb_gain *data);
