@@ -19,7 +19,7 @@
 #include "cmr_msg.h"
 #include "ae_ctrl.h"
 #include "ae_adpt.h"
-#include "ae_altek_adpt.h"
+#include "isp_adpt.h"
 
 #define AECTRL_MSG_QUEUE_SIZE      100
 #define AECTRL_EVT_BASE            0x2000
@@ -54,7 +54,7 @@ struct aectrl_cxt {
 	struct ae_ctrl_init_in init_in_param;
 };
 
-static cmr_int aectrl_deinit_adpt(struct aectrl_cxt *cxt_ptr )
+static cmr_int aectrl_deinit_adpt(struct aectrl_cxt *cxt_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct aectrl_work_lib *lib_ptr = NULL;
@@ -75,7 +75,7 @@ exit:
 	return ret;
 }
 
-static cmr_int aectrl_ioctrl(struct aectrl_cxt *cxt_ptr, enum ae_ctrl_cmd cmd, struct ae_ctrl_param_in *in_ptr,struct ae_ctrl_param_out *out_ptr)
+static cmr_int aectrl_ioctrl(struct aectrl_cxt *cxt_ptr, enum ae_ctrl_cmd cmd, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct aectrl_work_lib *lib_ptr = NULL;
@@ -111,7 +111,7 @@ static cmr_int aectrl_process(struct aectrl_cxt *cxt_ptr, struct ae_ctrl_proc_in
 		ISP_LOGI("ioctrl fun is NULL");
 	}
 exit:
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGV("done %ld", ret);
 	return ret;
 }
 
@@ -136,10 +136,10 @@ static cmr_int aectrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 	case AECTRL_EVT_EXIT:
 		break;
 	case AECTRL_EVT_IOCTRL:
-		ret = aectrl_ioctrl(cxt_ptr, (enum ae_ctrl_cmd)message->sub_msg_type, (struct ae_ctrl_param_in*)message->data, &cxt_ptr->ioctrl_out);
+		ret = aectrl_ioctrl(cxt_ptr, (enum ae_ctrl_cmd)message->sub_msg_type, (struct ae_ctrl_param_in *)message->data, &cxt_ptr->ioctrl_out);
 		break;
 	case AECTRL_EVT_PROCESS:
-		ret = aectrl_process(cxt_ptr, (struct ae_ctrl_proc_in*)message->data, &cxt_ptr->proc_out);
+		ret = aectrl_process(cxt_ptr, (struct ae_ctrl_proc_in *)message->data, &cxt_ptr->proc_out);
 		break;
 	default:
 		ISP_LOGE("don't support msg");
@@ -246,7 +246,7 @@ cmr_int ae_ctrl_init(struct ae_ctrl_init_in *in_ptr, struct ae_ctrl_init_out *ou
 	}
 
 	*handle = NULL;
-	cxt_ptr = (struct aectrl_cxt*)malloc(sizeof(*cxt_ptr));
+	cxt_ptr = (struct aectrl_cxt *)malloc(sizeof(*cxt_ptr));
 	if (NULL == cxt_ptr) {
 		ISP_LOGE("failed to create ae ctrl context!");
 		ret = ISP_ALLOC_ERROR;
@@ -275,7 +275,7 @@ error_adpt_init:
 	aectrl_destroy_thread(cxt_ptr);
 exit:
 	if (cxt_ptr) {
-		free((void*)cxt_ptr);
+		free((void *)cxt_ptr);
 	}
 	return ret;
 }
@@ -283,7 +283,7 @@ exit:
 cmr_int ae_ctrl_deinit(cmr_handle handle)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handle;
+	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handle;
 	CMR_MSG_INIT(message);
 
 	ISP_CHECK_HANDLE_VALID(handle);
@@ -305,7 +305,7 @@ cmr_int ae_ctrl_deinit(cmr_handle handle)
 
 	aectrl_destroy_thread(cxt_ptr);
 	pthread_mutex_destroy(&cxt_ptr->ioctrl_out_mutex);
-	free((void*)handle);
+	free((void *)handle);
 exit:
 	ISP_LOGI("done %ld", ret);
 	return ret;
@@ -314,7 +314,7 @@ exit:
 cmr_int ae_ctrl_ioctrl(cmr_handle handle, enum ae_ctrl_cmd cmd, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handle;
+	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handle;
 	CMR_MSG_INIT(message);
 
 	ISP_CHECK_HANDLE_VALID(handle);
@@ -345,7 +345,7 @@ cmr_int ae_ctrl_ioctrl(cmr_handle handle, enum ae_ctrl_cmd cmd, struct ae_ctrl_p
 	} else {
 		message.sync_flag = CMR_MSG_SYNC_PROCESSED;
 		message.alloc_flag = 0;
-		message.data = (void*)in_ptr;
+		message.data = (void *)in_ptr;
 	}
 
 	pthread_mutex_lock(&cxt_ptr->ioctrl_out_mutex);
@@ -371,7 +371,7 @@ exit:
 cmr_int ae_ctrl_process(cmr_handle handle, struct ae_ctrl_proc_in *in_ptr, struct ae_ctrl_proc_out *out_ptr)
 {
 	cmr_int ret = ISP_ERROR;
-	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handle;
+	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handle;
 	CMR_MSG_INIT(message);
 
 	ISP_CHECK_HANDLE_VALID(handle);

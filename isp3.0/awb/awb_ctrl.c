@@ -34,7 +34,7 @@
 
 
 /************************************* INTERNAL DATA TYPE ***************************************/
-typedef cmr_int (*awb_ioctrl_fun)(cmr_handle awb_ctrl_handle, void* input_ptr, void *output_ptr);
+typedef cmr_int (*awb_ioctrl_fun)(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr);
 
 struct awbctrl_thread_context {
 	cmr_handle ctrl_thr_handle;
@@ -62,15 +62,14 @@ struct awbctrl_context {
 	sem_t sync_sm;
 };
 
-struct awbctrl_ioctrl_fun
-{
+struct awbctrl_ioctrl_fun {
 	enum awb_ctrl_cmd cmd;
 	awb_ioctrl_fun ioctrl;
 };
 
 /************************************** LOCAL FUNCTION** ***************************************/
 static cmr_int awbctrl_create_thread(cmr_handle awb_ctrl_handle);
-static cmr_int awbctrl_ctrl_thread_proc(struct cmr_msg *message, void* p_data);
+static cmr_int awbctrl_ctrl_thread_proc(struct cmr_msg *message, void *p_data);
 static cmr_int awbctrl_destroy_thread(cmr_handle awb_ctrl_handle);
 static cmr_int awbctrl_get_lib_inf(cmr_handle awb_ctrl_handle);
 static cmr_int awbctrl_init_lib(cmr_handle awb_ctrl_handle);
@@ -132,18 +131,20 @@ static struct awbctrl_ioctrl_fun s_awbctrl_func[AWB_CTRL_CMD_MAX+1] = {
 	{AWB_CTRL_CMD_SET_AF_REPORT, awbctrl_set_af_info},
 	{AWB_CTRL_CMD_GET_EXIF_DEBUG_INFO, awbctrl_get_exif_debug_info},
 	{AWB_CTRL_CMD_GET_DEBUG_INFO, awbctrl_get_debug_info},
-	{AWB_CTRL_CMD_MAX,NULL}
+	{AWB_CTRL_CMD_MAX, NULL},
 };
 
 /*************************************INTERNAL FUNCTION ***************************************/
 cmr_int awbctrl_create_thread(cmr_handle awb_ctrl_handle)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 
-	ret = cmr_thread_create(&cxt->thread_cxt.ctrl_thr_handle, AWBCTRL_MSG_QUEUE_SIZE,
-							awbctrl_ctrl_thread_proc, (void*)awb_ctrl_handle);
-	ISP_LOGV("0x%lx", (cmr_uint)cxt->thread_cxt.ctrl_thr_handle);
+	ret = cmr_thread_create(&cxt->thread_cxt.ctrl_thr_handle,
+				AWBCTRL_MSG_QUEUE_SIZE,
+				awbctrl_ctrl_thread_proc,
+				(void *)awb_ctrl_handle);
+	ISP_LOGV("%p", cxt->thread_cxt.ctrl_thr_handle);
 	if (CMR_MSG_SUCCESS != ret) {
 		ISP_LOGE("failed to create main thread");
 		ret = ISP_ERROR;
@@ -152,11 +153,11 @@ cmr_int awbctrl_create_thread(cmr_handle awb_ctrl_handle)
 	return ret;
 }
 
-cmr_int awbctrl_ctrl_thread_proc(struct cmr_msg *message, void* p_data)
+cmr_int awbctrl_ctrl_thread_proc(struct cmr_msg *message, void *p_data)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	cmr_handle                                  awb_ctrl_handle = (cmr_handle)p_data;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 
 	if (!message || !p_data) {
 		ISP_LOGE("param error");
@@ -172,10 +173,10 @@ cmr_int awbctrl_ctrl_thread_proc(struct cmr_msg *message, void* p_data)
 	case AWBCTRL_EVT_EXIT:
 		break;
 	case AWBCTRL_EVT_IOCTRL:
-		ret = awbctrl_ioctrl(awb_ctrl_handle, message->sub_msg_type, message->data, (void*)&(cxt->ioctrl_out));
+		ret = awbctrl_ioctrl(awb_ctrl_handle, message->sub_msg_type, message->data, (void *)&(cxt->ioctrl_out));
 		break;
 	case AWBCTRL_EVT_PROCESS:
-		ret = awbctrl_process(awb_ctrl_handle, message->data, (void*)&(cxt->process_out));
+		ret = awbctrl_process(awb_ctrl_handle, message->data, (void *)&(cxt->process_out));
 		break;
 	default:
 		ISP_LOGI("don't support msg");
@@ -189,7 +190,7 @@ exit:
 cmr_int awbctrl_destroy_thread(cmr_handle awb_ctrl_handle)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 	struct awbctrl_thread_context               *awb_thread_cxt;
 
 	if (!awb_ctrl_handle) {
@@ -214,11 +215,11 @@ exit:
 cmr_int awbctrl_init_lib(cmr_handle awb_ctrl_handle)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 	struct awb_ctrl_init_out                    output_param;
 
 	if (cxt->awb_adpt_ops->adpt_init) {
-		ret = cxt->awb_adpt_ops->adpt_init((void*)&cxt->input_param, (void*)&output_param, &cxt->lib_handle);
+		ret = cxt->awb_adpt_ops->adpt_init((void *)&cxt->input_param, (void *)&output_param, &cxt->lib_handle);
 		if (!ret) {
 			cxt->cur_gain = output_param.gain;
 			cxt->cur_ct = output_param.ct;
@@ -234,7 +235,7 @@ cmr_int awbctrl_init_lib(cmr_handle awb_ctrl_handle)
 cmr_int awbctrl_deinit_lib(cmr_handle awb_ctrl_handle)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 
 	if (cxt->awb_adpt_ops->adpt_deinit) {
 		ret = cxt->awb_adpt_ops->adpt_deinit(cxt->lib_handle);
@@ -263,7 +264,7 @@ cmr_int awbctrl_ioctrl(cmr_handle awb_ctrl_handle, enum awb_ctrl_cmd cmd, void *
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	awb_ioctrl_fun                              ioctrl_fun = NULL;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 
 	ioctrl_fun = awbctrl_get_ioctrl_fun(cmd);
 	if (NULL != ioctrl_fun) {
@@ -278,7 +279,7 @@ exit:
 cmr_int awbctrl_process(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 
 	if (cxt->awb_adpt_ops->adpt_process) {
 		ret = cxt->awb_adpt_ops->adpt_process(cxt->lib_handle, input_ptr, output_ptr);
@@ -289,7 +290,7 @@ cmr_int awbctrl_process(cmr_handle awb_ctrl_handle, void *input_ptr, void *outpu
 cmr_int awbctrl_set_scenemode(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 
 	if (cxt->awb_adpt_ops->adpt_ioctrl) {
 		ret = cxt->awb_adpt_ops->adpt_ioctrl(cxt->lib_handle, AWB_CTRL_CMD_SET_SCENE_MODE, input_ptr, output_ptr);
@@ -301,7 +302,7 @@ cmr_int awbctrl_set_scenemode(cmr_handle awb_ctrl_handle, void *input_ptr, void 
 cmr_int awbctrl_set_wbmode(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 
 	if (cxt->awb_adpt_ops->adpt_ioctrl) {
 		ret = cxt->awb_adpt_ops->adpt_ioctrl(cxt->lib_handle, AWB_CTRL_CMD_SET_WB_MODE, input_ptr, output_ptr);
@@ -313,7 +314,7 @@ cmr_int awbctrl_set_wbmode(cmr_handle awb_ctrl_handle, void *input_ptr, void *ou
 cmr_int awbctrl_set_flashmode(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 
 	if (cxt->awb_adpt_ops->adpt_ioctrl) {
 		ret = cxt->awb_adpt_ops->adpt_ioctrl(cxt->lib_handle, AWB_CTRL_CMD_SET_FLASH_MODE, input_ptr, output_ptr);
@@ -325,7 +326,7 @@ cmr_int awbctrl_set_flashmode(cmr_handle awb_ctrl_handle, void *input_ptr, void 
 cmr_int awbctrl_set_workmode(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 
 	if (cxt->awb_adpt_ops->adpt_ioctrl) {
 		ret = cxt->awb_adpt_ops->adpt_ioctrl(cxt->lib_handle, AWB_CTRL_CMD_SET_WORK_MODE, input_ptr, output_ptr);
@@ -337,7 +338,7 @@ cmr_int awbctrl_set_workmode(cmr_handle awb_ctrl_handle, void *input_ptr, void *
 cmr_int awbctr_set_workmode(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 
 	if (cxt->awb_adpt_ops->adpt_ioctrl) {
 		ret = cxt->awb_adpt_ops->adpt_ioctrl(cxt->lib_handle, AWB_CTRL_CMD_SET_WORK_MODE, input_ptr, output_ptr);
@@ -349,7 +350,7 @@ cmr_int awbctr_set_workmode(cmr_handle awb_ctrl_handle, void *input_ptr, void *o
 cmr_int awbctrl_set_faceinfo(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 
 	if (cxt->awb_adpt_ops->adpt_ioctrl) {
 		ret = cxt->awb_adpt_ops->adpt_ioctrl(cxt->lib_handle, AWB_CTRL_CMD_SET_FACE_INFO, input_ptr, output_ptr);
@@ -361,7 +362,7 @@ cmr_int awbctrl_set_faceinfo(cmr_handle awb_ctrl_handle, void *input_ptr, void *
 cmr_int awbctrl_set_dzoom(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 
 	if (cxt->awb_adpt_ops->adpt_ioctrl) {
 		ret = cxt->awb_adpt_ops->adpt_ioctrl(cxt->lib_handle, AWB_CTRL_CMD_SET_DZOOM_FACTOR, input_ptr, output_ptr);
@@ -373,7 +374,7 @@ cmr_int awbctrl_set_dzoom(cmr_handle awb_ctrl_handle, void *input_ptr, void *out
 cmr_int awbctrl_set_sof_frame_idx(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 
 	if (cxt->awb_adpt_ops->adpt_ioctrl) {
 		ret = cxt->awb_adpt_ops->adpt_ioctrl(cxt->lib_handle, AWB_CTRL_CMD_SET_SOF_FRAME_IDX, input_ptr, output_ptr);
@@ -385,7 +386,7 @@ cmr_int awbctrl_set_sof_frame_idx(cmr_handle awb_ctrl_handle, void *input_ptr, v
 cmr_int awbctrl_set_bypass(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 
 	if (cxt->awb_adpt_ops->adpt_ioctrl) {
 		ret = cxt->awb_adpt_ops->adpt_ioctrl(cxt->lib_handle, AWB_CTRL_CMD_SET_BYPASS, input_ptr, output_ptr);
@@ -397,7 +398,7 @@ cmr_int awbctrl_set_bypass(cmr_handle awb_ctrl_handle, void *input_ptr, void *ou
 cmr_int awbctrl_get_gain(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 
 	if (cxt->awb_adpt_ops->adpt_ioctrl) {
 		ret = cxt->awb_adpt_ops->adpt_ioctrl(cxt->lib_handle, AWB_CTRL_CMD_GET_GAIN, input_ptr, output_ptr);
@@ -409,7 +410,7 @@ cmr_int awbctrl_get_gain(cmr_handle awb_ctrl_handle, void *input_ptr, void *outp
 cmr_int awbctrl_set_flash_open_p(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 
 	if (cxt->awb_adpt_ops->adpt_ioctrl) {
 		ret = cxt->awb_adpt_ops->adpt_ioctrl(cxt->lib_handle, AWB_CTRL_CMD_FLASH_OPEN_P, input_ptr, output_ptr);
@@ -421,7 +422,7 @@ cmr_int awbctrl_set_flash_open_p(cmr_handle awb_ctrl_handle, void *input_ptr, vo
 cmr_int awbctrl_set_flash_open_m(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 
 	if (cxt->awb_adpt_ops->adpt_ioctrl) {
 		ret = cxt->awb_adpt_ops->adpt_ioctrl(cxt->lib_handle, AWB_CTRL_CMD_FLASH_OPEN_M, input_ptr, output_ptr);
@@ -433,7 +434,7 @@ cmr_int awbctrl_set_flash_open_m(cmr_handle awb_ctrl_handle, void *input_ptr, vo
 cmr_int awbctrl_set_flashing(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 
 	if (cxt->awb_adpt_ops->adpt_ioctrl) {
 		ret = cxt->awb_adpt_ops->adpt_ioctrl(cxt->lib_handle, AWB_CTRL_CMD_FLASHING, input_ptr, output_ptr);
@@ -445,7 +446,7 @@ cmr_int awbctrl_set_flashing(cmr_handle awb_ctrl_handle, void *input_ptr, void *
 cmr_int awbctrl_set_flash_close(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 
 	if (cxt->awb_adpt_ops->adpt_ioctrl) {
 		ret = cxt->awb_adpt_ops->adpt_ioctrl(cxt->lib_handle, AWB_CTRL_CMD_FLASH_CLOSE, input_ptr, output_ptr);
@@ -459,7 +460,7 @@ cmr_int awbctrl_set_flash_close(cmr_handle awb_ctrl_handle, void *input_ptr, voi
 static cmr_int awbctrl_set_lock(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 
 	ISP_LOGI("lock_flag %d %d", cxt->lock_flag, cxt->lock_num);
 
@@ -481,7 +482,7 @@ exit:
 static cmr_int awbctrl_set_unlock(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 
 	ISP_LOGI("lock_flag %d %d", cxt->lock_flag, cxt->lock_num);
 
@@ -507,7 +508,7 @@ exit:
 cmr_int awbctrl_get_ct(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 
 	if (cxt->awb_adpt_ops->adpt_ioctrl) {
 		ret = cxt->awb_adpt_ops->adpt_ioctrl(cxt->lib_handle, AWB_CTRL_CMD_GET_CT, input_ptr, output_ptr);
@@ -519,7 +520,7 @@ cmr_int awbctrl_get_ct(cmr_handle awb_ctrl_handle, void *input_ptr, void *output
 cmr_int awbctrl_set_flash_before_p(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 
 	if (cxt->awb_adpt_ops->adpt_ioctrl) {
 		ret = cxt->awb_adpt_ops->adpt_ioctrl(cxt->lib_handle, AWB_CTRL_CMD_FLASH_BEFORE_P, input_ptr, output_ptr);
@@ -531,7 +532,7 @@ cmr_int awbctrl_set_flash_before_p(cmr_handle awb_ctrl_handle, void *input_ptr, 
 cmr_int awbctrl_set_flash_status(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 
 	if (cxt->awb_adpt_ops->adpt_ioctrl) {
 		ret = cxt->awb_adpt_ops->adpt_ioctrl(cxt->lib_handle, AWB_CTRL_CMD_SET_FLASH_STATUS, input_ptr, output_ptr);
@@ -543,7 +544,7 @@ cmr_int awbctrl_set_flash_status(cmr_handle awb_ctrl_handle, void *input_ptr, vo
 cmr_int awbctrl_set_ae_info(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 
 	if (cxt->awb_adpt_ops->adpt_ioctrl) {
 		ret = cxt->awb_adpt_ops->adpt_ioctrl(cxt->lib_handle, AWB_CTRL_CMD_SET_AE_REPORT, input_ptr, output_ptr);
@@ -555,7 +556,7 @@ cmr_int awbctrl_set_ae_info(cmr_handle awb_ctrl_handle, void *input_ptr, void *o
 cmr_int awbctrl_set_af_info(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 
 	if (cxt->awb_adpt_ops->adpt_ioctrl) {
 		ret = cxt->awb_adpt_ops->adpt_ioctrl(cxt->lib_handle, AWB_CTRL_CMD_SET_AF_REPORT, input_ptr, output_ptr);
@@ -567,7 +568,7 @@ cmr_int awbctrl_set_af_info(cmr_handle awb_ctrl_handle, void *input_ptr, void *o
 cmr_int awbctrl_get_exif_debug_info(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 
 	if (cxt->awb_adpt_ops->adpt_ioctrl) {
 		ret = cxt->awb_adpt_ops->adpt_ioctrl(cxt->lib_handle, AWB_CTRL_CMD_GET_EXIF_DEBUG_INFO, input_ptr, output_ptr);
@@ -579,7 +580,7 @@ cmr_int awbctrl_get_exif_debug_info(cmr_handle awb_ctrl_handle, void *input_ptr,
 cmr_int awbctrl_get_debug_info(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_ctrl_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
 
 	if (cxt->awb_adpt_ops->adpt_ioctrl) {
 		ret = cxt->awb_adpt_ops->adpt_ioctrl(cxt->lib_handle, AWB_CTRL_CMD_GET_DEBUG_INFO, input_ptr, output_ptr);
@@ -594,13 +595,13 @@ cmr_int awb_ctrl_init(struct awb_ctrl_init_in *input_ptr, struct awb_ctrl_init_o
 	struct awbctrl_context                      *cxt = NULL;
 
 	if (!input_ptr || !output_ptr || !awb_handle) {
-		ISP_LOGE("init param is null, input_ptr is 0x%lx, output_ptr is 0x%lx",(cmr_uint)input_ptr, (cmr_uint)output_ptr);
+		ISP_LOGE("init param is null, input_ptr is %p, output_ptr is %p", input_ptr, output_ptr);
 		ret = ISP_PARAM_NULL;
 		goto exit;
 	}
 
 	*awb_handle = NULL;
-	cxt = (struct awbctrl_context*)malloc(sizeof(*cxt));
+	cxt = (struct awbctrl_context *)malloc(sizeof(*cxt));
 	if (NULL == cxt) {
 		ISP_LOGE("failed to create awb ctrl context!");
 		ret = ISP_ALLOC_ERROR;
@@ -656,7 +657,7 @@ exit:
 cmr_int awb_ctrl_deinit(cmr_handle awb_handle)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_handle;
 
 	ISP_CHECK_HANDLE_VALID(awb_handle);
 
@@ -678,7 +679,7 @@ cmr_int awb_ctrl_deinit(cmr_handle awb_handle)
 #endif
 	sem_destroy(&cxt->sync_sm);
 	cmr_bzero(cxt, sizeof(*cxt));
-	free((void*)awb_handle);
+	free((void *)awb_handle);
 exit:
 	ISP_LOGI("done %ld", ret);
 	return ret;
@@ -687,14 +688,14 @@ exit:
 cmr_int awb_ctrl_ioctrl(cmr_handle awb_handle, enum awb_ctrl_cmd cmd, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_handle;
 #ifdef USE_THREAD
 	CMR_MSG_INIT(message);
 #endif
 	ISP_CHECK_HANDLE_VALID(awb_handle);
 
 	if ((cmd >= AWB_CTRL_CMD_MAX) || (0 == cxt->is_inited)) {
-		ISP_LOGI("input param is error 0x%lx", (cmr_uint)input_ptr);
+		ISP_LOGI("input param is error %p", input_ptr);
 		goto exit;
 	}
 #ifdef USE_THREAD
@@ -702,7 +703,7 @@ cmr_int awb_ctrl_ioctrl(cmr_handle awb_handle, enum awb_ctrl_cmd cmd, union awb_
 	message.sub_msg_type = cmd;
 	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
 	message.alloc_flag = 0;
-	message.data = (void*)input_ptr;
+	message.data = (void *)input_ptr;
 	ret = cmr_thread_msg_send(cxt->thread_cxt.ctrl_thr_handle, &message);
 	if (ret) {
 		ISP_LOGE("failed to send msg to main thr %ld", ret);
@@ -717,18 +718,18 @@ cmr_int awb_ctrl_ioctrl(cmr_handle awb_handle, enum awb_ctrl_cmd cmd, union awb_
 		sem_post(&cxt->sync_sm);
 		goto exit;
 	}
-	ret = awbctrl_ioctrl(awb_handle, cmd, (void*)input_ptr, (void*)output_ptr);
+	ret = awbctrl_ioctrl(awb_handle, cmd, (void *)input_ptr, (void *)output_ptr);
 	sem_post(&cxt->sync_sm);
 #endif
 exit:
-	ISP_LOGI("cmd = %d,done %ld", cmd, ret);
+	ISP_LOGV("cmd = %d, done %ld", cmd, ret);
 	return ret;
 }
 
 cmr_int awb_ctrl_process(cmr_handle awb_handle, struct awb_ctrl_process_in *input_ptr, struct awb_ctrl_process_out *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct awbctrl_context                      *cxt = (struct awbctrl_context*)awb_handle;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_handle;
 #ifdef USE_THREAD
 	CMR_MSG_INIT(message);
 #endif
@@ -736,14 +737,14 @@ cmr_int awb_ctrl_process(cmr_handle awb_handle, struct awb_ctrl_process_in *inpu
 	ISP_CHECK_HANDLE_VALID(awb_handle);
 
 	if (!input_ptr || !output_ptr || (0 == cxt->is_inited)) {
-		ISP_LOGI("input param is error 0x%lx", (cmr_uint)input_ptr);
+		ISP_LOGI("input param is error %p", input_ptr);
 		goto exit;
 	}
 #ifdef USE_THREAD
 	message.msg_type = AWBCTRL_EVT_PROCESS;
 	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
 	message.alloc_flag = 0;
-	message.data = (void*)input_ptr;
+	message.data = (void *)input_ptr;
 	ret = cmr_thread_msg_send(cxt->thread_cxt.ctrl_thr_handle, &message);
 	if (ret) {
 		ISP_LOGE("failed to send msg to main thr %ld", ret);
@@ -756,10 +757,10 @@ cmr_int awb_ctrl_process(cmr_handle awb_handle, struct awb_ctrl_process_in *inpu
 		sem_post(&cxt->sync_sm);
 		goto exit;
 	}
-	ret = awbctrl_process(awb_handle, (void*)input_ptr, (void*)output_ptr);
+	ret = awbctrl_process(awb_handle, (void *)input_ptr, (void *)output_ptr);
 	sem_post(&cxt->sync_sm);
 #endif
 exit:
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGV("done %ld", ret);
 	return ret;
 }

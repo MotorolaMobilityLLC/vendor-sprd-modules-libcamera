@@ -93,7 +93,7 @@ static cmr_int adpt_get_awb_ops(struct isp_lib_config *lib_info,
 	return ret;
 }
 
-struct adpt_register_type * lsc_adpt_reg_table[2]; /* TBD */
+struct adpt_register_type *lsc_adpt_reg_table[2]; /* TBD */
 static cmr_int adpt_get_lsc_ops(struct isp_lib_config *lib_info,
 				struct adpt_ops_type **ops)
 {

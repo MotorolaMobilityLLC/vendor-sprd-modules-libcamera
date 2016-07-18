@@ -19,7 +19,7 @@
 #include "cmr_msg.h"
 #include "afl_ctrl.h"
 #include "afl_adpt.h"
-#include "afl_altek_adpt.h"
+#include "isp_adpt.h"
 
 #define AFLCTRL_MSG_QUEUE_SIZE      100
 #define AFLCTRL_EVT_BASE            0x2000
@@ -54,7 +54,7 @@ struct aflctrl_cxt {
 	struct afl_ctrl_init_in init_in_param;
 };
 
-static cmr_int aflctrl_deinit_adpt(struct aflctrl_cxt *cxt )
+static cmr_int aflctrl_deinit_adpt(struct aflctrl_cxt *cxt)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct aflctrl_work_lib *lib_ptr = NULL;
@@ -75,7 +75,7 @@ exit:
 	return ret;
 }
 
-static cmr_int aflctrl_ioctrl(struct aflctrl_cxt *cxt, enum afl_ctrl_cmd cmd, struct afl_ctrl_param_in *in_ptr,struct afl_ctrl_param_out *out_ptr)
+static cmr_int aflctrl_ioctrl(struct aflctrl_cxt *cxt, enum afl_ctrl_cmd cmd, struct afl_ctrl_param_in *in_ptr, struct afl_ctrl_param_out *out_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct aflctrl_work_lib *lib_ptr = NULL;
@@ -91,7 +91,7 @@ static cmr_int aflctrl_ioctrl(struct aflctrl_cxt *cxt, enum afl_ctrl_cmd cmd, st
 		ISP_LOGI("ioctrl fun is NULL");
 	}
 exit:
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGV("done %ld", ret);
 	return ret;
 }
 
@@ -124,7 +124,7 @@ static cmr_int aflctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 		ISP_LOGE("param error");
 		goto exit;
 	}
-	ISP_LOGI("message.msg_type 0x%x, data %p", message->msg_type,
+	ISP_LOGV("message.msg_type 0x%x, data %p", message->msg_type,
 		 message->data);
 
 	switch (message->msg_type) {
@@ -136,17 +136,17 @@ static cmr_int aflctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 	case AFLCTRL_EVT_EXIT:
 		break;
 	case AFLCTRL_EVT_IOCTRL:
-		ret = aflctrl_ioctrl(cxt, (enum afl_ctrl_cmd)message->sub_msg_type, (struct afl_ctrl_param_in*)message->data, &cxt->ioctrl_out);
+		ret = aflctrl_ioctrl(cxt, (enum afl_ctrl_cmd)message->sub_msg_type, (struct afl_ctrl_param_in *)message->data, &cxt->ioctrl_out);
 		break;
 	case AFLCTRL_EVT_PROCESS:
-		ret = aflctrl_process(cxt, (struct afl_ctrl_proc_in*)message->data, &cxt->proc_out);
+		ret = aflctrl_process(cxt, (struct afl_ctrl_proc_in *)message->data, &cxt->proc_out);
 		break;
 	default:
 		ISP_LOGE("don't support msg");
 		break;
 	}
 exit:
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGV("done %ld", ret);
 	return ret;
 }
 
@@ -250,7 +250,7 @@ cmr_int afl_ctrl_init(struct afl_ctrl_init_in *in_ptr, struct afl_ctrl_init_out 
 	}
 
 	*handle = NULL;
-	cxt = (struct aflctrl_cxt*)malloc(sizeof(*cxt));
+	cxt = (struct aflctrl_cxt *)malloc(sizeof(*cxt));
 	if (NULL == cxt) {
 		ISP_LOGE("failed to create ae ctrl context!");
 		ret = ISP_ALLOC_ERROR;
@@ -278,9 +278,8 @@ cmr_int afl_ctrl_init(struct afl_ctrl_init_in *in_ptr, struct afl_ctrl_init_out 
 error_adpt_init:
 	aflctrl_destroy_thread(cxt);
 exit:
-	if (cxt) {
-		free((void*)cxt);
-	}
+	if (cxt)
+		free((void *)cxt);
 	ISP_LOGE("ret=%ld", ret);
 	return ret;
 }
@@ -288,7 +287,7 @@ exit:
 cmr_int afl_ctrl_deinit(cmr_handle handle)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct aflctrl_cxt *cxt = (struct aflctrl_cxt*)handle;
+	struct aflctrl_cxt *cxt = (struct aflctrl_cxt *)handle;
 	CMR_MSG_INIT(message);
 
 #ifndef CONFIG_CAMERA_AFL_AUTO_DETECTION
@@ -313,16 +312,16 @@ cmr_int afl_ctrl_deinit(cmr_handle handle)
 	}
 
 	aflctrl_destroy_thread(cxt);
-	free((void*)handle);
+	free((void *)handle);
 exit:
 	ISP_LOGI("done %ld", ret);
 	return ret;
 }
 
-cmr_int afl_ctrl_ioctrl(cmr_handle handle, enum afl_ctrl_cmd cmd, struct afl_ctrl_param_in *in_ptr,struct afl_ctrl_param_out *out_ptr)
+cmr_int afl_ctrl_ioctrl(cmr_handle handle, enum afl_ctrl_cmd cmd, struct afl_ctrl_param_in *in_ptr, struct afl_ctrl_param_out *out_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct aflctrl_cxt *cxt = (struct aflctrl_cxt*)handle;
+	struct aflctrl_cxt *cxt = (struct aflctrl_cxt *)handle;
 	CMR_MSG_INIT(message);
 
 #ifndef CONFIG_CAMERA_AFL_AUTO_DETECTION
@@ -340,7 +339,7 @@ cmr_int afl_ctrl_ioctrl(cmr_handle handle, enum afl_ctrl_cmd cmd, struct afl_ctr
 	message.sub_msg_type = cmd;
 	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
 	message.alloc_flag = 0;
-	message.data = (void*)in_ptr;
+	message.data = (void *)in_ptr;
 	ret = cmr_thread_msg_send(cxt->ctrl_thr_cxt.thr_handle, &message);
 	if (ret) {
 		ISP_LOGE("failed to send msg to main thr %ld", ret);
@@ -350,14 +349,14 @@ cmr_int afl_ctrl_ioctrl(cmr_handle handle, enum afl_ctrl_cmd cmd, struct afl_ctr
 		*out_ptr = cxt->ioctrl_out;
 	}
 exit:
-	ISP_LOGI("cmd = %d,done %ld", cmd, ret);
+	ISP_LOGV("cmd = %d, done %ld", cmd, ret);
 	return ret;
 }
 
 cmr_int afl_ctrl_process(cmr_handle handle, struct afl_ctrl_proc_in *in_ptr, struct afl_ctrl_proc_out *out_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct aflctrl_cxt *cxt = (struct aflctrl_cxt*)handle;
+	struct aflctrl_cxt *cxt = (struct aflctrl_cxt *)handle;
 	CMR_MSG_INIT(message);
 
 #ifndef CONFIG_CAMERA_AFL_AUTO_DETECTION

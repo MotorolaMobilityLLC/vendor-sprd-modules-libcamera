@@ -48,12 +48,12 @@ struct isp_dev_init_info {
 	cmr_malloc alloc_cb;
 	cmr_free   free_cb;
 	cmr_handle mem_cb_handle;
-	void* setting_param_list_ptr[3];//0:back,1:front,2:dual back,
+	void *setting_param_list_ptr[3];//0:back,1:front,2:dual back,
 	uint32 shading_bin_size;
-	uint8* shading_bin_addr;
+	uint8 *shading_bin_addr;
 	uint32 shading_bin_offset;
 	uint32 irp_bin_size;
-	uint8* irp_bin_addr;
+	uint8 *irp_bin_addr;
 	uint32 irp_bin_offset;
 };
 
@@ -103,9 +103,9 @@ cmr_int isp_dev_cfg_awb_param(isp_handle handle, struct awb_cfg_info *data);
 cmr_int isp_dev_cfg_yhis_param(isp_handle handle, struct yhis_cfg_info *data);
 cmr_int isp_dev_cfg_sub_sample(isp_handle handle, struct subsample_cfg_info *data);
 cmr_int isp_dev_cfg_anti_flicker(isp_handle handle, struct antiflicker_cfg_info *data);
-cmr_int isp_dev_cfg_dld_seq_basic_prev(isp_handle handle, cmr_u32 size, cmr_u8*data);
-cmr_int isp_dev_cfg_dld_seq_adv_prev(isp_handle handle, cmr_u32 size, cmr_u8*data);
-cmr_int isp_dev_cfg_dld_seq_fast_converge(isp_handle handle, cmr_u32 size, cmr_u8*data);
+cmr_int isp_dev_cfg_dld_seq_basic_prev(isp_handle handle, cmr_u32 size, cmr_u8 *data);
+cmr_int isp_dev_cfg_dld_seq_adv_prev(isp_handle handle, cmr_u32 size, cmr_u8 *data);
+cmr_int isp_dev_cfg_dld_seq_fast_converge(isp_handle handle, cmr_u32 size, cmr_u8 *data);
 cmr_int isp_dev_cfg_sharpness(isp_handle handle, cmr_u32 mode);
 cmr_int isp_dev_cfg_saturation(isp_handle handle, cmr_u32 mode);
 cmr_int isp_dev_cfg_contrast(isp_handle handle, cmr_u32 mode);

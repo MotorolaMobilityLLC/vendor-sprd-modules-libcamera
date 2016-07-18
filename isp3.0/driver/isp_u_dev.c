@@ -75,7 +75,7 @@ struct isp_file {
 
 static cmr_int isp_dev_create_thread(isp_handle handle);
 static cmr_int isp_dev_kill_thread(isp_handle handle);
-static void* isp_dev_thread_proc(void* data);
+static void* isp_dev_thread_proc(void *data);
 static cmr_int isp_dev_load_binary(isp_handle handle);
 
 cmr_int isp_dev_init(struct isp_dev_init_info *init_param_ptr, isp_handle *handle)
@@ -118,7 +118,7 @@ cmr_int isp_dev_init(struct isp_dev_init_info *init_param_ptr, isp_handle *handl
 	init_param.camera_id = init_param_ptr->camera_id;
 	init_param.width = init_param_ptr->width;
 	init_param.height = init_param_ptr->height;
-	ret= ioctl(file->fd, ISP_IO_SET_INIT_PARAM, &init_param);
+	ret = ioctl(file->fd, ISP_IO_SET_INIT_PARAM, &init_param);
 	if (ret) {
 		ISP_LOGE("isp set initial param error.");
 		goto isp_free;
@@ -189,7 +189,7 @@ cmr_int isp_dev_deinit(isp_handle handle)
 
 		if (0 == user_cnt) {
 			file->init_param.free_cb(CAMERA_ISP_BINGING4AWB, file->init_param.mem_cb_handle,
-				(cmr_uint*)file->fw_mem.phy_addr, (cmr_uint*)file->fw_mem.virt_addr, &fd, file->fw_mem.num);
+				(cmr_uint *)file->fw_mem.phy_addr, (cmr_uint *)file->fw_mem.virt_addr, &fd, file->fw_mem.num);
 		}
 	}
 
@@ -209,12 +209,12 @@ cmr_int isp_dev_deinit(isp_handle handle)
 cmr_int isp_dev_start(isp_handle handle)
 {
 	cmr_int                       ret = 0;
-	struct isp_file          *file = (struct isp_file*)handle;
-	struct isp_init_mem_param    load_input;
-	cmr_int                                         fw_size = 0;
-	cmr_u32                                       fw_buf_num = 1;
-	cmr_u32                                       kaddr[2];
-	cmr_u64                                       kaddr_temp;
+	struct isp_file               *file = (struct isp_file *)handle;
+	struct isp_init_mem_param     load_input;
+	cmr_int                       fw_size = 0;
+	cmr_u32                       fw_buf_num = 1;
+	cmr_u32                       kaddr[2];
+	cmr_u64                       kaddr_temp;
 
 	if (file->isp_is_inited) {
 		ISP_LOGE("isp firmware no need load again ");
@@ -229,7 +229,7 @@ cmr_int isp_dev_start(isp_handle handle)
 
 	memset(&load_input, 0x00, sizeof(load_input));
 	file->init_param.alloc_cb(CAMERA_ISP_BINGING4AWB, file->init_param.mem_cb_handle,
-				  (cmr_u32*)&fw_size, &fw_buf_num, (cmr_uint*)kaddr,
+				  (cmr_u32 *)&fw_size, &fw_buf_num, (cmr_uint *)kaddr,
 				  &load_input.fw_buf_vir_addr, &load_input.fw_buf_mfd);
 	if (ret) {
 		ISP_LOGE("faield to alloc fw buffer %ld", ret);
@@ -264,7 +264,7 @@ cmr_int isp_dev_start(isp_handle handle)
 	}
 
 	ret = isp_dev_load_firmware((isp_handle)file, &load_input);
-	if ((0 != ret) ||(0 == load_input.fw_buf_phy_addr)) {
+	if ((0 != ret) || (0 == load_input.fw_buf_phy_addr)) {
 		ISP_LOGE("failed to load firmware %ld", ret);
 		goto exit;
 	}
@@ -276,7 +276,7 @@ exit:
 cmr_int isp_dev_alloc_highiso_mem(isp_handle handle, struct isp_raw_data *buf, struct isp_img_size *size)
 {
 	cmr_int                  ret = 0;
-	struct isp_file          *file = (struct isp_file*)handle;
+	struct isp_file          *file = (struct isp_file *)handle;
 	cmr_u32                  buf_num = 1;
 	cmr_u32                  buf_size = 0, num = 0;
 
@@ -293,8 +293,8 @@ cmr_int isp_dev_alloc_highiso_mem(isp_handle handle, struct isp_raw_data *buf, s
 		file->init_param.alloc_cb(CAMERA_SNAPSHOT_HIGHISO,
 					  file->init_param.mem_cb_handle,
 					  &buf_size, &buf_num,
-					  (cmr_uint*)&buf->phy_addr,
-					  (cmr_uint*)&buf->virt_addr,
+					  (cmr_uint *)&buf->phy_addr,
+					  (cmr_uint *)&buf->virt_addr,
 					  &buf->fd);
 		buf->width = size->width;
 		buf->height = size->height;
@@ -311,8 +311,9 @@ cmr_int isp_dev_alloc_highiso_mem(isp_handle handle, struct isp_raw_data *buf, s
 static cmr_int isp_dev_load_binary(isp_handle handle)
 {
 	cmr_int                  ret = 0;
-	struct isp_file          *file = (struct isp_file*)handle;
+	struct isp_file          *file = (struct isp_file *)handle;
 	cmr_u32                  isp_id = 0;
+
 	if (!file) {
 		ret = -1;
 		ISP_LOGE("file hand is null error.");
@@ -333,13 +334,13 @@ static cmr_int isp_dev_load_binary(isp_handle handle)
 
 	ret = isp_dev_get_isp_id(handle, &isp_id);
 
-	memcpy((void*)(file->fw_mem.virt_addr + file->init_param.shading_bin_offset + ISP_SHADING_BIN_BUF_SIZE * isp_id),
-		(void*)file->init_param.shading_bin_addr, file->init_param.shading_bin_size);
-	memcpy((void*)(file->fw_mem.virt_addr + file->init_param.irp_bin_offset + ISP_IRP_BIN_BUF_SIZE * isp_id),
-		(void*)file->init_param.irp_bin_addr, file->init_param.irp_bin_size);
+	memcpy((void *)(file->fw_mem.virt_addr + file->init_param.shading_bin_offset + ISP_SHADING_BIN_BUF_SIZE * isp_id),
+		(void *)file->init_param.shading_bin_addr, file->init_param.shading_bin_size);
+	memcpy((void *)(file->fw_mem.virt_addr + file->init_param.irp_bin_offset + ISP_IRP_BIN_BUF_SIZE * isp_id),
+		(void *)file->init_param.irp_bin_addr, file->init_param.irp_bin_size);
 
-	ISP_LOGI("shading check 0x%x", *(cmr_u32*)(file->fw_mem.virt_addr + file->init_param.shading_bin_offset));
-	ISP_LOGI("irp check 0x%x", *(cmr_u32*)(file->fw_mem.virt_addr + file->init_param.irp_bin_offset));
+	ISP_LOGI("shading check 0x%x", *(cmr_u32 *)(file->fw_mem.virt_addr + file->init_param.shading_bin_offset));
+	ISP_LOGI("irp check 0x%x", *(cmr_u32 *)(file->fw_mem.virt_addr + file->init_param.irp_bin_offset));
 
 exit:
 	return ret;
@@ -347,7 +348,7 @@ exit:
 
 void isp_dev_evt_reg(isp_handle handle, isp_evt_cb isp_event_cb, void *privdata)
 {
-	struct isp_file          *file = (struct isp_file*)handle;
+	struct isp_file          *file = (struct isp_file *)handle;
 
 	if (!file) {
 		ISP_LOGE("isp_handle is null error.");
@@ -358,12 +359,11 @@ void isp_dev_evt_reg(isp_handle handle, isp_evt_cb isp_event_cb, void *privdata)
 	file->isp_event_cb = isp_event_cb;
 	file->evt_3a_handle = privdata;
 	pthread_mutex_unlock(&file->cb_mutex);
-	return;
 }
 
 void isp_dev_buf_cfg_evt_reg(isp_handle handle, cmr_handle grab_handle, isp_evt_cb isp_event_cb)
 {
-	struct isp_file          *file = (struct isp_file*)handle;
+	struct isp_file          *file = (struct isp_file *)handle;
 
 	if (!file) {
 		ISP_LOGE("isp_handle is null error.");
@@ -374,7 +374,6 @@ void isp_dev_buf_cfg_evt_reg(isp_handle handle, cmr_handle grab_handle, isp_evt_
 	file->grab_handle = grab_handle;
 	file->isp_cfg_buf_cb = isp_event_cb;
 	pthread_mutex_unlock(&file->cb_mutex);
-	return;
 }
 
 static cmr_int isp_dev_create_thread(isp_handle handle)
@@ -383,7 +382,7 @@ static cmr_int isp_dev_create_thread(isp_handle handle)
 	pthread_attr_t           attr;
 	struct isp_file          *file;
 
-	file = (struct isp_file*)handle;
+	file = (struct isp_file *)handle;
 	if (!file) {
 		ret = -1;
 		ISP_LOGE("file hand is null error.");
@@ -392,7 +391,7 @@ static cmr_int isp_dev_create_thread(isp_handle handle)
 
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-	ret = pthread_create(&file->thread_handle, &attr, isp_dev_thread_proc, (void*)handle);
+	ret = pthread_create(&file->thread_handle, &attr, isp_dev_thread_proc, (void *)handle);
 	pthread_attr_destroy(&attr);
 
 	return ret;
@@ -405,7 +404,7 @@ static cmr_int isp_dev_kill_thread(isp_handle handle)
 	struct isp_file            *file;
 	void                       *dummy;
 
-	file = (struct isp_file*)handle;
+	file = (struct isp_file *)handle;
 	if (!file) {
 		ret = -1;
 		ISP_LOGE("file hand is null error.");
@@ -427,7 +426,7 @@ static cmr_int isp_dev_kill_thread(isp_handle handle)
 
 static void* isp_dev_thread_proc(void *data)
 {
-	struct isp_file                  *file = NULL;
+	struct isp_file                   *file = NULL;
 	struct isp_statis_info            statis_info;
 	struct isp_statis_frame           statis_frame_buf;
 	struct isp_frm_info               img_frame;
@@ -435,13 +434,13 @@ static void* isp_dev_thread_proc(void *data)
 	struct isp_irq_info               irq_info;
 	struct img_addr addr;
 
-	file = (struct isp_file*)data;
+	file = (struct isp_file *)data;
 	ISP_LOGI("isp dev thread file %p ", file);
-	if(!file) {
+	if (!file) {
 		return NULL;
 	}
 
-	if(-1 == file->fd) {
+	if (-1 == file->fd) {
 		return NULL;
 	}
 	cmr_bzero(&statis_info, sizeof(statis_info));
@@ -452,18 +451,18 @@ static void* isp_dev_thread_proc(void *data)
 			ISP_LOGI("ISP_IO_IRQ error.");
 			break;
 		} else {
-			if(ISP_IMG_TX_STOP == irq_info.irq_flag) {
+			if (ISP_IMG_TX_STOP == irq_info.irq_flag) {
 				ISP_LOGE("isp_dev_thread_proc exit.");
 				break;
 			} else if (ISP_IMG_SYS_BUSY == irq_info.irq_flag) {
 				cmr_usleep(100);
 				ISP_LOGI("continue.");
 				continue;
-			} else if (ISP_IMG_NO_MEM == irq_info.irq_flag){
+			} else if (ISP_IMG_NO_MEM == irq_info.irq_flag) {
 				ISP_LOGE("statistics no mem");
 				continue;
 			} else {
-				if(ISP_IMG_TX_DONE == irq_info.irq_flag) {
+				if (ISP_IMG_TX_DONE == irq_info.irq_flag) {
 					if (irq_info.irq_type == ISP_IRQ_STATIS) {
 						statis_info.statis_frame.format = irq_info.format;
 						statis_info.statis_frame.buf_size = irq_info.length;
@@ -476,7 +475,7 @@ static void* isp_dev_thread_proc(void *data)
 						ISP_LOGI("got one frame statis vaddr 0x%lx paddr 0x%lx buf_size 0x%lx stats_cnt 0x%lx",
 							 irq_info.yaddr_vir, irq_info.yaddr, irq_info.length, statis_info.statis_cnt);
 						pthread_mutex_lock(&file->cb_mutex);
-						if(file->isp_event_cb) {
+						if (file->isp_event_cb) {
 							(*file->isp_event_cb)(ISP_DRV_STATISTICE, &statis_info, sizeof(statis_info), (void *)file->evt_3a_handle);
 						}
 						pthread_mutex_unlock(&file->cb_mutex);
@@ -488,28 +487,28 @@ static void* isp_dev_thread_proc(void *data)
 						irq_node.time_stamp.sec = irq_info.time_stamp.sec;
 						irq_node.time_stamp.usec = irq_info.time_stamp.usec;
 						pthread_mutex_lock(&file->cb_mutex);
-						if(file->isp_event_cb) {
+						if (file->isp_event_cb) {
 							(*file->isp_event_cb)(ISP_DRV_SENSOR_SOF, &irq_node, sizeof(irq_node), (void *)file->evt_3a_handle);
 						}
 						pthread_mutex_unlock(&file->cb_mutex);
 					} else if (irq_info.irq_type == ISP_IRQ_CFG_BUF) {
 						img_frame.channel_id = irq_info.channel_id;
-						img_frame.base= irq_info.base_id;
-						img_frame.frame_id= irq_info.base_id;
+						img_frame.base = irq_info.base_id;
+						img_frame.frame_id = irq_info.base_id;
 						img_frame.yaddr = irq_info.yaddr;
 						img_frame.uaddr = irq_info.uaddr;
 						img_frame.vaddr = irq_info.vaddr;
-						img_frame.yaddr_vir= irq_info.yaddr_vir;
-						img_frame.uaddr_vir= irq_info.uaddr_vir;
-						img_frame.vaddr_vir= irq_info.vaddr_vir;
+						img_frame.yaddr_vir = irq_info.yaddr_vir;
+						img_frame.uaddr_vir = irq_info.uaddr_vir;
+						img_frame.vaddr_vir = irq_info.vaddr_vir;
 						//img_frame.length= irq_info.buf_size.width*irq_info.buf_size.height;
 						img_frame.fd = irq_info.img_y_fd;
-						img_frame.sec= irq_info.time_stamp.sec;
-						img_frame.usec= irq_info.time_stamp.usec;
+						img_frame.sec = irq_info.time_stamp.sec;
+						img_frame.usec = irq_info.time_stamp.usec;
 						ISP_LOGI("high iso got one frm vaddr 0x%lx paddr 0x%lx, width %d, height %d",
 							 irq_info.yaddr_vir, irq_info.yaddr, file->init_param.width, file->init_param.height);
 						pthread_mutex_lock(&file->cb_mutex);
-						if(file->isp_cfg_buf_cb) {
+						if (file->isp_cfg_buf_cb) {
 							(*file->isp_cfg_buf_cb)(ISP_DRV_CFG_BUF, &img_frame, sizeof(img_frame), (void *)file->grab_handle);
 						}
 						pthread_mutex_unlock(&file->cb_mutex);
@@ -556,7 +555,7 @@ cmr_int isp_dev_open(isp_handle *handle, struct isp_dev_init_param *param)
 	file->camera_id = 0;
 	*handle = (isp_handle)file;
 
-	ret= ioctl(file->fd, ISP_IO_SET_INIT_PARAM, init_param);
+	ret = ioctl(file->fd, ISP_IO_SET_INIT_PARAM, init_param);
 	if (ret) {
 		ISP_LOGE("isp initial param error.");
 	}
@@ -682,22 +681,22 @@ cmr_int isp_dev_load_firmware(isp_handle handle, struct isp_init_mem_param *para
 	/*load altek isp firmware from user space*/
 
 	fp = fopen(isp_fw_name, "rd");
-	if(NULL == fp) {
+	if (NULL == fp) {
 		ISP_LOGE("open altek isp firmware failed.");
 		return -1;
 	}
 
 	fseek(fp, 0, SEEK_END);
 	fw_size = ftell(fp);
-	if(0 == fw_size || isp_fw_size < fw_size) {
+	if (0 == fw_size || isp_fw_size < fw_size) {
 		ISP_LOGE("firmware size fw_size invalid, fw_size = %ld", fw_size);
 		fclose(fp);
 		return -1;
 	}
 	fseek(fp, 0, SEEK_SET);
 
-	ret = fread((void*)param->fw_buf_vir_addr, 1, fw_size, fp);
-	if(ret < 0) {
+	ret = fread((void *)param->fw_buf_vir_addr, 1, fw_size, fp);
+	if (ret < 0) {
 		ISP_LOGE("read altek isp firmware failed.");
 		fclose(fp);
 		return -1;
@@ -852,8 +851,8 @@ cmr_int isp_dev_set_rawaddr(isp_handle handle, struct isp_raw_data *param)
 	}
 
 	if (!param) {
-	ISP_LOGE("param is null error.");
-	return -1;
+		ISP_LOGE("param is null error.");
+		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
@@ -878,8 +877,8 @@ cmr_int isp_dev_set_post_yuv_mem(isp_handle handle, struct isp_img_mem *param)
 	}
 
 	if (!param) {
-	ISP_LOGE("param is null error.");
-	return -1;
+		ISP_LOGE("param is null error.");
+		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
@@ -931,8 +930,8 @@ cmr_int isp_dev_set_fetch_src_buf(isp_handle handle, struct isp_img_mem *param)
 	}
 
 	if (!param) {
-	ISP_LOGE("param is null error.");
-	return -1;
+		ISP_LOGE("param is null error.");
+		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
@@ -965,7 +964,7 @@ cmr_int isp_dev_get_timestamp(isp_handle handle, cmr_u32 *sec, cmr_u32 *usec)
 
 	*sec = time.sec;
 	*usec = time.usec;
-	ISP_LOGI("sec=%d, usec=%d \n", *sec, *usec);
+	ISP_LOGI("sec=%d, usec=%d", *sec, *usec);
 
 	return ret;
 }
@@ -1294,7 +1293,7 @@ cmr_int isp_dev_cfg_anti_flicker(isp_handle handle, struct antiflicker_cfg_info 
 	return ret;
 }
 
-cmr_int isp_dev_cfg_dld_seq_basic_prev(isp_handle handle, cmr_u32 size, cmr_u8*data)
+cmr_int isp_dev_cfg_dld_seq_basic_prev(isp_handle handle, cmr_u32 size, cmr_u8 *data)
 {
 	cmr_int ret = 0;
 	struct isp_file *file = NULL;
@@ -1322,7 +1321,7 @@ cmr_int isp_dev_cfg_dld_seq_basic_prev(isp_handle handle, cmr_u32 size, cmr_u8*d
 	return ret;
 }
 
-cmr_int isp_dev_cfg_dld_seq_adv_prev(isp_handle handle, cmr_u32 size, cmr_u8*data)
+cmr_int isp_dev_cfg_dld_seq_adv_prev(isp_handle handle, cmr_u32 size, cmr_u8 *data)
 {
 	cmr_int ret = 0;
 	struct isp_file *file = NULL;
@@ -1350,7 +1349,7 @@ cmr_int isp_dev_cfg_dld_seq_adv_prev(isp_handle handle, cmr_u32 size, cmr_u8*dat
 	return ret;
 }
 
-cmr_int isp_dev_cfg_dld_seq_fast_converge(isp_handle handle, cmr_u32 size, cmr_u8*data)
+cmr_int isp_dev_cfg_dld_seq_fast_converge(isp_handle handle, cmr_u32 size, cmr_u8 *data)
 {
 	cmr_int ret = 0;
 	struct isp_file *file = NULL;
@@ -1985,7 +1984,7 @@ cmr_int isp_dev_set_init_param(isp_handle *handle, struct isp_dev_init_param *in
 	init_param.camera_id = init_param_ptr->camera_id;
 	init_param.width = init_param_ptr->width;
 	init_param.height = init_param_ptr->height;
-	ret= ioctl(file->fd, ISP_IO_SET_INIT_PARAM, &init_param);
+	ret = ioctl(file->fd, ISP_IO_SET_INIT_PARAM, &init_param);
 	if (ret) {
 		ISP_LOGE("isp set initial param error.");
 	}

@@ -185,7 +185,7 @@ enum ae_ctrl_cb_type {
 	AE_CTRL_CB_MAX
 };
 
-enum ae_ctrl_hdr_ev_level{
+enum ae_ctrl_hdr_ev_level {
 	AE_CTRL_HDR_EV_UNDEREXPOSURE,
 	AE_CTRL_HDR_EV_NORMAL,
 	AE_CTRL_HDR_EV_OVEREXPOSURE,
@@ -273,7 +273,7 @@ struct ae_ctrl_param_work {
 		struct ae_ctrl_param_resolution resolution;
 		struct ae_ctrl_param_measure_highflash highflash;
 		struct isp_sensor_fps_info sensor_fps;
-		void * tuning_param;
+		void *tuning_param;
 };
 
 struct ae_ctrl_param_scene {
@@ -281,7 +281,7 @@ struct ae_ctrl_param_scene {
 };
 
 struct ae_ctrl_param_measure_lum {
-	cmr_int  lum_mode;
+	cmr_int lum_mode;
 };
 
 struct ae_ctrl_param_range_fps {
@@ -392,7 +392,6 @@ struct ae_ctrl_proc_in {
 	struct isp3a_statistics_data *awb_stat_data_ptr;
 };
 
-
 struct ae_ctrl_param_out {
 	union{
 	cmr_s32 flash_eb;
@@ -456,7 +455,7 @@ struct ae_ctrl_ops_in {
 	cmr_int (*flash_get_charge)(cmr_handle handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell_ptr);
 	cmr_int (*flash_get_time)(cmr_handle handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell_ptr);
 	cmr_int (*flash_set_charge)(cmr_handle handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element_ptr);
-	cmr_int (*flash_set_time)(cmr_handle handler,struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element_ptr);
+	cmr_int (*flash_set_time)(cmr_handle handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element_ptr);
 	cmr_int (*flash_ctrl)(cmr_handle handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element_ptr);
 
 	cmr_int (*release_stat_buffer)(cmr_handle handler, cmr_int type, struct isp3a_statistics_data *buf_ptr);
@@ -466,7 +465,6 @@ struct ae_ctrl_init_out {
 	struct isp3a_ae_hw_cfg hw_cfg;
 	cmr_u32 hw_iso_speed;
 };
-
 
 struct ae_ctrl_init_in {
 	cmr_u32 camera_id;

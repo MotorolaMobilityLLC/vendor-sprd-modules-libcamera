@@ -655,6 +655,6 @@ cmr_int isp_video_start(cmr_handle isp_handle, struct isp_video_start *param_ptr
 cmr_int isp_video_stop(cmr_handle isp_handle);
 cmr_int isp_proc_start(cmr_handle isp_handle, struct ips_in_param *input_ptr, struct ips_out_param *output_ptr);
 cmr_int isp_proc_next(cmr_handle isp_handle, struct ipn_in_param *input_ptr, struct ips_out_param *output_ptr);
-cmr_int isp_cap_buff_cfg (cmr_handle isp_handle, struct isp_img_param *buf_cfg);
+cmr_int isp_cap_buff_cfg(cmr_handle isp_handle, struct isp_img_param *buf_cfg);
 void ispmw_dev_buf_cfg_evt_cb(cmr_handle isp_handle, isp_buf_cfg_evt_cb grab_event_cb);
 #endif

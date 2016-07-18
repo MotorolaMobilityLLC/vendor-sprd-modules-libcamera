@@ -153,12 +153,12 @@ struct awb_ctrl_init_in {
 	cmr_u32 awb_process_level;
 	void *tuning_param;
 	cmr_u32 param_size;
-	void* lsc_otp_random;
-	void* lsc_otp_golden;
+	void *lsc_otp_random;
+	void *lsc_otp_golden;
 	cmr_u32 lsc_otp_width;
 	cmr_u32 lsc_otp_height;
 	awb_callback awb_cb;
-	void* priv_handle;
+	void *priv_handle;
 };
 
 struct awb_ctrl_init_out {
@@ -204,7 +204,7 @@ struct awb_ctrl_af_report {
 };
 
 /**********************************UNION*************************************/
-union awb_ctrl_cmd_in{
+union awb_ctrl_cmd_in {
 	float dzoom_factor;
 	cmr_u32 manual_ct;
 	cmr_u32 lock_flag;

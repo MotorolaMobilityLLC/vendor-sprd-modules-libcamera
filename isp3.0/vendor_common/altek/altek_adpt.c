@@ -38,7 +38,7 @@ cmr_int isp_dispatch_stats(void *isp_stats, void *ae_stats_buf, void *awb_stats_
 	if (ret) {
 		ISP_LOGE("failed to disptach stats %ld", ret);
 	}
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGV("done %ld", ret);
 	return ret;
 }
 

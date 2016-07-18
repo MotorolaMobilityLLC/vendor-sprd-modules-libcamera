@@ -14,16 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef WIN32
 #include "sensor_exposure_queue.h"
-#else
-#define NULL 0
-#define cmr_int int
-#define cmr_u32  int
-#endif
 
 #ifndef MAX
-#define MAX(x,y) (((x)>(y))?(x):(y))
+#define MAX(x, y) (((x) > (y))?(x):(y))
 #endif
 
 struct seq_q_head {
@@ -122,7 +116,7 @@ exit:
 	return ret;
 }
 
-static cmr_int seq_push_write_element(struct seq_cxt *cxt_ptr,cmr_u32 is_add_idx, cmr_u32 offset, struct seq_cell *in_ptr)
+static cmr_int seq_push_write_element(struct seq_cxt *cxt_ptr, cmr_u32 is_add_idx, cmr_u32 offset, struct seq_cell *in_ptr)
 {
 	cmr_int ret = -1;
 
@@ -172,7 +166,7 @@ cmr_int seq_init(cmr_u32 queue_num, struct seq_init_in *in_ptr, void **handle)
 		goto exit;
 	}
 	*handle = NULL;
-	cxt_ptr = (struct seq_cxt*)malloc(sizeof(*cxt_ptr));
+	cxt_ptr = (struct seq_cxt *)malloc(sizeof(*cxt_ptr));
 	if (NULL == cxt_ptr) {
 		goto exit;
 	}
@@ -184,13 +178,13 @@ cmr_int seq_init(cmr_u32 queue_num, struct seq_init_in *in_ptr, void **handle)
 	cxt_ptr->write_q.max_num = queue_num;
 
 	q_size = queue_num * sizeof(struct seq_cell);
-	cxt_ptr->write_q.cell_ptr = (struct seq_cell*)malloc(q_size);
+	cxt_ptr->write_q.cell_ptr = (struct seq_cell *)malloc(q_size);
 	if (NULL == cxt_ptr->write_q.cell_ptr)
 		goto exit;
 	memset(cxt_ptr->write_q.cell_ptr, 0, q_size);
 
 	cxt_ptr->actual_q.max_num = queue_num;
-	cxt_ptr->actual_q.cell_ptr = (struct seq_cell*)malloc(q_size);
+	cxt_ptr->actual_q.cell_ptr = (struct seq_cell *)malloc(q_size);
 	if (NULL == cxt_ptr->actual_q.cell_ptr)
 		goto exit;
 	memset(cxt_ptr->actual_q.cell_ptr, 0, q_size);
@@ -204,7 +198,7 @@ cmr_int seq_init(cmr_u32 queue_num, struct seq_init_in *in_ptr, void **handle)
 		cxt_ptr->valid_offset_num = in_ptr->gain_valid_num - in_ptr->exp_valid_num;
 	}
 
-	*handle = (void*)cxt_ptr;
+	*handle = (void *)cxt_ptr;
 	return 0;
 exit:
 	if (cxt_ptr->write_q.cell_ptr)
@@ -225,7 +219,7 @@ cmr_int seq_deinit(void *handle)
 	if (NULL == handle)
 		goto exit;
 
-	cxt_ptr = (struct seq_cxt*)handle;
+	cxt_ptr = (struct seq_cxt *)handle;
 	if (cxt_ptr->write_q.cell_ptr)
 		free(cxt_ptr->write_q.cell_ptr);
 	if (cxt_ptr->actual_q.cell_ptr)
@@ -242,7 +236,7 @@ cmr_int seq_reset(void *handle)
 	struct seq_cxt *cxt_ptr = NULL;
 	cmr_int q_size = 0;
 
-	cxt_ptr = (struct seq_cxt*)handle;
+	cxt_ptr = (struct seq_cxt *)handle;
 
 	if (NULL == cxt_ptr
 			|| NULL == cxt_ptr->write_q.cell_ptr
@@ -287,7 +281,7 @@ cmr_int seq_put(void *handle, struct seq_item *in_est_ptr, struct seq_cell *out_
 		|| NULL == out_write_ptr) {
 		goto exit;
 	}
-	cxt_ptr = (struct seq_cxt*)handle;
+	cxt_ptr = (struct seq_cxt *)handle;
 
 	cur_frame_id = in_est_ptr->cell.frame_id;
 	if (SEQ_WORK_CAPTURE == in_est_ptr->work_mode)
@@ -304,7 +298,7 @@ cmr_int seq_put(void *handle, struct seq_item *in_est_ptr, struct seq_cell *out_
 	memset(&push_nxt_write_cell, 0, sizeof(push_nxt_write_cell));
 
 	if (cxt_ptr->init_in_param.idx_start_from == cur_frame_id) {
-		for (i = skip_offset_num; i <=  max_valid_num; i++ ) {
+		for (i = skip_offset_num; i <= max_valid_num; i++) {
 			push_nxt_actual_cell = in_est_ptr->cell;
 			ret = seq_push_actual_element(cxt_ptr, 0, i, &push_nxt_actual_cell);
 			if (ret)
@@ -312,11 +306,11 @@ cmr_int seq_put(void *handle, struct seq_item *in_est_ptr, struct seq_cell *out_
 		}
 	}
 
-	ret = seq_get_cur_actual_element(cxt_ptr,&cur_actual_cell);
+	ret = seq_get_cur_actual_element(cxt_ptr, &cur_actual_cell);
 	if (ret)
 		goto exit;
 
-	ret = seq_get_cur_write_element(cxt_ptr,&cur_write_cell);
+	ret = seq_get_cur_write_element(cxt_ptr, &cur_write_cell);
 	if (ret)
 		goto exit;
 
@@ -341,12 +335,12 @@ cmr_int seq_put(void *handle, struct seq_item *in_est_ptr, struct seq_cell *out_
 
 			if (cxt_ptr->pre_cell.exp_line == in_est_ptr->cell.exp_line) {
 				push_write_cell.gain = push_nxt_write_cell.gain;
-				for (i = 0; i <  offset_num; i++ ) {
+				for (i = 0; i < offset_num; i++) {
 					ret = seq_push_write_element(cxt_ptr, 0, i, &push_nxt_write_cell);
 					if (ret)
 						goto exit;
 				}
-				for (i = gain_valid_num+1; i <  max_valid_num + 1; i++ ) {
+				for (i = gain_valid_num + 1; i < max_valid_num + 1; i++) {
 					ret = seq_push_actual_element(cxt_ptr, 0, i, &push_nxt_write_cell);
 					if (ret)
 						goto exit;

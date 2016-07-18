@@ -17,7 +17,8 @@
 
 #include <dlfcn.h>
 #include <cutils/properties.h>
-#include "ae_altek_adpt.h"
+#include "ae_ctrl_types.h"
+#include "isp_adpt.h"
 #include "allib_ae.h"
 #include "allib_ae_errcode.h"
 #include "alwrapper_ae.h"
@@ -35,10 +36,10 @@
 #define MAX_EXP_LINE_CNT       65535
 #define BRACKET_NUM            5
 #define SENSOR_EXP_US_BASE     1000000000 /*x1000us*/
-#define SENSOR_EXP_BASE     1000 /*x1000us*/
+#define SENSOR_EXP_BASE        1000 /*x1000us*/
 #define TUNING_EXPOSURE_NUM    300
 
-enum aealtek_work_mode{
+enum aealtek_work_mode {
 	AEALTEK_PREVIEW,
 	AEALTEK_BRACKET,
 	AEALTEK_SNAPSHOT,
@@ -54,7 +55,7 @@ enum ae_tuning_mode {
 
 struct aealtek_lib_ops {
 	BOOL (*load_func)(struct alaeruntimeobj_t *aec_run_obj, UINT32 identityID);
-	void (*get_lib_ver)(struct alaelib_version_t* AE_LibVersion);
+	void (*get_lib_ver)(struct alaelib_version_t *AE_LibVersion);
 };
 
 struct aealtek_exposure_param {
@@ -292,12 +293,12 @@ struct aealtek_simple_sync_output {
 #define _AE_SYNC_SIMPLE_ERR_SUCCESS        (0)
 #define _AE_SYNC_SIMPLE_ERR_BASE           (0xA000)
 
-#define _AE_SYNC_SIMPLE_ERR_INVALID_PARAM              ( _AE_SYNC_SIMPLE_ERR_BASE +  1 )
-#define _AE_SYNC_SIMPLE_ERR_NULL_ADDR                      ( _AE_SYNC_SIMPLE_ERR_BASE +  2 )
-#define _AE_SYNC_SIMPLE_ERR_INVALID_MASTER_OTP_DAT      ( _AE_SYNC_SIMPLE_ERR_BASE +  3 )
-#define _AE_SYNC_SIMPLE_ERR_INVALID_SLAVE_OTP_DAT      ( _AE_SYNC_SIMPLE_ERR_BASE +  4 )
-#define _AE_SYNC_SIMPLE_ERR_INVALID_MASTER_SINFO_DAT      ( _AE_SYNC_SIMPLE_ERR_BASE +  5 )
-#define _AE_SYNC_SIMPLE_ERR_INVALID_SLAVE_SINFO_DAT      ( _AE_SYNC_SIMPLE_ERR_BASE +  6 )
+#define _AE_SYNC_SIMPLE_ERR_INVALID_PARAM                  (_AE_SYNC_SIMPLE_ERR_BASE +  1)
+#define _AE_SYNC_SIMPLE_ERR_NULL_ADDR                      (_AE_SYNC_SIMPLE_ERR_BASE +  2)
+#define _AE_SYNC_SIMPLE_ERR_INVALID_MASTER_OTP_DAT         (_AE_SYNC_SIMPLE_ERR_BASE +  3)
+#define _AE_SYNC_SIMPLE_ERR_INVALID_SLAVE_OTP_DAT          (_AE_SYNC_SIMPLE_ERR_BASE +  4)
+#define _AE_SYNC_SIMPLE_ERR_INVALID_MASTER_SINFO_DAT       (_AE_SYNC_SIMPLE_ERR_BASE +  5)
+#define _AE_SYNC_SIMPLE_ERR_INVALID_SLAVE_SINFO_DAT        (_AE_SYNC_SIMPLE_ERR_BASE +  6)
 #endif
 #endif
 
@@ -819,22 +820,22 @@ exit:
 }
 
 #ifdef CONFIG_CAMERA_RE_FOCUS
-uint32 aealtek_set_slv_otp( struct calib_wb_gain_t acalibwbgain,  struct alaeruntimeobj_t *aaelibcallback, struct ae_output_data_t *ae_output , void * ae_runtimedat )
+uint32 aealtek_set_slv_otp(struct calib_wb_gain_t acalibwbgain, struct alaeruntimeobj_t *aaelibcallback, struct ae_output_data_t *ae_output , void *ae_runtimedat)
 {
 	uint32 ret = ERR_WPR_AE_SUCCESS;
 	struct ae_set_param_t localparam;    /* local parameter set */
 
-	if ( acalibwbgain.r == 0 || acalibwbgain.g == 0 || acalibwbgain.b == 0 )
+	if (acalibwbgain.r == 0 || acalibwbgain.g == 0 || acalibwbgain.b == 0)
 		return ERR_WRP_AE_INVALID_INPUT_WB;
 
-	memset( &localparam, 0, sizeof(struct ae_set_param_content_t) );
+	memset(&localparam, 0, sizeof(struct ae_set_param_content_t));
 	localparam.ae_set_param_type = AE_SET_PARAM_OTP_WB_DAT_SLV;
 	localparam.set_param.ae_calib_wb_gain_slv_sensor.calib_r_gain = acalibwbgain.r;
 	localparam.set_param.ae_calib_wb_gain_slv_sensor.calib_g_gain = acalibwbgain.g;
 	localparam.set_param.ae_calib_wb_gain_slv_sensor.calib_b_gain = acalibwbgain.b;
 
-	ret = aaelibcallback->set_param( &localparam, ae_output, ae_runtimedat );
-	if ( ret != ERR_WPR_AE_SUCCESS )
+	ret = aaelibcallback->set_param(&localparam, ae_output, ae_runtimedat);
+	if (ret != ERR_WPR_AE_SUCCESS)
 		return ret;
 
 	return ret;
@@ -971,7 +972,7 @@ static cmr_int aealtek_init(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_init_in 
 	struct seq_init_in seq_in;
 
 
-	if (!cxt_ptr ||!in_ptr || !out_ptr) {
+	if (!cxt_ptr || !in_ptr || !out_ptr) {
 		ISP_LOGE("init param is null, input_ptr is %p, output_ptr is %p", in_ptr, out_ptr);
 		ret = ISP_PARAM_NULL;
 		goto exit;
@@ -1047,7 +1048,7 @@ static void aealtek_change_flash_state(struct aealtek_cxt *cxt_ptr, enum aealtek
 	cxt_ptr->flash_param.flash_state = to;
 }
 
-static cmr_int aealtek_get_def_hwisp_cfg( struct alhw3a_ae_cfginfo_t *cfg_ptr)
+static cmr_int aealtek_get_def_hwisp_cfg(struct alhw3a_ae_cfginfo_t *cfg_ptr)
 {
 	cmr_int ret = ISP_ERROR;
 
@@ -1198,7 +1199,7 @@ static cmr_int aealtek_set_tuning_param(struct aealtek_cxt *cxt_ptr, void *tunin
 
 	return ISP_SUCCESS;
 exit:
-	ISP_LOGE("ret=%ld, lib_ret=%ld,tuning_param:%p !!!", ret, lib_ret,tuning_param);
+	ISP_LOGE("ret=%ld, lib_ret=%ld,tuning_param:%p !!!", ret, lib_ret, tuning_param);
 	return ret;
 }
 
@@ -1208,7 +1209,7 @@ static cmr_int aealtek_write_to_sensor_slv(struct aealtek_cxt *cxt_ptr, struct a
 {
 	cmr_int ret = ISP_ERROR;
 
-	if (! cxt_ptr || !exp_ptr || !gain_ptr) {
+	if (!cxt_ptr || !exp_ptr || !gain_ptr) {
 		ISP_LOGE("param %p %p %p is NULL error!", cxt_ptr, exp_ptr, gain_ptr);
 		ret = ISP_PARAM_NULL;
 		goto exit;
@@ -1244,7 +1245,7 @@ static cmr_int aealtek_write_to_sensor(struct aealtek_cxt *cxt_ptr, struct ae_ct
 {
 	cmr_int ret = ISP_ERROR;
 
-	if (! cxt_ptr || !exp_ptr || !gain_ptr) {
+	if (!cxt_ptr || !exp_ptr || !gain_ptr) {
 		ISP_LOGE("param %p %p %p is NULL error!", cxt_ptr, exp_ptr, gain_ptr);
 		ret = ISP_PARAM_NULL;
 		goto exit;
@@ -1645,7 +1646,7 @@ static cmr_int aealtek_set_exp_comp(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 		lib_ev_comp = 3000;
 		break;
 	default:
-		ISP_LOGW("UI level =%ld",in_ptr->exp_comp.level);
+		ISP_LOGW("UI level = %ld", in_ptr->exp_comp.level);
 		break;
 	}
 	param_ct_ptr->ae_ui_evcomp = lib_ev_comp;
@@ -1834,8 +1835,9 @@ static cmr_int aealtek_set_fps(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 
 	max_fps = cxt_ptr->nxt_status.ui_param.fps.max_fps;
 	line_time = cxt_ptr->cur_status.ui_param.work_info.resolution.line_time;
-	ISP_LOGI("linetime=%d,fps:%f,%f", line_time,cxt_ptr->nxt_status.ui_param.fps.min_fps
-			,cxt_ptr->nxt_status.ui_param.fps.max_fps);
+	ISP_LOGI("linetime=%d,fps:%f,%f", line_time,
+		 cxt_ptr->nxt_status.ui_param.fps.min_fps,
+		 cxt_ptr->nxt_status.ui_param.fps.max_fps);
 
 	ret = aealtek_set_min_frame_length(cxt_ptr, max_fps, line_time);
 	if (ret)
@@ -2025,12 +2027,11 @@ static cmr_int aealtek_set_touch_zone(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 	cmr_s32 end_x;
 	cmr_s32 end_y;
 
-
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
 		goto exit;
 	}
-	ISP_LOGI("x=%d,y=%d,w=%d,h=%d,touch_flag:%d",in_ptr->touch_zone.zone.x,
+	ISP_LOGI("x=%d,y=%d,w=%d,h=%d,touch_flag:%d", in_ptr->touch_zone.zone.x,
 			in_ptr->touch_zone.zone.y,
 			in_ptr->touch_zone.zone.w,
 			in_ptr->touch_zone.zone.h,
@@ -2354,7 +2355,7 @@ static cmr_int aealtek_work_preview(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 	ret = aealtek_sensor_info_ui2lib(cxt_ptr, &in_ptr->resolution, preview_sensor_ptr);
 	if (ret)
 		goto exit;
-	ISP_LOGI("param min_fps=%d lib min_fps=%d",in_ptr->resolution.min_fps,
+	ISP_LOGI("param min_fps=%d lib min_fps=%d", in_ptr->resolution.min_fps,
 			set_in_param.set_param.normal_sensor_info.min_fps);
 	type = AE_SET_PARAM_SENSOR_INFO;
 	set_in_param.ae_set_param_type = type;
@@ -2374,7 +2375,7 @@ static cmr_int aealtek_work_preview(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 		ret = aealtek_sensor_info_ui2lib(cxt_ptr, &cxt_ptr->nxt_status.ui_param.work_info_slv.resolution, preview_sensor_ptr);
 		if (ret)
 			goto exit;
-		ISP_LOGI("slv param min_fps=%d lib min_fps=%d",cxt_ptr->nxt_status.ui_param.work_info_slv.resolution.min_fps,
+		ISP_LOGI("slv param min_fps=%d lib min_fps=%d", cxt_ptr->nxt_status.ui_param.work_info_slv.resolution.min_fps,
 				set_in_param.set_param.slave_sensor_info.min_fps);
 		type = AE_SET_PARAM_SENSOR_INFO_SLV;
 		set_in_param.ae_set_param_type = type;
@@ -2554,7 +2555,7 @@ static cmr_int aealtek_capture_hdr(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 		goto exit;
 	}
 
-	ret = aealtek_get_lib_expousre(cxt_ptr, AEALTEK_BRACKET,&ae_exposure);
+	ret = aealtek_get_lib_expousre(cxt_ptr, AEALTEK_BRACKET, &ae_exposure);
 	if (ret)
 		goto exit;
 	cxt_ptr->lib_data.exposure_array = ae_exposure;
@@ -2562,8 +2563,9 @@ static cmr_int aealtek_capture_hdr(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 	if (ret)
 		goto exit;
 
-	ISP_LOGI("hdr exp_array:%d,%d,%d", cxt_ptr->lib_data.exposure_array.bracket_exp[0].exp_line
-			,cxt_ptr->lib_data.exposure_array.bracket_exp[1].exp_line,cxt_ptr->lib_data.exposure_array.bracket_exp[2].exp_line);
+	ISP_LOGI("hdr exp_array:%d,%d,%d", cxt_ptr->lib_data.exposure_array.bracket_exp[0].exp_line,
+		 cxt_ptr->lib_data.exposure_array.bracket_exp[1].exp_line,
+		 cxt_ptr->lib_data.exposure_array.bracket_exp[2].exp_line);
 
 	return ISP_SUCCESS;
 exit:
@@ -2648,7 +2650,7 @@ static cmr_int aealtek_capture_normal(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 		goto exit;
 	}
 
-	ret = aealtek_get_lib_expousre(cxt_ptr, AEALTEK_SNAPSHOT,&ae_exposure);
+	ret = aealtek_get_lib_expousre(cxt_ptr, AEALTEK_SNAPSHOT, &ae_exposure);
 	if (ret)
 		goto exit;
 	cxt_ptr->lib_data.exposure_array = ae_exposure;
@@ -2776,7 +2778,7 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 			ISP_LOGW("ae set second tuning bin failed");
 	}
 
-	ISP_LOGI("frame size:%dx%d, line_time=%d",in_ptr->work_param.resolution.frame_size.w,
+	ISP_LOGI("frame size:%dx%d, line_time=%d", in_ptr->work_param.resolution.frame_size.w,
 			in_ptr->work_param.resolution.frame_size.h,
 			in_ptr->work_param.resolution.line_time);
 
@@ -2843,7 +2845,7 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 		break;
 	}
 
-	ret = aealtek_get_hwisp_cfg( cxt_ptr, &out_ptr->proc_out.hw_cfg);
+	ret = aealtek_get_hwisp_cfg(cxt_ptr, &out_ptr->proc_out.hw_cfg);
 	if (ret)
 		goto exit;
 
@@ -2857,10 +2859,12 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 	if (cxt_ptr->tuning_info.manual_ae_on && ISP3A_WORK_MODE_PREVIEW == work_mode) {
 		if (TUNING_MODE_USER_DEF != cxt_ptr->tuning_info.tuning_mode) {
 			cxt_ptr->sensor_exp_data.lib_exp.exp_time = cxt_ptr->tuning_info.exposure[cxt_ptr->tuning_info.num];
-			cxt_ptr->sensor_exp_data.lib_exp.exp_line = SENSOR_EXP_BASE*cxt_ptr->tuning_info.exposure[cxt_ptr->tuning_info.num]/cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time;
+			cxt_ptr->sensor_exp_data.lib_exp.exp_line =
+				SENSOR_EXP_BASE*cxt_ptr->tuning_info.exposure[cxt_ptr->tuning_info.num]/cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time;
 			cxt_ptr->sensor_exp_data.lib_exp.gain = cxt_ptr->tuning_info.gain[cxt_ptr->tuning_info.num];
-			ISP_LOGI("get num:%d tuning exp_gain:%d,%d", cxt_ptr->tuning_info.num
-					,cxt_ptr->sensor_exp_data.lib_exp.exp_line,cxt_ptr->sensor_exp_data.lib_exp.gain);
+			ISP_LOGI("get num:%d tuning exp_gain:%d,%d", cxt_ptr->tuning_info.num,
+				 cxt_ptr->sensor_exp_data.lib_exp.exp_line,
+				 cxt_ptr->sensor_exp_data.lib_exp.gain);
 			cxt_ptr->tuning_info.num++;
 		}
 
@@ -3375,37 +3379,53 @@ exit:
 
 #ifdef CONFIG_CAMERA_RE_FOCUS
 #ifdef CONFIG_AE_SYNC_INFO_MAPPING
-unsigned int aealtek_sync_simple_verify_input( struct aealtek_simple_sync_input *input )
+cmr_u32 aealtek_sync_simple_verify_input(struct aealtek_simple_sync_input *input)
 {
 	cmr_u32 err_ret = _AE_SYNC_SIMPLE_ERR_SUCCESS;
 
-	if ( input == 0 )
+	if (input == 0)
 		return _AE_SYNC_SIMPLE_ERR_NULL_ADDR;
 
-	if ( input->ud_msc_adgain == 0 || input->ud_msc_exposure_line == 0 || input->ud_msc_exposure_time == 0 ||
-	     input->ud_msc_iso == 0 )
+	if (input->ud_msc_adgain == 0 ||
+	    input->ud_msc_exposure_line == 0 ||
+	    input->ud_msc_exposure_time == 0 ||
+	    input->ud_msc_iso == 0)
 		return _AE_SYNC_SIMPLE_ERR_INVALID_PARAM;
 
-	if ( input->master_info.cam_info_calib.r_gain == 0 || input->master_info.cam_info_calib.g_gain == 0 || input->master_info.cam_info_calib.b_gain == 0 )
+	if (input->master_info.cam_info_calib.r_gain == 0 ||
+	    input->master_info.cam_info_calib.g_gain == 0 ||
+	    input->master_info.cam_info_calib.b_gain == 0)
 		return _AE_SYNC_SIMPLE_ERR_INVALID_MASTER_OTP_DAT;
 
-	if ( input->slave_info.cam_info_calib.r_gain == 0 ||  input->slave_info.cam_info_calib.g_gain == 0 ||  input->slave_info.cam_info_calib.b_gain == 0 )
+	if (input->slave_info.cam_info_calib.r_gain == 0 ||
+	    input->slave_info.cam_info_calib.g_gain == 0 ||
+	    input->slave_info.cam_info_calib.b_gain == 0)
 		return _AE_SYNC_SIMPLE_ERR_INVALID_SLAVE_OTP_DAT;
 
-	if ( input->master_info.cam_info_sensor.fn == 0.0 || input->master_info.cam_info_sensor.max_ad_gain <= 100 || input->master_info.cam_info_sensor.max_exp_line < 1 ||
-	     input->master_info.cam_info_sensor.max_fps == 0 || input->master_info.cam_info_sensor.max_fps < input->master_info.cam_info_sensor.min_fps ||
-	     input->master_info.cam_info_sensor.min_fps == 0 || input->master_info.cam_info_sensor.min_ad_gain < 100 || input->master_info.cam_info_sensor.min_exp_line < 1 )
+	if (((0.000001 >= input->master_info.cam_info_sensor.fn) && (-0.000001 <= input->master_info.cam_info_sensor.fn)) ||
+	    input->master_info.cam_info_sensor.max_ad_gain <= 100 ||
+	    input->master_info.cam_info_sensor.max_exp_line < 1 ||
+	    input->master_info.cam_info_sensor.max_fps == 0 ||
+	    input->master_info.cam_info_sensor.max_fps < input->master_info.cam_info_sensor.min_fps ||
+	    input->master_info.cam_info_sensor.min_fps == 0 ||
+	    input->master_info.cam_info_sensor.min_ad_gain < 100 ||
+	    input->master_info.cam_info_sensor.min_exp_line < 1)
 		return _AE_SYNC_SIMPLE_ERR_INVALID_MASTER_SINFO_DAT;
 
-	if ( input->slave_info.cam_info_sensor.fn == 0.0 || input->slave_info.cam_info_sensor.max_ad_gain <= 100 || input->slave_info.cam_info_sensor.max_exp_line < 1 ||
-	     input->slave_info.cam_info_sensor.max_fps == 0 || input->slave_info.cam_info_sensor.max_fps < input->slave_info.cam_info_sensor.min_fps ||
-	     input->slave_info.cam_info_sensor.min_fps == 0 || input->slave_info.cam_info_sensor.min_ad_gain < 100 || input->slave_info.cam_info_sensor.min_exp_line < 1 )
+	if (((0.000001 >= input->master_info.cam_info_sensor.fn) && (-0.000001 <= input->master_info.cam_info_sensor.fn)) ||
+	    input->slave_info.cam_info_sensor.max_ad_gain <= 100 ||
+	    input->slave_info.cam_info_sensor.max_exp_line < 1 ||
+	    input->slave_info.cam_info_sensor.max_fps == 0 ||
+	    input->slave_info.cam_info_sensor.max_fps < input->slave_info.cam_info_sensor.min_fps ||
+	    input->slave_info.cam_info_sensor.min_fps == 0 ||
+	    input->slave_info.cam_info_sensor.min_ad_gain < 100 ||
+	    input->slave_info.cam_info_sensor.min_exp_line < 1)
 		return _AE_SYNC_SIMPLE_ERR_INVALID_SLAVE_SINFO_DAT;
 
 	return err_ret;
 }
 
-unsigned int aealtek_sync_simple_trans(struct aealtek_simple_sync_input *input, struct aealtek_simple_sync_output *output)
+cmr_u32 aealtek_sync_simple_trans(struct aealtek_simple_sync_input *input, struct aealtek_simple_sync_output *output)
 {
 	cmr_u32 err_ret = _AE_SYNC_SIMPLE_ERR_SUCCESS;
 	float f_slave_time_per_line;
@@ -3414,40 +3434,39 @@ unsigned int aealtek_sync_simple_trans(struct aealtek_simple_sync_input *input, 
 		return _AE_SYNC_SIMPLE_ERR_NULL_ADDR;
 
 	err_ret = aealtek_sync_simple_verify_input(input);
-	if(err_ret != _AE_SYNC_SIMPLE_ERR_SUCCESS)
+	if (err_ret != _AE_SYNC_SIMPLE_ERR_SUCCESS)
 		return err_ret;
-
 
 	/* do simple translation */
 	output->ud_slv_exif_iso = input->ud_msc_exif_iso;
 
-	output->ud_slv_iso = input->ud_msc_iso * ( input->slave_info.cam_info_sensor.fn * input->slave_info.cam_info_sensor.fn /
-	                     input->master_info.cam_info_sensor.fn/input->master_info.cam_info_sensor.fn);
-	output->ud_slv_adgain =  output->ud_slv_iso * input->slave_info.cam_info_calib.g_gain/1000;
+	output->ud_slv_iso = input->ud_msc_iso * (input->slave_info.cam_info_sensor.fn * input->slave_info.cam_info_sensor.fn /
+						  input->master_info.cam_info_sensor.fn/input->master_info.cam_info_sensor.fn);
+	output->ud_slv_adgain = output->ud_slv_iso * input->slave_info.cam_info_calib.g_gain/1000;
 
 	/* protection for AD gain */
-	if ( output->ud_slv_adgain < input->slave_info.cam_info_sensor.min_ad_gain ) {
+	if (output->ud_slv_adgain < input->slave_info.cam_info_sensor.min_ad_gain) {
 		output->ud_slv_adgain = input->slave_info.cam_info_sensor.min_ad_gain;
-		output->ud_slv_iso = output->ud_slv_adgain * 1000/ input->slave_info.cam_info_calib.g_gain;
+		output->ud_slv_iso = output->ud_slv_adgain * 1000 / input->slave_info.cam_info_calib.g_gain;
 	}
 
-	if ( output->ud_slv_adgain > input->slave_info.cam_info_sensor.max_ad_gain ) {
+	if (output->ud_slv_adgain > input->slave_info.cam_info_sensor.max_ad_gain) {
 		output->ud_slv_adgain = input->slave_info.cam_info_sensor.max_ad_gain;
-		output->ud_slv_iso = output->ud_slv_adgain * 1000/ input->slave_info.cam_info_calib.g_gain;
+		output->ud_slv_iso = output->ud_slv_adgain * 1000 / input->slave_info.cam_info_calib.g_gain;
 	}
 
 	output->ud_slv_exposure_time = input->ud_msc_exposure_time;
 
-	f_slave_time_per_line = (float)( 1000000 * 100) / input->slave_info.cam_info_sensor.min_fps /input->slave_info.cam_info_sensor.max_exp_line;
+	f_slave_time_per_line = (float)(1000000 * 100) / input->slave_info.cam_info_sensor.min_fps / input->slave_info.cam_info_sensor.max_exp_line;
 	output->ud_slv_exposure_line = input->ud_msc_exposure_time/f_slave_time_per_line;
 
 	/* protection for exposure line */
-	if ( output->ud_slv_exposure_line < input->slave_info.cam_info_sensor.min_exp_line ) {
+	if (output->ud_slv_exposure_line < input->slave_info.cam_info_sensor.min_exp_line) {
 		output->ud_slv_exposure_line = input->slave_info.cam_info_sensor.min_exp_line;
 		output->ud_slv_exposure_time = input->slave_info.cam_info_sensor.min_exp_line * f_slave_time_per_line;
 	}
 
-	if ( output->ud_slv_exposure_line > input->slave_info.cam_info_sensor.max_exp_line ) {
+	if (output->ud_slv_exposure_line > input->slave_info.cam_info_sensor.max_exp_line) {
 		output->ud_slv_exposure_line = input->slave_info.cam_info_sensor.max_exp_line;
 		output->ud_slv_exposure_time = input->slave_info.cam_info_sensor.min_exp_line * f_slave_time_per_line;
 	}
@@ -3465,7 +3484,7 @@ static cmr_int aealtek_get_sync_info_from_mapping(struct aealtek_cxt *cxt_ptr, s
 	struct aealtek_simple_sync_output output;
 
 	if (!cxt_ptr) {
-		ISP_LOGE("param is NULL error,%p",cxt_ptr);
+		ISP_LOGE("param is NULL error,%p", cxt_ptr);
 		goto exit;
 	}
 
@@ -3483,7 +3502,8 @@ static cmr_int aealtek_get_sync_info_from_mapping(struct aealtek_cxt *cxt_ptr, s
 	input.master_info.cam_info_calib.b_gain = cxt_ptr->lib_data.ae_otp_data.b;
 	input.master_info.cam_info_sensor.fn = (float)(1.0 * cxt_ptr->init_in_param.sensor_static_info.f_num / F_NUM_BASE);
 	input.master_info.cam_info_sensor.max_ad_gain = cxt_ptr->nxt_status.ui_param.work_info.resolution.max_gain * 100;
-	input.master_info.cam_info_sensor.max_exp_line = SENSOR_EXP_US_BASE/cxt_ptr->nxt_status.ui_param.work_info.resolution.min_fps/cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time;
+	input.master_info.cam_info_sensor.max_exp_line =
+		SENSOR_EXP_US_BASE/cxt_ptr->nxt_status.ui_param.work_info.resolution.min_fps/cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time;
 	input.master_info.cam_info_sensor.max_fps = cxt_ptr->nxt_status.ui_param.work_info.resolution.max_fps * 100;
 	input.master_info.cam_info_sensor.min_ad_gain = 100;
 	input.master_info.cam_info_sensor.min_exp_line = 1;
@@ -3494,7 +3514,8 @@ static cmr_int aealtek_get_sync_info_from_mapping(struct aealtek_cxt *cxt_ptr, s
 	input.slave_info.cam_info_calib.b_gain = cxt_ptr->lib_data.ae_otp_data_slv.b;
 	input.slave_info.cam_info_sensor.fn = (float)(1.0 * cxt_ptr->init_in_param.sensor_static_info_slv.f_num / F_NUM_BASE);
 	input.slave_info.cam_info_sensor.max_ad_gain = cxt_ptr->nxt_status.ui_param.work_info_slv.resolution.max_gain * 100;
-	input.slave_info.cam_info_sensor.max_exp_line = SENSOR_EXP_US_BASE/cxt_ptr->nxt_status.ui_param.work_info_slv.resolution.min_fps/cxt_ptr->nxt_status.ui_param.work_info_slv.resolution.line_time;
+	input.slave_info.cam_info_sensor.max_exp_line =
+		SENSOR_EXP_US_BASE/cxt_ptr->nxt_status.ui_param.work_info_slv.resolution.min_fps/cxt_ptr->nxt_status.ui_param.work_info_slv.resolution.line_time;
 	input.slave_info.cam_info_sensor.max_fps = cxt_ptr->nxt_status.ui_param.work_info_slv.resolution.max_fps * 100;
 	input.slave_info.cam_info_sensor.min_ad_gain = 100;
 	input.slave_info.cam_info_sensor.min_exp_line = 1;
@@ -3504,8 +3525,9 @@ static cmr_int aealtek_get_sync_info_from_mapping(struct aealtek_cxt *cxt_ptr, s
 	if (_AE_SYNC_SIMPLE_ERR_SUCCESS != ret) {
 		ISP_LOGE("aealtek_sync_simple_trans err: %ld \r\n", ret);
 	} else {
-		ISP_LOGI("aealtek_sync_simple_trans BV: %d, ISO : %d, EXIF ISO: %d, gain: %d, Line: %d, Time: %d, ISP D gain: %d \r\n", output.result_bv, output.ud_slv_iso, output.ud_slv_exif_iso,
-		               output.ud_slv_adgain, output.ud_slv_exposure_line, output.ud_slv_exposure_time, output.ud_slv_isp_adgain);
+		ISP_LOGI("aealtek_sync_simple_trans BV: %d, ISO : %d, EXIF ISO: %d, gain: %d, Line: %d, Time: %d, ISP D gain: %d \r\n",
+			 output.result_bv, output.ud_slv_iso, output.ud_slv_exif_iso,
+			 output.ud_slv_adgain, output.ud_slv_exposure_line, output.ud_slv_exposure_time, output.ud_slv_isp_adgain);
 
 		ae_sync_info->master.exposure_time = input.ud_msc_exposure_time;
 		ae_sync_info->master.adgain = input.ud_msc_adgain;
@@ -3536,7 +3558,7 @@ static cmr_int aealtek_get_sync_info_from_lib(struct aealtek_cxt *cxt_ptr, struc
 	struct alaeruntimeobj_t *obj_ptr = NULL;
 
 	if (!cxt_ptr) {
-		ISP_LOGE("param is NULL error,%p!",cxt_ptr);
+		ISP_LOGE("param is NULL error,%p!", cxt_ptr);
 		goto exit;
 	}
 
@@ -3856,7 +3878,7 @@ static cmr_int aealtek_set_fd_param(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 
 	roi_ptr->roi_count = face_num > AL_MAX_ROI_NUM ? AL_MAX_ROI_NUM:face_num;
 	for (i = 0; i < face_num; ++i) {
-		sx = in_ptr->face_area.face_info[i].sx;;
+		sx = in_ptr->face_area.face_info[i].sx;
 		sy = in_ptr->face_area.face_info[i].sy;
 		ex = in_ptr->face_area.face_info[i].ex;
 		ey = in_ptr->face_area.face_info[i].ey;
@@ -4262,7 +4284,7 @@ static cmr_int aealtek_get_exp_gain(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 	out_ptr->exp_gain.dummy = cxt_ptr->sensor_exp_data.actual_exp.dummy;
 	out_ptr->exp_gain.gain = cxt_ptr->sensor_exp_data.actual_exp.gain;
 
-	ISP_LOGI("exp:%d,gain:%d", out_ptr->exp_gain.exposure_time,out_ptr->exp_gain.gain);
+	ISP_LOGI("exp:%d,gain:%d", out_ptr->exp_gain.exposure_time, out_ptr->exp_gain.gain);
 
 	return ISP_SUCCESS;
 exit:
@@ -4364,13 +4386,13 @@ static cmr_int aealtek_get_tuning_data(struct aealtek_cxt *cxt_ptr)
 		ISP_LOGI("persist.sys.isp.ae.tuning.type: %s", ae_property);
 		if (!strcmp("exposure_time", ae_property)) {
 			cxt_ptr->tuning_info.tuning_mode = TUNING_MODE_EXPOSURE;
-			sprintf(file_name,"/data/misc/media/exposure.txt");
+			sprintf(file_name, "/data/misc/media/exposure.txt");
 		} else if (!strcmp("gain", ae_property)) {
 			cxt_ptr->tuning_info.tuning_mode = TUNING_MODE_GAIN;
-			sprintf(file_name,"/data/misc/media/gain.txt");
+			sprintf(file_name, "/data/misc/media/gain.txt");
 		} else if (!strcmp("obclamp", ae_property)) {
 			cxt_ptr->tuning_info.tuning_mode = TUNING_MODE_OBCLAMP;
-			sprintf(file_name,"/data/misc/media/obclamp.txt");
+			sprintf(file_name, "/data/misc/media/obclamp.txt");
 		} else if (!strcmp("user_def", ae_property)) {
 			cxt_ptr->tuning_info.tuning_mode = TUNING_MODE_USER_DEF;
 		}
@@ -4422,8 +4444,8 @@ static cmr_int ae_altek_adpt_init(void *in, void *out, cmr_handle *handle)
 {
 	cmr_int ret = ISP_ERROR;
 	struct aealtek_cxt *cxt_ptr = NULL;
-	struct ae_ctrl_init_in *in_ptr = (struct ae_ctrl_init_in*)in;
-	struct ae_ctrl_init_out *out_ptr = (struct ae_ctrl_init_out*)out;
+	struct ae_ctrl_init_in *in_ptr = (struct ae_ctrl_init_in *)in;
+	struct ae_ctrl_init_out *out_ptr = (struct ae_ctrl_init_out *)out;
 
 
 
@@ -4434,7 +4456,7 @@ static cmr_int ae_altek_adpt_init(void *in, void *out, cmr_handle *handle)
 	}
 
 	*handle = NULL;
-	cxt_ptr = (struct aealtek_cxt*)malloc(sizeof(*cxt_ptr));
+	cxt_ptr = (struct aealtek_cxt *)malloc(sizeof(*cxt_ptr));
 	if (NULL == cxt_ptr) {
 		ISP_LOGE("failed to create ae ctrl context!");
 		ret = ISP_ALLOC_ERROR;
@@ -4467,7 +4489,7 @@ static cmr_int ae_altek_adpt_init(void *in, void *out, cmr_handle *handle)
 	if (ret)
 		goto exit;
 
-	ret = aealtek_get_hwisp_cfg( cxt_ptr, &out_ptr->hw_cfg);
+	ret = aealtek_get_hwisp_cfg(cxt_ptr, &out_ptr->hw_cfg);
 	if (ret)
 		goto exit;
 
@@ -4490,7 +4512,7 @@ exit:
 	if (cxt_ptr) {
 		aealtek_unload_lib(cxt_ptr);
 
-		free((void*)cxt_ptr);
+		free((void *)cxt_ptr);
 	}
 	return ret;
 }
@@ -4498,7 +4520,7 @@ exit:
 static cmr_int ae_altek_adpt_deinit(cmr_handle handle)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct aealtek_cxt *cxt_ptr = (struct aealtek_cxt*)handle;
+	struct aealtek_cxt *cxt_ptr = (struct aealtek_cxt *)handle;
 
 	ISP_CHECK_HANDLE_VALID(handle);
 
@@ -4514,7 +4536,7 @@ static cmr_int ae_altek_adpt_deinit(cmr_handle handle)
 	seq_deinit(cxt_ptr->seq_handle);
 
 	cxt_ptr->is_inited = 0;
-	free((void*)handle);
+	free((void *)handle);
 exit:
 	ISP_LOGI("done %ld", ret);
 	return ret;
@@ -4523,9 +4545,9 @@ exit:
 static cmr_int ae_altek_adpt_ioctrl(cmr_handle handle, cmr_int cmd, void *in, void *out)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct aealtek_cxt *cxt_ptr = (struct aealtek_cxt*)handle;
-	struct ae_ctrl_param_in *in_ptr = (struct ae_ctrl_param_in*)in;
-	struct ae_ctrl_param_out *out_ptr = (struct ae_ctrl_param_out*)out;
+	struct aealtek_cxt *cxt_ptr = (struct aealtek_cxt *)handle;
+	struct ae_ctrl_param_in *in_ptr = (struct ae_ctrl_param_in *)in;
+	struct ae_ctrl_param_out *out_ptr = (struct ae_ctrl_param_out *)out;
 
 
 	if (!handle) {
@@ -4715,7 +4737,9 @@ static cmr_int aealtek_pre_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 			ISP_LOGE("LIB AE stat data is NULL");
 			goto exit;
 		}
-		lib_ret = al3awrapper_dispatchhw3a_aestats((struct isp_drv_meta_ae_t*)in_ptr->stat_data_ptr->addr, &cxt_ptr->lib_data.stats_data, obj_ptr, obj_ptr->ae);
+		lib_ret = al3awrapper_dispatchhw3a_aestats((struct isp_drv_meta_ae_t *)in_ptr->stat_data_ptr->addr,
+							   &cxt_ptr->lib_data.stats_data,
+							   obj_ptr, obj_ptr->ae);
 		if (ERR_WPR_AE_SUCCESS != lib_ret) {
 			ret = ISP_ERROR;
 			ISP_LOGE("dispatch lib_ret=%ld", lib_ret);
@@ -4760,7 +4784,7 @@ static cmr_u32 aealtek_flash_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 
 	/*flash*/
 	if (cxt_ptr->flash_param.enable) {
-		ISP_LOGI("======lib flash converged =%d",cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_converged);
+		ISP_LOGI("======lib flash converged =%d", cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_converged);
 		ISP_LOGI("======lib flash ae_st=%d",
 			cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_LibStates);
 		ISP_LOGI("=====lib flash_st=%d",
@@ -4791,13 +4815,18 @@ static cmr_u32 aealtek_flash_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 					struct isp_flash_element  flash_element;
 
 					ISP_LOGI("========flash pre exp:%d,%d,%d,%d",
-							cxt_ptr->flash_param.pre_flash_before.exp_cell.gain,cxt_ptr->flash_param.pre_flash_before.exp_cell.exp_line
-							,cxt_ptr->flash_param.pre_flash_before.exp_cell.exp_time,cxt_ptr->flash_param.pre_flash_before.exp_cell.iso);
+							cxt_ptr->flash_param.pre_flash_before.exp_cell.gain,
+							cxt_ptr->flash_param.pre_flash_before.exp_cell.exp_line,
+							cxt_ptr->flash_param.pre_flash_before.exp_cell.exp_time,
+							cxt_ptr->flash_param.pre_flash_before.exp_cell.iso);
 
 					ISP_LOGI("========flash pre led_info:%d,%d,%d,%d,%d,%d",
-							cxt_ptr->flash_param.pre_flash_before.led_num,cxt_ptr->flash_param.led_info.led_tag
-							,cxt_ptr->flash_param.pre_flash_before.led_0.idx,cxt_ptr->flash_param.pre_flash_before.led_0.current
-							,cxt_ptr->flash_param.pre_flash_before.led_1.idx,cxt_ptr->flash_param.pre_flash_before.led_1.current);
+							cxt_ptr->flash_param.pre_flash_before.led_num,
+							cxt_ptr->flash_param.led_info.led_tag,
+							cxt_ptr->flash_param.pre_flash_before.led_0.idx,
+							cxt_ptr->flash_param.pre_flash_before.led_0.current,
+							cxt_ptr->flash_param.pre_flash_before.led_1.idx,
+							cxt_ptr->flash_param.pre_flash_before.led_1.current);
 
 					flash_cfg.type = ISP_FLASH_TYPE_PREFLASH;
 
@@ -4853,16 +4882,20 @@ static cmr_u32 aealtek_flash_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 				cxt_ptr->flash_param.main_flash_est.exp_cell.iso = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.snapshot_exp_dat.ISO;
 
 				ISP_LOGI("========flash main exp:%d,%d,%d,%d",
-						cxt_ptr->flash_param.main_flash_est.exp_cell.gain,cxt_ptr->flash_param.main_flash_est.exp_cell.exp_line
-						,cxt_ptr->flash_param.main_flash_est.exp_cell.exp_time,cxt_ptr->flash_param.main_flash_est.exp_cell.iso);
+						cxt_ptr->flash_param.main_flash_est.exp_cell.gain,
+						cxt_ptr->flash_param.main_flash_est.exp_cell.exp_line,
+						cxt_ptr->flash_param.main_flash_est.exp_cell.exp_time,
+						cxt_ptr->flash_param.main_flash_est.exp_cell.iso);
 
 				ISP_LOGI("========flash main led_info:%d,%d,%d,%d,%d,%d",
-						cxt_ptr->flash_param.main_flash_est.led_num,cxt_ptr->flash_param.led_info.led_tag
-						,cxt_ptr->flash_param.main_flash_est.led_0.idx,cxt_ptr->flash_param.main_flash_est.led_0.current
-						,cxt_ptr->flash_param.main_flash_est.led_1.idx,cxt_ptr->flash_param.main_flash_est.led_1.current);
+						cxt_ptr->flash_param.main_flash_est.led_num,
+						cxt_ptr->flash_param.led_info.led_tag,
+						cxt_ptr->flash_param.main_flash_est.led_0.idx,
+						cxt_ptr->flash_param.main_flash_est.led_0.current,
+						cxt_ptr->flash_param.main_flash_est.led_1.idx,
+						cxt_ptr->flash_param.main_flash_est.led_1.current);
 
 				aealtek_change_flash_state(cxt_ptr, cxt_ptr->flash_param.flash_state, AEALTEK_FLASH_STATE_KEEPING);
-
 			}
 			break;
 		default:
@@ -4967,8 +5000,9 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 		if (cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_roi_change_st)
 			cxt_ptr->touch_param.ctrl_roi_changed_flag = 1;
 
-		ISP_LOGI("======touch_req =%d,%d,%d",cxt_ptr->touch_param.ctrl_convergence_req_flag,
-				cxt_ptr->touch_param.ctrl_roi_changed_flag,cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_LibStates);
+		ISP_LOGI("======touch_req =%d,%d,%d", cxt_ptr->touch_param.ctrl_convergence_req_flag,
+				cxt_ptr->touch_param.ctrl_roi_changed_flag,
+				cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_LibStates);
 
 		/* wait roi converged command */
 		if (cxt_ptr->touch_param.ctrl_convergence_req_flag) {
@@ -5009,7 +5043,7 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 		if (data_length == cxt_ptr->stat_info_num) {
 			cxt_ptr->stat_info_num = 0;
 		} else {
-			cxt_ptr->stat_info_num ++;
+			cxt_ptr->stat_info_num++;
 		}
 
 		if (flash_callback)
@@ -5049,7 +5083,7 @@ static cmr_int aealtek_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_proc_
 			}
 		}
 	}
-	ISP_LOGI("mean=%d, BV=%d, exposure_line=%d, gain=%d, ae_states:%d, camera_id:%d",\
+	ISP_LOGI("mean=%d, BV=%d, exposure_line=%d, gain=%d, ae_states:%d, camera_id:%d",
 		out_data_ptr->rpt_3a_update.ae_update.curmean,
 		out_data_ptr->rpt_3a_update.ae_update.bv_val,
 		out_data_ptr->rpt_3a_update.ae_update.exposure_line,
@@ -5058,11 +5092,17 @@ static cmr_int aealtek_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_proc_
 		cxt_ptr->camera_id);
 
 	aealtek_print_lib_log(cxt_ptr, &cxt_ptr->lib_data.output_data);
-	isp_mlog(AE_FILE,"ISO:%d, exp_time:%d, exp_line:%d, again:%d, bv:%d, bg_bv:%d,d_clum:%d, c_lum:%d, t_lum:%d, sys_sof_index:%d", \
-			cxt_ptr->lib_data.output_data.udISO,cxt_ptr->lib_data.output_data.udCur_exposure_time
-			,cxt_ptr->lib_data.output_data.udexposure_line,cxt_ptr->lib_data.output_data.udsensor_ad_gain,
-			cxt_ptr->lib_data.output_data.bvresult,cxt_ptr->lib_data.output_data.bg_bvresult,(cxt_ptr->lib_data.output_data.ae_default_target)*4/100,
-			(cxt_ptr->lib_data.output_data.ae_cur_mean)*4/100,(cxt_ptr->lib_data.output_data.ae_targetmean)*4/100,cxt_ptr->lib_data.output_data.sys_sof_index);
+	isp_mlog(AE_FILE, "ISO:%d, exp_time:%d, exp_line:%d, again:%d, bv:%d, bg_bv:%d,d_clum:%d, c_lum:%d, t_lum:%d, sys_sof_index:%d",
+			cxt_ptr->lib_data.output_data.udISO,
+			cxt_ptr->lib_data.output_data.udCur_exposure_time,
+			cxt_ptr->lib_data.output_data.udexposure_line,
+			cxt_ptr->lib_data.output_data.udsensor_ad_gain,
+			cxt_ptr->lib_data.output_data.bvresult,
+			cxt_ptr->lib_data.output_data.bg_bvresult,
+			(cxt_ptr->lib_data.output_data.ae_default_target)*4/100,
+			(cxt_ptr->lib_data.output_data.ae_cur_mean)*4/100,
+			(cxt_ptr->lib_data.output_data.ae_targetmean)*4/100,
+			cxt_ptr->lib_data.output_data.sys_sof_index);
 
 	return ISP_SUCCESS;
 exit:
@@ -5073,9 +5113,9 @@ exit:
 static cmr_int ae_altek_adpt_process(cmr_handle handle, void *in, void *out)
 {
 	cmr_int ret = ISP_ERROR;
-	struct aealtek_cxt *cxt_ptr = (struct aealtek_cxt*)handle;
-	struct ae_ctrl_proc_in *in_ptr = (struct ae_ctrl_proc_in*)in;
-	struct ae_ctrl_proc_out *out_ptr = (struct ae_ctrl_proc_out*)out;
+	struct aealtek_cxt *cxt_ptr = (struct aealtek_cxt *)handle;
+	struct ae_ctrl_proc_in *in_ptr = (struct ae_ctrl_proc_in *)in;
+	struct ae_ctrl_proc_out *out_ptr = (struct ae_ctrl_proc_out *)out;
 
 
 	if (!handle || !in) {
@@ -5102,8 +5142,8 @@ static cmr_int ae_altek_adpt_process(cmr_handle handle, void *in, void *out)
 
 	if (cxt_ptr->flash_skip_number > 0) {
 		cxt_ptr->flash_skip_number--;
-		ISP_LOGI("flash skip_number:%d, flash_state:%d\n",cxt_ptr->flash_skip_number, cxt_ptr->flash_param.flash_state);
-		if (0==cxt_ptr->flash_skip_number && AEALTEK_FLASH_STATE_LIGHTING==cxt_ptr->flash_param.flash_state) {
+		ISP_LOGI("flash skip_number:%d, flash_state:%d\n", cxt_ptr->flash_skip_number, cxt_ptr->flash_param.flash_state);
+		if (0 == cxt_ptr->flash_skip_number && AEALTEK_FLASH_STATE_LIGHTING == cxt_ptr->flash_param.flash_state) {
 			ret = aealtek_set_flash_est(cxt_ptr, 0);
 			ret = aealtek_set_hw_flash_status(cxt_ptr, 1);
 		}

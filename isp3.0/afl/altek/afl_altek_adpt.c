@@ -16,7 +16,8 @@
 #define LOG_TAG "alk_adpt_afl"
 
 #include <dlfcn.h>
-#include "afl_altek_adpt.h"
+#include "afl_ctrl_types.h"
+#include "isp_adpt.h"
 #include "allib_flicker.h"
 #include "allib_flicker_errcode.h"
 #include "alwrapper_flicker.h"
@@ -29,7 +30,7 @@
 
 struct aflaltek_lib_ops {
 	BOOL (*load_func)(struct alflickerruntimeobj_t *flicker_run_obj, unsigned long identityID);
-	void (*get_lib_ver)(struct al_flickerlib_version_t* flicker_LibVersion);
+	void (*get_lib_ver)(struct al_flickerlib_version_t *flicker_LibVersion);
 };
 
 
@@ -44,7 +45,7 @@ struct aflaltek_statistics_queue {
 	cmr_u32 read;
 	cmr_u32 write;
 	cmr_u32 size;
-	struct isp3a_statistics_data* data[10];
+	struct isp3a_statistics_data *data[10];
 };
 
 /*ae altek context*/
@@ -111,7 +112,7 @@ static cmr_int aflaltek_load(struct aflaltek_cxt *cxt_ptr, struct afl_ctrl_init_
 	cmr_int is_ret = 0;
 
 
-	if (!cxt_ptr ||!in_ptr || !out_ptr) {
+	if (!cxt_ptr || !in_ptr || !out_ptr) {
 		ISP_LOGE("init param is null, input_ptr is %p, output_ptr is %p", in_ptr, out_ptr);
 		ret = ISP_PARAM_NULL;
 		goto exit;
@@ -306,9 +307,12 @@ static cmr_int aflaltek_set_shift_info(struct aflaltek_cxt *cxt_ptr, struct afl_
 	param_ct_ptr->shift_info.adgain = in_ptr->shift_info.adgain;
 	param_ct_ptr->shift_info.iso = in_ptr->shift_info.iso;
 
-	ISP_LOGV("shift_info %d,%d,%d,%d,%d,%d", param_ct_ptr->shift_info.avgmean,param_ct_ptr->shift_info.center_mean2x2
-			,param_ct_ptr->shift_info.bv
-			,param_ct_ptr->shift_info.exposure_time,param_ct_ptr->shift_info.adgain,param_ct_ptr->shift_info.iso);
+	ISP_LOGV("shift_info %d,%d,%d,%d,%d,%d", param_ct_ptr->shift_info.avgmean,
+		 param_ct_ptr->shift_info.center_mean2x2,
+		 param_ct_ptr->shift_info.bv,
+		 param_ct_ptr->shift_info.exposure_time,
+		 param_ct_ptr->shift_info.adgain,
+		 param_ct_ptr->shift_info.iso);
 
 	type = FLICKER_SET_PARAM_SHIFT_INFO;
 	in_param.flicker_set_param_type = type;
@@ -355,11 +359,11 @@ static cmr_int aflaltek_stat_queue_release_all(struct aflaltek_cxt *cxt_ptr, str
 	data_length = ARRAY_SIZE(cxt_ptr->stat_queue.data) - 1;
 	while (cxt_ptr->stat_queue.read != cxt_ptr->stat_queue.write) {
 		callback_in.stat_data = cxt_ptr->stat_queue.data[cxt_ptr->stat_queue.read];
-		cxt_ptr->stat_queue.size --;
+		cxt_ptr->stat_queue.size--;
 		if (data_length == cxt_ptr->stat_queue.read) {
 			cxt_ptr->stat_queue.read = 0;
 		} else {
-			cxt_ptr->stat_queue.read ++;
+			cxt_ptr->stat_queue.read++;
 		}
 		cxt_ptr->init_in_param.ops_in.afl_callback(cxt_ptr->caller_handle, AFL_CTRL_CB_STAT_DATA, &callback_in);
 	}
@@ -638,8 +642,8 @@ static cmr_int afl_altek_adpt_init(void *in, void *out, cmr_handle *handle)
 {
 	cmr_int ret = ISP_ERROR;
 	struct aflaltek_cxt *cxt_ptr = NULL;
-	struct afl_ctrl_init_in *in_ptr = (struct afl_ctrl_init_in*)in;
-	struct afl_ctrl_init_out *out_ptr = (struct afl_ctrl_init_out*)out;
+	struct afl_ctrl_init_in *in_ptr = (struct afl_ctrl_init_in *)in;
+	struct afl_ctrl_init_out *out_ptr = (struct afl_ctrl_init_out *)out;
 
 	if (!in_ptr || !out_ptr || !handle) {
 		ISP_LOGE("init param %p %p %p is NULL error!", in_ptr, out_ptr, handle);
@@ -648,7 +652,7 @@ static cmr_int afl_altek_adpt_init(void *in, void *out, cmr_handle *handle)
 	}
 
 	*handle = NULL;
-	cxt_ptr = (struct aflaltek_cxt*)malloc(sizeof(*cxt_ptr));
+	cxt_ptr = (struct aflaltek_cxt *)malloc(sizeof(*cxt_ptr));
 	if (NULL == cxt_ptr) {
 		ISP_LOGE("failed to create ae ctrl context!");
 		ret = ISP_ALLOC_ERROR;
@@ -682,7 +686,7 @@ exit:
 		if (ret)
 			ISP_LOGW("unload lib failed ret=%ld", ret);
 
-		free((void*)cxt_ptr);
+		free((void *)cxt_ptr);
 	}
 	ISP_LOGE("ret=%ld !!!", ret);
 	return ret;
@@ -691,7 +695,7 @@ exit:
 static cmr_int afl_altek_adpt_deinit(cmr_handle handle)
 {
 	cmr_int ret = ISP_ERROR;
-	struct aflaltek_cxt *cxt_ptr = (struct aflaltek_cxt*)handle;
+	struct aflaltek_cxt *cxt_ptr = (struct aflaltek_cxt *)handle;
 
 	ISP_CHECK_HANDLE_VALID(handle);
 
@@ -706,7 +710,7 @@ static cmr_int afl_altek_adpt_deinit(cmr_handle handle)
 	if (ret)
 		ISP_LOGW("unload lib failed ret=%ld", ret);
 
-	free((void*)handle);
+	free((void *)handle);
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGI("ret=%ld !!!", ret);
@@ -716,9 +720,9 @@ exit:
 static cmr_int afl_altek_adpt_ioctrl(cmr_handle handle, cmr_int cmd, void *in, void *out)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct aflaltek_cxt *cxt_ptr = (struct aflaltek_cxt*)handle;
-	struct afl_ctrl_param_in *in_ptr = (struct afl_ctrl_param_in*)in;
-	struct afl_ctrl_param_out *out_ptr = (struct afl_ctrl_param_out*)out;
+	struct aflaltek_cxt *cxt_ptr = (struct aflaltek_cxt *)handle;
+	struct afl_ctrl_param_in *in_ptr = (struct afl_ctrl_param_in *)in;
+	struct afl_ctrl_param_out *out_ptr = (struct afl_ctrl_param_out *)out;
 
 
 	if (!handle) {
@@ -778,22 +782,22 @@ static cmr_int aflaltek_stat_queue_process(struct aflaltek_cxt *cxt_ptr, struct 
 	}
 
 	data_length = ARRAY_SIZE(cxt_ptr->stat_queue.data) - 1;
-	ISP_LOGV("add stat_data =%p,size:%d", stat_data_ptr,cxt_ptr->stat_queue.size);
+	ISP_LOGV("add stat_data =%p,size:%d", stat_data_ptr, cxt_ptr->stat_queue.size);
 	cxt_ptr->stat_queue.data[cxt_ptr->stat_queue.write] = stat_data_ptr;
-	cxt_ptr->stat_queue.size ++;
+	cxt_ptr->stat_queue.size++;
 	if (data_length == cxt_ptr->stat_queue.write) {
 		cxt_ptr->stat_queue.write = 0;
 	} else {
-		cxt_ptr->stat_queue.write ++;
+		cxt_ptr->stat_queue.write++;
 	}
 
 	if (cxt_ptr->stat_queue.size > FLICKERINIT_TOTAL_QUEUE) {
 		callback_in.stat_data = cxt_ptr->stat_queue.data[cxt_ptr->stat_queue.read];
-		cxt_ptr->stat_queue.size --;
+		cxt_ptr->stat_queue.size--;
 		if (data_length == cxt_ptr->stat_queue.read) {
 			cxt_ptr->stat_queue.read = 0;
 		} else {
-			cxt_ptr->stat_queue.read ++;
+			cxt_ptr->stat_queue.read++;
 		}
 		cxt_ptr->init_in_param.ops_in.afl_callback(cxt_ptr->caller_handle, AFL_CTRL_CB_STAT_DATA, &callback_in);
 	}
@@ -809,9 +813,9 @@ static cmr_int afl_altek_adpt_process(cmr_handle handle, void *in, void *out)
 {
 	cmr_int ret = ISP_ERROR;
 	cmr_int lib_ret = 0;
-	struct aflaltek_cxt *cxt_ptr = (struct aflaltek_cxt*)handle;
-	struct afl_ctrl_proc_in *in_ptr = (struct afl_ctrl_proc_in*)in;
-	struct afl_ctrl_proc_out *out_ptr = (struct afl_ctrl_proc_out*)out;
+	struct aflaltek_cxt *cxt_ptr = (struct aflaltek_cxt *)handle;
+	struct afl_ctrl_proc_in *in_ptr = (struct afl_ctrl_proc_in *)in;
+	struct afl_ctrl_proc_out *out_ptr = (struct afl_ctrl_proc_out *)out;
 	struct afl_ctrl_callback_in callback_in;
 	enum ae_antiflicker_mode_t temp_flicker_mode;
 
@@ -823,8 +827,8 @@ static cmr_int afl_altek_adpt_process(cmr_handle handle, void *in, void *out)
 		ISP_LOGI("hw stat data is NULL error!!");
 		goto exit;
 	}
-	lib_ret = al3awrapper_dispatchhw3a_flickerstats((struct isp_drv_meta_antif_t*)in_ptr->stat_data_ptr->addr
-			, &cxt_ptr->lib_data.stats_data, &cxt_ptr->afl_obj, cxt_ptr->lib_run_data);
+	lib_ret = al3awrapper_dispatchhw3a_flickerstats((struct isp_drv_meta_antif_t *)in_ptr->stat_data_ptr->addr,
+							&cxt_ptr->lib_data.stats_data, &cxt_ptr->afl_obj, cxt_ptr->lib_run_data);
 	if (ERR_WPR_FLICKER_SUCCESS != lib_ret) {
 		ret = ISP_ERROR;
 		ISP_LOGE("dispatch lib_ret=%ld", lib_ret);
