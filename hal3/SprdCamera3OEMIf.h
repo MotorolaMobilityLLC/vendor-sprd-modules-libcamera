@@ -445,6 +445,7 @@ private:
 	Condition                       mParamWait;
 	Mutex                           mPrevBufLock;
 	Mutex                           mCapBufLock;
+	Mutex                           mZslLock;
 	uint32_t                        mCapBufIsAvail;
 
 	uint32_t                        m_zslValidDataWidth;

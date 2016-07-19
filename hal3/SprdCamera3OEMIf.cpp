@@ -6182,6 +6182,8 @@ int SprdCamera3OEMIf::PushZslSnapShotbuff()
 
 ZslBufferQueue SprdCamera3OEMIf::popZSLQueue()
 {
+	Mutex::Autolock l(&mZslLock);
+
 	List<ZslBufferQueue>::iterator frame;
 	ZslBufferQueue ret = {0};
 
@@ -6197,6 +6199,8 @@ ZslBufferQueue SprdCamera3OEMIf::popZSLQueue()
 
 int SprdCamera3OEMIf::getZSLQueueFrameNum()
 {
+	Mutex::Autolock l(&mZslLock);
+
 	int ret = 0;
 	ret = mZSLQueue.size();
 	HAL_LOGV("%d",ret);
@@ -6205,11 +6209,15 @@ int SprdCamera3OEMIf::getZSLQueueFrameNum()
 
 void SprdCamera3OEMIf::pushZSLQueue(ZslBufferQueue frame)
 {
+	Mutex::Autolock l(&mZslLock);
+
 	mZSLQueue.push_back(frame);
 }
 
 void SprdCamera3OEMIf::releaseZSLQueue()
 {
+	Mutex::Autolock l(&mZslLock);
+
 	List<ZslBufferQueue>::iterator round;
 	HAL_LOGD("para changed.size : %d", mZSLQueue.size());
 	while (mZSLQueue.size() > 0) {
