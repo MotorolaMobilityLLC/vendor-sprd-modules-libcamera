@@ -228,7 +228,7 @@ cmr_int isp_dev_start(isp_handle handle)
 	}
 
 	memset(&load_input, 0x00, sizeof(load_input));
-	file->init_param.alloc_cb(CAMERA_ISP_BINGING4AWB, file->init_param.mem_cb_handle,
+	ret = file->init_param.alloc_cb(CAMERA_ISP_BINGING4AWB, file->init_param.mem_cb_handle,
 				  (cmr_u32 *)&fw_size, &fw_buf_num, (cmr_uint *)kaddr,
 				  &load_input.fw_buf_vir_addr, &load_input.fw_buf_mfd);
 	if (ret) {

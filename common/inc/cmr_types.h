@@ -68,9 +68,9 @@ typedef void*           cmr_handle;
 #define UNUSED(x) (void)x
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
-typedef void (*cmr_malloc)(cmr_u32 mem_type, cmr_handle oem_handle, cmr_u32 *size,
+typedef cmr_int (*cmr_malloc)(cmr_u32 mem_type, cmr_handle oem_handle, cmr_u32 *size,
 	                         cmr_u32 *sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
-typedef void (*cmr_free)(cmr_u32 mem_type, cmr_handle oem_handle, cmr_uint *phy_addr,
+typedef cmr_int (*cmr_free)(cmr_u32 mem_type, cmr_handle oem_handle, cmr_uint *phy_addr,
 	                       cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum);
 
 #endif

@@ -219,36 +219,39 @@ extern int32_t isp_calibration(struct isp_cali_param *param, struct isp_data_t *
 
 /**********************************************************************************************/
 
-void camera_malloc(cmr_u32 mem_type, cmr_handle oem_handle, cmr_u32 *size_ptr,
+cmr_int camera_malloc(cmr_u32 mem_type, cmr_handle oem_handle, cmr_u32 *size_ptr,
 	                        cmr_u32 *sum_ptr, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd)
 {
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 
 	if (!oem_handle || !vir_addr || !size_ptr || !sum_ptr || !fd) {
-		CMR_LOGE("error param mem_type 0x%lx,oem_handle 0x%lx  vir_addr 0x%lx, fd 0x%lx", mem_type,(cmr_uint)oem_handle, (cmr_uint)vir_addr, fd);
-		return;
+		CMR_LOGE("error param mem_type 0x%x, oem_handle %p vir_addr %p, fd %p", mem_type, oem_handle, vir_addr, fd);
+		return -CMR_CAMERA_INVALID_PARAM;
 	}
 	CMR_LOGD("mem type %d size %d sum %d", mem_type, *size_ptr, *sum_ptr);
 	if (cxt->hal_malloc) {
-		cxt->hal_malloc(mem_type, size_ptr, sum_ptr, phy_addr, vir_addr, fd, cxt->client_data);
+		ret = cxt->hal_malloc(mem_type, size_ptr, sum_ptr, phy_addr, vir_addr, fd, cxt->client_data);
 	}
+
+	return ret;
 }
 
-void camera_free(cmr_u32 mem_type, cmr_handle oem_handle,cmr_uint *phy_addr,
+cmr_int camera_free(cmr_u32 mem_type, cmr_handle oem_handle,cmr_uint *phy_addr,
 						cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum)
 {
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 
 	if (!oem_handle ||!vir_addr || !fd) {
-		CMR_LOGE("error param mem_type 0x%lx,oem_handle 0x%lx fd 0x%lx  vir_addr 0x%lx",
-			mem_type,(cmr_uint)oem_handle, fd, (cmr_uint)vir_addr);
-		return;
+		CMR_LOGE("error param mem_type 0x%x, oem_handle %p fd %p vir_addr %p", mem_type, oem_handle, fd, vir_addr);
+		return -CMR_CAMERA_INVALID_PARAM;
 	}
 	CMR_LOGI("mem type %d sum %d", mem_type, sum);
-	CMR_LOGV("free 0x%lx 0x%lx", (cmr_uint)phy_addr, (cmr_uint)vir_addr);
-	cxt->hal_free(mem_type, phy_addr, vir_addr, fd, sum, cxt->client_data);
+	CMR_LOGV("free %p %p", phy_addr, vir_addr);
+	ret = cxt->hal_free(mem_type, phy_addr, vir_addr, fd, sum, cxt->client_data);
+
+	return ret;
 }
 
 void camera_snapshot_started(cmr_handle oem_handle)
@@ -6016,7 +6019,6 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type, struct common
 		isp_cmd = ISP_CTRL_GET_YIMG_INFO;
 		ptr_flag = 1;
 		isp_param_ptr = (void*)&param_ptr->isp_yimg;
-		CMR_LOGE("COM_ISP_GET_YIMG_INFO %p %d", isp_param, isp_param_ptr);
 		break;
 
 	case COM_ISP_SET_PREVIEW_YIMG:
@@ -7305,7 +7307,7 @@ cmr_int camera_get_sensor_mode_info(cmr_handle oem_handle, struct sensor_mode_in
 		goto exit;
 	}
 
-	for (i = SENSOR_MODE_COMMON_INIT; i <= SENSOR_MODE_MAX; i++) {
+	for (i = SENSOR_MODE_COMMON_INIT; i < SENSOR_MODE_MAX; i++) {
 		mode_info[i].trim_start_x = sensor_info->mode_info[i].trim_start_x;
 		mode_info[i].trim_start_y = sensor_info->mode_info[i].trim_start_y;
 		mode_info[i].trim_width = sensor_info->mode_info[i].trim_width;
