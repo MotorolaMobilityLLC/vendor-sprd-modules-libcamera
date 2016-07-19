@@ -6344,6 +6344,12 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data)
 
 	if (1 == obj->mZslShotPushFlag) {
 		zsl_frame = popZslFrame();
+		while (zsl_frame.y_vir_addr == 0) {
+			HAL_LOGD("wait for zsl frame");
+			usleep(20*1000);
+			zsl_frame = popZslFrame();
+		}
+
 		if (zsl_frame.y_vir_addr != 0) {
 			HAL_LOGD("fd=0x%x", zsl_frame.fd);
 			mHalOem->ops->camera_set_zsl_snapshot_buffer(obj->mCameraHandle,
