@@ -25,17 +25,17 @@
 #ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
 #include "../af_zzz.h"
 #endif
-#include "sensor_ov8856_raw_param_main.c"
+#include "sensor_ov8856s_raw_param_main.c"
 
 #define CAMERA_IMAGE_180
 
-#define SENSOR_NAME			"ov8856_mipi_raw"
+#define SENSOR_NAME			"ov8856s_mipi_raw"
 #define I2C_SLAVE_ADDR		0x20 //0x6c    /* 8bit slave address*/
 
-#define ov8856_PID_ADDR		0x300B
-#define ov8856_PID_VALUE		0x88
-#define ov8856_VER_ADDR		0x300C
-#define ov8856_VER_VALUE		0x5A
+#define ov8856s_PID_ADDR		0x300B
+#define ov8856s_PID_VALUE		0x88
+#define ov8856s_VER_ADDR		0x300C
+#define ov8856s_VER_VALUE		0x5A
 
 /* sensor parameters begin */
 /* effective sensor output image size */
@@ -149,20 +149,20 @@ struct otp_info_t {
 };
 
 
-#include "sensor_ov8856_lightarray_otp.c"
+#include "sensor_ov8856s_lightarray_otp.c"
 
 
-struct raw_param_info_tab s_ov8856_raw_param_tab[] = {
-	{MODULE_ID_OV8856_lightarray, &s_ov8856_mipi_raw_info, ov8856_lightarray_identify_otp, ov8856_lightarray_update_otp},
+struct raw_param_info_tab s_ov8856s_raw_param_tab[] = {
+	{MODULE_ID_OV8856_lightarray, &s_ov8856s_mipi_raw_info, ov8856s_lightarray_identify_otp, ov8856s_lightarray_update_otp},
 	{MODULE_ID_END, PNULL, PNULL, PNULL}
 };
 
 #endif
 
-static SENSOR_IOCTL_FUNC_TAB_T s_ov8856_ioctl_func_tab;
-struct sensor_raw_info *s_ov8856_mipi_raw_info_ptr = &s_ov8856_mipi_raw_info;
+static SENSOR_IOCTL_FUNC_TAB_T s_ov8856s_ioctl_func_tab;
+struct sensor_raw_info *s_ov8856s_mipi_raw_info_ptr = &s_ov8856s_mipi_raw_info;
 
-static const SENSOR_REG_T ov8856_init_setting[] = {
+static const SENSOR_REG_T ov8856s_init_setting[] = {
 	  //100 99 1632x1224
 		{0x0103, 0x01}, 
 		{0x0100, 0x00}, 
@@ -353,7 +353,7 @@ static const SENSOR_REG_T ov8856_init_setting[] = {
 
 };
 
-static const SENSOR_REG_T ov8856_preview_setting[] = {
+static const SENSOR_REG_T ov8856s_preview_setting[] = {
 		//mipi bit rate 720Mbps, //1632x1224, 30fps, frame_length 2482,line time 13.41us
 		
 		//{0x0100, 0x00},
@@ -419,7 +419,7 @@ static const SENSOR_REG_T ov8856_preview_setting[] = {
 		//{0x0100, 0x01},
 };
 
-static const SENSOR_REG_T ov8856_snapshot_setting[] = {
+static const SENSOR_REG_T ov8856s_snapshot_setting[] = {
 	
 	//mipi bit rate 720Mbps,3264x2448,  30fps, frame_length 2482,line time 13.41us
        // {0x0100,0x00},
@@ -490,18 +490,18 @@ static const SENSOR_REG_T ov8856_snapshot_setting[] = {
 
 };
 
-static SENSOR_REG_TAB_INFO_T s_ov8856_resolution_tab_raw[SENSOR_MODE_MAX] = {
-	{ADDR_AND_LEN_OF_ARRAY(ov8856_init_setting), 0, 0, EX_MCLK,
+static SENSOR_REG_TAB_INFO_T s_ov8856s_resolution_tab_raw[SENSOR_MODE_MAX] = {
+	{ADDR_AND_LEN_OF_ARRAY(ov8856s_init_setting), 0, 0, EX_MCLK,
 	 SENSOR_IMAGE_FORMAT_RAW},
-	/*{ADDR_AND_LEN_OF_ARRAY(ov8856_preview_setting),
+	/*{ADDR_AND_LEN_OF_ARRAY(ov8856s_preview_setting),
 	 PREVIEW_WIDTH, PREVIEW_HEIGHT, EX_MCLK,
 	 SENSOR_IMAGE_FORMAT_RAW},*/
-	{ADDR_AND_LEN_OF_ARRAY(ov8856_snapshot_setting),
+	{ADDR_AND_LEN_OF_ARRAY(ov8856s_snapshot_setting),
 	 SNAPSHOT_WIDTH, SNAPSHOT_HEIGHT, EX_MCLK,
 	 SENSOR_IMAGE_FORMAT_RAW},
 };
 
-static SENSOR_TRIM_T s_ov8856_resolution_trim_tab[SENSOR_MODE_MAX] = {
+static SENSOR_TRIM_T s_ov8856s_resolution_trim_tab[SENSOR_MODE_MAX] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 	/*{0, 0, PREVIEW_WIDTH, PREVIEW_HEIGHT,
 	 PREVIEW_LINE_TIME, PREVIEW_MIPI_PER_LANE_BPS, PREVIEW_FRAME_LENGTH,
@@ -511,7 +511,7 @@ static SENSOR_TRIM_T s_ov8856_resolution_trim_tab[SENSOR_MODE_MAX] = {
 	 {0, 0, SNAPSHOT_WIDTH, SNAPSHOT_HEIGHT}},
 };
 
-static const SENSOR_REG_T s_ov8856_preview_size_video_tab[SENSOR_VIDEO_MODE_MAX][1] = {
+static const SENSOR_REG_T s_ov8856s_preview_size_video_tab[SENSOR_VIDEO_MODE_MAX][1] = {
 	/*video mode 0: ?fps */
 	{
 	 {0xffff, 0xff}
@@ -530,7 +530,7 @@ static const SENSOR_REG_T s_ov8856_preview_size_video_tab[SENSOR_VIDEO_MODE_MAX]
 	 }
 };
 
-static const SENSOR_REG_T s_ov8856_capture_size_video_tab[SENSOR_VIDEO_MODE_MAX][1] = {
+static const SENSOR_REG_T s_ov8856s_capture_size_video_tab[SENSOR_VIDEO_MODE_MAX][1] = {
 	/*video mode 0: ?fps */
 	{
 	 {0xffff, 0xff}
@@ -549,12 +549,12 @@ static const SENSOR_REG_T s_ov8856_capture_size_video_tab[SENSOR_VIDEO_MODE_MAX]
 	 }
 };
 
-static SENSOR_VIDEO_INFO_T s_ov8856_video_info[SENSOR_MODE_MAX] = {
+static SENSOR_VIDEO_INFO_T s_ov8856s_video_info[SENSOR_MODE_MAX] = {
 	{{{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}}, PNULL},
 	{{{30, 30, 270, 90}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}},
-	 (SENSOR_REG_T **) s_ov8856_preview_size_video_tab},
+	 (SENSOR_REG_T **) s_ov8856s_preview_size_video_tab},
 	{{{2, 5, 338, 1000}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}},
-	 (SENSOR_REG_T **) s_ov8856_capture_size_video_tab},
+	 (SENSOR_REG_T **) s_ov8856s_capture_size_video_tab},
 };
 
 /*==============================================================================
@@ -562,7 +562,7 @@ static SENSOR_VIDEO_INFO_T s_ov8856_video_info[SENSOR_MODE_MAX] = {
  * set video mode
  *
  *============================================================================*/
-static uint32_t ov8856_set_video_mode(SENSOR_HW_HANDLE handle,uint32_t param)
+static uint32_t ov8856s_set_video_mode(SENSOR_HW_HANDLE handle,uint32_t param)
 {
 	SENSOR_REG_T_PTR sensor_reg_ptr;
 	uint16_t i = 0x00;
@@ -576,12 +576,12 @@ static uint32_t ov8856_set_video_mode(SENSOR_HW_HANDLE handle,uint32_t param)
 		return SENSOR_FAIL;
 	}
 
-	if (PNULL == s_ov8856_video_info[mode].setting_ptr) {
+	if (PNULL == s_ov8856s_video_info[mode].setting_ptr) {
 		SENSOR_PRINT("fail.");
 		return SENSOR_FAIL;
 	}
 
-	sensor_reg_ptr = (SENSOR_REG_T_PTR) & s_ov8856_video_info[mode].setting_ptr[param];
+	sensor_reg_ptr = (SENSOR_REG_T_PTR) & s_ov8856s_video_info[mode].setting_ptr[param];
 	if (PNULL == sensor_reg_ptr) {
 		SENSOR_PRINT("fail.");
 		return SENSOR_FAIL;
@@ -600,7 +600,7 @@ static uint32_t ov8856_set_video_mode(SENSOR_HW_HANDLE handle,uint32_t param)
  * sensor all info
  * please modify this variable acording your spec
  *============================================================================*/
-SENSOR_INFO_T g_ov8856_mipi_raw_info = {
+SENSOR_INFO_T g_ov8856s_mipi_raw_info = {
 	/* salve i2c write address */
 	(I2C_SLAVE_ADDR >> 1),
 	/* salve i2c read address */
@@ -639,9 +639,9 @@ SENSOR_INFO_T g_ov8856_mipi_raw_info = {
 	 * for Example: index = 0-> Device id, index = 1 -> version id
 	 * customer could ignore it.
 	 */
-	{{ov8856_PID_ADDR, ov8856_PID_VALUE}
+	{{ov8856s_PID_ADDR, ov8856s_PID_VALUE}
 	 ,
-	 {ov8856_VER_ADDR, ov8856_VER_VALUE}
+	 {ov8856s_VER_ADDR, ov8856s_VER_VALUE}
 	 }
 	,
 	/* voltage of avdd */
@@ -660,13 +660,13 @@ SENSOR_INFO_T g_ov8856_mipi_raw_info = {
 	/*  pattern of input image form sensor */
 	SENSOR_IMAGE_PATTERN_RAWRGB_B,
 	/* point to resolution table information structure */
-	s_ov8856_resolution_tab_raw,
+	s_ov8856s_resolution_tab_raw,
 	/* point to ioctl function table */
-	&s_ov8856_ioctl_func_tab,
+	&s_ov8856s_ioctl_func_tab,
 	/* information and table about Rawrgb sensor */
-	&s_ov8856_mipi_raw_info_ptr,
+	&s_ov8856s_mipi_raw_info_ptr,
 	/* extend information about sensor
-	 * like &g_ov8856_ext_info
+	 * like &g_ov8856s_ext_info
 	 */
 	NULL,
 	/* voltage of iovdd */
@@ -695,10 +695,10 @@ SENSOR_INFO_T g_ov8856_mipi_raw_info = {
 	65,
 	/* vertical view angle*/
 	60,
-	"ov8856v1"
+	"ov8856sv1"
 };
 
-static SENSOR_STATIC_INFO_T s_ov8856_static_info = {
+static SENSOR_STATIC_INFO_T s_ov8856s_static_info = {
 	240,	//f-number,focal ratio
 	200,	//focal_length;
 	0,	//max_fps,max fps of sensor's all settings,it will be calculated from sensor mode fps
@@ -710,7 +710,7 @@ static SENSOR_STATIC_INFO_T s_ov8856_static_info = {
 	0,	//adgain_valid_frame_num;N+1-1
 };
 
-static SENSOR_MODE_FPS_INFO_T s_ov8856_mode_fps_info = {
+static SENSOR_MODE_FPS_INFO_T s_ov8856s_mode_fps_info = {
 	0,	//is_init;
 	{{SENSOR_MODE_COMMON_INIT,0,1,0,0},
 	{SENSOR_MODE_PREVIEW_ONE,0,1,0,0},
@@ -723,51 +723,51 @@ static SENSOR_MODE_FPS_INFO_T s_ov8856_mode_fps_info = {
 	{SENSOR_MODE_SNAPSHOT_TWO_THIRD,0,1,0,0}}
 };
 
-LOCAL uint32_t _ov8856_init_mode_fps_info(SENSOR_HW_HANDLE handle)
+LOCAL uint32_t _ov8856s_init_mode_fps_info(SENSOR_HW_HANDLE handle)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
-	SENSOR_PRINT("_ov8856_init_mode_fps_info:E");
-	if(!s_ov8856_mode_fps_info.is_init) {
+	SENSOR_PRINT("_ov8856s_init_mode_fps_info:E");
+	if(!s_ov8856s_mode_fps_info.is_init) {
 		uint32_t i,modn,tempfps = 0;
-		SENSOR_PRINT("_ov8856_init_mode_fps_info:start init");
-		for(i = 0;i < NUMBER_OF_ARRAY(s_ov8856_resolution_trim_tab); i++) {
+		SENSOR_PRINT("_ov8856s_init_mode_fps_info:start init");
+		for(i = 0;i < NUMBER_OF_ARRAY(s_ov8856s_resolution_trim_tab); i++) {
 			//max fps should be multiple of 30,it calulated from line_time and frame_line
-			tempfps = s_ov8856_resolution_trim_tab[i].line_time*s_ov8856_resolution_trim_tab[i].frame_line;
+			tempfps = s_ov8856s_resolution_trim_tab[i].line_time*s_ov8856s_resolution_trim_tab[i].frame_line;
 			if(0 != tempfps) {
 				tempfps = 1000000000/tempfps;
 				modn = tempfps / 30;
 				if(tempfps > modn*30)
 					modn++;
-				s_ov8856_mode_fps_info.sensor_mode_fps[i].max_fps = modn*30;
-				if(s_ov8856_mode_fps_info.sensor_mode_fps[i].max_fps > 30) {
-					s_ov8856_mode_fps_info.sensor_mode_fps[i].is_high_fps = 1;
-					s_ov8856_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num =
-						s_ov8856_mode_fps_info.sensor_mode_fps[i].max_fps/30;
+				s_ov8856s_mode_fps_info.sensor_mode_fps[i].max_fps = modn*30;
+				if(s_ov8856s_mode_fps_info.sensor_mode_fps[i].max_fps > 30) {
+					s_ov8856s_mode_fps_info.sensor_mode_fps[i].is_high_fps = 1;
+					s_ov8856s_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num =
+						s_ov8856s_mode_fps_info.sensor_mode_fps[i].max_fps/30;
 				}
-				if(s_ov8856_mode_fps_info.sensor_mode_fps[i].max_fps >
-						s_ov8856_static_info.max_fps) {
-					s_ov8856_static_info.max_fps =
-						s_ov8856_mode_fps_info.sensor_mode_fps[i].max_fps;
+				if(s_ov8856s_mode_fps_info.sensor_mode_fps[i].max_fps >
+						s_ov8856s_static_info.max_fps) {
+					s_ov8856s_static_info.max_fps =
+						s_ov8856s_mode_fps_info.sensor_mode_fps[i].max_fps;
 				}
 			}
 			SENSOR_PRINT("mode %d,tempfps %d,frame_len %d,line_time: %d ",i,tempfps,
-					s_ov8856_resolution_trim_tab[i].frame_line,
-					s_ov8856_resolution_trim_tab[i].line_time);
+					s_ov8856s_resolution_trim_tab[i].frame_line,
+					s_ov8856s_resolution_trim_tab[i].line_time);
 			SENSOR_PRINT("mode %d,max_fps: %d ",
-					i,s_ov8856_mode_fps_info.sensor_mode_fps[i].max_fps);
+					i,s_ov8856s_mode_fps_info.sensor_mode_fps[i].max_fps);
 			SENSOR_PRINT("is_high_fps: %d,highfps_skip_num %d",
-					s_ov8856_mode_fps_info.sensor_mode_fps[i].is_high_fps,
-					s_ov8856_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num);
+					s_ov8856s_mode_fps_info.sensor_mode_fps[i].is_high_fps,
+					s_ov8856s_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num);
 		}
-		s_ov8856_mode_fps_info.is_init = 1;
+		s_ov8856s_mode_fps_info.is_init = 1;
 	}
-	SENSOR_PRINT("_ov8856_init_mode_fps_info:X");
+	SENSOR_PRINT("_ov8856s_init_mode_fps_info:X");
 	return rtn;
 }
 
 #if  1 //defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4)
 
-#define param_update(x1,x2) sprintf(name,"/data/ov8856_%s.bin",x1);\
+#define param_update(x1,x2) sprintf(name,"/data/ov8856s_%s.bin",x1);\
 				if(0==access(name,R_OK))\
 				{\
 					FILE* fp = NULL;\
@@ -781,7 +781,7 @@ LOCAL uint32_t _ov8856_init_mode_fps_info(SENSOR_HW_HANDLE handle)
 				}\
 				memset(name,0,sizeof(name))
 
-static uint32_t ov8856_InitRawTuneInfo(SENSOR_HW_HANDLE handle)
+static uint32_t ov8856s_InitRawTuneInfo(SENSOR_HW_HANDLE handle)
 {
 	uint32_t rtn=0x00;
 
@@ -794,9 +794,9 @@ static uint32_t ov8856_InitRawTuneInfo(SENSOR_HW_HANDLE handle)
  * get default frame length
  *
  *============================================================================*/
-static uint32_t ov8856_get_default_frame_length(SENSOR_HW_HANDLE handle,uint32_t mode)
+static uint32_t ov8856s_get_default_frame_length(SENSOR_HW_HANDLE handle,uint32_t mode)
 {
-	return s_ov8856_resolution_trim_tab[mode].frame_line;
+	return s_ov8856s_resolution_trim_tab[mode].frame_line;
 }
 
 /*==============================================================================
@@ -804,7 +804,7 @@ static uint32_t ov8856_get_default_frame_length(SENSOR_HW_HANDLE handle,uint32_t
  * write group-hold on to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void ov8856_group_hold_on(SENSOR_HW_HANDLE handle)
+static void ov8856s_group_hold_on(SENSOR_HW_HANDLE handle)
 {
 	//SENSOR_PRINT("E");
 
@@ -815,7 +815,7 @@ static void ov8856_group_hold_on(SENSOR_HW_HANDLE handle)
  * write group-hold off to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void ov8856_group_hold_off(SENSOR_HW_HANDLE handle)
+static void ov8856s_group_hold_off(SENSOR_HW_HANDLE handle)
 {
 	//SENSOR_PRINT("E");
 
@@ -828,7 +828,7 @@ static void ov8856_group_hold_off(SENSOR_HW_HANDLE handle)
  * please modify this function acording your spec
  *============================================================================*/
 
-static uint16_t ov8856_read_gain(SENSOR_HW_HANDLE handle)
+static uint16_t ov8856s_read_gain(SENSOR_HW_HANDLE handle)
 {
 	uint16_t gain_h = 0;
 	uint16_t gain_l = 0;
@@ -848,7 +848,7 @@ static uint16_t ov8856_read_gain(SENSOR_HW_HANDLE handle)
  * write gain to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void ov8856_write_gain(SENSOR_HW_HANDLE handle,float gain)
+static void ov8856s_write_gain(SENSOR_HW_HANDLE handle,float gain)
 {
 	float gain_a = 0;
 	float gain_d= 0x80;
@@ -877,7 +877,7 @@ static void ov8856_write_gain(SENSOR_HW_HANDLE handle,float gain)
 	Sensor_WriteReg(0x3208, 0x11);
 	Sensor_WriteReg(0x3208, 0xA1);
 
-	//ov8856_group_hold_off();
+	//ov8856s_group_hold_off();
 
 }
 
@@ -888,7 +888,7 @@ static void ov8856_write_gain(SENSOR_HW_HANDLE handle,float gain)
  * read frame length from sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static uint16_t ov8856_read_frame_length(SENSOR_HW_HANDLE handle)
+static uint16_t ov8856s_read_frame_length(SENSOR_HW_HANDLE handle)
 {
 	uint16_t frame_len_h = 0;
 	uint16_t frame_len_l = 0;
@@ -904,7 +904,7 @@ static uint16_t ov8856_read_frame_length(SENSOR_HW_HANDLE handle)
  * write frame length to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void ov8856_write_frame_length(SENSOR_HW_HANDLE handle,uint32_t frame_len)
+static void ov8856s_write_frame_length(SENSOR_HW_HANDLE handle,uint32_t frame_len)
 {
 	Sensor_WriteReg(0x380e, (frame_len >> 8) & 0xff);
 	Sensor_WriteReg(0x380f, frame_len & 0xff);
@@ -915,7 +915,7 @@ static void ov8856_write_frame_length(SENSOR_HW_HANDLE handle,uint32_t frame_len
  * read shutter from sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t ov8856_read_shutter(SENSOR_HW_HANDLE handle)
+static uint32_t ov8856s_read_shutter(SENSOR_HW_HANDLE handle)
 {
 	uint8_t ret_l, ret_m, ret_h;
 
@@ -932,7 +932,7 @@ static uint32_t ov8856_read_shutter(SENSOR_HW_HANDLE handle)
  * please pay attention to the frame length
  * please modify this function acording your spec
  *============================================================================*/
-static void ov8856_write_shutter(SENSOR_HW_HANDLE handle,uint32_t shutter)
+static void ov8856s_write_shutter(SENSOR_HW_HANDLE handle,uint32_t shutter)
 {
 	uint16_t value=0x00;
 	value=(shutter<<0x04)&0xff;
@@ -949,30 +949,30 @@ static void ov8856_write_shutter(SENSOR_HW_HANDLE handle,uint32_t shutter)
  * please pay attention to the frame length
  * please don't change this function if it's necessary
  *============================================================================*/
-static uint16_t ov8856_write_exposure_dummy(SENSOR_HW_HANDLE handle, uint16_t shutter,
+static uint16_t ov8856s_write_exposure_dummy(SENSOR_HW_HANDLE handle, uint16_t shutter,
 		uint16_t dummy_line, uint16_t size_index)
 {
 	uint32_t dest_fr_len = 0;
 	uint32_t cur_fr_len = 0;
 	uint32_t fr_len = s_current_default_frame_length;
 
-	//ov8856_group_hold_on();
+	//ov8856s_group_hold_on();
 
 	if (1 == SUPPORT_AUTO_FRAME_LENGTH)
 		goto write_sensor_shutter;
 
 	dest_fr_len = ((shutter + dummy_line+FRAME_OFFSET) > fr_len) ? (shutter +dummy_line+ FRAME_OFFSET) : fr_len;
 
-	cur_fr_len = ov8856_read_frame_length(handle);
+	cur_fr_len = ov8856s_read_frame_length(handle);
 
 	if (shutter < SENSOR_MIN_SHUTTER)
 		shutter = SENSOR_MIN_SHUTTER;
 
 	if (dest_fr_len != cur_fr_len)
-		ov8856_write_frame_length(handle,dest_fr_len);
+		ov8856s_write_frame_length(handle,dest_fr_len);
 write_sensor_shutter:
 	/* write shutter to sensor registers */
-	ov8856_write_shutter(handle,shutter);
+	ov8856s_write_shutter(handle,shutter);
 	return shutter;
 }
 
@@ -981,7 +981,7 @@ write_sensor_shutter:
  * get the shutter from isp
  * please don't change this function unless it's necessary
  *============================================================================*/
-static uint32_t ov8856_write_exposure(SENSOR_HW_HANDLE handle,uint32_t param)
+static uint32_t ov8856s_write_exposure(SENSOR_HW_HANDLE handle,uint32_t param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint16_t exposure_line = 0x00;
@@ -993,14 +993,14 @@ static uint32_t ov8856_write_exposure(SENSOR_HW_HANDLE handle,uint32_t param)
 	mode = (param >> 0x1c) & 0x0f;
 
 	SENSOR_PRINT("current mode = %d, exposure_line = %d, dummy_line=%d", mode, exposure_line,dummy_line);
-	s_current_default_frame_length = ov8856_get_default_frame_length(handle,mode);
+	s_current_default_frame_length = ov8856s_get_default_frame_length(handle,mode);
 
-	s_sensor_ev_info.preview_shutter = ov8856_write_exposure_dummy(handle,exposure_line,dummy_line,mode);
+	s_sensor_ev_info.preview_shutter = ov8856s_write_exposure_dummy(handle,exposure_line,dummy_line,mode);
 
 	return ret_value;
 }
 
-LOCAL unsigned long ov8856_ex_write_exposure(SENSOR_HW_HANDLE handle, unsigned long param)
+LOCAL unsigned long ov8856s_ex_write_exposure(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint16_t exposure_line = 0x00;
@@ -1018,7 +1018,7 @@ LOCAL unsigned long ov8856_ex_write_exposure(SENSOR_HW_HANDLE handle, unsigned l
 	dummy_line = ex->dummy;
 	size_index = ex->size_index;
 
-	ret_value = ov8856_write_exposure_dummy(handle, exposure_line, dummy_line, size_index);
+	ret_value = ov8856s_write_exposure_dummy(handle, exposure_line, dummy_line, size_index);
 
 	return ret_value;
 }
@@ -1028,13 +1028,13 @@ LOCAL unsigned long ov8856_ex_write_exposure(SENSOR_HW_HANDLE handle, unsigned l
  * sensor power on
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t ov8856_power_on(SENSOR_HW_HANDLE handle,uint32_t power_on)
+static uint32_t ov8856s_power_on(SENSOR_HW_HANDLE handle,uint32_t power_on)
 {
-	SENSOR_AVDD_VAL_E dvdd_val = g_ov8856_mipi_raw_info.dvdd_val;
-	SENSOR_AVDD_VAL_E avdd_val = g_ov8856_mipi_raw_info.avdd_val;
-	SENSOR_AVDD_VAL_E iovdd_val = g_ov8856_mipi_raw_info.iovdd_val;
-	BOOLEAN power_down = g_ov8856_mipi_raw_info.power_down_level;
-	BOOLEAN reset_level = g_ov8856_mipi_raw_info.reset_pulse_level;
+	SENSOR_AVDD_VAL_E dvdd_val = g_ov8856s_mipi_raw_info.dvdd_val;
+	SENSOR_AVDD_VAL_E avdd_val = g_ov8856s_mipi_raw_info.avdd_val;
+	SENSOR_AVDD_VAL_E iovdd_val = g_ov8856s_mipi_raw_info.iovdd_val;
+	BOOLEAN power_down = g_ov8856s_mipi_raw_info.power_down_level;
+	BOOLEAN reset_level = g_ov8856s_mipi_raw_info.reset_pulse_level;
 	//char value1[255];
 	//property_get("debug.camera.sensor.id",value1,"1");
 
@@ -1051,7 +1051,7 @@ static uint32_t ov8856_power_on(SENSOR_HW_HANDLE handle,uint32_t power_on)
 		usleep(10 * 1000);
 		Sensor_SetMCLK(SENSOR_DEFALUT_MCLK);
 		//if(!strcmp(value1,"3"))
-		//	Sensor_SetMIPILevel(1);
+			Sensor_SetMIPILevel(1);
 
 		#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
@@ -1066,7 +1066,7 @@ static uint32_t ov8856_power_on(SENSOR_HW_HANDLE handle,uint32_t power_on)
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 		#endif
 		//if(!strcmp(value1,"3"))
-		//	Sensor_SetMIPILevel(0);
+			Sensor_SetMIPILevel(0);
 
 		Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
 		usleep(10 * 1000);
@@ -1089,27 +1089,27 @@ static uint32_t ov8856_power_on(SENSOR_HW_HANDLE handle,uint32_t power_on)
  * get  parameters from otp
  * please modify this function acording your spec
  *============================================================================*/
-static int ov8856_get_otp_info(SENSOR_HW_HANDLE handle,struct otp_info_t *otp_info)
+static int ov8856s_get_otp_info(SENSOR_HW_HANDLE handle,struct otp_info_t *otp_info)
 {
 	uint32_t ret = SENSOR_FAIL;
 	uint32_t i = 0x00;
 
 	//identify otp information
-	for (i = 0; i < NUMBER_OF_ARRAY(s_ov8856_raw_param_tab); i++) {
-		SENSOR_PRINT("identify module_id=0x%x",s_ov8856_raw_param_tab[i].param_id);
+	for (i = 0; i < NUMBER_OF_ARRAY(s_ov8856s_raw_param_tab); i++) {
+		SENSOR_PRINT("identify module_id=0x%x",s_ov8856s_raw_param_tab[i].param_id);
 
-		if(PNULL!=s_ov8856_raw_param_tab[i].identify_otp){
+		if(PNULL!=s_ov8856s_raw_param_tab[i].identify_otp){
 			//set default value;
 			memset(otp_info, 0x00, sizeof(struct otp_info_t));
 
-			if(SENSOR_SUCCESS==s_ov8856_raw_param_tab[i].identify_otp(otp_info)){
-				if (s_ov8856_raw_param_tab[i].param_id== otp_info->module_id) {
-					SENSOR_PRINT("identify otp sucess! module_id=0x%x",s_ov8856_raw_param_tab[i].param_id);
+			if(SENSOR_SUCCESS==s_ov8856s_raw_param_tab[i].identify_otp(otp_info)){
+				if (s_ov8856s_raw_param_tab[i].param_id== otp_info->module_id) {
+					SENSOR_PRINT("identify otp sucess! module_id=0x%x",s_ov8856s_raw_param_tab[i].param_id);
 					ret = SENSOR_SUCCESS;
 					break;
 				}
 				else{
-					SENSOR_PRINT("identify module_id failed! table module_id=0x%x, otp module_id=0x%x",s_ov8856_raw_param_tab[i].param_id,otp_info->module_id);
+					SENSOR_PRINT("identify module_id failed! table module_id=0x%x, otp module_id=0x%x",s_ov8856s_raw_param_tab[i].param_id,otp_info->module_id);
 				}
 			}
 			else{
@@ -1132,15 +1132,15 @@ static int ov8856_get_otp_info(SENSOR_HW_HANDLE handle,struct otp_info_t *otp_in
  * apply otp parameters to sensor register
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t ov8856_apply_otp(SENSOR_HW_HANDLE handle,struct otp_info_t *otp_info, int id)
+static uint32_t ov8856s_apply_otp(SENSOR_HW_HANDLE handle,struct otp_info_t *otp_info, int id)
 {
 	uint32_t ret = SENSOR_FAIL;
 	//apply otp parameters
 	SENSOR_PRINT("otp_table_id = %d", id);
-	if (PNULL != s_ov8856_raw_param_tab[id].cfg_otp) {
+	if (PNULL != s_ov8856s_raw_param_tab[id].cfg_otp) {
 
-		if(SENSOR_SUCCESS==s_ov8856_raw_param_tab[id].cfg_otp(otp_info)){
-			SENSOR_PRINT("apply otp parameters success! module_id=0x%x",s_ov8856_raw_param_tab[id].param_id);
+		if(SENSOR_SUCCESS==s_ov8856s_raw_param_tab[id].cfg_otp(otp_info)){
+			SENSOR_PRINT("apply otp parameters success! module_id=0x%x",s_ov8856s_raw_param_tab[id].param_id);
 			ret = SENSOR_SUCCESS;
 		}
 		else{
@@ -1158,15 +1158,15 @@ static uint32_t ov8856_apply_otp(SENSOR_HW_HANDLE handle,struct otp_info_t *otp_
  * cfg otp setting
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t ov8856_cfg_otp(SENSOR_HW_HANDLE handle,uint32_t param)
+static uint32_t ov8856s_cfg_otp(SENSOR_HW_HANDLE handle,uint32_t param)
 {
 	uint32_t ret = SENSOR_FAIL;
 	struct otp_info_t otp_info={0x00};
 	int table_id = 0;
 
-	table_id = ov8856_get_otp_info(handle,&otp_info);
+	table_id = ov8856s_get_otp_info(handle,&otp_info);
 	if (-1 != table_id)
-		ret = ov8856_apply_otp(handle,&otp_info, table_id);
+		ret = ov8856s_apply_otp(handle,&otp_info, table_id);
 
 	//checking OTP apply result
 	if (SENSOR_SUCCESS != ret) {//disable lsc
@@ -1185,7 +1185,7 @@ static uint32_t ov8856_cfg_otp(SENSOR_HW_HANDLE handle,uint32_t param)
  * identify sensor id
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t ov8856_identify(SENSOR_HW_HANDLE handle,uint32_t param)
+static uint32_t ov8856s_identify(SENSOR_HW_HANDLE handle,uint32_t param)
 {
 	uint16_t pid_value = 0x00;
 	uint16_t ver_value = 0x00;
@@ -1193,26 +1193,26 @@ static uint32_t ov8856_identify(SENSOR_HW_HANDLE handle,uint32_t param)
 
 	SENSOR_PRINT("mipi raw identify");
 
-	pid_value = Sensor_ReadReg(ov8856_PID_ADDR);
+	pid_value = Sensor_ReadReg(ov8856s_PID_ADDR);
 	cmr_s8 value1[255];
 	property_get("debug.camera.debug.mode",value1,"0");
 	while(!strcmp(value1,"1")){
-		SENSOR_PRINT_ERR("SENSOR_ov8856: enable test mode pid %x",pid_value);
+		SENSOR_PRINT_ERR("SENSOR_ov8856s: enable test mode pid %x",pid_value);
 		usleep(1000*1000);
-		pid_value = Sensor_ReadReg(ov8856_PID_ADDR);
+		pid_value = Sensor_ReadReg(ov8856s_PID_ADDR);
 		property_get("debug.camera.debug.mode",value1,"0");
 	}
 
-	if (ov8856_PID_VALUE == pid_value) {
-		ver_value = Sensor_ReadReg(ov8856_VER_ADDR);
+	if (ov8856s_PID_VALUE == pid_value) {
+		ver_value = Sensor_ReadReg(ov8856s_VER_ADDR);
 		SENSOR_PRINT("Identify: PID = %x, VER = %x", pid_value, ver_value);
-		if (ov8856_VER_VALUE == ver_value) {
+		if (ov8856s_VER_VALUE == ver_value) {
 			#if 1 //defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4)
-			ov8856_InitRawTuneInfo(handle);
+			ov8856s_InitRawTuneInfo(handle);
 			#endif
-			_ov8856_init_mode_fps_info(handle);
+			_ov8856s_init_mode_fps_info(handle);
 			ret_value = SENSOR_SUCCESS;
-			SENSOR_PRINT_HIGH("this is ov8856 sensor");
+			SENSOR_PRINT_HIGH("this is ov8856s sensor");
 		} else {
 			SENSOR_PRINT_HIGH("Identify this is %x%x sensor", pid_value, ver_value);
 		}
@@ -1228,9 +1228,9 @@ static uint32_t ov8856_identify(SENSOR_HW_HANDLE handle,uint32_t param)
  * get resolution trim
  *
  *============================================================================*/
-static unsigned long ov8856_get_resolution_trim_tab(SENSOR_HW_HANDLE handle,uint32_t param)
+static unsigned long ov8856s_get_resolution_trim_tab(SENSOR_HW_HANDLE handle,uint32_t param)
 {
-	return (unsigned long) s_ov8856_resolution_trim_tab;
+	return (unsigned long) s_ov8856s_resolution_trim_tab;
 }
 
 /*==============================================================================
@@ -1238,7 +1238,7 @@ static unsigned long ov8856_get_resolution_trim_tab(SENSOR_HW_HANDLE handle,uint
  * before snapshot
  * you can change this function if it's necessary
  *============================================================================*/
-static uint32_t ov8856_before_snapshot(SENSOR_HW_HANDLE handle,uint32_t param)
+static uint32_t ov8856s_before_snapshot(SENSOR_HW_HANDLE handle,uint32_t param)
 {
 	uint32_t cap_shutter = 0;
 	uint32_t prv_shutter = 0;
@@ -1247,10 +1247,10 @@ static uint32_t ov8856_before_snapshot(SENSOR_HW_HANDLE handle,uint32_t param)
 	uint32_t capture_mode = param & 0xffff;
 	uint32_t preview_mode = (param >> 0x10) & 0xffff;
 
-	uint32_t prv_linetime = s_ov8856_resolution_trim_tab[preview_mode].line_time;
-	uint32_t cap_linetime = s_ov8856_resolution_trim_tab[capture_mode].line_time;
+	uint32_t prv_linetime = s_ov8856s_resolution_trim_tab[preview_mode].line_time;
+	uint32_t cap_linetime = s_ov8856s_resolution_trim_tab[capture_mode].line_time;
 
-	s_current_default_frame_length = ov8856_get_default_frame_length(handle,capture_mode);
+	s_current_default_frame_length = ov8856s_get_default_frame_length(handle,capture_mode);
 	SENSOR_PRINT("capture_mode = %d", capture_mode);
 
 	if (preview_mode == capture_mode) {
@@ -1259,8 +1259,8 @@ static uint32_t ov8856_before_snapshot(SENSOR_HW_HANDLE handle,uint32_t param)
 		goto snapshot_info;
 	}
 
-	prv_shutter = s_sensor_ev_info.preview_shutter;	//ov8856_read_shutter();
-	gain = s_sensor_ev_info.preview_gain;	//ov8856_read_gain();
+	prv_shutter = s_sensor_ev_info.preview_shutter;	//ov8856s_read_shutter();
+	gain = s_sensor_ev_info.preview_gain;	//ov8856s_read_gain();
 
 	Sensor_SetMode(capture_mode);
 	Sensor_SetMode_WaitDone();
@@ -1274,16 +1274,16 @@ static uint32_t ov8856_before_snapshot(SENSOR_HW_HANDLE handle,uint32_t param)
 		gain = gain / 2;
 	}
 */
-	cap_shutter = ov8856_write_exposure_dummy(handle,cap_shutter,0,0);
+	cap_shutter = ov8856s_write_exposure_dummy(handle,cap_shutter,0,0);
 	cap_gain = gain;
-	ov8856_write_gain(handle,cap_gain);
+	ov8856s_write_gain(handle,cap_gain);
 	SENSOR_PRINT("preview_shutter = 0x%x, preview_gain = 0x%x",
 		     s_sensor_ev_info.preview_shutter, s_sensor_ev_info.preview_gain);
 
 	SENSOR_PRINT("capture_shutter = 0x%x, capture_gain = 0x%x", cap_shutter, cap_gain);
 snapshot_info:
-	s_hdr_info.capture_shutter = cap_shutter; //ov8856_read_shutter();
-	s_hdr_info.capture_gain = cap_gain; //ov8856_read_gain();
+	s_hdr_info.capture_shutter = cap_shutter; //ov8856s_read_shutter();
+	s_hdr_info.capture_gain = cap_gain; //ov8856s_read_gain();
 	/* limit HDR capture min fps to 10;
 	 * MaxFrameTime = 1000000*0.1us;
 	 */
@@ -1322,7 +1322,7 @@ static uint32_t isp_to_real_gain(SENSOR_HW_HANDLE handle,uint32_t param)
  * write gain value to sensor
  * you can change this function if it's necessary
  *============================================================================*/
-static uint32_t ov8856_write_gain_value(SENSOR_HW_HANDLE handle,uint32_t param)
+static uint32_t ov8856s_write_gain_value(SENSOR_HW_HANDLE handle,uint32_t param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	float real_gain = 0;
@@ -1334,7 +1334,7 @@ static uint32_t ov8856_write_gain_value(SENSOR_HW_HANDLE handle,uint32_t param)
 	SENSOR_PRINT("real_gain = 0x%x", real_gain);
 
 	s_sensor_ev_info.preview_gain = real_gain;
-	ov8856_write_gain(handle,real_gain);
+	ov8856s_write_gain(handle,real_gain);
 
 	return ret_value;
 }
@@ -1345,7 +1345,7 @@ static uint32_t ov8856_write_gain_value(SENSOR_HW_HANDLE handle,uint32_t param)
  * write parameter to vcm
  * please add your VCM function to this function
  *============================================================================*/
-static uint32_t ov8856_write_af(SENSOR_HW_HANDLE handle,uint32_t param)
+static uint32_t ov8856s_write_af(SENSOR_HW_HANDLE handle,uint32_t param)
 {
 	return 0;//dw9714_write_af(param);
 }
@@ -1356,7 +1356,7 @@ static uint32_t ov8856_write_af(SENSOR_HW_HANDLE handle,uint32_t param)
  * increase gain or shutter for hdr
  *
  *============================================================================*/
-static void ov8856_increase_hdr_exposure(SENSOR_HW_HANDLE handle,uint8_t ev_multiplier)
+static void ov8856s_increase_hdr_exposure(SENSOR_HW_HANDLE handle,uint8_t ev_multiplier)
 {
 	uint32_t shutter_multiply = s_hdr_info.capture_max_shutter / s_hdr_info.capture_shutter;
 	uint32_t gain = 0;
@@ -1365,12 +1365,12 @@ static void ov8856_increase_hdr_exposure(SENSOR_HW_HANDLE handle,uint8_t ev_mult
 		shutter_multiply = 1;
 
 	if (shutter_multiply >= ev_multiplier) {
-		ov8856_write_exposure(handle,s_hdr_info.capture_shutter * ev_multiplier);
-		ov8856_write_gain(handle,s_hdr_info.capture_gain);
+		ov8856s_write_exposure(handle,s_hdr_info.capture_shutter * ev_multiplier);
+		ov8856s_write_gain(handle,s_hdr_info.capture_gain);
 	} else {
 		gain = s_hdr_info.capture_gain * ev_multiplier / shutter_multiply;
-		ov8856_write_exposure(handle,s_hdr_info.capture_shutter * shutter_multiply);
-		ov8856_write_gain(handle,gain);
+		ov8856s_write_exposure(handle,s_hdr_info.capture_shutter * shutter_multiply);
+		ov8856s_write_gain(handle,gain);
 	}
 }
 
@@ -1379,20 +1379,20 @@ static void ov8856_increase_hdr_exposure(SENSOR_HW_HANDLE handle,uint8_t ev_mult
  * decrease gain or shutter for hdr
  *
  *============================================================================*/
-static void ov8856_decrease_hdr_exposure(SENSOR_HW_HANDLE handle,uint8_t ev_divisor)
+static void ov8856s_decrease_hdr_exposure(SENSOR_HW_HANDLE handle,uint8_t ev_divisor)
 {
 	uint16_t gain_multiply = 0;
 	uint32_t shutter = 0;
 	gain_multiply = s_hdr_info.capture_gain / SENSOR_BASE_GAIN;
 
 	if (gain_multiply >= ev_divisor) {
-		ov8856_write_exposure(handle,s_hdr_info.capture_shutter);
-		ov8856_write_gain(handle,s_hdr_info.capture_gain / ev_divisor);
+		ov8856s_write_exposure(handle,s_hdr_info.capture_shutter);
+		ov8856s_write_gain(handle,s_hdr_info.capture_gain / ev_divisor);
 
 	} else {
 		shutter = s_hdr_info.capture_shutter * gain_multiply / ev_divisor;
-		ov8856_write_exposure(handle,shutter);
-		ov8856_write_gain(handle,s_hdr_info.capture_gain / gain_multiply);
+		ov8856s_write_exposure(handle,shutter);
+		ov8856s_write_gain(handle,s_hdr_info.capture_gain / gain_multiply);
 	}
 }
 
@@ -1401,7 +1401,7 @@ static void ov8856_decrease_hdr_exposure(SENSOR_HW_HANDLE handle,uint8_t ev_divi
  * set hdr ev
  * you can change this function if it's necessary
  *============================================================================*/
-static uint32_t ov8856_set_hdr_ev(SENSOR_HW_HANDLE handle,unsigned long param)
+static uint32_t ov8856s_set_hdr_ev(SENSOR_HW_HANDLE handle,unsigned long param)
 {
 	uint32_t ret = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr = (SENSOR_EXT_FUN_PARAM_T_PTR) param;
@@ -1412,15 +1412,15 @@ static uint32_t ov8856_set_hdr_ev(SENSOR_HW_HANDLE handle,unsigned long param)
 	switch (ev) {
 	case SENSOR_HDR_EV_LEVE_0:
 		ev_divisor = 2;
-		ov8856_decrease_hdr_exposure(handle,ev_divisor);
+		ov8856s_decrease_hdr_exposure(handle,ev_divisor);
 		break;
 	case SENSOR_HDR_EV_LEVE_1:
 		ev_multiplier = 2;
-		ov8856_increase_hdr_exposure(handle,ev_multiplier);
+		ov8856s_increase_hdr_exposure(handle,ev_multiplier);
 		break;
 	case SENSOR_HDR_EV_LEVE_2:
 		ev_multiplier = 1;
-		ov8856_increase_hdr_exposure(handle,ev_multiplier);
+		ov8856s_increase_hdr_exposure(handle,ev_multiplier);
 		break;
 	default:
 		break;
@@ -1433,7 +1433,7 @@ static uint32_t ov8856_set_hdr_ev(SENSOR_HW_HANDLE handle,unsigned long param)
  * extra functoin
  * you can add functions reference SENSOR_EXT_FUNC_CMD_E which from sensor_drv_u.h
  *============================================================================*/
-static uint32_t ov8856_ext_func(SENSOR_HW_HANDLE handle,unsigned long param)
+static uint32_t ov8856s_ext_func(SENSOR_HW_HANDLE handle,unsigned long param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr = (SENSOR_EXT_FUN_PARAM_T_PTR) param;
@@ -1441,7 +1441,7 @@ static uint32_t ov8856_ext_func(SENSOR_HW_HANDLE handle,unsigned long param)
 	SENSOR_PRINT("ext_ptr->cmd: %d", ext_ptr->cmd);
 	switch (ext_ptr->cmd) {
 	case SENSOR_EXT_EV:
-		rtn = ov8856_set_hdr_ev(handle,param);
+		rtn = ov8856s_set_hdr_ev(handle,param);
 		break;
 	default:
 		break;
@@ -1449,9 +1449,9 @@ static uint32_t ov8856_ext_func(SENSOR_HW_HANDLE handle,unsigned long param)
 
 	return rtn;
 }
-unsigned long _ov8856_Set_FrameSync(SENSOR_HW_HANDLE handle, unsigned long param)
+unsigned long _ov8856s_Set_FrameSync(SENSOR_HW_HANDLE handle, unsigned long param)
 {
-	Sensor_WriteReg(0x3000, 0x20);//bit 5 0 input 1 output---MASTER
+	Sensor_WriteReg(0x3000, 0x20);//bit 5 0 input 1 output
 	Sensor_WriteReg(0x300e, 0x20);
 
 	return 0;
@@ -1462,7 +1462,7 @@ unsigned long _ov8856_Set_FrameSync(SENSOR_HW_HANDLE handle, unsigned long param
  * mipi stream on
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t ov8856_stream_on(SENSOR_HW_HANDLE handle,uint32_t param)
+static uint32_t ov8856s_stream_on(SENSOR_HW_HANDLE handle,uint32_t param)
 {
 	SENSOR_PRINT("E");
 
@@ -1478,7 +1478,7 @@ static uint32_t ov8856_stream_on(SENSOR_HW_HANDLE handle,uint32_t param)
  * mipi stream off
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t ov8856_stream_off(SENSOR_HW_HANDLE handle,uint32_t param)
+static uint32_t ov8856s_stream_off(SENSOR_HW_HANDLE handle,uint32_t param)
 {
 	SENSOR_PRINT("E");
 
@@ -1494,143 +1494,143 @@ static uint32_t ov8856_stream_off(SENSOR_HW_HANDLE handle,uint32_t param)
  * calculate fps for every sensor mode according to frame_line and line_time
  * please modify this function acording your spec
  *============================================================================*/
-static uint32_t ov8856_init_mode_fps_info(SENSOR_HW_HANDLE handle)
+static uint32_t ov8856s_init_mode_fps_info(SENSOR_HW_HANDLE handle)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
-	SENSOR_LOGI("ov8856_init_mode_fps_info:E");
-	if(!s_ov8856_mode_fps_info.is_init) {
+	SENSOR_LOGI("ov8856s_init_mode_fps_info:E");
+	if(!s_ov8856s_mode_fps_info.is_init) {
 		uint32_t i,modn,tempfps = 0;
-		SENSOR_LOGI("ov8856_init_mode_fps_info:start init");
-		for(i = 0;i < NUMBER_OF_ARRAY(s_ov8856_resolution_trim_tab); i++) {
+		SENSOR_LOGI("ov8856s_init_mode_fps_info:start init");
+		for(i = 0;i < NUMBER_OF_ARRAY(s_ov8856s_resolution_trim_tab); i++) {
 			//max fps should be multiple of 30,it calulated from line_time and frame_line
-			tempfps = s_ov8856_resolution_trim_tab[i].line_time*s_ov8856_resolution_trim_tab[i].frame_line;
+			tempfps = s_ov8856s_resolution_trim_tab[i].line_time*s_ov8856s_resolution_trim_tab[i].frame_line;
 				if(0 != tempfps) {
 					tempfps = 1000000000/tempfps;
 				modn = tempfps / 30;
 				if(tempfps > modn*30)
 					modn++;
-				s_ov8856_mode_fps_info.sensor_mode_fps[i].max_fps = modn*30;
-				if(s_ov8856_mode_fps_info.sensor_mode_fps[i].max_fps > 30) {
-					s_ov8856_mode_fps_info.sensor_mode_fps[i].is_high_fps = 1;
-					s_ov8856_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num =
-						s_ov8856_mode_fps_info.sensor_mode_fps[i].max_fps/30;
+				s_ov8856s_mode_fps_info.sensor_mode_fps[i].max_fps = modn*30;
+				if(s_ov8856s_mode_fps_info.sensor_mode_fps[i].max_fps > 30) {
+					s_ov8856s_mode_fps_info.sensor_mode_fps[i].is_high_fps = 1;
+					s_ov8856s_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num =
+						s_ov8856s_mode_fps_info.sensor_mode_fps[i].max_fps/30;
 				}
-				if(s_ov8856_mode_fps_info.sensor_mode_fps[i].max_fps >
-						s_ov8856_static_info.max_fps) {
-					s_ov8856_static_info.max_fps =
-						s_ov8856_mode_fps_info.sensor_mode_fps[i].max_fps;
+				if(s_ov8856s_mode_fps_info.sensor_mode_fps[i].max_fps >
+						s_ov8856s_static_info.max_fps) {
+					s_ov8856s_static_info.max_fps =
+						s_ov8856s_mode_fps_info.sensor_mode_fps[i].max_fps;
 				}
 			}
 			SENSOR_LOGI("mode %d,tempfps %d,frame_len %d,line_time: %d ",i,tempfps,
-					s_ov8856_resolution_trim_tab[i].frame_line,
-					s_ov8856_resolution_trim_tab[i].line_time);
+					s_ov8856s_resolution_trim_tab[i].frame_line,
+					s_ov8856s_resolution_trim_tab[i].line_time);
 			SENSOR_LOGI("mode %d,max_fps: %d ",
-					i,s_ov8856_mode_fps_info.sensor_mode_fps[i].max_fps);
+					i,s_ov8856s_mode_fps_info.sensor_mode_fps[i].max_fps);
 			SENSOR_LOGI("is_high_fps: %d,highfps_skip_num %d",
-					s_ov8856_mode_fps_info.sensor_mode_fps[i].is_high_fps,
-					s_ov8856_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num);
+					s_ov8856s_mode_fps_info.sensor_mode_fps[i].is_high_fps,
+					s_ov8856s_mode_fps_info.sensor_mode_fps[i].high_fps_skip_num);
 		}
-		s_ov8856_mode_fps_info.is_init = 1;
+		s_ov8856s_mode_fps_info.is_init = 1;
 	}
-	SENSOR_LOGI("ov8856_init_mode_fps_info:X");
+	SENSOR_LOGI("ov8856s_init_mode_fps_info:X");
 	return rtn;
 }
 
-static uint32_t ov8856_get_static_info(SENSOR_HW_HANDLE handle, uint32_t *param)
+static uint32_t ov8856s_get_static_info(SENSOR_HW_HANDLE handle, uint32_t *param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	struct sensor_ex_info *ex_info;
 	uint32_t up = 0;
 	uint32_t down = 0;
 	//make sure we have get max fps of all settings.
-	if(!s_ov8856_mode_fps_info.is_init) {
-		ov8856_init_mode_fps_info(handle);
+	if(!s_ov8856s_mode_fps_info.is_init) {
+		ov8856s_init_mode_fps_info(handle);
 	}
 	ex_info = (struct sensor_ex_info*)param;
-	ex_info->f_num = s_ov8856_static_info.f_num;
-	ex_info->focal_length = s_ov8856_static_info.focal_length;
-	ex_info->max_fps = s_ov8856_static_info.max_fps;
-	ex_info->max_adgain = s_ov8856_static_info.max_adgain;
-	ex_info->ois_supported = s_ov8856_static_info.ois_supported;
-	ex_info->pdaf_supported = s_ov8856_static_info.pdaf_supported;
-	ex_info->exp_valid_frame_num = s_ov8856_static_info.exp_valid_frame_num;
-	ex_info->clamp_level = s_ov8856_static_info.clamp_level;
-	ex_info->adgain_valid_frame_num = s_ov8856_static_info.adgain_valid_frame_num;
-	ex_info->preview_skip_num = g_ov8856_mipi_raw_info.preview_skip_num;
-	ex_info->capture_skip_num = g_ov8856_mipi_raw_info.capture_skip_num;
-	ex_info->name = g_ov8856_mipi_raw_info.name;
-	ex_info->sensor_version_info = g_ov8856_mipi_raw_info.sensor_version_info;
+	ex_info->f_num = s_ov8856s_static_info.f_num;
+	ex_info->focal_length = s_ov8856s_static_info.focal_length;
+	ex_info->max_fps = s_ov8856s_static_info.max_fps;
+	ex_info->max_adgain = s_ov8856s_static_info.max_adgain;
+	ex_info->ois_supported = s_ov8856s_static_info.ois_supported;
+	ex_info->pdaf_supported = s_ov8856s_static_info.pdaf_supported;
+	ex_info->exp_valid_frame_num = s_ov8856s_static_info.exp_valid_frame_num;
+	ex_info->clamp_level = s_ov8856s_static_info.clamp_level;
+	ex_info->adgain_valid_frame_num = s_ov8856s_static_info.adgain_valid_frame_num;
+	ex_info->preview_skip_num = g_ov8856s_mipi_raw_info.preview_skip_num;
+	ex_info->capture_skip_num = g_ov8856s_mipi_raw_info.capture_skip_num;
+	ex_info->name = g_ov8856s_mipi_raw_info.name;
+	ex_info->sensor_version_info = g_ov8856s_mipi_raw_info.sensor_version_info;
 	//vcm_dw9800_get_pose_dis(handle, &up, &down);
 	ex_info->pos_dis.up2hori = up;
 	ex_info->pos_dis.hori2down = down;
-	SENSOR_LOGI("SENSOR_ov8856: f_num: %d", ex_info->f_num);
-	SENSOR_LOGI("SENSOR_ov8856: max_fps: %d", ex_info->max_fps);
-	SENSOR_LOGI("SENSOR_ov8856: max_adgain: %d", ex_info->max_adgain);
-	SENSOR_LOGI("SENSOR_ov8856: ois_supported: %d", ex_info->ois_supported);
-	SENSOR_LOGI("SENSOR_ov8856: pdaf_supported: %d", ex_info->pdaf_supported);
-	SENSOR_LOGI("SENSOR_ov8856: exp_valid_frame_num: %d", ex_info->exp_valid_frame_num);
-	SENSOR_LOGI("SENSOR_ov8856: clam_level: %d", ex_info->clamp_level);
-	SENSOR_LOGI("SENSOR_ov8856: adgain_valid_frame_num: %d", ex_info->adgain_valid_frame_num);
-	SENSOR_LOGI("SENSOR_ov8856: sensor name is: %s", ex_info->name);
-	SENSOR_LOGI("SENSOR_ov8856: sensor version info is: %s", ex_info->sensor_version_info);
+	SENSOR_LOGI("SENSOR_ov8856s: f_num: %d", ex_info->f_num);
+	SENSOR_LOGI("SENSOR_ov8856s: max_fps: %d", ex_info->max_fps);
+	SENSOR_LOGI("SENSOR_ov8856s: max_adgain: %d", ex_info->max_adgain);
+	SENSOR_LOGI("SENSOR_ov8856s: ois_supported: %d", ex_info->ois_supported);
+	SENSOR_LOGI("SENSOR_ov8856s: pdaf_supported: %d", ex_info->pdaf_supported);
+	SENSOR_LOGI("SENSOR_ov8856s: exp_valid_frame_num: %d", ex_info->exp_valid_frame_num);
+	SENSOR_LOGI("SENSOR_ov8856s: clam_level: %d", ex_info->clamp_level);
+	SENSOR_LOGI("SENSOR_ov8856s: adgain_valid_frame_num: %d", ex_info->adgain_valid_frame_num);
+	SENSOR_LOGI("SENSOR_ov8856s: sensor name is: %s", ex_info->name);
+	SENSOR_LOGI("SENSOR_ov8856s: sensor version info is: %s", ex_info->sensor_version_info);
 
 	return rtn;
 }
 
 
-static uint32_t ov8856_get_fps_info(SENSOR_HW_HANDLE handle, uint32_t *param)
+static uint32_t ov8856s_get_fps_info(SENSOR_HW_HANDLE handle, uint32_t *param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_MODE_FPS_T *fps_info;
 	//make sure have inited fps of every sensor mode.
-	if(!s_ov8856_mode_fps_info.is_init) {
-		ov8856_init_mode_fps_info(handle);
+	if(!s_ov8856s_mode_fps_info.is_init) {
+		ov8856s_init_mode_fps_info(handle);
 	}
 	fps_info = (SENSOR_MODE_FPS_T*)param;
 	uint32_t sensor_mode = fps_info->mode;
-	fps_info->max_fps = s_ov8856_mode_fps_info.sensor_mode_fps[sensor_mode].max_fps;
-	fps_info->min_fps = s_ov8856_mode_fps_info.sensor_mode_fps[sensor_mode].min_fps;
-	fps_info->is_high_fps = s_ov8856_mode_fps_info.sensor_mode_fps[sensor_mode].is_high_fps;
-	fps_info->high_fps_skip_num = s_ov8856_mode_fps_info.sensor_mode_fps[sensor_mode].high_fps_skip_num;
-	SENSOR_LOGI("SENSOR_ov8856: mode %d, max_fps: %d",fps_info->mode, fps_info->max_fps);
-	SENSOR_LOGI("SENSOR_ov8856: min_fps: %d", fps_info->min_fps);
-	SENSOR_LOGI("SENSOR_ov8856: is_high_fps: %d", fps_info->is_high_fps);
-	SENSOR_LOGI("SENSOR_ov8856: high_fps_skip_num: %d", fps_info->high_fps_skip_num);
+	fps_info->max_fps = s_ov8856s_mode_fps_info.sensor_mode_fps[sensor_mode].max_fps;
+	fps_info->min_fps = s_ov8856s_mode_fps_info.sensor_mode_fps[sensor_mode].min_fps;
+	fps_info->is_high_fps = s_ov8856s_mode_fps_info.sensor_mode_fps[sensor_mode].is_high_fps;
+	fps_info->high_fps_skip_num = s_ov8856s_mode_fps_info.sensor_mode_fps[sensor_mode].high_fps_skip_num;
+	SENSOR_LOGI("SENSOR_ov8856s: mode %d, max_fps: %d",fps_info->mode, fps_info->max_fps);
+	SENSOR_LOGI("SENSOR_ov8856s: min_fps: %d", fps_info->min_fps);
+	SENSOR_LOGI("SENSOR_ov8856s: is_high_fps: %d", fps_info->is_high_fps);
+	SENSOR_LOGI("SENSOR_ov8856s: high_fps_skip_num: %d", fps_info->high_fps_skip_num);
 
 	return rtn;
 }
 
-static unsigned long ov8856_access_val(SENSOR_HW_HANDLE handle, unsigned long param)
+static unsigned long ov8856s_access_val(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	SENSOR_VAL_T* param_ptr = (SENSOR_VAL_T*)param;
 	uint16_t tmp;
 
-	SENSOR_LOGI("SENSOR_ov8856: _ov8856_access_val E param_ptr = %p", param_ptr);
+	SENSOR_LOGI("SENSOR_ov8856s: _ov8856s_access_val E param_ptr = %p", param_ptr);
 	if(!param_ptr){
 		return rtn;
 	}
 
-	SENSOR_LOGI("SENSOR_ov8856: param_ptr->type=%x", param_ptr->type);
+	SENSOR_LOGI("SENSOR_ov8856s: param_ptr->type=%x", param_ptr->type);
 	switch(param_ptr->type)
 	{
 		case SENSOR_VAL_TYPE_INIT_OTP:
-			//rtn = ov8856_otp_init(handle);
+			//rtn = ov8856s_otp_init(handle);
 			break;
 		case SENSOR_VAL_TYPE_SHUTTER:
-			//*((uint32_t*)param_ptr->pval) = ov8856_get_shutter();
+			//*((uint32_t*)param_ptr->pval) = ov8856s_get_shutter();
 			break;
 		case SENSOR_VAL_TYPE_READ_VCM:
-			//rtn = ov8856_read_vcm(handle, param_ptr->pval);
+			//rtn = ov8856s_read_vcm(handle, param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_WRITE_VCM:
-			//rtn = ov8856_write_vcm(handle, param_ptr->pval);
+			//rtn = ov8856s_write_vcm(handle, param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_READ_OTP:
-			//rtn = ov8856_otp_read(handle,param_ptr);
+			//rtn = ov8856s_otp_read(handle,param_ptr);
 			break;
 		case SENSOR_VAL_TYPE_PARSE_OTP:
-			//rtn = ov8856_parse_otp(handle, param_ptr);
+			//rtn = ov8856s_parse_otp(handle, param_ptr);
 			break;
 		case SENSOR_VAL_TYPE_WRITE_OTP:
 			//rtn = _hi544_write_otp(handle, (uint32_t)param_ptr->pval);
@@ -1645,22 +1645,22 @@ static unsigned long ov8856_access_val(SENSOR_HW_HANDLE handle, unsigned long pa
 			//*(uint32_t*)param_ptr->pval = 0;//cur_af_pos;
 			break;
 		case SENSOR_VAL_TYPE_WRITE_OTP_GAIN:
-			//rtn = ov8856_write_otp_gain(handle, param_ptr->pval);
+			//rtn = ov8856s_write_otp_gain(handle, param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_READ_OTP_GAIN:
-			//rtn = ov8856_read_otp_gain(handle, param_ptr->pval);
+			//rtn = ov8856s_read_otp_gain(handle, param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_GET_STATIC_INFO:
-			rtn = ov8856_get_static_info(handle, param_ptr->pval);
+			rtn = ov8856s_get_static_info(handle, param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_GET_FPS_INFO:
-			rtn = ov8856_get_fps_info(handle, param_ptr->pval);
+			rtn = ov8856s_get_fps_info(handle, param_ptr->pval);
 			break;
 		default:
 			break;
 	}
 
-	SENSOR_LOGI("SENSOR_ov8856: _ov8856_access_val X");
+	SENSOR_LOGI("SENSOR_ov8856s: _ov8856s_access_val X");
 
 	return rtn;
 }
@@ -1671,25 +1671,25 @@ static unsigned long ov8856_access_val(SENSOR_HW_HANDLE handle, unsigned long pa
  * you can add functions reference SENSOR_IOCTL_FUNC_TAB_T from sensor_drv_u.h
  *
  * add ioctl functions like this:
- * .power = ov8856_power_on,
+ * .power = ov8856s_power_on,
  *============================================================================*/
-static SENSOR_IOCTL_FUNC_TAB_T s_ov8856_ioctl_func_tab = {
-	.power = ov8856_power_on,
-	.identify = ov8856_identify,
-	.get_trim = ov8856_get_resolution_trim_tab,
-	.before_snapshort = ov8856_before_snapshot,
-	//.write_ae_value = ov8856_write_exposure,
-	.write_gain_value = ov8856_write_gain_value,
+static SENSOR_IOCTL_FUNC_TAB_T s_ov8856s_ioctl_func_tab = {
+	.power = ov8856s_power_on,
+	.identify = ov8856s_identify,
+	.get_trim = ov8856s_get_resolution_trim_tab,
+	.before_snapshort = ov8856s_before_snapshot,
+	//.write_ae_value = ov8856s_write_exposure,
+	.write_gain_value = ov8856s_write_gain_value,
 	#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-	//.af_enable = ov8856_write_af,
+	//.af_enable = ov8856s_write_af,
 	#endif
-	//.set_focus = ov8856_ext_func,
-	//.set_video_mode = ov8856_set_video_mode,
-	.stream_on = ov8856_stream_on,
-	.stream_off = ov8856_stream_off,
-	.cfg_otp = ov8856_access_val,
-	.ex_write_exp = ov8856_ex_write_exposure,
+	//.set_focus = ov8856s_ext_func,
+	//.set_video_mode = ov8856s_set_video_mode,
+	.stream_on = ov8856s_stream_on,
+	.stream_off = ov8856s_stream_off,
+	.cfg_otp = ov8856s_access_val,
+	.ex_write_exp = ov8856s_ex_write_exposure,
 
-	//.group_hold_on = ov8856_group_hold_on,
-	//.group_hold_of = ov8856_group_hold_off,
+	//.group_hold_on = ov8856s_group_hold_on,
+	//.group_hold_of = ov8856s_group_hold_off,
 };

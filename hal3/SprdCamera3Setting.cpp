@@ -153,6 +153,12 @@ const sensor_fov_tab_t third_sensor_fov_tab[] =
 	{"ov2680_mipi_raw", {2.84f, 2.15f}, 2.15f},
 	{"", {3.50f, 2.625f}, 3.75f},
 };
+const sensor_fov_tab_t fourth_sensor_fov_tab[] =
+{
+	{"imx132_mipi_raw", {3.629f, 2.722f}, 3.486f},
+	{"ov2680_mipi_raw", {2.84f, 2.15f}, 2.15f},
+	{"", {3.50f, 2.625f}, 3.75f},
+};
 
 
 const int32_t klens_shading_map_size[2] = {1, 1};
@@ -942,6 +948,9 @@ const int32_t kavailable_front_pixer_size[2] = {
 const int32_t kavailable_back_ext_pixer_size[2] = {
 	BACK_EXT_SENSOR_ORIG_WIDTH, BACK_EXT_SENSOR_ORIG_WIDTH
 };
+const int32_t kavailable_front_ext_pixer_size[2] = {
+	FRONT_SENSOR_ORIG_WIDTH, FRONT_SENSOR_ORIG_HEIGHT
+};
 
 const int32_t kavailable_back_active_size[4] = {
 	0, 0, BACK_SENSOR_ORIG_WIDTH, BACK_SENSOR_ORIG_HEIGHT
@@ -951,6 +960,9 @@ const int32_t kavailable_front_active_size[4] = {
 };
 const int32_t kavailable_back_ext_active_size[4] = {
 	0, 0, BACK_EXT_SENSOR_ORIG_WIDTH, BACK_EXT_SENSOR_ORIG_HEIGHT
+};
+const int32_t kavailable_front_ext_active_size[4] = {
+	0, 0, FRONT_SENSOR_ORIG_WIDTH, FRONT_SENSOR_ORIG_HEIGHT
 };
 
 const int64_t kavailable_min_durations[1] = {
@@ -1525,6 +1537,19 @@ int SprdCamera3Setting::GetFovParam(int32_t cameraId)
 		}
 	}
 #endif
+#ifdef CONFIG_DCAM_SENSOR3_SUPPORT
+                else  if (3 == cameraId){
+                                SnNum = sizeof(fourth_sensor_fov_tab)/sizeof(sensor_fov_tab);
+                                LOGI("check third sensor numbers %d", SnNum);
+                                for(i=0; i<SnNum; i++) {
+                                                if( strcmp(fourth_sensor_fov_tab[i].sn_name, CAMERA_SENSOR_TYPE_FRONT_EXT) == 0) {
+                                                                    LOGI("sensor matched the %dth  is %s", i, CAMERA_SENSOR_TYPE_FRONT_EXT);
+                                                                    retValue = i;
+                                                                    break;
+                                                }
+                                }
+                }
+#endif
 
 	if (i == SnNum) {
 		retValue = SnNum-1;
@@ -1553,6 +1578,12 @@ int SprdCamera3Setting::setDefaultParaInfo(int32_t cameraId)
 	       memcpy(camera3_default_info.common.sensor_physical_size,third_sensor_fov_tab[index].physical_size,sizeof(third_sensor_fov_tab[index].physical_size));
 	}
 #endif
+#ifdef CONFIG_DCAM_SENSOR3_SUPPORT
+                else if (cameraId == 3) {
+                        memcpy(camera3_default_info.common.sensor_physical_size,fourth_sensor_fov_tab[index].physical_size,sizeof(fourth_sensor_fov_tab[index].physical_size));
+                }
+#endif
+
 	HAL_LOGI("Camera %d, physical_size %f, %f", cameraId, camera3_default_info.common.sensor_physical_size[0], camera3_default_info.common.sensor_physical_size[1]);
 
 	//memcpy(camera3_default_info.common.sensor_physical_size,ksensor_physical_size,sizeof(ksensor_physical_size));
@@ -1675,6 +1706,8 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId)
 		s_setting[cameraId].lens_InfoInfo.available_focal_lengths = front_sensor_fov_tab[index].focal_lengths;
 	} else if (cameraId == 2) {
 	       s_setting[cameraId].lens_InfoInfo.available_focal_lengths = third_sensor_fov_tab[index].focal_lengths;
+	}else if (cameraId == 3) {
+	       s_setting[cameraId].lens_InfoInfo.available_focal_lengths = fourth_sensor_fov_tab[index].focal_lengths;
 	}
 	s_setting[cameraId].lens_InfoInfo.available_apertures = default_info->common.aperture;
 	s_setting[cameraId].lens_InfoInfo.filter_density = default_info->common.filter_density;
@@ -1704,6 +1737,14 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId)
 		memcpy(s_setting[cameraId].sensor_InfoInfo.active_array_size, kavailable_back_ext_active_size, sizeof(kavailable_back_ext_active_size));
 	}
 #endif
+#ifdef CONFIG_DCAM_SENSOR3_SUPPORT
+                else if(cameraId == 3)
+                {
+                                memcpy(s_setting[cameraId].sensor_InfoInfo.pixer_array_size, kavailable_front_ext_pixer_size, sizeof(kavailable_front_ext_pixer_size));
+                                memcpy(s_setting[cameraId].sensor_InfoInfo.active_array_size, kavailable_front_ext_active_size, sizeof(kavailable_front_ext_active_size));
+                }
+#endif
+
 	s_setting[cameraId].sensor_InfoInfo.white_level = default_info->common.white_level;
 	for(size_t i=0;i<4;i++)
 		s_setting[cameraId].sensorInfo.black_level_pattern[i] = default_info->common.black_level;
@@ -1750,6 +1791,14 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId)
 		memcpy(s_setting[cameraId].scalerInfo.available_stream_configurations, kavailable_back_ext_stream_configurations, sizeof(kavailable_back_ext_stream_configurations));
 	}
 #endif
+#ifdef CONFIG_DCAM_SENSOR3_SUPPORT
+                else if (cameraId == 3) {
+                                        memcpy(s_setting[cameraId].scalerInfo.min_frame_durations, kavailable_front_min_frame_durations, sizeof(kavailable_front_min_frame_durations));
+                                        memcpy(s_setting[cameraId].scalerInfo.stall_durations, kavailable_front_stall_durations, sizeof(kavailable_front_stall_durations));
+                                        memcpy(s_setting[cameraId].scalerInfo.available_stream_configurations, kavailable_front_stream_configurations, sizeof(kavailable_front_stream_configurations));
+                }
+#endif
+
 	HAL_LOGI("id=%d format=%d", cameraId, s_setting[cameraId].scalerInfo.available_stream_configurations[0]);
 	memcpy(s_setting[cameraId].scalerInfo.processed_min_durations, kavailable_min_durations, sizeof(kavailable_min_durations));
 	s_setting[cameraId].scalerInfo.max_digital_zoom = 4.0f;
@@ -1792,7 +1841,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId)
 	//lens
 	if (cameraId == 0)
 		s_setting[cameraId].lensInfo.facing =  ANDROID_LENS_FACING_BACK;
-	else if(cameraId == 1)
+	else if(cameraId == 1||cameraId == 3)
 		s_setting[cameraId].lensInfo.facing =  ANDROID_LENS_FACING_FRONT;
 	else
 		s_setting[cameraId].lensInfo.facing =  ANDROID_LENS_FACING_BACK;

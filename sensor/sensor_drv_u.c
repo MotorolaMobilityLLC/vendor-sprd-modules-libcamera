@@ -1813,7 +1813,7 @@ void sns_set_status(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E sensor_id
 
 	/*pwdn all the sensor to avoid confilct as the sensor output*/
 	SENSOR_LOGV("1");
-	for (i=0; i<=SENSOR_DEVICE2; i++) {
+	for (i=0; i<=SENSOR_DEVICE3; i++) {
 		if (i == sensor_id) {
 			continue;
 		}

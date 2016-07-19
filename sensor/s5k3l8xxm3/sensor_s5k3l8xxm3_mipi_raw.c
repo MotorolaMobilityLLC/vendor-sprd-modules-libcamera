@@ -27,7 +27,7 @@
 
 //#define CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
 #ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-//#include "../af_zzz.h"
+#include "../vcm/vcm_ak7371.h"
 #endif
 
 #include "sensor_s5k3l8xxm3_raw_param_v3.c"
@@ -810,7 +810,7 @@ static uint32_t s5k3l8xxm3_get_static_info(SENSOR_HW_HANDLE handle, uint32_t *pa
 	ex_info->capture_skip_num = g_s5k3l8xxm3_mipi_raw_info.capture_skip_num;
 	ex_info->name = g_s5k3l8xxm3_mipi_raw_info.name;
 	ex_info->sensor_version_info = g_s5k3l8xxm3_mipi_raw_info.sensor_version_info;
-	//vcm_dw9800_get_pose_dis(handle, &up, &down);
+	//vcm_ak7371_get_pose_dis(handle, &up, &down);
 	ex_info->pos_dis.up2hori = up;
 	ex_info->pos_dis.hori2down = down;
 	SENSOR_PRINT("f_num: %d", ex_info->f_num);
@@ -934,7 +934,7 @@ static uint32_t _ak7371_init(SENSOR_HW_HANDLE handle, uint32_t mode)
 	return ret_value;
 }
 static unsigned int m_vcm_pos=0;
-uint32_t vcm_ak7371_set_position(SENSOR_HW_HANDLE handle, uint32_t pos)
+uint32_t _vcm_ak7371_set_position(SENSOR_HW_HANDLE handle, uint32_t pos)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint8_t cmd_val[2] = {0x00};
@@ -979,7 +979,8 @@ static uint32_t s5k3l8xxm3_identify(SENSOR_HW_HANDLE handle,uint32_t param)
 		SENSOR_PRINT("Identify: PID = %x, VER = %x", pid_value, ver_value);
 		if (s5k3l8xxm3_VER_VALUE == ver_value) {
 			SENSOR_PRINT_HIGH("this is s5k3l8xxm3 sensor");
-			_ak7371_init(handle, 2);
+			//_ak7371_init(handle, 2);
+			vcm_ak7371_init(handle,2);
 			#ifdef FEATURE_OTP
 			/*if read otp info failed or module id mismatched ,identify failed ,return SENSOR_FAIL ,exit identify*/
 			if(PNULL!=s_s5k3l8xxm3_raw_param_tab_ptr->identify_otp){

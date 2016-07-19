@@ -121,6 +121,7 @@ extern SENSOR_INFO_T g_ov13870_mipi_raw_info;
 extern SENSOR_INFO_T g_sp2509_mipi_raw_info;
 extern SENSOR_INFO_T g_s5k5e3yx_mipi_raw_info;
 extern SENSOR_INFO_T g_ov8856_mipi_raw_info;
+extern SENSOR_INFO_T g_ov8856s_mipi_raw_info;
 
 #define AUTO_TEST_CAMERA 1
 
@@ -156,7 +157,7 @@ const SENSOR_MATCH_T sensor2_infor_tab[]=
 
 const SENSOR_MATCH_T sensor3_infor_tab[]=
 {
-	{"ov8856_mipi_raw", &g_ov8856_mipi_raw_info},
+	{"ov8856s_mipi_raw", &g_ov8856s_mipi_raw_info},
 #ifdef SC_FPGA
 	{"ov5640_mipi_yuv", &g_ov5640_mipi_yuv_info},
 	{"ov5640_mipi_raw", &g_ov5640_mipi_raw_info},
@@ -429,8 +430,8 @@ cmr_u32 Sensor_IndexGet(struct sensor_drv_context *sensor_cxt, cmr_u32 index) {
 			sSnNum = sizeof(sensor3_infor_tab)/sizeof(SENSOR_MATCH_T)-1;
 			SENSOR_LOGI("sensor sensorTypeMatch sub2 is %d", sSnNum );
 			for(i=0; i<sSnNum; i++) {
-				if( strcmp(sensor3_infor_tab[i].sn_name, CAMERA_SENSOR_TYPE_FRONT) == 0) {
-					SENSOR_LOGI("sensor sensor matched the %dth  is %s", i, CAMERA_SENSOR_TYPE_FRONT);
+				if( strcmp(sensor3_infor_tab[i].sn_name, CAMERA_SENSOR_TYPE_FRONT_EXT) == 0) {
+					SENSOR_LOGI("sensor sensor matched the %dth  is %s", i, CAMERA_SENSOR_TYPE_FRONT_EXT);
 					retValue = i;
 					break;
 				}
