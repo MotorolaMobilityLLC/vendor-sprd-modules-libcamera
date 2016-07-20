@@ -297,6 +297,12 @@ struct sensor_otp_module_info {
 	cmr_u8 lens_id;
 	cmr_u8 vcm_id;
 	cmr_u8 driver_ic_id;
+	cmr_u8 factory_id;
+	cmr_u8 calibration_version;
+	cmr_u8 ir_bg_id;
+	cmr_u8 ois_id;
+	cmr_u8 cal_direction;
+	cmr_u8 section_size;
 };
 
 struct sensor_otp_iso_awb_info {
@@ -304,6 +310,7 @@ struct sensor_otp_iso_awb_info {
 	cmr_u16 gain_r;
 	cmr_u16 gain_g;
 	cmr_u16 gain_b;
+	cmr_u8 section_size;
 };
 
 struct sensor_otp_lsc_info {
@@ -315,6 +322,11 @@ struct sensor_otp_af_info {
 	cmr_u8 flag;
 	cmr_u16 infinite_cali;
 	cmr_u16 macro_cali;
+	cmr_u8 section_size;
+};
+struct sensor_otp_pdaf_info {
+	cmr_u8 *pdaf_data_addr;
+	cmr_u16 pdaf_data_size;
 };
 
 struct sensor_otp_cust_info {
@@ -323,7 +335,8 @@ struct sensor_otp_cust_info {
 	struct sensor_otp_iso_awb_info isp_awb_info;
 	struct sensor_otp_lsc_info lsc_info;
 	struct sensor_otp_af_info af_info;
-	cmr_u8 checksum;
+	struct sensor_otp_pdaf_info pdaf_info;
+	cmr_u16 checksum;
 };
 
 struct sensor_data_info {

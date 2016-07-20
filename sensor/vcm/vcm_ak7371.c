@@ -72,7 +72,7 @@ uint32_t vcm_ak7371_set_position(SENSOR_HW_HANDLE handle, uint32_t pos)
 		pos = 0x3FF;
 	m_cur_pos=pos&0x3FF;
 
-	//SENSOR_LOGI("set position %d", pos);
+	SENSOR_LOGI("set position %d", pos);
 	slave_addr = AK7371_VCM_SLAVE_ADDR;
 	cmd_len = 2;
 	cmd_val[0] = 0x00;

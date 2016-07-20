@@ -55,8 +55,8 @@
 #define PREVIEW_MIPI_PER_LANE_BPS  720                                
 
 /*line time unit: 0.1us*/
-#define SNAPSHOT_LINE_TIME	26300 
-#define PREVIEW_LINE_TIME		26300 // 947(*2)/36M(*2)
+#define SNAPSHOT_LINE_TIME	26305 
+#define PREVIEW_LINE_TIME		26305 // 947(*2)/36M(*2)
 
 /* frame length*/
 #define SNAPSHOT_FRAME_LENGTH		1234
@@ -64,7 +64,7 @@
 
 /* please ref your spec */
 #define FRAME_OFFSET			0
-#define SENSOR_MAX_GAIN			0xf8
+#define SENSOR_MAX_GAIN			0x100 //15.5x //
 #define SENSOR_BASE_GAIN		0x10
 #define SENSOR_MIN_SHUTTER		1
 
@@ -79,7 +79,7 @@
  * 1: sensor auto caculate
  * 0: driver caculate
  */
-#define SUPPORT_AUTO_FRAME_LENGTH	1
+#define SUPPORT_AUTO_FRAME_LENGTH	1 //0
 /* sensor parameters end */
 
 /* isp parameters, please don't change it*/
@@ -100,6 +100,7 @@ struct hdr_info_t {
 struct sensor_ev_info_t {
 	uint16_t preview_shutter;
 	uint16_t preview_gain;
+	uint16_t preview_framelength;
 };
 
 /*==============================================================================
@@ -156,8 +157,9 @@ struct raw_param_info_tab s_sp2509_raw_param_tab[] = {
 
 static SENSOR_IOCTL_FUNC_TAB_T s_sp2509_ioctl_func_tab;
 struct sensor_raw_info *s_sp2509_mipi_raw_info_ptr = &s_sp2509_mipi_raw_info;
-
 static const SENSOR_REG_T sp2509_init_setting[] = {
+};
+static const SENSOR_REG_T sp2509_snapshot_setting[] = {
 {0xfd,0x00},
 {0x2f,0x0c},       //2015.12.24
 {0x34,0x00},
@@ -242,25 +244,70 @@ static const SENSOR_REG_T sp2509_init_setting[] = {
 static const SENSOR_REG_T sp2509_preview_setting[] = {
 };
 
-static const SENSOR_REG_T sp2509_snapshot_setting[] = {
+static const SENSOR_REG_T sp2509_snapshot_setting1[] = {
+{0xfd,0x00},
+{0x2f,0x10},
+{0x34,0x00},
+{0x30,0x1d},
+{0x33,0x05},
+{0xfd,0x01},
+{0x44,0x00},
+{0x2a,0x5c},
+{0x2c,0x60},
+{0x25,0x06},
+{0x03,0x01},
+{0x04,0x71},
+{0x09,0x00},
+{0x0a,0x0a},
+{0x06,0x0a},
+{0x24,0x80},
+{0x01,0x01},
+{0xfb,0x63},
+{0xfd,0x01},
+{0x16,0x04},
+{0x1c,0x09},
+{0x21,0x66},
+{0x6a,0x00},
+{0x6b,0x00},
+{0x84,0x00},
+{0x85,0x10},
+{0x86,0x10},
+{0x13,0x60},
+{0x11,0x20},
+{0x33,0x60},
+{0xd0,0x03},
+{0xd1,0x01},
+{0xd2,0x20},
+{0xd3,0x01},
+{0xd4,0xa0},
+{0x58,0x10},
+{0x75,0xa0},
+{0x51,0x14},
+{0x52,0x10},
+{0x19,0x74},
+{0xfd,0x01},
+{0x9d,0x96},
+{0xa1,0x04},
+{0xb1,0x01},
+{0xac,0x01},
 };
 
 static SENSOR_REG_TAB_INFO_T s_sp2509_resolution_tab_raw[SENSOR_MODE_MAX] = {
 	{ADDR_AND_LEN_OF_ARRAY(sp2509_init_setting), 0, 0, EX_MCLK,
 	 SENSOR_IMAGE_FORMAT_RAW},
-	{ADDR_AND_LEN_OF_ARRAY(sp2509_preview_setting),
+	/*{ADDR_AND_LEN_OF_ARRAY(sp2509_preview_setting),
 	 PREVIEW_WIDTH, PREVIEW_HEIGHT, EX_MCLK,
-	 SENSOR_IMAGE_FORMAT_RAW},
-	{ADDR_AND_LEN_OF_ARRAY(sp2509_snapshot_setting),
+	 SENSOR_IMAGE_FORMAT_RAW},*/
+	{ADDR_AND_LEN_OF_ARRAY(sp2509_snapshot_setting1),
 	 SNAPSHOT_WIDTH, SNAPSHOT_HEIGHT, EX_MCLK,
 	 SENSOR_IMAGE_FORMAT_RAW},
 };
 
 static SENSOR_TRIM_T s_sp2509_resolution_trim_tab[SENSOR_MODE_MAX] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-	{0, 0, PREVIEW_WIDTH, PREVIEW_HEIGHT,
+	/*{0, 0, PREVIEW_WIDTH, PREVIEW_HEIGHT,
 	 PREVIEW_LINE_TIME, PREVIEW_MIPI_PER_LANE_BPS, PREVIEW_FRAME_LENGTH,
-	 {0, 0, PREVIEW_WIDTH, PREVIEW_HEIGHT}},
+	 {0, 0, PREVIEW_WIDTH, PREVIEW_HEIGHT}},*/
 	{0, 0, SNAPSHOT_WIDTH, SNAPSHOT_HEIGHT,
 	 SNAPSHOT_LINE_TIME, SNAPSHOT_MIPI_PER_LANE_BPS, SNAPSHOT_FRAME_LENGTH,
 	 {0, 0, SNAPSHOT_WIDTH, SNAPSHOT_HEIGHT}},
@@ -457,7 +504,7 @@ static SENSOR_STATIC_INFO_T s_sp2509_static_info = {
 	240,	//f-number,focal ratio
 	200,	//focal_length;
 	0,	//max_fps,max fps of sensor's all settings,it will be calculated from sensor mode fps
-	8,	//max_adgain,AD-gain
+	16*2,	//max_adgain,AD-gain
 	0,	//ois_supported;
 	0,	//pdaf_supported;
 	1,	//exp_valid_frame_num;N+2-1
@@ -539,266 +586,6 @@ LOCAL uint32_t _sp2509_init_mode_fps_info(SENSOR_HW_HANDLE handle)
 static uint32_t sp2509_InitRawTuneInfo(SENSOR_HW_HANDLE handle)
 {
 	uint32_t rtn=0x00;
-#if 0
-	isp_raw_para_update_from_file(&g_sp2509_mipi_raw_info,0);
-
-	struct sensor_raw_info* raw_sensor_ptr=s_sp2509_mipi_raw_info_ptr;
-	struct isp_mode_param* mode_common_ptr = raw_sensor_ptr->mode_ptr[0].addr;
-	int i;
-	char name[100] = {'\0'};
-
-	for (i=0; i<mode_common_ptr->block_num; i++) {
-		struct isp_block_header* header = &(mode_common_ptr->block_header[i]);
-		uint8_t* data = (uint8_t*)mode_common_ptr + header->offset;
-		switch (header->block_id)
-		{
-		case	ISP_BLK_PRE_WAVELET_V1: {
-				/* modify block data */
-				struct sensor_pwd_param* block = (struct sensor_pwd_param*)data;
-
-				static struct sensor_pwd_level pwd_param[SENSOR_SMART_LEVEL_NUM] = {
-					#include "NR/pwd_param.h"
-				};
-
-				param_update("pwd_param",pwd_param);
-
-				block->param_ptr = pwd_param;
-			}
-			break;
-
-		case	ISP_BLK_BPC_V1: {
-				/* modify block data */
-				struct sensor_bpc_param_v1* block = (struct sensor_bpc_param_v1*)data;
-
-				static struct sensor_bpc_level bpc_param[SENSOR_SMART_LEVEL_NUM] = {
-					#include "NR/bpc_param.h"
-				};
-
-				param_update("bpc_param",bpc_param);
-
-				block->param_ptr = bpc_param;
-			}
-			break;
-
-		case	ISP_BLK_BL_NR_V1: {
-				/* modify block data */
-				struct sensor_bdn_param* block = (struct sensor_bdn_param*)data;
-
-				static struct sensor_bdn_level bdn_param[SENSOR_SMART_LEVEL_NUM] = {
-					#include "NR/bdn_param.h"
-				};
-
-				param_update("bdn_param",bdn_param);
-
-				block->param_ptr = bdn_param;
-			}
-			break;
-
-		case	ISP_BLK_GRGB_V1: {
-				/* modify block data */
-				struct sensor_grgb_v1_param* block = (struct sensor_grgb_v1_param*)data;
-				static struct sensor_grgb_v1_level grgb_param[SENSOR_SMART_LEVEL_NUM] = {
-					#include "NR/grgb_param.h"
-				};
-
-				param_update("grgb_param",grgb_param);
-
-				block->param_ptr = grgb_param;
-
-			}
-			break;
-
-		case	ISP_BLK_NLM: {
-				/* modify block data */
-				struct sensor_nlm_param* block = (struct sensor_nlm_param*)data;
-
-				static struct sensor_nlm_level nlm_param[32] = {
-					#include "NR/nlm_param.h"
-				};
-
-				param_update("nlm_param",nlm_param);
-
-				static struct sensor_vst_level vst_param[32] = {
-					#include "NR/vst_param.h"
-				};
-
-				param_update("vst_param",vst_param);
-
-				static struct sensor_ivst_level ivst_param[32] = {
-					#include "NR/ivst_param.h"
-				};
-
-				param_update("ivst_param",ivst_param);
-
-				static struct sensor_flat_offset_level flat_offset_param[32] = {
-					#include "NR/flat_offset_param.h"
-				};
-
-				param_update("flat_offset_param",flat_offset_param);
-
-				block->param_nlm_ptr = nlm_param;
-				block->param_vst_ptr = vst_param;
-				block->param_ivst_ptr = ivst_param;
-				block->param_flat_offset_ptr = flat_offset_param;
-			}
-			break;
-
-		case	ISP_BLK_CFA_V1: {
-				/* modify block data */
-				struct sensor_cfa_param_v1* block = (struct sensor_cfa_param_v1*)data;
-				static struct sensor_cfae_level cfae_param[SENSOR_SMART_LEVEL_NUM] = {
-					#include "NR/cfae_param.h"
-				};
-
-				param_update("cfae_param",cfae_param);
-
-				block->param_ptr = cfae_param;
-			}
-			break;
-
-		case	ISP_BLK_RGB_PRECDN: {
-				/* modify block data */
-				struct sensor_rgb_precdn_param* block = (struct sensor_rgb_precdn_param*)data;
-
-				static struct sensor_rgb_precdn_level precdn_param[SENSOR_SMART_LEVEL_NUM] = {
-					#include "NR/rgb_precdn_param.h"
-				};
-
-				param_update("rgb_precdn_param",precdn_param);
-
-				block->param_ptr = precdn_param;
-			}
-			break;
-
-		case	ISP_BLK_YUV_PRECDN: {
-				/* modify block data */
-				struct sensor_yuv_precdn_param* block = (struct sensor_yuv_precdn_param*)data;
-
-				static struct sensor_yuv_precdn_level yuv_precdn_param[SENSOR_SMART_LEVEL_NUM] = {
-					#include "NR/yuv_precdn_param.h"
-				};
-
-				param_update("yuv_precdn_param",yuv_precdn_param);
-
-				block->param_ptr = yuv_precdn_param;
-			}
-			break;
-
-		case	ISP_BLK_PREF_V1: {
-				/* modify block data */
-				struct sensor_prfy_param* block = (struct sensor_prfy_param*)data;
-
-				static struct sensor_prfy_level prfy_param[SENSOR_SMART_LEVEL_NUM] = {
-					#include "NR/prfy_param.h"
-				};
-
-				param_update("prfy_param",prfy_param);
-
-				block->param_ptr = prfy_param;
-			}
-			break;
-
-		case	ISP_BLK_UV_CDN: {
-				/* modify block data */
-				struct sensor_uv_cdn_param* block = (struct sensor_uv_cdn_param*)data;
-
-				static struct sensor_uv_cdn_level uv_cdn_param[SENSOR_SMART_LEVEL_NUM] = {
-					#include "NR/yuv_cdn_param.h"
-				};
-
-				param_update("yuv_cdn_param",uv_cdn_param);
-
-				block->param_ptr = uv_cdn_param;
-			}
-			break;
-
-		case	ISP_BLK_EDGE_V1: {
-				/* modify block data */
-				struct sensor_ee_param* block = (struct sensor_ee_param*)data;
-
-				static struct sensor_ee_level edge_param[SENSOR_SMART_LEVEL_NUM] = {
-					#include "NR/edge_param.h"
-				};
-
-				param_update("edge_param",edge_param);
-
-				block->param_ptr = edge_param;
-			}
-			break;
-
-		case	ISP_BLK_UV_POSTCDN: {
-				/* modify block data */
-				struct sensor_uv_postcdn_param* block = (struct sensor_uv_postcdn_param*)data;
-
-				static struct sensor_uv_postcdn_level uv_postcdn_param[SENSOR_SMART_LEVEL_NUM] = {
-					#include "NR/yuv_postcdn_param.h"
-				};
-
-				param_update("yuv_postcdn_param",uv_postcdn_param);
-
-				block->param_ptr = uv_postcdn_param;
-			}
-			break;
-
-		case	ISP_BLK_IIRCNR_IIR: {
-				/* modify block data */
-				struct sensor_iircnr_param* block = (struct sensor_iircnr_param*)data;
-
-				static struct sensor_iircnr_level iir_cnr_param[SENSOR_SMART_LEVEL_NUM] = {
-					#include "NR/iircnr_param.h"
-				};
-
-				param_update("iircnr_param",iir_cnr_param);
-
-				block->param_ptr = iir_cnr_param;
-			}
-			break;
-
-		case	ISP_BLK_IIRCNR_YRANDOM: {
-				/* modify block data */
-				struct sensor_iircnr_yrandom_param* block = (struct sensor_iircnr_yrandom_param*)data;
-				static struct sensor_iircnr_yrandom_level iir_yrandom_param[SENSOR_SMART_LEVEL_NUM] = {
-					#include "NR/iir_yrandom_param.h"
-				};
-
-				param_update("iir_yrandom_param",iir_yrandom_param);
-
-				block->param_ptr = iir_yrandom_param;
-			}
-			break;
-
-		case  ISP_BLK_UVDIV_V1: {
-				/* modify block data */
-				struct sensor_cce_uvdiv_param_v1* block = (struct sensor_cce_uvdiv_param_v1*)data;
-
-				static struct sensor_cce_uvdiv_level cce_uvdiv_param[SENSOR_SMART_LEVEL_NUM] = {
-					#include "NR/cce_uv_param.h"
-				};
-
-				param_update("cce_uv_param",cce_uvdiv_param);
-
-				block->param_ptr = cce_uvdiv_param;
-			}
-			break;
-		case ISP_BLK_YIQ_AFM:{
-			/* modify block data */
-			struct sensor_y_afm_param *block = (struct sensor_y_afm_param*)data;
-
-			static struct sensor_y_afm_level y_afm_param[SENSOR_SMART_LEVEL_NUM] = {
-					#include "NR/y_afm_param.h"
-				};
-
-				param_update("y_afm_param",y_afm_param);
-
-				block->param_ptr = y_afm_param;
-			}
-			break;
-
-		default:
-			break;
-		}
-	}
-#endif
 
 	return rtn;
 }
@@ -846,14 +633,17 @@ static void sp2509_group_hold_off(void)
  *============================================================================*/
 static uint16_t sp2509_read_gain(SENSOR_HW_HANDLE handle)
 {
-	uint16_t gain_h = 0;
-	uint16_t gain_l = 0;
+/*	uint16_t gain_a = 0;
+	uint16_t gain_d = 0;
 
 	//gain_h = Sensor_ReadReg(0xYYYY) & 0xff;
 	  Sensor_WriteReg(0xfd, 0x01);
-	gain_l = Sensor_ReadReg(0x24) & 0xff;
+	gain_a = Sensor_ReadReg(0x24) & 0xff;
+	Sensor_WriteReg(0xfd, 0x02);
+	gain_d = Sensor_ReadReg(0x11) & 0xff;
 
-	return ((gain_h << 8) | gain_l);
+	return (gain_a*gain_d);*/
+	return s_sensor_ev_info.preview_gain;
 }
 
 /*==============================================================================
@@ -861,15 +651,32 @@ static uint16_t sp2509_read_gain(SENSOR_HW_HANDLE handle)
  * write gain to sensor registers
  * please modify this function acording your spec
  *============================================================================*/
-static void sp2509_write_gain(SENSOR_HW_HANDLE handle,uint32_t gain)
+static void sp2509_write_gain(SENSOR_HW_HANDLE handle,float gain)
 {
-	if (SENSOR_MAX_GAIN < gain)
+/*	if (SENSOR_MAX_GAIN < gain)
 			gain = SENSOR_MAX_GAIN;
 
 	Sensor_WriteReg(0xfd, 0x01);
 	Sensor_WriteReg(0x24, gain & 0xff);
-	Sensor_WriteReg(0x01, 0x01);
+	Sensor_WriteReg(0x01, 0x01);*/
 	//sp2509_group_hold_off(handle);
+	float gain_a = gain;
+	float gain_d= 0x80;
+
+	if (SENSOR_MAX_GAIN <(uint16_t) gain_a){
+		gain_a = SENSOR_MAX_GAIN;
+		gain_d = gain*0x80/gain_a;
+		if((uint16_t)gain_d > 2*0x80)
+			gain_d=2*0x80;
+	}
+	Sensor_WriteReg(0xfd, 0x01);
+	Sensor_WriteReg(0x24, (uint16_t)gain_a & 0xff);
+	Sensor_WriteReg(0xfd, 0x02);
+	Sensor_WriteReg(0x10, (uint16_t)gain_d & 0xff);
+	Sensor_WriteReg(0x11, (uint16_t)gain_d & 0xff);
+	Sensor_WriteReg(0x13, (uint16_t)gain_d & 0xff);
+	Sensor_WriteReg(0x14, (uint16_t)gain_d & 0xff);
+	Sensor_WriteReg(0x01, 0x01);
 
 }
 
@@ -882,11 +689,13 @@ static uint16_t sp2509_read_frame_length(SENSOR_HW_HANDLE handle)
 {
 	uint16_t frame_len_h = 0;
 	uint16_t frame_len_l = 0;
+	
+	Sensor_WriteReg(0xfd, 0x01);
+	frame_len_h = Sensor_ReadReg(0x0e) & 0xff;
+	frame_len_l = Sensor_ReadReg(0x0f) & 0xff;
 
-	//frame_len_h = Sensor_ReadReg(0xYYYY) & 0xff;
-	//frame_len_l = Sensor_ReadReg(0xYYYY) & 0xff;
-
-	return ((frame_len_h << 8) | frame_len_l);
+	s_sensor_ev_info.preview_framelength =  ((frame_len_h << 8) | frame_len_l);
+	return s_sensor_ev_info.preview_framelength;
 }
 
 /*==============================================================================
@@ -896,8 +705,11 @@ static uint16_t sp2509_read_frame_length(SENSOR_HW_HANDLE handle)
  *============================================================================*/
 static void sp2509_write_frame_length(SENSOR_HW_HANDLE handle,uint32_t frame_len)
 {
-	//Sensor_WriteReg(0xYYYY, (frame_length >> 8) & 0xff);
-	//Sensor_WriteReg(0xYYYY, frame_length & 0xff);
+	Sensor_WriteReg(0xfd, 0x01);
+	Sensor_WriteReg(0x05, (frame_len >> 8) & 0xff);
+	Sensor_WriteReg(0x06, frame_len & 0xff);
+	Sensor_WriteReg(0x01, 0x01);
+	//s_sensor_ev_info.preview_framelength = frame_len;
 }
 
 /*==============================================================================
@@ -927,6 +739,7 @@ static void sp2509_write_shutter(SENSOR_HW_HANDLE handle,uint32_t shutter)
 	Sensor_WriteReg(0xfd, 0x01);
 	Sensor_WriteReg(0x03, (shutter >> 8) & 0xff);
 	Sensor_WriteReg(0x04, shutter & 0xff);
+	Sensor_WriteReg(0x01, 0x01);
 	//return shutter;
 }
 
@@ -950,14 +763,17 @@ static uint16_t sp2509_update_exposure(SENSOR_HW_HANDLE handle,uint32_t shutter,
 	dest_fr_len = ((shutter + dummy_line+FRAME_OFFSET) > fr_len) ? (shutter +dummy_line+ FRAME_OFFSET) : fr_len;
 
 	cur_fr_len = sp2509_read_frame_length(handle);
+	SENSOR_PRINT("current shutter = %d, fr_len = %d, dummy_line=%d cur_fr_len %d dest_fr_len %d", shutter, fr_len,dummy_line,cur_fr_len,dest_fr_len);
 
 	if (shutter < SENSOR_MIN_SHUTTER)
 		shutter = SENSOR_MIN_SHUTTER;
 
 	if (dest_fr_len != cur_fr_len)
-		sp2509_write_frame_length(handle,dest_fr_len);
+		sp2509_write_frame_length(handle,dummy_line);
+	s_sensor_ev_info.preview_framelength = dest_fr_len;
 write_sensor_shutter:
 	/* write shutter to sensor registers */
+	s_sensor_ev_info.preview_shutter=shutter;
 	sp2509_write_shutter(handle,shutter);
 	return shutter;
 }
@@ -1207,8 +1023,8 @@ static uint32_t sp2509_before_snapshot(SENSOR_HW_HANDLE handle,uint32_t param)
 
 	SENSOR_PRINT("capture_shutter = 0x%x, capture_gain = 0x%x", cap_shutter, cap_gain);
 snapshot_info:
-	s_hdr_info.capture_shutter = cap_shutter; //sp2509_read_shutter();
-	s_hdr_info.capture_gain = cap_gain; //sp2509_read_gain();
+	s_hdr_info.capture_shutter = sp2509_read_shutter(handle);
+	s_hdr_info.capture_gain = sp2509_read_gain(handle);
 	/* limit HDR capture min fps to 10;
 	 * MaxFrameTime = 1000000*0.1us;
 	 */
@@ -1224,8 +1040,8 @@ snapshot_info:
  * get the shutter from isp
  * please don't change this function unless it's necessary
  *============================================================================*/
-static uint32_t sp2509_write_exposure_dummy(SENSOR_HW_HANDLE handle, uint16_t exposure_line,
-		uint16_t dummy_line, uint16_t size_index)
+static uint32_t sp2509_write_exposure_dummy(SENSOR_HW_HANDLE handle, uint32_t exposure_line,
+		uint32_t dummy_line, uint16_t size_index)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	/*uint16_t exposure_line = 0x00;
@@ -1236,7 +1052,6 @@ static uint32_t sp2509_write_exposure_dummy(SENSOR_HW_HANDLE handle, uint16_t ex
 	dummy_line = (param >> 0x10) & 0xfff; //for cits frame rate test
 	mode = (param >> 0x1c) & 0x0f;*/
 
-	SENSOR_PRINT("current mode = %d, exposure_line = %d, dummy_line=%d", size_index, exposure_line,dummy_line);
 	s_current_default_frame_length = sp2509_get_default_frame_length(handle,size_index);
 
 	s_sensor_ev_info.preview_shutter = sp2509_update_exposure(handle,exposure_line,dummy_line);
@@ -1252,9 +1067,17 @@ LOCAL unsigned long sp2509_write_exposure(SENSOR_HW_HANDLE handle, unsigned long
 	uint32_t size_index=0x00;
 
 
-	expsure_line=param&0xffff;
-	dummy_line=(param>>0x10)&0x0fff;
-	size_index=(param>>0x1c)&0x0f;
+	struct sensor_ex_exposure  *ex = (struct sensor_ex_exposure*)param;
+
+	if (!param) {
+		SENSOR_PRINT_ERR("param is NULL !!!");
+		return ret_value;
+	}
+
+	expsure_line = ex->exposure;
+	dummy_line = ex->dummy;
+	size_index = ex->size_index;
+
 
 	ret_value = sp2509_write_exposure_dummy(handle, expsure_line, dummy_line, size_index);
 
@@ -1278,6 +1101,7 @@ LOCAL unsigned long sp2509_ex_write_exposure(SENSOR_HW_HANDLE handle, unsigned l
 	exposure_line = ex->exposure;
 	dummy_line = ex->dummy;
 	size_index = ex->size_index;
+	SENSOR_PRINT("current mode = %d, exposure_line = %d, dummy_line=%d frame_length %d", size_index, exposure_line,dummy_line,s_current_default_frame_length);
 
 	ret_value = sp2509_write_exposure_dummy(handle, exposure_line, dummy_line, size_index);
 
@@ -1312,19 +1136,19 @@ static uint32_t isp_to_real_gain(SENSOR_HW_HANDLE handle,uint32_t param)
  * write gain value to sensor
  * you can change this function if it's necessary
  *============================================================================*/
-static uint32_t sp2509_write_gain_value(SENSOR_HW_HANDLE handle,uint32_t param)
+static uint32_t sp2509_write_gain_value(SENSOR_HW_HANDLE handle,unsigned long param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
-	uint32_t real_gain = 0;
+	float real_gain = 0;
 
-	real_gain = isp_to_real_gain(handle,param);
+	//real_gain = isp_to_real_gain(handle,param);
 
-	real_gain = real_gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
+	real_gain = (float)1.0*param * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
 
-	SENSOR_PRINT("real_gain = 0x%x", real_gain);
+	SENSOR_PRINT("real_gain = 0x%x", (uint32_t)real_gain);
 
-	s_sensor_ev_info.preview_gain = real_gain;
-	sp2509_write_gain(handle,real_gain);
+	s_sensor_ev_info.preview_gain = (uint32_t)real_gain;
+	sp2509_write_gain(handle,(uint32_t)real_gain);
 
 	return ret_value;
 }
@@ -1459,6 +1283,7 @@ static unsigned long _sp2509_SetSlave_FrameSync(SENSOR_HW_HANDLE handle, unsigne
 static uint32_t sp2509_stream_on(SENSOR_HW_HANDLE handle,uint32_t param)
 {
 	SENSOR_PRINT("E");
+	//_sp2509_SetSlave_FrameSync(handle,param);
 	Sensor_WriteReg(0xfd, 0x01);
 	Sensor_WriteReg(0xac, 0x01);
 	/*delay*/
@@ -1613,7 +1438,7 @@ static unsigned long sp2509_access_val(SENSOR_HW_HANDLE handle, unsigned long pa
 			//rtn = sp2509_otp_init(handle);
 			break;
 		case SENSOR_VAL_TYPE_SHUTTER:
-			//*((uint32_t*)param_ptr->pval) = sp2509_get_shutter();
+			*((uint32_t*)param_ptr->pval) = s_sensor_ev_info.preview_shutter;
 			break;
 		case SENSOR_VAL_TYPE_READ_VCM:
 			//rtn = sp2509_read_vcm(handle, param_ptr->pval);
@@ -1643,7 +1468,7 @@ static unsigned long sp2509_access_val(SENSOR_HW_HANDLE handle, unsigned long pa
 			//rtn = sp2509_write_otp_gain(handle, param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_READ_OTP_GAIN:
-			//rtn = sp2509_read_otp_gain(handle, param_ptr->pval);
+			*((uint32_t*)param_ptr->pval)  = s_sensor_ev_info.preview_gain;
 			break;
 		case SENSOR_VAL_TYPE_GET_STATIC_INFO:
 			rtn = sp2509_get_static_info(handle, param_ptr->pval);

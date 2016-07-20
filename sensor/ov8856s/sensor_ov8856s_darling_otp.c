@@ -53,7 +53,7 @@ static uint32_t ov8856s_darling_read_otp_info(SENSOR_HW_HANDLE handle,void *para
 	int otp_flag, addr, temp, i;
 	//set 0x5001[3] to 
 	int temp1;
-    Sensor_WriteReg(0x0100, 0x01);
+	Sensor_WriteReg(0x0100, 0x01);
 	temp1 = Sensor_ReadReg(0x5001);
 	Sensor_WriteReg(0x5001, (0x00 & 0x08) | (temp1 & (~0x08)));
 	// read OTP into buffer
@@ -153,7 +153,7 @@ static uint32_t ov8856s_darling_read_otp_info(SENSOR_HW_HANDLE handle,void *para
 	temp1 = Sensor_ReadReg(0x5001);
 	Sensor_WriteReg(0x5001, (0x08 & 0x08) | (temp1 & (~0x08)));
 
-    Sensor_WriteReg(0x0100, 0x00);
+	Sensor_WriteReg(0x0100, 0x00);
 
 	/*print otp information*/
 	SENSOR_PRINT("flag=0x%x",otp_info->flag);
@@ -252,7 +252,7 @@ static uint32_t ov8856s_darling_update_lsc(SENSOR_HW_HANDLE handle,void *param_p
 {
 	uint32_t rtn = SENSOR_SUCCESS;
 	struct otp_info_t *otp_info=(struct otp_info_t *)param_ptr;
-    ov8856s_darling_enable_lsc_otp(handle);
+	ov8856s_darling_enable_lsc_otp(handle);
 
 	/*TODO*/
 	int i=0,temp=0;
@@ -274,7 +274,7 @@ static uint32_t ov8856s_darling_test_awb(SENSOR_HW_HANDLE handle,void *param_ptr
 	uint32_t flag = 1;
 	struct otp_info_t *otp_info=(struct otp_info_t *)param_ptr;
 	char value[PROPERTY_VALUE_MAX];
-    property_get("persist.sys.camera.otp.awb", value, "on");
+	property_get("persist.sys.camera.otp.awb", value, "on");
 		
 	if(!strcmp(value,"on")){
 		SENSOR_PRINT("apply awb otp normally!");
@@ -348,7 +348,7 @@ static uint32_t ov8856s_darling_update_otp(SENSOR_HW_HANDLE handle,void *param_p
 static uint32_t ov8856s_darling_identify_otp(SENSOR_HW_HANDLE handle,void *param_ptr)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
-    struct otp_info_t *otp_info=(struct otp_info_t *)param_ptr;
+	struct otp_info_t *otp_info=(struct otp_info_t *)param_ptr;
 
 	rtn=ov8856s_darling_read_otp_info(handle,param_ptr);
 	if(rtn!=SENSOR_SUCCESS){
@@ -365,3 +365,6 @@ static uint32_t ov8856s_darling_identify_otp(SENSOR_HW_HANDLE handle,void *param
 }
 static struct raw_param_info_tab s_ov8856s_darling_raw_param_tab[] = 
 	{MODULE_ID_ov8856s_darling, &s_ov8856s_mipi_raw_info, ov8856s_darling_identify_otp, ov8856s_darling_update_otp};
+
+static struct otp_info_t *s_ov8856s_otp_info_ptr=&s_ov8856s_darling_otp_info;
+static struct raw_param_info_tab *s_ov8856s_raw_param_tab_ptr=&s_ov8856s_darling_raw_param_tab;  /*otp function interface*/

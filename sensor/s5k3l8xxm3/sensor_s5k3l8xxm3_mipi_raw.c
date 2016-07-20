@@ -67,8 +67,8 @@
 #define PREVIEW_MIPI_PER_LANE_BPS	1124  /* 2*Mipi clk */
 
 /*line time unit: 0.001us*/
-#define SNAPSHOT_LINE_TIME		10200
-#define PREVIEW_LINE_TIME		10200
+#define SNAPSHOT_LINE_TIME		10256
+#define PREVIEW_LINE_TIME		10256
 
 /* frame length*/
 #define SNAPSHOT_FRAME_LENGTH		3250
@@ -124,9 +124,9 @@ static struct sensor_ev_info_t s_sensor_ev_info={
 //#define FEATURE_OTP    /*OTP function switch*/
 
 #ifdef FEATURE_OTP
-#include "sensor_s5k3l8xxm3_yyy_otp.c"
-static struct otp_info_t *s_s5k3l8xxm3_otp_info_ptr=&s_s5k3l8xxm3_yyy_otp_info;
-static struct raw_param_info_tab *s_s5k3l8xxm3_raw_param_tab_ptr=&s_s5k3l8xxm3_yyy_raw_param_tab;  /*otp function interface*/
+#include "sensor_s5k3l8xxm3_darling_otp.c"
+#else
+#include "s5k3l8xxm3_darling_otp.h"
 #endif
 
 static SENSOR_IOCTL_FUNC_TAB_T s_s5k3l8xxm3_ioctl_func_tab;
@@ -292,6 +292,28 @@ static const SENSOR_REG_T s5k3l8xxm3_init_setting[] = {
 };
 
 static const SENSOR_REG_T s5k3l8xxm3_preview_setting[] = {
+	//$MIPI[Width:2104,Height:1560,Format:Raw10,Lane:4,ErrorCheck:0,PolarityData:0,PolarityClock:0,Buffer:4,DataRate:1124,useEmbData:0]
+	////$MV1[MCLK:24,Width:2104,Height:1560,Format:MIPI_Raw10,mipi_lane:4,mipi_datarate:1124,pvi_pclk_inverse:0]
+	/*
+	ExtClk :		24	MHz
+	Vt_pix_clk :		566.4	MHz
+	MIPI_output_speed :	1124	Mbps/lane
+	Crop_Width :		4208	px
+	Crop_Height :		3120	px
+	Output_Width :		2104	px
+	Output_Height : 	1560	px
+	Frame rate :		30.01	fps
+	Output format : 	Raw10
+	*Pedestal :		64
+	*Mapped BPC :		On
+	*Dynamic BPC :		Off
+	*Internal LSC : 	Off
+	H-size :		5808	px
+	H-blank :		3704	px
+	V-size :		3250	line
+	V-blank :		1690	line
+	Lane :			4	lane
+	First Pixel :		Gr	First	  */
 	{0x6028,0x2000},
 	{0x602A,0x0F74},
 	{0x6F12,0x0040},
@@ -332,6 +354,14 @@ static const SENSOR_REG_T s5k3l8xxm3_preview_setting[] = {
 };
 
 static const SENSOR_REG_T s5k3l8xxm3_snapshot_setting[] = {
+	// 3L8 ID : 03C8 read address 0000
+	// 4208x3120_Mclk=24Mhz_4lane_30fps
+	// Vt=566.4Mhz
+	// MIPI speed 1124Mbps
+	// line time :102
+	// frame length :3250
+	// Bayer pattern : GRBG
+
 	{0x6028,0x2000},
 	{0x602A,0x0F74},
 	{0x6F12,0x0040},
@@ -366,7 +396,7 @@ static const SENSOR_REG_T s5k3l8xxm3_snapshot_setting[] = {
 	{0x0202,0x0200},
 	{0x0200,0x00C6},
 	{0x0B04,0x0101},
-	{0x0B08,0x0100},//
+	{0x0B08,0x0000},//
 	{0x0B00,0x0007},
 	{0x316A,0x00A0},
 };
@@ -496,8 +526,8 @@ SENSOR_INFO_T g_s5k3l8xxm3_mipi_raw_info = {
 };
 
 static SENSOR_STATIC_INFO_T s_s5k3l8xxm3_static_info = {
-	200,	//f-number,focal ratio
-	357,	//focal_length;
+	220,	//f-number,focal ratio
+	346,	//focal_length;
 	0,	//max_fps,max fps of sensor's all settings,it will be calculated from sensor mode fps
 	16*256,	//max_adgain,AD-gain
 	0,	//ois_supported;
@@ -863,7 +893,7 @@ static unsigned long s5k3l8xxm3_access_val(SENSOR_HW_HANDLE handle,unsigned long
 	if(!param_ptr){
 		#ifdef FEATURE_OTP
 		if(PNULL!=s_s5k3l8xxm3_raw_param_tab_ptr->cfg_otp){
-			ret = s_s5k3l8xxm3_raw_param_tab_ptr->cfg_otp(s_s5k3l8xxm3_otp_info_ptr);
+			ret = s_s5k3l8xxm3_raw_param_tab_ptr->cfg_otp(handle,s_s5k3l8xxm3_otp_info_ptr);
 			//checking OTP apply result
 			if (SENSOR_SUCCESS != ret) {
 				SENSOR_PRINT("apply otp failed");
@@ -879,7 +909,28 @@ static unsigned long s5k3l8xxm3_access_val(SENSOR_HW_HANDLE handle,unsigned long
 	SENSOR_PRINT("sensor s5k3l8xxm3: param_ptr->type=%x", param_ptr->type);
 	
 	switch(param_ptr->type)
-	{
+	{	case SENSOR_VAL_TYPE_INIT_OTP:
+			ret =s5k3l8xxm3_otp_init(handle);
+			break;
+		case SENSOR_VAL_TYPE_READ_OTP:
+			ret =s5k3l8xxm3_otp_read(handle,param_ptr);
+			break;
+		case SENSOR_VAL_TYPE_READ_DUAL_OTP:
+			#ifdef S5K3L8XXM3_DUAL_OTP
+			ret = s5k3l8xxm3_dual_otp_read(handle, param_ptr);
+			#endif
+			break;
+		case SENSOR_VAL_TYPE_PARSE_OTP:
+			ret = s5k3l8xxm3_parse_otp(handle, param_ptr);
+			break;
+		case SENSOR_VAL_TYPE_PARSE_DUAL_OTP:
+			#ifdef S5K3L8XXM3_DUAL_OTP
+			ret = s5k3l8xxm3_parse_dual_otp(handle, param_ptr);
+			#endif
+			break;
+		case SENSOR_VAL_TYPE_WRITE_OTP:
+			//rtn = _s5k3l8xxm3_write_otp(handle, (uint32_t)param_ptr->pval);
+			break;
 		case SENSOR_VAL_TYPE_SHUTTER:
 			*((uint32_t*)param_ptr->pval) = s5k3l8xxm3_read_shutter(handle);
 			break;
@@ -987,7 +1038,7 @@ static uint32_t s5k3l8xxm3_identify(SENSOR_HW_HANDLE handle,uint32_t param)
 				SENSOR_PRINT("identify module_id=0x%x",s_s5k3l8xxm3_raw_param_tab_ptr->param_id);
 				//set default value
 				memset(s_s5k3l8xxm3_otp_info_ptr, 0x00, sizeof(struct otp_info_t));
-				ret_value = s_s5k3l8xxm3_raw_param_tab_ptr->identify_otp(s_s5k3l8xxm3_otp_info_ptr);
+				ret_value = s_s5k3l8xxm3_raw_param_tab_ptr->identify_otp(handle,s_s5k3l8xxm3_otp_info_ptr);
 				if(SENSOR_SUCCESS == ret_value ){
 					SENSOR_PRINT("identify otp sucess! module_id=0x%x, module_name=%s",s_s5k3l8xxm3_raw_param_tab_ptr->param_id,MODULE_NAME);
 				} else{
@@ -999,7 +1050,7 @@ static uint32_t s5k3l8xxm3_identify(SENSOR_HW_HANDLE handle,uint32_t param)
 			}
 
 			#endif
-			//s5k3l8xxm3_init_mode_fps_info(handle);
+			s5k3l8xxm3_init_mode_fps_info(handle);
 			ret_value = SENSOR_SUCCESS;
 			
 		} else {
@@ -1126,7 +1177,7 @@ static uint32_t isp_to_real_gain(SENSOR_HW_HANDLE handle,uint32_t param)
  * write gain value to sensor
  * you can change this function if it's necessary
  *============================================================================*/
-static uint32_t s5k3l8xxm3_write_gain_value(SENSOR_HW_HANDLE handle,uint32_t param)
+static uint32_t s5k3l8xxm3_write_gain_value(SENSOR_HW_HANDLE handle,unsigned long param)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	float real_gain = 0;
@@ -1135,7 +1186,7 @@ static uint32_t s5k3l8xxm3_write_gain_value(SENSOR_HW_HANDLE handle,uint32_t par
 
 	real_gain = (float)param * SENSOR_BASE_GAIN / ISP_BASE_GAIN*1.0;
 
-	SENSOR_PRINT("real_gain = 0x%f", real_gain);
+	SENSOR_PRINT("real_gain = 0x%x", real_gain);
 
 	s_sensor_ev_info.preview_gain = real_gain;
 	s5k3l8xxm3_write_gain(handle,real_gain);
@@ -1157,12 +1208,27 @@ static uint32_t s5k3l8xxm3_write_af(SENSOR_HW_HANDLE handle,uint32_t param)
 
 /*==============================================================================
  * Description:
+ * write parameter to frame sync
+ * please add your frame sync function to this function
+ *============================================================================*/
+
+static unsigned long _s5k3l8xxm3_SetMaster_FrameSync(SENSOR_HW_HANDLE handle, unsigned long param)
+{
+	Sensor_WriteReg(0x30c2, 0x0100);
+	//Sensor_WriteReg(0x30c3, 0x0100);
+	Sensor_WriteReg(0x30c4, 0x0100);
+	return 0;
+}
+
+/*==============================================================================
+ * Description:
  * mipi stream on
  * please modify this function acording your spec
  *============================================================================*/
 static uint32_t s5k3l8xxm3_stream_on(SENSOR_HW_HANDLE handle,uint32_t param)
 {
 	SENSOR_PRINT("E");
+	//_s5k3l8xxm3_SetMaster_FrameSync(handle,param);
 
 	Sensor_WriteReg(0x0100, 0x0100);
 	/*delay*/
