@@ -72,6 +72,7 @@ endif
 
 ifeq ($(TARGET_BOARD_CAMERA_HAL_VERSION), $(filter $(TARGET_BOARD_CAMERA_HAL_VERSION), HAL1.0 hal1.0 1.0))
 LOCAL_SRC_FILES += hal1.0/src/SprdCameraHardwareInterface.cpp
+LOCAL_SRC_FILES += hal1.0/src/SprdCameraFlash.cpp
 else
 LOCAL_SRC_FILES+= \
 	hal3/SprdCamera3Factory.cpp \

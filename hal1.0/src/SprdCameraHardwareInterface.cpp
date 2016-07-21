@@ -15,6 +15,7 @@
  */
 #define LOG_TAG "SprdCameraHardware"
 
+#include <camera/CameraMetadata.h>
 #include <utils/Log.h>
 #include <utils/String16.h>
 #include <sys/types.h>
@@ -41,12 +42,14 @@
 #include "SprdCameraHardwareInterface.h"
 //#include <androidfw/SprdIlog.h>
 
+#include "SprdCameraFlash.h"
 #ifdef CONFIG_CAMERA_ISP
 extern "C" {
 #include "isp_video.h"
 }
 #endif
 
+using namespace sprdcamera;
 namespace android {
 
 /**********************Macro Define**********************/
@@ -313,8 +316,20 @@ bool getApctCamInitSupport()
 	return gIsApctCamInitTimeShow;
 }
 
+
+/*===========================================================================
+ * FUNCTION		: getCameraInfo
+ * DESCRIPTION	: To get camera's information includeing information of flash.
+ * PARAMETERS	:
+ *		camera_id	: camera ID
+ *		cameraInfo	: To be filled with camera's information
+ * RETURN		: 0 -- success
+ *==========================================================================*/
 int SprdCameraHardware::getCameraInfo(int cameraId, struct camera_info *cameraInfo)
 {
+	CameraMetadata staticInfo;
+	uint8_t *flashInfo;
+	uint8_t   flashAvailable;
 	if (1 == getPropertyAtv()) {
 		memcpy(cameraInfo, &kCameraInfo3[cameraId], sizeof(CameraInfo));
 	} else {
@@ -328,6 +343,18 @@ int SprdCameraHardware::getCameraInfo(int cameraId, struct camera_info *cameraIn
 			}
 		}
 	}
+
+	// Update flash availabiltiy for front and back camera.
+	flashAvailable = (uint8_t*)(cameraId == 0) ? 1 : 0;
+	flashInfo=&flashAvailable ;
+
+	// To update flash information to framework.
+	staticInfo.update(ANDROID_FLASH_INFO_AVAILABLE,flashInfo, 1);
+
+	//Release a raw metadata buffer to the calleri.
+	cameraInfo->static_camera_characteristics = staticInfo.release();
+	cameraInfo->device_version = CAMERA_DEVICE_API_VERSION_1_0;
+	cameraInfo->conflicting_devices_length = 0;
 	return 0;
 }
 
@@ -747,6 +774,12 @@ status_t SprdCameraHardware::startPreview()
 
 	setCaptureRawMode(0);
 
+	LOGI("%s: Check if flash is already opened", __func__);
+	if(mCameraId==0) {
+		LOGI("%s: closing flash to reserve it for camera", __func__);
+		SprdCameraFlash::reserveFlash(mCameraId);
+	}
+
 	bool isRecordingMode = (mMsgEnabled & CAMERA_MSG_VIDEO_FRAME) > 0 ? true : false;
 	ret = startPreviewInternal(isRecordingMode);
 
@@ -783,6 +816,11 @@ void SprdCameraHardware::stopPreview()
 	}
 
 	stopPreviewInternal();
+	if(mCameraId==0){
+		LOGI("%s: release flash from camera for flash device.",__func__);
+		SprdCameraFlash::releaseFlash(mCameraId);
+	}
+
 	if (mIsPerformanceTestable) {
         sprd_stopPerfTracking("startPreview: X");
 	} else {
@@ -8804,6 +8842,27 @@ static int HAL_getNumberOfCameras()
 	return SprdCameraHardware::getNumberOfCameras();
 }
 
+
+/*===========================================================================
+ * FUNCTION		: HAL_setTorchMode
+ * DESCRIPTION	: Attempt to turn on or off the torch mode of the flash unit.
+ * PARAMETERS	:
+ *		camera_id	: camera ID
+ *		enabled		: Indicates whether to turn the flash on or off
+ * RETURN		: 0  -- success
+ *				  non zero -- failure
+ *==========================================================================*/
+
+static int HAL_setTorchMode(const char* camera_id, bool enabled) {
+	int retVal = 0;
+	LOGV("%s : In", __func__);
+
+	retVal = SprdCameraFlash::setTorchMode(camera_id,enabled);
+
+	LOGV("%s : Out", __func__);
+	return retVal;
+}
+
 static int HAL_getCameraInfo(int cameraId, struct camera_info *cameraInfo)
 {
 	return SprdCameraHardware::getCameraInfo(cameraId, cameraInfo);
@@ -8903,6 +8962,7 @@ static int HAL_camera_device_open(const struct hw_module_t* module,
 	}
 
 	LOGI("%s: open camera %s", __func__, id);
+	LOGI("%s: Check if flash is already opened", __func__);
 
 	if (g_cam_device[cameraId]) {
 		if (obj(g_cam_device[cameraId])->getCameraId() == cameraId) {
@@ -8959,16 +9019,36 @@ done:
 
 #ifdef CONFIG_CAMERA_HAL_VERSION_1
 
+/*===========================================================================
+ * FUNCTION		: HAL_setCallbacks
+ * DESCRIPTION	: Register callbacks for flash to update whether flash is on of off.
+ * PARAMETERS	:
+ *		callbacks		: Framework's callback function pointer
+ * RETURN		: 0  -- success
+ *				  non zero -- failure
+ *==========================================================================*/
+static int  HAL_setCallbacks(const camera_module_callbacks_t *callbacks) {
+	LOGV("%s : In", __func__);
+	int retVal = 0;
+
+	retVal = SprdCameraFlash::registerCallbacks(callbacks);
+
+	LOGV("%s : Out", __func__);
+	return retVal;
+}
+
 static hw_module_methods_t camera_module_methods = {
 	open : HAL_camera_device_open
 };
 
 extern "C" {
-	struct camera_module HAL_MODULE_INFO_SYM = {
+	camera_module_t HAL_MODULE_INFO_SYM = {
 		common : {
 		tag : HARDWARE_MODULE_TAG,
-		version_major : 1,
-		version_minor : 0,
+		//version_major : 1,
+		//version_minor : 0,
+		module_api_version: CAMERA_MODULE_API_VERSION_2_4,
+		hal_api_version: HARDWARE_HAL_API_VERSION,
 		id : CAMERA_HARDWARE_MODULE_ID,
 		name : "Sprd camera HAL",
 		author : "Spreadtrum Corporation",
@@ -8978,8 +9058,10 @@ extern "C" {
 		},
 		get_number_of_cameras : HAL_getNumberOfCameras,
 		get_camera_info : HAL_getCameraInfo,
-		set_callbacks : NULL,
+		set_callbacks : HAL_setCallbacks,
 		get_vendor_tag_ops : NULL,
+		open_legacy: NULL,
+		set_torch_mode : HAL_setTorchMode,
 		//reserved : {0,0,0,0,0,0,0},
 	};
 
