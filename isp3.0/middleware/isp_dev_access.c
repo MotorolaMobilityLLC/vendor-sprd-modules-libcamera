@@ -1115,9 +1115,9 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 
 	ret = isp_dev_stream_on(cxt->isp_driver_handle);
 	if (ISP_CAP_MODE_HIGHISO_RAW_CAP == cap_mode) {
-		usleep(500*1000);
+		usleep(800*1000);
 	} else {
-		usleep(110*1000);
+		usleep(200*1000);
 	}
 
 	isp_dev_stream_off(cxt->isp_driver_handle);
