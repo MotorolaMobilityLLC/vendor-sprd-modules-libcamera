@@ -120,6 +120,8 @@ enum DFS_POLICY {
 
 #define UPDATE_RANGE_FPS_COUNT                          0x04
 
+#define GYRO_MONITOR_QUEUE_SIZE                      100
+
 /**********************Static Members**********************/
 static nsecs_t s_start_timestamp = 0;
 static nsecs_t s_end_timestamp = 0;
@@ -272,8 +274,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mHDRPowerHintFlag(0),
 	mGyroInit(0),
 	mGyroDeinit(0),
-	mGyrostart(0),
-	mGyroend(0),
+	mGyroNum(0),
 	mEisInit(0),
 	mSprdEisEnabled(false),
 	mSprdPipVivEnabled(0),
@@ -6660,76 +6661,71 @@ void SprdCamera3OEMIf::EIS_init() {
 	mParam.wdy = 0;
 	mParam.wdz = 0;
 	mParam.f   = 1230;
-	mParam.td  = -0.001;
-	mParam.ts  = 0.013;
+	mParam.td  = 0.004;
+	mParam.ts  = 0.021;
 	video_stab_open(&mInst, &mParam);
 	HAL_LOGI("mParam src_w: %d, src_h:%d, dst_w:%d, dst_h:%d",mParam.src_w,mParam.src_h, mParam.dst_w, mParam.dst_h);
 }
 
 vsOutFrame SprdCamera3OEMIf::processEIS(vsInFrame frame_in)
 {
-	int gyro_start = 0;
-	int gyro_end =0;
 	int gyro_num = 0;
 	int i;
-	int ret_eis = -1;
+	int ret_eis = 1;
 	uint count = 0;
-	vsGyro* gyro =NULL;
+	vsGyro *gyro =NULL;
+	vsGyro *GyroInfo = NULL;
 	vsOutFrame frame_out_preview;
 	frame_out_preview.frame_data = NULL;
 
-	HAL_LOGI("frame_in.timestamp: %lf, mGyromaxtimestamp %lf",frame_in.timestamp,mGyromaxtimestamp);
-	while(mGyroInit && !mGyroDeinit && mGyromaxtimestamp < (frame_in.timestamp + mParam.td + mParam.ts /2)){
-		usleep(5*1000);
-		if(++count >= 6) {
-			HAL_LOGW("gyro data is too slow for eis process");
-			gyro_start = mGyrostart;
-			gyro_end = mGyroend;
-			HAL_LOGV("gyro_start = %d, gyro_end = %d",gyro_start, gyro_end);
-			mGyrostart = gyro_end;
-			frame_out_preview.warp.dat[0][0] = frame_out_preview.warp.dat[1][1] = frame_out_preview.warp.dat[2][2] = 1.0;
-			frame_out_preview.warp.dat[0][1] = frame_out_preview.warp.dat[0][2] = frame_out_preview.warp.dat[1][0] = 0.0;
-			frame_out_preview.warp.dat[1][2] = frame_out_preview.warp.dat[2][0] = frame_out_preview.warp.dat[2][1] = 0.0;
-			return frame_out_preview;
-		}
-	}
+	if(mGyromaxtimestamp){
+		video_stab_write_frame(mInst, &frame_in);
+		HAL_LOGI("frame timestamp: %lf, mGyromaxtimestamp %lf",frame_in.timestamp,mGyromaxtimestamp);
+		do{
+			gyro_num = mGyroInfo.size();
+			HAL_LOGI("gyro_num = %d",gyro_num);
+			if(gyro_num){
+				gyro = new vsGyro[gyro_num];
+				for(i = 0; i < gyro_num; i++)
+				{
+					GyroInfo = *mGyroInfo.begin();
+					gyro[i].t= GyroInfo->t/1000000000;
+					gyro[i].w[0] = GyroInfo->w[0];
+					gyro[i].w[1] = GyroInfo->w[1];
+					gyro[i].w[2] = GyroInfo->w[2];
+					HAL_LOGV("gyro i %d,timestamp %lf, x: %lf, y: %lf, z: %lf", i, gyro[i].t, gyro[i].w[0], gyro[i].w[1], gyro[i].w[2]);
+					mGyroInfo.erase(mGyroInfo.begin());
+				}
+				video_stab_write_gyro(mInst,gyro, gyro_num);
+				if(gyro){
+					delete gyro;
+					gyro = NULL;
+				}
+			}
+			ret_eis = video_stab_read(mInst, &frame_out_preview);
+			if(ret_eis == 0){
+				HAL_LOGI("frame_in 0x%lx, frame_out 0x%lx", frame_in.frame_data,frame_out_preview.frame_data);
+				if(frame_in.frame_data == frame_out_preview.frame_data)
+					return frame_out_preview;
+				else
+					ret_eis = 1;
+			}else if(ret_eis != 1){
+				HAL_LOGE("fail to read matrix");
+				goto eis_process_fail;
+			}
+			if(++count >= 4 || (NO_ERROR != mReadGyroCond.waitRelative(mReadGyroLock,30000000))){
+				HAL_LOGW("gyro data is too slow for eis process");
+				goto eis_process_fail;
+			}
+		}while(ret_eis == 1);
+	}else
+		HAL_LOGW("no gyro data to process EIS");
 
-	gyro_start = mGyrostart;
-	gyro_end = mGyroend;
-	HAL_LOGV("gyro_start = %d, gyro_end = %d",gyro_start, gyro_end);
-	mGyrostart = gyro_end;
-	if(gyro_end >= gyro_start)
-		gyro_num = gyro_end - gyro_start;
-	else
-		gyro_num = gyro_end - gyro_start + 30;
-	if(gyro_num){
-		gyro = new vsGyro[gyro_num];
-		for(i = 0; i < gyro_num; i++)
-		{
-			gyro[i].t=mGyro[0][gyro_start]/1000000000;
-			gyro[i].w[0] =mGyro[1][gyro_start];
-			gyro[i].w[1] =mGyro[2][gyro_start];
-			gyro[i].w[2] =mGyro[3][gyro_start];
-			HAL_LOGV("gyro i %d,timestamp %lf, x: %lf, y: %lf, z: %lf", i, gyro[i].t, gyro[i].w[0], gyro[i].w[1], gyro[i].w[2]);
-			gyro_start ++;
-			if(gyro_start >=30) gyro_start = 0;
-		}
-	}
-	video_stab_write(mInst, &frame_in, gyro, gyro_num);
-	ret_eis = video_stab_read(mInst, &frame_out_preview);
-	if(ret_eis == 0){
-		HAL_LOGI("frame_in 0x%lx, frame_out 0x%lx", frame_in.frame_data,frame_out_preview.frame_data);
-	}else{
-		HAL_LOGE("fail to read matrix,use unit matrix instead");
-		frame_out_preview.warp.dat[0][0] = frame_out_preview.warp.dat[1][1] = frame_out_preview.warp.dat[2][2] = 1.0;
-		frame_out_preview.warp.dat[0][1] = frame_out_preview.warp.dat[0][2] = frame_out_preview.warp.dat[1][0] = 0.0;
-		frame_out_preview.warp.dat[1][2] = frame_out_preview.warp.dat[2][0] = frame_out_preview.warp.dat[2][1] = 0.0;
-	}
-	if(gyro){
-		delete gyro;
-		gyro = NULL;
-	}
 
+eis_process_fail:
+	frame_out_preview.warp.dat[0][0] = frame_out_preview.warp.dat[1][1] = frame_out_preview.warp.dat[2][2] = 1.0;
+	frame_out_preview.warp.dat[0][1] = frame_out_preview.warp.dat[0][2] = frame_out_preview.warp.dat[1][0] = 0.0;
+	frame_out_preview.warp.dat[1][2] = frame_out_preview.warp.dat[2][0] = frame_out_preview.warp.dat[2][1] = 0.0;
 	return frame_out_preview;
 }
 #endif
@@ -6750,15 +6746,27 @@ int SprdCamera3OEMIf::gyro_monitor_thread_init(void *p_data)
 
 	if (!obj->mGyroInit) {
 		obj->mGyroInit = 1;
+		sem_init(&obj->mGyro_sem, 0, 0);
+#ifdef CONFIG_CAMERA_EIS
+		obj->mGyrodata = new vsGyro[GYRO_MONITOR_QUEUE_SIZE];
+#endif
 		pthread_attr_init(&attr);
 		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 		ret = pthread_create(&obj->mGyroMsgQueHandle,
 							&attr,
 							gyro_monitor_thread_proc,
 							(void *)obj);
+		pthread_attr_destroy(&attr);
 		if (ret) {
 			obj->mGyroInit = 0;
-			HAL_LOGE("fail to send init msg");
+			sem_destroy(&obj->mGyro_sem);
+#ifdef CONFIG_CAMERA_EIS
+			if(obj->mGyrodata) {
+				delete obj->mGyrodata;
+				obj->mGyrodata = NULL;
+			}
+#endif
+			HAL_LOGE("fail to init gyro thread");
 		}
 	}
 
@@ -6791,10 +6799,11 @@ void * SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data)
 		return NULL;
 	}
 
-	memset(obj->mGyro, 0, sizeof(obj->mGyro));
-	obj->mGyrostart = 0;
-	obj->mGyroend = 0;
+	obj->mGyroNum = 0;
 	obj->mGyromaxtimestamp = 0;
+#ifdef CONFIG_CAMERA_EIS
+	memset(obj->mGyrodata, 0, sizeof(obj->mGyrodata));
+#endif
 
 	SensorManager& mgr(SensorManager::getInstanceForPackage(String16("EIS intergrate")));
 
@@ -6852,18 +6861,21 @@ void * SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data)
 				switch(buffer[i].type) {
 				case Sensor::TYPE_GYROSCOPE:
 				{
+#ifdef CONFIG_CAMERA_EIS
 					struct timespec t1;
 					clock_gettime(CLOCK_BOOTTIME, &t1);
 					nsecs_t time1 = (t1.tv_sec)*1000000000LL + t1.tv_nsec;
 					HAL_LOGV("mGyroCamera CLOCK_BOOTTIME =%lld\n", time1);
+					obj->mGyrodata[obj->mGyroNum].t = buffer[i].timestamp;
+					obj->mGyrodata[obj->mGyroNum].w[0] = buffer[i].data[0];
+					obj->mGyrodata[obj->mGyroNum].w[1] = buffer[i].data[1];
+					obj->mGyrodata[obj->mGyroNum].w[2] = buffer[i].data[2];
+					obj->mGyromaxtimestamp = obj->mGyrodata[obj->mGyroNum].t/1000000000;
+					obj->mGyroInfo.push_back(&obj->mGyrodata[obj->mGyroNum]);
+					if(++obj->mGyroNum >= GYRO_MONITOR_QUEUE_SIZE) obj->mGyroNum = 0;
+					obj->mReadGyroCond.signal();
 					HAL_LOGV("gyro timestamp %lld, x: %f, y: %f, z: %f",buffer[i].timestamp, buffer[i].data[0], buffer[i].data[1], buffer[i].data[2]);
-					obj->mGyro[0][obj->mGyroend] = buffer[i].timestamp;
-					obj->mGyro[1][obj->mGyroend] = buffer[i].data[0];
-					obj->mGyro[2][obj->mGyroend] = buffer[i].data[1];
-					obj->mGyro[3][obj->mGyroend] = buffer[i].data[2];
-					obj->mGyromaxtimestamp = obj->mGyro[0][obj->mGyroend]/1000000000;
-					obj->mGyroend ++;
-					if(obj->mGyroend >= 30) obj->mGyroend = 0;
+#endif
 					sensor_info.type = CAMERA_AF_GYROSCOPE;
 					sensor_info.gyro_info.timestamp = buffer[i].timestamp;
 					sensor_info.gyro_info.x = buffer[i].data[0];
@@ -6898,6 +6910,7 @@ void * SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data)
 	q->disableSensor(gyroscope);
 	q->disableSensor(gsensor);
 exit:
+	sem_post(&obj->mGyro_sem);
 	obj->mGyroDeinit = 1;
 	//mgr.sensorManagerDied();
 	HAL_LOGD("X");
@@ -6909,6 +6922,7 @@ int SprdCamera3OEMIf::gyro_monitor_thread_deinit(void *p_data)
 {
 	int ret = NO_ERROR;
 	void *dummy;
+	struct timespec ts;
 	SprdCamera3OEMIf * obj = (SprdCamera3OEMIf *)p_data;
 
 	if (!obj) {
@@ -6926,11 +6940,32 @@ int SprdCamera3OEMIf::gyro_monitor_thread_deinit(void *p_data)
 			obj->mEisInit = 0;
 		}
 #endif
-		while (!obj->mGyroDeinit) {
-			usleep(2000);
+		if (clock_gettime(CLOCK_REALTIME, &ts)) {
+			HAL_LOGE("get time failed");
+			return UNKNOWN_ERROR;
 		}
+		/*gyro timeout is 100ms, so when gyro have some problem, this place wait for 150ms*/
+		ts.tv_nsec += ms2ns(150);
+		if (ts.tv_nsec > 1000000000) {
+			ts.tv_sec += 1;
+			ts.tv_nsec -= 1000000000;
+		}
+		ret = sem_timedwait(&obj->mGyro_sem, &ts);
+		if(ret)
+			HAL_LOGW("wait for gyro timeout");
+		sem_destroy(&obj->mGyro_sem);
+
 		//ret = pthread_join(obj->mGyroMsgQueHandle, &dummy);
 		obj->mGyroMsgQueHandle = 0;
+#ifdef CONFIG_CAMERA_EIS
+		while(!obj->mGyroInfo.empty())
+			obj->mGyroInfo.erase(obj->mGyroInfo.begin());
+		if(obj->mGyrodata) {
+			delete obj->mGyrodata;
+			obj->mGyrodata = NULL;
+		}
+#endif
+
 	}
 	HAL_LOGD("X inited=%d, Deinit = %d", obj->mGyroInit, obj->mGyroDeinit);
 

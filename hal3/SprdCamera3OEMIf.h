@@ -615,11 +615,14 @@ private:
 	bool                          mGyroDeinit;
 	bool                          mEisInit;
 	pthread_t                     mGyroMsgQueHandle;
-	double                        mGyro[4][30];
-	int                           mGyrostart;
-	int                           mGyroend;
+	int                           mGyroNum;
 	double                        mGyromaxtimestamp;
+	Mutex                         mReadGyroLock;
+	Condition                     mReadGyroCond;
+	sem_t                         mGyro_sem;
 #ifdef CONFIG_CAMERA_EIS
+	List<vsGyro*>                 mGyroInfo;
+	vsGyro                        *mGyrodata;
 	vsParam                       mParam;
 	vsInst                        mInst;
 #endif

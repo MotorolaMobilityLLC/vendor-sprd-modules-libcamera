@@ -45,17 +45,13 @@ typedef struct gyro_vs
 	 double		w[3];
 }vsGyro;
 
-typedef struct eis_info
-{
-	float 		zoom_ratio;
-	long long	sleep_time;
-} vsEisInfo;
-
 typedef void * vsInst;
+
 void video_stab_param_default(vsParam* param);
 void video_stab_open(vsInst* inst, vsParam* param);
 int video_stab_read(vsInst inst, vsOutFrame* frame);
-void video_stab_write(vsInst inst, vsInFrame* frame, vsGyro* gyro, int gyro_num);
+void video_stab_write_frame(vsInst inst, vsInFrame* frame);
+void video_stab_write_gyro(vsInst inst, vsGyro* gyro, int gyro_num);
 void video_stab_close(vsInst inst);
 
 #ifdef __cplusplus
