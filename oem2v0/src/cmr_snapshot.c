@@ -667,9 +667,6 @@ cmr_int snp_jpeg_enc_cb_handle(cmr_handle snp_handle, void *data)
 	struct cmr_cap_mem             *mem_ptr = &cxt->req_param.post_proc_setting.mem[cxt->index];
 	char                           value[PROPERTY_VALUE_MAX];
 	struct camera_frame_type       frame_type = {0};
-	struct snp_channel_param       *chn_param_ptr = &cxt->chn_param;
-	struct camera_frame_type       zsl_frame = {0};
-	struct img_frm                 rot_src, scale_src;
 
 	if (cxt->err_code) {
 		CMR_LOGE("error exit");
@@ -681,34 +678,6 @@ cmr_int snp_jpeg_enc_cb_handle(cmr_handle snp_handle, void *data)
 		CMR_LOGI("post proc has been cancel");
 		ret = CMR_CAMERA_NORNAL_EXIT;
 		goto exit;
-	}
-
-	if (chn_param_ptr->is_rot) {
-		rot_src = chn_param_ptr->rot[0].src_img;
-		CMR_LOGD("fd=0x%x", rot_src.fd);
-		zsl_frame.fd = rot_src.fd;
-		snp_send_msg_notify_thr(snp_handle,
-					SNAPSHOT_FUNC_ENCODE_PICTURE,
-					SNAPSHOT_EVT_RETURN_ZSL_BUF,
-					(void*)&zsl_frame,
-					sizeof(struct camera_frame_type));
-	} else if (chn_param_ptr->is_scaling) {
-		scale_src = chn_param_ptr->scale[0].src_img;
-		CMR_LOGD("fd=0x%x", scale_src.fd);
-		zsl_frame.fd = scale_src.fd;
-		snp_send_msg_notify_thr(snp_handle,
-					SNAPSHOT_FUNC_ENCODE_PICTURE,
-					SNAPSHOT_EVT_RETURN_ZSL_BUF,
-					(void*)&zsl_frame,
-					sizeof(struct camera_frame_type));
-	} else {
-		CMR_LOGD("fd=0x%x", chn_param_ptr->jpeg_in[0].src.fd);
-		zsl_frame.fd = chn_param_ptr->jpeg_in[0].src.fd;
-		snp_send_msg_notify_thr(snp_handle,
-					SNAPSHOT_FUNC_ENCODE_PICTURE,
-					SNAPSHOT_EVT_RETURN_ZSL_BUF,
-					(void*)&zsl_frame,
-					sizeof(struct camera_frame_type));
 	}
 
 	property_get("debug.camera.save.snpfile", value, "0");
@@ -2072,6 +2041,9 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data)
 	cmr_u32                        index = 0;
 	struct camera_frame_type       frame_type = {0};
 	cmr_s32                         sm_val = 0;
+	struct snp_channel_param       *chn_param_ptr = &cxt->chn_param;
+	struct camera_frame_type       zsl_frame = {0};
+	struct img_frm                 rot_src, scale_src;
 
 	if (!data) {
 		CMR_LOGE("param error");
@@ -2082,6 +2054,34 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data)
 	CMR_LOGI("wait beging 1");
 	sem_wait(&cxt->jpeg_sync_sm);
 	CMR_LOGI("wait done");
+
+	if (chn_param_ptr->is_rot) {
+		rot_src = chn_param_ptr->rot[0].src_img;
+		CMR_LOGD("fd=0x%x", rot_src.fd);
+		zsl_frame.fd = rot_src.fd;
+		snp_send_msg_notify_thr(snp_handle,
+					SNAPSHOT_FUNC_ENCODE_PICTURE,
+					SNAPSHOT_EVT_RETURN_ZSL_BUF,
+					(void*)&zsl_frame,
+					sizeof(struct camera_frame_type));
+	} else if (chn_param_ptr->is_scaling) {
+		scale_src = chn_param_ptr->scale[0].src_img;
+		CMR_LOGD("fd=0x%x", scale_src.fd);
+		zsl_frame.fd = scale_src.fd;
+		snp_send_msg_notify_thr(snp_handle,
+					SNAPSHOT_FUNC_ENCODE_PICTURE,
+					SNAPSHOT_EVT_RETURN_ZSL_BUF,
+					(void*)&zsl_frame,
+					sizeof(struct camera_frame_type));
+	} else {
+		CMR_LOGD("fd=0x%x", chn_param_ptr->jpeg_in[0].src.fd);
+		zsl_frame.fd = chn_param_ptr->jpeg_in[0].src.fd;
+		snp_send_msg_notify_thr(snp_handle,
+					SNAPSHOT_FUNC_ENCODE_PICTURE,
+					SNAPSHOT_EVT_RETURN_ZSL_BUF,
+					(void*)&zsl_frame,
+					sizeof(struct camera_frame_type));
+	}
 
 	if (cxt->ops.channel_free_frame) {
 		index += cxt->cur_frame_info.base;
@@ -3847,8 +3847,7 @@ cmr_int snp_send_msg_notify_thr(cmr_handle snp_handle, cmr_int func_type, cmr_in
 	CMR_LOGI("evt %ld", evt);
 	if (SNAPSHOT_FUNC_STATE == func_type ||
 	    SNAPSHOT_FUNC_TAKE_PICTURE == func_type && SNAPSHOT_EXIT_CB_DONE == evt ||
-	    SNAPSHOT_FUNC_ENCODE_PICTURE == func_type && SNAPSHOT_EXIT_CB_DONE == evt ||
-	    SNAPSHOT_FUNC_ENCODE_PICTURE == func_type && SNAPSHOT_EVT_RETURN_ZSL_BUF == evt) {
+	    SNAPSHOT_FUNC_ENCODE_PICTURE == func_type && SNAPSHOT_EXIT_CB_DONE == evt) {
 		sync_flag = CMR_MSG_SYNC_NONE;
 	} else {
 		switch (evt) {
