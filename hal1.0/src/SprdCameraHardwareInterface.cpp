@@ -6885,7 +6885,7 @@ void SprdCameraHardware::processZslFrame(void *p_data)
 	LOGD("processZslFrame: getZSLQueueFrameNum=%d", obj->getZSLQueueFrameNum());
 	if (SPRD_INTERNAL_RAW_REQUESTED == obj->getCaptureState() || !obj->isCapturing() || !need_pause) {
 		if (obj->mZSLFrameNum < obj->getZSLQueueFrameNum()) {
-			zsl_frame = popZslFrame();
+			zsl_frame = obj->popZslFrame();
 			LOGD("processZslFrame: fd=0x%x", zsl_frame.fd);
 			if (zsl_frame.y_vir_addr != 0) {
 				mHalOem->ops->camera_set_zsl_buffer(obj->mCameraHandle,
@@ -6910,6 +6910,12 @@ void SprdCameraHardware::snapshotZsl(void *p_data)
 
 	if (1 == obj->mZslShotPushFlag) {
 		zsl_frame = obj->popZslFrame();
+		while (zsl_frame.y_vir_addr == 0) {
+			LOGD("snapshotZsl: wait for zsl frame");
+			usleep(20*1000);
+			zsl_frame = obj->popZslFrame();
+		}
+
 		if (zsl_frame.y_vir_addr != 0) {
 			Mutex::Autolock zsllock(&mZslBufLock);
 			LOGD("snapshotZsl: fd=0x%x", zsl_frame.fd);
