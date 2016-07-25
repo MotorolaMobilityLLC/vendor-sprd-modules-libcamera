@@ -82,6 +82,7 @@ enum aft_cmd {
 
 	AFT_CMD_GET_BASE			= 0x2000,
 	AFT_CMD_GET_FV_STATS_CFG	= 0X2001,
+	AFT_CMD_GET_AE_SKIP_INFO	= 0X2002
 };
 
 struct aft_tuning_block_param {
@@ -134,6 +135,10 @@ struct aft_ae_info {
 	cmr_u32 cur_lum;
 	cmr_u32 target_lum;
 	cmr_u32 is_stable;
+	cmr_u32 bv;
+	cmr_u32 y_sum;
+	cmr_u32 cur_scene;
+	cmr_u32 registor_pos;
 };
 
 struct aft_sensor_info {
@@ -184,6 +189,11 @@ struct aft_caf_stats_cfg {
 	cmr_u8 num_blk_ver;
 };
 
+struct aft_ae_skip_info
+{
+	uint32_t ae_select_support;
+	uint32_t ae_skip_line;
+};
 /*------------------------------------------------------------------------------*
 *					Data Prototype				*
 *-------------------------------------------------------------------------------*/
