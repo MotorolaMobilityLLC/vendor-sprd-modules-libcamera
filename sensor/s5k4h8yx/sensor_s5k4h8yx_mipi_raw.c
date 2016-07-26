@@ -56,6 +56,9 @@ struct sensor_ev_info_t {
 	uint16_t preview_shutter;
 	float preview_gain;
 };
+static uint32_t s_current_default_frame_length;
+static uint32_t s_current_frame_length=0;
+static uint32_t s_current_default_line_time=0;
 
 struct sensor_ev_info_t s_sensor_ev_info;
 
@@ -1587,6 +1590,7 @@ static uint32_t _s5k4h8yx_GetMaxFrameLine(SENSOR_HW_HANDLE handle, uint32_t inde
 	SENSOR_TRIM_T_PTR trim_ptr=s_s5k4h8yx_Resolution_Trim_Tab;
 
 	max_line=trim_ptr[index].frame_line;
+	s_current_default_line_time = trim_ptr[index].line_time;
 
 	return max_line;
 }
@@ -1750,6 +1754,7 @@ static unsigned long _s5k4h8yx_write_exp_dummy(SENSOR_HW_HANDLE handle, uint16_t
 	if (expsure_line < 2) {
 		expsure_line = 2;
 	}
+	s_current_default_frame_length = max_frame_len;
 
 	frame_len = expsure_line + dummy_line;
 	frame_len = frame_len > (expsure_line + 8) ? frame_len : (expsure_line + 8);
@@ -1765,6 +1770,7 @@ static unsigned long _s5k4h8yx_write_exp_dummy(SENSOR_HW_HANDLE handle, uint16_t
 	if (frame_len_cur != frame_len) {
 		Sensor_WriteReg(0x0340, frame_len & 0xffff);
 	}
+	s_current_frame_length = frame_len;
 
 	Sensor_WriteReg(0x0202, expsure_line & 0xffff);
 	s_capture_shutter = expsure_line;
@@ -1970,9 +1976,20 @@ static unsigned long _s5k4h8yx_StreamOn(SENSOR_HW_HANDLE handle, unsigned long p
 static unsigned long _s5k4h8yx_StreamOff(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	SENSOR_LOGI("SENSOR_s5k4h8yx: StreamOff");
+	uint16_t value;
+	unsigned int sleep_time, frame_time;
 
-	Sensor_WriteReg(0x0100, 0x0003);
-	usleep(30*1000);
+	//Sensor_WriteReg(0x0100, 0x0003);
+	//usleep(50*1000);
+	value = Sensor_ReadReg(0x0100);
+	if (value != 0x0003) {
+		Sensor_WriteReg(0x0100, 0x0003);
+		frame_time = s_current_default_line_time*s_current_frame_length/1000+1000;
+		sleep_time = frame_time>50*1000?frame_time:50*1000;
+		usleep(sleep_time);//50 * 1000);
+		//usleep(s_current_default_line_time*s_current_frame_length/1000+1000);
+		SENSOR_LOGI("X  sleep_time %d  frame_time %d",sleep_time,frame_time);
+	}
 
 	return 0;
 }
