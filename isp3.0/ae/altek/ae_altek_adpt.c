@@ -570,6 +570,8 @@ static cmr_int aealtek_lib_to_out_report(struct ae_output_data_t *from_ptr, stru
 		goto exit;
 	}
 
+	to_ptr->ae_nonwt_mean = from_ptr->ae_nonwt_mean;
+	to_ptr->ae_center_mean2x2 = from_ptr->ae_center_mean2x2;
 	ret = aealtek_lib_report2out(&from_ptr->rpt_3a_update.ae_update, to_ptr);
 	if (ret)
 		goto exit;

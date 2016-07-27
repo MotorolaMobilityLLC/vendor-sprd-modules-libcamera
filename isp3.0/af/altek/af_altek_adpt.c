@@ -39,6 +39,16 @@
 #define SEC_TO_US	1000000L
 #define AE_CONVERGE_TIMEOUT	(2 * SEC_TO_US)
 
+/* suggest defulat value of AE stable for CAF trigger */
+#define DEFAULT_AE4AF_STABLE_AVG_MEAN_THD 3
+#define DEFAULT_AE4AF_STABLE_CENTER_MEAN_THD 5
+
+/* suggest defulat value of AE stable for CAF trigger */
+#define DEFAULT_AE4AF_STABLE_STABLE_CNT 2
+
+/* Max AE mean value */
+#define DEFAULT_MAX_AE_MEAN 250
+
 struct af_altek_lib_ops {
 	void *(*init)(void *af_out_obj);
 	cmr_u8 (*deinit)(void *alAFLib_runtim_obj, void *alAFLib_out_obj);
@@ -112,6 +122,19 @@ struct caf_context {
 	cmr_u32 inited;
 };
 
+struct af_ae_working_info {
+	cmr_u32 prv_ae_avg_mean;
+	cmr_u32 prv_ae_center_mean;
+	cmr_u32 cur_ae_avg_mean;
+	cmr_u32 cur_ae_center_mean;
+	cmr_u32 ae_stable_cnt;
+	cmr_u16 ae_converge_st;
+	cmr_u8 ae_stable_retrig_flg;
+	cmr_u16 ae4af_stable;
+	cmr_u8 aestable_avg_mean_th;
+	cmr_u8 aestable_center_mean_th;
+};
+
 struct af_altek_context {
 	cmr_u8 inited;
 	cmr_u32 camera_id;
@@ -139,6 +162,7 @@ struct af_altek_context {
 	struct af_gsensor_info gsensor_info;
 	struct af_ctrl_sensor_info_type sensor_info;
 	struct caf_context af_caf_cxt;
+	struct af_ae_working_info ae_info;
 };
 
 /************************************ INTERNAK DECLARATION ************************************/
@@ -952,6 +976,8 @@ static void afaltek_adpt_ae_info_to_af_lib(struct isp3a_ae_info *ae_info,
 	af_ae_info->cur_gain = (float)(ae_info->report_data.sensor_ad_gain);
 	af_ae_info->exp_time = (float)(ae_info->report_data.exp_time);
 	af_ae_info->preview_fr = ae_info->report_data.fps;
+	af_ae_info->avg_intensity = ae_info->report_data.ae_nonwt_mean;
+	af_ae_info->center_intensity = ae_info->report_data.ae_center_mean2x2;
 }
 
 static cmr_int afaltek_adpt_caf_init(cmr_handle adpt_handle)
@@ -1046,6 +1072,84 @@ exit:
 	return ret;
 }
 
+static void afaltek_adpt_ae_converge(cmr_handle adpt_handle)
+{
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+	cmr_u32 cur_avg_mean = cxt->ae_info.cur_ae_avg_mean;
+	cmr_u32 cur_center_mean = cxt->ae_info.cur_ae_center_mean;
+	cmr_u32 diff_avg_mean = 0;
+	cmr_u32 diff_center_mean = 0;
+	/* load value from working buffer in af ctrl */
+	cmr_u32 prv_avg_mean = cxt->ae_info.prv_ae_avg_mean;
+	cmr_u32 prv_center_mean = cxt->ae_info.prv_ae_center_mean;
+	cmr_u8 ae_stable_cnt = cxt->ae_info.ae_stable_cnt;
+	cmr_u8 aestable_avg_mean_th = cxt->ae_info.aestable_avg_mean_th;
+	cmr_u8 aestable_center_mean_th = cxt->ae_info.aestable_center_mean_th;
+
+	if ((DEFAULT_MAX_AE_MEAN <= cur_avg_mean) &&
+	    (DEFAULT_MAX_AE_MEAN <= cur_center_mean))
+		ae_stable_cnt = 0;
+	else {
+		diff_avg_mean = cur_avg_mean > prv_avg_mean ? cur_avg_mean - prv_avg_mean : prv_avg_mean - cur_avg_mean;
+		diff_center_mean = cur_center_mean > prv_center_mean ? cur_center_mean - prv_center_mean : prv_center_mean - cur_center_mean;
+
+		if ((diff_avg_mean < aestable_avg_mean_th) && (diff_center_mean < aestable_center_mean_th))
+			ae_stable_cnt++;
+		else
+			ae_stable_cnt = 0;
+	}
+
+	cxt->ae_info.prv_ae_avg_mean = cur_avg_mean;
+	cxt->ae_info.prv_ae_center_mean = cur_center_mean;
+	cxt->ae_info.ae_stable_cnt = ae_stable_cnt;
+}
+
+static cmr_int afaltek_adpt_end_notify(cmr_handle adpt_handle, cmr_int success)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+	struct af_result_param af_result;
+
+	cmr_bzero(&af_result, sizeof(af_result));
+	af_result.motor_pos = cxt->motor_info.motor_pos;
+	af_result.suc_win = success;
+
+	if (cxt->cb_ops.end_notify) {
+		ret = cxt->cb_ops.end_notify(cxt->caller_handle, &af_result);
+	} else {
+		ISP_LOGE("cb is null");
+		ret = -ISP_CALLBACK_NULL;
+	}
+
+	return ret;
+}
+
+static cmr_int afaltek_adpt_af_cancel(cmr_handle adpt_handle, cmr_int success)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+	struct allib_af_input_special_event event;
+
+	ISP_LOGI("E success = %ld", success);
+	ret = afaltek_adpt_lock_ae_awb(cxt, ISP_AE_AWB_UNLOCK);
+	if (ret)
+		ISP_LOGE("failed to unlock ret = %ld", ret);
+	cmr_bzero(&event, sizeof(event));
+	event.flag = 0;
+	event.type = alAFLib_AE_IS_LOCK;
+	ret = afaltek_adpt_set_special_event(cxt, &event);
+	if (ret)
+		ISP_LOGE("failed to set special event %ld", ret);
+	ret = afaltek_adpt_end_notify(cxt, success);
+	if (ret)
+		ISP_LOGI("failed to end notify ret = %ld", ret);
+	cxt->af_cur_status = AF_ADPT_IDLE;
+	afaltek_adpt_set_caf_fv_cfg(cxt);
+
+	return ret;
+}
+
+
 static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 					struct aft_proc_calc_param *aft_in)
 {
@@ -1054,6 +1158,8 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 	struct isp_af_win roi;
 	struct allib_af_input_roi_info_t lib_roi;
 	struct aft_proc_result aft_out;
+	cmr_int ae4af_stable = 0;
+	cmr_int ae_stable_cnt = cxt->ae_info.ae_stable_cnt;
 
 	pthread_mutex_lock(&cxt->af_caf_cxt.caf_mutex);
 	if (cxt->vcm_tune.tuning_enable) {
@@ -1065,15 +1171,15 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 	    (AF_CTRL_MODE_CONTINUOUS_VIDEO != cxt->af_mode))
 		goto exit;
 
-	if (AF_ADPT_DONE != cxt->af_cur_status && AF_ADPT_IDLE != cxt->af_cur_status)
-		goto exit;
-
 	cmr_bzero(&roi, sizeof(roi));
 	cmr_bzero(&lib_roi, sizeof(lib_roi));
 	cmr_bzero(&aft_out, sizeof(aft_out));
 
+	ae4af_stable = (ae_stable_cnt >= DEFAULT_AE4AF_STABLE_STABLE_CNT) ? 1 : 0;
+	aft_in->ae_info.is_stable = (ae4af_stable || cxt->ae_info.ae_converge_st);
+
 	ret = cxt->caf_ops.trigger_calc(cxt->caf_trigger_handle, aft_in, &aft_out);
-	ISP_LOGI("is_stable %d, caf_trig %d, cancel_caf %d",
+	ISP_LOGV("is_stable %d, caf_trig %d, cancel_caf %d",
 		 aft_in->ae_info.is_stable,
 		 aft_out.is_caf_trig,
 		 aft_out.is_cancel_caf);
@@ -1087,37 +1193,46 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 		goto exit;
 	}
 
-	ISP_LOGD("caf_trig %d", aft_out.is_caf_trig);
-	if ((!cxt->aft_proc_result.is_caf_trig) && aft_out.is_caf_trig) {
-		/* caf roi 1/16 raw */
-		roi.valid_win = 1;
-		if (!cxt->sensor_info.crop_info.width || !cxt->sensor_info.crop_info.height) {
-			ISP_LOGE("error crop width %d height %d",
-				cxt->sensor_info.crop_info.width,
-				cxt->sensor_info.crop_info.height);
-			goto exit;
-		}
-		roi.win[0].start_x = 3 * cxt->sensor_info.crop_info.width / 8;
-		roi.win[0].start_y = 3 * cxt->sensor_info.crop_info.height / 8;
-		roi.win[0].end_x = 5 * cxt->sensor_info.crop_info.width / 8;
-		roi.win[0].end_y = 5 * cxt->sensor_info.crop_info.height / 8;
+	roi.win[0].start_x = 3 * cxt->sensor_info.crop_info.width / 8;
+	roi.win[0].start_y = 3 * cxt->sensor_info.crop_info.height / 8;
+	roi.win[0].end_x = 5 * cxt->sensor_info.crop_info.width / 8;
+	roi.win[0].end_y = 5 * cxt->sensor_info.crop_info.height / 8;
 
+	if (aft_in->ae_info.is_stable && cxt->ae_info.ae_stable_retrig_flg) {
 		/* notify oem to show box */
 		ret = afaltek_adpt_start_notify(adpt_handle);
 		if (ret)
 			ISP_LOGE("failed to notify");
 		ret = afaltek_adpt_config_roi(adpt_handle, &roi,
-					alAFLib_ROI_TYPE_NORMAL, &lib_roi);
+					      alAFLib_ROI_TYPE_NORMAL, &lib_roi);
 		if (ret)
 			ISP_LOGE("failed to config roi");
 		ret = afaltek_adpt_pre_start(adpt_handle, &lib_roi);
 		if (ret)
 			ISP_LOGE("failed to start af");
-		ret = cxt->caf_ops.trigger_ioctrl(cxt->caf_trigger_handle,
-						  AFT_CMD_SET_CAF_STOP,
-						  NULL, NULL);
+		cxt->ae_info.ae_stable_retrig_flg =  0;
+
+	} else if ((!cxt->aft_proc_result.is_caf_trig) && aft_out.is_caf_trig) {
+		/* notify oem to show box */
+		ret = afaltek_adpt_start_notify(adpt_handle);
 		if (ret)
-			ISP_LOGE("failed to stop caf");
+			ISP_LOGE("failed to notify");
+		ret = afaltek_adpt_config_roi(adpt_handle, &roi,
+					      alAFLib_ROI_TYPE_NORMAL, &lib_roi);
+		if (ret)
+			ISP_LOGE("failed to config roi");
+		ret = afaltek_adpt_pre_start(adpt_handle, &lib_roi);
+		if (ret)
+			ISP_LOGE("failed to start af");
+
+	} else if ((AF_ADPT_FOCUSING == cxt->af_cur_status ||
+		    AF_ADPT_STARTED == cxt->af_cur_status)
+		   && aft_out.is_cancel_caf) {
+
+		ret = afaltek_adpt_stop(cxt);
+		if (ret)
+			ISP_LOGE("failed to stop");
+		ret = afaltek_adpt_af_cancel(cxt, 0);
 	}
 	cxt->aft_proc_result = aft_out;
 
@@ -1233,6 +1348,16 @@ static cmr_int afaltek_adpt_update_ae(cmr_handle adpt_handle, void *in)
 	cxt->ae_status_info.ae_converged = ae_info.ae_settled;
 	cxt->ae_status_info.ae_locked = (AE_LOCKED == isp_ae_info->report_data.ae_state) ? 1 : 0;
 
+	cxt->ae_info.cur_ae_avg_mean = isp_ae_info->report_data.ae_nonwt_mean;
+	cxt->ae_info.cur_ae_center_mean = isp_ae_info->report_data.ae_center_mean2x2;
+	cxt->ae_info.ae_converge_st = isp_ae_info->report_data.ae_converge_st;
+
+	ISP_LOGI("ae_stable_retrig_flg = %d", cxt->ae_info.ae_stable_retrig_flg);
+	afaltek_adpt_ae_converge(adpt_handle);
+	ISP_LOGI("ae_nonwt_mean = %d, ae_center_mean2x2 = %d, ae_converge_st =%d",
+			isp_ae_info->report_data.ae_nonwt_mean,
+			isp_ae_info->report_data.ae_center_mean2x2,
+			isp_ae_info->report_data.ae_converge_st);
 	ISP_LOGI("ae_converged = %ld ae_locked = %d ae_state = %d",
 			cxt->ae_status_info.ae_converged,
 			cxt->ae_status_info.ae_locked,
@@ -1571,26 +1696,6 @@ static cmr_u8 afaltek_adpt_set_pos(cmr_handle adpt_handle, cmr_s16 dac, cmr_u8 s
 	return ret;
 }
 
-static cmr_int afaltek_adpt_end_notify(cmr_handle adpt_handle, cmr_int success)
-{
-	cmr_int ret = -ISP_ERROR;
-	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct af_result_param af_result;
-
-	cmr_bzero(&af_result, sizeof(af_result));
-	af_result.motor_pos = cxt->motor_info.motor_pos;
-	af_result.suc_win = success;
-
-	if (cxt->cb_ops.end_notify) {
-		ret = cxt->cb_ops.end_notify(cxt->caller_handle, &af_result);
-	} else {
-		ISP_LOGE("cb is null");
-		ret = -ISP_CALLBACK_NULL;
-	}
-
-	return ret;
-}
-
 static cmr_u8 afaltek_adpt_get_timestamp(cmr_handle adpt_handle, cmr_u32 *sec, cmr_u32 *usec)
 {
 	cmr_int ret = -ISP_ERROR;
@@ -1736,7 +1841,6 @@ static cmr_int afaltek_adpt_proc_start(cmr_handle adpt_handle)
 			event.flag = 1;
 			event.type = alAFLib_AE_IS_LOCK;
 			ret = afaltek_adpt_set_special_event(cxt, &event);
-			cxt->af_cur_status = AF_ADPT_FOCUSED;
 			ISP_LOGI("isp_af_start proc focusing cxt->af_cur_status = %d", cxt->af_cur_status);
 		}
 	}
@@ -2113,7 +2217,7 @@ static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 	init_info.calib_data.macro_distance = 700;
 	init_info.calib_data.mech_top = 1023;
 	init_info.calib_data.mech_bottom = 0;
-	init_info.calib_data.lens_move_stable_time = 20;//35
+	init_info.calib_data.lens_move_stable_time = 20;
 	init_info.calib_data.extend_calib_ptr = NULL;
 	init_info.calib_data.extend_calib_data_size = 0;
 	ISP_LOGI("f_number = %f focal_lenth = %f",
@@ -2265,6 +2369,15 @@ static cmr_int afaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 		ISP_LOGE("failed to init caf library");
 		goto error_caf_init;
 	}
+
+	cxt->ae_info.cur_ae_avg_mean = 0;
+	cxt->ae_info.cur_ae_center_mean = 0;
+	cxt->ae_info.prv_ae_avg_mean = 0;
+	cxt->ae_info.prv_ae_center_mean = 0;
+	cxt->ae_info.ae_stable_retrig_flg = 0;
+	cxt->ae_info.aestable_avg_mean_th = DEFAULT_AE4AF_STABLE_AVG_MEAN_THD;
+	cxt->ae_info.aestable_center_mean_th = DEFAULT_AE4AF_STABLE_CENTER_MEAN_THD;
+
 	afaltek_adpt_caf_init(cxt);
 	/* show version */
 	afaltek_adpt_get_version(cxt);
@@ -2326,11 +2439,18 @@ static cmr_int afaltek_adpt_proc_report_status(cmr_handle adpt_handle,
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 
 	ISP_LOGI("focus_status.t_status = %d", report->focus_status.t_status);
-	if (alAFLib_STATUS_UNKNOWN == report->focus_status.t_status) {
+	if (alAFLib_STATUS_WARNING == report->focus_status.t_status ||
+		alAFLib_STATUS_AF_ABORT == report->focus_status.t_status) {
 		ret = afaltek_adpt_af_done(cxt, 0);
+		ISP_LOGI("t_status unfouced= %d", report->focus_status.t_status);
 	} else if (alAFLib_STATUS_FOCUSED == report->focus_status.t_status) {
 		ret = afaltek_adpt_af_done(cxt, 1);
-	} else {
+		ISP_LOGI("t_status fouced = %d", report->focus_status.t_status);
+	}else if (alAFLib_STATUS_FORCE_ABORT == report->focus_status.t_status) {
+		cxt->ae_info.ae_stable_retrig_flg = 1;
+		ISP_LOGI("t_status FORCE_ABORT = %d", report->focus_status.t_status);
+	}
+	else {
 		ISP_LOGI("unkown status = %d", report->focus_status.t_status);
 	}
 
