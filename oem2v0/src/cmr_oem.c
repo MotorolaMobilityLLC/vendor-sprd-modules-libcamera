@@ -1650,11 +1650,19 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture)
 	struct sensor_libuse_info       *libuse_info = NULL;
 	cmr_int                         product_id = 0;
 	struct common_isp_cmd_param    isp_param;
+	cmr_uint                        video_snapshot_type;
 
 	/*close flash*/
 	CMR_LOGI("camera_focus_post_proc %ld", will_capture);
 	setting_param.camera_id = cxt->camera_id;
-
+	ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_VIDEO_SNAPSHOT_TYPE, &setting_param);
+	if (ret) {
+		CMR_LOGE("failed to get video snapshot enabled flag %ld", ret);
+	} else {
+		video_snapshot_type = setting_param.cmd_type_value;
+		if (video_snapshot_type == VIDEO_SNAPSHOT_VIDEO)
+			need_close_flash = 0;
+	}
 	ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_SPRD_ZSL_ENABLED, &setting_param);
 	if (ret) {
 		CMR_LOGE("failed to get preview sprd zsl enabled flag %ld", ret);
@@ -1663,8 +1671,6 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture)
 	if (CAMERA_ZSL_MODE == cxt->snp_cxt.snp_mode && 1 == setting_param.cmd_type_value) {
 		need_close_flash = 0;
 	}
-	if (cxt->snp_cxt.snp_mode == VIDEO_SNAPSHOT_VIDEO)
-		need_close_flash = 0;
 	/*for third ae*/
 	raw_info_ptr = cxt->sn_cxt.sensor_info.raw_info_ptr;
 	if (raw_info_ptr) {
