@@ -181,6 +181,8 @@ enum allib_awb_set_parameter_type_t {
 	alawb_set_param_manual_flow,
 	alawb_set_param_test_fix_patten,
 	alawb_set_param_state_under_flash,
+	alawb_set_param_identity_id,
+
 	alawb_set_param_slave_calib_data,
 	alawb_set_param_slave_tuning_file,
 	alawb_set_param_slave_iso_speed,
@@ -208,6 +210,7 @@ struct allib_awb_set_parameter_t {
 		uint8                                   test_fix_patten;        /* alawb_set_param_test_fix_patten */
 		enum allib_awb_set_flash_states_t       state_under_flash;      /* alawb_set_param_state_under_flash */
 		uint16                                  slave_iso_speed;        /* alawb_set_param_slave_iso_speed */
+		uint8                                   identity_id;            /* alawb_set_param_identity_id */
 	}   para;
 };
 #pragma pack(pop)  /* restore old alignment setting from stack */

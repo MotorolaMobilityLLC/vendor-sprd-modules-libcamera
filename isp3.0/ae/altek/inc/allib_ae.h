@@ -584,6 +584,9 @@ struct ae_set_parameter_init_t {
 	/* OTP data */
 	struct calibration_data_t   ae_calib_wb_gain;			/* if no calibration data is prepared, set {0.0, 0.0, 0.0} would let AE lib use its default value
 								 * but remember to set OTP data via set_param, refer to command AE_SET_PARAM_OPT_WB_DAT */
+	/* Identity ID, used for recognize channel of 3A control for each camera channel */
+	uint8  identity_id;       /* default 0, should be assigned by AP framework */
+
 };
 #pragma pack(pop)  /* restore old alignment setting from stack  */
 

@@ -102,6 +102,8 @@ struct flicker_reference_output_setting_t {
 /*  Flicker set data (content) */
 struct flicker_set_param_content_t {
 	/* initial setting, basic setting related */
+	void   *flicker_setting_data;	/* this data should be parsed via wrapper to separated Flicker setting data, check basic alignment and read error, if no error, passing to lib directly */
+
 	/* basic command */
 	uint8 flicker_enable;
 	uint8 flicker_enableDebugLog;
@@ -109,7 +111,7 @@ struct flicker_set_param_content_t {
 	/* threshold command */
 	uint8 totalqueue;               /* number of total queues */
 	uint8 refqueue;                 /* number of consulting queues */
-	uint8 referencepreviousdata;    /* the frame that we refered.(at least 1), ex: 1:previous data, 2:the one before previous data */
+	uint8 referencepreviousdata;    /* the frame that we referred.(at least = 1), ex: 1:previous data, 2:the one before previous data */
 
 	/* raw info command */
 	uint16 rawsizex;

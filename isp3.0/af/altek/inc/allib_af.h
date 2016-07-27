@@ -398,6 +398,8 @@ struct allib_af_input_aec_info_t {
 	float cur_intensity;
 	float target_intensity;
 	int16	brightness;
+	uint32 avg_intensity;
+	uint32 center_intensity;
 	float cur_gain;
 	float exp_time;
 	int32 preview_fr;
@@ -747,6 +749,9 @@ struct allib_af_input_get_param_t {
  * alAFLib_STATUS_INIT	:	alAF lib finished initialization, ready for waitinf trigger.
  * alAFLib_STATUS_FOCUSED :	alAF lib finished one round focus process.
  * alAFLib_STATUS_UNKNOWN :	alAF lib is know in unknown status. AF is not busy.
+ * alAFLib_STATUS_WARNING : alAF lib wrans result that may not focus. UI should show red box.
+ * alAFLib_STATUS_AF_ABORT: alAF lib is aborted by self-protection
+ * alAFLib_STATUS_FORCE_ABORT :alAF lib is aborted by AP cmd cancel focus
  * alAFLib_STATUS_FOCUSING:	alAF lib is busy know and doing focus process., the aec should be locked this time.
  *
  * To inform upper layer (ex. af_wrapper) current AF status.
@@ -757,7 +762,10 @@ enum allib_af_status_type {
 	alAFLib_STATUS_INVALID = -1,
 	alAFLib_STATUS_INIT = 0,
 	alAFLib_STATUS_FOCUSED,
-	alAFLib_STATUS_UNKNOWN,
+	/*	alAFLib_STATUS_UNKNOWN,*/
+	alAFLib_STATUS_WARNING,
+	alAFLib_STATUS_AF_ABORT,
+	alAFLib_STATUS_FORCE_ABORT,
 	alAFLib_STATUS_FOCUSING
 };
 #pragma pack(pop)
