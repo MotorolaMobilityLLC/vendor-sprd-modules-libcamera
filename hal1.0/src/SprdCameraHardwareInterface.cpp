@@ -481,20 +481,8 @@ SprdCameraHardware::SprdCameraHardware(int cameraId):
 	mPreviewBufferUsage = PREVIEW_BUFFER_USAGE_DCAM;
 #endif
 	mOriginalPreviewBufferUsage = mPreviewBufferUsage;
-#if 0
-	if (MemIon::IOMMU_is_enabled(ION_MM)) {
-            mIOMMUEnabled = true;
-            mIOMMUID = ION_MM;
-	} else if (MemIon::IOMMU_is_enabled(ION_DCAM)) {
-            mIOMMUEnabled = true;
-            mIOMMUID = ION_DCAM;
-	} else
-#endif
-	{
-            mIOMMUEnabled = false;
-            mIOMMUID = -1;
-	}
-	LOGI("mIOMMUEnabled %d mIOMMUID %d.\n", mIOMMUEnabled, mIOMMUID);
+
+       mIOMMUEnabled = false;
 	memset(mIspB4awbHeapReserved, 0, sizeof(mIspB4awbHeapReserved));
 	memset(mIspRawAemHeapReserved, 0, sizeof(mIspRawAemHeapReserved));
 	memset(mPreviewHeapArray_phy, 0, sizeof(mPreviewHeapArray_phy));
@@ -3269,6 +3257,9 @@ bool SprdCameraHardware::startCameraIfNecessary()
 		mSetParametersBak.setVerticalViewAngle(str_vt_angle);
 	}
 
+	mIOMMUEnabled = IommuIsEnabled();
+	LOGI("mIOMMUEnabled=%d", mIOMMUEnabled);
+
 	if (mIsPerformanceTestable) {
 		sprd_stopPerfTracking("startCameraIfNecessary X.\n");
 	} else {
@@ -4322,12 +4313,6 @@ sprd_camera_memory_t* SprdCameraHardware::allocCameraMem(int buf_size, uint32_t 
 	       result = -1;
 	       LOGE("allocCameraMem: error data is null.");
 	     goto getpmem_end;
-	}
-
-	if (!mIOMMUEnabled) {
-		result = pHeapIon->get_phy_addr_from_ion(&paddr, &psize);
-	} else {
-		//result = pHeapIon->get_iova(mIOMMUID, &paddr, &psize);
 	}
 
 	if (result < 0) {
@@ -5984,17 +5969,6 @@ bool SprdCameraHardware::displayOneFrameForCapture(uint32_t width, uint32_t heig
 		}
 		LOGI("MemoryHeapIon::Get_phy_addr_from_ion: addr 0x%lx size 0x%x", ion_addr, ion_size);
 		dst_phy_addr = (uintptr_t)ion_addr;
-	} else {
-		#if 0
-		unsigned long iova_addr=0;
-		size_t iova_size=0;
-		if (MemoryHeapIon::Get_iova(mIOMMUID, private_h->share_fd, &iova_addr, &iova_size)) {
-			LOGE("displayOneFrameForCapture: Get_iova error");
-			return false;
-		}
-		LOGI("MemoryHeapIon::Get_iova: addr 0x%lx size 0x%x", iova_addr, iova_size);
-		dst_phy_addr = (uintptr_t)iova_addr;
-		#endif
 	}
 #endif
 	LOGI("displayOneFrameForCapture,0x%lx.",(unsigned long)virtual_addr);
@@ -6091,28 +6065,6 @@ bool SprdCameraHardware::displayOneFrame(uint32_t width, uint32_t height, cmr_s3
 		private_h = (struct private_handle_t *)(*buf_handle);
 	#if !defined(CONFIG_GPU_MIDGARD)
 		dst_phy_addr =  (uintptr_t)(private_h->phyaddr);
-	#else
-#if 0
-		if (!mIOMMUEnabled) {
-			unsigned long ion_addr=0;
-			size_t ion_size=0;
-			if (0 != MemIon::Get_phy_addr_from_ion(private_h->share_fd, &ion_addr, &ion_size)) {
-				LOGE("displayOneFrame: Get_phy_addr_from_ion error");
-				return false;
-			}
-			LOGI("MemoryHeapIon::Get_phy_addr_from_ion: addr 0x%lx size 0x%x", ion_addr, ion_size);
-			dst_phy_addr = (uintptr_t)ion_addr;
-		} else {
-			unsigned long iova_addr=0;
-			size_t iova_size=0;
-			if (MemoryHeapIon::Get_iova(mIOMMUID, private_h->share_fd, &iova_addr, &iova_size)) {
-				LOGE("displayOneFrame: Get_iova error");
-				return false;
-			}
-			LOGI("MemoryHeapIon::Get_iova: addr 0x%lx size 0x%x", iova_addr, iova_size);
-			dst_phy_addr = (uintptr_t)iova_addr;
-		}
-#endif
 	#endif
 		if (isPreviewing()) {
 			ret = displayCopy(dst_phy_addr, (uintptr_t)vaddr, phy_addr, (uintptr_t)virtual_addr, width, height);
@@ -6412,7 +6364,22 @@ void SprdCameraHardware::setShakeTestState(shake_test_state state)
 
 int SprdCameraHardware::IommuIsEnabled(void)
 {
-	return 0;
+	int ret;
+	int iommuIsEnabled = 0;
+
+        if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
+                LOGE("oem is null or oem ops is null");
+                return UNKNOWN_ERROR;
+       }
+
+	ret = mHalOem->ops->camera_get_iommu_status(mCameraHandle);
+	if (ret) {
+		iommuIsEnabled = 0;
+		return iommuIsEnabled;
+	}
+
+	iommuIsEnabled = 1;
+	return iommuIsEnabled;
 }
 
 int SprdCameraHardware::allocOneFrameMem(struct SprdCameraHardware::OneFrameMem *one_frame_mem_ptr)
@@ -6443,15 +6410,6 @@ int SprdCameraHardware::allocOneFrameMem(struct SprdCameraHardware::OneFrameMem 
 			LOGE("failed to get_phy_addr_from_ion.\n");
 			return -1;
 		}
-	} else {
-		/*
-		ret = tmp_one_frame_mem_ptr->input_y_pmem_hp->get_iova(mIOMMUID, (unsigned long *)(&tmp_one_frame_mem_ptr->input_y_physical_addr),
-		(size_t *)(&tmp_one_frame_mem_ptr->input_y_pmemory_size));
-		if (ret) {
-			LOGE("failed to get_mm_iova.\n");
-			return -1;
-		}
-		*/
 	}
 	tmp_one_frame_mem_ptr->input_y_virtual_addr = (unsigned char*)tmp_one_frame_mem_ptr->input_y_pmem_hp->getBase();
 	if (!tmp_one_frame_mem_ptr->input_y_physical_addr) {
@@ -6471,8 +6429,6 @@ int SprdCameraHardware::relaseOneFrameMem(struct SprdCameraHardware::OneFrameMem
 	if (tmp_one_frame_mem_ptr->input_y_physical_addr) {
 		if (!mIOMMUEnabled) {
 			tmp_one_frame_mem_ptr->input_y_pmem_hp.clear();
-		} else {
-			//tmp_one_frame_mem_ptr->input_y_pmem_hp->free_iova(mIOMMUID, tmp_one_frame_mem_ptr->input_y_physical_addr,tmp_one_frame_mem_ptr->input_y_pmemory_size);
 		}
 	}
 	return 0;

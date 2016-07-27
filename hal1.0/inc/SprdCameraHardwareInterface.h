@@ -601,7 +601,7 @@ private:
 	bool                            mIsRestartPreview;
 	uint32_t                        mIsSupportCallback;
 	bool                            mIOMMUEnabled;
-	int                             mIOMMUID;
+
 };
 	enum {
 		SPRD_CMD_START_BURST_TAKE = 1571,
