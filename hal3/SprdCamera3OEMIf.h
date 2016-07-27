@@ -183,6 +183,7 @@ public:
 	void initPowerHint();
 	void enablePowerHint();
 	void disablePowerHint();
+	int changeDfsPolicy(int dfs_policy);
 	int IommuIsEnabled(void);
 public:
 	static int      pre_alloc_cap_mem_thread_init(void *p_data);

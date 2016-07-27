@@ -95,6 +95,17 @@ namespace sprdcamera {
 #define HIGH_FREQ_STR        "500000"
 #endif
 
+// dfs policy
+enum DFS_POLICY {
+	CAM_EXIT,
+	CAM_LOW,
+	CAM_HIGH,
+};
+#define CAM_EXIT_STR          "exit"
+#define CAM_LOW_STR           "camlow"
+#define CAM_HIGH_STR          "camhigh"
+
+
 #define CONFIG_PRE_ALLOC_CAPTURE_MEM /*pre alloc memory for capture*/
 #define HAS_CAMERA_HINTS 1
 //#define CONFIG_NEED_UNMAP
@@ -282,6 +293,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 
 	initPowerHint();
 	enablePowerHint();
+	changeDfsPolicy(CAM_HIGH);
 
 	shakeTestInit(&mShakeTest);
 #if defined(CONFIG_BACK_CAMERA_ROTATION)
@@ -436,7 +448,7 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf()
 		closeCamera();
 	}
 
-	// Just in case that exception happen
+	changeDfsPolicy(CAM_EXIT);
 	disablePowerHint();
 
 	// clean memory in case memory leak
@@ -1231,6 +1243,42 @@ void SprdCamera3OEMIf::disablePowerHint()
 					  (void *)"state=0");
 	}
 #endif
+}
+
+int SprdCamera3OEMIf::changeDfsPolicy(int dfs_policy)
+{
+	const char* dfs_scene = NULL;
+	const char* const scenario_dfs = "/sys/class/devfreq/scene-frequency/sprd_governor/scenario_dfs";
+	FILE* fp = fopen(scenario_dfs, "wb");
+	if (NULL == fp) {
+		HAL_LOGE("failed to open %s X", scenario_dfs);
+		return BAD_VALUE;
+	}
+
+	switch (dfs_policy) {
+		case CAM_EXIT:
+			dfs_scene = CAM_EXIT_STR;
+			break;
+
+		case CAM_LOW:
+			dfs_scene = CAM_LOW_STR;
+			break;
+
+		case CAM_HIGH:
+			dfs_scene = CAM_HIGH_STR;
+			break;
+
+		default:
+			HAL_LOGW("unrecognize dfs policy");
+		break;
+	}
+
+	// echo dfs_scene > scenario_dfs
+	fprintf(fp, "%s", dfs_scene);
+
+	fclose(fp);
+	fp = NULL;
+	return NO_ERROR;
 }
 
 bool SprdCamera3OEMIf::setCameraPreviewDimensions()
