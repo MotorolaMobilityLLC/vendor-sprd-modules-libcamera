@@ -3855,6 +3855,15 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb,
 		break;
 	case CAMERA_EVT_CB_SNAPSHOT_DONE:
 		HAL_LOGV("CAMERA_EVT_CB_SNAPSHOT_DONE");
+		float aperture;
+		struct exif_spec_pic_taking_cond_tag    exif_pic_info;
+		LENS_Tag lensInfo;
+		mHalOem->ops->camera_get_sensor_result_exif_info(mCameraHandle, &exif_pic_info);
+		if (exif_pic_info.ApertureValue.denominator)
+			aperture = (float)exif_pic_info.ApertureValue.numerator / (float)exif_pic_info.ApertureValue.denominator;
+		mSetting->getLENSTag(&lensInfo);
+		lensInfo.aperture = aperture;
+		mSetting->setLENSTag(lensInfo);
 		if (checkPreviewStateForCapture() && (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE || mTakePictureMode == SNAPSHOT_DEFAULT_MODE)) {
 			receiveRawPicture((struct camera_frame_type *)parm4);
 		} else {

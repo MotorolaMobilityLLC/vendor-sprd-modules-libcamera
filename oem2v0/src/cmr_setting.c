@@ -2723,6 +2723,22 @@ setting_proc_out:
 	return ret;
 }
 
+static cmr_int setting_get_exif_pic_info(struct setting_component *cpt,struct setting_cmd_parameter *parm)
+{
+	cmr_int                           ret = 0;
+	struct setting_init_in		 *init_in = &cpt->init_in;
+	struct common_sn_cmd_param	  sn_param;
+
+	if (init_in->setting_sn_ioctl) {
+		ret = (*init_in->setting_sn_ioctl)(init_in->oem_handle, COM_SN_GET_EXIF_IMAGE_INFO, &sn_param);
+		if (ret) {
+			CMR_LOGD("sn ctrl failed");
+		}
+		cmr_copy(&parm->exif_pic_cond_info,  &sn_param.exif_pic_info,  sizeof(parm->exif_pic_cond_info));
+	}
+	return ret;
+}
+
 static cmr_int cmr_setting_clear_sem (struct setting_component *cpt)
 {
 	cmr_int tmpVal = 0;
@@ -3203,6 +3219,7 @@ cmr_int cmr_setting_ioctl(cmr_handle setting_handle, cmr_uint cmd_type,
 		{SETTING_GET_REFOCUS_ENABLE,			  setting_get_refocus_enable},
 		{SETTING_GET_TOUCH_XY,			  setting_get_touch_info},
 		{SETTING_GET_VIDEO_SNAPSHOT_TYPE,      setting_get_video_snapshot_type},
+		{SETTING_GET_EXIF_PIC_INFO,            setting_get_exif_pic_info},
 	};
 	struct setting_item          *item = NULL;
 	struct setting_component     *cpt =	 (struct setting_component *)setting_handle;

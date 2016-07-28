@@ -7440,6 +7440,30 @@ exit:
 	return ret;
 }
 
+cmr_uint camera_get_result_exif_info(cmr_handle oem_handle, struct exif_spec_pic_taking_cond_tag *exif_pic_info)
+{
+	cmr_uint                        ret = CMR_CAMERA_SUCCESS;
+	struct camera_context          *cxt = (struct camera_context*)oem_handle;
+	struct setting_context         *setting_cxt = NULL;
+	struct setting_cmd_parameter   setting_param;
+
+	if (!oem_handle || !exif_pic_info) {
+		CMR_LOGE("error param");
+		ret = -CMR_CAMERA_INVALID_PARAM;
+		goto exit;
+	}
+	setting_cxt = &cxt->setting_cxt;
+	setting_param.camera_id = cxt->camera_id;
+	 ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_EXIF_PIC_INFO, &setting_param);
+	if (ret) {
+		CMR_LOGE("failed to get exif %ld", ret);
+		goto exit;
+	}
+	memcpy(exif_pic_info, &setting_param.exif_pic_cond_info, sizeof(struct exif_spec_pic_taking_cond_tag));
+exit:
+	return ret;
+}
+
 cmr_int camera_local_get_zsl_info(cmr_handle oem_handle, cmr_uint *is_support,
                                         cmr_uint *max_width, cmr_uint *max_height)
 {

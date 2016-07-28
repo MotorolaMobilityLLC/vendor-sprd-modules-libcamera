@@ -103,6 +103,7 @@ cmr_int camera_start_preflash(cmr_handle camera_handle);
 cmr_int camera_get_viewangle(cmr_handle camera_handle, struct sensor_view_angle *view_angle);
 
 cmr_uint camera_get_sensor_exif_info(cmr_handle camera_handle, struct exif_info *exif_info);
+cmr_uint camera_get_sensor_result_exif_info(cmr_handle camera_handle, struct exif_spec_pic_taking_cond_tag *exif_pic_info);
 cmr_s32 camera_get_iommu_status(cmr_handle camera_handle);
 cmr_int camera_set_preview_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd);
 cmr_int camera_set_video_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd);

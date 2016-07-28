@@ -326,6 +326,7 @@ cmr_int camera_get_senor_mode_trim(cmr_handle oem_handle, struct img_rect *sn_tr
 cmr_uint camera_get_preview_angle(cmr_handle oem_handle);
 
 cmr_uint camera_get_exif_info(cmr_handle oem_handle, struct exif_info *exif_info);
+cmr_uint camera_get_result_exif_info(cmr_handle oem_handle, struct exif_spec_pic_taking_cond_tag *exif_pic_info);
 
 
 cmr_int camera_local_start_focus(cmr_handle oem_handle);

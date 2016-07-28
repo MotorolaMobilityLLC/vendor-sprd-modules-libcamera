@@ -463,6 +463,22 @@ exit:
 	return ret;
 }
 
+cmr_uint camera_get_sensor_result_exif_info(cmr_handle camera_handle, struct exif_spec_pic_taking_cond_tag *exif_pic_info)
+{
+	cmr_uint                  ret = CMR_CAMERA_SUCCESS;
+
+	if (!camera_handle || !exif_pic_info) {
+		CMR_LOGE("error 0x%lx info=0x%lx", (cmr_uint)camera_handle, (cmr_uint)exif_pic_info);
+		ret = -CMR_CAMERA_INVALID_PARAM;
+		goto exit;
+	}
+	ret = camera_get_result_exif_info(camera_handle, exif_pic_info);
+
+exit:
+	CMR_LOGV("done %ld", ret);
+	return ret;
+}
+
 /*
 * get dcam iommu status
 * return val:
@@ -959,6 +975,7 @@ static oem_ops_t oem_module_ops = {
 	camera_start_preflash,
 	camera_get_viewangle,
 	camera_get_sensor_exif_info,
+	camera_get_sensor_result_exif_info,
 	camera_get_iommu_status,
 	camera_set_preview_buffer,
 	camera_set_video_buffer,
