@@ -1326,9 +1326,9 @@ bool SprdCamera3OEMIf::setCameraPreviewDimensions()
 				mCaptureMode = CAMERA_ZSL_MODE;
 			} else {
 				if(mVideoWidth != 0 && mVideoHeight != 0) { //capture size must equal with video size
-					if (mVideoWidth <= mCaptureWidth && mVideoHeight <= mCaptureHeight) {
-						capture_size.width = (cmr_u32)mVideoWidth;
-						capture_size.height = (cmr_u32)mVideoHeight;
+					if (mCaptureWidth !=0 && mCaptureHeight !=0) {
+						capture_size.width = (cmr_u32)mCaptureWidth;
+						capture_size.height = (cmr_u32)mCaptureHeight;
 					} else {
 						capture_size.width = (cmr_u32)mPreviewWidth;
 						capture_size.height = (cmr_u32)mPreviewHeight;
