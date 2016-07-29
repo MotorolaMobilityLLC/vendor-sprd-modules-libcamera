@@ -20,6 +20,7 @@
 #include <semaphore.h>
 #include "isp_drv.h"
 #include "isp_common_types.h"
+#include "cutils/properties.h"
 
 #define BUF_BLOCK_SIZE                               (1024 * 1024)
 
@@ -84,6 +85,7 @@ cmr_int isp_dev_init(struct isp_dev_init_info *init_param_ptr, isp_handle *handl
 	cmr_int                       fd = -1;
 	struct isp_dev_init_param     init_param;
 	struct isp_file               *file = NULL;
+	char                          value[PROPERTY_VALUE_MAX];
 
 	file = malloc(sizeof(struct isp_file));
 	if (!file) {
@@ -118,6 +120,13 @@ cmr_int isp_dev_init(struct isp_dev_init_info *init_param_ptr, isp_handle *handl
 	init_param.camera_id = init_param_ptr->camera_id;
 	init_param.width = init_param_ptr->width;
 	init_param.height = init_param_ptr->height;
+	property_get("persist.sys.camera.raw.mode", value, "jpeg");
+	if (!strcmp(value, "raw")) {
+		init_param.raw_mode = 1;
+	} else {
+		init_param.raw_mode = 0;
+	}
+
 	ret = ioctl(file->fd, ISP_IO_SET_INIT_PARAM, &init_param);
 	if (ret) {
 		ISP_LOGE("isp set initial param error.");
