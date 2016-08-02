@@ -2116,29 +2116,25 @@ void camera_calibrationconfigure_load (uint32_t *start_addr, uint32_t *data_size
 
 static cmr_int camera_get_dual_otpinfo(cmr_handle  oem_handle,struct sensor_dual_otp_info *dual_otp_data)
 {
-	cmr_int                        ret = 0;
+	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 	SENSOR_VAL_T                   val;
 
-	if (dual_otp_data == NULL) {
-		ret = -1;
-		CMR_LOGE("%d,dual_otp_data is NULL ptr ", ret);
+	if (NULL == oem_handle || NULL == dual_otp_data) {
+		ret = -CMR_CAMERA_INVALID_PARAM;
+		CMR_LOGE("in parm error");
 		goto exit;
 	}
 	val.type = SENSOR_VAL_TYPE_READ_DUAL_OTP;
 	val.pval = NULL;
 	ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_ACCESS_VAL, (cmr_uint)&val);
 	if (ret) {
-		CMR_LOGE("get sensor static info failed %d", ret);
+		CMR_LOGE("get sensor dual otp info failed %d", ret);
 		goto exit;
 	}
 	if (val.pval) {
-		dual_otp_data->dual_otp.data_ptr = val.pval;
-		dual_otp_data->dual_otp.size = SENSOR_DUAL_OTP_TOTAL_SIZE;
-		dual_otp_data->master_slave_otp.data_ptr = (void *)((cmr_u8 *)val.pval + SENSOR_DUAL_OTP_MASTER_SLAVE_OFFSET);
-		dual_otp_data->master_slave_otp.size = SENSOR_DUAL_OTP_MASTER_SLAVE_SIZE;
-		dual_otp_data->data_3d.data_ptr = (void *)((cmr_u8 *)val.pval + SENSOR_DUAL_OTP_DATA3D_OFFSET);
-		dual_otp_data->data_3d.size = SENSOR_DUAL_OTP_DATA3D_SIZE;
+		memcpy(dual_otp_data, val.pval, sizeof(struct sensor_dual_otp_info));
+		CMR_LOGI("%p, %p, size:%d" ,dual_otp_data, dual_otp_data->dual_otp.data_ptr, dual_otp_data->dual_otp.size);
 	} else {
 		ret = -1;
 		CMR_LOGI("%d, no dual otp data", ret);
@@ -2950,7 +2946,7 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 	val.pval = NULL;
 	ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_ACCESS_VAL, (cmr_uint)&val);
 	if (ret) {
-		CMR_LOGE("get sensor static info failed %ld", ret);
+		CMR_LOGE("get sensor otp failed %ld", ret);
 		goto exit;
 	}
 	if (val.pval) {

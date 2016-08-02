@@ -22,12 +22,20 @@
 	#define IMX230_DUAL_OTP
 #endif
 
-#define OTP_LSC_INFO_LEN 1658
-static cmr_u8 imx230_opt_lsc_data[OTP_LSC_INFO_LEN];
+#define IMX230_OTP_LSC_INFO_LEN 1658
+static cmr_u8 imx230_opt_lsc_data[IMX230_OTP_LSC_INFO_LEN];
 static struct sensor_otp_cust_info imx230_otp_info;
 #ifdef IMX230_DUAL_OTP
-#define OTP_DUAL_SIZE 8192
-static cmr_u8 imx230_dual_otp_data[OTP_DUAL_SIZE];
+#define IMX230_DUAL_OTP_TOTAL_SIZE 8192
+#define IMX230_MASTER_LSC_INFO_LEN 1658
+#define IMX230_SLAVE_LSC_INFO_LEN 400
+#define IMX230_DUAL_OTP_DATA3D_SIZE 2142
+#define IMX230_DUAL_OTP_MASTER_SLAVE_OFFSET 1702
+#define IMX230_DUAL_OTP_DATA3D_OFFSET 4384
+
+static cmr_u8 imx230_dual_otp_data[IMX230_DUAL_OTP_TOTAL_SIZE];
+static struct sensor_dual_otp_info imx230_dual_otp_info;
+
 #endif
 
 static cmr_u8 imx230_i2c_read_otp_set(SENSOR_HW_HANDLE handle, cmr_u16 addr);
@@ -36,7 +44,7 @@ static int imx230_otp_read_data(SENSOR_HW_HANDLE handle);
 static unsigned long imx230_otp_read(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* param);
 static unsigned long imx230_parse_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* param);
 #ifdef IMX230_DUAL_OTP
-static unsigned long imx230_otp_dual_to_single(SENSOR_HW_HANDLE handle);
+static unsigned long imx230_dual_otp_split(SENSOR_HW_HANDLE handle);
 static int imx230_dual_otp_read_data(SENSOR_HW_HANDLE handle);
 static unsigned long imx230_dual_otp_read(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* param);
 static unsigned long imx230_parse_dual_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* param);
@@ -109,7 +117,7 @@ static int imx230_otp_read_data(SENSOR_HW_HANDLE handle)
 		checksum += low_val;
 		imx230_otp_info.isp_awb_info.gain_b = (high_val << 8 | low_val);
 
-		for (i = 0; i < OTP_LSC_INFO_LEN; i++) {
+		for (i = 0; i < IMX230_OTP_LSC_INFO_LEN; i++) {
 			imx230_opt_lsc_data[i] = imx230_i2c_read_otp(0x0020 + i);
 			checksum += imx230_opt_lsc_data[i];
 		}
@@ -228,7 +236,7 @@ static unsigned long imx230_parse_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* par
 		checksum += low_val;
 		imx230_otp_info.isp_awb_info.gain_b = (high_val << 8 | low_val);
 
-		for (j = 0; j < OTP_LSC_INFO_LEN; j++) {
+		for (j = 0; j < IMX230_OTP_LSC_INFO_LEN; j++) {
 			imx230_opt_lsc_data[j] = buff[i++];
 			checksum += imx230_opt_lsc_data[j];
 		}
@@ -270,12 +278,13 @@ static unsigned long imx230_parse_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* par
 }
 
 #ifdef IMX230_DUAL_OTP
-static unsigned long imx230_otp_dual_to_single(SENSOR_HW_HANDLE handle)
+static unsigned long imx230_dual_otp_split(SENSOR_HW_HANDLE handle)
 {
 	cmr_u16 i = 0;
 	cmr_u8 high_val = 0;
 	cmr_u8 low_val = 0;
 	cmr_u32 checksum = 0;
+	cmr_u8 *buffer = NULL;
 
 	SENSOR_LOGI("E");
 	imx230_otp_info.program_flag = imx230_dual_otp_data[0];
@@ -321,7 +330,7 @@ static unsigned long imx230_otp_dual_to_single(SENSOR_HW_HANDLE handle)
 	checksum += low_val;
 	imx230_otp_info.isp_awb_info.gain_b = (high_val << 8 | low_val);
 
-	for (i = 0; i < OTP_LSC_INFO_LEN; i++) {
+	for (i = 0; i < IMX230_OTP_LSC_INFO_LEN; i++) {
 		imx230_opt_lsc_data[i] = imx230_dual_otp_data[32+i];
 		checksum += imx230_opt_lsc_data[i];
 	}
@@ -355,7 +364,38 @@ static unsigned long imx230_otp_dual_to_single(SENSOR_HW_HANDLE handle)
 		imx230_otp_info.program_flag = 0;
 		return -1;
 	}
-	SENSOR_LOGI("X");
+	buffer = (cmr_u8 *)imx230_dual_otp_data;
+	imx230_dual_otp_info.dual_otp.data_ptr = (void *)imx230_dual_otp_data;
+	imx230_dual_otp_info.dual_otp.size = IMX230_DUAL_OTP_TOTAL_SIZE;
+	imx230_dual_otp_info.single_otp_ptr = &imx230_otp_info;
+	imx230_dual_otp_info.data_3d.data_ptr = (void *)(buffer + IMX230_DUAL_OTP_DATA3D_OFFSET);
+	imx230_dual_otp_info.data_3d.size = IMX230_DUAL_OTP_DATA3D_SIZE;
+	buffer += IMX230_DUAL_OTP_MASTER_SLAVE_OFFSET;
+	imx230_dual_otp_info.master_isp_awb_info.iso = (buffer[0] << 8 | buffer[1]);
+	buffer += 2;
+	imx230_dual_otp_info.master_isp_awb_info.gain_r = (buffer[0] << 8 | buffer[1]);
+	buffer += 2;
+	imx230_dual_otp_info.master_isp_awb_info.gain_g = (buffer[0] << 8 | buffer[1]);
+	buffer += 2;
+	imx230_dual_otp_info.master_isp_awb_info.gain_b = (buffer[0] << 8 | buffer[1]);
+	buffer += 2;
+	imx230_dual_otp_info.master_lsc_info.lsc_data_addr = buffer;
+	imx230_dual_otp_info.master_lsc_info.lsc_data_size = IMX230_MASTER_LSC_INFO_LEN;
+	buffer += IMX230_MASTER_LSC_INFO_LEN;
+	imx230_dual_otp_info.slave_isp_awb_info.iso = (buffer[0] << 8 | buffer[1]);
+	buffer += 2;
+	imx230_dual_otp_info.slave_isp_awb_info.gain_r = (buffer[0] << 8 | buffer[1]);
+	buffer += 2;
+	imx230_dual_otp_info.slave_isp_awb_info.gain_g = (buffer[0] << 8 | buffer[1]);
+	buffer += 2;
+	imx230_dual_otp_info.slave_isp_awb_info.gain_b = (buffer[0] << 8 | buffer[1]);
+	buffer += 2;
+	imx230_dual_otp_info.slave_lsc_info.lsc_data_addr = buffer;
+	imx230_dual_otp_info.slave_lsc_info.lsc_data_size = IMX230_SLAVE_LSC_INFO_LEN;
+	SENSOR_LOGI("master iso r g b %d %d,%d,%d,lsc size=%d", imx230_dual_otp_info.master_isp_awb_info.iso, imx230_dual_otp_info.master_isp_awb_info.gain_r,
+					imx230_dual_otp_info.master_isp_awb_info.gain_g, imx230_dual_otp_info.master_isp_awb_info.gain_b, imx230_dual_otp_info.master_lsc_info.lsc_data_size);
+	SENSOR_LOGI("slave iso r g b %d %d,%d,%d,lsc size=%d", imx230_dual_otp_info.slave_isp_awb_info.iso, imx230_dual_otp_info.slave_isp_awb_info.gain_r,
+					imx230_dual_otp_info.slave_isp_awb_info.gain_g, imx230_dual_otp_info.slave_isp_awb_info.gain_b, imx230_dual_otp_info.slave_lsc_info.lsc_data_size);
 	return 0;
 }
 
@@ -365,6 +405,7 @@ static int imx230_dual_otp_read_data(SENSOR_HW_HANDLE handle)
 	static cmr_u8 first_flag = 1;
 	cmr_u16 checksum = 0;
 	cmr_u32 checksum_total = 0;
+	cmr_u32 ret_value = SENSOR_SUCCESS;
 
 	SENSOR_LOGI("E");
 	//if (first_flag)
@@ -375,27 +416,28 @@ static int imx230_dual_otp_read_data(SENSOR_HW_HANDLE handle)
 			return -1;
 		}
 		checksum_total += imx230_dual_otp_data[0];
-		for (i = 1; i < OTP_DUAL_SIZE; i++) {
+		for (i = 1; i < IMX230_DUAL_OTP_TOTAL_SIZE; i++) {
 			imx230_dual_otp_data[i] = imx230_i2c_read_otp(0x0000 + i);
-			if (i < OTP_DUAL_SIZE - 2)
+			if (i < IMX230_DUAL_OTP_TOTAL_SIZE - 2)
 				checksum_total += imx230_dual_otp_data[i] ;
 		}
-		checksum = imx230_dual_otp_data[OTP_DUAL_SIZE-2] << 8 | imx230_dual_otp_data[OTP_DUAL_SIZE-1];
+		checksum = imx230_dual_otp_data[IMX230_DUAL_OTP_TOTAL_SIZE-2] << 8 | imx230_dual_otp_data[IMX230_DUAL_OTP_TOTAL_SIZE-1];
 		SENSOR_LOGI("checksum_total=0x%x, checksum=0x%x", checksum_total, checksum);
 		if ((checksum_total & 0xffff) != checksum ) {
 			SENSOR_LOGI("checksum error!");
 			return -1;
 		}
+		ret_value = imx230_dual_otp_split(handle);
 		first_flag = 0;
 	}
 	SENSOR_LOGI("X");
-	return 0;
+	return ret_value;
 }
 
 static unsigned long imx230_dual_otp_read(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* param)
 {
 	cmr_u16 i = 0;
-	uint32_t ret_value = SENSOR_SUCCESS;
+	cmr_u32 ret_value = SENSOR_SUCCESS;
 
 	SENSOR_LOGI("E");
 	ret_value = imx230_dual_otp_read_data(handle);
@@ -404,7 +446,7 @@ static unsigned long imx230_dual_otp_read(SENSOR_HW_HANDLE handle, SENSOR_VAL_T*
 		param->pval = NULL;
 		return ret_value;
 	}
-	param->pval = (void *)imx230_dual_otp_data;
+	param->pval = (void *)&imx230_dual_otp_info;
 	SENSOR_LOGI("param->pval = %p", param->pval);
 	return 0;
 }
@@ -415,6 +457,7 @@ static unsigned long imx230_parse_dual_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL_T
 	cmr_u8 *buff = NULL;
 	cmr_u16 checksum = 0;
 	cmr_u32 checksum_total = 0;
+	cmr_u32 ret_value = SENSOR_SUCCESS;
 
 	SENSOR_LOGI("E");
 	if (NULL == param->pval) {
@@ -429,19 +472,25 @@ static unsigned long imx230_parse_dual_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL_T
 		return -1;
 	}
 	checksum_total += imx230_dual_otp_data[0];
-	for (i = 1; i < OTP_DUAL_SIZE; i++) {
+	for (i = 1; i < IMX230_DUAL_OTP_TOTAL_SIZE; i++) {
 		imx230_dual_otp_data[i] = buff[i];
-		if (i < OTP_DUAL_SIZE - 2)
+		if (i < IMX230_DUAL_OTP_TOTAL_SIZE - 2)
 			checksum_total += imx230_dual_otp_data[i] ;
 	}
-	checksum = imx230_dual_otp_data[OTP_DUAL_SIZE-2] << 8 | imx230_dual_otp_data[OTP_DUAL_SIZE-1];
+	checksum = imx230_dual_otp_data[IMX230_DUAL_OTP_TOTAL_SIZE - 2] << 8 | imx230_dual_otp_data[IMX230_DUAL_OTP_TOTAL_SIZE - 1];
 	SENSOR_LOGI("checksum_total=0x%x, checksum=0x%x", checksum_total, checksum);
 	if ((checksum_total & 0xffff) != checksum ) {
 		SENSOR_LOGI("checksum error!");
 		param->pval = NULL;
 		return -1;
 	}
-	param->pval = (void *)imx230_dual_otp_data;
+	ret_value = imx230_dual_otp_split(handle);
+	if (ret_value) {
+		SENSOR_LOGI("otp error");
+		param->pval = NULL;
+		return ret_value;
+	}
+	param->pval = (void *)&imx230_dual_otp_info;
 	SENSOR_LOGI("param->pval = %p", param->pval);
 	return 0;
 }

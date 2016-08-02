@@ -26,12 +26,6 @@
 #define AE_SCENE_NUM 8
 #define SNR_NAME_MAX_LEN 64
 
-#define SENSOR_DUAL_OTP_TOTAL_SIZE 8192
-#define SENSOR_DUAL_OTP_MASTER_SLAVE_SIZE 2074
-#define SENSOR_DUAL_OTP_DATA3D_SIZE 2142
-#define SENSOR_DUAL_OTP_MASTER_SLAVE_OFFSET 1702
-#define SENSOR_DUAL_OTP_DATA3D_OFFSET 4384
-
 typedef void (*isp_buf_cfg_evt_cb)(cmr_int evt, void *data, cmr_u32 data_len, void *privdata);
 
 struct isp_block_header {
@@ -297,12 +291,6 @@ struct sensor_otp_module_info {
 	cmr_u8 lens_id;
 	cmr_u8 vcm_id;
 	cmr_u8 driver_ic_id;
-	cmr_u8 factory_id;
-	cmr_u8 calibration_version;
-	cmr_u8 ir_bg_id;
-	cmr_u8 ois_id;
-	cmr_u8 cal_direction;
-	cmr_u8 section_size;
 };
 
 struct sensor_otp_iso_awb_info {
@@ -310,7 +298,6 @@ struct sensor_otp_iso_awb_info {
 	cmr_u16 gain_r;
 	cmr_u16 gain_g;
 	cmr_u16 gain_b;
-	cmr_u8 section_size;
 };
 
 struct sensor_otp_lsc_info {
@@ -322,7 +309,6 @@ struct sensor_otp_af_info {
 	cmr_u8 flag;
 	cmr_u16 infinite_cali;
 	cmr_u16 macro_cali;
-	cmr_u8 section_size;
 };
 struct sensor_otp_pdaf_info {
 	cmr_u8 *pdaf_data_addr;
@@ -341,12 +327,16 @@ struct sensor_otp_cust_info {
 
 struct sensor_data_info {
 	void *data_ptr;
-	uint32_t size;
+	cmr_u32 size;
 };
 
 struct sensor_dual_otp_info {
 	struct sensor_data_info dual_otp;
-	struct sensor_data_info master_slave_otp;
+	struct sensor_otp_cust_info *single_otp_ptr;
 	struct sensor_data_info data_3d;
+	struct sensor_otp_iso_awb_info master_isp_awb_info;
+	struct sensor_otp_lsc_info master_lsc_info;
+	struct sensor_otp_iso_awb_info slave_isp_awb_info;
+	struct sensor_otp_lsc_info slave_lsc_info;
 };
 #endif
