@@ -184,7 +184,9 @@ cmr_int camera_save_y_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr
 	return 0;
 }
 
-cmr_int camera_save_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height, struct img_addr *addr)
+cmr_int camera_save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt,
+				cmr_u32 width, cmr_u32 height,
+				struct img_addr *addr)
 {
 	cmr_int                      ret = CMR_CAMERA_SUCCESS;
 	char                         file_name[40];
@@ -209,12 +211,10 @@ cmr_int camera_save_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u
 		strcat(file_name, ".raw");
 		CMR_LOGI("file name %s", file_name);
 		fp = fopen(file_name, "wb");
-
 		if (NULL == fp) {
 			CMR_LOGI("can not open file: %s \n", file_name);
 			return 0;
 		}
-
 		fwrite((void*)addr->addr_y, 1, width * height, fp);
 		fclose(fp);
 
@@ -242,37 +242,44 @@ cmr_int camera_save_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u
 			fwrite((void*)addr->addr_u, 1, width * height, fp);
 		}
 		fclose(fp);
-	} else if (IMG_DATA_TYPE_JPEG == img_fmt) {
-		strcat(file_name, "_");
-		sprintf(tmp_str, "%d", index);
-		strcat(file_name, tmp_str);
-		strcat(file_name, ".jpg");
-		CMR_LOGI("file name %s", file_name);
-
-		fp = fopen(file_name, "wb");
-		if (NULL == fp) {
-			CMR_LOGI("can not open file: %s \n", file_name);
-			return 0;
-		}
-
-		fwrite((void*)addr->addr_y, 1, width * height*2, fp);
-		fclose(fp);
-	} else if (IMG_DATA_TYPE_RAW == img_fmt) {
-		strcat(file_name, "_");
-		sprintf(tmp_str, "%d", index);
-		strcat(file_name, tmp_str);
-		strcat(file_name, ".mipi_raw");
-		CMR_LOGI("file name %s", file_name);
-
-		fp = fopen(file_name, "wb");
-		if(NULL == fp){
-			CMR_LOGI("can not open file: %s \n", file_name);
-			return 0;
-		}
-
-		fwrite((void*)addr->addr_y, 1, (uint32_t)(width * height * 5 / 4), fp);
-		fclose(fp);
 	}
+
+	return 0;
+}
+
+cmr_int camera_save_jpg_to_file(cmr_u32 index, cmr_u32 img_fmt,
+				       cmr_u32 width, cmr_u32 height,
+				       cmr_u32 stream_size, struct img_addr *addr)
+{
+	cmr_int                      ret = CMR_CAMERA_SUCCESS;
+	char                         file_name[40];
+	char                         tmp_str[10];
+	FILE                         *fp = NULL;
+
+	CMR_LOGI("index %d format %d width %d heght %d", index, img_fmt, width, height);
+
+	cmr_bzero(file_name, 40);
+	strcpy(file_name, "/data/misc/media/");
+	sprintf(tmp_str, "%d", width);
+	strcat(file_name, tmp_str);
+	strcat(file_name, "X");
+	sprintf(tmp_str, "%d", height);
+	strcat(file_name, tmp_str);
+	strcat(file_name, "_");
+	sprintf(tmp_str, "%d", index);
+	strcat(file_name, tmp_str);
+	strcat(file_name, ".jpg");
+	CMR_LOGI("file name %s", file_name);
+
+	fp = fopen(file_name, "wb");
+	if (NULL == fp) {
+		CMR_LOGI("can not open file: %s \n", file_name);
+		return 0;
+	}
+
+	fwrite((void*)addr->addr_y, 1, stream_size, fp);
+	fclose(fp);
+
 	return 0;
 }
 

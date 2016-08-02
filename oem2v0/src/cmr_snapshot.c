@@ -318,7 +318,6 @@ static cmr_int camera_close_uvde(struct camera_context *cxt);
 static cmr_int camera_start_uvde(struct camera_context *cxt, struct img_frm *src);
 static cmr_int camera_start_yde(struct camera_context *cxt, struct img_frm *src);
 static cmr_int camera_start_refocus(struct camera_context *cxt, struct img_frm *src);
-static cmr_int camera_save_jpg_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height, cmr_u32 stream_size, struct img_addr *addr);
 static int32_t snp_img_padding(struct img_frm *src, struct img_frm *dst,
 						   struct cmr_op_mean *mean);
 
@@ -682,10 +681,12 @@ cmr_int snp_jpeg_enc_cb_handle(cmr_handle snp_handle, void *data)
 
 	property_get("debug.camera.save.snpfile", value, "0");
 	if (atoi(value) == 5) {
-		camera_save_to_file(SNP_ENCODE_STREAM+cxt->cap_cnt, IMG_DATA_TYPE_JPEG,
-		cxt->req_param.post_proc_setting.actual_snp_size.width,
-		cxt->req_param.post_proc_setting.actual_snp_size.height,
-		&mem_ptr->target_jpeg.addr_vir);
+		ret = camera_save_jpg_to_file(SNP_ENCODE_STREAM+cxt->cap_cnt,
+				IMG_DATA_TYPE_JPEG,
+				cxt->req_param.post_proc_setting.actual_snp_size.width,
+				cxt->req_param.post_proc_setting.actual_snp_size.height,
+				enc_out_ptr->stream_size,
+				&mem_ptr->target_jpeg.addr_vir);
 	}
 
 	if (enc_out_ptr->total_height == cxt->req_param.post_proc_setting.actual_snp_size.height) {
@@ -697,18 +698,6 @@ cmr_int snp_jpeg_enc_cb_handle(cmr_handle snp_handle, void *data)
 				(char *)mem_ptr->target_jpeg.addr_vir.addr_y,
 				enc_out_ptr->stream_size,
 				0, 0, 0, 0);
-			//ret = camera_save_to_file(isp_get_saved_file_count(snp_handle),
-			//		IMG_DATA_TYPE_JPEG,
-			//		cxt->req_param.post_proc_setting.actual_snp_size.width,
-			//		cxt->req_param.post_proc_setting.actual_snp_size.height,
-			//		&mem_ptr->target_jpeg.addr_vir);
-			//ret = camera_save_jpg_to_file(isp_get_saved_file_count(snp_handle),
-			//		IMG_DATA_TYPE_JPEG,
-			//		cxt->req_param.post_proc_setting.actual_snp_size.width,
-			//		cxt->req_param.post_proc_setting.actual_snp_size.height,
-			//		enc_out_ptr->stream_size,
-			//		&mem_ptr->target_jpeg.addr_vir);
-
 		}
 		cxt->jpeg_stream_size = enc_out_ptr->stream_size;
 		if (!ret) {
@@ -906,10 +895,11 @@ cmr_int snp_start_encode(cmr_handle snp_handle, void *data)
 		char value[PROPERTY_VALUE_MAX];
 		property_get("debug.camera.save.snpfile", value, "0");
 		if (atoi(value) == 4 || atoi(value) == 100) {
-			camera_save_to_file(SNP_ENCODE_SRC_DATA, IMG_DATA_TYPE_YUV420,
-								jpeg_in_ptr->src.size.width,
-								jpeg_in_ptr->src.size.height,
-								&jpeg_in_ptr->src.addr_vir);
+			camera_save_yuv_to_file(SNP_ENCODE_SRC_DATA,
+						IMG_DATA_TYPE_YUV420,
+						jpeg_in_ptr->src.size.width,
+						jpeg_in_ptr->src.size.height,
+						&jpeg_in_ptr->src.addr_vir);
 		}
 
 #ifdef CONFIG_CAPTURE_DENOISE
@@ -931,16 +921,18 @@ cmr_int snp_start_encode(cmr_handle snp_handle, void *data)
 			goto exit;
 		}
 #endif
+
 #ifdef CONFIG_CAMERA_RE_FOCUS
-				struct camera_context		   *cxt = (struct camera_context*)snp_cxt->oem_handle;
-				if (cxt->camera_id == 0 && cxt->is_refocus_mode == 1) {
-					ret = camera_start_refocus(cxt, &jpeg_in_ptr->src);
-					if (ret != CMR_CAMERA_SUCCESS) {
-						CMR_LOGE("camera_start_refocus fail");
-						goto exit;
-					}
-				}
+		struct camera_context *cxt = (struct camera_context*)snp_cxt->oem_handle;
+		if (cxt->camera_id == 0 && cxt->is_refocus_mode == 1) {
+			ret = camera_start_refocus(cxt, &jpeg_in_ptr->src);
+			if (ret != CMR_CAMERA_SUCCESS) {
+				CMR_LOGE("camera_start_refocus fail");
+				goto exit;
+			}
+		}
 #endif
+
 		if ((!snp_cxt->req_param.is_video_snapshot) && (!snp_cxt->req_param.is_zsl_snapshot) && (snp_cxt->req_param.mode != CAMERA_ISP_TUNING_MODE)) {
 			snp_img_padding(&jpeg_in_ptr->src, &jpeg_in_ptr->dst, NULL);
 		}
@@ -999,10 +991,12 @@ cmr_int snp_start_encode_thumb(cmr_handle snp_handle)
 			char value[PROPERTY_VALUE_MAX];
 			property_get("debug.camera.save.snpfile", value, "0");
 			if (atoi(value) == 7) {
-				camera_save_to_file(SNP_THUMB_STREAM+snp_cxt->cap_cnt, IMG_DATA_TYPE_JPEG,
-									jpeg_in_ptr->src.size.width,
-									jpeg_in_ptr->src.size.height,
-									&jpeg_in_ptr->dst.addr_vir);
+				camera_save_jpg_to_file(SNP_THUMB_STREAM+snp_cxt->cap_cnt,
+							 IMG_DATA_TYPE_JPEG,
+							 jpeg_in_ptr->src.size.width,
+							 jpeg_in_ptr->src.size.height,
+							 snp_cxt->thumb_stream_size,
+							 &jpeg_in_ptr->dst.addr_vir);
 			}
 		}
 	//	snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_STATE, SNAPSHOT_EVT_ENC_THUMB_DONE, (void*)ret, sizeof(cmr_int));
@@ -1038,10 +1032,12 @@ cmr_int snp_start_decode_sync(cmr_handle snp_handle, void *data)
 
 	property_get("debug.camera.save.snpfile", value, "0");
 	if (atoi(value) == 1) {
-		camera_save_to_file(SNP_CHN_OUT_DATA, IMG_DATA_TYPE_JPEG,
-							chn_param_ptr->chn_frm[frm_ptr->frame_id-frm_ptr->base].size.width,
-							chn_param_ptr->chn_frm[frm_ptr->frame_id-frm_ptr->base].size.height,
-							&chn_param_ptr->jpeg_dec_in[index].src.addr_vir);
+		camera_save_jpg_to_file(SNP_CHN_OUT_DATA,
+					IMG_DATA_TYPE_JPEG,
+					chn_param_ptr->chn_frm[frm_ptr->frame_id-frm_ptr->base].size.width,
+					chn_param_ptr->chn_frm[frm_ptr->frame_id-frm_ptr->base].size.height,
+					frm_ptr->length,
+					&chn_param_ptr->jpeg_dec_in[index].src.addr_vir);
 	}
 	if (snp_cxt->ops.start_decode) {
 		src = chn_param_ptr->jpeg_dec_in[index].src;
@@ -1123,10 +1119,11 @@ cmr_int snp_start_rot(cmr_handle snp_handle, void *data)
 	}
 	property_get("debug.camera.save.snpfile", value, "0");
 	if (atoi(value) == 2) {
-		camera_save_to_file(SNP_ROT_DATA, IMG_DATA_TYPE_YUV420,
-							dst.size.width,
-							dst.size.height,
-							&dst.addr_vir);
+		camera_save_yuv_to_file(SNP_ROT_DATA,
+					IMG_DATA_TYPE_YUV420,
+					dst.size.width,
+					dst.size.height,
+					&dst.addr_vir);
 	}
 	//snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_STATE, SNAPSHOT_EVT_START_ROT, (void*)ret, sizeof(cmr_int));
 exit:
@@ -1325,10 +1322,11 @@ cmr_int snp_start_convet_thumb(cmr_handle snp_handle, void *data)
 		camera_take_snapshot_step(CMR_STEP_CVT_THUMB_E);
 		property_get("debug.camera.save.snpfile", value, "0");
 		if (atoi(value) == 6) {
-			camera_save_to_file(SNP_THUMB_DATA, IMG_DATA_TYPE_YUV420,
-								dst.size.width,
-								dst.size.height,
-								&dst.addr_vir);
+			camera_save_yuv_to_file(SNP_THUMB_DATA,
+						IMG_DATA_TYPE_YUV420,
+						dst.size.width,
+						dst.size.height,
+						&dst.addr_vir);
 		}
 	} else {
 		CMR_LOGE("err start_scale is null");
@@ -1371,114 +1369,10 @@ struct isp_awbc_cfg_test {
 extern uint32_t isp_cur_bv;
 extern uint32_t isp_cur_ct;
 
-static int camera_save_raw_to_file(char *name, uint32_t img_fmt,
-					uint32_t width, uint32_t height, struct img_addr *addr)
-{
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4)
-#if 1
-#define FILE_DIR "/data/misc/media/"
-#else
-#define FILE_DIR "/storage/sdcard0/DCIM/Camera/raw/"
-#endif
-#define FILE_NAME_LEN 200
-	int ret = CMR_CAMERA_SUCCESS;
-	char file_name[FILE_NAME_LEN] = {0};
-	char tmp_str[20] = {0};
-	FILE *fp = NULL;
-	uint32_t gain = 0;
-	uint32_t shutter = 0;
-	struct isp_awbc_cfg_test awbc_cfg;
-	void *   isp_handle = ispvideo_GetIspHandle();
-	uint32_t pos = 0;
-
-	read_sensor_gain(&gain);
-	read_sensor_shutter(&shutter);
-	read_otp_awb_gain(isp_handle, (void*)&awbc_cfg);
-	read_position(isp_handle, &pos);
-
-	CMR_LOGD("gain = %d shutter = %d\n",gain, shutter);
-	CMR_LOGI("name %s, format %d, width %d, heght %d",
-			name, img_fmt, width, height);
-
-	strcpy(file_name, FILE_DIR);
-	sprintf(tmp_str, "%d", width);
-	strcat(file_name, tmp_str);
-	strcat(file_name, "X");
-	sprintf(tmp_str, "%d", height);
-	strcat(file_name, tmp_str);
-
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%s", name);
-	strcat(file_name, tmp_str);
-
-	strcat(file_name, "_");
-	strcat(file_name, "gain");
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%d", gain);
-	strcat(file_name, tmp_str);
-	strcat(file_name, "_");
-	strcat(file_name, "shutter");
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%d", shutter);
-	strcat(file_name, tmp_str);
-
-	strcat(file_name, "_");
-	strcat(file_name, "awbgain");
-	strcat(file_name, "_");
-	strcat(file_name, "r");
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%d", awbc_cfg.r_gain);
-	strcat(file_name, tmp_str);
-	strcat(file_name, "_");
-	strcat(file_name, "g");
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%d", awbc_cfg.g_gain);
-	strcat(file_name, tmp_str);
-	strcat(file_name, "_");
-	strcat(file_name, "b");
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%d", awbc_cfg.b_gain);
-	strcat(file_name, tmp_str);
-	memset(tmp_str, 0, sizeof(tmp_str));
-	strcat(file_name, "_");
-	strcat(file_name, "afpos");
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%ld", pos);
-	strcat(file_name, tmp_str);
-
-	memset(tmp_str, 0, sizeof(tmp_str));
-	strcat(file_name, "_");
-	strcat(file_name, "ct");
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%ld", isp_cur_ct);
-	strcat(file_name, tmp_str);
-	memset(tmp_str, 0, sizeof(tmp_str));
-	strcat(file_name, "_");
-	strcat(file_name, "bv");
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%ld", isp_cur_bv);
-	strcat(file_name, tmp_str);
-
-
-
-	strcat(file_name, ".mipi_raw");
-	CMR_LOGI("file name %s", file_name);
-
-	fp = fopen(file_name, "wb");
-	if (NULL == fp) {
-		CMR_LOGE("can not open file: %s errno = %d\n", file_name, errno);
-		return -1;
-	}
-
-	fwrite((void *)addr->addr_y, 1, (uint32_t) (width * height * 2), fp);
-	fclose(fp);
-#endif
-	return 0;
-
-}
-
-static int snp_dump_mipi_raw(cmr_handle snp_handle, char *name, uint32_t img_fmt,
-			uint32_t width, uint32_t height, struct img_addr *addr)
+/* dump mipi raw */
+static int camera_save_mipi_raw_to_file(cmr_handle snp_handle, char *name,
+					uint32_t img_fmt, uint32_t width,
+					uint32_t height, struct img_addr *addr)
 {
 	struct snp_context         *snp_cxt = (struct snp_context*)snp_handle;
 #define FILE_DIR "/data/misc/media/"
@@ -1527,8 +1421,7 @@ static int snp_dump_mipi_raw(cmr_handle snp_handle, char *name, uint32_t img_fmt
 	sprintf(tmp_str, "%d", exp);
 	strcat(file_name, tmp_str);
 
-	/* modify filename extession to .raw from .mipi_raw for ALTEK Tool */
-	strcat(file_name, ".raw");
+	strcat(file_name, ".mipi_raw");
 	CMR_LOGI("file name %s", file_name);
 
 	fp = fopen(file_name, "wb");
@@ -1544,8 +1437,10 @@ static int snp_dump_mipi_raw(cmr_handle snp_handle, char *name, uint32_t img_fmt
 
 }
 
-static int snp_dump_mipi_raw2(cmr_handle snp_handle, char *name, uint32_t img_fmt,
-			uint32_t width, uint32_t height, struct img_addr *addr)
+/* dump altek raw */
+static int camera_save_raw2_to_file(cmr_handle snp_handle, char *name,
+				uint32_t img_fmt,uint32_t width,
+				uint32_t height, struct img_addr *addr)
 {
 	struct snp_context         *snp_cxt = (struct snp_context*)snp_handle;
 #define FILE_DIR "/data/misc/media/"
@@ -1609,214 +1504,6 @@ static int snp_dump_mipi_raw2(cmr_handle snp_handle, char *name, uint32_t img_fm
 
 }
 
-static int camera_save_raw2_to_file(char *name, uint32_t img_fmt,
-					uint32_t width, uint32_t height, struct img_addr *addr)
-{
-#define FILE_DIR "/data/misc/media/"
-
-#define FILE_NAME_LEN 200
-	int ret = CMR_CAMERA_SUCCESS;
-	char file_name[FILE_NAME_LEN] = {0};
-	char tmp_str[20] = {0};
-	FILE *fp = NULL;
-	uint32_t gain = 0;
-	uint32_t shutter = 0;
-	struct isp_awbc_cfg_test awbc_cfg;
-	void *   isp_handle = ispvideo_GetIspHandle();
-	uint32_t pos = 0;
-
-	read_sensor_gain(&gain);
-	read_sensor_shutter(&shutter);
-	read_otp_awb_gain(isp_handle, (void*)&awbc_cfg);
-	read_position(isp_handle, &pos);
-
-	CMR_LOGD("gain = %d shutter = %d\n",gain, shutter);
-	CMR_LOGI("name %s, format %d, width %d, heght %d",
-			name, img_fmt, width, height);
-
-	strcpy(file_name, FILE_DIR);
-	sprintf(tmp_str, "%d", width);
-	strcat(file_name, tmp_str);
-	strcat(file_name, "X");
-	sprintf(tmp_str, "%d", height);
-	strcat(file_name, tmp_str);
-
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%s", name);
-	strcat(file_name, tmp_str);
-
-	strcat(file_name, "_");
-	strcat(file_name, "gain");
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%d", gain);
-	strcat(file_name, tmp_str);
-	strcat(file_name, "_");
-	strcat(file_name, "shutter");
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%d", shutter);
-	strcat(file_name, tmp_str);
-
-	strcat(file_name, "_");
-	strcat(file_name, "awbgain");
-	strcat(file_name, "_");
-	strcat(file_name, "r");
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%d", awbc_cfg.r_gain);
-	strcat(file_name, tmp_str);
-	strcat(file_name, "_");
-	strcat(file_name, "g");
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%d", awbc_cfg.g_gain);
-	strcat(file_name, tmp_str);
-	strcat(file_name, "_");
-	strcat(file_name, "b");
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%d", awbc_cfg.b_gain);
-	strcat(file_name, tmp_str);
-	memset(tmp_str, 0, sizeof(tmp_str));
-	strcat(file_name, "_");
-	strcat(file_name, "afpos");
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%ld", pos);
-	strcat(file_name, tmp_str);
-
-	memset(tmp_str, 0, sizeof(tmp_str));
-	strcat(file_name, "_");
-	strcat(file_name, "ct");
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%ld", isp_cur_ct);
-	strcat(file_name, tmp_str);
-	memset(tmp_str, 0, sizeof(tmp_str));
-	strcat(file_name, "_");
-	strcat(file_name, "bv");
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%ld", isp_cur_bv);
-	strcat(file_name, tmp_str);
-
-
-
-	strcat(file_name, ".altek_raw");
-	CMR_LOGI("file name %s", file_name);
-
-	fp = fopen(file_name, "wb");
-	if (NULL == fp) {
-		CMR_LOGE("can not open file: %s errno = %d\n", file_name, errno);
-		return -1;
-	}
-
-	fwrite((void *)addr->addr_y, 1, (uint32_t) (width * height * 4 / 3), fp);
-	fclose(fp);
-	return 0;
-
-}
-
-static cmr_int camera_save_jpg_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height, cmr_u32 stream_size, struct img_addr *addr)
-{
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4)
-#if 1
-#define FILE_DIR "/data/misc/media/"
-#else
-#define FILE_DIR "/storage/sdcard0/DCIM/Camera/raw/"
-#endif
-#define FILE_NAME_LEN 200
-	int ret = CMR_CAMERA_SUCCESS;
-	char file_name[FILE_NAME_LEN] = {0};
-	char tmp_str[20] = {0};
-	FILE *fp = NULL;
-	uint32_t gain = 0;
-	uint32_t shutter = 0;
-	char datetime[15] = {0};
-	struct isp_awbc_cfg_test awbc_cfg;
-	void *   isp_handle = ispvideo_GetIspHandle();
-	uint32_t pos = 0;
-
-	read_sensor_gain(&gain);
-	read_sensor_shutter(&shutter);
-	read_otp_awb_gain(isp_handle, (void*)&awbc_cfg);
-	read_position(isp_handle, &pos);
-	CMR_LOGD("gain = %d shutter = %d\n",gain, shutter);
-	CMR_LOGI("index %d, format %d, width %d, heght %d",
-			index, img_fmt, width, height);
-
-	camera_get_system_time(datetime);
-
-	strcpy(file_name, FILE_DIR);
-	sprintf(tmp_str, "%d", width);
-	strcat(file_name, tmp_str);
-	strcat(file_name, "X");
-	sprintf(tmp_str, "%d", height);
-	strcat(file_name, tmp_str);
-
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%s", datetime);
-	//sprintf(tmp_str, "%d", index);
-	strcat(file_name, tmp_str);
-
-	strcat(file_name, "_");
-	strcat(file_name, "gain");
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%d", gain);
-	strcat(file_name, tmp_str);
-	strcat(file_name, "_");
-	strcat(file_name, "shutter");
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%d", shutter);
-	strcat(file_name, tmp_str);
-
-	strcat(file_name, "_");
-	strcat(file_name, "awbgain");
-	strcat(file_name, "_");
-	strcat(file_name, "r");
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%d", awbc_cfg.r_gain);
-	strcat(file_name, tmp_str);
-	strcat(file_name, "_");
-	strcat(file_name, "g");
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%d", awbc_cfg.g_gain);
-	strcat(file_name, tmp_str);
-	strcat(file_name, "_");
-	strcat(file_name, "b");
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%d", awbc_cfg.b_gain);
-	strcat(file_name, tmp_str);
-	memset(tmp_str, 0, sizeof(tmp_str));
-	strcat(file_name, "_");
-	strcat(file_name, "afpos");
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%ld", pos);
-	strcat(file_name, tmp_str);
-
-
-	memset(tmp_str, 0, sizeof(tmp_str));
-	strcat(file_name, "_");
-	strcat(file_name, "ct");
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%ld", isp_cur_ct);
-	strcat(file_name, tmp_str);
-	memset(tmp_str, 0, sizeof(tmp_str));
-	strcat(file_name, "_");
-	strcat(file_name, "bv");
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%ld", isp_cur_bv);
-	strcat(file_name, tmp_str);
-
-
-	strcat(file_name, ".jpg");
-	CMR_LOGI("file name %s", file_name);
-
-	fp = fopen(file_name, "wb");
-	if (NULL == fp) {
-		CMR_LOGI("can not open file: %s \n", file_name);
-		return 0;
-	}
-
-	fwrite((void*)addr->addr_y, 1, stream_size, fp);
-	fclose(fp);
-#endif
-	return 0;
-}
-
 cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data)
 {
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
@@ -1860,7 +1547,7 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data)
 				char datetime[15] = {0};
 				CMR_LOGI("save mipi raw to file");
 				camera_get_system_time(datetime);
-				snp_dump_mipi_raw(snp_handle,
+				camera_save_mipi_raw_to_file(snp_handle,
 					datetime,
 					IMG_DATA_TYPE_RAW,
 					mem_ptr->cap_raw.size.width,
@@ -2156,10 +1843,12 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data)
 			property_get("debug.camera.save.snpfile", value, "0");
 			if (atoi(value) == 8 || atoi(value) == 100) {
 				jpeg_addr.addr_y = enc_out_param.output_buf_virt_addr;
-				camera_save_to_file(SNP_JPEG_STREAM+cxt->cap_cnt, IMG_DATA_TYPE_JPEG,
-									cxt->req_param.post_proc_setting.actual_snp_size.width,
-									cxt->req_param.post_proc_setting.actual_snp_size.height,
-									&jpeg_addr);
+				camera_save_jpg_to_file(SNP_JPEG_STREAM+cxt->cap_cnt,
+							IMG_DATA_TYPE_JPEG,
+							cxt->req_param.post_proc_setting.actual_snp_size.width,
+							cxt->req_param.post_proc_setting.actual_snp_size.height,
+							enc_out_param.output_buf_size,
+							&jpeg_addr);
 			}
 		}
 
@@ -4027,20 +3716,14 @@ cmr_int camera_set_frame_type(cmr_handle snp_handle, struct camera_frame_type *f
 		frame_type->uv_vir_addr = mem_ptr->target_yuv.addr_vir.addr_u;
 		frame_type->uv_phy_addr = mem_ptr->target_yuv.addr_phy.addr_u;
 		frame_type->format = CAMERA_YCBCR_4_2_0;
-		if ((CAMERA_ISP_TUNING_MODE == cxt->req_param.mode) || (CAMERA_ISP_SIMULATION_MODE == cxt->req_param.mode)) {
+		if ((CAMERA_ISP_TUNING_MODE == cxt->req_param.mode) ||
+		    (CAMERA_ISP_SIMULATION_MODE == cxt->req_param.mode)) {
 			send_capture_data(0x02,/* yuv420 */
-							  cxt->req_param.post_proc_setting.actual_snp_size.width,
-							  cxt->req_param.post_proc_setting.actual_snp_size.height,
-							  (char *)mem_ptr->target_yuv.addr_vir.addr_y,
-							  size, (char *)mem_ptr->target_yuv.addr_vir.addr_u,
-							  size/2, 0, 0);
-			/*
-			ret = camera_save_to_file(isp_get_saved_file_count(snp_handle),
-										IMG_DATA_TYPE_YUV420,
-										frame_type->width,
-										frame_type->height,
-										&mem_ptr->target_yuv.addr_vir);
-			*/
+				cxt->req_param.post_proc_setting.actual_snp_size.width,
+				cxt->req_param.post_proc_setting.actual_snp_size.height,
+				(char *)mem_ptr->target_yuv.addr_vir.addr_y,
+				size, (char *)mem_ptr->target_yuv.addr_vir.addr_u,
+				size/2, 0, 0);
 		}
 		}
 		break;
@@ -4048,10 +3731,11 @@ cmr_int camera_set_frame_type(cmr_handle snp_handle, struct camera_frame_type *f
 
 	property_get("debug.camera.save.snpfile", value, "0");
 	if (atoi(value) == 3) {
-		camera_save_to_file(SNP_REDISPLAY_DATA, IMG_DATA_TYPE_YUV420,
-							frame_type->width,
-							frame_type->height,
-							&mem_ptr->target_yuv.addr_vir);
+		camera_save_yuv_to_file(SNP_REDISPLAY_DATA,
+					IMG_DATA_TYPE_YUV420,
+					frame_type->width,
+					frame_type->height,
+					&mem_ptr->target_yuv.addr_vir);
 	}
 
 	if (cxt->req_param.lls_shot_mode || cxt->req_param.is_vendor_hdr) {
@@ -4303,7 +3987,7 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data)
 	camera_take_snapshot_step(CMR_STEP_CAP_E);
 	property_get("debug.camera.save.snpfile", value, "0");
 	if (atoi(value) == 1 || atoi(value) == 100) {
-		camera_save_to_file(SNP_CHN_OUT_DATA,
+		camera_save_yuv_to_file(SNP_CHN_OUT_DATA,
 			IMG_DATA_TYPE_YUV420,
 			chn_param_ptr->chn_frm[chn_data_ptr->frame_id-chn_data_ptr->base].size.width,
 			chn_param_ptr->chn_frm[chn_data_ptr->frame_id-chn_data_ptr->base].size.height,
@@ -4491,12 +4175,12 @@ cmr_int snp_post_proc_for_isp_tuning(cmr_handle snp_handle, void *data)
 			char datetime[15] = {0};
 			CMR_LOGI("save altek raw to file");
 			camera_get_system_time(datetime);
-			snp_dump_mipi_raw2(snp_handle,
-					   datetime,
-					   IMG_DATA_TYPE_RAW,
-					   mem_ptr->cap_raw2.size.width,
-					   mem_ptr->cap_raw2.size.height,
-					   &mem_ptr->cap_raw2.addr_vir);
+			camera_save_raw2_to_file(snp_handle,
+					datetime,
+					IMG_DATA_TYPE_RAW,
+					mem_ptr->cap_raw2.size.width,
+					mem_ptr->cap_raw2.size.height,
+					&mem_ptr->cap_raw2.addr_vir);
 		}
 	}
 
@@ -4505,7 +4189,8 @@ cmr_int snp_post_proc_for_isp_tuning(cmr_handle snp_handle, void *data)
 		char datetime[15] = {0};
 		CMR_LOGI("save yuv to file");
 		CMR_LOGD("y=0x%lx", mem_ptr->target_yuv.addr_vir.addr_y);
-		camera_save_to_file(SNP_ENCODE_SRC_DATA, IMG_DATA_TYPE_YUV420,
+		camera_save_yuv_to_file(SNP_ENCODE_SRC_DATA,
+					IMG_DATA_TYPE_YUV420,
 					mem_ptr->target_yuv.size.width,
 					mem_ptr->target_yuv.size.height,
 					&mem_ptr->target_yuv.addr_vir);

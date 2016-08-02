@@ -376,7 +376,7 @@ struct img_frm {
 	struct img_size                         size;
 	struct img_addr                         addr_phy;
 	struct img_addr                         addr_vir;
-	cmr_u32                                 fd;
+	cmr_s32                                 fd;
 	struct img_data_end                     data_end;
 	cmr_u32                                 format_pattern;
 	void*                                   reserved;
@@ -855,7 +855,11 @@ cmr_int camera_get_trim_rect(struct img_rect *src_trim_rect, cmr_uint zoom_level
 cmr_int camera_get_trim_rect2(struct img_rect *src_trim_rect, float zoom_ratio, float dst_ratio,
 											cmr_u32 sensor_w, cmr_u32 sensor_h, cmr_u8 rot);
 
-cmr_int camera_save_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height, struct img_addr *addr);
+cmr_int camera_save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height, struct img_addr *addr);
+
+cmr_int camera_save_jpg_to_file(cmr_u32 index, cmr_u32 img_fmt,
+				cmr_u32 width, cmr_u32 height,
+				cmr_u32 stream_size, struct img_addr *addr);
 
 cmr_int read_file(const char* file_name, void *data_buf,uint32_t buf_size);
 

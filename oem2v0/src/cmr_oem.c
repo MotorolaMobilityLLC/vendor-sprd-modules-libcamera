@@ -3972,7 +3972,8 @@ cmr_int camera_deinit_internal(cmr_handle  oem_handle)
 }
 
 cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
-                                         struct img_frm *src, struct img_frm *dst, struct cmr_op_mean *mean)
+                            struct img_frm *src, struct img_frm *dst,
+                            struct cmr_op_mean *mean)
 {
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	if (!caller_handle || !oem_handle || !src || !dst || !mean) {
@@ -3980,6 +3981,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}
+
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 	struct jpeg_enc_in_param       enc_in_param;
 	cmr_uint                       stream_size;
@@ -3988,10 +3990,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 	setting_param.camera_id = cxt->camera_id;
 
 	sem_wait(&cxt->access_sm);
-	CMR_LOGI("src phy addr 0x%lx 0x%lx src vir addr 0x%lx 0x%lx",
-		     src->addr_phy.addr_y, src->addr_phy.addr_u, src->addr_vir.addr_y, src->addr_vir.addr_u);
-	CMR_LOGI("src size %d %d, out size %d %d cap_mode %d",
-		     src->size.width, src->size.height, dst->size.width, dst->size.height, cxt->highiso_mode);
+
 	enc_in_param.slice_height = mean->slice_height;
 	enc_in_param.slice_mod = mean->slice_mode;
 	enc_in_param.quality_level = mean->quality_level;
@@ -4011,8 +4010,17 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 		enc_in_param.src_endian.uv_endian = IMG_DATA_ENDIAN_2PLANE_UVUV;
 	}
 	cxt->jpeg_cxt.enc_caller_handle = caller_handle;
-	CMR_LOGI("dst->fd 0x%lx, src->fd 0x%lx enc_in_param.stream_buf_fd 0x%lx,enc_in_param.src_fd 0x%lx",
-		     dst->fd, src->fd, enc_in_param.stream_buf_fd, enc_in_param.src_fd);
+
+	CMR_LOGI("src: fd=0x%x, y_offset=0x%lx, u_offset=0x%lx, virt_y=0x%lx, virt_u=0x%lx",
+		enc_in_param.src_fd, enc_in_param.src_addr_phy.addr_y, enc_in_param.src_addr_phy.addr_u,
+		enc_in_param.src_addr_vir.addr_y, enc_in_param.src_addr_vir.addr_u);
+	CMR_LOGI("src: width=%d, height=%d, y_endian=%d, uv_endian=%d",
+		enc_in_param.size.width, enc_in_param.size.height,
+		enc_in_param.src_endian.y_endian, enc_in_param.src_endian.uv_endian);
+	CMR_LOGI("dst: fd=0x%x, stream_offset=0x%lx, stream_vir=0x%lx, width=%d, height=%d",
+		enc_in_param.stream_buf_fd, enc_in_param.stream_buf_phy, enc_in_param.stream_buf_vir,
+		enc_in_param.out_size.width, enc_in_param.out_size.height);
+
 	if (1 != mean->is_thumb) {
 #ifdef CONFIG_FACE_BEAUTY
 		cmr_int PerfectSkinLevel=0;

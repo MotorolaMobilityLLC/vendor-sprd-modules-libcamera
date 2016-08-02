@@ -2435,7 +2435,7 @@ cmr_int prev_depthmap_frame_handle(struct prev_handle *handle, cmr_u32 camera_id
 #if 0 // re-depthmap image save
 	if (prev_cxt->prev_frm_cnt %20 == 0) {
 		addr_vir.addr_y = data->yaddr_vir;
-		camera_save_to_file(prev_cxt->prev_frm_cnt,
+		camera_save_mipi_raw_to_file(prev_cxt->prev_frm_cnt,
 				IMG_DATA_TYPE_RAW,
 				1920,
 				1088,
@@ -5661,7 +5661,7 @@ cmr_int prev_construct_frame(struct prev_handle *handle,
 		cmr_s8 value[PROPERTY_VALUE_MAX];
 		property_get("debug.camera.dump.frame",value,"video");
 		if(!strcmp(value,"preview")){
-			camera_save_to_file(prev_cxt->prev_frm_cnt,
+			camera_save_yuv_to_file(prev_cxt->prev_frm_cnt,
 					IMG_DATA_TYPE_YUV420,
 					frame_type->width,
 					frame_type->height,
@@ -5765,7 +5765,7 @@ cmr_int prev_construct_video_frame(struct prev_handle *handle,
 		cmr_s8 value[PROPERTY_VALUE_MAX];
 		property_get("debug.camera.dump.frame",value,"preview");
 		if(!strcmp(value,"video")){
-			camera_save_to_file(prev_cxt->prev_frm_cnt,
+			camera_save_yuv_to_file(prev_cxt->prev_frm_cnt,
 					IMG_DATA_TYPE_YUV420,
 					frame_type->width,
 					frame_type->height,
@@ -5826,7 +5826,7 @@ cmr_int prev_construct_zsl_frame(struct prev_handle *handle,
 		cmr_s8 value[PROPERTY_VALUE_MAX];
 		property_get("debug.camera.dump.frame",value,"video");
 		if(!strcmp(value,"zsl")){
-		camera_save_to_file(prev_cxt->prev_frm_cnt,
+		camera_save_yuv_to_file(prev_cxt->prev_frm_cnt,
 				IMG_DATA_TYPE_YUV420,
 				frame_type->width,
 				frame_type->height,
