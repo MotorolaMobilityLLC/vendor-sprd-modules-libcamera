@@ -6541,8 +6541,8 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 		CMR_LOGE("failed to get preview sprd pipviv enabled flag %ld", ret);
 		goto exit;
 	}
-	out_param_ptr->sprd_pipviv_enabled = 1;//setting_param.cmd_type_value;
-	cxt->is_pipviv_mode = 1;//setting_param.cmd_type_value;
+	out_param_ptr->sprd_pipviv_enabled = setting_param.cmd_type_value;
+	cxt->is_pipviv_mode = setting_param.cmd_type_value;
 	CMR_LOGI("sprd pipviv_enabled flag %d", out_param_ptr->sprd_pipviv_enabled);
 	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_SPRD_HIGHISO_ENABLED, &setting_param);
 	if (ret) {
@@ -6563,7 +6563,11 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	}
 	CMR_LOGI("sprd highiso_mode %d", cxt->highiso_mode);
 
+#if 0
 	if(cxt->is_refocus_mode == 2)
+#else
+    if(1) //temp code,will check with app why not give right refocus mode
+#endif
 	{
 		out_param_ptr->sprd_pipviv_enabled = 1;
 		cxt->is_pipviv_mode = 1;

@@ -3710,13 +3710,16 @@ cmr_int camera_set_frame_type(cmr_handle snp_handle, struct camera_frame_type *f
 	default:
 		{
 		cmr_u32 size = cxt->req_param.post_proc_setting.actual_snp_size.width*cxt->req_param.post_proc_setting.actual_snp_size.height;
-
+#if 0 //temp code, will check with app why give right refocus mode
 		struct camera_context		   *oem_cxt = (struct camera_context*)cxt->oem_handle;
 		CMR_LOGI("oem_cxt->is_refocus_mode %ld", oem_cxt->is_refocus_mode);
 		if(oem_cxt->is_refocus_mode == 2)
 			frame_type->y_vir_addr = info->yaddr_vir;
 		else
 			frame_type->y_vir_addr = mem_ptr->target_yuv.addr_vir.addr_y;
+#else
+		frame_type->y_vir_addr = info->yaddr_vir;
+#endif
 		frame_type->fd = mem_ptr->target_yuv.fd;
 		frame_type->y_phy_addr = mem_ptr->target_yuv.addr_phy.addr_y;
 		frame_type->uv_vir_addr = mem_ptr->target_yuv.addr_vir.addr_u;
