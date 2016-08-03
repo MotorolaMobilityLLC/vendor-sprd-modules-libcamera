@@ -676,7 +676,12 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type, uint32_t frame_n
 				   mCaptureWidth != 0 &&
 				   mCaptureHeight != 0) {
 				mSprdZslEnabled = true;
-			} else {
+			}
+			else if (mSprdRefocusEnabled == true &&
+				   mRawHeight != 0 &&
+				   mRawWidth != 0) {
+				mSprdZslEnabled = true;
+			}else {
 				mSprdZslEnabled = false;
 			}
 
@@ -2028,7 +2033,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary()
 		/*get sensor and lens info from oem layer*/
 
 		/*get sensor otp from oem layer*/
-		if(mSprdRefocusEnabled == true){
+		if(mSprdRefocusEnabled == true && mCameraId == 0){
 			struct sensor_dual_otp_info dual_otp_info = {0};
 			OTP_Tag otpInfo = {0};
 			mHalOem->ops->camera_get_sensor_dual_otp_info(mCameraHandle, &dual_otp_info);
@@ -3057,7 +3062,7 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 #endif
 
 	VCM_Tag sprdvcmInfo;
-	if(mCameraId == 0)
+	if(mSprdRefocusEnabled == true && mCameraId == 0)
 	{
 		mSetting->getVCMTag(&sprdvcmInfo);
 		uint32_t vcm_step = 0;
@@ -4883,7 +4888,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag)
 			SPRD_DEF_Tag sprddefInfo;
 			mSetting->getSPRDDEFTag(&sprddefInfo);
 			HAL_LOGD("sprd_zsl_enabled=%d", sprddefInfo.sprd_zsl_enabled);
-			if(sprddefInfo.sprd_zsl_enabled == 0 && mRecordingMode == false) {
+			if(sprddefInfo.sprd_zsl_enabled == 0 && mRecordingMode == false && mSprdRefocusEnabled == false) {
 				mSprdZslEnabled = false;
 				SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ZSL_ENABLED, 0);
 			}

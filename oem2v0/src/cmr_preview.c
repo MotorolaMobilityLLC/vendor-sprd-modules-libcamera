@@ -4959,6 +4959,10 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id)
 		handle->prev_cxt[camera_id].prev_param.video_eb,
 		handle->prev_cxt[camera_id].prev_param.sprd_zsl_enabled);
 
+	CMR_LOGI("camera_id %d, refocus_eb %d",
+		camera_id,
+		handle->prev_cxt[camera_id].prev_param.refocus_eb);
+
 	CMR_LOGI("camera_id %d, prev size %d %d, cap size %d %d",
 		camera_id,
 		prev_size->width,

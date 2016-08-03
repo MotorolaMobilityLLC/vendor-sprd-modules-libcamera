@@ -3321,14 +3321,9 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 	}
 
 	if (frame_settings.exists(ANDROID_SPRD_ZSL_ENABLED)) {
-
-#if 1		// temp code, will check with app why not send right ANDROID_SPRD_ZSL_ENABLED meta value
-		s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled = 1;//frame_settings.find(ANDROID_SPRD_ZSL_ENABLED).data.u8[0];
-#else
 		s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled = frame_settings.find(ANDROID_SPRD_ZSL_ENABLED).data.u8[0];
-#endif
 		pushAndroidParaTag(ANDROID_SPRD_ZSL_ENABLED);
-		HAL_LOGD("sprd zsl enabled is %d", s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled);
+		HAL_LOGD("camera id %d,sprd zsl enabled is %d", mCameraId,s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled);
 	}
 
 //SCALER
@@ -3539,7 +3534,7 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 		valueU8 = frame_settings.find(ANDROID_SPRD_CONTROL_REFOCUS_ENABLE).data.u8[0];
 		s_setting[mCameraId].sprddefInfo.refocus_enable = valueU8;
 		pushAndroidParaTag(ANDROID_SPRD_CONTROL_REFOCUS_ENABLE);
-		HAL_LOGD("refocus mode %d", valueU8);
+		HAL_LOGD("camera id %d, refocus mode %d", mCameraId,valueU8);
 	}
 	if (frame_settings.exists(ANDROID_SPRD_SET_TOUCH_INFO)) {
 		s_setting[mCameraId].sprddefInfo.touchxy[0] = frame_settings.find(ANDROID_SPRD_SET_TOUCH_INFO).data.i32[0];

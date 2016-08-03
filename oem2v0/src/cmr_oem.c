@@ -6319,6 +6319,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 		out_param_ptr->video_slowmotion_eb = setting_param.cmd_type_value;
 		CMR_LOGD("video_slowmotion_eb = %d", out_param_ptr->video_slowmotion_eb);
 
+		CMR_LOGD("mode = %d", mode);
 		if (CAMERA_ZSL_MODE == mode) {
 			is_cfg_snp = 1;
 		}
@@ -6333,7 +6334,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 		goto exit;
 	}
 	cxt->is_refocus_mode =  setting_param.cmd_type_value;
-	CMR_LOGI("sprd refocus_enable flag %d", cxt->is_refocus_mode);
+	CMR_LOGI("is_refocus_mode %d", cxt->is_refocus_mode);
 	if(cxt->is_refocus_mode == 2 && cxt->camera_id == 2 && is_snapshot) {
 		//cxt->isp_to_dram = 1;
 		//out_param_ptr->isp_to_dram = 1;
@@ -6341,7 +6342,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 
 	 /*TBD need to get refocus flag*/
 	out_param_ptr->refocus_eb = cxt->is_refocus_mode;
-	 CMR_LOGI("sprd refocus_eb flag %d", out_param_ptr->refocus_eb);
+	CMR_LOGI("refocus_eb %d", out_param_ptr->refocus_eb);
 
 
 	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_CAPTURE_FORMAT, &setting_param);
@@ -6563,11 +6564,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	}
 	CMR_LOGI("sprd highiso_mode %d", cxt->highiso_mode);
 
-#if 0
 	if(cxt->is_refocus_mode == 2)
-#else
-    if(1) //temp code,will check with app why not give right refocus mode
-#endif
 	{
 		out_param_ptr->sprd_pipviv_enabled = 1;
 		cxt->is_pipviv_mode = 1;
