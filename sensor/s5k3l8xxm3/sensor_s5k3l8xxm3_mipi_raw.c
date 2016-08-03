@@ -288,7 +288,7 @@ static const SENSOR_REG_T s5k3l8xxm3_init_setting[] = {
 	{0x6F12,0x0157},
 	{0x6F12,0x0000},
 	{0x6F12,0x0003},
-	{0x0352,0x0000},//
+	{0x3052,0x0000},//
 };
 
 static const SENSOR_REG_T s5k3l8xxm3_preview_setting[] = {

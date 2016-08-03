@@ -113,6 +113,7 @@ static int s5k3l8xxm3_otp_read_data(SENSOR_HW_HANDLE handle)
 		low_val = s5k3l8xxm3_i2c_read_otp(0x003A);
 		//checksum += low_val;
 		s5k3l8xxm3_otp_info.isp_awb_info.gain_b = (high_val << 8 | low_val);
+		SENSOR_LOGI("iso = 0x%x s5k3l8xxm3_otp_info.gain_r = 0x%x %x %x", s5k3l8xxm3_otp_info.isp_awb_info.iso, s5k3l8xxm3_otp_info.isp_awb_info.gain_r,s5k3l8xxm3_otp_info.isp_awb_info.gain_g,s5k3l8xxm3_otp_info.isp_awb_info.gain_b);
 
 		for (i = 0; i < OTP_LSC_INFO_LEN; i++) {
 			s5k3l8xxm3_opt_lsc_data[i] = s5k3l8xxm3_i2c_read_otp(0x003D + i);
@@ -131,13 +132,14 @@ static int s5k3l8xxm3_otp_read_data(SENSOR_HW_HANDLE handle)
 		//checksum += low_val;
 		low_val = s5k3l8xxm3_i2c_read_otp(0x001C);
 		//checksum += high_val;
-		s5k3l8xxm3_otp_info.af_info.infinite_cali = (high_val << 8 | low_val);
+		s5k3l8xxm3_otp_info.af_info.infinite_cali = (high_val << 8 | low_val) >> 6;
 		high_val = s5k3l8xxm3_i2c_read_otp(0x001D);
 		//checksum += low_val;
 		low_val = s5k3l8xxm3_i2c_read_otp(0x001E);
 		//checksum += high_val;
-		s5k3l8xxm3_otp_info.af_info.macro_cali = (high_val << 8 | low_val);
+		s5k3l8xxm3_otp_info.af_info.macro_cali = (high_val << 8 | low_val) >> 6;
 		
+		SENSOR_LOGI("s5k3l8xxm3_otp_info.af_info.macro_cali = 0x%x %x",  s5k3l8xxm3_otp_info.af_info.macro_cali,s5k3l8xxm3_otp_info.af_info.infinite_cali);
 		if(otp_version==0x01){
 			otp_length=1733;
 		}
