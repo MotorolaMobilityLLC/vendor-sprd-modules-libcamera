@@ -44,7 +44,11 @@ using namespace android;
 namespace sprdcamera {
 
 /**********************Macro Define**********************/
+#ifdef CONFIG_CAMERA_FACE_DETECT
 #define CAMERA3MAXFACE 10
+#else
+#define CAMERA3MAXFACE 0
+#endif
 
 typedef struct
 {
@@ -73,7 +77,7 @@ typedef struct
 	int32_t available_processed_sizes[16];
 	int32_t jpegThumbnailSizes[CAMERA_SETTINGS_THUMBNAILSIZE_ARRAYSIZE];
 	int64_t FrameDurationRange[2];
-	uint8_t availableFaceDetectModes[2];
+	uint8_t availableFaceDetectModes[SPRD_MAX_AVAILABLE_FACE_DETECT_MODES];
 	uint8_t availableVideoStabModes[2];
 	uint8_t availEffectModes[9];
 	uint8_t availSceneModes[18];
@@ -225,7 +229,9 @@ const uint8_t avail_effect_mode[] = {
 };
 const uint8_t avail_scene_modes[] = {
 	ANDROID_CONTROL_SCENE_MODE_DISABLED,
+#ifdef CONFIG_CAMERA_FACE_DETECT
 	ANDROID_CONTROL_SCENE_MODE_FACE_PRIORITY,
+#endif
 	ANDROID_CONTROL_SCENE_MODE_NIGHT,
 	ANDROID_CONTROL_SCENE_MODE_ACTION,
 	ANDROID_CONTROL_SCENE_MODE_PORTRAIT,
@@ -1768,7 +1774,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId)
 	memcpy(s_setting[cameraId].toneInfo.available_tone_map_modes, kavailable_tone_map_modes, sizeof(kavailable_tone_map_modes));
 
 	//statistics_info
-	s_setting[cameraId].statis_InfoInfo.max_face_count = 10;
+	s_setting[cameraId].statis_InfoInfo.max_face_count = CAMERA3MAXFACE;
 	s_setting[cameraId].statis_InfoInfo.histogram_bucket_count = default_info->common.histogram_size;
 	s_setting[cameraId].statis_InfoInfo.max_histogram_count = default_info->common.max_histogram_count;
 	memcpy(s_setting[cameraId].statis_InfoInfo.sharpness_map_size, camera3_default_info.common.sharpness_map_size, sizeof(s_setting[cameraId].statis_InfoInfo.sharpness_map_size));

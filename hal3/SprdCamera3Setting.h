@@ -119,7 +119,11 @@ typedef int64_t nsecs_t;
 #define MIDDLE_FPS_RANGE 20
 #define SPRD_SHADING_FACTOR_NUM    (2*2)//(>1*1*4,<=64*64*4)
 #define SPRD_MAX_TONE_CURVE_POINT  64  //>=64
-
+#ifdef CONFIG_CAMERA_FACE_DETECT
+#define SPRD_MAX_AVAILABLE_FACE_DETECT_MODES 2
+#else
+#define SPRD_MAX_AVAILABLE_FACE_DETECT_MODES 1
+#endif
 
 #define CAMERA_SETTINGS_CONFIG_ARRAYSIZE 80
 #define CAMERA_SETTINGS_THUMBNAILSIZE_ARRAYSIZE 8
@@ -283,7 +287,7 @@ typedef struct {
 	int32_t max_histogram_count;
 	int32_t sharpness_map_size[2];
 	int32_t max_sharpness_map_size;
-	uint8_t available_face_detect_modes[2];
+	uint8_t available_face_detect_modes[SPRD_MAX_AVAILABLE_FACE_DETECT_MODES];
 } STATISTICS_INFO_Tag;
 
 typedef struct {
