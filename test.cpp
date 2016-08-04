@@ -1140,7 +1140,7 @@ int eng_tst_camera_init(int cameraId, minui_backend* backend, GRSurface* draw)
 	gr_draw = draw;
 	if(2 == cameraId)
 		camera_id = 2; // auxiliary camera
-	else if (1 == cameraId)
+	else if (1 == cameraId || 3 == cameraId)
 		camera_id = 1; // fore camera
 	else
 		camera_id = 0; // back camera
