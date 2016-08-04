@@ -954,7 +954,7 @@ static const SENSOR_REG_T imx230_2672x2008_setting[] = {
 	{0x3A21, 0x00},
 	{0x3011, 0x00},
 	{0x3013, 0x01},
-#ifdef CONFIG_CAMERA_RT_REFOCUS
+#ifdef CONFIG_CAMERA_DUAL_SYNC
 	/*for sensor sync start*/
 	{0x440C, 0x00}, // Lo-Activate
 	{0x440D, 0x07}, // pulse width(2000cycle)
