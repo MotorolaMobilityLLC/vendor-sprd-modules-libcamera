@@ -174,7 +174,7 @@ cmr_int isp_dev_deinit(isp_handle handle)
 	isp_dev_get_user_cnt((isp_handle)file, &user_cnt);
 	ISP_LOGE("user_cnt %d", user_cnt);
 
-	if (file->isp_is_inited) {
+	if (file->isp_is_inited && (user_cnt > 0)) {
 		if (-1 != file->fd) {
 			sem_wait(&file->close_sem);
 			if (-1 == close(file->fd)) {
