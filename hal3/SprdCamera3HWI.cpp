@@ -620,7 +620,7 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 		tranStreamAndChannelType(newStream, &stream_type, &channel_type);
 
 		/*temp code; for debug refocus depth map, del it if depth map quality is OK*/
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 		char	value[PROPERTY_VALUE_MAX];
 		char	value1[PROPERTY_VALUE_MAX];
 		property_get("debug.camera.save.refocus", value, "0");

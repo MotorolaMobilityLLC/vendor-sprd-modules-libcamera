@@ -190,7 +190,7 @@ struct isp3a_fw_context {
 	struct isp3a_fw_debug_context debug_data;
 	struct isp_sensor_ex_info ex_info;
 	struct sensor_otp_cust_info *otp_data;
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 	struct sensor_raw_ioctrl *ioctrl_ptr_slv;
 	struct sensor_otp_cust_info *otp_data_slv;
 #endif
@@ -202,7 +202,7 @@ static cmr_int isp3a_awb_callback(cmr_handle handle, cmr_u32 cmd, struct awb_ctr
 static cmr_int isp3a_afl_callback(cmr_handle handle, enum afl_ctrl_cb_type cmd, struct afl_ctrl_callback_in *in_ptr);
 static cmr_int isp3a_set_exposure(cmr_handle handle, struct ae_ctrl_param_sensor_exposure *in_ptr);
 static cmr_int isp3a_ae_set_gain(cmr_handle handle, struct ae_ctrl_param_sensor_gain *in_ptr);
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 static cmr_int isp3a_set_exposure_slv(cmr_handle handle, struct ae_ctrl_param_sensor_exposure *in_ptr);
 static cmr_int isp3a_ae_set_gain_slv(cmr_handle handle, struct ae_ctrl_param_sensor_gain *in_ptr);
 #endif
@@ -574,7 +574,7 @@ exit:
 	return ret;
 }
 
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 cmr_int isp3a_set_exposure_slv(cmr_handle handle, struct ae_ctrl_param_sensor_exposure *in_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
@@ -860,7 +860,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 	struct afl_ctrl_init_in                     afl_input;
 	struct afl_ctrl_init_out                    afl_output;
 	struct sensor_raw_info                      *sensor_raw_info_ptr = (struct sensor_raw_info *)input_ptr->setting_param_ptr;
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 	struct sensor_raw_info                      *sensor_raw_info_ptr_slv = (struct sensor_raw_info *)input_ptr->setting_param_ptr_slv;
 #endif
 	float                                       libVersion;
@@ -974,7 +974,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 	ae_input.preview_work.resolution.max_gain = input_ptr->ex_info.max_adgain;
 	ae_input.preview_work.resolution.sensor_size_index = 1;
 
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 	ae_input.ops_in.set_again_slv = isp3a_ae_set_gain_slv;
 	ae_input.ops_in.set_exposure_slv = isp3a_set_exposure_slv;
 	ae_input.sensor_static_info_slv.f_num = input_ptr->ex_info_slv.f_num;
@@ -3661,7 +3661,7 @@ cmr_int isp_3a_fw_init(struct isp_3a_fw_init_in *input_ptr, cmr_handle *isp_3a_h
 		cxt->otp_data = input_ptr->otp_data;
 	}
 
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 	sensor_raw_info_ptr_slv = (struct sensor_raw_info *)input_ptr->setting_param_ptr_slv;
 	if (NULL != sensor_raw_info_ptr_slv)
 		cxt->ioctrl_ptr_slv = sensor_raw_info_ptr_slv->ioctrl_ptr;

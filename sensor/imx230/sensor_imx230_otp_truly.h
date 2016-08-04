@@ -17,7 +17,7 @@
 #ifndef _SENSOR_IMX230_OTP_TRULY_H_
 #define _SENSOR_IMX230_OTP_TRULY_H_
 
-//#if defined(CONFIG_CAMERA_RE_FOCUS)
+//#if defined(CONFIG_CAMERA_RT_REFOCUS)
 	/*use dual otp info*/
 	#define IMX230_DUAL_OTP
 //#endif

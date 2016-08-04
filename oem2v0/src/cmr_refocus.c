@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#if defined (CONFIG_CAMERA_RE_FOCUS)
+#if defined (CONFIG_CAMERA_RT_REFOCUS)
 
 #define LOG_TAG "cmr_refocus"
 
@@ -100,7 +100,7 @@ int32_t no_callback = 1;
 
 static struct refoucs_ops altek_refoucs_ops = {
 
-#if defined(CONFIG_CAMERA_RE_FOCUS)
+#if defined(CONFIG_CAMERA_RT_REFOCUS)
 	alRnBRT_VersionInfo_Get,
 	alRnBRT_Init,
 	(altek_refocus_function)alRnBRT_ReFocus,

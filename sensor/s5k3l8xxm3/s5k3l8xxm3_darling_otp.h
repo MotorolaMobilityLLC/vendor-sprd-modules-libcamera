@@ -17,7 +17,7 @@
 #ifndef _SENSOR_S5K3L8XXM3_OTP_TRULY_H_
 #define _SENSOR_S5K3L8XXM3_OTP_TRULY_H_
 
-#if defined(CONFIG_CAMERA_RE_FOCUS)
+#if defined(CONFIG_CAMERA_RT_REFOCUS)
 	/*use dual otp info*/
 	#define S5K3L8XXM3_DUAL_OTP
 #endif

@@ -922,8 +922,8 @@ cmr_int snp_start_encode(cmr_handle snp_handle, void *data)
 		}
 #endif
 
-#ifdef CONFIG_CAMERA_RE_FOCUS
-		struct camera_context *cxt = (struct camera_context*)snp_cxt->oem_handle;
+#ifdef CONFIG_CAMERA_RT_REFOCUS
+		struct camera_context          *cxt = (struct camera_context*)snp_cxt->oem_handle;
 		if (cxt->camera_id == 0 && cxt->is_refocus_mode == 1) {
 			ret = camera_start_refocus(cxt, &jpeg_in_ptr->src);
 			if (ret != CMR_CAMERA_SUCCESS) {

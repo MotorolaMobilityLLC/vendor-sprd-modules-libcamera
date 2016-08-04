@@ -445,7 +445,7 @@ cmr_int camera_sensor_streamctrl(cmr_u32 on_off, void *privdata)
 		goto exit;
 	}
 
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 /*temp define, will del it when al3200 be merged into code*/
 #define	AL3200_CMD_DEPTH_MAP_MODE 2
 #define	AL3200_CMD_BYPASS_MODE  3
@@ -1812,7 +1812,7 @@ cmr_int camera_sensor_init(cmr_handle  oem_handle, cmr_uint is_autotest)
 		CMR_LOGE("open %d sensor failed %ld", cxt->camera_id, ret);
 		goto sensor_exit;
 	}
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 	if (cxt->camera_id == SENSOR_MAIN)
 	{
 		camera_id_bits = 1 << SENSOR_DEVICE2;
@@ -1859,7 +1859,7 @@ cmr_int camera_sensor_deinit(cmr_handle  oem_handle)
 	}
 	sensor_handle = sn_cxt->sensor_handle;
 	cmr_sensor_close(sensor_handle, (1 << cxt->camera_id));
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 	if (cxt->camera_id == SENSOR_MAIN)
 	{
 		ret = cmr_sensor_close(sensor_handle, 1 << SENSOR_DEVICE2);
@@ -2222,7 +2222,7 @@ static int camera_get_otpinfo(cmr_handle  oem_handle,struct isp_cali_param *cali
 		CMR_LOGE("malloc af  failed");
 		goto EXIT;
 	}
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 	val.type               = SENSOR_VAL_TYPE_READ_DUAL_OTP;
 #else
 	val.type               = SENSOR_VAL_TYPE_READ_OTP;
@@ -2235,7 +2235,7 @@ static int camera_get_otpinfo(cmr_handle  oem_handle,struct isp_cali_param *cali
 	}
 	cali_result->data_ptr = (void *)param;
 	cali_result->size = sizeof(struct sensor_otp_data);
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 	cali_result->data_ptr = val.pval;
 	CMR_LOGD("read otp data  0x%x val.pval 0x%x", cali_result->data_ptr,val.pval);
 #endif
@@ -2985,7 +2985,7 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 	if (val.pval) {
 		isp_param.otp_data = val.pval;
 	}
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 	ret = cmr_sensor_get_info(sn_cxt->sensor_handle,CAMERA_ID_2, &sn_cxt->sensor_info);
 	if (ret) {
 		CMR_LOGE("get_sensor info failed!");

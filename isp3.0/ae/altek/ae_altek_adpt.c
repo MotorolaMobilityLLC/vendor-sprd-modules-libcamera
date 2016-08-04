@@ -76,7 +76,7 @@ struct aealtek_sensor_exp_data {
 
 struct aealtek_ui_param {
 	struct ae_ctrl_param_work work_info;
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 	struct ae_ctrl_param_work work_info_slv;
 #endif
 	enum ae_ctrl_scene_mode scene;
@@ -181,7 +181,7 @@ struct aealtek_lib_data {
 	struct al3awrapper_stats_ae_t stats_data;
 	struct ae_output_data_t temp_output_data;
 	struct calib_wb_gain_t ae_otp_data;
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 	struct calib_wb_gain_t ae_otp_data_slv;
 #endif
 	struct aealtek_lib_exposure_data exposure_array;
@@ -234,7 +234,7 @@ struct aealtek_cxt {
 	struct ae_ctrl_proc_in proc_in;
 	struct aealtek_sensor_exp_data sensor_exp_data;
 	struct aealtek_exposure_param pre_write_exp_data;
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 	struct aealtek_exposure_param pre_write_exp_data_slv;
 #endif
 	struct aealtek_tuning_info tuning_info;
@@ -242,7 +242,7 @@ struct aealtek_cxt {
 	cmr_u32 stat_info_num;
 };
 
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 #ifdef CONFIG_AE_SYNC_INFO_MAPPING
 struct aealtek_simple_sync_calib_dat {
 	cmr_u32 r_gain;   /* scale by 1000 */
@@ -821,7 +821,7 @@ exit:
 	return ret;
 }
 
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 uint32 aealtek_set_slv_otp(struct calib_wb_gain_t acalibwbgain, struct alaeruntimeobj_t *aaelibcallback, struct ae_output_data_t *ae_output , void *ae_runtimedat)
 {
 	uint32 ret = ERR_WPR_AE_SUCCESS;
@@ -874,7 +874,7 @@ static cmr_int aealtek_load_otp(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_otp_
 			goto exit;
 	}
 
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 	lib_otp_ptr = &cxt_ptr->lib_data.ae_otp_data_slv;
 	ret = aealtek_convert_otp(cxt_ptr, otp_data_slv, lib_otp_ptr);
 	if (ret)
@@ -1003,7 +1003,7 @@ static cmr_int aealtek_init(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_init_in 
 	ret = aealtek_get_default_param(cxt_ptr, &in_ptr->preview_work, &cxt_ptr->cur_status);
 	if (ret)
 		goto exit;
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 	cxt_ptr->cur_status.ui_param.work_info_slv = in_ptr->preview_work_slv;
 #endif
 
@@ -1205,7 +1205,7 @@ exit:
 	return ret;
 }
 
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 static cmr_int aealtek_write_to_sensor_slv(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_sensor_exposure *exp_ptr
 		, struct ae_ctrl_param_sensor_gain *gain_ptr)
 {
@@ -2369,7 +2369,7 @@ static cmr_int aealtek_work_preview(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 		goto exit;
 	}
 
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 #ifndef CONFIG_AE_SYNC_INFO_MAPPING
 	if (cxt_ptr->is_refocus) {
 		/* slv_preview_sensor_info */
@@ -2619,7 +2619,7 @@ static cmr_int aealtek_capture_normal(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 		goto exit;
 	}
 
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 #ifndef CONFIG_AE_SYNC_INFO_MAPPING
 	if (cxt_ptr->is_refocus) {
 		/* slv capture_sensor_info */
@@ -2717,7 +2717,7 @@ exit:
 	return ret;
 }
 
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 static cmr_int aealtek_set_sync_mode(struct aealtek_cxt *cxt_ptr, cmr_u8 is_sync_mode)
 {
 	cmr_int ret = ISP_ERROR;
@@ -2816,7 +2816,7 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 	if (ret || NULL == cxt_ptr->seq_handle)
 		goto exit;
 
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 	cxt_ptr->is_refocus = in_ptr->work_param.is_refocus;
 #ifndef CONFIG_AE_SYNC_INFO_MAPPING
 	if (cxt_ptr->is_refocus)
@@ -3383,7 +3383,7 @@ exit:
 	return ret;
 }
 
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 #ifdef CONFIG_AE_SYNC_INFO_MAPPING
 cmr_u32 aealtek_sync_simple_verify_input(struct aealtek_simple_sync_input *input)
 {
@@ -3793,7 +3793,7 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 		if (ret)
 			goto exit;
 	}
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 	if (cxt_ptr->is_refocus) {
 		ret = aealtek_callback_sync_info(cxt_ptr, in_ptr);
 	}

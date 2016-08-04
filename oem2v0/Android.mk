@@ -100,7 +100,7 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_UV_DENOISE)),true)
 	LOCAL_SRC_FILES+= src/cmr_uvdenoise.c
 endif
 
-ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RE_FOCUS)),true)
+ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 	LOCAL_C_INCLUDES += $(LOCAL_PATH)/sensor/al3200
 	LOCAL_SRC_FILES+= src/cmr_refocus.c
 endif
@@ -147,7 +147,7 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_Y_DENOISE)),true)
 endif
 
 
-ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RE_FOCUS)),true)
+ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 	LOCAL_SHARED_LIBRARIES += libalRnBLV
 endif
 

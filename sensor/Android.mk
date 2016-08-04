@@ -85,7 +85,7 @@ ifeq ($(strip $(TARGET_CAMERA_OIS_FUNC)),true)
 						ois/OIS_main.c
 endif
 
-ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RE_FOCUS)),true)
+ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/al3200
 LOCAL_SRC_FILES += al3200/al3200.c
 endif

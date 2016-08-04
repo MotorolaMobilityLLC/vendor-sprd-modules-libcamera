@@ -37,7 +37,7 @@ LOCAL_SHARED_LIBRARIES += libynoise
 endif
 
 
-ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RE_FOCUS)),true)
+ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 LOCAL_SHARED_LIBRARIES += libalRnBLV
 endif
 

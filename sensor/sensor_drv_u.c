@@ -1827,7 +1827,7 @@ void sns_set_status(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E sensor_id
 
 			/*when use the camera vendor functions, the sensor_cxt should be set at first */
 			sensor_set_cxt_common(sensor_cxt);
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 			if(i == SENSOR_SUB)
 			{
 				hw_Sensor_SetResetLevel(sensor_cxt->sensor_hw_handler,(cmr_u32)sensor_cxt->sensor_info_ptr->reset_pulse_level);

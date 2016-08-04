@@ -514,7 +514,7 @@ struct isp_init_param {
 	struct sensor_otp_cust_info *otp_data;
 	struct sensor_data_info pdaf_otp;
 	struct sensor_pdaf_info *pdaf_info;
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 	struct isp_sensor_ex_info ex_info_slv;
 	void *setting_param_ptr_slv; // slave sensor
 	struct sensor_otp_cust_info *otp_data_slv;

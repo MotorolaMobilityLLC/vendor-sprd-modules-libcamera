@@ -1948,7 +1948,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId)
 	#else
 	s_setting[cameraId].sprddefInfo.availabe_antiband_auto_supported = 0;
 	#endif
-	#ifdef CONFIG_CAMERA_RE_FOCUS
+	#ifdef CONFIG_CAMERA_RT_REFOCUS
 	s_setting[cameraId].sprddefInfo.is_support_refocus = 1;
 	#else
 	s_setting[cameraId].sprddefInfo.is_support_refocus = 0;

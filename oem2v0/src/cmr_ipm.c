@@ -31,7 +31,7 @@ extern struct class_tab_t uvde_tab_info;
 #ifdef CONFIG_CAMERA_Y_DENOISE
 extern struct class_tab_t yde_tab_info;
 #endif
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 extern struct class_tab_t refocus_tab_info;
 #endif
 
@@ -51,7 +51,7 @@ struct ipm_class_tab class_type_tab[] =
 #ifdef CONFIG_CAMERA_Y_DENOISE
 	{IPM_TYPE_YDE,                 &yde_tab_info},
 #endif
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 	{IPM_TYPE_REFOCUS,                  &refocus_tab_info},
 #endif
 };

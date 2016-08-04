@@ -537,7 +537,7 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 	isp3a_input.otp_data = input_ptr->otp_data;
 	isp3a_input.pdaf_otp = input_ptr->pdaf_otp;
 	isp3a_input.pdaf_info = input_ptr->pdaf_info;
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 	isp3a_input.setting_param_ptr_slv = input_ptr->setting_param_ptr_slv;
 	isp3a_input.ex_info_slv = input_ptr->ex_info_slv;
 	isp3a_input.otp_data_slv = input_ptr->otp_data_slv;

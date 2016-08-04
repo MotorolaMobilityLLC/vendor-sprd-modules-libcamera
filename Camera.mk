@@ -65,7 +65,7 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)
 			$(LOCAL_PATH)/arithmetic/eis/inc
 endif
 
-ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RE_FOCUS)),true)
+ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/sensor/al3200
 endif
 

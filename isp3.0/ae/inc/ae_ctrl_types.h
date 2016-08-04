@@ -444,7 +444,7 @@ struct ae_ctrl_callback_in {
 struct ae_ctrl_ops_in {
 	cmr_int (*set_exposure)(cmr_handle handler, struct ae_ctrl_param_sensor_exposure *in_ptr);
 	cmr_int (*set_again)(cmr_handle handler, struct ae_ctrl_param_sensor_gain *in_ptr);
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 	cmr_int (*set_exposure_slv)(cmr_handle handler, struct ae_ctrl_param_sensor_exposure *in_ptr);
 	cmr_int (*set_again_slv)(cmr_handle handler, struct ae_ctrl_param_sensor_gain *in_ptr);
 #endif
@@ -476,7 +476,7 @@ struct ae_ctrl_init_in {
 	struct isp_lib_config  lib_param;
 	struct ae_ctrl_param_sensor_static_info sensor_static_info;
 	struct ae_ctrl_param_work preview_work;
-#ifdef CONFIG_CAMERA_RE_FOCUS
+#ifdef CONFIG_CAMERA_RT_REFOCUS
 	struct ae_ctrl_param_sensor_static_info sensor_static_info_slv; // slave sensor
 	struct ae_ctrl_param_work preview_work_slv; // slave sensor
 #endif
