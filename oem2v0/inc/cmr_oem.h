@@ -63,6 +63,7 @@ struct sensor_context {
 	cmr_u32                         inited;
 	struct sensor_if                sn_if;
 	struct sensor_exp_info          sensor_info;
+	struct sensor_exp_info          sensor_info_slv;
 	EXIF_SPEC_PIC_TAKING_COND_T     exif_info;
 	struct sensor_ex_info           cur_sns_ex_info;
 };

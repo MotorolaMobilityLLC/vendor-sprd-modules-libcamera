@@ -1375,6 +1375,25 @@ cmr_int isp_dev_access_set_skip_num(isp_handle isp_dev_handle, cmr_u32 skip_num)
 	return ret;
 }
 
+cmr_int isp_dev_access_match_data_ctrl(isp_handle isp_dev_handle, struct match_data_param *match_data)
+{
+	cmr_int                                ret = ISP_SUCCESS;
+	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	struct isp_match_data_param data;
+	cmr_u8 is_get = (GET_MATCH_AE_DATA == match_data->op || GET_MATCH_AWB_DATA == match_data->op);
+
+	if (is_get) {
+		data.op = (enum isp_match_data_op)match_data->op;
+	} else {
+		memcpy(&data, match_data, sizeof(struct match_data_param));
+	}
+	ret = isp_dev_match_data_ctrl(cxt->isp_driver_handle, &data);
+	if (is_get && !ret) {
+		memcpy(match_data, &data, sizeof(struct match_data_param));
+	}
+	return ret;
+}
+
 cmr_int isp_dev_access_cfg_sof_info(isp_handle isp_dev_handle, struct isp_sof_cfg_info *data)
 {
 	cmr_int                                ret = ISP_SUCCESS;

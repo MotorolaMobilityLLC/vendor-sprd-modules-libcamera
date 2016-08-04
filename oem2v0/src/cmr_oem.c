@@ -2831,6 +2831,9 @@ out:
 	return ret;
 }
 
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+static void *master_dual_otp = NULL;
+#endif
 cmr_int camera_isp_init(cmr_handle  oem_handle)
 {
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
@@ -2948,7 +2951,7 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 		} else {
 			camera_copy_sensor_ex_info_to_isp(&isp_param.ex_info,sns_ex_info_ptr);
 		}
-	}else {
+	} else {
 		CMR_LOGE("sns_ex_info_ptr is null,it is impossible error!");
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
@@ -2974,7 +2977,6 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 			isp_param.ex_info.adgain_valid_frame_num,isp_param.ex_info.preview_skip_num,
 			isp_param.ex_info.capture_skip_num);
 	CMR_LOGD("w %d h %d", isp_param.size.w,isp_param.size.h);
-
 	val.type = SENSOR_VAL_TYPE_READ_OTP;
 	val.pval = NULL;
 	ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_ACCESS_VAL, (cmr_uint)&val);
@@ -2985,67 +2987,93 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 	if (val.pval) {
 		isp_param.otp_data = val.pval;
 	}
-#ifdef CONFIG_CAMERA_RT_REFOCUS
-	ret = cmr_sensor_get_info(sn_cxt->sensor_handle,CAMERA_ID_2, &sn_cxt->sensor_info);
-	if (ret) {
-		CMR_LOGE("get_sensor info failed!");
-		ret = CMR_CAMERA_FAIL;
-		goto exit;
-	}
 
-	sensor_info_ptr = &sn_cxt->sensor_info;
-	CHECK_HANDLE_VALID(sensor_info_ptr);
-
-	isp_param.setting_param_ptr_slv = sensor_info_ptr->raw_info_ptr;
-
-
-	struct sensor_ex_info sn_ex_info_slv;
-	memset(&sn_ex_info,0,sizeof(struct sensor_ex_info));
-	val.type               = SENSOR_VAL_TYPE_GET_STATIC_INFO;
-	val.pval               = &sn_ex_info_slv;
-	ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, CAMERA_ID_2, SENSOR_ACCESS_VAL, (cmr_uint)&val);
-	if (ret) {
-		CMR_LOGE("get sensor static info failed %ld", ret);
-		goto exit;
-	}
-	camera_copy_sensor_ex_info_to_isp(&isp_param.ex_info_slv,&sn_ex_info_slv);
-	if (IMG_DATA_TYPE_RAW == sn_cxt->sensor_info.image_format) {
-		isp_param.ex_info_slv.preview_skip_num = 0;
-		isp_param.ex_info_slv.capture_skip_num = 0;
-	}
-	if((NULL != sn_ex_info_slv.name) && (NULL != sn_ex_info_slv.sensor_version_info)) {
-		CMR_LOGD("get static info:slave sensor name: %s, version: %s.",
-			isp_param.ex_info_slv.name,isp_param.ex_info_slv.sensor_version_info);
-	} else {
-		CMR_LOGE("maybe fail to get static info: slave sensor name or sensor version info is null.");
-	}
-	CMR_LOGD("get static info:f_num: %d,focal_length %d,max_fps: %d,max_adgain: %d",
-			isp_param.sn_ex_info_slv.f_num,isp_param.sn_ex_info_slv.focal_length,
-			isp_param.sn_ex_info_slv.max_fps,isp_param.sn_ex_info_slv.max_adgain);
-	CMR_LOGD("get static info:ois_supported: %d,pdaf_supported %d,exp_valid_frame_num %d,clamp_level %d",
-			isp_param.sn_ex_info_slv.ois_supported,isp_param.sn_ex_info_slv.pdaf_supported,
-			isp_param.sn_ex_info_slv.exp_valid_frame_num,isp_param.sn_ex_info_slv.clamp_level);
-	CMR_LOGD("get static info:adgain_valid_frame_num %d,preview_skip_num %d,capture_skip_num %d",
-			isp_param.sn_ex_info_slv.adgain_valid_frame_num,isp_param.sn_ex_info_slv.preview_skip_num,
-			isp_param.sn_ex_info_slv.capture_skip_num);
-	CMR_LOGD("w %d h %d", isp_param.size.w,isp_param.size.h);
-
-	val.type = SENSOR_VAL_TYPE_READ_OTP;
-	val.pval = NULL;
-	ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, CAMERA_ID_2, SENSOR_ACCESS_VAL, (cmr_uint)&val);
-	if (ret) {
-		CMR_LOGE("get sensor static info failed %ld", ret);
-		goto exit;
-	}
-	if (val.pval) {
-		isp_param.otp_data_slv = val.pval;
-	}
-#endif
 	if (sensor_info_ptr->raw_info_ptr && sensor_info_ptr->raw_info_ptr->ioctrl_ptr
 		&& sensor_info_ptr->raw_info_ptr->ioctrl_ptr->set_focus)
 		isp_param.ex_info.af_supported = 1;
 	else
 		isp_param.ex_info.af_supported = 0;
+
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	if (CAMERA_ID_0 == cxt->camera_id || CAMERA_ID_2 == cxt->camera_id) {
+		char                     refocus[PROPERTY_VALUE_MAX];
+
+		property_get("sys.cam.refocus", refocus, "0");
+		cxt->is_refocus_mode = atoi(refocus);//TBD
+		CMR_LOGI("refocus mode %d", cxt->is_refocus_mode);
+	}
+	isp_param.is_refocus = cxt->is_refocus_mode;
+	if (CAMERA_ID_0 == cxt->camera_id && cxt->is_refocus_mode) {
+		val.type = SENSOR_VAL_TYPE_READ_DUAL_OTP;
+		val.pval = NULL;
+		ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_ACCESS_VAL, (cmr_uint)&val);
+		if (ret) {
+			CMR_LOGE("get dual otp info failed %ld", ret);
+			goto exit;
+		}
+		if (val.pval) {
+			isp_param.dual_otp = val.pval;
+			master_dual_otp = val.pval;
+		}
+
+		ret = cmr_sensor_open(sn_cxt->sensor_handle, 1 << SENSOR_DEVICE2);
+		if (ret) {
+			CMR_LOGE("open 2 sensor failed %ld", ret);
+			ret = CMR_CAMERA_FAIL;
+			goto exit;
+		}
+		ret = cmr_sensor_get_info(sn_cxt->sensor_handle,CAMERA_ID_2, &sn_cxt->sensor_info_slv);
+		if (ret) {
+			CMR_LOGE("get_sensor info failed!");
+			ret = CMR_CAMERA_FAIL;
+			goto exit;
+		}
+
+		sensor_info_ptr = &sn_cxt->sensor_info_slv;
+		CHECK_HANDLE_VALID(sensor_info_ptr);
+
+		isp_param.setting_param_ptr_slv = sensor_info_ptr->raw_info_ptr;
+
+		struct sensor_ex_info sn_ex_info_slv;
+		memset(&sn_ex_info_slv,0,sizeof(struct sensor_ex_info));
+		val.type               = SENSOR_VAL_TYPE_GET_STATIC_INFO;
+		val.pval               = &sn_ex_info_slv;
+		ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, CAMERA_ID_2, SENSOR_ACCESS_VAL, (cmr_uint)&val);
+		if (ret) {
+			CMR_LOGE("get sensor static info failed %ld", ret);
+			goto exit;
+		}
+		camera_copy_sensor_ex_info_to_isp(&isp_param.ex_info_slv,&sn_ex_info_slv);
+		if (IMG_DATA_TYPE_RAW == sn_cxt->sensor_info.image_format) {
+			isp_param.ex_info_slv.preview_skip_num = 0;
+			isp_param.ex_info_slv.capture_skip_num = 0;
+		}
+		if((NULL != sn_ex_info_slv.name) && (NULL != sn_ex_info_slv.sensor_version_info)) {
+			CMR_LOGD("get static info:slave sensor name: %s, version: %s.",
+				isp_param.ex_info_slv.name,isp_param.ex_info_slv.sensor_version_info);
+		} else {
+			CMR_LOGE("maybe fail to get static info: slave sensor name or sensor version info is null.");
+		}
+		CMR_LOGD("get static info:f_num: %d,focal_length %d,max_fps: %d,max_adgain: %d",
+				isp_param.ex_info_slv.f_num,isp_param.ex_info_slv.focal_length,
+				isp_param.ex_info_slv.max_fps,isp_param.ex_info_slv.max_adgain);
+		CMR_LOGD("get static info:ois_supported: %d,pdaf_supported %d,exp_valid_frame_num %d,clamp_level %d",
+				isp_param.ex_info_slv.ois_supported,isp_param.ex_info_slv.pdaf_supported,
+				isp_param.ex_info_slv.exp_valid_frame_num,isp_param.ex_info_slv.clamp_level);
+		CMR_LOGD("get static info:adgain_valid_frame_num %d,preview_skip_num %d,capture_skip_num %d",
+				isp_param.ex_info_slv.adgain_valid_frame_num,isp_param.ex_info_slv.preview_skip_num,
+				isp_param.ex_info_slv.capture_skip_num);
+		CMR_LOGD("w %d h %d", isp_param.size.w,isp_param.size.h);
+
+		ret = cmr_sensor_close(cxt->sn_cxt.sensor_handle, 1 << SENSOR_DEVICE2);
+		if (ret) {
+			CMR_LOGE("close 2 sensor failed %ld", ret);
+			goto exit;
+		}
+	} else if (CAMERA_ID_2 == cxt->camera_id && cxt->is_refocus_mode) {
+		isp_param.dual_otp = master_dual_otp;
+	}
+#endif
 
 	CMR_PRINT_TIME;
 	ret = isp_init(&isp_param, &isp_cxt->isp_handle);

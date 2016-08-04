@@ -55,6 +55,7 @@ enum awb_ctrl_cmd {
 	AWB_CTRL_CMD_SET_AF_REPORT,
 	AWB_CTRL_CMD_GET_EXIF_DEBUG_INFO,//to jpeg exif
 	AWB_CTRL_CMD_GET_DEBUG_INFO,//to jpeg tail
+	AWB_CTRL_CMD_SET_SLAVE_ISO_SPEED,
 	AWB_CTRL_CMD_MAX
 };
 
@@ -128,6 +129,7 @@ struct awb_ctrl_wbmode_param {
 struct awb_ctrl_work_param {
 	cmr_u32 work_mode;
 	cmr_u32 capture_mode;
+	cmr_u16 is_refocus;
 	struct isp_size sensor_size;
 };
 
@@ -136,10 +138,12 @@ struct awb_ctrl_callback_in {
 };
 
 typedef cmr_int (*awb_callback)(cmr_handle handle, cmr_u32 cb_type, struct awb_ctrl_callback_in *input);
+typedef cmr_int (*match_data_ctrl)(cmr_handle handler, struct match_data_param *in_ptr);
 
 struct awb_ctrl_init_in {
 	cmr_handle caller_handle;
 	cmr_u32 camera_id;
+	cmr_u16 is_refocus;
 	cmr_u32 base_gain;
 	cmr_u32 awb_enable;
 	cmr_int  wb_mode;
@@ -149,15 +153,18 @@ struct awb_ctrl_init_in {
 //	struct awb_ctrl_opt_info otp_info;
 	struct isp_lib_config lib_config;
 	struct isp_calibration_awb_gain calibration_gain;
+	struct isp_calibration_awb_gain calibration_gain_slv;
 	cmr_u32 awb_process_type;
 	cmr_u32 awb_process_level;
 	void *tuning_param;
+	void *tuning_param_slv;
 	cmr_u32 param_size;
 	void *lsc_otp_random;
 	void *lsc_otp_golden;
 	cmr_u32 lsc_otp_width;
 	cmr_u32 lsc_otp_height;
 	awb_callback awb_cb;
+	match_data_ctrl match_ctrl;
 	void *priv_handle;
 };
 
@@ -212,6 +219,7 @@ union awb_ctrl_cmd_in {
 	cmr_u32 flash_status;
 	cmr_u32 bypass;
 	cmr_u32 sof_frame_idx;
+	cmr_u16 iso_speed;
 	struct awb_ctrl_wbmode_param wb_mode;
 	struct isp_face_area face_info;
 	struct awb_ctrl_work_param work_param;

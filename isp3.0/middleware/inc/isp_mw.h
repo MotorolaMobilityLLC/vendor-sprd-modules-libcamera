@@ -507,6 +507,7 @@ struct pd_raw_info {
 
 struct isp_init_param {
 	cmr_u32 camera_id;
+	cmr_u16 is_refocus;
 	void *setting_param_ptr;
 	struct isp_size size;
 	proc_callback ctrl_callback;
@@ -522,11 +523,9 @@ struct isp_init_param {
 	struct sensor_otp_cust_info *otp_data;
 	struct sensor_data_info pdaf_otp;
 	struct sensor_pdaf_info *pdaf_info;
-#ifdef CONFIG_CAMERA_RT_REFOCUS
 	struct isp_sensor_ex_info ex_info_slv;
 	void *setting_param_ptr_slv; // slave sensor
-	struct sensor_otp_cust_info *otp_data_slv;
-#endif
+	struct sensor_dual_otp_info *dual_otp;
 	cmr_u32 image_pattern;
 };
 

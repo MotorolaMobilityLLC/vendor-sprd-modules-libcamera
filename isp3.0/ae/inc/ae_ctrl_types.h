@@ -269,7 +269,7 @@ struct ae_ctrl_param_resolution {
 struct ae_ctrl_param_work {
 		cmr_int work_mode;
 		cmr_int capture_mode;
-		cmr_int is_refocus;
+		cmr_u16 is_refocus;
 		struct ae_ctrl_param_resolution resolution;
 		struct ae_ctrl_param_measure_highflash highflash;
 		struct isp_sensor_fps_info sensor_fps;
@@ -444,10 +444,10 @@ struct ae_ctrl_callback_in {
 struct ae_ctrl_ops_in {
 	cmr_int (*set_exposure)(cmr_handle handler, struct ae_ctrl_param_sensor_exposure *in_ptr);
 	cmr_int (*set_again)(cmr_handle handler, struct ae_ctrl_param_sensor_gain *in_ptr);
-#ifdef CONFIG_CAMERA_RT_REFOCUS
 	cmr_int (*set_exposure_slv)(cmr_handle handler, struct ae_ctrl_param_sensor_exposure *in_ptr);
 	cmr_int (*set_again_slv)(cmr_handle handler, struct ae_ctrl_param_sensor_gain *in_ptr);
-#endif
+	cmr_int (*set_iso_slv)(cmr_handle handler, cmr_u32 iso);
+	cmr_int (*match_data_ctrl)(cmr_handle handler, struct match_data_param *in_ptr);
 	cmr_int (*ae_callback)(cmr_handle handler, enum ae_ctrl_cb_type, struct ae_ctrl_callback_in *in_ptr);
 
 	cmr_int (*get_system_time)(cmr_handle handler, cmr_u32 *sec_ptr, cmr_u32 *usec_ptr);
@@ -476,10 +476,8 @@ struct ae_ctrl_init_in {
 	struct isp_lib_config  lib_param;
 	struct ae_ctrl_param_sensor_static_info sensor_static_info;
 	struct ae_ctrl_param_work preview_work;
-#ifdef CONFIG_CAMERA_RT_REFOCUS
 	struct ae_ctrl_param_sensor_static_info sensor_static_info_slv; // slave sensor
 	struct ae_ctrl_param_work preview_work_slv; // slave sensor
-#endif
 };
 
 /**----------------------------------------------------------------------------*

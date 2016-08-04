@@ -871,9 +871,9 @@ static unsigned long _s5k3p3sm_write_exposure(SENSOR_HW_HANDLE handle, unsigned 
 	return ret_value;
 }
 
-#define OTP_LSC_INFO_LEN 1658
+#define S5K3P3SM_OTP_LSC_INFO_LEN 1658
 
-static cmr_u8 s5k3p3_opt_lsc_data[OTP_LSC_INFO_LEN];
+static cmr_u8 s5k3p3_opt_lsc_data[S5K3P3SM_OTP_LSC_INFO_LEN];
 static struct sensor_otp_cust_info s5k3p3_otp_info;
 
 static cmr_u8 s5k3p3sm_i2c_read_otp_set(SENSOR_HW_HANDLE handle, cmr_u16 addr)
@@ -936,7 +936,7 @@ static int s5k3p3sm_otp_read_data(SENSOR_HW_HANDLE handle)
 	checksum += low_val;
 	s5k3p3_otp_info.isp_awb_info.gain_b = (high_val << 8 | low_val);
 
-	for (i = 0; i < OTP_LSC_INFO_LEN; i++) {
+	for (i = 0; i < S5K3P3SM_OTP_LSC_INFO_LEN; i++) {
 		s5k3p3_opt_lsc_data[i] = s5k3p3sm_i2c_read_otp(0x0020 + i);
 		checksum += s5k3p3_opt_lsc_data[i];
 	}
@@ -1054,7 +1054,7 @@ static unsigned long s5k3p3sm_parse_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* p
 		checksum += low_val;
 		s5k3p3_otp_info.isp_awb_info.gain_b = (high_val << 8 | low_val);
 
-		for (j = 0; j < OTP_LSC_INFO_LEN; j++) {
+		for (j = 0; j < S5K3P3SM_OTP_LSC_INFO_LEN; j++) {
 			s5k3p3_opt_lsc_data[j] = buff[i++];
 			checksum += s5k3p3_opt_lsc_data[j];
 		}

@@ -28,6 +28,7 @@
 
 struct isp_3a_fw_init_in {
 	cmr_handle caller_handle;
+	cmr_u16 is_refocus;
 	cmr_handle dev_access_handle;
 	cmr_u32 camera_id;
 	proc_callback isp_mw_callback;
@@ -45,11 +46,10 @@ struct isp_3a_fw_init_in {
 	struct sensor_otp_cust_info *otp_data;
 	struct sensor_data_info pdaf_otp;
 	struct sensor_pdaf_info *pdaf_info;
-#ifdef CONFIG_CAMERA_RT_REFOCUS
+	struct isp_bin_info bin_info_slv;
 	void *setting_param_ptr_slv;
 	struct isp_sensor_ex_info ex_info_slv; // slave sensor
-	struct sensor_otp_cust_info *otp_data_slv;
-#endif
+	struct sensor_dual_otp_info *dual_otp;
 };
 
 

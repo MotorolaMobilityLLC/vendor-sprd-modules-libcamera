@@ -49,6 +49,7 @@ struct awb_altek_context {
 	cmr_u32 is_lock;
 	cmr_u32 is_bypass;
 	awb_callback callback;
+	match_data_ctrl match_ctrl;
 	struct awb_altek_lib_ops ops;
 	struct isp_awb_gain cur_gain;
 	struct awb_ctrl_work_param work_mode;
@@ -168,6 +169,42 @@ cmr_int awbaltek_set_sof_frame_id(cmr_handle adpt_handle, union awb_ctrl_cmd_in 
 	if (ret) {
 		ISP_LOGE("failed to set sof frame id 0x%lx", ret);
 	}
+
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	if (cxt->work_mode.is_refocus && 0==cxt->camera_id) {
+		struct match_data_param match_param;
+		struct allib_awb_output_data_t match_output;
+
+		/* match */
+		ret = (cmr_int)cxt->lib_func.match(cxt->lib_func.awb, &match_output);
+		if (ret)
+			ISP_LOGE("failed %ld", ret);
+		cmr_bzero(&match_param, sizeof(match_param));
+		match_param.awb_data.gain.r = match_output.wbgain.r_gain;
+		match_param.awb_data.gain.g = match_output.wbgain.g_gain;
+		match_param.awb_data.gain.b = match_output.wbgain.b_gain;
+		match_param.awb_data.gain_balanced.r = match_output.wbgain_balanced.r_gain;
+		match_param.awb_data.gain_balanced.g = match_output.wbgain_balanced.g_gain;
+		match_param.awb_data.gain_balanced.b = match_output.wbgain_balanced.b_gain;
+		match_param.awb_data.gain_flash_off.r = match_output.wbgain_flash_off.r_gain;
+		match_param.awb_data.gain_flash_off.g = match_output.wbgain_flash_off.g_gain;
+		match_param.awb_data.gain_flash_off.b = match_output.wbgain_flash_off.b_gain;
+		match_param.awb_data.gain_capture.r = match_output.wbgain_capture.r_gain;
+		match_param.awb_data.gain_capture.g = match_output.wbgain_capture.g_gain;
+		match_param.awb_data.gain_capture.b = match_output.wbgain_capture.b_gain;
+		match_param.awb_data.ct = match_output.color_temp;
+		match_param.awb_data.ct_flash_off = match_output.color_temp_flash_off;
+		match_param.awb_data.ct_capture = match_output.color_temp_capture;
+		match_param.awb_data.is_update = match_output.awb_update;
+		match_param.awb_data.light_source = match_output.light_source;
+		match_param.awb_data.awb_states = match_output.awb_states;
+		match_param.awb_data.awb_decision = match_output.awb_decision;
+		match_param.op = SET_MATCH_AWB_DATA;
+		cxt->match_ctrl(cxt->caller_handle, &match_param);
+		ISP_LOGI("camera_id %d set match_data:%d %d %d,ct:%d", cxt->camera_id, match_param.awb_data.gain.r,
+				match_param.awb_data.gain.g, match_param.awb_data.gain.b, match_param.awb_data.ct);
+	}
+#endif
 
 	return ret;
 }
@@ -294,6 +331,24 @@ cmr_int awbaltek_set_af_report(cmr_handle adpt_handle, union awb_ctrl_cmd_in *in
 	ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
 	if (ret) {
 		ISP_LOGE("failed to set ae info");
+	}
+exit:
+	return ret;
+}
+
+cmr_int awbaltek_set_slave_iso_speed(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
+	struct allib_awb_set_parameter_t            input;
+
+	UNUSED(output_ptr);
+	input.type = alawb_set_param_slave_iso_speed;
+	ISP_LOGI("slave iso speed %d", input_ptr->iso_speed);
+	input.para.slave_iso_speed = input_ptr->iso_speed;
+	ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
+	if (ret) {
+		ISP_LOGE("failed to set slave iso speed");
 	}
 exit:
 	return ret;
@@ -516,6 +571,9 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 		goto exit;
 	}
 	cxt->callback = input_ptr->awb_cb;
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	cxt->match_ctrl = input_ptr->match_ctrl;
+#endif
 
 	/* initialize */
 	ret = (cmr_int)cxt->lib_func.initial(&cxt->lib_func);
@@ -560,6 +618,38 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 			ISP_LOGE("failed to set tuning file %lx", ret);
 		}
 	}
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	if (cxt->work_mode.is_refocus && 0 == cxt->camera_id) {
+		set_otp_param.type = alawb_set_param_slave_calib_data;
+		if (0 == input_ptr->calibration_gain_slv.r
+			&& 0 == input_ptr->calibration_gain_slv.g
+			&& 0 == input_ptr->calibration_gain_slv.b) {
+			set_otp_param.para.awb_calib_data.calib_r_gain = AWB_OTP_DEFAULT_R_GAIN;
+			set_otp_param.para.awb_calib_data.calib_g_gain = AWB_OTP_DEFAULT_G_GAIN;
+			set_otp_param.para.awb_calib_data.calib_b_gain = AWB_OTP_DEFAULT_B_GAIN;
+		} else {
+			set_otp_param.para.awb_calib_data.calib_r_gain = (cmr_u16)input_ptr->calibration_gain_slv.r;
+			set_otp_param.para.awb_calib_data.calib_g_gain = (cmr_u16)input_ptr->calibration_gain_slv.g;
+			set_otp_param.para.awb_calib_data.calib_b_gain = (cmr_u16)input_ptr->calibration_gain_slv.b;
+		}
+		ISP_LOGI("slv otp gain %d %d %d", set_otp_param.para.awb_calib_data.calib_r_gain,
+			set_otp_param.para.awb_calib_data.calib_g_gain, set_otp_param.para.awb_calib_data.calib_b_gain);
+		ret = (cmr_int)cxt->lib_func.set_param(&set_otp_param, cxt->lib_func.awb);
+		if (ret) {
+			ISP_LOGE("failed to set otp %lx", ret);
+		}
+
+		if (input_ptr->tuning_param_slv) {
+			ISP_LOGI("set slv tuning file");
+			set_param.type = alawb_set_param_slave_tuning_file;
+			set_param.para.tuning_file = input_ptr->tuning_param_slv;
+			ret = (cmr_int)cxt->lib_func.set_param(&set_param, cxt->lib_func.awb);
+			if (ret) {
+				ISP_LOGE("failed to set tuning file %lx", ret);
+			}
+		}
+	}
+#endif
 	/* get isp cfg */
 	get_isp_cfg.type = alawb_get_param_init_isp_config;
 	ret = (cmr_int)cxt->lib_func.get_param(&get_isp_cfg, cxt->lib_func.awb);
@@ -689,6 +779,7 @@ cmr_int awbaltek_set_workmode(cmr_handle adpt_handle, enum awb_ctrl_cmd cmd, uni
 	UNUSED(output_ptr);
 	cxt->work_mode.work_mode = input_ptr->work_param.work_mode;
 	cxt->work_mode.capture_mode = input_ptr->work_param.capture_mode;
+	//cxt->work_mode.is_refocus = input_ptr->work_param.is_refocus;
 	cxt->work_mode.sensor_size.w = input_ptr->work_param.sensor_size.w;
 	cxt->work_mode.sensor_size.h = input_ptr->work_param.sensor_size.h;
 
@@ -834,6 +925,9 @@ cmr_int awbaltek_ioctrl(cmr_handle adpt_handle, enum awb_ctrl_cmd cmd, union awb
 	case AWB_CTRL_CMD_SET_BYPASS:
 		ret = awbaltek_set_bypass(adpt_handle, input_ptr, output_ptr);
 		break;
+	case AWB_CTRL_CMD_SET_SLAVE_ISO_SPEED:
+		ret = awbaltek_set_slave_iso_speed(adpt_handle, input_ptr, output_ptr);
+		break;
 	case AWB_CTRL_CMD_SET_SCENE_MODE:
 	case AWB_CTRL_CMD_GET_STAT_SIZE:
 	case AWB_CTRL_CMD_GET_WIN_SIZE:
@@ -959,10 +1053,10 @@ cmr_int awbaltek_process(cmr_handle adpt_handle, struct awb_ctrl_process_in *inp
 						output_ptr->gain_capture.g, output_ptr->gain_capture.b);
 			}
 
-			ISP_LOGI("awb mode %d, awb_states:%d, gain %d %d %d, gain_blanced %d %d %d",
+			ISP_LOGI("awb mode %d, awb_states:%d, gain %d %d %d, gain_blanced %d %d %d,camera_id:%d",
 				     output_ptr->awb_mode, report_ptr->awb_states,
 				     output_ptr->gain.r, output_ptr->gain.g, output_ptr->gain.b,
-				     output_ptr->gain_balanced.r, output_ptr->gain_balanced.g, output_ptr->gain_balanced.b);
+				     output_ptr->gain_balanced.r, output_ptr->gain_balanced.g, output_ptr->gain_balanced.b, cxt->camera_id);
 			ISP_LOGV("awb update %d, frame id %d", output_ptr->is_update, output_ptr->hw3a_frame_id);
 			ISP_LOGV("awb ct %d, light source %d", output_ptr->ct, output_ptr->light_source);
 			isp_mlog(AWB_FILE, "wbgain:(%d, %d, %d), CT:%d, light_source:%d, awb_decision:%d, wbgain_balanced:(%d, %d, %d)",
@@ -1058,6 +1152,7 @@ cmr_int awb_altek_adpt_init(void *input_ptr, void *output_ptr, cmr_handle *adpt_
 	cmr_bzero(cxt, sizeof(*cxt));
 	cxt->caller_handle = input_param_ptr->caller_handle;
 	cxt->camera_id = input_param_ptr->camera_id;
+	cxt->work_mode.is_refocus = input_param_ptr->is_refocus;
 	ret = awbaltek_load_library((cmr_handle)cxt);
 	if (ret) {
 		ISP_LOGE("failed to load altek library");

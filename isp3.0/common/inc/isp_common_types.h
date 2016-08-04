@@ -305,6 +305,47 @@ struct isp3a_statistics_data {
 	void *addr;
 };
 
+struct awb_match_data {
+	struct isp_awb_gain gain;
+	struct isp_awb_gain gain_balanced;
+	struct isp_awb_gain gain_flash_off;
+	struct isp_awb_gain gain_capture;
+	cmr_u32 ct;
+	cmr_u32 ct_flash_off;
+	cmr_u32 ct_capture;
+	cmr_u32 is_update;
+	cmr_u16 light_source;
+	cmr_u32 awb_states;
+	cmr_u16 awb_decision;
+};
+
+struct ae_match_data {
+	cmr_u32 iso;
+	cmr_u32 exif_iso;
+	cmr_u32 exposure_time;
+	cmr_u32 exposure_line;
+	cmr_u32 sensor_ad_gain;
+	cmr_u32 isp_d_gain;
+	cmr_u16 uw_cur_fps;
+	cmr_s32 bv_val;
+	cmr_u8 uc_sensor_mode;
+};
+
+enum match_data_op {  /* enum isp_match_data_op */
+	GET_MATCH_AE_DATA,
+	SET_MATCH_AE_DATA,
+	GET_MATCH_AWB_DATA,
+	SET_MATCH_AWB_DATA,
+};
+
+struct match_data_param {
+	enum match_data_op op;
+	union {
+		struct awb_match_data awb_data;
+		struct ae_match_data ae_data;
+	};
+};
+
 struct isp_bin_info {
 	void *ae_addr;
 	void *awb_addr;

@@ -76,9 +76,7 @@ struct aealtek_sensor_exp_data {
 
 struct aealtek_ui_param {
 	struct ae_ctrl_param_work work_info;
-#ifdef CONFIG_CAMERA_RT_REFOCUS
 	struct ae_ctrl_param_work work_info_slv;
-#endif
 	enum ae_ctrl_scene_mode scene;
 	enum ae_ctrl_flicker_mode flicker;
 	enum ae_ctrl_iso_mode iso;
@@ -104,6 +102,7 @@ struct aealtek_status {
 	cmr_s32 is_quick_mode;
 	cmr_s32 is_hdr_status;
 	cmr_u32 min_frame_length;
+	cmr_u32 min_frame_length_slv;
 };
 
 enum aealtek_flash_state {
@@ -181,9 +180,7 @@ struct aealtek_lib_data {
 	struct al3awrapper_stats_ae_t stats_data;
 	struct ae_output_data_t temp_output_data;
 	struct calib_wb_gain_t ae_otp_data;
-#ifdef CONFIG_CAMERA_RT_REFOCUS
 	struct calib_wb_gain_t ae_otp_data_slv;
-#endif
 	struct aealtek_lib_exposure_data exposure_array;
 };
 
@@ -219,7 +216,7 @@ struct aealtek_cxt {
 	cmr_s32 ae_state;
 
 	cmr_s32 flash_skip_number;
-	cmr_s32 is_refocus;
+	cmr_u16 is_refocus;
 	struct aealtek_script_info script_info;
 	struct aealtek_status prv_status;
 	struct aealtek_status cur_status;
@@ -234,74 +231,12 @@ struct aealtek_cxt {
 	struct ae_ctrl_proc_in proc_in;
 	struct aealtek_sensor_exp_data sensor_exp_data;
 	struct aealtek_exposure_param pre_write_exp_data;
-#ifdef CONFIG_CAMERA_RT_REFOCUS
 	struct aealtek_exposure_param pre_write_exp_data_slv;
-#endif
 	struct aealtek_tuning_info tuning_info;
 	struct aealtek_stat_info stat_info[10];
 	cmr_u32 stat_info_num;
 	cmr_u32 is_3dcalibration;/**add for 3d calibration*/
 };
-
-#ifdef CONFIG_CAMERA_RT_REFOCUS
-#ifdef CONFIG_AE_SYNC_INFO_MAPPING
-struct aealtek_simple_sync_calib_dat {
-	cmr_u32 r_gain;   /* scale by 1000 */
-	cmr_u32 g_gain;   /* scale by 1000 */
-	cmr_u32 b_gain;   /* scale by 1000 */
-};
-
-struct aealtek_simple_sync_sensor_info {
-	cmr_u32 max_ad_gain;
-	cmr_u32 min_ad_gain;
-	cmr_u32 max_exp_line;
-	cmr_u32 min_exp_line;
-	cmr_u32 max_fps;
-	cmr_u32 min_fps;
-	float fn;
-};
-
-struct aealtek_simple_sync_cminfo {
-	struct aealtek_simple_sync_calib_dat  cam_info_calib;
-	struct aealtek_simple_sync_sensor_info  cam_info_sensor;
-};
-
-struct aealtek_simple_sync_input {
-	cmr_u32 ud_msc_exposure_time;    /* master camera, exposure time in micro-seconds */
-	cmr_u32 ud_msc_exposure_line;    /* master camera, exposure line */
-	cmr_u32 ud_msc_iso;         /* master camera, real iso speed  */
-	cmr_u32 ud_msc_exif_iso;    /* master camera, exis iso speed  */
-	cmr_u32 ud_msc_adgain;      /* master camera, sensor ad gain  */
-	cmr_u32 ud_msc_isp_adgain;  /* reserved */
-	cmr_s32  result_bv;
-	struct aealtek_simple_sync_cminfo   master_info;
-	struct aealtek_simple_sync_cminfo   slave_info;
-};
-
-struct aealtek_simple_sync_output {
-	cmr_u32 ud_slv_exposure_time;    /* slave camera, exposure time in micro-seconds */
-	cmr_u32 ud_slv_exposure_line;    /* slave camera, exposure line */
-	cmr_u32 ud_slv_iso;         /* slave camera, real iso speed  */
-	cmr_u32 ud_slv_exif_iso;    /* slave camera, exis iso speed  */
-	cmr_u32 ud_slv_adgain;      /* slave camera, sensor ad gain  */
-	cmr_u32 ud_slv_isp_adgain;  /* reserved */
-	cmr_s32  result_bv;
-};
-
-#define _AE_SYNC_SIMPLE_VER  0.1000
-
-/* define error code */
-#define _AE_SYNC_SIMPLE_ERR_SUCCESS        (0)
-#define _AE_SYNC_SIMPLE_ERR_BASE           (0xA000)
-
-#define _AE_SYNC_SIMPLE_ERR_INVALID_PARAM                  (_AE_SYNC_SIMPLE_ERR_BASE +  1)
-#define _AE_SYNC_SIMPLE_ERR_NULL_ADDR                      (_AE_SYNC_SIMPLE_ERR_BASE +  2)
-#define _AE_SYNC_SIMPLE_ERR_INVALID_MASTER_OTP_DAT         (_AE_SYNC_SIMPLE_ERR_BASE +  3)
-#define _AE_SYNC_SIMPLE_ERR_INVALID_SLAVE_OTP_DAT          (_AE_SYNC_SIMPLE_ERR_BASE +  4)
-#define _AE_SYNC_SIMPLE_ERR_INVALID_MASTER_SINFO_DAT       (_AE_SYNC_SIMPLE_ERR_BASE +  5)
-#define _AE_SYNC_SIMPLE_ERR_INVALID_SLAVE_SINFO_DAT        (_AE_SYNC_SIMPLE_ERR_BASE +  6)
-#endif
-#endif
 
 static cmr_int aealtek_reset_touch_ack(struct aealtek_cxt *cxt_ptr);
 static cmr_int aealtek_set_lock(struct aealtek_cxt *cxt_ptr, cmr_int is_lock);
@@ -822,10 +757,47 @@ exit:
 	return ret;
 }
 
-#ifdef CONFIG_CAMERA_RT_REFOCUS
-uint32 aealtek_set_slv_otp(struct calib_wb_gain_t acalibwbgain, struct alaeruntimeobj_t *aaelibcallback, struct ae_output_data_t *ae_output , void *ae_runtimedat)
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+static cmr_int aealtek_sensor_info_ui2lib_slv(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_resolution *from_ptr, struct ae_sensor_info_t *to_ptr)
 {
-	uint32 ret = ERR_WPR_AE_SUCCESS;
+	cmr_int ret = ISP_ERROR;
+	struct ae_ctrl_param_sensor_static_info *static_sensor_ptr = NULL;
+
+
+	if (!cxt_ptr || !from_ptr || !to_ptr) {
+		ISP_LOGE("param %p %p %p is NULL error!", cxt_ptr, from_ptr, to_ptr);
+		goto exit;
+	}
+	static_sensor_ptr = &cxt_ptr->init_in_param.sensor_static_info_slv;
+
+	/*	sensor info setting, RAW size, fps , etc. */
+	to_ptr->min_fps = 100 * from_ptr->min_fps;
+	to_ptr->max_fps = 100 * from_ptr->max_fps;
+	to_ptr->min_line_cnt = 1;
+	to_ptr->max_line_cnt = MAX_EXP_LINE_CNT;
+	to_ptr->exposuretime_per_exp_line_ns = from_ptr->line_time;
+	to_ptr->min_gain = 100 * 1;
+	to_ptr->max_gain = 100 * from_ptr->max_gain;
+
+	to_ptr->sensor_left = 0;
+	to_ptr->sensor_top = 0;
+	to_ptr->sensor_width = from_ptr->frame_size.w;
+	to_ptr->sensor_height = from_ptr->frame_size.h;
+
+	to_ptr->sensor_fullwidth = from_ptr->frame_size.w;
+	to_ptr->sensor_fullheight = from_ptr->frame_size.h;
+
+	to_ptr->ois_supported = static_sensor_ptr->ois_supported;
+	to_ptr->f_number = (float)(1.0 * static_sensor_ptr->f_num / F_NUM_BASE);
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld", ret);
+	return ret;
+}
+
+cmr_int aealtek_set_slv_otp(struct calib_wb_gain_t acalibwbgain, struct alaeruntimeobj_t *aaelibcallback, struct ae_output_data_t *ae_output , void *ae_runtimedat)
+{
+	cmr_int ret = ERR_WPR_AE_SUCCESS;
 	struct ae_set_param_t localparam;    /* local parameter set */
 
 	if (acalibwbgain.r == 0 || acalibwbgain.g == 0 || acalibwbgain.b == 0)
@@ -876,22 +848,23 @@ static cmr_int aealtek_load_otp(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_otp_
 			goto exit;
 	}
 
-#ifdef CONFIG_CAMERA_RT_REFOCUS
-	lib_otp_ptr = &cxt_ptr->lib_data.ae_otp_data_slv;
-	ret = aealtek_convert_otp(cxt_ptr, otp_data_slv, lib_otp_ptr);
-	if (ret)
-		goto exit;
-	ISP_LOGI("ae_otp_data_slv r=%d,g=%d,b=%d", cxt_ptr->lib_data.ae_otp_data_slv.r,
-			cxt_ptr->lib_data.ae_otp_data_slv.g,
-			cxt_ptr->lib_data.ae_otp_data_slv.b);
-#ifndef CONFIG_AE_SYNC_INFO_MAPPING
-	if (obj_ptr) {
-		lib_ret = aealtek_set_slv_otp(cxt_ptr->lib_data.ae_otp_data_slv,
-								obj_ptr, &cxt_ptr->lib_data.output_data, obj_ptr->ae);
-		if (lib_ret)
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	if (cxt_ptr->is_refocus && 0 == cxt_ptr->camera_id) {
+		lib_otp_ptr = &cxt_ptr->lib_data.ae_otp_data_slv;
+		ret = aealtek_convert_otp(cxt_ptr, otp_data_slv, lib_otp_ptr);
+		if (ret)
 			goto exit;
+		ISP_LOGI("ae_otp_data_slv r=%d,g=%d,b=%d", cxt_ptr->lib_data.ae_otp_data_slv.r,
+				cxt_ptr->lib_data.ae_otp_data_slv.g,
+				cxt_ptr->lib_data.ae_otp_data_slv.b);
+		if (obj_ptr) {
+			lib_ret = aealtek_set_slv_otp(cxt_ptr->lib_data.ae_otp_data_slv,
+									obj_ptr, &cxt_ptr->lib_data.output_data, obj_ptr->ae);
+			if (lib_ret)
+				goto exit;
+		}
 	}
-#endif
+
 #else
 	UNUSED(otp_data_slv);
 #endif
@@ -1005,7 +978,7 @@ static cmr_int aealtek_init(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_init_in 
 	ret = aealtek_get_default_param(cxt_ptr, &in_ptr->preview_work, &cxt_ptr->cur_status);
 	if (ret)
 		goto exit;
-#ifdef CONFIG_CAMERA_RT_REFOCUS
+#ifdef CONFIG_CAMERA_DUAL_SYNC
 	cxt_ptr->cur_status.ui_param.work_info_slv = in_ptr->preview_work_slv;
 #endif
 
@@ -1207,7 +1180,7 @@ exit:
 	return ret;
 }
 
-#ifdef CONFIG_CAMERA_RT_REFOCUS
+#ifdef CONFIG_CAMERA_DUAL_SYNC
 static cmr_int aealtek_write_to_sensor_slv(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_sensor_exposure *exp_ptr
 		, struct ae_ctrl_param_sensor_gain *gain_ptr)
 {
@@ -1290,6 +1263,12 @@ static cmr_int aealtek_pre_to_sensor(struct aealtek_cxt *cxt_ptr, cmr_int is_syn
 		ISP_LOGE("param is NULL error!");
 		goto exit;
 	}
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	if (cxt_ptr->is_refocus && !is_sync_call && 2 == cxt_ptr->camera_id) {
+		ISP_LOGI("return when in slave sensor");
+		return ISP_SUCCESS;
+	}
+#endif
 	if (0 == is_sync_call) {
 		sensor_exp.exp_line = cxt_ptr->sensor_exp_data.write_exp.exp_line;
 		sensor_exp.dummy = cxt_ptr->sensor_exp_data.write_exp.dummy;
@@ -2326,7 +2305,6 @@ exit:
 static cmr_int aealtek_work_preview(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_work *in_ptr, struct ae_ctrl_param_out *out_ptr)
 {
 	cmr_int ret = ISP_ERROR;
-
 	cmr_int lib_ret = 0;
 	struct alaeruntimeobj_t *obj_ptr = NULL;
 	struct ae_set_param_t set_in_param;
@@ -2334,7 +2312,6 @@ static cmr_int aealtek_work_preview(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 	enum ae_set_param_type_t type = 0;
 	struct ae_set_param_content_t *param_ct_ptr;
 	struct ae_sensor_info_t *preview_sensor_ptr = NULL;
-
 	struct aealtek_lib_exposure_data ae_exposure;
 
 	cmr_u32 max_fps = 0;
@@ -2374,12 +2351,15 @@ static cmr_int aealtek_work_preview(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 		goto exit;
 	}
 
-#ifdef CONFIG_CAMERA_RT_REFOCUS
-#ifndef CONFIG_AE_SYNC_INFO_MAPPING
-	if (cxt_ptr->is_refocus) {
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	if (cxt_ptr->is_refocus && 0 == cxt_ptr->camera_id) {
 		/* slv_preview_sensor_info */
+		cxt_ptr->nxt_status.ui_param.work_info_slv.resolution.min_fps = in_ptr->resolution.min_fps;
+		cxt_ptr->cur_status.min_frame_length_slv =
+				cxt_ptr->nxt_status.ui_param.work_info_slv.resolution.frame_line;
+
 		preview_sensor_ptr = &param_ct_ptr->slave_sensor_info;
-		ret = aealtek_sensor_info_ui2lib(cxt_ptr, &cxt_ptr->nxt_status.ui_param.work_info_slv.resolution, preview_sensor_ptr);
+		ret = aealtek_sensor_info_ui2lib_slv(cxt_ptr, &cxt_ptr->nxt_status.ui_param.work_info_slv.resolution, preview_sensor_ptr);
 		if (ret)
 			goto exit;
 		ISP_LOGI("slv param min_fps=%d lib min_fps=%d", cxt_ptr->nxt_status.ui_param.work_info_slv.resolution.min_fps,
@@ -2394,7 +2374,6 @@ static cmr_int aealtek_work_preview(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 			goto exit;
 		}
 	}
-#endif
 #endif
 
 	/* SET_PARAM_REGEN_EXP_INFO */
@@ -2624,12 +2603,11 @@ static cmr_int aealtek_capture_normal(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 		goto exit;
 	}
 
-#ifdef CONFIG_CAMERA_RT_REFOCUS
-#ifndef CONFIG_AE_SYNC_INFO_MAPPING
-	if (cxt_ptr->is_refocus) {
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	if (cxt_ptr->is_refocus && 0 == cxt_ptr->camera_id) {
 		/* slv capture_sensor_info */
 		cap_sensor_ptr = &param_ct_ptr->slave_capture_sensor_info;
-		ret = aealtek_sensor_info_ui2lib(cxt_ptr, &cxt_ptr->nxt_status.ui_param.work_info_slv.resolution, cap_sensor_ptr);
+		ret = aealtek_sensor_info_ui2lib_slv(cxt_ptr, &cxt_ptr->nxt_status.ui_param.work_info_slv.resolution, cap_sensor_ptr);
 		if (ret)
 			goto exit;
 
@@ -2643,7 +2621,6 @@ static cmr_int aealtek_capture_normal(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 			goto exit;
 		}
 	}
-#endif
 #endif
 
 	/* SET_PARAM_REGEN_EXP_INFO */
@@ -2722,7 +2699,7 @@ exit:
 	return ret;
 }
 
-#ifdef CONFIG_CAMERA_RT_REFOCUS
+#ifdef CONFIG_CAMERA_DUAL_SYNC
 static cmr_int aealtek_set_sync_mode(struct aealtek_cxt *cxt_ptr, cmr_u8 is_sync_mode)
 {
 	cmr_int ret = ISP_ERROR;
@@ -2821,12 +2798,11 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 	if (ret || NULL == cxt_ptr->seq_handle)
 		goto exit;
 
-#ifdef CONFIG_CAMERA_RT_REFOCUS
-	cxt_ptr->is_refocus = in_ptr->work_param.is_refocus;
-#ifndef CONFIG_AE_SYNC_INFO_MAPPING
-	if (cxt_ptr->is_refocus)
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	//cxt_ptr->is_refocus = in_ptr->work_param.is_refocus;
+	if (cxt_ptr->is_refocus && 0 == cxt_ptr->camera_id) {
 		ret = aealtek_set_sync_mode(cxt_ptr, 1);
-#endif
+	}
 #endif
 
 	work_mode = in_ptr->work_param.work_mode;
@@ -3388,191 +3364,32 @@ exit:
 	return ret;
 }
 
-#ifdef CONFIG_CAMERA_RT_REFOCUS
-#ifdef CONFIG_AE_SYNC_INFO_MAPPING
-cmr_u32 aealtek_sync_simple_verify_input(struct aealtek_simple_sync_input *input)
-{
-	cmr_u32 err_ret = _AE_SYNC_SIMPLE_ERR_SUCCESS;
-
-	if (input == 0)
-		return _AE_SYNC_SIMPLE_ERR_NULL_ADDR;
-
-	if (input->ud_msc_adgain == 0 ||
-	    input->ud_msc_exposure_line == 0 ||
-	    input->ud_msc_exposure_time == 0 ||
-	    input->ud_msc_iso == 0)
-		return _AE_SYNC_SIMPLE_ERR_INVALID_PARAM;
-
-	if (input->master_info.cam_info_calib.r_gain == 0 ||
-	    input->master_info.cam_info_calib.g_gain == 0 ||
-	    input->master_info.cam_info_calib.b_gain == 0)
-		return _AE_SYNC_SIMPLE_ERR_INVALID_MASTER_OTP_DAT;
-
-	if (input->slave_info.cam_info_calib.r_gain == 0 ||
-	    input->slave_info.cam_info_calib.g_gain == 0 ||
-	    input->slave_info.cam_info_calib.b_gain == 0)
-		return _AE_SYNC_SIMPLE_ERR_INVALID_SLAVE_OTP_DAT;
-
-	if (((0.000001 >= input->master_info.cam_info_sensor.fn) && (-0.000001 <= input->master_info.cam_info_sensor.fn)) ||
-	    input->master_info.cam_info_sensor.max_ad_gain <= 100 ||
-	    input->master_info.cam_info_sensor.max_exp_line < 1 ||
-	    input->master_info.cam_info_sensor.max_fps == 0 ||
-	    input->master_info.cam_info_sensor.max_fps < input->master_info.cam_info_sensor.min_fps ||
-	    input->master_info.cam_info_sensor.min_fps == 0 ||
-	    input->master_info.cam_info_sensor.min_ad_gain < 100 ||
-	    input->master_info.cam_info_sensor.min_exp_line < 1)
-		return _AE_SYNC_SIMPLE_ERR_INVALID_MASTER_SINFO_DAT;
-
-	if (((0.000001 >= input->master_info.cam_info_sensor.fn) && (-0.000001 <= input->master_info.cam_info_sensor.fn)) ||
-	    input->slave_info.cam_info_sensor.max_ad_gain <= 100 ||
-	    input->slave_info.cam_info_sensor.max_exp_line < 1 ||
-	    input->slave_info.cam_info_sensor.max_fps == 0 ||
-	    input->slave_info.cam_info_sensor.max_fps < input->slave_info.cam_info_sensor.min_fps ||
-	    input->slave_info.cam_info_sensor.min_fps == 0 ||
-	    input->slave_info.cam_info_sensor.min_ad_gain < 100 ||
-	    input->slave_info.cam_info_sensor.min_exp_line < 1)
-		return _AE_SYNC_SIMPLE_ERR_INVALID_SLAVE_SINFO_DAT;
-
-	return err_ret;
-}
-
-cmr_u32 aealtek_sync_simple_trans(struct aealtek_simple_sync_input *input, struct aealtek_simple_sync_output *output)
-{
-	cmr_u32 err_ret = _AE_SYNC_SIMPLE_ERR_SUCCESS;
-	float f_slave_time_per_line;
-
-	if (input == 0 || output == 0)
-		return _AE_SYNC_SIMPLE_ERR_NULL_ADDR;
-
-	err_ret = aealtek_sync_simple_verify_input(input);
-	if (err_ret != _AE_SYNC_SIMPLE_ERR_SUCCESS)
-		return err_ret;
-
-	/* do simple translation */
-	output->ud_slv_exif_iso = input->ud_msc_exif_iso;
-
-	output->ud_slv_iso = input->ud_msc_iso * (input->slave_info.cam_info_sensor.fn * input->slave_info.cam_info_sensor.fn /
-						  input->master_info.cam_info_sensor.fn/input->master_info.cam_info_sensor.fn);
-	output->ud_slv_adgain = output->ud_slv_iso * input->slave_info.cam_info_calib.g_gain/1000;
-
-	/* protection for AD gain */
-	if (output->ud_slv_adgain < input->slave_info.cam_info_sensor.min_ad_gain) {
-		output->ud_slv_adgain = input->slave_info.cam_info_sensor.min_ad_gain;
-		output->ud_slv_iso = output->ud_slv_adgain * 1000 / input->slave_info.cam_info_calib.g_gain;
-	}
-
-	if (output->ud_slv_adgain > input->slave_info.cam_info_sensor.max_ad_gain) {
-		output->ud_slv_adgain = input->slave_info.cam_info_sensor.max_ad_gain;
-		output->ud_slv_iso = output->ud_slv_adgain * 1000 / input->slave_info.cam_info_calib.g_gain;
-	}
-
-	output->ud_slv_exposure_time = input->ud_msc_exposure_time;
-
-	f_slave_time_per_line = (float)(1000000 * 100) / input->slave_info.cam_info_sensor.min_fps / input->slave_info.cam_info_sensor.max_exp_line;
-	output->ud_slv_exposure_line = input->ud_msc_exposure_time/f_slave_time_per_line;
-
-	/* protection for exposure line */
-	if (output->ud_slv_exposure_line < input->slave_info.cam_info_sensor.min_exp_line) {
-		output->ud_slv_exposure_line = input->slave_info.cam_info_sensor.min_exp_line;
-		output->ud_slv_exposure_time = input->slave_info.cam_info_sensor.min_exp_line * f_slave_time_per_line;
-	}
-
-	if (output->ud_slv_exposure_line > input->slave_info.cam_info_sensor.max_exp_line) {
-		output->ud_slv_exposure_line = input->slave_info.cam_info_sensor.max_exp_line;
-		output->ud_slv_exposure_time = input->slave_info.cam_info_sensor.min_exp_line * f_slave_time_per_line;
-	}
-
-	output->result_bv = input->result_bv;
-	output->ud_slv_isp_adgain = 0;   /* reserved item, fill 0 here  */
-	return err_ret;
-}
-
-static cmr_int aealtek_get_sync_info_from_mapping(struct aealtek_cxt *cxt_ptr, struct ispae_sync_info_output *ae_sync_info
-																	, struct aealtek_exposure_param *exp_gain)
-{
-	cmr_int ret = ISP_ERROR;
-	struct aealtek_simple_sync_input input;
-	struct aealtek_simple_sync_output output;
-
-	if (!cxt_ptr) {
-		ISP_LOGE("param is NULL error,%p", cxt_ptr);
-		goto exit;
-	}
-
-	input.ud_msc_adgain = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.sensor_ad_gain;
-	input.result_bv = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.bv_val;
-	input.ud_msc_exif_iso = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_cur_iso;
-	input.ud_msc_exposure_line = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.exposure_line;
-	input.ud_msc_exposure_time = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.exposure_time;
-
-	input.ud_msc_iso = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_cur_iso;
-
-	input.ud_msc_isp_adgain = 0;
-	input.master_info.cam_info_calib.r_gain = cxt_ptr->lib_data.ae_otp_data.r;
-	input.master_info.cam_info_calib.g_gain = cxt_ptr->lib_data.ae_otp_data.g;
-	input.master_info.cam_info_calib.b_gain = cxt_ptr->lib_data.ae_otp_data.b;
-	input.master_info.cam_info_sensor.fn = (float)(1.0 * cxt_ptr->init_in_param.sensor_static_info.f_num / F_NUM_BASE);
-	input.master_info.cam_info_sensor.max_ad_gain = cxt_ptr->nxt_status.ui_param.work_info.resolution.max_gain * 100;
-	input.master_info.cam_info_sensor.max_exp_line =
-		SENSOR_EXP_US_BASE/cxt_ptr->nxt_status.ui_param.work_info.resolution.min_fps/cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time;
-	input.master_info.cam_info_sensor.max_fps = cxt_ptr->nxt_status.ui_param.work_info.resolution.max_fps * 100;
-	input.master_info.cam_info_sensor.min_ad_gain = 100;
-	input.master_info.cam_info_sensor.min_exp_line = 1;
-	input.master_info.cam_info_sensor.min_fps = cxt_ptr->nxt_status.ui_param.work_info.resolution.min_fps * 100;
-
-	input.slave_info.cam_info_calib.r_gain = cxt_ptr->lib_data.ae_otp_data_slv.r;
-	input.slave_info.cam_info_calib.g_gain = cxt_ptr->lib_data.ae_otp_data_slv.g;
-	input.slave_info.cam_info_calib.b_gain = cxt_ptr->lib_data.ae_otp_data_slv.b;
-	input.slave_info.cam_info_sensor.fn = (float)(1.0 * cxt_ptr->init_in_param.sensor_static_info_slv.f_num / F_NUM_BASE);
-	input.slave_info.cam_info_sensor.max_ad_gain = cxt_ptr->nxt_status.ui_param.work_info_slv.resolution.max_gain * 100;
-	input.slave_info.cam_info_sensor.max_exp_line =
-		SENSOR_EXP_US_BASE/cxt_ptr->nxt_status.ui_param.work_info_slv.resolution.min_fps/cxt_ptr->nxt_status.ui_param.work_info_slv.resolution.line_time;
-	input.slave_info.cam_info_sensor.max_fps = cxt_ptr->nxt_status.ui_param.work_info_slv.resolution.max_fps * 100;
-	input.slave_info.cam_info_sensor.min_ad_gain = 100;
-	input.slave_info.cam_info_sensor.min_exp_line = 1;
-	input.slave_info.cam_info_sensor.min_fps = cxt_ptr->nxt_status.ui_param.work_info_slv.resolution.min_fps * 100;
-
-	ret = aealtek_sync_simple_trans(&input, &output);
-	if (_AE_SYNC_SIMPLE_ERR_SUCCESS != ret) {
-		ISP_LOGE("aealtek_sync_simple_trans err: %ld \r\n", ret);
-	} else {
-		ISP_LOGI("aealtek_sync_simple_trans BV: %d, ISO : %d, EXIF ISO: %d, gain: %d, Line: %d, Time: %d, ISP D gain: %d \r\n",
-			 output.result_bv, output.ud_slv_iso, output.ud_slv_exif_iso,
-			 output.ud_slv_adgain, output.ud_slv_exposure_line, output.ud_slv_exposure_time, output.ud_slv_isp_adgain);
-
-		ae_sync_info->master.exposure_time = input.ud_msc_exposure_time;
-		ae_sync_info->master.adgain = input.ud_msc_adgain;
-		ae_sync_info->master.iso = input.ud_msc_iso;
-		ae_sync_info->master.result_bv = input.result_bv;
-		ae_sync_info->slaver.exposure_time = output.ud_slv_exposure_time;
-		ae_sync_info->slaver.adgain = output.ud_slv_adgain;
-		ae_sync_info->slaver.iso = output.ud_slv_iso;
-		ae_sync_info->slaver.result_bv = output.result_bv;
-
-		exp_gain->exp_line = output.ud_slv_exposure_line;
-		exp_gain->exp_time = output.ud_slv_exposure_time;
-		exp_gain->gain = output.ud_slv_adgain * SENSOR_GAIN_BASE / LIB_GAIN_BASE;
-	}
-
-	return ISP_SUCCESS;
-exit:
-	ISP_LOGE("ret=%ld", ret);
-	return ret;
-}
-#else
+#ifdef CONFIG_CAMERA_DUAL_SYNC
 static cmr_int aealtek_get_sync_info_from_lib(struct aealtek_cxt *cxt_ptr, struct ispae_sync_info_output *ae_sync_info
-																	, struct aealtek_exposure_param *exp_gain)
+										, struct aealtek_exposure_param *exp_gain)
 {
 	cmr_int ret = ISP_ERROR;
 	struct ae_match_runtime_data_t master_dat;
 	struct ae_match_runtime_data_t slave_dat;
 	struct alaeruntimeobj_t *obj_ptr = NULL;
+	cmr_u32 line_time;
+	cmr_u32 line_time_slv;
+	cmr_u32 min_frame_length = 0;
+	cmr_u32 min_frame_length_slv = 0;
 
 	if (!cxt_ptr) {
 		ISP_LOGE("param is NULL error,%p!", cxt_ptr);
 		goto exit;
 	}
 
+	exp_gain->dummy = 0;
+	line_time = cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time;
+	line_time_slv = cxt_ptr->nxt_status.ui_param.work_info_slv.resolution.line_time;
+	min_frame_length = cxt_ptr->cur_status.min_frame_length;
+	min_frame_length_slv = cxt_ptr->cur_status.min_frame_length_slv;
+
+	ISP_LOGV("master line_time =%d min_frame_length=%d,slave line_time = %d,min_frame_length_slv=%d",
+			line_time, min_frame_length, line_time_slv, min_frame_length_slv);
 	master_dat.uc_sensor_mode = 0;
 	master_dat.sensor_ad_gain = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.sensor_ad_gain;
 	master_dat.bv_val = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.bv_val;
@@ -3580,18 +3397,44 @@ static cmr_int aealtek_get_sync_info_from_lib(struct aealtek_cxt *cxt_ptr, struc
 	master_dat.exposure_line = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.exposure_line;
 	master_dat.exposure_time = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.exposure_time;
 	master_dat.ISO = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_cur_iso;
-	master_dat.uwCur_fps = SENSOR_EXP_US_BASE/((cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.exposure_line+cxt_ptr->sensor_exp_data.lib_exp.dummy)
-			*cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time);
+	master_dat.uwCur_fps = SENSOR_EXP_US_BASE / ((cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.exposure_line + cxt_ptr->sensor_exp_data.lib_exp.dummy)
+			* line_time);
 	master_dat.ISP_D_gain = 0;
+
+	ISP_LOGI("master BV: %d, ISO : %d, EXIF ISO: %d, gain: %d, Line: %d, dummy: %d, Time: %d, ISP D gain: %d, fps: %d \r\n",
+			master_dat.bv_val, master_dat.ISO, master_dat.EXIF_ISO,
+			master_dat.sensor_ad_gain, master_dat.exposure_line, cxt_ptr->sensor_exp_data.lib_exp.dummy,
+			master_dat.exposure_time, master_dat.ISP_D_gain, master_dat.uwCur_fps);
 
 	obj_ptr = &cxt_ptr->al_obj;
 
 	if (obj_ptr && obj_ptr->sync_process)
 		ret = obj_ptr->sync_process(&master_dat, obj_ptr->ae, &slave_dat);
 
-	ISP_LOGI("get_sync_info_from_lib BV: %d, ISO : %d, EXIF ISO: %d, gain: %d, Line: %d, Time: %d, ISP D gain: %d \r\n"
-			, slave_dat.bv_val, slave_dat.ISO, slave_dat.EXIF_ISO,
-			slave_dat.sensor_ad_gain, slave_dat.exposure_line, slave_dat.exposure_time, slave_dat.ISP_D_gain);
+	ISP_LOGI("get slave BV: %d, ISO : %d, EXIF ISO: %d, gain: %d, Line: %d, Time: %d, ISP D gain: %d, fps: %d \r\n",
+			slave_dat.bv_val, slave_dat.ISO, slave_dat.EXIF_ISO,
+			slave_dat.sensor_ad_gain, slave_dat.exposure_line, slave_dat.exposure_time, slave_dat.ISP_D_gain,
+			slave_dat.uwCur_fps);
+
+	if (slave_dat.exposure_line < min_frame_length_slv) {
+		exp_gain->dummy = min_frame_length_slv - slave_dat.exposure_line;
+	}
+	slave_dat.uwCur_fps = SENSOR_EXP_US_BASE / ((slave_dat.exposure_line + exp_gain->dummy) * line_time_slv);
+	ISP_LOGI("before slave fps: %d",slave_dat.uwCur_fps);
+
+	if ((master_dat.exposure_line > min_frame_length || slave_dat.exposure_line > min_frame_length_slv) && min_frame_length && min_frame_length_slv) {
+		if (master_dat.exposure_time > slave_dat.exposure_time) {
+			ISP_LOGI("slave: should set slave sensor dummy line to follow master low fps");
+			exp_gain->dummy =
+				((master_dat.exposure_time - slave_dat.exposure_time) * SENSOR_EXP_BASE / line_time_slv * 10 + 5) / 10;
+		} else if (master_dat.exposure_time < slave_dat.exposure_time) {
+			ISP_LOGI("master: should set master sensor dummy line to follow slave low fps");
+			cxt_ptr->sensor_exp_data.write_exp.dummy =
+				(((slave_dat.exposure_time - master_dat.exposure_time) * SENSOR_EXP_BASE) / line_time * 10 + 5) / 10;
+		}
+	}
+	slave_dat.uwCur_fps = SENSOR_EXP_US_BASE / ((slave_dat.exposure_line + exp_gain->dummy) * line_time_slv);
+	ISP_LOGI("after actual slave fps: %d",slave_dat.uwCur_fps);
 
 	ae_sync_info->master.exposure_time = master_dat.exposure_time;
 	ae_sync_info->master.adgain = master_dat.sensor_ad_gain;
@@ -3605,6 +3448,7 @@ static cmr_int aealtek_get_sync_info_from_lib(struct aealtek_cxt *cxt_ptr, struc
 	exp_gain->exp_line = slave_dat.exposure_line;
 	exp_gain->exp_time = slave_dat.exposure_time;
 	exp_gain->gain = slave_dat.sensor_ad_gain * SENSOR_GAIN_BASE / LIB_GAIN_BASE;
+	exp_gain->iso = slave_dat.ISO;
 
 	return ISP_SUCCESS;
 exit:
@@ -3651,7 +3495,7 @@ exit:
 	ISP_LOGE("ret=%ld", ret);
 	return ret;
 }
-#endif
+
 static cmr_int aealtek_callback_sync_info(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr)
 {
 	cmr_int ret = ISP_ERROR;
@@ -3668,24 +3512,27 @@ static cmr_int aealtek_callback_sync_info(struct aealtek_cxt *cxt_ptr, struct ae
 
 	sensor_exp.dummy = 0;
 	sensor_exp.size_index = cxt_ptr->cur_status.ui_param.work_info_slv.resolution.sensor_size_index;
-#ifdef CONFIG_AE_SYNC_INFO_MAPPING
-	aealtek_get_sync_info_from_mapping(cxt_ptr, &ae_sync_info, &exp_param);
-	UNUSED(in_ptr);
-#else
+
 	aealtek_get_sync_info_from_lib(cxt_ptr, &ae_sync_info, &exp_param);
 	sensor_exp.exp_line = exp_param.exp_line;
 	sensor_gain.gain = exp_param.gain;
+	sensor_exp.dummy = exp_param.dummy;
 
 	ret = aealtek_set_sof_to_lib_slv(cxt_ptr, in_ptr, exp_param);
 	if (ret)
 		goto exit;
-#endif
 
+	ret = aealtek_pre_to_sensor(cxt_ptr, 0, 0);
 	ret = aealtek_write_to_sensor_slv(cxt_ptr, &sensor_exp, &sensor_gain);
 	if (ret)
 		goto exit;
-	callback_in.ae_sync_info = &ae_sync_info;
-	cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRL_CB_SYNC_INFO, &callback_in);
+	if (cxt_ptr->init_in_param.ops_in.set_iso_slv) {
+		ISP_LOGI("iso_speed_slv =%d", exp_param.iso);
+		cxt_ptr->init_in_param.ops_in.set_iso_slv(cxt_ptr->caller_handle, exp_param.iso);
+	}
+
+	//callback_in.ae_sync_info = &ae_sync_info;
+	//cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRL_CB_SYNC_INFO, &callback_in);
 
 	return ISP_SUCCESS;
 exit:
@@ -3793,13 +3640,15 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	ret = aealtek_set_sof_to_lib(cxt_ptr, in_ptr, cxt_ptr->sensor_exp_data.actual_exp);
 	if (ret)
 		goto exit;
-	if (0 == cxt_ptr->nxt_status.is_hdr_status) {
+
+	if (!cxt_ptr->is_refocus && 0 == cxt_ptr->nxt_status.is_hdr_status) {
 		ret = aealtek_pre_to_sensor(cxt_ptr, 0, 0);
 		if (ret)
 			goto exit;
 	}
-#ifdef CONFIG_CAMERA_RT_REFOCUS
-	if (cxt_ptr->is_refocus) {
+
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	if (cxt_ptr->is_refocus && 0 == cxt_ptr->camera_id) {
 		ret = aealtek_callback_sync_info(cxt_ptr, in_ptr);
 	}
 #endif
@@ -4478,6 +4327,7 @@ static cmr_int ae_altek_adpt_init(void *in, void *out, cmr_handle *handle)
 	cxt_ptr->camera_id = in_ptr->camera_id;
 	cxt_ptr->caller_handle = in_ptr->caller_handle;
 	cxt_ptr->init_in_param = *in_ptr;
+	cxt_ptr->is_refocus = in_ptr->preview_work.is_refocus;
 
 	ISP_LOGI("init frame %dx%d,lint_time=%d,index=%d",
 		cxt_ptr->init_in_param.preview_work.resolution.frame_size.w,

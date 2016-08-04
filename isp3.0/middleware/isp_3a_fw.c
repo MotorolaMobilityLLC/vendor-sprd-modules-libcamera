@@ -190,10 +190,9 @@ struct isp3a_fw_context {
 	struct isp3a_fw_debug_context debug_data;
 	struct isp_sensor_ex_info ex_info;
 	struct sensor_otp_cust_info *otp_data;
-#ifdef CONFIG_CAMERA_RT_REFOCUS
+	cmr_u16 is_refocus;
 	struct sensor_raw_ioctrl *ioctrl_ptr_slv;
-	struct sensor_otp_cust_info *otp_data_slv;
-#endif
+	struct sensor_dual_otp_info *dual_otp;
 };
 /*************************************INTERNAK DECLARATION***************************************/
 static cmr_int isp3a_get_dev_time(cmr_handle handle, cmr_u32 *sec_ptr, cmr_u32 *usec_ptr);
@@ -202,9 +201,11 @@ static cmr_int isp3a_awb_callback(cmr_handle handle, cmr_u32 cmd, struct awb_ctr
 static cmr_int isp3a_afl_callback(cmr_handle handle, enum afl_ctrl_cb_type cmd, struct afl_ctrl_callback_in *in_ptr);
 static cmr_int isp3a_set_exposure(cmr_handle handle, struct ae_ctrl_param_sensor_exposure *in_ptr);
 static cmr_int isp3a_ae_set_gain(cmr_handle handle, struct ae_ctrl_param_sensor_gain *in_ptr);
-#ifdef CONFIG_CAMERA_RT_REFOCUS
+#ifdef CONFIG_CAMERA_DUAL_SYNC
 static cmr_int isp3a_set_exposure_slv(cmr_handle handle, struct ae_ctrl_param_sensor_exposure *in_ptr);
 static cmr_int isp3a_ae_set_gain_slv(cmr_handle handle, struct ae_ctrl_param_sensor_gain *in_ptr);
+static cmr_int isp3a_set_slave_iso(cmr_handle isp_3a_handle, cmr_u32 iso);
+static cmr_int isp3a_match_data_ctrl(cmr_handle handler, struct match_data_param *in_ptr);
 #endif
 static cmr_int isp3a_flash_get_charge(cmr_handle handle, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell_ptr);
 static cmr_int isp3a_flash_get_time(cmr_handle handle, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell_ptr);
@@ -574,14 +575,13 @@ exit:
 	return ret;
 }
 
-#ifdef CONFIG_CAMERA_RT_REFOCUS
+#ifdef CONFIG_CAMERA_DUAL_SYNC
 cmr_int isp3a_set_exposure_slv(cmr_handle handle, struct ae_ctrl_param_sensor_exposure *in_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)handle;
 	cmr_u32                                     sensor_param = 0;
 	struct sensor_ex_exposure                   ex_exp;
-
 
 	if (!cxt || !cxt->ioctrl_ptr_slv || !in_ptr) {
 		ISP_LOGE("don't have io interface");
@@ -616,6 +616,38 @@ cmr_int isp3a_ae_set_gain_slv(cmr_handle handle, struct ae_ctrl_param_sensor_gai
 		goto exit;
 	}
 	ret = cxt->ioctrl_ptr_slv->set_gain(cxt->ioctrl_ptr_slv->caller_handler, in_ptr->gain);
+exit:
+	ISP_LOGI("done %ld", ret);
+	return ret;
+}
+
+cmr_int isp3a_set_slave_iso(cmr_handle isp_3a_handle, cmr_u32 iso)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
+	union awb_ctrl_cmd_in                       input;
+
+	input.iso_speed = iso;
+	ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_SLAVE_ISO_SPEED, &input, NULL);
+exit:
+	return ret;
+}
+
+cmr_int isp3a_match_data_ctrl(cmr_handle handler, struct match_data_param *in_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                    *cxt = (struct isp3a_fw_context *)handler;
+
+	if (!cxt || !in_ptr) {
+		ISP_LOGE("don't have io interface");
+		goto exit;
+	}
+
+	ret = isp_dev_access_match_data_ctrl(cxt->dev_access_handle, in_ptr);
+
+	if (ret) {
+		ISP_LOGE("failed to isp_dev_access_set_sensor_match_data");
+	}
 exit:
 	ISP_LOGI("done %ld", ret);
 	return ret;
@@ -860,7 +892,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 	struct afl_ctrl_init_in                     afl_input;
 	struct afl_ctrl_init_out                    afl_output;
 	struct sensor_raw_info                      *sensor_raw_info_ptr = (struct sensor_raw_info *)input_ptr->setting_param_ptr;
-#ifdef CONFIG_CAMERA_RT_REFOCUS
+#ifdef CONFIG_CAMERA_DUAL_SYNC
 	struct sensor_raw_info                      *sensor_raw_info_ptr_slv = (struct sensor_raw_info *)input_ptr->setting_param_ptr_slv;
 #endif
 	float                                       libVersion;
@@ -914,6 +946,16 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 
 	memset(&awb_input, 0x00, sizeof(awb_input));
 	awb_input.awb_cb = isp3a_awb_callback;
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	awb_input.is_refocus = cxt->is_refocus;
+	awb_input.match_ctrl = isp3a_match_data_ctrl;
+	awb_input.tuning_param_slv = input_ptr->bin_info_slv.awb_addr;
+	if (cxt->dual_otp) {
+		awb_input.calibration_gain_slv.r = cxt->dual_otp->slave_isp_awb_info.gain_r;
+		awb_input.calibration_gain_slv.g = cxt->dual_otp->slave_isp_awb_info.gain_g;
+		awb_input.calibration_gain_slv.b = cxt->dual_otp->slave_isp_awb_info.gain_b;
+	}
+#endif
 	awb_input.camera_id = input_ptr->camera_id;
 	awb_input.lib_config = input_ptr->awb_config;
 	awb_input.wb_mode = AWB_CTRL_WB_MODE_AUTO;
@@ -974,9 +1016,13 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 	ae_input.preview_work.resolution.max_gain = input_ptr->ex_info.max_adgain;
 	ae_input.preview_work.resolution.sensor_size_index = 1;
 
-#ifdef CONFIG_CAMERA_RT_REFOCUS
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	ae_input.preview_work.is_refocus = cxt->is_refocus;
+	ae_input.preview_work_slv.is_refocus = cxt->is_refocus;
 	ae_input.ops_in.set_again_slv = isp3a_ae_set_gain_slv;
 	ae_input.ops_in.set_exposure_slv = isp3a_set_exposure_slv;
+	ae_input.ops_in.set_iso_slv = isp3a_set_slave_iso;
+	ae_input.ops_in.match_data_ctrl = isp3a_match_data_ctrl;
 	ae_input.sensor_static_info_slv.f_num = input_ptr->ex_info_slv.f_num;
 	ae_input.sensor_static_info_slv.exposure_valid_num = input_ptr->ex_info_slv.exp_valid_frame_num;
 	ae_input.sensor_static_info_slv.gain_valid_num = input_ptr->ex_info_slv.adgain_valid_frame_num;
@@ -995,10 +1041,10 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 	ae_input.preview_work_slv.resolution.max_fps = input_ptr->ex_info_slv.max_fps;
 	ae_input.preview_work_slv.resolution.max_gain = input_ptr->ex_info_slv.max_adgain;
 	ae_input.preview_work_slv.resolution.sensor_size_index = 1;
-	if (cxt->otp_data_slv) {
-		ae_input.otp_data_slv.r = cxt->otp_data_slv->isp_awb_info.gain_r;
-		ae_input.otp_data_slv.g = cxt->otp_data_slv->isp_awb_info.gain_g;
-		ae_input.otp_data_slv.b = cxt->otp_data_slv->isp_awb_info.gain_b;
+	if (cxt->dual_otp) {
+		ae_input.otp_data_slv.r = cxt->dual_otp->slave_isp_awb_info.gain_r;
+		ae_input.otp_data_slv.g = cxt->dual_otp->slave_isp_awb_info.gain_g;
+		ae_input.otp_data_slv.b = cxt->dual_otp->slave_isp_awb_info.gain_b;
 	}
 #endif
 
@@ -1840,9 +1886,30 @@ cmr_int isp3a_set_awb_capture_gain(cmr_handle isp_3a_handle)
 
 	gain = cxt->awb_cxt.proc_out.gain_capture;
 	cxt->awb_cxt.proc_out.gain = cxt->awb_cxt.proc_out.gain_capture;
-	ret = isp_dev_access_cfg_awb_gain(cxt->dev_access_handle, &gain);
 	ct = cxt->awb_cxt.proc_out.ct_capture;
 	input_data.value = ct;
+
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	if (cxt->is_refocus && 2 == cxt->camera_id) {
+		struct match_data_param match_param;
+
+		cmr_bzero(&match_param, sizeof(match_param));
+		match_param.op = GET_MATCH_AWB_DATA;
+		ret = isp3a_match_data_ctrl(cxt, &match_param);
+		if (ret) {
+			ISP_LOGE("failed to get match_data");
+		}
+		gain = match_param.awb_data.gain_capture;
+		cxt->awb_cxt.proc_out.gain = match_param.awb_data.gain_capture;
+		ct = match_param.awb_data.ct_capture;
+		input_data.value = ct;
+		ISP_LOGI("camera id %d, get match out gain_capture,%d,%d,%d, ct:%d",
+			cxt->camera_id, match_param.awb_data.gain_capture.r, match_param.awb_data.gain_capture.g,
+			match_param.awb_data.gain_capture.b, match_param.awb_data.ct_capture);
+	}
+#endif
+	ret = isp_dev_access_cfg_awb_gain(cxt->dev_access_handle, &gain);
+
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_ACCESS_SET_COLOR_TEMP, &input_data, NULL);
 	ISP_LOGI("set capture gain %d %d %d,ct:%d", gain.r, gain.g, gain.b, ct);
 
@@ -3312,6 +3379,35 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 		sof_cfg_info.color_temp = cxt->awb_cxt.proc_out.ct;
 		sof_cfg_info.is_update = 1;
 	}
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	if (cxt->is_refocus && 2 == cxt->camera_id) {
+		struct match_data_param match_param;
+
+		cmr_bzero(&match_param, sizeof(match_param));
+		match_param.op = GET_MATCH_AWB_DATA;
+		ret = isp3a_match_data_ctrl(cxt, &match_param);
+		if (ret) {
+			ISP_LOGE("failed to get match_data");
+		}
+
+		sof_cfg_info.is_update = 0;
+		if (match_param.awb_data.is_update) {
+			sof_cfg_info.awb_gain.r = match_param.awb_data.gain.r;
+			sof_cfg_info.awb_gain.g = match_param.awb_data.gain.g;
+			sof_cfg_info.awb_gain.b = match_param.awb_data.gain.b;
+			sof_cfg_info.awb_b_gain.r = match_param.awb_data.gain_balanced.r;
+			sof_cfg_info.awb_b_gain.g = match_param.awb_data.gain_balanced.g;
+			sof_cfg_info.awb_b_gain.b = match_param.awb_data.gain_balanced.b;
+			sof_cfg_info.color_temp = match_param.awb_data.ct;
+			sof_cfg_info.is_update = 1;
+		}
+
+		ISP_LOGI("camera id %d, get match out awb_gain,%d,%d,%d,gain_balanced,%d,%d,%d,ct:%d, updata:%d",
+			cxt->camera_id, match_param.awb_data.gain.r, match_param.awb_data.gain.g, match_param.awb_data.gain.b,
+			match_param.awb_data.gain_balanced.r, match_param.awb_data.gain_balanced.g, match_param.awb_data.gain_balanced.b,
+			match_param.awb_data.ct, match_param.awb_data.is_update);
+	}
+#endif
 
 	ae_in.sof_param.frame_index = cxt->sof_idx;
 	ae_in.sof_param.timestamp.sec = sof_info->time_stamp.sec;
@@ -3531,6 +3627,7 @@ cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start *input_ptr)
 	}
 
 	cxt->sof_idx = 0;
+	//cxt->is_refocus = input_ptr->is_refocus;//TBD
 #if defined (CONFIG_Y_IMG_TO_ISP)
 	if (input_ptr->live_view_sz.w && input_ptr->live_view_sz.h) {
 		af_in.live_view_sz.img_width = input_ptr->live_view_sz.w;
@@ -3588,6 +3685,7 @@ cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start *input_ptr)
 		goto exit;
 	}
 	/* HW AE cfg */
+	awb_in.work_param.is_refocus = input_ptr->is_refocus;
 	awb_in.work_param.work_mode = input_ptr->work_mode;
 	awb_in.work_param.capture_mode = input_ptr->capture_mode;
 	awb_in.work_param.sensor_size.w = input_ptr->resolution_info.crop.width;
@@ -3671,13 +3769,31 @@ cmr_int isp_3a_fw_init(struct isp_3a_fw_init_in *input_ptr, cmr_handle *isp_3a_h
 		cxt->otp_data = input_ptr->otp_data;
 	}
 
-#ifdef CONFIG_CAMERA_RT_REFOCUS
-	sensor_raw_info_ptr_slv = (struct sensor_raw_info *)input_ptr->setting_param_ptr_slv;
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	cxt->is_refocus = input_ptr->is_refocus;
+	if (input_ptr->is_refocus && input_ptr->dual_otp && input_ptr->dual_otp->single_otp_ptr) {
+		cxt->dual_otp = input_ptr->dual_otp;
+		if (0 == input_ptr->camera_id) {/*master*/
+			cxt->otp_data = input_ptr->dual_otp->single_otp_ptr;
+			cxt->otp_data->isp_awb_info = input_ptr->dual_otp->master_isp_awb_info;
+			cxt->otp_data->lsc_info = input_ptr->dual_otp->master_lsc_info;
+			ISP_LOGI("master iso r g b %d %d,%d,%d,lsc size=%d",
+					cxt->otp_data->isp_awb_info.iso, cxt->otp_data->isp_awb_info.gain_r,
+					cxt->otp_data->isp_awb_info.gain_g, cxt->otp_data->isp_awb_info.gain_b,
+					cxt->otp_data->lsc_info.lsc_data_size);
+		} else if (2 == input_ptr->camera_id) {/*slave*/
+			cxt->otp_data = input_ptr->dual_otp->single_otp_ptr;
+			cxt->otp_data->isp_awb_info = input_ptr->dual_otp->slave_isp_awb_info;
+			cxt->otp_data->lsc_info = input_ptr->dual_otp->slave_lsc_info;
+			ISP_LOGI("slave iso r g b %d %d,%d,%d,lsc size=%d",
+					cxt->otp_data->isp_awb_info.iso, cxt->otp_data->isp_awb_info.gain_r,
+					cxt->otp_data->isp_awb_info.gain_g, cxt->otp_data->isp_awb_info.gain_b,
+					cxt->otp_data->lsc_info.lsc_data_size);
+		}
+	}
+	sensor_raw_info_ptr_slv = (struct sensor_raw_info*)input_ptr->setting_param_ptr_slv;
 	if (NULL != sensor_raw_info_ptr_slv)
 		cxt->ioctrl_ptr_slv = sensor_raw_info_ptr_slv->ioctrl_ptr;
-	if (input_ptr->otp_data_slv) {
-		cxt->otp_data_slv = input_ptr->otp_data_slv;
-	}
 #endif
 
 	sem_init(&cxt->statistics_data_sm, 0, 1);
