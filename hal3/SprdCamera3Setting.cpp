@@ -174,7 +174,7 @@ const int32_t ksupported_preview_formats[4] = {HAL_PIXEL_FORMAT_RAW16,
 												HAL_PIXEL_FORMAT_YV12,
 												HAL_PIXEL_FORMAT_YCrCb_420_SP};
 
-const int32_t kavailable_fps_ranges_back[] = {5,15, 5,20, 5,30, 30,30};//{5, 20, 8, 20, 10, 20, 5, 25, 10, 25, 5, 30, 10, 30};
+const int32_t kavailable_fps_ranges_back[] = {5,15, 5,20, 5,24, 5,30, 24,24, 30,30};//{5, 20, 8, 20, 10, 20, 5, 25, 10, 25, 5, 30, 10, 30};
 const int32_t kavailable_fps_ranges_front[] = {5,15, 5,30, 15,30, 30,30};//{5, 15, 5, 20, 10, 20, 5, 25, 10, 25, 5, 30, 10, 30};
 
 const int32_t kexposureCompensationRange[2] = {-3,3};
@@ -550,10 +550,10 @@ const int32_t kavailable_back_ext_stream_configurations[CAMERA_SETTINGS_CONFIG_A
 
 const int64_t kavailable_back_min_frame_durations[CAMERA_SETTINGS_CONFIG_ARRAYSIZE][4] = {
 #if defined(CONFIG_CAMERA_SUPPORT_21M)
-	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 5312, 3984, 33331760L},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 5312, 3984, 41666666L},
 #endif
 #if defined(CONFIG_CAMERA_SUPPORT_16M)
-	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 4608, 3456, 33331760L},
+	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 4608, 3456, 41666666L},
 #endif
 #if defined(CONFIG_CAMERA_SUPPORT_13M)
 	//{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 4128, 3104, 33331760L},
@@ -601,10 +601,10 @@ const int64_t kavailable_back_min_frame_durations[CAMERA_SETTINGS_CONFIG_ARRAYSI
 	{HAL_PIXEL_FORMAT_YV12, 176, 144, 33331760L},
 
 #if defined(CONFIG_CAMERA_SUPPORT_21M)
-	{HAL_PIXEL_FORMAT_YCbCr_420_888, 5312, 3984, 33331760L},
+	{HAL_PIXEL_FORMAT_YCbCr_420_888, 5312, 3984, 41666666L},
 #endif
 #if defined(CONFIG_CAMERA_SUPPORT_16M)
-	{HAL_PIXEL_FORMAT_YCbCr_420_888, 4608, 3456, 33331760L},
+	{HAL_PIXEL_FORMAT_YCbCr_420_888, 4608, 3456, 41666666L},
 #endif
 #if defined(CONFIG_CAMERA_SUPPORT_13M)
 //	{HAL_PIXEL_FORMAT_YCbCr_420_888, 4128, 3104, 33331760L},
