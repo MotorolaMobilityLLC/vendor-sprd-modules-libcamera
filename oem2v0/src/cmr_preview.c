@@ -5082,6 +5082,9 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id)
 			goto exit;
 		}
 
+		if (handle->prev_cxt[camera_id].prev_param.preview_eb && (handle->prev_cxt[camera_id].prev_mode > handle->prev_cxt[camera_id].cap_mode)) {
+			handle->prev_cxt[camera_id].cap_mode = handle->prev_cxt[camera_id].prev_mode;
+		}
 		/*caculate max size for capture*/
 		handle->prev_cxt[camera_id].max_size.width  = alg_pic_size->width;
 		handle->prev_cxt[camera_id].max_size.height = alg_pic_size->height;
