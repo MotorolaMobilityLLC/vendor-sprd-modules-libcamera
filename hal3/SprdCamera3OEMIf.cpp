@@ -1381,10 +1381,36 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode)
 		fps_param.min_fps = controlInfo.ae_target_fps_range[1];
 		fps_param.max_fps = controlInfo.ae_target_fps_range[1];
 		fps_param.video_mode = 1;
+
+		//to set recording fps by setprop
+		char prop[PROPERTY_VALUE_MAX];
+		int val_max = 0;
+		int val_min = 0;
+		property_get("persist.sys.camera.record.fps", prop, "0");
+		if(atoi(prop) != 0) {
+			val_min = atoi(prop)%100;
+			val_max = atoi(prop)/100;
+			fps_param.min_fps = val_min > 5 ? val_min : 5;
+			fps_param.max_fps = val_max;
+		}
+
 	} else {
 		fps_param.min_fps = controlInfo.ae_target_fps_range[0];
 		fps_param.max_fps = controlInfo.ae_target_fps_range[1];
 		fps_param.video_mode = 0;
+
+		//to set preview fps by setprop
+		char prop[PROPERTY_VALUE_MAX];
+		int val_max = 0;
+		int val_min = 0;
+		property_get("persist.sys.camera.preview.fps", prop, "0");
+		if(atoi(prop) != 0) {
+			val_min = atoi(prop)%100;
+			val_max = atoi(prop)/100;
+			fps_param.min_fps = val_min > 5 ? val_min : 5;
+			fps_param.max_fps = val_max;
+		}
+
 	}
 	SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_RANGE_FPS, (cmr_uint)&fps_param);
 
