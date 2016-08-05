@@ -1835,7 +1835,10 @@ void sns_set_status(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E sensor_id
 				SENSOR_LOGI("Sensor_sleep of id %d",i);
 			}
 #endif
-			hw_Sensor_PowerDown(sensor_cxt->sensor_hw_handler, (cmr_u32)sensor_cxt->sensor_info_ptr->power_down_level);
+			if (sensor_id == 3 & i == 1 || sensor_id == 1 & i == 3)
+				SENSOR_LOGI("no need to hw_Sensor_PowerDown");
+			else
+				hw_Sensor_PowerDown(sensor_cxt->sensor_hw_handler, (cmr_u32)sensor_cxt->sensor_info_ptr->power_down_level);
 			SENSOR_LOGI("Sensor_sleep of id %d",i);
 		}
 	}

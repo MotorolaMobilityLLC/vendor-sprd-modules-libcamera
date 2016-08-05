@@ -51,6 +51,7 @@
 #define BACK_CAMERA_ID            0
 #define FRONT_CAMERA_ID           1
 #define DEV2_CAMERA_ID           2
+#define DEV3_CAMERA_ID           3
 #define JPEG_SMALL_SIZE           (300 * 1024)
 #define ADDR_BY_WORD(a)           (((a) + 3 ) & (~3))
 #define CMR_NO_MEM(a, b) \
@@ -280,7 +281,7 @@ int camera_pre_capture_buf_id(cmr_u32 camera_id)
 
 	int buffer_id = 0;
 
-	if (FRONT_CAMERA_ID == camera_id) {
+	if (FRONT_CAMERA_ID == camera_id || DEV3_CAMERA_ID == camera_id) {
 #if defined(CONFIG_FRONT_CAMERA_SUPPORT_13M)
 		buffer_id = IMG_DP0_MEGA;
 #elif defined(CONFIG_FRONT_CAMERA_SUPPORT_8M)
@@ -300,27 +301,7 @@ int camera_pre_capture_buf_id(cmr_u32 camera_id)
 #else
 		buffer_id = IMG_2P0_MEGA;
 #endif
-	} else if (DEV2_CAMERA_ID == camera_id) {
-#if defined(CONFIG_CAMERA_DEV_2_SUPPORT_13M)
-		buffer_id = IMG_DP0_MEGA;
-#elif defined(CONFIG_CAMERA_DEV_2_SUPPORT_8M)
-		buffer_id = IMG_8P0_MEGA;
-#elif defined(CONFIG_CAMERA_DEV_2_SUPPORT_7M)
-		buffer_id = IMG_7P0_MEGA;
-#elif defined(CONFIG_CAMERA_DEV_2_SUPPORT_6M)
-		buffer_id = IMG_6P0_MEGA;
-#elif defined(CONFIG_CAMERA_DEV_2_SUPPORT_5M)
-		buffer_id = IMG_5P0_MEGA;
-#elif defined(CONFIG_CAMERA_DEV_2_SUPPORT_4M)
-		buffer_id = IMG_4P0_MEGA;
-#elif defined(CONFIG_CAMERA_DEV_2_SUPPORT_3M)
-		buffer_id = IMG_3P0_MEGA;
-#elif defined(CONFIG_CAMERA_DEV_2_SUPPORT_2M)
-		buffer_id = IMG_2P0_MEGA;
-#else
-		buffer_id = IMG_2P0_MEGA;
-#endif
-	} else {
+	} else if (BACK_CAMERA_ID == camera_id  || DEV2_CAMERA_ID == camera_id) {
 #if defined(CONFIG_CAMERA_SUPPORT_21M)
 		buffer_id = IMG_15P0_MEGA;
 #elif defined(CONFIG_CAMERA_SUPPORT_16M)
@@ -340,6 +321,27 @@ int camera_pre_capture_buf_id(cmr_u32 camera_id)
 #elif defined(CONFIG_CAMERA_SUPPORT_3M)
 		buffer_id = IMG_3P0_MEGA;
 #elif defined(CONFIG_CAMERA_SUPPORT_2M)
+		buffer_id = IMG_2P0_MEGA;
+#else
+		buffer_id = IMG_2P0_MEGA;
+#endif
+
+	} else {
+#if defined(CONFIG_CAMERA_DEV_2_SUPPORT_13M)
+		buffer_id = IMG_DP0_MEGA;
+#elif defined(CONFIG_CAMERA_DEV_2_SUPPORT_8M)
+		buffer_id = IMG_8P0_MEGA;
+#elif defined(CONFIG_CAMERA_DEV_2_SUPPORT_7M)
+		buffer_id = IMG_7P0_MEGA;
+#elif defined(CONFIG_CAMERA_DEV_2_SUPPORT_6M)
+		buffer_id = IMG_6P0_MEGA;
+#elif defined(CONFIG_CAMERA_DEV_2_SUPPORT_5M)
+		buffer_id = IMG_5P0_MEGA;
+#elif defined(CONFIG_CAMERA_DEV_2_SUPPORT_4M)
+		buffer_id = IMG_4P0_MEGA;
+#elif defined(CONFIG_CAMERA_DEV_2_SUPPORT_3M)
+		buffer_id = IMG_3P0_MEGA;
+#elif defined(CONFIG_CAMERA_DEV_2_SUPPORT_2M)
 		buffer_id = IMG_2P0_MEGA;
 #else
 		buffer_id = IMG_2P0_MEGA;
@@ -404,14 +406,14 @@ int camera_pre_capture_buf_size(cmr_u32 camera_id,
 
 	*mem_sum = 1;
 
-	if (BACK_CAMERA_ID == camera_id) {
+	if (BACK_CAMERA_ID == camera_id || DEV2_CAMERA_ID == camera_id ) {
 		mem_tab_ptr = (struct cap_size_to_mem*)&back_cam_raw_mem_size_tab[0];
 		yuv_mem_tab_ptr = (struct cap_size_to_mem*)&back_cam_mem_size_tab[0];
 		if (is_raw_capture)
 			*mem_size = MAX(mem_tab_ptr[mem_size_id].mem_size, yuv_mem_tab_ptr[mem_size_id].mem_size);
 		else
 			*mem_size = yuv_mem_tab_ptr[mem_size_id].mem_size;
-	} else if (FRONT_CAMERA_ID == camera_id || camera_id == DEV2_CAMERA_ID) {
+	} else if (FRONT_CAMERA_ID == camera_id || DEV3_CAMERA_ID == camera_id) {
 		mem_tab_ptr = (struct cap_size_to_mem*)&front_cam_raw_mem_size_tab[0];
 		yuv_mem_tab_ptr = (struct cap_size_to_mem*)&front_cam_mem_size_tab[0];
 		*mem_size = MAX(mem_tab_ptr[mem_size_id].mem_size, yuv_mem_tab_ptr[mem_size_id].mem_size);
@@ -447,17 +449,17 @@ int camera_capture_buf_size(uint32_t camera_id,
 	size_pixel = (uint32_t)(image_size->width * image_size->height);
 
 	if (SENSOR_IMAGE_FORMAT_RAW == sn_fmt) {
-		if (BACK_CAMERA_ID == camera_id) {
+		if (BACK_CAMERA_ID == camera_id|| DEV2_CAMERA_ID == camera_id) {
 			mem_tab_ptr = (struct cap_size_to_mem*)&back_cam_raw_mem_size_tab[0];
-		} else if (FRONT_CAMERA_ID == camera_id) {
+		} else if (FRONT_CAMERA_ID == camera_id || DEV3_CAMERA_ID == camera_id) {
 			mem_tab_ptr = (struct cap_size_to_mem*)&front_cam_raw_mem_size_tab[0];
 		} else {
 			mem_tab_ptr = (struct cap_size_to_mem*)&mem_size_tab[0];
 		}
 	} else {
-		if (BACK_CAMERA_ID == camera_id) {
+		if (BACK_CAMERA_ID == camera_id|| DEV2_CAMERA_ID == camera_id) {
 			mem_tab_ptr = (struct cap_size_to_mem*)&back_cam_mem_size_tab[0];
-		} else if (FRONT_CAMERA_ID == camera_id) {
+		} else if (FRONT_CAMERA_ID == camera_id|| DEV3_CAMERA_ID == camera_id) {
 			mem_tab_ptr = (struct cap_size_to_mem*)&front_cam_mem_size_tab[0];
 		} else {
 			mem_tab_ptr = (struct cap_size_to_mem*)&mem_size_tab[0];
