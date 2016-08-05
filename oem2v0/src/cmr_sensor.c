@@ -1141,7 +1141,7 @@ cmr_int cmr_get_otp_from_kernel(struct sensor_drv_context *sensor_cxt, cmr_uint 
 
 			ret = ioctl(fd_sensor, SENSOR_IO_READ_OTPDATA, &param_ptr);
 			if(!ret && 0 != param_ptr.dual_buff [0]) {
-				CMR_LOGD("SENSOR_IO_READ_OTPDATA dual OK");
+				CMR_LOGD("SENSOR_IO_READ_OTPDATA dual OK,param_ptr.dual_buff %p",param_ptr.dual_buff);
 				val->pval = param_ptr.dual_buff;
 				val->type = SENSOR_VAL_TYPE_PARSE_DUAL_OTP;
 			}
@@ -1151,7 +1151,7 @@ cmr_int cmr_get_otp_from_kernel(struct sensor_drv_context *sensor_cxt, cmr_uint 
 			*read_flag = 1;
 		}
 		if (NULL != sensor_otp.data_ptr) {
-			CMR_LOGD("SENSOR_IO_READ_OTPDATA  free buff");
+			CMR_LOGD("SENSOR_IO_READ_OTPDATA  free buff,val->pval %p",val->pval);
 			free(sensor_otp.data_ptr);
 			sensor_otp.data_ptr = NULL;
 		}

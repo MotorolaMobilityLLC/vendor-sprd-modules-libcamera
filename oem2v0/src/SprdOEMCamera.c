@@ -921,6 +921,7 @@ cmr_uint camera_get_sensor_dual_otp_info(cmr_handle camera_handle, struct sensor
 		goto exit;
 	}
 	ret = camera_get_dual_otpinfo(camera_handle, otp_info);
+	CMR_LOGI("otp_info data_ptr %p size %d", otp_info->dual_otp.data_ptr,otp_info->dual_otp.size);
 
 exit:
 	CMR_LOGI("done %ld", ret);
