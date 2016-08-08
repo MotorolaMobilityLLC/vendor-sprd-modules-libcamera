@@ -71,6 +71,7 @@ PUBLIC void JpegEnc_HwTopRegCfg(void)
 //	uint32 pTableAddr = (uint32)VSP_MEMO10_ADDR;
 	uint32 int_mask = 0;
 	uint32 endian_sel = 0;	
+	int ver_dup_num = 0;
 	
 	SCI_ASSERT(jpeg_fw_codec != PNULL);
 
@@ -97,7 +98,9 @@ PUBLIC void JpegEnc_HwTopRegCfg(void)
 //	VSP_WRITE_REG(VSP_DCAM_REG_BASE+DCAM_CFG_OFF, cmd, "DCAM_CFG: DCAM init");	
 	
 	//Source Size init
-	cmd = (jpeg_fw_codec->c_width & 0x01fff);
+	SCI_TRACE_LOW("c_height %d, height %d\n",jpeg_fw_codec->c_height,jpeg_fw_codec->height);
+	ver_dup_num = (jpeg_fw_codec->c_height - jpeg_fw_codec->height)/2;
+	cmd = ((ver_dup_num & 0x7)<<16)|(jpeg_fw_codec->c_width & 0x01fff);
 	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_PITCH_OFFSET, cmd, "configure jpeg pitch, pixel unit");
 
 #if defined(_VSP_) && defined(SMALL_SYS)
