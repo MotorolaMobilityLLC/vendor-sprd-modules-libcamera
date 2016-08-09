@@ -64,7 +64,7 @@ static int imx230_otp_read_data(SENSOR_HW_HANDLE handle)
 	static cmr_u8 first_flag = 1;
 
 	SENSOR_LOGI("E");
-	if (first_flag)
+	//if (first_flag)
 	{
 		imx230_otp_info.program_flag = imx230_i2c_read_otp(0x0000);
 		SENSOR_LOGI("program_flag = %d", imx230_otp_info.program_flag);
@@ -367,7 +367,7 @@ static int imx230_dual_otp_read_data(SENSOR_HW_HANDLE handle)
 	cmr_u32 checksum_total = 0;
 
 	SENSOR_LOGI("E");
-	if (first_flag)
+	//if (first_flag)
 	{
 		imx230_dual_otp_data[0] = imx230_i2c_read_otp(0x0000);
 		if (1 != imx230_dual_otp_data[0]) {

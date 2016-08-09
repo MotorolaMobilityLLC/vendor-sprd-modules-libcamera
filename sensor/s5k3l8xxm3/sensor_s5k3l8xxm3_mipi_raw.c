@@ -633,7 +633,7 @@ static void s5k3l8xxm3_write_gain(SENSOR_HW_HANDLE handle,float gain)
 	ret_value = Sensor_WriteReg(0x212, (uint32_t)d_gain);
 	ret_value = Sensor_WriteReg(0x214, (uint32_t)d_gain);
 
-	s5k3l8xxm3_group_hold_off(handle);
+	//s5k3l8xxm3_group_hold_off(handle);
 
 }
 
@@ -690,7 +690,7 @@ static uint16_t s5k3l8xxm3_write_exposure_dummy(SENSOR_HW_HANDLE handle,uint32_t
 	uint32_t cur_fr_len = 0;
 	uint32_t fr_len = s_current_default_frame_length;
 
-	s5k3l8xxm3_group_hold_on(handle);
+	//s5k3l8xxm3_group_hold_on(handle);
 
 	if (1 == SUPPORT_AUTO_FRAME_LENGTH)
 		goto write_sensor_shutter;

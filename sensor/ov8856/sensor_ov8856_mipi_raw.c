@@ -75,7 +75,7 @@
 
 /* please ref your spec */
 #define FRAME_OFFSET			6
-#define SENSOR_MAX_GAIN		    0x7c0              //15.5 multiple
+#define SENSOR_MAX_GAIN		    0x7ff              //16 multiple
 #define SENSOR_BASE_GAIN		0x80
 #define SENSOR_MIN_SHUTTER		6
 
@@ -125,7 +125,7 @@ static struct sensor_ev_info_t s_sensor_ev_info={
 	PREVIEW_FRAME_LENGTH
 	};
 
-#define FEATURE_OTP    /*OTP function switch*/
+//#define FEATURE_OTP    /*OTP function switch*/
 
 #ifdef FEATURE_OTP
 #include "sensor_ov8856_darling_otp.c"
@@ -674,10 +674,10 @@ static void ov8856_write_gain(SENSOR_HW_HANDLE handle,float gain)
 		if((uint16_t)gain_d >0x4*0x400)
 			gain_d=0x4*0x400;
 	}
-	Sensor_WriteReg(0x320a, 0x01);
+	//Sensor_WriteReg(0x320a, 0x01);
 	
 	//group 1:all other registers( gain)
-	Sensor_WriteReg(0x3208, 0x01);
+	//Sensor_WriteReg(0x3208, 0x01);
 	
 	Sensor_WriteReg(0x3508, ((uint16_t)gain_a >> 8) & 0x07);
 	Sensor_WriteReg(0x3509, (uint16_t)gain_a & 0xff);
@@ -689,8 +689,8 @@ static void ov8856_write_gain(SENSOR_HW_HANDLE handle,float gain)
 	Sensor_WriteReg(0x501e, (uint16_t)gain_d & 0xff);
 	Sensor_WriteReg(0x501f, ((uint16_t)gain_d >> 8) & 0x07);
 	Sensor_WriteReg(0x5020, (uint16_t)gain_d & 0xff);
-	Sensor_WriteReg(0x3208, 0x11);
-	Sensor_WriteReg(0x3208, 0xA1);
+	//Sensor_WriteReg(0x3208, 0x11);
+	//Sensor_WriteReg(0x3208, 0xA1);
 
 }
 
@@ -701,6 +701,12 @@ static void ov8856_write_gain(SENSOR_HW_HANDLE handle,float gain)
  *============================================================================*/
 static uint16_t ov8856_read_frame_length(SENSOR_HW_HANDLE handle)
 {
+	uint32_t frame_len;
+
+	frame_len = Sensor_ReadReg(0x380e) & 0xff;
+	frame_len = frame_len << 8| (Sensor_ReadReg(0x380f) & 0xff);
+	s_sensor_ev_info.preview_framelength = frame_len;
+
 	return s_sensor_ev_info.preview_framelength;
 }
 
