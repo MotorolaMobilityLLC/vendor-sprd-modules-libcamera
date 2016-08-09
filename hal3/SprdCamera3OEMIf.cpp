@@ -4774,11 +4774,9 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag)
 
 	case ANDROID_SPRD_ISO:
 		{
-			int8_t iso = 0;
 			SPRD_DEF_Tag sprddefInfo;
 			mSetting->getSPRDDEFTag(&sprddefInfo);
-			if(mRecordingMode == false)
-				SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISO, (cmr_uint)sprddefInfo.iso);
+			SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISO, (cmr_uint)sprddefInfo.iso);
 		}
 		break;
 
