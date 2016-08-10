@@ -2060,7 +2060,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary()
 	}
 
 	mIommuEnabled = IommuIsEnabled();
-	HAL_LOGD("mIommuEnabled=%d", mIommuEnabled);
+	HAL_LOGD("mIommuEnabled=%d mSprdRefocusEnabled %d", mIommuEnabled,mSprdRefocusEnabled);
 
 	return true;
 }
