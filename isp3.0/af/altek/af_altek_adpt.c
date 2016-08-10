@@ -819,6 +819,37 @@ static cmr_int afaltek_adpt_update_gsensor(cmr_handle adpt_handle, void *in)
 	return ret;
 }
 
+static cmr_int afaltek_adpt_update_imgsize_info(cmr_handle adpt_handle, struct af_ctrl_sensor_info_type *in)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+	struct allib_af_input_sensor_info_t sensor_info;
+
+	if (!in) {
+		ISP_LOGE("isp info is null");
+		return -ISP_PARAM_NULL;
+	}
+
+	/* set sensor info */
+	cmr_bzero(&sensor_info, sizeof(sensor_info));
+	sensor_info.preview_img_sz.uw_width = in->sensor_res_width;
+	sensor_info.preview_img_sz.uw_height = in->sensor_res_height;
+	sensor_info.sensor_crop_info.uwx = in->crop_info.x;
+	sensor_info.sensor_crop_info.uwy = in->crop_info.y;
+	sensor_info.sensor_crop_info.dx = in->crop_info.width;
+	sensor_info.sensor_crop_info.dy = in->crop_info.height;
+	/* set to cxt */
+	memcpy(&cxt->sensor_info, in, sizeof(cxt->sensor_info));
+
+	ISP_LOGI("uw_width = %d,uw_height= %d", sensor_info.preview_img_sz.uw_width,
+			sensor_info.preview_img_sz.uw_height);
+
+	ret = afaltek_adpt_update_sensor_info(cxt, &sensor_info);
+	if (ret)
+		ISP_LOGI("failed to update sensor info ret = %ld", ret);
+	return ret;
+}
+
 static cmr_int afaltek_adpt_update_isp_info(cmr_handle adpt_handle, void *in)
 {
 	cmr_int ret = -ISP_ERROR;
@@ -1042,6 +1073,19 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 	cmr_bzero(&aft_out, sizeof(aft_out));
 
 	ret = cxt->caf_ops.trigger_calc(cxt->caf_trigger_handle, aft_in, &aft_out);
+	ISP_LOGI("is_stable %d, caf_trig %d, cancel_caf %d",
+		 aft_in->ae_info.is_stable,
+		 aft_out.is_caf_trig,
+		 aft_out.is_cancel_caf);
+
+	/* caf roi 1/16 raw */
+	roi.valid_win = 1;
+	if (!cxt->sensor_info.crop_info.width || !cxt->sensor_info.crop_info.height) {
+		ISP_LOGE("failed to get crop width %d height %d",
+			cxt->sensor_info.crop_info.width,
+			cxt->sensor_info.crop_info.height);
+		goto exit;
+	}
 
 	ISP_LOGD("caf_trig %d", aft_out.is_caf_trig);
 	if ((!cxt->aft_proc_result.is_caf_trig) && aft_out.is_caf_trig) {
@@ -1600,6 +1644,9 @@ static cmr_int afaltek_adpt_config_roi(cmr_handle adpt_handle,
 	}
 	roi_out->src_img_sz.uw_width = sensor_p->sensor_res_width;
 	roi_out->src_img_sz.uw_height = sensor_p->sensor_res_height;
+	ISP_LOGI("src_img_sz.uw_width = %d, src_img_sz.uw_heigh = %d,",
+				 roi_out->src_img_sz.uw_width,
+				 roi_out->src_img_sz.uw_height);
 
 exit:
 	return ret;
@@ -1822,7 +1869,7 @@ static cmr_int afaltek_adpt_inctrl(cmr_handle adpt_handle, cmr_int cmd,
 	case AF_CTRL_CMD_SET_AF_BYPASS:
 		break;
 	case AF_CTRL_CMD_SET_ROI:
-		ret = afaltek_adpt_set_roi(adpt_handle, in);
+		//ret = afaltek_adpt_set_roi(adpt_handle, in);
 		break;
 	case AF_CTRL_CMD_SET_GYRO_INFO:
 		ret = afaltek_adpt_update_gyro_info(adpt_handle, in);
@@ -1856,6 +1903,9 @@ static cmr_int afaltek_adpt_inctrl(cmr_handle adpt_handle, cmr_int cmd,
 		break;
 	case AF_CTRL_CMD_SET_LIVE_VIEW_SIZE:
 		ret = afaltek_adpt_update_isp_info(adpt_handle, in);
+		break;
+	case AF_CTRL_CMD_SET_PRV_IMG_SIZE:
+		ret = afaltek_adpt_update_imgsize_info(adpt_handle, in);
 		break;
 	default:
 		ISP_LOGE("failed to case cmd = %ld", cmd);

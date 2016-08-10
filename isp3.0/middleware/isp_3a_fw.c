@@ -2272,6 +2272,7 @@ cmr_int isp3a_set_ae_awb_lock(cmr_handle isp_3a_handle, void *param_ptr)
 		goto exit;
 	}
 	mode = *(cmr_u32*)param_ptr;
+	ISP_LOGI("E");
 
 	if (ISP_AE_AWB_LOCK == mode) {
 		ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_PAUSE, NULL, NULL);
@@ -3511,6 +3512,7 @@ cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start *input_ptr)
 	struct afl_ctrl_param_in                    afl_in;
 	struct afl_ctrl_param_out                   afl_out;
 	struct af_ctrl_param_in                     af_in;
+	struct af_ctrl_sensor_info_type             af_info_in;
 
 	if ((NULL == cxt) || (NULL == input_ptr)) {
 		ISP_LOGE("param null %p %p", cxt, input_ptr);
@@ -3529,6 +3531,17 @@ cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start *input_ptr)
 				input_ptr->live_view_sz.w, input_ptr->live_view_sz.h);
 	}
 #endif
+
+	af_info_in.sensor_res_width = input_ptr->resolution_info.sensor_size.w;
+	af_info_in.sensor_res_height= input_ptr->resolution_info.sensor_size.h;
+	af_info_in.crop_info.width = input_ptr->resolution_info.crop.width;
+	af_info_in.crop_info.height = input_ptr->resolution_info.crop.height;
+	af_info_in.crop_info.x = input_ptr->resolution_info.crop.st_x;
+	af_info_in.crop_info.y = input_ptr->resolution_info.crop.st_y;
+	ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_SET_PRV_IMG_SIZE, (void *)&af_info_in, NULL);
+	if (ret) {
+		ISP_LOGE("failed to update prv img info");
+	}
 
 	if (input_ptr->sensor_fps.is_high_fps) {
 		if ((input_ptr->sensor_fps.high_fps_skip_num-1) > 0) {
