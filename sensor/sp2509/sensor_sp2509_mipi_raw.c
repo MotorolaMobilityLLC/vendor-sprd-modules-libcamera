@@ -298,7 +298,7 @@ static SENSOR_REG_TAB_INFO_T s_sp2509_resolution_tab_raw[SENSOR_MODE_MAX] = {
 	/*{ADDR_AND_LEN_OF_ARRAY(sp2509_preview_setting),
 	 PREVIEW_WIDTH, PREVIEW_HEIGHT, EX_MCLK,
 	 SENSOR_IMAGE_FORMAT_RAW},*/
-	{ADDR_AND_LEN_OF_ARRAY(sp2509_snapshot_setting1),
+	{ADDR_AND_LEN_OF_ARRAY(sp2509_snapshot_setting),
 	 SNAPSHOT_WIDTH, SNAPSHOT_HEIGHT, EX_MCLK,
 	 SENSOR_IMAGE_FORMAT_RAW},
 };
@@ -460,7 +460,7 @@ SENSOR_INFO_T g_sp2509_mipi_raw_info = {
 	 */
 	SENSOR_IMAGE_FORMAT_RAW,
 	/*  pattern of input image form sensor */
-	SENSOR_IMAGE_PATTERN_RAWRGB_R,
+	SENSOR_IMAGE_PATTERN_RAWRGB_B,
 	/* point to resolution table information structure */
 	s_sp2509_resolution_tab_raw,
 	/* point to ioctl function table */
@@ -509,7 +509,7 @@ static SENSOR_STATIC_INFO_T s_sp2509_static_info = {
 	0,	//pdaf_supported;
 	1,	//exp_valid_frame_num;N+2-1
 	16,	//clamp_level,black level
-	0,	//adgain_valid_frame_num;N+1-1
+	1,	//adgain_valid_frame_num;N+1-1
 };
 
 static SENSOR_MODE_FPS_INFO_T s_sp2509_mode_fps_info = {
@@ -666,9 +666,10 @@ static void sp2509_write_gain(SENSOR_HW_HANDLE handle,float gain)
 	if (SENSOR_MAX_GAIN <(uint16_t) gain_a){
 		gain_a = SENSOR_MAX_GAIN;
 		gain_d = gain*0x80/gain_a;
-		if((uint16_t)gain_d > 2*0x80)
-			gain_d=2*0x80;
+		if((uint16_t)gain_d > 2*0x80-1)
+			gain_d=2*0x80-1;
 	}
+	SENSOR_PRINT("real_gain = 0x%x gain_a %d %d", (uint32_t)gain,(uint16_t)gain_a,(uint16_t)gain_d);
 	Sensor_WriteReg(0xfd, 0x01);
 	Sensor_WriteReg(0x24, (uint16_t)gain_a & 0xff);
 	Sensor_WriteReg(0xfd, 0x02);
@@ -1102,6 +1103,7 @@ LOCAL unsigned long sp2509_ex_write_exposure(SENSOR_HW_HANDLE handle, unsigned l
 	dummy_line = ex->dummy;
 	size_index = ex->size_index;
 	SENSOR_PRINT("current mode = %d, exposure_line = %d, dummy_line=%d frame_length %d", size_index, exposure_line,dummy_line,s_current_default_frame_length);
+	s_current_default_frame_length = sp2509_get_default_frame_length(handle,size_index);
 
 	ret_value = sp2509_write_exposure_dummy(handle, exposure_line, dummy_line, size_index);
 

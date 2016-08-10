@@ -593,12 +593,12 @@ static SENSOR_STATIC_INFO_T s_ov8856_static_info = {
 	240,	//f-number,focal ratio
 	200,	//focal_length;
 	0,	//max_fps,max fps of sensor's all settings,it will be calculated from sensor mode fps
-	8,	//max_adgain,AD-gain
+	16*2,	//max_adgain,AD-gain
 	0,	//ois_supported;
 	0,	//pdaf_supported;
 	1,	//exp_valid_frame_num;N+2-1
 	64,	//clamp_level,black level
-	0,	//adgain_valid_frame_num;N+1-1
+	1,	//adgain_valid_frame_num;N+1-1
 };
 
 
@@ -671,14 +671,14 @@ static void ov8856_write_gain(SENSOR_HW_HANDLE handle,float gain)
 	if (SENSOR_MAX_GAIN < (uint16_t)gain_a){
 		gain_a = SENSOR_MAX_GAIN;
 		gain_d = gain*0x400/gain_a;
-		if((uint16_t)gain_d >0x4*0x400)
-			gain_d=0x4*0x400;
+		if((uint16_t)gain_d >0x2*0x400)
+			gain_d=0x2*0x400;
 	}
 	//Sensor_WriteReg(0x320a, 0x01);
 	
 	//group 1:all other registers( gain)
 	//Sensor_WriteReg(0x3208, 0x01);
-	
+	//SENSOR_PRINT("real_gain = %f %d %d", gain,(uint16_t)gain_a,(uint16_t)gain_d);
 	Sensor_WriteReg(0x3508, ((uint16_t)gain_a >> 8) & 0x07);
 	Sensor_WriteReg(0x3509, (uint16_t)gain_a & 0xff);
 	Sensor_WriteReg(0x5019, ((uint16_t)gain_d >> 8) & 0x07);
@@ -729,6 +729,20 @@ static void ov8856_write_frame_length(SENSOR_HW_HANDLE handle,uint32_t frame_len
  *============================================================================*/
 static uint32_t ov8856_read_shutter(SENSOR_HW_HANDLE handle)
 {
+	uint32_t value=0x00;
+	uint8_t shutter_l=0x00;
+	uint8_t shutter_m=0x00;
+	uint8_t shutter_h=0x00;
+
+	shutter_l=Sensor_ReadReg(0x3502);
+	//value=(shutter>>0x04)&0x0f;
+	shutter_m=Sensor_ReadReg(0x3501);
+	//value+=(shutter&0xff)<<0x04;
+	shutter_h=Sensor_ReadReg(0x3500);
+	//value+=(shutter&0x0f)<<0x0c;
+	value=((shutter_h&0x0f)<<12)+(shutter_m<<4)+((shutter_l>>4)&0x0f);
+	s_sensor_ev_info.preview_shutter = value;//shutter;
+
 	return s_sensor_ev_info.preview_shutter;
 }
 
@@ -747,6 +761,7 @@ static void ov8856_write_shutter(SENSOR_HW_HANDLE handle,uint32_t shutter)
 	Sensor_WriteReg(0x3501,value);
 	value=(shutter>>0x0c)&0x0f;
 	Sensor_WriteReg(0x3500,value);
+	s_sensor_ev_info.preview_shutter = shutter;
 }
 
 /*==============================================================================
@@ -761,7 +776,7 @@ static uint16_t ov8856_write_exposure_dummy(SENSOR_HW_HANDLE handle,uint32_t shu
 	uint32_t cur_fr_len = 0;
 	uint32_t fr_len = s_current_default_frame_length;
 
-	ov8856_group_hold_on(handle);
+	//ov8856_group_hold_on(handle);
 
 	if (1 == SUPPORT_AUTO_FRAME_LENGTH)
 		goto write_sensor_shutter;
@@ -1044,7 +1059,7 @@ static uint32_t ov8856_identify(SENSOR_HW_HANDLE handle,uint32_t param)
 			}
 
 			#endif
-			//ov8856_init_mode_fps_info(handle);
+			ov8856_init_mode_fps_info(handle);
 			ret_value = SENSOR_SUCCESS;
 			
 		} else {
@@ -1145,6 +1160,7 @@ static unsigned long ov8856_write_exposure(SENSOR_HW_HANDLE handle,unsigned long
 	size_index = ex->size_index;
 
 	SENSOR_PRINT("size_index=%d, exposure_line = %d, dummy_line=%d",size_index,exposure_line,dummy_line);
+	s_current_default_frame_length = ov8856_get_default_frame_length(handle,size_index);
 
 	ret_value = ov8856_write_exposure_dummy(handle, exposure_line, dummy_line, size_index);
 
@@ -1178,9 +1194,9 @@ static uint32_t ov8856_write_gain_value(SENSOR_HW_HANDLE handle,unsigned long pa
 
 	//real_gain = isp_to_real_gain(handle,param);
 
-	real_gain = (float)1.0*param * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
+	real_gain = (float)1.0f*param * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
 
-	SENSOR_PRINT("real_gain = 0x%x", real_gain);
+	SENSOR_PRINT("real_gain = %f", real_gain);
 
 	s_sensor_ev_info.preview_gain = real_gain;
 	ov8856_write_gain(handle,real_gain);

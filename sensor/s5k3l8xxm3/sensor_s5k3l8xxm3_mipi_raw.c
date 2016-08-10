@@ -1151,6 +1151,7 @@ static unsigned long s5k3l8xxm3_write_exposure(SENSOR_HW_HANDLE handle,unsigned 
 	size_index = ex->size_index;
 
 	SENSOR_PRINT("size_index=%d, exposure_line = %d, dummy_line=%d",size_index,exposure_line,dummy_line);
+	s_current_default_frame_length = s5k3l8xxm3_get_default_frame_length(handle,size_index);
 
 	ret_value = s5k3l8xxm3_write_exposure_dummy(handle, exposure_line, dummy_line, size_index);
 
