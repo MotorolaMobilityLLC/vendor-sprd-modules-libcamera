@@ -1252,7 +1252,7 @@ int SprdCamera3OEMIf::changeDfsPolicy(int dfs_policy)
 	const char* const scenario_dfs = "/sys/class/devfreq/scene-frequency/sprd_governor/scenario_dfs";
 	FILE* fp = fopen(scenario_dfs, "wb");
 	if (NULL == fp) {
-		HAL_LOGE("failed to open %s X", scenario_dfs);
+		HAL_LOGW("failed to open %s X", scenario_dfs);
 		return BAD_VALUE;
 	}
 
@@ -1274,6 +1274,7 @@ int SprdCamera3OEMIf::changeDfsPolicy(int dfs_policy)
 		break;
 	}
 
+	HAL_LOGD("dfs_scene: %s", dfs_scene);
 	// echo dfs_scene > scenario_dfs
 	fprintf(fp, "%s", dfs_scene);
 
@@ -2277,6 +2278,7 @@ int SprdCamera3OEMIf::startPreviewInternal()
 #endif
 
 	SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ZSL_ENABLED, (cmr_uint)mSprdZslEnabled);
+
 	HAL_LOGV("mVideoSnapshotType=%d", mVideoSnapshotType);
 	SET_PARM(mHalOem,mCameraHandle, CAMERA_PARAM_VIDEO_SNAPSHOT_TYPE, (cmr_uint)mVideoSnapshotType);
 
@@ -2380,11 +2382,6 @@ bool SprdCamera3OEMIf::iSZslMode()
 {
 	bool ret = true;
 
-	/*if ((CAMERA_ZSL_MODE != mCaptureMode)
-		&& (CAMERA_ZSL_CONTINUE_SHOT_MODE != mCaptureMode)
-		&& (CAMERA_ANDROID_ZSL_MODE != mCaptureMode)) {
-		ret = false;
-	}*/
 	if (CAMERA_ZSL_MODE != mCaptureMode)
 		ret = false;
 
