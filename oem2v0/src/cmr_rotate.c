@@ -193,7 +193,6 @@ cmr_int cmr_rot_close(cmr_handle rot_handle)
 {
 	cmr_int                 ret = CMR_CAMERA_SUCCESS;
 	struct rot_file         *file = (struct rot_file*)(rot_handle);
-	cmr_u32                 val = 1;
 
 	CMR_LOGI("Start to close rotation device.");
 
@@ -205,10 +204,6 @@ cmr_int cmr_rot_close(cmr_handle rot_handle)
 		ret = -CMR_CAMERA_FAIL;
 		goto close_free;
 	}
-
-	ret = ioctl(file->fd, SPRD_CPP_IO_CLOSE_ROT, &val);
-	if (ret)
-		ret = -CMR_CAMERA_FAIL;
 
 	close(file->fd);
 

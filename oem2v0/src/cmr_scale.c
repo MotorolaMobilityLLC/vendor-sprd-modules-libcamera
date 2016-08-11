@@ -575,7 +575,6 @@ cmr_int cmr_scale_close(cmr_handle scale_handle)
 {
 	cmr_int                 ret = CMR_CAMERA_SUCCESS;
 	struct scale_file       *file = (struct scale_file*)(scale_handle);
-	cmr_u32                 val;
 
 	CMR_LOGI("scale close device enter");
 
@@ -591,9 +590,6 @@ cmr_int cmr_scale_close(cmr_handle scale_handle)
 	}
 
 	if (-1 != file->handle) {
-		ret = ioctl(file->handle, SPRD_CPP_IO_CLOSE_SCALE, &val);
-		if (ret)
-			CMR_LOGE("scale error: close");
 		if (-1 == close(file->handle)) {
 			CMR_LOGE("scale error: close");
 		}
