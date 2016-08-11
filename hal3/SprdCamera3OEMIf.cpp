@@ -1538,7 +1538,7 @@ void SprdCamera3OEMIf::setCameraState(Sprd_camera_state state, state_owner owner
 	Sprd_camera_state   org_state   = SPRD_IDLE;
 	volatile Sprd_camera_state      * state_owner = NULL;
 	Mutex::Autolock stateLock(&mStateLock);
-	HAL_LOGD("E:state: %s, owner: %d", getCameraStateStr(state), owner);
+	HAL_LOGD("E:state: %s, owner: %d camera id %d", getCameraStateStr(state), owner,mCameraId);
 
 	if(owner == STATE_CAPTURE) {
 		if(mCameraState.capture_state == SPRD_INTERNAL_CAPTURE_STOPPING
@@ -1715,7 +1715,7 @@ bool SprdCamera3OEMIf::isCameraIdle()
 
 bool SprdCamera3OEMIf::isPreviewing()
 {
-	HAL_LOGV("%s", getCameraStateStr(mCameraState.preview_state));
+	HAL_LOGD("%s", getCameraStateStr(mCameraState.preview_state));
 	return (SPRD_PREVIEW_IN_PROGRESS == mCameraState.preview_state);
 }
 
@@ -2033,6 +2033,15 @@ bool SprdCamera3OEMIf::startCameraIfNecessary()
 		/*get sensor and lens info from oem layer*/
 
 		/*get sensor otp from oem layer*/
+
+//temp code begin
+		char refocus[PROPERTY_VALUE_MAX];
+		property_get("sys.cam.refocus", refocus, "0");
+		if(atoi(refocus)!=0)
+			mSprdRefocusEnabled = true;
+		CMR_LOGI("refocus mode %d", mSprdRefocusEnabled);
+//temp code end
+
 		if(mSprdRefocusEnabled == true && mCameraId == 0){
 			struct sensor_dual_otp_info dual_otp_info = {0};
 			OTP_Tag otpInfo = {0};
@@ -2285,7 +2294,7 @@ int SprdCamera3OEMIf::startPreviewInternal()
 	bool is_push_zsl = false;
 	char value[PROPERTY_VALUE_MAX];
 	property_get("persist.sys.camera.raw.mode", value, "jpeg");
-	HAL_LOGD("E");
+	HAL_LOGD("E camera id %d",mCameraId);
 
 	if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
 		HAL_LOGE("oem is null or oem ops is null");
@@ -2363,7 +2372,7 @@ int SprdCamera3OEMIf::startPreviewInternal()
 		if (!is_push_zsl)
 			PushFirstZslbuff();
 	}
-	HAL_LOGD("X");
+	HAL_LOGD("X camera id %d",mCameraId);
 
 	return NO_ERROR;
 }
@@ -2379,7 +2388,7 @@ void SprdCamera3OEMIf::stopPreviewInternal()
 		return;
 	}
 
-	HAL_LOGD("E");
+	HAL_LOGD("E camera id %d",mCameraId);
 	if (isCapturing()) {
 		setCameraState(SPRD_INTERNAL_CAPTURE_STOPPING, STATE_CAPTURE);
 		if (0 != mHalOem->ops->camera_cancel_takepicture(mCameraHandle)) {
@@ -2409,7 +2418,7 @@ void SprdCamera3OEMIf::stopPreviewInternal()
 	deinitPreview();
 	end_timestamp = systemTime();
 
-	HAL_LOGD("X Time:%lld(ms).",(end_timestamp - start_timestamp)/1000000);
+	HAL_LOGD("X Time:%lld(ms). camera id %d",(end_timestamp - start_timestamp)/1000000, mCameraId);
 }
 
 takepicture_mode SprdCamera3OEMIf::getCaptureMode()
