@@ -21,7 +21,8 @@ LOCAL_C_INCLUDES := \
 	$(TOP)vendor/sprd/modules/libmemion \
 	$(TOP)/vendor/sprd/external/kernel-headers \
 	$(TOP)/vendor/sprd/modules/libmemion \
-	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video
+	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
+	$(TARGET_OUT_INTERMEDIATES)/KERNEL/source/include/uapi
 
 LOCAL_C_INCLUDES += $(GPU_GRALLOC_INCLUDES)
 
@@ -39,8 +40,7 @@ LOCAL_C_INCLUDES += \
 LOCAL_SRC_FILES+= \
 	hal1.0/src/SprdCameraParameters.cpp \
 	common/src/cmr_msg.c \
-	tool/mtrace/mtrace.c \
-	tool/auto_test/src/SprdCamera_autest_Interface.cpp
+	tool/mtrace/mtrace.c 
 
 LOCAL_SRC_FILES += test.cpp
 
@@ -84,6 +84,7 @@ LOCAL_SRC_FILES+= \
 	hal3/SprdCamera3Setting.cpp \
 	hal3/SprdCamera3Stream.cpp \
 	hal3/SprdCamera3Flash.cpp \
+	hal3/SprdCamera3Muxer.cpp \
 #	hal1.0/src/SprdCameraHardwareInterface.cpp
 endif
 

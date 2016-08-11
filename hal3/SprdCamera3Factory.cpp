@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2016, The Linux Foundataion. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -37,13 +37,15 @@
 
 #include "SprdCamera3Factory.h"
 #include "SprdCamera3Flash.h"
+#include "SprdCamera3Muxer.h"
 
 using namespace android;
 
 namespace sprdcamera {
 
 SprdCamera3Factory gSprdCamera3Factory;
-
+SprdCamera3Muxer *gSprdCamera3Muxer = NULL;
+int gDualCameraEnable = 0;
 /*===========================================================================
  * FUNCTION   : SprdCamera3Factory
  *
@@ -55,10 +57,16 @@ SprdCamera3Factory gSprdCamera3Factory;
  *==========================================================================*/
 SprdCamera3Factory::SprdCamera3Factory()
 {
-	camera_info info;
+    camera_info info;
+    mNumOfCameras = SprdCamera3Setting::getNumberOfCameras();
+    if (!gSprdCamera3Muxer) {
+        SprdCamera3Muxer::getCameraMuxer(&gSprdCamera3Muxer);
+        if (!gSprdCamera3Muxer) {
+            LOGE("Error !! Failed to get SprdCamera3Muxer");
+        }
+    }
 
-	mNumOfCameras = SprdCamera3Setting::getNumberOfCameras();
-	mStaticMetadata = NULL;
+    mStaticMetadata = NULL;
 }
 
 /*===========================================================================
@@ -72,6 +80,10 @@ SprdCamera3Factory::SprdCamera3Factory()
  *==========================================================================*/
 SprdCamera3Factory::~SprdCamera3Factory()
 {
+    if (gSprdCamera3Muxer) {
+        delete gSprdCamera3Muxer;
+        gSprdCamera3Muxer = NULL;
+    }
 }
 
 /*===========================================================================
@@ -85,7 +97,7 @@ SprdCamera3Factory::~SprdCamera3Factory()
  *==========================================================================*/
 int SprdCamera3Factory::get_number_of_cameras()
 {
-	return gSprdCamera3Factory.getNumberOfCameras();
+    return gSprdCamera3Factory.getNumberOfCameras();
 }
 
 /*===========================================================================
@@ -103,7 +115,10 @@ int SprdCamera3Factory::get_number_of_cameras()
  *==========================================================================*/
 int SprdCamera3Factory::get_camera_info(int camera_id, struct camera_info *info)
 {
-	return gSprdCamera3Factory.getCameraInfo(camera_id, info);
+    if(gDualCameraEnable)
+        return gSprdCamera3Muxer->get_camera_info(camera_id, info);
+    else
+        return gSprdCamera3Factory.getCameraInfo(camera_id, info);
 }
 
 /*===========================================================================
@@ -117,7 +132,7 @@ int SprdCamera3Factory::get_camera_info(int camera_id, struct camera_info *info)
  *==========================================================================*/
 int SprdCamera3Factory::getNumberOfCameras()
 {
-	return mNumOfCameras;
+    return mNumOfCameras;
 }
 
 /*===========================================================================
@@ -135,28 +150,29 @@ int SprdCamera3Factory::getNumberOfCameras()
  *==========================================================================*/
 int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info)
 {
-	int rc;
-	Mutex::Autolock l(mLock);
+    int rc;
+    Mutex::Autolock l(mLock);
 
-	HAL_LOGV("E, camera_id = %d", camera_id);
-	if (!mNumOfCameras || camera_id >= mNumOfCameras || !info || (camera_id < 0)) {
-		return -ENODEV;
-	}
+    HAL_LOGV("E, camera_id = %d", camera_id);
+    if (!mNumOfCameras || camera_id >= mNumOfCameras || !info || (camera_id < 0)) {
+        return -ENODEV;
+    }
 
-	SprdCamera3Setting::initDefaultParameters(camera_id);
+    SprdCamera3Setting::initDefaultParameters(camera_id);
 
-	rc = SprdCamera3Setting::getStaticMetadata(camera_id, &mStaticMetadata);
-	if (rc < 0) {
-		return rc;
-	}
+    rc = SprdCamera3Setting::getStaticMetadata(camera_id, &mStaticMetadata);
+    if (rc < 0) {
+        return rc;
+    }
 
-	SprdCamera3Setting::getCameraInfo(camera_id, info);
+    SprdCamera3Setting::getCameraInfo(camera_id, info);
 
-	info->device_version = CAMERA_DEVICE_API_VERSION_3_2;//CAMERA_DEVICE_API_VERSION_3_0;
-	info->static_camera_characteristics = mStaticMetadata;
-	info->conflicting_devices_length = 0;
-	HAL_LOGV("X");
-	return rc;
+    info->device_version = CAMERA_DEVICE_API_VERSION_3_2;//CAMERA_DEVICE_API_VERSION_3_0;
+    info->static_camera_characteristics = mStaticMetadata;
+    info->conflicting_devices_length = 0;
+
+    HAL_LOGV("X");
+    return rc;
 }
 /*====================================================================
 *FUNCTION     :setTorchMode
@@ -170,21 +186,21 @@ int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info)
 *               non zero  --failure
 *===================================================================*/
 int SprdCamera3Factory::setTorchMode(const char* camera_id,bool enabled){
-	int retval = 0;
-	ALOGV("%s: In,camera_id:%s,enable:%d",__func__,camera_id,enabled);
+    int retval = 0;
+    ALOGV("%s: In,camera_id:%s,enable:%d",__func__,camera_id,enabled);
 
-	retval = SprdCamera3Flash::setTorchMode(camera_id,enabled);
-	ALOGV("retval = %d",retval);
+    retval = SprdCamera3Flash::setTorchMode(camera_id,enabled);
+    ALOGV("retval = %d",retval);
 
-	return retval;
+    return retval;
 }
 
 int SprdCamera3Factory::set_callbacks(const camera_module_callbacks_t *callbacks)
 {
-	ALOGV("%s :In",__func__);
-	int retval = 0;
+    ALOGV("%s :In",__func__);
+    int retval = 0;
 
-	retval = SprdCamera3Flash::registerCallbacks(callbacks);
+    retval = SprdCamera3Flash::registerCallbacks(callbacks);
 
     return retval;
 }
@@ -215,22 +231,22 @@ void SprdCamera3Factory::get_vendor_tag_ops(vendor_tag_ops_t* ops)
 int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
                     struct hw_device_t **hw_device)
 {
-	int rc = NO_ERROR;
+    int rc = NO_ERROR;
 
-	if (camera_id < 0 || camera_id >= mNumOfCameras)
-		return -ENODEV;
+    if (camera_id < 0 || camera_id >= mNumOfCameras)
+        return -ENODEV;
 
-	SprdCamera3HWI *hw = new SprdCamera3HWI(camera_id);
+    SprdCamera3HWI *hw = new SprdCamera3HWI(camera_id);
 
-	if (!hw) {
-		ALOGE("Allocation of hardware interface failed");
-		return NO_MEMORY;
-	}
-	rc = hw->openCamera(hw_device);
-	if (rc != 0) {
-		delete hw;
-	}
-	return rc;
+    if (!hw) {
+        ALOGE("Allocation of hardware interface failed");
+        return NO_MEMORY;
+    }
+    rc = hw->openCamera(hw_device);
+    if (rc != 0) {
+        delete hw;
+    }
+    return rc;
 }
 
 /*===========================================================================
@@ -247,23 +263,31 @@ int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
  *              none-zero failure code
  *==========================================================================*/
 int SprdCamera3Factory::camera_device_open(
-		const struct hw_module_t *module, const char *id,
-		struct hw_device_t **hw_device)
+        const struct hw_module_t *module, const char *id,
+        struct hw_device_t **hw_device)
 {
-	if (module != &HAL_MODULE_INFO_SYM.common) {
-		ALOGE("Invalid module. Trying to open %p, expect %p",
-				module, &HAL_MODULE_INFO_SYM.common);
-		return INVALID_OPERATION;
-	}
-	if (!id) {
-		ALOGE("Invalid camera id");
-		return BAD_VALUE;
-	}
-	return gSprdCamera3Factory.cameraDeviceOpen(atoi(id), hw_device);
+    if (module != &HAL_MODULE_INFO_SYM.common) {
+        ALOGE("Invalid module. Trying to open %p, expect %p",
+                module, &HAL_MODULE_INFO_SYM.common);
+        return INVALID_OPERATION;
+    }
+    if (!id) {
+        ALOGE("Invalid camera id");
+        return BAD_VALUE;
+    }
+
+    gDualCameraEnable = !strcmp(id, VIDEO_3D_MAGIC_STRING);
+
+    if(gDualCameraEnable){
+        return gSprdCamera3Muxer->camera_device_open(module, id, hw_device);
+    }
+    else{
+        return gSprdCamera3Factory.cameraDeviceOpen(atoi(id), hw_device);
+    }
 }
 
 struct hw_module_methods_t SprdCamera3Factory::mModuleMethods = {
-	open: SprdCamera3Factory::camera_device_open,
+    open: SprdCamera3Factory::camera_device_open,
 };
 
 }; // namespace sprdcamera
