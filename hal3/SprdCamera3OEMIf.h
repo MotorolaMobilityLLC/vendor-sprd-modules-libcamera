@@ -621,8 +621,9 @@ private:
 	Condition                     mReadGyroCond;
 	sem_t                         mGyro_sem;
 #ifdef CONFIG_CAMERA_EIS
+	static const int              kGyrocount = 100;
 	List<vsGyro*>                 mGyroInfo;
-	vsGyro                        *mGyrodata;
+	vsGyro                        mGyrodata[kGyrocount];
 	vsParam                       mParam;
 	vsInst                        mInst;
 #endif
