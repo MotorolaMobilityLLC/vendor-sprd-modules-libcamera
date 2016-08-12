@@ -105,8 +105,10 @@ static uint32_t lcd_w = 0, lcd_h = 0;
 
 static bool getLcdSize(uint32_t *width, uint32_t *height)
 {
-	*width = (uint32_t)gr_draw->width;
-	*height = (uint32_t)gr_draw->height;
+	if( NULL != gr_draw){
+		*width = (uint32_t)gr_draw->width;
+		*height = (uint32_t)gr_draw->height;
+	}
 	return true;
 }
 static void RGBRotate90_anticlockwise(uint8_t *des,uint8_t *src,int width,int height, int bits)
@@ -135,6 +137,34 @@ static void RGBRotate90_anticlockwise(uint8_t *des,uint8_t *src,int width,int he
 			size = 0;
 			for(i = 0; i < width; i++) {
 				size += height;
+				*(des16 + size - j - 1)= *src16++;
+			}
+		}
+	}
+}
+static void RGBRotate90_clockwise(uint8_t *des,uint8_t *src,int width,int height, int bits)
+{
+	int i,j;
+	int m = bits >> 3;
+	int size;
+
+	unsigned int *des32 = (unsigned int *)des;
+	unsigned int *src32 = (unsigned int *)src;
+	unsigned short *des16 = (unsigned short *)des;
+	unsigned short *src16 = (unsigned short *)src;
+
+	if ((!des)||(!src)) return;
+	if(m == 4){
+		for(j = 0; j < height; j++) {
+			for(i = 0; i < width; i++) {
+				size = (i+1)*height;
+				*(des32 + size - j - 1)= *src32++;
+			}
+		}
+	}else{
+		for(j = 0; j < height; j++) {
+			for(i = 0; i < width; i++) {
+				size = (i+1)*height;
 				*(des16 + size - j - 1)= *src16++;
 			}
 		}
@@ -344,7 +374,6 @@ static int autotest_fb_open(void)
 	fb_buf[2].virt_addr = (size_t)tmpbuf2;
 
 	fb_buf[3].virt_addr = (size_t)tmpbuf3;
-
 /*
 	for(i = 0; i < 6; i++){
 		ALOGD("DCAM: buf[%d] virt_addr=0x%x, phys_addr=0x%x, length=%d", \
@@ -383,11 +412,11 @@ static void autotest_fb_update(const camera_frame_type *frame)
 	if (!frame) return;
 
 	buffer_id = getPreviewBufferIDForFd(frame->fd);
-	target_buffer_id = buffer_id;
-//	memcpy(gr_draw->data, (uint8_t *)(fb_buf[!(frame_num % 2)].virt_addr), lcd_w*lcd_h*4);
 
-//	gr_draw = gr_backend->flip(gr_backend);
-//	fb_buf[0].virt_addr = (size_t)gr_draw->data;
+	if( NULL != gr_draw){
+		gr_draw = gr_backend->flip(gr_backend);
+		fb_buf[0].virt_addr = (size_t)gr_draw->data;
+	}
 
 	/*  */
 	if(!previewHeapArray[buffer_id]) {
@@ -528,6 +557,21 @@ void autotest_camera_cb(enum camera_cb_type cb , const void *client_data , enum 
 			RGBRotate90_anticlockwise((uint8_t *)(fb_buf[0].virt_addr), (uint8_t*)fb_buf[2].virt_addr, var.yres, var.xres, var.bits_per_pixel);
 			//RGBRotate90_anticlockwise((uint8_t *)(fb_buf[1].virt_addr), (uint8_t*)fb_buf[2].virt_addr, var.yres, var.xres, var.bits_per_pixel);
 		}
+	} else if (2 == camera_id) {
+		//2. stretch
+		StretchColors((void *)(fb_buf[2].virt_addr), var.yres, var.xres, var.bits_per_pixel, post_preview_buf, PREVIEW_WIDTH, PREVIEW_HIGHT, var.bits_per_pixel);
+
+		/*FIXME: here need 2 or 3 framebuffer pingpang ??*/
+		if(!(frame_num % 2)) {
+
+			//3. rotation
+			RGBRotate90_clockwise((uint8_t *)(fb_buf[0].virt_addr), (uint8_t*)fb_buf[2].virt_addr, var.yres, var.xres, var.bits_per_pixel);
+		} else {
+
+			//3. rotation
+			RGBRotate90_clockwise((uint8_t *)(fb_buf[0].virt_addr), (uint8_t*)fb_buf[2].virt_addr, var.yres, var.xres, var.bits_per_pixel);
+			//RGBRotate90_anticlockwise((uint8_t *)(fb_buf[1].virt_addr), (uint8_t*)fb_buf[2].virt_addr, var.yres, var.xres, var.bits_per_pixel);
+        }
 	}
 
 	/*lock*/
@@ -1086,28 +1130,37 @@ loaderror:
 	 return ret;
 }
 
-int autotest_camera_init(int cameraId)
+int autotest_camera_init(int cameraId, minui_backend* backend, GRSurface* draw)
 {
 	int ret = 0;
 
-	ALOGI("AutoTest: %s,%s,%d IN\n", __FILE__,__func__, __LINE__);
+	ALOGI("AutoTest:%s,%d IN\n", __func__, __LINE__);
 //	gr_init();
-//	gr_backend = backend;
-//	gr_draw = draw;
-	if(cameraId)
-		camera_id = 1; // fore camera
+	gr_backend = backend;
+	gr_draw = draw;
+	if (NULL != gr_draw)
+		ALOGI("AutoTest:%s,line:%d in skd mode\n", __func__, __LINE__);
+	else
+		ALOGI("AutoTest:%s,line:%d in BBAT mode\n", __func__, __LINE__);
+
+	if (2 == cameraId)
+		camera_id = 2; // back camera
+	else if (1 == cameraId)
+		camera_id = 1; //front camera
 	else
 		camera_id = 0; // back camera
-//	if (getLcdSize(&lcd_w, &lcd_h)){
-//		/*update preivew size by lcd*/
-//		ALOGI("%s AutoTest: lcd_w=%d,lcd_h=%d\n", __func__,lcd_w, lcd_h);
-//	}
+	if (getLcdSize(&lcd_w, &lcd_h)){
+		/*update preivew size by lcd*/
+		ALOGI("AutoTest:%s lcd_w=%d,lcd_h=%d\n", __func__,lcd_w, lcd_h);
+	}
+
 //	tmpbuf = (uint8_t*)malloc(lcd_w*lcd_h*4);
 //	tmpbuf1 = (uint8_t*)malloc(lcd_w*lcd_h*4);
-//	tmpbuf2 = (uint8_t*)malloc(lcd_w*lcd_h*4);
-//	tmpbuf3 = (uint8_t*)malloc(lcd_w*lcd_h*4);
+	tmpbuf2 = (uint8_t*)malloc(lcd_w*lcd_h*4);
+	tmpbuf3 = (uint8_t*)malloc(lcd_w*lcd_h*4);
 //	memcpy(tmpbuf1, gr_draw->data, lcd_w*lcd_h*4);
-//	autotest_fb_open();
+	if(NULL != gr_draw)
+		autotest_fb_open();
     if(autotest_load_hal_lib()){
         return -1;
     }
