@@ -3933,11 +3933,12 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb,
 	}
 	case CAMERA_EVT_CB_SNAPSHOT_JPEG_DONE:
 		exitFromPostProcess();
+		HAL_LOGD("CAMERA_EVT_CB_CAPTURE_FRAME_DONE, pip enable %d, refocus mode %d",mSprdPipVivEnabled,mSprdRefocusEnabled);
 //		mSprdPipVivEnabled = 1;
-		if (mSprdPipVivEnabled) {
+		if (mSprdPipVivEnabled || mSprdRefocusEnabled) {
 			Sprd_camera_state tmpCapState = getCaptureState();
-			HAL_LOGD("PIP HandleTakePicture state = %d, need_free = %d",
-				  tmpCapState, ((struct camera_frame_type *)parm4)->need_free);
+			HAL_LOGD("PIP HandleTakePicture state = %d, need_free = %d camera id",
+				  tmpCapState, ((struct camera_frame_type *)parm4)->need_free,mCameraId);
 			if ((SPRD_WAITING_JPEG == tmpCapState)
 				|| (SPRD_INTERNAL_CAPTURE_STOPPING == tmpCapState)) {
 			if (((struct camera_frame_type *)parm4)->need_free) {
@@ -4919,6 +4920,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag)
 		{
 			SPRD_DEF_Tag sprddefInfo;
 			mSetting->getSPRDDEFTag(&sprddefInfo);
+			HAL_LOGD("sprd_pipviv_enabled=%d camera id %d", sprddefInfo.sprd_pipviv_enabled,mCameraId);
 			if(sprddefInfo.sprd_pipviv_enabled == 1) {
 				mSprdPipVivEnabled = true;
 				SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_PIPVIV_ENABLED, 1);

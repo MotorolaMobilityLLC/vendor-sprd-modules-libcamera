@@ -1336,7 +1336,7 @@ void camera_snapshot_channel_handle(cmr_handle oem_handle, void* param)
 
 		if (CAMERA_ZSL_MODE == cxt->snp_cxt.snp_mode &&
 		video_snapshot_type != VIDEO_SNAPSHOT_VIDEO) {
-			if (zsl_capture_need_pause) {
+			if (zsl_capture_need_pause || cxt->is_refocus_mode) {
 				is_need_resume = 1;
 			}
 		} else if (1 != cxt->snp_cxt.total_num) {
@@ -1355,8 +1355,8 @@ void camera_snapshot_channel_handle(cmr_handle oem_handle, void* param)
 			}
 		} else {
 			is_need_resume = 0;
+		}
 	}
-
 	if (1 == is_need_resume) {
 		for (i = 0; i < GRAB_CHANNEL_MAX; i++) {
 			if (cxt->snp_cxt.channel_bits & (1 << i)) {
@@ -1372,7 +1372,7 @@ void camera_snapshot_channel_handle(cmr_handle oem_handle, void* param)
 		CMR_LOGI("done");
 	}
 #endif
-}
+
 }
 void camera_snapshot_state_handle(cmr_handle oem_handle, enum snapshot_cb_type cb, enum snapshot_func_type func, void* param)
 {

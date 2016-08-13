@@ -3745,9 +3745,9 @@ cmr_int camera_set_frame_type(cmr_handle snp_handle, struct camera_frame_type *f
 					&mem_ptr->target_yuv.addr_vir);
 	}
 
-	if (cxt->req_param.lls_shot_mode || cxt->req_param.is_vendor_hdr) {
-		CMR_LOGI("vendor capture cap_cnt = %d, total_num = %d",
-					cxt->cap_cnt, cxt->req_param.total_num);
+	if (cxt->req_param.lls_shot_mode || cxt->req_param.is_vendor_hdr ||cxt->req_param.is_pipviv_mode) {
+		CMR_LOGI("vendor capture cap_cnt = %d, total_num = %d, is_pipviv_mode %d",
+					cxt->cap_cnt, cxt->req_param.total_num,cxt->req_param.is_pipviv_mode);
 		if (0 == snp_get_request(snp_handle) || (cxt->cap_cnt == cxt->req_param.total_num)  || cxt->req_param.is_pipviv_mode) {
 			frame_type->need_free = 1;
 		} else {
