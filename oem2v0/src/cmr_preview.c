@@ -9797,7 +9797,8 @@ exit:
 	return ret;
 }
 
-cmr_int prev_set_preview_skip_frame_num(cmr_handle preview_handle, cmr_u32 camera_id, cmr_uint skip_num)
+cmr_int prev_set_preview_skip_frame_num(cmr_handle preview_handle, cmr_u32 camera_id,
+					cmr_uint skip_num, cmr_uint has_preflashed)
 {
 	cmr_int                ret = CMR_CAMERA_SUCCESS;
 	struct prev_handle	   *handle = (struct prev_handle*)preview_handle;
@@ -9808,9 +9809,9 @@ cmr_int prev_set_preview_skip_frame_num(cmr_handle preview_handle, cmr_u32 camer
 
 	prev_cxt = &handle->prev_cxt[camera_id];
 	prev_cxt->prev_skip_num = prev_cxt->prev_frm_cnt + skip_num;
-	prev_cxt->prev_preflash_skip_en = 1;
-	return ret;
+	prev_cxt->prev_preflash_skip_en = has_preflashed;
 
+	return ret;
 }
 
 cmr_int prev_set_ae_time(cmr_handle preview_handle, cmr_u32 camera_id, void *data)

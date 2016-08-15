@@ -2487,6 +2487,10 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
 			if ((uint32_t)CAMERA_FLASH_MODE_TORCH != flash_mode) {
 				setting_set_flashdevice(cpt, parm, FLASH_CLOSE_AFTER_OPEN);
 				CMR_LOGI("flash close");
+				CMR_LOGV("parm->ctrl_flash.will_capture=%d", parm->ctrl_flash.will_capture);
+				if (!parm->ctrl_flash.will_capture) {
+					hal_param->flash_param.has_preflashed = 0;
+				}
 			}
 			if (IMG_DATA_TYPE_RAW == image_format) {
 				is_to_isp = 1;
@@ -2504,6 +2508,7 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
 		//if (!parm->ctrl_flash.will_capture) {
 			//hal_param->flash_param.has_preflashed = 0;
 		//}
+
 		if (is_to_isp) {
 			if (0 == work_mode) {
 				setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_AFTER);
@@ -2736,6 +2741,18 @@ static cmr_int setting_get_exif_pic_info(struct setting_component *cpt,struct se
 		}
 		cmr_copy(&parm->exif_pic_cond_info,  &sn_param.exif_pic_info,  sizeof(parm->exif_pic_cond_info));
 	}
+	return ret;
+}
+
+static cmr_int setting_get_pre_lowflash_value(struct setting_component *cpt,
+					      struct setting_cmd_parameter *parm)
+{
+	cmr_int ret = 0;
+	struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+	parm->cmd_type_value = hal_param->flash_param.has_preflashed;
+	CMR_LOGI("hal_param->flash_param.has_preflashed=%d", hal_param->flash_param.has_preflashed);
+
 	return ret;
 }
 
@@ -3220,6 +3237,7 @@ cmr_int cmr_setting_ioctl(cmr_handle setting_handle, cmr_uint cmd_type,
 		{SETTING_GET_TOUCH_XY,			  setting_get_touch_info},
 		{SETTING_GET_VIDEO_SNAPSHOT_TYPE,      setting_get_video_snapshot_type},
 		{SETTING_GET_EXIF_PIC_INFO,            setting_get_exif_pic_info},
+		{SETTING_GET_PRE_LOWFLASH_VALUE,       setting_get_pre_lowflash_value},
 	};
 	struct setting_item          *item = NULL;
 	struct setting_component     *cpt =	 (struct setting_component *)setting_handle;
