@@ -637,6 +637,9 @@ private:
 	int32_t                       mVideoSnapshotType;
 
 	bool                          mIommuEnabled;
+	/* 0 - snapshot not need flash; 1 - snapshot need flash*/
+	uint32_t                      mFlashCaptureFlag;
+	uint32_t                      mFlashCaptureSkipNum;
 };
 
 }; // namespace sprdcamera

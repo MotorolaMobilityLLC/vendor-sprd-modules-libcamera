@@ -2253,10 +2253,17 @@ static cmr_int setting_is_need_flash(struct setting_component *cpt,
 	flash_mode = hal_param->flash_param.flash_mode;
 	shot_num = hal_param->shot_num;
 
-	if (CAMERA_FLASH_MODE_TORCH != flash_mode && flash_status && ((CAMERA_NORMAL_MODE == capture_mode)
-		|| (CAMERA_ISP_TUNING_MODE == capture_mode) || (CAMERA_ISP_SIMULATION_MODE == capture_mode)
-		|| (shot_num > 1))) {
-		is_need = 1;
+	CMR_LOGI("flash_mode=%d, flash_status=%d, capture_mode=%d, shot_num=%d",
+		flash_mode, flash_status, capture_mode, shot_num);
+
+	if (CAMERA_FLASH_MODE_TORCH != flash_mode && flash_status) {
+		if (CAMERA_NORMAL_MODE == capture_mode ||
+			CAMERA_ISP_TUNING_MODE == capture_mode ||
+			CAMERA_ISP_SIMULATION_MODE == capture_mode ||
+			CAMERA_ZSL_MODE == capture_mode ||
+			shot_num > 1) {
+				is_need = 1;
+		}
 	}
 
 	return is_need;

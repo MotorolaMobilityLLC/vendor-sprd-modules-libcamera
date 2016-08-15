@@ -905,6 +905,13 @@ cmr_int camera_get_sensor_max_fps(cmr_handle camera_handle,cmr_u32 camera_id, cm
 	return ret;
 }
 
+cmr_int camera_snapshot_is_need_flash(cmr_handle oem_handle, cmr_u32 camera_id, cmr_u32 *is_need_flash)
+{
+	camera_local_snapshot_is_need_flash(oem_handle, camera_id, is_need_flash);
+	return 0;
+}
+
+
 void dump_jpeg_file(void *virt_addr, unsigned int size, int width, int height)
 {
 	char str_buf[100];
@@ -999,6 +1006,7 @@ static oem_ops_t oem_module_ops = {
 	camera_get_gain_thrs,
 	camera_set_sensor_info_to_af,
 	camera_get_sensor_max_fps,
+	camera_snapshot_is_need_flash,
 };
 
 struct oem_module OEM_MODULE_INFO_SYM = {

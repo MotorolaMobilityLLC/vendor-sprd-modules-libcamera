@@ -284,6 +284,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mUpdateRangeFpsCount(0),
 	mPrvMinFps(0),
 	mPrvMaxFps(0),
+	mFlashCaptureFlag(0),
+	mFlashCaptureSkipNum(3),
 	mIommuEnabled(false)
 
 {
@@ -869,6 +871,12 @@ int SprdCamera3OEMIf::zslTakePicture()
 
 	if (isCapturing()) {
 		WaitForCaptureDone();
+	}
+
+	if (isPreviewing()) {
+		mHalOem->ops->camera_start_preflash(mCameraHandle);
+		mHalOem->ops->camera_snapshot_is_need_flash(mCameraHandle, mCameraId, &mFlashCaptureFlag);
+		HAL_LOGD("mFlashCaptureFlag=%d", mFlashCaptureFlag);
 	}
 
 	SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SHOT_NUM, mPicCaptureCnt);
@@ -6402,6 +6410,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data)
 	SprdCamera3OEMIf * obj = (SprdCamera3OEMIf *)p_data;
 	cmr_int need_pause;
 	struct camera_frame_type zsl_frame;
+	uint32_t cnt = 0;
 
 	if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
 		HAL_LOGE("oem is null or oem ops is null");
@@ -6410,10 +6419,36 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data)
 
 	if (1 == obj->mZslShotPushFlag) {
 		zsl_frame = obj->popZslFrame();
-		while (zsl_frame.y_vir_addr == 0) {
-			HAL_LOGD("wait for zsl frame");
-			usleep(20*1000);
-			zsl_frame = obj->popZslFrame();
+
+		if (obj->mFlashCaptureFlag == 1) {
+			while (1) {
+				if ((zsl_frame.y_vir_addr != 0) &&
+				    (obj->mFlashCaptureFlag == 1) &&
+				    (cnt <= obj->mFlashCaptureSkipNum)) {
+					HAL_LOGV("skip one frame");
+					mHalOem->ops->camera_set_zsl_buffer(obj->mCameraHandle,
+									zsl_frame.y_phy_addr,
+									zsl_frame.y_vir_addr,
+									zsl_frame.fd);
+					zsl_frame.y_vir_addr = 0;
+					cnt++;
+				}
+
+				HAL_LOGD("wait for zsl frame");
+				usleep(20*1000);
+				zsl_frame = obj->popZslFrame();
+				if ((zsl_frame.y_vir_addr != 0) &&
+				    (cnt > obj->mFlashCaptureSkipNum)) {
+					HAL_LOGD("cnt=%d", cnt);
+					break;
+				}
+			}
+		} else {
+			while (zsl_frame.y_vir_addr == 0) {
+				HAL_LOGD("wait for zsl frame");
+				usleep(20*1000);
+				zsl_frame = obj->popZslFrame();
+			}
 		}
 
 		if (zsl_frame.y_vir_addr != 0) {
@@ -6424,6 +6459,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data)
 								     zsl_frame.fd);
 			obj->mZslShotPushFlag = 0;
 		}
+		obj->mFlashCaptureFlag = 0;
 	}
 }
 

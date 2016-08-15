@@ -40,6 +40,8 @@
 #define CAMERA_OEM_MSG_QUEUE_SIZE                    10
 #define CAMERA_RECOVER_CNT                           3
 
+#define CONFIG_ZSL_FLASH_CAPTURE 1
+
 #define OEM_HANDLE_HDR                               1
 #define CAMERA_PATH_SHARE                            1
 #define OEM_RESTART_SUM                              2
@@ -1613,6 +1615,7 @@ cmr_int camera_focus_pre_proc(cmr_handle oem_handle)
 	/*open flash*/
 	setting_param.camera_id = cxt->camera_id;
 
+#ifndef CONFIG_ZSL_FLASH_CAPTURE
 	ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_SPRD_ZSL_ENABLED, &setting_param);
 	if (ret) {
 		CMR_LOGE("failed to get preview sprd zsl enabled flag %ld", ret);
@@ -1621,6 +1624,7 @@ cmr_int camera_focus_pre_proc(cmr_handle oem_handle)
 	if (CAMERA_ZSL_MODE == cxt->snp_cxt.snp_mode && 1 == setting_param.cmd_type_value) {
 		need_pre_flash = 0;
 	}
+#endif
 
 	//wait  AOI converged
 	ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_SET_ROI_CONVERGENCE_REQ, &setting_param);
@@ -1666,6 +1670,7 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture)
 			need_close_flash = 0;
 	}
 
+#ifndef CONFIG_ZSL_FLASH_CAPTURE
 	ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_SPRD_ZSL_ENABLED, &setting_param);
 	if (ret) {
 		CMR_LOGE("failed to get preview sprd zsl enabled flag %ld", ret);
@@ -1674,6 +1679,7 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture)
 	if (CAMERA_ZSL_MODE == cxt->snp_cxt.snp_mode && 1 == setting_param.cmd_type_value) {
 		need_close_flash = 0;
 	}
+#endif
 
 	cmr_bzero(&setting_param, sizeof(setting_param));
 	setting_param.camera_id = cxt->camera_id;
@@ -4546,6 +4552,77 @@ exit:
 	return ret;
 }
 
+cmr_int camera_local_snapshot_is_need_flash(cmr_handle oem_handle, cmr_u32 camera_id, cmr_u32 *is_need_flash)
+{
+	cmr_int                        ret = CMR_CAMERA_SUCCESS;
+	struct camera_context          *cxt = (struct camera_context*)oem_handle;
+	struct snapshot_context        *snp_cxt;
+	struct setting_cmd_parameter   setting_param;
+
+	if (!oem_handle || (camera_id != cxt->camera_id)) {
+		CMR_LOGE("in parm error");
+		ret = -CMR_CAMERA_INVALID_PARAM;
+		goto exit;
+	}
+	snp_cxt = &cxt->snp_cxt;
+
+	CMR_LOGI("camera id %d, capture mode %d", camera_id,  snp_cxt->snp_mode);
+
+	memset(&setting_param, 0, sizeof(setting_param));
+	setting_param.camera_id = camera_id;
+	ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_FLASH_STATUS, &setting_param);
+	if (ret) {
+		CMR_LOGE("failed to get flash mode %ld", ret);
+		goto exit;
+	}
+	*is_need_flash = setting_param.cmd_type_value;
+	CMR_LOGI("is_need_flash = %d", *is_need_flash);
+exit:
+	return ret;
+}
+
+cmr_int camera_capture_zsl_highflash(cmr_handle oem_handle, cmr_u32 camera_id)
+{
+	cmr_int                        ret = CMR_CAMERA_SUCCESS;
+	struct camera_context          *cxt = (struct camera_context*)oem_handle;
+	struct snapshot_context        *snp_cxt;
+	struct setting_cmd_parameter   setting_param;
+
+	if (!oem_handle || (camera_id != cxt->camera_id)) {
+		CMR_LOGE("in parm error");
+		ret = -CMR_CAMERA_INVALID_PARAM;
+		goto exit;
+	}
+	snp_cxt = &cxt->snp_cxt;
+
+	CMR_LOGI("camera id %d, capture mode %d", camera_id,  snp_cxt->snp_mode);
+
+	if ((1 != camera_get_hdr_flag(cxt))) {
+		/*open flash*/
+		memset(&setting_param, 0, sizeof(setting_param));
+		setting_param.ctrl_flash.capture_mode.capture_mode= snp_cxt->snp_mode;
+		setting_param.camera_id = camera_id;
+		setting_param.ctrl_flash.is_active = 1;
+		setting_param.ctrl_flash.flash_type = FLASH_HIGH_LIGHT;
+		setting_param.ctrl_flash.work_mode = 1; //capture
+		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_FLASH_STATUS, &setting_param);
+		if (ret) {
+			CMR_LOGE("failed to get flash mode %ld", ret);
+		}
+		CMR_LOGI("setting_param.cmd_type_value = %d", setting_param.cmd_type_value);
+		if (!ret && setting_param.cmd_type_value) {
+			ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_CTRL_FLASH, &setting_param);
+			if (ret) {
+				CMR_LOGE("failed to open flash");
+			}
+		}
+	}
+
+exit:
+	CMR_LOGI("done %ld", ret);
+	return ret;
+}
+
 cmr_int camera_open_sensor(cmr_handle oem_handle, cmr_u32 camera_id)
 {
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
@@ -7138,6 +7215,11 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle, enum takepicture_mode
 		CMR_LOGE("failed to snp post proc %ld", ret);
 		goto exit;
 	}
+
+	if (CAMERA_ZSL_MODE == mode) {
+		camera_capture_zsl_highflash(cxt, cxt->camera_id);
+	}
+
 	cxt->snp_cxt.actual_capture_size = snp_param.post_proc_setting.chn_out_frm[0].size;
 	if (CAMERA_ISP_SIMULATION_MODE == mode) {
 		cxt->camera_mode = mode;
@@ -7975,6 +8057,7 @@ cmr_int camera_local_set_zsl_snapshot_buffer(cmr_handle oem_handle, cmr_uint src
 			camera_set_discard_frame(cxt, 1);
 			ret = cmr_preview_receive_data(cxt->prev_cxt.preview_handle, cxt->camera_id, PREVIEW_CHN_PAUSE, (void*)&chn_data);
 		}
+		camera_capture_post_proc(cxt, cxt->camera_id);
 	} else {
 		CMR_LOGE("snapshot is not ready");
 	}

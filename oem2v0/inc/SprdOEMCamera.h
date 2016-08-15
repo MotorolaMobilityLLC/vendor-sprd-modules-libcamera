@@ -133,6 +133,9 @@ cmr_int camera_get_gain_thrs(cmr_handle camera_handle, cmr_u32 *is_over_thrs);
 
 cmr_int camera_set_sensor_info_to_af(cmr_handle camera_handle,  struct cmr_af_aux_sensor_info* sensor_info);
 cmr_int camera_get_sensor_max_fps(cmr_handle camera_handle,cmr_u32 camera_id, cmr_u32* max_fps);
+
+cmr_int camera_snapshot_is_need_flash(cmr_handle oem_handle, cmr_u32 camera_id, cmr_u32 *is_need_flash);
+
 #ifdef __cplusplus
 }
 #endif
