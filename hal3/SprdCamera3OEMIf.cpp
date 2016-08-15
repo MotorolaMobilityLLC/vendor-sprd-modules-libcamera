@@ -6263,6 +6263,8 @@ int SprdCamera3OEMIf::SetDimensionCapture(cam_dimension_t capture_size)
 	struct img_rect trim = {0,0,0,0};
 	struct sensor_mode_info mode_info[SENSOR_MODE_MAX];
 	int i;
+	int raw_width = 0;
+	int raw_height = 0;
 
 	HAL_LOGD("capture_size.width = %d, capture_size.height = %d",
 		capture_size.width, capture_size.height);
@@ -6280,12 +6282,29 @@ int SprdCamera3OEMIf::SetDimensionCapture(cam_dimension_t capture_size)
 			return UNKNOWN_ERROR;
 		}
 		mHalOem->ops->camera_get_sensor_info_for_raw(mCameraHandle, mode_info);
-		for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
-			HAL_LOGD("trim w=%d, h=%d", mode_info[i].trim_width, mode_info[i].trim_height);
-			if (mode_info[i].trim_width * mode_info[i].trim_height >= mCaptureWidth * mCaptureHeight) {
-				mCaptureWidth = mode_info[i].trim_width;
-				mCaptureHeight = mode_info[i].trim_height;
-				break;
+		if(mCameraId == 2){
+			for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
+				HAL_LOGD("trim w=%d, h=%d", mode_info[i].trim_width, mode_info[i].trim_height);
+				if (mode_info[i].trim_width * mode_info[i].trim_height != 0 && mode_info[i].trim_width * mode_info[i].trim_height <= mCaptureWidth * mCaptureHeight) {
+					if(raw_width * raw_height<= mode_info[i].trim_width * mode_info[i].trim_height){
+						raw_width = mode_info[i].trim_width;
+						raw_height = mode_info[i].trim_height;
+					}
+				}
+			}
+			if(raw_width * raw_height != 0){
+				mCaptureWidth = raw_width;
+				mCaptureHeight = raw_height;
+			} else
+				HAL_LOGW("There no raw setting for capture");
+		} else {
+			for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
+				HAL_LOGD("trim w=%d, h=%d", mode_info[i].trim_width, mode_info[i].trim_height);
+				if (mode_info[i].trim_width * mode_info[i].trim_height >= mCaptureWidth * mCaptureHeight) {
+					mCaptureWidth = mode_info[i].trim_width;
+					mCaptureHeight = mode_info[i].trim_height;
+					break;
+				}
 			}
 		}
 		HAL_LOGD("raw capture mode: mCaptureWidth=%d, mCaptureHeight=%d",

@@ -103,6 +103,16 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId):
 	mRecSkipNum(0),
 	mIsSkipFrm(false)
 {
+	//for camera id 2&3 debug
+	char value[PROPERTY_VALUE_MAX];
+	property_get("persist.sys.camera.id", value, "0");
+	if(mCameraId == 0) {
+		if (!strcmp(value, "2"))
+			mCameraId = 2;
+	}else if(mCameraId == 1){
+		if (!strcmp(value, "3"))
+			mCameraId = 3;
+	}
 	getLogLevel();
 	HAL_LOGD("mCameraId %d",mCameraId);
 	mCameraDevice.common.tag = HARDWARE_DEVICE_TAG;
