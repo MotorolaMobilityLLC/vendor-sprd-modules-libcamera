@@ -95,7 +95,7 @@ uint32 al3awrapper_dispatchhw3a_aestats( struct isp_drv_meta_ae_t * alisp_metada
 		/* store frame & timestamp */
 		memcpy( &ppatched_aedat->systemtime, &pmetadata_ae->systemtime, sizeof(struct timeval));
 		ppatched_aedat->udsys_sof_idx       = pmetadata_ae->udsys_sof_idx;
-
+		ppatched_aedat->udisp_dgain       = pmetadata_ae->udisp_dgain;
 
 		/* reset flag */
 		ppatched_aedat->bisstatsbyaddr = FALSE;
@@ -204,6 +204,8 @@ uint32 al3awrapper_dispatchhw3a_aestats( struct isp_drv_meta_ae_t * alisp_metada
 	/* store frame & timestamp */
 	memcpy( &ppatched_aedat->systemtime, &pmetadata_ae->systemtime, sizeof(struct timeval));
 	ppatched_aedat->udsys_sof_idx       = pmetadata_ae->udsys_sof_idx;
+	ppatched_aedat->udisp_dgain       = pmetadata_ae->udisp_dgain;
+
 
 	/* debug printf, removed for release version */
 	// printf( "al3AWrapper_DispatchHW3A_AEStats SOF idx :%d \r\n", ppatched_aedat->udsys_sof_idx  );

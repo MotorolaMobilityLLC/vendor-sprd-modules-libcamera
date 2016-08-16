@@ -1,13 +1,13 @@
 /******************************************************************************
  *  File name: debug_structure.h
- *  Latest Update Date:2016/04/14
+ *  Latest Update Date:2016/08/05
  *
  *  Comment:
  *  Describe structure definition of debug information
  *****************************************************************************/
 #include "mtype.h"
 
-#define DEBUG_STRUCT_VERSION               (501)
+#define DEBUG_STRUCT_VERSION               (502)
 
 #define MAX_AEFE_DEBUG_SIZE_STRUCT1        (669)
 #define MAX_AEFE_DEBUG_SIZE_STRUCT2        (5120)
@@ -208,6 +208,8 @@ struct other_debug {
 	uint32 fn_value;  /* Lens F-number(scale 1000), Fno 2.0 = 2000 */
 	uint32 focal_length;  /* The focal length of lens, (scale 1000) 3097 => 3.097 mm */
 	uint8 flash_flag;  /* 0: off, 1: preflash on, 2: mainflash on */
+	uint8 sync_mode;   /*  0: off, 1: turn on */
+
 	uint8 reserved[OTHER_DEBUG_RESERVED_SIZE];  /* Reserved */
 };
 #pragma pack(pop)  /* restore old alignment setting from stack  */

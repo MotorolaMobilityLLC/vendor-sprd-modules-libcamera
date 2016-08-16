@@ -454,6 +454,7 @@ struct isp_drv_meta_ae_t {
 	/* framework time/frame idx info */
 	struct timeval systemtime;
 	uint32 udsys_sof_idx;
+	uint32 udisp_dgain;
 
 	struct isp_drv_meta_ae_stats_info_t  ae_stats_info;
 
@@ -670,6 +671,7 @@ struct al3awrapper_stats_ae_t {
 	/* framework time/frame idx info */
 	struct timeval systemtime;
 	uint32 udsys_sof_idx;
+	uint32 udisp_dgain;
 
 	/* AE stats */
 	uint8  bisstatsbyaddr;      /* true: use addr to passing stats, flase: use array define */

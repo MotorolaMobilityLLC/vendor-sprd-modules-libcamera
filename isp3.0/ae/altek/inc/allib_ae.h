@@ -68,6 +68,56 @@ enum ae_iso_mode_t {
 };
 
 /*
+ *@typedef ae_ev_mode_t
+ *@brief AE EV compensation mode
+ */
+enum ae_ev_mode_t {
+	AE_UIEVCOMP_USRDEF = 0,
+	AE_EV_LEVEL_1,
+	AE_EV_LEVEL_2,
+	AE_EV_LEVEL_3,
+	AE_EV_LEVEL_4,
+	AE_EV_LEVEL_5,
+	AE_EV_LEVEL_6,
+	AE_EV_LEVEL_7,
+	AE_EV_LEVEL_8,
+	AE_EV_LEVEL_9,
+	AE_EV_LEVEL_10,
+	AE_EV_LEVEL_11,
+	AE_EV_LEVEL_12,
+	AE_EV_LEVEL_13,
+	AE_EV_LEVEL_14,
+	AE_EV_LEVEL_15,
+	AE_EV_LEVEL_16,
+	AE_EV_LEVEL_17,
+	AE_EV_LEVEL_18,
+	AE_EV_LEVEL_19,
+	AE_EV_LEVEL_20,
+	AE_EV_LEVEL_21,
+	AE_EV_LEVEL_22,
+	AE_EV_LEVEL_23,
+	AE_EV_LEVEL_24,
+	AE_EV_LEVEL_25,
+	AE_EV_LEVEL_26,
+	AE_EV_LEVEL_27,
+	AE_EV_LEVEL_28,
+	AE_EV_LEVEL_29,
+	AE_EV_LEVEL_30,
+	AE_EV_LEVEL_31,
+	AE_EV_LEVEL_32,
+	AE_EV_LEVEL_33,
+	AE_EV_LEVEL_34,
+	AE_EV_LEVEL_35,
+	AE_EV_LEVEL_36,
+	AE_EV_LEVEL_37,
+	AE_EV_LEVEL_38,
+	AE_EV_LEVEL_39,
+	AE_EV_LEVEL_40,
+	AE_EV_LEVEL_41,
+	AE_EV_MAX,
+};
+
+/*
  *@typedef ae_gain_mode_t
  *@brief AE AD gain mode
  */
@@ -200,6 +250,7 @@ enum ae_set_param_type_t {
 	AE_SET_PARAM_ENABLE,
 	AE_SET_PARAM_LOCKAE,
 	AE_SET_PARAM_UI_EVCOMP,
+	AE_SET_PARAM_UI_EVCOMP_LEVEL,
 	AE_SET_PARAM_3RD_EVCOMP,
 	AE_SET_PARAM_TARTGETMEAN,
 	AE_SET_PARAM_METERING_MODE,
@@ -210,6 +261,7 @@ enum ae_set_param_type_t {
 	AE_SET_PARAM_BRACKET_MODE,
 	AE_SET_PARAM_ANTIFLICKERMODE,
 	AE_SET_PARAM_SOF_NOTIFY,	/* inform AE lib current SOF changed  */
+	AE_SET_PARAM_ISP_DGAIN_SOF_NOTIFY,	/* inform AE lib current SOF changed  */
 
 	AE_SET_PARAM_FPS,
 	AE_SET_PARAM_ROI,		/*  touch ROI info  */
@@ -396,6 +448,7 @@ struct ae_motion_info_t {
 #pragma pack(4)    /* new alignment setting  */
 struct ae_single_expo_set_t {
 	uint32  ad_gain;
+	uint32  isp_dgain;
 	uint32  exp_linecount;
 	uint32  exp_time;
 	uint32  ISO;
@@ -461,6 +514,7 @@ struct ae_exposure_param_t {
 #pragma pack(4)    /* new alignment setting  */
 struct ae_init_exposure_param_t {
 	uint16  ad_gain;	/* scale 100 */
+	uint32  isp_dgain;	/* scale 100 */
 	uint32  exp_linecount;
 	uint32  exp_time;	/* for initial, exposure time is only for reference, exposure line would be more precise  */
 	int32   bv_val;		/* scale 1000 */
@@ -506,6 +560,18 @@ struct ae_sof_notify_param_t {
 	int32  ImageBV;		/* this data would be calculated automatically, no need to input by framework */
 
 	uint16 cuFPS;		/* scale 100, ex: 16.0 FPS --> 1600*/
+};
+#pragma pack(pop)  /* restore old alignment setting from stack  */
+
+/*
+ *@typedef ae_isp_dgain_sof_notify_param_t
+ *@brief ISP Dgain SOF information
+ */
+#pragma pack(push) /* push current alignment setting to stack */
+#pragma pack(4)    /* new alignment setting  */
+struct ae_isp_dgain_sof_notify_param_t {
+	uint32 sys_sof_index;	 /* current SOF index of AP framework */
+	uint32 isp_dgain;	/* scale 100 */
 };
 #pragma pack(pop)  /* restore old alignment setting from stack  */
 
@@ -582,7 +648,7 @@ struct ae_set_parameter_init_t {
 	struct ae_awb_info_t    ae_awb_info;
 
 	/* OTP data */
-	struct calibration_data_t   ae_calib_wb_gain;			/* if no calibration data is prepared, set {0.0, 0.0, 0.0} would let AE lib use its default value
+	struct calibration_data_t   ae_calib_wb_gain;			/* if no calibration data is prepared, set {0.0, 0.0, 0.0, 0.0} would let AE lib use its default value
 								 * but remember to set OTP data via set_param, refer to command AE_SET_PARAM_OPT_WB_DAT */
 	/* Identity ID, used for recognize channel of 3A control for each camera channel */
 	uint8  identity_id;       /* default 0, should be assigned by AP framework */
@@ -634,6 +700,7 @@ struct ae_set_param_content_t {
 
 	enum ae_antiflicker_mode_t  ae_set_antibaning_mode;
 	uint32 ae_targetmean;
+	enum ae_ev_mode_t  aeui_evcomp_level;
 	int32 ae_ui_evcomp;	/* +2 ~ -2 EV, scale 1000 */
 	int32 ae_3rd_evcomp;	/* +2 ~ -2 EV, scale 1000 */
 	uint32 manualFPSmode;	/* reserved item */
@@ -669,6 +736,8 @@ struct ae_set_param_content_t {
 
 	/* frame based update command  */
 	struct ae_sof_notify_param_t  sof_notify_param;		/* current sof notify param, should be updated for each SOF received */
+	/* frame based update command  */
+	struct ae_isp_dgain_sof_notify_param_t  isp_dgain_sof_notify_param;		/* current sof notify param, should be updated for each SOF received */
 
 	struct ae_gyro_info_t   ae_gyro_info;
 	struct ae_awb_info_t    ae_awb_info;
@@ -872,6 +941,7 @@ struct ae_match_runtime_data_t {
 	int32    bv_val;                   /* current BV value, copy from master camera module */
 
 	uint8    uc_sensor_mode;      /* 0: normal preview (master/slave), 1: capture mode ( master/slave), AP should indicate correct mode to get correct transform result  */
+	uint8    uc_is_binning;         /* 0: FR, no binning, crop, 1: BIN mode */
 
 };
 #pragma pack(pop)  /* restore old alignment setting from stack */

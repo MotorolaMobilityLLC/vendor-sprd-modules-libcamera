@@ -260,9 +260,15 @@ uint32   al3awrapper_com_separate_one_bin(uint8* a_pcbinadd, uint32 uw_bin_size,
 
 		addr = (a_pcbinadd + offset);
 
-		ret = al3awrapper_com_separate_function_bin(i, addr, uw_IDX_number, &function_addr[i], &bin_size[i]);
-		if( ERR_WRP_COMM_SUCCESS != ret )
-			return ret;
+		if( i == WRAPPER_COMM_BIN_NUMBER - 1 ) {
+			// IRP is SW format, not funciton Bin
+			function_addr[i] = addr;
+			bin_size[i] = uw_bin_size - offset;
+		} else {
+			ret = al3awrapper_com_separate_function_bin(i, addr, uw_IDX_number, &function_addr[i], &bin_size[i]);
+			if( ERR_WRP_COMM_SUCCESS != ret )
+				return ret;
+		}
 
 		ptr_function_offset++;
 	}

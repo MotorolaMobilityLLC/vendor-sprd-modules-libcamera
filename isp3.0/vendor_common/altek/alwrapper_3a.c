@@ -194,6 +194,7 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 
 		memcpy( &pispmetaae->systemtime, &systemtime, sizeof(struct timeval));
 		pispmetaae->udsys_sof_idx = udsof_idx;
+		pispmetaae->udisp_dgain = 100;
 
 		/* retriving AE info of stats */
 		paddrlocal = (uint8 *)alisp_metadata + pispmeta.uaestatsaddr;
@@ -256,6 +257,8 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 
 		memcpy( &pispmetaae->systemtime, &systemtime, sizeof(struct timeval));
 		pispmetaae->udsys_sof_idx = udsof_idx;
+		pispmetaae->udisp_dgain = 100;
+
 
 		if ( pispmeta.uaestatsaddr != 0 ) {
 			/* retriving AE info of stats */

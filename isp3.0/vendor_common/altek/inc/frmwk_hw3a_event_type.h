@@ -131,6 +131,7 @@ enum ae_state_t {
 	AE_LMT_CONVERGED,
 	AE_DISABLED,
 	AE_LOCKED,
+	AE_STABLE_LOCK,
 	AE_STATE_MAX
 } ;
 
@@ -178,6 +179,7 @@ struct wbgain_data_t {
 #pragma pack(push) /* push current alignment setting to stack */
 #pragma pack(4)    /* new alignment setting */
 struct calibration_data_t {
+	uint32 minISO;
 	uint32 calib_r_gain;        /* scale 1000 */
 	uint32 calib_g_gain;        /* scale 1000 */
 	uint32 calib_b_gain;        /* scale 1000 */

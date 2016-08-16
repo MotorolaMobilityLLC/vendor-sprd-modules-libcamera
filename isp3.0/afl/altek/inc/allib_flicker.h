@@ -36,6 +36,7 @@ enum flicker_set_param_type_t {
 	FLICKER_SET_PARAM_REFERENCE_DATA_INTERVAL,
 	FLICKER_SET_PARAM_ENABLE_DEBUG_REPORT,
 	FLICKER_SET_PARAM_SHIFT_INFO,
+	FLICKER_SET_PARAM_IDENTITYID,
 	FLICKER_SET_PARAM_MAX,
 
 };
@@ -107,6 +108,8 @@ struct flicker_set_param_content_t {
 	/* basic command */
 	uint8 flicker_enable;
 	uint8 flicker_enableDebugLog;
+	/* Identity ID, used for recognize channel of 3A control for each camera channel */
+	uint8  identity_id;       /* default 0, should be assigned by AP framework */
 
 	/* threshold command */
 	uint8 totalqueue;               /* number of total queues */
@@ -185,6 +188,7 @@ typedef uint32 (* allib_flicker_process )( void * hw3a_stats_data, void *flicker
 #pragma pack(push) /* push current alignment setting to stack */
 #pragma pack(4)    /* new alignment setting  */
 struct alflickerruntimeobj_t {
+	uint32  identityid;
 	allib_flicker_intial     initial;
 	allib_flicker_deinit     deinit;
 	allib_flicker_set_param  set_param;
