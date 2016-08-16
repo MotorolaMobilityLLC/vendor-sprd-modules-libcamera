@@ -48,7 +48,7 @@
 
 namespace sprdcamera {
 
-#define VIDEO_3D_MAGIC_STRING "3"
+#define VIDEO_3D_MAGIC_STRING "5"
 #define MAX_NUM_CAMERAS    3
 #define MAX_NUM_STREAMS    3
 #define MAX_QEQUEST_BUF 16
