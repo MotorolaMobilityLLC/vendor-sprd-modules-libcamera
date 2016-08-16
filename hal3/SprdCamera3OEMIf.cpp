@@ -635,6 +635,7 @@ void SprdCamera3OEMIf::initialize()
 int SprdCamera3OEMIf::start(camera_channel_type_t channel_type, uint32_t frame_number)
 {
 	int ret = NO_ERROR;
+	char value[PROPERTY_VALUE_MAX];
 	Mutex::Autolock l(&mLock);
 
 	SPRD_DEF_Tag sprddefInfo;
@@ -663,6 +664,12 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type, uint32_t frame_n
 			} else {
 				mSprdZslEnabled = false;
 			}
+
+		       property_get("volte.incall.camera.enable", value, "false");
+		       if (!strcmp(value, "true")) {
+			    mSprdZslEnabled = false;
+			    CMR_LOGI("volte incall, don't need to configure zsl ");
+		       }
 
 #ifdef CONFIG_CAMERA_EIS
 			SPRD_DEF_Tag sprddefInfo;
