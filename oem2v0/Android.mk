@@ -71,9 +71,11 @@ LOCAL_SRC_FILES+= \
 	src/cmr_focus.c
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
+	LOCAL_C_INCLUDES += \
+		$(LOCAL_PATH)/../arithmetic/sprdface/inc
 	ifeq ($(strip $(TARGET_BOARD_CAMERA_FD_LIB)),omron)
 		LOCAL_C_INCLUDES += \
-					$(LOCAL_PATH)/../arithmetic/omron/inc
+			$(LOCAL_PATH)/../arithmetic/omron/inc
 		LOCAL_SRC_FILES+= src/cmr_fd_omron.c
 	else
 		LOCAL_SRC_FILES+= src/cmr_fd.c
@@ -117,7 +119,7 @@ LOCAL_SHARED_LIBRARIES += libcamisp
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 	ifeq ($(strip $(TARGET_BOARD_CAMERA_FD_LIB)),omron)
-		LOCAL_STATIC_LIBRARIES += libeUdnDt libeUdnCo
+		LOCAL_STATIC_LIBRARIES += libeUdnDt libeUdnCo libsprdfa libsprdfar
 	else
 		LOCAL_SHARED_LIBRARIES += libface_finder
 	endif

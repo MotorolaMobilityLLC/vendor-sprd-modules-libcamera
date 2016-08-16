@@ -25,9 +25,27 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <cutils/properties.h>
 #include "UdnAPI.h"
 #include "CommonDef.h"
 #include "UdnDtAPI.h"
+#include "facealignapi.h"
+#include "faceattributeapi.h"
+
+#define FD_MAX_FACE_NUM         10
+#define FD_RUN_FAR_INTERVAL     6   /* The frame interval to run FAR. For reducing computation cost */
+
+struct class_faceattr {
+	FA_SHAPE        shape;
+	FAR_ATTRIBUTE   attr;
+	int             face_id;  /* face id gotten from face detection */
+};
+
+struct class_faceattr_array {
+	int                     count;                   /* face count      */
+	int                     frame_idx;               /* The frame when the face attributes are updated */
+	struct class_faceattr   face[FD_MAX_FACE_NUM+1]; /* face attricutes */
+};
 
 struct class_fd {
 	struct ipm_common               common;
@@ -43,6 +61,7 @@ struct class_fd {
 	ipm_callback                    frame_cb;
 	struct img_size                 fd_size;
 	struct img_face_area            face_area_prev; /* The faces detected from the previous frame; It is used to make face detection results more stable */
+	struct class_faceattr_array     faceattr_arr;  /* face attributes */
 	cmr_uint                        curr_frame_idx;
 	HDETECTION                      hDT;  /* Face Detection Handle */
 	HDTRESULT                       hDtResult; /* Face Detection Result Handle */
@@ -71,6 +90,8 @@ static cmr_uint fd_is_busy(struct class_fd *class_handle);
 static void fd_set_busy(struct class_fd *class_handle, cmr_uint is_busy);
 static cmr_int fd_thread_create(struct class_fd *class_handle);
 static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data);
+static FA_ALIGN_HANDLE hFaceAlign = NULL;  /* Handle for face alignment */
+static FAR_RECOGNIZER_HANDLE hFAR = NULL;  /* Handle for face attribute recognition */
 
 static struct class_ops fd_ops_tab_info = {
 	fd_open,
@@ -210,6 +231,7 @@ static cmr_int fd_open(cmr_handle ipm_handle, struct ipm_open_in *in, struct ipm
 	fd_handle->faceNodetect       = 0;
 	fd_handle->last_face_num      = 0;
 	fd_handle->is_get_result      = 0;
+	fd_handle->faceattr_arr.count = 0;
 
 	CMR_LOGD("mem_size = 0x%ld", fd_handle->mem_size);
 	fd_handle->alloc_addr = malloc(fd_handle->mem_size);
@@ -601,8 +623,96 @@ static void fd_smooth_fd_results(const struct img_face_area *i_face_area_prev,
 	o_face_area->face_count = currIdx;
 }
 
+static void fd_recognize_face_attribute(HDTRESULT i_hDtResult,
+                                        struct class_faceattr_array *io_faceattr_arr,
+                                        const cmr_u8 *i_image_data,
+                                        struct img_size i_image_size,
+                                        const cmr_uint i_curr_frame_idx)
+{
+    cmr_int face_count = 0;
+    cmr_int fd_idx = 0;
+    cmr_int i = 0;
+    struct class_faceattr_array new_attr_array = {0};
+    FA_IMAGE img = {0};
+
+    /* Don't update face attribute, if the frame interval is not enough. For reducing computation cost */
+    if ( (i_curr_frame_idx - io_faceattr_arr->frame_idx) < FD_RUN_FAR_INTERVAL ) {
+        return;
+    }
+
+    img.data = (unsigned char *)i_image_data;
+    img.width = i_image_size.width;
+    img.height = i_image_size.height;
+    img.step = img.width;
+
+    UDN_GetDtFaceCount(i_hDtResult, (INT32*)&face_count);
+
+    for (fd_idx = 0; fd_idx < face_count; fd_idx++) {
+        struct class_faceattr *fattr = &(new_attr_array.face[fd_idx]);
+        FACEINFO fd;
+
+        UDN_GetDtFaceInfo(i_hDtResult, fd_idx, &fd);
+
+        /* Assign the same face id with FD */
+        fattr->face_id = fd.nID;
+        fattr->attr.smile = 0;
+        fattr->attr.eyeOpen = 0;
+
+        /* Run face alignment */
+        {
+            FA_FACEINFO faface;
+            POINT center;
+            INT32 face_size = 0;       /* face size           */
+            INT32 roll_angle = 0;      /* roll angle, in [0,356] degrees */
+
+            UDN_ConvertRectToCenter(fd.ptLeftTop, fd.ptRightTop, fd.ptLeftBottom, fd.ptRightBottom,
+                                    &center, &face_size, &roll_angle);
+
+            if (roll_angle > 180) roll_angle -= 360;   /* Convert to (-180, +180] degrees */
+
+            faface.x = center.x - (face_size / 2);
+            faface.y = center.y - (face_size / 2);
+            faface.width = face_size;
+            faface.height = face_size;
+            faface.yawAngle = fd.nPose;
+            faface.rollAngle = roll_angle;
+
+            {
+                int err = FaFaceAlign(hFaceAlign, &img, &faface, &(fattr->shape));
+                // CMR_LOGI("FaFaceAlign: err=%d, score=%d", err, fattr->shape.score);
+             }
+        }
+
+        /* Run face attribute recognition */
+        {
+            FAR_OPTION opt;
+            FAR_FACEINFO farface;
+
+            /* set option: only do smile detection */
+            opt.smileOn = 1;
+            opt.eyeOpenCloseOn = 0;
+
+            /* Set the eye locations */
+            for (i = 0; i < 4; i++) {
+                farface.landmarks[i].x = fattr->shape.data[i*2];
+                farface.landmarks[i].y = fattr->shape.data[i*2+1];
+            }
+
+            {
+                int err = FarRecognize(hFAR, (const FAR_IMAGE *)&img, &farface, &opt, &(fattr->attr));
+                 CMR_LOGI("FarRecognize: err=%d, smile=%d", err, fattr->attr.smile);
+            }
+        }
+    }
+
+    new_attr_array.count = face_count;
+    new_attr_array.frame_idx = i_curr_frame_idx;
+    memcpy(io_faceattr_arr, &new_attr_array, sizeof(struct class_faceattr_array));
+}
+
 static void fd_get_fd_results(struct class_fd *fd_handle,
 								HDTRESULT i_hDtResult,
+								const struct class_faceattr_array *i_faceattr_arr,
 								struct img_face_area *io_face_area_prev,
 								struct img_face_area *o_face_area,
 								struct img_size image_size)
@@ -665,11 +775,45 @@ static void fd_get_fd_results(struct class_fd *fd_handle,
 		curr_face_area.range[valid_count].ely = ey;
 		curr_face_area.range[valid_count].ex = ex;
 		curr_face_area.range[valid_count].ey = ey;
-		curr_face_area.range[valid_count].face_id = valid_count;
-		curr_face_area.range[valid_count].smile_level = info.nConfidence / 10; /* Make it in [0,100] */
+		curr_face_area.range[valid_count].face_id = info.nID;
+		curr_face_area.range[valid_count].smile_level = 1;
 		curr_face_area.range[valid_count].blink_level = 0;
 		curr_face_area.range[valid_count].angle = info.nPose;
 		curr_face_area.range[valid_count].brightness = 128;
+
+        /* set smile detection result */
+         {
+            const cmr_int app_smile_thr = 30;  // smile threshold in APP
+            static cmr_int algo_smile_thr = 15; //it is a tuning parameter,must be in [1,50]
+            char smile_level[PROPERTY_VALUE_MAX];
+            property_get("persist.sys.camera.smile.level", smile_level, "0");
+            if(atoi(smile_level) > 0 && atoi(smile_level) < 50 ) {
+                 algo_smile_thr = atoi(smile_level);
+            }
+                 cmr_int i = 0;
+                 for (i = 0; i < i_faceattr_arr->count; i++) {
+                      const struct class_faceattr *fattr = &(i_faceattr_arr->face[i]);
+                      if (fattr->face_id == info.nID) {
+
+                      /* Note: The original smile score is in [-100, 100].
+                      But the Camera APP needs a score in [0, 100], and also the definitions for smile degree are
+                      different with the algorithm. So, we need to adjust the smile score to fit the APP.*/
+                      cmr_int smile_score = MAX(0, fattr->attr.smile);
+                      if (smile_score >= algo_smile_thr) {
+                          /* norm_score is in [0, 70] */
+                          cmr_int norm_score = ((smile_score - algo_smile_thr) * (100 - app_smile_thr)) / (100 - algo_smile_thr);
+                          /* scale the smile score to be in [30, 100] */
+                          smile_score = norm_score + app_smile_thr;
+                      } else {
+                          /* scale the smile score to be in [0, 30) */
+                          smile_score = (smile_score * app_smile_thr) / algo_smile_thr;
+                      }
+                      curr_face_area.range[valid_count].smile_level = MAX(1, smile_score);
+                      curr_face_area.range[valid_count].blink_level = MAX(0, -fattr->attr.eyeOpen);
+                      break;
+                }
+            }
+        }
 
 		valid_count++;
 	}
@@ -718,6 +862,17 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data)
 
 	switch (evt) {
 	case CMR_EVT_FD_INIT:
+
+		/* Create face alignment and face attribute recognition handle */
+		if (FA_OK != FaCreateAlignHandle(&hFaceAlign)) {
+                       CMR_LOGE("FaCreateAlignHandle() Error");
+			break;
+		}
+		if (FAR_OK != FarCreateRecognizerHandle(&hFAR)) {
+                       CMR_LOGE("FarCreateRecognizerHandle() Error");
+			break;
+		}
+
 		/* Creates Face Detection handle */
 		class_handle->hDT = UDN_CreateDetection();
 
@@ -733,7 +888,7 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data)
 		}
 
 		/* Sets Face Detection parameters */
-		if (set_dt_param(class_handle, class_handle->hDT) != TRUE) {
+		if (UDN_NORMAL != set_dt_param(class_handle, class_handle->hDT)) {
 			break;
 		}
 		break;
@@ -763,8 +918,16 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data)
 			break;
 		}
 
+		/* recognize face attribute (smile detection) */
+
+		fd_recognize_face_attribute(class_handle->hDtResult,
+		                            &(class_handle->faceattr_arr),
+		                            (cmr_u8*)class_handle->alloc_addr,
+		                            class_handle->fd_size,
+		                            class_handle->curr_frame_idx);
+
 		/* extract face detection results */
-		fd_get_fd_results(class_handle, class_handle->hDtResult, &(class_handle->face_area_prev), &(class_handle->frame_out.face_area), class_handle->fd_size);
+		fd_get_fd_results(class_handle, class_handle->hDtResult, &(class_handle->faceattr_arr), &(class_handle->face_area_prev), &(class_handle->frame_out.face_area), class_handle->fd_size);
 
 		class_handle->frame_out.dst_frame.size.width = class_handle->frame_in.src_frame.size.width;
 		class_handle->frame_out.dst_frame.size.height = class_handle->frame_in.src_frame.size.height;
@@ -781,6 +944,10 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data)
 		break;
 
 	case CMR_EVT_FD_EXIT:
+		/* Delete face alignment and face attribute recognition handle */
+		FaDeleteAlignHandle(&hFaceAlign);
+		FarDeleteRecognizerHandle(&hFAR);
+
 		/* Deletes Face Detection handle */
 		if (class_handle->hDT != NULL ) {
 			UDN_DeleteDetection(class_handle->hDT);

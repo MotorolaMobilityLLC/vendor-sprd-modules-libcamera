@@ -60,7 +60,8 @@ endif
 
 LOCAL_C_INCLUDES += \
                 $(LOCAL_PATH)/arithmetic/inc \
-                $(LOCAL_PATH)/arithmetic/facebeauty/inc
+                $(LOCAL_PATH)/arithmetic/facebeauty/inc \
+		$(LOCAL_PATH)/arithmetic/sprdface/inc
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FD_LIB)),omron)

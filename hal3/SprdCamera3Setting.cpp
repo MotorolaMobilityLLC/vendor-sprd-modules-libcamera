@@ -1964,11 +1964,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId)
 	s_setting[cameraId].sprddefInfo.big_pre_rec_size_support = 0;
 	#endif
 
-    #ifdef CONFIG_CAMERA_FACE_DETECT_OMRON
-	s_setting[cameraId].sprddefInfo.availabe_smile_enable = 0;
-	#else
 	s_setting[cameraId].sprddefInfo.availabe_smile_enable = 1;
-	#endif
 
 	#ifdef CONFIG_CAMERA_AFL_AUTO_DETECTION
 	s_setting[cameraId].sprddefInfo.availabe_antiband_auto_supported = 1;
