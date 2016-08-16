@@ -562,7 +562,7 @@ struct config_element sprd_back_camera_hardware_config[] = {
 	{"picture-size-values", "2048x1536,1600x1200,1280x960,640x480"},
 	{"video-picture-size-values", "1600x1200,1600x1200,1600x1200,1600x1200,1600x1200"},
 #elif defined(CONFIG_CAMERA_SUPPORT_2M)
-	{"picture-size-values", "1920x1088,1600x1200,1280x960,640x480"},
+	{"picture-size-values", "1920x1080,1600x1200,1280x960,640x480"},
 	{"video-picture-size-values", "1280x960,1280x960,1280x960,1280x960,1280x960"},
 #else
 	{"picture-size-values", "3264x2448,2592x1936,2048x1536,1600x1200,1280x960,640x480"},
@@ -577,12 +577,12 @@ struct config_element sprd_back_camera_hardware_config[] = {
 	{"preview-size-values", "1280x720,720x480,640x480,352x288,320x240,176x144"},
 	{"preview-size", "720x480"},
 #else
-	{"preview-size-values", "1920x1088,1280x960,1280x720,720x480,640x480,352x288,320x240,176x144"},
+	{"preview-size-values", "1920x1080,1280x960,1280x720,720x480,640x480,352x288,320x240,176x144"},
 	{"preview-size", "1280x960"},
 #endif
 #endif
 	{"video-size-values", ""},
-	{"video-size", "1920x1088"},
+	{"video-size", "1920x1080"},
 	{"preferred-preview-size-for-video", ""},
 	{"video-frame-format-values", "android-opaque,yuv420sp,yuv420p"},
 	{"video-frame-format", "android-opaque"},
