@@ -47,6 +47,11 @@ struct isp_mw_tunng_file_info {
 	cmr_u32 isp_caf_size;
 };
 
+struct isp_mw_pdaf_info {
+	void *pdaf_cbc_addr;
+	cmr_u32 pdaf_cbc_size;
+};
+
 struct isp_mw_context {
 	cmr_u32 camera_id;
 	cmr_u32 is_inited;
@@ -58,6 +63,7 @@ struct isp_mw_context {
 	proc_callback caller_callback;
 	struct isp_init_param input_param;
 	struct isp_mw_tunng_file_info tuning_bin;
+	struct isp_mw_pdaf_info pdaf_info;
 };
 
 static cmr_int ispmw_create_thread(cmr_handle isp_mw_handle);
@@ -274,6 +280,70 @@ exit:
 	return ret;
 }
 
+cmr_int ispmw_get_pdaf_cbc_bin(cmr_handle isp_mw_handle, const cmr_s8 *sensor_name)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp_mw_context                       *cxt = (struct isp_mw_context *)isp_mw_handle;
+	FILE                                        *fp = NULL;
+	cmr_u8                                      file_name[ISP_MW_FILE_NAME_LEN];
+
+	/* get caf tuning bin */
+	sprintf((void *)&file_name[0], "/system/lib/tuning/%s_cbc.bin", sensor_name);
+	fp = fopen((void *)&file_name[0], "rb");
+	if (NULL == fp) {
+		ISP_LOGE("failed to open caf bin");
+		goto exit;
+	}
+	fseek(fp, 0, SEEK_END);
+	cxt->pdaf_info.pdaf_cbc_size = ftell(fp);
+	if (0 == cxt->pdaf_info.pdaf_cbc_size) {
+		fclose(fp);
+		goto exit;
+	}
+	fseek(fp, 0, SEEK_SET);
+	cxt->pdaf_info.pdaf_cbc_addr = malloc(cxt->pdaf_info.pdaf_cbc_size);
+	if (NULL == cxt->pdaf_info.pdaf_cbc_addr) {
+		fclose(fp);
+		ISP_LOGE("failed to malloc");
+		goto exit;
+	}
+	if (cxt->pdaf_info.pdaf_cbc_size != fread(cxt->pdaf_info.pdaf_cbc_addr,
+						  1,
+						  cxt->pdaf_info.pdaf_cbc_size, fp)) {
+		fclose(fp);
+		ISP_LOGE("failed to read caf bin");
+		ret = -ISP_ERROR;
+		goto exit;
+	}
+	fclose(fp);
+exit:
+	if (ret) {
+		if (cxt->pdaf_info.pdaf_cbc_addr) {
+			free(cxt->pdaf_info.pdaf_cbc_addr);
+			cxt->pdaf_info.pdaf_cbc_addr = NULL;
+			cxt->pdaf_info.pdaf_cbc_size = 0;
+		}
+	} else {
+		ISP_LOGI("pdaf_cbc_addr = %p, size = %d",
+			cxt->pdaf_info.pdaf_cbc_addr, cxt->pdaf_info.pdaf_cbc_size);
+	}
+
+	return ret;
+}
+
+cmr_int ispmw_put_pdaf_cbc_bin(cmr_handle isp_mw_handle)
+{
+	struct isp_mw_context                       *cxt = (struct isp_mw_context *)isp_mw_handle;
+
+	if (cxt->pdaf_info.pdaf_cbc_addr) {
+		free(cxt->pdaf_info.pdaf_cbc_addr);
+		cxt->pdaf_info.pdaf_cbc_addr = NULL;
+		cxt->pdaf_info.pdaf_cbc_size = 0;
+	}
+
+	return 0;
+}
+
 cmr_int ispmw_put_tuning_bin(cmr_handle isp_mw_handle)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
@@ -345,6 +415,7 @@ exit:
 	}
 	return ret;
 }
+
 cmr_int ispmw_put_second_tuning_bin(cmr_handle isp_mw_handle)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
@@ -357,6 +428,7 @@ cmr_int ispmw_put_second_tuning_bin(cmr_handle isp_mw_handle)
 	}
 	return ret;
 }
+
 cmr_int ispmw_parse_second_tuning_bin(cmr_handle isp_mw_handle)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
@@ -409,8 +481,15 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 	if (input_ptr->ex_info.af_supported) {
 		ret = ispmw_get_caf_tuning_bin((cmr_handle)cxt, (const cmr_s8 *)input_ptr->ex_info.name);
 		if (ret) {
-			ISP_LOGE("get caf tuning bin error");
+			ISP_LOGE("failed to get caf tuning bin error");
 			goto exit;
+		}
+		if (input_ptr->ex_info.pdaf_supported) {
+			ret = ispmw_get_pdaf_cbc_bin((cmr_handle)cxt, (const cmr_s8 *)input_ptr->ex_info.name);
+			if (ret) {
+				ISP_LOGE("failed to get pdaf cbc bin");
+				goto exit;
+			}
 		}
 	}
 	ret = ispmw_parse_tuning_bin((cmr_handle)cxt);
@@ -431,6 +510,8 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 	isp_dev_input.shading_bin_size = cxt->tuning_bin.isp_dev_bin_info.uw_shading_bin_size;
 	isp_dev_input.irp_bin_addr = cxt->tuning_bin.isp_dev_bin_info.puc_irp_bin_addr;
 	isp_dev_input.irp_bin_size = cxt->tuning_bin.isp_dev_bin_info.uw_irp_bin_size;
+	isp_dev_input.pdaf_cbcp_bin_addr = cxt->pdaf_info.pdaf_cbc_addr;
+	isp_dev_input.pdaf_cbc_bin_size = cxt->pdaf_info.pdaf_cbc_size;
 	memcpy(&isp_dev_input.init_param, input_ptr, sizeof(struct isp_init_param));
 	ret = isp_dev_access_init(&isp_dev_input, &cxt->isp_dev_handle);
 	if (ret) {
@@ -475,7 +556,8 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 exit:
 	if (ret) {
 		if (cxt) {
-			ispmw_put_tuning_bin((cmr_handle)cxt);
+			ispmw_put_tuning_bin(cxt);
+			ispmw_put_pdaf_cbc_bin(cxt);
 			ret = isp_dev_access_deinit(cxt->isp_dev_handle);
 			if (ret)
 				ISP_LOGE("isp_dev_access_deinit fail %ld", ret);
@@ -501,11 +583,12 @@ cmr_int isp_deinit(cmr_handle isp_handle)
 
 	ret = isp_dev_access_deinit(cxt->isp_dev_handle);
 	if (ret)
-		ISP_LOGE("isp_dev_access_deinit fail %ld", ret);
+		ISP_LOGE("failed to isp_dev_access_deinit %ld", ret);
 	ret = isp_3a_fw_deinit(cxt->isp_3a_handle);
 	if (ret)
-		ISP_LOGE("isp_3a_fw_deinit fail %ld", ret);
-	ispmw_put_tuning_bin((cmr_handle)cxt);
+		ISP_LOGE("failed to isp_3a_fw_deinit %ld", ret);
+	ispmw_put_tuning_bin(cxt);
+	ispmw_put_pdaf_cbc_bin(cxt);
 	free((void *)cxt);
 
 	return ret;

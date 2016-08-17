@@ -55,6 +55,9 @@ struct isp_dev_init_info {
 	uint32 irp_bin_size;
 	uint8 *irp_bin_addr;
 	uint32 irp_bin_offset;
+	uint32 cbc_bin_size;
+	uint8 *cbc_bin_addr;
+	uint32 cbc_bin_offset;
 };
 
 struct isp_img_fd {
