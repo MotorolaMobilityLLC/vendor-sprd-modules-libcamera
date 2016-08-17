@@ -292,6 +292,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mEisInit(0),
 	mSprdEisEnabled(false),
 	mSprdPipVivEnabled(0),
+	mSprdRefocusEnabled(0),
 	mSprdHighIsoEnabled(0),
 	mVideoSnapshotType(0),
 	mIsRecording(false),
@@ -2040,6 +2041,8 @@ bool SprdCamera3OEMIf::startCameraIfNecessary()
 		if(atoi(refocus)!=0)
 			mSprdRefocusEnabled = true;
 		CMR_LOGI("refocus mode %d", mSprdRefocusEnabled);
+		SPRD_DEF_Tag sprddefInfo = {0};
+		mSetting->setSPRDDEFTag(sprddefInfo);
 //temp code end
 
 		if(mSprdRefocusEnabled == true && mCameraId == 0){
@@ -3933,7 +3936,7 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb,
 	}
 	case CAMERA_EVT_CB_SNAPSHOT_JPEG_DONE:
 		exitFromPostProcess();
-		HAL_LOGD("CAMERA_EVT_CB_CAPTURE_FRAME_DONE, pip enable %d, refocus mode %d",mSprdPipVivEnabled,mSprdRefocusEnabled);
+		HAL_LOGD("CAMERA_EVT_CB_SNAPSHOT_JPEG_DONE, pip enable %d, refocus mode %d",mSprdPipVivEnabled,mSprdRefocusEnabled);
 //		mSprdPipVivEnabled = 1;
 		if (mSprdPipVivEnabled || mSprdRefocusEnabled) {
 			Sprd_camera_state tmpCapState = getCaptureState();
