@@ -2873,9 +2873,13 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 	}
 
 	if (ISP3A_WORK_MODE_CAPTURE != work_mode || cxt_ptr->nxt_status.is_hdr_status) {
-		ret = aealtek_pre_to_sensor(cxt_ptr, 1, force_write_sensor);
-		if (ret)
-			goto exit;
+		if (cxt_ptr->tuning_info.manual_ae_on && TUNING_MODE_USER_DEF == cxt_ptr->tuning_info.tuning_mode) {
+			ISP_LOGI("dvt mode");
+		} else {
+			ret = aealtek_pre_to_sensor(cxt_ptr, 1, force_write_sensor);
+			if (ret)
+				goto exit;
+		}
 	}
 
 	++cxt_ptr->work_cnt;
