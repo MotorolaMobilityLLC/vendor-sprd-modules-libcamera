@@ -83,7 +83,7 @@ struct af_altek_lib_api {
 enum af_altek_adpt_status_t {
 	AF_ADPT_STARTED,
 	AF_ADPT_FOCUSING,
-	AF_ADPT_FOCUSED,
+	AF_ADPT_PRE_FOCUSED,
 	AF_ADPT_DONE,
 	AF_ADPT_IDLE,
 };
@@ -1225,8 +1225,7 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 		if (ret)
 			ISP_LOGE("failed to start af");
 
-	} else if ((AF_ADPT_FOCUSING == cxt->af_cur_status ||
-		    AF_ADPT_STARTED == cxt->af_cur_status)
+	} else if ((AF_ADPT_STARTED <= cxt->af_cur_status && AF_ADPT_DONE > cxt->af_cur_status)
 		   && aft_out.is_cancel_caf) {
 
 		ret = afaltek_adpt_stop(cxt);
@@ -1765,8 +1764,7 @@ static cmr_int afaltek_adpt_pre_start(cmr_handle adpt_handle,
 	struct isp3a_af_hw_cfg af_cfg;
 
 	bzero(&af_cfg, sizeof(af_cfg));
-	if ((AF_ADPT_STARTED == cxt->af_cur_status)
-		|| (AF_ADPT_FOCUSING == cxt->af_cur_status)) {
+	if ((AF_ADPT_STARTED <= cxt->af_cur_status) && (AF_ADPT_DONE > cxt->af_cur_status)) {
 		ret = afaltek_adpt_stop(cxt);
 		if (ret)
 			ISP_LOGE("failed to stop");
@@ -1797,6 +1795,7 @@ static cmr_int afaltek_adpt_post_start(cmr_handle adpt_handle)
 	ret = afaltek_adpt_set_start(adpt_handle);
 	if (ret) {
 		ISP_LOGE("failed to start");
+		cxt->af_cur_status = AF_ADPT_IDLE;
 		goto exit;
 	}
 
@@ -1841,6 +1840,7 @@ static cmr_int afaltek_adpt_proc_start(cmr_handle adpt_handle)
 			event.flag = 1;
 			event.type = alAFLib_AE_IS_LOCK;
 			ret = afaltek_adpt_set_special_event(cxt, &event);
+			cxt->af_cur_status = AF_ADPT_PRE_FOCUSED;
 			ISP_LOGI("isp_af_start proc focusing cxt->af_cur_status = %d", cxt->af_cur_status);
 		}
 	}
