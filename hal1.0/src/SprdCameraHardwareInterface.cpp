@@ -4204,7 +4204,7 @@ int SprdCameraHardware::Callback_Free(enum camera_mem_cb_type type, cmr_uint *ph
 	} else if (CAMERA_PREVIEW_RESERVED == type || CAMERA_VIDEO_RESERVED == type ||
 		CAMERA_SNAPSHOT_ZSL_RESERVED == type || CAMERA_ISP_LSC == type ||
 		CAMERA_ISP_BINGING4AWB == type || CAMERA_ISP_ANTI_FLICKER == type || CAMERA_ISP_RAWAE == type ||
-		CAMERA_SNAPSHOT_HIGHISO == type || CAMERA_ISP_RAW_DATA == type) {
+		CAMERA_SNAPSHOT_HIGHISO == type || CAMERA_ISP_RAW_DATA == type ||CAMERA_ISP_FIRMWARE == type) {
 		ret = camera->Callback_OtherFree(type, phy_addr, vir_addr, fd, sum);
 	} else if (CAMERA_VIDEO == type) {
 		ret = camera->Callback_VideoFree(phy_addr, vir_addr, fd, sum);
@@ -4302,8 +4302,8 @@ sprd_camera_memory_t* SprdCameraHardware::allocCameraMem(int buf_size, uint32_t 
 	unsigned long paddr = 0;
 	size_t psize = 0;
 	int result = 0;
-	LOGI("allocCameraMem E: size 0x%x", buf_size);
 
+	LOGI("allocCameraMem E: size 0x%x,mIOMMUEnabled  = %d", buf_size,mIOMMUEnabled);
 	if (!mIOMMUEnabled) {
 		if (is_cache) {
 			pHeapIon = new MemIon("/dev/ion", buf_size ,0 , (1<<31) | ION_HEAP_ID_MASK_MM);

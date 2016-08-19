@@ -3767,11 +3767,14 @@ static cmr_int camera_res_init_internal(cmr_handle oem_handle)
 		goto exit;
 	}
 
+#if 0 // move it to front before isp init,because iommu flag need check through grab_handle
 	ret = camera_grab_init(oem_handle);
 	if (ret) {
 		CMR_LOGE("failed to init grab %ld", ret);
 		goto exit;
 	}
+#endif
+
 
 	ret = camera_scaler_init(oem_handle);
 	if (ret) {
@@ -3965,9 +3968,16 @@ cmr_int camera_init_internal(cmr_handle  oem_handle, cmr_uint is_autotest)
 		CMR_LOGE("failed to init sensor %ld", ret);
 		goto exit;
 	}
+
+	ret = camera_grab_init(oem_handle);
+	if (ret) {
+		CMR_LOGE("failed to init grab %ld", ret);
+		goto exit;
+	}
+
 	ret = camera_res_init(oem_handle);
 	if (ret) {
-		CMR_LOGE("failed to init sensor %ld", ret);
+		CMR_LOGE("failed to init res %ld", ret);
 		goto sensor_deinit;
 	}
 

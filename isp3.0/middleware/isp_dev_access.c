@@ -673,7 +673,7 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	if(isp_id == 0 || isp_id == 1)
 		tSecnarioInfo.tScenarioOutBypassFlag.bBypassMetaData = 0;
 	else
-		tSecnarioInfo.tScenarioOutBypassFlag.bBypassMetaData = 1;
+		tSecnarioInfo.tScenarioOutBypassFlag.bBypassMetaData = 0;
 	if (resolution_ptr->sensor_output_size.w == resolution_ptr->sensor_max_size.w)
 		tSecnarioInfo.tSensorInfo.ucSensorMode = 0;
 	else if (resolution_ptr->sensor_output_size.w < resolution_ptr->sensor_max_size.w)
