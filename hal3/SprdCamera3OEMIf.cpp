@@ -4088,7 +4088,7 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb,
 //		mSprdPipVivEnabled = 1;
 		if (mSprdPipVivEnabled || mSprdRefocusEnabled) {
 			Sprd_camera_state tmpCapState = getCaptureState();
-			HAL_LOGD("PIP HandleTakePicture state = %d, need_free = %d camera id",
+			HAL_LOGD("PIP HandleTakePicture state = %d, need_free = %d camera id = %d",
 				  tmpCapState, ((struct camera_frame_type *)parm4)->need_free,mCameraId);
 			if ((SPRD_WAITING_JPEG == tmpCapState)
 				|| (SPRD_INTERNAL_CAPTURE_STOPPING == tmpCapState)) {
