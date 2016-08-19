@@ -2468,8 +2468,19 @@ cmr_int isp3a_set_convergence_req(cmr_handle isp_3a_handle, void *param_ptr)
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
 
-	UNUSED(param_ptr);
-	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_CONVERGENCE_REQ, NULL, NULL);
+	/**modified for 3d calibration set 3d calibration flag begin*/
+	if (!param_ptr) {
+		ISP_LOGE("set AE_CTRL_SET_CONVERGENCE_REQ, param_ptr == null");
+		ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_CONVERGENCE_REQ, NULL, NULL);
+	}
+	else
+	{
+		struct ae_ctrl_param_in    ae_in;
+		ae_in.value = *(cmr_u32*)param_ptr;
+		ISP_LOGE("set AE_CTRL_SET_CONVERGENCE_REQ with params for 3dcalibration, params:%d", ae_in.value);
+		ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_CONVERGENCE_REQ, &ae_in, NULL);
+	}
+	/**modified for 3d calibration set 3d calibration flag end*/
 exit:
 	return ret;
 }

@@ -131,6 +131,8 @@ typedef int64_t nsecs_t;
 #define CAMERA_SETTINGS_CONFIG_ARRAYSIZE 80
 #define CAMERA_SETTINGS_THUMBNAILSIZE_ARRAYSIZE 8
 
+#define SPRD_3DCALIBRATION_CAPSIZE_ARRAYSIZE 2/**add for 3d calibration capture size*/
+
 typedef struct {
 	uint8_t correction_mode;
 	uint8_t aberration_mode;
@@ -372,7 +374,8 @@ typedef struct {
 	uint8_t refocus_enable;
 	uint32_t touchxy[2];
 	uint8_t is_macro_fixed;
-
+	uint8_t  sprd_3dcalibration_enabled;/**add for 3d calibration enable flag*/
+	uint32_t sprd_3dcalibration_cap_size[SPRD_3DCALIBRATION_CAPSIZE_ARRAYSIZE];/**add for 3d calibration capture size*/
 } SPRD_DEF_Tag;
 
 typedef struct {

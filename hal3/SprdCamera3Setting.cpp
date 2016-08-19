@@ -2210,7 +2210,11 @@ int SprdCamera3Setting::initStaticMetadata(int32_t cameraId, camera_metadata_t *
 			&(s_setting[cameraId].sprddefInfo.big_pre_rec_size_support), 1);
 	staticInfo.update(ANDROID_SPRD_IS_SUPPORT_REFOCUS,
 			&(s_setting[cameraId].sprddefInfo.is_support_refocus), 1);
-
+	/**add for 3d calibration update metadata begin*/
+	staticInfo.update(ANDROID_SPRD_3DCALIBRATION_CAPTURE_SIZE,
+					(int32_t*)s_setting[cameraId].sprddefInfo.sprd_3dcalibration_cap_size,
+					ARRAY_SIZE(s_setting[cameraId].sprddefInfo.sprd_3dcalibration_cap_size));
+	/**add for 3d calibration update metadata end*/
 	*static_metadata = staticInfo.release();
 	#undef FILL_CAM_INFO
 	#undef FILL_CAM_INFO_ARRAY
@@ -3320,8 +3324,32 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 		HAL_LOGD("is_macro_fixed is %d", valueU8);
 	}
 
+	/**add for 3d calibration update metadata begin*/
+	if (frame_settings.exists(ANDROID_SPRD_3DCALIBRATION_ENABLED)) {
+		s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled =  frame_settings.find(ANDROID_SPRD_3DCALIBRATION_ENABLED).data.u8[0];
+		pushAndroidParaTag(ANDROID_SPRD_3DCALIBRATION_ENABLED);
+		HAL_LOGD("sprd_3dcalibration_enabled %d", s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled);
+	}
+    else
+    {
+        char prop[PROPERTY_VALUE_MAX];
+        int val = 0;
+        property_get("persist.sys.camera.hal.3d", prop, "0");
+        val = atoi(prop);
+        if (1== val) {
+            s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled = val;
+            pushAndroidParaTag(ANDROID_SPRD_3DCALIBRATION_ENABLED);
+            HAL_LOGD("force set sprd_3dcalibration_enabled %d", s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled);
+        }
+    }
+	/**add for 3d calibration update metadata end*/
+
 	if (frame_settings.exists(ANDROID_SPRD_ZSL_ENABLED)) {
 		s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled = frame_settings.find(ANDROID_SPRD_ZSL_ENABLED).data.u8[0];
+		/**add for 3d calibration force set sprd zsl enable begin*/
+		if ( s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled )
+			s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled = s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled;
+		/**add for 3d calibration force set sprd zsl enable end*/
 		pushAndroidParaTag(ANDROID_SPRD_ZSL_ENABLED);
 		HAL_LOGD("camera id %d,sprd zsl enabled is %d", mCameraId,s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled);
 	}

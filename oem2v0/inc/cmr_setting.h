@@ -70,6 +70,7 @@ enum setting_cmd_type {
 	SETTING_GET_VIDEO_SNAPSHOT_TYPE,
 	SETTING_GET_EXIF_PIC_INFO,
 	SETTING_GET_PRE_LOWFLASH_VALUE,
+	SETTING_GET_SPRD_3DCAL_ENABLE,/**add for 3d calibration setting params*/
 	SETTING_TYPE_MAX
 };
 

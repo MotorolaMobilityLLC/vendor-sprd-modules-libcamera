@@ -6119,6 +6119,15 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type, struct common
 	case COM_ISP_SET_ROI_CONVERGENCE_REQ:
 		isp_cmd = ISP_CTRL_SET_CONVERGENCE_REQ;
 		ptr_flag = 1;
+		/**add for 3d calibration set 3d calibration flag begin*/
+		CMR_LOGD("ISP_CTRL_SET_CONVERGENCE_REQ, is 3dcalibration enable:%d, params value:%d", cxt->is_3dcalibration_mode, param_ptr->cmd_value);
+		if ( cxt->is_3dcalibration_mode && 1 == param_ptr->cmd_value )
+		{
+			ptr_flag = 0;
+			isp_param = param_ptr->cmd_value;
+			CMR_LOGD("ISP_CTRL_SET_CONVERGENCE_REQ, isp_param:%d, &isp_param:%d", isp_param, &isp_param);
+        }
+		/**add for 3d calibration set 3d calibration flag end*/
 		CMR_LOGI("ISP_CTRL_SET_CONVERGENCE_REQ");
 		break;
 
@@ -6593,6 +6602,16 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	out_param_ptr->video_snapshot_type = setting_param.cmd_type_value;
 	CMR_LOGI("video_snapshot_type=%d", out_param_ptr->video_snapshot_type);
 
+	/**add for 3d calibration, get 3calibration flag start */
+	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_SPRD_3DCAL_ENABLE, &setting_param);
+	if (ret) {
+		CMR_LOGE("failed to get preview sprd eis enabled flag %ld", ret);
+		goto exit;
+	}
+	cxt->is_3dcalibration_mode = setting_param.cmd_type_value;
+	out_param_ptr->sprd_3dcalibration_enabled = cxt->is_3dcalibration_mode;
+	CMR_LOGE("sprd_3dcalibration_enabled flag %d", out_param_ptr->sprd_3dcalibration_enabled);
+	/**add for 3d calibration, get 3calibration flag end */
 exit:
 	CMR_LOGI("prev size %d %d pic size %d %d", out_param_ptr->preview_size.width, out_param_ptr->preview_size.height,
 		     out_param_ptr->picture_size.width, out_param_ptr->picture_size.height);
@@ -6682,6 +6701,7 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle, struct snapshot_param *
 	out_ptr->lls_shot_mode = cxt->lls_shot_mode;
 	out_ptr->is_vendor_hdr = cxt->is_vendor_hdr;
 	out_ptr->is_pipviv_mode = cxt->is_pipviv_mode;
+	out_ptr->is_3dcalibration_mode = cxt->is_3dcalibration_mode;/**add for 3d calibration*/
 	setting_param.camera_id = cxt->camera_id;
 	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_HDR, &setting_param);
 	if (ret) {
@@ -7017,6 +7037,10 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id, cmr
 		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
 					id, &setting_param);
 		break;
+	case CAMERA_PARAM_SPRD_3DCAL_ENABLE:/**add for 3d calibration setting params begin*/
+		setting_param.cmd_type_value = param;
+		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);
+		break;/**add for 3d calibration setting params end*/
 	default:
 		CMR_LOGI("don't support %d", id);
 	}

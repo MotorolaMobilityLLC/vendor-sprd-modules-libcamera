@@ -422,6 +422,7 @@ private:
 	bool                              mSprdHighIsoEnabled;
 
 	bool                              mSprdRefocusEnabled;
+	bool                              mSprd3dCalibrationEnabled;/**add for 3d calibration */
 
 	void yuvNv12ConvertToYv12(struct camera_frame_type *frame, char* tmpbuf);
 

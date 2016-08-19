@@ -240,6 +240,7 @@ struct aealtek_cxt {
 	struct aealtek_tuning_info tuning_info;
 	struct aealtek_stat_info stat_info[10];
 	cmr_u32 stat_info_num;
+	cmr_u32 is_3dcalibration;/**add for 3d calibration*/
 };
 
 #ifdef CONFIG_CAMERA_RT_REFOCUS
@@ -2107,7 +2108,6 @@ static cmr_int aealtek_set_convergence_req(struct aealtek_cxt *cxt_ptr, struct a
 {
 	cmr_int ret = ISP_ERROR;
 
-	UNUSED(in_ptr);
 	UNUSED(out_ptr);
 	if (!cxt_ptr) {
 		ISP_LOGE("param %p is NULL error!", cxt_ptr);
@@ -2119,6 +2119,10 @@ static cmr_int aealtek_set_convergence_req(struct aealtek_cxt *cxt_ptr, struct a
 		ret = aealtek_set_boost(cxt_ptr, 1);
 		if (ret)
 			goto exit;
+	}
+	else if (in_ptr && 1 == in_ptr->value) {/**add for 3d calibration*/
+		ISP_LOGE("set 3dcalibration enable");
+		cxt_ptr->is_3dcalibration = 1;
 	}
 	return ISP_SUCCESS;
 exit:
@@ -5035,7 +5039,8 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 
 	if (cxt_ptr->init_in_param.ops_in.ae_callback) {
 		aealtek_lib_to_out_info(cxt_ptr, &cxt_ptr->lib_data.output_data, &callback_in.proc_out.ae_info);
-		if(cxt_ptr->ae_state == AE_CONVERGED || cxt_ptr->ae_state == AE_LOCKED)
+		if((cxt_ptr->ae_state == AE_CONVERGED || cxt_ptr->ae_state == AE_LOCKED) ||
+		   (cxt_ptr->is_3dcalibration && cxt_ptr->ae_state == AE_CONVERGED))/**add for 3d calibration send stable notify*/
 			cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRL_CB_STAB_NOTIFY, &callback_in);
 
 		callback_in.proc_out.priv_size = sizeof(cxt_ptr->lib_data.output_data.rpt_3a_update);

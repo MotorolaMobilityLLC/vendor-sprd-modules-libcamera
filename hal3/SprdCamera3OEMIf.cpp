@@ -294,6 +294,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mSprdPipVivEnabled(0),
 	mSprdRefocusEnabled(0),
 	mSprdHighIsoEnabled(0),
+	mSprd3dCalibrationEnabled(0),/**add for 3d calibration*/
 	mVideoSnapshotType(0),
 	mIsRecording(false),
 	mIsUpdateRangeFps(false),
@@ -682,6 +683,10 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type, uint32_t frame_n
 				   mRawHeight != 0 &&
 				   mRawWidth != 0) {
 				mSprdZslEnabled = true;
+			}else if (mSprd3dCalibrationEnabled == true &&/**add for 3d calibration force set sprd zsl enable begin*/
+				   mRawHeight != 0 &&
+				   mRawWidth != 0) {
+				mSprdZslEnabled = true;/**add for 3d calibration force set sprd zsl enable end*/
 			}else {
 				mSprdZslEnabled = false;
 			}
@@ -1077,7 +1082,7 @@ status_t SprdCamera3OEMIf::autoFocus(void *user_data)
 
 	mMetaData = user_data;
 
-	if(mCameraId == 1)
+	if(mCameraId == 1||mCameraId == 3)
 		return NO_ERROR;
 
 	mSetting->getCONTROLTag(&controlInfo);
@@ -1133,7 +1138,7 @@ status_t SprdCamera3OEMIf::cancelAutoFocus()
 
 	Mutex::Autolock l(&mLock);
 
-	if(mCameraId == 1)
+	if(mCameraId == 1||mCameraId == 3)
 		return NO_ERROR;
 
 	ret = mHalOem->ops->camera_cancel_autofocus(mCameraHandle);
@@ -1995,6 +2000,11 @@ bool SprdCamera3OEMIf::startCameraIfNecessary()
 	cmr_uint max_height = 0;
 	struct exif_info exif_info = {0};
 	LENS_Tag lensInfo;
+	/**add for 3d calibration get max sensor size begin*/
+	SPRD_DEF_Tag sprddefInfo = {0,};
+	int         i = 0;
+	struct sensor_mode_info mode_info[SENSOR_MODE_MAX] = {0,};
+	/**add for 3d calibration get max sensor size end*/
 
 	if (NULL == mHalOem || NULL == mHalOem->ops) {
 		HAL_LOGE("oem is null or oem ops is null");
@@ -2065,6 +2075,19 @@ bool SprdCamera3OEMIf::startCameraIfNecessary()
 			}
 		}
 		/*get sensor otp from oem layer end*/
+		/**add for 3d calibration get max sensor size begin*/
+		mSetting->getSPRDDEFTag(&sprddefInfo);
+		mHalOem->ops->camera_get_sensor_info_for_raw(mCameraHandle, mode_info);
+		for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
+			HAL_LOGD("trim w=%d, h=%d", mode_info[i].trim_width, mode_info[i].trim_height);
+			if (mode_info[i].trim_width * mode_info[i].trim_height >= sprddefInfo.sprd_3dcalibration_cap_size[0] * sprddefInfo.sprd_3dcalibration_cap_size[1]) {
+				sprddefInfo.sprd_3dcalibration_cap_size[0] = mode_info[i].trim_width;
+				sprddefInfo.sprd_3dcalibration_cap_size[1] = mode_info[i].trim_height;
+			}
+		}
+		HAL_LOGI("sprd_3dcalibration_cap_size w=%d, h=%d", sprddefInfo.sprd_3dcalibration_cap_size[0], sprddefInfo.sprd_3dcalibration_cap_size[1]);
+		mSetting->setSPRDDEFTag(sprddefInfo);
+		/**add for 3d calibration get max sensor size end*/
 
 		HAL_LOGD("initializing param");
 	} else {
@@ -2547,7 +2570,7 @@ int SprdCamera3OEMIf::CameraConvertCoordinateToFramework(int32_t *cropRegion)
     if(mCameraId == 0) {
         sensorOrgW = BACK_SENSOR_ORIG_WIDTH;
         sensorOrgH = BACK_SENSOR_ORIG_HEIGHT;
-    } else if(mCameraId == 1) {
+    } else if(mCameraId == 1||mCameraId == 3) {
         sensorOrgW = FRONT_SENSOR_ORIG_WIDTH;
         sensorOrgH = FRONT_SENSOR_ORIG_HEIGHT;
     }
@@ -2579,7 +2602,7 @@ int SprdCamera3OEMIf::CameraConvertCoordinateFromFramework(int32_t *cropRegion)
     if(mCameraId == 0) {
         sensorOrgW = BACK_SENSOR_ORIG_WIDTH;
         sensorOrgH = BACK_SENSOR_ORIG_HEIGHT;
-    } else if(mCameraId == 1) {
+    } else if(mCameraId == 1||mCameraId == 3) {
         sensorOrgW = FRONT_SENSOR_ORIG_WIDTH;
         sensorOrgH = FRONT_SENSOR_ORIG_HEIGHT;
     }
@@ -3485,12 +3508,103 @@ void SprdCamera3OEMIf::yuvNv12ConvertToYv12(struct camera_frame_type *frame, cha
 	}
 
 }
+/**add for 3d calibration save debug img begin*/
+cmr_int save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height, struct img_addr *addr)
+{
+	cmr_int                      ret = CMR_CAMERA_SUCCESS;
+	char                         file_name[40] = {0,};
+	char                         tmp_str[10] = {0,};
+	FILE                         *fp = NULL;
 
+	HAL_LOGD("index %d format %d width %d heght %d", index, img_fmt, width, height);
+
+	strcpy(file_name, "/data/misc/media/");
+	sprintf(tmp_str, "%d", width);
+	strcat(file_name, tmp_str);
+	strcat(file_name, "X");
+	sprintf(tmp_str, "%d", height);
+	strcat(file_name, tmp_str);
+
+	if (IMG_DATA_TYPE_YUV420 == img_fmt ||
+		IMG_DATA_TYPE_YUV422 == img_fmt) {
+		strcat(file_name, "_y_");
+		sprintf(tmp_str, "%d", index);
+		strcat(file_name, tmp_str);
+		strcat(file_name, ".raw");
+		HAL_LOGD("file name %s", file_name);
+		fp = fopen(file_name, "wb");
+
+		if (NULL == fp) {
+			HAL_LOGE("can not open file: %s \n", file_name);
+			return 0;
+		}
+
+		fwrite((void*)addr->addr_y, 1, width * height, fp);
+		fclose(fp);
+
+		strcpy(file_name, "/data/misc/media/");
+		sprintf(tmp_str, "%d", width);
+		strcat(file_name, tmp_str);
+		strcat(file_name, "X");
+		sprintf(tmp_str, "%d", height);
+		strcat(file_name, tmp_str);
+		strcat(file_name, "_uv_");
+		sprintf(tmp_str, "%d", index);
+		strcat(file_name, tmp_str);
+		strcat(file_name, ".raw");
+		HAL_LOGD("file name %s", file_name);
+		fp = fopen(file_name, "wb");
+		if (NULL == fp) {
+			HAL_LOGE("can not open file: %s \n", file_name);
+			return 0;
+		}
+
+		if (IMG_DATA_TYPE_YUV420 == img_fmt) {
+			fwrite((void*)addr->addr_u, 1, width * height / 2, fp);
+		} else {
+			fwrite((void*)addr->addr_u, 1, width * height, fp);
+		}
+		fclose(fp);
+	} else if (IMG_DATA_TYPE_JPEG == img_fmt) {
+		strcat(file_name, "_");
+		sprintf(tmp_str, "%d", index);
+		strcat(file_name, tmp_str);
+		strcat(file_name, ".jpg");
+		HAL_LOGD("file name %s", file_name);
+
+		fp = fopen(file_name, "wb");
+		if (NULL == fp) {
+			HAL_LOGE("can not open file: %s \n", file_name);
+			return 0;
+		}
+
+		fwrite((void*)addr->addr_y, 1, width * height*2, fp);
+		fclose(fp);
+	} else if (IMG_DATA_TYPE_RAW == img_fmt) {
+		strcat(file_name, "_");
+		sprintf(tmp_str, "%d", index);
+		strcat(file_name, tmp_str);
+		strcat(file_name, ".mipi_raw");
+		HAL_LOGD("file name %s", file_name);
+
+		fp = fopen(file_name, "wb");
+		if(NULL == fp){
+			HAL_LOGE("can not open file: %s \n", file_name);
+			return 0;
+		}
+
+		fwrite((void*)addr->addr_y, 1, (uint32_t)(width * height * 5 / 4), fp);
+		fclose(fp);
+	}
+	return 0;
+}
+/**add for 3d calibration save debug img end*/
 void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame)
 {
 	HAL_LOGD("E, mReDisplayHeap = %p,frame->y_vir_addr 0x%x ", mReDisplayHeap,frame->y_vir_addr);
 	Mutex::Autolock cbLock(&mCaptureCbLock);
 	bool display_flag, callback_flag;
+	char prop[PROPERTY_VALUE_MAX] = {0,};/**add for 3d calibration return yuv buff begin*/
 
 	if (NULL == frame) {
 		HAL_LOGE("invalid frame pointer");
@@ -3533,7 +3647,26 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame)
 			displayOneFrameForCapture(dst_width, dst_height, dst_fd, dst_paddr, (char *)mReDisplayHeap->data);
 		FreeReDisplayMem();
 	}
-
+	/**add for 3d calibration return yuv buff begin*/
+	HAL_LOGD("is callback_flag:%d", callback_flag);
+	property_get("debug.camera.save.3dcalfile", prop, "0");
+	if (atoi(prop) == 1)
+	{
+		struct img_addr   imgadd = { 0, };
+		HAL_LOGD("3dcalibration yuv picture: width:%d, height:%d, fd:%d,"
+				"yaddp:%d, uaddp:%d, vaddp:%d, yaddv:%d, uaddv:%d, vaddv:%d",
+				 frame->width, frame->height, frame->fd,
+				 frame->y_phy_addr, frame->uv_phy_addr, frame->uv_phy_addr+frame->width*frame->height/2,
+				 frame->y_vir_addr, frame->uv_vir_addr, frame->uv_vir_addr+frame->width*frame->height/2);
+		imgadd.addr_y = frame->y_vir_addr;
+		imgadd.addr_u = frame->uv_vir_addr;
+		imgadd.addr_v = frame->uv_vir_addr+frame->width*frame->height/2;
+		save_yuv_to_file(mCameraId, IMG_DATA_TYPE_YUV420,
+					    frame->width,
+						frame->height,
+						&imgadd);
+	}
+	/**add for 3d calibration return yuv buff end*/
 	if(callback_flag){
 		int dst_fd = 0;
 		uintptr_t dst_paddr = 0;
@@ -3559,8 +3692,22 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame)
 		}
 
 		if(mReDisplayHeap)
+		{
+			if(mSprd3dCalibrationEnabled)/**modified for 3d calibration return yuv buff if redisplay exist*/
+				mReDisplayHeap->data = (void *)frame->y_vir_addr;
 			receiveCallbackPicture(dst_width, dst_height, dst_fd, dst_paddr, (char *)mReDisplayHeap->data);
-
+		}
+		else
+		{
+			/**add for 3d calibration return yuv buff begin*/
+			if (mSprd3dCalibrationEnabled)
+			{
+				HAL_LOGD("3dcalibration call back picture: width:%d, height:%d, fd:%d, phyadd:%d, viradd:%d",
+						  frame->width, frame->height, frame->fd, frame->y_phy_addr, frame->y_vir_addr);
+				receiveCallbackPicture(frame->width, frame->height, frame->fd, frame->y_phy_addr, (char *)&frame->y_vir_addr);
+			}
+			/**add for 3d calibration return yuv buff end*/
+		}
 		FreeReDisplayMem();
 	}
 
@@ -3881,6 +4028,7 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb,
 			cb, parm4, getCameraStateStr(getCaptureState()));
 	bool encode_location = true;
 	camera_position_type pt = {0, 0, 0, 0, NULL};
+	SPRD_DEF_Tag sprddefInfo = {0,};/**add for 3d calibration*/
 
 	switch (cb) {
 	case CAMERA_EXIT_CB_PREPARE:
@@ -3971,7 +4119,7 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb,
 		mSetting->getLENSTag(&lensInfo);
 		lensInfo.aperture = aperture;
 		mSetting->setLENSTag(lensInfo);
-		if (checkPreviewStateForCapture() && (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE || mTakePictureMode == SNAPSHOT_DEFAULT_MODE ||mTakePictureMode == SNAPSHOT_ZSL_MODE)) {
+		if (checkPreviewStateForCapture() && (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE || mTakePictureMode == SNAPSHOT_DEFAULT_MODE ||(mTakePictureMode == SNAPSHOT_ZSL_MODE && mSprd3dCalibrationEnabled)/**add for 3d calibration return zsl buffer */)) {
 			receiveRawPicture((struct camera_frame_type *)parm4);
 		} else {
 			HAL_LOGW("drop current rawPicture");
@@ -3983,9 +4131,20 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb,
 
 		if (SPRD_WAITING_RAW == getCaptureState())
 		{
-			transitionState(SPRD_WAITING_RAW,
-				SPRD_WAITING_JPEG,
-				STATE_CAPTURE);
+			/**modified for 3d calibration return yuv buffer finished begin */
+			if ( mSprd3dCalibrationEnabled && mTakePictureMode == SNAPSHOT_ZSL_MODE)
+			{
+				transitionState(SPRD_WAITING_RAW,
+							   SPRD_IDLE,
+							   STATE_CAPTURE);
+			}
+			else
+			{
+				transitionState(SPRD_WAITING_RAW,
+							   SPRD_WAITING_JPEG,
+							   STATE_CAPTURE);
+			}
+			/**modified for 3d calibration return yuv buffer finished end */
 		}
 		break;
 
@@ -4000,7 +4159,28 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb,
 	case CAMERA_EVT_CB_ZSL_FRM:
 		HAL_LOGV("CAMERA_EVT_CB_HAL2_ZSL_NEW_FRM");
 		break;
-
+	case CAMERA_EVT_CB_RETURN_ZSL_BUF:/**add for 3d calibration return zsl buffer begin */
+		if (isPreviewing() && iSZslMode() && mSprd3dCalibrationEnabled)
+		{
+		    cmr_u32                   buf_id = 0;
+		    struct camera_frame_type *zsl_frame = NULL;
+		    zsl_frame = (struct camera_frame_type *)parm4;
+		    if (zsl_frame->fd <= 0)
+		    {
+		        HAL_LOGW("zsl lost a buffer, this should not happen");
+		        break;
+		    }
+		    HAL_LOGD("zsl_frame->fd=0x%x", zsl_frame->fd);
+		    buf_id = getZslBufferIDForFd(zsl_frame->fd);
+		    if (buf_id != 0xFFFFFFFF)
+		    {
+		        mHalOem->ops->camera_set_zsl_buffer(mCameraHandle,
+								    mZslHeapArray[buf_id]->phys_addr,
+								    (cmr_uint)mZslHeapArray[buf_id]->data,
+								    mZslHeapArray[buf_id]->fd);
+		    }
+		}
+		break;/**add for 3d calibration return zsl buffer end */
 	default:
 		HAL_LOGE("unkown cb = %d", cb);
 		transitionState(getCaptureState(), SPRD_ERROR, STATE_CAPTURE);
@@ -4421,7 +4601,7 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void)
 	if(mCameraId == 0) {
 		sensorOrgW = BACK_SENSOR_ORIG_WIDTH;
 		sensorOrgH = BACK_SENSOR_ORIG_HEIGHT;
-	} else if(mCameraId == 1) {
+	} else if(mCameraId == 1||mCameraId == 3) {
 		sensorOrgW = FRONT_SENSOR_ORIG_WIDTH;
 		sensorOrgH = FRONT_SENSOR_ORIG_HEIGHT;
 	}
@@ -4509,7 +4689,7 @@ int SprdCamera3OEMIf::CameraConvertCropRegion(uint32_t sensorWidth, uint32_t sen
 	if(mCameraId == 0) {
 		sensorOrgW = BACK_SENSOR_ORIG_WIDTH;
 		sensorOrgH = BACK_SENSOR_ORIG_HEIGHT;
-	} else if(mCameraId == 1) {
+	} else if(mCameraId == 1||mCameraId == 3) {
 		sensorOrgW = FRONT_SENSOR_ORIG_WIDTH;
 		sensorOrgH = FRONT_SENSOR_ORIG_HEIGHT;
 	}
@@ -4976,6 +5156,15 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag)
 
 		}
 		break;
+	case ANDROID_SPRD_3DCALIBRATION_ENABLED:/**add for 3d calibration get max sensor size begin*/
+		{
+			SPRD_DEF_Tag sprddefInfo;
+			mSetting->getSPRDDEFTag(&sprddefInfo);
+			mSprd3dCalibrationEnabled = sprddefInfo.sprd_3dcalibration_enabled;
+			SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DCAL_ENABLE, sprddefInfo.sprd_3dcalibration_enabled);
+			HAL_LOGD("sprddefInfo.sprd_3dcalibration_enabled=%d mSprd3dCalibrationEnabled %d", sprddefInfo.sprd_3dcalibration_enabled,mSprd3dCalibrationEnabled);
+		}
+		break;/**add for 3d calibration get max sensor size end*/
 	default:
 		ret = BAD_VALUE;
 		break;

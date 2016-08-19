@@ -926,6 +926,10 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number)
 			HAL_LOGV("ANDROID_SPRD_HIGHISO_ENABLED");
 			mOEMIf->SetCameraParaTag(ANDROID_SPRD_HIGHISO_ENABLED);
 			break;
+		case ANDROID_SPRD_3DCALIBRATION_ENABLED:/**add for 3d calibration update params begin*/
+			HAL_LOGV("ANDROID_SPRD_3DCALIBRATION_ENABLED");
+			mOEMIf->SetCameraParaTag(ANDROID_SPRD_3DCALIBRATION_ENABLED);
+			break;/**add for 3d calibration update params end*/
 		default:
 			HAL_LOGV("other tag");
 			break;
@@ -1002,6 +1006,19 @@ int SprdCamera3MetadataChannel::getCapRequestPara(const CameraMetadata &metadata
 		request_para->sprd_refocus_enabled = sprddefInfo.refocus_enable;
 		HAL_LOGD("ANDROID_SPRD_CONTROL_REFOCUS_ENABLE is NULL, sprd_refocus_enabled %d",request_para->sprd_refocus_enabled);
 	}
+	/**add for 3d calibration force set sprd zsl enable begin*/
+	if (metadata.exists(ANDROID_SPRD_3DCALIBRATION_ENABLED)) {
+		request_para->sprd_zsl_enabled= metadata.find(ANDROID_SPRD_3DCALIBRATION_ENABLED).data.u8[0];
+		HAL_LOGD("3dcalibration exist, set sprd_zsl_enabled %d",request_para->sprd_zsl_enabled);
+	}
+	else {
+		SPRD_DEF_Tag sprddefInfo = {0,};
+		mSetting->getSPRDDEFTag(&sprddefInfo);
+		if ( sprddefInfo.sprd_3dcalibration_enabled )
+		    request_para->sprd_zsl_enabled = sprddefInfo.sprd_3dcalibration_enabled;
+		HAL_LOGD("ANDROID_SPRD_3DCALIBRATION_ENABLED is NULL, sprd_zsl_enabled %d",request_para->sprd_zsl_enabled);
+	}
+	/**add for 3d calibration force set sprd zsl enable begin*/
 
 	return NO_ERROR;
 }

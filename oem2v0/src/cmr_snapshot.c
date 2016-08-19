@@ -288,6 +288,7 @@ static cmr_int snp_send_msg_redisplay_thr(cmr_handle snp_handle, cmr_int evt, vo
 static cmr_int snp_send_msg_thumb_thr(cmr_handle snp_handle, cmr_int evt, void *data);
 static cmr_int snp_checkout_exit(cmr_handle snp_handle);
 static cmr_int snp_take_picture_done(cmr_handle snp_handle, struct frm_info *data);
+static cmr_int snp_3dcalibration_take_picture_done(cmr_handle snp_handle, struct frm_info *data);/**modified for 3d calibration*/
 static cmr_int snp_thumbnail(cmr_handle snp_handle, struct frm_info *data);
 static cmr_int camera_set_frame_type(cmr_handle snp_handle, struct camera_frame_type *frame_type, struct frm_info* info);
 static void snp_takepic_callback_done(cmr_handle snp_handle);
@@ -559,8 +560,17 @@ cmr_int snp_scale_cb_handle(cmr_handle snp_handle, void *data)
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct snp_context             *cxt = (struct snp_context*)snp_handle;
 	struct img_frm                 *scale_out_ptr = (struct img_frm*)data;
-	if (cxt->req_param.lls_shot_mode || cxt->req_param.is_vendor_hdr || cxt->req_param.is_pipviv_mode) {
-		ret = snp_take_picture_done(snp_handle, &cxt->cur_frame_info);
+	if (cxt->req_param.lls_shot_mode || cxt->req_param.is_vendor_hdr || cxt->req_param.is_pipviv_mode || cxt->req_param.is_3dcalibration_mode/**add for 3d calibration*/) {
+		/**modified for 3d calibration begin   */
+		if (cxt->req_param.is_3dcalibration_mode)
+		{
+			ret = snp_3dcalibration_take_picture_done(snp_handle, &cxt->cur_frame_info);
+		}
+		else
+		{
+			ret = snp_take_picture_done(snp_handle, &cxt->cur_frame_info);
+		}
+		/**modified for 3d calibration end   */
 		snp_post_proc_done(snp_handle);
 		return ret;
 	}
@@ -3851,7 +3861,60 @@ exit:
 	CMR_LOGI("done %ld", ret);
 	return ret;
 }
+/**modified for 3d calibration begin   */
+cmr_int snp_3dcalibration_take_picture_done(cmr_handle snp_handle, struct frm_info *data)
+{
+	cmr_int                          ret = CMR_CAMERA_SUCCESS;
+	struct snp_context              *cxt = (struct snp_context*)snp_handle;
+	struct camera_frame_type         frame_type = {0,};
+	char                             prop[PROPERTY_VALUE_MAX] = {0,};
 
+
+	if (CMR_CAMERA_NORNAL_EXIT == snp_checkout_exit(snp_handle)) {
+		CMR_LOGI("post proc has been cancel");
+		ret = CMR_CAMERA_NORNAL_EXIT;
+		goto exit;
+	}
+	if (!data) {
+		ret = CMR_CAMERA_INVALID_PARAM;
+		goto exit;
+	}
+	CMR_PRINT_TIME;
+	CMR_LOGD("3dcalibration yuv take done in picture: width:%d, height:%d, fd:%d, "
+			 "yaddp:%d, uaddp:%d, vaddp:%d, yaddv:%d, uaddv:%d, vaddv:%d",
+			 cxt->req_param.post_proc_setting.dealign_actual_snp_size.width, data->height, data->fd,
+			 data->yaddr, data->uaddr, data->vaddr,
+			 data->yaddr_vir, data->uaddr_vir, data->vaddr_vir);
+	frame_type.fd = data->fd;
+	frame_type.buf_id = data->frame_real_id;
+	frame_type.width = cxt->req_param.post_proc_setting.dealign_actual_snp_size.width;
+	frame_type.height = cxt->req_param.post_proc_setting.dealign_actual_snp_size.height;
+	frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000;
+	frame_type.y_vir_addr = data->yaddr_vir;
+	frame_type.uv_vir_addr = data->uaddr_vir;
+	frame_type.y_phy_addr = data->yaddr;
+	frame_type.uv_phy_addr = data->uaddr;
+	frame_type.format = data->fmt;
+	property_get("debug.camera.save.3dcalfile", prop, "0");
+	if (atoi(prop) == 1) {
+        struct img_addr   imgadd = { 0, };
+        imgadd.addr_y = data->yaddr_vir;
+        imgadd.addr_u = data->uaddr_vir;
+        imgadd.addr_v = data->vaddr_vir;
+        camera_save_yuv_to_file(8881, IMG_DATA_TYPE_YUV420,
+							frame_type.width,
+							frame_type.height,
+							&imgadd);
+	}
+	snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE, SNAPSHOT_EVT_RETURN_ZSL_BUF, (void*)&frame_type, sizeof(struct camera_frame_type));
+	snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE, SNAPSHOT_EVT_CB_SNAPSHOT_DONE, (void*)&frame_type, sizeof(struct camera_frame_type));
+	snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE, SNAPSHOT_EXIT_CB_DONE, (void*)&frame_type, sizeof(struct camera_frame_type));
+	sem_post(&cxt->redisplay_sm);
+exit:
+	CMR_LOGI("done %ld", ret);
+	return ret;
+}
+/**modified for 3d calibration end   */
 cmr_int snp_take_picture_done(cmr_handle snp_handle, struct frm_info *data)
 {
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
@@ -3962,7 +4025,7 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data)
 	}
 	snp_set_status(snp_handle, POST_PROCESSING);
 
-	if (cxt->req_param.lls_shot_mode || cxt->req_param.is_vendor_hdr || cxt->req_param.is_pipviv_mode ) {
+	if (cxt->req_param.lls_shot_mode || cxt->req_param.is_vendor_hdr || cxt->req_param.is_pipviv_mode || cxt->req_param.is_3dcalibration_mode/**add for 3d calibration*/) {
 		if (chn_param_ptr->is_rot) {
 			CMR_LOGI("need rotate");
 			ret = snp_start_rot(snp_handle, data);
@@ -3980,7 +4043,16 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data)
 				goto exit;
 			}
 		} else {
-			ret = snp_take_picture_done(snp_handle, chn_data_ptr);
+			/**modified for 3d calibration begin   */
+			if (cxt->req_param.is_3dcalibration_mode)
+			{
+				ret = snp_3dcalibration_take_picture_done(snp_handle, chn_data_ptr);
+			}
+			else
+			{
+				ret = snp_take_picture_done(snp_handle, chn_data_ptr);
+			}
+			/**modified for 3d calibration end   */
 			snp_post_proc_done(snp_handle);
 			CMR_LOGV("is_pipviv_mode %d chn_data_ptr %p",cxt->req_param.is_pipviv_mode,chn_data_ptr);
 		}

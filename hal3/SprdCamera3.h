@@ -205,6 +205,8 @@ static tags_info_t android_add_parameters[VENDOR_SECTION_END - VENDOR_SECTION_ST
     { "afModeMacroFixed",               TYPE_BYTE},
     { "VcmValue",				TYPE_INT32 },
     { "OtpValue",			TYPE_BYTE },
+    { "srpd3dCalibrationEnable",               TYPE_BYTE },/**add for 3d calibration enable metadata*/
+    { "srpd3dCalibrationSize",                 TYPE_INT32 },/**add for 3d calibration cap size metadata*/
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {

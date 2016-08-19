@@ -168,6 +168,7 @@ struct setting_hal_param {
 	cmr_uint			    refoucs_enable;
 	struct touch_coordinate              touch_info;
 	cmr_uint                       video_snapshot_type;
+	cmr_uint                       sprd_3dcalibration_enable;/**add for 3d calibration enable flag*/
 };
 
 struct setting_camera_info {
@@ -1890,6 +1891,40 @@ static cmr_int setting_set_video_snapshot_type(struct setting_component *cpt,
 	return ret;
 }
 
+/**add for 3d calibration update params begin*/
+static cmr_int setting_get_3dcalibration_enable(struct setting_component *cpt,
+                                           struct setting_cmd_parameter *parm)
+{
+	cmr_int                    ret = 0;
+	struct setting_hal_param    *hal_param = get_hal_param(cpt, parm->camera_id);
+
+	parm->cmd_type_value = hal_param->sprd_3dcalibration_enable;
+	CMR_LOGD("3dcalibration_enable=%ld", hal_param->sprd_3dcalibration_enable);
+	return ret;
+
+}
+static cmr_int setting_set_3dcalibration_enable(struct setting_component *cpt,
+                                                struct setting_cmd_parameter *parm)
+{
+	cmr_int                       ret = 0;
+	struct setting_hal_param     *hal_param = get_hal_param(cpt, parm->camera_id);
+    struct common_isp_cmd_param   isp_param = {0,};
+    struct setting_init_in       *init_in = &cpt->init_in;
+
+	hal_param->sprd_3dcalibration_enable = parm->cmd_type_value;
+
+    CMR_LOGD("set COM_ISP_SET_ROI_CONVERGENCE_REQ? %d", 0 != init_in->setting_isp_ioctl);
+	if (init_in && init_in->setting_isp_ioctl) {
+        isp_param.camera_id = parm->camera_id;
+        isp_param.cmd_value = parm->cmd_type_value;
+        CMR_LOGD("set COM_ISP_SET_ROI_CONVERGENCE_REQ begin, ome_handle:%d", init_in->oem_handle);
+        ret = (*init_in->setting_isp_ioctl)(init_in->oem_handle, COM_ISP_SET_ROI_CONVERGENCE_REQ, &isp_param);
+	}
+	CMR_LOGD("3dcalibration_enable=%ld", hal_param->sprd_3dcalibration_enable);
+	return ret;
+}
+/**add for 3d calibration update params end*/
+
 static cmr_int setting_get_touch_info(struct setting_component *cpt,
                                         struct setting_cmd_parameter *parm)
 {
@@ -3205,6 +3240,7 @@ cmr_int cmr_setting_ioctl(cmr_handle setting_handle, cmr_uint cmd_type,
 		{CAMERA_PARAM_REFOCUS_ENABLE,   setting_set_refocus_enable},
 		{CAMERA_PARAM_TOUCH_XY,            setting_set_touch_xy},
 		{CAMERA_PARAM_VIDEO_SNAPSHOT_TYPE,     setting_set_video_snapshot_type},
+		{CAMERA_PARAM_SPRD_3DCAL_ENABLE,       setting_set_3dcalibration_enable},/**add for 3d calibration set params*/
 		{CAMERA_PARAM_TYPE_MAX,                NULL},
 		{SETTING_GET_PREVIEW_ANGLE,            setting_get_preview_angle},
 		{SETTING_GET_CAPTURE_ANGLE,            setting_get_capture_angle},
@@ -3245,6 +3281,7 @@ cmr_int cmr_setting_ioctl(cmr_handle setting_handle, cmr_uint cmd_type,
 		{SETTING_GET_VIDEO_SNAPSHOT_TYPE,      setting_get_video_snapshot_type},
 		{SETTING_GET_EXIF_PIC_INFO,            setting_get_exif_pic_info},
 		{SETTING_GET_PRE_LOWFLASH_VALUE,       setting_get_pre_lowflash_value},
+		{SETTING_GET_SPRD_3DCAL_ENABLE,        setting_get_3dcalibration_enable},/**add for 3d calibration get params*/
 	};
 	struct setting_item          *item = NULL;
 	struct setting_component     *cpt =	 (struct setting_component *)setting_handle;

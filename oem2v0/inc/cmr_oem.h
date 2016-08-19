@@ -267,6 +267,7 @@ struct camera_context {
 	cmr_u32                  isp_to_dram;
 	cmr_int                  cap_cnt;
 	cmr_u32                  is_refocus_mode;
+	cmr_u32                  is_3dcalibration_mode;/**add for 3d calibration*/
 
 	/*memory func*/
 	camera_cb_of_malloc      hal_malloc;
