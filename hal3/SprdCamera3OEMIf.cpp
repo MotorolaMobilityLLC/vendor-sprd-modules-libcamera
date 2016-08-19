@@ -4119,7 +4119,7 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb,
 		mSetting->getLENSTag(&lensInfo);
 		lensInfo.aperture = aperture;
 		mSetting->setLENSTag(lensInfo);
-		if (checkPreviewStateForCapture() && (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE || mTakePictureMode == SNAPSHOT_DEFAULT_MODE ||(mTakePictureMode == SNAPSHOT_ZSL_MODE && mSprd3dCalibrationEnabled)/**add for 3d calibration return zsl buffer */)) {
+		if (checkPreviewStateForCapture() && (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE || mTakePictureMode == SNAPSHOT_DEFAULT_MODE ||mTakePictureMode == SNAPSHOT_ZSL_MODE)) {
 			receiveRawPicture((struct camera_frame_type *)parm4);
 		} else {
 			HAL_LOGW("drop current rawPicture");
