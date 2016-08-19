@@ -48,7 +48,8 @@ LOCAL_C_INCLUDES += \
 LOCAL_SRC_FILES+= \
 	hal1.0/src/SprdCameraParameters.cpp \
 	common/src/cmr_msg.c \
-	tool/mtrace/mtrace.c 
+	tool/mtrace/mtrace.c \
+	tool/auto_test/src/SprdCamera_autest_Interface.cpp
 
 LOCAL_SRC_FILES += test.cpp
 
