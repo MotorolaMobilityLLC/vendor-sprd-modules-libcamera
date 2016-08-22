@@ -49,6 +49,8 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../isp3.0/afl/altek/inc
 endif
 
+LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
+
 include $(LOCAL_PATH)/../SprdCtrl.mk
 
 LOCAL_SRC_FILES += \

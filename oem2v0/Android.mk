@@ -24,6 +24,8 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../isp3.0/middleware/inc
 endif
 
+LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
+
 LOCAL_SRC_FILES+= \
 	../vsp/src/jpg_drv_sc8830.c \
 	../jpeg/src/jpegcodec_bufmgr.c \
