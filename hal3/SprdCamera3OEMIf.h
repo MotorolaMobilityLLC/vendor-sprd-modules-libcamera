@@ -386,6 +386,8 @@ private:
 	int Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
 	int Callback_RefocusFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_u32 sum);
 	int Callback_RefocusMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
+	int Callback_PdafRawFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_u32 sum);
+	int Callback_PdafRawMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
 	int Callback_CaptureFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum);
 	int Callback_CaptureMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
 	int Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum);
@@ -437,6 +439,7 @@ private:
 	static const int                kZslBufferCount    = 24;
 	static const int                kZslRotBufferCount = 24;
 	static const int                kRefocusBufferCount    = 24;
+	static const int                kPdafRawBufferCount    = 4;
 	static const int                kRawBufferCount        = 1;
 	static const int                kJpegBufferCount       = 1;
 	static const int                kRawFrameHeaderSize    = 0x0;
@@ -542,6 +545,7 @@ private:
 	uint32_t                        mVideoHeapNum;
 	uint32_t                        mZslHeapNum;
 	uint32_t                        mRefocusHeapNum;
+	uint32_t                        mPdafRawHeapNum;
 	uint32_t                        mSubRawHeapNum;
 	uint32_t                        mSubRawHeapSize;
 	uint32_t                        mPreviewDcamAllocBufferCnt;
@@ -549,7 +553,7 @@ private:
 	sprd_camera_memory_t*           mVideoHeapArray[kVideoBufferCount+kVideoRotBufferCount+1];
 	sprd_camera_memory_t*           mZslHeapArray[kZslBufferCount+kZslRotBufferCount+1];
 	sprd_camera_memory_t*           mRefocusHeapArray[kRefocusBufferCount+1];
-
+	sprd_camera_memory_t*           mPdafRawHeapArray[kPdafRawBufferCount+1];
 	uintptr_t                       mRefocusHeapArray_phy[kRefocusBufferCount+1];
 	uintptr_t                       mRefocusHeapArray_vir[kRefocusBufferCount+1];
 	uint32_t                        mRefocusHeapArray_size[kRefocusBufferCount+1];
@@ -559,6 +563,7 @@ private:
 	sprd_camera_memory_t*           mVideoHeapReserved;
 	sprd_camera_memory_t*           mZslHeapReserved;
 	sprd_camera_memory_t*           mDepthHeapReserved;
+	sprd_camera_memory_t*           mPdafRawHeapReserved;
 	sprd_camera_memory_t*           mIspLscHeapReserved;
 	sprd_camera_memory_t*           mIspB4awbHeapReserved[kISPB4awbCount];
 	sprd_camera_memory_t*           mIspPreviewYReserved[2];

@@ -339,4 +339,23 @@ struct sensor_dual_otp_info {
 	struct sensor_otp_iso_awb_info slave_isp_awb_info;
 	struct sensor_otp_lsc_info slave_lsc_info;
 };
+
+struct pd_pos_info {
+	cmr_u16 pd_pos_x;
+	cmr_u16 pd_pos_y;
+};
+
+struct sensor_pdaf_info {
+	cmr_u16 pd_offset_x;
+	cmr_u16 pd_offset_y;
+	cmr_u16 pd_pitch_x;
+	cmr_u16 pd_pitch_y;
+	cmr_u16 pd_density_x;
+	cmr_u16 pd_density_y;
+	cmr_u16 pd_block_num_x;
+	cmr_u16 pd_block_num_y;
+	cmr_u16 pd_pos_size;
+	struct pd_pos_info *pd_pos_r;
+	struct pd_pos_info *pd_pos_l;
+};
 #endif

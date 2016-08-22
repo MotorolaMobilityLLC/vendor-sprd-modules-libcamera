@@ -55,6 +55,7 @@ extern "C"
 #define CMR_CAP1_ID_BASE                   0x4000
 #define CMR_VIDEO_ID_BASE                  0x8000
 #define CMR_REFOCUS_ID_BASE                0xF000
+#define CMR_PDAF_ID_BASE                   0xA000
 #define CMR_BASE_ID(x)                     ((x) & 0xF000)
 #define JPEG_EXIF_SIZE	                   (64*1024)
 #define RAWRGB_BIT_WIDTH                   10
@@ -305,6 +306,8 @@ enum common_isp_cmd_type {
 	COM_ISP_SET_PREVIEW_YIMG,
 	COM_ISP_SET_PREVIEW_YUV,
 	COM_ISP_GET_VCM_INFO,
+	COM_ISP_SET_PREVIEW_PDAF_RAW,
+	COM_ISP_SET_PREVIEW_PDAF_OPEN,
 	COM_ISP_TYPE_MAX
 };
 
@@ -671,6 +674,7 @@ struct common_isp_cmd_param {
 	cmr_uint	                                camera_id;
 	union {
 		cmr_u32                                 cmd_value;
+		void                                    *cmd_ptr;
 		cmr_u32                                 padding;
 		cmr_u32                                 vcm_step;
 		struct isp_af_win                       af_param;

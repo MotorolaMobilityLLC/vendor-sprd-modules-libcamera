@@ -1115,7 +1115,7 @@ cmr_int cmr_get_otp_from_kernel(struct sensor_drv_context *sensor_cxt, cmr_uint 
 		cmr_bzero(&sensor_otp, sizeof(sensor_otp));
 		otp_data_len = CMR_ISP_OTP_MAX_SIZE;
 		sensor_otp.data_ptr = malloc(otp_data_len);
-		if (NULL == sensor_otp.data_ptr){
+		if (NULL == sensor_otp.data_ptr) {
 			CMR_LOGE("malloc file failed");
 			return -1;
 		}

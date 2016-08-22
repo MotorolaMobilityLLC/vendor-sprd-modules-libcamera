@@ -90,6 +90,8 @@ struct preview_md_ops {
 	cmr_int (*get_isp_yimg)(cmr_handle oem_handle, cmr_uint sensor_id, struct isp_yimg_info *yimg);
 	cmr_int (*set_preview_yimg)(cmr_handle oem_handle, cmr_uint sensor_id, struct yimg_info *yimg);
 	cmr_int (*set_preview_yuv)(cmr_handle oem_handle, cmr_uint sensor_id, struct yuv_info_t *yuv);
+	cmr_int (*set_preview_pd_raw)(cmr_handle oem_handle, struct pd_raw_info *pd_raw);
+	cmr_int (*set_preview_pd_open)(cmr_handle oem_handle, struct pd_raw_open *pd_open);
 	cmr_int (*get_sensor_fps_info)(cmr_handle oem_handle, cmr_uint sensor_id, cmr_u32 sn_mode, struct sensor_mode_fps_tag *fps_info);
 	cmr_int (*get_dual_sensor_otp)(cmr_handle  oem_handle,struct sensor_dual_otp_info *dual_otp_data);
 	cmr_int (*isp_buff_cfg) (cmr_handle oem_handle, struct buffer_cfg *buf_cfg);
@@ -131,6 +133,7 @@ struct preview_param {
 	cmr_u32                  flip_on;
 	cmr_u32                  tool_eb;
 	cmr_u32                  refocus_eb;
+	cmr_u32                  pdaf_eb;
 	struct cmr_zoom_param	 zoom_setting;
 	struct memory_param      memory_setting;
 	void                     *private_data;
@@ -159,6 +162,7 @@ struct preview_out_param {
 	struct img_data_end      video_data_endian;
 	struct img_size          actual_video_size;
 	cmr_u32                  depthmap_chn_bits;
+	cmr_u32                  pdaf_chn_bits;
 	struct snp_proc_param    post_proc_setting;
 };
 

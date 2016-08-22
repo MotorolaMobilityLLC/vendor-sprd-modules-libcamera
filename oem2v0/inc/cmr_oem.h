@@ -121,6 +121,7 @@ struct preview_context {
 	cmr_u32                  channel_bits;
 	cmr_u32                  video_channel_bits;
 	cmr_u32                  depthmap_channel_bits;
+	cmr_u32                  pdaf_channel_bits;
 	cmr_uint                 status;
 	struct img_size          size;
 	struct img_size          video_size;
