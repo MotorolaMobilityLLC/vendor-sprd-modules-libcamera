@@ -163,6 +163,7 @@ struct af_altek_context {
 	struct af_ctrl_sensor_info_type sensor_info;
 	struct caf_context af_caf_cxt;
 	struct af_ae_working_info ae_info;
+	enum af_ctrl_lens_status lens_status;
 };
 
 /************************************ INTERNAK DECLARATION ************************************/
@@ -1664,7 +1665,7 @@ static cmr_u8 afaltek_adpt_set_vcm_pos(cmr_handle adpt_handle, struct af_ctrl_mo
 		ISP_LOGE("param null");
 		goto exit;
 	}
-
+	cxt->lens_status = AF_CTRL_LENS_MOVING;
 	if (cxt->cb_ops.set_pos)
 		ret = cxt->cb_ops.set_pos(cxt->caller_handle, pos_info);
 	else {
@@ -1880,6 +1881,7 @@ static cmr_int afaltek_adpt_lens_move_done(cmr_handle adpt_handle,
 	lens_info.lens_pos_updated = 1;
 	lens_info.lens_pos = pos_info->motor_pos;
 	lens_info.lens_status = LENS_MOVE_DONE;
+	cxt->lens_status = AF_CTRL_LENS_MOVE_DONE;
 	ret = afaltek_adpt_update_lens_info(adpt_handle, &lens_info);
 
 	return ret;
@@ -2040,6 +2042,16 @@ static cmr_int afaltek_adpt_get_mode(cmr_handle adpt_handle, cmr_int *mode)
 	return ret;
 }
 
+static cmr_int afaltek_adpt_get_lens_status(cmr_handle adpt_handle, cmr_int *out)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+	struct af_ctrl_param_out *out_ptr = (struct af_ctrl_param_out *)out;
+
+	out_ptr->lens_status = cxt->lens_status;
+	return ret;
+}
+
 static cmr_int afaltek_adpt_get_default_pos(cmr_handle adpt_handle, cmr_int *pos)
 {
 	cmr_int ret = -ISP_ERROR;
@@ -2149,6 +2161,9 @@ static cmr_int afaltek_adpt_outctrl(cmr_handle adpt_handle, cmr_int cmd,
 	switch (cmd) {
 	case AF_CTRL_CMD_GET_AF_MODE:
 		ret = afaltek_adpt_get_mode(adpt_handle, (cmr_int *) out);
+		break;
+	case AF_CTRL_CMD_GET_LENS_STATUS:
+		ret = afaltek_adpt_get_lens_status(adpt_handle, (cmr_int *) out);
 		break;
 	case AF_CTRL_CMD_GET_DEFAULT_LENS_POS:
 		ret = afaltek_adpt_get_default_pos(adpt_handle, (cmr_int *) out);
@@ -2353,6 +2368,7 @@ static cmr_int afaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 	cxt->cb_ops.cfg_af_stats = in_p->cb_ctrl_ops.cfg_af_stats;
 	cxt->cb_ops.get_system_time = in_p->cb_ctrl_ops.get_system_time;
 	cxt->af_cur_status = AF_ADPT_IDLE;
+	cxt->lens_status = (enum af_ctrl_lens_status)LENS_MOVE_DONE;
 	ret = afaltek_libops_init(cxt);
 	if (ret) {
 		ISP_LOGE("failed to init library and ops");

@@ -25,6 +25,7 @@
 #include "af_ctrl.h"
 #include "ae_ctrl.h"
 #include "afl_ctrl.h"
+#include "pdaf_ctrl.h"
 #include "isp_common_types.h"
 #include "cmr_msg.h"
 #include "cmr_sensor_info.h"
@@ -122,6 +123,13 @@ struct af_info {
 	struct isp3a_statistics_data statistics_buffer[ISP3A_STATISTICS_BUF_NUM];
 };
 
+struct pdaf_info {
+	cmr_handle handle;
+	cmr_u8 pdaf_support;
+	cmr_u8 pd_enable;
+	struct pdaf_ctrl_process_out proc_out;
+};
+
 struct afl_info {
 	cmr_handle handle;
 	struct isp3a_afl_hw_cfg hw_cfg;
@@ -179,6 +187,7 @@ struct isp3a_fw_context {
 	struct awb_info awb_cxt;
 	struct ae_info ae_cxt;
 	struct af_info af_cxt;
+	struct pdaf_info pdaf_cxt;
 	struct afl_info afl_cxt;
 	struct irp_info irp_cxt;
 	struct stats_buf_context stats_buf_cxt;
@@ -216,8 +225,6 @@ static cmr_int isp3a_start_af_notify(cmr_handle handle, void *data);
 static cmr_int isp3a_end_af_notify(cmr_handle handle, struct af_result_param *data);
 static cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input_ptr);
 static cmr_int isp3a_set_cfg_otp_info(cmr_handle isp_3a_handle);
-static cmr_int isp3a_set_pdaf_otp(cmr_handle isp_3a_handle, struct sensor_data_info *pdaf_otp_ptr);
-static cmr_int isp3a_set_pdaf_info(cmr_handle isp_3a_handle, struct sensor_pdaf_info *pdaf_info);
 static cmr_int isp3a_alg_deinit(cmr_handle isp_3a_handle);
 static cmr_int isp3a_create_ctrl_thread(cmr_handle isp_3a_handle);
 static cmr_int isp3a_ctrl_thread_proc(struct cmr_msg *message, void *p_data);
@@ -308,7 +315,12 @@ static cmr_int isp3a_stop(cmr_handle isp_3a_handle);
 static cmr_int isp3a_get_yimg_info(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_prev_yimg(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_prev_yuv(cmr_handle isp_3a_handle, void *param_ptr);
-static cmr_int isp3a_set_prev_pdaf_raw(cmr_handle isp_3a_handle, void *param_ptr);
+static cmr_int isp3a_set_pdaf_enable(cmr_handle isp_3a_handle, void *param_ptr);
+static cmr_int isp3a_set_pdaf_roi(cmr_handle isp_3a_handle, void *param_ptr);
+static cmr_int isp3a_set_pdaf_reset(cmr_handle isp_3a_handle);
+static cmr_int isp3a_handle_pdaf_callback(cmr_handle isp_3a_handle, struct pdaf_ctrl_callback_in *result_ptr);
+static cmr_int isp3a_start_pdaf_raw_process(cmr_handle isp_3a_handle, void *param_ptr);
+static cmr_int isp3a_handle_pdaf_raw_open(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_get_vcm_step(cmr_handle isp_3a_handle, void *param_ptr);
 
 
@@ -403,7 +415,8 @@ static struct isp3a_ctrl_io_func s_isp3a_ioctrl_tab[ISP_CTRL_MAX] = {
 	{ISP_CTRL_GET_YIMG_INFO,           isp3a_get_yimg_info},
 	{ISP_CTRL_SET_PREV_YIMG,           isp3a_set_prev_yimg},
 	{ISP_CTRL_SET_PREV_YUV,            isp3a_set_prev_yuv},
-	{ISP_CTRL_SET_PREV_PDAF_RAW,       isp3a_set_prev_pdaf_raw},
+	{ISP_CTRL_SET_PREV_PDAF_RAW,       isp3a_start_pdaf_raw_process},
+	{ISP_CTRL_SET_PREV_PDAF_OPEN,       isp3a_handle_pdaf_raw_open},
 	{ISP_CTRL_GET_VCM_INFO,            isp3a_get_vcm_step},
 };
 
@@ -845,40 +858,6 @@ cmr_int isp3a_set_cfg_otp_info(cmr_handle isp_3a_handle)
 	return ret;
 }
 
-cmr_int isp3a_set_pdaf_otp(cmr_handle isp_3a_handle, struct sensor_data_info *pdaf_otp_ptr)
-{
-	cmr_int                                     ret = ISP_SUCCESS;
-	struct isp3a_fw_context                     *cxt = NULL;
-
-	ISP_CHECK_HANDLE_VALID(isp_3a_handle);
-	if (NULL == pdaf_otp_ptr) {
-		ISP_LOGE("init param err");
-		return -ISP_ERROR;
-	}
-	cxt = (struct isp3a_fw_context *)isp_3a_handle;
-	if (pdaf_otp_ptr->data_ptr && (pdaf_otp_ptr->size > 0)) {
-	//TODO
-	}
-
-	return ret;
-}
-
-cmr_int isp3a_set_pdaf_info(cmr_handle isp_3a_handle, struct sensor_pdaf_info *pdaf_info)
-{
-	cmr_int                                     ret = ISP_SUCCESS;
-	struct isp3a_fw_context                     *cxt = NULL;
-
-	ISP_CHECK_HANDLE_VALID(isp_3a_handle);
-	if (NULL == pdaf_info) {
-		ISP_LOGE("init param err");
-		return -ISP_ERROR;
-	}
-	cxt = (struct isp3a_fw_context *)isp_3a_handle;
-	//TODO
-
-	return ret;
-}
-
 cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
@@ -891,6 +870,8 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 	struct ae_ctrl_init_out                     ae_output;
 	struct afl_ctrl_init_in                     afl_input;
 	struct afl_ctrl_init_out                    afl_output;
+	struct pdaf_ctrl_init_in                    pdaf_input;
+	struct pdaf_ctrl_init_out                   pdaf_output;
 	struct sensor_raw_info                      *sensor_raw_info_ptr = (struct sensor_raw_info *)input_ptr->setting_param_ptr;
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 	struct sensor_raw_info                      *sensor_raw_info_ptr_slv = (struct sensor_raw_info *)input_ptr->setting_param_ptr_slv;
@@ -902,7 +883,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 	cxt = (struct isp3a_fw_context *)isp_3a_handle;
 
 	cxt->af_cxt.af_support = input_ptr->ex_info.af_supported;
-
+	cxt->pdaf_cxt.pdaf_support = input_ptr->ex_info.pdaf_supported;
 	if (ERR_3ALIB_VER_SUCCESS == allib_3a_getversion(&libVersion)) {
 		ISP_LOGI("3a version:%f", libVersion);
 	}
@@ -943,6 +924,25 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 		goto exit;
 	}
 	cxt->af_cxt.hw_cfg = af_output.hw_cfg;
+
+	memset(&pdaf_input, 0x00, sizeof(pdaf_input));
+	pdaf_input.camera_id = input_ptr->camera_id;
+	pdaf_input.pdaf_lib_info = input_ptr->pdaf_config;
+	pdaf_input.caller_handle = isp_3a_handle;
+	pdaf_input.pdaf_support = cxt->pdaf_cxt.pdaf_support;
+	pdaf_input.pd_info = input_ptr->pdaf_info;
+	pdaf_input.pdaf_ctrl_cb_ops.call_back = isp3a_handle_pdaf_callback;
+	if (cxt->otp_data) {
+		pdaf_input.af_otp.otp_data = &cxt->otp_data->af_info;
+		pdaf_input.af_otp.size = sizeof(cxt->otp_data->af_info);
+		pdaf_input.pdaf_otp.otp_data = cxt->otp_data->pdaf_info.pdaf_data_addr;
+		pdaf_input.pdaf_otp.size = cxt->otp_data->pdaf_info.pdaf_data_size;
+	}
+	ret = pdaf_ctrl_init(&pdaf_input, &pdaf_output, &cxt->pdaf_cxt.handle);
+	if (ret) {
+		ISP_LOGE("failed to pdaf initialize");
+		goto exit;
+	}
 
 	memset(&awb_input, 0x00, sizeof(awb_input));
 	awb_input.awb_cb = isp3a_awb_callback;
@@ -1094,6 +1094,9 @@ exit:
 		if (cxt->afl_cxt.handle) {
 			afl_ctrl_deinit(cxt->afl_cxt.handle);
 		}
+		if (cxt->pdaf_cxt.handle) {
+			pdaf_ctrl_deinit(cxt->pdaf_cxt.handle);
+		}
 	}
 	return ret;
 }
@@ -1116,7 +1119,8 @@ cmr_int isp3a_alg_deinit(cmr_handle isp_3a_handle)
 	cxt->ae_cxt.handle = NULL;
 	afl_ctrl_deinit(cxt->afl_cxt.handle);
 	cxt->afl_cxt.handle = NULL;
-
+	pdaf_ctrl_deinit(cxt->pdaf_cxt.handle);
+	cxt->pdaf_cxt.handle = NULL;
 exit:
 	ISP_LOGI("done %ld", ret);
 	return ret;
@@ -3809,20 +3813,6 @@ cmr_int isp_3a_fw_init(struct isp_3a_fw_init_in *input_ptr, cmr_handle *isp_3a_h
 	}
 	ret = isp3a_set_cfg_otp_info((cmr_handle)cxt);
 
-	if (cxt->ex_info.pdaf_supported) {
-		//TODO
-		ret = isp3a_set_pdaf_otp((cmr_handle)cxt, &input_ptr->pdaf_otp);
-		if (ret) {
-			goto exit;
-		}
-
-		//input_ptr->pdaf_info;
-		ret = isp3a_set_pdaf_info((cmr_handle)cxt, input_ptr->pdaf_info);
-		if (ret) {
-			goto exit;
-		}
-	}
-
 	ret = isp3a_create_thread((cmr_handle)cxt);
 exit:
 	if (ret) {
@@ -3879,7 +3869,7 @@ cmr_int isp_3a_fw_capability(cmr_handle isp_3a_handle, enum isp_capbility_cmd cm
 		break;
 	case ISP_CTRL_GET_AE_LUM:
 		ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_GET_BV_BY_LUM, NULL, &output);
-		*((uint32_t *)param_ptr) = output.bv;
+		*((cmr_s32 *)param_ptr) = output.bv;
 		break;
 	default:
 		break;
@@ -4165,11 +4155,101 @@ exit:
 	return ret;
 }
 
-static cmr_int isp3a_set_prev_pdaf_raw(cmr_handle isp_3a_handle, void *param_ptr)
+cmr_int isp3a_set_pdaf_enable(cmr_handle isp_3a_handle, void *param_ptr)
+{
+	cmr_int                                     ret = -ISP_ERROR;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
+	struct pdaf_ctrl_param_in                     pdaf_in;
+
+	if (!param_ptr) {
+		ISP_LOGW("input is NULL");
+		goto exit;
+	}
+
+	cmr_bzero(&pdaf_in, sizeof(pdaf_in));
+	pdaf_in.enable = *((cmr_u8 *)param_ptr);
+	cxt->pdaf_cxt.pd_enable = pdaf_in.enable;
+	ret = pdaf_ctrl_ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_SET_ENABLE, &pdaf_in, NULL);
+
+exit:
+	return ret;
+}
+
+cmr_int isp3a_set_pdaf_roi(cmr_handle isp_3a_handle, void *param_ptr)
+{
+	cmr_int                                     ret = -ISP_ERROR;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
+	struct pdaf_ctrl_param_in                     pdaf_in;
+	struct isp3a_roi_t                                 *roi = (struct isp3a_roi_t *)param_ptr;
+
+	if (!param_ptr) {
+		ISP_LOGW("input is NULL");
+		goto exit;
+	}
+
+	cmr_bzero(&pdaf_in, sizeof(pdaf_in));
+	pdaf_in.roi.start_x = roi->start_x;
+	pdaf_in.roi.start_y = roi->start_y;
+	pdaf_in.roi.width = roi->width;
+	pdaf_in.roi.height = roi->height;
+	ret = pdaf_ctrl_ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_SET_ROI, &pdaf_in, NULL);
+exit:
+	return ret;
+}
+
+cmr_int isp3a_set_pdaf_reset(cmr_handle isp_3a_handle)
+{
+	cmr_int                                     ret = -ISP_ERROR;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
+	struct pdaf_ctrl_param_in                     pdaf_in;
+
+	ret = pdaf_ctrl_ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_SET_RESET, &pdaf_in, NULL);
+
+	return ret;
+}
+
+cmr_int isp3a_handle_pdaf_callback(cmr_handle isp_3a_handle, struct pdaf_ctrl_callback_in *result_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                    *cxt = (struct isp3a_fw_context *)isp_3a_handle;
+
+	cxt->pdaf_cxt.proc_out = result_ptr->proc_out;
+//TBD  SEND TO HAF LIB
+	return ret;
+}
+
+static cmr_int isp3a_handle_pdaf_raw_open(cmr_handle isp_3a_handle, void *param_ptr)
+{
+	cmr_int                                     ret = -ISP_ERROR;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
-	cmr_uint                                    *pd_raw = param_ptr;
+	struct pd_raw_open                  *pd_open = (struct pd_raw_open *)param_ptr;
+	struct pdaf_ctrl_open_in                   input;
+
+	if (!param_ptr) {
+		ISP_LOGW("input is NULL");
+		goto exit;
+	}
+
+	ISP_LOGV("E");
+	bzero(&input, sizeof(input));
+	if (1 == pd_open->open) {
+		input.size = pd_open->size;
+		input.pd_set_buffer = pd_open->pd_set_buffer;
+		ret = pdaf_ctrl_open(cxt->pdaf_cxt.handle,&input);
+	} else {
+		ret = pdaf_ctrl_close(cxt->pdaf_cxt.handle);
+	}
+
+exit:
+	return ret;
+}
+
+static cmr_int isp3a_start_pdaf_raw_process(cmr_handle isp_3a_handle, void *param_ptr)
+{
+	cmr_int                                     ret = -ISP_ERROR;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
+	struct pd_raw_info                  *pd_raw = (struct pd_raw_info *)param_ptr;
+	struct pdaf_ctrl_process_in                   input;
 
 	if (!param_ptr) {
 		ISP_LOGW("input is NULL");
@@ -4177,7 +4257,44 @@ static cmr_int isp3a_set_prev_pdaf_raw(cmr_handle isp_3a_handle, void *param_ptr
 	}
 
 	//TODO
+	if (cxt->pdaf_cxt.pdaf_support && cxt->pdaf_cxt.pd_enable) {
+		struct pdaf_ctrl_param_out pdaf_out;
+		struct af_ctrl_param_out af_out;
 
+		cmr_bzero(&pdaf_out, sizeof(pdaf_out));
+		cmr_bzero(&af_out, sizeof(af_out));
+		ret = pdaf_ctrl_ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_GET_BUSY, NULL, &pdaf_out);
+		ISP_LOGI("is_busy %d", pdaf_out.is_busy);
+		ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_GET_LENS_STATUS, NULL, &af_out);
+		if (ret) {
+			ISP_LOGE("failed to get lens status");
+		}
+		if (AF_CTRL_LENS_MOVE_DONE == af_out.lens_status && (!pdaf_out.is_busy)) {
+			cmr_bzero(&af_out, sizeof(af_out));
+			ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_GET_AF_CUR_LENS_POS, NULL, &af_out);
+			if (ret) {
+				ISP_LOGE("failed to get lens status");
+				goto exit;
+			}
+			input.dcurrentVCM = af_out.motor_pos;
+			input.dBv = cxt->ae_cxt.proc_out.ae_info.report_data.BV;
+			input.bit = 10;//TBD
+			memcpy(&input.pd_raw, pd_raw, sizeof(struct pd_raw_info));
+			ret = pdaf_ctrl_process(cxt->pdaf_cxt.handle, &input, NULL);
+			if (ret) {
+				ISP_LOGE("failed to process pdaf");
+				goto exit;
+			}
+		} else {
+			if (pd_raw->pd_callback) {
+				(pd_raw->pd_callback)(&pd_raw->pd_in);
+			}
+		}
+	} else {
+		if (pd_raw->pd_callback) {
+			(pd_raw->pd_callback)(&pd_raw->pd_in);
+		}
+	}
 exit:
 	return ret;
 }

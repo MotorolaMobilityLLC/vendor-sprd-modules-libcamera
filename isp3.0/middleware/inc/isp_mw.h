@@ -273,7 +273,6 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_GET_YIMG_INFO,
 	ISP_CTRL_SET_PREV_YIMG,
 	ISP_CTRL_SET_PREV_YUV,
-	ISP_CTRL_SET_PREV_PDAF_RAW,
 	ISP_CTRL_GET_VCM_INFO,
 
 	/*
@@ -289,6 +288,8 @@ enum isp_ctrl_cmd {
 	  * */
 	ISP_CTRL_DIRECT_MSG_BEGIN,
 	ISP_CTRL_SET_AUX_SENSOR_INFO,
+	ISP_CTRL_SET_PREV_PDAF_RAW,
+	ISP_CTRL_SET_PREV_PDAF_OPEN,
 	ISP_CTRL_DIRECT_MSG_END,
 	ISP_CTRL_MAX
 };
@@ -481,9 +482,17 @@ struct yuv_info_t {
 };
 
 struct pd_frame_in {
-	cmr_handle                                caller_handle;
-	cmr_u32                                   camera_id;
-	void                                      *private_data;
+	cmr_handle caller_handle;
+	cmr_u32 camera_id;
+	cmr_uint src_phy_addr;
+	cmr_uint src_vir_addr;
+	cmr_u32 fd;
+};
+
+struct pd_raw_open {
+	cmr_u8 open;
+	cmr_u32 size;
+	cmr_int (*pd_set_buffer) (struct pd_frame_in *cb_param);
 };
 
 struct trim_info {
@@ -496,8 +505,11 @@ struct trim_info {
 };
 
 struct pd_raw_info {
+	cmr_u32 frame_id;
 	void *addr;
 	cmr_u32 len;
+	cmr_uint sec;
+	cmr_uint usec;
 	cmr_u32 format;
 	cmr_u32 pattern;
 	struct trim_info roi;
@@ -521,7 +533,6 @@ struct isp_init_param {
 	void *setting_param_list_ptr[3];//0:back,1:front,2:dual back,
 	struct isp_sensor_ex_info ex_info;
 	struct sensor_otp_cust_info *otp_data;
-	struct sensor_data_info pdaf_otp;
 	struct sensor_pdaf_info *pdaf_info;
 	struct isp_sensor_ex_info ex_info_slv;
 	void *setting_param_ptr_slv; // slave sensor

@@ -252,6 +252,17 @@ struct isp3a_af_hw_cfg {
 	cmr_u16 uw_ine_cnt;
 };
 
+struct isp3a_roi_t {
+	/* top x position */
+	cmr_u16 start_x;
+	/* top y position */
+	cmr_u16 start_y;
+	/* crop width */
+	cmr_u16 width;
+	/* crop height */
+	cmr_u16 height;
+};
+
 struct isp3a_afl_hw_cfg {
 	cmr_u16 token_id;
 	cmr_u16 offset_ratiox;
@@ -344,6 +355,16 @@ struct match_data_param {
 		struct awb_match_data awb_data;
 		struct ae_match_data ae_data;
 	};
+};
+
+struct isp3a_pdaf_altek_report_t {
+	cmr_u32 token_id;
+	cmr_u32 frame_id;
+	cmr_u8 enable;
+	struct isp3a_timestamp time_stamp;
+	float pd_value;
+	void *pd_reg_out;
+	cmr_u32 pd_reg_size;
 };
 
 struct isp_bin_info {

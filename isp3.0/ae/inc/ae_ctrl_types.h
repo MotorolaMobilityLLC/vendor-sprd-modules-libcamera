@@ -400,7 +400,7 @@ struct ae_ctrl_param_out {
 	struct isp3a_ae_hw_cfg hw_cfg;
 	cmr_u32 isp_d_gain;
 	cmr_u32 hw_iso_speed;
-	cmr_u32 bv;
+	cmr_s32 bv;
 	cmr_u32 flicker_mode;
 	cmr_u32 ae_state;
 	struct ae_ctrl_debug_param debug_param;

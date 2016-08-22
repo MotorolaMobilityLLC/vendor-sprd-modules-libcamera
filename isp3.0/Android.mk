@@ -43,6 +43,8 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/ae/altek/inc \
 	$(LOCAL_PATH)/afl/inc \
 	$(LOCAL_PATH)/afl/altek/inc \
+	$(LOCAL_PATH)/pdaf/inc \
+	$(LOCAL_PATH)/pdaf/altek/inc \
 	$(LOCAL_PATH)/driver
 
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr

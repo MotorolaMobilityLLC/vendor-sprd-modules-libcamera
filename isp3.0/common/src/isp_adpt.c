@@ -139,6 +139,30 @@ static cmr_int adpt_get_afl_ops(struct isp_lib_config *lib_info,
 	return ret;
 }
 
+extern struct adpt_register_type pdaf_altek_adpt_info;
+static struct adpt_register_type *pdaf_adpt_reg_table[] = {
+	&pdaf_altek_adpt_info,
+};
+
+static cmr_int adpt_get_pdaf_ops(struct isp_lib_config *lib_info,
+			       struct adpt_ops_type **ops)
+{
+	cmr_int ret = -1;
+	cmr_u8 i = 0;
+	struct adpt_register_type **table = pdaf_adpt_reg_table;
+
+	for (i = 0; i < ARRAY_SIZE(pdaf_adpt_reg_table); i++) {
+		if (lib_info->product_id == table[i]->lib_info->product_id) {
+			if (lib_info->version_id == table[i]->lib_info->version_id) {
+				*ops = table[i]->ops;
+				ret = 0;
+				break;
+			}
+		}
+	}
+
+	return ret;
+}
 
 static cmr_int (*modules_ops[]) (struct isp_lib_config *,
 				 struct adpt_ops_type **) = {
@@ -147,6 +171,7 @@ static cmr_int (*modules_ops[]) (struct isp_lib_config *,
 	[ADPT_LIB_AWB] = adpt_get_awb_ops,
 	[ADPT_LIB_LSC] = adpt_get_lsc_ops,
 	[ADPT_LIB_AFL] = adpt_get_afl_ops,
+	[ADPT_LIB_PDAF] = adpt_get_pdaf_ops,
 };
 
 cmr_int adpt_get_ops(cmr_int lib_type, struct isp_lib_config *lib_info,

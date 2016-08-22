@@ -40,11 +40,11 @@ struct isp_3a_fw_init_in {
 	struct isp_lib_config awb_config;
 	struct isp_lib_config ae_config;
 	struct isp_lib_config afl_config;
+	struct isp_lib_config pdaf_config;
 	void *sensor_lsc_golden_data;
 	struct isp_ops ops;
 	struct isp_sensor_ex_info ex_info;
 	struct sensor_otp_cust_info *otp_data;
-	struct sensor_data_info pdaf_otp;
 	struct sensor_pdaf_info *pdaf_info;
 	struct isp_bin_info bin_info_slv;
 	void *setting_param_ptr_slv;
