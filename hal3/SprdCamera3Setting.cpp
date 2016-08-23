@@ -1857,8 +1857,8 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId)
 	else
 		memcpy(s_setting[cameraId].controlInfo.max_regions, kmax_front_regions, sizeof(kmax_regions));
 	{
-		s_setting[cameraId].controlInfo.ae_compensation_range[0] = -4;
-		s_setting[cameraId].controlInfo.ae_compensation_range[1] = 4;
+		s_setting[cameraId].controlInfo.ae_compensation_range[0] = -6;
+		s_setting[cameraId].controlInfo.ae_compensation_range[1] = 6;
     }
 	{
 		//s_setting[cameraId].controlInfo.available_effects[0] = ANDROID_CONTROL_EFFECT_MODE_OFF;
@@ -3240,7 +3240,7 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 		org_ae_compensat = frame_settings.find(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION).data.i32[0];
 		//GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.org_ae_exposure_compensation, org_ae_compensat, ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)
 		s_setting[mCameraId].controlInfo.org_ae_exposure_compensation = org_ae_compensat;
-		ae_compensat = frame_settings.find(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION).data.i32[0] + 3;
+		ae_compensat = (frame_settings.find(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION).data.i32[0] + s_setting[mCameraId].controlInfo.ae_compensation_range[1])/2;
 		ae_compensat = ae_compensat<0?0:ae_compensat;
 		//GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.ae_exposure_compensation, ae_compensat, ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)
 		s_setting[mCameraId].controlInfo.ae_exposure_compensation = ae_compensat;
