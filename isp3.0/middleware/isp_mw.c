@@ -578,7 +578,7 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 		goto exit;
 	}
 #ifdef CONFIG_CAMERA_DUAL_SYNC
-	if (input_ptr->is_refocus && 0 == input_ptr->camera_id && input_ptr->ex_info_slv.name) {
+	if (input_ptr->is_refocus && (0 == input_ptr->camera_id || 1 == input_ptr->camera_id) && input_ptr->ex_info_slv.name) {
 		ret = ispmw_get_tuning_bin_slv((cmr_handle)cxt,(const cmr_s8*)input_ptr->ex_info_slv.name);
 		if (ret) {
 			goto exit;

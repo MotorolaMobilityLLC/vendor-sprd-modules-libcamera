@@ -1894,7 +1894,7 @@ cmr_int isp3a_set_awb_capture_gain(cmr_handle isp_3a_handle)
 	input_data.value = ct;
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
-	if (cxt->is_refocus && 2 == cxt->camera_id) {
+	if (cxt->is_refocus && (2 == cxt->camera_id || 3 == cxt->camera_id)) {
 		struct match_data_param match_param;
 
 		cmr_bzero(&match_param, sizeof(match_param));
@@ -3384,7 +3384,7 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 		sof_cfg_info.is_update = 1;
 	}
 #ifdef CONFIG_CAMERA_DUAL_SYNC
-	if (cxt->is_refocus && 2 == cxt->camera_id) {
+	if (cxt->is_refocus && (2 == cxt->camera_id || 3 == cxt->camera_id)) {
 		struct match_data_param match_param;
 
 		cmr_bzero(&match_param, sizeof(match_param));
@@ -3775,24 +3775,26 @@ cmr_int isp_3a_fw_init(struct isp_3a_fw_init_in *input_ptr, cmr_handle *isp_3a_h
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 	cxt->is_refocus = input_ptr->is_refocus;
-	if (input_ptr->is_refocus && input_ptr->dual_otp && input_ptr->dual_otp->single_otp_ptr) {
-		cxt->dual_otp = input_ptr->dual_otp;
-		if (0 == input_ptr->camera_id) {/*master*/
-			cxt->otp_data = input_ptr->dual_otp->single_otp_ptr;
-			cxt->otp_data->isp_awb_info = input_ptr->dual_otp->master_isp_awb_info;
-			cxt->otp_data->lsc_info = input_ptr->dual_otp->master_lsc_info;
-			ISP_LOGI("master iso r g b %d %d,%d,%d,lsc size=%d",
-					cxt->otp_data->isp_awb_info.iso, cxt->otp_data->isp_awb_info.gain_r,
-					cxt->otp_data->isp_awb_info.gain_g, cxt->otp_data->isp_awb_info.gain_b,
-					cxt->otp_data->lsc_info.lsc_data_size);
-		} else if (2 == input_ptr->camera_id) {/*slave*/
-			cxt->otp_data = input_ptr->dual_otp->single_otp_ptr;
-			cxt->otp_data->isp_awb_info = input_ptr->dual_otp->slave_isp_awb_info;
-			cxt->otp_data->lsc_info = input_ptr->dual_otp->slave_lsc_info;
-			ISP_LOGI("slave iso r g b %d %d,%d,%d,lsc size=%d",
-					cxt->otp_data->isp_awb_info.iso, cxt->otp_data->isp_awb_info.gain_r,
-					cxt->otp_data->isp_awb_info.gain_g, cxt->otp_data->isp_awb_info.gain_b,
-					cxt->otp_data->lsc_info.lsc_data_size);
+	if (input_ptr->is_refocus && input_ptr->dual_otp) {
+		if (input_ptr->dual_otp->single_otp_ptr) {
+			cxt->dual_otp = input_ptr->dual_otp;
+			if (0 == input_ptr->camera_id || 1 == input_ptr->camera_id) {/*master*/
+				cxt->otp_data = input_ptr->dual_otp->single_otp_ptr;
+				cxt->otp_data->isp_awb_info = input_ptr->dual_otp->master_isp_awb_info;
+				cxt->otp_data->lsc_info = input_ptr->dual_otp->master_lsc_info;
+				ISP_LOGI("master iso r g b %d %d,%d,%d,lsc size=%d",
+						cxt->otp_data->isp_awb_info.iso, cxt->otp_data->isp_awb_info.gain_r,
+						cxt->otp_data->isp_awb_info.gain_g, cxt->otp_data->isp_awb_info.gain_b,
+						cxt->otp_data->lsc_info.lsc_data_size);
+			} else if (2 == input_ptr->camera_id || 3 == input_ptr->camera_id) {/*slave*/
+				cxt->otp_data = input_ptr->dual_otp->single_otp_ptr;
+				cxt->otp_data->isp_awb_info = input_ptr->dual_otp->slave_isp_awb_info;
+				cxt->otp_data->lsc_info = input_ptr->dual_otp->slave_lsc_info;
+				ISP_LOGI("slave iso r g b %d %d,%d,%d,lsc size=%d",
+						cxt->otp_data->isp_awb_info.iso, cxt->otp_data->isp_awb_info.gain_r,
+						cxt->otp_data->isp_awb_info.gain_g, cxt->otp_data->isp_awb_info.gain_b,
+						cxt->otp_data->lsc_info.lsc_data_size);
+			}
 		}
 	}
 	sensor_raw_info_ptr_slv = (struct sensor_raw_info*)input_ptr->setting_param_ptr_slv;

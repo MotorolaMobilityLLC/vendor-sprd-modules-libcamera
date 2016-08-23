@@ -849,7 +849,7 @@ static cmr_int aealtek_load_otp(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_otp_
 	}
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
-	if (cxt_ptr->is_refocus && 0 == cxt_ptr->camera_id) {
+	if (cxt_ptr->is_refocus && (0 == cxt_ptr->camera_id || 1 == cxt_ptr->camera_id)) {
 		lib_otp_ptr = &cxt_ptr->lib_data.ae_otp_data_slv;
 		ret = aealtek_convert_otp(cxt_ptr, otp_data_slv, lib_otp_ptr);
 		if (ret)
@@ -1264,7 +1264,7 @@ static cmr_int aealtek_pre_to_sensor(struct aealtek_cxt *cxt_ptr, cmr_int is_syn
 		goto exit;
 	}
 #ifdef CONFIG_CAMERA_DUAL_SYNC
-	if (cxt_ptr->is_refocus && !is_sync_call && 2 == cxt_ptr->camera_id) {
+	if (cxt_ptr->is_refocus && !is_sync_call && (2 == cxt_ptr->camera_id || 3 == cxt_ptr->camera_id)) {
 		ISP_LOGI("return when in slave sensor");
 		return ISP_SUCCESS;
 	}
@@ -2352,7 +2352,7 @@ static cmr_int aealtek_work_preview(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 	}
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
-	if (cxt_ptr->is_refocus && 0 == cxt_ptr->camera_id) {
+	if (cxt_ptr->is_refocus && (0 == cxt_ptr->camera_id || 1 == cxt_ptr->camera_id)) {
 		/* slv_preview_sensor_info */
 		cxt_ptr->nxt_status.ui_param.work_info_slv.resolution.min_fps = in_ptr->resolution.min_fps;
 		cxt_ptr->cur_status.min_frame_length_slv =
@@ -2604,7 +2604,7 @@ static cmr_int aealtek_capture_normal(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 	}
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
-	if (cxt_ptr->is_refocus && 0 == cxt_ptr->camera_id) {
+	if (cxt_ptr->is_refocus && (0 == cxt_ptr->camera_id || 1 == cxt_ptr->camera_id)) {
 		/* slv capture_sensor_info */
 		cap_sensor_ptr = &param_ct_ptr->slave_capture_sensor_info;
 		ret = aealtek_sensor_info_ui2lib_slv(cxt_ptr, &cxt_ptr->nxt_status.ui_param.work_info_slv.resolution, cap_sensor_ptr);
@@ -2800,7 +2800,7 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 	//cxt_ptr->is_refocus = in_ptr->work_param.is_refocus;
-	if (cxt_ptr->is_refocus && 0 == cxt_ptr->camera_id) {
+	if (cxt_ptr->is_refocus && (0 == cxt_ptr->camera_id || 1 == cxt_ptr->camera_id)) {
 		ret = aealtek_set_sync_mode(cxt_ptr, 1);
 	}
 #endif
@@ -3648,7 +3648,7 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	}
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
-	if (cxt_ptr->is_refocus && 0 == cxt_ptr->camera_id) {
+	if (cxt_ptr->is_refocus && (0 == cxt_ptr->camera_id || 1 == cxt_ptr->camera_id)) {
 		ret = aealtek_callback_sync_info(cxt_ptr, in_ptr);
 	}
 #endif

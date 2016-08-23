@@ -171,7 +171,7 @@ cmr_int awbaltek_set_sof_frame_id(cmr_handle adpt_handle, union awb_ctrl_cmd_in 
 	}
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
-	if (cxt->work_mode.is_refocus && 0==cxt->camera_id) {
+	if (cxt->work_mode.is_refocus && (0 == cxt->camera_id || 1 == cxt->camera_id)) {
 		struct match_data_param match_param;
 		struct allib_awb_output_data_t match_output;
 
@@ -619,7 +619,7 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 		}
 	}
 #ifdef CONFIG_CAMERA_DUAL_SYNC
-	if (cxt->work_mode.is_refocus && 0 == cxt->camera_id) {
+	if (cxt->work_mode.is_refocus && (0 == cxt->camera_id || 1 == cxt->camera_id)) {
 		set_otp_param.type = alawb_set_param_slave_calib_data;
 		if (0 == input_ptr->calibration_gain_slv.r
 			&& 0 == input_ptr->calibration_gain_slv.g
