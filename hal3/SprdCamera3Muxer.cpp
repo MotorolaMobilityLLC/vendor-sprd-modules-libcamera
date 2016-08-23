@@ -866,28 +866,43 @@ void SprdCamera3Muxer::MuxerThread::initGpuData(int w,int h, int rotation)
     pt_stream_info.src_width  = w;
     pt_stream_info.rot_angle = rotation;
 
-    pt_line_buf.homography_matrix[0] = 1.009579;
-    pt_line_buf.homography_matrix[1] = 0.061508;
-    pt_line_buf.homography_matrix[2] = 0.0;
-    pt_line_buf.homography_matrix[3] = -0.040547;
-    pt_line_buf.homography_matrix[4] = 1.007715;
-    pt_line_buf.homography_matrix[5] = 0.0;
-    pt_line_buf.homography_matrix[6] = 0.000012;
-    pt_line_buf.homography_matrix[7] = 0.000016;
-    pt_line_buf.homography_matrix[8] = 1.0;
-    pt_line_buf.homography_matrix[9] = 1.009010;
-    pt_line_buf.homography_matrix[10] = 0.009180;
-    pt_line_buf.homography_matrix[11] = 0.0;
-    pt_line_buf.homography_matrix[12] = -0.016966;
-    pt_line_buf.homography_matrix[13] = 0.991312;
-    pt_line_buf.homography_matrix[14] = 0.0;
-    pt_line_buf.homography_matrix[15] = 0.000011;
-    pt_line_buf.homography_matrix[16] = -0.000015;
-    pt_line_buf.homography_matrix[17] = 1.0;
+    float buff[768];
+    float H_left[9], H_right[9];
+    FILE *fid = fopen("/productinfo/sprd_3d_calibration/calibration.data","rb");
+    if(fid != NULL){
+        HAL_LOGE("open calibration file success");
+        fread(buff, sizeof(float),768,fid);
+        fclose(fid);
+        memcpy(H_left, buff+750, sizeof(float)*9);
+        memcpy(H_right, buff+759, sizeof(float)*9);
+
+        memcpy(pt_line_buf.homography_matrix, H_left, sizeof(float) * 9);
+        memcpy(pt_line_buf.homography_matrix + 9, H_right, sizeof(float) * 9);
+    } else{
+        HAL_LOGD("can not open calibration file, using default ");
+        pt_line_buf.homography_matrix[0] = 1.009579;
+        pt_line_buf.homography_matrix[1] = 0.061508;
+        pt_line_buf.homography_matrix[2] = 0.0;
+        pt_line_buf.homography_matrix[3] = -0.040547;
+        pt_line_buf.homography_matrix[4] = 1.007715;
+        pt_line_buf.homography_matrix[5] = 0.0;
+        pt_line_buf.homography_matrix[6] = 0.000012;
+        pt_line_buf.homography_matrix[7] = 0.000016;
+        pt_line_buf.homography_matrix[8] = 1.0;
+        pt_line_buf.homography_matrix[9] = 1.009010;
+        pt_line_buf.homography_matrix[10] = 0.009180;
+        pt_line_buf.homography_matrix[11] = 0.0;
+        pt_line_buf.homography_matrix[12] = -0.016966;
+        pt_line_buf.homography_matrix[13] = 0.991312;
+        pt_line_buf.homography_matrix[14] = 0.0;
+        pt_line_buf.homography_matrix[15] = 0.000011;
+        pt_line_buf.homography_matrix[16] = -0.000015;
+        pt_line_buf.homography_matrix[17] = 1.0;
+    }
 
     if(isInitRenderContest){
-    mGpuApi->destroyRenderContext();
-    isInitRenderContest = false;
+        mGpuApi->destroyRenderContext();
+        isInitRenderContest = false;
     }
 
 }
