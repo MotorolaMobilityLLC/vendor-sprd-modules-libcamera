@@ -833,6 +833,7 @@ uint32 aealtek_set_slv_otp(struct calib_wb_gain_t acalibwbgain, struct alaerunti
 
 	memset(&localparam, 0, sizeof(struct ae_set_param_content_t));
 	localparam.ae_set_param_type = AE_SET_PARAM_OTP_WB_DAT_SLV;
+	localparam.set_param.ae_calib_wb_gain_slv_sensor.minISO = 50;
 	localparam.set_param.ae_calib_wb_gain_slv_sensor.calib_r_gain = acalibwbgain.r;
 	localparam.set_param.ae_calib_wb_gain_slv_sensor.calib_g_gain = acalibwbgain.g;
 	localparam.set_param.ae_calib_wb_gain_slv_sensor.calib_b_gain = acalibwbgain.b;
