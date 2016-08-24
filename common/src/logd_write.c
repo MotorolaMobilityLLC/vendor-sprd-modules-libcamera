@@ -31,7 +31,7 @@
 
 #define LOG_BUF_SIZE	512
 #define  LOG_TO_COMM  1
-#define  LOG_THREAD  1
+//#define  LOG_THREAD  1
 
 #if 0
 typedef enum android_LogPriority {
