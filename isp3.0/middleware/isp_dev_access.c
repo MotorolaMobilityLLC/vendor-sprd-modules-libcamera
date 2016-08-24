@@ -665,9 +665,14 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 			}
 		}
 	}
+
+#if defined(CONFIG_CAMERA_NO_DCAM_DATA_PATH)
+	cxt->input_param.init_param.size.w = param_ptr->common_in.size.w;
+	cxt->input_param.init_param.size.h = param_ptr->common_in.size.h;
+#else
 	cxt->input_param.init_param.size.w = param_ptr->common_in.resolution_info.sensor_size.w;
 	cxt->input_param.init_param.size.h = param_ptr->common_in.resolution_info.sensor_size.h;
-
+#endif
 	isp_dev_set_capture_mode(cxt->isp_driver_handle, param_ptr->common_in.capture_mode);
 
 	ret = isp_dev_get_isp_id(cxt->isp_driver_handle, &isp_id);
@@ -751,7 +756,11 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	} else {
 		img_buf_param.img_id = ISP_IMG_STILL_CAPTURE;
 	}
+#if defined(CONFIG_CAMERA_NO_DCAM_DATA_PATH)
+	img_buf_param.format = ISP_OUT_IMG_NV12;
+#else
 	img_buf_param.format = ISP_OUT_IMG_YUY2;
+#endif
 	if (ISP_CAP_MODE_HIGHISO == param_ptr->common_in.capture_mode
 		|| ISP_CAP_MODE_DRAM == param_ptr->common_in.capture_mode
 		|| ISP_CAP_MODE_BURST == param_ptr->common_in.capture_mode) {
