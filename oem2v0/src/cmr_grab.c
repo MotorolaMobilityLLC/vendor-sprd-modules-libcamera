@@ -1135,6 +1135,10 @@ static cmr_u32 cmr_grab_get_4cc(cmr_u32 img_type)
 		ret_4cc = IMG_PIX_FMT_GREY;
 		break;
 
+	case IMG_DATA_TYPE_PDAF_TYPE3:
+		ret_4cc = IMG_PIX_FMT_PDA3;
+		break;
+
 	case IMG_DATA_TYPE_JPEG:
 		ret_4cc = IMG_PIX_FMT_JPEG;
 		break;
