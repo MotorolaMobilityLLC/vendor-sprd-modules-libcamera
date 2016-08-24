@@ -157,27 +157,32 @@ static int s5k3l8xxm3_otp_read_data(SENSOR_HW_HANDLE handle)
 		s5k3l8xxm3_otp_info.af_info.macro_cali = (high_val << 8 | low_val) >> 6;
 		
 		SENSOR_LOGI("s5k3l8xxm3_otp_info.af_info.macro_cali = 0x%x %x",  s5k3l8xxm3_otp_info.af_info.macro_cali,s5k3l8xxm3_otp_info.af_info.infinite_cali);
-		if(otp_version==0x01){
-			otp_length=1733;
-		}
-		else{
-			otp_length=2033;
+		if(otp_version == 0x01) {
+			otp_length = 1733;
+			high_val = s5k3l8xxm3_i2c_read_otp(otp_length - 2);
+			//checksum += low_val;
+			low_val = s5k3l8xxm3_i2c_read_otp(otp_length - 1);
+			if(high_val==0xff && low_val==0xff)
+				otp_length = 2033;
 		}
 		high_val = s5k3l8xxm3_i2c_read_otp(otp_length-2);
 		//checksum += low_val;
 		low_val = s5k3l8xxm3_i2c_read_otp(otp_length-1);
 		//checksum += high_val;
 		s5k3l8xxm3_otp_info.checksum= (high_val << 8 | low_val);
-		//FILE *fd=fopen("/data/misc/media/dump.otp","wb+");
 		for (i = 0; i < otp_length-2; i++) {
+			//low_val = s5k3l8xxm3_i2c_read_otp(0x0000 + i);
 			checksum += s5k3l8xxm3_i2c_read_otp(0x0000 + i);
-			//fwrite("%x ",low_val,1,1,fd);
-			//if(i>0&&i%15==0)
-			//	fwrite("\n",1,1,fd);
-			//if( i < 1730)
-			//	checksum += low_val;//s5k3l8xxm3_i2c_read_otp(0x0000 + i);
 		}
-		//fclose(fd);
+
+#if 0
+		fd=fopen("/data/misc/media/dual-otp.dump.bin","wb+");
+		for (i = 0; i < 8192; i++) {
+			low_val = s5k3l8xxm3_i2c_read_otp(0x0000 + i);
+			fwrite((char *)&low_val,1,1,fd);
+		}
+		fclose(fd);
+#endif
 		SENSOR_LOGI("checksum = 0x%x s5k3l8xxm3_otp_info.checksum = 0x%x %x %x %x %x", checksum, s5k3l8xxm3_otp_info.checksum,high_val,low_val,otp_version,otp_length);
 
 		if ((checksum&0xffff)  != s5k3l8xxm3_otp_info.checksum) {
@@ -218,6 +223,7 @@ static unsigned long s5k3l8xxm3_parse_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL_T*
 	cmr_u8 high_val = 0;
 	cmr_u8 low_val = 0;
 	cmr_u32 checksum = 0;
+	cmr_u8 otp_version = 0;
 
 	SENSOR_LOGI("E");
 	if (NULL == param->pval) {
@@ -225,7 +231,15 @@ static unsigned long s5k3l8xxm3_parse_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL_T*
 		return -1;
 	}
 	buff = param->pval;
-	otp_length = s5k3l8xxm3_i2c_read_otp(0x000E)==1?1733:2033;
+	otp_version = s5k3l8xxm3_i2c_read_otp(0x000E);
+	if(otp_version == 0x01){
+		otp_length = 1733;
+		high_val = s5k3l8xxm3_i2c_read_otp(otp_length - 2);
+		//checksum += low_val;
+		low_val = s5k3l8xxm3_i2c_read_otp(otp_length - 1);
+		if(high_val==0xff && low_val == 0xff )
+			otp_length = 2033;
+	}
 
 	if (1 != buff[0]) {
 		SENSOR_LOGI("s5k3l8xxm3_parse_otp is wrong data");
@@ -477,8 +491,8 @@ static int s5k3l8xxm3_dual_otp_read_data(SENSOR_HW_HANDLE handle)
 			SENSOR_LOGI("failed to read otp or the otp is wrong data");
 			return -1;
 		}
-		checksum_total += s5k3l8xxm3_dual_otp_data[0];
-		for (i = 1; i < OTP_DUAL_SIZE; i++) {
+		//checksum_total += s5k3l8xxm3_dual_otp_data[0];
+		for (i = 0; i < OTP_DUAL_SIZE; i++) {
 			s5k3l8xxm3_dual_otp_data[i] = s5k3l8xxm3_i2c_read_otp(0x0000 + i);
 			if (i < OTP_DUAL_SIZE - 2)
 				checksum_total += s5k3l8xxm3_dual_otp_data[i] ;

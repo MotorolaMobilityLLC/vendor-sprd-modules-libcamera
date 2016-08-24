@@ -668,11 +668,11 @@ static void ov8856_write_gain(SENSOR_HW_HANDLE handle,float gain)
 	float gain_a = gain;
 	float gain_d= 0x400;
 
-	if (SENSOR_MAX_GAIN < (uint16_t)gain_a){
+	if (SENSOR_MAX_GAIN < (uint16_t)gain_a) {
 		gain_a = SENSOR_MAX_GAIN;
 		gain_d = gain*0x400/gain_a;
-		if((uint16_t)gain_d >0x2*0x400)
-			gain_d=0x2*0x400;
+		if ((uint16_t)gain_d > 0x2*0x400-1)
+			gain_d = 0x2*0x400-1;
 	}
 	//Sensor_WriteReg(0x320a, 0x01);
 	

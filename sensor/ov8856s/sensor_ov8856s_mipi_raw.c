@@ -668,12 +668,12 @@ static void ov8856s_write_gain(SENSOR_HW_HANDLE handle,uint32_t gain)
 	float gain_a = gain;
 	float gain_d= 0x400;
 
-	if (SENSOR_MAX_GAIN < (uint16_t)gain_a){
+	if (SENSOR_MAX_GAIN < (uint16_t)gain_a) {
 
 		gain_a = SENSOR_MAX_GAIN;
 		gain_d = gain*0x400/gain_a;
-		if((uint16_t)gain_d >0x2*0x400)
-			gain_d=0x2*0x400;
+		if ((uint16_t)gain_d > 0x2*0x400-1)
+			gain_d = 0x2*0x400-1;
 	}
 	//Sensor_WriteReg(0x320a, 0x01);
 	
@@ -762,6 +762,7 @@ static void ov8856s_write_shutter(SENSOR_HW_HANDLE handle,uint32_t shutter)
 	Sensor_WriteReg(0x3501,value);
 	value=(shutter>>0x0c)&0x0f;
 	Sensor_WriteReg(0x3500,value);
+	s_sensor_ev_info.preview_shutter = shutter;
 }
 
 /*==============================================================================
@@ -1060,7 +1061,7 @@ static uint32_t ov8856s_identify(SENSOR_HW_HANDLE handle,uint32_t param)
 			}
 
 			#endif
-			//ov8856s_init_mode_fps_info(handle);
+			ov8856s_init_mode_fps_info(handle);
 			ret_value = SENSOR_SUCCESS;
 			
 		} else {
@@ -1195,7 +1196,7 @@ static uint32_t ov8856s_write_gain_value(SENSOR_HW_HANDLE handle,unsigned long p
 
 	//real_gain = isp_to_real_gain(handle,param);
 
-	real_gain = (float)1.0*param * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
+	real_gain = (float)1.0f*param * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
 
 	SENSOR_PRINT("real_gain = %f", real_gain);
 

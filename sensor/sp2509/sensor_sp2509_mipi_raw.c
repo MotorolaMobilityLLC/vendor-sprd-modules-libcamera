@@ -59,12 +59,12 @@
 #define PREVIEW_LINE_TIME		26305 // 947(*2)/36M(*2)
 
 /* frame length*/
-#define SNAPSHOT_FRAME_LENGTH		1234
-#define PREVIEW_FRAME_LENGTH		1234
+#define SNAPSHOT_FRAME_LENGTH		1267 //1234
+#define PREVIEW_FRAME_LENGTH		1267 //1234
 
 /* please ref your spec */
 #define FRAME_OFFSET			0
-#define SENSOR_MAX_GAIN			0x100 //15.5x //
+#define SENSOR_MAX_GAIN			0x1ff //100 //15.5x //
 #define SENSOR_BASE_GAIN		0x10
 #define SENSOR_MIN_SHUTTER		1
 
@@ -176,7 +176,7 @@ static const SENSOR_REG_T sp2509_snapshot_setting[] = {
 {0x04,0x85},
 {0x09,0x00},
 {0x0a,0x02},      //2015.12.24
-{0x06,0x0a},
+{0x06,0x2b},//0a},
 {0x24,0xf0},
 {0x01,0x01},
 {0xfb,0x73},
@@ -508,7 +508,7 @@ static SENSOR_STATIC_INFO_T s_sp2509_static_info = {
 	0,	//ois_supported;
 	0,	//pdaf_supported;
 	1,	//exp_valid_frame_num;N+2-1
-	16,	//clamp_level,black level
+	0,	//clamp_level,black level
 	1,	//adgain_valid_frame_num;N+1-1
 };
 
@@ -663,22 +663,22 @@ static void sp2509_write_gain(SENSOR_HW_HANDLE handle,float gain)
 	float gain_a = gain;
 	float gain_d= 0x80;
 
-	if (SENSOR_MAX_GAIN <(uint16_t) gain_a){
+	if (SENSOR_MAX_GAIN < (uint32_t)gain) {
 		gain_a = SENSOR_MAX_GAIN;
 		gain_d = gain*0x80/gain_a;
-		if((uint16_t)gain_d > 2*0x80-1)
-			gain_d=2*0x80-1;
+		if ((uint16_t)gain_d > 2*0x80 - 1)
+			gain_d = 2*0x80 -1;
 	}
-	SENSOR_PRINT("real_gain = 0x%x gain_a %d %d", (uint32_t)gain,(uint16_t)gain_a,(uint16_t)gain_d);
+	SENSOR_PRINT("real_gain = 0x%x gain_a %x %x", (uint32_t)gain,(uint8_t)gain_a,(uint8_t)gain_d);
 	Sensor_WriteReg(0xfd, 0x01);
 	Sensor_WriteReg(0x24, (uint16_t)gain_a & 0xff);
-	Sensor_WriteReg(0xfd, 0x02);
-	Sensor_WriteReg(0x10, (uint16_t)gain_d & 0xff);
-	Sensor_WriteReg(0x11, (uint16_t)gain_d & 0xff);
-	Sensor_WriteReg(0x13, (uint16_t)gain_d & 0xff);
-	Sensor_WriteReg(0x14, (uint16_t)gain_d & 0xff);
+	Sensor_WriteReg(0x37,((uint16_t)gain_a & 0x1ff) >> 0x08);
 	Sensor_WriteReg(0x01, 0x01);
-
+	Sensor_WriteReg(0xfd, 0x02);
+	Sensor_WriteReg(0x10, (uint8_t)gain_d & 0xff);
+	Sensor_WriteReg(0x11, (uint8_t)gain_d & 0xff);
+	Sensor_WriteReg(0x13, (uint8_t)gain_d & 0xff);
+	Sensor_WriteReg(0x14, (uint8_t)gain_d & 0xff);
 }
 
 /*==============================================================================
@@ -1289,7 +1289,7 @@ static uint32_t sp2509_stream_on(SENSOR_HW_HANDLE handle,uint32_t param)
 	Sensor_WriteReg(0xfd, 0x01);
 	Sensor_WriteReg(0xac, 0x01);
 	/*delay*/
-	usleep(10 * 1000);
+	//usleep(10 * 1000);
 	
 	return 0;
 }
