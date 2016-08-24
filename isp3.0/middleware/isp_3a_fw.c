@@ -1531,7 +1531,7 @@ cmr_int isp3a_ioctrl(cmr_handle isp_3a_handle, enum isp_ctrl_cmd cmd, void *para
 	if (NULL != ioctrl_fun) {
 		ret = ioctrl_fun(isp_3a_handle, param_ptr);
 	} else {
-		ISP_LOGI("ioctrl fun is NULL");
+		ISP_LOGI("ioctrl fun is NULL cmd = %d", cmd);
 	}
 exit:
 	ISP_LOGV("done %ld", ret);
@@ -3777,6 +3777,7 @@ static cmr_int isp_3a_fw_assemble_async_msg(enum isp_ctrl_cmd cmd, struct cmr_ms
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 
+#if 0
 	msg->msg_type = ISP3A_PROC_EVT_IOCTRL;
 	msg->sub_msg_type = cmd;
 	msg->alloc_flag = 1;
@@ -3790,7 +3791,11 @@ static cmr_int isp_3a_fw_assemble_async_msg(enum isp_ctrl_cmd cmd, struct cmr_ms
 		ret = -ISP_ERROR;
 		break;
 	}
-
+#else
+	UNUSED(cmd);
+	UNUSED(msg);
+	UNUSED(source);
+#endif
 	return ret;
 }
 
@@ -3812,18 +3817,23 @@ cmr_int isp_3a_fw_ioctl(cmr_handle isp_3a_handle, enum isp_ctrl_cmd cmd, void *p
 		goto exit;
 	}
 
-	if (ISP_CTRL_SYNC_NONE_MSG_BEGIN < cmd) {
+	if ((ISP_CTRL_SYNC_NONE_MSG_BEGIN < cmd) &&
+	    (ISP_CTRL_SYNC_NONE_MSG_END > cmd)) {
 		ret = isp_3a_fw_assemble_async_msg(cmd, &message, param_ptr);
 		if (ret)
 			goto exit;
+		ret = cmr_thread_msg_send(cxt->thread_cxt.process_thr_handle, &message);
+	} else if ((ISP_CTRL_DIRECT_MSG_BEGIN < cmd) &&
+		   (ISP_CTRL_DIRECT_MSG_END > cmd)) {
+		isp3a_ioctrl(cxt, cmd, param_ptr);
 	} else {
 		message.msg_type = ISP3A_PROC_EVT_IOCTRL;
 		message.sub_msg_type = cmd;
 		message.sync_flag = CMR_MSG_SYNC_PROCESSED;
 		message.alloc_flag = 0;
 		message.data = (void *)param_ptr;
+		ret = cmr_thread_msg_send(cxt->thread_cxt.process_thr_handle, &message);
 	}
-	ret = cmr_thread_msg_send(cxt->thread_cxt.process_thr_handle, &message);
 exit:
 	ISP_LOGV("cmd = %d done %ld", cmd, ret);
 	return ret;

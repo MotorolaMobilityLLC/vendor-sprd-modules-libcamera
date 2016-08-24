@@ -316,6 +316,7 @@ cmr_int ae_ctrl_ioctrl(cmr_handle handle, enum ae_ctrl_cmd cmd, struct ae_ctrl_p
 	cmr_int ret = ISP_SUCCESS;
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handle;
 	CMR_MSG_INIT(message);
+	cmr_int need_msg = 1;
 
 	ISP_CHECK_HANDLE_VALID(handle);
 
@@ -339,6 +340,7 @@ cmr_int ae_ctrl_ioctrl(cmr_handle handle, enum ae_ctrl_cmd cmd, struct ae_ctrl_p
 		message.sync_flag = CMR_MSG_SYNC_NONE;
 	} else if ((AE_CTRL_DIRECT_MSG_BEGIN < cmd) &&
 		   (AE_CTRL_DIRECT_MSG_END > cmd)) {
+		need_msg = 0;
 		ret = aectrl_ioctrl(cxt_ptr, cmd, in_ptr, &cxt_ptr->ioctrl_out);
 		if (ret)
 			goto exit;
@@ -349,14 +351,16 @@ cmr_int ae_ctrl_ioctrl(cmr_handle handle, enum ae_ctrl_cmd cmd, struct ae_ctrl_p
 	}
 
 	pthread_mutex_lock(&cxt_ptr->ioctrl_out_mutex);
-	ret = cmr_thread_msg_send(cxt_ptr->ctrl_thr_cxt.thr_handle, &message);
-	if (ret) {
-		ISP_LOGE("failed to send msg to main thr %ld", ret);
-		if (message.alloc_flag && message.data)
-			free(message.data);
+	if (need_msg) {
+		ret = cmr_thread_msg_send(cxt_ptr->ctrl_thr_cxt.thr_handle, &message);
+		if (ret) {
+			ISP_LOGE("failed to send msg to main thr %ld", ret);
+			if (message.alloc_flag && message.data)
+				free(message.data);
 
-		pthread_mutex_unlock(&cxt_ptr->ioctrl_out_mutex);
-		goto exit;
+			pthread_mutex_unlock(&cxt_ptr->ioctrl_out_mutex);
+			goto exit;
+		}
 	}
 	if (out_ptr) {
 		*out_ptr = cxt_ptr->ioctrl_out;

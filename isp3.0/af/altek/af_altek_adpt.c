@@ -2444,7 +2444,6 @@ static cmr_int afaltek_adpt_proc_report_status(cmr_handle adpt_handle,
 	cmr_int ret = ISP_SUCCESS;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 
-	ISP_LOGI("focus_status.t_status = %d", report->focus_status.t_status);
 	if (alAFLib_STATUS_WARNING == report->focus_status.t_status ||
 		alAFLib_STATUS_AF_ABORT == report->focus_status.t_status) {
 		ret = afaltek_adpt_af_done(cxt, 0);
@@ -2452,11 +2451,10 @@ static cmr_int afaltek_adpt_proc_report_status(cmr_handle adpt_handle,
 	} else if (alAFLib_STATUS_FOCUSED == report->focus_status.t_status) {
 		ret = afaltek_adpt_af_done(cxt, 1);
 		ISP_LOGI("t_status fouced = %d", report->focus_status.t_status);
-	}else if (alAFLib_STATUS_FORCE_ABORT == report->focus_status.t_status) {
+	} else if (alAFLib_STATUS_FORCE_ABORT == report->focus_status.t_status) {
 		cxt->ae_info.ae_stable_retrig_flg = 1;
-		ISP_LOGI("t_status FORCE_ABORT = %d", report->focus_status.t_status);
-	}
-	else {
+		ISP_LOGI("t_status force abort = %d", report->focus_status.t_status);
+	} else {
 		ISP_LOGI("unkown status = %d", report->focus_status.t_status);
 	}
 
