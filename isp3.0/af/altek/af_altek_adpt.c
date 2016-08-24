@@ -862,8 +862,14 @@ static cmr_int afaltek_adpt_update_imgsize_info(cmr_handle adpt_handle, struct a
 	sensor_info.sensor_crop_info.uwy = in->crop_info.y;
 	sensor_info.sensor_crop_info.dx = in->crop_info.width;
 	sensor_info.sensor_crop_info.dy = in->crop_info.height;
+
 	/* set to cxt */
-	memcpy(&cxt->sensor_info, in, sizeof(cxt->sensor_info));
+	cxt->sensor_info.sensor_res_height = in->sensor_res_height;
+	cxt->sensor_info.sensor_res_width = in->sensor_res_width;
+	cxt->sensor_info.crop_info.x = in->crop_info.x;
+	cxt->sensor_info.crop_info.y = in->crop_info.y;
+	cxt->sensor_info.crop_info.width = in->crop_info.width;
+	cxt->sensor_info.crop_info.height = in->crop_info.height;
 
 	ISP_LOGI("uw_width = %d,uw_height= %d", sensor_info.preview_img_sz.uw_width,
 			sensor_info.preview_img_sz.uw_height);
@@ -1640,7 +1646,7 @@ static cmr_int afaltek_adpt_postion_compensator(cmr_handle adpt_handle, cmr_s32 
 	if (costheta < 0)
 		/* Honri2DownDis */
 		pose_dis_value = cxt->sensor_info.pose_dis.hori2down;
-	 else
+	else
 		/* Up2HonriDis */
 		pose_dis_value = cxt->sensor_info.pose_dis.up2hori;
 	*pos_offset = (cmr_s32)afaltek_adpt_get_pose_compensator(costheta, pose_dis_value, 0);

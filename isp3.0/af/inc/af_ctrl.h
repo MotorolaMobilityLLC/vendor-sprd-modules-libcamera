@@ -272,6 +272,7 @@ struct af_ctrl_param_in {
 		struct isp_af_win af_ctrl_roi_info;
 		enum isp_flash_mode flash_mode;
 		struct af_ctrl_isp_info_t live_view_sz;
+		struct af_ctrl_sensor_info_type sensor_info;
 	};
 };
 
