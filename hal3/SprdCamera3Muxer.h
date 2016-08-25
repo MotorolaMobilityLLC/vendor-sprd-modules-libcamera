@@ -248,7 +248,7 @@ private:
     camera_metadata_t *mStaticMetadata;
     int mLastWidth;
     int mLastHeight;
-    camera3_stream_t mAuxStreams[MAX_QEQUEST_BUF];
+    camera3_stream_t mAuxStreams[MAX_NUM_STREAMS];
     uint8_t mVideoStreamsNum;
     bool mIsRecording;
     //when notify callback ,push hw notify into notify_list, with lock

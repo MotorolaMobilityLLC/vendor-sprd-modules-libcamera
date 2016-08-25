@@ -1335,6 +1335,8 @@ int SprdCamera3Muxer::configureStreams(const struct camera3_device *device,camer
     camera3_stream_t* newStream = NULL;
     camera3_stream_t* videoStream = NULL;
     camera3_stream_t* pAuxStreams[MAX_NUM_STREAMS];
+    camera3_stream_t* pMainStreams[MAX_NUM_STREAMS];
+    int streamNum = 2;
     size_t i = 0;
     size_t j = 0;
     int w = 0;
@@ -1342,11 +1344,20 @@ int SprdCamera3Muxer::configureStreams(const struct camera3_device *device,camer
     struct stream_info_s stream_info;
 
     Mutex::Autolock l(mLock1);
+    streamNum = stream_list->num_streams;
+    if(streamNum == 3){
+        (stream_list->streams[1]->max_buffers) = 1;
+        for (size_t i = 0; i < stream_list->num_streams; i++) {
+            pMainStreams[i] = (stream_list->streams)[i];
+        }
+        (stream_list->streams)[1] = pMainStreams[2];
+        (stream_list->streams)[2] = pMainStreams[1];
+        stream_list->num_streams = 2;
+    }
 
-    //allocate mMuxerThread->mMaxLocalBufferNum buf
     for (size_t i = 0; i < stream_list->num_streams; i++) {
         newStream = stream_list->streams[i];
-          if(getStreamType(newStream) == VIDEO_STREAM){
+        if(getStreamType(newStream) == VIDEO_STREAM){
             videoStream = stream_list->streams[i];
             is_recording = true;
             w = videoStream->width;
@@ -1355,27 +1366,27 @@ int SprdCamera3Muxer::configureStreams(const struct camera3_device *device,camer
                 if(mLastWidth != 0||mLastHeight != 0){
                     mMuxerThread->freeLocalBuffer(mMuxerThread->mLocalBuffer);
                 }
-                    for(size_t j = 0; j < mMuxerThread->mMaxLocalBufferNum; ){
-                        int tmp = mMuxerThread->allocateOne(w,h,\
-                                                1,&(mMuxerThread->mLocalBuffer[j]),mMuxerThread->mNativeBuffer[j]);
-                        if(tmp < 0){
-                            HAL_LOGE("request one buf failed.");
-                            continue;
-                        }
-                        mMuxerThread->mLocalBufferList.push_back(mMuxerThread->mLocalBuffer[j].buffer);
-                        j++;
+                for(size_t j = 0; j < mMuxerThread->mMaxLocalBufferNum; ){
+                    int tmp = mMuxerThread->allocateOne(w,h,\
+                            1,&(mMuxerThread->mLocalBuffer[j]),mMuxerThread->mNativeBuffer[j]);
+                    if(tmp < 0){
+                        HAL_LOGE("request one buf failed.");
+                        continue;
                     }
+                    mMuxerThread->mLocalBufferList.push_back(mMuxerThread->mLocalBuffer[j].buffer);
+                    j++;
                 }
+            }
             mLastWidth = w;
             mLastHeight = h;
             mVideoStreamsNum = i;
             }
         mAuxStreams[i] = *newStream;
         pAuxStreams[i] = &mAuxStreams[i];
-
-        }
+    }
     mIsRecording = is_recording;
     if(!is_recording){
+
         if(mMuxerThread->isRunning()){
             mMuxerThread->requestExit();
             mNotifyListAux.clear();
@@ -1387,6 +1398,10 @@ int SprdCamera3Muxer::configureStreams(const struct camera3_device *device,camer
             mNotifyListMain.clear();
             mUnmatchedFrameListMain.clear();
             mUnmatchedFrameListAux.clear();
+        }
+        if(streamNum == 2){
+            (stream_list->streams[1]->max_buffers) = 1;
+            stream_list->num_streams = 1;
         }
         SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
         rc = hwiMain->configure_streams(m_pPhyCamera[CAM_TYPE_MAIN].dev,stream_list);
@@ -1408,15 +1423,20 @@ int SprdCamera3Muxer::configureStreams(const struct camera3_device *device,camer
         HAL_LOGE("failed. configure main streams!!");
         return rc;
     }
-    videoStream->max_buffers += MAX_UNMATCHED_QUEUE_SIZE;
 
     rc = hwiAux->configure_streams(m_pPhyCamera[CAM_TYPE_AUX].dev,&config);
     if(rc < 0){
         HAL_LOGE("failed. configure aux streams!!");
         return rc;
     }
-   mMuxerThread->initGpuData(w,h,newStream->rotation);
-   mMuxerThread->run(NULL);
+    videoStream->max_buffers += MAX_UNMATCHED_QUEUE_SIZE;
+    if(streamNum == 3){
+        stream_list->num_streams = 3;
+        (stream_list->streams)[1] = pMainStreams[1];
+        (stream_list->streams)[2] = pMainStreams[2];
+    }
+    mMuxerThread->initGpuData(w,h,newStream->rotation);
+    mMuxerThread->run(NULL);
     HAL_LOGV("X");
 
     return rc;
@@ -1501,7 +1521,6 @@ int SprdCamera3Muxer::processCaptureRequest(const struct camera3_device *device,
     camera3_capture_request_t req_main;
     camera3_capture_request_t req_aux;
     camera3_stream_t *new_stream = NULL;
-    camera3_stream_t *video_stream = NULL;
     camera3_stream_buffer_t* out_streams_main = NULL;
     camera3_stream_buffer_t* out_streams_aux = NULL;
     int save_buffer_size = 0;
@@ -1543,7 +1562,6 @@ int SprdCamera3Muxer::processCaptureRequest(const struct camera3_device *device,
         out_streams_main[i] = req->output_buffers[i];
         new_stream = (req->output_buffers[i]).stream;
         if(getStreamType(new_stream) == VIDEO_STREAM) {
-            video_stream = new_stream;
             out_streams_main[i].buffer = popRequestList(mMuxerThread->mLocalBufferList);
             if(NULL == out_streams_main[i].buffer){
                 HAL_LOGE("failed, LocalBufferList is empty!");
@@ -1612,7 +1630,7 @@ int SprdCamera3Muxer::processCaptureRequest(const struct camera3_device *device,
         goto req_fail;
 
     }
-	saveVideoRequest(req);
+    saveVideoRequest(req);
     HAL_LOGE("rc, d%d", rc);
 
 req_fail:
@@ -2013,4 +2031,3 @@ hwi_video_frame_buffer_info_t* SprdCamera3Muxer::pushToUnmatchedQueue(hwi_video_
 }
 
 };
-
