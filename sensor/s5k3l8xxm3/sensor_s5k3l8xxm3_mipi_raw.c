@@ -817,6 +817,80 @@ static uint32_t s5k3l8xxm3_init_mode_fps_info(SENSOR_HW_HANDLE handle)
 	return rtn;
 }
 
+
+static const struct pd_pos_info s5k3l8xxm3_pd_pos_r[] = {
+	{ 28, 35 },
+	{ 44, 39 },
+	{ 64, 39 },
+	{ 80, 35 },
+	{ 32, 47 },
+	{ 48, 51 },
+	{ 60, 51 },
+	{ 76, 47 },
+	{ 32, 71 },
+	{ 48, 67 },
+	{ 60, 67 },
+	{ 76, 71 },
+	{ 28, 83 },
+	{ 44, 79 },
+	{ 64, 79 },
+	{ 80, 83 },
+};
+
+static const struct pd_pos_info s5k3l8xxm3_pd_pos_l[] = {
+	{ 28, 31 },
+	{ 44, 35 },
+	{ 64, 35 },
+	{ 80, 31 },
+	{ 32, 51 },
+	{ 48, 55 },
+	{ 60, 55 },
+	{ 76, 51 },
+	{ 32, 67 },
+	{ 48, 63 },
+	{ 60, 63 },
+	{ 76, 67 },
+	{ 28, 87 },
+	{ 44, 83 },
+	{ 64, 83 },
+	{ 80, 87 },
+};
+
+static uint32_t s5k3l8xxm3_get_pdaf_info(SENSOR_HW_HANDLE handle, uint32_t *param)
+{
+	uint32_t rtn = SENSOR_SUCCESS;
+	struct sensor_pdaf_info *pdaf_info = NULL;
+	cmr_u16 pd_pos_r_size = 0;
+	cmr_u16 pd_pos_l_size = 0;
+
+	/*TODO*/
+	if (param == NULL) {
+		SENSOR_PRINT_ERR("null input");
+		return -1;
+	}
+	pdaf_info = (struct sensor_pdaf_info *)param;
+	pd_pos_r_size = NUMBER_OF_ARRAY(s5k3l8xxm3_pd_pos_r);
+	pd_pos_l_size = NUMBER_OF_ARRAY(s5k3l8xxm3_pd_pos_l);
+	if (pd_pos_r_size != pd_pos_l_size) {
+		SENSOR_PRINT_ERR("s5k3l8xxm3_pd_pos_r size not match s5k3l8xxm3_pd_pos_l");
+		return -1;
+	}
+
+	pdaf_info->pd_offset_x = 24;
+	pdaf_info->pd_offset_y = 24;
+	pdaf_info->pd_pitch_x = 64;
+	pdaf_info->pd_pitch_y = 64;
+	pdaf_info->pd_density_x = 16;
+	pdaf_info->pd_density_y = 16;
+	pdaf_info->pd_block_num_x = 65;
+	pdaf_info->pd_block_num_y = 48;
+	pdaf_info->pd_pos_size = pd_pos_r_size;
+	pdaf_info->pd_pos_r = (struct pd_pos_info *)s5k3l8xxm3_pd_pos_r;
+	pdaf_info->pd_pos_l = (struct pd_pos_info *)s5k3l8xxm3_pd_pos_l;
+
+	return rtn;
+}
+
 static uint32_t s5k3l8xxm3_get_static_info(SENSOR_HW_HANDLE handle, uint32_t *param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
@@ -943,6 +1017,9 @@ static unsigned long s5k3l8xxm3_access_val(SENSOR_HW_HANDLE handle,unsigned long
 			break;
 		case SENSOR_VAL_TYPE_GET_FPS_INFO:
 			ret = s5k3l8xxm3_get_fps_info(handle, param_ptr->pval);
+			break;
+		case SENSOR_VAL_TYPE_GET_PDAF_INFO:
+			ret = s5k3l8xxm3_get_pdaf_info(handle, param_ptr->pval);
 			break;
 		default:
 			break;
