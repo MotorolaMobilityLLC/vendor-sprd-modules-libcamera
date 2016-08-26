@@ -341,7 +341,8 @@ static cmr_int aealtek_set_min_frame_length(struct aealtek_cxt *cxt_ptr, cmr_int
 		goto exit;
 	}
 	if (0 != max_fps && 0 != line_time) {
-		cxt_ptr->cur_status.min_frame_length = SENSOR_EXP_US_BASE / max_fps / line_time;
+		cxt_ptr->cur_status.min_frame_length =
+				cxt_ptr->nxt_status.ui_param.work_info.resolution.frame_line;
 	} else {
 		cxt_ptr->cur_status.min_frame_length = 0;
 	}
