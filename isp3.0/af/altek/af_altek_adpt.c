@@ -49,6 +49,8 @@
 /* Max AE mean value */
 #define DEFAULT_MAX_AE_MEAN 250
 
+#define DEFAULT_TUNING_BIN_SIZE 500
+
 struct af_altek_lib_ops {
 	void *(*init)(void *af_out_obj);
 	cmr_u8 (*deinit)(void *alAFLib_runtim_obj, void *alAFLib_out_obj);
@@ -65,11 +67,11 @@ struct af_altek_lib_ops {
 struct af_caf_trigger_ops {
 	cmr_s32 (*trigger_init)(struct aft_tuning_block_param *init_param,
 				aft_proc_handle_t *handle);
-	cmr_s32 (*trigger_deinit)(aft_proc_handle_t handle);
-	cmr_s32 (*trigger_calc)(aft_proc_handle_t handle,
+	cmr_s32 (*trigger_deinit)(aft_proc_handle_t *handle);
+	cmr_s32 (*trigger_calc)(aft_proc_handle_t *handle,
 				struct aft_proc_calc_param *alg_calc_in,
 				struct aft_proc_result *alg_calc_result);
-	cmr_s32 (*trigger_ioctrl)(aft_proc_handle_t handle,
+	cmr_s32 (*trigger_ioctrl)(aft_proc_handle_t *handle,
 				enum aft_cmd cmd,
 				void *param0,
 				void *param1);
@@ -143,7 +145,8 @@ struct af_altek_context {
 	cmr_handle caller_handle;
 	cmr_handle altek_lib_handle;
 	cmr_handle caf_lib_handle;
-	aft_proc_handle_t caf_trigger_handle;
+	aft_proc_handle_t *caf_trigger_handle;
+	aft_proc_handle_t aft_lib_handle;
 	struct af_ctrl_motor_pos motor_info;
 	cmr_int ae_awb_lock_cnt;
 	struct af_altek_lib_api lib_api;
@@ -179,12 +182,8 @@ static cmr_int afaltek_adpt_config_roi(cmr_handle adpt_handle,
 				       struct allib_af_input_roi_info_t *roi_out);
 static cmr_int afaltek_adpt_pre_start(cmr_handle adpt_handle,
 				      struct allib_af_input_roi_info_t *roi);
-static cmr_int afaltek_adpt_caf_stop(cmr_handle adpt_handle);
-static cmr_int afaltek_adpt_reset_caf(cmr_handle adpt_handle);
-static cmr_u8 afaltek_adpt_set_vcm_pos(cmr_handle adpt_handle, struct af_ctrl_motor_pos *pos_info);
+static cmr_int afaltek_adpt_set_vcm_pos(cmr_handle adpt_handle, struct af_ctrl_motor_pos *pos_info);
 static cmr_int afaltek_adpt_set_caf_fv_cfg(cmr_handle adpt_handle);
-static cmr_int afaltek_adpt_caf_init(cmr_handle adpt_handle);
-static cmr_int afaltek_adpt_caf_deinit(cmr_handle adpt_handle);
 static cmr_int afaltek_adpt_set_special_event(cmr_handle adpt_handle, void *in);
 static cmr_int afaltek_adpt_get_hw_config(struct isp3a_af_hw_cfg *out);
 
@@ -593,6 +592,35 @@ static cmr_int afaltek_adpt_stop(cmr_handle adpt_handle)
 	if ((AF_ADPT_STARTED <= cxt->af_cur_status) && (AF_ADPT_DONE > cxt->af_cur_status))
 		ret = afaltek_adpt_force_stop(cxt);
 
+	return ret;
+}
+
+static cmr_int afaltek_adpt_caf_stop(cmr_handle adpt_handle)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+
+#ifdef FEATRUE_SPRD_CAF_TRIGGER
+	ret = cxt->caf_ops.trigger_ioctrl(cxt->caf_trigger_handle,
+				    AFT_CMD_SET_CAF_STOP, NULL, NULL);
+#endif
+	return ret;
+}
+
+static cmr_int afaltek_adpt_reset_caf(cmr_handle adpt_handle)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+#ifdef FEATRUE_SPRD_CAF_TRIGGER
+	ret = cxt->caf_ops.trigger_ioctrl(cxt->caf_trigger_handle,
+				    AFT_CMD_SET_CAF_RESET, NULL, NULL);
+#else
+	struct allib_af_input_set_param_t p = { 0x00 };
+
+	p.type = alAFLIB_SET_PARAM_RESET_CAF;
+
+	ret = afaltek_adpt_set_parameters(cxt, &p);
+#endif
 	return ret;
 }
 
@@ -1535,35 +1563,6 @@ static cmr_int afaltek_adpt_lock_caf(cmr_handle adpt_handle, void *in)
 	return ret;
 }
 
-static cmr_int afaltek_adpt_caf_stop(cmr_handle adpt_handle)
-{
-	cmr_int ret = -ISP_ERROR;
-	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-
-#ifdef FEATRUE_SPRD_CAF_TRIGGER
-	ret = cxt->caf_ops.trigger_ioctrl(cxt->caf_trigger_handle,
-				    AFT_CMD_SET_CAF_STOP, NULL, NULL);
-#endif
-	return ret;
-}
-
-static cmr_int afaltek_adpt_reset_caf(cmr_handle adpt_handle)
-{
-	cmr_int ret = -ISP_ERROR;
-	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-#ifdef FEATRUE_SPRD_CAF_TRIGGER
-	ret = cxt->caf_ops.trigger_ioctrl(cxt->caf_trigger_handle,
-				    AFT_CMD_SET_CAF_RESET, NULL, NULL);
-#else
-	struct allib_af_input_set_param_t p = { 0x00 };
-
-	p.type = alAFLIB_SET_PARAM_RESET_CAF;
-
-	ret = afaltek_adpt_set_parameters(cxt, &p);
-#endif
-	return ret;
-}
-
 static cmr_int afaltek_adpt_hybird_af_enable(cmr_handle adpt_handle, void *in)
 {
 	cmr_int ret = -ISP_ERROR;
@@ -1734,7 +1733,7 @@ exit:
 	return ret;
 }
 
-static cmr_u8 afaltek_adpt_set_vcm_pos(cmr_handle adpt_handle, struct af_ctrl_motor_pos *pos_info)
+static cmr_int afaltek_adpt_set_vcm_pos(cmr_handle adpt_handle, struct af_ctrl_motor_pos *pos_info)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
@@ -1779,7 +1778,6 @@ static cmr_u8 afaltek_adpt_set_pos(cmr_handle adpt_handle, cmr_s16 dac, cmr_u8 s
 
 	return ret;
 }
-
 static cmr_u8 afaltek_adpt_get_timestamp(cmr_handle adpt_handle, cmr_u32 *sec, cmr_u32 *usec)
 {
 	cmr_int ret = -ISP_ERROR;
@@ -1792,6 +1790,38 @@ static cmr_u8 afaltek_adpt_get_timestamp(cmr_handle adpt_handle, cmr_u32 *sec, c
 		ret = -ISP_CALLBACK_NULL;
 	}
 
+	return ret;
+}
+
+static cmr_u8 afaltek_adpt_get_sys_time(cmr_handle adpt_handle, cmr_u64 *time)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+	cmr_u32 sec = 0;
+	cmr_u32 usec = 0;
+
+	if (cxt->cb_ops.get_system_time) {
+		ret = cxt->cb_ops.get_system_time(cxt->caller_handle, &sec, &usec);
+		*time = sec * SEC_TO_US + usec;
+	} else {
+		ISP_LOGE("cb is null");
+		ret = -ISP_CALLBACK_NULL;
+	}
+
+	return ret;
+}
+
+static cmr_u8 afaltek_adpt_aft_log(cmr_handle adpt_handle, cmr_u32 *is_save)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+	char value[PROPERTY_VALUE_MAX] = { 0x0 };
+
+	property_get("persist.sys.isp.af.mlog", value, "no"); /*save/no*/
+	if (!strcmp(value, "save"))
+		*is_save = 1;
+
+	ISP_LOGV("is_save %d", *is_save);
 	return ret;
 }
 
@@ -2477,14 +2507,18 @@ static cmr_int afaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 	aft_param.data = in_p->ctrl_in->caf_tuning_info.tuning_file;
 	aft_param.data_len = in_p->ctrl_in->caf_tuning_info.size;
 	if (NULL == aft_param.data || 0 == aft_param.data_len) {
-		cmr_u8 tmp[300];
+		cmr_u8 tmp[DEFAULT_TUNING_BIN_SIZE];
 
 		ISP_LOGE("caf tuning parater error");
-		memset(tmp, -1, 300);
+		memset(tmp, -1, DEFAULT_TUNING_BIN_SIZE);
 		aft_param.data = tmp;
-		aft_param.data_len = 300;
+		aft_param.data_len = DEFAULT_TUNING_BIN_SIZE;
 	}
-	ret = cxt->caf_ops.trigger_init(&aft_param, &cxt->caf_trigger_handle);
+	cxt->caf_trigger_handle = &cxt->aft_lib_handle;
+	cxt->aft_lib_handle.aft_ops.aft_cookie = (void*)cxt;
+	cxt->aft_lib_handle.aft_ops.get_sys_time = afaltek_adpt_get_sys_time;
+	cxt->aft_lib_handle.aft_ops.is_aft_mlog = afaltek_adpt_aft_log;
+	ret = cxt->caf_ops.trigger_init(&aft_param, &cxt->aft_lib_handle);
 	if (ret) {
 		ISP_LOGE("failed to init caf library");
 		goto error_caf_init;

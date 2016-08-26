@@ -39,8 +39,6 @@ extern "C"
 #define MAX_AF_FILTER_CNT 10
 #define MAX_AF_WIN 32
 
-typedef void* aft_proc_handle_t;
-
 enum aft_posture_type {
 	AFT_POSTURE_ACCELEROMETER,
 	AFT_POSTURE_MAGNETIC,
@@ -83,6 +81,15 @@ enum aft_cmd {
 	AFT_CMD_GET_BASE			= 0x2000,
 	AFT_CMD_GET_FV_STATS_CFG	= 0X2001,
 	AFT_CMD_GET_AE_SKIP_INFO	= 0X2002
+};
+
+enum aft_log_level {
+	AFT_LOG_VERBOSE = 0,
+	AFT_LOG_DEBUG,
+	AFT_LOG_INFO,
+	AFT_LOG_WARN,
+	AFT_LOG_ERROR,
+	AFT_LOG_MAX
 };
 
 struct aft_tuning_block_param {
@@ -194,16 +201,37 @@ struct aft_ae_skip_info
 	uint32_t ae_select_support;
 	uint32_t ae_skip_line;
 };
+
+typedef struct aft_ctrl_ops
+{
+	cmr_u8 (*get_sys_time)(void *cookie, cmr_u64* p_time);
+	cmr_u8 (*binfile_is_exist)(void *cookie, cmr_u8* is_exist);
+	cmr_u8 (*is_aft_mlog)(void *cookie, cmr_u32 *is_mlog);
+	cmr_u8 (*aft_log)(cmr_u32 log_level, const char* format, ...);
+
+	void *aft_cookie;
+} aft_ctrl_ops_t;
+
+typedef void* aft_sub_handle_t;
+
+typedef struct aft_context{
+	aft_sub_handle_t aft_sub_handle;
+	cmr_u16 tuning_param_len;
+	cmr_u32 af_mode;
+	struct aft_ae_info ae_info;
+	aft_ctrl_ops_t aft_ops;
+}aft_proc_handle_t;
+
 /*------------------------------------------------------------------------------*
 *					Data Prototype				*
 *-------------------------------------------------------------------------------*/
 
 signed int caf_trigger_init(struct aft_tuning_block_param *init_param, aft_proc_handle_t *handle);
-signed int caf_trigger_deinit(aft_proc_handle_t handle);
-signed int caf_trigger_calculation(aft_proc_handle_t handle,
+signed int caf_trigger_deinit(aft_proc_handle_t *handle);
+signed int caf_trigger_calculation(aft_proc_handle_t *handle,
 				struct aft_proc_calc_param *aft_calc_in,
 				struct aft_proc_result *aft_calc_result);
-signed int caf_trigger_ioctrl(aft_proc_handle_t handle, enum aft_cmd cmd, void *param0, void *param1);
+signed int caf_trigger_ioctrl(aft_proc_handle_t *handle, enum aft_cmd cmd, void *param0, void *param1);
 
 /*------------------------------------------------------------------------------*
 *					Compiler Flag				*
