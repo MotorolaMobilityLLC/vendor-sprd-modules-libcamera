@@ -950,9 +950,8 @@ static cmr_int afaltek_adpt_update_sof(cmr_handle adpt_handle, void *in)
 	struct allib_af_input_set_param_t p;
 
 	ret = afaltek_adpt_vcm_tuning_param(adpt_handle);
-	if (ret) {
-		ISP_LOGE("set vcm tuning position error");
-	}
+	if (ret)
+		ISP_LOGE("failed to set vcm tuning position");
 
 	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_UPDATE_SOF;
@@ -1156,7 +1155,6 @@ static cmr_int afaltek_adpt_af_cancel(cmr_handle adpt_handle, cmr_int success)
 	return ret;
 }
 
-
 static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 					struct aft_proc_calc_param *aft_in)
 {
@@ -1206,6 +1204,7 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 	roi.win[0].end_y = 5 * cxt->sensor_info.crop_info.height / 8;
 
 	if (aft_in->ae_info.is_stable && cxt->ae_info.ae_stable_retrig_flg) {
+		ISP_LOGI("af retrigger");
 		/* notify oem to show box */
 		ret = afaltek_adpt_start_notify(adpt_handle);
 		if (ret)
@@ -1218,7 +1217,6 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 		if (ret)
 			ISP_LOGE("failed to start af");
 		cxt->ae_info.ae_stable_retrig_flg =  0;
-
 	} else if ((!cxt->aft_proc_result.is_caf_trig) && aft_out.is_caf_trig) {
 		/* notify oem to show box */
 		ret = afaltek_adpt_start_notify(adpt_handle);
@@ -2156,7 +2154,7 @@ static cmr_int afaltek_adpt_outctrl(cmr_handle adpt_handle, cmr_int cmd,
 	cmr_int ret = -ISP_ERROR;
 
 	UNUSED(in);
-	ISP_LOGI("cmd = %ld", cmd);
+	ISP_LOGV("cmd = %ld", cmd);
 
 	switch (cmd) {
 	case AF_CTRL_CMD_GET_AF_MODE:
@@ -2463,10 +2461,10 @@ static cmr_int afaltek_adpt_proc_report_status(cmr_handle adpt_handle,
 	if (alAFLib_STATUS_WARNING == report->focus_status.t_status ||
 		alAFLib_STATUS_AF_ABORT == report->focus_status.t_status) {
 		ret = afaltek_adpt_af_done(cxt, 0);
-		ISP_LOGI("t_status unfouced= %d", report->focus_status.t_status);
+		ISP_LOGI("t_status unfocused = %d", report->focus_status.t_status);
 	} else if (alAFLib_STATUS_FOCUSED == report->focus_status.t_status) {
 		ret = afaltek_adpt_af_done(cxt, 1);
-		ISP_LOGI("t_status fouced = %d", report->focus_status.t_status);
+		ISP_LOGI("t_status focused ok = %d", report->focus_status.t_status);
 	} else if (alAFLib_STATUS_FORCE_ABORT == report->focus_status.t_status) {
 		cxt->ae_info.ae_stable_retrig_flg = 1;
 		ISP_LOGI("t_status force abort = %d", report->focus_status.t_status);
@@ -2533,7 +2531,9 @@ static cmr_int afaltek_adpt_proc_out_report(cmr_handle adpt_handle,
 	cmr_int ret = ISP_SUCCESS;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 
-	ISP_LOGI("report->type = 0x%x", report->type);
+	if (alAFLIB_OUTPUT_DEBUG_INFO != report->type)
+		ISP_LOGI("report->type = 0x%x", report->type);
+
 	if (alAFLIB_OUTPUT_STATUS & report->type) {
 		ret = afaltek_adpt_proc_report_status(cxt, report);
 	}
@@ -2562,8 +2562,8 @@ static cmr_int afaltek_adpt_process(cmr_handle adpt_handle, void *in, void *out)
 	struct af_ctrl_process_out *proc_out = (struct af_ctrl_process_out *)out;
 	struct allib_af_hw_stats_t af_stats;
 	struct isp_drv_meta_af_t *p_meta_data_af;
-	uint32 total_blocks;
-	uint32 focus_value;
+	cmr_u32 total_blocks;
+	cmr_u32 focus_value;
 	struct lib_caf_stats_t caf_stat;
 	struct aft_proc_calc_param aft_in;
 	struct alhw3a_af_cfginfo_t af_cfg;
@@ -2583,6 +2583,7 @@ static cmr_int afaltek_adpt_process(cmr_handle adpt_handle, void *in, void *out)
 	}
 	bzero(&caf_stat, sizeof(caf_stat));
 	if (CAF_CONFIG_ID == af_stats.af_token_id) {
+		ISP_LOGI("config in camera_id = %d", cxt->camera_id);
 		cmr_bzero(&af_cfg, sizeof(af_cfg));
 		if (cxt->af_caf_cxt.inited) {
 			caf_fv = &cxt->af_caf_cxt.caf_fv_tune;
@@ -2607,14 +2608,13 @@ static cmr_int afaltek_adpt_process(cmr_handle adpt_handle, void *in, void *out)
 			ISP_LOGE("get caf_stat error 0x%lx", ret);
 		} else {
 			ret = afaltek_adpt_trans_data_to_caf(cxt, &caf_stat, AFT_DATA_CAF);
-			if (ret) {
+			if (ret)
 				ISP_LOGE("caf trans fv err %ld", ret);
-			}
 		}
 	} else {
 		if (cxt->stats_config.need_update_token) {
-			ISP_LOGI("af_token_id = %d, token_id = %d",
-					af_stats.af_token_id, cxt->stats_config.token_id);
+			ISP_LOGI("camera_id = %d, af_token_id = %d, token_id = %d",
+				 cxt->camera_id, af_stats.af_token_id, cxt->stats_config.token_id);
 			if (af_stats.af_token_id == cxt->stats_config.token_id) {
 				struct allib_af_input_special_event event;
 

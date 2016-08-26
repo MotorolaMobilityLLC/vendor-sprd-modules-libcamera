@@ -662,7 +662,7 @@ cmr_int isp3a_match_data_ctrl(cmr_handle handler, struct match_data_param *in_pt
 		ISP_LOGE("failed to isp_dev_access_set_sensor_match_data");
 	}
 exit:
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGV("done %ld", ret);
 	return ret;
 }
 #endif
@@ -3288,7 +3288,10 @@ cmr_int isp3a_handle_stats(cmr_handle isp_3a_handle, void *data)
 		goto exit;
 	}
 	time_end = systemTime(CLOCK_MONOTONIC);
-	ISP_LOGI("test stats thr time_delta = %d us stats_cnt = 0x%lx", (cmr_s32)(time_end - statis_info->timestamp) / 1000, statis_info->statis_cnt);
+	ISP_LOGI("test stats thr time_delta = %d us stats_cnt = 0x%lx camera id = %d",
+		 (cmr_s32)(time_end - statis_info->timestamp) / 1000,
+		 statis_info->statis_cnt,
+		 cxt->camera_id);
 
 	/* free stats buf to isp drv */
 	statis_buf.buf_size = statis_info->statis_frame.buf_size;
@@ -3345,7 +3348,7 @@ exit:
 			ISP_LOGE("failed to set statis buf");
 		}
 	}
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGV("done %ld", ret);
 	return ret;
 }
 
@@ -3440,7 +3443,7 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 		ISP_LOGE("failed to cfg sof info");
 	}
 	time_end = systemTime(CLOCK_MONOTONIC);
-	ISP_LOGI("test sof msg cfg time_delta = %d us", (cmr_s32)(time_end - time_start) / 1000);
+	ISP_LOGI("test sof msg cfg time_delta = %d us camera id %d", (cmr_s32)(time_end - time_start) / 1000, cxt->camera_id);
 
 	time_start = time_end;
 	ret = isp_dev_access_get_exif_debug_info(cxt->dev_access_handle, exif_ptr);
@@ -3449,7 +3452,7 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 			cxt->irp_cxt.contrast, cxt->irp_cxt.saturation, cxt->irp_cxt.sharpness, cxt->irp_cxt.effect,
 			cxt->irp_cxt.mode,cxt->irp_cxt.quality, cxt->irp_cxt.sensor_id, cxt->irp_cxt.s_width, cxt->irp_cxt.s_height);
 	time_end = systemTime(CLOCK_MONOTONIC);
-	ISP_LOGI("test sof msg exif time_delta = %d us", (cmr_s32)(time_end - time_start) / 1000);
+	ISP_LOGI("test sof msg exif time_delta = %d us camera id %d", (cmr_s32)(time_end - time_start) / 1000, cxt->camera_id);
 	return ret;
 }
 

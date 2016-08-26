@@ -68,7 +68,7 @@ static struct isp_fw_group _group = {0 , {}};
 
 struct isp_file {
 	int                        fd;
-	int                       camera_id;
+	int                        camera_id;
 	cmr_handle                 evt_3a_handle;
 	cmr_handle                 grab_handle;
 	pthread_mutex_t            cb_mutex;
@@ -502,15 +502,15 @@ static void* isp_dev_thread_proc(void *data)
 						statis_info.statis_frame.time_stamp.usec = irq_info.time_stamp.usec;
 						statis_info.timestamp = systemTime(CLOCK_MONOTONIC);
 						statis_info.statis_cnt++;
-						ISP_LOGI("got one frame statis vaddr 0x%lx paddr 0x%lx buf_size 0x%lx stats_cnt 0x%ld",
-							 irq_info.yaddr_vir, irq_info.yaddr, irq_info.length, statis_info.statis_cnt);
+						ISP_LOGI("got one frame statis sensor id %d vaddr 0x%lx paddr 0x%lx buf_size 0x%lx stats_cnt 0x%lx",
+							 file->camera_id, irq_info.yaddr_vir, irq_info.yaddr, irq_info.length, statis_info.statis_cnt);
 						pthread_mutex_lock(&file->cb_mutex);
 						if (file->isp_event_cb) {
 							(*file->isp_event_cb)(ISP_DRV_STATISTICE, &statis_info, sizeof(statis_info), (void *)file->evt_3a_handle);
 						}
 						pthread_mutex_unlock(&file->cb_mutex);
 					} else if (irq_info.irq_type == ISP_IRQ_3A_SOF) {
-						ISP_LOGI("got one sof");
+						ISP_LOGI("got one sof sensor id %d", file->camera_id);
 						irq_node.irq_val0 = irq_info.irq_id;
 						irq_node.sof_idx = irq_info.frm_index;
 						irq_node.ret_val = 0;

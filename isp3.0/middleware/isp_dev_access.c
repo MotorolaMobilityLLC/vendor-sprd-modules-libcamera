@@ -1335,7 +1335,7 @@ cmr_int isp_dev_access_get_exif_debug_info(cmr_handle isp_dev_handle, struct deb
 
 	ret = isp_dev_get_iq_param(cxt->isp_driver_handle, exif_info, NULL);
 
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGV("done %ld", ret);
 	return ret;
 }
 

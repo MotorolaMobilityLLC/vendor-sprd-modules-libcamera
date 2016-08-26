@@ -388,7 +388,7 @@ cmr_int afl_ctrl_process(cmr_handle handle, struct afl_ctrl_proc_in *in_ptr, str
 		goto exit;
 	}
 exit:
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGV("done %ld", ret);
 	return ret;
 }
 
