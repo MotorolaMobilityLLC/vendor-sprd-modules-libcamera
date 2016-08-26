@@ -2003,9 +2003,10 @@ cmr_int isp_dev_get_iq_param(isp_handle handle, struct debug_info1 *info1, struc
 
 cmr_int isp_dev_set_init_param(isp_handle *handle, struct isp_dev_init_param *init_param_ptr)
 {
-	cmr_int                        ret = 0;
-	struct isp_dev_init_param      init_param;
-	struct isp_file                *file = NULL;
+	cmr_int                       ret = 0;
+	struct isp_dev_init_param     init_param;
+	struct isp_file               *file = NULL;
+	char                          value[PROPERTY_VALUE_MAX];
 
 	if (!handle) {
 		ISP_LOGE("handle is null error.");
@@ -2035,6 +2036,12 @@ cmr_int isp_dev_set_init_param(isp_handle *handle, struct isp_dev_init_param *in
 	init_param.camera_id = init_param_ptr->camera_id;
 	init_param.width = init_param_ptr->width;
 	init_param.height = init_param_ptr->height;
+	property_get("persist.sys.camera.raw.mode", value, "jpeg");
+	if (!strcmp(value, "raw")) {
+		init_param.raw_mode = 1;
+	} else {
+		init_param.raw_mode = 0;
+	}
 	ret = ioctl(file->fd, ISP_IO_SET_INIT_PARAM, &init_param);
 	if (ret) {
 		ISP_LOGE("isp set initial param error.");
