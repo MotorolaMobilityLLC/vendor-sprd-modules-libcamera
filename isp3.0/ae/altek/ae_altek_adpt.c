@@ -2182,6 +2182,7 @@ static cmr_int aealtek_get_lib_expousre(struct aealtek_cxt *cxt_ptr, enum aealte
 		exposure_ptr->preview.gain = in_param.para.ae_get_expo_param.cur_expo.ad_gain;
 		exposure_ptr->preview.exp_line = in_param.para.ae_get_expo_param.cur_expo.exp_linecount;
 		exposure_ptr->preview.exp_time = in_param.para.ae_get_expo_param.cur_expo.exp_time;
+		exposure_ptr->preview.iso = in_param.para.ae_get_expo_param.cur_expo.ISO;
 		ISP_LOGI("preview ad_gain=%d, exp_line=%d, exp_time=%d",
 				exposure_ptr->preview.gain,
 				exposure_ptr->preview.exp_line,
@@ -2191,6 +2192,7 @@ static cmr_int aealtek_get_lib_expousre(struct aealtek_cxt *cxt_ptr, enum aealte
 		exposure_ptr->snapshot.gain = in_param.para.ae_get_expo_param.still_expo.ad_gain;
 		exposure_ptr->snapshot.exp_line = in_param.para.ae_get_expo_param.still_expo.exp_linecount;
 		exposure_ptr->snapshot.exp_time = in_param.para.ae_get_expo_param.still_expo.exp_time;
+		exposure_ptr->snapshot.iso = in_param.para.ae_get_expo_param.still_expo.ISO;
 		ISP_LOGI("snapshot ad_gain=%d, exp_line=%d, exp_time=%d",
 				exposure_ptr->snapshot.gain,
 				exposure_ptr->snapshot.exp_line,
@@ -2203,6 +2205,7 @@ static cmr_int aealtek_get_lib_expousre(struct aealtek_cxt *cxt_ptr, enum aealte
 			exposure_ptr->bracket_exp[i].gain = in_param.para.ae_get_expo_param.bracket_expo[i].ad_gain;
 			exposure_ptr->bracket_exp[i].exp_line = in_param.para.ae_get_expo_param.bracket_expo[i].exp_linecount;
 			exposure_ptr->bracket_exp[i].exp_time = in_param.para.ae_get_expo_param.bracket_expo[i].exp_time;
+			exposure_ptr->bracket_exp[i].iso = in_param.para.ae_get_expo_param.bracket_expo[i].ISO;
 			exposure_ptr->bracket_exp[i].size_index = cxt_ptr->nxt_status.ui_param.work_info.resolution.sensor_size_index;
 		}
 		break;
