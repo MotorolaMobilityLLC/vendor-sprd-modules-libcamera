@@ -954,6 +954,10 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 		awb_input.calibration_gain_slv.r = cxt->dual_otp->slave_isp_awb_info.gain_r;
 		awb_input.calibration_gain_slv.g = cxt->dual_otp->slave_isp_awb_info.gain_g;
 		awb_input.calibration_gain_slv.b = cxt->dual_otp->slave_isp_awb_info.gain_b;
+	} else {
+		awb_input.calibration_gain_slv.r = input_ptr->bin_info.otp_data_addr->gain_r;
+		awb_input.calibration_gain_slv.g = input_ptr->bin_info.otp_data_addr->gain_g;
+		awb_input.calibration_gain_slv.b = input_ptr->bin_info.otp_data_addr->gain_b;
 	}
 #endif
 	awb_input.camera_id = input_ptr->camera_id;
@@ -1045,6 +1049,10 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 		ae_input.otp_data_slv.r = cxt->dual_otp->slave_isp_awb_info.gain_r;
 		ae_input.otp_data_slv.g = cxt->dual_otp->slave_isp_awb_info.gain_g;
 		ae_input.otp_data_slv.b = cxt->dual_otp->slave_isp_awb_info.gain_b;
+	} else {
+		ae_input.otp_data_slv.r = input_ptr->bin_info.otp_data_addr->gain_r;
+		ae_input.otp_data_slv.g = input_ptr->bin_info.otp_data_addr->gain_g;
+		ae_input.otp_data_slv.b = input_ptr->bin_info.otp_data_addr->gain_b;
 	}
 #endif
 

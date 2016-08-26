@@ -1264,7 +1264,7 @@ static cmr_int aealtek_pre_to_sensor(struct aealtek_cxt *cxt_ptr, cmr_int is_syn
 		goto exit;
 	}
 #ifdef CONFIG_CAMERA_DUAL_SYNC
-	if (cxt_ptr->is_refocus && !is_sync_call && (2 == cxt_ptr->camera_id || 3 == cxt_ptr->camera_id)) {
+	if (cxt_ptr->is_refocus  && (2 == cxt_ptr->camera_id || 3 == cxt_ptr->camera_id)) {
 		ISP_LOGI("return when in slave sensor");
 		return ISP_SUCCESS;
 	}
