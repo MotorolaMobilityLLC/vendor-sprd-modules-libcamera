@@ -502,7 +502,7 @@ static void* isp_dev_thread_proc(void *data)
 						statis_info.statis_frame.time_stamp.usec = irq_info.time_stamp.usec;
 						statis_info.timestamp = systemTime(CLOCK_MONOTONIC);
 						statis_info.statis_cnt++;
-						ISP_LOGI("got one frame statis sensor id %d vaddr 0x%lx paddr 0x%lx buf_size 0x%lx stats_cnt 0x%lx",
+						ISP_LOGI("got one frame statis sensor id %d vaddr 0x%lx paddr 0x%lx buf_size 0x%lx stats_cnt %ld",
 							 file->camera_id, irq_info.yaddr_vir, irq_info.yaddr, irq_info.length, statis_info.statis_cnt);
 						pthread_mutex_lock(&file->cb_mutex);
 						if (file->isp_event_cb) {
@@ -510,7 +510,7 @@ static void* isp_dev_thread_proc(void *data)
 						}
 						pthread_mutex_unlock(&file->cb_mutex);
 					} else if (irq_info.irq_type == ISP_IRQ_3A_SOF) {
-						ISP_LOGI("got one sof sensor id %d", file->camera_id);
+						ISP_LOGI("got one sof sensor id %d frm index %d", file->camera_id, irq_info.frm_index);
 						irq_node.irq_val0 = irq_info.irq_id;
 						irq_node.sof_idx = irq_info.frm_index;
 						irq_node.ret_val = 0;

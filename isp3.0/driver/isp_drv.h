@@ -73,10 +73,10 @@ struct isp_statis_info {
 };
 
 struct isp_irq_node {
-	uint32_t		irq_val0;
-	uint32_t		sof_idx;
-	int32_t			ret_val;
-	struct sprd_isp_time	time_stamp;
+	uint32_t                     irq_val0;
+	uint32_t                     sof_idx;
+	int32_t                      ret_val;
+	struct sprd_isp_time         time_stamp;
 };
 
 /*ISP driver API */
