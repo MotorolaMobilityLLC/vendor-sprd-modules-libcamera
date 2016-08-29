@@ -45,6 +45,8 @@ enum af_ctrl_cmd_type {
 	AF_CTRL_CMD_SET_YIMG_INFO,
 	AF_CTRL_CMD_SET_LIVE_VIEW_SIZE,
 	AF_CTRL_CMD_SET_PRV_IMG_SIZE,
+	AF_CTRL_CMD_SET_PD_INFO,
+	AF_CTRL_CMD_SET_PD_ENABLE,
 	AF_CTRL_CMD_SET_MAX,
 
 	AF_CTRL_CMD_GET_BASE = AF_CTRL_CMD_SET_MAX,
@@ -167,8 +169,25 @@ struct af_ctrl_cb_ops_type {
 			      struct af_result_param *data);
 	cmr_int (*lock_ae_awb)(cmr_handle caller_handle, void *lock);
 	cmr_int (*cfg_af_stats)(cmr_handle caller_handle, void *data);
+	cmr_int (*cfg_pdaf_roi)(cmr_handle caller_handle, void *data);
+	cmr_int (*cfg_pdaf_enable)(cmr_handle caller_handle, void *data);
+	cmr_int (*cfg_pdaf_reset)(cmr_handle caller_handle);
 	cmr_int (*get_system_time)(cmr_handle caller_handler, cmr_u32 *sec_ptr,
 				   cmr_u32 *usec_ptr);
+};
+
+struct af_ctrl_time_stamp_t {
+	cmr_u32 time_stamp_sec;
+	cmr_u32 time_stamp_us;
+};
+
+struct af_ctrl_input_pd_info_t {
+	cmr_u16 token_id;
+	cmr_u32 frame_id;
+	cmr_u8 enable;
+	struct af_ctrl_time_stamp_t time_stamp;
+	void* extend_data_ptr;
+	cmr_u32 extend_data_size;
 };
 
 enum af_ctrl_lib_product_id {
@@ -240,6 +259,7 @@ struct af_ctrl_init_in {
 	cmr_u32 camera_id;
 	cmr_handle caller_handle;
 	cmr_u8 af_support;
+	cmr_u8 pdaf_support;
 	struct isp_lib_config af_lib_info;
 	struct af_ctrl_otp_info_t otp_info;
 	struct af_ctrl_tuning_file_t tuning_info;
