@@ -1030,20 +1030,24 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type, e
 			cmr_uint sn_mode = 0;
 			cmr_uint face_info_max_num = sizeof(face_area.face_info)/sizeof(struct isp_face_info);
 
-			//save face info in cmr cxt for other case.such as face beauty takepicture
-			face_area.frame_width = frame_param->width;
-			face_area.frame_height = frame_param->height;
-			face_area.face_num = frame_param->face_num;
-			CMR_LOGD("face_num %d, size:%dx%d", face_area.face_num,
-						face_area.frame_width, face_area.frame_height);
-
 			cxt->fd_face_area.frame_width = frame_param->width;
 			cxt->fd_face_area.frame_height = frame_param->height;
 			cxt->fd_face_area.face_num = frame_param->face_num;
 
+			//note:now we get the preview face crop.but ISP need sensor's crop.so we need recovery crop.
+			cmr_preview_get_prev_rect(cxt->prev_cxt.preview_handle, cxt->camera_id, &src_prev_rect);
+
+			cmr_sensor_get_mode(cxt->sn_cxt.sensor_handle, cxt->camera_id, &sn_mode);
+			sensor_mode_info = &cxt->sn_cxt.sensor_info.mode_info[sn_mode];
+			face_area.frame_width = sensor_mode_info->trim_width;
+			face_area.frame_height = sensor_mode_info->trim_height;
+			face_area.face_num = frame_param->face_num;
+			CMR_LOGD("face_num %d, size:%dx%d", face_area.face_num, face_area.frame_width, face_area.frame_height);
+
 			if(face_info_max_num > face_area.face_num) {
 				face_info_max_num = face_area.face_num;
 			}
+
 			for (i = 0; i < face_info_max_num; i++) {
 				sx = MIN(MIN(frame_param->face_info[i].sx, frame_param->face_info[i].srx),
 						MIN(frame_param->face_info[i].ex, frame_param->face_info[i].elx));
@@ -1065,23 +1069,14 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type, e
 				cxt->fd_face_area.face_info[i].ex = ex;
 				cxt->fd_face_area.face_info[i].ey = ey;
 
-				//note:now we get the preview face crop.but ISP need sensor's crop.so we need recovery crop.
-				cmr_preview_get_prev_rect(cxt->prev_cxt.preview_handle, cxt->camera_id, &src_prev_rect);
-				//CMR_LOGI("%d %d %d %d", src_prev_rect.start_x, src_prev_rect.start_y, src_prev_rect.width, src_prev_rect.height);
 
-				cmr_sensor_get_mode(cxt->sn_cxt.sensor_handle, cxt->camera_id, &sn_mode);
-				sensor_mode_info = &cxt->sn_cxt.sensor_info.mode_info[sn_mode];
-
-				face_area.face_info[i].sx = 1.0*sx*src_prev_rect.width/face_area.frame_width+src_prev_rect.start_x;
-				face_area.face_info[i].sy = 1.0*sy*src_prev_rect.height/face_area.frame_height+src_prev_rect.start_y;
-				face_area.face_info[i].ex = 1.0*ex*src_prev_rect.width/face_area.frame_width+src_prev_rect.start_x;
-				face_area.face_info[i].ey = 1.0*ey*src_prev_rect.height/face_area.frame_height+src_prev_rect.start_y;
+				face_area.face_info[i].sx = 1.0*sx*src_prev_rect.width/frame_param->width+src_prev_rect.start_x;
+				face_area.face_info[i].sy = 1.0*sy*src_prev_rect.height/frame_param->height+src_prev_rect.start_y;
+				face_area.face_info[i].ex = 1.0*ex*src_prev_rect.width/frame_param->width+src_prev_rect.start_x;
+				face_area.face_info[i].ey = 1.0*ey*src_prev_rect.height/frame_param->height+src_prev_rect.start_y;
 				face_area.face_info[i].brightness = frame_param->face_info[i].brightness;
 				face_area.face_info[i].pose = frame_param->face_info[i].angle;
-
-				face_area.frame_width = sensor_mode_info->trim_width;
-				face_area.frame_height = sensor_mode_info->trim_height;
-				CMR_LOGI("face_area  width, height  %d, %d", face_area.frame_width, face_area.frame_height);
+				CMR_LOGD("preview face info sx %d sy %d ex %d, ey %d", face_area.face_info[i].sx, face_area.face_info[i].sy, face_area.face_info[i].ex, face_area.face_info[i].ey);
 			}
 			if (IMG_DATA_TYPE_RAW == cxt->sn_cxt.sensor_info.image_format
 				&& (!cxt->is_vendor_hdr)  /* SS requires to disable FD when HDR is on */
