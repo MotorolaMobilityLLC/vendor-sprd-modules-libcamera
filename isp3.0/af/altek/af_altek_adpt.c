@@ -519,7 +519,7 @@ static cmr_int afaltek_adpt_set_start(cmr_handle adpt_handle)
 	return ret;
 }
 
-static cmr_int afaltek_adpt_stop(cmr_handle adpt_handle)
+static cmr_int afaltek_adpt_force_stop(cmr_handle adpt_handle)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
@@ -530,7 +530,7 @@ static cmr_int afaltek_adpt_stop(cmr_handle adpt_handle)
 	p.type = alAFLIB_SET_PARAM_CANCEL_FOCUS;
 
 	ret = afaltek_adpt_set_parameters(cxt, &p);
-	ISP_LOGI("ret = %ld", ret);
+	ISP_LOGI("cxt->af_cur_status = %d ret = %ld", cxt->af_cur_status, ret);
 #if 0
 	status = cxt->af_out_obj.focus_status.t_status;
 	if (alAFLib_STATUS_UNKNOWN != status) {
@@ -538,6 +538,17 @@ static cmr_int afaltek_adpt_stop(cmr_handle adpt_handle)
 		ret = -ISP_ERROR;
 	}
 #endif
+	return ret;
+}
+
+static cmr_int afaltek_adpt_stop(cmr_handle adpt_handle)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+
+	if ((AF_ADPT_STARTED <= cxt->af_cur_status) && (AF_ADPT_DONE > cxt->af_cur_status))
+		ret = afaltek_adpt_force_stop(cxt);
+
 	return ret;
 }
 
@@ -1216,7 +1227,7 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 		ret = afaltek_adpt_pre_start(adpt_handle, &lib_roi);
 		if (ret)
 			ISP_LOGE("failed to start af");
-		cxt->ae_info.ae_stable_retrig_flg =  0;
+		cxt->ae_info.ae_stable_retrig_flg = 0;
 	} else if ((!cxt->aft_proc_result.is_caf_trig) && aft_out.is_caf_trig) {
 		/* notify oem to show box */
 		ret = afaltek_adpt_start_notify(adpt_handle);
@@ -1230,9 +1241,7 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 		if (ret)
 			ISP_LOGE("failed to start af");
 
-	} else if ((AF_ADPT_STARTED <= cxt->af_cur_status && AF_ADPT_DONE > cxt->af_cur_status)
-		   && aft_out.is_cancel_caf) {
-
+	} else if (aft_out.is_cancel_caf) {
 		ret = afaltek_adpt_stop(cxt);
 		if (ret)
 			ISP_LOGE("failed to stop");
@@ -1769,11 +1778,10 @@ static cmr_int afaltek_adpt_pre_start(cmr_handle adpt_handle,
 	struct isp3a_af_hw_cfg af_cfg;
 
 	bzero(&af_cfg, sizeof(af_cfg));
-	if ((AF_ADPT_STARTED <= cxt->af_cur_status) && (AF_ADPT_DONE > cxt->af_cur_status)) {
-		ret = afaltek_adpt_stop(cxt);
-		if (ret)
-			ISP_LOGE("failed to stop");
-	}
+	ret = afaltek_adpt_stop(cxt);
+	if (ret)
+		ISP_LOGE("failed to stop");
+
 	afaltek_adpt_get_hw_config(&af_cfg);
 	ret = afaltek_adpt_config_af_stats(cxt, &af_cfg);
 
