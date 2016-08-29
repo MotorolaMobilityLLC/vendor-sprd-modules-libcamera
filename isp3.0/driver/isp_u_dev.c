@@ -445,7 +445,7 @@ static cmr_int isp_dev_kill_thread(isp_handle handle)
 	memset(&write_op, 0, sizeof(struct isp_img_write_op));
 	write_op.cmd = ISP_IMG_STOP_ISP;
 	ret = write(file->fd, &write_op, sizeof(struct isp_img_write_op));
-	if (ret > 0) {
+	if (ret >= 0) {
 		ISP_LOGI("write OK!");
 		ret = pthread_join(file->thread_handle, &dummy);
 		file->thread_handle = 0;
