@@ -475,7 +475,8 @@ SprdCameraHardware::SprdCameraHardware(int cameraId):
 	mVideoWidth(0),
 	mVideoHeight(0),
 	mHalOem(NULL),
-	mIsSupportCallback(0)
+	mIsSupportCallback(0),
+	mPdafRawHeapNum = 0
 {
 	mIsPerformanceTestable = sprd_isPerformanceTestable();
 	if (mIsPerformanceTestable) {
@@ -3954,6 +3955,18 @@ int SprdCameraHardware::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u
 		*phy_addr++ = (cmr_uint)mIspYUVReserved->phys_addr;
 		*vir_addr++ = (cmr_uint)mIspYUVReserved->data;
 		*fd++ = mIspYUVReserved->fd;
+	} else if(type == CAMERA_PDAF_RAW_RESERVED) {
+		if(mPdafRawHeapReserved == NULL) {
+			memory = allocCameraMem(size, 1, true);
+			if (NULL == memory) {
+				HAL_LOGE("memory is null.");
+				goto mem_fail;
+			}
+			mPdafRawHeapReserved = memory;
+		}
+		*phy_addr++ = (cmr_uint)mPdafRawHeapReserved->phys_addr;
+		*vir_addr++ = (cmr_uint)mPdafRawHeapReserved->data;
+		*fd++ = mPdafRawHeapReserved->fd;
 	}
 	return 0;
 
@@ -3986,9 +3999,12 @@ int SprdCameraHardware::Callback_Malloc(enum camera_mem_cb_type type, cmr_u32 *s
 		ret = camera->Callback_PreviewMalloc(size, sum, phy_addr, vir_addr, fd);
 	} else if (CAMERA_SNAPSHOT == type) {
 		ret = camera->Callback_CaptureMalloc(size, sum, phy_addr, vir_addr, fd);
+	} else if(CAMERA_PDAF_RAW == type) {
+		ret = camera->Callback_PdafRawMalloc(size, sum, phy_addr, vir_addr, fd);
 	} else if (CAMERA_PREVIEW_RESERVED == type || CAMERA_VIDEO_RESERVED == type || CAMERA_ISP_FIRMWARE == type ||
 		CAMERA_SNAPSHOT_ZSL_RESERVED == type || CAMERA_ISP_LSC == type || CAMERA_ISP_BINGING4AWB == type ||
-		CAMERA_SNAPSHOT_HIGHISO == type || CAMERA_ISP_RAW_DATA == type) {
+		CAMERA_SNAPSHOT_HIGHISO == type || CAMERA_ISP_RAW_DATA == type ||
+		CAMERA_PDAF_RAW_RESERVED == type) {
 		ret = camera->Callback_OtherMalloc(type, size, sum_ptr, phy_addr, vir_addr, fd);
 	} else if (CAMERA_VIDEO == type) {
 		ret = camera->Callback_VideoMalloc(size, sum, phy_addr, vir_addr, fd);
@@ -4000,6 +4016,77 @@ int SprdCameraHardware::Callback_Malloc(enum camera_mem_cb_type type, cmr_u32 *s
 	LOGD("done %d", ret);
 	return ret;
 }
+
+int SprdCamera3OEMIf::Callback_PdafRawFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_u32 sum)
+{
+	cmr_u32 i;
+	Mutex::Autolock l(&mPrevBufLock);
+
+	HAL_LOGD("mPdafRawHeapNum %d sum %d", mPdafRawHeapNum, sum);
+
+	for (i=0 ; i<mPdafRawHeapNum ; i++) {
+		if (NULL != mPdafRawHeapArray[i]) {
+			freeCameraMem(mPdafRawHeapArray[i]);
+		}
+		mPdafRawHeapArray[i] = NULL;
+	}
+	mPdafRawHeapNum = 0;
+
+	return 0;
+}
+
+int SprdCamera3OEMIf::Callback_PdafRawMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd)
+{
+	sprd_camera_memory_t *memory = NULL;
+	cmr_int              i = 0;
+
+	HAL_LOGD("size %d sum %d mPdafRawHeapNum %d", size, sum, mPdafRawHeapNum);
+
+	*phy_addr = 0;
+	*vir_addr = 0;
+
+	if (mPdafRawHeapNum >= (kPdafRawBufferCount+1)) {
+		HAL_LOGE("error mPdafRawHeapNum %d", mPdafRawHeapNum);
+		return BAD_VALUE;
+	}
+
+	if ((mPdafRawHeapNum+sum) >= (kPdafRawBufferCount+1)) {
+		HAL_LOGE("malloc is too more %d %d", mPdafRawHeapNum, sum);
+		return BAD_VALUE;
+	}
+
+	if (sum >= kPdafRawBufferCount) {
+		//mPdafRawHeapNum = kPdafRawBufferCount;
+		//phy_addr += kPdafRawBufferCount;
+		//vir_addr += kPdafRawBufferCount;
+		for (i=mPdafRawHeapNum; i<(cmr_int)sum ; i++) {
+			memory = allocCameraMem(size, 1, true);
+
+			if (NULL == memory) {
+				HAL_LOGE("error memory is null.");
+				goto mem_fail;
+			}
+
+			mPdafRawHeapArray[mPdafRawHeapNum] = memory;
+			mPdafRawHeapNum++;
+			*phy_addr++ = 0;//(cmr_uint)memory->phys_addr;
+			*vir_addr++ = (cmr_uint)memory->data;
+			if (NULL != fd)
+				*fd++ = (cmr_s32)memory->fd;
+		}
+	} else {
+		HAL_LOGD("Do not need malloc, malloced num %d,request num %d, request size 0x%x",
+				mPdafRawHeapNum, sum, size);
+		goto mem_fail;
+	}
+
+	return 0;
+
+mem_fail:
+	Callback_PdafRawFree(0, 0, 0);
+	return BAD_VALUE;
+}
+
 int SprdCameraHardware::Callback_PreviewFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum)
 {
 	cmr_u32 i, j = 0;
@@ -4193,6 +4280,14 @@ int SprdCameraHardware::Callback_OtherFree(enum camera_mem_cb_type type, cmr_uin
 			mIspYUVReserved = NULL;
 		}
 	}
+
+	if (type == CAMERA_PDAF_RAW_RESERVED) {
+		if (NULL != mPdafRawHeapReserved) {
+			freeCameraMem(mPdafRawHeapReserved);
+		}
+		mPdafRawHeapReserved = NULL;
+	}
+
 	return 0;
 }
 
@@ -4213,10 +4308,13 @@ int SprdCameraHardware::Callback_Free(enum camera_mem_cb_type type, cmr_uint *ph
 		ret = camera->Callback_PreviewFree(phy_addr, vir_addr, fd, sum);
 	}  else if (CAMERA_SNAPSHOT == type) {
 		ret = camera->Callback_CaptureFree(phy_addr, vir_addr, fd, sum);
+	} else if(CAMERA_PDAF_RAW == type) {
+		ret = camera->Callback_PdafRawFree(phy_addr, vir_addr, sum);
 	} else if (CAMERA_PREVIEW_RESERVED == type || CAMERA_VIDEO_RESERVED == type ||
 		CAMERA_SNAPSHOT_ZSL_RESERVED == type || CAMERA_ISP_LSC == type ||
 		CAMERA_ISP_BINGING4AWB == type || CAMERA_ISP_ANTI_FLICKER == type || CAMERA_ISP_RAWAE == type ||
-		CAMERA_SNAPSHOT_HIGHISO == type || CAMERA_ISP_RAW_DATA == type ||CAMERA_ISP_FIRMWARE == type) {
+		CAMERA_SNAPSHOT_HIGHISO == type || CAMERA_ISP_RAW_DATA == type ||CAMERA_ISP_FIRMWARE == type ||
+		CAMERA_PDAF_RAW_RESERVED == type) {
 		ret = camera->Callback_OtherFree(type, phy_addr, vir_addr, fd, sum);
 	} else if (CAMERA_VIDEO == type) {
 		ret = camera->Callback_VideoFree(phy_addr, vir_addr, fd, sum);

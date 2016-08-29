@@ -223,6 +223,8 @@ private:
 	int Callback_PreviewMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
 	int Callback_VideoMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
 	int Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
+	int Callback_PdafRawFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_u32 sum);
+	int Callback_PdafRawMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
 	int Callback_CaptureMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
 	int Callback_CapturePathMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
 	int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size, cmr_u32 *sum_ptr, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
@@ -434,6 +436,7 @@ private:
 	static const int                kJpegBufferCount       = 1;
 	static const int                kRawFrameHeaderSize    = 0x0;
 	static const int                kISPB4awbCount         = 16;
+	static const int                kPdafRawBufferCount    = 4;
 	Mutex                           mLock; // API lock -- all public methods
 	Mutex                           mCallbackLock;
 	Mutex                           mPreviewCbLock;
@@ -464,6 +467,7 @@ private:
 	uint32_t                        mPreviewHeapNum;
 	uint32_t                        mVideoHeapNum;
 	uint32_t                        mZslHeapNum;
+	uint32_t                        mPdafRawHeapNum;
 	uint32_t                        mZslChannelStatus;
 	uint32_t                        mPreviewDcamAllocBufferCnt;
 	sprd_camera_memory_t*           *mPreviewHeapArray;
@@ -473,6 +477,7 @@ private:
 	uint32_t                        mPreviewHeapBakUseFlag;
 	sprd_camera_memory_t            mRawHeapInfoBak;
 	uint32_t                        mRawHeapBakUseFlag;
+	sprd_camera_memory_t            * mPdafRawHeapArray[kPdafRawBufferCount+1];
 
 	cmr_s32                         mPreviewHeapArray_fd[kPreviewBufferCount+kPreviewRotBufferCount+1];
 	uintptr_t                       mPreviewHeapArray_phy[kPreviewBufferCount+kPreviewRotBufferCount+1];
@@ -505,6 +510,7 @@ private:
 	sprd_camera_memory_t*           mIspYUVReserved;
 	sprd_camera_memory_t*           mIspAntiFlickerHeapReserved;
 	sprd_camera_memory_t*           mIspRawAemHeapReserved[kISPB4awbCount];
+	sprd_camera_memory_t*           mPdafRawHeapReserved;
 
 	sprd_camera_memory_t            *mRawHeap;
 	uint32_t                        mRawHeapSize;

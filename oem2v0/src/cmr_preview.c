@@ -5612,8 +5612,14 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
 		is_raw_capture = 1;
 	}
 
-	search_width = target_size->width;
-	search_height = target_size->height;
+	if (1 == handle->prev_cxt[camera_id].prev_param.pdaf_eb){
+		search_width = sensor_info->source_width_max;
+		search_height = sensor_info->source_height_max;
+	}
+	else {
+		search_width = target_size->width;
+		search_height = target_size->height;
+	}
 
 	CMR_LOGI("search_height = %d", search_height);
 	for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {

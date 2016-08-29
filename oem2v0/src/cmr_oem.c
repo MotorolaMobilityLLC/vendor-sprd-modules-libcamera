@@ -6445,6 +6445,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	struct jpeg_context            *jpeg_cxt = &cxt->jpeg_cxt;
 	struct snapshot_context        *snp_cxt = &cxt->snp_cxt;
 	struct setting_cmd_parameter   setting_param;
+	struct sensor_context          *sn_cxt = &cxt->sn_cxt;
 	char                     value[PROPERTY_VALUE_MAX];
 	cmr_u32                        is_cfg_snp = 0;
 	cmr_u32                        rotation = 0;
@@ -6550,6 +6551,15 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 		CMR_LOGE("failed to get zoom param %ld", ret);
 		goto exit;
 	}
+	/*get pdaf enable flag*/
+	if (1 == out_param_ptr->video_slowmotion_eb || 0 == sn_cxt->cur_sns_ex_info.pdaf_supported
+		|| CAMERA_ISP_TUNING_MODE == mode || CAMERA_UTEST_MODE == mode
+		|| CAMERA_AUTOTEST_MODE == mode || CAMERA_ISP_SIMULATION_MODE == mode
+		|| 1 == out_param_ptr->video_eb)
+		out_param_ptr->pdaf_eb = 0;
+	else if (1 == out_param_ptr->preview_eb)
+		out_param_ptr->pdaf_eb = 1;
+
 	out_param_ptr->zoom_setting = setting_param.zoom_param;
 	CMR_LOGV("aspect ratio prev=%f, video=%f, cap=%f",
 		out_param_ptr->zoom_setting.zoom_info.prev_aspect_ratio,
@@ -6570,6 +6580,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 		|| CAMERA_ISP_SIMULATION_MODE == mode) {
 		out_param_ptr->tool_eb = 1;
 	}
+
 	/*get snapshot size*/
 	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_CAPTURE_SIZE, &setting_param);
 	if (ret) {
