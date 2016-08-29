@@ -30,7 +30,6 @@ typedef enum{
 	SRCIMG_8 = 0,
 	SRCIMG_10 = 1,
 	SRCIMG_12 = 2,
-
 }DataBit;
 
 #ifdef __cplusplus

@@ -1,6 +1,5 @@
 #ifndef __PDData_H__
 #define __PDData_H__
-
 #include "alPDAF.h"
 
 struct altek_pos_info {
@@ -21,10 +20,10 @@ struct altek_pdaf_info {
     struct altek_pos_info *pd_pos_r;
     struct altek_pos_info *pd_pos_l;
 };
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
+extern int alPDExtract_VersionInfo_Get(void *VersionBuffer, int BufferSize);
 extern int alPDExtract_GetSize(struct altek_pdaf_info *PDSensorInfo,
                                alPD_RECT *InputROI,
                                unsigned short RawFileWidth,

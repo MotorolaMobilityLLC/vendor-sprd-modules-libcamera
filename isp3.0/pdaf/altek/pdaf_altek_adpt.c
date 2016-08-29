@@ -29,6 +29,9 @@
 
 /* use pdotp.bin in data/misc/media for test*/
 #define PD_DATA_TEST
+#ifdef PD_DATA_TEST
+	#define PD_OTP_TEST_SIZE	550
+#endif
 #define PDLIB_PATH "libalPDAF.so"
 #define PDEXTRACT_LIBPATH "libalPDExtract.so"
 #define PD_REG_OUT_SIZE	352
@@ -89,7 +92,7 @@ struct pdaf_altek_context {
 	enum pdaf_altek_adpt_status_t pdaf_cur_status;
 	struct isp3a_pdaf_altek_report_t report_data;
 #ifdef PD_DATA_TEST
-	cmr_u8 otp_test[144];
+	cmr_u8 otp_test[PD_OTP_TEST_SIZE];
 #endif
 	//struct pdaf_ctrl_init_in init_in_param;
 };
@@ -282,6 +285,7 @@ static cmr_int pdafaltek_adpt_set_reset(cmr_handle adpt_handle, struct pdaf_ctrl
 
 	UNUSED(in);
 	ISP_CHECK_HANDLE_VALID(adpt_handle);
+	cxt->frame_id = 0;
 	ret = cxt->ops.reset();
 	if (ret) {
 		ISP_LOGE("failed to set pdaf reset");
@@ -429,7 +433,7 @@ static cmr_int pdafaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 			CMR_LOGI("can not open file \n");
 			goto exit;
 	}
-	fread(cxt->otp_test, 1, 144, fp);
+	fread(cxt->otp_test, 1, PD_OTP_TEST_SIZE, fp);
 	fclose(fp);
 	ret = cxt->ops.init(cxt->otp_test);
 #else
@@ -610,7 +614,6 @@ static cmr_int pdafaltek_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		goto exit;
 	}
 	cxt->is_busy = 1;
-	cxt->frame_id = proc_in->pd_raw.frame_id;
 	cxt->image_width = proc_in->pd_raw.roi.image_width;
 	cxt->image_height = proc_in->pd_raw.roi.image_height;
 	if (cxt->image_width == proc_in->pd_raw.roi.trim_width
@@ -733,6 +736,7 @@ static cmr_int pdafaltek_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	if (cxt->cb_ops.call_back) {
 		ret = (cxt->cb_ops.call_back)(cxt->caller_handle, &callback_in);
 	}
+	cxt->frame_id ++;//= proc_in->pd_raw.frame_id;
 exit:
 	if (cxt->pd_set_buffer) {
 		(cxt->pd_set_buffer)(&proc_in->pd_raw.pd_in);
