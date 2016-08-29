@@ -286,8 +286,10 @@ uint32 al3awrapperae_updateotp2aelib( struct calib_wb_gain_t acalibwbgain,  stru
 	localparam.set_param.ae_calib_wb_gain.calib_r_gain = acalibwbgain.r;   /* scale 1000 base, if source is already scaled by 1000, direcly passing to AE lib */
 	localparam.set_param.ae_calib_wb_gain.calib_g_gain = acalibwbgain.g;   /* scale 1000 base, if source is already scaled by 1000, direcly passing to AE lib */
 	localparam.set_param.ae_calib_wb_gain.calib_b_gain = acalibwbgain.b;   /* scale 1000 base, if source is already scaled by 1000, direcly passing to AE lib */
+	localparam.set_param.ae_calib_wb_gain.minISO        = acalibwbgain.minISO;    /*  from calibration result, indicate minimun ISO which could be used */
 
-	localparam.set_param.ae_calib_wb_gain.minISO   = _DEFAULT_WRAPPER_MINISO;   /* workaround version, next release should remove this workaround */
+	if ( localparam.set_param.ae_calib_wb_gain.minISO == 0 )
+		localparam.set_param.ae_calib_wb_gain.minISO   = _DEFAULT_WRAPPER_MINISO;
 
 	ret = aaelibcallback->set_param( &localparam, ae_output, ae_runtimedat );
 	if ( ret != ERR_WPR_AE_SUCCESS )

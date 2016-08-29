@@ -33,6 +33,7 @@
 #define AL_AE_HW3A_BIT_DEPTH            (10)	/* bit depth for AE algo of HW3A stats, usually 10 */
 #define AL_AWB_HW3A_BIT_DEPTH           (8)	/* bit depth for AWB algo of HW3A stats, usually 8 */
 
+#define AL_AE_SENSORTEST_MAXNODE        (4)    /* max:4 sets of exposure param */
 /* for wrapper */
 #define HW3A_MAX_DLSQL_NUM              (20)	/* maximun download sequence list number */
 
@@ -228,6 +229,7 @@ struct calib_wb_gain_t {
 	uint32 r;	/* base unit: 1000 --> 1.0x */
 	uint32 g;	/* base unit: 1000 --> 1.0x */
 	uint32 b;	/* base unit: 1000 --> 1.0x */
+	uint32 minISO;    /* minimun ISO, from calibration */
 };
 #pragma pack(pop)  /* restore old alignment setting from stack */
 

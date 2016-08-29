@@ -392,10 +392,12 @@ static cmr_int aealtek_convert_otp(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_o
 		lib_otp_ptr->r = otp_data.r;
 		lib_otp_ptr->g = otp_data.g;
 		lib_otp_ptr->b = otp_data.b;
+		lib_otp_ptr->minISO = otp_data.iso;
 	} else {
 		lib_otp_ptr->r = 1500;
 		lib_otp_ptr->g = 1300;
 		lib_otp_ptr->b = 1600;
+		lib_otp_ptr->minISO = 50;
 		ISP_LOGE("NO OTP DATA !!!");
 	}
 	return ISP_SUCCESS;
@@ -752,6 +754,7 @@ static cmr_int aealtek_convert_ui2initlib(struct aealtek_cxt *cxt_ptr, struct ae
 	to_ptr->ae_calib_wb_gain.calib_r_gain = cxt_ptr->lib_data.ae_otp_data.r;
 	to_ptr->ae_calib_wb_gain.calib_g_gain = cxt_ptr->lib_data.ae_otp_data.g;
 	to_ptr->ae_calib_wb_gain.calib_b_gain = cxt_ptr->lib_data.ae_otp_data.b;
+	to_ptr->ae_calib_wb_gain.minISO = cxt_ptr->lib_data.ae_otp_data.minISO;
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld", ret);
@@ -806,10 +809,13 @@ cmr_int aealtek_set_slv_otp(struct calib_wb_gain_t acalibwbgain, struct alaerunt
 
 	memset(&localparam, 0, sizeof(struct ae_set_param_content_t));
 	localparam.ae_set_param_type = AE_SET_PARAM_OTP_WB_DAT_SLV;
-	localparam.set_param.ae_calib_wb_gain_slv_sensor.minISO = 50;
 	localparam.set_param.ae_calib_wb_gain_slv_sensor.calib_r_gain = acalibwbgain.r;
 	localparam.set_param.ae_calib_wb_gain_slv_sensor.calib_g_gain = acalibwbgain.g;
 	localparam.set_param.ae_calib_wb_gain_slv_sensor.calib_b_gain = acalibwbgain.b;
+	localparam.set_param.ae_calib_wb_gain_slv_sensor.minISO = acalibwbgain.minISO;
+	if (0 == localparam.set_param.ae_calib_wb_gain_slv_sensor.minISO) {
+		localparam.set_param.ae_calib_wb_gain_slv_sensor.minISO = _DEFAULT_WRAPPER_MINISO;
+	}
 
 	ret = aaelibcallback->set_param(&localparam, ae_output, ae_runtimedat);
 	if (ret != ERR_WPR_AE_SUCCESS)

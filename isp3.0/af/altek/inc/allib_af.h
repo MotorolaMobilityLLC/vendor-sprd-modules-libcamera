@@ -14,12 +14,26 @@
 
 #define ALAF_EXIF_INFO_SIZE (379)
 #define ALAF_DEBUG_INFO_SIZE (7168)
-#define MAX_STATS_ROI_NUM (5)
+#define ALAF_MAX_STATS_ROI_NUM (5)
 #define MAX_AF_DEBUG_DATA_SIZE (7168)
 #define MAX_STATS_COLUMN_NUM (9)
 #define MAX_STATS_ROW_NUM (9)
 #define ALAF_MAX_STATS_NUM (MAX_STATS_COLUMN_NUM*MAX_STATS_ROW_NUM)
 #define ALAF_MAX_ZONE (9)
+
+/*
+ * allib_af_version_t
+ *
+ * m_uw_main_ver:	Main version
+ * m_uw_sub_ver:	Sub version
+ */
+#pragma pack(push, 4)
+struct allib_af_version_t {
+	uint16 m_uw_main_ver;
+	uint16 m_uw_sub_ver;
+};
+#pragma pack(pop)
+
 
 /*
  * allib_af_time_stamp_t
@@ -196,6 +210,23 @@ struct allib_af_input_initial_set_t {
 #pragma pack(pop)
 
 /*
+ * allib_af_hybrid_type
+ *
+ * alAFLIB_HYBRID_TYPE_PD:	Phase detection.
+ *
+ * alAFLib support hybrid af type
+ */
+
+#pragma pack(push, 4)
+enum allib_af_hybrid_type {
+	alAFLIB_HYBRID_TYPE_PD = 1,
+	alAFLIB_HYBRID_TYPE_LASER = 1 << 1,
+	alAFLIB_HYBRID_TYPE_IAF = 1 << 2,
+	alAFLIB_HYBRID_TYPE_MAX
+};
+#pragma pack(pop)
+
+/*
  * allib_af_input_enable_hybrid_t
  * enable_hybrid:	enable hybrid AF
  * type:		hybrid af type.
@@ -205,7 +236,8 @@ struct allib_af_input_initial_set_t {
 #pragma pack(push, 4)
 struct allib_af_input_enable_hybrid_t {
 	uint8	enable_hybrid;
-	uint8	type;
+	enum allib_af_hybrid_type	type;
+	struct allib_af_version_t  pd_lib_version;
 };
 #pragma pack(pop)
 
@@ -334,7 +366,7 @@ struct allib_af_crop_t {
  * roi_updated:	does roi update
  * type:				input roi type, refer to al_af_lib_roi_type
  * frame_id:		frame id correspond to current roi
- * num_roi:			number of roi are qualify, max number is MAX_STATS_ROI_NUM.
+ * num_roi:			number of roi are qualify, max number is ALAF_MAX_STATS_ROI_NUM.
  * roi:					array of roi info, refer to type alAFLib_roi_t
  * weight:			weighting for each roi.
  * src_img_sz:	the source image which is refered by current input roi.
@@ -347,8 +379,8 @@ struct allib_af_input_roi_info_t {
 	enum allib_af_roi_type	type;
 	uint32          frame_id;
 	uint32          num_roi;
-	struct allib_af_roi_t   roi[MAX_STATS_ROI_NUM];
-	uint32          weight[MAX_STATS_ROI_NUM];
+	struct allib_af_roi_t   roi[ALAF_MAX_STATS_ROI_NUM];
+	uint32          weight[ALAF_MAX_STATS_ROI_NUM];
 	struct allib_af_img_t	src_img_sz;
 };
 #pragma pack(pop)
@@ -569,6 +601,44 @@ struct allib_af_input_special_event {
 #pragma pack(pop)
 
 /*
+ * allib_af_pd_stats_t
+ * defocus:	defocus
+ * conf_value:	confidence
+ * pd_value:	phase different
+ */
+#pragma pack(push, 4)
+struct allib_af_pd_stats_t {
+	int32 defocus;
+	uint32 conf_value;
+	float pd_value;
+};
+#pragma pack(pop)
+
+/*
+ * allib_af_input_pd_info_t
+ * token_id:	valid setting number, which same when doing AF configuration, for 3A libs synchronization
+ * frame_id:	frame id when send
+ * enable:	is PD enable?.
+ * time_stamp:	time when hw3a compute stats. unit: ms
+ * pd_stats[ALAF_MAX_STATS_NUM]: PD Statistics data;
+ * roi:		PD use roi info of extend data.
+ * src_img_sz:	roi reference PD source img size of extend data.
+ * extend_data_ptr:	extra lib data, if not support, set to null.
+ * extend_data_size: size of extra lib data, if not support set to zero.
+ */
+
+#pragma pack(push, 4)
+struct allib_af_input_pd_info_t {
+	uint16 token_id;
+	uint32 frame_id;
+	uint8 enable;
+	struct allib_af_time_stamp_t time_stamp;
+	void* extend_data_ptr;
+	uint32 extend_data_size;
+};
+#pragma pack(pop)
+
+/*
  * allib_af_set_param_type
  * the type of which parameter setin to alAFLib.
  * alAFLIB_SET_PARAM_UNKNOWN,		// 0 //         No type input
@@ -599,7 +669,8 @@ struct allib_af_input_special_event {
  * alAFLIB_SET_PARAM_SET_IMGBUF,		// 25 //         Set Image Buffer into alAFLib
  * alAFLIB_SET_PARAM_SET_DEFAULT_SETTING,	// 26 //        Set alAFLib to default setting. The current setting will be remove, and no longer to recover until restart camera and load such setting file.
  * alAFLIB_SET_PARAM_SPECIAL_EVENT,	// 27 //        To inform alAFLib if event change status. Event Type please reference to alAFLib_input_special_event_type
- * alAFLIB_SET_PARAM_MAX			// 28 //	0xff
+ * alAFLIB_SET_PARAM_UPDATE_PD_INFO      // 28 //        Update PD Info.
+ * alAFLIB_SET_PARAM_MAX			// 29 //	0xff
  */
 #pragma pack(push, 4)
 enum allib_af_set_param_type {
@@ -631,6 +702,7 @@ enum allib_af_set_param_type {
 	alAFLIB_SET_PARAM_SET_IMGBUF,
 	alAFLIB_SET_PARAM_SET_DEFAULT_SETTING,
 	alAFLIB_SET_PARAM_SPECIAL_EVENT,
+	alAFLIB_SET_PARAM_UPDATE_PD_INFO,
 	alAFLIB_SET_PARAM_MAX
 };
 #pragma pack(pop)
@@ -691,6 +763,7 @@ struct allib_af_input_set_param_t {
 		struct allib_af_input_special_event   special_event;
 		struct allib_af_input_enable_hybrid_t   haf_info;
 		struct allib_af_input_image_buf_t	img_buf;
+		struct allib_af_input_pd_info_t pd_info;
 	} u_set_data;
 };
 #pragma pack(pop)
@@ -848,14 +921,64 @@ struct allib_af_out_stats_config_t {
 };
 #pragma pack(pop)
 
+/*
+ * allib_af_pd_config_type
+ * PD_STATE:		update pd state.
+ * PD_ROI:	update roi info.
+ */
+#pragma pack(push, 4)
+enum allib_af_pd_config_type {
+	alAFLib_PD_CONFIG_ENABLE=1,
+	alAFLib_PD_CONFIG_ROI=(1<<1),
+	alAFLib_PD_CONFIG_RESET=(1<<2),
+};
+#pragma pack(pop)
+
+/*
+ * allib_af_out_pd_roi_info_t
+ * roi:		AF use roi info.
+ * src_img_sz:	roi reference source img size, which is received from upper layer.
+ * num_blk_ver:	vertical block number.
+ * num_blk_hor:	horizontal block number.
+ */
+
+#pragma pack(push, 4)
+struct allib_af_out_pd_roi_info_t {
+	struct allib_af_roi_t	roi;
+	struct allib_af_img_t	src_img_sz;
+	uint8 num_blk_ver;
+	uint8 num_blk_hor;
+};
+#pragma pack(pop)
+
+/*
+ * allib_af_out_pd_config_t
+ * token_id
+ * pd_roi_info:		AF use roi info.
+ * type:	pd config type
+ * pd_state:    pd state upadte.
+ * b_enable:	enable flag for PD calculation
+ */
+
+#pragma pack(push, 4)
+struct allib_af_out_pd_config_t {
+	uint16 token_id;
+	uint8 b_enable;
+	enum allib_af_pd_config_type type;
+	int32 pd_enable;
+	struct allib_af_out_pd_roi_info_t pd_roi_info;
+};
+#pragma pack(pop)
+
 #pragma pack(push, 4)
 enum allib_af_output_type {
 	alAFLIB_OUTPUT_UNKNOW = 1 ,
 	alAFLIB_OUTPUT_STATUS =( 1 << 1),
 	alAFLIB_OUTPUT_STATS_CONFIG =( 1 << 2),
-	alAFLIB_OUTPUT_IMG_BUF_DONE =( 1 << 3),
-	alAFLIB_OUTPUT_MOVE_LENS =( 1 << 4),
-	alAFLIB_OUTPUT_DEBUG_INFO =( 1 << 5),
+	alAFLIB_OUTPUT_PD_CONFIG =( 1 << 3),
+	alAFLIB_OUTPUT_IMG_BUF_DONE =( 1 << 4),
+	alAFLIB_OUTPUT_MOVE_LENS =( 1 << 5),
+	alAFLIB_OUTPUT_DEBUG_INFO =( 1 << 6),
 	alAFLIB_OUTPUT_MAX
 };
 #pragma pack(pop)
@@ -881,6 +1004,7 @@ struct allib_af_output_report_t {
 	enum allib_af_output_type type;
 	struct allib_af_out_status_t focus_status;
 	struct allib_af_out_stats_config_t stats_config;
+	struct allib_af_out_pd_config_t pd_config;
 	void* p_al_af_debug_data;
 	uint32 al_af_debug_data_size;
 	void*  p_al_af_exif_data;
@@ -892,27 +1016,13 @@ struct allib_af_output_report_t {
 
 /* alAFLib API */
 
-/*
- * allib_af_version_t
- *
- * m_uw_main_ver:	Main version
- * m_uw_sub_ver:	Sub version
- */
-#pragma pack(push, 4)
-struct allib_af_version_t {
-	uint16 m_uw_main_ver;
-	uint16 m_uw_sub_ver;
-};
-#pragma pack(pop)
-
 /* callback functions */
 typedef uint8 (* allib_af_set_param_func)(struct allib_af_input_set_param_t *param,void* allib_af_out_obj, void* allib_af_runtime_obj);
 typedef uint8 (* allib_af_get_param_func)(struct allib_af_input_get_param_t *param,void* allib_af_out_obj, void* allib_af_runtime_obj);
 typedef uint8 (* allib_af_process_func)(void* allib_af_hw_stats, void* allib_af_out_obj, void* allib_af_runtime_obj);
 typedef void* (* allib_af_intial_func)(void* allib_af_out_obj);
 typedef uint8 (* allib_af_deinit_func)(void* allib_af_runtime_obj, void* allib_af_out_obj);
-
-
+typedef void (* allib_af_callback_func)(struct allib_af_output_report_t *output, void* phandle);
 
 /*
  * allib_af_ops_t
@@ -934,9 +1044,6 @@ struct allib_af_ops_t {
 
 void allib_af_get_lib_ver(struct allib_af_version_t *allib_af_ver );
 uint8 allib_af_load_func(struct allib_af_ops_t *allib_af_ops);
-
-
-
 
 #endif
 /* end _ALAFLIB_H_ */

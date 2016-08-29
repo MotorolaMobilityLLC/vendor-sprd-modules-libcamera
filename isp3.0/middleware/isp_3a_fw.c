@@ -1049,10 +1049,12 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 		ae_input.otp_data_slv.r = cxt->dual_otp->slave_isp_awb_info.gain_r;
 		ae_input.otp_data_slv.g = cxt->dual_otp->slave_isp_awb_info.gain_g;
 		ae_input.otp_data_slv.b = cxt->dual_otp->slave_isp_awb_info.gain_b;
+		ae_input.otp_data_slv.iso = cxt->dual_otp->slave_isp_awb_info.iso;
 	} else {
 		ae_input.otp_data_slv.r = input_ptr->bin_info.otp_data_addr->gain_r;
 		ae_input.otp_data_slv.g = input_ptr->bin_info.otp_data_addr->gain_g;
 		ae_input.otp_data_slv.b = input_ptr->bin_info.otp_data_addr->gain_b;
+		ae_input.otp_data_slv.iso = input_ptr->bin_info.otp_data_addr->iso;
 	}
 #endif
 
@@ -1061,10 +1063,12 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 		ae_input.otp_data.r = cxt->otp_data->isp_awb_info.gain_r;
 		ae_input.otp_data.g = cxt->otp_data->isp_awb_info.gain_g;
 		ae_input.otp_data.b = cxt->otp_data->isp_awb_info.gain_b;
+		ae_input.otp_data.iso = cxt->otp_data->isp_awb_info.iso;
 	} else if (input_ptr->bin_info.otp_data_addr) {
 		ae_input.otp_data.r = input_ptr->bin_info.otp_data_addr->gain_r;
 		ae_input.otp_data.g = input_ptr->bin_info.otp_data_addr->gain_g;
 		ae_input.otp_data.b = input_ptr->bin_info.otp_data_addr->gain_b;
+		ae_input.otp_data.iso = input_ptr->bin_info.otp_data_addr->iso;
 	}
 	ret = ae_ctrl_init(&ae_input, &ae_output, &cxt->ae_cxt.handle);
 	if (ret) {

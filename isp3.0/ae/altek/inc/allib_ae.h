@@ -46,7 +46,7 @@ enum ae_metering_mode_type_t {
 	AE_METERING_SPOTWT,
 	AE_METERING_INTELLIWT,
 	AE_METERING_USERDEF_WT,
-	AE_METERING_MAX_MODE,
+	AE_METERING_MAX_MODE
 };
 
 /*
@@ -64,7 +64,7 @@ enum ae_iso_mode_t {
 	AE_ISO_6400,
 	AE_ISO_12800,
 	AE_ISO_USRDEF,
-	AE_ISO_MAX,
+	AE_ISO_MAX
 };
 
 /*
@@ -142,7 +142,7 @@ enum ae_gain_mode_t {
 enum ae_flash_st_t {
 	AE_FLASH_OFF,		/* flash HW status is switched off, no matter is torch off, or main-flash off, or pre-flash off */
 	AE_FLASH_ON,		/* flash HW status is switched on */
-	AE_FLASH_CANCEL,	/* time out */
+	AE_FLASH_CANCEL	/* time out */
 };
 
 /*
@@ -158,7 +158,7 @@ enum ae_script_mode_t {
 	/*  special control */
 	AE_SCRIPT_PAUSE,	/* used when special case, pause current script running until resume or OFF command send  */
 	AE_SCRIPT_RESUME,	/* resume script mode when current script mode under pause status, no used for ON/OFF mode  */
-	AE_SCRIPT_MAX,
+	AE_SCRIPT_MAX
 };
 
 /*
@@ -173,9 +173,19 @@ enum ae_script_st_t {
 	SCRIPT_WAIT_LED_TURNOFF,
 	SCRIPT_LOG_MSG,
 	SCRIPT_WAIT_NEXT_ROUND,
-	SCRIPT_DONE,
+	SCRIPT_DONE
 };
 
+/*
+ *@typedef ae_sensorctrl_test_flag_t
+ *@brief ae sensor ctrl test flag
+ */
+enum ae_sensorctrl_test_flag_t {
+	SENSOR_TEST_OFF = 0,
+	SENSOR_TEST_AUTO_ON,
+	SENSOR_TEST_MANUAL_ON,
+	SENSOR_TEST_MAX
+};
 
 /*
  *@typedef ae_converge_level_type_t
@@ -205,7 +215,7 @@ enum ae_capture_mode_t {
 	CAPTURE_MODE_DUALCAM_ASYNC,	/* Fusion */
 	CAPTURE_MODE_FASTSHOT,
 	CAPTURE_MODE_FASTSHOT_DUALCAM,
-	CAPTURE_MODE_MAX,
+	CAPTURE_MODE_MAX
 };
 
 /*
@@ -233,7 +243,7 @@ enum ae_scene_mode_t {
 	SCENE_MODE_CANDLELIGHT,
 	SCENE_MODE_HDR,			/* for HDR algoritm , should have some priority AE (highkey priority, lowkey priority) */
 	SCENE_MODE_BARCODE,		/* this scene mode may same as text scene mode  */
-	SCENE_MODE_MAX,
+	SCENE_MODE_MAX
 };
 
 /*
@@ -315,6 +325,7 @@ enum ae_set_param_type_t {
 	AE_SET_PARAM_SOF_NOTIFY_SLV,              /* update slave SOF notify */
 	AE_SET_PARAM_SYNC_MODE,                       /* update sync mdoe flag */
 	AE_SET_PARAM_ENGINEER_MODE,                       /* Turn on/off Engineer mode,1:on;0:off */
+	AE_SET_PARAM_SENSOR_CTRL_TEST,               /* Turn on/off test mode,and config max 4 sets of test exposure param*/
 
 	AE_SET_PARAM_MAX
 };
@@ -670,6 +681,20 @@ struct ae_engineer_mode_param_t {
 
 
 /*
+ *@typedef ae_timegain_sync_test_t
+ *@brief ae time&gain sync test
+ */
+#pragma pack(push) /* push current alignment setting to stack */
+#pragma pack(4)    /* new alignment setting */
+struct ae_timegain_sync_test_t {
+	uint32 exptime[AL_AE_SENSORTEST_MAXNODE];
+	uint32 gain[AL_AE_SENSORTEST_MAXNODE];
+	enum ae_sensorctrl_test_flag_t  flag;  /*0:off ,1:auto on,2Manual on*/
+	uint8 validnode;
+};
+#pragma pack(pop)  /* restore old alignment setting from stack */
+
+/*
  *@typedef ae_set_param_content_t
  *@brief parameter body of set param
  */
@@ -761,6 +786,8 @@ struct ae_set_param_content_t {
 
 	struct ae_hw_config_t ae_hw_config;  /* reserved,  sensor info, hw3a info */
 	struct ae_engineer_mode_param_t ae_engineer_mode_param;
+	struct ae_timegain_sync_test_t ae_sensorctrl_test_param;
+
 };
 #pragma pack(pop)  /* restore old alignment setting from stack  */
 

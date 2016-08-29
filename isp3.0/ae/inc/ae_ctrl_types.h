@@ -367,6 +367,7 @@ struct ae_ctrl_otp_data {
 	cmr_u32 r;
 	cmr_u32 g;
 	cmr_u32 b;
+	cmr_u32 iso;
 };
 
 struct ae_ctrl_exp_gain_param {
