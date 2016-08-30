@@ -3728,6 +3728,8 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame)
 	Mutex::Autolock cbPreviewLock(&mPreviewCbLock);
 	struct camera_jpeg_param *encInfo = &frame->jpeg_param;
 	int64_t temp = 0, temp1 = 0;;
+	buffer_handle_t *jpeg_buff_handle = NULL;
+	ssize_t maxJpegSize = -1;
 
 	HAL_LOGD("E encInfo->size = %d, enc->buffer = 0x%lx, encInfo->need_free = %d time=%lld",
 		encInfo->size, encInfo->outPtr, encInfo->need_free, frame->timestamp);
@@ -3782,7 +3784,17 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame)
 				}
 
 				pic_stream->getHeapSize(&heap_size);
-				jpegBlob = (camera3_jpeg_blob*)((char *)pic_addr_vir + (heap_size - sizeof(camera3_jpeg_blob)));
+				pic_stream->getQBufHandleForNum(frame_num, &jpeg_buff_handle);
+				if (jpeg_buff_handle == NULL) {
+					HAL_LOGE("failed to get jpeg buffer handle");
+					return;
+				}
+				maxJpegSize = ((private_handle_t*)(*jpeg_buff_handle))->width;
+				if (maxJpegSize > heap_size) {
+					maxJpegSize = heap_size;
+				}
+
+				jpegBlob = (camera3_jpeg_blob*)((char *)pic_addr_vir + (maxJpegSize - sizeof(camera3_jpeg_blob)));
 				jpegBlob->jpeg_size = encInfo->size+isp_info_size;
 				jpegBlob->jpeg_blob_id = CAMERA3_JPEG_BLOB_ID;
 				picChannel->channelCbRoutine(frame_num, timestamp, CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT);

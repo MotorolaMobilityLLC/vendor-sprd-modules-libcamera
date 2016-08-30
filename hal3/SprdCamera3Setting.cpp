@@ -188,20 +188,21 @@ const int32_t kexposureCompensationRange[2] = {-3,3};
 //	720, 480,
 //	640, 480,
 //};
+
 #if defined(CONFIG_CAMERA_SUPPORT_21M)
-int32_t jpeg_stream_size = ((5312 * 3984 + (2*1024-1)) & ~(2*1024-1));
+int32_t jpeg_stream_size = (5312 * 3984 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
 #elif defined(CONFIG_CAMERA_SUPPORT_16M)
-int32_t jpeg_stream_size = ((4608 * 3456 + (2*1024-1)) & ~(2*1024-1));
+int32_t jpeg_stream_size = (4608 * 3456 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
 #elif defined(CONFIG_CAMERA_SUPPORT_13M)
-int32_t jpeg_stream_size = ((4208*3120 + (2*1024-1)) & ~(2*1024-1));
+int32_t jpeg_stream_size = (4208 * 3120 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
 #elif defined(CONFIG_CAMERA_SUPPORT_8M)
-int32_t jpeg_stream_size = ((3264 * 2448 + (2*1024-1)) & ~(2*1024-1));
+int32_t jpeg_stream_size = (3264 * 2448 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
 #elif defined(CONFIG_CAMERA_SUPPORT_5M)
-int32_t jpeg_stream_size = ((2592 * 1944 + (2*1024-1)) & ~(2*1024-1));
+int32_t jpeg_stream_size = (2592 * 1944 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
 #elif defined(CONFIG_CAMERA_SUPPORT_3M)
-int32_t jpeg_stream_size = ((2048 * 1536 + (2*1024-1)) & ~(2*1024-1));
+int32_t jpeg_stream_size = (2048 * 1536 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
 #else
-int32_t jpeg_stream_size = ((1920 * 1080 + (2*1024-1)) & ~(2*1024-1));
+int32_t jpeg_stream_size = (1920 * 1080 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
 #endif
 
 const int32_t kjpegThumbnailSizes[CAMERA_SETTINGS_THUMBNAILSIZE_ARRAYSIZE] = {0, 0, 256, 144, 320, 240, 360, 240};
