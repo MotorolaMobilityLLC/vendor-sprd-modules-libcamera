@@ -590,8 +590,8 @@ SENSOR_INFO_T g_ov8856_mipi_raw_info = {
 };
 
 static SENSOR_STATIC_INFO_T s_ov8856_static_info = {
-	240,	//f-number,focal ratio
-	200,	//focal_length;
+	220,	//f-number,focal ratio
+	250,	//focal_length;
 	0,	//max_fps,max fps of sensor's all settings,it will be calculated from sensor mode fps
 	16*2,	//max_adgain,AD-gain
 	0,	//ois_supported;

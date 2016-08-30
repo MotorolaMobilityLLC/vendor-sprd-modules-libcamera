@@ -174,7 +174,7 @@ static const SENSOR_REG_T s5k3p3sm_common_init[] = {
 { 0x9928, 0x03CB },
 { 0x3D78, 0x396C },
 { 0x3D7A, 0x93C6 },//TnP
-{ 0xB0C8, 0x1000 },
+{ 0xB0C8, 0x0300 },
 //{ 0x0600, 0x0002 },
 { 0x6028, 0x2000 },
 { 0x602A, 0x1590 },
@@ -234,8 +234,8 @@ static const SENSOR_REG_T s5k3p3sm_2304x1740_4lane_setting[] = {
 	{0x602A,0x2E26},
 	{0x6F12,0x0103},*/
 	{0x6028, 0x2000},
-         {0x602A, 0x1590},
-         {0x6F12, 0x02FF},
+	 {0x602A, 0x1590},
+	 {0x6F12, 0x02FF},
 	{0x6028,0x4000},
 	{0x3D7C,0x0010},
 	{0x3D88,0x0064},
@@ -262,7 +262,7 @@ static const SENSOR_REG_T s5k3p3sm_2304x1740_4lane_setting[] = {
 	{0x0302,0x0001},
 	{0x0300,0x0004},
 	{0x030C,0x0004},
-	{0x030E,0x0037},
+	{0x030E,0x003F},//37
 	{0x030A,0x0001},
 	{0x0308,0x0008},
 	{0x0342,0x14A2},
@@ -618,7 +618,7 @@ SENSOR_INFO_T g_s5k3p3sm_mipi_raw_info = {
 	 {0x1, 0x20}},		// for Example: index = 0-> Device id, index = 1 -> version id
 
 //	SENSOR_AVDD_3000MV,	// voltage of avdd
-	SENSOR_AVDD_2800MV,	// voltage of avdd
+	SENSOR_AVDD_3000MV,	// voltage of avdd
 
 	4632,			// max width of source image
 	3480,			// max height of source image

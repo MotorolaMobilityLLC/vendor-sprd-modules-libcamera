@@ -800,7 +800,7 @@ SENSOR_INFO_T g_ov2680_mipi_raw_info = {
 	SENSOR_IMAGE_FORMAT_RAW,	// define in SENSOR_IMAGE_FORMAT_E enum,SENSOR_IMAGE_FORMAT_MAX
 	// if set to SENSOR_IMAGE_FORMAT_MAX here, image format depent on SENSOR_REG_TAB_INFO_T
 
-	SENSOR_IMAGE_PATTERN_RAWRGB_R,// pattern of input image form sensor;
+	SENSOR_IMAGE_PATTERN_RAWRGB_B,// pattern of input image form sensor;
 
 	s_ov2680_resolution_Tab_RAW,	// point to resolution table information structure
 	&s_ov2680_ioctl_func_tab,	// point to ioctl function table
