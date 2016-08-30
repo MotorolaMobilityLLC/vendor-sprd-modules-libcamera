@@ -2482,6 +2482,12 @@ bool SprdCamera3OEMIf::iSZslMode()
 	if (CAMERA_ZSL_MODE != mCaptureMode)
 		ret = false;
 
+	if(ret == false && mSprdRefocusEnabled == true){
+		usleep(20*1000);
+		if (CAMERA_ZSL_MODE != mCaptureMode)
+			ret = false;
+	}
+
 	return ret;
 }
 
