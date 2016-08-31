@@ -2026,7 +2026,6 @@ cmr_int isp_dev_set_init_param(isp_handle *handle, struct isp_dev_init_param *in
 		&& init_param_ptr->height == file->init_param.height
 		&& init_param_ptr->camera_id == file->init_param.camera_id) {
 		ISP_LOGI("same param.");
-		return ret;
 	}
 
 	file->init_param.width = init_param_ptr->width;
