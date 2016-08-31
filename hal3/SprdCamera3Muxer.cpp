@@ -899,6 +899,10 @@ void SprdCamera3Muxer::MuxerThread::initGpuData(int w,int h, int rotation)
         pt_line_buf.homography_matrix[16] = -0.000015;
         pt_line_buf.homography_matrix[17] = 1.0;
     }
+	HAL_LOGV("using following homography_matrix data:\n");
+	HAL_LOGV("left:\t%8f  %8f  %8f    right:\t%8f  %8f  %8f", pt_line_buf.homography_matrix[0],  pt_line_buf.homography_matrix[1], pt_line_buf.homography_matrix[2], pt_line_buf.homography_matrix[9], pt_line_buf.homography_matrix[10], pt_line_buf.homography_matrix[11]);
+	HAL_LOGV("\t\t%8f  %8f  %8f    \t%8f  %8f  %8f", pt_line_buf.homography_matrix[3],  pt_line_buf.homography_matrix[4], pt_line_buf.homography_matrix[5], pt_line_buf.homography_matrix[12], pt_line_buf.homography_matrix[13], pt_line_buf.homography_matrix[14]);
+	HAL_LOGV("\t\t%8f  %8f  %8f    \t%8f  %8f  %8f", pt_line_buf.homography_matrix[6],  pt_line_buf.homography_matrix[7], pt_line_buf.homography_matrix[8], pt_line_buf.homography_matrix[15], pt_line_buf.homography_matrix[16], pt_line_buf.homography_matrix[17]);
 
     if(isInitRenderContest){
         mGpuApi->destroyRenderContext();
