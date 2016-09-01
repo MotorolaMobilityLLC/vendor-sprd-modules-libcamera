@@ -659,7 +659,8 @@ static void aealtek_weight_ui2lib(enum ae_ctrl_measure_lum_mode from, enum ae_me
 		lib_metering = AE_METERING_AVERAGE;
 		break;
 	case AE_CTRL_MEASURE_LUM_CENTER:
-		lib_metering = AE_METERING_CENTERWT;
+		//lib_metering = AE_METERING_CENTERWT;
+		lib_metering = AE_METERING_INTELLIWT;
 		break;
 	case AE_CTRL_MEASURE_LUM_SPOT:
 		lib_metering = AE_METERING_SPOTWT;
@@ -674,11 +675,12 @@ static void aealtek_weight_ui2lib(enum ae_ctrl_measure_lum_mode from, enum ae_me
 		lib_metering = AE_METERING_USERDEF_WT;
 		break;
 	default:
-		lib_metering = AE_METERING_CENTERWT;
+		lib_metering = AE_METERING_INTELLIWT;
 		ISP_LOGW("not support weight mode %d", from);
 		break;
 	}
 	*to_ptr = lib_metering;
+	ISP_LOGI("weight mode %d", *to_ptr = lib_metering);
 exit:
 	return;
 }
