@@ -46,15 +46,16 @@ struct afctrl_context {
 	cmr_int camera_id;
 	cmr_u8 af_support;
 	cmr_int af_bypass;
-	cmr_s32 frame_id;
-	enum af_ctrl_mode_type af_mode;
-	cmr_int sence_mode;
-	cmr_int flash_on;
+	//cmr_s32 frame_id;
+	//enum af_ctrl_mode_type af_mode;
+	//cmr_int sence_mode;
+	//cmr_int flash_on;
 	cmr_handle adpt_handle;
 	cmr_handle caller_handle;
+	sem_t sync_sm;
 	struct af_ctrl_thread_context thread_cxt;
 	//enum af_ctrl_scene_mode af_scene_mode;
-	struct af_ctrl_roi_info_type af_roi_info;
+	//struct af_ctrl_roi_info_type af_roi_info;
 	//struct af_ctrl_sensor_info_type sensor_info;
 	//struct af_ctrl_auxiliary_info auxiliary_info;
 	struct af_ctrl_cb_ops_type cb_ops;
@@ -71,6 +72,10 @@ struct af_ctrl_msg_proc {
 	struct af_ctrl_process_in *in;
 	struct af_ctrl_process_out *out;
 };
+
+static cmr_int afctrl_evtctrl(cmr_handle handle, cmr_int cmd,
+			      struct af_ctrl_param_in *in,
+			      struct af_ctrl_param_out *out);
 
 static cmr_int afctrl_start_notify(cmr_handle handle, void *data)
 {
@@ -169,7 +174,7 @@ static cmr_int afctrl_config_af_stats(cmr_handle handle, void *data)
 	cmr_int ret = -ISP_ERROR;
 	struct afctrl_context *cxt = (struct afctrl_context *)handle;
 
-	ISP_LOGI("E");
+	ISP_LOGV("E");
 	if (cxt->cb_ops.cfg_af_stats) {
 		ret = cxt->cb_ops.cfg_af_stats(cxt->caller_handle, data);
 	} else {
@@ -200,9 +205,14 @@ static cmr_int afctrl_vcm_process(cmr_handle handle, void *pos)
 	cmr_int ret = -ISP_ERROR;
 	struct afctrl_context *cxt = (struct afctrl_context *)handle;
 	struct af_ctrl_motor_pos *pos_info = (struct af_ctrl_motor_pos *)pos;
+	struct af_ctrl_param_in in;
 
-	ISP_LOGI("pos_info->motor_pos = %d offset %d",
-		pos_info->motor_pos, pos_info->motor_offset);
+	cmr_bzero(&in, sizeof(in));
+
+	in.pos_info = *pos_info;
+
+	ISP_LOGI("motor_pos %d offset %d wait ms %d",
+		in.pos_info.motor_pos, in.pos_info.motor_offset, in.pos_info.vcm_wait_ms);
 
 	/* set pos via fw callback */
 	if (cxt->cb_ops.set_pos) {
@@ -213,13 +223,9 @@ static cmr_int afctrl_vcm_process(cmr_handle handle, void *pos)
 	}
 	/* wait for stabilizing vcm form tuning param */
 	cmr_msleep(pos_info->vcm_wait_ms);
-	ISP_LOGI("pos_info->vcm_wait_ms = %d", pos_info->vcm_wait_ms);
 
 	/* notify lib vcm moving finished */
-	ret = cxt->af_adpt_ops->adpt_ioctrl(cxt->adpt_handle,
-					  AF_CTRL_CMD_SET_AF_POS_DONE,
-					  pos_info,
-					  NULL);
+	ret = afctrl_evtctrl(cxt, AF_CTRL_CMD_SET_AF_POS_DONE, &in, NULL);
 	if (ret)
 		ISP_LOGI("ret = %ld", ret);
 	return ret;
@@ -265,7 +271,9 @@ static cmr_int afctrl_evtctrl(cmr_handle handle, cmr_int cmd,
 	cmr_int ret = -ISP_ERROR;
 	struct afctrl_context *cxt = (struct afctrl_context *)handle;
 
+	sem_wait(&cxt->sync_sm);
 	ret = cxt->af_adpt_ops->adpt_ioctrl(cxt->adpt_handle, cmd, in, out);
+	sem_post(&cxt->sync_sm);
 	return ret;
 }
 
@@ -370,7 +378,7 @@ static cmr_int afctrl_vcm_thread_proc(struct cmr_msg *message, void *p_data)
 		ret = -ISP_PARAM_NULL;
 		goto exit;
 	}
-	ISP_LOGI("message.msg_type 0x%x, data %p", message->msg_type, message->data);
+	ISP_LOGV("message.msg_type 0x%x, data %p", message->msg_type, message->data);
 
 	switch (message->msg_type) {
 	case AFCTRL_VCM_EVT_INIT:
@@ -456,6 +464,7 @@ cmr_int af_ctrl_init(struct af_ctrl_init_in *in,
 		ISP_LOGE("failed to get adapter layer ret = %ld", ret);
 		goto error_get_adpt;
 	}
+	sem_init(&cxt->sync_sm, 0, 1);
 	cxt->caller_handle = in->caller_handle;
 	cxt->cb_ops = in->af_ctrl_cb_ops;
 
@@ -539,6 +548,8 @@ cmr_int af_ctrl_deinit(cmr_handle handle)
 	ret = cxt->af_adpt_ops->adpt_deinit(cxt->adpt_handle);
 	if (ret)
 		ISP_LOGE("failed to deinit adapter layer ret = %ld", ret);
+
+	sem_destroy(&cxt->sync_sm);
 
 sucess_exit:
 	cmr_bzero(cxt, sizeof(*cxt));

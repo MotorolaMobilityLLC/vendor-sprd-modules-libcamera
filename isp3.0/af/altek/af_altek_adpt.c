@@ -885,16 +885,22 @@ static cmr_int afaltek_adpt_update_gyro_info(cmr_handle adpt_handle, void *in)
 	return ret;
 }
 
-static cmr_int afaltek_adpt_update_pd_info(cmr_handle adpt_handle,void *in)
+static cmr_int afaltek_adpt_update_pd_info(cmr_handle adpt_handle, void *in)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_pd_info_t *pd_info = (struct allib_af_input_pd_info_t *)in;
+	struct af_ctrl_input_pd_info_t *pd_info = (struct af_ctrl_input_pd_info_t *)in;
 	struct allib_af_input_set_param_t p;
 
 	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_UPDATE_PD_INFO;
-	p.u_set_data.pd_info = *pd_info;
+	p.u_set_data.pd_info.token_id  = pd_info->token_id;
+	p.u_set_data.pd_info.frame_id = pd_info->frame_id;
+	p.u_set_data.pd_info.enable = pd_info->enable;
+	p.u_set_data.pd_info.time_stamp.time_stamp_sec = pd_info->timestamp.sec;
+	p.u_set_data.pd_info.time_stamp.time_stamp_us = pd_info->timestamp.usec;
+	p.u_set_data.pd_info.extend_data_ptr = pd_info->extend_data_ptr;
+	p.u_set_data.pd_info.extend_data_size = pd_info->extend_data_size;
 
 	ret = afaltek_adpt_set_parameters(cxt, &p);
 	return ret;
@@ -2089,7 +2095,7 @@ static cmr_int afaltek_adpt_inctrl(cmr_handle adpt_handle, cmr_int cmd,
 		ret = afaltek_adpt_update_pd_info(adpt_handle, in);
 		break;
 	case AF_CTRL_CMD_SET_PD_ENABLE:
-		afaltek_adpt_hybird_af_enable(adpt_handle, in);
+		//ret = afaltek_adpt_hybird_af_enable(adpt_handle, in);
 		break;
 	case AF_CTRL_CMD_SET_LIVE_VIEW_SIZE:
 		ret = afaltek_adpt_update_isp_info(adpt_handle, in);
@@ -2382,7 +2388,7 @@ static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 		hybrid_in.type = alAFLIB_HYBRID_TYPE_PD;
 		//hybrid_in.pd_lib_version = NULL;
 
-		afaltek_adpt_hybird_af_enable(adpt_handle,(void *)&hybrid_in);
+		afaltek_adpt_hybird_af_enable(adpt_handle, (void *)&hybrid_in);
 	}
 
 	/* sync init param */

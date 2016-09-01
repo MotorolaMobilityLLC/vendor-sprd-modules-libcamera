@@ -176,16 +176,11 @@ struct af_ctrl_cb_ops_type {
 				   cmr_u32 *usec_ptr);
 };
 
-struct af_ctrl_time_stamp_t {
-	cmr_u32 time_stamp_sec;
-	cmr_u32 time_stamp_us;
-};
-
 struct af_ctrl_input_pd_info_t {
 	cmr_u16 token_id;
 	cmr_u32 frame_id;
 	cmr_u8 enable;
-	struct af_ctrl_time_stamp_t time_stamp;
+	struct isp3a_timestamp timestamp;
 	void* extend_data_ptr;
 	cmr_u32 extend_data_size;
 };
@@ -301,6 +296,11 @@ struct af_ctrl_param_in {
 		enum isp_flash_mode flash_mode;
 		struct af_ctrl_isp_info_t live_view_sz;
 		struct af_ctrl_sensor_info_type sensor_info;
+		struct af_ctrl_motor_pos pos_info;
+		struct isp3a_ae_info ae_info;
+		struct af_aux_sensor_info_t aux_info;
+		struct af_ctrl_input_pd_info_t pd_info;
+		void *y_img;
 	};
 };
 

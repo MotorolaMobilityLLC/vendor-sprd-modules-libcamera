@@ -3503,9 +3503,11 @@ cmr_int isp3a_start_af_process(cmr_handle isp_3a_handle, struct isp3a_statistics
 	struct af_ctrl_process_out                  output;
 	union awb_ctrl_cmd_in                       awb_in;
 
+#if 0
 	ret = af_ctrl_ioctrl(cxt->af_cxt.handle,
 			     AF_CTRL_CMD_SET_UPDATE_AWB,
 			     NULL, NULL);
+#endif
 	ret = af_ctrl_ioctrl(cxt->af_cxt.handle,
 			     AF_CTRL_CMD_SET_UPDATE_AE,
 			     (void *)&cxt->ae_cxt.proc_out.ae_info, NULL);
@@ -4180,7 +4182,7 @@ cmr_int isp3a_set_pdaf_enable(cmr_handle isp_3a_handle, void *param_ptr)
 {
 	cmr_int                                     ret = -ISP_ERROR;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
-	struct pdaf_ctrl_param_in                     pdaf_in;
+	struct pdaf_ctrl_param_in                   pdaf_in;
 
 	if (!param_ptr) {
 		ISP_LOGW("input is NULL");
@@ -4203,8 +4205,8 @@ cmr_int isp3a_set_pdaf_roi(cmr_handle isp_3a_handle, void *param_ptr)
 {
 	cmr_int                                     ret = -ISP_ERROR;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
-	struct pdaf_ctrl_param_in                     pdaf_in;
-	struct isp3a_roi_t                                 *roi = (struct isp3a_roi_t *)param_ptr;
+	struct pdaf_ctrl_param_in                   pdaf_in;
+	struct isp3a_roi_t                          *roi = (struct isp3a_roi_t *)param_ptr;
 
 	if (!param_ptr) {
 		ISP_LOGW("input is NULL");
@@ -4228,7 +4230,7 @@ cmr_int isp3a_set_pdaf_reset(cmr_handle isp_3a_handle)
 {
 	cmr_int                                     ret = -ISP_ERROR;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
-	struct pdaf_ctrl_param_in                     pdaf_in;
+	struct pdaf_ctrl_param_in                   pdaf_in;
 
 	if (!cxt->pdaf_cxt.handle) {
 		return ret;
@@ -4242,24 +4244,20 @@ cmr_int isp3a_set_pdaf_reset(cmr_handle isp_3a_handle)
 cmr_int isp3a_handle_pdaf_callback(cmr_handle isp_3a_handle, struct pdaf_ctrl_callback_in *result_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
-	struct isp3a_fw_context                    *cxt = (struct isp3a_fw_context *)isp_3a_handle;
-	struct af_ctrl_input_pd_info_t     input_pd_info;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
+	struct af_ctrl_param_in                     af_in;
 
 	cxt->pdaf_cxt.proc_out = result_ptr->proc_out;
 
-	input_pd_info.extend_data_size = cxt->pdaf_cxt.proc_out.pd_report_data.pd_reg_size;
-	input_pd_info.extend_data_ptr = cxt->pdaf_cxt.proc_out.pd_report_data.pd_reg_out;
-	input_pd_info.token_id = cxt->pdaf_cxt.proc_out.pd_report_data.token_id;
-	input_pd_info.time_stamp.time_stamp_sec = cxt->pdaf_cxt.proc_out.pd_report_data.time_stamp.sec;
-	input_pd_info.time_stamp.time_stamp_us = cxt->pdaf_cxt.proc_out.pd_report_data.time_stamp.usec;
+	af_in.pd_info.extend_data_size = cxt->pdaf_cxt.proc_out.pd_report_data.pd_reg_size;
+	af_in.pd_info.extend_data_ptr = cxt->pdaf_cxt.proc_out.pd_report_data.pd_reg_out;
+	af_in.pd_info.token_id = cxt->pdaf_cxt.proc_out.pd_report_data.token_id;
+	af_in.pd_info.timestamp.sec = cxt->pdaf_cxt.proc_out.pd_report_data.time_stamp.sec;
+	af_in.pd_info.timestamp.usec = cxt->pdaf_cxt.proc_out.pd_report_data.time_stamp.usec;
 
-	if (!cxt->af_cxt.handle) {
-		return ret;
-	}
 	ISP_LOGI("E");
-	ret = af_ctrl_ioctrl(cxt->af_cxt.handle,
-			     AF_CTRL_CMD_SET_PD_INFO,
-			     (void *)&input_pd_info, NULL);
+	ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_SET_PD_INFO, (void *)&af_in, NULL);
+
 	return ret;
 }
 
@@ -4267,8 +4265,8 @@ static cmr_int isp3a_handle_pdaf_raw_open(cmr_handle isp_3a_handle, void *param_
 {
 	cmr_int                                     ret = -ISP_ERROR;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
-	struct pd_raw_open                  *pd_open = (struct pd_raw_open *)param_ptr;
-	struct pdaf_ctrl_open_in                   input;
+	struct pd_raw_open                          *pd_open = (struct pd_raw_open *)param_ptr;
+	struct pdaf_ctrl_open_in                    input;
 
 	if (!param_ptr) {
 		ISP_LOGW("input is NULL");
@@ -4293,8 +4291,8 @@ static cmr_int isp3a_start_pdaf_raw_process(cmr_handle isp_3a_handle, void *para
 {
 	cmr_int                                     ret = -ISP_ERROR;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
-	struct pd_raw_info                  *pd_raw = (struct pd_raw_info *)param_ptr;
-	struct pdaf_ctrl_process_in                   input;
+	struct pd_raw_info                          *pd_raw = (struct pd_raw_info *)param_ptr;
+	struct pdaf_ctrl_process_in                 input;
 
 	if (!param_ptr) {
 		ISP_LOGW("input is NULL");
