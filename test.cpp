@@ -85,6 +85,8 @@ static unsigned int mPreviewHeapNum = 0; /*allocated preview buffer number*/
 static sprd_camera_memory_t* mPreviewHeapReserved = NULL;
 static sprd_camera_memory_t* mIspLscHeapReserved = NULL;
 static sprd_camera_memory_t* mIspAFLHeapReserved = NULL;
+static sprd_camera_memory_t* mIspFirmwareReserved = NULL;
+static uint32_t mIspFirmwareReserved_cnt = 0;
 static const int kISPB4awbCount = 16;
 sprd_camera_memory_t* mIspB4awbHeapReserved[kISPB4awbCount];
 sprd_camera_memory_t* mIspRawAemHeapReserved[kISPB4awbCount];
@@ -633,6 +635,12 @@ static int Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint *phy_addr, 
 			}
 		}
 	}
+	if (type == CAMERA_ISP_FIRMWARE) {
+		if (NULL != mIspFirmwareReserved && !(--mIspFirmwareReserved_cnt)) {
+			freeCameraMem(mIspFirmwareReserved);
+			mIspFirmwareReserved = NULL;
+		}
+	}
 
 	if (type == CAMERA_ISP_RAWAE) {
 		for (i=0 ; i < kISPB4awbCount ; i++) {
@@ -698,7 +706,7 @@ static cmr_int Callback_Free(enum camera_mem_cb_type type, cmr_uint *phy_addr, c
 
 	if (CAMERA_PREVIEW == type) {
 		ret = Callback_PreviewFree(phy_addr, vir_addr, fd, sum);
-	} else if (type == CAMERA_PREVIEW_RESERVED || type == CAMERA_ISP_LSC
+	} else if (type == CAMERA_PREVIEW_RESERVED || type == CAMERA_ISP_LSC || type == CAMERA_ISP_FIRMWARE
 			|| type == CAMERA_ISP_BINGING4AWB || type == CAMERA_ISP_RAWAE || type == CAMERA_ISP_ANTI_FLICKER) {
 		ret = Callback_OtherFree(type, phy_addr, vir_addr, fd, sum);
 	} else {
@@ -935,7 +943,27 @@ static int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size, cmr_
 			*vir_addr++ = (cmr_uint)mIspAFLHeapReserved->data;
 			*fd++ = mIspAFLHeapReserved->fd;
 		}
-	} else {
+	} else if (type == CAMERA_ISP_FIRMWARE) {
+		cmr_u64 kaddr = 0;
+		size_t ksize = 0;
+
+		if(++mIspFirmwareReserved_cnt == 1) {
+			memory = allocCameraMem(size, 1, false);
+			if (NULL == memory) {
+				ALOGE("Native MMI Test: %s,%d, failed: alloc camera mem err.\n", __func__, __LINE__);
+				goto mem_fail;
+			}
+			mIspFirmwareReserved = memory;
+		} else {
+			 memory = mIspFirmwareReserved;
+		}
+		if(memory->ion_heap)
+			memory->ion_heap->get_kaddr(&kaddr, &ksize);
+		*phy_addr++ = kaddr;
+		*phy_addr++ = kaddr >> 32;
+		*vir_addr++ = (cmr_uint)memory->data;
+		*fd++ = memory->fd;
+	}else {
 		ALOGE("Native MMI Test: %s,%s,%d, type ignore: %d, do nothing.\n", __FILE__, __func__, __LINE__, type);
 	}
 
@@ -972,7 +1000,7 @@ static cmr_int Callback_Malloc(enum camera_mem_cb_type type, cmr_u32 *size_ptr, 
         /* preview buffer */
 		ALOGI("Native MMI Test: %s,%s,%d IN\n", __FILE__,__func__, __LINE__);
 		ret = Callback_PreviewMalloc(size, sum, phy_addr, vir_addr, fd);
-	} else if (type == CAMERA_PREVIEW_RESERVED || type == CAMERA_ISP_LSC
+	} else if (type == CAMERA_PREVIEW_RESERVED || type == CAMERA_ISP_LSC || type == CAMERA_ISP_FIRMWARE
 			|| type == CAMERA_ISP_BINGING4AWB || type == CAMERA_ISP_RAWAE || type == CAMERA_ISP_ANTI_FLICKER) {
 		ALOGI("Native MMI Test: %s,%s,%d IN\n", __FILE__,__func__, __LINE__);
 		ret = Callback_OtherMalloc(type, size, sum, phy_addr, vir_addr, fd);
