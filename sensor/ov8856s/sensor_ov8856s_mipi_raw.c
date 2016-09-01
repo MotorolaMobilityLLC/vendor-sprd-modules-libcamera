@@ -1195,6 +1195,7 @@ static uint32_t ov8856s_write_gain_value(SENSOR_HW_HANDLE handle,unsigned long p
 	float real_gain = 0;
 
 	//real_gain = isp_to_real_gain(handle,param);
+	param = param < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : param;
 
 	real_gain = (float)1.0f*param * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
 

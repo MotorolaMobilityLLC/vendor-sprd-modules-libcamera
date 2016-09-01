@@ -44,7 +44,7 @@
 
 /* sensor parameters begin */
 /* effective sensor output image size */
-#define SNAPSHOT_WIDTH			4160 //4208
+#define SNAPSHOT_WIDTH			4208
 #define SNAPSHOT_HEIGHT			3120
 #define PREVIEW_WIDTH			2104
 #define PREVIEW_HEIGHT			1560
@@ -52,7 +52,7 @@
 /*Raw Trim parameters*/
 #define SNAPSHOT_TRIM_X			0
 #define SNAPSHOT_TRIM_Y			0
-#define SNAPSHOT_TRIM_W			4160 //4208
+#define SNAPSHOT_TRIM_W			4208
 #define SNAPSHOT_TRIM_H			3120
 #define PREVIEW_TRIM_X			0
 #define PREVIEW_TRIM_Y			0
@@ -409,18 +409,18 @@ static const SENSOR_REG_T s5k3l8xxm3_snapshot_setting[] = {
 	{0x6F12,0x0040},
 	{0x6F12,0x0040},
 	{0x6028,0x4000},
-	{0x0344,0x0020},
+	/*{0x0344,0x0020},//4160 x3120
 	{0x0346,0x0008},
 	{0x0348,0x105F},
 	{0x034A,0x0C37},
 	{0x034C,0x1040},
-	{0x034E,0x0C30},
-	/*{0x0344,0x0008},//4208 x3120
+	{0x034E,0x0C30},*/
+	{0x0344,0x0008},//4208 x3120
 	{0x0346,0x0008},
 	{0x0348,0x1077},
 	{0x034A,0x0C37},
 	{0x034C,0x1070},
-	{0x034E,0x0C30},*/
+	{0x034E,0x0C30},
 	{0x0900,0x0011},
 	{0x0380,0x0001},
 	{0x0382,0x0001},
@@ -458,6 +458,7 @@ static SENSOR_REG_TAB_INFO_T s_s5k3l8xxm3_resolution_tab_raw[SENSOR_MODE_MAX] = 
 	{ADDR_AND_LEN_OF_ARRAY(s5k3l8xxm3_snapshot_setting),
 	 SNAPSHOT_WIDTH, SNAPSHOT_HEIGHT, EX_MCLK,
 	 SENSOR_IMAGE_FORMAT_RAW},
+
 };
 
 static SENSOR_TRIM_T s_s5k3l8xxm3_resolution_trim_tab[SENSOR_MODE_MAX] = {
@@ -1031,7 +1032,8 @@ static unsigned long s5k3l8xxm3_access_val(SENSOR_HW_HANDLE handle,unsigned long
 	SENSOR_PRINT("sensor s5k3l8xxm3: param_ptr->type=%x", param_ptr->type);
 	
 	switch(param_ptr->type)
-	{	case SENSOR_VAL_TYPE_INIT_OTP:
+	{
+		case SENSOR_VAL_TYPE_INIT_OTP:
 			ret =s5k3l8xxm3_otp_init(handle);
 			break;
 		case SENSOR_VAL_TYPE_READ_OTP:
@@ -1309,10 +1311,11 @@ static uint32_t s5k3l8xxm3_write_gain_value(SENSOR_HW_HANDLE handle,unsigned lon
 	float real_gain = 0;
 
 	//real_gain = isp_to_real_gain(handle,param);
+	param = param < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : param;
 
 	real_gain = (float)param * SENSOR_BASE_GAIN / ISP_BASE_GAIN*1.0;
 
-	SENSOR_PRINT("real_gain = 0x%x", real_gain);
+	SENSOR_PRINT("real_gain = %f", real_gain);
 
 	s_sensor_ev_info.preview_gain = real_gain;
 	s5k3l8xxm3_write_gain(handle,real_gain);
@@ -1358,7 +1361,7 @@ static uint32_t s5k3l8xxm3_stream_on(SENSOR_HW_HANDLE handle,uint32_t param)
 
 	Sensor_WriteReg(0x0100, 0x0100);
 	/*delay*/
-	usleep(10 * 1000);
+	//usleep(10 * 1000);
 
 	return 0;
 }

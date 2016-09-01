@@ -1144,6 +1144,7 @@ static uint32_t sp2509_write_gain_value(SENSOR_HW_HANDLE handle,unsigned long pa
 	float real_gain = 0;
 
 	//real_gain = isp_to_real_gain(handle,param);
+	param = param < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : param;
 
 	real_gain = (float)1.0*param * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
 

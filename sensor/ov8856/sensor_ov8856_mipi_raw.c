@@ -129,6 +129,8 @@ static struct sensor_ev_info_t s_sensor_ev_info={
 
 #ifdef FEATURE_OTP
 #include "sensor_ov8856_darling_otp.c"
+#else
+#include "ov8856_darling_otp.h"
 #endif
 
 static SENSOR_IOCTL_FUNC_TAB_T s_ov8856_ioctl_func_tab;
@@ -975,7 +977,7 @@ static uint32_t ov8856_get_fps_info(SENSOR_HW_HANDLE handle, uint32_t *param)
 static unsigned long ov8856_access_val(SENSOR_HW_HANDLE handle,unsigned long param)
 {
 	uint32_t ret = SENSOR_SUCCESS;
-    SENSOR_VAL_T* param_ptr = (SENSOR_VAL_T*)param;
+	SENSOR_VAL_T* param_ptr = (SENSOR_VAL_T*)param;
 	
 	if(!param_ptr){
 		return ret;
@@ -986,19 +988,28 @@ static unsigned long ov8856_access_val(SENSOR_HW_HANDLE handle,unsigned long par
 	switch(param_ptr->type)
 	{
 		case SENSOR_VAL_TYPE_INIT_OTP:
-			#ifdef FEATURE_OTP
-			if(PNULL!=s_ov8856_raw_param_tab_ptr->cfg_otp){
-				ret = s_ov8856_raw_param_tab_ptr->cfg_otp(handle,s_ov8856_otp_info_ptr);
-				//checking OTP apply result
-				if (SENSOR_SUCCESS != ret) {
-					SENSOR_PRINT("apply otp failed");
-				}
-			} 
-			else {
-				SENSOR_PRINT("no update otp function!");
-			}
+			ret =ov8856_otp_init(handle);
+			break;
+		case SENSOR_VAL_TYPE_READ_OTP:
+			//ret =ov8856_otp_read(handle,param_ptr);
+			break;
+		case SENSOR_VAL_TYPE_READ_DUAL_OTP:
+			#ifdef OV8856_DUAL_OTP
+			//ret = ov8856_dual_otp_read(handle, param_ptr);
 			#endif
 			break;
+		case SENSOR_VAL_TYPE_PARSE_OTP:
+			//ret = ov8856_parse_otp(handle, param_ptr);
+			break;
+		case SENSOR_VAL_TYPE_PARSE_DUAL_OTP:
+			#ifdef OV8856_DUAL_OTP
+			//ret = ov8856_parse_dual_otp(handle, param_ptr);
+			#endif
+			break;
+		case SENSOR_VAL_TYPE_WRITE_OTP:
+			//rtn = _ov8856_write_otp(handle, (uint32_t)param_ptr->pval);
+			break;
+
 		case SENSOR_VAL_TYPE_SHUTTER:
 			*((uint32_t*)param_ptr->pval) = ov8856_read_shutter(handle);
 			break;
@@ -1193,6 +1204,8 @@ static uint32_t ov8856_write_gain_value(SENSOR_HW_HANDLE handle,unsigned long pa
 	float real_gain = 0;
 
 	//real_gain = isp_to_real_gain(handle,param);
+	//SENSOR_PRINT("param = %d", param);
+	param = param < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : param;
 
 	real_gain = (float)1.0f*param * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
 
