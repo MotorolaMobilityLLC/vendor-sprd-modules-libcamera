@@ -164,6 +164,7 @@ struct af_altek_context {
 	struct caf_context af_caf_cxt;
 	struct af_ae_working_info ae_info;
 	enum af_ctrl_lens_status lens_status;
+	cmr_u32 caf_force_focus;
 };
 
 /************************************ INTERNAK DECLARATION ************************************/
@@ -1083,6 +1084,8 @@ static cmr_int afaltek_adpt_caf_init(cmr_handle adpt_handle)
 	}
 	ISP_LOGI("caf_wp_ver %f init ret %ld", caf_wp_ver, ret);
 
+	cxt->caf_force_focus = 1;
+
 	return ret;
 }
 
@@ -1273,7 +1276,10 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 	roi.win[0].end_x = 5 * cxt->sensor_info.crop_info.width / 8;
 	roi.win[0].end_y = 5 * cxt->sensor_info.crop_info.height / 8;
 
-	if (aft_in->ae_info.is_stable && cxt->ae_info.ae_stable_retrig_flg) {
+	if ((aft_in->ae_info.is_stable && cxt->ae_info.ae_stable_retrig_flg)||
+		cxt->caf_force_focus) {
+		/* When entering the camera, CAF is forced to focus once. */
+		cxt->caf_force_focus = 0;
 		ISP_LOGI("af retrigger");
 		/* notify oem to show box */
 		ret = afaltek_adpt_start_notify(adpt_handle);
