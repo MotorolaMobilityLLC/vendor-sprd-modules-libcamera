@@ -3795,9 +3795,11 @@ SprdCamera3Setting::translateLocalToFwMetadata()
 	camMetadata.update(ANDROID_TONEMAP_CURVE_GREEN, s_setting[mCameraId].toneInfo.curve_green, SPRD_MAX_TONE_CURVE_POINT);
 	camMetadata.update(ANDROID_TONEMAP_CURVE_RED, s_setting[mCameraId].toneInfo.curve_red, SPRD_MAX_TONE_CURVE_POINT);
 
-	if(mCameraId == 0){
-		camMetadata.update(ANDROID_SPRD_VCM_STEP, &(s_setting[mCameraId].vcmInfo.vcm_step), 1);
+	if(mCameraId == 0){// && s_setting[mCameraId].otpInfo.otp_data){ // "s_setting[mCameraId].otpInfo.otp_data" always "true"
 		camMetadata.update(ANDROID_SPRD_OTP_DATA, s_setting[mCameraId].otpInfo.otp_data,SPRD_DUAL_OTP_SIZE);
+	}
+	if(mCameraId == 0 && s_setting[mCameraId].vcmInfo.vcm_step){
+		camMetadata.update(ANDROID_SPRD_VCM_STEP, &(s_setting[mCameraId].vcmInfo.vcm_step), 1);
 	}
 
 	resultMetadata = camMetadata.release();

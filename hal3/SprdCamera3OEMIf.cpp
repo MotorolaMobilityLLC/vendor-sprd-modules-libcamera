@@ -153,20 +153,6 @@ static void writeCamInitTimeToApct(char *buf)
 	}
 }
 
-static int save_file(const char *file_name, void *data, uint32_t data_size)
-{
-	FILE *pf = fopen(file_name, "wb");
-	uint32_t write_bytes = 0;
-
-	if (NULL == pf)
-		return 0;
-
-	write_bytes = fwrite(data, 1, data_size, pf);
-	fclose(pf);
-
-	return write_bytes;
-}
-
 static void writeCamInitTimeToProc(float init_time)
 {
 	char cam_time_buf[256] = {0};
@@ -2046,35 +2032,57 @@ bool SprdCamera3OEMIf::startCameraIfNecessary()
 
 		/*get sensor otp from oem layer*/
 
-//temp code begin
+		/*read refoucs mode begin*/
 		char refocus[PROPERTY_VALUE_MAX];
 		property_get("sys.cam.refocus", refocus, "0");
 		if(atoi(refocus)!=0)
 			mSprdRefocusEnabled = true;
 		CMR_LOGI("refocus mode %d", mSprdRefocusEnabled);
-		SPRD_DEF_Tag sprddefInfo = {0};
-		mSetting->setSPRDDEFTag(sprddefInfo);
-//temp code end
+		/*read refoucs mode end*/
 
-		if(mSprdRefocusEnabled == true && mCameraId == 0){
-			struct sensor_dual_otp_info dual_otp_info = {0};
+		/*read refoucs otp begin*/
+		if(mSprdRefocusEnabled == true && mCameraId == 0 ){
+#ifdef CAMERA_READ_OTP_FROM_FILE
+			char *psPath_OtpData = "data/misc/media/otp.bin";
+			char *dual_otp_data = (char*)malloc(SPRD_DUAL_OTP_SIZE);
 			OTP_Tag otpInfo = {0};
+			mSetting->getOTPTag(&otpInfo);
+			int otp_ret = read_file(psPath_OtpData,  dual_otp_data, SPRD_DUAL_OTP_SIZE);
+			if(otp_ret == 0){
+				struct sensor_dual_otp_info dual_otp_info = {0};
+				mHalOem->ops->camera_get_sensor_dual_otp_info(mCameraHandle, &dual_otp_info);
+				if(dual_otp_info.dual_otp.data_ptr != NULL)
+				{
+				    save_file(psPath_OtpData, dual_otp_info.dual_otp.data_ptr, dual_otp_info.dual_otp.size);
+					HAL_LOGD("camera_id: %d,dual_otp_info %p, data_ptr %p, size 0x%x", mCameraId, &dual_otp_info,dual_otp_info.dual_otp.data_ptr,dual_otp_info.dual_otp.size);
+					memcpy(otpInfo.otp_data,dual_otp_info.dual_otp.data_ptr,SPRD_DUAL_OTP_SIZE);
+				}
+			}else{
+					HAL_LOGD("camera_id: %d,dual_otp_data %p", mCameraId, dual_otp_data);
+					memcpy(otpInfo.otp_data,dual_otp_data,SPRD_DUAL_OTP_SIZE);
+			}
+			mSetting->setOTPTag(otpInfo);
+
+			if (dual_otp_data != NULL) {
+				free(dual_otp_data);
+				dual_otp_data = NULL;
+			}
+#else
+			OTP_Tag otpInfo = {0};
+			mSetting->getOTPTag(&otpInfo);
+
+			struct sensor_dual_otp_info dual_otp_info = {0};
 			mHalOem->ops->camera_get_sensor_dual_otp_info(mCameraHandle, &dual_otp_info);
 			if(dual_otp_info.dual_otp.data_ptr != NULL)
 			{
-				mSetting->getOTPTag(&otpInfo);
+				HAL_LOGD("camera_id: %d,dual_otp_info %p, data_ptr %p, size 0x%x", mCameraId, &dual_otp_info,dual_otp_info.dual_otp.data_ptr,dual_otp_info.dual_otp.size);
 				memcpy(otpInfo.otp_data,dual_otp_info.dual_otp.data_ptr,SPRD_DUAL_OTP_SIZE);
-				mSetting->setOTPTag(otpInfo);
-
-				char value[PROPERTY_VALUE_MAX];
-				property_get("persist.sys.camera.refocus.yuv", value, "0");
-				if (!strcmp(value, "1")) {
-				char *psPath_OtpData = "data/misc/media/otp.bin";
-			    save_file(psPath_OtpData, dual_otp_info.dual_otp.data_ptr, dual_otp_info.dual_otp.size);
-				}
-				HAL_LOGD("camera_id: %d,dual_otp_info %p", mCameraId, dual_otp_info);
 			}
+			mSetting->setOTPTag(otpInfo);
+#endif
 		}
+		/*read refoucs otp end*/
+
 		/*get sensor otp from oem layer end*/
 		/**add for 3d calibration get max sensor size begin*/
 		mSetting->getSPRDDEFTag(&sprddefInfo);
@@ -3449,21 +3457,6 @@ bool SprdCamera3OEMIf::receiveCallbackPicture(uint32_t width, uint32_t height, c
 			if(ret == NO_ERROR) {
 				if(addr_vir != NULL && virtual_addr != NULL)
 					memcpy((char *)addr_vir, (char *)virtual_addr, (width * height * 3) / 2);
-
-				char value[PROPERTY_VALUE_MAX];
-				property_get("persist.sys.camera.refocus.yuv", value, "0");
-				if (!strcmp(value, "1")) {
-					if(mCameraId  == 0)
-					{
-						char *psPath_depthData = "data/misc/media/pic0.yvu420";
-						save_file(psPath_depthData, (void *)virtual_addr, (width * height * 3) / 2);
-					}
-					if(mCameraId  == 2)
-					{
-						char *psPath_depthData = "data/misc/media/pic2.yvu420";
-						save_file(psPath_depthData, (void *)virtual_addr, (width * height * 3) / 2);
-					}
-				}
 
 				pic_channel->channelCbRoutine(frame_num, timestamp, CAMERA_STREAM_TYPE_PICTURE_CALLBACK);
 				HAL_LOGD("channelCbRoutine pic_callback_addr_vir = 0x%lx, frame_num = %d", addr_vir, frame_num);
