@@ -305,6 +305,7 @@ enum isp_capture_mode {
 	ISP_CAP_MODE_HIGHISO,
 	ISP_CAP_MODE_HIGHISO_RAW_CAP,
 	ISP_CAP_MODE_DRAM,
+	ISP_CAP_MODE_BURST,
 	ISP_CAP_MODE_MAX
 };
 
@@ -603,10 +604,11 @@ struct isp_video_start {
 	cmr_u32 is_need_flash;
 	cmr_u32 capture_skip_num;
 	struct isp_sensor_fps_info sensor_fps;
-	void *tuning_ae_addr;
-	cmr_s32 raw_buf_fd;
-	cmr_uint raw_buf_phys_addr;
-	cmr_uint raw_buf_virt_addr;
+	void * tuning_ae_addr;
+	cmr_s32 raw_buf_fd[4];
+	cmr_uint raw_buf_phys_addr[4];
+	cmr_u64 raw_buf_virt_addr[4];
+	cmr_u32  raw_buf_cnt;
 	cmr_uint raw_buf_size;
 	cmr_uint raw_buf_width;
 	cmr_uint raw_buf_height;
@@ -615,6 +617,8 @@ struct isp_video_start {
 	cmr_uint highiso_buf_virt_addr;
 	cmr_uint highiso_buf_size;
 	struct isp_size live_view_sz;
+	struct isp_size lv_size;
+	struct isp_size video_size;
 };
 
 struct ips_in_param {
@@ -658,11 +662,11 @@ struct isp_img_param {
 	cmr_u32                    start_buf_id;
 	cmr_u32                    is_reserved_buf;
 	cmr_u32                    flag;
-	cmr_u32                    index;
+	cmr_u32                    index[ISP_GRAB_BUF_MAX];
 	struct isp_size            img_size;
-	struct isp_img_mfd         img_fd;
-	struct isp_addr            addr;
-	struct isp_addr            addr_vir;
+	struct isp_img_mfd         img_fd[ISP_GRAB_BUF_MAX];
+	struct isp_addr            addr[ISP_GRAB_BUF_MAX];
+	struct isp_addr            addr_vir[ISP_GRAB_BUF_MAX];
 	cmr_uint                   zsl_private;
 };
 
@@ -675,5 +679,6 @@ cmr_int isp_video_stop(cmr_handle isp_handle);
 cmr_int isp_proc_start(cmr_handle isp_handle, struct ips_in_param *input_ptr, struct ips_out_param *output_ptr);
 cmr_int isp_proc_next(cmr_handle isp_handle, struct ipn_in_param *input_ptr, struct ips_out_param *output_ptr);
 cmr_int isp_cap_buff_cfg(cmr_handle isp_handle, struct isp_img_param *buf_cfg);
+cmr_int isp_drammode_takepic (cmr_handle isp_handle, cmr_u32 is_start);
 void ispmw_dev_buf_cfg_evt_cb(cmr_handle isp_handle, isp_buf_cfg_evt_cb grab_event_cb);
 #endif

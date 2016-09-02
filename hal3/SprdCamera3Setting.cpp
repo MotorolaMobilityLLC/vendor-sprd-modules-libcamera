@@ -2880,6 +2880,9 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
 	uint8_t sprdEisEnabled= 0;
 	requestInfo.update(ANDROID_SPRD_EIS_ENABLED, &sprdEisEnabled, 1);
 
+	uint8_t sprdBurstModeEnabled= 0;
+	requestInfo.update(ANDROID_SPRD_BURSTMODE_ENABLED, &sprdBurstModeEnabled, 1);
+
 	mDefaultMetadata[type] = requestInfo.release();
 	*metadata = mDefaultMetadata[type];
 
@@ -3353,6 +3356,12 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 		/**add for 3d calibration force set sprd zsl enable end*/
 		pushAndroidParaTag(ANDROID_SPRD_ZSL_ENABLED);
 		HAL_LOGD("camera id %d,sprd zsl enabled is %d", mCameraId,s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled);
+	}
+
+	if (frame_settings.exists(ANDROID_SPRD_BURSTMODE_ENABLED)) {
+		s_setting[mCameraId].sprddefInfo.sprd_burstmode_enable = frame_settings.find(ANDROID_SPRD_BURSTMODE_ENABLED).data.u8[0];
+		pushAndroidParaTag(ANDROID_SPRD_BURSTMODE_ENABLED);
+		HAL_LOGD("sprd_burstmode_enable is %d", s_setting[mCameraId].sprddefInfo.sprd_burstmode_enable);
 	}
 
 //SCALER

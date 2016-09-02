@@ -180,6 +180,8 @@ struct prev_context {
 	cmr_s64                         restart_timestamp;
 	cmr_uint                        restart_skip_cnt;
 	cmr_uint                        restart_skip_en;
+	struct img_size                 lv_size;
+	struct img_size                 video_size;
 
 	cmr_uint                        prev_self_restart;
 	cmr_uint                        prev_buf_id;
@@ -2991,7 +2993,7 @@ cmr_int prev_zsl_frame_handle(struct prev_handle *handle, cmr_u32 camera_id, str
 	prev_cxt->cap_zsl_frm_cnt++;
 
 	/*skip frame if SW skip mode*/
-	if (IMG_SKIP_SW == prev_cxt->skip_mode) {
+	if (IMG_SKIP_SW == prev_cxt->skip_mode && !prev_cxt->prev_param.sprd_burstmode_enabled) {
 		if (prev_cxt->cap_zsl_frm_cnt <= prev_cxt->prev_skip_num && prev_cxt->cap_zsl_frm_cnt < CMR_MAX_SKIP_NUM) {
 			CMR_LOGI("ignore this frame, preview cnt %ld, total skip num %ld, channed_id %d",
 				prev_cxt->cap_zsl_frm_cnt, prev_cxt->prev_skip_num, data->channel_id);
@@ -3006,7 +3008,8 @@ cmr_int prev_zsl_frame_handle(struct prev_handle *handle, cmr_u32 camera_id, str
 	}
 
 	/*skip frame when set param*/
-	if ((IMG_SKIP_SW == prev_cxt->skip_mode) && prev_cxt->cap_zsl_restart_skip_en) {
+	if ((IMG_SKIP_SW == prev_cxt->skip_mode) && prev_cxt->cap_zsl_restart_skip_en
+		&& !prev_cxt->prev_param.sprd_burstmode_enabled) {
 
 		timestamp = data->sec * 1000000000LL + data->usec * 1000;
 		CMR_LOGI("Restart skip: frame time = %lld, restart time=%lld",
@@ -3583,6 +3586,8 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_res
 			}
 			video_param.live_view_sz.width = prev_cxt->actual_prev_size.width;
 			video_param.live_view_sz.height = prev_cxt->actual_prev_size.height;
+			video_param.lv_size = prev_cxt->lv_size;
+			video_param.video_size = prev_cxt->video_size;
 			ret = handle->ops.isp_start_video(handle->oem_handle, &video_param);
 			if (ret) {
 				CMR_LOGE("isp start video failed");
@@ -3591,6 +3596,31 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_res
 			}
 			prev_cxt->isp_status = PREV_ISP_COWORK;
 		}
+	} else if (prev_cxt->prev_param.sprd_burstmode_enabled) {
+		video_param.size.width	= sensor_mode_info->trim_width;
+		if (prev_cxt->cap_need_binning)
+			video_param.size.width	= video_param.size.width >> 1;
+
+		video_param.size.height = sensor_mode_info->trim_height;
+		video_param.img_format	= ISP_DATA_NORMAL_RAW10;
+		video_param.video_mode	= ISP_VIDEO_MODE_CONTINUE;
+		video_param.work_mode = 0;
+		video_param.lv_size = prev_cxt->lv_size;
+		video_param.video_size = prev_cxt->video_size;
+		if (!handle->ops.isp_start_video) {
+			CMR_LOGE("ops isp_start_video is null");
+			ret = CMR_CAMERA_FAIL;
+			goto exit;
+		}
+
+		CMR_LOGI("width %d, height %ld", video_param.size.width, video_param.size.height);
+		ret = handle->ops.isp_start_video(handle->oem_handle, &video_param);
+		if (ret) {
+			CMR_LOGE("isp start video failed");
+			ret = CMR_CAMERA_FAIL;
+			goto exit;
+		}
+		prev_cxt->isp_status = PREV_ISP_COWORK;
 	}
 
 	/*start channel*/
@@ -3649,7 +3679,9 @@ exit:
 
 		if (snapshot_enable) {
 			prev_free_cap_buf(handle, camera_id, 0);
-			prev_free_cap_reserve_buf(handle, camera_id, 0);
+			if(!prev_cxt->prev_param.sprd_burstmode_enabled) {
+				prev_free_cap_reserve_buf(handle, camera_id, 0);
+			}
 			prev_free_zsl_buf(handle, camera_id, 0);
 		}
 		if (pdaf_enable) {
@@ -3784,7 +3816,9 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_rest
 			CMR_LOGE("post proc failed");
 		}
 		prev_free_cap_buf(handle, camera_id, is_restart);
-		prev_free_cap_reserve_buf(handle, camera_id, is_restart);
+		if(!prev_cxt->prev_param.sprd_burstmode_enabled) {
+			prev_free_cap_reserve_buf(handle, camera_id, is_restart);
+		}
 	}
 	prev_free_zsl_buf(handle, camera_id, is_restart);
 
@@ -6369,6 +6403,97 @@ exit:
 	return ret;
 }
 
+static cmr_int prev_get_matched_burstmode_lv_size(struct img_size sensor_size, struct img_size dst_img_size, struct img_size *lvsize, struct img_size *video_size)
+{
+	int i, last = -1;
+	cmr_u32 min_rate = 0x7fffffff, del_rate;
+
+	struct {
+			struct img_size el;
+			struct img_size rate;
+	} list[] = {
+			{{960, 720}, {12, 9}},
+			{{1920, 1080}, {16, 9}},
+//			{{1920, 1444}, {12, 9}},
+//			{{4200, 2362}, {16, 9}},
+//			{{4200, 3158}, {12, 9}},
+			{{0, 0}},
+	};
+
+	CMR_LOGD("sensor_size %d %d, dst_img_size %d %d", sensor_size.width, sensor_size.height,
+		dst_img_size.width, dst_img_size.height);
+
+#if 0
+	if(sensor_size.width > 4900 /*&& ((sensor_size.width % 24) == 0)*/) {
+		lvsize->width = 4224;
+		lvsize->height = 4224 * sensor_size.height / sensor_size.width;
+		if(lvsize->height >= 4 && lvsize->height <= 8192 && (!(lvsize->height & 1)))
+			return 0;
+	}
+#endif
+	for (i = 0; list[i].el.width != 0; i++) {
+		if (sensor_size.width < list[i].el.width || sensor_size.height < list[i].el.height){
+			break;
+		}
+		if((list[i].rate.width * sensor_size.height) == (list[i].rate.height * sensor_size.width)) {
+			last = i;
+			min_rate = 0;
+		} else if((list[i].rate.width * sensor_size.height) > (list[i].rate.height * sensor_size.width)) {
+			del_rate = (list[i].rate.width * sensor_size.height) - (list[i].rate.height * sensor_size.width);
+			CMR_LOGI("i %d del_rate %u", i, del_rate);
+			if(min_rate >= del_rate) {
+				last = i;
+				min_rate = del_rate;
+				CMR_LOGI("min_rate %d", min_rate);
+			}
+		} else {
+			del_rate = (list[i].rate.height *sensor_size.width) - (list[i].rate.width * sensor_size.height);
+			CMR_LOGI("i %d del_rate %u", i, del_rate);
+			if(min_rate >= del_rate) {
+				last = i;
+				min_rate = del_rate;
+				CMR_LOGI("min_rate %d", min_rate);
+			}
+		}
+	}
+	CMR_LOGI("select %d", last);
+
+	if(last == -1) {
+		cmr_u32 min_w = 0x7fffffff, min_h = 0x7fffffff;
+		cmr_u32 del_w , del_h;
+
+		for (i = 0; list[i].el.width != 0; i++) {
+			del_w = list[i].el.width > dst_img_size.width ? list[i].el.width - dst_img_size.width:
+				dst_img_size.width - list[i].el.width;
+			del_h =	list[i].el.height > dst_img_size.height ? list[i].el.height - dst_img_size.height:
+					dst_img_size.height - list[i].el.height;
+
+			if(del_w <= min_w && del_h <= min_h) {
+				min_w = del_w;
+				min_h = del_h;
+				last = i;
+			} else if (sensor_size.width < list[i].el.width || sensor_size.height < list[i].el.height){
+				break;
+			}
+		}
+
+		if(last == -1)
+			last = 0;
+		CMR_LOGI("select %d", last);
+	}
+
+	video_size->width = list[last].el.width;
+	video_size->height = list[last].el.height;
+	if(list[last].rate.width == 12) {
+		lvsize->width = 960;
+		lvsize->height = 720;
+	} else {
+		lvsize->width = 1920;
+		lvsize->height = 1080;
+	}
+	return 0;
+}
+
 cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_restart, struct preview_out_param *out_param_ptr)
 {
 	cmr_int                     ret = CMR_CAMERA_SUCCESS;
@@ -6457,6 +6582,27 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 		chn_param.cap_inf_cfg.cfg.src_img_rect.width,
 		chn_param.cap_inf_cfg.cfg.src_img_rect.height);
 
+	if(prev_cxt->prev_param.sprd_burstmode_enabled){
+		struct img_size sensor_size;
+		struct img_size  lv_size;
+		struct img_size  video_size;
+
+		sensor_size.width = sensor_mode_info->scaler_trim.width;
+		sensor_size.height = sensor_mode_info->scaler_trim.height;
+		prev_get_matched_burstmode_lv_size(sensor_size,
+			chn_param.cap_inf_cfg.cfg.dst_img_size, &lv_size, &video_size);
+		chn_param.cap_inf_cfg.cfg.src_img_change = 1;
+		chn_param.cap_inf_cfg.cfg.src_img_size.width  = video_size.width ;
+		chn_param.cap_inf_cfg.cfg.src_img_size.height = video_size.height;
+		chn_param.cap_inf_cfg.cfg.src_img_rect.start_x = 0;
+		chn_param.cap_inf_cfg.cfg.src_img_rect.start_y = 0;
+		chn_param.cap_inf_cfg.cfg.src_img_rect.width  = video_size.width ;
+		chn_param.cap_inf_cfg.cfg.src_img_rect.height = video_size.height;
+
+		prev_cxt->lv_size = lv_size;
+		prev_cxt->video_size = video_size;
+	}
+
 	/*caculate trim rect*/
 	if (ZOOM_INFO != zoom_param->mode) {
 		CMR_LOGI("zoom level %ld, dst_img_size %d %d",
@@ -6466,6 +6612,12 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 		ret = camera_get_trim_rect(&chn_param.cap_inf_cfg.cfg.src_img_rect,
 				zoom_param->zoom_level,
 				&chn_param.cap_inf_cfg.cfg.dst_img_size);
+	} else if(prev_cxt->prev_param.sprd_burstmode_enabled) {
+		ret = prev_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
+				chn_param.cap_inf_cfg.cfg.src_img_size.width,
+				chn_param.cap_inf_cfg.cfg.src_img_size.height,
+				prev_cxt->prev_param.prev_rot,
+				zoom_param);
 	} else {
 		ret = prev_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
 				sensor_mode_info->scaler_trim.width,
@@ -6579,14 +6731,15 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 	/*start isp*/
 	CMR_LOGI("need_isp %d, isp_status %ld", chn_param.cap_inf_cfg.cfg.need_isp, prev_cxt->isp_status);
 	if (chn_param.cap_inf_cfg.cfg.need_isp) {
-		video_param.size.width  = sensor_mode_info->trim_width;
-		if (chn_param.cap_inf_cfg.cfg.need_binning) {
-			video_param.size.width  = video_param.size.width >> 1;
-		}
-		video_param.size.height = sensor_mode_info->trim_height;
-		video_param.img_format  = ISP_DATA_NORMAL_RAW10;
-		video_param.video_mode  = ISP_VIDEO_MODE_CONTINUE;
-		video_param.work_mode = 0;
+		if(!prev_cxt->prev_param.sprd_burstmode_enabled) {
+			video_param.size.width  = sensor_mode_info->trim_width;
+			if (chn_param.cap_inf_cfg.cfg.need_binning) {
+				video_param.size.width  = video_param.size.width >> 1;
+			}
+			video_param.size.height = sensor_mode_info->trim_height;
+			video_param.img_format  = ISP_DATA_NORMAL_RAW10;
+			video_param.video_mode  = ISP_VIDEO_MODE_CONTINUE;
+			video_param.work_mode = 0;
 
 		if (!handle->ops.isp_start_video) {
 			CMR_LOGE("ops isp_start_video is null");
@@ -6603,6 +6756,9 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 			goto exit;
 		}
 		prev_cxt->isp_status = PREV_ISP_COWORK;
+		}
+		prev_cxt->cap_need_isp	   = chn_param.cap_inf_cfg.cfg.need_isp;
+		prev_cxt->cap_need_binning = chn_param.cap_inf_cfg.cfg.need_binning;
 	}
 
 	/*return preview out params*/
@@ -6697,11 +6853,40 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle, cmr_u32 camera_i
 
 	trim_sz.width = sensor_mode_info->scaler_trim.width;
 	trim_sz.height = sensor_mode_info->scaler_trim.height;
+
+	if(prev_cxt->prev_param.sprd_burstmode_enabled){
+		struct img_size sensor_size;
+		struct img_size  lv_size;
+		struct img_size  video_size;
+
+		sensor_size.width = sensor_mode_info->scaler_trim.width;
+		sensor_size.height = sensor_mode_info->scaler_trim.height;
+		prev_get_matched_burstmode_lv_size(sensor_size,
+			chn_param.cap_inf_cfg.cfg.dst_img_size, &lv_size, &video_size);
+		chn_param.cap_inf_cfg.cfg.src_img_change = 1;
+		chn_param.cap_inf_cfg.cfg.src_img_size.width  = video_size.width ;
+		chn_param.cap_inf_cfg.cfg.src_img_size.height = video_size.height;
+		chn_param.cap_inf_cfg.cfg.src_img_rect.start_x = 0;
+		chn_param.cap_inf_cfg.cfg.src_img_rect.start_y = 0;
+		chn_param.cap_inf_cfg.cfg.src_img_rect.width  = video_size.width ;
+		chn_param.cap_inf_cfg.cfg.src_img_rect.height = video_size.height;
+
+		prev_cxt->lv_size = lv_size;
+		prev_cxt->video_size = video_size;
+	}
+
 	/*caculate trim rect*/
 	if (ZOOM_INFO != zoom_param->mode) {
 		ret = camera_get_trim_rect(&chn_param.cap_inf_cfg.cfg.src_img_rect,
 				zoom_param->zoom_level,
 				&trim_sz);
+	} else if(prev_cxt->prev_param.sprd_burstmode_enabled) {
+		CMR_LOGI("test");
+		ret = prev_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
+				chn_param.cap_inf_cfg.cfg.src_img_size.width,
+				chn_param.cap_inf_cfg.cfg.src_img_size.height,
+				prev_cxt->prev_param.prev_rot,
+				zoom_param);
 	} else {
 		ret = prev_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
 				sensor_mode_info->scaler_trim.width,
@@ -7222,13 +7407,14 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 			goto exit;
 		}
 	}
-	ret = prev_alloc_cap_reserve_buf(handle, camera_id, is_restart);
-	if (ret) {
-		CMR_LOGE("alloc cap reserve buf failed");
-		ret = CMR_CAMERA_FAIL;
-		goto exit;
+	if(!prev_cxt->prev_param.sprd_burstmode_enabled) {
+		ret = prev_alloc_cap_reserve_buf(handle, camera_id, is_restart);
+		if (ret) {
+			CMR_LOGE("alloc cap reserve buf failed");
+			ret = CMR_CAMERA_FAIL;
+			goto exit;
+		}
 	}
-
 	ret = handle->ops.channel_path_capability(handle->oem_handle, &capability);
 	if (ret) {
 		CMR_LOGE("channel_path_capability failed");
@@ -7297,28 +7483,30 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 			goto exit;
 		}
 
-		/*config reserved buffer*/
-		cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
-		buf_cfg.channel_id         = prev_cxt->cap_channel_id;
-		if (is_capture_zsl) {
-			buf_cfg.base_id            = CMR_CAP1_ID_BASE;
-		} else {
-			buf_cfg.base_id            = CMR_CAP0_ID_BASE;
-		}
-		buf_cfg.count              = 1;
-		buf_cfg.length             = prev_cxt->cap_zsl_mem_size;
-		buf_cfg.is_reserved_buf    = 1;
-		buf_cfg.flag               = BUF_FLAG_INIT;
-		buf_cfg.addr[0].addr_y     = prev_cxt->cap_zsl_reserved_frm.addr_phy.addr_y;
-		buf_cfg.addr[0].addr_u     = prev_cxt->cap_zsl_reserved_frm.addr_phy.addr_u;
-		buf_cfg.addr_vir[0].addr_y = prev_cxt->cap_zsl_reserved_frm.addr_vir.addr_y;
-		buf_cfg.addr_vir[0].addr_u = prev_cxt->cap_zsl_reserved_frm.addr_vir.addr_u;
-		buf_cfg.fd[0]              = prev_cxt->cap_zsl_reserved_frm.fd;
-		ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);
-		if (ret) {
-			CMR_LOGE("channel buff config failed");
-			ret = CMR_CAMERA_FAIL;
-			goto exit;
+		if(!prev_cxt->prev_param.sprd_burstmode_enabled) {
+			/*config reserved buffer*/
+			cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
+			buf_cfg.channel_id         = prev_cxt->cap_channel_id;
+			if (is_capture_zsl) {
+				buf_cfg.base_id            = CMR_CAP1_ID_BASE;
+			} else {
+				buf_cfg.base_id            = CMR_CAP0_ID_BASE;
+			}
+			buf_cfg.count              = 1;
+			buf_cfg.length             = prev_cxt->cap_zsl_mem_size;
+			buf_cfg.is_reserved_buf    = 1;
+			buf_cfg.flag               = BUF_FLAG_INIT;
+			buf_cfg.addr[0].addr_y     = prev_cxt->cap_zsl_reserved_frm.addr_phy.addr_y;
+			buf_cfg.addr[0].addr_u     = prev_cxt->cap_zsl_reserved_frm.addr_phy.addr_u;
+			buf_cfg.addr_vir[0].addr_y = prev_cxt->cap_zsl_reserved_frm.addr_vir.addr_y;
+			buf_cfg.addr_vir[0].addr_u = prev_cxt->cap_zsl_reserved_frm.addr_vir.addr_u;
+			buf_cfg.fd[0]              = prev_cxt->cap_zsl_reserved_frm.fd;
+			ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);
+			if (ret) {
+				CMR_LOGE("channel buff config failed");
+				ret = CMR_CAMERA_FAIL;
+				goto exit;
+			}
 		}
 	} else {
 		if (!is_capture_zsl) {
@@ -7595,11 +7783,13 @@ cmr_int prev_set_cap_param_raw(struct prev_handle *handle,
 		goto exit;
 	}
 
-	ret = prev_alloc_cap_reserve_buf(handle, camera_id, is_restart);
-	if (ret) {
-		CMR_LOGE("alloc cap reserve buf failed");
-		ret = CMR_CAMERA_FAIL;
-		goto exit;
+	if(!prev_cxt->prev_param.sprd_burstmode_enabled) {
+		ret = prev_alloc_cap_reserve_buf(handle, camera_id, is_restart);
+		if (ret) {
+			CMR_LOGE("alloc cap reserve buf failed");
+			ret = CMR_CAMERA_FAIL;
+			goto exit;
+		}
 	}
 
 	/*config channel*/
@@ -7632,24 +7822,26 @@ cmr_int prev_set_cap_param_raw(struct prev_handle *handle,
 		goto exit;
 	}
 
-	/*config reserved buffer*/
-	cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
-	buf_cfg.channel_id         = prev_cxt->cap_channel_id;
-	buf_cfg.base_id            = CMR_CAP0_ID_BASE;
-	buf_cfg.count              = 1;
-	buf_cfg.length             = prev_cxt->cap_zsl_mem_size;
-	buf_cfg.is_reserved_buf    = 1;
-	buf_cfg.flag               = BUF_FLAG_INIT;
-	buf_cfg.addr[0].addr_y     = prev_cxt->cap_zsl_reserved_frm.addr_phy.addr_y;
-	buf_cfg.addr[0].addr_u     = prev_cxt->cap_zsl_reserved_frm.addr_phy.addr_u;
-	buf_cfg.addr_vir[0].addr_y = prev_cxt->cap_zsl_reserved_frm.addr_vir.addr_y;
-	buf_cfg.addr_vir[0].addr_u = prev_cxt->cap_zsl_reserved_frm.addr_vir.addr_u;
-	buf_cfg.fd[0]              = prev_cxt->cap_zsl_reserved_frm.fd;
-	ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);
-	if (ret) {
-		CMR_LOGE("channel buff config failed");
-		ret = CMR_CAMERA_FAIL;
-		goto exit;
+	if(!prev_cxt->prev_param.sprd_burstmode_enabled) {
+		/*config reserved buffer*/
+		cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
+		buf_cfg.channel_id         = prev_cxt->cap_channel_id;
+		buf_cfg.base_id            = CMR_CAP0_ID_BASE;
+		buf_cfg.count              = 1;
+		buf_cfg.length             = prev_cxt->cap_zsl_mem_size;
+		buf_cfg.is_reserved_buf    = 1;
+		buf_cfg.flag               = BUF_FLAG_INIT;
+		buf_cfg.addr[0].addr_y     = prev_cxt->cap_zsl_reserved_frm.addr_phy.addr_y;
+		buf_cfg.addr[0].addr_u     = prev_cxt->cap_zsl_reserved_frm.addr_phy.addr_u;
+		buf_cfg.addr_vir[0].addr_y = prev_cxt->cap_zsl_reserved_frm.addr_vir.addr_y;
+		buf_cfg.addr_vir[0].addr_u = prev_cxt->cap_zsl_reserved_frm.addr_vir.addr_u;
+		buf_cfg.fd[0]              = prev_cxt->cap_zsl_reserved_frm.fd;
+		ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);
+		if (ret) {
+			CMR_LOGE("channel buff config failed");
+			ret = CMR_CAMERA_FAIL;
+			goto exit;
+		}
 	}
 
 	/*save channel start param for restart*/
@@ -8142,6 +8334,28 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id, struct i
 			img_cap->dst_img_size.width  = img_cap->src_img_rect.width;
 			img_cap->dst_img_size.height = img_cap->src_img_rect.height;
 		}
+	}
+
+	if(prev_cxt->prev_param.sprd_highiso_enabled){
+		struct img_size sensor_size;
+		struct img_size  lv_size;
+		struct img_size  video_size;
+
+		sensor_size.width = sn_mode_info->scaler_trim.width;
+		sensor_size.height = sn_mode_info->scaler_trim.height;
+		prev_get_matched_burstmode_lv_size(sensor_size,
+			img_cap->dst_img_size, &lv_size, &video_size);
+#if 0
+		img_cap->src_img_change = 1;
+		img_cap->src_img_size.width  = video_size.width ;
+		img_cap->src_img_size.height = video_size.height;
+		img_cap->src_img_rect.start_x = 0;
+		img_cap->src_img_rect.start_y = 0;
+		img_cap->src_img_rect.width  = video_size.width ;
+		img_cap->src_img_rect.height = video_size.height;
+#endif
+		prev_cxt->lv_size = lv_size;
+		prev_cxt->video_size = video_size;
 	}
 
 	/*save original cap size*/
@@ -9137,7 +9351,7 @@ cmr_int prev_pop_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id, struc
 			cb_data_info.frame_data = &frame_type;
 			prev_cb_start(handle, &cb_data_info);
 		}
-	}else {
+	} else {
 		if (0 != valid_num) {
 			ret = CMR_CAMERA_INVALID_FRAME;
 			CMR_LOGE("error fd 0x%lx ",prev_cxt->cap_zsl_frm[0].fd);
@@ -10485,8 +10699,9 @@ cmr_int prev_capture_zoom_post_cap(struct prev_handle *handle, cmr_int *flag, cm
 	}
 
 	prev_cxt     = &handle->prev_cxt[camera_id];
-	if (prev_cxt != NULL && (prev_cxt->prev_param.sprd_highiso_enabled ||
-		prev_cxt->prev_param.isp_to_dram))
+	if (prev_cxt != NULL && (prev_cxt->prev_param.sprd_highiso_enabled
+		|| prev_cxt->prev_param.isp_to_dram
+		|| prev_cxt->prev_param.sprd_burstmode_enabled))
 		*flag = ZOOM_POST_PROCESS;
 	else
 		*flag = capability.zoom_post_proc;

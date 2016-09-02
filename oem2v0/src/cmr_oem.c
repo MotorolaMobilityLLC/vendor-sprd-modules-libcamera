@@ -420,6 +420,8 @@ void camera_send_channel_data(cmr_handle oem_handle, cmr_handle receiver_handle,
 				camera_post_share_path_available(oem_handle);
 			}
 		} else {
+			if(evt == 3 && cxt->burst_mode)  /* 3 = ISP_DRV_CFG_BUF */
+				evt = CMR_GRAB_TX_DONE;
 			if (cxt->snp_cxt.zsl_frame) {
 				cmr_copy(&cxt->snp_cxt.cur_chn_data, frm_ptr, sizeof(struct frm_info));
 				ret = cmr_preview_receive_data(cxt->prev_cxt.preview_handle, cxt->camera_id, evt, data);
@@ -740,7 +742,7 @@ void camera_isp_dev_evt_cb(cmr_int evt, void *data, cmr_u32 data_len, void *priv
 
 	CMR_LOGI("handle 0x%lx", (cmr_uint)privdata);
 	//hal1.0 in high iso mode not call isp_stop_video in the process flow, so call it here to stop isp.
-	if (!cxt->isp_to_dram) {
+	if (!cxt->isp_to_dram && !cxt->burst_mode) {
 		cmr_camera_isp_stop_video(cxt->prev_cxt.preview_handle, cxt->camera_id);
 	}
 	cxt->isp_to_dram = 0;
@@ -5125,10 +5127,14 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 
 	ispmw_dev_buf_cfg_evt_cb(isp_cxt->isp_handle, camera_isp_dev_evt_cb);
 
-	if (HIGHISO_CAP_MODE == cxt->highiso_mode) {
+	if (HIGHISO_CAP_MODE == cxt->highiso_mode || cxt->burst_mode) {
 		highiso_buf_num = 1;
-		isp_raw_buf_num = 1;
-		raw_buf_size = isp_param.size.w * isp_param.size.h * 4 / 3 * 2;
+		if(cxt->burst_mode) {
+			isp_raw_buf_num = 4;
+ 		} else {
+			isp_raw_buf_num = 1;
+		}
+		raw_buf_size = isp_param.size.w * isp_param.size.h * 4 / 3;
 		tmp_buf_size = isp_param.size.w * isp_param.size.h * 27 / 10;
 		num = tmp_buf_size / BUF_BLOCK_SIZE;
 		if (tmp_buf_size >  num * BUF_BLOCK_SIZE)
@@ -5138,9 +5144,9 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 			cxt->hal_malloc(CAMERA_ISP_RAW_DATA,
 					&raw_buf_size,
 					&isp_raw_buf_num,
-					&cxt->raw_buf_phys_addr,
-					&cxt->raw_buf_virt_addr,
-					&cxt->raw_buf_fd,
+					&cxt->raw_buf_phys_addr[0],
+					&cxt->raw_buf_virt_addr[0],
+					&cxt->raw_buf_fd[0],
 					cxt->client_data);
 
 			cxt->hal_malloc(CAMERA_SNAPSHOT_HIGHISO,
@@ -5151,30 +5157,51 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 					&cxt->highiso_buf_fd,
 					cxt->client_data);
 		}
-		isp_param.capture_mode = ISP_CAP_MODE_HIGHISO;
+		if(cxt->burst_mode)
+			isp_param.capture_mode = ISP_CAP_MODE_BURST;
+		else
+			isp_param.capture_mode = ISP_CAP_MODE_HIGHISO;
 
-		isp_param.raw_buf_fd = cxt->raw_buf_fd;
-		isp_param.raw_buf_phys_addr = cxt->raw_buf_phys_addr;
-		isp_param.raw_buf_virt_addr = cxt->raw_buf_virt_addr;
+//		isp_param.raw_buf_fd = cxt->raw_buf_fd;
+//		isp_param.raw_buf_phys_addr = cxt->raw_buf_phys_addr;
+//		isp_param.raw_buf_virt_addr = cxt->raw_buf_virt_addr;
+		memcpy(isp_param.raw_buf_fd, cxt->raw_buf_fd, sizeof(cmr_s32) * isp_raw_buf_num);
+		memcpy(isp_param.raw_buf_phys_addr, cxt->raw_buf_phys_addr, sizeof(cmr_u32) * isp_raw_buf_num);
+		memcpy(isp_param.raw_buf_virt_addr, cxt->raw_buf_virt_addr, sizeof(cmr_u64) * isp_raw_buf_num);
 		isp_param.raw_buf_size = raw_buf_size;
 		isp_param.raw_buf_width = isp_param.size.w;
 		isp_param.raw_buf_height = isp_param.size.h;
+		isp_param.raw_buf_cnt = isp_raw_buf_num;
 
 		isp_param.highiso_buf_fd = cxt->highiso_buf_fd;
 		isp_param.highiso_buf_phys_addr = cxt->highiso_buf_phys_addr;
 		isp_param.highiso_buf_virt_addr = cxt->highiso_buf_virt_addr;
 		isp_param.highiso_buf_size = highiso_buf_size;
 
-		CMR_LOGD("raw: fd=0x%x, phys_addr_offset=0x%lx, virt_addr = 0x%lx, buf_size=0x%lx",
-			isp_param.raw_buf_fd, isp_param.raw_buf_phys_addr,
-			isp_param.raw_buf_virt_addr, isp_param.raw_buf_size);
-		CMR_LOGD("width=%ld, height=%ld", isp_param.raw_buf_width, isp_param.raw_buf_height);
-		CMR_LOGD("highiso: fd=0x%x, phys_addr_offset=0x%lx, virt_addr = 0x%lx, buf_size=0x%lx",
+		CMR_LOGI("raw: fd=0x%x, phys_addr_offset=0x%lx, virt_addr = 0x%lx, buf_size=0x%lx",
+			isp_param.raw_buf_fd[0], isp_param.raw_buf_phys_addr[0],
+			isp_param.raw_buf_virt_addr[0], isp_param.raw_buf_size);
+		CMR_LOGI("raw: fd=0x%x, phys_addr_offset=0x%lx, virt_addr = 0x%lx, buf_size=0x%lx",
+			isp_param.raw_buf_fd[1], isp_param.raw_buf_phys_addr[1],
+			isp_param.raw_buf_virt_addr[1], isp_param.raw_buf_size);
+		CMR_LOGI("raw: fd=0x%x, phys_addr_offset=0x%lx, virt_addr = 0x%lx, buf_size=0x%lx",
+			isp_param.raw_buf_fd[2], isp_param.raw_buf_phys_addr[2],
+			isp_param.raw_buf_virt_addr[2], isp_param.raw_buf_size);
+		CMR_LOGI("raw: fd=0x%x, phys_addr_offset=0x%lx, virt_addr = 0x%lx, buf_size=0x%lx",
+			isp_param.raw_buf_fd[3], isp_param.raw_buf_phys_addr[3],
+			isp_param.raw_buf_virt_addr[3], isp_param.raw_buf_size);
+		CMR_LOGI("cnt=%d, width=%ld, height=%ld", isp_param.raw_buf_cnt, isp_param.raw_buf_width, isp_param.raw_buf_height);
+		CMR_LOGI("highiso: fd=0x%x, phys_addr_offset=0x%lx, virt_addr = 0x%lx, buf_size=0x%lx",
 			isp_param.highiso_buf_fd, isp_param.highiso_buf_phys_addr,
 			isp_param.highiso_buf_virt_addr, isp_param.highiso_buf_size);
 	}
 	isp_param.live_view_sz.w = param_ptr->live_view_sz.width;
 	isp_param.live_view_sz.h = param_ptr->live_view_sz.height;
+	isp_param.lv_size.w = param_ptr->lv_size.width;
+	isp_param.lv_size.h = param_ptr->lv_size.height;
+	isp_param.video_size.w = param_ptr->video_size.width;
+	isp_param.video_size.h = param_ptr->video_size.height;
+
 	if (1 == cxt->isp_to_dram) {
 		isp_param.capture_mode = ISP_CAP_MODE_DRAM;
 	}
@@ -5289,12 +5316,15 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle, cmr_
 		CMR_LOGI("prev rect %d %d %d %d", cxt->prev_cxt.rect.start_x, cxt->prev_cxt.rect.start_y,
 				  cxt->prev_cxt.rect.width, cxt->prev_cxt.rect.height);
 	}
-	if (!param_ptr->is_lightly) {
+	if (!param_ptr->is_lightly && !(param_ptr->buffer.base_id != CMR_PREV_ID_BASE && cxt->burst_mode)) {
 		ret = cmr_grab_cap_cfg(cxt->grab_cxt.grab_handle, &param_ptr->cap_inf_cfg, channel_id, endian);
 		if (ret) {
 			CMR_LOGE("failed to cap cfg %ld", ret);
 			goto exit;
 		}
+	} else if(param_ptr->buffer.base_id != CMR_PREV_ID_BASE && cxt->burst_mode) {
+		endian->y_endian = 1;
+		endian->uv_endian = 1;
 	}
 
 /*
@@ -5330,7 +5360,8 @@ cmr_int camera_channel_buff_cfg (cmr_handle oem_handle, struct buffer_cfg *buf_c
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}
-	if (HIGHISO_CAP_MODE == cxt->highiso_mode || cxt->isp_to_dram) {
+	if (HIGHISO_CAP_MODE == cxt->highiso_mode || cxt->isp_to_dram
+		|| (buf_cfg->base_id != CMR_PREV_ID_BASE && cxt->burst_mode)) {
 		ret = camera_isp_buff_cfg(cxt, buf_cfg);
 	}
 	else
@@ -5379,7 +5410,7 @@ cmr_int camera_isp_buff_cfg(cmr_handle oem_handle, struct buffer_cfg *buf_cfg)
 	struct isp_img_param  isp_buf_cfg;
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 	struct isp_context             *isp_cxt = &cxt->isp_cxt;
-
+	int                            i;
 	if (!oem_handle) {
 		CMR_LOGE("in parm error");
 		ret = -CMR_CAMERA_INVALID_PARAM;
@@ -5388,23 +5419,24 @@ cmr_int camera_isp_buff_cfg(cmr_handle oem_handle, struct buffer_cfg *buf_cfg)
 	memset(&isp_buf_cfg, 0, sizeof(struct isp_img_param));
 	isp_buf_cfg.channel_id = buf_cfg->channel_id;
 	isp_buf_cfg.base_id = buf_cfg->base_id;
-	isp_buf_cfg.is_reserved_buf = buf_cfg->is_reserved_buf;
 	isp_buf_cfg.count = buf_cfg->count;
 	isp_buf_cfg.flag = buf_cfg->flag;
 	isp_buf_cfg.length = buf_cfg->length;
-	isp_buf_cfg.index = buf_cfg->index[0];
 	isp_buf_cfg.start_buf_id = buf_cfg->start_buf_id;
-	isp_buf_cfg.addr.chn0 = buf_cfg->addr[0].addr_y;
-	isp_buf_cfg.addr.chn1= buf_cfg->addr[0].addr_u;
-	isp_buf_cfg.addr.chn2= buf_cfg->addr[0].addr_v;
-	isp_buf_cfg.addr_vir.chn0 = buf_cfg->addr_vir[0].addr_y;
-	isp_buf_cfg.addr_vir.chn1 = buf_cfg->addr_vir[0].addr_u;
-	isp_buf_cfg.addr_vir.chn2 = buf_cfg->addr_vir[0].addr_v;
 	isp_buf_cfg.is_reserved_buf = buf_cfg->is_reserved_buf;
+	for(i = 0;i < isp_buf_cfg.count; i++) {
+		isp_buf_cfg.index[i] = buf_cfg->index[i];
+		isp_buf_cfg.addr[i].chn0 = buf_cfg->addr[i].addr_y;
+		isp_buf_cfg.addr[i].chn1 = buf_cfg->addr[i].addr_u;
+		isp_buf_cfg.addr[i].chn2 = buf_cfg->addr[i].addr_v;
+		isp_buf_cfg.addr_vir[i].chn0 = buf_cfg->addr_vir[i].addr_y;
+		isp_buf_cfg.addr_vir[i].chn1 = buf_cfg->addr_vir[i].addr_u;
+		isp_buf_cfg.addr_vir[i].chn2 = buf_cfg->addr_vir[i].addr_v;
+		isp_buf_cfg.img_fd[i].y = buf_cfg->fd[i];
+		isp_buf_cfg.img_fd[i].u = buf_cfg->fd[i];
+		isp_buf_cfg.img_fd[i].v = buf_cfg->fd[i];
+	}
 	isp_buf_cfg.zsl_private = buf_cfg->zsl_private;
-	isp_buf_cfg.img_fd.y = buf_cfg->fd[0];
-	isp_buf_cfg.img_fd.u = buf_cfg->fd[0];
-	isp_buf_cfg.img_fd.v = buf_cfg->fd[0];
 
 	ret = isp_cap_buff_cfg(isp_cxt->isp_handle, &isp_buf_cfg);
 	if (ret) {
@@ -5415,6 +5447,35 @@ exit:
 	CMR_LOGD("done %ld", ret);
 	return ret;
 }
+
+cmr_int camera_local_start_multi_layer(cmr_handle oem_handle)
+{
+	cmr_int                        ret = CMR_CAMERA_SUCCESS;
+
+	struct camera_context          *cxt = (struct camera_context*)oem_handle;
+	struct isp_context             *isp_cxt = &cxt->isp_cxt;
+
+	ret = isp_drammode_takepic(isp_cxt->isp_handle, 1);
+	if (ret) {
+		CMR_LOGE("failed to start_multi_layer %ld", ret);
+	}
+	return ret;
+}
+
+cmr_int camera_local_stop_multi_layer(cmr_handle oem_handle)
+{
+	cmr_int                        ret = CMR_CAMERA_SUCCESS;
+
+	struct camera_context          *cxt = (struct camera_context*)oem_handle;
+	struct isp_context             *isp_cxt = &cxt->isp_cxt;
+
+	ret = isp_drammode_takepic(isp_cxt->isp_handle, 0);
+	if (ret) {
+		CMR_LOGE("failed to stop_multi_layer %ld", ret);
+	}
+	return ret;
+}
+
 cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits, cmr_uint skip_number)
 {
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
@@ -6719,7 +6780,6 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	out_param_ptr->video_snapshot_type = setting_param.cmd_type_value;
 	CMR_LOGI("video_snapshot_type=%d", out_param_ptr->video_snapshot_type);
 
-	/**add for 3d calibration, get 3calibration flag start */
 	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_SPRD_3DCAL_ENABLE, &setting_param);
 	if (ret) {
 		CMR_LOGE("failed to get preview sprd eis enabled flag %ld", ret);
@@ -6727,8 +6787,25 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	}
 	cxt->is_3dcalibration_mode = setting_param.cmd_type_value;
 	out_param_ptr->sprd_3dcalibration_enabled = cxt->is_3dcalibration_mode;
-	CMR_LOGE("sprd_3dcalibration_enabled flag %d", out_param_ptr->sprd_3dcalibration_enabled);
-	/**add for 3d calibration, get 3calibration flag end */
+	CMR_LOGD("sprd_3dcalibration_enabled flag %d", out_param_ptr->sprd_3dcalibration_enabled);
+
+	// init value
+	cxt->burst_mode = 0;
+	out_param_ptr->sprd_highiso_enabled = 0;
+	cxt->highiso_mode = HIGHISO_MODE_NONE;
+
+	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_SPRD_BURSTMODE_ENABLED, &setting_param);
+	out_param_ptr->sprd_burstmode_enabled = setting_param.cmd_type_value;
+	CMR_LOGI("sprd_burstmode_enabled=%d", out_param_ptr->sprd_burstmode_enabled);
+	if (out_param_ptr->sprd_burstmode_enabled == 1 &&
+	    out_param_ptr->sprd_zsl_enabled == 1) {
+		cxt->burst_mode = 1;
+	} else if (out_param_ptr->sprd_burstmode_enabled == 1 &&
+		   out_param_ptr->sprd_zsl_enabled == 0) {
+		out_param_ptr->sprd_highiso_enabled = 1;
+		cxt->highiso_mode = HIGHISO_CAP_MODE;
+	}
+
 exit:
 	CMR_LOGI("prev size %d %d pic size %d %d", out_param_ptr->preview_size.width, out_param_ptr->preview_size.height,
 		     out_param_ptr->picture_size.width, out_param_ptr->picture_size.height);
@@ -6741,6 +6818,8 @@ exit:
 		     jpeg_cxt->param.thum_size.width, jpeg_cxt->param.thum_size.height);
 	CMR_LOGI("frame cnt %d", out_param_ptr->frame_count);
 	CMR_LOGI("out_param_ptr->flip_on  %d", out_param_ptr->flip_on );
+	CMR_LOGI("burst_mode %d", cxt->burst_mode);
+	CMR_LOGI("highiso_mode %d", cxt->highiso_mode);
 
 	return ret;
 }
@@ -7159,6 +7238,10 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id, cmr
 		setting_param.cmd_type_value = param;
 		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);
 		break;/**add for 3d calibration setting params end*/
+	case CAMERA_PARAM_SPRD_BURSTMODE_ENABLED:
+		setting_param.cmd_type_value = param;
+		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);
+		break;
 	default:
 		CMR_LOGI("don't support %d", id);
 	}
@@ -7524,7 +7607,8 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle, enum takepicture_mode
 		camera_post_share_path_available(oem_handle);
 	}
 
-
+	if(cxt->burst_mode || cxt->highiso_mode == HIGHISO_CAP_MODE)
+		camera_local_start_multi_layer(oem_handle);
 exit:
 	CMR_LOGV("done %ld", ret);
 	return ret;

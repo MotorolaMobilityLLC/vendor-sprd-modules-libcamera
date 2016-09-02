@@ -433,6 +433,9 @@ static cmr_int cmr_grab_cap_cfg_common(cmr_handle grab_handle, struct cap_cfg *c
 	parm.crop_rect.y = config->cfg.src_img_rect.start_y;
 	parm.crop_rect.w = config->cfg.src_img_rect.width;
 	parm.crop_rect.h = config->cfg.src_img_rect.height;
+	parm.reserved[0] = config->cfg.src_img_change;
+	parm.reserved[1] = config->cfg.src_img_size.width;
+	parm.reserved[2] = config->cfg.src_img_size.height;
 	ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_CROP, &parm);
 	CMR_RTN_IF_ERR(ret);
 	CMR_LOGI("channel_id  %d, crop_rect %x,%x,%x,%x ret %ld \n", channel_id, parm.crop_rect.x, parm.crop_rect.y,
@@ -526,6 +529,10 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config, cmr_u32
 	parm.crop_rect.y = config->cfg.src_img_rect.start_y;
 	parm.crop_rect.w = config->cfg.src_img_rect.width;
 	parm.crop_rect.h = config->cfg.src_img_rect.height;
+	parm.reserved[0] = config->cfg.src_img_change;
+	parm.reserved[1] = config->cfg.src_img_size.width;
+	parm.reserved[2] = config->cfg.src_img_size.height;
+
 	ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_OUTPUT_SIZE, &parm);
 	CMR_RTN_IF_ERR(ret);
 

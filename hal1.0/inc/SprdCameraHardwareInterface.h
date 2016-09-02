@@ -225,7 +225,7 @@ private:
 	int Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
 	int Callback_CaptureMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
 	int Callback_CapturePathMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
-	int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
+	int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size, cmr_u32 *sum_ptr, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
 	static int Callback_Malloc(enum camera_mem_cb_type type,
 				cmr_u32 *size_ptr, cmr_u32 *sum_ptr,
 				cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd,
@@ -501,7 +501,7 @@ private:
 	sprd_camera_memory_t*           mIspB4awbHeapReserved[kISPB4awbCount];
 	sprd_camera_memory_t*           mIspFirmwareReserved;
 	sprd_camera_memory_t*           mHighIsoSnapshotHeapReserved;
-	sprd_camera_memory_t*           mIspRawDataReserved;
+	sprd_camera_memory_t*           mIspRawDataReserved[4];
 	sprd_camera_memory_t*           mIspYUVReserved;
 	sprd_camera_memory_t*           mIspAntiFlickerHeapReserved;
 	sprd_camera_memory_t*           mIspRawAemHeapReserved[kISPB4awbCount];

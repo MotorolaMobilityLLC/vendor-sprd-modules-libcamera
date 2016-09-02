@@ -981,6 +981,12 @@ void dump_jpeg_file(void *virt_addr, unsigned int size, int width, int height)
 	fclose(fp);
 }
 
+cmr_int camera_stop_multi_layer(cmr_handle camera_handle)
+{
+	camera_local_stop_multi_layer(camera_handle);
+	return 0;
+}
+
 static oem_ops_t oem_module_ops = {
 	camera_init,
 	camera_deinit,
@@ -1043,6 +1049,7 @@ static oem_ops_t oem_module_ops = {
 	camera_snapshot_is_need_flash,
 	camera_get_sensor_dual_otp_info,
 	camera_get_sensor_vcm_step,
+	camera_stop_multi_layer,
 };
 
 struct oem_module OEM_MODULE_INFO_SYM = {

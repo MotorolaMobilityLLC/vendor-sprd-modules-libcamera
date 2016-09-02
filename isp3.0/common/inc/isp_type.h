@@ -23,6 +23,8 @@ extern "C" {
 #include <sys/types.h>
 #include "cmr_types.h"
 
+#define ISP_GRAB_BUF_MAX 16
+
 struct isp_sample_point_info {
 	cmr_s32 x0;
 	cmr_s32 x1;

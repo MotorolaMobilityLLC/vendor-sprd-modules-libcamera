@@ -130,11 +130,11 @@ struct isp_dev_img_param {
 	cmr_u32                    is_reserved_buf;
 	cmr_u32                    count;
 	cmr_u32                    flag;
-	cmr_u32                    index;
+	cmr_u32                    index[ISP_GRAB_BUF_MAX];
 	struct isp_size            img_size;
-	struct isp_img_mfd         img_fd;
-	struct isp_addr            addr;
-	struct isp_addr            addr_vir;
+	struct isp_img_mfd         img_fd[ISP_GRAB_BUF_MAX];
+	struct isp_addr            addr[ISP_GRAB_BUF_MAX];
+	struct isp_addr            addr_vir[ISP_GRAB_BUF_MAX];
 	cmr_uint                   zsl_private;
 };
 
@@ -160,6 +160,8 @@ cmr_int isp_dev_access_match_data_ctrl(isp_handle isp_dev_handle, struct match_d
 cmr_int isp_dev_access_cfg_sof_info(isp_handle handle, struct isp_sof_cfg_info *data);
 cmr_int isp_dev_access_cap_buf_cfg(cmr_handle isp_dev_handle, struct isp_dev_img_param *parm);
 void isp_dev_access_cfg_buf_evt_reg(cmr_handle isp_dev_handle, cmr_handle grab_handle, isp_evt_cb isp_event_cb);
+cmr_int isp_dev_access_drammode_takepic(isp_handle isp_dev_handle, cmr_u32 is_start);
+
 /**---------------------------------------------------------------------------*/
 
 #endif

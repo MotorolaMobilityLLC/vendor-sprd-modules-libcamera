@@ -876,36 +876,43 @@ cmr_int isp_cap_buff_cfg(cmr_handle isp_handle, struct isp_img_param *buf_cfg)
 	cmr_u32                  i;
 	struct isp_dev_img_param parm;
 
-	memset(&parm, 0, sizeof(struct isp_dev_img_param));
-
 	if (NULL == buf_cfg || NULL == cxt->isp_dev_handle) {
 		ISP_LOGE("Para invalid");
 		return -1;
 	}
 
+	memset(&parm, 0, sizeof(struct isp_dev_img_param));
 	parm.channel_id = buf_cfg->channel_id;
 	parm.base_id = buf_cfg->base_id;
-	parm.addr.chn0 = buf_cfg->addr.chn0;
-	parm.addr.chn1 = buf_cfg->addr.chn1;
-	parm.addr.chn2 = buf_cfg->addr.chn2;
-	parm.addr_vir.chn0 = buf_cfg->addr_vir.chn0;
-	parm.addr_vir.chn1 = buf_cfg->addr_vir.chn1;
-	parm.addr_vir.chn2 = buf_cfg->addr_vir.chn2;
-	parm.index           = buf_cfg->index;
 	parm.is_reserved_buf  = buf_cfg->is_reserved_buf;
+	parm.count	 = buf_cfg->count;
 	parm.flag         = buf_cfg->flag;
+	for(i = 0; i < parm.count; i++) {
+		parm.addr[i].chn0 = buf_cfg->addr[i].chn0;
+		parm.addr[i].chn1 = buf_cfg->addr[i].chn1;
+		parm.addr[i].chn2 = buf_cfg->addr[i].chn2;
+		parm.addr_vir[i].chn0 = buf_cfg->addr_vir[i].chn0;
+		parm.addr_vir[i].chn1 = buf_cfg->addr_vir[i].chn1;
+		parm.addr_vir[i].chn2 = buf_cfg->addr_vir[i].chn2;
+		parm.index[i]           = buf_cfg->index[i];
+		parm.img_fd[i].y      = buf_cfg->img_fd[i].y;
+		parm.img_fd[i].u      = buf_cfg->img_fd[i].u;
+		parm.img_fd[i].v      = buf_cfg->img_fd[i].v;
+	}
 	parm.zsl_private      = buf_cfg->zsl_private;
-	parm.img_fd.y      = buf_cfg->img_fd.y;
-	parm.img_fd.u      = buf_cfg->img_fd.u;
-	parm.img_fd.v      = buf_cfg->img_fd.v;
-
-
-	ISP_LOGI("fd=0x%x, offset: y=0x%lx, u=0x%lx, v=0x%lx, is_reserved_buf=%d",
-		 buf_cfg->img_fd.y,
-		 buf_cfg->addr.chn0, buf_cfg->addr.chn1,
-		 buf_cfg->addr.chn2, buf_cfg->is_reserved_buf);
 
 	ret = isp_dev_access_cap_buf_cfg(cxt->isp_dev_handle, &parm);
 
 	return ret;
 }
+
+cmr_int isp_drammode_takepic (cmr_handle isp_handle, cmr_u32 is_start)
+{
+	cmr_int                    ret = ISP_SUCCESS;
+	struct isp_mw_context      *cxt = (struct isp_mw_context *)isp_handle;
+
+	ret = isp_dev_access_drammode_takepic(cxt->isp_dev_handle, is_start);
+
+	return ret;
+}
+

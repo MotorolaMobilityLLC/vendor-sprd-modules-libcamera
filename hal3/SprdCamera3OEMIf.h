@@ -185,6 +185,7 @@ public:
 	void disablePowerHint();
 	int changeDfsPolicy(int dfs_policy);
 	int IommuIsEnabled(void);
+	int stopMultiLayer();
 public:
 	static int      pre_alloc_cap_mem_thread_init(void *p_data);
 	static int      pre_alloc_cap_mem_thread_deinit(void *p_data);
@@ -391,7 +392,7 @@ private:
 	int Callback_CaptureFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum);
 	int Callback_CaptureMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
 	int Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum);
-	int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr,cmr_s32 *fd);
+	int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size, cmr_u32 *sum_ptr, cmr_uint *phy_addr, cmr_uint *vir_addr,cmr_s32 *fd);
 	static int Callback_Free(enum camera_mem_cb_type type, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum, void* private_data);
 	static int Callback_Malloc(enum camera_mem_cb_type type, cmr_u32 *size_ptr, cmr_u32 *sum_ptr, cmr_uint *phy_addr,
 		                                                cmr_uint *vir_addr, cmr_s32 *fd, void* private_data);
@@ -408,6 +409,7 @@ private:
 	uint32_t getZslBufferIDForFd(cmr_s32 fd);
 	int pushZslFrame(struct camera_frame_type *frame);
 	struct camera_frame_type popZslFrame();
+	void processStopMultiLayer(void *p_data);
 
 	List<ZslBufferQueue> mZSLQueue;
 	bool                              mSprdZslEnabled;
@@ -572,7 +574,7 @@ private:
 
 	sprd_camera_memory_t*           mHighIsoSnapshotHeapReserved;
 	sprd_camera_memory_t*           mIspYUVReserved;
-	sprd_camera_memory_t*           mIspRawDataReserved;
+	sprd_camera_memory_t*           mIspRawDataReserved[4];
 
 	sprd_camera_memory_t*           mIspAntiFlickerHeapReserved;
 	sprd_camera_memory_t*           mIspRawAemHeapReserved[kISPB4awbCount];
@@ -650,6 +652,8 @@ private:
 	/* 0 - snapshot not need flash; 1 - snapshot need flash*/
 	uint32_t                      mFlashCaptureFlag;
 	uint32_t                      mFlashCaptureSkipNum;
+	bool                          mFlagMultiLayerStart;
+	bool                          mSprdBurstModeEnabled;
 };
 
 }; // namespace sprdcamera

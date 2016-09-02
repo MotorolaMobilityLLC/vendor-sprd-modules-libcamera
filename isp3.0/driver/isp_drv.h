@@ -100,6 +100,7 @@ cmr_int isp_dev_set_img_buf(isp_handle handle, struct isp_cfg_img_buf *param);
 cmr_int isp_dev_get_img_buf(isp_handle handle, struct isp_img_read_op *param);
 cmr_int isp_dev_set_img_param(isp_handle handle, struct isp_cfg_img_param *param);
 cmr_int isp_dev_get_timestamp(isp_handle handle, cmr_u32 *sec, cmr_u32 *usec);
+cmr_int isp_dev_drammode_takepic(isp_handle handle, cmr_u32 is_start);
 cmr_int isp_dev_highiso_mode(isp_handle handle, struct isp_raw_data *param);
 cmr_int isp_dev_cfg_scenario_info(isp_handle handle, struct scenario_info_ap *data);
 cmr_int isp_dev_cfg_iso_speed(isp_handle handle, cmr_u32 *data);

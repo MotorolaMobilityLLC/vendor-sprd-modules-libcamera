@@ -376,6 +376,7 @@ typedef struct {
 	uint8_t is_macro_fixed;
 	uint8_t  sprd_3dcalibration_enabled;/**add for 3d calibration enable flag*/
 	uint32_t sprd_3dcalibration_cap_size[SPRD_3DCALIBRATION_CAPSIZE_ARRAYSIZE];/**add for 3d calibration capture size*/
+	uint8_t sprd_burstmode_enable;
 } SPRD_DEF_Tag;
 
 typedef struct {

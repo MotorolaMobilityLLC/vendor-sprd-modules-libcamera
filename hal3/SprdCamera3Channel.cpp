@@ -930,6 +930,10 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number)
 			HAL_LOGV("ANDROID_SPRD_3DCALIBRATION_ENABLED");
 			mOEMIf->SetCameraParaTag(ANDROID_SPRD_3DCALIBRATION_ENABLED);
 			break;/**add for 3d calibration update params end*/
+		case ANDROID_SPRD_BURSTMODE_ENABLED:
+			HAL_LOGV("ANDROID_SPRD_BURSTMODE_ENABLED");
+			mOEMIf->SetCameraParaTag(ANDROID_SPRD_BURSTMODE_ENABLED);
+			break;
 		default:
 			HAL_LOGV("other tag");
 			break;

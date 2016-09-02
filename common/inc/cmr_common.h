@@ -424,6 +424,8 @@ struct video_start_param {
 	cmr_u32                                 is_need_flash;
 	cmr_u32                                 capture_skip_num;
 	struct img_size                         live_view_sz;
+	struct img_size                         lv_size;
+	struct img_size                         video_size;
 };
 
 struct memory_param {
@@ -484,6 +486,8 @@ struct  sensor_if {
 };
 
 struct img_frm_cap {
+	cmr_u32                             src_img_change;
+	struct img_size                     src_img_size;
 	struct img_rect                     src_img_rect;
 	struct img_size                     dst_img_size;
 	cmr_u32                             dst_img_fmt;
@@ -1038,7 +1042,8 @@ enum camera_param_type{
 	CAMERA_PARAM_REFOCUS_ENABLE,
 	CAMERA_PARAM_TOUCH_XY,
 	CAMERA_PARAM_VIDEO_SNAPSHOT_TYPE,
-	CAMERA_PARAM_SPRD_3DCAL_ENABLE,/**add for 3d calibration*/
+	CAMERA_PARAM_SPRD_3DCAL_ENABLE,
+	CAMERA_PARAM_SPRD_BURSTMODE_ENABLED,
 	CAMERA_PARAM_TYPE_MAX
 };
 
@@ -1258,7 +1263,7 @@ cmr_int (*camera_get_sensor_max_fps)(cmr_handle camera_handle,cmr_u32 camera_id,
 cmr_int (*camera_snapshot_is_need_flash)(cmr_handle oem_handle, cmr_u32 camera_id, cmr_u32 *is_need_flash);
 cmr_uint (*camera_get_sensor_dual_otp_info)(cmr_handle camera_handle, struct sensor_dual_otp_info *otp_info);
 cmr_uint (*camera_get_sensor_vcm_step)(cmr_handle camera_handle,cmr_u32 camera_id, cmr_u32* vcm_step);
-
+cmr_int (*camera_stop_multi_layer)(cmr_handle camera_handle);
 }oem_ops_t;
 
 typedef struct oem_module {

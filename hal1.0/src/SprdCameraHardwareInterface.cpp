@@ -467,7 +467,6 @@ SprdCameraHardware::SprdCameraHardware(int cameraId):
 	mIspLscHeapReserved(NULL),
 	mIspFirmwareReserved(NULL),
 	mHighIsoSnapshotHeapReserved(NULL),
-	mIspRawDataReserved(NULL),
 	mIspYUVReserved (NULL),
 	mIspAntiFlickerHeapReserved(NULL),
 	mVideoShotPushFlag(0),
@@ -526,6 +525,7 @@ SprdCameraHardware::SprdCameraHardware(int cameraId):
 	mPreviewHeapBakUseFlag = 0;
 	memset(&mRawHeapInfoBak, 0, sizeof(mRawHeapInfoBak));
 	mRawHeapBakUseFlag = 0;
+	memset(mIspRawDataReserved, 0, sizeof(mIspRawDataReserved));
 
 	setCameraState(SPRD_INIT, STATE_CAMERA);
 
@@ -684,9 +684,11 @@ void SprdCameraHardware::release()
 		mHighIsoSnapshotHeapReserved = NULL;
 	}
 
-	if (NULL != mIspRawDataReserved) {
-		freeCameraMem(mIspRawDataReserved);
-		mIspRawDataReserved = NULL;
+	for (int i = 0; i < 4; i++) {
+		if (NULL != mIspRawDataReserved[i]) {
+			freeCameraMem(mIspRawDataReserved[i]);
+			mIspRawDataReserved[i] = NULL;
+		}
 	}
 
 	if (NULL != mIspYUVReserved) {
@@ -3755,7 +3757,7 @@ mem_fail:
 	return -1;
 }
 
-int SprdCameraHardware::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd)
+int SprdCameraHardware::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size, cmr_u32 *sum_ptr, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd)
 {
 
 	sprd_camera_memory_t *memory = NULL;
@@ -3763,6 +3765,7 @@ int SprdCameraHardware::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u
 	cmr_u32              mem_size;
 	cmr_u32              mem_sum;
 	int                  buffer_id;
+	cmr_u32 sum = *sum_ptr;
 
 	LOGD("Callback_OtherMalloc: type %d size %d sum %d", type, size, sum);
 
@@ -3921,17 +3924,24 @@ int SprdCameraHardware::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u
 		LOGI("malloc High Iso memory, malloced type %d,request num %d, request size 0x%x, fd 0x%x",
 			type, sum, size, fd);
 	} else if (type == CAMERA_ISP_RAW_DATA) {
-		if (mIspRawDataReserved ==  NULL) {
+		cmr_u64 *kaddr = (cmr_u64 *)vir_addr;
+		size_t ksize = 0;
+
+		for (i = 0; i < sum; i++) {
 			memory = allocCameraMem(size, true);
 			if (NULL == memory) {
-				LOGE("allocCameraMem failed");
-				goto mem_fail;
+				LOGI("memory is null.");
+				break;
 			}
-			mIspRawDataReserved = memory;
+			mIspRawDataReserved[i] = memory;
+			*phy_addr++ = 0;
+//			*vir_addr++ = (cmr_uint)memory->data;
+			memory->ion_heap->get_kaddr(kaddr, &ksize);
+			kaddr++;
+			*fd++ = memory->fd;
+			LOGI("mfd=%d, vir_addr=0x%0x", memory->fd, memory->data);
 		}
-		*phy_addr++ = (cmr_uint)mIspRawDataReserved->phys_addr;
-		*vir_addr++ = (cmr_uint)mIspRawDataReserved->data;
-		*fd++ = mIspRawDataReserved->fd;
+		*sum_ptr = i;
 	}else if (type == CAMERA_ISP_PREVIEW_YUV) {
 		if (mIspYUVReserved ==  NULL) {
 			memory = allocCameraMem(size, true);
@@ -3979,7 +3989,7 @@ int SprdCameraHardware::Callback_Malloc(enum camera_mem_cb_type type, cmr_u32 *s
 	} else if (CAMERA_PREVIEW_RESERVED == type || CAMERA_VIDEO_RESERVED == type || CAMERA_ISP_FIRMWARE == type ||
 		CAMERA_SNAPSHOT_ZSL_RESERVED == type || CAMERA_ISP_LSC == type || CAMERA_ISP_BINGING4AWB == type ||
 		CAMERA_SNAPSHOT_HIGHISO == type || CAMERA_ISP_RAW_DATA == type) {
-		ret = camera->Callback_OtherMalloc(type, size, sum, phy_addr, vir_addr, fd);
+		ret = camera->Callback_OtherMalloc(type, size, sum_ptr, phy_addr, vir_addr, fd);
 	} else if (CAMERA_VIDEO == type) {
 		ret = camera->Callback_VideoMalloc(size, sum, phy_addr, vir_addr, fd);
 	} else if (CAMERA_SNAPSHOT_ZSL == type) {
@@ -4169,9 +4179,11 @@ int SprdCameraHardware::Callback_OtherFree(enum camera_mem_cb_type type, cmr_uin
 	}
 
 	if (type == CAMERA_ISP_RAW_DATA) {
-		if (NULL != mIspRawDataReserved) {
-			freeCameraMem(mIspRawDataReserved);
-			mIspRawDataReserved = NULL;
+		for (i = 0; i < 4; i++) {
+			if (NULL != mIspRawDataReserved[i]) {
+				freeCameraMem(mIspRawDataReserved[i]);
+				mIspRawDataReserved[i] = NULL;
+			}
 		}
 	}
 

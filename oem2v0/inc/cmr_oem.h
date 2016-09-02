@@ -264,8 +264,8 @@ struct camera_context {
 	cmr_u32                  lls_shot_mode;
 	cmr_u32                  is_vendor_hdr;
 	cmr_u32                  is_pipviv_mode;
-	enum highiso_mode_type   highiso_mode;  /*highiso mode HIGHISO_CAP_MODE: normal high iso cap mode,
-                                                                         HIGHISO_RAWDATA_MODE:raw data cap on high iso mode*/
+	enum highiso_mode_type   highiso_mode;
+	cmr_u32                  burst_mode;
 	cmr_u32                  isp_to_dram;
 	cmr_int                  cap_cnt;
 	cmr_u32                  is_refocus_mode;
@@ -293,9 +293,9 @@ struct camera_context {
 	cmr_uint                 b4awb_virt_addr[ISP_B4AWB_BUF_CNT];
 #endif
 	cmr_u8                   flag_highiso_alloc_mem;
-	cmr_s32                  raw_buf_fd;
-	cmr_uint                 raw_buf_phys_addr;
-	cmr_uint                 raw_buf_virt_addr;
+	cmr_s32                  raw_buf_fd[4];
+	cmr_uint                 raw_buf_phys_addr[4];
+	cmr_u64                 raw_buf_virt_addr[4];
 	cmr_s32                  highiso_buf_fd;
 	cmr_uint                 highiso_buf_phys_addr;
 	cmr_uint                 highiso_buf_virt_addr;
@@ -382,7 +382,7 @@ cmr_int camera_local_snapshot_is_need_flash(cmr_handle oem_handle, cmr_u32 camer
 cmr_int camera_get_dual_otpinfo(cmr_handle  oem_handle,struct sensor_dual_otp_info *dual_otp_data);
 cmr_int prev_set_vcm_step(cmr_handle preview_handle, cmr_u32 camera_id, void *data);
 cmr_int cmr_get_sensor_vcm_step(cmr_handle  oem_handle,cmr_u32 camera_id, cmr_u32* max_fps);
-
+cmr_int camera_local_stop_multi_layer(cmr_handle oem_handle);
 
 #ifdef __cplusplus
 }

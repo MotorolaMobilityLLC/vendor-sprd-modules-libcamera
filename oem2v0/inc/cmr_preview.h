@@ -142,6 +142,7 @@ struct preview_param {
 	cmr_u32                  video_slowmotion_eb;
 	cmr_u32                  sprd_pipviv_enabled;
 	cmr_u32                  sprd_highiso_enabled;
+	cmr_u32                  sprd_burstmode_enabled;
 	cmr_u32                  sprd_eis_enabled;
 	cmr_u32                  isp_to_dram;
 	cmr_u32                  video_snapshot_type;

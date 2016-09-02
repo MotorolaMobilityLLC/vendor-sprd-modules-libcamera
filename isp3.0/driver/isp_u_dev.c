@@ -300,14 +300,14 @@ cmr_int isp_dev_alloc_highiso_mem(isp_handle handle, struct isp_raw_data *buf, s
 		file->init_param.alloc_cb(CAMERA_SNAPSHOT_HIGHISO,
 					  file->init_param.mem_cb_handle,
 					  &buf_size, &buf_num,
-					  (cmr_uint *)&buf->phy_addr[0],
-					  (cmr_uint *)&buf->virt_addr[0],
+					  (cmr_uint*)&buf->phy_addr[0],
+					  (cmr_uint*)&buf->virt_addr[0],
 					  &buf->fd[0]);
 		buf->width = size->width;
 		buf->height = size->height;
 		buf->size = buf_size;
-		ISP_LOGD("highiso_buf fd 0x%x phy_addr 0x%x virt_addr 0x%llx size 0x%x",
-			buf->fd[0], buf->phy_addr[0], (unsigned long long)buf->virt_addr[0], buf_size);
+		ISP_LOGD("highiso_buf fd 0x%x phy_addr 0x%x virt_addr 0x%x size 0x%x",
+			buf->fd[0], buf->phy_addr[0], (cmr_u32)buf->virt_addr[0], buf_size);
 	}
 
 	ISP_LOGE("done");
@@ -2053,6 +2053,7 @@ cmr_int isp_dev_highiso_mode(isp_handle handle, struct isp_raw_data *param)
 {
 	cmr_int ret = 0;
 	struct isp_file *file = NULL;
+	struct isp_hiso_data hiso_info;
 
 	if (!handle) {
 		ISP_LOGE("handle is null error.");
@@ -2064,10 +2065,165 @@ cmr_int isp_dev_highiso_mode(isp_handle handle, struct isp_raw_data *param)
 	}
 
 	file = (struct isp_file *)(handle);
-	ret = ioctl(file->fd, ISP_IO_SET_HISO, param);
+	hiso_info.fd = param->fd[0];
+	hiso_info.phy_addr = param->phy_addr[0];
+	hiso_info.virt_addr = param->virt_addr[0];
+	hiso_info.size = param->size;
+	CMR_LOGI("debug highiso fd = 0x%x, highiso phy = 0x%x, highiso vir = 0x%x, size = 0x%x",
+		 hiso_info.fd, hiso_info.phy_addr,hiso_info.virt_addr, hiso_info.size);
+	ret = ioctl(file->fd, ISP_IO_SET_HISO, &hiso_info);
 	if (ret) {
 		ISP_LOGE("ISP_IO_SET_HISO error.");
 	}
 
 	return ret;
 }
+
+cmr_int isp_dev_drammode_takepic(isp_handle handle, cmr_u32 is_start)
+{
+	cmr_int ret = 0;
+	struct isp_file *file = NULL;
+
+	if (!handle) {
+		CMR_LOGE("handle is null error.");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+
+	ret = ioctl(file->fd, ISP_IO_PROC_STILL, &is_start);
+	if (ret) {
+		CMR_LOGE("ISP_IO_PROC_STILL error.");
+	}
+
+	return ret;
+}
+
+cmr_int camera_save_to_file_isp(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height, struct img_addr *addr)
+{
+		cmr_int                      ret = 0;
+		char                         file_name[40];
+		char                         tmp_str[10];
+		FILE                         *fp = NULL;
+
+		CMR_LOGI("index %d format %d width %d heght %d u_addr 0x%lx", index, img_fmt, width, height, addr->addr_u);
+
+		cmr_bzero(file_name, 40);
+		strcpy(file_name, "/data/misc/media/");
+		sprintf(tmp_str, "%d", width);
+		strcat(file_name, tmp_str);
+		strcat(file_name, "X");
+		sprintf(tmp_str, "%d", height);
+		strcat(file_name, tmp_str);
+
+		if (IMG_DATA_TYPE_YUV420 == img_fmt ||
+			IMG_DATA_TYPE_YUV422 == img_fmt) {
+			strcat(file_name, "_y_");
+			sprintf(tmp_str, "%d", index);
+			strcat(file_name, tmp_str);
+			strcat(file_name, ".raw");
+			CMR_LOGI("file name %s", file_name);
+			fp = fopen(file_name, "wb");
+
+			if (NULL == fp) {
+				CMR_LOGI("can not open file: %s \n", file_name);
+				return 0;
+			}
+
+			fwrite((void*)addr->addr_y, 1, width * height, fp);
+			fclose(fp);
+
+			bzero(file_name, 40);
+			strcpy(file_name, "/data/misc/media/");
+			sprintf(tmp_str, "%d", width);
+			strcat(file_name, tmp_str);
+			strcat(file_name, "X");
+			sprintf(tmp_str, "%d", height);
+			strcat(file_name, tmp_str);
+			strcat(file_name, "_uv_");
+			sprintf(tmp_str, "%d", index);
+			strcat(file_name, tmp_str);
+			strcat(file_name, ".raw");
+			CMR_LOGI("file name %s", file_name);
+			fp = fopen(file_name, "wb");
+			if (NULL == fp) {
+				CMR_LOGI("can not open file: %s \n", file_name);
+				return 0;
+			}
+
+			if(1){ //(IMG_DATA_TYPE_YUV420 == img_fmt) {
+				fwrite((void*)(addr->addr_y + width * height), 1, width * height / 2, fp);
+			} else {
+				fwrite((void*)addr->addr_u, 1, width * height / 2, fp);
+			}
+			fclose(fp);
+		} else if (IMG_DATA_TYPE_JPEG == img_fmt) {
+			strcat(file_name, "_");
+			sprintf(tmp_str, "%d", index);
+			strcat(file_name, tmp_str);
+			strcat(file_name, ".jpg");
+			CMR_LOGI("file name %s", file_name);
+
+			fp = fopen(file_name, "wb");
+			if (NULL == fp) {
+				CMR_LOGI("can not open file: %s \n", file_name);
+				return 0;
+			}
+
+			fwrite((void*)addr->addr_y, 1, width * height*2, fp);
+			fclose(fp);
+		} else if (IMG_DATA_TYPE_RAW == img_fmt) {
+			strcat(file_name, "_");
+			sprintf(tmp_str, "%d", index);
+			strcat(file_name, tmp_str);
+			strcat(file_name, ".mipi_raw");
+			CMR_LOGI("file name %s", file_name);
+
+			fp = fopen(file_name, "wb");
+			if(NULL == fp){
+				CMR_LOGI("can not open file: %s \n", file_name);
+				return 0;
+			}
+
+			fwrite((void*)addr->addr_y, 1, (uint32_t)(width * height * 5 / 4), fp);
+			fclose(fp);
+		}
+		return 0;
+}
+
+
+
+cmr_int statistic_save_to_file_isp(struct isp_statis_frame_output *statis, struct isp_file *file)
+{
+	cmr_int                      ret = 0;
+	char                         file_name[40];
+	char                         tmp_str[10];
+	FILE                         *fp = NULL;
+
+	cmr_bzero(file_name, 40);
+	strcpy(file_name, "/data/misc/media/statisic_");
+	sprintf(tmp_str, "%d", file->init_param.width);
+	strcat(file_name, tmp_str);
+	strcat(file_name, "X");
+	sprintf(tmp_str, "%d", file->init_param.height);
+	strcat(file_name, tmp_str);
+	strcat(file_name, ".log");
+
+	CMR_LOGI("file name %s", file_name);
+	fp = fopen(file_name, "a+");
+
+	if (NULL == fp) {
+		CMR_LOGI("can not open file: %s \n", file_name);
+		return 0;
+	}
+	fseek(fp,0,SEEK_END);
+
+//	sprintf(tmp_str, "\n%d %d\n", statis->time_stamp.sec, statis->time_stamp.usec);
+//	fwrite((tmp_str, 1, 10, fp);
+	
+	fwrite((void*)(statis->vir_addr), 1, statis->buf_size, fp);
+	fclose(fp);
+
+	return 0;
+}
+
