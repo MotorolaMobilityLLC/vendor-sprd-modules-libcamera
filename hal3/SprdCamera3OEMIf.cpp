@@ -2348,8 +2348,8 @@ void SprdCamera3OEMIf::deinitCapture(bool isPreAllocCapMem)
 int SprdCamera3OEMIf::startPreviewInternal()
 {
 	bool is_push_zsl = false;
+	bool is_volte = false;
 	char value[PROPERTY_VALUE_MAX];
-
 	HAL_LOGD("E camera id %d",mCameraId);
 
 	SPRD_DEF_Tag sprddefInfo;
@@ -2462,7 +2462,9 @@ int SprdCamera3OEMIf::startPreviewInternal()
 		is_push_zsl = true;
 		PushFirstZslbuff();
 	}
-	if (mCaptureMode == CAMERA_ZSL_MODE) {
+	property_get("volte.incall.camera.enable", value, "false");
+	is_volte = !strcmp(value, "true");
+	if (is_volte||mCaptureMode == CAMERA_ZSL_MODE) {
 		PushFirstVideobuff();
 		if (!is_push_zsl)
 			PushFirstZslbuff();
