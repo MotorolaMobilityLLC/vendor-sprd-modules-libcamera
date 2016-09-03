@@ -187,7 +187,6 @@ static cmr_int afaltek_adpt_caf_init(cmr_handle adpt_handle);
 static cmr_int afaltek_adpt_caf_deinit(cmr_handle adpt_handle);
 static cmr_int afaltek_adpt_set_special_event(cmr_handle adpt_handle, void *in);
 static cmr_int afaltek_adpt_get_hw_config(struct isp3a_af_hw_cfg *out);
-static cmr_int afaltek_adpt_update_pd_info(cmr_handle adpt_handle,void *in);
 
 /************************************ INTERNAK FUNCTION ***************************************/
 
@@ -976,7 +975,7 @@ static cmr_int afaltek_adpt_update_isp_info(cmr_handle adpt_handle, void *in)
 	p.u_set_data.isp_info.liveview_img_sz.uw_height = in_isp_info->img_height;
 
 	ISP_LOGI("uw_width = %d", p.u_set_data.isp_info.liveview_img_sz.uw_width);
-	ISP_LOGI("uw_height= %d", p.u_set_data.isp_info.liveview_img_sz.uw_height);
+	ISP_LOGI("uw_height = %d", p.u_set_data.isp_info.liveview_img_sz.uw_height);
 
 	ret = afaltek_adpt_set_parameters(cxt, &p);
 	ISP_LOGI("ret = %ld", ret);
@@ -1234,40 +1233,15 @@ static cmr_int afaltek_adpt_af_cancel(cmr_handle adpt_handle, cmr_int success)
 	return ret;
 }
 
-static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
-					struct aft_proc_calc_param *aft_in)
+static cmr_int afaltek_adpt_caf_start(cmr_handle adpt_handle)
 {
-	cmr_int ret = ISP_SUCCESS;
+	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct isp_af_win roi;
 	struct allib_af_input_roi_info_t lib_roi;
-	struct aft_proc_result aft_out;
-	cmr_int ae4af_stable = 0;
-	cmr_int ae_stable_cnt = cxt->ae_info.ae_stable_cnt;
-
-	pthread_mutex_lock(&cxt->af_caf_cxt.caf_mutex);
-	if (cxt->vcm_tune.tuning_enable) {
-		ISP_LOGI("vcm tuning mode");
-		goto exit;
-	}
-
-	if ((AF_CTRL_MODE_CAF != cxt->af_mode) &&
-	    (AF_CTRL_MODE_CONTINUOUS_VIDEO != cxt->af_mode))
-		goto exit;
 
 	cmr_bzero(&roi, sizeof(roi));
 	cmr_bzero(&lib_roi, sizeof(lib_roi));
-	cmr_bzero(&aft_out, sizeof(aft_out));
-
-	ae4af_stable = (ae_stable_cnt >= DEFAULT_AE4AF_STABLE_STABLE_CNT) ? 1 : 0;
-	aft_in->ae_info.is_stable = (ae4af_stable || cxt->ae_info.ae_converge_st);
-
-	ret = cxt->caf_ops.trigger_calc(cxt->caf_trigger_handle, aft_in, &aft_out);
-	ISP_LOGV("is_stable %d, caf_trig %d, cancel_caf %d",
-		 aft_in->ae_info.is_stable,
-		 aft_out.is_caf_trig,
-		 aft_out.is_cancel_caf);
-
 	/* caf roi 1/16 raw */
 	roi.valid_win = 1;
 	if (!cxt->sensor_info.crop_info.width || !cxt->sensor_info.crop_info.height) {
@@ -1282,36 +1256,61 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 	roi.win[0].end_x = 5 * cxt->sensor_info.crop_info.width / 8;
 	roi.win[0].end_y = 5 * cxt->sensor_info.crop_info.height / 8;
 
-	if ((aft_in->ae_info.is_stable && cxt->ae_info.ae_stable_retrig_flg)||
+	/* notify oem to show box */
+	ret = afaltek_adpt_start_notify(adpt_handle);
+	if (ret)
+		ISP_LOGE("failed to notify");
+	ret = afaltek_adpt_config_roi(adpt_handle, &roi,
+				      alAFLib_ROI_TYPE_NORMAL, &lib_roi);
+	if (ret)
+		ISP_LOGE("failed to config roi");
+	ret = afaltek_adpt_pre_start(adpt_handle, &lib_roi);
+	if (ret)
+		ISP_LOGE("failed to start af");
+exit:
+	return ret;
+}
+
+static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
+					struct aft_proc_calc_param *aft_in)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+	struct aft_proc_result aft_out;
+	cmr_int ae4af_stable = 0;
+	cmr_int ae_stable_cnt = cxt->ae_info.ae_stable_cnt;
+
+	pthread_mutex_lock(&cxt->af_caf_cxt.caf_mutex);
+	if (cxt->vcm_tune.tuning_enable) {
+		ISP_LOGI("vcm tuning mode");
+		goto exit;
+	}
+
+	if ((AF_CTRL_MODE_CAF != cxt->af_mode) &&
+	    (AF_CTRL_MODE_CONTINUOUS_VIDEO != cxt->af_mode))
+		goto exit;
+
+	cmr_bzero(&aft_out, sizeof(aft_out));
+
+	ae4af_stable = (ae_stable_cnt >= DEFAULT_AE4AF_STABLE_STABLE_CNT) ? 1 : 0;
+	aft_in->ae_info.is_stable = (ae4af_stable || cxt->ae_info.ae_converge_st);
+
+	ret = cxt->caf_ops.trigger_calc(cxt->caf_trigger_handle, aft_in, &aft_out);
+	ISP_LOGV("is_stable %d, caf_trig %d, cancel_caf %d",
+		 aft_in->ae_info.is_stable,
+		 aft_out.is_caf_trig,
+		 aft_out.is_cancel_caf);
+
+
+	if ((aft_in->ae_info.is_stable && cxt->ae_info.ae_stable_retrig_flg) ||
 		cxt->caf_force_focus) {
 		/* When entering the camera, CAF is forced to focus once. */
 		cxt->caf_force_focus = 0;
 		ISP_LOGI("af retrigger");
-		/* notify oem to show box */
-		ret = afaltek_adpt_start_notify(adpt_handle);
-		if (ret)
-			ISP_LOGE("failed to notify");
-		ret = afaltek_adpt_config_roi(adpt_handle, &roi,
-					      alAFLib_ROI_TYPE_NORMAL, &lib_roi);
-		if (ret)
-			ISP_LOGE("failed to config roi");
-		ret = afaltek_adpt_pre_start(adpt_handle, &lib_roi);
-		if (ret)
-			ISP_LOGE("failed to start af");
+		ret = afaltek_adpt_caf_start(cxt);
 		cxt->ae_info.ae_stable_retrig_flg = 0;
 	} else if ((!cxt->aft_proc_result.is_caf_trig) && aft_out.is_caf_trig) {
-		/* notify oem to show box */
-		ret = afaltek_adpt_start_notify(adpt_handle);
-		if (ret)
-			ISP_LOGE("failed to notify");
-		ret = afaltek_adpt_config_roi(adpt_handle, &roi,
-					      alAFLib_ROI_TYPE_NORMAL, &lib_roi);
-		if (ret)
-			ISP_LOGE("failed to config roi");
-		ret = afaltek_adpt_pre_start(adpt_handle, &lib_roi);
-		if (ret)
-			ISP_LOGE("failed to start af");
-
+		ret = afaltek_adpt_caf_start(cxt);
 	} else if (aft_out.is_cancel_caf) {
 		ret = afaltek_adpt_stop(cxt);
 		if (ret)
@@ -2042,6 +2041,7 @@ static cmr_int afaltek_adpt_inctrl(cmr_handle adpt_handle, cmr_int cmd,
 		}
 	case AF_CTRL_CMD_SET_AF_STOP:
 		ret = afaltek_adpt_stop(adpt_handle);
+		ret = afaltek_adpt_lock_ae_awb(adpt_handle, ISP_AE_AWB_UNLOCK);
 		break;
 	case AF_CTRL_CMD_SET_AF_RESTART:
 		ret = afaltek_adpt_reset_af_setting(adpt_handle);
@@ -2382,7 +2382,7 @@ static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 		ISP_LOGI("failed to update isp info ret = %ld", ret);
 #endif
 	ISP_LOGI("in->pdaf_support = %d", in->pdaf_support);
-	if(in->pdaf_support){
+	if (in->pdaf_support) {
 		/* set hybrid input info */
 		hybrid_in.enable_hybrid = 1;
 		hybrid_in.type = alAFLIB_HYBRID_TYPE_PD;
@@ -2641,13 +2641,13 @@ static cmr_int afaltek_adpt_proc_report_pd_cfg(cmr_handle adpt_handle,
 	ISP_LOGI("pdaf_cfg.type = %x", pdaf_cfg.type);
 	/* send stats config to framework */
 	if (pdaf_cfg.type & alAFLib_PD_CONFIG_ENABLE) {
-		afaltek_adpt_config_pdaf_enable(adpt_handle,(void *)&pdaf_cfg.pd_enable);
+		afaltek_adpt_config_pdaf_enable(adpt_handle, (void *)&pdaf_cfg.pd_enable);
 	}
 	if (pdaf_cfg.type & alAFLib_PD_CONFIG_RESET) {
 		afaltek_adpt_config_pdaf_reset(adpt_handle);
 	}
-	if (pdaf_cfg.type & alAFLib_PD_CONFIG_ROI){
-		afaltek_adpt_config_pdaf_roi(adpt_handle,(void *)&pdaf_cfg.pd_roi_info.roi);
+	if (pdaf_cfg.type & alAFLib_PD_CONFIG_ROI) {
+		afaltek_adpt_config_pdaf_roi(adpt_handle, (void *)&pdaf_cfg.pd_roi_info.roi);
 	}
 	return ret;
 }
@@ -2663,7 +2663,7 @@ static cmr_int afaltek_adpt_proc_out_report(cmr_handle adpt_handle,
 		ISP_LOGI("report->type = 0x%x", report->type);
 
 	if (alAFLIB_OUTPUT_PD_CONFIG & report->type) {
-		ret = afaltek_adpt_proc_report_pd_cfg(cxt,report);
+		ret = afaltek_adpt_proc_report_pd_cfg(cxt, report);
 	}
 	if (alAFLIB_OUTPUT_DEBUG_INFO & report->type) {
 		ret = afaltek_adpt_proc_report_debug_info(report, report_out);

@@ -2358,7 +2358,7 @@ cmr_int isp3a_set_ae_awb_lock(cmr_handle isp_3a_handle, void *param_ptr)
 		ISP_LOGW("input is NULL");
 		goto exit;
 	}
-	mode = *(cmr_u32*)param_ptr;
+	mode = *(cmr_u32 *)param_ptr;
 	ISP_LOGI("E");
 
 	if (ISP_AE_AWB_LOCK == mode) {
@@ -2559,11 +2559,9 @@ cmr_int isp3a_set_convergence_req(cmr_handle isp_3a_handle, void *param_ptr)
 	if (!param_ptr) {
 		ISP_LOGE("set AE_CTRL_SET_CONVERGENCE_REQ, param_ptr == null");
 		ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_CONVERGENCE_REQ, NULL, NULL);
-	}
-	else
-	{
+	} else {
 		struct ae_ctrl_param_in    ae_in;
-		ae_in.value = *(cmr_u32*)param_ptr;
+		ae_in.value = *(cmr_u32 *)param_ptr;
 		ISP_LOGE("set AE_CTRL_SET_CONVERGENCE_REQ with params for 3dcalibration, params:%d", ae_in.value);
 		ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_CONVERGENCE_REQ, &ae_in, NULL);
 	}
@@ -3133,6 +3131,7 @@ err_handle:
 		if (ISP_DRV_STATISTICE == evt) {
 			struct isp_statis_buf statis_buf;
 			struct isp_statis_info *statis_info = (struct isp_statis_info *)data;
+
 			statis_buf.buf_size = statis_info->statis_frame.buf_size;
 			statis_buf.phy_addr = statis_info->statis_frame.phy_addr;
 			statis_buf.vir_addr = statis_info->statis_frame.vir_addr;
@@ -3458,7 +3457,7 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 	isp_mlog(SHADING_FILE, "RPrun:%d, BPrun:%d", exif_ptr->shading_debug_info1.rp_run, exif_ptr->shading_debug_info1.bp_run);
 	isp_mlog(IRP_FILE, "contrast:%d,saturation:%d,sharpness:%d,effect:%d,mode:%d,quality:%d,sensor_id:%d,s_width:%d,s_height:%d",
 			cxt->irp_cxt.contrast, cxt->irp_cxt.saturation, cxt->irp_cxt.sharpness, cxt->irp_cxt.effect,
-			cxt->irp_cxt.mode,cxt->irp_cxt.quality, cxt->irp_cxt.sensor_id, cxt->irp_cxt.s_width, cxt->irp_cxt.s_height);
+			cxt->irp_cxt.mode, cxt->irp_cxt.quality, cxt->irp_cxt.sensor_id, cxt->irp_cxt.s_width, cxt->irp_cxt.s_height);
 	time_end = systemTime(CLOCK_MONOTONIC);
 	ISP_LOGI("test sof msg exif time_delta = %d us camera id %d", (cmr_s32)(time_end - time_start) / 1000, cxt->camera_id);
 	return ret;
@@ -3591,7 +3590,8 @@ cmr_int isp3a_start_awb_process(cmr_handle isp_3a_handle, struct isp3a_statistic
 			cxt->awb_cxt.proc_out = output;
 		}
 		if (AWB_CTRL_STATUS_CONVERGE == output.awb_states) {
-			union awb_ctrl_cmd_in  awb_in;
+			union awb_ctrl_cmd_in awb_in;
+
 			awb_in.lock_param.lock_flag = 1;
 			awb_in.lock_param.ct = 0;
 			awb_in.lock_param.wbgain.r = 0;
@@ -3665,7 +3665,7 @@ cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start *input_ptr)
 #endif
 
 	af_in.sensor_info.sensor_res_width = input_ptr->resolution_info.sensor_size.w;
-	af_in.sensor_info.sensor_res_height= input_ptr->resolution_info.sensor_size.h;
+	af_in.sensor_info.sensor_res_height = input_ptr->resolution_info.sensor_size.h;
 	af_in.sensor_info.crop_info.width = input_ptr->resolution_info.crop.width;
 	af_in.sensor_info.crop_info.height = input_ptr->resolution_info.crop.height;
 	af_in.sensor_info.crop_info.x = input_ptr->resolution_info.crop.st_x;
@@ -3818,7 +3818,7 @@ cmr_int isp_3a_fw_init(struct isp_3a_fw_init_in *input_ptr, cmr_handle *isp_3a_h
 			}
 		}
 	}
-	sensor_raw_info_ptr_slv = (struct sensor_raw_info*)input_ptr->setting_param_ptr_slv;
+	sensor_raw_info_ptr_slv = (struct sensor_raw_info *)input_ptr->setting_param_ptr_slv;
 	if (NULL != sensor_raw_info_ptr_slv)
 		cxt->ioctrl_ptr_slv = sensor_raw_info_ptr_slv->ioctrl_ptr;
 #endif
@@ -4278,7 +4278,7 @@ static cmr_int isp3a_handle_pdaf_raw_open(cmr_handle isp_3a_handle, void *param_
 	if (1 == pd_open->open) {
 		input.size = pd_open->size;
 		input.pd_set_buffer = pd_open->pd_set_buffer;
-		ret = pdaf_ctrl_open(cxt->pdaf_cxt.handle,&input);
+		ret = pdaf_ctrl_open(cxt->pdaf_cxt.handle, &input);
 	} else {
 		ret = pdaf_ctrl_close(cxt->pdaf_cxt.handle);
 	}

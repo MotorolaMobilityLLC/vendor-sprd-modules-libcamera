@@ -172,7 +172,7 @@ isp_free:
 cmr_int isp_dev_deinit(isp_handle handle)
 {
 	cmr_int                       ret = 0;
-	struct isp_file               *file = (struct isp_file*)handle;
+	struct isp_file               *file = (struct isp_file *)handle;
 
 	if (!file) {
 		ret = -1;
@@ -197,7 +197,7 @@ cmr_int isp_dev_deinit(isp_handle handle)
 		}
 		--_group.file_cnt;
 		file->init_param.free_cb(CAMERA_ISP_FIRMWARE, file->init_param.mem_cb_handle,
-			(cmr_uint*)file->fw_mem.phy_addr, (cmr_uint*)file->fw_mem.virt_addr, (cmr_s32 *)&file->fw_mem.mfd, file->fw_mem.num);
+			(cmr_uint *)file->fw_mem.phy_addr, (cmr_uint *)file->fw_mem.virt_addr, (cmr_s32 *)&file->fw_mem.mfd, file->fw_mem.num);
 	}
 
 	pthread_mutex_lock(&file->cb_mutex);
@@ -300,8 +300,8 @@ cmr_int isp_dev_alloc_highiso_mem(isp_handle handle, struct isp_raw_data *buf, s
 		file->init_param.alloc_cb(CAMERA_SNAPSHOT_HIGHISO,
 					  file->init_param.mem_cb_handle,
 					  &buf_size, &buf_num,
-					  (cmr_uint*)&buf->phy_addr[0],
-					  (cmr_uint*)&buf->virt_addr[0],
+					  (cmr_uint *)&buf->phy_addr[0],
+					  (cmr_uint *)&buf->virt_addr[0],
 					  &buf->fd[0]);
 		buf->width = size->width;
 		buf->height = size->height;
@@ -361,16 +361,16 @@ static cmr_int isp_dev_load_binary(isp_handle handle)
 
 #else
 
-	memcpy((void*)(shading),
-		(void*)file->init_param.shading_bin_addr, file->init_param.shading_bin_size);
-	memcpy((void*)(irp),
-			(void*)file->init_param.irp_bin_addr, file->init_param.irp_bin_size);
+	memcpy((void *)(shading),
+		(void *)file->init_param.shading_bin_addr, file->init_param.shading_bin_size);
+	memcpy((void *)(irp),
+			(void *)file->init_param.irp_bin_addr, file->init_param.irp_bin_size);
 
 	ISP_LOGI("isp_id %d shading offset 0x%lx, irp 0x%lx", isp_id,
-			shading - file->fw_mem.virt_addr, irp -file->fw_mem.virt_addr);
+			shading - file->fw_mem.virt_addr, irp - file->fw_mem.virt_addr);
 #endif
-	ISP_LOGI("shading %p check 0x%x", (cmr_u32*)shading, *(cmr_u32*)(shading + 0x100));
-	ISP_LOGI("irp %p check 0x%x", (cmr_u32*)irp, *(cmr_u32*)(irp + 0x100));
+	ISP_LOGI("shading %p check 0x%x", (cmr_u32 *)shading, *(cmr_u32 *)(shading + 0x100));
+	ISP_LOGI("irp %p check 0x%x", (cmr_u32 *)irp, *(cmr_u32 *)(irp + 0x100));
 
 exit:
 	return ret;
@@ -709,25 +709,25 @@ cmr_int isp_dev_load_firmware(isp_handle handle, struct isp_init_mem_param *para
 	}
 
 	/*load altek isp firmware from user space*/
-	if(++_group.file_cnt == 1) {
+	if (++_group.file_cnt == 1) {
 
 		fp = fopen(isp_fw_name, "rd");
-		if(NULL == fp) {
+		if (NULL == fp) {
 			ISP_LOGE("open altek isp firmware failed.");
 			return -1;
 		}
 
 		fseek(fp, 0, SEEK_END);
 		fw_size = ftell(fp);
-		if(0 == fw_size || isp_fw_size < fw_size) {
+		if (0 == fw_size || isp_fw_size < fw_size) {
 			ISP_LOGE("firmware size fw_size invalid, fw_size = %ld", fw_size);
 			fclose(fp);
 			return -1;
 		}
 		fseek(fp, 0, SEEK_SET);
 
-		ret = fread((void*)param->fw_buf_vir_addr, 1, fw_size, fp);
-		if(ret < 0) {
+		ret = fread((void *)param->fw_buf_vir_addr, 1, fw_size, fp);
+		if (ret < 0) {
 			ISP_LOGE("read altek isp firmware failed.");
 			fclose(fp);
 			return -1;
@@ -1948,7 +1948,7 @@ cmr_int isp_dev_match_data_ctrl(isp_handle handle, struct isp_match_data_param *
 	struct isp_file *file = NULL;
 
 	if (!handle || !data) {
-		CMR_LOGE("handle is null error %p %p", handle, data);
+		ISP_LOGE("handle is null error %p %p", handle, data);
 		return -1;
 	}
 
@@ -1956,7 +1956,7 @@ cmr_int isp_dev_match_data_ctrl(isp_handle handle, struct isp_match_data_param *
 
 	ret = ioctl(file->fd, ISP_IO_MATCH_DATA_CTRL, data);
 	if (ret) {
-		CMR_LOGE("isp_dev_get_match_data error.");
+		ISP_LOGE("isp_dev_get_match_data error.");
 	}
 
 	return ret;
@@ -2069,8 +2069,8 @@ cmr_int isp_dev_highiso_mode(isp_handle handle, struct isp_raw_data *param)
 	hiso_info.phy_addr = param->phy_addr[0];
 	hiso_info.virt_addr = param->virt_addr[0];
 	hiso_info.size = param->size;
-	CMR_LOGI("debug highiso fd = 0x%x, highiso phy = 0x%x, highiso vir = 0x%x, size = 0x%x",
-		 hiso_info.fd, hiso_info.phy_addr,hiso_info.virt_addr, hiso_info.size);
+	ISP_LOGI("debug highiso fd = 0x%x, highiso phy = 0x%x, highiso vir = 0x%x, size = 0x%x",
+		 hiso_info.fd, hiso_info.phy_addr, hiso_info.virt_addr, hiso_info.size);
 	ret = ioctl(file->fd, ISP_IO_SET_HISO, &hiso_info);
 	if (ret) {
 		ISP_LOGE("ISP_IO_SET_HISO error.");
@@ -2085,7 +2085,7 @@ cmr_int isp_dev_drammode_takepic(isp_handle handle, cmr_u32 is_start)
 	struct isp_file *file = NULL;
 
 	if (!handle) {
-		CMR_LOGE("handle is null error.");
+		ISP_LOGE("handle is null error.");
 		return -1;
 	}
 
@@ -2093,105 +2093,104 @@ cmr_int isp_dev_drammode_takepic(isp_handle handle, cmr_u32 is_start)
 
 	ret = ioctl(file->fd, ISP_IO_PROC_STILL, &is_start);
 	if (ret) {
-		CMR_LOGE("ISP_IO_PROC_STILL error.");
+		ISP_LOGE("ISP_IO_PROC_STILL error.");
 	}
 
 	return ret;
 }
 
+#if 0
 cmr_int camera_save_to_file_isp(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height, struct img_addr *addr)
 {
-		cmr_int                      ret = 0;
-		char                         file_name[40];
-		char                         tmp_str[10];
-		FILE                         *fp = NULL;
+	cmr_int                      ret = 0;
+	char                         file_name[40];
+	char                         tmp_str[10];
+	FILE                         *fp = NULL;
 
-		CMR_LOGI("index %d format %d width %d heght %d u_addr 0x%lx", index, img_fmt, width, height, addr->addr_u);
+	ISP_LOGI("index %d format %d width %d heght %d u_addr 0x%lx", index, img_fmt, width, height, addr->addr_u);
 
-		cmr_bzero(file_name, 40);
+	cmr_bzero(file_name, 40);
+	strcpy(file_name, "/data/misc/media/");
+	sprintf(tmp_str, "%d", width);
+	strcat(file_name, tmp_str);
+	strcat(file_name, "X");
+	sprintf(tmp_str, "%d", height);
+	strcat(file_name, tmp_str);
+
+	if (IMG_DATA_TYPE_YUV420 == img_fmt ||
+	    IMG_DATA_TYPE_YUV422 == img_fmt) {
+		strcat(file_name, "_y_");
+		sprintf(tmp_str, "%d", index);
+		strcat(file_name, tmp_str);
+		strcat(file_name, ".raw");
+		ISP_LOGI("file name %s", file_name);
+		fp = fopen(file_name, "wb");
+
+		if (NULL == fp) {
+			ISP_LOGI("can not open file: %s", file_name);
+			return 0;
+		}
+
+		fwrite((void *)addr->addr_y, 1, width * height, fp);
+		fclose(fp);
+
+		bzero(file_name, 40);
 		strcpy(file_name, "/data/misc/media/");
 		sprintf(tmp_str, "%d", width);
 		strcat(file_name, tmp_str);
 		strcat(file_name, "X");
 		sprintf(tmp_str, "%d", height);
 		strcat(file_name, tmp_str);
+		strcat(file_name, "_uv_");
+		sprintf(tmp_str, "%d", index);
+		strcat(file_name, tmp_str);
+		strcat(file_name, ".raw");
+		ISP_LOGI("file name %s", file_name);
+		fp = fopen(file_name, "wb");
+		if (NULL == fp) {
+			ISP_LOGI("can not open file: %s", file_name);
+			return 0;
+		}
 
-		if (IMG_DATA_TYPE_YUV420 == img_fmt ||
-			IMG_DATA_TYPE_YUV422 == img_fmt) {
-			strcat(file_name, "_y_");
-			sprintf(tmp_str, "%d", index);
-			strcat(file_name, tmp_str);
-			strcat(file_name, ".raw");
-			CMR_LOGI("file name %s", file_name);
-			fp = fopen(file_name, "wb");
-
-			if (NULL == fp) {
-				CMR_LOGI("can not open file: %s \n", file_name);
-				return 0;
-			}
-
-			fwrite((void*)addr->addr_y, 1, width * height, fp);
-			fclose(fp);
-
-			bzero(file_name, 40);
-			strcpy(file_name, "/data/misc/media/");
-			sprintf(tmp_str, "%d", width);
-			strcat(file_name, tmp_str);
-			strcat(file_name, "X");
-			sprintf(tmp_str, "%d", height);
-			strcat(file_name, tmp_str);
-			strcat(file_name, "_uv_");
-			sprintf(tmp_str, "%d", index);
-			strcat(file_name, tmp_str);
-			strcat(file_name, ".raw");
-			CMR_LOGI("file name %s", file_name);
-			fp = fopen(file_name, "wb");
-			if (NULL == fp) {
-				CMR_LOGI("can not open file: %s \n", file_name);
-				return 0;
-			}
-
-			if(1){ //(IMG_DATA_TYPE_YUV420 == img_fmt) {
-				fwrite((void*)(addr->addr_y + width * height), 1, width * height / 2, fp);
-			} else {
-				fwrite((void*)addr->addr_u, 1, width * height / 2, fp);
-			}
-			fclose(fp);
+		if (1) { //(IMG_DATA_TYPE_YUV420 == img_fmt) {
+			fwrite((void *)(addr->addr_y + width * height), 1, width * height / 2, fp);
+		} else {
+			fwrite((void *)addr->addr_u, 1, width * height / 2, fp);
+		}
+		fclose(fp);
 		} else if (IMG_DATA_TYPE_JPEG == img_fmt) {
 			strcat(file_name, "_");
 			sprintf(tmp_str, "%d", index);
 			strcat(file_name, tmp_str);
 			strcat(file_name, ".jpg");
-			CMR_LOGI("file name %s", file_name);
+			ISP_LOGI("file name %s", file_name);
 
 			fp = fopen(file_name, "wb");
 			if (NULL == fp) {
-				CMR_LOGI("can not open file: %s \n", file_name);
+				ISP_LOGI("can not open file: %s", file_name);
 				return 0;
 			}
 
-			fwrite((void*)addr->addr_y, 1, width * height*2, fp);
+			fwrite((void *)addr->addr_y, 1, width * height*2, fp);
 			fclose(fp);
 		} else if (IMG_DATA_TYPE_RAW == img_fmt) {
 			strcat(file_name, "_");
 			sprintf(tmp_str, "%d", index);
 			strcat(file_name, tmp_str);
 			strcat(file_name, ".mipi_raw");
-			CMR_LOGI("file name %s", file_name);
+			ISP_LOGI("file name %s", file_name);
 
 			fp = fopen(file_name, "wb");
-			if(NULL == fp){
-				CMR_LOGI("can not open file: %s \n", file_name);
+			if (NULL == fp) {
+				ISP_LOGI("can not open file: %s", file_name);
 				return 0;
 			}
 
-			fwrite((void*)addr->addr_y, 1, (uint32_t)(width * height * 5 / 4), fp);
+			fwrite((void *)addr->addr_y, 1, (uint32_t)(width * height * 5 / 4), fp);
 			fclose(fp);
 		}
 		return 0;
 }
-
-
 
 cmr_int statistic_save_to_file_isp(struct isp_statis_frame_output *statis, struct isp_file *file)
 {
@@ -2209,21 +2208,21 @@ cmr_int statistic_save_to_file_isp(struct isp_statis_frame_output *statis, struc
 	strcat(file_name, tmp_str);
 	strcat(file_name, ".log");
 
-	CMR_LOGI("file name %s", file_name);
+	ISP_LOGI("file name %s", file_name);
 	fp = fopen(file_name, "a+");
 
 	if (NULL == fp) {
-		CMR_LOGI("can not open file: %s \n", file_name);
+		ISP_LOGI("can not open file: %s", file_name);
 		return 0;
 	}
-	fseek(fp,0,SEEK_END);
+	fseek(fp, 0, SEEK_END);
 
 //	sprintf(tmp_str, "\n%d %d\n", statis->time_stamp.sec, statis->time_stamp.usec);
 //	fwrite((tmp_str, 1, 10, fp);
-	
-	fwrite((void*)(statis->vir_addr), 1, statis->buf_size, fp);
+
+	fwrite((void *)(statis->vir_addr), 1, statis->buf_size, fp);
 	fclose(fp);
 
 	return 0;
 }
-
+#endif

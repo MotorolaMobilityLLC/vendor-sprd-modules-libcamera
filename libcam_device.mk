@@ -46,13 +46,7 @@ ALTEK_LIB := libalAWBLib \
 	libalPDAF \
 	libalPDExtract
 
-ALTEK_FW := TBM_G2v1DDR.bin \
-	TBM_Qmerge_Sensor1.bin \
-	TBM_Qmerge_Sensor2.bin \
-	TBM_Qmerge_Sensor3.bin \
-	TBM_Shading_0.bin \
-	TBM_Shading_1.bin \
-	TBM_Shading_2.bin
+ALTEK_FW := TBM_G2v1DDR.bin
 
 SPRD_LIB := libcamoem
 
