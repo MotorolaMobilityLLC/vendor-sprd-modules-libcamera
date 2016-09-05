@@ -319,6 +319,10 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	enablePowerHint();
 	changeDfsPolicy(CAM_HIGH);
 
+#if defined(LOWPOWER_DISPLAY_30FPS)
+	property_set("lowpower.display.30fps","true");
+#endif
+
 	shakeTestInit(&mShakeTest);
 #if defined(CONFIG_BACK_CAMERA_ROTATION)
 	if (0 == cameraId) {
@@ -480,6 +484,15 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf()
 
 	changeDfsPolicy(CAM_EXIT);
 	disablePowerHint();
+
+#if defined(LOWPOWER_DISPLAY_30FPS)
+	char value[PROPERTY_VALUE_MAX];
+	property_get("lowpower.display.30fps", value, "false");
+	if(!strcmp(value,"true")){
+		property_set("lowpower.display.30fps","false");
+		HAL_LOGI("camera low power mode exit");
+	}
+#endif
 
 	// clean memory in case memory leak
 	if(NULL != mReDisplayHeap) {
