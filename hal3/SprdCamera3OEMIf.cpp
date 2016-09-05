@@ -5244,11 +5244,18 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag)
 		{
 			SPRD_DEF_Tag sprddefInfo;
 			mSetting->getSPRDDEFTag(&sprddefInfo);
-			if(sprddefInfo.sprd_burstmode_enable == 1) {
+
+			char value[PROPERTY_VALUE_MAX];
+			property_get("persist.sys.camera.raw.mode", value, "jpeg");
+
+			if (!strcmp(value, "raw")) {
+				mSprdBurstModeEnabled = 0;
+			} else if(sprddefInfo.sprd_burstmode_enable == 1) {
 				mSprdBurstModeEnabled = 1;
 			} else {
 				mSprdBurstModeEnabled = 0;
 			}
+
 			HAL_LOGD("mSprdBurstModeEnabled=%d", mSprdBurstModeEnabled);
 		}
 		break;

@@ -609,7 +609,6 @@ void isp_dev_access_convert_awb_param(struct isp3a_awb_hw_cfg *data, struct awb_
 
 }
 #define FPGA_TEST     1
-#define VIDEO_USE     0
 
 cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_dev_access_start_in *param_ptr)
 {
@@ -922,6 +921,8 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 	struct isp_sensor_resolution_info      *resolution_ptr = NULL;
 	struct isp_raw_data                    highiso_info;
 	struct isp_img_size                    size;
+	struct isp_dev_init_param              init_param;
+	char                                   value[PROPERTY_VALUE_MAX];
 
 	UNUSED(output_ptr);
 	ISP_CHECK_HANDLE_VALID(isp_dev_handle);
@@ -930,6 +931,17 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 		ISP_LOGE("failed to dev_start %ld", ret);
 		goto exit;
 	}
+
+	init_param.width = input_ptr->src_frame.img_size.w;
+	init_param.height = input_ptr->src_frame.img_size.h;
+	init_param.camera_id = cxt->camera_id;
+	property_get("persist.sys.camera.raw.mode", value, "jpeg");
+	if (!strcmp(value, "raw")) {
+		init_param.raw_mode = 1;
+	} else {
+		init_param.raw_mode = 0;
+	}
+	isp_dev_set_init_param(cxt->isp_driver_handle, &init_param);
 
 	if (2 == input_ptr->cap_mode)
 		cap_mode = ISP_CAP_MODE_HIGHISO_RAW_CAP;
@@ -982,7 +994,7 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 
 	isp_dev_set_fetch_src_buf(cxt->isp_driver_handle, &img_mem);
 
-	if (ISP_CAP_MODE_HIGHISO_RAW_CAP == cap_mode) {
+	if (1 /*ISP_CAP_MODE_HIGHISO_RAW_CAP == cap_mode*/) {
 		size.height = input_ptr->src_frame.img_size.h;
 		size.width = input_ptr->src_frame.img_size.w;
 		ret = isp_dev_alloc_highiso_mem(cxt->isp_driver_handle, &highiso_info, &size);
@@ -1057,7 +1069,8 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 	img_buf_param.addr[1].chn0 = 0x2FFFFFFF;
 	img_buf_param.addr[2].chn0 = 0x2FFFFFFF;
 	img_buf_param.addr[3].chn0 = 0x2FFFFFFF;
-	ISP_LOGI("set still image buffer param img_id %d", img_buf_param.img_id);
+	ISP_LOGI("set still image buffer param img_id %d w %d h %d", img_buf_param.img_id,
+			img_buf_param.width, img_buf_param.height);
 	ret = isp_dev_set_img_param(cxt->isp_driver_handle, &img_buf_param);
 
 
@@ -1075,7 +1088,8 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 		img_buf_param.addr[1].chn0 = 0x2FFFFFFF;
 		img_buf_param.addr[2].chn0 = 0x2FFFFFFF;
 		img_buf_param.addr[3].chn0 = 0x2FFFFFFF;
-		ISP_LOGV("set preview image buffer param img_id %d", img_buf_param.img_id);
+		ISP_LOGI("set preview image buffer param img_id %d w %d h %d", img_buf_param.img_id,
+			img_buf_param.width, img_buf_param.height);
 		ret = isp_dev_set_img_param(cxt->isp_driver_handle, &img_buf_param);
 	}
 
@@ -1163,11 +1177,13 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 	}
 
 	ret = isp_dev_stream_on(cxt->isp_driver_handle);
+	isp_dev_access_drammode_takepic(isp_dev_handle, 1);
 	if (ISP_CAP_MODE_HIGHISO_RAW_CAP == cap_mode) {
 		usleep(800*1000);
 	} else {
-		usleep(200*1000);
+		usleep(800*1000);
 	}
+	isp_dev_access_drammode_takepic(isp_dev_handle, 0);
 
 	isp_dev_stream_off(cxt->isp_driver_handle);
 	isp_dev_stop(cxt->isp_driver_handle);

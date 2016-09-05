@@ -24,6 +24,7 @@ extern "C" {
 #include "cmr_types.h"
 
 #define ISP_GRAB_BUF_MAX 16
+#define VIDEO_USE     1
 
 struct isp_sample_point_info {
 	cmr_s32 x0;
