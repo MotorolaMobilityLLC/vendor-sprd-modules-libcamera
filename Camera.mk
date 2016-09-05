@@ -23,14 +23,7 @@ LOCAL_C_INCLUDES := \
 	$(TOP)/vendor/sprd/modules/libmemion \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video
 
-
-ifeq ($(strip $(TARGET_GPU_PLATFORM)),midgard)
-LOCAL_C_INCLUDES += vendor/sprd/proprietories-source/libgpu/gralloc/midgard
-else ifeq ($(strip $(TARGET_GPU_PLATFORM)),utgard)
-LOCAL_C_INCLUDES += vendor/sprd/proprietories-source/libgpu/gralloc/utgard
-else
-LOCAL_C_INCLUDES += hardware/libhardware/modules/gralloc/
-endif
+LOCAL_C_INCLUDES += $(TOP)/vendor/sprd/external/drivers/gpu/$(TARGET_GPU_PLATFORM)/include
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),3)
 LOCAL_C_INCLUDES += \
