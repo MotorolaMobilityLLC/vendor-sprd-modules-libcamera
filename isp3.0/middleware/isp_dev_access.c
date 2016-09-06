@@ -994,20 +994,18 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 
 	isp_dev_set_fetch_src_buf(cxt->isp_driver_handle, &img_mem);
 
-	if (1 /*ISP_CAP_MODE_HIGHISO_RAW_CAP == cap_mode*/) {
-		size.height = input_ptr->src_frame.img_size.h;
-		size.width = input_ptr->src_frame.img_size.w;
-		ret = isp_dev_alloc_highiso_mem(cxt->isp_driver_handle, &highiso_info, &size);
-		if (ret) {
-			ISP_LOGE("failed to alloc highiso mem %ld", ret);
-			goto exit;
-		}
+	size.height = input_ptr->src_frame.img_size.h;
+	size.width = input_ptr->src_frame.img_size.w;
+	ret = isp_dev_alloc_highiso_mem(cxt->isp_driver_handle, &highiso_info, &size);
+	if (ret) {
+		ISP_LOGE("failed to alloc highiso mem %ld", ret);
+		goto exit;
+	}
 
-		ret = isp_dev_highiso_mode(cxt->isp_driver_handle, &highiso_info);
-		if (ret) {
-			ISP_LOGE("failed to set highiso mode %ld", ret);
-			goto exit;
-		}
+	ret = isp_dev_highiso_mode(cxt->isp_driver_handle, &highiso_info);
+	if (ret) {
+		ISP_LOGE("failed to set highiso mode %ld", ret);
+		goto exit;
 	}
 
 #ifdef FPGA_TEST
@@ -1178,11 +1176,8 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 
 	ret = isp_dev_stream_on(cxt->isp_driver_handle);
 	isp_dev_access_drammode_takepic(isp_dev_handle, 1);
-	if (ISP_CAP_MODE_HIGHISO_RAW_CAP == cap_mode) {
-		usleep(800*1000);
-	} else {
-		usleep(800*1000);
-	}
+	/*wait untile receive raw to yuv finish*/
+	usleep(800*1000);
 	isp_dev_access_drammode_takepic(isp_dev_handle, 0);
 
 	isp_dev_stream_off(cxt->isp_driver_handle);
