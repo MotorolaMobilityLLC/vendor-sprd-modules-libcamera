@@ -63,8 +63,6 @@ struct isp_fw_group {
 	cmr_u32				 file_cnt;
 	pthread_mutex_t      mutex;
 };
-static struct isp_fw_group _group = {0 , {}};
-
 
 struct isp_file {
 	int                        fd;
@@ -81,10 +79,12 @@ struct isp_file {
 	cmr_int                    isp_is_inited;
 };
 
+static struct isp_fw_group _group = {0 , {}};
 static cmr_int isp_dev_create_thread(isp_handle handle);
 static cmr_int isp_dev_kill_thread(isp_handle handle);
 static void* isp_dev_thread_proc(void *data);
 static cmr_int isp_dev_load_binary(isp_handle handle);
+static cmr_int isp_dev_set_user_working(isp_handle handle);
 
 cmr_int isp_dev_init(struct isp_dev_init_info *init_param_ptr, isp_handle *handle)
 {
@@ -182,7 +182,13 @@ cmr_int isp_dev_deinit(isp_handle handle)
 
 	ret = isp_dev_kill_thread(handle);
 	if (ret) {
-		ISP_LOGE("Failed to kill the thread. errno : %d", errno);
+		ISP_LOGE("Failed to kill the thread");
+		return ret;
+	}
+
+	ret = isp_dev_set_user_working(handle);
+	if (ret) {
+		ISP_LOGE("failed to set user working");
 		return ret;
 	}
 
@@ -311,6 +317,28 @@ cmr_int isp_dev_alloc_highiso_mem(isp_handle handle, struct isp_raw_data *buf, s
 	}
 
 	ISP_LOGE("done");
+
+	return ret;
+}
+
+static cmr_int isp_dev_set_user_working(isp_handle handle)
+{
+	cmr_int ret = 0;
+	cmr_int camera_id = 0;
+	struct isp_file *file = NULL;
+
+	if (!handle) {
+		ISP_LOGE("handle is null error.");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+	camera_id = file->camera_id;
+
+	ret = ioctl(file->fd, ISP_IO_SET_USER_WORKING, &camera_id);
+	if (ret) {
+		ISP_LOGE("failed to set user");
+	}
 
 	return ret;
 }
@@ -553,6 +581,7 @@ static void* isp_dev_thread_proc(void *data)
 
 	return NULL;
 }
+
 cmr_int isp_dev_open(isp_handle *handle, struct isp_dev_init_param *param)
 {
 	cmr_int ret = 0;
