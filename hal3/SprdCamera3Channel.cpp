@@ -725,10 +725,15 @@ SprdCamera3MetadataChannel::~SprdCamera3MetadataChannel()
 int SprdCamera3MetadataChannel::request(const CameraMetadata &metadata)
 {
 	CONTROL_Tag controlInfo;
+	SPRD_DEF_Tag sprddefInfo;
 
 	mSetting->updateWorkParameters(metadata);
 	/*ae precapture ae state callback to framework*/
 	mSetting->getCONTROLTag(&controlInfo);
+	mSetting->getSPRDDEFTag(&sprddefInfo);
+	if (metadata.exists(ANDROID_SPRD_METERING_MODE) && metadata.exists(ANDROID_CONTROL_AF_TRIGGER) && controlInfo.af_trigger == ANDROID_CONTROL_AF_TRIGGER_START) {
+		mOEMIf->SetCameraParaTag(ANDROID_SPRD_METERING_MODE);
+	}
 	/*if (controlInfo.ae_state == ANDROID_CONTROL_AE_STATE_PRECAPTURE
 		&& controlInfo.ae_precap_trigger == ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER_START) {
 		mOEMIf->setAePrecaptureSta(ANDROID_CONTROL_AE_STATE_CONVERGED);
