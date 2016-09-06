@@ -6789,7 +6789,6 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle, cmr_u32 camera_i
 	cmr_u32                       channel_id = 0;
 	struct channel_start_param    chn_param;
 	struct img_data_end           endian;
-	struct img_size               trim_sz;
 
 	CHECK_HANDLE_VALID(handle);
 	CHECK_CAMERA_ID(camera_id);
@@ -6853,9 +6852,6 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle, cmr_u32 camera_i
 		chn_param.cap_inf_cfg.cfg.src_img_rect.width,
 		chn_param.cap_inf_cfg.cfg.src_img_rect.height);
 
-	trim_sz.width = sensor_mode_info->scaler_trim.width;
-	trim_sz.height = sensor_mode_info->scaler_trim.height;
-
 	if(prev_cxt->prev_param.sprd_burstmode_enabled){
 		struct img_size sensor_size;
 		struct img_size  lv_size;
@@ -6881,7 +6877,7 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle, cmr_u32 camera_i
 	if (ZOOM_INFO != zoom_param->mode) {
 		ret = camera_get_trim_rect(&chn_param.cap_inf_cfg.cfg.src_img_rect,
 				zoom_param->zoom_level,
-				&trim_sz);
+				&chn_param.cap_inf_cfg.cfg.dst_img_size);
 	} else if(prev_cxt->prev_param.sprd_burstmode_enabled) {
 		CMR_LOGI("test");
 		ret = prev_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
