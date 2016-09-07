@@ -1003,12 +1003,14 @@ int SprdCamera3MetadataChannel::getCapRequestPara(const CameraMetadata &metadata
 		HAL_LOGD("sprd_refocus_enabled %d",request_para->sprd_refocus_enabled);
 	}
 	else {
-		//request_para->sprd_refocus_enabled = 0;
-		//request_para->sprd_refocus_enabled = 1; /*temp code, will check with app why not send right ANDROID_SPRD_CONTROL_REFOCUS_ENABLE meta value*/
+#if 1
+		request_para->sprd_refocus_enabled = 0;
+#else
 		SPRD_DEF_Tag sprddefInfo;
 		mSetting->getSPRDDEFTag(&sprddefInfo);
 		request_para->sprd_refocus_enabled = sprddefInfo.refocus_enable;
 		HAL_LOGD("ANDROID_SPRD_CONTROL_REFOCUS_ENABLE is NULL, sprd_refocus_enabled %d",request_para->sprd_refocus_enabled);
+#endif
 	}
 	/**add for 3d calibration force set sprd zsl enable begin*/
 	if (metadata.exists(ANDROID_SPRD_3DCALIBRATION_ENABLED)) {
