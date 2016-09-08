@@ -2265,19 +2265,19 @@ static unsigned long imx230_access_val(SENSOR_HW_HANDLE handle, unsigned long pa
 			//rtn = imx230_write_vcm(handle, param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_READ_OTP:
-			//rtn = imx230_otp_read(handle,param_ptr);
+			rtn = imx230_otp_read(handle,param_ptr);
 			break;
 		case SENSOR_VAL_TYPE_READ_DUAL_OTP:
 			#ifdef IMX230_DUAL_OTP
-				//rtn = imx230_dual_otp_read(handle, param_ptr);
+				rtn = imx230_dual_otp_read(handle, param_ptr);
 			#endif
 			break;
 		case SENSOR_VAL_TYPE_PARSE_OTP:
-			//rtn = imx230_parse_otp(handle, param_ptr);
+			rtn = imx230_parse_otp(handle, param_ptr);
 			break;
 		case SENSOR_VAL_TYPE_PARSE_DUAL_OTP:
 			#ifdef IMX230_DUAL_OTP
-				//rtn = imx230_parse_dual_otp(handle, param_ptr);
+				rtn = imx230_parse_dual_otp(handle, param_ptr);
 			#endif
 			break;
 		case SENSOR_VAL_TYPE_WRITE_OTP:
