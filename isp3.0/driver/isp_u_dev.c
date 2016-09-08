@@ -1024,7 +1024,7 @@ cmr_int isp_dev_get_timestamp(isp_handle handle, cmr_u32 *sec, cmr_u32 *usec)
 
 	*sec = time.sec;
 	*usec = time.usec;
-	ISP_LOGI("sec=%d, usec=%d", *sec, *usec);
+	ISP_LOGV("sec=%d, usec=%d", *sec, *usec);
 
 	return ret;
 }

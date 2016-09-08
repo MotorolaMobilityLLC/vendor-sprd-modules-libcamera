@@ -87,6 +87,7 @@ enum af_altek_adpt_status_t {
 	AF_ADPT_FOCUSING,
 	AF_ADPT_PRE_FOCUSED,
 	AF_ADPT_DONE,
+	AF_ADPT_RE_TRIG,
 	AF_ADPT_IDLE,
 };
 
@@ -122,6 +123,7 @@ struct caf_context {
 	pthread_mutex_t caf_mutex;
 	struct aft_caf_stats_cfg caf_fv_tune;
 	cmr_u32 inited;
+	cmr_u32 caf_force_focus;
 };
 
 struct af_ae_working_info {
@@ -167,7 +169,6 @@ struct af_altek_context {
 	struct caf_context af_caf_cxt;
 	struct af_ae_working_info ae_info;
 	enum af_ctrl_lens_status lens_status;
-	cmr_u32 caf_force_focus;
 };
 
 /************************************ INTERNAK DECLARATION ************************************/
@@ -186,6 +187,7 @@ static cmr_int afaltek_adpt_set_vcm_pos(cmr_handle adpt_handle, struct af_ctrl_m
 static cmr_int afaltek_adpt_set_caf_fv_cfg(cmr_handle adpt_handle);
 static cmr_int afaltek_adpt_set_special_event(cmr_handle adpt_handle, void *in);
 static cmr_int afaltek_adpt_get_hw_config(struct isp3a_af_hw_cfg *out);
+static cmr_int afaltek_adpt_af_done(cmr_handle adpt_handle, cmr_int success);
 
 /************************************ INTERNAK FUNCTION ***************************************/
 
@@ -1117,7 +1119,7 @@ static cmr_int afaltek_adpt_caf_init(cmr_handle adpt_handle)
 	}
 	ISP_LOGI("caf_wp_ver %f init ret %ld", caf_wp_ver, ret);
 
-	cxt->caf_force_focus = 1;
+	cxt->af_caf_cxt.caf_force_focus = 1;
 
 	return ret;
 }
@@ -1330,10 +1332,11 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 		 aft_out.is_cancel_caf);
 
 
-	if ((aft_in->ae_info.is_stable && cxt->ae_info.ae_stable_retrig_flg) ||
-		cxt->caf_force_focus) {
+	if (cxt->af_caf_cxt.caf_force_focus) {
 		/* When entering the camera, CAF is forced to focus once. */
-		cxt->caf_force_focus = 0;
+		cxt->af_caf_cxt.caf_force_focus = 0;
+		ret = afaltek_adpt_caf_start(cxt);
+	} else if ((aft_in->ae_info.is_stable && AF_ADPT_RE_TRIG == cxt->af_cur_status)) {
 		ISP_LOGI("af retrigger");
 		ret = afaltek_adpt_caf_start(cxt);
 		cxt->ae_info.ae_stable_retrig_flg = 0;
@@ -1343,7 +1346,7 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 		ret = afaltek_adpt_stop(cxt);
 		if (ret)
 			ISP_LOGE("failed to stop");
-		ret = afaltek_adpt_af_cancel(cxt, 0);
+		cxt->ae_info.ae_stable_retrig_flg = 1;
 	}
 	cxt->aft_proc_result = aft_out;
 
@@ -1910,6 +1913,7 @@ static cmr_int afaltek_adpt_post_start(cmr_handle adpt_handle)
 	if (ret) {
 		ISP_LOGE("failed to start");
 		cxt->af_cur_status = AF_ADPT_IDLE;
+		afaltek_adpt_af_done(cxt, 0);
 		goto exit;
 	}
 
@@ -2595,14 +2599,20 @@ static cmr_int afaltek_adpt_proc_report_status(cmr_handle adpt_handle,
 	ISP_LOGI("focus_status.t_status = %d", report->focus_status.t_status);
 	if (alAFLib_STATUS_WARNING == report->focus_status.t_status ||
 		alAFLib_STATUS_AF_ABORT == report->focus_status.t_status) {
-		ret = afaltek_adpt_af_done(cxt, 0);
 		ISP_LOGI("t_status unfocused = %d", report->focus_status.t_status);
+		ret = afaltek_adpt_af_done(cxt, 0);
 	} else if (alAFLib_STATUS_FOCUSED == report->focus_status.t_status) {
-		ret = afaltek_adpt_af_done(cxt, 1);
 		ISP_LOGI("t_status focused ok = %d", report->focus_status.t_status);
+		ret = afaltek_adpt_af_done(cxt, 1);
 	} else if (alAFLib_STATUS_FORCE_ABORT == report->focus_status.t_status) {
-		cxt->ae_info.ae_stable_retrig_flg = 1;
-		ISP_LOGI("t_status force abort = %d", report->focus_status.t_status);
+		ISP_LOGI("t_status force abort = %d retrigger = %d",
+			 report->focus_status.t_status,
+			 cxt->ae_info.ae_stable_retrig_flg);
+		if (cxt->ae_info.ae_stable_retrig_flg)
+			cxt->af_cur_status = AF_ADPT_RE_TRIG;
+		else
+			ret = afaltek_adpt_af_done(cxt, 0); /* this means someone canncel af */
+
 	} else {
 		ISP_LOGI("unkown status = %d", report->focus_status.t_status);
 	}
