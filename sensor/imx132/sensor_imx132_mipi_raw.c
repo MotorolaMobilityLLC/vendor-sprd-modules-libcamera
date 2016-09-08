@@ -112,6 +112,7 @@ struct sensor_raw_info *s_imx132_mipi_raw_info_ptr = &s_imx132_mipi_raw_info;
 
 static const SENSOR_REG_T imx132_init_setting[] = {
 	{0x0100,0x00},
+	{0x0101,0x03},
 	{0x3087,0x53},
 	{0x308B,0x5A},
 	{0x3094,0x11},
@@ -479,7 +480,8 @@ SENSOR_INFO_T g_imx132_mipi_raw_info = {
 	/* horizontal  view angle*/
 	35,
 	/* vertical view angle*/
-	35
+	35,
+	"imx132_v1"
 };
 
 
