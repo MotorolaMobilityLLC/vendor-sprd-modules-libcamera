@@ -1360,8 +1360,8 @@ bool SprdCamera3OEMIf::setCameraPreviewDimensions()
 	if(mVideoWidth != 0 && mVideoHeight != 0) {
 		video_size.width = (cmr_u32)mVideoWidth;
 		video_size.height = (cmr_u32)mVideoHeight;
-		if (sprddefInfo.slowmotion <= 1 && mCaptureWidth != 0 && mCaptureHeight != 0)
-				mCaptureMode = CAMERA_ZSL_MODE;
+		if (sprddefInfo.slowmotion <= 1)
+			mCaptureMode = CAMERA_ZSL_MODE;
 	}
 
 	SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_VIDEO_SIZE, (cmr_uint)&video_size);
