@@ -68,6 +68,8 @@ static cmr_int fd_thread_create(struct class_fd *class_handle);
 static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data);
 static HDETECTION hDT = NULL;          /* Face Detection Handle */
 static HDTRESULT hDtResult = NULL;     /* Face Detection Result Handle */
+static cmr_int faceNodetect;
+static cmr_int last_face_num;
 
 static struct class_ops fd_ops_tab_info = {
 	fd_open,
@@ -134,7 +136,7 @@ static cmr_int set_dt_param(HDETECTION hDT)
 	}
 
 	/* Sets the Face Detection Threshold */
-	nRet = UDN_SetDtThreshold(hDT, 500, 400);
+	nRet = UDN_SetDtThreshold(hDT, 500, 500);
 	if (nRet != UDN_NORMAL) {
 		CMR_LOGE("UDN_SetDtThreshold() Error : %d", nRet);
 		return nRet;
@@ -154,7 +156,7 @@ static cmr_int set_dt_param(HDETECTION hDT)
 		return nRet;
 	}
 	/* Sets Motion Face Detection Retry Count, Motion Head Detection Retry Count and Hold Count at lost time */
-	nRet = UDN_SetDtLostParam(hDT, 4, 4, 4);
+	nRet = UDN_SetDtLostParam(hDT, 1, 1, 1);
 	if (nRet != UDN_NORMAL) {
 		CMR_LOGE("UDN_SetDtLostParam() Error : %d", nRet);
 		return nRet;
@@ -540,7 +542,7 @@ static void fd_smooth_fd_results(const struct img_face_area *i_face_area_prev,
 									const struct img_face_area *i_face_area_curr,
 									struct img_face_area *o_face_area)
 {
-	const cmr_int overlap_thr = 90;
+	const cmr_int overlap_thr = 85;
 	cmr_uint prevIdx = 0;
 	cmr_uint currIdx = 0;
 	cmr_int trueCount = 0;
@@ -556,13 +558,13 @@ static void fd_smooth_fd_results(const struct img_face_area *i_face_area_prev,
 				break;
 			}
 		}
+		const struct face_finder_data *f1 = &(i_face_area_curr->range[currIdx]);
+		/* output the average of the two faces */
+		struct face_finder_data *outf = &(o_face_area->range[trueCount]);
 
 		/* when two faces have large overlaps, they are considered as "true" faces */
 		if (overlap_prevIdx >= 0) {
-			const struct face_finder_data *f1 = &(i_face_area_curr->range[currIdx]);
 			const struct face_finder_data *f2 = &(i_face_area_prev->range[overlap_prevIdx]);
-			/* output the average of the two faces */
-			struct face_finder_data *outf = &(o_face_area->range[trueCount]);
 			outf->face_id = trueCount;
 			outf->sx = f2->sx;
 			outf->sy = f2->sy;
@@ -578,6 +580,21 @@ static void fd_smooth_fd_results(const struct img_face_area *i_face_area_prev,
 			outf->blink_level = f1->blink_level;
 
 			memcpy(f1,outf,sizeof(struct face_finder_data));
+			trueCount++;
+		} else {
+			outf->face_id = trueCount;
+			outf->sx = f1->sx;
+			outf->sy = f1->sy;
+			outf->srx = f1->srx;
+			outf->sry = f1->sry;
+			outf->ex = f1->ex;
+			outf->ey = f1->ey;
+			outf->elx = f1->elx;
+			outf->ely = f1->ely;
+			outf->brightness = f1->brightness;
+			outf->angle = f1->angle;
+			outf->smile_level = f1->smile_level;
+			outf->blink_level = f1->blink_level;
 			trueCount++;
 		}
 	}
@@ -659,11 +676,21 @@ static void fd_get_fd_results(HDTRESULT i_hDtResult,
 
 	curr_face_area.face_count = valid_count;
 
-	if (is_do_smooth) {
+	if (is_do_smooth && face_num > 0 ) {
+		faceNodetect= 0;
+		last_face_num = face_num;
 		fd_smooth_fd_results(io_face_area_prev, &curr_face_area, o_face_area);
 	} else {
-		memcpy(o_face_area, &curr_face_area, sizeof(struct img_face_area));
-	}
+			if (faceNodetect > 3) {
+				last_face_num = 0;
+			} else {
+				curr_face_area.face_count = last_face_num;
+				memcpy(&curr_face_area, io_face_area_prev, sizeof(struct img_face_area));
+				faceNodetect++;
+			}
+			memcpy(o_face_area, &curr_face_area, sizeof(struct img_face_area));
+		}
+	CMR_LOGD("faceNodetect %d,curr_face_area.face_count  %d ",faceNodetect,curr_face_area.face_count );
 	memcpy(io_face_area_prev, &curr_face_area, sizeof(struct img_face_area));
 
 }
