@@ -67,9 +67,9 @@ static int s_mem_method = 0;/*0: physical address, 1: iommu  address*/
 static unsigned char camera_id = 0; /*camera id: fore=1,back=0*/
 
 /*data processing useful*/
-#define PREVIEW_WIDTH       1600//1280//640
-#define PREVIEW_HIGHT       1200//960//480
-#define PREVIEW_BUFF_NUM 8  /*preview buffer*/
+#define PREVIEW_WIDTH       1280//640//
+#define PREVIEW_HIGHT       960//480//
+#define PREVIEW_BUFF_NUM    4  /*preview buffer*/
 #define SPRD_MAX_PREVIEW_BUF    PREVIEW_BUFF_NUM
 struct frame_buffer_t {
     size_t phys_addr;
@@ -111,65 +111,110 @@ bool getLcdSize(uint32_t *width, uint32_t *height)
 	return true;
 }
 
-static void RGBRotate90_anticlockwise(uint8_t *des,uint8_t *src,int width,int height, int bits)
+static void RGBRotate90_anticlockwise(void* pDest, int nDestWidth, int nDestHeight, int nDestBits, void* pSrc, int nSrcWidth, int nSrcHeight, int nSrcBits)
 {
 
 	int i,j;
-	int m = bits >> 3;
-	int size;
+	int m = nSrcBits >> 3;
 
-	unsigned int *des32 = (unsigned int *)des;
-	unsigned int *src32 = (unsigned int *)src;
-	unsigned short *des16 = (unsigned short *)des;
-	unsigned short *src16 = (unsigned short *)src;
+	unsigned int *des32 = (unsigned int *)pDest;
+	unsigned int *src32 = (unsigned int *)pSrc;
+	unsigned short *des16 = (unsigned short *)pDest;
+	unsigned short *src16 = (unsigned short *)pSrc;
 
-	if ((!des)||(!src)) return;
-	if(m == 4){
-		for(j = 0; j < height; j++) {
-			size = 0;
-			for(i = 0; i < width; i++) {
-				size += height;
-				*(des32 + size - j - 1)= *src32++;
-			}
-		}
-	}else{
-		for(j = 0; j < height; j++) {
-			size = 0;
-			for(i = 0; i < width; i++) {
-				size += height;
-				*(des16 + size - j - 1)= *src16++;
-			}
-		}
-	}
+    if ((nDestWidth < nSrcHeight)||(nDestHeight < nSrcWidth)){
+        int s_offsetX = 0;
+        int s_offsetY = 0;
+        int d_offsetX = s_offsetY;
+        int d_offsetY = s_offsetX;
+
+        if ((!pDest)||(!pSrc)) return;
+        if(m == 4){
+            for(j = 0; j < nDestHeight; j++) {
+                for(i = 0; i < nDestWidth; i++) {
+                    *(des32 + (j+d_offsetY) * nDestWidth + nDestWidth - (j + d_offsetX)) = *(src32 + (j+s_offsetY) * nDestWidth + i + s_offsetX);
+                }
+            }
+        }else{
+            for(j = 0; j < nDestHeight; j++) {
+                for(i = 0; i < nDestWidth; i++) {
+                    *(des16 + (j+d_offsetY) * nDestWidth + nDestWidth - (j + d_offsetX)) = *(src16 + (j+s_offsetY) * nDestWidth + i + s_offsetX);
+                }
+            }
+        }
+    } else {
+        int d_offsetX = ((int)((nDestWidth - nSrcHeight)/2));
+        int d_offsetY = ((int)((nDestHeight - nSrcWidth)/2));
+        int s_offsetX = d_offsetY;
+        int s_offsetY = d_offsetX;
+        if ((!pDest)||(!pSrc)) return;
+        if(m == 4){
+            for(j = 0; j < nSrcHeight; j++) {
+                for(i = 0; i < nSrcWidth; i++) {
+                    *(des32 + (i+d_offsetY) * nDestWidth + nDestWidth - (j + d_offsetX)) = *(src32 + (j+s_offsetY) * nDestHeight + i + s_offsetX);
+                }
+            }
+        }else{
+            for(j = 0; j < nSrcHeight; j++) {
+                for(i = 0; i < nSrcWidth; i++) {
+                    *(des16 + (i+d_offsetY) * nDestWidth + nDestWidth - (j + d_offsetX)) = *(src16 + (j+s_offsetY) * nDestHeight + i + s_offsetX);
+                }
+            }
+        }
+    }
 }
 
-static void RGBRotate90_clockwise(uint8_t *des,uint8_t *src,int width,int height, int bits)
+static void RGBRotate90_clockwise(void* pDest, int nDestWidth, int nDestHeight, int nDestBits, void* pSrc, int nSrcWidth, int nSrcHeight, int nSrcBits)
 {
-	int i,j;
-	int m = bits >> 3;
-	int size;
 
-	unsigned int *des32 = (unsigned int *)des;
-	unsigned int *src32 = (unsigned int *)src;
-	unsigned short *des16 = (unsigned short *)des;
-	unsigned short *src16 = (unsigned short *)src;
+    int i,j;
+    int m = nSrcBits >> 3;
 
-	if ((!des)||(!src)) return;
-	if(m == 4){
-		for(j = 0; j < height; j++) {
-			for(i = 0; i < width; i++) {
-				size = (i+1)*height;
-				*(des32 + size - j - 1)= *src32++;
-			}
-		}
-	}else{
-		for(j = 0; j < height; j++) {
-			for(i = 0; i < width; i++) {
-				size = (i+1)*height;
-				*(des16 + size - j - 1)= *src16++;
-			}
-		}
-	}
+    unsigned int *des32 = (unsigned int *)pDest;
+    unsigned int *src32 = (unsigned int *)pSrc;
+    unsigned short *des16 = (unsigned short *)pDest;
+    unsigned short *src16 = (unsigned short *)pSrc;
+
+    if ((nDestWidth < nSrcHeight)||(nDestHeight < nSrcWidth)){
+        int s_offsetX = 0;
+        int s_offsetY = 0;
+        int d_offsetX = s_offsetY;
+        int d_offsetY = s_offsetX;
+
+        if ((!pDest)||(!pSrc)) return;
+        if(m == 4){
+            for(j = 0; j < nDestHeight; j++) {
+                for(i = 0; i < nDestWidth; i++) {
+                    *(des32 + (nDestHeight - i - d_offsetY) * nDestWidth + nDestWidth - (j + d_offsetX)) = *(src32 + (j+s_offsetY) * nDestWidth + i + s_offsetX);
+                }
+            }
+        }else{
+            for(j = 0; j < nDestHeight; j++) {
+                for(i = 0; i < nDestWidth; i++) {
+                    *(des16 + (nDestHeight - i - d_offsetY) * nDestWidth + nDestWidth - (j + d_offsetX)) = *(src16 + (j+s_offsetY) * nDestWidth + i + s_offsetX);
+                }
+            }
+        }
+    } else {
+        int d_offsetX = ((int)((nDestWidth - nSrcHeight)/2));
+        int d_offsetY = ((int)((nDestHeight - nSrcWidth)/2));
+        int s_offsetX = d_offsetY;
+        int s_offsetY = d_offsetX;
+        if ((!pDest)||(!pSrc)) return;
+        if(m == 4){
+            for(j = 0; j < nSrcHeight; j++) {
+                for(i = 0; i < nSrcWidth; i++) {
+                    *(des32 + (nDestHeight - i - d_offsetY) * nDestWidth + nDestWidth - (j + d_offsetX)) = *(src32 + (j+s_offsetY) * nDestHeight + i + s_offsetX);
+                }
+            }
+        }else{
+            for(j = 0; j < nSrcHeight; j++) {
+                for(i = 0; i < nSrcWidth; i++) {
+                    *(des16 + (nDestHeight - i - d_offsetY) * nDestWidth + nDestWidth - (j + d_offsetX)) = *(src16 + (j+s_offsetY) * nDestHeight + i + s_offsetX);
+                }
+            }
+        }
+    }
 }
 
 static void YUVRotate90(uint8_t *des,uint8_t *src,int width,int height)
@@ -200,37 +245,52 @@ static void YUVRotate90(uint8_t *des,uint8_t *src,int width,int height)
 
 static void  StretchColors(void* pDest, int nDestWidth, int nDestHeight, int nDestBits, void* pSrc, int nSrcWidth, int nSrcHeight, int nSrcBits)
 {
-	double dfAmplificationX = ((double)nDestWidth)/nSrcWidth;
-	double dfAmplificationY = ((double)nDestHeight)/nSrcHeight;
-	double stretch = 1/(dfAmplificationY > dfAmplificationX ? dfAmplificationY : dfAmplificationX);
-	int offsetX = (dfAmplificationY > dfAmplificationX ? (int)(nSrcWidth - nDestWidth/dfAmplificationY) >> 1 : 0);
-	int offsetY = (dfAmplificationX > dfAmplificationY ? (int)(nSrcHeight - nDestHeight/dfAmplificationX) >>1 : 0);
-	int i = 0;
-	int j = 0;
-	double tmpY = 0;
-	unsigned int *pSrcPos = (unsigned int*)pSrc;
-	unsigned int *pDestPos = (unsigned int*)pDest;
-	int linesize ;
-	ALOGI("Native MMI Test: nDestWidth = %d, nDestHeight = %d, nSrcWidth = %d, nSrcHeight = %d, offsetX = %d, offsetY= %d \n", \
-		nDestWidth, nDestHeight, nSrcWidth, nSrcHeight, offsetX, offsetY);
+    if ((nDestWidth < nSrcWidth)||(nDestHeight<nSrcHeight)){
+        double dfAmplificationX = ((double)nDestWidth)/nSrcWidth;
+        double dfAmplificationY = ((double)nDestHeight)/nSrcHeight;
+        double stretch = 1/(dfAmplificationY > dfAmplificationX ? dfAmplificationY : dfAmplificationX);
+        int offsetX = (dfAmplificationY > dfAmplificationX ? (int)(nSrcWidth - nDestWidth/dfAmplificationY) >> 1 : 0);
+        int offsetY = (dfAmplificationX > dfAmplificationY ? (int)(nSrcHeight - nDestHeight/dfAmplificationX) >>1 : 0);
+        int i = 0;
+        int j = 0;
+        double tmpY = 0;
+        unsigned int *pSrcPos = (unsigned int*)pSrc;
+        unsigned int *pDestPos = (unsigned int*)pDest;
+        int linesize ;
+        ALOGI("Native MMI Test: nDestWidth = %d, nDestHeight = %d, nSrcWidth = %d, nSrcHeight = %d, offsetX = %d, offsetY= %d \n", \
+            nDestWidth, nDestHeight, nSrcWidth, nSrcHeight, offsetX, offsetY);
 
-	for(i = 0; i<nDestHeight; i++) {
-		double tmpX = 0;
+        for(i = 0; i<nDestHeight; i++) {
+            double tmpX = 0;
 
-		int nLine = (int)(tmpY+0.5) + offsetY;
+            int nLine = (int)(tmpY+0.5) + offsetY;
 
-		linesize = nLine * nSrcWidth;
+            linesize = nLine * nSrcWidth;
 
-		for(j = 0; j<nDestWidth; j++) {
+            for(j = 0; j<nDestWidth; j++) {
 
-			int nRow = (int)(tmpX+0.5) + offsetX;
+                int nRow = (int)(tmpX+0.5) + offsetX;
 
-			*pDestPos++ = *(pSrcPos + linesize + nRow);
+                *pDestPos++ = *(pSrcPos + linesize + nRow);
 
-			tmpX += stretch;
-		}
-		tmpY += stretch;
-	}
+                tmpX += stretch;
+            }
+            tmpY += stretch;
+        }
+    } else {
+        int offsetX = (int)((nDestHeight - nSrcHeight)/2);
+        int offsetY = (int)((nDestWidth - nSrcWidth)/2);
+        int i = 0, j = 0;
+        unsigned int *pSrcPos = (unsigned int*)pSrc;
+        unsigned int *pDestPos = (unsigned int*)pDest;
+        for (j = 0; j < nSrcHeight; j++){
+            for (i = 0; i < nSrcWidth; i++){
+                *(pDestPos + (j + offsetX) * nDestWidth + i + offsetY) = *(pSrcPos + j * nSrcWidth + i);
+            }
+        }
+
+    }
+
 }
 
 
@@ -537,27 +597,24 @@ void eng_tst_camera_cb(enum camera_cb_type cb , const void *client_data , enum c
 	if(0 == camera_id) {
 		//2. stretch
 		StretchColors((void *)(fb_buf[2].virt_addr), var.yres, var.xres, var.bits_per_pixel, post_preview_buf, PREVIEW_WIDTH, PREVIEW_HIGHT, var.bits_per_pixel);
-
 		/*FIXME: here need 2 or 3 framebuffer pingpang ??*/
 		if(!(frame_num % 2)) {
 
 			//3. rotation
-			RGBRotate90_anticlockwise((uint8_t *)(fb_buf[0].virt_addr), (uint8_t*)fb_buf[2].virt_addr, var.yres, var.xres, var.bits_per_pixel);
+			RGBRotate90_anticlockwise((void *)(fb_buf[0].virt_addr),var.xres, var.yres, var.bits_per_pixel, (void*)fb_buf[2].virt_addr, PREVIEW_WIDTH, PREVIEW_HIGHT, var.bits_per_pixel);
 		} else {
 
 			//3. rotation
-			RGBRotate90_anticlockwise((uint8_t *)(fb_buf[0].virt_addr), (uint8_t*)fb_buf[2].virt_addr, var.yres, var.xres, var.bits_per_pixel);
+			RGBRotate90_anticlockwise((void *)(fb_buf[0].virt_addr),var.xres, var.yres, var.bits_per_pixel, (void*)fb_buf[2].virt_addr, PREVIEW_WIDTH, PREVIEW_HIGHT, var.bits_per_pixel);
 			//RGBRotate90_anticlockwise((uint8_t *)(fb_buf[1].virt_addr), (uint8_t*)fb_buf[2].virt_addr, var.yres, var.xres, var.bits_per_pixel);
         }
 	} else if (1 == camera_id) {
 		//2. stretch
-		StretchColors((void *)(fb_buf[3].virt_addr), var.yres, var.xres, var.bits_per_pixel, post_preview_buf, PREVIEW_WIDTH, PREVIEW_HIGHT, var.bits_per_pixel);
-		//mirror fore camera
-		data_mirror((uint8_t *)(fb_buf[2].virt_addr), (uint8_t *)(fb_buf[3].virt_addr), var.yres,var.xres, var.bits_per_pixel);
+		StretchColors((void *)(fb_buf[2].virt_addr), var.yres, var.xres, var.bits_per_pixel, post_preview_buf, PREVIEW_WIDTH, PREVIEW_HIGHT, var.bits_per_pixel);
 		if(!(frame_num % 2)) {
-			RGBRotate90_anticlockwise((uint8_t *)(fb_buf[0].virt_addr), (uint8_t*)fb_buf[2].virt_addr, var.yres, var.xres, var.bits_per_pixel);
+			RGBRotate90_clockwise((void *)(fb_buf[0].virt_addr),var.xres, var.yres, var.bits_per_pixel, (void*)fb_buf[2].virt_addr, PREVIEW_WIDTH, PREVIEW_HIGHT, var.bits_per_pixel);
 		} else {
-			RGBRotate90_anticlockwise((uint8_t *)(fb_buf[0].virt_addr), (uint8_t*)fb_buf[2].virt_addr, var.yres, var.xres, var.bits_per_pixel);
+			RGBRotate90_clockwise((void *)(fb_buf[0].virt_addr),var.xres, var.yres, var.bits_per_pixel, (void*)fb_buf[2].virt_addr, PREVIEW_WIDTH, PREVIEW_HIGHT, var.bits_per_pixel);
 			//RGBRotate90_anticlockwise((uint8_t *)(fb_buf[1].virt_addr), (uint8_t*)fb_buf[2].virt_addr, var.yres, var.xres, var.bits_per_pixel);
 		}
 	} else if (2 == camera_id) {
@@ -568,11 +625,11 @@ void eng_tst_camera_cb(enum camera_cb_type cb , const void *client_data , enum c
 		if(!(frame_num % 2)) {
 
 			//3. rotation
-			RGBRotate90_clockwise((uint8_t *)(fb_buf[0].virt_addr), (uint8_t*)fb_buf[2].virt_addr, var.yres, var.xres, var.bits_per_pixel);
+			RGBRotate90_anticlockwise((void *)(fb_buf[0].virt_addr),var.xres, var.yres, var.bits_per_pixel, (void*)fb_buf[2].virt_addr, PREVIEW_WIDTH, PREVIEW_HIGHT, var.bits_per_pixel);
 		} else {
 
 			//3. rotation
-			RGBRotate90_clockwise((uint8_t *)(fb_buf[0].virt_addr), (uint8_t*)fb_buf[2].virt_addr, var.yres, var.xres, var.bits_per_pixel);
+			RGBRotate90_anticlockwise((void *)(fb_buf[0].virt_addr),var.xres, var.yres, var.bits_per_pixel, (void*)fb_buf[2].virt_addr, PREVIEW_WIDTH, PREVIEW_HIGHT, var.bits_per_pixel);
 			//RGBRotate90_anticlockwise((uint8_t *)(fb_buf[1].virt_addr), (uint8_t*)fb_buf[2].virt_addr, var.yres, var.xres, var.bits_per_pixel);
         }
 	}
