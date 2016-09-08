@@ -5032,6 +5032,7 @@ exit:
 
 		callback_in.proc_out.ae_frame.is_skip_cur_frame = 1;
 		callback_in.proc_out.ae_frame.stats_buff_ptr = in_ptr->stat_data_ptr;
+		callback_in.proc_out.ae_frame.awb_stats_buff_ptr = in_ptr->awb_stat_data_ptr;
 		cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRL_CB_PROC_OUT, &callback_in);
 }
 	ISP_LOGI("done %ld", ret);
