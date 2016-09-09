@@ -1159,6 +1159,7 @@ static unsigned long ov8856_write_exposure(SENSOR_HW_HANDLE handle,unsigned long
 	uint16_t exposure_line = 0x00;
 	uint16_t dummy_line = 0x00;
 	uint16_t size_index=0x00;
+	uint16_t frame_interval =0x00;
 	struct sensor_ex_exposure  *ex = (struct sensor_ex_exposure*)param;
 	
 	if (!param) {
@@ -1170,7 +1171,9 @@ static unsigned long ov8856_write_exposure(SENSOR_HW_HANDLE handle,unsigned long
 	dummy_line = ex->dummy;
 	size_index = ex->size_index;
 
-	SENSOR_PRINT("size_index=%d, exposure_line = %d, dummy_line=%d",size_index,exposure_line,dummy_line);
+	frame_interval = (uint16_t)(((exposure_line + dummy_line) * (s_ov8856_resolution_trim_tab[size_index].line_time)) / 1000000);
+	SENSOR_PRINT("mode = %d, exposure_line = %d, dummy_line= %d, frame_interval= %d ms",
+		size_index, exposure_line, dummy_line, frame_interval);
 	s_current_default_frame_length = ov8856_get_default_frame_length(handle,size_index);
 
 	ret_value = ov8856_write_exposure_dummy(handle, exposure_line, dummy_line, size_index);

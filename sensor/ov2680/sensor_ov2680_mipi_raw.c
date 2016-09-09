@@ -1424,8 +1424,11 @@ LOCAL unsigned long _ov2680_write_exp_dummy(SENSOR_HW_HANDLE handle, uint16_t ex
 	uint16_t value0=0x00;
 	uint16_t value1=0x00;
 	uint16_t value2=0x00;
+	uint16_t frame_interval=0x00;
 
-	SENSOR_LOGI("SENSOR_ov2680: write_exposure line:%d, dummy:%d, size_index:%d\n", expsure_line, dummy_line, size_index);
+	frame_interval = (uint16_t)(((expsure_line + dummy_line) * s_ov2680_Resolution_Trim_Tab[size_index].line_time) / 1000000);
+	SENSOR_LOGI("current mode = %d, exposure_line = %d, dummy_line= %d, frame_interval= %d ms",
+		size_index, expsure_line, dummy_line, frame_interval);
 	SENSOR_LOGI("SENSOR_ov2680: read reg :0x3820=%x\n", Sensor_ReadReg(0x3820));
 	SENSOR_LOGI("SENSOR_ov2680: read reg :0x3821=%x\n", Sensor_ReadReg(0x3821));
 	max_frame_len=_ov2680_GetMaxFrameLine(handle, size_index);
