@@ -5128,13 +5128,15 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 	ispmw_dev_buf_cfg_evt_cb(isp_cxt->isp_handle, camera_isp_dev_evt_cb);
 
 	if (HIGHISO_CAP_MODE == cxt->highiso_mode || cxt->burst_mode) {
+		int i;
+
 		highiso_buf_num = 1;
 		if(cxt->burst_mode) {
 			isp_raw_buf_num = 4;
  		} else {
 			isp_raw_buf_num = 1;
 		}
-		raw_buf_size = isp_param.size.w * isp_param.size.h * 4 / 3;
+		raw_buf_size = (((isp_param.size.w * 4 / 3 + 7) >> 3) << 3) * isp_param.size.h;
 		tmp_buf_size = isp_param.size.w * isp_param.size.h * 27 / 10;
 		num = tmp_buf_size / BUF_BLOCK_SIZE;
 		if (tmp_buf_size >  num * BUF_BLOCK_SIZE)
@@ -5178,18 +5180,11 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 		isp_param.highiso_buf_virt_addr = cxt->highiso_buf_virt_addr;
 		isp_param.highiso_buf_size = highiso_buf_size;
 
-		CMR_LOGI("raw: fd=0x%x, phys_addr_offset=0x%lx, virt_addr = 0x%lx, buf_size=0x%lx",
-			isp_param.raw_buf_fd[0], isp_param.raw_buf_phys_addr[0],
-			isp_param.raw_buf_virt_addr[0], isp_param.raw_buf_size);
-		CMR_LOGI("raw: fd=0x%x, phys_addr_offset=0x%lx, virt_addr = 0x%lx, buf_size=0x%lx",
-			isp_param.raw_buf_fd[1], isp_param.raw_buf_phys_addr[1],
-			isp_param.raw_buf_virt_addr[1], isp_param.raw_buf_size);
-		CMR_LOGI("raw: fd=0x%x, phys_addr_offset=0x%lx, virt_addr = 0x%lx, buf_size=0x%lx",
-			isp_param.raw_buf_fd[2], isp_param.raw_buf_phys_addr[2],
-			isp_param.raw_buf_virt_addr[2], isp_param.raw_buf_size);
-		CMR_LOGI("raw: fd=0x%x, phys_addr_offset=0x%lx, virt_addr = 0x%lx, buf_size=0x%lx",
-			isp_param.raw_buf_fd[3], isp_param.raw_buf_phys_addr[3],
-			isp_param.raw_buf_virt_addr[3], isp_param.raw_buf_size);
+		for(i = 0; i < isp_raw_buf_num; i++) {
+			CMR_LOGI("raw: fd=0x%x, phys_addr_offset=0x%lx, virt_addr = 0x%llx, buf_size=0x%lx",
+				isp_param.raw_buf_fd[i], isp_param.raw_buf_phys_addr[i],
+				isp_param.raw_buf_virt_addr[i], isp_param.raw_buf_size);
+		}
 		CMR_LOGI("cnt=%d, width=%ld, height=%ld", isp_param.raw_buf_cnt, isp_param.raw_buf_width, isp_param.raw_buf_height);
 		CMR_LOGI("highiso: fd=0x%x, phys_addr_offset=0x%lx, virt_addr = 0x%lx, buf_size=0x%lx",
 			isp_param.highiso_buf_fd, isp_param.highiso_buf_phys_addr,
