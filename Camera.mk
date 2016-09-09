@@ -23,7 +23,7 @@ LOCAL_C_INCLUDES := \
 	$(TOP)/vendor/sprd/modules/libmemion \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video
 
-LOCAL_C_INCLUDES += $(TOP)/vendor/sprd/external/drivers/gpu/$(TARGET_GPU_PLATFORM)/include
+LOCAL_C_INCLUDES += $(GPU_GRALLOC_INCLUDES)
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),3)
 LOCAL_C_INCLUDES += \
