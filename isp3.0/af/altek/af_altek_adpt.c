@@ -2608,11 +2608,13 @@ static cmr_int afaltek_adpt_proc_report_status(cmr_handle adpt_handle,
 		ISP_LOGI("t_status force abort = %d retrigger = %d",
 			 report->focus_status.t_status,
 			 cxt->ae_info.ae_stable_retrig_flg);
-		if (cxt->ae_info.ae_stable_retrig_flg)
+		if (cxt->ae_info.ae_stable_retrig_flg) {
 			cxt->af_cur_status = AF_ADPT_RE_TRIG;
-		else
-			ret = afaltek_adpt_af_done(cxt, 0); /* this means someone canncel af */
-
+		} else {
+			/* this means someone canncel af */
+			//ret = afaltek_adpt_af_done(cxt, 0);
+		}
+		ret = afaltek_adpt_lock_ae_awb(cxt, ISP_AE_AWB_UNLOCK);
 	} else {
 		ISP_LOGI("unkown status = %d", report->focus_status.t_status);
 	}
