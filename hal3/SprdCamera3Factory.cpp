@@ -37,14 +37,14 @@
 
 #include "SprdCamera3Factory.h"
 #include "SprdCamera3Flash.h"
-#include "SprdCamera3Muxer.h"
+#include "multiCamera/SprdCamera3Wrapper.h"
 
 using namespace android;
 
 namespace sprdcamera {
 
 SprdCamera3Factory gSprdCamera3Factory;
-SprdCamera3Muxer *gSprdCamera3Muxer = NULL;
+SprdCamera3Wrapper *gSprdCamera3Wrapper = NULL;
 int gDualCameraEnable = 0;
 /*===========================================================================
  * FUNCTION   : SprdCamera3Factory
@@ -59,10 +59,10 @@ SprdCamera3Factory::SprdCamera3Factory()
 {
     camera_info info;
     mNumOfCameras = SprdCamera3Setting::getNumberOfCameras();
-    if (!gSprdCamera3Muxer) {
-        SprdCamera3Muxer::getCameraMuxer(&gSprdCamera3Muxer);
-        if (!gSprdCamera3Muxer) {
-            LOGE("Error !! Failed to get SprdCamera3Muxer");
+    if (!gSprdCamera3Wrapper) {
+        SprdCamera3Wrapper::getCameraWrapper(&gSprdCamera3Wrapper);
+        if (!gSprdCamera3Wrapper) {
+            LOGE("Error !! Failed to get SprdCamera3Wrapper");
         }
     }
 
@@ -80,9 +80,9 @@ SprdCamera3Factory::SprdCamera3Factory()
  *==========================================================================*/
 SprdCamera3Factory::~SprdCamera3Factory()
 {
-    if (gSprdCamera3Muxer) {
-        delete gSprdCamera3Muxer;
-        gSprdCamera3Muxer = NULL;
+    if (gSprdCamera3Wrapper) {
+        delete gSprdCamera3Wrapper;
+        gSprdCamera3Wrapper = NULL;
     }
 }
 
@@ -115,8 +115,8 @@ int SprdCamera3Factory::get_number_of_cameras()
  *==========================================================================*/
 int SprdCamera3Factory::get_camera_info(int camera_id, struct camera_info *info)
 {
-    if(gDualCameraEnable)
-        return gSprdCamera3Muxer->get_camera_info(camera_id, info);
+    if(isMultiCameraMode(camera_id))
+        return gSprdCamera3Wrapper->getCameraInfo(camera_id, info);
     else
         return gSprdCamera3Factory.getCameraInfo(camera_id, info);
 }
@@ -276,12 +276,9 @@ int SprdCamera3Factory::camera_device_open(
         return BAD_VALUE;
     }
 
-    gDualCameraEnable = !strcmp(id, VIDEO_3D_MAGIC_STRING);
-
-    if(gDualCameraEnable){
-        return gSprdCamera3Muxer->camera_device_open(module, id, hw_device);
-    }
-    else{
+    if(isMultiCameraMode(atoi(id))){
+        return gSprdCamera3Wrapper->cameraDeviceOpen(module, id, hw_device);
+    }else{
         return gSprdCamera3Factory.cameraDeviceOpen(atoi(id), hw_device);
     }
 }
@@ -289,6 +286,14 @@ int SprdCamera3Factory::camera_device_open(
 struct hw_module_methods_t SprdCamera3Factory::mModuleMethods = {
     open: SprdCamera3Factory::camera_device_open,
 };
+
+bool SprdCamera3Factory::isMultiCameraMode(int cameraId)
+{
+    if((MIN_MULTI_CAMERA_FAKE_ID <= cameraId) && (cameraId <= MAX_MULTI_CAMERA_FAKE_ID))
+        return true;
+    else
+        return false;
+}
 
 }; // namespace sprdcamera
 

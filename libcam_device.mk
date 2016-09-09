@@ -59,3 +59,4 @@ PRODUCT_PACKAGES += $(SPRD_LIB)
 PRODUCT_PACKAGES += miniBoot.bin \
 	TBM_D2.bin
 PRODUCT_PACKAGES += libimagestitcher
+PRODUCT_PACKAGES += libdepthengine

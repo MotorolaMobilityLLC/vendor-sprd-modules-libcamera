@@ -93,7 +93,9 @@ LOCAL_SRC_FILES+= \
 	hal3/SprdCamera3Setting.cpp \
 	hal3/SprdCamera3Stream.cpp \
 	hal3/SprdCamera3Flash.cpp \
-	hal3/SprdCamera3Muxer.cpp \
+	hal3/multiCamera/SprdCamera3StereoVideo.cpp \
+	hal3/multiCamera/SprdCamera3RangeFinder.cpp \
+	hal3/multiCamera/SprdCamera3Wrapper.cpp  \
 #	hal1.0/src/SprdCameraHardwareInterface.cpp
 endif
 

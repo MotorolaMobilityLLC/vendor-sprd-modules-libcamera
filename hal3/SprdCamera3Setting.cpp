@@ -2891,6 +2891,11 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
 	uint8_t sprdBurstModeEnabled= 0;
 	requestInfo.update(ANDROID_SPRD_BURSTMODE_ENABLED, &sprdBurstModeEnabled, 1);
 
+	if(mCameraId == 0){
+		requestInfo.update(ANDROID_SPRD_VCM_STEP, &(s_setting[mCameraId].vcmInfo.vcm_step), 1);
+		requestInfo.update(ANDROID_SPRD_OTP_DATA, s_setting[mCameraId].otpInfo.otp_data,SPRD_DUAL_OTP_SIZE);
+	}
+
 	mDefaultMetadata[type] = requestInfo.release();
 	*metadata = mDefaultMetadata[type];
 

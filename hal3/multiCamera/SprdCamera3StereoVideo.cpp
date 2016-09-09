@@ -26,14 +26,14 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#define LOG_TAG "SprdCamera3Muxer"
+#define LOG_TAG "SprdCamera3StereoVideo"
 //#define LOG_NDEBUG 0
-#include "SprdCamera3Muxer.h"
+#include "SprdCamera3StereoVideo.h"
 
 using namespace android;
 namespace sprdcamera {
 
-SprdCamera3Muxer *mMuxer = NULL;
+SprdCamera3StereoVideo *mMuxer = NULL;
 
 //Error Check Macros
 #define CHECK_MUXER() \
@@ -73,42 +73,42 @@ SprdCamera3Muxer *mMuxer = NULL;
                 return -ENODEV; \
             } \
 
-camera3_device_ops_t SprdCamera3Muxer::mCameraMuxerOps = {
-    initialize:                               SprdCamera3Muxer::initialize,
-    configure_streams:                        SprdCamera3Muxer::configure_streams,
+camera3_device_ops_t SprdCamera3StereoVideo::mCameraMuxerOps = {
+    initialize:                               SprdCamera3StereoVideo::initialize,
+    configure_streams:                        SprdCamera3StereoVideo::configure_streams,
     register_stream_buffers:                  NULL,
-    construct_default_request_settings:       SprdCamera3Muxer::construct_default_request_settings,
-    process_capture_request:                  SprdCamera3Muxer::process_capture_request,
+    construct_default_request_settings:       SprdCamera3StereoVideo::construct_default_request_settings,
+    process_capture_request:                  SprdCamera3StereoVideo::process_capture_request,
     get_metadata_vendor_tag_ops:              NULL,
-    dump:                                     SprdCamera3Muxer::dump,
-    flush:                                    SprdCamera3Muxer::flush,
+    dump:                                     SprdCamera3StereoVideo::dump,
+    flush:                                    SprdCamera3StereoVideo::flush,
     reserved:{0},
 };
 
-camera3_callback_ops SprdCamera3Muxer::callback_ops_main = {
-    process_capture_result:                   SprdCamera3Muxer::process_capture_result_main,
-    notify:                                   SprdCamera3Muxer::notifyMain
+camera3_callback_ops SprdCamera3StereoVideo::callback_ops_main = {
+    process_capture_result:                   SprdCamera3StereoVideo::process_capture_result_main,
+    notify:                                   SprdCamera3StereoVideo::notifyMain
 };
 
-camera3_callback_ops SprdCamera3Muxer::callback_ops_aux = {
-    process_capture_result:                   SprdCamera3Muxer::process_capture_result_aux,
-    notify:                                   SprdCamera3Muxer::notifyAux
+camera3_callback_ops SprdCamera3StereoVideo::callback_ops_aux = {
+    process_capture_result:                   SprdCamera3StereoVideo::process_capture_result_aux,
+    notify:                                   SprdCamera3StereoVideo::notifyAux
 };
 
 /*===========================================================================
- * FUNCTION         : SprdCamera3Muxer
+ * FUNCTION         : SprdCamera3StereoVideo
  *
- * DESCRIPTION     : SprdCamera3Muxer Constructor
+ * DESCRIPTION     : SprdCamera3StereoVideo Constructor
  *
  * PARAMETERS:
  *   @num_of_cameras  : Number of Physical Cameras on device
  *
  *==========================================================================*/
-SprdCamera3Muxer::SprdCamera3Muxer()
+SprdCamera3StereoVideo::SprdCamera3StereoVideo()
 {
     HAL_LOGV(" E");
     m_nPhyCameras = 2;//m_nPhyCameras should always be 2 with dual camera mode
-
+    m_VirtualCamera.id = 1;//hardcode left front camera here
     mStaticMetadata = NULL;
     mMuxerThread = new MuxerThread();
     mMuxerThread->mMaxLocalBufferNum = MAX_QEQUEST_BUF;
@@ -120,12 +120,12 @@ SprdCamera3Muxer::SprdCamera3Muxer()
 }
 
 /*===========================================================================
- * FUNCTION         : ~SprdCamera3Muxer
+ * FUNCTION         : ~SprdCamera3StereoVideo
  *
- * DESCRIPTION     : SprdCamera3Muxer Desctructor
+ * DESCRIPTION     : SprdCamera3StereoVideo Desctructor
  *
  *==========================================================================*/
-SprdCamera3Muxer::~SprdCamera3Muxer()
+SprdCamera3StereoVideo::~SprdCamera3StereoVideo()
 {
     HAL_LOGV("E");
     mMuxerThread = NULL;
@@ -142,6 +142,7 @@ SprdCamera3Muxer::~SprdCamera3Muxer()
 
     HAL_LOGV("X");
 }
+
 /*===========================================================================
  * FUNCTION         : freeLocalBuffer
  *
@@ -153,9 +154,8 @@ SprdCamera3Muxer::~SprdCamera3Muxer()
  *
  * RETURN             :  NONE
  *==========================================================================*/
-void SprdCamera3Muxer::MuxerThread::freeLocalBuffer(new_mem_t* mLocalBuffer)
+void SprdCamera3StereoVideo::MuxerThread::freeLocalBuffer(new_mem_t* mLocalBuffer)
 {
-
     mLocalBufferList.clear();
     for(size_t i = 0; i < mMaxLocalBufferNum; i++){
         if(mLocalBuffer[i].buffer != NULL){
@@ -178,12 +178,12 @@ void SprdCamera3Muxer::MuxerThread::freeLocalBuffer(new_mem_t* mLocalBuffer)
  *
  * RETURN             :  NONE
  *==========================================================================*/
-void SprdCamera3Muxer::getCameraMuxer(SprdCamera3Muxer** pMuxer)
+void SprdCamera3StereoVideo::getCameraMuxer(SprdCamera3StereoVideo** pMuxer)
 {
 
     *pMuxer = NULL;
         if (!mMuxer) {
-             mMuxer = new SprdCamera3Muxer();
+             mMuxer = new SprdCamera3StereoVideo();
     }
     CHECK_MUXER();
     *pMuxer = mMuxer;
@@ -205,7 +205,7 @@ void SprdCamera3Muxer::getCameraMuxer(SprdCamera3Muxer** pMuxer)
  *              ENODEV : Camera not found
  *              other: non-zero failure code
  *==========================================================================*/
-int SprdCamera3Muxer::get_camera_info(__unused int camera_id, struct camera_info *info)
+int SprdCamera3StereoVideo::get_camera_info(__unused int camera_id, struct camera_info *info)
 {
 
     int rc = NO_ERROR;
@@ -234,7 +234,7 @@ int SprdCamera3Muxer::get_camera_info(__unused int camera_id, struct camera_info
  *              BAD_VALUE : Invalid Camera ID
  *              other: non-zero failure code
  *==========================================================================*/
-int SprdCamera3Muxer::camera_device_open(
+int SprdCamera3StereoVideo::camera_device_open(
         __unused const struct hw_module_t *module, const char *id,
         struct hw_device_t **hw_device)
 {
@@ -265,7 +265,7 @@ int SprdCamera3Muxer::camera_device_open(
  *              NO_ERROR  : success
  *              other: non-zero failure code
  *==========================================================================*/
-int SprdCamera3Muxer::close_camera_device(__unused hw_device_t *hw_dev)
+int SprdCamera3StereoVideo::close_camera_device(__unused hw_device_t *hw_dev)
 {
     if(hw_dev == NULL){
         HAL_LOGE("failed.hw_dev null");
@@ -286,7 +286,7 @@ int SprdCamera3Muxer::close_camera_device(__unused hw_device_t *hw_dev)
  *              NO_ERROR  : success
  *              other: non-zero failure code
  *==========================================================================*/
-int SprdCamera3Muxer::closeCameraDevice()
+int SprdCamera3StereoVideo::closeCameraDevice()
 {
 
     int rc = NO_ERROR;
@@ -322,7 +322,7 @@ int SprdCamera3Muxer::closeCameraDevice()
  *
  * RETURN     :
  *==========================================================================*/
-int SprdCamera3Muxer::initialize(__unused const struct camera3_device *device,
+int SprdCamera3StereoVideo::initialize(__unused const struct camera3_device *device,
                         const camera3_callback_ops_t *callback_ops)
 {
     int rc = NO_ERROR;
@@ -345,7 +345,7 @@ int SprdCamera3Muxer::initialize(__unused const struct camera3_device *device,
  *
  * RETURN     :
  *==========================================================================*/
-const camera_metadata_t * SprdCamera3Muxer::construct_default_request_settings(const struct camera3_device *device, int type)
+const camera_metadata_t * SprdCamera3StereoVideo::construct_default_request_settings(const struct camera3_device *device, int type)
 {
     const camera_metadata_t* rc;
 
@@ -369,7 +369,7 @@ const camera_metadata_t * SprdCamera3Muxer::construct_default_request_settings(c
  *
  * RETURN     :
  *==========================================================================*/
-int SprdCamera3Muxer::configure_streams(const struct camera3_device *device, camera3_stream_configuration_t* stream_list)
+int SprdCamera3StereoVideo::configure_streams(const struct camera3_device *device, camera3_stream_configuration_t* stream_list)
 {
     int rc=0;
 
@@ -391,7 +391,7 @@ int SprdCamera3Muxer::configure_streams(const struct camera3_device *device, cam
  *
  * RETURN     :
  *==========================================================================*/
-int SprdCamera3Muxer::process_capture_request(const struct camera3_device* device, camera3_capture_request_t *request)
+int SprdCamera3StereoVideo::process_capture_request(const struct camera3_device* device, camera3_capture_request_t *request)
 {
     int rc=0;
 
@@ -404,13 +404,13 @@ int SprdCamera3Muxer::process_capture_request(const struct camera3_device* devic
 /*===========================================================================
  * FUNCTION   :process_capture_result_main
  *
- * DESCRIPTION: deconstructor of SprdCamera3Muxer
+ * DESCRIPTION: deconstructor of SprdCamera3StereoVideo
  *
  * PARAMETERS :
  *
  * RETURN     :
  *==========================================================================*/
-void SprdCamera3Muxer::process_capture_result_main(const struct camera3_callback_ops *ops, const camera3_capture_result_t *result)
+void SprdCamera3StereoVideo::process_capture_result_main(const struct camera3_callback_ops *ops, const camera3_capture_result_t *result)
 {
     HAL_LOGV("idx:%d", result->frame_number);
     CHECK_MUXER();
@@ -419,13 +419,13 @@ void SprdCamera3Muxer::process_capture_result_main(const struct camera3_callback
 /*===========================================================================
  * FUNCTION   :process_capture_result_aux
  *
- * DESCRIPTION: deconstructor of SprdCamera3Muxer
+ * DESCRIPTION: deconstructor of SprdCamera3StereoVideo
  *
  * PARAMETERS :
  *
  * RETURN     :
  *==========================================================================*/
-void SprdCamera3Muxer::process_capture_result_aux(const struct camera3_callback_ops *ops, const camera3_capture_result_t *result)
+void SprdCamera3StereoVideo::process_capture_result_aux(const struct camera3_callback_ops *ops, const camera3_capture_result_t *result)
 {
     HAL_LOGV("idx:%d", result->frame_number);
     CHECK_MUXER();
@@ -440,7 +440,7 @@ void SprdCamera3Muxer::process_capture_result_aux(const struct camera3_callback_
  *
  * RETURN     :
  *==========================================================================*/
-void SprdCamera3Muxer::notifyMain(const struct camera3_callback_ops *ops, const camera3_notify_msg_t* msg)
+void SprdCamera3StereoVideo::notifyMain(const struct camera3_callback_ops *ops, const camera3_notify_msg_t* msg)
 {
     HAL_LOGV("idx:%d", msg->message.shutter.frame_number);
     CHECK_MUXER();
@@ -455,7 +455,7 @@ void SprdCamera3Muxer::notifyMain(const struct camera3_callback_ops *ops, const 
  *
  * RETURN     :
  *==========================================================================*/
-void SprdCamera3Muxer::notifyAux(const struct camera3_callback_ops *ops, const camera3_notify_msg_t* msg)
+void SprdCamera3StereoVideo::notifyAux(const struct camera3_callback_ops *ops, const camera3_notify_msg_t* msg)
 {
     HAL_LOGV("idx:%d", msg->message.shutter.frame_number);
     CHECK_MUXER();
@@ -465,13 +465,13 @@ void SprdCamera3Muxer::notifyAux(const struct camera3_callback_ops *ops, const c
 /*===========================================================================
  * FUNCTION   :popRequestList
  *
- * DESCRIPTION: deconstructor of SprdCamera3Muxer
+ * DESCRIPTION: deconstructor of SprdCamera3StereoVideo
  *
  * PARAMETERS :
  *
  * RETURN     :
  *==========================================================================*/
- buffer_handle_t* SprdCamera3Muxer::popRequestList(List <buffer_handle_t*>& list)
+ buffer_handle_t* SprdCamera3StereoVideo::popRequestList(List <buffer_handle_t*>& list)
 {
     buffer_handle_t* ret = NULL;
 
@@ -487,13 +487,13 @@ void SprdCamera3Muxer::notifyAux(const struct camera3_callback_ops *ops, const c
 /*===========================================================================
  * FUNCTION   :allocateOne
  *
- * DESCRIPTION: deconstructor of SprdCamera3Muxer
+ * DESCRIPTION: deconstructor of SprdCamera3StereoVideo
  *
  * PARAMETERS :
  *
  * RETURN     :
  *==========================================================================*/
-int SprdCamera3Muxer::MuxerThread::allocateOne(int w,int h, uint32_t is_cache,new_mem_t *new_mem,const native_handle_t *& nBuf )
+int SprdCamera3StereoVideo::MuxerThread::allocateOne(int w,int h, uint32_t is_cache,new_mem_t *new_mem,const native_handle_t *& nBuf )
 {
 
     int result = 0;
@@ -567,7 +567,7 @@ getpmem_fail:
  *  NO_ERROR if the request is normal
  *  BAD_VALUE if the request if improper
  *==========================================================================*/
-int SprdCamera3Muxer::validateCaptureRequest(camera3_capture_request_t *request)
+int SprdCamera3StereoVideo::validateCaptureRequest(camera3_capture_request_t *request)
 {
     size_t idx = 0;
     const camera3_stream_buffer_t *b = NULL;
@@ -635,7 +635,7 @@ int SprdCamera3Muxer::validateCaptureRequest(camera3_capture_request_t *request)
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int SprdCamera3Muxer::cameraDeviceOpen(__unused int camera_id,
+int SprdCamera3StereoVideo::cameraDeviceOpen(__unused int camera_id,
         struct hw_device_t **hw_device)
 {
     int rc = NO_ERROR;
@@ -665,7 +665,6 @@ int SprdCamera3Muxer::cameraDeviceOpen(__unused int camera_id,
         m_pPhyCamera[i].hwi = hw;
     }
 
-    m_VirtualCamera.id = 0;//hardcode main camera id here
     m_VirtualCamera.dev.common.tag = HARDWARE_DEVICE_TAG;
     m_VirtualCamera.dev.common.version = CAMERA_DEVICE_API_VERSION_3_2;
     m_VirtualCamera.dev.common.close = close_camera_device;
@@ -691,7 +690,7 @@ int SprdCamera3Muxer::cameraDeviceOpen(__unused int camera_id,
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int SprdCamera3Muxer::getCameraInfo(struct camera_info *info)
+int SprdCamera3StereoVideo::getCameraInfo(struct camera_info *info)
 {
     int rc = NO_ERROR;
     int camera_id = m_VirtualCamera.id;
@@ -720,7 +719,7 @@ int SprdCamera3Muxer::getCameraInfo(struct camera_info *info)
  *              NO_ERROR  : success
  *              other: non-zero failure code
  *==========================================================================*/
-int SprdCamera3Muxer::setupPhysicalCameras()
+int SprdCamera3StereoVideo::setupPhysicalCameras()
 {
     m_pPhyCamera = new sprdcamera_physical_descriptor_t[m_nPhyCameras];
     if (!m_pPhyCamera) {
@@ -742,7 +741,7 @@ int SprdCamera3Muxer::setupPhysicalCameras()
  *
  * RETURN     : None
  *==========================================================================*/
-SprdCamera3Muxer::MuxerThread::MuxerThread()
+SprdCamera3StereoVideo::MuxerThread::MuxerThread()
 {
     mIommuEnabled = 0;
     mLocalBufferList.clear();
@@ -769,7 +768,7 @@ SprdCamera3Muxer::MuxerThread::MuxerThread()
  *
  * RETURN     : None
  *==========================================================================*/
-SprdCamera3Muxer::MuxerThread::~MuxerThread()
+SprdCamera3StereoVideo::MuxerThread::~MuxerThread()
 {
     HAL_LOGV(" E");
 
@@ -792,7 +791,7 @@ SprdCamera3Muxer::MuxerThread::~MuxerThread()
  *
  * RETURN     : None
  *==========================================================================*/
-int SprdCamera3Muxer::MuxerThread::loadGpuApi()
+int SprdCamera3StereoVideo::MuxerThread::loadGpuApi()
 {
     HAL_LOGV(" E");
     const char* error = NULL;
@@ -838,7 +837,7 @@ int SprdCamera3Muxer::MuxerThread::loadGpuApi()
  *
  * RETURN     : None
  *==========================================================================*/
-void SprdCamera3Muxer::MuxerThread::unLoadGpuApi()
+void SprdCamera3StereoVideo::MuxerThread::unLoadGpuApi()
 {
     HAL_LOGV("E");
 
@@ -858,7 +857,7 @@ void SprdCamera3Muxer::MuxerThread::unLoadGpuApi()
  *
  * RETURN     : None
  *==========================================================================*/
-void SprdCamera3Muxer::MuxerThread::initGpuData(int w,int h, int rotation)
+void SprdCamera3StereoVideo::MuxerThread::initGpuData(int w,int h, int rotation)
 {
     pt_stream_info.dst_height = h;
     pt_stream_info.dst_width  = w;
@@ -899,10 +898,10 @@ void SprdCamera3Muxer::MuxerThread::initGpuData(int w,int h, int rotation)
         pt_line_buf.homography_matrix[16] = -0.000015;
         pt_line_buf.homography_matrix[17] = 1.0;
     }
-	HAL_LOGV("using following homography_matrix data:\n");
-	HAL_LOGV("left:\t%8f  %8f  %8f    right:\t%8f  %8f  %8f", pt_line_buf.homography_matrix[0],  pt_line_buf.homography_matrix[1], pt_line_buf.homography_matrix[2], pt_line_buf.homography_matrix[9], pt_line_buf.homography_matrix[10], pt_line_buf.homography_matrix[11]);
-	HAL_LOGV("\t\t%8f  %8f  %8f    \t%8f  %8f  %8f", pt_line_buf.homography_matrix[3],  pt_line_buf.homography_matrix[4], pt_line_buf.homography_matrix[5], pt_line_buf.homography_matrix[12], pt_line_buf.homography_matrix[13], pt_line_buf.homography_matrix[14]);
-	HAL_LOGV("\t\t%8f  %8f  %8f    \t%8f  %8f  %8f", pt_line_buf.homography_matrix[6],  pt_line_buf.homography_matrix[7], pt_line_buf.homography_matrix[8], pt_line_buf.homography_matrix[15], pt_line_buf.homography_matrix[16], pt_line_buf.homography_matrix[17]);
+    HAL_LOGV("using following homography_matrix data:\n");
+    HAL_LOGV("left:\t%8f  %8f  %8f    right:\t%8f  %8f  %8f", pt_line_buf.homography_matrix[0],  pt_line_buf.homography_matrix[1], pt_line_buf.homography_matrix[2], pt_line_buf.homography_matrix[9], pt_line_buf.homography_matrix[10], pt_line_buf.homography_matrix[11]);
+    HAL_LOGV("\t\t%8f  %8f  %8f    \t%8f  %8f  %8f", pt_line_buf.homography_matrix[3],  pt_line_buf.homography_matrix[4], pt_line_buf.homography_matrix[5], pt_line_buf.homography_matrix[12], pt_line_buf.homography_matrix[13], pt_line_buf.homography_matrix[14]);
+    HAL_LOGV("\t\t%8f  %8f  %8f    \t%8f  %8f  %8f", pt_line_buf.homography_matrix[6],  pt_line_buf.homography_matrix[7], pt_line_buf.homography_matrix[8], pt_line_buf.homography_matrix[15], pt_line_buf.homography_matrix[16], pt_line_buf.homography_matrix[17]);
 
     if(isInitRenderContest){
         mGpuApi->destroyRenderContext();
@@ -920,7 +919,7 @@ void SprdCamera3Muxer::MuxerThread::initGpuData(int w,int h, int rotation)
  * RETURN     : None
  *==========================================================================*/
 
-bool SprdCamera3Muxer::MuxerThread::threadLoop()
+bool SprdCamera3StereoVideo::MuxerThread::threadLoop()
 {
     buffer_handle_t* output_buffer = NULL;
     muxer_queue_msg_t muxer_msg;
@@ -976,7 +975,7 @@ bool SprdCamera3Muxer::MuxerThread::threadLoop()
 
     waitMsgAvailable();
 
-    return true;   //rc setted 0,then the thread quits,when set rc 0  //han.xu
+    return true;   //rc setted 0,then the thread quits,when set rc 0
 }
 /*===========================================================================
  * FUNCTION   :requestExit
@@ -987,7 +986,7 @@ bool SprdCamera3Muxer::MuxerThread::threadLoop()
  *
  * RETURN     : None
  *==========================================================================*/
-void SprdCamera3Muxer::MuxerThread::requestExit()
+void SprdCamera3StereoVideo::MuxerThread::requestExit()
 {
     muxer_queue_msg_t muxer_msg;
     muxer_msg.msg_type = MUXER_MSG_EXIT;
@@ -1004,7 +1003,7 @@ void SprdCamera3Muxer::MuxerThread::requestExit()
  *
  * RETURN     :
  *==========================================================================*/
-int SprdCamera3Muxer::getStreamType(camera3_stream_t *new_stream )
+int SprdCamera3StereoVideo::getStreamType(camera3_stream_t *new_stream )
 {
     int stream_type = 0;
     int format = new_stream->format;
@@ -1051,7 +1050,7 @@ int SprdCamera3Muxer::getStreamType(camera3_stream_t *new_stream )
  *
  * RETURN     :
  *==========================================================================*/
-void SprdCamera3Muxer::MuxerThread::waitMsgAvailable()
+void SprdCamera3StereoVideo::MuxerThread::waitMsgAvailable()
 {
     // TODO:what to do for timeout
     while(mMuxerMsgList.empty()) {
@@ -1074,9 +1073,9 @@ void SprdCamera3Muxer::MuxerThread::waitMsgAvailable()
  *              MATCH_SUCCESS
  *==========================================================================*/
 
-bool SprdCamera3Muxer::matchTwoFrame(hwi_video_frame_buffer_info_t result1,List <hwi_video_frame_buffer_info_t> &list, hwi_video_frame_buffer_info_t* result2)
+bool SprdCamera3StereoVideo::matchTwoFrame(hwi_frame_buffer_info_t result1,List <hwi_frame_buffer_info_t> &list, hwi_frame_buffer_info_t* result2)
 {
-    List<hwi_video_frame_buffer_info_t>::iterator itor2;
+    List<hwi_frame_buffer_info_t>::iterator itor2;
     if(list.empty()) {
         HAL_LOGW("match failed for idx:%d, unmatched queue is empty", result1.frame_number);
         return MATCH_FAILED;
@@ -1104,8 +1103,8 @@ bool SprdCamera3Muxer::matchTwoFrame(hwi_video_frame_buffer_info_t result1,List 
  *
  * RETURN     : None
  *==========================================================================*/
-int SprdCamera3Muxer::MuxerThread::muxerTwoFrame(buffer_handle_t* &output_buf,
-    matched_video_buffer_combination_t* combVideoResult)
+int SprdCamera3StereoVideo::MuxerThread::muxerTwoFrame(buffer_handle_t* &output_buf,
+    frame_matched_info_t* combVideoResult)
 {
     int rc = NO_ERROR;
     buffer_handle_t* input_buf1 = combVideoResult->buffer1;
@@ -1166,8 +1165,8 @@ return rc;
  *
  * RETURN     : None
  *==========================================================================*/
-void SprdCamera3Muxer::MuxerThread::videoCallBackResult(buffer_handle_t* buffer,
-    matched_video_buffer_combination_t* combVideoResult)
+void SprdCamera3StereoVideo::MuxerThread::videoCallBackResult(buffer_handle_t* buffer,
+    frame_matched_info_t* combVideoResult)
 {
 
     camera3_buffer_status_t buffer_status = CAMERA3_BUFFER_STATUS_OK;
@@ -1225,7 +1224,7 @@ void SprdCamera3Muxer::MuxerThread::videoCallBackResult(buffer_handle_t* buffer,
  *
  * RETURN     : None
  *==========================================================================*/
-void SprdCamera3Muxer::MuxerThread::dumpFps()
+void SprdCamera3StereoVideo::MuxerThread::dumpFps()
 {
     mVFrameCount++;
     int64_t now = systemTime();
@@ -1248,7 +1247,7 @@ void SprdCamera3Muxer::MuxerThread::dumpFps()
  *
  * RETURN     :
  *==========================================================================*/
-void SprdCamera3Muxer::dump(const struct camera3_device *device, int fd)
+void SprdCamera3StereoVideo::dump(const struct camera3_device *device, int fd)
 {
     HAL_LOGV("E");
     CHECK_MUXER();
@@ -1267,7 +1266,7 @@ void SprdCamera3Muxer::dump(const struct camera3_device *device, int fd)
  *
  * RETURN     :
  *==========================================================================*/
-int SprdCamera3Muxer::flush(const struct camera3_device *device)
+int SprdCamera3StereoVideo::flush(const struct camera3_device *device)
 {
     int rc=0;
 
@@ -1289,7 +1288,7 @@ int SprdCamera3Muxer::flush(const struct camera3_device *device)
  *
  * RETURN     :
  *==========================================================================*/
-int SprdCamera3Muxer::initialize(const camera3_callback_ops_t *callback_ops)
+int SprdCamera3StereoVideo::initialize(const camera3_callback_ops_t *callback_ops)
 {
     int rc = NO_ERROR;
     sprdcamera_physical_descriptor_t sprdCam = m_pPhyCamera[CAM_TYPE_MAIN];
@@ -1345,7 +1344,7 @@ int SprdCamera3Muxer::initialize(const camera3_callback_ops_t *callback_ops)
  *
  * RETURN     :
  *==========================================================================*/
-int SprdCamera3Muxer::configureStreams(const struct camera3_device *device,camera3_stream_configuration_t* stream_list)
+int SprdCamera3StereoVideo::configureStreams(const struct camera3_device *device,camera3_stream_configuration_t* stream_list)
 {
     HAL_LOGV("E");
 
@@ -1449,7 +1448,7 @@ int SprdCamera3Muxer::configureStreams(const struct camera3_device *device,camer
  *
  * RETURN     :
  *==========================================================================*/
-const camera_metadata_t * SprdCamera3Muxer::constructDefaultRequestSettings(const struct camera3_device *device, int type)
+const camera_metadata_t * SprdCamera3StereoVideo::constructDefaultRequestSettings(const struct camera3_device *device, int type)
 {
     HAL_LOGV("E");
     const camera_metadata_t *fwk_metadata = NULL;
@@ -1480,7 +1479,7 @@ const camera_metadata_t * SprdCamera3Muxer::constructDefaultRequestSettings(cons
  *
  * RETURN     : None
  *==========================================================================*/
-void SprdCamera3Muxer::saveVideoRequest(camera3_capture_request_t *request)
+void SprdCamera3StereoVideo::saveVideoRequest(camera3_capture_request_t *request)
 {
     HAL_LOGV("idx:%d", request->frame_number);
 
@@ -1509,7 +1508,7 @@ void SprdCamera3Muxer::saveVideoRequest(camera3_capture_request_t *request)
  *    @request:camera3 request
  * RETURN     :
  *==========================================================================*/
-int SprdCamera3Muxer::processCaptureRequest(const struct camera3_device *device,camera3_capture_request_t *request)
+int SprdCamera3StereoVideo::processCaptureRequest(const struct camera3_device *device,camera3_capture_request_t *request)
 {
     int rc = 0;
     uint32_t i = 0;
@@ -1631,7 +1630,7 @@ int SprdCamera3Muxer::processCaptureRequest(const struct camera3_device *device,
         goto req_fail;
 
     }
-	saveVideoRequest(req);
+    saveVideoRequest(req);
     HAL_LOGE("rc, d%d", rc);
 
 req_fail:
@@ -1658,7 +1657,7 @@ req_fail:
  *
  * RETURN     : None
  *==========================================================================*/
-void SprdCamera3Muxer::notifyMain( const camera3_notify_msg_t* msg)
+void SprdCamera3StereoVideo::notifyMain( const camera3_notify_msg_t* msg)
 {
     {
         Mutex::Autolock l(mNotifyLockMain);
@@ -1682,7 +1681,7 @@ void SprdCamera3Muxer::notifyMain( const camera3_notify_msg_t* msg)
  *
  * RETURN     : None
  *==========================================================================*/
-void SprdCamera3Muxer::processCaptureResultMain( const camera3_capture_result_t *result)
+void SprdCamera3StereoVideo::processCaptureResultMain( const camera3_capture_result_t *result)
 {
     uint64_t result_timestamp;
     uint32_t cur_frame_number;
@@ -1734,8 +1733,8 @@ void SprdCamera3Muxer::processCaptureResultMain( const camera3_capture_result_t 
         return;
     }
 
-    hwi_video_frame_buffer_info_t matched_frame;
-    hwi_video_frame_buffer_info_t cur_frame;
+    hwi_frame_buffer_info_t matched_frame;
+    hwi_frame_buffer_info_t cur_frame;
     cur_frame.frame_number = cur_frame_number;
     cur_frame.timestamp = result_timestamp;
     cur_frame.buffer = result->output_buffers->buffer;
@@ -1758,7 +1757,7 @@ void SprdCamera3Muxer::processCaptureResultMain( const camera3_capture_result_t 
             }
         } else {
             HAL_LOGE("Enqueue newest unmatched frame:%d for Main camera", cur_frame.frame_number);
-            hwi_video_frame_buffer_info_t *discard_frame = pushToUnmatchedQueue(cur_frame, mUnmatchedFrameListMain);
+            hwi_frame_buffer_info_t *discard_frame = pushToUnmatchedQueue(cur_frame, mUnmatchedFrameListMain);
 
             if(discard_frame != NULL){
                 HAL_LOGE("Discard oldest unmatched frame:%d for Main camera", discard_frame->frame_number);
@@ -1773,15 +1772,15 @@ void SprdCamera3Muxer::processCaptureResultMain( const camera3_capture_result_t 
     return;
 }
 /*===========================================================================
- * FUNCTION   :~SprdCamera3Muxer
+ * FUNCTION   :~SprdCamera3StereoVideo
  *
- * DESCRIPTION: deconstructor of SprdCamera3Muxer
+ * DESCRIPTION: deconstructor of SprdCamera3StereoVideo
  *
  * PARAMETERS :
  *
  * RETURN     : None
  *==========================================================================*/
-void SprdCamera3Muxer::notifyAux( const camera3_notify_msg_t* msg)
+void SprdCamera3StereoVideo::notifyAux( const camera3_notify_msg_t* msg)
 {
     Mutex::Autolock l(mNotifyLockAux);
     mNotifyListAux.push_back(*msg);
@@ -1802,7 +1801,7 @@ void SprdCamera3Muxer::notifyAux( const camera3_notify_msg_t* msg)
  *
  * RETURN     : None
  *==========================================================================*/
-void SprdCamera3Muxer::processCaptureResultAux( const camera3_capture_result_t *result)
+void SprdCamera3StereoVideo::processCaptureResultAux( const camera3_capture_result_t *result)
 {
     uint64_t result_timestamp;
     uint32_t cur_frame_number;
@@ -1848,8 +1847,8 @@ void SprdCamera3Muxer::processCaptureResultAux( const camera3_capture_result_t *
         return;
     }
 
-    hwi_video_frame_buffer_info_t matched_frame;
-    hwi_video_frame_buffer_info_t cur_frame;
+    hwi_frame_buffer_info_t matched_frame;
+    hwi_frame_buffer_info_t cur_frame;
     cur_frame.frame_number = cur_frame_number;
     cur_frame.timestamp = result_timestamp;
     cur_frame.buffer = (result->output_buffers)->buffer;
@@ -1871,7 +1870,7 @@ void SprdCamera3Muxer::processCaptureResultAux( const camera3_capture_result_t *
             }
         } else{
             HAL_LOGV("Enqueue newest unmatched frame:%d for Aux camera", cur_frame.frame_number);
-            hwi_video_frame_buffer_info_t *discard_frame = pushToUnmatchedQueue(cur_frame, mUnmatchedFrameListAux);
+            hwi_frame_buffer_info_t *discard_frame = pushToUnmatchedQueue(cur_frame, mUnmatchedFrameListAux);
             if(discard_frame != NULL){
                 HAL_LOGE("Discard oldest unmatched frame:%d for Aux camera", discard_frame->frame_number);
                 mMuxerThread->mLocalBufferList.push_back(discard_frame->buffer);
@@ -1892,7 +1891,7 @@ void SprdCamera3Muxer::processCaptureResultAux( const camera3_capture_result_t *
  *
  * RETURN     : None
  *==========================================================================*/
-void SprdCamera3Muxer::MuxerThread::videoErrorCallback(uint32_t frame_number)
+void SprdCamera3StereoVideo::MuxerThread::videoErrorCallback(uint32_t frame_number)
 {
     camera3_capture_result_t result;
 
@@ -1932,13 +1931,13 @@ void SprdCamera3Muxer::MuxerThread::videoErrorCallback(uint32_t frame_number)
 /*===========================================================================
  * FUNCTION   :dump
  *
- * DESCRIPTION: deconstructor of SprdCamera3Muxer
+ * DESCRIPTION: deconstructor of SprdCamera3StereoVideo
  *
  * PARAMETERS :
  *
  * RETURN     : None
  *==========================================================================*/
-void SprdCamera3Muxer::_dump(const struct camera3_device *device, int fd)
+void SprdCamera3StereoVideo::_dump(const struct camera3_device *device, int fd)
 {
 
     HAL_LOGV(" E");
@@ -1957,7 +1956,7 @@ void SprdCamera3Muxer::_dump(const struct camera3_device *device, int fd)
  *                        int
  * RETURN     : None
  *==========================================================================*/
-void SprdCamera3Muxer::dumpImg(void* addr,int size,int frameId)
+void SprdCamera3StereoVideo::dumpImg(void* addr,int size,int frameId)
 {
 
     HAL_LOGV(" E");
@@ -1989,7 +1988,7 @@ void SprdCamera3Muxer::dumpImg(void* addr,int size,int frameId)
  *
  * RETURN     : None
  *==========================================================================*/
-int SprdCamera3Muxer::_flush(const struct camera3_device *device)
+int SprdCamera3StereoVideo::_flush(const struct camera3_device *device)
 {
     int rc=0;
 
@@ -2016,12 +2015,12 @@ int SprdCamera3Muxer::_flush(const struct camera3_device *device)
  *
  * RETURN     : None
  *==========================================================================*/
-hwi_video_frame_buffer_info_t* SprdCamera3Muxer::pushToUnmatchedQueue(hwi_video_frame_buffer_info_t new_buffer_info, List <hwi_video_frame_buffer_info_t> &queue)
+hwi_frame_buffer_info_t* SprdCamera3StereoVideo::pushToUnmatchedQueue(hwi_frame_buffer_info_t new_buffer_info, List <hwi_frame_buffer_info_t> &queue)
 {
-    hwi_video_frame_buffer_info_t *pushout = NULL;
+    hwi_frame_buffer_info_t *pushout = NULL;
     if(queue.size() == MAX_UNMATCHED_QUEUE_SIZE){
-        pushout = new hwi_video_frame_buffer_info_t;
-        List <hwi_video_frame_buffer_info_t>::iterator i = queue.begin();
+        pushout = new hwi_frame_buffer_info_t;
+        List <hwi_frame_buffer_info_t>::iterator i = queue.begin();
         *pushout = *i;
         queue.erase(i);
 
