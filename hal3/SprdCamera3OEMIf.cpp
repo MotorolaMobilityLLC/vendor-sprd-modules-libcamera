@@ -710,7 +710,10 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type, uint32_t frame_n
 		{
 			if (mSprdBurstModeEnabled == 1 && mSprdZslEnabled == 1) {
 				ret = zslTakePicture();
-			} else {
+			}
+			else if (mSprdRefocusEnabled == 1 && mSprdZslEnabled == 1) {
+				ret = zslTakePicture();
+			}else {
 				if(mTakePictureMode == SNAPSHOT_NO_ZSL_MODE ||
 				   mTakePictureMode == SNAPSHOT_ONLY_MODE)
 					ret = takePicture();
@@ -1774,7 +1777,7 @@ bool SprdCamera3OEMIf::checkPreviewStateForCapture()
 		ret = false;
 	} else {
 		tmpState = getPreviewState();
-		if (iSZslMode()) {
+		if (iSZslMode()||mSprdZslEnabled) {
 			if (SPRD_PREVIEW_IN_PROGRESS != tmpState) {
 				HAL_LOGE("incorrect preview status %d of ZSL capture mode", (uint32_t)tmpState);
 				ret = false;
@@ -2551,12 +2554,6 @@ bool SprdCamera3OEMIf::iSZslMode()
 
 	if (CAMERA_ZSL_MODE != mCaptureMode)
 		ret = false;
-
-	if(ret == false && mSprdRefocusEnabled == true){
-		usleep(20*1000);
-		if (CAMERA_ZSL_MODE != mCaptureMode)
-			ret = false;
-	}
 
 	if (mSprdZslEnabled == 0)
 		ret = false;
@@ -5210,11 +5207,11 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag)
 		{
 			SPRD_DEF_Tag sprddefInfo;
 			mSetting->getSPRDDEFTag(&sprddefInfo);
-			if(sprddefInfo.refocus_enable != 0) {
+			/*if(sprddefInfo.refocus_enable != 0) {
 				mSprdRefocusEnabled = true;
 			}else {
 				mSprdRefocusEnabled = false;
-			}
+			}*/
 			HAL_LOGD("sprddefInfo.refocus_enable=%d mSprdRefocusEnabled %d", sprddefInfo.refocus_enable,mSprdRefocusEnabled);
 			SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_REFOCUS_ENABLE, sprddefInfo.refocus_enable);
 
