@@ -1045,11 +1045,13 @@ static unsigned long s5k3l8xxm3_access_val(SENSOR_HW_HANDLE handle,unsigned long
 			#endif
 			break;
 		case SENSOR_VAL_TYPE_PARSE_OTP:
-			ret = s5k3l8xxm3_parse_otp(handle, param_ptr);
+			ret =s5k3l8xxm3_otp_read(handle,param_ptr);
+			//ret = s5k3l8xxm3_parse_otp(handle, param_ptr);
 			break;
 		case SENSOR_VAL_TYPE_PARSE_DUAL_OTP:
 			#ifdef S5K3L8XXM3_DUAL_OTP
-			ret = s5k3l8xxm3_parse_dual_otp(handle, param_ptr);
+			ret = s5k3l8xxm3_dual_otp_read(handle, param_ptr);
+			//ret = s5k3l8xxm3_parse_dual_otp(handle, param_ptr);
 			#endif
 			break;
 		case SENSOR_VAL_TYPE_WRITE_OTP:
