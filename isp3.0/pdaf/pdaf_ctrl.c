@@ -45,9 +45,13 @@ struct pdafctrl_context {
 	struct pdaf_ctrl_thread_context thread_cxt;
 	struct pdaf_ctrl_cb_ops_type cb_ops;
 	struct adpt_ops_type *pdaf_adpt_ops;
-	//void *raw_addr;
 	//struct pdaf_ctrl_process_out proc_out;
 	//struct pdaf_ctrl_init_in init_in_param;
+};
+
+struct pdaf_init_msg_ctrl {
+	struct pdaf_ctrl_init_in *in;
+	struct pdaf_ctrl_init_out *out;
 };
 
 struct pdaf_ctrl_msg_ctrl {
@@ -55,6 +59,15 @@ struct pdaf_ctrl_msg_ctrl {
 	struct pdaf_ctrl_param_in *in;
 	struct pdaf_ctrl_param_out *out;
 };
+
+static cmr_int pdafctrl_init_adpt(cmr_handle handle, struct pdaf_ctrl_init_in *in, struct pdaf_ctrl_init_out *out)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct pdafctrl_context *cxt = (struct pdafctrl_context *)handle;
+
+	ret = cxt->pdaf_adpt_ops->adpt_init(in, out, &cxt->adpt_handle);
+	return ret;
+}
 
 static cmr_int pdafctrl_deinit_adpt(cmr_handle handle)
 {
@@ -123,6 +136,7 @@ static cmr_int pdafctrl_thread_proc(struct cmr_msg *message, void *p_data)
 	cmr_handle handle = (cmr_handle) p_data;
 	struct pdafctrl_context *cxt = (struct pdafctrl_context *)handle;
 	struct pdaf_ctrl_msg_ctrl *msg_ctrl = NULL;
+	struct pdaf_init_msg_ctrl *msg_init = NULL;
 
 	if (!message || !p_data) {
 		ISP_LOGE("param error message = %p, p_data = %p", message, p_data);
@@ -139,6 +153,8 @@ static cmr_int pdafctrl_thread_proc(struct cmr_msg *message, void *p_data)
 		ret = pdafctrl_close(handle);
 		break;
 	case PDAFCTRL_EVT_INIT:
+		msg_init = (struct pdaf_init_msg_ctrl *)message->data;
+		ret = pdafctrl_init_adpt(handle, msg_init->in, msg_init->out);
 		break;
 	case PDAFCTRL_EVT_DEINIT:
 		ret = pdafctrl_deinit_adpt(handle);
@@ -201,6 +217,28 @@ exit:
 	return ret;
 }
 
+static cmr_int pdafctrl_init_adapt(struct pdafctrl_context *cxt, struct pdaf_ctrl_init_in *in, struct pdaf_ctrl_init_out *out)
+{
+	cmr_int ret = -ISP_ERROR;
+	CMR_MSG_INIT(message);
+	struct pdaf_init_msg_ctrl msg_init;
+
+	msg_init.in = in;
+	msg_init.out = out;
+	message.msg_type = PDAFCTRL_EVT_INIT;
+	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+	message.alloc_flag = 0;
+	message.data = &msg_init;
+	ret = cmr_thread_msg_send(cxt->thread_cxt.ctrl_thr_handle, &message);
+	if (ret) {
+		ISP_LOGE("failed to send msg to main thr %ld", ret);
+		goto exit;
+	}
+
+exit:
+	return ret;
+}
+
 cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in *in,
 		     struct pdaf_ctrl_init_out *out, cmr_handle *handle)
 {
@@ -251,7 +289,7 @@ cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in *in,
 	}
 
 	/* adpter init */
-	ret = cxt->pdaf_adpt_ops->adpt_init(in, out, &cxt->adpt_handle);
+	ret = pdafctrl_init_adapt(cxt, in, out);
 	if (ret) {
 		ISP_LOGE("failed to init adapter layer ret = %ld", ret);
 		goto error_adpt_init;

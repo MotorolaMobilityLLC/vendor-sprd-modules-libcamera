@@ -58,16 +58,10 @@ struct pdaf_altek_lib_api {
 	cmr_int (*pdaf_altek_version)(void *a_pOutBuf, int a_dInBufMaxSize);
 };
 
-enum pdaf_altek_adpt_status_t {
-	PDAF_ADPT_STARTED,
-	PDAF_ADPT_DONE,
-	PDAF_ADPT_IDLE,
-};
-
 struct pdaf_altek_context {
 	cmr_u8 inited;
 	cmr_u32 camera_id;
-	void *addr;
+	cmr_u8 pd_open;
 	cmr_u8 is_busy;
 	cmr_u32 frame_id;
 	cmr_u32 token_id;
@@ -89,7 +83,6 @@ struct pdaf_altek_context {
 	alPD_RECT pdroi;
 	DataBit bit;
 	PDInReg pd_reg_in;
-	enum pdaf_altek_adpt_status_t pdaf_cur_status;
 	struct isp3a_pdaf_altek_report_t report_data;
 #ifdef PD_DATA_TEST
 	cmr_u8 otp_test[PD_OTP_TEST_SIZE];
@@ -221,9 +214,19 @@ static cmr_int pdafaltek_adpt_set_pd_info(cmr_handle adpt_handle, struct sensor_
 	cmr_int ret = -ISP_ERROR;
 
 	ISP_CHECK_HANDLE_VALID(adpt_handle);
-	//TBD
-	//cxt->pd_info.pd_offset_x = pd_info->pd_offset_x;
-
+/*
+	cxt->pd_info.pd_offset_x = pd_info->pd_offset_x;
+	cxt->pd_info.pd_offset_y = pd_info->pd_offset_y;
+	cxt->pd_info.pd_pitch_x = pd_info->pd_pitch_x;
+	cxt->pd_info.pd_pitch_y = pd_info->pd_pitch_y;
+	cxt->pd_info.pd_density_x = pd_info->pd_density_x;
+	cxt->pd_info.pd_density_y = pd_info->pd_density_y;
+	cxt->pd_info.pd_block_num_x = pd_info->pd_block_num_x;
+	cxt->pd_info.pd_block_num_y = pd_info->pd_block_num_y;
+	cxt->pd_info.pd_pos_size = pd_info->pd_pos_size;
+	cxt->pd_info.pd_pos_r = (struct altek_pos_info *)pd_info->pd_pos_r;
+	cxt->pd_info.pd_pos_l = (struct altek_pos_info *)pd_info->pd_pos_l;
+*/
 	UNUSED(pd_info);
 	return 0;
 }
@@ -235,6 +238,7 @@ static cmr_int pdafaltek_adpt_set_open(cmr_handle adpt_handle, struct pdaf_ctrl_
 
 	ISP_CHECK_HANDLE_VALID(adpt_handle);
 	cxt->pd_set_buffer = in->pd_set_buffer;
+	cxt->pd_open = 1;
 	ISP_LOGI("pd open %p", cxt->pd_set_buffer);
 	return 0;
 }
@@ -247,6 +251,7 @@ static cmr_int pdafaltek_adpt_set_close(cmr_handle adpt_handle, struct pdaf_ctrl
 	ISP_CHECK_HANDLE_VALID(adpt_handle);
 	UNUSED(in);
 	cxt->pd_set_buffer = NULL;
+	cxt->pd_open = 0;
 	ISP_LOGI("pd close");
 	return 0;
 }
@@ -414,8 +419,6 @@ static cmr_int pdafaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 	ISP_LOGI("infinite = %lf, macro = %lf",
 			 cxt->pd_reg_in.tSensorInfo.uwInfVCM,
 			 cxt->pd_reg_in.tSensorInfo.uwMacroVCM);
-	cxt->pdaf_cur_status = PDAF_ADPT_IDLE;
-	cxt->is_busy = 0;
 
 	ret = pdafaltek_libops_init(cxt);
 	if (ret) {
@@ -429,9 +432,9 @@ static cmr_int pdafaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 	/* init lib */
 #ifdef PD_DATA_TEST
 	fp = fopen("/data/misc/media/pdotp.bin", "rb");
-	if(NULL == fp){
+	if (NULL == fp) {
 			CMR_LOGI("can not open file \n");
-			goto exit;
+			goto error_lib_init;
 	}
 	fread(cxt->otp_test, 1, PD_OTP_TEST_SIZE, fp);
 	fclose(fp);
@@ -447,6 +450,8 @@ static cmr_int pdafaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 
 	*adpt_handle = (cmr_handle)cxt;
 	cxt->inited = 1;
+	cxt->is_busy = 0;
+	cxt->report_data.pd_reg_size = PD_REG_OUT_SIZE;
 	return ret;
 
 error_lib_init:
@@ -609,8 +614,8 @@ static cmr_int pdafaltek_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	ISP_CHECK_HANDLE_VALID(adpt_handle);
 	cmr_bzero(&callback_in, sizeof(callback_in));
 
-	if (!cxt->pd_enable) {
-		ISP_LOGI("pd enable %d return", cxt->pd_enable);
+	if (!cxt->pd_open) {
+		ISP_LOGI("pd not open return");
 		goto exit;
 	}
 	cxt->is_busy = 1;
@@ -724,14 +729,13 @@ static cmr_int pdafaltek_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 							cxt->report_data.pd_reg_out, cxt->pd_reg_in.dcurrentVCM);
 		}
 	#endif
-	callback_in.proc_out.pd_report_data.token_id = cxt->token_id;//TBD
-	callback_in.proc_out.pd_report_data.frame_id = cxt->frame_id ;
-	callback_in.proc_out.pd_report_data.enable = cxt->pd_enable;
-	callback_in.proc_out.pd_report_data.pd_value = cxt->report_data.pd_value;
-	callback_in.proc_out.pd_report_data.pd_reg_out = cxt->report_data.pd_reg_out;
-	callback_in.proc_out.pd_report_data.pd_reg_size = PD_REG_OUT_SIZE;
-	callback_in.proc_out.pd_report_data.time_stamp.sec = proc_in->pd_raw.sec;
-	callback_in.proc_out.pd_report_data.time_stamp.usec = proc_in->pd_raw.usec;
+	cxt->report_data.token_id = cxt->token_id;
+	cxt->report_data.frame_id = cxt->frame_id;
+	cxt->report_data.enable = cxt->pd_enable;
+	cxt->report_data.time_stamp.sec = proc_in->pd_raw.sec;
+	cxt->report_data.time_stamp.usec = proc_in->pd_raw.usec;
+
+	callback_in.proc_out.pd_report_data = cxt->report_data;
 	/*call back to haf lib*/
 	if (cxt->cb_ops.call_back) {
 		ret = (cxt->cb_ops.call_back)(cxt->caller_handle, &callback_in);
@@ -745,14 +749,14 @@ exit:
 	return ret;
 }
 
-static cmr_int pdafaltek_adpt_inctrl(cmr_handle adpt_handle, cmr_int cmd,
+static cmr_int pdafaltek_adpt_ioctrl(cmr_handle adpt_handle, cmr_int cmd,
 				   void *in, void *out)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct pdaf_ctrl_param_in *in_ptr = (struct pdaf_ctrl_param_in *)in;
+	struct pdaf_ctrl_param_out *out_ptr = (struct pdaf_ctrl_param_out *)out;
 
 	ISP_CHECK_HANDLE_VALID(adpt_handle);
-	UNUSED(out);
 	ISP_LOGV("cmd = %ld", cmd);
 
 	switch (cmd) {
@@ -771,30 +775,6 @@ static cmr_int pdafaltek_adpt_inctrl(cmr_handle adpt_handle, cmr_int cmd,
 	case PDAF_CTRL_CMD_SET_RESET:
 		ret = pdafaltek_adpt_set_reset(adpt_handle, in_ptr);
 		break;
-	default:
-		ISP_LOGE("failed to case cmd = %ld", cmd);
-		break;
-	}
-
-	return ret;
-}
-
-static cmr_int pdafaltek_adpt_outctrl(cmr_handle adpt_handle, cmr_int cmd,
-				   void *in, void *out)
-{
-	cmr_int ret = -ISP_ERROR;
-	struct pdaf_ctrl_param_out *out_ptr = (struct pdaf_ctrl_param_out *)out;
-
-	ISP_CHECK_HANDLE_VALID(adpt_handle);
-	if (!out) {
-		ISP_LOGE("init param %p is null !!!", out);
-		ret = ISP_PARAM_NULL;
-		return ret;
-	}
-	UNUSED(in);
-	ISP_LOGV("cmd = %ld", cmd);
-
-	switch (cmd) {
 	case PDAF_CTRL_CMD_GET_BUSY:
 		ret = pdafaltek_adpt_get_busy(adpt_handle, out_ptr);
 		break;
@@ -802,21 +782,6 @@ static cmr_int pdafaltek_adpt_outctrl(cmr_handle adpt_handle, cmr_int cmd,
 		ISP_LOGE("failed to case cmd = %ld", cmd);
 		break;
 	}
-
-	return ret;
-}
-
-
-static cmr_int pdafaltek_adpt_ioctrl(cmr_handle adpt_handle, cmr_int cmd,
-				   void *in, void *out)
-{
-	cmr_int ret = -ISP_ERROR;
-
-	ISP_CHECK_HANDLE_VALID(adpt_handle);
-	if ((PDAF_CTRL_CMD_SET_BASE < cmd) && (PDAF_CTRL_CMD_SET_MAX > cmd))
-		ret = pdafaltek_adpt_inctrl(adpt_handle, cmd, in, out);
-	else if ((PDAF_CTRL_CMD_GET_BASE < cmd) && (PDAF_CTRL_CMD_GET_MAX > cmd))
-		ret = pdafaltek_adpt_outctrl(adpt_handle, cmd, in, out);
 
 	return ret;
 }

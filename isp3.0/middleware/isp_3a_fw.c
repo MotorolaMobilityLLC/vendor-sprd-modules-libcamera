@@ -888,6 +888,25 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 		ISP_LOGI("3a version:%f", libVersion);
 	}
 
+	memset(&pdaf_input, 0x00, sizeof(pdaf_input));
+	pdaf_input.camera_id = input_ptr->camera_id;
+	pdaf_input.pdaf_lib_info = input_ptr->pdaf_config;
+	pdaf_input.caller_handle = isp_3a_handle;
+	pdaf_input.pdaf_support = cxt->pdaf_cxt.pdaf_support;
+	pdaf_input.pd_info = input_ptr->pdaf_info;
+	pdaf_input.pdaf_ctrl_cb_ops.call_back = isp3a_handle_pdaf_callback;
+	if (cxt->otp_data) {
+		pdaf_input.af_otp.otp_data = &cxt->otp_data->af_info;
+		pdaf_input.af_otp.size = sizeof(cxt->otp_data->af_info);
+		pdaf_input.pdaf_otp.otp_data = cxt->otp_data->pdaf_info.pdaf_data_addr;
+		pdaf_input.pdaf_otp.size = cxt->otp_data->pdaf_info.pdaf_data_size;
+	}
+	ret = pdaf_ctrl_init(&pdaf_input, &pdaf_output, &cxt->pdaf_cxt.handle);
+	if (ret) {
+		ISP_LOGE("failed to pdaf initialize");
+		goto exit;
+	}
+
 	memset(&af_input, 0x00, sizeof(af_input));
 	af_input.camera_id = input_ptr->camera_id;
 	af_input.af_lib_info = input_ptr->af_config;
@@ -928,25 +947,6 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 		goto exit;
 	}
 	cxt->af_cxt.hw_cfg = af_output.hw_cfg;
-
-	memset(&pdaf_input, 0x00, sizeof(pdaf_input));
-	pdaf_input.camera_id = input_ptr->camera_id;
-	pdaf_input.pdaf_lib_info = input_ptr->pdaf_config;
-	pdaf_input.caller_handle = isp_3a_handle;
-	pdaf_input.pdaf_support = cxt->pdaf_cxt.pdaf_support;
-	pdaf_input.pd_info = input_ptr->pdaf_info;
-	pdaf_input.pdaf_ctrl_cb_ops.call_back = isp3a_handle_pdaf_callback;
-	if (cxt->otp_data) {
-		pdaf_input.af_otp.otp_data = &cxt->otp_data->af_info;
-		pdaf_input.af_otp.size = sizeof(cxt->otp_data->af_info);
-		pdaf_input.pdaf_otp.otp_data = cxt->otp_data->pdaf_info.pdaf_data_addr;
-		pdaf_input.pdaf_otp.size = cxt->otp_data->pdaf_info.pdaf_data_size;
-	}
-	ret = pdaf_ctrl_init(&pdaf_input, &pdaf_output, &cxt->pdaf_cxt.handle);
-	if (ret) {
-		ISP_LOGE("failed to pdaf initialize");
-		goto exit;
-	}
 
 	memset(&awb_input, 0x00, sizeof(awb_input));
 	awb_input.awb_cb = isp3a_awb_callback;
@@ -4252,6 +4252,7 @@ cmr_int isp3a_handle_pdaf_callback(cmr_handle isp_3a_handle, struct pdaf_ctrl_ca
 	af_in.pd_info.extend_data_size = cxt->pdaf_cxt.proc_out.pd_report_data.pd_reg_size;
 	af_in.pd_info.extend_data_ptr = cxt->pdaf_cxt.proc_out.pd_report_data.pd_reg_out;
 	af_in.pd_info.token_id = cxt->pdaf_cxt.proc_out.pd_report_data.token_id;
+	af_in.pd_info.frame_id = cxt->pdaf_cxt.proc_out.pd_report_data.frame_id;
 	af_in.pd_info.timestamp.sec = cxt->pdaf_cxt.proc_out.pd_report_data.time_stamp.sec;
 	af_in.pd_info.timestamp.usec = cxt->pdaf_cxt.proc_out.pd_report_data.time_stamp.usec;
 
@@ -4299,7 +4300,6 @@ static cmr_int isp3a_start_pdaf_raw_process(cmr_handle isp_3a_handle, void *para
 		goto exit;
 	}
 
-	//TODO
 	if (cxt->pdaf_cxt.pdaf_support && cxt->pdaf_cxt.pd_enable) {
 		struct pdaf_ctrl_param_out pdaf_out;
 		struct af_ctrl_param_out af_out;
@@ -4321,7 +4321,7 @@ static cmr_int isp3a_start_pdaf_raw_process(cmr_handle isp_3a_handle, void *para
 			}
 			input.dcurrentVCM = af_out.motor_pos;
 			input.dBv = cxt->ae_cxt.proc_out.ae_info.report_data.BV;
-			input.bit = 10;//TBD
+			input.bit = 10;
 			memcpy(&input.pd_raw, pd_raw, sizeof(struct pd_raw_info));
 			ret = pdaf_ctrl_process(cxt->pdaf_cxt.handle, &input, NULL);
 			if (ret) {
