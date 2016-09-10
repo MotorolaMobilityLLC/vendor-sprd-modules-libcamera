@@ -393,7 +393,7 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, enum isp_dev_access_ctrl
 
 	ISP_CHECK_HANDLE_VALID(isp_dev_handle);
 
-	ISP_LOGI("cmd: %d", cmd);
+	ISP_LOGV("cmd: %d", cmd);
 	switch (cmd) {
 	case ISP_DEV_ACCESS_SET_AWB_GAIN:
 		break;
@@ -1356,7 +1356,7 @@ cmr_int isp_dev_access_set_stats_buf(cmr_handle isp_dev_handle, struct isp_stati
 	cmr_int                                ret = ISP_SUCCESS;
 	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
-	ISP_LOGI("s");
+	ISP_LOGV("E");
 	ret = isp_dev_set_statis_buf(cxt->isp_driver_handle, buf);
 
 	return ret;

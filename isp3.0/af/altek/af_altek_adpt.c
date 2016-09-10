@@ -51,6 +51,8 @@
 
 #define DEFAULT_TUNING_BIN_SIZE 500
 
+#define AF_DOING(x) ((AF_ADPT_STARTED <= (x)) && (AF_ADPT_DONE > (x)))
+
 struct af_altek_lib_ops {
 	void *(*init)(void *af_out_obj);
 	cmr_u8 (*deinit)(void *alAFLib_runtim_obj, void *alAFLib_out_obj);
@@ -591,7 +593,7 @@ static cmr_int afaltek_adpt_stop(cmr_handle adpt_handle)
 	cmr_int ret = ISP_SUCCESS;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 
-	if ((AF_ADPT_STARTED <= cxt->af_cur_status) && (AF_ADPT_DONE > cxt->af_cur_status))
+	if (AF_DOING(cxt->af_cur_status))
 		ret = afaltek_adpt_force_stop(cxt);
 
 	return ret;
@@ -1326,10 +1328,11 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 	aft_in->ae_info.is_stable = (ae4af_stable || cxt->ae_info.ae_converge_st);
 
 	ret = cxt->caf_ops.trigger_calc(cxt->caf_trigger_handle, aft_in, &aft_out);
-	ISP_LOGV("is_stable %d, caf_trig %d, cancel_caf %d",
+	ISP_LOGI("is_stable %d, caf_trig %d, cancel_caf %d cur_status %d",
 		 aft_in->ae_info.is_stable,
 		 aft_out.is_caf_trig,
-		 aft_out.is_cancel_caf);
+		 aft_out.is_cancel_caf,
+		 cxt->af_cur_status);
 
 
 	if (cxt->af_caf_cxt.caf_force_focus) {
@@ -1342,7 +1345,7 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 		cxt->ae_info.ae_stable_retrig_flg = 0;
 	} else if ((!cxt->aft_proc_result.is_caf_trig) && aft_out.is_caf_trig) {
 		ret = afaltek_adpt_caf_start(cxt);
-	} else if (aft_out.is_cancel_caf) {
+	} else if (aft_out.is_cancel_caf && AF_DOING(cxt->af_cur_status)) {
 		ret = afaltek_adpt_stop(cxt);
 		if (ret)
 			ISP_LOGE("failed to stop");
@@ -1466,7 +1469,7 @@ static cmr_int afaltek_adpt_update_ae(cmr_handle adpt_handle, void *in)
 	cxt->ae_info.cur_ae_center_mean = isp_ae_info->report_data.ae_center_mean2x2;
 	cxt->ae_info.ae_converge_st = isp_ae_info->report_data.ae_converge_st;
 
-	ISP_LOGI("ae_stable_retrig_flg = %d", cxt->ae_info.ae_stable_retrig_flg);
+	ISP_LOGV("ae_stable_retrig_flg = %d", cxt->ae_info.ae_stable_retrig_flg);
 	afaltek_adpt_ae_converge(adpt_handle);
 	ISP_LOGI("ae_nonwt_mean = %d, ae_center_mean2x2 = %d, ae_converge_st =%d",
 			isp_ae_info->report_data.ae_nonwt_mean,
@@ -1716,7 +1719,7 @@ static cmr_int afaltek_adpt_postion_compensator(cmr_handle adpt_handle, cmr_s32 
 	cmr_s32 pose_dis_value = 0;
 
 	if (0 == cxt->gsensor_info.valid) {
-		ISP_LOGE("gsensor info error");
+		ISP_LOGI("no gsensor info");
 		ret = -ISP_PARAM_ERROR;
 		goto exit;
 	}
@@ -2596,7 +2599,7 @@ static cmr_int afaltek_adpt_proc_report_status(cmr_handle adpt_handle,
 	cmr_int ret = ISP_SUCCESS;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 
-	ISP_LOGI("focus_status.t_status = %d", report->focus_status.t_status);
+	ISP_LOGV("focus_status.t_status = %d", report->focus_status.t_status);
 	if (alAFLib_STATUS_WARNING == report->focus_status.t_status ||
 		alAFLib_STATUS_AF_ABORT == report->focus_status.t_status) {
 		ISP_LOGI("t_status unfocused = %d", report->focus_status.t_status);
