@@ -2512,9 +2512,9 @@ static cmr_int aealtek_capture_hdr(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 	set_in_param.bforceupdateflg   = 1;
 	param_ct_ptr->capture_mode = CAPTURE_MODE_BRACKET;
 	param_ct_ptr->ae_bracket_param.valid_exp_num = 3;
-	param_ct_ptr->ae_bracket_param.bracket_evComp[0] = -1000;
+	param_ct_ptr->ae_bracket_param.bracket_evComp[0] = -2000;
 	param_ct_ptr->ae_bracket_param.bracket_evComp[1] =  0;
-	param_ct_ptr->ae_bracket_param.bracket_evComp[2] = 1000;
+	param_ct_ptr->ae_bracket_param.bracket_evComp[2] = 2000;
 	type = AE_SET_PARAM_BRACKET_MODE;
 	set_in_param.ae_set_param_type = type;
 	if (obj_ptr && obj_ptr->set_param)
@@ -3835,13 +3835,13 @@ static cmr_int aealtek_set_hdr_ev(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_pa
 
 	level = in_ptr->soft_hdr_ev.level;
 	switch (level) {
-	case AE_CTRL_HDR_EV_UNDEREXPOSURE:
-		// cxt_ptr->sensor_exp_data.lib_exp = cxt_ptr->lib_data.exposure_array.bracket_exp[0];
+	case AE_CTRL_HDR_EV_OVEREXPOSURE:
+		cxt_ptr->sensor_exp_data.lib_exp = cxt_ptr->lib_data.exposure_array.bracket_exp[0];
 		break;
 	case AE_CTRL_HDR_EV_NORMAL:
 		cxt_ptr->sensor_exp_data.lib_exp = cxt_ptr->lib_data.exposure_array.bracket_exp[1];
 		break;
-	case AE_CTRL_HDR_EV_OVEREXPOSURE:
+	case AE_CTRL_HDR_EV_UNDEREXPOSURE:
 		cxt_ptr->sensor_exp_data.lib_exp = cxt_ptr->lib_data.exposure_array.bracket_exp[2];
 		break;
 	default:
