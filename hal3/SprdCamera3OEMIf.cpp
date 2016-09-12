@@ -710,9 +710,6 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type, uint32_t frame_n
 		{
 			if (mSprdBurstModeEnabled == 1 && mSprdZslEnabled == 1) {
 				ret = zslTakePicture();
-			}
-			else if (mSprdRefocusEnabled == 1 && mSprdZslEnabled == 1) {
-				ret = zslTakePicture();
 			}else {
 				if(mTakePictureMode == SNAPSHOT_NO_ZSL_MODE ||
 				   mTakePictureMode == SNAPSHOT_ONLY_MODE)
@@ -5341,19 +5338,30 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode, uint32_t fr
 
 			break;
 		case CAMERA_CAPTURE_MODE_CONTINUE_NON_ZSL_SNAPSHOT:
-			mTakePictureMode = SNAPSHOT_NO_ZSL_MODE;
-			mCaptureMode = CAMERA_NORMAL_MODE;
-			mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
-			mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
-			mRecordingMode =false;
-			mPicCaptureCnt = 100;
-			mZslPreviewMode = false;
-			if (!strcmp(value, "raw")) {
-				HAL_LOGE("enter isp tuning mode ");
-				mCaptureMode = CAMERA_ISP_TUNING_MODE;
-			} else if (!strcmp(value, "sim")) {
-				HAL_LOGE("enter isp simulation mode ");
-				mCaptureMode = CAMERA_ISP_SIMULATION_MODE;
+			if (mSprdRefocusEnabled == 1 && mSprdZslEnabled == 1)
+			{
+				mTakePictureMode = SNAPSHOT_ZSL_MODE;
+				mCaptureMode = CAMERA_ZSL_MODE;
+				mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DV;
+				mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
+				mRecordingMode =false;
+				mPicCaptureCnt = 1;
+				mZslPreviewMode = false;
+			} else {
+				mTakePictureMode = SNAPSHOT_NO_ZSL_MODE;
+				mCaptureMode = CAMERA_NORMAL_MODE;
+				mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
+				mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
+				mRecordingMode =false;
+				mPicCaptureCnt = 100;
+				mZslPreviewMode = false;
+				if (!strcmp(value, "raw")) {
+					HAL_LOGE("enter isp tuning mode ");
+					mCaptureMode = CAMERA_ISP_TUNING_MODE;
+				} else if (!strcmp(value, "sim")) {
+					HAL_LOGE("enter isp simulation mode ");
+					mCaptureMode = CAMERA_ISP_SIMULATION_MODE;
+				}
 			}
 
 			break;
