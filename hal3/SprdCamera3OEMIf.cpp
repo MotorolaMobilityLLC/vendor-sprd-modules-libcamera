@@ -2467,9 +2467,13 @@ int SprdCamera3OEMIf::startPreviewInternal()
 		is_push_zsl = true;
 		PushFirstZslbuff();
 	}
+
 	property_get("volte.incall.camera.enable", value, "false");
 	is_volte = !strcmp(value, "true");
 	if (is_volte||mCaptureMode == CAMERA_ZSL_MODE) {
+		SPRD_DEF_Tag sprddefInfo;
+		mSetting->getSPRDDEFTag(&sprddefInfo);
+			if(!sprddefInfo.perfect_skin_level)
 		PushFirstVideobuff();
 		if (!is_push_zsl)
 			PushFirstZslbuff();
@@ -3207,6 +3211,12 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 	buffer_handle_t* buff_handle = NULL;
 	int32_t buf_deq_num = 0;
 	int32_t buf_num = 0;
+	cmr_uint videobuf_phy = 0;
+	cmr_uint videobuf_vir = 0;
+	cmr_uint prebuf_phy = 0;
+	cmr_uint prebuf_vir = 0;
+	cmr_s32 fd0 = 0;
+	cmr_s32 fd1 = 0;
 	SENSOR_Tag sensorInfo;
 
 	mSetting->getSENSORTag(&sensorInfo);
@@ -3333,10 +3343,34 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 						}
 					}
 #endif
+					if(rec_stream && sprddefInfo.perfect_skin_level >0 ) {
+						ret = rec_stream->getQBufAddrForNum(frame_num, &videobuf_vir, &videobuf_phy, &fd0);
+						if (ret == NO_ERROR && videobuf_vir != 0) {
+							mIsRecording = true;
+							if (mSlowPara.last_frm_timestamp == 0) {
+								mSlowPara.last_frm_timestamp = buffer_timestamp;
+								mSlowPara.rec_timestamp = buffer_timestamp;
+							}
+						}
+					}//recording cts
 
 					if (mIsRecording) {
 						if (frame_num > mRecordFrameNum)
 							calculateTimestampForSlowmotion(buffer_timestamp);
+							if( sprddefInfo.perfect_skin_level >0) {
+								ret=rec_stream->getQBufAddrForNum(frame_num, &videobuf_vir, &videobuf_phy,&fd0);
+								if (ret == NO_ERROR && videobuf_vir != 0 ){
+									pre_stream->getQBufAddrForNum(frame_num, &prebuf_vir, &prebuf_phy,&fd1);
+									HAL_LOGD("frame_num=%d, videobuf_phy=0x%lx, videobuf_vir=0x%lx", frame_num, videobuf_phy, videobuf_vir);
+									HAL_LOGD("frame_num=%d, prebuf_phy=0x%lx, prebuf_vir=0x%lx", frame_num, prebuf_phy, prebuf_vir);
+									memcpy((void*)videobuf_vir, (void*)prebuf_vir, mPreviewWidth * mPreviewHeight * 3 / 2);
+									channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp, CAMERA_STREAM_TYPE_VIDEO);
+									if(frame_num == (mDropVideoFrameNum+1)) //for IOMMU error
+										 channel->channelClearInvalidQBuff(mDropVideoFrameNum, buffer_timestamp, CAMERA_STREAM_TYPE_VIDEO);
+									if(frame_num > mRecordFrameNum)
+										mRecordFrameNum = frame_num;
+								}
+							}
 
 						channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp, CAMERA_STREAM_TYPE_PREVIEW);
 					} else {
@@ -3346,6 +3380,8 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 						channel->channelClearInvalidQBuff(mDropPreviewFrameNum, buffer_timestamp, CAMERA_STREAM_TYPE_PREVIEW);
 				} else {
 					channel->channelClearInvalidQBuff(frame_num, buffer_timestamp, CAMERA_STREAM_TYPE_PREVIEW);
+					if (rec_stream&&sprddefInfo.perfect_skin_level >0)
+						channel->channelClearInvalidQBuff(frame_num, buffer_timestamp, CAMERA_STREAM_TYPE_VIDEO);
 				}
 				if (callback_stream)
 					callback_stream->getQBufListNum(&buf_num);

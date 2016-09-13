@@ -315,7 +315,10 @@ int SprdCamera3RegularChannel::request(camera3_stream_t *stream, buffer_handle_t
 				if(i == 0)
 					mOEMIf->PushPreviewbuff(buffer);
 				else if(i == (CAMERA_STREAM_TYPE_VIDEO - REGULAR_STREAM_TYPE_BASE)) {
-					mOEMIf->PushVideobuff(buffer);
+					SPRD_DEF_Tag sprddefInfo;
+					mSetting->getSPRDDEFTag(&sprddefInfo);
+					if(!sprddefInfo.perfect_skin_level)
+						mOEMIf->PushVideobuff(buffer);
 				} else if(i == (CAMERA_STREAM_TYPE_CALLBACK - REGULAR_STREAM_TYPE_BASE))
 					mOEMIf->PushZslbuff(buffer);
 
