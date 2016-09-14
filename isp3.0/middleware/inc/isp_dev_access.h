@@ -99,6 +99,7 @@ struct isp_dev_init_in {
 	uint8 *irp_bin_addr;
 	uint32 pdaf_cbc_bin_size;
 	uint8 *pdaf_cbcp_bin_addr;
+	cmr_u8 pdaf_supported;
 };
 
 struct dev_time {

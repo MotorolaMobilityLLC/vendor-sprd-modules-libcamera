@@ -50,6 +50,7 @@ struct isp_mw_tunng_file_info {
 struct isp_mw_pdaf_info {
 	void *pdaf_cbc_addr;
 	cmr_u32 pdaf_cbc_size;
+	cmr_u8  pdaf_supported;
 };
 
 struct isp_mw_context {
@@ -605,7 +606,10 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 	isp_dev_input.irp_bin_size = cxt->tuning_bin.isp_dev_bin_info.uw_irp_bin_size;
 	isp_dev_input.pdaf_cbcp_bin_addr = cxt->pdaf_info.pdaf_cbc_addr;
 	isp_dev_input.pdaf_cbc_bin_size = cxt->pdaf_info.pdaf_cbc_size;
+	isp_dev_input.pdaf_supported = input_ptr->ex_info.pdaf_supported;
 	memcpy(&isp_dev_input.init_param, input_ptr, sizeof(struct isp_init_param));
+	ISP_LOGI("cbc bin addr is %p size 0x%x", (cmr_u32 *)isp_dev_input.pdaf_cbcp_bin_addr,
+		isp_dev_input.pdaf_cbc_bin_size);
 	ret = isp_dev_access_init(&isp_dev_input, &cxt->isp_dev_handle);
 	if (ret) {
 		goto exit;
@@ -906,7 +910,7 @@ cmr_int isp_cap_buff_cfg(cmr_handle isp_handle, struct isp_img_param *buf_cfg)
 	return ret;
 }
 
-cmr_int isp_drammode_takepic (cmr_handle isp_handle, cmr_u32 is_start)
+cmr_int isp_drammode_takepic(cmr_handle isp_handle, cmr_u32 is_start)
 {
 	cmr_int                    ret = ISP_SUCCESS;
 	struct isp_mw_context      *cxt = (struct isp_mw_context *)isp_handle;
@@ -915,4 +919,3 @@ cmr_int isp_drammode_takepic (cmr_handle isp_handle, cmr_u32 is_start)
 
 	return ret;
 }
-

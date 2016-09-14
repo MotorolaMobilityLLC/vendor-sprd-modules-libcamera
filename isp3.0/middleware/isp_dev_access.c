@@ -46,6 +46,7 @@ struct isp_dev_access_context {
 	cmr_handle isp_driver_handle;
 	struct isp_dev_init_in input_param;
 	struct iommu_mem fw_buffer;
+	cmr_u8 pdaf_supported;
 };
 
 /*************************************INTERNAK FUNCTION ***************************************/
@@ -80,6 +81,7 @@ cmr_int isp_dev_access_init(struct isp_dev_init_in *input_ptr, cmr_handle *isp_d
 	cmr_bzero(cxt, sizeof(*cxt));
 	cxt->camera_id = input_ptr->camera_id;
 	cxt->caller_handle = input_ptr->caller_handle;
+	cxt->pdaf_supported = input_ptr->pdaf_supported;
 
 	input.camera_id = input_ptr->camera_id;
 	input.width = input_ptr->init_param.size.w;
@@ -91,6 +93,10 @@ cmr_int isp_dev_access_init(struct isp_dev_init_in *input_ptr, cmr_handle *isp_d
 	input.shading_bin_size = input_ptr->shading_bin_size;
 	input.irp_bin_addr = input_ptr->irp_bin_addr;
 	input.irp_bin_size = input_ptr->irp_bin_size;
+	input.cbc_bin_addr = input_ptr->pdaf_cbcp_bin_addr;
+	input.cbc_bin_size = input_ptr->pdaf_cbc_bin_size;
+	input.pdaf_supported = input_ptr->pdaf_supported;
+	ISP_LOGI("cbc addr is %p ,cbc size is 0x%x", (cmr_u32 *)input.cbc_bin_addr, input.cbc_bin_size);
 	memcpy(&cxt->input_param, input_ptr, sizeof(struct isp_dev_init_in));
 
 	ret = isp_dev_init(&input, &cxt->isp_driver_handle);
@@ -113,6 +119,7 @@ exit:
 		cxt->is_inited = 1;
 		*isp_dev_handle = (cmr_handle)cxt;
 	}
+
 	return ret;
 }
 
@@ -655,6 +662,7 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 
 	memset(&tSecnarioInfo, 0, sizeof(tSecnarioInfo));
 	resolution_ptr = &param_ptr->common_in.resolution_info;
+	tSecnarioInfo.tSensorInfo.cbc_enabled = 0;
 	tSecnarioInfo.tSensorInfo.uwOriginalWidth = resolution_ptr->sensor_max_size.w;
 	tSecnarioInfo.tSensorInfo.uwOriginalHeight = resolution_ptr->sensor_max_size.h;
 	tSecnarioInfo.tSensorInfo.uwWidth = resolution_ptr->sensor_output_size.w;
@@ -699,21 +707,28 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 		tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutHeight = 0;
 	}
 
+	if (cxt->pdaf_supported)
+		tSecnarioInfo.tSensorInfo.cbc_enabled = 1;
+
 	ISP_LOGI("size %dx%d, line time %d frameRate %d clamp %d image_pattern %d sensor_mode %d",
 		tSecnarioInfo.tSensorInfo.uwWidth, tSecnarioInfo.tSensorInfo.uwHeight,
 		tSecnarioInfo.tSensorInfo.udLineTime, tSecnarioInfo.tSensorInfo.uwFrameRate,
 		tSecnarioInfo.tSensorInfo.uwClampLevel, tSecnarioInfo.tSensorInfo.nColorOrder,
 		tSecnarioInfo.tSensorInfo.ucSensorMode);
-	ISP_LOGI("sensor out %d %d %d %d %d %d", tSecnarioInfo.tSensorInfo.uwCropStartX,
+	ISP_LOGI("sensor out %d %d %d %d %d %d cbc_en %d", tSecnarioInfo.tSensorInfo.uwCropStartX,
 		tSecnarioInfo.tSensorInfo.uwCropStartY, tSecnarioInfo.tSensorInfo.uwCropEndX,
 		tSecnarioInfo.tSensorInfo.uwCropEndY, tSecnarioInfo.tSensorInfo.uwOriginalWidth,
-		tSecnarioInfo.tSensorInfo.uwOriginalHeight);
+		tSecnarioInfo.tSensorInfo.uwOriginalHeight, tSecnarioInfo.tSensorInfo.cbc_enabled);
 	ret = isp_dev_cfg_scenario_info(cxt->isp_driver_handle, &tSecnarioInfo);
 	if (ISP_SUCCESS != ret) {
 		ISP_LOGE("isp_dev_cfg_scenario_info error %ld", ret);
 		return -1;
 	}
-
+	ret = isp_dev_load_cbc(cxt->isp_driver_handle);
+	if (0 != ret) {
+		ISP_LOGE("failed to load cbc");
+		return -1;
+	}
 	/*set still image buffer format*/
 	memset(&img_buf_param, 0, sizeof(img_buf_param));
 
@@ -1021,6 +1036,7 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 		scenario_in.tSensorInfo.ucSensorMode = 0;
 	else if (input_ptr->src_frame.img_size.w < resolution_ptr->sensor_max_size.w)
 		scenario_in.tSensorInfo.ucSensorMode = 1;
+	scenario_in.tSensorInfo.cbc_enabled = 0;
 	scenario_in.tSensorInfo.ucSensorMouduleType = 0;//0-sensor1  1-sensor2
 	scenario_in.tSensorInfo.uwWidth = input_ptr->src_frame.img_size.w;
 	scenario_in.tSensorInfo.uwHeight = input_ptr->src_frame.img_size.h;
@@ -1050,6 +1066,10 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 		scenario_in.tBayerSCLOutInfo.uwBayerSCLOutHeight = 720;//cxt->input_param.init_param.size.h;
 		ISP_LOGI("bayer scaler wxh %dx%d\n", scenario_in.tSensorInfo.uwWidth, scenario_in.tSensorInfo.uwHeight);
 	}
+
+	if (cxt->pdaf_supported)
+		scenario_in.tSensorInfo.cbc_enabled = 1;
+
 	ISP_LOGI("size %dx%d, line time %d frameRate %d", scenario_in.tSensorInfo.uwWidth, scenario_in.tSensorInfo.uwHeight,
 		scenario_in.tSensorInfo.udLineTime, scenario_in.tSensorInfo.uwFrameRate);
 	ret = isp_dev_cfg_scenario_info(cxt->isp_driver_handle, &scenario_in);
@@ -1057,7 +1077,11 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 		ISP_LOGE("isp_dev_cfg_scenario_info error %ld", ret);
 		return -1;
 	}
-
+	ret = isp_dev_load_cbc(cxt->isp_driver_handle);
+	if (0 != ret) {
+		ISP_LOGE("failed to load cbc");
+		return -1;
+	}
 	/*set still image buffer format*/
 	memset(&img_buf_param, 0, sizeof(img_buf_param));
 

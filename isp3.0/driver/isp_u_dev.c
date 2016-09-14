@@ -77,6 +77,7 @@ struct isp_file {
 	sem_t                      close_sem;
 	struct isp_fw_mem          fw_mem;
 	cmr_int                    isp_is_inited;
+	cmr_u8                     pdaf_supported;
 };
 
 static struct isp_fw_group _group = {0 , {}};
@@ -111,11 +112,11 @@ cmr_int isp_dev_init(struct isp_dev_init_info *init_param_ptr, isp_handle *handl
 	/*file->init_param = *init_param_ptr;*/
 	memcpy((void *)&file->init_param, init_param_ptr, sizeof(struct isp_dev_init_info));
 
-	file->init_param.shading_bin_offset = ISP_FW_BUF_SIZE+ISP_SHARE_BUFF_SIZE+ISP_WORKING_BUF_SIZE+
-		(ISP_STATISTICS_BUF_SIZE*5*3)+ISP_IRP_BIN_BUF_SIZE*3;
-	file->init_param.irp_bin_offset = ISP_FW_BUF_SIZE+ISP_SHARE_BUFF_SIZE+ISP_WORKING_BUF_SIZE+
-		(ISP_STATISTICS_BUF_SIZE*5*3);
-
+	file->init_param.shading_bin_offset = ISP_SHADING_BIN_BASE;
+	file->init_param.irp_bin_offset = ISP_IRP_BIN_BASE;
+	file->init_param.cbc_bin_offset = ISP_CBC_BIN_BASE;
+	ISP_LOGE("cbc bin addr %p, size is %x\n", (cmr_u32 *) file->init_param.cbc_bin_addr,
+		file->init_param.cbc_bin_size);
 	fd = open(isp_dev_name, O_RDWR, 0);
 	if (fd < 0) {
 		ret = -1;
@@ -150,6 +151,7 @@ cmr_int isp_dev_init(struct isp_dev_init_info *init_param_ptr, isp_handle *handl
 
 	file->camera_id = init_param_ptr->camera_id;
 	file->isp_is_inited = 0;
+	file->pdaf_supported = init_param_ptr->pdaf_supported;
 	*handle = (isp_handle)file;
 
 	/*create isp dev thread*/
@@ -260,9 +262,10 @@ cmr_int isp_dev_start(isp_handle handle)
 	load_input.shading_bin_offset = file->init_param.shading_bin_offset;
 	load_input.irp_bin_offset = file->init_param.irp_bin_offset;
 	ISP_LOGI("shading offset 0x%x irp offset 0x%x", load_input.shading_bin_offset, load_input.irp_bin_offset);
-	ISP_LOGI("shading bin addr 0x%p size 0x%x irq bin addr 0x%p size %x",
+	ISP_LOGI("shading bin addr 0x%p size 0x%x irq bin addr 0x%p size %x, cbc bin addr 0x%p size %x",
 		 file->init_param.shading_bin_addr, file->init_param.shading_bin_size,
-		 file->init_param.irp_bin_addr, file->init_param.irp_bin_size);
+		 file->init_param.irp_bin_addr, file->init_param.irp_bin_size, file->init_param.cbc_bin_addr,
+		 file->init_param.cbc_bin_size);
 
 	file->fw_mem.virt_addr = load_input.fw_buf_vir_addr;
 	file->fw_mem.phy_addr = load_input.fw_buf_phy_addr;
@@ -343,6 +346,39 @@ static cmr_int isp_dev_set_user_working(isp_handle handle)
 	return ret;
 }
 
+cmr_int isp_dev_load_cbc(isp_handle handle)
+{
+	cmr_int                  ret = 0;
+	struct isp_file          *file = (struct isp_file *)handle;
+	cmr_u32                  isp_id = 0;
+	cmr_uint	         cbc = 0;
+
+	if (!file->pdaf_supported)
+		return 0;
+
+	if (!file) {
+		ret = -1;
+		ISP_LOGE("file hand is null error.");
+		return ret;
+	}
+	if (!file->init_param.cbc_bin_addr) {
+		ret = -1;
+		ISP_LOGE("cbc param null error");
+		goto exit;
+	}
+	if (file->init_param.cbc_bin_size > ISP_CBC_BIN_BUF_SIZE) {
+		ret = -1;
+		ISP_LOGE("the cbc binary size is out of range.");
+		goto exit;
+	}
+
+	ret = isp_dev_get_isp_id(handle, &isp_id);
+	cbc = file->fw_mem.virt_addr + ISP_CBC_BIN_BASE + ISP_CBC_BIN_BUF_SIZE * isp_id;
+	memcpy((void *)(cbc), (void *)file->init_param.cbc_bin_addr, file->init_param.cbc_bin_size);
+exit:
+	return ret;
+}
+
 static cmr_int isp_dev_load_binary(isp_handle handle)
 {
 	cmr_int                  ret = 0;
@@ -393,6 +429,8 @@ static cmr_int isp_dev_load_binary(isp_handle handle)
 		(void *)file->init_param.shading_bin_addr, file->init_param.shading_bin_size);
 	memcpy((void *)(irp),
 			(void *)file->init_param.irp_bin_addr, file->init_param.irp_bin_size);
+	if (file->pdaf_supported)
+		isp_dev_load_cbc(handle);
 
 	ISP_LOGI("isp_id %d shading offset 0x%lx, irp 0x%lx", isp_id,
 			shading - file->fw_mem.virt_addr, irp - file->fw_mem.virt_addr);

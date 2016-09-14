@@ -58,6 +58,7 @@ struct isp_dev_init_info {
 	uint32 cbc_bin_size;
 	uint8 *cbc_bin_addr;
 	uint32 cbc_bin_offset;
+	cmr_u8 pdaf_supported;
 };
 
 struct isp_img_fd {
@@ -90,6 +91,8 @@ cmr_int isp_dev_close(isp_handle handle);
 cmr_int isp_dev_stop(isp_handle handle);
 cmr_int isp_dev_stream_on(isp_handle handle);
 cmr_int isp_dev_stream_off(isp_handle handle);
+cmr_int isp_dev_load_cbc(isp_handle handle);
+cmr_int isp_dev_pdaf_supported(isp_handle handle);
 cmr_int isp_dev_set_rawaddr(isp_handle handle, struct isp_raw_data *param);
 cmr_int isp_dev_set_post_yuv_mem(isp_handle handle, struct isp_img_mem *param);
 cmr_int isp_dev_set_fetch_src_buf(isp_handle handle, struct isp_img_mem *param);
