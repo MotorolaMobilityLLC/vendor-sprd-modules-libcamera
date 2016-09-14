@@ -138,7 +138,7 @@ static const struct cap_size_to_mem back_cam_raw_mem_size_tab[IMG_SIZE_NUM] = {
 	{PIXEL_AP0_MEGA, (78 << 20)},
 	{PIXEL_BP0_MEGA, (78 << 20)},
 	{PIXEL_CP0_MEGA, (78 << 20)},
-	{PIXEL_DP0_MEGA, (78 << 20)},
+	{PIXEL_DP0_MEGA, (82 << 20)},
 	{PIXEL_10P0_MEGA, (95 << 20)},
 	{PIXEL_15P0_MEGA, (125 << 20)}
 };
