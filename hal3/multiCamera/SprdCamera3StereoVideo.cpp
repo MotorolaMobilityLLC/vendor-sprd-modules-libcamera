@@ -1148,7 +1148,7 @@ int SprdCamera3StereoVideo::MuxerThread::muxerTwoFrame(buffer_handle_t* &output_
     dcam.left_buf = (struct private_handle_t *)*input_buf1;
     dcam.right_buf = (struct private_handle_t *)*input_buf2;
     dcam.dst_buf = (struct private_handle_t *)*output_buf;
-    dcam.rot_angle = ROT_90;
+    dcam.rot_angle = ROT_270;
 
     mGpuApi->imageStitchingWithGPU(&dcam);
 
