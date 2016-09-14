@@ -40,8 +40,8 @@
 
 /* sensor parameters begin */
 /* effective sensor output image size */
-#define SNAPSHOT_WIDTH			5344
-#define SNAPSHOT_HEIGHT			4016
+#define SNAPSHOT_WIDTH			4160
+#define SNAPSHOT_HEIGHT			3120
 #define PREVIEW_WIDTH			2672
 #define PREVIEW_HEIGHT			2008
 
