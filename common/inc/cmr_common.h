@@ -863,8 +863,9 @@ enum video_snapshot_tpye {
 /**********************************************************8*******************/
 cmr_int camera_get_trim_rect(struct img_rect *src_trim_rect, cmr_uint zoom_level, struct img_size *dst_size);
 
-cmr_int camera_get_trim_rect2(struct img_rect *src_trim_rect, float zoom_ratio, float dst_ratio,
-											cmr_u32 sensor_w, cmr_u32 sensor_h, cmr_u8 rot);
+cmr_int camera_get_trim_rect2(struct img_rect *src_trim_rect,
+			float zoom_ratio, float dst_aspect_ratio,
+			cmr_u32 sensor_w, cmr_u32 sensor_h, cmr_u8 rot);
 
 cmr_int camera_save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height, struct img_addr *addr);
 

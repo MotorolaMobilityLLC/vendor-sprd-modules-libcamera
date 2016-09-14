@@ -1074,11 +1074,14 @@ static cmr_int setting_process_zoom(struct setting_component *cpt,
 	} else if (zoom_param.mode == ZOOM_INFO) {
 		const float EPSINON = 0.01f;
 		float zoom_dif = zoom_param.zoom_info.zoom_ratio - org_zoom.zoom_info.zoom_ratio;
-		float output_dif = zoom_param.zoom_info.output_ratio != org_zoom.zoom_info.output_ratio;
-
-		if ((zoom_dif >= EPSINON || zoom_dif <= -EPSINON)
-			|| (output_dif >= EPSINON || output_dif <= -EPSINON))
-				is_changed = 1;
+		float pre_dif = zoom_param.zoom_info.prev_aspect_ratio - org_zoom.zoom_info.prev_aspect_ratio;
+		float video_dif = zoom_param.zoom_info.video_aspect_ratio - org_zoom.zoom_info.video_aspect_ratio;
+		float cap_dif = zoom_param.zoom_info.capture_aspect_ratio - org_zoom.zoom_info.capture_aspect_ratio;
+		if ((zoom_dif >= EPSINON || zoom_dif <= -EPSINON) ||
+		    (pre_dif >= EPSINON || pre_dif <= -EPSINON) ||
+		    (video_dif >= EPSINON || video_dif <= -EPSINON) ||
+		    (cap_dif >= EPSINON || cap_dif <= -EPSINON))
+			is_changed = 1;
 	}
 	if (is_changed) {
 		if (setting_is_active(cpt)) {

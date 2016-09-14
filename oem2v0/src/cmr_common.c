@@ -51,6 +51,7 @@ struct CAMERA_TAKEPIC_STAT cap_stp[CMR_STEP_MAX] ={
 		{"call back",          0, 0, 0},
 };
 
+// for hal1.0 calculate crop
 cmr_int camera_get_trim_rect(struct img_rect *src_trim_rect, cmr_uint zoom_level, struct img_size *dst_size)
 {
 	cmr_int                  ret = CMR_CAMERA_SUCCESS;
@@ -99,37 +100,48 @@ exit:
 	return ret;
 }
 
-cmr_int camera_get_trim_rect2(struct img_rect *src_trim_rect, float zoom_ratio, float dst_ratio,
-											cmr_u32 sensor_w, cmr_u32 sensor_h, cmr_u8 rot)//for hal2.0 calculate crop again
+// for hal3.2 calculate crop
+cmr_int camera_get_trim_rect2(struct img_rect *src_trim_rect,
+			float zoom_ratio, float dst_aspect_ratio,
+			cmr_u32 sensor_w, cmr_u32 sensor_h, cmr_u8 rot)
 {
+	cmr_int                  ret = CMR_CAMERA_SUCCESS;
 	cmr_u32                  trim_width;
 	cmr_u32                  trim_height;
-	float                    minOutputRatio;
-	float                    zoom_width, zoom_height, sensor_ratio;
+	float                    output_aspect_ratio;
+	float                    zoom_width, zoom_height, sensor_aspect_ratio;
 
-	if (NULL == src_trim_rect) {
-		CMR_LOGE("param error");
-		return -CMR_CAMERA_INVALID_PARAM;
-	} else if (src_trim_rect->width == 0 || src_trim_rect->height == 0) {
-		CMR_LOGE("0x%lx w %d h %d", (cmr_uint)src_trim_rect, src_trim_rect->width, src_trim_rect->height);
+	if (NULL == src_trim_rect || dst_aspect_ratio < 0.0001f || zoom_ratio < 0.0001f) {
+		CMR_LOGE("pointer of src_trim_rect = %p, dst ratio=%f, zoom ratio=%f",
+			src_trim_rect, dst_aspect_ratio, zoom_ratio);
 		return -CMR_CAMERA_INVALID_PARAM;
 	}
-	minOutputRatio = dst_ratio;
-	sensor_ratio = (float)sensor_w / (float)sensor_h;
+	if (src_trim_rect->width == 0 || src_trim_rect->height == 0) {
+		CMR_LOGE("w %d h %d", src_trim_rect->width, src_trim_rect->height);
+		return -CMR_CAMERA_INVALID_PARAM;
+	}
+
+	CMR_LOGI("src_trim_rect %d %d %d %d, sn w/h %d %d, zoom_ratio %f, dst_aspect_ratio %f",
+		src_trim_rect->start_x, src_trim_rect->start_y,
+		src_trim_rect->width, src_trim_rect->height,
+		sensor_w, sensor_h,
+		zoom_ratio, dst_aspect_ratio);
+
+	output_aspect_ratio = dst_aspect_ratio;
+	sensor_aspect_ratio = (float)sensor_w / (float)sensor_h;
+
 	if (rot != IMG_ANGLE_0 && rot != IMG_ANGLE_180) {
-		minOutputRatio = 1 / minOutputRatio;
+		output_aspect_ratio = 1 / output_aspect_ratio;
 	}
-	if (minOutputRatio > sensor_ratio) {
+	if (output_aspect_ratio > sensor_aspect_ratio) {
 		zoom_width = (float)sensor_w / zoom_ratio;
-		zoom_height = zoom_width / minOutputRatio;
+		zoom_height = zoom_width / output_aspect_ratio;
 	} else {
 		zoom_height = (float)sensor_h / zoom_ratio;
-		zoom_width = zoom_height * minOutputRatio;
+		zoom_width = zoom_height * output_aspect_ratio;
 	}
 	trim_width = (cmr_u32)zoom_width;
 	trim_height = (cmr_u32)zoom_height;
-	CMR_LOGI("sensor_ratio %f, minOutputRatio %f, zoom_ratio %f", sensor_ratio, minOutputRatio, zoom_ratio);
-	CMR_LOGI("trim_width %d, trim_height %d", trim_width, trim_height);
 
 	src_trim_rect->start_x += (src_trim_rect->width - trim_width) >> 1;
 	src_trim_rect->start_y += (src_trim_rect->height - trim_height) >> 1;
@@ -137,14 +149,12 @@ cmr_int camera_get_trim_rect2(struct img_rect *src_trim_rect, float zoom_ratio, 
 	src_trim_rect->start_y = CAMERA_START(src_trim_rect->start_y);
 	src_trim_rect->width = CAMERA_WIDTH(trim_width);
 	src_trim_rect->height = CAMERA_HEIGHT(trim_height);
-	CMR_LOGI("zoom_level %f trim rect %d %d %d %d",
-			zoom_ratio,
-			src_trim_rect->start_x,
-			src_trim_rect->start_y,
-			src_trim_rect->width,
-			src_trim_rect->height);
 
-	return CMR_CAMERA_SUCCESS;
+	CMR_LOGI("output trim rect %d %d %d %d",
+		src_trim_rect->start_x, src_trim_rect->start_y,
+		src_trim_rect->width, src_trim_rect->height);
+
+	return ret;
 }
 
 cmr_int camera_save_y_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height, void *addr)

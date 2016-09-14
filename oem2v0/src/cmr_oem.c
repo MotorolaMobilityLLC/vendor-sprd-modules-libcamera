@@ -6528,6 +6528,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 		goto exit;
 	}
 	out_param_ptr->cap_fmt = setting_param.cmd_type_value;
+
 	/*get zoom param*/
 	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_ZOOM_PARAM, &setting_param);
 	if (ret) {
@@ -6535,6 +6536,11 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 		goto exit;
 	}
 	out_param_ptr->zoom_setting = setting_param.zoom_param;
+	CMR_LOGV("aspect ratio prev=%f, video=%f, cap=%f",
+		out_param_ptr->zoom_setting.zoom_info.prev_aspect_ratio,
+		out_param_ptr->zoom_setting.zoom_info.video_aspect_ratio,
+		out_param_ptr->zoom_setting.zoom_info.capture_aspect_ratio);
+
 	cxt->snp_cxt.snp_mode = mode;
 	if (0 == is_cfg_snp) {
 		CMR_LOGI("don't need cfg snp");

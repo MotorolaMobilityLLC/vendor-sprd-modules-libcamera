@@ -76,7 +76,9 @@ struct img_size {
 
 struct zoom_info {
 	float                                   zoom_ratio;
-	float                                   output_ratio;
+	float                                   prev_aspect_ratio;
+	float                                   video_aspect_ratio;
+	float                                   capture_aspect_ratio;
 };
 
 struct cmr_zoom_param {

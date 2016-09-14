@@ -1037,7 +1037,7 @@ static void autotest_camera_startpreview(void)
     zoom_param.mode = 1;
     zoom_param.zoom_level = 1;
     zoom_param.zoom_info.zoom_ratio = 1.00000;
-    zoom_param.zoom_info.output_ratio = (float)PREVIEW_WIDTH/PREVIEW_HIGHT;
+    zoom_param.zoom_info.prev_aspect_ratio= (float)PREVIEW_WIDTH/PREVIEW_HIGHT;
 
     fps_param.frame_rate = 25;
     fps_param.video_mode = 0;

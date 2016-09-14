@@ -121,6 +121,8 @@ enum DFS_POLICY {
 
 #define UPDATE_RANGE_FPS_COUNT                          0x04
 
+#define MAX_DIGITAL_ZOOM_RATIO                       (2.0f)
+
 /**********************Static Members**********************/
 static nsecs_t s_start_timestamp = 0;
 static nsecs_t s_end_timestamp = 0;
@@ -391,12 +393,10 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mTakePictureMode = SNAPSHOT_DEFAULT_MODE;
 	mZSLTakePicture = false;
 
-	mZoomInfo.zoom_info.output_ratio = 0.0f;
-	mZoomInfo.zoom_info.zoom_ratio = 0.0f;
 	mZoomInfo.mode = ZOOM_INFO;
-	mCurZoomInfo.zoom_info.output_ratio = 0.0f;
-	mCurZoomInfo.zoom_info.zoom_ratio = 0.0f;
-	mCurZoomInfo.mode = ZOOM_INFO;
+	mZoomInfo.zoom_info.prev_aspect_ratio = 0.0f;
+	mZoomInfo.zoom_info.video_aspect_ratio = 0.0f;
+	mZoomInfo.zoom_info.capture_aspect_ratio = 0.0f;
 
 	mCameraHandle = NULL;
 
@@ -4640,103 +4640,106 @@ int SprdCamera3OEMIf::handleCbData(hal3_trans_info_t &result_info, void *userdat
 
 int SprdCamera3OEMIf::setCameraConvertCropRegion(void)
 {
-	float minOutputRatio;
-	float zoomWidth,zoomHeight,zoomRatio;
-	int ret = 0, integer;
+	float zoomWidth, zoomHeight, zoomRatio = 1.0f;
+	float prevAspectRatio, capAspectRatio, videoAspectRatio;
+	float sensorAspectRatio, outputAspectRatio;
 	uint32_t sensorOrgW = 0, sensorOrgH = 0;
-	struct cmr_zoom_param zoomInfo;
 	SCALER_Tag scaleInfo;
-	CONTROL_Tag ctlInfo;
-	uint8_t capIntent = 0;
-	cam_dimension_t imgSize = {0};
 	struct img_rect cropRegion;
-	float table[30] = {1.0, 1.03, 1.05, 1.08, 1.1, 1.13, 1.16, 1.19, 1.22, 1.25, 1.28, 1.31,
-			1.34, 1.37, 1.40, 1.42, 1.45, 1.47, 1.50, 1.52, 1.55, 1.58, 1.61, 1.64, 1.67, 1.7,
-			1.73, 1.76, 1.79, 1.79};//, 1.84, 1.87, 1.89, 1.92, 1.94, 1.97
+	int ret = 0;
 
 	if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
 		HAL_LOGE("oem is null or oem ops is null");
 		return UNKNOWN_ERROR;
 	}
 
+	if (mSprdRefocusEnabled) {
+		HAL_LOGD("SprdRefocus cant set zoomratio for now, may be will remove this later");
+		return 0;
+	}
 
 	mSetting->getSCALERTag(&scaleInfo);
-	mSetting->getCONTROLTag(&ctlInfo);
-	capIntent = ctlInfo.capture_intent;
 	cropRegion.start_x = scaleInfo.crop_region[0];
 	cropRegion.start_y = scaleInfo.crop_region[1];
 	cropRegion.width = scaleInfo.crop_region[2];
 	cropRegion.height = scaleInfo.crop_region[3];
-	HAL_LOGD("crop %d %d %d %d intent=%d", cropRegion.start_x, cropRegion.start_y,
-		cropRegion.width ,cropRegion.height, capIntent);
+	HAL_LOGD("crop start_x=%d start_y=%d width=%d height=%d",
+		cropRegion.start_x, cropRegion.start_y, cropRegion.width ,cropRegion.height);
+
 	if(mCameraId == 0) {
 		sensorOrgW = BACK_SENSOR_ORIG_WIDTH;
 		sensorOrgH = BACK_SENSOR_ORIG_HEIGHT;
-	} else if(mCameraId == 1||mCameraId == 3) {
+	} else if(mCameraId == 1 || mCameraId == 3) {
 		sensorOrgW = FRONT_SENSOR_ORIG_WIDTH;
 		sensorOrgH = FRONT_SENSOR_ORIG_HEIGHT;
 	}
-	if (cropRegion.width == 0 || cropRegion.height == 0){
-		HAL_LOGW("cropRegion.width or cropRegion.height is 0");
-		//return 1;
-		if (capIntent == ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW || capIntent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD
-			|| capIntent == ANDROID_CONTROL_CAPTURE_INTENT_ZERO_SHUTTER_LAG || capIntent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT) {
-			//mSetting->getPreviewSize(&imgSize);
-			cropRegion.width = mPreviewWidth;
-			cropRegion.height = mPreviewHeight;
+
+	if (mCameraId == 2) {
+		HAL_LOGW("cameraid 2 need to be handled, then this code will be removed");
+		return 0;
+	}
+
+	sensorAspectRatio = static_cast<float>(sensorOrgW) / sensorOrgH;
+
+	if (mPreviewWidth != 0 && mPreviewHeight != 0) {
+		prevAspectRatio = static_cast<float>(mPreviewWidth) / mPreviewHeight;
+	} else {
+		prevAspectRatio = sensorAspectRatio;
+	}
+
+	if (mVideoWidth != 0 && mVideoHeight != 0) {
+		videoAspectRatio = static_cast<float>(mVideoWidth) / mVideoHeight;
+	} else {
+		videoAspectRatio = prevAspectRatio;
+	}
+
+	if (mCaptureWidth != 0 && mCaptureHeight != 0) {
+		capAspectRatio = static_cast<float>(mCaptureWidth) / mCaptureHeight;
+	} else {
+		capAspectRatio = prevAspectRatio;
+	}
+
+	if (cropRegion.width > 0 && cropRegion.height > 0) {
+		zoomWidth = static_cast<float>(cropRegion.width);
+		zoomHeight = static_cast<float>(cropRegion.height);
+	} else {
+		zoomWidth = static_cast<float>(sensorOrgW);
+		zoomHeight = static_cast<float>(sensorOrgH);
+	}
+
+	if (mPreviewWidth != 0 && mPreviewHeight != 0) {
+		if (prevAspectRatio >= sensorAspectRatio) {
+			zoomRatio = static_cast<float>(sensorOrgW) / zoomWidth;
 		} else {
-			//mSetting->getPictureSize(&imgSize);
-			cropRegion.width = mCaptureWidth;
-			cropRegion.height = mCaptureHeight;
+			zoomRatio = static_cast<float>(sensorOrgH) / zoomHeight;
 		}
-	}
-	zoomWidth = static_cast<float>(cropRegion.width);
-	zoomHeight = static_cast<float>(cropRegion.height);
-
-	//get dstRatio and zoomRatio frm framework
-	minOutputRatio = zoomWidth / zoomHeight;
-	if (minOutputRatio > (static_cast<float>(sensorOrgW) / static_cast<float>(sensorOrgH))) {
+	} else if (mCaptureWidth != 0 && mCaptureHeight != 0) {
+		if (capAspectRatio >= sensorAspectRatio) {
+			zoomRatio = static_cast<float>(sensorOrgW) / zoomWidth;
+		} else {
+			zoomRatio = static_cast<float>(sensorOrgH) / zoomHeight;
+		}
+	} else {
 		zoomRatio = static_cast<float>(sensorOrgW) / zoomWidth;
-	} else {
-		zoomRatio = static_cast<float>(sensorOrgH) / zoomHeight;
-	}
-	integer = static_cast<int>(zoomRatio * 10);
-	if (integer > 40 || integer < 10) {/*max zoom is 4, integer is 39;if max zoom is a, integer is 10a - 1*/
-		HAL_LOGE("ratio error integer=%d", integer);
-		return 1;
-	}
-	if (integer == 40)/*for cts testImmediateZoom*/
-		integer = 39;
-
-	zoomInfo.mode = ZOOM_INFO;
-	zoomInfo.zoom_info.zoom_ratio = table[integer - 10];
-	if (capIntent == ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW ||
-	    capIntent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD ||
-	    capIntent == ANDROID_CONTROL_CAPTURE_INTENT_ZERO_SHUTTER_LAG ||
-	    capIntent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT) {
-		//mSetting->getPreviewSize(&imgSize);
-		zoomWidth = mPreviewWidth;
-		zoomHeight = mPreviewHeight;
-	} else {
-		//mSetting->getPictureSize(&imgSize);
-		zoomWidth = mCaptureWidth;
-		zoomHeight = mCaptureHeight;
 	}
 
-	if(mSprdZslEnabled == 1 && mCaptureWidth>0 && mCaptureHeight>0) {
-		zoomWidth = mCaptureWidth;
-		zoomHeight = mCaptureHeight;
-	}
+	if (zoomRatio < 1.0f)
+		zoomRatio = 1.0f;
+	if (zoomRatio > MAX_DIGITAL_ZOOM_RATIO)
+		zoomRatio = MAX_DIGITAL_ZOOM_RATIO;
 
-	zoomInfo.zoom_info.output_ratio = zoomWidth/zoomHeight;
-	mZoomInfo = zoomInfo;
-	SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ZOOM,(cmr_uint)&mZoomInfo);
-	HAL_LOGD("zoomRatio=%f trueRat=%f dst=%f zoomWidth=%f zoomHeight=%f output_ratio=%f)",
-		zoomRatio, zoomInfo.zoom_info.zoom_ratio, minOutputRatio,
-		zoomWidth, zoomHeight, zoomInfo.zoom_info.output_ratio);
+	mZoomInfo.mode = ZOOM_INFO;
+	mZoomInfo.zoom_info.zoom_ratio= zoomRatio;
+	mZoomInfo.zoom_info.prev_aspect_ratio = prevAspectRatio;
+	mZoomInfo.zoom_info.video_aspect_ratio= videoAspectRatio;
+	mZoomInfo.zoom_info.capture_aspect_ratio= capAspectRatio;
+	SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ZOOM, (cmr_uint)&mZoomInfo);
+
+	HAL_LOGD("camId=%d, zoomRatio=%f, outputAspectRatio: prev=%f, video=%f, cap=%f",
+		mCameraId, zoomRatio, prevAspectRatio,
+		videoAspectRatio, capAspectRatio);
 
 	return ret;
-
 }
 
 int SprdCamera3OEMIf::CameraConvertCropRegion(uint32_t sensorWidth, uint32_t sensorHeight, struct img_rect *cropRegion)

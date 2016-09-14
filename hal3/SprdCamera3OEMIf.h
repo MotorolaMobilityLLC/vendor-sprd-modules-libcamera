@@ -537,7 +537,7 @@ private:
 	bool			mZSLTakePicture;
 	timer_t				mPrvTimerID;
 
-	struct cmr_zoom_param 	mZoomInfo,mCurZoomInfo;
+	struct cmr_zoom_param 	mZoomInfo;
 	int8_t		mFlashMode;
 
 	bool			mJpegRotaSet;

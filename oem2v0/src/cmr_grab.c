@@ -412,22 +412,38 @@ static cmr_int cmr_grab_cap_cfg_common(cmr_handle grab_handle, struct cap_cfg *c
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
 
+	CMR_LOGI("chn_id=%d, regu_mode=%d, pdaf_ctrl=%d %d, deci_factor=%d, cfg_isp=%d",
+		channel_id,
+		config->cfg.regular_desc.regular_mode,
+		config->cfg.pdaf_ctrl.mode,
+		config->cfg.pdaf_ctrl.phase_data_type,
+		config->chn_deci_factor,
+		config->buffer_cfg_isp);
+
 	parm.channel_id = channel_id;
 	parm.regular_desc = config->cfg.regular_desc;
 	ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_SHRINK, &parm);
-	CMR_LOGI("channel_id  %d, regular_mode %d, ret %ld \n", channel_id, config->cfg.regular_desc.regular_mode, ret);
+	if (ret) {
+		CMR_LOGE("SPRD_IMG_IO_SET_SHRINK failed, ret=%ld", ret);
+		return ret;
+	}
 
 	parm.channel_id = channel_id;
 	parm.pdaf_ctrl.mode            = config->cfg.pdaf_ctrl.mode;
 	parm.pdaf_ctrl.phase_data_type = config->cfg.pdaf_ctrl.phase_data_type;
 	ret = ioctl(p_grab->fd, SPRD_IMG_IO_PDAF_CONTROL, &parm);
-	CMR_LOGI("channel_id  %d, pdaf_ctrl %d %d, ret %ld \n",
-		 channel_id, config->cfg.pdaf_ctrl.mode, config->cfg.pdaf_ctrl.phase_data_type, ret);
+	if (ret) {
+		CMR_LOGE("SPRD_IMG_IO_PDAF_CONTROL failed, ret=%d", ret);
+		return ret;
+	}
 
 	parm.channel_id = channel_id;
 	parm.deci = config->chn_deci_factor;
 	ret = ioctl(p_grab->fd, SPRD_IMG_IO_PATH_FRM_DECI, &parm);
-	CMR_LOGI("channel_id  %d, deci_factor %d, ret %ld \n", channel_id, config->chn_deci_factor, ret);
+	if (ret) {
+		CMR_LOGE("SPRD_IMG_IO_PATH_FRM_DECI failed, ret=%d", ret);
+		return ret;
+	}
 
 	parm.crop_rect.x = config->cfg.src_img_rect.start_x;
 	parm.crop_rect.y = config->cfg.src_img_rect.start_y;
@@ -437,15 +453,20 @@ static cmr_int cmr_grab_cap_cfg_common(cmr_handle grab_handle, struct cap_cfg *c
 	parm.reserved[1] = config->cfg.src_img_size.width;
 	parm.reserved[2] = config->cfg.src_img_size.height;
 	ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_CROP, &parm);
-	CMR_RTN_IF_ERR(ret);
-	CMR_LOGI("channel_id  %d, crop_rect %x,%x,%x,%x ret %ld \n", channel_id, parm.crop_rect.x, parm.crop_rect.y,
-		 parm.crop_rect.w, parm.crop_rect.h, ret);
+	if (ret) {
+		CMR_LOGE("SPRD_IMG_IO_SET_CROP failed, ret=%d", ret);
+		return ret;
+	}
+	CMR_LOGI("crop_rect in hex:%x,%x,%x,%x, crop_rect in dec:%d,%d,%d,%d",
+		parm.crop_rect.x, parm.crop_rect.y,
+		parm.crop_rect.w, parm.crop_rect.h,
+		parm.crop_rect.x, parm.crop_rect.y,
+		parm.crop_rect.w, parm.crop_rect.h);
 
 	/* secondly,  check whether the output format described by config->cfg[cfg_id] can be supported by the low layer */
 	pxl_fmt = cmr_grab_get_4cc(config->cfg.dst_img_fmt);
 	found = 0;
 	fmt_parm.index = 0;
-	CMR_LOGI("config->buffer_cfg_isp  %d, \n", config->buffer_cfg_isp);
 	while (0 == ioctl(p_grab->fd, SPRD_IMG_IO_GET_FMT, &fmt_parm)) {
 		if (fmt_parm.fmt == pxl_fmt) {
 			CMR_LOGV("FourCC 0x%x is supported by the low layer", pxl_fmt);

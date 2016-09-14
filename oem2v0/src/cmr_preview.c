@@ -482,12 +482,6 @@ static cmr_int prev_get_sn_inf(struct prev_handle *handle,
 				cmr_u32 frm_deci,
 				struct sensor_if *sn_if);
 
-static cmr_int prev_get_trim_rect2(struct img_rect *src_trim_rect,
-					cmr_u32 sn_w,
-					cmr_u32 sn_h,
-					cmr_u32 rot,
-					struct cmr_zoom_param *zoom_param);
-
 static cmr_int prev_get_cap_max_size(struct prev_handle *handle,
 					cmr_u32 camera_id,
 					struct sensor_mode_info *sn_mode,
@@ -1055,7 +1049,11 @@ cmr_int cmr_preview_update_zoom(cmr_handle preview_handle, cmr_u32 camera_id, st
 	if (ZOOM_LEVEL == param->mode) {
 		CMR_LOGI("update zoom, zoom_level %ld", param->zoom_level);
 	} else {
-		CMR_LOGI("update zoom, zoom_info %f %f", param->zoom_info.zoom_ratio, param->zoom_info.output_ratio);
+		CMR_LOGI("update zoom, zoom_ratio=%f prev=%f, video=%f, cap=%f",
+			param->zoom_info.zoom_ratio,
+			param->zoom_info.prev_aspect_ratio,
+			param->zoom_info.video_aspect_ratio,
+			param->zoom_info.capture_aspect_ratio);
 	}
 
 	message.msg_type   = PREV_EVT_UPDATE_ZOOM;
@@ -1885,9 +1883,11 @@ cmr_int prev_thread_proc(struct cmr_msg *message, void *p_data)
 		if (ZOOM_LEVEL == zoom_param->mode) {
 			CMR_LOGD("update zoom, zoom_level %ld", zoom_param->zoom_level);
 		} else {
-			CMR_LOGD("update zoom, zoom_info %f %f",
+			CMR_LOGD("update zoom, zoom_ratio=%f, prev=%f, video=%f, cap=%f",
 				zoom_param->zoom_info.zoom_ratio,
-				zoom_param->zoom_info.output_ratio);
+				zoom_param->zoom_info.prev_aspect_ratio,
+				zoom_param->zoom_info.video_aspect_ratio,
+				zoom_param->zoom_info.capture_aspect_ratio);
 		}
 
 		/*save zoom param*/
@@ -5740,39 +5740,6 @@ exit:
 	return ret;
 }
 
-cmr_int prev_get_trim_rect2(struct img_rect *src_trim_rect,
-				cmr_u32 sn_w,
-				cmr_u32 sn_h,
-				cmr_u32 rot,
-				struct cmr_zoom_param *zoom_param)
-{
-	cmr_int    ret = CMR_CAMERA_SUCCESS;
-	float      sensor_ratio, zoom_ratio, min_output_ratio;
-
-	CMR_LOGI("src_trim_rect %d %d %d %d, sn w/h %d %d, zoom param %f %f",
-		src_trim_rect->start_x,
-		src_trim_rect->start_y,
-		src_trim_rect->width,
-		src_trim_rect->height,
-		sn_w,
-		sn_h,
-		zoom_param->zoom_info.zoom_ratio,
-		zoom_param->zoom_info.output_ratio);
-
-	ret = camera_get_trim_rect2(src_trim_rect,
-			zoom_param->zoom_info.zoom_ratio,
-			zoom_param->zoom_info.output_ratio,
-			sn_w,
-			sn_h,
-			rot);
-	if (ret) {
-		CMR_LOGE("failed to calculate scaling window %ld", ret);
-		return CMR_CAMERA_FAIL;
-	}
-
-	return ret;
-}
-
 cmr_int prev_get_cap_max_size(struct prev_handle *handle,
 					cmr_u32 camera_id,
 					struct sensor_mode_info *sn_mode,
@@ -5847,11 +5814,12 @@ cmr_int prev_get_cap_max_size(struct prev_handle *handle,
 			goto exit;
 		}
 	} else {
-		ret = prev_get_trim_rect2(&img_rc,
+		ret = camera_get_trim_rect2(&img_rc,
+				zoom_param->zoom_info.zoom_ratio,
+				zoom_param->zoom_info.capture_aspect_ratio,
 				sn_mode->trim_width,
 				sn_mode->trim_height,
-				handle->prev_cxt[camera_id].prev_param.cap_rot,
-				zoom_param);
+				handle->prev_cxt[camera_id].prev_param.cap_rot);
 		if (ret) {
 			CMR_LOGE("Failed to get trimming window");
 			goto exit;
@@ -6615,17 +6583,19 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 				zoom_param->zoom_level,
 				&chn_param.cap_inf_cfg.cfg.dst_img_size);
 	} else if(prev_cxt->prev_param.sprd_burstmode_enabled) {
-		ret = prev_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
+		ret = camera_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
+				zoom_param->zoom_info.zoom_ratio,
+				zoom_param->zoom_info.prev_aspect_ratio,
 				chn_param.cap_inf_cfg.cfg.src_img_size.width,
 				chn_param.cap_inf_cfg.cfg.src_img_size.height,
-				prev_cxt->prev_param.prev_rot,
-				zoom_param);
+				prev_cxt->prev_param.prev_rot);
 	} else {
-		ret = prev_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
+		ret = camera_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
+				zoom_param->zoom_info.zoom_ratio,
+				zoom_param->zoom_info.prev_aspect_ratio,
 				sensor_mode_info->scaler_trim.width,
 				sensor_mode_info->scaler_trim.height,
-				prev_cxt->prev_param.prev_rot,
-				zoom_param);
+				prev_cxt->prev_param.prev_rot);
 	}
 	if (ret) {
 		CMR_LOGE("prev get trim failed");
@@ -6879,18 +6849,19 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle, cmr_u32 camera_i
 				zoom_param->zoom_level,
 				&chn_param.cap_inf_cfg.cfg.dst_img_size);
 	} else if(prev_cxt->prev_param.sprd_burstmode_enabled) {
-		CMR_LOGI("test");
-		ret = prev_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
+		ret = camera_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
+				zoom_param->zoom_info.zoom_ratio,
+				zoom_param->zoom_info.prev_aspect_ratio,
 				chn_param.cap_inf_cfg.cfg.src_img_size.width,
 				chn_param.cap_inf_cfg.cfg.src_img_size.height,
-				prev_cxt->prev_param.prev_rot,
-				zoom_param);
+				prev_cxt->prev_param.prev_rot);
 	} else {
-		ret = prev_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
+		ret = camera_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
+				zoom_param->zoom_info.zoom_ratio,
+				zoom_param->zoom_info.prev_aspect_ratio,
 				sensor_mode_info->scaler_trim.width,
 				sensor_mode_info->scaler_trim.height,
-				prev_cxt->prev_param.prev_rot,
-				zoom_param);
+				prev_cxt->prev_param.prev_rot);
 	}
 	if (ret) {
 		CMR_LOGE("prev get trim failed");
@@ -7024,18 +6995,12 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_
 				zoom_param->zoom_level,
 				&trim_sz);
 	} else {
-		struct cmr_zoom_param zoom_info = *zoom_param;
-		cmr_s8 value[PROPERTY_VALUE_MAX];
-		property_get("volte.incall.camera.enable", value, "false");
-		if (!strcmp(value, "true"))
-			CMR_LOGI("volte incall, don't need to reset zoom_info ");
-		else
-			zoom_info.zoom_info.output_ratio = (float)prev_cxt->actual_video_size.width / (float)prev_cxt->actual_video_size.height;
-		ret = prev_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
+		ret = camera_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
+				zoom_param->zoom_info.zoom_ratio,
+				zoom_param->zoom_info.video_aspect_ratio,
 				sensor_mode_info->scaler_trim.width,
 				sensor_mode_info->scaler_trim.height,
-				prev_cxt->prev_param.prev_rot,
-				&zoom_info);
+				prev_cxt->prev_param.prev_rot);
 	}
 	if (ret) {
 		CMR_LOGE("video get trim failed");
@@ -7242,11 +7207,12 @@ cmr_int prev_set_video_param_lightly(struct prev_handle *handle, cmr_u32 camera_
 				zoom_param->zoom_level,
 				&trim_sz);
 	} else {
-		ret = prev_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
+		ret = camera_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
+				zoom_param->zoom_info.zoom_ratio,
+				zoom_param->zoom_info.video_aspect_ratio,
 				sensor_mode_info->scaler_trim.width,
 				sensor_mode_info->scaler_trim.height,
-				prev_cxt->prev_param.prev_rot,
-				zoom_param);
+				prev_cxt->prev_param.prev_rot);
 	}
 	if (ret) {
 		CMR_LOGE("prev get trim failed");
@@ -8241,11 +8207,12 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id, struct i
 				zoom_param->zoom_level,
 				&trim_sz);
 	} else {
-		ret = prev_get_trim_rect2(&img_cap->src_img_rect,
+		ret = camera_get_trim_rect2(&img_cap->src_img_rect,
+				zoom_param->zoom_info.zoom_ratio,
+				zoom_param->zoom_info.capture_aspect_ratio,
 				sn_mode_info->scaler_trim.width,
 				sn_mode_info->scaler_trim.height,
-				prev_cxt->prev_param.cap_rot,
-				zoom_param);
+				prev_cxt->prev_param.cap_rot);
 	}
 
 	if (ret) {
@@ -8287,11 +8254,12 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id, struct i
 			if (ZOOM_INFO != zoom_param->mode) {
 				ret = camera_get_trim_rect(sn_trim_rect, zoom_param->zoom_level, &trim_sz);
 			} else {
-				ret = prev_get_trim_rect2(sn_trim_rect,
+				ret = camera_get_trim_rect2(sn_trim_rect,
+					zoom_param->zoom_info.zoom_ratio,
+					zoom_param->zoom_info.capture_aspect_ratio,
 					sn_trim_rect->width,
 					sn_trim_rect->height,
-					prev_cxt->prev_param.cap_rot,
-					zoom_param);
+					prev_cxt->prev_param.cap_rot);
 			}
 			if (ret) {
 				CMR_LOGE("Failed to get trimming window for %ld zoom level ", zoom_param->zoom_level);
@@ -8483,11 +8451,12 @@ cmr_int prev_get_scale_rect(struct prev_handle *handle,
 					zoom_param->zoom_level,
 					&trim_sz);
 		} else {
-			ret = prev_get_trim_rect2(&rect,
+			ret = camera_get_trim_rect2(&rect,
+					zoom_param->zoom_info.zoom_ratio,
+					zoom_param->zoom_info.capture_aspect_ratio,
 					rect.width,
 					rect.height,
-					IMG_ANGLE_0,
-					zoom_param);
+					IMG_ANGLE_0);
 		}
 
 		if (ret) {
