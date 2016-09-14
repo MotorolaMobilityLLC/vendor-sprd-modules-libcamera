@@ -9862,18 +9862,6 @@ cmr_int prev_get_cap_post_proc_param(struct prev_handle *handle,
 		is_normal_cap = 0;
 	}
 
-	if (prev_cxt->prev_param.video_eb) {
-		CMR_LOGI("cap orig size %d %d actual video size %d %d", prev_cxt->cap_org_size.width, prev_cxt->cap_org_size.height,
-				prev_cxt->actual_video_size.width, prev_cxt->actual_video_size.height);
-		if (prev_cxt->cap_org_size.width * prev_cxt->cap_org_size.height >=
-			prev_cxt->actual_video_size.width * prev_cxt->actual_video_size.height) {
-			if ((prev_cxt->cap_org_size.width != prev_cxt->actual_video_size.width)  ||
-				(prev_cxt->cap_org_size.height != prev_cxt->actual_video_size.height)) {
-				prev_cxt->cap_org_size.width = prev_cxt->actual_video_size.width;
-				prev_cxt->cap_org_size.height = prev_cxt->actual_video_size.height;
-			}
-		}
-	}
 	CMR_LOGI("cap_rot %d, is_cfg_rot_cap %d, cfg_cap_rot %d, is_normal_cap %d",
 		cap_rot,
 		is_cfg_rot_cap,
