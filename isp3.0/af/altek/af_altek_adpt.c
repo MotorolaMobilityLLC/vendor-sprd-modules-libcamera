@@ -2561,6 +2561,7 @@ static cmr_int afaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 
 	*adpt_handle = (cmr_handle)cxt;
 	cxt->inited = 1;
+	ISP_LOGI("done cxt = %p", cxt);
 	return ret;
 
 error_lib_init:

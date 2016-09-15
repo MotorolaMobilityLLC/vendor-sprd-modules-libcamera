@@ -43,6 +43,7 @@ struct af_ctrl_thread_context {
 };
 
 struct afctrl_context {
+	cmr_u32 is_inited;
 	cmr_int camera_id;
 	cmr_u8 af_support;
 	cmr_int af_bypass;
@@ -272,7 +273,8 @@ static cmr_int afctrl_evtctrl(cmr_handle handle, cmr_int cmd,
 	struct afctrl_context *cxt = (struct afctrl_context *)handle;
 
 	sem_wait(&cxt->sync_sm);
-	ret = cxt->af_adpt_ops->adpt_ioctrl(cxt->adpt_handle, cmd, in, out);
+	if (cxt->is_inited)
+		ret = cxt->af_adpt_ops->adpt_ioctrl(cxt->adpt_handle, cmd, in, out);
 	sem_post(&cxt->sync_sm);
 	return ret;
 }
@@ -284,7 +286,8 @@ static cmr_int afctrl_evtprocess(cmr_handle handle,
 	cmr_int ret = -ISP_ERROR;
 	struct afctrl_context *cxt = (struct afctrl_context *)handle;
 
-	ret = cxt->af_adpt_ops->adpt_process(cxt->adpt_handle, in, out);
+	if (cxt->is_inited)
+		ret = cxt->af_adpt_ops->adpt_process(cxt->adpt_handle, in, out);
 	return ret;
 }
 
@@ -496,15 +499,19 @@ cmr_int af_ctrl_init(struct af_ctrl_init_in *in,
 		goto error_vcm_thread;
 	}
 
+	sem_wait(&cxt->sync_sm);
 	/* adpter init */
 	ret = cxt->af_adpt_ops->adpt_init(&adpt_in, out, &cxt->adpt_handle);
 	if (ret) {
+		sem_post(&cxt->sync_sm);
 		ISP_LOGE("failed to init adapter layer ret = %ld", ret);
 		goto error_init_adpt;
 	}
+	sem_post(&cxt->sync_sm);
 
 sucess_exit:
 	*handle = (cmr_handle) cxt;
+	cxt->is_inited = 1;
 	return ret;
 
 	cxt->af_adpt_ops->adpt_deinit(cxt->adpt_handle);
@@ -545,10 +552,12 @@ cmr_int af_ctrl_deinit(cmr_handle handle)
 	if (ret)
 		ISP_LOGE("failed to destroy thread ret = %ld", ret);
 #endif
+	sem_wait(&cxt->sync_sm);
 	ret = cxt->af_adpt_ops->adpt_deinit(cxt->adpt_handle);
 	if (ret)
 		ISP_LOGE("failed to deinit adapter layer ret = %ld", ret);
-
+	cxt->is_inited = 0;
+	sem_post(&cxt->sync_sm);
 	sem_destroy(&cxt->sync_sm);
 
 sucess_exit:
