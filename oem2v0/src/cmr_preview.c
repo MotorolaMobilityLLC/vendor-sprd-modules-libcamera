@@ -180,8 +180,8 @@ struct prev_context {
 	cmr_s64                         restart_timestamp;
 	cmr_uint                        restart_skip_cnt;
 	cmr_uint                        restart_skip_en;
-	struct img_size                 lv_size;
-	struct img_size                 video_size;
+	struct img_size                 lv_size;      /*isp lv size*/
+	struct img_size                 video_size;   /*isp video and scl size*/
 
 	cmr_uint                        prev_self_restart;
 	cmr_uint                        prev_buf_id;
@@ -6394,13 +6394,7 @@ static cmr_int prev_get_matched_burstmode_lv_size(struct img_size sensor_size, s
 		dst_img_size.width, dst_img_size.height);
 
 #if 0
-	if(sensor_size.width > 4900 /*&& ((sensor_size.width % 24) == 0)*/) {
-		lvsize->width = 4224;
-		lvsize->height = 4224 * sensor_size.height / sensor_size.width;
-		if(lvsize->height >= 4 && lvsize->height <= 8192 && (!(lvsize->height & 1)))
-			return 0;
-	}
-#endif
+
 	for (i = 0; list[i].el.width != 0; i++) {
 		if (sensor_size.width < list[i].el.width || sensor_size.height < list[i].el.height){
 			break;
@@ -6451,7 +6445,6 @@ static cmr_int prev_get_matched_burstmode_lv_size(struct img_size sensor_size, s
 			last = 0;
 		CMR_LOGI("select %d", last);
 	}
-
 	video_size->width = list[last].el.width;
 	video_size->height = list[last].el.height;
 	if(list[last].rate.width == 12) {
@@ -6461,6 +6454,35 @@ static cmr_int prev_get_matched_burstmode_lv_size(struct img_size sensor_size, s
 		lvsize->width = 1920;
 		lvsize->height = 1080;
 	}
+#//else
+	if(sensor_size.width > 4224/*4900 && ((sensor_size.width % 24) == 0)*/) {
+		video_size->width = 4224;
+		video_size->height = 4224 * sensor_size.height / sensor_size.width;
+	} else {
+		video_size->width = sensor_size.width;
+		video_size->height = sensor_size.height;
+	}
+	lvsize->width = 960;
+	lvsize->height = 720;
+#else
+
+	video_size->width = dst_img_size.width;
+	video_size->height = dst_img_size.height;
+
+	if (sensor_size.width *1000/ sensor_size.height > video_size->width * 1000/video_size->height) {
+		video_size->width = sensor_size.width * video_size->height / sensor_size.height;
+		video_size->width = CAMERA_WIDTH(video_size->width);
+	}
+	else if (sensor_size.width *1000/ sensor_size.height < video_size->width * 1000/video_size->height) {
+		video_size->height = video_size->width * sensor_size.height / sensor_size.width;
+		video_size->height = CAMERA_HEIGHT(video_size->height);
+	}
+
+	lvsize->width = 960;
+	lvsize->height = 720;
+	CMR_LOGI("video width %d height %d", video_size->width, video_size->height);
+
+#endif
 	return 0;
 }
 
@@ -6552,7 +6574,8 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 		chn_param.cap_inf_cfg.cfg.src_img_rect.width,
 		chn_param.cap_inf_cfg.cfg.src_img_rect.height);
 
-	if(prev_cxt->prev_param.sprd_burstmode_enabled){
+	if (prev_cxt->prev_param.sprd_burstmode_enabled ||
+		!prev_cxt->prev_param.snapshot_eb){
 		struct img_size sensor_size;
 		struct img_size  lv_size;
 		struct img_size  video_size;
@@ -6571,6 +6594,9 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 
 		prev_cxt->lv_size = lv_size;
 		prev_cxt->video_size = video_size;
+	} else if (prev_cxt->prev_param.preview_eb && prev_cxt->prev_param.snapshot_eb) {
+		prev_cxt->video_size.width = sensor_mode_info->scaler_trim.width;
+		prev_cxt->video_size.height = sensor_mode_info->scaler_trim.height;
 	}
 
 	/*caculate trim rect*/
@@ -6582,7 +6608,8 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 		ret = camera_get_trim_rect(&chn_param.cap_inf_cfg.cfg.src_img_rect,
 				zoom_param->zoom_level,
 				&chn_param.cap_inf_cfg.cfg.dst_img_size);
-	} else if(prev_cxt->prev_param.sprd_burstmode_enabled) {
+	} else if (prev_cxt->prev_param.sprd_burstmode_enabled ||
+		!prev_cxt->prev_param.snapshot_eb) {
 		ret = camera_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
 				zoom_param->zoom_info.zoom_ratio,
 				zoom_param->zoom_info.prev_aspect_ratio,
@@ -6713,21 +6740,23 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 			video_param.video_mode  = ISP_VIDEO_MODE_CONTINUE;
 			video_param.work_mode = 0;
 
-		if (!handle->ops.isp_start_video) {
-			CMR_LOGE("ops isp_start_video is null");
-			ret = CMR_CAMERA_FAIL;
-			goto exit;
-		}
+			if (!handle->ops.isp_start_video) {
+				CMR_LOGE("ops isp_start_video is null");
+				ret = CMR_CAMERA_FAIL;
+				goto exit;
+			}
 
-		video_param.live_view_sz.width = prev_cxt->actual_prev_size.width;
-		video_param.live_view_sz.height = prev_cxt->actual_prev_size.height;
-		ret = handle->ops.isp_start_video(handle->oem_handle, &video_param);
-		if (ret) {
-			CMR_LOGE("isp start video failed");
-			ret = CMR_CAMERA_FAIL;
-			goto exit;
-		}
-		prev_cxt->isp_status = PREV_ISP_COWORK;
+			video_param.live_view_sz.width = prev_cxt->actual_prev_size.width;
+			video_param.live_view_sz.height = prev_cxt->actual_prev_size.height;
+			video_param.lv_size 	= prev_cxt->lv_size;
+			video_param.video_size  = prev_cxt->video_size;
+			ret = handle->ops.isp_start_video(handle->oem_handle, &video_param);
+			if (ret) {
+				CMR_LOGE("isp start video failed");
+				ret = CMR_CAMERA_FAIL;
+				goto exit;
+			}
+			prev_cxt->isp_status = PREV_ISP_COWORK;
 		}
 		prev_cxt->cap_need_isp	   = chn_param.cap_inf_cfg.cfg.need_isp;
 		prev_cxt->cap_need_binning = chn_param.cap_inf_cfg.cfg.need_binning;
@@ -6822,7 +6851,8 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle, cmr_u32 camera_i
 		chn_param.cap_inf_cfg.cfg.src_img_rect.width,
 		chn_param.cap_inf_cfg.cfg.src_img_rect.height);
 
-	if(prev_cxt->prev_param.sprd_burstmode_enabled){
+	if (prev_cxt->prev_param.sprd_burstmode_enabled ||
+		!prev_cxt->prev_param.snapshot_eb) {
 		struct img_size sensor_size;
 		struct img_size  lv_size;
 		struct img_size  video_size;
@@ -6841,6 +6871,9 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle, cmr_u32 camera_i
 
 		prev_cxt->lv_size = lv_size;
 		prev_cxt->video_size = video_size;
+	} else {
+		prev_cxt->video_size.width = sensor_mode_info->scaler_trim.width;
+		prev_cxt->video_size.height = sensor_mode_info->scaler_trim.height;
 	}
 
 	/*caculate trim rect*/
@@ -6848,7 +6881,8 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle, cmr_u32 camera_i
 		ret = camera_get_trim_rect(&chn_param.cap_inf_cfg.cfg.src_img_rect,
 				zoom_param->zoom_level,
 				&chn_param.cap_inf_cfg.cfg.dst_img_size);
-	} else if(prev_cxt->prev_param.sprd_burstmode_enabled) {
+	} else if (prev_cxt->prev_param.sprd_burstmode_enabled ||
+		!prev_cxt->prev_param.snapshot_eb) {
 		ret = camera_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
 				zoom_param->zoom_info.zoom_ratio,
 				zoom_param->zoom_info.prev_aspect_ratio,
@@ -8199,6 +8233,29 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id, struct i
 		img_cap->src_img_rect.width,
 		img_cap->src_img_rect.height);
 
+
+	if (!prev_cxt->prev_param.preview_eb){
+		struct img_size sensor_size;
+		struct img_size  lv_size;
+		struct img_size  video_size;
+
+		sensor_size.width = sn_mode_info->scaler_trim.width;
+		sensor_size.height = sn_mode_info->scaler_trim.height;
+		prev_get_matched_burstmode_lv_size(sensor_size,
+			*cap_size, &lv_size, &video_size);
+		img_cap->src_img_change = 1;
+		img_cap->src_img_size.width  = video_size.width ;
+		img_cap->src_img_size.height = video_size.height;
+		img_cap->src_img_rect.start_x = 0;
+		img_cap->src_img_rect.start_y = 0;
+		img_cap->src_img_rect.width  = video_size.width ;
+		img_cap->src_img_rect.height = video_size.height;
+
+		prev_cxt->lv_size = lv_size;
+		prev_cxt->video_size = video_size;
+	}
+
+
 	trim_sz.width = sn_mode_info->scaler_trim.width;
 	trim_sz.height = sn_mode_info->scaler_trim.height;
 	/*caculate trim rect*/
@@ -8206,6 +8263,13 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id, struct i
 		ret = camera_get_trim_rect(&img_cap->src_img_rect,
 				zoom_param->zoom_level,
 				&trim_sz);
+	} else if (!prev_cxt->prev_param.preview_eb) {
+		ret = camera_get_trim_rect2(&img_cap->src_img_rect,
+				zoom_param->zoom_info.zoom_ratio,
+				zoom_param->zoom_info.prev_aspect_ratio,
+				img_cap->src_img_size.width,
+				img_cap->src_img_size.height,
+				prev_cxt->prev_param.prev_rot);
 	} else {
 		ret = camera_get_trim_rect2(&img_cap->src_img_rect,
 				zoom_param->zoom_info.zoom_ratio,
@@ -8303,24 +8367,9 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id, struct i
 	}
 
 	if(prev_cxt->prev_param.sprd_highiso_enabled){
-		struct img_size sensor_size;
-		struct img_size  lv_size;
-		struct img_size  video_size;
+		struct img_size  video_size = {960, 720};
 
-		sensor_size.width = sn_mode_info->scaler_trim.width;
-		sensor_size.height = sn_mode_info->scaler_trim.height;
-		prev_get_matched_burstmode_lv_size(sensor_size,
-			img_cap->dst_img_size, &lv_size, &video_size);
-#if 0
-		img_cap->src_img_change = 1;
-		img_cap->src_img_size.width  = video_size.width ;
-		img_cap->src_img_size.height = video_size.height;
-		img_cap->src_img_rect.start_x = 0;
-		img_cap->src_img_rect.start_y = 0;
-		img_cap->src_img_rect.width  = video_size.width ;
-		img_cap->src_img_rect.height = video_size.height;
-#endif
-		prev_cxt->lv_size = lv_size;
+		prev_cxt->lv_size = video_size;
 		prev_cxt->video_size = video_size;
 	}
 
