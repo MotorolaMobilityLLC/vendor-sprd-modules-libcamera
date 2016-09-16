@@ -240,7 +240,7 @@ static unsigned long s5k3l8xxm3_parse_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL_T*
 		if(high_val==0xff && low_val == 0xff )
 			otp_length = 2133; //2033
 	}
-	otp_length = S5K4L8XXM3_OTP_DUAL_SIZE;//2033;
+	otp_length = 8192;//2033;
 
 	if (1 != buff[0]) {
 		SENSOR_LOGI("s5k3l8xxm3_parse_otp is wrong data");

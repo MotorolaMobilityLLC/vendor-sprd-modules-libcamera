@@ -1614,10 +1614,10 @@ static unsigned long _s5k3p3sm_access_val(SENSOR_HW_HANDLE handle, unsigned long
 			//rtn = _s5k3p3sm_write_vcm(param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_READ_OTP:
-			//s5k3p3sm_otp_read(handle, param_ptr);
+			s5k3p3sm_otp_read(handle, param_ptr);
 			break;
 		case SENSOR_VAL_TYPE_PARSE_OTP:
-			//s5k3p3sm_parse_otp(handle, param_ptr);
+			s5k3p3sm_parse_otp(handle, param_ptr);
 			break;
 		case SENSOR_VAL_TYPE_WRITE_OTP:
 			//rtn = _hi544_write_otp((uint32_t)param_ptr->pval);
