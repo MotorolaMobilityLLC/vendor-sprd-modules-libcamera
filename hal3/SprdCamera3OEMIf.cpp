@@ -121,6 +121,7 @@ enum DFS_POLICY {
 
 #define UPDATE_RANGE_FPS_COUNT                          0x04
 
+#define MIN_DIGITAL_ZOOM_RATIO                       (1.0f)
 #define MAX_DIGITAL_ZOOM_RATIO                       (2.0f)
 
 /**********************Static Members**********************/
@@ -2653,6 +2654,9 @@ int SprdCamera3OEMIf::CameraConvertCoordinateToFramework(int32_t *cropRegion)
     } else if(mCameraId == 1||mCameraId == 3) {
         sensorOrgW = FRONT_SENSOR_ORIG_WIDTH;
         sensorOrgH = FRONT_SENSOR_ORIG_HEIGHT;
+    } else if(mCameraId == 2) {
+        sensorOrgW = BACK_EXT_SENSOR_ORIG_WIDTH;
+        sensorOrgH = BACK_EXT_SENSOR_ORIG_HEIGHT;
     }
     fdWid = cropRegion[2] - cropRegion[0];
     fdHeight = cropRegion[3] - cropRegion[1];
@@ -2685,6 +2689,9 @@ int SprdCamera3OEMIf::CameraConvertCoordinateFromFramework(int32_t *cropRegion)
     } else if(mCameraId == 1||mCameraId == 3) {
         sensorOrgW = FRONT_SENSOR_ORIG_WIDTH;
         sensorOrgH = FRONT_SENSOR_ORIG_HEIGHT;
+    } else if(mCameraId == 2) {
+        sensorOrgW = BACK_EXT_SENSOR_ORIG_WIDTH;
+        sensorOrgH = BACK_EXT_SENSOR_ORIG_HEIGHT;
     }
     fdWid = cropRegion[2] - cropRegion[0];
     fdHeight = cropRegion[3] - cropRegion[1];
@@ -4664,11 +4671,6 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void)
 		return UNKNOWN_ERROR;
 	}
 
-	if (mSprdRefocusEnabled) {
-		HAL_LOGD("SprdRefocus cant set zoomratio for now, may be will remove this later");
-		return 0;
-	}
-
 	mSetting->getSCALERTag(&scaleInfo);
 	cropRegion.start_x = scaleInfo.crop_region[0];
 	cropRegion.start_y = scaleInfo.crop_region[1];
@@ -4683,11 +4685,9 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void)
 	} else if(mCameraId == 1 || mCameraId == 3) {
 		sensorOrgW = FRONT_SENSOR_ORIG_WIDTH;
 		sensorOrgH = FRONT_SENSOR_ORIG_HEIGHT;
-	}
-
-	if (mCameraId == 2) {
-		HAL_LOGW("cameraid 2 need to be handled, then this code will be removed");
-		return 0;
+	} else if(mCameraId == 2) {
+		sensorOrgW = BACK_EXT_SENSOR_ORIG_WIDTH;
+		sensorOrgH = BACK_EXT_SENSOR_ORIG_HEIGHT;
 	}
 
 	sensorAspectRatio = static_cast<float>(sensorOrgW) / sensorOrgH;
@@ -4734,8 +4734,8 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void)
 		zoomRatio = static_cast<float>(sensorOrgW) / zoomWidth;
 	}
 
-	if (zoomRatio < 1.0f)
-		zoomRatio = 1.0f;
+	if (zoomRatio < MIN_DIGITAL_ZOOM_RATIO)
+		zoomRatio = MIN_DIGITAL_ZOOM_RATIO;
 	if (zoomRatio > MAX_DIGITAL_ZOOM_RATIO)
 		zoomRatio = MAX_DIGITAL_ZOOM_RATIO;
 
@@ -4777,6 +4777,9 @@ int SprdCamera3OEMIf::CameraConvertCropRegion(uint32_t sensorWidth, uint32_t sen
 	} else if(mCameraId == 1||mCameraId == 3) {
 		sensorOrgW = FRONT_SENSOR_ORIG_WIDTH;
 		sensorOrgH = FRONT_SENSOR_ORIG_HEIGHT;
+	} else if(mCameraId == 2) {
+		sensorOrgW = BACK_EXT_SENSOR_ORIG_WIDTH;
+		sensorOrgH = BACK_EXT_SENSOR_ORIG_HEIGHT;
 	}
 	if (sensorWidth == 0 || sensorHeight == 0 || cropRegion->width == 0	|| cropRegion->height == 0){
 		HAL_LOGW("cropRegion->height or cropRegion->width is 0");
