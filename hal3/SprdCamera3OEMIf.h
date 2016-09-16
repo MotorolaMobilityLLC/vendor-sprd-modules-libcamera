@@ -481,6 +481,7 @@ private:
 	int                             mPictureFormat;//0:YUV422;1:YUV420;2:RGB;3:JPEG
 	int                             mPreviewStartFlag;
 	uint32_t                        mIsDvPreview;
+	uint32_t                        mIsStoppingPreview;
 
 	bool				  mZslPreviewMode;
 	bool                            mRecordingMode;

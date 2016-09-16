@@ -231,6 +231,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mPictureFormat(1),
 	mPreviewStartFlag(0),
 	mIsDvPreview(0),
+	mIsStoppingPreview(0),
 	mRecordingMode(0),
 	mIsSetCaptureMode(false),
 	mRecordingFirstFrameTime(0),
@@ -2507,6 +2508,7 @@ void SprdCamera3OEMIf::stopPreviewInternal()
 		return;
 	}
 
+	mIsStoppingPreview = 1;
 	setCameraState(SPRD_INTERNAL_PREVIEW_STOPPING, STATE_PREVIEW);
 	if(CMR_CAMERA_SUCCESS != mHalOem->ops->camera_stop_preview(mCameraHandle)) {
 		setCameraState(SPRD_ERROR, STATE_PREVIEW);
@@ -2514,6 +2516,7 @@ void SprdCamera3OEMIf::stopPreviewInternal()
 	}
 
 	WaitForPreviewStop();
+	mIsStoppingPreview = 0;
 
 	deinitPreview();
 	end_timestamp = systemTime();
@@ -4004,6 +4007,8 @@ void SprdCamera3OEMIf::HandleStartPreview(enum camera_cb_type cb,
 		break;
 
 	case CAMERA_RSP_CB_SUCCESS:
+		if (mIsStoppingPreview)
+			HAL_LOGW("when is stopping preview, this place will change previw status");
 		setCameraState(SPRD_PREVIEW_IN_PROGRESS, STATE_PREVIEW);
 		break;
 
@@ -4078,6 +4083,9 @@ void SprdCamera3OEMIf::HandleStopPreview(enum camera_cb_type cb, void*  parm4)
 			cb, (cmr_uint)parm4, getCameraStateStr(tmpPrevState));
 
 	if ((SPRD_IDLE == tmpPrevState) || (SPRD_INTERNAL_PREVIEW_STOPPING == tmpPrevState)) {
+		setCameraState(SPRD_IDLE, STATE_PREVIEW);
+	} else if (SPRD_PREVIEW_IN_PROGRESS == tmpPrevState && mIsStoppingPreview) {
+		HAL_LOGI("when stopping preview, there are some frame frome oem callback to hal");
 		setCameraState(SPRD_IDLE, STATE_PREVIEW);
 	} else {
 		HAL_LOGE("HandleEncode: error preview status, %s", getCameraStateStr(tmpPrevState));
