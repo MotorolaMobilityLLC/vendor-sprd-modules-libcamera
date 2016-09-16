@@ -30,6 +30,7 @@
 #define ov2680_I2C_ADDR_W        (0x6c>>1)
 #define ov2680_I2C_ADDR_R         (0x6c>>1)
 #define RAW_INFO_END_ID 0x71717567
+#define FRAME_OFFSET 4
 
 #define ov2680_MIN_FRAME_LEN_PRV  0x484
 #define ov2680_MIN_FRAME_LEN_CAP  0x7B6
@@ -1425,6 +1426,7 @@ LOCAL unsigned long _ov2680_write_exp_dummy(SENSOR_HW_HANDLE handle, uint16_t ex
 	uint16_t value1=0x00;
 	uint16_t value2=0x00;
 	uint16_t frame_interval=0x00;
+	int32_t offset = 0;
 
 	frame_interval = (uint16_t)(((expsure_line + dummy_line) * s_ov2680_Resolution_Trim_Tab[size_index].line_time) / 1000000);
 	SENSOR_LOGI("current mode = %d, exposure_line = %d, dummy_line= %d, frame_interval= %d ms",
@@ -1435,7 +1437,11 @@ LOCAL unsigned long _ov2680_write_exp_dummy(SENSOR_HW_HANDLE handle, uint16_t ex
 
 	if(0x00!=max_frame_len)
 	{
-		frame_len = ((expsure_line+dummy_line+4)> max_frame_len) ? (expsure_line+dummy_line+4) : max_frame_len;
+		if (dummy_line > FRAME_OFFSET)
+			offset = dummy_line;
+		else
+			offset = FRAME_OFFSET;
+		frame_len = ((expsure_line + offset)> max_frame_len) ? (expsure_line + offset) : max_frame_len;
 
 		if(0x00!=(0x01&frame_len))
 		{
