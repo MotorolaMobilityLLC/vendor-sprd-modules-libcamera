@@ -1,13 +1,13 @@
 /******************************************************************************
  *  File name: debug_structure.h
- *  Latest Update Date:2016/08/05
+ *  Latest Update Date:2016/09/12
  *
  *  Comment:
  *  Describe structure definition of debug information
  *****************************************************************************/
 #include "mtype.h"
 
-#define DEBUG_STRUCT_VERSION               (502)
+#define DEBUG_STRUCT_VERSION               (503)
 
 #define MAX_AEFE_DEBUG_SIZE_STRUCT1        (669)
 #define MAX_AEFE_DEBUG_SIZE_STRUCT2        (5120)

@@ -253,7 +253,20 @@ struct allib_af_get_data_info_t {
 	uint32	size;
 };
 #pragma pack(pop)
+//diff >>>
+/*
+ * allib_af_get_pd_info_t
+ * pd_range:	pd confidence.
+ *
+ */
+#pragma pack(push, 4)/*new*/
+struct allib_af_get_pd_info_t {
+	uint8	update_pd_info;
+	uint32	pd_range;
 
+};
+#pragma pack(pop)
+//diff <<<
 /*
  * allib_af_input_focus_mode_type
  *
@@ -786,6 +799,9 @@ enum allib_af_get_param_type {
 	alAFLIB_GET_PARAM_DEBUG_INFO,
 	alAFLIB_GET_PARAM_EXIF_INFO,
 	alAFLIB_GET_PARAM_NOTHING,
+//diff >>>
+	alAFLIB_GET_PARAM_PD_INFO,/*new*/
+//diff <<<
 	alAFLIB_GET_PARAM_MAX
 };
 #pragma pack(pop)
@@ -811,6 +827,9 @@ struct allib_af_input_get_param_t {
 		uint16				uw_default_lens_pos;
 		struct allib_af_get_data_info_t debug_data_info;
 		struct allib_af_get_data_info_t exif_data_info;
+//diff >>>
+		struct allib_af_get_pd_info_t pd_data_info;/*new*/
+//diff <<<
 	} u_get_data;
 };
 #pragma pack(pop)
@@ -835,11 +854,16 @@ enum allib_af_status_type {
 	alAFLib_STATUS_INVALID = -1,
 	alAFLib_STATUS_INIT = 0,
 	alAFLib_STATUS_FOCUSED,
+
 	/*	alAFLib_STATUS_UNKNOWN,*/
 	alAFLib_STATUS_WARNING,
 	alAFLib_STATUS_AF_ABORT,
 	alAFLib_STATUS_FORCE_ABORT,
-	alAFLib_STATUS_FOCUSING
+	alAFLib_STATUS_FOCUSING,
+//diff >>>
+	alAFLib_STATUS_PD_SEARCH_START,/*new*/
+	alAFLib_STATUS_PD_SEARCH_DONE/*new*/
+//diff <<<
 };
 #pragma pack(pop)
 
