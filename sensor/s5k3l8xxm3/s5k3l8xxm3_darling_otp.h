@@ -163,7 +163,7 @@ static int s5k3l8xxm3_otp_read_data(SENSOR_HW_HANDLE handle)
 			//checksum += low_val;
 			low_val = s5k3l8xxm3_i2c_read_otp(otp_length - 1);
 			if(high_val==0xff && low_val==0xff)
-				otp_length = S5K4L8XXM3_OTP_DUAL_SIZE;//2133;
+				otp_length = 8192;//S5K4L8XXM3_OTP_DUAL_SIZE;//2133;
 		}
 		high_val = s5k3l8xxm3_i2c_read_otp(otp_length-2);
 		//checksum += low_val;
