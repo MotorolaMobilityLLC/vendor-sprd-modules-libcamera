@@ -1116,6 +1116,9 @@ status_t SprdCamera3OEMIf::autoFocus(void *user_data)
 	if (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE || controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_AUTO) {
 		if( controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE )
 			mHalOem->ops->camera_transfer_caf_to_af(mCameraHandle);
+		else if(controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_AUTO)
+			mHalOem->ops->camera_transfer_af_to_caf(mCameraHandle);
+
 		SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE, CAMERA_FOCUS_MODE_AUTO);
 	}
 	controlInfo.af_state = ANDROID_CONTROL_AF_STATE_ACTIVE_SCAN;
