@@ -455,6 +455,9 @@ static SENSOR_REG_TAB_INFO_T s_s5k3l8xxm3_resolution_tab_raw[SENSOR_MODE_MAX] = 
 	/*{ADDR_AND_LEN_OF_ARRAY(s5k3l8xxm3_preview_setting),
 	 PREVIEW_WIDTH, PREVIEW_HEIGHT, EX_MCLK,
 	 SENSOR_IMAGE_FORMAT_RAW},*/
+	 {ADDR_AND_LEN_OF_ARRAY(s5k3l8xxm3_720p_setting),
+	 1280, 720, EX_MCLK,
+	 SENSOR_IMAGE_FORMAT_RAW},
 	{ADDR_AND_LEN_OF_ARRAY(s5k3l8xxm3_snapshot_setting),
 	 SNAPSHOT_WIDTH, SNAPSHOT_HEIGHT, EX_MCLK,
 	 SENSOR_IMAGE_FORMAT_RAW},
@@ -466,6 +469,7 @@ static SENSOR_TRIM_T s_s5k3l8xxm3_resolution_trim_tab[SENSOR_MODE_MAX] = {
 	/*{PREVIEW_TRIM_X, PREVIEW_TRIM_Y, PREVIEW_TRIM_W, PREVIEW_TRIM_H,
 	 PREVIEW_LINE_TIME, PREVIEW_MIPI_PER_LANE_BPS, PREVIEW_FRAME_LENGTH,
 	 {0, 0, PREVIEW_TRIM_W, PREVIEW_TRIM_H}},*/
+	 {0, 0, 1280, 720, 10263, 1124, 812, {0, 0, 1280, 720}},
 	{SNAPSHOT_TRIM_X, SNAPSHOT_TRIM_Y, SNAPSHOT_TRIM_W, SNAPSHOT_TRIM_H,
 	 SNAPSHOT_LINE_TIME, SNAPSHOT_MIPI_PER_LANE_BPS, SNAPSHOT_FRAME_LENGTH,
 	 {0, 0, SNAPSHOT_TRIM_W, SNAPSHOT_TRIM_H}},
@@ -693,6 +697,8 @@ static void s5k3l8xxm3_write_gain(SENSOR_HW_HANDLE handle,float gain)
  *============================================================================*/
 static uint16_t s5k3l8xxm3_read_frame_length(SENSOR_HW_HANDLE handle)
 {
+	s_sensor_ev_info.preview_framelength= Sensor_ReadReg(0x0340);
+
 	return s_sensor_ev_info.preview_framelength;
 }
 
@@ -713,6 +719,8 @@ static void s5k3l8xxm3_write_frame_length(SENSOR_HW_HANDLE handle,uint32_t frame
  *============================================================================*/
 static uint32_t s5k3l8xxm3_read_shutter(SENSOR_HW_HANDLE handle)
 {
+	s_sensor_ev_info.preview_shutter = Sensor_ReadReg(0x0202);
+
 	return s_sensor_ev_info.preview_shutter;
 }
 
@@ -744,7 +752,8 @@ static uint16_t s5k3l8xxm3_write_exposure_dummy(SENSOR_HW_HANDLE handle,uint32_t
 	if (1 == SUPPORT_AUTO_FRAME_LENGTH)
 		goto write_sensor_shutter;
 
-	dest_fr_len = ((shutter + dummy_line+FRAME_OFFSET) > fr_len) ? (shutter +dummy_line+ FRAME_OFFSET) : fr_len;
+	dummy_line = dummy_line > FRAME_OFFSET ? dummy_line : FRAME_OFFSET;
+	dest_fr_len = ((shutter + dummy_line) > fr_len) ? (shutter +dummy_line) : fr_len;
 
 	cur_fr_len = s5k3l8xxm3_read_frame_length(handle);
 
@@ -1046,10 +1055,14 @@ static unsigned long s5k3l8xxm3_access_val(SENSOR_HW_HANDLE handle,unsigned long
 			break;
 		case SENSOR_VAL_TYPE_PARSE_OTP:
 			ret = s5k3l8xxm3_parse_otp(handle, param_ptr);
+			if (ret != 0)
+				ret =s5k3l8xxm3_otp_read(handle,param_ptr);
 			break;
 		case SENSOR_VAL_TYPE_PARSE_DUAL_OTP:
 			#ifdef S5K3L8XXM3_DUAL_OTP
 			ret = s5k3l8xxm3_parse_dual_otp(handle, param_ptr);
+			if (ret != 0)
+				ret =s5k3l8xxm3_dual_otp_read(handle,param_ptr);
 			#endif
 			break;
 		case SENSOR_VAL_TYPE_WRITE_OTP:

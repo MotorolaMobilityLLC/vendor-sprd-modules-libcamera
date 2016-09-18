@@ -782,7 +782,8 @@ static uint16_t ov8856s_write_exposure_dummy(SENSOR_HW_HANDLE handle,uint32_t sh
 	if (1 == SUPPORT_AUTO_FRAME_LENGTH)
 		goto write_sensor_shutter;
 
-	dest_fr_len = ((shutter + dummy_line+FRAME_OFFSET) > fr_len) ? (shutter +dummy_line+ FRAME_OFFSET) : fr_len;
+	dummy_line = dummy_line > FRAME_OFFSET ? dummy_line : FRAME_OFFSET;
+	dest_fr_len = ((shutter + dummy_line) > fr_len) ? (shutter +dummy_line) : fr_len;
 
 	cur_fr_len = ov8856s_read_frame_length(handle);
 

@@ -692,8 +692,8 @@ static uint16_t sp2509_read_frame_length(SENSOR_HW_HANDLE handle)
 	uint16_t frame_len_l = 0;
 	
 	Sensor_WriteReg(0xfd, 0x01);
-	frame_len_h = Sensor_ReadReg(0x0e) & 0xff;
-	frame_len_l = Sensor_ReadReg(0x0f) & 0xff;
+	frame_len_h = Sensor_ReadReg(0x4e) & 0xff;
+	frame_len_l = Sensor_ReadReg(0x4f) & 0xff;
 
 	s_sensor_ev_info.preview_framelength =  ((frame_len_h << 8) | frame_len_l);
 	return s_sensor_ev_info.preview_framelength;
@@ -761,7 +761,8 @@ static uint16_t sp2509_update_exposure(SENSOR_HW_HANDLE handle,uint32_t shutter,
 	if (1 == SUPPORT_AUTO_FRAME_LENGTH)
 		goto write_sensor_shutter;
 
-	dest_fr_len = ((shutter + dummy_line+FRAME_OFFSET) > fr_len) ? (shutter +dummy_line+ FRAME_OFFSET) : fr_len;
+	dummy_line = dummy_line > FRAME_OFFSET ? dummy_line : FRAME_OFFSET;
+	dest_fr_len = ((shutter + dummy_line) > fr_len) ? (shutter +dummy_line) : fr_len;
 
 	cur_fr_len = sp2509_read_frame_length(handle);
 	SENSOR_PRINT("current shutter = %d, fr_len = %d, dummy_line=%d cur_fr_len %d dest_fr_len %d", shutter, fr_len,dummy_line,cur_fr_len,dest_fr_len);

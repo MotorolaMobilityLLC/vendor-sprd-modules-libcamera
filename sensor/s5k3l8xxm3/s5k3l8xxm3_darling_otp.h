@@ -79,8 +79,7 @@ static int s5k3l8xxm3_otp_read_data(SENSOR_HW_HANDLE handle)
 	SENSOR_LOGI("E");
 	//if (first_flag)
 	{
-		otp_version = s5k3l8xxm3_i2c_read_otp(0x000E);
-			
+		otp_version = s5k3l8xxm3_i2c_read_otp(0x0002);
 		s5k3l8xxm3_otp_info.program_flag = s5k3l8xxm3_i2c_read_otp(0x0000);
 		SENSOR_LOGI("program_flag = %d", s5k3l8xxm3_otp_info.program_flag);
 		if (1 != s5k3l8xxm3_otp_info.program_flag) {
@@ -157,14 +156,15 @@ static int s5k3l8xxm3_otp_read_data(SENSOR_HW_HANDLE handle)
 		s5k3l8xxm3_otp_info.af_info.macro_cali = (high_val << 8 | low_val) >> 6;
 		
 		SENSOR_LOGI("s5k3l8xxm3_otp_info.af_info.macro_cali = 0x%x %x",  s5k3l8xxm3_otp_info.af_info.macro_cali,s5k3l8xxm3_otp_info.af_info.infinite_cali);
-		if(otp_version == 0x01) {
+		if(otp_version == 0x01){
 			otp_length = 1733;
-			high_val = s5k3l8xxm3_i2c_read_otp(otp_length - 2);
-			//checksum += low_val;
-			low_val = s5k3l8xxm3_i2c_read_otp(otp_length - 1);
-			if(high_val==0xff && low_val==0xff)
-				otp_length = 8192;//S5K4L8XXM3_OTP_DUAL_SIZE;//2133;
-		}
+		}else if(otp_version == 0x02){
+			otp_length = 2033;
+		}else if(otp_version == 0x03){
+			otp_length = 2133;
+		}else
+			otp_length = 8192;//
+		otp_length = 8192;//
 		high_val = s5k3l8xxm3_i2c_read_otp(otp_length-2);
 		//checksum += low_val;
 		low_val = s5k3l8xxm3_i2c_read_otp(otp_length-1);
@@ -231,15 +231,15 @@ static unsigned long s5k3l8xxm3_parse_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL_T*
 		return -1;
 	}
 	buff = param->pval;
-	otp_version = s5k3l8xxm3_i2c_read_otp(0x000E);
+	otp_version = s5k3l8xxm3_i2c_read_otp(0x0002);
 	if(otp_version == 0x01){
 		otp_length = 1733;
-		high_val = s5k3l8xxm3_i2c_read_otp(otp_length - 2);
-		//checksum += low_val;
-		low_val = s5k3l8xxm3_i2c_read_otp(otp_length - 1);
-		if(high_val==0xff && low_val == 0xff )
-			otp_length = 2133; //2033
-	}
+	}else if(otp_version == 0x02){
+		otp_length = 2033;
+	}else if(otp_version == 0x03){
+		otp_length = 2133;
+	}else
+		otp_length = 8192;//
 	otp_length = 8192;//2033;
 
 	if (1 != buff[0]) {
