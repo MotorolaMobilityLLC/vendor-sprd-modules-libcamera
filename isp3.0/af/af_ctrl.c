@@ -522,6 +522,7 @@ error_vcm_thread:
 	afctrl_destroy_thread(cxt);
 error_main_thread:
 #endif
+	sem_destroy(&cxt->sync_sm);
 error_get_adpt:
 	free(cxt);
 	cxt = NULL;

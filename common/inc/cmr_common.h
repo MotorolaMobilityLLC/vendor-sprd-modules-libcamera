@@ -102,23 +102,36 @@ extern "C"
 			}                                              \
 		} while(0)
 
+#ifdef __LP64__
 #define CMR_PRINT_TIME                                                     \
-		do {                                                       \
-                        nsecs_t timestamp = systemTime(CLOCK_MONOTONIC);   \
-                        CMR_LOGI("timestamp = %lld.", timestamp/1000000);  \
-		} while(0)
+	do {                                                       \
+		nsecs_t timestamp = systemTime(CLOCK_MONOTONIC);   \
+		CMR_LOGI("timestamp = %ld.", timestamp/1000000);  \
+	} while(0)
 
 #define CMR_PRINT_TIME_V                                                     \
-		do {                                                       \
-                        nsecs_t timestamp = systemTime(CLOCK_MONOTONIC);   \
-                        CMR_LOGV("timestamp = %lld.", timestamp/1000000);  \
-		} while(0)
+	do {                                                       \
+		nsecs_t timestamp = systemTime(CLOCK_MONOTONIC);   \
+		CMR_LOGV("timestamp = %ld.", timestamp/1000000);  \
+	} while(0)
+#else
+#define CMR_PRINT_TIME                                                     \
+	do {                                                       \
+		nsecs_t timestamp = systemTime(CLOCK_MONOTONIC);   \
+		CMR_LOGI("timestamp = %lld.", timestamp/1000000);  \
+	} while(0)
 
+#define CMR_PRINT_TIME_V                                                     \
+	do {                                                       \
+		nsecs_t timestamp = systemTime(CLOCK_MONOTONIC);   \
+		CMR_LOGV("timestamp = %lld.", timestamp/1000000);  \
+	} while(0)
+#endif
 
 #define CMR_PERROR                                                     \
-		do {                                                       \
-                        CMR_LOGE("device.errno %d %s", errno, strerror(errno)); \
-		} while(0)
+	do {                                                       \
+		CMR_LOGE("device.errno %d %s", errno, strerror(errno)); \
+	} while(0)
 
 #ifndef MIN
 #define MIN(x,y) (((x)<(y))?(x):(y))
