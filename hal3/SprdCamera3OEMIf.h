@@ -185,6 +185,8 @@ public:
 	void enablePowerHint();
 	void disablePowerHint();
 	int changeDfsPolicy(int dfs_policy);
+	int setDfsPolicy(int dfs_policy);
+	int releaseDfsPolicy(int dfs_policy);
 	int IommuIsEnabled(void);
 	int stopMultiLayer();
 	void setSensorCloseFlag();
@@ -513,6 +515,7 @@ private:
 	uint32_t                        mTimeCoeff;
 	uint32_t                        mPreviewBufferUsage;
 	uint32_t                        mOriginalPreviewBufferUsage;
+	uint32_t 			mCameraDfsPolicyCur;
 
 	/*callback thread*/
 	cmr_handle               mCameraHandle;

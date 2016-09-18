@@ -101,7 +101,8 @@ enum DFS_POLICY {
 	CAM_LOW,
 	CAM_HIGH,
 };
-#define CAM_EXIT_STR          "exit"
+
+//#define CAM_EXIT_STR          "exit"
 #define CAM_LOW_STR           "camlow"
 #define CAM_HIGH_STR          "camhigh"
 
@@ -298,7 +299,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mFlashCaptureFlag(0),
 	mFlashCaptureSkipNum(1),
 	mFlagMultiLayerStart(false),
-	mIommuEnabled(false)
+	mIommuEnabled(false),
+	mCameraDfsPolicyCur(CAM_EXIT)
 
 {
 	//mIsPerformanceTestable = sprd_isPerformanceTestable();
@@ -712,6 +714,9 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type, uint32_t frame_n
 		}
 		case CAMERA_CHANNEL_TYPE_PICTURE:
 		{
+			changeDfsPolicy(CAM_HIGH);
+			HAL_LOGI("take picture: set dfs CAM_HIGH");
+
 			if (mSprdBurstModeEnabled == 1 && mSprdZslEnabled == 1) {
 				ret = zslTakePicture();
 			}else {
@@ -1330,6 +1335,44 @@ void SprdCamera3OEMIf::disablePowerHint()
 
 int SprdCamera3OEMIf::changeDfsPolicy(int dfs_policy)
 {
+	switch (dfs_policy) {
+		case CAM_EXIT:
+			if(CAM_LOW == mCameraDfsPolicyCur){
+				releaseDfsPolicy(CAM_LOW);
+			}else if(CAM_HIGH == mCameraDfsPolicyCur){
+				releaseDfsPolicy(CAM_HIGH);
+			}
+			mCameraDfsPolicyCur = CAM_EXIT;
+			break;
+		case CAM_LOW:
+			if(CAM_EXIT == mCameraDfsPolicyCur){
+				setDfsPolicy(CAM_LOW);
+			}else if(CAM_HIGH == mCameraDfsPolicyCur){
+				setDfsPolicy(CAM_LOW);
+				releaseDfsPolicy(CAM_HIGH);
+			}
+			mCameraDfsPolicyCur = CAM_LOW;
+			break;
+		case CAM_HIGH:
+			if(CAM_EXIT == mCameraDfsPolicyCur){
+				setDfsPolicy(CAM_HIGH);
+			}else if(CAM_LOW == mCameraDfsPolicyCur){
+				setDfsPolicy(CAM_HIGH);
+				releaseDfsPolicy(CAM_LOW);
+			}
+			mCameraDfsPolicyCur = CAM_HIGH;
+			break;
+		default:
+			HAL_LOGW("unrecognize dfs policy");
+			break;
+	}
+	HAL_LOGI("mCameraDfsPolicyCur: %d", mCameraDfsPolicyCur);
+	return NO_ERROR;
+}
+
+
+int SprdCamera3OEMIf::setDfsPolicy(int dfs_policy)
+{
 	const char* dfs_scene = NULL;
 	const char* const scenario_dfs = "/sys/class/devfreq/scene-frequency/sprd_governor/scenario_dfs";
 	FILE* fp = fopen(scenario_dfs, "wb");
@@ -1337,29 +1380,48 @@ int SprdCamera3OEMIf::changeDfsPolicy(int dfs_policy)
 		HAL_LOGW("failed to open %s X", scenario_dfs);
 		return BAD_VALUE;
 	}
-
 	switch (dfs_policy) {
-		case CAM_EXIT:
-			dfs_scene = CAM_EXIT_STR;
-			break;
-
 		case CAM_LOW:
 			dfs_scene = CAM_LOW_STR;
 			break;
-
 		case CAM_HIGH:
 			dfs_scene = CAM_HIGH_STR;
 			break;
-
 		default:
 			HAL_LOGW("unrecognize dfs policy");
-		break;
+			break;
 	}
-
 	HAL_LOGD("dfs_scene: %s", dfs_scene);
 	// echo dfs_scene > scenario_dfs
 	fprintf(fp, "%s", dfs_scene);
+	fclose(fp);
+	fp = NULL;
+	return NO_ERROR;
+}
 
+int SprdCamera3OEMIf::releaseDfsPolicy(int dfs_policy)
+{
+	const char* dfs_scene = NULL;
+	const char* const scenario_dfs = "/sys/class/devfreq/scene-frequency/sprd_governor/exit_scene";
+	FILE* fp = fopen(scenario_dfs, "wb");
+	if (NULL == fp) {
+		HAL_LOGW("failed to open %s X", scenario_dfs);
+		return BAD_VALUE;
+	}
+	switch (dfs_policy) {
+		case CAM_LOW:
+			dfs_scene = CAM_LOW_STR;
+			break;
+		case CAM_HIGH:
+			dfs_scene = CAM_HIGH_STR;
+			break;
+		default:
+			HAL_LOGW("unrecognize dfs policy");
+			break;
+	}
+	HAL_LOGD("release dfs_scene: %s", dfs_scene);
+	// echo dfs_scene > scenario_dfs
+	fprintf(fp, "%s", dfs_scene);
 	fclose(fp);
 	fp = NULL;
 	return NO_ERROR;
@@ -2417,9 +2479,11 @@ int SprdCamera3OEMIf::startPreviewInternal()
 
 	if (mRecordingMode == false && sprddefInfo.sprd_zsl_enabled == 1) {
 		mSprdZslEnabled = true;
+		changeDfsPolicy(CAM_HIGH);
 	} else if ((mRecordingMode == true && sprddefInfo.slowmotion > 1) ||
 		   (mRecordingMode == true && mVideoSnapshotType == 1)) {
 		mSprdZslEnabled = false;
+		changeDfsPolicy(CAM_HIGH);
 	} else if (mRecordingMode == true &&
 		   mVideoWidth != 0 &&
 		   mVideoHeight != 0 &&
@@ -2430,6 +2494,7 @@ int SprdCamera3OEMIf::startPreviewInternal()
 		   mRawHeight != 0 &&
 		   mRawWidth != 0) {
 		mSprdZslEnabled = true;
+		changeDfsPolicy(CAM_HIGH);
 	}else if (mSprd3dCalibrationEnabled == true &&
 		   mRawHeight != 0 &&
 		   mRawWidth != 0) {
@@ -3079,7 +3144,10 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 		miSPreviewFirstFrame = 0;
 
 		disablePowerHint();
-
+		if (mSprdZslEnabled == 0){
+			changeDfsPolicy(CAM_LOW);
+			HAL_LOGI("after first non-zsl preview: set dfs CAM_LOW");
+		}
 	}
 
 SPRD_DEF_Tag sprddefInfo;
@@ -3954,6 +4022,11 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame)
 	if (1 == mHDRPowerHint) {
 		disablePowerHint();
 		mHDRPowerHintFlag = 0;
+	}
+
+	if ((mSprdZslEnabled == 0) || (mSprdZslEnabled == 1 && mRecordingMode == true)) {
+		changeDfsPolicy(CAM_LOW);
+		HAL_LOGI("after take picture,enter non-zsl preview: set dfs CAM_LOW");
 	}
 
 	HAL_LOGD("X");
