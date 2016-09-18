@@ -3337,7 +3337,8 @@ exit:
 static cmr_int aealtek_set_sof_to_lib(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct aealtek_exposure_param exp_param)
 {
 	cmr_int ret = ISP_ERROR;
-
+	cmr_u32 frame_len_cur = 0;
+	cmr_u32 min_frame_length = 0;
 	cmr_int lib_ret = 0;
 	struct alaeruntimeobj_t *obj_ptr = NULL;
 	struct ae_set_param_t in_param;
@@ -3360,8 +3361,14 @@ static cmr_int aealtek_set_sof_to_lib(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 	param_ct_ptr->sof_notify_param.exp_linecount = exp_param.exp_line;
 	param_ct_ptr->sof_notify_param.exp_adgain = exp_param.gain;
 	param_ct_ptr->sof_notify_param.exp_time = exp_param.exp_time;
-	param_ct_ptr->sof_notify_param.cuFPS = 100*(SENSOR_EXP_US_BASE/((exp_param.exp_line+exp_param.dummy)*cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time));
-
+	min_frame_length = cxt_ptr->cur_status.min_frame_length;
+	frame_len_cur = (exp_param.exp_line > min_frame_length) ? exp_param.exp_line:min_frame_length;
+	if (frame_len_cur >= exp_param.exp_line) {
+		param_ct_ptr->sof_notify_param.cuFPS = 100*(SENSOR_EXP_US_BASE/(frame_len_cur *cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time));
+	} else {
+		param_ct_ptr->sof_notify_param.cuFPS = 100*(SENSOR_EXP_US_BASE/((exp_param.exp_line+exp_param.dummy)*cxt_ptr->nxt_status.ui_param.work_info.resolution.line_time));
+	}
+	ISP_LOGV("sof_index =%ld linecount=%d dummy=%d cuFPS=%d !",in_ptr->sof_param.frame_index,exp_param.exp_line,exp_param.dummy,param_ct_ptr->sof_notify_param.cuFPS/100 );
 	in_param.ae_set_param_type = type;
 	if (obj_ptr && obj_ptr->set_param)
 		lib_ret = obj_ptr->set_param(&in_param, output_param_ptr, obj_ptr->ae);
@@ -3648,6 +3655,9 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	cxt_ptr->sensor_exp_data.write_exp.gain = out_write.gain;
 	cxt_ptr->sensor_exp_data.write_exp.dummy = out_write.dummy;
 
+	ret = aealtek_set_dummy(cxt_ptr, &cxt_ptr->sensor_exp_data.actual_exp);
+	if(ret)
+		ISP_LOGW("warning set_dummy ret=%ld !!!", ret);
 	ret = aealtek_set_sof_to_lib(cxt_ptr, in_ptr, cxt_ptr->sensor_exp_data.actual_exp);
 	if (ret)
 		goto exit;
