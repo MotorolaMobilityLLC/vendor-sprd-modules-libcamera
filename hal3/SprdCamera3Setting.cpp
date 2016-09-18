@@ -3840,7 +3840,7 @@ SprdCamera3Setting::translateLocalToFwMetadata()
 	if(mCameraId == 0){// && s_setting[mCameraId].otpInfo.otp_data){ // "s_setting[mCameraId].otpInfo.otp_data" always "true"
 		camMetadata.update(ANDROID_SPRD_OTP_DATA, s_setting[mCameraId].otpInfo.otp_data,SPRD_DUAL_OTP_SIZE);
 	}
-	if(mCameraId == 0 && s_setting[mCameraId].vcmInfo.vcm_step){
+	if(mCameraId == 0){
 		camMetadata.update(ANDROID_SPRD_VCM_STEP, &(s_setting[mCameraId].vcmInfo.vcm_step), 1);
 	}
 
