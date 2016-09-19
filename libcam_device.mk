@@ -28,6 +28,7 @@ TUNING_BIN += ov2680_mipi_raw_shading.bin
 TUNING_BIN += s5k3l8xxm3_mipi_raw_3a.bin
 TUNING_BIN += s5k3l8xxm3_mipi_raw_shading.bin
 TUNING_BIN += s5k3l8xxm3_mipi_raw_caf.bin
+TUNING_BIN += s5k3l8xxm3_mipi_raw_cbc.bin
 TUNING_BIN += ov8856_mipi_raw_3a.bin
 TUNING_BIN += ov8856_mipi_raw_shading.bin
 TUNING_BIN += ov8856_mipi_raw_caf.bin
