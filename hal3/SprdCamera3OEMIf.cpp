@@ -2563,6 +2563,7 @@ int SprdCamera3OEMIf::startPreviewInternal()
 			stopPreviewInternal();
 	}
 	mRestartFlag = false;
+	mZslNum = 2;
 
 	if (mRecordingMode == false && sprddefInfo.sprd_zsl_enabled == 1) {
 		mSprdZslEnabled = true;
@@ -2577,6 +2578,7 @@ int SprdCamera3OEMIf::startPreviewInternal()
 		   mCaptureWidth != 0 &&
 		   mCaptureHeight != 0) {
 		mSprdZslEnabled = true;
+		mZslNum = 3;
 	} else if (mSprdRefocusEnabled == true &&
 		   mRawHeight != 0 &&
 		   mRawWidth != 0) {
