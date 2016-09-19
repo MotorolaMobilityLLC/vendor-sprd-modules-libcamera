@@ -1809,7 +1809,7 @@ bool SprdCamera3OEMIf::checkPreviewStateForCapture()
 		ret = false;
 	} else {
 		tmpState = getPreviewState();
-		if (iSZslMode()||mSprdZslEnabled) {
+		if (iSZslMode()||mSprdZslEnabled || mVideoSnapshotType == 1) {
 			if (SPRD_PREVIEW_IN_PROGRESS != tmpState) {
 				HAL_LOGE("incorrect preview status %d of ZSL capture mode", (uint32_t)tmpState);
 				ret = false;
