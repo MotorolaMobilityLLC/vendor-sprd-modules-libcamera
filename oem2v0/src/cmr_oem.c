@@ -5129,7 +5129,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 		if(cxt->burst_mode) {
 			isp_raw_buf_num = 4;
  		} else {
-			isp_raw_buf_num = 1;
+			isp_raw_buf_num = 3;
 		}
 		raw_buf_size = (((isp_param.size.w * 4 / 3 + 7) >> 3) << 3) * isp_param.size.h;
 		tmp_buf_size = isp_param.size.w * isp_param.size.h * 27 / 10;
