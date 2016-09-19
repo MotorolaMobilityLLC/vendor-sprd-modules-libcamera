@@ -2990,6 +2990,8 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 
 	#define GET_VALUE_IF_DIF(x, y, tag) \
 		if (((x) != (y)) || ((x) == (y) && (x) == 0)) {\
+			if ((x) != (y))\
+				rc++;\
 			(x) = (y);\
 			pushAndroidParaTag(tag);\
 		}
@@ -3159,9 +3161,9 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 	}
 
 	if (frame_settings.exists(ANDROID_JPEG_THUMBNAIL_QUALITY) && is_capture) {
-		s_setting[mCameraId].jpgInfo.thumbnail_quality = frame_settings.find(ANDROID_JPEG_THUMBNAIL_QUALITY).data.u8[0];
+		valueU8 = frame_settings.find(ANDROID_JPEG_THUMBNAIL_QUALITY).data.u8[0];
+		GET_VALUE_IF_DIF(s_setting[mCameraId].jpgInfo.thumbnail_quality, valueU8, ANDROID_JPEG_THUMBNAIL_QUALITY)
 		HAL_LOGV("thumnail quality %d", s_setting[mCameraId].jpgInfo.thumbnail_quality);
-		pushAndroidParaTag(ANDROID_JPEG_THUMBNAIL_QUALITY);
 	}
 
 	if (frame_settings.exists(ANDROID_JPEG_THUMBNAIL_SIZE) && is_capture) {
@@ -3223,15 +3225,15 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 	}
 
 	if (frame_settings.exists(ANDROID_FLASH_MODE)) {
-		s_setting[mCameraId].flashInfo.mode = frame_settings.find(ANDROID_FLASH_MODE).data.u8[0];
+		valueU8 = frame_settings.find(ANDROID_FLASH_MODE).data.u8[0];
+		GET_VALUE_IF_DIF(s_setting[mCameraId].flashInfo.mode, valueU8, ANDROID_FLASH_MODE)
 		HAL_LOGD("flash mode %d",s_setting[mCameraId].flashInfo.mode);
-		pushAndroidParaTag(ANDROID_FLASH_MODE);
 	}
 
 	if (frame_settings.exists(ANDROID_CONTROL_AE_MODE)) {
-		s_setting[mCameraId].controlInfo.ae_mode = frame_settings.find(ANDROID_CONTROL_AE_MODE).data.u8[0];
+	valueU8 = frame_settings.find(ANDROID_CONTROL_AE_MODE).data.u8[0];
 		HAL_LOGV("ae mode %d",s_setting[mCameraId].controlInfo.ae_mode);
-		pushAndroidParaTag(ANDROID_CONTROL_AE_MODE);
+		GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.ae_mode,valueU8,ANDROID_CONTROL_AE_MODE)
 	}
 
 	if (frame_settings.exists(ANDROID_CONTROL_AE_LOCK)) {
@@ -3242,22 +3244,20 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 
 	if (frame_settings.exists(ANDROID_CONTROL_SCENE_MODE)) {
 		valueU8 = frame_settings.find(ANDROID_CONTROL_SCENE_MODE).data.u8[0];
-
-		s_setting[mCameraId].controlInfo.scene_mode = valueU8;
-		pushAndroidParaTag(ANDROID_CONTROL_SCENE_MODE);
+		GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.scene_mode, valueU8, ANDROID_CONTROL_SCENE_MODE)
 		HAL_LOGV("scene %d", valueU8);
 	}
 
 	if (frame_settings.exists(ANDROID_CONTROL_EFFECT_MODE)) {
-		s_setting[mCameraId].controlInfo.effect_mode = frame_settings.find(ANDROID_CONTROL_EFFECT_MODE).data.u8[0];
-		pushAndroidParaTag(ANDROID_CONTROL_EFFECT_MODE);
-		HAL_LOGV("effect %d", s_setting[mCameraId].controlInfo.effect_mode);
+		valueU8 = frame_settings.find(ANDROID_CONTROL_EFFECT_MODE).data.u8[0];
+		GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.effect_mode, valueU8, ANDROID_CONTROL_EFFECT_MODE)
+		HAL_LOGV("effect %d", valueU8);
 	}
 
 	if (frame_settings.exists(ANDROID_CONTROL_AWB_MODE)) {
-		s_setting[mCameraId].controlInfo.awb_mode = frame_settings.find(ANDROID_CONTROL_AWB_MODE).data.u8[0];
-		pushAndroidParaTag(ANDROID_CONTROL_AWB_MODE);
-		HAL_LOGV("awb %d", s_setting[mCameraId].controlInfo.awb_mode);
+		valueU8 = frame_settings.find(ANDROID_CONTROL_AWB_MODE).data.u8[0];
+		GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.awb_mode, valueU8, ANDROID_CONTROL_AWB_MODE)
+		HAL_LOGV("awb %d", valueU8);
 	}
 
 	if (frame_settings.exists(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)) {
@@ -3277,9 +3277,8 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 
 	if (frame_settings.exists(ANDROID_CONTROL_AE_ANTIBANDING_MODE)) {
 		valueU8 = frame_settings.find(ANDROID_CONTROL_AE_ANTIBANDING_MODE).data.u8[0];
-		s_setting[mCameraId].controlInfo.ae_abtibanding_mode = valueU8;
-		pushAndroidParaTag(ANDROID_CONTROL_AE_ANTIBANDING_MODE);
-		HAL_LOGD("ANDROID_CONTROL_AE_ANTIBANDING_MODE %d",valueU8);
+		GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.ae_abtibanding_mode, valueU8, ANDROID_CONTROL_AE_ANTIBANDING_MODE)
+		HAL_LOGV("ANDROID_CONTROL_AE_ANTIBANDING_MODE %d %d",valueU8);
 	}
 //SPRD
 	if (frame_settings.exists(ANDROID_SPRD_CAPTURE_MODE)) {
@@ -3370,8 +3369,8 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 
 	/**add for 3d calibration update metadata begin*/
 	if (frame_settings.exists(ANDROID_SPRD_3DCALIBRATION_ENABLED)) {
-		s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled =  frame_settings.find(ANDROID_SPRD_3DCALIBRATION_ENABLED).data.u8[0];
-		pushAndroidParaTag(ANDROID_SPRD_3DCALIBRATION_ENABLED);
+		valueU8 = frame_settings.find(ANDROID_SPRD_3DCALIBRATION_ENABLED).data.u8[0];
+		GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled, valueU8, ANDROID_SPRD_3DCALIBRATION_ENABLED)
 		HAL_LOGD("sprd_3dcalibration_enabled %d", s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled);
 	}
     else
@@ -3405,6 +3404,8 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 	}
 
 //SCALER
+
+	int32_t needUpdate = false;
 	if (frame_settings.exists(ANDROID_SCALER_CROP_REGION)) {
 		int32_t x = frame_settings.find(ANDROID_SCALER_CROP_REGION).data.i32[0];
 		int32_t y = frame_settings.find(ANDROID_SCALER_CROP_REGION).data.i32[1];
@@ -3419,7 +3420,9 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 			s_setting[mCameraId].scalerInfo.crop_region[2] = w;
 			s_setting[mCameraId].scalerInfo.crop_region[3] = h;
 			//pushAndroidParaTag(ANDROID_SCALER_CROP_REGION);
+			needUpdate = true;
 		}
+		if (needUpdate == true )
 		pushAndroidParaTag(ANDROID_SCALER_CROP_REGION);
 		HAL_LOGD("crop %d %d %d %d", x, y, w, h);
 	}
@@ -3428,8 +3431,10 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 	if (frame_settings.exists(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER)) {
 		valueU8 = frame_settings.find(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER).data.u8[0];
 		s_setting[mCameraId].controlInfo.ae_precap_trigger = valueU8;
+		if(valueU8==1){
 		pushAndroidParaTag(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER);
 		HAL_LOGD("AE precap trigger status = %d", valueU8);
+		}
 	}
 	if (frame_settings.exists(ANDROID_CONTROL_AE_PRECAPTURE_ID)) {
 		s_setting[mCameraId].controlInfo.ae_precapture_id = frame_settings.find(ANDROID_CONTROL_AE_PRECAPTURE_ID).data.i32[0];
@@ -3437,10 +3442,13 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 		HAL_LOGD("AE precap trigger id = %d", s_setting[mCameraId].controlInfo.ae_precapture_id);
 	}
 	if (frame_settings.exists(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)) {
+		if((s_setting[mCameraId].controlInfo.ae_target_fps_range[1] !=frame_settings.find(ANDROID_CONTROL_AE_TARGET_FPS_RANGE).data.i32[1])) {
+			HAL_LOGV("AE target fps min %d, max %d", s_setting[mCameraId].controlInfo.ae_target_fps_range[0], s_setting[mCameraId].controlInfo.ae_target_fps_range[1]);
+			pushAndroidParaTag(ANDROID_CONTROL_AE_TARGET_FPS_RANGE);
+		}
 		s_setting[mCameraId].controlInfo.ae_target_fps_range[0] = frame_settings.find(ANDROID_CONTROL_AE_TARGET_FPS_RANGE).data.i32[0];
 		s_setting[mCameraId].controlInfo.ae_target_fps_range[1] = frame_settings.find(ANDROID_CONTROL_AE_TARGET_FPS_RANGE).data.i32[1];
-		HAL_LOGD("AE target fps min %d, max %d", s_setting[mCameraId].controlInfo.ae_target_fps_range[0], s_setting[mCameraId].controlInfo.ae_target_fps_range[1]);
-		pushAndroidParaTag(ANDROID_CONTROL_AE_TARGET_FPS_RANGE);
+		HAL_LOGV("AE target fps min %d, max %d", s_setting[mCameraId].controlInfo.ae_target_fps_range[0], s_setting[mCameraId].controlInfo.ae_target_fps_range[1]);
 	}
 	if (frame_settings.exists(ANDROID_CONTROL_AE_REGIONS) && frame_settings.exists(ANDROID_SCALER_CROP_REGION)) {
 		int32_t crop_area[5] = {0};
@@ -3525,8 +3533,8 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 		HAL_LOGD("AF trig id %d", s_setting[mCameraId].controlInfo.af_trigger_Id);
 	}
 	if (frame_settings.exists(ANDROID_CONTROL_AF_MODE)) {
-		s_setting[mCameraId].controlInfo.af_mode = frame_settings.find(ANDROID_CONTROL_AF_MODE).data.u8[0];
-		pushAndroidParaTag(ANDROID_CONTROL_AF_MODE);
+		valueU8 = frame_settings.find(ANDROID_CONTROL_AF_MODE).data.u8[0];
+		GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.af_mode, valueU8, ANDROID_CONTROL_AF_MODE)
 		HAL_LOGD("AF trig mode %d", s_setting[mCameraId].controlInfo.af_mode);
 	}
 	if (frame_settings.exists(ANDROID_CONTROL_AF_STATE)) {
