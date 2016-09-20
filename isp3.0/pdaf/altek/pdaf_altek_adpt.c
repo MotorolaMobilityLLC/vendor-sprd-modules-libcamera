@@ -41,7 +41,7 @@ struct pdaf_altek_lib_ops {
 	cmr_u8 (*init)(void *a_pInPDPackData);
 	cmr_u8 (*calc)(float *a_pfOutPDValue, void *a_tOutPdReg, void *a_pInImageBuf_left,
 				void *a_pInImageBuf_right, unsigned short a_uwInWidth, unsigned short a_uwInHeight,
-				alPD_RECT a_tInWOI, DataBit a_tInBits, PDInReg *a_tInPdReg);
+				alGE_RECT a_tInWOI, DataBit a_tInBits, PDInReg *a_tInPdReg);
 	cmr_u8 (*deinit)(void);
 	cmr_u8 (*reset)(void);
 };
@@ -80,7 +80,7 @@ struct pdaf_altek_context {
 	void *pd_left;
 	void *pd_right;
 	alPD_RECT roi;
-	alPD_RECT pdroi;
+	alGE_RECT pdroi;
 	DataBit bit;
 	PDInReg pd_reg_in;
 	cmr_u8 pd_reg_out[PD_REG_OUT_SIZE];
@@ -202,8 +202,8 @@ static cmr_int pdafaltek_adpt_get_version(cmr_handle adpt_handle)
 	cmr_u8 version[256] ={ 0 };
 
 	ISP_CHECK_HANDLE_VALID(adpt_handle);
-	ret = cxt->lib_api.pdaf_altek_version(&version, sizeof(version));
-
+	//ret = cxt->lib_api.pdaf_altek_version(&version, sizeof(version));
+	ret = alPDAF_VersionInfo_Get(&version, sizeof(version));
 	ISP_LOGI("version %s", version);
 	return ret;
 }
@@ -291,7 +291,8 @@ static cmr_int pdafaltek_adpt_set_config(cmr_handle adpt_handle, struct pdaf_ctr
 	}
 	if (in->pd_config->type & ISP3A_PD_CONFIG_RESET) {
 		cxt->frame_id = 0;
-		ret = cxt->ops.reset();
+		//ret = cxt->ops.reset();
+		ret = alPDAF_Reset();
 		ISP_LOGI("pd reset");
 	}
 
@@ -419,11 +420,11 @@ static cmr_int pdafaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 			 cxt->pd_reg_in.tSensorInfo.uwInfVCM,
 			 cxt->pd_reg_in.tSensorInfo.uwMacroVCM);
 
-	ret = pdafaltek_libops_init(cxt);
-	if (ret) {
-		ISP_LOGE("failed to init library and ops");
-		goto exit;
-	}
+	//ret = pdafaltek_libops_init(cxt);
+	//if (ret) {
+	//	ISP_LOGE("failed to init library and ops");
+	//	goto exit;
+	//}
 
 	/* show version */
 	pdafaltek_adpt_get_version(cxt);
@@ -437,7 +438,8 @@ static cmr_int pdafaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 	}
 	fread(cxt->otp_test, 1, PD_OTP_TEST_SIZE, fp);
 	fclose(fp);
-	ret = cxt->ops.init(cxt->otp_test);
+	//ret = cxt->ops.init(cxt->otp_test);
+	ret = alPDAF_Initial(cxt->otp_test);
 #else
 	ret = cxt->ops.init(in_p->pdaf_otp.otp_data);
 #endif
@@ -454,7 +456,7 @@ static cmr_int pdafaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 	return ret;
 
 error_lib_init:
-	pdafaltek_libops_deinit(cxt);
+	//pdafaltek_libops_deinit(cxt);
 exit:
 	if (cxt) {
 		if (cxt->pd_right) {
@@ -479,8 +481,10 @@ static cmr_int pdafaltek_adpt_deinit(cmr_handle adpt_handle)
 	ISP_LOGI("cxt = %p", cxt);
 	if (cxt) {
 		/* deinit lib */
-		ret = cxt->ops.deinit();
-		ret = pdafaltek_libops_deinit(cxt);
+		//ret = cxt->ops.deinit();
+		ret = alPDAF_Close();
+		//ret = pdafaltek_libops_deinit(cxt);
+
 		if (cxt->pd_right) {
 			free(cxt->pd_right);
 			cxt->pd_right = NULL;
@@ -652,7 +656,9 @@ static cmr_int pdafaltek_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 			cxt->roi.m_wLeft, cxt->roi.m_wTop,
 			cxt->roi.m_wWidth, cxt->roi.m_wHeight);
 
-	ret = cxt->extract_ops.getsize(&cxt->pd_info, &cxt->roi, cxt->image_width, cxt->image_height,
+	//ret = cxt->extract_ops.getsize(&cxt->pd_info, &cxt->roi, cxt->image_width, cxt->image_height,
+							//(cmr_u16 *)&cxt->pdroi.m_wWidth, (cmr_u16 *)&cxt->pdroi.m_wHeight);
+	ret = alPDExtract_GetSize(&cxt->pd_info, &cxt->roi, cxt->image_width, cxt->image_height,
 							(cmr_u16 *)&cxt->pdroi.m_wWidth, (cmr_u16 *)&cxt->pdroi.m_wHeight);
 	if (ret) {
 		ISP_LOGE("failed to get pd data size%ld", ret);
@@ -660,7 +666,9 @@ static cmr_int pdafaltek_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	}
 	ISP_LOGI("pd size %d, %d,", cxt->pdroi.m_wWidth, cxt->pdroi.m_wHeight);
 
-	ret = cxt->extract_ops.extract((cmr_u8 *)proc_in->pd_raw.addr, &cxt->roi, cxt->image_width, cxt->image_height,
+	//ret = cxt->extract_ops.extract((cmr_u8 *)proc_in->pd_raw.addr, &cxt->roi, cxt->image_width, cxt->image_height,
+							//(cmr_u16 *)cxt->pd_left, (cmr_u16 *)cxt->pd_right);
+	ret = alPDExtract_Run((cmr_u8 *)proc_in->pd_raw.addr, &cxt->roi, cxt->image_width, cxt->image_height,
 							(cmr_u16 *)cxt->pd_left, (cmr_u16 *)cxt->pd_right);
 	if (ret) {
 		ISP_LOGE("failed to extract pd data %ld", ret);
@@ -704,7 +712,9 @@ static cmr_int pdafaltek_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	ISP_LOGI("dBv %f, vcm current %d",
 			cxt->pd_reg_in.dBv, cxt->pd_reg_in.dcurrentVCM);
 
-	ret = cxt->ops.calc(&cxt->report_data.pd_value, cxt->report_data.pd_reg_out, cxt->pd_left, cxt->pd_right,
+	//ret = cxt->ops.calc(&cxt->report_data.pd_value, cxt->report_data.pd_reg_out, cxt->pd_left, cxt->pd_right,
+					//cxt->pdroi.m_wWidth, cxt->pdroi.m_wHeight, cxt->pdroi, cxt->bit, &cxt->pd_reg_in);
+	ret = alPDAF_Calculate(&cxt->report_data.pd_value, cxt->report_data.pd_reg_out, cxt->pd_left, cxt->pd_right,
 					cxt->pdroi.m_wWidth, cxt->pdroi.m_wHeight, cxt->pdroi, cxt->bit, &cxt->pd_reg_in);
 	if (ret) {
 		ISP_LOGE("failed to calc pd data %ld", ret);

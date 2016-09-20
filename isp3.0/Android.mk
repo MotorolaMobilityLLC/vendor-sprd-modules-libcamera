@@ -58,7 +58,7 @@ LOCAL_MODULE := libcamisp
 
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_SHARED_LIBRARIES := libcutils libutils libdl libcamcommon
+LOCAL_SHARED_LIBRARIES := libcutils libutils libdl libcamcommon libalPDAF libalPDExtract
 
 include $(BUILD_SHARED_LIBRARY)
 

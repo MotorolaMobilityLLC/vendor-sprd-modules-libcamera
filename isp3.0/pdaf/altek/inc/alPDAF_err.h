@@ -12,11 +12,11 @@ SPECIFIC PURPOSE, AND THIS FILE (OR DOCUMENT) DOES NOT
 CONSTITUTE A FEEDBACK TO ANY KIND.
 */
 
-//#include "../../arithmetic/inc/alGE.h"
+#include "alPD.h"
 
 #define alPDAF_ERR_MODULE                   0x76000//483328
-#define alPDAF_ERR_CODE                     int
-#define alPDAF_ERR_SUCCESS                  0x00
+#define alPDAF_ERR_CODE                     alGE_ERR_CODE
+#define alPDAF_ERR_SUCCESS                  alGE_ERR_SUCCESS
 #define alPDAF_ERR_BUFFER_SIZE_TOO_SMALL    (alPDAF_ERR_MODULE+0x00000001) //483329
 #define alPDAF_ERR_BUFFER_IS_NULL           (alPDAF_ERR_MODULE+0x00000002) //483330
 
