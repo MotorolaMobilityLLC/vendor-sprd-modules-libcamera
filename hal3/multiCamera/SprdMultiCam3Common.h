@@ -118,6 +118,7 @@ typedef struct {
     uint32_t frame_number;
     uint64_t timestamp;
     buffer_handle_t* buffer;
+    int status;
     int vcmSteps;
 } hwi_frame_buffer_info_t;
 
@@ -125,18 +126,21 @@ typedef struct {
     uint32_t frame_number;
     const camera3_stream_buffer_t *input_buffer;
     camera3_stream_t *stream;
-    buffer_handle_t *buffer1;
-    buffer_handle_t *buffer2;
+    buffer_handle_t *buffer1;//main sensor
+    int status1;
+    buffer_handle_t *buffer2;//aux sensor
+    int status2;
     int vcmSteps;
 } frame_matched_info_t;
 
 
 typedef struct {
     uint32_t frame_number;
+    int showPreviewDeviceId;
     buffer_handle_t*  buffer;
     camera3_stream_t *stream;
     camera3_stream_buffer_t* input_buffer;
-}old_video_request;
+}old_request;
 
 typedef struct {
     buffer_handle_t* buffer;

@@ -106,17 +106,21 @@ camera3_callback_ops SprdCamera3StereoVideo::callback_ops_aux = {
  *==========================================================================*/
 SprdCamera3StereoVideo::SprdCamera3StereoVideo()
 {
-    HAL_LOGV(" E");
+    HAL_LOGD(" E");
     m_nPhyCameras = 2;//m_nPhyCameras should always be 2 with dual camera mode
-    m_VirtualCamera.id = 1;//hardcode left front camera here
+
     mStaticMetadata = NULL;
     mMuxerThread = new MuxerThread();
-    mMuxerThread->mMaxLocalBufferNum = MAX_QEQUEST_BUF;
-    mMuxerThread->mLocalBuffer = NULL;
+    mMaxLocalBufferNum = MAX_VIDEO_QEQUEST_BUF;
+    mVideoLocalBuffer = NULL;
+    mPreviewLocalBuffer = NULL;
+    mVideoLocalBufferList.clear();
+    mOldVideoRequestList.clear();
+    mPreviewLocalBufferList.clear();
+    mOldPreviewRequestList.clear();
     setupPhysicalCameras();
-    mLastWidth = 0;
-    mLastHeight = 0;
-    HAL_LOGV("X");
+    m_VirtualCamera.id = 1;//hardcode left front camera id here
+    HAL_LOGD("X");
 }
 
 /*===========================================================================
@@ -127,22 +131,25 @@ SprdCamera3StereoVideo::SprdCamera3StereoVideo()
  *==========================================================================*/
 SprdCamera3StereoVideo::~SprdCamera3StereoVideo()
 {
-    HAL_LOGV("E");
+    HAL_LOGD("E");
     mMuxerThread = NULL;
     mNotifyListAux.clear();
     mNotifyListMain.clear();
     mUnmatchedFrameListMain.clear();
     mUnmatchedFrameListAux.clear();
-    mLastWidth = 0;
-    mLastHeight = 0;
+    mPreviewLastWidth = 0;
+    mPreviewLastHeight = 0;
+    mVideoLocalBufferList.clear();
+    mOldVideoRequestList.clear();
+    mPreviewLocalBufferList.clear();
+    mOldPreviewRequestList.clear();
     if (m_pPhyCamera) {
         delete [] m_pPhyCamera;
         m_pPhyCamera = NULL;
      }
 
-    HAL_LOGV("X");
+    HAL_LOGD("X");
 }
-
 /*===========================================================================
  * FUNCTION         : freeLocalBuffer
  *
@@ -154,17 +161,18 @@ SprdCamera3StereoVideo::~SprdCamera3StereoVideo()
  *
  * RETURN             :  NONE
  *==========================================================================*/
-void SprdCamera3StereoVideo::MuxerThread::freeLocalBuffer(new_mem_t* mLocalBuffer)
+void SprdCamera3StereoVideo::freeLocalBuffer(new_mem_t* LocalBuffer, List<buffer_handle_t*>& bufferList,int bufferNum)
 {
-    mLocalBufferList.clear();
-    for(size_t i = 0; i < mMaxLocalBufferNum; i++){
-        if(mLocalBuffer[i].buffer != NULL){
-            delete ((private_handle_t*)*(mLocalBuffer[i].buffer));
-            delete mLocalBuffer[i].pHeapIon;
-            *(mLocalBuffer[i].buffer) = NULL;
+    HAL_LOGD("free local buffer,bufferNum=%d",bufferNum);
+    bufferList.clear();
+    for(size_t i = 0; i < bufferNum; i++){
+        if(LocalBuffer[i].buffer != NULL){
+            delete ((private_handle_t*)*(LocalBuffer[i].buffer));
+            delete LocalBuffer[i].pHeapIon;
+            *(LocalBuffer[i].buffer) = NULL;
         }
     }
-    free(mLocalBuffer);
+    free(LocalBuffer);
 
 }
 /*===========================================================================
@@ -187,7 +195,7 @@ void SprdCamera3StereoVideo::getCameraMuxer(SprdCamera3StereoVideo** pMuxer)
     }
     CHECK_MUXER();
     *pMuxer = mMuxer;
-    HAL_LOGV("mMuxer: %p ", mMuxer);
+    HAL_LOGD("mMuxer: %p ", mMuxer);
 
     return;
 }
@@ -210,11 +218,11 @@ int SprdCamera3StereoVideo::get_camera_info(__unused int camera_id, struct camer
 
     int rc = NO_ERROR;
 
-    HAL_LOGV("E");
+    HAL_LOGD("E");
     if(info) {
          rc = mMuxer->getCameraInfo(info);
     }
-    HAL_LOGV("X, rc: %d", rc);
+    HAL_LOGD("X, rc: %d", rc);
 
     return rc;
 }
@@ -241,14 +249,14 @@ int SprdCamera3StereoVideo::camera_device_open(
 
     int rc = NO_ERROR;
 
-    HAL_LOGV("id= %d",atoi(id));
+    HAL_LOGD("id= %d",atoi(id));
     if (!id) {
          HAL_LOGE("Invalid camera id");
         return BAD_VALUE;
      }
 
     rc =  mMuxer->cameraDeviceOpen(atoi(id), hw_device);
-    HAL_LOGV("id= %d, rc: %d", atoi(id), rc);
+    HAL_LOGD("id= %d, rc: %d", atoi(id), rc);
 
     return rc;
 }
@@ -307,8 +315,11 @@ int SprdCamera3StereoVideo::closeCameraDevice()
         sprdCam->hwi = NULL;
         sprdCam->dev = NULL;
     }
-
-    HAL_LOGV("X, rc: %d", rc);
+    mUnmatchedPreviewFrameListMain.clear();
+    mUnmatchedPreviewFrameListAux.clear();
+    freeLocalBuffer(mPreviewLocalBuffer,mPreviewLocalBufferList,MAX_PREVIEW_QEQUEST_BUF);
+    freeLocalBuffer(mVideoLocalBuffer,mVideoLocalBufferList,MAX_VIDEO_QEQUEST_BUF);
+    HAL_LOGD("X, rc: %d", rc);
 
     return rc;
 }
@@ -327,12 +338,12 @@ int SprdCamera3StereoVideo::initialize(__unused const struct camera3_device *dev
 {
     int rc = NO_ERROR;
 
-    HAL_LOGV("E");
+    HAL_LOGD("E");
     CHECK_MUXER_ERROR();
 
     rc = mMuxer->initialize(callback_ops);
 
-    HAL_LOGV("X");
+    HAL_LOGD("X");
     return rc;
 }
 
@@ -349,14 +360,14 @@ const camera_metadata_t * SprdCamera3StereoVideo::construct_default_request_sett
 {
     const camera_metadata_t* rc;
 
-    HAL_LOGV("E");
+    HAL_LOGD("E");
     if (!mMuxer) {
         HAL_LOGE("Error getting muxer ");
         return NULL;
     }
     rc = mMuxer->constructDefaultRequestSettings(device,type);
 
-    HAL_LOGV("X");
+    HAL_LOGD("X");
 
     return rc;
 }
@@ -373,12 +384,12 @@ int SprdCamera3StereoVideo::configure_streams(const struct camera3_device *devic
 {
     int rc=0;
 
-    HAL_LOGV(" E");
+    HAL_LOGD(" E");
     CHECK_MUXER_ERROR();
 
     rc = mMuxer->configureStreams(device,stream_list);
 
-    HAL_LOGV(" X");
+    HAL_LOGD(" X");
 
     return rc;
 }
@@ -442,7 +453,6 @@ void SprdCamera3StereoVideo::process_capture_result_aux(const struct camera3_cal
  *==========================================================================*/
 void SprdCamera3StereoVideo::notifyMain(const struct camera3_callback_ops *ops, const camera3_notify_msg_t* msg)
 {
-    HAL_LOGV("idx:%d", msg->message.shutter.frame_number);
     CHECK_MUXER();
     mMuxer->notifyMain(msg);
 }
@@ -457,7 +467,6 @@ void SprdCamera3StereoVideo::notifyMain(const struct camera3_callback_ops *ops, 
  *==========================================================================*/
 void SprdCamera3StereoVideo::notifyAux(const struct camera3_callback_ops *ops, const camera3_notify_msg_t* msg)
 {
-    HAL_LOGV("idx:%d", msg->message.shutter.frame_number);
     CHECK_MUXER();
     mMuxer->notifyAux(msg);
 }
@@ -493,7 +502,7 @@ void SprdCamera3StereoVideo::notifyAux(const struct camera3_callback_ops *ops, c
  *
  * RETURN     :
  *==========================================================================*/
-int SprdCamera3StereoVideo::MuxerThread::allocateOne(int w,int h, uint32_t is_cache,new_mem_t *new_mem,const native_handle_t *& nBuf )
+int SprdCamera3StereoVideo::allocateOne(int w,int h, uint32_t is_cache,new_mem_t *new_mem,const native_handle_t *& nBuf )
 {
 
     int result = 0;
@@ -501,6 +510,7 @@ int SprdCamera3StereoVideo::MuxerThread::allocateOne(int w,int h, uint32_t is_ca
     MemIon *pHeapIon = NULL;
     private_handle_t *buffer;
 
+    HAL_LOGD("E");
     mem_size = w*h*3/2 ;
     // to make it page size aligned
     //  mem_size = (mem_size + 4095U) & (~4095U);
@@ -546,7 +556,7 @@ int SprdCamera3StereoVideo::MuxerThread::allocateOne(int w,int h, uint32_t is_ca
     new_mem->buffer = &nBuf;
     new_mem->pHeapIon = pHeapIon;
 
-    HAL_LOGV("X");
+    HAL_LOGD("X");
 
     return result;
 
@@ -641,7 +651,7 @@ int SprdCamera3StereoVideo::cameraDeviceOpen(__unused int camera_id,
     int rc = NO_ERROR;
     uint32_t phyId = 0;
 
-    HAL_LOGV(" E");
+    HAL_LOGD(" E");
     hw_device_t *hw_dev[m_nPhyCameras];
     // Open all physical cameras
     for (uint32_t i = 0; i < m_nPhyCameras; i++) {
@@ -672,7 +682,7 @@ int SprdCamera3StereoVideo::cameraDeviceOpen(__unused int camera_id,
     m_VirtualCamera.dev.priv = (void*)&m_VirtualCamera;
     *hw_device = &m_VirtualCamera.dev.common;
 
-    HAL_LOGV("X");
+    HAL_LOGD("X");
     return rc;
 }
 
@@ -694,7 +704,7 @@ int SprdCamera3StereoVideo::getCameraInfo(struct camera_info *info)
 {
     int rc = NO_ERROR;
     int camera_id = m_VirtualCamera.id;
-    HAL_LOGV("E, camera_id = %d", camera_id);
+    HAL_LOGD("E, camera_id = %d", camera_id);
 
     SprdCamera3Setting::initDefaultParameters(camera_id);
 
@@ -707,7 +717,7 @@ int SprdCamera3StereoVideo::getCameraInfo(struct camera_info *info)
 
     info->device_version = CAMERA_DEVICE_API_VERSION_3_2;//CAMERA_DEVICE_API_VERSION_3_0;
     info->static_camera_characteristics = mStaticMetadata;
-    HAL_LOGV("X");
+    HAL_LOGD("X");
     return rc;
 }
 /*===========================================================================
@@ -743,9 +753,6 @@ int SprdCamera3StereoVideo::setupPhysicalCameras()
  *==========================================================================*/
 SprdCamera3StereoVideo::MuxerThread::MuxerThread()
 {
-    mIommuEnabled = 0;
-    mLocalBufferList.clear();
-    mOldVideoRequestList.clear();
     mMuxerMsgList.clear();
     mGpuApi = (GPUAPI_t*)malloc(sizeof(GPUAPI_t));
     if(mGpuApi == NULL){
@@ -757,7 +764,7 @@ SprdCamera3StereoVideo::MuxerThread::MuxerThread()
         HAL_LOGE("load gpu api failed.");
     }
 
-    HAL_LOGV("X");
+    HAL_LOGD("X");
 }
 /*===========================================================================
  * FUNCTION   :~~MuxerThread
@@ -770,17 +777,15 @@ SprdCamera3StereoVideo::MuxerThread::MuxerThread()
  *==========================================================================*/
 SprdCamera3StereoVideo::MuxerThread::~MuxerThread()
 {
-    HAL_LOGV(" E");
+    HAL_LOGD(" E");
 
-    mLocalBufferList.clear();
-    mOldVideoRequestList.clear();
     mMuxerMsgList.clear();
     if(mGpuApi != NULL){
         unLoadGpuApi();
         free(mGpuApi);
         mGpuApi = NULL;
     }
-    HAL_LOGV("X");
+    HAL_LOGD("X");
 }
 /*===========================================================================
  * FUNCTION   :loadGpuApi
@@ -793,7 +798,7 @@ SprdCamera3StereoVideo::MuxerThread::~MuxerThread()
  *==========================================================================*/
 int SprdCamera3StereoVideo::MuxerThread::loadGpuApi()
 {
-    HAL_LOGV(" E");
+    HAL_LOGD(" E");
     const char* error = NULL;
     mGpuApi->handle = dlopen(LIB_GPU_PATH, RTLD_LAZY);
     if (mGpuApi->handle == NULL) {
@@ -824,7 +829,7 @@ int SprdCamera3StereoVideo::MuxerThread::loadGpuApi()
     }
     isInitRenderContest = false;
 
-    HAL_LOGV("load Gpu Api succuss.");
+    HAL_LOGD("load Gpu Api succuss.");
 
     return 0;
 }
@@ -839,14 +844,14 @@ int SprdCamera3StereoVideo::MuxerThread::loadGpuApi()
  *==========================================================================*/
 void SprdCamera3StereoVideo::MuxerThread::unLoadGpuApi()
 {
-    HAL_LOGV("E");
+    HAL_LOGD("E");
 
     if(mGpuApi->handle!=NULL){
      dlclose(mGpuApi->handle);
      mGpuApi->handle = NULL;
     }
 
-    HAL_LOGV("X");
+    HAL_LOGD("X");
 }
 /*===========================================================================
  * FUNCTION   :initGpuData
@@ -909,6 +914,7 @@ void SprdCamera3StereoVideo::MuxerThread::initGpuData(int w,int h, int rotation)
     }
 
 }
+
 /*===========================================================================
  * FUNCTION   :threadLoop
  *
@@ -932,7 +938,7 @@ bool SprdCamera3StereoVideo::MuxerThread::threadLoop()
             {
                 //flush queue
                 HAL_LOGW("MuxerThread Stopping, mMuxerMsgList.size=%d, mOldVideoRequestList.size:%d",
-                        mMuxerMsgList.size(), mOldVideoRequestList.size());
+                        mMuxerMsgList.size(), mMuxer->mOldVideoRequestList.size());
                 for (List < muxer_queue_msg_t >::iterator i = mMuxerMsgList.begin(); i != mMuxerMsgList.end();)
                 {
                     if(i != mMuxerMsgList.end()){
@@ -946,15 +952,7 @@ bool SprdCamera3StereoVideo::MuxerThread::threadLoop()
                     }
                 }
 
-                List < old_video_request >::iterator i = mOldVideoRequestList.begin();
-                while(mOldVideoRequestList.begin() != mOldVideoRequestList.end()){
-                    i = mOldVideoRequestList.begin();
-                    videoErrorCallback(i->frame_number);
-                }
-                HAL_LOGW("MuxerThread Stopped, mMuxerMsgList.size=%d, mOldVideoRequestList.size:%d",
-                    mMuxerMsgList.size(), mOldVideoRequestList.size());
 
-                freeLocalBuffer(mLocalBuffer);
                 return false;
             }
                 break;
@@ -975,7 +973,7 @@ bool SprdCamera3StereoVideo::MuxerThread::threadLoop()
 
     waitMsgAvailable();
 
-    return true;   //rc setted 0,then the thread quits,when set rc 0
+    return true;
 }
 /*===========================================================================
  * FUNCTION   :requestExit
@@ -992,7 +990,151 @@ void SprdCamera3StereoVideo::MuxerThread::requestExit()
     muxer_msg.msg_type = MUXER_MSG_EXIT;
     mMuxerMsgList.push_back(muxer_msg);
     mMergequeueSignal.signal();
+}
 
+/*===========================================================================
+ * FUNCTION   :CallBackResult
+ *
+ * DESCRIPTION:
+ *
+ * PARAMETERS : callback metadata,notify,preview stream
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void SprdCamera3StereoVideo::CallBackResult(frame_matched_info_t* combResult)
+{
+    camera3_capture_result_t result;
+    camera3_stream_buffer_t result_buffer;
+    List <pending_Metadata_t>::iterator j= mPendingMetadataList.begin() ;
+    camera3_notify_msg_t msg ;
+    result.frame_number = combResult->frame_number;
+    int showPreviewDeviceId = CAM_TYPE_MAIN;
+    HAL_LOGV("id%d",combResult->frame_number);
+    //get show preview frame device id value
+    {
+        Mutex::Autolock l(mRequest);
+        List <old_request>::iterator i = mOldPreviewRequestList.begin();
+        while(i != mOldPreviewRequestList.end()){
+            if(i->frame_number == combResult->frame_number){
+                showPreviewDeviceId = i->showPreviewDeviceId;
+                result_buffer.stream = i->stream;
+                mOldPreviewRequestList.erase(i);
+                HAL_LOGV("id%d,showpreviewid%d",i->frame_number,showPreviewDeviceId);
+                break;
+            }
+            i++;
+        }
+    }
+    if(combResult->buffer2 == NULL){
+        showPreviewDeviceId = CAM_TYPE_MAIN;
+    }
+    //notify
+    {
+        if(showPreviewDeviceId == CAM_TYPE_MAIN){
+            Mutex::Autolock l(mNotifyLockMain);
+            for(List <camera3_notify_msg_t>::iterator i = mNotifyListMain.begin(); i !=  mNotifyListMain.end(); i++){
+                if(i->message.shutter.frame_number == combResult->frame_number){
+                    msg = *i;
+                    break;
+                }
+            }
+            }else if(showPreviewDeviceId == CAM_TYPE_AUX){
+            Mutex::Autolock l(mNotifyLockAux);
+            for(List <camera3_notify_msg_t>::iterator i = mNotifyListAux.begin(); i !=  mNotifyListAux.end(); i++){
+                if(i->message.shutter.frame_number == combResult->frame_number){
+                    msg = *i;
+                    break;
+                }
+            }
+         }
+        mCallbackOps->notify(mCallbackOps, &msg);
+    }
+  //metadata
+    {
+        Mutex::Autolock l(mPendingMetadataListLock);
+        if(showPreviewDeviceId == CAM_TYPE_MAIN){
+        for(; j !=  mPendingMetadataList.end(); j++){
+            if(j->frame_number == combResult->frame_number &&  j->CamDevice == CAM_TYPE_MAIN){
+                result.result = j->metadata;
+                result.input_buffer = NULL;
+                result.num_output_buffers = 0;
+                result.partial_result = 1;
+                break;
+            }
+        }
+         if(j ==  mPendingMetadataList.end()){
+            HAL_LOGD("don't find pendingMetata frame id=%d",result.frame_number);
+            result.result = NULL;
+            result.partial_result = 0;
+         }
+         }else  if(showPreviewDeviceId == CAM_TYPE_AUX){
+             for(; j !=  mPendingMetadataList.end(); j++){
+                 if(j->frame_number == combResult->frame_number &&  j->CamDevice == CAM_TYPE_AUX){
+                  result.result = j->metadata;
+                  result.partial_result = 1;
+                  result.num_output_buffers = 0;
+                  result.input_buffer = NULL;
+                  break;
+                }
+             }
+             if(j ==  mPendingMetadataList.end()){
+                HAL_LOGD("don't find pendingMetata frame id=%d",result.frame_number);
+                result.result = NULL;
+                result.partial_result = 0;
+
+             }
+        }
+    }
+
+    mCallbackOps->process_capture_result(mCallbackOps,&result);
+
+    if(result.result!=NULL){
+        Mutex::Autolock l(mPendingMetadataListLock);
+        free_camera_metadata(j->metadata);
+        mPendingMetadataList.erase(j);
+        for(List <pending_Metadata_t>::iterator it= mPendingMetadataList.begin() ;
+            it !=  mPendingMetadataList.end(); it++){
+            if(  it->frame_number == combResult->frame_number ){
+                free_camera_metadata(it->metadata);
+                mPendingMetadataList.erase(it);
+                break;
+               }
+           }
+        }
+    {
+        if(showPreviewDeviceId == CAM_TYPE_MAIN){
+            result_buffer.buffer = combResult->buffer1;
+            result_buffer.status= combResult->status1;
+            result_buffer.acquire_fence = -1;
+            result_buffer.release_fence = -1;
+            result.num_output_buffers = 1;
+            result.input_buffer = NULL;
+            result.result = NULL;
+            result.output_buffers=&result_buffer;
+            mCallbackOps->process_capture_result(mCallbackOps,&result);
+
+            if(combResult->buffer2 != NULL){
+                Mutex::Autolock l(mPreviewLocalBufferListLock);
+                mPreviewLocalBufferList.push_back(combResult->buffer2);
+            }
+        }else if(showPreviewDeviceId == CAM_TYPE_AUX){
+            result_buffer.buffer = combResult->buffer2;
+            result_buffer.status= combResult->status2;
+            result_buffer.acquire_fence = -1;
+            result_buffer.release_fence = -1;
+            result.num_output_buffers = 1;
+            result.result = NULL;
+            result.input_buffer = NULL;
+            result.output_buffers=&result_buffer;
+            mCallbackOps->process_capture_result(mCallbackOps,&result);
+            if(combResult->buffer1 != NULL){
+                Mutex::Autolock l(mPreviewLocalBufferListLock);
+                mPreviewLocalBufferList.push_back(combResult->buffer1);
+            }
+        }
+    }
+
+    HAL_LOGV(" X");
 }
 /*===========================================================================
  * FUNCTION   :getStreamType
@@ -1076,21 +1218,28 @@ void SprdCamera3StereoVideo::MuxerThread::waitMsgAvailable()
 bool SprdCamera3StereoVideo::matchTwoFrame(hwi_frame_buffer_info_t result1,List <hwi_frame_buffer_info_t> &list, hwi_frame_buffer_info_t* result2)
 {
     List<hwi_frame_buffer_info_t>::iterator itor2;
+
+    HAL_LOGE("match  for size:%d, ", list.size());
     if(list.empty()) {
-        HAL_LOGW("match failed for idx:%d, unmatched queue is empty", result1.frame_number);
+        HAL_LOGE("match failed for idx:%d, unmatched queue is empty", list.size());
         return MATCH_FAILED;
     } else {
         itor2=list.begin();
         while(itor2!=list.end()) {
             uint64_t tmp=result1.timestamp-itor2->timestamp;
+            HAL_LOGE("cur timestamp=%lld ,match timestamp=%lld",result1.timestamp,itor2->timestamp);
+
+            HAL_LOGE("cur id=%d ,match id=%d",result1.frame_number,itor2->frame_number);
             if(tmp<=TIME_DIFF && tmp>=-TIME_DIFF) {
                 *result2=*itor2;
                 list.erase(itor2);
+
+                HAL_LOGE("match ok for idx:%d,  matched frame", result2->frame_number);
                 return MATCH_SUCCESS;
             }
             itor2++;
         }
-        HAL_LOGW("match failed for idx:%d, could not find matched frame", result1.frame_number);
+        HAL_LOGE("match failed for idx:%d, could not find matched frame", result1.frame_number);
         return MATCH_FAILED;
     }
 }
@@ -1109,24 +1258,29 @@ int SprdCamera3StereoVideo::MuxerThread::muxerTwoFrame(buffer_handle_t* &output_
     int rc = NO_ERROR;
     buffer_handle_t* input_buf1 = combVideoResult->buffer1;
     buffer_handle_t* input_buf2 = combVideoResult->buffer2;
+    List <old_request>::iterator itor;
 
     if(input_buf1 == NULL || input_buf2 == NULL){
         HAL_LOGE("Error, null buffer detected! input_buf1:%p input_buf2:%p",input_buf1, input_buf2);
         return BAD_VALUE;
     }
+    {
+        Mutex::Autolock l(mMuxer->mRequest);
 
-    List <old_video_request>::iterator itor=mOldVideoRequestList.begin();
-    while(itor!=mOldVideoRequestList.end()) {
-        if((itor)->frame_number == combVideoResult->frame_number) {
-            break;
+        itor =mMuxer->mOldVideoRequestList.begin();
+        while(itor!=mMuxer->mOldVideoRequestList.end()) {
+            if((itor)->frame_number == combVideoResult->frame_number) {
+                break;
+            }
+            itor++;
         }
-        itor++;
     }
-
     //if no matching request found, return buffers
-    if(itor == mOldVideoRequestList.end()){
-        mLocalBufferList.push_back(input_buf1);
-        mLocalBufferList.push_back(input_buf2);
+    if(itor == mMuxer->mOldVideoRequestList.end()){
+
+        HAL_LOGE("old video not exit ,frame_number=%d",combVideoResult->frame_number);
+       mMuxer->mVideoLocalBufferList.push_back(input_buf1);
+       mMuxer->mVideoLocalBufferList.push_back(input_buf2);
        return UNKNOWN_ERROR;
     } else {
         output_buf = itor->buffer;
@@ -1135,11 +1289,11 @@ int SprdCamera3StereoVideo::MuxerThread::muxerTwoFrame(buffer_handle_t* &output_
     }
 
     if(!isInitRenderContest){
-            if(CONTEXT_FAIL == mGpuApi->initRenderContext(&pt_stream_info, pt_line_buf.homography_matrix, 18)) {
+        if(CONTEXT_FAIL == mGpuApi->initRenderContext(&pt_stream_info, pt_line_buf.homography_matrix, 18)) {
             HAL_LOGE("initRenderContext fail");
             return UNKNOWN_ERROR;
         }else{
-        isInitRenderContest = true;
+            isInitRenderContest = true;
         }
     }
 
@@ -1148,7 +1302,7 @@ int SprdCamera3StereoVideo::MuxerThread::muxerTwoFrame(buffer_handle_t* &output_
     dcam.left_buf = (struct private_handle_t *)*input_buf1;
     dcam.right_buf = (struct private_handle_t *)*input_buf2;
     dcam.dst_buf = (struct private_handle_t *)*output_buf;
-    dcam.rot_angle = ROT_270;
+    dcam.rot_angle = ROT_90;
 
     mGpuApi->imageStitchingWithGPU(&dcam);
 
@@ -1171,19 +1325,19 @@ void SprdCamera3StereoVideo::MuxerThread::videoCallBackResult(buffer_handle_t* b
 
     camera3_buffer_status_t buffer_status = CAMERA3_BUFFER_STATUS_OK;
     camera3_capture_result_t result;
-
+     List <old_request >::iterator itor;
     camera3_stream_buffer_t *result_buffers = new camera3_stream_buffer_t[1];
-    void* dest = NULL;
-    void* src = NULL;
+    {
 
-    List <old_video_request >::iterator itor=mOldVideoRequestList.begin();
-    while(itor!=mOldVideoRequestList.end()) {
-        if(itor->frame_number==combVideoResult->frame_number) {
-            break;
+        Mutex::Autolock l(mMuxer->mRequest);
+        itor=mMuxer->mOldVideoRequestList.begin();
+        while(itor!=mMuxer->mOldVideoRequestList.end()) {
+            if(itor->frame_number==combVideoResult->frame_number) {
+                break;
+            }
+            itor++;
         }
-        itor++;
     }
-
     result_buffers->stream = itor->stream;
     result_buffers->buffer = buffer;
 
@@ -1199,19 +1353,18 @@ void SprdCamera3StereoVideo::MuxerThread::videoCallBackResult(buffer_handle_t* b
     result.input_buffer = itor->input_buffer;
     result.partial_result = 0;
 
-    mOldVideoRequestList.erase(itor);
     dumpFps();
-
     HAL_LOGV(":%d", result.frame_number);
-    mCallbackOps->process_capture_result(mCallbackOps,&result);
-
-    if(combVideoResult->buffer1!=NULL) {
-        mLocalBufferList.push_back(combVideoResult->buffer1);
+    mMuxer->mCallbackOps->process_capture_result(mMuxer->mCallbackOps,&result);
+    {
+        Mutex::Autolock l(mMuxer->mVideoLocalBufferListLock);
+        if(combVideoResult->buffer1!=NULL) {
+            mMuxer->mVideoLocalBufferList.push_back(combVideoResult->buffer1);
+        }
+        if(combVideoResult->buffer2!=NULL) {
+            mMuxer->mVideoLocalBufferList.push_back(combVideoResult->buffer2);
+        }
     }
-    if(combVideoResult->buffer2!=NULL) {
-        mLocalBufferList.push_back(combVideoResult->buffer2);
-    }
-
    delete[]result_buffers;
 
 }
@@ -1232,7 +1385,7 @@ void SprdCamera3StereoVideo::MuxerThread::dumpFps()
     if (diff > ms2ns(250)) {
         mVFps = (((double)(mVFrameCount - mVLastFrameCount)) *
                 (double)(s2ns(1))) / (double)diff;
-        HAL_LOGV("[KPI Perf]: PROFILE_3D_VIDEO_FRAMES_PER_SECOND: %.4f ", mVFps);
+        HAL_LOGD("[KPI Perf]: PROFILE_3D_VIDEO_FRAMES_PER_SECOND: %.4f ", mVFps);
         mVLastFpsTime = now;
         mVLastFrameCount = mVFrameCount;
     }
@@ -1249,12 +1402,12 @@ void SprdCamera3StereoVideo::MuxerThread::dumpFps()
  *==========================================================================*/
 void SprdCamera3StereoVideo::dump(const struct camera3_device *device, int fd)
 {
-    HAL_LOGV("E");
+    HAL_LOGD("E");
     CHECK_MUXER();
 
     mMuxer->_dump(device,fd);
 
-    HAL_LOGV("X");
+    HAL_LOGD("X");
 
 }
 /*===========================================================================
@@ -1270,12 +1423,12 @@ int SprdCamera3StereoVideo::flush(const struct camera3_device *device)
 {
     int rc=0;
 
-    HAL_LOGV(" E");
+    HAL_LOGD(" E");
     CHECK_MUXER_ERROR();
 
     rc = mMuxer->_flush(device);
 
-    HAL_LOGV(" X");
+    HAL_LOGD(" X");
 
     return rc;
 }
@@ -1294,16 +1447,25 @@ int SprdCamera3StereoVideo::initialize(const camera3_callback_ops_t *callback_op
     sprdcamera_physical_descriptor_t sprdCam = m_pPhyCamera[CAM_TYPE_MAIN];
     SprdCamera3HWI *hwiMain = sprdCam.hwi;
 
-    HAL_LOGV("E");
+    HAL_LOGD("E");
     CHECK_HWI_ERROR(hwiMain);
 
+    mIommuEnabled = 0;
     mNotifyListAux.clear();
     mNotifyListMain.clear();
     mUnmatchedFrameListMain.clear();
     mUnmatchedFrameListAux.clear();
-    mLastWidth = 0;
-    mLastHeight = 0;
+    mVideoLastWidth = 0;
+    mVideoLastHeight = 0;
+    mPreviewLastWidth = 0;
+    mPreviewLastHeight = 0;
     mVideoStreamsNum = 0;
+    mOldPreviewRequestList.clear();
+    mOldVideoRequestList.clear();
+    mUnmatchedPreviewFrameListMain.clear();
+    mUnmatchedPreviewFrameListAux.clear();
+    mCallbackOps = callback_ops;
+    mShowPreviewDeviceId = CAM_TYPE_MAIN;
 
     rc = hwiMain->initialize(sprdCam.dev, &callback_ops_main);
     if (rc != NO_ERROR) {
@@ -1322,16 +1484,22 @@ int SprdCamera3StereoVideo::initialize(const camera3_callback_ops_t *callback_op
     }
 
     //init buffer_handle_t
-    mMuxerThread->mLocalBuffer = (new_mem_t*)malloc(sizeof(new_mem_t)*mMuxerThread->mMaxLocalBufferNum);
-    if (NULL == mMuxerThread->mLocalBuffer) {
-        HAL_LOGE("fatal error! mLocalBuffer pointer is null.");
+    mMaxLocalBufferNum = MAX_PREVIEW_QEQUEST_BUF;
+    mPreviewLocalBuffer = (new_mem_t*)malloc(sizeof(new_mem_t)*mMaxLocalBufferNum);
+    if (NULL == mPreviewLocalBuffer) {
+        HAL_LOGE("fatal error! mPreviewLocalBuffer pointer is null.");
     }
-    memset(mMuxerThread->mLocalBuffer, 0 , sizeof(new_mem_t)*mMuxerThread->mMaxLocalBufferNum);
+    memset(mPreviewLocalBuffer, 0 , sizeof(new_mem_t)*mMaxLocalBufferNum);
+
+    mMaxLocalBufferNum = MAX_VIDEO_QEQUEST_BUF;
+    mVideoLocalBuffer = (new_mem_t*)malloc(sizeof(new_mem_t)*mMaxLocalBufferNum);
+    if (NULL == mVideoLocalBuffer) {
+        HAL_LOGE("fatal error! mVideoLocalBuffer pointer is null.");
+    }
+    memset(mVideoLocalBuffer, 0 , sizeof(new_mem_t)*mMaxLocalBufferNum);
 
 
-    mMuxerThread->mCallbackOps = callback_ops;
-
-    HAL_LOGV("X");
+    HAL_LOGD("X");
     return rc;
 }
 
@@ -1346,13 +1514,16 @@ int SprdCamera3StereoVideo::initialize(const camera3_callback_ops_t *callback_op
  *==========================================================================*/
 int SprdCamera3StereoVideo::configureStreams(const struct camera3_device *device,camera3_stream_configuration_t* stream_list)
 {
-    HAL_LOGV("E");
+    HAL_LOGD("E");
 
     int rc=0;
     bool is_recording = false;
     camera3_stream_t* newStream = NULL;
     camera3_stream_t* videoStream = NULL;
+    camera3_stream_t* previewStream = NULL;
     camera3_stream_t* pAuxStreams[MAX_NUM_STREAMS];
+    camera3_stream_t* pMainStreams[MAX_NUM_STREAMS];
+    int streamNum = 2;
     size_t i = 0;
     size_t j = 0;
     int w = 0;
@@ -1360,38 +1531,66 @@ int SprdCamera3StereoVideo::configureStreams(const struct camera3_device *device
     struct stream_info_s stream_info;
 
     Mutex::Autolock l(mLock1);
-
-    //allocate mMuxerThread->mMaxLocalBufferNum buf
+    streamNum = stream_list->num_streams;
     for (size_t i = 0; i < stream_list->num_streams; i++) {
         newStream = stream_list->streams[i];
-          if(getStreamType(newStream) == VIDEO_STREAM){
+        if(getStreamType(newStream) == VIDEO_STREAM){
+          is_recording = true;
+        }
+    }
+    for (size_t i = 0; i < stream_list->num_streams; i++) {
+        newStream = stream_list->streams[i];
+       if(getStreamType(newStream) == PREVIEW_STREAM){
+            previewStream = stream_list->streams[i];
+            w = previewStream->width;
+            h = previewStream->height;
+            HAL_LOGD("mPreviewLastWidth=%d,w=%d",mPreviewLastWidth,w);
+         if(mPreviewLastWidth!= w && mPreviewLastHeight != h){
+                mMaxLocalBufferNum = MAX_PREVIEW_QEQUEST_BUF;
+                if(mPreviewLastWidth != 0||mPreviewLastHeight != 0){
+                    freeLocalBuffer(mPreviewLocalBuffer,mPreviewLocalBufferList,mMaxLocalBufferNum);
+                }
+                for(size_t j = 0; j < mMaxLocalBufferNum; ){
+                    int tmp = allocateOne(w,h,\
+                            1,&(mPreviewLocalBuffer[j]),mPreviewNativeBuffer[j]);
+                    if(tmp < 0){
+                        HAL_LOGE("request one buf failed.");
+                        continue;
+                    }
+                    mPreviewLocalBufferList.push_back(mPreviewLocalBuffer[j].buffer);
+                    j++;
+                }
+            }
+            mPreviewLastWidth = w;
+            mPreviewLastHeight = h;
+            mPreviewStreamsNum = i;
+        }else if(getStreamType(newStream) == VIDEO_STREAM){
             videoStream = stream_list->streams[i];
-            is_recording = true;
             w = videoStream->width;
             h = videoStream->height;
-            if(mLastWidth!= w && mLastHeight != h){
-                if(mLastWidth != 0||mLastHeight != 0){
-                    mMuxerThread->freeLocalBuffer(mMuxerThread->mLocalBuffer);
+            mMaxLocalBufferNum = MAX_VIDEO_QEQUEST_BUF;
+            if(mVideoLastWidth!= w && mVideoLastHeight != h){
+                if(mVideoLastWidth != 0||mVideoLastHeight != 0){
+                    freeLocalBuffer(mVideoLocalBuffer,mVideoLocalBufferList,mMaxLocalBufferNum);
                 }
-                    for(size_t j = 0; j < mMuxerThread->mMaxLocalBufferNum; ){
-                        int tmp = mMuxerThread->allocateOne(w,h,\
-                                                1,&(mMuxerThread->mLocalBuffer[j]),mMuxerThread->mNativeBuffer[j]);
-                        if(tmp < 0){
-                            HAL_LOGE("request one buf failed.");
-                            continue;
-                        }
-                        mMuxerThread->mLocalBufferList.push_back(mMuxerThread->mLocalBuffer[j].buffer);
-                        j++;
+                for(size_t j = 0; j < mMaxLocalBufferNum; ){
+                    int tmp = allocateOne(w,h,\
+                            1,&(mVideoLocalBuffer[j]),mVideoNativeBuffer[j]);
+                    if(tmp < 0){
+                        HAL_LOGE("request one buf failed.");
+                        continue;
                     }
+                    mVideoLocalBufferList.push_back(mVideoLocalBuffer[j].buffer);
+                    j++;
                 }
-            mLastWidth = w;
-            mLastHeight = h;
+            }
+            mVideoLastWidth = w;
+            mVideoLastHeight = h;
             mVideoStreamsNum = i;
             }
         mAuxStreams[i] = *newStream;
         pAuxStreams[i] = &mAuxStreams[i];
-
-        }
+    }
     mIsRecording = is_recording;
     if(!is_recording){
         if(mMuxerThread->isRunning()){
@@ -1406,14 +1605,8 @@ int SprdCamera3StereoVideo::configureStreams(const struct camera3_device *device
             mUnmatchedFrameListMain.clear();
             mUnmatchedFrameListAux.clear();
         }
-        SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
-        rc = hwiMain->configure_streams(m_pPhyCamera[CAM_TYPE_MAIN].dev,stream_list);
-        if(rc < 0){
-            HAL_LOGE("failed. configure streams!!");
-        }
-        return rc;
     }
-
+    mPendingMetadataList.clear();
     SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
     SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_AUX].hwi;
 
@@ -1426,16 +1619,20 @@ int SprdCamera3StereoVideo::configureStreams(const struct camera3_device *device
         HAL_LOGE("failed. configure main streams!!");
         return rc;
     }
-    videoStream->max_buffers += MAX_UNMATCHED_QUEUE_SIZE;
-
     rc = hwiAux->configure_streams(m_pPhyCamera[CAM_TYPE_AUX].dev,&config);
     if(rc < 0){
         HAL_LOGE("failed. configure aux streams!!");
         return rc;
     }
-   mMuxerThread->initGpuData(w,h,newStream->rotation);
-   mMuxerThread->run(NULL);
-    HAL_LOGV("X");
+
+    previewStream->max_buffers += MAX_UNMATCHED_QUEUE_SIZE;
+    if(is_recording){
+        videoStream->max_buffers += MAX_UNMATCHED_QUEUE_SIZE;
+        mMuxerThread->initGpuData(w,h,newStream->rotation);
+        mMuxerThread->run(NULL);
+    }
+
+   HAL_LOGD("X");
 
     return rc;
 }
@@ -1450,7 +1647,7 @@ int SprdCamera3StereoVideo::configureStreams(const struct camera3_device *device
  *==========================================================================*/
 const camera_metadata_t * SprdCamera3StereoVideo::constructDefaultRequestSettings(const struct camera3_device *device, int type)
 {
-    HAL_LOGV("E");
+    HAL_LOGD("E");
     const camera_metadata_t *fwk_metadata = NULL;
 
     SprdCamera3HWI *hw = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
@@ -1466,39 +1663,148 @@ const camera_metadata_t * SprdCamera3StereoVideo::constructDefaultRequestSetting
         HAL_LOGE("constructDefaultMetadata failed");
         return NULL;
     }
-    HAL_LOGV("X");
+    HAL_LOGD("X");
     return fwk_metadata;
 
 }
 /*===========================================================================
- * FUNCTION   :saveVideoBuffer
+ * FUNCTION   :saveRequest
  *
- * DESCRIPTION: save video buffer in request
+ * DESCRIPTION: save buffer in request
  *
  * PARAMETERS :
  *
  * RETURN     : None
  *==========================================================================*/
-void SprdCamera3StereoVideo::saveVideoRequest(camera3_capture_request_t *request)
+void SprdCamera3StereoVideo::saveRequest(camera3_capture_request_t *request,int showPreviewDeviceId)
 {
-    HAL_LOGV("idx:%d", request->frame_number);
 
     size_t i = 0;
-    old_video_request oldVideoRequest ;
     camera3_stream_t* newStream = NULL;
     for (i = 0; i < request->num_output_buffers; i++) {
         newStream = (request->output_buffers[i]).stream;
-        if(getStreamType(newStream) == VIDEO_STREAM){
-        oldVideoRequest.frame_number = request->frame_number;
-        oldVideoRequest.buffer = ((request->output_buffers)[i]).buffer;
-        oldVideoRequest.stream = ((request->output_buffers)[i]).stream;
-        oldVideoRequest.input_buffer = request->input_buffer;
-
-        mMuxerThread->mOldVideoRequestList.push_back(oldVideoRequest);
+        if(getStreamType(newStream) == CALLBACK_STREAM){
+            old_request oldRequest ;
+            HAL_LOGV("idx:%d save preview stream ", request->frame_number);
+            Mutex::Autolock l(mRequest);
+            oldRequest.frame_number = request->frame_number;
+            oldRequest.showPreviewDeviceId = showPreviewDeviceId;
+            oldRequest.buffer = ((request->output_buffers)[i]).buffer;
+            oldRequest.stream = ((request->output_buffers)[i]).stream;
+            oldRequest.input_buffer = request->input_buffer;
+            mOldPreviewRequestList.push_back(oldRequest);
+        }else if(getStreamType(newStream) == VIDEO_STREAM){
+            Mutex::Autolock l(mRequest);
+            old_request oldRequest ;
+            HAL_LOGV("idx:%d save video stream ", request->frame_number);
+            oldRequest.frame_number = request->frame_number;
+            oldRequest.buffer = ((request->output_buffers)[i]).buffer;
+            oldRequest.stream = ((request->output_buffers)[i]).stream;
+            oldRequest.input_buffer = request->input_buffer;
+            mOldVideoRequestList.push_back(oldRequest);
+            if(mOldVideoRequestList.size() == MAX_SAVE_REQUEST_QUEUE_SIZE){
+                List <old_request>::iterator itor = mOldVideoRequestList.begin();
+                mOldVideoRequestList.erase(itor);
+            }
         }
+
     }
 }
 /*===========================================================================
+ * FUNCTION   :convertRequest
+ *
+ * DESCRIPTION: convert Capture Request
+ *
+ * PARAMETERS :
+ *
+ *
+ * RETURN     :
+ *==========================================================================*/
+int SprdCamera3StereoVideo::convertRequest(const camera3_capture_request_t *request,camera3_capture_request_t *newRequest,int type,int showPreviewDeviceId)
+{
+    camera3_stream_buffer_t* out_streams_main = NULL;
+    camera3_stream_buffer_t* out_streams_aux = NULL;
+    camera3_stream_t *new_stream = NULL;
+    int num_output_buffers;
+
+    HAL_LOGV("conver request id=%d type=%d",request->frame_number,type);
+    if(type == CAM_TYPE_MAIN){
+        out_streams_main = (camera3_stream_buffer_t *)malloc(sizeof(camera3_stream_buffer_t)*(request->num_output_buffers));
+        if (!out_streams_main) {
+            HAL_LOGE("failed");
+            return -1;
+        }
+        memset(out_streams_main, 0x00, (sizeof(camera3_stream_buffer_t))*(request->num_output_buffers));
+
+        for(size_t i = 0; i < request->num_output_buffers; i++){
+            out_streams_main[i] = request->output_buffers[i];
+            new_stream = (request->output_buffers[i]).stream;
+            if(getStreamType(new_stream) == CALLBACK_STREAM){
+                if(showPreviewDeviceId == CAM_TYPE_AUX){
+                    Mutex::Autolock l(mPreviewLocalBufferListLock);
+                    out_streams_main[i].buffer = popRequestList(mPreviewLocalBufferList);
+                    if(NULL == out_streams_main[i].buffer){
+                        HAL_LOGE("failed, Preview LocalBufferList is empty!");
+                        return NO_MEMORY;
+                    }
+                }
+            }else if(getStreamType(new_stream) == VIDEO_STREAM){
+                Mutex::Autolock l(mVideoLocalBufferListLock);
+                out_streams_main[i].buffer = popRequestList(mVideoLocalBufferList);
+                if(NULL == out_streams_main[i].buffer){
+                    HAL_LOGE("failed, Video LocalBufferList is empty!");
+                    return NO_MEMORY;
+                }
+
+            }
+        }
+
+        newRequest->output_buffers = out_streams_main;
+    }else if(type == CAM_TYPE_AUX){
+        num_output_buffers = request->num_output_buffers;
+        if(mIsRecording){
+            num_output_buffers = 1;
+            newRequest->num_output_buffers = 1;
+        }
+        out_streams_aux = (camera3_stream_buffer_t *)malloc(sizeof(camera3_stream_buffer_t)*num_output_buffers);
+    if (!out_streams_aux) {
+        HAL_LOGE("failed");
+        return NO_MEMORY;
+    }
+    memset(out_streams_aux, 0x00, (sizeof(camera3_stream_buffer_t))*num_output_buffers);
+    for(size_t i = 0;i < request->num_output_buffers; i++){
+        new_stream = (request->output_buffers[i]).stream;
+        if(getStreamType(new_stream) == CALLBACK_STREAM && (!mIsRecording)) {
+            out_streams_aux[0] = request->output_buffers[i];
+            if(showPreviewDeviceId == CAM_TYPE_MAIN){
+                Mutex::Autolock l(mPreviewLocalBufferListLock);
+                out_streams_aux[0].buffer = popRequestList(mPreviewLocalBufferList);
+                if(NULL == out_streams_aux[0].buffer){
+                HAL_LOGE("failed,Preview LocalBufferList is empty!");
+                return NO_MEMORY;
+                }
+            }
+            out_streams_aux[0].stream = &mAuxStreams[mPreviewStreamsNum];
+            out_streams_aux[0].acquire_fence = -1;
+        }else if(getStreamType(new_stream) == VIDEO_STREAM){
+            Mutex::Autolock l(mVideoLocalBufferListLock);
+
+            out_streams_aux[num_output_buffers-1] = request->output_buffers[i];
+            out_streams_aux[num_output_buffers-1].buffer = popRequestList(mVideoLocalBufferList);
+            out_streams_aux[num_output_buffers-1].stream = &mAuxStreams[mVideoStreamsNum];
+            out_streams_aux[num_output_buffers-1].acquire_fence = -1;
+            if(NULL == out_streams_aux[num_output_buffers-1].buffer){
+                HAL_LOGE("failed,Video LocalBufferList is empty!");
+                return NO_MEMORY;
+            }
+        }
+    }
+    newRequest->output_buffers = out_streams_aux;
+    }
+    return NO_ERROR;
+
+}
+ /*===========================================================================
  * FUNCTION   :processCaptureRequest
  *
  * DESCRIPTION: process Capture Request
@@ -1519,119 +1825,71 @@ int SprdCamera3StereoVideo::processCaptureRequest(const struct camera3_device *d
     camera3_capture_request_t req_main;
     camera3_capture_request_t req_aux;
     camera3_stream_t *new_stream = NULL;
-    camera3_stream_t *video_stream = NULL;
-    camera3_stream_buffer_t* out_streams_main = NULL;
-    camera3_stream_buffer_t* out_streams_aux = NULL;
-    int save_buffer_size = 0;
-    int new_buffer_size = 0;
-
-    for(i = 0; i < request->num_output_buffers; i++) {
-        if(getStreamType((request->output_buffers[i]).stream) == VIDEO_STREAM) {
-            is_recording = true;
-            break;
-            }
-    }
-    mIsRecording = is_recording;
-    HAL_LOGE("mIsRecording:%b,id=%d",mIsRecording,request->frame_number);
-    if(!is_recording){
-        rc = hwiMain->process_capture_request(m_pPhyCamera[CAM_TYPE_MAIN].dev,request);
-        if(rc < 0){
-            HAL_LOGE("failed. process capture request!");
-        }
-
-        return rc;
-    }
-
+    CameraMetadata metadata;
+    int ShowPreviewDeviceId = CAM_TYPE_MAIN;
     rc = validateCaptureRequest(req);
     if (rc != NO_ERROR){
         return rc;
     }
+    metadata = request->settings;
+    if (metadata.exists(ANDROID_SPRD_MULTI_CAM3_PREVIEW_ID)) {
+        mShowPreviewDeviceId = metadata.find(ANDROID_SPRD_MULTI_CAM3_PREVIEW_ID).data.i32[0];
+        HAL_LOGV("show preview device id:%d", mShowPreviewDeviceId);
+        if(mShowPreviewDeviceId != 0 && mShowPreviewDeviceId != 1){
+            mShowPreviewDeviceId = 0;
+        }
+    }
 
-/*config main camera*/
 
+    for(i = 0; i < request->num_output_buffers; i++) {
+        if(getStreamType((request->output_buffers[i]).stream) == VIDEO_STREAM) {
+                is_recording = true;
+                break;
+            }
+    }
+    mIsRecording = is_recording;
+    if(mIsRecording){
+        mShowPreviewDeviceId = CAM_TYPE_MAIN;
+    }
+    HAL_LOGV("mIsRecording=%d id:%d mShowPreviewDeviceId:%d",mIsRecording,request->frame_number,mShowPreviewDeviceId);
+    /* stream config main camera*/
     req_main = *req;
-    out_streams_main = (camera3_stream_buffer_t *)malloc(sizeof(camera3_stream_buffer_t)*(req_main.num_output_buffers));
-    if (!out_streams_main) {
-        HAL_LOGE("failed");
-        return -1;
-    }
-    memset(out_streams_main, 0x00, (sizeof(camera3_stream_buffer_t))*(req_main.num_output_buffers));
-
-    for(size_t i = 0; i < req->num_output_buffers; i++) {
-        out_streams_main[i] = req->output_buffers[i];
-        new_stream = (req->output_buffers[i]).stream;
-        if(getStreamType(new_stream) == VIDEO_STREAM) {
-            video_stream = new_stream;
-            out_streams_main[i].buffer = popRequestList(mMuxerThread->mLocalBufferList);
-            if(NULL == out_streams_main[i].buffer){
-                HAL_LOGE("failed, LocalBufferList is empty!");
-                return NO_MEMORY;
-            }
-            save_buffer_size = ((struct private_handle_t *)*((req->output_buffers[i]).buffer))->size;
-            new_buffer_size = ((struct private_handle_t *)*(out_streams_main[i].buffer))->size;
-            if(new_buffer_size != save_buffer_size){
-                HAL_LOGV("convert video buf size mismatching");
-            }
-        }
-    }
-
-    req_main.output_buffers = out_streams_main;
-
-/*config aux camera * recreate a config without preview stream */
+    convertRequest(req,&req_main,CAM_TYPE_MAIN,mShowPreviewDeviceId);
+    /*config aux camera*/
     req_aux = *req;
-    req_aux.num_output_buffers = 1;
+    convertRequest(req,&req_aux,CAM_TYPE_AUX,mShowPreviewDeviceId);
 
+    saveRequest(req,mShowPreviewDeviceId);
 
-    out_streams_aux = (camera3_stream_buffer_t *)malloc(sizeof(camera3_stream_buffer_t));
-    if (!out_streams_aux) {
-        HAL_LOGE("failed");
-        return NO_MEMORY;
-    }
-    memset(out_streams_aux, 0x00, (sizeof(camera3_stream_buffer_t))*(req_aux.num_output_buffers));
-
-    for(size_t i = 0;i < req->num_output_buffers; i++)
-    {
-        new_stream = (req->output_buffers[i]).stream;
-        if(getStreamType(new_stream) == VIDEO_STREAM) {
-            out_streams_aux[0] = req->output_buffers[i];
-            out_streams_aux[0].buffer = popRequestList(mMuxerThread->mLocalBufferList);
-            out_streams_aux[0].stream = &mAuxStreams[mVideoStreamsNum];
-            out_streams_aux[0].acquire_fence = -1;
-            if(NULL == out_streams_aux[0].buffer){
-                HAL_LOGE("failed, LocalBufferList is empty!");
-                return NO_MEMORY;
-            }
-
-            save_buffer_size = ((struct private_handle_t *)*((req->output_buffers[i]).buffer))->size;
-            new_buffer_size = ((struct private_handle_t *)*(out_streams_aux[0].buffer))->size;
-            if(new_buffer_size != save_buffer_size){
-            HAL_LOGV("convert video buf size mismatching");
-            }
-            break;
-        }
-    }
-    req_aux.output_buffers = out_streams_aux;
     rc = hwiMain->process_capture_request(m_pPhyCamera[CAM_TYPE_MAIN].dev,&req_main);
 
     if(rc < 0){
+        HAL_LOGD("main failed. rc= %d", rc);
         for(i = 0; i < req_main.num_output_buffers; i++) {
-            if(getStreamType((req_main.output_buffers)[i].stream) == VIDEO_STREAM) {
-                mMuxerThread->mLocalBufferList.push_back((req_main.output_buffers)[i].buffer);
+            if(getStreamType((req_main.output_buffers)[i].stream) == PREVIEW_STREAM) {
+                mPreviewLocalBufferList.push_back((req_main.output_buffers)[i].buffer);
             }
-    }
-        goto req_fail;
+            if(getStreamType((req_main.output_buffers)[i].stream) == VIDEO_STREAM) {
+                mVideoLocalBufferList.push_back((req_main.output_buffers)[i].buffer);
+            }
+        }
+    goto req_fail;
     }
 
     rc = hwiAux->process_capture_request(m_pPhyCamera[CAM_TYPE_AUX].dev,&req_aux);
 
     if(rc < 0){
-        mMuxerThread->mLocalBufferList.push_back((req_aux.output_buffers)[0].buffer);
-        HAL_LOGE("failed, idx:%d", req_aux.frame_number);
-        goto req_fail;
-
+            HAL_LOGD("aux failed. rc=%d", rc);
+        for(i = 0; i < req_main.num_output_buffers; i++) {
+            if(getStreamType((req_main.output_buffers)[i].stream) == PREVIEW_STREAM) {
+                mPreviewLocalBufferList.push_back((req_main.output_buffers)[i].buffer);
+            }
+            if(getStreamType((req_main.output_buffers)[i].stream) == VIDEO_STREAM) {
+            mVideoLocalBufferList.push_back((req_main.output_buffers)[i].buffer);
+            }
+        }
     }
-    saveVideoRequest(req);
-    HAL_LOGE("rc, d%d", rc);
+    HAL_LOGD("rc, %d", rc);
 
 req_fail:
 
@@ -1663,15 +1921,13 @@ void SprdCamera3StereoVideo::notifyMain( const camera3_notify_msg_t* msg)
         Mutex::Autolock l(mNotifyLockMain);
         mNotifyListMain.push_back(*msg);
         if(mNotifyListMain.size() == MAX_NOTIFY_QUEUE_SIZE){
-            List <camera3_notify_msg_t>::iterator itor = mNotifyListMain.begin();
-            for(int i = 0; i < CLEAR_NOTIFY_QUEUE; i++){
-                mNotifyListMain.erase(itor++);
-            }
+        List <camera3_notify_msg_t>::iterator itor = mNotifyListMain.begin();
+            mNotifyListMain.erase(itor);
         }
     }
-    mMuxerThread->mCallbackOps->notify(mMuxerThread->mCallbackOps, msg);
 
 }
+
 /*===========================================================================
  * FUNCTION   :processCaptureResultMain
  *
@@ -1686,15 +1942,59 @@ void SprdCamera3StereoVideo::processCaptureResultMain( const camera3_capture_res
     uint64_t result_timestamp;
     uint32_t cur_frame_number;
     uint32_t searchnotifyresult = NOTIFY_NOT_FOUND;
-
+    bool isRecording = false;
+    cur_frame_number = result->frame_number;
     const camera3_stream_buffer_t *result_buffer  =  result->output_buffers;
-    /* Direclty pass preview buffer and meta result for Main camera */
-    if((result_buffer == NULL) || (getStreamType(result_buffer->stream) != VIDEO_STREAM )){
-        mMuxerThread->mCallbackOps->process_capture_result(mMuxerThread->mCallbackOps, result);
+
+    {
+        Mutex::Autolock l(mRequest);
+        List <old_request>::iterator i = mOldVideoRequestList.begin();
+        while(i != mOldVideoRequestList.end()){
+            if(i->frame_number == result->frame_number){
+                isRecording = true;
+                break;
+            }
+            i++;
+        }
+   }
+
+    HAL_LOGV("id = %d output_buffers=%p mIsRecording=%d",result->frame_number,result->output_buffers,isRecording);
+    if(result->output_buffers == NULL){
+        //save metadata to pendingMetaList
+        Mutex::Autolock l(mPendingMetadataListLock);
+        pending_Metadata_t meta;
+        meta.frame_number = result->frame_number;
+        meta.metadata = clone_camera_metadata(result->result);
+        meta.CamDevice = CAM_TYPE_MAIN;
+        mPendingMetadataList.push_back(meta);
+        return;
+    }else if(getStreamType(result->output_buffers->stream) == CALLBACK_STREAM ){
+        //save preview stream
+        Mutex::Autolock l(mUnmatchedPreviewQueueLock);
+        hwi_frame_buffer_info_t cur_frame;
+        cur_frame.status = (result->output_buffers)->status;
+        cur_frame.frame_number = cur_frame_number;
+        cur_frame.buffer = (result->output_buffers)->buffer;
+        if(mUnmatchedPreviewFrameListAux.size() > 0){
+            List <hwi_frame_buffer_info_t>::iterator it = mUnmatchedPreviewFrameListAux.begin();
+            hwi_frame_buffer_info_t matched_frame = *it;
+            mUnmatchedPreviewFrameListAux.erase(it);
+            frame_matched_info_t combo_frame;
+            combo_frame.frame_number = cur_frame.frame_number;
+            combo_frame.buffer1 = cur_frame.buffer;
+            combo_frame.status1 = cur_frame.status;
+
+            combo_frame.buffer2 = matched_frame.buffer;
+            combo_frame.status2 = matched_frame.status;
+            CallBackResult(&combo_frame);
+        }else {
+            mUnmatchedPreviewFrameListMain.push_back(cur_frame);
+        }
+
         return;
     }
 
-    cur_frame_number = result->frame_number;
+    //process video stream
     {
         Mutex::Autolock l(mNotifyLockMain);
         for(List <camera3_notify_msg_t>::iterator i = mNotifyListMain.begin(); i != mNotifyListMain.end();i++){
@@ -1702,13 +2002,14 @@ void SprdCamera3StereoVideo::processCaptureResultMain( const camera3_capture_res
                 if(i->type == CAMERA3_MSG_SHUTTER){
                     searchnotifyresult = NOTIFY_SUCCESS;
                     result_timestamp = i->message.shutter.timestamp;
-                     mNotifyListMain.erase(i);
-                }   else if (i->type == CAMERA3_MSG_ERROR){
+                }else if (i->type == CAMERA3_MSG_ERROR){
                     HAL_LOGE("Return error video buffer:%d caused by error Notify status", result->frame_number);
                     mMuxerThread->videoErrorCallback(result->frame_number);
-                    mMuxerThread->mLocalBufferList.push_back(result->output_buffers->buffer);
+                    {
+                        Mutex::Autolock l(mVideoLocalBufferListLock);
+                        mVideoLocalBufferList.push_back(result->output_buffers->buffer);
+                    }
                     searchnotifyresult = NOTIFY_ERROR;
-                     mNotifyListMain.erase(i);
                     return;
                 }
             }
@@ -1727,9 +2028,10 @@ void SprdCamera3StereoVideo::processCaptureResultMain( const camera3_capture_res
      * 2.return local buffer
      */
     if(result_buffer->status == CAMERA3_BUFFER_STATUS_ERROR){
+         Mutex::Autolock l(mVideoLocalBufferListLock);
         HAL_LOGE("Return error video buffer:%d caused by error Buffer status", result->frame_number);
         mMuxerThread->videoErrorCallback(result->frame_number);
-        mMuxerThread->mLocalBufferList.push_back(result->output_buffers->buffer);
+        mVideoLocalBufferList.push_back(result->output_buffers->buffer);
         return;
     }
 
@@ -1751,7 +2053,7 @@ void SprdCamera3StereoVideo::processCaptureResultMain( const camera3_capture_res
             muxer_msg.combo_frame.stream=result->output_buffers->stream;
             {
                 Mutex::Autolock l(mMuxerThread->mMergequeueMutex);
-                HAL_LOGV("Enqueue combo frame:%d for frame merge!", muxer_msg.combo_frame.frame_number);
+                HAL_LOGD("Enqueue combo frame:%d for frame merge!", muxer_msg.combo_frame.frame_number);
                 mMuxerThread->mMuxerMsgList.push_back(muxer_msg);
                 mMuxerThread->mMergequeueSignal.signal();
             }
@@ -1760,8 +2062,9 @@ void SprdCamera3StereoVideo::processCaptureResultMain( const camera3_capture_res
             hwi_frame_buffer_info_t *discard_frame = pushToUnmatchedQueue(cur_frame, mUnmatchedFrameListMain);
 
             if(discard_frame != NULL){
+                 Mutex::Autolock l(mVideoLocalBufferListLock);
                 HAL_LOGE("Discard oldest unmatched frame:%d for Main camera", discard_frame->frame_number);
-                mMuxerThread->mLocalBufferList.push_back(discard_frame->buffer);
+                mVideoLocalBufferList.push_back(discard_frame->buffer);
                 mMuxerThread->videoErrorCallback(discard_frame->frame_number);
 
                 delete discard_frame;
@@ -1772,9 +2075,9 @@ void SprdCamera3StereoVideo::processCaptureResultMain( const camera3_capture_res
     return;
 }
 /*===========================================================================
- * FUNCTION   :~SprdCamera3StereoVideo
+ * FUNCTION   :notifyAux
  *
- * DESCRIPTION: deconstructor of SprdCamera3StereoVideo
+ * DESCRIPTION: notify aux camera
  *
  * PARAMETERS :
  *
@@ -1782,18 +2085,17 @@ void SprdCamera3StereoVideo::processCaptureResultMain( const camera3_capture_res
  *==========================================================================*/
 void SprdCamera3StereoVideo::notifyAux( const camera3_notify_msg_t* msg)
 {
-    Mutex::Autolock l(mNotifyLockAux);
+    HAL_LOGV("id%d",msg->message.shutter.frame_number);
+    Mutex::Autolock l(mNotifyLockMain);
     mNotifyListAux.push_back(*msg);
-
     if(mNotifyListAux.size() == MAX_NOTIFY_QUEUE_SIZE){
         List <camera3_notify_msg_t>::iterator itor = mNotifyListAux.begin();
-        for(int i = 0; i < CLEAR_NOTIFY_QUEUE; i++){
-            mNotifyListAux.erase(itor++);
-        }
+            mNotifyListAux.erase(itor);
     }
+
 }
 /*===========================================================================
- * FUNCTION   :processCaptureResultMain
+ * FUNCTION   :processCaptureResultAux
  *
  * DESCRIPTION: process Capture Result from the aux hwi
  *
@@ -1806,12 +2108,86 @@ void SprdCamera3StereoVideo::processCaptureResultAux( const camera3_capture_resu
     uint64_t result_timestamp;
     uint32_t cur_frame_number;
     uint32_t searchnotifyresult = NOTIFY_NOT_FOUND;
+    bool isRecording = false;
+    cur_frame_number = result->frame_number;
 
-    /* Direclty pass meta result for Aux camera */
-    if(result->num_output_buffers == 0){
+    {
+        Mutex::Autolock l(mRequest);
+        List <old_request>::iterator i = mOldVideoRequestList.begin();
+        while(i != mOldVideoRequestList.end()){
+            if(i->frame_number == result->frame_number){
+                isRecording = true;
+                break;
+            }
+            i++;
+        }
+   }
+
+    HAL_LOGV("id = %d output_buffers=%p isRecording=%d ",result->frame_number,result->output_buffers,isRecording);
+
+    if(result->output_buffers == NULL){
+    //save metadata to mPendingMetadataList
+        {
+            Mutex::Autolock l(mPendingMetadataListLock);
+            pending_Metadata_t meta;
+            meta.frame_number = result->frame_number;
+            meta.metadata = clone_camera_metadata(result->result);
+            meta.CamDevice = CAM_TYPE_AUX;
+            mPendingMetadataList.push_back(meta);
+        }
+        if(isRecording){
+        //create invalid preview stream data ,preview stream not exit when is recording
+            Mutex::Autolock l(mUnmatchedPreviewQueueLock);
+            hwi_frame_buffer_info_t cur_frame;
+            cur_frame.frame_number = cur_frame_number;
+            cur_frame.buffer = NULL;
+            cur_frame.status = CAMERA3_BUFFER_STATUS_ERROR;
+            if(mUnmatchedPreviewFrameListMain.size() > 0){
+                List <hwi_frame_buffer_info_t>::iterator it = mUnmatchedPreviewFrameListMain.begin();
+                hwi_frame_buffer_info_t matched_frame = *it;
+                mUnmatchedPreviewFrameListMain.erase(it);
+
+                frame_matched_info_t combo_frame;
+                combo_frame.frame_number = matched_frame.frame_number;
+                combo_frame.buffer1 = matched_frame.buffer;
+                combo_frame.status1 = matched_frame.status;
+                combo_frame.buffer2 = cur_frame.buffer;
+                combo_frame.status2 = cur_frame.status;
+                CallBackResult(&combo_frame);
+                return;
+            }else{
+                mUnmatchedPreviewFrameListAux.push_back(cur_frame);
+                return;
+            }
+        }
+
+        return;
+    }else if(getStreamType(result->output_buffers->stream) == CALLBACK_STREAM ){
+    //save preview stream data
+        Mutex::Autolock l(mUnmatchedPreviewQueueLock);
+        hwi_frame_buffer_info_t cur_frame;
+        cur_frame.status = (result->output_buffers)->status;
+        cur_frame.frame_number = cur_frame_number;
+        cur_frame.buffer = (result->output_buffers)->buffer;
+        if(mUnmatchedPreviewFrameListMain.size() > 0){
+            List <hwi_frame_buffer_info_t>::iterator it = mUnmatchedPreviewFrameListMain.begin();
+            hwi_frame_buffer_info_t matched_frame = *it;
+            mUnmatchedPreviewFrameListMain.erase(it);
+
+            frame_matched_info_t combo_frame;
+            combo_frame.frame_number = matched_frame.frame_number;
+            combo_frame.buffer1 = matched_frame.buffer;
+            combo_frame.status1 = matched_frame.status;
+            combo_frame.buffer2 = cur_frame.buffer;
+            combo_frame.status2 = cur_frame.status;
+            CallBackResult(&combo_frame);
+        }else{
+            mUnmatchedPreviewFrameListAux.push_back(cur_frame);
+        }
         return;
     }
-    cur_frame_number = result->frame_number;
+
+    //process video stream
     {
         Mutex::Autolock l(mNotifyLockAux);
         for(List <camera3_notify_msg_t>::iterator i = mNotifyListAux.begin(); i != mNotifyListAux.end();i++){
@@ -1819,12 +2195,11 @@ void SprdCamera3StereoVideo::processCaptureResultAux( const camera3_capture_resu
                 if(i->type == CAMERA3_MSG_SHUTTER){
                     searchnotifyresult = NOTIFY_SUCCESS;
                     result_timestamp = i->message.shutter.timestamp;
-                    mNotifyListAux.erase(i);
                 }   else if (i->type == CAMERA3_MSG_ERROR){
                     HAL_LOGE("Return local buffer:%d caused by error Notify status", result->frame_number);
+                    Mutex::Autolock l(mVideoLocalBufferListLock);
                     searchnotifyresult = NOTIFY_ERROR;
-                    mMuxerThread->mLocalBufferList.push_back(result->output_buffers->buffer);
-                    mNotifyListAux.erase(i);
+                    mVideoLocalBufferList.push_back(result->output_buffers->buffer);
                     return;
                 }
             }
@@ -1843,7 +2218,7 @@ void SprdCamera3StereoVideo::processCaptureResultAux( const camera3_capture_resu
         camera3_capture_result_t result_copy;
         result_copy = *result;
         HAL_LOGE("Return local buffer:%d caused by error Buffer status", result->frame_number);
-        mMuxerThread->mLocalBufferList.push_back(result->output_buffers->buffer);
+        mVideoLocalBufferList.push_back(result->output_buffers->buffer);
         return;
     }
 
@@ -1864,16 +2239,17 @@ void SprdCamera3StereoVideo::processCaptureResultAux( const camera3_capture_resu
             muxer_msg.combo_frame.input_buffer = result->input_buffer;
             {
                 Mutex::Autolock l(mMuxerThread->mMergequeueMutex);
-                HAL_LOGV("Enqueue combo frame:%d for frame merge!", muxer_msg.combo_frame.frame_number);
+                HAL_LOGD("Enqueue combo frame:%d for frame merge!", muxer_msg.combo_frame.frame_number);
                 mMuxerThread->mMuxerMsgList.push_back(muxer_msg);
                 mMuxerThread->mMergequeueSignal.signal();
             }
         } else{
-            HAL_LOGV("Enqueue newest unmatched frame:%d for Aux camera", cur_frame.frame_number);
+            HAL_LOGD("Enqueue newest unmatched frame:%d for Aux camera", cur_frame.frame_number);
             hwi_frame_buffer_info_t *discard_frame = pushToUnmatchedQueue(cur_frame, mUnmatchedFrameListAux);
             if(discard_frame != NULL){
+                Mutex::Autolock l(mVideoLocalBufferListLock);
                 HAL_LOGE("Discard oldest unmatched frame:%d for Aux camera", discard_frame->frame_number);
-                mMuxerThread->mLocalBufferList.push_back(discard_frame->buffer);
+                mVideoLocalBufferList.push_back(discard_frame->buffer);
                 delete discard_frame;
             }
         }
@@ -1894,19 +2270,21 @@ void SprdCamera3StereoVideo::processCaptureResultAux( const camera3_capture_resu
 void SprdCamera3StereoVideo::MuxerThread::videoErrorCallback(uint32_t frame_number)
 {
     camera3_capture_result_t result;
+    List <old_request>::iterator i;
 
-    List <old_video_request>::iterator i = mOldVideoRequestList.begin();
-    for(; i != mOldVideoRequestList.end();){
-        if(i->frame_number == frame_number){
-            break;
+     i = mMuxer->mOldVideoRequestList.begin();
+    {
+        Mutex::Autolock l(mMuxer->mRequest);
+        for(; i != mMuxer->mOldVideoRequestList.end();){
+            if(i->frame_number == frame_number){
+                break;
+            }
+            i++;
         }
-        i++;
+        if(i == mMuxer->mOldVideoRequestList.end()){
+            return;
+        }
     }
-
-    if(i == mOldVideoRequestList.end()){
-        return;
-    }
-
     camera3_stream_buffer_t *result_buffers = new camera3_stream_buffer_t[1];
 
     result_buffers->stream = i->stream;
@@ -1921,9 +2299,9 @@ void SprdCamera3StereoVideo::MuxerThread::videoErrorCallback(uint32_t frame_numb
     result.num_output_buffers = 1;
     result.input_buffer = i->input_buffer;
     result.partial_result = 0;
-    mCallbackOps->process_capture_result(mCallbackOps, &result);
 
-    mOldVideoRequestList.erase(i);
+    HAL_LOGD(":%d", result.frame_number);
+    mMuxer->mCallbackOps->process_capture_result(mMuxer->mCallbackOps, &result);
     delete result_buffers;
 
     return;
@@ -1940,10 +2318,10 @@ void SprdCamera3StereoVideo::MuxerThread::videoErrorCallback(uint32_t frame_numb
 void SprdCamera3StereoVideo::_dump(const struct camera3_device *device, int fd)
 {
 
-    HAL_LOGV(" E");
+    HAL_LOGD(" E");
 
 
-    HAL_LOGV("X");
+    HAL_LOGD("X");
 
 }
 /*===========================================================================
@@ -1959,7 +2337,7 @@ void SprdCamera3StereoVideo::_dump(const struct camera3_device *device, int fd)
 void SprdCamera3StereoVideo::dumpImg(void* addr,int size,int frameId)
 {
 
-    HAL_LOGV(" E");
+    HAL_LOGD(" E");
     char name[128];
     snprintf(name, sizeof(name), "/data/misc/media/%d_%d.yuv",\
                         size, frameId);
@@ -1975,7 +2353,7 @@ void SprdCamera3StereoVideo::dumpImg(void* addr,int size,int frameId)
     }
     fclose(file_fd);
 
-    HAL_LOGV("X");
+    HAL_LOGD("X");
 
 }
 
@@ -1991,12 +2369,18 @@ void SprdCamera3StereoVideo::dumpImg(void* addr,int size,int frameId)
 int SprdCamera3StereoVideo::_flush(const struct camera3_device *device)
 {
     int rc=0;
+    hwi_frame_buffer_info_t matched_frame_main;
+    hwi_frame_buffer_info_t matched_frame_aux;
 
+    HAL_LOGD("E");
     SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
     rc = hwiMain->flush(m_pPhyCamera[CAM_TYPE_MAIN].dev);
 
     SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_AUX].hwi;
     rc = hwiAux->flush(m_pPhyCamera[CAM_TYPE_AUX].dev);
+
+    HAL_LOGV("mUnmatchedPreviewFrameListMain.size =%d",mUnmatchedPreviewFrameListMain.size());
+    HAL_LOGV("mUnmatchedPreviewFrameListaux.size =%d",mUnmatchedPreviewFrameListAux.size());
 
     if(mMuxerThread != NULL){
         if(mMuxerThread->isRunning()){
@@ -2004,6 +2388,7 @@ int SprdCamera3StereoVideo::_flush(const struct camera3_device *device)
         }
     }
 
+    HAL_LOGD("X");
     return rc;
 }
 /*===========================================================================

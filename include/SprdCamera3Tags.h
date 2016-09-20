@@ -49,6 +49,7 @@ typedef enum sprd_camera_ext_tags{
         ANDROID_SPRD_BURSTMODE_ENABLED,
         ANDROID_SPRD_3D_RANGEFINDER_DISTANCE,
         ANDROID_SPRD_3D_RANGEFINDER_POINTS,
+        ANDROID_SPRD_MULTI_CAM3_PREVIEW_ID,
         VENDOR_SECTION_END,
         /*not parameter but only flag between framework and hal*/
         /*sprd add flag end*/

@@ -210,6 +210,7 @@ static tags_info_t android_add_parameters[VENDOR_SECTION_END - VENDOR_SECTION_ST
     { "sprdBurstModeEnabled",           TYPE_BYTE },
     { "sprd3DRangeFinderDistance",  TYPE_DOUBLE },
     { "sprd3DRangeFinderPoints",        TYPE_INT32 },
+    { "sprdMultiCam3PreviewId",        TYPE_INT32 },
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {
