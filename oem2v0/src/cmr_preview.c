@@ -85,6 +85,7 @@
 						(prev_cxt->cap_org_size.height == prev_cxt->actual_pic_size.height))
 
 #define RAW_NO_SCALING       		((ZOOM_POST_PROCESS == prev_cxt->cap_zoom_mode) && \
+	                                        0 == zoom_param->zoom_level && \
 						(prev_cxt->cap_org_size.width == prev_cxt->actual_pic_size.width) && \
 						(prev_cxt->cap_org_size.height == prev_cxt->actual_pic_size.height))
 
