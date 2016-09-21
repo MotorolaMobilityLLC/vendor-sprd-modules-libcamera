@@ -721,6 +721,26 @@ int SprdCamera3StereoVideo::getCameraInfo(struct camera_info *info)
     return rc;
 }
 /*===========================================================================
+ * FUNCTION         : get3DVideoSize
+ *
+ * DESCRIPTION     : get3DVideoSize
+ *
+ *==========================================================================*/
+void SprdCamera3StereoVideo::get3DVideoSize(int *pWidth, int *pHeight)
+{
+    SPRD_DEF_Tag sprddefInfo;
+    if ( NULL == pWidth || NULL == pHeight || NULL == m_pPhyCamera )
+    {
+        HAL_LOGE("parameter error!");
+        return;
+    }
+    m_pPhyCamera[CAM_TYPE_MAIN].hwi->mSetting->getSPRDDEFTag(&sprddefInfo);
+    HAL_LOGD("sensor full size, w:%d, h:%d", sprddefInfo.sprd_3dcalibration_cap_size[0], sprddefInfo.sprd_3dcalibration_cap_size[1]);
+    *pWidth = sprddefInfo.sprd_3dcalibration_cap_size[0]>>1;
+    *pHeight = sprddefInfo.sprd_3dcalibration_cap_size[1]>>1;
+    HAL_LOGD("3d video size, w:%d, h:%d", *pWidth, *pHeight);
+}
+/*===========================================================================
  * FUNCTION         : setupPhysicalCameras
  *
  * DESCRIPTION     : Creates Camera Muxer if not created
@@ -866,8 +886,8 @@ void SprdCamera3StereoVideo::MuxerThread::initGpuData(int w,int h, int rotation)
 {
     pt_stream_info.dst_height = h;
     pt_stream_info.dst_width  = w;
-    pt_stream_info.src_height = h;
-    pt_stream_info.src_width  = w;
+    pt_stream_info.src_height = m3DVideoHeight;
+    pt_stream_info.src_width  = m3DVideoWidth;
     pt_stream_info.rot_angle = rotation;
 
     float buff[768];
@@ -1302,7 +1322,7 @@ int SprdCamera3StereoVideo::MuxerThread::muxerTwoFrame(buffer_handle_t* &output_
     dcam.left_buf = (struct private_handle_t *)*input_buf1;
     dcam.right_buf = (struct private_handle_t *)*input_buf2;
     dcam.dst_buf = (struct private_handle_t *)*output_buf;
-    dcam.rot_angle = ROT_90;
+    dcam.rot_angle = ROT_270;
 
     mGpuApi->imageStitchingWithGPU(&dcam);
 
@@ -1538,6 +1558,8 @@ int SprdCamera3StereoVideo::configureStreams(const struct camera3_device *device
           is_recording = true;
         }
     }
+    get3DVideoSize( &mMuxerThread->m3DVideoWidth, &mMuxerThread->m3DVideoHeight);
+                     
     for (size_t i = 0; i < stream_list->num_streams; i++) {
         newStream = stream_list->streams[i];
        if(getStreamType(newStream) == PREVIEW_STREAM){
@@ -1574,7 +1596,7 @@ int SprdCamera3StereoVideo::configureStreams(const struct camera3_device *device
                     freeLocalBuffer(mVideoLocalBuffer,mVideoLocalBufferList,mMaxLocalBufferNum);
                 }
                 for(size_t j = 0; j < mMaxLocalBufferNum; ){
-                    int tmp = allocateOne(w,h,\
+                    int tmp = allocateOne(mMuxerThread->m3DVideoWidth,mMuxerThread->m3DVideoHeight,\
                             1,&(mVideoLocalBuffer[j]),mVideoNativeBuffer[j]);
                     if(tmp < 0){
                         HAL_LOGE("request one buf failed.");
@@ -1584,6 +1606,8 @@ int SprdCamera3StereoVideo::configureStreams(const struct camera3_device *device
                     j++;
                 }
             }
+            stream_list->streams[i]->width = mMuxerThread->m3DVideoWidth;
+            stream_list->streams[i]->height = mMuxerThread->m3DVideoHeight;
             mVideoLastWidth = w;
             mVideoLastHeight = h;
             mVideoStreamsNum = i;
@@ -1623,6 +1647,11 @@ int SprdCamera3StereoVideo::configureStreams(const struct camera3_device *device
     if(rc < 0){
         HAL_LOGE("failed. configure aux streams!!");
         return rc;
+    }
+    if ( 0 != mVideoLastWidth )
+    {
+        stream_list->streams[mVideoStreamsNum]->width = mVideoLastWidth;
+        stream_list->streams[mVideoStreamsNum]->height = mVideoLastHeight;
     }
 
     previewStream->max_buffers += MAX_UNMATCHED_QUEUE_SIZE;
@@ -1700,6 +1729,8 @@ void SprdCamera3StereoVideo::saveRequest(camera3_capture_request_t *request,int 
             oldRequest.frame_number = request->frame_number;
             oldRequest.buffer = ((request->output_buffers)[i]).buffer;
             oldRequest.stream = ((request->output_buffers)[i]).stream;
+            oldRequest.stream->width = mMuxerThread->m3DVideoWidth;
+            oldRequest.stream->height = mMuxerThread->m3DVideoHeight;
             oldRequest.input_buffer = request->input_buffer;
             mOldVideoRequestList.push_back(oldRequest);
             if(mOldVideoRequestList.size() == MAX_SAVE_REQUEST_QUEUE_SIZE){
@@ -1755,6 +1786,8 @@ int SprdCamera3StereoVideo::convertRequest(const camera3_capture_request_t *requ
                     HAL_LOGE("failed, Video LocalBufferList is empty!");
                     return NO_MEMORY;
                 }
+                out_streams_main[i].stream->width = mMuxerThread->m3DVideoWidth;
+                out_streams_main[i].stream->height = mMuxerThread->m3DVideoHeight;
 
             }
         }

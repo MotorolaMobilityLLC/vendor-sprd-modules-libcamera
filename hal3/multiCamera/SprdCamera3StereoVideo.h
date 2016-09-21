@@ -144,6 +144,7 @@ private:
     int cameraDeviceOpen(int camera_id,struct hw_device_t **hw_device);
     int setupPhysicalCameras();
     int getCameraInfo(struct camera_info *info);
+    void get3DVideoSize(int *pWidth, int *pHeight);
     int validateCaptureRequest(camera3_capture_request_t *request);
     void saveRequest(camera3_capture_request_t *request,int showPreviewDeviceId);
     int  pushRequestList( buffer_handle_t *request,List <buffer_handle_t*>&);
@@ -175,6 +176,8 @@ public:
         Mutex      mMergequeueMutex;
         Condition  mMergequeueSignal;
         line_buf_t  pt_line_buf  ;
+        int m3DVideoWidth;
+        int m3DVideoHeight;
         struct stream_info_s pt_stream_info;
         bool isInitRenderContest;
     private:
