@@ -36,6 +36,7 @@ SprdCamera3Wrapper::SprdCamera3Wrapper()
 {
     SprdCamera3RangeFinder::getCameraRangeFinder(&mRangeFinder);
     SprdCamera3StereoVideo::getCameraMuxer(&mStereoVideo);
+    SprdCamera3Capture::getCameraCapture(&mCapture);
 }
 
 SprdCamera3Wrapper::~SprdCamera3Wrapper()
@@ -67,6 +68,9 @@ int SprdCamera3Wrapper::cameraDeviceOpen(
         case MODE_RANGE_FINDER:
             rc = mRangeFinder->camera_device_open(module, id, hw_device);
             return rc;
+        case MODE_3D_CAPTURE:
+            rc = mCapture->camera_device_open(module, id, hw_device);
+            return rc;
         default:
 
             HAL_LOGE("cameraId:%d not supported yet!", atoi(id));
@@ -89,6 +93,9 @@ int SprdCamera3Wrapper::getCameraInfo(__unused int camera_id, struct camera_info
             return rc;
         case MODE_RANGE_FINDER:
             rc = mRangeFinder->get_camera_info(camera_id, info);
+            return rc;
+        case MODE_3D_CAPTURE:
+            rc = mCapture->get_camera_info(camera_id, info);
             return rc;
         default:
 

@@ -43,6 +43,7 @@
 #include <sys/mman.h>
 #include "SprdCamera3StereoVideo.h"
 #include "SprdCamera3RangeFinder.h"
+#include "SprdCamera3Capture.h"
 
 
 namespace sprdcamera {
@@ -50,6 +51,7 @@ namespace sprdcamera {
 typedef enum {
 	MODE_3D_VIDEO = 5,
 	MODE_RANGE_FINDER,
+	MODE_3D_CAPTURE,
 	MODE_MAX
 }multiCameraMode;
 
@@ -66,7 +68,8 @@ public:
 
 private:
 	SprdCamera3StereoVideo      *mStereoVideo;
-	SprdCamera3RangeFinder *mRangeFinder;
+	SprdCamera3RangeFinder      *mRangeFinder;
+	SprdCamera3Capture          *mCapture;
 };
 
 

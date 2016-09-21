@@ -1029,8 +1029,10 @@ int SprdCamera3MetadataChannel::getCapRequestPara(const CameraMetadata &metadata
 		SPRD_DEF_Tag sprddefInfo = {0,};
 		mSetting->getSPRDDEFTag(&sprddefInfo);
 		if ( sprddefInfo.sprd_3dcalibration_enabled )
+        {
 		    request_para->sprd_zsl_enabled = sprddefInfo.sprd_3dcalibration_enabled;
-		HAL_LOGD("ANDROID_SPRD_3DCALIBRATION_ENABLED is NULL, sprd_zsl_enabled %d",request_para->sprd_zsl_enabled);
+		    HAL_LOGD("ANDROID_SPRD_3DCALIBRATION_ENABLED is NULL but 3d cal mode needed, force set sprd_zsl_enabled %d",request_para->sprd_zsl_enabled);
+        }
 	}
 	/**add for 3d calibration force set sprd zsl enable begin*/
 

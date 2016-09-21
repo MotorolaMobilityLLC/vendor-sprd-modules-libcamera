@@ -138,6 +138,7 @@ public:
 	virtual int openCamera();
 	void initialize();
 	void setCaptureRawMode(bool mode);
+	void setCallBackRawMode(bool mode);/**add for 3d capture*/
 	void antiShakeParamSetup();
 	int displayCopy(uintptr_t dst_phy_addr, uintptr_t dst_virtual_addr,
 			uintptr_t src_phy_addr, uintptr_t src_virtual_addr, uint32_t src_w, uint32_t src_h);
@@ -427,6 +428,8 @@ private:
 
 	bool                              mSprdRefocusEnabled;
 	bool                              mSprd3dCalibrationEnabled;/**add for 3d calibration */
+	bool                              mSprdRawCallBack;/**add for 3d capture */
+	bool                              mSprdReprocessing;/**add for 3d capture */
 
 	void yuvNv12ConvertToYv12(struct camera_frame_type *frame, char* tmpbuf);
 

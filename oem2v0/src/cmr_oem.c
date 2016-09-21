@@ -6896,6 +6896,17 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle, struct snapshot_param *
 	out_ptr->is_pipviv_mode = cxt->is_pipviv_mode;
 	out_ptr->is_3dcalibration_mode = cxt->is_3dcalibration_mode;/**add for 3d calibration*/
 	setting_param.camera_id = cxt->camera_id;
+
+	/**add for 3d capture, use 3d calibration tag for call back yuv buffer begin*/
+	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_SPRD_3DCAL_ENABLE, &setting_param);
+	if (ret) {
+		CMR_LOGE("failed to get preview sprd eis enabled flag %ld", ret);
+		goto exit;
+	}
+	cxt->is_3dcalibration_mode = setting_param.cmd_type_value;
+	out_ptr->is_3dcalibration_mode = setting_param.cmd_type_value;
+	/**add for 3d capture, use 3d calibration tag for call back yuv buffer end*/
+
 	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_HDR, &setting_param);
 	if (ret) {
 		CMR_LOGE("failed to get envir %ld", ret);

@@ -825,7 +825,7 @@ int SprdCamera3HWI::validateCaptureRequest(camera3_capture_request_t *request)
 
 	uint32_t frameNumber = request->frame_number;
 	if (request->input_buffer != NULL &&
-			request->input_buffer->stream != mInputStream) {
+			request->input_buffer->stream == NULL) {/**modified for 3d capture, enable reprocessing*/
 		HAL_LOGE("Request %d: Input buffer not from input stream!", frameNumber);
 		return BAD_VALUE;
 	}
@@ -1116,6 +1116,13 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 					}
 				} else if(capturePara.cap_intent == ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE
 					|| capturePara.cap_intent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT) {
+					/**add for 3d capture, set raw callback mode when stream format is 420_888 begin*/
+					if ( stream->format == HAL_PIXEL_FORMAT_YCbCr_420_888)
+					{
+						HAL_LOGE("call back stream request!");
+						mOEMIf->setCallBackRawMode(1);
+					}
+					/**add for 3d capture, set raw callback mode when stream format is 420_888 end*/
 					ret = mPicChan->request(stream, output.buffer, frameNumber);
 					if(ret){
 						HAL_LOGE("request buff 0x%lx (%d)failed", output.buffer, frameNumber);
@@ -1241,6 +1248,15 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info)
 			     i->frame_number, frame_number,  i->request_id);
 
 		if (i->frame_number < frame_number) {
+			/**add for 3d capture reprocessing begin   */
+			HAL_LOGI("result stream format =%d",result_info->stream->format);
+			if (NULL != i->input_buffer)
+			{
+			    HAL_LOGI("reprocess capture request, continue search");
+			    i++;
+			    continue;
+			}
+			/**add for 3d capture reprocessing end   */
 			if (!i->bNotified) {
 				notify_msg.type = CAMERA3_MSG_SHUTTER;
 				notify_msg.message.shutter.frame_number = i->frame_number;
@@ -1355,6 +1371,15 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info)
 		}
 
 		if (i->frame_number > frame_number) {
+			/**add for 3d capture reprocessing begin   */
+			HAL_LOGI("result stream format =%d",result_info->stream->format);
+			if (HAL_PIXEL_FORMAT_BLOB==result_info->stream->format)
+			{
+			    HAL_LOGI("capture result, continue search");
+			    i++;
+			    continue;
+			}
+			/**add for 3d capture reprocessing end   */
 			break;
 		}
 	}

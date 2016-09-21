@@ -147,6 +147,58 @@ typedef struct {
     MemIon *pHeapIon;
 }new_mem_t;
 
+typedef struct {
+    struct private_handle_t *left_buf;
+    struct private_handle_t *right_buf;
+    struct private_handle_t *dst_buf;
+    int rot_angle;
+}dcam_info_t;
+
+typedef struct{
+    void* handle;
+    int (*initRenderContext)(struct stream_info_s *resolution,float *homography_matrix,int matrix_size);
+    void (*imageStitchingWithGPU)(dcam_info_t *dcam);
+    void (*destroyRenderContext)(void);
+}GPUAPI_t;
+
+typedef enum {
+    /* Main camera device id*/
+    CAM_MAIN_ID =1,
+    /* Aux camera device id*/
+    CAM_AUX_ID =3
+} CameraID;
+
+typedef enum {
+    /* Main camera of the related cam subsystem which controls*/
+    CAM_TYPE_MAIN = 0,
+    /* Aux camera of the related cam subsystem */
+    CAM_TYPE_AUX
+} CameraType;
+
+struct stream_info_s
+{
+    int src_width;
+    int src_height;
+    int dst_width;
+    int dst_height;
+    int rot_angle;
+};//stream_info_t;
+
+typedef struct line_buf_s
+{
+   float homography_matrix[18];
+   float warp_matrix[18];
+   int   points[32];
+}line_buf_t;
+
+enum rot_angle {
+    ROT_0 = 0,
+    ROT_90,
+    ROT_180,
+    ROT_270,
+    ROT_MAX
+};
+
 };
 
 #endif

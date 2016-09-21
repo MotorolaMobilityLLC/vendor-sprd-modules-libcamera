@@ -26,8 +26,8 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ifndef SPRDCAMERAMUXER_H_HEADER
-#define SPRDCAMERAMUXER_H_HEADER
+#ifndef SPRDCAMERA3DCAPTURE_H_HEADER
+#define SPRDCAMERA3DCAPTURE_H_HEADER
 
 #include <stdlib.h>
 #include <dlfcn.h>
@@ -47,45 +47,50 @@
 #include "../SprdCamera3HWI.h"
 #include "SprdMultiCam3Common.h"
 
-
 namespace sprdcamera {
 
-#define VIDEO_3D_MAGIC_STRING "5"
-#define MAX_NUM_CAMERAS    3
-#define MAX_NUM_STREAMS    3
-#define MAX_VIDEO_QEQUEST_BUF 16
-#define MAX_PREVIEW_QEQUEST_BUF 5
-#define MAX_UNMATCHED_QUEUE_SIZE 4
-#define MAX_SAVE_REQUEST_QUEUE_SIZE 10
-#define TIME_DIFF (2000e6)
+#define LOCAL_CAPBUFF_NUM        3
+#define MAX_NUM_CAMERAS          3
+#define MAX_NUM_STREAMS          3
+#define MAX_QEQUEST_BUF          5
+#define MAX_UNMATCHED_QUEUE_SIZE 3
+#define TIME_DIFF                (100e6)
+#define CONTEXT_SUCCESS          1
+#define CONTEXT_FAIL             0
+#define THREAD_TIMEOUT           50e6
+#define MAX_NOTIFY_QUEUE_SIZE    100
+#define CLEAR_NOTIFY_QUEUE       50
 #define LIB_GPU_PATH "libimagestitcher.so"
-#define CONTEXT_SUCCESS 1
-#define CONTEXT_FAIL 0
-#define THREAD_TIMEOUT    30e6
-#define MAX_NOTIFY_QUEUE_SIZE 10
-
-
-typedef enum {
-    MUXER_MSG_DATA_PROC = 1,
-    MUXER_MSG_EXIT
-} muxerMsgType;
-
-typedef struct {
-    muxerMsgType  msg_type;
-    frame_matched_info_t combo_frame;
-} muxer_queue_msg_t;
 
 typedef struct {
     uint32_t frame_number;
-    uint8_t CamDevice;
-    camera_metadata_t* metadata;
-} pending_Metadata_t;
+    buffer_handle_t*  buffer;
+    camera3_stream_t *stream;
+    camera3_stream_buffer_t* input_buffer;
+}request_saved_t;
 
+typedef enum {
+    CAPTURE_MSG_DATA_PROC = 1,
+    CAPTURE_MSG_COMBAIN_PROC,
+    CAPTURE_MSG_EXIT
+} captureMsgType;
 
-class SprdCamera3StereoVideo
+typedef struct {
+    uint32_t                        frame_number;
+    const camera3_stream_buffer_t *input_buffer;
+    buffer_handle_t               *buffer1;
+    buffer_handle_t               *buffer2;
+} buffer_combination_t;
+
+typedef struct {
+    captureMsgType  msg_type;
+    buffer_combination_t combo_buff;
+} capture_queue_msg_t;
+
+class SprdCamera3Capture
 {
 public:
-    static void getCameraMuxer(SprdCamera3StereoVideo** pMuxer);
+    static void getCameraCapture(SprdCamera3Capture** pCapture);
     static int camera_device_open(
         __unused const struct hw_module_t *module, const char *id,
         struct hw_device_t **hw_device);
@@ -102,119 +107,98 @@ public:
     static void dump(const struct camera3_device *device, int fd);
     static int flush(const struct camera3_device *device);
 
-    static camera3_device_ops_t mCameraMuxerOps;
+    static camera3_device_ops_t mCameraCaptureOps;
     static camera3_callback_ops callback_ops_main;
     static camera3_callback_ops callback_ops_aux;
 
 private:
     sprdcamera_physical_descriptor_t *m_pPhyCamera;
-    sprd_virtual_camera_t m_VirtualCamera;
-    uint8_t m_nPhyCameras;
-    Mutex mLock1;
-    camera_metadata_t *mStaticMetadata;
-    int mVideoLastWidth;
-    int mVideoLastHeight;
-    int mPreviewLastWidth;
-    int mPreviewLastHeight;
-    camera3_stream_t mAuxStreams[MAX_VIDEO_QEQUEST_BUF];
-    uint8_t mVideoStreamsNum;
-    uint8_t mPreviewStreamsNum;
-    bool mIsRecording;
-    int mShowPreviewDeviceId;
+    sprd_virtual_camera_t             m_VirtualCamera;
+    uint8_t                           m_nPhyCameras;
+    Mutex                             mLock1;
+    camera_metadata_t                *mStaticMetadata;
+    int                               mLastWidth;
+    int                               mLastHeight;
+    int                               mCaptureWidth;
+    int                               mCaptureHeight;
+    camera3_stream_t                 *mSavedReqStreams[MAX_NUM_STREAMS];
+    uint8_t                           mPreviewStreamsNum;
+    int                               mPreviewID;
+    int                               mChangeFocus[2];
+    bool                              mIsCaptureing;
     //when notify callback ,push hw notify into notify_list, with lock
-    List <camera3_notify_msg_t> mNotifyListMain;
-    Mutex mNotifyLockMain;
-    List <camera3_notify_msg_t> mNotifyListAux;
-    Mutex mNotifyLockAux;
-
-    //This queue stores unmatched buffer for each hwi, accessed with lock
-    Mutex mUnmatchedQueueLock;
-    List <hwi_frame_buffer_info_t> mUnmatchedFrameListMain;
-    List <hwi_frame_buffer_info_t> mUnmatchedFrameListAux;
-
-    Mutex mUnmatchedPreviewQueueLock;
-    List <hwi_frame_buffer_info_t> mUnmatchedPreviewFrameListMain;
-    List <hwi_frame_buffer_info_t> mUnmatchedPreviewFrameListAux;
-    Mutex mRequest;
-    Mutex mBufferLock;
-    Mutex      mMergequeueMutex;
-    Condition  mMergequeueSignal;
-    bool mIommuEnabled;
-
+    List <camera3_notify_msg_t>       mNotifyListMain;
+    Mutex                             mNotifyLockMain;
+    List <camera3_notify_msg_t>       mNotifyListAux;
+    Mutex                             mNotifyLockAux;
     int cameraDeviceOpen(int camera_id,struct hw_device_t **hw_device);
     int setupPhysicalCameras();
     int getCameraInfo(struct camera_info *info);
     int validateCaptureRequest(camera3_capture_request_t *request);
-    void saveRequest(camera3_capture_request_t *request,int showPreviewDeviceId);
-    int  pushRequestList( buffer_handle_t *request,List <buffer_handle_t*>&);
-    buffer_handle_t * popRequestList(List <buffer_handle_t*>& list);
-    bool matchTwoFrame(hwi_frame_buffer_info_t result1,List <hwi_frame_buffer_info_t> &list, hwi_frame_buffer_info_t* result2);
+    void saveVideoRequest(camera3_capture_request_t *request);
+    int pushRequestList( buffer_handle_t *request,List <buffer_handle_t*>&);
+    buffer_handle_t *popRequestList(List <buffer_handle_t*>& list);
     int getStreamType(camera3_stream_t *new_stream );
-    hwi_frame_buffer_info_t* pushToUnmatchedQueue(hwi_frame_buffer_info_t new_buffer_info, List <hwi_frame_buffer_info_t> &queue);
-    void CallBackResult(frame_matched_info_t* combResult);
 
 public:
 
-    SprdCamera3StereoVideo();
-    virtual ~SprdCamera3StereoVideo();
+    SprdCamera3Capture();
+    virtual ~SprdCamera3Capture();
 
-    class MuxerThread: public Thread
+    class CaptureThread: public Thread
     {
     public:
-        MuxerThread();
-        ~MuxerThread();
-        virtual bool  threadLoop();
+        CaptureThread();
+        ~CaptureThread();
+        virtual bool threadLoop();
         virtual void requestExit();
         void videoErrorCallback(uint32_t frame_number);
         int loadGpuApi();
         void unLoadGpuApi();
+        void freeLocalBuffer(new_mem_t* mLocalBuffer);
+        void freeLocalCapBuffer(new_mem_t* pLocalCapBuffer);
+        int allocateOne(int w,int h,uint32_t is_cache,new_mem_t*,const native_handle_t *& nBuf );
+        int allocateCapBuff(int w,int h,uint32_t is_cache,new_mem_t*,const native_handle_t *& nBuf );
         void initGpuData(int w,int h,int );
-        GPUAPI_t* mGpuApi;
         //This queue stores matched buffer as frame_matched_info_t
-        List <muxer_queue_msg_t> mMuxerMsgList;
-        Mutex      mMergequeueMutex;
-        Condition  mMergequeueSignal;
-        line_buf_t  pt_line_buf  ;
-        struct stream_info_s pt_stream_info;
-        bool isInitRenderContest;
+        List <capture_queue_msg_t>         mCaptureMsgList;
+        List <request_saved_t >            mSavedRequestList;
+        List<buffer_handle_t*>             mLocalBufferList;
+                                           
+        Mutex                              mMergequeueMutex;
+        Condition                          mMergequeueSignal;
+        const camera3_callback_ops_t      *mCallbackOps;
+        sprdcamera_physical_descriptor_t  *mDevMain;
+        const native_handle_t             *mNativeBuffer[MAX_QEQUEST_BUF];
+        const native_handle_t             *mNativeCapBuffer[LOCAL_CAPBUFF_NUM];
+        const native_handle_t             *mNativeCmbBuffer;
+        new_mem_t                         *mLocalBuffer;
+        new_mem_t                         *mLocalCapBuffer;
+        buffer_handle_t                   *mSavedResultBuff;
+        camera3_capture_request_t          mSavedCapRequest;
+        camera3_stream_buffer_t            mSavedCapReqstreambuff;
+        camera3_stream_t                   mMainStreams[MAX_NUM_STREAMS];
+        camera3_stream_t                   mAuxStreams[MAX_NUM_STREAMS];
+        uint8_t                            mCaptureStreamsNum;
+        bool                               mReprocessing;
+        GPUAPI_t                          *mGpuApi;
+        line_buf_t                         pt_line_buf  ;
+        struct stream_info_s               pt_stream_info;
+        bool                               isInitRenderContest;
     private:
-        int mVFrameCount;
-        int mVLastFrameCount;
+        bool    mIommuEnabled;
+        int     mVFrameCount;
+        int     mVLastFrameCount;
         nsecs_t mVLastFpsTime;
-        double mVFps;
+        double  mVFps;
         void dumpFps();
         void waitMsgAvailable();
-        int muxerTwoFrame(/*out*/buffer_handle_t* &output_buf, frame_matched_info_t* combVideoResult);
-        void videoCallBackResult(buffer_handle_t* buffer, frame_matched_info_t* combVideoResult);
+        int combineTwoPicture(/*out*/buffer_handle_t *&output_buf, buffer_handle_t *inputbuff1, buffer_handle_t *inputbuff2);
     };
-    sp<MuxerThread> mMuxerThread;
+    sp<CaptureThread> mCaptureThread;
 
-    Mutex mPendingMetadataListLock;
-    List <pending_Metadata_t > mPendingMetadataList;
-
-    List <old_request > mOldVideoRequestList;
-    List <old_request > mOldPreviewRequestList;
-
-    List<buffer_handle_t*> mVideoLocalBufferList;
-    Mutex   mVideoLocalBufferListLock;
-    List<buffer_handle_t*> mPreviewLocalBufferList;
-    Mutex   mPreviewLocalBufferListLock;
-
-    const native_handle_t* mVideoNativeBuffer[MAX_VIDEO_QEQUEST_BUF];
-    const native_handle_t* mPreviewNativeBuffer[MAX_PREVIEW_QEQUEST_BUF];
-
-    new_mem_t* mPreviewLocalBuffer;
-    new_mem_t* mVideoLocalBuffer;
-
-    uint8_t mMaxLocalBufferNum;
-    const camera3_callback_ops_t* mCallbackOps;
-
-    void freeLocalBuffer(new_mem_t* LocalBuffer, List<buffer_handle_t*>& bufferList,int bufferNum);
-     int allocateOne(int w,int h,uint32_t is_cache,new_mem_t*,const native_handle_t *& nBuf );
     int initialize(const camera3_callback_ops_t *callback_ops);
     int configureStreams(const struct camera3_device *device,camera3_stream_configuration_t* stream_list);
-    int convertRequest(const camera3_capture_request_t *request,camera3_capture_request_t *newRequest,
-         int type,int shwoPreviewDeviceId);
     int processCaptureRequest(const struct camera3_device *device,camera3_capture_request_t *request);
     void notifyMain( const camera3_notify_msg_t* msg);
     void processCaptureResultMain( const camera3_capture_result_t *result);

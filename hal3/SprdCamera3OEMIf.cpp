@@ -286,6 +286,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mSprdRefocusEnabled(0),
 	mSprdHighIsoEnabled(0),
 	mSprd3dCalibrationEnabled(0),/**add for 3d calibration*/
+	mSprdRawCallBack(0),/**add for 3d capture*/
+	mSprdReprocessing(0),/**add for 3d capture*/
 	mVideoSnapshotType(0),
 	mIsRecording(false),
 	mIsUpdateRangeFps(false),
@@ -941,6 +943,22 @@ int SprdCamera3OEMIf::zslTakePicture()
 	HAL_LOGI("JPEG thumbnail size = %d x %d", jpgInfo.thumbnail_size[0], jpgInfo.thumbnail_size[1]);
 	SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_SIZE, (cmr_uint)&jpeg_thumb_size);
 
+	/**add for 3d capture, set raw call back mode begin*/
+	if ( mSprdRawCallBack )
+	{
+	    mSprd3dCalibrationEnabled = true;
+	    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DCAL_ENABLE, mSprd3dCalibrationEnabled);
+	    HAL_LOGD("raw call back mode, force enable 3d cal");
+	}
+	else
+	{
+	    SPRD_DEF_Tag sprddefInfo;
+	    mSetting->getSPRDDEFTag(&sprddefInfo);
+	    mSprd3dCalibrationEnabled = sprddefInfo.sprd_3dcalibration_enabled;
+	    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DCAL_ENABLE, sprddefInfo.sprd_3dcalibration_enabled);
+	}
+	/**add for 3d capture, set raw call back mode end*/
+
 	setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
 	if (CMR_CAMERA_SUCCESS != mHalOem->ops->camera_take_picture(mCameraHandle, mCaptureMode)) {
 		setCameraState(SPRD_ERROR, STATE_CAPTURE);
@@ -950,7 +968,7 @@ int SprdCamera3OEMIf::zslTakePicture()
 
 	mFlagMultiLayerStart = true;
 
-	if(mSprdZslEnabled == true) {
+	if(mSprdZslEnabled == true && !mSprdReprocessing) {/**add for 3d capture, enable reprocess request*/
 		CMR_MSG_INIT(message);
 		uint32_t ret = 0;
 
@@ -966,6 +984,7 @@ int SprdCamera3OEMIf::zslTakePicture()
 		HAL_LOGD("mZslShotPushFlag %d",mZslShotPushFlag);
 	} else {
 		PushZslSnapShotbuff();
+		mSprdReprocessing = false;/**add for 3d capture, disable reprocess after reprocessing buffer setted*/
 	}
 
 	print_time();
@@ -1179,7 +1198,18 @@ status_t SprdCamera3OEMIf::cancelAutoFocus()
 	HAL_LOGD("X");
 	return ret;
 }
+/**add for 3d capture, set raw call back mode begin*/
+void SprdCamera3OEMIf::setCallBackRawMode(bool mode)
+{
+	if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
+		HAL_LOGE("oem is null or oem ops is null");
+		return;
+	}
 
+	mSprdRawCallBack = mode;
+	HAL_LOGD("ISP_TOOL: setCaptureRawMode: %d, %d", mode, mSprdRawCallBack);
+}
+/**add for 3d capture, set raw call back mode end*/
 status_t SprdCamera3OEMIf::setAePrecaptureSta(uint8_t state)
 {
 	status_t ret = 0;
@@ -2061,7 +2091,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary()
 		/*read refoucs mode begin*/
 		char refocus[PROPERTY_VALUE_MAX];
 		property_get("sys.cam.refocus", refocus, "0");
-		if(atoi(refocus)!=0)
+		if( 0 != atoi(refocus) && 5 != atoi(refocus) )/**modified for 3d capture, should not set refocus enable in 3d capture mode*/
 			mSprdRefocusEnabled = true;
 		CMR_LOGI("refocus mode %d", mSprdRefocusEnabled);
 		/*read refoucs mode end*/
@@ -3755,26 +3785,6 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame)
 			displayOneFrameForCapture(dst_width, dst_height, dst_fd, dst_paddr, (char *)mReDisplayHeap->data);
 		FreeReDisplayMem();
 	}
-	/**add for 3d calibration return yuv buff begin*/
-	HAL_LOGD("is callback_flag:%d", callback_flag);
-	property_get("debug.camera.save.3dcalfile", prop, "0");
-	if (atoi(prop) == 1)
-	{
-		struct img_addr   imgadd = { 0, };
-		HAL_LOGD("3dcalibration yuv picture: width:%d, height:%d, fd:%d,"
-				"yaddp:%d, uaddp:%d, vaddp:%d, yaddv:%d, uaddv:%d, vaddv:%d",
-				 frame->width, frame->height, frame->fd,
-				 frame->y_phy_addr, frame->uv_phy_addr, frame->uv_phy_addr+frame->width*frame->height/2,
-				 frame->y_vir_addr, frame->uv_vir_addr, frame->uv_vir_addr+frame->width*frame->height/2);
-		imgadd.addr_y = frame->y_vir_addr;
-		imgadd.addr_u = frame->uv_vir_addr;
-		imgadd.addr_v = frame->uv_vir_addr+frame->width*frame->height/2;
-		save_yuv_to_file(mCameraId, IMG_DATA_TYPE_YUV420,
-					    frame->width,
-						frame->height,
-						&imgadd);
-	}
-	/**add for 3d calibration return yuv buff end*/
 	if(callback_flag){
 		int dst_fd = 0;
 		uintptr_t dst_paddr = 0;
@@ -3793,6 +3803,26 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame)
 			FreeReDisplayMem();
 			return;
 		}
+		/**add for 3d calibration return yuv buff begin*/
+		HAL_LOGD("is callback_flag:%d", callback_flag);
+		property_get("debug.camera.save.3dcalfile", prop, "0");
+		if (atoi(prop) == 1)
+		{
+			struct img_addr   imgadd = { 0, };
+			HAL_LOGD("3dcalibration yuv picture: width:%d, height:%d, fd:%d,"
+					"yaddp:%d, uaddp:%d, vaddp:%d, yaddv:%d, uaddv:%d, vaddv:%d",
+					 frame->width, frame->height, frame->fd,
+					 frame->y_phy_addr, frame->uv_phy_addr, frame->uv_phy_addr+frame->width*frame->height/2,
+					 frame->y_vir_addr, frame->uv_vir_addr, frame->uv_vir_addr+frame->width*frame->height/2);
+			imgadd.addr_y = frame->y_vir_addr;
+			imgadd.addr_u = frame->uv_vir_addr;
+			imgadd.addr_v = frame->uv_vir_addr+frame->width*frame->height/2;
+			save_yuv_to_file(mCameraId, IMG_DATA_TYPE_YUV420,
+							frame->width,
+							frame->height,
+							&imgadd);
+		}
+		/**add for 3d calibration return yuv buff end*/
 
 		if(mSprdRefocusEnabled)
 		{
@@ -4256,12 +4286,13 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb,
 
 		if (SPRD_WAITING_RAW == getCaptureState())
 		{
-			/**modified for 3d calibration return yuv buffer finished begin */
-			if ( mSprd3dCalibrationEnabled && mTakePictureMode == SNAPSHOT_ZSL_MODE)
+			/**modified for 3d calibration&3d capture return yuv buffer finished begin */
+			if ( (mSprdRawCallBack || mSprd3dCalibrationEnabled) && mTakePictureMode == SNAPSHOT_ZSL_MODE)
 			{
 				transitionState(SPRD_WAITING_RAW,
 							   SPRD_IDLE,
 							   STATE_CAPTURE);
+				mSprdRawCallBack = false;
 			}
 			else
 			{
@@ -4284,8 +4315,8 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb,
 	case CAMERA_EVT_CB_ZSL_FRM:
 		HAL_LOGV("CAMERA_EVT_CB_HAL2_ZSL_NEW_FRM");
 		break;
-	case CAMERA_EVT_CB_RETURN_ZSL_BUF:/**add for 3d calibration return zsl buffer begin */
-		if (isPreviewing() && iSZslMode() && mSprd3dCalibrationEnabled)
+	case CAMERA_EVT_CB_RETURN_ZSL_BUF:/**add for 3d calibration & 3d capture return zsl buffer begin */
+		if (isPreviewing() && iSZslMode() && (mSprd3dCalibrationEnabled||mSprdRawCallBack))
 		{
 		    cmr_u32                   buf_id = 0;
 		    struct camera_frame_type *zsl_frame = NULL;
@@ -5426,6 +5457,7 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode, uint32_t fr
 			mRecordingMode = false;
 			mPicCaptureCnt = 1;
 			mZslPreviewMode = false;
+			mSprdReprocessing = true;/**add for 3d capture, enable reprocessing mode*/
 			break;
 		case CAMERA_CAPTURE_MODE_VIDEO_SNAPSHOT:
 			if (mVideoSnapshotType != 1) {

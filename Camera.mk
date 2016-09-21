@@ -96,6 +96,7 @@ LOCAL_SRC_FILES+= \
 	hal3/multiCamera/SprdCamera3StereoVideo.cpp \
 	hal3/multiCamera/SprdCamera3RangeFinder.cpp \
 	hal3/multiCamera/SprdCamera3Wrapper.cpp  \
+        hal3/multiCamera/SprdCamera3Capture.cpp  \
 #	hal1.0/src/SprdCameraHardwareInterface.cpp
 endif
 
