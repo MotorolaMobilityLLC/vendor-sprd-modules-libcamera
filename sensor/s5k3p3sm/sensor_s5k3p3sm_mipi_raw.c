@@ -174,7 +174,7 @@ static const SENSOR_REG_T s5k3p3sm_common_init[] = {
 { 0x9928, 0x03CB },
 { 0x3D78, 0x396C },
 { 0x3D7A, 0x93C6 },//TnP
-{ 0xB0C8, 0x0100 },
+{ 0xB0C8, 0x1000 },//MIPI VOD ctrl
 //{ 0x0600, 0x0002 },
 { 0x6028, 0x2000 },
 { 0x602A, 0x1590 },
@@ -185,12 +185,12 @@ static const SENSOR_REG_T s5k3p3sm_common_init[] = {
 // frame length	0x0E2A
 // 1H time	91.9
 static const SENSOR_REG_T s5k3p3sm_4632x3480_4lane_setting[] = {
- /*{ 0x6028, 0x2000 },
- { 0x602A, 0x2E26 },
- { 0x6F12, 0x0103 },*/
  { 0x6028, 0x2000 },
+ { 0x602A, 0x2E26 },
+ { 0x6F12, 0x0103 },
+ /*{ 0x6028, 0x2000 },
  { 0x602A, 0x1590 },
- { 0x6F12, 0x02FF  },
+ { 0x6F12, 0x02FF  },*/
  { 0x6028, 0x4000 },
  { 0x3D7C, 0x1110 },
  { 0x3D88, 0x0064 },
@@ -235,12 +235,12 @@ static const SENSOR_REG_T s5k3p3sm_4632x3480_4lane_setting[] = {
 };
 
 static const SENSOR_REG_T s5k3p3sm_4160x3120_4lane_setting[] = {
- /*{ 0x6028, 0x2000 },
- { 0x602A, 0x2E26 },
- { 0x6F12, 0x0103 },*/
  { 0x6028, 0x2000 },
+ { 0x602A, 0x2E26 },
+ { 0x6F12, 0x0103 },
+/* { 0x6028, 0x2000 },
  { 0x602A, 0x1590 },
- { 0x6F12, 0x02FF  },
+ { 0x6F12, 0x02FF  },*/
  { 0x6028, 0x4000 },
  { 0x3D7C, 0x1110 },
  { 0x3D88, 0x0064 },
@@ -286,12 +286,12 @@ static const SENSOR_REG_T s5k3p3sm_4160x3120_4lane_setting[] = {
 
 // 60 fps
 static const SENSOR_REG_T s5k3p3sm_2304x1740_4lane_setting[] = {
-/*	{0x6028,0x2000},
+	{0x6028,0x2000},
 	{0x602A,0x2E26},
-	{0x6F12,0x0103},*/
-	{0x6028, 0x2000},
+	{0x6F12,0x0103},
+/*	{0x6028, 0x2000},
 	 {0x602A, 0x1590},
-	 {0x6F12, 0x02FF},
+	 {0x6F12, 0x02FF},*/
 	{0x6028,0x4000},
 	{0x3D7C,0x0010},
 	{0x3D88,0x0064},
@@ -318,7 +318,7 @@ static const SENSOR_REG_T s5k3p3sm_2304x1740_4lane_setting[] = {
 	{0x0302,0x0001},
 	{0x0300,0x0004},
 	{0x030C,0x0004},
-	{0x030E,0x003F},//37
+	{0x030E,0x0037},//3F},//37
 	{0x030A,0x0001},
 	{0x0308,0x0008},
 	{0x0342,0x14A2},
@@ -879,9 +879,10 @@ static unsigned long _s5k3p3sm_write_exp_dummy(SENSOR_HW_HANDLE handle, uint16_t
 		expsure_line = 3;
 	}
 
+	dummy_line = dummy_line > 5 ? dummy_line : 5;
 	frame_len = expsure_line + dummy_line;
-	frame_len = (frame_len > (uint32_t)(expsure_line + 5)) ? frame_len : (uint32_t)(expsure_line + 5);
 	frame_len = (frame_len > max_frame_len) ? frame_len : max_frame_len;
+
 	if (0x00!=(0x01&frame_len)) {
 		frame_len+=0x01;
 	}
@@ -1372,6 +1373,7 @@ static unsigned long _s5k3p3sm_GetExifInfo(SENSOR_HW_HANDLE handle, unsigned lon
 static unsigned long _s5k3p3sm_StreamOn(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	SENSOR_LOGI("SENSOR_S5K3P3SM: StreamOn");
+	Sensor_WriteReg(0x6214, 0x7970);
 
 	Sensor_WriteReg(0x0100, 0x0100);
 #if 1
