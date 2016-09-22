@@ -556,6 +556,8 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 	}
 	cmr_bzero(cxt, sizeof(*cxt));
 
+	ISP_LOGE("init param name %s", input_ptr->ex_info.name);
+	cxt->input_param.ex_info.name = input_ptr->ex_info.name;
 	ret = ispmw_get_tuning_bin((cmr_handle)cxt, (const cmr_s8 *)input_ptr->ex_info.name);
 	if (ret) {
 		goto exit;
@@ -758,9 +760,9 @@ cmr_int isp_video_start(cmr_handle isp_handle, struct isp_video_start *param_ptr
 		ISP_LOGE("error,input is NULL");
 		goto exit;
 	}
-
+	ISP_LOGI("sensor %s",cxt->input_param.ex_info.name);
 	ISP_LOGI("isp size:%d,%d", param_ptr->size.w, param_ptr->size.h);
-	sprintf(file_name, "imx230_mipi_raw_%d", param_ptr->size.w);
+	sprintf((void *)&file_name[0], "%s_%d", cxt->input_param.ex_info.name,param_ptr->size.w);
 	ret = ispmw_get_second_tuning_bin((cmr_handle)cxt, (const cmr_s8 *)file_name);
 	if (ret) {
 		goto exit;
