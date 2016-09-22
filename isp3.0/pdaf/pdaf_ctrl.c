@@ -24,12 +24,10 @@
 #define PDAFCTRL_MSG_QUEUE_SIZE			100
 #define PDAFCTRL_EVT_BASE				0x2000
 #define PDAFCTRL_EVT_INIT				PDAFCTRL_EVT_BASE
-#define PDAFCTRL_EVT_DEINIT			(PDAFCTRL_EVT_BASE + 1)
-#define PDAFCTRL_EVT_IOCTRL			(PDAFCTRL_EVT_BASE + 2)
-#define PDAFCTRL_EVT_PROCESS			(PDAFCTRL_EVT_BASE + 3)
+#define PDAFCTRL_EVT_DEINIT				(PDAFCTRL_EVT_BASE + 1)
+#define PDAFCTRL_EVT_IOCTRL				(PDAFCTRL_EVT_BASE + 2)
+#define PDAFCTRL_EVT_PROCESS				(PDAFCTRL_EVT_BASE + 3)
 #define PDAFCTRL_EVT_EXIT				(PDAFCTRL_EVT_BASE + 4)
-#define PDAFCTRL_EVT_OPEN				(PDAFCTRL_EVT_BASE + 5)
-#define PDAFCTRL_EVT_CLOSE				(PDAFCTRL_EVT_BASE + 6)
 
 struct pdaf_ctrl_thread_context {
 	cmr_handle ctrl_thr_handle;
@@ -37,7 +35,6 @@ struct pdaf_ctrl_thread_context {
 
 struct pdafctrl_context {
 	cmr_int camera_id;
-	cmr_u8 pdaf_open;
 	cmr_u8 pdaf_support;
 	cmr_int pdaf_bypass;
 	cmr_handle adpt_handle;
@@ -100,36 +97,6 @@ static cmr_int pdafctrl_process(cmr_handle handle,
 	return ret;
 }
 
-cmr_int pdafctrl_open(cmr_handle handle, struct pdaf_ctrl_open_in *in)
-{
-	cmr_int ret = -ISP_ERROR;
-	struct pdafctrl_context *cxt = (struct pdafctrl_context *)handle;
-	struct pdaf_ctrl_param_in pdaf_in;
-
-	cmr_bzero(&pdaf_in, sizeof(pdaf_in));
-	if (0 == cxt->pdaf_open) {
-		pdaf_in.pd_set_buffer = in->pd_set_buffer;
-		ret = cxt->pdaf_adpt_ops->adpt_ioctrl(cxt->adpt_handle, PDAF_CTRL_CMD_SET_OPEN, &pdaf_in, NULL);
-		cxt->pdaf_open = 1;
-	}
-	return ret;
-}
-
-cmr_int pdafctrl_close(cmr_handle handle)
-{
-	cmr_int ret = -ISP_ERROR;
-	struct pdafctrl_context *cxt = (struct pdafctrl_context *)handle;
-	struct pdaf_ctrl_param_in pdaf_in;
-
-	if (1 == cxt->pdaf_open) {
-		pdaf_in.pd_set_buffer = NULL;
-		ret = cxt->pdaf_adpt_ops->adpt_ioctrl(cxt->adpt_handle, PDAF_CTRL_CMD_SET_CLOSE, &pdaf_in, NULL);
-		cxt->pdaf_open = 0;
-	}
-	return ret;
-}
-
-
 static cmr_int pdafctrl_thread_proc(struct cmr_msg *message, void *p_data)
 {
 	cmr_int ret = -ISP_ERROR;
@@ -146,12 +113,6 @@ static cmr_int pdafctrl_thread_proc(struct cmr_msg *message, void *p_data)
 	ISP_LOGV("message.msg_type 0x%x, data %p", message->msg_type, message->data);
 
 	switch (message->msg_type) {
-	case PDAFCTRL_EVT_OPEN:
-		ret = pdafctrl_open(handle, (struct pdaf_ctrl_open_in *)message->data);
-		break;
-	case PDAFCTRL_EVT_CLOSE:
-		ret = pdafctrl_close(handle);
-		break;
 	case PDAFCTRL_EVT_INIT:
 		msg_init = (struct pdaf_init_msg_ctrl *)message->data;
 		ret = pdafctrl_init_adpt(handle, msg_init->in, msg_init->out);
@@ -354,7 +315,7 @@ cmr_int pdaf_ctrl_process(cmr_handle handle, struct pdaf_ctrl_process_in *in,
 		goto exit;
 	}
 
-	if (!cxt->pdaf_support || !cxt->pdaf_open) {
+	if (!cxt->pdaf_support) {
 		ret = ISP_SUCCESS;
 		goto exit;
 	}
@@ -389,7 +350,6 @@ cmr_int pdaf_ctrl_ioctrl(cmr_handle handle, cmr_int cmd,
 	cmr_int ret = -ISP_ERROR;
 	struct pdafctrl_context *cxt = (struct pdafctrl_context *)handle;
 
-#if USE_PD_THREAD
 	struct pdaf_ctrl_msg_ctrl msg_ctrl;
 	CMR_MSG_INIT(message);
 
@@ -399,84 +359,22 @@ cmr_int pdaf_ctrl_ioctrl(cmr_handle handle, cmr_int cmd,
 		goto exit;
 	}
 
-	msg_ctrl.cmd = cmd;
-	msg_ctrl.in = in;
-	msg_ctrl.out = out;
-	message.msg_type = PDAFCTRL_EVT_IOCTRL;
-	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
-	message.alloc_flag = 0;
-	message.data = &msg_ctrl;
+	if (cmd > PDAF_CTRL_CMD_DIRECT_BEGIN && cmd < PDAF_CTRL_CMD_DIRECT_END) {
+		ret = pdafctrl_ioctrl(handle, cmd, in, out);
+	} else {
+		msg_ctrl.cmd = cmd;
+		msg_ctrl.in = in;
+		msg_ctrl.out = out;
+		message.msg_type = PDAFCTRL_EVT_IOCTRL;
+		message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+		message.alloc_flag = 0;
+		message.data = &msg_ctrl;
 
-	ret = cmr_thread_msg_send(cxt->thread_cxt.ctrl_thr_handle, &message);
-	if (ret) {
-		ISP_LOGE("failed to send msg to main thr %ld", ret);
-		goto exit;
-	}
-#else
-	ISP_CHECK_HANDLE_VALID(handle);
-	if (!cxt->pdaf_support) {
-		ret = ISP_SUCCESS;
-		goto exit;
-	}
-
-	ret = pdafctrl_ioctrl(handle, cmd,
-				   in, out);
-#endif
-
-exit:
-	return ret;
-}
-
-cmr_int pdaf_ctrl_open(cmr_handle handle, struct pdaf_ctrl_open_in *in)
-{
-	cmr_int ret = -ISP_ERROR;
-	struct pdafctrl_context *cxt = (struct pdafctrl_context *)handle;
-	CMR_MSG_INIT(message);
-
-	ISP_CHECK_HANDLE_VALID(handle);
-	if (!in) {
-		ret = ISP_PARAM_NULL;
-		ISP_LOGI("input param %p is error !!!", in);
-		goto exit;
-	}
-	if (!cxt->pdaf_support) {
-		ret = ISP_SUCCESS;
-		goto exit;
-	}
-
-	message.msg_type = PDAFCTRL_EVT_OPEN;
-	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
-	message.alloc_flag = 0;
-	message.data = in;
-	ret = cmr_thread_msg_send(cxt->thread_cxt.ctrl_thr_handle, &message);
-	if (ret) {
-		ISP_LOGE("failed to send msg to main thr %ld", ret);
-		goto exit;
-	}
-
-exit:
-	return ret;
-}
-
-cmr_int pdaf_ctrl_close(cmr_handle handle)
-{
-	cmr_int ret = -ISP_ERROR;
-	struct pdafctrl_context *cxt = (struct pdafctrl_context *)handle;
-	CMR_MSG_INIT(message);
-
-	ISP_CHECK_HANDLE_VALID(handle);
-	if (!cxt->pdaf_support) {
-		ret = ISP_SUCCESS;
-		goto exit;
-	}
-
-	message.msg_type = PDAFCTRL_EVT_CLOSE;
-	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
-	message.alloc_flag = 0;
-	ret = cmr_thread_msg_send(cxt->thread_cxt.ctrl_thr_handle, &message);
-	if (ret) {
-		ISP_LOGE("failed to send msg to main thr %ld", ret);
-		goto exit;
+		ret = cmr_thread_msg_send(cxt->thread_cxt.ctrl_thr_handle, &message);
+		if (ret) {
+			ISP_LOGE("failed to send msg to main thr %ld", ret);
+			goto exit;
+		}
 	}
 
 exit:

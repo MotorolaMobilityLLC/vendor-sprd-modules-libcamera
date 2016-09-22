@@ -252,6 +252,12 @@ struct isp3a_af_hw_cfg {
 	cmr_u16 uw_ine_cnt;
 };
 
+enum isp3a_af_pd_config_type {
+	ISP3A_PD_CONFIG_ENABLE = 1,
+	ISP3A_PD_CONFIG_ROI = (1 << 1),
+	ISP3A_PD_CONFIG_RESET = (1 << 2),
+};
+
 struct isp3a_roi_t {
 	/* top x position */
 	cmr_u16 start_x;
@@ -261,6 +267,13 @@ struct isp3a_roi_t {
 	cmr_u16 width;
 	/* crop height */
 	cmr_u16 height;
+};
+
+struct isp3a_pd_config_t {
+	cmr_u32 type;
+	cmr_u16 token_id;
+	cmr_u8 pd_enable;
+	struct isp3a_roi_t pd_roi;
 };
 
 struct isp3a_afl_hw_cfg {

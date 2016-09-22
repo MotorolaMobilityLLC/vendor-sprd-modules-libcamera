@@ -126,7 +126,6 @@ struct af_info {
 struct pdaf_info {
 	cmr_handle handle;
 	cmr_u8 pdaf_support;
-	cmr_u8 pd_enable;
 	struct pdaf_ctrl_process_out proc_out;
 };
 
@@ -315,9 +314,7 @@ static cmr_int isp3a_stop(cmr_handle isp_3a_handle);
 static cmr_int isp3a_get_yimg_info(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_prev_yimg(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_prev_yuv(cmr_handle isp_3a_handle, void *param_ptr);
-static cmr_int isp3a_set_pdaf_enable(cmr_handle isp_3a_handle, void *param_ptr);
-static cmr_int isp3a_set_pdaf_roi(cmr_handle isp_3a_handle, void *param_ptr);
-static cmr_int isp3a_set_pdaf_reset(cmr_handle isp_3a_handle);
+static cmr_int isp3a_set_pdaf_config(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_handle_pdaf_callback(cmr_handle isp_3a_handle, struct pdaf_ctrl_callback_in *result_ptr);
 static cmr_int isp3a_start_pdaf_raw_process(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_handle_pdaf_raw_open(cmr_handle isp_3a_handle, void *param_ptr);
@@ -884,6 +881,9 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 
 	cxt->af_cxt.af_support = input_ptr->ex_info.af_supported;
 	cxt->pdaf_cxt.pdaf_support = input_ptr->ex_info.pdaf_supported;
+	if (0 == cxt->af_cxt.af_support) {
+		cxt->pdaf_cxt.pdaf_support = 0;
+	}
 	if (ERR_3ALIB_VER_SUCCESS == allib_3a_getversion(&libVersion)) {
 		ISP_LOGI("3a version:%f", libVersion);
 	}
@@ -930,9 +930,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 	af_input.af_ctrl_cb_ops.end_notify = isp3a_end_af_notify;
 	af_input.af_ctrl_cb_ops.lock_ae_awb = isp3a_set_ae_awb_lock;
 	af_input.af_ctrl_cb_ops.cfg_af_stats = isp3a_cfg_af_param;
-	af_input.af_ctrl_cb_ops.cfg_pdaf_roi = isp3a_set_pdaf_roi;
-	af_input.af_ctrl_cb_ops.cfg_pdaf_enable = isp3a_set_pdaf_enable;
-	af_input.af_ctrl_cb_ops.cfg_pdaf_reset = isp3a_set_pdaf_reset;
+	af_input.af_ctrl_cb_ops.cfg_pdaf_config = isp3a_set_pdaf_config;
 	af_input.af_ctrl_cb_ops.get_system_time = isp3a_get_dev_time;
 	af_input.tuning_info.tuning_file = input_ptr->bin_info.af_addr;
 	af_input.caf_tuning_info.tuning_file = input_ptr->bin_info.isp_caf_addr;
@@ -4192,35 +4190,12 @@ exit:
 	return ret;
 }
 
-cmr_int isp3a_set_pdaf_enable(cmr_handle isp_3a_handle, void *param_ptr)
+cmr_int isp3a_set_pdaf_config(cmr_handle isp_3a_handle, void *param_ptr)
 {
 	cmr_int                                     ret = -ISP_ERROR;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
 	struct pdaf_ctrl_param_in                   pdaf_in;
-
-	if (!param_ptr) {
-		ISP_LOGW("input is NULL");
-		goto exit;
-	}
-
-	if (!cxt->pdaf_cxt.handle) {
-		goto exit;
-	}
-	cmr_bzero(&pdaf_in, sizeof(pdaf_in));
-	pdaf_in.enable = *((cmr_u8 *)param_ptr);
-	cxt->pdaf_cxt.pd_enable = pdaf_in.enable;
-	ret = pdaf_ctrl_ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_SET_ENABLE, &pdaf_in, NULL);
-
-exit:
-	return ret;
-}
-
-cmr_int isp3a_set_pdaf_roi(cmr_handle isp_3a_handle, void *param_ptr)
-{
-	cmr_int                                     ret = -ISP_ERROR;
-	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
-	struct pdaf_ctrl_param_in                   pdaf_in;
-	struct isp3a_roi_t                          *roi = (struct isp3a_roi_t *)param_ptr;
+	struct isp3a_pd_config_t                    *pd_config = (struct isp3a_pd_config_t *)param_ptr;
 
 	if (!param_ptr) {
 		ISP_LOGW("input is NULL");
@@ -4231,27 +4206,9 @@ cmr_int isp3a_set_pdaf_roi(cmr_handle isp_3a_handle, void *param_ptr)
 	}
 
 	cmr_bzero(&pdaf_in, sizeof(pdaf_in));
-	pdaf_in.roi.start_x = roi->start_x;
-	pdaf_in.roi.start_y = roi->start_y;
-	pdaf_in.roi.width = roi->width;
-	pdaf_in.roi.height = roi->height;
-	ret = pdaf_ctrl_ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_SET_ROI, &pdaf_in, NULL);
+	pdaf_in.pd_config = pd_config;
+	ret = pdaf_ctrl_ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_SET_CONFIG, &pdaf_in, NULL);
 exit:
-	return ret;
-}
-
-cmr_int isp3a_set_pdaf_reset(cmr_handle isp_3a_handle)
-{
-	cmr_int                                     ret = -ISP_ERROR;
-	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
-	struct pdaf_ctrl_param_in                   pdaf_in;
-
-	if (!cxt->pdaf_cxt.handle) {
-		return ret;
-	}
-
-	ret = pdaf_ctrl_ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_SET_RESET, &pdaf_in, NULL);
-
 	return ret;
 }
 
@@ -4271,7 +4228,7 @@ cmr_int isp3a_handle_pdaf_callback(cmr_handle isp_3a_handle, struct pdaf_ctrl_ca
 	af_in.pd_info.timestamp.usec = cxt->pdaf_cxt.proc_out.pd_report_data.time_stamp.usec;
 
 	ISP_LOGI("E");
-	ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_SET_PD_INFO, (void *)&af_in, NULL);
+	ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_SET_PD_INFO, (void *)&af_in.pd_info, NULL);
 
 	return ret;
 }
@@ -4281,7 +4238,7 @@ static cmr_int isp3a_handle_pdaf_raw_open(cmr_handle isp_3a_handle, void *param_
 	cmr_int                                     ret = -ISP_ERROR;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
 	struct pd_raw_open                          *pd_open = (struct pd_raw_open *)param_ptr;
-	struct pdaf_ctrl_open_in                    input;
+	struct pdaf_ctrl_param_in                   pdaf_in;
 
 	if (!param_ptr) {
 		ISP_LOGW("input is NULL");
@@ -4289,13 +4246,12 @@ static cmr_int isp3a_handle_pdaf_raw_open(cmr_handle isp_3a_handle, void *param_
 	}
 
 	ISP_LOGV("E");
-	bzero(&input, sizeof(input));
+	bzero(&pdaf_in, sizeof(pdaf_in));
 	if (1 == pd_open->open) {
-		input.size = pd_open->size;
-		input.pd_set_buffer = pd_open->pd_set_buffer;
-		ret = pdaf_ctrl_open(cxt->pdaf_cxt.handle, &input);
+		pdaf_in.pd_set_buffer = pd_open->pd_set_buffer;
+		ret = pdaf_ctrl_ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_SET_OPEN, &pdaf_in, NULL);
 	} else {
-		ret = pdaf_ctrl_close(cxt->pdaf_cxt.handle);
+		ret = pdaf_ctrl_ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_SET_CLOSE, &pdaf_in, NULL);
 	}
 
 exit:
@@ -4314,7 +4270,7 @@ static cmr_int isp3a_start_pdaf_raw_process(cmr_handle isp_3a_handle, void *para
 		goto exit;
 	}
 
-	if (cxt->pdaf_cxt.pdaf_support && cxt->pdaf_cxt.pd_enable) {
+	if (cxt->pdaf_cxt.pdaf_support) {
 		struct pdaf_ctrl_param_out pdaf_out;
 		struct af_ctrl_param_out af_out;
 
@@ -4360,7 +4316,7 @@ cmr_int isp3a_get_vcm_step(cmr_handle isp_3a_handle, void *param_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
-	struct af_ctrl_param_out                     af_out;
+	struct af_ctrl_param_out                    af_out;
 
 	if (!param_ptr) {
 		ISP_LOGW("input is NULL");

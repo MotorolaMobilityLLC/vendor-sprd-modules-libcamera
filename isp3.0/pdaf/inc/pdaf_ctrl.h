@@ -26,17 +26,17 @@ enum pdaf_ctrl_data_type {
 	PDAF_DATA_TYPE_MAX
 };
 enum pdaf_ctrl_cmd_type {
-	PDAF_CTRL_CMD_SET_BASE,
 	PDAF_CTRL_CMD_SET_OPEN,
 	PDAF_CTRL_CMD_SET_CLOSE,
-	PDAF_CTRL_CMD_SET_ENABLE,
-	PDAF_CTRL_CMD_SET_ROI,
-	PDAF_CTRL_CMD_SET_RESET,
-	PDAF_CTRL_CMD_SET_MAX,
 
-	PDAF_CTRL_CMD_GET_BASE = PDAF_CTRL_CMD_SET_MAX,
+	/*
+	 * warning if you wanna set ioctrl directly
+	 * please add msg id below here
+	  * */
+	PDAF_CTRL_CMD_DIRECT_BEGIN,
 	PDAF_CTRL_CMD_GET_BUSY,
-	PDAF_CTRL_CMD_GET_MAX,
+	PDAF_CTRL_CMD_SET_CONFIG,
+	PDAF_CTRL_CMD_DIRECT_END,
 };
 
 enum pdaf_ctrl_lib_product_id {
@@ -50,17 +50,6 @@ enum pdaf_ctrl_data_bit {
 	PD_DATA_BIT_8 = 8,
 	PD_DATA_BIT_10 = 10,
 	PD_DATA_BIT_12 = 12,
-};
-
-struct pdaf_ctrl_roi_t {
-	/* top x position */
-	cmr_u16 start_x;
-	/* top y position */
-	cmr_u16 start_y;
-	/* crop width */
-	cmr_u16 width;
-	/* crop height */
-	cmr_u16 height;
 };
 
 struct pdaf_ctrl_otp_info_t {
@@ -90,17 +79,9 @@ struct pdaf_ctrl_cb_ops_type {
 			   struct pdaf_ctrl_callback_in *in);
 };
 
-struct pdaf_ctrl_open_in {
-	cmr_u32 size;
-	cmr_int (*pd_set_buffer) (struct pd_frame_in *cb_param);
-};
-
 struct pdaf_ctrl_param_in {
 	union {
-		cmr_u8 enable;
-		cmr_u32 frame_id;
-		cmr_u16 token_id;
-		struct isp3a_roi_t roi;
+		struct isp3a_pd_config_t *pd_config;
 		cmr_int (*pd_set_buffer) (struct pd_frame_in *cb_param);
 	};
 };
@@ -139,6 +120,4 @@ cmr_int pdaf_ctrl_process(cmr_handle handle, struct pdaf_ctrl_process_in *in,
 cmr_int pdaf_ctrl_ioctrl(cmr_handle handle, cmr_int cmd,
 		       struct pdaf_ctrl_param_in *in,
 		       struct pdaf_ctrl_param_out *out);
-cmr_int pdaf_ctrl_open(cmr_handle handle, struct pdaf_ctrl_open_in *in);
-cmr_int pdaf_ctrl_close(cmr_handle handle);
 #endif

@@ -495,50 +495,6 @@ static cmr_u8 afaltek_adpt_config_af_stats(cmr_handle adpt_handle, void *data)
 	return ret;
 }
 
-static cmr_int afaltek_adpt_config_pdaf_roi(cmr_handle adpt_handle, void *data)
-{
-	cmr_int ret = -ISP_ERROR;
-	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-
-	ISP_LOGI("E");
-	if (cxt->cb_ops.cfg_pdaf_roi) {
-		ret = cxt->cb_ops.cfg_pdaf_roi(cxt->caller_handle, data);
-	} else {
-		ISP_LOGE("cb is null");
-		ret = -ISP_CALLBACK_NULL;
-	}
-	return ret;
-}
-
-static cmr_int afaltek_adpt_config_pdaf_reset(cmr_handle adpt_handle)
-{
-	cmr_int ret = -ISP_ERROR;
-	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-
-	ISP_LOGI("E");
-	if (cxt->cb_ops.cfg_pdaf_reset) {
-		ret = cxt->cb_ops.cfg_pdaf_reset(cxt->caller_handle);
-	} else {
-		ISP_LOGE("cb is null");
-		ret = -ISP_CALLBACK_NULL;
-	}
-	return ret;
-}
-
-static cmr_int afaltek_adpt_config_pdaf_enable(cmr_handle adpt_handle, void *data)
-{
-	cmr_int ret = -ISP_ERROR;
-	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-
-	if (cxt->cb_ops.cfg_pdaf_enable) {
-		ret = cxt->cb_ops.cfg_pdaf_enable(cxt->caller_handle, data);
-	} else {
-		ISP_LOGE("cb is null");
-		ret = -ISP_CALLBACK_NULL;
-	}
-	return ret;
-}
-
 static cmr_int afaltek_adpt_start_notify(cmr_handle adpt_handle)
 {
 	cmr_int ret = -ISP_ERROR;
@@ -1592,13 +1548,14 @@ static cmr_int afaltek_adpt_hybird_af_enable(cmr_handle adpt_handle, void *in)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_input_enable_hybrid_t *hybrid = (struct allib_af_input_enable_hybrid_t *)in;
+	cmr_u8 haf_enable = *((cmr_u8 *)in);
 	struct allib_af_input_set_param_t p;
 
-	ISP_LOGI("E");
+	ISP_LOGI("haf_enable %d",haf_enable);
 	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_HYBIRD_AF_ENABLE;
-	p.u_set_data.haf_info = *hybrid;
+	p.u_set_data.haf_info.enable_hybrid = haf_enable;
+	p.u_set_data.haf_info.type = alAFLIB_HYBRID_TYPE_PD;
 
 	ret = afaltek_adpt_set_parameters(cxt, &p);
 	return ret;
@@ -2165,7 +2122,7 @@ static cmr_int afaltek_adpt_inctrl(cmr_handle adpt_handle, cmr_int cmd,
 		ret = afaltek_adpt_update_pd_info(adpt_handle, in);
 		break;
 	case AF_CTRL_CMD_SET_PD_ENABLE:
-		//ret = afaltek_adpt_hybird_af_enable(adpt_handle, in);
+		ret = afaltek_adpt_hybird_af_enable(adpt_handle, in);
 		break;
 	case AF_CTRL_CMD_SET_LIVE_VIEW_SIZE:
 		ret = afaltek_adpt_update_isp_info(adpt_handle, in);
@@ -2370,7 +2327,7 @@ static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 	struct allib_af_input_sensor_info_t sensor_info;
 	struct allib_af_input_init_info_t init_info;
 	struct sensor_otp_af_info *otp_af_info;
-	struct allib_af_input_enable_hybrid_t hybrid_in;
+	cmr_u8 haf_enable = 0;
 
 	cmr_bzero(&move_lens_info, sizeof(move_lens_info));
 	otp_af_info = (struct sensor_otp_af_info *) in->otp_info.otp_data;
@@ -2454,11 +2411,8 @@ static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 	ISP_LOGI("in->pdaf_support = %d", in->pdaf_support);
 	if (in->pdaf_support) {
 		/* set hybrid input info */
-		hybrid_in.enable_hybrid = 1;
-		hybrid_in.type = alAFLIB_HYBRID_TYPE_PD;
-		//hybrid_in.pd_lib_version = NULL;
-
-		afaltek_adpt_hybird_af_enable(adpt_handle, (void *)&hybrid_in);
+		haf_enable = 1;
+		afaltek_adpt_hybird_af_enable(adpt_handle, (void *)&haf_enable);
 	}
 
 	/* sync init param */
@@ -2531,9 +2485,7 @@ static cmr_int afaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 	cxt->cb_ops.end_notify = in_p->cb_ctrl_ops.end_notify;
 	cxt->cb_ops.lock_ae_awb = in_p->cb_ctrl_ops.lock_ae_awb;
 	cxt->cb_ops.cfg_af_stats = in_p->cb_ctrl_ops.cfg_af_stats;
-	cxt->cb_ops.cfg_pdaf_enable = in_p->cb_ctrl_ops.cfg_pdaf_enable;
-	cxt->cb_ops.cfg_pdaf_roi = in_p->cb_ctrl_ops.cfg_pdaf_roi;
-	cxt->cb_ops.cfg_pdaf_reset = in_p->cb_ctrl_ops.cfg_pdaf_reset;
+	cxt->cb_ops.cfg_pdaf_config = in_p->cb_ctrl_ops.cfg_pdaf_config;
 	cxt->cb_ops.get_system_time = in_p->cb_ctrl_ops.get_system_time;
 	cxt->af_cur_status = AF_ADPT_IDLE;
 	cxt->lens_status = (enum af_ctrl_lens_status)LENS_MOVE_DONE;
@@ -2727,24 +2679,24 @@ static cmr_int afaltek_adpt_proc_report_pd_cfg(cmr_handle adpt_handle,
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct allib_af_out_pd_config_t pdaf_cfg;
+	struct isp3a_pd_config_t pdaf_cfg;
 
 	cmr_bzero(&pdaf_cfg, sizeof(pdaf_cfg));
 	pdaf_cfg.pd_enable = report->pd_config.pd_enable;
 	pdaf_cfg.token_id = report->pd_config.token_id;
 	pdaf_cfg.type = report->pd_config.type;
-	pdaf_cfg.pd_roi_info = report->pd_config.pd_roi_info;
+	pdaf_cfg.pd_roi.start_x = report->pd_config.pd_roi_info.roi.uw_top;
+	pdaf_cfg.pd_roi.start_y = report->pd_config.pd_roi_info.roi.uw_left;
+	pdaf_cfg.pd_roi.width = report->pd_config.pd_roi_info.roi.uw_dx;
+	pdaf_cfg.pd_roi.height = report->pd_config.pd_roi_info.roi.uw_dy;
 
 	ISP_LOGI("pdaf_cfg.type = %x", pdaf_cfg.type);
 	/* send stats config to framework */
-	if (pdaf_cfg.type & alAFLib_PD_CONFIG_ENABLE) {
-		afaltek_adpt_config_pdaf_enable(adpt_handle, (void *)&pdaf_cfg.pd_enable);
-	}
-	if (pdaf_cfg.type & alAFLib_PD_CONFIG_RESET) {
-		afaltek_adpt_config_pdaf_reset(adpt_handle);
-	}
-	if (pdaf_cfg.type & alAFLib_PD_CONFIG_ROI) {
-		afaltek_adpt_config_pdaf_roi(adpt_handle, (void *)&pdaf_cfg.pd_roi_info.roi);
+	if (cxt->cb_ops.cfg_pdaf_config) {
+		ret = cxt->cb_ops.cfg_pdaf_config(cxt->caller_handle, (void *)&pdaf_cfg);
+	} else {
+		ISP_LOGE("cb is null");
+		ret = -ISP_CALLBACK_NULL;
 	}
 	return ret;
 }
