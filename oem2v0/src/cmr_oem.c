@@ -8739,3 +8739,18 @@ exit:
 	return ret;
 }
 
+cmr_int camera_local_set_sensor_close_flag(cmr_handle oem_handle)
+{
+	cmr_int                         ret = CMR_CAMERA_SUCCESS;
+	struct camera_context           *cxt = (struct camera_context*)oem_handle;
+	SENSOR_VAL_T            val;
+
+	val.type = SENSOR_VAL_TYPE_SET_SENSOR_CLOSE_FLAG;
+	val.pval = NULL;
+	ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_ACCESS_VAL, (cmr_uint)&val);
+	if (ret){
+		CMR_LOGE("failed to set sensor close flag");
+	}
+	return ret;
+}
+

@@ -62,6 +62,7 @@ static uint32_t s_current_default_line_time=0;
 
 struct sensor_ev_info_t s_sensor_ev_info;
 
+static uint32_t s_s5k4h8yx_sensor_close_flag = 0;
 
 SENSOR_HW_HANDLE _s5k4h8yx_Create(void *privatedata);
 void _s5k4h8yx_Destroy(SENSOR_HW_HANDLE handle);
@@ -1975,21 +1976,28 @@ static unsigned long _s5k4h8yx_StreamOn(SENSOR_HW_HANDLE handle, unsigned long p
 
 static unsigned long _s5k4h8yx_StreamOff(SENSOR_HW_HANDLE handle, unsigned long param)
 {
-	SENSOR_LOGI("SENSOR_s5k4h8yx: StreamOff");
 	uint16_t value;
-	unsigned int sleep_time, frame_time;
+	unsigned int sleep_time = 0, frame_time;
+
+	SENSOR_LOGI("E");
 
 	//Sensor_WriteReg(0x0100, 0x0003);
 	//usleep(50*1000);
 	value = Sensor_ReadReg(0x0100);
-	if (value != 0x0003) {
+	if (value == 0x0103) {
 		Sensor_WriteReg(0x0100, 0x0003);
-		frame_time = s_current_default_line_time*s_current_frame_length/1000+1000;
-		sleep_time = frame_time>50*1000?frame_time:50*1000;
-		usleep(sleep_time);//50 * 1000);
-		//usleep(s_current_default_line_time*s_current_frame_length/1000+1000);
-		SENSOR_LOGI("X  sleep_time %d  frame_time %d",sleep_time,frame_time);
+		if (!s_s5k4h8yx_sensor_close_flag) {
+			frame_time = s_current_default_line_time*s_current_frame_length/1000+1000;
+			sleep_time = frame_time>50*1000?frame_time:50*1000;
+			usleep(sleep_time);
+		}
+	} else {
+		Sensor_WriteReg(0x0100, 0x0003);
 	}
+
+	s_s5k4h8yx_sensor_close_flag = 0;
+
+	SENSOR_LOGI("X sleep_time=%dus", sleep_time);
 
 	return 0;
 }
@@ -2559,6 +2567,14 @@ static uint32_t _s5k4h8yx_get_static_info(SENSOR_HW_HANDLE handle, uint32_t *par
 	return rtn;
 }
 
+static uint32_t _s5k4h8yx_set_sensor_close_flag(SENSOR_HW_HANDLE handle)
+{
+	uint32_t rtn = SENSOR_SUCCESS;
+
+	s_s5k4h8yx_sensor_close_flag = 1;
+
+	return rtn;
+}
 
 static unsigned long _s5k4h8yx_access_val(SENSOR_HW_HANDLE handle, unsigned long param)
 {
@@ -2624,6 +2640,9 @@ static unsigned long _s5k4h8yx_access_val(SENSOR_HW_HANDLE handle, unsigned long
 			break;
 		case SENSOR_VAL_TYPE_GET_FPS_INFO:
 			rtn = _s5k4h8yx_get_fps_info(handle, param_ptr->pval);
+			break;
+		case SENSOR_VAL_TYPE_SET_SENSOR_CLOSE_FLAG:
+			rtn = _s5k4h8yx_set_sensor_close_flag(handle);
 			break;
 		default:
 			break;

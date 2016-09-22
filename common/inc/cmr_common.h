@@ -1278,6 +1278,8 @@ cmr_int (*camera_snapshot_is_need_flash)(cmr_handle oem_handle, cmr_u32 camera_i
 cmr_uint (*camera_get_sensor_dual_otp_info)(cmr_handle camera_handle, struct sensor_dual_otp_info *otp_info);
 cmr_uint (*camera_get_sensor_vcm_step)(cmr_handle camera_handle,cmr_u32 camera_id, cmr_u32* vcm_step);
 cmr_int (*camera_stop_multi_layer)(cmr_handle camera_handle);
+cmr_int (*camera_set_sensor_close_flag)(cmr_handle camera_handle);
+
 }oem_ops_t;
 
 typedef struct oem_module {

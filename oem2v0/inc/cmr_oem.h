@@ -383,7 +383,7 @@ cmr_int camera_get_dual_otpinfo(cmr_handle  oem_handle,struct sensor_dual_otp_in
 cmr_int prev_set_vcm_step(cmr_handle preview_handle, cmr_u32 camera_id, void *data);
 cmr_int cmr_get_sensor_vcm_step(cmr_handle  oem_handle,cmr_u32 camera_id, cmr_u32* max_fps);
 cmr_int camera_local_stop_multi_layer(cmr_handle oem_handle);
-
+cmr_int camera_local_set_sensor_close_flag(cmr_handle oem_handle);
 #ifdef __cplusplus
 }
 #endif

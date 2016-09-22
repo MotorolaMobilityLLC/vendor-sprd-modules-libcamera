@@ -1430,6 +1430,9 @@ int SprdCamera3HWI::flush()
 	}
 	Mutex::Autolock l(mLock);
 
+	// for performance tuning: close camera
+	mOEMIf->setSensorCloseFlag();
+
 	if(mMetadataChannel)
 		mMetadataChannel->stop(mFrameNum);
 	if(mRegularChan)

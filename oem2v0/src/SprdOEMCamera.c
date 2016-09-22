@@ -987,6 +987,12 @@ cmr_int camera_stop_multi_layer(cmr_handle camera_handle)
 	return 0;
 }
 
+cmr_int camera_set_sensor_close_flag(cmr_handle camera_handle)
+{
+	camera_local_set_sensor_close_flag(camera_handle);
+	return 0;
+}
+
 static oem_ops_t oem_module_ops = {
 	camera_init,
 	camera_deinit,
@@ -1050,6 +1056,7 @@ static oem_ops_t oem_module_ops = {
 	camera_get_sensor_dual_otp_info,
 	camera_get_sensor_vcm_step,
 	camera_stop_multi_layer,
+	camera_set_sensor_close_flag,
 };
 
 struct oem_module OEM_MODULE_INFO_SYM = {

@@ -92,6 +92,8 @@ static uint32_t s_current_frame_length=0;
 static uint32_t s_current_default_line_time=0;
 struct sensor_ev_info_t s_sensor_ev_info;
 
+static uint32_t s_imx230_sensor_close_flag = 0;
+
 static SENSOR_IOCTL_FUNC_TAB_T s_imx230_ioctl_func_tab;
 struct sensor_raw_info *s_imx230_mipi_raw_info_ptr = &s_imx230_mipi_raw_info;
 
@@ -2266,18 +2268,24 @@ static unsigned long imx230_stream_off(SENSOR_HW_HANDLE handle, unsigned long pa
 	SENSOR_LOGI("E");
 	UNUSED(param);
 	unsigned char value;
-	unsigned int sleep_time,frame_time;
+	unsigned int sleep_time = 0, frame_time;
 
 	value = Sensor_ReadReg(0x0100);
-	if (value != 0x00) {
+	if (value == 0x01) {
 		Sensor_WriteReg(0x0100, 0x00);
-		frame_time = s_current_default_line_time*s_current_frame_length/1000+1000;
-		sleep_time = frame_time>50*1000?frame_time:50*1000;
-		usleep(sleep_time);//50 * 1000);
-		//usleep(s_current_default_line_time*s_current_frame_length/1000+1000);
-		SENSOR_LOGI("X  sleep_time %d  frame_time %d",sleep_time,frame_time);
+		if (!s_imx230_sensor_close_flag) {
+			frame_time = s_current_default_line_time*s_current_frame_length/1000+1000;
+			sleep_time = frame_time>50*1000?frame_time:50*1000;
+			usleep(sleep_time);
+		}
+	} else {
+		Sensor_WriteReg(0x0100, 0x00);
 	}
-	SENSOR_LOGI("X");
+
+	s_imx230_sensor_close_flag = 0;
+
+	SENSOR_LOGI("X sleep_time=%dus", sleep_time);
+
 	return 0;
 }
 
@@ -2350,6 +2358,15 @@ static uint32_t imx230_get_fps_info(SENSOR_HW_HANDLE handle, uint32_t *param)
 	return rtn;
 }
 
+static uint32_t imx230_set_sensor_close_flag(SENSOR_HW_HANDLE handle)
+{
+	uint32_t rtn = SENSOR_SUCCESS;
+
+	s_imx230_sensor_close_flag = 1;
+
+	return rtn;
+}
+
 static unsigned long imx230_access_val(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
@@ -2415,6 +2432,9 @@ static unsigned long imx230_access_val(SENSOR_HW_HANDLE handle, unsigned long pa
 			break;
 		case SENSOR_VAL_TYPE_GET_FPS_INFO:
 			rtn = imx230_get_fps_info(handle, param_ptr->pval);
+			break;
+		case SENSOR_VAL_TYPE_SET_SENSOR_CLOSE_FLAG:
+			rtn = imx230_set_sensor_close_flag(handle);
 			break;
 		default:
 			break;

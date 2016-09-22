@@ -7341,6 +7341,16 @@ void * SprdCamera3OEMIf::pre_alloc_cap_mem_thread_proc(void *p_data)
 	return NULL;
 }
 
+void SprdCamera3OEMIf::setSensorCloseFlag()
+{
+	if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
+		HAL_LOGE("oem is null or oem ops is null");
+		return;
+	}
+
+	mHalOem->ops->camera_set_sensor_close_flag(mCameraHandle);
+}
+
 #ifdef CONFIG_CAMERA_EIS
 void SprdCamera3OEMIf::EIS_init() {
 	//mParam = {0};
