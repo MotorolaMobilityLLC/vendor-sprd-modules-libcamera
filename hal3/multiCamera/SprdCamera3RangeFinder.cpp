@@ -232,8 +232,8 @@ void SprdCamera3RangeFinder::getDepthImageSize(int inputWidth, int inputHeight, 
             *outHeight = 180;
         }
 // TODO:Remove this after depth engine support 16:9
-        *outWidth = 240;
-        *outHeight = 180;
+        *outWidth = 320;
+        *outHeight = 240;
    HAL_LOGD("iw:%d,ih:%d,ow:%d,oh:%d",inputWidth,inputHeight,*outWidth,*outHeight);
 
 }
@@ -1329,43 +1329,99 @@ int SprdCamera3RangeFinder::MeasureThread::calculateDepthValue(frame_matched_inf
 
     int dPVImgW = ((private_handle_t*)*(input_buf1))->width;
     int dPVImgH = ((private_handle_t*)*(input_buf1))->height;
-    unsigned short *puwDisparityBuf = (unsigned short *)malloc(dPVImgW*dPVImgH*sizeof(unsigned short));
+
+    unsigned short *puwDisparityBuf = new unsigned short[dPVImgW * dPVImgH * 2];
     vcmSteps = combDepthResult->vcmSteps;
     void *pucBufMain_YCC420NV21 = (void*)((private_handle_t*)*(input_buf1))->base;
     void *pucBufSub_YCC420NV21 =  (void*)((private_handle_t*)*(input_buf2))->base;
+
+    unsigned char *mainRotate = new unsigned char[dPVImgW * dPVImgH * 3 / 2];
+    unsigned char *auxRotate = new unsigned char[dPVImgW * dPVImgH * 3 / 2];
+    unsigned short *disparityRotate = new unsigned short[dPVImgW * dPVImgH * 2];
+
     uwInX1 = mCurUwcoods.uwInX1;
     uwInY1 = mCurUwcoods.uwInY1;
     uwInX2 = mCurUwcoods.uwInX2;
     uwInY2 = mCurUwcoods.uwInY2;
 
     HAL_LOGD("uwInX1=%d,uwInY1=%d,uwInX2=%d,uwInY2=%d",uwInX1,uwInY1,uwInX2,uwInY2);
-    HAL_LOGD("width=%d highet=%d pucBufSub_YCC420NV21=%p VCM=%d ",dPVImgW,dPVImgH,pucBufSub_YCC420NV21,vcmSteps);
+    HAL_LOGD("width=%d height=%d pucBufSub_YCC420NV21=%p VCM=%d ",dPVImgW,dPVImgH,pucBufSub_YCC420NV21,vcmSteps);
 
-    rc = mDepthEngineApi->alSDE2_Init(NULL, 0, dPVImgW, dPVImgH,\
-                                    mOtpData, SPRD_DUAL_OTP_SIZE);
+#ifdef CONFIG_DUAL_CAMERA_HORIZONTAL
+    rc = mDepthEngineApi->alSDE2_Init(NULL, 0, dPVImgH, dPVImgW, mOtpData, SPRD_DUAL_OTP_SIZE);
+#else
+    rc = mDepthEngineApi->alSDE2_Init(NULL, 0, dPVImgW, dPVImgH, mOtpData, SPRD_DUAL_OTP_SIZE);
+#endif
     if(rc != 0){
         HAL_LOGE("alSDE2_Init failed, rc=%d", rc);
         goto ALSDE_FAILED;
     }
 
-    rc = mDepthEngineApi->alSDE2_Run (puwDisparityBuf, \
-                                    pucBufMain_YCC420NV21,\
-                                    pucBufSub_YCC420NV21,\
+#ifdef CONFIG_DUAL_CAMERA_HORIZONTAL
+    rc = gRangeFinder->NV21Rotate90((unsigned char*)mainRotate, (unsigned char*)pucBufMain_YCC420NV21, dPVImgW, dPVImgH, 0);
+    if(rc != true){
+        HAL_LOGE("main rotate fail  rc = %d",rc);
+        goto ALSDE_FAILED;
+    }
+
+    rc = gRangeFinder->NV21Rotate90((unsigned char*)auxRotate, (unsigned char*)pucBufMain_YCC420NV21, dPVImgW, dPVImgH, 0);
+    if(rc != true){
+        HAL_LOGE("aux rotate fail  rc = %d",rc);
+        goto ALSDE_FAILED;
+    }
+#else
+    rc = gRangeFinder->NV21Rotate180((unsigned char*)mainRotate, (unsigned char*)pucBufMain_YCC420NV21, dPVImgW, dPVImgH, 0);
+    if(rc != true){
+        HAL_LOGE("main rotate fail  rc = %d",rc);
+        goto ALSDE_FAILED;
+    }
+
+    rc = gRangeFinder->NV21Rotate180((unsigned char*)auxRotate, (unsigned char*)pucBufMain_YCC420NV21, dPVImgW, dPVImgH, 0);
+    if(rc != true){
+        HAL_LOGE("aux rotate fail  rc = %d",rc);
+        goto ALSDE_FAILED;
+    }
+#endif
+
+    rc = mDepthEngineApi->alSDE2_Run ((void*)puwDisparityBuf, \
+                                    (void*)auxRotate,\
+                                    (void*)mainRotate,\
                                     vcmSteps);
     if(rc != 0){
         HAL_LOGE("alSDE2_Run failed .rc = %d",rc);
         goto ALSDE_FAILED;
     }
 
-    rc = mDepthEngineApi->alSDE2_HolelessPolish (puwDisparityBuf, dPVImgW, dPVImgH);
+#ifdef CONFIG_DUAL_CAMERA_HORIZONTAL
+    rc = gRangeFinder->DepthRotateCCW90(disparityRotate, puwDisparityBuf, dPVImgH, dPVImgW, dPVImgW * dPVImgH * 2);
+    if(rc != true){
+        HAL_LOGE("disparityRotate fail rc = %d",rc);
+        goto ALSDE_FAILED;
+    }
+#else
+    rc = gRangeFinder->DepthRotateCCW180(disparityRotate, puwDisparityBuf, dPVImgW, dPVImgH, dPVImgW * dPVImgH * 2);
+    if(rc != true){
+        HAL_LOGE("disparityRotate fail rc = %d",rc);
+        goto ALSDE_FAILED;
+    }
+#endif
+
+    rc = mDepthEngineApi->alSDE2_HolelessPolish (disparityRotate, dPVImgW, dPVImgH);
     if(rc != 0){
         HAL_LOGE("alSDE2_HolelessPolish failed .rc = %d",rc);
         goto ALSDE_FAILED;
     }
 
+
+#ifdef CONFIG_DUAL_CAMERA_HORIZONTAL
     rc = mDepthEngineApi->alSDE2_DistanceMeasurement(&eOutDistance, \
-                                                puwDisparityBuf, dPVImgW, dPVImgH, uwInX1, \
+                                                disparityRotate, dPVImgH, dPVImgW, uwInX1, \
                                                 uwInY1, uwInX2, uwInY2, vcmSteps);
+#else
+    rc = mDepthEngineApi->alSDE2_DistanceMeasurement(&eOutDistance, \
+                                                disparityRotate, dPVImgW, dPVImgH, uwInX1, \
+                                                uwInY1, uwInX2, uwInY2, vcmSteps);
+#endif
 
     if(rc != 0){
         HAL_LOGE("alSDE2_DistanceMeasurement failed .rc = %d",rc);
@@ -1380,17 +1436,25 @@ int SprdCamera3RangeFinder::MeasureThread::calculateDepthValue(frame_matched_inf
 
 #if IMG_DUMP_DEBUG
     addr = (void*)((struct private_handle_t *)*(combDepthResult->buffer1))->base;
+
     size =((struct private_handle_t *)*(combDepthResult->buffer1))->size;
     gRangeFinder->dumpImg(addr,size,combDepthResult->frame_number,1);
 
     addr = (void*)((struct private_handle_t *)*(combDepthResult->buffer2))->base;
     size =((struct private_handle_t *)*(combDepthResult->buffer2))->size;
     gRangeFinder->dumpImg(addr,size,combDepthResult->frame_number,2);
+
+    addr = (void*)mainRotate;
+    size =((struct private_handle_t *)*(combDepthResult->buffer2))->size;
+    gRangeFinder->dumpImg(addr,size,combDepthResult->frame_number,3);
 #endif
 
 ALSDE_FAILED:
    mDepthEngineApi->alSDE2_Close();
    free(puwDisparityBuf);
+   delete [] mainRotate;
+   delete [] auxRotate;
+   delete [] disparityRotate;
 
 return rc;
 }
@@ -1555,7 +1619,7 @@ int SprdCamera3RangeFinder::configureStreams(const struct camera3_device *device
     }
 
     if(stream_list->streams[1] == NULL){
-        HAL_LOGE("congxd+stream stream_list->streams[1] == NULL");
+        HAL_LOGE("stream_list->streams[1] == NULL");
         stream_list->streams[1] = (camera3_stream_t *)malloc(sizeof(camera3_stream_t));
     }
 
@@ -2256,6 +2320,96 @@ hwi_frame_buffer_info_t* SprdCamera3RangeFinder::pushToUnmatchedQueue(hwi_frame_
     queue.push_back(new_buffer_info);
 
     return pushout;
+}
+
+bool SprdCamera3RangeFinder::DepthRotateCCW90(uint16_t *a_uwDstBuf, uint16_t *a_uwSrcBuf,
+        uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight, uint32_t a_udFileSize) {
+    int x, y, nw, nh;
+    uint16_t *dst;
+    if (!a_uwSrcBuf || !a_uwDstBuf || a_uwSrcWidth <= 0 || a_uwSrcHeight <= 0)
+        return false;
+
+    nw = a_uwSrcHeight;
+    nh = a_uwSrcWidth;
+    for (x = 0; x < nw; x++) {
+        dst = a_uwDstBuf + (nh - 1) * nw + x;
+        for (y = 0; y < nh; y++, dst -= nw) {
+            *dst = *a_uwSrcBuf++;
+        }
+    }
+    return true;
+}
+
+bool SprdCamera3RangeFinder::DepthRotateCCW180(uint16_t *a_uwDstBuf, uint16_t *a_uwSrcBuf,
+        uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight, uint32_t a_udFileSize) {
+    int x, y, nw, nh;
+    uint16_t *dst;
+    int n = 0;
+    if (!a_uwSrcBuf || !a_uwDstBuf || a_uwSrcWidth <= 0 || a_uwSrcHeight <= 0)
+        return false;
+
+    for (int j = a_uwSrcHeight - 1; j >= 0; j--) {
+        for (int i = a_uwSrcWidth; i > 0; i--) {
+            a_uwDstBuf[n++] = a_uwSrcBuf[a_uwSrcWidth * j + i];
+        }
+    }
+
+    return true;
+}
+
+bool SprdCamera3RangeFinder::NV21Rotate90(uint8_t *a_ucDstBuf, uint8_t *a_ucSrcBuf, uint16_t a_uwSrcWidth,
+        uint16_t a_uwSrcHeight, uint32_t a_udFileSize) {
+    int k, x, y, nw, nh;
+    uint8_t *dst;
+
+    nw = a_uwSrcHeight;
+    nh = a_uwSrcWidth;
+    // rotate Y
+    k = 0;
+    for (x = nw - 1; x >= 0; x--) {
+        dst = a_ucDstBuf + x;
+        for (y = 0; y < nh; y++, dst += nw) {
+            *dst = a_ucSrcBuf[k++];
+        }
+    }
+
+    // rotate cbcr
+    k = nw * nh * 3 / 2 - 1;
+    for (x = a_uwSrcWidth - 1; x > 0; x = x - 2) {
+        for (y = 0; y < a_uwSrcHeight / 2; y++) {
+            a_ucDstBuf[k] = a_ucSrcBuf[(a_uwSrcWidth * a_uwSrcHeight)
+                    + (y * a_uwSrcWidth) + x];
+            k--;
+            a_ucDstBuf[k] = a_ucSrcBuf[(a_uwSrcWidth * a_uwSrcHeight)
+                    + (y * a_uwSrcWidth) + (x - 1)];
+            k--;
+        }
+    }
+
+    return true;
+
+}
+
+bool SprdCamera3RangeFinder::NV21Rotate180(uint8_t *a_ucDstBuf, uint8_t *a_ucSrcBuf, uint16_t a_uwSrcWidth,
+        uint16_t a_uwSrcHeight, uint32_t a_udFileSize) {
+    int n = 0;
+    int hw = a_uwSrcWidth / 2;
+    int hh = a_uwSrcHeight / 2;
+    //copy y
+    for (int j = a_uwSrcHeight - 1; j >= 0; j--) {
+        for (int i = a_uwSrcWidth; i > 0; i--) {
+            a_ucDstBuf[n++] = a_ucSrcBuf[a_uwSrcWidth * j + i];
+        }
+    }
+
+    //copy uv
+    unsigned char *ptemp = a_ucSrcBuf + a_uwSrcWidth * a_uwSrcHeight;
+    for (int j = hh - 1; j >= 0; j--) {
+        for (int i = a_uwSrcWidth; i > 0; i--) {
+            a_ucDstBuf[n++] = ptemp[a_uwSrcWidth * j + i];
+        }
+    }
+    return true;
 }
 
 };
