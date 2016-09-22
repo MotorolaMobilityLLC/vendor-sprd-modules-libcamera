@@ -47,12 +47,26 @@ typedef struct gyro_vs
 
 typedef void * vsInst;
 
+typedef struct sprd_eis_init_info {
+	char board_name[36];
+	double f;
+	double td;
+	double ts;
+}sprd_eis_init_info_t;
+
 void video_stab_param_default(vsParam* param);
 void video_stab_open(vsInst* inst, vsParam* param);
 int video_stab_read(vsInst inst, vsOutFrame* frame);
 void video_stab_write_frame(vsInst inst, vsInFrame* frame);
 void video_stab_write_gyro(vsInst inst, vsGyro* gyro, int gyro_num);
 void video_stab_close(vsInst inst);
+
+const sprd_eis_init_info_t  eis_init_info_tab[] =
+{
+	{"sp9860g-1",1230.0f, 0.004f, 0.021f},
+	{"sp9860g-3",1160.0f, -0.01f, 0.0024f}
+};
+
 
 #ifdef __cplusplus
 }

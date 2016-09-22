@@ -7456,6 +7456,8 @@ void SprdCamera3OEMIf::setSensorCloseFlag()
 #ifdef CONFIG_CAMERA_EIS
 void SprdCamera3OEMIf::EIS_init() {
 	//mParam = {0};
+	int i = 0;
+	int num = sizeof(eis_init_info_tab)/sizeof(sprd_eis_init_info_t);
 	video_stab_param_default(&mParam);
 	mParam.src_w = (uint16_t)mPreviewWidth;
 	mParam.src_h = (uint16_t)mPreviewHeight;
@@ -7465,9 +7467,18 @@ void SprdCamera3OEMIf::EIS_init() {
 	mParam.wdx = 0;
 	mParam.wdy = 0;
 	mParam.wdz = 0;
-	mParam.f   = 1230;
-	mParam.td  = 0.004;
-	mParam.ts  = 0.021;
+	mParam.f   = 1230.0f;
+	mParam.td  = 0.0001f;
+	mParam.ts  = 0.0001f;
+	//EIS parameter depend on board version
+	for (i = 0; i < num; i++){
+		if(strcmp(eis_init_info_tab[i].board_name, CAMERA_EIS_BOARD_PARAM) == 0){
+			mParam.f   = eis_init_info_tab[i].f ;//1230;
+			mParam.td  = eis_init_info_tab[i].td;//0.004;
+			mParam.ts  = eis_init_info_tab[i].ts;//0.021;
+		}
+	}
+	HAL_LOGI("mParam f: %lf, td:%lf, ts:%lf",mParam.f,mParam.td, mParam.ts);
 	video_stab_open(&mInst, &mParam);
 	HAL_LOGI("mParam src_w: %d, src_h:%d, dst_w:%d, dst_h:%d",mParam.src_w,mParam.src_h, mParam.dst_w, mParam.dst_h);
 }
