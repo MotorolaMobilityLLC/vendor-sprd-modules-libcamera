@@ -64,7 +64,12 @@ namespace sprdcamera {
 #define THREAD_TIMEOUT    30e6
 #define MAX_NOTIFY_QUEUE_SIZE 10
 
-
+typedef struct {
+    int srcWidth;
+    int srcHeight;
+    int stereoVideoWidth;
+    int stereoVideoHeight;
+}video_size;
 typedef enum {
     MUXER_MSG_DATA_PROC = 1,
     MUXER_MSG_EXIT
@@ -141,6 +146,7 @@ private:
     Condition  mMergequeueSignal;
     bool mIommuEnabled;
 
+    video_size mVideoSize;
     int cameraDeviceOpen(int camera_id,struct hw_device_t **hw_device);
     int setupPhysicalCameras();
     int getCameraInfo(struct camera_info *info);
@@ -169,15 +175,13 @@ public:
         void videoErrorCallback(uint32_t frame_number);
         int loadGpuApi();
         void unLoadGpuApi();
-        void initGpuData(int w,int h,int );
+        void initGpuData(int rotation);
         GPUAPI_t* mGpuApi;
         //This queue stores matched buffer as frame_matched_info_t
         List <muxer_queue_msg_t> mMuxerMsgList;
         Mutex      mMergequeueMutex;
         Condition  mMergequeueSignal;
         line_buf_t  pt_line_buf  ;
-        int m3DVideoWidth;
-        int m3DVideoHeight;
         struct stream_info_s pt_stream_info;
         bool isInitRenderContest;
     private:
@@ -225,7 +229,7 @@ public:
     void processCaptureResultAux( const camera3_capture_result_t *result);
     const camera_metadata_t *constructDefaultRequestSettings( const struct camera3_device *device,int type);
     void _dump(const struct camera3_device *device, int fd);
-    void dumpImg(void* addr,int size,int fd);
+    void dumpImg(void* addr,int size,int fd,int flag);
     int _flush(const struct camera3_device *device);
     int closeCameraDevice();
 

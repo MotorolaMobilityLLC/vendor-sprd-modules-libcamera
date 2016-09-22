@@ -136,6 +136,7 @@ typedef struct {
 
 typedef struct {
     uint32_t frame_number;
+    bool invalid;
     int showPreviewDeviceId;
     buffer_handle_t*  buffer;
     camera3_stream_t *stream;
