@@ -101,6 +101,7 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId):
 	mPictureChannel(NULL),
 	mDeqBufNum(0),
 	mRecSkipNum(0),
+	mFlush(false),
 	mIsSkipFrm(false)
 {
 	//for camera id 2&3 debug
@@ -1208,12 +1209,18 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 
 	{
 		Mutex::Autolock lr(mRequestLock);
+		size_t pendingCount = 0;
 		while (mPendingRequest >= receive_req_max) {
-			ret = mRequestSignal.waitRelative(mRequestLock, kPendingTime);
-			if (ret == TIMED_OUT) {
-				ret = -ENODEV;
+			mRequestSignal.waitRelative(mRequestLock, kPendingTime);
+			if (mFlush || pendingCount > kPendingTimeOut/kPendingTime) {
+				HAL_LOGD("mFlush=%d, pendingCount=%d", mFlush, pendingCount);
+				if (mFlush)
+					ret = 0;
+				else
+					ret = -ENODEV;
 				break;
 			}
+			pendingCount++;
 		}
 	}
 	if (ret == -ENODEV)
@@ -1428,6 +1435,8 @@ int SprdCamera3HWI::flush()
 			mPicChan->channelClearAllQBuff(timestamp, CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT);
 		}
 	}
+
+	mFlush = true;
 	Mutex::Autolock l(mLock);
 
 	// for performance tuning: close camera
@@ -1445,8 +1454,11 @@ int SprdCamera3HWI::flush()
 	ret = mFlushSignal.waitRelative(mLock, 500000000); //500ms
 	if (ret == TIMED_OUT) {
 		HAL_LOGE("Flush is time out");
+		mFlush = false;
 		return -ENODEV;
 	}
+
+	mFlush = false;
 
 	return 0;
 }
