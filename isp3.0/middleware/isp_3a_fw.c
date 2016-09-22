@@ -3444,6 +3444,20 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 	}
 	cxt->ae_cxt.hw_iso_speed = ae_out.hw_iso_speed;
 	sof_cfg_info.iso_val = ae_out.hw_iso_speed;
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	if (cxt->is_refocus && (2 == cxt->camera_id || 3 == cxt->camera_id)) {
+		struct match_data_param match_param;
+
+		cmr_bzero(&match_param, sizeof(match_param));
+		match_param.op = GET_MATCH_AE_DATA;
+		ret = isp3a_match_data_ctrl(cxt, &match_param);
+		if (ret) {
+			ISP_LOGE("failed to get match_data");
+		}
+		sof_cfg_info.iso_val = match_param.ae_data.iso;
+		ISP_LOGI("camera id %d, get match out iso_val:%d", cxt->camera_id, sof_cfg_info.iso_val);
+	}
+#endif
 	time_start = systemTime(CLOCK_MONOTONIC);
 	ret = isp_dev_access_cfg_sof_info(cxt->dev_access_handle, &sof_cfg_info);
 	if (ret) {

@@ -342,6 +342,13 @@ static cmr_int aealtek_set_min_frame_length(struct aealtek_cxt *cxt_ptr, cmr_int
 	}
 	if (0 != max_fps && 0 != line_time) {
 		cxt_ptr->cur_status.min_frame_length = SENSOR_EXP_US_BASE / max_fps / line_time;
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	if (cxt_ptr->is_refocus && (0 == cxt_ptr->camera_id || 1 == cxt_ptr->camera_id)) {
+		cxt_ptr->cur_status.min_frame_length_slv = SENSOR_EXP_US_BASE / max_fps
+				/ cxt_ptr->cur_status.ui_param.work_info_slv.resolution.line_time;
+		ISP_LOGI("min_frame_length_slv=%d", cxt_ptr->cur_status.min_frame_length_slv);
+	}
+#endif
 	} else {
 		cxt_ptr->cur_status.min_frame_length = 0;
 	}
@@ -3383,8 +3390,7 @@ exit:
 }
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
-static cmr_int aealtek_get_sync_info_from_lib(struct aealtek_cxt *cxt_ptr, struct ispae_sync_info_output *ae_sync_info
-										, struct aealtek_exposure_param *exp_gain)
+static cmr_int aealtek_get_sync_info_from_lib(struct aealtek_cxt *cxt_ptr, struct aealtek_exposure_param *exp_gain)
 {
 	cmr_int ret = ISP_ERROR;
 	struct ae_match_runtime_data_t master_dat;
@@ -3394,6 +3400,7 @@ static cmr_int aealtek_get_sync_info_from_lib(struct aealtek_cxt *cxt_ptr, struc
 	cmr_u32 line_time_slv;
 	cmr_u32 min_frame_length = 0;
 	cmr_u32 min_frame_length_slv = 0;
+	struct match_data_param match_param;
 
 	if (!cxt_ptr) {
 		ISP_LOGE("param is NULL error,%p!", cxt_ptr);
@@ -3438,30 +3445,36 @@ static cmr_int aealtek_get_sync_info_from_lib(struct aealtek_cxt *cxt_ptr, struc
 		exp_gain->dummy = min_frame_length_slv - slave_dat.exposure_line;
 	}
 	slave_dat.uwCur_fps = SENSOR_EXP_US_BASE / ((slave_dat.exposure_line + exp_gain->dummy) * line_time_slv);
-	ISP_LOGI("before slave fps: %d",slave_dat.uwCur_fps);
+	ISP_LOGV("before slave fps: %d",slave_dat.uwCur_fps);
 
 	if ((master_dat.exposure_line > min_frame_length || slave_dat.exposure_line > min_frame_length_slv) && min_frame_length && min_frame_length_slv) {
 		if (master_dat.exposure_time > slave_dat.exposure_time) {
 			ISP_LOGI("slave: should set slave sensor dummy line to follow master low fps");
 			exp_gain->dummy =
-				((master_dat.exposure_time - slave_dat.exposure_time) * SENSOR_EXP_BASE / line_time_slv * 10 + 5) / 10;
+				(master_dat.exposure_time - slave_dat.exposure_time) * SENSOR_EXP_BASE / line_time_slv;
 		} else if (master_dat.exposure_time < slave_dat.exposure_time) {
 			ISP_LOGI("master: should set master sensor dummy line to follow slave low fps");
 			cxt_ptr->sensor_exp_data.write_exp.dummy =
-				(((slave_dat.exposure_time - master_dat.exposure_time) * SENSOR_EXP_BASE) / line_time * 10 + 5) / 10;
+				((slave_dat.exposure_time - master_dat.exposure_time) * SENSOR_EXP_BASE) / line_time;
 		}
 	}
 	slave_dat.uwCur_fps = SENSOR_EXP_US_BASE / ((slave_dat.exposure_line + exp_gain->dummy) * line_time_slv);
-	ISP_LOGI("after actual slave fps: %d",slave_dat.uwCur_fps);
+	ISP_LOGV("after actual slave fps: %d",slave_dat.uwCur_fps);
 
-	ae_sync_info->master.exposure_time = master_dat.exposure_time;
-	ae_sync_info->master.adgain = master_dat.sensor_ad_gain;
-	ae_sync_info->master.iso = master_dat.ISO;
-	ae_sync_info->master.result_bv = master_dat.bv_val;
-	ae_sync_info->slaver.exposure_time = slave_dat.exposure_time;
-	ae_sync_info->slaver.adgain = slave_dat.sensor_ad_gain;
-	ae_sync_info->slaver.iso = slave_dat.ISO;
-	ae_sync_info->slaver.result_bv = slave_dat.bv_val;
+	if (cxt_ptr->init_in_param.ops_in.match_data_ctrl) {
+		cmr_bzero(&match_param, sizeof(match_param));
+		match_param.ae_data.iso = slave_dat.ISO;
+		match_param.ae_data.exif_iso = slave_dat.EXIF_ISO;
+		match_param.ae_data.exposure_time = slave_dat.exposure_time;
+		match_param.ae_data.exposure_line = slave_dat.exposure_line;
+		match_param.ae_data.sensor_ad_gain = slave_dat.sensor_ad_gain;
+		match_param.ae_data.isp_d_gain = slave_dat.ISP_D_gain;
+		match_param.ae_data.uw_cur_fps = slave_dat.uwCur_fps;
+		match_param.ae_data.bv_val = slave_dat.bv_val;
+		match_param.ae_data.uc_sensor_mode = slave_dat.uc_sensor_mode;
+		match_param.op = SET_MATCH_AE_DATA;
+		cxt_ptr->init_in_param.ops_in.match_data_ctrl(cxt_ptr->caller_handle, &match_param);
+	}
 
 	exp_gain->exp_line = slave_dat.exposure_line;
 	exp_gain->exp_time = slave_dat.exposure_time;
@@ -3518,7 +3531,6 @@ static cmr_int aealtek_callback_sync_info(struct aealtek_cxt *cxt_ptr, struct ae
 {
 	cmr_int ret = ISP_ERROR;
 	struct ae_ctrl_callback_in callback_in;
-	struct ispae_sync_info_output ae_sync_info;
 	struct ae_ctrl_param_sensor_exposure sensor_exp;
 	struct ae_ctrl_param_sensor_gain sensor_gain;
 	struct aealtek_exposure_param exp_param;
@@ -3531,7 +3543,7 @@ static cmr_int aealtek_callback_sync_info(struct aealtek_cxt *cxt_ptr, struct ae
 	sensor_exp.dummy = 0;
 	sensor_exp.size_index = cxt_ptr->cur_status.ui_param.work_info_slv.resolution.sensor_size_index;
 
-	aealtek_get_sync_info_from_lib(cxt_ptr, &ae_sync_info, &exp_param);
+	aealtek_get_sync_info_from_lib(cxt_ptr, &exp_param);
 	sensor_exp.exp_line = exp_param.exp_line;
 	sensor_gain.gain = exp_param.gain;
 	sensor_exp.dummy = exp_param.dummy;
@@ -3545,12 +3557,9 @@ static cmr_int aealtek_callback_sync_info(struct aealtek_cxt *cxt_ptr, struct ae
 	if (ret)
 		goto exit;
 	if (cxt_ptr->init_in_param.ops_in.set_iso_slv) {
-		ISP_LOGI("iso_speed_slv =%d", exp_param.iso);
+		ISP_LOGV("iso_speed_slv =%d", exp_param.iso);
 		cxt_ptr->init_in_param.ops_in.set_iso_slv(cxt_ptr->caller_handle, exp_param.iso);
 	}
-
-	//callback_in.ae_sync_info = &ae_sync_info;
-	//cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRL_CB_SYNC_INFO, &callback_in);
 
 	return ISP_SUCCESS;
 exit:
