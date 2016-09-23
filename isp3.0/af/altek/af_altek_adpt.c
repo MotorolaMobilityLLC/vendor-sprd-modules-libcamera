@@ -37,7 +37,7 @@
 #define LIBRARY_PATH "libalAFLib.so"
 #define CAF_LIBRARY_PATH "libspcaftrigger.so"
 #define SEC_TO_US	1000000L
-#define AE_CONVERGE_TIMEOUT	(2 * SEC_TO_US)
+#define AE_CONVERGE_TIMEOUT	(1.3 * SEC_TO_US)
 
 /* suggest defulat value of AE stable for CAF trigger */
 #define DEFAULT_AE4AF_STABLE_AVG_MEAN_THD 3
@@ -51,7 +51,7 @@
 
 #define DEFAULT_TUNING_BIN_SIZE 500
 
-#define AF_DOING(x) ((AF_ADPT_STARTED <= (x)) && (AF_ADPT_DONE > (x)))
+#define AF_DOING(x) ((AF_ADPT_STARTED < (x)) && (AF_ADPT_DONE > (x)))
 
 struct af_altek_lib_ops {
 	void *(*init)(void *af_out_obj);
@@ -85,12 +85,18 @@ struct af_altek_lib_api {
 };
 
 enum af_altek_adpt_status_t {
+	AF_ADPT_STARTE_HOLDON,
 	AF_ADPT_STARTED,
 	AF_ADPT_FOCUSING,
 	AF_ADPT_PRE_FOCUSED,
 	AF_ADPT_DONE,
 	AF_ADPT_RE_TRIG,
 	AF_ADPT_IDLE,
+};
+
+enum af_altek_lib_status_t {
+	AF_LIB_IDLE,
+	AF_LIB_BUSY,
 };
 
 struct af_altek_ae_status_info {
@@ -161,6 +167,7 @@ struct af_altek_context {
 	void *af_runtime_obj;
 	struct af_altek_ae_status_info ae_status_info;
 	enum af_altek_adpt_status_t af_cur_status;
+	enum af_altek_lib_status_t af_lib_status;
 	struct af_altek_stats_config_t stats_config;
 	struct af_altek_report_t report_data;
 	struct af_altek_vcm_tune_info vcm_tune;
@@ -171,6 +178,7 @@ struct af_altek_context {
 	struct caf_context af_caf_cxt;
 	struct af_ae_working_info ae_info;
 	enum af_ctrl_lens_status lens_status;
+	struct isp_af_win last_roi;
 };
 
 /************************************ INTERNAK DECLARATION ************************************/
@@ -184,7 +192,8 @@ static cmr_int afaltek_adpt_config_roi(cmr_handle adpt_handle,
 				       cmr_int roi_type,
 				       struct allib_af_input_roi_info_t *roi_out);
 static cmr_int afaltek_adpt_pre_start(cmr_handle adpt_handle,
-				      struct allib_af_input_roi_info_t *roi);
+				      struct allib_af_input_roi_info_t *roi,
+				      const char *cb_func);
 static cmr_int afaltek_adpt_set_vcm_pos(cmr_handle adpt_handle, struct af_ctrl_motor_pos *pos_info);
 static cmr_int afaltek_adpt_set_caf_fv_cfg(cmr_handle adpt_handle);
 static cmr_int afaltek_adpt_set_special_event(cmr_handle adpt_handle, void *in);
@@ -573,6 +582,7 @@ static cmr_int afaltek_adpt_force_stop(cmr_handle adpt_handle)
 	struct allib_af_input_set_param_t p;
 	cmr_int status = 0;
 
+	cxt->af_lib_status = AF_LIB_BUSY;
 	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_CANCEL_FOCUS;
 
@@ -1292,13 +1302,22 @@ static cmr_int afaltek_adpt_caf_start(cmr_handle adpt_handle)
 	ret = afaltek_adpt_start_notify(adpt_handle);
 	if (ret)
 		ISP_LOGE("failed to notify");
-	ret = afaltek_adpt_config_roi(adpt_handle, &roi,
-				      alAFLib_ROI_TYPE_NORMAL, &lib_roi);
-	if (ret)
-		ISP_LOGE("failed to config roi");
-	ret = afaltek_adpt_pre_start(adpt_handle, &lib_roi);
-	if (ret)
-		ISP_LOGE("failed to start af");
+	if (AF_LIB_BUSY == cxt->af_lib_status) {
+		ISP_LOGI("isp_af_start af holdon");
+		cxt->af_cur_status = AF_ADPT_STARTE_HOLDON;
+		memcpy(&cxt->last_roi, &roi, sizeof(cxt->last_roi));
+	} else {
+		ret = afaltek_adpt_config_roi(adpt_handle, &roi,
+					      alAFLib_ROI_TYPE_NORMAL, &lib_roi);
+		if (ret)
+			ISP_LOGE("failed to config roi");
+		ret = afaltek_adpt_stop(cxt);
+		if (ret)
+			ISP_LOGE("failed to stop");
+		ret = afaltek_adpt_pre_start(adpt_handle, &lib_roi, __func__);
+		if (ret)
+			ISP_LOGE("failed to start af");
+	}
 exit:
 	return ret;
 }
@@ -1339,11 +1358,11 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 		/* When entering the camera, CAF is forced to focus once. */
 		cxt->af_caf_cxt.caf_force_focus = 0;
 		ret = afaltek_adpt_caf_start(cxt);
-	} else if ((aft_in->ae_info.is_stable && AF_ADPT_RE_TRIG == cxt->af_cur_status)) {
+	} else if (aft_in->ae_info.is_stable && AF_ADPT_RE_TRIG == cxt->af_cur_status) {
 		ISP_LOGI("af retrigger");
 		ret = afaltek_adpt_caf_start(cxt);
 		cxt->ae_info.ae_stable_retrig_flg = 0;
-	} else if ((!cxt->aft_proc_result.is_caf_trig) && aft_out.is_caf_trig) {
+	} else if (!cxt->aft_proc_result.is_caf_trig && aft_out.is_caf_trig) {
 		ret = afaltek_adpt_caf_start(cxt);
 	} else if (aft_out.is_cancel_caf && AF_DOING(cxt->af_cur_status)) {
 		ret = afaltek_adpt_stop(cxt);
@@ -1878,17 +1897,14 @@ exit:
 }
 
 static cmr_int afaltek_adpt_pre_start(cmr_handle adpt_handle,
-				      struct allib_af_input_roi_info_t *roi)
+				      struct allib_af_input_roi_info_t *roi,
+				      const char *cb_func)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct isp3a_af_hw_cfg af_cfg;
 
 	bzero(&af_cfg, sizeof(af_cfg));
-	ret = afaltek_adpt_stop(cxt);
-	if (ret)
-		ISP_LOGE("failed to stop");
-
 	afaltek_adpt_get_hw_config(&af_cfg);
 	ret = afaltek_adpt_config_af_stats(cxt, &af_cfg);
 
@@ -1900,7 +1916,7 @@ static cmr_int afaltek_adpt_pre_start(cmr_handle adpt_handle,
 	afaltek_adpt_get_timestamp(cxt,
 				   &cxt->ae_status_info.timestamp.sec,
 				   &cxt->ae_status_info.timestamp.usec);
-	ISP_LOGI("isp_af_start pre sec = %d, usec = %d",
+	ISP_LOGI("isp_af_start pre cb by %s sec = %d, usec = %d", cb_func,
 		 cxt->ae_status_info.timestamp.sec, cxt->ae_status_info.timestamp.usec);
 	return ret;
 }
@@ -1937,17 +1953,23 @@ static cmr_int afaltek_adpt_proc_start(cmr_handle adpt_handle)
 	cmr_u32 sec = 0;
 	cmr_u32 usec = 0;
 	cmr_uint time_delta = 0;
+	struct allib_af_input_roi_info_t lib_roi;
 
-	if (AF_ADPT_STARTED == cxt->af_cur_status) {
+	if ((AF_ADPT_STARTE_HOLDON == cxt->af_cur_status) &&
+	    (AF_LIB_IDLE == cxt->af_lib_status)) {
+		cmr_bzero(&lib_roi, sizeof(lib_roi));
+		afaltek_adpt_config_roi(adpt_handle, &cxt->last_roi,
+					alAFLib_ROI_TYPE_NORMAL, &lib_roi);
+		ret = afaltek_adpt_pre_start(adpt_handle, &lib_roi, __func__);
+	} else if (AF_ADPT_STARTED == cxt->af_cur_status) {
 		if (cxt->ae_status_info.ae_converged ||
 		    cxt->aft_proc_result.is_caf_trig) {
 			afaltek_adpt_post_start(cxt);
 		} else {
 			afaltek_adpt_get_timestamp(cxt, &sec, &usec);
-			time_delta =
-			    (sec * SEC_TO_US + usec) -
-			    (cxt->ae_status_info.timestamp.sec * SEC_TO_US +
-			     cxt->ae_status_info.timestamp.usec);
+			time_delta = (sec * SEC_TO_US + usec) -
+				(cxt->ae_status_info.timestamp.sec * SEC_TO_US +
+				 cxt->ae_status_info.timestamp.usec);
 			if (AE_CONVERGE_TIMEOUT <= time_delta) {
 				ISP_LOGI("isp_af_start proc ae converge timeout time_delta = %lu", time_delta);
 				afaltek_adpt_post_start(cxt);
@@ -2049,6 +2071,7 @@ static cmr_int afaltek_adpt_inctrl(cmr_handle adpt_handle, cmr_int cmd,
 				   void *in, void *out)
 {
 	cmr_int ret = -ISP_ERROR;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 
 	UNUSED(out);
 	ISP_LOGV("cmd = %ld", cmd);
@@ -2071,9 +2094,19 @@ static cmr_int afaltek_adpt_inctrl(cmr_handle adpt_handle, cmr_int cmd,
 		struct allib_af_input_roi_info_t lib_roi;
 
 		cmr_bzero(&lib_roi, sizeof(lib_roi));
-		afaltek_adpt_config_roi(adpt_handle, in,
-					alAFLib_ROI_TYPE_NORMAL, &lib_roi);
-		ret = afaltek_adpt_pre_start(adpt_handle, &lib_roi);
+		if (AF_LIB_BUSY == cxt->af_lib_status) {
+			ISP_LOGI("isp_af_start af holdon");
+			cxt->af_cur_status = AF_ADPT_STARTE_HOLDON;
+			memcpy(&cxt->last_roi, in, sizeof(cxt->last_roi));
+		} else {
+			ret = afaltek_adpt_stop(cxt);
+			if (ret)
+				ISP_LOGE("failed to stop");
+
+			afaltek_adpt_config_roi(adpt_handle, in,
+						alAFLib_ROI_TYPE_NORMAL, &lib_roi);
+			ret = afaltek_adpt_pre_start(adpt_handle, &lib_roi, __func__);
+		}
 		break;
 		}
 	case AF_CTRL_CMD_SET_AF_STOP:
@@ -2604,9 +2637,11 @@ static cmr_int afaltek_adpt_proc_report_status(cmr_handle adpt_handle,
 	if (alAFLib_STATUS_WARNING == report->focus_status.t_status ||
 		alAFLib_STATUS_AF_ABORT == report->focus_status.t_status) {
 		ISP_LOGI("t_status unfocused = %d", report->focus_status.t_status);
+		cxt->af_lib_status = AF_LIB_IDLE;
 		ret = afaltek_adpt_af_done(cxt, 0);
 	} else if (alAFLib_STATUS_FOCUSED == report->focus_status.t_status) {
 		ISP_LOGI("t_status focused ok = %d", report->focus_status.t_status);
+		cxt->af_lib_status = AF_LIB_IDLE;
 		ret = afaltek_adpt_af_done(cxt, 1);
 	} else if (alAFLib_STATUS_FORCE_ABORT == report->focus_status.t_status) {
 		ISP_LOGI("t_status force abort = %d retrigger = %d",
@@ -2617,7 +2652,19 @@ static cmr_int afaltek_adpt_proc_report_status(cmr_handle adpt_handle,
 		} else {
 			/* this means someone canncel af */
 			//ret = afaltek_adpt_af_done(cxt, 0);
+#if 0
+			struct allib_af_input_special_event event;
+
+			cmr_bzero(&event, sizeof(event));
+			event.flag = 0;
+			event.type = alAFLib_AE_IS_LOCK;
+			ret = afaltek_adpt_set_special_event(cxt, &event);
+			if (ret)
+				ISP_LOGI("failed to set special event %ld", ret);
+#endif
+			cxt->af_cur_status = AF_ADPT_DONE;
 		}
+		cxt->af_lib_status = AF_LIB_IDLE;
 		ret = afaltek_adpt_lock_ae_awb(cxt, ISP_AE_AWB_UNLOCK);
 	} else {
 		ISP_LOGI("unkown status = %d", report->focus_status.t_status);
