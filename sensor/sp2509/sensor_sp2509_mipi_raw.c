@@ -157,6 +157,10 @@ struct raw_param_info_tab s_sp2509_raw_param_tab[] = {
 
 static SENSOR_IOCTL_FUNC_TAB_T s_sp2509_ioctl_func_tab;
 struct sensor_raw_info *s_sp2509_mipi_raw_info_ptr = &s_sp2509_mipi_raw_info;
+static uint32_t s_sp2509_sensor_close_flag = 0;
+static uint32_t s_current_frame_length=0;
+static uint32_t s_current_default_line_time=0;
+
 static const SENSOR_REG_T sp2509_init_setting[] = {
 };
 static const SENSOR_REG_T sp2509_snapshot_setting[] = {
@@ -763,6 +767,7 @@ static uint16_t sp2509_update_exposure(SENSOR_HW_HANDLE handle,uint32_t shutter,
 
 	dummy_line = dummy_line > FRAME_OFFSET ? dummy_line : FRAME_OFFSET;
 	dest_fr_len = ((shutter + dummy_line) > fr_len) ? (shutter +dummy_line) : fr_len;
+	s_current_frame_length = dest_fr_len;
 
 	cur_fr_len = sp2509_read_frame_length(handle);
 	SENSOR_PRINT("current shutter = %d, fr_len = %d, dummy_line=%d cur_fr_len %d dest_fr_len %d", shutter, fr_len,dummy_line,cur_fr_len,dest_fr_len);
@@ -796,21 +801,17 @@ static uint32_t sp2509_power_on(SENSOR_HW_HANDLE handle,uint32_t power_on)
 	if (SENSOR_TRUE == power_on) {
 		Sensor_PowerDown(power_down);
 		Sensor_SetResetLevel(reset_level);
-		usleep(10 * 1000);
 		Sensor_SetIovddVoltage(iovdd_val);
-		usleep(1 * 1000);
 		Sensor_SetAvddVoltage(avdd_val);
 		Sensor_SetDvddVoltage(dvdd_val);
 		usleep(5 * 1000);
 		Sensor_PowerDown(!power_down);
 		usleep(5 * 1000);
 		Sensor_SetResetLevel(!reset_level);
-		usleep(10 * 1000);
 		Sensor_SetMCLK(SENSOR_DEFALUT_MCLK);
 
 		#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
-		usleep(5 * 1000);
 		//zzz_init(2);
 		#endif
 
@@ -821,10 +822,8 @@ static uint32_t sp2509_power_on(SENSOR_HW_HANDLE handle,uint32_t power_on)
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 		#endif
 		Sensor_SetResetLevel(reset_level);
-		usleep(1* 1000);
 		Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
 		Sensor_PowerDown(power_down);
-		usleep(10 * 1000);
 		Sensor_SetAvddVoltage(SENSOR_AVDD_CLOSED);
 		Sensor_SetDvddVoltage(SENSOR_AVDD_CLOSED);
 		Sensor_SetIovddVoltage(SENSOR_AVDD_CLOSED);
@@ -1105,6 +1104,7 @@ LOCAL unsigned long sp2509_ex_write_exposure(SENSOR_HW_HANDLE handle, unsigned l
 	size_index = ex->size_index;
 	SENSOR_PRINT("current mode = %d, exposure_line = %d, dummy_line=%d frame_length %d", size_index, exposure_line,dummy_line,s_current_default_frame_length);
 	s_current_default_frame_length = sp2509_get_default_frame_length(handle,size_index);
+	s_current_default_line_time = s_sp2509_resolution_trim_tab[size_index].line_time;
 
 	ret_value = sp2509_write_exposure_dummy(handle, exposure_line, dummy_line, size_index);
 
@@ -1304,12 +1304,23 @@ static uint32_t sp2509_stream_on(SENSOR_HW_HANDLE handle,uint32_t param)
 static uint32_t sp2509_stream_off(SENSOR_HW_HANDLE handle,uint32_t param)
 {
 	SENSOR_PRINT("E");
+	unsigned char value;
+	unsigned int sleep_time = 0, frame_time;
 
-	Sensor_WriteReg(0xfd,0x01);
-	Sensor_WriteReg(0xac,0x00);
-	/*delay*/
-	usleep(50 * 1000);
+	value = Sensor_ReadReg(0xac);
+	if (value == 0x01) {
+		Sensor_WriteReg(0xfd,0x01);
+		Sensor_WriteReg(0xac,0x00);
+		if (!s_sp2509_sensor_close_flag) {
+			usleep(50 * 1000);
+		}
+	} else {
+		Sensor_WriteReg(0xfd,0x01);
+		Sensor_WriteReg(0xac,0x00);
+	}
 
+	s_sp2509_sensor_close_flag = 0;
+	SENSOR_LOGI("X sleep_time=%dus", sleep_time);
 	return 0;
 } 
 
@@ -1424,6 +1435,15 @@ static uint32_t sp2509_get_fps_info(SENSOR_HW_HANDLE handle, uint32_t *param)
 	return rtn;
 }
 
+static uint32_t sp2509_set_sensor_close_flag(SENSOR_HW_HANDLE handle)
+{
+	uint32_t rtn = SENSOR_SUCCESS;
+
+	s_sp2509_sensor_close_flag = 1;
+
+	return rtn;
+}
+
 static unsigned long sp2509_access_val(SENSOR_HW_HANDLE handle, unsigned long param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
@@ -1479,6 +1499,9 @@ static unsigned long sp2509_access_val(SENSOR_HW_HANDLE handle, unsigned long pa
 			break;
 		case SENSOR_VAL_TYPE_GET_FPS_INFO:
 			rtn = sp2509_get_fps_info(handle, param_ptr->pval);
+			break;
+		case SENSOR_VAL_TYPE_SET_SENSOR_CLOSE_FLAG:
+			rtn = sp2509_set_sensor_close_flag(handle);
 			break;
 		default:
 			break;

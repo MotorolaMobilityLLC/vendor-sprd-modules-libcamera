@@ -131,6 +131,9 @@ static struct sensor_ev_info_t s_sensor_ev_info={
 
 static SENSOR_IOCTL_FUNC_TAB_T s_s5k3l8xxm3_ioctl_func_tab;
 static struct sensor_raw_info *s_s5k3l8xxm3_mipi_raw_info_ptr = &s_s5k3l8xxm3_mipi_raw_info;
+static uint32_t s_s5k3l8xxm3_sensor_close_flag = 0;
+static uint32_t s_current_frame_length=0;
+static uint32_t s_current_default_line_time=0;
 
 static const SENSOR_REG_T s5k3l8xxm3_init_setting[] = {
 	//{0x6028,0x4000},
@@ -754,6 +757,7 @@ static uint16_t s5k3l8xxm3_write_exposure_dummy(SENSOR_HW_HANDLE handle,uint32_t
 
 	dummy_line = dummy_line > FRAME_OFFSET ? dummy_line : FRAME_OFFSET;
 	dest_fr_len = ((shutter + dummy_line) > fr_len) ? (shutter +dummy_line) : fr_len;
+	s_current_frame_length = dest_fr_len;
 
 	cur_fr_len = s5k3l8xxm3_read_frame_length(handle);
 
@@ -790,19 +794,17 @@ static uint32_t s5k3l8xxm3_power_on(SENSOR_HW_HANDLE handle,uint32_t power_on)
 	if (SENSOR_TRUE == power_on) {
 		Sensor_PowerDown(power_down);
 		Sensor_SetResetLevel(reset_level);
-		usleep(10 * 1000);
 		Sensor_SetAvddVoltage(avdd_val);
 		Sensor_SetDvddVoltage(dvdd_val);
 		Sensor_SetIovddVoltage(iovdd_val);
 		Sensor_PowerDown(!power_down);
 		Sensor_SetResetLevel(!reset_level);
-		usleep(10 * 1000);
+		usleep(20);
 		Sensor_SetMCLK(EX_MCLK);
 		Sensor_SetMIPILevel(0);
 
 		#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
-		usleep(5 * 1000);
 		//zzz_init(2);
 		#else
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
@@ -1012,6 +1014,14 @@ static uint32_t s5k3l8xxm3_get_fps_info(SENSOR_HW_HANDLE handle, uint32_t *param
 	return rtn;
 }
 
+static uint32_t s5k3l8xxm3_set_sensor_close_flag(SENSOR_HW_HANDLE handle)
+{
+	uint32_t rtn = SENSOR_SUCCESS;
+
+	s_s5k3l8xxm3_sensor_close_flag = 1;
+
+	return rtn;
+}
 /*==============================================================================
  * Description:
  * cfg otp setting
@@ -1082,6 +1092,9 @@ static unsigned long s5k3l8xxm3_access_val(SENSOR_HW_HANDLE handle,unsigned long
 			break;
 		case SENSOR_VAL_TYPE_GET_PDAF_INFO:
 			ret = s5k3l8xxm3_get_pdaf_info(handle, param_ptr->pval);
+			break;
+		case SENSOR_VAL_TYPE_SET_SENSOR_CLOSE_FLAG:
+			ret = s5k3l8xxm3_set_sensor_close_flag(handle);
 			break;
 		default:
 			break;
@@ -1292,6 +1305,7 @@ static unsigned long s5k3l8xxm3_write_exposure(SENSOR_HW_HANDLE handle,unsigned 
 
 	SENSOR_PRINT("size_index=%d, exposure_line = %d, dummy_line=%d",size_index,exposure_line,dummy_line);
 	s_current_default_frame_length = s5k3l8xxm3_get_default_frame_length(handle,size_index);
+	s_current_default_line_time = s_s5k3l8xxm3_resolution_trim_tab[size_index].line_time;
 
 	ret_value = s5k3l8xxm3_write_exposure_dummy(handle, exposure_line, dummy_line, size_index);
 
@@ -1387,13 +1401,25 @@ static uint32_t s5k3l8xxm3_stream_on(SENSOR_HW_HANDLE handle,uint32_t param)
 static uint32_t s5k3l8xxm3_stream_off(SENSOR_HW_HANDLE handle,uint32_t param)
 {
 	SENSOR_PRINT("E");
+	unsigned char value;
+	unsigned int sleep_time = 0, frame_time;
 
-	Sensor_WriteReg(0x0100, 0x0000);
-	/*delay*/
-	usleep(50 * 1000);
+	value = Sensor_ReadReg(0x0100);
 
+	if (value == 0x01) {
+		Sensor_WriteReg(0x0100, 0x00);
+		if (!s_s5k3l8xxm3_sensor_close_flag) {
+			usleep(50 * 1000);
+		}
+	} else {
+		Sensor_WriteReg(0x0100, 0x00);
+	}
+
+	s_s5k3l8xxm3_sensor_close_flag = 0;
+	SENSOR_LOGI("X sleep_time=%dus", sleep_time);
 	return 0;
 }
+
 
 /*==============================================================================
  * Description:
