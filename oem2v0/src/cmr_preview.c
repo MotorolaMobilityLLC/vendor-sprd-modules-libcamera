@@ -6136,6 +6136,7 @@ cmr_int prev_construct_video_frame(struct prev_handle *handle,
 	struct prev_context     *prev_cxt = NULL;
 	struct img_frm          *frm_ptr = NULL;
 	cmr_s64                 ae_time =  0;
+	char refocus[PROPERTY_VALUE_MAX];
 
 	if (!handle || !frame_type || !info) {
 		CMR_LOGE("Invalid param! 0x%p, 0x%p, 0x%p", handle, frame_type, info);
@@ -6148,6 +6149,7 @@ cmr_int prev_construct_video_frame(struct prev_handle *handle,
 	prev_rot    = handle->prev_cxt[camera_id].prev_param.prev_rot;
 	prev_cxt    = &handle->prev_cxt[camera_id];
 	ae_time  = prev_cxt->ae_time;
+	property_get("sys.cam.refocus", refocus, "0");
 
 	if (video_chn_id == info->channel_id) {
 		if (prev_rot) {
@@ -6188,8 +6190,12 @@ cmr_int prev_construct_video_frame(struct prev_handle *handle,
 		frame_type->monoboottime = info->monoboottime;
 		frame_type->zoom_ratio = prev_cxt->prev_param.zoom_setting.zoom_info.zoom_ratio;
 		frame_type->ae_time = ae_time;
-		CMR_LOGI("ae_time: %lld, zoom_ratio: %f", frame_type->ae_time, frame_type->zoom_ratio);
+		CMR_LOGI("ae_time: %lld, zoom_ratio: %f",frame_type->ae_time, frame_type->zoom_ratio);
 		frame_type->type      = PREVIEW_VIDEO_FRAME;
+
+		if (prev_cxt->prev_param.is_support_fd && prev_cxt->prev_param.is_fd_on && atoi(refocus) != 0 && camera_id == 3) { //add for 3d VIDEO makeup
+			prev_fd_send_data(handle, camera_id, frm_ptr);
+		}
 #if 0
 		cmr_s8 value[PROPERTY_VALUE_MAX];
 		property_get("debug.camera.dump.frame",value,"preview");

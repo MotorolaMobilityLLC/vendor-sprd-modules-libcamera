@@ -272,6 +272,7 @@ private:
 	void HandleAutoExposure(enum camera_cb_type cb, void* parm4);
 	void HandleCancelPicture(enum camera_cb_type cb, void* parm4);
 	void calculateTimestampForSlowmotion(int64_t frm_timestamp);
+	void doFaceMakeup(struct camera_frame_type *frame);
 
 	enum Sprd_camera_state {
 		SPRD_INIT,

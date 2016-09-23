@@ -297,6 +297,7 @@ int SprdCamera3RegularChannel::request(camera3_stream_t *stream, buffer_handle_t
 {
 	int ret = NO_ERROR;
 	int i;
+	char refocus[PROPERTY_VALUE_MAX];
 
 	for(i=0; i<CHANNEL_MAX_STREAM_NUM; i++)
 	{
@@ -317,7 +318,8 @@ int SprdCamera3RegularChannel::request(camera3_stream_t *stream, buffer_handle_t
 				else if(i == (CAMERA_STREAM_TYPE_VIDEO - REGULAR_STREAM_TYPE_BASE)) {
 					SPRD_DEF_Tag sprddefInfo;
 					mSetting->getSPRDDEFTag(&sprddefInfo);
-					if(!sprddefInfo.perfect_skin_level)
+					property_get("sys.cam.refocus", refocus, "0");
+					if(!sprddefInfo.perfect_skin_level  ||0 != atoi(refocus))
 						mOEMIf->PushVideobuff(buffer);
 				} else if(i == (CAMERA_STREAM_TYPE_CALLBACK - REGULAR_STREAM_TYPE_BASE))
 					mOEMIf->PushZslbuff(buffer);
