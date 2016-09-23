@@ -38,6 +38,7 @@
 #define CAF_LIBRARY_PATH "libspcaftrigger.so"
 #define SEC_TO_US	1000000L
 #define AE_CONVERGE_TIMEOUT	(1.3 * SEC_TO_US)
+#define AF_LIB_BUSY_FRAMES 3
 
 /* suggest defulat value of AE stable for CAF trigger */
 #define DEFAULT_AE4AF_STABLE_AVG_MEAN_THD 3
@@ -97,6 +98,11 @@ enum af_altek_adpt_status_t {
 enum af_altek_lib_status_t {
 	AF_LIB_IDLE,
 	AF_LIB_BUSY,
+};
+
+struct af_alek_lib_status_info {
+	cmr_u32 busy_frame_id;
+	enum af_altek_lib_status_t af_lib_status;
 };
 
 struct af_altek_ae_status_info {
@@ -167,7 +173,7 @@ struct af_altek_context {
 	void *af_runtime_obj;
 	struct af_altek_ae_status_info ae_status_info;
 	enum af_altek_adpt_status_t af_cur_status;
-	enum af_altek_lib_status_t af_lib_status;
+	struct af_alek_lib_status_info lib_status_info;
 	struct af_altek_stats_config_t stats_config;
 	struct af_altek_report_t report_data;
 	struct af_altek_vcm_tune_info vcm_tune;
@@ -538,7 +544,7 @@ static cmr_int afaltek_adpt_force_stop(cmr_handle adpt_handle)
 	struct allib_af_input_set_param_t p;
 	cmr_int status = 0;
 
-	cxt->af_lib_status = AF_LIB_BUSY;
+	cxt->lib_status_info.af_lib_status = AF_LIB_BUSY;
 	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_CANCEL_FOCUS;
 
@@ -1030,6 +1036,7 @@ static cmr_int afaltek_adpt_update_sof(cmr_handle adpt_handle, void *in)
 	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_UPDATE_SOF;
 
+	cxt->frame_id = sof_info->sof_frame_idx;
 	p.u_set_data.sof_id.sof_frame_id = sof_info->sof_frame_idx;
 	p.u_set_data.sof_id.sof_time.time_stamp_sec = sof_info->timestamp.sec;
 	p.u_set_data.sof_id.sof_time.time_stamp_us = sof_info->timestamp.usec;
@@ -1258,7 +1265,7 @@ static cmr_int afaltek_adpt_caf_start(cmr_handle adpt_handle)
 	ret = afaltek_adpt_start_notify(adpt_handle);
 	if (ret)
 		ISP_LOGE("failed to notify");
-	if (AF_LIB_BUSY == cxt->af_lib_status) {
+	if (AF_LIB_BUSY == cxt->lib_status_info.af_lib_status) {
 		ISP_LOGI("isp_af_start af holdon");
 		cxt->af_cur_status = AF_ADPT_STARTE_HOLDON;
 		memcpy(&cxt->last_roi, &roi, sizeof(cxt->last_roi));
@@ -1795,7 +1802,7 @@ static cmr_u8 afaltek_adpt_get_sys_time(cmr_handle adpt_handle, cmr_u64 *time)
 
 static cmr_u8 afaltek_adpt_aft_log(cmr_handle adpt_handle, cmr_u32 *is_save)
 {
-	cmr_int ret = -ISP_ERROR;
+	cmr_int ret = ISP_SUCCESS;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	char value[PROPERTY_VALUE_MAX] = { 0x0 };
 
@@ -1912,12 +1919,18 @@ static cmr_int afaltek_adpt_proc_start(cmr_handle adpt_handle)
 	cmr_uint time_delta = 0;
 	struct allib_af_input_roi_info_t lib_roi;
 
-	if ((AF_ADPT_STARTE_HOLDON == cxt->af_cur_status) &&
-	    (AF_LIB_IDLE == cxt->af_lib_status)) {
-		cmr_bzero(&lib_roi, sizeof(lib_roi));
-		afaltek_adpt_config_roi(adpt_handle, &cxt->last_roi,
-					alAFLib_ROI_TYPE_NORMAL, &lib_roi);
-		ret = afaltek_adpt_pre_start(adpt_handle, &lib_roi, __func__);
+	if (AF_ADPT_STARTE_HOLDON == cxt->af_cur_status) {
+		if ((AF_LIB_IDLE == cxt->lib_status_info.af_lib_status)) {
+			cmr_bzero(&lib_roi, sizeof(lib_roi));
+			afaltek_adpt_config_roi(adpt_handle, &cxt->last_roi,
+						alAFLib_ROI_TYPE_NORMAL, &lib_roi);
+			ret = afaltek_adpt_pre_start(adpt_handle, &lib_roi, __func__);
+		} else {
+			if (AF_LIB_BUSY_FRAMES == cxt->lib_status_info.busy_frame_id++) {
+				cxt->lib_status_info.af_lib_status = AF_LIB_IDLE;
+				ISP_LOGW("af lib busy was over %d frames", AF_LIB_BUSY_FRAMES);
+			}
+		}
 	} else if (AF_ADPT_STARTED == cxt->af_cur_status) {
 		if (cxt->ae_status_info.ae_converged ||
 		    cxt->aft_proc_result.is_caf_trig) {
@@ -2051,7 +2064,7 @@ static cmr_int afaltek_adpt_inctrl(cmr_handle adpt_handle, cmr_int cmd,
 		struct allib_af_input_roi_info_t lib_roi;
 
 		cmr_bzero(&lib_roi, sizeof(lib_roi));
-		if (AF_LIB_BUSY == cxt->af_lib_status) {
+		if (AF_LIB_BUSY == cxt->lib_status_info.af_lib_status) {
 			ISP_LOGI("isp_af_start af holdon");
 			cxt->af_cur_status = AF_ADPT_STARTE_HOLDON;
 			memcpy(&cxt->last_roi, in, sizeof(cxt->last_roi));
@@ -2589,11 +2602,13 @@ static cmr_int afaltek_adpt_proc_report_status(cmr_handle adpt_handle,
 	if (alAFLib_STATUS_WARNING == report->focus_status.t_status ||
 		alAFLib_STATUS_AF_ABORT == report->focus_status.t_status) {
 		ISP_LOGI("t_status unfocused = %d", report->focus_status.t_status);
-		cxt->af_lib_status = AF_LIB_IDLE;
+		cxt->lib_status_info.busy_frame_id = 0;
+		cxt->lib_status_info.af_lib_status = AF_LIB_IDLE;
 		ret = afaltek_adpt_af_done(cxt, 0);
 	} else if (alAFLib_STATUS_FOCUSED == report->focus_status.t_status) {
 		ISP_LOGI("t_status focused ok = %d", report->focus_status.t_status);
-		cxt->af_lib_status = AF_LIB_IDLE;
+		cxt->lib_status_info.busy_frame_id = 0;
+		cxt->lib_status_info.af_lib_status = AF_LIB_IDLE;
 		ret = afaltek_adpt_af_done(cxt, 1);
 	} else if (alAFLib_STATUS_FORCE_ABORT == report->focus_status.t_status) {
 		ISP_LOGI("t_status force abort = %d retrigger = %d",
@@ -2616,7 +2631,8 @@ static cmr_int afaltek_adpt_proc_report_status(cmr_handle adpt_handle,
 #endif
 			cxt->af_cur_status = AF_ADPT_DONE;
 		}
-		cxt->af_lib_status = AF_LIB_IDLE;
+		cxt->lib_status_info.busy_frame_id = 0;
+		cxt->lib_status_info.af_lib_status = AF_LIB_IDLE;
 		ret = afaltek_adpt_lock_ae_awb(cxt, ISP_AE_AWB_UNLOCK);
 	} else {
 		ISP_LOGI("unkown status = %d", report->focus_status.t_status);
