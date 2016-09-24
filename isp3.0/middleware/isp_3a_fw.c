@@ -319,6 +319,7 @@ static cmr_int isp3a_handle_pdaf_callback(cmr_handle isp_3a_handle, struct pdaf_
 static cmr_int isp3a_start_pdaf_raw_process(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_handle_pdaf_raw_open(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_get_vcm_step(cmr_handle isp_3a_handle, void *param_ptr);
+static cmr_int isp3a_handle_haf_enable(cmr_handle isp_3a_handle, void *param_ptr);
 
 
 static struct isp3a_ctrl_io_func s_isp3a_ioctrl_tab[ISP_CTRL_MAX] = {
@@ -413,8 +414,9 @@ static struct isp3a_ctrl_io_func s_isp3a_ioctrl_tab[ISP_CTRL_MAX] = {
 	{ISP_CTRL_SET_PREV_YIMG,           isp3a_set_prev_yimg},
 	{ISP_CTRL_SET_PREV_YUV,            isp3a_set_prev_yuv},
 	{ISP_CTRL_SET_PREV_PDAF_RAW,       isp3a_start_pdaf_raw_process},
-	{ISP_CTRL_SET_PREV_PDAF_OPEN,       isp3a_handle_pdaf_raw_open},
+	{ISP_CTRL_SET_PREV_PDAF_OPEN,      isp3a_handle_pdaf_raw_open},
 	{ISP_CTRL_GET_VCM_INFO,            isp3a_get_vcm_step},
+	{ISP_CTRL_SET_HAF_ENABLE,          isp3a_handle_haf_enable},
 };
 
 /*************************************INTERNAK FUNCTION ***************************************/
@@ -4218,6 +4220,9 @@ cmr_int isp3a_handle_pdaf_callback(cmr_handle isp_3a_handle, struct pdaf_ctrl_ca
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
 	struct af_ctrl_param_in                     af_in;
 
+	if (!cxt->af_cxt.handle) {
+		return ret;
+	}
 	cxt->pdaf_cxt.proc_out = result_ptr->proc_out;
 
 	af_in.pd_info.extend_data_size = cxt->pdaf_cxt.proc_out.pd_report_data.pd_reg_size;
@@ -4327,6 +4332,25 @@ cmr_int isp3a_get_vcm_step(cmr_handle isp_3a_handle, void *param_ptr)
 	af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_GET_AF_CUR_LENS_POS, NULL, &af_out);
 	ISP_LOGI("vcm step %d", af_out.motor_pos);
 	*((cmr_u16 *)param_ptr) = af_out.motor_pos;
+exit:
+	return ret;
+}
+
+static cmr_int isp3a_handle_haf_enable(cmr_handle isp_3a_handle, void *param_ptr)
+{
+	cmr_int                                     ret = -ISP_ERROR;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
+	struct af_ctrl_param_in                     af_in;
+
+	if (!param_ptr) {
+		ISP_LOGW("input is NULL");
+		goto exit;
+	}
+
+	ISP_LOGV("E");
+	bzero(&af_in, sizeof(af_in));
+	af_in.haf_enable = *((cmr_u8 *)param_ptr);
+	ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_SET_PD_ENABLE, (void *)&af_in.haf_enable, NULL);
 exit:
 	return ret;
 }

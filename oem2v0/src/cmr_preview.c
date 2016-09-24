@@ -2717,7 +2717,6 @@ cmr_int prev_pdaf_raw_frame_handle(struct prev_handle *handle, cmr_u32 camera_id
 				}
 			}
 		#endif
-		//TBD
 		pd_raw.frame_id = prev_cxt->pdaf_frm_cnt;
 		pd_raw.addr = (void *)addr_vir.addr_y;
 		pd_raw.len = prev_cxt->pdaf_mem_size;
@@ -5232,7 +5231,7 @@ cmr_int prev_alloc_pdaf_raw_buf(struct prev_handle *handle, cmr_u32 camera_id, c
 	mem_ops  = &prev_cxt->prev_param.memory_setting;
 	CMR_LOGI("allo flag %d", prev_cxt->pdaf_mem_alloc_flag);
 
-	prev_cxt->pdaf_mem_size = prev_cxt->pdaf_rect.width * prev_cxt->pdaf_rect.height * 10 / 8;//TBD
+	prev_cxt->pdaf_mem_size = prev_cxt->pdaf_rect.width * prev_cxt->pdaf_rect.height * 10 / 8;
 
 	prev_cxt->pdaf_mem_num = PDAF_FRM_CNT;
 
@@ -5244,7 +5243,7 @@ cmr_int prev_alloc_pdaf_raw_buf(struct prev_handle *handle, cmr_u32 camera_id, c
 
 	if (!is_restart && (1 != prev_cxt->pdaf_mem_alloc_flag)) {
 		prev_cxt->pdaf_mem_valid_num = 0;
-		mem_ops->alloc_mem(CAMERA_PDAF_RAW,//TBD
+		mem_ops->alloc_mem(CAMERA_PDAF_RAW,
 				   handle->oem_handle,
 				   (cmr_u32 *)&prev_cxt->pdaf_mem_size,
 				   (cmr_u32 *)&prev_cxt->pdaf_mem_num,
@@ -5267,9 +5266,8 @@ cmr_int prev_alloc_pdaf_raw_buf(struct prev_handle *handle, cmr_u32 camera_id, c
 				prev_cxt->pdaf_mem_valid_num++;
 			}
 		}
-		prev_cxt->pdaf_mem_alloc_flag = 1;
 /*
-		mem_ops->alloc_mem(CAMERA_PDAF_RAW_RESERVED,//TBD
+		mem_ops->alloc_mem(CAMERA_PDAF_RAW_RESERVED,
 				   handle->oem_handle,
 				   (cmr_u32 *)&prev_cxt->pdaf_mem_size,
 				   (cmr_u32 *)&reserved_count,
@@ -5282,11 +5280,13 @@ cmr_int prev_alloc_pdaf_raw_buf(struct prev_handle *handle, cmr_u32 camera_id, c
 			prev_cxt->pdaf_reserved_virt_addr,
 			prev_cxt->pdaf_reserved_fd);
 */
+		prev_cxt->pdaf_mem_alloc_flag = 1;
+
 	}
 
 	/*arrange the buffer*/
 	buffer->channel_id = 0; /*should be update when channel cfg complete*/
-	buffer->base_id    = CMR_PDAF_ID_BASE; //TBD
+	buffer->base_id    = CMR_PDAF_ID_BASE;
 	buffer->count      = prev_cxt->pdaf_mem_valid_num;
 	buffer->length     = prev_cxt->pdaf_mem_size;
 	buffer->flag       = BUF_FLAG_INIT;
@@ -5335,7 +5335,7 @@ cmr_int prev_free_pdaf_raw_buf(struct prev_handle *handle, cmr_u32 camera_id, cm
 	}
 
 	if (!is_restart && (1 == prev_cxt->pdaf_mem_alloc_flag)) {
-		mem_ops->free_mem(CAMERA_PDAF_RAW, //TBD
+		mem_ops->free_mem(CAMERA_PDAF_RAW,
 				  handle->oem_handle,
 				  prev_cxt->pdaf_phys_addr_array,
 				  prev_cxt->pdaf_virt_addr_array,
@@ -5345,7 +5345,7 @@ cmr_int prev_free_pdaf_raw_buf(struct prev_handle *handle, cmr_u32 camera_id, cm
 		cmr_bzero(prev_cxt->pdaf_virt_addr_array, (PDAF_FRM_CNT)*sizeof(cmr_uint));
 		cmr_bzero(prev_cxt->pdaf_fd_array, (PDAF_FRM_CNT)*sizeof(cmr_s32));
 /*
-		mem_ops->free_mem(CAMERA_PDAF_RAW_RESERVED,//TBD
+		mem_ops->free_mem(CAMERA_PDAF_RAW_RESERVED,
 			  handle->oem_handle,
 			  (cmr_uint*)prev_cxt->pdaf_reserved_phys_addr,
 			  (cmr_uint*)prev_cxt->pdaf_reserved_virt_addr,
@@ -8030,6 +8030,7 @@ cmr_int prev_set_pdaf_raw_param(struct prev_handle *handle, cmr_u32 camera_id, c
 	chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
 	chn_param.cap_inf_cfg.cfg.flip_on = 0;
 	chn_param.cap_inf_cfg.cfg.need_isp_tool = 1;
+	chn_param.cap_inf_cfg.cfg.pdaf_type3 = 1;
 #if 0
 	prev_cxt->pdaf_rect.start_x = sensor_mode_info->trim_start_x;
 	prev_cxt->pdaf_rect.start_y = sensor_mode_info->trim_start_y;
@@ -8101,6 +8102,7 @@ cmr_int prev_set_pdaf_raw_param(struct prev_handle *handle, cmr_u32 camera_id, c
 	}
 
 	/*config reserved buffer*/
+	/*
 	cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
 	buf_cfg.channel_id         = prev_cxt->pdaf_channel_id;
 	buf_cfg.base_id            = CMR_PDAF_ID_BASE;
@@ -8120,7 +8122,7 @@ cmr_int prev_set_pdaf_raw_param(struct prev_handle *handle, cmr_u32 camera_id, c
 		ret = CMR_CAMERA_FAIL;
 		goto exit;
 	}
-
+*/
 	/*return preview out params*/
 	if (out_param_ptr) {
 		out_param_ptr->pdaf_chn_bits = 1 << prev_cxt->pdaf_channel_id;

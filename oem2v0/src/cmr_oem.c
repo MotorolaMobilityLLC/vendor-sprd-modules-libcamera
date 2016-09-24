@@ -5320,7 +5320,7 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle, cmr_
 		CMR_LOGI("prev rect %d %d %d %d", cxt->prev_cxt.rect.start_x, cxt->prev_cxt.rect.start_y,
 				  cxt->prev_cxt.rect.width, cxt->prev_cxt.rect.height);
 	}
-	if (!param_ptr->is_lightly && !(param_ptr->buffer.base_id != CMR_PREV_ID_BASE && cxt->burst_mode)) {
+	if (!param_ptr->is_lightly && (param_ptr->buffer.base_id == CMR_PREV_ID_BASE || !cxt->burst_mode)) {
 		ret = cmr_grab_cap_cfg(cxt->grab_cxt.grab_handle, &param_ptr->cap_inf_cfg, channel_id, endian);
 		if (ret) {
 			CMR_LOGE("failed to cap cfg %ld", ret);
@@ -5329,6 +5329,7 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle, cmr_
 	} else if(param_ptr->buffer.base_id != CMR_PREV_ID_BASE && cxt->burst_mode) {
 		endian->y_endian = 1;
 		endian->uv_endian = 1;
+		*channel_id = GRAB_CHANNEL_MAX - 1;
 	}
 
 /*
@@ -5364,8 +5365,8 @@ cmr_int camera_channel_buff_cfg (cmr_handle oem_handle, struct buffer_cfg *buf_c
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}
-	if (HIGHISO_CAP_MODE == cxt->highiso_mode || cxt->isp_to_dram
-		|| (buf_cfg->base_id != CMR_PREV_ID_BASE && cxt->burst_mode)) {
+	if ((HIGHISO_CAP_MODE == cxt->highiso_mode || cxt->isp_to_dram
+		|| (buf_cfg->base_id == CMR_CAP1_ID_BASE && cxt->burst_mode)) && buf_cfg->base_id != CMR_PDAF_ID_BASE) {
 		ret = camera_isp_buff_cfg(cxt, buf_cfg);
 	}
 	else
@@ -5393,7 +5394,7 @@ cmr_int camera_channel_cap_cfg(cmr_handle oem_handle,
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}
-	if (HIGHISO_CAP_MODE == cxt->highiso_mode || cxt->isp_to_dram)
+	if ((HIGHISO_CAP_MODE == cxt->highiso_mode || cxt->isp_to_dram) && !cap_cfg->cfg.pdaf_type3)
 		cap_cfg->buffer_cfg_isp = 1;
 	else
 		cap_cfg->buffer_cfg_isp = 0;

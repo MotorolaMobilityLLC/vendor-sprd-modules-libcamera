@@ -510,6 +510,7 @@ struct img_frm_cap {
 	cmr_u32                             need_isp_tool;
 	struct dcam_regular_desc            regular_desc;
 	cmr_u32                             flip_on;
+	cmr_u32                             pdaf_type3;
 	struct sprd_pdaf_control            pdaf_ctrl;
 };
 

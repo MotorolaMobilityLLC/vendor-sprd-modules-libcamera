@@ -31,6 +31,7 @@
 #define PD_DATA_TEST
 #ifdef PD_DATA_TEST
 	#define PD_OTP_TEST_SIZE	550
+	#define PD_OTP_TEST_PATH "/system/lib/tuning/s5k3l8xxm3_mipi_raw_pdotp.bin"
 #endif
 #define PDLIB_PATH "libalPDAF.so"
 #define PDEXTRACT_LIBPATH "libalPDExtract.so"
@@ -363,7 +364,7 @@ static cmr_int pdafaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 		return ret;
 	}
 #ifdef PD_DATA_TEST
-	//use pdotp.bin in data/misc/media
+	//use pdotp.bin
 #else
 	if (NULL == in_p->pdaf_otp.otp_data || NULL == in_p->pd_info) {
 		ISP_LOGE("failed to get pd otp data");
@@ -429,7 +430,7 @@ static cmr_int pdafaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 
 	/* init lib */
 #ifdef PD_DATA_TEST
-	fp = fopen("/data/misc/media/pdotp.bin", "rb");
+	fp = fopen(PD_OTP_TEST_PATH, "rb");
 	if (NULL == fp) {
 		CMR_LOGI("can not open file \n");
 		goto error_lib_init;
@@ -607,6 +608,7 @@ static cmr_int pdafaltek_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 
 	if (!cxt->pd_enable || !cxt->pd_open) {
 		ISP_LOGI("pd enable %d, open %d",cxt->pd_enable, cxt->pd_open);
+		ret = ISP_SUCCESS;
 		goto exit;
 	}
 	cxt->is_busy = 1;
@@ -734,7 +736,7 @@ static cmr_int pdafaltek_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	cxt->frame_id ++;//= proc_in->pd_raw.frame_id;
 exit:
 	if (cxt->pd_set_buffer) {
-		(cxt->pd_set_buffer)(&proc_in->pd_raw.pd_in);
+		ret = (cxt->pd_set_buffer)(&proc_in->pd_raw.pd_in);
 	}
 	cxt->is_busy = 0;
 	return ret;

@@ -334,6 +334,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	memset(mPreviewHeapArray, 0, sizeof(mPreviewHeapArray));
 	memset(mVideoHeapArray, 0, sizeof(mVideoHeapArray));
 	memset(&mSlowPara, 0, sizeof(slow_motion_para));
+	memset(mPdafRawHeapArray, 0, sizeof(mPdafRawHeapArray));
 
 	setCameraState(SPRD_INIT, STATE_CAMERA);
 
@@ -432,6 +433,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mIspLscHeapReserved = NULL;
 	mHighIsoSnapshotHeapReserved = NULL;
 	mIspYUVReserved = NULL;
+	mPdafRawHeapReserved = NULL;
 
 	mVideoShotFlag = 0;
 	mVideoShotNum = 0;
@@ -591,6 +593,10 @@ void SprdCamera3OEMIf::closeCamera()
 	if (NULL != mIspYUVReserved) {
 		freeCameraMem(mIspYUVReserved);
 		mIspYUVReserved = NULL;
+	}
+	if (NULL != mPdafRawHeapReserved) {
+		freeCameraMem(mPdafRawHeapReserved);
+		mPdafRawHeapReserved = NULL;
 	}
 
 

@@ -298,6 +298,7 @@ struct af_ctrl_param_in {
 		struct isp3a_ae_info ae_info;
 		struct af_aux_sensor_info_t aux_info;
 		struct af_ctrl_input_pd_info_t pd_info;
+		cmr_u8 haf_enable;
 		void *y_img;
 	};
 };
