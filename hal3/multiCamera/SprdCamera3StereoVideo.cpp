@@ -981,8 +981,7 @@ bool SprdCamera3StereoVideo::MuxerThread::threadLoop()
                     }
                 }
 
-                 List < old_request >::iterator i = mMuxer->mOldVideoRequestList.begin();
-                while(mMuxer->mOldVideoRequestList.begin() != mMuxer->mOldVideoRequestList.end()){
+                for(List < old_request >::iterator i = mMuxer->mOldVideoRequestList.begin();i != mMuxer->mOldVideoRequestList.end();){
                     if(!i->invalid){
                         HAL_LOGD("flush frame_number=%d",i->frame_number);
                         videoErrorCallback(i->frame_number);
@@ -1262,8 +1261,8 @@ bool SprdCamera3StereoVideo::matchTwoFrame(hwi_frame_buffer_info_t result1,List 
     } else {
         itor2=list.begin();
         while(itor2!=list.end()) {
-            uint64_t tmp=result1.timestamp-itor2->timestamp;
-            if(tmp<=TIME_DIFF && tmp>=-TIME_DIFF) {
+            int64_t tmp=result1.timestamp-itor2->timestamp;
+            if(abs(tmp) < TIME_DIFF) {
                 *result2=*itor2;
                 list.erase(itor2);
                 return MATCH_SUCCESS;

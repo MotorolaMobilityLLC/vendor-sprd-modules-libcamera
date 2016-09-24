@@ -57,7 +57,7 @@ namespace sprdcamera {
 #define MAX_PREVIEW_QEQUEST_BUF 5
 #define MAX_UNMATCHED_QUEUE_SIZE 4
 #define MAX_SAVE_REQUEST_QUEUE_SIZE 10
-#define TIME_DIFF (2000e6)
+#define TIME_DIFF (1000e6)
 #define LIB_GPU_PATH "libimagestitcher.so"
 #define CONTEXT_SUCCESS 1
 #define CONTEXT_FAIL 0

@@ -755,8 +755,8 @@ bool SprdCamera3RangeFinder::matchTwoFrame(hwi_frame_buffer_info_t result1,List 
     } else {
         itor2=list.begin();
         while(itor2!=list.end()) {
-            uint64_t tmp=result1.timestamp-itor2->timestamp;
-            if(tmp<=TIME_DIFF && tmp>=-TIME_DIFF) {
+            int64_t tmp=result1.timestamp-itor2->timestamp;
+            if(abs(tmp) <= TIME_DIFF) {
                 *result2=*itor2;
                 list.erase(itor2);
                 return MATCH_SUCCESS;

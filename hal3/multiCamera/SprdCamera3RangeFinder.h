@@ -53,7 +53,7 @@ namespace sprdcamera {
 #define MAX_NUM_STREAMS    2
 #define MAX_QEQUEST_BUF 16
 #define MAX_UNMATCHED_QUEUE_SIZE 3
-#define TIME_DIFF (5000e6)
+#define TIME_DIFF (1000e6)
 #define DEPTH_ENGINE_PATH "libdepthengine.so"
 #define CONTEXT_SUCCESS 1
 #define CONTEXT_FAIL 0
