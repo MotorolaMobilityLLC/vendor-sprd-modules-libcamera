@@ -4196,35 +4196,49 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 				SkinWhitenTsface.bottom = (cxt->fd_face_area.face_info[0].ey*pic_height)/(cxt->fd_face_area.frame_height);
 				CMR_LOGD("UCAM update rect:%d-%d-%d-%d",SkinWhitenTsface.left,SkinWhitenTsface.top,
 					SkinWhitenTsface.right,SkinWhitenTsface.bottom);
-			}
-			TSMakeupData  inMakeupData, outMakeupData;
-			unsigned char *yBuf = (unsigned char *)(src->addr_vir.addr_y);
-			unsigned char *uvBuf = (unsigned char *)(src->addr_vir.addr_u) ;
-			unsigned char * tmpBuf = (unsigned char*)malloc(pic_width*pic_height* 3 / 2);
 
-			inMakeupData.frameWidth = pic_width;
-			inMakeupData.frameHeight = pic_height;
-			inMakeupData.yBuf = yBuf;
-			inMakeupData.uvBuf = uvBuf;
+				TSMakeupData  inMakeupData, outMakeupData;
+				unsigned char *yBuf = (unsigned char *)(src->addr_vir.addr_y);
+				unsigned char *uvBuf = (unsigned char *)(src->addr_vir.addr_u) ;
+				unsigned char * tmpBuf = (unsigned char*)malloc(pic_width*pic_height* 3 / 2);
 
-			outMakeupData.frameWidth = pic_width;
-			outMakeupData.frameHeight = pic_height;
-			outMakeupData.yBuf = tmpBuf;
-			outMakeupData.uvBuf = tmpBuf + pic_width*pic_height;
-			CMR_LOGV("perfect frameWidth is %d, frameHeight is %d", pic_width, pic_height);
+				unsigned int uv_len = pic_width * pic_height * 1 / 2;
+				unsigned char * UVBuf = (unsigned char*)malloc(uv_len);
+				memcpy(UVBuf, uvBuf + 1, uv_len - 1);
+				*(UVBuf + uv_len - 1)  = *(uvBuf + uv_len - 2);
 
-			CMR_LOGV("perfect ts_face_beautify will be call");
-			int mu_retVal = ts_face_beautify(&inMakeupData, &outMakeupData, skinCleanLevel, skinWhitenLevel, &SkinWhitenTsface,0);
-			if(mu_retVal !=  TS_OK) {
-				CMR_LOGD("perfect ts_face_beautify mu_retVal is %d", mu_retVal);
-			} else {
-				CMR_LOGD("perfect ts_face_beautify return OK");
-				memcpy(yBuf, tmpBuf, pic_width * pic_height);
-				memcpy(uvBuf, (tmpBuf + pic_width * pic_height), (pic_width * pic_height / 2));
-			}
+				inMakeupData.frameWidth = pic_width;
+				inMakeupData.frameHeight = pic_height;
+				inMakeupData.yBuf = yBuf;
+				inMakeupData.uvBuf = UVBuf;
 
-			free(tmpBuf);
-			tmpBuf = NULL;
+				outMakeupData.frameWidth = pic_width;
+				outMakeupData.frameHeight = pic_height;
+				outMakeupData.yBuf = tmpBuf;
+				outMakeupData.uvBuf = tmpBuf + pic_width*pic_height;
+				CMR_LOGI("perfect frameWidth is %d, frameHeight is %d", pic_width, pic_height);
+
+				CMR_LOGV("perfect ts_face_beautify will be call");
+				int mu_retVal = ts_face_beautify(&inMakeupData, &outMakeupData, skinCleanLevel, skinWhitenLevel, &SkinWhitenTsface,0);
+				if(mu_retVal !=  TS_OK) {
+					CMR_LOGE("perfect ts_face_beautify mu_retVal is %d", mu_retVal);
+				} else {
+					CMR_LOGD("perfect ts_face_beautify return OK");
+					memcpy(yBuf, tmpBuf, pic_width * pic_height);
+					memcpy(uvBuf, (tmpBuf + pic_width * pic_height + 1), (uv_len - 1));
+					*(uvBuf + uv_len - 1)  = *(tmpBuf + pic_width * pic_height * 3 / 2 - 2);
+				}
+
+				if(UVBuf){
+					free(UVBuf);
+					UVBuf = NULL;
+				}
+				if(tmpBuf){
+					free(tmpBuf);
+					tmpBuf = NULL;
+				}
+			}else
+				CMR_LOGW("UCAM perfect no detect face");
 		}
 #endif
 
