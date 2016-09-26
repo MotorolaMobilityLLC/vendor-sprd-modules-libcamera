@@ -697,9 +697,16 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	tSecnarioInfo.tSensorInfo.uwFrameRate = resolution_ptr->fps.max_fps*100;
 	tSecnarioInfo.tSensorInfo.ucSensorMouduleType = 0;//0-sensor1  1-sensor2
 	tSecnarioInfo.tSensorInfo.nColorOrder = cxt->input_param.init_param.image_pattern;
+
+#if defined(CONFIG_CAMERA_NO_DCAM_DATA_PATH)
+	tSecnarioInfo.tScenarioOutBypassFlag.bBypassLV = 1;
+	tSecnarioInfo.tScenarioOutBypassFlag.bBypassVideo = 1;
+	tSecnarioInfo.tScenarioOutBypassFlag.bBypassStill = 1;
+#else
 	tSecnarioInfo.tScenarioOutBypassFlag.bBypassLV = 0;
 	tSecnarioInfo.tScenarioOutBypassFlag.bBypassVideo = 0;
 	tSecnarioInfo.tScenarioOutBypassFlag.bBypassStill = 0;
+#endif
 	tSecnarioInfo.tScenarioOutBypassFlag.bBypassMetaData = 0;
 	if (resolution_ptr->sensor_output_size.w == resolution_ptr->sensor_max_size.w)
 		tSecnarioInfo.tSensorInfo.ucSensorMode = 0;
