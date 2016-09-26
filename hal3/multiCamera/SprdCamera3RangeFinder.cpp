@@ -1364,7 +1364,7 @@ int SprdCamera3RangeFinder::MeasureThread::calculateDepthValue(frame_matched_inf
         goto ALSDE_FAILED;
     }
 
-    rc = gRangeFinder->NV21Rotate90((unsigned char*)auxRotate, (unsigned char*)pucBufMain_YCC420NV21, dPVImgW, dPVImgH, 0);
+    rc = gRangeFinder->NV21Rotate90((unsigned char*)auxRotate, (unsigned char*)pucBufSub_YCC420NV21, dPVImgW, dPVImgH, 0);
     if(rc != true){
         HAL_LOGE("aux rotate fail  rc = %d",rc);
         goto ALSDE_FAILED;
@@ -1376,7 +1376,7 @@ int SprdCamera3RangeFinder::MeasureThread::calculateDepthValue(frame_matched_inf
         goto ALSDE_FAILED;
     }
 
-    rc = gRangeFinder->NV21Rotate180((unsigned char*)auxRotate, (unsigned char*)pucBufMain_YCC420NV21, dPVImgW, dPVImgH, 0);
+    rc = gRangeFinder->NV21Rotate180((unsigned char*)auxRotate, (unsigned char*)pucBufSub_YCC420NV21, dPVImgW, dPVImgH, 0);
     if(rc != true){
         HAL_LOGE("aux rotate fail  rc = %d",rc);
         goto ALSDE_FAILED;
@@ -1429,6 +1429,10 @@ int SprdCamera3RangeFinder::MeasureThread::calculateDepthValue(frame_matched_inf
     }
 
     HAL_LOGD("eOutDistance=%f",eOutDistance);
+	if(eOutDistance > 3000){
+		eOutDistance = 3000;
+		HAL_LOGD("distance too large. set to 3000");
+	}
     {
         Mutex::Autolock l(gRangeFinder->mDepthVauleLock);
         gRangeFinder->mUwDepth = (int64_t)eOutDistance;
@@ -1447,6 +1451,10 @@ int SprdCamera3RangeFinder::MeasureThread::calculateDepthValue(frame_matched_inf
     addr = (void*)mainRotate;
     size =((struct private_handle_t *)*(combDepthResult->buffer2))->size;
     gRangeFinder->dumpImg(addr,size,combDepthResult->frame_number,3);
+
+    addr = (void*)auxRotate;
+    size =((struct private_handle_t *)*(combDepthResult->buffer2))->size;
+    gRangeFinder->dumpImg(addr,size,combDepthResult->frame_number,4);
 #endif
 
 ALSDE_FAILED:
