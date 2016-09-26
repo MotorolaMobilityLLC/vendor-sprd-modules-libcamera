@@ -1848,7 +1848,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId)
 
 	HAL_LOGI("id=%d format=%d", cameraId, s_setting[cameraId].scalerInfo.available_stream_configurations[0]);
 	memcpy(s_setting[cameraId].scalerInfo.processed_min_durations, kavailable_min_durations, sizeof(kavailable_min_durations));
-	s_setting[cameraId].scalerInfo.max_digital_zoom = 4.0f;
+	s_setting[cameraId].scalerInfo.max_digital_zoom = 2.0f;
 	memcpy(s_setting[cameraId].scalerInfo.jpeg_min_durations, camera3_default_info.common.FrameDurationRange, sizeof(camera3_default_info.common.FrameDurationRange));
 	s_setting[cameraId].scalerInfo.cropping_type = ANDROID_SCALER_CROPPING_TYPE_FREEFORM;
 
