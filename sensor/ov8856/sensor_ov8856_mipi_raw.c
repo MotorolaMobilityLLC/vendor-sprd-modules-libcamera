@@ -682,7 +682,7 @@ static void ov8856_write_gain(SENSOR_HW_HANDLE handle,float gain)
 	//Sensor_WriteReg(0x320a, 0x01);
 	
 	//group 1:all other registers( gain)
-	//Sensor_WriteReg(0x3208, 0x01);
+	Sensor_WriteReg(0x3208, 0x01);
 	//SENSOR_PRINT("real_gain = %f %d %d", gain,(uint16_t)gain_a,(uint16_t)gain_d);
 	Sensor_WriteReg(0x3508, ((uint16_t)gain_a >> 8) & 0x07);
 	Sensor_WriteReg(0x3509, (uint16_t)gain_a & 0xff);
@@ -694,8 +694,8 @@ static void ov8856_write_gain(SENSOR_HW_HANDLE handle,float gain)
 	Sensor_WriteReg(0x501e, (uint16_t)gain_d & 0xff);
 	Sensor_WriteReg(0x501f, ((uint16_t)gain_d >> 8) & 0x07);
 	Sensor_WriteReg(0x5020, (uint16_t)gain_d & 0xff);
-	//Sensor_WriteReg(0x3208, 0x11);
-	//Sensor_WriteReg(0x3208, 0xA1);
+	Sensor_WriteReg(0x3208, 0x11);
+	Sensor_WriteReg(0x3208, 0xA1);
 
 }
 
