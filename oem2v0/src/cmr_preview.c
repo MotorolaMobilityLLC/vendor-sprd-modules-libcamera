@@ -80,27 +80,6 @@
 #define CAP_SIM_ROT(handle,cam_id)      (((struct prev_handle*)handle)->prev_cxt[cam_id].prev_param.is_cfg_rot_cap \
 						&& (IMG_ANGLE_0 == ((struct prev_handle*)handle)->prev_cxt[cam_id].prev_status))
 
-#define YUV_NO_SCALING       		((ZOOM_BY_CAP == prev_cxt->cap_zoom_mode) && \
-						(prev_cxt->cap_org_size.width == prev_cxt->actual_pic_size.width) && \
-						(prev_cxt->cap_org_size.height == prev_cxt->actual_pic_size.height))
-
-#define RAW_NO_SCALING       		((ZOOM_POST_PROCESS == prev_cxt->cap_zoom_mode) && \
-	                                        0 == zoom_param->zoom_level && \
-						(prev_cxt->cap_org_size.width == prev_cxt->actual_pic_size.width) && \
-						(prev_cxt->cap_org_size.height == prev_cxt->actual_pic_size.height))
-
-#define YUV_NO_SCALING_FOR_ROT       	((ZOOM_BY_CAP == prev_cxt->cap_zoom_mode) && \
-						(prev_cxt->cap_org_size.width == prev_cxt->actual_pic_size.height) && \
-						(prev_cxt->cap_org_size.height == prev_cxt->actual_pic_size.width))
-
-#define RAW_NO_SCALING_FOR_ROT       	((ZOOM_POST_PROCESS == prev_cxt->cap_zoom_mode) && \
-						0 == zoom_param->zoom_level && \
-						(prev_cxt->cap_org_size.width == prev_cxt->actual_pic_size.height) && \
-						(prev_cxt->cap_org_size.height == prev_cxt->actual_pic_size.width))
-
-#define NO_SCALING                      (YUV_NO_SCALING || RAW_NO_SCALING)
-
-#define NO_SCALING_FOR_ROT              (YUV_NO_SCALING_FOR_ROT || RAW_NO_SCALING_FOR_ROT)
 #define IS_RESEARCH(search_h, h)        (search_h != h && h >= search_h * 3 / 2 && search_h >= 1088)
 
 
@@ -639,6 +618,7 @@ static cmr_int prev_pop_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id
 
 static cmr_int prev_capture_zoom_post_cap(struct prev_handle *handle, cmr_int *flag, cmr_u32 camera_id);
 cmr_int prev_get_frm_index(struct img_frm* frame, struct frm_info* data);
+cmr_int prev_is_need_scaling(cmr_handle preview_handle, cmr_u32 camera_id);
 
 
 /**************************FUNCTION ***************************************************************************/
@@ -4411,6 +4391,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 	cmr_u32                  channel_buffer_size = 0;
 	cmr_u32                  cap_sum = 0;
 	int32_t                  buffer_id = 0;
+	cmr_int                  is_need_scaling = 1;
 
 	CHECK_HANDLE_VALID(handle);
 	CHECK_CAMERA_ID(camera_id);
@@ -4446,6 +4427,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 		cap_max_size = &prev_cxt->cap_org_size;
 	}
 
+	is_need_scaling = prev_is_need_scaling(handle, camera_id);
 	/*caculate memory size for capture*/
 	buffer_id = camera_pre_capture_buf_id(camera_id);
 	ret = camera_pre_capture_buf_size(camera_id,
@@ -4536,7 +4518,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 							 &prev_cxt->prev_param.thumb_size,
 							 &prev_cxt->cap_mem[i],
 							 ((IMG_ANGLE_0 != prev_cxt->prev_param.cap_rot) || prev_cxt->prev_param.is_cfg_rot_cap),
-							 !(NO_SCALING || NO_SCALING_FOR_ROT),
+							 is_need_scaling,
 							 1);
 		} else {
 			ret = camera_arrange_capture_buf(&cap_2_mems,
@@ -4548,7 +4530,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 							 &prev_cxt->prev_param.thumb_size,
 							 &prev_cxt->cap_mem[i],
 							 (prev_cxt->prev_param.is_cfg_rot_cap && (IMG_ANGLE_0 != prev_cxt->prev_param.encode_angle)),
-							 !(NO_SCALING || NO_SCALING_FOR_ROT),
+							 is_need_scaling,
 							 1);
 		}
 	}
@@ -4573,7 +4555,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 					prev_cxt->cap_mem[i].cap_raw.fd         = prev_cxt->cap_mem[i].cap_yuv.fd;
 				}
 			} else {
-				if (NO_SCALING) {
+				if (!is_need_scaling) {
 					CMR_LOGD("raw no scale, no rotation");
 					prev_cxt->cap_mem[i].cap_raw.addr_phy.addr_y = prev_cxt->cap_mem[i].cap_yuv.addr_phy.addr_y;
 					prev_cxt->cap_mem[i].cap_raw.addr_vir.addr_y = prev_cxt->cap_mem[i].cap_yuv.addr_vir.addr_y;
@@ -4624,7 +4606,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 					frame_size = prev_cxt->cap_org_size.width * prev_cxt->cap_org_size.height * 3 / 2;
 					cur_img_frm = &prev_cxt->cap_mem[i].cap_yuv_rot;
 				} else {
-					if (NO_SCALING) {
+					if (!is_need_scaling) {
 						mem_size   = prev_cxt->cap_mem[i].target_yuv.buf_size;
 						fd         = prev_cxt->cap_mem[i].target_yuv.fd;
 						y_addr     = prev_cxt->cap_mem[i].target_yuv.addr_phy.addr_y;
@@ -4655,7 +4637,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 					cur_img_frm = &prev_cxt->cap_mem[i].cap_yuv_rot;
 
 				} else {
-					if (NO_SCALING) {
+					if (!is_need_scaling) {
 						mem_size   = prev_cxt->cap_mem[i].target_yuv.buf_size;
 						fd         = prev_cxt->cap_mem[i].target_yuv.fd;
 						y_addr     = prev_cxt->cap_mem[i].target_yuv.addr_phy.addr_y;
@@ -8440,6 +8422,7 @@ cmr_int prev_get_scale_rect(struct prev_handle *handle,
 {
 	cmr_int                     ret = CMR_CAMERA_SUCCESS;
 	cmr_u32                     i = 0;
+	cmr_int                     is_need_scaling = 1;
 	struct img_rect             rect;
 	struct prev_context         *prev_cxt = NULL;
 	struct sensor_mode_info     *sensor_mode_info = NULL;
@@ -8467,18 +8450,11 @@ cmr_int prev_get_scale_rect(struct prev_handle *handle,
 		prev_cxt->actual_pic_size.width,
 		prev_cxt->actual_pic_size.height);
 
-	if (IMG_ANGLE_90 == rot || IMG_ANGLE_270 == rot) {
-		if (NO_SCALING_FOR_ROT) {
-			cap_post_proc_param->is_need_scaling = 0;
-		} else {
-			cap_post_proc_param->is_need_scaling = 1;
-		}
+	is_need_scaling = prev_is_need_scaling(handle, camera_id);
+	if (is_need_scaling) {
+		cap_post_proc_param->is_need_scaling = 1;
 	} else {
-		if (NO_SCALING) {
-			cap_post_proc_param->is_need_scaling = 0;
-		} else {
-			cap_post_proc_param->is_need_scaling = 1;
-		}
+		cap_post_proc_param->is_need_scaling = 0;
 	}
 
 	if (!cap_post_proc_param->is_need_scaling) {
@@ -10847,4 +10823,62 @@ cmr_int prev_set_vcm_step(cmr_handle preview_handle, cmr_u32 camera_id, void *da
 	prev_cxt->vcm_step = vcm_step;
 
 	return ret;
+}
+cmr_int prev_is_need_scaling(cmr_handle preview_handle, cmr_u32 camera_id)
+{
+	struct prev_handle     *handle = (struct prev_handle*)preview_handle;
+	struct prev_context    *prev_cxt = NULL;
+	cmr_int                is_need_scaling = 1;
+	cmr_u32                is_raw_capture = 0;
+	char                   value[PROPERTY_VALUE_MAX];
+
+	CHECK_HANDLE_VALID(handle);
+	CHECK_CAMERA_ID(camera_id);
+	prev_cxt = &handle->prev_cxt[camera_id];
+
+	property_get("persist.sys.camera.raw.mode", value, "jpeg");
+	if (!strcmp(value, "raw")) {
+		is_raw_capture = 1;
+	}
+
+	//yuv no scale condition
+	if ((ZOOM_BY_CAP == prev_cxt->cap_zoom_mode) &&
+	    (prev_cxt->cap_org_size.width == prev_cxt->actual_pic_size.width) &&
+	    (prev_cxt->cap_org_size.height == prev_cxt->actual_pic_size.height)) {
+		is_need_scaling = 0;
+		return is_need_scaling;
+	}
+
+       //raw data no scale condition
+	if ((is_raw_capture) &&
+	    (ZOOM_POST_PROCESS == prev_cxt->cap_zoom_mode) &&
+	    (prev_cxt->cap_org_size.width == prev_cxt->actual_pic_size.width) &&
+	    (prev_cxt->cap_org_size.height == prev_cxt->actual_pic_size.height)) {
+		is_need_scaling = 0;
+		return is_need_scaling;
+	}
+
+	// no raw data no scale condition
+	if ((!is_raw_capture) &&
+	    (ZOOM_POST_PROCESS == prev_cxt->cap_zoom_mode) &&
+	    (prev_cxt->cap_org_size.width == prev_cxt->actual_pic_size.width) &&
+	    (prev_cxt->cap_org_size.height == prev_cxt->actual_pic_size.height) &&
+	    (prev_cxt->cap_org_size.width == prev_cxt->cap_sn_trim_rect.width) &&
+	    (prev_cxt->cap_org_size.height == prev_cxt->cap_sn_trim_rect.height)) {
+		is_need_scaling = 0;
+		return is_need_scaling;
+	}
+
+	CMR_LOGI("cap_zoom_mode %ld, cap_org_size %d %d, cap_sn_trim_rect %d %d, actual_pic_size %d %d, is_raw_capture %d, is_need_scaling %d",
+		prev_cxt->cap_zoom_mode,
+		prev_cxt->cap_org_size.width,
+		prev_cxt->cap_org_size.height,
+		prev_cxt->cap_sn_trim_rect.width,
+		prev_cxt->cap_sn_trim_rect.height,
+		prev_cxt->actual_pic_size.width,
+		prev_cxt->actual_pic_size.height,
+		is_raw_capture,
+		is_need_scaling);
+
+	return is_need_scaling;
 }
