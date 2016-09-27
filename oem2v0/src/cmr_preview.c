@@ -1240,6 +1240,36 @@ cmr_int cmr_preview_get_max_cap_size(cmr_handle preview_handle, cmr_u32 camera_i
 	CMR_LOGI("max size %ld, %ld", *max_w, *max_h);
 	return ret;
 }
+/**add for 3d capture to reset reprocessing capture size begin*/
+cmr_int cmr_preview_set_cap_size(cmr_handle preview_handle, cmr_u32 camera_id, cmr_u32 width, cmr_u32 height)
+{
+	struct prev_handle     *handle = (struct prev_handle*)preview_handle;
+	CMR_LOGD("before set cap_org_size:%d %d",
+			 handle->prev_cxt[camera_id].cap_org_size.width, handle->prev_cxt[camera_id].cap_org_size.height);
+	CMR_LOGD("before set actual_pic_size:%d %d",
+			 handle->prev_cxt[camera_id].actual_pic_size.width, handle->prev_cxt[camera_id].actual_pic_size.height);
+	CMR_LOGD("before set aligned_pic_size:%d %d",
+			 handle->prev_cxt[camera_id].aligned_pic_size.width, handle->prev_cxt[camera_id].aligned_pic_size.height);
+	CMR_LOGD("before set dealign_actual_pic_size:%d %d",
+			 handle->prev_cxt[camera_id].dealign_actual_pic_size.width, handle->prev_cxt[camera_id].dealign_actual_pic_size.height);
+	CMR_LOGD("before set picture_size:%d %d",
+			 handle->prev_cxt[camera_id].prev_param.picture_size.width, handle->prev_cxt[camera_id].prev_param.picture_size.height);
+	handle->prev_cxt[camera_id].actual_pic_size.width = width;
+	handle->prev_cxt[camera_id].actual_pic_size.height = height;
+	handle->prev_cxt[camera_id].aligned_pic_size.width = width;
+	handle->prev_cxt[camera_id].aligned_pic_size.height = height;
+	handle->prev_cxt[camera_id].dealign_actual_pic_size.width = width;
+	handle->prev_cxt[camera_id].dealign_actual_pic_size.height = height;
+	handle->prev_cxt[camera_id].cap_org_size.width = width;
+	handle->prev_cxt[camera_id].cap_org_size.height = height;
+	handle->prev_cxt[camera_id].max_size.width = width;
+	handle->prev_cxt[camera_id].max_size.height = height;
+	handle->prev_cxt[camera_id].prev_param.picture_size.width = width;
+	handle->prev_cxt[camera_id].prev_param.picture_size.height = height;
+
+	return 0;
+}
+/**add for 3d capture to reset reprocessing capture size end*/
 
 cmr_int cmr_preview_get_post_proc_param(cmr_handle preview_handle,
 				 	cmr_u32 camera_id,

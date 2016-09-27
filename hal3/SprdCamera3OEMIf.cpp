@@ -954,7 +954,7 @@ int SprdCamera3OEMIf::zslTakePicture()
 	HAL_LOGI("JPEG thumbnail size = %d x %d", jpgInfo.thumbnail_size[0], jpgInfo.thumbnail_size[1]);
 	SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_SIZE, (cmr_uint)&jpeg_thumb_size);
 
-	/**add for 3d capture, set raw call back mode begin*/
+	/**add for 3d capture, set raw call back mode & reprocess capture size begin*/
 	if ( mSprdRawCallBack )
 	{
 	    mSprd3dCalibrationEnabled = true;
@@ -968,7 +968,12 @@ int SprdCamera3OEMIf::zslTakePicture()
 	    mSprd3dCalibrationEnabled = sprddefInfo.sprd_3dcalibration_enabled;
 	    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DCAL_ENABLE, sprddefInfo.sprd_3dcalibration_enabled);
 	}
-	/**add for 3d capture, set raw call back mode end*/
+	if (mSprdReprocessing)
+	{
+	    HAL_LOGE("camera_set_reprocess_picture_size");
+	    mHalOem->ops->camera_set_reprocess_picture_size(mCameraHandle, mCameraId, mCaptureWidth, mCaptureHeight);
+	}
+	/**add for 3d capture, set raw call back mode & reprocess capture size end*/
 
 	setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
 	if (CMR_CAMERA_SUCCESS != mHalOem->ops->camera_take_picture(mCameraHandle, mCaptureMode)) {
@@ -995,7 +1000,6 @@ int SprdCamera3OEMIf::zslTakePicture()
 		HAL_LOGD("mZslShotPushFlag %d",mZslShotPushFlag);
 	} else {
 		PushZslSnapShotbuff();
-		mSprdReprocessing = false;/**add for 3d capture, disable reprocess after reprocessing buffer setted*/
 	}
 
 	print_time();
@@ -4017,6 +4021,14 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame)
 
 				if(frame_num > mPictureFrameNum)
 					mPictureFrameNum = frame_num;
+
+				/**add for 3d capture, set raw call back mode & reprocess capture size begin*/
+				if ( mSprdReprocessing )
+				{
+				    HAL_LOGI("jpeg encode doen, reprocessing end");
+				    mSprdReprocessing = false;
+				    mHalOem->ops->camera_set_reprocess_picture_size(mCameraHandle, mCameraId, mRawWidth, mRawHeight);
+				}
 			}
 		}
 

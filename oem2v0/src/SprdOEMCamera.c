@@ -893,6 +893,16 @@ cmr_int camera_set_sensor_info_to_af(cmr_handle camera_handle,  struct cmr_af_au
 	return ret;
 }
 
+/**add for 3d capture to reset reprocessing capture size begin*/
+cmr_int camera_set_reprocess_picture_size(cmr_handle camera_handle, cmr_u32 camera_id, cmr_u32 width, cmr_u32 height)
+{
+	struct camera_context *cxt = (struct camera_context*)camera_handle;
+	cmr_int ret = CMR_CAMERA_SUCCESS;
+	ret = cmr_preview_set_cap_size(cxt->prev_cxt.preview_handle, camera_id, width, height);
+	return ret;
+}
+/**add for 3d capture to reset reprocessing capture size end*/
+
 cmr_int camera_get_sensor_max_fps(cmr_handle camera_handle,cmr_u32 camera_id, cmr_u32* max_fps)
 {
 	cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -1057,6 +1067,7 @@ static oem_ops_t oem_module_ops = {
 	camera_get_sensor_vcm_step,
 	camera_stop_multi_layer,
 	camera_set_sensor_close_flag,
+	camera_set_reprocess_picture_size,/**add for 3d capture to reset reprocessing capture size*/
 };
 
 struct oem_module OEM_MODULE_INFO_SYM = {

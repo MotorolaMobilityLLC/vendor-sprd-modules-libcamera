@@ -121,7 +121,6 @@ private:
     int                               mLastHeight;
     int                               mCaptureWidth;
     int                               mCaptureHeight;
-	int                          mCaptureStreamNum;
     camera3_stream_t                 *mSavedReqStreams[MAX_NUM_STREAMS];
     uint8_t                           mPreviewStreamsNum;
     int                               mPreviewID;
@@ -135,7 +134,7 @@ private:
     int cameraDeviceOpen(int camera_id,struct hw_device_t **hw_device);
     int setupPhysicalCameras();
     int getCameraInfo(struct camera_info *info);
-	 void get3DCaptureSize(int *pWidth, int *pHeight);
+    void get3DCaptureSize(int *pWidth, int *pHeight);
     int validateCaptureRequest(camera3_capture_request_t *request);
     void saveVideoRequest(camera3_capture_request_t *request);
     int pushRequestList( buffer_handle_t *request,List <buffer_handle_t*>&);
@@ -166,9 +165,7 @@ public:
         List <capture_queue_msg_t>         mCaptureMsgList;
         List <request_saved_t >            mSavedRequestList;
         List<buffer_handle_t*>             mLocalBufferList;
-           int m3DCaptureWidth;
-         int m3DCaptureHeight;
-	Mutex                              mMergequeueMutex;
+        Mutex                              mMergequeueMutex;
         Condition                          mMergequeueSignal;
         const camera3_callback_ops_t      *mCallbackOps;
         sprdcamera_physical_descriptor_t  *mDevMain;
@@ -183,6 +180,8 @@ public:
         camera3_stream_t                   mMainStreams[MAX_NUM_STREAMS];
         camera3_stream_t                   mAuxStreams[MAX_NUM_STREAMS];
         uint8_t                            mCaptureStreamsNum;
+        int                                m3DCaptureWidth;
+        int                                m3DCaptureHeight;
         bool                               mReprocessing;
         GPUAPI_t                          *mGpuApi;
         line_buf_t                         pt_line_buf  ;

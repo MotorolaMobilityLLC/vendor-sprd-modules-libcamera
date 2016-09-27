@@ -34,6 +34,7 @@ using namespace android;
 namespace sprdcamera {
 
 SprdCamera3Capture *mCapture = NULL;
+
 //Error Check Macros
 #define CHECK_CAPTURE() \
     if (!mCapture) { \
@@ -824,7 +825,7 @@ void SprdCamera3Capture::get3DCaptureSize(int *pWidth, int *pHeight)
     HAL_LOGD("sensor full size, w:%d, h:%d", sprddefInfo.sprd_3dcalibration_cap_size[0], sprddefInfo.sprd_3dcalibration_cap_size[1]);
     *pWidth = sprddefInfo.sprd_3dcalibration_cap_size[0]>>1;
     *pHeight = sprddefInfo.sprd_3dcalibration_cap_size[1]>>1;
-    HAL_LOGD("3d video size, w:%d, h:%d", *pWidth, *pHeight);
+    HAL_LOGD("3d capture size, w:%d, h:%d", *pWidth, *pHeight);
 }
 
 /*===========================================================================
@@ -997,23 +998,23 @@ void SprdCamera3Capture::CaptureThread::initGpuData(int w,int h, int rotation)
         memcpy(pt_line_buf.homography_matrix + 9, H_right, sizeof(float) * 9);
     } else{
         HAL_LOGD("can not open calibration file, using default ");
-        pt_line_buf.homography_matrix[0] = 1.009579;
-        pt_line_buf.homography_matrix[1] = 0.061508;
+        pt_line_buf.homography_matrix[0] = 1.0;
+        pt_line_buf.homography_matrix[1] = 0.0;
         pt_line_buf.homography_matrix[2] = 0.0;
-        pt_line_buf.homography_matrix[3] = -0.040547;
-        pt_line_buf.homography_matrix[4] = 1.007715;
+        pt_line_buf.homography_matrix[3] = 0.0;
+        pt_line_buf.homography_matrix[4] = 1.0;
         pt_line_buf.homography_matrix[5] = 0.0;
-        pt_line_buf.homography_matrix[6] = 0.000012;
-        pt_line_buf.homography_matrix[7] = 0.000016;
+        pt_line_buf.homography_matrix[6] = 0.0;
+        pt_line_buf.homography_matrix[7] = 0.0;
         pt_line_buf.homography_matrix[8] = 1.0;
-        pt_line_buf.homography_matrix[9] = 1.009010;
-        pt_line_buf.homography_matrix[10] = 0.009180;
+        pt_line_buf.homography_matrix[9] = 1.0;
+        pt_line_buf.homography_matrix[10] =0.0;
         pt_line_buf.homography_matrix[11] = 0.0;
-        pt_line_buf.homography_matrix[12] = -0.016966;
-        pt_line_buf.homography_matrix[13] = 0.991312;
+        pt_line_buf.homography_matrix[12] = 0.0;
+        pt_line_buf.homography_matrix[13] = 1.0;
         pt_line_buf.homography_matrix[14] = 0.0;
-        pt_line_buf.homography_matrix[15] = 0.000011;
-        pt_line_buf.homography_matrix[16] = -0.000015;
+        pt_line_buf.homography_matrix[15] = 0.0;
+        pt_line_buf.homography_matrix[16] = 0.0;
         pt_line_buf.homography_matrix[17] = 1.0;
     }
 	HAL_LOGV("using following homography_matrix data:\n");
@@ -1198,16 +1199,11 @@ bool SprdCamera3Capture::CaptureThread::threadLoop()
                     memcpy( (void*)&request, &mSavedCapRequest, sizeof(camera3_capture_request_t) );
 
                     memcpy( input_buffer, &mSavedCapReqstreambuff, sizeof(camera3_stream_buffer_t) );
-                    input_buffer->stream = &mMainStreams[mCaptureStreamsNum-1];	
-		    input_buffer->stream->width = m3DCaptureWidth;
-		    input_buffer->stream->height= m3DCaptureHeight;
-						
+                    input_buffer->stream = &mMainStreams[mCaptureStreamsNum-1];
                     input_buffer->buffer = output_buffer;
 
                     memcpy( (void*)&output_buffers[0], &mSavedCapReqstreambuff, sizeof(camera3_stream_buffer_t) );
                     output_buffers[0].stream = &mMainStreams[mCaptureStreamsNum-1];
-		   output_buffers[0].stream->width = m3DCaptureWidth;
-		   output_buffers[0].stream->height= m3DCaptureHeight;
 
                     request.output_buffers = output_buffers;
                     request.input_buffer = input_buffer;
@@ -1216,12 +1212,14 @@ bool SprdCamera3Capture::CaptureThread::threadLoop()
                     HAL_LOGD("capture combaind success: framenumber %d", request.frame_number);
                     HAL_LOGD("capture combaind success: cmbbuff 0x%x", output_buffer);
 
-                    HAL_LOGD("reprocess request input buff 0x%x, stream:0x%x, yaddr_v:0x%x",
+                    HAL_LOGD("reprocess request input buff 0x%x, stream:0x%x, yaddr_v:0x%x, width:%d, height:%d",
                              request.input_buffer->buffer, request.input_buffer->stream,
-                             ((struct private_handle_t*)(*request.input_buffer->buffer))->base);
-                    HAL_LOGD("reprocess request output buff 0x%x, stream:0x%x, yaddr_v:0x%x",
+                             ((struct private_handle_t*)(*request.input_buffer->buffer))->base,
+                             input_buffer->stream->width, input_buffer->stream->height);
+                    HAL_LOGD("reprocess request output buff 0x%x, stream:0x%x, yaddr_v:0x%x, width:%d, height:%d",
                              request.output_buffers[0].buffer, request.output_buffers[0].stream,
-                             ((struct private_handle_t*)(*request.output_buffers[0].buffer))->base);
+                             ((struct private_handle_t*)(*request.output_buffers[0].buffer))->base,
+                             request.output_buffers[0].stream->width, request.output_buffers[0].stream->height);
                     if(0 > mDevMain->hwi->process_capture_request(mDevMain->dev,&request)){
                         HAL_LOGE("failed. process capture request!");
                     }
@@ -1465,6 +1463,7 @@ int SprdCamera3Capture::initialize(const camera3_callback_ops_t *callback_ops)
     mChangeFocus[1]= 0;
     mCaptureThread->mCaptureStreamsNum = 0;
     mCaptureThread->mReprocessing = false;
+
     rc = hwiMain->initialize(sprdCam.dev, &callback_ops_main);
     if (rc != NO_ERROR) {
         HAL_LOGE("Error main camera while initialize !! ");
@@ -1553,7 +1552,6 @@ int SprdCamera3Capture::configureStreams(const struct camera3_device *device,cam
         }
         else if(requestStreamType == SNAPSHOT_STREAM){
             mIsCaptureing = true;
-	    mCaptureStreamNum=i;
             w = stream_list->streams[i]->width;
             h = stream_list->streams[i]->height;
             HAL_LOGD("capture width:%d, height:%d", w, h);
@@ -1561,26 +1559,26 @@ int SprdCamera3Capture::configureStreams(const struct camera3_device *device,cam
                 if(mCaptureWidth != 0||mCaptureWidth != 0){
                     mCaptureThread->freeLocalCapBuffer(mCaptureThread->mLocalCapBuffer);
                 }
-                for(size_t j = 0; j < LOCAL_CAPBUFF_NUM; j++){			
-						if(0 > mCaptureThread->allocateCapBuff(mCaptureThread->m3DCaptureWidth,mCaptureThread->m3DCaptureHeight,1,&(mCaptureThread->mLocalCapBuffer[j]),mCaptureThread->mNativeCapBuffer[j])){
-                                                     HAL_LOGE("request one buf failed.");
-                                                 continue;
-                    	                            }
+                for(size_t j = 0; j < LOCAL_CAPBUFF_NUM-1; j++){
+                    if(0 > mCaptureThread->allocateCapBuff(mCaptureThread->m3DCaptureWidth,mCaptureThread->m3DCaptureHeight,1,&(mCaptureThread->mLocalCapBuffer[j]),mCaptureThread->mNativeCapBuffer[j])){
+                        HAL_LOGE("request one buf failed.");
+                        continue;
+                    }
+                }
+                if(0 > mCaptureThread->allocateCapBuff(w,h,1,&(mCaptureThread->mLocalCapBuffer[stream_list->num_streams]),mCaptureThread->mNativeCapBuffer[stream_list->num_streams])){
+                    HAL_LOGE("request one buf failed.");
+                    continue;
                 }
             }
             mCaptureWidth = w;
             mCaptureHeight = h;
             mCaptureThread->mCaptureStreamsNum = stream_list->num_streams;
-		
-	    stream_list->streams[i]->width =mCaptureThread->m3DCaptureWidth;    
-            stream_list->streams[i]->height = mCaptureThread->m3DCaptureHeight;  
-				
             HAL_LOGD("configurestreams, mCaptureThread->mCaptureStreamsNum:%d", mCaptureThread->mCaptureStreamsNum);
 
             //mCaptureThread->mMainStreams[stream_list->num_streams] = &mCallBackStream;
             mCaptureThread->mMainStreams[stream_list->num_streams].max_buffers = 1;
-            mCaptureThread->mMainStreams[stream_list->num_streams].width = stream_list->streams[i]->width;
-            mCaptureThread->mMainStreams[stream_list->num_streams].height = stream_list->streams[i]->height;
+            mCaptureThread->mMainStreams[stream_list->num_streams].width = mCaptureThread->m3DCaptureWidth;
+            mCaptureThread->mMainStreams[stream_list->num_streams].height = mCaptureThread->m3DCaptureHeight;
             mCaptureThread->mMainStreams[stream_list->num_streams].format = HAL_PIXEL_FORMAT_YCbCr_420_888;
             mCaptureThread->mMainStreams[stream_list->num_streams].usage = stream_list->streams[i]->usage;
             mCaptureThread->mMainStreams[stream_list->num_streams].stream_type = CAMERA3_STREAM_OUTPUT;
@@ -1589,8 +1587,8 @@ int SprdCamera3Capture::configureStreams(const struct camera3_device *device,cam
             pMainStreams[stream_list->num_streams] = &mCaptureThread->mMainStreams[stream_list->num_streams];
             //stream_list->num_streams++;
             mCaptureThread->mAuxStreams[stream_list->num_streams].max_buffers = 1;
-            mCaptureThread->mAuxStreams[stream_list->num_streams].width = stream_list->streams[i]->width;
-            mCaptureThread->mAuxStreams[stream_list->num_streams].height = stream_list->streams[i]->height;
+            mCaptureThread->mAuxStreams[stream_list->num_streams].width = mCaptureThread->m3DCaptureWidth;
+            mCaptureThread->mAuxStreams[stream_list->num_streams].height = mCaptureThread->m3DCaptureHeight;
             mCaptureThread->mAuxStreams[stream_list->num_streams].format = HAL_PIXEL_FORMAT_YCbCr_420_888;
             mCaptureThread->mAuxStreams[stream_list->num_streams].usage = stream_list->streams[i]->usage;
             mCaptureThread->mAuxStreams[stream_list->num_streams].stream_type = CAMERA3_STREAM_OUTPUT;
@@ -1638,13 +1636,6 @@ int SprdCamera3Capture::configureStreams(const struct camera3_device *device,cam
         HAL_LOGE("failed. configure aux streams!!");
         return rc;
     }
-
-	 if ( mCaptureWidth )
-    {
-        stream_list->streams[mCaptureStreamNum]->width = mCaptureWidth;
-        stream_list->streams[mCaptureStreamNum]->height = mCaptureHeight;
-    }
-
     if(mainconfig.num_streams == 3)
     {
         HAL_LOGD("push back to streamlist");
@@ -1797,8 +1788,8 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
 
             mSavedReqStreams[mCaptureThread->mCaptureStreamsNum-1] = req->output_buffers[i].stream;
             out_streams_main[i].stream = &mCaptureThread->mMainStreams[mCaptureThread->mCaptureStreamsNum];
-	    out_streams_main[i].stream->width =mCaptureThread->m3DCaptureWidth;
-	    out_streams_main[i].stream->height=mCaptureThread->m3DCaptureHeight;		
+            out_streams_main[i].stream->width =mCaptureThread->m3DCaptureWidth;
+            out_streams_main[i].stream->height=mCaptureThread->m3DCaptureHeight;
             out_streams_main[i].buffer = mCaptureThread->mLocalCapBuffer[0].buffer;
             HAL_LOGD("newtype:%d", out_streams_main[i].stream->format );
             HAL_LOGD("org snp request output buff 0x%x, stream:0x%x, yaddr_v:0x%x",
@@ -1838,9 +1829,9 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
         if(getStreamType(new_stream) == SNAPSHOT_STREAM) {
             out_streams_aux[i] = req->output_buffers[i];
             out_streams_aux[i].buffer = mCaptureThread->mLocalCapBuffer[1].buffer;
-            out_streams_aux[i].stream = &mCaptureThread->mAuxStreams[mCaptureThread->mCaptureStreamsNum];		
-	    out_streams_aux[i].stream->width =mCaptureThread->m3DCaptureWidth;
-	    out_streams_aux[i].stream->height=mCaptureThread->m3DCaptureHeight;	
+            out_streams_aux[i].stream = &mCaptureThread->mAuxStreams[mCaptureThread->mCaptureStreamsNum];
+            out_streams_aux[i].stream->width =mCaptureThread->m3DCaptureWidth;
+            out_streams_aux[i].stream->height=mCaptureThread->m3DCaptureHeight;
             out_streams_aux[i].acquire_fence = -1;
             HAL_LOGD("mCaptureThread->mCaptureStreamsNum, stream:0x%x", mCaptureThread->mCaptureStreamsNum, out_streams_aux[i].stream);
             if(NULL == out_streams_aux[i].buffer){
