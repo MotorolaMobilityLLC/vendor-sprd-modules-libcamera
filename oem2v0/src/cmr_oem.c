@@ -218,6 +218,7 @@ static cmr_int camera_preview_set_yimg_to_isp(cmr_handle oem_handle, cmr_u32 cam
 static cmr_int camera_preview_set_yuv_to_isp(cmr_handle oem_handle, cmr_u32 camera_id, struct yuv_info_t *yuv);
 static cmr_int camera_preview_set_pd_raw_to_isp(cmr_handle oem_handle, struct pd_raw_info *pd_raw);
 static cmr_int camera_preview_pd_raw_open_to_isp(cmr_handle oem_handle, struct pd_raw_open *pd_open);
+static void camera_face_makeup(cmr_handle oem_handle, struct img_frm *src);
 extern int32_t isp_calibration_get_info(struct isp_data_t *golden_info, struct isp_cali_info_t *cali_info);
 extern int32_t isp_calibration(struct isp_cali_param *param, struct isp_data_t *result);
 
@@ -3349,6 +3350,7 @@ cmr_int camera_snapshot_init(cmr_handle  oem_handle)
 	init_param.ops.get_sensor_info = camera_get_sensor_info;
 	init_param.ops.get_tuning_info = camera_get_tuning_info;
 	init_param.ops.stop_codec = camera_stop_codec;
+	init_param.ops.face_makeup = camera_face_makeup;
 	init_param.private_data = NULL;
 	ret = cmr_snapshot_init(&init_param, &snp_cxt->snapshot_handle);
 	if (ret) {
@@ -4113,6 +4115,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
                             struct cmr_op_mean *mean)
 {
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
+	char refocus[PROPERTY_VALUE_MAX];
 	if (!caller_handle || !oem_handle || !src || !dst || !mean) {
 		CMR_LOGE("in parm error");
 		ret = -CMR_CAMERA_INVALID_PARAM;
@@ -4158,88 +4161,11 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 		enc_in_param.stream_buf_fd, enc_in_param.stream_buf_phy, enc_in_param.stream_buf_vir,
 		enc_in_param.out_size.width, enc_in_param.out_size.height);
 
-	if (1 != mean->is_thumb) {
+	if (1 != mean->is_thumb ) {
 #ifdef CONFIG_FACE_BEAUTY
-		cmr_int PerfectSkinLevel=0;
-		ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_PERFECT_SKINLEVEL, &setting_param);
-		if (ret) {
-			CMR_LOGE("failed to get perfect skinlevel %ld, setting_cxt->setting_handle is 0x%x", ret, setting_cxt->setting_handle);
-		} else {
-			PerfectSkinLevel = setting_param.cmd_type_value;
-			CMR_LOGV("kinlin perfectskinlevel is %d", PerfectSkinLevel);
-		}
-		// init the parameters table. save the value until the process is restart or the device is restart.
-		int tab_skinWhitenLevel[10]={0,15,25,35,45,55,65,75,85,95};
-		int tab_skinCleanLevel[10]={0,25,45,50,55,60,70,80,85,95};
-
-		int level = PerfectSkinLevel;
-		int skinWhitenLevel = 0;
-		int skinCleanLevel = 0;
-		int level_num = 0;
-		// convert the skin_level set by APP to skinWhitenLevel & skinCleanLevel according to the table saved.
-		level = (level<0)?0:((level>90)?90:level);
-		level_num = level/10;
-
-		skinWhitenLevel = tab_skinWhitenLevel[level_num];
-		skinCleanLevel = tab_skinCleanLevel[level_num];
-
-		int pic_width = src->size.width;
-		int pic_height = src->size.height;
-		CMR_LOGD("perfect skinWhitenLevel is %d, skinCleanLevel is %d", skinWhitenLevel, skinCleanLevel);
-		if( PerfectSkinLevel !=0 && pic_width > 0 && pic_height > 0){
-			TSRect  SkinWhitenTsface;
-			memset(&SkinWhitenTsface,0,sizeof(TSRect));
-			if(cxt->fd_face_area.face_num > 0) {
-				SkinWhitenTsface.left = (cxt->fd_face_area.face_info[0].sx*pic_width)/(cxt->fd_face_area.frame_width);
-				SkinWhitenTsface.top = (cxt->fd_face_area.face_info[0].sy*pic_height)/(cxt->fd_face_area.frame_height);
-				SkinWhitenTsface.right = (cxt->fd_face_area.face_info[0].ex*pic_width)/(cxt->fd_face_area.frame_width);
-				SkinWhitenTsface.bottom = (cxt->fd_face_area.face_info[0].ey*pic_height)/(cxt->fd_face_area.frame_height);
-				CMR_LOGD("UCAM update rect:%d-%d-%d-%d",SkinWhitenTsface.left,SkinWhitenTsface.top,
-					SkinWhitenTsface.right,SkinWhitenTsface.bottom);
-
-				TSMakeupData  inMakeupData, outMakeupData;
-				unsigned char *yBuf = (unsigned char *)(src->addr_vir.addr_y);
-				unsigned char *uvBuf = (unsigned char *)(src->addr_vir.addr_u) ;
-				unsigned char * tmpBuf = (unsigned char*)malloc(pic_width*pic_height* 3 / 2);
-
-				unsigned int uv_len = pic_width * pic_height * 1 / 2;
-				unsigned char * UVBuf = (unsigned char*)malloc(uv_len);
-				memcpy(UVBuf, uvBuf + 1, uv_len - 1);
-				*(UVBuf + uv_len - 1)  = *(uvBuf + uv_len - 2);
-
-				inMakeupData.frameWidth = pic_width;
-				inMakeupData.frameHeight = pic_height;
-				inMakeupData.yBuf = yBuf;
-				inMakeupData.uvBuf = UVBuf;
-
-				outMakeupData.frameWidth = pic_width;
-				outMakeupData.frameHeight = pic_height;
-				outMakeupData.yBuf = tmpBuf;
-				outMakeupData.uvBuf = tmpBuf + pic_width*pic_height;
-				CMR_LOGI("perfect frameWidth is %d, frameHeight is %d", pic_width, pic_height);
-
-				CMR_LOGV("perfect ts_face_beautify will be call");
-				int mu_retVal = ts_face_beautify(&inMakeupData, &outMakeupData, skinCleanLevel, skinWhitenLevel, &SkinWhitenTsface,0);
-				if(mu_retVal !=  TS_OK) {
-					CMR_LOGE("perfect ts_face_beautify mu_retVal is %d", mu_retVal);
-				} else {
-					CMR_LOGD("perfect ts_face_beautify return OK");
-					memcpy(yBuf, tmpBuf, pic_width * pic_height);
-					memcpy(uvBuf, (tmpBuf + pic_width * pic_height + 1), (uv_len - 1));
-					*(uvBuf + uv_len - 1)  = *(tmpBuf + pic_width * pic_height * 3 / 2 - 2);
-				}
-
-				if(UVBuf){
-					free(UVBuf);
-					UVBuf = NULL;
-				}
-				if(tmpBuf){
-					free(tmpBuf);
-					tmpBuf = NULL;
-				}
-			}else
-				CMR_LOGW("UCAM perfect no detect face");
-		}
+		property_get("sys.cam.refocus", refocus, "0");
+		if(atoi(refocus) == 0)
+			camera_face_makeup(oem_handle, src);
 #endif
 
 		ret = jpeg_enc_start(&enc_in_param);
@@ -4255,6 +4181,110 @@ exit:
 	sem_post(&cxt->access_sm);
 	CMR_LOGV("done %ld", ret);
 	return ret;
+}
+
+void camera_face_makeup(cmr_handle oem_handle, struct img_frm *src)
+{
+	if (!oem_handle || !src) {
+		CMR_LOGE("in parm error");
+		return;
+	}
+	cmr_int                        ret = CMR_CAMERA_SUCCESS;
+	struct camera_context          *cxt = (struct camera_context*)oem_handle;
+	struct setting_context         *setting_cxt = &cxt->setting_cxt;
+	struct setting_cmd_parameter   setting_param;
+	setting_param.camera_id = cxt->camera_id;
+	char refocus[PROPERTY_VALUE_MAX];
+
+	cmr_int PerfectSkinLevel=0;
+	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_PERFECT_SKINLEVEL, &setting_param);
+	if (ret) {
+		CMR_LOGE("failed to get perfect skinlevel %ld, setting_cxt->setting_handle is 0x%x", ret, setting_cxt->setting_handle);
+	} else {
+		PerfectSkinLevel = setting_param.cmd_type_value;
+		CMR_LOGV("kinlin perfectskinlevel is %d", PerfectSkinLevel);
+	}
+	// init the parameters table. save the value until the process is restart or the device is restart.
+	int tab_skinWhitenLevel[10]={0,15,25,35,45,55,65,75,85,95};
+	int tab_skinCleanLevel[10]={0,25,45,50,55,60,70,80,85,95};
+
+	int level = PerfectSkinLevel;
+	int skinWhitenLevel = 0;
+	int skinCleanLevel = 0;
+	int level_num = 0;
+	// convert the skin_level set by APP to skinWhitenLevel & skinCleanLevel according to the table saved.
+	level = (level<0)?0:((level>90)?90:level);
+	level_num = level/10;
+
+	skinWhitenLevel = tab_skinWhitenLevel[level_num];
+	skinCleanLevel = tab_skinCleanLevel[level_num];
+
+	int pic_width = src->size.width;
+	int pic_height = src->size.height;
+	CMR_LOGD("perfect skinWhitenLevel is %d, skinCleanLevel is %d", skinWhitenLevel, skinCleanLevel);
+	if( PerfectSkinLevel !=0 && pic_width > 0 && pic_height > 0){
+		TSRect  SkinWhitenTsface;
+		memset(&SkinWhitenTsface,0,sizeof(TSRect));
+		if(cxt->fd_face_area.face_num > 0) {
+			SkinWhitenTsface.left = (cxt->fd_face_area.face_info[0].sx*pic_width)/(cxt->fd_face_area.frame_width);
+			SkinWhitenTsface.top = (cxt->fd_face_area.face_info[0].sy*pic_height)/(cxt->fd_face_area.frame_height);
+			SkinWhitenTsface.right = (cxt->fd_face_area.face_info[0].ex*pic_width)/(cxt->fd_face_area.frame_width);
+			SkinWhitenTsface.bottom = (cxt->fd_face_area.face_info[0].ey*pic_height)/(cxt->fd_face_area.frame_height);
+			CMR_LOGD("UCAM update rect:%d-%d-%d-%d",SkinWhitenTsface.left,SkinWhitenTsface.top,
+				SkinWhitenTsface.right,SkinWhitenTsface.bottom);
+
+
+			TSMakeupData  inMakeupData, outMakeupData;
+			unsigned char *yBuf = (unsigned char *)(src->addr_vir.addr_y);
+			unsigned char *uvBuf = (unsigned char *)(src->addr_vir.addr_u) ;
+			unsigned char * tmpBuf = (unsigned char*)malloc(pic_width*pic_height* 3 / 2);
+			property_get("sys.cam.refocus", refocus, "0");
+
+			unsigned int uv_len = pic_width * pic_height * 1 / 2;
+			unsigned char * UVBuf = (unsigned char*)malloc(uv_len);
+			memcpy(UVBuf, uvBuf + 1, uv_len - 1);
+			*(UVBuf + uv_len - 1)  = *(uvBuf + uv_len - 2);
+
+			inMakeupData.frameWidth = pic_width;
+			inMakeupData.frameHeight = pic_height;
+			inMakeupData.yBuf = yBuf;
+			if(atoi(refocus) == 0)
+				inMakeupData.uvBuf = UVBuf;
+			else
+				inMakeupData.uvBuf = uvBuf;
+
+			outMakeupData.frameWidth = pic_width;
+			outMakeupData.frameHeight = pic_height;
+			outMakeupData.yBuf = tmpBuf;
+			outMakeupData.uvBuf = tmpBuf + pic_width*pic_height;
+			CMR_LOGI("perfect frameWidth is %d, frameHeight is %d", pic_width, pic_height);
+
+			CMR_LOGV("perfect ts_face_beautify will be call");
+			int mu_retVal = ts_face_beautify(&inMakeupData, &outMakeupData, skinCleanLevel, skinWhitenLevel, &SkinWhitenTsface,0);
+			if(mu_retVal !=  TS_OK) {
+				CMR_LOGE("perfect ts_face_beautify mu_retVal is %d", mu_retVal);
+			} else {
+				CMR_LOGD("perfect ts_face_beautify return OK");
+				memcpy(yBuf, tmpBuf, pic_width * pic_height);
+				if(atoi(refocus) == 0) {
+					memcpy(uvBuf, (tmpBuf + pic_width * pic_height + 1), (uv_len - 1));
+					*(uvBuf + uv_len - 1)  = *(tmpBuf + pic_width * pic_height * 3 / 2 - 2);
+				} else {
+					memcpy(uvBuf, (tmpBuf + pic_width * pic_height), (pic_width * pic_height / 2));
+				}
+			}
+
+			if(UVBuf){
+				free(UVBuf);
+				UVBuf = NULL;
+			}
+			if(tmpBuf){
+				free(tmpBuf);
+				tmpBuf = NULL;
+			}
+		}else
+			CMR_LOGW("UCAM perfect no detect face");
+	}
 }
 
 cmr_int camera_start_decode(cmr_handle  oem_handle, cmr_handle caller_handle, struct img_frm *src,

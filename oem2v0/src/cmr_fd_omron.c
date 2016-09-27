@@ -44,6 +44,8 @@ struct class_fd {
 	struct img_size                 fd_size;
 	struct img_face_area            face_area_prev; /* The faces detected from the previous frame; It is used to make face detection results more stable */
 	cmr_uint                        curr_frame_idx;
+	HDETECTION                      hDT;  /* Face Detection Handle */
+	HDTRESULT                       hDtResult; /* Face Detection Result Handle */
 };
 
 struct fd_start_parameter {
@@ -66,8 +68,7 @@ static cmr_uint fd_is_busy(struct class_fd *class_handle);
 static void fd_set_busy(struct class_fd *class_handle, cmr_uint is_busy);
 static cmr_int fd_thread_create(struct class_fd *class_handle);
 static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data);
-static HDETECTION hDT = NULL;          /* Face Detection Handle */
-static HDTRESULT hDtResult = NULL;     /* Face Detection Result Handle */
+
 static cmr_int faceNodetect;
 static cmr_int last_face_num;
 
@@ -201,6 +202,8 @@ static cmr_int fd_open(cmr_handle ipm_handle, struct ipm_open_in *in, struct ipm
 	fd_handle->fd_size            = in->frame_size;
 	fd_handle->face_area_prev.face_count = 0;
 	fd_handle->curr_frame_idx     = 0;
+	fd_handle->hDT                = NULL;
+	fd_handle->hDtResult          = NULL;
 
 	CMR_LOGD("mem_size = 0x%ld", fd_handle->mem_size);
 	fd_handle->alloc_addr = malloc(fd_handle->mem_size);
@@ -719,20 +722,21 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data)
 	switch (evt) {
 	case CMR_EVT_FD_INIT:
 		/* Creates Face Detection handle */
-		hDT = UDN_CreateDetection();
-		if ( hDT == NULL ) {
+		class_handle->hDT = UDN_CreateDetection();
+
+		if ( class_handle->hDT == NULL ) {
 			CMR_LOGE("UDN_CreateDetection() Error");
 			break;
 		}
 		/* Creates Face Detection result handle */
-		hDtResult = UDN_CreateDtResult(10, 10);
-		if ( hDtResult == NULL ) {
+		class_handle->hDtResult = UDN_CreateDtResult(10, 10);
+		if ( class_handle->hDtResult == NULL ) {
 			CMR_LOGE("UDN_CreateDtResult() Error");
 			break;
 		}
 
 		/* Sets Face Detection parameters */
-		if (set_dt_param(hDT) != TRUE) {
+		if (set_dt_param(class_handle->hDT) != TRUE) {
 			break;
 		}
 		break;
@@ -751,11 +755,11 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data)
 		{
 			int minFaceSize = MIN(class_handle->fd_size.width, class_handle->fd_size.height) / 10;
 			minFaceSize = MAX(minFaceSize, 40);
-			UDN_SetDtFaceSizeRange(hDT, minFaceSize, 8192);
+			UDN_SetDtFaceSizeRange(class_handle->hDT, minFaceSize, 8192);
 		}
 
 		/* Executes Face Detection */
-		ret = UDN_Detection(hDT, (cmr_u8*)class_handle->alloc_addr, class_handle->fd_size.width, class_handle->fd_size.height, ACCURACY_HIGH_TR, hDtResult);
+		ret = UDN_Detection(class_handle->hDT, (cmr_u8*)class_handle->alloc_addr, class_handle->fd_size.width, class_handle->fd_size.height, ACCURACY_HIGH_TR, class_handle->hDtResult);
 		if (ret != UDN_NORMAL) {
 			CMR_LOGE("UDN_Detection() Error : %ld", ret);
 			fd_set_busy(class_handle, 0);
@@ -763,7 +767,7 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data)
 		}
 
 		/* extract face detection results */
-		fd_get_fd_results(hDtResult, &(class_handle->face_area_prev), &(class_handle->frame_out.face_area), class_handle->fd_size);
+		fd_get_fd_results(class_handle->hDtResult, &(class_handle->face_area_prev), &(class_handle->frame_out.face_area), class_handle->fd_size);
 
 		class_handle->frame_out.dst_frame.size.width = class_handle->frame_in.src_frame.size.width;
 		class_handle->frame_out.dst_frame.size.height = class_handle->frame_in.src_frame.size.height;
@@ -780,14 +784,14 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data)
 
 	case CMR_EVT_FD_EXIT:
 		/* Deletes Face Detection handle */
-		if ( hDT != NULL ) {
-			UDN_DeleteDetection(hDT);
-			hDT = NULL;
+		if (class_handle-> hDT != NULL ) {
+			UDN_DeleteDetection(class_handle->hDT);
+			class_handle->hDT = NULL;
 		}
 		/* Deletes Face Detection result handle */
-		if ( hDtResult != NULL ) {
-			UDN_DeleteDtResult(hDtResult);
-			hDtResult = NULL;
+		if ( class_handle->hDtResult != NULL ) {
+			UDN_DeleteDtResult(class_handle->hDtResult);
+			class_handle->hDtResult = NULL;
 		}
 		break;
 

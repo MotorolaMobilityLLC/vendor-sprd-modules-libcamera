@@ -268,6 +268,7 @@ static void snp_reset_ctrl_condition(cmr_handle snp_handle);
 static cmr_int snp_post_proc(cmr_handle snp_handle, void *data);
 static cmr_int snp_stop_proc(cmr_handle snp_handle);
 static cmr_int snp_start_encode(cmr_handle snp_handle, void *data);
+static void snp_face_makeup(cmr_handle snp_handle, void *data);
 static cmr_int snp_start_encode_thumb(cmr_handle snp_handle);
 static cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data);
 static cmr_int snp_start_isp_next_proc(cmr_handle snp_handle, void *data);
@@ -880,6 +881,22 @@ cmr_int snp_secondary_thread_proc(struct cmr_msg *message, void* p_data)
 exit:
 	CMR_LOGI("done %ld", ret);
 	return ret;
+}
+
+void snp_face_makeup(cmr_handle snp_handle, void *data)
+{
+	cmr_int                        ret = CMR_CAMERA_SUCCESS;
+	struct snp_context             *snp_cxt = (struct snp_context*)snp_handle;
+	struct snp_channel_param       *chn_param_ptr = &snp_cxt->chn_param;
+	struct frm_info                *frm_ptr = (struct frm_info*)data;
+	struct snp_jpeg_param          *jpeg_in_ptr;
+	cmr_u32                        index = frm_ptr->frame_id - frm_ptr->base;
+
+	jpeg_in_ptr = &chn_param_ptr->jpeg_in[index];
+	if (snp_cxt->ops.face_makeup) {
+		snp_cxt->ops.face_makeup(snp_cxt->oem_handle, &jpeg_in_ptr->src);
+	}
+	CMR_LOGI("done %ld", ret);
 }
 
 cmr_int snp_start_encode(cmr_handle snp_handle, void *data)
@@ -4026,6 +4043,7 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data)
 	snp_set_status(snp_handle, POST_PROCESSING);
 
 	if (cxt->req_param.lls_shot_mode || cxt->req_param.is_vendor_hdr || cxt->req_param.is_pipviv_mode || cxt->req_param.is_3dcalibration_mode/**add for 3d calibration*/) {
+		snp_face_makeup(snp_handle, data);/** add for 3D capture face_makeup*/
 		if (chn_param_ptr->is_rot) {
 			CMR_LOGI("need rotate");
 			ret = snp_start_rot(snp_handle, data);
