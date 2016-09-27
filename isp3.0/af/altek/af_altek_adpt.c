@@ -822,6 +822,7 @@ static cmr_int afaltek_adpt_set_mode(cmr_handle adpt_handle, cmr_int mode)
 	case AF_CTRL_MODE_AUTO:
 		cxt->af_touch_mode = 1;
 #ifdef FEATRUE_SPRD_CAF_TRIGGER
+		afaltek_adpt_caf_set_mode(cxt, AFT_MODE_NORMAL);
 		afaltek_adpt_caf_stop(cxt);
 #endif
 		ret = afaltek_adpt_stop(cxt);
@@ -1521,22 +1522,22 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 		goto exit;
 	}
 
-	if ((AF_CTRL_MODE_CAF != cxt->af_mode) &&
-	    (AF_CTRL_MODE_CONTINUOUS_VIDEO != cxt->af_mode))
-		goto exit;
-
 	cmr_bzero(&aft_out, sizeof(aft_out));
 
 	ae4af_stable = (ae_stable_cnt >= DEFAULT_AE4AF_STABLE_STABLE_CNT) ? 1 : 0;
 	aft_in->ae_info.is_stable = (ae4af_stable || cxt->ae_info.ae_converge_st);
 
 	ret = cxt->caf_ops.trigger_calc(cxt->caf_trigger_handle, aft_in, &aft_out);
-	ISP_LOGI("is_stable %d, caf_trig %d, cancel_caf %d cur_status %d",
+	ISP_LOGI("is_stable %d, data_type %d caf_trig %d, cancel_caf %d cur_status %d",
 		 aft_in->ae_info.is_stable,
+		 aft_in->active_data_type,
 		 aft_out.is_caf_trig,
 		 aft_out.is_cancel_caf,
 		 cxt->af_cur_status);
 
+	if ((AF_CTRL_MODE_CAF != cxt->af_mode) &&
+	    (AF_CTRL_MODE_CONTINUOUS_VIDEO != cxt->af_mode))
+		goto exit;
 
 	if (cxt->af_caf_cxt.caf_force_focus) {
 		/* When entering the camera, CAF is forced to focus once. */
@@ -2259,7 +2260,8 @@ static cmr_int afaltek_adpt_caf_reset_after_af(cmr_handle adpt_handle)
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 
 	if ((AF_CTRL_MODE_CAF == cxt->af_mode) ||
-	     (AF_CTRL_MODE_CONTINUOUS_VIDEO == cxt->af_mode)) {
+	     (AF_CTRL_MODE_CONTINUOUS_VIDEO == cxt->af_mode) ||
+	     (AF_CTRL_MODE_AUTO == cxt->af_mode)) {
 		ret = afaltek_adpt_reset_caf(cxt);
 	}
 
