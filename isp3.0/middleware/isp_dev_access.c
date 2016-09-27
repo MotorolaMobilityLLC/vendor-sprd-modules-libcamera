@@ -688,13 +688,9 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	if(ISP_CAP_MODE_HIGHISO == param_ptr->common_in.capture_mode ||
 		ISP_CAP_MODE_BURST == param_ptr->common_in.capture_mode) {
 #if VIDEO_USE
-		if(init_param.width > 4290) {
-			tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutWidth = param_ptr->common_in.video_size.w;
-			tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutHeight = param_ptr->common_in.video_size.h;
-		} else {
-			tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutWidth = 0;
-			tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutHeight = 0;
-		}
+		/*decrease isp scaling bandwith*/
+		tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutWidth = param_ptr->common_in.video_size.w;
+		tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutHeight = param_ptr->common_in.video_size.h;
 #else
 		tSecnarioInfo.tScenarioOutBypassFlag.bBypassVideo = 1;
 		tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutWidth = param_ptr->common_in.lv_size.w;//cxt->input_param.init_param.size.w;

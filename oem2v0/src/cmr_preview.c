@@ -6389,8 +6389,8 @@ static cmr_int prev_get_matched_burstmode_lv_size(struct img_size sensor_size, s
 	} list[] = {
 			{{960, 720}, {12, 9}},
 			{{1920, 1080}, {16, 9}},
-#if VIDEO_USE
-			{{1920, 1444}, {12, 9}},
+			{{1920, 1440}, {12, 9}},
+#if 0 //VIDEO_USE
 			{{4200, 2362}, {16, 9}},
 			{{4200, 3158}, {12, 9}},
 #endif
@@ -6473,16 +6473,21 @@ static cmr_int prev_get_matched_burstmode_lv_size(struct img_size sensor_size, s
 	lvsize->height = 720;
 #else
 
-	video_size->width = dst_img_size.width;
-	video_size->height = dst_img_size.height;
+	if(dst_img_size.width < sensor_size.width && dst_img_size.height < sensor_size.height) {
+		video_size->width = dst_img_size.width;
+		video_size->height = dst_img_size.height;
 
-	if (sensor_size.width *1000/ sensor_size.height > video_size->width * 1000/video_size->height) {
-		video_size->width = sensor_size.width * video_size->height / sensor_size.height;
-		video_size->width = CAMERA_WIDTH(video_size->width);
-	}
-	else if (sensor_size.width *1000/ sensor_size.height < video_size->width * 1000/video_size->height) {
-		video_size->height = video_size->width * sensor_size.height / sensor_size.width;
-		video_size->height = CAMERA_HEIGHT(video_size->height);
+		if (sensor_size.width *1000/ sensor_size.height > video_size->width * 1000/video_size->height) {
+			video_size->width = sensor_size.width * video_size->height / sensor_size.height;
+			video_size->width = CAMERA_WIDTH(video_size->width);
+		}
+		else if (sensor_size.width *1000/ sensor_size.height < video_size->width * 1000/video_size->height) {
+			video_size->height = video_size->width * sensor_size.height / sensor_size.width;
+			video_size->height = CAMERA_HEIGHT(video_size->height);
+		}
+	} else if(dst_img_size.width > sensor_size.width || dst_img_size.height > sensor_size.height) {
+		video_size->width = sensor_size.width;
+		video_size->height = sensor_size.height;
 	}
 
 	lvsize->width = 960;
