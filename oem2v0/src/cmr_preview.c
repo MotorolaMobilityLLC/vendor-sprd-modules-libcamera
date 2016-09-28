@@ -8855,8 +8855,8 @@ cmr_int prev_pop_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id, s
 	valid_num = prev_cxt->prev_mem_valid_num;
 
 	if (valid_num > PREV_FRM_CNT || valid_num <= 0) {
-		CMR_LOGE("cnt error valid_num %ld", valid_num);
-		goto exit;
+		CMR_LOGE("wrong valid_num %ld", valid_num);
+		return CMR_CAMERA_INVALID_PARAM;
 	}
 	if ((prev_cxt->prev_frm[0].fd == data->fd) && valid_num > 0) {
 		frame_type.y_phy_addr = prev_cxt->prev_frm[0].addr_phy.addr_y;
@@ -8884,10 +8884,10 @@ cmr_int prev_pop_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id, s
 			cb_data_info.frame_data = &frame_type;
 			prev_cb_start(handle, &cb_data_info);
 		}
-	}else {
-		ret = CMR_CAMERA_INVALID_FRAME;
-		CMR_LOGE("error yaddr 0x%x uaddr 0x%x",data->yaddr, data->uaddr);
-		goto exit;
+	} else {
+		CMR_LOGE("got wrong buf: data->fd=0x%lx, prev_frm[0].fd=0x%lx, valid_num=%d",
+			data->fd, prev_cxt->prev_frm[0].fd, valid_num);
+		return CMR_CAMERA_INVALID_FRAME;
 	}
 
 exit:
@@ -9228,6 +9228,11 @@ cmr_int prev_pop_video_buffer(struct prev_handle *handle, cmr_u32 camera_id, str
 	prev_cxt  = &handle->prev_cxt[camera_id];
 	valid_num = prev_cxt->video_mem_valid_num;
 
+	if (valid_num > PREV_FRM_CNT || valid_num <= 0) {
+		CMR_LOGE("wrong valid_num %ld", valid_num);
+		return CMR_CAMERA_INVALID_PARAM;
+	}
+
 	if ((prev_cxt->video_frm[0].fd == data->fd) && valid_num > 0) {
 		frame_type.y_phy_addr = prev_cxt->video_phys_addr_array[0];
 		frame_type.y_vir_addr = prev_cxt->video_virt_addr_array[0];
@@ -9252,11 +9257,10 @@ cmr_int prev_pop_video_buffer(struct prev_handle *handle, cmr_u32 camera_id, str
 			cb_data_info.frame_data = &frame_type;
 			prev_cb_start(handle, &cb_data_info);
 		}
-	}else {
-		ret = CMR_CAMERA_INVALID_FRAME;
-		CMR_LOGE("data->fd=0x%lx, prev_cxt->video_frm[0].fd=0x%lx",
-			data->fd, prev_cxt->video_frm[0].fd);
-		goto exit;
+	} else {
+		CMR_LOGE("got wrong buf: data->fd=0x%lx, video_frm[0].fd=0x%lx, valid_num=%d",
+			data->fd, prev_cxt->video_frm[0].fd, valid_num);
+		return CMR_CAMERA_INVALID_FRAME;
 	}
 
 exit:
@@ -9369,6 +9373,11 @@ cmr_int prev_pop_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id, struc
 	prev_cxt  = &handle->prev_cxt[camera_id];
 	valid_num = prev_cxt->cap_zsl_mem_valid_num;
 
+	if (valid_num > ZSL_FRM_CNT || valid_num <= 0) {
+		CMR_LOGE("wrong valid_num %ld", valid_num);
+		return CMR_CAMERA_INVALID_PARAM;
+	}
+
 	if ((prev_cxt->cap_zsl_frm[0].fd == data->fd) && valid_num > 0) {
 		frame_type.y_phy_addr = prev_cxt->cap_zsl_phys_addr_array[0];
 		frame_type.y_vir_addr = prev_cxt->cap_zsl_virt_addr_array[0];
@@ -9394,13 +9403,9 @@ cmr_int prev_pop_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id, struc
 			prev_cb_start(handle, &cb_data_info);
 		}
 	} else {
-		if (0 != valid_num) {
-			ret = CMR_CAMERA_INVALID_FRAME;
-			CMR_LOGE("error fd 0x%lx ",prev_cxt->cap_zsl_frm[0].fd);
-			goto exit;
-		} else {
-			CMR_LOGE("discard frame  fd 0x%lx",prev_cxt->cap_zsl_frm[0].fd);
-		}
+		CMR_LOGE("got wrong buf: data->fd=0x%lx, cap_zsl_frm[0].fd=0x%lx, valid_num=%d",
+			data->fd, prev_cxt->cap_zsl_frm[0].fd, valid_num);
+		return CMR_CAMERA_INVALID_FRAME;
 	}
 
 exit:
