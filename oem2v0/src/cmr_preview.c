@@ -6491,7 +6491,7 @@ static cmr_int prev_get_matched_burstmode_lv_size(struct img_size sensor_size, s
 	lvsize->height = 720;
 #else
 
-	if(dst_img_size.width < sensor_size.width && dst_img_size.height < sensor_size.height) {
+	if (dst_img_size.width < sensor_size.width && dst_img_size.height < sensor_size.height) {
 		video_size->width = dst_img_size.width;
 		video_size->height = dst_img_size.height;
 
@@ -6503,7 +6503,7 @@ static cmr_int prev_get_matched_burstmode_lv_size(struct img_size sensor_size, s
 			video_size->height = video_size->width * sensor_size.height / sensor_size.width;
 			video_size->height = CAMERA_HEIGHT(video_size->height);
 		}
-	} else if(dst_img_size.width > sensor_size.width || dst_img_size.height > sensor_size.height) {
+	} else {
 		video_size->width = sensor_size.width;
 		video_size->height = sensor_size.height;
 	}
