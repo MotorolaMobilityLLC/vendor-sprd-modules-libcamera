@@ -4577,8 +4577,11 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb,
 	{
 		controlInfo.af_state = ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED;
 		mSetting->setAfCONTROLTag(controlInfo);
-		mIsAutoFocus = false;
 		//channel->channelCbRoutine(0, timeStamp, CAMERA_STREAM_TYPE_DEFAULT);
+		if(controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_AUTO) //reset autofocus only in TouchAF process
+		{
+			mIsAutoFocus = false;
+		}
 	}
 		break;
 
@@ -4588,7 +4591,11 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb,
 		controlInfo.af_state = ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED;
 		mSetting->setAfCONTROLTag(controlInfo);
 		//channel->channelCbRoutine(0, timeStamp, CAMERA_STREAM_TYPE_DEFAULT);
-		mIsAutoFocus = false;
+		if(controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_AUTO) //reset autofocus only in TouchAF process
+		{
+			mIsAutoFocus = false;
+		}
+
 	}
 		break;
 
