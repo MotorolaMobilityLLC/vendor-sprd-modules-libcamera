@@ -1178,6 +1178,7 @@ bool SprdCamera3Capture::CaptureThread::threadLoop()
                 }
                 else
                 {
+                    CameraMetadata meta;
                     camera3_capture_request_t       request = {0,};
                     camera3_stream_buffer_t* output_buffers = NULL;
                     camera3_stream_buffer_t* input_buffer = NULL;
@@ -1197,6 +1198,9 @@ bool SprdCamera3Capture::CaptureThread::threadLoop()
                     memset(input_buffer, 0x00, sizeof(camera3_stream_buffer_t));
 
                     memcpy( (void*)&request, &mSavedCapRequest, sizeof(camera3_capture_request_t) );
+                    meta.append(mSavedCapReqsettings);
+                    mSavedCapReqsettings = meta.release();
+                    request.settings = mSavedCapReqsettings;
 
                     memcpy( input_buffer, &mSavedCapReqstreambuff, sizeof(camera3_stream_buffer_t) );
                     input_buffer->stream = &mMainStreams[mCaptureStreamsNum-1];
@@ -1209,8 +1213,8 @@ bool SprdCamera3Capture::CaptureThread::threadLoop()
                     request.input_buffer = input_buffer;
                     mReprocessing = true;
 
-                    HAL_LOGD("capture combaind success: framenumber %d", request.frame_number);
-                    HAL_LOGD("capture combaind success: cmbbuff 0x%x", output_buffer);
+                    HAL_LOGD("capture combined success: framenumber %d", request.frame_number);
+                    HAL_LOGD("capture combined success: cmbbuff 0x%x", output_buffer);
 
                     HAL_LOGD("reprocess request input buff 0x%x, stream:0x%x, yaddr_v:0x%x, width:%d, height:%d",
                              request.input_buffer->buffer, request.input_buffer->stream,
@@ -1338,12 +1342,12 @@ void SprdCamera3Capture::CaptureThread::waitMsgAvailable()
 int SprdCamera3Capture::CaptureThread::combineTwoPicture(buffer_handle_t *&output_buf, buffer_handle_t *input_buf1, buffer_handle_t *input_buf2)
 {
     int rc = NO_ERROR;
-
+    CameraMetadata metaSettings;
     if(input_buf1 == NULL || input_buf2 == NULL){
         HAL_LOGE("Error, null buffer detected! input_buf1:%p input_buf2:%p",input_buf1, input_buf2);
         return BAD_VALUE;
     }
-    HAL_LOGD("combain two picture:%d, %d", input_buf1, input_buf2);
+    HAL_LOGD("combine two picture:%d, %d", input_buf1, input_buf2);
 
     if(!isInitRenderContest){
         if(CONTEXT_FAIL == mGpuApi->initRenderContext(&pt_stream_info, pt_line_buf.homography_matrix, 18)) {
@@ -1361,6 +1365,32 @@ int SprdCamera3Capture::CaptureThread::combineTwoPicture(buffer_handle_t *&outpu
     dcam.right_buf = (struct private_handle_t *)*input_buf2;
     dcam.dst_buf = (struct private_handle_t *)*output_buf;
     dcam.rot_angle = ROT_90;
+
+    metaSettings = mSavedCapReqsettings;
+    if ( metaSettings.exists(ANDROID_JPEG_ORIENTATION) )
+    {
+        int32_t jpeg_orientation = metaSettings.find(ANDROID_JPEG_ORIENTATION).data.i32[0];
+        HAL_LOGD("find jpeg orientation %d", jpeg_orientation);
+        switch ( jpeg_orientation )
+        {
+        case 0:
+            dcam.rot_angle = ROT_270;
+            break;
+        case 90:
+            dcam.rot_angle = ROT_180;
+            break;
+        case 180:
+            dcam.rot_angle = ROT_90;
+            break;
+        case 270:
+            dcam.rot_angle = ROT_0;
+            break;
+        default:
+            dcam.rot_angle = ROT_90;
+            break;
+        }
+    }
+
     HAL_LOGD(" before cmb yaddr_v:%d", ((struct private_handle_t*)output_buf)->base );
 
     mGpuApi->imageStitchingWithGPU(&dcam);
@@ -1778,6 +1808,7 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
         new_stream = (req->output_buffers[i]).stream;
         HAL_LOGD("num_output_buffers:%d, streamtype:%d", req->num_output_buffers, requestStreamType);
         if(requestStreamType == SNAPSHOT_STREAM) {
+            CameraMetadata meta;
             HAL_LOGD(" orgtype:%d", req->output_buffers[i].stream->format );
             mCaptureThread->mSavedResultBuff = NULL;
             HAL_LOGD("org snp request output buff 0x%x, stream:0x%x, yaddr_v:0x%x",
@@ -1785,6 +1816,8 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
                      ((struct private_handle_t*)(*request->output_buffers[i].buffer))->base);
             memcpy( &mCaptureThread->mSavedCapRequest, req, sizeof(camera3_capture_request_t));
             memcpy( &mCaptureThread->mSavedCapReqstreambuff, &req->output_buffers[i], sizeof(camera3_stream_buffer_t));
+            meta.append(req->settings);
+            mCaptureThread->mSavedCapReqsettings = meta.release();
 
             mSavedReqStreams[mCaptureThread->mCaptureStreamsNum-1] = req->output_buffers[i].stream;
             out_streams_main[i].stream = &mCaptureThread->mMainStreams[mCaptureThread->mCaptureStreamsNum];
@@ -1987,9 +2020,9 @@ void SprdCamera3Capture::processCaptureResultMain( const camera3_capture_result_
             capture_msg.combo_buff.buffer1 = result->output_buffers->buffer;
             capture_msg.combo_buff.buffer2 = mCaptureThread->mSavedResultBuff;
             capture_msg.combo_buff.input_buffer=result->input_buffer;
-            HAL_LOGD("capture combaind begin: framenumber %d", capture_msg.combo_buff.frame_number);
-            HAL_LOGD("capture combaind begin: buff1 0x%x", capture_msg.combo_buff.buffer1);
-            HAL_LOGD("capture combaind begin: buff2 0x%x", capture_msg.combo_buff.buffer2);
+            HAL_LOGD("capture combined begin: framenumber %d", capture_msg.combo_buff.frame_number);
+            HAL_LOGD("capture combined begin: buff1 0x%x", capture_msg.combo_buff.buffer1);
+            HAL_LOGD("capture combined begin: buff2 0x%x", capture_msg.combo_buff.buffer2);
             {
                 Mutex::Autolock l(mCaptureThread->mMergequeueMutex);
                 HAL_LOGD("Enqueue combo frame:%d for frame merge!", capture_msg.combo_buff.frame_number);
@@ -2139,9 +2172,9 @@ void SprdCamera3Capture::processCaptureResultAux( const camera3_capture_result_t
                 capture_msg.combo_buff.buffer1 = mCaptureThread->mSavedResultBuff;
                 capture_msg.combo_buff.buffer2 = result->output_buffers->buffer;
                 capture_msg.combo_buff.input_buffer=result->input_buffer;
-                HAL_LOGD("capture combaind begin: framenumber %d", capture_msg.combo_buff.frame_number);
-                HAL_LOGD("capture combaind begin: buff1 %d", capture_msg.combo_buff.buffer1);
-                HAL_LOGD("capture combaind begin: buff2 %d", capture_msg.combo_buff.buffer2);
+                HAL_LOGD("capture combined begin: framenumber %d", capture_msg.combo_buff.frame_number);
+                HAL_LOGD("capture combined begin: buff1 %d", capture_msg.combo_buff.buffer1);
+                HAL_LOGD("capture combined begin: buff2 %d", capture_msg.combo_buff.buffer2);
                 {
                     Mutex::Autolock l(mCaptureThread->mMergequeueMutex);
                     HAL_LOGD("Enqueue combo frame:%d for frame merge!", capture_msg.combo_buff.frame_number);

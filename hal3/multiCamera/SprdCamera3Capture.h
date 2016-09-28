@@ -177,6 +177,7 @@ public:
         buffer_handle_t                   *mSavedResultBuff;
         camera3_capture_request_t          mSavedCapRequest;
         camera3_stream_buffer_t            mSavedCapReqstreambuff;
+        camera_metadata_t                 *mSavedCapReqsettings;
         camera3_stream_t                   mMainStreams[MAX_NUM_STREAMS];
         camera3_stream_t                   mAuxStreams[MAX_NUM_STREAMS];
         uint8_t                            mCaptureStreamsNum;
