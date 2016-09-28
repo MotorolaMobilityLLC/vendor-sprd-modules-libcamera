@@ -216,6 +216,10 @@ static cmr_int pdafaltek_adpt_set_pd_info(cmr_handle adpt_handle, struct sensor_
 
 	ISP_CHECK_HANDLE_VALID(adpt_handle);
 
+	if (!pd_info) {
+		ret = -ISP_PARAM_NULL;
+		return ret;
+	}
 	cxt->pd_info.pd_offset_x = pd_info->pd_offset_x;
 	cxt->pd_info.pd_offset_y = pd_info->pd_offset_y;
 	cxt->pd_info.pd_pitch_x = pd_info->pd_pitch_x;
@@ -388,10 +392,18 @@ static cmr_int pdafaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 	cxt->cb_ops = in_p->pdaf_ctrl_cb_ops;
 	//cxt->init_in_param = *in_p;
 	ret = pdafaltek_adpt_set_pd_info(cxt, in_p->pd_info);
-
+	if (ret) {
+		ISP_LOGE("failed to set pd info");
+		goto exit;
+	}
 	pd_in_size = in_p->pd_info->pd_block_num_x * in_p->pd_info->pd_block_num_y
 				* in_p->pd_info->pd_density_x * sizeof(cmr_u16);
 	ISP_LOGI("pd_in_size = %d", pd_in_size);
+	if (0 == pd_in_size) {
+		ISP_LOGE("failed to get pd size");
+		ret = -ISP_PARAM_ERROR;
+		goto exit;
+	}
 	cxt->pd_left = malloc(pd_in_size);
 	if (NULL == cxt->pd_left) {
 		ISP_LOGE("failed to malloc");

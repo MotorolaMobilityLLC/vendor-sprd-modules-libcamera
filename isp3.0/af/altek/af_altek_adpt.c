@@ -155,6 +155,7 @@ struct af_ae_working_info {
 
 struct af_altek_context {
 	cmr_u8 inited;
+	cmr_u8 haf_support;
 	cmr_u32 camera_id;
 	cmr_u32 frame_id;
 	cmr_u32 af_mode;
@@ -2135,7 +2136,7 @@ static cmr_int afaltek_adpt_inctrl(cmr_handle adpt_handle, cmr_int cmd,
 		ret = afaltek_adpt_update_pd_info(adpt_handle, in);
 		break;
 	case AF_CTRL_CMD_SET_PD_ENABLE:
-		ret = afaltek_adpt_hybird_af_enable(adpt_handle, in);
+		//ret = afaltek_adpt_hybird_af_enable(adpt_handle, in);
 		break;
 	case AF_CTRL_CMD_SET_LIVE_VIEW_SIZE:
 		ret = afaltek_adpt_update_isp_info(adpt_handle, in);
@@ -2421,8 +2422,8 @@ static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 	if (ret)
 		ISP_LOGI("failed to update isp info ret = %ld", ret);
 #endif
-	ISP_LOGI("in->pdaf_support = %d", in->pdaf_support);
-	if (in->pdaf_support) {
+	ISP_LOGI("cxt->haf_support = %d", cxt->haf_support);
+	if (cxt->haf_support) {
 		/* set hybrid input info */
 		haf_enable = 1;
 		afaltek_adpt_hybird_af_enable(adpt_handle, (void *)&haf_enable);
@@ -2491,6 +2492,7 @@ static cmr_int afaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 
 	cmr_bzero(cxt, sizeof(*cxt));
 	cxt->inited = 0;
+	cxt->haf_support = in_p->ctrl_in->pdaf_support;
 	cxt->caller_handle = in_p->caller_handle;
 	cxt->camera_id = in_p->ctrl_in->camera_id;
 	cxt->cb_ops.set_pos = in_p->cb_ctrl_ops.set_pos;

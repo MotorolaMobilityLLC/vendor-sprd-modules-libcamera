@@ -2847,6 +2847,7 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 	struct isp_init_param           isp_param;
 	struct isp_video_limit          isp_limit;
 	SENSOR_VAL_T                    val;
+	struct sensor_pdaf_info         pdaf_info;
 
 #if defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4)
 	struct isp_cali_param cali_param;
@@ -2857,6 +2858,7 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 #endif
 
 	cmr_bzero(&isp_param, sizeof(isp_param));
+	cmr_bzero(&pdaf_info, sizeof(pdaf_info));
 	CMR_PRINT_TIME;
 	CHECK_HANDLE_VALID(oem_handle);
 	isp_cxt = &(cxt->isp_cxt);
@@ -2981,9 +2983,6 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 	CMR_LOGD("w %d h %d", isp_param.size.w,isp_param.size.h);
 
 	if(1 == isp_param.ex_info.pdaf_supported) {
-		struct sensor_pdaf_info pdaf_info;
-
-		cmr_bzero(&pdaf_info, sizeof(pdaf_info));
 
 		val.type = SENSOR_VAL_TYPE_GET_PDAF_INFO;
 		val.pval = &pdaf_info;
@@ -6476,9 +6475,11 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	struct snapshot_context        *snp_cxt = &cxt->snp_cxt;
 	struct setting_cmd_parameter   setting_param;
 	struct sensor_context          *sn_cxt = &cxt->sn_cxt;
-	char                     value[PROPERTY_VALUE_MAX];
+	struct isp_context             *isp_cxt = &cxt->isp_cxt;
+	char                           value[PROPERTY_VALUE_MAX];
 	cmr_u32                        is_cfg_snp = 0;
 	cmr_u32                        rotation = 0;
+	cmr_u8                         haf_enable = 0;
 
 	setting_param.camera_id = cxt->camera_id;
 	cmr_bzero((void*)out_param_ptr, sizeof(*out_param_ptr));
@@ -6590,6 +6591,12 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	else if (1 == out_param_ptr->preview_eb)
 		out_param_ptr->pdaf_eb = 1;
 
+	haf_enable = out_param_ptr->pdaf_eb;
+	CMR_LOGI("haf_enable %d", haf_enable);
+	ret = isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_SET_HAF_ENABLE, &haf_enable);
+	if(ret) {
+		CMR_LOGE("isp_ioctl-ISP_CTRL_SET_HAF_ENABLE failed");
+	}
 	out_param_ptr->zoom_setting = setting_param.zoom_param;
 	CMR_LOGV("aspect ratio prev=%f, video=%f, cap=%f",
 		out_param_ptr->zoom_setting.zoom_info.prev_aspect_ratio,
