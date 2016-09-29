@@ -1429,9 +1429,9 @@ int SprdCamera3RangeFinder::MeasureThread::calculateDepthValue(frame_matched_inf
     }
 
     HAL_LOGD("eOutDistance=%f",eOutDistance);
-	if(eOutDistance > 3000){
-		eOutDistance = 3000;
-		HAL_LOGD("distance too large. set to 3000");
+	if(eOutDistance > 500){
+		eOutDistance = 500;
+		HAL_LOGD("distance too large. set to 500");
 	}
     {
         Mutex::Autolock l(gRangeFinder->mDepthVauleLock);
