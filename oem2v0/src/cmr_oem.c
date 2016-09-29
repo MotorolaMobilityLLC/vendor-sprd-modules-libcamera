@@ -6480,12 +6480,18 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	cmr_u32                        is_cfg_snp = 0;
 	cmr_u32                        rotation = 0;
 	cmr_u8                         haf_enable = 0;
+	cmr_u32                        is_raw_capture = 0;
 
 	setting_param.camera_id = cxt->camera_id;
 	cmr_bzero((void*)out_param_ptr, sizeof(*out_param_ptr));
 
 	out_param_ptr->memory_setting.alloc_mem = camera_malloc;
 	out_param_ptr->memory_setting.free_mem = camera_free;
+
+	property_get("persist.sys.camera.raw.mode", value, "jpeg");
+	if (!strcmp(value, "raw")) {
+		is_raw_capture = 1;
+	}
 
 	if (CAMERA_SNAPSHOT != is_snapshot) {
 		ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_PREVIEW_FORMAT, &setting_param);
@@ -6586,7 +6592,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	if (1 == out_param_ptr->video_slowmotion_eb || 0 == sn_cxt->cur_sns_ex_info.pdaf_supported
 		|| CAMERA_ISP_TUNING_MODE == mode || CAMERA_UTEST_MODE == mode
 		|| CAMERA_AUTOTEST_MODE == mode || CAMERA_ISP_SIMULATION_MODE == mode
-		|| 1 == out_param_ptr->video_eb)
+		|| 1 == out_param_ptr->video_eb || 1 == is_raw_capture)
 		out_param_ptr->pdaf_eb = 0;
 	else if (1 == out_param_ptr->preview_eb)
 		out_param_ptr->pdaf_eb = 1;
@@ -6798,9 +6804,8 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	}
 	//camera apk open high iso feature, cmd_type_value value is 1,the high iso mode set HIGHISO_CAP_MODE
 	if (setting_param.cmd_type_value) {
-		property_get("persist.sys.camera.raw.mode", value, "jpeg");
 		//on high iso mode,take  raw data picture,the high iso mode set HIGHISO_RAWDATA_MODE
-		if (!strcmp(value, "raw")) {
+		if (1 == is_raw_capture) {
 			out_param_ptr->sprd_highiso_enabled = 0;
 			cxt->highiso_mode = HIGHISO_RAWDATA_MODE;
 		} else {
