@@ -141,6 +141,7 @@ typedef struct {
     buffer_handle_t*  buffer;
     camera3_stream_t *stream;
     camera3_stream_buffer_t* input_buffer;
+    int rotation;
 }old_request;
 
 typedef struct {

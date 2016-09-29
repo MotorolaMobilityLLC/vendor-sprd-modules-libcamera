@@ -386,7 +386,6 @@ int SprdCamera3StereoVideo::configure_streams(const struct camera3_device *devic
 
     HAL_LOGD(" E");
     CHECK_MUXER_ERROR();
-
     rc = mMuxer->configureStreams(device,stream_list);
 
     HAL_LOGD(" X");
@@ -886,7 +885,6 @@ void SprdCamera3StereoVideo::MuxerThread::unLoadGpuApi()
  *==========================================================================*/
 void SprdCamera3StereoVideo::MuxerThread::initGpuData(int rotation)
 {
-
     pt_stream_info.dst_height = mMuxer->mVideoSize.srcHeight;
     pt_stream_info.dst_width  = mMuxer->mVideoSize.srcWidth;
     pt_stream_info.src_height = mMuxer->mVideoSize.stereoVideoHeight;
@@ -895,7 +893,6 @@ void SprdCamera3StereoVideo::MuxerThread::initGpuData(int rotation)
     HAL_LOGV("src_width = %d dst_height=%d,dst_width=%d,dst_height=%d",\
         pt_stream_info.src_width ,pt_stream_info.src_height,\
         pt_stream_info.dst_width , pt_stream_info.dst_height);
-
     float buff[768];
     float H_left[9], H_right[9];
     FILE *fid = fopen("/productinfo/sprd_3d_calibration/calibration.data","rb");
@@ -1286,10 +1283,11 @@ int SprdCamera3StereoVideo::MuxerThread::muxerTwoFrame(buffer_handle_t* &output_
     frame_matched_info_t* combVideoResult)
 {
     int rc = NO_ERROR;
+    int32_t rotation = ROT_270;
+    static int32_t s_rotation = ROT_270;
     buffer_handle_t* input_buf1 = combVideoResult->buffer1;
     buffer_handle_t* input_buf2 = combVideoResult->buffer2;
     List <old_request>::iterator itor;
-
     if(input_buf1 == NULL || input_buf2 == NULL){
         HAL_LOGE("Error, null buffer detected! input_buf1:%p input_buf2:%p",input_buf1, input_buf2);
         return BAD_VALUE;
@@ -1312,6 +1310,7 @@ int SprdCamera3StereoVideo::MuxerThread::muxerTwoFrame(buffer_handle_t* &output_
        return UNKNOWN_ERROR;
     } else {
         output_buf = itor->buffer;
+        rotation = itor->rotation;
         if(output_buf == NULL)
             return BAD_VALUE;
     }
@@ -1330,7 +1329,29 @@ int SprdCamera3StereoVideo::MuxerThread::muxerTwoFrame(buffer_handle_t* &output_
     dcam.left_buf = (struct private_handle_t *)*input_buf1;
     dcam.right_buf = (struct private_handle_t *)*input_buf2;
     dcam.dst_buf = (struct private_handle_t *)*output_buf;
-    dcam.rot_angle = ROT_270;
+    if(rotation>=0)
+    {
+            switch(rotation)
+            {
+            case 0:
+                rotation = 3;
+                break;
+            case 90:
+                rotation = 2;
+                break;
+            case 180:
+                rotation = 1;
+                break;
+            case 270:
+                rotation = 0;
+                break;
+            default :
+                rotation = 3;
+                break;
+        }
+        s_rotation = rotation;
+    }
+    dcam.rot_angle = s_rotation;
     mGpuApi->imageStitchingWithGPU(&dcam);
 
 return rc;
@@ -1546,7 +1567,6 @@ int SprdCamera3StereoVideo::initialize(const camera3_callback_ops_t *callback_op
 int SprdCamera3StereoVideo::configureStreams(const struct camera3_device *device,camera3_stream_configuration_t* stream_list)
 {
     HAL_LOGD("E");
-
     int rc=0;
     bool is_recording = false;
     camera3_stream_t* newStream = NULL;
@@ -1664,7 +1684,6 @@ int SprdCamera3StereoVideo::configureStreams(const struct camera3_device *device
     camera3_stream_configuration config;
     config = *stream_list;
     config.streams = pAuxStreams;
-
     rc = hwiMain->configure_streams(m_pPhyCamera[CAM_TYPE_MAIN].dev,stream_list);
     if(rc < 0){
         HAL_LOGE("failed. configure main streams!!");
@@ -1755,9 +1774,14 @@ void SprdCamera3StereoVideo::saveRequest(camera3_capture_request_t *request,int 
             mOldPreviewRequestList.push_back(oldRequest);
         }else if(getStreamType(newStream) == VIDEO_STREAM){
             Mutex::Autolock l(mRequest);
-            old_request oldRequest ;
-            HAL_LOGD("idx:%d save video stream ", request->frame_number);
-            oldRequest.frame_number = request->frame_number;
+        old_request oldRequest ;
+        HAL_LOGD("idx:%d save video stream ", request->frame_number);
+        CameraMetadata metadata;
+        metadata = request->settings;
+        if (metadata.exists(ANDROID_SPRD_SENSOR_ROTATION)) {
+            oldRequest.rotation = metadata.find(ANDROID_SPRD_SENSOR_ROTATION).data.i32[0];
+        }
+        oldRequest.frame_number = request->frame_number;
             oldRequest.buffer = ((request->output_buffers)[i]).buffer;
             oldRequest.stream = ((request->output_buffers)[i]).stream;
             oldRequest.input_buffer = request->input_buffer;
@@ -1910,7 +1934,6 @@ int SprdCamera3StereoVideo::processCaptureRequest(const struct camera3_device *d
             mShowPreviewDeviceId = 0;
         }
     }
-
 
     for(i = 0; i < request->num_output_buffers; i++) {
         if(getStreamType((request->output_buffers[i]).stream) == VIDEO_STREAM) {
