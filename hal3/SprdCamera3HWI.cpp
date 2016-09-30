@@ -1400,9 +1400,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info)
 			} else {
 				++i;
 			}
-		}
-
-		if (i->frame_number > frame_number) {
+		} else if (i->frame_number > frame_number) {
 			/**add for 3d capture reprocessing begin   */
 			HAL_LOGI("result stream format =%d",result_info->stream->format);
 			if (HAL_PIXEL_FORMAT_BLOB==result_info->stream->format)
