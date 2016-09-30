@@ -1003,20 +1003,10 @@ static unsigned long ov8856_access_val(SENSOR_HW_HANDLE handle,unsigned long par
 			ret =ov8856_otp_init(handle);
 			break;
 		case SENSOR_VAL_TYPE_READ_OTP:
-			//ret =ov8856_otp_read(handle,param_ptr);
-			break;
-		case SENSOR_VAL_TYPE_READ_DUAL_OTP:
-			#ifdef OV8856_DUAL_OTP
-			//ret = ov8856_dual_otp_read(handle, param_ptr);
-			#endif
+			ret =ov8856_otp_read(handle,param_ptr);
 			break;
 		case SENSOR_VAL_TYPE_PARSE_OTP:
-			//ret = ov8856_parse_otp(handle, param_ptr);
-			break;
-		case SENSOR_VAL_TYPE_PARSE_DUAL_OTP:
-			#ifdef OV8856_DUAL_OTP
-			//ret = ov8856_parse_dual_otp(handle, param_ptr);
-			#endif
+			ret = ov8856_parse_otp(handle, param_ptr);
 			break;
 		case SENSOR_VAL_TYPE_WRITE_OTP:
 			//rtn = _ov8856_write_otp(handle, (uint32_t)param_ptr->pval);

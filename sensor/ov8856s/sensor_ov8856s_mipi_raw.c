@@ -129,6 +129,8 @@ static struct sensor_ev_info_t s_sensor_ev_info={
 
 #ifdef FEATURE_OTP
 #include "sensor_ov8856s_darling_otp.c"
+#else
+#include "ov8856s_darling_otp.h"
 #endif
 
 static SENSOR_IOCTL_FUNC_TAB_T s_ov8856s_ioctl_func_tab;
@@ -989,18 +991,13 @@ static unsigned long ov8856s_access_val(SENSOR_HW_HANDLE handle,unsigned long pa
 	switch(param_ptr->type)
 	{
 		case SENSOR_VAL_TYPE_INIT_OTP:
-			#ifdef FEATURE_OTP
-			if(PNULL!=s_ov8856s_raw_param_tab_ptr->cfg_otp){
-				ret = s_ov8856s_raw_param_tab_ptr->cfg_otp(handle,s_ov8856s_otp_info_ptr);
-				//checking OTP apply result
-				if (SENSOR_SUCCESS != ret) {
-					SENSOR_PRINT("apply otp failed");
-				}
-			} 
-			else {
-				SENSOR_PRINT("no update otp function!");
-			}
-			#endif
+			ret =ov8856s_otp_init(handle);
+			break;
+		case SENSOR_VAL_TYPE_READ_OTP:
+			ret =ov8856s_otp_read(handle,param_ptr);
+			break;
+		case SENSOR_VAL_TYPE_PARSE_OTP:
+			ret = ov8856s_parse_otp(handle, param_ptr);
 			break;
 		case SENSOR_VAL_TYPE_SHUTTER:
 			*((uint32_t*)param_ptr->pval) = ov8856s_read_shutter(handle);
