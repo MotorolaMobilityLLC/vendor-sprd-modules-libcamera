@@ -350,6 +350,7 @@ static cmr_int cmr_scale_restart(struct scale_file *file)
 	cmr_int                 ret = CMR_CAMERA_SUCCESS;
 	cmr_int                 fd = -1;
 	cmr_int                 time_out = 3;
+	cmr_u32                 val;
 
 	if (!file) {
 		ret = CMR_CAMERA_INVALID_PARAM;
@@ -374,6 +375,7 @@ static cmr_int cmr_scale_restart(struct scale_file *file)
 			CMR_LOGI("scale sleep 50ms");
 			usleep(50*1000);
 		} else {
+			ret = ioctl(fd, SPRD_CPP_IO_OPEN_SCALE, &val);
 			break;
 		}
 	};
