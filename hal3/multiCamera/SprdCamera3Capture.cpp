@@ -982,13 +982,13 @@ void SprdCamera3Capture::CaptureThread::initGpuData(int w,int h, int rotation)
     pt_stream_info.src_height = m3DCaptureHeight;
     pt_stream_info.src_width  = m3DCaptureWidth;
     pt_stream_info.rot_angle = rotation;
-	HAL_LOGE("pt_stream_info.src_height=%d,pt_stream_info.src_width=%d,pt_stream_info.dst_height=%d,pt_stream_info.dst_width=%d",m3DCaptureHeight,m3DCaptureWidth,h,w);
+	HAL_LOGD("pt_stream_info.src_height=%d,pt_stream_info.src_width=%d,pt_stream_info.dst_height=%d,pt_stream_info.dst_width=%d",m3DCaptureHeight,m3DCaptureWidth,h,w);
 
     float buff[768];
     float H_left[9], H_right[9];
     FILE *fid = fopen("/productinfo/sprd_3d_calibration/calibration.data","rb");
     if(fid != NULL){
-        HAL_LOGE("open calibration file success");
+        HAL_LOGD("open calibration file success");
         fread(buff, sizeof(float),768,fid);
         fclose(fid);
         memcpy(H_left, buff+750, sizeof(float)*9);
@@ -1199,6 +1199,13 @@ bool SprdCamera3Capture::CaptureThread::threadLoop()
 
                     memcpy( (void*)&request, &mSavedCapRequest, sizeof(camera3_capture_request_t) );
                     meta.append(mSavedCapReqsettings);
+                    if ( meta.exists(ANDROID_JPEG_ORIENTATION) )
+                    {
+                        int32_t jpeg_orientation = meta.find(ANDROID_JPEG_ORIENTATION).data.i32[0];
+                        HAL_LOGD("find jpeg orientation %d", jpeg_orientation);
+                        jpeg_orientation = 0;
+                        meta.update(ANDROID_JPEG_ORIENTATION, &jpeg_orientation, 1);
+                    }
                     mSavedCapReqsettings = meta.release();
                     request.settings = mSavedCapReqsettings;
 
@@ -1374,19 +1381,19 @@ int SprdCamera3Capture::CaptureThread::combineTwoPicture(buffer_handle_t *&outpu
         switch ( jpeg_orientation )
         {
         case 0:
-            dcam.rot_angle = ROT_270;
-            break;
-        case 90:
-            dcam.rot_angle = ROT_180;
-            break;
-        case 180:
-            dcam.rot_angle = ROT_90;
-            break;
-        case 270:
             dcam.rot_angle = ROT_0;
             break;
-        default:
+        case 90:
             dcam.rot_angle = ROT_90;
+            break;
+        case 180:
+            dcam.rot_angle = ROT_180;
+            break;
+        case 270:
+            dcam.rot_angle = ROT_270;
+            break;
+        default:
+            dcam.rot_angle = ROT_270;
             break;
         }
     }
@@ -1625,9 +1632,6 @@ int SprdCamera3Capture::configureStreams(const struct camera3_device *device,cam
             mCaptureThread->mAuxStreams[stream_list->num_streams].data_space =  stream_list->streams[i]->data_space;
             mCaptureThread->mAuxStreams[stream_list->num_streams].rotation = stream_list->streams[i]->rotation;
             pAuxStreams[stream_list->num_streams] = &mCaptureThread->mAuxStreams[stream_list->num_streams];
-
-            mCaptureThread->initGpuData(w,h,stream_list->streams[i]->rotation);
-            mCaptureThread->run(NULL);
         }
         mCaptureThread->mMainStreams[i] = *stream_list->streams[i];
         mCaptureThread->mAuxStreams[i] = *stream_list->streams[i];
@@ -1677,6 +1681,9 @@ int SprdCamera3Capture::configureStreams(const struct camera3_device *device,cam
         HAL_LOGD("main configurestreams, streamtype:%d, format:%d, width:%d, height:%d",
                  stream_list->streams[i]->stream_type, stream_list->streams[i]->format, stream_list->streams[i]->width, stream_list->streams[i]->height );
     }
+
+    mCaptureThread->initGpuData(w,h,stream_list->streams[stream_list->num_streams-1]->rotation);
+    mCaptureThread->run(NULL);
 
     HAL_LOGV("X");
 
@@ -1737,8 +1744,6 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
     camera3_stream_t          *new_stream = NULL;
     camera3_stream_buffer_t   *out_streams_main = NULL;
     camera3_stream_buffer_t   *out_streams_aux = NULL;
-    int                        save_buffer_size = 0;
-    int                        new_buffer_size = 0;
 
     for(i = 0; i < request->num_output_buffers; i++) {
         int requestStreamType = getStreamType(request->output_buffers[i].stream);
@@ -1751,19 +1756,12 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
         }
     }
     HAL_LOGD("mIsCaptureing:%d, framenumber=%d",mIsCaptureing, request->frame_number);
-    if(0){
-        rc = hwiMain->process_capture_request(m_pPhyCamera[CAM_TYPE_MAIN].dev,request);
-        if(rc < 0){
-            HAL_LOGE("failed. process capture request!");
-        }
-
-        return rc;
-    }
 
     rc = validateCaptureRequest(req);
     if (rc != NO_ERROR){
         return rc;
     }
+
 	metaSettings = request->settings;
 	if ( metaSettings.exists(ANDROID_SPRD_MULTI_CAM3_PREVIEW_ID) )
     {
@@ -1798,7 +1796,7 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
     out_streams_main = (camera3_stream_buffer_t *)malloc(sizeof(camera3_stream_buffer_t)*(req_main.num_output_buffers));
     if (!out_streams_main) {
         HAL_LOGE("failed");
-        return -1;
+        return NO_MEMORY;
     }
     memset(out_streams_main, 0x00, (sizeof(camera3_stream_buffer_t))*(req_main.num_output_buffers));
 
@@ -1816,15 +1814,22 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
                      ((struct private_handle_t*)(*request->output_buffers[i].buffer))->base);
             memcpy( &mCaptureThread->mSavedCapRequest, req, sizeof(camera3_capture_request_t));
             memcpy( &mCaptureThread->mSavedCapReqstreambuff, &req->output_buffers[i], sizeof(camera3_stream_buffer_t));
-            meta.append(req->settings);
+            meta.append(req_main.settings);
+            if ( meta.exists(ANDROID_JPEG_ORIENTATION) )
+            {
+                int jpeg_orientation = meta.find(ANDROID_JPEG_ORIENTATION).data.i32[0];
+                HAL_LOGD("find jpeg orientation id %d", jpeg_orientation);
+                jpeg_orientation = 0;
+                //meta.update(ANDROID_JPEG_ORIENTATION, &jpeg_orientation, 1);
+            }
             mCaptureThread->mSavedCapReqsettings = meta.release();
-
+            req_main.settings = mCaptureThread->mSavedCapReqsettings;
             mSavedReqStreams[mCaptureThread->mCaptureStreamsNum-1] = req->output_buffers[i].stream;
             out_streams_main[i].stream = &mCaptureThread->mMainStreams[mCaptureThread->mCaptureStreamsNum];
             out_streams_main[i].stream->width =mCaptureThread->m3DCaptureWidth;
             out_streams_main[i].stream->height=mCaptureThread->m3DCaptureHeight;
             out_streams_main[i].buffer = mCaptureThread->mLocalCapBuffer[0].buffer;
-            HAL_LOGD("newtype:%d", out_streams_main[i].stream->format );
+            HAL_LOGD("newtype:%d, rotation:%d", out_streams_main[i].stream->format, out_streams_main[i].stream->rotation);
             HAL_LOGD("org snp request output buff 0x%x, stream:0x%x, yaddr_v:0x%x",
                      request->output_buffers[i].buffer, request->output_buffers[i].stream,
                      ((struct private_handle_t*)(*request->output_buffers[i].buffer))->base);
@@ -1851,7 +1856,7 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
     out_streams_aux = (camera3_stream_buffer_t *)malloc(sizeof(camera3_stream_buffer_t));
     if (!out_streams_aux) {
         HAL_LOGE("failed");
-        return NO_MEMORY;
+        goto req_fail;
     }
     memset(out_streams_aux, 0x00, (sizeof(camera3_stream_buffer_t))*(req_aux.num_output_buffers));
 
@@ -1860,6 +1865,18 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
         new_stream = (req->output_buffers[i]).stream;
         HAL_LOGD("num_output_buffers:%d, , streamtype:%d", req->num_output_buffers, getStreamType(new_stream));
         if(getStreamType(new_stream) == SNAPSHOT_STREAM) {
+            CameraMetadata meta;
+            meta.append(req_aux.settings);
+            if ( meta.exists(ANDROID_JPEG_ORIENTATION) )
+            {
+                int jpeg_orientation = meta.find(ANDROID_JPEG_ORIENTATION).data.i32[0];
+                HAL_LOGD("find jpeg orientation id %d", jpeg_orientation);
+                jpeg_orientation = 0;
+                //meta.update(ANDROID_JPEG_ORIENTATION, &jpeg_orientation, 1);
+            }
+            mCaptureThread->mSavedCapReqsettings = meta.release();
+            req_aux.settings = mCaptureThread->mSavedCapReqsettings;
+
             out_streams_aux[i] = req->output_buffers[i];
             out_streams_aux[i].buffer = mCaptureThread->mLocalCapBuffer[1].buffer;
             out_streams_aux[i].stream = &mCaptureThread->mAuxStreams[mCaptureThread->mCaptureStreamsNum];
@@ -1869,15 +1886,8 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
             HAL_LOGD("mCaptureThread->mCaptureStreamsNum, stream:0x%x", mCaptureThread->mCaptureStreamsNum, out_streams_aux[i].stream);
             if(NULL == out_streams_aux[i].buffer){
                 HAL_LOGE("failed, LocalBufferList is empty!");
-                return NO_MEMORY;
+                goto req_fail;
             }
-
-            save_buffer_size = ((struct private_handle_t *)*((req->output_buffers[i]).buffer))->size;
-            new_buffer_size = ((struct private_handle_t *)*(out_streams_aux[i].buffer))->size;
-            if(new_buffer_size != save_buffer_size){
-            HAL_LOGD("convert capture buf size mismatching");
-            }
-            break;
         }
         else {
             out_streams_aux[i] = req->output_buffers[i];
@@ -1891,15 +1901,9 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
             HAL_LOGD("mPreviewStreamsNum:%d, stream:0x%x", mPreviewStreamsNum, out_streams_aux[i].stream);
             if(NULL == out_streams_aux[i].buffer){
                 HAL_LOGE("failed, LocalBufferList is empty!");
-                return NO_MEMORY;
+                goto req_fail;
             }
 
-            save_buffer_size = ((struct private_handle_t *)*((req->output_buffers[i]).buffer))->size;
-            new_buffer_size = ((struct private_handle_t *)*(out_streams_aux[0].buffer))->size;
-            if(new_buffer_size != save_buffer_size){
-            HAL_LOGD("convert preview buf size mismatching");
-            }
-            break;
         }
     }
     req_aux.output_buffers = out_streams_aux;
