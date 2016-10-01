@@ -7675,6 +7675,7 @@ cmr_int prev_set_zsl_param_lightly(struct prev_handle *handle, cmr_u32 camera_id
 		chn_param.skip_num   = prev_cxt->cap_skip_num;
 	}
 
+	chn_param.buffer.base_id = CMR_CAP1_ID_BASE;
 	chn_param.cap_inf_cfg.chn_deci_factor  = 0;
 	chn_param.cap_inf_cfg.frm_num          = -1;
 	chn_param.cap_inf_cfg.buffer_cfg_isp   = 0;

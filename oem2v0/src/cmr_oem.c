@@ -5286,6 +5286,7 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle, cmr_
 	struct sensor_exp_info         sensor_info;
 	struct sensor_mode_info        *sensor_mode_info;
 	struct sn_cfg                  sensor_cfg;
+	int 				isp_only = 0;
 
 	if (!oem_handle || !caller_handle || !param_ptr || !channel_id || !endian) {
 		CMR_LOGE("in parm error 0x%lx 0x%lx 0x%lx 0x%lx 0x%lx", (cmr_uint)oem_handle, (cmr_uint)caller_handle,
@@ -5300,11 +5301,18 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle, cmr_
 		param_ptr->cap_inf_cfg.buffer_cfg_isp = 0;
 
 	CMR_LOGV("param_ptr->cap_inf_cfg.buffer_cfg_isp %ld", param_ptr->cap_inf_cfg.buffer_cfg_isp);
+	if (param_ptr->buffer.base_id == CMR_CAP1_ID_BASE && cxt->burst_mode)
+		isp_only = 1;
+
 	if (param_ptr->is_lightly) {
-		ret = cmr_grab_cap_cfg_lightly(cxt->grab_cxt.grab_handle, &param_ptr->cap_inf_cfg, *channel_id);
-		if (ret) {
-			CMR_LOGE("failed to cap cfg %ld", ret);
-			goto exit;
+		CMR_LOGI("channel id %d, caller_handle 0x%lx, skip num %d",
+			     *channel_id, (cmr_uint)caller_handle, param_ptr->skip_num);
+		if (!isp_only) {
+			ret = cmr_grab_cap_cfg_lightly(cxt->grab_cxt.grab_handle, &param_ptr->cap_inf_cfg, *channel_id);
+			if (ret) {
+				CMR_LOGE("failed to cap cfg %ld", ret);
+				goto exit;
+			}
 		}
 		return ret;
 	}
@@ -5350,16 +5358,18 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle, cmr_
 		CMR_LOGI("prev rect %d %d %d %d", cxt->prev_cxt.rect.start_x, cxt->prev_cxt.rect.start_y,
 				  cxt->prev_cxt.rect.width, cxt->prev_cxt.rect.height);
 	}
-	if (!param_ptr->is_lightly && (param_ptr->buffer.base_id == CMR_PREV_ID_BASE || !cxt->burst_mode)) {
-		ret = cmr_grab_cap_cfg(cxt->grab_cxt.grab_handle, &param_ptr->cap_inf_cfg, channel_id, endian);
-		if (ret) {
-			CMR_LOGE("failed to cap cfg %ld", ret);
-			goto exit;
+	if (!param_ptr->is_lightly) {
+		if (!isp_only) {
+			ret = cmr_grab_cap_cfg(cxt->grab_cxt.grab_handle, &param_ptr->cap_inf_cfg, channel_id, endian);
+			if (ret) {
+				CMR_LOGE("failed to cap cfg %ld", ret);
+				goto exit;
+			}
+		} else {
+			endian->y_endian = 1;
+			endian->uv_endian = 1;
+			*channel_id = GRAB_CHANNEL_MAX - 1;
 		}
-	} else if(param_ptr->buffer.base_id != CMR_PREV_ID_BASE && cxt->burst_mode) {
-		endian->y_endian = 1;
-		endian->uv_endian = 1;
-		*channel_id = GRAB_CHANNEL_MAX - 1;
 	}
 
 /*
