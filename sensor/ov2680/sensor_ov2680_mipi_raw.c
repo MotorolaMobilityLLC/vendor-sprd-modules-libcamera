@@ -1933,7 +1933,7 @@ LOCAL unsigned long _ov2680_StreamOn(SENSOR_HW_HANDLE handle, unsigned long para
 	usleep(100 * 1000);
 	Sensor_WriteReg(0x0100, 0x01);
 #if 1
-	cmr_s8 value1[255];
+	cmr_s8 value1[PROPERTY_VALUE_MAX];
 	property_get("debug.camera.test.mode",value1,"0");
 	if(!strcmp(value1,"1")){
 		SENSOR_LOGI("SENSOR_ov2680: enable test mode");

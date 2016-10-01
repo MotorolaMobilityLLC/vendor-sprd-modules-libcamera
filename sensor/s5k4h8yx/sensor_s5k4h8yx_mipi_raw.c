@@ -1963,7 +1963,7 @@ static unsigned long _s5k4h8yx_StreamOn(SENSOR_HW_HANDLE handle, unsigned long p
 
 	Sensor_WriteReg(0x0100, 0x0103);
 #if 1
-	cmr_s8 value1[255];
+	cmr_s8 value1[PROPERTY_VALUE_MAX];
 	property_get("debug.camera.test.mode",value1,"0");
 	if(!strcmp(value1,"1")){
 		SENSOR_LOGI("SENSOR_s5k4h8yx: enable test mode");

@@ -2389,7 +2389,7 @@ static unsigned long imx230_stream_on(SENSOR_HW_HANDLE handle, unsigned long par
 	UNUSED(param);
 	Sensor_WriteReg(0x0100, 0x01);
 #if 1
-	cmr_s8 value1[255];
+	cmr_s8 value1[PROPERTY_VALUE_MAX];
 	property_get("debug.camera.test.mode",value1,"0");
 	if(!strcmp(value1,"1")){
 		SENSOR_LOGI("SENSOR_imx230: enable test mode");

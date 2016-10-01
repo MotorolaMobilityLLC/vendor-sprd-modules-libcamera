@@ -360,7 +360,7 @@ int SprdCameraHardware::getCameraInfo(int cameraId, struct camera_info *cameraIn
 
 void SprdCameraHardware::shakeTestInit(ShakeTest *tmpShakeTest)
 {
-	char is_performance_camera_test[100];
+	char is_performance_camera_test[PROPERTY_VALUE_MAX];
 	int tmp_diff_yuv_color[MAX_LOOP_COLOR_COUNT][MAX_Y_UV_COUNT]={
 		{0x28,0xef},
 		{0x51,0x5a},
@@ -5206,7 +5206,7 @@ status_t SprdCameraHardware::set_ddr_freq(uint32_t mhzVal)
 
 status_t SprdCameraHardware::startPreviewInternal(bool isRecording)
 {
-	char is_face_detect_test[100];
+	char is_face_detect_test[PROPERTY_VALUE_MAX];
 
 	char * isZslSupport = (char *)"false";
 	if (mIsPerformanceTestable) {

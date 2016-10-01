@@ -2960,7 +2960,7 @@ static unsigned long _s5k3l2xx_StreamOn(SENSOR_HW_HANDLE handle, unsigned long p
 
 	//usleep(50*1000);
 #if 1
-	cmr_s8 value1[255];
+	cmr_s8 value1[PROPERTY_VALUE_MAX];
 	property_get("debug.camera.test.mode",value1,"0");
 	if(!strcmp(value1,"1")){
 		SENSOR_LOGI("SENSOR_s5k3l2xx: enable test mode");
