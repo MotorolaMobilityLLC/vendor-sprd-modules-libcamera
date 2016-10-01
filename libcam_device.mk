@@ -47,7 +47,8 @@ ALTEK_LIB := libalAWBLib \
 	libspcaftrigger \
 	libalRnBLV \
 	libalPDAF \
-	libalPDExtract
+	libalPDExtract \
+	libalAFTrigger
 
 ALTEK_FW := TBM_G2v1DDR.bin
 

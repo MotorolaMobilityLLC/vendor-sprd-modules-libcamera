@@ -22,6 +22,7 @@
 #include "af_adpt.h"
 #include "isp_adpt.h"
 #include "allib_af.h"
+#include "alAFTrigger.h"
 #include "hw3a_stats.h"
 #include "alwrapper_af_errcode.h"
 #include "alwrapper_af.h"
@@ -36,6 +37,7 @@
 
 #define LIBRARY_PATH "libalAFLib.so"
 #define CAF_LIBRARY_PATH "libspcaftrigger.so"
+#define HAF_LIBRARY_PATH "libalAFTrigger.so"
 #define SEC_TO_US	1000000L
 #define AE_CONVERGE_TIMEOUT	(1.3 * SEC_TO_US)
 #define AF_LIB_BUSY_FRAMES 3
@@ -67,6 +69,15 @@ struct af_altek_lib_ops {
 			   void *alAFLib_out_obj, void *alAFLib_runtim_obj);
 };
 
+struct haf_altek_lib_ops {
+	cmr_int (*init)(void);
+	cmr_int (*deinit)(void);
+	cmr_int (*set_haf_state)(cmr_u8 a_ucHAFState);
+	cmr_u8 (*get_haf_state)(cmr_u8 *a_pucHAFState);
+	cmr_u8 (*calculate)(float *a_pfOutProbTrigger, TriggerInReg *a_tInTriggerReg);
+	cmr_int (*get_version)(void *a_pOutBuf, cmr_s32 a_dInBufMaxSize);
+};
+
 struct af_caf_trigger_ops {
 	cmr_s32 (*trigger_init)(struct aft_tuning_block_param *init_param,
 				aft_proc_handle_t *handle);
@@ -93,6 +104,13 @@ enum af_altek_adpt_status_t {
 	AF_ADPT_DONE,
 	AF_ADPT_RE_TRIG,
 	AF_ADPT_IDLE,
+};
+
+enum af_trigger_status_t {
+	AF_TIGGER_NONE = 0,
+	AF_TIGGER_NORMAL = 1,
+	AF_TIGGER_PD = 2,
+	AF_TIGGER_MAX
 };
 
 enum af_altek_lib_status_t {
@@ -135,6 +153,7 @@ struct af_altek_y_stat {
 
 struct caf_context {
 	pthread_mutex_t caf_mutex;
+	pthread_mutex_t af_start_mutex;
 	struct aft_caf_stats_cfg caf_fv_tune;
 	cmr_u32 inited;
 	cmr_u32 caf_force_focus;
@@ -161,6 +180,7 @@ struct af_altek_context {
 	cmr_u32 af_mode;
 	cmr_handle caller_handle;
 	cmr_handle altek_lib_handle;
+	cmr_handle altek_haf_lib_handle;
 	cmr_handle caf_lib_handle;
 	aft_proc_handle_t *caf_trigger_handle;
 	aft_proc_handle_t aft_lib_handle;
@@ -168,6 +188,7 @@ struct af_altek_context {
 	cmr_int ae_awb_lock_cnt;
 	struct af_altek_lib_api lib_api;
 	struct af_altek_lib_ops ops;
+	struct haf_altek_lib_ops haf_ops;
 	struct af_caf_trigger_ops caf_ops;
 	struct af_ctrl_cb_ops_type cb_ops;
 	struct allib_af_output_report_t af_out_obj;
@@ -186,6 +207,8 @@ struct af_altek_context {
 	struct af_ae_working_info ae_info;
 	enum af_ctrl_lens_status lens_status;
 	struct isp_af_win last_roi;
+	TriggerInReg haf_trigger_reg;
+	cmr_u8 pd_trigger_stats_lock;
 };
 
 /************************************ INTERNAK DECLARATION ************************************/
@@ -206,6 +229,9 @@ static cmr_int afaltek_adpt_set_caf_fv_cfg(cmr_handle adpt_handle);
 static cmr_int afaltek_adpt_set_special_event(cmr_handle adpt_handle, void *in);
 static cmr_int afaltek_adpt_get_hw_config(struct isp3a_af_hw_cfg *out);
 static cmr_int afaltek_adpt_af_done(cmr_handle adpt_handle, cmr_int success);
+static cmr_int afaltek_adpt_trans_data_to_caf(cmr_handle adpt_handle, void *in, cmr_u32 caf_type);
+static cmr_int afaltek_adpt_set_haf_state(cmr_handle adpt_handle, cmr_u8 state);
+static cmr_u8 afaltek_adpt_get_haf_state(cmr_handle adpt_handle);
 
 /************************************ INTERNAK FUNCTION ***************************************/
 
@@ -246,6 +272,114 @@ static void unload_altek_library(cmr_handle adpt_handle)
 		dlclose(cxt->altek_lib_handle);
 		cxt->altek_lib_handle = NULL;
 	}
+}
+
+static cmr_int load_altek_haf_library(cmr_handle adpt_handle)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+
+	cxt->altek_haf_lib_handle = dlopen(HAF_LIBRARY_PATH, RTLD_NOW);
+	if (!cxt->altek_haf_lib_handle) {
+		ISP_LOGE("failed to dlopen");
+		goto error_dlopen;
+	}
+	cxt->haf_ops.init= dlsym(cxt->altek_haf_lib_handle, "alAFTrigger_Initial");
+	if (!cxt->haf_ops.init) {
+		ISP_LOGE("failed to dlsym init");
+		goto error_dlsym;
+	}
+	cxt->haf_ops.deinit= dlsym(cxt->altek_haf_lib_handle, "alAFTrigger_Close");
+	if (!cxt->haf_ops.deinit) {
+		ISP_LOGE("failed to dlsym deinit");
+		goto error_dlsym;
+	}
+	cxt->haf_ops.set_haf_state= dlsym(cxt->altek_haf_lib_handle, "alAFTrigger_SetHAFState");
+	if (!cxt->haf_ops.set_haf_state) {
+		ISP_LOGE("failed to dlsym set_haf_state");
+		goto error_dlsym;
+	}
+	cxt->haf_ops.get_haf_state= dlsym(cxt->altek_haf_lib_handle, "alAFTrigger_GetHAFState");
+	if (!cxt->haf_ops.get_haf_state) {
+		ISP_LOGE("failed to dlsym get_haf_state");
+		goto error_dlsym;
+	}
+	cxt->haf_ops.calculate= dlsym(cxt->altek_haf_lib_handle, "alAFTrigger_Calculate");
+	if (!cxt->haf_ops.calculate) {
+		ISP_LOGE("failed to dlsym calculate");
+		goto error_dlsym;
+	}
+	cxt->haf_ops.get_version= dlsym(cxt->altek_haf_lib_handle, "alAFTrigger_GetVersionInfo");
+	if (!cxt->haf_ops.get_version) {
+		ISP_LOGE("failed to dlsym get_version");
+		goto error_dlsym;
+	}
+
+	return 0;
+error_dlsym:
+	dlclose(cxt->altek_haf_lib_handle);
+	cxt->altek_haf_lib_handle = NULL;
+error_dlopen:
+	return ret;
+}
+
+static void unload_altek_haf_library(cmr_handle adpt_handle)
+{
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+
+	if (cxt->altek_haf_lib_handle) {
+		dlclose(cxt->altek_haf_lib_handle);
+		cxt->altek_haf_lib_handle = NULL;
+	}
+}
+
+static void afaltek_adpt_get_haf_version(cmr_handle adpt_handle)
+{
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+	cmr_u8 version[128] ={ 0 };
+
+	cxt->haf_ops.get_version(&version, sizeof(version));
+
+	ISP_LOGI("haf trigger version %s", version);
+}
+
+static cmr_int afaltek_adpt_set_haf_state(cmr_handle adpt_handle, cmr_u8 state)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+
+	cxt->haf_ops.set_haf_state(state);
+
+	ISP_LOGV("set haf trigger state %d", state);
+	return ret;
+}
+
+static cmr_u8 afaltek_adpt_get_haf_state(cmr_handle adpt_handle)
+{
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+	cmr_u8 state = 0;
+
+	cxt->haf_ops.get_haf_state(&state);
+
+	ISP_LOGI("get haf trigger state %d", state);
+	return state;
+}
+
+static cmr_int afaltek_adpt_haf_init(cmr_handle adpt_handle)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+
+	ret = cxt->haf_ops.init();
+	if (ret) {
+		ISP_LOGE("failed to init haf trigger library");
+		goto exit;
+	}
+	afaltek_adpt_set_haf_state(cxt, Waiting);
+	afaltek_adpt_get_haf_version(cxt);
+
+exit:
+	return ret;
 }
 
 static cmr_int load_caf_library(cmr_handle adpt_handle)
@@ -524,6 +658,7 @@ static cmr_int afaltek_adpt_set_start(cmr_handle adpt_handle)
 	struct allib_af_input_set_param_t p;
 	cmr_int status = 0;
 
+	pthread_mutex_lock(&cxt->af_caf_cxt.af_start_mutex);
 	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_AF_START;
 
@@ -534,6 +669,7 @@ static cmr_int afaltek_adpt_set_start(cmr_handle adpt_handle)
 		ISP_LOGI("failed to start af focus_status = %ld", status);
 		ret = -ISP_ERROR;
 	}
+	pthread_mutex_unlock(&cxt->af_caf_cxt.af_start_mutex);
 
 	return ret;
 }
@@ -894,8 +1030,27 @@ static cmr_int afaltek_adpt_update_pd_info(cmr_handle adpt_handle, void *in)
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct af_ctrl_input_pd_info_t *pd_info = (struct af_ctrl_input_pd_info_t *)in;
+	struct aft_pd_trig_info trigger_in;
 	struct allib_af_input_set_param_t p;
 
+	cmr_bzero(&trigger_in, sizeof(trigger_in));
+	if (cxt->haf_ops.calculate && cxt->haf_support && !cxt->pd_trigger_stats_lock) {
+		cxt->haf_trigger_reg.dcurrentVCM = cxt->motor_info.motor_pos + cxt->motor_info.motor_offset;
+		cxt->haf_trigger_reg.tPDInfo = pd_info->extend_data_ptr;
+
+		ret = cxt->haf_ops.calculate(&trigger_in.probability, &cxt->haf_trigger_reg);
+		if (ret) {
+			ISP_LOGE("failed to calc pd trigger %ld", ret);
+		}
+		trigger_in.pd_state = *((cmr_u8 *)pd_info->extend_data_ptr + 84);
+		trigger_in.token_id = pd_info->token_id;
+		trigger_in.frame_id = pd_info->frame_id;
+		trigger_in.timestamp.time_stamp_sec = pd_info->timestamp.sec;
+		trigger_in.timestamp.time_stamp_us = pd_info->timestamp.usec;
+		ISP_LOGI("trigger sensitivity %f, vcm %d, haf_ProbTrigger %f, pd_state =%d", cxt->haf_trigger_reg.fTriggerSensitivity,
+			cxt->haf_trigger_reg.dcurrentVCM, trigger_in.probability, trigger_in.pd_state);
+		afaltek_adpt_trans_data_to_caf(adpt_handle, (void *)&trigger_in, AFT_DATA_PD);
+	}
 	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_UPDATE_PD_INFO;
 	p.u_set_data.pd_info.token_id  = pd_info->token_id;
@@ -1077,12 +1232,21 @@ static cmr_int afaltek_adpt_caf_init(cmr_handle adpt_handle)
 
 	al3awrappercaf_get_version(&caf_wp_ver);
 	pthread_mutex_init(&cxt->af_caf_cxt.caf_mutex, NULL);
+	pthread_mutex_init(&cxt->af_caf_cxt.af_start_mutex, NULL);
 	caf_cfg_tune = &cxt->af_caf_cxt.caf_fv_tune;
 	if (cxt->caf_ops.trigger_ioctrl) {
 		ret = cxt->caf_ops.trigger_ioctrl(cxt->caf_trigger_handle,
 				    AFT_CMD_GET_FV_STATS_CFG, caf_cfg_tune, NULL);
 		if (ret)
 			ISP_LOGE("get AFT_CMD_GET_FV_STATS_CFG error %ld", ret);
+		if (cxt->haf_support) {
+			ret = cxt->caf_ops.trigger_ioctrl(cxt->caf_trigger_handle,
+					AFT_CMD_GET_PD_TRIG_SST, &cxt->haf_trigger_reg.fTriggerSensitivity, NULL);
+			if (ret)
+				ISP_LOGE("get AFT_CMD_GET_PD_TRIG_SST error %ld", ret);
+			else
+				ISP_LOGI("get AFT_CMD_GET_PD_TRIG_SST sensitivity %f", cxt->haf_trigger_reg.fTriggerSensitivity);
+		}
 	} else {
 		ISP_LOGE("trigger_ioctrl NULL error");
 		ret = -ISP_PARAM_ERROR;
@@ -1106,6 +1270,7 @@ static cmr_int afaltek_adpt_caf_deinit(cmr_handle adpt_handle)
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 
 	pthread_mutex_destroy(&cxt->af_caf_cxt.caf_mutex);
+	pthread_mutex_destroy(&cxt->af_caf_cxt.af_start_mutex);
 	cxt->af_caf_cxt.inited = 0;
 
 	return ret;
@@ -1156,7 +1321,8 @@ static cmr_int afaltek_adpt_set_caf_fv_cfg(cmr_handle adpt_handle)
 	ret = al3awrapper_caf_transform_cfg(&afaltek_cfg, &af_cfg);
 
 	/* send stats config to framework */
-	ret = afaltek_adpt_config_af_stats(cxt, &af_cfg);
+	if (!cxt->haf_support)
+		ret = afaltek_adpt_config_af_stats(cxt, &af_cfg);
 
 exit:
 	return ret;
@@ -1291,6 +1457,26 @@ exit:
 	return ret;
 }
 
+static cmr_int afaltek_adpt_haf_start(cmr_handle adpt_handle)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+
+	ISP_LOGI("afaltek_adpt_haf_start E");
+	ret = afaltek_adpt_set_start(adpt_handle);
+	if (ret) {
+		ISP_LOGE("failed to start");
+		//cxt->af_cur_status = AF_ADPT_IDLE;
+		//afaltek_adpt_af_done(cxt, 0);
+		//goto exit;
+	}
+
+	cxt->af_cur_status = AF_ADPT_FOCUSING;
+	cxt->pd_trigger_stats_lock = 1;
+exit:
+	return ret;
+}
+
 static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 					struct aft_proc_calc_param *aft_in)
 {
@@ -1331,7 +1517,10 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 		ISP_LOGI("af retrigger");
 		ret = afaltek_adpt_caf_start(cxt);
 		cxt->ae_info.ae_stable_retrig_flg = 0;
-	} else if (!cxt->aft_proc_result.is_caf_trig && aft_out.is_caf_trig) {
+	} else if (AF_TIGGER_PD == aft_out.is_caf_trig) {
+		ISP_LOGI("pd trigger");
+		ret = afaltek_adpt_haf_start(cxt);
+	} else if (AF_TIGGER_NORMAL != cxt->aft_proc_result.is_caf_trig && AF_TIGGER_NORMAL == aft_out.is_caf_trig) {
 		ret = afaltek_adpt_caf_start(cxt);
 	} else if (aft_out.is_cancel_caf && AF_DOING(cxt->af_cur_status)) {
 		ret = afaltek_adpt_stop(cxt);
@@ -1420,6 +1609,19 @@ static cmr_int afaltek_adpt_trans_data_to_caf(cmr_handle adpt_handle, void *in, 
 		aft_in.caf_blk_info.time_stamp.time_stamp_us = caf_stat->time_stamp.time_stamp_us;
 		aft_in.caf_blk_info.data = caf_stat->fv;
 		aft_in.active_data_type = caf_type;
+		break;
+	}
+	case AFT_DATA_PD:
+	{
+		struct aft_pd_trig_info *pd_trigger_info = (struct aft_pd_trig_info *)in;
+
+		aft_in.active_data_type = caf_type;
+		aft_in.pd_trig_info.token_id = pd_trigger_info->token_id;
+		aft_in.pd_trig_info.frame_id = pd_trigger_info->frame_id;
+		aft_in.pd_trig_info.timestamp = pd_trigger_info->timestamp;
+		aft_in.pd_trig_info.probability = pd_trigger_info->probability;
+		aft_in.pd_trig_info.pd_state = pd_trigger_info->pd_state;
+		ISP_LOGV("aft_in.pd_trig_info.probability %f", aft_in.pd_trig_info.probability);
 		break;
 	}
 	default:
@@ -1557,17 +1759,32 @@ static cmr_int afaltek_adpt_lock_caf(cmr_handle adpt_handle, void *in)
 	return ret;
 }
 
-static cmr_int afaltek_adpt_hybird_af_enable(cmr_handle adpt_handle, void *in)
+static cmr_int afaltek_adpt_pd_trigger_status_enable(cmr_handle adpt_handle, void *in)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	cmr_u8 haf_enable = *((cmr_u8 *)in);
+	cmr_u8 pdaf_enable = *((cmr_u8 *)in);
+
+	ISP_LOGI("pdaf status enable %d",pdaf_enable);
+	if (cxt->caf_ops.trigger_ioctrl) {
+		ret = cxt->caf_ops.trigger_ioctrl(cxt->caf_trigger_handle,
+						AFT_CMD_SET_PD_ENABLE, in, NULL);
+	}
+
+	return ret;
+}
+
+static cmr_int afaltek_adpt_hybird_af_support(cmr_handle adpt_handle, void *in)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+	cmr_u8 haf_support = *((cmr_u8 *)in);
 	struct allib_af_input_set_param_t p;
 
-	ISP_LOGI("haf_enable %d",haf_enable);
+	ISP_LOGI("haf_support %d",haf_support);
 	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_HYBIRD_AF_ENABLE;
-	p.u_set_data.haf_info.enable_hybrid = haf_enable;
+	p.u_set_data.haf_info.enable_hybrid = haf_support;
 	p.u_set_data.haf_info.type = alAFLIB_HYBRID_TYPE_PD;
 
 	ret = afaltek_adpt_set_parameters(cxt, &p);
@@ -1738,6 +1955,9 @@ static cmr_int afaltek_adpt_set_vcm_pos(cmr_handle adpt_handle, struct af_ctrl_m
 		goto exit;
 	}
 	cxt->lens_status = AF_CTRL_LENS_MOVING;
+	if (cxt->haf_support) {
+		afaltek_adpt_set_haf_state(cxt, Focusing);
+	}
 	if (cxt->cb_ops.set_pos)
 		ret = cxt->cb_ops.set_pos(cxt->caller_handle, pos_info);
 	else {
@@ -1947,7 +2167,7 @@ static cmr_int afaltek_adpt_proc_start(cmr_handle adpt_handle)
 		}
 	} else if (AF_ADPT_STARTED == cxt->af_cur_status) {
 		if (cxt->ae_status_info.ae_converged ||
-		    cxt->aft_proc_result.is_caf_trig) {
+		   AF_TIGGER_NORMAL == cxt->aft_proc_result.is_caf_trig) {
 			afaltek_adpt_post_start(cxt);
 		} else {
 			afaltek_adpt_get_timestamp(cxt, &sec, &usec);
@@ -2002,6 +2222,9 @@ static cmr_int afaltek_adpt_lens_move_done(cmr_handle adpt_handle,
 	lens_info.lens_pos = pos_info->motor_pos;
 	lens_info.lens_status = LENS_MOVE_DONE;
 	cxt->lens_status = AF_CTRL_LENS_MOVE_DONE;
+	if (cxt->haf_support) {
+		afaltek_adpt_set_haf_state(cxt, Waiting);
+	}
 	ret = afaltek_adpt_update_lens_info(adpt_handle, &lens_info);
 
 	return ret;
@@ -2149,7 +2372,7 @@ static cmr_int afaltek_adpt_inctrl(cmr_handle adpt_handle, cmr_int cmd,
 		ret = afaltek_adpt_update_pd_info(adpt_handle, in);
 		break;
 	case AF_CTRL_CMD_SET_PD_ENABLE:
-		//ret = afaltek_adpt_hybird_af_enable(adpt_handle, in);
+		ret = afaltek_adpt_pd_trigger_status_enable(adpt_handle, in);
 		break;
 	case AF_CTRL_CMD_SET_LIVE_VIEW_SIZE:
 		ret = afaltek_adpt_update_isp_info(adpt_handle, in);
@@ -2354,7 +2577,7 @@ static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 	struct allib_af_input_sensor_info_t sensor_info;
 	struct allib_af_input_init_info_t init_info;
 	struct sensor_otp_af_info *otp_af_info;
-	cmr_u8 haf_enable = 0;
+	cmr_u8 haf_support = 0;
 
 	cmr_bzero(&move_lens_info, sizeof(move_lens_info));
 	otp_af_info = (struct sensor_otp_af_info *) in->otp_info.otp_data;
@@ -2438,8 +2661,8 @@ static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 	ISP_LOGI("cxt->haf_support = %d", cxt->haf_support);
 	if (cxt->haf_support) {
 		/* set hybrid input info */
-		haf_enable = 1;
-		afaltek_adpt_hybird_af_enable(adpt_handle, (void *)&haf_enable);
+		haf_support = 1;
+		afaltek_adpt_hybird_af_support(adpt_handle, (void *)&haf_support);
 	}
 
 	/* sync init param */
@@ -2472,9 +2695,16 @@ static cmr_int afaltek_libops_init(cmr_handle adpt_handle)
 		ISP_LOGE("failed to load caf library");
 		goto error_load_caf_lib;
 	}
-
+	if (cxt->haf_support) {
+		ret = load_altek_haf_library(cxt);
+		if (ret) {
+			ISP_LOGE("failed to load haf library");
+			goto error_load_haf_lib;
+		}
+	}
 	return ret;
-
+error_load_haf_lib:
+	unload_caf_library(cxt);
 error_load_caf_lib:
 error_load_ops:
 	unload_altek_library(cxt);
@@ -2484,6 +2714,11 @@ error_load_lib:
 
 static void afaltek_libops_deinit(cmr_handle adpt_handle)
 {
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+
+	if (cxt->haf_support) {
+		unload_altek_haf_library(adpt_handle);
+	}
 	unload_caf_library(adpt_handle);
 	unload_altek_library(adpt_handle);
 }
@@ -2556,6 +2791,13 @@ static cmr_int afaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 	/* show version */
 	afaltek_adpt_get_version(cxt);
 
+	if (cxt->haf_support) {
+		ret = afaltek_adpt_haf_init(cxt);
+		if (ret) {
+			ISP_LOGE("failed to init haf trigger library");
+			goto error_haf_init;
+		}
+	}
 	/* init lib */
 	cxt->af_runtime_obj = cxt->ops.init(&cxt->af_out_obj);
 	if (!cxt->af_runtime_obj) {
@@ -2578,6 +2820,9 @@ static cmr_int afaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 	return ret;
 
 error_lib_init:
+	if (cxt->haf_support)
+		cxt->haf_ops.deinit();
+error_haf_init:
 	cxt->caf_ops.trigger_deinit(cxt->caf_trigger_handle);
 error_caf_init:
 	afaltek_libops_deinit(cxt);
@@ -2594,6 +2839,9 @@ static cmr_int afaltek_adpt_deinit(cmr_handle adpt_handle)
 
 	ISP_LOGI("cxt = %p", cxt);
 	if (cxt) {
+		if (cxt->haf_support) {
+			cxt->haf_ops.deinit();
+		}
 		cxt->caf_ops.trigger_deinit(cxt->caf_trigger_handle);
 		afaltek_adpt_caf_deinit(adpt_handle);
 		/* deinit lib */
@@ -2620,11 +2868,13 @@ static cmr_int afaltek_adpt_proc_report_status(cmr_handle adpt_handle,
 		cxt->lib_status_info.busy_frame_id = 0;
 		cxt->lib_status_info.af_lib_status = AF_LIB_IDLE;
 		ret = afaltek_adpt_af_done(cxt, 0);
+		cxt->pd_trigger_stats_lock = 0;
 	} else if (alAFLib_STATUS_FOCUSED == report->focus_status.t_status) {
 		ISP_LOGI("t_status focused ok = %d", report->focus_status.t_status);
 		cxt->lib_status_info.busy_frame_id = 0;
 		cxt->lib_status_info.af_lib_status = AF_LIB_IDLE;
 		ret = afaltek_adpt_af_done(cxt, 1);
+		cxt->pd_trigger_stats_lock = 0;
 	} else if (alAFLib_STATUS_FORCE_ABORT == report->focus_status.t_status) {
 		ISP_LOGI("t_status force abort = %d retrigger = %d",
 			 report->focus_status.t_status,
@@ -2649,6 +2899,7 @@ static cmr_int afaltek_adpt_proc_report_status(cmr_handle adpt_handle,
 		cxt->lib_status_info.busy_frame_id = 0;
 		cxt->lib_status_info.af_lib_status = AF_LIB_IDLE;
 		ret = afaltek_adpt_lock_ae_awb(cxt, ISP_AE_AWB_UNLOCK);
+		cxt->pd_trigger_stats_lock = 0;
 	} else {
 		ISP_LOGI("unkown status = %d", report->focus_status.t_status);
 	}

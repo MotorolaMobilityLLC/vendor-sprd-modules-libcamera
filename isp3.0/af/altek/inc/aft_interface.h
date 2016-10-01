@@ -68,19 +68,22 @@ enum aft_calc_data_type {
 	AFT_DATA_AE,
 	AFT_DATA_SENSOR,
 	AFT_DATA_CAF,
+	AFT_DATA_PD,
 	AFT_DATA_MAX
 
 };
 
 enum aft_cmd {
-	AFT_CMD_SET_BASE 			= 0x1000,
+	AFT_CMD_SET_BASE			= 0x1000,
 	AFT_CMD_SET_AF_MODE			= 0x1001,
 	AFT_CMD_SET_CAF_RESET		= 0x1002,
-	AFT_CMD_SET_CAF_STOP			= 0x1003,
+	AFT_CMD_SET_CAF_STOP		= 0x1003,
+	AFT_CMD_SET_PD_ENABLE		= 0X1004,
 
 	AFT_CMD_GET_BASE			= 0x2000,
 	AFT_CMD_GET_FV_STATS_CFG	= 0X2001,
-	AFT_CMD_GET_AE_SKIP_INFO	= 0X2002
+	AFT_CMD_GET_AE_SKIP_INFO	= 0X2002,
+	AFT_CMD_GET_PD_TRIG_SST		= 0X2003
 };
 
 enum aft_log_level {
@@ -170,6 +173,14 @@ struct aft_caf_blk_info {
 	cmr_u32 *data;
 };
 
+struct aft_pd_trig_info {
+	cmr_u16 token_id;
+	cmr_u32 frame_id;
+	struct caf_time_stamp timestamp;
+	float probability;
+	cmr_u8 pd_state;
+};
+
 struct aft_proc_result {
 	cmr_u32 is_caf_trig;
 	cmr_u32 is_caf_trig_in_taf;
@@ -185,6 +196,7 @@ struct aft_proc_calc_param {
 	struct aft_ae_info ae_info;
 	struct aft_sensor_info sensor_info;
 	struct aft_caf_blk_info caf_blk_info;
+	struct aft_pd_trig_info pd_trig_info;
 };
 
 struct aft_caf_stats_cfg {

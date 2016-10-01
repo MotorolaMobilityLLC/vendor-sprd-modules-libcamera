@@ -1,5 +1,5 @@
-#ifndef _ALGE_H_
-#define _ALGE_H_
+#ifndef _ALAFT_H_
+#define _ALAFT_H_
 
 #include "mtype.h"
 #define alGE_ERR_CODE int
@@ -34,4 +34,4 @@ typedef struct IMAGE_INFO
     void *m_pBuf_2;
 } ALTEK_IMAGE_INFO;
 
-#endif // _ALGE_H_
+#endif // _ALAFT_H_

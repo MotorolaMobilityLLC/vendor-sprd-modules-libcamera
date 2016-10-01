@@ -59,7 +59,6 @@ struct pdaf_altek_lib_api {
 };
 
 struct pdaf_altek_context {
-	cmr_u8 inited;
 	cmr_u32 camera_id;
 	cmr_u8 pd_open;
 	cmr_u8 is_busy;
@@ -75,13 +74,9 @@ struct pdaf_altek_context {
 	struct pdaf_ctrl_cb_ops_type cb_ops;
 	cmr_int (*pd_set_buffer) (struct pd_frame_in *cb_param);
 	struct altek_pdaf_info pd_info;
-	cmr_u16 image_width;
-	cmr_u16 image_height;
 	void *pd_left;
 	void *pd_right;
 	alPD_RECT roi;
-	alGE_RECT pdroi;
-	DataBit bit;
 	PDInReg pd_reg_in;
 	cmr_u8 pd_reg_out[PD_REG_OUT_SIZE];
 	struct isp3a_pdaf_altek_report_t report_data;
@@ -386,7 +381,6 @@ static cmr_int pdafaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 	}
 
 	cmr_bzero(cxt, sizeof(*cxt));
-	cxt->inited = 0;
 	cxt->caller_handle = in_p->caller_handle;
 	cxt->camera_id = in_p->camera_id;
 	cxt->cb_ops = in_p->pdaf_ctrl_cb_ops;
@@ -461,7 +455,6 @@ static cmr_int pdafaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 	}
 
 	*adpt_handle = (cmr_handle)cxt;
-	cxt->inited = 1;
 	cxt->is_busy = 0;
 	cxt->report_data.pd_reg_out = (void *)cxt->pd_reg_out;
 	cxt->report_data.pd_reg_size = PD_REG_OUT_SIZE;
@@ -606,9 +599,14 @@ static cmr_int pdafaltek_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	struct pdaf_altek_context *cxt = (struct pdaf_altek_context *)adpt_handle;
 	struct pdaf_ctrl_process_in *proc_in = (struct pdaf_ctrl_process_in *)in;
 	struct pdaf_ctrl_callback_in callback_in;
+	alGE_RECT pdroi;
+	DataBit bit;
+	cmr_u16 image_width;
+	cmr_u16 image_height;
 	char value[PROPERTY_VALUE_MAX];
 
 	UNUSED(out);
+	bzero(&pdroi,sizeof(pdroi));
 	if (!in) {
 		ISP_LOGE("init param %p is null !!!", in);
 		ret = ISP_PARAM_NULL;
@@ -628,10 +626,10 @@ static cmr_int pdafaltek_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		goto exit;
 	}
 	cxt->is_busy = 1;
-	cxt->image_width = proc_in->pd_raw.roi.image_width;
-	cxt->image_height = proc_in->pd_raw.roi.image_height;
-	if (cxt->image_width == proc_in->pd_raw.roi.trim_width
-		&& cxt->image_height == proc_in->pd_raw.roi.trim_height) {
+	image_width = proc_in->pd_raw.roi.image_width;
+	image_height = proc_in->pd_raw.roi.image_height;
+	if (image_width == proc_in->pd_raw.roi.trim_width
+		&& image_height == proc_in->pd_raw.roi.trim_height) {
 		cxt->pd_info.pd_raw_crop_en = 0;
 	} else {
 		cxt->pd_info.pd_raw_crop_en = 1;
@@ -649,8 +647,8 @@ static cmr_int pdafaltek_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	}
 	cxt->pd_reg_in.dcurrentVCM = proc_in->dcurrentVCM;
 	cxt->pd_reg_in.dBv = (float)proc_in->dBv /1000.0;
-	cxt->pdroi.m_wLeft = 0;
-	cxt->pdroi.m_wTop = 0;
+	pdroi.m_wLeft = 0;
+	pdroi.m_wTop = 0;
 
 	#if 1// pdaf image save
 		property_get("debug.camera.dump.pdaf.raw",(char *)value,"0");
@@ -664,23 +662,23 @@ static cmr_int pdafaltek_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		UNUSED(value);
 	#endif
 	ISP_LOGI("pd addr %p, width %d, height %d,roi %d, %d, %d, %d,",
-			proc_in->pd_raw.addr, cxt->image_width, cxt->image_height,
+			proc_in->pd_raw.addr, image_width, image_height,
 			cxt->roi.m_wLeft, cxt->roi.m_wTop,
 			cxt->roi.m_wWidth, cxt->roi.m_wHeight);
 
-	//ret = cxt->extract_ops.getsize(&cxt->pd_info, &cxt->roi, cxt->image_width, cxt->image_height,
-							//(cmr_u16 *)&cxt->pdroi.m_wWidth, (cmr_u16 *)&cxt->pdroi.m_wHeight);
-	ret = alPDExtract_GetSize(&cxt->pd_info, &cxt->roi, cxt->image_width, cxt->image_height,
-							(cmr_u16 *)&cxt->pdroi.m_wWidth, (cmr_u16 *)&cxt->pdroi.m_wHeight);
+	//ret = cxt->extract_ops.getsize(&cxt->pd_info, &cxt->roi, image_width, image_height,
+							//(cmr_u16 *)&pdroi.m_wWidth, (cmr_u16 *)&pdroi.m_wHeight);
+	ret = alPDExtract_GetSize(&cxt->pd_info, &cxt->roi, image_width, image_height,
+							(cmr_u16 *)&pdroi.m_wWidth, (cmr_u16 *)&pdroi.m_wHeight);
 	if (ret) {
 		ISP_LOGE("failed to get pd data size%ld", ret);
 		goto exit;
 	}
-	ISP_LOGI("pd size %d, %d,", cxt->pdroi.m_wWidth, cxt->pdroi.m_wHeight);
+	ISP_LOGI("pd size %d, %d,", pdroi.m_wWidth, pdroi.m_wHeight);
 
-	//ret = cxt->extract_ops.extract((cmr_u8 *)proc_in->pd_raw.addr, &cxt->roi, cxt->image_width, cxt->image_height,
+	//ret = cxt->extract_ops.extract((cmr_u8 *)proc_in->pd_raw.addr, &cxt->roi, image_width, image_height,
 							//(cmr_u16 *)cxt->pd_left, (cmr_u16 *)cxt->pd_right);
-	ret = alPDExtract_Run((cmr_u8 *)proc_in->pd_raw.addr, &cxt->roi, cxt->image_width, cxt->image_height,
+	ret = alPDExtract_Run((cmr_u8 *)proc_in->pd_raw.addr, &cxt->roi, image_width, image_height,
 							(cmr_u16 *)cxt->pd_left, (cmr_u16 *)cxt->pd_right);
 	if (ret) {
 		ISP_LOGE("failed to extract pd data %ld", ret);
@@ -692,42 +690,42 @@ static cmr_int pdafaltek_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		property_get("debug.camera.dump.pdaf.data",(char *)value,"0");
 		if(atoi(value)) {
 			pdafaltek_dump_file(cxt->frame_id, PDAF_DATA_TYPE_LEFT,
-							cxt->pdroi.m_wWidth,
-							cxt->pdroi.m_wHeight,
+							pdroi.m_wWidth,
+							pdroi.m_wHeight,
 							cxt->pd_left, cxt->pd_reg_in.dcurrentVCM);
 
 			pdafaltek_dump_file(cxt->frame_id, PDAF_DATA_TYPE_RIGHT,
-							cxt->pdroi.m_wWidth,
-							cxt->pdroi.m_wHeight,
+							pdroi.m_wWidth,
+							pdroi.m_wHeight,
 							cxt->pd_right, cxt->pd_reg_in.dcurrentVCM);
 		}
 	#endif
 
 	switch (proc_in->bit) {
 	case PD_DATA_BIT_8:
-		cxt->bit = SRCIMG_8; // not support yet
+		bit = SRCIMG_8; // not support yet
 		break;
 	case PD_DATA_BIT_10:
-		cxt->bit = SRCIMG_10;
+		bit = SRCIMG_10;
 		break;
 	case PD_DATA_BIT_12:
-		cxt->bit = SRCIMG_12;
+		bit = SRCIMG_12;
 		break;
 	default:
-		cxt->bit = SRCIMG_10;
+		bit = SRCIMG_10;
 		break;
 	}
 
 	ISP_LOGI("bit %d, roi %d, %d, %d, %d,",
-			cxt->bit, cxt->pdroi.m_wLeft, cxt->pdroi.m_wTop, cxt->pdroi.m_wWidth, cxt->pdroi.m_wHeight);
+			bit, pdroi.m_wLeft, pdroi.m_wTop, pdroi.m_wWidth, pdroi.m_wHeight);
 
 	ISP_LOGI("dBv %f, vcm current %d",
 			cxt->pd_reg_in.dBv, cxt->pd_reg_in.dcurrentVCM);
 
 	//ret = cxt->ops.calc(&cxt->report_data.pd_value, cxt->report_data.pd_reg_out, cxt->pd_left, cxt->pd_right,
-					//cxt->pdroi.m_wWidth, cxt->pdroi.m_wHeight, cxt->pdroi, cxt->bit, &cxt->pd_reg_in);
+					//pdroi.m_wWidth, pdroi.m_wHeight, pdroi, bit, &cxt->pd_reg_in);
 	ret = alPDAF_Calculate(&cxt->report_data.pd_value, cxt->report_data.pd_reg_out, cxt->pd_left, cxt->pd_right,
-					cxt->pdroi.m_wWidth, cxt->pdroi.m_wHeight, cxt->pdroi, cxt->bit, &cxt->pd_reg_in);
+					pdroi.m_wWidth, pdroi.m_wHeight, pdroi, bit, &cxt->pd_reg_in);
 	if (ret) {
 		ISP_LOGE("failed to calc pd data %ld", ret);
 		goto exit;
@@ -739,8 +737,8 @@ static cmr_int pdafaltek_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		property_get("debug.camera.dump.pdaf.out",(char *)value,"0");
 		if(atoi(value)) {
 			pdafaltek_dump_file(cxt->frame_id, PDAF_DATA_TYPE_OUT,
-							cxt->pdroi.m_wWidth,
-							cxt->pdroi.m_wHeight,
+							pdroi.m_wWidth,
+							pdroi.m_wHeight,
 							cxt->report_data.pd_reg_out, cxt->pd_reg_in.dcurrentVCM);
 		}
 	#endif
