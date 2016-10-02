@@ -1035,6 +1035,7 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type, e
 			cxt->fd_face_area.frame_height = frame_param->height;
 			cxt->fd_face_area.face_num = frame_param->face_num;
 
+			cmr_bzero(&face_area, sizeof(struct isp_face_area));
 			//note:now we get the preview face crop.but ISP need sensor's crop.so we need recovery crop.
 			cmr_preview_get_prev_rect(cxt->prev_cxt.preview_handle, cxt->camera_id, &src_prev_rect);
 
@@ -1045,11 +1046,11 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type, e
 			face_area.face_num = frame_param->face_num;
 			CMR_LOGD("face_num %d, size:%dx%d", face_area.face_num, face_area.frame_width, face_area.frame_height);
 
-			if(face_info_max_num > face_area.face_num) {
-				face_info_max_num = face_area.face_num;
+			if(face_info_max_num < face_area.face_num) {
+				face_area.face_num = face_info_max_num;
 			}
 
-			for (i = 0; i < face_info_max_num; i++) {
+			for (i = 0; i < face_area.face_num; i++) {
 				sx = MIN(MIN(frame_param->face_info[i].sx, frame_param->face_info[i].srx),
 						MIN(frame_param->face_info[i].ex, frame_param->face_info[i].elx));
 				sy = MIN(MIN(frame_param->face_info[i].sy, frame_param->face_info[i].sry),
@@ -1059,22 +1060,21 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type, e
 				ey = MAX(MAX(frame_param->face_info[i].sy, frame_param->face_info[i].sry),
 						MAX(frame_param->face_info[i].ey, frame_param->face_info[i].ely));
 /*
-				face_area.face_info[i].sx = sx;;
+				face_area.face_info[i].sx = sx;
 				face_area.face_info[i].sy = sy;
 				face_area.face_info[i].ex = ex;
 				face_area.face_info[i].ey = ey;
 */
 				//save face info in cmr cxt for other case.such as face beauty takepicture
-				cxt->fd_face_area.face_info[i].sx = sx;;
+				cxt->fd_face_area.face_info[i].sx = sx;
 				cxt->fd_face_area.face_info[i].sy = sy;
 				cxt->fd_face_area.face_info[i].ex = ex;
 				cxt->fd_face_area.face_info[i].ey = ey;
 
-
-				face_area.face_info[i].sx = 1.0*sx*src_prev_rect.width/frame_param->width+src_prev_rect.start_x;
-				face_area.face_info[i].sy = 1.0*sy*src_prev_rect.height/frame_param->height+src_prev_rect.start_y;
-				face_area.face_info[i].ex = 1.0*ex*src_prev_rect.width/frame_param->width+src_prev_rect.start_x;
-				face_area.face_info[i].ey = 1.0*ey*src_prev_rect.height/frame_param->height+src_prev_rect.start_y;
+				face_area.face_info[i].sx = 1.0 * sx * (float)face_area.frame_width / (float)frame_param->width;
+				face_area.face_info[i].sy = 1.0 * sy * (float)face_area.frame_height / (float)frame_param->height;
+				face_area.face_info[i].ex = 1.0 * ex * (float)face_area.frame_width / (float)frame_param->width;
+				face_area.face_info[i].ey = 1.0 * ey * (float)face_area.frame_height / (float)frame_param->height;
 				face_area.face_info[i].brightness = frame_param->face_info[i].brightness;
 				face_area.face_info[i].pose = frame_param->face_info[i].angle;
 				CMR_LOGD("preview face info sx %d sy %d ex %d, ey %d", face_area.face_info[i].sx, face_area.face_info[i].sy, face_area.face_info[i].ex, face_area.face_info[i].ey);

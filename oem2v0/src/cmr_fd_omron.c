@@ -46,6 +46,9 @@ struct class_fd {
 	cmr_uint                        curr_frame_idx;
 	HDETECTION                      hDT;  /* Face Detection Handle */
 	HDTRESULT                       hDtResult; /* Face Detection Result Handle */
+	cmr_int                         faceNodetect;
+	cmr_int                         last_face_num;
+	cmr_uint                        is_get_result;
 };
 
 struct fd_start_parameter {
@@ -68,9 +71,6 @@ static cmr_uint fd_is_busy(struct class_fd *class_handle);
 static void fd_set_busy(struct class_fd *class_handle, cmr_uint is_busy);
 static cmr_int fd_thread_create(struct class_fd *class_handle);
 static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data);
-
-static cmr_int faceNodetect;
-static cmr_int last_face_num;
 
 static struct class_ops fd_ops_tab_info = {
 	fd_open,
@@ -103,11 +103,12 @@ struct class_tab_t fd_tab_info = {
 	} while(0)
 
 /* Set Face Detection parameters */
-static cmr_int set_dt_param(HDETECTION hDT)
+static cmr_int set_dt_param(struct class_fd *fd_handle, HDETECTION hDT)
 {
 	int32_t   nRet = UDN_NORMAL;
 	uint32_t  anAngle[POSE_TYPE_COUNT];
 	int32_t   nMotionAngleExtension;
+	int minFaceSize,maxFaceSize;
 
 	/* Sets the Face Detection Mode */
 	nRet = UDN_SetDtMode(hDT, DT_MODE_MOTION1);
@@ -117,7 +118,9 @@ static cmr_int set_dt_param(HDETECTION hDT)
 	}
 
 	/* Sets the Minimum and Maximum face sizes to be detected */
-	nRet = UDN_SetDtFaceSizeRange(hDT,40, 8192);
+	minFaceSize = MIN(fd_handle->fd_size.width, fd_handle->fd_size.height) / 10;
+	maxFaceSize = MAX(fd_handle->fd_size.width, fd_handle->fd_size.height);
+	nRet = UDN_SetDtFaceSizeRange(hDT,minFaceSize, maxFaceSize);
 	if (nRet != UDN_NORMAL) {
 		CMR_LOGE("UDN_SetDtFaceSizeRange() Error : %d", nRet);
 		return nRet;
@@ -127,8 +130,8 @@ static cmr_int set_dt_param(HDETECTION hDT)
 	anAngle[POSE_FRONT] = ANGLE_ULR15 | ANGLE_6;
 	anAngle[POSE_HALF_PROFILE] =ANGLE_ULR15 | ANGLE_6;
 	anAngle[POSE_PROFILE] = ANGLE_NONE;
-	//nMotionAngleExtension = ANGLE_ROTATION_EXT1 | ANGLE_POSE_EXT1 | DETECT_HEAD_USE;
-	nMotionAngleExtension = ANGLE_ROTATION_EXT1 | ANGLE_POSE_EXT0 | DETECT_HEAD_NOUSE;
+	nMotionAngleExtension = ANGLE_ROTATION_EXT1| ANGLE_POSE_EXT1| DETECT_HEAD_NOUSE;
+	//nMotionAngleExtension = ANGLE_ROTATION_EXT1 | ANGLE_POSE_EXT0 | DETECT_HEAD_NOUSE;
 
 	nRet = UDN_SetDtAngle(hDT, anAngle, nMotionAngleExtension);
 	if (nRet != UDN_NORMAL) {
@@ -137,33 +140,33 @@ static cmr_int set_dt_param(HDETECTION hDT)
 	}
 
 	/* Sets the Face Detection Threshold */
-	nRet = UDN_SetDtThreshold(hDT, 500, 500);
+	nRet = UDN_SetDtThreshold(hDT, 580, 580);
 	if (nRet != UDN_NORMAL) {
 		CMR_LOGE("UDN_SetDtThreshold() Error : %d", nRet);
 		return nRet;
 	}
 
 	/* Sets the search density coefficient for face detection */
-	nRet = UDN_SetDtStep(hDT, 33, 27);
+	nRet = UDN_SetDtStep(hDT, 33, 33);
 	if (nRet != UDN_NORMAL) {
 		CMR_LOGE("UDN_SetDtStep() Error : %d", nRet);
 		return nRet;
 	}
 
 	/* Sets Motion Face Detection Refresh Count for each Motion mode */
-	nRet = UDN_SetDtRefreshCount(hDT, DT_MODE_MOTION1, 4);
+	nRet = UDN_SetDtRefreshCount(hDT, DT_MODE_MOTION1, 15);
 	if (nRet != UDN_NORMAL) {
 		CMR_LOGE("UDN_SetDtRefreshCount() Error : %d", nRet);
 		return nRet;
 	}
 	/* Sets Motion Face Detection Retry Count, Motion Head Detection Retry Count and Hold Count at lost time */
-	nRet = UDN_SetDtLostParam(hDT, 1, 1, 1);
+	nRet = UDN_SetDtLostParam(hDT, 2, 3, 2);
 	if (nRet != UDN_NORMAL) {
 		CMR_LOGE("UDN_SetDtLostParam() Error : %d", nRet);
 		return nRet;
 	}
 	/* Set  DtModifyMoveRate*/
-	nRet = UDN_SetDtModifyMoveRate(hDT, 10);
+	nRet = UDN_SetDtModifyMoveRate(hDT, 4);
 	if (nRet != UDN_NORMAL) {
 		CMR_LOGE("UDN_SetDtModifyMoveRate() Error : %d", nRet);
 		return nRet;
@@ -196,7 +199,7 @@ static cmr_int fd_open(cmr_handle ipm_handle, struct ipm_open_in *in, struct ipm
 	fd_handle->common.class_type  = IPM_TYPE_FD;
 	fd_handle->common.ops         = &fd_ops_tab_info;
 	fd_handle->frame_cb           = in->reg_cb;
-	fd_handle->mem_size           = in->frame_size.height * in->frame_size.width * 3 / 2;
+	fd_handle->mem_size           = in->frame_size.height * in->frame_size.width;// * 3 / 2;
 	fd_handle->frame_total_num    = in->frame_cnt;
 	fd_handle->frame_cnt          = 0;
 	fd_handle->fd_size            = in->frame_size;
@@ -204,6 +207,9 @@ static cmr_int fd_open(cmr_handle ipm_handle, struct ipm_open_in *in, struct ipm
 	fd_handle->curr_frame_idx     = 0;
 	fd_handle->hDT                = NULL;
 	fd_handle->hDtResult          = NULL;
+	fd_handle->faceNodetect       = 0;
+	fd_handle->last_face_num      = 0;
+	fd_handle->is_get_result      = 0;
 
 	CMR_LOGD("mem_size = 0x%ld", fd_handle->mem_size);
 	fd_handle->alloc_addr = malloc(fd_handle->mem_size);
@@ -330,25 +336,25 @@ static cmr_int fd_transfer_frame(cmr_handle class_handle,struct ipm_frame_in *in
 				CMR_LOGE("sync err,out parm can't NULL.");
 			}
 		}
-	}else{
-	       memcpy(&fd_handle->frame_out.face_area, &fd_handle->face_area_prev, sizeof(struct img_face_area));
-           fd_handle->frame_out.dst_frame.size.width = fd_handle->frame_in.src_frame.size.width;
-	       fd_handle->frame_out.dst_frame.size.height = fd_handle->frame_in.src_frame.size.height;
-	       /*callback*/
-	       if (fd_handle->frame_cb) {
-			    fd_handle->frame_out.private_data = in->private_data;
-			    fd_handle->frame_out.caller_handle = in->caller_handle;
-			    fd_handle->frame_cb(IPM_TYPE_FD, &fd_handle->frame_out);
+	}else if(!fd_handle->is_get_result){
+		memcpy(&fd_handle->frame_out.face_area, &fd_handle->face_area_prev, sizeof(struct img_face_area));
+		fd_handle->frame_out.dst_frame.size.width = fd_handle->frame_in.src_frame.size.width;
+		fd_handle->frame_out.dst_frame.size.height = fd_handle->frame_in.src_frame.size.height;
+		/*callback*/
+		if (fd_handle->frame_cb) {
+			fd_handle->frame_out.private_data = in->private_data;
+			fd_handle->frame_out.caller_handle = in->caller_handle;
+			fd_handle->frame_cb(IPM_TYPE_FD, &fd_handle->frame_out);
+		}
+		if (fd_handle->frame_cb) {
+			if (out != NULL) {
+				cmr_bzero(out,sizeof(struct ipm_frame_out));
 			}
-		   if (fd_handle->frame_cb) {
-			  if (out != NULL) {
-				  cmr_bzero(out,sizeof(struct ipm_frame_out));
-			  }
-		    } else {
-			   if (out != NULL) {
-				   out = &fd_handle->frame_out;
-			   } else {
-				  CMR_LOGE("sync err,out parm can't NULL.");
+		} else {
+			if (out != NULL) {
+				out = &fd_handle->frame_out;
+			} else {
+				CMR_LOGE("sync err,out parm can't NULL.");
 			}
 		}
 	}
@@ -548,7 +554,6 @@ static void fd_smooth_fd_results(const struct img_face_area *i_face_area_prev,
 	const cmr_int overlap_thr = 85;
 	cmr_uint prevIdx = 0;
 	cmr_uint currIdx = 0;
-	cmr_int trueCount = 0;
 
 	for (currIdx = 0; currIdx < i_face_area_curr->face_count; currIdx++) {
 		cmr_int overlap_percent = 0;
@@ -562,13 +567,13 @@ static void fd_smooth_fd_results(const struct img_face_area *i_face_area_prev,
 			}
 		}
 		const struct face_finder_data *f1 = &(i_face_area_curr->range[currIdx]);
+		const struct face_finder_data *f2 = &(i_face_area_prev->range[overlap_prevIdx]);
 		/* output the average of the two faces */
-		struct face_finder_data *outf = &(o_face_area->range[trueCount]);
+		struct face_finder_data *outf = &(o_face_area->range[currIdx]);
 
 		/* when two faces have large overlaps, they are considered as "true" faces */
 		if (overlap_prevIdx >= 0) {
-			const struct face_finder_data *f2 = &(i_face_area_prev->range[overlap_prevIdx]);
-			outf->face_id = trueCount;
+			outf->face_id = currIdx;
 			outf->sx = f2->sx;
 			outf->sy = f2->sy;
 			outf->srx = f2->srx;
@@ -583,9 +588,8 @@ static void fd_smooth_fd_results(const struct img_face_area *i_face_area_prev,
 			outf->blink_level = f1->blink_level;
 
 			memcpy(f1,outf,sizeof(struct face_finder_data));
-			trueCount++;
 		} else {
-			outf->face_id = trueCount;
+			outf->face_id = currIdx;
 			outf->sx = f1->sx;
 			outf->sy = f1->sy;
 			outf->srx = f1->srx;
@@ -598,14 +602,14 @@ static void fd_smooth_fd_results(const struct img_face_area *i_face_area_prev,
 			outf->angle = f1->angle;
 			outf->smile_level = f1->smile_level;
 			outf->blink_level = f1->blink_level;
-			trueCount++;
 		}
 	}
 
-	o_face_area->face_count = trueCount;
+	o_face_area->face_count = currIdx;
 }
 
-static void fd_get_fd_results(HDTRESULT i_hDtResult,
+static void fd_get_fd_results(struct class_fd *fd_handle,
+								HDTRESULT i_hDtResult,
 								struct img_face_area *io_face_area_prev,
 								struct img_face_area *o_face_area,
 								struct img_size image_size)
@@ -676,24 +680,24 @@ static void fd_get_fd_results(HDTRESULT i_hDtResult,
 
 		valid_count++;
 	}
-
 	curr_face_area.face_count = valid_count;
 
-	if (is_do_smooth && face_num > 0 ) {
-		faceNodetect= 0;
-		last_face_num = face_num;
+	fd_handle->is_get_result = 1;
+	if (is_do_smooth && curr_face_area.face_count > 0 ) {
+		fd_handle->faceNodetect = 0;
+		fd_handle->last_face_num = curr_face_area.face_count;
 		fd_smooth_fd_results(io_face_area_prev, &curr_face_area, o_face_area);
 	} else {
-			if (faceNodetect > 3) {
-				last_face_num = 0;
-			} else {
-				curr_face_area.face_count = last_face_num;
-				memcpy(&curr_face_area, io_face_area_prev, sizeof(struct img_face_area));
-				faceNodetect++;
-			}
-			memcpy(o_face_area, &curr_face_area, sizeof(struct img_face_area));
+		if (fd_handle->faceNodetect > 1) {
+			fd_handle->last_face_num = 0;
+		} else {
+			curr_face_area.face_count = fd_handle->last_face_num;
+			memcpy(&curr_face_area, io_face_area_prev, sizeof(struct img_face_area));
+			fd_handle->faceNodetect++;
 		}
-	CMR_LOGD("faceNodetect %d,curr_face_area.face_count  %d ",faceNodetect,curr_face_area.face_count );
+		memcpy(o_face_area, &curr_face_area, sizeof(struct img_face_area));
+	}
+	CMR_LOGD("faceNodetect %d,curr_face_area.face_count  %d ",fd_handle->faceNodetect,curr_face_area.face_count);
 	memcpy(io_face_area_prev, &curr_face_area, sizeof(struct img_face_area));
 
 }
@@ -729,14 +733,14 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data)
 			break;
 		}
 		/* Creates Face Detection result handle */
-		class_handle->hDtResult = UDN_CreateDtResult(10, 10);
+		class_handle->hDtResult = UDN_CreateDtResult(10, 4);
 		if ( class_handle->hDtResult == NULL ) {
 			CMR_LOGE("UDN_CreateDtResult() Error");
 			break;
 		}
 
 		/* Sets Face Detection parameters */
-		if (set_dt_param(class_handle->hDT) != TRUE) {
+		if (set_dt_param(class_handle, class_handle->hDT) != TRUE) {
 			break;
 		}
 		break;
@@ -752,11 +756,11 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data)
 		fd_set_busy(class_handle, 1);
 
 		/* Make the detection speed independent of image size */
-		{
+		/*{
 			int minFaceSize = MIN(class_handle->fd_size.width, class_handle->fd_size.height) / 10;
 			minFaceSize = MAX(minFaceSize, 40);
 			UDN_SetDtFaceSizeRange(class_handle->hDT, minFaceSize, 8192);
-		}
+		}*/
 
 		/* Executes Face Detection */
 		ret = UDN_Detection(class_handle->hDT, (cmr_u8*)class_handle->alloc_addr, class_handle->fd_size.width, class_handle->fd_size.height, ACCURACY_HIGH_TR, class_handle->hDtResult);
@@ -767,7 +771,7 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data)
 		}
 
 		/* extract face detection results */
-		fd_get_fd_results(class_handle->hDtResult, &(class_handle->face_area_prev), &(class_handle->frame_out.face_area), class_handle->fd_size);
+		fd_get_fd_results(class_handle, class_handle->hDtResult, &(class_handle->face_area_prev), &(class_handle->frame_out.face_area), class_handle->fd_size);
 
 		class_handle->frame_out.dst_frame.size.width = class_handle->frame_in.src_frame.size.width;
 		class_handle->frame_out.dst_frame.size.height = class_handle->frame_in.src_frame.size.height;
@@ -780,11 +784,12 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data)
 		}
 
 		fd_set_busy(class_handle, 0);
+		class_handle->is_get_result = 0;
 		break;
 
 	case CMR_EVT_FD_EXIT:
 		/* Deletes Face Detection handle */
-		if (class_handle-> hDT != NULL ) {
+		if (class_handle->hDT != NULL ) {
 			UDN_DeleteDetection(class_handle->hDT);
 			class_handle->hDT = NULL;
 		}
