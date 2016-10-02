@@ -1239,6 +1239,14 @@ static cmr_int afaltek_adpt_af_cancel(cmr_handle adpt_handle, cmr_int success)
 	return ret;
 }
 
+static void afaltek_adpt_set_centor(struct isp_af_win *roi, struct af_ctrl_sensor_crop_info_t *crop_info)
+{
+	roi->win[0].start_x = 3 * crop_info->width / 8;
+	roi->win[0].start_y = 3 * crop_info->height / 8;
+	roi->win[0].end_x = 5 * crop_info->width / 8;
+	roi->win[0].end_y = 5 * crop_info->height / 8;
+}
+
 static cmr_int afaltek_adpt_caf_start(cmr_handle adpt_handle)
 {
 	cmr_int ret = -ISP_ERROR;
@@ -1249,7 +1257,6 @@ static cmr_int afaltek_adpt_caf_start(cmr_handle adpt_handle)
 	cmr_bzero(&roi, sizeof(roi));
 	cmr_bzero(&lib_roi, sizeof(lib_roi));
 	/* caf roi 1/16 raw */
-	roi.valid_win = 1;
 	if (!cxt->sensor_info.crop_info.width || !cxt->sensor_info.crop_info.height) {
 		ISP_LOGE("failed to get crop width %d height %d",
 			cxt->sensor_info.crop_info.width,
@@ -1257,10 +1264,8 @@ static cmr_int afaltek_adpt_caf_start(cmr_handle adpt_handle)
 		goto exit;
 	}
 
-	roi.win[0].start_x = 3 * cxt->sensor_info.crop_info.width / 8;
-	roi.win[0].start_y = 3 * cxt->sensor_info.crop_info.height / 8;
-	roi.win[0].end_x = 5 * cxt->sensor_info.crop_info.width / 8;
-	roi.win[0].end_y = 5 * cxt->sensor_info.crop_info.height / 8;
+	roi.valid_win = 1;
+	afaltek_adpt_set_centor(&roi, &cxt->sensor_info.crop_info);
 
 	/* notify oem to show box */
 	ret = afaltek_adpt_start_notify(adpt_handle);
@@ -1828,6 +1833,14 @@ static cmr_int afaltek_adpt_config_roi(cmr_handle adpt_handle,
 	sensor_p = &cxt->sensor_info;
 	roi_out->roi_updated = 1;
 	roi_out->type = roi_type;
+
+	if ((0 == roi_in->win[0].start_x) &&
+	    (0 == roi_in->win[0].start_y) &&
+	    (0 == roi_in->win[0].end_x) &&
+	    (0 == roi_in->win[0].end_y)) {
+		roi_in->valid_win = 1;
+		afaltek_adpt_set_centor(roi_in, &cxt->sensor_info.crop_info);
+	}
 
 	roi_out->frame_id = cxt->frame_id;
 	/* only support value 1 */
