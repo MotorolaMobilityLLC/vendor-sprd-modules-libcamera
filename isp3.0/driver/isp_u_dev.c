@@ -21,8 +21,16 @@
 #include "isp_drv.h"
 #include "isp_common_types.h"
 #include "cutils/properties.h"
+#include "cmr_msg.h"
 
 #define BUF_BLOCK_SIZE                               (1024 * 1024)
+
+#define ISP_DEV_MUTILAYER_MSG_QUEUE_SIZE             40
+#define ISP_DEV_MUTILAYER_EVT_BASE                   0x4000
+#define ISP_DEV_MUTILAYER_EVT_INIT                    ISP_DEV_MUTILAYER_EVT_BASE
+#define ISP_DEV_MUTILAYER_EVT_DEINIT                 (ISP_DEV_MUTILAYER_EVT_BASE + 1)
+#define ISP_DEV_MUTILAYER_EVT_PROCESS                (ISP_DEV_MUTILAYER_EVT_BASE + 2)
+#define ISP_DEV_MUTILAYER_EVT_EXIT                   (ISP_DEV_MUTILAYER_EVT_BASE + 3)
 
 struct img_addr {
 	cmr_uint                                addr_y;
@@ -69,10 +77,11 @@ struct isp_file {
 	int                        camera_id;
 	cmr_handle                 evt_3a_handle;
 	cmr_handle                 grab_handle;
+	cmr_handle                 mutilayer_thr_handle;
 	pthread_mutex_t            cb_mutex;
 	pthread_t                  thread_handle;
-	isp_evt_cb                 isp_event_cb;  //isp event callback
-	isp_evt_cb                 isp_cfg_buf_cb;  //isp event callback
+	isp_evt_cb                 isp_event_cb;  /* isp event callback */
+	isp_evt_cb                 isp_cfg_buf_cb;  /* isp event callback */
 	struct isp_dev_init_info   init_param;
 	sem_t                      close_sem;
 	struct isp_fw_mem          fw_mem;
@@ -81,6 +90,7 @@ struct isp_file {
 };
 
 static struct isp_fw_group _group = {0 , {}};
+static cmr_int isp_dev_create_mutilayer_thread(isp_handle handle);
 static cmr_int isp_dev_create_thread(isp_handle handle);
 static cmr_int isp_dev_kill_thread(isp_handle handle);
 static void* isp_dev_thread_proc(void *data);
@@ -153,6 +163,13 @@ cmr_int isp_dev_init(struct isp_dev_init_info *init_param_ptr, isp_handle *handl
 	file->isp_is_inited = 0;
 	file->pdaf_supported = init_param_ptr->pdaf_supported;
 	*handle = (isp_handle)file;
+
+	/* create muti layer thread */
+	ret = isp_dev_create_mutilayer_thread((isp_handle)file);
+	if (ret) {
+		ISP_LOGE("failed to create muti layer thread ret = %ld", ret);
+		goto isp_free;
+	}
 
 	/*create isp dev thread*/
 	ret = isp_dev_create_thread((isp_handle)file);
@@ -384,8 +401,9 @@ static cmr_int isp_dev_load_binary(isp_handle handle)
 	cmr_int                  ret = 0;
 	struct isp_file          *file = (struct isp_file *)handle;
 	cmr_u32                  isp_id = 0;
-	cmr_uint				 shading;
-	cmr_uint				 irp;
+	cmr_uint                 shading;
+	cmr_uint                 irp;
+
 	if (!file) {
 		ret = -1;
 		ISP_LOGE("file hand is null error.");
@@ -409,22 +427,6 @@ static cmr_int isp_dev_load_binary(isp_handle handle)
 	shading = file->fw_mem.virt_addr + file->init_param.shading_bin_offset + ISP_SHADING_BIN_BUF_SIZE * isp_id;
 	irp = file->fw_mem.virt_addr + file->init_param.irp_bin_offset + ISP_IRP_BIN_BUF_SIZE * isp_id;
 
-#if 0
-	memcpy((void*)(file->fw_mem.virt_addr + file->init_param.shading_bin_offset),
-		(void*)file->init_param.shading_bin_addr, file->init_param.shading_bin_size);
-	memcpy((void*)(file->fw_mem.virt_addr + file->init_param.irp_bin_offset),
-		(void*)file->init_param.irp_bin_addr, file->init_param.irp_bin_size);
-	memcpy((void*)(file->fw_mem.virt_addr + file->init_param.shading_bin_offset + ISP_SHADING_BIN_BUF_SIZE),
-		(void*)file->init_param.shading_bin_addr, file->init_param.shading_bin_size);
-	memcpy((void*)(file->fw_mem.virt_addr + file->init_param.irp_bin_offset + ISP_IRP_BIN_BUF_SIZE),
-		(void*)file->init_param.irp_bin_addr, file->init_param.irp_bin_size);
-	memcpy((void*)(file->fw_mem.virt_addr + file->init_param.shading_bin_offset + 2*ISP_SHADING_BIN_BUF_SIZE),
-		(void*)file->init_param.shading_bin_addr, file->init_param.shading_bin_size);
-	memcpy((void*)(file->fw_mem.virt_addr + file->init_param.irp_bin_offset + 2*ISP_IRP_BIN_BUF_SIZE),
-		(void*)file->init_param.irp_bin_addr, file->init_param.irp_bin_size);
-
-#else
-
 	memcpy((void *)(shading),
 		(void *)file->init_param.shading_bin_addr, file->init_param.shading_bin_size);
 	memcpy((void *)(irp),
@@ -434,7 +436,6 @@ static cmr_int isp_dev_load_binary(isp_handle handle)
 
 	ISP_LOGI("isp_id %d shading offset 0x%lx, irp 0x%lx", isp_id,
 			shading - file->fw_mem.virt_addr, irp - file->fw_mem.virt_addr);
-#endif
 	ISP_LOGI("shading %p check 0x%x", (cmr_u32 *)shading, *(cmr_u32 *)(shading + 0x100));
 	ISP_LOGI("irp %p check 0x%x", (cmr_u32 *)irp, *(cmr_u32 *)(irp + 0x100));
 
@@ -470,6 +471,84 @@ void isp_dev_buf_cfg_evt_reg(isp_handle handle, cmr_handle grab_handle, isp_evt_
 	file->grab_handle = grab_handle;
 	file->isp_cfg_buf_cb = isp_event_cb;
 	pthread_mutex_unlock(&file->cb_mutex);
+}
+
+cmr_int isp_dev_cfg_grap_buffer(isp_handle handle, struct isp_irq_info *irq_info)
+{
+	struct isp_file *file = (struct isp_file *)handle;
+	struct isp_frm_info img_frame;
+
+	img_frame.channel_id = irq_info->channel_id;
+	img_frame.base = irq_info->base_id;
+	img_frame.frame_id = irq_info->base_id;
+	img_frame.yaddr = irq_info->yaddr;
+	img_frame.uaddr = irq_info->uaddr;
+	img_frame.vaddr = irq_info->vaddr;
+	img_frame.yaddr_vir = irq_info->yaddr_vir;
+	img_frame.uaddr_vir = irq_info->uaddr_vir;
+	img_frame.vaddr_vir = irq_info->vaddr_vir;
+	//img_frame.length= irq_info.buf_size.width*irq_info.buf_size.height;
+	img_frame.fd = irq_info->img_y_fd;
+	img_frame.sec = irq_info->time_stamp.sec;
+	img_frame.usec = irq_info->time_stamp.usec;
+	ISP_LOGI("high iso got one frm vaddr 0x%lx paddr 0x%lx, width %d, height %d",
+		 irq_info->yaddr_vir, irq_info->yaddr, file->init_param.width, file->init_param.height);
+	pthread_mutex_lock(&file->cb_mutex);
+	if (file->isp_cfg_buf_cb) {
+		(*file->isp_cfg_buf_cb)(ISP_MW_CFG_BUF, &img_frame, sizeof(img_frame), (void *)file->grab_handle);
+	}
+	pthread_mutex_unlock(&file->cb_mutex);
+
+	return 0;
+}
+
+static cmr_int isp_dev_mutilayer_thread_proc(struct cmr_msg *message, void *p_data)
+{
+	cmr_int ret = ISP_SUCCESS;
+	isp_handle handle = (isp_handle) p_data;
+
+	if (!message || !p_data) {
+		ISP_LOGE("param error message = %p, p_data = %p", message, p_data);
+		ret = -ISP_PARAM_NULL;
+		goto exit;
+	}
+	ISP_LOGV("message.msg_type 0x%x, data %p", message->msg_type, message->data);
+
+	switch (message->msg_type) {
+	case ISP_DEV_MUTILAYER_EVT_INIT:
+		break;
+	case ISP_DEV_MUTILAYER_EVT_DEINIT:
+		break;
+	case ISP_DEV_MUTILAYER_EVT_EXIT:
+		break;
+	case ISP_DEV_MUTILAYER_EVT_PROCESS:
+		isp_dev_cfg_grap_buffer(handle, message->data);
+		break;
+	default:
+		ISP_LOGE("don't support msg");
+		break;
+	}
+exit:
+	ISP_LOGV("done %ld", ret);
+	return ret;
+}
+
+static cmr_int isp_dev_create_mutilayer_thread(isp_handle handle)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct isp_file *file = (struct isp_file *)handle;
+
+	ret = cmr_thread_create(&file->mutilayer_thr_handle,
+				ISP_DEV_MUTILAYER_MSG_QUEUE_SIZE,
+				isp_dev_mutilayer_thread_proc,
+				(void *)handle);
+	ISP_LOGV("%p", file->mutilayer_thr_handle);
+	if (CMR_MSG_SUCCESS != ret) {
+		ISP_LOGE("failed to create muti-layer thread %ld", ret);
+	}
+
+	ISP_LOGV("done %ld", ret);
+	return ret;
 }
 
 static cmr_int isp_dev_create_thread(isp_handle handle)
@@ -520,15 +599,89 @@ static cmr_int isp_dev_kill_thread(isp_handle handle)
 	return ret;
 }
 
+static cmr_int isp_dev_handle_statis(isp_handle handle, struct isp_irq_info *irq_info, struct isp_statis_info *statis_info)
+{
+	struct isp_file *file = (struct isp_file *)handle;
+
+	statis_info->statis_frame.format = irq_info->format;
+	statis_info->statis_frame.buf_size = irq_info->length;
+	statis_info->statis_frame.phy_addr = irq_info->yaddr;
+	statis_info->statis_frame.vir_addr = irq_info->yaddr_vir;
+	statis_info->statis_frame.time_stamp.sec = irq_info->time_stamp.sec;
+	statis_info->statis_frame.time_stamp.usec = irq_info->time_stamp.usec;
+	statis_info->timestamp = systemTime(CLOCK_MONOTONIC);
+	statis_info->statis_cnt++;
+	ISP_LOGI("got one frame statis sensor id %d vaddr 0x%lx paddr 0x%lx buf_size 0x%lx stats_cnt %ld",
+		 file->camera_id, irq_info->yaddr_vir, irq_info->yaddr,
+		 irq_info->length, statis_info->statis_cnt);
+	pthread_mutex_lock(&file->cb_mutex);
+	if (file->isp_event_cb) {
+		(*file->isp_event_cb)(ISP_DRV_STATISTICE, statis_info, sizeof(struct isp_statis_info), (void *)file->evt_3a_handle);
+	}
+	pthread_mutex_unlock(&file->cb_mutex);
+
+	return 0;
+}
+
+static cmr_int isp_dev_handle_sof(isp_handle handle, struct isp_irq_info *irq_info)
+{
+	struct isp_file *file = (struct isp_file *)handle;
+	struct isp_irq_node irq_node;
+
+	irq_node.irq_val0 = irq_info->irq_id;
+	irq_node.sof_idx = irq_info->frm_index;
+	irq_node.ret_val = 0;
+	irq_node.time_stamp.sec = irq_info->time_stamp.sec;
+	irq_node.time_stamp.usec = irq_info->time_stamp.usec;
+	ISP_LOGI("got one sof sensor id %d frm index %d", file->camera_id, irq_info->frm_index);
+	pthread_mutex_lock(&file->cb_mutex);
+	if (file->isp_event_cb) {
+		(*file->isp_event_cb)(ISP_DRV_SENSOR_SOF, &irq_node, sizeof(irq_node), (void *)file->evt_3a_handle);
+	}
+	pthread_mutex_unlock(&file->cb_mutex);
+
+	return 0;
+}
+
+static cmr_int isp_dev_handle_cfg_grap_buf(isp_handle handle, struct isp_irq_info *irq_info)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct isp_file *file = (struct isp_file *)handle;
+	struct isp_irq_info *info;
+	CMR_MSG_INIT(message);
+
+	info = (struct isp_irq_info *)malloc(sizeof(*info));
+
+	if (!info) {
+		ISP_LOGE("failed to malloc irq info");
+		ret = -ISP_ALLOC_ERROR;
+		goto error_malloc;
+	}
+	*info = *irq_info;
+
+	message.msg_type = ISP_DEV_MUTILAYER_EVT_PROCESS;
+	message.sync_flag = CMR_MSG_SYNC_NONE;
+	message.alloc_flag = 1;
+	message.data = (void *)info;
+	ret = cmr_thread_msg_send(file->mutilayer_thr_handle, &message);
+	if (ret) {
+		ISP_LOGE("failed to send msg to thr %ld", ret);
+		goto exit;
+	}
+
+	return ret;
+exit:
+	free(info);
+error_malloc:
+	return ret;
+}
+
 static void* isp_dev_thread_proc(void *data)
 {
 	struct isp_file                   *file = NULL;
 	struct isp_statis_info            statis_info;
 	struct isp_statis_frame           statis_frame_buf;
-	struct isp_frm_info               img_frame;
-	struct isp_irq_node               irq_node;
 	struct isp_irq_info               irq_info;
-	struct img_addr addr;
 
 	file = (struct isp_file *)data;
 	ISP_LOGI("isp dev thread file %p ", file);
@@ -557,58 +710,19 @@ static void* isp_dev_thread_proc(void *data)
 			} else if (ISP_IMG_NO_MEM == irq_info.irq_flag) {
 				ISP_LOGE("statistics no mem");
 				continue;
-			} else {
-				if (ISP_IMG_TX_DONE == irq_info.irq_flag) {
-					if (irq_info.irq_type == ISP_IRQ_STATIS) {
-						statis_info.statis_frame.format = irq_info.format;
-						statis_info.statis_frame.buf_size = irq_info.length;
-						statis_info.statis_frame.phy_addr = irq_info.yaddr;
-						statis_info.statis_frame.vir_addr = irq_info.yaddr_vir;
-						statis_info.statis_frame.time_stamp.sec = irq_info.time_stamp.sec;
-						statis_info.statis_frame.time_stamp.usec = irq_info.time_stamp.usec;
-						statis_info.timestamp = systemTime(CLOCK_MONOTONIC);
-						statis_info.statis_cnt++;
-						ISP_LOGI("got one frame statis sensor id %d vaddr 0x%lx paddr 0x%lx buf_size 0x%lx stats_cnt %ld",
-							 file->camera_id, irq_info.yaddr_vir, irq_info.yaddr, irq_info.length, statis_info.statis_cnt);
-						pthread_mutex_lock(&file->cb_mutex);
-						if (file->isp_event_cb) {
-							(*file->isp_event_cb)(ISP_DRV_STATISTICE, &statis_info, sizeof(statis_info), (void *)file->evt_3a_handle);
-						}
-						pthread_mutex_unlock(&file->cb_mutex);
-					} else if (irq_info.irq_type == ISP_IRQ_3A_SOF) {
-						ISP_LOGI("got one sof sensor id %d frm index %d", file->camera_id, irq_info.frm_index);
-						irq_node.irq_val0 = irq_info.irq_id;
-						irq_node.sof_idx = irq_info.frm_index;
-						irq_node.ret_val = 0;
-						irq_node.time_stamp.sec = irq_info.time_stamp.sec;
-						irq_node.time_stamp.usec = irq_info.time_stamp.usec;
-						pthread_mutex_lock(&file->cb_mutex);
-						if (file->isp_event_cb) {
-							(*file->isp_event_cb)(ISP_DRV_SENSOR_SOF, &irq_node, sizeof(irq_node), (void *)file->evt_3a_handle);
-						}
-						pthread_mutex_unlock(&file->cb_mutex);
-					} else if (irq_info.irq_type == ISP_IRQ_CFG_BUF) {
-						img_frame.channel_id = irq_info.channel_id;
-						img_frame.base = irq_info.base_id;
-						img_frame.frame_id = irq_info.base_id;
-						img_frame.yaddr = irq_info.yaddr;
-						img_frame.uaddr = irq_info.uaddr;
-						img_frame.vaddr = irq_info.vaddr;
-						img_frame.yaddr_vir = irq_info.yaddr_vir;
-						img_frame.uaddr_vir = irq_info.uaddr_vir;
-						img_frame.vaddr_vir = irq_info.vaddr_vir;
-						//img_frame.length= irq_info.buf_size.width*irq_info.buf_size.height;
-						img_frame.fd = irq_info.img_y_fd;
-						img_frame.sec = irq_info.time_stamp.sec;
-						img_frame.usec = irq_info.time_stamp.usec;
-						ISP_LOGI("high iso got one frm vaddr 0x%lx paddr 0x%lx, width %d, height %d",
-							 irq_info.yaddr_vir, irq_info.yaddr, file->init_param.width, file->init_param.height);
-						pthread_mutex_lock(&file->cb_mutex);
-						if (file->isp_cfg_buf_cb) {
-							(*file->isp_cfg_buf_cb)(ISP_DRV_CFG_BUF, &img_frame, sizeof(img_frame), (void *)file->grab_handle);
-						}
-						pthread_mutex_unlock(&file->cb_mutex);
-					}
+			} else if (ISP_IMG_TX_DONE == irq_info.irq_flag) {
+				switch (irq_info.irq_type) {
+				case ISP_IRQ_STATIS:
+					isp_dev_handle_statis(file, &irq_info, &statis_info);
+					break;
+				case ISP_IRQ_3A_SOF:
+					isp_dev_handle_sof(file, &irq_info);
+					break;
+				case ISP_IRQ_CFG_BUF:
+					isp_dev_handle_cfg_grap_buf(file, &irq_info);
+					break;
+				default:
+					break;
 				}
 			}
 		}
@@ -825,7 +939,6 @@ cmr_int isp_dev_set_statis_buf(isp_handle handle, struct isp_statis_buf *param)
 	}
 
 	file = (struct isp_file *)(handle);
-
 	ret = ioctl(file->fd, ISP_IO_SET_STATIS_BUF, param);
 	if (ret) {
 		ISP_LOGE("isp_dev_set_statis_buf error. 0x%lx", ret);

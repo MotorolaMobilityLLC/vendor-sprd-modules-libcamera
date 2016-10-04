@@ -28,6 +28,7 @@ typedef cmr_int (*proc_callback)(cmr_handle handle, cmr_u32 mode, void *param_pt
 #define ISP_EVT_MASK                                   0x0000FF00
 #define ISP_CALLBACK_EVT                               0x00040000
 #define ISP_SNR_NAME_MAX_LEN                           64
+#define ISP_MW_EVT_BASE                                3 //(1 << 3)
 
 /*******************************enum type*************************************************/
 enum isp_callback_cmd {
@@ -310,6 +311,9 @@ enum isp_capture_mode {
 	ISP_CAP_MODE_MAX
 };
 
+enum isp_mw_evt {
+	ISP_MW_CFG_BUF = ISP_MW_EVT_BASE,
+};
 
 /*********************************struct type*********************************************/
 struct isp_af_notice {

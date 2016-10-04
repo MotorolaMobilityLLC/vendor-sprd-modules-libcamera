@@ -107,7 +107,6 @@ void ispmw_dev_buf_cfg_evt_cb(cmr_handle isp_handle, isp_buf_cfg_evt_cb grab_eve
 	struct isp_mw_context                       *cxt = (struct isp_mw_context *)isp_handle;
 
 	isp_dev_access_cfg_buf_evt_reg(cxt->isp_dev_handle, cxt->caller_handle, grab_event_cb);
-
 }
 
 cmr_int ispmw_parse_tuning_bin(cmr_handle isp_mw_handle)
@@ -582,7 +581,7 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 	}
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 	if (input_ptr->is_refocus && (0 == input_ptr->camera_id || 1 == input_ptr->camera_id) && input_ptr->ex_info_slv.name) {
-		ret = ispmw_get_tuning_bin_slv((cmr_handle)cxt,(const cmr_s8*)input_ptr->ex_info_slv.name);
+		ret = ispmw_get_tuning_bin_slv((cmr_handle)cxt, (const cmr_s8 *)input_ptr->ex_info_slv.name);
 		if (ret) {
 			goto exit;
 		}
@@ -760,9 +759,9 @@ cmr_int isp_video_start(cmr_handle isp_handle, struct isp_video_start *param_ptr
 		ISP_LOGE("error,input is NULL");
 		goto exit;
 	}
-	ISP_LOGI("sensor %s",cxt->input_param.ex_info.name);
+	ISP_LOGI("sensor %s", cxt->input_param.ex_info.name);
 	ISP_LOGI("isp size:%d,%d", param_ptr->size.w, param_ptr->size.h);
-	sprintf((void *)&file_name[0], "%s_%d", cxt->input_param.ex_info.name,param_ptr->size.w);
+	sprintf((void *)&file_name[0], "%s_%d", cxt->input_param.ex_info.name, param_ptr->size.w);
 	ret = ispmw_get_second_tuning_bin((cmr_handle)cxt, (const cmr_s8 *)file_name);
 	if (ret) {
 		goto exit;
@@ -893,7 +892,7 @@ cmr_int isp_cap_buff_cfg(cmr_handle isp_handle, struct isp_img_param *buf_cfg)
 	parm.is_reserved_buf  = buf_cfg->is_reserved_buf;
 	parm.count	 = buf_cfg->count;
 	parm.flag         = buf_cfg->flag;
-	for(i = 0; i < parm.count; i++) {
+	for (i = 0; i < parm.count; i++) {
 		parm.addr[i].chn0 = buf_cfg->addr[i].chn0;
 		parm.addr[i].chn1 = buf_cfg->addr[i].chn1;
 		parm.addr[i].chn2 = buf_cfg->addr[i].chn2;

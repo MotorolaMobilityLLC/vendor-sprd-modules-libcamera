@@ -421,14 +421,17 @@ void camera_send_channel_data(cmr_handle oem_handle, cmr_handle receiver_handle,
 				camera_post_share_path_available(oem_handle);
 			}
 		} else {
-			if(evt == 3 && cxt->burst_mode)  /* 3 = ISP_DRV_CFG_BUF */
+			/* muti layer patch begin */
+			if (ISP_MW_CFG_BUF == evt && cxt->burst_mode)
 				evt = CMR_GRAB_TX_DONE;
+			/* muti layer patch end */
 			if (cxt->snp_cxt.zsl_frame) {
 				cmr_copy(&cxt->snp_cxt.cur_chn_data, frm_ptr, sizeof(struct frm_info));
 				ret = cmr_preview_receive_data(cxt->prev_cxt.preview_handle, cxt->camera_id, evt, data);
-				CMR_LOGV("camera id = %d,  cur_chn_data.yaddr_vir 0x%x, yaddr_vir 0x%x",cxt->camera_id,cxt->snp_cxt.cur_chn_data.yaddr_vir,frm_ptr->yaddr_vir);
+				CMR_LOGV("camera id = %d,  cur_chn_data.yaddr_vir 0x%x, yaddr_vir 0x%x",
+					 cxt->camera_id,cxt->snp_cxt.cur_chn_data.yaddr_vir,frm_ptr->yaddr_vir);
 			} else {
-			ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle, SNAPSHOT_EVT_FREE_FRM, data);
+				ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle, SNAPSHOT_EVT_FREE_FRM, data);
 			}
 		}
 	}
@@ -727,7 +730,6 @@ void camera_grab_evt_cb(cmr_int evt, void* data, void* privdata)
 	}
 }
 
-
 void camera_isp_dev_evt_cb(cmr_int evt, void *data, cmr_u32 data_len, void *privdata)
 {
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
@@ -749,7 +751,6 @@ void camera_isp_dev_evt_cb(cmr_int evt, void *data, cmr_u32 data_len, void *priv
 	cxt->isp_to_dram = 0;
 	camera_send_channel_data((cmr_handle)cxt, receiver_handle, evt, data);
 }
-
 
 void camera_scaler_evt_cb(cmr_int evt, void* data, void *privdata)
 {
