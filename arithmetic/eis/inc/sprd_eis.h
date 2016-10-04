@@ -64,7 +64,7 @@ void video_stab_close(vsInst inst);
 const sprd_eis_init_info_t  eis_init_info_tab[] =
 {
 	{"sp9860g-1",1230.0f, 0.004f, 0.021f},
-	{"sp9860g-3",1160.0f, -0.01f, 0.0024f}
+	{"sp9860g-3",1160.0f, -0.01f, 0.024f}
 };
 
 
