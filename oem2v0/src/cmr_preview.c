@@ -9202,10 +9202,11 @@ cmr_int prev_set_video_buffer(struct prev_handle *handle, cmr_u32 camera_id, cmr
 	}
 
 exit:
-	CMR_LOGD("fd=0x%x, channel_id=0x%x, valid_num=%ld",
+	CMR_LOGD("fd=0x%x, channel_id=0x%x, valid_num=%ld, camera_id = %ld",
 		prev_cxt->video_frm[valid_num].fd,
 		prev_cxt->video_channel_id,
-		prev_cxt->video_mem_valid_num);
+		prev_cxt->video_mem_valid_num,
+		prev_cxt->camera_id);
 	return ret;
 }
 
@@ -9265,8 +9266,8 @@ cmr_int prev_pop_video_buffer(struct prev_handle *handle, cmr_u32 camera_id, str
 	}
 
 exit:
-	CMR_LOGD("fd=0x%x, channel_id=0x%x, valid_num=%ld",
-		data->fd, data->channel_id, prev_cxt->video_mem_valid_num);
+	CMR_LOGD("fd=0x%x, channel_id=0x%x, valid_num=%ld, camera_id = %ld",
+		data->fd, data->channel_id, prev_cxt->video_mem_valid_num, prev_cxt->camera_id);
 	return ret;
 }
 
