@@ -35,6 +35,7 @@
 #include "allib_3a_ver.h"
 #include "allib_3a_ver_errcode.h"
 #include "isp_mlog.h"
+#include "isp_bridge.h"
 
 /**************************************** MACRO DEFINE *****************************************/
 #define ISP3A_MSG_QUEUE_SIZE                                         100
@@ -655,11 +656,11 @@ cmr_int isp3a_match_data_ctrl(cmr_handle handler, struct match_data_param *in_pt
 		goto exit;
 	}
 
-	ret = isp_dev_access_match_data_ctrl(cxt->dev_access_handle, in_ptr);
+	if (GET_MATCH_AWB_DATA == in_ptr->op || SET_MATCH_AWB_DATA == in_ptr->op)
+		isp_br_ioctrl(cxt->camera_id, in_ptr->op, &in_ptr->awb_data, &in_ptr->awb_data);
+	else if (GET_MATCH_AE_DATA == in_ptr->op || SET_MATCH_AE_DATA == in_ptr->op)
+		isp_br_ioctrl(cxt->camera_id, in_ptr->op, &in_ptr->ae_data, &in_ptr->ae_data);
 
-	if (ret) {
-		ISP_LOGE("failed to isp_dev_access_set_sensor_match_data");
-	}
 exit:
 	ISP_LOGV("done %ld", ret);
 	return ret;
@@ -3863,6 +3864,7 @@ exit:
 	} else {
 		cxt->is_inited = 1;
 		*isp_3a_handle = (cmr_handle)cxt;
+		isp_br_init(cxt->camera_id, cxt);
 		isp_dev_access_evt_reg(cxt->dev_access_handle, isp3a_dev_evt_cb, (cmr_handle)cxt);
 	}
 	ISP_LOGI("done %ld", ret);
@@ -3881,6 +3883,7 @@ cmr_int isp_3a_fw_deinit(cmr_handle isp_3a_handle)
 	isp3a_destroy_thread((cmr_handle)cxt);
 	isp3a_alg_deinit((cmr_handle)cxt);
 	isp3a_deinit_statistics_buf((cmr_handle)cxt);
+	isp_br_deinit();
 	sem_destroy(&cxt->statistics_data_sm);
 	free((void *)cxt);
 	cxt = NULL;

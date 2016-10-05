@@ -156,29 +156,19 @@ cmr_int awbaltek_set_dzoom(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_
 	return ret;
 }
 
-cmr_int awbaltek_set_sof_frame_id(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+cmr_int awbaltek_match_slave_awb_info(cmr_handle adpt_handle)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
-	struct allib_awb_set_parameter_t            input;
+	struct match_data_param match_param;
+	struct allib_awb_output_data_t match_output;
 
-	UNUSED(output_ptr);
-	input.type = alawb_set_param_sys_sof_frame_idx;
-	input.para.sys_sof_frame_idx = input_ptr->sof_frame_idx;
-	ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
-	if (ret) {
-		ISP_LOGE("failed to set sof frame id 0x%lx", ret);
-	}
-
-#ifdef CONFIG_CAMERA_DUAL_SYNC
 	if (cxt->work_mode.is_refocus && (0 == cxt->camera_id || 1 == cxt->camera_id)) {
-		struct match_data_param match_param;
-		struct allib_awb_output_data_t match_output;
-
 		/* match */
 		ret = (cmr_int)cxt->lib_func.match(cxt->lib_func.awb, &match_output);
 		if (ret)
-			ISP_LOGE("failed %ld", ret);
+			ISP_LOGE("failed to match awb info %ld", ret);
+
 		cmr_bzero(&match_param, sizeof(match_param));
 		match_param.awb_data.gain.r = match_output.wbgain.r_gain;
 		match_param.awb_data.gain.g = match_output.wbgain.g_gain;
@@ -204,6 +194,26 @@ cmr_int awbaltek_set_sof_frame_id(cmr_handle adpt_handle, union awb_ctrl_cmd_in 
 		ISP_LOGI("camera_id %d set match_data:%d %d %d,ct:%d", cxt->camera_id, match_param.awb_data.gain.r,
 				match_param.awb_data.gain.g, match_param.awb_data.gain.b, match_param.awb_data.ct);
 	}
+
+	return ret;
+}
+
+cmr_int awbaltek_set_sof_frame_id(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
+	struct allib_awb_set_parameter_t            input;
+
+	UNUSED(output_ptr);
+	input.type = alawb_set_param_sys_sof_frame_idx;
+	input.para.sys_sof_frame_idx = input_ptr->sof_frame_idx;
+	ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
+	if (ret) {
+		ISP_LOGE("failed to set sof frame id 0x%lx", ret);
+	}
+
+#ifdef CONFIG_CAMERA_DUAL_SYNC
+	awbaltek_match_slave_awb_info(cxt);
 #endif
 
 	return ret;

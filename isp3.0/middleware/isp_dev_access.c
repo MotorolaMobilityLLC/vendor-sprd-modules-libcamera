@@ -1454,7 +1454,7 @@ cmr_int isp_dev_access_set_skip_num(isp_handle isp_dev_handle, cmr_u32 skip_num)
 	ret = isp_dev_set_skip_num(cxt->isp_driver_handle, skip_num);
 	return ret;
 }
-
+#if 0
 cmr_int isp_dev_access_match_data_ctrl(isp_handle isp_dev_handle, struct match_data_param *match_data)
 {
 	cmr_int                                ret = ISP_SUCCESS;
@@ -1473,7 +1473,7 @@ cmr_int isp_dev_access_match_data_ctrl(isp_handle isp_dev_handle, struct match_d
 	}
 	return ret;
 }
-
+#endif
 cmr_int isp_dev_access_cfg_sof_info(isp_handle isp_dev_handle, struct isp_sof_cfg_info *data)
 {
 	cmr_int                                ret = ISP_SUCCESS;

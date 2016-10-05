@@ -364,10 +364,8 @@ enum match_data_op {  /* enum isp_match_data_op */
 
 struct match_data_param {
 	enum match_data_op op;
-	union {
-		struct awb_match_data awb_data;
-		struct ae_match_data ae_data;
-	};
+	struct awb_match_data awb_data;
+	struct ae_match_data ae_data;
 };
 
 struct isp3a_pdaf_altek_report_t {
