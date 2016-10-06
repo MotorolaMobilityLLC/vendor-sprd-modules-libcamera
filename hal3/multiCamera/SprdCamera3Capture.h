@@ -63,10 +63,11 @@ namespace sprdcamera {
 #define LIB_GPU_PATH "libimagestitcher.so"
 
 typedef struct {
-    uint32_t frame_number;
-    buffer_handle_t*  buffer;
-    camera3_stream_t *stream;
-    camera3_stream_buffer_t* input_buffer;
+    uint32_t                 frame_number;
+    uint32_t                 preview_id;
+    buffer_handle_t         *buffer;
+    camera3_stream_t        *stream;
+    camera3_stream_buffer_t *input_buffer;
 }request_saved_t;
 
 typedef enum {
@@ -76,7 +77,7 @@ typedef enum {
 } captureMsgType;
 
 typedef struct {
-    uint32_t                        frame_number;
+    uint32_t                       frame_number;
     const camera3_stream_buffer_t *input_buffer;
     buffer_handle_t               *buffer1;
     buffer_handle_t               *buffer2;
@@ -121,10 +122,17 @@ private:
     int                               mLastHeight;
     int                               mCaptureWidth;
     int                               mCaptureHeight;
+    bool                              mIommuEnabled;
+    new_mem_t                        *mLocalBuffer;
+    new_mem_t                        *mLocalCapBuffer;
+    const native_handle_t            *mNativeBuffer[MAX_QEQUEST_BUF];
+    const native_handle_t            *mNativeCapBuffer[LOCAL_CAPBUFF_NUM];
+    List<buffer_handle_t*>            mLocalBufferList;
+    List <request_saved_t>            mSavedRequestList;
     camera3_stream_t                 *mSavedReqStreams[MAX_NUM_STREAMS];
     uint8_t                           mPreviewStreamsNum;
     int                               mPreviewID;
-    int                               mChangeFocus[2];
+    Mutex                             mRequestLock;
     bool                              mIsCaptureing;
     //when notify callback ,push hw notify into notify_list, with lock
     List <camera3_notify_msg_t>       mNotifyListMain;
@@ -135,11 +143,15 @@ private:
     int setupPhysicalCameras();
     int getCameraInfo(struct camera_info *info);
     void get3DCaptureSize(int *pWidth, int *pHeight);
+    int getStreamType(camera3_stream_t *new_stream );
+    void freeLocalBuffer(new_mem_t* pLocalBuffer);
+    void freeLocalCapBuffer(new_mem_t* pLocalCapBuffer);
+    int allocateOne(int w,int h,uint32_t is_cache,new_mem_t*,const native_handle_t *& nBuf );
+    int allocateCapBuff(int w,int h,uint32_t is_cache,new_mem_t*,const native_handle_t *& nBuf );
     int validateCaptureRequest(camera3_capture_request_t *request);
-    void saveVideoRequest(camera3_capture_request_t *request);
+    void saveRequest(camera3_capture_request_t *request,uint32_t showPreviewDeviceId);
     int pushRequestList( buffer_handle_t *request,List <buffer_handle_t*>&);
     buffer_handle_t *popRequestList(List <buffer_handle_t*>& list);
-    int getStreamType(camera3_stream_t *new_stream );
 
 public:
 
@@ -156,24 +168,13 @@ public:
         void videoErrorCallback(uint32_t frame_number);
         int loadGpuApi();
         void unLoadGpuApi();
-        void freeLocalBuffer(new_mem_t* mLocalBuffer);
-        void freeLocalCapBuffer(new_mem_t* pLocalCapBuffer);
-        int allocateOne(int w,int h,uint32_t is_cache,new_mem_t*,const native_handle_t *& nBuf );
-        int allocateCapBuff(int w,int h,uint32_t is_cache,new_mem_t*,const native_handle_t *& nBuf );
         void initGpuData(int w,int h,int );
         //This queue stores matched buffer as frame_matched_info_t
         List <capture_queue_msg_t>         mCaptureMsgList;
-        List <request_saved_t >            mSavedRequestList;
-        List<buffer_handle_t*>             mLocalBufferList;
         Mutex                              mMergequeueMutex;
         Condition                          mMergequeueSignal;
         const camera3_callback_ops_t      *mCallbackOps;
         sprdcamera_physical_descriptor_t  *mDevMain;
-        const native_handle_t             *mNativeBuffer[MAX_QEQUEST_BUF];
-        const native_handle_t             *mNativeCapBuffer[LOCAL_CAPBUFF_NUM];
-        const native_handle_t             *mNativeCmbBuffer;
-        new_mem_t                         *mLocalBuffer;
-        new_mem_t                         *mLocalCapBuffer;
         buffer_handle_t                   *mSavedResultBuff;
         camera3_capture_request_t          mSavedCapRequest;
         camera3_stream_buffer_t            mSavedCapReqstreambuff;
@@ -189,7 +190,6 @@ public:
         struct stream_info_s               pt_stream_info;
         bool                               isInitRenderContest;
     private:
-        bool    mIommuEnabled;
         int     mVFrameCount;
         int     mVLastFrameCount;
         nsecs_t mVLastFpsTime;
@@ -198,7 +198,7 @@ public:
         void waitMsgAvailable();
         int combineTwoPicture(/*out*/buffer_handle_t *&output_buf, buffer_handle_t *inputbuff1, buffer_handle_t *inputbuff2);
     };
-    sp<CaptureThread> mCaptureThread;
+    sp<CaptureThread>     mCaptureThread;
 
     int initialize(const camera3_callback_ops_t *callback_ops);
     int configureStreams(const struct camera3_device *device,camera3_stream_configuration_t* stream_list);

@@ -106,20 +106,23 @@ camera3_callback_ops SprdCamera3Capture::callback_ops_aux = {
  *==========================================================================*/
 SprdCamera3Capture::SprdCamera3Capture()
 {
-    HAL_LOGV(" E");
+    HAL_LOGD(" E");
     m_nPhyCameras = 2;//m_nPhyCameras should always be 2 with dual camera mode
     m_VirtualCamera.id = 1;//hardcode left front camera here
     mStaticMetadata = NULL;
     mCaptureThread = new CaptureThread();
-    mCaptureThread->mLocalBuffer = NULL;
-    mCaptureThread->mLocalCapBuffer = NULL;
+    mIommuEnabled = 0;
+    mLocalBuffer = NULL;
+    mLocalCapBuffer = NULL;
+    mLocalBufferList.clear();
+    mSavedRequestList.clear();
     setupPhysicalCameras();
     mLastWidth = 0;
     mLastHeight = 0;
     mCaptureWidth = 0;
     mCaptureHeight = 0;
     mIsCaptureing = false;
-    HAL_LOGV("X");
+    HAL_LOGD("X");
 }
 
 /*===========================================================================
@@ -130,8 +133,9 @@ SprdCamera3Capture::SprdCamera3Capture()
  *==========================================================================*/
 SprdCamera3Capture::~SprdCamera3Capture()
 {
-    HAL_LOGV("E");
+    HAL_LOGD("E");
     mCaptureThread = NULL;
+    mSavedRequestList.clear();
     mNotifyListAux.clear();
     mNotifyListMain.clear();
     mLastWidth = 0;
@@ -141,57 +145,7 @@ SprdCamera3Capture::~SprdCamera3Capture()
         m_pPhyCamera = NULL;
      }
 
-    HAL_LOGV("X");
-}
-/*===========================================================================
- * FUNCTION         : freeLocalBuffer
- *
- * DESCRIPTION     : free new_mem_t buffer
- *
- * PARAMETERS:
- *   @new_mem_t      : Pointer to struct new_mem_t buffer
- *
- *
- * RETURN             :  NONE
- *==========================================================================*/
-void SprdCamera3Capture::CaptureThread::freeLocalBuffer(new_mem_t* mLocalBuffer)
-{
-
-    mLocalBufferList.clear();
-    for(size_t i = 0; i < MAX_QEQUEST_BUF; i++){
-        if(mLocalBuffer[i].buffer != NULL){
-            delete ((private_handle_t*)*(mLocalBuffer[i].buffer));
-            mLocalBuffer[i].buffer = NULL;
-        }
-        if(mLocalBuffer[i].pHeapIon != NULL){
-            delete mLocalBuffer[i].pHeapIon;
-            mLocalBuffer[i].pHeapIon = NULL;
-        }
-    }
-}
-/*===========================================================================
- * FUNCTION         : freeLocalCapBuffer
- *
- * DESCRIPTION     : free new_mem_t buffer
- *
- * PARAMETERS:
- *   @new_mem_t      : Pointer to struct new_mem_t buffer
- *
- *
- * RETURN             :  NONE
- *==========================================================================*/
-void SprdCamera3Capture::CaptureThread::freeLocalCapBuffer(new_mem_t* pLocalCapBuffer)
-{
-    for(size_t i = 0; i < LOCAL_CAPBUFF_NUM; i++){
-        if(pLocalCapBuffer[i].buffer != NULL){
-            delete ((private_handle_t*)*(pLocalCapBuffer[i].buffer));
-            pLocalCapBuffer[i].buffer = NULL;
-        }
-        if(pLocalCapBuffer[i].pHeapIon != NULL){
-            delete pLocalCapBuffer[i].pHeapIon;
-            pLocalCapBuffer[i].pHeapIon = NULL;
-        }
-    }
+    HAL_LOGD("X");
 }
 /*===========================================================================
  * FUNCTION         : getCameraCapture
@@ -297,7 +251,6 @@ int SprdCamera3Capture::close_camera_device(__unused hw_device_t *hw_dev)
         HAL_LOGE("failed.hw_dev null");
         return -1;
     }
-
     return mCapture->closeCameraDevice();
 }
 /*===========================================================================
@@ -317,6 +270,7 @@ int SprdCamera3Capture::closeCameraDevice()
 
     int rc = NO_ERROR;
     sprdcamera_physical_descriptor_t *sprdCam = NULL;
+    HAL_LOGD("E");
 
     // Attempt to close all cameras regardless of unbundle results
     for (uint32_t i = 0; i < m_nPhyCameras; i++) {
@@ -333,8 +287,15 @@ int SprdCamera3Capture::closeCameraDevice()
         sprdCam->hwi = NULL;
         sprdCam->dev = NULL;
     }
+    mLocalBufferList.clear();
+    freeLocalBuffer(mLocalBuffer);
+    free(mLocalBuffer);
+    mLocalBuffer = NULL;
+    freeLocalCapBuffer(mLocalCapBuffer);
+    free(mLocalCapBuffer);
+    mLocalCapBuffer = NULL;
 
-    HAL_LOGV("X, rc: %d", rc);
+    HAL_LOGD("X, rc: %d", rc);
 
     return rc;
 }
@@ -519,7 +480,7 @@ void SprdCamera3Capture::notifyAux(const struct camera3_callback_ops *ops, const
  *
  * RETURN     :
  *==========================================================================*/
-int SprdCamera3Capture::CaptureThread::allocateOne(int w,int h, uint32_t is_cache,new_mem_t *new_mem,const native_handle_t *& nBuf )
+int SprdCamera3Capture::allocateOne(int w,int h, uint32_t is_cache,new_mem_t *new_mem,const native_handle_t *& nBuf )
 {
 
     int result = 0;
@@ -590,7 +551,7 @@ getpmem_fail:
  *
  * RETURN     :
  *==========================================================================*/
-int SprdCamera3Capture::CaptureThread::allocateCapBuff(int w,int h, uint32_t is_cache,new_mem_t *new_mem,const native_handle_t *& nBuf )
+int SprdCamera3Capture::allocateCapBuff(int w,int h, uint32_t is_cache,new_mem_t *new_mem,const native_handle_t *& nBuf )
 {
 
     int result = 0;
@@ -651,6 +612,56 @@ getpmem_fail:
    delete pHeapIon;
 
     return -1;
+}
+/*===========================================================================
+ * FUNCTION         : freeLocalBuffer
+ *
+ * DESCRIPTION     : free new_mem_t buffer
+ *
+ * PARAMETERS:
+ *   @new_mem_t      : Pointer to struct new_mem_t buffer
+ *
+ *
+ * RETURN             :  NONE
+ *==========================================================================*/
+void SprdCamera3Capture::freeLocalBuffer(new_mem_t* pLocalBuffer)
+{
+    for(size_t i = 0; i < MAX_QEQUEST_BUF; i++){
+        if(pLocalBuffer[i].buffer != NULL){
+            delete ((private_handle_t*)*(pLocalBuffer[i].buffer));
+            pLocalBuffer[i].buffer = NULL;
+        }
+        if(pLocalBuffer[i].pHeapIon != NULL){
+            delete pLocalBuffer[i].pHeapIon;
+            pLocalBuffer[i].pHeapIon = NULL;
+        }
+    }
+}
+/*===========================================================================
+ * FUNCTION         : freeLocalCapBuffer
+ *
+ * DESCRIPTION     : free new_mem_t buffer
+ *
+ * PARAMETERS:
+ *   @new_mem_t      : Pointer to struct new_mem_t buffer
+ *
+ *
+ * RETURN             :  NONE
+ *==========================================================================*/
+void SprdCamera3Capture::freeLocalCapBuffer(new_mem_t* pLocalCapBuffer)
+{
+    for(size_t i = 0; i < LOCAL_CAPBUFF_NUM; i++){
+        if(pLocalCapBuffer[i].buffer != NULL){
+            delete ((private_handle_t*)*(pLocalCapBuffer[i].buffer));
+            pLocalCapBuffer[i].buffer = NULL;
+        }
+        if(pLocalCapBuffer[i].pHeapIon != NULL){
+            delete pLocalCapBuffer[i].pHeapIon;
+            pLocalCapBuffer[i].pHeapIon = NULL;
+        }
+    }
+    free(mLocalCapBuffer);
+    mLocalCapBuffer = NULL;
 }
 /*===========================================================================
  * FUNCTION   :validateCaptureRequest
@@ -861,9 +872,6 @@ int SprdCamera3Capture::setupPhysicalCameras()
  *==========================================================================*/
 SprdCamera3Capture::CaptureThread::CaptureThread()
 {
-    mIommuEnabled = 0;
-    mLocalBufferList.clear();
-    mSavedRequestList.clear();
     mCaptureMsgList.clear();
     mGpuApi = (GPUAPI_t*)malloc(sizeof(GPUAPI_t));
     if(mGpuApi == NULL){
@@ -889,9 +897,6 @@ SprdCamera3Capture::CaptureThread::CaptureThread()
 SprdCamera3Capture::CaptureThread::~CaptureThread()
 {
     HAL_LOGV(" E");
-
-    mLocalBufferList.clear();
-    mSavedRequestList.clear();
     mCaptureMsgList.clear();
     if(mGpuApi != NULL){
         unLoadGpuApi();
@@ -1140,33 +1145,6 @@ bool SprdCamera3Capture::CaptureThread::threadLoop()
         case CAPTURE_MSG_EXIT:
             {
                 //flush queue
-                HAL_LOGW("CaptureThread Stopping, mCaptureMsgList.size=%d, mSavedRequestList.size:%d",
-                        mCaptureMsgList.size(), mSavedRequestList.size());
-                for (List < capture_queue_msg_t >::iterator i = mCaptureMsgList.begin(); i != mCaptureMsgList.end();)
-                {
-                    if(i != mCaptureMsgList.end()){
-                        //if(captureTwoFrame(output_buffer, &capture_msg.combo_frame) != NO_ERROR){
-                        //    HAL_LOGE("Error happen when merging for frame idx:%d",capture_msg.combo_frame.frame_number);
-                        //    videoErrorCallback(capture_msg.combo_frame.frame_number);
-                        //} else {
-                        //    videoCallBackResult(output_buffer,&capture_msg.combo_frame);
-                        //}
-                        i = mCaptureMsgList.erase(i);
-                    }
-                }
-
-                List < request_saved_t >::iterator i = mSavedRequestList.begin();
-                while(mSavedRequestList.begin() != mSavedRequestList.end()){
-                    i = mSavedRequestList.begin();
-                    //videoErrorCallback(i->frame_number);
-                }
-                HAL_LOGW("CaptureThread Stopped, mCaptureMsgList.size=%d, mSavedRequestList.size:%d",
-                    mCaptureMsgList.size(), mSavedRequestList.size());
-
-                freeLocalBuffer(mLocalBuffer);
-                freeLocalCapBuffer(mLocalCapBuffer);
-                free(mLocalBuffer);
-                free(mLocalCapBuffer);
                 return false;
             }
             break;
@@ -1365,7 +1343,7 @@ int SprdCamera3Capture::CaptureThread::combineTwoPicture(buffer_handle_t *&outpu
             isInitRenderContest = true;
         }
     }
-    output_buf = mLocalCapBuffer[2].buffer;
+    output_buf = mCapture->mLocalCapBuffer[mCaptureStreamsNum].buffer;
     dcam_info_t dcam;
 
     dcam.left_buf = (struct private_handle_t *)*input_buf1;
@@ -1496,8 +1474,6 @@ int SprdCamera3Capture::initialize(const camera3_callback_ops_t *callback_ops)
     mCaptureHeight = 0;
     mPreviewStreamsNum = 0;
     mPreviewID = 0;
-    mChangeFocus[0] = 0;
-    mChangeFocus[1]= 0;
     mCaptureThread->mCaptureStreamsNum = 0;
     mCaptureThread->mReprocessing = false;
 
@@ -1518,17 +1494,17 @@ int SprdCamera3Capture::initialize(const camera3_callback_ops_t *callback_ops)
     }
 
     //init buffer_handle_t
-    mCaptureThread->mLocalBuffer = (new_mem_t*)malloc(sizeof(new_mem_t)*MAX_QEQUEST_BUF);
-    if (NULL == mCaptureThread->mLocalBuffer) {
+    mLocalBuffer = (new_mem_t*)malloc(sizeof(new_mem_t)*MAX_QEQUEST_BUF);
+    if (NULL == mLocalBuffer) {
         HAL_LOGE("fatal error! mLocalBuffer pointer is null.");
     }
-    memset(mCaptureThread->mLocalBuffer, 0 , sizeof(new_mem_t)*MAX_QEQUEST_BUF);
+    memset(mLocalBuffer, 0 , sizeof(new_mem_t)*MAX_QEQUEST_BUF);
 
-    mCaptureThread->mLocalCapBuffer = (new_mem_t*)malloc(sizeof(new_mem_t)*LOCAL_CAPBUFF_NUM);
-    if (NULL == mCaptureThread->mLocalCapBuffer) {
+    mLocalCapBuffer = (new_mem_t*)malloc(sizeof(new_mem_t)*LOCAL_CAPBUFF_NUM);
+    if (NULL == mLocalCapBuffer) {
         HAL_LOGE("fatal error! mLocalCapBuffer pointer is null.");
     }
-    memset(mCaptureThread->mLocalCapBuffer, 0 , sizeof(new_mem_t)*LOCAL_CAPBUFF_NUM);
+    memset(mLocalCapBuffer, 0 , sizeof(new_mem_t)*LOCAL_CAPBUFF_NUM);
 
     mCaptureThread->mCallbackOps = callback_ops;
     mCaptureThread->mDevMain = &m_pPhyCamera[CAM_TYPE_MAIN];
@@ -1571,15 +1547,15 @@ int SprdCamera3Capture::configureStreams(const struct camera3_device *device,cam
             HAL_LOGD("preview width:%d, height:%d", w, h);
             if(mLastWidth!= w && mLastHeight != h){
                 if(mLastWidth != 0||mLastHeight != 0){
-                    mCaptureThread->freeLocalBuffer(mCaptureThread->mLocalBuffer);
+                    freeLocalBuffer(mLocalBuffer);
                 }
                 for(size_t j = 0; j < MAX_QEQUEST_BUF; j++){
-                    int tmp = mCaptureThread->allocateOne(w,h,1,&(mCaptureThread->mLocalBuffer[j]),mCaptureThread->mNativeBuffer[j]);
+                    int tmp = allocateOne(w,h,1,&(mLocalBuffer[j]),mNativeBuffer[j]);
                     if(tmp < 0){
                         HAL_LOGE("request one buf failed.");
                         continue;
                     }
-                    mCaptureThread->mLocalBufferList.push_back(mCaptureThread->mLocalBuffer[j].buffer);
+                    mLocalBufferList.push_back(mLocalBuffer[j].buffer);
                 }
             }
             mLastWidth = w;
@@ -1594,15 +1570,15 @@ int SprdCamera3Capture::configureStreams(const struct camera3_device *device,cam
             HAL_LOGD("capture width:%d, height:%d", w, h);
             if(mCaptureWidth!= w && mCaptureHeight != h){
                 if(mCaptureWidth != 0||mCaptureWidth != 0){
-                    mCaptureThread->freeLocalCapBuffer(mCaptureThread->mLocalCapBuffer);
+                    freeLocalCapBuffer(mLocalCapBuffer);
                 }
                 for(size_t j = 0; j < LOCAL_CAPBUFF_NUM-1; j++){
-                    if(0 > mCaptureThread->allocateCapBuff(mCaptureThread->m3DCaptureWidth,mCaptureThread->m3DCaptureHeight,1,&(mCaptureThread->mLocalCapBuffer[j]),mCaptureThread->mNativeCapBuffer[j])){
+                    if(0 > allocateCapBuff(mCaptureThread->m3DCaptureWidth,mCaptureThread->m3DCaptureHeight,1,&(mLocalCapBuffer[j]),mNativeCapBuffer[j])){
                         HAL_LOGE("request one buf failed.");
                         continue;
                     }
                 }
-                if(0 > mCaptureThread->allocateCapBuff(w,h,1,&(mCaptureThread->mLocalCapBuffer[stream_list->num_streams]),mCaptureThread->mNativeCapBuffer[stream_list->num_streams])){
+                if(0 > allocateCapBuff(w,h,1,&(mLocalCapBuffer[stream_list->num_streams]),mNativeCapBuffer[stream_list->num_streams])){
                     HAL_LOGE("request one buf failed.");
                     continue;
                 }
@@ -1720,6 +1696,38 @@ const camera_metadata_t * SprdCamera3Capture::constructDefaultRequestSettings(co
     return fwk_metadata;
 
 }
+
+/*===========================================================================
+ * FUNCTION   :saveRequest
+ *
+ * DESCRIPTION: save buffer in request
+ *
+ * PARAMETERS :
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void SprdCamera3Capture::saveRequest(camera3_capture_request_t *request,uint32_t preview_id)
+{
+    size_t i = 0;
+    camera3_stream_t* newStream = NULL;
+    for (i = 0; i < request->num_output_buffers; i++)
+    {
+        newStream = (request->output_buffers[i]).stream;
+        if (getStreamType(newStream) == CALLBACK_STREAM)
+        {
+            request_saved_t currRequest;
+            HAL_LOGD("save preview request %d", request->frame_number);
+            Mutex::Autolock l(mRequestLock);
+            currRequest.frame_number = request->frame_number;
+            currRequest.preview_id = preview_id;
+            currRequest.buffer = request->output_buffers[i].buffer;
+            currRequest.stream = request->output_buffers[i].stream;
+            currRequest.input_buffer = request->input_buffer;
+            mSavedRequestList.push_back(currRequest);
+        }
+    }
+}
+
 /*===========================================================================
  * FUNCTION   :processCaptureRequest
  *
@@ -1771,25 +1779,21 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
         {
             HAL_LOGD("preview id changed to %d, current preview id:%d", nPreviewId, mPreviewID);
             mPreviewID = nPreviewId;
-            mChangeFocus[0] = req->frame_number;
-            mChangeFocus[1] = req->frame_number;
         }
 	}
     else
     {
         char prop[PROPERTY_VALUE_MAX] = {0,};
-        int nPreviewId = mPreviewID;
         property_get("debug.camera.3dcap.preview", prop, "0");
-        nPreviewId = atoi(prop);
+        int nPreviewId = atoi(prop);
 		HAL_LOGV("no preview id setting find, prop preview id %d, current preview id:%d", nPreviewId, mPreviewID);
         if ( nPreviewId&0x03 && mPreviewID != nPreviewId )
         {
             HAL_LOGD("preview id changed to %d by prop, current preview id:%d", nPreviewId, mPreviewID);
             mPreviewID = nPreviewId;
-            mChangeFocus[0] = mPreviewID==0?req->frame_number:0;
-            mChangeFocus[1] = mPreviewID==1?req->frame_number:0;
         }
     }
+    saveRequest(req, mPreviewID);
 
     /*config main camera*/
     req_main = *req;
@@ -1828,24 +1832,23 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
             out_streams_main[i].stream = &mCaptureThread->mMainStreams[mCaptureThread->mCaptureStreamsNum];
             out_streams_main[i].stream->width =mCaptureThread->m3DCaptureWidth;
             out_streams_main[i].stream->height=mCaptureThread->m3DCaptureHeight;
-            out_streams_main[i].buffer = mCaptureThread->mLocalCapBuffer[0].buffer;
+            out_streams_main[i].buffer = mLocalCapBuffer[0].buffer;
             HAL_LOGD("newtype:%d, rotation:%d", out_streams_main[i].stream->format, out_streams_main[i].stream->rotation);
             HAL_LOGD("org snp request output buff 0x%x, stream:0x%x, yaddr_v:0x%x",
                      request->output_buffers[i].buffer, request->output_buffers[i].stream,
                      ((struct private_handle_t*)(*request->output_buffers[i].buffer))->base);
             HAL_LOGD("snp request buffer:0x%x, stream:0x%x, yaddr_v:0x%x",
-                     mCaptureThread->mLocalCapBuffer[2].buffer, &mCaptureThread->mMainStreams[mCaptureThread->mCaptureStreamsNum-1],
-                     ((struct private_handle_t*)(*mCaptureThread->mLocalCapBuffer[2].buffer))->base );
+                     mLocalCapBuffer[2].buffer, &mCaptureThread->mMainStreams[mCaptureThread->mCaptureStreamsNum-1],
+                     ((struct private_handle_t*)(*mLocalCapBuffer[2].buffer))->base );
         }
         else
         {
             mSavedReqStreams[mPreviewStreamsNum] = req->output_buffers[i].stream;
             out_streams_main[i].stream = &mCaptureThread->mMainStreams[mPreviewStreamsNum];
-            if ( 1 == mPreviewID )
+            if ( CAM_TYPE_AUX == mPreviewID )
             {
                 HAL_LOGV("hide main preview");
-                out_streams_main[i].buffer = popRequestList(mCaptureThread->mLocalBufferList);
-                out_streams_main[i].acquire_fence = -1;
+                out_streams_main[i].buffer = popRequestList(mLocalBufferList);
             }
         }
     }
@@ -1878,7 +1881,7 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
             req_aux.settings = mCaptureThread->mSavedCapReqsettings;
 
             out_streams_aux[i] = req->output_buffers[i];
-            out_streams_aux[i].buffer = mCaptureThread->mLocalCapBuffer[1].buffer;
+            out_streams_aux[i].buffer = mLocalCapBuffer[1].buffer;
             out_streams_aux[i].stream = &mCaptureThread->mAuxStreams[mCaptureThread->mCaptureStreamsNum];
             out_streams_aux[i].stream->width =mCaptureThread->m3DCaptureWidth;
             out_streams_aux[i].stream->height=mCaptureThread->m3DCaptureHeight;
@@ -1892,18 +1895,17 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
         else {
             out_streams_aux[i] = req->output_buffers[i];
             out_streams_aux[i].stream = &mCaptureThread->mAuxStreams[mPreviewStreamsNum];
-            if ( 0 == mPreviewID )
+            if ( CAM_TYPE_MAIN == mPreviewID )
             {
                 HAL_LOGV("hide sub preview");
-                out_streams_aux[i].buffer = popRequestList(mCaptureThread->mLocalBufferList);
-                out_streams_aux[i].acquire_fence = -1;
+                out_streams_aux[i].buffer = popRequestList(mLocalBufferList);
             }
             HAL_LOGD("mPreviewStreamsNum:%d, stream:0x%x", mPreviewStreamsNum, out_streams_aux[i].stream);
             if(NULL == out_streams_aux[i].buffer){
                 HAL_LOGE("failed, LocalBufferList is empty!");
                 goto req_fail;
             }
-
+            out_streams_aux[i].acquire_fence = -1;
         }
     }
     req_aux.output_buffers = out_streams_aux;
@@ -1927,8 +1929,8 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
         HAL_LOGE("failed, idx:%d", req_aux.frame_number);
         goto req_fail;
     }
-    HAL_LOGD("rc, d%d", rc);
 
+    HAL_LOGD("rc, d%d", rc);
 req_fail:
 
     if (req_aux.output_buffers != NULL) {
@@ -2063,48 +2065,35 @@ void SprdCamera3Capture::processCaptureResultMain( const camera3_capture_result_
     }
     else
     {
-        if ( 0 == mPreviewID )
+        camera3_capture_result_t   newResult = {0,};
+        camera3_stream_buffer_t    newOutput_buffers = {0,};
+        int request_preview_id = -1;
         {
-            if ( result->frame_number < mChangeFocus[1] )
-            {
-                HAL_LOGD("not in capture, just discard frame:%d", result->frame_number);
-                mCaptureThread->mLocalBufferList.push_back(result->output_buffers->buffer);
-            }
-            else
-            {
-                camera3_capture_result_t   newResult = {0,};
-                camera3_stream_buffer_t    newOutput_buffers = {0,};
-                memcpy( &newResult, result, sizeof(camera3_capture_result_t) );
-                memcpy( mSavedReqStreams[mPreviewStreamsNum], result->output_buffers[0].stream, sizeof(camera3_stream_t) );
-                memcpy( &newOutput_buffers, &result->output_buffers[0], sizeof(camera3_stream_buffer_t) );
-                newOutput_buffers.stream = mSavedReqStreams[mPreviewStreamsNum];
-                memcpy( (void*)&newResult.output_buffers[0], &newOutput_buffers, sizeof(camera3_stream_buffer_t) );
-                mCaptureThread->mCallbackOps->process_capture_result(mCaptureThread->mCallbackOps, &newResult);
+            Mutex::Autolock l(mRequestLock);
+            List <request_saved_t>::iterator i = mSavedRequestList.begin();
+            while(i != mSavedRequestList.end()){
+                if(i->frame_number == result->frame_number){
+                    request_preview_id = i->preview_id;
+                    if (CAM_TYPE_MAIN == request_preview_id)
+                    {
+                        memcpy( &newResult, result, sizeof(camera3_capture_result_t) );
+                        memcpy( &newOutput_buffers, &result->output_buffers[0], sizeof(camera3_stream_buffer_t) );
+                        newOutput_buffers.stream = i->stream;
+                        memcpy( newOutput_buffers.stream, result->output_buffers[0].stream, sizeof(camera3_stream_t) );
+                        newResult.output_buffers = &newOutput_buffers;
+                        mCaptureThread->mCallbackOps->process_capture_result(mCaptureThread->mCallbackOps, &newResult);
+                        mSavedRequestList.erase(i);
+                    }
+                    HAL_LOGD("find preview frame %d, show preview id:%d", result->frame_number, request_preview_id);
+                    break;
+                }
+                i++;
             }
         }
-        else if ( 1 == mPreviewID )
+        if ( CAM_TYPE_MAIN != request_preview_id )
         {
-            if ( result->frame_number < mChangeFocus[0] )
-            {
-                camera3_capture_result_t   newResult = {0,};
-                camera3_stream_buffer_t    newOutput_buffers = {0,};
-                memcpy( &newResult, result, sizeof(camera3_capture_result_t) );
-                memcpy( mSavedReqStreams[mPreviewStreamsNum], result->output_buffers[0].stream, sizeof(camera3_stream_t) );
-                memcpy( &newOutput_buffers, &result->output_buffers[0], sizeof(camera3_stream_buffer_t) );
-                newOutput_buffers.stream = mSavedReqStreams[mPreviewStreamsNum];
-                memcpy( (void*)&newResult.output_buffers[0], &newOutput_buffers, sizeof(camera3_stream_buffer_t) );
-                mCaptureThread->mCallbackOps->process_capture_result(mCaptureThread->mCallbackOps, &newResult);
-                //if (result->frame_number == mChangeFocus[0]-1)
-                //{
-                //    mChangeFocus[0] = 0;
-                //}
-                HAL_LOGD("preview id changed at frame:%d, continue send left main preview frame:%d", mChangeFocus[0], result->frame_number);
-            }
-            else
-            {
-                HAL_LOGD("not in capture, just discard frame:%d", result->frame_number);
-                mCaptureThread->mLocalBufferList.push_back(result->output_buffers->buffer);
-            }
+            HAL_LOGD("not in capture, just discard frame:%d", result->frame_number);
+            mLocalBufferList.push_back(result->output_buffers[0].buffer);
         }
     }
 
@@ -2189,49 +2178,39 @@ void SprdCamera3Capture::processCaptureResultAux( const camera3_capture_result_t
         }
         else if ( currStreamType == SNAPSHOT_STREAM )
         {
-            HAL_LOGD("should not be entry here, shutter frame:%d", result->frame_number);
-            mCaptureThread->mLocalBufferList.push_back(result->output_buffers->buffer);
+            HAL_LOGD("should not entry here, shutter frame:%d", result->frame_number);
         }
         else
         {
-            if ( 1 == mPreviewID )
+            camera3_capture_result_t   newResult = {0,};
+            camera3_stream_buffer_t    newOutput_buffers = {0,};
+            int request_preview_id = -1;
             {
-                if ( result->frame_number < mChangeFocus[0] )
-                {
-                    HAL_LOGD("not in capture, just discard frame:%d", result->frame_number);
-                    mCaptureThread->mLocalBufferList.push_back(result->output_buffers->buffer);
-                }
-                else
-                {
-                    camera3_capture_result_t   newResult = { 0, };
-                    camera3_stream_buffer_t    newOutput_buffers = {0,};
-                    memcpy( &newResult, result, sizeof(camera3_capture_result_t) );
-                    memcpy( mSavedReqStreams[mPreviewStreamsNum], result->output_buffers[0].stream, sizeof(camera3_stream_t) );
-                    memcpy( &newOutput_buffers, &result->output_buffers[0], sizeof(camera3_stream_buffer_t) );
-                    newOutput_buffers.stream = mSavedReqStreams[mPreviewStreamsNum];
-                    memcpy( (void*)&newResult.output_buffers[0], &newOutput_buffers, sizeof(camera3_stream_buffer_t) );
-                    mCaptureThread->mCallbackOps->process_capture_result(mCaptureThread->mCallbackOps, &newResult);
+                Mutex::Autolock l(mRequestLock);
+                List <request_saved_t>::iterator i = mSavedRequestList.begin();
+                while(i != mSavedRequestList.end()){
+                    if(i->frame_number == result->frame_number){
+                        request_preview_id = i->preview_id;
+                        if (CAM_TYPE_AUX == request_preview_id)
+                        {
+                            memcpy( &newResult, result, sizeof(camera3_capture_result_t) );
+                            memcpy( &newOutput_buffers, &result->output_buffers[0], sizeof(camera3_stream_buffer_t) );
+                            newOutput_buffers.stream = i->stream;
+                            memcpy( newOutput_buffers.stream, result->output_buffers[0].stream, sizeof(camera3_stream_t) );
+                            newResult.output_buffers = &newOutput_buffers;
+                            mCaptureThread->mCallbackOps->process_capture_result(mCaptureThread->mCallbackOps, &newResult);
+                            mSavedRequestList.erase(i);
+                        }
+                        HAL_LOGD("find preview frame %d, show preview id:%d",result->frame_number, request_preview_id);
+                        break;
+                    }
+                    i++;
                 }
             }
-            else if ( 0 == mPreviewID )
+            if ( CAM_TYPE_AUX != request_preview_id )
             {
-                if ( result->frame_number < mChangeFocus[1] )
-                {
-                    camera3_capture_result_t   newResult = { 0, };
-                    camera3_stream_buffer_t    newOutput_buffers = {0,};
-                    memcpy( &newResult, result, sizeof(camera3_capture_result_t) );
-                    memcpy( mSavedReqStreams[mPreviewStreamsNum], result->output_buffers[0].stream, sizeof(camera3_stream_t) );
-                    memcpy( &newOutput_buffers, &result->output_buffers[0], sizeof(camera3_stream_buffer_t) );
-                    newOutput_buffers.stream = mSavedReqStreams[mPreviewStreamsNum];
-                    memcpy( (void*)&newResult.output_buffers[0], &newOutput_buffers, sizeof(camera3_stream_buffer_t) );
-                    mCaptureThread->mCallbackOps->process_capture_result(mCaptureThread->mCallbackOps, &newResult);
-                    HAL_LOGD("preview id changed at frame:%d, continue send left sub preview frame:%d", mChangeFocus[1], result->frame_number);
-                }
-                else
-                {
-                    HAL_LOGD("not in capture, just discard frame:%d", result->frame_number);
-                    mCaptureThread->mLocalBufferList.push_back(result->output_buffers->buffer);
-                }
+                HAL_LOGD("not in capture, just discard frame:%d", result->frame_number);
+                mLocalBufferList.push_back(result->output_buffers[0].buffer);
             }
         }
         return;
@@ -2301,6 +2280,10 @@ void SprdCamera3Capture::dumpImg(void* addr,int size,int frameId)
 int SprdCamera3Capture::_flush(const struct camera3_device *device)
 {
     int rc=0;
+    HAL_LOGD("E");
+
+    HAL_LOGD("flush, mCaptureMsgList.size=%d, mSavedRequestList.size:%d",
+            mCaptureThread->mCaptureMsgList.size(), mSavedRequestList.size());
 
     SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
     rc = hwiMain->flush(m_pPhyCamera[CAM_TYPE_MAIN].dev);
@@ -2313,7 +2296,7 @@ int SprdCamera3Capture::_flush(const struct camera3_device *device)
             mCaptureThread->requestExit();
         }
     }
-
+    HAL_LOGD("X");
     return rc;
 }
 
