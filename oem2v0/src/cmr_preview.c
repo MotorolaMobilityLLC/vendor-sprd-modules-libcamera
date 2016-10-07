@@ -8471,8 +8471,13 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id, struct i
 	}
 
 	/*save original cap size*/
-	prev_cxt->cap_org_size.width  = img_cap->dst_img_size.width;
-	prev_cxt->cap_org_size.height = img_cap->dst_img_size.height;
+	if (prev_cxt->prev_param.video_snapshot_type == VIDEO_SNAPSHOT_VIDEO) {
+		prev_cxt->cap_org_size.width  = prev_cxt->actual_video_size.width;
+		prev_cxt->cap_org_size.height = prev_cxt->actual_video_size.height;
+	} else {
+		prev_cxt->cap_org_size.width  = img_cap->dst_img_size.width;
+		prev_cxt->cap_org_size.height = img_cap->dst_img_size.height;
+	}
 	CMR_LOGI("cap_orig_size %d %d", prev_cxt->cap_org_size.width, prev_cxt->cap_org_size.height);
 
 exit:

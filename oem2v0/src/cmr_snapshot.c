@@ -4909,13 +4909,7 @@ cmr_int cmr_snapshot_receive_data(cmr_handle snapshot_handle, cmr_int evt, void*
 						src_vir, dst_vir, width, height, proc_param_ptr->channel_zoom_mode);
 					cmr_copy((void *)dst_vir, (void *)src_vir, width * height);
 
-					if (ZOOM_POST_PROCESS == proc_param_ptr->channel_zoom_mode) {
-						src_vir = (unsigned long)chn_data.yaddr_vir + width * height;
-					} else if (ZOOM_POST_PROCESS_WITH_TRIM == proc_param_ptr->channel_zoom_mode) {
-						src_vir = (unsigned long)chn_data.yaddr_vir + proc_param_ptr->max_size.width * proc_param_ptr->max_size.height;
-					} else {
-						src_vir = (unsigned long)chn_data.yaddr_vir + act_width * act_height;
-					}
+					src_vir = (unsigned long)chn_data.yaddr_vir + width * height;
 
 					dst_vir = (unsigned long)cxt->req_param.post_proc_setting.chn_out_frm[0].addr_vir.addr_u;
 					CMR_LOGI("uv src_vir = %lx dst_vir = %lx width %d height %d act_width %d act_height %d max_size.width %d max_size.height %d",
