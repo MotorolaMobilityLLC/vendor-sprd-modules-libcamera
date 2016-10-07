@@ -138,7 +138,6 @@ struct awb_ctrl_callback_in {
 };
 
 typedef cmr_int (*awb_callback)(cmr_handle handle, cmr_u32 cb_type, struct awb_ctrl_callback_in *input);
-typedef cmr_int (*match_data_ctrl)(cmr_handle handler, struct match_data_param *in_ptr);
 
 struct awb_ctrl_init_in {
 	cmr_handle caller_handle;
@@ -164,7 +163,6 @@ struct awb_ctrl_init_in {
 	cmr_u32 lsc_otp_width;
 	cmr_u32 lsc_otp_height;
 	awb_callback awb_cb;
-	match_data_ctrl match_ctrl;
 	void *priv_handle;
 };
 

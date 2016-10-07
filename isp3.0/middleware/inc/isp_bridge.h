@@ -21,6 +21,44 @@
 
 #include "isp_common_types.h"
 
+enum isp_br_ctrl_cmd_type {
+	GET_MATCH_AE_DATA,
+	SET_MATCH_AE_DATA,
+	GET_MATCH_AWB_DATA,
+	SET_MATCH_AWB_DATA,
+};
+
+struct awb_match_data {
+	struct isp_awb_gain gain;
+	struct isp_awb_gain gain_balanced;
+	struct isp_awb_gain gain_flash_off;
+	struct isp_awb_gain gain_capture;
+	cmr_u32 ct;
+	cmr_u32 ct_flash_off;
+	cmr_u32 ct_capture;
+	cmr_u32 is_update;
+	cmr_u16 light_source;
+	cmr_u32 awb_states;
+	cmr_u16 awb_decision;
+};
+
+struct ae_match_data {
+	cmr_u32 iso;
+	cmr_u32 exif_iso;
+	cmr_u32 exposure_time;
+	cmr_u32 exposure_line;
+	cmr_u32 sensor_ad_gain;
+	cmr_u32 isp_d_gain;
+	cmr_u16 uw_cur_fps;
+	cmr_s32 bv_val;
+	cmr_u8 uc_sensor_mode;
+};
+
+struct match_data_param {
+	struct awb_match_data awb_data;
+	struct ae_match_data ae_data;
+};
+
 cmr_int isp_br_init(cmr_int sensor_id, cmr_handle isp_3a_handle);
 cmr_int isp_br_deinit(void);
 cmr_int isp_br_ioctrl(cmr_int sensor_id, cmr_int cmd, void *in, void *out);

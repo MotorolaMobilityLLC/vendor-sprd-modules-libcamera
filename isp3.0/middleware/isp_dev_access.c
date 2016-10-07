@@ -685,7 +685,7 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	else if (resolution_ptr->sensor_output_size.w < resolution_ptr->sensor_max_size.w)
 		tSecnarioInfo.tSensorInfo.ucSensorMode = 1;
 
-	if(ISP_CAP_MODE_HIGHISO == param_ptr->common_in.capture_mode ||
+	if (ISP_CAP_MODE_HIGHISO == param_ptr->common_in.capture_mode ||
 		ISP_CAP_MODE_BURST == param_ptr->common_in.capture_mode) {
 #if VIDEO_USE
 		/*decrease isp scaling bandwith*/
@@ -734,7 +734,7 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 		img_buf_param.img_id = ISP_IMG_STILL_CAPTURE;
 	}
 	img_buf_param.format = ISP_OUT_IMG_YUY2;
-	if(ISP_CAP_MODE_HIGHISO == param_ptr->common_in.capture_mode
+	if (ISP_CAP_MODE_HIGHISO == param_ptr->common_in.capture_mode
 		|| ISP_CAP_MODE_DRAM == param_ptr->common_in.capture_mode
 		|| ISP_CAP_MODE_BURST == param_ptr->common_in.capture_mode) {
 		img_buf_param.format = ISP_OUT_IMG_NV12;
@@ -831,8 +831,8 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	awb_gain_info.b = param_ptr->hw_cfg.awb_gain_balanced.b;
 	ret = isp_dev_cfg_awb_gain_balanced(cxt->isp_driver_handle, &awb_gain_info);
 
-	if(ISP_CAP_MODE_HIGHISO == param_ptr->common_in.capture_mode
-		|| ISP_CAP_MODE_BURST == param_ptr->common_in.capture_mode) {
+	if (ISP_CAP_MODE_HIGHISO == param_ptr->common_in.capture_mode ||
+	    ISP_CAP_MODE_BURST == param_ptr->common_in.capture_mode) {
 		/*set still image buffer format*/
 		memset(&img_buf_param, 0, sizeof(img_buf_param));
 
@@ -1218,14 +1218,14 @@ cmr_int isp_dev_access_cap_buf_cfg(cmr_handle isp_dev_handle, struct isp_dev_img
 	cmr_int                                ret = ISP_SUCCESS;
 	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 	struct isp_img_mem                     img_mem;
-	cmr_u32                 			   i;
+	cmr_u32                                i;
 
 	ISP_CHECK_HANDLE_VALID(isp_dev_handle);
 	memset(&img_mem, 0, sizeof(struct isp_img_mem));
 
 	ISP_LOGI("count %d", parm->count);
 	for (i = 0; i < parm->count; i++) {
-		if(parm->img_fd[i].y == 0 || parm->addr_vir[i].chn0 == 0)
+		if (parm->img_fd[i].y == 0 || parm->addr_vir[i].chn0 == 0)
 			continue;
 		img_mem.img_fmt = parm->img_fmt;
 		img_mem.channel_id = parm->channel_id;

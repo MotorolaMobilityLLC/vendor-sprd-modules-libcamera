@@ -26,6 +26,7 @@
 #include "allib_awb_errcode.h"
 #include "alwrapper_awb.h"
 #include "isp_mlog.h"
+#include "isp_bridge.h"
 
 /**************************************** MACRO DEFINE *****************************************/
 #define LIBRARY_PATH "libalAWBLib.so"
@@ -44,16 +45,16 @@ struct awb_altek_lib_ops {
 struct awb_altek_context {
 	cmr_u32 camera_id;
 	cmr_u32 is_inited;
+	cmr_u32 is_master;
 	cmr_handle caller_handle;
 	cmr_handle altek_lib_handle;
 	cmr_u32 is_lock;
 	cmr_u32 is_bypass;
 	awb_callback callback;
-	match_data_ctrl match_ctrl;
 	struct awb_altek_lib_ops ops;
 	struct isp_awb_gain cur_gain;
 	struct awb_ctrl_work_param work_mode;
-	struct allib_awb_runtime_obj_t  lib_func;
+	struct allib_awb_runtime_obj_t lib_func;
 	struct allib_awb_output_data_t cur_process_out;
 	struct al3awrapper_stats_awb_t awb_stats;
 	struct awb_ctrl_recover_param recover;
@@ -62,20 +63,9 @@ struct awb_altek_context {
 	cmr_s8 exif_debug_info[AWB_EXIF_DEBUG_INFO_SIZE];
 };
 /*********************************************END***********************************************/
-static cmr_int awbaltek_load_library(cmr_handle adpt_handle);
-static cmr_int awbaltek_unload_library(cmr_handle adpt_handle);
-static cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr, struct awb_ctrl_init_out *output_ptr);
-static cmr_int awbaltek_deinit(cmr_handle adpte_handle);
-static cmr_int awbaltek_set_workmode(cmr_handle adpt_handle, enum awb_ctrl_cmd cmd, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr);
-static cmr_int awbaltek_set_face(cmr_handle adpt_handle, enum awb_ctrl_cmd cmd, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr);
-static cmr_int awbaltek_open_pre_flash(cmr_handle adpt_handle);
-static cmr_int awbaltek_ioctrl(cmr_handle adpt_handle, enum awb_ctrl_cmd cmd, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr);
-static cmr_int awbaltek_process(cmr_handle adpt_handle, struct awb_ctrl_process_in *input_ptr, struct awb_ctrl_process_out *output_ptr);
 static cmr_int awbaltek_convert_wb_mode(enum awb_ctrl_wb_mode input_mode);
-static cmr_int awbaltek_get_exif_info(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr);
-static cmr_int awbaltek_get_debug_info(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr);
 /*************************************INTERNAK FUNCTION ****************************************/
-cmr_int awbaltek_load_library(cmr_handle adpt_handle)
+static cmr_int awbaltek_load_library(cmr_handle adpt_handle)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
@@ -108,7 +98,7 @@ exit:
 	return ret;
 }
 
-cmr_int awbaltek_unload_library(cmr_handle adpt_handle)
+static cmr_int awbaltek_unload_library(cmr_handle adpt_handle)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
@@ -121,7 +111,7 @@ cmr_int awbaltek_unload_library(cmr_handle adpt_handle)
 	return ret;
 }
 
-cmr_int awbaltek_set_wb_mode(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+static cmr_int awbaltek_set_wb_mode(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
@@ -139,7 +129,7 @@ cmr_int awbaltek_set_wb_mode(cmr_handle adpt_handle, union awb_ctrl_cmd_in *inpu
 	return ret;
 }
 
-cmr_int awbaltek_set_dzoom(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+static cmr_int awbaltek_set_dzoom(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
@@ -156,14 +146,14 @@ cmr_int awbaltek_set_dzoom(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_
 	return ret;
 }
 
-cmr_int awbaltek_match_slave_awb_info(cmr_handle adpt_handle)
+static cmr_int awbaltek_match_slave_awb_info(cmr_handle adpt_handle)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
-	struct match_data_param match_param;
-	struct allib_awb_output_data_t match_output;
+	struct match_data_param                     match_param;
+	struct allib_awb_output_data_t              match_output;
 
-	if (cxt->work_mode.is_refocus && (0 == cxt->camera_id || 1 == cxt->camera_id)) {
+	if (cxt->work_mode.is_refocus && cxt->is_master) {
 		/* match */
 		ret = (cmr_int)cxt->lib_func.match(cxt->lib_func.awb, &match_output);
 		if (ret)
@@ -189,16 +179,18 @@ cmr_int awbaltek_match_slave_awb_info(cmr_handle adpt_handle)
 		match_param.awb_data.light_source = match_output.light_source;
 		match_param.awb_data.awb_states = match_output.awb_states;
 		match_param.awb_data.awb_decision = match_output.awb_decision;
-		match_param.op = SET_MATCH_AWB_DATA;
-		cxt->match_ctrl(cxt->caller_handle, &match_param);
-		ISP_LOGI("camera_id %d set match_data:%d %d %d,ct:%d", cxt->camera_id, match_param.awb_data.gain.r,
-				match_param.awb_data.gain.g, match_param.awb_data.gain.b, match_param.awb_data.ct);
+		isp_br_ioctrl(cxt->camera_id, SET_MATCH_AWB_DATA, &match_param, NULL);
+		ISP_LOGI("camera_id %d set match_data:%d %d %d,ct:%d", cxt->camera_id,
+			 match_param.awb_data.gain.r,
+			 match_param.awb_data.gain.g,
+			 match_param.awb_data.gain.b,
+			 match_param.awb_data.ct);
 	}
 
 	return ret;
 }
 
-cmr_int awbaltek_set_sof_frame_id(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+static cmr_int awbaltek_set_sof_frame_id(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
@@ -212,14 +204,12 @@ cmr_int awbaltek_set_sof_frame_id(cmr_handle adpt_handle, union awb_ctrl_cmd_in 
 		ISP_LOGE("failed to set sof frame id 0x%lx", ret);
 	}
 
-#ifdef CONFIG_CAMERA_DUAL_SYNC
 	awbaltek_match_slave_awb_info(cxt);
-#endif
 
 	return ret;
 }
 
-cmr_int awbaltek_set_lock(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+static cmr_int awbaltek_set_lock(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
@@ -247,7 +237,7 @@ exit:
 	return ret;
 }
 
-cmr_int awbaltek_set_unlock(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+static cmr_int awbaltek_set_unlock(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
@@ -265,7 +255,7 @@ exit:
 	return ret;
 }
 
-cmr_int awbaltek_set_flash_close(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+static cmr_int awbaltek_set_flash_close(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
@@ -283,7 +273,7 @@ exit:
 	return ret;
 }
 
-cmr_int awbaltek_set_ae_report(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+static cmr_int awbaltek_set_ae_report(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
@@ -328,7 +318,7 @@ exit:
 	return ret;
 }
 
-cmr_int awbaltek_set_af_report(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+static cmr_int awbaltek_set_af_report(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
@@ -346,7 +336,7 @@ exit:
 	return ret;
 }
 
-cmr_int awbaltek_set_slave_iso_speed(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+static cmr_int awbaltek_set_slave_iso_speed(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
@@ -364,7 +354,7 @@ exit:
 	return ret;
 }
 
-cmr_int awbaltek_set_bypass(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+static cmr_int awbaltek_set_bypass(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
@@ -390,7 +380,7 @@ exit:
 	return ret;
 }
 
-cmr_int awbaltek_set_flash_before_p(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+static cmr_int awbaltek_set_flash_before_p(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
@@ -406,7 +396,7 @@ exit:
 	return ret;
 }
 
-cmr_int awbaltek_set_flash_before_m(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+static cmr_int awbaltek_set_flash_before_m(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
@@ -431,7 +421,7 @@ exit:
 	return ret;
 }
 
-cmr_int awbaltek_get_gain(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+static cmr_int awbaltek_get_gain(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
@@ -458,7 +448,7 @@ exit:
 	return ret;
 }
 
-cmr_int awbaltek_get_ct(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+static cmr_int awbaltek_get_ct(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
@@ -481,7 +471,7 @@ exit:
 	return ret;
 }
 
-cmr_int awbaltek_get_exif_info(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+static cmr_int awbaltek_get_exif_info(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
@@ -509,7 +499,7 @@ exit:
 	return ret;
 }
 
-cmr_int awbaltek_get_debug_info(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+static cmr_int awbaltek_get_debug_info(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
@@ -535,7 +525,7 @@ exit:
 	return ret;
 }
 
-cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr, struct awb_ctrl_init_out *output_ptr)
+static cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr, struct awb_ctrl_init_out *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
@@ -581,9 +571,6 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 		goto exit;
 	}
 	cxt->callback = input_ptr->awb_cb;
-#ifdef CONFIG_CAMERA_DUAL_SYNC
-	cxt->match_ctrl = input_ptr->match_ctrl;
-#endif
 
 	/* initialize */
 	ret = (cmr_int)cxt->lib_func.initial(&cxt->lib_func);
@@ -628,9 +615,10 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 			ISP_LOGE("failed to set tuning file %lx", ret);
 		}
 	}
-#ifdef CONFIG_CAMERA_DUAL_SYNC
-	if (cxt->work_mode.is_refocus && (0 == cxt->camera_id || 1 == cxt->camera_id)) {
+
+	if (cxt->work_mode.is_refocus && cxt->is_master) {
 		set_otp_param.type = alawb_set_param_slave_calib_data;
+
 		if (0 == input_ptr->calibration_gain_slv.r
 			&& 0 == input_ptr->calibration_gain_slv.g
 			&& 0 == input_ptr->calibration_gain_slv.b) {
@@ -643,7 +631,8 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 			set_otp_param.para.awb_calib_data.calib_b_gain = (cmr_u16)input_ptr->calibration_gain_slv.b;
 		}
 		ISP_LOGI("slv otp gain %d %d %d", set_otp_param.para.awb_calib_data.calib_r_gain,
-			set_otp_param.para.awb_calib_data.calib_g_gain, set_otp_param.para.awb_calib_data.calib_b_gain);
+			set_otp_param.para.awb_calib_data.calib_g_gain,
+			set_otp_param.para.awb_calib_data.calib_b_gain);
 		ret = (cmr_int)cxt->lib_func.set_param(&set_otp_param, cxt->lib_func.awb);
 		if (ret) {
 			ISP_LOGE("failed to set otp %lx", ret);
@@ -659,7 +648,7 @@ cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *input_ptr
 			}
 		}
 	}
-#endif
+
 	/* get isp cfg */
 	get_isp_cfg.type = alawb_get_param_init_isp_config;
 	ret = (cmr_int)cxt->lib_func.get_param(&get_isp_cfg, cxt->lib_func.awb);
@@ -764,7 +753,7 @@ exit:
 	return ret;
 }
 
-cmr_int awbaltek_deinit(cmr_handle adpt_handle)
+static cmr_int awbaltek_deinit(cmr_handle adpt_handle)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
@@ -780,7 +769,7 @@ exit:
 	return ret;
 }
 
-cmr_int awbaltek_set_workmode(cmr_handle adpt_handle, enum awb_ctrl_cmd cmd, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+static cmr_int awbaltek_set_workmode(cmr_handle adpt_handle, enum awb_ctrl_cmd cmd, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
@@ -796,7 +785,7 @@ cmr_int awbaltek_set_workmode(cmr_handle adpt_handle, enum awb_ctrl_cmd cmd, uni
 	return ret;
 }
 
-cmr_int awbaltek_set_face(cmr_handle adpt_handle, enum awb_ctrl_cmd cmd, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+static cmr_int awbaltek_set_face(cmr_handle adpt_handle, enum awb_ctrl_cmd cmd, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
@@ -838,7 +827,7 @@ exit:
 	return ret;
 }
 
-cmr_int awbaltek_open_pre_flash(cmr_handle adpt_handle)
+static cmr_int awbaltek_open_pre_flash(cmr_handle adpt_handle)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
@@ -871,7 +860,7 @@ cmr_int awbaltek_open_pre_flash(cmr_handle adpt_handle)
 	return ret;
 }
 
-cmr_int awbaltek_ioctrl(cmr_handle adpt_handle, enum awb_ctrl_cmd cmd, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+static cmr_int awbaltek_ioctrl(cmr_handle adpt_handle, enum awb_ctrl_cmd cmd, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
@@ -961,7 +950,7 @@ exit:
 	return ret;
 }
 
-cmr_int awbaltek_update_ae_report(cmr_handle adpt_handle, struct isp3a_ae_info *ae_info)
+static cmr_int awbaltek_update_ae_report(cmr_handle adpt_handle, struct isp3a_ae_info *ae_info)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
@@ -1003,7 +992,7 @@ cmr_int awbaltek_update_ae_report(cmr_handle adpt_handle, struct isp3a_ae_info *
 	return ret;
 }
 
-cmr_int awbaltek_process(cmr_handle adpt_handle, struct awb_ctrl_process_in *input_ptr, struct awb_ctrl_process_out *output_ptr)
+static cmr_int awbaltek_process(cmr_handle adpt_handle, struct awb_ctrl_process_in *input_ptr, struct awb_ctrl_process_out *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
@@ -1088,7 +1077,7 @@ exit:
 	return ret;
 }
 
-cmr_int awbaltek_convert_wb_mode(enum awb_ctrl_wb_mode input_mode)
+static cmr_int awbaltek_convert_wb_mode(enum awb_ctrl_wb_mode input_mode)
 {
 	cmr_int                                     wb_mode = AL3A_WB_MODE_AUTO;
 
@@ -1139,7 +1128,7 @@ cmr_int awbaltek_convert_wb_mode(enum awb_ctrl_wb_mode input_mode)
 	return wb_mode;
 }
 /*************************************EXTERNAL FUNCTION ***************************************/
-cmr_int awb_altek_adpt_init(void *input_ptr, void *output_ptr, cmr_handle *adpt_handle)
+static cmr_int awb_altek_adpt_init(void *input_ptr, void *output_ptr, cmr_handle *adpt_handle)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_ctrl_init_in                     *input_param_ptr = (struct awb_ctrl_init_in *)input_ptr;
@@ -1163,6 +1152,9 @@ cmr_int awb_altek_adpt_init(void *input_ptr, void *output_ptr, cmr_handle *adpt_
 	cxt->caller_handle = input_param_ptr->caller_handle;
 	cxt->camera_id = input_param_ptr->camera_id;
 	cxt->work_mode.is_refocus = input_param_ptr->is_refocus;
+	if (0 == cxt->camera_id || 1 == cxt->camera_id)
+		cxt->is_master = 1;
+
 	ret = awbaltek_load_library((cmr_handle)cxt);
 	if (ret) {
 		ISP_LOGE("failed to load altek library");
@@ -1184,7 +1176,7 @@ exit:
 	return ret;
 }
 
-cmr_int awb_altek_adpt_deinit(cmr_handle adpt_handle)
+static cmr_int awb_altek_adpt_deinit(cmr_handle adpt_handle)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
@@ -1206,7 +1198,7 @@ exit:
 	return ret;
 }
 
-cmr_int awb_altek_adpt_ioctrl(cmr_handle adpt_handle, cmr_int cmd, void *input_ptr, void *output_ptr)
+static cmr_int awb_altek_adpt_ioctrl(cmr_handle adpt_handle, cmr_int cmd, void *input_ptr, void *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	union awb_ctrl_cmd_in                       *input_param_ptr = (union awb_ctrl_cmd_in *)input_ptr;
@@ -1222,7 +1214,7 @@ exit:
 	return ret;
 }
 
-cmr_int awb_altek_adpt_process(cmr_handle adpt_handle, void *input_ptr, void *output_ptr)
+static cmr_int awb_altek_adpt_process(cmr_handle adpt_handle, void *input_ptr, void *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct awb_ctrl_process_in                  *input_param_ptr = (struct awb_ctrl_process_in *)input_ptr;

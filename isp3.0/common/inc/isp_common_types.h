@@ -33,7 +33,7 @@ extern "C" {
 #define cmr_usleep(x)					usleep((x))
 
 #ifndef MIN
-#define MIN(x,y) (((x)<(y))?(x):(y))
+#define MIN(x, y) (((x) < (y))?(x):(y))
 #endif
 
 #define ISP_CHECK_HANDLE_VALID(handle) \
@@ -41,7 +41,7 @@ extern "C" {
 		if (!handle) { \
 			return -ISP_ERROR; \
 		} \
-	} while(0)
+	} while (0)
 
 #define ISP_AE_BLOCK 256
 /**********************************ENUM************************************/
@@ -94,7 +94,7 @@ enum isp3a_work_mode {
 };
 
 enum isp3a_opmode_idx {
-	ISP3A_OPMODE_NORMALLV =0,
+	ISP3A_OPMODE_NORMALLV = 0,
 	ISP3A_OPMODE_AF_FLASH_AF,
 	ISP3A_OPMODE_FLASH_AE,
 	ISP3A_OPMODE_MAX,
@@ -146,19 +146,19 @@ struct isp3a_ae_report {
 
 	void *y_stats;     // HW3a AE Y stats addr
 	cmr_u32 sys_sof_index;     // current SOF ID, should be maintained by framework
-	cmr_int  bv_delta;        // delta BV from converge
+	cmr_int bv_delta;        // delta BV from converge
 
 	cmr_u32 debug_data_size;
 	void *debug_data;
 	void *rgb_stats;
 };
 
-struct isp_ae_statistic_info{
+struct isp_ae_statistic_info {
 	cmr_u32 r_info[ISP_AE_BLOCK];
 	cmr_u32 g_info[ISP_AE_BLOCK];
 	cmr_u32 b_info[ISP_AE_BLOCK];
 	cmr_u32 y_hist[ISP_AE_BLOCK];
- };
+};
 
 struct isp3a_ae_info {
 	cmr_u32 ae_ctrl_converged_flag; //0:non converge,  1: converged
@@ -169,7 +169,6 @@ struct isp3a_ae_info {
 	struct isp3a_ae_report report_data;
 	cmr_u8 valid;
 };
-
 
 struct isp3a_awb_his {
 	cmr_u8 benable;//bEnable;
@@ -189,8 +188,7 @@ struct isp3a_awb_his {
 	cmr_u32 dhisinterp;//dHisInterp;
 };
 
-struct isp3a_hw_region
-{
+struct isp3a_hw_region {
 	cmr_u16 border_ratio_X; // 100% use of current sensor cropped area
 	cmr_u16 border_ratio_Y; // 100% use of current sensor cropped area
 	cmr_u16 blk_num_X; // fixed value for AE lib
@@ -199,8 +197,7 @@ struct isp3a_hw_region
 	cmr_u16 offset_ratio_Y; // 0% offset of top of current sensor cropped area
 };
 
-struct isp3a_ae_hw_cfg
-{
+struct isp3a_ae_hw_cfg {
 	cmr_u32 tokenID;
 	struct isp3a_hw_region region;
 };
@@ -329,45 +326,6 @@ struct isp3a_statistics_data {
 	void *addr;
 };
 
-struct awb_match_data {
-	struct isp_awb_gain gain;
-	struct isp_awb_gain gain_balanced;
-	struct isp_awb_gain gain_flash_off;
-	struct isp_awb_gain gain_capture;
-	cmr_u32 ct;
-	cmr_u32 ct_flash_off;
-	cmr_u32 ct_capture;
-	cmr_u32 is_update;
-	cmr_u16 light_source;
-	cmr_u32 awb_states;
-	cmr_u16 awb_decision;
-};
-
-struct ae_match_data {
-	cmr_u32 iso;
-	cmr_u32 exif_iso;
-	cmr_u32 exposure_time;
-	cmr_u32 exposure_line;
-	cmr_u32 sensor_ad_gain;
-	cmr_u32 isp_d_gain;
-	cmr_u16 uw_cur_fps;
-	cmr_s32 bv_val;
-	cmr_u8 uc_sensor_mode;
-};
-
-enum match_data_op {  /* enum isp_match_data_op */
-	GET_MATCH_AE_DATA,
-	SET_MATCH_AE_DATA,
-	GET_MATCH_AWB_DATA,
-	SET_MATCH_AWB_DATA,
-};
-
-struct match_data_param {
-	enum match_data_op op;
-	struct awb_match_data awb_data;
-	struct ae_match_data ae_data;
-};
-
 struct isp3a_pdaf_altek_report_t {
 	cmr_u32 token_id;
 	cmr_u32 frame_id;
@@ -387,7 +345,7 @@ struct isp_bin_info {
 	void *isp_shading_addr;
 	cmr_u32 isp_shading_size;
 	cmr_u32 size;
-	struct sensor_otp_iso_awb_info * otp_data_addr;
+	struct sensor_otp_iso_awb_info *otp_data_addr;
 	void *isp_caf_addr;
 	cmr_u32 isp_caf_size;
 };
@@ -395,10 +353,9 @@ struct isp_bin_info {
 typedef cmr_int (*isp3a_callback) (cmr_handle handle, cmr_u32 cb_type,
 				  void *param_ptr, cmr_u32 param_len);
 
-typedef void (*isp3a_evt_cb)(cmr_int evt, void* data, void* privdata);
+typedef void (*isp3a_evt_cb)(cmr_int evt, void *data, void *privdata);
 
 typedef cmr_int (*isp3a_release_buf)(cmr_handle handle, cmr_int type, struct isp3a_statistics_data *buf_ptr);
-
 
 #ifdef __cplusplus
 }
