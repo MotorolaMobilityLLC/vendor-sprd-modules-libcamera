@@ -59,6 +59,7 @@ struct match_data_param {
 	struct ae_match_data ae_data;
 };
 
+cmr_handle isp_br_get_3a_handle(cmr_int sensor_id);
 cmr_int isp_br_init(cmr_int sensor_id, cmr_handle isp_3a_handle);
 cmr_int isp_br_deinit(void);
 cmr_int isp_br_ioctrl(cmr_int sensor_id, cmr_int cmd, void *in, void *out);

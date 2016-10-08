@@ -936,6 +936,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 	awb_input.awb_cb = isp3a_awb_callback;
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 	awb_input.is_refocus = cxt->is_refocus;
+	awb_input.is_master = cxt->is_master;
 	awb_input.tuning_param_slv = input_ptr->bin_info_slv.awb_addr;
 	if (cxt->dual_otp) {
 		awb_input.calibration_gain_slv.r = cxt->dual_otp->slave_isp_awb_info.gain_r;
@@ -1008,6 +1009,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 	ae_input.preview_work.resolution.sensor_size_index = 1;
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
+	ae_input.is_master = cxt->is_master;
 	ae_input.preview_work.is_refocus = cxt->is_refocus;
 	ae_input.preview_work_slv.is_refocus = cxt->is_refocus;
 	ae_input.ops_in.set_again_slv = isp3a_ae_set_gain_slv;
@@ -3400,7 +3402,7 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 					    NULL,
 					    &match_param);
 		if (ret) {
-			ISP_LOGE("failed to get match_data");
+			ISP_LOGE("failed to get awb match_data");
 		}
 
 		sof_cfg_info.is_update = 0;
@@ -3415,7 +3417,7 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 			sof_cfg_info.is_update = 1;
 		}
 
-		ISP_LOGI("camera id %d, get match out awb_gain,%d,%d,%d,gain_balanced,%d,%d,%d,ct:%d, updata:%d",
+		ISP_LOGI("camera id %d, get match awb_gain,%d,%d,%d,balanced,%d,%d,%d,ct:%d, updata:%d",
 			cxt->camera_id,
 			match_param.awb_data.gain.r,
 			match_param.awb_data.gain.g,

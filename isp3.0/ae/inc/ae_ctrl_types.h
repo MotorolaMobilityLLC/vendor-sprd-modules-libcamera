@@ -73,6 +73,7 @@ enum ae_ctrl_cmd {
 	AE_CTRL_SET_AF_REPORT,
 	AE_CTRL_SET_CONVERGENCE_REQ,
 	AE_CTRL_SET_SNAPSHOT_FINISHED,
+	AE_CTRL_SET_MASTER,
 	AE_CTRL_GET_DEBUG_DATA,
 	AE_CTRL_GET_EXIF_DATA,
 	AE_CTRL_GET_EXT_DEBUG_INFO,
@@ -468,12 +469,13 @@ struct ae_ctrl_init_out {
 
 struct ae_ctrl_init_in {
 	cmr_u32 camera_id;
+	cmr_u8 is_master;
 	void *tuning_param;
 	struct ae_ctrl_otp_data otp_data;
 	struct ae_ctrl_otp_data otp_data_slv;
 	cmr_handle caller_handle;
-	struct ae_ctrl_ops_in  ops_in;
-	struct isp_lib_config  lib_param;
+	struct ae_ctrl_ops_in ops_in;
+	struct isp_lib_config lib_param;
 	struct ae_ctrl_param_sensor_static_info sensor_static_info;
 	struct ae_ctrl_param_work preview_work;
 	struct ae_ctrl_param_sensor_static_info sensor_static_info_slv; // slave sensor

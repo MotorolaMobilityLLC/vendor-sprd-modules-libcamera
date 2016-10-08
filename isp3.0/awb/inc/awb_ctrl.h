@@ -56,6 +56,7 @@ enum awb_ctrl_cmd {
 	AWB_CTRL_CMD_GET_EXIF_DEBUG_INFO,//to jpeg exif
 	AWB_CTRL_CMD_GET_DEBUG_INFO,//to jpeg tail
 	AWB_CTRL_CMD_SET_SLAVE_ISO_SPEED,
+	AWB_CTRL_CMD_SET_MASTER,
 	AWB_CTRL_CMD_MAX
 };
 
@@ -145,7 +146,8 @@ struct awb_ctrl_init_in {
 	cmr_u16 is_refocus;
 	cmr_u32 base_gain;
 	cmr_u32 awb_enable;
-	cmr_int  wb_mode;
+	cmr_int wb_mode;
+	cmr_u8 is_master;
 //	enum awb_ctrl_stat_img_format stat_img_format;
 //	struct awb_ctrl_size stat_img_size;
 //	struct awb_ctrl_size stat_win_size;
@@ -218,6 +220,7 @@ union awb_ctrl_cmd_in {
 	cmr_u32 bypass;
 	cmr_u32 sof_frame_idx;
 	cmr_u16 iso_speed;
+	cmr_u8 is_master;
 	struct awb_ctrl_wbmode_param wb_mode;
 	struct isp_face_area face_info;
 	struct awb_ctrl_work_param work_param;

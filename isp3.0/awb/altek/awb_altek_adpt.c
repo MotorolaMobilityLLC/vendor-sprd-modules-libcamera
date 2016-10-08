@@ -45,7 +45,7 @@ struct awb_altek_lib_ops {
 struct awb_altek_context {
 	cmr_u32 camera_id;
 	cmr_u32 is_inited;
-	cmr_u32 is_master;
+	cmr_u8 is_master;
 	cmr_handle caller_handle;
 	cmr_handle altek_lib_handle;
 	cmr_u32 is_lock;
@@ -417,6 +417,18 @@ static cmr_int awbaltek_set_flash_before_m(cmr_handle adpt_handle, union awb_ctr
 	} else {
 		ISP_LOGI("AWB has locked!");
 	}
+exit:
+	return ret;
+}
+
+static cmr_int awbaltek_set_master(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
+
+	UNUSED(output_ptr);
+	cxt->is_master = input_ptr->is_master;
+	ISP_LOGI("camera_id %d master = %d", cxt->camera_id, cxt->is_master);
 exit:
 	return ret;
 }
@@ -901,6 +913,9 @@ static cmr_int awbaltek_ioctrl(cmr_handle adpt_handle, enum awb_ctrl_cmd cmd, un
 	case AWB_CTRL_CMD_LOCK:
 		ret = awbaltek_set_lock(adpt_handle, input_ptr, output_ptr);
 		break;
+	case AWB_CTRL_CMD_SET_MASTER:
+		ret = awbaltek_set_master(adpt_handle, input_ptr, output_ptr);
+		break;
 	case AWB_CTRL_CMD_UNLOCK:
 		ret = awbaltek_set_unlock(adpt_handle, input_ptr, output_ptr);
 		break;
@@ -1152,8 +1167,7 @@ static cmr_int awb_altek_adpt_init(void *input_ptr, void *output_ptr, cmr_handle
 	cxt->caller_handle = input_param_ptr->caller_handle;
 	cxt->camera_id = input_param_ptr->camera_id;
 	cxt->work_mode.is_refocus = input_param_ptr->is_refocus;
-	if (0 == cxt->camera_id || 1 == cxt->camera_id)
-		cxt->is_master = 1;
+	cxt->is_master = input_param_ptr->is_master;
 
 	ret = awbaltek_load_library((cmr_handle)cxt);
 	if (ret) {

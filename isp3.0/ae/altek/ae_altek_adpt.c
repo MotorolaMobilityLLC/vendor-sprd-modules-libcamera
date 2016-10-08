@@ -218,7 +218,7 @@ struct aealtek_cxt {
 
 	cmr_s32 flash_skip_number;
 	cmr_u16 is_refocus;
-	cmr_u16 is_master;
+	cmr_u8 is_master;
 	struct aealtek_script_info script_info;
 	struct aealtek_status prv_status;
 	struct aealtek_status cur_status;
@@ -4016,6 +4016,23 @@ exit:
 	return ret;
 }
 
+static cmr_int aealtek_set_master(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+
+	UNUSED(out_ptr);
+	if (!cxt_ptr) {
+		ISP_LOGE("param %p is NULL error!", cxt_ptr);
+		goto exit;
+	}
+	cxt_ptr->is_master = in_ptr->value;
+	ISP_LOGI("camera_id %d master = %d", cxt_ptr->camera_id, cxt_ptr->is_master);
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld !!!", ret);
+	return ret;
+}
+
 static cmr_int aealtek_get_flash_eb(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr)
 {
 	cmr_int ret = ISP_ERROR;
@@ -4335,8 +4352,6 @@ static cmr_int ae_altek_adpt_init(void *in, void *out, cmr_handle *handle)
 	struct ae_ctrl_init_in *in_ptr = (struct ae_ctrl_init_in *)in;
 	struct ae_ctrl_init_out *out_ptr = (struct ae_ctrl_init_out *)out;
 
-
-
 	if (!in_ptr || !out_ptr || !handle) {
 		ISP_LOGE("init param %p %p is null !!!", in_ptr, out_ptr);
 		ret = ISP_PARAM_NULL;
@@ -4356,8 +4371,7 @@ static cmr_int ae_altek_adpt_init(void *in, void *out, cmr_handle *handle)
 	cxt_ptr->caller_handle = in_ptr->caller_handle;
 	cxt_ptr->init_in_param = *in_ptr;
 	cxt_ptr->is_refocus = in_ptr->preview_work.is_refocus;
-	if (0 == cxt_ptr->camera_id || 1 == cxt_ptr->camera_id)
-		cxt_ptr->is_master = 1;
+	cxt_ptr->is_master = in_ptr->is_master;
 
 	ISP_LOGI("init frame %dx%d,lint_time=%d,index=%d",
 		cxt_ptr->init_in_param.preview_work.resolution.frame_size.w,
@@ -4550,6 +4564,9 @@ static cmr_int ae_altek_adpt_ioctrl(cmr_handle handle, cmr_int cmd, void *in, vo
 		break;
 	case AE_CTRL_SET_SNAPSHOT_FINISHED:
 		ret = aealtek_set_snapshot_finished(cxt_ptr, in_ptr, out_ptr);
+		break;
+	case AE_CTRL_SET_MASTER:
+		ret = aealtek_set_master(cxt_ptr, in_ptr, out_ptr);
 		break;
 	case AE_CTRL_GET_DEBUG_DATA:
 		ret = aealtek_get_debug_data(cxt_ptr, in_ptr, out_ptr);
