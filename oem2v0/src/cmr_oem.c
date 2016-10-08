@@ -5264,6 +5264,33 @@ cmr_int camera_isp_stop_video(cmr_handle oem_handle)
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}
+	if (HIGHISO_CAP_MODE == cxt->highiso_mode || cxt->burst_mode) {
+		int i;
+		cmr_int                         highiso_buf_num = 0;
+		cmr_int                         isp_raw_buf_num = 0;
+
+		highiso_buf_num = 1;
+		if(cxt->burst_mode) {
+			isp_raw_buf_num = 4;
+		} else {
+			isp_raw_buf_num = 3;
+		}
+		if (cxt->hal_free) {
+			cxt->hal_free(CAMERA_ISP_RAW_DATA,
+					&cxt->raw_buf_phys_addr[0],
+					&cxt->raw_buf_virt_addr[0],
+					&cxt->raw_buf_fd[0],
+					isp_raw_buf_num,
+					cxt->client_data);
+
+			cxt->hal_free(CAMERA_SNAPSHOT_HIGHISO,
+					&cxt->highiso_buf_phys_addr,
+					&cxt->highiso_buf_virt_addr,
+					&cxt->highiso_buf_fd,
+					highiso_buf_num,
+					cxt->client_data);
+		}
+	}
 	if (cxt->isp_cxt.is_work) {
 		ret = isp_video_stop(isp_cxt->isp_handle);
 		if (ret) {
