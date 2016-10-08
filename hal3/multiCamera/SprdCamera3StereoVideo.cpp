@@ -987,6 +987,8 @@ bool SprdCamera3StereoVideo::MuxerThread::threadLoop()
                 };
                 HAL_LOGW("MuxerThread Stopped, mMuxerMsgList.size=%d, mOldVideoRequestList.size:%d",
                     mMuxerMsgList.size(), mMuxer->mOldVideoRequestList.size());
+                mGpuApi->destroyRenderContext();
+                isInitRenderContest = false;
                 return false;
             }
                 break;

@@ -1145,6 +1145,8 @@ bool SprdCamera3Capture::CaptureThread::threadLoop()
         case CAPTURE_MSG_EXIT:
             {
                 //flush queue
+                mGpuApi->destroyRenderContext();
+                isInitRenderContest = false;
                 return false;
             }
             break;
