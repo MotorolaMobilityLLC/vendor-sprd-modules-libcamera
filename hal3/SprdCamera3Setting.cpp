@@ -3784,7 +3784,7 @@ SprdCamera3Setting::translateLocalToFwMetadata()
 		eisCrop[1] = s_setting[mCameraId].eiscrop_Info.crop[1];
 		eisCrop[2] = s_setting[mCameraId].eiscrop_Info.crop[2];
 		eisCrop[3] = s_setting[mCameraId].eiscrop_Info.crop[3];
-		ALOGI("eisCrop:[%d, %d, %d, %d]",eisCrop[0],eisCrop[1],eisCrop[2],eisCrop[3]);
+		HAL_LOGV("eis crop:[%d, %d, %d, %d]",eisCrop[0],eisCrop[1],eisCrop[2],eisCrop[3]);
 		camMetadata.update(ANDROID_SPRD_EIS_CROP, eisCrop, 4);
 	}
 	camMetadata.update(ANDROID_STATISTICS_FACE_DETECT_MODE, &(s_setting[mCameraId].statisticsInfo.face_detect_mode), 1);

@@ -157,6 +157,25 @@ int SprdCamera3RegularChannel::channelCbRoutine(uint32_t frame_number, int64_t t
 		return BAD_VALUE;
 	}
 
+#ifdef CONFIG_CAMERA_EIS
+	//stream reserved[0] used for save eis crop rect.
+	EIS_CROP_Tag eiscrop_Info = {0};
+	SPRD_DEF_Tag sprddefInfo;
+	CONTROL_Tag controlInfo;
+	mSetting->getSPRDDEFTag(&sprddefInfo);
+	mSetting->getCONTROLTag(&controlInfo);
+	//before used,set reserved[0] to null
+	stream->reserved[0] = NULL;
+	if (ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD == controlInfo.capture_intent &&
+			sprddefInfo.sprd_eis_enabled &&
+			stream->data_space == HAL_DATASPACE_UNKNOWN) {
+		mSetting->getEISCROPTag(&eiscrop_Info);
+		stream->reserved[0] = (void *)&eiscrop_Info;
+		HAL_LOGI("eis crop:[%d, %d, %d, %d]",eiscrop_Info.crop[0],
+			eiscrop_Info.crop[1],eiscrop_Info.crop[2],eiscrop_Info.crop[3]);
+	}
+#endif
+
 	result_info.is_urgent = false;
 	result_info.buffer = buffer;
 	result_info.frame_number = frame_number;
@@ -167,6 +186,10 @@ int SprdCamera3RegularChannel::channelCbRoutine(uint32_t frame_number, int64_t t
 
 	mChannelCB(&result_info, mUserData);
 
+#ifdef CONFIG_CAMERA_EIS
+	//after used, set stream reserved[0] to null
+	stream->reserved[0] = NULL;
+#endif
 	return NO_ERROR;
 }
 
