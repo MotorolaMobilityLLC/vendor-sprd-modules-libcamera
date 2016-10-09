@@ -476,7 +476,7 @@ SprdCameraHardware::SprdCameraHardware(int cameraId):
 	mVideoHeight(0),
 	mHalOem(NULL),
 	mIsSupportCallback(0),
-	mPdafRawHeapNum = 0
+	mPdafRawHeapNum(0)
 {
 	mIsPerformanceTestable = sprd_isPerformanceTestable();
 	if (mIsPerformanceTestable) {
@@ -3957,9 +3957,9 @@ int SprdCameraHardware::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u
 		*fd++ = mIspYUVReserved->fd;
 	} else if(type == CAMERA_PDAF_RAW_RESERVED) {
 		if(mPdafRawHeapReserved == NULL) {
-			memory = allocCameraMem(size, 1, true);
+			memory = allocCameraMem(size, true);
 			if (NULL == memory) {
-				HAL_LOGE("memory is null.");
+				LOGE("memory is null.");
 				goto mem_fail;
 			}
 			mPdafRawHeapReserved = memory;
@@ -4017,12 +4017,12 @@ int SprdCameraHardware::Callback_Malloc(enum camera_mem_cb_type type, cmr_u32 *s
 	return ret;
 }
 
-int SprdCamera3OEMIf::Callback_PdafRawFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_u32 sum)
+int SprdCameraHardware::Callback_PdafRawFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_u32 sum)
 {
 	cmr_u32 i;
 	Mutex::Autolock l(&mPrevBufLock);
 
-	HAL_LOGD("mPdafRawHeapNum %d sum %d", mPdafRawHeapNum, sum);
+	LOGD("mPdafRawHeapNum %d sum %d", mPdafRawHeapNum, sum);
 
 	for (i=0 ; i<mPdafRawHeapNum ; i++) {
 		if (NULL != mPdafRawHeapArray[i]) {
@@ -4035,23 +4035,23 @@ int SprdCamera3OEMIf::Callback_PdafRawFree(cmr_uint *phy_addr, cmr_uint *vir_add
 	return 0;
 }
 
-int SprdCamera3OEMIf::Callback_PdafRawMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd)
+int SprdCameraHardware::Callback_PdafRawMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd)
 {
 	sprd_camera_memory_t *memory = NULL;
 	cmr_int              i = 0;
 
-	HAL_LOGD("size %d sum %d mPdafRawHeapNum %d", size, sum, mPdafRawHeapNum);
+	LOGD("size %d sum %d mPdafRawHeapNum %d", size, sum, mPdafRawHeapNum);
 
 	*phy_addr = 0;
 	*vir_addr = 0;
 
 	if (mPdafRawHeapNum >= (kPdafRawBufferCount+1)) {
-		HAL_LOGE("error mPdafRawHeapNum %d", mPdafRawHeapNum);
+		LOGE("error mPdafRawHeapNum %d", mPdafRawHeapNum);
 		return BAD_VALUE;
 	}
 
 	if ((mPdafRawHeapNum+sum) >= (kPdafRawBufferCount+1)) {
-		HAL_LOGE("malloc is too more %d %d", mPdafRawHeapNum, sum);
+		LOGE("malloc is too more %d %d", mPdafRawHeapNum, sum);
 		return BAD_VALUE;
 	}
 
@@ -4060,10 +4060,10 @@ int SprdCamera3OEMIf::Callback_PdafRawMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint
 		//phy_addr += kPdafRawBufferCount;
 		//vir_addr += kPdafRawBufferCount;
 		for (i=mPdafRawHeapNum; i<(cmr_int)sum ; i++) {
-			memory = allocCameraMem(size, 1, true);
+			memory = allocCameraMem(size, true);
 
 			if (NULL == memory) {
-				HAL_LOGE("error memory is null.");
+				LOGE("error memory is null.");
 				goto mem_fail;
 			}
 
@@ -4075,7 +4075,7 @@ int SprdCamera3OEMIf::Callback_PdafRawMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint
 				*fd++ = (cmr_s32)memory->fd;
 		}
 	} else {
-		HAL_LOGD("Do not need malloc, malloced num %d,request num %d, request size 0x%x",
+		LOGD("Do not need malloc, malloced num %d,request num %d, request size 0x%x",
 				mPdafRawHeapNum, sum, size);
 		goto mem_fail;
 	}
