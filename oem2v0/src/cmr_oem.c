@@ -4058,8 +4058,7 @@ static cmr_int camera_res_deinit(cmr_handle oem_handle)
 cmr_int camera_init_internal(cmr_handle  oem_handle, cmr_uint is_autotest)
 {
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
-	cmr_int                        ret_res_deinit = CMR_CAMERA_SUCCESS;
-	cmr_int                        ret_sensor_deinit = CMR_CAMERA_SUCCESS;
+	cmr_int                        ret_deinit = CMR_CAMERA_SUCCESS;
 
 	ret = camera_sensor_init(oem_handle, is_autotest);
 	if (ret) {
@@ -4070,13 +4069,13 @@ cmr_int camera_init_internal(cmr_handle  oem_handle, cmr_uint is_autotest)
 	ret = camera_grab_init(oem_handle);
 	if (ret) {
 		CMR_LOGE("failed to init grab %ld", ret);
-		goto exit;
+		goto sensor_deinit;
 	}
 
 	ret = camera_res_init(oem_handle);
 	if (ret) {
 		CMR_LOGE("failed to init res %ld", ret);
-		goto sensor_deinit;
+		goto grab_deinit;
 	}
 
 	ret = camera_isp_init(oem_handle);
@@ -4088,15 +4087,21 @@ cmr_int camera_init_internal(cmr_handle  oem_handle, cmr_uint is_autotest)
 	goto exit;
 
 res_deinit:
-    ret_res_deinit = camera_res_deinit(oem_handle);
-    if(ret_res_deinit){
-        CMR_LOGE("failed to camera_res_deinit %ld", ret_res_deinit);
+    ret_deinit = camera_res_deinit(oem_handle);
+    if(ret_deinit){
+        CMR_LOGE("failed to camera_res_deinit %ld", ret_deinit);
+    }
+
+grab_deinit:
+    ret_deinit = camera_grab_deinit(oem_handle);
+    if(ret_deinit){
+        CMR_LOGE("failed to camera_grab_deinit %ld", ret_deinit);
     }
 
 sensor_deinit:
-    ret_sensor_deinit = camera_sensor_deinit(oem_handle);
-    if(ret_sensor_deinit){
-        CMR_LOGE("failed to camera_sensor_deinit %ld", ret_sensor_deinit);
+    ret_deinit = camera_sensor_deinit(oem_handle);
+    if(ret_deinit){
+        CMR_LOGE("failed to camera_sensor_deinit %ld", ret_deinit);
     }
 
 exit:
