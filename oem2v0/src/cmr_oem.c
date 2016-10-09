@@ -6630,7 +6630,8 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	if (1 == out_param_ptr->video_slowmotion_eb || 0 == sn_cxt->cur_sns_ex_info.pdaf_supported
 		|| CAMERA_ISP_TUNING_MODE == mode || CAMERA_UTEST_MODE == mode
 		|| CAMERA_AUTOTEST_MODE == mode || CAMERA_ISP_SIMULATION_MODE == mode
-		|| 1 == out_param_ptr->video_eb || 1 == is_raw_capture)
+		|| 1 == out_param_ptr->video_eb || 1 == is_raw_capture
+		|| 1 == out_param_ptr->is_dv)
 		out_param_ptr->pdaf_eb = 0;
 	else if (1 == out_param_ptr->preview_eb)
 		out_param_ptr->pdaf_eb = 1;
