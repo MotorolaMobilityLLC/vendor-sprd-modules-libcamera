@@ -2849,6 +2849,7 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 	struct isp_video_limit          isp_limit;
 	SENSOR_VAL_T                    val;
 	struct sensor_pdaf_info         pdaf_info;
+	char                            value[PROPERTY_VALUE_MAX];
 
 #if defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4)
 	struct isp_cali_param cali_param;
@@ -2983,6 +2984,11 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 			isp_param.ex_info.capture_skip_num);
 	CMR_LOGD("w %d h %d", isp_param.size.w,isp_param.size.h);
 
+	property_get("persist.sys.camera.raw.mode", value, "jpeg");
+	if (!strcmp(value, "raw")) {
+		isp_param.ex_info.pdaf_supported = 0;
+		CMR_LOGI("pdaf not support in raw mode");
+	}
 	if(1 == isp_param.ex_info.pdaf_supported) {
 
 		val.type = SENSOR_VAL_TYPE_GET_PDAF_INFO;
@@ -3014,10 +3020,8 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 
-	char                     refocus[PROPERTY_VALUE_MAX];
-
-	property_get("sys.cam.refocus", refocus, "0");
-	cxt->is_refocus_mode = atoi(refocus);//TBD
+	property_get("sys.cam.refocus", value, "0");
+	cxt->is_refocus_mode = atoi(value);//TBD
 	CMR_LOGI("refocus mode %d", cxt->is_refocus_mode);
 
 	isp_param.is_refocus = cxt->is_refocus_mode;
