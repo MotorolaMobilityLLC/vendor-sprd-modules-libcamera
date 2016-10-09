@@ -111,7 +111,7 @@ static cmr_int set_dt_param(struct class_fd *fd_handle, HDETECTION hDT)
 	int minFaceSize,maxFaceSize;
 
 	/* Sets the Face Detection Mode */
-	nRet = UDN_SetDtMode(hDT, DT_MODE_MOTION1);
+	nRet = UDN_SetDtMode(hDT, DT_MODE_MOTION3);
 	if (nRet != UDN_NORMAL) {
 		CMR_LOGE("UDN_SetDtMode() Error : %d", nRet);
 		return nRet;
@@ -128,7 +128,7 @@ static cmr_int set_dt_param(struct class_fd *fd_handle, HDETECTION hDT)
 
 	/* Sets the Angle settings for face detection */
 	anAngle[POSE_FRONT] = ANGLE_ULR15 | ANGLE_6;
-	anAngle[POSE_HALF_PROFILE] =ANGLE_ULR15 | ANGLE_6;
+	anAngle[POSE_HALF_PROFILE] = ANGLE_ULR15 | ANGLE_6;
 	anAngle[POSE_PROFILE] = ANGLE_NONE;
 	nMotionAngleExtension = ANGLE_ROTATION_EXT1| ANGLE_POSE_EXT1| DETECT_HEAD_NOUSE;
 	//nMotionAngleExtension = ANGLE_ROTATION_EXT1 | ANGLE_POSE_EXT0 | DETECT_HEAD_NOUSE;
@@ -140,27 +140,27 @@ static cmr_int set_dt_param(struct class_fd *fd_handle, HDETECTION hDT)
 	}
 
 	/* Sets the Face Detection Threshold */
-	nRet = UDN_SetDtThreshold(hDT, 580, 580);
+	nRet = UDN_SetDtThreshold(hDT, 580, 300);
 	if (nRet != UDN_NORMAL) {
 		CMR_LOGE("UDN_SetDtThreshold() Error : %d", nRet);
 		return nRet;
 	}
 
 	/* Sets the search density coefficient for face detection */
-	nRet = UDN_SetDtStep(hDT, 33, 33);
+	nRet = UDN_SetDtStep(hDT, 33, 27);
 	if (nRet != UDN_NORMAL) {
 		CMR_LOGE("UDN_SetDtStep() Error : %d", nRet);
 		return nRet;
 	}
 
 	/* Sets Motion Face Detection Refresh Count for each Motion mode */
-	nRet = UDN_SetDtRefreshCount(hDT, DT_MODE_MOTION1, 15);
+	nRet = UDN_SetDtRefreshCount(hDT, DT_MODE_MOTION3, 5);
 	if (nRet != UDN_NORMAL) {
 		CMR_LOGE("UDN_SetDtRefreshCount() Error : %d", nRet);
 		return nRet;
 	}
 	/* Sets Motion Face Detection Retry Count, Motion Head Detection Retry Count and Hold Count at lost time */
-	nRet = UDN_SetDtLostParam(hDT, 2, 3, 2);
+	nRet = UDN_SetDtLostParam(hDT, 8, 3, 2);
 	if (nRet != UDN_NORMAL) {
 		CMR_LOGE("UDN_SetDtLostParam() Error : %d", nRet);
 		return nRet;
