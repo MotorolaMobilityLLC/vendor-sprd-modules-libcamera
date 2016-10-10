@@ -1598,7 +1598,6 @@ static cmr_int aealtek_set_exp_comp(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 	struct ae_output_data_t *output_param_ptr = NULL;
 	enum ae_set_param_type_t type = 0;
 	struct ae_set_param_content_t *param_ct_ptr = NULL;
-	cmr_s32 lib_ev_comp = 0;
 
 	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
@@ -1611,40 +1610,15 @@ static cmr_int aealtek_set_exp_comp(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 	output_param_ptr = &cxt_ptr->lib_data.output_data;
 	param_ct_ptr = &in_param.set_param;
 
-	switch (in_ptr->exp_comp.level) {
-	case AE_CTRL_ATTR_LEVEL_1:
-		lib_ev_comp = -3000;
-		break;
-	case AE_CTRL_ATTR_LEVEL_2:
-		lib_ev_comp = -2000;
-		break;
-	case AE_CTRL_ATTR_LEVEL_3:
-		lib_ev_comp = -1000;
-		break;
-	case AE_CTRL_ATTR_LEVEL_4:
-		lib_ev_comp = 0;
-		break;
-	case AE_CTRL_ATTR_LEVEL_5:
-		lib_ev_comp = 1000;
-		break;
-	case AE_CTRL_ATTR_LEVEL_6:
-		lib_ev_comp = 2000;
-		break;
-	case AE_CTRL_ATTR_LEVEL_7:
-		lib_ev_comp = 3000;
-		break;
-	default:
-		ISP_LOGW("UI level = %ld", in_ptr->exp_comp.level);
-		break;
-	}
-	param_ct_ptr->ae_ui_evcomp = lib_ev_comp;
-	type = AE_SET_PARAM_UI_EVCOMP;
+	param_ct_ptr->aeui_evcomp_level = in_ptr->exp_comp.level;
+	type = AE_SET_PARAM_UI_EVCOMP_LEVEL;
 	in_param.ae_set_param_type = type;
 	if (obj_ptr && obj_ptr->set_param)
 		lib_ret = obj_ptr->set_param(&in_param, output_param_ptr, obj_ptr->ae);
 	if (lib_ret)
 		goto exit;
-	cxt_ptr->nxt_status.lib_ui_param.ui_ev_level = param_ct_ptr->ae_ui_evcomp;
+	ISP_LOGV("UI level = %ld, ev_value = %d", in_ptr->exp_comp.level, output_param_ptr->ui_EV_comp);
+	cxt_ptr->nxt_status.lib_ui_param.ui_ev_level = param_ct_ptr->aeui_evcomp_level;
 	cxt_ptr->update_list.is_ev = 1;
 	return ISP_SUCCESS;
 exit:
