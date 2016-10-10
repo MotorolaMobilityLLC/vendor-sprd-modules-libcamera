@@ -584,7 +584,7 @@ private:
 
 	sprd_camera_memory_t*           mHighIsoSnapshotHeapReserved;
 	sprd_camera_memory_t*           mIspYUVReserved;
-	sprd_camera_memory_t*           mIspRawDataReserved[4];
+	sprd_camera_memory_t*           mIspRawDataReserved[ISP_RAWBUF_NUM];
 
 	sprd_camera_memory_t*           mIspAntiFlickerHeapReserved;
 	sprd_camera_memory_t*           mIspRawAemHeapReserved[kISPB4awbCount];

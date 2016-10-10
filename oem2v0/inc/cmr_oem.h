@@ -293,9 +293,9 @@ struct camera_context {
 	cmr_uint                 b4awb_virt_addr[ISP_B4AWB_BUF_CNT];
 #endif
 	cmr_u8                   flag_highiso_alloc_mem;
-	cmr_s32                  raw_buf_fd[4];
-	cmr_uint                 raw_buf_phys_addr[4];
-	cmr_u64                 raw_buf_virt_addr[4];
+	cmr_s32                  raw_buf_fd[ISP_RAWBUF_NUM];
+	cmr_uint                 raw_buf_phys_addr[ISP_RAWBUF_NUM];
+	cmr_u64                  raw_buf_virt_addr[ISP_RAWBUF_NUM];
 	cmr_s32                  highiso_buf_fd;
 	cmr_uint                 highiso_buf_phys_addr;
 	cmr_uint                 highiso_buf_virt_addr;

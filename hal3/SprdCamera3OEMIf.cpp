@@ -507,7 +507,7 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf()
 		}
 	}
 
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < ISP_RAWBUF_NUM; i++) {
 		if (NULL != mIspRawDataReserved[i]) {
 			freeCameraMem(mIspRawDataReserved[i]);
 			mIspRawDataReserved[i] = NULL;
@@ -6492,8 +6492,8 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32
 				}
 				mIspRawDataReserved[i] = memory;
 			}
-			*phy_addr++ = 0;
-//			*vir_addr++ = (cmr_uint)mIspRawDataReserved[i]->data;
+//			*phy_addr++ = 0;
+			*phy_addr++ = (cmr_uint)mIspRawDataReserved[i]->data;
 			mIspRawDataReserved[i]->ion_heap->get_kaddr(kaddr, &ksize);
 			kaddr++;
 			*fd++ = mIspRawDataReserved[i]->fd;

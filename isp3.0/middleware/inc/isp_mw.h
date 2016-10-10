@@ -610,9 +610,9 @@ struct isp_video_start {
 	cmr_u32 capture_skip_num;
 	struct isp_sensor_fps_info sensor_fps;
 	void * tuning_ae_addr;
-	cmr_s32 raw_buf_fd[4];
-	cmr_uint raw_buf_phys_addr[4];
-	cmr_u64 raw_buf_virt_addr[4];
+	cmr_s32 raw_buf_fd[ISP_RAWBUF_NUM];
+	cmr_uint raw_buf_phys_addr[ISP_RAWBUF_NUM];
+	cmr_u64 raw_buf_virt_addr[ISP_RAWBUF_NUM];
 	cmr_u32  raw_buf_cnt;
 	cmr_uint raw_buf_size;
 	cmr_uint raw_buf_width;

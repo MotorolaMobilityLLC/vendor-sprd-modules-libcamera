@@ -96,6 +96,7 @@ static cmr_int isp_dev_kill_thread(isp_handle handle);
 static void* isp_dev_thread_proc(void *data);
 static cmr_int isp_dev_load_binary(isp_handle handle);
 static cmr_int isp_dev_set_user_working(isp_handle handle);
+static cmr_int camera_save_to_file_isp(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height, struct img_addr *addr);
 
 cmr_int isp_dev_init(struct isp_dev_init_info *init_param_ptr, isp_handle *handle)
 {
@@ -681,7 +682,10 @@ static void* isp_dev_thread_proc(void *data)
 	struct isp_file                   *file = NULL;
 	struct isp_statis_info            statis_info;
 	struct isp_statis_frame           statis_frame_buf;
+	struct isp_frm_info               img_frame;
 	struct isp_irq_info               irq_info;
+	struct img_addr 		  addr;
+	char			          value[PROPERTY_VALUE_MAX];
 
 	file = (struct isp_file *)data;
 	ISP_LOGI("isp dev thread file %p ", file);
@@ -719,7 +723,48 @@ static void* isp_dev_thread_proc(void *data)
 					isp_dev_handle_sof(file, &irq_info);
 					break;
 				case ISP_IRQ_CFG_BUF:
+					property_get("debug.camera.save.snpfile", value, "0");
+					if (atoi(value) == 11) {
+						addr.addr_y = irq_info.yaddr_vir;
+						addr.addr_u = irq_info.uaddr_vir;
+						addr.addr_v = irq_info.vaddr_vir;
+						ISP_LOGI("camera_save_to_file img_y_fd 0x%x vaddr 0x%lx uaddr 0x%lx paddr 0x%lx buf_size 0x%lx, width %d, height %d", 
+							 irq_info.img_y_fd, irq_info.yaddr_vir, irq_info.uaddr_vir, irq_info.yaddr, irq_info.length, file->init_param.width,
+							 file->init_param.height);
+						camera_save_to_file_isp(irq_info.frm_index, IMG_DATA_TYPE_YUV420,
+							file->init_param.width,
+							file->init_param.height,
+							&addr);
+					}
 					isp_dev_handle_cfg_grap_buf(file, &irq_info);
+					break;
+				case ISP_IRQ_DEBUG_RAW:
+					img_frame.channel_id = irq_info.channel_id;
+					img_frame.base = irq_info.base_id;
+					img_frame.frame_id = irq_info.base_id;
+					img_frame.yaddr = irq_info.yaddr;
+					img_frame.uaddr = irq_info.uaddr;
+					img_frame.vaddr = irq_info.vaddr;
+					img_frame.yaddr_vir = irq_info.yaddr_vir;
+					img_frame.uaddr_vir = irq_info.uaddr_vir;
+					img_frame.vaddr_vir = irq_info.vaddr_vir;
+					//img_frame.length= irq_info.buf_size.width*irq_info.buf_size.height;
+					img_frame.fd = irq_info.img_y_fd;
+					img_frame.sec = irq_info.time_stamp.sec;
+					img_frame.usec = irq_info.time_stamp.usec;
+					ISP_LOGI("high iso got raw frm vaddr 0x%lx paddr 0x%lx, width %d, height %d",
+						 irq_info.yaddr_vir, irq_info.yaddr, file->init_param.width, file->init_param.height);
+					property_get("debug.camera.save.snpfile", value, "0");
+					if (atoi(value) == 11) {
+						addr.addr_y = irq_info.yaddr;
+						ISP_LOGI("camera_save_to_file img_y_fd 0x%x vaddr 0x%lx uaddr 0x%lx paddr 0x%lx buf_size 0x%lx, width %d, height %d", 
+							 irq_info.img_y_fd, irq_info.yaddr_vir, irq_info.uaddr_vir, irq_info.yaddr, irq_info.length, file->init_param.width,
+							 file->init_param.height);
+						camera_save_to_file_isp(irq_info.frm_index, IMG_DATA_TYPE_RAW2,
+							file->init_param.width,
+							file->init_param.height,
+							&addr);
+					}
 					break;
 				default:
 					break;
@@ -2279,7 +2324,6 @@ cmr_int isp_dev_drammode_takepic(isp_handle handle, cmr_u32 is_start)
 	return ret;
 }
 
-#if 0
 cmr_int camera_save_to_file_isp(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height, struct img_addr *addr)
 {
 	cmr_int                      ret = 0;
@@ -2357,7 +2401,7 @@ cmr_int camera_save_to_file_isp(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, c
 			strcat(file_name, "_");
 			sprintf(tmp_str, "%d", index);
 			strcat(file_name, tmp_str);
-			strcat(file_name, ".mipi_raw");
+			strcat(file_name, "_mipi.raw");
 			ISP_LOGI("file name %s", file_name);
 
 			fp = fopen(file_name, "wb");
@@ -2367,6 +2411,21 @@ cmr_int camera_save_to_file_isp(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, c
 			}
 
 			fwrite((void *)addr->addr_y, 1, (uint32_t)(width * height * 5 / 4), fp);
+			fclose(fp);
+		} else if (IMG_DATA_TYPE_RAW2 == img_fmt) {
+			strcat(file_name, "_");
+			sprintf(tmp_str, "%d", index);
+			strcat(file_name, tmp_str);
+			strcat(file_name, "_mipi.raw");
+			ISP_LOGI("file name %s", file_name);
+
+			fp = fopen(file_name, "wb");
+			if (NULL == fp) {
+				ISP_LOGI("can not open file: %s", file_name);
+				return 0;
+			}
+
+			fwrite((void *)addr->addr_y, 1, (uint32_t)(width * height * 4 / 3), fp);
 			fclose(fp);
 		}
 		return 0;
@@ -2405,4 +2464,4 @@ cmr_int statistic_save_to_file_isp(struct isp_statis_frame_output *statis, struc
 
 	return 0;
 }
-#endif
+
