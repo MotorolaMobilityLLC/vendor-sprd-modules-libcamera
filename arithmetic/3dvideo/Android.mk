@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
@@ -25,3 +26,4 @@ LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
 LOCAL_SRC_FILES_32 := lib/$(LOCAL_MODULE).so
 LOCAL_SRC_FILES_64 := lib64/$(LOCAL_MODULE).so
 include $(BUILD_PREBUILT)
+endif

@@ -226,7 +226,9 @@ static cmr_int camera_preview_set_yimg_to_isp(cmr_handle oem_handle, cmr_u32 cam
 static cmr_int camera_preview_set_yuv_to_isp(cmr_handle oem_handle, cmr_u32 camera_id, struct yuv_info_t *yuv);
 static cmr_int camera_preview_set_pd_raw_to_isp(cmr_handle oem_handle, struct pd_raw_info *pd_raw);
 static cmr_int camera_preview_pd_raw_open_to_isp(cmr_handle oem_handle, struct pd_raw_open *pd_open);
+#ifdef CONFIG_FACE_BEAUTY
 static void camera_face_makeup(cmr_handle oem_handle, struct img_frm *src);
+#endif
 extern int32_t isp_calibration_get_info(struct isp_data_t *golden_info, struct isp_cali_info_t *cali_info);
 extern int32_t isp_calibration(struct isp_cali_param *param, struct isp_data_t *result);
 
@@ -3404,7 +3406,9 @@ cmr_int camera_snapshot_init(cmr_handle  oem_handle)
 	init_param.ops.get_sensor_info = camera_get_sensor_info;
 	init_param.ops.get_tuning_info = camera_get_tuning_info;
 	init_param.ops.stop_codec = camera_stop_codec;
+#ifdef CONFIG_FACE_BEAUTY
 	init_param.ops.face_makeup = camera_face_makeup;
+#endif
 	init_param.private_data = NULL;
 	ret = cmr_snapshot_init(&init_param, &snp_cxt->snapshot_handle);
 	if (ret) {
@@ -4302,6 +4306,7 @@ exit:
 	return ret;
 }
 
+#ifdef CONFIG_FACE_BEAUTY
 void camera_face_makeup(cmr_handle oem_handle, struct img_frm *src)
 {
 	if (!oem_handle || !src) {
@@ -4392,6 +4397,7 @@ void camera_face_makeup(cmr_handle oem_handle, struct img_frm *src)
 			CMR_LOGW("UCAM perfect no detect face");
 	}
 }
+#endif
 
 cmr_int camera_start_decode(cmr_handle  oem_handle, cmr_handle caller_handle, struct img_frm *src,
                                         struct img_frm *dst, struct cmr_op_mean *mean)

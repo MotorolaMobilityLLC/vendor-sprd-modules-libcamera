@@ -23,7 +23,11 @@
 #include <MemoryHeapIon.h>
 #include <binder/MemoryHeapBase.h>
 
+#ifdef CONFIG_GPU_PLATFORM_ROGUE
+#include <gralloc_public.h>
+#else
 #include <gralloc_priv.h>
+#endif
 #include "ion_sprd.h"
 
 #include "cmr_common.h"

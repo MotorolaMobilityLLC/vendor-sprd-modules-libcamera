@@ -37,7 +37,11 @@
 #include <string.h>
 #include <hardware/camera3.h>
 #include <system/camera_metadata.h>
+#ifdef CONFIG_GPU_PLATFORM_ROGUE
+#include <gralloc_public.h>
+#else
 #include <gralloc_priv.h>
+#endif
 #include <utils/Trace.h>
 #include <utils/Log.h>
 #include <utils/Errors.h>

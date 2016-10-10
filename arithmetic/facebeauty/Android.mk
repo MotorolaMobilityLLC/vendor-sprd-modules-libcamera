@@ -16,14 +16,14 @@
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),true)
 LOCAL_PATH := $(call my-dir)
 
-include $(CLEAR_VARS)
-LOCAL_MODULE := libts_face_beautify_hal
-LOCAL_MODULE_CLASS := SHARED_LIBRARIES
-LOCAL_MODULE_TAGS := optional
-LOCAL_MULTILIB := both
-LOCAL_MODULE_STEM_32 := libts_face_beautify_hal.so
-LOCAL_MODULE_STEM_64 := libts_face_beautify_hal.so
-LOCAL_SRC_FILES_32 := libts_face_beautify_hal.so
-LOCAL_SRC_FILES_64 := libts_face_beautify_hal_64.so
-include $(BUILD_PREBUILT)
+#include $(CLEAR_VARS)
+#LOCAL_MODULE := libts_face_beautify_hal
+#LOCAL_MODULE_CLASS := SHARED_LIBRARIES
+#LOCAL_MODULE_TAGS := optional
+#LOCAL_MULTILIB := both
+#LOCAL_MODULE_STEM_32 := libts_face_beautify_hal.so
+#LOCAL_MODULE_STEM_64 := libts_face_beautify_hal.so
+#LOCAL_SRC_FILES_32 := libts_face_beautify_hal.so
+#LOCAL_SRC_FILES_64 := libts_face_beautify_hal_64.so
+#include $(BUILD_PREBUILT)
 endif

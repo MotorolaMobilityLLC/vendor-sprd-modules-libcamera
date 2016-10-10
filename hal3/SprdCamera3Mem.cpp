@@ -34,7 +34,11 @@
 #include <sys/mman.h>
 #include <utils/Log.h>
 #include <utils/Errors.h>
+#ifdef CONFIG_GPU_PLATFORM_ROGUE
+#include <gralloc_public.h>
+#else
 #include <gralloc_priv.h>
+#endif
 #include "MemIon.h"
 #include <binder/MemoryHeapBase.h>
 #include <sprd_ion.h>
@@ -204,19 +208,28 @@ SprdCamera3GrallocMemory::~SprdCamera3GrallocMemory()
 int SprdCamera3GrallocMemory::map(buffer_handle_t *buffer_handle ,hal_mem_info_t *mem_info)
 {
 	int ret = NO_ERROR;
-	struct private_handle_t *private_handle = NULL;
 	int fd = 0;
 
 	if (NULL == mem_info || NULL == buffer_handle) {
 		HAL_LOGE("Param invalid handle=%p, info=%p", buffer_handle, mem_info);
 		return -EINVAL;
 	}
+#ifdef CONFIG_GPU_PLATFORM_ROGUE
+	fd = ADP_BUFFD(*buffer_handle);
 
+	mem_info->fd = fd;
+	// mem_info->addr_phy is offset, always set to 0 for yaddr
+	mem_info->addr_phy =  (void*)0;
+	mem_info->addr_vir = (void*)ADP_BASE(*buffer_handle);
+	// need to 4k alignment
+	mem_info->size = ADP_BUFSIZE(*buffer_handle);
+#else
+	struct private_handle_t *private_handle = NULL;
 	private_handle = (struct private_handle_t*) (*buffer_handle);
 	if (NULL == private_handle) {
-		HAL_LOGE("NULL buffer handle!");
-		ret = -EINVAL;
-		goto err_out;
+			HAL_LOGE("NULL buffer handle!");
+			ret = -EINVAL;
+			goto err_out;
 	}
 
 	fd = private_handle->share_fd;
@@ -227,6 +240,7 @@ int SprdCamera3GrallocMemory::map(buffer_handle_t *buffer_handle ,hal_mem_info_t
 	mem_info->addr_vir = (void*)private_handle->base;
 	// need to 4k alignment
 	mem_info->size = private_handle->size;;
+#endif
 	HAL_LOGD("fd=0x%x, addr_phy offset =0x%lx, buf size=0x%lx",
 		mem_info->fd, mem_info->addr_phy, mem_info->size);
 	return 0;
@@ -238,19 +252,25 @@ err_out:
 int SprdCamera3GrallocMemory::map2(buffer_handle_t *buffer_handle ,hal_mem_info_t *mem_info)
 {
 	int ret = NO_ERROR;
-	struct private_handle_t *private_handle = NULL;
 	int fd = 0;
 
 	if (NULL == mem_info || NULL == buffer_handle) {
 		HAL_LOGE("Param invalid handle=%p, info=%p", buffer_handle, mem_info);
 		return -EINVAL;
 	}
-
+#ifdef CONFIG_GPU_PLATFORM_ROGUE
+	fd = ADP_BUFFD(*buffer_handle);
+	mem_info->fd = fd;
+	// mem_info->addr_phy is offset, always set to 0 for yaddr
+	mem_info->addr_phy = (void*)0;
+	mem_info->addr_vir = (void*)ADP_BASE(*buffer_handle);
+#else
+	struct private_handle_t *private_handle = NULL;
 	private_handle = (struct private_handle_t*) (*buffer_handle);
 	if (NULL == private_handle) {
-		HAL_LOGE("NULL buffer handle!");
-		ret = -EINVAL;
-		goto err_out;
+			HAL_LOGE("NULL buffer handle!");
+			ret = -EINVAL;
+			goto err_out;
 	}
 
 	fd = private_handle->share_fd;
@@ -258,6 +278,7 @@ int SprdCamera3GrallocMemory::map2(buffer_handle_t *buffer_handle ,hal_mem_info_
 	// mem_info->addr_phy is offset, always set to 0 for yaddr
 	mem_info->addr_phy = (void*)0;
 	mem_info->addr_vir = (void*)private_handle->base;
+#endif
 	HAL_LOGD("dont need iommu addr, mem_info->fd = %d, mem_info->addr_phy =%p, mem_info->addr_vir=%p",
 		mem_info->fd, mem_info->addr_phy, mem_info->addr_vir);
 

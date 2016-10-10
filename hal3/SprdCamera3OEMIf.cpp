@@ -38,7 +38,11 @@
 #ifdef SPRD_PERFORMANCE
 #include <androidfw/SprdIlog.h>
 #endif
+#ifdef CONFIG_GPU_PLATFORM_ROGUE
+#include <gralloc_public.h>
+#else
 #include <gralloc_priv.h>
+#endif
 #include "SprdCamera3HALHeader.h"
 #include "SprdCamera3Channel.h"
 #include "SprdCamera3Flash.h"
@@ -3280,6 +3284,7 @@ void SprdCamera3OEMIf::calculateTimestampForSlowmotion(int64_t frm_timestamp)
 	mSlowPara.last_frm_timestamp = frm_timestamp;
 }
 
+#ifdef CONFIG_FACE_BEAUTY
 void SprdCamera3OEMIf::doFaceMakeup(struct camera_frame_type *frame)
 {
 	SPRD_DEF_Tag sprddefInfo;
@@ -3383,6 +3388,7 @@ void SprdCamera3OEMIf::doFaceMakeup(struct camera_frame_type *frame)
 		tmpBuf = NULL;
 	}
 }
+#endif
 
 void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 {
@@ -4186,7 +4192,12 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame)
 					HAL_LOGE("failed to get jpeg buffer handle");
 					return;
 				}
+
+#ifdef CONFIG_GPU_PLATFORM_ROGUE
+				maxJpegSize = ADP_WIDTH(*jpeg_buff_handle);
+#else
 				maxJpegSize = ((private_handle_t*)(*jpeg_buff_handle))->width;
+#endif
 				if (maxJpegSize > heap_size) {
 					maxJpegSize = heap_size;
 				}

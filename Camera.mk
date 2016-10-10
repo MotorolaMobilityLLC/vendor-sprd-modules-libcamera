@@ -26,13 +26,19 @@ LOCAL_C_INCLUDES := \
 LOCAL_C_INCLUDES += $(GPU_GRALLOC_INCLUDES)
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
 
+
 ifeq ($(strip $(TARGET_GPU_PLATFORM)),midgard)
 LOCAL_C_INCLUDES += vendor/sprd/proprietories-source/libgpu/gralloc/midgard
 else ifeq ($(strip $(TARGET_GPU_PLATFORM)),utgard)
 LOCAL_C_INCLUDES += vendor/sprd/proprietories-source/libgpu/gralloc/utgard
+else ifeq ($(strip $(TARGET_GPU_PLATFORM)),rogue)
+LOCAL_C_INCLUDES += vendor/sprd/proprietories-source/libgpu/gralloc/
+LOCAL_C_INCLUDES += hardware/libhardware/modules/gralloc/
 else
 LOCAL_C_INCLUDES += hardware/libhardware/modules/gralloc/
 endif
+
+
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),3)
 LOCAL_C_INCLUDES += \
@@ -94,11 +100,15 @@ LOCAL_SRC_FILES+= \
 	hal3/SprdCamera3Setting.cpp \
 	hal3/SprdCamera3Stream.cpp \
 	hal3/SprdCamera3Flash.cpp \
+
+ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
+LOCAL_SRC_FILES+= \
 	hal3/multiCamera/SprdCamera3StereoVideo.cpp \
 	hal3/multiCamera/SprdCamera3RangeFinder.cpp \
 	hal3/multiCamera/SprdCamera3Wrapper.cpp  \
         hal3/multiCamera/SprdCamera3Capture.cpp  \
 #	hal1.0/src/SprdCameraHardwareInterface.cpp
+endif
 endif
 
 LOCAL_CFLAGS += -fno-strict-aliasing -D_VSP_ -DJPEG_ENC -D_VSP_LINUX_ -DCHIP_ENDIAN_LITTLE -Wno-unused-parameter

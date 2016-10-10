@@ -41,7 +41,11 @@
 #if (MINICAMERA != 1)
 #include <ui/Fence.h>
 #endif
+#ifdef CONFIG_GPU_PLATFORM_ROGUE
+#include <gralloc_public.h>
+#else
 #include <gralloc_priv.h>
+#endif
 #include "SprdCamera3HWI.h"
 
 #include "SprdCamera3Channel.h"

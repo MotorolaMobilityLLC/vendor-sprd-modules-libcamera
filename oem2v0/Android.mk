@@ -75,10 +75,10 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
 		$(LOCAL_PATH)/../arithmetic/sprdface/inc
 	ifeq ($(strip $(TARGET_BOARD_CAMERA_FD_LIB)),omron)
 		LOCAL_C_INCLUDES += \
-			$(LOCAL_PATH)/../arithmetic/omron/inc
-		LOCAL_SRC_FILES+= src/cmr_fd_omron.c
+		$(LOCAL_PATH)/../arithmetic/omron/inc
+	##	LOCAL_SRC_FILES+= src/cmr_fd_omron.c
 	else
-		LOCAL_SRC_FILES+= src/cmr_fd.c
+	##	LOCAL_SRC_FILES+= src/cmr_fd.c
 	endif
 endif
 
@@ -93,7 +93,7 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_Y_DENOISE)),true)
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
-	LOCAL_SRC_FILES+= src/cmr_hdr.c
+	##LOCAL_SRC_FILES+= src/cmr_hdr.c
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_UV_DENOISE)),true)
@@ -134,8 +134,8 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_GYRO)),true)
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
-	LOCAL_CFLAGS += -DCONFIG_SPRD_HDR_LIB
-	LOCAL_SHARED_LIBRARIES += libsprd_easy_hdr
+	##LOCAL_CFLAGS += -DCONFIG_SPRD_HDR_LIB
+	##LOCAL_SHARED_LIBRARIES += libsprd_easy_hdr
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_UV_DENOISE)),true)
@@ -153,7 +153,7 @@ endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),false)
 else
-	LOCAL_SHARED_LIBRARIES += libts_face_beautify_hal
+	##LOCAL_SHARED_LIBRARIES += libts_face_beautify_hal
 endif
 
 include $(BUILD_SHARED_LIBRARY)

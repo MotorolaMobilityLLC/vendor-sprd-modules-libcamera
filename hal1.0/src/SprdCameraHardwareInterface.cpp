@@ -33,7 +33,11 @@
 #include <cutils/properties.h>
 #include <sprd_ion.h>
 #if(MINICAMERA != 1)
+#ifdef CONFIG_GPU_PLATFORM_ROGUE
+#include <gralloc_public.h>
+#else
 #include <gralloc_priv.h>
+#endif
 #endif
 
 #include <camera/Camera.h>
