@@ -139,6 +139,7 @@ public:
 	void initialize();
 	void setCaptureRawMode(bool mode);
 	void setCallBackRawMode(bool mode);/**add for 3d capture*/
+	void setCaptureReprocessMode(bool mode, uint32_t width, uint32_t height);/**add for 3d capture*/
 	void antiShakeParamSetup();
 	int displayCopy(uintptr_t dst_phy_addr, uintptr_t dst_virtual_addr,
 			uintptr_t src_phy_addr, uintptr_t src_virtual_addr, uint32_t src_w, uint32_t src_h);

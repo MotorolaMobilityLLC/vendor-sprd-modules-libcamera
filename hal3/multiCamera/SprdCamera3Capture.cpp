@@ -533,6 +533,7 @@ int SprdCamera3Capture::allocateOne(int w,int h, uint32_t is_cache,new_mem_t *ne
     new_mem->buffer = &nBuf;
     new_mem->pHeapIon = pHeapIon;
 
+    HAL_LOGD("fd=0x%x, size=0x%lx, heap=%p", buffer->share_fd, mem_size, pHeapIon);
     HAL_LOGV("X");
 
     return result;
@@ -604,6 +605,7 @@ int SprdCamera3Capture::allocateCapBuff(int w,int h, uint32_t is_cache,new_mem_t
     new_mem->buffer = &nBuf;
     new_mem->pHeapIon = pHeapIon;
 
+    HAL_LOGD("fd=0x%x, size=0x%lx, heap=%p", buffer->share_fd, mem_size, pHeapIon);
     HAL_LOGV("X");
 
     return result;
@@ -632,6 +634,7 @@ void SprdCamera3Capture::freeLocalBuffer(new_mem_t* pLocalBuffer)
             pLocalBuffer[i].buffer = NULL;
         }
         if(pLocalBuffer[i].pHeapIon != NULL){
+            HAL_LOGD("fd=0x%x, heap=%p", pLocalBuffer[i].pHeapIon->getHeapID(), pLocalBuffer[i].pHeapIon);
             delete pLocalBuffer[i].pHeapIon;
             pLocalBuffer[i].pHeapIon = NULL;
         }
@@ -656,6 +659,7 @@ void SprdCamera3Capture::freeLocalCapBuffer(new_mem_t* pLocalCapBuffer)
             pLocalCapBuffer[i].buffer = NULL;
         }
         if(pLocalCapBuffer[i].pHeapIon != NULL){
+            HAL_LOGD("fd=0x%x, heap=%p", pLocalCapBuffer[i].pHeapIon->getHeapID(), pLocalCapBuffer[i].pHeapIon);
             delete pLocalCapBuffer[i].pHeapIon;
             pLocalCapBuffer[i].pHeapIon = NULL;
         }
@@ -987,8 +991,8 @@ void SprdCamera3Capture::CaptureThread::initGpuData(int w,int h, int rotation)
     pt_stream_info.src_height = m3DCaptureHeight;
     pt_stream_info.src_width  = m3DCaptureWidth;
     pt_stream_info.rot_angle = rotation;
-	HAL_LOGD("pt_stream_info.src_height=%d,pt_stream_info.src_width=%d,pt_stream_info.dst_height=%d,pt_stream_info.dst_width=%d",m3DCaptureHeight,m3DCaptureWidth,h,w);
-
+    HAL_LOGD("src_width = %d, dst_height=%d, dst_width=%d, dst_height=%d, rotation:%d",
+             pt_stream_info.src_width ,pt_stream_info.src_height,pt_stream_info.dst_width , pt_stream_info.dst_height, rotation);
     float buff[768];
     float H_left[9], H_right[9];
     FILE *fid = fopen("/productinfo/sprd_3d_calibration/calibration.data","rb");
@@ -1022,16 +1026,10 @@ void SprdCamera3Capture::CaptureThread::initGpuData(int w,int h, int rotation)
         pt_line_buf.homography_matrix[16] = 0.0;
         pt_line_buf.homography_matrix[17] = 1.0;
     }
-	HAL_LOGV("using following homography_matrix data:\n");
-	HAL_LOGV("left:\t%8f  %8f  %8f    right:\t%8f  %8f  %8f", pt_line_buf.homography_matrix[0],  pt_line_buf.homography_matrix[1], pt_line_buf.homography_matrix[2], pt_line_buf.homography_matrix[9], pt_line_buf.homography_matrix[10], pt_line_buf.homography_matrix[11]);
-	HAL_LOGV("\t\t%8f  %8f  %8f    \t%8f  %8f  %8f", pt_line_buf.homography_matrix[3],  pt_line_buf.homography_matrix[4], pt_line_buf.homography_matrix[5], pt_line_buf.homography_matrix[12], pt_line_buf.homography_matrix[13], pt_line_buf.homography_matrix[14]);
-	HAL_LOGV("\t\t%8f  %8f  %8f    \t%8f  %8f  %8f", pt_line_buf.homography_matrix[6],  pt_line_buf.homography_matrix[7], pt_line_buf.homography_matrix[8], pt_line_buf.homography_matrix[15], pt_line_buf.homography_matrix[16], pt_line_buf.homography_matrix[17]);
-
-    if(isInitRenderContest){
-        mGpuApi->destroyRenderContext();
-        isInitRenderContest = false;
-    }
-
+    HAL_LOGV("using following homography_matrix data:\n");
+    HAL_LOGV("left:\t%8f  %8f  %8f    right:\t%8f  %8f  %8f", pt_line_buf.homography_matrix[0],  pt_line_buf.homography_matrix[1], pt_line_buf.homography_matrix[2], pt_line_buf.homography_matrix[9], pt_line_buf.homography_matrix[10], pt_line_buf.homography_matrix[11]);
+    HAL_LOGV("\t\t%8f  %8f  %8f    \t%8f  %8f  %8f", pt_line_buf.homography_matrix[3],  pt_line_buf.homography_matrix[4], pt_line_buf.homography_matrix[5], pt_line_buf.homography_matrix[12], pt_line_buf.homography_matrix[13], pt_line_buf.homography_matrix[14]);
+    HAL_LOGV("\t\t%8f  %8f  %8f    \t%8f  %8f  %8f", pt_line_buf.homography_matrix[6],  pt_line_buf.homography_matrix[7], pt_line_buf.homography_matrix[8], pt_line_buf.homography_matrix[15], pt_line_buf.homography_matrix[16], pt_line_buf.homography_matrix[17]);
 }
 
 static void save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height, struct img_addr *addr)
@@ -1145,8 +1143,6 @@ bool SprdCamera3Capture::CaptureThread::threadLoop()
         case CAPTURE_MSG_EXIT:
             {
                 //flush queue
-                mGpuApi->destroyRenderContext();
-                isInitRenderContest = false;
                 return false;
             }
             break;
@@ -1191,10 +1187,14 @@ bool SprdCamera3Capture::CaptureThread::threadLoop()
 
                     memcpy( input_buffer, &mSavedCapReqstreambuff, sizeof(camera3_stream_buffer_t) );
                     input_buffer->stream = &mMainStreams[mCaptureStreamsNum-1];
+                    input_buffer->stream->width = mCapture->mCaptureWidth;
+                    input_buffer->stream->height = mCapture->mCaptureHeight;
                     input_buffer->buffer = output_buffer;
 
                     memcpy( (void*)&output_buffers[0], &mSavedCapReqstreambuff, sizeof(camera3_stream_buffer_t) );
                     output_buffers[0].stream = &mMainStreams[mCaptureStreamsNum-1];
+                    output_buffers[0].stream->width = mCapture->mCaptureWidth;
+                    output_buffers[0].stream->height= mCapture->mCaptureHeight;
 
                     request.output_buffers = output_buffers;
                     request.input_buffer = input_buffer;
@@ -1378,10 +1378,15 @@ int SprdCamera3Capture::CaptureThread::combineTwoPicture(buffer_handle_t *&outpu
         }
     }
 
+    HAL_LOGD(" combine rot_angle:%d", dcam.rot_angle );
     HAL_LOGD(" before cmb yaddr_v:%d", ((struct private_handle_t*)output_buf)->base );
 
     mGpuApi->imageStitchingWithGPU(&dcam);
     HAL_LOGD(" after cmb yaddr_v:%d", ((struct private_handle_t*)output_buf)->base );
+    if(isInitRenderContest){
+        mGpuApi->destroyRenderContext();
+        isInitRenderContest = false;
+    }
 
     return rc;
 }
@@ -1590,6 +1595,8 @@ int SprdCamera3Capture::configureStreams(const struct camera3_device *device,cam
             mCaptureThread->mCaptureStreamsNum = stream_list->num_streams;
             HAL_LOGD("configurestreams, mCaptureThread->mCaptureStreamsNum:%d", mCaptureThread->mCaptureStreamsNum);
 
+            stream_list->streams[i]->width = mCaptureThread->m3DCaptureWidth;
+            stream_list->streams[i]->height = mCaptureThread->m3DCaptureHeight;
             //mCaptureThread->mMainStreams[stream_list->num_streams] = &mCallBackStream;
             mCaptureThread->mMainStreams[stream_list->num_streams].max_buffers = 1;
             mCaptureThread->mMainStreams[stream_list->num_streams].width = mCaptureThread->m3DCaptureWidth;
@@ -1653,6 +1660,8 @@ int SprdCamera3Capture::configureStreams(const struct camera3_device *device,cam
         HAL_LOGD("push back to streamlist");
         memcpy( stream_list->streams[0], &mCaptureThread->mMainStreams[0], sizeof(camera3_stream_t) );
         memcpy( stream_list->streams[1], &mCaptureThread->mMainStreams[1], sizeof(camera3_stream_t) );
+        stream_list->streams[1]->width = mCaptureWidth;
+        stream_list->streams[1]->height = mCaptureHeight;
     }
     for (i=0; i<stream_list->num_streams; i++)
     {

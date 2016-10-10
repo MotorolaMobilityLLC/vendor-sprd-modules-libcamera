@@ -1155,6 +1155,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 			HAL_LOGD("input buff 0x%lx (%d)", input->buffer, frameNumber);
 			mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_ZSL_SNAPSHOT, frameNumber);
 			mPictureRequest = true;
+			mOEMIf->setCaptureReprocessMode(true, stream->width, stream->height);
 			ret = mRegularChan->setZSLInputBuff(input->buffer);
 			if(ret){
 				HAL_LOGE("zsl input buff 0x%lx (%d)failed", input->buffer, frameNumber);

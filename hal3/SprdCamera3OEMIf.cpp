@@ -968,11 +968,6 @@ int SprdCamera3OEMIf::zslTakePicture()
 	    mSprd3dCalibrationEnabled = sprddefInfo.sprd_3dcalibration_enabled;
 	    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DCAL_ENABLE, sprddefInfo.sprd_3dcalibration_enabled);
 	}
-	if (mSprdReprocessing)
-	{
-	    HAL_LOGE("camera_set_reprocess_picture_size");
-	    mHalOem->ops->camera_set_reprocess_picture_size(mCameraHandle, mCameraId, mCaptureWidth, mCaptureHeight);
-	}
 	/**add for 3d capture, set raw call back mode & reprocess capture size end*/
 
 	setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
@@ -1213,18 +1208,27 @@ status_t SprdCamera3OEMIf::cancelAutoFocus()
 	HAL_LOGD("X");
 	return ret;
 }
-/**add for 3d capture, set raw call back mode begin*/
+/**add for 3d capture, set 3d capture special mode begin   */
 void SprdCamera3OEMIf::setCallBackRawMode(bool mode)
 {
 	if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
 		HAL_LOGE("oem is null or oem ops is null");
 		return;
 	}
-
+	HAL_LOGD("setCallBackRawMode: %d, %d", mode, mSprdRawCallBack);
 	mSprdRawCallBack = mode;
-	HAL_LOGD("ISP_TOOL: setCaptureRawMode: %d, %d", mode, mSprdRawCallBack);
 }
-/**add for 3d capture, set raw call back mode end*/
+void SprdCamera3OEMIf::setCaptureReprocessMode(bool mode, uint32_t width, uint32_t height)
+{
+	if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
+		HAL_LOGE("oem is null or oem ops is null");
+		return;
+	}
+	HAL_LOGD("setCaptureReprocessMode: %d, %d, reprocess size: %d, %d", mode, mSprdReprocessing, width, height);
+	mSprdReprocessing = mode;
+	mHalOem->ops->camera_set_reprocess_picture_size(mCameraHandle, mCameraId, width, height);
+}
+/**add for 3d capture, set 3d capture special mode end   */
 status_t SprdCamera3OEMIf::setAePrecaptureSta(uint8_t state)
 {
 	status_t ret = 0;
@@ -4026,8 +4030,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame)
 				if ( mSprdReprocessing )
 				{
 				    HAL_LOGI("jpeg encode doen, reprocessing end");
-				    mSprdReprocessing = false;
-				    mHalOem->ops->camera_set_reprocess_picture_size(mCameraHandle, mCameraId, mRawWidth, mRawHeight);
+				    setCaptureReprocessMode(false, mRawWidth, mRawHeight);
 				}
 			}
 		}
@@ -5566,7 +5569,6 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode, uint32_t fr
 			mRecordingMode = false;
 			mPicCaptureCnt = 1;
 			mZslPreviewMode = false;
-			mSprdReprocessing = true;/**add for 3d capture, enable reprocessing mode*/
 			break;
 		case CAMERA_CAPTURE_MODE_VIDEO_SNAPSHOT:
 			if (mVideoSnapshotType != 1) {
