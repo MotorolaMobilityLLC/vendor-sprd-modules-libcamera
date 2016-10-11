@@ -110,6 +110,7 @@ extern SENSOR_INFO_T g_autotest_ov13850_mipi_raw_info;
 extern SENSOR_INFO_T g_at_ov5648_mipi_raw_info;
 extern SENSOR_INFO_T g_at_ov5670_mipi_raw_info;
 
+extern SENSOR_INFO_T g_s5k3p8sm_mipi_raw_info;
 extern SENSOR_INFO_T g_s5k3p3sm_mipi_raw_info;
 extern SENSOR_INFO_T g_s5k4h8yx_mipi_raw_info;
 extern SENSOR_INFO_T g_imx230_mipi_raw_info;
@@ -130,6 +131,7 @@ extern SENSOR_INFO_T g_ov8856s_mipi_raw_info;
  **---------------------------------------------------------------------------*/
 const SENSOR_MATCH_T main_sensor_infor_tab[]=
 {
+	{"s5k3p8sm_mipi_raw", &g_s5k3p8sm_mipi_raw_info},
 	{"s5k3p3sm_mipi_raw", &g_s5k3p3sm_mipi_raw_info},
 	{"imx230_mipi_raw", &g_imx230_mipi_raw_info},
 	{"imx258_mipi_raw", &g_imx258_mipi_raw_info},
