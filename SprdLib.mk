@@ -24,8 +24,10 @@ LOCAL_SHARED_LIBRARIES +=libgui
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
-##LOCAL_CFLAGS += -DCONFIG_SPRD_HDR_LIB
-##LOCAL_SHARED_LIBRARIES += libsprd_easy_hdr
+ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
+LOCAL_CFLAGS += -DCONFIG_SPRD_HDR_LIB
+LOCAL_SHARED_LIBRARIES += libsprd_easy_hdr
+endif
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_UV_DENOISE)),true)
@@ -43,5 +45,7 @@ endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),false)
 else
-##LOCAL_SHARED_LIBRARIES += libts_face_beautify_hal
+ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
+LOCAL_SHARED_LIBRARIES += libts_face_beautify_hal
+endif
 endif
