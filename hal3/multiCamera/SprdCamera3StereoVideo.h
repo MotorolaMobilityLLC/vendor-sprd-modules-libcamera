@@ -50,14 +50,13 @@
 
 namespace sprdcamera {
 
-#define VIDEO_3D_MAGIC_STRING "5"
 #define MAX_NUM_CAMERAS    3
 #define MAX_NUM_STREAMS    3
-#define MAX_VIDEO_QEQUEST_BUF 16
+#define MAX_VIDEO_QEQUEST_BUF 18
 #define MAX_PREVIEW_QEQUEST_BUF 5
 #define MAX_UNMATCHED_QUEUE_SIZE 4
 #define MAX_SAVE_REQUEST_QUEUE_SIZE 10
-#define TIME_DIFF (1000e6)
+#define TIME_DIFF (15e6)
 #define LIB_GPU_PATH "libimagestitcher.so"
 #define CONTEXT_SUCCESS 1
 #define CONTEXT_FAIL 0
@@ -175,7 +174,7 @@ public:
         void videoErrorCallback(uint32_t frame_number);
         int loadGpuApi();
         void unLoadGpuApi();
-        void initGpuData(int rotation);
+        void initGpuData();
         GPUAPI_t* mGpuApi;
         //This queue stores matched buffer as frame_matched_info_t
         List <muxer_queue_msg_t> mMuxerMsgList;
@@ -222,6 +221,7 @@ public:
     int configureStreams(const struct camera3_device *device,camera3_stream_configuration_t* stream_list);
     int convertRequest(const camera3_capture_request_t *request,camera3_capture_request_t *newRequest,
          int type,int shwoPreviewDeviceId);
+    void clearFrameNeverMatched(int whichCamera);
     int processCaptureRequest(const struct camera3_device *device,camera3_capture_request_t *request);
     void notifyMain( const camera3_notify_msg_t* msg);
     void processCaptureResultMain( const camera3_capture_result_t *result);
