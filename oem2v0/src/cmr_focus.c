@@ -817,9 +817,14 @@ cmr_int af_set_mode(cmr_handle af_handle, cmr_u32 came_id, cmr_u32 af_mode)
 		goto exit;
 	}
 
-	CMR_LOGI("af_mode %d", af_mode);
+	CMR_LOGI("af_mode,af_cxt->af_mode %d,%d", af_mode,af_cxt->af_mode);
 
 	if (af_mode < CAMERA_FOCUS_MODE_MAX) {
+		if(af_cxt->af_mode == af_mode) {
+			CMR_LOGI("some mode, no need set again");
+			goto exit;
+		}
+
 		af_cxt->af_mode = af_mode;
 	} else {
 		CMR_LOGE("param invalid, set af mode to AUTO");
