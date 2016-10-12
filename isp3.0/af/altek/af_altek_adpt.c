@@ -592,6 +592,10 @@ static cmr_u8 afaltek_adpt_lock_ae_awb(cmr_handle adpt_handle, cmr_int lock)
 	cmr_int ret = ISP_SUCCESS;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 
+
+	ISP_LOGI("af doesn't lock any A");
+	return ret;
+
 	if (ISP_AE_AWB_LOCK == lock) {
 		if (cxt->ae_awb_lock_cnt >= 1) {
 			ISP_LOGI("af has already locked ae awb");
