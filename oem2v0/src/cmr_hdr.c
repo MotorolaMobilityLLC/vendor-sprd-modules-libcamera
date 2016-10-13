@@ -28,6 +28,8 @@
 #else
 #include "../../arithmetic/inc/HDR2.h"
 #endif
+#include <cutils/properties.h>
+
 
 struct class_hdr {
 	struct ipm_common               common;
@@ -87,6 +89,8 @@ static cmr_int hdr_thread_destroy(struct class_hdr *class_handle);
 static cmr_int hdr_save_frame(cmr_handle class_handle, struct ipm_frame_in *in);
 static cmr_int req_hdr_save_frame(cmr_handle class_handle, struct ipm_frame_in *in);
 static cmr_int hdr_frame_proc(cmr_handle class_handle);
+static cmr_int hdr_save_yuv(cmr_handle class_handle, cmr_u32 width,cmr_u32 height);
+
 
 static struct class_ops hdr_ops_tab_info = {
 	hdr_open,
@@ -450,6 +454,12 @@ static cmr_int hdr_arithmetic(cmr_handle class_handle, struct img_addr *dst_addr
 		return CMR_CAMERA_INVALID_PARAM;
 	}
 
+	cmr_s8 value[PROPERTY_VALUE_MAX];
+	property_get("debug.camera.dump.hdr.frame",value,"0");
+	if(!strcmp(value,"1")){
+		ret = hdr_save_yuv(class_handle, width, height);
+	}
+
 	temp_addr0 = hdr_handle->alloc_addr[0];
 	temp_addr1 = hdr_handle->alloc_addr[1];
 	temp_addr2 = hdr_handle->alloc_addr[2];
@@ -622,4 +632,92 @@ static cmr_int hdr_thread_destroy(struct class_hdr *class_handle)
 
 	return ret;
 }
+
+static cmr_int hdr_save_yuv(cmr_handle class_handle, cmr_u32 width,cmr_u32 height)
+{
+	cmr_int            ret         = CMR_CAMERA_SUCCESS;
+
+	struct class_hdr  *hdr_handle = (struct class_hdr *)class_handle;
+
+	if (!class_handle ) {
+		CMR_LOGE("Invalid Param!");
+		return CMR_CAMERA_INVALID_PARAM;
+	}
+
+	FILE *fp = NULL;
+	FILE *fp1 = NULL;
+	FILE *fp2 = NULL;
+
+	char  file_name[100];
+	char  file_name1[100];
+	char  file_name2[100];
+	char		tmp_str[10];
+	char datetime[15] = {0};
+	time_t timep;
+	struct tm *p;
+
+	cmr_bzero(file_name, 40);
+	cmr_bzero(file_name1, 40);
+	cmr_bzero(file_name2, 40);
+
+	time(&timep);
+	p = localtime(&timep);
+	sprintf(datetime, "%04d%02d%02d%02d%02d%02d",
+			(1900 + p->tm_year),
+			(1 + p->tm_mon),
+			p->tm_mday,
+			p->tm_hour,
+			p->tm_min,
+			p->tm_sec);
+
+	strcpy(file_name, "/data/misc/media/hdr_");
+	strcpy(file_name1, "/data/misc/media/hdr_");
+	strcpy(file_name2, "/data/misc/media/hdr_");
+
+	strcat(file_name, datetime);
+	strcat(file_name1, datetime);
+	strcat(file_name2, datetime);
+
+	strcat(file_name, "_");
+	sprintf(tmp_str, "%d", width);
+	strcat(file_name, tmp_str);
+	strcat(file_name, "X");
+	sprintf(tmp_str, "%d", height);
+	strcat(file_name, tmp_str);
+	strcat(file_name, "_1");
+	strcat(file_name, ".NV21");
+	fp =fopen(file_name,"wb");
+	fwrite((void*)hdr_handle->alloc_addr[0], 1, width * height * 3 / 2, fp);
+	fclose(fp);
+	fp = NULL;
+
+	strcat(file_name1, "_");
+	sprintf(tmp_str, "%d", width);
+	strcat(file_name1, tmp_str);
+	strcat(file_name1, "X");
+	sprintf(tmp_str, "%d", height);
+	strcat(file_name1, tmp_str);
+	strcat(file_name1, "_2");
+	strcat(file_name1, ".NV21");
+	fp1 =fopen(file_name1,"wb");
+	fwrite((void*)hdr_handle->alloc_addr[1], 1, width * height * 3 / 2, fp1);
+	fclose(fp1);
+	fp1 = NULL;
+
+	strcat(file_name2, "_");
+	sprintf(tmp_str, "%d", width);
+	strcat(file_name2, tmp_str);
+	strcat(file_name2, "X");
+	sprintf(tmp_str, "%d", height);
+	strcat(file_name2, tmp_str);
+	strcat(file_name2, "_3");
+	strcat(file_name2, ".NV21");
+	fp2 =fopen(file_name2,"wb");
+	fwrite((void*)hdr_handle->alloc_addr[2], 1, width * height * 3 / 2, fp2);
+	fclose(fp2);
+	fp2 = NULL;
+
+	return ret;
+}
+
 #endif
