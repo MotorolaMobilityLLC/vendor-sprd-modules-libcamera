@@ -238,10 +238,11 @@ struct aealtek_cxt {
 	struct aealtek_stat_info stat_info[10];
 	cmr_u32 stat_info_num;
 	cmr_u32 is_3dcalibration;/**add for 3d calibration*/
+	int flash_state_machine;
 };
 
 static cmr_int aealtek_reset_touch_ack(struct aealtek_cxt *cxt_ptr);
-static cmr_int aealtek_set_lock(struct aealtek_cxt *cxt_ptr, cmr_int is_lock);
+static cmr_int aealtek_set_lock(struct aealtek_cxt *cxt_ptr, cmr_int is_lock, const char *cb_func);
 static cmr_int aealtek_set_flash_est(struct aealtek_cxt *cxt_ptr, cmr_u32 is_reset);
 static cmr_int aealtek_enable_debug_report(struct aealtek_cxt *cxt_ptr, cmr_int enable);
 static cmr_int aealtek_set_tuning_param(struct aealtek_cxt *cxt_ptr, void *tuning_param);
@@ -608,6 +609,7 @@ static cmr_int aealtek_get_default_param(struct aealtek_cxt *cxt_ptr, struct ae_
 	st_ptr->ui_param.weight = AE_CTRL_MEASURE_LUM_CENTER;
 	st_ptr->ui_param.fps.min_fps = 2;
 	st_ptr->ui_param.fps.max_fps = 30;
+	cxt_ptr->flash_state_machine = AEALTEK_FLASH_STATE_CLOSE;
 
 	if (0 == cxt_ptr->init_in_param.sensor_static_info.f_num) {
 		cxt_ptr->init_in_param.sensor_static_info.f_num = 280;
@@ -1870,7 +1872,7 @@ static cmr_int aealtek_set_measure_lum(struct aealtek_cxt *cxt_ptr, struct ae_ct
 			goto exit;
 		if (cxt_ptr->flash_param.enable) {
 			cxt_ptr->flash_param.enable = 0;
-			aealtek_set_lock(cxt_ptr, 0);
+			aealtek_set_lock(cxt_ptr, 0, __func__);
 			ret = aealtek_set_flash_est(cxt_ptr, 1);
 			if (ret)
 				goto exit;
@@ -2882,7 +2884,7 @@ exit:
 	return ret;
 }
 
-static cmr_int aealtek_set_lock(struct aealtek_cxt *cxt_ptr, cmr_int is_lock)
+static cmr_int aealtek_set_lock(struct aealtek_cxt *cxt_ptr, cmr_int is_lock, const char *cb_func)
 {
 	cmr_int ret = ISP_ERROR;
 
@@ -2890,7 +2892,7 @@ static cmr_int aealtek_set_lock(struct aealtek_cxt *cxt_ptr, cmr_int is_lock)
 		ISP_LOGE("param is NULL error!");
 		goto exit;
 	}
-	ISP_LOGI("lock_cnt=%d, is_lock=%ld", cxt_ptr->lock_cnt, is_lock);
+	ISP_LOGI("lock_cnt=%d, is_lock=%ld cb: %s", cxt_ptr->lock_cnt, is_lock, cb_func);
 
 	if (is_lock) {
 		cxt_ptr->lock_cnt++;
@@ -3162,7 +3164,7 @@ static cmr_int aealtek_set_flash_notice(struct aealtek_cxt *cxt_ptr, struct ae_c
 
 	case ISP_FLASH_PRE_LIGHTING:
 		ISP_LOGI("=========pre flash lighting");
-		ret = aealtek_set_lock(cxt_ptr, 0);
+		ret = aealtek_set_lock(cxt_ptr, 0, __func__);
 		if (ret)
 			goto exit;
 
@@ -3179,6 +3181,7 @@ static cmr_int aealtek_set_flash_notice(struct aealtek_cxt *cxt_ptr, struct ae_c
 	case ISP_FLASH_PRE_AFTER:
 		ISP_LOGI("=========pre flash after");
 		aealtek_change_flash_state(cxt_ptr, cxt_ptr->flash_param.flash_state, AEALTEK_FLASH_STATE_CLOSE);
+		cxt_ptr->flash_state_machine = AEALTEK_FLASH_STATE_CLOSE;
 
 		aealtek_set_hw_flash_status(cxt_ptr, 0);
 		aealtek_set_boost(cxt_ptr, 0);
@@ -3982,7 +3985,7 @@ static cmr_int aealtek_set_snapshot_finished(struct aealtek_cxt *cxt_ptr, struct
 		if (ret)
 			goto exit;
 		cxt_ptr->flash_param.enable = 0;
-		aealtek_set_lock(cxt_ptr, 0);
+		aealtek_set_lock(cxt_ptr, 0, __func__);
 	}
 	return ISP_SUCCESS;
 exit:
@@ -4473,10 +4476,10 @@ static cmr_int ae_altek_adpt_ioctrl(cmr_handle handle, cmr_int cmd, void *in, vo
 		ret = aealtek_set_work_mode(cxt_ptr, in_ptr, out_ptr);
 		break;
 	case AE_CTRL_SET_PAUSE:
-		ret = aealtek_set_lock(cxt_ptr, 1);
+		ret = aealtek_set_lock(cxt_ptr, 1, __func__);
 		break;
 	case AE_CTRL_SET_RESTORE:
-		ret = aealtek_set_lock(cxt_ptr, 0);
+		ret = aealtek_set_lock(cxt_ptr, 0, __func__);
 		break;
 	case AE_CTRL_SET_FLASH_NOTICE:
 		ret = aealtek_set_flash_notice(cxt_ptr, &in_ptr->flash_notice, out_ptr);
@@ -4500,10 +4503,10 @@ static cmr_int ae_altek_adpt_ioctrl(cmr_handle handle, cmr_int cmd, void *in, vo
 		ret = aealtek_get_bv_by_gain(cxt_ptr, in_ptr, out_ptr);
 		break;
 	case AE_CTRL_SET_FORCE_PAUSE:
-		aealtek_set_lock(cxt_ptr, 1);
+		aealtek_set_lock(cxt_ptr, 1, __func__);
 		break;
 	case AE_CTRL_SET_FORCE_RESTORE:
-		aealtek_set_lock(cxt_ptr, 0);
+		aealtek_set_lock(cxt_ptr, 0, __func__);
 		break;
 	case AE_CTRL_GET_MONITOR_INFO:
 		break;
@@ -4663,6 +4666,7 @@ static cmr_u32 aealtek_flash_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 		, cmr_u32 *is_special_converge_flag)
 {
 	cmr_u32 is_callback = 0;
+	cmr_int ret = ISP_SUCCESS;
 
 	/*flash*/
 	if (cxt_ptr->flash_param.enable) {
@@ -4678,7 +4682,11 @@ static cmr_u32 aealtek_flash_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 			*is_special_converge_flag = 1;
 			if (cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_converged
 				&& AE_EST_WITH_LED_PRE_DONE == cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_FlashStates) {
-				aealtek_set_lock(cxt_ptr, 1);
+				if (cxt_ptr->flash_state_machine == AEALTEK_FLASH_STATE_PREPARE_ON) {
+					return ISP_SUCCESS;
+				}
+				cxt_ptr->flash_state_machine = AEALTEK_FLASH_STATE_PREPARE_ON;
+				aealtek_set_lock(cxt_ptr, 1, __func__);
 				aealtek_change_ae_state(cxt_ptr, cxt_ptr->ae_state, ISP3A_AE_CTRL_ST_FLASH_PREPARE_CONVERGED);
 
 				cxt_ptr->flash_param.pre_flash_before.led_num = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.preflash_ctrldat.ucDICTotal_idx;
@@ -4746,7 +4754,11 @@ static cmr_u32 aealtek_flash_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 			*is_special_converge_flag = 1;
 			if (cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_converged
 				&& AE_EST_WITH_LED_DONE == cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_FlashStates) {
-				aealtek_set_lock(cxt_ptr, 1);
+				if (cxt_ptr->flash_state_machine == AEALTEK_FLASH_STATE_LIGHTING) {
+					return ISP_SUCCESS;
+				}
+				cxt_ptr->flash_state_machine = AEALTEK_FLASH_STATE_LIGHTING;
+				aealtek_set_lock(cxt_ptr, 1, __func__);
 				aealtek_change_ae_state(cxt_ptr, cxt_ptr->ae_state, ISP3A_AE_CTRL_ST_FLASH_ON_CONVERGED);
 
 				/*cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRL_CB_FLASHING_CONVERGED, callback_in);*/
@@ -4902,7 +4914,6 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 			}
 		}
 	}
-
 	flash_callback = aealtek_flash_process(cxt_ptr, &callback_in, &is_special_converge_flag);
 
 	if (0 == is_special_converge_flag
