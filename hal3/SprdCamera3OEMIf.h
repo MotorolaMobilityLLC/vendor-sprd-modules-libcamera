@@ -397,6 +397,8 @@ private:
 	int Callback_PdafRawMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
 	int Callback_CaptureFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum);
 	int Callback_CaptureMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
+	int Callback_CapturePathMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd);
+	int Callback_CapturePathFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum);
 	int Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum);
 	int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size, cmr_u32 *sum_ptr, cmr_uint *phy_addr, cmr_uint *vir_addr,cmr_s32 *fd);
 	static int Callback_Free(enum camera_mem_cb_type type, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum, void* private_data);
@@ -471,6 +473,7 @@ private:
 	uint32_t                        mRawHeapSize;
 
 	sprd_camera_memory_t			*mSubRawHeapArray[MAX_SUB_RAWHEAP_NUM];
+	sprd_camera_memory_t			*mPathRawHeapArray[MAX_SUB_RAWHEAP_NUM];
 	sprd_zsl_capture_info_t                 mZSLCapInfo[MAX_SUB_RAWHEAP_NUM];
 	sprd_camera_memory_t            *mReDisplayHeap;
 	//TODO: put the picture dimensions in the CameraParameters object;
@@ -560,6 +563,8 @@ private:
 	uint32_t                        mPdafRawHeapNum;
 	uint32_t                        mSubRawHeapNum;
 	uint32_t                        mSubRawHeapSize;
+	uint32_t                        mPathRawHeapNum;
+	uint32_t                        mPathRawHeapSize;
 	uint32_t                        mPreviewDcamAllocBufferCnt;
 	sprd_camera_memory_t*			mPreviewHeapArray[kPreviewBufferCount+kPreviewRotBufferCount+1];
 	sprd_camera_memory_t*           mVideoHeapArray[kVideoBufferCount+kVideoRotBufferCount+1];

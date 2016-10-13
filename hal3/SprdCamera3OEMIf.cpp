@@ -302,8 +302,9 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mFlashCaptureSkipNum(1),
 	mFlagMultiLayerStart(false),
 	mIommuEnabled(false),
-	mCameraDfsPolicyCur(CAM_EXIT)
-
+	mCameraDfsPolicyCur(CAM_EXIT),
+	mSubRawHeapSize(0),
+	mPathRawHeapNum(0)
 {
 	ATRACE_CALL();
 
@@ -339,6 +340,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	memset(mVideoHeapArray, 0, sizeof(mVideoHeapArray));
 	memset(&mSlowPara, 0, sizeof(slow_motion_para));
 	memset(mPdafRawHeapArray, 0, sizeof(mPdafRawHeapArray));
+	memset(mPathRawHeapArray, 0, sizeof(mPathRawHeapArray));
 
 	setCameraState(SPRD_INIT, STATE_CAMERA);
 
@@ -2500,6 +2502,7 @@ void SprdCamera3OEMIf::deinitCapture(bool isPreAllocCapMem)
 	if(mCaptureMode != CAMERA_ZSL_MODE)
 		Callback_CaptureFree(0, 0, 0, 0);
 	*/
+	Callback_CapturePathFree(0, 0, 0, 0);
 }
 
 int SprdCamera3OEMIf::startPreviewInternal()
@@ -6318,6 +6321,82 @@ mem_fail:
 	return -1;
 }
 
+int SprdCamera3OEMIf::Callback_CapturePathMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd)
+{
+	sprd_camera_memory_t *memory = NULL;
+	cmr_int              i = 0;
+
+	LOGI("Callback_CapturePathMalloc: size %d sum %d mPathRawHeapNum %d mPathRawHeapSize %d", size, sum, mPathRawHeapNum, mPathRawHeapSize);
+
+	*phy_addr = 0;
+	*vir_addr = 0;
+	*fd = 0;
+
+	if (mPathRawHeapNum >= MAX_SUB_RAWHEAP_NUM) {
+		LOGE("Callback_CapturePathMalloc: error mPathRawHeapNum %d", mPathRawHeapNum);
+		return -1;
+	}
+	if ((mPathRawHeapNum+sum) >= MAX_SUB_RAWHEAP_NUM) {
+		LOGE("Callback_CapturePathMalloc: malloc is too more %d %d", mPathRawHeapNum, sum);
+		return -1;
+	}
+	if (0 == mPathRawHeapNum) {
+		mPathRawHeapSize = size;
+		for (i=0 ; i<(cmr_int)sum ; i++) {
+			memory = allocCameraMem(size, 1, true);
+
+			if (NULL == memory) {
+				LOGE("Callback_CapturePathMalloc: error memory is null.");
+				goto mem_fail;
+			}
+
+			mPathRawHeapArray[mPathRawHeapNum] = memory;
+			mPathRawHeapNum++;
+
+			*phy_addr++ = (cmr_uint)memory->phys_addr;
+			*vir_addr++ = (cmr_uint)memory->data;
+			*fd++ = memory->fd;
+
+		}
+	} else {
+		if ((mPathRawHeapNum >= sum) && (mPathRawHeapSize >= size)) {
+			LOGI("Callback_CapturePathMalloc :test");
+			for (i=0 ; i<(cmr_int)sum ; i++) {
+				*phy_addr++ = (cmr_uint)mPathRawHeapArray[i]->phys_addr;
+				*vir_addr++ = (cmr_uint)mPathRawHeapArray[i]->data;
+				*fd++ = mPathRawHeapArray[i]->fd;
+			}
+		} else {
+			LOGE("failed to malloc memory, malloced num %d,request num %d, size 0x%x, request size 0x%x",
+				mPathRawHeapNum, sum, mPathRawHeapSize, size);
+			goto mem_fail;
+		}
+	}
+	return 0;
+
+mem_fail:
+	Callback_CapturePathFree(0, 0, 0, 0);
+	return -1;
+}
+
+int SprdCamera3OEMIf::Callback_CapturePathFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum)
+{
+	cmr_u32 i;
+
+	LOGI("Callback_CapturePathFree: mPathRawHeapNum %d sum %d", mPathRawHeapNum, sum);
+
+	for (i=0 ; i<mPathRawHeapNum ; i++) {
+		if (NULL != mPathRawHeapArray[i]) {
+			freeCameraMem(mPathRawHeapArray[i]);
+		}
+		mPathRawHeapArray[i] = NULL;
+	}
+	mPathRawHeapNum = 0;
+	mPathRawHeapSize = 0;
+
+	return 0;
+}
+
 int SprdCamera3OEMIf::Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum)
 {
 	cmr_u32 i;
@@ -6654,6 +6733,8 @@ int SprdCamera3OEMIf::Callback_Free(enum camera_mem_cb_type type, cmr_uint *phy_
 		ret = camera->Callback_RefocusFree(phy_addr, vir_addr, sum);
 	} else if(CAMERA_PDAF_RAW == type) {
 		ret = camera->Callback_PdafRawFree(phy_addr, vir_addr, sum);
+	} else if (CAMERA_SNAPSHOT_PATH == type) {
+		ret = camera->Callback_CapturePathFree(phy_addr, vir_addr, fd, sum);
 	} else if (CAMERA_PREVIEW_RESERVED == type ||
 		   CAMERA_VIDEO_RESERVED == type ||
 		   CAMERA_ISP_FIRMWARE == type ||
@@ -6712,6 +6793,8 @@ int SprdCamera3OEMIf::Callback_Malloc(enum camera_mem_cb_type type,
 		ret = camera->Callback_RefocusMalloc(size, sum, phy_addr, vir_addr, fd);
 	} else if(CAMERA_PDAF_RAW == type) {
 		ret = camera->Callback_PdafRawMalloc(size, sum, phy_addr, vir_addr, fd);
+	} else if (CAMERA_SNAPSHOT_PATH == type) {
+		ret = camera->Callback_CapturePathMalloc(size, sum, phy_addr, vir_addr, fd);
 	} else if (CAMERA_PREVIEW_RESERVED == type ||
 		   CAMERA_VIDEO_RESERVED == type ||
 		   CAMERA_ISP_FIRMWARE == type ||

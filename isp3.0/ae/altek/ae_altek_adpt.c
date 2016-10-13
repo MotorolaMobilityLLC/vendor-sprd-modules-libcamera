@@ -3837,13 +3837,13 @@ static cmr_int aealtek_set_hdr_ev(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_pa
 
 	level = in_ptr->soft_hdr_ev.level;
 	switch (level) {
-	case AE_CTRL_HDR_EV_OVEREXPOSURE:
+	case AE_CTRL_HDR_EV_UNDEREXPOSURE:
 		cxt_ptr->sensor_exp_data.lib_exp = cxt_ptr->lib_data.exposure_array.bracket_exp[0];
 		break;
 	case AE_CTRL_HDR_EV_NORMAL:
 		cxt_ptr->sensor_exp_data.lib_exp = cxt_ptr->lib_data.exposure_array.bracket_exp[1];
 		break;
-	case AE_CTRL_HDR_EV_UNDEREXPOSURE:
+	case AE_CTRL_HDR_EV_OVEREXPOSURE:
 		cxt_ptr->sensor_exp_data.lib_exp = cxt_ptr->lib_data.exposure_array.bracket_exp[2];
 		break;
 	default:

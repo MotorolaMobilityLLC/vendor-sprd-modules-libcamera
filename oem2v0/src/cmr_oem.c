@@ -646,7 +646,7 @@ void camera_grab_handle(cmr_int evt, void* data, void* privdata)
 		struct ipm_frame_in  ipm_in_param;
 		struct ipm_frame_out imp_out_param;
 		/* for bug 396318, will be removed later */
-		camera_set_discard_frame((cmr_handle)cxt, 1);
+		//camera_set_discard_frame((cmr_handle)cxt, 1);
 		ret = cmr_preview_receive_data(cxt->prev_cxt.preview_handle, cxt->camera_id, evt, data);
 		if (ret) {
 			CMR_LOGE("failed to send a frame to preview %ld", ret);
@@ -659,8 +659,12 @@ void camera_grab_handle(cmr_int evt, void* data, void* privdata)
 			}
 		} else {
 			frm_id = camera_get_post_proc_chn_out_frm_id(cxt->snp_cxt.post_proc_setting.chn_out_frm, frame);
-			out_param = cxt->snp_cxt.post_proc_setting.chn_out_frm[frm_id];
+			if(frm_id >= CMR_CAPTURE_MEM_SUM)
+				out_param = cxt->snp_cxt.post_proc_setting.chn_out_frm[0];
+			else
+				out_param = cxt->snp_cxt.post_proc_setting.chn_out_frm[frm_id];
 		}
+		out_param.addr_vir.addr_y = frame->yaddr_vir;
 		cxt->snp_cxt.cur_frm_info = *frame;
 		ipm_cxt->frm_num++;
 		ipm_in_param.src_frame = out_param;
@@ -6922,6 +6926,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 		in_param.frame_rect.width = in_param.frame_size.width;
 		in_param.frame_rect.height = in_param.frame_size.height;
 		in_param.reg_cb = camera_ipm_cb;
+		in_param.adgain_valid_frame_num = cxt->sn_cxt.cur_sns_ex_info.adgain_valid_frame_num;
 		ret = camera_open_hdr(cxt, &in_param, &out_param);
 		if (ret) {
 			CMR_LOGE("failed to open hdr %ld", ret);
@@ -6937,7 +6942,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	} else {
 		if (camera_get_hdr_flag(cxt)) {
 			out_param_ptr->frame_count = cxt->ipm_cxt.hdr_num;
-			out_param_ptr->frame_ctrl = FRAME_IMAGE_PROC;
+			out_param_ptr->frame_ctrl = FRAME_HDR_PROC;
 		} else {
 			out_param_ptr->frame_count = cxt->snp_cxt.total_num;
 			if (1 == cxt->snp_cxt.total_num) {

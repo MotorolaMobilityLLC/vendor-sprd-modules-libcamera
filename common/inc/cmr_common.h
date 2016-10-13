@@ -77,9 +77,6 @@ extern "C"
 #define FACE_DETECT_NUM                    10
 #define FRAME_NUM_MAX                     0xFFFFFFFF
 #define FRAME_FLASH_MAX                   0x0000FFFF
-#define FRAME_STOP                        0
-#define FRAME_CONTINUE                    1
-#define FRAME_IMAGE_PROC                  2
 #define INVALID_FORMAT_PATTERN            255
 
 #define CAMERA_SAFE_SCALE_DOWN(w)          (cmr_u32)((w)*11/10)
@@ -373,6 +370,12 @@ enum highiso_mode_type {
 	HIGHISO_CAP_MODE,
 	HIGHISO_RAWDATA_MODE,
 	HIGHISO_MODE_MAX
+};
+
+enum frame_contrl_type {
+	FRAME_STOP = 0,
+	FRAME_CONTINUE,
+	FRAME_HDR_PROC
 };
 
 struct img_addr {
