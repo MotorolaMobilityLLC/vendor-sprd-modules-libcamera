@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 #define LOG_TAG "isp_3afw"
+#define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 
 #include <stdlib.h>
+#include <cutils/trace.h>
 #include <cutils/properties.h>
 #include <utils/Timers.h>
 #include <unistd.h>
@@ -3774,6 +3776,8 @@ cmr_int isp3a_stop(cmr_handle isp_3a_handle)
 /*************************************EXTERNAL FUNCTION ***************************************/
 cmr_int isp_3a_fw_init(struct isp_3a_fw_init_in *input_ptr, cmr_handle *isp_3a_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = NULL;
 	struct sensor_raw_info                      *sensor_raw_info_ptr = NULL;
@@ -3869,11 +3873,14 @@ exit:
 		isp_dev_access_evt_reg(cxt->dev_access_handle, isp3a_dev_evt_cb, (cmr_handle)cxt);
 	}
 	ISP_LOGI("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int isp_3a_fw_deinit(cmr_handle isp_3a_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
 
@@ -3890,6 +3897,7 @@ cmr_int isp_3a_fw_deinit(cmr_handle isp_3a_handle)
 	cxt = NULL;
 
 exit:
+	ATRACE_END();
 	return ret;
 }
 

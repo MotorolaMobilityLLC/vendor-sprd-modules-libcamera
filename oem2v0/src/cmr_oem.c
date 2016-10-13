@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 #define LOG_TAG "cmr_oem"
+#define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <math.h>
 #include <cutils/properties.h>
+#include <cutils/trace.h>
 #include "cmr_oem.h"
 #include "cmr_common.h"
 #if defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4)
@@ -363,6 +365,8 @@ exit:
 
 void camera_send_channel_data(cmr_handle oem_handle, cmr_handle receiver_handle, cmr_uint evt, void *data)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 	struct frm_info                 *frm_ptr = data;
@@ -439,6 +443,7 @@ exit:
 	if (ret) {
 		CMR_LOGE("failed to send channel data %ld", ret);
 	}
+	ATRACE_END();
 }
 
 /*
@@ -606,6 +611,8 @@ cmr_int camera_get_post_proc_chn_out_frm_id(struct img_frm* frame, struct frm_in
 
 void camera_grab_handle(cmr_int evt, void* data, void* privdata)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)privdata;
 	struct ipm_context              *ipm_cxt = &cxt->ipm_cxt;
@@ -683,6 +690,7 @@ exit:
 			cxt->camera_cb(CAMERA_EXIT_CB_FAILED, cxt->client_data, CAMERA_FUNC_TAKE_PICTURE, NULL);
 		}
 	}
+	ATRACE_END();
 	return;
 }
 
@@ -1782,6 +1790,8 @@ cmr_int camera_get_preview_status(cmr_handle oem_handle)
 
 cmr_int camera_sensor_init(cmr_handle  oem_handle, cmr_uint is_autotest)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 	struct sensor_context           *sn_cxt = NULL;
@@ -1801,6 +1811,7 @@ cmr_int camera_sensor_init(cmr_handle  oem_handle, cmr_uint is_autotest)
 	cmr_bzero(&init_param, sizeof(init_param));
 	init_param.oem_handle = oem_handle;
 	init_param.is_autotest = is_autotest;
+
 	ret = cmr_sensor_init(&init_param, &sensor_handle);
 	if (ret) {
 		CMR_LOGE("failed to init sensor %ld", ret);
@@ -1841,13 +1852,17 @@ sensor_exit:
 	cmr_sensor_deinit_static_info(cxt);
 	cmr_sensor_deinit(sn_cxt->sensor_handle);
 	sn_cxt->inited = 0;
+
 exit:
 	CMR_LOGD("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_sensor_deinit(cmr_handle  oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	cmr_handle                      sensor_handle;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
@@ -1877,11 +1892,14 @@ cmr_int camera_sensor_deinit(cmr_handle  oem_handle)
 	cmr_bzero(sn_cxt,sizeof(*sn_cxt));
 
 exit:
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_grab_init(cmr_handle  oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 	struct grab_context             *grab_cxt = NULL;
@@ -1910,11 +1928,14 @@ cmr_int camera_grab_init(cmr_handle  oem_handle)
 
 exit:
 	CMR_LOGD("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_grab_deinit(cmr_handle  oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 	struct grab_context             *grab_cxt = NULL;
@@ -1934,6 +1955,7 @@ cmr_int camera_grab_deinit(cmr_handle  oem_handle)
 	cmr_bzero(grab_cxt, sizeof(*grab_cxt));
 exit:
 	CMR_LOGD("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
@@ -1951,6 +1973,8 @@ cmr_s32 camera_local_get_iommu_status(cmr_handle oem_handle) {
 
 cmr_int camera_jpeg_init(cmr_handle  oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 	struct jpeg_context             *jpeg_cxt = NULL;
@@ -1970,11 +1994,14 @@ cmr_int camera_jpeg_init(cmr_handle  oem_handle)
 		}
 	}
 	CMR_LOGD("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_jpeg_deinit(cmr_handle  oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 	struct jpeg_context             *jpeg_cxt;
@@ -1997,11 +2024,14 @@ cmr_int camera_jpeg_deinit(cmr_handle  oem_handle)
 
 exit:
 	CMR_LOGD("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_scaler_init(cmr_handle  oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 	struct scaler_context           *scaler_cxt = NULL;
@@ -2028,11 +2058,14 @@ cmr_int camera_scaler_init(cmr_handle  oem_handle)
 
 exit:
 	CMR_LOGD("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_scaler_deinit(cmr_handle  oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 	struct scaler_context           *scaler_cxt;
@@ -2053,11 +2086,14 @@ cmr_int camera_scaler_deinit(cmr_handle  oem_handle)
 	cmr_bzero(scaler_cxt, sizeof(*scaler_cxt));
 exit:
 	CMR_LOGD("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_rotation_init(cmr_handle  oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 	struct rotation_context         *rot_cxt = NULL;
@@ -2084,11 +2120,14 @@ cmr_int camera_rotation_init(cmr_handle  oem_handle)
 
 exit:
 	CMR_LOGD("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_rotation_deinit(cmr_handle  oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 	struct rotation_context         *rot_cxt;
@@ -2111,6 +2150,7 @@ cmr_int camera_rotation_deinit(cmr_handle  oem_handle)
 
 exit:
 	CMR_LOGD("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
@@ -2839,6 +2879,8 @@ static void *master_dual_otp = NULL;
 #endif
 cmr_int camera_isp_init(cmr_handle  oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 	struct isp_context              *isp_cxt = NULL;
@@ -3168,6 +3210,7 @@ exit:
 	}
 #endif
 	CMR_LOGD("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
@@ -3184,6 +3227,8 @@ cmr_int camera_isp_deinit_notice(cmr_handle  oem_handle)
 
 cmr_int camera_isp_deinit(cmr_handle  oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 	struct isp_context              *isp_cxt;
@@ -3225,11 +3270,14 @@ cmr_int camera_isp_deinit(cmr_handle  oem_handle)
 
 exit:
 	CMR_LOGD("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_preview_init(cmr_handle  oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 	struct preview_context          *prev_cxt = NULL;
@@ -3287,11 +3335,14 @@ cmr_int camera_preview_init(cmr_handle  oem_handle)
 	prev_cxt->inited = 1;
 exit:
 	CMR_LOGV("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_preview_deinit(cmr_handle  oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 	struct preview_context          *prev_cxt;
@@ -3312,11 +3363,14 @@ cmr_int camera_preview_deinit(cmr_handle  oem_handle)
 	cmr_bzero(prev_cxt, sizeof(*prev_cxt));
 exit:
 	CMR_LOGD("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_snapshot_init(cmr_handle  oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 	struct snapshot_context         *snp_cxt = NULL;
@@ -3365,11 +3419,14 @@ cmr_int camera_snapshot_init(cmr_handle  oem_handle)
 	snp_cxt->inited = 1;
 exit:
 	CMR_LOGD("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_snapshot_deinit(cmr_handle  oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 	struct snapshot_context         *snp_cxt;
@@ -3390,11 +3447,14 @@ cmr_int camera_snapshot_deinit(cmr_handle  oem_handle)
 	cmr_bzero(snp_cxt, sizeof(*snp_cxt));
 exit:
 	CMR_LOGD("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_ipm_init(cmr_handle  oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 	struct ipm_context              *ipm_cxt = NULL;
@@ -3424,11 +3484,14 @@ cmr_int camera_ipm_init(cmr_handle  oem_handle)
 
 exit:
 	CMR_LOGD("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_ipm_deinit(cmr_handle  oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 	struct ipm_context              *ipm_cxt;
@@ -3449,11 +3512,14 @@ cmr_int camera_ipm_deinit(cmr_handle  oem_handle)
 	cmr_bzero(ipm_cxt, sizeof(*ipm_cxt));
 exit:
 	CMR_LOGD("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_setting_init(cmr_handle  oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 	struct setting_context          *setting_cxt = NULL;
@@ -3486,11 +3552,14 @@ cmr_int camera_setting_init(cmr_handle  oem_handle)
 
 exit:
 	CMR_LOGD("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_setting_deinit(cmr_handle  oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 	struct setting_context          *setting_cxt;
@@ -3511,11 +3580,14 @@ cmr_int camera_setting_deinit(cmr_handle  oem_handle)
 	cmr_bzero(setting_cxt, sizeof(*setting_cxt));
 exit:
 	CMR_LOGD("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_focus_init(cmr_handle  oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 	struct focus_context            *focus_cxt;
@@ -3548,11 +3620,14 @@ cmr_int camera_focus_init(cmr_handle  oem_handle)
 
 exit:
 	CMR_LOGD("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_focus_deinit(cmr_handle  oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 	struct focus_context            *focus_cxt;
@@ -3574,6 +3649,7 @@ cmr_int camera_focus_deinit(cmr_handle  oem_handle)
 
 exit:
 	CMR_LOGD("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
@@ -3910,6 +3986,8 @@ exit:
 
 static cmr_int camera_res_deinit_internal(cmr_handle oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	CMR_LOGI("In");
 	camera_snapshot_deinit(oem_handle);
 
@@ -3931,6 +4009,8 @@ static cmr_int camera_res_deinit_internal(cmr_handle oem_handle)
 
 	camera_deinit_thread(oem_handle);
 	CMR_LOGI("Out");
+
+	ATRACE_END();
 	return CMR_CAMERA_SUCCESS;
 }
 
@@ -3974,6 +4054,8 @@ static cmr_int camera_init_thread_proc(struct cmr_msg *message, void *p_data)
 }
 cmr_int camera_res_init(cmr_handle oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 	CMR_MSG_INIT(message);
@@ -4004,11 +4086,14 @@ cmr_int camera_res_init(cmr_handle oem_handle)
 		ret = CMR_CAMERA_FAIL;
 	}
 	CMR_LOGI("async msg sent");
+	ATRACE_END();
 	return ret;
 }
 
 static cmr_int camera_res_init_done(cmr_handle oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 	CMR_MSG_INIT(message);
@@ -4021,10 +4106,13 @@ static cmr_int camera_res_init_done(cmr_handle oem_handle)
 	}
 	ret = cxt->err_code;
 	CMR_LOGI("res init-ed");
+	ATRACE_END();
 	return ret;
 }
 static cmr_int camera_res_deinit(cmr_handle oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 	CMR_MSG_INIT(message);
@@ -4052,11 +4140,14 @@ static cmr_int camera_res_deinit(cmr_handle oem_handle)
 	sem_destroy(&cxt->hdr_flag_sm);
 	sem_destroy(&cxt->share_path_sm);
 	sem_destroy(&cxt->access_sm);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_init_internal(cmr_handle  oem_handle, cmr_uint is_autotest)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	cmr_int                        ret_deinit = CMR_CAMERA_SUCCESS;
 
@@ -4105,17 +4196,20 @@ sensor_deinit:
     }
 
 exit:
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_deinit_internal(cmr_handle  oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	camera_isp_deinit_notice(oem_handle);
 	camera_isp_deinit(oem_handle);
 	camera_res_deinit(oem_handle);
 	camera_sensor_deinit(oem_handle);
-
+	ATRACE_END();
 	return ret;
 }
 
@@ -4502,6 +4596,8 @@ exit:
 
 cmr_int camera_preview_pre_proc(cmr_handle oem_handle, cmr_u32 camera_id, cmr_u32 preview_sn_mode)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 	cmr_u32                        sensor_mode;
@@ -4535,6 +4631,7 @@ cmr_int camera_preview_pre_proc(cmr_handle oem_handle, cmr_u32 camera_id, cmr_u3
 	}
 exit:
 	CMR_LOGI("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
@@ -4787,6 +4884,8 @@ exit:
 
 cmr_int camera_open_sensor(cmr_handle oem_handle, cmr_u32 camera_id)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 	struct sensor_context           *sn_cxt = &cxt->sn_cxt;
@@ -4802,11 +4901,14 @@ cmr_int camera_open_sensor(cmr_handle oem_handle, cmr_u32 camera_id)
 		CMR_LOGE("open %d sensor failed %ld", cxt->camera_id, ret);
 		return CMR_CAMERA_FAIL;
 	}
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_close_sensor(cmr_handle oem_handle, cmr_u32 camera_id)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 	struct sensor_context           *sn_cxt = &cxt->sn_cxt;
@@ -4821,11 +4923,14 @@ cmr_int camera_close_sensor(cmr_handle oem_handle, cmr_u32 camera_id)
 		CMR_LOGE("open %d sensor failed %ld", cxt->camera_id, ret);
 		return CMR_CAMERA_FAIL;
 	}
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle, struct raw_proc_param *param_ptr)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 	struct isp_context              *isp_cxt = &cxt->isp_cxt;
@@ -4966,11 +5071,14 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle, struct 
 		CMR_LOGD("caller handle 0x%lx", (cmr_uint)caller_handle);
 	}
 exit:
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *param_ptr)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 	struct isp_context              *isp_cxt = &cxt->isp_cxt;
@@ -5259,11 +5367,14 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 	}
 exit:
 	CMR_LOGI("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_isp_stop_video(cmr_handle oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 	struct isp_context             *isp_cxt = &cxt->isp_cxt;
@@ -5310,12 +5421,15 @@ cmr_int camera_isp_stop_video(cmr_handle oem_handle)
 	}
 exit:
 	CMR_LOGI("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle, cmr_u32 camera_id,
 										struct channel_start_param *param_ptr, cmr_u32 *channel_id, struct img_data_end *endian)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 	struct sensor_context          *sn_cxt = &cxt->sn_cxt;
@@ -5350,7 +5464,7 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle, cmr_
 				goto exit;
 			}
 		}
-		return ret;
+		goto exit;
 	}
 
 	//cmr_grab_set_zoom_mode(cxt->grab_cxt.grab_handle, 1);
@@ -5408,32 +5522,20 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle, cmr_
 		}
 	}
 
-/*
-	// we will remove the flowing code later
-	// update the channel id
-	param_ptr->buffer.channel_id = *channel_id;
-
-	if (HIGHISO_CAP_MODE == cxt->highiso_mode || cxt->isp_to_dram) {
-		ret = camera_isp_buff_cfg(cxt, &param_ptr->buffer);
-	}
-	else
-		ret = cmr_grab_buff_cfg(cxt->grab_cxt.grab_handle, &param_ptr->buffer);
-	if (ret) {
-		CMR_LOGE("failed to buf cfg %ld", ret);
-		goto exit;
-	}
-*/
 	cxt->grab_cxt.caller_handle[*channel_id] = caller_handle;
 	cxt->grab_cxt.skip_number[*channel_id] = param_ptr->skip_num;
 	CMR_LOGI("channel id %d, caller_handle 0x%lx, skip num %d",
 		     *channel_id, (cmr_uint)caller_handle, param_ptr->skip_num);
 exit:
 	CMR_LOGV("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_channel_buff_cfg (cmr_handle oem_handle, struct buffer_cfg *buf_cfg)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 	if (!oem_handle) {
@@ -5453,6 +5555,7 @@ cmr_int camera_channel_buff_cfg (cmr_handle oem_handle, struct buffer_cfg *buf_c
 	}
 exit:
 	CMR_LOGV("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
@@ -6514,6 +6617,8 @@ exit:
 cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mode,
 	                                               cmr_uint is_snapshot, struct preview_param *out_param_ptr)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 	struct preview_context         *prev_cxt = &cxt->prev_cxt;
@@ -6933,11 +7038,14 @@ exit:
 	CMR_LOGI("burst_mode %d", cxt->burst_mode);
 	CMR_LOGI("highiso_mode %d", cxt->highiso_mode);
 
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_set_preview_param(cmr_handle oem_handle, enum takepicture_mode mode,  cmr_uint is_snapshot)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 	struct preview_context         *prev_cxt = &cxt->prev_cxt;
@@ -6989,6 +7097,7 @@ cmr_int camera_set_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	CMR_LOGI("rot angle %ld", snp_cxt->post_proc_setting.rot_angle);
 
 exit:
+	ATRACE_END();
 	return ret;
 }
 
@@ -7442,16 +7551,21 @@ exit:
 
 cmr_int camera_local_deinit(cmr_handle oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 
 	camera_deinit_internal(oem_handle);
 	free((void*)oem_handle);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_local_start_preview(cmr_handle oem_handle, enum takepicture_mode mode,  cmr_uint is_snapshot)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 	struct preview_context         *prev_cxt = &cxt->prev_cxt;
@@ -7477,11 +7591,14 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle, enum takepicture_mode 
 	ret = cmr_sensor_focus_init(cxt->sn_cxt.sensor_handle ,cxt->camera_id);
 #endif
 exit:
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_local_stop_preview(cmr_handle oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	cmr_int                         prev_ret = CMR_CAMERA_SUCCESS;
 	cmr_int                         snp_ret = CMR_CAMERA_SUCCESS;
@@ -7514,6 +7631,7 @@ cmr_int camera_local_stop_preview(cmr_handle oem_handle)
 	cxt->prev_cxt.video_size.height = 0;
 exit:
 	CMR_LOGV("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
@@ -7552,6 +7670,8 @@ cmr_int camera_local_set_cap_size(cmr_handle oem_handle, cmr_u32 is_reprocessing
 
 cmr_int camera_local_start_snapshot(cmr_handle oem_handle, enum takepicture_mode mode, cmr_uint is_snapshot)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 	struct preview_context         *prev_cxt;
@@ -7751,11 +7871,14 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle, enum takepicture_mode
 		camera_local_start_multi_layer(oem_handle);
 exit:
 	CMR_LOGV("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_local_stop_snapshot(cmr_handle oem_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 
@@ -7795,6 +7918,7 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle)
 
 exit:
 	CMR_LOGV("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 

@@ -29,6 +29,7 @@
 
 #define LOG_TAG "SprdCamera3Channel"
 //#define LOG_NDEBUG 0
+#define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 
 #include <stdlib.h>
 #include <cstdlib>
@@ -37,6 +38,7 @@
 #include <hardware/camera3.h>
 #include <system/camera_metadata.h>
 #include <gralloc_priv.h>
+#include <utils/Trace.h>
 #include <utils/Log.h>
 #include <utils/Errors.h>
 #include <cutils/properties.h>
@@ -574,6 +576,8 @@ int SprdCamera3PicChannel::channelCbRoutine(uint32_t frame_number, int64_t times
 
 int SprdCamera3PicChannel::channelClearAllQBuff(int64_t timestamp, camera_stream_type_t stream_type)
 {
+	ATRACE_CALL();
+
 	int ret = NO_ERROR;
 	cam_result_data_info_t  result_info;
 	int8_t index = stream_type - PIC_STREAM_TYPE_BASE;

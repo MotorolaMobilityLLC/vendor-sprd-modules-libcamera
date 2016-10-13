@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 #define LOG_TAG "isp_mw"
+#define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 
 #include <stdlib.h>
+#include <cutils/trace.h>
 #include "cutils/properties.h"
 #include <unistd.h>
 #include "isp_mw.h"
@@ -229,6 +231,7 @@ exit:
 		ISP_LOGI("3a bin size = %d, shading bin size = %d",
 			cxt->tuning_bin.isp_3a_size, cxt->tuning_bin.isp_shading_size);
 	}
+
 	return ret;
 }
 
@@ -533,6 +536,8 @@ cmr_int ispmw_parse_second_tuning_bin(cmr_handle isp_mw_handle)
 /*************************************EXTERNAL FUNCTION ***************************************/
 cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp_3a_fw_init_in                    isp3a_input;
 	struct isp_dev_init_in                      isp_dev_input;
@@ -555,6 +560,7 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 	}
 	cmr_bzero(cxt, sizeof(*cxt));
 
+	ATRACE_BEGIN("isp_get_and_parse_tuning_bin");
 	ISP_LOGE("init param name %s", input_ptr->ex_info.name);
 	cxt->input_param.ex_info.name = input_ptr->ex_info.name;
 	ret = ispmw_get_tuning_bin((cmr_handle)cxt, (const cmr_s8 *)input_ptr->ex_info.name);
@@ -575,6 +581,7 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 			}
 		}
 	}
+
 	ret = ispmw_parse_tuning_bin((cmr_handle)cxt);
 	if (ret) {
 		goto exit;
@@ -591,6 +598,9 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 		}
 	}
 #endif
+
+	ATRACE_END();
+
 	cxt->camera_id = input_ptr->camera_id;
 	cxt->caller_handle = input_ptr->oem_handle;
 	cxt->caller_callback = input_ptr->ctrl_callback;
@@ -675,6 +685,7 @@ exit:
 		*isp_handle = (cmr_handle)cxt;
 	}
 	ISP_LOGI("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
@@ -745,6 +756,8 @@ cmr_int isp_ioctl(cmr_handle isp_handle, enum isp_ctrl_cmd cmd, void *param_ptr)
 
 cmr_int isp_video_start(cmr_handle isp_handle, struct isp_video_start *param_ptr)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp_mw_context                       *cxt = (struct isp_mw_context *)isp_handle;
 	struct isp_3a_cfg_param                     cfg_param;
@@ -804,11 +817,14 @@ stop_exit:
 	isp_3a_fw_stop(cxt->isp_3a_handle);
 exit:
 	ISP_LOGI("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int isp_video_stop(cmr_handle isp_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp_mw_context                       *cxt = (struct isp_mw_context *)isp_handle;
 
@@ -818,11 +834,14 @@ cmr_int isp_video_stop(cmr_handle isp_handle)
 	ret = isp_3a_fw_stop(cxt->isp_3a_handle);
 	ispmw_put_second_tuning_bin((cmr_handle)cxt);
 
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int isp_proc_start(cmr_handle isp_handle, struct ips_in_param *input_ptr, struct ips_out_param *output_ptr)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp_mw_context                       *cxt = (struct isp_mw_context *)isp_handle;
 	struct isp_dev_postproc_in                  dev_in;
@@ -861,6 +880,7 @@ cmr_int isp_proc_start(cmr_handle isp_handle, struct ips_in_param *input_ptr, st
 	ret = isp_dev_access_start_postproc(cxt->isp_dev_handle, &dev_in, &dev_out);
 	ret = isp_3a_fw_stop(cxt->isp_3a_handle);
 exit:
+	ATRACE_END();
 	return ret;
 }
 
@@ -876,6 +896,8 @@ cmr_int isp_proc_next(cmr_handle isp_handle, struct ipn_in_param *input_ptr, str
 
 cmr_int isp_cap_buff_cfg(cmr_handle isp_handle, struct isp_img_param *buf_cfg)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                    ret = ISP_SUCCESS;
 	struct isp_mw_context      *cxt = (struct isp_mw_context *)isp_handle;
 	cmr_u32                  i;
@@ -908,15 +930,19 @@ cmr_int isp_cap_buff_cfg(cmr_handle isp_handle, struct isp_img_param *buf_cfg)
 
 	ret = isp_dev_access_cap_buf_cfg(cxt->isp_dev_handle, &parm);
 
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int isp_drammode_takepic(cmr_handle isp_handle, cmr_u32 is_start)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                    ret = ISP_SUCCESS;
 	struct isp_mw_context      *cxt = (struct isp_mw_context *)isp_handle;
 
 	ret = isp_dev_access_drammode_takepic(cxt->isp_dev_handle, is_start);
 
+	ATRACE_END();
 	return ret;
 }

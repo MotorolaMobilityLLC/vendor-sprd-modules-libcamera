@@ -15,7 +15,9 @@
  */
 
 #define LOG_TAG "cmr_common"
+#define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 
+#include <cutils/trace.h>
 #include <stdlib.h>
 #include "cmr_common.h"
 
@@ -105,6 +107,8 @@ cmr_int camera_get_trim_rect2(struct img_rect *src_trim_rect,
 			float zoom_ratio, float dst_aspect_ratio,
 			cmr_u32 sensor_w, cmr_u32 sensor_h, cmr_u8 rot)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                  ret = CMR_CAMERA_SUCCESS;
 	cmr_u32                  trim_width;
 	cmr_u32                  trim_height;
@@ -153,7 +157,7 @@ cmr_int camera_get_trim_rect2(struct img_rect *src_trim_rect,
 	CMR_LOGI("output trim rect %d %d %d %d",
 		src_trim_rect->start_x, src_trim_rect->start_y,
 		src_trim_rect->width, src_trim_rect->height);
-
+	ATRACE_END();
 	return ret;
 }
 

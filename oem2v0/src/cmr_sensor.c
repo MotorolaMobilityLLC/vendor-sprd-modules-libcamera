@@ -14,7 +14,9 @@
 * limitations under the License.
 */
 #define LOG_TAG "cmr_sensor"
+#define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 
+#include <cutils/trace.h>
 #include <utils/Log.h>
 #include <fcntl.h>              /* low-level i/o */
 #include <errno.h>
@@ -133,6 +135,8 @@ cmr_int cmr_sns_get_ioctl_cmd(SENSOR_IOCTL_CMD_E *sns_cmd, enum sensor_cmd in_cm
  **---------------------------------------------------------------------------*/
  cmr_int cmr_sensor_init(struct sensor_init_param *init_param_ptr, cmr_handle *sensor_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int             ret = CMR_CAMERA_SUCCESS;
 	struct cmr_sensor_handle  *handle = NULL;
 	CMR_LOGI("E");
@@ -178,11 +182,14 @@ init_end:
 	}
 
 	CMR_LOGV("X ret %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int cmr_sensor_deinit(cmr_handle sensor_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	CMR_LOGI("E");
 	cmr_int             ret = CMR_CAMERA_SUCCESS;
 	struct cmr_sensor_handle  *handle = (struct cmr_sensor_handle *)sensor_handle;
@@ -208,11 +215,14 @@ cmr_int cmr_sensor_deinit(cmr_handle sensor_handle)
 
 deinit_end:
 	CMR_LOGI("X ret %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int cmr_sensor_open(cmr_handle sensor_handle, cmr_u32 sensor_id_bits)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	CMR_MSG_INIT(message);
 	cmr_int                   ret = CMR_CAMERA_SUCCESS;
 	struct cmr_sensor_handle  *handle = (struct cmr_sensor_handle *)sensor_handle;
@@ -240,12 +250,16 @@ cmr_int cmr_sensor_open(cmr_handle sensor_handle, cmr_u32 sensor_id_bits)
 			ret = CMR_CAMERA_FAIL;
 		}
 	}
+
 	CMR_LOGI("X ret %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int cmr_sensor_close(cmr_handle sensor_handle, cmr_u32 sensor_id_bits)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	CMR_MSG_INIT(message);
 	cmr_int             ret = CMR_CAMERA_SUCCESS;
 	struct cmr_sensor_handle  *handle = (struct cmr_sensor_handle *)sensor_handle;
@@ -263,6 +277,7 @@ cmr_int cmr_sensor_close(cmr_handle sensor_handle, cmr_u32 sensor_id_bits)
 		return CMR_CAMERA_FAIL;
 	}
 	CMR_LOGI("X ret %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
@@ -416,6 +431,8 @@ cmr_int cmr_sensor_get_info(cmr_handle sensor_handle, cmr_uint sensor_id, struct
 
 cmr_int cmr_sensor_set_mode(cmr_handle sensor_handle, cmr_uint sensor_id, cmr_uint mode)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	CMR_MSG_INIT(message);
 	cmr_int                  ret = CMR_CAMERA_SUCCESS;
 	struct cmr_sensor_handle *handle = (struct cmr_sensor_handle *)sensor_handle;
@@ -434,11 +451,14 @@ cmr_int cmr_sensor_set_mode(cmr_handle sensor_handle, cmr_uint sensor_id, cmr_ui
 		return CMR_CAMERA_FAIL;
 	}
 	CMR_LOGI("X ret %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int cmr_sensor_set_mode_done(cmr_handle sensor_handle, cmr_uint sensor_id)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                  ret = CMR_CAMERA_SUCCESS;
 
 	CMR_MSG_INIT(message);
@@ -456,6 +476,7 @@ cmr_int cmr_sensor_set_mode_done(cmr_handle sensor_handle, cmr_uint sensor_id)
 		return CMR_CAMERA_FAIL;
 	}
 	CMR_LOGI("X ret %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
@@ -870,6 +891,8 @@ cmr_int cmr_sns_destroy_thread(struct cmr_sensor_handle *handle)
 
 cmr_int cmr_sns_open(struct cmr_sensor_handle *handle, cmr_u32 sensor_id_bits)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int       ret = CMR_CAMERA_SUCCESS;
 	cmr_u32       cameraId = 0;
 	cmr_u32       cameraCnt = 0;
@@ -907,11 +930,15 @@ cmr_int cmr_sns_open(struct cmr_sensor_handle *handle, cmr_u32 sensor_id_bits)
 			}
 		}
 	}
+
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int cmr_sns_close(struct cmr_sensor_handle *handle, cmr_u32 sensor_id_bits)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int       ret = CMR_CAMERA_SUCCESS;
 	cmr_u32       cameraId = 0;
 	cmr_u32       cameraCnt = 0;
@@ -939,6 +966,7 @@ cmr_int cmr_sns_close(struct cmr_sensor_handle *handle, cmr_u32 sensor_id_bits)
 	}
 	/*todo, if close not success, how to handle the issue*/
 
+	ATRACE_END();
 	return ret;
 }
 
@@ -1317,6 +1345,8 @@ static cmr_int cmr_sns_create_monitor_thread(struct cmr_sensor_handle *sensor_ha
 
 static cmr_int cmr_sns_kill_monitor_thread(struct cmr_sensor_handle *sensor_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                  ret = CMR_CAMERA_SUCCESS;
 	void                     *dummy;
 
@@ -1335,6 +1365,7 @@ static cmr_int cmr_sns_kill_monitor_thread(struct cmr_sensor_handle *sensor_hand
 	}
 
 	CMR_LOGI("X kill sensor monitor thread done!");
+	ATRACE_END();
 	return ret;
 }
 
@@ -1420,6 +1451,8 @@ static cmr_int  cmr_sns_create_fmove_thread(struct cmr_sensor_handle *sensor_han
 
 static cmr_int cmr_sns_kill_fmove_thread(struct cmr_sensor_handle *sensor_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                  ret = CMR_CAMERA_SUCCESS;
 	void                     *dummy;
 
@@ -1438,6 +1471,7 @@ static cmr_int cmr_sns_kill_fmove_thread(struct cmr_sensor_handle *sensor_handle
 	}
 
 	CMR_LOGI("X kill sensor monitor thread done!");
+	ATRACE_END();
 	return ret;
 }
 

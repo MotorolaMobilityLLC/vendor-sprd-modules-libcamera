@@ -16,11 +16,13 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "SprdCamera3OEMIf"
+#define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 
 #include <camera/Camera.h>
 #include "SprdCamera3OEMIf.h"
 #include <utils/Log.h>
 #include <utils/String16.h>
+#include <utils/Trace.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
@@ -303,6 +305,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mCameraDfsPolicyCur(CAM_EXIT)
 
 {
+	ATRACE_CALL();
+
 	//mIsPerformanceTestable = sprd_isPerformanceTestable();
 	HAL_LOGI("openCameraHardware: E cameraId: %d.", cameraId);
 
@@ -458,6 +462,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 
 SprdCamera3OEMIf::~SprdCamera3OEMIf()
 {
+	ATRACE_CALL();
+
 	int i;
 	HAL_LOGI("closeCameraHardware: E cameraId: %d.", mCameraId);
 
@@ -540,6 +546,8 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf()
 
 void SprdCamera3OEMIf::closeCamera()
 {
+	ATRACE_CALL();
+
 	HAL_LOGI("E");
 	Mutex::Autolock l(&mLock);
 
@@ -690,6 +698,8 @@ int SprdCamera3OEMIf::stopMultiLayer()
 
 int SprdCamera3OEMIf::start(camera_channel_type_t channel_type, uint32_t frame_number)
 {
+	ATRACE_CALL();
+
 	int ret = NO_ERROR;
 	Mutex::Autolock l(&mLock);
 
@@ -747,6 +757,8 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type, uint32_t frame_n
 
 int SprdCamera3OEMIf::stop(camera_channel_type_t channel_type, uint32_t frame_number)
 {
+	ATRACE_CALL();
+
 	int ret = NO_ERROR;
 	int capture_intent = 0;
 
@@ -770,6 +782,8 @@ int SprdCamera3OEMIf::stop(camera_channel_type_t channel_type, uint32_t frame_nu
 
 int SprdCamera3OEMIf::takePicture()
 {
+	ATRACE_CALL();
+
 	bool result = true, wait_raw = true;
 
 	HAL_LOGI("E");
@@ -909,6 +923,8 @@ int SprdCamera3OEMIf::takePicture()
 
 int SprdCamera3OEMIf::zslTakePicture()
 {
+	ATRACE_CALL();
+
 	HAL_LOGI("E");
 	GET_START_TIME;
 	print_time();
@@ -1004,6 +1020,8 @@ int SprdCamera3OEMIf::zslTakePicture()
 
 int SprdCamera3OEMIf::VideoTakePicture()
 {
+	ATRACE_CALL();
+
 	HAL_LOGI("E");
 	GET_START_TIME;
 	print_time();
@@ -1112,6 +1130,8 @@ status_t SprdCamera3OEMIf::faceDectect_enable(bool enable)
 
 status_t SprdCamera3OEMIf::autoFocus(void *user_data)
 {
+	ATRACE_CALL();
+
 #ifdef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
 	return NO_ERROR;
 #endif
@@ -1167,6 +1187,8 @@ status_t SprdCamera3OEMIf::autoFocus(void *user_data)
 
 status_t SprdCamera3OEMIf::cancelAutoFocus()
 {
+	ATRACE_CALL();
+
 #ifdef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
 	return NO_ERROR;
 #endif
@@ -1902,6 +1924,8 @@ bool SprdCamera3OEMIf::checkPreviewStateForCapture()
 
 bool SprdCamera3OEMIf::WaitForCameraStart()
 {
+	ATRACE_CALL();
+
 	HAL_LOGD("E");
 	Mutex::Autolock stateLock(&mStateLock);
 
@@ -1918,6 +1942,8 @@ bool SprdCamera3OEMIf::WaitForCameraStart()
 
 bool SprdCamera3OEMIf::WaitForCameraStop()
 {
+	ATRACE_CALL();
+
 	HAL_LOGD("E");
 	Mutex::Autolock stateLock(&mStateLock);
 
@@ -1937,6 +1963,8 @@ bool SprdCamera3OEMIf::WaitForCameraStop()
 
 bool SprdCamera3OEMIf::WaitForPreviewStart()
 {
+	ATRACE_CALL();
+
 	HAL_LOGD("E");
 	Mutex::Autolock stateLock(&mStateLock);
 
@@ -1957,6 +1985,8 @@ bool SprdCamera3OEMIf::WaitForPreviewStart()
 
 bool SprdCamera3OEMIf::WaitForPreviewStop()
 {
+	ATRACE_CALL();
+
 	Mutex::Autolock statelock(&mStateLock);
 
 	while (SPRD_IDLE != mCameraState.preview_state
@@ -1974,6 +2004,8 @@ bool SprdCamera3OEMIf::WaitForPreviewStop()
 
 bool SprdCamera3OEMIf::WaitForCaptureStart()
 {
+	ATRACE_CALL();
+
 	HAL_LOGD("E");
 	Mutex::Autolock stateLock(&mStateLock);
 
@@ -2003,6 +2035,8 @@ bool SprdCamera3OEMIf::WaitForCaptureStart()
 
 bool SprdCamera3OEMIf::WaitForCaptureDone()
 {
+	ATRACE_CALL();
+
 	Mutex::Autolock stateLock(&mStateLock);
 	while (SPRD_IDLE != mCameraState.capture_state
 		&& SPRD_ERROR != mCameraState.capture_state) {
@@ -2028,6 +2062,8 @@ bool SprdCamera3OEMIf::WaitForCaptureDone()
 
 bool SprdCamera3OEMIf::WaitForBurstCaptureDone()
 {
+	ATRACE_CALL();
+
 	Mutex::Autolock stateLock(&mStateLock);
 
 	SprdCamera3PicChannel *pic_channel = reinterpret_cast<SprdCamera3PicChannel *>(mPictureChan);
@@ -2082,6 +2118,8 @@ bool SprdCamera3OEMIf::WaitForBurstCaptureDone()
 
 bool SprdCamera3OEMIf::WaitForCaptureJpegState()
 {
+	ATRACE_CALL();
+
 	Mutex::Autolock stateLock(&mStateLock);
 
 	while (SPRD_WAITING_JPEG != mCameraState.capture_state
@@ -2098,6 +2136,8 @@ bool SprdCamera3OEMIf::WaitForCaptureJpegState()
 
 bool SprdCamera3OEMIf::WaitForFocusCancelDone()
 {
+	ATRACE_CALL();
+
 	Mutex::Autolock stateLock(&mStateLock);
 	while (SPRD_IDLE != mCameraState.focus_state
 		&& SPRD_ERROR != mCameraState.focus_state) {
@@ -2114,6 +2154,8 @@ bool SprdCamera3OEMIf::WaitForFocusCancelDone()
 
 bool SprdCamera3OEMIf::startCameraIfNecessary()
 {
+	ATRACE_CALL();
+
 	cmr_uint is_support_zsl = 0;
 	cmr_uint max_width = 0;
 	cmr_uint max_height = 0;
@@ -2244,6 +2286,8 @@ bool SprdCamera3OEMIf::startCameraIfNecessary()
 
 sprd_camera_memory_t* SprdCamera3OEMIf::allocReservedMem(int buf_size, int num_bufs, uint32_t is_cache)
 {
+	ATRACE_CALL();
+
 	unsigned long paddr = 0;
 	size_t psize = 0;
 	int result = 0;
@@ -2306,6 +2350,8 @@ getpmem_fail:
 
 sprd_camera_memory_t* SprdCamera3OEMIf::allocCameraMem(int buf_size, int num_bufs, uint32_t is_cache)
 {
+	ATRACE_CALL();
+
 	unsigned long paddr = 0;
 	size_t psize = 0;
 	int result = 0;
@@ -2458,6 +2504,8 @@ void SprdCamera3OEMIf::deinitCapture(bool isPreAllocCapMem)
 
 int SprdCamera3OEMIf::startPreviewInternal()
 {
+	ATRACE_CALL();
+
 	bool is_push_zsl = false;
 	bool is_volte = false;
 	char value[PROPERTY_VALUE_MAX];
@@ -2596,6 +2644,8 @@ int SprdCamera3OEMIf::startPreviewInternal()
 
 void SprdCamera3OEMIf::stopPreviewInternal()
 {
+	ATRACE_CALL();
+
 	nsecs_t start_timestamp = systemTime();
 	nsecs_t end_timestamp;
 	mUpdateRangeFpsCount = 0;
@@ -2683,6 +2733,8 @@ bool SprdCamera3OEMIf::iSZslMode()
 
 int SprdCamera3OEMIf::cancelPictureInternal()
 {
+	ATRACE_CALL();
+
 	bool result = true;
 	HAL_LOGD("E, state %s", getCameraStateStr(getCaptureState()));
 
@@ -2866,6 +2918,8 @@ int SprdCamera3OEMIf::displayCopy(uintptr_t dst_phy_addr, uintptr_t dst_virtual_
 
 void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame)
 {
+	ATRACE_CALL();
+
 	if (NULL == frame) {
 		HAL_LOGE("invalid frame pointer");
 		return;
@@ -2967,6 +3021,8 @@ int SprdCamera3OEMIf::IommuIsEnabled(void)
 
 int SprdCamera3OEMIf::allocOneFrameMem(struct SprdCamera3OEMIf::OneFrameMem *one_frame_mem_ptr)
 {
+	ATRACE_CALL();
+
 	struct SprdCamera3OEMIf::OneFrameMem *ptr = one_frame_mem_ptr;
 	int ret = 0;
 
@@ -2996,6 +3052,8 @@ int SprdCamera3OEMIf::allocOneFrameMem(struct SprdCamera3OEMIf::OneFrameMem *one
 
 int SprdCamera3OEMIf::relaseOneFrameMem(struct SprdCamera3OEMIf::OneFrameMem *one_frame_mem_ptr)
 {
+	ATRACE_CALL();
+
 	struct SprdCamera3OEMIf::OneFrameMem *ptr = one_frame_mem_ptr;
 	if (!ptr)
 		return 0;
@@ -3194,6 +3252,8 @@ void SprdCamera3OEMIf::doFaceMakeup(struct camera_frame_type *frame)
 
 void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 {
+	ATRACE_CALL();
+
 	Mutex::Autolock cbLock(&mPreviewCbLock);
 	int ret = NO_ERROR;
 
@@ -3609,6 +3669,8 @@ void SprdCamera3OEMIf::FreeReDisplayMem()
 
 bool SprdCamera3OEMIf::displayOneFrameForCapture(uint32_t width, uint32_t height, int fd, uintptr_t phy_addr, char *virtual_addr)
 {
+	ATRACE_CALL();
+
 	HAL_LOGD("E: size = %dx%d, phy_addr = 0x%lx, virtual_addr = 0x%lx", width, height, phy_addr, virtual_addr);
 
 	Mutex::Autolock cbLock(&mPreviewCbLock);
@@ -3669,6 +3731,8 @@ bool SprdCamera3OEMIf::iSCallbackCaptureFrame()
 
 bool SprdCamera3OEMIf::receiveCallbackPicture(uint32_t width, uint32_t height, cmr_s32 fd, uintptr_t phy_addr, char *virtual_addr)
 {
+	ATRACE_CALL();
+
 	HAL_LOGD("E: size = %dx%d, phy_addr = 0x%lx, virtual_addr = 0x%lx", width, height, phy_addr, virtual_addr);
 
 	Mutex::Autolock cbLock(&mPreviewCbLock);
@@ -3832,6 +3896,8 @@ cmr_int save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 
 /**add for 3d calibration save debug img end*/
 void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame)
 {
+	ATRACE_CALL();
+
 	HAL_LOGD("E, mReDisplayHeap = %p,frame->y_vir_addr 0x%x ", mReDisplayHeap,frame->y_vir_addr);
 	Mutex::Autolock cbLock(&mCaptureCbLock);
 	bool display_flag, callback_flag;
@@ -3947,6 +4013,8 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame)
 
 void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame)
 {
+	ATRACE_CALL();
+
 	print_time();
 	Mutex::Autolock cbLock(&mCaptureCbLock);
 	Mutex::Autolock cbPreviewLock(&mPreviewCbLock);
@@ -4167,6 +4235,8 @@ SprdCamera3OEMIf::transitionState(SprdCamera3OEMIf::Sprd_camera_state from,
 void SprdCamera3OEMIf::HandleStartPreview(enum camera_cb_type cb,
 		void* parm4)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	HAL_LOGV("in: cb = %d, parm4 = 0x%x, state = %s",
 		cb, (cmr_uint)parm4, getCameraStateStr(getPreviewState()));
 
@@ -4250,10 +4320,13 @@ void SprdCamera3OEMIf::HandleStartPreview(enum camera_cb_type cb,
 	}
 
 	HAL_LOGV("out, state = %s", getCameraStateStr(getPreviewState()));
+	ATRACE_END();
 }
 
 void SprdCamera3OEMIf::HandleStopPreview(enum camera_cb_type cb, void*  parm4)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	Mutex::Autolock cbPreviewLock(&mPreviewCbLock);
 	Sprd_camera_state tmpPrevState = SPRD_IDLE;
 	tmpPrevState = getPreviewState();
@@ -4279,11 +4352,14 @@ void SprdCamera3OEMIf::HandleStopPreview(enum camera_cb_type cb, void*  parm4)
 	mSetting->setAeCONTROLTag(controlInfo);
 	mSetting->setAwbCONTROLTag(controlInfo);
 	HAL_LOGD("state = %s", getCameraStateStr(getPreviewState()));
+	ATRACE_END();
 }
 
 void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb,
 											void* parm4)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	HAL_LOGD("E: cb = %d, parm4 = 0x%x, state = %s",
 			cb, parm4, getCameraStateStr(getCaptureState()));
 	bool encode_location = true;
@@ -4451,11 +4527,14 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb,
 	}
 
 	HAL_LOGD("X, state = %s", getCameraStateStr(getCaptureState()));
+	ATRACE_END();
 }
 
 void SprdCamera3OEMIf::HandleCancelPicture(enum camera_cb_type cb,
 												void* parm4)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	HAL_LOGD("E: cb = %d, parm4 = 0x%x, state = %s",
 			cb, parm4, getCameraStateStr(getCaptureState()));
 
@@ -4467,11 +4546,14 @@ void SprdCamera3OEMIf::HandleCancelPicture(enum camera_cb_type cb,
 			STATE_CAPTURE);
 
 	HAL_LOGD("X, state = %s", getCameraStateStr(getCaptureState()));
+	ATRACE_END();
 }
 
 void SprdCamera3OEMIf::HandleEncode(enum camera_cb_type cb,
 										void* parm4)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	HAL_LOGD("E: cb = %d, parm4 = 0x%x, state = %s",
 			cb, parm4, getCameraStateStr(getCaptureState()));
 
@@ -4554,11 +4636,14 @@ void SprdCamera3OEMIf::HandleEncode(enum camera_cb_type cb,
 
 handle_encode_exit:
 	HAL_LOGD("X, state = %s", getCameraStateStr(getCaptureState()));
+	ATRACE_END();
 }
 
 void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb,
 										void* parm4)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	SprdCamera3MetadataChannel *channel = (SprdCamera3MetadataChannel*)mMetaData;
 	int64_t timeStamp = 0;
 	timeStamp = systemTime();
@@ -4626,11 +4711,14 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb,
 	}
 
 	HAL_LOGD("out, state = %s", getCameraStateStr(getFocusState()));
+	ATRACE_END();
 }
 
 void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb,
 										void* parm4)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	CONTROL_Tag controlInfo;
 	mSetting->getCONTROLTag(&controlInfo);
 	HAL_LOGD("E: cb = %d, parm4 = 0x%x, state = %s",
@@ -4661,6 +4749,7 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb,
 	}
 
 	HAL_LOGD("out");
+	ATRACE_END();
 }
 
 
@@ -4689,6 +4778,8 @@ void SprdCamera3OEMIf::camera_cb(enum camera_cb_type cb,
 					enum camera_func_type func,
 					void* parm4)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)client_data;
 	HAL_LOGV("E");
 	HAL_LOGV("cb = %d func = %d parm4 = 0x%x", cb, func, (cmr_uint)parm4);
@@ -4733,11 +4824,15 @@ void SprdCamera3OEMIf::camera_cb(enum camera_cb_type cb,
 		HAL_LOGE("Unknown camera-callback status %d", cb);
 		break;
 	}
+
+	ATRACE_END();
 	HAL_LOGV("X");
 }
 
 int SprdCamera3OEMIf::flush_buffer(camera_flush_mem_type_e  type, int index, void *v_addr, void *p_addr, int size)
 {
+	ATRACE_CALL();
+
 	int ret = 0;
 	sprd_camera_memory_t *pmem = NULL;
 	MemIon *pHeapIon = NULL;
@@ -4797,6 +4892,8 @@ int SprdCamera3OEMIf::flush_buffer(camera_flush_mem_type_e  type, int index, voi
 
 int SprdCamera3OEMIf::openCamera()
 {
+	ATRACE_CALL();
+
 	int ret = NO_ERROR;
 
 	GET_START_TIME;
@@ -7139,6 +7236,8 @@ void SprdCamera3OEMIf::receiveZslFrame(struct camera_frame_type *frame)
 
 void SprdCamera3OEMIf::snapshotZsl(void *p_data)
 {
+	ATRACE_CALL();
+
 	SprdCamera3OEMIf * obj = (SprdCamera3OEMIf *)p_data;
 	cmr_int need_pause;
 	struct camera_frame_type zsl_frame;
@@ -7494,6 +7593,8 @@ void SprdCamera3OEMIf::EIS_init() {
 
 vsOutFrame SprdCamera3OEMIf::processEIS(vsInFrame frame_in)
 {
+	ATRACE_CALL();
+
 	int gyro_num = 0;
 	int i;
 	int ret_eis = 1;

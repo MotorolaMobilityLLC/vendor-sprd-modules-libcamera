@@ -15,9 +15,11 @@
  */
 
 #define LOG_TAG "cmr_preview"
+#define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 
 #include <stdlib.h>
 #include <math.h>
+#include <cutils/trace.h>
 #include <cutils/properties.h>
 #include "cmr_preview.h"
 #include "cmr_msg.h"
@@ -737,6 +739,8 @@ cmr_int cmr_preview_set_param (cmr_handle preview_handle,
 				struct preview_param *param_ptr,
 				struct preview_out_param *out_param_ptr)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	CMR_MSG_INIT(message);
 	cmr_int               ret = CMR_CAMERA_SUCCESS;
 	cmr_int               call_ret = CMR_CAMERA_SUCCESS;
@@ -784,18 +788,21 @@ exit:
 		CMR_LOGI("call ret %ld", call_ret);
 	}
 
+	ATRACE_END();
 	return ret | call_ret;
 }
 
 cmr_int cmr_preview_start(cmr_handle preview_handle, cmr_u32 camera_id)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	CMR_MSG_INIT(message);
 	cmr_int             ret = CMR_CAMERA_SUCCESS;
 	struct prev_handle  *handle = (struct prev_handle*)preview_handle;
 
 	CHECK_HANDLE_VALID(handle);
 	CHECK_CAMERA_ID(camera_id);
-	CMR_LOGI("in");
+	CMR_LOGI("E");
 
 	message.msg_type  = PREV_EVT_ASSIST_START;
 	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
@@ -814,7 +821,8 @@ cmr_int cmr_preview_start(cmr_handle preview_handle, cmr_u32 camera_id)
 		return CMR_CAMERA_FAIL;
 	}
 
-	CMR_LOGI("out");
+	CMR_LOGI("X");
+	ATRACE_END();
 	return ret;
 }
 
@@ -2045,6 +2053,8 @@ static cmr_int prev_cb_thread_proc(struct cmr_msg *message, void *p_data)
 
 cmr_int prev_cb_start(struct prev_handle *handle, struct prev_cb_info *cb_info)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	CMR_MSG_INIT(message);
 	cmr_int                   ret = CMR_CAMERA_SUCCESS;
 	struct prev_cb_info       *cb_data_info = NULL;
@@ -2098,6 +2108,7 @@ exit:
 		}
 	}
 
+	ATRACE_END();
 	return ret;
 }
 
@@ -2162,6 +2173,8 @@ cmr_int prev_receive_data(struct prev_handle *handle,
 
 cmr_int prev_frame_handle(struct prev_handle *handle, cmr_u32 camera_id, struct frm_info *data)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                     ret = CMR_CAMERA_SUCCESS;
 	cmr_u32                     preview_enable = 0;
 	cmr_u32                     snapshot_enable = 0;
@@ -2221,6 +2234,7 @@ cmr_int prev_frame_handle(struct prev_handle *handle, cmr_u32 camera_id, struct 
 		prev_cxt->recovery_status = PREV_RECOVERY_IDLE;
 	}
 
+	ATRACE_END();
 	return ret;
 }
 
@@ -2757,7 +2771,6 @@ cmr_int prev_pdaf_raw_frame_handle(struct prev_handle *handle, cmr_u32 camera_id
 	}
 exit:
 
-	//CMR_LOGI("done %ld",ret);
 	return ret;
 }
 
@@ -3458,6 +3471,8 @@ cmr_int prev_local_deinit(struct prev_handle *handle)
 
 cmr_int prev_pre_set(struct prev_handle *handle, cmr_u32 camera_id)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                 ret = CMR_CAMERA_SUCCESS;
 	cmr_u32                 sensor_mode = 0;
 	struct prev_context     *prev_cxt = NULL;
@@ -3482,6 +3497,7 @@ cmr_int prev_pre_set(struct prev_handle *handle, cmr_u32 camera_id)
 		ret = CMR_CAMERA_FAIL;
 	}
 
+	ATRACE_END();
 	return ret;
 }
 
@@ -3504,6 +3520,8 @@ cmr_int prev_post_set(struct prev_handle *handle, cmr_u32 camera_id)
 
 cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_restart, cmr_u32 is_sn_reopen)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                     ret = CMR_CAMERA_SUCCESS;
 	struct prev_context         *prev_cxt = NULL;
 	cmr_u32                     preview_enable = 0;
@@ -3703,6 +3721,7 @@ exit:
 	}
 
 	CMR_LOGD("out");
+	ATRACE_END();
 	return ret;
 }
 
@@ -3912,6 +3931,8 @@ exit:
 
 cmr_int prev_alloc_prev_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_restart, struct buffer_cfg *buffer)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                  ret = CMR_CAMERA_SUCCESS;
 	cmr_u32                  buffer_size = 0;
 	cmr_u32                  frame_size = 0;
@@ -4092,6 +4113,7 @@ cmr_int prev_alloc_prev_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 		}
 	}
 	CMR_LOGI("out %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
@@ -5379,6 +5401,8 @@ cmr_int prev_free_pdaf_raw_buf(struct prev_handle *handle, cmr_u32 camera_id, cm
 
 cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                 ret = CMR_CAMERA_SUCCESS;
 	struct img_size         *prev_size = NULL;
 	struct img_size         *act_prev_size = NULL;
@@ -5570,6 +5594,7 @@ exit:
 		handle->prev_cxt[camera_id].video_mode,
 		handle->prev_cxt[camera_id].cap_mode);
 
+	ATRACE_END();
 	return ret;
 }
 
@@ -6038,6 +6063,8 @@ cmr_int prev_construct_frame(struct prev_handle *handle,
 				struct frm_info *info,
 				struct camera_frame_type *frame_type)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                 ret = CMR_CAMERA_SUCCESS;
 	cmr_u32                 frm_id = 0;
 	cmr_u32                 prev_num = 0;
@@ -6140,6 +6167,7 @@ cmr_int prev_construct_frame(struct prev_handle *handle,
 		CMR_LOGE("ignored, channel id %d, frame id %d", info->channel_id, info->frame_id);
 	}
 
+	ATRACE_END();
 	return ret;
 }
 
@@ -6301,9 +6329,10 @@ cmr_int prev_set_param_internal(struct prev_handle *handle,
 				cmr_u32 is_restart,
 				struct preview_out_param *out_param_ptr)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int 		ret = CMR_CAMERA_SUCCESS;
 
-	CMR_LOGV(" in");
 	CHECK_HANDLE_VALID(handle);
 	CHECK_CAMERA_ID(camera_id);
 	if (!out_param_ptr) {
@@ -6396,6 +6425,7 @@ cmr_int prev_set_param_internal(struct prev_handle *handle,
 exit:
 	CMR_LOGD(" out, ret %ld", ret);
 	handle->prev_cxt[camera_id].out_ret_val = ret;
+	ATRACE_END();
 	return ret;
 }
 
@@ -6521,6 +6551,8 @@ static cmr_int prev_get_matched_burstmode_lv_size(struct img_size sensor_size, s
 
 cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_restart, struct preview_out_param *out_param_ptr)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                     ret = CMR_CAMERA_SUCCESS;
 	struct sensor_exp_info      *sensor_info = NULL;
 	struct sensor_mode_info     *sensor_mode_info = NULL;
@@ -6808,6 +6840,7 @@ exit:
 		prev_free_prev_buf(handle, camera_id, 0);
 	}
 
+	ATRACE_END();
 	return ret;
 }
 
@@ -6970,6 +7003,8 @@ exit:
 
 cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_restart, struct preview_out_param *out_param_ptr)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                     ret = CMR_CAMERA_SUCCESS;
 	struct sensor_exp_info      *sensor_info = NULL;
 	struct sensor_mode_info     *sensor_mode_info = NULL;
@@ -7195,6 +7230,7 @@ exit:
 		prev_free_video_buf(handle, camera_id, 0);
 	}
 
+	ATRACE_END();
 	return ret;
 }
 
@@ -7321,6 +7357,8 @@ exit:
 
 cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_restart, cmr_u32 is_lightly, struct preview_out_param *out_param_ptr)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                     ret = CMR_CAMERA_SUCCESS;
 	struct sensor_exp_info      *sensor_info = NULL;
 	struct sensor_mode_info     *sensor_mode_info = NULL;
@@ -7586,6 +7624,7 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 
 exit:
 	CMR_LOGD("out");
+	ATRACE_END();
 	return ret;
 }
 
@@ -7726,6 +7765,8 @@ cmr_int prev_set_cap_param_raw(struct prev_handle *handle,
 				cmr_u32 is_restart,
 				struct preview_out_param *out_param_ptr)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                     ret = CMR_CAMERA_SUCCESS;
 	struct sensor_exp_info      *sensor_info = NULL;
 	struct sensor_mode_info     *sensor_mode_info = NULL;
@@ -7906,12 +7947,15 @@ cmr_int prev_set_cap_param_raw(struct prev_handle *handle,
 	}
 
 exit:
-	CMR_LOGD(" out");
+	CMR_LOGD("X");
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int prev_set_depthmap_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_restart, struct preview_out_param *out_param_ptr)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                     ret = CMR_CAMERA_SUCCESS;
 	struct sensor_exp_info      *sensor_info = NULL;
 	struct sensor_mode_info     *sensor_mode_info = NULL;
@@ -8009,11 +8053,14 @@ exit:
 		prev_free_depthmap_buf(handle, camera_id, 0);
 	}
 
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int prev_set_pdaf_raw_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_restart, struct preview_out_param *out_param_ptr)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                     ret = CMR_CAMERA_SUCCESS;
 	struct sensor_exp_info      *sensor_info = NULL;
 	struct sensor_mode_info     *sensor_mode_info = NULL;
@@ -8161,11 +8208,14 @@ exit:
 		prev_free_pdaf_raw_buf(handle, camera_id, 0);
 	}
 
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id, struct img_size *cap_size, struct img_frm_cap *img_cap)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                     ret = CMR_CAMERA_SUCCESS;
 	cmr_u32                     tmp_width = 0;
 	struct img_size             *sensor_size = NULL;
@@ -8415,7 +8465,8 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id, struct i
 	CMR_LOGI("cap_orig_size %d %d", prev_cxt->cap_org_size.width, prev_cxt->cap_org_size.height);
 
 exit:
-	CMR_LOGD("out");
+	CMR_LOGD("X");
+	ATRACE_END();
 	return ret;
 }
 
@@ -8617,7 +8668,6 @@ static cmr_int prev_before_set_param(struct prev_handle *handle, cmr_u32 camera_
 
 
 exit:
-
 	return ret;
 }
 
@@ -8741,12 +8791,14 @@ static cmr_int prev_after_set_param(struct prev_handle *handle,
 	}
 
 exit:
-	CMR_LOGD("out");
+	CMR_LOGD("X");
 	return ret;
 }
 
 cmr_int prev_set_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                     ret = CMR_CAMERA_SUCCESS;
 	struct prev_context         *prev_cxt = NULL;
 	cmr_int                     valid_num = 0;
@@ -8835,11 +8887,14 @@ exit:
 		prev_cxt->prev_channel_id,
 		prev_cxt->prev_mem_valid_num,
 		prev_cxt->camera_id);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int prev_pop_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id, struct frm_info *data, cmr_u32 is_to_hal)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                     ret = CMR_CAMERA_SUCCESS;
 	struct prev_context         *prev_cxt = NULL;
 	cmr_int                     valid_num = 0;
@@ -8897,11 +8952,14 @@ cmr_int prev_pop_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id, s
 exit:
 	CMR_LOGI("fd=0x%x, channel_id=0x%x, valid_num=%ld, camera_id = %ld",
 		data->fd, data->channel_id, prev_cxt->prev_mem_valid_num,prev_cxt->camera_id);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int prev_set_depthmap_buffer(struct prev_handle *handle, cmr_u32 camera_id, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                     ret = CMR_CAMERA_SUCCESS;
 	struct prev_context         *prev_cxt = NULL;
 	cmr_int                     valid_num = 0;
@@ -8958,11 +9016,14 @@ cmr_int prev_set_depthmap_buffer(struct prev_handle *handle, cmr_u32 camera_id, 
 
 exit:
 	CMR_LOGI("fd=0x%x, valid_num=%ld", prev_cxt->depthmap_frm[valid_num].fd, prev_cxt->depthmap_mem_valid_num);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int prev_pop_depthmap_buffer(struct prev_handle *handle, cmr_u32 camera_id, struct frm_info *data, cmr_u32 is_to_hal)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                     ret = CMR_CAMERA_SUCCESS;
 	struct prev_context         *prev_cxt = NULL;
 	cmr_int                     valid_num = 0;
@@ -9005,11 +9066,14 @@ cmr_int prev_pop_depthmap_buffer(struct prev_handle *handle, cmr_u32 camera_id, 
 
 exit:
 	CMR_LOGI("fd=0x%x, valid_num=%ld", data->fd, prev_cxt->depthmap_mem_valid_num);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int prev_set_pdaf_raw_buffer(struct prev_handle *handle, cmr_u32 camera_id, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                     ret = CMR_CAMERA_SUCCESS;
 	struct prev_context         *prev_cxt = NULL;
 	cmr_int                     valid_num = 0;
@@ -9072,11 +9136,14 @@ cmr_int prev_set_pdaf_raw_buffer(struct prev_handle *handle, cmr_u32 camera_id, 
 exit:
 	CMR_LOGI("done cnt %ld width %d height %d addr_y 0x%lx, fd 0x%x", prev_cxt->pdaf_mem_valid_num, width, height,
 		prev_cxt->pdaf_frm[valid_num].addr_vir.addr_y, prev_cxt->pdaf_frm[valid_num].fd);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int prev_pop_pdaf_raw_buffer(struct prev_handle *handle, cmr_u32 camera_id, struct frm_info *data, cmr_u32 is_to_hal)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                     ret = CMR_CAMERA_SUCCESS;
 	struct prev_context         *prev_cxt = NULL;
 	cmr_int                     valid_num = 0;
@@ -9123,11 +9190,14 @@ cmr_int prev_pop_pdaf_raw_buffer(struct prev_handle *handle, cmr_u32 camera_id, 
 exit:
 	CMR_LOGI("done cnt %ld yaddr_vir 0x%lx fd 0x%x", prev_cxt->pdaf_mem_valid_num, data->yaddr_vir,
 		data->fd);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int prev_set_video_buffer(struct prev_handle *handle, cmr_u32 camera_id, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                     ret = CMR_CAMERA_SUCCESS;
 	struct prev_context         *prev_cxt = NULL;
 	cmr_int                     valid_num = 0;
@@ -9210,11 +9280,14 @@ exit:
 		prev_cxt->video_channel_id,
 		prev_cxt->video_mem_valid_num,
 		prev_cxt->camera_id);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int prev_pop_video_buffer(struct prev_handle *handle, cmr_u32 camera_id, struct frm_info *data, cmr_u32 is_to_hal)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                     ret = CMR_CAMERA_SUCCESS;
 	struct prev_context         *prev_cxt = NULL;
 	cmr_int                     valid_num = 0;
@@ -9271,11 +9344,14 @@ cmr_int prev_pop_video_buffer(struct prev_handle *handle, cmr_u32 camera_id, str
 exit:
 	CMR_LOGD("fd=0x%x, channel_id=0x%x, valid_num=%ld, camera_id = %ld",
 		data->fd, data->channel_id, prev_cxt->video_mem_valid_num, prev_cxt->camera_id);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int prev_set_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                     ret = CMR_CAMERA_SUCCESS;
 	struct prev_context         *prev_cxt = NULL;
 	cmr_int                     valid_num = 0;
@@ -9358,11 +9434,14 @@ exit:
 		prev_cxt->cap_channel_id,
 		prev_cxt->cap_zsl_mem_valid_num,
 		prev_cxt->camera_id);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int prev_pop_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id, struct frm_info *data, cmr_u32 is_to_hal)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                     ret = CMR_CAMERA_SUCCESS;
 	struct prev_context         *prev_cxt = NULL;
 	cmr_int                     valid_num = 0;
@@ -9419,6 +9498,7 @@ cmr_int prev_pop_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id, struc
 exit:
 	CMR_LOGD("fd=0x%x, channel_id=0x%x, valid_num=%ld, camera_id = %ld",
 		data->fd, data->channel_id, prev_cxt->cap_zsl_mem_valid_num,prev_cxt->camera_id);
+	ATRACE_END();
 	return ret;
 }
 

@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 #define LOG_TAG "isp_dev_access"
+#define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 
 #include <stdlib.h>
+#include <cutils/trace.h>
 #include "cutils/properties.h"
 #include <unistd.h>
 #include "isp_common_types.h"
@@ -57,6 +59,8 @@ struct isp_dev_access_context {
 /*************************************EXTERNAL FUNCTION ***************************************/
 cmr_int isp_dev_access_init(struct isp_dev_init_in *input_ptr, cmr_handle *isp_dev_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                                ret = ISP_SUCCESS;
 	struct isp_dev_access_context          *cxt = NULL;
 	struct isp_dev_init_info               input;
@@ -120,11 +124,14 @@ exit:
 		*isp_dev_handle = (cmr_handle)cxt;
 	}
 
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int isp_dev_access_deinit(cmr_handle isp_dev_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                                ret = ISP_SUCCESS;
 	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
@@ -133,6 +140,7 @@ cmr_int isp_dev_access_deinit(cmr_handle isp_dev_handle)
 	ret = isp_dev_deinit(cxt->isp_driver_handle);
 	free((void *)cxt);
 	ISP_LOGI("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 

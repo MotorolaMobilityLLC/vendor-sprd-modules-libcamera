@@ -15,11 +15,13 @@
  */
 
 #define LOG_TAG "isp_u_dev"
+#define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 
 #include <pthread.h>
 #include <semaphore.h>
 #include "isp_drv.h"
 #include "isp_common_types.h"
+#include <cutils/trace.h>
 #include "cutils/properties.h"
 #include "cmr_msg.h"
 
@@ -100,6 +102,8 @@ static cmr_int camera_save_to_file_isp(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 w
 
 cmr_int isp_dev_init(struct isp_dev_init_info *init_param_ptr, isp_handle *handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                       ret = 0;
 	cmr_int                       fd = -1;
 	struct isp_dev_init_param     init_param;
@@ -179,6 +183,7 @@ cmr_int isp_dev_init(struct isp_dev_init_info *init_param_ptr, isp_handle *handl
 	} else {
 		ISP_LOGI("isp device init ok.");
 	}
+	ATRACE_END();
 	return ret;
 
 isp_free:
@@ -191,6 +196,8 @@ isp_free:
 
 cmr_int isp_dev_deinit(isp_handle handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                       ret = 0;
 	struct isp_file               *file = (struct isp_file *)handle;
 
@@ -236,11 +243,14 @@ cmr_int isp_dev_deinit(isp_handle handle)
 	file->isp_is_inited = 0;
 	free(file);
 
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int isp_dev_start(isp_handle handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                       ret = 0;
 	struct isp_file               *file = (struct isp_file *)handle;
 	struct isp_init_mem_param     load_input;
@@ -304,6 +314,7 @@ cmr_int isp_dev_start(isp_handle handle)
 	}
 
 exit:
+	ATRACE_END();
 	return ret;
 }
 
@@ -399,6 +410,8 @@ exit:
 
 static cmr_int isp_dev_load_binary(isp_handle handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                  ret = 0;
 	struct isp_file          *file = (struct isp_file *)handle;
 	cmr_u32                  isp_id = 0;
@@ -441,6 +454,7 @@ static cmr_int isp_dev_load_binary(isp_handle handle)
 	ISP_LOGI("irp %p check 0x%x", (cmr_u32 *)irp, *(cmr_u32 *)(irp + 0x100));
 
 exit:
+	ATRACE_END();
 	return ret;
 }
 
@@ -476,6 +490,8 @@ void isp_dev_buf_cfg_evt_reg(isp_handle handle, cmr_handle grab_handle, isp_evt_
 
 cmr_int isp_dev_cfg_grap_buffer(isp_handle handle, struct isp_irq_info *irq_info)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	struct isp_file *file = (struct isp_file *)handle;
 	struct isp_frm_info img_frame;
 
@@ -500,6 +516,7 @@ cmr_int isp_dev_cfg_grap_buffer(isp_handle handle, struct isp_irq_info *irq_info
 	}
 	pthread_mutex_unlock(&file->cb_mutex);
 
+	ATRACE_END();
 	return 0;
 }
 
@@ -876,6 +893,8 @@ cmr_int isp_dev_stop(isp_handle handle)
 
 cmr_int isp_dev_stream_on(isp_handle handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int ret = 0;
 	cmr_int camera_id = 0;
 	struct isp_file *file = NULL;
@@ -893,11 +912,14 @@ cmr_int isp_dev_stream_on(isp_handle handle)
 		ISP_LOGE("isp_dev_stream_on error.");
 	}
 
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int isp_dev_stream_off(isp_handle handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int ret = 0;
 	cmr_int camera_id = 0;
 	struct isp_file *file = NULL;
@@ -914,12 +936,14 @@ cmr_int isp_dev_stream_off(isp_handle handle)
 	if (ret) {
 		ISP_LOGE("isp_dev_stream_off error.");
 	}
-
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int isp_dev_load_firmware(isp_handle handle, struct isp_init_mem_param *param)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int ret = 0;
 	cmr_int fw_size = 0;
 	FILE *fp = NULL;
@@ -966,6 +990,7 @@ cmr_int isp_dev_load_firmware(isp_handle handle, struct isp_init_mem_param *para
 		ISP_LOGE("isp_dev_load_firmware error.");
 	}
 
+	ATRACE_END();
 	return ret;
 }
 

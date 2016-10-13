@@ -29,6 +29,7 @@
 
 #define LOG_TAG "SprdCamera3HWI"
 //#define LOG_NDEBUG 0
+#define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 
 #include <cutils/properties.h>
 #include <hardware/camera3.h>
@@ -36,6 +37,7 @@
 #include <stdlib.h>
 #include <utils/Log.h>
 #include <utils/Errors.h>
+#include <utils/Trace.h>
 #if (MINICAMERA != 1)
 #include <ui/Fence.h>
 #endif
@@ -104,6 +106,8 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId):
 	mFlush(false),
 	mIsSkipFrm(false)
 {
+	ATRACE_CALL();
+
 	//for camera id 2&3 debug
 	char value[PROPERTY_VALUE_MAX];
 	property_get("persist.sys.camera.id", value, "0");
@@ -165,6 +169,8 @@ int SprdCamera3HWI::getNumberOfCameras()
 
 SprdCamera3HWI::~SprdCamera3HWI()
 {
+	ATRACE_CALL();
+
 	HAL_LOGD("E");
 
 	SprdCamera3RegularChannel* regularChannel = reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
@@ -311,6 +317,8 @@ static int ispCtrlFlash(uint32_t param, uint32_t status)
 
 int SprdCamera3HWI::openCamera(struct hw_device_t **hw_device)
 {
+	ATRACE_CALL();
+
 	HAL_LOGD("E");
 
 	int ret = 0;
@@ -348,6 +356,8 @@ int SprdCamera3HWI::openCamera(struct hw_device_t **hw_device)
 
 int SprdCamera3HWI::openCamera()
 {
+	ATRACE_CALL();
+
 	int ret = NO_ERROR;
 
 	if (mOEMIf) {
@@ -391,6 +401,8 @@ int SprdCamera3HWI::openCamera()
 
 int SprdCamera3HWI::closeCamera()
 {
+	ATRACE_CALL();
+
 	HAL_LOGD("E");
 	int ret = NO_ERROR;
 
@@ -413,6 +425,8 @@ int SprdCamera3HWI::closeCamera()
 
 int SprdCamera3HWI::initialize(const struct camera3_callback_ops *callback_ops)
 {
+	ATRACE_CALL();
+
 	int ret = 0;
 	Mutex::Autolock l(mLock);
 
@@ -427,6 +441,8 @@ int SprdCamera3HWI::initialize(const struct camera3_callback_ops *callback_ops)
 
 camera_metadata_t *SprdCamera3HWI::constructDefaultMetadata(int type)
 {
+	ATRACE_CALL();
+
 	camera_metadata_t *metadata = NULL;
 
 	HAL_LOGI("S, type = %d",type);
@@ -544,6 +560,8 @@ int32_t SprdCamera3HWI::checkStreamSizeAndFormat(camera3_stream_t* new_stream)
 
 int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 {
+	ATRACE_CALL();
+
 	HAL_LOGD("E");
 	Mutex::Autolock l(mLock);
 
@@ -886,6 +904,8 @@ int SprdCamera3HWI::validateCaptureRequest(camera3_capture_request_t *request)
 
 void SprdCamera3HWI::flushRequest(uint32_t frame_num)
 {
+	ATRACE_CALL();
+
 	SprdCamera3RegularChannel* regularChannel = reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
 	SprdCamera3PicChannel* picChannel = reinterpret_cast<SprdCamera3PicChannel *>(mPicChan);
 	int64_t timestamp = 0;
@@ -929,6 +949,8 @@ void SprdCamera3HWI::getLogLevel()
 
 int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 {
+	ATRACE_CALL();
+
 	int ret = NO_ERROR;
 	CapRequestPara capturePara;
 	CameraMetadata meta;
@@ -1233,6 +1255,8 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 
 void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info)
 {
+	ATRACE_CALL();
+
 	Mutex::Autolock l(mRequestLock);
 
 	uint32_t frame_number = result_info->frame_number;
@@ -1423,6 +1447,8 @@ void SprdCamera3HWI::dump(int /*fd */)
 
 int SprdCamera3HWI::flush()
 {
+	ATRACE_CALL();
+
 	/*Enable lock when we implement this function */
 	int ret = NO_ERROR;
 	int64_t timestamp = 0;
@@ -1495,6 +1521,8 @@ void SprdCamera3HWI::captureResultCb(cam_result_data_info_t *result_info,
 int SprdCamera3HWI::initialize(const struct camera3_device *device,
 						const camera3_callback_ops_t *callback_ops)
 {
+	ATRACE_CALL();
+
 	HAL_LOGD("mCameraOps E");
 	SprdCamera3HWI *hw = reinterpret_cast <SprdCamera3HWI *>(device->priv);
 	if (!hw) {
@@ -1510,6 +1538,8 @@ int SprdCamera3HWI::initialize(const struct camera3_device *device,
 int SprdCamera3HWI::configure_streams(const struct camera3_device *device,
 						camera3_stream_configuration_t * stream_list)
 {
+	ATRACE_CALL();
+
 	HAL_LOGD("mCameraOps E");
 	SprdCamera3HWI *hw = reinterpret_cast <SprdCamera3HWI *>(device->priv);
 	if (!hw) {
@@ -1555,6 +1585,8 @@ SprdCamera3HWI::construct_default_request_settings(const struct camera3_device *
 int SprdCamera3HWI::process_capture_request(const struct camera3_device *device,
 						camera3_capture_request_t * request)
 {
+	ATRACE_CALL();
+
 	HAL_LOGV("mCameraOps E");
 	SprdCamera3HWI *hw = reinterpret_cast < SprdCamera3HWI * >(device->priv);
 	if (!hw) {
@@ -1598,6 +1630,8 @@ void SprdCamera3HWI::dump(const struct camera3_device *device, int fd)
 
 int SprdCamera3HWI::flush(const struct camera3_device *device)
 {
+	ATRACE_CALL();
+
 	int ret;
 
 	HAL_LOGD("mCameraOps E");
@@ -1614,6 +1648,8 @@ int SprdCamera3HWI::flush(const struct camera3_device *device)
 
 int SprdCamera3HWI::close_camera_device(struct hw_device_t *device)
 {
+	ATRACE_CALL();
+
 	int ret = NO_ERROR;
 	int id;
 	HAL_LOGI("E");
@@ -1692,6 +1728,8 @@ int SprdCamera3HWI::timer_set(void *obj, int32_t delay_ms)
 
 void SprdCamera3HWI::timer_handler(union sigval arg)
 {
+	ATRACE_CALL();
+
 	SprdCamera3HWI *dev = reinterpret_cast<SprdCamera3HWI *>(arg.sival_ptr);
 	SprdCamera3RegularChannel* regularChannel = reinterpret_cast<SprdCamera3RegularChannel *>(dev->mRegularChan);
 	SprdCamera3PicChannel* picChannel = reinterpret_cast<SprdCamera3PicChannel *>(dev->mPicChan);

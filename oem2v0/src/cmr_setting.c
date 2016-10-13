@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 #define LOG_TAG "cmr_setting"
+#define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 
 #if (MINICAMERA != 1)
 #include <math.h>
 #endif
+#include <cutils/trace.h>
 #include <cutils/properties.h>
 #include "cmr_setting.h"
 #include "isp_app.h"
@@ -2175,6 +2177,8 @@ static cmr_int setting_set_thumb_size(struct setting_component *cpt,
 static cmr_int setting_set_environment(struct setting_component *cpt,
 					                   struct setting_cmd_parameter *parm)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                        ret = 0;
 	struct setting_cmd_parameter   cmd_param;
 	struct setting_hal_param       *hal_param = get_hal_param(cpt, parm->camera_id);
@@ -2284,9 +2288,9 @@ static cmr_int setting_set_environment(struct setting_component *cpt,
                 }
         }
 
-
 exit:
 	cpt->force_set = 0;
+	ATRACE_END();
 	return ret;
 }
 

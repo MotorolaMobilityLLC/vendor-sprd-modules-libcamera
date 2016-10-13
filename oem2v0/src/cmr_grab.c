@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 #define LOG_TAG "cmr_grab"
+#define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 
+#include <cutils/trace.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -92,6 +94,8 @@ cmr_int cmr_grap_free_grab(struct cmr_grab *p_grab)
 
 cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr, cmr_handle *grab_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                  ret = 0;
 	cmr_u32                  i = 0;
 	cmr_u32                  channel_id;
@@ -177,11 +181,14 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr, cmr_handle *grab_h
 	memset(p_grab->chn_status, 0, sizeof(p_grab->chn_status));
 	*grab_handle = (cmr_handle)p_grab;
 
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int cmr_grab_deinit(cmr_handle grab_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                  ret = 0;
 	cmr_u32                  channel_id = 0;
 	struct cmr_grab          *p_grab;
@@ -223,6 +230,7 @@ cmr_int cmr_grab_deinit(cmr_handle grab_handle)
 	}
 	free((void*)grab_handle);
 	CMR_LOGI("close dev done");
+	ATRACE_END();
 	return 0;
 }
 
@@ -270,6 +278,8 @@ void cmr_grab_evt_reg(cmr_handle grab_handle, cmr_evt_cb  grab_event_cb)
 
 cmr_int cmr_grab_if_cfg(cmr_handle grab_handle, struct sensor_if *sn_if)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                  ret = 0;
 	struct cmr_grab          *p_grab;
 	struct sprd_img_sensor_if sensor_if;
@@ -327,6 +337,7 @@ cmr_int cmr_grab_if_cfg(cmr_handle grab_handle, struct sensor_if *sn_if)
 		 sensor_if.res[0]);
 
 exit:
+	ATRACE_END();
 	return ret;
 }
 
@@ -355,6 +366,8 @@ cmr_int cmr_grab_if_decfg(cmr_handle grab_handle, struct sensor_if *sn_if)
 
 cmr_int cmr_grab_sn_cfg(cmr_handle grab_handle, struct sn_cfg *config)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                  ret = 0;
 	//struct grab_streamparm   stream_parm;
 	struct cmr_grab          *p_grab;
@@ -391,11 +404,14 @@ cmr_int cmr_grab_sn_cfg(cmr_handle grab_handle, struct sn_cfg *config)
 	ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_SENSOR_TRIM, &rect);
 
 exit:
+	ATRACE_END();
 	return ret;
 }
 
 static cmr_int cmr_grab_cap_cfg_common(cmr_handle grab_handle, struct cap_cfg *config, cmr_u32 channel_id, struct img_data_end *endian)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                  ret = 0;
 	cmr_u32                  found = 0;
 	cmr_u32                  pxl_fmt;
@@ -517,12 +533,15 @@ static cmr_int cmr_grab_cap_cfg_common(cmr_handle grab_handle, struct cap_cfg *c
 		CMR_LOGI("fourcc not founded dst_img_fmt=0x%x \n", config->cfg.dst_img_fmt);
 	}
 exit:
+	ATRACE_END();
 	CMR_LOGV("ret %ld", ret);
 	return ret;
 }
 
 cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config, cmr_u32 *channel_id, struct img_data_end *endian)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                  ret = 0;
 	cmr_u32                  pxl_fmt;
 	struct cmr_grab          *p_grab;
@@ -565,6 +584,7 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config, cmr_u32
 
 exit:
 	CMR_LOGI("ret %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
@@ -587,6 +607,8 @@ cmr_int cmr_grab_cap_cfg_lightly(cmr_handle grab_handle, struct cap_cfg *config,
 
 cmr_int cmr_grab_buff_cfg (cmr_handle grab_handle, struct buffer_cfg *buf_cfg)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                  ret = 0;
 	cmr_u32                  i;
 	struct cmr_grab          *p_grab;
@@ -638,11 +660,14 @@ cmr_int cmr_grab_buff_cfg (cmr_handle grab_handle, struct buffer_cfg *buf_cfg)
 	}
 
 exit:
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int cmr_grab_cap_start(cmr_handle grab_handle, cmr_u32 skip_num)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                  ret = 0;
 	struct cmr_grab          *p_grab;
 	cmr_u32                  num;
@@ -667,11 +692,14 @@ cmr_int cmr_grab_cap_start(cmr_handle grab_handle, cmr_u32 skip_num)
 
 exit:
 	CMR_LOGI("ret = %ld.",ret);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int cmr_grab_cap_stop(cmr_handle grab_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                  ret = 0;
 	cmr_s32                  i;
 	struct cmr_grab          *p_grab;
@@ -716,6 +744,7 @@ cmr_int cmr_grab_cap_stop(cmr_handle grab_handle)
 
 exit:
 	CMR_LOGI("ret = %ld.",ret);
+	ATRACE_END();
 	return ret;
 }
 
@@ -998,6 +1027,8 @@ static cmr_int   cmr_grab_create_thread(cmr_handle grab_handle)
 
 static cmr_int cmr_grab_kill_thread(cmr_handle grab_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                  ret = 0;
 	void                     *dummy;
 	struct cmr_grab          *p_grab;
@@ -1032,6 +1063,7 @@ static cmr_int cmr_grab_kill_thread(cmr_handle grab_handle)
 		p_grab->thread_handle = 0;
 	}
 
+	ATRACE_END();
 	return ret;
 }
 
