@@ -1463,9 +1463,11 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
 		p_exif_info->primary.basic.ImageWidth = exif_unit->actual_picture_size.width;
 		p_exif_info->primary.basic.ImageLength = exif_unit->actual_picture_size.height;
 	}
-	CMR_LOGD("EXIF width=%d, height=%d \n",
+	CMR_LOGD("EXIF width=%d, height=%d, SPECEXIF width:%d, height:%d \n",
 			p_exif_info->primary.basic.ImageWidth,
-			p_exif_info->primary.basic.ImageLength);
+			p_exif_info->primary.basic.ImageLength,
+			p_exif_info->spec_ptr->basic.PixelXDimension,
+			p_exif_info->spec_ptr->basic.PixelYDimension);
 
 	if (NULL != p_exif_info->primary.data_struct_ptr) {
 		p_exif_info->primary.data_struct_ptr->valid.Orientation = 1;

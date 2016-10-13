@@ -7639,6 +7639,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle, enum takepicture_mode
 	sizeof(cxt->snp_cxt.post_proc_setting.chn_out_frm));
 	cxt->snp_cxt.post_proc_setting.actual_snp_size = snp_param.post_proc_setting.actual_snp_size;
 	cxt->snp_cxt.post_proc_setting.dealign_actual_snp_size = snp_param.post_proc_setting.dealign_actual_snp_size;/**add for 3D Capture, modify reprocess request exif size*/
+	cxt->snp_cxt.post_proc_setting.snp_size = snp_param.post_proc_setting.snp_size;/**add for 3D Capture, modify reprocess request exif size*/
 
 #if defined(CONFIG_CAMERA_FLASH_HIGH_AE_MEASURE)
 	camera_set_discard_frame(cxt, 1);
