@@ -3923,9 +3923,9 @@ cmr_int snp_3dcalibration_take_picture_done(cmr_handle snp_handle, struct frm_in
 							frame_type.height,
 							&imgadd);
 	}
-	snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE, SNAPSHOT_EVT_RETURN_ZSL_BUF, (void*)&frame_type, sizeof(struct camera_frame_type));
 	snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE, SNAPSHOT_EVT_CB_SNAPSHOT_DONE, (void*)&frame_type, sizeof(struct camera_frame_type));
 	snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE, SNAPSHOT_EXIT_CB_DONE, (void*)&frame_type, sizeof(struct camera_frame_type));
+	snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE, SNAPSHOT_EVT_RETURN_ZSL_BUF, (void*)&frame_type, sizeof(struct camera_frame_type));
 	sem_post(&cxt->redisplay_sm);
 exit:
 	CMR_LOGI("done %ld", ret);

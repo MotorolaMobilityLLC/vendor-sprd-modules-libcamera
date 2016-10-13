@@ -136,8 +136,6 @@ SprdCamera3Capture::~SprdCamera3Capture()
     HAL_LOGD("E");
     mCaptureThread = NULL;
     mSavedRequestList.clear();
-    mNotifyListAux.clear();
-    mNotifyListMain.clear();
     mLastWidth = 0;
     mLastHeight = 0;
     if (m_pPhyCamera) {
@@ -1377,12 +1375,31 @@ int SprdCamera3Capture::CaptureThread::combineTwoPicture(buffer_handle_t *&outpu
             break;
         }
     }
-
     HAL_LOGD(" combine rot_angle:%d", dcam.rot_angle );
     HAL_LOGD(" before cmb yaddr_v:%d", ((struct private_handle_t*)output_buf)->base );
-
     mGpuApi->imageStitchingWithGPU(&dcam);
     HAL_LOGD(" after cmb yaddr_v:%d", ((struct private_handle_t*)output_buf)->base );
+    {
+        char prop[PROPERTY_VALUE_MAX] = {0,};
+        property_get("debug.camera.3dcap.savefile", prop, "0");
+        if ( 1 == atoi(prop) )
+        {
+            static int nCont = 0;
+            struct img_addr   imgadd = { 0, };
+            imgadd.addr_y = (cmr_uint)(((struct private_handle_t*)*input_buf1)->base);
+            imgadd.addr_u = imgadd.addr_y+1632*1224;
+            save_yuv_to_file(100+nCont, IMG_DATA_TYPE_YUV420, 1632, 1224, &imgadd);
+
+            imgadd.addr_y = (cmr_uint)(((struct private_handle_t*)*input_buf2)->base);
+            imgadd.addr_u = imgadd.addr_y+1632*1224;
+            save_yuv_to_file(200+nCont, IMG_DATA_TYPE_YUV420, 1632, 1224, &imgadd);
+
+            imgadd.addr_y = (cmr_uint)(((struct private_handle_t*)*output_buf)->base);
+            imgadd.addr_u = imgadd.addr_y+1920*1080;
+            save_yuv_to_file(300+nCont, IMG_DATA_TYPE_YUV420, 1920, 1080, &imgadd);
+            nCont = nCont%100+1;
+        }
+    }
     if(isInitRenderContest){
         mGpuApi->destroyRenderContext();
         isInitRenderContest = false;
@@ -1473,8 +1490,6 @@ int SprdCamera3Capture::initialize(const camera3_callback_ops_t *callback_ops)
     HAL_LOGV("E");
     CHECK_HWI_ERROR(hwiMain);
 
-    mNotifyListAux.clear();
-    mNotifyListMain.clear();
     mLastWidth = 0;
     mLastHeight = 0;
     mCaptureWidth = 0;
@@ -1829,15 +1844,7 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
                      ((struct private_handle_t*)(*request->output_buffers[i].buffer))->base);
             memcpy( &mCaptureThread->mSavedCapRequest, req, sizeof(camera3_capture_request_t));
             memcpy( &mCaptureThread->mSavedCapReqstreambuff, &req->output_buffers[i], sizeof(camera3_stream_buffer_t));
-            meta.append(req_main.settings);
-            if ( meta.exists(ANDROID_JPEG_ORIENTATION) )
-            {
-                int jpeg_orientation = meta.find(ANDROID_JPEG_ORIENTATION).data.i32[0];
-                HAL_LOGD("find jpeg orientation id %d", jpeg_orientation);
-                jpeg_orientation = 0;
-                //meta.update(ANDROID_JPEG_ORIENTATION, &jpeg_orientation, 1);
-            }
-            mCaptureThread->mSavedCapReqsettings = meta.release();
+            mCaptureThread->mSavedCapReqsettings = clone_camera_metadata(req_main.settings);
             req_main.settings = mCaptureThread->mSavedCapReqsettings;
             mSavedReqStreams[mCaptureThread->mCaptureStreamsNum-1] = req->output_buffers[i].stream;
             out_streams_main[i].stream = &mCaptureThread->mMainStreams[mCaptureThread->mCaptureStreamsNum];
@@ -1968,16 +1975,6 @@ req_fail:
  *==========================================================================*/
 void SprdCamera3Capture::notifyMain( const camera3_notify_msg_t* msg)
 {
-    {
-        Mutex::Autolock l(mNotifyLockMain);
-        mNotifyListMain.push_back(*msg);
-        if(mNotifyListMain.size() == MAX_NOTIFY_QUEUE_SIZE){
-            List <camera3_notify_msg_t>::iterator itor = mNotifyListMain.begin();
-            for(int i = 0; i < CLEAR_NOTIFY_QUEUE; i++){
-                mNotifyListMain.erase(itor++);
-            }
-        }
-    }
     if ( msg->type == CAMERA3_MSG_SHUTTER && msg->message.shutter.frame_number == mCaptureThread->mSavedCapRequest.frame_number )
     {
         if (mCaptureThread->mReprocessing)
@@ -2008,10 +2005,22 @@ void SprdCamera3Capture::processCaptureResultMain( const camera3_capture_result_
 
     /* Direclty pass preview buffer and meta result for Main camera */
     if(result_buffer == NULL){
-        if (result->frame_number==mCaptureThread->mSavedCapRequest.frame_number && mCaptureThread->mReprocessing)
+        if (result->frame_number==mCaptureThread->mSavedCapRequest.frame_number && 0 != result->frame_number)
         {
-            HAL_LOGD("hold yuv picture call back, framenumber:%d", result->frame_number );
-            return;
+            if (mCaptureThread->mReprocessing)
+            {
+                HAL_LOGD("hold yuv picture call back, framenumber:%d", result->frame_number);
+                return;
+            }
+            else
+            {
+                camera3_capture_result_t newresult = {0,};
+                newresult = *result;
+                newresult.result = mCaptureThread->mSavedCapReqsettings;
+                mCaptureThread->mCallbackOps->process_capture_result(mCaptureThread->mCallbackOps, result);
+                free_camera_metadata(mCaptureThread->mSavedCapReqsettings);
+                return;
+            }
         }
         mCaptureThread->mCallbackOps->process_capture_result(mCaptureThread->mCallbackOps, result);
         return;
@@ -2121,15 +2130,7 @@ void SprdCamera3Capture::processCaptureResultMain( const camera3_capture_result_
  *==========================================================================*/
 void SprdCamera3Capture::notifyAux( const camera3_notify_msg_t* msg)
 {
-    Mutex::Autolock l(mNotifyLockAux);
-    mNotifyListAux.push_back(*msg);
-
-    if(mNotifyListAux.size() == MAX_NOTIFY_QUEUE_SIZE){
-        List <camera3_notify_msg_t>::iterator itor = mNotifyListAux.begin();
-        for(int i = 0; i < CLEAR_NOTIFY_QUEUE; i++){
-            mNotifyListAux.erase(itor++);
-        }
-    }
+    return;
 }
 /*===========================================================================
  * FUNCTION   :processCaptureResultMain

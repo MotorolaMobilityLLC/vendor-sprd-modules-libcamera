@@ -7535,6 +7535,21 @@ cmr_int camera_local_highflash_ae_measure (cmr_handle oem_handle)
 	return ret;
 }
 
+/**add for 3d capture to reset reprocessing capture size begin*/
+cmr_int camera_local_set_cap_size(cmr_handle oem_handle, cmr_u32 is_reprocessing, cmr_u32 camera_id, cmr_u32 width, cmr_u32 height)
+{
+	struct camera_context   *cxt = (struct camera_context*)oem_handle;
+	struct preview_context  *prv_cxt = &cxt->prev_cxt;
+	struct snapshot_context *snp_cxt = &cxt->snp_cxt;
+
+    cmr_preview_set_cap_size(prv_cxt->preview_handle, is_reprocessing, camera_id, width, height);
+	snp_cxt->request_size.width = width;
+	snp_cxt->request_size.height = height;
+
+	return 0;
+}
+/**add for 3d capture to reset reprocessing capture size end*/
+
 cmr_int camera_local_start_snapshot(cmr_handle oem_handle, enum takepicture_mode mode, cmr_uint is_snapshot)
 {
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;

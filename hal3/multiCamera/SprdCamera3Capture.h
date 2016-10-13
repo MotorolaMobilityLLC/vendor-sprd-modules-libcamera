@@ -134,11 +134,6 @@ private:
     int                               mPreviewID;
     Mutex                             mRequestLock;
     bool                              mIsCaptureing;
-    //when notify callback ,push hw notify into notify_list, with lock
-    List <camera3_notify_msg_t>       mNotifyListMain;
-    Mutex                             mNotifyLockMain;
-    List <camera3_notify_msg_t>       mNotifyListAux;
-    Mutex                             mNotifyLockAux;
     int cameraDeviceOpen(int camera_id,struct hw_device_t **hw_device);
     int setupPhysicalCameras();
     int getCameraInfo(struct camera_info *info);

@@ -894,11 +894,10 @@ cmr_int camera_set_sensor_info_to_af(cmr_handle camera_handle,  struct cmr_af_au
 }
 
 /**add for 3d capture to reset reprocessing capture size begin*/
-cmr_int camera_set_reprocess_picture_size(cmr_handle camera_handle, cmr_u32 camera_id, cmr_u32 width, cmr_u32 height)
+cmr_int camera_set_reprocess_picture_size(cmr_handle camera_handle, cmr_uint is_reprocessing, cmr_u32 camera_id, cmr_u32 width, cmr_u32 height)
 {
-	struct camera_context *cxt = (struct camera_context*)camera_handle;
 	cmr_int ret = CMR_CAMERA_SUCCESS;
-	ret = cmr_preview_set_cap_size(cxt->prev_cxt.preview_handle, camera_id, width, height);
+	ret = camera_local_set_cap_size(camera_handle, is_reprocessing, camera_id, width, height);
 	return ret;
 }
 /**add for 3d capture to reset reprocessing capture size end*/

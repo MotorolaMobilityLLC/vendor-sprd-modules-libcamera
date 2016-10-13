@@ -384,6 +384,7 @@ cmr_int prev_set_vcm_step(cmr_handle preview_handle, cmr_u32 camera_id, void *da
 cmr_int cmr_get_sensor_vcm_step(cmr_handle  oem_handle,cmr_u32 camera_id, cmr_u32* max_fps);
 cmr_int camera_local_stop_multi_layer(cmr_handle oem_handle);
 cmr_int camera_local_set_sensor_close_flag(cmr_handle oem_handle);
+cmr_int camera_local_set_cap_size(cmr_handle oem_handle, cmr_u32 is_reprocessing, cmr_u32 camera_id, cmr_u32 width, cmr_u32 height);/**add for 3d capture to reset reprocessing capture size*/
 #ifdef __cplusplus
 }
 #endif

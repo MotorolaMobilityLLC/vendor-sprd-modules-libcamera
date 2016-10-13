@@ -1280,7 +1280,7 @@ cmr_uint (*camera_get_sensor_dual_otp_info)(cmr_handle camera_handle, struct sen
 cmr_uint (*camera_get_sensor_vcm_step)(cmr_handle camera_handle,cmr_u32 camera_id, cmr_u32* vcm_step);
 cmr_int (*camera_stop_multi_layer)(cmr_handle camera_handle);
 cmr_int (*camera_set_sensor_close_flag)(cmr_handle camera_handle);
-cmr_int (*camera_set_reprocess_picture_size)(cmr_handle camera_handle, cmr_u32 camera_id, cmr_u32 width, cmr_u32 height);/**add for 3d capture to reset reprocessing capture size*/
+cmr_int (*camera_set_reprocess_picture_size)(cmr_handle camera_handle, cmr_uint is_reprocessing, cmr_u32 camera_id, cmr_u32 width, cmr_u32 height);/**add for 3d capture to reset reprocessing capture size*/
 
 }oem_ops_t;
 

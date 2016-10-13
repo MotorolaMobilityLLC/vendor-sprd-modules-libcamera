@@ -1226,7 +1226,7 @@ void SprdCamera3OEMIf::setCaptureReprocessMode(bool mode, uint32_t width, uint32
 	}
 	HAL_LOGD("setCaptureReprocessMode: %d, %d, reprocess size: %d, %d", mode, mSprdReprocessing, width, height);
 	mSprdReprocessing = mode;
-	mHalOem->ops->camera_set_reprocess_picture_size(mCameraHandle, mCameraId, width, height);
+	mHalOem->ops->camera_set_reprocess_picture_size(mCameraHandle, mSprdReprocessing, mCameraId, width, height);
 }
 /**add for 3d capture, set 3d capture special mode end   */
 status_t SprdCamera3OEMIf::setAePrecaptureSta(uint8_t state)

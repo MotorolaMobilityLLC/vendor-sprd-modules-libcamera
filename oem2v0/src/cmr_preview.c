@@ -277,6 +277,8 @@ struct prev_context {
 	cmr_uint                        cap_zsl_mem_num;
 	cmr_int                         cap_zsl_mem_valid_num;
 
+	cmr_uint                        is_reprocessing;
+
 	/*depthmap*/
 	cmr_uint                        depthmap_cnt;
 	cmr_uint                        prev_cnt;
@@ -1221,7 +1223,7 @@ cmr_int cmr_preview_get_max_cap_size(cmr_handle preview_handle, cmr_u32 camera_i
 	return ret;
 }
 /**add for 3d capture to reset reprocessing capture size begin*/
-cmr_int cmr_preview_set_cap_size(cmr_handle preview_handle, cmr_u32 camera_id, cmr_u32 width, cmr_u32 height)
+cmr_int cmr_preview_set_cap_size(cmr_handle preview_handle, cmr_u32 is_reprocessing, cmr_u32 camera_id, cmr_u32 width, cmr_u32 height)
 {
 	struct prev_handle     *handle = (struct prev_handle*)preview_handle;
 	CMR_LOGD("before set cap_org_size:%d %d",
@@ -1246,6 +1248,7 @@ cmr_int cmr_preview_set_cap_size(cmr_handle preview_handle, cmr_u32 camera_id, c
 	handle->prev_cxt[camera_id].max_size.height = height;
 	handle->prev_cxt[camera_id].prev_param.picture_size.width = width;
 	handle->prev_cxt[camera_id].prev_param.picture_size.height = height;
+	handle->prev_cxt[camera_id].is_reprocessing = is_reprocessing;
 
 	return 0;
 }
@@ -9312,7 +9315,10 @@ cmr_int prev_set_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 		width     = prev_cxt->actual_pic_size.width;
 		height    = prev_cxt->actual_pic_size.height;
 	}
-
+    if (prev_cxt->is_reprocessing){
+        width = prev_cxt->cap_sn_size.width;
+        height = prev_cxt->cap_sn_size.height;
+    } 
 	buffer_size = width * height;
 	frame_size = prev_cxt->cap_zsl_mem_size;
 
