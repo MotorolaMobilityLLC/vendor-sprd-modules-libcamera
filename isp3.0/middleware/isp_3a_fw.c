@@ -179,6 +179,7 @@ struct isp3a_fw_bin_context {
 struct isp3a_fw_context {
 	cmr_u32 camera_id;
 	cmr_u32 is_inited;
+	cmr_u8 stream_on;
 	cmr_u32 is_master;
 	cmr_int err_code;
 	cmr_handle caller_handle;
@@ -3238,6 +3239,10 @@ cmr_int isp3a_handle_stats(cmr_handle isp_3a_handle, void *data)
 	cmr_int                                     isp_stats = 0;
 	nsecs_t                                     time_end = 0;
 
+	if (!cxt->stream_on) {
+		ISP_LOGI("skip stats when stream off");
+		goto exit;
+	}
 	/* get buffer */
 	ret = isp3a_get_3a_stats_buf(isp_3a_handle);
 	if (ret) {
@@ -3990,6 +3995,7 @@ cmr_int isp_3a_fw_start(cmr_handle isp_3a_handle, struct isp_video_start *input_
 		ret = ISP_PARAM_NULL;
 		goto exit;
 	}
+	cxt->stream_on = 1;
 	message.msg_type = ISP3A_PROC_EVT_START;
 	message.sub_msg_type = 0;
 	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
@@ -4012,6 +4018,7 @@ cmr_int isp_3a_fw_stop(cmr_handle isp_3a_handle)
 
 	ISP_CHECK_HANDLE_VALID(isp_3a_handle);
 
+	cxt->stream_on = 0;
 	message.msg_type = ISP3A_PROC_EVT_STOP;
 	message.sub_msg_type = 0;
 	message.sync_flag = CMR_MSG_SYNC_PROCESSED;

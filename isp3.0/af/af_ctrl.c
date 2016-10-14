@@ -484,7 +484,7 @@ sucess_exit:
 
 	cxt->af_adpt_ops->adpt_deinit(cxt->adpt_handle);
 error_init_adpt:
-	ret = afctrl_destroy_vcm_thread(cxt);
+	afctrl_destroy_vcm_thread(cxt);
 error_vcm_thread:
 #ifdef SUPPORT_AF_THREAD
 	afctrl_destroy_thread(cxt);
