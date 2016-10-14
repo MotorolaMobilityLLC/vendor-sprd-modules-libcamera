@@ -641,17 +641,6 @@ exit:
 	return ret;
 }
 
-cmr_int isp3a_match_data_ctrl(cmr_handle isp_3a_handle, cmr_int sensor_id, cmr_int cmd, void *in, void *out)
-{
-	cmr_int                                     ret = ISP_SUCCESS;
-	struct isp3a_fw_context                    *cxt = (struct isp3a_fw_context *)isp_3a_handle;
-
-	ret = isp_br_ioctrl(sensor_id, cmd, in, out);
-
-	ISP_LOGV("done %ld", ret);
-	return ret;
-}
-
 cmr_int isp3a_flash_get_charge(cmr_handle handle, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
@@ -1899,11 +1888,10 @@ cmr_int isp3a_set_awb_capture_gain(cmr_handle isp_3a_handle)
 		struct match_data_param match_param;
 
 		cmr_bzero(&match_param, sizeof(match_param));
-		ret = isp3a_match_data_ctrl(cxt,
-					    cxt->camera_id,
+		ret = isp_br_ioctrl(cxt->camera_id,
 					    GET_MATCH_AWB_DATA,
 					    NULL,
-					    &match_param);
+					    &match_param.awb_data);
 		if (ret) {
 			ISP_LOGE("failed to get match_data");
 		}
@@ -3365,6 +3353,7 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 	struct debug_info1                          *exif_ptr = &cxt->debug_data.exif_debug_info;
 	nsecs_t                                     time_start = 0;
 	nsecs_t                                     time_end = 0;
+	struct match_data_param                     match_param;
 
 	if (NULL == cxt) {
 		ISP_LOGE("error cxt NULL");
@@ -3395,14 +3384,11 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 	}
 
 	if (cxt->is_refocus && !cxt->is_master) {
-		struct match_data_param match_param;
-
 		cmr_bzero(&match_param, sizeof(match_param));
-		ret = isp3a_match_data_ctrl(cxt,
-					    cxt->camera_id,
+		ret = isp_br_ioctrl(cxt->camera_id,
 					    GET_MATCH_AWB_DATA,
 					    NULL,
-					    &match_param);
+					    &match_param.awb_data);
 		if (ret) {
 			ISP_LOGE("failed to get awb match_data");
 		}
@@ -3445,14 +3431,11 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 	sof_cfg_info.iso_val = ae_out.hw_iso_speed;
 
 	if (cxt->is_refocus && !cxt->is_master) {
-		struct match_data_param match_param;
-
 		cmr_bzero(&match_param, sizeof(match_param));
-		ret = isp3a_match_data_ctrl(cxt,
-					    cxt->camera_id,
+		ret = isp_br_ioctrl(cxt->camera_id,
 					    GET_MATCH_AE_DATA,
 					    NULL,
-					    &match_param);
+					    &match_param.ae_data);
 		if (ret) {
 			ISP_LOGE("failed to get match_data");
 		}

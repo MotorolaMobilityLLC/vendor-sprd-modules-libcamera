@@ -3435,7 +3435,7 @@ static cmr_int aealtek_get_sync_info_from_lib(struct aealtek_cxt *cxt_ptr, struc
 	match_param.ae_data.uw_cur_fps = slave_dat.uwCur_fps;
 	match_param.ae_data.bv_val = slave_dat.bv_val;
 	match_param.ae_data.uc_sensor_mode = slave_dat.uc_sensor_mode;
-	isp_br_ioctrl(cxt_ptr->camera_id, SET_MATCH_AE_DATA, &match_param, NULL);
+	isp_br_ioctrl(cxt_ptr->camera_id, SET_MATCH_AE_DATA, &match_param.ae_data, NULL);
 
 	exp_gain->exp_line = slave_dat.exposure_line;
 	exp_gain->exp_time = slave_dat.exposure_time;

@@ -179,7 +179,7 @@ static cmr_int awbaltek_match_slave_awb_info(cmr_handle adpt_handle)
 		match_param.awb_data.light_source = match_output.light_source;
 		match_param.awb_data.awb_states = match_output.awb_states;
 		match_param.awb_data.awb_decision = match_output.awb_decision;
-		isp_br_ioctrl(cxt->camera_id, SET_MATCH_AWB_DATA, &match_param, NULL);
+		isp_br_ioctrl(cxt->camera_id, SET_MATCH_AWB_DATA, &match_param.awb_data, NULL);
 		ISP_LOGI("camera_id %d set match_data:%d %d %d,ct:%d", cxt->camera_id,
 			 match_param.awb_data.gain.r,
 			 match_param.awb_data.gain.g,
