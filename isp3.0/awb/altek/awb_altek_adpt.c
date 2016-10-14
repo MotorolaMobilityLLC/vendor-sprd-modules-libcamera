@@ -185,6 +185,22 @@ static cmr_int awbaltek_match_slave_awb_info(cmr_handle adpt_handle)
 			 match_param.awb_data.gain.g,
 			 match_param.awb_data.gain.b,
 			 match_param.awb_data.ct);
+		isp_mlog(AWB_FILE, "master gain.r:%d, gain.g:%d, gain.b:%d\n, gain_balanced.r:%d, gain_balanced.g:%d, gain_balanced.b:%d\n,ct:%d,\
+			\n\n\nslave gain.r:%d, gain.g:%d, gain.b:%d\n, gain_balanced.r:%d, gain_balanced.g:%d, gain_balanced.b:%d\n,ct:%d",
+			cxt-> cur_process_out.wbgain.r_gain,
+			cxt-> cur_process_out.wbgain.g_gain,
+			cxt-> cur_process_out.wbgain.b_gain,
+			cxt->cur_process_out.wbgain_balanced.r_gain,
+			cxt->cur_process_out.wbgain_balanced.g_gain,
+			cxt->cur_process_out.wbgain_balanced.b_gain,
+			cxt->cur_process_out.color_temp,
+			match_param.awb_data.gain.r,
+			match_param.awb_data.gain.g,
+			match_param.awb_data.gain.b,
+			match_param.awb_data.gain_balanced.r,
+			match_param.awb_data.gain_balanced.g,
+			match_param.awb_data.gain_balanced.b,
+			match_param.awb_data.ct);
 	}
 
 	return ret;
