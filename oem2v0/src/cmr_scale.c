@@ -15,7 +15,9 @@
  */
 
 #define LOG_TAG "cmr_scale"
+#define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 
+#include <cutils/trace.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include "cmr_type.h"
@@ -220,6 +222,7 @@ static cmr_int cmr_scale_thread_proc(struct cmr_msg *message, void *private_data
 		break;
 
 	case CMR_EVT_SCALE_START:
+		ATRACE_BEGIN("cpp_scale");
 		CMR_LOGI("scale start");
 		struct img_frm frame;
 
@@ -278,6 +281,7 @@ static cmr_int cmr_scale_thread_proc(struct cmr_msg *message, void *private_data
 				}
 			}
 		}
+		ATRACE_END();
 		restart_cnt = 0;
 		break;
 
@@ -456,6 +460,8 @@ exit:
 cmr_int cmr_scale_start(cmr_handle scale_handle, struct img_frm *src_img,
 			struct img_frm *dst_img, cmr_evt_cb cmr_event_cb, cmr_handle cb_handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 
 	struct scale_cfg_param_t        *cfg_params = NULL;
@@ -548,6 +554,8 @@ cmr_int cmr_scale_start(cmr_handle scale_handle, struct img_frm *src_img,
 		goto free_frame;
 	}
 
+	ATRACE_END();
+
 	if (cmr_event_cb) {
 		sem_wait(&file->sync_sem);
 		ret = file->sync_none_err_code;
@@ -568,9 +576,7 @@ free_frame:
 	}
 
 exit:
-
 	return ret;
-
 }
 
 cmr_int cmr_scale_close(cmr_handle scale_handle)

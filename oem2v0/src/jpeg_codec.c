@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
+
+#include <cutils/trace.h>
 #include "exif_writer.h"
 #include "cmr_msg.h"
 #include "jpeg_codec.h"
@@ -1184,6 +1187,8 @@ static cmr_int _check_wexif_param(struct jpeg_enc_exif_param *param_ptr)
 
 cmr_int jpeg_enc_start(struct jpeg_enc_in_param *in_parm_ptr)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                      ret = JPEG_CODEC_SUCCESS;
 	struct jpeg_enc              *enc_cxt_ptr = 0;
 	struct jpeg_codec_context    *jcontext = (struct jpeg_codec_context*)in_parm_ptr->jpeg_handle;
@@ -1240,6 +1245,7 @@ enc_start_end:
 	}
 	sem_post(&jcontext->access_sem);
 	CMR_LOGV("jpeg:ret %d", (cmr_u32)ret);
+	ATRACE_END();
 	return JPEG_CODEC_SUCCESS;
 }
 

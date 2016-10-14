@@ -915,6 +915,8 @@ cmr_int cmr_grab_scale_capability(cmr_handle grab_handle, cmr_u32 *width, cmr_u3
 
 cmr_int cmr_grab_path_capability(cmr_handle grab_handle, struct cmr_path_capability *capability)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                  ret = 0;
 	struct cmr_grab          *p_grab;
 	struct sprd_img_read_op  op;
@@ -969,6 +971,8 @@ cmr_int cmr_grab_path_capability(cmr_handle grab_handle, struct cmr_path_capabil
 	CMR_LOGV("video prev %d scale %d capture_no_trim %d capture_pause %d zoom_post_proc %d",
 		 capability->is_video_prev_diff,capability->hw_scale_available,
 		 capability->capture_no_trim, capability->capture_pause, capability->zoom_post_proc);
+
+	ATRACE_END();
 	return ret;
 }
 

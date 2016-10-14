@@ -762,6 +762,7 @@ void camera_isp_dev_evt_cb(cmr_int evt, void *data, cmr_u32 data_len, void *priv
 
 void camera_scaler_evt_cb(cmr_int evt, void* data, void *privdata)
 {
+	ATRACE_BEGIN(__FUNCTION__);
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)privdata;
 
@@ -778,6 +779,7 @@ void camera_scaler_evt_cb(cmr_int evt, void* data, void *privdata)
 	} else {
 		CMR_LOGE("err, don't support evt 0x%lx", evt);
 	}
+	ATRACE_END();
 }
 
 void camera_jpeg_evt_cb(cmr_int evt, void* data, void *privdata)
@@ -4217,6 +4219,8 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
                             struct img_frm *src, struct img_frm *dst,
                             struct cmr_op_mean *mean)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	char refocus[PROPERTY_VALUE_MAX];
 	if (!caller_handle || !oem_handle || !src || !dst || !mean) {
@@ -4283,6 +4287,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 exit:
 	sem_post(&cxt->access_sm);
 	CMR_LOGV("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
@@ -4521,6 +4526,8 @@ exit:
 cmr_int camera_start_scale(cmr_handle oem_handle, cmr_handle caller_handle, struct img_frm *src,
                                       struct img_frm *dst, struct cmr_op_mean *mean)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 
@@ -4531,7 +4538,8 @@ cmr_int camera_start_scale(cmr_handle oem_handle, cmr_handle caller_handle, stru
 	}
 	CMR_LOGI("caller_handle 0x%lx is_sync %d", (cmr_uint)caller_handle, mean->is_sync);
 	CMR_LOGI("src fd 0x%lx , dst fd 0x%lx",src->fd,dst->fd);
-	CMR_LOGI("src 0x%lx 0x%lx , dst 0x%lx 0x%lx",src->addr_phy.addr_y, src->addr_phy.addr_u, dst->addr_phy.addr_y, dst->addr_phy.addr_u);
+	CMR_LOGI("src 0x%lx 0x%lx , dst 0x%lx 0x%lx",src->addr_phy.addr_y,
+		src->addr_phy.addr_u, dst->addr_phy.addr_y, dst->addr_phy.addr_u);
 	CMR_LOGI("src size %d %d dst size %d %d rect %d %d %d %d endian %d %d %d %d",
 		src->size.width,
 		src->size.height,
@@ -4556,12 +4564,16 @@ cmr_int camera_start_scale(cmr_handle oem_handle, cmr_handle caller_handle, stru
 	}
 exit:
 	CMR_LOGI("done %ld", ret);
+
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_start_rot(cmr_handle oem_handle, cmr_handle caller_handle, struct img_frm *src,
                                    struct img_frm *dst, struct cmr_op_mean *mean)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 	struct cmr_rot_param           rot_param;
@@ -4591,6 +4603,7 @@ rot_end:
 	camera_take_snapshot_step(CMR_STEP_ROT_E);
 exit:
 	CMR_LOGI("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
@@ -4673,6 +4686,8 @@ exit:
 
 cmr_int camera_capture_pre_proc(cmr_handle oem_handle, cmr_u32 camera_id, cmr_u32 preview_mode, cmr_u32 capture_mode, cmr_u32 is_restart, cmr_u32 is_sn_reopen)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 	struct snapshot_context        *snp_cxt;
@@ -4746,11 +4761,14 @@ cmr_int camera_capture_pre_proc(cmr_handle oem_handle, cmr_u32 camera_id, cmr_u3
 	}
 exit:
 	CMR_LOGI("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_capture_post_proc(cmr_handle oem_handle, cmr_u32 camera_id)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 	struct snapshot_context        *snp_cxt;
@@ -4808,6 +4826,7 @@ cmr_int camera_capture_post_proc(cmr_handle oem_handle, cmr_u32 camera_id)
 
 exit:
 	CMR_LOGI("done %ld", ret);
+	ATRACE_END();
 	return ret;
 }
 
@@ -8144,6 +8163,8 @@ cmr_int camera_local_redisplay_data(cmr_handle oem_handle, cmr_s32 output_fd,
                                                    cmr_uint input_addr_y, cmr_uint input_addr_uv,
                                                    cmr_uint input_width, cmr_uint input_height)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 	struct img_frm                 src_img;
@@ -8262,6 +8283,7 @@ cmr_int camera_local_redisplay_data(cmr_handle oem_handle, cmr_s32 output_fd,
 		}
 	}
 exit:
+	ATRACE_END();
 	CMR_LOGI("done %ld", ret);
 	return ret;
 }
@@ -8499,6 +8521,8 @@ exit:
 
 cmr_int camera_local_set_video_snapshot_buffer(cmr_handle oem_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt;
 	struct frm_info                chn_data;
@@ -8541,11 +8565,14 @@ cmr_int camera_local_set_video_snapshot_buffer(cmr_handle oem_handle, cmr_uint s
 	}
 exit:
 	CMR_LOGI("out");
+	ATRACE_END();
 	return ret;
 }
 
 cmr_int camera_local_set_zsl_snapshot_buffer(cmr_handle oem_handle, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt;
 	struct frm_info                chn_data;
@@ -8613,6 +8640,7 @@ cmr_int camera_local_set_zsl_snapshot_buffer(cmr_handle oem_handle, cmr_uint src
 	}
 exit:
 	CMR_LOGI("out");
+	ATRACE_END();
 	return ret;
 }
 

@@ -3412,6 +3412,8 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 		if(rec_stream) {
 			ret = rec_stream->getQBufNumForVir(buff_vir, &frame_num);
 			if(ret == NO_ERROR) {
+				ATRACE_BEGIN("video_frame");
+
 				pre_stream->getQBufListNum(&buf_deq_num);
 				HAL_LOGD("RECODING review buffer is %d ",buf_deq_num);
 				//3D video recoding
@@ -3463,6 +3465,8 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 
 				if(frame_num > mRecordFrameNum)
 					mRecordFrameNum = frame_num;
+
+				ATRACE_END();
 			}
 		}
 
@@ -3470,6 +3474,8 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 		if(pre_stream) {
 			ret = pre_stream->getQBufNumForVir(buff_vir, &frame_num);
 			if(ret == NO_ERROR) {
+				ATRACE_BEGIN("preview_frame");
+
 				HAL_LOGI("prev buff fd=0x%x, buff_vir=0x%lx, num %d, ret %d, time 0x%llx, frame type = %d rec=%lld, ",
 					frame->fd, buff_vir, frame_num, ret, buffer_timestamp,
 					frame->type, mSlowPara.rec_timestamp);
@@ -3573,6 +3579,8 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 				}
 				if(frame_num > mPreviewFrameNum)
 					mPreviewFrameNum = frame_num;
+
+				ATRACE_END();
 			} else {
 				pre_stream = NULL;
 			}
@@ -3581,6 +3589,8 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 		if(callback_stream) {//callback stream
 			ret = callback_stream->getQBufNumForVir(buff_vir, &frame_num);
 			if(ret == NO_ERROR) {
+				ATRACE_BEGIN("callback_frame");
+
 				HAL_LOGI("callback buff fd=0x%x, vir=0x%lx, num %d, ret %d, time 0x%llx, frame type = %d",
 					frame->fd, buff_vir, frame_num, ret, buffer_timestamp,frame->type);
 
@@ -3596,6 +3606,8 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 				}
 				if(frame_num > mZslFrameNum)
 					mZslFrameNum = frame_num;
+
+				ATRACE_END();
 			}
 		}
 
@@ -3604,6 +3616,8 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 			CMR_MSG_INIT(message);
 			mHalOem->ops->camera_zsl_snapshot_need_pause(mCameraHandle, &need_pause);
 			if (PREVIEW_ZSL_FRAME == frame->type) {
+				ATRACE_BEGIN("zsl_frame");
+
 				HAL_LOGI("zsl buff fd=0x%x, frame type=%d", frame->fd, frame->type);
 				pushZslFrame(frame);
 				message.msg_type = CMR_EVT_ZSL_MON_PUSH;
@@ -3614,6 +3628,8 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 					HAL_LOGE("Fail to send one msg!");
 					return;
 				}
+
+				ATRACE_END();
 			} else if (PREVIEW_ZSL_CANCELED_FRAME == frame->type) {
 				if (!isCapturing() || !need_pause) {
 					mHalOem->ops->camera_set_zsl_buffer(mCameraHandle, frame->y_phy_addr, frame->y_vir_addr, frame->fd);
