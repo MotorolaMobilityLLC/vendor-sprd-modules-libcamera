@@ -1089,15 +1089,18 @@ static cmr_int awbaltek_process(cmr_handle adpt_handle, struct awb_ctrl_process_
 				     output_ptr->gain_balanced.r, output_ptr->gain_balanced.g, output_ptr->gain_balanced.b, cxt->camera_id);
 			ISP_LOGV("awb update %d, frame id %d", output_ptr->is_update, output_ptr->hw3a_frame_id);
 			ISP_LOGV("awb ct %d, light source %d", output_ptr->ct, output_ptr->light_source);
-			isp_mlog(AWB_FILE, "wbgain:(%d, %d, %d), CT:%d, light_source:%d, awb_decision:%d, wbgain_balanced:(%d, %d, %d)",
-					cxt->cur_process_out.wbgain.r_gain,
-					cxt->cur_process_out.wbgain.g_gain,
-					cxt->cur_process_out.wbgain.b_gain,
-					cxt->cur_process_out.color_temp,
-					cxt->cur_process_out.light_source,
-					cxt->cur_process_out.awb_decision,
-					cxt->cur_process_out.wbgain_balanced.r_gain,
-					cxt->cur_process_out.wbgain_balanced.b_gain);
+			if (!cxt->work_mode.is_refocus) {
+				isp_mlog(AWB_FILE, "wbgain:(%d, %d, %d), CT:%d, light_source:%d, awb_decision:%d, wbgain_balanced:(%d, %d, %d)",
+					 cxt->cur_process_out.wbgain.r_gain,
+					 cxt->cur_process_out.wbgain.g_gain,
+					 cxt->cur_process_out.wbgain.b_gain,
+					 cxt->cur_process_out.color_temp,
+					 cxt->cur_process_out.light_source,
+					 cxt->cur_process_out.awb_decision,
+					 cxt->cur_process_out.wbgain_balanced.r_gain,
+					 cxt->cur_process_out.wbgain_balanced.g_gain,
+					 cxt->cur_process_out.wbgain_balanced.b_gain);
+			}
 		}
 	} else {
 		ISP_LOGE("don't have process interface");
