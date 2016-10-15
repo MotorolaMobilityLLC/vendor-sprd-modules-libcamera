@@ -63,6 +63,8 @@ namespace sprdcamera {
 #define SFACTOR 100
 #define AR4_3 133
 #define AR16_9 177
+#define UWINY1_MAX 240
+#define UWINY2_MAX 240
 
 #define S5K4L8XXM3_OTP_PDAF_SIZE 500
 #define S5K4L8XXM3_OTP_LSC_INFO_LEN 1210

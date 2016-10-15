@@ -1412,6 +1412,12 @@ int SprdCamera3RangeFinder::MeasureThread::calculateDepthValue(frame_matched_inf
         goto ALSDE_FAILED;
     }
 
+    if(uwInY1 == UWINY1_MAX){
+            uwInY1 = UWINY1_MAX-1;
+    }
+    if(uwInY2 == UWINY2_MAX){
+            uwInY2 = UWINY2_MAX-1;
+    }
 
 #ifdef CONFIG_DUAL_CAMERA_HORIZONTAL
     rc = mDepthEngineApi->alSDE2_DistanceMeasurement(&eOutDistance, \
