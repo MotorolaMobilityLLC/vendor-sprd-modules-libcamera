@@ -2000,6 +2000,14 @@ static cmr_int aealtek_set_touch_zone(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 			in_ptr->touch_zone.zone.w,
 			in_ptr->touch_zone.zone.h,
 			cxt_ptr->touch_param.touch_flag);
+
+	if (0 == in_ptr->touch_zone.zone.x &&
+	    0 == in_ptr->touch_zone.zone.y &&
+	    0 == in_ptr->touch_zone.zone.w &&
+	    0 == in_ptr->touch_zone.zone.h) {
+		return ISP_SUCCESS;
+	}
+
 	end_x = in_ptr->touch_zone.zone.w + in_ptr->touch_zone.zone.x;
 	end_y = in_ptr->touch_zone.zone.h + in_ptr->touch_zone.zone.y;
 	if (in_ptr->touch_zone.zone.w <= 0
