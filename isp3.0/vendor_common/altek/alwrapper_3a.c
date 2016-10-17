@@ -75,6 +75,10 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 
 	struct timeval systemtime, systemtime_e;
 	uint64  time_s, time_e;
+	uint64  time_1, time_2;
+	uint64  time_3, time_4;
+	uint64  time_5, time_6;
+	uint64  time_7, time_8 ,time_9;
 
 	/* NULL pointer protection */
 	if ( alisp_metadata == NULL )
@@ -87,72 +91,140 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 	paddrlocal = (uint8 *)alisp_metadata;
 	/* by byte parsing, use casting would cause some compiler padding shift issue */
 	/* 0. common Info */
-	memcpy( &pispmeta.umagicnum        , paddrlocal, 4 );
-	paddrlocal+= 4;
-	memcpy( &pispmeta.uhwengineid      , paddrlocal, 2 );
-	paddrlocal+= 2;
-	memcpy( &pispmeta.uframeidx        , paddrlocal, 2 );
-	paddrlocal+= 2;
-	memcpy( &pispmeta.uchecksum        , paddrlocal, 4 );
-	paddrlocal+= 4;
+	offset = 0;
+	//memcpy( &pispmeta.umagicnum        , paddrlocal, 4 );
+	pispmeta.umagicnum = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+	//paddrlocal+= 4;
+	offset+= 4;
+	//memcpy( &pispmeta.uhwengineid      , paddrlocal, 2 );
+	pispmeta.uhwengineid = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+	//paddrlocal+= 2;
+	offset+= 2;
+	//memcpy( &pispmeta.uframeidx        , paddrlocal, 2 );
+	pispmeta.uframeidx = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+	//paddrlocal+= 2;
+	offset+= 2;
+	//memcpy( &pispmeta.uchecksum        , paddrlocal, 4 );
+	pispmeta.uchecksum = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+	//paddrlocal+= 4;
+	offset+= 4;
+
 	/*  1. ae  stats info */
-	memcpy( &pispmeta.uaetag           , paddrlocal, 2 );
-	paddrlocal+= 2;
-	memcpy( &pispmeta.uaetokenid       , paddrlocal, 2 );
-	paddrlocal+= 2;
-	memcpy( &pispmeta.uaestatssize     , paddrlocal, 4 );
-	paddrlocal+= 4;
-	memcpy( &pispmeta.uaestatsaddr     , paddrlocal, 4 );
-	paddrlocal+= 4;
+	//memcpy( &pispmeta.uaetag           , paddrlocal, 2 );
+	pispmeta.uaetag = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+	//paddrlocal+= 2;
+	offset+= 2;
+	//memcpy( &pispmeta.uaetokenid       , paddrlocal, 2 );
+	pispmeta.uaetokenid = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+	//paddrlocal+= 2;
+	offset+= 2;
+	//memcpy( &pispmeta.uaestatssize     , paddrlocal, 4 );
+	pispmeta.uaestatssize = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+	//paddrlocal+= 4;
+	offset+= 4;
+	//memcpy( &pispmeta.uaestatsaddr     , paddrlocal, 4 );
+	pispmeta.uaestatsaddr = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+	//paddrlocal+= 4;
+	offset+= 4;
+
 	/*   2. awb stats info */
-	memcpy( &pispmeta.uawbtag          , paddrlocal, 2 );
-	paddrlocal+= 2;
-	memcpy( &pispmeta.uawbtokenid      , paddrlocal, 2 );
-	paddrlocal+= 2;
-	memcpy( &pispmeta.uawbstatssize    , paddrlocal, 4 );
-	paddrlocal+= 4;
-	memcpy( &pispmeta.uawbstatsaddr    , paddrlocal, 4 );
-	paddrlocal+= 4;
+	//memcpy( &pispmeta.uawbtag          , paddrlocal, 2 );
+	pispmeta.uawbtag = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+	//paddrlocal+= 2;
+	offset+= 2;
+	//memcpy( &pispmeta.uawbtokenid      , paddrlocal, 2 );
+	pispmeta.uawbtokenid = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+	//paddrlocal+= 2;
+	offset+= 2;
+	//memcpy( &pispmeta.uawbstatssize    , paddrlocal, 4 );
+	pispmeta.uawbstatssize = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+	//paddrlocal+= 4;
+	offset+= 4;
+	//memcpy( &pispmeta.uawbstatsaddr    , paddrlocal, 4 );
+	pispmeta.uawbstatsaddr = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+	//paddrlocal+= 4;
+	offset+= 4;
+
 	/*   3. af stats info  */
-	memcpy( &pispmeta.uaftag           , paddrlocal, 2 );
-	paddrlocal+= 2;
-	memcpy( &pispmeta.uaftokenid       , paddrlocal, 2 );
-	paddrlocal+= 2;
-	memcpy( &pispmeta.uafstatssize     , paddrlocal, 4 );
-	paddrlocal+= 4;
-	memcpy( &pispmeta.uafstatsaddr     , paddrlocal, 4 );
-	paddrlocal+= 4;
+	//memcpy( &pispmeta.uaftag           , paddrlocal, 2 );
+	pispmeta.uaftag = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+	//paddrlocal+= 2;
+	offset+= 2;
+	//memcpy( &pispmeta.uaftokenid       , paddrlocal, 2 );
+	pispmeta.uaftokenid = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+	//paddrlocal+= 2;
+	offset+= 2;
+	//memcpy( &pispmeta.uafstatssize     , paddrlocal, 4 );
+	pispmeta.uafstatssize = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+	//paddrlocal+= 4;
+	offset+= 4;
+	//memcpy( &pispmeta.uafstatsaddr     , paddrlocal, 4 );
+	pispmeta.uafstatsaddr = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+	//paddrlocal+= 4;
+	offset+= 4;
+
 	/*   4. y-hist stats info  */
-	memcpy( &pispmeta.uyhisttag        , paddrlocal, 2 );
-	paddrlocal+= 2;
-	memcpy( &pispmeta.uyhisttokenid    , paddrlocal, 2 );
-	paddrlocal+= 2;
-	memcpy( &pispmeta.uyhiststatssize  , paddrlocal, 4 );
-	paddrlocal+= 4;
-	memcpy( &pispmeta.uyhiststatsaddr  , paddrlocal, 4 );
-	paddrlocal+= 4;
+	//memcpy( &pispmeta.uyhisttag        , paddrlocal, 2 );
+	pispmeta.uyhisttag = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+	//paddrlocal+= 2;
+	offset+= 2;
+	//memcpy( &pispmeta.uyhisttokenid    , paddrlocal, 2 );
+	pispmeta.uyhisttokenid = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+	//paddrlocal+= 2;
+	offset+= 2;
+	//memcpy( &pispmeta.uyhiststatssize  , paddrlocal, 4 );
+	pispmeta.uyhiststatssize = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+	//paddrlocal+= 4;
+	offset+= 4;
+	//memcpy( &pispmeta.uyhiststatsaddr  , paddrlocal, 4 );
+	pispmeta.uyhiststatsaddr = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+	//paddrlocal+= 4;
+	offset+= 4;
+
 	/*   5. anfi-flicker stats info */
-	memcpy( &pispmeta.uantiftag        , paddrlocal, 2 );
-	paddrlocal+= 2;
-	memcpy( &pispmeta.uantiftokenid    , paddrlocal, 2 );
-	paddrlocal+= 2;
-	memcpy( &pispmeta.uantifstatssize  , paddrlocal, 4 );
-	paddrlocal+= 4;
-	memcpy( &pispmeta.uantifstatsaddr  , paddrlocal, 4 );
-	paddrlocal+= 4;
+	//memcpy( &pispmeta.uantiftag        , paddrlocal, 2 );
+	pispmeta.uantiftag = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+	//paddrlocal+= 2;
+	offset+= 2;
+	//memcpy( &pispmeta.uantiftokenid    , paddrlocal, 2 );
+	pispmeta.uantiftokenid = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+	//paddrlocal+= 2;
+	offset+= 2;
+	//memcpy( &pispmeta.uantifstatssize  , paddrlocal, 4 );
+	pispmeta.uantifstatssize = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+	//paddrlocal+= 4;
+	offset+= 4;
+	//memcpy( &pispmeta.uantifstatsaddr  , paddrlocal, 4 );
+	pispmeta.uantifstatsaddr = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+	//paddrlocal+= 4;
+	offset+= 4;
+
 	/*   6. subsample image info   */
-	memcpy( &pispmeta.usubsampletag        , paddrlocal, 2 );
-	paddrlocal+= 2;
-	memcpy( &pispmeta.usubsampletokenid    , paddrlocal, 2 );
-	paddrlocal+= 2;
-	memcpy( &pispmeta.usubsamplestatssize  , paddrlocal, 4 );
-	paddrlocal+= 4;
-	memcpy( &pispmeta.usubsamplestatsaddr  , paddrlocal, 4 );
-	paddrlocal+= 4;
+	//memcpy( &pispmeta.usubsampletag        , paddrlocal, 2 );
+	pispmeta.usubsampletag = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+	//paddrlocal+= 2;
+	offset+= 2;
+	//memcpy( &pispmeta.usubsampletokenid    , paddrlocal, 2 );
+	pispmeta.usubsampletokenid = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+	//paddrlocal+= 2;
+	offset+= 2;
+	//memcpy( &pispmeta.usubsamplestatssize  , paddrlocal, 4 );
+	pispmeta.usubsamplestatssize = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+	//paddrlocal+= 4;
+	offset+= 4;
+	//memcpy( &pispmeta.usubsamplestatsaddr  , paddrlocal, 4 );
+	pispmeta.usubsamplestatsaddr = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+	//paddrlocal+= 4;
+	offset+= 4;
 
 	/* check HW3A stats define version with magic number, which should be maintained & update at each ISP release */
 	if ( pispmeta.umagicnum != HW3A_MAGIC_NUMBER_VERSION )
 		ret =  ERR_WRP_MISMACTHED_STATS_VER;	/* keep error code only in early phase, if need return immediatedly then return here */
+
+	gettimeofday(&systemtime, NULL);
+	time_1 = systemtime.tv_sec * 1000000 + systemtime.tv_usec;
+
+
 
 	/* check data validity, if data is empty, reset buffer to 3A lib, avoid corrupt data to crash system  */
 	if ( ( pispmeta.uaestatsaddr == 0 || pispmeta.uaestatssize == 0  )   && alisp_metadata_ae != NULL ) {
@@ -167,15 +239,28 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 	if ( (pispmeta.uyhiststatsaddr == 0 || pispmeta.uyhiststatssize == 0  ) && alisp_metadata_yhist != NULL ) {
 		memset( alisp_metadata_yhist, 0, sizeof( struct  isp_drv_meta_yhist_t ));
 	}
+
+	gettimeofday(&systemtime, NULL);
+	time_2 = systemtime.tv_sec * 1000000 + systemtime.tv_usec;
+
+
 	if ( (pispmeta.uantifstatsaddr == 0 || pispmeta.uantifstatssize == 0  ) && alisp_metadata_antif != NULL ) {
 		memset( alisp_metadata_antif, 0, sizeof( struct  isp_drv_meta_antif_t ));
 #ifndef LOCAL_NDK_BUILD
-		ISP_LOGI("al3awrapper_dispatchhw3astats anti-flicker invalid addr: %d , statssize:%d", pispmeta.uantifstatsaddr, pispmeta.uantifstatssize );
+		//ISP_LOGI("al3awrapper_dispatchhw3astats anti-flicker invalid addr: %d , statssize:%d", pispmeta.uantifstatsaddr, pispmeta.uantifstatssize );
 #endif
 	}
+
+	gettimeofday(&systemtime, NULL);
+	time_3 = systemtime.tv_sec * 1000000 + systemtime.tv_usec;
+
 	if ( (pispmeta.usubsamplestatsaddr == 0  || pispmeta.usubsamplestatssize == 0  ) && alisp_metadata_subsample != NULL ) {
 		memset( alisp_metadata_subsample, 0, sizeof( struct  isp_drv_meta_subsample_t ));
 	}
+
+	gettimeofday(&systemtime, NULL);
+	time_4= systemtime.tv_sec * 1000000 + systemtime.tv_usec;
+
 
 	/* parsing AE if AE pointer is valid */
 	if ( alisp_metadata_ae == NULL )
@@ -199,17 +284,21 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 		/* retriving AE info of stats */
 		paddrlocal = (uint8 *)alisp_metadata + pispmeta.uaestatsaddr;
 		offset = 0;
-		memcpy( &alisp_metadata_ae->ae_stats_info.udpixelsperblocks  , paddrlocal, 4 );
-		paddrlocal+= 4;
+		//memcpy( &alisp_metadata_ae->ae_stats_info.udpixelsperblocks  , paddrlocal, 4 );
+		alisp_metadata_ae->ae_stats_info.udpixelsperblocks = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+		//paddrlocal+= 4;
 		offset+=4;
-		memcpy( &alisp_metadata_ae->ae_stats_info.udbanksize         , paddrlocal, 4 );
-		paddrlocal+= 4;
+		//memcpy( &alisp_metadata_ae->ae_stats_info.udbanksize         , paddrlocal, 4 );
+		alisp_metadata_ae->ae_stats_info.udbanksize = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+		//paddrlocal+= 4;
 		offset+=4;
-		memcpy( &alisp_metadata_ae->ae_stats_info.ucvalidblocks      , paddrlocal, 1 );
-		paddrlocal+= 1;
+		//memcpy( &alisp_metadata_ae->ae_stats_info.ucvalidblocks      , paddrlocal, 1 );
+		alisp_metadata_ae->ae_stats_info.ucvalidblocks = paddrlocal[offset];
+		//paddrlocal+= 1;
 		offset+=1;
-		memcpy( &alisp_metadata_ae->ae_stats_info.ucvalidbanks       , paddrlocal, 1 );
-		paddrlocal+= 1;
+		//memcpy( &alisp_metadata_ae->ae_stats_info.ucvalidbanks       , paddrlocal, 1 );
+		alisp_metadata_ae->ae_stats_info.ucvalidbanks = paddrlocal[offset];
+		//paddrlocal+= 1;
 		offset+=1;
 
 		/* copy AE stats to indicated buffer address, make 8 alignment */
@@ -264,16 +353,21 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 			/* retriving AE info of stats */
 			paddrlocal = (uint8 *)alisp_metadata + pispmeta.uaestatsaddr;
 			offset = 0;
-			memcpy( &alisp_metadata_ae->ae_stats_info.udpixelsperblocks  , paddrlocal, 4 );
-			paddrlocal+= 4;
+			//memcpy( &alisp_metadata_ae->ae_stats_info.udpixelsperblocks  , paddrlocal, 4 );
+			alisp_metadata_ae->ae_stats_info.udpixelsperblocks = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+			//paddrlocal+= 4;
 			offset+=4;
-			memcpy( &alisp_metadata_ae->ae_stats_info.udbanksize         , paddrlocal, 4 );
-			paddrlocal+= 4;
+			//memcpy( &alisp_metadata_ae->ae_stats_info.udbanksize         , paddrlocal, 4 );
+			alisp_metadata_ae->ae_stats_info.udbanksize = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+			//paddrlocal+= 4;
 			offset+=4;
-			memcpy( &alisp_metadata_ae->ae_stats_info.ucvalidblocks      , paddrlocal, 1 );
-			paddrlocal+= 1;
+			//memcpy( &alisp_metadata_ae->ae_stats_info.ucvalidblocks      , paddrlocal, 1 );
+			alisp_metadata_ae->ae_stats_info.ucvalidblocks = paddrlocal[offset];
+			//paddrlocal+= 1;
 			offset+=1;
-			memcpy( &alisp_metadata_ae->ae_stats_info.ucvalidbanks       , paddrlocal, 1 );
+			//memcpy( &alisp_metadata_ae->ae_stats_info.ucvalidbanks       , paddrlocal, 1 );
+			alisp_metadata_ae->ae_stats_info.ucvalidbanks = paddrlocal[offset];
+
 		} else {
 			alisp_metadata_ae->ae_stats_info.udpixelsperblocks = 3000;
 			alisp_metadata_ae->ae_stats_info.udbanksize = 512;
@@ -285,6 +379,11 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 		pispmetaae->b_isstats_byaddr = 0;
 
 	}
+
+
+	gettimeofday(&systemtime, NULL);
+	time_5= systemtime.tv_sec * 1000000 + systemtime.tv_usec;
+
 
 	/* parsing AWB if AWB pointer is valid */
 	if ( alisp_metadata_awb == NULL )
@@ -307,41 +406,53 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 		/* retriving awb info of stats */
 		paddrlocal = (uint8 *)alisp_metadata + pispmeta.uawbstatsaddr;
 		offset = 0;
-		memcpy( &alisp_metadata_awb->awb_stats_info.udpixelsperblocks  , paddrlocal, 4 );
-		paddrlocal+= 4;
+		//memcpy( &alisp_metadata_awb->awb_stats_info.udpixelsperblocks  , paddrlocal, 4 );
+		alisp_metadata_awb->awb_stats_info.udpixelsperblocks = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+		//paddrlocal+= 4;
 		offset+= 4;
-		memcpy( &alisp_metadata_awb->awb_stats_info.udbanksize         , paddrlocal, 4 );
-		paddrlocal+= 4;
+		//memcpy( &alisp_metadata_awb->awb_stats_info.udbanksize         , paddrlocal, 4 );
+		alisp_metadata_awb->awb_stats_info.udbanksize = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+		//paddrlocal+= 4;
 		offset+= 4;
-		memcpy( &alisp_metadata_awb->awb_stats_info.uwsub_x            , paddrlocal, 2 );
-		paddrlocal+= 2;
+		//memcpy( &alisp_metadata_awb->awb_stats_info.uwsub_x            , paddrlocal, 2 );
+		alisp_metadata_awb->awb_stats_info.uwsub_x = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+		//paddrlocal+= 2;
 		offset+= 2;
-		memcpy( &alisp_metadata_awb->awb_stats_info.uwsub_y            , paddrlocal, 2 );
-		paddrlocal+= 2;
+		//memcpy( &alisp_metadata_awb->awb_stats_info.uwsub_y            , paddrlocal, 2 );
+		alisp_metadata_awb->awb_stats_info.uwsub_y = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+		//paddrlocal+= 2;
 		offset+= 2;
-		memcpy( &alisp_metadata_awb->awb_stats_info.uwwin_x            , paddrlocal, 2 );
-		paddrlocal+= 2;
+		//memcpy( &alisp_metadata_awb->awb_stats_info.uwwin_x            , paddrlocal, 2 );
+		alisp_metadata_awb->awb_stats_info.uwwin_x = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+		//paddrlocal+= 2;
 		offset+= 2;
-		memcpy( &alisp_metadata_awb->awb_stats_info.uwwin_y            , paddrlocal, 2 );
-		paddrlocal+= 2;
+		//memcpy( &alisp_metadata_awb->awb_stats_info.uwwin_y            , paddrlocal, 2 );
+		alisp_metadata_awb->awb_stats_info.uwwin_y = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+		//paddrlocal+= 2;
 		offset+= 2;
-		memcpy( &alisp_metadata_awb->awb_stats_info.uwwin_w            , paddrlocal, 2 );
-		paddrlocal+= 2;
+		//memcpy( &alisp_metadata_awb->awb_stats_info.uwwin_w            , paddrlocal, 2 );
+		alisp_metadata_awb->awb_stats_info.uwwin_w = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+		//paddrlocal+= 2;
 		offset+= 2;
-		memcpy( &alisp_metadata_awb->awb_stats_info.uwwin_h            , paddrlocal, 2 );
-		paddrlocal+= 2;
+		//memcpy( &alisp_metadata_awb->awb_stats_info.uwwin_h            , paddrlocal, 2 );
+		alisp_metadata_awb->awb_stats_info.uwwin_h = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+		//paddrlocal+= 2;
 		offset+= 2;
-		memcpy( &alisp_metadata_awb->awb_stats_info.uwtotalcount       , paddrlocal, 2 );
-		paddrlocal+= 2;
+		//memcpy( &alisp_metadata_awb->awb_stats_info.uwtotalcount       , paddrlocal, 2 );
+		alisp_metadata_awb->awb_stats_info.uwtotalcount = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+		//paddrlocal+= 2;
 		offset+= 2;
-		memcpy( &alisp_metadata_awb->awb_stats_info.uwgrasscount       , paddrlocal, 2 );
-		paddrlocal+= 2;
+		//memcpy( &alisp_metadata_awb->awb_stats_info.uwgrasscount       , paddrlocal, 2 );
+		alisp_metadata_awb->awb_stats_info.uwgrasscount = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+		//paddrlocal+= 2;
 		offset+= 2;
-		memcpy( &alisp_metadata_awb->awb_stats_info.ucvalidblocks      , paddrlocal, 1 );
-		paddrlocal+= 1;
+		//memcpy( &alisp_metadata_awb->awb_stats_info.ucvalidblocks      , paddrlocal, 1 );
+		alisp_metadata_awb->awb_stats_info.ucvalidblocks = paddrlocal[offset];
+		//paddrlocal+= 1;
 		offset+= 1;
-		memcpy( &alisp_metadata_awb->awb_stats_info.ucvalidbanks       , paddrlocal, 1 );
-		paddrlocal+= 1;
+		//memcpy( &alisp_metadata_awb->awb_stats_info.ucvalidbanks       , paddrlocal, 1 );
+		alisp_metadata_awb->awb_stats_info.ucvalidbanks = paddrlocal[offset];
+		//paddrlocal+= 1;
 		offset+= 1;
 
 		/* copy AWB stats to indicated buffer address, make 8 alignment */
@@ -393,43 +504,59 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 			/* retriving awb info of stats */
 			paddrlocal = (uint8 *)alisp_metadata + pispmeta.uawbstatsaddr;
 			offset = 0;
-			memcpy( &alisp_metadata_awb->awb_stats_info.udpixelsperblocks  , paddrlocal, 4 );
-			paddrlocal+= 4;
+			//memcpy( &alisp_metadata_awb->awb_stats_info.udpixelsperblocks  , paddrlocal, 4 );
+			alisp_metadata_awb->awb_stats_info.udpixelsperblocks = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+			//paddrlocal+= 4;
 			offset+= 4;
-			memcpy( &alisp_metadata_awb->awb_stats_info.udbanksize         , paddrlocal, 4 );
-			paddrlocal+= 4;
+			//memcpy( &alisp_metadata_awb->awb_stats_info.udbanksize         , paddrlocal, 4 );
+			alisp_metadata_awb->awb_stats_info.udbanksize = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+			//paddrlocal+= 4;
 			offset+= 4;
-			memcpy( &alisp_metadata_awb->awb_stats_info.uwsub_x            , paddrlocal, 2 );
-			paddrlocal+= 2;
+			//memcpy( &alisp_metadata_awb->awb_stats_info.uwsub_x            , paddrlocal, 2 );
+			alisp_metadata_awb->awb_stats_info.uwsub_x = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+			//paddrlocal+= 2;
 			offset+= 2;
-			memcpy( &alisp_metadata_awb->awb_stats_info.uwsub_y            , paddrlocal, 2 );
-			paddrlocal+= 2;
+			//memcpy( &alisp_metadata_awb->awb_stats_info.uwsub_y            , paddrlocal, 2 );
+			alisp_metadata_awb->awb_stats_info.uwsub_y = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+			//paddrlocal+= 2;
 			offset+= 2;
-			memcpy( &alisp_metadata_awb->awb_stats_info.uwwin_x            , paddrlocal, 2 );
-			paddrlocal+= 2;
+			//memcpy( &alisp_metadata_awb->awb_stats_info.uwwin_x            , paddrlocal, 2 );
+			alisp_metadata_awb->awb_stats_info.uwwin_x = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+			//paddrlocal+= 2;
 			offset+= 2;
-			memcpy( &alisp_metadata_awb->awb_stats_info.uwwin_y            , paddrlocal, 2 );
-			paddrlocal+= 2;
+			//memcpy( &alisp_metadata_awb->awb_stats_info.uwwin_y            , paddrlocal, 2 );
+			alisp_metadata_awb->awb_stats_info.uwwin_y = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+			//paddrlocal+= 2;
 			offset+= 2;
-			memcpy( &alisp_metadata_awb->awb_stats_info.uwwin_w            , paddrlocal, 2 );
-			paddrlocal+= 2;
+			//memcpy( &alisp_metadata_awb->awb_stats_info.uwwin_w            , paddrlocal, 2 );
+			alisp_metadata_awb->awb_stats_info.uwwin_w = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+			//paddrlocal+= 2;
 			offset+= 2;
-			memcpy( &alisp_metadata_awb->awb_stats_info.uwwin_h            , paddrlocal, 2 );
-			paddrlocal+= 2;
+			//memcpy( &alisp_metadata_awb->awb_stats_info.uwwin_h            , paddrlocal, 2 );
+			alisp_metadata_awb->awb_stats_info.uwwin_h = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+			//paddrlocal+= 2;
 			offset+= 2;
-			memcpy( &alisp_metadata_awb->awb_stats_info.uwtotalcount       , paddrlocal, 2 );
-			paddrlocal+= 2;
+			//memcpy( &alisp_metadata_awb->awb_stats_info.uwtotalcount       , paddrlocal, 2 );
+			alisp_metadata_awb->awb_stats_info.uwtotalcount = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+			//paddrlocal+= 2;
 			offset+= 2;
-			memcpy( &alisp_metadata_awb->awb_stats_info.uwgrasscount       , paddrlocal, 2 );
-			paddrlocal+= 2;
+			//memcpy( &alisp_metadata_awb->awb_stats_info.uwgrasscount       , paddrlocal, 2 );
+			alisp_metadata_awb->awb_stats_info.uwgrasscount= ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+			//paddrlocal+= 2;
 			offset+= 2;
-			memcpy( &alisp_metadata_awb->awb_stats_info.ucvalidblocks      , paddrlocal, 1 );
-			paddrlocal+= 1;
+			//memcpy( &alisp_metadata_awb->awb_stats_info.ucvalidblocks      , paddrlocal, 1 );
+			alisp_metadata_awb->awb_stats_info.ucvalidblocks = paddrlocal[offset];
+			//paddrlocal+= 1;
 			offset+= 1;
-			memcpy( &alisp_metadata_awb->awb_stats_info.ucvalidbanks       , paddrlocal, 1 );
+			//memcpy( &alisp_metadata_awb->awb_stats_info.ucvalidbanks       , paddrlocal, 1 );
+			alisp_metadata_awb->awb_stats_info.ucvalidbanks = paddrlocal[offset];
 		}
 
 	}
+
+	gettimeofday(&systemtime, NULL);
+	time_6= systemtime.tv_sec * 1000000 + systemtime.tv_usec;
+
 
 	/* parsing AF if AF pointer is valid */
 	if ( alisp_metadata_af == NULL )
@@ -451,17 +578,21 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 		/* retriving af info of stats */
 		paddrlocal = (uint8 *)alisp_metadata + pispmeta.uafstatsaddr;
 		offset = 0;
-		memcpy( &alisp_metadata_af->af_stats_info.udpixelsperblocks  , paddrlocal, 4 );
-		paddrlocal+= 4;
+		//memcpy( &alisp_metadata_af->af_stats_info.udpixelsperblocks  , paddrlocal, 4 );
+		alisp_metadata_af->af_stats_info.udpixelsperblocks = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+		//paddrlocal+= 4;
 		offset+= 4;
-		memcpy( &alisp_metadata_af->af_stats_info.udbanksize         , paddrlocal, 4 );
-		paddrlocal+= 4;
+		//memcpy( &alisp_metadata_af->af_stats_info.udbanksize         , paddrlocal, 4 );
+		alisp_metadata_af->af_stats_info.udbanksize = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+		//paddrlocal+= 4;
 		offset+= 4;
-		memcpy( &alisp_metadata_af->af_stats_info.ucvalidblocks      , paddrlocal, 1 );
-		paddrlocal+= 1;
+		//memcpy( &alisp_metadata_af->af_stats_info.ucvalidblocks      , paddrlocal, 1 );
+		alisp_metadata_af->af_stats_info.ucvalidblocks = paddrlocal[offset];
+		//paddrlocal+= 1;
 		offset+= 1;
-		memcpy( &alisp_metadata_af->af_stats_info.ucvalidbanks       , paddrlocal, 1 );
-		paddrlocal+= 1;
+		//memcpy( &alisp_metadata_af->af_stats_info.ucvalidbanks       , paddrlocal, 1 );
+		alisp_metadata_af->af_stats_info.ucvalidbanks = paddrlocal[offset];
+		//paddrlocal+= 1;
 		offset+= 1;
 
 		/* copy af stats to indicated buffer address, make 8 alignment */
@@ -496,6 +627,11 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 		uwValidstats_Num++;
 	}
 
+
+	gettimeofday(&systemtime, NULL);
+	time_7= systemtime.tv_sec * 1000000 + systemtime.tv_usec;
+
+
 	/* parsing YHist if YHist pointer is valid */
 	if ( alisp_metadata_yhist == NULL )
 		;	/* do nothing, even if HW3A stats passing valid data */
@@ -523,7 +659,7 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 		offset_start = offset_start + padding;
 
 #ifndef LOCAL_NDK_BUILD
-		ISP_LOGI("al3awrapper_dispatchhw3astats y-hist statssize:%d", alisp_metadata_yhist->uyhiststatssize );
+		//ISP_LOGI("al3awrapper_dispatchhw3astats y-hist statssize:%d", alisp_metadata_yhist->uyhiststatssize );
 #endif
 
 		/* allocate memory buffer base on meta size of YHist stats */
@@ -533,10 +669,28 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 
 		/* shift to data addr */
 		ptempaddr = (uint8 *)alisp_metadata + offset_start;
-		/* copy data to buffer addr */
-		memcpy( (void *)alisp_metadata_yhist->pyhist_stats , (void *)ptempaddr, alisp_metadata_yhist->uyhiststatssize );
+
+
+#ifdef _ENABLE_STATS_PRE_ALLOC_BUF
+#if ( _ENABLE_STATS_PRE_ALLOC_BUF )
+		alisp_metadata_yhist->b_isstats_byaddr = 1;
+#endif
+#endif
+
+		if ( alisp_metadata_yhist->b_isstats_byaddr == 0 ) {
+			/* copy data to buffer addr */
+			memcpy( (void *)alisp_metadata_yhist->pyhist_stats , (void *)ptempaddr, alisp_metadata_yhist->uyhiststatssize );
+		} else {
+			/* assign by addr if buffer is allocated from 3A ctrl layer  */
+			alisp_metadata_yhist->puc_yhist_stats = (uint8 *)ptempaddr;
+		}
 		uwValidstats_Num++;
+
 	}
+
+	gettimeofday(&systemtime, NULL);
+	time_8= systemtime.tv_sec * 1000000 + systemtime.tv_usec;
+
 
 	/* parsing AntiF if AntiF pointer is valid */
 	if ( alisp_metadata_antif == NULL )
@@ -571,10 +725,26 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 
 		/* shift to data addr */
 		ptempaddr = (uint8 *)alisp_metadata + offset_start;
-		/* copy data to buffer addr */
-		memcpy( (void *)alisp_metadata_antif->pantif_stats , (void *)ptempaddr, alisp_metadata_antif->uantifstatssize );
+
+
+#ifdef _ENABLE_STATS_PRE_ALLOC_BUF
+#if ( _ENABLE_STATS_PRE_ALLOC_BUF )
+		alisp_metadata_antif->b_isstats_byaddr = 1;
+#endif
+#endif
+
+		if ( alisp_metadata_antif->b_isstats_byaddr == 0 ) {
+			/* copy data to buffer addr */
+			memcpy( (void *)alisp_metadata_antif->pantif_stats , (void *)ptempaddr, alisp_metadata_antif->uantifstatssize );
+		} else {
+			/* assign by addr if buffer is allocated from 3A ctrl layer  */
+			alisp_metadata_antif->puc_antif_stats = (uint8 *)ptempaddr;
+		}
 		uwValidstats_Num++;
 	}
+
+	gettimeofday(&systemtime, NULL);
+	time_9= systemtime.tv_sec * 1000000 + systemtime.tv_usec;
 
 	/* parsing Subsample if Subsample pointer is valid */
 	if ( alisp_metadata_subsample == NULL )
@@ -596,14 +766,17 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 		/* retriving subsample info of stats */
 		paddrlocal = (uint8 *)alisp_metadata + pispmeta.usubsamplestatsaddr;
 		offset = 0;
-		memcpy( &alisp_metadata_subsample->subsample_stats_info.udbuffertotalsize  , paddrlocal, 4 );
-		paddrlocal+= 4;
+		//memcpy( &alisp_metadata_subsample->subsample_stats_info.udbuffertotalsize  , paddrlocal, 4 );
+		alisp_metadata_subsample->subsample_stats_info.udbuffertotalsize = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+		//paddrlocal+= 4;
 		offset+= 4;
-		memcpy( &alisp_metadata_subsample->subsample_stats_info.ucvalidw           , paddrlocal, 2 );
-		paddrlocal+= 2;
+		//memcpy( &alisp_metadata_subsample->subsample_stats_info.ucvalidw           , paddrlocal, 2 );
+		alisp_metadata_subsample->subsample_stats_info.ucvalidw = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+		//paddrlocal+= 2;
 		offset+= 2;
-		memcpy( &alisp_metadata_subsample->subsample_stats_info.ucvalidh           , paddrlocal, 2 );
-		paddrlocal+= 2;
+		//memcpy( &alisp_metadata_subsample->subsample_stats_info.ucvalidh           , paddrlocal, 2 );
+		alisp_metadata_subsample->subsample_stats_info.ucvalidh = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+		//paddrlocal+= 2;
 		offset+= 2;
 
 		/* copy subsample stats to indicated buffer address, make 8 alignment */
@@ -618,8 +791,20 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 
 		/* shift to data addr */
 		ptempaddr = (uint8 *)alisp_metadata + offset_start;
-		/* copy data to buffer addr */
-		memcpy( (void *)alisp_metadata_subsample->psubsample_stats , (void *)ptempaddr, alisp_metadata_subsample->usubsamplestatssize );
+
+#ifdef _ENABLE_STATS_PRE_ALLOC_BUF
+#if ( _ENABLE_STATS_PRE_ALLOC_BUF )
+		alisp_metadata_subsample->b_isstats_byaddr = 1;
+#endif
+#endif
+
+		if ( alisp_metadata_subsample->b_isstats_byaddr == 0 ) {
+			/* copy data to buffer addr */
+			memcpy( (void *)alisp_metadata_subsample->psubsample_stats , (void *)ptempaddr, alisp_metadata_subsample->usubsamplestatssize );
+		} else {
+			/* assign by addr if buffer is allocated from 3A ctrl layer  */
+			alisp_metadata_subsample->puc_subsample_stats = (uint8 *)ptempaddr;
+		}
 		uwValidstats_Num++;
 	}
 
@@ -627,11 +812,11 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 		return ERR_WRP_EMPTY_METADATA;
 
 	gettimeofday(&systemtime_e, NULL);
-
 	time_e = systemtime_e.tv_sec * 1000000 + systemtime_e.tv_usec;
 
 #ifndef LOCAL_NDK_BUILD
-	ISP_LOGI("al3awrapper_dispatchhw3astats process time %d!", (uint32)(time_e - time_s));
+	ISP_LOGI("al3awrapper_dispatchhw3astats process total_time:%d,commom_t:%d,memset3A:%d,memset_flk:%d,memset_sub:%d,ae_t:%d,wb:%d,af:%d,y_t_m:%d,flk_t_m:%d,sub_t_m:%d\r\n", (uint32)(time_e - time_s),(uint32)(time_1 - time_s),(uint32)(time_2 - time_1),
+	         (uint32)(time_3 - time_2),(uint32)(time_4 - time_3),(uint32)(time_5 - time_4),(uint32)(time_6 - time_5),(uint32)(time_7 - time_6),(uint32)(time_8-time_7),(uint32)(time_9-time_8),(uint32)(time_e-time_9));
 #endif
 
 

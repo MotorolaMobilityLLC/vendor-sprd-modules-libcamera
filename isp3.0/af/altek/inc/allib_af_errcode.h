@@ -50,6 +50,8 @@ enum allib_af_param_result_err_list {
 	PARAM_ERR_INVALID_IMG_BUFFER = (1 << 8),
 	PARAM_ERR_INVALID_MANUAL_DAC  = (1 << 9),
 	PARAM_ERR_ROI_NOT_UPDATE = (1 << 10),
-	PARAM_ERR_INVALID_HYBRID_TYPE = (1 << 11)
+	PARAM_ERR_INVALID_HYBRID_TYPE = (1 << 11),
+	PARAM_ERR_CANCEL_FOCUS_FAIL = (1 << 12),
+	PARAM_ERR_LENSMOVE_TIMEOUT = (1 << 13)
 };
 #pragma pack(pop)

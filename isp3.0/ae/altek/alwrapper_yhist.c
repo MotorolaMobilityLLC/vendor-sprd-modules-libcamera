@@ -43,7 +43,14 @@ uint32 al3awrapper_dispatchhw3a_yhiststats( struct isp_drv_meta_yhist_t * alisp_
 
 	pmetadata_yhist = (struct isp_drv_meta_yhist_t *)alisp_metadata_yhist;
 	ppatched_yhistdat = (struct al3awrapper_stats_yhist_t *)alwrappered_yhist_dat;
-	stats = (uint8 *)pmetadata_yhist->pyhist_stats;
+
+	if(pmetadata_yhist->b_isstats_byaddr == 1) {
+		if ( pmetadata_yhist->puc_yhist_stats == NULL )
+			return ERR_WRP_YHIST_INVALID_STATS_ADDR;
+		stats = (uint8 *)pmetadata_yhist->puc_yhist_stats;
+	} else
+		stats = (uint8 *)pmetadata_yhist->pyhist_stats;
+
 	/* update sturcture size, this would be double checked in yhist libs */
 	ppatched_yhistdat->ustructuresize = sizeof( struct al3awrapper_stats_yhist_t );
 	/* store patched data/common info/yhist info from wrapper */

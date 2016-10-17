@@ -787,7 +787,9 @@ struct allib_af_input_set_param_t {
  * alAFLIB_GET_PARAM_FOCUS_MODE:		get current focus mode
  * alAFLIB_GET_PARAM_DEFAULT_LENS_POS:	get default lens position (step)
  * alAFLIB_GET_PARAM_GET_CUR_LENS_POS:	get current lens position (step)
- * alAFLIB_GET_PARAM_NOTHING:		set it if you don't need to get info from alAFlib this time.
+ * alAFLIB_GET_PARAM_DEBUG_INFO:		get Debug info memory address size
+ * alAFLIB_GET_PARAM_EXIF_INFO:			get Exif info memory address size
+ * alAFLIB_GET_PARAM_NOTHING:			set it if you don't need to get info from alAFlib this time.
  *
  * info type you want to get from alAFLib.
  */

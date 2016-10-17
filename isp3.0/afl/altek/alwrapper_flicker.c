@@ -59,7 +59,14 @@ uint32 al3awrapper_dispatchhw3a_flickerstats( struct isp_drv_meta_antif_t * alis
 
 	pmetadata_flicker = (struct isp_drv_meta_antif_t *)alisp_metadata_flicker;
 	ppatched_flickerdat = (struct al3awrapper_stats_flicker_t *)alwrappered_flicker_dat;
-	stats = (uint8 *)pmetadata_flicker->pantif_stats;
+
+	if(pmetadata_flicker->b_isstats_byaddr == 1) {
+		if ( pmetadata_flicker->puc_antif_stats == NULL )
+			return ERR_WRP_FLICKER_INVALID_STATS_ADDR;
+		stats = (uint8 *)pmetadata_flicker->puc_antif_stats;
+	} else
+		stats = (uint8 *)pmetadata_flicker->pantif_stats;
+
 	/* update sturcture size, this would be double checked in flicker libs */
 	ppatched_flickerdat->ustructuresize = sizeof( struct al3awrapper_stats_flicker_t );
 	/* store patched data/common info/ae info from wrapper */

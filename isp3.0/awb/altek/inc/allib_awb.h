@@ -187,6 +187,10 @@ enum allib_awb_set_parameter_type_t {
 	alawb_set_param_slave_tuning_file,
 	alawb_set_param_slave_iso_speed,
 
+	alawb_set_param_engineer_manual_wbgain,
+	alawb_set_param_engineer_manual_balance_wbgain,
+	alawb_set_param_engineer_manual_color_temp,
+
 	alawb_set_param_max
 };
 
@@ -211,6 +215,8 @@ struct allib_awb_set_parameter_t {
 		enum allib_awb_set_flash_states_t       state_under_flash;      /* alawb_set_param_state_under_flash */
 		uint16                                  slave_iso_speed;        /* alawb_set_param_slave_iso_speed */
 		uint8                                   identity_id;            /* alawb_set_param_identity_id */
+		struct wbgain_data_t                    manual_wbgain;          /* alawb_set_param_engineer_manual_wbgain / alawb_set_param_engineer_manual_balance_wbgain */
+		uint16                                  manual_color_temp;      /* alawb_set_param_engineer_manual_color_temp */
 	}   para;
 };
 #pragma pack(pop)  /* restore old alignment setting from stack */

@@ -16,6 +16,7 @@
 #define FLICKERINIT_REF_QUEUE               ( 4 )
 #define FLICKERINIT_RAWSIZE_X               ( 1396 )
 #define FLICKERINIT_RAWSIZE_Y               ( 1044 )
+#define FLICKERINIT_MAX_FPS                 ( 3000 )
 #define FLICKERINIT_LINETIME                ( 9900 ) /* unit: ns(nano second) */
 #define REFERENCE_PREVIOUS_DATA_INTERVAL    ( 1 )
 
@@ -37,6 +38,8 @@ enum flicker_set_param_type_t {
 	FLICKER_SET_PARAM_ENABLE_DEBUG_REPORT,
 	FLICKER_SET_PARAM_SHIFT_INFO,
 	FLICKER_SET_PARAM_IDENTITYID,
+	FLICKER_SET_PARAM_SENSOR_FPS,
+	FLICKER_SET_PARAM_SW_FPS,
 	FLICKER_SET_PARAM_MAX,
 
 };
@@ -98,18 +101,40 @@ struct flicker_reference_output_setting_t {
 };
 #pragma pack(pop)  /* restore old alignment setting from stack  */
 
+/*
+ *@typedef flicker_set_parameter_init_t
+ *@brief Flicker initial setting
+ */
+#pragma pack(push) /* push current alignment setting to stack */
+#pragma pack(4)    /* new alignment setting  */
+struct flicker_set_parameter_init_t {
+	void   *flicker_setting_data;	/* this data should be parsed via wrapper to separated Flicker setting data, check basic alignment and read error, if no error, passing to lib directly */
+	uint32 line_time;               /* unit: nano second */
+	uint16 Sensor_MaxFPS; /* Sensor Maximum fps, scale 100, ex: 3000 = 30fps, 2500 = 25fps */
+	uint16 Sensor_MinFPS; /* Sensor Minimum fps, scale 100, ex: 3000 = 30fps, 2500 = 25fps */
+	uint16 SW_MaxFPS; /* Software limit Maximum fps, scale 100, ex: 3000 = 30fps, 2500 = 25fps */
+	uint16 SW_MinFPS; /* Software limit Minimum fps, scale 100, ex: 3000 = 30fps, 2500 = 25fps */
+	uint16 rawsizex;
+	uint16 rawsizey;
+};
+#pragma pack(pop)  /* restore old alignment setting from stack  */
+
 #pragma pack(push) /* push current alignment setting to stack */
 #pragma pack(4)    /* new alignment setting  */
 /*  Flicker set data (content) */
 struct flicker_set_param_content_t {
 	/* initial setting, basic setting related */
-	void   *flicker_setting_data;	/* this data should be parsed via wrapper to separated Flicker setting data, check basic alignment and read error, if no error, passing to lib directly */
+	struct flicker_set_parameter_init_t  flicker_initial_setting;
 
 	/* basic command */
 	uint8 flicker_enable;
 	uint8 flicker_enableDebugLog;
 	/* Identity ID, used for recognize channel of 3A control for each camera channel */
 	uint8  identity_id;       /* default 0, should be assigned by AP framework */
+	uint16 Sensor_MaxFPS; /* Sensor Maximum fps, scale 100, ex: 3000 = 30fps, 2500 = 25fps */
+	uint16 Sensor_MinFPS; /* Sensor Minimum fps, scale 100, ex: 3000 = 30fps, 2500 = 25fps */
+	uint16 SW_MaxFPS; /* Software limit Maximum fps, scale 100, ex: 3000 = 30fps, 2500 = 25fps */
+	uint16 SW_MinFPS; /* Software limit Minimum fps, scale 100, ex: 3000 = 30fps, 2500 = 25fps */
 
 	/* threshold command */
 	uint8 totalqueue;               /* number of total queues */

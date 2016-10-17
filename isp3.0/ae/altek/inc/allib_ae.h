@@ -895,6 +895,7 @@ struct ae_output_data_t {
 
 	struct exposure_data_t    flash_off_exp_dat;
 	struct exposure_data_t    snapshot_exp_dat;
+	struct exposure_data_t    bracket_HDR_exp_dat[AL_MAX_EXP_ENTRIES];
 
 	/* AE control status */
 	INT16  ae_roi_change_st;	/* 0 : no response to ROI change, 1: ROI changed and taken, this reset should be performed via framework once framework ack this message status */

@@ -198,7 +198,7 @@ struct raw_info {
 	uint16     sensor_raw_h;
 	struct  rect_roi_t           sensor_raw_valid_roi;
 	enum    color_order_mode_t   raw_color_order;
-	uint32     line_time;		/* unit: second */
+	uint32     line_time;		/* unit: nano-second */
 } ;
 #pragma pack(pop)  /* restore old alignment setting from stack */
 
@@ -552,7 +552,9 @@ struct isp_drv_meta_yhist_t {
 	uint16 uframeidx;		/* HW3a_frame_idx */
 
 	/* YHist info */
+	uint8  b_isstats_byaddr;   // 0: use pae_stats, 1: use puc_ae_stats
 	uint8  pyhist_stats[HW3A_YHIST_STATS_BUFFER_SIZE];
+	uint8  *puc_yhist_stats;
 	uint16 uyhisttokenid;
 	uint32 uyhiststatssize;
 
@@ -572,7 +574,9 @@ struct isp_drv_meta_antif_t {
 	uint16 uframeidx;               /* HW3a_frame_idx */
 
 	/* anti-flicker info */
+	uint8  b_isstats_byaddr;   // 0: use pae_stats, 1: use puc_ae_stats
 	uint8  pantif_stats[HW3A_ANTIF_STATS_BUFFER_SIZE];
+	uint8  *puc_antif_stats;
 	uint16 uantiftokenid;
 	uint32 uantifstatssize;
 
@@ -602,7 +606,9 @@ struct isp_drv_meta_subsample_t {
 	uint16 uframeidx;		/* HW3a_frame_idx */
 
 	/* Subsample info */
+	uint8  b_isstats_byaddr;   // 0: use pae_stats, 1: use puc_ae_stats
 	uint8  psubsample_stats[HW3A_SUBIMG_STATS_BUFFER_SIZE];
+	uint8  *puc_subsample_stats;
 	uint16 usubsampletokenid;
 	uint32 usubsamplestatssize;
 
