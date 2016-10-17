@@ -599,10 +599,13 @@ cmr_int snp_scale_cb_handle(cmr_handle snp_handle, void *data)
 			sem_post(&cxt->scaler_sync_sm);
 			goto exit;
 		}
-		ret = snp_start_thumb_proc(snp_handle, &cxt->cur_frame_info);
-		if (ret) {
-			CMR_LOGE("failed to start thumb %ld", ret);
-			goto exit;
+		if ((0 != cxt->req_param.jpeg_setting.thum_size.width) &&
+		    (0 != cxt->req_param.jpeg_setting.thum_size.height)) {
+			ret = snp_start_thumb_proc(snp_handle, &cxt->cur_frame_info);
+			if (ret) {
+				CMR_LOGE("failed to start thumb %ld", ret);
+				goto exit;
+			}
 		}
 		ret = snp_redisplay(snp_handle, &cxt->cur_frame_info);
 		if (ret) {
@@ -620,8 +623,8 @@ cmr_int snp_scale_cb_handle(cmr_handle snp_handle, void *data)
 	}
 exit:
 	CMR_LOGI("post jpeg sync sm");
-	if ((0 == cxt->req_param.jpeg_setting.thum_size.width)
-		|| (0 == cxt->req_param.jpeg_setting.thum_size.height)) {
+	if ((0 == cxt->req_param.jpeg_setting.thum_size.width) ||
+	    (0 == cxt->req_param.jpeg_setting.thum_size.height)) {
 		sem_post(&cxt->scaler_sync_sm);
 	}
 	if (ret) {
@@ -1356,37 +1359,34 @@ cmr_int snp_start_convet_thumb(cmr_handle snp_handle, void *data)
 	if (CMR_CAMERA_NORNAL_EXIT == snp_checkout_exit(snp_handle)) {
 		CMR_LOGI("post proc has been cancel");
 		ret = CMR_CAMERA_NORNAL_EXIT;
-		goto convet_thumb_exit;
+		goto exit;
 	}
 
 	if (snp_cxt->ops.start_scale == NULL) {
 		CMR_LOGE("start_scale is null");
 		ret = -CMR_CAMERA_FAIL;
-		goto convet_thumb_exit;
+		goto exit;
 	}
 
 	src = chn_param_ptr->convert_thumb[index].src_img;
 	dst = chn_param_ptr->convert_thumb[index].dst_img;
+	if (src.size.width == dst.size.width &&
+	    src.size.height == dst.size.height) {
+		CMR_LOGI("don't need to scale");
+		goto exit;
+	}
 	mean.slice_height = chn_param_ptr->convert_thumb[index].slice_height;
 	mean.is_sync = 1;
 	src.data_end = snp_cxt->req_param.post_proc_setting.data_endian;
 	dst.data_end = snp_cxt->req_param.post_proc_setting.data_endian;
 	camera_take_snapshot_step(CMR_STEP_CVT_THUMB_S);
-	if ((src.size.width != dst.size.width) ||
-	    (src.size.height != dst.size.height)) {
-		if (snp_cxt->req_param.is_video_snapshot ||
-		    snp_cxt->req_param.is_zsl_snapshot) {
-			ret = snp_img_scaling_down(&src, &dst, &mean);
-			cmr_snapshot_memory_flush(snp_cxt);
-		} else {
-			ret = snp_cxt->ops.start_scale(snp_cxt->oem_handle, 
-						snp_handle, &src, &dst, &mean);
-		}
-	} else {
-		CMR_LOGI("don't need to scale");
+	ret = snp_cxt->ops.start_scale(snp_cxt->oem_handle, snp_handle, &src, &dst, &mean);
+	if (ret) {
+		CMR_LOGE("snp_cxt->ops.start_scale failed");
+		goto exit;
 	}
-
 	camera_take_snapshot_step(CMR_STEP_CVT_THUMB_E);
+
 	property_get("debug.camera.save.snpfile", value, "0");
 	if (atoi(value) == 6) {
 		camera_save_yuv_to_file(SNP_THUMB_DATA,
@@ -1396,7 +1396,7 @@ cmr_int snp_start_convet_thumb(cmr_handle snp_handle, void *data)
 					&dst.addr_vir);
 	}
 
-convet_thumb_exit:
+exit:
 	//snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_STATE, SNAPSHOT_EVT_CONVERT_THUMB_DONE, (void*)ret, sizeof(cmr_int));
 	CMR_LOGI("done %ld", ret);
 	ATRACE_END();
@@ -3898,8 +3898,8 @@ cmr_int snp_start_thumb_proc(cmr_handle snp_handle, struct frm_info *data)
 		ret = CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}
-	if ((0 != cxt->req_param.jpeg_setting.thum_size.width)
-		&& (0 != cxt->req_param.jpeg_setting.thum_size.height)) {
+	if ((0 != cxt->req_param.jpeg_setting.thum_size.width) &&
+	    (0 != cxt->req_param.jpeg_setting.thum_size.height)) {
 		ret = snp_send_msg_thumb_thr(snp_handle, SNP_EVT_THUMB, data);
 		if (ret) {
 			CMR_LOGE("failed to send msg thumb %ld", ret);
@@ -3908,9 +3908,9 @@ cmr_int snp_start_thumb_proc(cmr_handle snp_handle, struct frm_info *data)
 	}
 exit:
 	ATRACE_END();
-	if ((0 != cxt->req_param.jpeg_setting.thum_size.width)
-		&& (0 != cxt->req_param.jpeg_setting.thum_size.height)
-		&& (CMR_CAMERA_SUCCESS != ret)) {
+	if ((0 != cxt->req_param.jpeg_setting.thum_size.width) &&
+	    (0 != cxt->req_param.jpeg_setting.thum_size.height) &&
+	    (CMR_CAMERA_SUCCESS != ret)) {
 		sem_post(&cxt->scaler_sync_sm);
 	}
 	return ret;
