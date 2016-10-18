@@ -3798,7 +3798,8 @@ SprdCamera3Setting::translateLocalToFwMetadata()
 		camMetadata.update(ANDROID_SPRD_EIS_CROP, eisCrop, 4);
 	}
 	camMetadata.update(ANDROID_STATISTICS_FACE_DETECT_MODE, &(s_setting[mCameraId].statisticsInfo.face_detect_mode), 1);
-	if(ANDROID_STATISTICS_FACE_DETECT_MODE_OFF != (s_setting[mCameraId].statisticsInfo.face_detect_mode))
+	if(ANDROID_STATISTICS_FACE_DETECT_MODE_OFF != (s_setting[mCameraId].statisticsInfo.face_detect_mode) ||
+		(s_setting[mCameraId].sprddefInfo.perfect_skin_level) > 0)
 	{
 		#define MAX_ROI 10
 		FACE_Tag *faceDetectionInfo =
@@ -3808,6 +3809,7 @@ SprdCamera3Setting::translateLocalToFwMetadata()
 		uint8_t faceScores[MAX_ROI];
 		int32_t faceRectangles[MAX_ROI * 4];
 		int32_t faceLandmarks[MAX_ROI * 6];
+		uint8_t dataSize = 1;
 		int j = 0 ;
 		for (int i = 0; i < numFaces; i++) {
 			faceIds[i] = faceDetectionInfo->face[i].id;
@@ -3822,17 +3824,31 @@ SprdCamera3Setting::translateLocalToFwMetadata()
 			memset(faceRectangles, 0, sizeof(int32_t) * MAX_ROI * 4);
 			memset(faceLandmarks, 0, sizeof(int32_t) * MAX_ROI * 6);
 		}
-		//ALOGE("jinsong facenum:%d",numFaces);
-		camMetadata.update(ANDROID_STATISTICS_FACE_IDS, faceIds, numFaces);
-		camMetadata.update(ANDROID_STATISTICS_FACE_SCORES, faceScores, numFaces);
+		if(numFaces >= 1){
+			dataSize = numFaces;
+		}
+		camMetadata.update(ANDROID_STATISTICS_FACE_IDS, faceIds, dataSize);
+		camMetadata.update(ANDROID_STATISTICS_FACE_SCORES, faceScores, dataSize);
 		camMetadata.update(ANDROID_STATISTICS_FACE_RECTANGLES,
-			faceRectangles, numFaces*4);
+			faceRectangles, dataSize*4);
+
+		if(camMetadata.exists(ANDROID_STATISTICS_FACE_RECTANGLES)) {
+
+			int32_t  g_face_info1= camMetadata.find(ANDROID_STATISTICS_FACE_RECTANGLES).data.i32[0];
+			int32_t  g_face_info2 = camMetadata.find(ANDROID_STATISTICS_FACE_RECTANGLES).data.i32[1];
+			int32_t  g_face_info3 = camMetadata.find(ANDROID_STATISTICS_FACE_RECTANGLES).data.i32[2];
+			int32_t  g_face_info4= camMetadata.find(ANDROID_STATISTICS_FACE_RECTANGLES).data.i32[3];
+			HAL_LOGV("id%d:face sx %d sy %d ex %d ey %d",mCameraId,g_face_info1, g_face_info2, g_face_info3, g_face_info4);
+
+			}
 		//hangcheng note:have to remove this memset,
 		//due to it would face crop can not show when face detect lib cost time large than frame rate time.
 		//memset remove to SprdCamera3OEMIf::receivePreviewFDFrame function
 		//memset(faceDetectionInfo,0,sizeof(FACE_Tag));
 	}
 
+	//perfect_level
+	camMetadata.update(ANDROID_SPRD_UCAM_SKIN_LEVEL, &(s_setting[mCameraId].sprddefInfo.perfect_skin_level), 1);
 	//sensor
 	if(s_setting[mCameraId].controlInfo.ae_target_fps_range[1])
 		s_setting[mCameraId].sensorInfo.frame_duration = (int64_t)(NSEC_PER_SEC/s_setting[mCameraId].controlInfo.ae_target_fps_range[1]);

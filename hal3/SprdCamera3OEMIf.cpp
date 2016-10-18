@@ -59,6 +59,7 @@ using namespace android;
 
 namespace sprdcamera {
 
+
 /**********************Macro Define**********************/
 #define SWITCH_MONITOR_QUEUE_SIZE 50
 #define GET_START_TIME do {\
@@ -2951,9 +2952,10 @@ void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame)
 	struct img_rect rect = {0};
 	mSetting->getFACETag(&faceInfo);
 	memset(&faceInfo,0,sizeof(FACE_Tag));
-	HAL_LOGD("receive face_num %d.",frame->face_num);
+	HAL_LOGD("receive face_num %d.mid=%d",frame->face_num,mCameraId);
 	int32_t number_of_faces = frame->face_num <= FACE_DETECT_NUM ? frame->face_num:FACE_DETECT_NUM;
 	faceInfo.face_num = number_of_faces;
+
 	if (0 != number_of_faces) {
 		for(k=0 ; k< number_of_faces ; k++) {
 			faceInfo.face[k].id = k;
@@ -2976,6 +2978,7 @@ void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame)
 			faceInfo.face[k].rect[1] = sy;
 			faceInfo.face[k].rect[2] = ex;
 			faceInfo.face[k].rect[3] = ey;
+
 			HAL_LOGD("smile level %d. face:%d  %d  %d  %d \n",frame->face_info[k].smile_level,
 				faceInfo.face[k].rect[0],faceInfo.face[k].rect[1],faceInfo.face[k].rect[2],faceInfo.face[k].rect[3]);
 			CameraConvertCoordinateToFramework(faceInfo.face[k].rect);
@@ -3221,6 +3224,7 @@ void SprdCamera3OEMIf::doFaceMakeup(struct camera_frame_type *frame)
 		int skinWhitenLevel = 0;
 		int skinCleanLevel = 0;
 		int level_num = 0;
+
 		// convert the skin_level set by APP to skinWhitenLevel & skinCleanLevel according to the table saved.
 		level = (level<0)?0:((level>90)?90:level);
 		level_num = level/10;
@@ -3427,11 +3431,6 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 			if(ret == NO_ERROR) {
 				ATRACE_BEGIN("video_frame");
 
-				pre_stream->getQBufListNum(&buf_deq_num);
-				HAL_LOGD("RECODING review buffer is %d ",buf_deq_num);
-				//3D video recoding
-				if ( atoi(refocus) != 0 &&  sprddefInfo.perfect_skin_level > 0)
-					doFaceMakeup(frame);
 				HAL_LOGI("record, fd=0x%x, buff_vir = 0x%lx, frame_num = %d, buffer_timestamp = %lld, frame->type = %d rec=%lld",
 					 frame->fd, buff_vir, frame_num, buffer_timestamp,frame->type, mSlowPara.rec_timestamp);
 				if(frame->type == PREVIEW_VIDEO_FRAME && frame_num >= mRecordFrameNum && (frame_num > mPictureFrameNum ||frame_num == 0)) {

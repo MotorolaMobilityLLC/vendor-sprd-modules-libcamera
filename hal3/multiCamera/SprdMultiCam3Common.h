@@ -138,6 +138,8 @@ typedef struct {
     uint32_t frame_number;
     bool invalid;
     int showPreviewDeviceId;
+    int32_t perfectskinlevel;
+    int32_t   g_face_info[4];
     buffer_handle_t*  buffer;
     camera3_stream_t *stream;
     camera3_stream_buffer_t* input_buffer;
