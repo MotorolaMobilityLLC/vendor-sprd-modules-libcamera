@@ -4450,7 +4450,7 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb,
 		exitFromPostProcess();
 		HAL_LOGD("CAMERA_EVT_CB_SNAPSHOT_JPEG_DONE, pip enable %d, refocus mode %d",mSprdPipVivEnabled,mSprdRefocusEnabled);
 //		mSprdPipVivEnabled = 1;
-		if (mSprdPipVivEnabled || mSprdRefocusEnabled) {
+		if ((mSprdPipVivEnabled || mSprdRefocusEnabled) && (parm4 != NULL)) {
 			Sprd_camera_state tmpCapState = getCaptureState();
 			HAL_LOGD("PIP HandleTakePicture state = %d, need_free = %d camera id = %d",
 				  tmpCapState, ((struct camera_frame_type *)parm4)->need_free,mCameraId);
