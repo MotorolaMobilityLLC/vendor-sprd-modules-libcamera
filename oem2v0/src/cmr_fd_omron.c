@@ -111,7 +111,7 @@ static cmr_int set_dt_param(struct class_fd *fd_handle, HDETECTION hDT)
 	int minFaceSize,maxFaceSize;
 
 	/* Sets the Face Detection Mode */
-	nRet = UDN_SetDtMode(hDT, DT_MODE_MOTION3);
+	nRet = UDN_SetDtMode(hDT, DT_MODE_MOTION1);
 	if (nRet != UDN_NORMAL) {
 		CMR_LOGE("UDN_SetDtMode() Error : %d", nRet);
 		return nRet;
@@ -154,7 +154,7 @@ static cmr_int set_dt_param(struct class_fd *fd_handle, HDETECTION hDT)
 	}
 
 	/* Sets Motion Face Detection Refresh Count for each Motion mode */
-	nRet = UDN_SetDtRefreshCount(hDT, DT_MODE_MOTION3, 5);
+	nRet = UDN_SetDtRefreshCount(hDT, DT_MODE_MOTION1, 15);
 	if (nRet != UDN_NORMAL) {
 		CMR_LOGE("UDN_SetDtRefreshCount() Error : %d", nRet);
 		return nRet;
@@ -296,6 +296,20 @@ static cmr_int fd_transfer_frame(cmr_handle class_handle,struct ipm_frame_in *in
 		return ret;
 	}
 
+	//to reduce fd time, use DT_MODE_MOTION3 instead of DT_MODE_MOTION1 when frame larger than 20.
+	if(fd_handle->curr_frame_idx == 20) {
+		ret = UDN_SetDtMode(fd_handle->hDT, DT_MODE_MOTION3);
+		if (ret != UDN_NORMAL) {
+			CMR_LOGE("UDN_SetDtMode() Error : %d", ret);
+			return ret;
+		}
+		ret = UDN_SetDtRefreshCount(fd_handle->hDT, DT_MODE_MOTION3, 5);
+		if (ret != UDN_NORMAL) {
+			CMR_LOGE("UDN_SetDtRefreshCount() Error : %d", ret);
+			return ret;
+		}
+	}
+
 	// reduce the frame rate, because the current face detection (tracking mode) is too fast!!
 	{
 		const static cmr_uint DROP_RATE = 2;
@@ -325,27 +339,6 @@ static cmr_int fd_transfer_frame(cmr_handle class_handle,struct ipm_frame_in *in
 			goto out;
 		}
 
-		if (fd_handle->frame_cb) {
-			if (out != NULL) {
-				cmr_bzero(out,sizeof(struct ipm_frame_out));
-			}
-		} else {
-			if (out != NULL) {
-				out = &fd_handle->frame_out;
-			} else {
-				CMR_LOGE("sync err,out parm can't NULL.");
-			}
-		}
-	}else if(!fd_handle->is_get_result){
-		memcpy(&fd_handle->frame_out.face_area, &fd_handle->face_area_prev, sizeof(struct img_face_area));
-		fd_handle->frame_out.dst_frame.size.width = fd_handle->frame_in.src_frame.size.width;
-		fd_handle->frame_out.dst_frame.size.height = fd_handle->frame_in.src_frame.size.height;
-		/*callback*/
-		if (fd_handle->frame_cb) {
-			fd_handle->frame_out.private_data = in->private_data;
-			fd_handle->frame_out.caller_handle = in->caller_handle;
-			fd_handle->frame_cb(IPM_TYPE_FD, &fd_handle->frame_out);
-		}
 		if (fd_handle->frame_cb) {
 			if (out != NULL) {
 				cmr_bzero(out,sizeof(struct ipm_frame_out));
