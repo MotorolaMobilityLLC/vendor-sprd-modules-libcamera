@@ -1474,7 +1474,9 @@ static cmr_int afaltek_adpt_haf_start(cmr_handle adpt_handle)
 		//afaltek_adpt_af_done(cxt, 0);
 		//goto exit;
 	}
-
+	if (cxt->haf_support) {
+		afaltek_adpt_set_haf_state(cxt, Focusing);
+	}
 	cxt->af_cur_status = AF_ADPT_FOCUSING;
 	cxt->pd_trigger_stats_lock = 1;
 exit:
@@ -1959,9 +1961,6 @@ static cmr_int afaltek_adpt_set_vcm_pos(cmr_handle adpt_handle, struct af_ctrl_m
 		goto exit;
 	}
 	cxt->lens_status = AF_CTRL_LENS_MOVING;
-	if (cxt->haf_support) {
-		afaltek_adpt_set_haf_state(cxt, Focusing);
-	}
 	if (cxt->cb_ops.set_pos)
 		ret = cxt->cb_ops.set_pos(cxt->caller_handle, pos_info);
 	else {
@@ -2226,9 +2225,6 @@ static cmr_int afaltek_adpt_lens_move_done(cmr_handle adpt_handle,
 	lens_info.lens_pos = pos_info->motor_pos;
 	lens_info.lens_status = LENS_MOVE_DONE;
 	cxt->lens_status = AF_CTRL_LENS_MOVE_DONE;
-	if (cxt->haf_support) {
-		afaltek_adpt_set_haf_state(cxt, Waiting);
-	}
 	ret = afaltek_adpt_update_lens_info(adpt_handle, &lens_info);
 
 	return ret;
@@ -2275,6 +2271,9 @@ static cmr_int afaltek_adpt_af_done(cmr_handle adpt_handle, cmr_int success)
 		ISP_LOGI("failed to caf reset ret = %ld", ret);
 	afaltek_adpt_set_caf_fv_cfg(cxt);
 
+	if (cxt->haf_support) {
+		afaltek_adpt_set_haf_state(cxt, Waiting);
+	}
 	return ret;
 }
 
