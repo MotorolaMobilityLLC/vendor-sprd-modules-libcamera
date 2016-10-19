@@ -2993,7 +2993,7 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 
-	property_get("sys.cam.refocus", value, "0");
+	property_get("sys.cam.multi.camera.mode", value, "0");
 	cxt->is_refocus_mode = atoi(value);//TBD
 	CMR_LOGI("refocus mode %d", cxt->is_refocus_mode);
 
@@ -4156,7 +4156,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 	ATRACE_BEGIN(__FUNCTION__);
 
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
-	char refocus[PROPERTY_VALUE_MAX];
+	char multicameramode[PROPERTY_VALUE_MAX];
 	if (!caller_handle || !oem_handle || !src || !dst || !mean) {
 		CMR_LOGE("in parm error");
 		ret = -CMR_CAMERA_INVALID_PARAM;
@@ -4204,8 +4204,8 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 
 	if (1 != mean->is_thumb ) {
 #ifdef CONFIG_FACE_BEAUTY
-		property_get("sys.cam.refocus", refocus, "0");
-		if(atoi(refocus) == 0)
+		property_get("sys.cam.multi.camera.mode", multicameramode, "0");
+		if(atoi(multicameramode) == 0)
 			camera_face_makeup(oem_handle, src);
 #endif
 
@@ -4236,7 +4236,7 @@ void camera_face_makeup(cmr_handle oem_handle, struct img_frm *src)
 	struct setting_context         *setting_cxt = &cxt->setting_cxt;
 	struct setting_cmd_parameter   setting_param;
 	setting_param.camera_id = cxt->camera_id;
-	char refocus[PROPERTY_VALUE_MAX];
+	char multicameramode[PROPERTY_VALUE_MAX];
 
 	cmr_int PerfectSkinLevel=0;
 	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_PERFECT_SKINLEVEL, &setting_param);
@@ -4280,7 +4280,7 @@ void camera_face_makeup(cmr_handle oem_handle, struct img_frm *src)
 			unsigned char *yBuf = (unsigned char *)(src->addr_vir.addr_y);
 			unsigned char *uvBuf = (unsigned char *)(src->addr_vir.addr_u) ;
 			unsigned char * tmpBuf = (unsigned char*)malloc(pic_width*pic_height* 3 / 2);
-			property_get("sys.cam.refocus", refocus, "0");
+			property_get("sys.cam.multi.camera.mode", multicameramode, "0");
 
 			unsigned int uv_len = pic_width * pic_height * 1 / 2;
 			unsigned char * UVBuf = (unsigned char*)malloc(uv_len);
@@ -4290,7 +4290,7 @@ void camera_face_makeup(cmr_handle oem_handle, struct img_frm *src)
 			inMakeupData.frameWidth = pic_width;
 			inMakeupData.frameHeight = pic_height;
 			inMakeupData.yBuf = yBuf;
-			if(atoi(refocus) == 0)
+			if(atoi(multicameramode) == 0)
 				inMakeupData.uvBuf = UVBuf;
 			else
 				inMakeupData.uvBuf = uvBuf;
@@ -4308,7 +4308,7 @@ void camera_face_makeup(cmr_handle oem_handle, struct img_frm *src)
 			} else {
 				CMR_LOGD("perfect ts_face_beautify return OK");
 				memcpy(yBuf, tmpBuf, pic_width * pic_height);
-				if(atoi(refocus) == 0) {
+				if(atoi(multicameramode) == 0) {
 					memcpy(uvBuf, (tmpBuf + pic_width * pic_height + 1), (uv_len - 1));
 					*(uvBuf + uv_len - 1)  = *(tmpBuf + pic_width * pic_height * 3 / 2 - 2);
 				} else {

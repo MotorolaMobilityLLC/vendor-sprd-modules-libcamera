@@ -48,13 +48,6 @@
 
 namespace sprdcamera {
 
-typedef enum {
-	MODE_3D_VIDEO = 5,
-	MODE_RANGE_FINDER,
-	MODE_3D_CAPTURE,
-	MODE_MAX
-}multiCameraMode;
-
 class SprdCamera3Wrapper
 {
 public:

@@ -36,9 +36,6 @@
 
 namespace sprdcamera {
 
-#define MIN_MULTI_CAMERA_FAKE_ID   5
-#define MAX_MULTI_CAMERA_FAKE_ID   15
-
 
 class SprdCamera3Factory
 {
@@ -57,7 +54,8 @@ private:
 	int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
 	static int camera_device_open(const struct hw_module_t *module, const char *id,
 				struct hw_device_t **hw_device);
-	static bool isMultiCameraMode(int cameraId);
+	static bool isSingleIdExposeOnMultiCameraMode(int cameraId);
+	static int multiCameraModeIdToPhyId(int cameraId);
 	camera_metadata_t *mStaticMetadata;
 
 public:

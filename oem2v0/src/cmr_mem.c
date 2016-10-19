@@ -425,11 +425,11 @@ int camera_pre_capture_buf_size(cmr_u32 camera_id,
 		else
 			*mem_size = yuv_mem_tab_ptr[mem_size_id].mem_size;
 	} else if (FRONT_CAMERA_ID == camera_id || DEV3_CAMERA_ID == camera_id) {
-        char refocus[PROPERTY_VALUE_MAX];
+        char multicameramode[PROPERTY_VALUE_MAX];
         int cameraMode = 0;
 
-        property_get("sys.cam.refocus", refocus, "0");
-        cameraMode = atoi(refocus);
+        property_get("sys.cam.multi.camera.mode", multicameramode, "0");
+        cameraMode = atoi(multicameramode);
         if(cameraMode == 3){
             CMR_LOGI("current mode is 3D video");
             mem_tab_ptr = (struct cap_size_to_mem*)&Stereo_video_mem_size_tab[0];

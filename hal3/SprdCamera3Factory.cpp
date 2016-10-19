@@ -45,7 +45,6 @@ namespace sprdcamera {
 
 SprdCamera3Factory gSprdCamera3Factory;
 SprdCamera3Wrapper *gSprdCamera3Wrapper = NULL;
-int gDualCameraEnable = 0;
 /*===========================================================================
  * FUNCTION   : SprdCamera3Factory
  *
@@ -115,10 +114,10 @@ int SprdCamera3Factory::get_number_of_cameras()
  *==========================================================================*/
 int SprdCamera3Factory::get_camera_info(int camera_id, struct camera_info *info)
 {
-    if(isMultiCameraMode(camera_id))
+    if(isSingleIdExposeOnMultiCameraMode(camera_id))
         return gSprdCamera3Wrapper->getCameraInfo(camera_id, info);
     else
-        return gSprdCamera3Factory.getCameraInfo(camera_id, info);
+        return gSprdCamera3Factory.getCameraInfo(multiCameraModeIdToPhyId(camera_id), info);
 }
 
 /*===========================================================================
@@ -233,15 +232,18 @@ int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
 {
     int rc = NO_ERROR;
 
-    if (camera_id < 0 || camera_id >= mNumOfCameras)
+    if (camera_id < 0 || multiCameraModeIdToPhyId(camera_id) >= mNumOfCameras)
         return -ENODEV;
 
-    SprdCamera3HWI *hw = new SprdCamera3HWI(camera_id);
+    SprdCamera3HWI *hw = new SprdCamera3HWI(multiCameraModeIdToPhyId(camera_id));
 
     if (!hw) {
         ALOGE("Allocation of hardware interface failed");
         return NO_MEMORY;
     }
+    if (hw->isMultiCameraMode(camera_id))
+        hw->setMultiCameraMode((multiCameraMode)camera_id);
+
     rc = hw->openCamera(hw_device);
     if (rc != 0) {
         delete hw;
@@ -276,7 +278,7 @@ int SprdCamera3Factory::camera_device_open(
         return BAD_VALUE;
     }
 
-    if(isMultiCameraMode(atoi(id))){
+    if(isSingleIdExposeOnMultiCameraMode(atoi(id))){
         return gSprdCamera3Wrapper->cameraDeviceOpen(module, id, hw_device);
     }else{
         return gSprdCamera3Factory.cameraDeviceOpen(atoi(id), hw_device);
@@ -287,12 +289,37 @@ struct hw_module_methods_t SprdCamera3Factory::mModuleMethods = {
     open: SprdCamera3Factory::camera_device_open,
 };
 
-bool SprdCamera3Factory::isMultiCameraMode(int cameraId)
+/*Camera ID Expose To Camera Apk On MultiCameraMode
+camera apk use one camera id to open camera on MODE_3D_VIDEO, MODE_RANGE_FINDER, MODE_3D_CAPTURE
+camera apk use two camera id MODE_REFOCUS and 2 to open Camera
+ValidationTools apk use two camera id MODE_3D_CALIBRATION and 3 to open Camera
+*/
+bool SprdCamera3Factory::isSingleIdExposeOnMultiCameraMode(int cameraId)
 {
-    if((MIN_MULTI_CAMERA_FAKE_ID <= cameraId) && (cameraId <= MAX_MULTI_CAMERA_FAKE_ID))
-        return true;
-    else
+    /*Camera ID Expose To Camera Apk On MultiCameraMode*/
+    if ((MIN_MULTI_CAMERA_FAKE_ID > cameraId) || (cameraId > MAX_MULTI_CAMERA_FAKE_ID))
         return false;
+
+    if ((MODE_3D_VIDEO == cameraId) || (MODE_RANGE_FINDER == cameraId) || (MODE_3D_CAPTURE == cameraId)) {
+        return true;
+    } else if (MODE_REFOCUS == cameraId || (MODE_3D_CALIBRATION == cameraId)) {
+        return false;
+    }
+
+    return false;
+}
+
+int SprdCamera3Factory::multiCameraModeIdToPhyId(int cameraId)
+{
+    if(MIN_MULTI_CAMERA_FAKE_ID > cameraId) {
+        return cameraId;
+    } else if (MODE_REFOCUS == cameraId) { //Camera2 apk open  camera id is MODE_REFOCUS and 2 ,camera hal transform to open physics Camera id is 0 and 2
+        return 0;
+    } else if (MODE_3D_CALIBRATION == cameraId) { //ValidationTools apk open  camera id is MODE_3D_CALIBRATION and 3 ,camera hal transform to open physics Camera id is 1 and 3
+        return 1;
+    }
+
+    return 0xff;
 }
 
 }; // namespace sprdcamera

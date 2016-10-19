@@ -2226,11 +2226,11 @@ bool SprdCamera3OEMIf::startCameraIfNecessary()
 		/*get sensor otp from oem layer*/
 
 		/*read refoucs mode begin*/
-		char refocus[PROPERTY_VALUE_MAX];
-		property_get("sys.cam.refocus", refocus, "0");
-		if( 0 != atoi(refocus) && 5 != atoi(refocus) )/**modified for 3d capture, should not set refocus enable in 3d capture mode*/
+		char multicameramode[PROPERTY_VALUE_MAX];
+		property_get("sys.cam.multi.camera.mode", multicameramode, "0");
+		if( 0 != atoi(multicameramode) && 5 != atoi(multicameramode) )/**modified for 3d capture, should not set refocus enable in 3d capture mode*/
 			mSprdRefocusEnabled = true;
-		CMR_LOGI("refocus mode %d", mSprdRefocusEnabled);
+			CMR_LOGI("mSprdRefocusEnabled %d", mSprdRefocusEnabled);
 		/*read refoucs mode end*/
 
 		/*read refoucs otp begin*/
@@ -2531,7 +2531,7 @@ int SprdCamera3OEMIf::startPreviewInternal()
 	bool is_push_zsl = false;
 	bool is_volte = false;
 	char value[PROPERTY_VALUE_MAX];
-	char refocus[PROPERTY_VALUE_MAX];
+	char multicameramode[PROPERTY_VALUE_MAX];
 	HAL_LOGD("E camera id %d",mCameraId);
 
 	SPRD_DEF_Tag sprddefInfo;
@@ -2657,8 +2657,8 @@ int SprdCamera3OEMIf::startPreviewInternal()
 	if (is_volte||mCaptureMode == CAMERA_ZSL_MODE) {
 		SPRD_DEF_Tag sprddefInfo;
 		mSetting->getSPRDDEFTag(&sprddefInfo);
-		property_get("sys.cam.refocus", refocus, "0");
-		if(!sprddefInfo.perfect_skin_level  || 0 != atoi(refocus))
+		property_get("sys.cam.multi.camera.mode", multicameramode, "0");
+		if(!sprddefInfo.perfect_skin_level  || 0 != atoi(multicameramode))
 			PushFirstVideobuff();
 		if (!is_push_zsl)
 			PushFirstZslbuff();
@@ -3413,12 +3413,12 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 	cmr_s32 fd0 = 0;
 	cmr_s32 fd1 = 0;
 	SENSOR_Tag sensorInfo;
-	char refocus[PROPERTY_VALUE_MAX];
+	char multicameramode[PROPERTY_VALUE_MAX];
 
 	mSetting->getSENSORTag(&sensorInfo);
 	sensorInfo.timestamp = buffer_timestamp;
 	mSetting->setSENSORTag(sensorInfo);
-	property_get("sys.cam.refocus", refocus, "0");
+	property_get("sys.cam.multi.camera.mode", multicameramode, "0");
 
 	if(channel) {
 		channel->getStream(CAMERA_STREAM_TYPE_PREVIEW, &pre_stream);
@@ -3570,7 +3570,7 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 					if (mIsRecording) {
 						if (frame_num > mRecordFrameNum)
 							calculateTimestampForSlowmotion(buffer_timestamp);
-							if( sprddefInfo.perfect_skin_level >0 && 0 == atoi(refocus) ) { //for 2D video recoding face_beauty
+							if( sprddefInfo.perfect_skin_level >0 && 0 == atoi(multicameramode) ) { //for 2D video recoding face_beauty
 								ret=rec_stream->getQBufAddrForNum(frame_num, &videobuf_vir, &videobuf_phy,&fd0);
 								if (ret == NO_ERROR && videobuf_vir != 0 ){
 									pre_stream->getQBufAddrForNum(frame_num, &prebuf_vir, &prebuf_phy,&fd1);

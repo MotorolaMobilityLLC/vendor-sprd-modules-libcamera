@@ -10472,23 +10472,18 @@ cmr_int prev_fd_open(struct prev_handle *handle, cmr_u32 camera_id)
 	ATRACE_BEGIN(__FUNCTION__);
 
 	cmr_int                     ret = CMR_CAMERA_SUCCESS;
-	cmr_int                     camMode;
 	struct prev_context         *prev_cxt = NULL;
 	struct ipm_open_in          in_param;
 	struct ipm_open_out         out_param;
-	char refocus[PROPERTY_VALUE_MAX];
 
 	CHECK_HANDLE_VALID(handle);
 	CHECK_CAMERA_ID(camera_id);
 
 	prev_cxt = &handle->prev_cxt[camera_id];
-	property_get("sys.cam.refocus", refocus, "0");
-	camMode=atoi(refocus);
 
-	CMR_LOGI("is_support_fd %ld, is_fd_on %ld,camMode %d",
+	CMR_LOGI("is_support_fd %ld, is_fd_on %ld",
 		prev_cxt->prev_param.is_support_fd,
-		prev_cxt->prev_param.is_fd_on,
-		camMode);
+		prev_cxt->prev_param.is_fd_on);
 
 	if (!prev_cxt->prev_param.is_support_fd) {
 		CMR_LOGD("not support fd");

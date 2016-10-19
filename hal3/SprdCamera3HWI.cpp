@@ -61,6 +61,7 @@ using namespace android;
 namespace sprdcamera {
 
 unsigned int SprdCamera3HWI::mCameraSessionActive = 0;
+multiCameraMode SprdCamera3HWI::mMultiCameraMode = MODE_SINGLE_CAMERA;
 
 // gHALLogLevel(default is 4):
 //   1 - only show ALOGE, err log is always show
@@ -137,7 +138,6 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId):
 	mPendingRequest = 0;
 	mCurrentRequestId = -1;
 	mCurrentCapIntent = 0;
-	mCameraSessionActive = 0;
 
 	mMetadataChannel = NULL;
 
@@ -324,16 +324,17 @@ int SprdCamera3HWI::openCamera(struct hw_device_t **hw_device)
 	int ret = 0;
 	Mutex::Autolock l(mLock);
 
-	/*
-	if (mCameraSessionActive) {
+	if (mCameraSessionActive && !(isMultiCameraMode(mMultiCameraMode))) {
 		HAL_LOGE("multiple simultaneous camera instance not supported");
 		return -EUSERS;
-	}*/
+	}
 
 	if (mCameraOpened) {
 		*hw_device = NULL;
 		return PERMISSION_DENIED;
 	}
+
+	setPropForMultiCameraMode(mMultiCameraMode);
 
 	ret = openCamera();
 	if (ret == 0) {
@@ -1685,6 +1686,8 @@ int SprdCamera3HWI::close_camera_device(struct hw_device_t *device)
 	}
 
 	mCameraSessionActive = 0;
+	mMultiCameraMode = MODE_SINGLE_CAMERA;
+	property_set("sys.cam.multi.camera.mode", "0");
 	HAL_LOGI("X");
 	return ret;
 }
@@ -1760,5 +1763,61 @@ void SprdCamera3HWI::timer_handler(union sigval arg)
 	(dev->mFlushSignal).signal();
 	HAL_LOGD("X");
 }
+
+void SprdCamera3HWI::setMultiCameraMode(multiCameraMode multiCameraModeId)
+{
+    mMultiCameraMode = multiCameraModeId;
+    HAL_LOGD("mMultiCameraMode=%d ", mMultiCameraMode);
+}
+
+bool SprdCamera3HWI::isMultiCameraMode(int cameraId)
+{
+     HAL_LOGD("cameraId= %d ", cameraId);
+    if((MIN_MULTI_CAMERA_FAKE_ID <= cameraId) && (cameraId <= MAX_MULTI_CAMERA_FAKE_ID))
+        return true;
+    else
+        return false;
+}
+
+void SprdCamera3HWI::setPropForMultiCameraMode(multiCameraMode multiCameraModeId)
+{
+    int multiCameraMode = 0;
+    char value[PROPERTY_VALUE_MAX];
+    memset(value, 0, sizeof(value));
+
+    switch(multiCameraModeId){
+        case MODE_3D_VIDEO:
+               multiCameraMode = 3;
+               break;
+        case MODE_RANGE_FINDER:
+               multiCameraMode = 4;
+               break;
+        case MODE_3D_CAPTURE:
+               multiCameraMode = 5;
+               break;
+        case MODE_REFOCUS:
+               multiCameraMode = 2;
+               break;
+        case MODE_3D_CALIBRATION:
+               multiCameraMode = 6;
+               break;
+
+        default:
+		  break;
+    }
+    sprintf(&value[0], "%d", multiCameraMode);
+    //First open camera non multicameramode, set 	sys.cam.multi.camera.mode as 0, make sure the default value is 0
+    if (!mCameraSessionActive && !(isMultiCameraMode(mMultiCameraMode))) {
+		property_set("sys.cam.multi.camera.mode", "0");
+    }
+    // Only multicameraId to set the sys.cam.multi.camera.mode value.
+    if (isMultiCameraMode(mMultiCameraMode)) {
+		 property_set("sys.cam.multi.camera.mode", value);
+    }
+    HAL_LOGI("multiCameraModeId:%d, multiCameraMode value:%s",multiCameraModeId, value);
+
+    return;
+}
+
 
 };				//end namespace sprdcamera
