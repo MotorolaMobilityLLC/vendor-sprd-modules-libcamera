@@ -920,7 +920,7 @@ cmr_int camera_snapshot_is_need_flash(cmr_handle oem_handle, cmr_u32 camera_id, 
 	return 0;
 }
 
-cmr_uint camera_get_sensor_dual_otp_info(cmr_handle camera_handle, struct sensor_dual_otp_info *otp_info)
+cmr_uint camera_get_sensor_otp_info(cmr_handle camera_handle, struct sensor_otp_cust_info *otp_info)
 {
 	cmr_uint                  ret = CMR_CAMERA_SUCCESS;
 
@@ -929,8 +929,8 @@ cmr_uint camera_get_sensor_dual_otp_info(cmr_handle camera_handle, struct sensor
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}
-	ret = camera_get_dual_otpinfo(camera_handle, otp_info);
-	CMR_LOGI("otp_info data_ptr %p size %d", otp_info->dual_otp.data_ptr,otp_info->dual_otp.size);
+	ret = camera_get_otpinfo(camera_handle, otp_info);
+	CMR_LOGV("otp_info data_ptr %p size %d", otp_info->dual_otp.total_otp.data_ptr,otp_info->dual_otp.total_otp.size);
 
 exit:
 	CMR_LOGI("done %ld", ret);
@@ -1062,7 +1062,7 @@ static oem_ops_t oem_module_ops = {
 	camera_set_sensor_info_to_af,
 	camera_get_sensor_max_fps,
 	camera_snapshot_is_need_flash,
-	camera_get_sensor_dual_otp_info,
+	camera_get_sensor_otp_info,
 	camera_get_sensor_vcm_step,
 	camera_stop_multi_layer,
 	camera_set_sensor_close_flag,

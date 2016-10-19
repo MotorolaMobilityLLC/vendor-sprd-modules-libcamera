@@ -2196,18 +2196,18 @@ void camera_calibrationconfigure_load (uint32_t *start_addr, uint32_t *data_size
 	CMR_LOGI("done");
 }
 
-cmr_int camera_get_dual_otpinfo(cmr_handle  oem_handle,struct sensor_dual_otp_info *dual_otp_data)
+cmr_int camera_get_otpinfo(cmr_handle  oem_handle,struct sensor_otp_cust_info *otp_data)
 {
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 	SENSOR_VAL_T                   val;
 
-	if (NULL == oem_handle || NULL == dual_otp_data) {
+	if (NULL == oem_handle || NULL == otp_data) {
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		CMR_LOGE("in parm error");
 		goto exit;
 	}
-	val.type = SENSOR_VAL_TYPE_READ_DUAL_OTP;
+	val.type = SENSOR_VAL_TYPE_READ_OTP;
 	val.pval = NULL;
 	ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_ACCESS_VAL, (cmr_uint)&val);
 	if (ret) {
@@ -2215,8 +2215,8 @@ cmr_int camera_get_dual_otpinfo(cmr_handle  oem_handle,struct sensor_dual_otp_in
 		goto exit;
 	}
 	if (val.pval) {
-		memcpy(dual_otp_data, val.pval, sizeof(struct sensor_dual_otp_info));
-		CMR_LOGI("%p, %p, size:%d" ,dual_otp_data, dual_otp_data->dual_otp.data_ptr, dual_otp_data->dual_otp.size);
+		memcpy(otp_data, val.pval, sizeof(struct sensor_otp_cust_info));
+		CMR_LOGI("%p, %p, size:%d" ,otp_data, otp_data->dual_otp.total_otp.data_ptr, otp_data->dual_otp.total_otp.size);
 	} else {
 		ret = -1;
 		CMR_LOGI("%d, no dual otp data", ret);
@@ -2228,82 +2228,6 @@ exit:
 
 #if defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4)
 #define CMR_ISP_OTP_MAX_SIZE (100 * 1024)
-static int camera_get_otpinfo(cmr_handle  oem_handle,struct isp_cali_param *cali_param, struct isp_data_info *cali_result)
-{
-	cmr_int                        ret = 0;
-	struct camera_context          *cxt = (struct camera_context*)oem_handle;
-
-	struct isp_data_t              sensor_otp;
-	struct isp_data_t              target_buf;
-	struct sensor_otp_data         *param = NULL;
-	SENSOR_VAL_T                   val;
-	uint32_t                       otp_start_addr = 0;
-	uint32_t                       otp_data_len = 0;
-	int i;
-	CMR_LOGE("get otp info start");
-
-	param = (struct sensor_otp_data *)malloc(sizeof(struct sensor_otp_data));
-	if (NULL == param) {
-		CMR_LOGE("malloc otp param failed");
-		goto EXIT;
-	}
-	cmr_bzero(param, sizeof(struct sensor_otp_data));
-
-	param->lsc.size = CMR_ISP_OTP_MAX_SIZE;
-	param->lsc.data_ptr = malloc(param->lsc.size);
-	if (NULL == param->lsc.data_ptr) {
-		CMR_LOGE("malloc lsc failed");
-		goto EXIT;
-	}
-
-	/* read otp awb data */
-	param->awb.size = CMR_ISP_OTP_MAX_SIZE;
-	param->awb.data_ptr = malloc(param->awb.size);
-	if (NULL == param->awb.data_ptr) {
-		CMR_LOGE("malloc awb  failed");
-		goto EXIT;
-	}
-
-	/* read otp af data */
-	param->af.size = CMR_ISP_OTP_MAX_SIZE;
-	param->af.data_ptr = malloc(param->af.size);
-	if (NULL == param->af.data_ptr) {
-		CMR_LOGE("malloc af  failed");
-		goto EXIT;
-	}
-#ifdef CONFIG_CAMERA_RT_REFOCUS
-	val.type               = SENSOR_VAL_TYPE_READ_DUAL_OTP;
-#else
-	val.type               = SENSOR_VAL_TYPE_READ_OTP;
-#endif
-	val.pval               = param;
-	ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_ACCESS_VAL, (cmr_uint)&val);
-	if (0 != ret) {
-		CMR_LOGE("read otp data failed %ld", ret);
-		goto EXIT;
-	}
-	cali_result->data_ptr = (void *)param;
-	cali_result->size = sizeof(struct sensor_otp_data);
-#ifdef CONFIG_CAMERA_RT_REFOCUS
-	cali_result->data_ptr = val.pval;
-	CMR_LOGD("read otp data  0x%x val.pval 0x%x", cali_result->data_ptr,val.pval);
-#endif
-	return ret;
-EXIT:
-	if (NULL != param) {
-		free(param);
-	}
-	if (NULL != param->lsc.data_ptr) {
-		free(param->lsc.data_ptr);
-	}
-	if (NULL != param->awb.data_ptr) {
-		free(param->awb.data_ptr);
-	}
-	if (NULL != param->af.data_ptr) {
-		free(param->af.data_ptr);
-	}
-	return ret;
-}
 static int camera_get_reloadinfo(cmr_handle  oem_handle, struct isp_cali_param *cali_param, struct isp_data_info* cali_result)
 {
 	int32_t                        rtn = 0;
@@ -2880,9 +2804,6 @@ out:
 	return ret;
 }
 
-#ifdef CONFIG_CAMERA_DUAL_SYNC
-static void *master_dual_otp = NULL;
-#endif
 cmr_int camera_isp_init(cmr_handle  oem_handle)
 {
 	ATRACE_BEGIN(__FUNCTION__);
@@ -3058,6 +2979,9 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 	}
 	if (val.pval) {
 		isp_param.otp_data = val.pval;
+		if (isp_param.otp_data->dual_otp.total_otp.data_ptr) {
+			isp_param.dual_otp = &isp_param.otp_data->dual_otp;
+		}
 	}
 
 	if (sensor_info_ptr->raw_info_ptr && sensor_info_ptr->raw_info_ptr->ioctrl_ptr
@@ -3074,17 +2998,6 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 
 	isp_param.is_refocus = cxt->is_refocus_mode;
 	if ((CAMERA_ID_0 == cxt->camera_id || CAMERA_ID_1 == cxt->camera_id) && cxt->is_refocus_mode) {
-		val.type = SENSOR_VAL_TYPE_READ_DUAL_OTP;
-		val.pval = NULL;
-		ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_ACCESS_VAL, (cmr_uint)&val);
-		if (ret) {
-			CMR_LOGE("get dual otp info failed %ld", ret);
-			goto exit;
-		}
-		if (val.pval) {
-			isp_param.dual_otp = val.pval;
-			master_dual_otp = val.pval;
-		}
 		if (CAMERA_ID_0 == cxt->camera_id) {
 			ret = cmr_sensor_open(sn_cxt->sensor_handle, 1 << SENSOR_DEVICE2);
 			if (ret) {
@@ -3122,6 +3035,21 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 					isp_param.ex_info_slv.name,isp_param.ex_info_slv.sensor_version_info);
 			} else {
 				CMR_LOGE("maybe fail to get static info: slave sensor name or sensor version info is null.");
+			}
+			val.type = SENSOR_VAL_TYPE_READ_OTP;
+			val.pval = NULL;
+			ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, CAMERA_ID_2, SENSOR_ACCESS_VAL, (cmr_uint)&val);
+			if (ret) {
+				CMR_LOGE("get sensor otp failed %ld", ret);
+				goto exit;
+			}
+			if (val.pval) {
+				isp_param.otp_data_slv = val.pval;
+			}
+			ret = cmr_sensor_close(cxt->sn_cxt.sensor_handle, 1 << SENSOR_DEVICE2);
+			if (ret) {
+				CMR_LOGE("close 2 sensor failed %ld", ret);
+				goto exit;
 			}
 		} else if (CAMERA_ID_1 == cxt->camera_id) {
 			ret = cmr_sensor_open(sn_cxt->sensor_handle, 1 << SENSOR_DEVICE3);
@@ -3161,6 +3089,21 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 			} else {
 				CMR_LOGE("maybe fail to get static info: slave sensor name or sensor version info is null.");
 			}
+			val.type = SENSOR_VAL_TYPE_READ_OTP;
+			val.pval = NULL;
+			ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, CAMERA_ID_3, SENSOR_ACCESS_VAL, (cmr_uint)&val);
+			if (ret) {
+				CMR_LOGE("get sensor otp failed %ld", ret);
+				goto exit;
+			}
+			if (val.pval) {
+				isp_param.otp_data_slv = val.pval;
+			}
+			ret = cmr_sensor_close(cxt->sn_cxt.sensor_handle, 1 << SENSOR_DEVICE3);
+			if (ret) {
+				CMR_LOGE("close 3 sensor failed %ld", ret);
+				goto exit;
+			}
 		}
 		CMR_LOGD("get static info:f_num: %d,focal_length %d,max_fps: %d,max_adgain: %d",
 				isp_param.ex_info_slv.f_num,isp_param.ex_info_slv.focal_length,
@@ -3172,21 +3115,6 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 				isp_param.ex_info_slv.adgain_valid_frame_num,isp_param.ex_info_slv.preview_skip_num,
 				isp_param.ex_info_slv.capture_skip_num);
 		CMR_LOGD("w %d h %d", isp_param.size.w,isp_param.size.h);
-		if (CAMERA_ID_0 == cxt->camera_id) {
-			ret = cmr_sensor_close(cxt->sn_cxt.sensor_handle, 1 << SENSOR_DEVICE2);
-			if (ret) {
-				CMR_LOGE("close 2 sensor failed %ld", ret);
-				goto exit;
-			}
-		} else if (CAMERA_ID_1 == cxt->camera_id) {
-			ret = cmr_sensor_close(cxt->sn_cxt.sensor_handle, 1 << SENSOR_DEVICE3);
-			if (ret) {
-				CMR_LOGE("close 3 sensor failed %ld", ret);
-				goto exit;
-			}
-		}
-	} else if ((CAMERA_ID_2 == cxt->camera_id || CAMERA_ID_3 == cxt->camera_id) && cxt->is_refocus_mode) {
-		isp_param.dual_otp = master_dual_otp;
 	}
 #endif
 
@@ -3327,7 +3255,7 @@ cmr_int camera_preview_init(cmr_handle  oem_handle)
 	init_param.ops.set_preview_pd_raw = camera_preview_set_pd_raw_to_isp;
 	init_param.ops.set_preview_pd_open = camera_preview_pd_raw_open_to_isp;
 	init_param.ops.get_sensor_fps_info = camera_get_sensor_fps_info;
-	init_param.ops.get_dual_sensor_otp = camera_get_dual_otpinfo;
+	init_param.ops.get_sensor_otp = camera_get_otpinfo;
 	init_param.ops.isp_buff_cfg = camera_isp_buff_cfg;
 	init_param.oem_cb = camera_preview_cb;
 	init_param.private_data = NULL;

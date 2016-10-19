@@ -283,6 +283,11 @@ struct sensor_raw_info {
 	struct sensor_raw_note_info note_ptr[MAX_MODE_NUM];
 };
 
+struct sensor_data_info {
+	void *data_ptr;
+	cmr_u32 size;
+};
+
 struct sensor_otp_module_info {
 	cmr_u8 year;
 	cmr_u8 month;
@@ -315,29 +320,28 @@ struct sensor_otp_pdaf_info {
 	cmr_u16 pdaf_data_size;
 };
 
-struct sensor_otp_cust_info {
+struct sensor_single_otp_info {
 	cmr_u8 program_flag;
 	struct sensor_otp_module_info module_info;
-	struct sensor_otp_iso_awb_info isp_awb_info;
+	struct sensor_otp_iso_awb_info iso_awb_info;
 	struct sensor_otp_lsc_info lsc_info;
 	struct sensor_otp_af_info af_info;
 	struct sensor_otp_pdaf_info pdaf_info;
 	cmr_u16 checksum;
 };
 
-struct sensor_data_info {
-	void *data_ptr;
-	cmr_u32 size;
+struct sensor_dual_otp_info {
+	struct sensor_data_info total_otp;
+	struct sensor_data_info data_3d;
+	struct sensor_otp_iso_awb_info master_iso_awb_info;
+	struct sensor_otp_lsc_info master_lsc_info;
+	struct sensor_otp_iso_awb_info slave_iso_awb_info;
+	struct sensor_otp_lsc_info slave_lsc_info;
 };
 
-struct sensor_dual_otp_info {
-	struct sensor_data_info dual_otp;
-	struct sensor_otp_cust_info *single_otp_ptr;
-	struct sensor_data_info data_3d;
-	struct sensor_otp_iso_awb_info master_isp_awb_info;
-	struct sensor_otp_lsc_info master_lsc_info;
-	struct sensor_otp_iso_awb_info slave_isp_awb_info;
-	struct sensor_otp_lsc_info slave_lsc_info;
+struct sensor_otp_cust_info {
+	struct sensor_single_otp_info single_otp;
+	struct sensor_dual_otp_info dual_otp;
 };
 
 struct pd_pos_info {

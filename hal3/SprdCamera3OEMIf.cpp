@@ -2229,17 +2229,18 @@ bool SprdCamera3OEMIf::startCameraIfNecessary()
 			mSetting->getOTPTag(&otpInfo);
 			int otp_ret = read_file(psPath_OtpData,  dual_otp_data, SPRD_DUAL_OTP_SIZE);
 			if(otp_ret == 0){
-				struct sensor_dual_otp_info dual_otp_info = {0};
-				mHalOem->ops->camera_get_sensor_dual_otp_info(mCameraHandle, &dual_otp_info);
-				if(dual_otp_info.dual_otp.data_ptr != NULL)
+				struct sensor_otp_cust_info otp_info = {0};
+				mHalOem->ops->camera_get_sensor_otp_info(mCameraHandle, &otp_info);
+				if(otp_info.dual_otp.total_otp.data_ptr != NULL)
 				{
-				    save_file(psPath_OtpData, dual_otp_info.dual_otp.data_ptr, dual_otp_info.dual_otp.size);
-					HAL_LOGD("camera_id: %d,dual_otp_info %p, data_ptr %p, size 0x%x", mCameraId, &dual_otp_info,dual_otp_info.dual_otp.data_ptr,dual_otp_info.dual_otp.size);
-					memcpy(otpInfo.otp_data,dual_otp_info.dual_otp.data_ptr,SPRD_DUAL_OTP_SIZE);
+				    save_file(psPath_OtpData, otp_info.dual_otp.total_otp.data_ptr, otp_info.dual_otp.total_otp.size);
+					HAL_LOGD("camera_id: %d,otp_info %p, data_ptr %p, size 0x%x", mCameraId, &otp_info,
+						otp_info.dual_otp.total_otp.data_ptr,otp_info.dual_otp.total_otp.size);
+					memcpy(otpInfo.otp_data,otp_info.dual_otp.total_otp.data_ptr, otp_info.dual_otp.total_otp.size);
 				}
 			}else{
 					HAL_LOGD("camera_id: %d,dual_otp_data %p", mCameraId, dual_otp_data);
-					memcpy(otpInfo.otp_data,dual_otp_data,SPRD_DUAL_OTP_SIZE);
+					memcpy(otpInfo.otp_data, dual_otp_data, SPRD_DUAL_OTP_SIZE);
 			}
 			mSetting->setOTPTag(otpInfo);
 
@@ -2251,12 +2252,13 @@ bool SprdCamera3OEMIf::startCameraIfNecessary()
 			OTP_Tag otpInfo = {0};
 			mSetting->getOTPTag(&otpInfo);
 
-			struct sensor_dual_otp_info dual_otp_info = {0};
-			mHalOem->ops->camera_get_sensor_dual_otp_info(mCameraHandle, &dual_otp_info);
-			if(dual_otp_info.dual_otp.data_ptr != NULL)
+			struct sensor_otp_cust_info otp_info = {0};
+			mHalOem->ops->camera_get_sensor_otp_info(mCameraHandle, &otp_info);
+			if(otp_info.dual_otp.total_otp.data_ptr != NULL)
 			{
-				HAL_LOGD("camera_id: %d,dual_otp_info %p, data_ptr %p, size 0x%x", mCameraId, &dual_otp_info,dual_otp_info.dual_otp.data_ptr,dual_otp_info.dual_otp.size);
-				memcpy(otpInfo.otp_data,dual_otp_info.dual_otp.data_ptr,SPRD_DUAL_OTP_SIZE);
+				HAL_LOGD("camera_id: %d,dual_otp_info %p, data_ptr %p, size 0x%x", mCameraId, &otp_info,
+					otp_info.dual_otp.total_otp.data_ptr, otp_info.dual_otp.total_otp.size);
+				memcpy(otpInfo.otp_data, otp_info.dual_otp.total_otp.data_ptr, otp_info.dual_otp.total_otp.size);
 			}
 			mSetting->setOTPTag(otpInfo);
 #endif

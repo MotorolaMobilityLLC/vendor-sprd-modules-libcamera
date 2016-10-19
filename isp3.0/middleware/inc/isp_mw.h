@@ -527,6 +527,7 @@ struct isp_init_param {
 	cmr_u32 camera_id;
 	cmr_u16 is_refocus;
 	void *setting_param_ptr;
+	void *setting_param_ptr_slv; // slave sensor
 	struct isp_size size;
 	proc_callback ctrl_callback;
 	cmr_handle oem_handle;
@@ -538,11 +539,11 @@ struct isp_init_param {
 	cmr_free   free_cb;
 	void *setting_param_list_ptr[3];//0:back,1:front,2:dual back,
 	struct isp_sensor_ex_info ex_info;
-	struct sensor_otp_cust_info *otp_data;
-	struct sensor_pdaf_info *pdaf_info;
 	struct isp_sensor_ex_info ex_info_slv;
-	void *setting_param_ptr_slv; // slave sensor
+	struct sensor_otp_cust_info *otp_data;
+	struct sensor_otp_cust_info *otp_data_slv;
 	struct sensor_dual_otp_info *dual_otp;
+	struct sensor_pdaf_info *pdaf_info;
 	cmr_u32 image_pattern;
 };
 

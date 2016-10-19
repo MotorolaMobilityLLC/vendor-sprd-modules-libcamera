@@ -54,7 +54,7 @@ static unsigned long imx258_otp_read(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* para
 	imx258_otp_read_data(handle);
 	otp_info = &imx258_otp_info;
 
-	if (1 != otp_info->program_flag) {
+	if (1 != otp_info->single_otp.program_flag) {
 		SENSOR_LOGI("otp error");
 		param->pval = NULL;
 		return -1;

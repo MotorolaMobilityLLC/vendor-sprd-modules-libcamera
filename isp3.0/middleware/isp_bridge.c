@@ -27,22 +27,23 @@ struct ispbr_context {
 	sem_t ae_sm;
 	sem_t awb_sm;
 	struct match_data_param match_param;
+	struct sensor_dual_otp_info *dual_otp[SENSOR_NUM_MAX];
 };
 
 static struct ispbr_context br_cxt;
 
 /*************************************INTERNAK FUNCTION ****************************************/
 
-cmr_handle isp_br_get_3a_handle(cmr_int sensor_id)
+cmr_handle isp_br_get_3a_handle(cmr_u32 camera_id)
 {
-	return br_cxt.isp_3afw_handles[sensor_id];
+	return br_cxt.isp_3afw_handles[camera_id];
 }
 
-cmr_int isp_br_ioctrl(cmr_int sensor_id, cmr_int cmd, void *in, void *out)
+cmr_int isp_br_ioctrl(cmr_u32 camera_id, cmr_int cmd, void *in, void *out)
 {
 	struct ispbr_context *cxt = &br_cxt;
 
-	UNUSED(sensor_id);
+	UNUSED(camera_id);
 	switch (cmd) {
 	case GET_MATCH_AWB_DATA:
 		sem_wait(&cxt->awb_sm);
@@ -69,12 +70,12 @@ cmr_int isp_br_ioctrl(cmr_int sensor_id, cmr_int cmd, void *in, void *out)
 	return 0;
 }
 
-cmr_int isp_br_init(cmr_int sensor_id, cmr_handle isp_3a_handle)
+cmr_int isp_br_init(cmr_u32 camera_id, cmr_handle isp_3a_handle)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct ispbr_context *cxt = &br_cxt;
 
-	cxt->isp_3afw_handles[sensor_id] = isp_3a_handle;
+	cxt->isp_3afw_handles[camera_id] = isp_3a_handle;
 
 	/* TBD not atomic operations, unsafe*/
 	cxt->user_cnt++;
@@ -102,5 +103,33 @@ cmr_int isp_br_deinit(void)
 			cxt->isp_3afw_handles[i] = NULL;
 	}
 
+	return ret;
+}
+
+cmr_int isp_br_save_dual_otp(cmr_u32 camera_id, struct sensor_dual_otp_info *dual_otp)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct ispbr_context *cxt = &br_cxt;
+
+	if (camera_id >= SENSOR_NUM_MAX) {
+		ISP_LOGE("fail save camera_id %d dual otp", camera_id);
+		goto exit;
+	}
+	cxt->dual_otp[camera_id] = dual_otp;
+exit:
+	return ret;
+}
+
+cmr_int isp_br_get_dual_otp(cmr_u32 camera_id, struct sensor_dual_otp_info **dual_otp)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct ispbr_context *cxt = &br_cxt;
+
+	if (camera_id >= SENSOR_NUM_MAX) {
+		ISP_LOGE("fail get camera_id %d dual otp", camera_id);
+		goto exit;
+	}
+	*dual_otp = cxt->dual_otp[camera_id];
+exit:
 	return ret;
 }

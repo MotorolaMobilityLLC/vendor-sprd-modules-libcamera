@@ -135,7 +135,7 @@ cmr_int camera_set_sensor_info_to_af(cmr_handle camera_handle,  struct cmr_af_au
 cmr_int camera_get_sensor_max_fps(cmr_handle camera_handle,cmr_u32 camera_id, cmr_u32* max_fps);
 
 cmr_int camera_snapshot_is_need_flash(cmr_handle oem_handle, cmr_u32 camera_id, cmr_u32 *is_need_flash);
-cmr_uint camera_get_sensor_dual_otp_info(cmr_handle camera_handle, struct sensor_dual_otp_info *otp_info);
+cmr_uint camera_get_sensor_otp_info(cmr_handle camera_handle, struct sensor_otp_cust_info *otp_info);
 cmr_uint camera_get_sensor_vcm_step(cmr_handle camera_handle,cmr_u32 camera_id, cmr_u32* vcm_step);
 cmr_int camera_stop_multi_layer(cmr_handle camera_handle);
 cmr_int camera_set_reprocess_picture_size(cmr_handle camera_handle, cmr_uint is_reprocessing, cmr_u32 camera_id, cmr_u32 width, cmr_u32 height);/**add for 3d capture to reset reprocessing capture size*/

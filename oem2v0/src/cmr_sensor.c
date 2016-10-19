@@ -1136,9 +1136,7 @@ cmr_int cmr_get_otp_from_kernel(struct sensor_drv_context *sensor_cxt, cmr_uint 
 
 	*read_flag = 0;
 	if(( SENSOR_ACCESS_VAL == cmd)
-		&& (SENSOR_VAL_TYPE_READ_OTP ==  val->type
-		||SENSOR_VAL_TYPE_READ_DUAL_OTP ==  val->type)) {
-
+		&& SENSOR_VAL_TYPE_READ_OTP ==  val->type) {
 		cmr_bzero(&param_ptr, sizeof(param_ptr));
 		cmr_bzero(&sensor_otp, sizeof(sensor_otp));
 		otp_data_len = CMR_ISP_OTP_MAX_SIZE;

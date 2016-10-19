@@ -3688,15 +3688,15 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_res
 #if 1
 		if ( prev_cxt->prev_param.refocus_eb == 1) {
 			/* get otp  buffer  */
-			struct sensor_dual_otp_info sensor_otp;
-			ret = handle->ops.get_dual_sensor_otp(handle->oem_handle, &sensor_otp);
+			struct sensor_otp_cust_info sensor_otp;
+			ret = handle->ops.get_sensor_otp(handle->oem_handle, &sensor_otp);
 			if (ret) {
 				CMR_LOGE("get sensor otp error");
 				goto exit;
 			}
-			CMR_LOGI("sensor_otp 0x%x",  sensor_otp.dual_otp.data_ptr);
-			if(sensor_otp.dual_otp.data_ptr !=NULL)
-				prev_depthmap_open(handle, camera_id, sensor_otp.dual_otp);
+			CMR_LOGI("sensor_otp 0x%x",  sensor_otp.dual_otp.total_otp.data_ptr);
+			if(sensor_otp.dual_otp.total_otp.data_ptr != NULL)
+				prev_depthmap_open(handle, camera_id, sensor_otp.dual_otp.total_otp);
 		}
 #endif
 	}

@@ -1272,18 +1272,8 @@ static unsigned long imx258_access_val(SENSOR_HW_HANDLE handle, unsigned long pa
 		case SENSOR_VAL_TYPE_READ_OTP:
 			//imx258_otp_read(handle,param_ptr);
 			break;
-		case SENSOR_VAL_TYPE_READ_DUAL_OTP:
-			#if IMX230_DUAL_OTP
-			//	imx258_dual_otp_read(handle, param_ptr);
-			#endif
-			break;
 		case SENSOR_VAL_TYPE_PARSE_OTP:
 			//imx258_parse_otp(handle, param_ptr);
-			break;
-		case SENSOR_VAL_TYPE_PARSE_DUAL_OTP:
-			#if IMX230_DUAL_OTP
-				//imx258_parse_dual_otp(handle, param_ptr);
-			#endif
 			break;
 		case SENSOR_VAL_TYPE_WRITE_OTP:
 			//rtn = _hi544_write_otp(handle, (uint32_t)param_ptr->pval);
