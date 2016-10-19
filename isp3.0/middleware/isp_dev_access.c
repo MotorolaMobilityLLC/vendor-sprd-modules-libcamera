@@ -707,6 +707,8 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 		ISP_LOGI("BayerSCL w %d h %d\n", tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutWidth,
 			 tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutHeight);
 	} else {
+		tSecnarioInfo.tScenarioOutBypassFlag.bBypassLV = 1;
+		tSecnarioInfo.tScenarioOutBypassFlag.bBypassVideo = 1;
 		tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutWidth = 0;
 		tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutHeight = 0;
 	}
