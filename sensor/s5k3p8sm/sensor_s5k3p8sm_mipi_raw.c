@@ -340,7 +340,8 @@ static const SENSOR_REG_T s5k3p8sm_common_init[] = {
 { 0x6F12, 0x0088 },
 { 0x6F12, 0x0D70 },
 { 0x6028, 0x4000 },
-{ 0x0202, 0x0006 },
+{ 0x0202, 0x0100 },
+{ 0x0204, 0x0140 },
 { 0x0200, 0x0618 },
 { 0x021E, 0x0300 },
 { 0x021C, 0x0000 },
@@ -561,7 +562,7 @@ static const SENSOR_REG_T s5k3p8sm_2304x1740_4lane_setting[] = {
 { 0x0400, 0x0001 },
 { 0x0404, 0x0020 },
 { 0x0342, 0x1400 },
-{ 0x0340, 0x0E3B },
+{ 0x0340, 0x1C76 },
 { 0x0B0E, 0x0000 },
 { 0x0216, 0x0000 },
 { 0x3604, 0x0002 },
@@ -990,7 +991,7 @@ SENSOR_INFO_T g_s5k3p8sm_mipi_raw_info = {
 	&s_s5k3p8sm_mipi_raw_info_ptr,		// information and table about Rawrgb sensor
 	NULL,			//&g_s5k3p8sm_ext_info,                // extend information about sensor
 	SENSOR_AVDD_1800MV,	// iovdd
-	SENSOR_AVDD_1200MV,	// dvdd
+	SENSOR_AVDD_1000MV,	// dvdd
 	3,			// skip frame num before preview
 	3,			// skip frame num before capture
 	0,			// deci frame num during preview
