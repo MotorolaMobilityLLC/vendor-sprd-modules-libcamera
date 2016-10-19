@@ -4487,6 +4487,7 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb,
 		if (SPRD_WAITING_RAW == getCaptureState())
 		{
 			/**modified for 3d calibration&3d capture return yuv buffer finished begin */
+			HAL_LOGD("mSprdRawCallBack:%d, mSprd3dCalibrationEnabled:%d, mTakePictureMode:%d", mSprdRawCallBack, mSprd3dCalibrationEnabled, mTakePictureMode);
 			if ( (mSprdRawCallBack || mSprd3dCalibrationEnabled) && mTakePictureMode == SNAPSHOT_ZSL_MODE)
 			{
 				transitionState(SPRD_WAITING_RAW,

@@ -987,20 +987,22 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 	switch(capturePara.cap_intent)
 	{
 		case ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW:
-			if(mOldCapIntent != capturePara.cap_intent) {
-				mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_PREVIEW, mFrameNum);
-				mFirstRegularRequest = true;
-			}
-
-			if(capturePara.sprd_zsl_enabled == true && mOldCapIntent != capturePara.cap_intent) {
-				mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_SPRD_ZSL_PREVIEW, mFrameNum);
-				if(mOldCapIntent == ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE) {
-					mFirstRegularRequest = false;
-				} else {
-					mFirstRegularRequest = true;
-				}
-			}
-
+		    if(mOldCapIntent != capturePara.cap_intent) {
+		        if (!capturePara.sprd_zsl_enabled)
+		        {
+		            mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_PREVIEW, mFrameNum);
+		            mFirstRegularRequest = true;
+		        }
+		        else
+		        {
+		            mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_SPRD_ZSL_PREVIEW, mFrameNum);
+		            if(mOldCapIntent == ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE) {
+		                mFirstRegularRequest = false;
+		            } else {
+		                mFirstRegularRequest = true;
+		            }
+		        }
+		    }
 			break;
 		case ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD:
 			if(mOldCapIntent != capturePara.cap_intent) {
