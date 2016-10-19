@@ -546,6 +546,7 @@ static const SENSOR_REG_T s5k3l8xxm3_common_init[] = {
 	{0x112C, 0x4100},
 	{0x112E, 0x0000},
 	{0x3442, 0x0100},
+	{0x3098,0x0364},//
 };
 
 

@@ -161,21 +161,18 @@ static int ov8856s_otp_read_data(SENSOR_HW_HANDLE handle)
 		}
 		fclose(fd);
 #endif
+/*		for(i=0x7010;i<=0x720a;i++) {
+			Sensor_WriteReg(i,0); // clear OTP buffer, recommended use continuous write to accelarate,0x720a
+		}*/
+		//set 0x5001[3] to "1"
+		temp1 = Sensor_ReadReg(0x5001);
+		Sensor_WriteReg(0x5001, (0x08 & 0x08) | (temp1 & (~0x08)));
+		Sensor_WriteReg(0x0100, 0x00);
 
 		if ((checksum&0xffff)  != ov8856s_otp_info.checksum) {
 			SENSOR_LOGI("checksum error!");
 			ov8856s_otp_info.program_flag = 0;
 			return -1;
-		}else{
-			for(i=0x7010;i<=0x720a;i++) {
-					Sensor_WriteReg(i,0); // clear OTP buffer, recommended use continuous write to accelarate,0x720a
-				}
-				//set 0x5001[3] to "1"
-				temp1 = Sensor_ReadReg(0x5001);
-				Sensor_WriteReg(0x5001, (0x08 & 0x08) | (temp1 & (~0x08)));
-			
-				Sensor_WriteReg(0x0100, 0x00);
-
 		}
 		first_flag = 0;
 	}

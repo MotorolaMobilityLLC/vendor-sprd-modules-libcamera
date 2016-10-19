@@ -737,7 +737,7 @@ static SENSOR_STATIC_INFO_T s_ov2680_static_info = {
 	0,	//pdaf_supported;
 	1,	//exp_valid_frame_num;N+2-1
 	16,	//clamp_level,black level
-	0,	//adgain_valid_frame_num;N+1-1
+	1,	//adgain_valid_frame_num;N+1-1
 };
 
 static SENSOR_MODE_FPS_INFO_T s_ov2680_mode_fps_info = {
