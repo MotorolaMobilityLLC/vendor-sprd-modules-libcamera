@@ -91,6 +91,8 @@ public:
 	void dump(int fd);
 	int flush();
 	void captureResultCb(cam_result_data_info_t *result_info);
+	uint64_t getZslBufferTimestamp();
+	void setZslBufferTimestamp(uint64_t timestamp);
 	SprdCamera3RegularChannel* getRegularChan();
 	SprdCamera3PicChannel* getPicChan();
 	SprdCamera3OEMIf* getOEMif();

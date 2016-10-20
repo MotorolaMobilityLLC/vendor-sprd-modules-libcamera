@@ -121,7 +121,7 @@ SprdCamera3Capture::SprdCamera3Capture()
     mLastHeight = 0;
     mCaptureWidth = 0;
     mCaptureHeight = 0;
-    mIsCaptureing = false;
+    mIsCapturing = false;
     HAL_LOGD("X");
 }
 
@@ -840,6 +840,29 @@ void SprdCamera3Capture::get3DCaptureSize(int *pWidth, int *pHeight)
     *pHeight = sprddefInfo.sprd_3dcalibration_cap_size[1]>>1;
     HAL_LOGD("3d capture size, w:%d, h:%d", *pWidth, *pHeight);
 }
+/*===========================================================================
+ * FUNCTION         : set3DCaptureMode
+ *
+ * DESCRIPTION     : set3DCaptureMode
+ *
+ *==========================================================================*/
+void SprdCamera3Capture::set3DCaptureMode()
+{
+    SPRD_DEF_Tag sprddefInfo;
+    if ( NULL == m_pPhyCamera )
+    {
+        HAL_LOGE("parameter error!");
+        return;
+    }
+    m_pPhyCamera[CAM_TYPE_MAIN].hwi->mSetting->getSPRDDEFTag(&sprddefInfo);
+    sprddefInfo.sprd_3dcapture_enabled = true;
+    m_pPhyCamera[CAM_TYPE_MAIN].hwi->mSetting->setSPRDDEFTag(sprddefInfo);
+
+    m_pPhyCamera[CAM_TYPE_AUX].hwi->mSetting->getSPRDDEFTag(&sprddefInfo);
+    sprddefInfo.sprd_3dcapture_enabled = true;
+    m_pPhyCamera[CAM_TYPE_AUX].hwi->mSetting->setSPRDDEFTag(sprddefInfo);
+}
+
 
 /*===========================================================================
  * FUNCTION         : setupPhysicalCameras
@@ -1558,6 +1581,7 @@ int SprdCamera3Capture::configureStreams(const struct camera3_device *device,cam
 
     Mutex::Autolock l(mLock1);
     get3DCaptureSize( &mCaptureThread->m3DCaptureWidth, &mCaptureThread->m3DCaptureHeight);
+    set3DCaptureMode();
 
     HAL_LOGD("configurestreams, stream num:%d", stream_list->num_streams);
     for (size_t i = 0; i < stream_list->num_streams; i++) {
@@ -1586,7 +1610,6 @@ int SprdCamera3Capture::configureStreams(const struct camera3_device *device,cam
             HAL_LOGD("configurestreams, mPreviewStreamsNum:%d", mPreviewStreamsNum);
         }
         else if(requestStreamType == SNAPSHOT_STREAM){
-            mIsCaptureing = true;
             w = stream_list->streams[i]->width;
             h = stream_list->streams[i]->height;
             HAL_LOGD("capture width:%d, height:%d", w, h);
@@ -1768,7 +1791,6 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
 {
     int                        rc = 0;
     uint32_t                   i = 0;
-    bool                       is_recording = false;
     SprdCamera3HWI            *hwiMain = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
     SprdCamera3HWI            *hwiAux = m_pPhyCamera[CAM_TYPE_AUX].hwi;
     CameraMetadata             metaSettings;
@@ -1778,18 +1800,7 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
     camera3_stream_t          *new_stream = NULL;
     camera3_stream_buffer_t   *out_streams_main = NULL;
     camera3_stream_buffer_t   *out_streams_aux = NULL;
-
-    for(i = 0; i < request->num_output_buffers; i++) {
-        int requestStreamType = getStreamType(request->output_buffers[i].stream);
-        HAL_LOGD("org streamtype:%d, out streamtype:%d", request->output_buffers[i].stream->stream_type, requestStreamType);
-        if(requestStreamType == VIDEO_STREAM) {
-            is_recording = true;
-        }
-        else if (requestStreamType == SNAPSHOT_STREAM ){
-            mIsCaptureing = true;
-        }
-    }
-    HAL_LOGD("mIsCaptureing:%d, framenumber=%d",mIsCaptureing, request->frame_number);
+    bool                       is_captureing = false;
 
     rc = validateCaptureRequest(req);
     if (rc != NO_ERROR){
@@ -1858,6 +1869,8 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
             HAL_LOGD("snp request buffer:0x%x, stream:0x%x, yaddr_v:0x%x",
                      mLocalCapBuffer[2].buffer, &mCaptureThread->mMainStreams[mCaptureThread->mCaptureStreamsNum-1],
                      ((struct private_handle_t*)(*mLocalCapBuffer[2].buffer))->base );
+            mIsCapturing = true;
+            is_captureing = true;
         }
         else
         {
@@ -1886,18 +1899,7 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
         new_stream = (req->output_buffers[i]).stream;
         HAL_LOGD("num_output_buffers:%d, , streamtype:%d", req->num_output_buffers, getStreamType(new_stream));
         if(getStreamType(new_stream) == SNAPSHOT_STREAM) {
-            CameraMetadata meta;
-            meta.append(req_aux.settings);
-            if ( meta.exists(ANDROID_JPEG_ORIENTATION) )
-            {
-                int jpeg_orientation = meta.find(ANDROID_JPEG_ORIENTATION).data.i32[0];
-                HAL_LOGD("find jpeg orientation id %d", jpeg_orientation);
-                jpeg_orientation = 0;
-                //meta.update(ANDROID_JPEG_ORIENTATION, &jpeg_orientation, 1);
-            }
-            mCaptureThread->mSavedCapReqsettings = meta.release();
             req_aux.settings = mCaptureThread->mSavedCapReqsettings;
-
             out_streams_aux[i] = req->output_buffers[i];
             out_streams_aux[i].buffer = mLocalCapBuffer[1].buffer;
             out_streams_aux[i].stream = &mCaptureThread->mAuxStreams[mCaptureThread->mCaptureStreamsNum];
@@ -1934,22 +1936,66 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
         req_main.output_buffers[0].stream->format = HAL_PIXEL_FORMAT_YCbCr_420_888;
         req_aux.output_buffers[0].stream->format = HAL_PIXEL_FORMAT_YCbCr_420_888;
     }
-    HAL_LOGV("start main, idx:%d", req_main.frame_number);
-    rc = hwiMain->process_capture_request(m_pPhyCamera[CAM_TYPE_MAIN].dev,&req_main);
-    if(rc < 0){
-        HAL_LOGE("failed, idx:%d", req_main.frame_number);
-        goto req_fail;
+    HAL_LOGD("mIsCapturing:%d, framenumber=%d",mIsCapturing, request->frame_number);
+
+    if ( is_captureing )
+    {
+        uint64_t currentMainTimestamp = hwiMain->getZslBufferTimestamp();
+        uint64_t currentAuxTimestamp = hwiAux->getZslBufferTimestamp();
+        HAL_LOGD("currentMainTimestamp:%lld, currentAuxTimestamp=%lld",currentMainTimestamp, currentAuxTimestamp);
+        if ( currentMainTimestamp < currentAuxTimestamp )
+        {
+            HAL_LOGV("start main, idx:%d", req_main.frame_number);
+            hwiMain->setZslBufferTimestamp(currentMainTimestamp);
+            rc = hwiMain->process_capture_request(m_pPhyCamera[CAM_TYPE_MAIN].dev, &req_main);
+            if(rc < 0){
+                HAL_LOGE("failed, idx:%d", req_main.frame_number);
+                goto req_fail;
+            }
+            hwiAux->setZslBufferTimestamp(currentMainTimestamp);
+            HAL_LOGV("start sub, idx:%d", req_aux.frame_number);
+            rc = hwiAux->process_capture_request(m_pPhyCamera[CAM_TYPE_AUX].dev,&req_aux);
+            if(rc < 0){
+                HAL_LOGE("failed, idx:%d", req_aux.frame_number);
+                goto req_fail;
+            }
+        }
+        else
+        {
+            HAL_LOGV("start sub, idx:%d", req_aux.frame_number);
+            hwiAux->setZslBufferTimestamp(currentAuxTimestamp);
+            rc = hwiAux->process_capture_request(m_pPhyCamera[CAM_TYPE_AUX].dev,&req_aux);
+            if(rc < 0){
+                HAL_LOGE("failed, idx:%d", req_aux.frame_number);
+                goto req_fail;
+            }
+            hwiMain->setZslBufferTimestamp(currentAuxTimestamp);
+            HAL_LOGV("start main, idx:%d", req_main.frame_number);
+            rc = hwiMain->process_capture_request(m_pPhyCamera[CAM_TYPE_MAIN].dev, &req_main);
+            if(rc < 0){
+                HAL_LOGE("failed, idx:%d", req_main.frame_number);
+                goto req_fail;
+            }
+        }
+    }
+    else
+    {
+        HAL_LOGV("start main, idx:%d", req_main.frame_number);
+        rc = hwiMain->process_capture_request(m_pPhyCamera[CAM_TYPE_MAIN].dev, &req_main);
+        if(rc < 0){
+            HAL_LOGE("failed, idx:%d", req_main.frame_number);
+            goto req_fail;
+        }
+        HAL_LOGV("start sub, idx:%d", req_aux.frame_number);
+        rc = hwiAux->process_capture_request(m_pPhyCamera[CAM_TYPE_AUX].dev,&req_aux);
+        if(rc < 0){
+            HAL_LOGE("failed, idx:%d", req_aux.frame_number);
+            goto req_fail;
+        }
     }
 
-    HAL_LOGV("start sub, idx:%d", req_aux.frame_number);
-    rc = hwiAux->process_capture_request(m_pPhyCamera[CAM_TYPE_AUX].dev,&req_aux);
-    if(rc < 0){
-        HAL_LOGE("failed, idx:%d", req_aux.frame_number);
-        goto req_fail;
-    }
-
-    HAL_LOGD("rc, d%d", rc);
 req_fail:
+    HAL_LOGD("rc, d%d", rc);
 
     if (req_aux.output_buffers != NULL) {
         free((void*)req_aux.output_buffers);
@@ -2027,7 +2073,7 @@ void SprdCamera3Capture::processCaptureResultMain( const camera3_capture_result_
     }
 
     int currStreamType = getStreamType(result_buffer->stream);
-    if ( mIsCaptureing && currStreamType == DEFAULT_DEFAULT )
+    if ( mIsCapturing && currStreamType == DEFAULT_DEFAULT )
     {
         HAL_LOGD("framenumber:%d, currStreamType:%d, stream:0x%x, buffer:0x%x, format:%d",
                  result->frame_number, currStreamType, result_buffer->stream, result_buffer->buffer, result_buffer->stream->format);
@@ -2057,7 +2103,7 @@ void SprdCamera3Capture::processCaptureResultMain( const camera3_capture_result_
             }
         }
     }
-    else if ( mIsCaptureing && currStreamType == SNAPSHOT_STREAM )
+    else if ( mIsCapturing && currStreamType == SNAPSHOT_STREAM )
     {
         camera3_capture_result_t   newResult = {0,};
         camera3_stream_buffer_t    newOutput_buffers = {0,};
@@ -2082,6 +2128,7 @@ void SprdCamera3Capture::processCaptureResultMain( const camera3_capture_result_
                  newResult.output_buffers[0].stream->stream_type);
         mCaptureThread->mCallbackOps->process_capture_result(mCaptureThread->mCallbackOps, &newResult);
         mCaptureThread->mReprocessing = false;
+        mIsCapturing = false;
     }
     else
     {
@@ -2151,81 +2198,76 @@ void SprdCamera3Capture::processCaptureResultAux( const camera3_capture_result_t
     if(result->num_output_buffers == 0){
         return;
     }
-
-    if ( mIsCaptureing )
+    int currStreamType = getStreamType(result->output_buffers->stream);
+    if ( mIsCapturing && currStreamType == DEFAULT_DEFAULT )
     {
-        int currStreamType = getStreamType(result->output_buffers->stream);
-        if ( currStreamType == DEFAULT_DEFAULT )
-        {
-            const camera3_stream_buffer_t *result_buffer  =  result->output_buffers;
+        const camera3_stream_buffer_t *result_buffer  =  result->output_buffers;
 
-            HAL_LOGD("framenumber:%d, currStreamType:%d, stream:%d, buffer:%d, format:%d",
-                     result->frame_number, currStreamType,
-                     result->output_buffers->stream, result->output_buffers->buffer, result->output_buffers->stream->format);
-            HAL_LOGD("aux yuv picture: format:%d, width:%d, height:%d, buff:%d",
-                     result_buffer->stream->format, result_buffer->stream->width, result_buffer->stream->height, result_buffer->buffer);
-            HAL_LOGD("aux capture result:%d, mSavedResult:%d", result->frame_number, mCaptureThread->mSavedResultBuff);
-            if ( NULL == mCaptureThread->mSavedResultBuff )
-            {
-                mCaptureThread->mSavedResultBuff = result->output_buffers->buffer;
-            }
-            else
-            {
-                capture_queue_msg_t capture_msg;
-                capture_msg.msg_type = CAPTURE_MSG_DATA_PROC;
-                capture_msg.combo_buff.frame_number = result->frame_number;
-                capture_msg.combo_buff.buffer1 = mCaptureThread->mSavedResultBuff;
-                capture_msg.combo_buff.buffer2 = result->output_buffers->buffer;
-                capture_msg.combo_buff.input_buffer=result->input_buffer;
-                HAL_LOGD("capture combined begin: framenumber %d", capture_msg.combo_buff.frame_number);
-                HAL_LOGD("capture combined begin: buff1 %d", capture_msg.combo_buff.buffer1);
-                HAL_LOGD("capture combined begin: buff2 %d", capture_msg.combo_buff.buffer2);
-                {
-                    Mutex::Autolock l(mCaptureThread->mMergequeueMutex);
-                    HAL_LOGD("Enqueue combo frame:%d for frame merge!", capture_msg.combo_buff.frame_number);
-                    mCaptureThread->mCaptureMsgList.push_back(capture_msg);
-                    mCaptureThread->mMergequeueSignal.signal();
-                }
-            }
-        }
-        else if ( currStreamType == SNAPSHOT_STREAM )
+        HAL_LOGD("framenumber:%d, currStreamType:%d, stream:%d, buffer:%d, format:%d",
+                 result->frame_number, currStreamType,
+                 result->output_buffers->stream, result->output_buffers->buffer, result->output_buffers->stream->format);
+        HAL_LOGD("aux yuv picture: format:%d, width:%d, height:%d, buff:%d",
+                 result_buffer->stream->format, result_buffer->stream->width, result_buffer->stream->height, result_buffer->buffer);
+        HAL_LOGD("aux capture result:%d, mSavedResult:%d", result->frame_number, mCaptureThread->mSavedResultBuff);
+        if ( NULL == mCaptureThread->mSavedResultBuff )
         {
-            HAL_LOGD("should not entry here, shutter frame:%d", result->frame_number);
+            mCaptureThread->mSavedResultBuff = result->output_buffers->buffer;
         }
         else
         {
-            camera3_capture_result_t   newResult = {0,};
-            camera3_stream_buffer_t    newOutput_buffers = {0,};
-            int request_preview_id = -1;
+            capture_queue_msg_t capture_msg;
+            capture_msg.msg_type = CAPTURE_MSG_DATA_PROC;
+            capture_msg.combo_buff.frame_number = result->frame_number;
+            capture_msg.combo_buff.buffer1 = mCaptureThread->mSavedResultBuff;
+            capture_msg.combo_buff.buffer2 = result->output_buffers->buffer;
+            capture_msg.combo_buff.input_buffer=result->input_buffer;
+            HAL_LOGD("capture combined begin: framenumber %d", capture_msg.combo_buff.frame_number);
+            HAL_LOGD("capture combined begin: buff1 %d", capture_msg.combo_buff.buffer1);
+            HAL_LOGD("capture combined begin: buff2 %d", capture_msg.combo_buff.buffer2);
             {
-                Mutex::Autolock l(mRequestLock);
-                List <request_saved_t>::iterator i = mSavedRequestList.begin();
-                while(i != mSavedRequestList.end()){
-                    if(i->frame_number == result->frame_number){
-                        request_preview_id = i->preview_id;
-                        if (CAM_TYPE_AUX == request_preview_id)
-                        {
-                            memcpy( &newResult, result, sizeof(camera3_capture_result_t) );
-                            memcpy( &newOutput_buffers, &result->output_buffers[0], sizeof(camera3_stream_buffer_t) );
-                            newOutput_buffers.stream = i->stream;
-                            memcpy( newOutput_buffers.stream, result->output_buffers[0].stream, sizeof(camera3_stream_t) );
-                            newResult.output_buffers = &newOutput_buffers;
-                            mCaptureThread->mCallbackOps->process_capture_result(mCaptureThread->mCallbackOps, &newResult);
-                            mSavedRequestList.erase(i);
-                        }
-                        HAL_LOGD("find preview frame %d, show preview id:%d",result->frame_number, request_preview_id);
-                        break;
-                    }
-                    i++;
-                }
-            }
-            if ( CAM_TYPE_AUX != request_preview_id )
-            {
-                HAL_LOGD("not in capture, just discard frame:%d", result->frame_number);
-                mLocalBufferList.push_back(result->output_buffers[0].buffer);
+                Mutex::Autolock l(mCaptureThread->mMergequeueMutex);
+                HAL_LOGD("Enqueue combo frame:%d for frame merge!", capture_msg.combo_buff.frame_number);
+                mCaptureThread->mCaptureMsgList.push_back(capture_msg);
+                mCaptureThread->mMergequeueSignal.signal();
             }
         }
-        return;
+    }
+    else if ( mIsCapturing && currStreamType == SNAPSHOT_STREAM )
+    {
+        HAL_LOGD("should not entry here, shutter frame:%d", result->frame_number);
+    }
+    else
+    {
+        camera3_capture_result_t   newResult = {0,};
+        camera3_stream_buffer_t    newOutput_buffers = {0,};
+        int request_preview_id = -1;
+        {
+            Mutex::Autolock l(mRequestLock);
+            List <request_saved_t>::iterator i = mSavedRequestList.begin();
+            while(i != mSavedRequestList.end()){
+                if(i->frame_number == result->frame_number){
+                    request_preview_id = i->preview_id;
+                    if (CAM_TYPE_AUX == request_preview_id)
+                    {
+                        memcpy( &newResult, result, sizeof(camera3_capture_result_t) );
+                        memcpy( &newOutput_buffers, &result->output_buffers[0], sizeof(camera3_stream_buffer_t) );
+                        newOutput_buffers.stream = i->stream;
+                        memcpy( newOutput_buffers.stream, result->output_buffers[0].stream, sizeof(camera3_stream_t) );
+                        newResult.output_buffers = &newOutput_buffers;
+                        mCaptureThread->mCallbackOps->process_capture_result(mCaptureThread->mCallbackOps, &newResult);
+                        mSavedRequestList.erase(i);
+                    }
+                    HAL_LOGD("find preview frame %d, show preview id:%d",result->frame_number, request_preview_id);
+                    break;
+                }
+                i++;
+            }
+        }
+        if ( CAM_TYPE_AUX != request_preview_id )
+        {
+            HAL_LOGD("not in capture, just discard frame:%d", result->frame_number);
+            mLocalBufferList.push_back(result->output_buffers[0].buffer);
+        }
     }
     return;
 }

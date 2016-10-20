@@ -191,6 +191,8 @@ public:
 	int IommuIsEnabled(void);
 	int stopMultiLayer();
 	void setSensorCloseFlag();
+	uint64_t getZslBufferTimestamp();/**add for 3dcapture, get zsl buffer's timestamp in zsl query*/
+	void setZslBufferTimestamp(uint64_t timestamp);/**add for 3dcapture, set the needed timestamp*/
 public:
 	static int      pre_alloc_cap_mem_thread_init(void *p_data);
 	static int      pre_alloc_cap_mem_thread_deinit(void *p_data);
@@ -417,6 +419,8 @@ private:
 	uint32_t getZslBufferIDForFd(cmr_s32 fd);
 	int pushZslFrame(struct camera_frame_type *frame);
 	struct camera_frame_type popZslFrame();
+	struct camera_frame_type popZslList(uint64_t timestamp);/**add for 3dcapture, record received zsl buffer end*/
+	void pushZslList(ZslBufferQueue frame);/**add for 3dcapture, record received zsl buffer end*/
 	void processStopMultiLayer(void *p_data);
 
 	List<ZslBufferQueue> mZSLQueue;
@@ -437,6 +441,8 @@ private:
 	bool                              mSprd3dCalibrationEnabled;/**add for 3d calibration */
 	bool                              mSprdRawCallBack;/**add for 3d capture */
 	bool                              mSprdReprocessing;/**add for 3d capture */
+	uint64_t                          mNeededTimestamp;/**add for 3d capture */
+	List<ZslBufferQueue>              mZSLList;/**add for 3dcapture, record received zsl buffer end*/
 
 	void yuvNv12ConvertToYv12(struct camera_frame_type *frame, char* tmpbuf);
 

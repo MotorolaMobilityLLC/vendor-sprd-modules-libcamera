@@ -133,11 +133,12 @@ private:
     uint8_t                           mPreviewStreamsNum;
     int                               mPreviewID;
     Mutex                             mRequestLock;
-    bool                              mIsCaptureing;
+    bool                              mIsCapturing;
     int cameraDeviceOpen(int camera_id,struct hw_device_t **hw_device);
     int setupPhysicalCameras();
     int getCameraInfo(struct camera_info *info);
     void get3DCaptureSize(int *pWidth, int *pHeight);
+    void set3DCaptureMode();
     int getStreamType(camera3_stream_t *new_stream );
     void freeLocalBuffer(new_mem_t* pLocalBuffer);
     void freeLocalCapBuffer(new_mem_t* pLocalCapBuffer);

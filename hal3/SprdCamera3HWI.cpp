@@ -1422,6 +1422,16 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info)
 	}
 }
 
+uint64_t SprdCamera3HWI::getZslBufferTimestamp()
+{
+    return mOEMIf->getZslBufferTimestamp();
+}
+
+void SprdCamera3HWI::setZslBufferTimestamp(uint64_t timestamp)
+{
+    mOEMIf->setZslBufferTimestamp(timestamp);
+}
+
 void SprdCamera3HWI::getMetadataVendorTagOps(vendor_tag_query_ops_t * ops)
 {
 	ops->get_camera_vendor_section_name = mSetting->getVendorSectionName;
