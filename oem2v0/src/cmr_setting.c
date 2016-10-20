@@ -2237,9 +2237,10 @@ static cmr_int setting_set_environment(struct setting_component *cpt,
 	}
 
 	if (invalid_word != hal_param->hal_common.auto_exposure_mode) {
-		memset(&cmd_param.ae_param,0,sizeof(cmd_param.ae_param));
+		memset(&cmd_param,0,sizeof(cmd_param));
+		cmd_param.camera_id = parm->camera_id;
 		cmd_param.ae_param.mode = hal_param->hal_common.auto_exposure_mode;
-		ret = setting_set_auto_exposure_mode(cpt, &cmd_param.ae_param);
+		ret = setting_set_auto_exposure_mode(cpt, &cmd_param);
 		CMR_RTN_IF_ERR(ret);
 	}
 
