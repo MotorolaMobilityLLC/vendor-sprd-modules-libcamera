@@ -171,6 +171,7 @@ static cmr_int camera_channel_cap_cfg(cmr_handle oem_handle,
 									cmr_u32 *channel_id,
 									struct img_data_end *endian);
 static cmr_int camera_isp_buff_cfg (cmr_handle oem_handle, struct buffer_cfg *buf_cfg);
+static cmr_int camera_hdr_set_ev(cmr_handle oem_handle);
 static cmr_int camera_channel_scale_capability(cmr_handle oem_handle, cmr_u32 *width, cmr_u32 *sc_factor, cmr_u32 *sc_threshold);
 static cmr_int camera_channel_path_capability(cmr_handle oem_handle, struct cmr_path_capability *capability);
 static cmr_int camera_channel_get_cap_time(cmr_handle oem_handle, cmr_u32 *sec, cmr_u32 *usec);
@@ -3257,6 +3258,7 @@ cmr_int camera_preview_init(cmr_handle  oem_handle)
 	init_param.ops.get_sensor_fps_info = camera_get_sensor_fps_info;
 	init_param.ops.get_sensor_otp = camera_get_otpinfo;
 	init_param.ops.isp_buff_cfg = camera_isp_buff_cfg;
+	init_param.ops.hdr_set_ev = camera_hdr_set_ev;
 	init_param.oem_cb = camera_preview_cb;
 	init_param.private_data = NULL;
 	init_param.sensor_bits = (1 << cxt->camera_id);
@@ -4660,36 +4662,6 @@ cmr_int camera_capture_pre_proc(cmr_handle oem_handle, cmr_u32 camera_id, cmr_u3
 		if (ret) {
 			CMR_LOGE("failed to set sensor %ld", ret);
 		}
-	}
-
-	if (1 == camera_get_hdr_flag(cxt)) {
-		ret = cmr_ipm_pre_proc(cxt->ipm_cxt.hdr_handle);
-		if (ret) {
-			CMR_LOGE("failed to ipm pre proc, %ld", ret);
-		}
-	}
-	if (cxt->is_vendor_hdr) {
-		cxt->cap_cnt = 0;
-#if defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4)
-		struct sensor_exp_info sensor_info;
-		ret = camera_get_sensor_info(cxt, cxt->camera_id, &sensor_info);
-		if (ret) {
-			CMR_LOGE("get_sensor info failed!");
-			ret = CMR_CAMERA_FAIL;
-			goto exit;
-		}
-
-		if (SENSOR_IMAGE_FORMAT_RAW == sensor_info.image_format) {
-			isp_param.cmd_value = OEM_EV_LEVEL_1;
-			ret = camera_isp_ioctl(oem_handle,COM_ISP_SET_HDR,(void *)&isp_param);
-		} else {
-			sn_param.cmd_value = OEM_EV_LEVEL_1;
-			ret = camera_sensor_ioctl(oem_handle,COM_SN_SET_HDR_EV,(void *)&sn_param);
-		}
-#else
-		sn_param.cmd_value = OEM_EV_LEVEL_1;
-		ret = camera_sensor_ioctl(oem_handle,COM_SN_SET_HDR_EV,(void *)&sn_param);
-#endif
 	}
 exit:
 	CMR_LOGI("done %ld", ret);
@@ -8972,3 +8944,43 @@ cmr_int camera_local_set_sensor_close_flag(cmr_handle oem_handle)
 	return ret;
 }
 
+cmr_int camera_hdr_set_ev(cmr_handle oem_handle)
+{
+	cmr_int 					   ret = CMR_CAMERA_SUCCESS;
+	struct camera_context		   *cxt = (struct camera_context*)oem_handle;
+	struct common_sn_cmd_param sn_param;
+	struct common_isp_cmd_param isp_param;
+
+	if (1 == camera_get_hdr_flag(cxt)) {
+		ret = cmr_ipm_pre_proc(cxt->ipm_cxt.hdr_handle);
+		if (ret) {
+			CMR_LOGE("failed to ipm pre proc, %ld", ret);
+		}
+	}
+	if (cxt->is_vendor_hdr) {
+		cxt->cap_cnt = 0;
+#if defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4)
+		struct sensor_exp_info sensor_info;
+		ret = camera_get_sensor_info(cxt, cxt->camera_id, &sensor_info);
+		if (ret) {
+			CMR_LOGE("get_sensor info failed!");
+			ret = CMR_CAMERA_FAIL;
+			goto exit;
+		}
+
+		if (SENSOR_IMAGE_FORMAT_RAW == sensor_info.image_format) {
+			isp_param.cmd_value = OEM_EV_LEVEL_1;
+			ret = camera_isp_ioctl(oem_handle,COM_ISP_SET_HDR,(void *)&isp_param);
+		} else {
+			sn_param.cmd_value = OEM_EV_LEVEL_1;
+			ret = camera_sensor_ioctl(oem_handle,COM_SN_SET_HDR_EV,(void *)&sn_param);
+		}
+#else
+		sn_param.cmd_value = OEM_EV_LEVEL_1;
+		ret = camera_sensor_ioctl(oem_handle,COM_SN_SET_HDR_EV,(void *)&sn_param);
+#endif
+	}
+exit:
+	CMR_LOGI("done %ld", ret);
+	return ret;
+}

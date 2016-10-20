@@ -3192,6 +3192,15 @@ cmr_int prev_capture_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
 						ret = CMR_CAMERA_INVALID_PARAM;
 						goto exit;
 					}
+
+					if (handle->ops.hdr_set_ev) {
+						if (prev_cxt->cap_frm_cnt <= prev_cxt->prev_param.frame_count - hdr_num)
+							handle->ops.hdr_set_ev(handle->oem_handle);
+					} else {
+						CMR_LOGE("err,hdr_set_ev is null");
+						ret = CMR_CAMERA_INVALID_PARAM;
+						goto exit;
+					}
 				}
 				if (prev_cxt->cap_frm_cnt <= prev_cxt->prev_param.frame_count - hdr_num) {
 					cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
@@ -3660,6 +3669,16 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_res
 			goto exit;
 		}
 		prev_cxt->isp_status = PREV_ISP_COWORK;
+	}
+
+	if (snapshot_enable && !preview_enable) {
+		if (handle->ops.hdr_set_ev) {
+			handle->ops.hdr_set_ev(handle->oem_handle);
+		} else {
+			CMR_LOGE("err,hdr_set_ev is null");
+			ret = CMR_CAMERA_INVALID_PARAM;
+			goto exit;
+		}
 	}
 
 	/*start channel*/

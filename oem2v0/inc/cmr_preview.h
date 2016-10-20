@@ -95,6 +95,7 @@ struct preview_md_ops {
 	cmr_int (*get_sensor_fps_info)(cmr_handle oem_handle, cmr_uint sensor_id, cmr_u32 sn_mode, struct sensor_mode_fps_tag *fps_info);
 	cmr_int (*get_sensor_otp)(cmr_handle  oem_handle,struct sensor_otp_cust_info *dual_otp_data);
 	cmr_int (*isp_buff_cfg) (cmr_handle oem_handle, struct buffer_cfg *buf_cfg);
+	cmr_int (*hdr_set_ev)(cmr_handle oem_handle);
 };
 
 struct preview_init_param {
