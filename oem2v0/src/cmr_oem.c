@@ -3934,13 +3934,14 @@ static cmr_int camera_res_init_internal(cmr_handle oem_handle)
 		CMR_LOGE("failed to init focus %ld", ret);
 		goto exit;
 	}
-
+/*
 	ret = camera_jpeg_init(oem_handle);
 	if (ret) {
 		CMR_LOGE("failed to init jpeg %ld", ret);
 		goto exit;
 	}
 
+*/
 #if 0 // move it to front before isp init,because iommu flag need check through grab_handle
 	ret = camera_grab_init(oem_handle);
 	if (ret) {

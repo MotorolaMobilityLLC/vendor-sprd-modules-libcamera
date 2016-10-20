@@ -26,6 +26,7 @@
 #else
 #include "af_bu64297gwz.h"
 #endif
+#include "sensor_s5k3p8sm_raw_param_v3.c"
 
 #define S5K3P8SM_I2C_ADDR_W        0x10
 #define S5K3P8SM_I2C_ADDR_R        0x10
@@ -40,7 +41,7 @@
 #define s5k3p8sm_i2c_read_otp(addr)  s5k3p8sm_i2c_read_otp_set(handle,addr)
 
 static uint32_t g_module_id = 0;
-static struct sensor_raw_info* s_s5k3p8sm_mipi_raw_info_ptr = NULL;
+static struct sensor_raw_info* s_s5k3p8sm_mipi_raw_info_ptr = &s_s5k3p8sm_mipi_raw_info;
 static int s_capture_shutter = 0;
 static int s_exposure_time = 0;
 
@@ -890,7 +891,7 @@ static SENSOR_IOCTL_FUNC_TAB_T s_s5k3p8sm_ioctl_func_tab = {
 	_s5k3p8sm_write_gain,
 	PNULL,//read_gain_scale
 	PNULL,//set_frame_rate
-	s5k3p8sm_write_af,
+	PNULL,//s5k3p8sm_write_af,
 	PNULL,
 	PNULL,//_s5k3p8sm_set_awb,
 	PNULL,
@@ -1635,7 +1636,7 @@ static uint32_t _s5k3p8sm_GetRawInof(SENSOR_HW_HANDLE handle)
 		}
 		else if (PNULL!=tab_ptr[i].identify_otp) {
 			if (SENSOR_SUCCESS==tab_ptr[i].identify_otp(handle, 0)) {
-				s_s5k3p8sm_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
+				//s_s5k3p8sm_mipi_raw_info_ptr = tab_ptr[i].info_ptr;
 				SENSOR_PRINT("SENSOR_S5K3P8SM: _s5k3p8sm_GetRawInof success");
 				break;
 			}

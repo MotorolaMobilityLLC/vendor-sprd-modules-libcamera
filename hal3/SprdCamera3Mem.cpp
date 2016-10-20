@@ -220,9 +220,12 @@ int SprdCamera3GrallocMemory::map(buffer_handle_t *buffer_handle ,hal_mem_info_t
 	mem_info->fd = fd;
 	// mem_info->addr_phy is offset, always set to 0 for yaddr
 	mem_info->addr_phy =  (void*)0;
-	mem_info->addr_vir = (void*)ADP_BASE(*buffer_handle);
+	mem_info->addr_vir = (void *)((unsigned long)fd);//(void*)ADP_BASE(*buffer_handle);
 	// need to 4k alignment
-	mem_info->size = ADP_BUFSIZE(*buffer_handle);
+	mem_info->size = 0x3000;//ADP_BUFSIZE(*buffer_handle);
+	HAL_LOGD("int SprdCamera3GrallocMemory::map");
+//	HAL_LOGD("fd=0x%x, addr_phy offset =0x%lx, buf size=0x%lx",
+//		mem_info->fd, mem_info->addr_phy, mem_info->size);
 #else
 	struct private_handle_t *private_handle = NULL;
 	private_handle = (struct private_handle_t*) (*buffer_handle);
@@ -240,9 +243,9 @@ int SprdCamera3GrallocMemory::map(buffer_handle_t *buffer_handle ,hal_mem_info_t
 	mem_info->addr_vir = (void*)private_handle->base;
 	// need to 4k alignment
 	mem_info->size = private_handle->size;;
-#endif
 	HAL_LOGD("fd=0x%x, addr_phy offset =0x%lx, buf size=0x%lx",
 		mem_info->fd, mem_info->addr_phy, mem_info->size);
+#endif
 	return 0;
 
 err_out:
