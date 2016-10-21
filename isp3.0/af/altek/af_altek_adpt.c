@@ -178,6 +178,7 @@ struct af_altek_context {
 	cmr_u32 camera_id;
 	cmr_u32 frame_id;
 	cmr_u32 af_mode;
+	cmr_u32 af_touch_mode;
 	cmr_handle caller_handle;
 	cmr_handle altek_lib_handle;
 	cmr_handle altek_haf_lib_handle;
@@ -819,6 +820,7 @@ static cmr_int afaltek_adpt_set_mode(cmr_handle adpt_handle, cmr_int mode)
 	switch (ctrl_mode) {
 	case AF_CTRL_MODE_MACRO:
 	case AF_CTRL_MODE_AUTO:
+		cxt->af_touch_mode = 1;
 #ifdef FEATRUE_SPRD_CAF_TRIGGER
 		afaltek_adpt_caf_stop(cxt);
 #endif
@@ -1465,8 +1467,29 @@ static cmr_int afaltek_adpt_haf_start(cmr_handle adpt_handle)
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+	struct isp_af_win roi;
+	struct allib_af_input_roi_info_t lib_roi;
 
-	ISP_LOGI("afaltek_adpt_haf_start E");
+	ISP_LOGI("E");
+	cmr_bzero(&roi, sizeof(roi));
+	cmr_bzero(&lib_roi, sizeof(lib_roi));
+
+	roi.valid_win = 1;
+	afaltek_adpt_set_centor(&roi, &cxt->sensor_info.crop_info);
+	afaltek_adpt_config_roi(adpt_handle, &roi,
+						alAFLib_ROI_TYPE_NORMAL, &lib_roi);
+
+	ret = afaltek_adpt_set_roi(adpt_handle, &lib_roi);
+	if (ret)
+		ISP_LOGE("failed to set roi");
+
+	if (cxt->af_touch_mode) {
+		/* notify oem to show box */
+		cxt->af_touch_mode = 0;
+		ret = afaltek_adpt_start_notify(adpt_handle);
+		if (ret)
+			ISP_LOGE("failed to notify");
+	}
 	ret = afaltek_adpt_set_start(adpt_handle);
 	if (ret) {
 		ISP_LOGE("failed to start");

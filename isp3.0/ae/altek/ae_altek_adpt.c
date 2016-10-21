@@ -689,7 +689,7 @@ static void aealtek_weight_ui2lib(enum ae_ctrl_measure_lum_mode from, enum ae_me
 		break;
 	}
 	*to_ptr = lib_metering;
-	ISP_LOGI("weight mode %d", *to_ptr = lib_metering);
+	ISP_LOGI("weight form %d mode %d", from,  *to_ptr = lib_metering);
 exit:
 	return;
 }
