@@ -28,6 +28,7 @@
 #endif
 #ifdef CONFIG_FACE_BEAUTY
 #include "ts_makeup_api.h"
+#include "ts_makeup_data.h"
 #endif
 
 #include "sprd_img.h"
@@ -4306,6 +4307,7 @@ void camera_face_makeup(cmr_handle oem_handle, struct img_frm *src)
 	CMR_LOGD("perfect skinWhitenLevel is %d, skinCleanLevel is %d", skinWhitenLevel, skinCleanLevel);
 	if( PerfectSkinLevel !=0 && pic_width > 0 && pic_height > 0){
 		TSRect  SkinWhitenTsface;
+		YuvFormat yuvFormat = TSFB_FMT_NV21;
 		memset(&SkinWhitenTsface,0,sizeof(TSRect));
 		if(cxt->fd_face_area.face_num > 0) {
 			SkinWhitenTsface.left = (cxt->fd_face_area.face_info[0].sx*pic_width)/(cxt->fd_face_area.frame_width);
@@ -4321,45 +4323,31 @@ void camera_face_makeup(cmr_handle oem_handle, struct img_frm *src)
 			unsigned char *uvBuf = (unsigned char *)(src->addr_vir.addr_u) ;
 			unsigned char * tmpBuf = (unsigned char*)malloc(pic_width*pic_height* 3 / 2);
 			property_get("sys.cam.multi.camera.mode", multicameramode, "0");
-
-			unsigned int uv_len = pic_width * pic_height * 1 / 2;
-			unsigned char * UVBuf = (unsigned char*)malloc(uv_len);
-			memcpy(UVBuf, uvBuf + 1, uv_len - 1);
-			*(UVBuf + uv_len - 1)  = *(uvBuf + uv_len - 2);
+			if(atoi(multicameramode) == 0) {
+				yuvFormat = TSFB_FMT_NV12;
+			}
 
 			inMakeupData.frameWidth = pic_width;
 			inMakeupData.frameHeight = pic_height;
 			inMakeupData.yBuf = yBuf;
-			if(atoi(multicameramode) == 0)
-				inMakeupData.uvBuf = UVBuf;
-			else
-				inMakeupData.uvBuf = uvBuf;
+			inMakeupData.uvBuf = uvBuf;
 
 			outMakeupData.frameWidth = pic_width;
 			outMakeupData.frameHeight = pic_height;
 			outMakeupData.yBuf = tmpBuf;
 			outMakeupData.uvBuf = tmpBuf + pic_width*pic_height;
-			CMR_LOGI("perfect frameWidth is %d, frameHeight is %d", pic_width, pic_height);
+			CMR_LOGI("perfect frameWidth is %d, frameHeight is %d, format is %d", pic_width, pic_height,yuvFormat);
 
 			CMR_LOGV("perfect ts_face_beautify will be call");
-			int mu_retVal = ts_face_beautify(&inMakeupData, &outMakeupData, skinCleanLevel, skinWhitenLevel, &SkinWhitenTsface,0);
+			int mu_retVal = ts_face_beautify(&inMakeupData, &outMakeupData, skinCleanLevel, skinWhitenLevel, &SkinWhitenTsface, 0, yuvFormat);
 			if(mu_retVal !=  TS_OK) {
 				CMR_LOGE("perfect ts_face_beautify mu_retVal is %d", mu_retVal);
 			} else {
 				CMR_LOGD("perfect ts_face_beautify return OK");
 				memcpy(yBuf, tmpBuf, pic_width * pic_height);
-				if(atoi(multicameramode) == 0) {
-					memcpy(uvBuf, (tmpBuf + pic_width * pic_height + 1), (uv_len - 1));
-					*(uvBuf + uv_len - 1)  = *(tmpBuf + pic_width * pic_height * 3 / 2 - 2);
-				} else {
-					memcpy(uvBuf, (tmpBuf + pic_width * pic_height), (pic_width * pic_height / 2));
-				}
+				memcpy(uvBuf, (tmpBuf + pic_width * pic_height), (pic_width * pic_height / 2));
 			}
 
-			if(UVBuf){
-				free(UVBuf);
-				UVBuf = NULL;
-			}
 			if(tmpBuf){
 				free(tmpBuf);
 				tmpBuf = NULL;

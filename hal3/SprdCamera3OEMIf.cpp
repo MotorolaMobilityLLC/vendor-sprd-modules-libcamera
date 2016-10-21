@@ -3308,6 +3308,7 @@ void SprdCamera3OEMIf::doFaceMakeup(struct camera_frame_type *frame)
 	HAL_LOGD("UCAM skinWhitenLevel is %d, skinCleanLevel is %d", skinWhitenLevel, skinCleanLevel);
 
 	FACE_Tag faceInfo;
+	YuvFormat yuvFormat = TSFB_FMT_NV21;
 	mSetting->getFACETag(&faceInfo);
 	if(faceInfo.face_num>0){
 		mSkinWhitenNotDetectFDNum = 0;
@@ -3346,7 +3347,7 @@ void SprdCamera3OEMIf::doFaceMakeup(struct camera_frame_type *frame)
 	outMakeupData.uvBuf = tmpBuf + frame->width*frame->height ;
 
 	if ( frame->width > 0 && frame->height > 0 && NULL != outMakeupData.yBuf && isNeedBeautify) {
-		int mu_retVal = ts_face_beautify(&inMakeupData, &outMakeupData, skinCleanLevel, skinWhitenLevel, &mSkinWhitenTsface,0);
+		int mu_retVal = ts_face_beautify(&inMakeupData, &outMakeupData, skinCleanLevel, skinWhitenLevel, &mSkinWhitenTsface, 0, yuvFormat);
 		if(mu_retVal !=  TS_OK) {
 			HAL_LOGE("UCAM ts_face_beautify ret is %d", mu_retVal);
 		} else {
@@ -5053,7 +5054,9 @@ int SprdCamera3OEMIf::openCamera()
 #ifdef CONFIG_CAMERA_GYRO
 	gyro_monitor_thread_init((void *)this);
 #endif
-
+#ifdef CONFIG_FACE_BEAUTY
+	ts_printVersionInfo();
+#endif
 	return ret;
 }
 

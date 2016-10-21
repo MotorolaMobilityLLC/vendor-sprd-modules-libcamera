@@ -16,6 +16,10 @@ extern "C" {
     #define TS_NO_MEMORY         (0x00000004)    //No memory error
 
 
+    typedef enum enumYuvFORMAT{
+        TSFB_FMT_NV21 = 0,
+        TSFB_FMT_NV12,
+    }YuvFormat;
     /*
      * Data struct : rectangle
      */

@@ -917,6 +917,7 @@ void SprdCamera3StereoVideo::ReProcessThread::video_3d_doFaceMakeup( private_han
     frame->height = private_handle->height;
 
     TSRect Tsface;
+    YuvFormat yuvFormat = TSFB_FMT_NV21;
     if(face_info[0] !=0 ||face_info[1] !=0 || face_info[2]!= 0 || face_info[3] != 0){
         video_3d_convert_face_info_from_preview2video(face_info, frame->width, frame->height);
         Tsface.left = face_info[0];
@@ -952,7 +953,7 @@ void SprdCamera3StereoVideo::ReProcessThread::video_3d_doFaceMakeup( private_han
         outMakeupData.uvBuf = tmpBuf + frame->width*frame->height ;
 
         if (frame->width > 0 && frame->height > 0 && NULL != outMakeupData.yBuf) {
-            int ret_val = ts_face_beautify(&inMakeupData, &outMakeupData, skinCleanLevel, skinWhitenLevel, &Tsface,0);
+            int ret_val = ts_face_beautify(&inMakeupData, &outMakeupData, skinCleanLevel, skinWhitenLevel, &Tsface, 0, yuvFormat);
             if(ret_val !=  TS_OK) {
                 HAL_LOGE("UCAM ts_face_beautify ret is %d", ret_val);
             } else {
