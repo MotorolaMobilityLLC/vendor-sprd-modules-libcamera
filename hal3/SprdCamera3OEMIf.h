@@ -189,7 +189,7 @@ public:
 	int setDfsPolicy(int dfs_policy);
 	int releaseDfsPolicy(int dfs_policy);
 	int IommuIsEnabled(void);
-	int stopMultiLayer();
+	int checkIfNeedToStopMultiLayer();
 	void setSensorCloseFlag();
 	uint64_t getZslBufferTimestamp();/**add for 3dcapture, get zsl buffer's timestamp in zsl query*/
 	void setZslBufferTimestamp(uint64_t timestamp);/**add for 3dcapture, set the needed timestamp*/

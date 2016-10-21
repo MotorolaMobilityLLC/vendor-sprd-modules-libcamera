@@ -978,11 +978,8 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 		mHDRProcessFlag = false;
 	}
 
-	if (mOldCapIntent == ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE &&
-	    capturePara.cap_intent != ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE) {
-	        HAL_LOGV("stopMultiLayer");
-		mOEMIf->stopMultiLayer();
-	}
+	// check if need to stop multi-layer
+	mOEMIf->checkIfNeedToStopMultiLayer();
 
 	switch(capturePara.cap_intent)
 	{

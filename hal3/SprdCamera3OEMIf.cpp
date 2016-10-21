@@ -670,7 +670,7 @@ void SprdCamera3OEMIf::initialize()
 	mDropZslFrameNum = 0;
 }
 
-int SprdCamera3OEMIf::stopMultiLayer()
+int SprdCamera3OEMIf::checkIfNeedToStopMultiLayer()
 {
 	if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
 		HAL_LOGE("oem is null or oem ops is null");
@@ -681,7 +681,6 @@ int SprdCamera3OEMIf::stopMultiLayer()
 	mSetting->getSPRDDEFTag(&sprddefInfo);
 
 	// capture_mode: 1 single capture; >1: n capture
-	HAL_LOGI("sprddefInfo.capture_mode=%d", sprddefInfo.capture_mode);
 	if (mFlagMultiLayerStart &&
 	    mSprdBurstModeEnabled == 1 &&
 	    mSprdZslEnabled == 1 &&
