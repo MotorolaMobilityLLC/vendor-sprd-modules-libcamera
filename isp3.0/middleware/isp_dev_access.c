@@ -629,7 +629,7 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 {
 	cmr_int                                ret = ISP_SUCCESS;
 	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-	struct scenario_info_ap               	input_data;
+	struct scenario_info_ap                input_data;
 	struct cfg_3a_info			cfg3a_info;
 	struct dld_sequence                     dldseq_info;
 	cmr_u32                                iso_gain = 0;
