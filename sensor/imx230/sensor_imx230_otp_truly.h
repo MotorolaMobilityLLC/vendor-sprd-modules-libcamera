@@ -138,11 +138,12 @@ static unsigned long imx230_otp_split(SENSOR_HW_HANDLE handle)
 		single_otp->program_flag = 0;
 		return -1;
 	}
+	imx230_otp_info.total_otp.data_ptr = (void *)imx230_otp_data;
+	imx230_otp_info.total_otp.size = IMX230_OTP_SIZE;
 
 	/*set below when use dual camera otp*/
 	buffer = (cmr_u8 *)imx230_otp_data;
-	imx230_otp_info.dual_otp.total_otp.data_ptr = (void *)imx230_otp_data;
-	imx230_otp_info.dual_otp.total_otp.size = IMX230_OTP_SIZE;
+	imx230_otp_info.dual_otp.dual_flag = 1;
 	imx230_otp_info.dual_otp.data_3d.data_ptr = (void *)(buffer + IMX230_OTP_DATA3D_OFFSET);
 	imx230_otp_info.dual_otp.data_3d.size = IMX230_OTP_DATA3D_SIZE;
 	buffer += IMX230_OTP_MASTER_SLAVE_OFFSET;

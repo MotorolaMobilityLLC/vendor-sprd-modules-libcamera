@@ -930,7 +930,7 @@ cmr_uint camera_get_sensor_otp_info(cmr_handle camera_handle, struct sensor_otp_
 		goto exit;
 	}
 	ret = camera_get_otpinfo(camera_handle, otp_info);
-	CMR_LOGV("otp_info data_ptr %p size %d", otp_info->dual_otp.total_otp.data_ptr,otp_info->dual_otp.total_otp.size);
+	CMR_LOGV("otp_info data_ptr %p size %d", otp_info->total_otp.data_ptr,otp_info->total_otp.size);
 
 exit:
 	CMR_LOGI("done %ld", ret);

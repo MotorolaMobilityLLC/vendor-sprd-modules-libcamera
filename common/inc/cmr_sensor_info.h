@@ -331,7 +331,7 @@ struct sensor_single_otp_info {
 };
 
 struct sensor_dual_otp_info {
-	struct sensor_data_info total_otp;
+	cmr_u8 dual_flag;
 	struct sensor_data_info data_3d;
 	struct sensor_otp_iso_awb_info master_iso_awb_info;
 	struct sensor_otp_lsc_info master_lsc_info;
@@ -340,6 +340,7 @@ struct sensor_dual_otp_info {
 };
 
 struct sensor_otp_cust_info {
+	struct sensor_data_info total_otp;
 	struct sensor_single_otp_info single_otp;
 	struct sensor_dual_otp_info dual_otp;
 };

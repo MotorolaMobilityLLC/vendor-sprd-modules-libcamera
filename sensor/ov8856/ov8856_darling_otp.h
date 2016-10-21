@@ -166,12 +166,11 @@ static unsigned long ov8856_otp_read(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* para
 	ret = ov8856_otp_read_data(handle);
 	otp_info = &ov8856_otp_info;
 
-	if (0 == otp_info->single_otp.program_flag || ret) {
+	if (ret || 1 != otp_info->single_otp.program_flag) {
 		SENSOR_LOGI("otp error");
 		param->pval = NULL;
 		return -1;
-	}else
-		otp_info->single_otp.program_flag=1;
+	}
 	param->pval = (void *)otp_info;
 	SENSOR_LOGI("param->pval = %p", param->pval);
 	return 0;

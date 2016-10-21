@@ -106,10 +106,12 @@ static unsigned long s5k3l8xxm3_otp_split(SENSOR_HW_HANDLE handle)
 	single_otp->af_info.macro_cali = (high_val << 8 | low_val) >> 6;
 	SENSOR_LOGI("infinite_cali = %d macro_cali = %d",  single_otp->af_info.infinite_cali,single_otp->af_info.macro_cali);
 
+	s5k3l8xxm3_otp_info.total_otp.data_ptr = (void *)s5k3l8xxm3_otp_data;
+	s5k3l8xxm3_otp_info.total_otp.size = S5K4L8XXM3_OTP_SIZE;
+
 	/*set below when use dual camera otp*/
 	buffer = (cmr_u8 *)s5k3l8xxm3_otp_data;
-	s5k3l8xxm3_otp_info.dual_otp.total_otp.data_ptr = (void *)s5k3l8xxm3_otp_data;
-	s5k3l8xxm3_otp_info.dual_otp.total_otp.size = S5K4L8XXM3_OTP_SIZE;
+	s5k3l8xxm3_otp_info.dual_otp.dual_flag = 1;
 	s5k3l8xxm3_otp_info.dual_otp.data_3d.data_ptr = (void *)(buffer + S5K3L8XXM3_OTP_DATA3D_OFFSET);
 	s5k3l8xxm3_otp_info.dual_otp.data_3d.size = S5K3L8XXM3_OTP_DATA3D_SIZE;
 	buffer += S5K3L8XXM3_OTP_MASTER_SLAVE_OFFSET;

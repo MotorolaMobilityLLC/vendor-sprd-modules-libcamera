@@ -2217,7 +2217,7 @@ cmr_int camera_get_otpinfo(cmr_handle  oem_handle,struct sensor_otp_cust_info *o
 	}
 	if (val.pval) {
 		memcpy(otp_data, val.pval, sizeof(struct sensor_otp_cust_info));
-		CMR_LOGI("%p, %p, size:%d" ,otp_data, otp_data->dual_otp.total_otp.data_ptr, otp_data->dual_otp.total_otp.size);
+		CMR_LOGI("%p, %p, size:%d" ,otp_data, otp_data->total_otp.data_ptr, otp_data->total_otp.size);
 	} else {
 		ret = -1;
 		CMR_LOGI("%d, no dual otp data", ret);
@@ -2980,7 +2980,7 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 	}
 	if (val.pval) {
 		isp_param.otp_data = val.pval;
-		if (isp_param.otp_data->dual_otp.total_otp.data_ptr) {
+		if (isp_param.otp_data->dual_otp.dual_flag) {
 			isp_param.dual_otp = &isp_param.otp_data->dual_otp;
 		}
 	}

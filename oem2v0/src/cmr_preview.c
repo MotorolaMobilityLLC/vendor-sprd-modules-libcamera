@@ -3713,9 +3713,9 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_res
 				CMR_LOGE("get sensor otp error");
 				goto exit;
 			}
-			CMR_LOGI("sensor_otp 0x%x",  sensor_otp.dual_otp.total_otp.data_ptr);
-			if(sensor_otp.dual_otp.total_otp.data_ptr != NULL)
-				prev_depthmap_open(handle, camera_id, sensor_otp.dual_otp.total_otp);
+			CMR_LOGI("sensor_otp %p, dual flag %d",  sensor_otp.total_otp.data_ptr, sensor_otp.dual_otp.dual_flag);
+			if(sensor_otp.total_otp.data_ptr != NULL && sensor_otp.dual_otp.dual_flag)
+				prev_depthmap_open(handle, camera_id, sensor_otp.total_otp);
 		}
 #endif
 	}
