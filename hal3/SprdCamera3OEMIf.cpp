@@ -2631,7 +2631,7 @@ int SprdCamera3OEMIf::startPreviewInternal()
 
 	HAL_LOGD("mSprdBurstModeEnabled=%d", mSprdBurstModeEnabled);
 	SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_BURSTMODE_ENABLED, (cmr_uint)mSprdBurstModeEnabled);
-    /**add for 3dcapture, increase zsl buffer number for frame sync*/
+	/**add for 3dcapture, increase zsl buffer number for frame sync*/
 	if (sprddefInfo.sprd_3dcapture_enabled)
 	{
 	    mZslNum = DUALCAM_ZSL_NUM;
@@ -4543,6 +4543,12 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb,
 		    cmr_u32                   buf_id = 0;
 		    struct camera_frame_type *zsl_frame = NULL;
 		    zsl_frame = (struct camera_frame_type *)parm4;
+		    if (mIsUnpopped)
+		    {
+		        mIsUnpopped = false;
+		        HAL_LOGD("unpopped zsl buffer, should not set to list");
+		        break;
+		    }
 		    if (zsl_frame->fd <= 0)
 		    {
 		        HAL_LOGW("zsl lost a buffer, this should not happen");
@@ -7226,7 +7232,6 @@ int SprdCamera3OEMIf::getZSLQueueFrameNum()
 void SprdCamera3OEMIf::pushZSLQueue(ZslBufferQueue frame)
 {
 	Mutex::Autolock l(&mZslLock);
-	HAL_LOGD("push zsl frame : Camera %d, buf_id:%d, timestamp:%lld", mCameraId, frame.frame.buf_id, frame.frame.timestamp);/**add for 3dcapture, increase zsl buffer number for frame sync*/
 
 	mZSLQueue.push_back(frame);
 }
@@ -7304,13 +7309,13 @@ struct camera_frame_type SprdCamera3OEMIf::popZslFrame()
 /**add for 3dcapture, record received zsl buffer begin*/
 uint64_t SprdCamera3OEMIf::getZslBufferTimestamp()
 {
-	List<ZslBufferQueue>::iterator frame;
+    List<ZslBufferQueue>::iterator frame;
 
-	HAL_LOGD("E");
-	if(mZSLQueue.size() == 0)
-		return 0;
+    HAL_LOGD("E");
+    if(mZSLQueue.size() == 0)
+        return 0;
 
-	frame = mZSLQueue.begin();
+    frame = mZSLQueue.begin();
 
     HAL_LOGD("current timestamp:%lld", frame->frame.timestamp);
     return frame->frame.timestamp;
@@ -7323,9 +7328,9 @@ void SprdCamera3OEMIf::setZslBufferTimestamp(uint64_t timestamp)
 
 void SprdCamera3OEMIf::pushZslList(ZslBufferQueue frame)
 {
-	Mutex::Autolock l(&mZslLock);
+    Mutex::Autolock l(&mZslLock);
     List<ZslBufferQueue>::iterator zslFrame;
-	HAL_LOGD("push zsl frame : Camera %d, buf_id:%d, timestamp:%lld", mCameraId, frame.frame.buf_id, frame.frame.timestamp);
+    HAL_LOGD("push zsl frame : Camera %d, buf_id:%d, timestamp:%lld", mCameraId, frame.frame.buf_id, frame.frame.timestamp);
     if ( mZslNum-2 <= mZSLList.size() )
     {
         HAL_LOGD("Camera %d zsl list number: %d", mCameraId, mZSLList.size());
@@ -7337,42 +7342,43 @@ void SprdCamera3OEMIf::pushZslList(ZslBufferQueue frame)
 
 struct camera_frame_type SprdCamera3OEMIf::popZslList(uint64_t timestamp)
 {
-	Mutex::Autolock l(&mZslLock);
+    Mutex::Autolock l(&mZslLock);
 
-	List<ZslBufferQueue>::iterator frame;
-	struct camera_frame_type zsl_frame = {0};
+    List<ZslBufferQueue>::iterator frame;
+    struct camera_frame_type zsl_frame = {0};
 
-	HAL_LOGD("E");
-	if(mZSLList.size() == 0)
-		return zsl_frame;
+    HAL_LOGD("E");
+    if(mZSLList.size() == 0)
+        return zsl_frame;
 
-	HAL_LOGD("input timestamp: %lld", timestamp);
+    HAL_LOGD("input timestamp: %lld", timestamp);
 
-	frame = mZSLList.begin();
-	if ( timestamp < frame->frame.timestamp && DUALCAM_TIME_DIFF < abs(frame->frame.timestamp - timestamp) )
-	{
-		HAL_LOGD("Camera %d, the oldest zsl buffer's timestamp:%lld is much bigger than the needed timestamp: %lld", mCameraId,frame->frame.timestamp, timestamp);
+    frame = mZSLList.begin();
+    if ( timestamp < frame->frame.timestamp && DUALCAM_TIME_DIFF < abs(frame->frame.timestamp - timestamp) )
+    {
+        HAL_LOGD("Camera %d, the oldest zsl buffer's timestamp:%lld is much bigger than the needed timestamp: %lld", mCameraId,frame->frame.timestamp, timestamp);
         for ( frame = mZSLList.begin();frame != mZSLList.end();frame++ )
         {
-            HAL_LOGD("buffer in the list timestamp:%lld, needed timestamp: %lld", frame->frame.timestamp, timestamp);
+            HAL_LOGV("buffer in the list timestamp:%lld, needed timestamp: %lld", frame->frame.timestamp, timestamp);
         }
         frame = mZSLList.begin();
         zsl_frame = frame->frame;
-		mZSLList.erase(frame);
-		return zsl_frame;
-	}
+        mZSLList.erase(frame);
+        return zsl_frame;
+    }
 
     for ( frame = mZSLList.begin();frame != mZSLList.end();frame++ )
     {
         if ( DUALCAM_TIME_DIFF >= abs(frame->frame.timestamp - timestamp) )
         {
-			HAL_LOGD("Camera %d, mach zsl buffer found, timestamp:%lld, needed timestamp: %lld", mCameraId, frame->frame.timestamp, timestamp);
-			zsl_frame = frame->frame;
-			mZSLList.erase(frame);
-			break;
+            HAL_LOGD("Camera %d, mach zsl buffer found, timestamp:%lld, needed timestamp: %lld", mCameraId, frame->frame.timestamp, timestamp);
+            zsl_frame = frame->frame;
+            mZSLList.erase(frame);
+            mIsUnpopped = true;
+            break;
         }
-		HAL_LOGD("finding mach buffer, current timestamp:%lld, needed timestamp: %lld", frame->frame.timestamp, timestamp);
-		mZSLList.erase(frame);
+        HAL_LOGD("finding mach buffer, current timestamp:%lld, needed timestamp: %lld", frame->frame.timestamp, timestamp);
+        mZSLList.erase(frame);
     }
 
 	return zsl_frame;
@@ -7458,13 +7464,13 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data)
 	}
 
 	if (1 == obj->mZslShotPushFlag) {
-        if ( 0 == obj->mNeededTimestamp )/**add for 3dcapture, find right zsl buffer if the needed timestamp gived*/
-        {
-			zsl_frame = obj->popZslFrame();
-        }
+		if ( 0 == obj->mNeededTimestamp )/**add for 3dcapture, find right zsl buffer if the needed timestamp gived*/
+		{
+		    zsl_frame = obj->popZslFrame();
+		}
 		else
 		{
-			zsl_frame = obj->popZslList(mNeededTimestamp);
+		    zsl_frame = obj->popZslList(mNeededTimestamp);
 		}
 
 		// for burst mode
@@ -7508,13 +7514,13 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data)
 			while (zsl_frame.y_vir_addr == 0) {
 				HAL_LOGD("wait for zsl frame");
 				usleep(20*1000);
-                if (mNeededTimestamp)/**add for 3dcapture, find right zsl buffer if the needed timestamp gived*/
-                {
-					zsl_frame = obj->popZslList(mNeededTimestamp);
-                }
+				if (mNeededTimestamp)/**add for 3dcapture, find right zsl buffer if the needed timestamp gived*/
+				{
+				    zsl_frame = obj->popZslList(mNeededTimestamp);
+				}
 				else
 				{
-					zsl_frame = obj->popZslFrame();
+				    zsl_frame = obj->popZslFrame();
 				}
 			}
 		}

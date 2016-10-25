@@ -990,6 +990,11 @@ void SprdCamera3Capture::CaptureThread::unLoadGpuApi()
 {
     HAL_LOGV("E");
 
+    if(isInitRenderContest){
+        mGpuApi->destroyRenderContext();
+        isInitRenderContest = false;
+    }
+
     if(mGpuApi->handle!=NULL){
      dlclose(mGpuApi->handle);
      mGpuApi->handle = NULL;
@@ -1006,15 +1011,15 @@ void SprdCamera3Capture::CaptureThread::unLoadGpuApi()
  *
  * RETURN     : None
  *==========================================================================*/
-void SprdCamera3Capture::CaptureThread::initGpuData(int w,int h, int rotation)
+void SprdCamera3Capture::CaptureThread::initGpuData()
 {
-    pt_stream_info.dst_height = h;
-    pt_stream_info.dst_width  = w;
+    pt_stream_info.dst_height = mCapture->mCaptureHeight;
+    pt_stream_info.dst_width  = mCapture->mCaptureWidth;
     pt_stream_info.src_height = m3DCaptureHeight;
     pt_stream_info.src_width  = m3DCaptureWidth;
-    pt_stream_info.rot_angle = rotation;
+    pt_stream_info.rot_angle = 0;
     HAL_LOGD("src_width = %d, dst_height=%d, dst_width=%d, dst_height=%d, rotation:%d",
-             pt_stream_info.src_width ,pt_stream_info.src_height,pt_stream_info.dst_width , pt_stream_info.dst_height, rotation);
+             pt_stream_info.src_width ,pt_stream_info.src_height,pt_stream_info.dst_width , pt_stream_info.dst_height, pt_stream_info.rot_angle);
     float buff[768];
     float H_left[9], H_right[9];
     FILE *fid = fopen("/productinfo/sprd_3d_calibration/calibration.data","rb");
@@ -1047,6 +1052,11 @@ void SprdCamera3Capture::CaptureThread::initGpuData(int w,int h, int rotation)
         pt_line_buf.homography_matrix[15] = 0.0;
         pt_line_buf.homography_matrix[16] = 0.0;
         pt_line_buf.homography_matrix[17] = 1.0;
+    }
+    if(CONTEXT_FAIL == mGpuApi->initRenderContext(&pt_stream_info, pt_line_buf.homography_matrix, 18)) {
+        HAL_LOGE("initRenderContext fail");
+    }else{
+        isInitRenderContest = true;
     }
     HAL_LOGV("using following homography_matrix data:\n");
     HAL_LOGV("left:\t%8f  %8f  %8f    right:\t%8f  %8f  %8f", pt_line_buf.homography_matrix[0],  pt_line_buf.homography_matrix[1], pt_line_buf.homography_matrix[2], pt_line_buf.homography_matrix[9], pt_line_buf.homography_matrix[10], pt_line_buf.homography_matrix[11]);
@@ -1157,6 +1167,10 @@ bool SprdCamera3Capture::CaptureThread::threadLoop()
 {
     buffer_handle_t* output_buffer = NULL;
     capture_queue_msg_t capture_msg;
+
+    if (!isInitRenderContest)
+        initGpuData();
+
     while(!mCaptureMsgList.empty()){
         List <capture_queue_msg_t>::iterator itor1 = mCaptureMsgList.begin();
         capture_msg = *itor1;
@@ -1165,7 +1179,7 @@ bool SprdCamera3Capture::CaptureThread::threadLoop()
         case CAPTURE_MSG_EXIT:
             {
                 //flush queue
-                return false;
+                return true;
             }
             break;
         case CAPTURE_MSG_DATA_PROC:
@@ -1358,15 +1372,6 @@ int SprdCamera3Capture::CaptureThread::combineTwoPicture(buffer_handle_t *&outpu
     }
     HAL_LOGD("combine two picture:%d, %d", input_buf1, input_buf2);
 
-    if(!isInitRenderContest){
-        if(CONTEXT_FAIL == mGpuApi->initRenderContext(&pt_stream_info, pt_line_buf.homography_matrix, 18)) {
-            HAL_LOGE("initRenderContext fail");
-            return UNKNOWN_ERROR;
-        }
-        else {
-            isInitRenderContest = true;
-        }
-    }
     output_buf = mCapture->mLocalCapBuffer[mCaptureStreamsNum].buffer;
     dcam_info_t dcam;
 
@@ -1424,11 +1429,6 @@ int SprdCamera3Capture::CaptureThread::combineTwoPicture(buffer_handle_t *&outpu
             nCont = nCont%100+1;
         }
     }
-    if(isInitRenderContest){
-        mGpuApi->destroyRenderContext();
-        isInitRenderContest = false;
-    }
-
     return rc;
 }
 
@@ -1708,7 +1708,6 @@ int SprdCamera3Capture::configureStreams(const struct camera3_device *device,cam
                  stream_list->streams[i]->stream_type, stream_list->streams[i]->format, stream_list->streams[i]->width, stream_list->streams[i]->height );
     }
 
-    mCaptureThread->initGpuData(w,h,stream_list->streams[stream_list->num_streams-1]->rotation);
     mCaptureThread->run(NULL);
 
     HAL_LOGV("X");

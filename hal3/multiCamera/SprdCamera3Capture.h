@@ -164,7 +164,7 @@ public:
         void videoErrorCallback(uint32_t frame_number);
         int loadGpuApi();
         void unLoadGpuApi();
-        void initGpuData(int w,int h,int );
+        void initGpuData();
         //This queue stores matched buffer as frame_matched_info_t
         List <capture_queue_msg_t>         mCaptureMsgList;
         Mutex                              mMergequeueMutex;

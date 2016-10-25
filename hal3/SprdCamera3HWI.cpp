@@ -1419,7 +1419,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info)
 		mRequestSignal.signal();
 	}
 }
-
+/**add for 3d capture, get/set needed zsl buffer's timestamp in zsl query begin*/
 uint64_t SprdCamera3HWI::getZslBufferTimestamp()
 {
     return mOEMIf->getZslBufferTimestamp();
@@ -1429,6 +1429,7 @@ void SprdCamera3HWI::setZslBufferTimestamp(uint64_t timestamp)
 {
     mOEMIf->setZslBufferTimestamp(timestamp);
 }
+/**add for 3d capture, get/set needed zsl buffer's timestamp in zsl query end*/
 
 void SprdCamera3HWI::getMetadataVendorTagOps(vendor_tag_query_ops_t * ops)
 {

@@ -443,6 +443,7 @@ private:
 	bool                              mSprdReprocessing;/**add for 3d capture */
 	uint64_t                          mNeededTimestamp;/**add for 3d capture */
 	List<ZslBufferQueue>              mZSLList;/**add for 3dcapture, record received zsl buffer end*/
+	bool                              mIsUnpopped;/**add for 3dcapture, record unpoped zsl buffer*/
 
 	void yuvNv12ConvertToYv12(struct camera_frame_type *frame, char* tmpbuf);
 
