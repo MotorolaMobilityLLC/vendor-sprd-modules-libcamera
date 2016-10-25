@@ -593,7 +593,7 @@ private:
 	sprd_camera_memory_t*           mIspPreviewYReserved[2];
 	static sprd_camera_memory_t*     mIspFirmwareReserved;
 	static uint32_t     			mIspFirmwareReserved_cnt;
-
+	static bool			mZslCaptureExitLoop;
 	sprd_camera_memory_t*           mHighIsoSnapshotHeapReserved;
 	sprd_camera_memory_t*           mIspYUVReserved;
 	sprd_camera_memory_t*           mIspRawDataReserved[ISP_RAWBUF_NUM];

@@ -142,6 +142,7 @@ gralloc_module_t const* SprdCamera3OEMIf::mGrallocHal = NULL;
 //oem_module_t   * SprdCamera3OEMIf::mHalOem = NULL;
 sprd_camera_memory_t* SprdCamera3OEMIf::mIspFirmwareReserved = NULL;
 uint32_t     		 SprdCamera3OEMIf::mIspFirmwareReserved_cnt = 0;
+bool			SprdCamera3OEMIf::mZslCaptureExitLoop = false;
 
 static void writeCamInitTimeToApct(char *buf)
 {
@@ -467,7 +468,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mZSLList.clear();/**add for 3d capture*/
 
 	mSprdBurstModeEnabled = 0;
-
+	mZslCaptureExitLoop = false;
 	HAL_LOGI("openCameraHardware: X cameraId: %d.", cameraId);
 }
 
@@ -570,7 +571,7 @@ void SprdCamera3OEMIf::closeCamera()
 
 	HAL_LOGI("E");
 	Mutex::Autolock l(&mLock);
-
+	mZslCaptureExitLoop = true;
 	// Either preview was ongoing, or we are in the middle or taking a
 	// picture.  It's the caller's responsibility to make sure the camera
 	// is in the idle or init state before destroying this object.
@@ -7509,6 +7510,10 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data)
 					HAL_LOGD("cnt=%d", cnt);
 					break;
 				}
+				if(true == mZslCaptureExitLoop) {
+					HAL_LOGD("zsl loop exit done.");
+					break;
+				}
 			}
 		} else {
 			while (zsl_frame.y_vir_addr == 0) {
@@ -7521,6 +7526,10 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data)
 				else
 				{
 				    zsl_frame = obj->popZslFrame();
+				}
+				if(true == mZslCaptureExitLoop) {
+					HAL_LOGD("zsl loop exit done.");
+					break;
 				}
 			}
 		}
