@@ -6345,7 +6345,7 @@ cmr_int prev_construct_video_frame(struct prev_handle *handle,
 					IMG_DATA_TYPE_YUV420,
 					frame_type->width,
 					frame_type->height,
-					&prev_cxt->prev_frm[frm_id].addr_vir);
+					&prev_cxt->video_frm[frm_id].addr_vir);
 		}
 #endif
 	} else {
@@ -6700,12 +6700,8 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 	chn_param.cap_inf_cfg.cfg.need_binning = 0;
 	chn_param.cap_inf_cfg.cfg.need_isp     = 0;
 	chn_param.cap_inf_cfg.cfg.dst_img_fmt  = prev_cxt->prev_param.preview_fmt;
+	chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
 
-	if(1 == handle->prev_cxt[camera_id].prev_param.is_dv) {
-		chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 1;
-	} else {
-		chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
-	}
 	if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
 		prev_cxt->skip_mode = IMG_SKIP_SW_KER;
 		chn_param.cap_inf_cfg.cfg.need_isp = 1;
@@ -6983,12 +6979,7 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle, cmr_u32 camera_i
 	chn_param.cap_inf_cfg.cfg.need_binning = 0;
 	chn_param.cap_inf_cfg.cfg.need_isp     = 0;
 	chn_param.cap_inf_cfg.cfg.dst_img_fmt  = prev_cxt->prev_param.preview_fmt;
-
-	if(1 == handle->prev_cxt[camera_id].prev_param.is_dv) {
-		chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode= 1;
-	} else {
-		chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
-	}
+	chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
 
 	if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
 		prev_cxt->skip_mode = IMG_SKIP_SW_KER;
