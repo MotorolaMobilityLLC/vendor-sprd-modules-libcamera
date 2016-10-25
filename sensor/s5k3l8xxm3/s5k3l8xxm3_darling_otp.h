@@ -153,7 +153,21 @@ static unsigned long s5k3l8xxm3_otp_split(SENSOR_HW_HANDLE handle)
 				s5k3l8xxm3_otp_info.dual_otp.slave_iso_awb_info.gain_g,
 				s5k3l8xxm3_otp_info.dual_otp.slave_iso_awb_info.gain_b,
 				s5k3l8xxm3_otp_info.dual_otp.slave_lsc_info.lsc_data_size);
+	{
+		FILE *fp = NULL;
+		char value[PROPERTY_VALUE_MAX];
 
+		property_get("debug.camera.dump.otp",(char *)value,"0");
+		if(atoi(value)) {
+			fp = fopen("/data/misc/media/s5k3l8otp.bin", "wb");
+			if (NULL == fp) {
+				SENSOR_LOGI("failed to open");
+			} else {
+				fwrite(s5k3l8xxm3_otp_info.total_otp.data_ptr, 1, s5k3l8xxm3_otp_info.total_otp.size, fp);
+				fclose(fp);
+			}
+		}
+	}
 	SENSOR_LOGI("X");
 	return 0;
 }

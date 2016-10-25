@@ -21,6 +21,7 @@
 
 #include <utils/Log.h>
 #include "sensor.h"
+#include "cutils/properties.h"
 #include "jpeg_exif_header.h"
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"

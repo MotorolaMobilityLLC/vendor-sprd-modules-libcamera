@@ -889,12 +889,15 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 	pdaf_input.caller_handle = isp_3a_handle;
 	pdaf_input.pdaf_support = cxt->pdaf_cxt.pdaf_support;
 	pdaf_input.pd_info = input_ptr->pdaf_info;
+	pdaf_input.name = input_ptr->ex_info.name;
 	pdaf_input.pdaf_ctrl_cb_ops.call_back = isp3a_handle_pdaf_callback;
-	if (cxt->single_otp_data) {
+	if (cxt->single_otp_data && input_ptr->otp_data) {
 		pdaf_input.af_otp.otp_data = &cxt->single_otp_data->af_info;
 		pdaf_input.af_otp.size = sizeof(cxt->single_otp_data->af_info);
-		pdaf_input.pdaf_otp.otp_data = cxt->single_otp_data->pdaf_info.pdaf_data_addr;
-		pdaf_input.pdaf_otp.size = cxt->single_otp_data->pdaf_info.pdaf_data_size;
+		pdaf_input.pdaf_otp.otp_data = input_ptr->otp_data->total_otp.data_ptr;
+		pdaf_input.pdaf_otp.size = input_ptr->otp_data->total_otp.size;
+		//pdaf_input.pdaf_otp.otp_data = cxt->single_otp_data->pdaf_info.pdaf_data_addr;
+		//pdaf_input.pdaf_otp.size = cxt->single_otp_data->pdaf_info.pdaf_data_size;
 	}
 	ret = pdaf_ctrl_init(&pdaf_input, &pdaf_output, &cxt->pdaf_cxt.handle);
 	if (ret) {

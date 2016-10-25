@@ -27,21 +27,16 @@
 #include "alPDAF.h"
 #include "PDExtract.h"
 
-/* use pdotp.bin in data/misc/media for test*/
-#define PD_DATA_TEST
-#ifdef PD_DATA_TEST
-	#define PD_OTP_TEST_SIZE	550
-	#define PD_OTP_TEST_PATH "/system/lib/tuning/s5k3l8xxm3_mipi_raw_pdotp.bin"
-#endif
 #define PDLIB_PATH "libalPDAF.so"
 #define PDEXTRACT_LIBPATH "libalPDExtract.so"
 #define PD_REG_OUT_SIZE	352
+#define PD_OTP_PACK_SIZE	550
 
 struct pdaf_altek_lib_ops {
-	cmr_u8 (*init)(void *a_pInPDPackData);
-	cmr_u8 (*calc)(float *a_pfOutPDValue, void *a_tOutPdReg, void *a_pInImageBuf_left,
+	cmr_u8 (*init)(void *a_pInPDPackData,void *a_pInOTPData , int a_dInOTPSize);
+	cmr_u8 (*calc)(float *a_pfInPDValue, void *a_pOutPDReg, void *a_pInImageBuf_left,
 				void *a_pInImageBuf_right, unsigned short a_uwInWidth, unsigned short a_uwInHeight,
-				alGE_RECT a_tInWOI, DataBit a_tInBits, PDInReg *a_tInPdReg);
+				alGE_RECT a_tInWOI, DataBit a_tInbit, PDInReg *a_tInPDReg);
 	cmr_u8 (*deinit)(void);
 	cmr_u8 (*reset)(void);
 };
@@ -80,9 +75,7 @@ struct pdaf_altek_context {
 	PDInReg pd_reg_in;
 	cmr_u8 pd_reg_out[PD_REG_OUT_SIZE];
 	struct isp3a_pdaf_altek_report_t report_data;
-#ifdef PD_DATA_TEST
-	cmr_u8 otp_test[PD_OTP_TEST_SIZE];
-#endif
+	cmr_u8 pdotp_pack_data[PD_OTP_PACK_SIZE];
 	//struct pdaf_ctrl_init_in init_in_param;
 };
 
@@ -346,6 +339,27 @@ static cmr_int pdafaltek_libops_deinit(cmr_handle adpt_handle)
 	return ret;
 }
 
+cmr_int pdafaltek_get_pd_pack_bin(cmr_handle adpt_handle, const cmr_s8 *sensor_name)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct pdaf_altek_context *cxt = (struct pdaf_altek_context *)adpt_handle;
+	FILE *fp = NULL;
+	cmr_u8 file_name[100];
+
+	/* get pd pack bin */
+	ISP_LOGI("sensor_name %s", sensor_name);
+	sprintf((void *)&file_name[0], "/system/lib/tuning/%s_pdotp.bin", sensor_name);
+	fp = fopen((void *)&file_name[0], "rb");
+	if (NULL == fp) {
+		ISP_LOGI("failed to open pdotp bin");
+		goto exit;
+	}
+	fread(cxt->pdotp_pack_data, 1, PD_OTP_PACK_SIZE, fp);
+	fclose(fp);
+exit:
+	return ret;
+}
+
 static cmr_int pdafaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 {
 	cmr_int ret = -ISP_ERROR;
@@ -354,24 +368,19 @@ static cmr_int pdafaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 	struct pdaf_altek_context *cxt = NULL;
 	struct sensor_otp_af_info *otp_af_info = NULL;
 	cmr_u32 pd_in_size = 0;
-#ifdef PD_DATA_TEST
-	FILE * fp = NULL;
-#endif
 
 	if (!in_p || !adpt_handle) {
 		ISP_LOGE("init param %p is null !!!", in_p);
 		ret = ISP_PARAM_NULL;
 		return ret;
 	}
-#ifdef PD_DATA_TEST
-	//use pdotp.bin
-#else
-	if (NULL == in_p->pdaf_otp.otp_data || NULL == in_p->pd_info) {
-		ISP_LOGE("failed to get pd otp data");
+
+	if (/*NULL == in_p->pdaf_otp.otp_data || */NULL == in_p->pd_info) {
+		ISP_LOGE("failed to get pd data");
 		ret = ISP_PARAM_NULL;
 		return ret;
 	}
-#endif
+
 	*adpt_handle = NULL;
 	cxt = (struct pdaf_altek_context *)malloc(sizeof(*cxt));
 	if (NULL == cxt) {
@@ -425,7 +434,8 @@ static cmr_int pdafaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 	ISP_LOGI("infinite = %lf, macro = %lf",
 			 cxt->pd_reg_in.tSensorInfo.uwInfVCM,
 			 cxt->pd_reg_in.tSensorInfo.uwMacroVCM);
-
+	/*TBD dSensorID 0:for SamSung 1: for Sony*/
+	cxt->pd_reg_in.tSensorInfo.dSensorID = 0;// for samsung sensor
 	//ret = pdafaltek_libops_init(cxt);
 	//if (ret) {
 	//	ISP_LOGE("failed to init library and ops");
@@ -435,22 +445,13 @@ static cmr_int pdafaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 	/* show version */
 	pdafaltek_adpt_get_version(cxt);
 
+	pdafaltek_get_pd_pack_bin(cxt, (const cmr_s8 *)in_p->name);
 	/* init lib */
-#ifdef PD_DATA_TEST
-	fp = fopen(PD_OTP_TEST_PATH, "rb");
-	if (NULL == fp) {
-		CMR_LOGI("can not open file \n");
-		goto error_lib_init;
-	}
-	fread(cxt->otp_test, 1, PD_OTP_TEST_SIZE, fp);
-	fclose(fp);
-	//ret = cxt->ops.init(cxt->otp_test);
-	ret = alPDAF_Initial(cxt->otp_test);
-#else
-	ret = cxt->ops.init(in_p->pdaf_otp.otp_data);
-#endif
+	ISP_LOGI("otp ptr %p size %ld", in_p->pdaf_otp.otp_data, in_p->pdaf_otp.size);
+	//ret = cxt->ops.init(cxt->pdotp_pack_data, in_p->pdaf_otp.otp_data, in_p->pdaf_otp.size);
+	ret = alPDAF_Initial(cxt->pdotp_pack_data, in_p->pdaf_otp.otp_data, in_p->pdaf_otp.size);
 	if (ret) {
-		ISP_LOGE("failed to init lib");
+		ISP_LOGE("failed to init lib %ld", ret);
 		goto error_lib_init;
 	}
 

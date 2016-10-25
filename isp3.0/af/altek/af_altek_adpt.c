@@ -349,7 +349,7 @@ static cmr_int afaltek_adpt_set_haf_state(cmr_handle adpt_handle, cmr_u8 state)
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 
-	cxt->haf_ops.set_haf_state(state);
+	ret = cxt->haf_ops.set_haf_state(state);
 
 	ISP_LOGV("set haf trigger state %d", state);
 	return ret;
@@ -593,10 +593,10 @@ static cmr_u8 afaltek_adpt_lock_ae_awb(cmr_handle adpt_handle, cmr_int lock)
 	cmr_int ret = ISP_SUCCESS;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 
-
-	ISP_LOGI("af doesn't lock any A");
-	return ret;
-
+	if (cxt->haf_support) {
+		ISP_LOGI("af doesn't lock any A");
+		return ret;
+	}
 	if (ISP_AE_AWB_LOCK == lock) {
 		if (cxt->ae_awb_lock_cnt >= 1) {
 			ISP_LOGI("af has already locked ae awb");
@@ -1041,7 +1041,7 @@ static cmr_int afaltek_adpt_update_pd_info(cmr_handle adpt_handle, void *in)
 	struct allib_af_input_set_param_t p;
 
 	cmr_bzero(&trigger_in, sizeof(trigger_in));
-	if (cxt->haf_ops.calculate && cxt->haf_support && !cxt->pd_trigger_stats_lock) {
+	if (cxt->haf_ops.calculate && cxt->haf_support) {
 		cxt->haf_trigger_reg.dcurrentVCM = cxt->motor_info.motor_pos + cxt->motor_info.motor_offset;
 		cxt->haf_trigger_reg.tPDInfo = pd_info->extend_data_ptr;
 
@@ -1056,7 +1056,10 @@ static cmr_int afaltek_adpt_update_pd_info(cmr_handle adpt_handle, void *in)
 		trigger_in.timestamp.time_stamp_us = pd_info->timestamp.usec;
 		ISP_LOGI("trigger sensitivity %f, vcm %d, haf_ProbTrigger %f, pd_state =%d", cxt->haf_trigger_reg.fTriggerSensitivity,
 			cxt->haf_trigger_reg.dcurrentVCM, trigger_in.probability, trigger_in.pd_state);
-		afaltek_adpt_trans_data_to_caf(adpt_handle, (void *)&trigger_in, AFT_DATA_PD);
+		if (!cxt->pd_trigger_stats_lock) {
+			ISP_LOGI("af idle, send pd trigger data");
+			afaltek_adpt_trans_data_to_caf(adpt_handle, (void *)&trigger_in, AFT_DATA_PD);
+		}
 	}
 	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_UPDATE_PD_INFO;
@@ -1459,6 +1462,7 @@ static cmr_int afaltek_adpt_caf_start(cmr_handle adpt_handle)
 		ret = afaltek_adpt_pre_start(adpt_handle, &lib_roi, __func__);
 		if (ret)
 			ISP_LOGE("failed to start af");
+		cxt->pd_trigger_stats_lock = 1;
 	}
 exit:
 	return ret;
@@ -1475,18 +1479,18 @@ static cmr_int afaltek_adpt_haf_start(cmr_handle adpt_handle)
 	cmr_bzero(&roi, sizeof(roi));
 	cmr_bzero(&lib_roi, sizeof(lib_roi));
 
-	roi.valid_win = 1;
-	afaltek_adpt_set_centor(&roi, &cxt->sensor_info.crop_info);
-	afaltek_adpt_config_roi(adpt_handle, &roi,
-						alAFLib_ROI_TYPE_NORMAL, &lib_roi);
-
-	ret = afaltek_adpt_set_roi(adpt_handle, &lib_roi);
-	if (ret)
-		ISP_LOGE("failed to set roi");
-
 	if (cxt->af_touch_mode) {
-		/* notify oem to show box */
 		cxt->af_touch_mode = 0;
+		roi.valid_win = 1;
+		afaltek_adpt_set_centor(&roi, &cxt->sensor_info.crop_info);
+		afaltek_adpt_config_roi(adpt_handle, &roi,
+							alAFLib_ROI_TYPE_NORMAL, &lib_roi);
+
+		ret = afaltek_adpt_set_roi(adpt_handle, &lib_roi);
+		if (ret)
+			ISP_LOGE("failed to set roi");
+
+		/* notify oem to show box */
 		ret = afaltek_adpt_start_notify(adpt_handle);
 		if (ret)
 			ISP_LOGE("failed to notify");
@@ -1499,7 +1503,7 @@ static cmr_int afaltek_adpt_haf_start(cmr_handle adpt_handle)
 		//goto exit;
 	}
 	if (cxt->haf_support) {
-		afaltek_adpt_set_haf_state(cxt, Focusing);
+		ret = afaltek_adpt_set_haf_state(cxt, Focusing);
 	}
 	cxt->af_cur_status = AF_ADPT_FOCUSING;
 	cxt->pd_trigger_stats_lock = 1;
@@ -2297,6 +2301,7 @@ static cmr_int afaltek_adpt_af_done(cmr_handle adpt_handle, cmr_int success)
 	afaltek_adpt_set_caf_fv_cfg(cxt);
 
 	if (cxt->haf_support) {
+		cxt->pd_trigger_stats_lock = 0;
 		afaltek_adpt_set_haf_state(cxt, Waiting);
 	}
 	return ret;
@@ -2896,13 +2901,11 @@ static cmr_int afaltek_adpt_proc_report_status(cmr_handle adpt_handle,
 		cxt->lib_status_info.busy_frame_id = 0;
 		cxt->lib_status_info.af_lib_status = AF_LIB_IDLE;
 		ret = afaltek_adpt_af_done(cxt, 0);
-		cxt->pd_trigger_stats_lock = 0;
 	} else if (alAFLib_STATUS_FOCUSED == report->focus_status.t_status) {
 		ISP_LOGI("t_status focused ok = %d", report->focus_status.t_status);
 		cxt->lib_status_info.busy_frame_id = 0;
 		cxt->lib_status_info.af_lib_status = AF_LIB_IDLE;
 		ret = afaltek_adpt_af_done(cxt, 1);
-		cxt->pd_trigger_stats_lock = 0;
 	} else if (alAFLib_STATUS_FORCE_ABORT == report->focus_status.t_status) {
 		ISP_LOGI("t_status force abort = %d retrigger = %d",
 			 report->focus_status.t_status,
