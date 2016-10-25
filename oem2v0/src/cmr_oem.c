@@ -665,11 +665,11 @@ void camera_grab_handle(cmr_int evt, void* data, void* privdata)
 			else
 				out_param = cxt->snp_cxt.post_proc_setting.chn_out_frm[frm_id];
 		}
+		ipm_in_param.dst_frame = out_param;
 		out_param.addr_vir.addr_y = frame->yaddr_vir;
 		cxt->snp_cxt.cur_frm_info = *frame;
 		ipm_cxt->frm_num++;
 		ipm_in_param.src_frame = out_param;
-		ipm_in_param.dst_frame = out_param;
 		ipm_in_param.private_data = (void*)privdata;
 		imp_out_param.dst_frame = out_param;
 		imp_out_param.private_data = privdata;
