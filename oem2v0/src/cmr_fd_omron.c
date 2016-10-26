@@ -68,6 +68,8 @@ struct class_fd {
 	cmr_int                         faceNodetect;
 	cmr_int                         last_face_num;
 	cmr_uint                        is_get_result;
+	FA_ALIGN_HANDLE                 hFaceAlign;  /* Handle for face alignment */
+	FAR_RECOGNIZER_HANDLE           hFAR;  /* Handle for face attribute recognition */
 };
 
 struct fd_start_parameter {
@@ -90,8 +92,6 @@ static cmr_uint fd_is_busy(struct class_fd *class_handle);
 static void fd_set_busy(struct class_fd *class_handle, cmr_uint is_busy);
 static cmr_int fd_thread_create(struct class_fd *class_handle);
 static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data);
-static FA_ALIGN_HANDLE hFaceAlign = NULL;  /* Handle for face alignment */
-static FAR_RECOGNIZER_HANDLE hFAR = NULL;  /* Handle for face attribute recognition */
 
 static struct class_ops fd_ops_tab_info = {
 	fd_open,
@@ -228,6 +228,8 @@ static cmr_int fd_open(cmr_handle ipm_handle, struct ipm_open_in *in, struct ipm
 	fd_handle->curr_frame_idx     = 0;
 	fd_handle->hDT                = NULL;
 	fd_handle->hDtResult          = NULL;
+	fd_handle->hFaceAlign         = NULL;
+	fd_handle->hFAR               = NULL;
 	fd_handle->faceNodetect       = 0;
 	fd_handle->last_face_num      = 0;
 	fd_handle->is_get_result      = 0;
@@ -623,7 +625,8 @@ static void fd_smooth_fd_results(const struct img_face_area *i_face_area_prev,
 	o_face_area->face_count = currIdx;
 }
 
-static void fd_recognize_face_attribute(HDTRESULT i_hDtResult,
+static void fd_recognize_face_attribute(struct class_fd *fd_handle,
+                                        HDTRESULT i_hDtResult,
                                         struct class_faceattr_array *io_faceattr_arr,
                                         const cmr_u8 *i_image_data,
                                         struct img_size i_image_size,
@@ -678,7 +681,7 @@ static void fd_recognize_face_attribute(HDTRESULT i_hDtResult,
             faface.rollAngle = roll_angle;
 
             {
-                int err = FaFaceAlign(hFaceAlign, &img, &faface, &(fattr->shape));
+                int err = FaFaceAlign(fd_handle->hFaceAlign, &img, &faface, &(fattr->shape));
                 // CMR_LOGI("FaFaceAlign: err=%d, score=%d", err, fattr->shape.score);
              }
         }
@@ -699,7 +702,7 @@ static void fd_recognize_face_attribute(HDTRESULT i_hDtResult,
             }
 
             {
-                int err = FarRecognize(hFAR, (const FAR_IMAGE *)&img, &farface, &opt, &(fattr->attr));
+                int err = FarRecognize(fd_handle->hFAR, (const FAR_IMAGE *)&img, &farface, &opt, &(fattr->attr));
                  CMR_LOGI("FarRecognize: err=%d, smile=%d", err, fattr->attr.smile);
             }
         }
@@ -864,11 +867,11 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data)
 	case CMR_EVT_FD_INIT:
 
 		/* Create face alignment and face attribute recognition handle */
-		if (FA_OK != FaCreateAlignHandle(&hFaceAlign)) {
+		if (FA_OK != FaCreateAlignHandle(&(class_handle->hFaceAlign))) {
                        CMR_LOGE("FaCreateAlignHandle() Error");
 			break;
 		}
-		if (FAR_OK != FarCreateRecognizerHandle(&hFAR)) {
+		if (FAR_OK != FarCreateRecognizerHandle(&(class_handle->hFAR))) {
                        CMR_LOGE("FarCreateRecognizerHandle() Error");
 			break;
 		}
@@ -920,7 +923,7 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data)
 
 		/* recognize face attribute (smile detection) */
 
-		fd_recognize_face_attribute(class_handle->hDtResult,
+		fd_recognize_face_attribute(class_handle,class_handle->hDtResult,
 		                            &(class_handle->faceattr_arr),
 		                            (cmr_u8*)class_handle->alloc_addr,
 		                            class_handle->fd_size,
@@ -945,8 +948,8 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data)
 
 	case CMR_EVT_FD_EXIT:
 		/* Delete face alignment and face attribute recognition handle */
-		FaDeleteAlignHandle(&hFaceAlign);
-		FarDeleteRecognizerHandle(&hFAR);
+		FaDeleteAlignHandle(&(class_handle->hFaceAlign));
+		FarDeleteRecognizerHandle(&(class_handle->hFAR));
 
 		/* Deletes Face Detection handle */
 		if (class_handle->hDT != NULL ) {
