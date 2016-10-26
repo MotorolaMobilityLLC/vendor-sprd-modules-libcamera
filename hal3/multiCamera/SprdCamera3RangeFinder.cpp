@@ -318,7 +318,7 @@ int SprdCamera3RangeFinder::closeCameraDevice()
         if(dev == NULL)
             continue;
 
-        HAL_LOGW("camera id:%d", i);
+        HAL_LOGD("camera id:%d, dev addr %p", i, dev);
         rc = SprdCamera3HWI::close_camera_device(dev);
         if (rc != NO_ERROR) {
             HAL_LOGE("Error, camera id:%d", i);

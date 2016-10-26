@@ -120,7 +120,7 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId):
 			mCameraId = 3;
 	}
 	getLogLevel();
-	HAL_LOGD("mCameraId %d",mCameraId);
+	HAL_LOGD("mCameraId %d,mCameraDevice %p",mCameraId,&mCameraDevice);
 	mCameraDevice.common.tag = HARDWARE_DEVICE_TAG;
 	mCameraDevice.common.version = CAMERA_DEVICE_API_VERSION_3_2;//CAMERA_DEVICE_API_VERSION_3_0;
 	mCameraDevice.common.close = close_camera_device;
@@ -1668,9 +1668,11 @@ int SprdCamera3HWI::close_camera_device(struct hw_device_t *device)
 		HAL_LOGE("NULL camera device");
 		return BAD_VALUE;
 	}
+	HAL_LOGD("camera id %d, device addr %p", hw->mCameraId, device);
 	id = hw->mCameraId;
 	delete hw;
 	hw = NULL;
+	device == NULL;
 
 #ifdef CONFIG_CAMERA_ISP
 	stopispserver();
@@ -1680,10 +1682,14 @@ int SprdCamera3HWI::close_camera_device(struct hw_device_t *device)
 	ispvideo_RegCameraFunc(4, NULL);
 //	ispvideo_RegCameraFunc(REG_CTRL_FLASH, NULL);
 #endif
-	if (id == 0) {
+	if (id == SENSOR_MAIN) {
 		g_cam_device[0] = NULL;
-	} else {
+	} else if (id == SENSOR_SUB) {
 		g_cam_device[1] = NULL;
+	} else if (id == SENSOR_DEVICE2) {
+		g_cam_device[2] = NULL;
+	} else if (id == SENSOR_DEVICE3) {
+		g_cam_device[3] = NULL;
 	}
 
 	mCameraSessionActive = 0;
