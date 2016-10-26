@@ -7953,11 +7953,15 @@ void * SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data)
 
 	if (!obj) {
 		HAL_LOGE("obj null  error");
+		sem_post(&obj->mGyro_sem);
+		obj->mGyroDeinit = 1;
 		return NULL;
 	}
 
 	if (NULL == obj->mCameraHandle || NULL == obj->mHalOem || NULL == obj->mHalOem->ops) {
 		HAL_LOGE("oem is null or oem ops is null");
+		sem_post(&obj->mGyro_sem);
+		obj->mGyroDeinit = 1;
 		return NULL;
 	}
 
@@ -7969,14 +7973,19 @@ void * SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data)
 
 	SensorManager& mgr(SensorManager::getInstanceForPackage(String16("EIS intergrate")));
 
-
 	Sensor const* const* list;
 	ssize_t count = mgr.getSensorList(&list);
 	sp<SensorEventQueue> q = mgr.createEventQueue();
 	Sensor const* gyroscope = mgr.getDefaultSensor(Sensor::TYPE_GYROSCOPE);
 	Sensor const* gsensor = mgr.getDefaultSensor(Sensor::TYPE_ACCELEROMETER);
-
+	if(q == NULL) {
+		HAL_LOGE("createEventQueue error");
+		sem_post(&obj->mGyro_sem);
+		obj->mGyroDeinit = 1;
+		return NULL;
+	}
 	const int fd = q->getFd();
+	HAL_LOGI("EventQueue fd %d",fd);
 	sp<Looper> loop = NULL;
 
 	ret = q->enableSensor(gyroscope);
@@ -8001,11 +8010,17 @@ void * SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data)
 	q->setEventRate(gsensor, ms2ns(eventRate));
 
 	loop = new Looper(true);
+	if (loop == NULL) {
+		HAL_LOGE("creat loop fail");
+		q->disableSensor(gsensor);
+		q->disableSensor(gyroscope);
+		goto exit;
+	}
 	loop->addFd(fd, fd, ALOOPER_EVENT_INPUT, NULL, NULL);
 
 	struct cmr_af_aux_sensor_info sensor_info;
+	HAL_LOGD("loop for pull gyro and gsensor data");
 	while(true == obj->mGyroInit){
-
 		result = loop->pollOnce(Timeout, NULL, &events, NULL);
 		if ((result == ALOOPER_POLL_ERROR) || (events & ALOOPER_EVENT_HANGUP)) {
 			HAL_LOGE("SensorEventQueue::waitForEvent error");
@@ -8013,9 +8028,17 @@ void * SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data)
 			q->disableSensor(gsensor);
 			goto exit;
 		}else if(result == ALOOPER_POLL_TIMEOUT) {
-			HAL_LOGW("SensorEventQueue::waitForEvent timeout");
+			HAL_LOGE("SensorEventQueue::waitForEvent timeout");
+			q->disableSensor(gyroscope);
+			q->disableSensor(gsensor);
+			goto exit;
 		}
-
+		if (!obj) {
+			HAL_LOGE("obj is null,exit thread loop");
+			q->disableSensor(gyroscope);
+			q->disableSensor(gsensor);
+			goto exit;
+		}
 		//q->waitForEvent();
 		if ((result == fd)&&(n = q->read(buffer, 8)) > 0) {
 			for (int i=0 ; i<n ; i++) {
@@ -8102,21 +8125,24 @@ int SprdCamera3OEMIf::gyro_monitor_thread_deinit(void *p_data)
 			obj->mEisInit = 0;
 		}
 #endif
-		if (clock_gettime(CLOCK_REALTIME, &ts)) {
-			HAL_LOGE("get time failed");
-			return UNKNOWN_ERROR;
-		}
-		/*gyro timeout is 100ms, so when gyro have some problem, this place wait for 150ms*/
-		ts.tv_nsec += ms2ns(150);
-		if (ts.tv_nsec > 1000000000) {
-			ts.tv_sec += 1;
-			ts.tv_nsec -= 1000000000;
-		}
-		ret = sem_timedwait(&obj->mGyro_sem, &ts);
-		if(ret)
-			HAL_LOGW("wait for gyro timeout");
-		sem_destroy(&obj->mGyro_sem);
+		if(!obj->mGyroDeinit) {
+			if (clock_gettime(CLOCK_REALTIME, &ts)) {
+				HAL_LOGE("get time failed");
+				return UNKNOWN_ERROR;
+			}
+			/*when gyro thread proc time is long when camera close, we should wait for thread end at last 1000ms*/
+			ts.tv_nsec += ms2ns(1000);
+			if (ts.tv_nsec > 1000000000) {
+				ts.tv_sec += 1;
+				ts.tv_nsec -= 1000000000;
+			}
+			ret = sem_timedwait(&obj->mGyro_sem, &ts);
+			if(ret)
+				HAL_LOGW("wait for gyro timeout");
+		} else
+			HAL_LOGW("gyro thread already end");
 
+		sem_destroy(&obj->mGyro_sem);
 		//ret = pthread_join(obj->mGyroMsgQueHandle, &dummy);
 		obj->mGyroMsgQueHandle = 0;
 #ifdef CONFIG_CAMERA_EIS
