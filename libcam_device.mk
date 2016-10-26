@@ -39,6 +39,9 @@ TUNING_BIN += ov8856s_mipi_raw_shading.bin
 TUNING_BIN += ov8856s_mipi_raw_caf.bin
 TUNING_BIN += sp2509_mipi_raw_3a.bin
 TUNING_BIN += sp2509_mipi_raw_shading.bin
+TUNING_BIN += s5k3p8sm_mipi_raw_3a.bin
+TUNING_BIN += s5k3p8sm_mipi_raw_shading.bin
+TUNING_BIN += s5k3p8sm_mipi_raw_caf.bin
 
 ALTEK_LIB := libalAWBLib \
 	libalAELib \
