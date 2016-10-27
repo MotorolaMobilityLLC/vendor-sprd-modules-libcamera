@@ -741,7 +741,7 @@ static void* isp_dev_thread_proc(void *data)
 					break;
 				case ISP_IRQ_CFG_BUF:
 					property_get("debug.camera.save.snpfile", value, "0");
-					if (atoi(value) == 11) {
+					if (atoi(value) == 11 || atoi(value) & (1<<11)) {
 						addr.addr_y = irq_info.yaddr_vir;
 						addr.addr_u = irq_info.uaddr_vir;
 						addr.addr_v = irq_info.vaddr_vir;
@@ -772,7 +772,7 @@ static void* isp_dev_thread_proc(void *data)
 					ISP_LOGI("high iso got raw frm vaddr 0x%lx paddr 0x%lx, width %d, height %d",
 						 irq_info.yaddr_vir, irq_info.yaddr, file->init_param.width, file->init_param.height);
 					property_get("debug.camera.save.snpfile", value, "0");
-					if (atoi(value) == 11) {
+					if (atoi(value) == 11 || atoi(value) & (1<<11)) {
 						addr.addr_y = irq_info.yaddr;
 						ISP_LOGI("camera_save_to_file img_y_fd 0x%x vaddr 0x%lx uaddr 0x%lx paddr 0x%lx buf_size 0x%lx, width %d, height %d", 
 							 irq_info.img_y_fd, irq_info.yaddr_vir, irq_info.uaddr_vir, irq_info.yaddr, irq_info.length, file->init_param.width,
@@ -2360,6 +2360,8 @@ cmr_int camera_save_to_file_isp(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, c
 
 	cmr_bzero(file_name, 40);
 	strcpy(file_name, "/data/misc/media/");
+	sprintf(tmp_str, "%d_", index);
+	strcat(file_name, tmp_str);
 	sprintf(tmp_str, "%d", width);
 	strcat(file_name, tmp_str);
 	strcat(file_name, "X");
@@ -2368,9 +2370,7 @@ cmr_int camera_save_to_file_isp(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, c
 
 	if (IMG_DATA_TYPE_YUV420 == img_fmt ||
 	    IMG_DATA_TYPE_YUV422 == img_fmt) {
-		strcat(file_name, "_y_");
-		sprintf(tmp_str, "%d", index);
-		strcat(file_name, tmp_str);
+		strcat(file_name, "_y");
 		strcat(file_name, ".raw");
 		ISP_LOGI("file name %s", file_name);
 		fp = fopen(file_name, "wb");
@@ -2385,14 +2385,14 @@ cmr_int camera_save_to_file_isp(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, c
 
 		bzero(file_name, 40);
 		strcpy(file_name, "/data/misc/media/");
+		sprintf(tmp_str, "%d_", index);
+		strcat(file_name, tmp_str);
 		sprintf(tmp_str, "%d", width);
 		strcat(file_name, tmp_str);
 		strcat(file_name, "X");
 		sprintf(tmp_str, "%d", height);
 		strcat(file_name, tmp_str);
-		strcat(file_name, "_uv_");
-		sprintf(tmp_str, "%d", index);
-		strcat(file_name, tmp_str);
+		strcat(file_name, "_uv");
 		strcat(file_name, ".raw");
 		ISP_LOGI("file name %s", file_name);
 		fp = fopen(file_name, "wb");
@@ -2407,53 +2407,44 @@ cmr_int camera_save_to_file_isp(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, c
 			fwrite((void *)addr->addr_u, 1, width * height / 2, fp);
 		}
 		fclose(fp);
-		} else if (IMG_DATA_TYPE_JPEG == img_fmt) {
-			strcat(file_name, "_");
-			sprintf(tmp_str, "%d", index);
-			strcat(file_name, tmp_str);
-			strcat(file_name, ".jpg");
-			ISP_LOGI("file name %s", file_name);
+	} else if (IMG_DATA_TYPE_JPEG == img_fmt) {
+		strcat(file_name, ".jpg");
+		ISP_LOGI("file name %s", file_name);
 
-			fp = fopen(file_name, "wb");
-			if (NULL == fp) {
-				ISP_LOGI("can not open file: %s", file_name);
-				return 0;
-			}
-
-			fwrite((void *)addr->addr_y, 1, width * height*2, fp);
-			fclose(fp);
-		} else if (IMG_DATA_TYPE_RAW == img_fmt) {
-			strcat(file_name, "_");
-			sprintf(tmp_str, "%d", index);
-			strcat(file_name, tmp_str);
-			strcat(file_name, "_mipi.raw");
-			ISP_LOGI("file name %s", file_name);
-
-			fp = fopen(file_name, "wb");
-			if (NULL == fp) {
-				ISP_LOGI("can not open file: %s", file_name);
-				return 0;
-			}
-
-			fwrite((void *)addr->addr_y, 1, (uint32_t)(width * height * 5 / 4), fp);
-			fclose(fp);
-		} else if (IMG_DATA_TYPE_RAW2 == img_fmt) {
-			strcat(file_name, "_");
-			sprintf(tmp_str, "%d", index);
-			strcat(file_name, tmp_str);
-			strcat(file_name, "_mipi.raw");
-			ISP_LOGI("file name %s", file_name);
-
-			fp = fopen(file_name, "wb");
-			if (NULL == fp) {
-				ISP_LOGI("can not open file: %s", file_name);
-				return 0;
-			}
-
-			fwrite((void *)addr->addr_y, 1, (uint32_t)(width * height * 4 / 3), fp);
-			fclose(fp);
+		fp = fopen(file_name, "wb");
+		if (NULL == fp) {
+			ISP_LOGI("can not open file: %s", file_name);
+			return 0;
 		}
-		return 0;
+
+		fwrite((void *)addr->addr_y, 1, width * height*2, fp);
+		fclose(fp);
+	} else if (IMG_DATA_TYPE_RAW == img_fmt) {
+		strcat(file_name, "_mipi.raw");
+		ISP_LOGI("file name %s", file_name);
+
+		fp = fopen(file_name, "wb");
+		if (NULL == fp) {
+			ISP_LOGI("can not open file: %s", file_name);
+			return 0;
+		}
+
+		fwrite((void *)addr->addr_y, 1, (uint32_t)(width * height * 5 / 4), fp);
+		fclose(fp);
+	} else if (IMG_DATA_TYPE_RAW2 == img_fmt) {
+		strcat(file_name, "_mipi2.raw");
+		ISP_LOGI("file name %s", file_name);
+
+		fp = fopen(file_name, "wb");
+		if (NULL == fp) {
+			ISP_LOGI("can not open file: %s", file_name);
+			return 0;
+		}
+
+		fwrite((void *)addr->addr_y, 1, (uint32_t)(((width* 4 / 3 + 7) >> 3) << 3)  * height, fp);
+		fclose(fp);
+	}
+	return 0;
 }
 
 cmr_int statistic_save_to_file_isp(struct isp_statis_frame_output *statis, struct isp_file *file)

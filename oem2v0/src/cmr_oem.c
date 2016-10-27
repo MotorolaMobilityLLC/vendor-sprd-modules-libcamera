@@ -646,6 +646,8 @@ void camera_grab_handle(cmr_int evt, void* data, void* privdata)
 		struct img_frm out_param;
 		struct ipm_frame_in  ipm_in_param;
 		struct ipm_frame_out imp_out_param;
+		char value[PROPERTY_VALUE_MAX];
+
 		/* for bug 396318, will be removed later */
 		//camera_set_discard_frame((cmr_handle)cxt, 1);
 		ret = cmr_preview_receive_data(cxt->prev_cxt.preview_handle, cxt->camera_id, evt, data);
@@ -673,6 +675,16 @@ void camera_grab_handle(cmr_int evt, void* data, void* privdata)
 		ipm_in_param.private_data = (void*)privdata;
 		imp_out_param.dst_frame = out_param;
 		imp_out_param.private_data = privdata;
+
+		property_get("debug.camera.save.snpfile", value, "0");
+		if (atoi(value) == 9 || (atoi(value) & (1<<9))) {
+			camera_save_yuv_to_file(FORM_DUMPINDEX(SNP_HDR_OUT_DATA, cxt->dump_cnt, ipm_cxt->frm_num),
+				IMG_DATA_TYPE_YUV420,
+				cxt->snp_cxt.actual_capture_size.width,
+				cxt->snp_cxt.actual_capture_size.height,
+				&frame->yaddr_vir);
+		}
+
 		ret = ipm_transfer_frame(ipm_cxt->hdr_handle, &ipm_in_param, &imp_out_param);
 		if (ret) {
 			CMR_LOGE("failed to transfer frame to ipm %ld", ret);
@@ -4878,6 +4890,62 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle, struct 
 	if (1 == param_ptr->slice_num) {
 		struct ips_in_param  in_param;
 		struct ips_out_param out_param;
+
+		int i;
+		cmr_int 	  	raw_buf_size;
+		cmr_int 		highiso_buf_size;
+		cmr_int 		tmp_buf_size;
+		cmr_int 		num = 0;
+		cmr_int 		highiso_buf_num = 1;
+		cmr_int 		isp_raw_buf_num = 1;
+
+		raw_buf_size = ((param_ptr->src_frame.size.width * 4 / 3 + 7) & (~7)) * param_ptr->src_frame.size.height;
+		tmp_buf_size = param_ptr->src_frame.size.width * param_ptr->src_frame.size.height * 27 / 10;
+		num = tmp_buf_size / BUF_BLOCK_SIZE;
+		if (tmp_buf_size >  num * BUF_BLOCK_SIZE)
+			num++;
+		highiso_buf_size = num * BUF_BLOCK_SIZE;
+		if (cxt->hal_malloc) {
+			cxt->hal_malloc(CAMERA_ISP_RAW_DATA,
+					&raw_buf_size,
+					&isp_raw_buf_num,
+					&cxt->raw_buf_phys_addr[0],
+					&cxt->raw_buf_virt_addr[0],
+					&cxt->raw_buf_fd[0],
+					cxt->client_data);
+
+			cxt->hal_malloc(CAMERA_SNAPSHOT_HIGHISO,
+					&highiso_buf_size,
+					&highiso_buf_num,
+					&cxt->highiso_buf_phys_addr,
+					&cxt->highiso_buf_virt_addr,
+					&cxt->highiso_buf_fd,
+					cxt->client_data);
+		}
+		memcpy(in_param.raw_buf_fd, cxt->raw_buf_fd, sizeof(cmr_s32) * isp_raw_buf_num);
+		memcpy(in_param.raw_buf_phys_addr, cxt->raw_buf_phys_addr, sizeof(cmr_u32) * isp_raw_buf_num);
+		memcpy(in_param.raw_buf_virt_addr, cxt->raw_buf_virt_addr, sizeof(cmr_u64) * isp_raw_buf_num);
+		in_param.raw_buf_size = raw_buf_size;
+		in_param.raw_buf_width = param_ptr->src_frame.size.width;
+		in_param.raw_buf_height = param_ptr->src_frame.size.height;
+		in_param.raw_buf_cnt = isp_raw_buf_num;
+
+		in_param.highiso_buf_fd = cxt->highiso_buf_fd;
+		in_param.highiso_buf_phys_addr = cxt->highiso_buf_phys_addr;
+		in_param.highiso_buf_virt_addr = cxt->highiso_buf_virt_addr;
+		in_param.highiso_buf_size = highiso_buf_size;
+
+		for(i = 0; i < isp_raw_buf_num; i++) {
+			CMR_LOGI("raw: fd=0x%x, phys_addr_offset=0x%lx, virt_addr = 0x%llx, buf_size=0x%lx",
+				in_param.raw_buf_fd[i], in_param.raw_buf_phys_addr[i],
+				in_param.raw_buf_virt_addr[i], in_param.raw_buf_size);
+		}
+		CMR_LOGI("cnt=%d, width=%ld, height=%ld", in_param.raw_buf_cnt, in_param.raw_buf_width, in_param.raw_buf_height);
+		CMR_LOGI("highiso: fd=0x%x, phys_addr_offset=0x%lx, virt_addr = 0x%lx, buf_size=0x%lx",
+			in_param.highiso_buf_fd, in_param.highiso_buf_phys_addr,
+			in_param.highiso_buf_virt_addr, in_param.highiso_buf_size);
+
+
 		in_param.src_frame.img_fmt = param_ptr->src_frame.fmt;
 		in_param.src_frame.img_size.w = param_ptr->src_frame.size.width;
 		in_param.src_frame.img_size.h = param_ptr->src_frame.size.height;
@@ -4970,10 +5038,56 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle, struct 
 
 		in_param.cap_mode = cxt->highiso_mode;
 		CMR_LOGI("ips_in_param:cap_mode %d", in_param.cap_mode);
+
+		{
+			char value[PROPERTY_VALUE_MAX];
+			property_get("debug.camera.save.snpfile", value, "0");
+			if (atoi(value) == 1 || atoi(value) == 100 || (atoi(value) & (1<<1))) {
+				camera_save_yuv_to_file(FORM_DUMPINDEX(0x4000, cxt->dump_cnt, 0),
+					IMG_DATA_TYPE_RAW,
+					param_ptr->src_frame.size.width,
+					param_ptr->src_frame.size.height,
+					&param_ptr->src_frame.addr_vir);
+			}
+		}
+
 		ret = isp_proc_start(isp_cxt->isp_handle, &in_param, &out_param);
 
 		if (ret) {
 			CMR_LOGE("failed to start proc %ld", ret);
+		}
+
+		{
+			char value[PROPERTY_VALUE_MAX];
+			property_get("debug.camera.save.snpfile", value, "0");
+			if (atoi(value) == 1 || atoi(value) == 100 || (atoi(value) & (1<<1))) {
+				camera_save_yuv_to_file(FORM_DUMPINDEX(0x5000, cxt->dump_cnt, 0),
+					IMG_DATA_TYPE_RAW2,
+					in_param.raw_buf_width ,
+					in_param.raw_buf_height,
+					&in_param.raw_buf_phys_addr[0]);
+				camera_save_yuv_to_file(FORM_DUMPINDEX(0x6000, cxt->dump_cnt, 0),
+					IMG_DATA_TYPE_YUV420,
+					param_ptr->dst_frame.size.width,
+					param_ptr->dst_frame.size.height,
+					&param_ptr->dst_frame.addr_vir);
+			}
+		}
+
+		if (cxt->hal_free) {
+			cxt->hal_free(CAMERA_ISP_RAW_DATA,
+					&cxt->raw_buf_phys_addr[0],
+					&cxt->raw_buf_virt_addr[0],
+					&cxt->raw_buf_fd[0],
+					isp_raw_buf_num,
+					cxt->client_data);
+
+			cxt->hal_free(CAMERA_SNAPSHOT_HIGHISO,
+					&cxt->highiso_buf_phys_addr,
+					&cxt->highiso_buf_virt_addr,
+					&cxt->highiso_buf_fd,
+					highiso_buf_num,
+					cxt->client_data);
 		}
 	} else {
 		struct ipn_in_param in_param;

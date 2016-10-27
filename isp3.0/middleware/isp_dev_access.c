@@ -945,7 +945,6 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 	struct isp_raw_data                    isp_raw_mem;
 	struct isp_img_mem                     img_mem;
 	struct isp_sensor_resolution_info      *resolution_ptr = NULL;
-	struct isp_raw_data                    highiso_info;
 	struct isp_img_size                    size;
 	struct isp_dev_init_param              init_param;
 	char                                   value[PROPERTY_VALUE_MAX];
@@ -977,6 +976,7 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 	ISP_LOGI("cap_mode = %d", cap_mode);
 
 	memset(&isp_raw_mem, 0, sizeof(struct isp_raw_data));
+#if 0
 	isp_raw_mem.fd[0] = input_ptr->dst2_frame.img_fd.y;
 	isp_raw_mem.phy_addr[0] = input_ptr->dst2_frame.img_addr_phy.chn0;
 	isp_raw_mem.virt_addr[0] = input_ptr->dst2_frame.img_addr_vir.chn0;
@@ -985,6 +985,16 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 	isp_raw_mem.height = input_ptr->dst2_frame.img_size.h;
 	isp_raw_mem.fmt = ISP_OUTPUT_RAW10;
 	isp_raw_mem.cnt	= 1;
+#else
+	memcpy(isp_raw_mem.fd, input_ptr->input_ptr->raw_buf_fd, sizeof(cmr_s32) * input_ptr->input_ptr->raw_buf_cnt);
+	memcpy(isp_raw_mem.phy_addr, input_ptr->input_ptr->raw_buf_phys_addr, sizeof(unsigned int) * input_ptr->input_ptr->raw_buf_cnt);
+	memcpy(isp_raw_mem.virt_addr, input_ptr->input_ptr->raw_buf_virt_addr, sizeof(cmr_u64) * input_ptr->input_ptr->raw_buf_cnt);
+	isp_raw_mem.size = input_ptr->input_ptr->raw_buf_size;
+	isp_raw_mem.width = input_ptr->input_ptr->raw_buf_width;
+	isp_raw_mem.height = input_ptr->input_ptr->raw_buf_height;
+	isp_raw_mem.fmt = ISP_OUTPUT_ALTEK_RAW10;
+	isp_raw_mem.cnt = input_ptr->input_ptr->raw_buf_cnt;
+#endif
 	ret = isp_dev_set_rawaddr(cxt->isp_driver_handle, &isp_raw_mem);
 	ISP_LOGI("raw10_buf fd 0x%x phy_addr 0x%x virt_addr 0x%x", isp_raw_mem.fd[0],
 		isp_raw_mem.phy_addr[0], (cmr_u32)isp_raw_mem.virt_addr[0]);
@@ -1022,13 +1032,24 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 
 	size.height = input_ptr->src_frame.img_size.h;
 	size.width = input_ptr->src_frame.img_size.w;
-	ret = isp_dev_alloc_highiso_mem(cxt->isp_driver_handle, &highiso_info, &size);
+#if 0
+	ret = isp_dev_alloc_highiso_mem(cxt->isp_driver_handle, &isp_raw_mem, &size);
 	if (ret) {
 		ISP_LOGE("failed to alloc highiso mem %ld", ret);
 		goto exit;
 	}
+#else
+	memset(&isp_raw_mem, 0, sizeof(isp_raw_mem));
+	isp_raw_mem.fd[0] = input_ptr->input_ptr->highiso_buf_fd;
+	isp_raw_mem.phy_addr[0] = input_ptr->input_ptr->highiso_buf_phys_addr;
+	isp_raw_mem.virt_addr[0] = input_ptr->input_ptr->highiso_buf_virt_addr;
+	isp_raw_mem.cnt = 1;
+	isp_raw_mem.size = input_ptr->input_ptr->highiso_buf_size;
+	isp_raw_mem.width = input_ptr->input_ptr->raw_buf_width;
+	isp_raw_mem.height = input_ptr->input_ptr->raw_buf_height;
+#endif
 
-	ret = isp_dev_highiso_mode(cxt->isp_driver_handle, &highiso_info);
+	ret = isp_dev_highiso_mode(cxt->isp_driver_handle, &isp_raw_mem);
 	if (ret) {
 		ISP_LOGE("failed to set highiso mode %ld", ret);
 		goto exit;

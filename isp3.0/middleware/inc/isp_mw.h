@@ -638,6 +638,17 @@ struct ips_in_param {
 	struct isp_sensor_resolution_info resolution_info;
 	struct isp_sensor_fps_info sensor_fps;
 	cmr_u32 cap_mode;
+	cmr_s32 raw_buf_fd[ISP_RAWBUF_NUM];
+	cmr_uint raw_buf_phys_addr[ISP_RAWBUF_NUM];
+	cmr_u64 raw_buf_virt_addr[ISP_RAWBUF_NUM];
+	cmr_u32  raw_buf_cnt;
+	cmr_uint raw_buf_size;
+	cmr_uint raw_buf_width;
+	cmr_uint raw_buf_height;
+	cmr_s32 highiso_buf_fd;
+	cmr_uint highiso_buf_phys_addr;
+	cmr_uint highiso_buf_virt_addr;
+	cmr_uint highiso_buf_size;
 };
 
 struct ips_out_param {

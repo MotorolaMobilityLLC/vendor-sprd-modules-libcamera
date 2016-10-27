@@ -820,10 +820,10 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm,
 
 	mem_res = *io_mem_res;
 	mem_end = *io_mem_end;
-	CMR_LOGD("mem_end=%d", mem_end);
+	CMR_LOGD("mem_end=%0x", mem_end);
 
 	raw_size = sn_size->width * sn_size->height * RAWRGB_BIT_WIDTH / 8;
-	raw2_size = sn_size->width * sn_size->height * 3 / 2 * 2;
+	raw2_size = ((sn_size->width * 4 / 3 + 7) & (~7)) * sn_size->height;
 
 	tmp1 = image_size->width * image_size->height;
 	tmp2 = cap_size->width * cap_size->height;
@@ -879,7 +879,7 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm,
 	CMR_NO_MEM(max_size * 3 / 2 + max_size * 3/2 + raw2_size, mem_res);
 	*io_mem_res = mem_res - (max_size * 3 / 2 + max_size * 3/2 + raw2_size);
 	*io_mem_end = mem_end + max_size * 3 / 2 + max_size * 3/2 + raw2_size;
-	CMR_LOGD("mem_end=%d", *io_mem_end);
+	CMR_LOGD("mem_end=%0x", *io_mem_end);
 
 	return 0;
 }

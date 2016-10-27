@@ -203,25 +203,28 @@ cmr_int camera_save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt,
 				struct img_addr *addr)
 {
 	cmr_int                      ret = CMR_CAMERA_SUCCESS;
-	char                         file_name[40];
+	char                         file_name[0x40];
 	char                         tmp_str[10];
 	FILE                         *fp = NULL;
 
-	CMR_LOGI("index %d format %d width %d heght %d", index, img_fmt, width, height);
+	CMR_LOGI("index 0x%x format %d width %d height %d, addr 0x%x 0x%x", index, img_fmt, width, height,
+		addr->addr_y, addr->addr_u);
 
-	cmr_bzero(file_name, 40);
+
+	cmr_bzero(file_name, 0x40);
 	strcpy(file_name, "/data/misc/media/");
+	sprintf(tmp_str, "%08x_", index);
+	strcat(file_name, tmp_str);
+
 	sprintf(tmp_str, "%d", width);
 	strcat(file_name, tmp_str);
 	strcat(file_name, "X");
 	sprintf(tmp_str, "%d", height);
 	strcat(file_name, tmp_str);
-
 	if (IMG_DATA_TYPE_YUV420 == img_fmt ||
 		IMG_DATA_TYPE_YUV422 == img_fmt) {
-		strcat(file_name, "_y_");
-		sprintf(tmp_str, "%d", index);
-		strcat(file_name, tmp_str);
+
+		strcat(file_name, "_y");
 		strcat(file_name, ".raw");
 		CMR_LOGI("file name %s", file_name);
 		fp = fopen(file_name, "wb");
@@ -234,14 +237,14 @@ cmr_int camera_save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt,
 
 		bzero(file_name, 40);
 		strcpy(file_name, "/data/misc/media/");
+		sprintf(tmp_str, "%08x_", index);
+		strcat(file_name, tmp_str);
 		sprintf(tmp_str, "%d", width);
 		strcat(file_name, tmp_str);
 		strcat(file_name, "X");
 		sprintf(tmp_str, "%d", height);
 		strcat(file_name, tmp_str);
-		strcat(file_name, "_uv_");
-		sprintf(tmp_str, "%d", index);
-		strcat(file_name, tmp_str);
+		strcat(file_name, "_uv");
 		strcat(file_name, ".raw");
 		CMR_LOGI("file name %s", file_name);
 		fp = fopen(file_name, "wb");
@@ -255,6 +258,34 @@ cmr_int camera_save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt,
 		} else {
 			fwrite((void*)addr->addr_u, 1, width * height, fp);
 		}
+		fclose(fp);
+	} else if (IMG_DATA_TYPE_RAW == img_fmt) {
+		strcat(file_name, "_mipi.raw");
+		ISP_LOGI("file name %s\n", file_name);
+		width = (width* 5 / 4);
+		ISP_LOGI("new width %d\n", width);
+
+		fp = fopen(file_name, "wb");
+		if (NULL == fp) {
+			ISP_LOGI("can not open file: %s", file_name);
+			return 0;
+		}
+
+		fwrite((void *)addr->addr_y, 1, (uint32_t)((width* 5 / 4) * height ), fp);
+		fclose(fp);
+	} else if (IMG_DATA_TYPE_RAW2 == img_fmt) {
+		strcat(file_name, "_mipi2.raw");
+		ISP_LOGI("file name %s", file_name);
+		width = (width* 4 / 3 + 7) & (~7);
+		ISP_LOGI("new width %d\n", width);
+
+		fp = fopen(file_name, "wb");
+		if (NULL == fp) {
+			ISP_LOGI("can not open file: %s", file_name);
+			return 0;
+		}
+
+		fwrite((void *)addr->addr_y, 1, (uint32_t)width * height, fp);
 		fclose(fp);
 	}
 
@@ -270,17 +301,18 @@ cmr_int camera_save_jpg_to_file(cmr_u32 index, cmr_u32 img_fmt,
 	char                         tmp_str[10];
 	FILE                         *fp = NULL;
 
-	CMR_LOGI("index %d format %d width %d heght %d", index, img_fmt, width, height);
+	CMR_LOGI("index 0x%x format %d width %d height %d, addr 0x%x 0x%x", index, img_fmt, width, height,
+		addr->addr_y, addr->addr_u);
 
 	cmr_bzero(file_name, 40);
 	strcpy(file_name, "/data/misc/media/");
+	sprintf(tmp_str, "%08x", index);
+	strcat(file_name, tmp_str);
+	strcat(file_name, "_");
 	sprintf(tmp_str, "%d", width);
 	strcat(file_name, tmp_str);
 	strcat(file_name, "X");
 	sprintf(tmp_str, "%d", height);
-	strcat(file_name, tmp_str);
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%d", index);
 	strcat(file_name, tmp_str);
 	strcat(file_name, ".jpg");
 	CMR_LOGI("file name %s", file_name);

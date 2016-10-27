@@ -82,6 +82,7 @@ struct isp_dev_postproc_in {
 	struct isp_awb_gain awb_gain_balanced;
 	struct isp_sensor_resolution_info resolution_info;
 	cmr_u32 cap_mode;/* 0/1:normal raw capture mode, 2:high iso raw capture mode */
+	struct ips_in_param *input_ptr;
 };
 
 struct isp_dev_postproc_out {

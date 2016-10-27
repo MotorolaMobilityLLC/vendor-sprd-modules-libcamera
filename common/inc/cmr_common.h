@@ -79,6 +79,22 @@ extern "C"
 #define FRAME_FLASH_MAX                   0x0000FFFF
 #define INVALID_FORMAT_PATTERN            255
 
+
+#define PREV_OUT_DATA				     0xF000 /*debug.camera.save.snpfile 16*/
+#define SNP_CHN_OUT_DATA    		             	 0x8000 /*debug.camera.save.snpfile 1*/
+#define SNP_ROT_DATA                                 0x8001 /*debug.camera.save.snpfile 2*/
+#define SNP_SCALE_DATA                               0x8002
+#define SNP_REDISPLAY_DATA                           0x8003 /*debug.camera.save.snpfile 3*/
+#define SNP_ENCODE_SRC_DATA                          0x8004 /*debug.camera.save.snpfile 4*/
+#define SNP_ENCODE_STREAM                            0x9000 /*debug.camera.save.snpfile 5*/
+#define SNP_THUMB_DATA                               0x8006 /*debug.camera.save.snpfile 6*/
+#define SNP_THUMB_STREAM                             0x1000 /*debug.camera.save.snpfile 7*/
+#define SNP_JPEG_STREAM                              0x2000 /*debug.camera.save.snpfile 8*/
+#define SNP_HDR_OUT_DATA                             0x3000 /*debug.camera.save.snpfile 9*/
+
+#define FORM_DUMPINDEX(flag, dumpindex, ext)        (((dumpindex) << 24) + ((flag) << 8) + (ext))
+
+
 #define CAMERA_SAFE_SCALE_DOWN(w)          (cmr_u32)((w)*11/10)
 #define CAMERA_START(w)                    ((w)& ~(2 - 1))
 #define CAMERA_WIDTH(w)                    ((w)& ~(8 - 1))

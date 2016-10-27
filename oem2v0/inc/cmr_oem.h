@@ -299,6 +299,8 @@ struct camera_context {
 	cmr_s32                  highiso_buf_fd;
 	cmr_uint                 highiso_buf_phys_addr;
 	cmr_uint                 highiso_buf_virt_addr;
+
+	cmr_uint		 dump_cnt;;
 };
 
 cmr_int camera_local_int(cmr_u32 camera_id, camera_cb_of_type callback,  void *client_data, cmr_uint is_autotest, cmr_handle *oem_handle, void* cb_of_malloc, void* cb_of_free);

@@ -2270,6 +2270,14 @@ cmr_int prev_preview_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
 	CMR_LOGD("frame_id=0x%x, frame_real_id=%d, channel_id=%d fd=0x%x",
 		  data->frame_id, data->frame_real_id, data->channel_id, data->fd);
 
+	if (0/*prev_cxt->prev_frm_cnt < 50 && (prev_cxt->prev_frm_cnt%2) == 0*/) {
+		camera_save_yuv_to_file(FORM_DUMPINDEX(PREV_OUT_DATA, prev_cxt->prev_frm_cnt, 0),
+			IMG_DATA_TYPE_YUV420,
+			prev_cxt->actual_prev_size.width,
+			prev_cxt->actual_prev_size.height,
+			&data->yaddr_vir);
+	}
+
 	if (0 == prev_cxt->prev_frm_cnt) {
 		/*response*/
 		cb_data_info.cb_type    = PREVIEW_RSP_CB_SUCCESS;
