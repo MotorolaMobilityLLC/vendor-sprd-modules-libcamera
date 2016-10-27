@@ -44,10 +44,6 @@
 #include "SprdCamera3Flash.h"
 #include <dlfcn.h>
 
-#ifdef CONFIG_FACE_BEAUTY
-#include "ts_makeup_api.h"
-#endif
-
 #ifdef CONFIG_CAMERA_ISP
 extern "C" {
 #include "isp_video.h"
@@ -318,6 +314,12 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 
 	//mIsPerformanceTestable = sprd_isPerformanceTestable();
 	HAL_LOGI("openCameraHardware: E cameraId: %d.", cameraId);
+
+#ifdef CONFIG_FACE_BEAUTY
+	mSkinWhitenNotDetectFDNum = 0;
+	isNeedBeautify = false;
+	memset(&mSkinWhitenTsface,0,sizeof(TSRect));
+#endif
 
 	initPowerHint();
 	enablePowerHint();
@@ -3232,62 +3234,98 @@ void SprdCamera3OEMIf::doFaceMakeup(struct camera_frame_type *frame)
 	int tab_skinCleanLevel[10]={0,25,45,50,55,60,70,80,85,95};
 	mSetting->getSPRDDEFTag(&sprddefInfo);
 	HAL_LOGV("perfect_skin_level = %d", sprddefInfo.perfect_skin_level);
+
+	int level = sprddefInfo.perfect_skin_level;
+	int skinWhitenLevel = 0;
+	int skinCleanLevel = 0;
+	int level_num = 0;
+
+	// get the property level and parameters value and save in the parameters table.
+	// one time only adjust one level's parameters. In order to adjust all the values, six time should be done.
+	{
+		char str_adb_level[PROPERTY_VALUE_MAX];
+		char str_adb_white[PROPERTY_VALUE_MAX];
+		char str_adb_clean[PROPERTY_VALUE_MAX];
+		int  adb_level_val = 0;
+		int  adb_white_val = 0;
+		int  adb_clean_val = 0;
+
+		if( ( property_get("persist.sys.camera.beauty.level", str_adb_level, "0")) &&
+			( property_get("persist.sys.camera.beauty.white", str_adb_white, "0")) &&
+			( property_get("persist.sys.camera.beauty.clean", str_adb_clean, "0"))
+		) {
+			adb_level_val = atoi(str_adb_level);
+			adb_level_val = (adb_level_val < 0) ? 0 : ((adb_level_val > 9) ? 9 : adb_level_val);
+			adb_white_val = atoi(str_adb_white);
+			// TODO: clip the adb_white_val.
+			adb_clean_val = atoi(str_adb_clean);
+			// TODO: clip the adb_clean_val.
+
+			// replace the static value.
+			tab_skinWhitenLevel[adb_level_val] = adb_white_val;
+			tab_skinCleanLevel[adb_level_val] = adb_clean_val;
+		}
+	}
+
+	// convert the skin_level set by APP to skinWhitenLevel & skinCleanLevel according to the table saved.
+	level = (level<0)?0:((level>90)?90:level);
+	level_num = level/10;
+	skinWhitenLevel = tab_skinWhitenLevel[level_num];
+	skinCleanLevel = tab_skinCleanLevel[level_num];
+	HAL_LOGD("UCAM skinWhitenLevel is %d, skinCleanLevel is %d", skinWhitenLevel, skinCleanLevel);
+
 	FACE_Tag faceInfo;
-	TSRect Tsface;
-	memset(&Tsface,0,sizeof(TSRect));
 	mSetting->getFACETag(&faceInfo);
 	if(faceInfo.face_num>0){
+		mSkinWhitenNotDetectFDNum = 0;
+		isNeedBeautify = true;
 		CameraConvertCoordinateFromFramework(faceInfo.face[0].rect);
-		Tsface.left = faceInfo.face[0].rect[0];
-		Tsface.top = faceInfo.face[0].rect[1];
-		Tsface.right = faceInfo.face[0].rect[2];
-		Tsface.bottom = faceInfo.face[0].rect[3];
-		HAL_LOGV("FACE_BEAUTY rect:%d-%d-%d-%d",Tsface.left,Tsface.top,Tsface.right,Tsface.bottom);
+		mSkinWhitenTsface.left = faceInfo.face[0].rect[0];
+		mSkinWhitenTsface.top = faceInfo.face[0].rect[1];
+		mSkinWhitenTsface.right = faceInfo.face[0].rect[2];
+		mSkinWhitenTsface.bottom = faceInfo.face[0].rect[3];
+		HAL_LOGV("FACE_BEAUTY rect:%d-%d-%d-%d",mSkinWhitenTsface.left,mSkinWhitenTsface.top,mSkinWhitenTsface.right,mSkinWhitenTsface.bottom);
+	}  else {
+		HAL_LOGE("Not detect face!");
+	}
+	mSkinWhitenNotDetectFDNum++;
+#define SHINWHITED_NOT_DETECTFD_MAXNUM 10
+	if(mSkinWhitenNotDetectFDNum>SHINWHITED_NOT_DETECTFD_MAXNUM){
+		HAL_LOGD("UCAM:can not find fd in %d frame.reset mSkinWhitenTsface",SHINWHITED_NOT_DETECTFD_MAXNUM);
+		mSkinWhitenNotDetectFDNum = 0;
+		isNeedBeautify = false;
+		memset(&mSkinWhitenTsface,0,sizeof(TSRect));
+	}
 
-		int level = sprddefInfo.perfect_skin_level;
-		int skinWhitenLevel = 0;
-		int skinCleanLevel = 0;
-		int level_num = 0;
+	TSMakeupData  inMakeupData, outMakeupData;
+	unsigned char *yBuf = (unsigned char *)(frame->y_vir_addr);
+	unsigned char *uvBuf = (unsigned char *)(frame->y_vir_addr) + frame->width*frame->height ;
+	unsigned char * tmpBuf = new unsigned char[frame->width*frame->height* 3 / 2];
 
-		// convert the skin_level set by APP to skinWhitenLevel & skinCleanLevel according to the table saved.
-		level = (level<0)?0:((level>90)?90:level);
-		level_num = level/10;
-		skinWhitenLevel = tab_skinWhitenLevel[level_num];
-		skinCleanLevel = tab_skinCleanLevel[level_num];
-		HAL_LOGD("UCAM skinWhitenLevel is %d, skinCleanLevel is %d", skinWhitenLevel, skinCleanLevel);
+	inMakeupData.frameWidth = frame->width;
+	inMakeupData.frameHeight = frame->height;
+	inMakeupData.yBuf = yBuf;
+	inMakeupData.uvBuf = uvBuf;
 
-		TSMakeupData  inMakeupData, outMakeupData;
-		unsigned char *yBuf = (unsigned char *)(frame->y_vir_addr);
-		unsigned char *uvBuf = (unsigned char *)(frame->y_vir_addr) + frame->width*frame->height ;
-		unsigned char * tmpBuf = new unsigned char[frame->width*frame->height* 3 / 2];
+	outMakeupData.frameWidth = frame->width;
+	outMakeupData.frameHeight = frame->height;
+	outMakeupData.yBuf = tmpBuf;
+	outMakeupData.uvBuf = tmpBuf + frame->width*frame->height ;
 
-		inMakeupData.frameWidth = frame->width;
-		inMakeupData.frameHeight = frame->height;
-		inMakeupData.yBuf = yBuf;
-		inMakeupData.uvBuf = uvBuf;
-
-		outMakeupData.frameWidth = frame->width;
-		outMakeupData.frameHeight = frame->height;
-		outMakeupData.yBuf = tmpBuf;
-		outMakeupData.uvBuf = tmpBuf + frame->width*frame->height ;
-
-		if (frame->width > 0 && frame->height > 0 && NULL != outMakeupData.yBuf) {
-			int mu_retVal = ts_face_beautify(&inMakeupData, &outMakeupData, skinCleanLevel, skinWhitenLevel, &Tsface,0);
-			if(mu_retVal !=  TS_OK) {
-				HAL_LOGE("UCAM ts_face_beautify ret is %d", mu_retVal);
-			} else {
-				HAL_LOGD("UCAM ts_face_beautify return OK");
-				memcpy((unsigned char *)(frame->y_vir_addr), tmpBuf, frame->width * frame->height * 3 / 2);
-			}
+	if ( frame->width > 0 && frame->height > 0 && NULL != outMakeupData.yBuf && isNeedBeautify) {
+		int mu_retVal = ts_face_beautify(&inMakeupData, &outMakeupData, skinCleanLevel, skinWhitenLevel, &mSkinWhitenTsface,0);
+		if(mu_retVal !=  TS_OK) {
+			HAL_LOGE("UCAM ts_face_beautify ret is %d", mu_retVal);
 		} else {
-			HAL_LOGE("No face beauty! frame size %d, %d. If size is not zero, then outMakeupData.yBuf is null!");
-		}
-		if(NULL != tmpBuf) {
-			delete tmpBuf;
-			tmpBuf = NULL;
+			HAL_LOGD("UCAM ts_face_beautify return OK");
+			memcpy((unsigned char *)(frame->y_vir_addr), tmpBuf, frame->width * frame->height * 3 / 2);
 		}
 	} else {
-		HAL_LOGD("Not detect face!");
+		HAL_LOGE("No face beauty! frame size %d, %d. If size is not zero, then outMakeupData.yBuf is null!");
+	}
+	if(NULL != tmpBuf) {
+		delete tmpBuf;
+		tmpBuf = NULL;
 	}
 }
 
@@ -3333,8 +3371,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 		}
 	}
 
-SPRD_DEF_Tag sprddefInfo;
-mSetting->getSPRDDEFTag(&sprddefInfo);
+	SPRD_DEF_Tag sprddefInfo;
+	mSetting->getSPRDDEFTag(&sprddefInfo);
 
 #ifdef CONFIG_CAMERA_ISP
 	send_img_data(ISP_TOOL_YVU420_2FRAME, mPreviewWidth, mPreviewHeight, (char *)frame->y_vir_addr, frame->width * frame->height * 3 /2);
@@ -3441,11 +3479,11 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 
 
 #ifdef CONFIG_FACE_BEAUTY
-			if (PREVIEW_ZSL_FRAME != frame->type && sprddefInfo.perfect_skin_level > 0 ) {
-				faceDectect(1);
-				if( isPreviewing() && frame->type == PREVIEW_FRAME )
-					doFaceMakeup(frame);
-			}
+		if (PREVIEW_ZSL_FRAME != frame->type && sprddefInfo.perfect_skin_level > 0 ) {
+			faceDectect(1);
+			if( isPreviewing() && frame->type == PREVIEW_FRAME )
+				doFaceMakeup(frame);
+		}
 #endif
 
 

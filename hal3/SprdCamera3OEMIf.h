@@ -58,6 +58,9 @@ extern "C" {
 #include "sprd_eis.h"
 #endif
 
+#ifdef CONFIG_FACE_BEAUTY
+#include "ts_makeup_api.h"
+#endif
 
 using namespace android;
 
@@ -632,7 +635,7 @@ private:
 
 	/*pre-alloc capture memory*/
 	uint32_t                   mIsPreAllocCapMem;
-	pthread_t                 mPreAllocCapMemThread;
+	pthread_t                  mPreAllocCapMemThread;
 	uint32_t                   mPreAllocCapMemInited;
 	uint32_t                   mIsPreAllocCapMemDone;
 	sem_t                      mPreAllocCapMemSemDone;
@@ -681,6 +684,11 @@ private:
 	uint32_t                      mFlashCaptureSkipNum;
 	bool                          mFlagMultiLayerStart;
 	bool                          mSprdBurstModeEnabled;
+#ifdef CONFIG_FACE_BEAUTY
+	uint32_t                      mSkinWhitenNotDetectFDNum;
+	bool                          isNeedBeautify;
+	TSRect                        mSkinWhitenTsface;
+#endif
 };
 
 }; // namespace sprdcamera
