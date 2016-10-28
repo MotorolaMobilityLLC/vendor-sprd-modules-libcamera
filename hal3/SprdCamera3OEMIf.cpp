@@ -98,7 +98,7 @@ namespace sprdcamera {
 #define HIGH_FREQ_STR        "500000"
 #endif
 #define DUALCAM_TIME_DIFF (15e6)/**add for 3d capture*/
-#define DUALCAM_ZSL_NUM   (8)/**add for 3d capture*/
+#define DUALCAM_ZSL_NUM   (6)/**add for 3d capture*/
 
 // dfs policy
 enum DFS_POLICY {
@@ -7334,7 +7334,7 @@ void SprdCamera3OEMIf::pushZslList(ZslBufferQueue frame)
     Mutex::Autolock l(&mZslLock);
     List<ZslBufferQueue>::iterator zslFrame;
     HAL_LOGD("push zsl frame : Camera %d, buf_id:%d, timestamp:%lld", mCameraId, frame.frame.buf_id, frame.frame.timestamp);
-    if ( mZslNum-2 <= mZSLList.size() )
+    if ( mZslNum-1 <= mZSLList.size() )
     {
         HAL_LOGD("Camera %d zsl list number: %d", mCameraId, mZSLList.size());
         zslFrame = mZSLList.begin();
