@@ -92,7 +92,7 @@ static unsigned long _s5k4h8yx_access_val(SENSOR_HW_HANDLE handle, unsigned long
 static uint32_t _s5k4h8yx_read_otp(SENSOR_HW_HANDLE handle, unsigned long param);
 static uint32_t _s5k4h8yx_write_otp(SENSOR_HW_HANDLE handle, unsigned long param);
 
-#define FEATURE_OTP    /*OTP function switch*/
+//#define FEATURE_OTP    /*OTP function switch*/
 
 #ifdef FEATURE_OTP
 #define MODULE_ID_s5k4h8yx_ofilm		0x0007
@@ -2591,7 +2591,7 @@ static unsigned long _s5k4h8yx_access_val(SENSOR_HW_HANDLE handle, unsigned long
 	switch(param_ptr->type)
 	{
 		case SENSOR_VAL_TYPE_INIT_OTP:
-			rtn = _s5k4h8yx_init_otp(handle);
+			//rtn = _s5k4h8yx_init_otp(handle);
 			break;
 		case SENSOR_VAL_TYPE_SHUTTER:
 			*((uint32_t*)param_ptr->pval) = _s5k4h8yx_get_shutter(handle);
@@ -2603,16 +2603,16 @@ static unsigned long _s5k4h8yx_access_val(SENSOR_HW_HANDLE handle, unsigned long
 			rtn = _s5k4h8yx_write_vcm(handle, param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_READ_OTP:
-			rtn = _s5k4h8yx_read_otp(handle, (unsigned long)param_ptr->pval);
+			//rtn = _s5k4h8yx_read_otp(handle, (unsigned long)param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_PARSE_OTP:
-			rtn = _s5k4h8yx_parse_otp(handle, (unsigned long)param_ptr->pval);
+			//rtn = _s5k4h8yx_parse_otp(handle, (unsigned long)param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_WRITE_OTP:
-			rtn = _s5k4h8yx_write_otp(handle, (unsigned long)param_ptr->pval);
+			//rtn = _s5k4h8yx_write_otp(handle, (unsigned long)param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_ERASE_OTP:
-			rtn = _s5k4h8yx_erase_otp(handle, (unsigned long)param_ptr->pval);
+			//rtn = _s5k4h8yx_erase_otp(handle, (unsigned long)param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_GET_RELOADINFO:
 			{
