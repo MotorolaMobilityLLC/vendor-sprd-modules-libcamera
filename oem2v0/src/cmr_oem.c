@@ -32,6 +32,7 @@
 
 #include "sprd_img.h"
 #include "isp_video.h"
+#include "pthread.h"
 /**********************************************************************************************/
 #define PREVIEW_MSG_QUEUE_SIZE                       50
 #define SNAPSHOT_MSG_QUEUE_SIZE                      50
@@ -70,6 +71,9 @@ enum oem_ev_level {
 
 static uint32_t                                      is_support_reload = 0;
 static uint32_t                                      is_dual_capture = 0;
+static pthread_mutex_t  close_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t   close_cond = PTHREAD_COND_INITIALIZER;
+static uint32_t closing = 0;
 
 /************************************internal interface ***************************************/
 static void camera_send_channel_data(cmr_handle oem_handle, cmr_handle receiver_handle, cmr_uint evt, void *data);
@@ -4098,7 +4102,12 @@ cmr_int camera_init_internal(cmr_handle  oem_handle, cmr_uint is_autotest)
 
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	cmr_int                        ret_deinit = CMR_CAMERA_SUCCESS;
-
+	pthread_mutex_lock(&close_mutex);
+	while (closing!=0) {
+		pthread_cond_wait(&close_cond, &close_mutex);
+	}
+	pthread_mutex_unlock(&close_mutex);
+	CMR_LOGI("E");
 	ret = camera_sensor_init(oem_handle, is_autotest);
 	if (ret) {
 		CMR_LOGE("failed to init sensor %ld", ret);
@@ -4144,6 +4153,7 @@ sensor_deinit:
     }
 
 exit:
+	CMR_LOGI("X");
 	ATRACE_END();
 	return ret;
 }
@@ -4153,11 +4163,22 @@ cmr_int camera_deinit_internal(cmr_handle  oem_handle)
 	ATRACE_BEGIN(__FUNCTION__);
 
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
+	pthread_mutex_lock(&close_mutex);
+	closing++;
+	pthread_mutex_unlock(&close_mutex);
+	CMR_LOGI("E");
 	camera_isp_deinit_notice(oem_handle);
 	camera_isp_deinit(oem_handle);
 	camera_res_deinit(oem_handle);
 	camera_sensor_deinit(oem_handle);
+	pthread_mutex_lock(&close_mutex);
+	closing--;
+	if (closing==0) {
+		pthread_cond_signal(&close_cond);
+	}
+	pthread_mutex_unlock(&close_mutex);
 	ATRACE_END();
+	CMR_LOGI("X");
 	return ret;
 }
 
