@@ -433,6 +433,7 @@ private:
 	// total zsl buffer num
 	int32_t                           mZslNum;
 	Mutex                             mZslBufLock;
+	Mutex				mZslPopLock;
 	// zsl end
 
 	bool                              mSprdPipVivEnabled;
@@ -627,6 +628,7 @@ private:
 	int32_t			mVideoShotFlag;
 	int32_t			mVideoShotPushFlag;
 	Condition		mVideoShotWait;
+	Condition			mZslShotWait;
 
 	/*pre-alloc capture memory*/
 	uint32_t                   mIsPreAllocCapMem;
@@ -674,6 +676,8 @@ private:
 	bool                          mIommuEnabled;
 	/* 0 - snapshot not need flash; 1 - snapshot need flash*/
 	uint32_t                      mFlashCaptureFlag;
+	uint32_t				mZslPopFlag;
+	uint32_t				mVideoSnapshotFrameNum;
 	uint32_t                      mFlashCaptureSkipNum;
 	bool                          mFlagMultiLayerStart;
 	bool                          mSprdBurstModeEnabled;

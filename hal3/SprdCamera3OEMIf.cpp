@@ -71,12 +71,15 @@ namespace sprdcamera {
 #define GET_USE_TIME do {\
 			s_use_time = (s_end_timestamp - s_start_timestamp)/1000000;\
 		}while(0)
+#define ZSL_FRAME_TIMEOUT    1000000000     /*1000ms*/
 #define SET_PARAM_TIMEOUT    2000000000     /*2000ms*/
 #define CAP_TIMEOUT          5000000000     /*5000ms*/
 #define PREV_TIMEOUT         5000000000     /*5000ms*/
 #define CAP_START_TIMEOUT    5000000000     /* 5000ms*/
 #define PREV_STOP_TIMEOUT    3000000000     /* 3000ms*/
 #define CANCEL_AF_TIMEOUT    500000000      /*1000ms*/
+
+
 #define SET_PARAMS_TIMEOUT   250            /*250 means 250*10ms*/
 #define ON_OFF_ACT_TIMEOUT   50             /*50 means 50*10ms*/
 #define IS_ZOOM_SYNC         0
@@ -673,6 +676,7 @@ int SprdCamera3OEMIf::getCameraId() const
 void SprdCamera3OEMIf::initialize()
 {
 	mPreviewFrameNum = 0;
+	mVideoSnapshotFrameNum = 0;
 	mRecordFrameNum = 0;
 	mZslFrameNum = 0;
 	mPictureFrameNum = 0;
@@ -759,10 +763,14 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type, uint32_t frame_n
 				if(mTakePictureMode == SNAPSHOT_NO_ZSL_MODE ||
 				   mTakePictureMode == SNAPSHOT_ONLY_MODE)
 					ret = takePicture();
-				else if(mTakePictureMode == SNAPSHOT_ZSL_MODE)
+				else if(mTakePictureMode == SNAPSHOT_ZSL_MODE) {
+					mVideoSnapshotFrameNum = frame_number;
 					ret = zslTakePicture();
-				else if(mTakePictureMode == SNAPSHOT_VIDEO_MODE)
+				}
+				else if(mTakePictureMode == SNAPSHOT_VIDEO_MODE) {
+					mVideoSnapshotFrameNum = frame_number;
 					ret = VideoTakePicture();
+				}
 			}
 
 			break;
@@ -3451,7 +3459,7 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 					 frame->fd, buff_vir, frame_num, buffer_timestamp,frame->type, mSlowPara.rec_timestamp);
 				if(frame->type == PREVIEW_VIDEO_FRAME && frame_num >= mRecordFrameNum && (frame_num > mPictureFrameNum ||frame_num == 0)) {
 					if (mVideoWidth <= mCaptureWidth && mVideoHeight <= mCaptureHeight) {
-						if(mVideoShotFlag)
+						if(mVideoShotFlag && (frame_num >=  mVideoSnapshotFrameNum))
 							PushVideoSnapShotbuff(frame_num, CAMERA_STREAM_TYPE_VIDEO);
 					}
 					rec_stream->getQBufListNum(&buf_deq_num);
@@ -3495,6 +3503,11 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 					mRecordFrameNum = frame_num;
 
 				ATRACE_END();
+			}
+			if((mVideoSnapshotFrameNum <= mRecordFrameNum) && mZslShotPushFlag == 1)
+			{
+				mZslPopFlag = 1;
+				mZslShotWait.signal();
 			}
 		}
 
@@ -7472,6 +7485,11 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data)
 		return;
 	}
 
+	if (mZslPopFlag == 0 && (mVideoWidth != 0 && mVideoHeight != 0)) {
+		mZslShotWait.waitRelative(mZslPopLock,ZSL_FRAME_TIMEOUT);
+		mZslPopLock.unlock();
+	}
+	mZslPopFlag =0;
 	if (1 == obj->mZslShotPushFlag) {
 		if ( 0 == obj->mNeededTimestamp )/**add for 3dcapture, find right zsl buffer if the needed timestamp gived*/
 		{
