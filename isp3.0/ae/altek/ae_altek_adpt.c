@@ -1232,7 +1232,7 @@ static cmr_int aealtek_write_to_sensor_slv(struct aealtek_cxt *cxt_ptr,
 		ret = ISP_PARAM_NULL;
 		goto exit;
 	}
-
+#if 0
 	if (cxt_ptr->init_in_param.ops_in.set_exposure_slv) {
 		if (0 != exp_ptr->exp_line && (cxt_ptr->pre_write_exp_data_slv.exp_line != exp_ptr->exp_line
 				|| cxt_ptr->pre_write_exp_data_slv.dummy != exp_ptr->dummy)) {
@@ -1245,7 +1245,7 @@ static cmr_int aealtek_write_to_sensor_slv(struct aealtek_cxt *cxt_ptr,
 			(*cxt_ptr->init_in_param.ops_in.set_again_slv)(cxt_ptr->caller_handle, gain_ptr);
 		}
 	}
-
+#endif
 	cxt_ptr->pre_write_exp_data_slv.exp_line = exp_ptr->exp_line;
 	cxt_ptr->pre_write_exp_data_slv.dummy = exp_ptr->dummy;
 	cxt_ptr->pre_write_exp_data_slv.gain = gain_ptr->gain;
@@ -1286,6 +1286,34 @@ static cmr_int aealtek_write_to_sensor(struct aealtek_cxt *cxt_ptr,
 	cxt_ptr->pre_write_exp_data.dummy = exp_ptr->dummy;
 	cxt_ptr->pre_write_exp_data.gain = gain_ptr->gain;
 
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld", ret);
+	return ret;
+}
+
+static cmr_int aealtek_pre_calc_ae(struct aealtek_cxt *cxt_ptr,
+				   struct ae_ctrl_param_sensor_exposure *sensor_exp,
+				   struct ae_ctrl_param_sensor_gain *sensor_gain)
+{
+	cmr_int ret = ISP_ERROR;
+
+	if (!cxt_ptr) {
+		ISP_LOGE("param is NULL error!");
+		goto exit;
+	}
+	if (cxt_ptr->is_refocus && !cxt_ptr->is_master) {
+		ISP_LOGI("return when in slave sensor");
+		return ISP_SUCCESS;
+	}
+	sensor_exp->exp_line = cxt_ptr->sensor_exp_data.write_exp.exp_line;
+	sensor_exp->dummy = cxt_ptr->sensor_exp_data.write_exp.dummy;
+	sensor_exp->size_index = cxt_ptr->sensor_exp_data.write_exp.size_index;
+	sensor_gain->gain = cxt_ptr->sensor_exp_data.write_exp.gain * SENSOR_GAIN_BASE / LIB_GAIN_BASE;
+
+	cxt_ptr->pre_write_exp_data.exp_line = sensor_exp->exp_line;
+	cxt_ptr->pre_write_exp_data.dummy = sensor_exp->dummy;
+	cxt_ptr->pre_write_exp_data.gain = sensor_gain->gain;
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld", ret);
@@ -3545,12 +3573,122 @@ exit:
 	return ret;
 }
 
+/* TBD this code will remove to drv_u */
+#include <sprd_sensor_k.h>
+static cmr_int aealtek_handle_aec_info(struct aealtek_cxt *cxt_ptr,
+					   struct ae_ctrl_param_sensor_exposure *master_exp_ptr,
+					   struct ae_ctrl_param_sensor_gain *master_gain_ptr,
+					   struct ae_ctrl_param_sensor_exposure *slave_exp_ptr,
+					   struct ae_ctrl_param_sensor_gain *slave_gain_ptr)
+{
+	struct sensor_muti_aec_i2c_tag muti_aec_info;
+	struct sensor_aec_reg_info aeinfo;
+	struct sensor_aec_i2c_tag *aec_info;
+	cmr_u8 i = 0;
+	cmr_u16 size = 0;
+
+	memset(&aeinfo, 0x00, sizeof(aeinfo));
+	memset(&muti_aec_info, 0x00, sizeof(muti_aec_info));
+
+	aeinfo.exp.exposure = master_exp_ptr->exp_line;
+	aeinfo.exp.dummy = master_exp_ptr->dummy;
+	aeinfo.exp.size_index = master_exp_ptr->size_index;
+	aeinfo.gain = master_gain_ptr->gain;
+
+	cxt_ptr->init_in_param.ops_in.read_aec_info(cxt_ptr->caller_handle, &aeinfo);
+	aec_info = aeinfo.aec_i2c_info_out;
+
+	/* write aec i2c */
+	cmr_u16 sensor_id[AEC_I2C_SENSOR_MAX];
+	cmr_u16 i2c_save_addr[AEC_I2C_SENSOR_MAX];
+	cmr_u16 addr_bits_type[AEC_I2C_SENSOR_MAX];
+	cmr_u16 data_bits_type[AEC_I2C_SENSOR_MAX];
+	struct sensor_reg_tag msettings[AEC_I2C_SETTINGS_MAX];
+	struct sensor_reg_tag ssettings[AEC_I2C_SETTINGS_MAX];
+
+	muti_aec_info.sensor_id = sensor_id;
+	muti_aec_info.id_size = AEC_I2C_SENSOR_MAX;
+	muti_aec_info.i2c_slave_addr = i2c_save_addr;
+	muti_aec_info.i2c_slave_len = AEC_I2C_SENSOR_MAX;
+	muti_aec_info.addr_bits_type = addr_bits_type;
+	muti_aec_info.addr_bits_type_len = AEC_I2C_SENSOR_MAX;
+	muti_aec_info.data_bits_type = data_bits_type;
+	muti_aec_info.data_bits_type_len = AEC_I2C_SENSOR_MAX;
+
+	muti_aec_info.master_i2c_tab = msettings;
+	muti_aec_info.slave_i2c_tab = ssettings;
+
+	sensor_id[0] = cxt_ptr->camera_id;
+	i2c_save_addr[0] = aec_info->slave_addr;
+	addr_bits_type[0] = aec_info->addr_bits_type;
+	data_bits_type[0] = aec_info->data_bits_type;
+
+	for (i = 0; i < aec_info->frame_length->size; i++) {
+		msettings[size].reg_addr = aec_info->frame_length->settings[i].reg_addr;
+		msettings[size++].reg_value = aec_info->frame_length->settings[i].reg_value;
+	}
+	for (i = 0; i < aec_info->shutter->size; i++) {
+		msettings[size].reg_addr = aec_info->shutter->settings[i].reg_addr;
+		msettings[size++].reg_value = aec_info->shutter->settings[i].reg_value;
+	}
+	for (i = 0; i < aec_info->again->size; i++) {
+		msettings[size].reg_addr = aec_info->again->settings[i].reg_addr;
+		msettings[size++].reg_value = aec_info->again->settings[i].reg_value;
+	}
+	for (i = 0; i < aec_info->dgain->size; i++) {
+		msettings[size].reg_addr = aec_info->dgain->settings[i].reg_addr;
+		msettings[size++].reg_value = aec_info->dgain->settings[i].reg_value;
+	}
+	muti_aec_info.msize = aec_info->shutter->size +
+				aec_info->again->size +
+				aec_info->dgain->size +
+				aec_info->frame_length->size;
+
+	aeinfo.exp.exposure = slave_exp_ptr->exp_line;
+	aeinfo.exp.dummy = slave_exp_ptr->dummy;
+	aeinfo.exp.size_index = slave_exp_ptr->size_index;
+	aeinfo.gain = slave_gain_ptr->gain;
+	cxt_ptr->init_in_param.ops_in.read_aec_info_slv(cxt_ptr->caller_handle, &aeinfo);
+	aec_info = aeinfo.aec_i2c_info_out;
+
+	sensor_id[1] = cxt_ptr->camera_id + 2;
+	i2c_save_addr[1] = aec_info->slave_addr;
+	addr_bits_type[1] = aec_info->addr_bits_type;
+	data_bits_type[1] = aec_info->data_bits_type;
+	size = 0;
+	for (i = 0; i < aec_info->frame_length->size; i++) {
+		ssettings[size].reg_addr = aec_info->frame_length->settings[i].reg_addr;
+		ssettings[size++].reg_value = aec_info->frame_length->settings[i].reg_value;
+	}
+	for (i = 0; i < aec_info->shutter->size; i++) {
+		ssettings[size].reg_addr = aec_info->shutter->settings[i].reg_addr;
+		ssettings[size++].reg_value = aec_info->shutter->settings[i].reg_value;
+	}
+	for (i = 0; i < aec_info->again->size; i++) {
+		ssettings[size].reg_addr = aec_info->again->settings[i].reg_addr;
+		ssettings[size++].reg_value = aec_info->again->settings[i].reg_value;
+	}
+	for (i = 0; i < aec_info->dgain->size; i++) {
+		ssettings[size].reg_addr = aec_info->dgain->settings[i].reg_addr;
+		ssettings[size++].reg_value = aec_info->dgain->settings[i].reg_value;
+	}
+	muti_aec_info.ssize = aec_info->shutter->size +
+				aec_info->again->size +
+				aec_info->dgain->size +
+				aec_info->frame_length->size;
+
+	cxt_ptr->init_in_param.ops_in.write_aec_info(cxt_ptr->caller_handle, &muti_aec_info);
+	return 0;
+}
+
 static cmr_int aealtek_callback_sync_info(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr)
 {
 	cmr_int ret = ISP_ERROR;
 	struct ae_ctrl_callback_in callback_in;
 	struct ae_ctrl_param_sensor_exposure sensor_exp;
 	struct ae_ctrl_param_sensor_gain sensor_gain;
+	struct ae_ctrl_param_sensor_exposure sensor_exp_slv;
+	struct ae_ctrl_param_sensor_gain sensor_gain_slv;
 	struct aealtek_exposure_param exp_param;
 
 	if (!cxt_ptr) {
@@ -3558,22 +3696,29 @@ static cmr_int aealtek_callback_sync_info(struct aealtek_cxt *cxt_ptr, struct ae
 		goto exit;
 	}
 
-	sensor_exp.dummy = 0;
-	sensor_exp.size_index = cxt_ptr->cur_status.ui_param.work_info_slv.resolution.sensor_size_index;
+	sensor_exp_slv.dummy = 0;
+	sensor_exp_slv.size_index = cxt_ptr->cur_status.ui_param.work_info_slv.resolution.sensor_size_index;
 
 	aealtek_get_sync_info_from_lib(cxt_ptr, &exp_param);
-	sensor_exp.exp_line = exp_param.exp_line;
-	sensor_gain.gain = exp_param.gain;
-	sensor_exp.dummy = exp_param.dummy;
+	sensor_exp_slv.exp_line = exp_param.exp_line;
+	sensor_gain_slv.gain = exp_param.gain;
+	sensor_exp_slv.dummy = exp_param.dummy;
 
 	ret = aealtek_set_sof_to_lib_slv(cxt_ptr, in_ptr, exp_param);
 	if (ret)
 		goto exit;
-
+#if 1
+	sensor_gain.gain = 0;
+	memset(&sensor_exp, 0x00, sizeof(sensor_exp));
+	ret = aealtek_pre_calc_ae(cxt_ptr, &sensor_exp, &sensor_gain);
+	ret = aealtek_write_to_sensor_slv(cxt_ptr, &sensor_exp_slv, &sensor_gain_slv);
+	aealtek_handle_aec_info(cxt_ptr, &sensor_exp, &sensor_gain, &sensor_exp_slv, &sensor_gain_slv);
+#else
 	ret = aealtek_pre_to_sensor(cxt_ptr, 0, 0);
-	ret = aealtek_write_to_sensor_slv(cxt_ptr, &sensor_exp, &sensor_gain);
+	ret = aealtek_write_to_sensor_slv(cxt_ptr, &sensor_exp_slv, &sensor_gain_slv);
 	if (ret)
 		goto exit;
+#endif
 	if (cxt_ptr->init_in_param.ops_in.set_iso_slv) {
 		ISP_LOGV("iso_speed_slv =%d", exp_param.iso);
 		cxt_ptr->init_in_param.ops_in.set_iso_slv(cxt_ptr->caller_handle, exp_param.iso);
@@ -3665,7 +3810,7 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 		out_write = in_est.cell;
 	}
 
-	ISP_LOGI("out_actual exp_line=%d, exp_time=%d, gain=%d", out_actual.exp_line, out_actual.exp_time, out_actual.gain);
+	ISP_LOGI("cxt_ptr->is_refocus %d sout_actual exp_line=%d, exp_time=%d, gain=%d",cxt_ptr->is_refocus, out_actual.exp_line, out_actual.exp_time, out_actual.gain);
 
 	if (0 == out_actual.exp_line || 0 == out_actual.gain) {
 		out_actual = in_est.cell;

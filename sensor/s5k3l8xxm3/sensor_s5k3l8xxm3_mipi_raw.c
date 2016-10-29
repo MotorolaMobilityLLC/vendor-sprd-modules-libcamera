@@ -107,7 +107,7 @@
 
 struct sensor_ev_info_t {
 	uint16_t preview_shutter;
-	uint16_t preview_gain;	
+	uint16_t preview_gain;
 	uint16_t preview_framelength;
 };
 
@@ -1348,7 +1348,7 @@ static SENSOR_STATIC_INFO_T s_s5k3l8xxm3_static_info = {
 	1,	//exp_valid_frame_num;N+2-1
 	64,	//clamp_level,black level
 	1,	//adgain_valid_frame_num;N+1-1
-    };   
+    };
 
 
 static SENSOR_MODE_FPS_INFO_T s_s5k3l8xxm3_mode_fps_info = {
@@ -1424,7 +1424,7 @@ static void s5k3l8xxm3_write_gain(SENSOR_HW_HANDLE handle,float gain)
 
 	/*if (SENSOR_MAX_GAIN < gain)
 			gain = SENSOR_MAX_GAIN;
-		
+
 	Sensor_WriteReg(0x0204, gain);
 	SENSOR_LOGI("_s5k3l8xxm3: real_gain:0x%x, param: 0x%x", (uint32_t)real_gain, param);
 */
@@ -1440,14 +1440,13 @@ static void s5k3l8xxm3_write_gain(SENSOR_HW_HANDLE handle,float gain)
 			d_gain=256*256;  //d_gain < 256x
 	}
 
-	ret_value = Sensor_WriteReg(0x204,(uint32_t)a_gain);//0x100);//a_gain); 
-	ret_value = Sensor_WriteReg(0x20e,(uint32_t) d_gain);
+	ret_value = Sensor_WriteReg(0x204, (uint32_t)a_gain);//0x100);//a_gain);
+	ret_value = Sensor_WriteReg(0x20e, (uint32_t)d_gain);
 	ret_value = Sensor_WriteReg(0x210, (uint32_t)d_gain);
 	ret_value = Sensor_WriteReg(0x212, (uint32_t)d_gain);
 	ret_value = Sensor_WriteReg(0x214, (uint32_t)d_gain);
 
 	//s5k3l8xxm3_group_hold_off(handle);
-
 }
 
 /*==============================================================================
@@ -1531,7 +1530,7 @@ write_sensor_shutter:
 	#ifdef GAIN_DELAY_1_FRAME
 	usleep(dest_fr_len*PREVIEW_LINE_TIME/10);
 	#endif
-	
+
 	return SENSOR_SUCCESS;
 }
 
@@ -1788,8 +1787,8 @@ static uint32_t s5k3l8xxm3_set_sensor_close_flag(SENSOR_HW_HANDLE handle)
 static unsigned long s5k3l8xxm3_access_val(SENSOR_HW_HANDLE handle,unsigned long param)
 {
 	uint32_t ret = SENSOR_FAIL;
-    SENSOR_VAL_T* param_ptr = (SENSOR_VAL_T*)param;
-	
+	SENSOR_VAL_T* param_ptr = (SENSOR_VAL_T*)param;
+
 	if(!param_ptr){
 		#ifdef FEATURE_OTP
 		if(PNULL!=s_s5k3l8xxm3_raw_param_tab_ptr->cfg_otp){
@@ -1845,7 +1844,7 @@ static unsigned long s5k3l8xxm3_access_val(SENSOR_HW_HANDLE handle,unsigned long
 		default:
 			break;
 	}
-    ret = SENSOR_SUCCESS;
+	ret = SENSOR_SUCCESS;
 
 	return ret;
 }
@@ -2021,7 +2020,7 @@ static uint32_t s5k3l8xxm3_before_snapshot(SENSOR_HW_HANDLE handle,uint32_t para
 
 	SENSOR_PRINT("capture_shutter = 0x%x, capture_gain = 0x%x", cap_shutter, cap_gain);
 snapshot_info:
-	
+
 	Sensor_SetSensorExifInfo(SENSOR_EXIF_CTRL_EXPOSURETIME, cap_shutter);
 
 	return SENSOR_SUCCESS;
@@ -2039,7 +2038,7 @@ static unsigned long s5k3l8xxm3_write_exposure(SENSOR_HW_HANDLE handle,unsigned 
 	uint16_t dummy_line = 0x00;
 	uint16_t size_index=0x00;
 	struct sensor_ex_exposure  *ex = (struct sensor_ex_exposure*)param;
-	
+
 	if (!param) {
 		SENSOR_PRINT_ERR("param is NULL !!!");
 		return ret_value;
@@ -2067,7 +2066,6 @@ static uint32_t isp_to_real_gain(SENSOR_HW_HANDLE handle,uint32_t param)
 {
 	uint32_t real_gain = 0;
 
-	
 	real_gain=param;
 
 	return real_gain;
@@ -2091,8 +2089,149 @@ static uint32_t s5k3l8xxm3_write_gain_value(SENSOR_HW_HANDLE handle,unsigned lon
 	SENSOR_PRINT("real_gain = %f", real_gain);
 
 	s_sensor_ev_info.preview_gain = real_gain;
-	s5k3l8xxm3_write_gain(handle,real_gain);
+	s5k3l8xxm3_write_gain(handle, real_gain);
 
+	return ret_value;
+}
+
+static struct sensor_reg_tag s5k3l8xxm3_shutter_reg[] = {
+	{0x0202, 0},
+};
+
+static struct sensor_i2c_reg_tab s5k3l8xxm3_shutter_tab = {
+	.settings = s5k3l8xxm3_shutter_reg,
+	.size = ARRAY_SIZE(s5k3l8xxm3_shutter_reg),
+};
+
+static struct sensor_reg_tag s5k3l8xxm3_again_reg[] = {
+	{0x0204, 0},
+};
+
+static struct sensor_i2c_reg_tab s5k3l8xxm3_again_tab = {
+	.settings = s5k3l8xxm3_again_reg,
+	.size = ARRAY_SIZE(s5k3l8xxm3_again_reg),
+};
+
+static struct sensor_reg_tag s5k3l8xxm3_dgain_reg[] = {
+	{0x020e, 0},
+	{0x0210, 0},
+	{0x0212, 0},
+	{0x0214, 0},
+};
+
+struct sensor_i2c_reg_tab s5k3l8xxm3_dgain_tab = {
+	.settings = s5k3l8xxm3_dgain_reg,
+	.size = ARRAY_SIZE(s5k3l8xxm3_dgain_reg),
+};
+
+static struct sensor_reg_tag s5k3l8xxm3_frame_length_reg[] = {
+	{0x0340, 0},
+};
+
+static struct sensor_i2c_reg_tab s5k3l8xxm3_frame_length_tab = {
+	.settings = s5k3l8xxm3_frame_length_reg,
+	.size = ARRAY_SIZE(s5k3l8xxm3_frame_length_reg),
+};
+
+static struct sensor_aec_i2c_tag s5k3l8xxm3_aec_info = {
+	.slave_addr = (I2C_SLAVE_ADDR >> 1),
+	.addr_bits_type = SENSOR_I2C_REG_16BIT,
+	.data_bits_type = SENSOR_I2C_VAL_16BIT,
+	.shutter = &s5k3l8xxm3_shutter_tab,
+	.again = &s5k3l8xxm3_again_tab,
+	.dgain = &s5k3l8xxm3_dgain_tab,
+	.frame_length = &s5k3l8xxm3_frame_length_tab,
+};
+
+static uint16_t s5k3l8xxm3_calc_exposure(SENSOR_HW_HANDLE handle,
+					 uint32_t shutter, uint32_t dummy_line, uint16_t mode,
+					 struct sensor_aec_i2c_tag *aec_info)
+{
+	uint32_t dest_fr_len = 0;
+	uint32_t cur_fr_len = 0;
+	uint32_t fr_len = s_current_default_frame_length;
+	int32_t offset = 0;
+	float fps = 0.0;
+	float line_time = 0.0;
+
+	dummy_line = dummy_line > FRAME_OFFSET ? dummy_line : FRAME_OFFSET;
+	dest_fr_len = ((shutter + dummy_line) > fr_len) ? (shutter +dummy_line) : fr_len;
+	s_current_frame_length = dest_fr_len;
+
+	cur_fr_len = s5k3l8xxm3_read_frame_length(handle);
+
+	if (shutter < SENSOR_MIN_SHUTTER)
+		shutter = SENSOR_MIN_SHUTTER;
+	line_time = s_s5k3l8xxm3_resolution_trim_tab[mode].line_time;
+	if (cur_fr_len > shutter) {
+		fps = 1000000.0 / (cur_fr_len * line_time);
+	} else {
+		fps = 1000000.0 / ((shutter + dummy_line) * line_time);
+	}
+	SENSOR_PRINT("sync fps = %f", fps);
+
+	aec_info->frame_length->settings[0].reg_value = dest_fr_len;
+	aec_info->shutter->settings[0].reg_value = shutter;
+	return shutter;
+}
+
+static void s5k3l8xxm3_calc_gain(float gain, struct sensor_aec_i2c_tag *aec_info)
+{
+	uint32_t ret_value = SENSOR_SUCCESS;
+	uint16_t value=0x00;
+	float real_gain = gain;
+	float a_gain = 0;
+	float d_gain = 0;
+	uint8_t i = 0;
+
+	if ((uint32_t)real_gain <= 16*32) {
+		a_gain = real_gain;
+		d_gain = 256;
+	} else {
+		a_gain = 16*32;
+		d_gain = 256.0*real_gain/a_gain;
+		SENSOR_LOGI("_s5k3l8xxm3: real_gain:0x%x, a_gain: 0x%x, d_gain: 0x%x", (uint32_t)real_gain, (uint32_t)a_gain,(uint32_t)d_gain);
+		if((uint32_t)d_gain>256*256)
+			d_gain=256*256;  //d_gain < 256x
+	}
+
+	aec_info->again->settings[0].reg_value = (uint16_t)a_gain;
+	for (i = 0; i < aec_info->dgain->size; i++)
+		aec_info->dgain->settings[i].reg_value = (uint16_t)d_gain;
+}
+
+static unsigned long s5k3l8xxm3_read_aec_info(SENSOR_HW_HANDLE handle, unsigned long param)
+{
+	unsigned long ret_value = SENSOR_SUCCESS;
+	struct sensor_aec_reg_info *info = (struct sensor_aec_reg_info *)param;
+	uint16_t exposure_line = 0x00;
+	uint16_t dummy_line = 0x00;
+	uint16_t mode = 0x00;
+	float real_gain = 0;
+	uint32_t gain = 0;
+	uint16_t frame_interval =0x00;
+
+	info->aec_i2c_info_out = &s5k3l8xxm3_aec_info;
+
+	exposure_line = info->exp.exposure;
+	dummy_line = info->exp.dummy;
+	mode = info->exp.size_index;
+
+	frame_interval = (uint16_t)(((exposure_line + dummy_line) * (s_s5k3l8xxm3_resolution_trim_tab[mode].line_time)) / 1000000);
+	SENSOR_PRINT("mode = %d, exposure_line = %d, dummy_line= %d, frame_interval= %d ms",
+		mode, exposure_line, dummy_line, frame_interval);
+
+	s_current_default_frame_length = s5k3l8xxm3_get_default_frame_length(handle,mode);
+	s_current_default_line_time = s_s5k3l8xxm3_resolution_trim_tab[mode].line_time;
+
+	s_sensor_ev_info.preview_shutter =
+		s5k3l8xxm3_calc_exposure(handle,
+					 exposure_line, dummy_line, mode,
+					 &s5k3l8xxm3_aec_info);
+
+	gain = info->gain < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : info->gain;
+	real_gain = (float)info->gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN*1.0;
+	s5k3l8xxm3_calc_gain(real_gain, &s5k3l8xxm3_aec_info);
 	return ret_value;
 }
 
@@ -2187,8 +2326,9 @@ static SENSOR_IOCTL_FUNC_TAB_T s_s5k3l8xxm3_ioctl_func_tab = {
 	#endif
 	.stream_on = s5k3l8xxm3_stream_on,
 	.stream_off = s5k3l8xxm3_stream_off,
-	.cfg_otp=s5k3l8xxm3_access_val,	
+	.cfg_otp=s5k3l8xxm3_access_val,
 	//.af_enable =_s5k3l8xxm3_write_af,
 	//.group_hold_on = s5k3l8xxm3_group_hold_on,
 	//.group_hold_of = s5k3l8xxm3_group_hold_off,
+	.read_aec_info = s5k3l8xxm3_read_aec_info,
 };

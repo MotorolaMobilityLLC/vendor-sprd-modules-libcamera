@@ -52,7 +52,7 @@
 #define RAW_BITS				10
 
 #define SNAPSHOT_MIPI_PER_LANE_BPS	720
-#define PREVIEW_MIPI_PER_LANE_BPS  720                                
+#define PREVIEW_MIPI_PER_LANE_BPS  720
 
 /*line time unit: 0.1us*/
 #define SNAPSHOT_LINE_TIME	26305 
@@ -1056,7 +1056,7 @@ static uint32_t sp2509_write_exposure_dummy(SENSOR_HW_HANDLE handle, uint32_t ex
 	s_current_default_frame_length = sp2509_get_default_frame_length(handle,size_index);
 
 	s_sensor_ev_info.preview_shutter = sp2509_update_exposure(handle,exposure_line,dummy_line);
-	
+
 	return ret_value;
 }
 
@@ -1120,7 +1120,6 @@ static uint32_t isp_to_real_gain(SENSOR_HW_HANDLE handle,uint32_t param)
 {
 	uint32_t real_gain = 0;
 
-	
 #if defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4)
 	real_gain=param;
 #else
@@ -1157,6 +1156,163 @@ static uint32_t sp2509_write_gain_value(SENSOR_HW_HANDLE handle,unsigned long pa
 	return ret_value;
 }
 
+static struct sensor_reg_tag sp2509_shutter_reg[] = {
+	{0xfd, 0x01},
+	{0x03, 0x00},
+	{0x04, 0x00},
+	{0x01, 0x01},
+};
+
+static struct sensor_i2c_reg_tab sp2509_shutter_tab = {
+	.settings = sp2509_shutter_reg,
+	.size = ARRAY_SIZE(sp2509_shutter_reg),
+};
+
+static struct sensor_reg_tag sp2509_again_reg[] = {
+	{0xfd, 0x01},
+	{0x24, 0x00},
+	{0x37, 0x00},
+	{0x01, 0x01},
+};
+
+static struct sensor_i2c_reg_tab sp2509_again_tab = {
+	.settings = sp2509_again_reg,
+	.size = ARRAY_SIZE(sp2509_again_reg),
+};
+
+static struct sensor_reg_tag sp2509_dgain_reg[] = {
+	{0xfd, 0x02},
+	{0x10, 0x00},
+	{0x11, 0x00},
+	{0x13, 0x00},
+	{0x14, 0x00},
+};
+
+struct sensor_i2c_reg_tab sp2509_dgain_tab = {
+	.settings = sp2509_dgain_reg,
+	.size = ARRAY_SIZE(sp2509_dgain_reg),
+};
+
+static struct sensor_reg_tag sp2509_frame_length_reg[] = {
+#if 0 //frame auto
+	{0xfd, 0x01},
+	{0x05, 0x00},
+	{0x06, 0x00},
+	{0x01, 0x01},
+#endif
+};
+
+static struct sensor_i2c_reg_tab sp2509_frame_length_tab = {
+	.settings = sp2509_frame_length_reg,
+	.size = ARRAY_SIZE(sp2509_frame_length_reg),
+};
+
+static struct sensor_aec_i2c_tag sp2509_aec_info = {
+	.slave_addr = (I2C_SLAVE_ADDR >> 1),
+	.addr_bits_type = SENSOR_I2C_REG_8BIT,
+	.data_bits_type = SENSOR_I2C_VAL_8BIT,
+	.shutter = &sp2509_shutter_tab,
+	.again = &sp2509_again_tab,
+	.dgain = &sp2509_dgain_tab,
+	.frame_length = &sp2509_frame_length_tab,
+};
+
+static uint16_t sp2509_calc_exposure(SENSOR_HW_HANDLE handle,
+					 uint32_t shutter, uint32_t dummy_line, uint16_t mode,
+					 struct sensor_aec_i2c_tag *aec_info)
+{
+	uint32_t dest_fr_len = 0;
+	uint32_t cur_fr_len = 0;
+	uint32_t fr_len = s_current_default_frame_length;
+	int32_t offset = 0;
+	float fps = 0.0;
+	float line_time = 0.0;
+
+	if (1 == SUPPORT_AUTO_FRAME_LENGTH)
+		goto write_sensor_shutter;
+	dummy_line = dummy_line > FRAME_OFFSET ? dummy_line : FRAME_OFFSET;
+	dest_fr_len = ((shutter + dummy_line) > fr_len) ? (shutter +dummy_line) : fr_len;
+	s_current_frame_length = dest_fr_len;
+
+	cur_fr_len = sp2509_read_frame_length(handle);
+	SENSOR_PRINT("current shutter = %d, fr_len = %d, dummy_line=%d cur_fr_len %d dest_fr_len %d", shutter, fr_len,dummy_line,cur_fr_len,dest_fr_len);
+
+	if (shutter < SENSOR_MIN_SHUTTER)
+		shutter = SENSOR_MIN_SHUTTER;
+#if 1
+	line_time = s_sp2509_resolution_trim_tab[mode].line_time;
+	if (cur_fr_len > shutter) {
+		fps = 1000000.0 / (cur_fr_len * line_time);
+	} else {
+		fps = 1000000.0 / ((shutter + dummy_line) * line_time);
+	}
+	SENSOR_PRINT("sync fps = %f", fps);
+#endif
+	//aec_info->frame_length->settings[1].reg_value = (dest_fr_len >> 8) & 0xff;
+	//aec_info->frame_length->settings[2].reg_value = dest_fr_len & 0xff;
+write_sensor_shutter:
+	aec_info->shutter->settings[1].reg_value = (shutter >> 8) & 0xff;
+	aec_info->shutter->settings[2].reg_value = shutter & 0xff;
+
+	return shutter;
+}
+
+static void sp2509_calc_gain(float gain, struct sensor_aec_i2c_tag *aec_info)
+{
+	float gain_a = gain;
+	float gain_d= 0x80;
+	uint8_t i = 0;
+
+	if (SENSOR_MAX_GAIN < (uint32_t)gain) {
+		gain_a = SENSOR_MAX_GAIN;
+		gain_d = gain*0x80/gain_a;
+		if ((uint16_t)gain_d > 2*0x80 - 1)
+			gain_d = 2*0x80 -1;
+	}
+	aec_info->again->settings[1].reg_value = (uint16_t)gain_a & 0xff;
+	aec_info->again->settings[2].reg_value = ((uint16_t)gain_a & 0x1ff) >> 0x08;
+
+	aec_info->dgain->settings[1].reg_value = (uint8_t)gain_d & 0xff;
+	aec_info->dgain->settings[2].reg_value = (uint8_t)gain_d & 0xff;
+	aec_info->dgain->settings[3].reg_value = (uint8_t)gain_d & 0xff;
+	aec_info->dgain->settings[4].reg_value = (uint8_t)gain_d & 0xff;
+}
+
+static unsigned long sp2509_read_aec_info(SENSOR_HW_HANDLE handle, unsigned long param)
+{
+	unsigned long ret_value = SENSOR_SUCCESS;
+	struct sensor_aec_reg_info *info = (struct sensor_aec_reg_info *)param;
+	uint16_t exposure_line = 0x00;
+	uint16_t dummy_line = 0x00;
+	uint16_t mode = 0x00;
+	float real_gain = 0;
+	uint32_t gain = 0;
+	uint16_t frame_interval =0x00;
+
+	info->aec_i2c_info_out = &sp2509_aec_info;
+
+	exposure_line = info->exp.exposure;
+	dummy_line = info->exp.dummy;
+	mode = info->exp.size_index;
+
+	frame_interval = (uint16_t)(((exposure_line + dummy_line) * (s_sp2509_resolution_trim_tab[mode].line_time)) / 1000000);
+	SENSOR_PRINT("mode = %d, exposure_line = %d, dummy_line= %d, frame_interval= %d ms",
+		mode, exposure_line, dummy_line, frame_interval);
+
+	s_current_default_frame_length = sp2509_get_default_frame_length(handle,mode);
+	s_current_default_line_time = s_sp2509_resolution_trim_tab[mode].line_time;
+
+	s_sensor_ev_info.preview_shutter =
+		sp2509_calc_exposure(handle,
+					 exposure_line, dummy_line, mode,
+					 &sp2509_aec_info);
+
+	gain = info->gain < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : info->gain;
+	real_gain = (float)info->gain* SENSOR_BASE_GAIN / ISP_BASE_GAIN*1.0;
+	sp2509_calc_gain(real_gain, &sp2509_aec_info);
+
+	return ret_value;
+}
 #ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
 /*==============================================================================
  * Description:
@@ -1536,10 +1692,11 @@ static SENSOR_IOCTL_FUNC_TAB_T s_sp2509_ioctl_func_tab = {
 	.stream_off = sp2509_stream_off,
 	//#ifdef FEATURE_OTP
 	//.cfg_otp=sp2509_cfg_otp,
-	//#endif	
+	//#endif
 	.cfg_otp = sp2509_access_val,
 	.ex_write_exp = sp2509_ex_write_exposure,
 
 	//.group_hold_on = sp2509_group_hold_on,
 	//.group_hold_of = sp2509_group_hold_off,
+	.read_aec_info = sp2509_read_aec_info,
 };
