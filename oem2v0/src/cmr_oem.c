@@ -767,18 +767,25 @@ void camera_isp_dev_evt_cb(cmr_int evt, void *data, cmr_u32 data_len, void *priv
 	cmr_u32                         channel_id;
 	cmr_handle                      receiver_handle;
 
-	if (!cxt || !data || !privdata) {
+	if (!cxt) {
 		CMR_LOGE("error param, handle 0x%lx data 0x%lx ", (cmr_uint)cxt, (cmr_uint)data);
 		return;
 	}
 
-	CMR_LOGI("handle 0x%lx", (cmr_uint)privdata);
-	//hal1.0 in high iso mode not call isp_stop_video in the process flow, so call it here to stop isp.
-	if (!cxt->isp_to_dram && !cxt->burst_mode) {
-		cmr_camera_isp_stop_video(cxt->prev_cxt.preview_handle, cxt->camera_id);
+	CMR_LOGI("evt = %d", evt);
+	switch (evt) {
+	case ISP_MW_CFG_BUF:
+		//hal1.0 in high iso mode not call isp_stop_video in the process flow, so call it here to stop isp.
+		if (!cxt->isp_to_dram && !cxt->burst_mode) {
+			cmr_camera_isp_stop_video(cxt->prev_cxt.preview_handle, cxt->camera_id);
+		}
+		cxt->isp_to_dram = 0;
+		camera_send_channel_data((cmr_handle)cxt, receiver_handle, evt, data);
+		break;
+	case ISP_MW_ALTEK_RAW:
+		CMR_LOGI("turn off flash");
+		break;
 	}
-	cxt->isp_to_dram = 0;
-	camera_send_channel_data((cmr_handle)cxt, receiver_handle, evt, data);
 }
 
 void camera_scaler_evt_cb(cmr_int evt, void* data, void *privdata)

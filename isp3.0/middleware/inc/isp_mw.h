@@ -313,6 +313,7 @@ enum isp_capture_mode {
 
 enum isp_mw_evt {
 	ISP_MW_CFG_BUF = ISP_MW_EVT_BASE,
+	ISP_MW_ALTEK_RAW,
 };
 
 /*********************************struct type*********************************************/

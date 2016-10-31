@@ -32,7 +32,8 @@
 #define ISP_DEV_MUTILAYER_EVT_INIT                    ISP_DEV_MUTILAYER_EVT_BASE
 #define ISP_DEV_MUTILAYER_EVT_DEINIT                 (ISP_DEV_MUTILAYER_EVT_BASE + 1)
 #define ISP_DEV_MUTILAYER_EVT_PROCESS                (ISP_DEV_MUTILAYER_EVT_BASE + 2)
-#define ISP_DEV_MUTILAYER_EVT_EXIT                   (ISP_DEV_MUTILAYER_EVT_BASE + 3)
+#define ISP_DEV_MUTILAYER_EVT_ALTEK_RAW              (ISP_DEV_MUTILAYER_EVT_BASE + 3)
+#define ISP_DEV_MUTILAYER_EVT_EXIT                   (ISP_DEV_MUTILAYER_EVT_BASE + 4)
 
 struct img_addr {
 	cmr_uint                                addr_y;
@@ -520,6 +521,18 @@ cmr_int isp_dev_cfg_grap_buffer(isp_handle handle, struct isp_irq_info *irq_info
 	return 0;
 }
 
+cmr_int isp_dev_notify_altek_raw(isp_handle handle)
+{
+	struct isp_file *file = (struct isp_file *)handle;
+
+	pthread_mutex_lock(&file->cb_mutex);
+	if (file->isp_cfg_buf_cb) {
+		(*file->isp_cfg_buf_cb)(ISP_MW_ALTEK_RAW, NULL, 0, (void *)file->grab_handle);
+	}
+	pthread_mutex_unlock(&file->cb_mutex);
+	return 0;
+}
+
 static cmr_int isp_dev_mutilayer_thread_proc(struct cmr_msg *message, void *p_data)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -541,6 +554,9 @@ static cmr_int isp_dev_mutilayer_thread_proc(struct cmr_msg *message, void *p_da
 		break;
 	case ISP_DEV_MUTILAYER_EVT_PROCESS:
 		isp_dev_cfg_grap_buffer(handle, message->data);
+		break;
+	case ISP_DEV_MUTILAYER_EVT_ALTEK_RAW:
+		isp_dev_notify_altek_raw(handle);
 		break;
 	default:
 		ISP_LOGE("don't support msg");
@@ -694,6 +710,25 @@ error_malloc:
 	return ret;
 }
 
+static cmr_int isp_dev_handle_altek_raw(isp_handle handle)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct isp_file *file = (struct isp_file *)handle;
+	CMR_MSG_INIT(message);
+
+	message.msg_type = ISP_DEV_MUTILAYER_EVT_ALTEK_RAW;
+	message.sync_flag = CMR_MSG_SYNC_NONE;
+	message.alloc_flag = 0;
+	message.data = NULL;
+	ret = cmr_thread_msg_send(file->mutilayer_thr_handle, &message);
+	if (ret) {
+		ISP_LOGE("failed to send msg to thr %ld", ret);
+	}
+
+	return ret;
+}
+
+
 static void* isp_dev_thread_proc(void *data)
 {
 	struct isp_file                   *file = NULL;
@@ -701,7 +736,7 @@ static void* isp_dev_thread_proc(void *data)
 	struct isp_statis_frame           statis_frame_buf;
 	struct isp_frm_info               img_frame;
 	struct isp_irq_info               irq_info;
-	struct img_addr 		  addr;
+	struct img_addr                   addr;
 	char			          value[PROPERTY_VALUE_MAX];
 
 	file = (struct isp_file *)data;
@@ -755,7 +790,7 @@ static void* isp_dev_thread_proc(void *data)
 					}
 					isp_dev_handle_cfg_grap_buf(file, &irq_info);
 					break;
-				case ISP_IRQ_DEBUG_RAW:
+				case ISP_IRQ_ALTEK_RAW:
 					img_frame.channel_id = irq_info.channel_id;
 					img_frame.base = irq_info.base_id;
 					img_frame.frame_id = irq_info.base_id;
@@ -772,10 +807,15 @@ static void* isp_dev_thread_proc(void *data)
 					ISP_LOGI("high iso got raw frm vaddr 0x%lx paddr 0x%lx, width %d, height %d",
 						 irq_info.yaddr_vir, irq_info.yaddr, file->init_param.width, file->init_param.height);
 					property_get("debug.camera.save.snpfile", value, "0");
+
+					isp_dev_handle_altek_raw(file);
+
 					if (atoi(value) == 11 || atoi(value) & (1<<11)) {
 						addr.addr_y = irq_info.yaddr;
 						ISP_LOGI("camera_save_to_file img_y_fd 0x%x vaddr 0x%lx uaddr 0x%lx paddr 0x%lx buf_size 0x%lx, width %d, height %d", 
-							 irq_info.img_y_fd, irq_info.yaddr_vir, irq_info.uaddr_vir, irq_info.yaddr, irq_info.length, file->init_param.width,
+							 irq_info.img_y_fd,
+							 irq_info.yaddr_vir, irq_info.uaddr_vir,
+							 irq_info.yaddr, irq_info.length, file->init_param.width,
 							 file->init_param.height);
 						camera_save_to_file_isp(irq_info.frm_index, IMG_DATA_TYPE_RAW2,
 							file->init_param.width,
