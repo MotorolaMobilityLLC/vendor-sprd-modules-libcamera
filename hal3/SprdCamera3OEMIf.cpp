@@ -3568,7 +3568,7 @@ mSetting->getSPRDDEFTag(&sprddefInfo);
 						}
 					}//recording cts
 
-					if (mIsRecording) {
+					if (mIsRecording && rec_stream) {
 						if (frame_num > mRecordFrameNum)
 							calculateTimestampForSlowmotion(buffer_timestamp);
 							if( sprddefInfo.perfect_skin_level >0 && 0 == atoi(multicameramode) ) { //for 2D video recoding face_beauty
