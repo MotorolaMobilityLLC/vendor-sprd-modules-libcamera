@@ -259,6 +259,7 @@ cmr_int isp_dev_start(isp_handle handle)
 	cmr_u32                       fw_buf_num = 1;
 	cmr_u32                       kaddr[2];
 	cmr_u64                       kaddr_temp;
+	cmr_s32                       fds[2];
 
 	if (file->isp_is_inited) {
 		ISP_LOGE("isp firmware no need load again ");
@@ -274,7 +275,7 @@ cmr_int isp_dev_start(isp_handle handle)
 	memset(&load_input, 0x00, sizeof(load_input));
 	ret = file->init_param.alloc_cb(CAMERA_ISP_FIRMWARE, file->init_param.mem_cb_handle,
 				  (cmr_u32 *)&fw_size, &fw_buf_num, (cmr_uint *)kaddr,
-				  &load_input.fw_buf_vir_addr, &load_input.fw_buf_mfd);
+				  &load_input.fw_buf_vir_addr, fds);
 	if (ret) {
 		ISP_LOGE("faield to alloc fw buffer %ld", ret);
 		goto exit;
@@ -288,6 +289,8 @@ cmr_int isp_dev_start(isp_handle handle)
 	ISP_LOGI("kaddr0 0x%x kaddr1 0x%x", kaddr[0], kaddr[1]);
 
 	load_input.fw_buf_size = fw_size;
+	load_input.fw_buf_mfd = fds[0];
+	load_input.fw_buf_dev_fd = fds[1];
 	load_input.shading_bin_offset = file->init_param.shading_bin_offset;
 	load_input.irp_bin_offset = file->init_param.irp_bin_offset;
 	ISP_LOGI("shading offset 0x%x irp offset 0x%x", load_input.shading_bin_offset, load_input.irp_bin_offset);

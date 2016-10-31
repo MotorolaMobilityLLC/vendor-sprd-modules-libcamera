@@ -92,6 +92,7 @@ typedef struct sprd_camera_memory {
 	cmr_uint phys_addr;
 	cmr_uint phys_size;
 	cmr_s32 fd;
+	cmr_s32 dev_fd;
 	void *handle;
 	void *data;
 	bool busy_flag;

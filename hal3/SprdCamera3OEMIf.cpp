@@ -2422,6 +2422,7 @@ sprd_camera_memory_t* SprdCamera3OEMIf::allocCameraMem(int buf_size, int num_buf
 
 	memory->ion_heap = pHeapIon;
 	memory->fd = pHeapIon->getHeapID();
+	memory->dev_fd = pHeapIon->getIonDeviceFd();
 	// memory->phys_addr is offset from memory->fd, always set 0 for yaddr
 	memory->phys_addr = 0;
 	memory->phys_size = mem_size;
@@ -6666,6 +6667,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32
 		*phy_addr++ = kaddr >> 32;
 		*vir_addr++ = (cmr_uint)memory->data;
 		*fd++ = memory->fd;
+		*fd++ = memory->dev_fd;
 	} else if (type == CAMERA_SNAPSHOT_HIGHISO) {
 		if(mHighIsoSnapshotHeapReserved == NULL) {
 			memory = allocReservedMem(size, 1, true);
