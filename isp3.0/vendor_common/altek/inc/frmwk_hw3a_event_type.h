@@ -45,6 +45,13 @@ enum ae_antiflicker_mode_t {
 	ANTIFLICKER_OFF,
 };
 
+enum antiflicker_ui_mode_t {
+	ANTIFLICKER_UI_MODE_AUTO = 0,
+	ANTIFLICKER_UI_MODE_FIXED_50HZ,
+	ANTIFLICKER_UI_MODE_FIXED_60HZ,
+	ANTIFLICKER_UI_MODE_OFF,
+};
+
 enum color_order_mode_t {
 	COLOR_RGGB,
 	COLOR_GRGB,

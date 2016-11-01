@@ -29,8 +29,10 @@
 #define _DEFAULT_FLICKER_60HZ_TH_UPPER  (64)
 #define _DEFAULT_FLICKER_LIBVALUE_50HZ  (50)
 #define _DEFAULT_FLICKER_LIBVALUE_60HZ  (60)
+#define _DEFAULT_FLICKER_LIBVALUE_AUTO  (0)
+#define _DEFAULT_FLICKER_LIBVALUE_OFF   (255)
 
-#define _DEFAULT_FLICKER_MODE      (ANTIFLICKER_50HZ)
+#define _DEFAULT_FLICKER_MODE      (ANTIFLICKER_UI_MODE_FIXED_50HZ)
 
 #ifdef __cplusplus
 extern "C"
@@ -97,14 +99,14 @@ uint32 al3awrapperantif_getversion( float *fwrapversion );
 uint32 al3awrapper_antif_get_flickermode( uint8 flicker_libresult, enum ae_antiflicker_mode_t *flicker_mode );
 
 /**
-\API name: al3awrapper_antif_set_flickermode
-\This API would help to parse set current flicker to flicker lib
-\param flicker_mode[in], current flicker result (enum, 50 Hz or 60 Hz)
-\param aFlickerLibCallback[in]: callback lookup table, must passing correct table into this API for querying HW3A config
-\param flicker_runtimeDat[in]: Flicker lib runtime buffer after calling init, must passing correct addr to into this API
-\return: error code
-*/
-uint32 al3awrapper_antif_set_flickermode( enum ae_antiflicker_mode_t flicker_mode, struct alflickerruntimeobj_t *aflickerlibcallback, void * flicker_runtimedat );
+ * API name: al3awrapper_antif_set_flickermode
+ * This API would help to parse set manual flicker mode to flicker lib
+ * param flicker_mode[in], UI flicker mode (enum, Auto, 50 Hz or 60 Hz)
+ * param aFlickerLibCallback[in]: callback lookup table, must passing correct table into this API for querying HW3A config
+ * param flicker_runtimeDat[in]: Flicker lib runtime buffer after calling init, must passing correct addr to into this API
+ * return: error code
+ */
+uint32 al3awrapper_antif_set_flickermode( enum antiflicker_ui_mode_t flicker_mode, struct alflickerruntimeobj_t *aflickerlibcallback, void * flicker_runtimedat );
 
 /**
  * API name: al3awrapperflicker_reference_setting

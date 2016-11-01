@@ -33,6 +33,7 @@ enum flicker_set_param_type_t {
 	FLICKER_SET_PARAM_ENABLE,
 	FLICKER_SET_PARAM_RAW_SIZE,
 	FLICKER_SET_PARAM_LINE_TIME,
+	FLICKER_SET_PARAM_MANUAL_MODE,
 	FLICKER_SET_PARAM_CURRENT_FREQUENCY,
 	FLICKER_SET_PARAM_REFERENCE_DATA_INTERVAL,
 	FLICKER_SET_PARAM_ENABLE_DEBUG_REPORT,
@@ -129,6 +130,7 @@ struct flicker_set_param_content_t {
 	/* basic command */
 	uint8 flicker_enable;
 	uint8 flicker_enableDebugLog;
+	uint8 manual_mode;
 	/* Identity ID, used for recognize channel of 3A control for each camera channel */
 	uint8  identity_id;       /* default 0, should be assigned by AP framework */
 	uint16 Sensor_MaxFPS; /* Sensor Maximum fps, scale 100, ex: 3000 = 30fps, 2500 = 25fps */

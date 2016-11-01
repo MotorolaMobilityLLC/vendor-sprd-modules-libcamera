@@ -1709,13 +1709,11 @@ cmr_int isp3a_set_flicker(cmr_handle isp_3a_handle, void *param_ptr)
 	ae_in.flicker.flicker_mode = *(cmr_u32 *)param_ptr;
 	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_FLICKER, &ae_in, NULL);
 
-	if (AE_CTRL_FLICKER_AUTO == (*(cmr_u32 *)param_ptr)) {
-		ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_GET_FLICKER_MODE, NULL, &ae_out);
-		afl_in.mode.flicker_mode = ae_out.flicker_mode;
-		ret = afl_ctrl_ioctrl(cxt->afl_cxt.handle, AFL_CTRL_SET_FLICKER, &afl_in, NULL);
-	}
+	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_GET_FLICKER_MODE, NULL, &ae_out);
+	afl_in.mode.flicker_mode = ae_out.flicker_mode;
+	ret = afl_ctrl_ioctrl(cxt->afl_cxt.handle, AFL_CTRL_SET_FLICKER, &afl_in, NULL);
 
-	afl_in.mode.flicker_mode = *(cmr_u32 *)param_ptr;;
+	afl_in.mode.flicker_mode = *(cmr_u32 *)param_ptr;
 	ret = afl_ctrl_ioctrl(cxt->afl_cxt.handle, AFL_CTRL_SET_UI_FLICKER_MODE, &afl_in, NULL);
 
 exit:

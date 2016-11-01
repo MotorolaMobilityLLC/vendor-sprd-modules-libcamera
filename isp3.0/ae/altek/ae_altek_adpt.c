@@ -654,6 +654,36 @@ exit:
 	return;
 }
 
+static void antiflicker_mode_ui2lib(enum ae_ctrl_flicker_mode from, enum antiflicker_ui_mode_t *to_ptr)
+{
+	enum antiflicker_ui_mode_t lib_antiflicker = 0;
+
+	if (!to_ptr) {
+		ISP_LOGE("param is NULL !!!");
+		goto exit;
+	}
+	switch (from) {
+	case AE_CTRL_FLICKER_AUTO:
+		lib_antiflicker = ANTIFLICKER_UI_MODE_AUTO;
+		break;
+	case AE_CTRL_FLICKER_50HZ:
+		lib_antiflicker = ANTIFLICKER_UI_MODE_FIXED_50HZ;
+		break;
+	case AE_CTRL_FLICKER_60HZ:
+		lib_antiflicker = ANTIFLICKER_UI_MODE_FIXED_60HZ;
+		break;
+	case AE_CTRL_FLICKER_OFF:
+		lib_antiflicker = ANTIFLICKER_UI_MODE_OFF;
+		break;
+	default:
+		ISP_LOGW("not support antiflicker mode %d", from);
+		break;
+	}
+	*to_ptr = lib_antiflicker;
+exit:
+	return;
+}
+
 static void aealtek_weight_ui2lib(enum ae_ctrl_measure_lum_mode from, enum ae_metering_mode_type_t *to_ptr)
 {
 	enum ae_metering_mode_type_t lib_metering = 0;
@@ -1674,6 +1704,7 @@ static cmr_int aealtek_set_flicker(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 	enum ae_set_param_type_t type = 0;
 	struct ae_set_param_content_t *param_ct_ptr = NULL;
 	enum ae_antiflicker_mode_t lib_flicker_mode = 0;
+	enum antiflicker_ui_mode_t antiflicker_ui_mode = 0;
 
 	UNUSED(out_ptr);
 	if (!cxt_ptr || !in_ptr) {
@@ -1687,6 +1718,7 @@ static cmr_int aealtek_set_flicker(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 	param_ct_ptr = &in_param.set_param;
 
 	aealtek_flicker_ui2lib(in_ptr->flicker.flicker_mode, &lib_flicker_mode);
+	antiflicker_mode_ui2lib(in_ptr->flicker.flicker_mode, &antiflicker_ui_mode);
 
 	param_ct_ptr->ae_set_antibaning_mode = lib_flicker_mode;
 	type = AE_SET_PARAM_ANTIFLICKERMODE;
@@ -1695,7 +1727,7 @@ static cmr_int aealtek_set_flicker(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 		lib_ret = obj_ptr->set_param(&in_param, output_param_ptr, obj_ptr->ae);
 	if (lib_ret)
 		goto exit;
-	cxt_ptr->nxt_status.lib_ui_param.flicker = lib_flicker_mode;
+	cxt_ptr->nxt_status.lib_ui_param.flicker = (enum ae_antiflicker_mode_t)(antiflicker_ui_mode);
 	cxt_ptr->update_list.is_flicker = 1;
 	return ISP_SUCCESS;
 exit:

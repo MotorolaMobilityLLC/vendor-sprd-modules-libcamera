@@ -213,32 +213,35 @@ uint32 al3awrapper_antif_get_flickermode( uint8 flicker_libresult, enum ae_antif
 	return ret;
 }
 
-
 /*
  * API name: al3awrapper_antif_set_flickermode
- * This API would help to parse set current flicker to flicker lib
- * param flicker_mode[in], current flicker result (enum, 50 Hz or 60 Hz)
+ * This API would help to parse set manual flicker mode to flicker lib
+ * param flicker_mode[in], UI flicker mode (enum, Auto, 50 Hz or 60 Hz)
  * param aFlickerLibCallback[in]: callback lookup table, must passing correct table into this API for querying HW3A config
  * param flicker_runtimeDat[in]: Flicker lib runtime buffer after calling init, must passing correct addr to into this API
  * return: error code
  */
-uint32 al3awrapper_antif_set_flickermode( enum ae_antiflicker_mode_t flicker_mode, struct alflickerruntimeobj_t *aflickerlibcallback, void * flicker_runtimedat )
+uint32 al3awrapper_antif_set_flickermode( enum antiflicker_ui_mode_t flicker_mode, struct alflickerruntimeobj_t *aflickerlibcallback, void * flicker_runtimedat )
 {
 	uint32 ret = ERR_WPR_FLICKER_SUCCESS;
 	uint16 flicker_hz;
 	struct flicker_output_data_t outputparam;   /* f set_param, no actual usage now, just cread instant in avoid of error when passing NULL to lib */
 	struct flicker_set_param_t local_setparam;
 
-	if ( flicker_mode == ANTIFLICKER_50HZ )
+	if ( flicker_mode == ANTIFLICKER_UI_MODE_AUTO )
+		flicker_hz = _DEFAULT_FLICKER_LIBVALUE_AUTO;
+	else if ( flicker_mode == ANTIFLICKER_UI_MODE_FIXED_50HZ )
 		flicker_hz = _DEFAULT_FLICKER_LIBVALUE_50HZ;
-	else if ( flicker_mode == ANTIFLICKER_60HZ )
+	else if ( flicker_mode == ANTIFLICKER_UI_MODE_FIXED_60HZ )
 		flicker_hz = _DEFAULT_FLICKER_LIBVALUE_60HZ;
+	else if ( flicker_mode == ANTIFLICKER_UI_MODE_OFF )
+		flicker_hz = _DEFAULT_FLICKER_LIBVALUE_OFF;
 	else
-		return ret;  /*  invalid input Hz range, do nothing to flicker lib  */
+		return ERR_WRP_FLICKER_INVALID_INPUT_HZ;  /*  invalid input Hz range, do nothing to flicker lib  */
 
 	memset( &local_setparam, 0, sizeof(struct flicker_set_param_t) );
-	local_setparam.flicker_set_param_type = FLICKER_SET_PARAM_CURRENT_FREQUENCY;   /* ask Flicker lib for HW3A setting */
-	local_setparam.set_param.currentfreq = flicker_hz;
+	local_setparam.flicker_set_param_type = FLICKER_SET_PARAM_MANUAL_MODE;   /* ask Flicker lib for HW3A setting */
+	local_setparam.set_param.manual_mode = flicker_hz;
 
 	ret = aflickerlibcallback->set_param( &local_setparam, &outputparam, flicker_runtimedat );
 	if ( ret != ERR_WPR_FLICKER_SUCCESS )
