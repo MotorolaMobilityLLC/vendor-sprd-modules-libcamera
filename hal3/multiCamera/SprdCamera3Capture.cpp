@@ -135,14 +135,10 @@ SprdCamera3Capture::~SprdCamera3Capture()
 {
     HAL_LOGD("E");
     mCaptureThread = NULL;
-    mSavedRequestList.clear();
-    mLastWidth = 0;
-    mLastHeight = 0;
     if (m_pPhyCamera) {
         delete [] m_pPhyCamera;
         m_pPhyCamera = NULL;
      }
-
     HAL_LOGD("X");
 }
 /*===========================================================================
@@ -293,6 +289,13 @@ int SprdCamera3Capture::closeCameraDevice()
     free(mLocalCapBuffer);
     mLocalCapBuffer = NULL;
 
+    mSavedRequestList.clear();
+
+    if(mCaptureThread->mGpuApi != NULL){
+        mCaptureThread->unLoadGpuApi();
+        free(mCaptureThread->mGpuApi);
+        mCaptureThread->mGpuApi = NULL;
+    }
     HAL_LOGD("X, rc: %d", rc);
 
     return rc;
@@ -751,7 +754,7 @@ int SprdCamera3Capture::cameraDeviceOpen(__unused int camera_id,
     int rc = NO_ERROR;
     uint32_t phyId = 0;
 
-    HAL_LOGV(" E");
+    HAL_LOGD(" E");
     hw_device_t *hw_dev[m_nPhyCameras];
     // Open all physical cameras
     for (uint32_t i = 0; i < m_nPhyCameras; i++) {
@@ -783,7 +786,17 @@ int SprdCamera3Capture::cameraDeviceOpen(__unused int camera_id,
     m_VirtualCamera.dev.priv = (void*)&m_VirtualCamera;
     *hw_device = &m_VirtualCamera.dev.common;
 
-    HAL_LOGV("X");
+    mCaptureThread->mGpuApi = (GPUAPI_t*)malloc(sizeof(GPUAPI_t));
+    if(mCaptureThread->mGpuApi == NULL){
+        HAL_LOGE("mGpuApi malloc failed.");
+    }
+    memset(mCaptureThread->mGpuApi, 0 ,sizeof(GPUAPI_t));
+
+    if(mCaptureThread->loadGpuApi() < 0){
+        HAL_LOGE("load gpu api failed.");
+    }
+
+    HAL_LOGD("X");
     return rc;
 }
 
@@ -898,18 +911,8 @@ int SprdCamera3Capture::setupPhysicalCameras()
  *==========================================================================*/
 SprdCamera3Capture::CaptureThread::CaptureThread()
 {
+    HAL_LOGD(" E");
     mCaptureMsgList.clear();
-    mGpuApi = (GPUAPI_t*)malloc(sizeof(GPUAPI_t));
-    if(mGpuApi == NULL){
-        HAL_LOGE("mGpuApi malloc failed.");
-    }
-    memset(mGpuApi, 0 ,sizeof(GPUAPI_t));
-
-    if(loadGpuApi() < 0){
-        HAL_LOGE("load gpu api failed.");
-    }
-
-    HAL_LOGV("X");
 }
 /*===========================================================================
  * FUNCTION   :~~CaptureThread
@@ -922,14 +925,8 @@ SprdCamera3Capture::CaptureThread::CaptureThread()
  *==========================================================================*/
 SprdCamera3Capture::CaptureThread::~CaptureThread()
 {
-    HAL_LOGV(" E");
+    HAL_LOGD(" E");
     mCaptureMsgList.clear();
-    if(mGpuApi != NULL){
-        unLoadGpuApi();
-        free(mGpuApi);
-        mGpuApi = NULL;
-    }
-    HAL_LOGV("X");
 }
 /*===========================================================================
  * FUNCTION   :loadGpuApi
@@ -942,7 +939,7 @@ SprdCamera3Capture::CaptureThread::~CaptureThread()
  *==========================================================================*/
 int SprdCamera3Capture::CaptureThread::loadGpuApi()
 {
-    HAL_LOGV(" E");
+    HAL_LOGD(" E");
     const char* error = NULL;
     mGpuApi->handle = dlopen(LIB_GPU_PATH, RTLD_LAZY);
     if (mGpuApi->handle == NULL) {
@@ -973,7 +970,7 @@ int SprdCamera3Capture::CaptureThread::loadGpuApi()
     }
     isInitRenderContest = false;
 
-    HAL_LOGV("load Gpu Api succuss.");
+    HAL_LOGD("load Gpu Api succuss.");
 
     return 0;
 }
@@ -988,7 +985,7 @@ int SprdCamera3Capture::CaptureThread::loadGpuApi()
  *==========================================================================*/
 void SprdCamera3Capture::CaptureThread::unLoadGpuApi()
 {
-    HAL_LOGV("E");
+    HAL_LOGD("E");
 
     if(isInitRenderContest){
         mGpuApi->destroyRenderContext();
@@ -1000,7 +997,7 @@ void SprdCamera3Capture::CaptureThread::unLoadGpuApi()
      mGpuApi->handle = NULL;
     }
 
-    HAL_LOGV("X");
+    HAL_LOGD("X");
 }
 /*===========================================================================
  * FUNCTION   :initGpuData
@@ -1058,10 +1055,10 @@ void SprdCamera3Capture::CaptureThread::initGpuData()
     }else{
         isInitRenderContest = true;
     }
-    HAL_LOGV("using following homography_matrix data:\n");
-    HAL_LOGV("left:\t%8f  %8f  %8f    right:\t%8f  %8f  %8f", pt_line_buf.homography_matrix[0],  pt_line_buf.homography_matrix[1], pt_line_buf.homography_matrix[2], pt_line_buf.homography_matrix[9], pt_line_buf.homography_matrix[10], pt_line_buf.homography_matrix[11]);
-    HAL_LOGV("\t\t%8f  %8f  %8f    \t%8f  %8f  %8f", pt_line_buf.homography_matrix[3],  pt_line_buf.homography_matrix[4], pt_line_buf.homography_matrix[5], pt_line_buf.homography_matrix[12], pt_line_buf.homography_matrix[13], pt_line_buf.homography_matrix[14]);
-    HAL_LOGV("\t\t%8f  %8f  %8f    \t%8f  %8f  %8f", pt_line_buf.homography_matrix[6],  pt_line_buf.homography_matrix[7], pt_line_buf.homography_matrix[8], pt_line_buf.homography_matrix[15], pt_line_buf.homography_matrix[16], pt_line_buf.homography_matrix[17]);
+    HAL_LOGD("using following homography_matrix data:\n");
+    HAL_LOGD("left:\t%8f  %8f  %8f    right:\t%8f  %8f  %8f", pt_line_buf.homography_matrix[0],  pt_line_buf.homography_matrix[1], pt_line_buf.homography_matrix[2], pt_line_buf.homography_matrix[9], pt_line_buf.homography_matrix[10], pt_line_buf.homography_matrix[11]);
+    HAL_LOGD("\t\t%8f  %8f  %8f    \t%8f  %8f  %8f", pt_line_buf.homography_matrix[3],  pt_line_buf.homography_matrix[4], pt_line_buf.homography_matrix[5], pt_line_buf.homography_matrix[12], pt_line_buf.homography_matrix[13], pt_line_buf.homography_matrix[14]);
+    HAL_LOGD("\t\t%8f  %8f  %8f    \t%8f  %8f  %8f", pt_line_buf.homography_matrix[6],  pt_line_buf.homography_matrix[7], pt_line_buf.homography_matrix[8], pt_line_buf.homography_matrix[15], pt_line_buf.homography_matrix[16], pt_line_buf.homography_matrix[17]);
 }
 
 static void save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height, struct img_addr *addr)
@@ -1168,6 +1165,7 @@ bool SprdCamera3Capture::CaptureThread::threadLoop()
     buffer_handle_t* output_buffer = NULL;
     capture_queue_msg_t capture_msg;
 
+    HAL_LOGD("E: isInitRenderContest:%d",isInitRenderContest);
     if (!isInitRenderContest)
         initGpuData();
 
@@ -1179,7 +1177,14 @@ bool SprdCamera3Capture::CaptureThread::threadLoop()
         case CAPTURE_MSG_EXIT:
             {
                 //flush queue
-                return true;
+                memset( &mSavedCapRequest, 0, sizeof(camera3_capture_request_t));
+                memset( &mSavedCapReqstreambuff, 0, sizeof(camera3_stream_buffer_t));
+                if ( NULL != mSavedCapReqsettings )
+                {
+                    free_camera_metadata(mSavedCapReqsettings);
+                    mSavedCapReqsettings = NULL;
+                }
+                return false;
             }
             break;
         case CAPTURE_MSG_DATA_PROC:
@@ -1218,8 +1223,7 @@ bool SprdCamera3Capture::CaptureThread::threadLoop()
                         jpeg_orientation = 0;
                         meta.update(ANDROID_JPEG_ORIENTATION, &jpeg_orientation, 1);
                     }
-                    mSavedCapReqsettings = meta.release();
-                    request.settings = mSavedCapReqsettings;
+                    request.settings = meta.release();
 
                     memcpy( input_buffer, &mSavedCapReqstreambuff, sizeof(camera3_stream_buffer_t) );
                     input_buffer->stream = &mMainStreams[mCaptureStreamsNum-1];
@@ -1416,16 +1420,16 @@ int SprdCamera3Capture::CaptureThread::combineTwoPicture(buffer_handle_t *&outpu
             static int nCont = 0;
             struct img_addr   imgadd = { 0, };
             imgadd.addr_y = (cmr_uint)(((struct private_handle_t*)*input_buf1)->base);
-            imgadd.addr_u = imgadd.addr_y+1632*1224;
-            save_yuv_to_file(100+nCont, IMG_DATA_TYPE_YUV420, 1632, 1224, &imgadd);
+            imgadd.addr_u = imgadd.addr_y+m3DCaptureWidth*m3DCaptureHeight;
+            save_yuv_to_file(100+nCont, IMG_DATA_TYPE_YUV420, m3DCaptureWidth, m3DCaptureHeight, &imgadd);
 
             imgadd.addr_y = (cmr_uint)(((struct private_handle_t*)*input_buf2)->base);
             imgadd.addr_u = imgadd.addr_y+1632*1224;
-            save_yuv_to_file(200+nCont, IMG_DATA_TYPE_YUV420, 1632, 1224, &imgadd);
+            save_yuv_to_file(200+nCont, IMG_DATA_TYPE_YUV420, m3DCaptureWidth, m3DCaptureHeight, &imgadd);
 
             imgadd.addr_y = (cmr_uint)(((struct private_handle_t*)*output_buf)->base);
             imgadd.addr_u = imgadd.addr_y+1920*1080;
-            save_yuv_to_file(300+nCont, IMG_DATA_TYPE_YUV420, 1920, 1080, &imgadd);
+            save_yuv_to_file(300+nCont, IMG_DATA_TYPE_YUV420, mCapture->mCaptureWidth, mCapture->mCaptureHeight, &imgadd);
             nCont = nCont%100+1;
         }
     }
@@ -1511,7 +1515,7 @@ int SprdCamera3Capture::initialize(const camera3_callback_ops_t *callback_ops)
     sprdcamera_physical_descriptor_t sprdCam = m_pPhyCamera[CAM_TYPE_MAIN];
     SprdCamera3HWI *hwiMain = sprdCam.hwi;
 
-    HAL_LOGV("E");
+    HAL_LOGD("E");
     CHECK_HWI_ERROR(hwiMain);
 
     mLastWidth = 0;
@@ -1554,7 +1558,7 @@ int SprdCamera3Capture::initialize(const camera3_callback_ops_t *callback_ops)
 
     mCaptureThread->mCallbackOps = callback_ops;
     mCaptureThread->mDevMain = &m_pPhyCamera[CAM_TYPE_MAIN];
-    HAL_LOGV("X");
+    HAL_LOGD("X");
     return rc;
 }
 
@@ -1855,6 +1859,11 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
                      ((struct private_handle_t*)(*request->output_buffers[i].buffer))->base);
             memcpy( &mCaptureThread->mSavedCapRequest, req, sizeof(camera3_capture_request_t));
             memcpy( &mCaptureThread->mSavedCapReqstreambuff, &req->output_buffers[i], sizeof(camera3_stream_buffer_t));
+            if ( NULL != mCaptureThread->mSavedCapReqsettings )
+            {
+                free_camera_metadata(mCaptureThread->mSavedCapReqsettings);
+                mCaptureThread->mSavedCapReqsettings = NULL;
+            }
             mCaptureThread->mSavedCapReqsettings = clone_camera_metadata(req_main.settings);
             req_main.settings = mCaptureThread->mSavedCapReqsettings;
             mSavedReqStreams[mCaptureThread->mCaptureStreamsNum-1] = req->output_buffers[i].stream;
@@ -2056,15 +2065,16 @@ void SprdCamera3Capture::processCaptureResultMain( const camera3_capture_result_
             if (mCaptureThread->mReprocessing)
             {
                 HAL_LOGD("hold yuv picture call back, framenumber:%d", result->frame_number);
+                if ( NULL != mCaptureThread->mSavedCapReqsettings )
+                {
+                    free_camera_metadata(mCaptureThread->mSavedCapReqsettings);
+                    mCaptureThread->mSavedCapReqsettings = NULL;
+                }
                 return;
             }
             else
             {
-                camera3_capture_result_t newresult = {0,};
-                newresult = *result;
-                newresult.result = mCaptureThread->mSavedCapReqsettings;
                 mCaptureThread->mCallbackOps->process_capture_result(mCaptureThread->mCallbackOps, result);
-                free_camera_metadata(mCaptureThread->mSavedCapReqsettings);
                 return;
             }
         }
