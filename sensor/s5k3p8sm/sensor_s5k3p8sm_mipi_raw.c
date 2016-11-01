@@ -666,7 +666,7 @@ static SENSOR_IOCTL_FUNC_TAB_T s_s5k3p8sm_ioctl_func_tab = {
 	_s5k3p8sm_write_gain,
 	PNULL,//read_gain_scale
 	PNULL,//set_frame_rate
-	PNULL,//s5k3p8sm_write_af,
+	s5k3p8sm_write_af,//s5k3p8sm_write_af,
 	PNULL,
 	PNULL,//_s5k3p8sm_set_awb,
 	PNULL,
