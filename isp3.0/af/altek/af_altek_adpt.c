@@ -1056,10 +1056,7 @@ static cmr_int afaltek_adpt_update_pd_info(cmr_handle adpt_handle, void *in)
 		trigger_in.timestamp.time_stamp_us = pd_info->timestamp.usec;
 		ISP_LOGI("trigger sensitivity %f, vcm %d, haf_ProbTrigger %f, pd_state =%d", cxt->haf_trigger_reg.fTriggerSensitivity,
 			cxt->haf_trigger_reg.dcurrentVCM, trigger_in.probability, trigger_in.pd_state);
-		if (!cxt->pd_trigger_stats_lock) {
-			ISP_LOGI("af idle, send pd trigger data");
-			afaltek_adpt_trans_data_to_caf(adpt_handle, (void *)&trigger_in, AFT_DATA_PD);
-		}
+		afaltek_adpt_trans_data_to_caf(adpt_handle, (void *)&trigger_in, AFT_DATA_PD);
 	}
 	cmr_bzero(&p, sizeof(p));
 	p.type = alAFLIB_SET_PARAM_UPDATE_PD_INFO;
@@ -1551,7 +1548,7 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 		ISP_LOGI("af retrigger");
 		ret = afaltek_adpt_caf_start(cxt);
 		cxt->ae_info.ae_stable_retrig_flg = 0;
-	} else if (AF_TIGGER_PD == aft_out.is_caf_trig) {
+	} else if (AF_TIGGER_PD == aft_out.is_caf_trig && !cxt->pd_trigger_stats_lock) {
 		ISP_LOGI("pd trigger");
 		ret = afaltek_adpt_haf_start(cxt);
 	} else if (AF_TIGGER_NORMAL != cxt->aft_proc_result.is_caf_trig && AF_TIGGER_NORMAL == aft_out.is_caf_trig) {

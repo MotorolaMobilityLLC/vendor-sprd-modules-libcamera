@@ -17,6 +17,7 @@ CONSTITUTE A FEEDBACK TO ANY KIND.
 #define alAFTrigger_ERR_SUCCESS                  0x00
 #define alAFTrigger_ERR_BUFFER_SIZE_TOO_SMALL    (alAFTrigger_ERR_MODULE+0x00000001)
 #define alAFTrigger_ERR_BUFFER_IS_NULL           (alAFTrigger_ERR_MODULE+0x00000002)
+#define alAFTrigger_ERR_NO_CURRENT_VCM           (alAFTrigger_ERR_MODULE+0x00000003) //491523
 
 //AFTrigger error code
 
