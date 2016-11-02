@@ -877,7 +877,10 @@ int SprdCamera3HWI::validateCaptureRequest(camera3_capture_request_t *request)
 	// Validate all buffers
 	b = request->output_buffers;
 	do {
-		//SprdCamera3Channel *channel = static_cast <SprdCamera3Channel * >(b->stream->priv);
+		if (b == NULL) {
+			HAL_LOGE("Request %d: Buffer %d: output_buffers is NULL!", frameNumber, idx);
+			return BAD_VALUE;
+		}
 		HAL_LOGV("strm=0x%lx hdl=0x%lx b=0x%lx", (cmr_uint)b->stream, (cmr_uint)b->buffer,(cmr_uint)b);
 		SprdCamera3Channel *channel = static_cast <SprdCamera3Channel * >(b->stream->priv);
 		if (channel == NULL) {
