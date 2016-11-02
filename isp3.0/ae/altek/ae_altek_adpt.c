@@ -3871,12 +3871,24 @@ static cmr_int aealtek_set_hdr_ev(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_pa
 	switch (level) {
 	case AE_CTRL_HDR_EV_UNDEREXPOSURE:
 		cxt_ptr->sensor_exp_data.lib_exp = cxt_ptr->lib_data.exposure_array.bracket_exp[0];
+		ISP_LOGI("UNDEREXPOSURE exp_line=%d exp_time=%d,gain=%d",
+			cxt_ptr->sensor_exp_data.lib_exp.exp_line,
+			cxt_ptr->sensor_exp_data.lib_exp.exp_time,
+			cxt_ptr->sensor_exp_data.lib_exp.gain);
 		break;
 	case AE_CTRL_HDR_EV_NORMAL:
 		cxt_ptr->sensor_exp_data.lib_exp = cxt_ptr->lib_data.exposure_array.bracket_exp[1];
+		ISP_LOGI("NORMAL exp_line=%d exp_time=%d,gain=%d",
+			cxt_ptr->sensor_exp_data.lib_exp.exp_line,
+			cxt_ptr->sensor_exp_data.lib_exp.exp_time,
+			cxt_ptr->sensor_exp_data.lib_exp.gain);
 		break;
 	case AE_CTRL_HDR_EV_OVEREXPOSURE:
 		cxt_ptr->sensor_exp_data.lib_exp = cxt_ptr->lib_data.exposure_array.bracket_exp[2];
+		ISP_LOGI("OVEREXPOSURE exp_line=%d exp_time=%d,gain=%d",
+			cxt_ptr->sensor_exp_data.lib_exp.exp_line,
+			cxt_ptr->sensor_exp_data.lib_exp.exp_time,
+			cxt_ptr->sensor_exp_data.lib_exp.gain);
 		break;
 	default:
 		break;
