@@ -1373,7 +1373,6 @@ static cmr_int aealtek_set_boost(struct aealtek_cxt *cxt_ptr, cmr_u32 is_speed)
 	enum ae_set_param_type_t type = 0;
 	struct ae_set_param_content_t *param_ct_ptr = NULL;
 
-
 	if (!cxt_ptr) {
 		ISP_LOGE("param %p is NULL error!", cxt_ptr);
 		goto exit;
@@ -1383,10 +1382,15 @@ static cmr_int aealtek_set_boost(struct aealtek_cxt *cxt_ptr, cmr_u32 is_speed)
 	output_param_ptr = &cxt_ptr->lib_data.output_data;
 	param_ct_ptr = &in_param.set_param;
 
-	if (is_speed)
+	/*the converge mode of front camera is too slow, set the converge mode AE_CONVERGE_FAST*/
+	if (1 == cxt_ptr->camera_id || 3 == cxt_ptr->camera_id) {
 		param_ct_ptr->converge_speedlv = AE_CONVERGE_FAST;
-	else
-		param_ct_ptr->converge_speedlv = AE_CONVERGE_NORMAL;
+	} else {
+		if (is_speed)
+			param_ct_ptr->converge_speedlv = AE_CONVERGE_FAST;
+		else
+			param_ct_ptr->converge_speedlv = AE_CONVERGE_NORMAL;
+	}
 	type = AE_SET_PARAM_CONVERGE_SPD;
 	in_param.ae_set_param_type = type;
 	if (obj_ptr && obj_ptr->set_param)
