@@ -917,6 +917,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 	struct sensor_raw_info                      *sensor_raw_info_ptr_slv = (struct sensor_raw_info *)input_ptr->setting_param_ptr_slv;
 #endif
 	float                                       libVersion;
+	char                                        value[PROPERTY_VALUE_MAX];
 
 	ISP_CHECK_HANDLE_VALID(isp_3a_handle);
 
@@ -924,7 +925,9 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 
 	cxt->af_cxt.af_support = input_ptr->ex_info.af_supported;
 	cxt->pdaf_cxt.pdaf_support = input_ptr->ex_info.pdaf_supported;
-	if (0 == cxt->af_cxt.af_support) {
+
+	property_get("persist.sys.camera.pdaf.off", (char *)value, "0");
+	if (0 == cxt->af_cxt.af_support || atoi(value) || cxt->is_refocus) {
 		cxt->pdaf_cxt.pdaf_support = 0;
 	}
 	if (ERR_3ALIB_VER_SUCCESS == allib_3a_getversion(&libVersion)) {

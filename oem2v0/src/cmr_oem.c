@@ -3017,11 +3017,11 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 
 	property_get("sys.cam.multi.camera.mode", value, "0");
-	cxt->is_refocus_mode = atoi(value);//TBD
-	CMR_LOGI("refocus mode %d", cxt->is_refocus_mode);
+	cxt->is_multi_mode = atoi(value);//TBD
+	CMR_LOGI("is_multi_mode %d", cxt->is_multi_mode);
 
-	isp_param.is_refocus = cxt->is_refocus_mode;
-	if ((CAMERA_ID_0 == cxt->camera_id || CAMERA_ID_1 == cxt->camera_id) && cxt->is_refocus_mode) {
+	isp_param.is_refocus = cxt->is_multi_mode;
+	if ((CAMERA_ID_0 == cxt->camera_id || CAMERA_ID_1 == cxt->camera_id) && cxt->is_multi_mode) {
 		if (CAMERA_ID_0 == cxt->camera_id) {
 			ret = cmr_sensor_open(sn_cxt->sensor_handle, 1 << SENSOR_DEVICE2);
 			if (ret) {
@@ -6810,11 +6810,15 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 		|| CAMERA_ISP_TUNING_MODE == mode || CAMERA_UTEST_MODE == mode
 		|| CAMERA_AUTOTEST_MODE == mode || CAMERA_ISP_SIMULATION_MODE == mode
 		|| 1 == out_param_ptr->video_eb || 1 == is_raw_capture
-		|| 1 == out_param_ptr->is_dv)
+		|| 1 == out_param_ptr->is_dv || cxt->is_multi_mode)
 		out_param_ptr->pdaf_eb = 0;
 	else if (1 == out_param_ptr->preview_eb)
 		out_param_ptr->pdaf_eb = 1;
 
+	property_get("persist.sys.camera.pdaf.off", value, "0");
+	if(atoi(value)) {
+		out_param_ptr->pdaf_eb = 0;
+	}
 	haf_enable = out_param_ptr->pdaf_eb;
 	CMR_LOGI("haf_enable %d", haf_enable);
 	ret = isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_SET_HAF_ENABLE, &haf_enable);
