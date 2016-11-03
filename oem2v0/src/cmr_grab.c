@@ -53,7 +53,6 @@
 struct cmr_grab {
 	cmr_s32                 fd;
 	cmr_evt_cb              grab_evt_cb;
-	sem_t                   exit_sem;
 	pthread_mutex_t         cb_mutex;
 	pthread_mutex_t         dcam_mutex;
 	pthread_mutex_t         status_mutex;
@@ -107,7 +106,6 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr, cmr_handle *grab_h
 		return -1;
 	}
 	p_grab->init_param = *init_param_ptr;
-	sem_init(&p_grab->exit_sem, 0, 0);
 	CMR_LOGI("Start to open GRAB device. %p", p_grab);
 	p_grab->fd = open(CMR_GRAB_DEV_NAME, O_RDWR, 0);
 	if (-1 == p_grab->fd) {
@@ -1049,20 +1047,8 @@ static cmr_int cmr_grab_kill_thread(cmr_handle grab_handle)
 	op.cmd = SPRD_IMG_STOP_DCAM;
 	op.sensor_id = p_grab->init_param.sensor_id;
 	ret = write(p_grab->fd, &op, sizeof(struct sprd_img_write_op));
-	if (ret > 0) {
+	if (ret >= 0) {
 		CMR_LOGI("write OK!");
-		if (clock_gettime(CLOCK_REALTIME, &ts) != -1) {
-			ts.tv_sec += 2;
-			while ((status = sem_timedwait(&p_grab->exit_sem, &ts)) == -1 && errno == EINTR)
-				continue;       /* Restart if interrupted by handler */
-
-			/* Check what happened */
-			if ((-1 == status) && (ETIMEDOUT == errno) ) {
-				close(p_grab->fd);
-				CMR_LOGI("wait thread exit timeout, force read() return");
-				p_grab->fd = -1;
-			}
-		}
 		ret = pthread_join(p_grab->thread_handle, &dummy);
 		p_grab->thread_handle = 0;
 	}
@@ -1165,7 +1151,6 @@ static void* cmr_grab_thread_proc(void* data)
 		}
 	}
 
-	sem_post(&p_grab->exit_sem);
 	CMR_LOGI("Out");
 	return NULL;
 }
