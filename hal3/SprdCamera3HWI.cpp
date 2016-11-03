@@ -498,9 +498,13 @@ int32_t SprdCamera3HWI::tranStreamAndChannelType(camera3_stream_t* new_stream, c
 	if(new_stream->stream_type == CAMERA3_STREAM_OUTPUT)
 	{
 		if(new_stream->format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED)
+#ifdef CONFIG_CAMERA_NO_DCAM_DATA_PATH
+			new_stream->format =  HAL_PIXEL_FORMAT_YCbCr_420_SP;
+#else
 			new_stream->format =  HAL_PIXEL_FORMAT_YCrCb_420_SP;
-
+#endif
 		switch (new_stream->format) {
+			case HAL_PIXEL_FORMAT_YCbCr_420_SP:
 			case HAL_PIXEL_FORMAT_YCrCb_420_SP:
 				if (new_stream->usage & GRALLOC_USAGE_HW_VIDEO_ENCODER) {
 					*stream_type = CAMERA_STREAM_TYPE_VIDEO;
