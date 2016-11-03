@@ -767,6 +767,8 @@ void camera_isp_dev_evt_cb(cmr_int evt, void *data, cmr_u32 data_len, void *priv
 	struct frm_info                 *frame = (struct frm_info*)data;
 	cmr_u32                         channel_id;
 	cmr_handle                      receiver_handle;
+	cmr_int						flash_status = FLASH_CLOSE;
+	struct setting_cmd_parameter    setting_param;
 
 	if (!cxt) {
 		CMR_LOGE("error param, handle 0x%lx data 0x%lx ", (cmr_uint)cxt, (cmr_uint)data);
@@ -784,7 +786,41 @@ void camera_isp_dev_evt_cb(cmr_int evt, void *data, cmr_u32 data_len, void *priv
 		camera_send_channel_data((cmr_handle)cxt, receiver_handle, evt, data);
 		break;
 	case ISP_MW_ALTEK_RAW:
-		CMR_LOGI("turn off flash");
+		/*close flash*/
+		if (0 == cxt->camera_id) {
+			setting_param.camera_id = cxt->camera_id;
+			ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_HW_FLASH_STATUS, &setting_param);
+			if (ret) {
+				CMR_LOGE("failed to get flash mode %ld", ret);
+				//goto exit;
+			}
+			flash_status = setting_param.cmd_type_value;
+			CMR_LOGI("HW flash_status=%ld", flash_status);
+
+			if (FLASH_OPEN == flash_status || FLASH_HIGH_LIGHT == flash_status) {
+				static cmr_u32 zsl_flash_skip_num = 0;
+				if(CAMERA_ZSL_MODE == cxt->snp_cxt.snp_mode) {
+					if(zsl_flash_skip_num <= FLASH_CAPTURE_SKIP_FRAME_NUM) {
+						zsl_flash_skip_num++;
+						break;
+					}
+					else
+						zsl_flash_skip_num = 0;
+				}
+
+				CMR_LOGI("turn off flash");
+				memset(&setting_param, 0, sizeof(setting_param));
+				setting_param.ctrl_flash.capture_mode.capture_mode = 0;
+				setting_param.ctrl_flash.is_active = 0;
+				setting_param.ctrl_flash.work_mode = 1; //capture
+				setting_param.ctrl_flash.flash_type = FLASH_CLOSE_AFTER_OPEN;
+				ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_CTRL_FLASH, &setting_param);
+				if (ret) {
+					CMR_LOGE("failed to open flash");
+				}
+			}
+		}
+
 		break;
 	}
 }

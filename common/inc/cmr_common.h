@@ -78,7 +78,7 @@ extern "C"
 #define FRAME_NUM_MAX                     0xFFFFFFFF
 #define FRAME_FLASH_MAX                   0x0000FFFF
 #define INVALID_FORMAT_PATTERN            255
-
+#define FLASH_CAPTURE_SKIP_FRAME_NUM  1
 
 #define PREV_OUT_DATA				     0xF000 /*debug.camera.save.snpfile 16*/
 #define SNP_CHN_OUT_DATA    		             	 0x8000 /*debug.camera.save.snpfile 1*/

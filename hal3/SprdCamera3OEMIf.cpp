@@ -303,7 +303,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mPrvMinFps(0),
 	mPrvMaxFps(0),
 	mFlashCaptureFlag(0),
-	mFlashCaptureSkipNum(1),
+	mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM),
 	mFlagMultiLayerStart(false),
 	mIommuEnabled(false),
 	mCameraDfsPolicyCur(CAM_EXIT),
