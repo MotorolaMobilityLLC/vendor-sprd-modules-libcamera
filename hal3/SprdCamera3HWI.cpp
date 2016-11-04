@@ -151,6 +151,7 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId):
 
 	mBurstCapCnt = 1;
 
+	mVideoSnapshotHint = false;
 	mOldCapIntent = 0;
 	mOldRequesId = 0;
 	mPrvTimerID = NULL;
@@ -1002,6 +1003,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 		    }
 			break;
 		case ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD:
+			mVideoSnapshotHint = false;
 			if(mOldCapIntent != capturePara.cap_intent) {
 				mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_VIDEO, mFrameNum);
 				if(mOldCapIntent != ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT)
@@ -1025,6 +1027,9 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 			if(mOldCapIntent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD) {
 				mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_VIDEO_SNAPSHOT, mFrameNum);
 				mPictureRequest = true;
+				if(mVideoSnapshotHint == true) {
+					mOEMIf->mBurstVideoSnapshot = true;
+				}
 			}
 			else if(mOldCapIntent != ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE &&
 			           mOldCapIntent != ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT) {
@@ -1045,6 +1050,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 	if(mOldCapIntent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD &&
 	   capturePara.cap_intent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT) {
 		mOldCapIntent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD;
+		mVideoSnapshotHint = true;
 	} else if(mOldCapIntent != SPRD_CONTROL_CAPTURE_INTENT_FLUSH) {
 		mOldCapIntent = capturePara.cap_intent;
 	} else {
@@ -1057,9 +1063,9 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 	else
 		mOldRequesId = capturePara.cap_request_id;
 
-	HAL_LOGI("num_output_buffers=%d, frame_num=%d, mPictureRequest=%d, captureIntent=%d, mFirstRegularRequest=%d",
+	HAL_LOGI("num_output_buffers=%d, frame_num=%d, mPictureRequest=%d, captureIntent=%d, mFirstRegularRequest=%d mVideoSnapshotHint =%d",
 		     request->num_output_buffers, request->frame_number,
-		     mPictureRequest,capturePara.cap_intent, mFirstRegularRequest);
+		     mPictureRequest,capturePara.cap_intent, mFirstRegularRequest,mVideoSnapshotHint);
 
 #ifndef MINICAMERA
 	for (size_t i = 0; i < request->num_output_buffers; i++) {

@@ -220,6 +220,8 @@ public:
 	static void*  gyro_monitor_thread_proc( void *p_data);
 #endif
 
+	int			mBurstVideoSnapshot;
+	int			mVideoParameterSetFlag;
 private:
 	inline void print_time();
 
@@ -381,6 +383,7 @@ private:
 	int handleCbData(hal3_trans_info_t &result_info, void *userdata);
 	int zslTakePicture();
 	int VideoTakePicture();
+	int setVideoSnapshotParameter();
 
 	int timer_stop();
 	int timer_set(void *obj, int32_t delay_ms, timer_handle_func handler);
