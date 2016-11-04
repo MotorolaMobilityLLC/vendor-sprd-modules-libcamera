@@ -5044,7 +5044,9 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void)
 		videoAspectRatio = prevAspectRatio;
 	}
 
-	if (mCaptureWidth != 0 && mCaptureHeight != 0) {
+	if(mRawWidth != 0 && mRawHeight != 0) {
+		capAspectRatio = static_cast<float>(mRawWidth) / mRawHeight;
+	} else if (mCaptureWidth != 0 && mCaptureHeight != 0) {
 		capAspectRatio = static_cast<float>(mCaptureWidth) / mCaptureHeight;
 	} else {
 		capAspectRatio = prevAspectRatio;
