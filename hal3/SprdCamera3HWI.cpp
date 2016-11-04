@@ -856,6 +856,10 @@ int SprdCamera3HWI::validateCaptureRequest(camera3_capture_request_t *request)
 	}
 	if (request->input_buffer != NULL) {
 		b = request->input_buffer;
+		if (b == NULL || b->stream == NULL || b->buffer == NULL) {
+			HAL_LOGE("Request %d: Buffer %d: input_buffer parameter is NULL!", frameNumber, idx);
+			return BAD_VALUE;
+		}
 		SprdCamera3Channel *channel = static_cast<SprdCamera3Channel * >(b->stream->priv);
 		if (channel == NULL) {
 			HAL_LOGE("Request %d: Buffer %d: Unconfigured stream!", frameNumber, idx);
@@ -869,16 +873,12 @@ int SprdCamera3HWI::validateCaptureRequest(camera3_capture_request_t *request)
 			HAL_LOGE("Request %d: Buffer %d: Has a release fence!", frameNumber, idx);
 			return BAD_VALUE;
 		}
-		if (b->buffer == NULL) {
-			HAL_LOGE("Request %d: Buffer %d: NULL buffer handle!", frameNumber, idx);
-			return BAD_VALUE;
-		}
 	}
 	// Validate all buffers
 	b = request->output_buffers;
 	do {
-		if (b == NULL) {
-			HAL_LOGE("Request %d: Buffer %d: output_buffers is NULL!", frameNumber, idx);
+		if (b == NULL || b->stream == NULL || b->buffer == NULL) {
+			HAL_LOGE("Request %d: Buffer %d: output_buffers parameter is NULL!", frameNumber, idx);
 			return BAD_VALUE;
 		}
 		HAL_LOGV("strm=0x%lx hdl=0x%lx b=0x%lx", (cmr_uint)b->stream, (cmr_uint)b->buffer,(cmr_uint)b);
@@ -893,10 +893,6 @@ int SprdCamera3HWI::validateCaptureRequest(camera3_capture_request_t *request)
 		}
 		if (b->release_fence != -1) {
 			HAL_LOGE("Request %d: Buffer %d: Has a release fence!", frameNumber, idx);
-			return BAD_VALUE;
-		}
-		if (b->buffer == NULL) {
-			HAL_LOGE("Request %d: Buffer %d: NULL buffer handle!", frameNumber, idx);
 			return BAD_VALUE;
 		}
 		idx++;
