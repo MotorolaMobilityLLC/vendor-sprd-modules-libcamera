@@ -215,8 +215,6 @@ static cmr_int isp3a_awb_callback(cmr_handle handle, cmr_u32 cmd, struct awb_ctr
 static cmr_int isp3a_afl_callback(cmr_handle handle, enum afl_ctrl_cb_type cmd, struct afl_ctrl_callback_in *in_ptr);
 static cmr_int isp3a_set_exposure(cmr_handle handle, struct ae_ctrl_param_sensor_exposure *in_ptr);
 static cmr_int isp3a_ae_set_gain(cmr_handle handle, struct ae_ctrl_param_sensor_gain *in_ptr);
-static cmr_int isp3a_set_exposure_slv(cmr_handle handle, struct ae_ctrl_param_sensor_exposure *in_ptr);
-static cmr_int isp3a_ae_set_gain_slv(cmr_handle handle, struct ae_ctrl_param_sensor_gain *in_ptr);
 static cmr_int isp3a_read_aec_info(cmr_handle handle, void *in_ptr);
 static cmr_int isp3a_read_aec_info_slv(cmr_handle handle, void *in_ptr);
 static cmr_int isp3a_write_aec_info(cmr_handle handle, void *in_ptr);
@@ -584,36 +582,6 @@ cmr_int isp3a_ae_set_gain(cmr_handle handle, struct ae_ctrl_param_sensor_gain *i
 		goto exit;
 	}
 	ret = cxt->ioctrl_ptr->set_gain(cxt->ioctrl_ptr->caller_handler, in_ptr->gain);
-exit:
-	ISP_LOGI("done %ld", ret);
-	return ret;
-}
-
-cmr_int isp3a_set_exposure_slv(cmr_handle handle, struct ae_ctrl_param_sensor_exposure *in_ptr)
-{
-	cmr_int                                     ret = ISP_SUCCESS;
-	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)handle;
-	cmr_u32                                     sensor_param = 0;
-	struct ae_ctrl_param_sensor_exposure        ex_exp;
-
-	if (!cxt || !cxt->ioctrl_ptr_slv || !in_ptr) {
-		ISP_LOGE("don't have io interface");
-		goto exit;
-	}
-
-	if (cxt->ioctrl_ptr_slv->ex_set_exposure) {
-		ex_exp.exp_line = in_ptr->exp_line;
-		ex_exp.dummy = in_ptr->dummy;
-		ex_exp.size_index = in_ptr->size_index;
-
-		ret = cxt->ioctrl_ptr_slv->ex_set_exposure(cxt->ioctrl_ptr_slv->caller_handler, (unsigned long)&ex_exp);
-	} else if (cxt->ioctrl_ptr_slv->set_exposure) {
-		sensor_param = in_ptr->exp_line & 0x0000ffff;
-		sensor_param |= (in_ptr->dummy << 0x10) & 0x0fff0000;
-		sensor_param |= (in_ptr->size_index << 0x1c) & 0xf0000000;
-
-		ret = cxt->ioctrl_ptr_slv->set_exposure(cxt->ioctrl_ptr_slv->caller_handler, sensor_param);
-	}
 exit:
 	ISP_LOGI("done %ld", ret);
 	return ret;
@@ -1073,8 +1041,6 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 	ae_input.is_master = cxt->is_master;
 	ae_input.preview_work.is_refocus = cxt->is_refocus;
 	ae_input.preview_work_slv.is_refocus = cxt->is_refocus;
-	ae_input.ops_in.set_again_slv = isp3a_ae_set_gain_slv;
-	ae_input.ops_in.set_exposure_slv = isp3a_set_exposure_slv;
 	ae_input.ops_in.set_iso_slv = isp3a_set_slave_iso;
 	ae_input.ops_in.read_aec_info = isp3a_read_aec_info;
 	ae_input.ops_in.read_aec_info_slv = isp3a_read_aec_info_slv;

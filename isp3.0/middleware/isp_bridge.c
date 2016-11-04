@@ -31,6 +31,7 @@ struct ispbr_context {
 };
 
 static struct ispbr_context br_cxt;
+static pthread_mutex_t g_br_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /*************************************INTERNAK FUNCTION ****************************************/
 
@@ -77,8 +78,9 @@ cmr_int isp_br_init(cmr_u32 camera_id, cmr_handle isp_3a_handle)
 
 	cxt->isp_3afw_handles[camera_id] = isp_3a_handle;
 
-	/* TBD not atomic operations, unsafe*/
+	pthread_mutex_lock(&g_br_mutex);
 	cxt->user_cnt++;
+	pthread_mutex_unlock(&g_br_mutex);
 	ISP_LOGI("cnt = %d", cxt->user_cnt);
 	if (1 == cxt->user_cnt) {
 		sem_init(&cxt->ae_sm, 0, 1);
@@ -94,7 +96,9 @@ cmr_int isp_br_deinit(void)
 	struct ispbr_context *cxt = &br_cxt;
 	cmr_u8 i = 0;
 
+	pthread_mutex_lock(&g_br_mutex);
 	cxt->user_cnt--;
+	pthread_mutex_unlock(&g_br_mutex);
 	ISP_LOGI("cnt = %d", cxt->user_cnt);
 	if (0 == cxt->user_cnt) {
 		sem_destroy(&cxt->ae_sm);

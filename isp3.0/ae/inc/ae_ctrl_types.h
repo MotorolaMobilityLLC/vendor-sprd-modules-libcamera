@@ -446,8 +446,6 @@ struct ae_ctrl_callback_in {
 struct ae_ctrl_ops_in {
 	cmr_int (*set_exposure)(cmr_handle handler, struct ae_ctrl_param_sensor_exposure *in_ptr);
 	cmr_int (*set_again)(cmr_handle handler, struct ae_ctrl_param_sensor_gain *in_ptr);
-	cmr_int (*set_exposure_slv)(cmr_handle handler, struct ae_ctrl_param_sensor_exposure *in_ptr);
-	cmr_int (*set_again_slv)(cmr_handle handler, struct ae_ctrl_param_sensor_gain *in_ptr);
 	cmr_int (*set_iso_slv)(cmr_handle handler, cmr_u32 iso);
 	cmr_int (*read_aec_info)(cmr_handle handler, void *aec_info); /* TBD master & slave will merge by bridge */
 	cmr_int (*read_aec_info_slv)(cmr_handle handler, void *aec_info);

@@ -1232,20 +1232,6 @@ static cmr_int aealtek_write_to_sensor_slv(struct aealtek_cxt *cxt_ptr,
 		ret = ISP_PARAM_NULL;
 		goto exit;
 	}
-#if 0
-	if (cxt_ptr->init_in_param.ops_in.set_exposure_slv) {
-		if (0 != exp_ptr->exp_line && (cxt_ptr->pre_write_exp_data_slv.exp_line != exp_ptr->exp_line
-				|| cxt_ptr->pre_write_exp_data_slv.dummy != exp_ptr->dummy)) {
-			(*cxt_ptr->init_in_param.ops_in.set_exposure_slv)(cxt_ptr->caller_handle, exp_ptr);
-		}
-	}
-
-	if (cxt_ptr->init_in_param.ops_in.set_again_slv) {
-		if (0 != gain_ptr->gain && (cxt_ptr->pre_write_exp_data_slv.gain != gain_ptr->gain)) {
-			(*cxt_ptr->init_in_param.ops_in.set_again_slv)(cxt_ptr->caller_handle, gain_ptr);
-		}
-	}
-#endif
 	cxt_ptr->pre_write_exp_data_slv.exp_line = exp_ptr->exp_line;
 	cxt_ptr->pre_write_exp_data_slv.dummy = exp_ptr->dummy;
 	cxt_ptr->pre_write_exp_data_slv.gain = gain_ptr->gain;
