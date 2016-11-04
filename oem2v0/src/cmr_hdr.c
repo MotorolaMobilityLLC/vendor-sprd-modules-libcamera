@@ -506,6 +506,7 @@ static cmr_int hdr_save_frame(cmr_handle class_handle, struct ipm_frame_in *in)
 		return CMR_CAMERA_FAIL;
 	}
 
+	CMR_LOGI(" HDR frame_sn %d, y_addr %p", frame_sn, in->src_frame.addr_vir.addr_y);
 	if (hdr_handle->mem_size >= in->src_frame.buf_size && NULL != in->src_frame.addr_vir.addr_y)
 		hdr_handle->alloc_addr[frame_sn] = (cmr_u8*)(in->src_frame.addr_vir.addr_y);
 	 else

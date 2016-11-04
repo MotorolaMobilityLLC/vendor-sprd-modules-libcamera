@@ -2904,7 +2904,8 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 
 	}
 
-	if (ISP3A_WORK_MODE_CAPTURE != work_mode || cxt_ptr->nxt_status.is_hdr_status) {
+	ISP_LOGI("work_mode=%d is_hdr_status=%d",work_mode,cxt_ptr->nxt_status.is_hdr_status);
+	if (ISP3A_WORK_MODE_CAPTURE != work_mode || !cxt_ptr->nxt_status.is_hdr_status) {
 		if (cxt_ptr->tuning_info.manual_ae_on && TUNING_MODE_USER_DEF == cxt_ptr->tuning_info.tuning_mode) {
 			ISP_LOGI("dvt mode");
 		} else {
@@ -4045,6 +4046,11 @@ static cmr_int aealtek_set_hdr_ev(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_pa
 	ret = aealtek_set_dummy(cxt_ptr, &cxt_ptr->sensor_exp_data.lib_exp);
 	if (ret)
 		ISP_LOGW("warning set_dummy ret=%ld !!!", ret);
+	ISP_LOGI("exp_line=%d dummy=%d size_index=%d gain=%d",
+		cxt_ptr->sensor_exp_data.lib_exp.exp_line,
+		cxt_ptr->sensor_exp_data.lib_exp.dummy,
+		cxt_ptr->sensor_exp_data.lib_exp.size_index,
+		cxt_ptr->sensor_exp_data.lib_exp.gain);
 	ret = aealtek_pre_to_sensor(cxt_ptr, 1, 0);
 
 	return ISP_SUCCESS;
