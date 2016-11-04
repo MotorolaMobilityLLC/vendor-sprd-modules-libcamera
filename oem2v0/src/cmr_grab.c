@@ -465,8 +465,8 @@ static cmr_int cmr_grab_cap_cfg_common(cmr_handle grab_handle, struct cap_cfg *c
 		img_fmt.height     = config->cfg.dst_img_size.height;
 		img_fmt.fourcc     = pxl_fmt; //fourecc
 		img_fmt.need_isp   = config->cfg.need_isp;
-		img_fmt.reserved[0] = config->cfg.flip_on;
-		img_fmt.reserved[1] = config->buffer_cfg_isp ? 0 : 1;
+		img_fmt.flip_on = config->cfg.flip_on;
+		img_fmt.buffer_cfg_isp = config->buffer_cfg_isp ? 0 : 1;
 		if (endian == NULL) {
 			img_fmt.is_lightly = 1;
 		}
@@ -477,7 +477,7 @@ static cmr_int cmr_grab_cap_cfg_common(cmr_handle grab_handle, struct cap_cfg *c
 			img_fmt.height,
 			img_fmt.fourcc,
 			img_fmt.need_isp,
-			img_fmt.reserved[0]);
+			img_fmt.flip_on);
 		ret = ioctl(p_grab->fd, SPRD_IMG_IO_CHECK_FMT, &img_fmt);
 		CMR_LOGV("need binning, %d", img_fmt.need_binning);
 		if (img_fmt.need_binning) {
@@ -491,7 +491,7 @@ static cmr_int cmr_grab_cap_cfg_common(cmr_handle grab_handle, struct cap_cfg *c
 		}
 		if (endian != NULL) {
 			memcpy((void*)&data_endian,
-				(void*)&img_fmt.reserved[0],
+				(void*)&img_fmt.flip_on,
 				sizeof(struct img_data_end));
 			cmr_grab_get_data_endian(&data_endian, endian);
 		}

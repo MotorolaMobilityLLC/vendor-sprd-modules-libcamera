@@ -1134,15 +1134,15 @@ cmr_int cmr_get_otp_from_kernel(struct sensor_drv_context *sensor_cxt, cmr_uint 
 				val->type = SENSOR_VAL_TYPE_PARSE_OTP;
 			}
 		} else if (SENSOR_VAL_TYPE_READ_DUAL_OTP ==  val->type) {
-			param_ptr.type = SENSOR_OTP_PARAM_DUAL;
+			param_ptr.type = SENSOR_OTP_PARAM_NORMAL;
 			param_ptr.start_addr = 0;
-			param_ptr.dual_len = 0;
-			param_ptr.dual_buff = sensor_otp.data_ptr;
+			param_ptr.len = 0;
+			param_ptr.buff = sensor_otp.data_ptr;
 
 			ret = ioctl(fd_sensor, SENSOR_IO_READ_OTPDATA, &param_ptr);
-			if(!ret && 0 != param_ptr.dual_buff [0]) {
-				CMR_LOGD("SENSOR_IO_READ_OTPDATA dual OK,param_ptr.dual_buff %p",param_ptr.dual_buff);
-				val->pval = param_ptr.dual_buff;
+			if(!ret && 0 != param_ptr.buff [0]) {
+				CMR_LOGD("SENSOR_IO_READ_OTPDATA dual OK,param_ptr.buff %p",param_ptr.buff);
+				val->pval = param_ptr.buff;
 				val->type = SENSOR_VAL_TYPE_PARSE_DUAL_OTP;
 			}
 		}

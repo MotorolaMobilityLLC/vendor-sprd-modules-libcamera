@@ -72,6 +72,13 @@ struct isp_statis_info {
 	cmr_uint statis_cnt;
 };
 
+struct isp_irq_node {
+	uint32_t		irq_val0;
+	uint32_t		sof_idx;
+	int32_t			ret_val;
+	struct sprd_isp_time	time_stamp;
+};
+
 /*ISP driver API */
 cmr_int isp_dev_init(struct isp_dev_init_info *init_param_ptr, isp_handle *handle);
 cmr_int isp_dev_deinit(isp_handle handle);
@@ -94,7 +101,7 @@ cmr_int isp_dev_get_img_buf(isp_handle handle, struct isp_img_read_op *param);
 cmr_int isp_dev_set_img_param(isp_handle handle, struct isp_cfg_img_param *param);
 cmr_int isp_dev_get_timestamp(isp_handle handle, cmr_u32 *sec, cmr_u32 *usec);
 cmr_int isp_dev_highiso_mode(isp_handle handle, struct isp_raw_data *param);
-cmr_int isp_dev_cfg_scenario_info(isp_handle handle, SCENARIO_INFO_AP *data);
+cmr_int isp_dev_cfg_scenario_info(isp_handle handle, struct scenario_info_ap *data);
 cmr_int isp_dev_cfg_iso_speed(isp_handle handle, cmr_u32 *data);
 cmr_int isp_dev_cfg_awb_gain(isp_handle handle, struct isp_awb_gain_info *data);
 cmr_int isp_dev_cfg_awb_gain_balanced(isp_handle handle, struct isp_awb_gain_info *data);

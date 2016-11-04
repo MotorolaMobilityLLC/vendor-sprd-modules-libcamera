@@ -613,7 +613,7 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 {
 	cmr_int                                ret = ISP_SUCCESS;
 	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-	SCENARIO_INFO_AP                       input_data;
+	struct scenario_info_ap               	input_data;
 	struct cfg_3a_info			cfg3a_info;
 	struct dld_sequence                     dldseq_info;
 	cmr_u32                                iso_gain = 0;
@@ -623,7 +623,7 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	struct isp_raw_data                    isp_raw_mem;
 	cmr_u32                                capture_mode = 0;
 	struct isp_cfg_img_param               img_buf_param;
-	SCENARIO_INFO_AP                       tSecnarioInfo;
+	struct scenario_info_ap                tSecnarioInfo;
 	struct isp_iq_otp_info                 iq_info;
 	struct isp_dev_init_param              init_param;
 	char                                   value[PROPERTY_VALUE_MAX];
@@ -825,20 +825,20 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 		ret = isp_dev_set_img_param(cxt->isp_driver_handle, &img_buf_param);
 
 		memset(&isp_raw_mem, 0, sizeof(isp_raw_mem));
-		isp_raw_mem.fd = param_ptr->common_in.raw_buf_fd;
-		isp_raw_mem.phy_addr = param_ptr->common_in.raw_buf_phys_addr;
-		isp_raw_mem.virt_addr = param_ptr->common_in.raw_buf_virt_addr;
+		isp_raw_mem.fd[0] = param_ptr->common_in.raw_buf_fd;
+		isp_raw_mem.phy_addr[0] = param_ptr->common_in.raw_buf_phys_addr;
+		isp_raw_mem.virt_addr[0] = (uint64_t)param_ptr->common_in.raw_buf_virt_addr;
 		isp_raw_mem.size = param_ptr->common_in.raw_buf_size;
 		isp_raw_mem.width = param_ptr->common_in.raw_buf_width;
 		isp_raw_mem.height = param_ptr->common_in.raw_buf_height;
 		ret = isp_dev_set_rawaddr(cxt->isp_driver_handle, &isp_raw_mem);
-		ISP_LOGI("raw10_buf fd 0x%x phy_addr 0x%x virt_addr 0x%x", isp_raw_mem.fd,
-		isp_raw_mem.phy_addr, isp_raw_mem.virt_addr);
+		ISP_LOGI("raw10_buf fd 0x%x phy_addr 0x%x virt_addr 0x%llx", isp_raw_mem.fd[0],
+		isp_raw_mem.phy_addr[0], (unsigned long long)isp_raw_mem.virt_addr[0]);
 
 		memset(&isp_raw_mem, 0, sizeof(isp_raw_mem));
-		isp_raw_mem.fd = param_ptr->common_in.highiso_buf_fd;
-		isp_raw_mem.phy_addr = param_ptr->common_in.highiso_buf_phys_addr;
-		isp_raw_mem.virt_addr = param_ptr->common_in.highiso_buf_virt_addr;
+		isp_raw_mem.fd[0] = param_ptr->common_in.highiso_buf_fd;
+		isp_raw_mem.phy_addr[0] = param_ptr->common_in.highiso_buf_phys_addr;
+		isp_raw_mem.virt_addr[0] = (cmr_u64)param_ptr->common_in.highiso_buf_virt_addr;
 		isp_raw_mem.size = param_ptr->common_in.highiso_buf_size;
 		isp_raw_mem.width = param_ptr->common_in.raw_buf_width;
 		isp_raw_mem.height = param_ptr->common_in.raw_buf_height;
@@ -872,7 +872,7 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 {
 	cmr_int                                ret = ISP_SUCCESS;
 	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-	SCENARIO_INFO_AP                       scenario_in;
+	struct scenario_info_ap                scenario_in;
 	struct cfg_3a_info                     cfg_info;
 	struct isp_cfg_img_param               img_param;
 	struct isp_awb_gain_info               awb_gain;
@@ -902,15 +902,15 @@ cmr_int isp_dev_access_start_postproc(cmr_handle isp_dev_handle, struct isp_dev_
 	ISP_LOGI("cap_mode = %d", cap_mode);
 
 	memset(&isp_raw_mem, 0, sizeof(struct isp_raw_data));
-	isp_raw_mem.fd = input_ptr->dst2_frame.img_fd.y;
-	isp_raw_mem.phy_addr = input_ptr->dst2_frame.img_addr_phy.chn0;
-	isp_raw_mem.virt_addr = input_ptr->dst2_frame.img_addr_vir.chn0;
+	isp_raw_mem.fd[0] = input_ptr->dst2_frame.img_fd.y;
+	isp_raw_mem.phy_addr[0] = input_ptr->dst2_frame.img_addr_phy.chn0;
+	isp_raw_mem.virt_addr[0] = (uint64_t)input_ptr->dst2_frame.img_addr_vir.chn0;
 	isp_raw_mem.size = (input_ptr->dst2_frame.img_size.w*input_ptr->dst2_frame.img_size.h)*3*2/2;
 	isp_raw_mem.width = input_ptr->dst2_frame.img_size.w;
 	isp_raw_mem.height = input_ptr->dst2_frame.img_size.h;
 	ret = isp_dev_set_rawaddr(cxt->isp_driver_handle, &isp_raw_mem);
-	ISP_LOGI("raw10_buf fd 0x%x phy_addr 0x%x virt_addr 0x%x", isp_raw_mem.fd,
-		isp_raw_mem.phy_addr, isp_raw_mem.virt_addr);
+	ISP_LOGI("raw10_buf fd 0x%x phy_addr 0x%x virt_addr 0x%llx", isp_raw_mem.fd[0],
+		isp_raw_mem.phy_addr[0], (unsigned long long)isp_raw_mem.virt_addr[0]);
 
 	memset(&img_mem, 0, sizeof(struct isp_img_mem));
 	img_mem.img_fmt = input_ptr->dst_frame.img_fmt;

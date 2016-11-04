@@ -300,14 +300,14 @@ cmr_int isp_dev_alloc_highiso_mem(isp_handle handle, struct isp_raw_data *buf, s
 		file->init_param.alloc_cb(CAMERA_SNAPSHOT_HIGHISO,
 					  file->init_param.mem_cb_handle,
 					  &buf_size, &buf_num,
-					  (cmr_uint *)&buf->phy_addr,
-					  (cmr_uint *)&buf->virt_addr,
-					  &buf->fd);
+					  (cmr_uint *)&buf->phy_addr[0],
+					  (cmr_uint *)&buf->virt_addr[0],
+					  &buf->fd[0]);
 		buf->width = size->width;
 		buf->height = size->height;
 		buf->size = buf_size;
-		ISP_LOGD("highiso_buf fd 0x%x phy_addr 0x%x virt_addr 0x%x size 0x%x",
-			buf->fd, buf->phy_addr, buf->virt_addr, buf_size);
+		ISP_LOGD("highiso_buf fd 0x%x phy_addr 0x%x virt_addr 0x%llx size 0x%x",
+			buf->fd[0], buf->phy_addr[0], (unsigned long long)buf->virt_addr[0], buf_size);
 	}
 
 	ISP_LOGE("done");
@@ -460,7 +460,7 @@ static void* isp_dev_thread_proc(void *data)
 	struct isp_statis_info            statis_info;
 	struct isp_statis_frame           statis_frame_buf;
 	struct isp_frm_info               img_frame;
-	struct isp_irq                    irq_node;
+	struct isp_irq_node               irq_node;
 	struct isp_irq_info               irq_info;
 	struct img_addr addr;
 
@@ -502,7 +502,7 @@ static void* isp_dev_thread_proc(void *data)
 						statis_info.statis_frame.time_stamp.usec = irq_info.time_stamp.usec;
 						statis_info.timestamp = systemTime(CLOCK_MONOTONIC);
 						statis_info.statis_cnt++;
-						ISP_LOGI("got one frame statis vaddr 0x%lx paddr 0x%lx buf_size 0x%lx stats_cnt 0x%lx",
+						ISP_LOGI("got one frame statis vaddr 0x%lx paddr 0x%lx buf_size 0x%lx stats_cnt 0x%ld",
 							 irq_info.yaddr_vir, irq_info.yaddr, irq_info.length, statis_info.statis_cnt);
 						pthread_mutex_lock(&file->cb_mutex);
 						if (file->isp_event_cb) {
@@ -512,7 +512,7 @@ static void* isp_dev_thread_proc(void *data)
 					} else if (irq_info.irq_type == ISP_IRQ_3A_SOF) {
 						ISP_LOGI("got one sof");
 						irq_node.irq_val0 = irq_info.irq_id;
-						irq_node.reserved = irq_info.frm_index;
+						irq_node.sof_idx = irq_info.frm_index;
 						irq_node.ret_val = 0;
 						irq_node.time_stamp.sec = irq_info.time_stamp.sec;
 						irq_node.time_stamp.usec = irq_info.time_stamp.usec;
@@ -1000,7 +1000,7 @@ cmr_int isp_dev_get_timestamp(isp_handle handle, cmr_u32 *sec, cmr_u32 *usec)
 	return ret;
 }
 
-cmr_int isp_dev_cfg_scenario_info(isp_handle handle, SCENARIO_INFO_AP *data)
+cmr_int isp_dev_cfg_scenario_info(isp_handle handle, struct scenario_info_ap *data)
 {
 	cmr_int ret = 0;
 	struct isp_file *file = NULL;
