@@ -53,6 +53,7 @@
 struct cmr_grab {
 	cmr_s32                 fd;
 	cmr_evt_cb              grab_evt_cb;
+	sem_t                   close_sem;
 	pthread_mutex_t         cb_mutex;
 	pthread_mutex_t         dcam_mutex;
 	pthread_mutex_t         status_mutex;
@@ -100,7 +101,7 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr, cmr_handle *grab_h
 	cmr_u32                  channel_id;
 	struct cmr_grab          *p_grab = NULL;
 
-	p_grab = (struct cmr_grab*)malloc(sizeof(struct cmr_grab));
+	p_grab = (struct cmr_grab *)malloc(sizeof(struct cmr_grab));
 	if (!p_grab) {
 		CMR_LOGE("No mem");
 		return -1;
@@ -116,7 +117,7 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr, cmr_handle *grab_h
 	} else {
 		CMR_LOGI("OK to open device.");
 	}
-
+	sem_init(&p_grab->close_sem, 0, 0);
 	ret = pthread_mutex_init(&p_grab->cb_mutex, NULL);
 	if (ret) {
 		CMR_LOGE("Failed to init mutex : %d", errno);
@@ -192,7 +193,7 @@ cmr_int cmr_grab_deinit(cmr_handle grab_handle)
 	struct cmr_grab          *p_grab;
 
 	CMR_LOGI("close dev %p", grab_handle);
-	p_grab = (struct cmr_grab*)grab_handle;
+	p_grab = (struct cmr_grab *)grab_handle;
 
 	CMR_CHECK_HANDLE;
 	/* thread should be killed before fd deinited */
@@ -205,6 +206,7 @@ cmr_int cmr_grab_deinit(cmr_handle grab_handle)
 	/* then close fd */
 	if (-1 != p_grab->fd) {
 		CMR_LOGI("close fd");
+		sem_wait(&p_grab->close_sem);
 		if (-1 == close(p_grab->fd)) {
 			fprintf(stderr, "error %d, %s\n", errno, strerror(errno));
 			exit(EXIT_FAILURE);
@@ -223,6 +225,7 @@ cmr_int cmr_grab_deinit(cmr_handle grab_handle)
 	pthread_mutex_destroy(&p_grab->cb_mutex);
 	pthread_mutex_destroy(&p_grab->dcam_mutex);
 	pthread_mutex_destroy(&p_grab->status_mutex);
+	sem_destroy(&p_grab->close_sem);
 	for (channel_id = 0; channel_id < CHN_MAX; channel_id++) {
 		pthread_mutex_destroy(&p_grab->path_mutex[channel_id]);
 	}
@@ -264,7 +267,7 @@ void cmr_grab_evt_reg(cmr_handle grab_handle, cmr_evt_cb  grab_event_cb)
 {
 	struct cmr_grab          *p_grab;
 
-	p_grab = (struct cmr_grab*)grab_handle;
+	p_grab = (struct cmr_grab *)grab_handle;
 	if (!p_grab)
 		return;
 
@@ -283,7 +286,7 @@ cmr_int cmr_grab_if_cfg(cmr_handle grab_handle, struct sensor_if *sn_if)
 	struct sprd_img_sensor_if sensor_if;
 	struct sprd_img_res       res = {0};
 
-	p_grab = (struct cmr_grab*)grab_handle;
+	p_grab = (struct cmr_grab *)grab_handle;
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
 
@@ -345,7 +348,7 @@ cmr_int cmr_grab_if_decfg(cmr_handle grab_handle, struct sensor_if *sn_if)
 	struct cmr_grab          *p_grab;
 	struct sprd_img_sensor_if sensor_if;
 
-	p_grab = (struct cmr_grab*)grab_handle;
+	p_grab = (struct cmr_grab *)grab_handle;
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
 
@@ -373,7 +376,7 @@ cmr_int cmr_grab_sn_cfg(cmr_handle grab_handle, struct sn_cfg *config)
 	struct sprd_img_size     size;
 	struct sprd_img_rect     rect;
 
-	p_grab = (struct cmr_grab*)grab_handle;
+	p_grab = (struct cmr_grab *)grab_handle;
 	CMR_CHECK_HANDLE;
 
 	if (1 == config->frm_num) {
@@ -421,7 +424,7 @@ static cmr_int cmr_grab_cap_cfg_common(cmr_handle grab_handle, struct cap_cfg *c
 
 	if (NULL == config)
 		return -1;
-	p_grab = (struct cmr_grab*)grab_handle;
+	p_grab = (struct cmr_grab *)grab_handle;
 
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
@@ -447,7 +450,7 @@ static cmr_int cmr_grab_cap_cfg_common(cmr_handle grab_handle, struct cap_cfg *c
 	parm.pdaf_ctrl.phase_data_type = config->cfg.pdaf_ctrl.phase_data_type;
 	ret = ioctl(p_grab->fd, SPRD_IMG_IO_PDAF_CONTROL, &parm);
 	if (ret) {
-		CMR_LOGE("SPRD_IMG_IO_PDAF_CONTROL failed, ret=%d", ret);
+		CMR_LOGE("SPRD_IMG_IO_PDAF_CONTROL failed, ret=%ld", ret);
 		return ret;
 	}
 
@@ -455,7 +458,7 @@ static cmr_int cmr_grab_cap_cfg_common(cmr_handle grab_handle, struct cap_cfg *c
 	parm.deci = config->chn_deci_factor;
 	ret = ioctl(p_grab->fd, SPRD_IMG_IO_PATH_FRM_DECI, &parm);
 	if (ret) {
-		CMR_LOGE("SPRD_IMG_IO_PATH_FRM_DECI failed, ret=%d", ret);
+		CMR_LOGE("SPRD_IMG_IO_PATH_FRM_DECI failed, ret=%ld", ret);
 		return ret;
 	}
 
@@ -468,7 +471,7 @@ static cmr_int cmr_grab_cap_cfg_common(cmr_handle grab_handle, struct cap_cfg *c
 	parm.reserved[2] = config->cfg.src_img_size.height;
 	ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_CROP, &parm);
 	if (ret) {
-		CMR_LOGE("SPRD_IMG_IO_SET_CROP failed, ret=%d", ret);
+		CMR_LOGE("SPRD_IMG_IO_SET_CROP failed, ret=%ld", ret);
 		return ret;
 	}
 	CMR_LOGI("crop_rect in hex:%x,%x,%x,%x, crop_rect in dec:%d,%d,%d,%d",
@@ -548,7 +551,7 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config, cmr_u32
 
 	if (NULL == config || NULL == channel_id)
 		return -1;
-	p_grab = (struct cmr_grab*)grab_handle;
+	p_grab = (struct cmr_grab *)grab_handle;
 
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
@@ -593,7 +596,7 @@ cmr_int cmr_grab_cap_cfg_lightly(cmr_handle grab_handle, struct cap_cfg *config,
 
 	if (NULL == config)
 		return -1;
-	p_grab = (struct cmr_grab*)grab_handle;
+	p_grab = (struct cmr_grab *)grab_handle;
 
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
@@ -614,7 +617,7 @@ cmr_int cmr_grab_buff_cfg (cmr_handle grab_handle, struct buffer_cfg *buf_cfg)
 
 	if (NULL == buf_cfg || buf_cfg->count > GRAB_BUF_MAX)
 		return -1;
-	p_grab = (struct cmr_grab*)grab_handle;
+	p_grab = (struct cmr_grab *)grab_handle;
 
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
@@ -671,7 +674,7 @@ cmr_int cmr_grab_cap_start(cmr_handle grab_handle, cmr_u32 skip_num)
 	cmr_u32                  num;
 	cmr_u32                  stream_on = 1;
 
-	p_grab = (struct cmr_grab*)grab_handle;
+	p_grab = (struct cmr_grab *)grab_handle;
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
 
@@ -704,7 +707,7 @@ cmr_int cmr_grab_cap_stop(cmr_handle grab_handle)
 	cmr_u32                  stream_on = 0;
 	struct sprd_img_res      res = {0x0};
 
-	p_grab = (struct cmr_grab*)grab_handle;
+	p_grab = (struct cmr_grab *)grab_handle;
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
 
@@ -751,7 +754,7 @@ cmr_int cmr_grab_set_trace_flag(cmr_handle grab_handle, cmr_u32 trace_owner, cmr
 	struct cmr_grab          *p_grab;
 	cmr_int                  ret = 0;
 
-	p_grab = (struct cmr_grab*)grab_handle;
+	p_grab = (struct cmr_grab *)grab_handle;
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
 
@@ -770,7 +773,7 @@ cmr_int cmr_grab_set_rt_refocus(cmr_handle grab_handle, cmr_u32 rt_refocus)
 	struct cmr_grab          *p_grab;
 	cmr_int                  ret = 0;
 
-	p_grab = (struct cmr_grab*)grab_handle;
+	p_grab = (struct cmr_grab *)grab_handle;
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
 
@@ -790,7 +793,7 @@ cmr_int cmr_grab_cap_resume(cmr_handle grab_handle, cmr_u32 channel_id, cmr_u32 
 	struct cmr_grab          *p_grab;
 	cmr_u32                  ch_id;
 
-	p_grab = (struct cmr_grab*)grab_handle;
+	p_grab = (struct cmr_grab *)grab_handle;
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
 	CMR_LOGI("channel_id %d, frm_num %d, status %d", channel_id, frm_num, p_grab->chn_status[channel_id]);
@@ -810,7 +813,7 @@ cmr_int cmr_grab_cap_pause(cmr_handle grab_handle, cmr_u32 channel_id, cmr_u32 r
 	struct cmr_grab          *p_grab;
 	struct sprd_img_parm     parm;
 
-	p_grab = (struct cmr_grab*)grab_handle;
+	p_grab = (struct cmr_grab *)grab_handle;
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
 	CMR_LOGI("channel_id %d,reconfig_flag %d.", channel_id, reconfig_flag);
@@ -829,10 +832,10 @@ cmr_int cmr_grab_cap_pause(cmr_handle grab_handle, cmr_u32 channel_id, cmr_u32 r
 cmr_int cmr_grab_get_cap_time(cmr_handle grab_handle, cmr_u32 *sec, cmr_u32 *usec)
 {
 	cmr_int                  ret = 0;
-	struct cmr_grab          *p_grab = (struct cmr_grab*)grab_handle;
+	struct cmr_grab          *p_grab = (struct cmr_grab *)grab_handle;
 	struct sprd_img_time     time;
 
-	p_grab = (struct cmr_grab*)grab_handle;
+	p_grab = (struct cmr_grab *)grab_handle;
 	CMR_CHECK_HANDLE;
 
 	ret = ioctl(p_grab->fd, SPRD_IMG_IO_GET_TIME, &time);
@@ -858,7 +861,7 @@ cmr_int cmr_grab_free_frame(cmr_handle grab_handle, cmr_u32 channel_id, cmr_u32 
 	struct cmr_grab          *p_grab;
 	struct sprd_img_write_op op;
 
-	p_grab = (struct cmr_grab*)grab_handle;
+	p_grab = (struct cmr_grab *)grab_handle;
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
 	CMR_LOGV("channel id %d, index 0x%x", channel_id, index);
@@ -898,7 +901,7 @@ cmr_int cmr_grab_scale_capability(cmr_handle grab_handle, cmr_u32 *width, cmr_u3
 		CMR_LOGE("Wrong param, %p %p", width, sc_factor);
 		return -ENODEV;
 	}
-	p_grab = (struct cmr_grab*)grab_handle;
+	p_grab = (struct cmr_grab *)grab_handle;
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
 
@@ -926,14 +929,14 @@ cmr_int cmr_grab_path_capability(cmr_handle grab_handle, struct cmr_path_capabil
 		CMR_LOGE("Wrong param, %p", capability);
 		return -ENODEV;
 	}
-	p_grab = (struct cmr_grab*)grab_handle;
+	p_grab = (struct cmr_grab *)grab_handle;
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
 
 	memset(capability, 0, sizeof(struct cmr_path_capability));
 	op.cmd = SPRD_IMG_GET_PATH_CAP;
 	ret = read(p_grab->fd, &op, sizeof(struct sprd_img_read_op));
-	for (i = 0; i< (cmr_int)(op.parm.capability.count); i++) {
+	for (i = 0; i < (cmr_int)(op.parm.capability.count); i++) {
 		if (op.parm.capability.path_info[i].support_yuv) {
 			yuv_cnt++;
 			if (p_grab->chn_status[i] == CHN_IDLE) {
@@ -1011,13 +1014,13 @@ static cmr_s32 cmr_grab_evt_id(cmr_s32 isr_flag)
 	return ret;
 }
 
-static cmr_int   cmr_grab_create_thread(cmr_handle grab_handle)
+static cmr_int cmr_grab_create_thread(cmr_handle grab_handle)
 {
 	cmr_int                  ret = 0;
 	pthread_attr_t           attr;
 	struct cmr_grab          *p_grab;
 
-	p_grab = (struct cmr_grab*)grab_handle;
+	p_grab = (struct cmr_grab *)grab_handle;
 	CMR_CHECK_HANDLE;
 
 	pthread_attr_init(&attr);
@@ -1037,7 +1040,7 @@ static cmr_int cmr_grab_kill_thread(cmr_handle grab_handle)
 	struct sprd_img_write_op op;
 	int                       status;
 	struct timespec           ts;
-	p_grab = (struct cmr_grab*)grab_handle;
+	p_grab = (struct cmr_grab *)grab_handle;
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
 	memset(&op, 0, sizeof(struct sprd_img_write_op));
@@ -1068,7 +1071,7 @@ static void* cmr_grab_thread_proc(void* data)
 	struct sprd_img_read_op  op;
 	struct sprd_img_res res = {0};
 
-	p_grab = (struct cmr_grab*)data;
+	p_grab = (struct cmr_grab *)data;
 	if (!p_grab)
 		return NULL;
 	if (-1 == p_grab->fd)
@@ -1076,7 +1079,7 @@ static void* cmr_grab_thread_proc(void* data)
 
 	CMR_LOGI("In");
 
-	while(1) {
+	while (1) {
 		op.cmd = SPRD_IMG_GET_FRM_BUFFER;
 		op.sensor_id = p_grab->init_param.sensor_id;
 		if (-1 == read(p_grab->fd, &op, sizeof(struct sprd_img_read_op))) {
@@ -1143,7 +1146,7 @@ static void* cmr_grab_thread_proc(void* data)
 				if (on_flag) {
 					pthread_mutex_lock(&p_grab->cb_mutex);
 					if (p_grab->grab_evt_cb) {
-						(*p_grab->grab_evt_cb)(evt_id, &frame, (void*)p_grab->init_param.oem_handle);
+						(*p_grab->grab_evt_cb)(evt_id, &frame, (void *)p_grab->init_param.oem_handle);
 					}
 					pthread_mutex_unlock(&p_grab->cb_mutex);
 				}
@@ -1151,6 +1154,7 @@ static void* cmr_grab_thread_proc(void* data)
 		}
 	}
 
+	sem_post(&p_grab->close_sem);
 	CMR_LOGI("Out");
 	return NULL;
 }
@@ -1245,7 +1249,7 @@ static cmr_u32 cmr_grab_get_img_type(uint32_t fourcc)
 	return img_type;
 }
 
-static cmr_u32 cmr_grab_get_data_endian(struct img_data_end* in_endian, struct img_data_end* out_endian)
+static cmr_u32 cmr_grab_get_data_endian(struct img_data_end *in_endian, struct img_data_end *out_endian)
 {
 	if (NULL == in_endian || NULL == out_endian) {
 		CMR_LOGE("Wrong param");
@@ -1273,7 +1277,7 @@ static cmr_u32 cmr_grab_get_data_endian(struct img_data_end* in_endian, struct i
 	return 0;
 }
 
-cmr_u32 cmr_grab_get_dcam_endian(struct img_data_end* in_endian, struct img_data_end* out_endian)
+cmr_u32 cmr_grab_get_dcam_endian(struct img_data_end *in_endian, struct img_data_end *out_endian)
 {
 	if (NULL == in_endian || NULL == out_endian) {
 		CMR_LOGE("Wrong param");
@@ -1307,7 +1311,7 @@ cmr_int cmr_grab_flash_cb(cmr_handle grab_handle, cmr_u32 opt)
 	struct cmr_grab          *p_grab;
 	struct sprd_img_set_flash set_flash;
 
-	p_grab = (struct cmr_grab*)grab_handle;
+	p_grab = (struct cmr_grab *)grab_handle;
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
 
@@ -1337,7 +1341,7 @@ cmr_int cmr_grab_stream_cb(cmr_handle grab_handle, grab_stream_on str_on)
 	cmr_int                  ret = 0;
 	struct cmr_grab          *p_grab;
 
-	p_grab = (struct cmr_grab*)grab_handle;
+	p_grab = (struct cmr_grab *)grab_handle;
 	CMR_CHECK_HANDLE;
 	p_grab->stream_on_cb = str_on;
 
@@ -1350,7 +1354,7 @@ cmr_int cmr_grab_set_zoom_mode(cmr_handle grab_handle, cmr_u32 opt)
 	struct cmr_grab          *p_grab;
 	cmr_u32                  zoom;
 
-	p_grab = (struct cmr_grab*)grab_handle;
+	p_grab = (struct cmr_grab *)grab_handle;
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
 	zoom = opt;
@@ -1367,10 +1371,10 @@ cmr_int cmr_grab_cfg_flash(cmr_handle grab_handle, struct sprd_flash_cfg_param *
 	struct cmr_grab          *p_grab;
 	struct sprd_flash_cfg_param   cfg;
 
-	p_grab = (struct cmr_grab*)grab_handle;
+	p_grab = (struct cmr_grab *)grab_handle;
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
-	cfg.io_id= cfg_param->io_id;
+	cfg.io_id = cfg_param->io_id;
 	cfg.real_cell = cfg_param->real_cell;
 	ret = ioctl(p_grab->fd, SPRD_IMG_IO_CFG_FLASH, &cfg);
 	if (ret) {
