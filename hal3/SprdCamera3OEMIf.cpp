@@ -668,6 +668,9 @@ void SprdCamera3OEMIf::closeCamera()
 	deinitCapture(0);
 	FreeReDisplayMem();
 
+	//reset capture mode to normal
+	mSetting->s_setting[mCameraId].controlInfo.scene_mode = 0;
+
 	mReleaseFLag = true;
 	HAL_LOGI("X");
 }
