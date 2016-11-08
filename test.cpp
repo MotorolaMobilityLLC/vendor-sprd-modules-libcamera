@@ -832,6 +832,7 @@ static sprd_camera_memory_t* allocCameraMem(int buf_size, int num_bufs, uint32_t
 
 	memory->ion_heap = pHeapIon;
 	memory->fd = pHeapIon->getHeapID();
+	memory->dev_fd = pHeapIon->getIonDeviceFd();
 	// memory->phys_addr is offset from memory->fd, always set 0 for yaddr
 	memory->phys_addr = 0;
 	memory->phys_size = mem_size;
@@ -1020,6 +1021,7 @@ static int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size, cmr_
 		*phy_addr++ = kaddr >> 32;
 		*vir_addr++ = (cmr_uint)memory->data;
 		*fd++ = memory->fd;
+		*fd++ = memory->dev_fd;
 	}else {
 		ALOGE("Native MMI Test: %s,%s,%d, type ignore: %d, do nothing.\n", __FILE__, __func__, __LINE__, type);
 	}
