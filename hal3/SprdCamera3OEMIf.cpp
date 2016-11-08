@@ -3514,11 +3514,20 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 #ifdef CONFIG_FACE_BEAUTY
 		if (PREVIEW_ZSL_FRAME != frame->type && sprddefInfo.perfect_skin_level > 0 ) {
 			faceDectect(1);
-			if( isPreviewing() && frame->type == PREVIEW_FRAME )
+			if( isPreviewing() && frame->type == PREVIEW_FRAME ) {
+#ifdef CONFIG_3DPREVIEW_NO_FACE_BEAUTY
+				HAL_LOGV("multicameramode %d", atoi(multicameramode));
+				if(0 == atoi(multicameramode)) {
+					doFaceMakeup(frame);
+				} else if (3 != atoi(multicameramode)) {
+					doFaceMakeup(frame);
+				}
+#else
 				doFaceMakeup(frame);
+#endif
+			}
 		}
 #endif
-
 
 		//recording stream
 		if(rec_stream) {
