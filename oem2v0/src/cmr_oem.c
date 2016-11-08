@@ -1232,6 +1232,7 @@ cmr_int camera_ipm_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param)
 	cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle);
 	camera_post_share_path_available((cmr_handle)cxt);
 	cxt->ipm_cxt.frm_num = 0;
+	CMR_LOGI("fmt = %d", frame.fmt);
 #endif
 	ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle, SNAPSHOT_EVT_HDR_DONE, &frame);
 	if (ret) {

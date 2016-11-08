@@ -462,7 +462,7 @@ cmr_int snp_postproc_thread_proc(struct cmr_msg *message, void* p_data)
 		break;
 	case SNP_EVT_HDR_POST_PROC:
 	{
-		struct frm_info  frame;
+		//struct frm_info frame;
 /*		frame = cxt->cur_frame_info;
 		ret = snp_post_proc((cmr_handle)p_data, (void*)&frame);//used for run ipm handle in snp module*/
 		ret = snp_post_proc((cmr_handle)p_data, message->data);
@@ -4539,7 +4539,7 @@ cmr_int snp_post_proc(cmr_handle snp_handle, void *data)
 	CMR_LOGI("path data index 0x%x 0x%x", chn_data_ptr->frame_id, chn_data_ptr->base);
 	cxt->index = chn_data_ptr->frame_id - chn_data_ptr->base;
 	fmt =  chn_data_ptr->fmt;
-	CMR_LOGI("index %d", cxt->index);
+	CMR_LOGI("index %d fmt %d", cxt->index, fmt);
 	if (CAMERA_AUTOTEST_MODE == cxt->req_param.mode) {
 		snp_autotest_proc(snp_handle, data);
 		return ret;
@@ -4975,7 +4975,7 @@ cmr_int cmr_snapshot_receive_data(cmr_handle snapshot_handle, cmr_int evt, void*
 		break;
 	case SNAPSHOT_EVT_HDR_DONE:
 		snp_evt = SNP_EVT_HDR_DONE;
-		malloc_len = sizeof(struct img_frm);
+		malloc_len = sizeof(struct frm_info);
 		send_thr_handle = cxt->thread_cxt.proc_cb_thr_handle;
 		break;
 	case SNAPSHOT_EVT_JPEG_ENC_DONE:
