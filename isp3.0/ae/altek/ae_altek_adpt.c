@@ -239,6 +239,7 @@ struct aealtek_cxt {
 	cmr_u32 stat_info_num;
 	cmr_u32 is_3dcalibration;/**add for 3d calibration*/
 	int flash_state_machine;
+	cmr_u32 hdr_enable;
 };
 
 static cmr_int aealtek_reset_touch_ack(struct aealtek_cxt *cxt_ptr);
@@ -247,6 +248,7 @@ static cmr_int aealtek_set_flash_est(struct aealtek_cxt *cxt_ptr, cmr_u32 is_res
 static cmr_int aealtek_enable_debug_report(struct aealtek_cxt *cxt_ptr, cmr_int enable);
 static cmr_int aealtek_set_tuning_param(struct aealtek_cxt *cxt_ptr, void *tuning_param);
 static cmr_int aealtek_set_lib_roi(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr);
+static cmr_int aealtek_set_hdr_ev(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr);
 /********function start******/
 static void aealtek_print_lib_log(struct aealtek_cxt *cxt_ptr, struct ae_output_data_t *in_ptr)
 {
@@ -654,7 +656,7 @@ exit:
 	return;
 }
 
-static void antiflicker_mode_ui2lib(enum ae_ctrl_flicker_mode from, enum antiflicker_ui_mode_t *to_ptr)
+static void aealtek_antiflicker_mode_ui2lib(enum ae_ctrl_flicker_mode from, enum antiflicker_ui_mode_t *to_ptr)
 {
 	enum antiflicker_ui_mode_t lib_antiflicker = 0;
 
@@ -1736,7 +1738,7 @@ static cmr_int aealtek_set_flicker(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_p
 	param_ct_ptr = &in_param.set_param;
 
 	aealtek_flicker_ui2lib(in_ptr->flicker.flicker_mode, &lib_flicker_mode);
-	antiflicker_mode_ui2lib(in_ptr->flicker.flicker_mode, &antiflicker_ui_mode);
+	aealtek_antiflicker_mode_ui2lib(in_ptr->flicker.flicker_mode, &antiflicker_ui_mode);
 
 	param_ct_ptr->ae_set_antibaning_mode = lib_flicker_mode;
 	type = AE_SET_PARAM_ANTIFLICKERMODE;
@@ -2890,7 +2892,6 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 
 	}
 
-	ISP_LOGI("work_mode=%d is_hdr_status=%d",work_mode,cxt_ptr->nxt_status.is_hdr_status);
 	if (ISP3A_WORK_MODE_CAPTURE != work_mode || !cxt_ptr->nxt_status.is_hdr_status) {
 		if (cxt_ptr->tuning_info.manual_ae_on && TUNING_MODE_USER_DEF == cxt_ptr->tuning_info.tuning_mode) {
 			ISP_LOGI("dvt mode");
@@ -3730,12 +3731,15 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	char ae_exp[PROPERTY_VALUE_MAX];
 	char ae_gain[PROPERTY_VALUE_MAX];
 
-
 	if (!cxt_ptr || !in_ptr || !out_ptr) {
 		ISP_LOGE("param %p %p %p is NULL error!", cxt_ptr, in_ptr, out_ptr);
 		goto exit;
 	}
 
+	if(cxt_ptr->hdr_enable && cxt_ptr->nxt_status.is_hdr_status) {
+		ret = aealtek_set_hdr_ev(cxt_ptr, in_ptr, out_ptr);
+		return ISP_SUCCESS;
+	}
 	if (ISP3A_WORK_MODE_CAPTURE == cxt_ptr->cur_status.ui_param.work_info.work_mode) {
 		return ISP_SUCCESS;
 	}
@@ -3985,6 +3989,22 @@ exit:
 	return ret;
 }
 
+static cmr_int aealtek_set_hdr_enable(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+
+	UNUSED(out_ptr);
+	if (!cxt_ptr) {
+		ISP_LOGE("param %p is NULL error!", cxt_ptr);
+		goto exit;
+	}
+	cxt_ptr->hdr_enable = in_ptr->soft_hdr_ev.enable;
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld !!!", ret);
+	return ret;
+}
+
 static cmr_int aealtek_set_hdr_ev(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr)
 {
 	cmr_int ret = ISP_ERROR;
@@ -4001,9 +4021,13 @@ static cmr_int aealtek_set_hdr_ev(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_pa
 		ISP_LOGE("param is NULL error!");
 		goto exit;
 	}
-	cxt_ptr->nxt_status.ui_param.hdr_level = in_ptr->soft_hdr_ev.level;
 
-	level = in_ptr->soft_hdr_ev.level;
+	cxt_ptr->nxt_status.ui_param.hdr_level = in_ptr->sof_param.frame_index - 1;
+	level = cxt_ptr->nxt_status.ui_param.hdr_level;
+	ISP_LOGI("hdr_level=%d", level);
+	if(level >= 3) //if (level < 0 || level >= 3)    modify cause:  comparison of unsigned enum expression < 0 is always false
+		return ISP_SUCCESS;
+
 	switch (level) {
 	case AE_CTRL_HDR_EV_UNDEREXPOSURE:
 		cxt_ptr->sensor_exp_data.lib_exp = cxt_ptr->lib_data.exposure_array.bracket_exp[0];
@@ -4719,7 +4743,9 @@ static cmr_int ae_altek_adpt_ioctrl(cmr_handle handle, cmr_int cmd, void *in, vo
 		ret = aealtek_set_gyro_param(cxt_ptr, in_ptr, out_ptr);
 		break;
 	case AE_CTRL_SET_HDR_EV:
-		ret = aealtek_set_hdr_ev(cxt_ptr, in_ptr, out_ptr);
+		break;
+	case AE_CTRL_SET_HDR_ENABLE:
+		ret = aealtek_set_hdr_enable(cxt_ptr, in_ptr, out_ptr);
 		break;
 	case AE_CTRL_GET_HWISP_CONFIG:
 		break;

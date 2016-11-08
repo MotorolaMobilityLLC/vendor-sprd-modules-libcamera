@@ -3200,7 +3200,7 @@ cmr_int prev_capture_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
 						ret = CMR_CAMERA_INVALID_PARAM;
 						goto exit;
 					}
-
+#if 0
 					if (handle->ops.hdr_set_ev) {
 						if (prev_cxt->cap_frm_cnt <= prev_cxt->prev_param.frame_count - hdr_num)
 							handle->ops.hdr_set_ev(handle->oem_handle);
@@ -3209,6 +3209,7 @@ cmr_int prev_capture_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
 						ret = CMR_CAMERA_INVALID_PARAM;
 						goto exit;
 					}
+#endif
 				}
 				if (prev_cxt->cap_frm_cnt <= prev_cxt->prev_param.frame_count - hdr_num) {
 					cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));

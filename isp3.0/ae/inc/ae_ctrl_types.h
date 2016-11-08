@@ -68,6 +68,7 @@ enum ae_ctrl_cmd {
 	AE_CTRL_SET_QUICK_MODE,
 	AE_CTRL_SET_GYRO_PARAM,
 	AE_CTRL_SET_HDR_EV,
+	AE_CTRL_SET_HDR_ENABLE,
 	AE_CTRL_GET_HWISP_CONFIG,
 	AE_CTRL_SET_AWB_REPORT,
 	AE_CTRL_SET_AF_REPORT,
@@ -312,7 +313,7 @@ struct ae_ctrl_param_sensor_static_info {
 };
 
 struct ae_ctrl_param_hdr_ev {
-	cmr_s32 level;
+	cmr_s32 enable;
 };
 
 struct ae_ctrl_param_ae_frame {

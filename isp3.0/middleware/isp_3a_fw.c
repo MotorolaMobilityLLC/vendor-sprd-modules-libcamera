@@ -2110,8 +2110,8 @@ cmr_int isp3a_set_hdr(cmr_handle isp_3a_handle, void *param_ptr)
 		goto exit;
 	}
 
-	ae_in.soft_hdr_ev.level = *(cmr_s32 *)param_ptr;
-	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_HDR_EV, &ae_in, NULL);
+	ae_in.soft_hdr_ev.enable = *(cmr_s32 *)param_ptr;
+	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_HDR_ENABLE, &ae_in, NULL);
 
 exit:
 	return ret;
