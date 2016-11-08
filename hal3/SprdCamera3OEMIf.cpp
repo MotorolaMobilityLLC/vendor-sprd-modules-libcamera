@@ -3558,14 +3558,23 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 						int64_t boot_time = frame->monoboottime;
 						int64_t ae_time =frame->ae_time;
 						//int64_t sleep_time = boot_time -buffer_timestamp;
-						uint32_t zoom_ratio =(uint32_t)(frame->zoom_ratio * 100);
+						//uint32_t zoom_ratio =(uint32_t)(frame->zoom_ratio * 100);
 						rec_stream->getQBufHandleForNum(frame_num, &buff_handle);
 						private_handle_t *private_handle = (struct private_handle_t*) (*buff_handle);
-						//nsecs_t time = systemTime(CLOCK_MONOTONIC);
-						//HAL_LOGD("CLOCK_MONOTONIC = %lld\n", time);
-						HAL_LOGV("rec_timestamp = %lld, boot_time = %lld\n", buffer_timestamp, boot_time);
-						HAL_LOGV("ae_time = %lld, zoom_ratio = %d\n", ae_time, zoom_ratio);
-						private_handle->phyaddr = zoom_ratio;
+						if(frame->zoom_ratio == 0)
+							frame->zoom_ratio = 1.0f;
+						if(&mEisInfo != NULL) {
+							memset(&mEisInfo, 0, sizeof(eis_info_t));
+							mEisInfo.zoom_ratio = frame->zoom_ratio;
+							mEisInfo.timestamp = boot_time - ae_time/2;
+							HAL_LOGV("rec_timestamp = %lld, boot_time = %lld\n", buffer_timestamp, boot_time);
+							HAL_LOGV("ae_time = %lld, zoom_ratio = %f\n", ae_time, frame->zoom_ratio);
+							private_handle->phyaddr = (unsigned long)&mEisInfo;
+							HAL_LOGV("private_handle->phyaddr = %p", private_handle->phyaddr);
+						} else {
+							private_handle->phyaddr = NULL;
+							HAL_LOGE("mEisInfo is null");
+						}
 					}
 #endif
 					channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp, CAMERA_STREAM_TYPE_VIDEO);
@@ -3614,6 +3623,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 							int64_t boot_time = frame->monoboottime;
 							int64_t ae_time =frame->ae_time;
 							int64_t sleep_time = boot_time -buffer_timestamp;
+							if(frame->zoom_ratio == 0)
+								frame->zoom_ratio = 1.0f;
 							float zoom_ratio = frame->zoom_ratio;
 							HAL_LOGV("prev_timestamp = %lld, boot_time = %lld\n", buffer_timestamp, boot_time);
 							HAL_LOGV("ae_time = %lld, zoom_ratio = %f\n", ae_time, zoom_ratio);

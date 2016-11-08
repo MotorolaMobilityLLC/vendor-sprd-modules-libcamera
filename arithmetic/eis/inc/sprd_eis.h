@@ -54,6 +54,12 @@ typedef struct sprd_eis_init_info {
 	double ts;
 }sprd_eis_init_info_t;
 
+typedef struct eis_info {
+	float zoom_ratio;
+	int64_t timestamp;
+}eis_info_t;
+
+
 void video_stab_param_default(vsParam* param);
 void video_stab_open(vsInst* inst, vsParam* param);
 int video_stab_read(vsInst inst, vsOutFrame* frame);

@@ -669,6 +669,7 @@ private:
 	vsGyro                        mGyrodata[kGyrocount];
 	vsParam                       mParam;
 	vsInst                        mInst;
+	eis_info_t                    mEisInfo;
 #endif
 	bool                          mSprdEisEnabled;
 	bool                          mIsUpdateRangeFps;
