@@ -3426,10 +3426,15 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 			s_setting[mCameraId].scalerInfo.crop_region[3] = h;
 			//pushAndroidParaTag(ANDROID_SCALER_CROP_REGION);
 			needUpdate = true;
-		}
+		}else if(s_setting[mCameraId].video_size.width != 0
+                     && s_setting[mCameraId].video_size.height != 0
+                     && (s_setting[mCameraId].preview_size.width != s_setting[mCameraId].video_size.width
+                     || s_setting[mCameraId].preview_size.height != s_setting[mCameraId].video_size.height)){
+					 needUpdate = true;
+		    }
 		if (needUpdate == true )
 		pushAndroidParaTag(ANDROID_SCALER_CROP_REGION);
-		HAL_LOGD("crop %d %d %d %d", x, y, w, h);
+		HAL_LOGD("crop %d %d %d %d needUpdate=%d", x, y, w, h,needUpdate);
 	}
 
 //AE
@@ -3921,6 +3926,20 @@ int SprdCamera3Setting::getPictureSize(cam_dimension_t *size)
 {
 	if (size) {
 		*size = s_setting[mCameraId].picture_size;
+	}
+	return 0;
+}
+
+int SprdCamera3Setting::setVideoSize(cam_dimension_t size)
+{
+	s_setting[mCameraId].video_size = size;
+	return 0;
+}
+
+int SprdCamera3Setting::getVideoSize(cam_dimension_t *size)
+{
+	if (size) {
+		*size = s_setting[mCameraId].video_size;
 	}
 	return 0;
 }

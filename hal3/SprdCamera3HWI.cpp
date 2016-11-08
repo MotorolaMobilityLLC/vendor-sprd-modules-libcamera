@@ -786,6 +786,9 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 	mOEMIf->SetDimensionRaw(raw_size);
 	mOEMIf->SetDimensionCapture(capture_size);
 
+	mSetting->setPreviewSize(preview_size);
+	mSetting->setVideoSize(video_size);
+	mSetting->setPictureSize(capture_size);
 	// for cts
 	if(preview_size.height * preview_size.width > 3264 * 2448 ||
 	   raw_size.height * raw_size.width > 3264 * 2448) {
