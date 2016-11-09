@@ -3517,10 +3517,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 			faceDectect(1);
 			if( isPreviewing() && frame->type == PREVIEW_FRAME ) {
 #ifdef CONFIG_3DPREVIEW_NO_FACE_BEAUTY
-				HAL_LOGV("multicameramode %d", atoi(multicameramode));
-				if(0 == atoi(multicameramode)) {
-					doFaceMakeup(frame);
-				} else if (3 != atoi(multicameramode)) {
+				if( 3 != atoi(multicameramode)) {
 					doFaceMakeup(frame);
 				}
 #else
