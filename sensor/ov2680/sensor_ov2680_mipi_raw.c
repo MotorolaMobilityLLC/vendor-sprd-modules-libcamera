@@ -1433,8 +1433,8 @@ LOCAL unsigned long _ov2680_write_exp_dummy(SENSOR_HW_HANDLE handle, uint16_t ex
 	frame_interval = (uint16_t)(((expsure_line + dummy_line) * s_ov2680_Resolution_Trim_Tab[size_index].line_time) / 1000000);
 	SENSOR_LOGI("current mode = %d, exposure_line = %d, dummy_line= %d, frame_interval= %d ms",
 		size_index, expsure_line, dummy_line, frame_interval);
-	SENSOR_LOGI("SENSOR_ov2680: read reg :0x3820=%x\n", Sensor_ReadReg(0x3820));
-	SENSOR_LOGI("SENSOR_ov2680: read reg :0x3821=%x\n", Sensor_ReadReg(0x3821));
+	//SENSOR_LOGI("SENSOR_ov2680: read reg :0x3820=%x\n", Sensor_ReadReg(0x3820));
+	//SENSOR_LOGI("SENSOR_ov2680: read reg :0x3821=%x\n", Sensor_ReadReg(0x3821));
 	max_frame_len=_ov2680_GetMaxFrameLine(handle, size_index);
 
 	if(0x00!=max_frame_len)
@@ -1520,16 +1520,16 @@ LOCAL unsigned long _ov2680_write_gain(SENSOR_HW_HANDLE handle, unsigned long pa
 	//real_gain = ((param&0xf)+16)*(((param>>4)&0x01)+1)*(((param>>5)&0x01)+1)*(((param>>6)&0x01)+1)*(((param>>7)&0x01)+1);
 	//real_gain = real_gain*(((param>>8)&0x01)+1)*(((param>>9)&0x01)+1)*(((param>>10)&0x01)+1)*(((param>>11)&0x01)+1);
 	real_gain = param >> 3;
-	if(real_gain > 0x3ff)
+	if(real_gain > 0x7ff)
 	{
-		real_gain = 0x3ff;
+		real_gain = 0x7ff;
 	}
 
 	SENSOR_LOGI("SENSOR_ov2680: real_gain:0x%x, param: 0x%x", real_gain, param);
 
 	value = real_gain&0xff;
 	ret_value = Sensor_WriteReg(0x350b, value);/*0-7*/
-	value = (real_gain>>0x08)&0x03;
+	value = (real_gain>>0x08)&0x07;
 	ret_value = Sensor_WriteReg(0x350a, value);/*8*/
 
 	return ret_value;
