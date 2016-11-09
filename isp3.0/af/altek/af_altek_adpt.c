@@ -1338,13 +1338,13 @@ exit:
 static void afaltek_adpt_ae_converge(cmr_handle adpt_handle)
 {
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	cmr_u32 cur_avg_mean = cxt->ae_info.cur_ae_avg_mean;
-	cmr_u32 cur_center_mean = cxt->ae_info.cur_ae_center_mean;
-	cmr_u32 diff_avg_mean = 0;
-	cmr_u32 diff_center_mean = 0;
+	cmr_s32 cur_avg_mean = cxt->ae_info.cur_ae_avg_mean;
+	cmr_s32 cur_center_mean = cxt->ae_info.cur_ae_center_mean;
+	cmr_s32 diff_avg_mean = 0;
+	cmr_s32 diff_center_mean = 0;
 	/* load value from working buffer in af ctrl */
-	cmr_u32 prv_avg_mean = cxt->ae_info.prv_ae_avg_mean;
-	cmr_u32 prv_center_mean = cxt->ae_info.prv_ae_center_mean;
+	cmr_s32 prv_avg_mean = cxt->ae_info.prv_ae_avg_mean;
+	cmr_s32 prv_center_mean = cxt->ae_info.prv_ae_center_mean;
 	cmr_u8 ae_stable_cnt = cxt->ae_info.ae_stable_cnt;
 	cmr_u8 aestable_avg_mean_th = cxt->ae_info.aestable_avg_mean_th;
 	cmr_u8 aestable_center_mean_th = cxt->ae_info.aestable_center_mean_th;
@@ -2128,11 +2128,6 @@ static cmr_int afaltek_adpt_pre_start(cmr_handle adpt_handle,
 {
 	cmr_int ret = -ISP_ERROR;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
-	struct isp3a_af_hw_cfg af_cfg;
-
-	bzero(&af_cfg, sizeof(af_cfg));
-	afaltek_adpt_get_hw_config(&af_cfg);
-	ret = afaltek_adpt_config_af_stats(cxt, &af_cfg);
 
 	ret = afaltek_adpt_set_roi(adpt_handle, roi);
 	if (ret)
@@ -2781,7 +2776,7 @@ static cmr_int afaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 	cxt->cb_ops.cfg_pdaf_config = in_p->cb_ctrl_ops.cfg_pdaf_config;
 	cxt->cb_ops.get_system_time = in_p->cb_ctrl_ops.get_system_time;
 	cxt->af_cur_status = AF_ADPT_IDLE;
-	cxt->lens_status = (enum af_ctrl_lens_status)LENS_MOVE_DONE;
+	cxt->lens_status = AF_CTRL_LENS_MOVE_DONE;
 	ret = afaltek_libops_init(cxt);
 	if (ret) {
 		ISP_LOGE("failed to init library and ops");
