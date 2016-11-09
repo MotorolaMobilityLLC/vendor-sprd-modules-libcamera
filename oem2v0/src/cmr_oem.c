@@ -3015,11 +3015,6 @@ cmr_int camera_isp_init(cmr_handle  oem_handle)
 			isp_param.ex_info.capture_skip_num);
 	CMR_LOGD("w %d h %d", isp_param.size.w,isp_param.size.h);
 
-	property_get("persist.sys.camera.raw.mode", value, "jpeg");
-	if (!strcmp(value, "raw")) {
-		isp_param.ex_info.pdaf_supported = 0;
-		CMR_LOGI("pdaf not support in raw mode");
-	}
 	if(1 == isp_param.ex_info.pdaf_supported) {
 
 		val.type = SENSOR_VAL_TYPE_GET_PDAF_INFO;

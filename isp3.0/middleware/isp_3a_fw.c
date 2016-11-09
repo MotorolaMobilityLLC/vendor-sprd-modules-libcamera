@@ -898,6 +898,11 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 	if (0 == cxt->af_cxt.af_support || atoi(value) || cxt->is_refocus) {
 		cxt->pdaf_cxt.pdaf_support = 0;
 	}
+	property_get("persist.sys.camera.raw.mode", (char *)value, "jpeg");
+	if (!strcmp(value, "raw")) {
+		cxt->pdaf_cxt.pdaf_support = 0;
+		CMR_LOGI("pdaf not support in raw mode");
+	}
 	if (ERR_3ALIB_VER_SUCCESS == allib_3a_getversion(&libVersion)) {
 		ISP_LOGI("3a version:%f", libVersion);
 	}
