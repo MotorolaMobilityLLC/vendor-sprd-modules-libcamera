@@ -2296,10 +2296,11 @@ SprdCamera3Setting::~SprdCamera3Setting()
 			free_camera_metadata(mDefaultMetadata[i]);
 	}
 	if (mStaticMetadata[mCameraId]) {
-        free(mStaticMetadata[mCameraId]);
-        mStaticMetadata[mCameraId] = NULL;
-        HAL_LOGI("%s id=%d", __FUNCTION__, mCameraId);
-    }
+		free(mStaticMetadata[mCameraId]);
+		mStaticMetadata[mCameraId] = NULL;
+		HAL_LOGI("%s id=%d", __FUNCTION__, mCameraId);
+	}
+	HAL_LOGI("%s X", __FUNCTION__);
 }
 
 int SprdCamera3Setting::getDefaultParameters(SprdCameraParameters &params)
@@ -3393,6 +3394,11 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
             s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled = val;
             pushAndroidParaTag(ANDROID_SPRD_3DCALIBRATION_ENABLED);
             HAL_LOGD("force set sprd_3dcalibration_enabled %d", s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled);
+        }
+        else
+        {
+            s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled = 0;
+            HAL_LOGD("reset sprd_3dcalibration_enabled %d", s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled);
         }
     }
 	/**add for 3d calibration update metadata end*/
