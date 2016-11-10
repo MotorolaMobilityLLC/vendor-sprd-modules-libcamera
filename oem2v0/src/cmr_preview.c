@@ -8463,10 +8463,10 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id, struct i
 	} else if (!prev_cxt->prev_param.preview_eb) {
 		ret = camera_get_trim_rect2(&img_cap->src_img_rect,
 				zoom_param->zoom_info.zoom_ratio,
-				zoom_param->zoom_info.prev_aspect_ratio,
+				zoom_param->zoom_info.capture_aspect_ratio,
 				img_cap->src_img_size.width,
 				img_cap->src_img_size.height,
-				prev_cxt->prev_param.prev_rot);
+				prev_cxt->prev_param.cap_rot);
 	} else {
 		ret = camera_get_trim_rect2(&img_cap->src_img_rect,
 				zoom_param->zoom_info.zoom_ratio,
@@ -8556,14 +8556,17 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id, struct i
 				img_cap->dst_img_size.width  = cap_size->width;
 				img_cap->dst_img_size.height = cap_size->height;
 			}
-		} else {
+		} else if(prev_cxt->prev_param.sprd_highiso_enabled) {
 			/*if the out size is larger than the in size*/
 			img_cap->dst_img_size.width  = img_cap->src_img_rect.width;
 			img_cap->dst_img_size.height = img_cap->src_img_rect.height;
+		} else {
+			img_cap->dst_img_size.width  = cap_size->width;
+			img_cap->dst_img_size.height = cap_size->height;
 		}
 	}
 
-	if(prev_cxt->prev_param.sprd_highiso_enabled){
+	if (prev_cxt->prev_param.sprd_highiso_enabled) {
 		struct img_size  video_size = {960, 720};
 
 		prev_cxt->lv_size = video_size;
@@ -10933,26 +10936,28 @@ cmr_int prev_capture_zoom_post_cap(struct prev_handle *handle, cmr_int *flag, cm
 	}
 	CMR_LOGV("in");
 
-	if (!handle->ops.channel_path_capability) {
-		CMR_LOGE("ops channel_path_capability is null");
-		ret = CMR_CAMERA_FAIL;
-		goto exit;
-	}
-
-	ret = handle->ops.channel_path_capability(handle->oem_handle, &capability);
-	if (ret) {
-		CMR_LOGE("channel_path_capability failed");
-		ret = CMR_CAMERA_FAIL;
-		goto exit;
-	}
-
 	prev_cxt     = &handle->prev_cxt[camera_id];
+
 	if (prev_cxt != NULL && (prev_cxt->prev_param.sprd_highiso_enabled
 		|| prev_cxt->prev_param.isp_to_dram
 		|| prev_cxt->prev_param.sprd_burstmode_enabled))
 		*flag = ZOOM_POST_PROCESS;
-	else
+	else {
+		if (!handle->ops.channel_path_capability) {
+			CMR_LOGE("ops channel_path_capability is null");
+			ret = CMR_CAMERA_FAIL;
+			goto exit;
+		}
+
+		ret = handle->ops.channel_path_capability(handle->oem_handle, &capability);
+		if (ret) {
+			CMR_LOGE("channel_path_capability failed");
+			ret = CMR_CAMERA_FAIL;
+			goto exit;
+		}
+
 		*flag = capability.zoom_post_proc;
+	}
 
 	CMR_LOGV("out flag %d", *flag);
 exit:
