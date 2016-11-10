@@ -2286,6 +2286,11 @@ SprdCamera3Setting::SprdCamera3Setting(int cameraId)
 
 SprdCamera3Setting::~SprdCamera3Setting()
 {
+	//reset some paramters/tag to default value
+	s_setting[mCameraId].controlInfo.scene_mode = 0;
+	s_setting[mCameraId].controlInfo.af_mode = 0;
+	memset(s_setting[mCameraId].scalerInfo.crop_region, 0, sizeof(int32_t)*4);
+
 	for (size_t i = 0; i < CAMERA3_TEMPLATE_COUNT; i++) {
 		if (mDefaultMetadata[i])
 			free_camera_metadata(mDefaultMetadata[i]);
