@@ -53,15 +53,15 @@ namespace sprdcamera {
 
 #define MAX_NUM_CAMERAS    3
 #define MAX_NUM_STREAMS    3
-#define MAX_VIDEO_QEQUEST_BUF 18
-#define MAX_PREVIEW_QEQUEST_BUF 5
-#define MAX_UNMATCHED_QUEUE_SIZE 4
+#define MAX_VIDEO_QEQUEST_BUF 20
+#define MAX_UNMATCHED_QUEUE_SIZE 3
 #define MAX_SAVE_REQUEST_QUEUE_SIZE 10
 #define TIME_DIFF (15e6)
 #define LIB_GPU_PATH "libimagestitcher.so"
 #define CONTEXT_SUCCESS 1
 #define CONTEXT_FAIL 0
 #define THREAD_TIMEOUT    30e6
+#define WAIT_FRAME_TIMEOUT    2000e6
 #define MAX_NOTIFY_QUEUE_SIZE 10
 
 typedef struct {
@@ -79,13 +79,6 @@ typedef struct {
     muxerMsgType  msg_type;
     frame_matched_info_t combo_frame;
 } muxer_queue_msg_t;
-
-typedef struct {
-    uint32_t frame_number;
-    uint8_t CamDevice;
-    camera_metadata_t* metadata;
-} pending_Metadata_t;
-
 
 class SprdCamera3StereoVideo
 {
@@ -115,36 +108,32 @@ private:
     sprdcamera_physical_descriptor_t *m_pPhyCamera;
     sprd_virtual_camera_t m_VirtualCamera;
     uint8_t m_nPhyCameras;
-    Mutex mLock1;
+    Mutex mLock;
     camera_metadata_t *mStaticMetadata;
-    int mVideoLastWidth;
-    int mVideoLastHeight;
-    int mPreviewLastWidth;
-    int mPreviewLastHeight;
     camera3_stream_t mAuxStreams[MAX_VIDEO_QEQUEST_BUF];
     uint8_t mVideoStreamsNum;
     uint8_t mPreviewStreamsNum;
     bool mIsRecording;
     int mShowPreviewDeviceId;
+    int mLastShowPreviewDeviceId;
     //when notify callback ,push hw notify into notify_list, with lock
     List <camera3_notify_msg_t> mNotifyListMain;
     Mutex mNotifyLockMain;
     List <camera3_notify_msg_t> mNotifyListAux;
     Mutex mNotifyLockAux;
-
+    uint32_t mWaitFrameNumber;
+    uint32_t mHasSendFrameNumber;
     //This queue stores unmatched buffer for each hwi, accessed with lock
     Mutex mUnmatchedQueueLock;
     List <hwi_frame_buffer_info_t> mUnmatchedFrameListMain;
     List <hwi_frame_buffer_info_t> mUnmatchedFrameListAux;
 
-    Mutex mUnmatchedPreviewQueueLock;
-    List <hwi_frame_buffer_info_t> mUnmatchedPreviewFrameListMain;
-    List <hwi_frame_buffer_info_t> mUnmatchedPreviewFrameListAux;
     Mutex mRequest;
-    Mutex mBufferLock;
     Mutex      mMergequeueMutex;
     Condition  mMergequeueSignal;
     bool mIommuEnabled;
+    Mutex      mWaitFrameMutex;
+    Condition  mWaitFrameSignal;
 
     int cameraDeviceOpen(int camera_id,struct hw_device_t **hw_device);
     int setupPhysicalCameras();
@@ -157,7 +146,6 @@ private:
     bool matchTwoFrame(hwi_frame_buffer_info_t result1,List <hwi_frame_buffer_info_t> &list, hwi_frame_buffer_info_t* result2);
     int getStreamType(camera3_stream_t *new_stream );
     hwi_frame_buffer_info_t* pushToUnmatchedQueue(hwi_frame_buffer_info_t new_buffer_info, List <hwi_frame_buffer_info_t> &queue);
-    void CallBackResult(frame_matched_info_t* combResult);
 
 public:
 
@@ -215,32 +203,24 @@ public:
     };
     sp<MuxerThread> mMuxerThread;
 
-    Mutex mPendingMetadataListLock;
-    List <pending_Metadata_t > mPendingMetadataList;
     List <old_request > mOldVideoRequestList;
     List <old_request > mOldPreviewRequestList;
 
     List<buffer_handle_t*> mVideoLocalBufferList;
     Mutex   mVideoLocalBufferListLock;
-    List<buffer_handle_t*> mPreviewLocalBufferList;
-    Mutex   mPreviewLocalBufferListLock;
 
     const native_handle_t* mVideoNativeBuffer[MAX_VIDEO_QEQUEST_BUF];
-    const native_handle_t* mPreviewNativeBuffer[MAX_PREVIEW_QEQUEST_BUF];
-
-    new_mem_t* mPreviewLocalBuffer;
     new_mem_t* mVideoLocalBuffer;
     int32_t mPerfectskinlevel;
     uint8_t mMaxLocalBufferNum;
     const camera3_callback_ops_t* mCallbackOps;
     video_size mVideoSize;
-
+    Mutex      mFlushMutex;
+    Condition  mFlushSignal;
     void freeLocalBuffer(new_mem_t* LocalBuffer, List<buffer_handle_t*>& bufferList,int bufferNum);
     int allocateOne(int w,int h,uint32_t is_cache,new_mem_t*,const native_handle_t *& nBuf );
     int initialize(const camera3_callback_ops_t *callback_ops);
     int configureStreams(const struct camera3_device *device,camera3_stream_configuration_t* stream_list);
-    int convertRequest(const camera3_capture_request_t *request,camera3_capture_request_t *newRequest,
-         int type,int shwoPreviewDeviceId);
     void clearFrameNeverMatched(int whichCamera);
     int processCaptureRequest(const struct camera3_device *device,camera3_capture_request_t *request);
     void notifyMain( const camera3_notify_msg_t* msg);
