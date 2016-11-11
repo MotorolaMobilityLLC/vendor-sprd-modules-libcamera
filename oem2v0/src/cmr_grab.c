@@ -733,7 +733,10 @@ cmr_int cmr_grab_cap_stop(cmr_handle grab_handle)
 		res.sensor_id = p_grab->init_param.sensor_id;
 		res.flag = p_grab->res;
 		ret = ioctl(p_grab->fd, SPRD_IMG_IO_PUT_DCAM_RES, &res);
-		CMR_RTN_IF_ERR(ret);
+		if (ret) {
+			pthread_mutex_unlock(&p_grab->dcam_mutex);
+			goto exit;
+		}
 		if (0 == res.flag) {
 			CMR_LOGE("get dcam res failed!");
 			pthread_mutex_unlock(&p_grab->dcam_mutex);
