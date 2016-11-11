@@ -209,7 +209,7 @@ struct af_altek_context {
 	enum af_ctrl_lens_status lens_status;
 	struct isp_af_win last_roi;
 	TriggerInReg haf_trigger_reg;
-	cmr_u8 pd_trigger_stats_lock;
+	cmr_u8 start_af_status;
 };
 
 /************************************ INTERNAK DECLARATION ************************************/
@@ -1459,7 +1459,7 @@ static cmr_int afaltek_adpt_caf_start(cmr_handle adpt_handle)
 		ret = afaltek_adpt_pre_start(adpt_handle, &lib_roi, __func__);
 		if (ret)
 			ISP_LOGE("failed to start af");
-		cxt->pd_trigger_stats_lock = 1;
+		cxt->start_af_status = 1;
 	}
 exit:
 	return ret;
@@ -1503,7 +1503,7 @@ static cmr_int afaltek_adpt_haf_start(cmr_handle adpt_handle)
 		ret = afaltek_adpt_set_haf_state(cxt, Focusing);
 	}
 	cxt->af_cur_status = AF_ADPT_FOCUSING;
-	cxt->pd_trigger_stats_lock = 1;
+	cxt->start_af_status = 1;
 exit:
 	return ret;
 }
@@ -1548,7 +1548,7 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 		ISP_LOGI("af retrigger");
 		ret = afaltek_adpt_caf_start(cxt);
 		cxt->ae_info.ae_stable_retrig_flg = 0;
-	} else if (AF_TIGGER_PD == aft_out.is_caf_trig && !cxt->pd_trigger_stats_lock) {
+	} else if (AF_TIGGER_PD == aft_out.is_caf_trig && !cxt->start_af_status) {
 		ISP_LOGI("pd trigger");
 		ret = afaltek_adpt_haf_start(cxt);
 	} else if (AF_TIGGER_NORMAL != cxt->aft_proc_result.is_caf_trig && AF_TIGGER_NORMAL == aft_out.is_caf_trig) {
@@ -2292,8 +2292,8 @@ static cmr_int afaltek_adpt_af_done(cmr_handle adpt_handle, cmr_int success)
 		ISP_LOGI("failed to caf reset ret = %ld", ret);
 	afaltek_adpt_set_caf_fv_cfg(cxt);
 
+	cxt->start_af_status = 0;
 	if (cxt->haf_support) {
-		cxt->pd_trigger_stats_lock = 0;
 		afaltek_adpt_set_haf_state(cxt, Waiting);
 	}
 	return ret;
@@ -2428,13 +2428,22 @@ static cmr_int afaltek_adpt_get_mode(cmr_handle adpt_handle, cmr_int *mode)
 	return ret;
 }
 
-static cmr_int afaltek_adpt_get_lens_status(cmr_handle adpt_handle, cmr_int *out)
+static cmr_int afaltek_adpt_get_pd_status(cmr_handle adpt_handle, cmr_int *out)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 	struct af_ctrl_param_out *out_ptr = (struct af_ctrl_param_out *)out;
 
-	out_ptr->lens_status = cxt->lens_status;
+	out_ptr->pd_status.lens_status = cxt->lens_status;
+	if (cxt->start_af_status) {
+		out_ptr->pd_status.need_skip_frame = 0;
+	} else {
+		/*
+		 * when af not in focusing ,pd calculate will skip frame
+		 * to reduce cpu loading
+		 */
+		out_ptr->pd_status.need_skip_frame = 1;
+	}
 	return ret;
 }
 
@@ -2548,8 +2557,8 @@ static cmr_int afaltek_adpt_outctrl(cmr_handle adpt_handle, cmr_int cmd,
 	case AF_CTRL_CMD_GET_AF_MODE:
 		ret = afaltek_adpt_get_mode(adpt_handle, (cmr_int *) out);
 		break;
-	case AF_CTRL_CMD_GET_LENS_STATUS:
-		ret = afaltek_adpt_get_lens_status(adpt_handle, (cmr_int *) out);
+	case AF_CTRL_CMD_GET_PD_STATUS:
+		ret = afaltek_adpt_get_pd_status(adpt_handle, (cmr_int *) out);
 		break;
 	case AF_CTRL_CMD_GET_DEFAULT_LENS_POS:
 		ret = afaltek_adpt_get_default_pos(adpt_handle, (cmr_int *) out);
@@ -2922,7 +2931,7 @@ static cmr_int afaltek_adpt_proc_report_status(cmr_handle adpt_handle,
 		cxt->lib_status_info.busy_frame_id = 0;
 		cxt->lib_status_info.af_lib_status = AF_LIB_IDLE;
 		ret = afaltek_adpt_lock_ae_awb(cxt, ISP_AE_AWB_UNLOCK);
-		cxt->pd_trigger_stats_lock = 0;
+		cxt->start_af_status = 0;
 	} else {
 		ISP_LOGI("unkown status = %d", report->focus_status.t_status);
 	}

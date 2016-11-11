@@ -51,7 +51,7 @@ enum af_ctrl_cmd_type {
 
 	AF_CTRL_CMD_GET_BASE = AF_CTRL_CMD_SET_MAX,
 	AF_CTRL_CMD_GET_AF_MODE,
-	AF_CTRL_CMD_GET_LENS_STATUS,
+	AF_CTRL_CMD_GET_PD_STATUS,
 	AF_CTRL_CMD_GET_DEFAULT_LENS_POS,
 	AF_CTRL_CMD_GET_AF_CUR_LENS_POS,
 	AF_CTRL_CMD_GET_DEBUG,
@@ -281,7 +281,10 @@ struct af_ctrl_y_info_t {
 	cmr_uint yaddr[2];
 	cmr_u32 in_proc[2];
 };
-
+struct af_ctrl_pd_status_t {
+	enum af_ctrl_lens_status lens_status;
+	cmr_u8 need_skip_frame;
+};
 struct af_ctrl_param_in {
 	union {
 		enum af_ctrl_mode_type af_mode;
@@ -307,7 +310,6 @@ struct af_ctrl_param_out {
 	union {
 		enum af_ctrl_mode_type af_mode;
 		cmr_u16 motor_pos;
-		enum af_ctrl_lens_status lens_status;
 		enum af_ctrl_scene_mode af_scene_mode;
 		cmr_u16 bypass;
 		struct af_ctrl_roi_info_type af_ctrl_roi_info;
@@ -315,6 +317,7 @@ struct af_ctrl_param_out {
 		struct af_ctrl_debug_info_t debug_info;
 		struct af_ctrl_debug_info_t exif_info;
 		struct af_ctrl_y_info_t y_info;
+		struct af_ctrl_pd_status_t pd_status;
 	};
 };
 

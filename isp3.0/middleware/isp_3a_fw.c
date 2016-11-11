@@ -4351,7 +4351,7 @@ static cmr_int isp3a_start_pdaf_raw_process(cmr_handle isp_3a_handle, void *para
 
 	if (!param_ptr) {
 		ISP_LOGW("input is NULL");
-		goto exit;
+		return ret;
 	}
 
 	if (cxt->pdaf_cxt.pdaf_support) {
@@ -4362,11 +4362,18 @@ static cmr_int isp3a_start_pdaf_raw_process(cmr_handle isp_3a_handle, void *para
 		cmr_bzero(&af_out, sizeof(af_out));
 		ret = pdaf_ctrl_ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_GET_BUSY, NULL, &pdaf_out);
 		ISP_LOGI("is_busy %d", pdaf_out.is_busy);
-		ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_GET_LENS_STATUS, NULL, &af_out);
+		ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_GET_PD_STATUS, NULL, &af_out);
 		if (ret) {
-			ISP_LOGE("failed to get lens status");
+			ISP_LOGE("failed to get pd status");
 		}
-		if (AF_CTRL_LENS_MOVE_DONE == af_out.lens_status && (!pdaf_out.is_busy)) {
+		if (af_out.pd_status.need_skip_frame && 0 == cxt->sof_idx % 2) {
+			/*
+			 * when af not in focusing ,only calculate pd once in 2 frame
+			 * to reduce cpu loading
+			 */
+			goto exit;
+		}
+		if (AF_CTRL_LENS_MOVE_DONE == af_out.pd_status.lens_status && (!pdaf_out.is_busy)) {
 			cmr_bzero(&af_out, sizeof(af_out));
 			ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_GET_AF_CUR_LENS_POS, NULL, &af_out);
 			if (ret) {
@@ -4382,17 +4389,14 @@ static cmr_int isp3a_start_pdaf_raw_process(cmr_handle isp_3a_handle, void *para
 				ISP_LOGE("failed to process pdaf");
 				goto exit;
 			}
-		} else {
-			if (pd_raw->pd_callback) {
-				(pd_raw->pd_callback)(&pd_raw->pd_in);
-			}
-		}
-	} else {
-		if (pd_raw->pd_callback) {
-			(pd_raw->pd_callback)(&pd_raw->pd_in);
+			goto sucess_done;
 		}
 	}
 exit:
+	if (pd_raw->pd_callback) {
+		(pd_raw->pd_callback)(&pd_raw->pd_in);
+	}
+sucess_done:
 	return ret;
 }
 
