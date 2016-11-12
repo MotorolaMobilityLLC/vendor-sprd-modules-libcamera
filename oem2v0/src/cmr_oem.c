@@ -5373,7 +5373,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 
 		highiso_buf_num = 1;
 		if(cxt->burst_mode) {
-			isp_raw_buf_num = 5;
+			isp_raw_buf_num = 3;
  		} else {
 			isp_raw_buf_num = 3;
 		}
@@ -5476,7 +5476,7 @@ cmr_int camera_isp_stop_video(cmr_handle oem_handle)
 
 		highiso_buf_num = 1;
 		if(cxt->burst_mode) {
-			isp_raw_buf_num = 5;
+			isp_raw_buf_num = 3;
 		} else {
 			isp_raw_buf_num = 3;
 		}
