@@ -1064,9 +1064,10 @@ static cmr_int cmr_grab_kill_thread(cmr_handle grab_handle)
 		CMR_LOGI("write OK!");
 		ret = pthread_join(p_grab->thread_handle, &dummy);
 		p_grab->thread_handle = 0;
-	}
-	else
+	} else {
+		CMR_LOGE("write error ret %d", ret);
 		ret = cnt;
+	}
 
 	ATRACE_END();
 	return ret;
