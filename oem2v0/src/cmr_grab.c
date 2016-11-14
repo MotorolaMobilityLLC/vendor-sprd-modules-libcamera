@@ -1320,7 +1320,11 @@ cmr_int cmr_grab_flash_cb(cmr_handle grab_handle, cmr_u32 opt)
 
 	bzero(&set_flash, sizeof(struct sprd_img_set_flash));
 	if (FLASH_TORCH == opt) {
-		set_flash.led1_ctrl = 1;
+#ifdef CONFIG_CAMERA_FLASH_LED_SWITCH
+			set_flash.led1_ctrl = 1;
+#else
+			set_flash.led0_ctrl = 1;
+#endif
 	} else {
 #ifdef CONFIG_CAMERA_FLASH_LED_0
 		set_flash.led0_ctrl = 1;
