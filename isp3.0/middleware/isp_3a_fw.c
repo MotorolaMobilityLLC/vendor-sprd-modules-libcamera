@@ -279,6 +279,7 @@ static cmr_int isp3a_notice_burst(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_get_info(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_ae_night_mode(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_ae_awb_lock(cmr_handle isp_3a_handle, void *param_ptr);
+static cmr_int isp3a_set_awb_lock(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_ae_lock(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_dzoom(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_convergence_req(cmr_handle isp_3a_handle, void *param_ptr);
@@ -397,6 +398,7 @@ static struct isp3a_ctrl_io_func s_isp3a_ioctrl_tab[ISP_CTRL_MAX] = {
 	{ISP_CTRL_GET_INFO,                isp3a_get_info},//debug
 	{ISP_CTRL_SET_AE_NIGHT_MODE,       isp3a_set_ae_night_mode},
 	{ISP_CTRL_SET_AE_AWB_LOCK_UNLOCK,  isp3a_set_ae_awb_lock},
+	{ISP_CTRL_SET_AWB_LOCK_UNLOCK,     isp3a_set_awb_lock},
 	{ISP_CTRL_SET_AE_LOCK_UNLOCK,      isp3a_set_ae_lock},
 	{ISP_CTRL_IFX_PARAM_UPDATE,        NULL},
 	{ISP_CTRL_SET_DZOOM_FACTOR,        isp3a_set_dzoom},
@@ -2405,6 +2407,44 @@ cmr_int isp3a_set_ae_awb_lock(cmr_handle isp_3a_handle, void *param_ptr)
 		awb_in.lock_param.wbgain.g = 0;
 		awb_in.lock_param.wbgain.b = 0;
 		ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_UNLOCK, &awb_in, NULL);
+	} else {
+		ISP_LOGI("don't support %d", mode);
+	}
+exit:
+	return ret;
+}
+
+cmr_int isp3a_set_awb_lock(cmr_handle isp_3a_handle, void *param_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	cmr_u32                                     mode;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
+	union awb_ctrl_cmd_in                       awb_in;
+
+	if (!param_ptr) {
+		ISP_LOGW("input is NULL");
+		goto exit;
+	}
+	mode = *(cmr_u32 *)param_ptr;
+	ISP_LOGI("do nothing");
+	return ret;
+
+	if (ISP_AWB_LOCK == mode) {
+		awb_in.lock_param.lock_flag = 1;
+		awb_in.lock_param.ct = 0;
+		awb_in.lock_param.wbgain.r = 0;
+		awb_in.lock_param.wbgain.g = 0;
+		awb_in.lock_param.wbgain.b = 0;
+		ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_LOCK, &awb_in, NULL);
+		ISP_LOGI("hdr open lock awb");
+	} else if (ISP_AWB_UNLOCK == mode) {
+		awb_in.lock_param.lock_flag = 0;
+		awb_in.lock_param.ct = 0;
+		awb_in.lock_param.wbgain.r = 0;
+		awb_in.lock_param.wbgain.g = 0;
+		awb_in.lock_param.wbgain.b = 0;
+		ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_UNLOCK, &awb_in, NULL);
+		ISP_LOGI("hdr close unlock awb");
 	} else {
 		ISP_LOGI("don't support %d", mode);
 	}

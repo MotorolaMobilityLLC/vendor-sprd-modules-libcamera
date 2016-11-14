@@ -6545,6 +6545,12 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type, struct common
 		isp_param = param_ptr->cmd_value;
 		break;
 
+	case COM_ISP_SET_AWB_LOCK_UNLOCK:
+		isp_cmd = ISP_CTRL_SET_AWB_LOCK_UNLOCK;
+		isp_param = param_ptr->cmd_value;
+		CMR_LOGI("set AE AWB Lock & Unlock %d", isp_param);
+		break;
+
 	case COM_ISP_SET_AE_LOCK_UNLOCK:
 		isp_cmd = ISP_CTRL_SET_AE_LOCK_UNLOCK;
 		isp_param = param_ptr->cmd_value;
