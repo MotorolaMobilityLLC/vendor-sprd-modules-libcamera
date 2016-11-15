@@ -87,9 +87,9 @@ struct preview_md_ops {
 	cmr_int (*capture_post_proc)(cmr_handle oem_handle, cmr_u32 camera_id);
 	cmr_int (*get_sensor_info)(cmr_handle oem_handle, cmr_uint sensor_id, struct sensor_exp_info *sensor_info);
 	cmr_int (*get_sensor_autotest_mode)(cmr_handle oem_handle, cmr_uint sensor_id, cmr_uint *is_autotest);
-	cmr_int (*get_isp_yimg)(cmr_handle oem_handle, cmr_uint sensor_id, struct isp_yimg_info *yimg);
-	cmr_int (*set_preview_yimg)(cmr_handle oem_handle, cmr_uint sensor_id, struct yimg_info *yimg);
-	cmr_int (*set_preview_yuv)(cmr_handle oem_handle, cmr_uint sensor_id, struct yuv_info_t *yuv);
+	cmr_int (*get_isp_yimg)(cmr_handle oem_handle, cmr_u32 sensor_id, struct isp_yimg_info *yimg);
+	cmr_int (*set_preview_yimg)(cmr_handle oem_handle, cmr_u32 sensor_id, struct yimg_info *yimg);
+	cmr_int (*set_preview_yuv)(cmr_handle oem_handle, cmr_u32 sensor_id, struct yuv_info_t *yuv);
 	cmr_int (*set_preview_pd_raw)(cmr_handle oem_handle, struct pd_raw_info *pd_raw);
 	cmr_int (*set_preview_pd_open)(cmr_handle oem_handle, struct pd_raw_open *pd_open);
 	cmr_int (*get_sensor_fps_info)(cmr_handle oem_handle, cmr_uint sensor_id, cmr_u32 sn_mode, struct sensor_mode_fps_tag *fps_info);

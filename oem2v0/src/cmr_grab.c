@@ -74,7 +74,7 @@ static cmr_int cmr_grab_create_thread(cmr_handle grab_handle);
 static cmr_int cmr_grab_kill_thread(cmr_handle grab_handle);
 static void* cmr_grab_thread_proc(void* data);
 static cmr_u32 cmr_grab_get_4cc(cmr_u32 img_type);
-static cmr_u32 cmr_grab_get_img_type(uint32_t fourcc);
+static cmr_u32 cmr_grab_get_img_type(cmr_u32 fourcc);
 static cmr_u32 cmr_grab_get_data_endian(struct img_data_end* in_endian, struct img_data_end* out_endian);
 
 cmr_int cmr_grap_free_grab(struct cmr_grab *p_grab)
@@ -1209,9 +1209,9 @@ static cmr_u32 cmr_grab_get_4cc(cmr_u32 img_type)
 	return ret_4cc;
 }
 
-static cmr_u32 cmr_grab_get_img_type(uint32_t fourcc)
+static cmr_u32 cmr_grab_get_img_type(cmr_u32 fourcc)
 {
-	uint32_t                 img_type;
+	cmr_u32                 img_type;
 
 	switch (fourcc) {
 	case IMG_PIX_FMT_YUV422P:
@@ -1308,7 +1308,7 @@ cmr_u32 cmr_grab_get_dcam_endian(struct img_data_end *in_endian, struct img_data
 	return 0;
 }
 
-cmr_int cmr_grab_flash_cb(cmr_handle grab_handle, cmr_u32 opt)
+cmr_int cmr_grab_flash_cb(cmr_handle grab_handle, struct grab_flash_opt *flash_opt)
 {
 	cmr_int                  ret = 0;
 	struct cmr_grab          *p_grab;
@@ -1319,11 +1319,11 @@ cmr_int cmr_grab_flash_cb(cmr_handle grab_handle, cmr_u32 opt)
 	CMR_CHECK_FD;
 
 	bzero(&set_flash, sizeof(struct sprd_img_set_flash));
-	if (FLASH_TORCH == opt) {
+	if (FLASH_TORCH == flash_opt->opt) {
 #ifdef CONFIG_CAMERA_FLASH_LED_SWITCH
-			set_flash.led1_ctrl = 1;
+		set_flash.led1_ctrl = 1;
 #else
-			set_flash.led0_ctrl = 1;
+		set_flash.led0_ctrl = 1;
 #endif
 	} else {
 #ifdef CONFIG_CAMERA_FLASH_LED_0
@@ -1333,9 +1333,9 @@ cmr_int cmr_grab_flash_cb(cmr_handle grab_handle, cmr_u32 opt)
 		set_flash.led1_ctrl = 1;
 #endif
 	}
-	set_flash.led0_status = opt;
-	set_flash.led1_status = opt;
-	set_flash.flash_index = (opt >> 8);
+	set_flash.led0_status = flash_opt->opt;
+	set_flash.led1_status = flash_opt->opt;
+	set_flash.flash_index = flash_opt->flash_index;
 	ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_FLASH, &set_flash);
 	if (ret) {
 		CMR_LOGE("error");

@@ -68,6 +68,11 @@ struct sn_cfg {
 	cmr_u32                  frm_num;
 };
 
+struct grab_flash_opt {
+	cmr_u32 opt;
+	cmr_u32 flash_index;
+};
+
 typedef cmr_int (*grab_stream_on)(cmr_u32 is_on, void *privdata);
 
 cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr, cmr_handle *grab_handle);
@@ -87,7 +92,7 @@ cmr_int cmr_grab_cap_pause(cmr_handle grab_handle, cmr_u32 channel_id, cmr_u32 r
 cmr_int cmr_grab_free_frame(cmr_handle grab_handle, cmr_u32 channel_id, cmr_u32 index);
 cmr_int cmr_grab_scale_capability(cmr_handle grab_handle, cmr_u32 *width, cmr_u32 *sc_factor, cmr_u32 *sc_threshold);
 cmr_int cmr_grab_get_cap_time(cmr_handle grab_handle, cmr_u32 *sec, cmr_u32 *usec);
-cmr_int cmr_grab_flash_cb(cmr_handle grab_handle, cmr_u32 opt);
+cmr_int cmr_grab_flash_cb(cmr_handle grab_handle, struct grab_flash_opt *flash_opt);
 cmr_int cmr_grab_stream_cb(cmr_handle grab_handle, grab_stream_on str_on);
 cmr_int cmr_grab_set_trace_flag(cmr_handle grab_handle, cmr_u32 trace_owner, cmr_u32 val);
 cmr_int cmr_grab_set_zoom_mode(cmr_handle grab_handle, cmr_u32 opt);

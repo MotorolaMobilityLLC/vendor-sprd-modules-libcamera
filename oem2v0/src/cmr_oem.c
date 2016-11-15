@@ -767,7 +767,7 @@ void camera_isp_dev_evt_cb(cmr_int evt, void *data, cmr_u32 data_len, void *priv
 	struct frm_info                 *frame = (struct frm_info*)data;
 	cmr_u32                         channel_id;
 	cmr_handle                      receiver_handle;
-	cmr_int						flash_status = FLASH_CLOSE;
+	cmr_int                         flash_status = FLASH_CLOSE;
 	struct setting_cmd_parameter    setting_param;
 
 	if (!cxt) {
@@ -1677,7 +1677,8 @@ exit:
 	return ret;
 }
 
-cmr_int camera_focus_visit_flash_info(cmr_handle oem_handle,cmr_u32 camera_id){
+cmr_int camera_focus_visit_flash_info(cmr_handle oem_handle, cmr_uint camera_id)
+{
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 	struct setting_cmd_parameter    setting_param;
 
@@ -1686,7 +1687,6 @@ cmr_int camera_focus_visit_flash_info(cmr_handle oem_handle,cmr_u32 camera_id){
 	cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_HW_FLASH_STATUS, &setting_param);
 
 	return setting_param.cmd_type_value;// 1 stands for pre-flash turned on
-
 }
 
 cmr_int camera_focus_pre_proc(cmr_handle oem_handle)
@@ -1775,7 +1775,7 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture)
 		//goto exit;
 	}
 	has_preflashed = setting_param.cmd_type_value;
-	CMR_LOGD("has_preflashed=%d", has_preflashed);
+	CMR_LOGD("has_preflashed=%ld", has_preflashed);
 
 	/*for third ae*/
 	raw_info_ptr = cxt->sn_cxt.sensor_info.raw_info_ptr;
@@ -2789,9 +2789,10 @@ out:
 
 int32_t camera_isp_flash_ctrl(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element)
 {
-	int32_t ret = 0;
-	struct camera_context		  *cxt = (struct camera_context*)handler;
-	uint8_t                       real_type = 0;
+	int32_t                           ret = 0;
+	struct camera_context             *cxt = (struct camera_context *)handler;
+	cmr_u8                            real_type = 0;
+	struct grab_flash_opt             flash_opt;
 
 
 	if (!cxt || !cfg_ptr) {
@@ -2821,7 +2822,9 @@ int32_t camera_isp_flash_ctrl(void *handler, struct isp_flash_cfg *cfg_ptr, stru
 		break;
 	}
 
-	ret = cmr_grab_flash_cb(cxt->grab_cxt.grab_handle, real_type);
+	flash_opt.opt = real_type;
+	flash_opt.flash_index = cxt->camera_id;
+	ret = cmr_grab_flash_cb(cxt->grab_cxt.grab_handle, &flash_opt);
 out:
 	return ret;
 }
@@ -2866,7 +2869,7 @@ out:
 	return ret;
 }
 
-cmr_int camera_isp_init(cmr_handle  oem_handle)
+cmr_int camera_isp_init(cmr_handle oem_handle)
 {
 	ATRACE_BEGIN(__FUNCTION__);
 
@@ -5999,12 +6002,18 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type, struc
 		param_ptr->size_param = cxt->snp_cxt.post_proc_setting.dealign_actual_snp_size;
 		break;
 	case SETTING_IO_CTRL_FLASH:
-		if (FLASH_OPEN == param_ptr->cmd_value || FLASH_HIGH_LIGHT == param_ptr->cmd_value || FLASH_TORCH == param_ptr->cmd_value) {
-			cmr_sensor_set_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_EXIF_CTRL_FLASH, 1);
-		} else {
-			//cmr_sensor_set_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_EXIF_CTRL_FLASH, 0);
+		{
+			struct grab_flash_opt flash_opt;
+
+			if (FLASH_OPEN == param_ptr->cmd_value || FLASH_HIGH_LIGHT == param_ptr->cmd_value || FLASH_TORCH == param_ptr->cmd_value) {
+				cmr_sensor_set_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_EXIF_CTRL_FLASH, 1);
+			} else {
+				//cmr_sensor_set_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_EXIF_CTRL_FLASH, 0);
+			}
+			flash_opt.opt = param_ptr->cmd_value;
+			flash_opt.flash_index = cxt->camera_id;
+			cmr_grab_flash_cb(grab_handle, &flash_opt);
 		}
-		cmr_grab_flash_cb(grab_handle, param_ptr->cmd_value|(cxt->camera_id<<8));
 		break;
 	case SETTING_IO_GET_PREVIEW_MODE:
 		param_ptr->cmd_value = cxt->prev_cxt.preview_sn_mode;
