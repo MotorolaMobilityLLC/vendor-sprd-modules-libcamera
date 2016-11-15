@@ -154,6 +154,7 @@ struct af_altek_y_stat {
 struct caf_context {
 	pthread_mutex_t caf_mutex;
 	pthread_mutex_t af_start_mutex;
+	pthread_mutex_t af_report_mutex;
 	struct aft_caf_stats_cfg caf_fv_tune;
 	cmr_u32 inited;
 	cmr_u32 caf_force_focus;
@@ -477,6 +478,21 @@ static cmr_int afaltek_adpt_set_parameters(cmr_handle adpt_handle,
 		} else {
 			ret = ISP_SUCCESS;
 		}
+	} else {
+		ISP_LOGE("failed to lib set param");
+	}
+
+	return ret;
+}
+
+static cmr_int afaltek_adpt_set_parameters_no_report(cmr_handle adpt_handle,
+					   struct allib_af_input_set_param_t *p)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+
+	if (cxt->ops.set_parameters(p, &cxt->af_out_obj, cxt->af_runtime_obj)) {
+		ret = ISP_SUCCESS;
 	} else {
 		ISP_LOGE("failed to lib set param");
 	}
@@ -1240,6 +1256,7 @@ static cmr_int afaltek_adpt_caf_init(cmr_handle adpt_handle)
 	al3awrappercaf_get_version(&caf_wp_ver);
 	pthread_mutex_init(&cxt->af_caf_cxt.caf_mutex, NULL);
 	pthread_mutex_init(&cxt->af_caf_cxt.af_start_mutex, NULL);
+	pthread_mutex_init(&cxt->af_caf_cxt.af_report_mutex, NULL);
 	caf_cfg_tune = &cxt->af_caf_cxt.caf_fv_tune;
 	if (cxt->caf_ops.trigger_ioctrl) {
 		ret = cxt->caf_ops.trigger_ioctrl(cxt->caf_trigger_handle,
@@ -1278,6 +1295,7 @@ static cmr_int afaltek_adpt_caf_deinit(cmr_handle adpt_handle)
 
 	pthread_mutex_destroy(&cxt->af_caf_cxt.caf_mutex);
 	pthread_mutex_destroy(&cxt->af_caf_cxt.af_start_mutex);
+	pthread_mutex_destroy(&cxt->af_caf_cxt.af_report_mutex);
 	cxt->af_caf_cxt.inited = 0;
 
 	return ret;
@@ -1913,7 +1931,7 @@ static cmr_int afaltek_adpt_set_special_event(cmr_handle adpt_handle, void *in)
 	p.type = alAFLIB_SET_PARAM_SPECIAL_EVENT;
 	p.u_set_data.special_event = *event;
 
-	ret = afaltek_adpt_set_parameters(cxt, &p);
+	ret = afaltek_adpt_set_parameters_no_report(cxt, &p);
 	return ret;
 }
 
@@ -3022,6 +3040,7 @@ static cmr_int afaltek_adpt_proc_out_report(cmr_handle adpt_handle,
 	cmr_int ret = ISP_SUCCESS;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 
+	pthread_mutex_lock(&cxt->af_caf_cxt.af_report_mutex);
 	if (alAFLIB_OUTPUT_DEBUG_INFO != report->type)
 		ISP_LOGI("report->type = 0x%x", report->type);
 
@@ -3041,6 +3060,7 @@ static cmr_int afaltek_adpt_proc_out_report(cmr_handle adpt_handle,
 		if (cxt->inited)
 			ret = afaltek_adpt_proc_report_stats_cfg(cxt, report);
 	}
+	pthread_mutex_unlock(&cxt->af_caf_cxt.af_report_mutex);
 	return ret;
 }
 
