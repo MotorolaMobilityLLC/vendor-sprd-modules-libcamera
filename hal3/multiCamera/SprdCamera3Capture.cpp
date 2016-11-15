@@ -665,8 +665,6 @@ void SprdCamera3Capture::freeLocalCapBuffer(new_mem_t* pLocalCapBuffer)
             pLocalCapBuffer[i].pHeapIon = NULL;
         }
     }
-    free(mLocalCapBuffer);
-    mLocalCapBuffer = NULL;
 }
 /*===========================================================================
  * FUNCTION   :validateCaptureRequest
@@ -789,11 +787,15 @@ int SprdCamera3Capture::cameraDeviceOpen(__unused int camera_id,
     mCaptureThread->mGpuApi = (GPUAPI_t*)malloc(sizeof(GPUAPI_t));
     if(mCaptureThread->mGpuApi == NULL){
         HAL_LOGE("mGpuApi malloc failed.");
+        closeCameraDevice();
+        return NO_MEMORY;
     }
     memset(mCaptureThread->mGpuApi, 0 ,sizeof(GPUAPI_t));
 
     if(mCaptureThread->loadGpuApi() < 0){
         HAL_LOGE("load gpu api failed.");
+        closeCameraDevice();
+        return UNKNOWN_ERROR;
     }
 
     HAL_LOGD("X");
@@ -941,6 +943,13 @@ int SprdCamera3Capture::CaptureThread::loadGpuApi()
 {
     HAL_LOGD(" E");
     const char* error = NULL;
+
+    if(mGpuApi == NULL){
+        error = dlerror();
+        HAL_LOGE("mGpuApi is null. error = %s", error);
+        return -1;
+     }
+
     mGpuApi->handle = dlopen(LIB_GPU_PATH, RTLD_LAZY);
     if (mGpuApi->handle == NULL) {
         error = dlerror();
@@ -1410,6 +1419,10 @@ int SprdCamera3Capture::CaptureThread::combineTwoPicture(buffer_handle_t *&outpu
     }
     HAL_LOGD(" combine rot_angle:%d", dcam.rot_angle );
     HAL_LOGD(" before cmb yaddr_v:%d", ((struct private_handle_t*)output_buf)->base );
+    if(mGpuApi->imageStitchingWithGPU == NULL){
+        HAL_LOGE("mGpuApi imageStitchingWithGPU is null.");
+        return -1;
+    }
     mGpuApi->imageStitchingWithGPU(&dcam);
     HAL_LOGD(" after cmb yaddr_v:%d", ((struct private_handle_t*)output_buf)->base );
     {
@@ -1547,12 +1560,16 @@ int SprdCamera3Capture::initialize(const camera3_callback_ops_t *callback_ops)
     mLocalBuffer = (new_mem_t*)malloc(sizeof(new_mem_t)*MAX_QEQUEST_BUF);
     if (NULL == mLocalBuffer) {
         HAL_LOGE("fatal error! mLocalBuffer pointer is null.");
+        return NO_MEMORY;
     }
     memset(mLocalBuffer, 0 , sizeof(new_mem_t)*MAX_QEQUEST_BUF);
 
     mLocalCapBuffer = (new_mem_t*)malloc(sizeof(new_mem_t)*LOCAL_CAPBUFF_NUM);
     if (NULL == mLocalCapBuffer) {
         HAL_LOGE("fatal error! mLocalCapBuffer pointer is null.");
+        free(mLocalBuffer);
+        mLocalBuffer = NULL;
+        return NO_MEMORY;
     }
     memset(mLocalCapBuffer, 0 , sizeof(new_mem_t)*LOCAL_CAPBUFF_NUM);
 
@@ -1597,9 +1614,9 @@ int SprdCamera3Capture::configureStreams(const struct camera3_device *device,cam
             h = stream_list->streams[i]->height;
             HAL_LOGD("preview width:%d, height:%d", w, h);
             if(mLastWidth!= w && mLastHeight != h){
-                if(mLastWidth != 0||mLastHeight != 0){
-                    freeLocalBuffer(mLocalBuffer);
-                }
+
+                freeLocalBuffer(mLocalBuffer);
+
                 for(size_t j = 0; j < MAX_QEQUEST_BUF; j++){
                     int tmp = allocateOne(w,h,1,&(mLocalBuffer[j]),mNativeBuffer[j]);
                     if(tmp < 0){
@@ -1619,9 +1636,9 @@ int SprdCamera3Capture::configureStreams(const struct camera3_device *device,cam
             h = stream_list->streams[i]->height;
             HAL_LOGD("capture width:%d, height:%d", w, h);
             if(mCaptureWidth!= w && mCaptureHeight != h){
-                if(mCaptureWidth != 0||mCaptureWidth != 0){
-                    freeLocalCapBuffer(mLocalCapBuffer);
-                }
+
+                freeLocalCapBuffer(mLocalCapBuffer);
+
                 for(size_t j = 0; j < LOCAL_CAPBUFF_NUM-1; j++){
                     if(0 > allocateCapBuff(mCaptureThread->m3DCaptureWidth,mCaptureThread->m3DCaptureHeight,1,&(mLocalCapBuffer[j]),mNativeCapBuffer[j])){
                         HAL_LOGE("request one buf failed.");
