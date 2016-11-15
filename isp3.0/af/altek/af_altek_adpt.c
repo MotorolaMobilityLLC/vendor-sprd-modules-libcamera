@@ -180,6 +180,7 @@ struct af_altek_context {
 	cmr_u32 frame_id;
 	cmr_u32 af_mode;
 	cmr_u32 af_touch_mode;
+	cmr_u16 af_lock;
 	cmr_handle caller_handle;
 	cmr_handle altek_lib_handle;
 	cmr_handle altek_haf_lib_handle;
@@ -1526,6 +1527,40 @@ exit:
 	return ret;
 }
 
+static cmr_int afaltek_adpt_set_af_lock(cmr_handle adpt_handle)
+{
+
+	cmr_int ret = ISP_SUCCESS;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+
+	if (!cxt) {
+		ISP_LOGE("failed to struct af_altek_context is NULL.");
+		ret = -ISP_ERROR;
+		goto exit;
+	}
+
+	cxt->af_lock = 1;
+exit:
+	return ret;
+}
+
+static cmr_int afaltek_adpt_set_af_unlock(cmr_handle adpt_handle)
+{
+
+	cmr_int ret = ISP_SUCCESS;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+
+	if (!cxt) {
+		ISP_LOGE("failed to struct af_altek_context is NULL.");
+		ret = -ISP_ERROR;
+		goto exit;
+	}
+
+	cxt->af_lock = 0;
+exit:
+	return ret;
+}
+
 static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 					struct aft_proc_calc_param *aft_in)
 {
@@ -1538,6 +1573,11 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 	pthread_mutex_lock(&cxt->af_caf_cxt.caf_mutex);
 	if (cxt->vcm_tune.tuning_enable) {
 		ISP_LOGI("vcm tuning mode");
+		goto exit;
+	}
+
+	if (cxt->af_lock) {
+		ISP_LOGI("af at hdr been locked do nothing.");
 		goto exit;
 	}
 
@@ -2365,6 +2405,12 @@ static cmr_int afaltek_adpt_inctrl(cmr_handle adpt_handle, cmr_int cmd,
 		break;
 	case AF_CTRL_CMD_SET_AF_RESTART:
 		ret = afaltek_adpt_reset_af_setting(adpt_handle);
+		break;
+	case AF_CTRL_CMR_SET_AF_LOCK:
+		ret = afaltek_adpt_set_af_lock(adpt_handle);
+		break;
+	case AF_CTRL_CMR_SET_AF_UNLOCK:
+		ret = afaltek_adpt_set_af_unlock(adpt_handle);
 		break;
 	case AF_CTRL_CMD_SET_TRIGGER_STATS:
 		ret = afaltek_adpt_set_trigger_stats(adpt_handle, in);

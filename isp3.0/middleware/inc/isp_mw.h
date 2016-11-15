@@ -113,6 +113,12 @@ enum isp_awb_lock_unlock_mode {
 	ISP_AWB_LOCK_MAX
 };
 
+enum isp_af_lock_unlock_mode{
+	ISP_AF_LOCK = 0x00,
+	ISP_AF_UNLOCK,
+	ISP_AF_LOCK_MAX
+};
+
 enum isp_ae_mode {
 	ISP_AUTO = 0x00,
 	ISP_NIGHT,
@@ -262,6 +268,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SET_AE_NIGHT_MODE,
 	ISP_CTRL_SET_AE_AWB_LOCK_UNLOCK,
 	ISP_CTRL_SET_AWB_LOCK_UNLOCK,
+	ISP_CTRL_SET_AF_LOCK_UNLOCK,
 	ISP_CTRL_SET_AE_LOCK_UNLOCK,
 	ISP_CTRL_IFX_PARAM_UPDATE,
 	ISP_CTRL_SET_DZOOM_FACTOR,

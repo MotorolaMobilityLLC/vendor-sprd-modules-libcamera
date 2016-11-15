@@ -280,6 +280,7 @@ static cmr_int isp3a_get_info(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_ae_night_mode(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_ae_awb_lock(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_awb_lock(cmr_handle isp_3a_handle, void *param_ptr);
+static cmr_int isp3a_set_af_lock(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_ae_lock(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_dzoom(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_convergence_req(cmr_handle isp_3a_handle, void *param_ptr);
@@ -399,6 +400,7 @@ static struct isp3a_ctrl_io_func s_isp3a_ioctrl_tab[ISP_CTRL_MAX] = {
 	{ISP_CTRL_SET_AE_NIGHT_MODE,       isp3a_set_ae_night_mode},
 	{ISP_CTRL_SET_AE_AWB_LOCK_UNLOCK,  isp3a_set_ae_awb_lock},
 	{ISP_CTRL_SET_AWB_LOCK_UNLOCK,     isp3a_set_awb_lock},
+	{ISP_CTRL_SET_AF_LOCK_UNLOCK,      isp3a_set_af_lock},
 	{ISP_CTRL_SET_AE_LOCK_UNLOCK,      isp3a_set_ae_lock},
 	{ISP_CTRL_IFX_PARAM_UPDATE,        NULL},
 	{ISP_CTRL_SET_DZOOM_FACTOR,        isp3a_set_dzoom},
@@ -2414,7 +2416,7 @@ exit:
 	return ret;
 }
 
-cmr_int isp3a_set_awb_lock(cmr_handle isp_3a_handle, void *param_ptr)
+static cmr_int isp3a_set_awb_lock(cmr_handle isp_3a_handle, void *param_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
 	cmr_u32                                     mode;
@@ -2449,6 +2451,52 @@ cmr_int isp3a_set_awb_lock(cmr_handle isp_3a_handle, void *param_ptr)
 		ISP_LOGI("don't support %d", mode);
 	}
 exit:
+	return ret;
+}
+
+
+static cmr_int isp3a_set_af_lock(cmr_handle isp_3a_handle, void *param_ptr)
+{
+
+	cmr_int                                     ret = ISP_SUCCESS;
+	cmr_u32                                     mode;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
+
+	if (!param_ptr) {
+
+		ISP_LOGW("input param_ptr is NULL.");
+		ret = -ISP_ERROR;
+		goto exit;
+	}
+
+	if (!cxt) {
+		ISP_LOGE("failed: the struct isp3a_fw_context is NULL.");
+		ret = -ISP_ERROR;
+		goto exit;
+	}
+
+	mode = *(cmr_u32 *)param_ptr;
+	ISP_LOGI("E.");
+	if (mode == ISP_AF_LOCK) {
+		ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMR_SET_AF_LOCK, NULL, NULL);
+		if (ret != ISP_SUCCESS){
+			ISP_LOGE("failed to set af enable.");
+			goto exit;
+		}
+	} else if (mode == ISP_AF_UNLOCK) {
+		ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMR_SET_AF_UNLOCK, NULL, NULL);
+		if (ret != ISP_SUCCESS) {
+			ISP_LOGE("failed to set af disable.");
+			goto exit;
+		}
+	} else {
+		ret = -ISP_ERROR;
+		ISP_LOGI("dont support %d", mode);
+
+	}
+
+exit:
+
 	return ret;
 }
 
