@@ -833,7 +833,7 @@ typedef enum {
 		}                                                    \
 	} while(0)
 
-#define SENSOR_PARAM_NUM  8
+#define SENSOR_PARAM_NUM  255
 #define SENSOR_PARA "/data/misc/media/sensor.file"
 
 enum SENSOR_EVT_TYPE {
