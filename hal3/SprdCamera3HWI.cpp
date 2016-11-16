@@ -786,9 +786,8 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 	mOEMIf->SetDimensionRaw(raw_size);
 	mOEMIf->SetDimensionCapture(capture_size);
 
-	// for third party apk callback stream size set crop zoom ratio.
-	if(raw_size.width != 0 && raw_size.height != 0)
-		mOEMIf->setCameraConvertCropRegion();
+	// need to update crop region each time when ConfigureStreams
+	mOEMIf->setCameraConvertCropRegion();
 
 	mSetting->setPreviewSize(preview_size);
 	mSetting->setVideoSize(video_size);
