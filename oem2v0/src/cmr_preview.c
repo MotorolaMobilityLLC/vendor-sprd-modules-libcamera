@@ -3890,10 +3890,12 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_rest
 			CMR_LOGE("post proc failed");
 		}
 		prev_free_cap_buf(handle, camera_id, is_restart);
-		if(!prev_cxt->prev_param.sprd_burstmode_enabled) {
-			prev_free_cap_reserve_buf(handle, camera_id, is_restart);
-		}
 	}
+
+	if(!prev_cxt->prev_param.sprd_burstmode_enabled) {
+		prev_free_cap_reserve_buf(handle, camera_id, is_restart);
+	}
+
 	prev_free_zsl_buf(handle, camera_id, is_restart);
 
 	prev_cxt->prev_frm_cnt     = 0;
