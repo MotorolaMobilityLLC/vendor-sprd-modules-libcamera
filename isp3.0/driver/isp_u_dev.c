@@ -94,6 +94,7 @@ struct isp_file {
 
 static struct isp_fw_group _group = {0 , {}};
 static cmr_int isp_dev_create_mutilayer_thread(isp_handle handle);
+static cmr_int isp_dev_kill_mutilayer_thread(isp_handle handle);
 static cmr_int isp_dev_create_thread(isp_handle handle);
 static cmr_int isp_dev_kill_thread(isp_handle handle);
 static void* isp_dev_thread_proc(void *data);
@@ -211,6 +212,12 @@ cmr_int isp_dev_deinit(isp_handle handle)
 	ret = isp_dev_kill_thread(handle);
 	if (ret) {
 		ISP_LOGE("Failed to kill the thread");
+		return ret;
+	}
+
+	ret = isp_dev_kill_mutilayer_thread((isp_handle)file);
+	if (ret) {
+		ISP_LOGE("failed to kill muti layer thread ret = %ld", ret);
 		return ret;
 	}
 
@@ -534,6 +541,21 @@ cmr_int isp_dev_notify_altek_raw(isp_handle handle)
 	}
 	pthread_mutex_unlock(&file->cb_mutex);
 	return 0;
+}
+
+
+static cmr_int isp_dev_kill_mutilayer_thread(isp_handle handle)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct isp_file *file = (struct isp_file *)handle;
+
+	ret = cmr_thread_destroy(file->mutilayer_thr_handle);
+	if (CMR_MSG_SUCCESS != ret) {
+		ISP_LOGE("failed to kill muti-layer thread %ld", ret);
+	}
+
+	ISP_LOGV("done %ld", ret);
+	return ret;
 }
 
 static cmr_int isp_dev_mutilayer_thread_proc(struct cmr_msg *message, void *p_data)
