@@ -98,7 +98,7 @@ cmr_int cmr_grab_set_trace_flag(cmr_handle grab_handle, cmr_u32 trace_owner, cmr
 cmr_int cmr_grab_set_zoom_mode(cmr_handle grab_handle, cmr_u32 opt);
 cmr_u32 cmr_grab_get_dcam_endian(struct img_data_end* in_endian, struct img_data_end* out_endian);
 cmr_int cmr_grab_path_capability(cmr_handle grab_handle, struct cmr_path_capability *capability);
-cmr_int cmr_grab_cfg_flash(cmr_handle grab_handle, struct sprd_flash_cfg_param *cfg_param);
+cmr_int cmr_grab_cfg_flash(cmr_handle grab_handle, struct sprd_flash_cfg_param *cfg);
 cmr_s32 cmr_grab_get_cpp_fd(cmr_handle grab_handle);
 cmr_int cmr_grab_set_rt_refocus(cmr_handle grab_handle, cmr_u32 rt_refocus);
 #ifdef __cplusplus

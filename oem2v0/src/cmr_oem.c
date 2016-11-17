@@ -2746,12 +2746,12 @@ out:
 
 int32_t camera_isp_flash_set_charge(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element)
 {
-	int32_t ret = 0;
+	cmr_s32                           ret = 0;
 	struct camera_context		  *cxt = (struct camera_context*)handler;
 #if 1
 
-	struct sprd_flash_cfg_param   cfg;
-	uint8_t                       real_type = 0;
+	struct sprd_flash_cfg_param       cfg;
+	cmr_u8                            real_type = 0;
 	struct sprd_flash_cell		  real_cell;
 
 
@@ -2780,6 +2780,7 @@ int32_t camera_isp_flash_set_charge(void *handler, struct isp_flash_cfg *cfg_ptr
 	cfg.real_cell.element[0].index = element->index;
 	cfg.real_cell.element[0].val = element->val;
 	cfg.io_id = FLASH_IOID_SET_CHARGE;
+	cfg.flash_idx = cxt->camera_id;
 	ret = cmr_grab_cfg_flash(cxt->grab_cxt.grab_handle, &cfg);
 
 out:
