@@ -754,7 +754,7 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type, uint32_t frame_n
 #endif
 
 			ret = startPreviewInternal();
-			if ((mVideoSnapshotType == 1) && (mCaptureWidth != 0 && mCaptureHeight != 0)) {
+			if ((mVideoSnapshotType == 1) && (mCaptureWidth != 0 && mCaptureHeight != 0) && mVideoParameterSetFlag == 0) {
 				mPicCaptureCnt = 1;
 				ret = setVideoSnapshotParameter();
 				mVideoParameterSetFlag = true;
@@ -808,6 +808,7 @@ int SprdCamera3OEMIf::stop(camera_channel_type_t channel_type, uint32_t frame_nu
 	{
 		case CAMERA_CHANNEL_TYPE_REGULAR:
 			stopPreviewInternal();
+			mVideoParameterSetFlag = false;
 			break;
 		case CAMERA_CHANNEL_TYPE_PICTURE:
 			cancelPictureInternal();
