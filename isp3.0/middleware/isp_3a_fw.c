@@ -1679,12 +1679,20 @@ cmr_int isp3a_set_scene_mode(cmr_handle isp_3a_handle, void *param_ptr)
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
 	struct ae_ctrl_param_in                     ae_in;
+	cmr_u32                                     value;
 
 	if (!param_ptr) {
 		ISP_LOGW("input is NULL");
 		goto exit;
 	}
 	ae_in.scene.scene_mode = *(cmr_u32 *)param_ptr;
+	if (AE_CTRL_SCENE_LANDSPACE == ae_in.scene.scene_mode) {
+		value = 5;
+	} else {
+		value = 3; /*default*/
+	}
+	isp3a_set_saturation(isp_3a_handle, &value);
+	isp3a_set_contrast(isp_3a_handle, &value);
 	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_SCENE_MODE, &ae_in, NULL);
 
 exit:
