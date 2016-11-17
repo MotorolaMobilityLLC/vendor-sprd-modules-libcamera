@@ -726,7 +726,11 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 				else if (sprddefInfo.slowmotion > 1)
 					SprdCamera3RegularChannel::kMaxBuffers = 8;
 				else
+#ifdef CONFIG_CAMERA_NO_DCAM_DATA_PATH
+					SprdCamera3RegularChannel::kMaxBuffers = 8;
+#else
 					SprdCamera3RegularChannel::kMaxBuffers = 4;
+#endif
 				HAL_LOGD("slowmotion=%d, kMaxBuffers=%d",
 					sprddefInfo.slowmotion, SprdCamera3RegularChannel::kMaxBuffers);
 
