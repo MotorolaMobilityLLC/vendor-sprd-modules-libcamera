@@ -4139,7 +4139,7 @@ cmr_int snr_get_mark(struct sensor_drv_context *sensor_cxt,
 			cmr_u8 *is_saved_ptr)
 {
 	cmr_u32 i, j = 0;
-	cmr_u8 *ptr = buf,str[255];
+	cmr_u8 *ptr = buf;//,str[255];
 
 	SENSOR_LOGI("open sensor driver interface");
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
@@ -4153,16 +4153,16 @@ cmr_int snr_get_mark(struct sensor_drv_context *sensor_cxt,
 		for( i=0 ; i<4 ; i++) {
 			*ptr++ = sensor_cxt->sensor_index[i];
 		}
-		for( i=0 ; i<4 ; i++) {
+	/*	for( i=0 ; i<4 ; i++) {
 			strcat(str,":");
 			strcat(str, sensor_cxt->sensor_list_ptr[i]->sensor_version_info);
 			strcat(str," ");
 		}
 
-		memcpy(ptr++,str,strlen(str));
-		SENSOR_LOGI("index is %d,%d. %s",
+		memcpy(ptr++,str,strlen(str));*/
+		SENSOR_LOGI("index is %d,%d",
 			sensor_cxt->sensor_index[SENSOR_MAIN],
-			sensor_cxt->sensor_index[SENSOR_SUB],str);
+			sensor_cxt->sensor_index[SENSOR_SUB]);
 	} else {
 		*is_saved_ptr = 0;
 	}
@@ -4398,7 +4398,7 @@ void sensor_rid_save_sensor_info(void)
 	cmr_u32 fd;
 	SENSOR_LOGE("srid E\n");
 
-	sprintf(sensor_info, ":%s :%s :%s :%s",
+	sprintf(sensor_info, "%s %s %s %s",
 		s_p_sensor_cxt->sensor_list_ptr[SENSOR_MAIN]->sensor_version_info,
 		s_p_sensor_cxt->sensor_list_ptr[SENSOR_SUB]->sensor_version_info,
 		s_p_sensor_cxt->sensor_list_ptr[SENSOR_DEVICE2]->sensor_version_info,
