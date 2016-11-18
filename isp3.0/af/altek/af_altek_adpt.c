@@ -196,6 +196,7 @@ struct af_altek_context {
 	struct af_ctrl_cb_ops_type cb_ops;
 	struct allib_af_output_report_t af_out_obj;
 	void *af_runtime_obj;
+	pthread_mutex_t af_obj_mutex;
 	struct af_altek_ae_status_info ae_status_info;
 	enum af_altek_adpt_status_t af_cur_status;
 	struct af_alek_lib_status_info lib_status_info;
@@ -470,9 +471,13 @@ static cmr_int afaltek_adpt_set_parameters(cmr_handle adpt_handle,
 					   struct allib_af_input_set_param_t *p)
 {
 	cmr_int ret = -ISP_ERROR;
+	cmr_u8 lib_ret = 0;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 
-	if (cxt->ops.set_parameters(p, &cxt->af_out_obj, cxt->af_runtime_obj)) {
+	pthread_mutex_lock(&cxt->af_obj_mutex);
+	lib_ret = cxt->ops.set_parameters(p, &cxt->af_out_obj, cxt->af_runtime_obj);
+	pthread_mutex_unlock(&cxt->af_obj_mutex);
+	if (lib_ret) {
 		if (cxt->af_out_obj.result) {
 			ret = afaltek_adpt_proc_out_report(cxt, &cxt->af_out_obj, NULL);
 			ISP_LOGV("need repot result type = %d ret = %ld", p->type, ret);
@@ -490,9 +495,13 @@ static cmr_int afaltek_adpt_set_parameters_no_report(cmr_handle adpt_handle,
 					   struct allib_af_input_set_param_t *p)
 {
 	cmr_int ret = -ISP_ERROR;
+	cmr_u8 lib_ret = 0;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
 
-	if (cxt->ops.set_parameters(p, &cxt->af_out_obj, cxt->af_runtime_obj)) {
+	pthread_mutex_lock(&cxt->af_obj_mutex);
+	lib_ret = cxt->ops.set_parameters(p, &cxt->af_out_obj, cxt->af_runtime_obj);
+	pthread_mutex_unlock(&cxt->af_obj_mutex);
+	if (lib_ret) {
 		ret = ISP_SUCCESS;
 	} else {
 		ISP_LOGE("failed to lib set param");
@@ -2902,7 +2911,7 @@ static cmr_int afaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 		ISP_LOGE("failed to init lib");
 		goto error_lib_init;
 	}
-
+	pthread_mutex_init(&cxt->af_obj_mutex, NULL);
 	/* init param */
 	ret = afaltek_adpt_param_init(cxt, in_p->ctrl_in);
 	if (ret)
@@ -2943,6 +2952,7 @@ static cmr_int afaltek_adpt_deinit(cmr_handle adpt_handle)
 		cxt->caf_ops.trigger_deinit(cxt->caf_trigger_handle);
 		afaltek_adpt_caf_deinit(adpt_handle);
 		/* deinit lib */
+		pthread_mutex_destroy(&cxt->af_obj_mutex);
 		cxt->ops.deinit(cxt->af_runtime_obj, &cxt->af_out_obj);
 		afaltek_libops_deinit(cxt);
 		cmr_bzero(cxt, sizeof(*cxt));
@@ -3125,6 +3135,7 @@ static cmr_int afaltek_adpt_process(cmr_handle adpt_handle, void *in, void *out)
 	struct alhw3a_af_cfginfo_t af_cfg;
 	struct lib_caf_stats_config_t afaltek_cfg;
 	struct aft_caf_stats_cfg *caf_fv = NULL;
+	cmr_u8 lib_ret = 0;
 
 	cmr_bzero(&af_stats, sizeof(af_stats));
 	cmr_bzero(&af_cfg, sizeof(af_cfg));
@@ -3182,7 +3193,10 @@ static cmr_int afaltek_adpt_process(cmr_handle adpt_handle, void *in, void *out)
 			}
 		}
 
-		if (cxt->ops.process(&af_stats, &cxt->af_out_obj, cxt->af_runtime_obj)) {
+		pthread_mutex_lock(&cxt->af_obj_mutex);
+		lib_ret = cxt->ops.process(&af_stats, &cxt->af_out_obj, cxt->af_runtime_obj);
+		pthread_mutex_unlock(&cxt->af_obj_mutex);
+		if (lib_ret) {
 			if (cxt->af_out_obj.result) {
 				cxt->report_data.need_report = 0;
 				ret = afaltek_adpt_proc_out_report(cxt, &cxt->af_out_obj, &cxt->report_data);
