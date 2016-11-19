@@ -2294,6 +2294,17 @@ SprdCamera3Setting::~SprdCamera3Setting()
 	//reset some paramters/tag to default value
 	s_setting[mCameraId].controlInfo.scene_mode = 0;
 	s_setting[mCameraId].controlInfo.af_mode = 0;
+	s_setting[mCameraId].controlInfo.ae_mode = 0;
+	s_setting[mCameraId].flashInfo.mode = 0;
+	s_setting[mCameraId].controlInfo.effect_mode = 0;
+	s_setting[mCameraId].controlInfo.antibanding_mode =0;
+	s_setting[mCameraId].controlInfo.capture_intent = 0;
+	s_setting[mCameraId].lensInfo.focal_length = 0.0f;
+	s_setting[mCameraId].jpgInfo.quality = 0;
+	s_setting[mCameraId].controlInfo.awb_mode = 0;
+	s_setting[mCameraId].controlInfo.ae_abtibanding_mode = 0;
+	s_setting[mCameraId].sprddefInfo.capture_mode = 0;
+	s_setting[mCameraId].sprddefInfo.sprd_eis_enabled = 0;
 	memset(s_setting[mCameraId].scalerInfo.crop_region, 0, sizeof(int32_t)*4);
 
 	for (size_t i = 0; i < CAMERA3_TEMPLATE_COUNT; i++) {
