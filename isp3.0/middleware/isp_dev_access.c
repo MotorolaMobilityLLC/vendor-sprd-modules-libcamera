@@ -657,6 +657,14 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	}
 	isp_dev_set_init_param(cxt->isp_driver_handle, &init_param);
 
+	if (param_ptr->common_in.sensor_fps.is_high_fps) {
+		if ((param_ptr->common_in.sensor_fps.high_fps_skip_num - 1) > 0) {
+			ret = isp_dev_access_set_skip_num(isp_dev_handle, param_ptr->common_in.sensor_fps.high_fps_skip_num - 1);
+			if (ret) {
+				ISP_LOGE("failed to isp_dev_access_set_skip_num");
+			}
+		}
+	}
 	cxt->input_param.init_param.size.w = param_ptr->common_in.resolution_info.sensor_size.w;
 	cxt->input_param.init_param.size.h = param_ptr->common_in.resolution_info.sensor_size.h;
 

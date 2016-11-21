@@ -3828,15 +3828,6 @@ cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start *input_ptr)
 		ISP_LOGE("failed to update prv img info");
 	}
 
-	if (input_ptr->sensor_fps.is_high_fps) {
-		if ((input_ptr->sensor_fps.high_fps_skip_num-1) > 0) {
-			ret = isp_dev_access_set_skip_num(cxt->dev_access_handle, input_ptr->sensor_fps.high_fps_skip_num-1);
-			if (ret) {
-				ISP_LOGE("failed to isp_dev_access_set_skip_num");
-			}
-		}
-	}
-
 	cxt->irp_cxt.mode = input_ptr->work_mode;
 	cxt->irp_cxt.sensor_id = cxt->camera_id;
 	cxt->irp_cxt.s_width = input_ptr->resolution_info.crop.width;
