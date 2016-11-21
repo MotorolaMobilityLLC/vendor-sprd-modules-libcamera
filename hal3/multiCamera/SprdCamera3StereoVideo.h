@@ -116,6 +116,7 @@ private:
     bool mIsRecording;
     int mShowPreviewDeviceId;
     int mLastShowPreviewDeviceId;
+    int mFirstShowPreviewDeviceId;
     //when notify callback ,push hw notify into notify_list, with lock
     List <camera3_notify_msg_t> mNotifyListMain;
     Mutex mNotifyLockMain;
@@ -211,12 +212,12 @@ public:
 
     const native_handle_t* mVideoNativeBuffer[MAX_VIDEO_QEQUEST_BUF];
     new_mem_t* mVideoLocalBuffer;
+    const native_handle_t* mPreviewNativeBuffer;
+    new_mem_t mPreviewLocalBuffer;
     int32_t mPerfectskinlevel;
     uint8_t mMaxLocalBufferNum;
     const camera3_callback_ops_t* mCallbackOps;
     video_size mVideoSize;
-    Mutex      mFlushMutex;
-    Condition  mFlushSignal;
     void freeLocalBuffer(new_mem_t* LocalBuffer, List<buffer_handle_t*>& bufferList,int bufferNum);
     int allocateOne(int w,int h,uint32_t is_cache,new_mem_t*,const native_handle_t *& nBuf );
     int initialize(const camera3_callback_ops_t *callback_ops);
