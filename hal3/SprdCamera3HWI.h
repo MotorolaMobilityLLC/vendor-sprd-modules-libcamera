@@ -67,8 +67,8 @@ typedef enum {
 	MODE_3D_VIDEO = 5,       //Camera2 apk open  camera id is MODE_3D_VIDEO,camera hal transform to open physics Camera id is 1 and 3
 	MODE_RANGE_FINDER,     //Camera2 apk open  camera id is MODE_RANGE_FINDER,camera hal transform to open physics Camera id is 1 and 3
 	MODE_3D_CAPTURE,        //Camera2 apk open  camera id is MODE_3D_CAPTURE,camera hal transform to open physics Camera id is 1 and 3
-	MODE_3D_CALIBRATION, //ValidationTools apk open  camera id is MODE_3D_CALIBRATION and 3 ,camera hal transform to open physics Camera id is 1 and 3
-	MODE_REFOCUS,             //Camera2 apk open  camera id is MODE_REFOCUS and 2 ,camera hal transform to open physics Camera id is 0 and 2
+	MODE_3D_CALIBRATION = 8, //ValidationTools apk open  camera id is MODE_3D_CALIBRATION and 3 ,camera hal transform to open physics Camera id is 1 and 3
+	MODE_REFOCUS = 9,             //Camera2 apk open  camera id is MODE_REFOCUS and 2 ,camera hal transform to open physics Camera id is 0 and 2
 	MODE_MAX
 }multiCameraMode;
 

@@ -325,7 +325,9 @@ int SprdCamera3HWI::openCamera(struct hw_device_t **hw_device)
 	int ret = 0;
 	Mutex::Autolock l(mLock);
 
-	if (mCameraSessionActive && !(isMultiCameraMode(mMultiCameraMode))) {
+	//single camera mode can only open one camera .multicamera mode can only open two cameras.
+	if (mCameraSessionActive == 1 && !(isMultiCameraMode(mMultiCameraMode))
+	    || mCameraSessionActive > 2) {
 		HAL_LOGE("multiple simultaneous camera instance not supported");
 		return -EUSERS;
 	}
@@ -340,7 +342,7 @@ int SprdCamera3HWI::openCamera(struct hw_device_t **hw_device)
 	ret = openCamera();
 	if (ret == 0) {
 		*hw_device = &mCameraDevice.common;
-		mCameraSessionActive = 1;
+		mCameraSessionActive++;
 #ifdef CONFIG_CAMERA_ISP
 		startispserver();
 		ispvideo_RegCameraFunc(1, ispVideoStartPreview);
@@ -352,7 +354,7 @@ int SprdCamera3HWI::openCamera(struct hw_device_t **hw_device)
 	} else
 		*hw_device = NULL;
 
-	HAL_LOGD("X");
+	HAL_LOGD("X mCameraSessionActive %d",mCameraSessionActive);
 	return ret;
 }
 
@@ -1703,10 +1705,11 @@ int SprdCamera3HWI::close_camera_device(struct hw_device_t *device)
 		g_cam_device[3] = NULL;
 	}
 
-	mCameraSessionActive = 0;
+	if (mCameraSessionActive > 0)
+		mCameraSessionActive--;
 	mMultiCameraMode = MODE_SINGLE_CAMERA;
 	property_set("sys.cam.multi.camera.mode", "0");
-	HAL_LOGI("X");
+	HAL_LOGI("X mCameraSessionActive %d", mCameraSessionActive);
 	return ret;
 }
 
@@ -1825,7 +1828,7 @@ void SprdCamera3HWI::setPropForMultiCameraMode(multiCameraMode multiCameraModeId
     }
     sprintf(&value[0], "%d", multiCameraMode);
     //First open camera non multicameramode, set 	sys.cam.multi.camera.mode as 0, make sure the default value is 0
-    if (!mCameraSessionActive && !(isMultiCameraMode(mMultiCameraMode))) {
+    if (mCameraSessionActive == 0 && !(isMultiCameraMode(mMultiCameraMode))) {
 		property_set("sys.cam.multi.camera.mode", "0");
     }
     // Only multicameraId to set the sys.cam.multi.camera.mode value.
