@@ -233,6 +233,7 @@ void SprdCamera3OEMIf::shakeTestInit(ShakeTest *tmpShakeTest)
 }
 
 SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
+	mSetCapRatioFlag(false),
 	mSprdPipVivEnabled(0),
 	mSprdHighIsoEnabled(0),
 	mSprdRefocusEnabled(0),
@@ -5232,7 +5233,9 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void)
 		videoAspectRatio = prevAspectRatio;
 	}
 
-	if(mRawWidth != 0 && mRawHeight != 0) {
+	if (mSetCapRatioFlag == true && mCaptureWidth != 0 && mCaptureHeight != 0) {
+		capAspectRatio = static_cast<float>(mCaptureWidth) / mCaptureHeight;
+	} else if (mRawWidth != 0 && mRawHeight != 0) {
 		capAspectRatio = static_cast<float>(mRawWidth) / mRawHeight;
 	} else if (mCaptureWidth != 0 && mCaptureHeight != 0) {
 		capAspectRatio = static_cast<float>(mCaptureWidth) / mCaptureHeight;

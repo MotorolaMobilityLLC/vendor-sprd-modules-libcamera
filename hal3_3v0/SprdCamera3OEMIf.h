@@ -240,6 +240,7 @@ public:
 
 	int			mBurstVideoSnapshot;
 	int			mVideoParameterSetFlag;
+	bool			mSetCapRatioFlag;
 private:
 	inline void print_time();
 

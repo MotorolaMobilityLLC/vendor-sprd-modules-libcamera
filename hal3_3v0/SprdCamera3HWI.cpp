@@ -1104,6 +1104,18 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 		     request->num_output_buffers, request->frame_number,
 		     mPictureRequest,capturePara.cap_intent, mFirstRegularRequest,mVideoSnapshotHint);
 
+	//fix BUG618304, reset crop ratio when request have both jpeg stream and callback stream
+	if (request->num_output_buffers == 3) {
+		const camera3_stream_buffer_t & output1 = request->output_buffers[1];
+		const camera3_stream_buffer_t & output2 = request->output_buffers[2];
+		if (output1.stream->data_space == HAL_DATASPACE_JFIF
+			&& output2.stream->data_space == output1.stream->data_space) {
+			HAL_LOGD("callback and capture stream dataspace %d",output2.stream->data_space);
+			mOEMIf->mSetCapRatioFlag = true;
+			mOEMIf->setCameraConvertCropRegion();
+			mOEMIf->mSetCapRatioFlag = false;
+		}
+	}
 #ifndef MINICAMERA
 	for (size_t i = 0; i < request->num_output_buffers; i++) {
 		const camera3_stream_buffer_t & output = request->output_buffers[i];
