@@ -4348,7 +4348,11 @@ void camera_face_makeup(cmr_handle oem_handle, struct img_frm *src)
 	CMR_LOGD("perfect skinWhitenLevel is %d, skinCleanLevel is %d", skinWhitenLevel, skinCleanLevel);
 	if( PerfectSkinLevel !=0 && pic_width > 0 && pic_height > 0){
 		TSRect  SkinWhitenTsface;
+#ifdef CONFIG_CAMERA_DCAM_SUPPORT_FORMAT_NV12
+		YuvFormat yuvFormat = TSFB_FMT_NV12;
+#else
 		YuvFormat yuvFormat = TSFB_FMT_NV21;
+#endif
 		memset(&SkinWhitenTsface,0,sizeof(TSRect));
 		if(cxt->fd_face_area.face_num > 0) {
 			SkinWhitenTsface.left = (cxt->fd_face_area.face_info[0].sx*pic_width)/(cxt->fd_face_area.frame_width);

@@ -3334,7 +3334,11 @@ void SprdCamera3OEMIf::doFaceMakeup(struct camera_frame_type *frame)
 	HAL_LOGD("UCAM skinWhitenLevel is %d, skinCleanLevel is %d", skinWhitenLevel, skinCleanLevel);
 
 	FACE_Tag faceInfo;
-	YuvFormat yuvFormat = TSFB_FMT_NV21;
+#ifdef CONFIG_CAMERA_DCAM_SUPPORT_FORMAT_NV12
+		YuvFormat yuvFormat = TSFB_FMT_NV12;
+#else
+		YuvFormat yuvFormat = TSFB_FMT_NV21;
+#endif
 	mSetting->getFACETag(&faceInfo);
 	if(faceInfo.face_num>0){
 		mSkinWhitenNotDetectFDNum = 0;

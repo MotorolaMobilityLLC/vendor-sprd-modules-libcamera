@@ -15,7 +15,6 @@ extern "C" {
     #define TS_ERROR_INTERNAL    (0x00000003)    //Internal error
     #define TS_NO_MEMORY         (0x00000004)    //No memory error
 
-
     typedef enum enumYuvFORMAT{
         TSFB_FMT_NV21 = 0,
         TSFB_FMT_NV12,

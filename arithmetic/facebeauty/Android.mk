@@ -14,18 +14,30 @@
 # limitations under the License.
 #
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_BEAUTY)),true)
-ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
+
+ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
+LIB_PATH := lib
 LOCAL_MODULE := libts_face_beautify_hal
+else ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))
+LIB_PATH := x86_lib
+ifeq ($(strip $(TARGET_BOARD_CAMERA_DCAM_SUPPORT_FORMAT)),nv12)
+LOCAL_MODULE := libts_face_beautify_hal_nv12
+else ifeq ($(strip $(TARGET_BOARD_CAMERA_DCAM_SUPPORT_FORMAT)),nv21)
+LOCAL_MODULE := libts_face_beautify_hal_nv21
+else
+LOCAL_MODULE := libts_face_beautify_hal
+endif
+endif
+
 LOCAL_MODULE_CLASS := SHARED_LIBRARIES
 LOCAL_MODULE_TAGS := optional
 LOCAL_MULTILIB := both
-LOCAL_MODULE_STEM_32 := libts_face_beautify_hal.so
-LOCAL_MODULE_STEM_64 := libts_face_beautify_hal.so
-LOCAL_SRC_FILES_32 := libts_face_beautify_hal.so
-LOCAL_SRC_FILES_64 := libts_face_beautify_hal_64.so
+LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE).so
+LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
+LOCAL_SRC_FILES_32 := $(LIB_PATH)/$(LOCAL_MODULE).so
+LOCAL_SRC_FILES_64 := $(LIB_PATH)64/$(LOCAL_MODULE).so
 include $(BUILD_PREBUILT)
-endif
 endif

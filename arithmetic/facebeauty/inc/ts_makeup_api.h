@@ -11,6 +11,7 @@
 extern "C" {
 #endif
 
+
     void ts_printVersionInfo();
     void ts_SetImageOritation(int angle);//for algorithm face detection
     /*
