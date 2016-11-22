@@ -1227,6 +1227,17 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 		}
 	}
 
+	/* For take picture channel request*/
+	if(mPictureRequest) {
+		/*refocus mode, need sync timestamp*/
+		char multicameramode[PROPERTY_VALUE_MAX];
+		property_get("sys.cam.multi.camera.mode", multicameramode, "0");
+		if( 2 == atoi(multicameramode) ){
+			uint64_t currentTimestamp = getZslBufferTimestamp();
+			setZslBufferTimestamp(currentTimestamp);
+		}
+	}
+
 	// For take picture channel request
 	if(mPictureRequest) {
 		SprdCamera3Channel *channel;
