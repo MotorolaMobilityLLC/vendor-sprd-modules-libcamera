@@ -508,6 +508,7 @@ cmr_int isp_dev_cfg_grap_buffer(isp_handle handle, struct isp_irq_info *irq_info
 
 	img_frame.channel_id = irq_info->channel_id;
 	img_frame.base = irq_info->base_id;
+	img_frame.fmt = irq_info->format;
 	img_frame.frame_id = irq_info->base_id;
 	img_frame.yaddr = irq_info->yaddr;
 	img_frame.uaddr = irq_info->uaddr;

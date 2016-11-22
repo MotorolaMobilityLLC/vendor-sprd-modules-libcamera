@@ -1010,6 +1010,7 @@ cmr_int isp_cap_buff_cfg(cmr_handle isp_handle, struct isp_img_param *buf_cfg)
 	}
 
 	memset(&parm, 0, sizeof(struct isp_dev_img_param));
+	parm.img_fmt = buf_cfg->img_fmt;
 	parm.channel_id = buf_cfg->channel_id;
 	parm.base_id = buf_cfg->base_id;
 	parm.is_reserved_buf  = buf_cfg->is_reserved_buf;

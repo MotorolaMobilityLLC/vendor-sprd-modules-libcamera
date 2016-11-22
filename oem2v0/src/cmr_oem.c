@@ -175,7 +175,7 @@ static cmr_int camera_channel_cap_cfg(cmr_handle oem_handle,
 									struct cap_cfg *cap_cfg,
 									cmr_u32 *channel_id,
 									struct img_data_end *endian);
-static cmr_int camera_isp_buff_cfg (cmr_handle oem_handle, struct buffer_cfg *buf_cfg);
+static cmr_int camera_isp_buff_cfg(cmr_handle oem_handle, struct buffer_cfg *buf_cfg);
 static cmr_int camera_hdr_set_ev(cmr_handle oem_handle);
 static cmr_int camera_channel_scale_capability(cmr_handle oem_handle, cmr_u32 *width, cmr_u32 *sc_factor, cmr_u32 *sc_threshold);
 static cmr_int camera_channel_path_capability(cmr_handle oem_handle, struct cmr_path_capability *capability);
@@ -5620,7 +5620,7 @@ exit:
 	return ret;
 }
 
-cmr_int camera_channel_buff_cfg (cmr_handle oem_handle, struct buffer_cfg *buf_cfg)
+cmr_int camera_channel_buff_cfg(cmr_handle oem_handle, struct buffer_cfg *buf_cfg)
 {
 	ATRACE_BEGIN(__FUNCTION__);
 
@@ -5689,6 +5689,7 @@ cmr_int camera_isp_buff_cfg(cmr_handle oem_handle, struct buffer_cfg *buf_cfg)
 		goto exit;
 	}
 	memset(&isp_buf_cfg, 0, sizeof(struct isp_img_param));
+	isp_buf_cfg.img_fmt = 1; /* nv12 is 1, TBD */
 	isp_buf_cfg.channel_id = buf_cfg->channel_id;
 	isp_buf_cfg.base_id = buf_cfg->base_id;
 	isp_buf_cfg.count = buf_cfg->count;
@@ -6575,7 +6576,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type, struct common
 		{
 			ptr_flag = 0;
 			isp_param = param_ptr->cmd_value;
-			CMR_LOGD("ISP_CTRL_SET_CONVERGENCE_REQ, isp_param:%d, &isp_param:%d", isp_param, &isp_param);
+			CMR_LOGD("ISP_CTRL_SET_CONVERGENCE_REQ, isp_param:%d, &isp_param:%p", isp_param, &isp_param);
         }
 		/**add for 3d calibration set 3d calibration flag end*/
 		CMR_LOGI("ISP_CTRL_SET_CONVERGENCE_REQ");
@@ -7945,7 +7946,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle, enum takepicture_mode
 				goto exit;
 			}
 			read_size = camera_get_data_from_file(file_name, IMG_DATA_TYPE_RAW, scene_param.width, scene_param.height, &isp_cap_raw.addr_vir);
-			CMR_LOGI("raw data read_size = %d", read_size);
+			CMR_LOGI("raw data read_size = %ld", read_size);
 		}
 
 		sem_wait(&cxt->access_sm);
@@ -8915,7 +8916,7 @@ cmr_int camera_preview_get_isp_yimg(cmr_handle oem_handle, cmr_u32 camera_id, st
 	isp_param.camera_id = camera_id;
 	ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_YIMG_INFO, &isp_param);
 	if (ret) {
-		CMR_LOGE("get isp y stat error %d", ret);
+		CMR_LOGE("get isp y stat error %ld", ret);
 		goto exit;
 	}
 	memcpy(yimg, &isp_param.isp_yimg, sizeof(struct isp_yimg_info));
@@ -9066,23 +9067,23 @@ cmr_int cmr_get_sensor_max_fps(cmr_handle oem_handle,cmr_u32 camera_id, cmr_u32*
 
 cmr_int cmr_set_zoom_factor_to_isp(cmr_handle oem_handle,float* zoomFactor)
 {
-        cmr_int         ret = CMR_CAMERA_SUCCESS;
+	cmr_int         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context   *cxt = NULL;
 	struct isp_context      *isp_cxt = NULL;
-        CHECK_HANDLE_VALID(oem_handle);
+	CHECK_HANDLE_VALID(oem_handle);
 
 	cxt = (struct camera_context*)oem_handle;
 	isp_cxt = &cxt->isp_cxt;
-        if(NULL == isp_cxt->isp_handle || NULL == zoomFactor) {
-                CMR_LOGE("isp handle or zoomFactor is null!");
-                ret = -CMR_CAMERA_INVALID_PARAM;
-                return ret;
-        }
+	if(NULL == isp_cxt->isp_handle || NULL == zoomFactor) {
+		CMR_LOGE("isp handle or zoomFactor is null!");
+		ret = -CMR_CAMERA_INVALID_PARAM;
+		return ret;
+	}
 	ret = isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_SET_DZOOM_FACTOR, zoomFactor);
-        if(ret) {
-                CMR_LOGE("isp_ioctl-ISP_CTRL_SET_DZOOM_FACTOR failed:zoomFactor is %f",zoomFactor);
-        }
-        return ret;
+	if(ret) {
+		CMR_LOGE("isp_ioctl-ISP_CTRL_SET_DZOOM_FACTOR failed:zoomFactor is %f",*zoomFactor);
+	}
+	return ret;
 }
 
 cmr_int cmr_get_sensor_vcm_step(cmr_handle  oem_handle,cmr_u32 camera_id, cmr_u32* vcm_step)
@@ -9099,7 +9100,7 @@ cmr_int cmr_get_sensor_vcm_step(cmr_handle  oem_handle,cmr_u32 camera_id, cmr_u3
 	isp_param.camera_id = cxt->camera_id;
 	ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_VCM_INFO, &isp_param);
 	if (ret) {
-		CMR_LOGE("get isp vcm step error %d", ret);
+		CMR_LOGE("get isp vcm step error %ld", ret);
 		goto exit;
 	}
 	CMR_LOGD("isp_param.vcm_step = %d", isp_param.vcm_step);

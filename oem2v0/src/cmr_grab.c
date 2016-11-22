@@ -81,7 +81,7 @@ cmr_int cmr_grap_free_grab(struct cmr_grab *p_grab)
 {
 	cmr_u32                  channel_id;
 
-	if (p_grab == NULL){
+	if (p_grab == NULL) {
 		return 0;
 	}
 	if (0 <= p_grab->fd) {
@@ -160,8 +160,8 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr, cmr_handle *grab_h
 	}
 
 	ret = cmr_grab_create_thread((cmr_handle)p_grab);
-	if(0 != ret){
-		for(channel_id = 0; channel_id < CHN_MAX; channel_id++){
+	if (0 != ret) {
+		for (channel_id = 0; channel_id < CHN_MAX; channel_id++) {
 			pthread_mutex_destroy(&p_grab->path_mutex[channel_id]);
 		}
 		pthread_mutex_destroy(&p_grab->cb_mutex);
@@ -274,7 +274,6 @@ void cmr_grab_evt_reg(cmr_handle grab_handle, cmr_evt_cb  grab_event_cb)
 	pthread_mutex_lock(&p_grab->cb_mutex);
 	p_grab->grab_evt_cb = grab_event_cb;
 	pthread_mutex_unlock(&p_grab->cb_mutex);
-	return;
 }
 
 cmr_int cmr_grab_if_cfg(cmr_handle grab_handle, struct sensor_if *sn_if)
@@ -531,7 +530,7 @@ static cmr_int cmr_grab_cap_cfg_common(cmr_handle grab_handle, struct cap_cfg *c
 		}
 		pthread_mutex_unlock(&p_grab->path_mutex[channel_id]);
 	} else {
-		CMR_LOGI("fourcc not founded dst_img_fmt=0x%x \n", config->cfg.dst_img_fmt);
+		CMR_LOGI("fourcc not founded dst_img_fmt=0x%x", config->cfg.dst_img_fmt);
 	}
 exit:
 	ATRACE_END();
@@ -606,7 +605,7 @@ cmr_int cmr_grab_cap_cfg_lightly(cmr_handle grab_handle, struct cap_cfg *config,
 	return cmr_grab_cap_cfg_common(grab_handle, config, channel_id, NULL);
 }
 
-cmr_int cmr_grab_buff_cfg (cmr_handle grab_handle, struct buffer_cfg *buf_cfg)
+cmr_int cmr_grab_buff_cfg(cmr_handle grab_handle, struct buffer_cfg *buf_cfg)
 {
 	ATRACE_BEGIN(__FUNCTION__);
 
@@ -692,7 +691,7 @@ cmr_int cmr_grab_cap_start(cmr_handle grab_handle, cmr_u32 skip_num)
 	}
 
 exit:
-	CMR_LOGI("ret = %ld.",ret);
+	CMR_LOGI("ret = %ld", ret);
 	ATRACE_END();
 	return ret;
 }
@@ -723,7 +722,7 @@ cmr_int cmr_grab_cap_stop(cmr_handle grab_handle)
 	}
 
 	ret = ioctl(p_grab->fd, SPRD_IMG_IO_STREAM_OFF, &stream_on);
-	for (i = 0; i < CHN_MAX; i ++) {
+	for (i = 0; i < CHN_MAX; i++) {
 		p_grab->chn_status[i] = CHN_IDLE;
 		pthread_mutex_unlock(&p_grab->path_mutex[i]);
 	}
@@ -747,7 +746,7 @@ cmr_int cmr_grab_cap_stop(cmr_handle grab_handle)
 	pthread_mutex_unlock(&p_grab->dcam_mutex);
 
 exit:
-	CMR_LOGI("ret = %ld.",ret);
+	CMR_LOGI("ret = %ld", ret);
 	ATRACE_END();
 	return ret;
 }
@@ -846,11 +845,10 @@ cmr_int cmr_grab_get_cap_time(cmr_handle grab_handle, cmr_u32 *sec, cmr_u32 *use
 
 	*sec  = time.sec;
 	*usec = time.usec;
-	CMR_LOGI("sec=%d, usec=%d \n", *sec, *usec);
+	CMR_LOGI("sec=%d, usec=%d", *sec, *usec);
 
 exit:
 	return ret;
-
 }
 
 cmr_int cmr_grab_free_frame(cmr_handle grab_handle, cmr_u32 channel_id, cmr_u32 index)
@@ -973,7 +971,7 @@ cmr_int cmr_grab_path_capability(cmr_handle grab_handle, struct cmr_path_capabil
 	capability->capture_pause = 1;
 
 	CMR_LOGV("video prev %d scale %d capture_no_trim %d capture_pause %d zoom_post_proc %d",
-		 capability->is_video_prev_diff,capability->hw_scale_available,
+		 capability->is_video_prev_diff, capability->hw_scale_available,
 		 capability->capture_no_trim, capability->capture_pause, capability->zoom_post_proc);
 
 	ATRACE_END();
