@@ -533,13 +533,13 @@ cmr_int snp_ipm_cb_handle(cmr_handle snp_handle, void *data)
 	struct snp_context             *cxt = (struct snp_context*)snp_handle;
 	CMR_MSG_INIT(message);
 
-	message.data = malloc(sizeof(struct img_frm));
+	message.data = malloc(sizeof(struct frm_info));
 	if (!message.data) {
 		CMR_LOGE("failed to malloc");
 		ret = -CMR_CAMERA_NO_MEM;
 		return ret;
 	}
-	cmr_copy(message.data, data, sizeof(struct img_frm));
+	cmr_copy(message.data, data, sizeof(struct frm_info));
 	message.alloc_flag = 1;
 	message.msg_type = SNP_EVT_HDR_POST_PROC;
 	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
