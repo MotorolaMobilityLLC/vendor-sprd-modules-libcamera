@@ -175,6 +175,7 @@ struct af_ae_working_info {
 
 struct af_altek_context {
 	cmr_u8 inited;
+	cmr_u8 stats_ready;
 	cmr_u8 haf_support;
 	cmr_u32 camera_id;
 	cmr_u32 frame_id;
@@ -1590,6 +1591,11 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 		goto exit;
 	}
 
+	if (!cxt->stats_ready) {
+		ISP_LOGI("af stats is not ready");
+		goto exit;
+	}
+
 	cmr_bzero(&aft_out, sizeof(aft_out));
 
 	ae4af_stable = (ae_stable_cnt >= DEFAULT_AE4AF_STABLE_STABLE_CNT) ? 1 : 0;
@@ -1618,7 +1624,8 @@ static cmr_int afaltek_adpt_caf_process(cmr_handle adpt_handle,
 	} else if (AF_TIGGER_PD == aft_out.is_caf_trig && !cxt->start_af_status) {
 		ISP_LOGI("pd trigger");
 		ret = afaltek_adpt_haf_start(cxt);
-	} else if (AF_TIGGER_NORMAL != cxt->aft_proc_result.is_caf_trig && AF_TIGGER_NORMAL == aft_out.is_caf_trig) {
+	} else if (AF_TIGGER_NORMAL != cxt->aft_proc_result.is_caf_trig &&
+		   AF_TIGGER_NORMAL == aft_out.is_caf_trig) {
 		ret = afaltek_adpt_caf_start(cxt);
 	} else if (aft_out.is_cancel_caf && AF_DOING(cxt->af_cur_status)) {
 		ret = afaltek_adpt_stop(cxt);
@@ -3148,6 +3155,7 @@ static cmr_int afaltek_adpt_process(cmr_handle adpt_handle, void *in, void *out)
 		ret = -ISP_PARAM_ERROR;
 		goto exit;
 	}
+	cxt->stats_ready = 1;
 	bzero(&caf_stat, sizeof(caf_stat));
 	if (CAF_CONFIG_ID == af_stats.af_token_id) {
 		ISP_LOGI("config in camera_id = %d", cxt->camera_id);
