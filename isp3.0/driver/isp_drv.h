@@ -42,35 +42,35 @@ enum isp_drv_evt {
 };
 
 struct isp_dev_init_info {
-	cmr_u32 camera_id;
-	cmr_u32 width;
-	cmr_u32 height;
-	cmr_malloc alloc_cb;
-	cmr_free   free_cb;
-	cmr_handle mem_cb_handle;
-	void *setting_param_list_ptr[3];//0:back,1:front,2:dual back,
-	uint32 shading_bin_size;
-	uint8 *shading_bin_addr;
-	uint32 shading_bin_offset;
-	uint32 irp_bin_size;
-	uint8 *irp_bin_addr;
-	uint32 irp_bin_offset;
-	uint32 cbc_bin_size;
-	uint8 *cbc_bin_addr;
-	uint32 cbc_bin_offset;
-	cmr_u8 pdaf_supported;
+	cmr_u32         camera_id;
+	cmr_u32         width;
+	cmr_u32         height;
+	cmr_malloc      alloc_cb;
+	cmr_free        free_cb;
+	cmr_handle      mem_cb_handle;
+	void            *setting_param_list_ptr[3];//0:back,1:front,2:dual back,
+	uint32          shading_bin_size;
+	uint8           *shading_bin_addr;
+	uint32          shading_bin_offset;
+	uint32          irp_bin_size;
+	uint8           *irp_bin_addr;
+	uint32          irp_bin_offset;
+	uint32          cbc_bin_size;
+	uint8           *cbc_bin_addr;
+	uint32          cbc_bin_offset;
+	cmr_u8          pdaf_supported;
 };
 
 struct isp_img_fd {
-	cmr_u32 y;
-	cmr_u32 u;
-	cmr_u32 v;
+	cmr_u32         y;
+	cmr_u32         u;
+	cmr_u32         v;
 };
 
 struct isp_statis_info {
-	struct isp_statis_frame_output statis_frame;
-	nsecs_t timestamp;
-	cmr_uint statis_cnt;
+	struct isp_statis_frame_output  statis_frame;
+	nsecs_t                         timestamp;
+	cmr_uint                        statis_cnt;
 };
 
 struct isp_irq_node {

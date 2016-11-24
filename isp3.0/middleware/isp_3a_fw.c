@@ -3952,7 +3952,7 @@ cmr_int isp_3a_fw_init_otp(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *i
 /*************************************EXTERNAL FUNCTION ***************************************/
 cmr_int isp_3a_fw_init(struct isp_3a_fw_init_in *input_ptr, cmr_handle *isp_3a_handle)
 {
-	ATRACE_BEGIN(__FUNCTION__);
+	ATRACE_BEGIN(__func__);
 
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = NULL;
@@ -4031,7 +4031,7 @@ exit:
 
 cmr_int isp_3a_fw_deinit(cmr_handle isp_3a_handle)
 {
-	ATRACE_BEGIN(__FUNCTION__);
+	ATRACE_BEGIN(__func__);
 
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;

@@ -24,72 +24,50 @@
 #include <cutils/trace.h>
 #include "cutils/properties.h"
 #include "cmr_msg.h"
+#include "isp_debug.h"
+
 
 #define BUF_BLOCK_SIZE                               (1024 * 1024)
-
 #define ISP_DEV_MUTILAYER_MSG_QUEUE_SIZE             40
 #define ISP_DEV_MUTILAYER_EVT_BASE                   0x4000
-#define ISP_DEV_MUTILAYER_EVT_INIT                    ISP_DEV_MUTILAYER_EVT_BASE
+#define ISP_DEV_MUTILAYER_EVT_INIT                   ISP_DEV_MUTILAYER_EVT_BASE
 #define ISP_DEV_MUTILAYER_EVT_DEINIT                 (ISP_DEV_MUTILAYER_EVT_BASE + 1)
 #define ISP_DEV_MUTILAYER_EVT_PROCESS                (ISP_DEV_MUTILAYER_EVT_BASE + 2)
 #define ISP_DEV_MUTILAYER_EVT_ALTEK_RAW              (ISP_DEV_MUTILAYER_EVT_BASE + 3)
 #define ISP_DEV_MUTILAYER_EVT_EXIT                   (ISP_DEV_MUTILAYER_EVT_BASE + 4)
-
-struct img_addr {
-	cmr_uint                                addr_y;
-	cmr_uint                                addr_u;
-	cmr_uint                                addr_v;
-};
-
-enum img_data_type {
-	IMG_DATA_TYPE_YUV422 = 0,
-	IMG_DATA_TYPE_YUV420,
-	IMG_DATA_TYPE_YVU420,
-	IMG_DATA_TYPE_YUV420_3PLANE,
-	IMG_DATA_TYPE_RAW,
-	IMG_DATA_TYPE_RAW2,
-	IMG_DATA_TYPE_RGB565,
-	IMG_DATA_TYPE_RGB666,
-	IMG_DATA_TYPE_RGB888,
-	IMG_DATA_TYPE_JPEG,
-	IMG_DATA_TYPE_YV12,
-	IMG_DATA_TYPE_MAX
-};
-
-
 #define isp_fw_size            0x200000
 
 static char isp_dev_name[50] = "/dev/sprd_isp";
 static char isp_fw_name[50] = "/system/vendor/firmware/TBM_G2v1DDR.bin";
 
 struct isp_fw_mem {
-	cmr_uint virt_addr;
-	cmr_uint phy_addr;
-	cmr_int mfd;
-	cmr_u32 size;
-	cmr_u32 num;
+	cmr_uint                        virt_addr;
+	cmr_uint                        phy_addr;
+	cmr_int                         mfd;
+	cmr_u32                         size;
+	cmr_u32                         num;
 };
 
 struct isp_fw_group {
-	cmr_u32 file_cnt;
-	pthread_mutex_t mutex;
+	cmr_u32                         file_cnt;
+	pthread_mutex_t                 mutex;
 };
 
 struct isp_file {
-	int                        fd;
-	int                        camera_id;
-	cmr_handle                 evt_3a_handle;
-	cmr_handle                 grab_handle;
-	cmr_handle                 mutilayer_thr_handle;
-	pthread_mutex_t            cb_mutex;
-	pthread_t                  thread_handle;
-	isp_evt_cb                 isp_event_cb;  /* isp event callback */
-	isp_evt_cb                 isp_cfg_buf_cb;  /* isp event callback */
-	struct isp_dev_init_info   init_param;
-	sem_t                      close_sem;
-	struct isp_fw_mem          fw_mem;
-	cmr_int                    isp_is_inited;
-	cmr_u8                     pdaf_supported;
+	int                             fd;
+	int                             camera_id;
+	cmr_handle                      evt_3a_handle;
+	cmr_handle                      grab_handle;
+	cmr_handle                      mutilayer_thr_handle;
+	pthread_mutex_t                 cb_mutex;
+	pthread_t                       thread_handle;
+	isp_evt_cb                      isp_event_cb;  /* isp event callback */
+	isp_evt_cb                      isp_cfg_buf_cb;  /* isp event callback */
+	struct isp_dev_init_info        init_param;
+	sem_t                           close_sem;
+	struct isp_fw_mem               fw_mem;
+	cmr_int                         isp_is_inited;
+	cmr_u8                          pdaf_supported;
 };
 
 static struct isp_fw_group _group = {0, PTHREAD_MUTEX_INITIALIZER};
@@ -100,11 +78,11 @@ static cmr_int isp_dev_kill_thread(isp_handle handle);
 static void* isp_dev_thread_proc(void *data);
 static cmr_int isp_dev_load_binary(isp_handle handle);
 static cmr_int isp_dev_set_user_working(isp_handle handle);
-static cmr_int camera_save_to_file_isp(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height, struct img_addr *addr);
+
 
 cmr_int isp_dev_init(struct isp_dev_init_info *init_param_ptr, isp_handle *handle)
 {
-	ATRACE_BEGIN(__FUNCTION__);
+	ATRACE_BEGIN(__func__);
 
 	cmr_int                       ret = 0;
 	cmr_int                       fd = -1;
@@ -197,7 +175,7 @@ isp_free:
 
 cmr_int isp_dev_deinit(isp_handle handle)
 {
-	ATRACE_BEGIN(__FUNCTION__);
+	ATRACE_BEGIN(__func__);
 
 	cmr_int                       ret = 0;
 	struct isp_file               *file = (struct isp_file *)handle;
@@ -256,7 +234,7 @@ cmr_int isp_dev_deinit(isp_handle handle)
 
 cmr_int isp_dev_start(isp_handle handle)
 {
-	ATRACE_BEGIN(__FUNCTION__);
+	ATRACE_BEGIN(__func__);
 
 	cmr_int                       ret = 0;
 	struct isp_file               *file = (struct isp_file *)handle;
@@ -419,7 +397,7 @@ exit:
 
 static cmr_int isp_dev_load_binary(isp_handle handle)
 {
-	ATRACE_BEGIN(__FUNCTION__);
+	ATRACE_BEGIN(__func__);
 
 	cmr_int                  ret = 0;
 	struct isp_file          *file = (struct isp_file *)handle;
@@ -499,7 +477,7 @@ void isp_dev_buf_cfg_evt_reg(isp_handle handle, cmr_handle grab_handle, isp_evt_
 
 cmr_int isp_dev_cfg_grap_buffer(isp_handle handle, struct isp_irq_info *irq_info)
 {
-	ATRACE_BEGIN(__FUNCTION__);
+	ATRACE_BEGIN(__func__);
 
 	struct isp_file *file = (struct isp_file *)handle;
 	struct isp_frm_info img_frame;
@@ -764,8 +742,8 @@ static void* isp_dev_thread_proc(void *data)
 	struct isp_statis_frame           statis_frame_buf;
 	struct isp_frm_info               img_frame;
 	struct isp_irq_info               irq_info;
-	struct img_addr                   addr;
-	char			          value[PROPERTY_VALUE_MAX];
+	struct isp_img_info               img_info;
+	char                              value[PROPERTY_VALUE_MAX];
 
 	file = (struct isp_file *)data;
 	ISP_LOGI("isp dev thread file %p ", file);
@@ -805,16 +783,10 @@ static void* isp_dev_thread_proc(void *data)
 				case ISP_IRQ_CFG_BUF:
 					property_get("debug.camera.save.snpfile", value, "0");
 					if (atoi(value) == 11 || atoi(value) & (1<<11)) {
-						addr.addr_y = irq_info.yaddr_vir;
-						addr.addr_u = irq_info.uaddr_vir;
-						addr.addr_v = irq_info.vaddr_vir;
-						ISP_LOGI("camera_save_to_file img_y_fd 0x%x vaddr 0x%lx uaddr 0x%lx paddr 0x%lx buf_size 0x%lx, width %d, height %d", 
-							 irq_info.img_y_fd, irq_info.yaddr_vir, irq_info.uaddr_vir, irq_info.yaddr, irq_info.length, file->init_param.width,
-							 file->init_param.height);
-						camera_save_to_file_isp(irq_info.frm_index, IMG_DATA_TYPE_YUV420,
-							file->init_param.width,
-							file->init_param.height,
-							&addr);
+
+						img_info.width = file->init_param.width;
+						img_info.height = file->init_param.height;
+						isp_debug_save_to_file(&img_info, ISP_DATA_TYPE_YUV420, &irq_info);
 					}
 					isp_dev_handle_cfg_grap_buf(file, &irq_info);
 					break;
@@ -839,16 +811,10 @@ static void* isp_dev_thread_proc(void *data)
 					isp_dev_handle_altek_raw(file);
 
 					if (atoi(value) == 11 || atoi(value) & (1<<11)) {
-						addr.addr_y = irq_info.yaddr;
-						ISP_LOGI("camera_save_to_file img_y_fd 0x%x vaddr 0x%lx uaddr 0x%lx paddr 0x%lx buf_size 0x%lx, width %d, height %d", 
-							 irq_info.img_y_fd,
-							 irq_info.yaddr_vir, irq_info.uaddr_vir,
-							 irq_info.yaddr, irq_info.length, file->init_param.width,
-							 file->init_param.height);
-						camera_save_to_file_isp(irq_info.frm_index, IMG_DATA_TYPE_RAW2,
-							file->init_param.width,
-							file->init_param.height,
-							&addr);
+
+						img_info.width = file->init_param.width;
+						img_info.height = file->init_param.height;
+						isp_debug_save_to_file(&img_info, ISP_DATA_TYPE_RAW2, &irq_info);
 					}
 					break;
 				default:
@@ -961,7 +927,7 @@ cmr_int isp_dev_stop(isp_handle handle)
 
 cmr_int isp_dev_stream_on(isp_handle handle)
 {
-	ATRACE_BEGIN(__FUNCTION__);
+	ATRACE_BEGIN(__func__);
 
 	cmr_int ret = 0;
 	cmr_int camera_id = 0;
@@ -986,7 +952,7 @@ cmr_int isp_dev_stream_on(isp_handle handle)
 
 cmr_int isp_dev_stream_off(isp_handle handle)
 {
-	ATRACE_BEGIN(__FUNCTION__);
+	ATRACE_BEGIN(__func__);
 
 	cmr_int ret = 0;
 	cmr_int camera_id = 0;
@@ -1010,7 +976,7 @@ cmr_int isp_dev_stream_off(isp_handle handle)
 
 cmr_int isp_dev_load_firmware(isp_handle handle, struct isp_init_mem_param *param)
 {
-	ATRACE_BEGIN(__FUNCTION__);
+	ATRACE_BEGIN(__func__);
 
 	cmr_int ret = 0;
 	cmr_int fw_size = 0;
@@ -1026,7 +992,7 @@ cmr_int isp_dev_load_firmware(isp_handle handle, struct isp_init_mem_param *para
 		return -1;
 	}
 	file = (struct isp_file *)(handle);
-	if(file->fd < 0) {
+	if (file->fd < 0) {
 		ISP_LOGE("fd error.");
 		return -1;
 	}
@@ -2473,135 +2439,4 @@ cmr_int isp_dev_drammode_takepic(isp_handle handle, cmr_u32 is_start)
 	return ret;
 }
 
-cmr_int camera_save_to_file_isp(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height, struct img_addr *addr)
-{
-	cmr_int                      ret = 0;
-	char                         file_name[40];
-	char                         tmp_str[10];
-	FILE                         *fp = NULL;
-
-	ISP_LOGI("index %d format %d width %d heght %d u_addr 0x%lx", index, img_fmt, width, height, addr->addr_u);
-
-	cmr_bzero(file_name, 40);
-	strcpy(file_name, "/data/misc/media/");
-	sprintf(tmp_str, "%d_", index);
-	strcat(file_name, tmp_str);
-	sprintf(tmp_str, "%d", width);
-	strcat(file_name, tmp_str);
-	strcat(file_name, "X");
-	sprintf(tmp_str, "%d", height);
-	strcat(file_name, tmp_str);
-
-	if (IMG_DATA_TYPE_YUV420 == img_fmt ||
-	    IMG_DATA_TYPE_YUV422 == img_fmt) {
-		strcat(file_name, "_y");
-		strcat(file_name, ".raw");
-		ISP_LOGI("file name %s", file_name);
-		fp = fopen(file_name, "wb");
-
-		if (NULL == fp) {
-			ISP_LOGI("can not open file: %s", file_name);
-			return 0;
-		}
-
-		fwrite((void *)addr->addr_y, 1, width * height, fp);
-		fclose(fp);
-
-		bzero(file_name, 40);
-		strcpy(file_name, "/data/misc/media/");
-		sprintf(tmp_str, "%d_", index);
-		strcat(file_name, tmp_str);
-		sprintf(tmp_str, "%d", width);
-		strcat(file_name, tmp_str);
-		strcat(file_name, "X");
-		sprintf(tmp_str, "%d", height);
-		strcat(file_name, tmp_str);
-		strcat(file_name, "_uv");
-		strcat(file_name, ".raw");
-		ISP_LOGI("file name %s", file_name);
-		fp = fopen(file_name, "wb");
-		if (NULL == fp) {
-			ISP_LOGI("can not open file: %s", file_name);
-			return 0;
-		}
-
-		if (1) { //(IMG_DATA_TYPE_YUV420 == img_fmt) {
-			fwrite((void *)(addr->addr_y + width * height), 1, width * height / 2, fp);
-		} else {
-			fwrite((void *)addr->addr_u, 1, width * height / 2, fp);
-		}
-		fclose(fp);
-	} else if (IMG_DATA_TYPE_JPEG == img_fmt) {
-		strcat(file_name, ".jpg");
-		ISP_LOGI("file name %s", file_name);
-
-		fp = fopen(file_name, "wb");
-		if (NULL == fp) {
-			ISP_LOGI("can not open file: %s", file_name);
-			return 0;
-		}
-
-		fwrite((void *)addr->addr_y, 1, width * height*2, fp);
-		fclose(fp);
-	} else if (IMG_DATA_TYPE_RAW == img_fmt) {
-		strcat(file_name, "_mipi.raw");
-		ISP_LOGI("file name %s", file_name);
-
-		fp = fopen(file_name, "wb");
-		if (NULL == fp) {
-			ISP_LOGI("can not open file: %s", file_name);
-			return 0;
-		}
-
-		fwrite((void *)addr->addr_y, 1, (uint32_t)(width * height * 5 / 4), fp);
-		fclose(fp);
-	} else if (IMG_DATA_TYPE_RAW2 == img_fmt) {
-		strcat(file_name, "_mipi2.raw");
-		ISP_LOGI("file name %s", file_name);
-
-		fp = fopen(file_name, "wb");
-		if (NULL == fp) {
-			ISP_LOGI("can not open file: %s", file_name);
-			return 0;
-		}
-
-		fwrite((void *)addr->addr_y, 1, (uint32_t)(((width* 4 / 3 + 7) >> 3) << 3)  * height, fp);
-		fclose(fp);
-	}
-	return 0;
-}
-
-cmr_int statistic_save_to_file_isp(struct isp_statis_frame_output *statis, struct isp_file *file)
-{
-	cmr_int                      ret = 0;
-	char                         file_name[40];
-	char                         tmp_str[10];
-	FILE                         *fp = NULL;
-
-	cmr_bzero(file_name, 40);
-	strcpy(file_name, "/data/misc/media/statisic_");
-	sprintf(tmp_str, "%d", file->init_param.width);
-	strcat(file_name, tmp_str);
-	strcat(file_name, "X");
-	sprintf(tmp_str, "%d", file->init_param.height);
-	strcat(file_name, tmp_str);
-	strcat(file_name, ".log");
-
-	ISP_LOGI("file name %s", file_name);
-	fp = fopen(file_name, "a+");
-
-	if (NULL == fp) {
-		ISP_LOGI("can not open file: %s", file_name);
-		return 0;
-	}
-	fseek(fp, 0, SEEK_END);
-
-//	sprintf(tmp_str, "\n%d %d\n", statis->time_stamp.sec, statis->time_stamp.usec);
-//	fwrite((tmp_str, 1, 10, fp);
-
-	fwrite((void *)(statis->vir_addr), 1, statis->buf_size, fp);
-	fclose(fp);
-
-	return 0;
-}
 

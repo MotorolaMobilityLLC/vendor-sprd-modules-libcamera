@@ -342,7 +342,7 @@ static cmr_int awbaltek_set_af_report(cmr_handle adpt_handle, union awb_ctrl_cmd
 
 	UNUSED(output_ptr);
 	input.type = alawb_set_param_update_af_report;
-	ISP_LOGI("af report size %d", input_ptr->af_report.data_size);
+	ISP_LOGV("af report size %d", input_ptr->af_report.data_size);
 	memcpy(&input.para.af_report_update, input_ptr->af_report.data, sizeof(struct af_report_update_t));
 	ret = (cmr_int)cxt->lib_func.set_param(&input, cxt->lib_func.awb);
 	if (ret) {

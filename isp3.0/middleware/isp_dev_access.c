@@ -59,7 +59,7 @@ struct isp_dev_access_context {
 /*************************************EXTERNAL FUNCTION ***************************************/
 cmr_int isp_dev_access_init(struct isp_dev_init_in *input_ptr, cmr_handle *isp_dev_handle)
 {
-	ATRACE_BEGIN(__FUNCTION__);
+	ATRACE_BEGIN(__func__);
 
 	cmr_int                                ret = ISP_SUCCESS;
 	struct isp_dev_access_context          *cxt = NULL;
@@ -130,7 +130,7 @@ exit:
 
 cmr_int isp_dev_access_deinit(cmr_handle isp_dev_handle)
 {
-	ATRACE_BEGIN(__FUNCTION__);
+	ATRACE_BEGIN(__func__);
 
 	cmr_int                                ret = ISP_SUCCESS;
 	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;

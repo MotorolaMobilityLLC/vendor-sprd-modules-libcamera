@@ -641,7 +641,7 @@ cmr_int isp_parse_bin_otp(cmr_handle isp_mw_handle)
 /*************************************EXTERNAL FUNCTION ***************************************/
 cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 {
-	ATRACE_BEGIN(__FUNCTION__);
+	ATRACE_BEGIN(__func__);
 
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp_3a_fw_init_in                    isp3a_input;
@@ -856,7 +856,7 @@ cmr_int isp_ioctl(cmr_handle isp_handle, enum isp_ctrl_cmd cmd, void *param_ptr)
 
 cmr_int isp_video_start(cmr_handle isp_handle, struct isp_video_start *param_ptr)
 {
-	ATRACE_BEGIN(__FUNCTION__);
+	ATRACE_BEGIN(__func__);
 
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp_mw_context                       *cxt = (struct isp_mw_context *)isp_handle;
@@ -923,7 +923,7 @@ exit:
 
 cmr_int isp_video_stop(cmr_handle isp_handle)
 {
-	ATRACE_BEGIN(__FUNCTION__);
+	ATRACE_BEGIN(__func__);
 
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp_mw_context                       *cxt = (struct isp_mw_context *)isp_handle;
@@ -940,7 +940,7 @@ cmr_int isp_video_stop(cmr_handle isp_handle)
 
 cmr_int isp_proc_start(cmr_handle isp_handle, struct ips_in_param *input_ptr, struct ips_out_param *output_ptr)
 {
-	ATRACE_BEGIN(__FUNCTION__);
+	ATRACE_BEGIN(__func__);
 
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp_mw_context                       *cxt = (struct isp_mw_context *)isp_handle;
@@ -997,7 +997,7 @@ cmr_int isp_proc_next(cmr_handle isp_handle, struct ipn_in_param *input_ptr, str
 
 cmr_int isp_cap_buff_cfg(cmr_handle isp_handle, struct isp_img_param *buf_cfg)
 {
-	ATRACE_BEGIN(__FUNCTION__);
+	ATRACE_BEGIN(__func__);
 
 	cmr_int                    ret = ISP_SUCCESS;
 	struct isp_mw_context      *cxt = (struct isp_mw_context *)isp_handle;
@@ -1038,7 +1038,7 @@ cmr_int isp_cap_buff_cfg(cmr_handle isp_handle, struct isp_img_param *buf_cfg)
 
 cmr_int isp_drammode_takepic(cmr_handle isp_handle, cmr_u32 is_start)
 {
-	ATRACE_BEGIN(__FUNCTION__);
+	ATRACE_BEGIN(__func__);
 
 	cmr_int                    ret = ISP_SUCCESS;
 	struct isp_mw_context      *cxt = (struct isp_mw_context *)isp_handle;
