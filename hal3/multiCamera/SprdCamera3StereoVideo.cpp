@@ -1023,7 +1023,8 @@ int SprdCamera3StereoVideo::ReProcessThread::reProcessFrame(const buffer_handle_
         }
     }
     private_handle_t *private_handle = (struct private_handle_t*) (*frame_buffer);
-    video_3d_doFaceMakeup(private_handle,perfectskinlevel,face_info);
+    if(perfectskinlevel > 0)
+        video_3d_doFaceMakeup(private_handle,perfectskinlevel,face_info);
 
     return rc;
 }

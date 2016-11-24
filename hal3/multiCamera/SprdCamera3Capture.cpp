@@ -948,6 +948,144 @@ SprdCamera3Capture::CaptureThread::~CaptureThread()
     HAL_LOGD(" E");
     mCaptureMsgList.clear();
 }
+
+/*===========================================================================
+ * FUNCTION   :cap_3d_convert_face_info_from_preview2cap
+ *
+ * DESCRIPTION:
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void SprdCamera3Capture::CaptureThread::cap_3d_convert_face_info_from_preview2cap(int *ptr_cam_face_inf,int width,int height)
+{
+    float zoomWidth,zoomHeight;
+    uint32_t  fdWidth,fdHeight,sensorOrgW,sensorOrgH;
+    int*w= NULL;
+    int *h =NULL;
+
+    sensorOrgW =m3DCaptureWidth*2;
+    sensorOrgH = m3DCaptureHeight*2;
+    fdWidth= ptr_cam_face_inf[2]-ptr_cam_face_inf[0];
+    fdHeight= ptr_cam_face_inf[3]-ptr_cam_face_inf[1];
+    if (fdWidth == 0 || fdHeight == 0){
+        HAL_LOGE("parameters error.");
+        return;
+    }
+    zoomWidth = (float)width / (float)sensorOrgW;
+    zoomHeight = (float)height / (float)sensorOrgH;
+    ptr_cam_face_inf[0] = ptr_cam_face_inf[0] * zoomWidth/2;
+    ptr_cam_face_inf[1] = ptr_cam_face_inf[1] * zoomHeight;
+    ptr_cam_face_inf[2] = ptr_cam_face_inf[2] * zoomWidth/2;
+    ptr_cam_face_inf[3] = ptr_cam_face_inf[3] * zoomHeight;
+    HAL_LOGV("ptr_cam_face_inf 0 %d 1 %d 2%d 3 %d", ptr_cam_face_inf[0], ptr_cam_face_inf[1], ptr_cam_face_inf[2], ptr_cam_face_inf[3]);
+    return;
+
+}
+/*===========================================================================
+ * FUNCTION   :cap_3d_doFaceMakeup
+ *
+ * DESCRIPTION:
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void SprdCamera3Capture::CaptureThread::cap_3d_doFaceMakeup( private_handle_t *private_handle ,int perfect_level,int *face_info)
+{
+    // init the parameters table. save the value until the process is restart or the device is restart.
+    int tab_skinWhitenLevel[10]={0,15,25,35,45,55,65,75,85,95};
+    int tab_skinCleanLevel[10]={0,25,45,50,55,60,70,80,85,95};
+    struct camera_frame_type cap_3d_frame = {0};
+    struct camera_frame_type *frame = &cap_3d_frame;
+    frame->y_vir_addr =(cmr_uint)private_handle->base;
+    frame->width = private_handle->width;
+    frame->height = private_handle->height;
+
+    TSRect Tsface;
+    YuvFormat yuvFormat = TSFB_FMT_NV21;
+    if(face_info[0] !=0 ||face_info[1] !=0 || face_info[2]!= 0 || face_info[3] != 0){
+        cap_3d_convert_face_info_from_preview2cap(face_info, frame->width, frame->height);
+        Tsface.left = face_info[0];
+        Tsface.top = face_info[1];
+        Tsface.right = face_info[2];
+        Tsface.bottom = face_info[3];
+        HAL_LOGD("FACE_BEAUTY rect:%d-%d-%d-%d",Tsface.left,Tsface.top,Tsface.right,Tsface.bottom);
+
+        int level = perfect_level;
+        int skinWhitenLevel = 0;
+        int skinCleanLevel = 0;
+        int level_num = 0;
+        // convert the skin_level set by APP to skinWhitenLevel & skinCleanLevel according to the table saved.
+        level = (level<0)?0:((level>90)?90:level);
+        level_num = level/10;
+        skinWhitenLevel = tab_skinWhitenLevel[level_num];
+        skinCleanLevel = tab_skinCleanLevel[level_num];
+        HAL_LOGD("UCAM skinWhitenLevel is %d, skinCleanLevel is %d frame->height %d frame->width %d", skinWhitenLevel, skinCleanLevel,frame->height,frame->width);
+
+        TSMakeupData  inMakeupData, outMakeupData;
+        unsigned char *yBuf = (unsigned char *)(frame->y_vir_addr);
+        unsigned char *uvBuf = (unsigned char *)(frame->y_vir_addr) + frame->width*frame->height ;
+        unsigned char * tmpBuf = new unsigned char[frame->width*frame->height* 3 / 2];
+
+        inMakeupData.frameWidth = frame->width;
+        inMakeupData.frameHeight = frame->height;
+        inMakeupData.yBuf = yBuf;
+        inMakeupData.uvBuf = uvBuf;
+
+        outMakeupData.frameWidth = frame->width;
+        outMakeupData.frameHeight = frame->height;
+        outMakeupData.yBuf = tmpBuf;
+        outMakeupData.uvBuf = tmpBuf + frame->width*frame->height ;
+
+        if (frame->width > 0 && frame->height > 0 && NULL != outMakeupData.yBuf) {
+            int ret_val = ts_face_beautify(&inMakeupData, &outMakeupData, skinCleanLevel, skinWhitenLevel, &Tsface, 0, yuvFormat);
+            if(ret_val !=  TS_OK) {
+                HAL_LOGE("UCAM ts_face_beautify ret is %d", ret_val);
+            } else {
+                HAL_LOGD("UCAM ts_face_beautify return OK");
+                memcpy((unsigned char *)(frame->y_vir_addr), tmpBuf, frame->width * frame->height * 3 / 2);
+            }
+        } else {
+            HAL_LOGE("No face beauty! frame size %d, %d. If size is not zero, then outMakeupData.yBuf is null!");
+        }
+        if(NULL != tmpBuf) {
+            delete tmpBuf;
+            tmpBuf = NULL;
+        }
+    } else {
+        HAL_LOGD("Not detect face!");
+    }
+
+}
+
+/*===========================================================================
+ * FUNCTION   :reProcessFrame face makeup
+ *
+ * DESCRIPTION: reprocess frame
+ *
+ * PARAMETERS :
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void  SprdCamera3Capture::CaptureThread::reProcessFrame(const buffer_handle_t* frame_buffer,int cur_frameid)
+{
+    int32_t perfectskinlevel = 0;
+    int32_t   face_info[4];
+    perfectskinlevel = mCapture->mPerfectskinlevel;
+    face_info[0]=mCapture->g_face_info[0];
+    face_info[1]=mCapture-> g_face_info[1];
+    face_info[2]=mCapture->g_face_info[2];
+    face_info[3]=mCapture->g_face_info[3];
+    HAL_LOGD("perfectskinlevel=%d face:sx %d sy %d ex %d ey %d", perfectskinlevel,face_info[0],face_info[1],face_info[2],face_info[3]);
+    private_handle_t *private_handle = (struct private_handle_t*) (*frame_buffer);
+    if(perfectskinlevel >0)
+        cap_3d_doFaceMakeup(private_handle,perfectskinlevel,face_info);
+
+    return;
+}
+
 /*===========================================================================
  * FUNCTION   :loadGpuApi
  *
@@ -1222,6 +1360,7 @@ bool SprdCamera3Capture::CaptureThread::threadLoop()
                 }
                 else
                 {
+                    reProcessFrame(output_buffer,capture_msg.combo_buff.frame_number) ;
                     CameraMetadata meta;
                     camera3_capture_request_t       request = {0,};
                     camera3_stream_buffer_t* output_buffers = NULL;
@@ -1869,6 +2008,12 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
             mPreviewID = nPreviewId;
         }
     }
+    /* save Perfectskinlevel */
+    if(metaSettings.exists(ANDROID_SPRD_UCAM_SKIN_LEVEL)) {
+        mPerfectskinlevel = metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[0];
+        HAL_LOGD("perfectskinlevel=%d",mPerfectskinlevel);
+     }
+
     saveRequest(req, mPreviewID);
 
     /*config main camera*/
@@ -2092,6 +2237,17 @@ void SprdCamera3Capture::processCaptureResultMain( const camera3_capture_result_
     uint32_t cur_frame_number;
     uint32_t searchnotifyresult = NOTIFY_NOT_FOUND;
     const camera3_stream_buffer_t *result_buffer  =  result->output_buffers;
+
+    /*save face info for 3d capture */
+     CameraMetadata metadata;
+     metadata = result->result;
+     if((result->result) && metadata.exists(ANDROID_STATISTICS_FACE_RECTANGLES)) {
+        g_face_info[0] = metadata.find(ANDROID_STATISTICS_FACE_RECTANGLES).data.i32[0];
+        g_face_info[1] = metadata.find(ANDROID_STATISTICS_FACE_RECTANGLES).data.i32[1];
+        g_face_info[2] = metadata.find(ANDROID_STATISTICS_FACE_RECTANGLES).data.i32[2];
+        g_face_info[3] = metadata.find(ANDROID_STATISTICS_FACE_RECTANGLES).data.i32[3];
+        HAL_LOGD("sx %d sy %d ex %d ey %d", g_face_info[0], g_face_info[1], g_face_info[2], g_face_info[3]);
+    }
 
     /* Direclty pass preview buffer and meta result for Main camera */
     if(result_buffer == NULL){

@@ -46,6 +46,7 @@
 #include <ui/GraphicBuffer.h>
 #include "../SprdCamera3HWI.h"
 #include "SprdMultiCam3Common.h"
+#include "ts_makeup_api.h"
 
 namespace sprdcamera {
 
@@ -134,6 +135,8 @@ private:
     int                               mPreviewID;
     Mutex                             mRequestLock;
     bool                              mIsCapturing;
+    int32_t                           mPerfectskinlevel;
+    int32_t                           g_face_info[4];
     int cameraDeviceOpen(int camera_id,struct hw_device_t **hw_device);
     int setupPhysicalCameras();
     int getCameraInfo(struct camera_info *info);
@@ -193,6 +196,9 @@ public:
         void dumpFps();
         void waitMsgAvailable();
         int combineTwoPicture(/*out*/buffer_handle_t *&output_buf, buffer_handle_t *inputbuff1, buffer_handle_t *inputbuff2);
+        void reProcessFrame(const buffer_handle_t* frame_buffer,int32_t cur_frameid);
+        void cap_3d_convert_face_info_from_preview2cap(int *ptr_cam_face_inf,int width,int height);
+        void cap_3d_doFaceMakeup( private_handle_t *private_handle ,int perfect_level,int *face_info);
     };
     sp<CaptureThread>     mCaptureThread;
 
