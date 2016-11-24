@@ -851,8 +851,17 @@ int SprdCamera3RangeFinder::SyncThread::allocateOne(int w,int h, uint32_t is_cac
         goto getpmem_fail;
     }
 
+    if (new_mem == NULL) {
+        HAL_LOGE("error new_mem is null.");
+        goto getpmem_fail;
+    }
+
     buffer = new private_handle_t(private_handle_t::PRIV_FLAGS_USES_ION,0x130,\
                             mem_size, (unsigned char *)pHeapIon->getBase(), 0);
+    if (buffer == NULL) {
+        HAL_LOGE("error buffer is null.");
+        goto getpmem_fail;
+    }
 
     buffer->share_fd = pHeapIon->getHeapID();
     buffer->format = HAL_PIXEL_FORMAT_YCrCb_420_SP;

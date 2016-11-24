@@ -164,12 +164,13 @@ void SprdCamera3StereoVideo::freeLocalBuffer(new_mem_t* LocalBuffer, List<buffer
     for(size_t i = 0; i < bufferNum; i++){
         if(LocalBuffer[i].buffer != NULL){
             delete ((private_handle_t*)*(LocalBuffer[i].buffer));
+            LocalBuffer[i].buffer = NULL;
+        }
+        if(LocalBuffer[i].pHeapIon != NULL){
             delete LocalBuffer[i].pHeapIon;
-            *(LocalBuffer[i].buffer) = NULL;
+            LocalBuffer[i].pHeapIon = NULL;
         }
     }
-    free(LocalBuffer);
-
 }
 /*===========================================================================
  * FUNCTION         : getCameraMuxer
@@ -316,6 +317,10 @@ int SprdCamera3StereoVideo::closeCameraDevice()
     mOldPreviewRequestList.clear();
     mOldVideoRequestList.clear();
     freeLocalBuffer(mVideoLocalBuffer,mVideoLocalBufferList,MAX_VIDEO_QEQUEST_BUF);
+    if (mVideoLocalBuffer != NULL) {
+        free(mVideoLocalBuffer);
+        mVideoLocalBuffer = NULL;
+    }
 
     HAL_LOGD("X, rc: %d", rc);
     return rc;
@@ -535,8 +540,17 @@ int SprdCamera3StereoVideo::allocateOne(int w,int h, uint32_t is_cache,new_mem_t
         goto getpmem_fail;
     }
 
+    if (new_mem == NULL) {
+        HAL_LOGE("error new_mem is null.");
+        goto getpmem_fail;
+    }
+
     buffer = new private_handle_t(private_handle_t::PRIV_FLAGS_USES_ION,0x130,\
                             mem_size, (unsigned char *)pHeapIon->getBase(), 0);
+    if (buffer == NULL) {
+        HAL_LOGE("error buffer is null.");
+        goto getpmem_fail;
+    }
 
     buffer->share_fd = pHeapIon->getHeapID();
     buffer->format = HAL_PIXEL_FORMAT_YCrCb_420_SP;
