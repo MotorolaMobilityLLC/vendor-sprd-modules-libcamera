@@ -770,7 +770,7 @@ static const SENSOR_REG_T s5k4h8yx_1632x1224_4lane_setting[] = {
 static SENSOR_REG_TAB_INFO_T s_s5k4h8yx_resolution_Tab_RAW[] = {
     #ifdef  S5K4H8YX_4_LANES
 	{ADDR_AND_LEN_OF_ARRAY(s5k4h8yx_common_init_new1), 0, 0, 24, SENSOR_IMAGE_FORMAT_RAW},
-	//{ADDR_AND_LEN_OF_ARRAY(s5k4h8yx_1632x1224_4lane_setting_new1), 1632, 1224, 24, SENSOR_IMAGE_FORMAT_RAW},
+	{ADDR_AND_LEN_OF_ARRAY(s5k4h8yx_1632x1224_4lane_setting), 1632, 1224, 24, SENSOR_IMAGE_FORMAT_RAW},
 	{ADDR_AND_LEN_OF_ARRAY(s5k4h8yx_3264x2448_4lane_setting_new1), 3264, 2448, 24, SENSOR_IMAGE_FORMAT_RAW},
     #else
 	//{ADDR_AND_LEN_OF_ARRAY(s5k4h8yx_common_init), 0, 0, 24, SENSOR_IMAGE_FORMAT_RAW},
@@ -792,7 +792,7 @@ static SENSOR_TRIM_T s_s5k4h8yx_Resolution_Trim_Tab[] = {
 	{0, 0, 3264, 2448, 26742, 700, 2498, {0, 0, 3264, 2448}},
 	//{0, 0, 1632, 1224, 26742, 700, 1246, {0, 0, 1632, 1224}},
 	#else
-	//{0, 0, 1632, 1224, 13371, 700, 1246, {0, 0, 1632, 1224}},
+	{0, 0, 1632, 1224, 13371, 700, 2498, {0, 0, 1632, 1224}},
 	{0, 0, 3264, 2448, 13371, 700, 2498, {0, 0, 3264, 2448}},
 	#endif
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
