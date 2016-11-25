@@ -1152,11 +1152,6 @@ void SprdCamera3Capture::CaptureThread::unLoadGpuApi()
 {
     HAL_LOGD("E");
 
-    if(isInitRenderContest){
-        mGpuApi->destroyRenderContext();
-        isInitRenderContest = false;
-    }
-
     if(mGpuApi->handle!=NULL){
      dlclose(mGpuApi->handle);
      mGpuApi->handle = NULL;
@@ -1348,6 +1343,10 @@ bool SprdCamera3Capture::CaptureThread::threadLoop()
                 {
                     free_camera_metadata(mSavedCapReqsettings);
                     mSavedCapReqsettings = NULL;
+                }
+                if(isInitRenderContest){
+                    mGpuApi->destroyRenderContext();
+                    isInitRenderContest = false;
                 }
                 return false;
             }
