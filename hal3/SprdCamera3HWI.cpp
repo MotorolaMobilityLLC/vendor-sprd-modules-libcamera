@@ -799,7 +799,8 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 	   raw_size.height * raw_size.width > 3264 * 2448) {
 		mReciveQeqMax = SprdCamera3PicChannel::kMaxBuffers;
 	} else {
-		mReciveQeqMax = SprdCamera3RegularChannel::kMaxBuffers;
+		mReciveQeqMax = SprdCamera3RegularChannel::kMaxBuffers +
+				SprdCamera3PicChannel::kMaxBuffers;
 	}
 
 	/* Initialize mPendingRequestInfo and mPendnigBuffersMap */
