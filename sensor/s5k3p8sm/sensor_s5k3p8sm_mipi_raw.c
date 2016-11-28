@@ -575,32 +575,24 @@ static const SENSOR_REG_T s5k3p8sm_1280x720_4lane_setting[] = {
 
 static SENSOR_REG_TAB_INFO_T s_s5k3p8sm_resolution_Tab_RAW[9] = {
 	{ADDR_AND_LEN_OF_ARRAY(s5k3p8sm_common_init), 0, 0, 24, SENSOR_IMAGE_FORMAT_RAW},
-	//{ADDR_AND_LEN_OF_ARRAY(s5k3p8sm_2320x1744_4lane_setting), 2320, 1744, 24, SENSOR_IMAGE_FORMAT_RAW},
+	{ADDR_AND_LEN_OF_ARRAY(s5k3p8sm_2320x1744_4lane_setting), 2320, 1744, 24, SENSOR_IMAGE_FORMAT_RAW},
 	{ADDR_AND_LEN_OF_ARRAY(s5k3p8sm_4640x3488_4lane_setting), 4640, 3488, 24, SENSOR_IMAGE_FORMAT_RAW},
 	//{ADDR_AND_LEN_OF_ARRAY(s5k3p8sm_1280x720_4lane_setting), 1280, 720, 24, SENSOR_IMAGE_FORMAT_RAW},
 	//{ADDR_AND_LEN_OF_ARRAY(s5k3p8sm_1920x1080_4lane_30fps_setting), 1920, 1080, 24, SENSOR_IMAGE_FORMAT_RAW},
 	//{ADDR_AND_LEN_OF_ARRAY(s5k3p8sm_1920x1080_4lane_setting), 1920, 1080, 24, SENSOR_IMAGE_FORMAT_RAW},
 	//{ADDR_AND_LEN_OF_ARRAY(s5k3p8sm_2320x1748_4lane_setting), 2320, 1748, 24, SENSOR_IMAGE_FORMAT_RAW},
 	//{ADDR_AND_LEN_OF_ARRAY(s5k3p8sm_2304x1740_4lane_setting), 2304, 1740, 24, SENSOR_IMAGE_FORMAT_RAW},
-	{PNULL, 0, 0, 0, 0, 0},
-	{PNULL, 0, 0, 0, 0, 0},
-	{PNULL, 0, 0, 0, 0, 0},
-	{PNULL, 0, 0, 0, 0, 0},
 };
 
 static SENSOR_TRIM_T s_s5k3p8sm_Resolution_Trim_Tab[SENSOR_MODE_MAX] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-	//{0, 0, 2320, 1744, 9140, 1320, 3643, {0, 0, 2320, 1744}},
+	{0, 0, 2320, 1744, 9140, 1320, 3643, {0, 0, 2320, 1744}},
 	{0, 0, 4640, 3488, 9140, 2784, 3643, {0, 0, 4640, 3488}},
 	//{0, 0, 1280, 720, 9248, 1320, 906, {0, 0, 1280, 720}},
 	//{0, 0, 1920, 1080, 9430, 1320, 3534, {0, 0, 1920, 1080}},
 	//{0, 0, 1920, 1080, 9430, 1320, 1767, {0, 0, 1920, 1080}},
 	//{0, 0, 2320, 1748, 18300, 1440, 1800, {0, 0, 2320, 1748}},
 	//{0, 0, 2304, 1740, 9430, 1320, 0x0dc8, {0, 0, 2304, 1740}},
-	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 };
 
 static const SENSOR_REG_T s_s5k3p8sm_2576x1932_video_tab[SENSOR_VIDEO_MODE_MAX][1] = {
@@ -1083,7 +1075,7 @@ static int s5k3p8sm_otp_read_data(SENSOR_HW_HANDLE handle)
 	if (0 == single_otp->af_info.flag)
 		SENSOR_PRINT("af otp is wrong");
 
-	checksum += single_otp->af_info.flag;
+	checksum = 0;//+= s5k3p3_otp_info.af_info.flag;
 	/* cause checksum, skip af flag */
 	low_val = s5k3p8sm_i2c_read_otp(0x06A1);
 	checksum += low_val;
@@ -1201,7 +1193,7 @@ static unsigned long s5k3p8sm_parse_otp(SENSOR_HW_HANDLE handle, SENSOR_VAL_T* p
 		if (0 == single_otp->af_info.flag)
 			SENSOR_PRINT("af otp is wrong");
 
-		checksum += single_otp->af_info.flag;
+		checksum = 0;//+= s5k3p3_otp_info.af_info.flag;
 		/* cause checksum, skip af flag */
 		low_val = buff[i++];
 		checksum += low_val;
@@ -1275,7 +1267,10 @@ static unsigned long _s5k3p8sm_update_gain(SENSOR_HW_HANDLE handle, unsigned lon
 		d_gain = 256;
 	} else {
 		a_gain = 16*32;
-		d_gain = real_gain>>1;
+		d_gain = 256.0*real_gain/a_gain;
+		SENSOR_LOGI("_s5k3p8sm: real_gain:0x%x, a_gain: 0x%x, d_gain: 0x%x", (uint32_t)real_gain, (uint32_t)a_gain,(uint32_t)d_gain);
+		if((uint32_t)d_gain>256*256)
+			d_gain=256*256;  //d_gain < 256x
 	}
 
 	ret_value = Sensor_WriteReg(0x204, a_gain);
@@ -1665,7 +1660,7 @@ static unsigned long _s5k3p8sm_access_val(SENSOR_HW_HANDLE handle, unsigned long
 	switch(param_ptr->type)
 	{
 		case SENSOR_VAL_TYPE_INIT_OTP:
-			//s5k3p8sm_otp_init(handle);
+			s5k3p8sm_otp_init(handle);
 			break;
 		case SENSOR_VAL_TYPE_SHUTTER:
 			*((uint32_t*)param_ptr->pval) = _s5k3p8sm_get_shutter(handle);
@@ -1677,10 +1672,10 @@ static unsigned long _s5k3p8sm_access_val(SENSOR_HW_HANDLE handle, unsigned long
 			//rtn = _s5k3p8sm_write_vcm(param_ptr->pval);
 			break;
 		case SENSOR_VAL_TYPE_READ_OTP:
-			//s5k3p8sm_otp_read(handle, param_ptr);
+			s5k3p8sm_otp_read(handle, param_ptr);
 			break;
 		case SENSOR_VAL_TYPE_PARSE_OTP:
-			//s5k3p8sm_parse_otp(handle, param_ptr);
+			s5k3p8sm_parse_otp(handle, param_ptr);
 			break;
 		case SENSOR_VAL_TYPE_WRITE_OTP:
 			//rtn = _hi544_write_otp((uint32_t)param_ptr->pval);

@@ -1200,7 +1200,11 @@ static unsigned long _s5k3p3sm_update_gain(SENSOR_HW_HANDLE handle, unsigned lon
 		d_gain = 256;
 	} else {
 		a_gain = 16*32;
-		d_gain = real_gain>>1;
+		d_gain = 256.0*real_gain/a_gain;
+		SENSOR_LOGI("_s5k3p3sm: real_gain:0x%x, a_gain: 0x%x, d_gain: 0x%x", (uint32_t)real_gain, (uint32_t)a_gain,(uint32_t)d_gain);
+		if((uint32_t)d_gain>256*256)
+			d_gain=256*256;  //d_gain < 256x
+
 	}
 
 	ret_value = Sensor_WriteReg(0x204, a_gain);
