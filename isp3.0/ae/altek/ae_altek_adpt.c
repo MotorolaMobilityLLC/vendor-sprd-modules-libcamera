@@ -2057,7 +2057,8 @@ static cmr_int aealtek_set_touch_zone(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 	if (0 == in_ptr->touch_zone.zone.x &&
 	    0 == in_ptr->touch_zone.zone.y &&
 	    0 == in_ptr->touch_zone.zone.w &&
-	    0 == in_ptr->touch_zone.zone.h) {
+	    0 == in_ptr->touch_zone.zone.h &&
+	    1 == cxt_ptr->touch_param.touch_flag) {
 		return ISP_SUCCESS;
 	}
 
@@ -5159,7 +5160,8 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 				ISP_LOGI("CB TOUCH_CONVERGED");
 				aealtek_change_ae_state(cxt_ptr, cxt_ptr->ae_state, ISP3A_AE_CTRL_ST_CONVERGED);
 				cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRl_CB_TOUCH_CONVERGED, &callback_in);
-				cxt_ptr->touch_param.touch_flag = 0;
+				//cxt_ptr->touch_param.touch_flag = 0;
+				cxt_ptr->touch_param.ctrl_convergence_req_flag=0;
 			}
 		}
 	}
