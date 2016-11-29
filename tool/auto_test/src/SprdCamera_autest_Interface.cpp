@@ -813,6 +813,7 @@ static sprd_camera_memory_t* allocCameraMem(int buf_size, int num_bufs, uint32_t
 
 	memory->ion_heap = pHeapIon;
 	memory->fd = pHeapIon->getHeapID();
+	memory->dev_fd = pHeapIon->getIonDeviceFd();
 	// memory->phys_addr is offset from memory->fd, always set 0 for yaddr
 	memory->phys_addr = 0;
 	memory->phys_size = mem_size;
