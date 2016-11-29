@@ -36,6 +36,7 @@ enum pdaf_ctrl_cmd_type {
 	PDAF_CTRL_CMD_DIRECT_BEGIN,
 	PDAF_CTRL_CMD_GET_BUSY,
 	PDAF_CTRL_CMD_SET_CONFIG,
+	PDAF_CTRL_CMD_SET_ENABLE,
 	PDAF_CTRL_CMD_DIRECT_END,
 };
 
@@ -81,6 +82,7 @@ struct pdaf_ctrl_cb_ops_type {
 
 struct pdaf_ctrl_param_in {
 	union {
+		cmr_u8 pd_enable;
 		struct isp3a_pd_config_t *pd_config;
 		cmr_int (*pd_set_buffer) (struct pd_frame_in *cb_param);
 	};

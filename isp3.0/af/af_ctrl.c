@@ -125,6 +125,21 @@ static cmr_int afctrl_lock_ae_awb(cmr_handle handle, void *data)
 	return ret;
 }
 
+static cmr_int afctrl_config_pdaf_enable(cmr_handle handle, void *data)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct afctrl_context *cxt = (struct afctrl_context *)handle;
+
+	if (cxt->cb_ops.cfg_pdaf_enable) {
+		ret = cxt->cb_ops.cfg_pdaf_enable(cxt->caller_handle, data);
+	} else {
+		ISP_LOGE("cb is null");
+		ret = -ISP_CALLBACK_NULL;
+	}
+
+	return ret;
+}
+
 static cmr_int afctrl_config_pdaf_config(cmr_handle handle, void *data)
 {
 	cmr_int ret = -ISP_ERROR;
@@ -449,6 +464,7 @@ cmr_int af_ctrl_init(struct af_ctrl_init_in *in,
 	adpt_in.cb_ctrl_ops.end_notify = afctrl_end_notify;
 	adpt_in.cb_ctrl_ops.lock_ae_awb = afctrl_lock_ae_awb;
 	adpt_in.cb_ctrl_ops.cfg_af_stats = afctrl_config_af_stats;
+	adpt_in.cb_ctrl_ops.cfg_pdaf_enable = afctrl_config_pdaf_enable;
 	adpt_in.cb_ctrl_ops.cfg_pdaf_config = afctrl_config_pdaf_config;
 	adpt_in.cb_ctrl_ops.get_system_time = afctrl_get_timestamp;
 

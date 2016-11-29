@@ -171,6 +171,7 @@ struct af_ctrl_cb_ops_type {
 			      struct af_result_param *data);
 	cmr_int (*lock_ae_awb)(cmr_handle caller_handle, void *lock);
 	cmr_int (*cfg_af_stats)(cmr_handle caller_handle, void *data);
+	cmr_int (*cfg_pdaf_enable)(cmr_handle caller_handle, void *data);
 	cmr_int (*cfg_pdaf_config)(cmr_handle caller_handle, void *data);
 	cmr_int (*get_system_time)(cmr_handle caller_handler, cmr_u32 *sec_ptr,
 				   cmr_u32 *usec_ptr);

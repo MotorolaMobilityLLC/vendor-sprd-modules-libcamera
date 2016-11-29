@@ -321,6 +321,7 @@ static cmr_int isp3a_stop(cmr_handle isp_3a_handle);
 static cmr_int isp3a_get_yimg_info(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_prev_yimg(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_prev_yuv(cmr_handle isp_3a_handle, void *param_ptr);
+static cmr_int isp3a_set_pdaf_enable(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_set_pdaf_config(cmr_handle isp_3a_handle, void *param_ptr);
 static cmr_int isp3a_handle_pdaf_callback(cmr_handle isp_3a_handle, struct pdaf_ctrl_callback_in *result_ptr);
 static cmr_int isp3a_start_pdaf_raw_process(cmr_handle isp_3a_handle, void *param_ptr);
@@ -957,6 +958,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 	af_input.af_ctrl_cb_ops.end_notify = isp3a_end_af_notify;
 	af_input.af_ctrl_cb_ops.lock_ae_awb = isp3a_set_ae_awb_lock;
 	af_input.af_ctrl_cb_ops.cfg_af_stats = isp3a_cfg_af_param;
+	af_input.af_ctrl_cb_ops.cfg_pdaf_enable = isp3a_set_pdaf_enable;
 	af_input.af_ctrl_cb_ops.cfg_pdaf_config = isp3a_set_pdaf_config;
 	af_input.af_ctrl_cb_ops.get_system_time = isp3a_get_dev_time;
 	af_input.tuning_info.tuning_file = input_ptr->bin_info.af_addr;
@@ -4371,6 +4373,28 @@ static cmr_int isp3a_set_prev_yuv(cmr_handle isp_3a_handle, void *param_ptr)
 		goto exit;
 	}
 
+exit:
+	return ret;
+}
+
+cmr_int isp3a_set_pdaf_enable(cmr_handle isp_3a_handle, void *param_ptr)
+{
+	cmr_int                                     ret = -ISP_ERROR;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
+	struct pdaf_ctrl_param_in                   pdaf_in;
+
+	if (!param_ptr) {
+		ISP_LOGW("input is NULL");
+		goto exit;
+	}
+	if (!cxt->pdaf_cxt.handle) {
+		goto exit;
+	}
+
+	cmr_bzero(&pdaf_in, sizeof(pdaf_in));
+	pdaf_in.pd_enable = *(cmr_u8 *)param_ptr;
+	ISP_LOGV("pd_enable %d", pdaf_in.pd_enable);
+	ret = pdaf_ctrl_ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_SET_ENABLE, &pdaf_in, NULL);
 exit:
 	return ret;
 }

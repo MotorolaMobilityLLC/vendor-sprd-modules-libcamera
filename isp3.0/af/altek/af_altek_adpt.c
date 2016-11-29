@@ -237,6 +237,7 @@ static cmr_int afaltek_adpt_af_done(cmr_handle adpt_handle, cmr_int success);
 static cmr_int afaltek_adpt_trans_data_to_caf(cmr_handle adpt_handle, void *in, cmr_u32 caf_type);
 static cmr_int afaltek_adpt_set_haf_state(cmr_handle adpt_handle, cmr_u8 state);
 static cmr_u8 afaltek_adpt_get_haf_state(cmr_handle adpt_handle);
+static cmr_int afaltek_adpt_set_pd_enable(cmr_handle adpt_handle, cmr_u8 enable);
 
 /************************************ INTERNAK FUNCTION ***************************************/
 
@@ -834,6 +835,7 @@ static cmr_int afaltek_adpt_set_mode(cmr_handle adpt_handle, cmr_int mode)
 	struct allib_af_input_set_param_t p;
 	cmr_int ctrl_mode = 0;
 	struct af_ctrl_motor_pos pos_info;
+	cmr_u8 pd_enable = 0;
 
 	cmr_bzero(&pos_info, sizeof(pos_info));
 	cmr_bzero(&p, sizeof(p));
@@ -858,6 +860,8 @@ static cmr_int afaltek_adpt_set_mode(cmr_handle adpt_handle, cmr_int mode)
 
 		p.u_set_data.focus_mode_type = alAFLib_AF_MODE_AUTO;
 		ret = afaltek_adpt_set_parameters(cxt, &p);
+		pd_enable = 0;
+		afaltek_adpt_set_pd_enable(cxt, pd_enable);
 		break;
 	case AF_CTRL_MODE_CAF:
 #ifdef FEATRUE_SPRD_CAF_TRIGGER
@@ -866,6 +870,8 @@ static cmr_int afaltek_adpt_set_mode(cmr_handle adpt_handle, cmr_int mode)
 #endif
 		p.u_set_data.focus_mode_type = alAFLib_AF_MODE_CONTINUOUS_PICTURE;
 		ret = afaltek_adpt_set_parameters(cxt, &p);
+		pd_enable = 1;
+		afaltek_adpt_set_pd_enable(cxt, pd_enable);
 		break;
 
 	case AF_CTRL_MODE_INFINITY:
@@ -2128,6 +2134,22 @@ static cmr_u8 afaltek_adpt_get_sys_time(cmr_handle adpt_handle, cmr_u64 *time)
 	return ret;
 }
 
+static cmr_int afaltek_adpt_set_pd_enable(cmr_handle adpt_handle, cmr_u8 enable)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+
+	/* send PDAF enable */
+	if (cxt->cb_ops.cfg_pdaf_enable) {
+		ISP_LOGV("pd_enable %d", enable);
+		ret = cxt->cb_ops.cfg_pdaf_enable(cxt->caller_handle, (void *)&enable);
+	} else {
+		ISP_LOGE("cb is null");
+		ret = -ISP_CALLBACK_NULL;
+	}
+	return ret;
+}
+
 static cmr_u8 afaltek_adpt_aft_log(cmr_handle adpt_handle, cmr_u32 *is_save)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -2857,13 +2879,7 @@ static cmr_int afaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 	cxt->haf_support = in_p->ctrl_in->pdaf_support;
 	cxt->caller_handle = in_p->caller_handle;
 	cxt->camera_id = in_p->ctrl_in->camera_id;
-	cxt->cb_ops.set_pos = in_p->cb_ctrl_ops.set_pos;
-	cxt->cb_ops.start_notify = in_p->cb_ctrl_ops.start_notify;
-	cxt->cb_ops.end_notify = in_p->cb_ctrl_ops.end_notify;
-	cxt->cb_ops.lock_ae_awb = in_p->cb_ctrl_ops.lock_ae_awb;
-	cxt->cb_ops.cfg_af_stats = in_p->cb_ctrl_ops.cfg_af_stats;
-	cxt->cb_ops.cfg_pdaf_config = in_p->cb_ctrl_ops.cfg_pdaf_config;
-	cxt->cb_ops.get_system_time = in_p->cb_ctrl_ops.get_system_time;
+	cxt->cb_ops = in_p->cb_ctrl_ops;
 	cxt->af_cur_status = AF_ADPT_IDLE;
 	cxt->lens_status = AF_CTRL_LENS_MOVE_DONE;
 	ret = afaltek_libops_init(cxt);
@@ -3086,7 +3102,7 @@ static cmr_int afaltek_adpt_proc_report_pd_cfg(cmr_handle adpt_handle,
 	pdaf_cfg.pd_roi.height = report->pd_config.pd_roi_info.roi.uw_dy;
 
 	ISP_LOGI("pdaf_cfg.type = %x", pdaf_cfg.type);
-	/* send stats config to framework */
+	/* send stats config to PDAF */
 	if (cxt->cb_ops.cfg_pdaf_config) {
 		ret = cxt->cb_ops.cfg_pdaf_config(cxt->caller_handle, (void *)&pdaf_cfg);
 	} else {

@@ -295,6 +295,23 @@ static cmr_int pdafaltek_adpt_set_config(cmr_handle adpt_handle, struct pdaf_ctr
 	return 0;
 }
 
+static cmr_int pdafaltek_adpt_set_enable(cmr_handle adpt_handle, struct pdaf_ctrl_param_in *in)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct pdaf_altek_context *cxt = (struct pdaf_altek_context *)adpt_handle;
+
+	ISP_CHECK_HANDLE_VALID(adpt_handle);
+	if (!in) {
+		ISP_LOGE("init param is null");
+		ret = ISP_PARAM_NULL;
+		return ret;
+	}
+	cxt->pd_enable = in->pd_enable;
+	ISP_LOGI("pd enable %d", cxt->pd_enable);
+
+	return 0;
+}
+
 static cmr_int pdafaltek_adpt_get_busy(cmr_handle adpt_handle, struct pdaf_ctrl_param_out *out)
 {
 	cmr_int ret = -ISP_ERROR;
@@ -795,6 +812,9 @@ static cmr_int pdafaltek_adpt_ioctrl(cmr_handle adpt_handle, cmr_int cmd,
 		break;
 	case PDAF_CTRL_CMD_SET_CONFIG:
 		ret = pdafaltek_adpt_set_config(adpt_handle, in_ptr);
+		break;
+	case PDAF_CTRL_CMD_SET_ENABLE:
+		ret = pdafaltek_adpt_set_enable(adpt_handle, in_ptr);
 		break;
 	case PDAF_CTRL_CMD_GET_BUSY:
 		ret = pdafaltek_adpt_get_busy(adpt_handle, out_ptr);
