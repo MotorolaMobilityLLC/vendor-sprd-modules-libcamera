@@ -2402,8 +2402,6 @@ static cmr_int aealtek_work_preview(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 	if (cxt_ptr->is_refocus && cxt_ptr->is_master) {
 		/* slv_preview_sensor_info */
 		cxt_ptr->nxt_status.ui_param.work_info_slv.resolution.min_fps = in_ptr->resolution.min_fps;
-		cxt_ptr->cur_status.min_frame_length_slv =
-				cxt_ptr->nxt_status.ui_param.work_info_slv.resolution.frame_line;
 
 		preview_sensor_ptr = &param_ct_ptr->slave_sensor_info;
 		ret = aealtek_sensor_info_ui2lib_slv(cxt_ptr,
@@ -3858,10 +3856,10 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	cxt_ptr->sensor_exp_data.write_exp.gain = out_write.gain;
 	cxt_ptr->sensor_exp_data.write_exp.dummy = out_write.dummy;
 
-	ret = aealtek_set_dummy(cxt_ptr, &cxt_ptr->sensor_exp_data.actual_exp);
+	ret = aealtek_set_dummy(cxt_ptr, &cxt_ptr->sensor_exp_data.write_exp);
 	if (ret)
 		ISP_LOGW("warning set_dummy ret=%ld !!!", ret);
-	ret = aealtek_set_sof_to_lib(cxt_ptr, in_ptr, cxt_ptr->sensor_exp_data.actual_exp);
+	ret = aealtek_set_sof_to_lib(cxt_ptr, in_ptr, cxt_ptr->sensor_exp_data.write_exp);
 	if (ret)
 		goto exit;
 
