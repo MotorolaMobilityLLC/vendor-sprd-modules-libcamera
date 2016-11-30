@@ -4920,11 +4920,10 @@ static cmr_u32 aealtek_flash_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 
 	/*flash*/
 	if (cxt_ptr->flash_param.enable) {
-		ISP_LOGI("======lib flash converged =%d", cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_converged);
-		ISP_LOGI("======lib flash ae_st=%d",
-			cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_LibStates);
-		ISP_LOGI("=====lib flash_st=%d",
-			cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_FlashStates);
+		ISP_LOGI("======lib flash converged =%d,ae_st=%d,flash_st=%d",
+				cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_converged,
+				cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_LibStates,
+				cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_FlashStates);
 		switch (cxt_ptr->flash_param.flash_state) {
 		case AEALTEK_FLASH_STATE_PREPARE_ON:
 			ISP_LOGV("========flash led prepare on");
