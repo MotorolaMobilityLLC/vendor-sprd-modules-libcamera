@@ -516,7 +516,7 @@ static cmr_int prev_set_cap_param(struct prev_handle *handle,
 
 static cmr_int prev_update_cap_param(struct prev_handle *handle,
 					cmr_u32 camera_id,
-					cmr_u32 encode_angle);
+					cmr_u32 encode_angle,struct snp_proc_param *snp_proc_param);
 
 static cmr_int prev_set_zsl_param_lightly(struct prev_handle *handle, cmr_u32 camera_id);
 
@@ -1969,7 +1969,7 @@ cmr_int prev_thread_proc(struct cmr_msg *message, void *p_data)
 		inter_param = (struct internal_param*)message->data;
 		camera_id   = (cmr_u32)((unsigned long)inter_param->param1);
 
-		ret = prev_update_cap_param(handle, camera_id, (cmr_u32)((unsigned long)inter_param->param2));
+		ret = prev_update_cap_param(handle, camera_id, (cmr_u32)((unsigned long)inter_param->param2),(struct snp_proc_param*)inter_param->param3);
 
 		ret = prev_get_cap_post_proc_param(handle,
 						camera_id,
@@ -7788,7 +7788,7 @@ exit:
 
 static cmr_int prev_update_cap_param(struct prev_handle *handle,
 					cmr_u32 camera_id,
-					cmr_u32 encode_angle)
+					cmr_u32 encode_angle,struct snp_proc_param * snp_proc_param)
 {
 	cmr_int                     ret = CMR_CAMERA_SUCCESS;
 	struct sensor_exp_info      *sensor_info = NULL;
@@ -7810,6 +7810,7 @@ static cmr_int prev_update_cap_param(struct prev_handle *handle,
 	sensor_info            = &prev_cxt->sensor_info;
 	sensor_mode_info = &sensor_info->mode_info[prev_cxt->cap_mode];
 	zoom_param         = &prev_cxt->prev_param.zoom_setting;
+	prev_cxt->prev_param.thumb_size = snp_proc_param->thumb_size;
 
 	CMR_LOGI("@xin preview_eb %d , snapshot_eb %d, frame_ctrl %d, frame_count %d, encode_angle %d",
 		prev_cxt->prev_param.preview_eb,

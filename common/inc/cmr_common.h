@@ -776,6 +776,7 @@ struct snp_proc_param {
 	struct img_rect                     scaler_src_rect[CMR_CAPTURE_MEM_SUM];
 	struct img_frm                      chn_out_frm[CMR_CAPTURE_MEM_SUM];
 	struct cmr_cap_mem                  mem[CMR_CAPTURE_MEM_SUM];
+	struct img_size                     thumb_size;
 };
 /*************************** snapshot post data type **************************/
 

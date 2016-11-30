@@ -7317,6 +7317,7 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle, struct snapshot_param *
 		goto exit;
 	}
 	jpeg_cxt->param.thum_size = setting_param.size_param;
+	out_ptr->post_proc_setting.thumb_size = setting_param.size_param;
 
 	ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_TOUCH_XY, &setting_param);
 	if (ret) {

@@ -205,7 +205,7 @@ int32_t jpeg_stream_size = (2048 * 1536 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
 int32_t jpeg_stream_size = (1920 * 1080 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
 #endif
 
-const int32_t kjpegThumbnailSizes[CAMERA_SETTINGS_THUMBNAILSIZE_ARRAYSIZE] = {0, 0, 256, 144, 320, 240, 720, 480};
+const int32_t kjpegThumbnailSizes[CAMERA_SETTINGS_THUMBNAILSIZE_ARRAYSIZE] = {0, 0, 256, 144, 320, 240, 368, 240};
 const int64_t kFrameDurationRange[2] = {33331760L,500000000L};//{33331760L,30000000000L}; // ~1/30 s - 1/5 sec
 camera_metadata_rational kexposureCompensationStep = {1,1};
 const uint8_t availableFaceDetectModes[] = {
