@@ -3859,7 +3859,10 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	ret = aealtek_set_dummy(cxt_ptr, &cxt_ptr->sensor_exp_data.write_exp);
 	if (ret)
 		ISP_LOGW("warning set_dummy ret=%ld !!!", ret);
-	ret = aealtek_set_sof_to_lib(cxt_ptr, in_ptr, cxt_ptr->sensor_exp_data.write_exp);
+	ret = aealtek_set_dummy(cxt_ptr, &cxt_ptr->sensor_exp_data.actual_exp);
+	if (ret)
+		ISP_LOGW("warning set_dummy ret=%ld !!!", ret);
+	ret = aealtek_set_sof_to_lib(cxt_ptr, in_ptr, cxt_ptr->sensor_exp_data.actual_exp);
 	if (ret)
 		goto exit;
 
