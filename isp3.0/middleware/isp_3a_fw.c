@@ -217,9 +217,6 @@ static cmr_int isp3a_set_exposure(cmr_handle handle, struct ae_ctrl_param_sensor
 static cmr_int isp3a_ae_set_gain(cmr_handle handle, struct ae_ctrl_param_sensor_gain *in_ptr);
 static cmr_int isp3a_set_exposure_slv(cmr_handle handle, struct ae_ctrl_param_sensor_exposure *in_ptr);
 static cmr_int isp3a_ae_set_gain_slv(cmr_handle handle, struct ae_ctrl_param_sensor_gain *in_ptr);
-static cmr_int isp3a_read_aec_info(cmr_handle handle, void *in_ptr);
-static cmr_int isp3a_read_aec_info_slv(cmr_handle handle, void *in_ptr);
-static cmr_int isp3a_write_aec_info(cmr_handle handle, void *in_ptr);
 static cmr_int isp3a_set_slave_iso(cmr_handle isp_3a_handle, cmr_u32 iso);
 static cmr_int isp3a_flash_get_charge(cmr_handle handle, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell_ptr);
 static cmr_int isp3a_flash_get_time(cmr_handle handle, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell_ptr);
@@ -634,51 +631,6 @@ exit:
 	return ret;
 }
 
-cmr_int isp3a_read_aec_info(cmr_handle handle, void *in_ptr)
-{
-	cmr_int                                     ret = ISP_SUCCESS;
-	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)handle;
-
-	if (!cxt || !cxt->ioctrl_ptr|| !cxt->ioctrl_ptr->read_aec_info || !in_ptr) {
-		ISP_LOGE("don't have io interface");
-		goto exit;
-	}
-	ret = cxt->ioctrl_ptr->read_aec_info(cxt->ioctrl_ptr->caller_handler, in_ptr);
-exit:
-	ISP_LOGI("done %ld", ret);
-	return ret;
-}
-
-cmr_int isp3a_read_aec_info_slv(cmr_handle handle, void *in_ptr)
-{
-	cmr_int                                     ret = ISP_SUCCESS;
-	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)handle;
-
-	if (!cxt || !cxt->ioctrl_ptr_slv || !cxt->ioctrl_ptr_slv->read_aec_info || !in_ptr) {
-		ISP_LOGE("don't have io interface");
-		goto exit;
-	}
-	ret = cxt->ioctrl_ptr_slv->read_aec_info(cxt->ioctrl_ptr_slv->caller_handler, in_ptr);
-exit:
-	ISP_LOGI("done %ld", ret);
-	return ret;
-}
-
-cmr_int isp3a_write_aec_info(cmr_handle handle, void *in_ptr)
-{
-	cmr_int                                     ret = ISP_SUCCESS;
-	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)handle;
-
-	if (!cxt || !cxt->ioctrl_ptr|| !cxt->ioctrl_ptr->read_aec_info || !in_ptr) {
-		ISP_LOGE("don't have io interface");
-		goto exit;
-	}
-	ret = cxt->ioctrl_ptr->write_aec_info(cxt->ioctrl_ptr->caller_handler, in_ptr);
-exit:
-	ISP_LOGI("done %ld", ret);
-	return ret;
-}
-
 cmr_int isp3a_set_slave_iso(cmr_handle isp_3a_handle, cmr_u32 iso)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
@@ -1076,9 +1028,6 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 	ae_input.ops_in.set_again_slv = isp3a_ae_set_gain_slv;
 	ae_input.ops_in.set_exposure_slv = isp3a_set_exposure_slv;
 	ae_input.ops_in.set_iso_slv = isp3a_set_slave_iso;
-	ae_input.ops_in.read_aec_info = isp3a_read_aec_info;
-	ae_input.ops_in.read_aec_info_slv = isp3a_read_aec_info_slv;
-	ae_input.ops_in.write_aec_info = isp3a_write_aec_info;
 	ae_input.sensor_static_info_slv.f_num = input_ptr->ex_info_slv.f_num;
 	ae_input.sensor_static_info_slv.exposure_valid_num = input_ptr->ex_info_slv.exp_valid_frame_num;
 	ae_input.sensor_static_info_slv.gain_valid_num = input_ptr->ex_info_slv.adgain_valid_frame_num;

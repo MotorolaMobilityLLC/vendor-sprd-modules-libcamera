@@ -802,7 +802,7 @@ write_sensor_shutter:
 	#ifdef GAIN_DELAY_1_FRAME
 	usleep(dest_fr_len*PREVIEW_LINE_TIME/10);
 	#endif
-
+	
 	return SENSOR_SUCCESS;
 }
 
@@ -1178,6 +1178,7 @@ static uint32_t isp_to_real_gain(SENSOR_HW_HANDLE handle,uint32_t param)
 {
 	uint32_t real_gain = 0;
 
+	
 	real_gain=param;
 
 	return real_gain;
@@ -1206,165 +1207,6 @@ static uint32_t ov8856s_write_gain_value(SENSOR_HW_HANDLE handle,unsigned long p
 	return ret_value;
 }
 
-static struct sensor_reg_tag ov8856s_shutter_reg[] = {
-	{0x3502, 0},
-	{0x3501, 0},
-	{0x3500, 0},
-};
-
-static struct sensor_i2c_reg_tab ov8856s_shutter_tab = {
-	.settings = ov8856s_shutter_reg,
-	.size = ARRAY_SIZE(ov8856s_shutter_reg),
-};
-
-static struct sensor_reg_tag ov8856s_again_reg[] = {
-	{0x3208, 0x01},
-	{0x3508, 0x00},
-	{0x3509, 0x00},
-};
-
-static struct sensor_i2c_reg_tab ov8856s_again_tab = {
-	.settings = ov8856s_again_reg,
-	.size = ARRAY_SIZE(ov8856s_again_reg),
-};
-
-static struct sensor_reg_tag ov8856s_dgain_reg[] = {
-	{0x5019, 0},
-	{0x501a, 0},
-	{0x501b, 0},
-	{0x501c, 0},
-	{0x501d, 0},
-	{0x501e, 0},
-	{0x501f, 0},
-	{0x5020, 0},
-	{0x3208, 0x11},
-	{0x3208, 0xA1},
-};
-
-struct sensor_i2c_reg_tab ov8856s_dgain_tab = {
-	.settings = ov8856s_dgain_reg,
-	.size = ARRAY_SIZE(ov8856s_dgain_reg),
-};
-
-static struct sensor_reg_tag ov8856s_frame_length_reg[] = {
-	{0x380e, 0},
-	{0x380f, 0},
-};
-
-static struct sensor_i2c_reg_tab ov8856s_frame_length_tab = {
-	.settings = ov8856s_frame_length_reg,
-	.size = ARRAY_SIZE(ov8856s_frame_length_reg),
-};
-
-static struct sensor_aec_i2c_tag ov8856s_aec_info = {
-	.slave_addr = (I2C_SLAVE_ADDR >> 1),
-	.addr_bits_type = SENSOR_I2C_REG_16BIT,
-	.data_bits_type = SENSOR_I2C_VAL_8BIT,
-	.shutter = &ov8856s_shutter_tab,
-	.again = &ov8856s_again_tab,
-	.dgain = &ov8856s_dgain_tab,
-	.frame_length = &ov8856s_frame_length_tab,
-};
-
-static uint16_t ov8856s_calc_exposure(SENSOR_HW_HANDLE handle,
-					 uint32_t shutter, uint32_t dummy_line, uint16_t mode,
-					 struct sensor_aec_i2c_tag *aec_info)
-{
-	uint32_t dest_fr_len = 0;
-	uint32_t cur_fr_len = 0;
-	uint32_t fr_len = s_current_default_frame_length;
-	int32_t offset = 0;
-	uint16_t value=0x00;
-	float fps = 0.0;
-	float line_time = 0.0;
-
-	dummy_line = dummy_line > FRAME_OFFSET ? dummy_line : FRAME_OFFSET;
-	dest_fr_len = ((shutter + dummy_line) > fr_len) ? (shutter +dummy_line) : fr_len;
-
-	cur_fr_len = ov8856s_read_frame_length(handle);
-
-	if (shutter < SENSOR_MIN_SHUTTER)
-		shutter = SENSOR_MIN_SHUTTER;
-
-	line_time = s_ov8856s_resolution_trim_tab[mode].line_time;
-	if (cur_fr_len > shutter) {
-		fps = 1000000.0 / (cur_fr_len * line_time);
-	} else {
-		fps = 1000000.0 / ((shutter + dummy_line) * line_time);
-	}
-
-	SENSOR_PRINT("sync fps = %f", fps);
-	aec_info->frame_length->settings[0].reg_value = (dest_fr_len >> 8) & 0xff;
-	aec_info->frame_length->settings[1].reg_value = dest_fr_len & 0xff;
-	value=(shutter<<0x04)&0xff;
-	aec_info->shutter->settings[0].reg_value = value;
-	value=(shutter>>0x04)&0xff;
-	aec_info->shutter->settings[1].reg_value = value;
-	value=(shutter>>0x0c)&0x0f;
-	aec_info->shutter->settings[2].reg_value = value;
-	return shutter;
-}
-
-static void ov8856s_calc_gain(float gain, struct sensor_aec_i2c_tag *aec_info)
-{
-	float gain_a = gain;
-	float gain_d= 0x400;
-
-	if (SENSOR_MAX_GAIN < (uint16_t)gain_a) {
-
-		gain_a = SENSOR_MAX_GAIN;
-		gain_d = gain*0x400/gain_a;
-		if ((uint16_t)gain_d > 0x2*0x400-1)
-			gain_d = 0x2*0x400-1;
-	}
-	//group 1:all other registers( gain)
-	//Sensor_WriteReg(0x3208, 0x01);
-
-	aec_info->again->settings[1].reg_value = ((uint16_t)gain_a >> 8) & 0x07;
-	aec_info->again->settings[2].reg_value = (uint16_t)gain_a & 0xff;
-
-	aec_info->dgain->settings[0].reg_value = ((uint16_t)gain_d >> 8) & 0x07;
-	aec_info->dgain->settings[1].reg_value = (uint16_t)gain_d & 0xff;
-	aec_info->dgain->settings[2].reg_value = ((uint16_t)gain_d >> 8) & 0x07;
-	aec_info->dgain->settings[3].reg_value = (uint16_t)gain_d & 0xff;
-	aec_info->dgain->settings[4].reg_value = ((uint16_t)gain_d >> 8) & 0x07;
-	aec_info->dgain->settings[5].reg_value = (uint16_t)gain_d & 0xff;
-	aec_info->dgain->settings[6].reg_value = ((uint16_t)gain_d >> 8) & 0x07;
-	aec_info->dgain->settings[7].reg_value = (uint16_t)gain_d & 0xff;
-}
-
-static unsigned long ov8856s_read_aec_info(SENSOR_HW_HANDLE handle, unsigned long param)
-{
-	unsigned long ret_value = SENSOR_SUCCESS;
-	struct sensor_aec_reg_info *info = (struct sensor_aec_reg_info *)param;
-	uint16_t exposure_line = 0x00;
-	uint16_t dummy_line = 0x00;
-	uint16_t mode = 0x00;
-	float real_gain = 0;
-	uint32_t gain = 0;
-	uint16_t frame_interval=0x00;
-
-	info->aec_i2c_info_out = &ov8856s_aec_info;
-
-	exposure_line = info->exp.exposure;
-	dummy_line = info->exp.dummy;
-	mode = info->exp.size_index;
-
-	frame_interval = (uint16_t)(((exposure_line + dummy_line) * (s_ov8856s_resolution_trim_tab[mode].line_time)) / 1000000);
-	SENSOR_PRINT("mode = %d, exposure_line = %d, dummy_line= %d, frame_interval= %d ms",
-		mode, exposure_line, dummy_line, frame_interval);
-	s_current_default_frame_length = ov8856s_get_default_frame_length(handle,mode);
-
-	s_sensor_ev_info.preview_shutter =
-		ov8856s_calc_exposure(handle,
-					 exposure_line, dummy_line, mode,
-					 &ov8856s_aec_info);
-
-	gain = info->gain < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : info->gain;
-	real_gain = (float)info->gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN*1.0;
-	ov8856s_calc_gain(real_gain, &ov8856s_aec_info);
-	return ret_value;
-}
 #ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
 /*==============================================================================
  * Description:
@@ -1441,9 +1283,8 @@ static SENSOR_IOCTL_FUNC_TAB_T s_ov8856s_ioctl_func_tab = {
 	#endif
 	.stream_on = ov8856s_stream_on,
 	.stream_off = ov8856s_stream_off,
-	.cfg_otp=ov8856s_access_val,
+	.cfg_otp=ov8856s_access_val,	
 
 	//.group_hold_on = ov8856s_group_hold_on,
 	//.group_hold_of = ov8856s_group_hold_off,
-	.read_aec_info = ov8856s_read_aec_info,
 };

@@ -81,7 +81,6 @@ LOCAL uint32_t _ov2680_com_Identify_otp(SENSOR_HW_HANDLE handle, void* param_ptr
 LOCAL unsigned long _ov2680_cfg_otp(SENSOR_HW_HANDLE handle, unsigned long  param);
 LOCAL unsigned long _ov2680_access_val(SENSOR_HW_HANDLE handle, unsigned long param);
 LOCAL unsigned long _ov2680_ex_write_exposure(SENSOR_HW_HANDLE handle, unsigned long param);
-static unsigned long ov2680_read_aec_info(SENSOR_HW_HANDLE handle, unsigned long param);
 
 LOCAL const struct raw_param_info_tab s_ov2680_raw_param_tab[]={
 	//{ov2680_RAW_PARAM_Sunny, &s_ov2680_mipi_raw_info, _ov2680_Sunny_Identify_otp, update_otp},
@@ -727,7 +726,6 @@ LOCAL SENSOR_IOCTL_FUNC_TAB_T s_ov2680_ioctl_func_tab = {
 	_ov2680_StreamOff,
 	_ov2680_access_val,//_ov2680_access_val
 	_ov2680_ex_write_exposure,
-	ov2680_read_aec_info,
 };
 
 static SENSOR_STATIC_INFO_T s_ov2680_static_info = {
@@ -1532,151 +1530,6 @@ LOCAL unsigned long _ov2680_write_gain(SENSOR_HW_HANDLE handle, unsigned long pa
 	value = (real_gain>>0x08)&0x03;
 	ret_value = Sensor_WriteReg(0x350a, value);/*8*/
 
-	return ret_value;
-}
-
-static struct sensor_reg_tag ov2680_shutter_reg[] = {
-	{0x3502, 0},
-	{0x3501, 0},
-	{0x3500, 0},
-};
-
-static struct sensor_i2c_reg_tab ov2680_shutter_tab = {
-	.settings = ov2680_shutter_reg,
-	.size = ARRAY_SIZE(ov2680_shutter_reg),
-};
-
-static struct sensor_reg_tag ov2680_again_reg[] = {
-	{0x350b, 0},
-	{0x350a, 0},
-};
-
-static struct sensor_i2c_reg_tab ov2680_again_tab = {
-	.settings = ov2680_again_reg,
-	.size = ARRAY_SIZE(ov2680_again_reg),
-};
-
-static struct sensor_reg_tag ov2680_dgain_reg[] = {
-};
-
-struct sensor_i2c_reg_tab ov2680_dgain_tab = {
-	.settings = ov2680_dgain_reg,
-	.size = ARRAY_SIZE(ov2680_dgain_reg),
-};
-
-static struct sensor_reg_tag ov2680_frame_length_reg[] = {
-	{0x380f, 0x0e},
-	{0x380e, 0x05},
-};
-
-static struct sensor_i2c_reg_tab ov2680_frame_length_tab = {
-	.settings = ov2680_frame_length_reg,
-	.size = ARRAY_SIZE(ov2680_frame_length_reg),
-};
-
-static struct sensor_aec_i2c_tag ov2680_aec_info = {
-	.slave_addr = ov2680_I2C_ADDR_W,
-	.addr_bits_type = SENSOR_I2C_REG_16BIT,
-	.data_bits_type = SENSOR_I2C_VAL_8BIT,
-	.shutter = &ov2680_shutter_tab,
-	.again = &ov2680_again_tab,
-	.dgain = &ov2680_dgain_tab,
-	.frame_length = &ov2680_frame_length_tab,
-};
-
-static uint16_t ov2680_calc_exposure(SENSOR_HW_HANDLE handle,
-					 uint32_t expsure_line, uint32_t dummy_line, uint16_t size_index,
-					 struct sensor_aec_i2c_tag *aec_info)
-{
-	uint32_t ret_value = SENSOR_SUCCESS;
-
-	uint16_t frame_len=0x00;
-	uint16_t frame_len_cur=0x00;
-	uint16_t max_frame_len=0x00;
-	uint16_t value=0x00;
-	uint16_t value0=0x00;
-	uint16_t value1=0x00;
-	uint16_t value2=0x00;
-	uint16_t frame_interval=0x00;
-	int32_t offset = 0;
-
-	frame_interval = (uint16_t)(((expsure_line + dummy_line) * s_ov2680_Resolution_Trim_Tab[size_index].line_time) / 1000000);
-	SENSOR_LOGI("current mode = %d, exposure_line = %d, dummy_line= %d, frame_interval= %d ms",
-		size_index, expsure_line, dummy_line, frame_interval);
-
-	max_frame_len=_ov2680_GetMaxFrameLine(handle, size_index);
-	if(0x00!=max_frame_len)
-	{
-		if (dummy_line > FRAME_OFFSET)
-			offset = dummy_line;
-		else
-			offset = FRAME_OFFSET;
-		frame_len = ((expsure_line + offset)> max_frame_len) ? (expsure_line + offset) : max_frame_len;
-
-		if(0x00!=(0x01&frame_len))
-		{
-			frame_len+=0x01;
-		}
-
-		frame_len_cur = (Sensor_ReadReg(0x380e)&0xff)<<8;
-		frame_len_cur |= Sensor_ReadReg(0x380f)&0xff;
-
-		value=(frame_len)&0xff;
-		aec_info->frame_length->settings[0].reg_value = value;
-		value=(frame_len>>0x08)&0xff;
-		aec_info->frame_length->settings[1].reg_value = value;
-	}
-
-	value=(expsure_line<<0x04)&0xff;
-	aec_info->shutter->settings[0].reg_value = value;
-	value=(expsure_line>>0x04)&0xff;
-	aec_info->shutter->settings[1].reg_value = value;
-	value=(expsure_line>>0x0c)&0x0f;
-	aec_info->shutter->settings[2].reg_value = value;
-
-	return 0;
-}
-
-static void ov2680_calc_gain(uint32_t gain, struct sensor_aec_i2c_tag *aec_info)
-{
-	uint32_t ret_value = SENSOR_SUCCESS;
-	uint16_t value=0x00;
-	uint32_t real_gain = 0;
-
-	real_gain = gain >> 3;
-	if(real_gain > 0x3ff)
-	{
-		real_gain = 0x3ff;
-	}
-
-	SENSOR_LOGI("SENSOR_ov2680: real_gain:0x%x", real_gain);
-
-	value = real_gain&0xff;
-	aec_info->again->settings[0].reg_value = value;
-	value = (real_gain>>0x08)&0x03;
-	aec_info->again->settings[1].reg_value = value;
-}
-
-static unsigned long ov2680_read_aec_info(SENSOR_HW_HANDLE handle, unsigned long param)
-{
-	unsigned long ret_value = SENSOR_SUCCESS;
-	struct sensor_aec_reg_info *info = (struct sensor_aec_reg_info *)param;
-	uint16_t exposure_line = 0x00;
-	uint16_t dummy_line = 0x00;
-	uint16_t mode = 0x00;
-	uint32_t gain = 0;
-
-	info->aec_i2c_info_out = &ov2680_aec_info;
-
-	exposure_line = info->exp.exposure;
-	dummy_line = info->exp.dummy;
-	mode = info->exp.size_index;
-
-	ov2680_calc_exposure(handle,
-			     exposure_line, dummy_line, mode,
-			     &ov2680_aec_info);
-
-	ov2680_calc_gain(info->gain, &ov2680_aec_info);
 	return ret_value;
 }
 
