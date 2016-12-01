@@ -5814,7 +5814,7 @@ cmr_int prev_alloc_pdaf_raw_buf(struct prev_handle *handle, cmr_u32 camera_id, c
 				prev_cxt->pdaf_mem_valid_num++;
 			}
 		}
-/*
+
 		mem_ops->alloc_mem(CAMERA_PDAF_RAW_RESERVED,
 				   handle->oem_handle,
 				   (cmr_u32 *)&prev_cxt->pdaf_mem_size,
@@ -5827,7 +5827,7 @@ cmr_int prev_alloc_pdaf_raw_buf(struct prev_handle *handle, cmr_u32 camera_id, c
 			prev_cxt->pdaf_reserved_phys_addr,
 			prev_cxt->pdaf_reserved_virt_addr,
 			prev_cxt->pdaf_reserved_fd);
-*/
+
 		prev_cxt->pdaf_mem_alloc_flag = 1;
 
 	}
@@ -5852,15 +5852,15 @@ cmr_int prev_alloc_pdaf_raw_buf(struct prev_handle *handle, cmr_u32 camera_id, c
 		buffer->addr_vir[i].addr_u = prev_cxt->pdaf_frm[i].addr_vir.addr_u;
 		buffer->fd[i]           = prev_cxt->pdaf_frm[i].fd;
 	}
-/*
+
 	prev_cxt->pdaf_reserved_frm.buf_size        = prev_cxt->pdaf_mem_size;
 	prev_cxt->pdaf_reserved_frm.addr_vir.addr_y = prev_cxt->pdaf_reserved_virt_addr;
 	prev_cxt->pdaf_reserved_frm.addr_vir.addr_u = prev_cxt->pdaf_reserved_virt_addr;
 	prev_cxt->pdaf_reserved_frm.addr_phy.addr_y = prev_cxt->pdaf_reserved_phys_addr;
 	prev_cxt->pdaf_reserved_frm.addr_phy.addr_u = prev_cxt->pdaf_reserved_phys_addr;
 	prev_cxt->pdaf_reserved_frm.fd           = prev_cxt->pdaf_reserved_fd;
-	prev_cxt->pdaf_reserved_frm.fmt             = IMG_DATA_TYPE_RAW;
-*/
+	prev_cxt->pdaf_reserved_frm.fmt             = IMG_DATA_TYPE_RAW;//IMG_DATA_TYPE_PDAF_TYPE3;
+
 	CMR_LOGI("out %ld", ret);
 	return ret;
 }
@@ -5892,14 +5892,14 @@ cmr_int prev_free_pdaf_raw_buf(struct prev_handle *handle, cmr_u32 camera_id, cm
 		cmr_bzero(prev_cxt->pdaf_phys_addr_array, (PDAF_FRM_CNT)*sizeof(cmr_uint));
 		cmr_bzero(prev_cxt->pdaf_virt_addr_array, (PDAF_FRM_CNT)*sizeof(cmr_uint));
 		cmr_bzero(prev_cxt->pdaf_fd_array, (PDAF_FRM_CNT)*sizeof(cmr_s32));
-/*
+
 		mem_ops->free_mem(CAMERA_PDAF_RAW_RESERVED,
 			  handle->oem_handle,
 			  (cmr_uint*)prev_cxt->pdaf_reserved_phys_addr,
 			  (cmr_uint*)prev_cxt->pdaf_reserved_virt_addr,
 			  &prev_cxt->pdaf_reserved_fd,
 			  (cmr_u32)1);
-*/
+
 		prev_cxt->pdaf_reserved_phys_addr = 0;
 		prev_cxt->pdaf_reserved_virt_addr = 0;
 		prev_cxt->pdaf_reserved_fd = 0;
@@ -8738,21 +8738,21 @@ cmr_int prev_set_pdaf_raw_param(struct prev_handle *handle, cmr_u32 camera_id, c
 	chn_param.cap_inf_cfg.cfg.flip_on = 0;
 	chn_param.cap_inf_cfg.cfg.need_isp_tool = 1;
 	chn_param.cap_inf_cfg.cfg.pdaf_type3 = 1;
-#if 0
+#if 0 /*not crop*/
 	prev_cxt->pdaf_rect.start_x = sensor_mode_info->trim_start_x;
 	prev_cxt->pdaf_rect.start_y = sensor_mode_info->trim_start_y;
 	prev_cxt->pdaf_rect.width = sensor_mode_info->trim_width;
 	prev_cxt->pdaf_rect.height = sensor_mode_info->trim_height;
-#else
+#else /*crop roi*/
 	prev_cxt->pdaf_rect.start_x = sensor_mode_info->trim_width / 4;
 	prev_cxt->pdaf_rect.start_y = sensor_mode_info->trim_height / 4;
 	prev_cxt->pdaf_rect.width = sensor_mode_info->trim_width / 2;
 	prev_cxt->pdaf_rect.height = sensor_mode_info->trim_height / 2;
-#endif
 	prev_cxt->pdaf_rect.start_x = ALIGN_16_PIXEL(prev_cxt->pdaf_rect.start_x);
 	prev_cxt->pdaf_rect.start_y = ALIGN_16_PIXEL(prev_cxt->pdaf_rect.start_y);
 	prev_cxt->pdaf_rect.width = ALIGN_16_PIXEL(prev_cxt->pdaf_rect.width);
 	prev_cxt->pdaf_rect.height = ALIGN_16_PIXEL(prev_cxt->pdaf_rect.height);
+#endif
 
 	CMR_LOGI("image_format %d image_pattern %d w=%d h=%d, max_w=%d, max_h=%d",
 		sensor_mode_info->image_format,
@@ -8809,7 +8809,6 @@ cmr_int prev_set_pdaf_raw_param(struct prev_handle *handle, cmr_u32 camera_id, c
 	}
 
 	/*config reserved buffer*/
-	/*
 	cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
 	buf_cfg.channel_id         = prev_cxt->pdaf_channel_id;
 	buf_cfg.base_id            = CMR_PDAF_ID_BASE;
@@ -8829,7 +8828,7 @@ cmr_int prev_set_pdaf_raw_param(struct prev_handle *handle, cmr_u32 camera_id, c
 		ret = CMR_CAMERA_FAIL;
 		goto exit;
 	}
-*/
+
 	/*return preview out params*/
 	if (out_param_ptr) {
 		out_param_ptr->pdaf_chn_bits = 1 << prev_cxt->pdaf_channel_id;
