@@ -155,6 +155,7 @@ struct irp_info {
 	cmr_u32 sensor_id;
 	cmr_u32 s_width;
 	cmr_u32 s_height;
+	cmr_u32 scene_mode;
 };
 
 struct stats_buf_context {
@@ -1679,7 +1680,8 @@ cmr_int isp3a_set_scene_mode(cmr_handle isp_3a_handle, void *param_ptr)
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
 	struct ae_ctrl_param_in                     ae_in;
-	cmr_u32                                     value;
+	cmr_u32                                     saturation;
+	cmr_u32                                     contrast;
 
 	if (!param_ptr) {
 		ISP_LOGW("input is NULL");
@@ -1687,13 +1689,19 @@ cmr_int isp3a_set_scene_mode(cmr_handle isp_3a_handle, void *param_ptr)
 	}
 	ae_in.scene.scene_mode = *(cmr_u32 *)param_ptr;
 	if (AE_CTRL_SCENE_LANDSPACE == ae_in.scene.scene_mode) {
-		value = 5;
-	} else {
-		value = 3; /*default*/
+		saturation = 5;
+		contrast = 5;
+		isp3a_set_saturation(isp_3a_handle, &saturation);
+		isp3a_set_contrast(isp_3a_handle, &contrast);
+	} else if (AE_CTRL_SCENE_LANDSPACE == cxt->irp_cxt.scene_mode) {
+		saturation = 3;
+		contrast = 3;
+		isp3a_set_saturation(isp_3a_handle, &saturation);
+		isp3a_set_contrast(isp_3a_handle, &contrast);
 	}
-	isp3a_set_saturation(isp_3a_handle, &value);
-	isp3a_set_contrast(isp_3a_handle, &value);
+
 	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_SCENE_MODE, &ae_in, NULL);
+	cxt->irp_cxt.scene_mode = ae_in.scene.scene_mode;
 
 exit:
 	return ret;
