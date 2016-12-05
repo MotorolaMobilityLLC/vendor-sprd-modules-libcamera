@@ -3118,8 +3118,34 @@ static cmr_int afaltek_adpt_proc_out_report(cmr_handle adpt_handle,
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+	struct allib_af_output_report_t report_cur;
 
+#if 1
 	pthread_mutex_lock(&cxt->af_caf_cxt.af_report_mutex);
+	report_cur = *report;
+
+	if (alAFLIB_OUTPUT_DEBUG_INFO != report_cur.type)
+		ISP_LOGI("report->type = 0x%x", report_cur.type);
+
+	if (alAFLIB_OUTPUT_PD_CONFIG & report_cur.type) {
+		ret = afaltek_adpt_proc_report_pd_cfg(cxt, &report_cur);
+	}
+	if (alAFLIB_OUTPUT_DEBUG_INFO & report_cur.type) {
+		ret = afaltek_adpt_proc_report_debug_info(&report_cur, report_out);
+	}
+	if (alAFLIB_OUTPUT_UNKNOW & report_cur.type) {
+		ret = afaltek_adpt_proc_output_error_handler(&report_cur);
+	}
+	if (alAFLIB_OUTPUT_STATUS & report_cur.type) {
+		ret = afaltek_adpt_proc_report_status(cxt, &report_cur);
+	}
+	if (alAFLIB_OUTPUT_STATS_CONFIG & report_cur.type) {
+		if (cxt->inited)
+			ret = afaltek_adpt_proc_report_stats_cfg(cxt, &report_cur);
+	}
+	pthread_mutex_unlock(&cxt->af_caf_cxt.af_report_mutex);
+#else //use af thread
+
 	if (alAFLIB_OUTPUT_DEBUG_INFO != report->type)
 		ISP_LOGI("report->type = 0x%x", report->type);
 
@@ -3139,7 +3165,7 @@ static cmr_int afaltek_adpt_proc_out_report(cmr_handle adpt_handle,
 		if (cxt->inited)
 			ret = afaltek_adpt_proc_report_stats_cfg(cxt, report);
 	}
-	pthread_mutex_unlock(&cxt->af_caf_cxt.af_report_mutex);
+#endif
 	return ret;
 }
 
