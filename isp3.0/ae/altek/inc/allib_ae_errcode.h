@@ -16,6 +16,7 @@
 #define _AL_AELIB_SETTINGFILE                    (  _AL_AELIB_GLOBAL_ERR_OFFSET + 0x100 )
 #define _AL_AELIB_LIBPROCESS                     (  _AL_AELIB_GLOBAL_ERR_OFFSET + 0x200 )
 #define _AL_AELIB_SYNCPROCESS                     (  _AL_AELIB_GLOBAL_ERR_OFFSET + 0x300 )
+#define _AL_AELIB_SETPARAM                        (  _AL_AELIB_GLOBAL_ERR_OFFSET + 0x400 )
 
 #define _AL_AELIB_CHKERR                    ( _AL_AELIB_GLOBAL_ERR_OFFSET  + 0x01 )
 #define _AL_AELIB_INVALID_PARAM             ( _AL_AELIB_GLOBAL_ERR_OFFSET  + 0x02 )
@@ -71,5 +72,11 @@
 #define _AL_AELIB_INVALID_TIME_LINE                                 ( _AL_AELIB_SYNCPROCESS + 0x02 )
 #define _AL_AELIB_INVALID_SYNC_MODE                               ( _AL_AELIB_SYNCPROCESS + 0x03 )
 #define _AL_AELIB_INVALID_SLV_SENSOR_PARA                    ( _AL_AELIB_SYNCPROCESS + 0x04 )
+
+/* for setting param   */
+#define _AL_AELIB_INVALID_FPS                                 ( _AL_AELIB_SETPARAM + 0x01)
+#define _AL_AELIB_INVALID_LINE                                ( _AL_AELIB_SETPARAM + 0x02)
+#define _AL_AELIB_INVALID_GAIN                                ( _AL_AELIB_SETPARAM + 0x03)
+
 
 #endif /* ALAELIB_ERR_H_ */
