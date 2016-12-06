@@ -4511,6 +4511,7 @@ cmr_int camera_start_exif_encode(cmr_handle oem_handle, cmr_handle caller_handle
 	struct jpeg_wexif_cb_param     out_pram;
 	struct setting_cmd_parameter   setting_param;
 	struct common_isp_cmd_param    isp_param;
+	char                           value[PROPERTY_VALUE_MAX];
 
 	if (!caller_handle || !oem_handle || !pic_src || !dst || !thumb_src || !out_ptr) {
 		CMR_LOGE("in parm error");
@@ -4530,14 +4531,22 @@ cmr_int camera_start_exif_encode(cmr_handle oem_handle, cmr_handle caller_handle
 	enc_exif_param.exif_ptr = setting_param.exif_all_info_ptr;
 	enc_exif_param.exif_isp_info = NULL;
 
-	ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_EXIF_DEBUG_INFO, &isp_param);
-	if (ret) {
-		CMR_LOGW("isp get exif debug info failed");
+
+	property_get("ro.debuggable", value, "");
+	if (strcmp(value, "1") == 0) {
+		ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_EXIF_DEBUG_INFO, &isp_param);
+		if (ret) {
+			CMR_LOGW("isp get exif debug info failed");
+			enc_exif_param.exif_isp_debug_info.addr = NULL;
+			enc_exif_param.exif_isp_debug_info.size = 0;
+		} else {
+			enc_exif_param.exif_isp_debug_info.addr = isp_param.isp_dbg_info.addr;
+			enc_exif_param.exif_isp_debug_info.size = isp_param.isp_dbg_info.size;
+		}
+	} else {
+		CMR_LOGV("user doen't report debug info");
 		enc_exif_param.exif_isp_debug_info.addr = NULL;
 		enc_exif_param.exif_isp_debug_info.size = 0;
-	} else {
-		enc_exif_param.exif_isp_debug_info.addr = isp_param.isp_dbg_info.addr;
-		enc_exif_param.exif_isp_debug_info.size = isp_param.isp_dbg_info.size;
 	}
 
 	CMR_LOGV("exif_isp_debug_info: addr=%p, size=%ld",
