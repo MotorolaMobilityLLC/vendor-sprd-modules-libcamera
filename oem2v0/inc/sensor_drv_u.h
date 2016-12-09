@@ -15,13 +15,6 @@
  */
 #ifndef _SENSOR_DRV_U_H_
 #define _SENSOR_DRV_U_H_
-//#include <linux/i2c.h>
-//#include <linux/gpio.h>
-//#include <linux/delay.h>
-//#include <mach/hardware.h>
-//#include <asm/io.h>
-//#include <linux/list.h>
-//#include <linux/mutex.h>
 #include "jpeg_exif_header.h"
 #include "cmr_common.h"
 #include <sys/types.h>
@@ -563,6 +556,7 @@ typedef struct sensor_ioctl_func_tab_tag {
 	cmr_uint(*stream_off) (SENSOR_HW_HANDLE handle, cmr_uint param);
 	cmr_uint(*cfg_otp) (SENSOR_HW_HANDLE handle, cmr_uint param);
 	cmr_uint(*ex_write_exp) (SENSOR_HW_HANDLE handle, cmr_uint param);
+	cmr_uint(*read_aec_info) (SENSOR_HW_HANDLE handle, cmr_uint param);
 } SENSOR_IOCTL_FUNC_TAB_T, *SENSOR_IOCTL_FUNC_TAB_T_PTR;
 
 struct raw_param_info_tab {
@@ -891,12 +885,6 @@ struct sensor_drv_context {
 	cmr_u32                             error_cnt;
 	cmr_uint                            lnc_addr_bakup[8][4];
 	cmr_u32                             bypass_mode;
-};
-
-struct sensor_ex_exposure {
-	uint32_t exposure;
-	uint32_t dummy;
-	uint32_t size_index;
 };
 
 enum {

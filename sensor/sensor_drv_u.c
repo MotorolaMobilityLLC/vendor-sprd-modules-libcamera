@@ -629,6 +629,30 @@ cmr_int hw_Sensor_WriteI2C(SENSOR_HW_HANDLE handle, cmr_u16 slave_addr, cmr_u8 *
 	return ret;
 }
 
+cmr_int sns_dev_muti_i2c_write(struct sensor_drv_context *sensor_cxt,
+					struct sensor_muti_aec_i2c_tag *aec_i2c_info)
+{
+	cmr_int ret = SENSOR_SUCCESS;
+	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
+
+	ret = ioctl(sensor_cxt->fd_sensor, SENSOR_IO_MUTI_I2C_WRITE, aec_i2c_info);
+	if (0 != ret) {
+		SENSOR_LOGE("failed to write muti i2c");
+		ret = -1;
+	}
+
+	return ret;
+}
+
+cmr_int hw_sensor_muti_i2c_write(SENSOR_HW_HANDLE handle, struct sensor_muti_aec_i2c_tag *aec_i2c_info)
+{
+	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)(handle->privatedata);
+
+	sns_dev_muti_i2c_write(sensor_cxt, aec_i2c_info);
+
+	return 0;
+}
+
 static cmr_int sns_grc_read_i2c(struct sensor_drv_context *sensor_cxt, cmr_u16 slave_addr, cmr_u16 addr, cmr_u16 *reg, cmr_int bits)
 {
 	cmr_int ret = -SENSOR_FAIL;
@@ -1325,8 +1349,10 @@ void Sensor_SetExportInfo(struct sensor_drv_context *sensor_cxt)
 			exp_info_ptr->raw_info_ptr->ioctrl_ptr->ext_fuc = exp_info_ptr->ioctl_func_ptr->set_focus;
 			exp_info_ptr->raw_info_ptr->ioctrl_ptr->write_i2c = hw_Sensor_WriteI2C;
 			//exp_info_ptr->raw_info_ptr->ioctrl_ptr->read_i2c = Sensor_ReadI2C;
-			exp_info_ptr->raw_info_ptr->ioctrl_ptr->ex_set_exposure= exp_info_ptr->ioctl_func_ptr->ex_write_exp;
+			exp_info_ptr->raw_info_ptr->ioctrl_ptr->ex_set_exposure = exp_info_ptr->ioctl_func_ptr->ex_write_exp;
 			exp_info_ptr->raw_info_ptr->ioctrl_ptr->caller_handler = sensor_cxt->sensor_hw_handler;
+			exp_info_ptr->raw_info_ptr->ioctrl_ptr->read_aec_info = exp_info_ptr->ioctl_func_ptr->read_aec_info;
+			exp_info_ptr->raw_info_ptr->ioctrl_ptr->write_aec_info = hw_sensor_muti_i2c_write;
 		}
 		//now we think sensor output width and height are equal to sensor trim_width and trim_height
 		exp_info_ptr->sensor_mode_info[i].out_width = exp_info_ptr->sensor_mode_info[i].trim_width;

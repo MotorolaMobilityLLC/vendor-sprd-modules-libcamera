@@ -148,6 +148,8 @@ struct sensor_raw_ioctrl {
 	cmr_int(*read_i2c) (cmr_handle caller_handler, cmr_u16 slave_addr, cmr_u8 * cmd,
 			    cmr_u16 cmd_length);
 	uint32_t(*ex_set_exposure) (cmr_handle caller_handler, uint32_t param);
+	cmr_int(*read_aec_info) (cmr_handle caller_handler, void *param);
+	cmr_int(*write_aec_info) (cmr_handle caller_handler, void *param);
 };
 
 /*************new***************************/
@@ -363,4 +365,32 @@ struct sensor_pdaf_info {
 	struct pd_pos_info *pd_pos_r;
 	struct pd_pos_info *pd_pos_l;
 };
+
+struct sensor_ex_exposure {
+	cmr_u32 exposure;
+	cmr_u32 dummy;
+	cmr_u32 size_index;
+};
+
+struct sensor_i2c_reg_tab {
+	struct sensor_reg_tag *settings;
+	uint16_t size;
+};
+
+struct sensor_aec_i2c_tag {
+	uint16_t slave_addr;
+	uint16_t addr_bits_type;
+	uint16_t data_bits_type;
+	struct sensor_i2c_reg_tab *shutter;
+	struct sensor_i2c_reg_tab *again;
+	struct sensor_i2c_reg_tab *dgain;
+	struct sensor_i2c_reg_tab *frame_length;
+};
+
+struct sensor_aec_reg_info {
+	struct sensor_ex_exposure exp;
+	cmr_u32 gain;
+	struct sensor_aec_i2c_tag *aec_i2c_info_out;
+};
+
 #endif

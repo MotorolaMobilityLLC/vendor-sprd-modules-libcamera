@@ -2129,6 +2129,156 @@ static unsigned long imx230_write_gain_value(SENSOR_HW_HANDLE handle, unsigned l
 	return ret_value;
 }
 
+static struct sensor_reg_tag imx230_shutter_reg[] = {
+	{0x0202, 0},
+	{0x0203, 0},
+};
+
+static struct sensor_i2c_reg_tab imx230_shutter_tab = {
+	.settings = imx230_shutter_reg,
+	.size = ARRAY_SIZE(imx230_shutter_reg),
+};
+
+static struct sensor_reg_tag imx230_again_reg[] = {
+	{0x0204, 0},
+	{0x0205, 0},
+};
+
+static struct sensor_i2c_reg_tab imx230_again_tab = {
+	.settings = imx230_again_reg,
+	.size = ARRAY_SIZE(imx230_again_reg),
+};
+
+static struct sensor_reg_tag imx230_dgain_reg[] = {
+	{ 0x020e, 0x00 },
+	{ 0x020f, 0x00 },
+	{ 0x0210, 0x00 },
+	{ 0x0211, 0x00 },
+	{ 0x0212, 0x00 },
+	{ 0x0213, 0x00 },
+	{ 0x0214, 0x00 },
+	{ 0x0215, 0x00 },
+};
+
+struct sensor_i2c_reg_tab imx230_dgain_tab = {
+	.settings = imx230_dgain_reg,
+	.size = ARRAY_SIZE(imx230_dgain_reg),
+};
+
+static struct sensor_reg_tag imx230_frame_length_reg[] = {
+	{0x0340, 0},
+	{0x0341, 0},
+};
+
+static struct sensor_i2c_reg_tab imx230_frame_length_tab = {
+	.settings = imx230_frame_length_reg,
+	.size = ARRAY_SIZE(imx230_frame_length_reg),
+};
+
+static struct sensor_aec_i2c_tag imx230_aec_info = {
+	.slave_addr = (I2C_SLAVE_ADDR >> 1),
+	.addr_bits_type = SENSOR_I2C_REG_16BIT,
+	.data_bits_type = SENSOR_I2C_VAL_8BIT,
+	.shutter = &imx230_shutter_tab,
+	.again = &imx230_again_tab,
+	.dgain = &imx230_dgain_tab,
+	.frame_length = &imx230_frame_length_tab,
+};
+
+static uint16_t imx230_calc_exposure(SENSOR_HW_HANDLE handle,
+					 uint32_t shutter, uint32_t dummy_line,
+					 struct sensor_aec_i2c_tag *aec_info)
+{
+	uint32_t dest_fr_len = 0;
+	uint32_t cur_fr_len = 0;
+	uint32_t fr_len = s_current_default_frame_length;
+	int32_t offset = 0;
+
+	if (dummy_line > FRAME_OFFSET)
+		offset = dummy_line;
+	else
+		offset = FRAME_OFFSET;
+	dest_fr_len = ((shutter + offset) > fr_len) ? (shutter + offset) : fr_len;
+
+	cur_fr_len = imx230_read_frame_length(handle);
+	s_current_frame_length = dest_fr_len;
+
+	if (shutter < SENSOR_MIN_SHUTTER)
+		shutter = SENSOR_MIN_SHUTTER;
+
+	aec_info->frame_length->settings[0].reg_value = (dest_fr_len >> 8) & 0xff;
+	aec_info->frame_length->settings[1].reg_value = dest_fr_len & 0xff;
+	aec_info->shutter->settings[0].reg_value = (shutter >> 8) & 0xff;
+	aec_info->shutter->settings[1].reg_value = shutter & 0xff;
+	return shutter;
+}
+
+static void imx230_calc_gain(float gain, struct sensor_aec_i2c_tag *aec_info)
+{
+	uint8_t i = 0;
+	uint32_t sensor_again = 0;
+	uint32_t sensor_dgain = 0;
+	float temp_gain;
+
+	gain = gain/32.0;
+
+	temp_gain = gain;
+	if (temp_gain < 1.0)
+		temp_gain = 1.0;
+	else if (temp_gain > 8.0)
+		temp_gain = 8.0;
+	sensor_again = (uint16_t)(512.0 - 512.0 / temp_gain);
+
+	aec_info->again->settings[0].reg_value = (sensor_again>>8)& 0xFF;
+	aec_info->again->settings[1].reg_value = sensor_again & 0xFF;
+
+	temp_gain = gain/8;
+	if (temp_gain >16.0)
+		temp_gain = 16.0;
+	else if (temp_gain < 1.0)
+		temp_gain = 1.0;
+	sensor_dgain = (uint16_t)(256 * temp_gain);
+	aec_info->dgain->settings[0].reg_value = (sensor_dgain>>8)& 0xFF;
+	aec_info->dgain->settings[1].reg_value = sensor_dgain & 0xFF;
+	aec_info->dgain->settings[2].reg_value = (sensor_dgain>>8)& 0xFF;
+	aec_info->dgain->settings[3].reg_value = sensor_dgain & 0xFF;
+	aec_info->dgain->settings[4].reg_value = (sensor_dgain>>8)& 0xFF;
+	aec_info->dgain->settings[5].reg_value = sensor_dgain & 0xFF;
+	aec_info->dgain->settings[6].reg_value = (sensor_dgain>>8)& 0xFF;
+	aec_info->dgain->settings[7].reg_value = sensor_dgain & 0xFF;
+}
+
+static unsigned long imx230_read_aec_info(SENSOR_HW_HANDLE handle, unsigned long param)
+{
+	unsigned long ret_value = SENSOR_SUCCESS;
+	struct sensor_aec_reg_info *info = (struct sensor_aec_reg_info *)param;
+	uint16_t exposure_line = 0x00;
+	uint16_t dummy_line = 0x00;
+	uint16_t mode = 0x00;
+	float real_gain = 0;
+	uint32_t gain = 0;
+
+	info->aec_i2c_info_out = &imx230_aec_info;
+
+	exposure_line = info->exp.exposure;
+	dummy_line = info->exp.dummy;
+	mode = info->exp.size_index;
+
+	s_current_default_frame_length = imx230_get_default_frame_length(NULL, mode);
+	s_current_default_line_time = imx230_get_default_line_ime(NULL, mode);
+
+	s_sensor_ev_info.preview_shutter =
+		imx230_calc_exposure(handle,
+					 exposure_line, dummy_line,
+					 &imx230_aec_info);
+
+	gain = info->gain < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : info->gain;
+	real_gain = (float)info->gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN*1.0;
+	imx230_calc_gain(real_gain, &imx230_aec_info);
+
+	return ret_value;
+}
+
 /*==============================================================================
  * Description:
  * increase gain or shutter for hdr
@@ -2451,4 +2601,5 @@ static SENSOR_IOCTL_FUNC_TAB_T s_imx230_ioctl_func_tab = {
 	//.group_hold_on = imx132_group_hold_on,
 	//.group_hold_of = imx132_group_hold_off,
 	.cfg_otp = imx230_access_val,
+	.read_aec_info = imx230_read_aec_info,
 };
