@@ -71,8 +71,8 @@ struct isp_fw_mem {
 };
 
 struct isp_fw_group {
-	cmr_u32				 file_cnt;
-	pthread_mutex_t      mutex;
+	cmr_u32 file_cnt;
+	pthread_mutex_t mutex;
 };
 
 struct isp_file {
@@ -92,7 +92,7 @@ struct isp_file {
 	cmr_u8                     pdaf_supported;
 };
 
-static struct isp_fw_group _group = {0 , {}};
+static struct isp_fw_group _group = {0, PTHREAD_MUTEX_INITIALIZER};
 static cmr_int isp_dev_create_mutilayer_thread(isp_handle handle);
 static cmr_int isp_dev_kill_mutilayer_thread(isp_handle handle);
 static cmr_int isp_dev_create_thread(isp_handle handle);
@@ -135,12 +135,12 @@ cmr_int isp_dev_init(struct isp_dev_init_info *init_param_ptr, isp_handle *handl
 	ISP_LOGE("cbc bin addr %p, size is %x\n", (cmr_u32 *) file->init_param.cbc_bin_addr,
 		file->init_param.cbc_bin_size);
 	fd = open(isp_dev_name, O_RDWR, 0);
+	file->fd = fd;
 	if (fd < 0) {
 		ret = -1;
 		ISP_LOGE("isp_dev_open error.");
 		goto isp_free;
 	}
-	file->fd = fd;
 
 	init_param.camera_id = init_param_ptr->camera_id;
 	init_param.width = init_param_ptr->width;
@@ -167,7 +167,6 @@ cmr_int isp_dev_init(struct isp_dev_init_info *init_param_ptr, isp_handle *handl
 	}
 
 	file->camera_id = init_param_ptr->camera_id;
-	file->isp_is_inited = 0;
 	file->pdaf_supported = init_param_ptr->pdaf_supported;
 	*handle = (isp_handle)file;
 
@@ -212,34 +211,34 @@ cmr_int isp_dev_deinit(isp_handle handle)
 	ret = isp_dev_kill_thread(handle);
 	if (ret) {
 		ISP_LOGE("Failed to kill the thread");
-		return ret;
 	}
 
 	ret = isp_dev_kill_mutilayer_thread((isp_handle)file);
 	if (ret) {
 		ISP_LOGE("failed to kill muti layer thread ret = %ld", ret);
-		return ret;
 	}
 
+#if 0
 	ret = isp_dev_set_user_working(handle);
 	if (ret) {
 		ISP_LOGE("failed to set user working");
 		return ret;
 	}
-
-	if (file->isp_is_inited) {
-		if (-1 != file->fd) {
-			sem_wait(&file->close_sem);
-			if (-1 == close(file->fd)) {
-				ISP_LOGE("close error.");
-			}
-		} else {
-			ISP_LOGE("isp_dev_close error.");
+#endif
+	if (file->fd >= 0) {
+		sem_wait(&file->close_sem);
+		if (-1 == close(file->fd)) {
+			ISP_LOGE("close error.");
 		}
-		--_group.file_cnt;
-		file->init_param.free_cb(CAMERA_ISP_FIRMWARE, file->init_param.mem_cb_handle,
-			(cmr_uint *)file->fw_mem.phy_addr, (cmr_uint *)file->fw_mem.virt_addr, (cmr_s32 *)&file->fw_mem.mfd, file->fw_mem.num);
+	} else {
+		ISP_LOGE("isp_dev_close error.");
 	}
+	pthread_mutex_lock(&_group.mutex);
+	_group.file_cnt--;
+	pthread_mutex_unlock(&_group.mutex);
+	file->init_param.free_cb(CAMERA_ISP_FIRMWARE, file->init_param.mem_cb_handle,
+				 (cmr_uint *)file->fw_mem.phy_addr, (cmr_uint *)file->fw_mem.virt_addr,
+				 (cmr_s32 *)&file->fw_mem.mfd, file->fw_mem.num);
 
 	pthread_mutex_lock(&file->cb_mutex);
 	file->isp_event_cb = NULL;
@@ -288,8 +287,6 @@ cmr_int isp_dev_start(isp_handle handle)
 		goto exit;
 	}
 
-	file->isp_is_inited = 1;
-
 	kaddr_temp = kaddr[1];
 	load_input.fw_buf_phy_addr = (kaddr[0] | kaddr_temp << 32);
 	ISP_LOGI("fw_buf_phy_addr 0x%llx,", load_input.fw_buf_phy_addr);
@@ -323,6 +320,7 @@ cmr_int isp_dev_start(isp_handle handle)
 		ISP_LOGE("failed to load firmware %ld", ret);
 		goto exit;
 	}
+	file->isp_is_inited = 1;
 
 exit:
 	ATRACE_END();
@@ -1027,10 +1025,17 @@ cmr_int isp_dev_load_firmware(isp_handle handle, struct isp_init_mem_param *para
 		ISP_LOGE("Param is null error.");
 		return -1;
 	}
+	file = (struct isp_file *)(handle);
+	if(file->fd < 0) {
+		ISP_LOGE("fd error.");
+		return -1;
+	}
 
 	/*load altek isp firmware from user space*/
-	if (++_group.file_cnt == 1) {
-
+	pthread_mutex_lock(&_group.mutex);
+	_group.file_cnt++;
+	pthread_mutex_unlock(&_group.mutex);
+	if (_group.file_cnt == 1) {
 		fp = fopen(isp_fw_name, "rd");
 		if (NULL == fp) {
 			ISP_LOGE("open altek isp firmware failed.");
@@ -1054,7 +1059,6 @@ cmr_int isp_dev_load_firmware(isp_handle handle, struct isp_init_mem_param *para
 		}
 		fclose(fp);
 	}
-	file = (struct isp_file *)(handle);
 	ret = ioctl(file->fd, ISP_IO_LOAD_FW, param);
 	if (ret) {
 		ISP_LOGE("isp_dev_load_firmware error.");
