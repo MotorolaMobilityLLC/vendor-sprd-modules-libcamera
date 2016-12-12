@@ -53,9 +53,6 @@ struct isp_dev_access_context {
 
 /*************************************INTERNAK FUNCTION ***************************************/
 
-
-
-
 /*************************************EXTERNAL FUNCTION ***************************************/
 cmr_int isp_dev_access_init(struct isp_dev_init_in *input_ptr, cmr_handle *isp_dev_handle)
 {
@@ -630,8 +627,8 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	cmr_int                                ret = ISP_SUCCESS;
 	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 	struct scenario_info_ap                input_data;
-	struct cfg_3a_info			cfg3a_info;
-	struct dld_sequence                     dldseq_info;
+	struct cfg_3a_info                     cfg3a_info;
+	struct dld_sequence                    dldseq_info;
 	cmr_u32                                iso_gain = 0;
 	struct isp_awb_gain_info               awb_gain_info;
 	cmr_u32                                isp_id = 0;
@@ -659,7 +656,8 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 
 	if (param_ptr->common_in.sensor_fps.is_high_fps) {
 		if ((param_ptr->common_in.sensor_fps.high_fps_skip_num - 1) > 0) {
-			ret = isp_dev_access_set_deci_num(isp_dev_handle, param_ptr->common_in.sensor_fps.high_fps_skip_num - 1);
+			ret = isp_dev_set_deci_num(cxt->isp_driver_handle,
+							  param_ptr->common_in.sensor_fps.high_fps_skip_num - 1);
 			if (ret) {
 				ISP_LOGE("failed to deci num");
 			}
@@ -1561,43 +1559,6 @@ cmr_int isp_dev_access_get_debug_info(cmr_handle isp_dev_handle, struct debug_in
 	return ret;
 }
 
-cmr_int isp_dev_access_set_skip_num(isp_handle isp_dev_handle, cmr_u32 skip_num)
-{
-	cmr_int                                ret = ISP_SUCCESS;
-	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-
-	ret = isp_dev_set_skip_num(cxt->isp_driver_handle, skip_num);
-	return ret;
-}
-
-cmr_int isp_dev_access_set_deci_num(isp_handle isp_dev_handle, cmr_u32 deci_num)
-{
-	cmr_int                                ret = ISP_SUCCESS;
-	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-
-	ret = isp_dev_set_deci_num(cxt->isp_driver_handle, deci_num);
-	return ret;
-}
-#if 0
-cmr_int isp_dev_access_match_data_ctrl(isp_handle isp_dev_handle, struct match_data_param *match_data)
-{
-	cmr_int                                ret = ISP_SUCCESS;
-	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-	struct isp_match_data_param data;
-	cmr_u8 is_get = (GET_MATCH_AE_DATA == match_data->op || GET_MATCH_AWB_DATA == match_data->op);
-
-	if (is_get) {
-		data.op = (enum isp_match_data_op)match_data->op;
-	} else {
-		memcpy(&data, match_data, sizeof(struct match_data_param));
-	}
-	ret = isp_dev_match_data_ctrl(cxt->isp_driver_handle, &data);
-	if (is_get && !ret) {
-		memcpy(match_data, &data, sizeof(struct match_data_param));
-	}
-	return ret;
-}
-#endif
 cmr_int isp_dev_access_cfg_sof_info(isp_handle isp_dev_handle, struct isp_sof_cfg_info *data)
 {
 	cmr_int                                ret = ISP_SUCCESS;
@@ -1613,5 +1574,14 @@ cmr_int isp_dev_access_drammode_takepic(isp_handle isp_dev_handle, cmr_u32 is_st
 	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 	ISP_LOGI("is_start %d", is_start);
 	ret = isp_dev_drammode_takepic(cxt->isp_driver_handle, is_start);
+	return ret;
+}
+
+cmr_int isp_dev_access_set_skip_num(isp_handle isp_dev_handle, cmr_u32 skip_num)
+{
+	cmr_int                                ret = ISP_SUCCESS;
+	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+
+	ret = isp_dev_set_skip_num(cxt->isp_driver_handle, skip_num);
 	return ret;
 }

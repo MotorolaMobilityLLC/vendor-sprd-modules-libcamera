@@ -7930,7 +7930,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data)
 			}
 		}
 
-		if (obj->mFlashCaptureFlag == 1) {
+		if (/*obj->mFlashCaptureFlag == 1*/0) {
 			while (1) {
 				if ((zsl_frame.y_vir_addr != 0) &&
 				    (obj->mFlashCaptureFlag == 1) &&

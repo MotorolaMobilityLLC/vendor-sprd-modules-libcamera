@@ -800,16 +800,17 @@ void camera_isp_dev_evt_cb(cmr_int evt, void *data, cmr_u32 data_len, void *priv
 			CMR_LOGI("HW flash_status=%ld", flash_status);
 
 			if (FLASH_OPEN == flash_status || FLASH_HIGH_LIGHT == flash_status) {
+#if 0
 				static cmr_u32 zsl_flash_skip_num = 0;
 				if(CAMERA_ZSL_MODE == cxt->snp_cxt.snp_mode) {
-					if(zsl_flash_skip_num <= FLASH_CAPTURE_SKIP_FRAME_NUM) {
+					if (zsl_flash_skip_num < FLASH_CAPTURE_SKIP_FRAME_NUM) {
 						zsl_flash_skip_num++;
 						break;
-					}
-					else
+					} else {
 						zsl_flash_skip_num = 0;
+					}
 				}
-
+#endif
 				CMR_LOGI("turn off flash");
 				memset(&setting_param, 0, sizeof(setting_param));
 				setting_param.ctrl_flash.capture_mode.capture_mode = 0;
@@ -5506,6 +5507,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 		isp_param.highiso_buf_phys_addr = cxt->highiso_buf_phys_addr;
 		isp_param.highiso_buf_virt_addr = cxt->highiso_buf_virt_addr;
 		isp_param.highiso_buf_size = highiso_buf_size;
+		isp_param.capture_skip_num = param_ptr->capture_skip_num;
 
 		for(i = 0; i < isp_raw_buf_num; i++) {
 			CMR_LOGI("raw: fd=0x%x, phys_addr_offset=0x%lx, virt_addr = 0x%lx, buf_size=0x%lx",

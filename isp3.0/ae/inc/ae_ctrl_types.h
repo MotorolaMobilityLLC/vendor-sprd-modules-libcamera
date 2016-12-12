@@ -471,6 +471,7 @@ struct ae_ctrl_ops_in {
 	cmr_int (*flash_ctrl)(cmr_handle handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element_ptr);
 
 	cmr_int (*release_stat_buffer)(cmr_handle handler, cmr_int type, struct isp3a_statistics_data *buf_ptr);
+	cmr_int (*flash_set_skip)(cmr_handle handler, cmr_u32 skip_num);
 };
 
 struct ae_ctrl_init_out {

@@ -157,12 +157,11 @@ cmr_int isp_dev_access_cfg_iso_speed(cmr_handle isp_dev_handle, cmr_u32 *data);
 cmr_int isp_dev_access_get_exif_debug_info(cmr_handle isp_dev_handle, struct debug_info1 *exif_info);
 cmr_int isp_dev_access_set_cfg_otp_info(cmr_handle isp_dev_handle, struct isp_iq_otp_info *data);
 cmr_int isp_dev_access_get_debug_info(cmr_handle isp_dev_handle, struct debug_info2 *debug_info);
-cmr_int isp_dev_access_set_skip_num(isp_handle handle, cmr_u32 skip_num);
-cmr_int isp_dev_access_set_deci_num(isp_handle handle, cmr_u32 deci_num);
 cmr_int isp_dev_access_cfg_sof_info(isp_handle handle, struct isp_sof_cfg_info *data);
 cmr_int isp_dev_access_cap_buf_cfg(cmr_handle isp_dev_handle, struct isp_dev_img_param *parm);
 void isp_dev_access_cfg_buf_evt_reg(cmr_handle isp_dev_handle, cmr_handle grab_handle, isp_evt_cb isp_event_cb);
 cmr_int isp_dev_access_drammode_takepic(isp_handle isp_dev_handle, cmr_u32 is_start);
+cmr_int isp_dev_access_set_skip_num(isp_handle isp_dev_handle, cmr_u32 skip_num);
 
 /**---------------------------------------------------------------------------*/
 

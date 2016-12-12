@@ -3713,6 +3713,7 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_res
 		video_param.work_mode = 0;
 		video_param.lv_size = prev_cxt->lv_size;
 		video_param.video_size = prev_cxt->video_size;
+		video_param.capture_skip_num = prev_cxt->cap_skip_num;
 		if (!handle->ops.isp_start_video) {
 			CMR_LOGE("ops isp_start_video is null");
 			ret = CMR_CAMERA_FAIL;

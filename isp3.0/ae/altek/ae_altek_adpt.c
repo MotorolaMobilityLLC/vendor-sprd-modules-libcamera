@@ -214,6 +214,7 @@ struct aealtek_cxt {
 	void *seq_handle;
 
 	cmr_s32 lock_cnt;
+	cmr_s32 pre_cnt;
 	cmr_s32 ae_state;
 
 	cmr_s32 flash_skip_number;
@@ -240,6 +241,8 @@ struct aealtek_cxt {
 	cmr_u32 is_3dcalibration;/**add for 3d calibration*/
 	int flash_state_machine;
 	cmr_u32 hdr_enable;
+	cmr_u32 main_flash_status;
+	cmr_u32 zsl_mode;
 };
 
 static cmr_int aealtek_reset_touch_ack(struct aealtek_cxt *cxt_ptr);
@@ -612,6 +615,7 @@ static cmr_int aealtek_get_default_param(struct aealtek_cxt *cxt_ptr, struct ae_
 	st_ptr->ui_param.fps.min_fps = 2;
 	st_ptr->ui_param.fps.max_fps = 30;
 	cxt_ptr->flash_state_machine = AEALTEK_FLASH_STATE_CLOSE;
+	cxt_ptr->main_flash_status = 0;
 
 	if (0 == cxt_ptr->init_in_param.sensor_static_info.f_num) {
 		cxt_ptr->init_in_param.sensor_static_info.f_num = 280;
@@ -2869,12 +2873,14 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 	if (cxt_ptr->is_refocus && cxt_ptr->is_master)
 		ret = aealtek_set_sync_mode(cxt_ptr, 1);
 
+	cxt_ptr->zsl_mode = in_ptr->work_param.capture_mode;
 	work_mode = in_ptr->work_param.work_mode;
 	ISP_LOGI("work_mode=%ld",in_ptr->work_param.work_mode);
 	switch (work_mode) {
 	case ISP3A_WORK_MODE_PREVIEW:
 		cxt_ptr->nxt_status.is_hdr_status = 0;
-		if (in_ptr->work_param.capture_mode != ISP_CAP_MODE_AUTO && in_ptr->work_param.capture_mode != ISP_CAP_MODE_ZSL) {
+		if (in_ptr->work_param.capture_mode != ISP_CAP_MODE_AUTO &&
+		    in_ptr->work_param.capture_mode != ISP_CAP_MODE_BURST) {
 			in_ptr->work_param.capture_mode = ISP_CAP_MODE_AUTO;
 			ret = aealtek_set_capture_mode_auto(cxt_ptr, in_ptr);
 		}
@@ -3310,20 +3316,18 @@ static cmr_int aealtek_set_flash_notice(struct aealtek_cxt *cxt_ptr, struct ae_c
 				}
 			}
 		}
-		ret = aealtek_convert_lib_exposure2outdata(cxt_ptr, &cxt_ptr->flash_param.main_flash_est.exp_cell, &cxt_ptr->lib_data.output_data);
-		if (ret)
-			goto exit;
-		ret = aealtek_lib_exposure2sensor(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
-		if (ret)
-			goto exit;
-		cxt_ptr->sensor_exp_data.write_exp = cxt_ptr->sensor_exp_data.lib_exp;
-		aealtek_pre_to_sensor(cxt_ptr, 1, 0);
+		cxt_ptr->main_flash_status = 1;
 		break;
 
 	case ISP_FLASH_MAIN_LIGHTING:
+		/* burst is zsl */
+		if (ISP_CAP_MODE_BURST == cxt_ptr->zsl_mode)
+			ret = cxt_ptr->init_in_param.ops_in.flash_set_skip(cxt_ptr->caller_handle, 5);
 		break;
 	case ISP_FLASH_MAIN_AFTER:
 		ISP_LOGI("=========main flash after");
+		cxt_ptr->main_flash_status = 0;
+		ret = cxt_ptr->init_in_param.ops_in.flash_set_skip(cxt_ptr->caller_handle, 0);
 		aealtek_set_hw_flash_status(cxt_ptr, 0);
 		ret = aealtek_convert_lib_exposure2outdata(cxt_ptr, &cxt_ptr->flash_param.pre_flash_before.exp_cell, &cxt_ptr->lib_data.output_data);
 		if (ret)
@@ -3778,6 +3782,30 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 			aealtek_set_lock(cxt_ptr, 1, __func__);
 		ret = aealtek_set_hdr_ev(cxt_ptr, in_ptr, out_ptr);
 		return ISP_SUCCESS;
+	}
+	if (cxt_ptr->main_flash_status && cxt_ptr->pre_cnt == 0) {
+		ret = aealtek_convert_lib_exposure2outdata(cxt_ptr,
+					&cxt_ptr->flash_param.main_flash_est.exp_cell, &cxt_ptr->lib_data.output_data);
+		if (ret) {
+			ISP_LOGW("failed !!!");
+			goto exit;
+		}
+		ret = aealtek_lib_exposure2sensor(cxt_ptr, &cxt_ptr->lib_data.output_data, &cxt_ptr->sensor_exp_data.lib_exp);
+		if (ret) {
+			ISP_LOGW("failed !!!");
+			goto exit;
+		}
+		cxt_ptr->sensor_exp_data.write_exp = cxt_ptr->sensor_exp_data.lib_exp;
+		aealtek_pre_to_sensor(cxt_ptr, 1, 1);
+		cxt_ptr->pre_cnt++;
+		if (ret) {
+			ISP_LOGW("failed !!!");
+			goto exit;
+		}
+	}
+	ISP_LOGI("pre_cnt=%d main_flash_status=%d",cxt_ptr->pre_cnt, cxt_ptr->main_flash_status);
+	if (cxt_ptr->main_flash_status == 0) {
+		cxt_ptr->pre_cnt = 0;
 	}
 	if (ISP3A_WORK_MODE_CAPTURE == cxt_ptr->cur_status.ui_param.work_info.work_mode) {
 		return ISP_SUCCESS;
