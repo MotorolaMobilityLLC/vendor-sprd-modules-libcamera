@@ -3518,6 +3518,7 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 	nsecs_t                                     time_start = 0;
 	nsecs_t                                     time_end = 0;
 	struct match_data_param                     match_param;
+	char                                        value[PROPERTY_VALUE_MAX];
 
 	if (NULL == cxt) {
 		ISP_LOGE("error cxt NULL");
@@ -3536,17 +3537,6 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 	awb_in.sof_frame_idx = cxt->sof_idx;
 	ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_SOF_FRAME_IDX, &awb_in, &awb_out);
 	sof_cfg_info.is_update = 0;
-	if (cxt->awb_cxt.proc_out.is_update) {
-		sof_cfg_info.awb_gain.r = cxt->awb_cxt.proc_out.gain.r;
-		sof_cfg_info.awb_gain.g = cxt->awb_cxt.proc_out.gain.g;
-		sof_cfg_info.awb_gain.b = cxt->awb_cxt.proc_out.gain.b;
-		sof_cfg_info.awb_b_gain.r = cxt->awb_cxt.proc_out.gain_balanced.r;
-		sof_cfg_info.awb_b_gain.g = cxt->awb_cxt.proc_out.gain_balanced.g;
-		sof_cfg_info.awb_b_gain.b = cxt->awb_cxt.proc_out.gain_balanced.b;
-		sof_cfg_info.color_temp = cxt->awb_cxt.proc_out.ct;
-		sof_cfg_info.is_update = 1;
-	}
-
 	if (cxt->is_refocus && !cxt->is_master) {
 		cmr_bzero(&match_param, sizeof(match_param));
 		ret = isp_br_ioctrl(cxt->camera_id,
@@ -3556,8 +3546,6 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 		if (ret) {
 			ISP_LOGE("failed to get awb match_data");
 		}
-
-		sof_cfg_info.is_update = 0;
 		if (match_param.awb_data.is_update) {
 			sof_cfg_info.awb_gain.r = match_param.awb_data.gain.r;
 			sof_cfg_info.awb_gain.g = match_param.awb_data.gain.g;
@@ -3569,7 +3557,7 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 			sof_cfg_info.is_update = 1;
 		}
 
-		ISP_LOGI("camera id %d, get match awb_gain,%d,%d,%d,balanced,%d,%d,%d,ct:%d, updata:%d",
+		ISP_LOGV("camera id %d, get match awb_gain,%d,%d,%d,balanced,%d,%d,%d,ct:%d, updata:%d",
 			cxt->camera_id,
 			match_param.awb_data.gain.r,
 			match_param.awb_data.gain.g,
@@ -3578,6 +3566,15 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 			match_param.awb_data.gain_balanced.g,
 			match_param.awb_data.gain_balanced.b,
 			match_param.awb_data.ct, match_param.awb_data.is_update);
+	} else if (cxt->awb_cxt.proc_out.is_update) {
+		sof_cfg_info.awb_gain.r = cxt->awb_cxt.proc_out.gain.r;
+		sof_cfg_info.awb_gain.g = cxt->awb_cxt.proc_out.gain.g;
+		sof_cfg_info.awb_gain.b = cxt->awb_cxt.proc_out.gain.b;
+		sof_cfg_info.awb_b_gain.r = cxt->awb_cxt.proc_out.gain_balanced.r;
+		sof_cfg_info.awb_b_gain.g = cxt->awb_cxt.proc_out.gain_balanced.g;
+		sof_cfg_info.awb_b_gain.b = cxt->awb_cxt.proc_out.gain_balanced.b;
+		sof_cfg_info.color_temp = cxt->awb_cxt.proc_out.ct;
+		sof_cfg_info.is_update = 1;
 	}
 
 	ae_in.sof_param.frame_index = cxt->sof_idx;
@@ -3604,7 +3601,7 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 			ISP_LOGE("failed to get match_data");
 		}
 		sof_cfg_info.iso_val = match_param.ae_data.iso;
-		ISP_LOGI("camera id %d, get match out iso_val:%d", cxt->camera_id, sof_cfg_info.iso_val);
+		ISP_LOGV("camera id %d, get match out iso_val:%d", cxt->camera_id, sof_cfg_info.iso_val);
 	}
 
 	time_start = systemTime(CLOCK_MONOTONIC);
@@ -3616,7 +3613,10 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 	ISP_LOGI("test sof msg cfg time_delta = %d us camera id %d", (cmr_s32)(time_end - time_start) / 1000, cxt->camera_id);
 
 	time_start = time_end;
-	ret = isp_dev_access_get_exif_debug_info(cxt->dev_access_handle, exif_ptr);
+	property_get("ro.debuggable", (char *)value, "0");
+	if (atoi(value)) {
+		ret = isp_dev_access_get_exif_debug_info(cxt->dev_access_handle, exif_ptr);
+	}
 	isp_mlog(SHADING_FILE, "RPrun:%d, BPrun:%d", exif_ptr->shading_debug_info1.rp_run, exif_ptr->shading_debug_info1.bp_run);
 	isp_mlog(IRP_FILE, "contrast:%d,saturation:%d,sharpness:%d,effect:%d,mode:%d,quality:%d,sensor_id:%d,s_width:%d,s_height:%d",
 			cxt->irp_cxt.contrast, cxt->irp_cxt.saturation, cxt->irp_cxt.sharpness, cxt->irp_cxt.effect,
