@@ -1279,17 +1279,13 @@ static uint16_t ov8856s_calc_exposure(SENSOR_HW_HANDLE handle,
 	dummy_line = dummy_line > FRAME_OFFSET ? dummy_line : FRAME_OFFSET;
 	dest_fr_len = ((shutter + dummy_line) > fr_len) ? (shutter +dummy_line) : fr_len;
 
-	cur_fr_len = ov8856s_read_frame_length(handle);
+	//cur_fr_len = ov8856s_read_frame_length(handle);
 
 	if (shutter < SENSOR_MIN_SHUTTER)
 		shutter = SENSOR_MIN_SHUTTER;
 
 	line_time = s_ov8856s_resolution_trim_tab[mode].line_time;
-	if (cur_fr_len > shutter) {
-		fps = 1000000.0 / (cur_fr_len * line_time);
-	} else {
-		fps = 1000000.0 / ((shutter + dummy_line) * line_time);
-	}
+	fps = 1000000.0 / (dest_fr_len * line_time);
 
 	SENSOR_PRINT("sync fps = %f", fps);
 	aec_info->frame_length->settings[0].reg_value = (dest_fr_len >> 8) & 0xff;

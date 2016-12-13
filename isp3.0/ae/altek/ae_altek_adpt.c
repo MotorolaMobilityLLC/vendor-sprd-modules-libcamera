@@ -1224,20 +1224,26 @@ exit:
 	return ret;
 }
 
-static cmr_int aealtek_write_to_sensor_slv(struct aealtek_cxt *cxt_ptr,
+static cmr_int aealtek_save_aec_info(struct aealtek_cxt *cxt_ptr,
 					   struct ae_ctrl_param_sensor_exposure *exp_ptr,
-					   struct ae_ctrl_param_sensor_gain *gain_ptr)
+					   struct ae_ctrl_param_sensor_gain *gain_ptr,
+					   struct ae_ctrl_param_sensor_exposure *exp_ptr_slv,
+					   struct ae_ctrl_param_sensor_gain *gain_ptr_slv)
 {
 	cmr_int ret = ISP_ERROR;
 
-	if (!cxt_ptr || !exp_ptr || !gain_ptr) {
+	if (!cxt_ptr || !exp_ptr || !gain_ptr || !exp_ptr_slv || !gain_ptr_slv) {
 		ISP_LOGE("param %p %p %p is NULL error!", cxt_ptr, exp_ptr, gain_ptr);
 		ret = ISP_PARAM_NULL;
 		goto exit;
 	}
-	cxt_ptr->pre_write_exp_data_slv.exp_line = exp_ptr->exp_line;
-	cxt_ptr->pre_write_exp_data_slv.dummy = exp_ptr->dummy;
-	cxt_ptr->pre_write_exp_data_slv.gain = gain_ptr->gain;
+	cxt_ptr->pre_write_exp_data.exp_line = exp_ptr->exp_line;
+	cxt_ptr->pre_write_exp_data.dummy = exp_ptr->dummy;
+	cxt_ptr->pre_write_exp_data.gain = gain_ptr->gain;
+
+	cxt_ptr->pre_write_exp_data_slv.exp_line = exp_ptr_slv->exp_line;
+	cxt_ptr->pre_write_exp_data_slv.dummy = exp_ptr_slv->dummy;
+	cxt_ptr->pre_write_exp_data_slv.gain = gain_ptr_slv->gain;
 
 	return ISP_SUCCESS;
 exit:
@@ -1300,9 +1306,6 @@ static cmr_int aealtek_pre_calc_ae(struct aealtek_cxt *cxt_ptr,
 	sensor_exp->size_index = cxt_ptr->sensor_exp_data.write_exp.size_index;
 	sensor_gain->gain = cxt_ptr->sensor_exp_data.write_exp.gain * SENSOR_GAIN_BASE / LIB_GAIN_BASE;
 
-	cxt_ptr->pre_write_exp_data.exp_line = sensor_exp->exp_line;
-	cxt_ptr->pre_write_exp_data.dummy = sensor_exp->dummy;
-	cxt_ptr->pre_write_exp_data.gain = sensor_gain->gain;
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld", ret);
@@ -3727,18 +3730,23 @@ static cmr_int aealtek_callback_sync_info(struct aealtek_cxt *cxt_ptr, struct ae
 	ret = aealtek_set_sof_to_lib_slv(cxt_ptr, in_ptr, exp_param);
 	if (ret)
 		goto exit;
-#if 1
+
 	sensor_gain.gain = 0;
 	memset(&sensor_exp, 0x00, sizeof(sensor_exp));
 	ret = aealtek_pre_calc_ae(cxt_ptr, &sensor_exp, &sensor_gain);
-	ret = aealtek_write_to_sensor_slv(cxt_ptr, &sensor_exp_slv, &sensor_gain_slv);
-	aealtek_handle_aec_info(cxt_ptr, &sensor_exp, &sensor_gain, &sensor_exp_slv, &sensor_gain_slv);
-#else
-	ret = aealtek_pre_to_sensor(cxt_ptr, 0, 0);
-	ret = aealtek_write_to_sensor_slv(cxt_ptr, &sensor_exp_slv, &sensor_gain_slv);
-	if (ret)
-		goto exit;
-#endif
+	if ((sensor_exp_slv.exp_line != cxt_ptr->pre_write_exp_data_slv.exp_line
+		|| sensor_exp_slv.dummy != cxt_ptr->pre_write_exp_data_slv.dummy
+		|| sensor_gain_slv.gain != cxt_ptr->pre_write_exp_data_slv.gain
+		|| sensor_exp.exp_line != cxt_ptr->pre_write_exp_data.exp_line
+		|| sensor_exp.dummy != cxt_ptr->pre_write_exp_data.dummy
+		|| sensor_gain.gain != cxt_ptr->pre_write_exp_data.gain)
+		&& 0 != sensor_exp_slv.exp_line && 0 != sensor_gain_slv.gain
+		&& 0 != sensor_exp.exp_line && 0 != sensor_gain.gain) {
+
+		aealtek_handle_aec_info(cxt_ptr, &sensor_exp, &sensor_gain, &sensor_exp_slv, &sensor_gain_slv);
+	}
+	ret = aealtek_save_aec_info(cxt_ptr, &sensor_exp, &sensor_gain, &sensor_exp_slv, &sensor_gain_slv);
+
 	if (cxt_ptr->init_in_param.ops_in.set_iso_slv) {
 		ISP_LOGV("iso_speed_slv =%d", exp_param.iso);
 		cxt_ptr->init_in_param.ops_in.set_iso_slv(cxt_ptr->caller_handle, exp_param.iso);
