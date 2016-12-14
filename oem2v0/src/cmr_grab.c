@@ -895,6 +895,7 @@ cmr_int cmr_grab_free_frame(cmr_handle grab_handle, cmr_u32 channel_id, cmr_u32 
 cmr_int cmr_grab_scale_capability(cmr_handle grab_handle, cmr_u32 *width, cmr_u32 *sc_factor, cmr_u32 *sc_threshold)
 {
 	cmr_int                  ret = 0;
+	cmr_int			 cnt;
 	struct cmr_grab          *p_grab;
 	struct sprd_img_read_op  op;
 
@@ -907,7 +908,10 @@ cmr_int cmr_grab_scale_capability(cmr_handle grab_handle, cmr_u32 *width, cmr_u3
 	CMR_CHECK_FD;
 
 	op.cmd = SPRD_IMG_GET_SCALE_CAP;
-	ret = read(p_grab->fd, &op, sizeof(struct sprd_img_read_op));
+	cnt = read(p_grab->fd, &op, sizeof(struct sprd_img_read_op));
+	if (cnt != sizeof(struct sprd_img_read_op))
+		ret = cnt;
+
 	*width           = op.parm.reserved[0];
 	*sc_factor       = op.parm.reserved[1];
 	*sc_threshold    = op.parm.reserved[2];
@@ -920,6 +924,7 @@ cmr_int cmr_grab_path_capability(cmr_handle grab_handle, struct cmr_path_capabil
 	ATRACE_BEGIN(__FUNCTION__);
 
 	cmr_int                  ret = 0;
+	cmr_int                  cnt;
 	struct cmr_grab          *p_grab;
 	struct sprd_img_read_op  op;
 	cmr_int                  i = 0;
@@ -936,7 +941,10 @@ cmr_int cmr_grab_path_capability(cmr_handle grab_handle, struct cmr_path_capabil
 
 	memset(capability, 0, sizeof(struct cmr_path_capability));
 	op.cmd = SPRD_IMG_GET_PATH_CAP;
-	ret = read(p_grab->fd, &op, sizeof(struct sprd_img_read_op));
+	cnt = read(p_grab->fd, &op, sizeof(struct sprd_img_read_op));
+	if (cnt != sizeof(struct sprd_img_read_op))
+		ret = cnt;
+
 	for (i = 0; i < (cmr_int)(op.parm.capability.count); i++) {
 		if (op.parm.capability.path_info[i].support_yuv) {
 			yuv_cnt++;
@@ -1036,6 +1044,7 @@ static cmr_int cmr_grab_kill_thread(cmr_handle grab_handle)
 	ATRACE_BEGIN(__FUNCTION__);
 
 	cmr_int                  ret = 0;
+	cmr_int                  cnt;
 	void                     *dummy;
 	struct cmr_grab          *p_grab;
 	struct sprd_img_write_op op;
@@ -1050,12 +1059,14 @@ static cmr_int cmr_grab_kill_thread(cmr_handle grab_handle)
 
 	op.cmd = SPRD_IMG_STOP_DCAM;
 	op.sensor_id = p_grab->init_param.sensor_id;
-	ret = write(p_grab->fd, &op, sizeof(struct sprd_img_write_op));
-	if (ret >= 0) {
+	cnt = write(p_grab->fd, &op, sizeof(struct sprd_img_write_op));
+	if (cnt == sizeof(struct sprd_img_write_op)) {
 		CMR_LOGI("write OK!");
 		ret = pthread_join(p_grab->thread_handle, &dummy);
 		p_grab->thread_handle = 0;
 	}
+	else
+		ret = cnt;
 
 	ATRACE_END();
 	return ret;
@@ -1067,6 +1078,7 @@ static void* cmr_grab_thread_proc(void* data)
 	struct frm_info          frame;
 	cmr_u32                  on_flag = 0;
 	cmr_s32                  frm_num = -1;
+	cmr_s32			 cnt;
 	struct cmr_grab          *p_grab;
 	struct img_data_end      endian;
 	struct sprd_img_read_op  op;
@@ -1081,9 +1093,10 @@ static void* cmr_grab_thread_proc(void* data)
 	CMR_LOGI("In");
 
 	while (1) {
+		cnt = sizeof(struct sprd_img_read_op);
 		op.cmd = SPRD_IMG_GET_FRM_BUFFER;
 		op.sensor_id = p_grab->init_param.sensor_id;
-		if (-1 == read(p_grab->fd, &op, sizeof(struct sprd_img_read_op))) {
+		if (cnt != read(p_grab->fd, &op, sizeof(struct sprd_img_read_op))) {
 			CMR_LOGI("Failed to read frame buffer");
 			break;
 		} else {

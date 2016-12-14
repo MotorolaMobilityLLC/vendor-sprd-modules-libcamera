@@ -635,6 +635,7 @@ static cmr_int isp_dev_create_thread(isp_handle handle)
 static cmr_int isp_dev_kill_thread(isp_handle handle)
 {
 	cmr_int                    ret = 0;
+	cmr_int                    cnt;
 	struct isp_img_write_op    write_op;
 	struct isp_file            *file;
 	void                       *dummy;
@@ -649,12 +650,15 @@ static cmr_int isp_dev_kill_thread(isp_handle handle)
 	ISP_LOGI("kill isp proc thread.");
 	memset(&write_op, 0, sizeof(struct isp_img_write_op));
 	write_op.cmd = ISP_IMG_STOP_ISP;
-	ret = write(file->fd, &write_op, sizeof(struct isp_img_write_op));
-	if (ret >= 0) {
+
+	cnt = write(file->fd, &write_op, sizeof(struct isp_img_write_op));
+	if (cnt == sizeof(struct isp_img_write_op)) {
 		ISP_LOGI("write OK!");
 		ret = pthread_join(file->thread_handle, &dummy);
 		file->thread_handle = 0;
 	}
+	else
+		ret = cnt;
 
 	return ret;
 }
@@ -1085,9 +1089,10 @@ cmr_int isp_dev_set_statis_buf(isp_handle handle, struct isp_statis_buf *param)
 
 cmr_int isp_dev_get_statis_buf(isp_handle handle, struct isp_img_read_op *param)
 {
-	cmr_int ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_img_read_op *op = NULL;
+	cmr_int                 ret = 0;
+	cmr_int                 cnt;
+	struct isp_file         *file = NULL;
+	struct isp_img_read_op  *op = NULL;
 
 	if (!handle) {
 		ISP_LOGE("handle is null error.");
@@ -1102,8 +1107,9 @@ cmr_int isp_dev_get_statis_buf(isp_handle handle, struct isp_img_read_op *param)
 
 	file = (struct isp_file *)(handle);
 
-	ret = read(file->fd, op, sizeof(struct isp_img_read_op));
-	if (ret) {
+	cnt = read(file->fd, op, sizeof(struct isp_img_read_op));
+	if (cnt != sizeof(struct isp_img_read_op)) {
+		ret = cnt;
 		ISP_LOGE("isp_dev_get_statis_buf error.");
 	}
 
@@ -1136,9 +1142,10 @@ cmr_int isp_dev_set_img_buf(isp_handle handle, struct isp_cfg_img_buf *param)
 
 cmr_int isp_dev_get_img_buf(isp_handle handle, struct isp_img_read_op *param)
 {
-	cmr_int ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_img_read_op *op = NULL;
+	cmr_int                 ret = 0;
+	cmr_int                 cnt;
+	struct isp_file         *file = NULL;
+	struct isp_img_read_op  *op = NULL;
 
 	if (!handle) {
 		ISP_LOGE("handle is null error.");
@@ -1154,8 +1161,9 @@ cmr_int isp_dev_get_img_buf(isp_handle handle, struct isp_img_read_op *param)
 
 	file = (struct isp_file *)(handle);
 
-	ret = read(file->fd, op, sizeof(struct isp_img_read_op));
-	if (ret) {
+	cnt = read(file->fd, op, sizeof(struct isp_img_read_op));
+	if (cnt != sizeof(struct isp_img_read_op)) {
+		ret = cnt;
 		ISP_LOGE("isp_dev_get_img_buf error.");
 	}
 
