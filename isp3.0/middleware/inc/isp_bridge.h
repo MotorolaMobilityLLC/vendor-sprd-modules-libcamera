@@ -52,6 +52,8 @@ struct ae_match_data {
 	cmr_u16 uw_cur_fps;
 	cmr_s32 bv_val;
 	cmr_u8 uc_sensor_mode;
+	cmr_s32 master_bgbv;
+	cmr_u32 master_curmean;
 };
 
 struct match_data_param {

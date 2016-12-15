@@ -182,6 +182,7 @@ enum ae_ctrl_cb_type {
 	AE_CTRL_CB_PREFLASH_PERIOD_END,
 	AE_CTRL_CB_CLOSE_MAIN_FLASH,
 	AE_CTRL_CB_PROC_OUT,
+	AE_CTRL_CB_SOF,
 	AE_CTRl_CB_TOUCH_CONVERGED,
 	AE_CTRL_CB_SYNC_INFO,
 	AE_CTRL_CB_MAX
@@ -379,6 +380,14 @@ struct ae_ctrl_exp_gain_param {
 	cmr_u32 gain;
 };
 
+struct ae_ctrl_sof_cfg_info {
+	cmr_u32 hw_iso_speed;
+	cmr_u32 curmean;
+	cmr_s32 bv_val;
+	cmr_s32 bg_bvresult;
+	cmr_u32 ae_cur_iso;
+};
+
 struct ae_ctrl_proc_out {
 	struct isp3a_ae_info ae_info;
 	struct ae_ctrl_param_ae_frame ae_frame;
@@ -436,10 +445,10 @@ struct ae_ctrl_param_in {
 	};
 };
 
-
 struct ae_ctrl_callback_in {
 	union {
 	struct ae_ctrl_proc_out proc_out;
+	struct ae_ctrl_sof_cfg_info ae_cfg_info;
 	struct ispae_sync_info_output *ae_sync_info;
 	};
 };

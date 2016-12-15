@@ -3524,6 +3524,8 @@ static cmr_int aealtek_get_sync_info_from_lib(struct aealtek_cxt *cxt_ptr, struc
 	match_param.ae_data.uw_cur_fps = slave_dat.uwCur_fps;
 	match_param.ae_data.bv_val = slave_dat.bv_val;
 	match_param.ae_data.uc_sensor_mode = slave_dat.uc_sensor_mode;
+	match_param.ae_data.master_bgbv = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.BG_BVResult;
+	match_param.ae_data.master_curmean = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.curmean;
 	isp_br_ioctrl(cxt_ptr->camera_id, SET_MATCH_AE_DATA, &match_param.ae_data, NULL);
 
 	exp_gain->exp_line = slave_dat.exposure_line;
@@ -3764,11 +3766,13 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	struct seq_cell out_write;
 	char ae_exp[PROPERTY_VALUE_MAX];
 	char ae_gain[PROPERTY_VALUE_MAX];
+	struct ae_ctrl_callback_in callback_in;
 
 	if (!cxt_ptr || !in_ptr || !out_ptr) {
 		ISP_LOGE("param %p %p %p is NULL error!", cxt_ptr, in_ptr, out_ptr);
 		goto exit;
 	}
+	memset(&callback_in, 0x00, sizeof(callback_in));
 
 	if(cxt_ptr->hdr_enable && cxt_ptr->nxt_status.is_hdr_status) {
 		if (0 == cxt_ptr->lock_cnt)
@@ -3864,6 +3868,18 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	if (ret)
 		ISP_LOGW("warning set_dummy ret=%ld !!!", ret);
 	ret = aealtek_set_sof_to_lib(cxt_ptr, in_ptr, cxt_ptr->sensor_exp_data.actual_exp);
+
+	ret = aealtek_get_iso_from_adgain(cxt_ptr,
+					  &cxt_ptr->sensor_exp_data.actual_exp.gain,
+					  &callback_in.ae_cfg_info.hw_iso_speed);
+	if (ret)
+		goto exit;
+
+	callback_in.ae_cfg_info.curmean = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.curmean;
+	callback_in.ae_cfg_info.bv_val = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.bv_val;
+	callback_in.ae_cfg_info.bg_bvresult = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.BG_BVResult;
+	callback_in.ae_cfg_info.ae_cur_iso = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_cur_iso;
+	cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRL_CB_SOF, &callback_in);
 	if (ret)
 		goto exit;
 

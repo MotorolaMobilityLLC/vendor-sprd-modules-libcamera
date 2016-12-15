@@ -64,13 +64,11 @@
 #define ISP3A_PROC_EVT_START                                         (ISP3A_EVT_BASE+27)
 #define ISP3A_PROC_EVT_STOP                                          (ISP3A_EVT_BASE+28)
 
-
 #define ISP3A_RECEIVER_EVT_INIT                                      (ISP3A_EVT_BASE+40)
 #define ISP3A_RECEIVER_EVT_DEINIT                                    (ISP3A_EVT_BASE+41)
 #define ISP3A_RECEIVER_EVT_IOCTRL                                    (ISP3A_EVT_BASE+42)
 #define ISP3A_RECEIVER_EVT_PROCESS                                   (ISP3A_EVT_BASE+43)
 #define ISP3A_RECEIVER_EVT_EXIT                                      (ISP3A_EVT_BASE+44)
-
 
 #define ISP3A_AF_EVT_INIT                                            (ISP3A_EVT_BASE+50)
 #define ISP3A_AF_EVT_DEINIT                                          (ISP3A_EVT_BASE+51)
@@ -78,11 +76,19 @@
 #define ISP3A_AF_EVT_PROCESS                                         (ISP3A_EVT_BASE+53)
 #define ISP3A_AF_EVT_EXIT                                            (ISP3A_EVT_BASE+54)
 
-#define ISP3A_AFL_EVT_INIT                                           (ISP3A_EVT_BASE+50)
-#define ISP3A_AFL_EVT_DEINIT                                         (ISP3A_EVT_BASE+51)
-#define ISP3A_AFL_EVT_IOCTRL                                         (ISP3A_EVT_BASE+52)
-#define ISP3A_AFL_EVT_PROCESS                                        (ISP3A_EVT_BASE+53)
-#define ISP3A_AFL_EVT_EXIT                                           (ISP3A_EVT_BASE+54)
+#define ISP3A_AFL_EVT_INIT                                           (ISP3A_EVT_BASE+60)
+#define ISP3A_AFL_EVT_DEINIT                                         (ISP3A_EVT_BASE+61)
+#define ISP3A_AFL_EVT_IOCTRL                                         (ISP3A_EVT_BASE+62)
+#define ISP3A_AFL_EVT_PROCESS                                        (ISP3A_EVT_BASE+63)
+#define ISP3A_AFL_EVT_EXIT                                           (ISP3A_EVT_BASE+64)
+
+#define ISP3A_ISPDRV_EVT_INIT                                        (ISP3A_EVT_BASE+70)
+#define ISP3A_ISPDRV_EVT_DEINIT                                      (ISP3A_EVT_BASE+71)
+#define ISP3A_ISPDRV_EVT_IOCTRL                                      (ISP3A_EVT_BASE+72)
+#define ISP3A_ISPDRV_EVT_PROCESS                                     (ISP3A_EVT_BASE+73)
+#define ISP3A_ISPDRV_EVT_EXIT                                        (ISP3A_EVT_BASE+74)
+#define ISP3A_ISPDRV_EVT_CFG                                         (ISP3A_EVT_BASE+75)
+
 /************************************* INTERNAL DATA TYPE ***************************************/
 typedef cmr_int (*isp3a_ioctrl_fun)(cmr_handle isp_3a_handle, void *param_ptr);
 
@@ -93,7 +99,8 @@ struct isp3a_ctrl_io_func {
 
 struct isp3a_thread_context {
 	cmr_handle ctrl_thr_handle;
-	cmr_handle process_thr_handle;//for processing unpack statics & AE & AWB
+	cmr_handle process_thr_handle; //for processing unpack statics & AE & AWB
+	cmr_handle ispdrv_thr_handle; //for set param to isp
 	cmr_handle af_thr_handle;
 	cmr_handle afl_thr_handle;
 	pthread_t receiver_thr_handle;
@@ -239,6 +246,9 @@ static cmr_int isp3a_destroy_process_thread(cmr_handle isp_3a_handle);
 static cmr_int isp3a_create_receiver_thread(cmr_handle isp_3a_handle);
 static void *isp3a_receiver_thread_proc(void *p_data);
 static cmr_int isp3a_destroy_receiver_thread(cmr_handle isp_3a_handle);
+static cmr_int isp3a_create_ispdrv_thread(cmr_handle isp_3a_handle);
+static cmr_int isp3a_ispdrv_thread_proc(struct cmr_msg *message, void *p_data);
+static cmr_int isp3a_destroy_ispdrv_thread(cmr_handle isp_3a_handle);
 static cmr_int isp3a_create_af_thread(cmr_handle isp_3a_handle);
 static cmr_int isp3a_af_thread_proc(struct cmr_msg *message, void *p_data);
 static cmr_int isp3a_destroy_af_thread(cmr_handle isp_3a_handle);
@@ -447,6 +457,123 @@ cmr_int isp3a_get_dev_time(cmr_handle handle, cmr_u32 *sec_ptr, cmr_u32 *usec_pt
 	return ret;
 }
 
+cmr_int isp3a_handle_ae_cb_sof(cmr_handle handle, struct ae_ctrl_callback_in *result_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)handle;
+	struct ae_ctrl_callback_in                  *info;
+	CMR_MSG_INIT(message);
+
+	info = (struct ae_ctrl_callback_in *)malloc(sizeof(*info));
+
+	if (!info) {
+		ISP_LOGE("failed to malloc info");
+		ret = -ISP_ALLOC_ERROR;
+		goto error_malloc;
+	}
+	*info = *result_ptr;
+
+	message.msg_type = ISP3A_ISPDRV_EVT_CFG;
+	message.sync_flag = CMR_MSG_SYNC_NONE;
+	message.alloc_flag = 1;
+	message.data = (void *)info;
+	ret = cmr_thread_msg_send(cxt->thread_cxt.ispdrv_thr_handle, &message);
+	if (ret) {
+		ISP_LOGE("failed to send msg to thr %ld", ret);
+		goto exit;
+	}
+
+	return ret;
+exit:
+	if (info)
+		free(info);
+error_malloc:
+	return ret;
+}
+
+cmr_int isp3a_ispdrv_cfg_info(cmr_handle handle, struct ae_ctrl_callback_in *result_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)handle;
+	struct match_data_param                     match_param;
+	struct isp_sof_cfg_info                     sof_cfg_info;
+	nsecs_t                                     time_start = 0;
+	nsecs_t                                     time_end = 0;
+
+	time_start = systemTime(CLOCK_MONOTONIC);
+	cmr_bzero(&sof_cfg_info, sizeof(sof_cfg_info));
+	if (cxt->is_refocus && !cxt->is_master) {
+		cmr_bzero(&match_param, sizeof(match_param));
+		ret = isp_br_ioctrl(cxt->camera_id,
+					GET_MATCH_AWB_DATA,
+					NULL,
+					&match_param.awb_data);
+		if (ret) {
+			ISP_LOGE("failed to get awb match_data");
+		}
+		if (match_param.awb_data.is_update) {
+			sof_cfg_info.awb_gain.r = match_param.awb_data.gain.r;
+			sof_cfg_info.awb_gain.g = match_param.awb_data.gain.g;
+			sof_cfg_info.awb_gain.b = match_param.awb_data.gain.b;
+			sof_cfg_info.awb_b_gain.r = match_param.awb_data.gain_balanced.r;
+			sof_cfg_info.awb_b_gain.g = match_param.awb_data.gain_balanced.g;
+			sof_cfg_info.awb_b_gain.b = match_param.awb_data.gain_balanced.b;
+			sof_cfg_info.color_temp = match_param.awb_data.ct;
+			sof_cfg_info.is_update = 1;
+		}
+
+		ISP_LOGV("camera id %d, get match awb_gain,%d,%d,%d,balanced,%d,%d,%d,ct:%d, updata:%d",
+			 cxt->camera_id,
+			 match_param.awb_data.gain.r,
+			 match_param.awb_data.gain.g,
+			 match_param.awb_data.gain.b,
+			 match_param.awb_data.gain_balanced.r,
+			 match_param.awb_data.gain_balanced.g,
+			 match_param.awb_data.gain_balanced.b,
+			 match_param.awb_data.ct, match_param.awb_data.is_update);
+	} else if (cxt->awb_cxt.proc_out.is_update) {
+		sof_cfg_info.awb_gain.r = cxt->awb_cxt.proc_out.gain.r;
+		sof_cfg_info.awb_gain.g = cxt->awb_cxt.proc_out.gain.g;
+		sof_cfg_info.awb_gain.b = cxt->awb_cxt.proc_out.gain.b;
+		sof_cfg_info.awb_b_gain.r = cxt->awb_cxt.proc_out.gain_balanced.r;
+		sof_cfg_info.awb_b_gain.g = cxt->awb_cxt.proc_out.gain_balanced.g;
+		sof_cfg_info.awb_b_gain.b = cxt->awb_cxt.proc_out.gain_balanced.b;
+		sof_cfg_info.color_temp = cxt->awb_cxt.proc_out.ct;
+		sof_cfg_info.is_update = 1;
+	}
+
+	if (cxt->is_refocus && !cxt->is_master) {
+		cmr_bzero(&match_param, sizeof(match_param));
+		ret = isp_br_ioctrl(cxt->camera_id,
+					GET_MATCH_AE_DATA,
+					NULL,
+					&match_param.ae_data);
+		if (ret) {
+			ISP_LOGE("failed to get match_data");
+		}
+		sof_cfg_info.iso_val = match_param.ae_data.iso;
+		sof_cfg_info.iq_ae_info.update_iso= match_param.ae_data.iso;
+		sof_cfg_info.iq_ae_info.update_mean = match_param.ae_data.master_curmean;
+		sof_cfg_info.iq_ae_info.update_bv= match_param.ae_data.bv_val;
+		sof_cfg_info.iq_ae_info.update_bgbv = match_param.ae_data.master_bgbv;
+		ISP_LOGV("camera id %d, get match out iso_val:%d", cxt->camera_id, sof_cfg_info.iso_val);
+	} else {
+		sof_cfg_info.iso_val = result_ptr->ae_cfg_info.hw_iso_speed;
+		sof_cfg_info.iq_ae_info.update_iso = result_ptr->ae_cfg_info.ae_cur_iso;
+		sof_cfg_info.iq_ae_info.update_mean = result_ptr->ae_cfg_info.curmean;
+		sof_cfg_info.iq_ae_info.update_bv = result_ptr->ae_cfg_info.bv_val;
+		sof_cfg_info.iq_ae_info.update_bgbv = result_ptr->ae_cfg_info.bg_bvresult;
+	}
+	cxt->ae_cxt.hw_iso_speed = sof_cfg_info.iso_val;
+	ret = isp_dev_access_cfg_sof_info(cxt->dev_access_handle, &sof_cfg_info);
+	if (ret) {
+		ISP_LOGE("failed to cfg sof info");
+	}
+	time_end = systemTime(CLOCK_MONOTONIC);
+	ISP_LOGI("test sof msg cfg time_delta = %d us camera id %d %d", (cmr_s32)(time_end - time_start) / 1000, cxt->camera_id, cxt->ae_cxt.hw_iso_speed);
+	return ret;
+}
+
 cmr_int isp3a_ae_callback(cmr_handle handle, enum ae_ctrl_cb_type cmd, struct ae_ctrl_callback_in *in_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
@@ -477,6 +604,9 @@ cmr_int isp3a_ae_callback(cmr_handle handle, enum ae_ctrl_cb_type cmd, struct ae
 		break;
 	case AE_CTRL_CB_PROC_OUT:
 		ret = isp3a_handle_ae_result(handle, in_ptr);
+		break;
+	case AE_CTRL_CB_SOF:
+		ret = isp3a_handle_ae_cb_sof(handle, in_ptr);
 		break;
 	case AE_CTRL_CB_SYNC_INFO:
 		callback_cmd = ISP_AE_SYNC_INFO;
@@ -1391,6 +1521,82 @@ exit:
 	return ret;
 }
 
+cmr_int isp3a_create_ispdrv_thread(cmr_handle isp_3a_handle)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
+
+	ret = cmr_thread_create(&cxt->thread_cxt.ispdrv_thr_handle, ISP3A_MSG_QUEUE_SIZE,
+							isp3a_ispdrv_thread_proc, (void *)isp_3a_handle);
+	ISP_LOGV("0x%lx", (cmr_uint)cxt->thread_cxt.ispdrv_thr_handle);
+	if (CMR_MSG_SUCCESS != ret) {
+		ISP_LOGE("failed to create ispdrv thread");
+		ret = ISP_ERROR;
+	}
+
+	return ret;
+}
+
+cmr_int isp3a_ispdrv_thread_proc(struct cmr_msg *message, void *p_data)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	cmr_handle                                  isp_3a_handle = (cmr_handle)p_data;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
+
+	if (!message || !p_data) {
+		ISP_LOGE("param error");
+		goto exit;
+	}
+	ISP_LOGV("message.msg_type 0x%x, data %p", message->msg_type, message->data);
+
+	switch (message->msg_type) {
+	case ISP3A_ISPDRV_EVT_INIT:
+		break;
+	case ISP3A_ISPDRV_EVT_DEINIT:
+		break;
+	case ISP3A_ISPDRV_EVT_EXIT:
+		break;
+	case ISP3A_ISPDRV_EVT_IOCTRL:
+		break;
+	case ISP3A_ISPDRV_EVT_PROCESS:
+		break;
+	case ISP3A_ISPDRV_EVT_CFG:
+		ret = isp3a_ispdrv_cfg_info(cxt, message->data);
+		break;
+	default:
+		ISP_LOGI("don't support msg");
+		break;
+	}
+exit:
+	ISP_LOGV("done %ld", ret);
+	return ret;
+}
+
+cmr_int isp3a_destroy_ispdrv_thread(cmr_handle isp_3a_handle)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
+	struct isp3a_thread_context                 *isp3a_thread_cxt;
+
+	if (!isp_3a_handle) {
+		ISP_LOGE("input is NULL");
+		ret = ISP_ERROR;
+		goto exit;
+	}
+	isp3a_thread_cxt = &cxt->thread_cxt;
+	if (isp3a_thread_cxt->ispdrv_thr_handle) {
+		ret = cmr_thread_destroy(isp3a_thread_cxt->ispdrv_thr_handle);
+		if (!ret) {
+			isp3a_thread_cxt->ispdrv_thr_handle = (cmr_handle)NULL;
+		} else {
+			ISP_LOGE("failed to destroy ispdrv thread");
+		}
+	}
+exit:
+	ISP_LOGI("done %ld", ret);
+	return ret;
+}
+
 cmr_int isp3a_create_af_thread(cmr_handle isp_3a_handle)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
@@ -1493,15 +1699,15 @@ cmr_int isp3a_afl_thread_proc(struct cmr_msg *message, void *p_data)
 	ISP_LOGI("message.msg_type 0x%x, data %p", message->msg_type, message->data);
 
 	switch (message->msg_type) {
-	case ISP3A_AF_EVT_INIT:
+	case ISP3A_AFL_EVT_INIT:
 		break;
-	case ISP3A_AF_EVT_DEINIT:
+	case ISP3A_AFL_EVT_DEINIT:
 		break;
-	case ISP3A_AF_EVT_EXIT:
+	case ISP3A_AFL_EVT_EXIT:
 		break;
-	case ISP3A_AF_EVT_IOCTRL:
+	case ISP3A_AFL_EVT_IOCTRL:
 		break;
-	case ISP3A_AF_EVT_PROCESS:
+	case ISP3A_AFL_EVT_PROCESS:
 		break;
 	default:
 		ISP_LOGI("don't support msg");
@@ -1547,9 +1753,14 @@ cmr_int isp3a_create_thread(cmr_handle isp_3a_handle)
 //		goto exit;
 //	}
 	ret = isp3a_create_process_thread(isp_3a_handle);
-//	if (ret) {
-//		goto destroy_ctrl_thread;
-//	}
+	if (ret) {
+		//goto destroy_ctrl_thread;
+		goto exit;
+	}
+	ret = isp3a_create_ispdrv_thread(isp_3a_handle);
+	if (ret) {
+		goto destroy_process_thread;
+	}
 //	ret = isp3a_create_receiver_thread(isp_3a_handle);
 //	if (ret) {
 //		goto destroy_process_thread;
@@ -1562,14 +1773,14 @@ cmr_int isp3a_create_thread(cmr_handle isp_3a_handle)
 //	if (ret) {
 //		goto destroy_af_thread;
 //	}
-//	goto exit;
+	goto exit;
 //destroy_af_thread:
 //	ret = isp3a_destroy_af_thread(isp_3a_handle);
-//destroy_process_thread:
-//	ret = isp3a_destroy_process_thread(isp_3a_handle);
+destroy_process_thread:
+	ret = isp3a_destroy_process_thread(isp_3a_handle);
 //destroy_ctrl_thread:
 //	ret = isp3a_destroy_ctrl_thread(isp_3a_handle);
-//exit:
+exit:
 	return ret;
 }
 
@@ -1585,6 +1796,9 @@ cmr_int isp3a_destroy_thread(cmr_handle isp_3a_handle)
 	ret = isp3a_destroy_process_thread(isp_3a_handle);
 	if (ret)
 		ISP_LOGE("destroy process thread fail %ld", ret);
+	ret = isp3a_destroy_ispdrv_thread(isp_3a_handle);
+	if (ret)
+		ISP_LOGE("destroy ispdrv thread fail %ld", ret);
 //	isp3a_destroy_af_thread(isp_3a_handle);
 //	isp3a_destroy_afl_thread(isp_3a_handle);
 //	isp3a_destroy_receiver_thread(isp_3a_handle);
@@ -3508,16 +3722,13 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
 	union awb_ctrl_cmd_in                       awb_in;
-	union awb_ctrl_cmd_out                      awb_out;
 	struct af_ctrl_param_in                     af_in;
 	struct ae_ctrl_param_in                     ae_in;
 	struct ae_ctrl_param_out                    ae_out;
 	struct isp_irq_node                         *sof_info = (struct isp_irq_node *)data;
-	struct isp_sof_cfg_info                     sof_cfg_info;
 	struct debug_info1                          *exif_ptr = &cxt->debug_data.exif_debug_info;
 	nsecs_t                                     time_start = 0;
 	nsecs_t                                     time_end = 0;
-	struct match_data_param                     match_param;
 	char                                        value[PROPERTY_VALUE_MAX];
 
 	if (NULL == cxt) {
@@ -3535,48 +3746,7 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 		ISP_LOGE("failed to set af sof");
 	}
 	awb_in.sof_frame_idx = cxt->sof_idx;
-	ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_SOF_FRAME_IDX, &awb_in, &awb_out);
-	sof_cfg_info.is_update = 0;
-	if (cxt->is_refocus && !cxt->is_master) {
-		cmr_bzero(&match_param, sizeof(match_param));
-		ret = isp_br_ioctrl(cxt->camera_id,
-					    GET_MATCH_AWB_DATA,
-					    NULL,
-					    &match_param.awb_data);
-		if (ret) {
-			ISP_LOGE("failed to get awb match_data");
-		}
-		if (match_param.awb_data.is_update) {
-			sof_cfg_info.awb_gain.r = match_param.awb_data.gain.r;
-			sof_cfg_info.awb_gain.g = match_param.awb_data.gain.g;
-			sof_cfg_info.awb_gain.b = match_param.awb_data.gain.b;
-			sof_cfg_info.awb_b_gain.r = match_param.awb_data.gain_balanced.r;
-			sof_cfg_info.awb_b_gain.g = match_param.awb_data.gain_balanced.g;
-			sof_cfg_info.awb_b_gain.b = match_param.awb_data.gain_balanced.b;
-			sof_cfg_info.color_temp = match_param.awb_data.ct;
-			sof_cfg_info.is_update = 1;
-		}
-
-		ISP_LOGV("camera id %d, get match awb_gain,%d,%d,%d,balanced,%d,%d,%d,ct:%d, updata:%d",
-			cxt->camera_id,
-			match_param.awb_data.gain.r,
-			match_param.awb_data.gain.g,
-			match_param.awb_data.gain.b,
-			match_param.awb_data.gain_balanced.r,
-			match_param.awb_data.gain_balanced.g,
-			match_param.awb_data.gain_balanced.b,
-			match_param.awb_data.ct, match_param.awb_data.is_update);
-	} else if (cxt->awb_cxt.proc_out.is_update) {
-		sof_cfg_info.awb_gain.r = cxt->awb_cxt.proc_out.gain.r;
-		sof_cfg_info.awb_gain.g = cxt->awb_cxt.proc_out.gain.g;
-		sof_cfg_info.awb_gain.b = cxt->awb_cxt.proc_out.gain.b;
-		sof_cfg_info.awb_b_gain.r = cxt->awb_cxt.proc_out.gain_balanced.r;
-		sof_cfg_info.awb_b_gain.g = cxt->awb_cxt.proc_out.gain_balanced.g;
-		sof_cfg_info.awb_b_gain.b = cxt->awb_cxt.proc_out.gain_balanced.b;
-		sof_cfg_info.color_temp = cxt->awb_cxt.proc_out.ct;
-		sof_cfg_info.is_update = 1;
-	}
-
+	ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_SOF_FRAME_IDX, &awb_in, NULL);
 	ae_in.sof_param.frame_index = cxt->sof_idx;
 	ae_in.sof_param.timestamp.sec = sof_info->time_stamp.sec;
 	ae_in.sof_param.timestamp.usec = sof_info->time_stamp.usec;
@@ -3584,35 +3754,7 @@ cmr_int isp3a_handle_sensor_sof(cmr_handle isp_3a_handle, void *data)
 	if (ret) {
 		ISP_LOGE("failed to set ae sof");
 	}
-	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_GET_HW_ISO_SPEED, NULL, &ae_out);
-	if (ret) {
-		ISP_LOGE("failed to get hw_iso_speed");
-	}
-	cxt->ae_cxt.hw_iso_speed = ae_out.hw_iso_speed;
-	sof_cfg_info.iso_val = ae_out.hw_iso_speed;
-
-	if (cxt->is_refocus && !cxt->is_master) {
-		cmr_bzero(&match_param, sizeof(match_param));
-		ret = isp_br_ioctrl(cxt->camera_id,
-					    GET_MATCH_AE_DATA,
-					    NULL,
-					    &match_param.ae_data);
-		if (ret) {
-			ISP_LOGE("failed to get match_data");
-		}
-		sof_cfg_info.iso_val = match_param.ae_data.iso;
-		ISP_LOGV("camera id %d, get match out iso_val:%d", cxt->camera_id, sof_cfg_info.iso_val);
-	}
-
 	time_start = systemTime(CLOCK_MONOTONIC);
-	ret = isp_dev_access_cfg_sof_info(cxt->dev_access_handle, &sof_cfg_info);
-	if (ret) {
-		ISP_LOGE("failed to cfg sof info");
-	}
-	time_end = systemTime(CLOCK_MONOTONIC);
-	ISP_LOGI("test sof msg cfg time_delta = %d us camera id %d", (cmr_s32)(time_end - time_start) / 1000, cxt->camera_id);
-
-	time_start = time_end;
 	property_get("ro.debuggable", (char *)value, "0");
 	if (atoi(value)) {
 		ret = isp_dev_access_get_exif_debug_info(cxt->dev_access_handle, exif_ptr);
@@ -4043,7 +4185,7 @@ exit:
 		isp_br_init(cxt->camera_id, cxt);
 		isp_dev_access_evt_reg(cxt->dev_access_handle, isp3a_dev_evt_cb, (cmr_handle)cxt);
 	}
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGI("done %ld cxt %p", ret, cxt);
 	ATRACE_END();
 	return ret;
 }
