@@ -2722,6 +2722,27 @@ exit:
 	return ret;
 }
 
+static cmr_int aealtek_set_capture_mode_auto(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+	enum isp_capture_mode cap_mode = 0;
+
+	if (!cxt_ptr || !in_ptr) {
+		ISP_LOGE("param is NULL error!");
+		goto exit;
+	}
+
+	cap_mode = in_ptr->work_param.capture_mode;
+	ret = aealtek_set_capture_mode(cxt_ptr, cap_mode);
+
+	if (ret)
+		goto exit;
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld !!!", ret);
+	return ret;
+}
+
 static cmr_int aealtek_work_video(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr)
 {
 	cmr_int ret = ISP_ERROR;
@@ -2851,12 +2872,15 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 	switch (work_mode) {
 	case ISP3A_WORK_MODE_PREVIEW:
 		cxt_ptr->nxt_status.is_hdr_status = 0;
+		if (in_ptr->work_param.capture_mode != ISP_CAP_MODE_AUTO && in_ptr->work_param.capture_mode != ISP_CAP_MODE_ZSL) {
+			in_ptr->work_param.capture_mode = ISP_CAP_MODE_AUTO;
+			ret = aealtek_set_capture_mode_auto(cxt_ptr, in_ptr);
+		}
 		ret = aealtek_work_preview(cxt_ptr, &cxt_ptr->nxt_status.ui_param.work_info, out_ptr);
 		force_write_sensor = 1;
 		break;
 	case ISP3A_WORK_MODE_CAPTURE:
 		ret = aealtek_work_capture(cxt_ptr, in_ptr, out_ptr);
-		ret = 0;
 		if (cxt_ptr->nxt_status.is_hdr_status)
 			force_write_sensor = 1;
 		break;
