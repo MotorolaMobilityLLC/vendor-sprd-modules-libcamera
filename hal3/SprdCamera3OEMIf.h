@@ -210,8 +210,16 @@ public:
 	void            setIspFlashMode(uint32_t mode);
 
 #ifdef CONFIG_CAMERA_EIS
-	virtual void EIS_init();
-	vsOutFrame processEIS(vsInFrame frame_in);
+	virtual void EisPreview_init();
+	virtual void EisVideo_init();
+	vsOutFrame processPreviewEIS(vsInFrame frame_in);
+	vsOutFrame processVideoEIS(vsInFrame frame_in);
+	void pushEISPreviewQueue(vsGyro *mGyrodata);
+	void popEISPreviewQueue(vsGyro *gyro, int gyro_num);
+	void pushEISVideoQueue(vsGyro *mGyrodata);
+	void popEISVideoQueue(vsGyro *gyro, int gyro_num);
+	void EisPreviewFrameStab(struct camera_frame_type *frame);
+	void EisVideoFrameStab(struct camera_frame_type *frame);
 #endif
 
 #ifdef CONFIG_CAMERA_GYRO
@@ -655,21 +663,28 @@ private:
 
 	/* for eis*/
 	bool                          mGyroInit;
-	bool                          mGyroDeinit;
-	bool                          mEisInit;
+	bool                          mGyroExit;
+	bool                          mEisPreviewInit;
+	bool                          mEisVideoInit;
 	pthread_t                     mGyroMsgQueHandle;
 	int                           mGyroNum;
 	double                        mGyromaxtimestamp;
-	Mutex                         mReadGyroLock;
-	Condition                     mReadGyroCond;
+	Mutex                         mReadGyroPreviewLock;
+	Mutex                         mReadGyroVideoLock;
+	Condition                     mReadGyroPreviewCond;
+	Condition                     mReadGyroVideoCond;
 	sem_t                         mGyro_sem;
+	Mutex                         mEisPreviewLock;
+	Mutex                         mEisVideoLock;
 #ifdef CONFIG_CAMERA_EIS
 	static const int              kGyrocount = 100;
-	List<vsGyro*>                 mGyroInfo;
+	List<vsGyro*>                 mGyroPreviewInfo;
+	List<vsGyro*>                 mGyroVideoInfo;
 	vsGyro                        mGyrodata[kGyrocount];
-	vsParam                       mParam;
-	vsInst                        mInst;
-	eis_info_t                    mEisInfo;
+	vsParam                       mPreviewParam;
+	vsParam                       mVideoParam;
+	vsInst                        mPreviewInst;
+	vsInst                        mVideoInst;
 #endif
 	bool                          mSprdEisEnabled;
 	bool                          mIsUpdateRangeFps;

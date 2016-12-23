@@ -775,7 +775,12 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 
 	mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE;
 	mOEMIf->SetChannelHandle(mRegularChan, mPicChan);
-
+#ifdef CONFIG_CAMERA_EIS
+	if (sprddefInfo.sprd_eis_enabled) {
+		//leave two*height*1.5 bytes space for eis parameters
+		video_size.width = (video_size.width >> 4) << 4;
+	}
+#endif
 	HAL_LOGI("preview: width=%d, height=%d, video: width=%d, height=%d",
 		preview_size.width, preview_size.height,
 		video_size.width, video_size.height);
