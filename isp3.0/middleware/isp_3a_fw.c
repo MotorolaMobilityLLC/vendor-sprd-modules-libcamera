@@ -3805,6 +3805,19 @@ cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start *input_ptr)
 	}
 
 	cxt->sof_idx = 0;
+	if (cxt->is_refocus && cxt->is_master) {
+		cmr_handle isp_3a_handle_slv;
+		struct isp3a_fw_context *cxt_slv = NULL;
+
+		isp_3a_handle_slv = isp_br_get_3a_handle(cxt->camera_id + 2); //get slave 3a fw handle
+		cxt_slv = (struct isp3a_fw_context *)isp_3a_handle_slv;
+		if (!cxt_slv) {
+			ISP_LOGE("failed to get slave sensor handle it is not ready");
+			ret = -ISP_ERROR;
+			goto exit;
+		}
+		cxt->ioctrl_ptr_slv = cxt_slv->ioctrl_ptr;
+	}
 	//cxt->is_refocus = input_ptr->is_refocus;//TBD
 #if defined (CONFIG_Y_IMG_TO_ISP)
 	if (input_ptr->live_view_sz.w && input_ptr->live_view_sz.h) {
@@ -3927,7 +3940,7 @@ cmr_int isp_3a_fw_init_otp(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *i
 	}
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
-	if (cxt->is_refocus) {
+	if (cxt->is_refocus && cxt->is_master) {
 		if (input_ptr->dual_otp) {
 			ISP_LOGI("use dual otp slave");
 			cxt->slave_iso_awb_info = input_ptr->dual_otp->slave_iso_awb_info;
@@ -3957,7 +3970,6 @@ cmr_int isp_3a_fw_init(struct isp_3a_fw_init_in *input_ptr, cmr_handle *isp_3a_h
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = NULL;
 	struct sensor_raw_info                      *sensor_raw_info_ptr = NULL;
-	struct sensor_raw_info                      *sensor_raw_info_ptr_slv = NULL;
 
 	if (!input_ptr || !isp_3a_handle) {
 		ISP_LOGE("input is NULL, 0x%lx", (cmr_uint)input_ptr);
@@ -3989,9 +4001,6 @@ cmr_int isp_3a_fw_init(struct isp_3a_fw_init_in *input_ptr, cmr_handle *isp_3a_h
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 	cxt->is_refocus = input_ptr->is_refocus;
-	sensor_raw_info_ptr_slv = (struct sensor_raw_info *)input_ptr->setting_param_ptr_slv;
-	if (NULL != sensor_raw_info_ptr_slv)
-		cxt->ioctrl_ptr_slv = sensor_raw_info_ptr_slv->ioctrl_ptr;
 #endif
 	isp_3a_fw_init_otp(cxt, input_ptr);
 
@@ -4043,7 +4052,7 @@ cmr_int isp_3a_fw_deinit(cmr_handle isp_3a_handle)
 	isp3a_destroy_thread((cmr_handle)cxt);
 	isp3a_alg_deinit((cmr_handle)cxt);
 	isp3a_deinit_statistics_buf((cmr_handle)cxt);
-	isp_br_deinit();
+	isp_br_deinit(cxt->camera_id);
 	sem_destroy(&cxt->statistics_data_sm);
 	free((void *)cxt);
 	cxt = NULL;

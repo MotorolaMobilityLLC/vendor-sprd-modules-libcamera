@@ -37,6 +37,10 @@ static pthread_mutex_t g_br_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 cmr_handle isp_br_get_3a_handle(cmr_u32 camera_id)
 {
+	if (camera_id >= SENSOR_NUM_MAX) {
+		ISP_LOGE("fail camera_id %d", camera_id);
+		return NULL;
+	}
 	return br_cxt.isp_3afw_handles[camera_id];
 }
 
@@ -44,7 +48,10 @@ cmr_int isp_br_ioctrl(cmr_u32 camera_id, cmr_int cmd, void *in, void *out)
 {
 	struct ispbr_context *cxt = &br_cxt;
 
-	UNUSED(camera_id);
+	if (camera_id >= SENSOR_NUM_MAX) {
+		ISP_LOGE("fail camera_id %d", camera_id);
+		return -ISP_PARAM_ERROR;
+	}
 	switch (cmd) {
 	case GET_MATCH_AWB_DATA:
 		sem_wait(&cxt->awb_sm);
@@ -76,6 +83,10 @@ cmr_int isp_br_init(cmr_u32 camera_id, cmr_handle isp_3a_handle)
 	cmr_int ret = ISP_SUCCESS;
 	struct ispbr_context *cxt = &br_cxt;
 
+	if (camera_id >= SENSOR_NUM_MAX) {
+		ISP_LOGE("fail camera_id %d", camera_id);
+		return -ISP_PARAM_ERROR;
+	}
 	cxt->isp_3afw_handles[camera_id] = isp_3a_handle;
 
 	pthread_mutex_lock(&g_br_mutex);
@@ -90,12 +101,17 @@ cmr_int isp_br_init(cmr_u32 camera_id, cmr_handle isp_3a_handle)
 	return ret;
 }
 
-cmr_int isp_br_deinit(void)
+cmr_int isp_br_deinit(cmr_u32 camera_id)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct ispbr_context *cxt = &br_cxt;
 	cmr_u8 i = 0;
 
+	if (camera_id >= SENSOR_NUM_MAX) {
+		ISP_LOGE("fail camera_id %d", camera_id);
+		return -ISP_PARAM_ERROR;
+	}
+	cxt->isp_3afw_handles[camera_id] = NULL;
 	pthread_mutex_lock(&g_br_mutex);
 	cxt->user_cnt--;
 	pthread_mutex_unlock(&g_br_mutex);

@@ -678,11 +678,12 @@ cmr_int sns_dev_muti_i2c_write(struct sensor_drv_context *sensor_cxt,
 
 cmr_int hw_sensor_muti_i2c_write(SENSOR_HW_HANDLE handle, struct sensor_muti_aec_i2c_tag *aec_i2c_info)
 {
+	cmr_int ret = SENSOR_SUCCESS;
 	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)(handle->privatedata);
 
-	sns_dev_muti_i2c_write(sensor_cxt, aec_i2c_info);
+	ret = sns_dev_muti_i2c_write(sensor_cxt, aec_i2c_info);
 
-	return 0;
+	return ret;
 }
 
 cmr_int hw_sensor_init_otp_module(SENSOR_HW_HANDLE handle)
