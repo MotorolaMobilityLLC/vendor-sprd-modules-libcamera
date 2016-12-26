@@ -9110,8 +9110,8 @@ cmr_int prev_pop_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id, s
 			prev_cb_start(handle, &cb_data_info);
 		}
 	} else {
-		CMR_LOGE("got wrong buf: data->fd=0x%x, prev_frm[0].fd=0x%x, valid_num=%ld",
-			data->fd, prev_cxt->prev_frm[0].fd, valid_num);
+		CMR_LOGE("got wrong buf: id=%d, data->fd=0x%x, prev_frm[0].fd=0x%x, valid_num=%ld",
+			camera_id, data->fd, prev_cxt->prev_frm[0].fd, valid_num);
 		return CMR_CAMERA_INVALID_FRAME;
 	}
 
@@ -9502,8 +9502,8 @@ cmr_int prev_pop_video_buffer(struct prev_handle *handle, cmr_u32 camera_id, str
 			prev_cb_start(handle, &cb_data_info);
 		}
 	} else {
-		CMR_LOGE("got wrong buf: data->fd=0x%x, video_frm[0].fd=0x%x, valid_num=%ld",
-			data->fd, prev_cxt->video_frm[0].fd, valid_num);
+		CMR_LOGE("got wrong buf: id=%d, data->fd=0x%x, video_frm[0].fd=0x%x, valid_num=%ld",
+			camera_id, data->fd, prev_cxt->video_frm[0].fd, valid_num);
 		return CMR_CAMERA_INVALID_FRAME;
 	}
 
@@ -9656,8 +9656,8 @@ cmr_int prev_pop_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id, struc
 			prev_cb_start(handle, &cb_data_info);
 		}
 	} else {
-		CMR_LOGE("got wrong buf: data->fd=0x%x, cap_zsl_frm[0].fd=0x%x, valid_num=%ld",
-			data->fd, prev_cxt->cap_zsl_frm[0].fd, valid_num);
+		CMR_LOGE("got wrong buf: id=%d, data->fd=0x%x, cap_zsl_frm[0].fd=0x%x, valid_num=%ld",
+			camera_id, data->fd, prev_cxt->cap_zsl_frm[0].fd, valid_num);
 		return CMR_CAMERA_INVALID_FRAME;
 	}
 

@@ -3429,7 +3429,7 @@ cmr_int isp3a_handle_stats(cmr_handle isp_3a_handle, void *data)
 		goto exit;
 	}
 	time_end = systemTime(CLOCK_MONOTONIC);
-	ISP_LOGI("test stats thr time_delta = %d us stats_cnt = 0x%lx camera id = %d",
+	ISP_LOGI("test stats thr time_delta = %d us stats_cnt = %ld camera id = %d",
 		 (cmr_s32)(time_end - statis_info->timestamp) / 1000,
 		 statis_info->statis_cnt,
 		 cxt->camera_id);

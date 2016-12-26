@@ -639,24 +639,26 @@ static cmr_int isp_dev_kill_thread(isp_handle handle)
 	return ret;
 }
 
-static cmr_int isp_dev_handle_statis(isp_handle handle, struct isp_irq_info *irq_info, struct isp_statis_info *statis_info)
+static cmr_int isp_dev_handle_statis(isp_handle handle, struct isp_irq_info *irq_info)
 {
 	struct isp_file *file = (struct isp_file *)handle;
+	struct isp_statis_info statis_info;
 
-	statis_info->statis_frame.format = irq_info->format;
-	statis_info->statis_frame.buf_size = irq_info->length;
-	statis_info->statis_frame.phy_addr = irq_info->yaddr;
-	statis_info->statis_frame.vir_addr = irq_info->yaddr_vir;
-	statis_info->statis_frame.time_stamp.sec = irq_info->time_stamp.sec;
-	statis_info->statis_frame.time_stamp.usec = irq_info->time_stamp.usec;
-	statis_info->timestamp = systemTime(CLOCK_MONOTONIC);
-	statis_info->statis_cnt++;
+	cmr_bzero(&statis_info, sizeof(statis_info));
+	statis_info.statis_frame.format = irq_info->format;
+	statis_info.statis_frame.buf_size = irq_info->length;
+	statis_info.statis_frame.phy_addr = irq_info->yaddr;
+	statis_info.statis_frame.vir_addr = irq_info->yaddr_vir;
+	statis_info.statis_frame.time_stamp.sec = irq_info->time_stamp.sec;
+	statis_info.statis_frame.time_stamp.usec = irq_info->time_stamp.usec;
+	statis_info.timestamp = systemTime(CLOCK_MONOTONIC);
+	statis_info.statis_cnt = irq_info->frm_index;
 	ISP_LOGI("got one frame statis sensor id %d vaddr 0x%lx paddr 0x%lx buf_size 0x%lx stats_cnt %ld",
 		 file->camera_id, irq_info->yaddr_vir, irq_info->yaddr,
-		 irq_info->length, statis_info->statis_cnt);
+		 irq_info->length, statis_info.statis_cnt);
 	pthread_mutex_lock(&file->cb_mutex);
 	if (file->isp_event_cb) {
-		(*file->isp_event_cb)(ISP_DRV_STATISTICE, statis_info, sizeof(struct isp_statis_info), (void *)file->evt_3a_handle);
+		(*file->isp_event_cb)(ISP_DRV_STATISTICE, &statis_info, sizeof(struct isp_statis_info), (void *)file->evt_3a_handle);
 	}
 	pthread_mutex_unlock(&file->cb_mutex);
 
@@ -738,9 +740,6 @@ static cmr_int isp_dev_handle_altek_raw(isp_handle handle)
 static void* isp_dev_thread_proc(void *data)
 {
 	struct isp_file                   *file = NULL;
-	struct isp_statis_info            statis_info;
-	struct isp_statis_frame           statis_frame_buf;
-	struct isp_frm_info               img_frame;
 	struct isp_irq_info               irq_info;
 	struct isp_img_info               img_info;
 	char                              value[PROPERTY_VALUE_MAX];
@@ -754,7 +753,6 @@ static void* isp_dev_thread_proc(void *data)
 	if (-1 == file->fd) {
 		return NULL;
 	}
-	cmr_bzero(&statis_info, sizeof(statis_info));
 	ISP_LOGI("isp dev thread in.");
 	while (1) {
 		/*Get irq*/
@@ -775,7 +773,7 @@ static void* isp_dev_thread_proc(void *data)
 			} else if (ISP_IMG_TX_DONE == irq_info.irq_flag) {
 				switch (irq_info.irq_type) {
 				case ISP_IRQ_STATIS:
-					isp_dev_handle_statis(file, &irq_info, &statis_info);
+					isp_dev_handle_statis(file, &irq_info);
 					break;
 				case ISP_IRQ_3A_SOF:
 					isp_dev_handle_sof(file, &irq_info);
@@ -791,19 +789,6 @@ static void* isp_dev_thread_proc(void *data)
 					isp_dev_handle_cfg_grap_buf(file, &irq_info);
 					break;
 				case ISP_IRQ_ALTEK_RAW:
-					img_frame.channel_id = irq_info.channel_id;
-					img_frame.base = irq_info.base_id;
-					img_frame.frame_id = irq_info.base_id;
-					img_frame.yaddr = irq_info.yaddr;
-					img_frame.uaddr = irq_info.uaddr;
-					img_frame.vaddr = irq_info.vaddr;
-					img_frame.yaddr_vir = irq_info.yaddr_vir;
-					img_frame.uaddr_vir = irq_info.uaddr_vir;
-					img_frame.vaddr_vir = irq_info.vaddr_vir;
-					//img_frame.length= irq_info.buf_size.width*irq_info.buf_size.height;
-					img_frame.fd = irq_info.img_y_fd;
-					img_frame.sec = irq_info.time_stamp.sec;
-					img_frame.usec = irq_info.time_stamp.usec;
 					ISP_LOGI("high iso got raw frm vaddr 0x%lx paddr 0x%lx, width %d, height %d",
 						 irq_info.yaddr_vir, irq_info.yaddr, file->init_param.width, file->init_param.height);
 					property_get("debug.camera.save.snpfile", value, "0");
