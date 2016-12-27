@@ -37,20 +37,25 @@ typedef struct
 /* The face information structure */
 typedef struct
 {
-    FAR_POINT landmarks[4]; /* The facial landmark points. The sequence is: left-eye left corner,
-                            left-eye right corner, right-eye left corner, right-eye right corner */
+    FAR_POINT landmarks[7]; /* The facial landmark points. The sequence is: left-eye left corner,
+                            left-eye right corner, right-eye left corner, right-eye right corner,
+                            nose tip,mouth left corner, mouth right corner */
 }FAR_FACEINFO;
 
 typedef struct
 {
-    int smile;          /* Smile degree: smile(>0); not smile(<0); unknown(0)*/
-    int eyeOpen;        /* Eye open degree: open(<0); close(>0); unknown(0)  */
+    int smile;           /* Smile degree: smile(>0); not smile(<0); unknown(0)   */
+    int eyeClose;        /* Eye open degree: open(<0); close(>0); unknown(0)     */
+    int infant;          /* Infant degree: infant(>0); not infant(<0); unknown(0)*/
+    int gender;          /* Gender: Male(>0); Female(<0); unknown(0)             */
 }FAR_ATTRIBUTE;
 
 typedef struct
 {
-    unsigned char smileOn;           /* run smile degree estimation: 1-->ON; 0-->OFF */
-    unsigned char eyeOpenCloseOn;    /* run eye close/open recognition: 1-->ON; 0-->OFF */
+    unsigned char smileOn;          /* run smile degree estimation: 1-->ON; 0-->OFF    */
+    unsigned char eyeOn;            /* run eye close/open recognition: 1-->ON; 0-->OFF */
+    unsigned char infantOn;         /* run infant detection: 1-->ON; 0-->OFF           */
+    unsigned char genderOn;         /* run gender detection: 1-->ON; 0-->OFF           */
 }FAR_OPTION;
 
 /* The recognizer handle */

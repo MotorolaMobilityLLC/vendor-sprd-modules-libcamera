@@ -26,6 +26,8 @@
 #define FA_ERROR_INTERNAL       -1  /* Error: Unknown internal error            */
 #define FA_ERROR_NOMEMORY       -2  /* Error: Memory allocation error           */
 #define FA_ERROR_INVALIDARG     -3  /* Error: Invalid argument                  */
+#define FA_ERROR_NULL_HANDLE    -4  /* Error: FA handle is NULL                 */
+#define FA_ERROR_BAD_IMAGE      -5  /* Error: Bad input image                   */
 
 /* The gray-scale image structure */
 typedef struct

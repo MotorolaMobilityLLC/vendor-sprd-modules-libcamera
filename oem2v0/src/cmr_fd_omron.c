@@ -659,7 +659,7 @@ static void fd_recognize_face_attribute(struct class_fd *fd_handle,
         /* Assign the same face id with FD */
         fattr->face_id = fd.nID;
         fattr->attr.smile = 0;
-        fattr->attr.eyeOpen = 0;
+        fattr->attr.eyeClose = 0;
 
         /* Run face alignment */
         {
@@ -681,9 +681,7 @@ static void fd_recognize_face_attribute(struct class_fd *fd_handle,
             faface.rollAngle = roll_angle;
 
             {
-#ifndef CONFIG_CAMERA_DCAM_SUPPORT_FORMAT_NV12
                 int err = FaFaceAlign(fd_handle->hFaceAlign, &img, &faface, &(fattr->shape));
-#endif
                 // CMR_LOGI("FaFaceAlign: err=%d, score=%d", err, fattr->shape.score);
              }
         }
@@ -695,7 +693,9 @@ static void fd_recognize_face_attribute(struct class_fd *fd_handle,
 
             /* set option: only do smile detection */
             opt.smileOn = 1;
-            opt.eyeOpenCloseOn = 0;
+            opt.eyeOn = 0;
+            opt.genderOn = 0;
+            opt.infantOn = 0;
 
             /* Set the eye locations */
             for (i = 0; i < 4; i++) {
@@ -704,10 +704,8 @@ static void fd_recognize_face_attribute(struct class_fd *fd_handle,
             }
 
             {
-#ifndef CONFIG_CAMERA_DCAM_SUPPORT_FORMAT_NV12
                 int err = FarRecognize(fd_handle->hFAR, (const FAR_IMAGE *)&img, &farface, &opt, &(fattr->attr));
                  CMR_LOGI("FarRecognize: err=%d, smile=%d", err, fattr->attr.smile);
-#endif
             }
         }
     }
@@ -816,7 +814,7 @@ static void fd_get_fd_results(struct class_fd *fd_handle,
                           smile_score = (smile_score * app_smile_thr) / algo_smile_thr;
                       }
                       curr_face_area.range[valid_count].smile_level = MAX(1, smile_score);
-                      curr_face_area.range[valid_count].blink_level = MAX(0, -fattr->attr.eyeOpen);
+                      curr_face_area.range[valid_count].blink_level = MAX(0, -fattr->attr.eyeClose);
                       break;
                 }
             }
@@ -871,7 +869,6 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data)
 	case CMR_EVT_FD_INIT:
 
 		/* Create face alignment and face attribute recognition handle */
-#ifndef CONFIG_CAMERA_DCAM_SUPPORT_FORMAT_NV12
 		if (FA_OK != FaCreateAlignHandle(&(class_handle->hFaceAlign))) {
                        CMR_LOGE("FaCreateAlignHandle() Error");
 			break;
@@ -880,7 +877,7 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data)
                        CMR_LOGE("FarCreateRecognizerHandle() Error");
 			break;
 		}
-#endif
+
 		/* Creates Face Detection handle */
 		class_handle->hDT = UDN_CreateDetection();
 
@@ -953,10 +950,9 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data)
 
 	case CMR_EVT_FD_EXIT:
 		/* Delete face alignment and face attribute recognition handle */
-#ifndef CONFIG_CAMERA_DCAM_SUPPORT_FORMAT_NV12
 		FaDeleteAlignHandle(&(class_handle->hFaceAlign));
 		FarDeleteRecognizerHandle(&(class_handle->hFAR));
-#endif
+
 		/* Deletes Face Detection handle */
 		if (class_handle->hDT != NULL ) {
 			UDN_DeleteDetection(class_handle->hDT);
