@@ -3142,7 +3142,12 @@ cmr_int sns_stream_ctrl_common(struct sensor_drv_context *sensor_cxt, cmr_u32 on
 	if (on_off) {
 		if (SENSOR_INTERFACE_TYPE_CSI2 == sensor_cxt->sensor_info_ptr->sensor_interface.type) {
 			mode = sensor_cxt->sensor_mode[snr_get_cur_id(sensor_cxt)];
-			sns_dev_mipi_init(sensor_cxt, mode);
+			ret = sns_dev_mipi_init(sensor_cxt, mode);
+			if (ret) {
+				SENSOR_LOGE("mipi initial failed ret %d", ret);
+			} else {
+				SENSOR_LOGE("mipi initial ok");
+			}
 		}
 		ret = sns_stream_on(sensor_cxt);
 	} else {

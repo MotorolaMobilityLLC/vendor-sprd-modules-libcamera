@@ -756,6 +756,9 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 		return -1;
 	}
 	/*set still image buffer format*/
+
+#if defined(CONFIG_CAMERA_NO_DCAM_DATA_PATH)
+#else
 	memset(&img_buf_param, 0, sizeof(img_buf_param));
 
 	if (2 == isp_id) {
@@ -763,11 +766,8 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	} else {
 		img_buf_param.img_id = ISP_IMG_STILL_CAPTURE;
 	}
-#if defined(CONFIG_CAMERA_NO_DCAM_DATA_PATH)
-	img_buf_param.format = ISP_OUT_IMG_NV12;
-#else
 	img_buf_param.format = ISP_OUT_IMG_YUY2;
-#endif
+
 	if (ISP_CAP_MODE_HIGHISO == param_ptr->common_in.capture_mode
 		|| ISP_CAP_MODE_DRAM == param_ptr->common_in.capture_mode
 		|| ISP_CAP_MODE_BURST == param_ptr->common_in.capture_mode) {
@@ -791,6 +791,7 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	ISP_LOGI("set still image buffer param img_id %d w %d h %d", img_buf_param.img_id,
 			img_buf_param.width, img_buf_param.height);
 	ret = isp_dev_set_img_param(cxt->isp_driver_handle, &img_buf_param);
+#endif
 
 #ifdef FPGA_TEST
 	// SubSample
@@ -935,7 +936,10 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 		}
 	}
 
+#if defined(CONFIG_CAMERA_NO_DCAM_DATA_PATH)
+#else
 	ret = isp_dev_stream_on(cxt->isp_driver_handle);
+#endif
 
 exit:
 	ISP_LOGI("done %ld", ret);
