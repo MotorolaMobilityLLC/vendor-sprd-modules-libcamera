@@ -213,9 +213,7 @@ LOCAL_CFLAGS += -DCONFIG_CAMERA_GYRO
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
-ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
 LOCAL_CFLAGS += -DCONFIG_CAMERA_HDR_CAPTURE
-endif
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_UV_DENOISE)),true)

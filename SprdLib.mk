@@ -24,10 +24,8 @@ LOCAL_SHARED_LIBRARIES +=libgui
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
-ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
 LOCAL_CFLAGS += -DCONFIG_SPRD_HDR_LIB
 LOCAL_SHARED_LIBRARIES += libsprd_easy_hdr
-endif
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_UV_DENOISE)),true)
