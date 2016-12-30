@@ -2780,7 +2780,7 @@ v=v>(max)?(max):v; hist[v]++;}
 	static ERRCODE if_aft_binfile_is_exist(uint8 * is_exist, void *cookie) {
 
 		af_ctrl_t *af = cookie;
-		char *aft_tuning_path = "/data/aft_tuning_j3.bin";
+		char *aft_tuning_path = "/data/misc/cameraserver/aft_tuning.bin";
 		FILE *fp = NULL;
 
 		if (0 == access(aft_tuning_path, R_OK)) {	//read request successs
