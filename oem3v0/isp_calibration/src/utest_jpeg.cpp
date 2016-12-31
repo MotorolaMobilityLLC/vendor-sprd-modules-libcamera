@@ -60,9 +60,9 @@ struct utest_jpeg_context {
 	uint32_t number;
 };
 
-static char utest_jpeg_enc_src_y[] = "/data/misc/media/utest_src_y.raw";
-static char utest_jpeg_enc_src_uv[] = "/data/misc/media/utest_src_uv.raw";
-static char utest_jpg_enc_dst_file[] = "/data/misc/media/utest_jpg_file.jpg";
+static char utest_jpeg_enc_src_y[] = "/data/misc/cameraserver/utest_src_y.raw";
+static char utest_jpeg_enc_src_uv[] = "/data/misc/cameraserver/utest_src_uv.raw";
+static char utest_jpg_enc_dst_file[] = "/data/misc/cameraserver/utest_jpg_file.jpg";
 
 static struct utest_jpeg_context utest_jpeg_cxt;
 static struct utest_jpeg_context *g_utest_jpeg_cxt_ptr = &utest_jpeg_cxt;

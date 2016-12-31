@@ -171,7 +171,7 @@ cmr_int camera_save_y_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr
 	CMR_LOGI("index %d format %d width %d heght %d", index, img_fmt, width, height);
 
 	cmr_bzero(file_name, 40);
-	strcpy(file_name, "/data/misc/media/");
+	strcpy(file_name, CAMERA_DUMP_PATH);
 	sprintf(tmp_str, "%d", width);
 	strcat(file_name, tmp_str);
 	strcat(file_name, "X");
@@ -212,7 +212,7 @@ cmr_int camera_save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt,
 
 
 	cmr_bzero(file_name, 0x40);
-	strcpy(file_name, "/data/misc/media/");
+	strcpy(file_name, CAMERA_DUMP_PATH);
 	sprintf(tmp_str, "%08x_", index);
 	strcat(file_name, tmp_str);
 
@@ -236,7 +236,7 @@ cmr_int camera_save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt,
 		fclose(fp);
 
 		bzero(file_name, 40);
-		strcpy(file_name, "/data/misc/media/");
+		strcpy(file_name, CAMERA_DUMP_PATH);
 		sprintf(tmp_str, "%08x_", index);
 		strcat(file_name, tmp_str);
 		sprintf(tmp_str, "%d", width);
@@ -297,15 +297,15 @@ cmr_int camera_save_jpg_to_file(cmr_u32 index, cmr_u32 img_fmt,
 				       cmr_u32 stream_size, struct img_addr *addr)
 {
 	cmr_int                      ret = CMR_CAMERA_SUCCESS;
-	char                         file_name[40];
+	char                         file_name[80];
 	char                         tmp_str[10];
 	FILE                         *fp = NULL;
 
 	CMR_LOGI("index 0x%x format %d width %d height %d, addr 0x%x 0x%x", index, img_fmt, width, height,
 		addr->addr_y, addr->addr_u);
 
-	cmr_bzero(file_name, 40);
-	strcpy(file_name, "/data/misc/media/");
+	cmr_bzero(file_name, 80);
+	strcpy(file_name, CAMERA_DUMP_PATH);
 	sprintf(tmp_str, "%08x", index);
 	strcat(file_name, tmp_str);
 	strcat(file_name, "_");

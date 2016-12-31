@@ -973,14 +973,17 @@ void dump_jpeg_file(void *virt_addr, unsigned int size, int width, int height)
 			p->tm_min,
 			p->tm_sec);
 
+	strcpy(str_buf, CAMERA_DUMP_PATH);
 	strcat(datetime, "_");
 	sprintf(tmp_str, "%d", width);
 	strcat(datetime, tmp_str);
 	strcat(datetime, "X");
 	sprintf(tmp_str, "%d", height);
 	strcat(datetime, tmp_str);
+	strcat(str_buf, datetime);
+	strcat(str_buf, ".jpg");
 
-	snprintf(str_buf, sizeof(str_buf), "/data/misc/media/%s.jpg", datetime);
+	CMR_LOGD("file name %s", str_buf);
 	fp = fopen(str_buf, "ab+");
 	if (NULL == fp) {
 		printf("open %s failed\n", str_buf);

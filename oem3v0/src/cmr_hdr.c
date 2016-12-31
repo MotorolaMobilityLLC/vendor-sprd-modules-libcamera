@@ -659,10 +659,13 @@ static cmr_int hdr_save_yuv(cmr_handle class_handle, cmr_u32 width,cmr_u32 heigh
 			p->tm_min,
 			p->tm_sec);
 
-	strcpy(file_name, "/data/misc/media/hdr_");
-	strcpy(file_name1, "/data/misc/media/hdr_");
-	strcpy(file_name2, "/data/misc/media/hdr_");
+	strcpy(file_name, CAMERA_DUMP_PATH);
+	strcpy(file_name1, CAMERA_DUMP_PATH);
+	strcpy(file_name2, CAMERA_DUMP_PATH);
 
+	strcat(file_name, "hdr_");
+	strcat(file_name1, "hdr_");
+	strcat(file_name2, "hdr_");
 	strcat(file_name, datetime);
 	strcat(file_name1, datetime);
 	strcat(file_name2, datetime);

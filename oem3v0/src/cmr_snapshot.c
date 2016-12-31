@@ -1422,7 +1422,6 @@ static int camera_save_mipi_raw_to_file(cmr_handle snp_handle, char *name,
 					uint32_t height, struct img_addr *addr)
 {
 	struct snp_context         *snp_cxt = (struct snp_context*)snp_handle;
-#define FILE_DIR "/data/misc/media/"
 #define FILE_NAME_LEN 200
 	int ret = CMR_CAMERA_SUCCESS;
 	char file_name[FILE_NAME_LEN] = {0};
@@ -1445,7 +1444,7 @@ static int camera_save_mipi_raw_to_file(cmr_handle snp_handle, char *name,
 	CMR_LOGI("name %s, format %d, width %d, heght %d",
 			name, img_fmt, width, height);
 
-	strcpy(file_name, FILE_DIR);
+	strcpy(file_name, CAMERA_DUMP_PATH);
 
 	sprintf(tmp_str, "%s", name);
 	strcat(file_name, tmp_str);
@@ -1490,7 +1489,6 @@ static int camera_save_raw2_to_file(cmr_handle snp_handle, char *name,
 				uint32_t height, struct img_addr *addr)
 {
 	struct snp_context         *snp_cxt = (struct snp_context*)snp_handle;
-#define FILE_DIR "/data/misc/media/"
 #define FILE_NAME_LEN 200
 	int ret = CMR_CAMERA_SUCCESS;
 	char file_name[FILE_NAME_LEN] = {0};
@@ -1513,7 +1511,7 @@ static int camera_save_raw2_to_file(cmr_handle snp_handle, char *name,
 	CMR_LOGI("name %s, format %d, width %d, heght %d",
 			name, img_fmt, width, height);
 
-	strcpy(file_name, FILE_DIR);
+	strcpy(file_name, CAMERA_DUMP_PATH);
 	sprintf(tmp_str, "%s", name);
 	strcat(file_name, tmp_str);
 	strcat(file_name, "_");

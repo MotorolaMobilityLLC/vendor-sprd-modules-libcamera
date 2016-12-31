@@ -468,8 +468,8 @@ static cmr_int refocus_thread_proc(struct cmr_msg *message, void *private_data)
 	void                    *refocus_out_buff_ptr = NULL;
 	cmr_int                   face_num = 0;
 	cmr_int                   k,min_refocus;
-	char *psPath_otpData = "data/misc/media/otp.bin";
-	char *psPath_depthData = "data/misc/media/depth.bin";
+	char *psPath_otpData = "data/misc/cameraserver/otp.bin";
+	char *psPath_depthData = "data/misc/cameraserver/depth.bin";
 	struct refocus_init_parameter *init_param;
 	struct refocus_start_parameter *start_param;
 	cmr_s8						   value[PROPERTY_VALUE_MAX];
@@ -508,7 +508,7 @@ static cmr_int refocus_thread_proc(struct cmr_msg *message, void *private_data)
 									   }
 								   } else{
 #if 0
-									   char *psPath_OTP= "data/misc/media/packet.otp";
+									   char *psPath_OTP= "data/misc/cameraserver/packet.otp";
 									   init_param->otp_data.otp_size = 0x2000;
 									   char *otp_data = malloc(init_param->otp_data.otp_size);
 									   read_file(psPath_otpData,  otp_data, init_param->otp_data.otp_size);
@@ -690,7 +690,7 @@ int32_t refocus_save_to_file (cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr
 	CMR_LOGI("index %d format %d width %d heght %d", index, img_fmt, width, height);
 
 	cmr_bzero(file_name, 100);
-	strcpy(file_name, "/data/misc/media/");
+	strcpy(file_name, CAMERA_DUMP_PATH);
 	sprintf(tmp_str, "%d", width);
 	strcat(file_name, tmp_str);
 	strcat(file_name, "X");
@@ -748,7 +748,7 @@ int32_t refocus_output_save_to_file (cmr_u32 index, cmr_u32 img_fmt, cmr_u32 wid
 	CMR_LOGI("index %d format %d width %d heght %d", index, img_fmt, width, height);
 
 	cmr_bzero(file_name, 100);
-	strcpy(file_name, "/data/misc/media/");
+	strcpy(file_name, CAMERA_DUMP_PATH);
 	sprintf(tmp_str, "%d", width);
 	strcat(file_name, tmp_str);
 	strcat(file_name, "X");

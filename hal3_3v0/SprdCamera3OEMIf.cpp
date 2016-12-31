@@ -2305,7 +2305,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary()
 		/*read refoucs otp begin*/
 		if(mSprdRefocusEnabled == true && mCameraId == 0 ){
 #ifdef CAMERA_READ_OTP_FROM_FILE
-			char *psPath_OtpData = "data/misc/media/otp.bin";
+			char *psPath_OtpData = "data/misc/cameraserver/otp.bin";
 			char *dual_otp_data = (char*)malloc(SPRD_DUAL_OTP_SIZE);
 			OTP_Tag otpInfo = {0};
 			mSetting->getOTPTag(&otpInfo);
@@ -3928,7 +3928,7 @@ cmr_int save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 
 
 	HAL_LOGD("index %d format %d width %d heght %d", index, img_fmt, width, height);
 
-	strcpy(file_name, "/data/misc/media/");
+	strcpy(file_name, CAMERA_DUMP_PATH);
 	sprintf(tmp_str, "%d", width);
 	strcat(file_name, tmp_str);
 	strcat(file_name, "X");
@@ -3952,7 +3952,7 @@ cmr_int save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 
 		fwrite((void*)addr->addr_y, 1, width * height, fp);
 		fclose(fp);
 
-		strcpy(file_name, "/data/misc/media/");
+		strcpy(file_name, CAMERA_DUMP_PATH);
 		sprintf(tmp_str, "%d", width);
 		strcat(file_name, tmp_str);
 		strcat(file_name, "X");
