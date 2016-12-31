@@ -659,9 +659,9 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 
 	if (param_ptr->common_in.sensor_fps.is_high_fps) {
 		if ((param_ptr->common_in.sensor_fps.high_fps_skip_num - 1) > 0) {
-			ret = isp_dev_access_set_skip_num(isp_dev_handle, param_ptr->common_in.sensor_fps.high_fps_skip_num - 1);
+			ret = isp_dev_access_set_deci_num(isp_dev_handle, param_ptr->common_in.sensor_fps.high_fps_skip_num - 1);
 			if (ret) {
-				ISP_LOGE("failed to isp_dev_access_set_skip_num");
+				ISP_LOGE("failed to deci num");
 			}
 		}
 	}
@@ -1511,6 +1511,15 @@ cmr_int isp_dev_access_set_skip_num(isp_handle isp_dev_handle, cmr_u32 skip_num)
 	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
 	ret = isp_dev_set_skip_num(cxt->isp_driver_handle, skip_num);
+	return ret;
+}
+
+cmr_int isp_dev_access_set_deci_num(isp_handle isp_dev_handle, cmr_u32 deci_num)
+{
+	cmr_int                                ret = ISP_SUCCESS;
+	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+
+	ret = isp_dev_set_deci_num(cxt->isp_driver_handle, deci_num);
 	return ret;
 }
 #if 0

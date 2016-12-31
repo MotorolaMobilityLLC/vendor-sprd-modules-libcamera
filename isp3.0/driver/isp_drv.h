@@ -145,6 +145,7 @@ cmr_int isp_dev_get_user_cnt(isp_handle handle, cmr_s32 *cnt);
 cmr_int isp_dev_get_iq_param(isp_handle handle, struct debug_info1 *info1, struct debug_info2 *info2);
 cmr_int isp_dev_set_capture_mode(isp_handle handle, cmr_u32 capture_mode);
 cmr_int isp_dev_set_skip_num(isp_handle handle, cmr_u32 skip_num);
+cmr_int isp_dev_set_deci_num(isp_handle handle, cmr_u32 deci_num);
 cmr_int isp_dev_match_data_ctrl(isp_handle handle, struct isp_match_data_param *data);
 cmr_int isp_dev_set_init_param(isp_handle *handle, struct isp_dev_init_param *init_param_ptr);
 cmr_int isp_dev_cfg_cap_buf(isp_handle handle, struct isp_img_mem *param);
