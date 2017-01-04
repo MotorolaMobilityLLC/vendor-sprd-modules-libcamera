@@ -1105,6 +1105,7 @@ static void eng_tst_camera_startpreview(void)
 
     /*  */
     SET_PARM(mHalOem, oem_handle , CAMERA_PARAM_PREVIEW_SIZE   , (cmr_uint)&preview_size);
+    SET_PARM(mHalOem,oem_handle , CAMERA_PARAM_AF_MODE   , CAMERA_FOCUS_MODE_CAF);
     //SET_PARM(oem_handle , CAMERA_PARAM_VIDEO_SIZE     , (cmr_uint)&video_size);
     //SET_PARM(oem_handle , CAMERA_PARAM_CAPTURE_SIZE   , (cmr_uint)&capture_size);
     SET_PARM(mHalOem, oem_handle , CAMERA_PARAM_PREVIEW_FORMAT , CAMERA_DATA_FORMAT_YUV420);
