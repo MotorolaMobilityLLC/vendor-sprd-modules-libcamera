@@ -1690,12 +1690,12 @@ cmr_int isp3a_set_scene_mode(cmr_handle isp_3a_handle, void *param_ptr)
 		goto exit;
 	}
 	ae_in.scene.scene_mode = *(cmr_u32 *)param_ptr;
-	if (AE_CTRL_SCENE_LANDSPACE == ae_in.scene.scene_mode) {
-		saturation = 5;
-		contrast = 5;
+	if (AE_CTRL_SCENE_LANDSCAPE == ae_in.scene.scene_mode) {
+		saturation = 4;
+		contrast = 4;
 		isp3a_set_saturation(isp_3a_handle, &saturation);
 		isp3a_set_contrast(isp_3a_handle, &contrast);
-	} else if (AE_CTRL_SCENE_LANDSPACE == cxt->irp_cxt.scene_mode) {
+	} else if (AE_CTRL_SCENE_LANDSCAPE == cxt->irp_cxt.scene_mode) {
 		saturation = 3;
 		contrast = 3;
 		isp3a_set_saturation(isp_3a_handle, &saturation);

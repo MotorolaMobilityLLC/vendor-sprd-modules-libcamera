@@ -1792,7 +1792,7 @@ static cmr_int aealtek_set_scene_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 	case AE_CTRL_SCENE_PORTRAIT:
 		lib_scene_mode = SCENE_MODE_PORTRAIT;
 		break;
-	case AE_CTRL_SCENE_LANDSPACE:
+	case AE_CTRL_SCENE_LANDSCAPE:
 		lib_scene_mode = SCENE_MODE_LANDSCAPE;
 		break;
 	default:
