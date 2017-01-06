@@ -1,0 +1,435 @@
+/*
+ * Copyright (C) 2012 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *		http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "isp_blocks_cfg.h"
+
+
+
+ isp_s32 _pm_cce_adjust_hue_saturation(struct isp_cce_param_v1 *cce_param, isp_u32 hue, isp_u32 saturation)
+{
+		isp_s32 rtn = ISP_SUCCESS;
+		isp_u32 cce_coef_index = 0;
+		isp_u16 cce_coef[3] = {0};
+		isp_u32 cur_idx = 0;
+		struct isp_rgb_gains rgb_gain = {0x00, 0x00, 0x00, 0x00};
+		struct isp_cce_param_v1 *dst_cce_ptr = (struct isp_cce_param_v1*)cce_param;
+		isp_u32 i = 0x00;
+		isp_u16 src_matrix[9] = {0};
+		isp_u16 dst_matrix[9] = {0};
+
+#if 0
+		ISP_LOGI("origin: **********************");
+		ISP_LOGI("cur index = %d, is effect=%d", dst_cce_ptr->cur_idx, dst_cce_ptr->is_specialeffect);
+		ISP_LOGI("color coef: %d, %d, %d", dst_cce_ptr->cce_coef[ISP_CCE_COEF_COLOR_CAST][0],
+					dst_cce_ptr->cce_coef[ISP_CCE_COEF_COLOR_CAST][1],
+					dst_cce_ptr->cce_coef[ISP_CCE_COEF_COLOR_CAST][2]);
+		ISP_LOGI("gain coef: %d, %d, %d", dst_cce_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][0],
+					dst_cce_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][1],
+					dst_cce_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][2]);
+		ISP_LOGI("hue = %d, sat= % d", dst_cce_ptr->cur_level[0], dst_cce_ptr->cur_level[1]);
+		ISP_LOGI("matrix: m=[%d, %d, %d; %d, %d, %d; %d, %d, %d], shift=[%d, %d, %d]",
+			dst_cce_ptr->cur.matrix[0], dst_cce_ptr->cur.matrix[1], dst_cce_ptr->cur.matrix[2],
+			dst_cce_ptr->cur.matrix[3], dst_cce_ptr->cur.matrix[4], dst_cce_ptr->cur.matrix[5],
+			dst_cce_ptr->cur.matrix[6], dst_cce_ptr->cur.matrix[7], dst_cce_ptr->cur.matrix[8],
+			dst_cce_ptr->cur.y_offset, dst_cce_ptr->cur.u_offset, dst_cce_ptr->cur.v_offset);
+#endif
+
+		ISP_LOGV("target: hue = %d, sat= % d", hue, saturation);
+
+		rtn = isp_hue_saturation_2_gain(hue, saturation, &rgb_gain);
+		if (ISP_SUCCESS != rtn) {
+			ISP_LOGE("isp_hue_saturation_2_gain failed\n");
+			return ISP_ERROR;
+		}
+
+		cce_coef_index = ISP_CCE_COEF_COLOR_CAST;
+		dst_cce_ptr->cce_coef[cce_coef_index][0] = rgb_gain.gain_r;
+		dst_cce_ptr->cce_coef[cce_coef_index][1] = rgb_gain.gain_g;
+		dst_cce_ptr->cce_coef[cce_coef_index][2] = rgb_gain.gain_b;
+
+		dst_cce_ptr->cur_level[0] = hue;
+		dst_cce_ptr->cur_level[1] = saturation;
+
+		for(i=0; i<3; i++){
+			uint32_t color_cast_coef = dst_cce_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][i];
+			uint32_t gain_offset_coef = dst_cce_ptr->cce_coef[ISP_CCE_COEF_COLOR_CAST][i];
+
+			cce_coef[i] = gain_offset_coef * color_cast_coef / ISP_FIX_8BIT_UNIT;
+		}
+
+		ISP_LOGV("multiply: %d, %d, %d", cce_coef[0],cce_coef[1],cce_coef[2]);
+
+		cur_idx = dst_cce_ptr->cur_idx;
+
+		for (i = 0; i < 9; ++i){
+			src_matrix[i] = (isp_u16)dst_cce_ptr->cce_tab[cur_idx].matrix[i];
+		}
+
+		isp_cce_adjust(src_matrix, cce_coef, dst_matrix, ISP_FIX_10BIT_UNIT);
+
+		for (i = 0; i < 9; ++i){
+			dst_cce_ptr->cur.matrix[i] = (uint32_t)dst_matrix[i];
+		}
+
+		dst_cce_ptr->cur.y_offset= dst_cce_ptr->cce_tab[cur_idx].y_offset;
+		dst_cce_ptr->cur.u_offset= dst_cce_ptr->cce_tab[cur_idx].u_offset;
+		dst_cce_ptr->cur.v_offset= dst_cce_ptr->cce_tab[cur_idx].v_offset;
+
+#if 0
+		ISP_LOGI("output: ");
+		ISP_LOGI("cur index = %d, is effect=%d", dst_cce_ptr->cur_idx, dst_cce_ptr->is_specialeffect);
+		ISP_LOGI("color coef: %d, %d, %d", dst_cce_ptr->cce_coef[ISP_CCE_COEF_COLOR_CAST][0],
+					dst_cce_ptr->cce_coef[ISP_CCE_COEF_COLOR_CAST][1],
+					dst_cce_ptr->cce_coef[ISP_CCE_COEF_COLOR_CAST][2]);
+		ISP_LOGI("gain coef: %d, %d, %d", dst_cce_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][0],
+					dst_cce_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][1],
+					dst_cce_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][2]);
+		ISP_LOGI("hue = %d, sat= % d", dst_cce_ptr->cur_level[0], dst_cce_ptr->cur_level[1]);
+		ISP_LOGI("matrix: m=[%d, %d, %d; %d, %d, %d; %d, %d, %d], shift=[%d, %d, %d]",
+			dst_cce_ptr->cur.matrix[0], dst_cce_ptr->cur.matrix[1], dst_cce_ptr->cur.matrix[2],
+			dst_cce_ptr->cur.matrix[3], dst_cce_ptr->cur.matrix[4], dst_cce_ptr->cur.matrix[5],
+			dst_cce_ptr->cur.matrix[6], dst_cce_ptr->cur.matrix[7], dst_cce_ptr->cur.matrix[8],
+			dst_cce_ptr->cur.y_offset, dst_cce_ptr->cur.u_offset, dst_cce_ptr->cur.v_offset);
+#endif
+
+		return rtn;
+}
+
+ isp_s32 _pm_cce_adjust_gain_offset(struct isp_cce_param_v1 *cce_param, isp_u16 r_gain, isp_u16 g_gain, isp_u16 b_gain)
+{
+		isp_s32 rtn = ISP_SUCCESS;
+		isp_u32 cce_coef_index = 0;
+		isp_u16 cce_coef[3] = {0};
+		struct isp_rgb_gains rgb_gain = {0x00, 0x00, 0x00, 0x00};
+		struct isp_cce_param_v1 *dst_cce_ptr = (struct isp_cce_param_v1*)cce_param;
+		isp_u32 i = 0x00;
+		isp_u32 cur_idx = 0;
+		isp_u16 src_matrix[9] = {0};
+		isp_u16 dst_matrix[9] = {0};
+
+#if 0
+		ISP_LOGI("origin: **********************");
+		ISP_LOGI("cur index = %d, is effect=%d", dst_cce_ptr->cur_idx, dst_cce_ptr->is_specialeffect);
+		ISP_LOGI("color coef: %d, %d, %d", dst_cce_ptr->cce_coef[ISP_CCE_COEF_COLOR_CAST][0],
+					dst_cce_ptr->cce_coef[ISP_CCE_COEF_COLOR_CAST][1],
+					dst_cce_ptr->cce_coef[ISP_CCE_COEF_COLOR_CAST][2]);
+		ISP_LOGI("gain coef: %d, %d, %d", dst_cce_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][0],
+					dst_cce_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][1],
+					dst_cce_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][2]);
+		ISP_LOGI("hue = %d, sat= % d", dst_cce_ptr->cur_level[0], dst_cce_ptr->cur_level[1]);
+		ISP_LOGI("matrix: m=[%d, %d, %d; %d, %d, %d; %d, %d, %d], shift=[%d, %d, %d]",
+			dst_cce_ptr->cur.matrix[0], dst_cce_ptr->cur.matrix[1], dst_cce_ptr->cur.matrix[2],
+			dst_cce_ptr->cur.matrix[3], dst_cce_ptr->cur.matrix[4], dst_cce_ptr->cur.matrix[5],
+			dst_cce_ptr->cur.matrix[6], dst_cce_ptr->cur.matrix[7], dst_cce_ptr->cur.matrix[8],
+			dst_cce_ptr->cur.y_offset, dst_cce_ptr->cur.u_offset, dst_cce_ptr->cur.v_offset);
+#endif
+		ISP_LOGI("target: gain: %d, %d, %d", r_gain, g_gain, b_gain);
+
+		if (0 == r_gain || 0 == g_gain || 0 == b_gain) {
+			r_gain = ISP_FIX_8BIT_UNIT;
+			g_gain = ISP_FIX_8BIT_UNIT;
+			b_gain = ISP_FIX_8BIT_UNIT;
+		}
+
+		cce_coef_index = ISP_CCE_COEF_GAIN_OFFSET;
+		dst_cce_ptr->cce_coef[cce_coef_index][0] = r_gain;
+		dst_cce_ptr->cce_coef[cce_coef_index][1] = g_gain;
+		dst_cce_ptr->cce_coef[cce_coef_index][2] = b_gain;
+
+		for(i=0; i<3; i++){
+			uint32_t color_cast_coef = dst_cce_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][i];
+			uint32_t gain_offset_coef = dst_cce_ptr->cce_coef[ISP_CCE_COEF_COLOR_CAST][i];
+
+			cce_coef[i] = gain_offset_coef * color_cast_coef / ISP_FIX_8BIT_UNIT;
+		}
+
+		cur_idx = dst_cce_ptr->cur_idx;
+
+		for (i = 0; i < 9; ++i){
+			src_matrix[i] = (isp_u16)dst_cce_ptr->cce_tab[cur_idx].matrix[i];
+		}
+
+		isp_cce_adjust(src_matrix, cce_coef, dst_matrix, ISP_FIX_10BIT_UNIT);
+
+		for (i = 0; i < 9; ++i){
+			dst_cce_ptr->cur.matrix[i] = (uint32_t)dst_matrix[i];
+		}
+
+		dst_cce_ptr->cur.y_offset = dst_cce_ptr->cce_tab[cur_idx].y_offset;
+		dst_cce_ptr->cur.u_offset = dst_cce_ptr->cce_tab[cur_idx].u_offset;
+		dst_cce_ptr->cur.v_offset = dst_cce_ptr->cce_tab[cur_idx].v_offset;
+
+#if 0
+		ISP_LOGI("output: **********************");
+		ISP_LOGI("cur index = %d, is effect=%d", dst_cce_ptr->cur_idx, dst_cce_ptr->is_specialeffect);
+		ISP_LOGI("color coef: %d, %d, %d", dst_cce_ptr->cce_coef[ISP_CCE_COEF_COLOR_CAST][0],
+					dst_cce_ptr->cce_coef[ISP_CCE_COEF_COLOR_CAST][1],
+					dst_cce_ptr->cce_coef[ISP_CCE_COEF_COLOR_CAST][2]);
+		ISP_LOGI("gain coef: %d, %d, %d", dst_cce_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][0],
+					dst_cce_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][1],
+					dst_cce_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][2]);
+		ISP_LOGI("hue = %d, sat= % d", dst_cce_ptr->cur_level[0], dst_cce_ptr->cur_level[1]);
+		ISP_LOGI("matrix: m=[%d, %d, %d; %d, %d, %d; %d, %d, %d], shift=[%d, %d, %d]",
+			dst_cce_ptr->cur.matrix[0], dst_cce_ptr->cur.matrix[1], dst_cce_ptr->cur.matrix[2],
+			dst_cce_ptr->cur.matrix[3], dst_cce_ptr->cur.matrix[4], dst_cce_ptr->cur.matrix[5],
+			dst_cce_ptr->cur.matrix[6], dst_cce_ptr->cur.matrix[7], dst_cce_ptr->cur.matrix[8],
+			dst_cce_ptr->cur.y_offset, dst_cce_ptr->cur.u_offset, dst_cce_ptr->cur.v_offset);
+#endif
+
+		return rtn;
+}
+
+ isp_s32 _pm_cce_adjust(struct isp_cce_param_v1 *cce_param)
+{
+	isp_s32 rtn0 = ISP_SUCCESS;
+	isp_s32 rtn = ISP_SUCCESS;
+
+	isp_s32 hue = cce_param->cur_level[0];
+	isp_s32 saturation = cce_param->cur_level[1];
+	isp_u16 r_gain = cce_param->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][0];
+	isp_u16 g_gain = cce_param->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][1];
+	isp_u16 b_gain = cce_param->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][2];
+
+	if (0 != cce_param->is_specialeffect) {
+		ISP_LOGI("do not adjust cce for specialeffect");
+		return ISP_SUCCESS;
+	}
+
+	rtn0 = _pm_cce_adjust_hue_saturation(cce_param, hue, saturation);
+	if (ISP_SUCCESS != rtn) {
+		ISP_LOGE("_pm_cce_adjust_hue_saturation failed");
+		rtn = rtn0;
+	}
+
+	rtn0= _pm_cce_adjust_gain_offset(cce_param, r_gain, g_gain, b_gain);
+	if (ISP_SUCCESS != rtn) {
+		ISP_LOGE("_pm_cce_adjust_hue_saturation failed");
+		rtn = rtn0;
+	}
+
+	return rtn;
+
+}
+
+ isp_s32 _pm_cce_init_v1(void *dst_cce_param, void *src_cce_param, void* param1, void* param2)
+{
+	isp_s32 rtn = ISP_SUCCESS;
+	isp_u32 i = 0x00, j = 0, index = 0;
+	struct sensor_cce_param *src_ptr = (struct sensor_cce_param*)src_cce_param;
+	struct isp_cce_param_v1 *dst_ptr = (struct isp_cce_param_v1*)dst_cce_param;
+	struct isp_pm_block_header *cce_header_ptr = (struct isp_pm_block_header*)param1;
+	UNUSED(param2);
+
+	memset((void*)&dst_ptr->cur,0x00,sizeof(dst_ptr->cur));
+	dst_ptr->is_specialeffect = 0;
+
+	for (i = 0; i < SENSOR_CCE_NUM; ++i) {
+		for(j = 0x00; j < 9; ++j) {
+			dst_ptr->cce_tab[i].matrix[j] = src_ptr->tab[i].matrix[j];
+		}
+		dst_ptr->cce_tab[i].u_offset = src_ptr->tab[i].u_shift;
+		dst_ptr->cce_tab[i].v_offset = src_ptr->tab[i].v_shift;
+		dst_ptr->cce_tab[i].y_offset = src_ptr->tab[i].y_shift;
+	}
+	index = src_ptr->cur_idx;
+
+	for (i = 0; i < MAX_SPECIALEFFECT_NUM; ++i) {
+		for (j = 0; j < 9; ++j) {
+			dst_ptr->specialeffect_tab[i].matrix[j] = src_ptr->specialeffect[i].matrix[j];
+		}
+		dst_ptr->specialeffect_tab[i].y_offset = src_ptr->specialeffect[i].y_shift;
+		dst_ptr->specialeffect_tab[i].u_offset = src_ptr->specialeffect[i].u_shift;
+		dst_ptr->specialeffect_tab[i].v_offset = src_ptr->specialeffect[i].v_shift;
+	}
+
+	for (i = 0; i < 9; ++i) {
+		dst_ptr->cur.matrix[i] = src_ptr->tab[index].matrix[i];
+	}
+
+	dst_ptr->cur.u_offset = src_ptr->tab[index].u_shift;
+	dst_ptr->cur.v_offset = src_ptr->tab[index].v_shift;
+	dst_ptr->cur.y_offset = src_ptr->tab[index].y_shift;
+
+	for (i = 0; i < 2; ++i) {
+		for (j = 0; j < 3; ++j){
+			if (ISP_CCE_COEF_COLOR_CAST == i){
+				dst_ptr->cce_coef[i][j] = ISP_FIX_10BIT_UNIT;
+			} else if (ISP_CCE_COEF_GAIN_OFFSET == i){
+				dst_ptr->cce_coef[i][j] = ISP_FIX_8BIT_UNIT;
+			}
+		}
+	}
+
+	dst_ptr->cur_idx = index;
+	dst_ptr->prv_idx = 0;
+
+	_pm_cce_adjust(dst_ptr);
+
+	cce_header_ptr->is_update = ISP_ONE;
+
+	return rtn;
+}
+
+ isp_s32 _pm_cce_set_param_v1(void *cce_param, isp_u32 cmd, void* param_ptr0, void* param_ptr1)
+{
+	isp_s32 rtn = ISP_SUCCESS;
+	struct isp_cce_param_v1 *dst_ptr = (struct isp_cce_param_v1*)cce_param;
+	struct isp_pm_block_header *cce_header_ptr = (struct isp_pm_block_header*)param_ptr1;
+
+	switch (cmd) {
+	case ISP_PM_BLK_CCE:
+	{
+		isp_u32 idx = 0;
+		isp_u32 i = 0x00;
+		idx = *((isp_u32*)param_ptr0);
+
+		for (i = 0; i < 9; ++i) {
+			dst_ptr->cur.matrix[i] = dst_ptr->cce_tab[idx].matrix[i];
+		}
+
+		dst_ptr->cur.y_offset = dst_ptr->cce_tab[idx].y_offset;
+		dst_ptr->cur.u_offset = dst_ptr->cce_tab[idx].u_offset;
+		dst_ptr->cur.v_offset = dst_ptr->cce_tab[idx].v_offset;
+
+		dst_ptr->cur_idx = idx;
+
+		dst_ptr->is_specialeffect = 0;
+
+		_pm_cce_adjust(dst_ptr);
+		cce_header_ptr->is_update = ISP_ONE;
+	}
+	break;
+
+	case ISP_PM_BLK_SPECIAL_EFFECT:
+	{
+		isp_u32 idx = *((isp_u32*)param_ptr0);
+		dst_ptr->prv_idx = dst_ptr->cur_idx;
+		dst_ptr->cur_idx = idx;
+		if (0 == idx) {
+			dst_ptr->is_specialeffect = 0;
+			dst_ptr->cur = dst_ptr->cce_tab[dst_ptr->cur_idx];
+		} else {
+			dst_ptr->is_specialeffect = 1;
+			dst_ptr->cur = dst_ptr->specialeffect_tab[dst_ptr->cur_idx];
+		}
+		_pm_cce_adjust(dst_ptr);
+		cce_header_ptr->is_update = ISP_ONE;
+	}
+	break;
+
+	case ISP_PM_BLK_SMART_SETTING:
+		{
+			struct isp_range val_range = {0, 0};
+			struct smart_block_result *block_result = (struct smart_block_result*)param_ptr0;
+
+			if (block_result->update == 0){
+				return rtn;
+			}
+
+			if (dst_ptr->is_specialeffect != 0) {
+				/*special effect mode, do not adjust cce*/
+				return ISP_SUCCESS;
+			}
+
+			if ((0 == dst_ptr->cur_idx) && (dst_ptr->cur_idx != dst_ptr->prv_idx)) {
+				cce_header_ptr->is_update = ISP_ONE;
+			}
+
+			if (ISP_SMART_COLOR_CAST == block_result->smart_id) {
+
+				isp_s32 adjust_hue = dst_ptr->cur_level[0];
+				isp_s32 adjust_saturation = dst_ptr->cur_level[1];
+
+				val_range.min = 0;
+				val_range.max = 360;
+				rtn = _pm_check_smart_param(block_result, &val_range, 2, ISP_SMART_Y_TYPE_VALUE);
+				if (ISP_SUCCESS != rtn) {
+					ISP_LOGE("ISP_PM_BLK_SMART_SETTING: wrong param !\n");
+					return rtn;
+				}
+
+				adjust_hue = block_result->component[0].fix_data[0];
+				adjust_saturation = block_result->component[1].fix_data[0];
+
+				if (adjust_hue != dst_ptr->cur_level[0]
+					|| adjust_saturation != dst_ptr->cur_level[1]) {
+
+					rtn = _pm_cce_adjust_hue_saturation(dst_ptr, adjust_hue, adjust_saturation);
+					if (ISP_SUCCESS == rtn)
+						cce_header_ptr->is_update = ISP_ONE;
+				}
+
+			}else if (ISP_SMART_GAIN_OFFSET == block_result->smart_id) {
+				isp_u16 r_gain = 0;
+				isp_u16 g_gain = 0;
+				isp_u16 b_gain = 0;
+
+				val_range.min = 0;
+				val_range.max = 360;
+				rtn = _pm_check_smart_param(block_result, &val_range, 3, ISP_SMART_Y_TYPE_VALUE);
+				if (ISP_SUCCESS != rtn) {
+					ISP_LOGE("ISP_PM_BLK_SMART_SETTING: wrong param !\n");
+					return rtn;
+				}
+
+				r_gain = block_result->component[0].fix_data[0];
+				g_gain = block_result->component[1].fix_data[0];
+				b_gain = block_result->component[2].fix_data[0];
+
+				if (dst_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][0] != r_gain ||
+					dst_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][1] != g_gain ||
+					dst_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][2] != b_gain) {
+
+					rtn = _pm_cce_adjust_gain_offset(dst_ptr, r_gain, g_gain, b_gain);
+					if (ISP_SUCCESS == rtn)
+						cce_header_ptr->is_update = ISP_ONE;
+				}
+			}
+		}
+		break;
+
+		default:
+		break;
+	}
+
+	return rtn;
+}
+
+ isp_s32 _pm_cce_get_param_v1(void *cce_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
+{
+	isp_s32 rtn = ISP_SUCCESS;
+	struct isp_cce_param_v1 *cce_ptr = (struct isp_cce_param_v1*)cce_param;
+	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
+	isp_u32 *update_flag = (isp_u32*)rtn_param1;
+
+	param_data_ptr->id = ISP_BLK_CCE;
+	param_data_ptr->cmd = cmd;
+
+	switch (cmd) {
+	case ISP_PM_BLK_ISP_SETTING:
+	{
+		param_data_ptr->data_ptr = (void*)&cce_ptr->cur;
+		param_data_ptr->data_size = sizeof(cce_ptr->cur);
+		*update_flag = 0;
+	}
+	break;
+
+	default:
+	break;
+	}
+
+	return rtn;
+}
