@@ -34,6 +34,7 @@
 /**************************MCARO DEFINITION********************************************************************/
 // abilty, max support buf num
 #define PREV_FRM_CNT                    GRAB_BUF_MAX
+#define PREV_DATATYPE_CNT               8
 #define PREV_ROT_FRM_CNT                GRAB_BUF_MAX
 #define ZSL_FRM_CNT                     GRAB_BUF_MAX
 #define ZSL_ROT_FRM_CNT                 GRAB_BUF_MAX
@@ -282,28 +283,28 @@ struct prev_context {
 
 	cmr_uint                        is_reprocessing;
 
-	/*depthmap*/
-	cmr_uint                        depthmap_cnt;
+	/*sensor datatype*/
+	cmr_uint                        sensor_datatype_cnt;
 	cmr_uint                        prev_cnt;
-	cmr_uint                        depthmap_channel_id;
-	cmr_uint                        depthmap_channel_status;
-	cmr_uint                        depthmap_frm_cnt;
-	cmr_uint                        depthmap_buf_id;
-	struct img_frm                  depthmap_frm[PREV_FRM_CNT];
-	cmr_uint                        depthmap_phys_addr_array[PREV_FRM_CNT];
-	cmr_uint                        depthmap_virt_addr_array[PREV_FRM_CNT];
-	cmr_s32                         depthmap_fd_array[PREV_FRM_CNT];
-	cmr_u32                         depthmap_mem_alloc_flag;
-	cmr_uint                        depthmap_mem_size;
-	cmr_uint                        depthmap_mem_num;
-	cmr_int                         depthmap_mem_valid_num;
-	cmr_uint                        depthmap_reserved_phys_addr;
-	cmr_uint                        depthmap_reserved_virt_addr;
-	cmr_s32                         depthmap_reserved_fd;
-	struct img_frm                  depthmap_reserved_frm;
-	cmr_s64                         depthmap_timestamp;
-	cmr_uint                        depthmap_frm_id;
-	struct frm_info                        *depthmap_data;
+	cmr_uint                        sensor_datatype_channel_id;
+	cmr_uint                        sensor_datatype_channel_status;
+	cmr_uint                        sensor_datatype_frm_cnt;
+	cmr_uint                        sensor_datatype_buf_id;
+	struct img_frm                  sensor_datatype_frm[PREV_FRM_CNT];
+	cmr_uint                        sensor_datatype_phys_addr_array[PREV_FRM_CNT];
+	cmr_uint                        sensor_datatype_virt_addr_array[PREV_FRM_CNT];
+	cmr_s32                         sensor_datatype_fd_array[PREV_FRM_CNT];
+	cmr_u32                         sensor_datatype_mem_alloc_flag;
+	cmr_uint                        sensor_datatype_mem_size;
+	cmr_uint                        sensor_datatype_mem_num;
+	cmr_int                         sensor_datatype_mem_valid_num;
+	cmr_uint                        sensor_datatype_reserved_phys_addr;
+	cmr_uint                        sensor_datatype_reserved_virt_addr;
+	cmr_s32                         sensor_datatype_reserved_fd;
+	struct img_frm                  sensor_datatype_reserved_frm;
+	cmr_s64                         sensor_datatype_timestamp;
+	cmr_uint                        sensor_datatype_frm_id;
+	struct frm_info                 *sensor_datatype_data;
 	struct img_frm                        *preview_bakcup_frm;
 	cmr_s64                         preview_bakcup_timestamp;
 	struct frm_info   *preview_bakcup_data;
@@ -399,7 +400,7 @@ static cmr_int prev_frame_handle(struct prev_handle *handle, cmr_u32 camera_id, 
 
 static cmr_int prev_preview_frame_handle(struct prev_handle *handle, cmr_u32 camera_id, struct frm_info *data);
 
-static cmr_int prev_depthmap_frame_handle(struct prev_handle *handle, cmr_u32 camera_id, struct frm_info *data);
+static cmr_int prev_sensor_datatype_frame_handle(struct prev_handle *handle, cmr_u32 camera_id, struct frm_info *data);
 
 static cmr_int prev_pdaf_raw_frame_handle(struct prev_handle *handle, cmr_u32 camera_id, struct frm_info *data);
 
@@ -497,7 +498,7 @@ static cmr_int prev_set_prev_param(struct prev_handle *handle,
 					cmr_u32 is_restart,
 					struct preview_out_param *out_param_ptr);
 
-static cmr_int prev_set_depthmap_param(struct prev_handle *handle,
+static cmr_int prev_set_sensor_datatype_param(struct prev_handle *handle,
 					cmr_u32 camera_id,
 					cmr_u32 is_restart,
 					struct preview_out_param *out_param_ptr);
@@ -589,23 +590,23 @@ static cmr_int prev_fd_ctrl(struct prev_handle *handle,
 				cmr_u32 camera_id,
 				cmr_u32 on_off);
 
-static cmr_int prev_depthmap_open(struct prev_handle *handle, cmr_u32 camera_id, struct sensor_data_info otp_data);
+static cmr_int prev_sensor_datatype_open(struct prev_handle *handle, cmr_u32 camera_id, struct sensor_data_info otp_data);
 
-static cmr_int prev_depthmap_close(struct prev_handle *handle, cmr_u32 camera_id);
+static cmr_int prev_sensor_datatype_close(struct prev_handle *handle, cmr_u32 camera_id);
 
-static cmr_int prev_depthmap_send_data(struct prev_handle *handle, cmr_u32 camera_id, struct img_frm *frm,struct frm_info *depthmap_frm);
+static cmr_int prev_sensor_datatype_send_data(struct prev_handle *handle, cmr_u32 camera_id, struct img_frm *frm,struct frm_info *sensor_datatype_frm);
 
-static cmr_int prev_depthmap_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param);
+static cmr_int prev_sensor_datatype_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param);
 
-static cmr_int prev_depthmap_ctrl(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 on_off);
+static cmr_int prev_sensor_datatype_ctrl(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 on_off);
 
 static cmr_int prev_set_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id, cmr_uint src_phy_addr, cmr_uint src_vir_addr ,cmr_s32 fd);
 
 static cmr_int prev_pop_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id, struct frm_info *data, cmr_u32 is_to_hal);
 
-static cmr_int prev_set_depthmap_buffer(struct prev_handle *handle, cmr_u32 camera_id, cmr_uint src_phy_addr, cmr_uint src_vir_addr ,cmr_s32 fd);
+static cmr_int prev_set_sensor_datatype_buffer(struct prev_handle *handle, cmr_u32 camera_id, cmr_uint src_phy_addr, cmr_uint src_vir_addr ,cmr_s32 fd);
 
-static cmr_int prev_pop_depthmap_buffer(struct prev_handle *handle, cmr_u32 camera_id, struct frm_info *data, cmr_u32 is_to_hal);
+static cmr_int prev_pop_sensor_datatype_buffer(struct prev_handle *handle, cmr_u32 camera_id, struct frm_info *data, cmr_u32 is_to_hal);
 
 static cmr_int prev_set_pdaf_raw_buffer(struct prev_handle *handle, cmr_u32 camera_id, cmr_uint src_phy_addr, cmr_uint src_vir_addr ,cmr_s32 fd);
 
@@ -2180,8 +2181,8 @@ cmr_int prev_frame_handle(struct prev_handle *handle, cmr_u32 camera_id, struct 
 	cmr_u32                     preview_enable = 0;
 	cmr_u32                     snapshot_enable = 0;
 	cmr_u32                     video_enable = 0;
-	cmr_u32                     refocus_eb;
-	cmr_u32                     pdaf_eb = 0;
+	enum sensor_data_type       sensor_datatype = 0;
+	enum sensor_pdaf_type       pdaf_mode = 0;
 	struct prev_context         *prev_cxt = NULL;
 
 	CHECK_HANDLE_VALID(handle);
@@ -2195,8 +2196,8 @@ cmr_int prev_frame_handle(struct prev_handle *handle, cmr_u32 camera_id, struct 
 	preview_enable  = prev_cxt->prev_param.preview_eb;
 	snapshot_enable = prev_cxt->prev_param.snapshot_eb;
 	video_enable    = prev_cxt->prev_param.video_eb;
-	refocus_eb      = prev_cxt->prev_param.refocus_eb;
-	pdaf_eb = prev_cxt->prev_param.pdaf_eb;
+	sensor_datatype = prev_cxt->prev_param.sensor_datatype;
+	pdaf_mode       = prev_cxt->prev_param.pdaf_mode;
 
 	CMR_LOGV("preview_enable %d, snapshot_enable %d, channel_id %d, prev_channel_id %ld, cap_channel_id %ld",
 		preview_enable,
@@ -2209,11 +2210,11 @@ cmr_int prev_frame_handle(struct prev_handle *handle, cmr_u32 camera_id, struct 
 		ret = prev_preview_frame_handle(handle, camera_id, data);
 	}
 
-	if ((refocus_eb == 1) && (data->channel_id == prev_cxt->depthmap_channel_id)) {
-		ret = prev_depthmap_frame_handle(handle, camera_id, data);
+	if ((sensor_datatype > SENSOR_DATATYPE_DISABLED) && (data->channel_id == prev_cxt->sensor_datatype_channel_id)) {
+		ret = prev_sensor_datatype_frame_handle(handle, camera_id, data);
 	}
 
-	if (pdaf_eb && (data->channel_id == prev_cxt->pdaf_channel_id)) {
+	if ((pdaf_mode == SENSOR_PDAF_TYPE3_ENABLE) && (data->channel_id == prev_cxt->pdaf_channel_id)) {
 		ret = prev_pdaf_raw_frame_handle(handle, camera_id, data);
 	}
 
@@ -2414,37 +2415,50 @@ cmr_int prev_preview_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
 		}
 	}
 
-	if(prev_cxt->prev_param.refocus_eb == 1 ){
+	switch(prev_cxt->prev_param.sensor_datatype){
+		case SENSOR_REAL_DEPTH_ENABLE:
+			prev_cxt->prev_cnt ++;
+			if(prev_cxt->prev_cnt <=1){
+				CMR_LOGD("prev_cxt->prev_cnt %ld ",prev_cxt->prev_cnt);
+			}else{
 
-		prev_cxt->prev_cnt ++;
-		if(prev_cxt->prev_cnt <=1){
-			CMR_LOGD("prev_cxt->prev_cnt %ld ",prev_cxt->prev_cnt);
-		}else{
+				/*notify frame*/
+				ret = prev_pop_preview_buffer(handle, camera_id, prev_cxt->preview_bakcup_data, 0);
+				if (ret) {
+					CMR_LOGE("pop frm 0x%x err", prev_cxt->preview_bakcup_data->channel_id);
+					goto exit;
+				}
 
-			/*notify frame*/
-			ret = prev_pop_preview_buffer(handle, camera_id, prev_cxt->preview_bakcup_data, 0);
-			if (ret) {
-				CMR_LOGE("pop frm 0x%x err", prev_cxt->preview_bakcup_data->channel_id);
-				goto exit;
+				/*copy refoucs-detect info*/
+				cmr_bzero(&frame_type, sizeof(struct camera_frame_type));
+				frame_type.width = prev_cxt->prev_param.preview_size.width;
+				frame_type.height = prev_cxt->prev_param.preview_size.height;
+
+				frame_type.y_phy_addr = prev_cxt->preview_bakcup_data->yaddr;
+				frame_type.y_vir_addr = prev_cxt->preview_bakcup_data->yaddr_vir;
+				frame_type.fd		  = prev_cxt->preview_bakcup_data->fd;
+				frame_type.type 	  = PREVIEW_FRAME;
+				frame_type.timestamp = prev_cxt->preview_bakcup_data->sec * 1000000000LL + prev_cxt->preview_bakcup_data->usec * 1000;
+
+				/*notify refoucs info directly*/
+				cb_data_info.cb_type	= PREVIEW_EVT_CB_FRAME;
+				cb_data_info.func_type	= PREVIEW_FUNC_START_PREVIEW;
+				cb_data_info.frame_data = &frame_type;
+				prev_cb_start(handle, &cb_data_info);
 			}
-
-			/*copy refoucs-detect info*/
-			cmr_bzero(&frame_type, sizeof(struct camera_frame_type));
-			frame_type.width = prev_cxt->prev_param.preview_size.width;
-			frame_type.height = prev_cxt->prev_param.preview_size.height;
-
-			frame_type.y_phy_addr = prev_cxt->preview_bakcup_data->yaddr;
-			frame_type.y_vir_addr = prev_cxt->preview_bakcup_data->yaddr_vir;
-			frame_type.fd		  = prev_cxt->preview_bakcup_data->fd;
-			frame_type.type 	  = PREVIEW_FRAME;
-			frame_type.timestamp = prev_cxt->preview_bakcup_data->sec * 1000000000LL + prev_cxt->preview_bakcup_data->usec * 1000;
-
-			/*notify refoucs info directly*/
-			cb_data_info.cb_type	= PREVIEW_EVT_CB_FRAME;
+			break;
+		case SENSOR_EMBEDDED_INFO_ENABLE:
+			/*notify embedded info directly*/
+			cb_data_info.cb_type	= PREVIEW_EVT_SENSOR_DATATYPE;
 			cb_data_info.func_type	= PREVIEW_FUNC_START_PREVIEW;
 			cb_data_info.frame_data = &frame_type;
 			prev_cb_start(handle, &cb_data_info);
-		}
+
+			break;
+		case SENSOR_DATATYPE_PDAF_ENABLE:
+			break;
+		default:
+			break;
 	}
 
 	if (IMG_ANGLE_0 == prev_cxt->prev_param.prev_rot) {
@@ -2454,8 +2468,8 @@ cmr_int prev_preview_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
 			goto exit;
 		}
 		prev_cxt->prev_buf_id = frame_type.buf_id;
-		if( prev_cxt->prev_param.refocus_eb == 1){
-			CMR_LOGE("prev_cxt->prev_cnt %ld ,prev_cxt->prev_frm_cnt %ld refocus_eb %d",prev_cxt->prev_cnt,prev_cxt->prev_frm_cnt,prev_cxt->prev_param.refocus_eb);
+		if( prev_cxt->prev_param.sensor_datatype == SENSOR_REAL_DEPTH_ENABLE){
+			CMR_LOGE("prev_cxt->prev_cnt %lu ,prev_cxt->prev_frm_cnt %lu sensor_datatype %d",prev_cxt->prev_cnt,prev_cxt->prev_frm_cnt,prev_cxt->prev_param.sensor_datatype);
 			return CMR_CAMERA_SUCCESS;
 		}
 
@@ -2488,8 +2502,8 @@ cmr_int prev_preview_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
 				goto exit;
 			}
 
-			if( prev_cxt->prev_param.refocus_eb == 1){
-				CMR_LOGE("prev_cxt->prev_cnt %ld ,prev_cxt->prev_frm_cnt %ld refocus_eb %d",prev_cxt->prev_cnt,prev_cxt->prev_frm_cnt,prev_cxt->prev_param.refocus_eb);
+			if( prev_cxt->prev_param.sensor_datatype == SENSOR_REAL_DEPTH_ENABLE){
+				CMR_LOGE("prev_cxt->prev_cnt %lu ,prev_cxt->prev_frm_cnt %lu sensor_datatype %d",prev_cxt->prev_cnt,prev_cxt->prev_frm_cnt,prev_cxt->prev_param.sensor_datatype);
 				return CMR_CAMERA_SUCCESS;
 			}
 
@@ -2530,7 +2544,7 @@ exit:
 	return ret;
 }
 
-cmr_int prev_depthmap_frame_handle(struct prev_handle *handle, cmr_u32 camera_id, struct frm_info *data)
+cmr_int prev_sensor_datatype_frame_handle(struct prev_handle *handle, cmr_u32 camera_id, struct frm_info *data)
 {
 	cmr_int                     ret = CMR_CAMERA_SUCCESS;
 	struct prev_context         *prev_cxt = NULL;
@@ -2551,11 +2565,11 @@ cmr_int prev_depthmap_frame_handle(struct prev_handle *handle, cmr_u32 camera_id
 	cmr_bzero(&frame_type, sizeof(struct camera_frame_type));
 
 	prev_cxt = &handle->prev_cxt[camera_id];
-	prev_cxt->depthmap_timestamp = data->sec * 1000000000LL + data->usec * 1000;
-	prev_cxt->depthmap_frm_id = prev_get_frm_index(prev_cxt->depthmap_frm, data);
-	prev_cxt->depthmap_cnt ++;
+	prev_cxt->sensor_datatype_timestamp = data->sec * 1000000000LL + data->usec * 1000;
+	prev_cxt->sensor_datatype_frm_id = prev_get_frm_index(prev_cxt->sensor_datatype_frm, data);
+	prev_cxt->sensor_datatype_cnt ++;
 	prev_cxt->prev_cnt = 0;
-	//cmr_bzero(prev_cxt->depthmap_data,sizeof(struct frm_info));
+	//cmr_bzero(prev_cxt->sensor_datatype_data,sizeof(struct frm_info));
 
 	if (!IS_PREVIEW(handle, camera_id)) {
 		CMR_LOGE("preview stopped, skip this frame,prev_status,prev_status %ld ",prev_cxt->prev_status);
@@ -2571,8 +2585,8 @@ cmr_int prev_depthmap_frame_handle(struct prev_handle *handle, cmr_u32 camera_id
 		return CMR_CAMERA_INVALID_PARAM;
 	}
 
-	CMR_LOGV("got one frame, frame_id 0x%x, frame_real_id %d, channel_id %d yaddr 0x%x depthmap_timestamp %" PRId64", data->yaddr_vir 0x%x",
-		data->frame_id, data->frame_real_id, data->channel_id, data->yaddr,prev_cxt->depthmap_timestamp, data->yaddr_vir);
+	CMR_LOGV("got one frame, frame_id 0x%x, frame_real_id %d, channel_id %d yaddr 0x%x sensor_datatype_timestamp %" PRId64", data->yaddr_vir 0x%x",
+		data->frame_id, data->frame_real_id, data->channel_id, data->yaddr,prev_cxt->sensor_datatype_timestamp, data->yaddr_vir);
 
 #if 0 // re-depthmap image save
 	if (prev_cxt->prev_frm_cnt %20 == 0) {
@@ -2585,58 +2599,77 @@ cmr_int prev_depthmap_frame_handle(struct prev_handle *handle, cmr_u32 camera_id
 	}
 #endif
 
-	if(prev_cxt->depthmap_cnt > 2){
-		ret = prev_pop_depthmap_buffer(handle, camera_id, data, 0);
-		ret = prev_set_depthmap_buffer(handle, camera_id, data->yaddr, data->yaddr_vir, data->fd);
-	}else{
+	switch(prev_cxt->prev_param.sensor_datatype){
+		case SENSOR_REAL_DEPTH_ENABLE:
+			if(prev_cxt->sensor_datatype_cnt > 2){
+				ret = prev_pop_sensor_datatype_buffer(handle, camera_id, data, 0);
+				ret = prev_set_sensor_datatype_buffer(handle, camera_id, data->yaddr, data->yaddr_vir, data->fd);
+			}else{
 
-		prev_cxt->depthmap_data = data;
+				prev_cxt->sensor_datatype_data = data;
 
-		CMR_LOGV("depthmap_cnt %ld,prev_cxt->depthmap_timestamp %"PRId64" preview_bakcup_timestamp %" PRId64,prev_cxt->depthmap_cnt,prev_cxt->depthmap_timestamp,prev_cxt->preview_bakcup_timestamp);
-		if(prev_cxt->depthmap_timestamp != 0 && prev_cxt->preview_bakcup_frm != 0){
-			if(fabs((prev_cxt->depthmap_timestamp - prev_cxt->preview_bakcup_timestamp)*1.0f) <= 10000*1000*1.0f){
-				prev_depthmap_send_data(handle, camera_id, prev_cxt->preview_bakcup_frm,data);
-				CMR_LOGV(" prev_depthmap_send_data ");
-				return ret;
-			}else
-				CMR_LOGD("_timestamp %" PRId64"bakcup_frm  %p ", prev_cxt->depthmap_timestamp, prev_cxt->preview_bakcup_frm);
-				if(prev_cxt->preview_bakcup_frm != NULL )
-				{
-					/*notify frame*/
-					ret = prev_pop_preview_buffer(handle, camera_id, prev_cxt->preview_bakcup_data, 0);
-					if (ret) {
-						CMR_LOGE("pop frm 0x%x err", prev_cxt->preview_bakcup_data->channel_id);
-						//goto exit;
-					}
+				CMR_LOGV("sensor_datatype_cnt %lu,prev_cxt->sensor_datatype_timestamp %" PRId64" preview_bakcup_timestamp %" PRId64,prev_cxt->sensor_datatype_cnt,prev_cxt->sensor_datatype_timestamp,prev_cxt->preview_bakcup_timestamp);
+				if(  prev_cxt->sensor_datatype_timestamp != 0 && prev_cxt->preview_bakcup_frm != 0){
+					if(llabs(prev_cxt->sensor_datatype_timestamp -  prev_cxt->preview_bakcup_timestamp) <= 10000*1000*1.0f){
+						prev_sensor_datatype_send_data(handle, camera_id, prev_cxt->preview_bakcup_frm,data);
+						CMR_LOGV(" prev_sensor_datatype_send_data ");
+						return ret;
+					}else
+						CMR_LOGD("sensor_datatype_timestamp %" PRId64"preview_bakcup_frm %p ", prev_cxt->sensor_datatype_timestamp, prev_cxt->preview_bakcup_frm);
+					if(prev_cxt->preview_bakcup_frm != NULL )
+					{
+						/*notify frame*/
+						ret = prev_pop_preview_buffer(handle, camera_id, prev_cxt->preview_bakcup_data, 0);
+						if (ret) {
+							CMR_LOGE("pop frm 0x%x err", prev_cxt->preview_bakcup_data->channel_id);
+							//goto exit;
+						}
 
 					/*copy refoucs-detect info*/
-					cmr_bzero(&frame_type, sizeof(struct camera_frame_type));
-					frame_type.width = prev_cxt->prev_param.preview_size.width;
-					frame_type.height = prev_cxt->prev_param.preview_size.height;
+						cmr_bzero(&frame_type, sizeof(struct camera_frame_type));
+						frame_type.width = prev_cxt->prev_param.preview_size.width;
+						frame_type.height = prev_cxt->prev_param.preview_size.height;
 
-					frame_type.y_phy_addr = prev_cxt->preview_bakcup_data->yaddr;
-					frame_type.y_vir_addr = prev_cxt->preview_bakcup_data->yaddr_vir;
-					frame_type.fd		  = prev_cxt->preview_bakcup_data->fd;
-					frame_type.type 	  = PREVIEW_FRAME;
-					frame_type.timestamp = prev_cxt->preview_bakcup_data->sec * 1000000000LL + prev_cxt->preview_bakcup_data->usec * 1000;
+						frame_type.y_phy_addr = prev_cxt->preview_bakcup_data->yaddr;
+						frame_type.y_vir_addr = prev_cxt->preview_bakcup_data->yaddr_vir;
+						frame_type.fd		  = prev_cxt->preview_bakcup_data->fd;
+						frame_type.type 	  = PREVIEW_FRAME;
+						frame_type.timestamp = prev_cxt->preview_bakcup_data->sec * 1000000000LL + prev_cxt->preview_bakcup_data->usec * 1000;
 
-					/*notify refoucs info directly*/
-					cb_data_info.cb_type	= PREVIEW_EVT_CB_FRAME;
-					cb_data_info.func_type	= PREVIEW_FUNC_START_PREVIEW;
-					cb_data_info.frame_data = &frame_type;
-					prev_cb_start(handle, &cb_data_info);
+						/*notify refoucs info directly*/
+						cb_data_info.cb_type	= PREVIEW_EVT_CB_FRAME;
+						cb_data_info.func_type	= PREVIEW_FUNC_START_PREVIEW;
+						cb_data_info.frame_data = &frame_type;
+						prev_cb_start(handle, &cb_data_info);
+					}
+
+					ret = prev_pop_sensor_datatype_buffer(handle, camera_id, data, 0);
+					ret = prev_set_sensor_datatype_buffer(handle, camera_id, data->yaddr, data->yaddr_vir, data->fd);
+					return ret;
+				}else{
+					CMR_LOGD("sensor_datatype_timestamp %" PRId64"preview_bakcup_frm %p ", prev_cxt->sensor_datatype_timestamp, prev_cxt->preview_bakcup_frm);
+					ret = prev_pop_sensor_datatype_buffer(handle, camera_id, data, 0);
+					ret = prev_set_sensor_datatype_buffer(handle, camera_id, data->yaddr, data->yaddr_vir, data->fd);
 				}
+			}
 
-				ret = prev_pop_depthmap_buffer(handle, camera_id, data, 0);
-				ret = prev_set_depthmap_buffer(handle, camera_id, data->yaddr, data->yaddr_vir, data->fd);
-				return ret;
-		}else{
-			CMR_LOGD("_timestamp %" PRId64"bakcup_frm  %p ", prev_cxt->depthmap_timestamp, prev_cxt->preview_bakcup_frm);
-			ret = prev_pop_depthmap_buffer(handle, camera_id, data, 0);
-			ret = prev_set_depthmap_buffer(handle, camera_id, data->yaddr, data->yaddr_vir, data->fd);
-		}
+			break;
+		case SENSOR_EMBEDDED_INFO_ENABLE:
+				prev_cxt->sensor_datatype_data = data;
+				CMR_LOGV("sensor_datatype %u ,sensor_datatype_cnt %lu,prev_cxt->sensor_datatype_timestamp %" PRId64" preview_bakcup_timestamp %" PRId64,prev_cxt->prev_param.sensor_datatype,prev_cxt->sensor_datatype_cnt,prev_cxt->sensor_datatype_timestamp,prev_cxt->preview_bakcup_timestamp);
+
+				/*notify embedded info directly*/
+				cb_data_info.cb_type	= PREVIEW_EVT_SENSOR_DATATYPE;
+				cb_data_info.func_type	= PREVIEW_FUNC_START_PREVIEW;
+				cb_data_info.frame_data = &frame_type;
+				prev_cb_start(handle, &cb_data_info);
+
+			break;
+		case SENSOR_DATATYPE_PDAF_ENABLE:
+			break;
+		default:
+			break;
 	}
-
 
 exit:
 	if (ret) {
@@ -3559,7 +3592,7 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_res
 	cmr_u32                     preview_enable = 0;
 	cmr_u32                     snapshot_enable = 0;
 	cmr_u32                     video_enable = 0;
-	cmr_u32                     pdaf_enable = 0;
+	enum sensor_pdaf_type       pdaf_mode = 0;
 	cmr_u32                     tool_eb = 0;
 	cmr_u32                     channel_bits = 0;
 	cmr_uint                    skip_num = 0;
@@ -3582,7 +3615,7 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_res
 	snapshot_enable = prev_cxt->prev_param.snapshot_eb;
 	video_enable    = prev_cxt->prev_param.video_eb;
 	tool_eb         = prev_cxt->prev_param.tool_eb;
-	pdaf_enable = prev_cxt->prev_param.pdaf_eb;
+	pdaf_mode       = prev_cxt->prev_param.pdaf_mode;
 	CMR_LOGI("camera_id %d, prev_status %ld, preview_eb %d, snapshot_eb %d",
 		camera_id, prev_cxt->prev_status, preview_enable, snapshot_enable);
 
@@ -3725,25 +3758,35 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_res
 		if (prev_cxt->prev_param.is_support_fd) {
 			prev_fd_open(handle, camera_id);
 		}
-		/*init depthmap*/
-		CMR_LOGI("refocus_eb %d",  prev_cxt->prev_param.refocus_eb);
+		/*init sensor_datatype*/
+		CMR_LOGI("sensor_datatype %u",  prev_cxt->prev_param.sensor_datatype);
 #if 1
-		if ( prev_cxt->prev_param.refocus_eb == 1) {
-			/* get otp  buffer  */
-			struct sensor_otp_cust_info sensor_otp;
-			ret = handle->ops.get_sensor_otp(handle->oem_handle, &sensor_otp);
-			if (ret) {
-				CMR_LOGE("get sensor otp error");
-				goto exit;
-			}
-			CMR_LOGI("sensor_otp %p, dual flag %d",  sensor_otp.total_otp.data_ptr, sensor_otp.dual_otp.dual_flag);
-			if(sensor_otp.total_otp.data_ptr != NULL && sensor_otp.dual_otp.dual_flag)
-				prev_depthmap_open(handle, camera_id, sensor_otp.total_otp);
+		struct sensor_otp_cust_info sensor_otp;
+		switch(prev_cxt->prev_param.sensor_datatype){
+			case SENSOR_REAL_DEPTH_ENABLE:
+				/* get otp  buffer  */
+				ret = handle->ops.get_sensor_otp(handle->oem_handle, &sensor_otp);
+				if (ret) {
+					CMR_LOGE("get sensor otp error");
+					goto exit;
+				}
+				CMR_LOGI("sensor_otp %p, dual flag %d",  sensor_otp.total_otp.data_ptr, sensor_otp.dual_otp.dual_flag);
+				if(sensor_otp.total_otp.data_ptr != NULL && sensor_otp.dual_otp.dual_flag)
+					prev_sensor_datatype_open(handle, camera_id, sensor_otp.total_otp);
+
+				break;
+			case SENSOR_EMBEDDED_INFO_ENABLE:
+				break;
+			case SENSOR_DATATYPE_PDAF_ENABLE:
+				break;
+			default:
+				break;
+
 		}
 #endif
 	}
 
-	if (pdaf_enable) {
+	if (pdaf_mode == SENSOR_PDAF_TYPE3_ENABLE) {
 		struct pd_raw_open pd_open;
 
 		pd_open.open = 1;
@@ -3769,7 +3812,7 @@ exit:
 			}
 			prev_free_zsl_buf(handle, camera_id, 0);
 		}
-		if (pdaf_enable) {
+		if (pdaf_mode == SENSOR_PDAF_TYPE3_ENABLE) {
 			prev_free_pdaf_raw_buf(handle, camera_id, 0);
 		}
 	}
@@ -3788,7 +3831,7 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_rest
 	cmr_u32                preview_enable = 0;
 	cmr_u32                snapshot_enable = 0;
 	cmr_u32                video_enable = 0;
-	cmr_u32                pdaf_enable = 0;
+	enum sensor_pdaf_type  pdaf_mode = 0;
 	cmr_u32                channel_bits = 0;
 	struct prev_cb_info    cb_data_info;
 
@@ -3806,7 +3849,7 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_rest
 	preview_enable	= prev_cxt->prev_param.preview_eb;
 	snapshot_enable = prev_cxt->prev_param.snapshot_eb;
 	video_enable    = prev_cxt->prev_param.video_eb;
-	pdaf_enable = prev_cxt->prev_param.pdaf_eb;
+	pdaf_mode       = prev_cxt->prev_param.pdaf_mode;
 
 	CMR_LOGI("camera_id %d, prev_status %ld, isp_status %ld, preview_eb %d, snapshot_eb %d",
 		camera_id, prev_cxt->prev_status, prev_cxt->isp_status, preview_enable, snapshot_enable);
@@ -3854,9 +3897,9 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_rest
 			prev_fd_close(handle, camera_id);
 		}
 
-		/*deinit depthmap*/
-		if (prev_cxt->prev_param.refocus_eb == 1) {
-			prev_depthmap_close(handle, camera_id);
+		/*deinit sensor_datatype*/
+		if (prev_cxt->prev_param.sensor_datatype == SENSOR_REAL_DEPTH_ENABLE) {
+			prev_sensor_datatype_close(handle, camera_id);
 		}
 	}
 
@@ -3883,7 +3926,7 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_rest
 		}
 	}
 
-	if (pdaf_enable) {
+	if (pdaf_mode == SENSOR_PDAF_TYPE3_ENABLE) {
 		struct pd_raw_open pd_open;
 
 		cmr_bzero(&pd_open, sizeof(pd_open));
@@ -5236,7 +5279,7 @@ cmr_int prev_free_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32
 	return ret;
 }
 
-cmr_int prev_alloc_depthmap_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_restart, struct buffer_cfg *buffer)
+cmr_int prev_alloc_sensor_datatype_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_restart, struct buffer_cfg *buffer)
 {
 	cmr_int                  ret = CMR_CAMERA_SUCCESS;
 	cmr_uint                 i = 0;
@@ -5253,11 +5296,28 @@ cmr_int prev_alloc_depthmap_buf(struct prev_handle *handle, cmr_u32 camera_id, c
 
 	prev_cxt = &handle->prev_cxt[camera_id];
 	mem_ops  = &prev_cxt->prev_param.memory_setting;
-	CMR_LOGI("allo flag %d", prev_cxt->depthmap_mem_alloc_flag);
+	CMR_LOGI("allo flag %d", prev_cxt->sensor_datatype_mem_alloc_flag);
 
-	prev_cxt->depthmap_mem_size = CAMERA_DEPTH_META_SIZE;
+	switch(prev_cxt->prev_param.sensor_datatype){
+		case SENSOR_REAL_DEPTH_ENABLE:
+			/*for depth param*/
+			prev_cxt->sensor_datatype_mem_size = CAMERA_DEPTH_META_SIZE;
+			prev_cxt->sensor_datatype_mem_num = PREV_FRM_CNT;
+			break;
+		case SENSOR_EMBEDDED_INFO_ENABLE:
+			/*for embedded info param*/
+			prev_cxt->sensor_datatype_mem_size = CAMERA_EMBEDDED_INFO_META_SIZE;
+			prev_cxt->sensor_datatype_mem_num = PREV_DATATYPE_CNT;
+			break;
+		case SENSOR_DATATYPE_PDAF_ENABLE:
+			/*for pdaf param*/
+			prev_cxt->sensor_datatype_mem_size = CAMERA_PDAF_META_SIZE;
+			prev_cxt->sensor_datatype_mem_num = PREV_DATATYPE_CNT;
+			break;
+		default:
+			return CMR_CAMERA_INVALID_PARAM;
+	}
 
-	prev_cxt->depthmap_mem_num = PREV_FRM_CNT;
 
 	/*alloc preview buffer*/
 	if (!mem_ops->alloc_mem || !mem_ops->free_mem) {
@@ -5265,77 +5325,77 @@ cmr_int prev_alloc_depthmap_buf(struct prev_handle *handle, cmr_u32 camera_id, c
 		return CMR_CAMERA_INVALID_PARAM;
 	}
 
-	if (!is_restart && (1 != prev_cxt->depthmap_mem_alloc_flag)) {
-		mem_ops->alloc_mem(CAMERA_DEPTH_MAP,
+	if (!is_restart && (1 != prev_cxt->sensor_datatype_mem_alloc_flag)) {
+		mem_ops->alloc_mem(CAMERA_SENSOR_DATATYPE_MAP,
 				   handle->oem_handle,
-				   (cmr_u32 *)&prev_cxt->depthmap_mem_size,
-				   (cmr_u32 *)&prev_cxt->depthmap_mem_num,
-				   prev_cxt->depthmap_phys_addr_array,
-				   prev_cxt->depthmap_virt_addr_array,
-				   prev_cxt->depthmap_fd_array);
+				   (cmr_u32 *)&prev_cxt->sensor_datatype_mem_size,
+				   (cmr_u32 *)&prev_cxt->sensor_datatype_mem_num,
+				   prev_cxt->sensor_datatype_phys_addr_array,
+				   prev_cxt->sensor_datatype_virt_addr_array,
+				   prev_cxt->sensor_datatype_fd_array);
 		/*check memory valid*/
-		CMR_LOGI("depthmap_mem_size 0x%lx, mem_num %ld", prev_cxt->depthmap_mem_size, prev_cxt->depthmap_mem_num);
-		for (i = 0; i < prev_cxt->depthmap_mem_num; i++) {
-			CMR_LOGI("%ld, phys_addr 0x%lx, virt_addr 0x%lx, fd 0x%x",
+		CMR_LOGI("sensor_datatype_mem_size 0x%lx, mem_num %ld", prev_cxt->sensor_datatype_mem_size, prev_cxt->sensor_datatype_mem_num);
+		for (i = 0; i < prev_cxt->sensor_datatype_mem_num; i++) {
+			CMR_LOGI("%lu, phys_addr 0x%lx, virt_addr 0x%lx, fd 0x%x",
 				i,
-				prev_cxt->depthmap_phys_addr_array[i],
-				prev_cxt->depthmap_virt_addr_array[i],
-				prev_cxt->depthmap_fd_array[i]);
+				prev_cxt->sensor_datatype_phys_addr_array[i],
+				prev_cxt->sensor_datatype_virt_addr_array[i],
+				prev_cxt->sensor_datatype_fd_array[i]);
 
-			if (((0 == prev_cxt->depthmap_virt_addr_array[i])) || (prev_cxt->depthmap_fd_array[i] == 0)) {
+			if (((0 == prev_cxt->sensor_datatype_virt_addr_array[i])) || (prev_cxt->sensor_datatype_fd_array[i] == 0)) {
 				CMR_LOGE("memory is invalid");
 				return  CMR_CAMERA_NO_MEM;
 			} else {
-				prev_cxt->depthmap_mem_valid_num++;
+				prev_cxt->sensor_datatype_mem_valid_num++;
 			}
 		}
-		mem_ops->alloc_mem(CAMERA_DEPTH_MAP_RESERVED,
+		mem_ops->alloc_mem(CAMERA_SENSOR_DATATYPE_MAP_RESERVED,
 				   handle->oem_handle,
-				   (cmr_u32 *)&prev_cxt->depthmap_mem_size,
+				   (cmr_u32 *)&prev_cxt->sensor_datatype_mem_size,
 				   (cmr_u32 *)&reserved_count,
-				   &prev_cxt->depthmap_reserved_phys_addr,
-				   &prev_cxt->depthmap_reserved_virt_addr,
-				   &prev_cxt->depthmap_reserved_fd);
-		prev_cxt->depthmap_mem_alloc_flag = 1;
+				   &prev_cxt->sensor_datatype_reserved_phys_addr,
+				   &prev_cxt->sensor_datatype_reserved_virt_addr,
+				   &prev_cxt->sensor_datatype_reserved_fd);
+		prev_cxt->sensor_datatype_mem_alloc_flag = 1;
 		CMR_LOGI("reserved, phys_addr 0x%lx, virt_addr 0x%lx, fd 0x%x",
-			prev_cxt->depthmap_reserved_phys_addr,
-			prev_cxt->depthmap_reserved_virt_addr,
-			prev_cxt->depthmap_reserved_fd);
+			prev_cxt->sensor_datatype_reserved_phys_addr,
+			prev_cxt->sensor_datatype_reserved_virt_addr,
+			prev_cxt->sensor_datatype_reserved_fd);
 	}
 
 	/*arrange the buffer*/
 	buffer->channel_id = 0; /*should be update when channel cfg complete*/
-	buffer->base_id    = CMR_REFOCUS_ID_BASE;
-	buffer->count      = prev_cxt->depthmap_mem_valid_num;
-	buffer->length     = prev_cxt->depthmap_mem_size;
+	buffer->base_id    = CMR_SENSOR_DATATYPE_ID_BASE;
+	buffer->count      = prev_cxt->sensor_datatype_mem_valid_num;
+	buffer->length     = prev_cxt->sensor_datatype_mem_size;
 	buffer->flag       = BUF_FLAG_INIT;
 
-	for (i = 0; i < (cmr_uint)prev_cxt->depthmap_mem_valid_num; i++) {
-		prev_cxt->depthmap_frm[i].buf_size        = prev_cxt->depthmap_mem_size;
-		prev_cxt->depthmap_frm[i].addr_vir.addr_y = prev_cxt->depthmap_virt_addr_array[i];
-		prev_cxt->depthmap_frm[i].addr_phy.addr_y = prev_cxt->depthmap_phys_addr_array[i];
-		prev_cxt->depthmap_frm[i].fd              = prev_cxt->depthmap_fd_array[i];
-		prev_cxt->depthmap_frm[i].fmt             = IMG_DATA_TYPE_RAW;
+	for (i = 0; i < (cmr_uint)prev_cxt->sensor_datatype_mem_valid_num; i++) {
+		prev_cxt->sensor_datatype_frm[i].buf_size        = prev_cxt->sensor_datatype_mem_size;
+		prev_cxt->sensor_datatype_frm[i].addr_vir.addr_y = prev_cxt->sensor_datatype_virt_addr_array[i];
+		prev_cxt->sensor_datatype_frm[i].addr_phy.addr_y = prev_cxt->sensor_datatype_phys_addr_array[i];
+		prev_cxt->sensor_datatype_frm[i].fd              = prev_cxt->sensor_datatype_fd_array[i];
+		prev_cxt->sensor_datatype_frm[i].fmt             = IMG_DATA_TYPE_RAW;
 
-		buffer->addr[i].addr_y     = prev_cxt->depthmap_frm[i].addr_phy.addr_y;
-		buffer->addr[i].addr_u     = prev_cxt->depthmap_frm[i].addr_phy.addr_u;
-		buffer->addr_vir[i].addr_y = prev_cxt->depthmap_frm[i].addr_vir.addr_y;
-		buffer->addr_vir[i].addr_u = prev_cxt->depthmap_frm[i].addr_vir.addr_u;
-		buffer->fd[i]           = prev_cxt->depthmap_frm[i].fd;
+		buffer->addr[i].addr_y     = prev_cxt->sensor_datatype_frm[i].addr_phy.addr_y;
+		buffer->addr[i].addr_u     = prev_cxt->sensor_datatype_frm[i].addr_phy.addr_u;
+		buffer->addr_vir[i].addr_y = prev_cxt->sensor_datatype_frm[i].addr_vir.addr_y;
+		buffer->addr_vir[i].addr_u = prev_cxt->sensor_datatype_frm[i].addr_vir.addr_u;
+		buffer->fd[i]           = prev_cxt->sensor_datatype_frm[i].fd;
 	}
-	prev_cxt->depthmap_reserved_frm.buf_size        = prev_cxt->depthmap_mem_size;
-	prev_cxt->depthmap_reserved_frm.addr_vir.addr_y = prev_cxt->depthmap_reserved_virt_addr;
-	prev_cxt->depthmap_reserved_frm.addr_vir.addr_u = prev_cxt->depthmap_reserved_virt_addr;
-	prev_cxt->depthmap_reserved_frm.addr_phy.addr_y = prev_cxt->depthmap_reserved_phys_addr;
-	prev_cxt->depthmap_reserved_frm.addr_phy.addr_u = prev_cxt->depthmap_reserved_phys_addr;
-	prev_cxt->depthmap_reserved_frm.fd           = prev_cxt->depthmap_reserved_fd;
-	prev_cxt->depthmap_reserved_frm.fmt             = IMG_DATA_TYPE_RAW;
+	prev_cxt->sensor_datatype_reserved_frm.buf_size        = prev_cxt->sensor_datatype_mem_size;
+	prev_cxt->sensor_datatype_reserved_frm.addr_vir.addr_y = prev_cxt->sensor_datatype_reserved_virt_addr;
+	prev_cxt->sensor_datatype_reserved_frm.addr_vir.addr_u = prev_cxt->sensor_datatype_reserved_virt_addr;
+	prev_cxt->sensor_datatype_reserved_frm.addr_phy.addr_y = prev_cxt->sensor_datatype_reserved_phys_addr;
+	prev_cxt->sensor_datatype_reserved_frm.addr_phy.addr_u = prev_cxt->sensor_datatype_reserved_phys_addr;
+	prev_cxt->sensor_datatype_reserved_frm.fd           = prev_cxt->sensor_datatype_reserved_fd;
+	prev_cxt->sensor_datatype_reserved_frm.fmt             = IMG_DATA_TYPE_RAW;
 
 	CMR_LOGI("out %ld", ret);
 	return ret;
 }
 
-cmr_int prev_free_depthmap_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_restart)
+cmr_int prev_free_sensor_datatype_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_restart)
 {
 	cmr_int                  ret = CMR_CAMERA_SUCCESS;
 	struct prev_context      *prev_cxt = NULL;
@@ -5352,19 +5412,19 @@ cmr_int prev_free_depthmap_buf(struct prev_handle *handle, cmr_u32 camera_id, cm
 		return CMR_CAMERA_INVALID_PARAM;
 	}
 
-	if (!is_restart && (1 == prev_cxt->depthmap_mem_alloc_flag)) {
-		mem_ops->free_mem(CAMERA_DEPTH_MAP,
+	if (!is_restart && (1 == prev_cxt->sensor_datatype_mem_alloc_flag)) {
+		mem_ops->free_mem(CAMERA_SENSOR_DATATYPE_MAP,
 				  handle->oem_handle,
-				  prev_cxt->depthmap_phys_addr_array,
-				  prev_cxt->depthmap_virt_addr_array,
-				  prev_cxt->depthmap_fd_array,
-				  prev_cxt->depthmap_mem_num);
-		cmr_bzero(prev_cxt->depthmap_phys_addr_array, (PREV_FRM_CNT)*sizeof(cmr_uint));
-		cmr_bzero(prev_cxt->depthmap_virt_addr_array, (PREV_FRM_CNT)*sizeof(cmr_uint));
-		cmr_bzero(prev_cxt->depthmap_fd_array, (PREV_FRM_CNT)*sizeof(cmr_s32));
-		prev_cxt->depthmap_reserved_phys_addr = 0;
-		prev_cxt->depthmap_reserved_virt_addr = 0;
-		prev_cxt->depthmap_mem_alloc_flag = 0;
+				  prev_cxt->sensor_datatype_phys_addr_array,
+				  prev_cxt->sensor_datatype_virt_addr_array,
+				  prev_cxt->sensor_datatype_fd_array,
+				  prev_cxt->sensor_datatype_mem_num);
+		cmr_bzero(prev_cxt->sensor_datatype_phys_addr_array, (PREV_FRM_CNT)*sizeof(cmr_uint));
+		cmr_bzero(prev_cxt->sensor_datatype_virt_addr_array, (PREV_FRM_CNT)*sizeof(cmr_uint));
+		cmr_bzero(prev_cxt->sensor_datatype_fd_array, (PREV_FRM_CNT)*sizeof(cmr_s32));
+		prev_cxt->sensor_datatype_reserved_phys_addr = 0;
+		prev_cxt->sensor_datatype_reserved_virt_addr = 0;
+		prev_cxt->sensor_datatype_mem_alloc_flag = 0;
 	}
 
 	CMR_LOGI("out");
@@ -5566,9 +5626,9 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id)
 		handle->prev_cxt[camera_id].prev_param.video_eb,
 		handle->prev_cxt[camera_id].prev_param.sprd_zsl_enabled);
 
-	CMR_LOGI("camera_id %d, refocus_eb %d",
+	CMR_LOGI("camera_id %d, sensor_datatype %d",
 		camera_id,
-		handle->prev_cxt[camera_id].prev_param.refocus_eb);
+		handle->prev_cxt[camera_id].prev_param.sensor_datatype);
 
 	CMR_LOGI("camera_id %d, prev size %d %d, cap size %d %d",
 		camera_id,
@@ -5585,7 +5645,7 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id)
 
 	aligned_type = CAMERA_MEM_NO_ALIGNED;
 
-	if(handle->prev_cxt->prev_param.refocus_eb)
+	if(handle->prev_cxt->prev_param.sensor_datatype || handle->prev_cxt->prev_param.refocus_mode)
 		aligned_type = CAMERA_MEM_NO_ALIGNED;
 
 	/* w/h aligned by 16 */
@@ -5753,7 +5813,7 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
 		is_3D_caputre = 1;
 	}
 
-	if (1 == handle->prev_cxt[camera_id].prev_param.pdaf_eb){
+	if (SENSOR_PDAF_TYPE3_ENABLE == handle->prev_cxt[camera_id].prev_param.pdaf_mode){
 		search_width = sensor_info->source_width_max;
 		search_height = sensor_info->source_height_max;
 	} else if (1 == is_3D_video || 1 == is_3D_caputre) {
@@ -6232,7 +6292,7 @@ cmr_int prev_construct_frame(struct prev_handle *handle,
 	prev_rot    = handle->prev_cxt[camera_id].prev_param.prev_rot;
 	prev_cxt    = &handle->prev_cxt[camera_id];
 	ae_time  = prev_cxt->ae_time;
-	prev_cxt->depthmap_cnt = 0;
+	prev_cxt->sensor_datatype_cnt = 0;
 	prev_cxt->pdaf_frm_cnt = prev_cxt->prev_frm_cnt;
 	if (prev_chn_id == info->channel_id) {
 		if (prev_rot) {
@@ -6296,17 +6356,24 @@ cmr_int prev_construct_frame(struct prev_handle *handle,
 		}
 
 #if 1
-		if (prev_cxt->prev_param.refocus_eb == 1) {
+	switch(prev_cxt->prev_param.sensor_datatype){
+		case SENSOR_REAL_DEPTH_ENABLE:
 			prev_cxt->preview_bakcup_timestamp = frame_type->timestamp;
 			prev_cxt->preview_bakcup_frm = frm_ptr;
 			prev_cxt->preview_bakcup_data = info;
 			prev_cxt->preview_bakcup_frame_type = frame_type;
-			CMR_LOGV(" frm_ptr %p addr_vir.addr_y 0x%lx  frame_type->fd 0x%x", frm_ptr,frm_ptr->addr_vir.addr_y,frame_type->fd);
-		}else
-		{
-		     CMR_LOGV("not depthmap mode, channel id %d, frame id %d", info->channel_id, info->frame_id);
-		}
-#endif
+		CMR_LOGV(" frm_ptr %p addr_vir.addr_y 0x%lx  frame_type->fd 0x%x", frm_ptr,frm_ptr->addr_vir.addr_y,frame_type->fd);
+
+			break;
+		case SENSOR_EMBEDDED_INFO_ENABLE:
+			break;
+		case SENSOR_DATATYPE_PDAF_ENABLE:
+			break;
+		default:
+		     CMR_LOGV("not sensor_datatype mode, channel id %d, frame id %d", info->channel_id, info->frame_id);
+			break;
+	}
+	#endif
 #ifdef CONFIG_Y_IMG_TO_ISP
 		prev_y_info_copy_to_isp(handle, camera_id, info);
 #endif
@@ -6548,7 +6615,7 @@ cmr_int prev_set_param_internal(struct prev_handle *handle,
 		}
 	}
 
-	if (handle->prev_cxt[camera_id].prev_param.pdaf_eb) {
+	if (handle->prev_cxt[camera_id].prev_param.pdaf_mode == SENSOR_PDAF_TYPE3_ENABLE) {
 		ret = prev_set_pdaf_raw_param(handle, camera_id, is_restart, out_param_ptr);
 		if (ret) {
 			CMR_LOGE("set pdaf param failed");
@@ -6556,10 +6623,10 @@ cmr_int prev_set_param_internal(struct prev_handle *handle,
 		}
 	}
 
-	if (handle->prev_cxt[camera_id].prev_param.refocus_eb == 1) {
-		ret = prev_set_depthmap_param(handle, camera_id, is_restart, out_param_ptr);
+	if (handle->prev_cxt[camera_id].prev_param.sensor_datatype > SENSOR_DATATYPE_DISABLED) {
+		ret = prev_set_sensor_datatype_param(handle, camera_id, is_restart, out_param_ptr);
 		if (ret) {
-			CMR_LOGE("set depthmap param failed");
+			CMR_LOGE("set sensosr_datatype param failed");
 			goto exit;
 		}
 	}
@@ -8111,7 +8178,7 @@ exit:
 	return ret;
 }
 
-cmr_int prev_set_depthmap_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_restart, struct preview_out_param *out_param_ptr)
+cmr_int prev_set_sensor_datatype_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_restart, struct preview_out_param *out_param_ptr)
 {
 	ATRACE_BEGIN(__FUNCTION__);
 
@@ -8148,12 +8215,26 @@ cmr_int prev_set_depthmap_param(struct prev_handle *handle, cmr_u32 camera_id, c
 	chn_param.cap_inf_cfg.cfg.flip_on = 0;
 
 	chn_param.cap_inf_cfg.cfg.pdaf_ctrl.mode = 1;
-	chn_param.cap_inf_cfg.cfg.pdaf_ctrl.phase_data_type = CAMERA_DEPTH_META_DATA_TYPE;
 
-	/*alloc depth metadata buffer*/
-	ret = prev_alloc_depthmap_buf(handle, camera_id, is_restart, &chn_param.buffer);
+	switch(prev_cxt->prev_param.sensor_datatype)
+	{
+		case SENSOR_REAL_DEPTH_ENABLE:
+			chn_param.cap_inf_cfg.cfg.pdaf_ctrl.phase_data_type = CAMERA_DEPTH_META_DATA_TYPE;
+			break;
+		case SENSOR_EMBEDDED_INFO_ENABLE:
+			chn_param.cap_inf_cfg.cfg.pdaf_ctrl.phase_data_type = CAMERA_EMBEDDED_INFO_TYPE;
+			break;
+		case SENSOR_DATATYPE_PDAF_ENABLE:
+			chn_param.cap_inf_cfg.cfg.pdaf_ctrl.phase_data_type = CAMERA_DATATYPE_PDAF_TYPE;
+			break;
+		default:
+			return CMR_CAMERA_INVALID_PARAM;
+	}
+
+	/*alloc sensor_datatype metadata buffer*/
+	ret = prev_alloc_sensor_datatype_buf(handle, camera_id, is_restart, &chn_param.buffer);
 	if (ret) {
-		CMR_LOGE("alloc depthmap buf failed");
+		CMR_LOGE("alloc sensor_datatype buf failed");
 		goto exit;
 	}
 	if (!handle->ops.channel_cap_cfg) {
@@ -8169,9 +8250,9 @@ cmr_int prev_set_depthmap_param(struct prev_handle *handle, cmr_u32 camera_id, c
 		ret = CMR_CAMERA_FAIL;
 		goto exit;
 	}
-	prev_cxt->depthmap_channel_id = channel_id;
-	CMR_LOGI("depthmap chn id is %ld", prev_cxt->depthmap_channel_id);
-	prev_cxt->depthmap_channel_status = PREV_CHN_BUSY;
+	prev_cxt->sensor_datatype_channel_id = channel_id;
+	CMR_LOGI("sensor_datatype chn id is %ld", prev_cxt->sensor_datatype_channel_id);
+	prev_cxt->sensor_datatype_channel_status = PREV_CHN_BUSY;
 
 	chn_param.buffer.channel_id = channel_id;
 	ret = handle->ops.channel_buff_cfg(handle->oem_handle, &chn_param.buffer);
@@ -8183,17 +8264,17 @@ cmr_int prev_set_depthmap_param(struct prev_handle *handle, cmr_u32 camera_id, c
 
 	/*config reserved buffer*/
 	cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
-	buf_cfg.channel_id         = prev_cxt->depthmap_channel_id;
-	buf_cfg.base_id            = CMR_REFOCUS_ID_BASE;
+	buf_cfg.channel_id         = prev_cxt->sensor_datatype_channel_id;
+	buf_cfg.base_id            = CMR_SENSOR_DATATYPE_ID_BASE;
 	buf_cfg.count              = 1;
-	buf_cfg.length             = prev_cxt->depthmap_mem_size;
+	buf_cfg.length             = prev_cxt->sensor_datatype_mem_size;
 	buf_cfg.is_reserved_buf    = 1;
 	buf_cfg.flag               = BUF_FLAG_INIT;
-	buf_cfg.addr[0].addr_y     = prev_cxt->depthmap_reserved_frm.addr_phy.addr_y;
-	buf_cfg.addr[0].addr_u     = prev_cxt->depthmap_reserved_frm.addr_phy.addr_u;
-	buf_cfg.addr_vir[0].addr_y = prev_cxt->depthmap_reserved_frm.addr_vir.addr_y;
-	buf_cfg.addr_vir[0].addr_u = prev_cxt->depthmap_reserved_frm.addr_vir.addr_u;
-	buf_cfg.fd[0]              = prev_cxt->depthmap_reserved_frm.fd;
+	buf_cfg.addr[0].addr_y     = prev_cxt->sensor_datatype_reserved_frm.addr_phy.addr_y;
+	buf_cfg.addr[0].addr_u     = prev_cxt->sensor_datatype_reserved_frm.addr_phy.addr_u;
+	buf_cfg.addr_vir[0].addr_y = prev_cxt->sensor_datatype_reserved_frm.addr_vir.addr_y;
+	buf_cfg.addr_vir[0].addr_u = prev_cxt->sensor_datatype_reserved_frm.addr_vir.addr_u;
+	buf_cfg.fd[0]              = prev_cxt->sensor_datatype_reserved_frm.fd;
 	ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);
 	if (ret) {
 		CMR_LOGE("channel buff config failed");
@@ -8203,13 +8284,13 @@ cmr_int prev_set_depthmap_param(struct prev_handle *handle, cmr_u32 camera_id, c
 
 	/*return preview out params*/
 	if (out_param_ptr) {
-		out_param_ptr->depthmap_chn_bits = 1 << prev_cxt->depthmap_channel_id;
+		out_param_ptr->sensor_datatype_chn_bits = 1 << prev_cxt->sensor_datatype_channel_id;
 	}
 
 exit:
 	CMR_LOGI("ret %ld", ret);
 	if (ret) {
-		prev_free_depthmap_buf(handle, camera_id, 0);
+		prev_free_sensor_datatype_buf(handle, camera_id, 0);
 	}
 
 	ATRACE_END();
@@ -9123,7 +9204,7 @@ exit:
 	return ret;
 }
 
-cmr_int prev_set_depthmap_buffer(struct prev_handle *handle, cmr_u32 camera_id, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd)
+cmr_int prev_set_sensor_datatype_buffer(struct prev_handle *handle, cmr_u32 camera_id, cmr_uint src_phy_addr, cmr_uint src_vir_addr, cmr_s32 fd)
 {
 	ATRACE_BEGIN(__FUNCTION__);
 
@@ -9144,7 +9225,7 @@ cmr_int prev_set_depthmap_buffer(struct prev_handle *handle, cmr_u32 camera_id, 
 
 	cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
 	prev_cxt  = &handle->prev_cxt[camera_id];
-	valid_num = prev_cxt->depthmap_mem_valid_num;
+	valid_num = prev_cxt->sensor_datatype_mem_valid_num;
 
 	if (valid_num >= PREV_FRM_CNT || valid_num < 0) {
 		CMR_LOGE("cnt error valid_num %ld", valid_num);
@@ -9152,28 +9233,43 @@ cmr_int prev_set_depthmap_buffer(struct prev_handle *handle, cmr_u32 camera_id, 
 		return ret;
 	}
 
-	prev_cxt->depthmap_phys_addr_array[valid_num]     = src_phy_addr;
-	prev_cxt->depthmap_virt_addr_array[valid_num]     = src_vir_addr;
-	prev_cxt->depthmap_fd_array[valid_num]           = fd;
-	prev_cxt->depthmap_frm[valid_num].buf_size        = CAMERA_DEPTH_META_SIZE;
-	prev_cxt->depthmap_frm[valid_num].addr_vir.addr_y = prev_cxt->depthmap_virt_addr_array[valid_num];
-	prev_cxt->depthmap_frm[valid_num].addr_phy.addr_y = prev_cxt->depthmap_phys_addr_array[valid_num];
-	prev_cxt->depthmap_frm[valid_num].fd          = prev_cxt->depthmap_fd_array[valid_num];
-	prev_cxt->depthmap_frm[valid_num].fmt             = IMG_DATA_TYPE_RAW;
+	switch(prev_cxt->prev_param.sensor_datatype){
+		case SENSOR_REAL_DEPTH_ENABLE:
+			prev_cxt->sensor_datatype_frm[valid_num].buf_size        = CAMERA_DEPTH_META_SIZE;
+			buf_cfg.length          								 = CAMERA_DEPTH_META_SIZE;
+			break;
+		case SENSOR_EMBEDDED_INFO_ENABLE:
+			prev_cxt->sensor_datatype_frm[valid_num].buf_size        = CAMERA_EMBEDDED_INFO_META_SIZE;
+			buf_cfg.length      									 = CAMERA_EMBEDDED_INFO_META_SIZE;
+			break;
+		case SENSOR_DATATYPE_PDAF_ENABLE:
+			prev_cxt->sensor_datatype_frm[valid_num].buf_size        = CAMERA_PDAF_META_SIZE;
+			buf_cfg.length      									 = CAMERA_PDAF_META_SIZE;
+			break;
+		default:
+			return CMR_CAMERA_INVALID_PARAM;
+	}
 
-	buf_cfg.channel_id  = prev_cxt->depthmap_channel_id;
-	buf_cfg.base_id     = CMR_REFOCUS_ID_BASE;
+	prev_cxt->sensor_datatype_phys_addr_array[valid_num]     = src_phy_addr;
+	prev_cxt->sensor_datatype_virt_addr_array[valid_num]     = src_vir_addr;
+	prev_cxt->sensor_datatype_fd_array[valid_num]           = fd;
+	prev_cxt->sensor_datatype_frm[valid_num].addr_vir.addr_y = prev_cxt->sensor_datatype_virt_addr_array[valid_num];
+	prev_cxt->sensor_datatype_frm[valid_num].addr_phy.addr_y = prev_cxt->sensor_datatype_phys_addr_array[valid_num];
+	prev_cxt->sensor_datatype_frm[valid_num].fd          = prev_cxt->sensor_datatype_fd_array[valid_num];
+	prev_cxt->sensor_datatype_frm[valid_num].fmt             = IMG_DATA_TYPE_RAW;
+
+	buf_cfg.channel_id  = prev_cxt->sensor_datatype_channel_id;
+	buf_cfg.base_id     = CMR_SENSOR_DATATYPE_ID_BASE;
 	buf_cfg.count       = 1;
-	buf_cfg.length      = CAMERA_DEPTH_META_SIZE;
 	buf_cfg.flag        = BUF_FLAG_RUNNING;
 
-	buf_cfg.addr[0].addr_y     = prev_cxt->depthmap_frm[valid_num].addr_phy.addr_y;
-	buf_cfg.addr[0].addr_u     = prev_cxt->depthmap_frm[valid_num].addr_phy.addr_u;
-	buf_cfg.addr_vir[0].addr_y = prev_cxt->depthmap_frm[valid_num].addr_vir.addr_y;
-	buf_cfg.addr_vir[0].addr_u = prev_cxt->depthmap_frm[valid_num].addr_vir.addr_u;
-	buf_cfg.fd[0]             = prev_cxt->depthmap_frm[valid_num].fd;
-	buf_cfg.fd[1]             = prev_cxt->depthmap_frm[valid_num].fd;
-	prev_cxt->depthmap_mem_valid_num++;
+	buf_cfg.addr[0].addr_y     = prev_cxt->sensor_datatype_frm[valid_num].addr_phy.addr_y;
+	buf_cfg.addr[0].addr_u     = prev_cxt->sensor_datatype_frm[valid_num].addr_phy.addr_u;
+	buf_cfg.addr_vir[0].addr_y = prev_cxt->sensor_datatype_frm[valid_num].addr_vir.addr_y;
+	buf_cfg.addr_vir[0].addr_u = prev_cxt->sensor_datatype_frm[valid_num].addr_vir.addr_u;
+	buf_cfg.fd[0]             = prev_cxt->sensor_datatype_frm[valid_num].fd;
+	buf_cfg.fd[1]             = prev_cxt->sensor_datatype_frm[valid_num].fd;
+	prev_cxt->sensor_datatype_mem_valid_num++;
 
 	ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);
 	if (ret) {
@@ -9182,12 +9278,12 @@ cmr_int prev_set_depthmap_buffer(struct prev_handle *handle, cmr_u32 camera_id, 
 	}
 
 exit:
-	CMR_LOGI("fd=0x%x, valid_num=%ld", prev_cxt->depthmap_frm[valid_num].fd, prev_cxt->depthmap_mem_valid_num);
+	CMR_LOGI("fd=0x%x, valid_num=%ld", prev_cxt->sensor_datatype_frm[valid_num].fd, prev_cxt->sensor_datatype_mem_valid_num);
 	ATRACE_END();
 	return ret;
 }
 
-cmr_int prev_pop_depthmap_buffer(struct prev_handle *handle, cmr_u32 camera_id, struct frm_info *data, cmr_u32 is_to_hal)
+cmr_int prev_pop_sensor_datatype_buffer(struct prev_handle *handle, cmr_u32 camera_id, struct frm_info *data, cmr_u32 is_to_hal)
 {
 	ATRACE_BEGIN(__FUNCTION__);
 
@@ -9206,33 +9302,33 @@ cmr_int prev_pop_depthmap_buffer(struct prev_handle *handle, cmr_u32 camera_id, 
 	}
 
 	prev_cxt  = &handle->prev_cxt[camera_id];
-	valid_num = prev_cxt->depthmap_mem_valid_num;
+	valid_num = prev_cxt->sensor_datatype_mem_valid_num;
 
 	if (valid_num > PREV_FRM_CNT || valid_num <= 0) {
 		CMR_LOGE("cnt error valid_num %ld", valid_num);
 		goto exit;
 	}
-	if ( (prev_cxt->depthmap_frm[0].fd == (cmr_s32)data->fd) && valid_num > 0) {
+	if ( (prev_cxt->sensor_datatype_frm[0].fd == (cmr_s32)data->fd) && valid_num > 0) {
 		for (i = 0; i < (cmr_u32)(valid_num - 1); i++) {
-			prev_cxt->depthmap_phys_addr_array[i] = prev_cxt->depthmap_phys_addr_array[i+1];
-			prev_cxt->depthmap_virt_addr_array[i] = prev_cxt->depthmap_virt_addr_array[i+1];
-			prev_cxt->depthmap_fd_array[i] = prev_cxt->depthmap_fd_array[i+1];
-			memcpy(&prev_cxt->depthmap_frm[i], &prev_cxt->depthmap_frm[i+1], sizeof(struct img_frm));
+			prev_cxt->sensor_datatype_phys_addr_array[i] = prev_cxt->sensor_datatype_phys_addr_array[i+1];
+			prev_cxt->sensor_datatype_virt_addr_array[i] = prev_cxt->sensor_datatype_virt_addr_array[i+1];
+			prev_cxt->sensor_datatype_fd_array[i] = prev_cxt->sensor_datatype_fd_array[i+1];
+			memcpy(&prev_cxt->sensor_datatype_frm[i], &prev_cxt->sensor_datatype_frm[i+1], sizeof(struct img_frm));
 		}
-		prev_cxt->depthmap_phys_addr_array[valid_num-1] = 0;
-		prev_cxt->depthmap_virt_addr_array[valid_num-1] = 0;
+		prev_cxt->sensor_datatype_phys_addr_array[valid_num-1] = 0;
+		prev_cxt->sensor_datatype_virt_addr_array[valid_num-1] = 0;
 
-		cmr_bzero(&prev_cxt->depthmap_frm[valid_num-1], sizeof(struct img_frm));
-		prev_cxt->depthmap_mem_valid_num--;
+		cmr_bzero(&prev_cxt->sensor_datatype_frm[valid_num-1], sizeof(struct img_frm));
+		prev_cxt->sensor_datatype_mem_valid_num--;
 	} else {
 		ret = CMR_CAMERA_INVALID_FRAME;
-		CMR_LOGE("error yaddr 0x%x uaddr 0x%x yaddr 0x%lx uaddr 0x%lx,  prev_cxt->depthmap_frm[0].fd 0x%x",
-			data->yaddr, data->uaddr, prev_cxt->depthmap_frm[0].addr_phy.addr_y, prev_cxt->depthmap_frm[0].addr_phy.addr_u,prev_cxt->depthmap_frm[0].fd);
+		CMR_LOGE("error yaddr 0x%x uaddr 0x%x yaddr 0x%lx uaddr 0x%lx,  prev_cxt->sensor_datatype_frm[0].fd 0x%x",
+			data->yaddr, data->uaddr, prev_cxt->sensor_datatype_frm[0].addr_phy.addr_y, prev_cxt->sensor_datatype_frm[0].addr_phy.addr_u,prev_cxt->sensor_datatype_frm[0].fd);
 		goto exit;
 	}
 
 exit:
-	CMR_LOGI("fd=0x%x, valid_num=%ld", data->fd, prev_cxt->depthmap_mem_valid_num);
+	CMR_LOGI("fd=0x%x, valid_num=%ld", data->fd, prev_cxt->sensor_datatype_mem_valid_num);
 	ATRACE_END();
 	return ret;
 }
@@ -10756,7 +10852,7 @@ cmr_int prev_fd_ctrl(struct prev_handle *handle,
 	return ret;
 }
 
-cmr_int prev_depthmap_open(struct prev_handle *handle, cmr_u32 camera_id,struct sensor_data_info  otp_data)
+cmr_int prev_sensor_datatype_open(struct prev_handle *handle, cmr_u32 camera_id,struct sensor_data_info  otp_data)
 {
 	cmr_int                     ret = CMR_CAMERA_SUCCESS;
 	struct prev_context         *prev_cxt = NULL;
@@ -10768,78 +10864,104 @@ cmr_int prev_depthmap_open(struct prev_handle *handle, cmr_u32 camera_id,struct 
 
 	prev_cxt = &handle->prev_cxt[camera_id];
 
-	CMR_LOGI("refocus_eb %d",
-		prev_cxt->prev_param.refocus_eb);
+	CMR_LOGI("sensor_datatype %u",
+		prev_cxt->prev_param.sensor_datatype);
 
-	if (prev_cxt->prev_param.refocus_eb != 1) {
-		CMR_LOGD("not support depthmap");
+	if (prev_cxt->prev_param.sensor_datatype < SENSOR_DATATYPE_DISABLED || prev_cxt->prev_param.sensor_datatype > SENSOR_DATATYPE_MAX) {
+		CMR_LOGD("not support sensor datatype");
 		ret = CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}
 
-	if (prev_cxt->refocus_handle) {
-		CMR_LOGI("refocus inited already");
-		return ret;
-	}
 
-	in_param.frame_cnt          = prev_cxt->prev_frm_cnt;
-	if ((IMG_ANGLE_90 == prev_cxt->prev_param.prev_rot) ||
-		(IMG_ANGLE_270 == prev_cxt->prev_param.prev_rot)) {
-		in_param.frame_size.width   = prev_cxt->actual_prev_size.height;
-		in_param.frame_size.height  = prev_cxt->actual_prev_size.width;
-		in_param.frame_rect.start_x = 0;
-		in_param.frame_rect.start_y = 0;
-		in_param.frame_rect.width   = in_param.frame_size.height;
-		in_param.frame_rect.height  = in_param.frame_size.width;
-		in_param.otp_data.otp_size = 8192;//otp_data->size;//TBD
-		in_param.otp_data.otp_ptr = otp_data.data_ptr;//TBD
-	} else {
-		in_param.frame_size.width   = prev_cxt->actual_prev_size.width;
-		in_param.frame_size.height  = prev_cxt->actual_prev_size.height;
-		in_param.frame_rect.start_x = 0;
-		in_param.frame_rect.start_y = 0;
-		in_param.frame_rect.width   = in_param.frame_size.width;
-		in_param.frame_rect.height  = in_param.frame_size.height;
-		in_param.otp_data.otp_size =8192;//otp_data->size;//TBD
-		in_param.otp_data.otp_ptr = otp_data.data_ptr;//TBD
-	}
+	switch(prev_cxt->prev_param.sensor_datatype)
+	{
+		case SENSOR_REAL_DEPTH_ENABLE:
+			if (prev_cxt->refocus_handle) {
+				CMR_LOGI("refocus inited already");
+				ret = CMR_CAMERA_FAIL;
+				break;
+			}
 
-	in_param.reg_cb             = prev_depthmap_cb;
-
-	ret = cmr_ipm_open(handle->ipm_handle, IPM_TYPE_REFOCUS, &in_param, &out_param, &prev_cxt->refocus_handle);
-	if (ret) {
-		CMR_LOGE("cmr_ipm_open failed");
-		ret = CMR_CAMERA_FAIL;
-		goto exit;
-	}
-	CMR_LOGD("depthmap_handle 0x%p", prev_cxt->refocus_handle);
+			in_param.frame_cnt          = prev_cxt->prev_frm_cnt;
+			if ((IMG_ANGLE_90 == prev_cxt->prev_param.prev_rot) ||
+					(IMG_ANGLE_270 == prev_cxt->prev_param.prev_rot)) {
+				in_param.frame_size.width   = prev_cxt->actual_prev_size.height;
+				in_param.frame_size.height  = prev_cxt->actual_prev_size.width;
+				in_param.frame_rect.start_x = 0;
+				in_param.frame_rect.start_y = 0;
+				in_param.frame_rect.width   = in_param.frame_size.height;
+				in_param.frame_rect.height  = in_param.frame_size.width;
+				in_param.otp_data.otp_size = 8192;//otp_data->size;//TBD
+				in_param.otp_data.otp_ptr = otp_data.data_ptr;//TBD
+			} else {
+				in_param.frame_size.width   = prev_cxt->actual_prev_size.width;
+				in_param.frame_size.height  = prev_cxt->actual_prev_size.height;
+				in_param.frame_rect.start_x = 0;
+				in_param.frame_rect.start_y = 0;
+				in_param.frame_rect.width   = in_param.frame_size.width;
+				in_param.frame_rect.height  = in_param.frame_size.height;
+				in_param.otp_data.otp_size =8192;//otp_data->size;//TBD
+				in_param.otp_data.otp_ptr = otp_data.data_ptr;//TBD
+			}
+			in_param.reg_cb             = prev_sensor_datatype_cb;
+			ret = cmr_ipm_open(handle->ipm_handle, IPM_TYPE_REFOCUS, &in_param, &out_param, &prev_cxt->refocus_handle);
+			if (ret) {
+				CMR_LOGE("cmr_ipm_open failed");
+				ret = CMR_CAMERA_FAIL;
+			}
+			CMR_LOGD("refocus_handle 0x%p", prev_cxt->refocus_handle);
+			break;
+			/*
+		case SENSOR_EMBEDDED_INFO_ENABLE:
+			break;
+		case SENSOR_DATATYPE_PDAF_ENABLE:
+			break;
+			*/
+		default:
+			return CMR_CAMERA_INVALID_PARAM;
+ 	}
 
 exit:
 	CMR_LOGI("out, ret %ld", ret);
 	return ret;
 }
 
-cmr_int prev_depthmap_close(struct prev_handle *handle, cmr_u32 camera_id)
+cmr_int prev_sensor_datatype_close(struct prev_handle *handle, cmr_u32 camera_id)
 {
 	cmr_int                     ret = CMR_CAMERA_SUCCESS;
 	struct prev_context         *prev_cxt = NULL;
 
 	prev_cxt = &handle->prev_cxt[camera_id];
 
-	CMR_LOGI(" refocus_eb %d",
-		prev_cxt->prev_param.refocus_eb);
+	CMR_LOGI(" sensor_datatype %u",
+		prev_cxt->prev_param.sensor_datatype);
 
-	CMR_LOGV("depthmap_handle 0x%p", prev_cxt->refocus_handle);
-	if (prev_cxt->refocus_handle) {
-		ret = cmr_ipm_close(prev_cxt->refocus_handle);
-		prev_cxt->refocus_handle = 0;
+	CMR_LOGV("sensor_datatype_handle 0x%p", prev_cxt->refocus_handle);
+	switch(prev_cxt->prev_param.sensor_datatype){
+		case SENSOR_REAL_DEPTH_ENABLE:
+			if (prev_cxt->refocus_handle) {
+				ret = cmr_ipm_close(prev_cxt->refocus_handle);
+				prev_cxt->refocus_handle = 0;
+			}
+			CMR_LOGV("refocus_handle 0x%p", prev_cxt->refocus_handle);
+			break;
+
+		/*
+		case SENSOR_EMBEDDED_INFO_ENABLE:
+			break;
+		case SENSOR_DATATYPE_PDAF_ENABLE:
+			break;
+		*/
+		default:
+			break;
 	}
 
 	CMR_LOGV("ret %ld", ret);
 	return ret;
 }
 
-cmr_int prev_depthmap_send_data(struct prev_handle *handle, cmr_u32 camera_id, struct img_frm *frm,struct frm_info *depthmap_frm)
+cmr_int prev_sensor_datatype_send_data(struct prev_handle *handle, cmr_u32 camera_id, struct img_frm *frm,struct frm_info *sensor_datatype_frm)
 {
 	cmr_int                     ret = CMR_CAMERA_SUCCESS;
 	struct prev_context         *prev_cxt = NULL;
@@ -10854,38 +10976,48 @@ cmr_int prev_depthmap_send_data(struct prev_handle *handle, cmr_u32 camera_id, s
 		goto exit;
 	}
 
-	CMR_LOGD("refocus_eb %d frm %p addr_vir.addr_y 0x%lx, touchX %d,touchY %d, depthmap_frm->yaddr_vir 0x%x",
-		prev_cxt->prev_param.refocus_eb,frm,frm->addr_vir.addr_y,prev_cxt->touch_info.touchX,prev_cxt->touch_info.touchY,depthmap_frm->yaddr_vir);
+	CMR_LOGD("sensor_datatype %u frm %p addr_vir.addr_y 0x%lx, touchX %d,touchY %d, sensor_datatype_frm->yaddr_vir 0x%x",
+		prev_cxt->prev_param.sensor_datatype,frm,frm->addr_vir.addr_y,prev_cxt->touch_info.touchX,prev_cxt->touch_info.touchY,sensor_datatype_frm->yaddr_vir);
 
-	if (prev_cxt->prev_param.refocus_eb != 1) {
-		CMR_LOGE("refoucs unsupport or closed");
+	if (prev_cxt->prev_param.sensor_datatype <SENSOR_DATATYPE_DISABLED || prev_cxt->prev_param.sensor_datatype > SENSOR_DATATYPE_MAX) {
+		CMR_LOGE("sensor datatype unsupport or closed");
 		ret = CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}
 
-	ipm_in_param.frame_cnt = prev_cxt->prev_frm_cnt;
-	ipm_in_param.src_frame     = *frm;
-	ipm_in_param.dst_frame     = *frm;
-	ipm_in_param.touch_x =  prev_cxt->touch_info.touchX;
-	ipm_in_param.touch_y =  prev_cxt->touch_info.touchY;
-	ipm_in_param.depth_map.width= 480;//TBD
-	ipm_in_param.depth_map.height= 360;//TBD
-	ipm_in_param.depth_map.depth_map_ptr = (void*)((unsigned long)depthmap_frm->yaddr_vir); //TBD
-	ipm_in_param.caller_handle = (void*)handle;
-	ipm_in_param.private_data  = (void*)((unsigned long)camera_id);
+	switch(prev_cxt->prev_param.sensor_datatype)
+	{
+		case SENSOR_REAL_DEPTH_ENABLE:
+			ipm_in_param.frame_cnt = prev_cxt->prev_frm_cnt;
+			ipm_in_param.src_frame     = *frm;
+			ipm_in_param.dst_frame     = *frm;
+			ipm_in_param.touch_x =  prev_cxt->touch_info.touchX;
+			ipm_in_param.touch_y =  prev_cxt->touch_info.touchY;
+			ipm_in_param.depth_map.width= 480;//TBD
+			ipm_in_param.depth_map.height= 360;//TBD
+			ipm_in_param.depth_map.depth_map_ptr = (void*)((unsigned long)sensor_datatype_frm->yaddr_vir); //TBD
+			ipm_in_param.caller_handle = (void*)handle;
+			ipm_in_param.private_data  = (void*)((unsigned long)camera_id);
 
-	ret = ipm_transfer_frame(prev_cxt->refocus_handle, &ipm_in_param, NULL);
-	if (ret) {
-		CMR_LOGE("failed to transfer frame to ipm %ld", ret);
-		goto exit;
-	}
+			ret = ipm_transfer_frame(prev_cxt->refocus_handle, &ipm_in_param, NULL);
+			if (ret) {
+				CMR_LOGE("failed to transfer frame to ipm %ld", ret);
+			}
+			break;
+		case SENSOR_EMBEDDED_INFO_ENABLE:
+			break;
+		case SENSOR_DATATYPE_PDAF_ENABLE:
+			break;
+		default:
+			return CMR_CAMERA_INVALID_PARAM;
+ 	}
 
 exit:
 	CMR_LOGD("out, ret %ld", ret);
 	return ret;
 }
 
-cmr_int prev_depthmap_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param)
+cmr_int prev_sensor_datatype_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param)
 {
 	UNUSED(class_type);
 
@@ -10909,8 +11041,8 @@ cmr_int prev_depthmap_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param)
 
 	prev_cxt  = &handle->prev_cxt[camera_id];
 
-	if ( prev_cxt->prev_param.refocus_eb != 1) {
-		CMR_LOGW("depthmap closed");
+	if (prev_cxt->prev_param.sensor_datatype <SENSOR_DATATYPE_DISABLED || prev_cxt->prev_param.sensor_datatype > SENSOR_DATATYPE_MAX) {
+		CMR_LOGW("sensor datatype closed");
 		return CMR_CAMERA_INVALID_PARAM;
 	}
 
@@ -10939,16 +11071,16 @@ cmr_int prev_depthmap_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param)
 	cb_data_info.frame_data = &frame_type;
 	prev_cb_start(handle, &cb_data_info);
 	//prev_cxt->preview_bakcup_frm  = NULL;
-	ret = prev_pop_depthmap_buffer(handle, camera_id, prev_cxt->depthmap_data, 0);
-	if(prev_cxt->depthmap_data->yaddr_vir !=0)
-		ret = prev_set_depthmap_buffer(handle, camera_id, prev_cxt->depthmap_data->yaddr, prev_cxt->depthmap_data->yaddr_vir, prev_cxt->depthmap_data->fd);
+	ret = prev_pop_sensor_datatype_buffer(handle, camera_id, prev_cxt->sensor_datatype_data, 0);
+	if(prev_cxt->sensor_datatype_data->yaddr_vir !=0)
+		ret = prev_set_sensor_datatype_buffer(handle, camera_id, prev_cxt->sensor_datatype_data->yaddr, prev_cxt->sensor_datatype_data->yaddr_vir, prev_cxt->sensor_datatype_data->fd);
 
 
 	return ret;
 }
 
 #if 0
-cmr_int prev_depthmap_ctrl(struct prev_handle *handle,
+cmr_int prev_sensor_datatype_ctrl(struct prev_handle *handle,
 				cmr_u32 camera_id,
 				cmr_u32 on_off)
 {
@@ -10962,12 +11094,12 @@ cmr_int prev_depthmap_ctrl(struct prev_handle *handle,
 
 	CMR_LOGD(" %d", on_off);
 
-	prev_cxt->prev_param.refocus_eb = on_off;
+	prev_cxt->prev_param.sensor_datatype = on_off;
 
 	if (0 == on_off) {
-		prev_depthmap_close(handle, camera_id);
+		prev_sensor_datatype_close(handle, camera_id);
 	} else {
-		prev_depthmap_open(handle, camera_id);
+		prev_sensor_datatype_open(handle, camera_id);
 	}
 
 	return ret;

@@ -56,7 +56,11 @@ extern "C"
 #define CMR_CAP0_ID_BASE                   0x2000
 #define CMR_CAP1_ID_BASE                   0x4000
 #define CMR_VIDEO_ID_BASE                  0x8000
-#define CMR_REFOCUS_ID_BASE                0xF000
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+#define CMR_REFOCUS_ID_BASE            0xF000
+#else
+#define CMR_SENSOR_DATATYPE_ID_BASE        0xF000
+#endif
 #define CMR_PDAF_ID_BASE                   0xA000
 #define CMR_BASE_ID(x)                     ((x) & 0xF000)
 #define JPEG_EXIF_SIZE	                   (64*1024)
@@ -73,8 +77,12 @@ extern "C"
 #define CAMERA_SENSOR_INFO_2_ISP_NUM  3
 #define CMR_MAX_SKIP_NUM                   10
 #define CAMERA_DEPTH_META_SIZE             (480 * 360 + 1280)
+#define CAMERA_EMBEDDED_INFO_META_SIZE     (480 * 360 + 1280)
+#define CAMERA_PDAF_META_SIZE              (480 * 360 + 1280)
 #define CAMERA_DEPTH_META_DATA_TYPE        0x35
 #define CAMERA_CONFIG_BUFFER_TO_KERNAL_ARRAY_SIZE  4
+#define CAMERA_EMBEDDED_INFO_TYPE          0x12
+#define CAMERA_DATATYPE_PDAF_TYPE          0x35
 
 #define HDR_CAP_NUM                        3
 #define FACE_DETECT_NUM                    10
@@ -202,6 +210,22 @@ enum img_angle {
 	IMG_ANGLE_180,
 	IMG_ANGLE_MIRROR,
 	IMG_ANGLE_MAX
+};
+
+enum sensor_data_type {
+	SENSOR_DATATYPE_DISABLED = 0,
+	SENSOR_REAL_DEPTH_ENABLE,
+	SENSOR_EMBEDDED_INFO_ENABLE,
+	SENSOR_DATATYPE_PDAF_ENABLE,
+	SENSOR_DATATYPE_MAX
+};
+
+enum sensor_pdaf_type {
+	SENSOR_PDAF_DISABLED = 0,
+	SENSOR_PDAF_TYPE1_ENABLE,
+	SENSOR_PDAF_TYPE2_ENABLE,
+	SENSOR_PDAF_TYPE3_ENABLE,
+	SENSOR_PDAF_MAX
 };
 
 enum img_data_type {
@@ -1015,6 +1039,7 @@ enum camera_cb_type {
 	CAMERA_EVT_CB_AE_LOCK_NOTIFY,
 	CAMERA_EVT_CB_AE_UNLOCK_NOTIFY,
 	CAMERA_EVT_CB_RETURN_ZSL_BUF,
+	CAMERA_EVT_SENSOR_DATATYPE,
 	CAMERA_CB_TYPE_MAX
 };
 
@@ -1028,6 +1053,7 @@ enum camera_func_type {
 	CAMERA_FUNC_STOP_PREVIEW,
 	CAMERA_FUNC_RELEASE_PICTURE,
 	CAMERA_FUNC_AE_STATE_CALLBACK,
+	CAMERA_FUNC_SENSOR_DATATYPE,
 	CAMERA_FUNC_TYPE_MAX
 };
 

@@ -1342,7 +1342,7 @@ static SENSOR_STATIC_INFO_T s_s5k3l8xxm3_static_info = {
 	0,	//max_fps,max fps of sensor's all settings,it will be calculated from sensor mode fps
 	16*256,	//max_adgain,AD-gain
 	0,	//ois_supported;
-	1,	//pdaf_supported;
+	SENSOR_PDAF_TYPE3_ENABLE,	//pdaf_supported;
 	1,	//exp_valid_frame_num;N+2-1
 	64,	//clamp_level,black level
 	1,	//adgain_valid_frame_num;N+1-1

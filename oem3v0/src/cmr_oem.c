@@ -400,7 +400,7 @@ void camera_send_channel_data(cmr_handle oem_handle, cmr_handle receiver_handle,
 	if (cxt->prev_cxt.channel_bits & chn_bit) {
 		ret = cmr_preview_receive_data(cxt->prev_cxt.preview_handle, cxt->camera_id, evt, data);
 	}
-	if (cxt->prev_cxt.depthmap_channel_bits & chn_bit) {
+	if (cxt->prev_cxt.sensor_datatype_channel_bits & chn_bit) {
 		ret = cmr_preview_receive_data(cxt->prev_cxt.preview_handle, cxt->camera_id, evt, data);
 	}
 	if (cxt->prev_cxt.pdaf_channel_bits & chn_bit) {
@@ -1091,6 +1091,9 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type, e
 		break;
 	case PREVIEW_EXIT_CB_FAILED:
 		oem_cb_type = CAMERA_EXIT_CB_FAILED;
+		break;
+	case PREVIEW_EVT_SENSOR_DATATYPE:
+		oem_cb_type = CAMERA_EVT_SENSOR_DATATYPE;
 		break;
 	case PREVIEW_EVT_CB_FLUSH:
 		oem_cb_type = CAMERA_EVT_CB_FLUSH;
@@ -3025,7 +3028,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle)
 			isp_param.ex_info.capture_skip_num);
 	CMR_LOGD("w %d h %d", isp_param.size.w,isp_param.size.h);
 
-	if(1 == isp_param.ex_info.pdaf_supported) {
+	if(SENSOR_PDAF_TYPE3_ENABLE == isp_param.ex_info.pdaf_supported) {
 
 		val.type = SENSOR_VAL_TYPE_GET_PDAF_INFO;
 		val.pval = &pdaf_info;
@@ -6863,9 +6866,11 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	}
 
 	 /*TBD need to get refocus flag*/
-	out_param_ptr->refocus_eb = cxt->is_refocus_mode;
-	CMR_LOGI("refocus_eb %d", out_param_ptr->refocus_eb);
-
+	out_param_ptr->refocus_mode = cxt->is_refocus_mode;
+	CMR_LOGI("refocus_mode %d", out_param_ptr->refocus_mode);
+	if(out_param_ptr->refocus_mode == 1){
+		out_param_ptr->sensor_datatype = SENSOR_REAL_DEPTH_ENABLE;
+	}
 
 	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_CAPTURE_FORMAT, &setting_param);
 	if (ret) {
@@ -6881,25 +6886,38 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 		goto exit;
 	}
 	/*get pdaf enable flag*/
-	if (1 == out_param_ptr->video_slowmotion_eb || 0 == sn_cxt->cur_sns_ex_info.pdaf_supported
+	if (1 == out_param_ptr->video_slowmotion_eb || SENSOR_PDAF_DISABLED == sn_cxt->cur_sns_ex_info.pdaf_supported
 		|| CAMERA_ISP_TUNING_MODE == mode || CAMERA_UTEST_MODE == mode
 		|| CAMERA_AUTOTEST_MODE == mode || CAMERA_ISP_SIMULATION_MODE == mode
 		|| 1 == out_param_ptr->video_eb || 1 == is_raw_capture
 		|| 1 == out_param_ptr->is_dv || cxt->is_multi_mode)
-		out_param_ptr->pdaf_eb = 0;
-	else if (1 == out_param_ptr->preview_eb)
-		out_param_ptr->pdaf_eb = 1;
+		out_param_ptr->pdaf_mode = SENSOR_PDAF_DISABLED;
+	else if (SENSOR_PDAF_TYPE1_ENABLE == sn_cxt->cur_sns_ex_info.pdaf_supported && out_param_ptr->preview_eb == 1){
+		out_param_ptr->pdaf_mode = SENSOR_PDAF_TYPE1_ENABLE;
+		out_param_ptr->sensor_datatype = SENSOR_DATATYPE_PDAF_ENABLE;
+	}else if (SENSOR_PDAF_TYPE2_ENABLE == sn_cxt->cur_sns_ex_info.pdaf_supported && out_param_ptr->preview_eb == 1){
+		out_param_ptr->pdaf_mode = SENSOR_PDAF_TYPE2_ENABLE;
+		out_param_ptr->sensor_datatype = SENSOR_DATATYPE_PDAF_ENABLE;
+	}else if(SENSOR_PDAF_TYPE3_ENABLE == sn_cxt->cur_sns_ex_info.pdaf_supported && out_param_ptr->preview_eb == 1){
+		out_param_ptr->pdaf_mode = SENSOR_PDAF_TYPE3_ENABLE;
+		out_param_ptr->sensor_datatype = SENSOR_DATATYPE_DISABLED;
+	}
 
 	property_get("persist.sys.camera.pdaf.off", value, "0");
 	if(atoi(value)) {
-		out_param_ptr->pdaf_eb = 0;
+		out_param_ptr->pdaf_mode = 0;
+		out_param_ptr->sensor_datatype = SENSOR_DATATYPE_DISABLED;
 	}
-	haf_enable = out_param_ptr->pdaf_eb;
-	CMR_LOGI("haf_enable %d", haf_enable);
-	ret = isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_SET_HAF_ENABLE, &haf_enable);
-	if(ret) {
-		CMR_LOGE("isp_ioctl-ISP_CTRL_SET_HAF_ENABLE failed");
+
+	if(out_param_ptr->pdaf_mode == SENSOR_PDAF_TYPE3_ENABLE){
+		haf_enable = out_param_ptr->pdaf_mode;
+		CMR_LOGI("haf_enable %d", haf_enable);
+		ret = isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_SET_HAF_ENABLE, &haf_enable);
+		if(ret) {
+			CMR_LOGE("isp_ioctl-ISP_CTRL_SET_HAF_ENABLE failed");
+		}
 	}
+
 	out_param_ptr->zoom_setting = setting_param.zoom_param;
 	CMR_LOGV("aspect ratio prev=%f, video=%f, cap=%f",
 		out_param_ptr->zoom_setting.zoom_info.prev_aspect_ratio,
@@ -7230,7 +7248,7 @@ cmr_int camera_set_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	prev_cxt->data_endian = preview_out.preview_data_endian;
 	prev_cxt->video_sn_mode = preview_out.video_sn_mode;
 	prev_cxt->video_channel_bits = preview_out.video_chn_bits;
-	prev_cxt->depthmap_channel_bits = preview_out.depthmap_chn_bits;
+	prev_cxt->sensor_datatype_channel_bits = preview_out.sensor_datatype_chn_bits;
 	prev_cxt->pdaf_channel_bits = preview_out.pdaf_chn_bits;
 	prev_cxt->actual_video_size = preview_out.actual_video_size;
 	prev_cxt->video_data_endian = preview_out.video_data_endian;

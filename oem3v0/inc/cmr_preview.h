@@ -39,6 +39,7 @@ enum preview_cb_type {
 	PREVIEW_EVT_CB_FD,
 	PREVIEW_EVT_CB_RESUME,
 	PREVIEW_EXIT_CB_PREPARE,
+	PREVIEW_EVT_SENSOR_DATATYPE,
 	PREVIEW_EVT_MAX
 };
 
@@ -135,8 +136,9 @@ struct preview_param {
 	cmr_u32                  video_eb;
 	cmr_u32                  flip_on;
 	cmr_u32                  tool_eb;
-	cmr_u32                  refocus_eb;
-	cmr_u32                  pdaf_eb;
+	enum sensor_data_type    sensor_datatype;//refocus_eb;
+	enum sensor_pdaf_type    pdaf_mode;//pdaf_eb;
+	cmr_u32                  refocus_mode;
 	struct cmr_zoom_param	 zoom_setting;
 	struct memory_param      memory_setting;
 	void                     *private_data;
@@ -165,7 +167,7 @@ struct preview_out_param {
 	cmr_u32                  video_sn_mode;
 	struct img_data_end      video_data_endian;
 	struct img_size          actual_video_size;
-	cmr_u32                  depthmap_chn_bits;
+	cmr_u32                  sensor_datatype_chn_bits;
 	cmr_u32                  pdaf_chn_bits;
 	struct snp_proc_param    post_proc_setting;
 };

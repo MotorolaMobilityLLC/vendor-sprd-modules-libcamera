@@ -4537,6 +4537,10 @@ void SprdCamera3OEMIf::HandleStartPreview(enum camera_cb_type cb,
 		receiveCameraExitError();
 		break;
 
+	case CAMERA_EVT_SENSOR_DATATYPE:
+		HAL_LOGV("CAMERA_EVT_SENSOR_DATATYPE");
+		break;
+
 	case CAMERA_EVT_CB_FLUSH:
 		HAL_LOGV("CAMERA_EVT_CB_FLUSH");
 		{
@@ -6793,7 +6797,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32
 		*phy_addr++ = (cmr_uint)mZslHeapReserved->phys_addr;
 		*vir_addr++ = (cmr_uint)mZslHeapReserved->data;
 		*fd++ = mZslHeapReserved->fd;
-	} else if(type == CAMERA_DEPTH_MAP_RESERVED) {
+	} else if(type == CAMERA_SENSOR_DATATYPE_MAP_RESERVED) {
 		if(mDepthHeapReserved == NULL) {
 			memory = allocCameraMem(size, 1, true);
 			if (NULL == memory) {
@@ -6975,7 +6979,7 @@ int SprdCamera3OEMIf::Callback_Free(enum camera_mem_cb_type type, cmr_uint *phy_
 		ret = camera->Callback_VideoFree(phy_addr, vir_addr, fd, sum);
 	} else if(CAMERA_SNAPSHOT_ZSL == type) {
 		ret = camera->Callback_ZslFree(phy_addr, vir_addr, fd, sum);
-	} else if(CAMERA_DEPTH_MAP == type) {
+	} else if(CAMERA_SENSOR_DATATYPE_MAP == type) {
 		ret = camera->Callback_RefocusFree(phy_addr, vir_addr, sum);
 	} else if(CAMERA_PDAF_RAW == type) {
 		ret = camera->Callback_PdafRawFree(phy_addr, vir_addr, sum);
@@ -6985,7 +6989,7 @@ int SprdCamera3OEMIf::Callback_Free(enum camera_mem_cb_type type, cmr_uint *phy_
 		   CAMERA_VIDEO_RESERVED == type ||
 		   CAMERA_ISP_FIRMWARE == type ||
 		   CAMERA_SNAPSHOT_ZSL_RESERVED == type ||
-		   CAMERA_DEPTH_MAP_RESERVED == type ||
+		   CAMERA_SENSOR_DATATYPE_MAP_RESERVED == type ||
 		   CAMERA_PDAF_RAW_RESERVED == type ||
 		   CAMERA_ISP_LSC == type ||
 		   CAMERA_ISP_BINGING4AWB == type ||
@@ -7035,7 +7039,7 @@ int SprdCamera3OEMIf::Callback_Malloc(enum camera_mem_cb_type type,
 		ret = camera->Callback_VideoMalloc(size, sum, phy_addr, vir_addr, fd);
 	} else if(CAMERA_SNAPSHOT_ZSL == type) {
 		ret = camera->Callback_ZslMalloc(size, sum, phy_addr, vir_addr, fd);
-	} else if(CAMERA_DEPTH_MAP == type) {
+	} else if(CAMERA_SENSOR_DATATYPE_MAP == type) {
 		ret = camera->Callback_RefocusMalloc(size, sum, phy_addr, vir_addr, fd);
 	} else if(CAMERA_PDAF_RAW == type) {
 		ret = camera->Callback_PdafRawMalloc(size, sum, phy_addr, vir_addr, fd);
