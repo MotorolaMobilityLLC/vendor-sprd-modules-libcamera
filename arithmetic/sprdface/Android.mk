@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
-ifeq ($(strip $(TARGET_BOARD_CAMERA_FD_LIB)),omron)
 LOCAL_PATH := $(call my-dir)
 
 ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
@@ -22,6 +21,20 @@ LIB_PATH := lib/lib
 else ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))
 LIB_PATH := lib/x86_lib
 endif
+
+
+#SPRD face detect
+include $(CLEAR_VARS)
+LOCAL_MODULE := libsprdfd
+LOCAL_MODULE_CLASS := STATIC_LIBRARIES
+LOCAL_MULTILIB := both
+LOCAL_MODULE_STEM_32 := libsprdfd.a
+LOCAL_MODULE_STEM_64 := libsprdfd.a
+LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprdfd.a
+LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprdfd.a
+LOCAL_MODULE_TAGS := optional
+include $(BUILD_PREBUILT)
+
 
 # SPRD face alignment library
 include $(CLEAR_VARS)
@@ -46,5 +59,4 @@ LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprdfar.a
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprdfar.a
 LOCAL_MODULE_TAGS := optional
 include $(BUILD_PREBUILT)
-endif
 endif

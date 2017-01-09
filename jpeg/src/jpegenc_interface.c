@@ -221,11 +221,11 @@ static int  save_jpgenc_file2debug()
 	JPEG_CODEC_T *jpeg_fw_codec = Get_JPEGEncCodec();
 	uint8*				bitstream_ptr = jpeg_fw_codec->g_stream_buf_ptr;
 	uint32    				bitstream_len = jpeg_fw_codec->pingpang_buf_len;
-	FILE* jpg = fopen("/data/misc/media/enc_failed.jpg","wb");
+	FILE* jpg = fopen("/data/misc/cameraserver/enc_failed.jpg","wb");
 
 	if(NULL == jpg)
 	{
-		SCI_TRACE_LOW("failed to open file /data/misc/media/enc_failed.jpg \n");
+		SCI_TRACE_LOW("failed to open file /data/misc/cameraserver/enc_failed.jpg \n");
 		return 0;
 	}
 

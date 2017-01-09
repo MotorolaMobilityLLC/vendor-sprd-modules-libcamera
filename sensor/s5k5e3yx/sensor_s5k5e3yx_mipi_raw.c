@@ -599,6 +599,7 @@ static uint32_t Sensor_s5k5e3yx_InitRawTuneInfo(void)
 		uint8_t* data = (uint8_t*)mode_common_ptr + header->offset;
 		switch (header->block_id)
 		{
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
 		case	ISP_BLK_PRE_WAVELET_V1: {
 				/* modify block data */
 				struct sensor_pwd_param* block = (struct sensor_pwd_param*)data;
@@ -844,6 +845,7 @@ static uint32_t Sensor_s5k5e3yx_InitRawTuneInfo(void)
 
 		default:
 			break;
+#endif
 		}
 	}
 

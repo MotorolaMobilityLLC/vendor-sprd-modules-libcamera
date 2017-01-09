@@ -16,7 +16,7 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-ifeq ($(strip $(TARGET_BOARD)), sp9850ka_1h10)
+ifeq ($(strip $(TARGET_CAMERA_FAKE)), true)
 
 LOCAL_MODULE := camera.$(TARGET_BOARD_PLATFORM)
 LOCAL_MODULE_RELATIVE_PATH := hw

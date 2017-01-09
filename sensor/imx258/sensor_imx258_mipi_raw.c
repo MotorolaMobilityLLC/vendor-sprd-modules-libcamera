@@ -23,7 +23,11 @@
 //#include "../vcm/vcm_dw9800.h"
 #include "af_bu64297gwz.h"
 
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
 #include "sensor_imx258_raw_param_v3.c"
+#else
+#include "param/sensor_imx258_raw_param_main.c"
+#endif
 #include "sensor_imx258_otp_truly.h"
 
 #define DW9800_VCM_SLAVE_ADDR (0x0c)
@@ -50,8 +54,13 @@
 #define LANE_NUM			4
 #define RAW_BITS			10
 
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
 #define SNAPSHOT_MIPI_PER_LANE_BPS	1419
 #define PREVIEW_MIPI_PER_LANE_BPS	800
+#else
+#define SNAPSHOT_MIPI_PER_LANE_BPS	858
+#define PREVIEW_MIPI_PER_LANE_BPS	660
+#endif
 
 /* please ref your spec */
 #define FRAME_OFFSET			10
@@ -139,6 +148,102 @@ static const SENSOR_REG_T imx258_init_setting[] = {
     {0x5F04,0x00},
     {0x5F05,0xED},
 
+};
+
+static const SENSOR_REG_T imx258_2096x1552_setting[] = {
+    /*4Lane
+    reg_B30
+    2096x1552(4:3) 30fps
+    H: 2096
+    V: 1552
+    Output format Setting
+        Address value*/
+        {0x0112,0x0A},
+        {0x0113,0x0A},
+        {0x0114,0x03},//Clock Setting
+        {0x0301,0x05},
+        {0x0303,0x02},
+        {0x0305,0x04},
+        {0x0306,0x00},
+        {0x0307,0x6E},
+        {0x0309,0x0A},
+        {0x030B,0x01},
+        {0x030D,0x02},
+        {0x030E,0x00},
+        {0x030F,0xD8},
+        {0x0310,0x00},
+        {0x0820,0x0A},
+        {0x0821,0x50},
+        {0x0822,0x00},
+        {0x0823,0x00},//Line Length Setting
+        {0x0342,0x14},
+        {0x0343,0xE8},//Frame Length Setting
+        {0x0340,0x06},
+        {0x0341,0x6C},//ROI Setting
+        {0x0344,0x00},
+        {0x0345,0x00},
+        {0x0346,0x00},
+        {0x0347,0x00},
+        {0x0348,0x10},
+        {0x0349,0x6F},
+        {0x034A,0x0C},
+        {0x034B,0x2F},//Analog Image Size Setting
+        {0x0381,0x01},
+        {0x0383,0x01},
+        {0x0385,0x01},
+        {0x0387,0x01},
+        {0x0900,0x01},
+        {0x0901,0x12},//Digital Image Size Setting
+        {0x0401,0x01},
+        {0x0404,0x00},
+        {0x0405,0x20},
+        {0x0408,0x00},
+        {0x0409,0x04},
+        {0x040A,0x00},
+        {0x040B,0x04},
+        {0x040C,0x10},
+        {0x040D,0x68},
+        {0x040E,0x06},
+        {0x040F,0x10},
+        {0x3038,0x00},
+        {0x303A,0x00},
+        {0x303B,0x10},
+        {0x300D,0x00},//Output Size Setting
+        {0x034C,0x08},
+        {0x034D,0x30},
+        {0x034E,0x06},
+        {0x034F,0x10},
+         #if 0
+        {0x0202,0x06},
+        {0x0203,0x62}, //Integration Time Setting
+        {0x0204,0x00},
+        {0x0205,0x00},//Gain Setting
+        {0x020E,0x01},
+        {0x020F,0x00},
+        {0x0210,0x01},
+        {0x0211,0x00},
+        {0x0212,0x01},
+        {0x0213,0x00},
+        {0x0214,0x01},
+        {0x0215,0x00},
+        #endif
+        {0x7BCD,0x01},//Added Setting(AF)
+        {0x94DC,0x20},//Added Setting(IQ)
+        {0x94DD,0x20},
+        {0x94DE,0x20},
+        {0x95DC,0x20},
+        {0x95DD,0x20},
+        {0x95DE,0x20},
+        {0x7FB0,0x00},
+        {0x9010,0x3E},
+        {0x9419,0x50},
+        {0x941B,0x50},
+        {0x9519,0x50},
+        {0x951B,0x50},//Added Setting(mode)
+        {0x3030,0x00},
+        {0x3032,0x00},//0},//1},
+        {0x0220,0x00},
+        {0x4041,0x00},
 };
 
 static const SENSOR_REG_T imx258_4208x3120_setting[] = {
@@ -341,14 +446,18 @@ static const SENSOR_REG_T imx258_1048x780_setting[] = {
 
 static SENSOR_REG_TAB_INFO_T s_imx258_resolution_tab_raw[SENSOR_MODE_MAX] = {
 	{ADDR_AND_LEN_OF_ARRAY(imx258_init_setting), 0, 0, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
 	{ADDR_AND_LEN_OF_ARRAY(imx258_1048x780_setting), 1048, 780, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
+#endif
 	{ADDR_AND_LEN_OF_ARRAY(imx258_4208x3120_setting), 4208, 3120, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
 	//{ADDR_AND_LEN_OF_ARRAY(imx258_5344x4016_setting), 5344, 4016, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
 };
 
 static SENSOR_TRIM_T s_imx258_resolution_trim_tab[SENSOR_MODE_MAX] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
 	{0, 0, 1048, 780, 20275 , 660, 820, {0, 0, 1048, 780}},
+#endif
 	{0, 0, 4208, 3120, 10325, 1296, 3224, {0, 0, 4208, 3120}},
 	//{0, 0, 5344, 4016, 10040, SNAPSHOT_MIPI_PER_LANE_BPS, 4140, {0, 0, 5344, 4016}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
@@ -578,7 +687,38 @@ SENSOR_INFO_T g_imx258_mipi_raw_info = {
 	35,
 	/* vertical view angle*/
 	35,
-	"imx258v1"//sensor version info
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
+	"imx258v1"
+#else
+	"imx258v1",//sensor version info
+	{
+	0x00070005,
+	{
+		{
+			0x32786D69,
+			0x00003835,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000
+		}
+	},
+	AE_VERSION,
+	AWB_VERSION,
+	NR_VERSION,
+	LNC_VERSION,
+	
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000,
+	0x00000000
+}
+#endif
 };
 
 /*==============================================================================

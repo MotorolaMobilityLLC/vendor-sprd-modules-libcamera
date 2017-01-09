@@ -1347,6 +1347,14 @@ void Sensor_SetExportInfo(struct sensor_drv_context *sensor_cxt)
 			exp_info_ptr->raw_info_ptr->ioctrl_ptr->set_exposure = exp_info_ptr->ioctl_func_ptr->write_ae_value;
 			exp_info_ptr->raw_info_ptr->ioctrl_ptr->set_gain = exp_info_ptr->ioctl_func_ptr->write_gain_value;
 			exp_info_ptr->raw_info_ptr->ioctrl_ptr->ext_fuc = exp_info_ptr->ioctl_func_ptr->set_focus;
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+			exp_info_ptr->raw_info_ptr->ioctrl_ptr->set_pos = exp_info_ptr->ioctl_func_ptr->set_pos;
+			exp_info_ptr->raw_info_ptr->ioctrl_ptr->get_otp = exp_info_ptr->ioctl_func_ptr->get_otp;
+			exp_info_ptr->raw_info_ptr->ioctrl_ptr->get_motor_pos = exp_info_ptr->ioctl_func_ptr->get_motor_pos;
+			exp_info_ptr->raw_info_ptr->ioctrl_ptr->set_motor_bestmode = exp_info_ptr->ioctl_func_ptr->set_motor_bestmode;
+			exp_info_ptr->raw_info_ptr->ioctrl_ptr->get_test_vcm_mode = exp_info_ptr->ioctl_func_ptr->get_test_vcm_mode;
+			exp_info_ptr->raw_info_ptr->ioctrl_ptr->set_test_vcm_mode = exp_info_ptr->ioctl_func_ptr->set_test_vcm_mode;
+#endif
 			exp_info_ptr->raw_info_ptr->ioctrl_ptr->write_i2c = hw_Sensor_WriteI2C;
 			//exp_info_ptr->raw_info_ptr->ioctrl_ptr->read_i2c = Sensor_ReadI2C;
 			exp_info_ptr->raw_info_ptr->ioctrl_ptr->ex_set_exposure = exp_info_ptr->ioctl_func_ptr->ex_write_exp;
@@ -3142,12 +3150,17 @@ cmr_int sns_stream_ctrl_common(struct sensor_drv_context *sensor_cxt, cmr_u32 on
 	if (on_off) {
 		if (SENSOR_INTERFACE_TYPE_CSI2 == sensor_cxt->sensor_info_ptr->sensor_interface.type) {
 			mode = sensor_cxt->sensor_mode[snr_get_cur_id(sensor_cxt)];
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
 			ret = sns_dev_mipi_init(sensor_cxt, mode);
 			if (ret) {
 				SENSOR_LOGE("mipi initial failed ret %d", ret);
 			} else {
 				SENSOR_LOGE("mipi initial ok");
 			}
+#endif
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+			sns_dev_mipi_init(sensor_cxt, mode);
+#endif
 		}
 		ret = sns_stream_on(sensor_cxt);
 	} else {

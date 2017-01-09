@@ -94,13 +94,13 @@ typedef struct {
 	u16 uwClampLevel;	/*sensor's clamp level */
 } SCINFO_MODE_INFO_ISP;
 #endif
-
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
 struct sensor_version_info {
 	cmr_u32 version_id;
 	cmr_u32 srtuct_size;
 	cmr_u32 reserve;
 };
-
+#endif
 struct sensor_raw_resolution_info {
 	cmr_u16 start_x;
 	cmr_u16 start_y;
@@ -150,8 +150,17 @@ struct sensor_raw_ioctrl {
 	uint32_t(*ex_set_exposure) (cmr_handle caller_handler, uint32_t param);
 	cmr_int(*read_aec_info) (cmr_handle caller_handler, void *param);
 	cmr_int(*write_aec_info) (cmr_handle caller_handler, void *param);
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+	//af control and DVT test funcs valid only af_enable works
+	uint32_t (*set_pos)(uint16_t pos);
+	uint32_t (*get_otp)(uint16_t *inf,uint16_t *macro);
+	uint32_t (*get_motor_pos)(uint16_t *pos);
+	uint32_t (*set_motor_bestmode)();
+	uint32_t (*get_test_vcm_mode)();
+	uint32_t (*set_test_vcm_mode)(char* vcm_mode);
+#endif
 };
-
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
 /*************new***************************/
 struct sensor_fix_param_mode_info {
 	uint32_t version_id;
@@ -284,10 +293,15 @@ struct sensor_raw_info {
 	struct sensor_raw_fix_info *fix_ptr[MAX_MODE_NUM];
 	struct sensor_raw_note_info note_ptr[MAX_MODE_NUM];
 };
-
+#endif
 struct sensor_data_info {
 	void *data_ptr;
 	cmr_u32 size;
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+	struct sensor_raw_info *sn_raw_info;
+	struct isp_data_info isp_init_data[MAX_MODE_NUM];
+	struct isp_data_info isp_update_data[MAX_MODE_NUM];/*for isp_tool*/
+#endif
 };
 
 struct sensor_otp_module_info {

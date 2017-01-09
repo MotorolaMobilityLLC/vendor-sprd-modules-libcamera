@@ -1119,11 +1119,9 @@ static uint32_t Sensor_s5k4h8yx_InitRawTuneInfo(void)
 				block->param_ptr = pwd_param;
 			}
 			break;
-
 		case	ISP_BLK_BPC_V1: {
 				/* modify block data */
 				struct sensor_bpc_param_v1* block = (struct sensor_bpc_param_v1*)data;
-
 				static struct sensor_bpc_level bpc_param[SENSOR_SMART_LEVEL_NUM] = {
 					#include "noise/bpc_param.h"
 				};
@@ -1152,6 +1150,7 @@ static uint32_t Sensor_s5k4h8yx_InitRawTuneInfo(void)
 				/* modify block data */
 				struct sensor_grgb_v1_param* block = (struct sensor_grgb_v1_param*)data;
 				static struct sensor_grgb_v1_level grgb_param[SENSOR_SMART_LEVEL_NUM] = {
+
 					#include "noise/grgb_param.h"
 				};
 
@@ -1201,6 +1200,7 @@ static uint32_t Sensor_s5k4h8yx_InitRawTuneInfo(void)
 				/* modify block data */
 				struct sensor_cfa_param_v1* block = (struct sensor_cfa_param_v1*)data;
 				static struct sensor_cfae_level cfae_param[SENSOR_SMART_LEVEL_NUM] = {
+
 					#include "noise/cfae_param.h"
 				};
 
@@ -1267,6 +1267,7 @@ static uint32_t Sensor_s5k4h8yx_InitRawTuneInfo(void)
 			break;
 
 		case	ISP_BLK_EDGE_V1: {
+
 				/* modify block data */
 				struct sensor_ee_param* block = (struct sensor_ee_param*)data;
 

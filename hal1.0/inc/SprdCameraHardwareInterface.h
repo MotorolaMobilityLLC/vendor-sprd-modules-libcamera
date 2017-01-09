@@ -503,10 +503,15 @@ private:
 	/* mCommonHeapReserved for preview, video and zsl reserved buffer*/
 	sprd_camera_memory_t*           mCommonHeapReserved;
 	sprd_camera_memory_t*           mIspLscHeapReserved;
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+	sprd_camera_memory_t*           mIspStatisHeapReserved;
+#endif
 	sprd_camera_memory_t*           mIspB4awbHeapReserved[kISPB4awbCount];
 	sprd_camera_memory_t*           mIspFirmwareReserved;
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
 	sprd_camera_memory_t*           mHighIsoSnapshotHeapReserved;
 	sprd_camera_memory_t*           mIspRawDataReserved[4];
+#endif
 	sprd_camera_memory_t*           mIspYUVReserved;
 	sprd_camera_memory_t*           mIspAntiFlickerHeapReserved;
 	sprd_camera_memory_t*           mIspRawAemHeapReserved[kISPB4awbCount];

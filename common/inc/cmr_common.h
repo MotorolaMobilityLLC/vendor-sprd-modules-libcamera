@@ -28,13 +28,13 @@ extern "C"
 #include "sensor_raw.h"
 #include "isp_app.h"
 #include "jpeg_exif_header.h"
-#include "../../arithmetic/inc/FaceFinder.h"
 #include <sprd_sensor_k.h>
 #include "sprd_img.h"
 #include "cmr_log.h"
 
 
 #define OEM_LIBRARY_PATH "libcamoem.so"
+#define CAMERA_DUMP_PATH "/data/misc/cameraserver/"
 
 #define UNUSED(x) (void)x
 
@@ -335,6 +335,9 @@ enum common_isp_cmd_type {
 	COM_ISP_SET_PREVIEW_PDAF_RAW,
 	COM_ISP_SET_PREVIEW_PDAF_OPEN,
 	COM_ISP_SET_AWB_LOCK_UNLOCK,
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+	COM_ISP_SET_CAPTURE_RAW_MODE,
+#endif
 	COM_ISP_TYPE_MAX
 };
 
@@ -532,6 +535,7 @@ struct img_frm_cap {
 	cmr_u32                             flip_on;
 	cmr_u32                             pdaf_type3;
 	struct sprd_pdaf_control            pdaf_ctrl;
+	cmr_u32 sence_mode;
 };
 
 struct buffer_cfg {
@@ -728,6 +732,7 @@ struct common_isp_cmd_param {
 		struct isp_info                         isp_dbg_info;
 		struct isp_adgain_exp_info              isp_adgain;
 		struct isp_yimg_info                    isp_yimg;
+		struct img_size                    size_param;
 	};
 };
 
@@ -806,6 +811,9 @@ struct face_finder_data {
     int angle;
     int smile_level;
     int blink_level;
+    int pose;
+    int score;
+    int smile_conf;
 };
 
 struct img_face_area {
@@ -1072,13 +1080,17 @@ enum camera_param_type{
 	CAMERA_PARAM_ISP_AE_LOCK_UNLOCK,
 	CAMERA_PARAM_SLOW_MOTION_FLAG,
 	CAMERA_PARAM_SPRD_PIPVIV_ENABLED,
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
 	CAMERA_PARAM_SPRD_HIGHISO_ENABLED,
+#endif
 	CAMERA_PARAM_SPRD_EIS_ENABLED,
 	CAMERA_PARAM_REFOCUS_ENABLE,
 	CAMERA_PARAM_TOUCH_XY,
 	CAMERA_PARAM_VIDEO_SNAPSHOT_TYPE,
 	CAMERA_PARAM_SPRD_3DCAL_ENABLE,
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
 	CAMERA_PARAM_SPRD_BURSTMODE_ENABLED,
+#endif
 	CAMERA_PARAM_TYPE_MAX
 };
 
@@ -1298,9 +1310,15 @@ cmr_int (*camera_get_sensor_max_fps)(cmr_handle camera_handle,cmr_u32 camera_id,
 cmr_int (*camera_snapshot_is_need_flash)(cmr_handle oem_handle, cmr_u32 camera_id, cmr_u32 *is_need_flash);
 cmr_uint (*camera_get_sensor_otp_info)(cmr_handle camera_handle, struct sensor_otp_cust_info *otp_info);
 cmr_uint (*camera_get_sensor_vcm_step)(cmr_handle camera_handle,cmr_u32 camera_id, cmr_u32* vcm_step);
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
 cmr_int (*camera_stop_multi_layer)(cmr_handle camera_handle);
+#endif
 cmr_int (*camera_set_sensor_close_flag)(cmr_handle camera_handle);
 cmr_int (*camera_set_reprocess_picture_size)(cmr_handle camera_handle, cmr_uint is_reprocessing, cmr_u32 camera_id, cmr_u32 width, cmr_u32 height);/**add for 3d capture to reset reprocessing capture size*/
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+cmr_int (*camera_off_the_fly_path_start)(cmr_handle camera_handle);
+cmr_int (*camera_off_the_fly_path_stop)(cmr_handle camera_handle);
+#endif
 
 }oem_ops_t;
 

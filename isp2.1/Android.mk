@@ -33,8 +33,8 @@ LOCAL_CFLAGS += -DAE_WORK_MOD_V0
 LOCAL_C_INCLUDES := \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
 	$(LOCAL_PATH)/../common/inc \
-	$(LOCAL_PATH)/../oem2v0/inc \
-	$(LOCAL_PATH)/../oem2v0/isp_calibration/inc \
+	$(LOCAL_PATH)/../oem2v1/inc \
+	$(LOCAL_PATH)/../oem2v1/isp_calibration/inc \
 	$(LOCAL_PATH)/../jpeg/inc \
 	$(LOCAL_PATH)/../vsp/inc \
 	$(LOCAL_PATH)/../tool/mtrace \

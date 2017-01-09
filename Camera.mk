@@ -38,9 +38,18 @@ else
 LOCAL_C_INCLUDES += hardware/libhardware/modules/gralloc/
 endif
 
+ISP_HW_VER = 3v0
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
+ISP_HW_VER = 2v1
+LOCAL_C_INCLUDES += \
+	$(LOCAL_PATH)/isp2.1/isp_tune \
+	$(LOCAL_PATH)/isp2.1/common/inc \
+	$(LOCAL_PATH)/isp2.1/middleware/inc
+endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),3)
+ISP_HW_VER = 3v0
 LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/isp3.0/dummy \
 	$(LOCAL_PATH)/isp3.0/common/inc \
@@ -48,8 +57,8 @@ LOCAL_C_INCLUDES += \
 endif
 
 LOCAL_C_INCLUDES += \
-    $(LOCAL_PATH)/oem2v0/inc \
-    $(LOCAL_PATH)/oem2v0/isp_calibration/inc
+    $(LOCAL_PATH)/oem$(ISP_HW_VER)/inc \
+    $(LOCAL_PATH)/oem$(ISP_HW_VER)/isp_calibration/inc
 
 LOCAL_SRC_FILES+= \
 	hal1.0/src/SprdCameraParameters.cpp \
@@ -67,14 +76,7 @@ endif
 LOCAL_C_INCLUDES += \
                 $(LOCAL_PATH)/arithmetic/inc \
                 $(LOCAL_PATH)/arithmetic/facebeauty/inc \
-		$(LOCAL_PATH)/arithmetic/sprdface/inc
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
-ifeq ($(strip $(TARGET_BOARD_CAMERA_FD_LIB)),omron)
-	LOCAL_C_INCLUDES += \
-			    $(LOCAL_PATH)/arithmetic/omron/inc
-endif
-endif
+                $(LOCAL_PATH)/arithmetic/sprdface/inc
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)
 	LOCAL_C_INCLUDES += \
@@ -91,22 +93,22 @@ LOCAL_SRC_FILES += hal1.0/src/SprdCameraHardwareInterface.cpp
 LOCAL_SRC_FILES += hal1.0/src/SprdCameraFlash.cpp
 else
 LOCAL_SRC_FILES+= \
-	hal3/SprdCamera3Factory.cpp \
-	hal3/SprdCamera3Hal.cpp \
-	hal3/SprdCamera3HWI.cpp \
-	hal3/SprdCamera3Channel.cpp \
-	hal3/SprdCamera3Mem.cpp \
-	hal3/SprdCamera3OEMIf.cpp \
-	hal3/SprdCamera3Setting.cpp \
-	hal3/SprdCamera3Stream.cpp \
-	hal3/SprdCamera3Flash.cpp \
+	hal3_$(ISP_HW_VER)/SprdCamera3Factory.cpp \
+	hal3_$(ISP_HW_VER)/SprdCamera3Hal.cpp \
+	hal3_$(ISP_HW_VER)/SprdCamera3HWI.cpp \
+	hal3_$(ISP_HW_VER)/SprdCamera3Channel.cpp \
+	hal3_$(ISP_HW_VER)/SprdCamera3Mem.cpp \
+	hal3_$(ISP_HW_VER)/SprdCamera3OEMIf.cpp \
+	hal3_$(ISP_HW_VER)/SprdCamera3Setting.cpp \
+	hal3_$(ISP_HW_VER)/SprdCamera3Stream.cpp \
+	hal3_$(ISP_HW_VER)/SprdCamera3Flash.cpp \
 
 ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
 LOCAL_SRC_FILES+= \
-	hal3/multiCamera/SprdCamera3StereoVideo.cpp \
-	hal3/multiCamera/SprdCamera3RangeFinder.cpp \
-	hal3/multiCamera/SprdCamera3Wrapper.cpp  \
-        hal3/multiCamera/SprdCamera3Capture.cpp  \
+	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3StereoVideo.cpp \
+	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3RangeFinder.cpp \
+	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3Wrapper.cpp  \
+    hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3Capture.cpp  \
 #	hal1.0/src/SprdCameraHardwareInterface.cpp
 endif
 endif

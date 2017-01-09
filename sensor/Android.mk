@@ -22,6 +22,16 @@ LOCAL_CFLAGS += -fno-strict-aliasing -Wno-unused-parameter #-Werror
 
 TARGET_BOARD_CAMERA_READOTP_METHOD?=0
 
+ISP_HW_VER = 3v0
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
+ISP_HW_VER = 2v1
+endif
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),3)
+ISP_HW_VER = 3v0
+endif
+
 LOCAL_C_INCLUDES := \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL/usr/include/video \
 	$(LOCAL_PATH)/../common/inc \
@@ -29,9 +39,34 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../vsp/inc \
 	$(LOCAL_PATH)/../tool/mtrace \
 	$(LOCAL_PATH)/dummy \
-	$(LOCAL_PATH)/../oem2v0/inc \
-	$(LOCAL_PATH)/../oem2v0/isp_calibration/inc
+	$(LOCAL_PATH)/../oem$(ISP_HW_VER)/inc \
+	$(LOCAL_PATH)/../oem$(ISP_HW_VER)/isp_calibration/inc
 
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
+LOCAL_C_INCLUDES += \
+	$(LOCAL_PATH)/../isp2.1/middleware/inc \
+	$(LOCAL_PATH)/../isp2.1/isp_tune \
+	$(LOCAL_PATH)/../isp2.1/calibration \
+	$(LOCAL_PATH)/../isp2.1/driver/inc \
+	$(LOCAL_PATH)/../isp2.1/param_manager \
+	$(LOCAL_PATH)/../isp2.1/ae/inc \
+	$(LOCAL_PATH)/../isp2.1/ae/sprd_ae/inc \
+	$(LOCAL_PATH)/../isp2.1/awb/inc \
+	$(LOCAL_PATH)/../isp2.1/awb/alc_awb/inc \
+	$(LOCAL_PATH)/../isp2.1/awb/sprd_awb/inc \
+	$(LOCAL_PATH)/../isp2.1/af/inc \
+	$(LOCAL_PATH)/../isp2.1/af/sprd_af/inc \
+	$(LOCAL_PATH)/../isp2.1/af/sft_af/inc \
+	$(LOCAL_PATH)/../isp2.1/af/alc_af/inc \
+	$(LOCAL_PATH)/../isp2.1/lsc/inc \
+	$(LOCAL_PATH)/../isp2.1/common/inc/ \
+	$(LOCAL_PATH)/../isp2.1/afl/inc \
+	$(LOCAL_PATH)/../isp2.1/smart \
+	$(LOCAL_PATH)/../isp2.1/utility \
+	$(LOCAL_PATH)/../isp2.1/calibration/inc
+
+endif
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),3)
 LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../isp3.0/dummy \
@@ -47,6 +82,7 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../isp3.0/ae/altek/inc \
 	$(LOCAL_PATH)/../isp3.0/afl/inc \
 	$(LOCAL_PATH)/../isp3.0/afl/altek/inc
+
 endif
 
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
@@ -77,6 +113,16 @@ LOCAL_SRC_FILES += \
 				dummy/isp_otp_calibration.c \
 				sensor_cfg.c \
 				sensor_drv_u.c
+
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
+LOCAL_SRC_FILES += \
+				ov13850r2a/sensor_ov13850r2a_mipi_raw.c \
+				ov5675/sensor_ov5675_mipi_raw.c \
+				gc8024/sensor_gc8024_mipi_raw.c \
+				gc5005/sensor_gc5005_mipi_raw.c
+
+endif
 
 ifeq ($(strip $(TARGET_CAMERA_OIS_FUNC)),true)
 	LOCAL_C_INCLUDES += \

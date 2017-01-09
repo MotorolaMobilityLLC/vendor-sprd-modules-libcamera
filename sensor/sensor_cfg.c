@@ -97,6 +97,9 @@ extern SENSOR_INFO_T g_s5k4h5yc_jsl_mipi_raw_info;
 extern SENSOR_INFO_T g_s5k5e3yx_mipi_raw_info;
 extern SENSOR_INFO_T g_ov13850_mipi_raw_info;
 extern SENSOR_INFO_T g_ov13850r2a_mipi_raw_info;
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+extern SENSOR_INFO_T g_ov5675_mipi_raw_info;
+#endif
 extern SENSOR_INFO_T g_t4kb3_mipi_raw_info;
 extern SENSOR_INFO_T g_ov5648_mipi_raw_info;
 extern SENSOR_INFO_T g_ov5648_darling_mipi_raw_info;
@@ -110,7 +113,9 @@ extern SENSOR_INFO_T g_autotest_ov13850_mipi_raw_info;
 extern SENSOR_INFO_T g_at_ov5648_mipi_raw_info;
 extern SENSOR_INFO_T g_at_ov5670_mipi_raw_info;
 
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
 extern SENSOR_INFO_T g_s5k3p8sm_mipi_raw_info;
+#endif
 extern SENSOR_INFO_T g_s5k3p3sm_mipi_raw_info;
 extern SENSOR_INFO_T g_s5k4h8yx_mipi_raw_info;
 extern SENSOR_INFO_T g_imx230_mipi_raw_info;
@@ -123,7 +128,10 @@ extern SENSOR_INFO_T g_sp2509_mipi_raw_info;
 extern SENSOR_INFO_T g_s5k5e3yx_mipi_raw_info;
 extern SENSOR_INFO_T g_ov8856_mipi_raw_info;
 extern SENSOR_INFO_T g_ov8856s_mipi_raw_info;
-
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+extern SENSOR_INFO_T g_gc8024_mipi_raw_info;
+extern SENSOR_INFO_T g_gc5005_mipi_raw_info;
+#endif
 #define AUTO_TEST_CAMERA 1
 
 /**---------------------------------------------------------------------------*
@@ -131,18 +139,33 @@ extern SENSOR_INFO_T g_ov8856s_mipi_raw_info;
  **---------------------------------------------------------------------------*/
 const SENSOR_MATCH_T main_sensor_infor_tab[]=
 {
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
 	{"s5k3p8sm_mipi_raw", &g_s5k3p8sm_mipi_raw_info},
+#endif
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+	{"gc8024_mipi_raw", &g_gc8024_mipi_raw_info},
+	{"imx258_mipi_raw", &g_imx258_mipi_raw_info},
+#endif
 	{"s5k3p3sm_mipi_raw", &g_s5k3p3sm_mipi_raw_info},
 	{"imx230_mipi_raw", &g_imx230_mipi_raw_info},
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
 	{"imx258_mipi_raw", &g_imx258_mipi_raw_info},
+#endif
 	{"s5k3l2xx_mipi_raw", &g_s5k3l2xx_mipi_raw_info},
 	{"s5k3l8xxm3_mipi_raw", &g_s5k3l8xxm3_mipi_raw_info},
 	{"ov13870_mipi_raw", &g_ov13870_mipi_raw_info},
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+	{"ov13850r2a_mipi_raw", &g_ov13850r2a_mipi_raw_info},
+#endif
 	PNULL
 };
 
 const SENSOR_MATCH_T sub_sensor_infor_tab[]=
 {
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+	{"5005_mipi_raw", &g_gc5005_mipi_raw_info},
+	{"ov5675_mipi_raw", &g_ov5675_mipi_raw_info},
+#endif
 	{"imx132_mipi_raw", &g_imx132_mipi_raw_info},
 	{"s5k4h8yx_mipi_raw", &g_s5k4h8yx_mipi_raw_info},
 	{"s5k5e3yx_mipi_raw", &g_s5k5e3yx_mipi_raw_info},
