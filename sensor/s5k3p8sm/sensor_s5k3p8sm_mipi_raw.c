@@ -745,8 +745,8 @@ SENSOR_INFO_T g_s5k3p8sm_mipi_raw_info = {
 //	SENSOR_AVDD_3000MV,	// voltage of avdd
 	SENSOR_AVDD_2800MV,	// voltage of avdd
 
-	4632,			// max width of source image
-	3480,			// max height of source image
+	4640,//4632,			// max width of source image
+	3488,//3480,			// max height of source image
 	(cmr_s8 *)"s5k3p8sm_mipi_raw",		// name of sensor
 
 	SENSOR_IMAGE_FORMAT_RAW,	// define in SENSOR_IMAGE_FORMAT_E enum,SENSOR_IMAGE_FORMAT_MAX
