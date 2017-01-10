@@ -97,6 +97,7 @@ struct setting_flash_param {
 	cmr_uint      auto_flash_status;
 	cmr_uint      has_preflashed;
 	cmr_uint      flash_hw_status;
+	cmr_uint      set_flash_mode_off_after_close_flash;
 };
 
 struct setting_hal_common {
@@ -777,7 +778,15 @@ static cmr_int setting_set_flash_mode(struct setting_component *cpt,
 	cmr_uint                      flash_mode = 0;
 	cmr_uint                      status = 0;
 
+	flash_param->set_flash_mode_off_after_close_flash = 0;
 	flash_mode = parm->cmd_type_value;
+
+	CMR_LOGI("flash_mode:%lu has_preflashed:%lu", flash_mode, flash_param->has_preflashed);
+	if ((flash_mode == CAMERA_FLASH_MODE_OFF) && flash_param->has_preflashed){
+		flash_param->set_flash_mode_off_after_close_flash = 1;
+		return ret;
+	}
+
 	flash_param->flash_mode = flash_mode;
 	setting_flash_handle(cpt, parm, flash_param->flash_mode);
 
@@ -2576,6 +2585,12 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
 				CMR_LOGV("parm->ctrl_flash.will_capture=%ld", parm->ctrl_flash.will_capture);
 				if (!parm->ctrl_flash.will_capture) {
 					hal_param->flash_param.has_preflashed = 0;
+				}
+				if ((hal_param->flash_param.has_preflashed == 0) && hal_param->flash_param.set_flash_mode_off_after_close_flash)
+				{
+					hal_param->flash_param.flash_mode = CAMERA_FLASH_MODE_OFF;
+					hal_param->flash_param.set_flash_mode_off_after_close_flash = 0;
+					setting_set_flash_mode(cpt, parm);
 				}
 			}
 			if (IMG_DATA_TYPE_RAW == image_format) {

@@ -5591,7 +5591,12 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag)
 			if (drvAeMode != CAMERA_FLASH_MODE_TORCH && mFlashMode != CAMERA_FLASH_MODE_TORCH) {
 				if (mFlashMode != drvAeMode) {
 					mFlashMode = drvAeMode;
+					HAL_LOGD("set flash mode capture_state:%d mFlashMode:%d", mCameraState.capture_state, mFlashMode);
+					if (mCameraState.capture_state == SPRD_FLASH_IN_PROGRESS) {
+						break;
+					}else{
 					SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH, mFlashMode);
+					}
 				}
 			}
 		}
