@@ -772,12 +772,12 @@ exit:
 		if (cxt) {
 			ispmw_put_tuning_bin(cxt);
 			ispmw_put_pdaf_cbc_bin(cxt);
-			ret = isp_dev_access_deinit(cxt->isp_dev_handle);
-			if (ret)
-				ISP_LOGE("isp_dev_access_deinit fail %ld", ret);
 			ret = isp_3a_fw_deinit(cxt->isp_3a_handle);
 			if (ret)
 				ISP_LOGE("isp_3a_fw_deinit fail %ld", ret);
+			ret = isp_dev_access_deinit(cxt->isp_dev_handle);
+			if (ret)
+				ISP_LOGE("isp_dev_access_deinit fail %ld", ret);
 			free((void *)cxt);
 		}
 	} else {
@@ -796,12 +796,12 @@ cmr_int isp_deinit(cmr_handle isp_handle)
 
 	ISP_CHECK_HANDLE_VALID(isp_handle);
 
-	ret = isp_dev_access_deinit(cxt->isp_dev_handle);
-	if (ret)
-		ISP_LOGE("failed to isp_dev_access_deinit %ld", ret);
 	ret = isp_3a_fw_deinit(cxt->isp_3a_handle);
 	if (ret)
 		ISP_LOGE("failed to isp_3a_fw_deinit %ld", ret);
+	ret = isp_dev_access_deinit(cxt->isp_dev_handle);
+	if (ret)
+		ISP_LOGE("failed to isp_dev_access_deinit %ld", ret);
 	ispmw_put_tuning_bin(cxt);
 	ispmw_put_pdaf_cbc_bin(cxt);
 	free((void *)cxt);
