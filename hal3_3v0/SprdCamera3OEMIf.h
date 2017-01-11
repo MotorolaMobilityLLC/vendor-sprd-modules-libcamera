@@ -199,6 +199,7 @@ public:
 	int changeDfsPolicy(int dfs_policy);
 	int setDfsPolicy(int dfs_policy);
 	int releaseDfsPolicy(int dfs_policy);
+	int ddrDfsComplete(void);
 	int IommuIsEnabled(void);
 	int checkIfNeedToStopMultiLayer();
 	void setSensorCloseFlag();
