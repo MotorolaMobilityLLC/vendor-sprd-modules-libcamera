@@ -430,6 +430,7 @@ address	data*/
 {0x6F12,0x7971},
 {0x602A,0x6218},
 {0x6F12,0x7150},
+{0x0806,0x0001},
 };
 static const SENSOR_REG_T s5k4h8yx_3264x2448_2lane_setting_new1[] = {
     /*full size	
