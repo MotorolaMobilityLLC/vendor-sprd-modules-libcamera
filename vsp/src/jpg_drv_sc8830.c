@@ -7,8 +7,8 @@
  *****************************************************************************/
 /******************************************************************************
  **                   Edit    History                                         *
- **---------------------------------------------------------------------------* 
- ** DATE          NAME            DESCRIPTION                                 * 
+ **---------------------------------------------------------------------------*
+ ** DATE          NAME            DESCRIPTION                                 *
  ** 06/11/2009    Xiaowei Luo     Create.                                     *
  *****************************************************************************/
 
@@ -17,6 +17,7 @@
 **---------------------------------------------------------------------------*/
 #include "sci_types.h"
 #include "jpg_drv_sc8830.h"
+#include "jpegcodec_global.h"
 #if !defined(_VSP_)
 #include "common_global.h"
 #include "bsm_global.h"
@@ -93,9 +94,9 @@ PUBLIC void flush_unalign_bytes(int32 nbytes)
 {
 	int i = 0;
 	uint32 cmd = 0;
-	
+
 	cmd = (8<<24) | 1;
-	
+
 	for (i = 0; i < nbytes; i++)
 	{
 //		if(VSP_READ_REG_POLL(VSP_BSM_REG_BASE+BSM_DEBUG_OFF, 1<<3, 1<<3, TIME_OUT_CLK,
@@ -105,8 +106,8 @@ PUBLIC void flush_unalign_bytes(int32 nbytes)
 //		}
 
             JPG_READ_REG_POLL(JPG_BSM_REG_BASE+BSM_STS0_OFFSET, ((uint32)1<<31), ((uint32)0<<31), TIME_OUT_CLK, "BSM_DEBUG, polling bsm status");
-		
-		JPG_WRITE_REG(JPG_BSM_REG_BASE+BSM_CFG2_OFFSET, cmd, "BSM_CFG2: flush one byte");	
+
+		JPG_WRITE_REG(JPG_BSM_REG_BASE+BSM_CFG2_OFFSET, cmd, "BSM_CFG2: flush one byte");
 	}
 }
 
@@ -114,27 +115,29 @@ PUBLIC void flush_unalign_bytes(int32 nbytes)
 PUBLIC void open_jpg_iram (void)
 {
 	uint32 cmd;
-    
-        cmd = JPG_READ_REG(JPG_GLB_REG_BASE+GLB_CTRL_OFFSET, "DCAM_CFG: allow software to access the vsp buffer");
-	cmd |= (1<<2);		
+	JPEG_CODEC_T *jpeg_fw_codec = Get_JPEGEncCodec();
+
+	cmd = JPG_READ_REG(JPG_GLB_REG_BASE+GLB_CTRL_OFFSET, "DCAM_CFG: allow software to access the vsp buffer");
+	cmd |= (1<<2);
 	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_CTRL_OFFSET, cmd, "DCAM_CFG: allow software to access the vsp buffer");
-#ifndef JPG_IWHALE2
-	JPG_READ_REG_POLL(JPG_GLB_REG_BASE+GLB_CTRL_OFFSET, 1<<8, 1<<8, TIME_OUT_CLK, "DCAM_CFG: polling dcam clock status");
-#endif
+
+	if ((jpeg_fw_codec->jpg_version != SHARKL2) && (jpeg_fw_codec->jpg_version != IWHALE2))
+		JPG_READ_REG_POLL(JPG_GLB_REG_BASE+GLB_CTRL_OFFSET, 1<<8, 1<<8, TIME_OUT_CLK, "DCAM_CFG: polling dcam clock status");
 }
 
 //allow hardware to access the vsp buffer
 PUBLIC void close_jpg_iram (void)
 {
 	uint32 cmd;
-	
-//	cmd = (0<<4) | (1<<3);
+	JPEG_CODEC_T *jpeg_fw_codec = Get_JPEGEncCodec();
+
+	//	cmd = (0<<4) | (1<<3);
 	cmd = JPG_READ_REG(JPG_GLB_REG_BASE+GLB_CTRL_OFFSET, "DCAM_CFG: allow hardware to access the vsp buffer");
 	cmd = (cmd & ~0x4) ;
 	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_CTRL_OFFSET, cmd, "DCAM_CFG: allow hardware to access the vsp buffer");
-#ifndef JPG_IWHALE2
-	JPG_READ_REG_POLL (JPG_GLB_REG_BASE+GLB_CTRL_OFFSET, 1,1, TIME_OUT_CLK, "DCAM_CFG: polling dcam clock status");
-#endif
+
+	if ((jpeg_fw_codec->jpg_version != SHARKL2) && (jpeg_fw_codec->jpg_version != IWHALE2))
+		JPG_READ_REG_POLL (JPG_GLB_REG_BASE+GLB_CTRL_OFFSET, 1,1, TIME_OUT_CLK, "DCAM_CFG: polling dcam clock status");
 }
 
 /**

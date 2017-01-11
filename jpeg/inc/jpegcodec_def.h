@@ -261,6 +261,7 @@ typedef struct jpeg_codec_tag
 	unsigned long			      addr;
 	uint32                stream_switch_num;
 	uint8                 *g_stream_buf_ptr;
+	uint32                jpg_version;
 }JPEG_CODEC_T;
 
 typedef struct jpeg_progressive_info_tag

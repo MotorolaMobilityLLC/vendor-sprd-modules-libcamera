@@ -365,7 +365,8 @@ PUBLIC JPEG_RET_E JpegEnc_InitParam(JPEG_ENC_INPUT_PARA_T *input_para_ptr)
 	JPEG_CODEC_T *jpeg_fw_codec = Get_JPEGEncCodec();
 	int fd;
 	void *jpg_addr;
-	
+	uint32 jpg_version;
+
 	SCI_ASSERT(jpeg_fw_codec != PNULL);
 	SCI_ASSERT(input_para_ptr != PNULL);
 
@@ -388,16 +389,18 @@ PUBLIC JPEG_RET_E JpegEnc_InitParam(JPEG_ENC_INPUT_PARA_T *input_para_ptr)
 	}
 	fd = jpeg_fw_codec->fd;
 	jpg_addr = jpeg_fw_codec->jpg_addr;
+	jpg_version = jpeg_fw_codec->jpg_version;
 	SCI_MEMSET(jpeg_fw_codec, 0, (sizeof(JPEG_CODEC_T)));
 	jpeg_fw_codec->fd = fd;
 	jpeg_fw_codec->jpg_addr = jpg_addr;
+	jpeg_fw_codec->jpg_version = jpg_version;
 	jpeg_fw_codec->y_interleaved = input_para_ptr->y_interleaved;
 	jpeg_fw_codec->uv_interleaved = input_para_ptr->uv_interleaved;
 	jpeg_fw_codec->RST_Count = M_RST0;
 	jpeg_fw_codec->mbio_bfr0_valid = TRUE;
 	jpeg_fw_codec->mbio_bfr1_valid = FALSE;
 
-	//Load parameter into JPEG Codec  
+	//Load parameter into JPEG Codec
 	jpeg_fw_codec->work_mode = (uint8)input_para_ptr->work_mode;
 	jpeg_fw_codec->is_first_slice = input_para_ptr->is_first_slice;
 	jpeg_fw_codec->is_last_slice = input_para_ptr->is_last_slice;
