@@ -671,6 +671,8 @@ isp_s32 isp_set_comm_param_v1(isp_handle isp_handler)
 	} else if (ISP_CAP_MODE == isp_context_ptr->data.input) {
 		com_param_ptr->fetch_sel_0 = 0x0;
 		com_param_ptr->store_sel_0 = 0x0;
+		com_param_ptr->fetch_sel_1 = 0x3;
+		com_param_ptr->store_sel_1 = 0x3;
 	}
 
 	com_param_ptr->fetch_color_format= isp_context_ptr->data.input_format;
@@ -693,6 +695,7 @@ isp_s32 isp_set_comm_param_v1(isp_handle isp_handler)
 	com_param_ptr->shadow_ctrl_ch0.shadow_mctrl = 1;
 	com_param_ptr->shadow_ctrl_ch1.shadow_mctrl = 1;
 	com_param_ptr->lbuf_off.ydly_lbuf_offset = 0x119;
+	com_param_ptr->lbuf_off.comm_lbuf_offset = 0x460;
 
 	com_param_ptr->gclk_ctrl_rrgb = 0xffffffff;
 	com_param_ptr->gclk_ctrl_yiq_frgb = 0xffffffff;

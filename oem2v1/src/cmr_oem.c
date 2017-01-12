@@ -60,7 +60,7 @@ enum oem_ev_level {
 	OEM_EV_LEVEL_3
 };
 
-#define OFF_THE_FLY_PATH_BIT                         0x4
+#define OFF_THE_FLY_PATH_BIT                         0x8
 #define OFF_THE_FLY_CHANNEL                          2
 
 #define CHECK_HANDLE_VALID(handle) \

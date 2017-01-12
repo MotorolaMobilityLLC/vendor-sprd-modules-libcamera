@@ -756,12 +756,10 @@ cmr_int cmr_grab_off_the_fly_path_start(cmr_handle grab_handle)
 	p_grab = (struct cmr_grab *)grab_handle;
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
-/*
 	ret = ioctl(p_grab->fd, SPRD_IMG_IO_OFF_THE_FLY_PATH_START, &start);
 	if (ret) {
 		CMR_LOGE("failed to start off-the-fly path");
 	}
-*/
 	CMR_LOGI("ret = %ld", ret);
 	return ret;
 }
@@ -776,12 +774,10 @@ cmr_int cmr_grab_off_the_fly_path_stop(cmr_handle grab_handle)
 	p_grab = (struct cmr_grab *)grab_handle;
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
-/*
 	ret = ioctl(p_grab->fd, SPRD_IMG_IO_OFF_THE_FLY_PATH_STOP, &stop);
 	if (ret) {
 		CMR_LOGE("failed to stop off-the-fly path");
 	}
-*/
 	CMR_LOGI("ret = %ld", ret);
 
 	return ret;
