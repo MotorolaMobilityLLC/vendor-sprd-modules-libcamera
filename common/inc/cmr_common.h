@@ -38,6 +38,8 @@ extern "C"
 
 #define UNUSED(x) (void)x
 
+#define CAMERA_BRINGUP                     1
+
 #define CMR_EVT_GRAB_BASE                  (1 << 16)
 #define CMR_EVT_CVT_BASE                   (1 << 17)
 #define CMR_EVT_ISP_BASE                   (1 << 18)
@@ -908,6 +910,8 @@ cmr_int camera_get_trim_rect(struct img_rect *src_trim_rect, cmr_uint zoom_level
 cmr_int camera_get_trim_rect2(struct img_rect *src_trim_rect,
 			float zoom_ratio, float dst_aspect_ratio,
 			cmr_u32 sensor_w, cmr_u32 sensor_h, cmr_u8 rot);
+
+cmr_int camera_scale_down_software(struct img_frm *src, struct img_frm *dst);
 
 cmr_int camera_save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height, struct img_addr *addr);
 

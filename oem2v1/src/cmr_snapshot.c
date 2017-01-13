@@ -1205,65 +1205,6 @@ exit:
 	return ret;
 }
 
-int32_t snp_img_scaling_down(struct img_frm *src, struct img_frm *dst,
-						   struct cmr_op_mean *mean)
-{
-	UNUSED(mean);
-
-	cmr_u8 *dst_y_buf;
-	cmr_u8 *dst_uv_buf;
-	cmr_u8 *src_y_buf;
-	cmr_u8 *src_uv_buf;
-	cmr_u32  src_w;
-	cmr_u32  src_h;
-	cmr_u32  dst_w;
-	cmr_u32  dst_h;
-	cmr_u32  dst_uv_w;
-	cmr_u32  dst_uv_h;
-	cmr_u32  cur_w = 0;
-	cmr_u32  cur_h = 0;
-	cmr_u32  cur_size = 0;
-	cmr_u32  cur_byte = 0;
-	cmr_u32  ratio_w;
-	cmr_u32  ratio_h;
-	uint16_t i,j;
-	if (NULL == dst || NULL == src) {
-		return -1;
-	}
-	dst_y_buf     = (cmr_u8*)dst->addr_vir.addr_y;
-	dst_uv_buf    = (cmr_u8*)dst->addr_vir.addr_u;
-	src_y_buf     = (cmr_u8*)src->addr_vir.addr_y;
-	src_uv_buf    = (cmr_u8*)src->addr_vir.addr_u;
-	src_w         = src->size.width;
-	src_h         = src->size.height;
-	dst_w         = dst->size.width;
-	dst_h         = dst->size.height;
-	dst_uv_w      = dst_w / 2;
-	dst_uv_h      = dst_h / 2;
-	ratio_w       = (src_w <<10) / dst_w;
-	ratio_h       = (src_h <<10) / dst_h;
-	for (i=0 ; i<dst_h; i++) {
-		cur_h = (ratio_h * i) >> 10;
-		cur_size = cur_h *src_w;
-		for (j=0; j<dst_w; j++) {
-			cur_w = (ratio_w *j) >> 10;
-			*dst_y_buf++ = src_y_buf[cur_size +cur_w];
-		}
-	}
-	for (i=0 ; i<dst_uv_h; i++) {
-		cur_h = (ratio_h * i) >> 10;
-		cur_size = cur_h *(src_w/2) *2;
-		for (j=0; j<dst_uv_w; j++) {
-			cur_w = (ratio_w *j) >> 10;
-			cur_byte = cur_size +cur_w *2;
-			*dst_uv_buf++ = src_uv_buf[cur_byte];       //u
-			*dst_uv_buf++ = src_uv_buf[cur_byte +1];    //v
-		}
-	}
-	CMR_LOGI("done");
-	return 0;
-}
-
 static int32_t snp_img_padding(struct img_frm *src, struct img_frm *dst,
 						   struct cmr_op_mean *mean)
 {
@@ -1356,12 +1297,20 @@ cmr_int snp_start_convet_thumb(cmr_handle snp_handle, void *data)
 	mean.is_sync = 1;
 	src.data_end = snp_cxt->req_param.post_proc_setting.data_endian;
 	dst.data_end = snp_cxt->req_param.post_proc_setting.data_endian;
+
 	camera_take_snapshot_step(CMR_STEP_CVT_THUMB_S);
+
+#ifdef CAMERA_BRINGUP
+	camera_scale_down_software(&src, &dst);
+	cmr_snapshot_memory_flush(snp_cxt);
+#else
 	ret = snp_cxt->ops.start_scale(snp_cxt->oem_handle, snp_handle, &src, &dst, &mean);
 	if (ret) {
 		CMR_LOGE("snp_cxt->ops.start_scale failed");
 		goto exit;
 	}
+#endif
+
 	camera_take_snapshot_step(CMR_STEP_CVT_THUMB_E);
 
 	property_get("debug.camera.save.snpfile", value, "0");

@@ -8099,12 +8099,17 @@ cmr_int camera_local_redisplay_data(cmr_handle oem_handle, cmr_s32 output_fd,
 		goto exit;
 	}
 	src_img.rect = rect;
+
+#ifdef CAMERA_BRINGUP
+	camera_scale_down_software(&src_img, &dst_img);
+#else
 	ret = cmr_scale_start(cxt->scaler_cxt.scaler_handle, &src_img, &dst_img, (cmr_evt_cb)NULL, NULL);
 	if (ret) {
 		CMR_LOGE("failed to start start %ld", ret);
 		ret = - CMR_CAMERA_FAIL;
 		goto exit;
 	}
+#endif
 
 	/* start roattion*/
 	if (IMG_ANGLE_0 != cxt->snp_cxt.cfg_cap_rot) {

@@ -161,6 +161,62 @@ cmr_int camera_get_trim_rect2(struct img_rect *src_trim_rect,
 	return ret;
 }
 
+cmr_int camera_scale_down_software(struct img_frm *src, struct img_frm *dst)
+{
+	cmr_u8 *dst_y_buf;
+	cmr_u8 *dst_uv_buf;
+	cmr_u8 *src_y_buf;
+	cmr_u8 *src_uv_buf;
+	cmr_u32  src_w;
+	cmr_u32  src_h;
+	cmr_u32  dst_w;
+	cmr_u32  dst_h;
+	cmr_u32  dst_uv_w;
+	cmr_u32  dst_uv_h;
+	cmr_u32  cur_w = 0;
+	cmr_u32  cur_h = 0;
+	cmr_u32  cur_size = 0;
+	cmr_u32  cur_byte = 0;
+	cmr_u32  ratio_w;
+	cmr_u32  ratio_h;
+	uint16_t i,j;
+	if (NULL == dst || NULL == src) {
+		return -1;
+	}
+	dst_y_buf     = (cmr_u8*)dst->addr_vir.addr_y;
+	dst_uv_buf    = (cmr_u8*)dst->addr_vir.addr_u;
+	src_y_buf     = (cmr_u8*)src->addr_vir.addr_y;
+	src_uv_buf    = (cmr_u8*)src->addr_vir.addr_u;
+	src_w         = src->size.width;
+	src_h         = src->size.height;
+	dst_w         = dst->size.width;
+	dst_h         = dst->size.height;
+	dst_uv_w      = dst_w / 2;
+	dst_uv_h      = dst_h / 2;
+	ratio_w       = (src_w <<10) / dst_w;
+	ratio_h       = (src_h <<10) / dst_h;
+	for (i=0 ; i<dst_h; i++) {
+		cur_h = (ratio_h * i) >> 10;
+		cur_size = cur_h *src_w;
+		for (j=0; j<dst_w; j++) {
+			cur_w = (ratio_w *j) >> 10;
+			*dst_y_buf++ = src_y_buf[cur_size +cur_w];
+		}
+	}
+	for (i=0 ; i<dst_uv_h; i++) {
+		cur_h = (ratio_h * i) >> 10;
+		cur_size = cur_h *(src_w/2) *2;
+		for (j=0; j<dst_uv_w; j++) {
+			cur_w = (ratio_w *j) >> 10;
+			cur_byte = cur_size +cur_w *2;
+			*dst_uv_buf++ = src_uv_buf[cur_byte];       //u
+			*dst_uv_buf++ = src_uv_buf[cur_byte +1];    //v
+		}
+	}
+	CMR_LOGI("done");
+	return 0;
+}
+
 cmr_int camera_save_y_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height, void *addr)
 {
 	cmr_int                      ret = CMR_CAMERA_SUCCESS;
