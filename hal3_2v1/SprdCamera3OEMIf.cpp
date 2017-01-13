@@ -429,9 +429,6 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	memset(mIspB4awbHeapReserved, 0, sizeof(mIspB4awbHeapReserved));
 	memset(mIspRawAemHeapReserved, 0, sizeof(mIspRawAemHeapReserved));
 	memset(mIspPreviewYReserved, 0, sizeof(mIspPreviewYReserved));
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
-	memset(mIspRawDataReserved, 0, sizeof(mIspRawDataReserved));
-#endif
 
 	mJpegRotaSet = false;
 	mPicCaptureCnt = 1;
@@ -545,14 +542,6 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf()
 		}
 	}
 
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
-	for (i = 0; i < ISP_RAWBUF_NUM; i++) {
-		if (NULL != mIspRawDataReserved[i]) {
-			freeCameraMem(mIspRawDataReserved[i]);
-			mIspRawDataReserved[i] = NULL;
-		}
-	}
-#endif
 	if (NULL != mIspYUVReserved) {
 		freeCameraMem(mIspYUVReserved);
 		mIspYUVReserved = NULL;
@@ -6572,16 +6561,7 @@ int SprdCamera3OEMIf::Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint 
 		}
 		mIspYUVReserved = NULL;
 	}
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
-	if (type == CAMERA_ISP_RAW_DATA) {
-		for (i=0; i < sum; i++) {
-			if (NULL != mIspRawDataReserved[i]) {
-				freeCameraMem(mIspRawDataReserved[i]);
-			}
-			mIspRawDataReserved[i] = NULL;
-		}
-	}
-#endif
+
 	return 0;
 }
 
@@ -6760,30 +6740,6 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32
 		*phy_addr++ = 0;
 		*vir_addr++ = (cmr_uint)mIspYUVReserved->data;
 		*fd++ = mIspYUVReserved->fd;
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
-	} else if (type == CAMERA_ISP_RAW_DATA) {
-		cmr_u64 *kaddr = (cmr_u64 *)vir_addr;
-		size_t ksize = 0;
-
-		for (i = 0; i < sum; i++) {
-			if (mIspRawDataReserved[i] == NULL) {
-				memory = allocCameraMem(size, 1, true);
-				if (NULL == memory) {
-					HAL_LOGE("memory is null.");
-					break;
-				}
-				mIspRawDataReserved[i] = memory;
-			}
-//			*phy_addr++ = 0;
-			*phy_addr++ = (cmr_uint)mIspRawDataReserved[i]->data;
-			mIspRawDataReserved[i]->ion_heap->get_kaddr(kaddr, &ksize);
-			kaddr++;
-			*fd++ = mIspRawDataReserved[i]->fd;
-			HAL_LOGD("isp raw data fd=0x%0x, vir_addr=0x%0x",
-				mIspRawDataReserved[i]->fd, mIspRawDataReserved[i]->data);
-		}
-		*sum_ptr = i;
-#endif
 	}
 
 	return 0;

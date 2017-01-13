@@ -54,13 +54,8 @@
 #define LANE_NUM			4
 #define RAW_BITS			10
 
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
-#define SNAPSHOT_MIPI_PER_LANE_BPS	1419
-#define PREVIEW_MIPI_PER_LANE_BPS	800
-#else
 #define SNAPSHOT_MIPI_PER_LANE_BPS	858
 #define PREVIEW_MIPI_PER_LANE_BPS	660
-#endif
 
 /* please ref your spec */
 #define FRAME_OFFSET			10
@@ -446,18 +441,14 @@ static const SENSOR_REG_T imx258_1048x780_setting[] = {
 
 static SENSOR_REG_TAB_INFO_T s_imx258_resolution_tab_raw[SENSOR_MODE_MAX] = {
 	{ADDR_AND_LEN_OF_ARRAY(imx258_init_setting), 0, 0, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
 	{ADDR_AND_LEN_OF_ARRAY(imx258_1048x780_setting), 1048, 780, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
-#endif
 	{ADDR_AND_LEN_OF_ARRAY(imx258_4208x3120_setting), 4208, 3120, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
 	//{ADDR_AND_LEN_OF_ARRAY(imx258_5344x4016_setting), 5344, 4016, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
 };
 
 static SENSOR_TRIM_T s_imx258_resolution_trim_tab[SENSOR_MODE_MAX] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
 	{0, 0, 1048, 780, 20275 , 660, 820, {0, 0, 1048, 780}},
-#endif
 	{0, 0, 4208, 3120, 10325, 1296, 3224, {0, 0, 4208, 3120}},
 	//{0, 0, 5344, 4016, 10040, SNAPSHOT_MIPI_PER_LANE_BPS, 4140, {0, 0, 5344, 4016}},
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},

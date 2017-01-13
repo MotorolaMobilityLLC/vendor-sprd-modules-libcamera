@@ -289,11 +289,6 @@ struct camera_context {
 	cmr_uint                 b4awb_virt_addr[ISP_B4AWB_BUF_CNT];
 #endif
 	cmr_u8                   flag_highiso_alloc_mem;
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
-	cmr_s32                  raw_buf_fd[ISP_RAWBUF_NUM];
-	cmr_uint                 raw_buf_phys_addr[ISP_RAWBUF_NUM];
-	cmr_u64                  raw_buf_virt_addr[ISP_RAWBUF_NUM];
-#endif
 	cmr_uint		 dump_cnt;;
 };
 

@@ -603,9 +603,6 @@ private:
 	static uint32_t     			mIspFirmwareReserved_cnt;
 	static bool			mZslCaptureExitLoop;
 	sprd_camera_memory_t*           mIspYUVReserved;
-	#if defined(CONFIG_CAMERA_ISP_DIR_3)
-	sprd_camera_memory_t*           mIspRawDataReserved[ISP_RAWBUF_NUM];
-	#endif
 
 	sprd_camera_memory_t*           mIspAntiFlickerHeapReserved;
 	sprd_camera_memory_t*           mIspRawAemHeapReserved[kISPB4awbCount];
