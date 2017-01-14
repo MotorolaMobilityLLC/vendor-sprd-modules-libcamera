@@ -1027,7 +1027,7 @@ int SprdCamera3MetadataChannel::getCapRequestPara(const CameraMetadata &metadata
 	}
 
 	if (metadata.exists(ANDROID_SPRD_ZSL_ENABLED)) {
-		request_para->sprd_zsl_enabled= metadata.find(ANDROID_SPRD_ZSL_ENABLED).data.u8[0];
+		request_para->sprd_zsl_enabled= 0;//metadata.find(ANDROID_SPRD_ZSL_ENABLED).data.u8[0];
 	}
 	else {
 		request_para->sprd_zsl_enabled = 0;
