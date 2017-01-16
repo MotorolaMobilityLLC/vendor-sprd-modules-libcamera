@@ -1082,7 +1082,7 @@ const int32_t kmax_regions[3] = {
 };
 #endif
 const int32_t kmax_front_regions[3] = {
-	0, 0, 0,
+	1, 0, 0,
 };
 
 const int32_t kavailable_test_pattern_modes[] = {
@@ -1258,7 +1258,7 @@ const int32_t front_kavailable_request_keys[] = {
         ANDROID_CONTROL_AE_LOCK,
         ANDROID_CONTROL_AE_MODE,
         ANDROID_CONTROL_AE_TARGET_FPS_RANGE,
-        //ANDROID_CONTROL_AE_REGIONS,
+        ANDROID_CONTROL_AE_REGIONS,
         ANDROID_CONTROL_AF_MODE,
         ANDROID_CONTROL_AF_TRIGGER,
         //ANDROID_CONTROL_AF_REGIONS,
@@ -3467,10 +3467,10 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 		pushAndroidParaTag(ANDROID_SPRD_SLOW_MOTION);
 		HAL_LOGV("slowmotion %d", s_setting[mCameraId].sprddefInfo.slowmotion);
 	}
+
+	bool UpdateAE = false;
 	if (frame_settings.exists(ANDROID_SPRD_METERING_MODE)) {
 		s_setting[mCameraId].sprddefInfo.am_mode= frame_settings.find(ANDROID_SPRD_METERING_MODE).data.u8[0];
-		pushAndroidParaTag(ANDROID_SPRD_METERING_MODE);
-		HAL_LOGI("metering mod is %d", s_setting[mCameraId].sprddefInfo.am_mode);
 
 		int area[5 + 1] = {0};
 		if (frame_settings.find(ANDROID_CONTROL_AE_REGIONS).count == 5)
@@ -3480,11 +3480,22 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 				area[i] = frame_settings.find(ANDROID_CONTROL_AE_REGIONS).data.i32[i];
 			}
 		}
+		if (s_setting[mCameraId].controlInfo.ae_regions[0] != area[0] ||
+			s_setting[mCameraId].controlInfo.ae_regions[1] != area[1] ||
+			s_setting[mCameraId].controlInfo.ae_regions[2] != area[2] ||
+			s_setting[mCameraId].controlInfo.ae_regions[3] != area[3]) {
+			UpdateAE = true;
+		}
+		HAL_LOGI("metering mod is %d, need update %d", s_setting[mCameraId].sprddefInfo.am_mode, UpdateAE);
+
 		area[2] = area[2] - area[0];
 		area[3] = area[3] - area[1];
-		for (size_t i=0; i < frame_settings.find(ANDROID_CONTROL_AE_REGIONS).count; i++)
-			s_setting[mCameraId].sprddefInfo.am_regions[i] = area[i];
-		HAL_LOGD("AM region %d %d %d %d %d cnt %d",area[0],area[1],area[2],area[3],area[4],frame_settings.find(ANDROID_CONTROL_AE_REGIONS).count);
+		if(UpdateAE == true){
+			for (size_t i=0; i < frame_settings.find(ANDROID_CONTROL_AE_REGIONS).count; i++)
+				s_setting[mCameraId].sprddefInfo.am_regions[i] = area[i];
+			pushAndroidParaTag(ANDROID_SPRD_METERING_MODE);
+			HAL_LOGD("AM region %d %d %d %d %d cnt %d",area[0],area[1],area[2],area[3],area[4],frame_settings.find(ANDROID_CONTROL_AE_REGIONS).count);
+		}
 	}
 	/*if (frame_settings.exists(ANDROID_SPRD_METERING_AREA)) {
 		HAL_LOGI(" metering area cnt is %d", frame_settings.find(ANDROID_SPRD_METERING_AREA).count);
@@ -3693,6 +3704,7 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 		int32_t af_area[5] = {0};
 		size_t i = 0, cnt = 0;
 		int32_t err_flag = true;
+		bool UpdateAF = false;
 		if (frame_settings.find(ANDROID_CONTROL_AF_REGIONS).count == 5) {
 			for (i=0 ; i<5; i++)
 				af_area[i] = frame_settings.find(ANDROID_CONTROL_AF_REGIONS).data.i32[i];
@@ -3729,11 +3741,19 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 			if (err_flag == true) {
 				af_area[2] = af_area[2] - af_area[0];
 				af_area[3] = af_area[3] - af_area[1];
-				for (i=0; i<5; i++)
-					s_setting[mCameraId].controlInfo.af_regions[i] = af_area[i];
-				pushAndroidParaTag(ANDROID_CONTROL_AF_REGIONS);
+				if (s_setting[mCameraId].controlInfo.af_regions[0] != af_area[0] ||
+				s_setting[mCameraId].controlInfo.af_regions[1] != af_area[1] ||
+				s_setting[mCameraId].controlInfo.af_regions[2] != af_area[2] ||
+				s_setting[mCameraId].controlInfo.af_regions[3] != af_area[3]) {
+					UpdateAF = true;
+				}
+				if(UpdateAF == true){
+					for (i=0; i<5; i++)
+						s_setting[mCameraId].controlInfo.af_regions[i] = af_area[i];
+					pushAndroidParaTag(ANDROID_CONTROL_AF_REGIONS);
+					HAL_LOGD("ANDROID_CONTROL_AF_REGIONS AF region(%d %d %d %d %d cnt=%d)",af_area[0],af_area[1],af_area[2],af_area[3],af_area[4],frame_settings.find(ANDROID_CONTROL_AF_REGIONS).count);
+				}
 			}
-			HAL_LOGD("ANDROID_CONTROL_AF_REGIONS AF region(%d %d %d %d %d cnt=%d)",af_area[0],af_area[1],af_area[2],af_area[3],af_area[4],frame_settings.find(ANDROID_CONTROL_AF_REGIONS).count);
 		}
 	}
 	/*if (frame_settings.exists(ANDROID_CONTROL_AF_REGIONS)) {

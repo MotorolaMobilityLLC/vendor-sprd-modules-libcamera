@@ -6308,6 +6308,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type, struct common
 		else
 			trim.end_y = param_ptr->win_area.rect[0].start_y + param_ptr->win_area.rect[0].height - 1;
 
+		CMR_LOGI("AE ROI (%d,%d,%d,%d)",trim.start_x,trim.start_y,trim.end_x,trim.end_y);
 		ptr_flag = 1;
 		isp_param_ptr = (void *)&trim;
 		break;

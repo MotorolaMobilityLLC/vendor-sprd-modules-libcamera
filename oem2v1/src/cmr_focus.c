@@ -626,7 +626,7 @@ cmr_int cmr_focus_set_param(cmr_handle af_handle, cmr_u32 came_id, enum camera_p
 			struct cmr_focus_param temp = *(struct cmr_focus_param *)param;
 
 			for (loop = 0; loop < temp.zone_cnt; loop++)
-				CMR_LOGV("temp.zone_cnt=%d x=%d ,y=%d, w=%d ,h=%d ",
+				CMR_LOGI("temp.zone_cnt=%d x=%d ,y=%d, w=%d ,h=%d ",
 					 temp.zone_cnt,
 					 temp.zone[loop].start_x, temp.zone[loop].start_y,
 					 temp.zone[loop].width, temp.zone[loop].height);

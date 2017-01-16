@@ -5656,6 +5656,8 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag)
 					focus_para.zone[0].width = zoom.width;
 					focus_para.zone[0].height = zoom.height;
 					focus_para.zone_cnt = 1;
+					HAL_LOGI("after crop AF region is %d %d %d %d", focus_para.zone[0].start_x, focus_para.zone[0].start_y,
+						focus_para.zone[0].width, focus_para.zone[0].height);
 					SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FOCUS_RECT, (cmr_uint)&focus_para);
 				}
 			}
@@ -5877,6 +5879,8 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag)
 			}
 
 			mSetting->androidAmModeToDrvAwbMode(sprddefInfo.am_mode, &ae_param);
+			HAL_LOGI("after crop AM region is %d %d %d %d", ae_param.win_area.rect[0].start_x, ae_param.win_area.rect[0].start_y,
+				ae_param.win_area.rect[0].width, ae_param.win_area.rect[0].height);
 			SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AUTO_EXPOSURE_MODE, (cmr_uint)&ae_param);
 
 		}

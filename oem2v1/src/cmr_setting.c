@@ -837,7 +837,7 @@ static cmr_int setting_set_auto_exposure_mode(struct setting_component *cpt,
 			trim.end_x = isp_param.win_area.rect[0].start_x + isp_param.win_area.rect[0].width;
 			trim.end_y = isp_param.win_area.rect[0].start_y +  isp_param.win_area.rect[0].height;
 
-			CMR_LOGI("trim rect (%d,%d,%d,%d)",trim.start_x,trim.start_y,trim.end_x,trim.end_y );
+			CMR_LOGI("AE ROI (%d,%d,%d,%d)",trim.start_x,trim.start_y,trim.end_x,trim.end_y );
 			cpt->is_touch_focus  =1;
 			if (trim.end_x <= (uint32_t)trim.start_x
 			|| trim.end_y <= (uint32_t)trim.start_y
