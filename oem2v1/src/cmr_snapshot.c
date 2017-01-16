@@ -657,7 +657,10 @@ void snp_post_proc_done(cmr_handle snp_handle)
 	CMR_LOGI("wait beging for redisplay sm");
 	sem_wait(&cxt->redisplay_sm);
 	CMR_LOGI("wait end for redisplay sm");
-	snp_set_request(snp_handle, TAKE_PICTURE_NO);
+	if (cxt->cap_cnt >= cxt->req_param.total_num) {
+		cxt->cap_cnt = 0;
+		snp_set_request(snp_handle, TAKE_PICTURE_NO);
+	}
 exit:
 	CMR_LOGI("post");
 	snp_set_status(snp_handle, IDLE);

@@ -431,7 +431,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	memset(mIspPreviewYReserved, 0, sizeof(mIspPreviewYReserved));
 
 	mJpegRotaSet = false;
-	mPicCaptureCnt = 1;
+	mPicCaptureCnt = 0;
 
 	mRegularChan = NULL;
 	mPictureChan = NULL;
@@ -712,6 +712,7 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type, uint32_t frame_n
 
 			ret = startPreviewInternal();
 			if ((mVideoSnapshotType == 1) && (mCaptureWidth != 0 && mCaptureHeight != 0) && mVideoParameterSetFlag == 0) {
+				mPicCaptureCnt = 1;
 				ret = setVideoSnapshotParameter();
 				mVideoParameterSetFlag = true;
 			}
@@ -4720,9 +4721,13 @@ void SprdCamera3OEMIf::HandleEncode(enum camera_cb_type cb,
 			tmpCapState = getCaptureState();
 			if ((SPRD_WAITING_JPEG == tmpCapState)
 				|| (SPRD_INTERNAL_CAPTURE_STOPPING == tmpCapState)) {
-				setCameraState(SPRD_IDLE,
-					STATE_CAPTURE);
-
+				if (((struct camera_frame_type *)parm4)->jpeg_param.need_free) {
+					setCameraState(SPRD_IDLE,
+						STATE_CAPTURE);
+				} else if(tmpCapState != SPRD_INTERNAL_CAPTURE_STOPPING){
+					setCameraState(SPRD_INTERNAL_RAW_REQUESTED,
+						STATE_CAPTURE);
+				}
 			} else if (SPRD_IDLE != tmpCapState) {
 				HAL_LOGE("HandleEncode: CAMERA_EXIT_CB_DONE error cap status, %s",
 					getCameraStateStr(tmpCapState));
@@ -5512,9 +5517,9 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag)
 		{
 			SPRD_DEF_Tag sprddefInfo;
 			mSetting->getSPRDDEFTag(&sprddefInfo);
-			HAL_LOGD("sprd_eis_enabled = %d", sprddefInfo.capture_mode);
+			SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SHOT_NUM, sprddefInfo.capture_mode);
 			if (sprddefInfo.capture_mode > 1)
-				mPicCaptureCnt = sprddefInfo.capture_mode;
+				BurstCapCnt = sprddefInfo.capture_mode;
 		}
 		break;
 
@@ -5718,6 +5723,7 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode, uint32_t fr
 			mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
 			mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
 			mRecordingMode =false;
+			mPicCaptureCnt = 1;
 			mZslPreviewMode = false;
 			break;
 		case CAMERA_CAPTURE_MODE_NON_ZSL_SNAPSHOT:
@@ -5726,6 +5732,7 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode, uint32_t fr
 			mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
 			mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
 			mRecordingMode =false;
+			mPicCaptureCnt = 1;
 			mZslPreviewMode = false;
 			if (!strcmp(value, "raw")) {
 				HAL_LOGD("enter isp tuning mode ");
@@ -5744,6 +5751,7 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode, uint32_t fr
 				mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DV;
 				mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
 				mRecordingMode =false;
+				mPicCaptureCnt = 1;
 				mZslPreviewMode = false;
 			} else {
 				mTakePictureMode = SNAPSHOT_NO_ZSL_MODE;
@@ -5751,6 +5759,7 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode, uint32_t fr
 				mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
 				mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
 				mRecordingMode =false;
+				mPicCaptureCnt = 100;
 				mZslPreviewMode = false;
 				if (!strcmp(value, "raw")) {
 					HAL_LOGE("enter isp tuning mode ");
@@ -5768,6 +5777,7 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode, uint32_t fr
 			mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
 			mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
 			mRecordingMode = false;
+			mPicCaptureCnt = 1;
 			mZslPreviewMode = false;
 			break;
 		case CAMERA_CAPTURE_MODE_VIDEO_SNAPSHOT:
@@ -5777,6 +5787,7 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode, uint32_t fr
 				mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DV;
 				mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
 				mRecordingMode = true;
+				mPicCaptureCnt = 1;
 				mZslPreviewMode = false;
 			} else {
 				mTakePictureMode = SNAPSHOT_VIDEO_MODE;
@@ -5784,6 +5795,7 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode, uint32_t fr
 				mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DV;
 				mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
 				mRecordingMode = true;
+				mPicCaptureCnt = 1;
 				mZslPreviewMode = false;
 				mVideoShotNum = frame_number;
 				mVideoShotFlag = 1;
@@ -5795,6 +5807,7 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode, uint32_t fr
 			mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
 			mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
 			mRecordingMode =false;
+			mPicCaptureCnt = 1;
 			mZslPreviewMode = false;
 			break;
 		case CAMERA_CAPTURE_MODE_ISP_SIMULATION_TOOL:
@@ -5803,6 +5816,7 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode, uint32_t fr
 			mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
 			mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
 			mRecordingMode =false;
+			mPicCaptureCnt = 1;
 			mZslPreviewMode = false;
 			break;
 		case CAMERA_CAPTURE_MODE_PREVIEW_SNAPSHOT:
@@ -5811,6 +5825,7 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode, uint32_t fr
 			mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
 			mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
 			mRecordingMode = false;
+			mPicCaptureCnt = 1;
 			mZslPreviewMode = false;
 			break;
 		case CAMERA_CAPTURE_MODE_SPRD_ZSL_SNAPSHOT:
@@ -5819,6 +5834,7 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode, uint32_t fr
 			mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DV;
 			mPreviewFormat = CAMERA_DATA_FORMAT_YUV420;
 			mRecordingMode =false;
+			mPicCaptureCnt = 1;
 			mZslPreviewMode = false;
 			break;
 		case CAMERA_CAPTURE_MODE_SPRD_ZSL_PREVIEW:

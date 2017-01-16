@@ -862,7 +862,7 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm,
 	cap_mem->cap_raw.size.width = sn_size->width;
 	cap_mem->cap_raw.size.height = sn_size->height;
 	cap_mem->cap_raw.fmt = IMG_DATA_TYPE_RAW;
-
+/*
 	cap_mem->cap_raw2.addr_phy.addr_y = cap_2_frm->mem_frm.addr_phy.addr_y + max_size * 3 / 2 + max_size * 3 / 2;
 	cap_mem->cap_raw2.addr_vir.addr_y = cap_2_frm->mem_frm.addr_vir.addr_y + max_size * 3 / 2 + max_size * 3 / 2;
 	cap_mem->cap_raw2.fd = cap_2_frm->mem_frm.fd;
@@ -870,15 +870,15 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm,
 	cap_mem->cap_raw2.size.width = sn_size->width;
 	cap_mem->cap_raw2.size.height = sn_size->height;
 	cap_mem->cap_raw2.fmt = IMG_DATA_TYPE_RAW2;
-
+*/
 	cap_mem->target_jpeg.addr_phy.addr_y = cap_mem->cap_yuv.addr_phy.addr_y;
 	cap_mem->target_jpeg.addr_vir.addr_y = cap_mem->cap_yuv.addr_vir.addr_y;
 	cap_mem->target_jpeg.fd = cap_mem->cap_yuv.fd;
 
 	/* update io param */
-	CMR_NO_MEM(max_size * 3 / 2 + max_size * 3/2 + raw2_size, mem_res);
-	*io_mem_res = mem_res - (max_size * 3 / 2 + max_size * 3/2 + raw2_size);
-	*io_mem_end = mem_end + max_size * 3 / 2 + max_size * 3/2 + raw2_size;
+	CMR_NO_MEM(max_size * 3 / 2 + max_size * 3/2, mem_res);
+	*io_mem_res = mem_res - (max_size * 3 / 2 + max_size * 3/2);
+	*io_mem_end = mem_end + max_size * 3 / 2 + max_size * 3/2;
 	CMR_LOGD("mem_end=%0x", *io_mem_end);
 
 	return 0;
