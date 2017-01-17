@@ -35,7 +35,7 @@
 #include <android/log.h>
 
 /* Debug only */
-#if 0
+#if 1
 #define WRAP_LOG(...) __android_log_print(ANDROID_LOG_DEBUG, "af_wrapper", __VA_ARGS__)
 #else
 #define WRAP_LOG(...) do { } while(0)
@@ -118,48 +118,50 @@ uint32 al3awrapper_dispatchhw3a_afstats(void *isp_meta_data,void *alaf_stats)
 	uint8 *add_stat_32, *add_stat_64;
 	uint32  udoffset;
 
-	WRAP_LOG("al3awrapper_dispatchhw3a_afstats start\n");
+	WRAP_LOG("al3awrapper_dispatchhw3a_afstats start");
 
 	/* check input parameter validity*/
 	if(isp_meta_data == NULL) {
-		WRAP_LOG("ERR_WRP_AF_EMPTY_METADATA\n");
+		WRAP_LOG("ERR_WRP_AF_EMPTY_METADATA");
 		return ERR_WRP_AF_EMPTY_METADATA;
 	}
 
 	if(alaf_stats == NULL) {
-		WRAP_LOG("ERR_WRP_AF_INVALID_INPUT_PARAM\n");
+		WRAP_LOG("ERR_WRP_AF_INVALID_INPUT_PARAM");
 		return ERR_WRP_AF_INVALID_INPUT_PARAM;
 	}
 
-	WRAP_LOG("isp_meta_data %p\n",isp_meta_data);
+
 	p_meta_data_af = (struct isp_drv_meta_af_t *)isp_meta_data;
-	WRAP_LOG("alaf_stats %p\n",alaf_stats);
 	p_patched_stats = (struct allib_af_hw_stats_t *)alaf_stats;
+	WRAP_LOG("isp_meta_data %p, alaf_stats %p, isp_meta_data->upseudoflag %d",isp_meta_data, alaf_stats, p_meta_data_af->upseudoflag);
+
+	if(p_meta_data_af->upseudoflag) {
+		WRAP_LOG("ERR_WRP_AF_PSEUDO_DATA");
+		return ERR_WRP_AF_PSEUDO_DATA;
+	}
+
 	total_blocks = p_meta_data_af->af_stats_info.ucvalidblocks * p_meta_data_af->af_stats_info.ucvalidbanks;
-	WRAP_LOG("total_blocks %d\n",total_blocks);
 	bank_size = p_meta_data_af->af_stats_info.udbanksize;
-	WRAP_LOG("bank_size %d\n",bank_size);
 	blocks = p_meta_data_af->af_stats_info.ucvalidblocks;
-	WRAP_LOG("blocks %d\n",blocks);
+	banks = p_meta_data_af->af_stats_info.ucvalidbanks;
+	WRAP_LOG("total_blocks %d, bank_size %d, blocks %d, banks %d", total_blocks, bank_size, blocks, banks);
+
+	if ( total_blocks == 0 ) {
+		WRAP_LOG("ERR_WRP_AF_INVALID_INPUT_PARAM with total blocks: %d ", total_blocks );
+		return ERR_WRP_AF_INVALID_INPUT_PARAM;
+	}
 
 	if(blocks > MAX_STATS_COLUMN_NUM)
 		blocks = MAX_STATS_COLUMN_NUM;
 
-	if ( total_blocks == 0 ) {
-		WRAP_LOG("ERR_WRP_AF_INVALID_INPUT_PARAM with total blocks: %d \n", total_blocks );
-		return ERR_WRP_AF_INVALID_INPUT_PARAM;
-	}
-
-	p_patched_stats->valid_column_num = blocks;
-	banks = p_meta_data_af->af_stats_info.ucvalidbanks;
-	WRAP_LOG("banks %d\n",banks);
-
 	if(banks > MAX_STATS_ROW_NUM)
 		banks = MAX_STATS_ROW_NUM;
 
+	p_patched_stats->valid_column_num = blocks;
 	p_patched_stats->valid_row_num = banks;
 	index = 0;
-	WRAP_LOG("uhwengineid %d\n",p_meta_data_af->uhwengineid);
+	WRAP_LOG("uhwengineid %d",p_meta_data_af->uhwengineid);
 
 	if ( p_meta_data_af->b_isstats_byaddr == 1 ) {
 		if ( p_meta_data_af->puc_af_stats == NULL )
@@ -219,7 +221,7 @@ uint32 al3awrapper_dispatchhw3a_afstats(void *isp_meta_data,void *alaf_stats)
 				add_stat_32 += 40;
 				add_stat_64 += 40;
 
-				WRAP_LOG("fv_hor[%d] %d\n",index,p_patched_stats->fv_hor[index]);
+				WRAP_LOG("fv_hor[%d] %d",index,p_patched_stats->fv_hor[index]);
 			}
 		}
 	} else if(AL3A_HW3A_DEV_ID_B_0 == p_meta_data_af->uhwengineid) {
@@ -255,11 +257,11 @@ uint32 al3awrapper_dispatchhw3a_afstats(void *isp_meta_data,void *alaf_stats)
 				stats_addr_32+= 6;
 
 				add_stat_32 += 24;
-				WRAP_LOG("fv_hor[%d] %d\n",index,p_patched_stats->fv_hor[index]);
+				WRAP_LOG("fv_hor[%d] %d",index,p_patched_stats->fv_hor[index]);
 			}
 		}
 	} else {
-		WRAP_LOG("ERR_WRP_AF_INVALID_ENGINE\n");
+		WRAP_LOG("ERR_WRP_AF_INVALID_ENGINE");
 		return ERR_WRP_AF_INVALID_ENGINE;
 	}
 
@@ -428,14 +430,14 @@ uint32 al3awrapperaf_updateispconfig_af(struct allib_af_out_stats_config_t *lib_
 {
 	uint32 ret = ERR_WPR_AF_SUCCESS;
 	uint32 udTemp = 0;
-	WRAP_LOG("al3awrapperaf_updateispconfig_af start ID %d\n",lib_config->token_id);
+	WRAP_LOG("al3awrapperaf_updateispconfig_af start ID %d",lib_config->token_id);
 
 	isp_config->tokenid = lib_config->token_id;
 
 	isp_config->tafregion.uwblknumx = lib_config->num_blk_hor;
-	WRAP_LOG("uwblknumx %d\n",isp_config->tafregion.uwblknumx);
+	WRAP_LOG("uwblknumx %d",isp_config->tafregion.uwblknumx);
 	isp_config->tafregion.uwblknumy = lib_config->num_blk_ver;
-	WRAP_LOG("uwblknumy%d\n",isp_config->tafregion.uwblknumy);
+	WRAP_LOG("uwblknumy%d",isp_config->tafregion.uwblknumy);
 
 	if(0 == lib_config->src_img_sz.uw_width)
 		return ERR_WRP_AF_ZERO_SRC_IMG_WIDTH;
@@ -444,36 +446,36 @@ uint32 al3awrapperaf_updateispconfig_af(struct allib_af_out_stats_config_t *lib_
 		return ERR_WRP_AF_ZERO_SRC_IMG_HEIGHT;
 
 	udTemp = 100*((uint32)(lib_config->roi.uw_dx))/((uint32)(lib_config->src_img_sz.uw_width));
-	WRAP_LOG("uw_dx%d uwWidth%d \n",lib_config->roi.uw_dx,lib_config->src_img_sz.uw_width);
+	WRAP_LOG("uw_dx%d uwWidth%d ",lib_config->roi.uw_dx,lib_config->src_img_sz.uw_width);
 	isp_config->tafregion.uwsizeratiox = (uint16)udTemp;
-	WRAP_LOG("uwsizeratiox%d\n",isp_config->tafregion.uwsizeratiox);
+	WRAP_LOG("uwsizeratiox%d",isp_config->tafregion.uwsizeratiox);
 	udTemp = 100*((uint32)(lib_config->roi.uw_dy))/((uint32)(lib_config->src_img_sz.uw_height));
 	isp_config->tafregion.uwsizeratioy = (uint16)udTemp;
-	WRAP_LOG("uwsizeratioy%d\n",isp_config->tafregion.uwsizeratioy);
+	WRAP_LOG("uwsizeratioy%d",isp_config->tafregion.uwsizeratioy);
 	udTemp = 100*((uint32)(lib_config->roi.uw_left))/((uint32)(lib_config->src_img_sz.uw_width));
 	isp_config->tafregion.uwoffsetratiox = (uint16)udTemp;
-	WRAP_LOG("uwoffsetratiox%d\n",isp_config->tafregion.uwoffsetratiox);
+	WRAP_LOG("uwoffsetratiox%d",isp_config->tafregion.uwoffsetratiox);
 	udTemp = 100*((uint32)(lib_config->roi.uw_top))/((uint32)(lib_config->src_img_sz.uw_height));
 	isp_config->tafregion.uwoffsetratioy = (uint16)udTemp;
-	WRAP_LOG("uwoffsetratioy%d\n",isp_config->tafregion.uwoffsetratioy);
+	WRAP_LOG("uwoffsetratioy%d",isp_config->tafregion.uwoffsetratioy);
 	isp_config->benableaflut = lib_config->b_enable_af_lut;
-	WRAP_LOG("benableaflut%d\n",isp_config->benableaflut);
+	WRAP_LOG("benableaflut%d",isp_config->benableaflut);
 	memcpy(isp_config->auwlut,lib_config->auw_lut,sizeof(uint16)*259);
 	memcpy(isp_config->auwaflut,lib_config->auw_af_lut,sizeof(uint16)*259);
 	memcpy(isp_config->aucweight,lib_config->auc_weight,sizeof(uint8)*6);
 	isp_config->uwsh = lib_config->uw_sh;
-	WRAP_LOG("uwsh%d\n",isp_config->uwsh);
+	WRAP_LOG("uwsh%d",isp_config->uwsh);
 	isp_config->ucthmode = lib_config->uc_th_mode;
-	WRAP_LOG("ucthmode%d\n",isp_config->ucthmode);
+	WRAP_LOG("ucthmode%d",isp_config->ucthmode);
 	memcpy(isp_config->aucindex,lib_config->auc_index,sizeof(uint8)*82);
 	memcpy(isp_config->auwth,lib_config->auw_th,sizeof(uint16)*4);
 	memcpy(isp_config->pwtv,lib_config->pw_tv,sizeof(uint16)*4);
 	isp_config->udafoffset = lib_config->ud_af_offset;
-	WRAP_LOG("udafoffset%d\n",isp_config->udafoffset);
+	WRAP_LOG("udafoffset%d",isp_config->udafoffset);
 	isp_config->baf_py_enable = lib_config->b_af_py_enable;
-	WRAP_LOG("baf_py_enable%d\n",isp_config->baf_py_enable);
+	WRAP_LOG("baf_py_enable%d",isp_config->baf_py_enable);
 	isp_config->baf_lpf_enable = lib_config->b_af_lpf_enable;
-	WRAP_LOG("baf_lpf_enable%d\n",isp_config->baf_lpf_enable);
+	WRAP_LOG("baf_lpf_enable%d",isp_config->baf_lpf_enable);
 
 	switch(lib_config->n_filter_mode) {
 	case MODE_51:
@@ -488,9 +490,9 @@ uint32 al3awrapperaf_updateispconfig_af(struct allib_af_out_stats_config_t *lib_
 		break;
 	}
 
-	WRAP_LOG("nfiltermode%d\n",isp_config->nfiltermode);
+	WRAP_LOG("nfiltermode%d",isp_config->nfiltermode);
 	isp_config->ucfilterid = lib_config->uc_filter_id;
-	WRAP_LOG("ucfilterid%d\n",isp_config->ucfilterid );
+	WRAP_LOG("ucfilterid%d",isp_config->ucfilterid);
 	isp_config->uwlinecnt = lib_config->uw_line_cnt;
 	WRAP_LOG("uwlinecnt%d\n",isp_config->uwlinecnt);
 
@@ -583,7 +585,7 @@ uint32 al3awrapperaf_getdefaultcfg(struct alhw3a_af_cfginfo_t *isp_config)
 	memcpy(isp_config->aucindex,auc_af_blk_th_idx,sizeof(uint8)*82);
 	memcpy(isp_config->auwth,auw_af_th_lut,sizeof(uint16)*4);
 	memcpy(isp_config->pwtv,auw_af_th_lut,sizeof(uint16)*4);
-	isp_config->udafoffset = 0x80;
+	isp_config->udafoffset = 0xFFFF; // 0xFFFF = get value from sensor clamp level at driver layer
 	isp_config->baf_py_enable = FALSE;
 	isp_config->baf_lpf_enable = FALSE;
 	isp_config->nfiltermode = HW3A_MF_DISABLE;

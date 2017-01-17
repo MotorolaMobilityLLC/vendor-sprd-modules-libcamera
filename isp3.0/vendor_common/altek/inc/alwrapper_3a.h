@@ -38,6 +38,18 @@ struct wrapper_hw3a_define_sizeinfo_t {
 
 
 /*
+ * API name: al3awrapper_dispatchhw3astats_af
+ * This API used for copying stats data from HW ISP(Altek) to AF buffer, but without further patching
+ * Framework should call al3AWrapper_DispatchHW3A_XXStats in certain thread for patching, after patching completed, send event
+ * to XX Ctrl layer, prepare for process
+ * param alisp_metadata[In] :   meta data address from ISP driver, passing via AP framework
+ * param alisp_metadata_af[Out] : AF stats buffer addr, should be arranged via AF ctrl/3A ctrl layer
+ * param udsof_idx[In] : current SOF index, should be from ISP driver layer
+ * return: error code
+ */
+uint32 al3awrapper_dispatchhw3astats_af( void * alisp_metadata, struct isp_drv_meta_af_t * alisp_metadata_af, uint32 udsof_idx );
+
+/*
  * API name: al3awrapper_dispatchhw3astats
  * This API used for copying stats data from HW ISP(Altek) to seperated buffer, but without further patching
  * Framework should call al3AWrapper_DispatchHW3A_XXStats in certain thread for patching, after patching completed, send event

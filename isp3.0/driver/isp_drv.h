@@ -35,6 +35,7 @@ typedef void (*isp_evt_cb)(cmr_int evt, void *data, cmr_u32 data_len, void *priv
 
 enum isp_drv_evt {
 	ISP_DRV_STATISTICE,
+	ISP_DRV_AF_STATISTICE,
 	ISP_DRV_SENSOR_SOF,
 	ISP_DRV_RAW10,
 	ISP_DRV_CFG_BUF,

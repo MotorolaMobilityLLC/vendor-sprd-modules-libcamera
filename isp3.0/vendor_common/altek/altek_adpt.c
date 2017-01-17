@@ -42,6 +42,20 @@ cmr_int isp_dispatch_stats(void *isp_stats, void *ae_stats_buf, void *awb_stats_
 	return ret;
 }
 
+cmr_int isp_dispatch_af_stats(void *isp_af_stats, void *af_stats_buf, cmr_u32 sof_idx)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+
+	ret = (cmr_int)al3awrapper_dispatchhw3astats_af(isp_af_stats,
+			(struct isp_drv_meta_af_t *)af_stats_buf,
+			sof_idx);
+	if (ret) {
+		ISP_LOGE("failed to disptach af stats %ld", ret);
+	}
+	ISP_LOGV("done %ld", ret);
+	return ret;
+}
+
 cmr_int isp_separate_3a_bin(void *bin, void **ae_tuning_buf, void **awb_tuning_buf, void **af_tuning_buf)
 {
 	cmr_int                                     ret = ISP_SUCCESS;

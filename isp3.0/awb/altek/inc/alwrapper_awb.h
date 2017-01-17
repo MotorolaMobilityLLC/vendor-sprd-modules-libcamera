@@ -23,7 +23,10 @@ extern "C"
 {
 #endif
 
-#define _WRAPPER_AWB_VER 0.8070
+#define _WRAPPER_AWB_VER        0.8080
+
+#define AWB_STATS_MAX_BLOCKS    (64)
+#define AWB_STATS_MAX_BANKS     (48)
 
 /*
  * API name: al3awrapperawb_setotpcalibration
@@ -88,6 +91,18 @@ uint32 al3awrapperawb_translatescenemodefromap2awblib(uint32 ascenemode);
  * return: error code
  */
 uint32 al3awrapper_dispatchhw3a_awbstats(void *alisp_metadata_awb, void *alwrappered_awb_dat);
+
+/*
+ * API name: al3awrapper_dispatchhw3a_awb_stats_rgbdata
+ * This API used for patching HW3A stats from ISP(Altek) for third party libary,
+ * after patching completed, AWB ctrl should prepare patched
+ * stats to AWB libs
+ * param alISP_MetaData_AWB[In]: patched data after calling al3AWrapper_DispatchHW3AStats,
+ *                               used for patch AWB stats for AWB lib
+ * param alWrappered_AWB_Dat[Out]: result AWB stats
+ * return: error code
+ */
+uint32 al3awrapper_dispatchhw3a_awb_stats_rgbdata(void *alisp_metadata_awb, void *alwrappered_awb_dat);
 
 /*
  * API name: al3awrapperawb_settuningfile

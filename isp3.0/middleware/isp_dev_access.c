@@ -103,6 +103,7 @@ cmr_int isp_dev_access_init(struct isp_dev_init_in *input_ptr, cmr_handle *isp_d
 	ret = isp_dev_init(&input, &cxt->isp_driver_handle);
 	if (ret) {
 		ISP_LOGE("failed to dev initialized");
+		goto exit;
 	}
 
 	ret = isp_dev_start(cxt->isp_driver_handle);

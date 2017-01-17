@@ -38,6 +38,220 @@
  * Function code
  ******************************************************************************/
 
+/*  for AF ctrl layer */
+/*
+ * API name: al3awrapper_dispatchhw3astats_af
+ * This API used for copying stats data from HW ISP(Altek) to AF buffer, but without further patching
+ * Framework should call al3AWrapper_DispatchHW3A_XXStats in certain thread for patching, after patching completed, send event
+ * to XX Ctrl layer, prepare for process
+ * param alisp_metadata[In] :   meta data address from ISP driver, passing via AP framework
+ * param alisp_metadata_af[Out] : AF stats buffer addr, should be arranged via AF ctrl/3A ctrl layer
+ * param udsof_idx[In] : current SOF index, should be from ISP driver layer
+ * return: error code
+ */
+uint32 al3awrapper_dispatchhw3astats_af( void * alisp_metadata, struct isp_drv_meta_af_t * alisp_metadata_af, uint32 udsof_idx )
+{
+	uint32 ret = ERR_WRP_SUCCESS;
+	uint8 *paddrlocal;
+	struct isp_drv_meta_t pispmeta;
+	struct isp_drv_meta_af_t *pispmetaaf;
+	uint16  uwValidstats_Num =0;
+
+	uint8 *ptempaddr;
+	uint32 offset_start, offset, padding;
+
+	struct timeval systemtime, systemtime_e;
+	uint64  time_s, time_e;
+	uint64  time_1, time_2;
+
+	/* NULL pointer protection */
+	if ( alisp_metadata == NULL )
+		return ERR_WRP_EMPTY_METADATA;
+
+	/* store timestamp at beginning, for AF usage */
+	gettimeofday(&systemtime, NULL);
+	time_s = systemtime.tv_sec * 1000000 + systemtime.tv_usec;
+
+	paddrlocal = (uint8 *)alisp_metadata;
+	/* by byte parsing, use casting would cause some compiler padding shift issue */
+	/* 0. common Info */
+	offset = 0;
+	//memcpy( &pispmeta.umagicnum        , paddrlocal, 4 );
+	pispmeta.umagicnum = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+	//paddrlocal+= 4;
+	offset+= 4;
+	//memcpy( &pispmeta.uhwengineid      , paddrlocal, 2 );
+	pispmeta.uhwengineid = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+	//paddrlocal+= 2;
+	offset+= 2;
+	//memcpy( &pispmeta.uframeidx        , paddrlocal, 2 );
+	pispmeta.uframeidx = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+	//paddrlocal+= 2;
+	offset+= 2;
+	//memcpy( &pispmeta.uchecksum        , paddrlocal, 4 );
+	pispmeta.uchecksum = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+	//paddrlocal+= 4;
+	offset+= 4;
+
+	/* check HW3A stats's type ID */
+	if ( (pispmeta.umagicnum & 0xFF000000) != HW3A_VERSION_NUMBER_AF_TYPEID ) {
+		ret =  ERR_WRP_MISMACTHED_AFSTATS_VER;	/* keep error code only in early phase, if need return immediatedly then return here */
+		return ret;
+	}
+
+	/*   1. af stats info  */
+	//memcpy( &pispmeta.uaftag           , paddrlocal, 2 );
+	pispmeta.uaftag = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+	//paddrlocal+= 2;
+	offset+= 2;
+	//memcpy( &pispmeta.uaftokenid       , paddrlocal, 2 );
+	pispmeta.uaftokenid = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
+	//paddrlocal+= 2;
+	offset+= 2;
+	//memcpy( &pispmeta.uafstatssize     , paddrlocal, 4 );
+	pispmeta.uafstatssize = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+	//paddrlocal+= 4;
+	offset+= 4;
+	//memcpy( &pispmeta.uafstatsaddr     , paddrlocal, 4 );
+	pispmeta.uafstatsaddr = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+	//paddrlocal+= 4;
+	offset+= 4;
+
+	/* check HW3A stats define version with magic number, which should be maintained & update at each ISP release */
+	if ( (pispmeta.umagicnum & 0x00FFFFFF) != HW3A_MAGIC_NUMBER_VERSION )
+		ret =  ERR_WRP_MISMACTHED_STATS_VER;	/* keep error code only in early phase, if need return immediatedly then return here */
+
+	gettimeofday(&systemtime, NULL);
+	time_1 = systemtime.tv_sec * 1000000 + systemtime.tv_usec;
+
+	/* check data validity, if data is empty, reset buffer to AF lib, avoid corrupt data to crash system  */
+	if ( (pispmeta.uafstatsaddr == 0 || pispmeta.uafstatssize == 0  ) && alisp_metadata_af != NULL ) {
+		memset( alisp_metadata_af, 0, sizeof( struct  isp_drv_meta_af_t ));
+	}
+
+	gettimeofday(&systemtime, NULL);
+	time_2 = systemtime.tv_sec * 1000000 + systemtime.tv_usec;
+
+	/* parsing AF if AF pointer is valid */
+	if ( alisp_metadata_af == NULL )
+		;	/* do nothing, even if HW3A stats passing valid data */
+	else if ( pispmeta.uafstatssize != 0 && pispmeta.uafstatsaddr != 0 ) {
+		pispmetaaf = (struct isp_drv_meta_af_t *)alisp_metadata_af;
+		/* udpate common info */
+		pispmetaaf->umagicnum = pispmeta.umagicnum;
+		pispmetaaf->uhwengineid = pispmeta.uhwengineid;
+		pispmetaaf->uframeidx = pispmeta.uframeidx;
+
+		/* update af info */
+		pispmetaaf->uaftokenid = pispmeta.uaftokenid;
+		pispmetaaf->uafstatssize = pispmeta.uafstatssize;
+		pispmetaaf->upseudoflag = 0;
+
+		memcpy( &pispmetaaf->systemtime, &systemtime, sizeof(struct timeval));
+		pispmetaaf->udsys_sof_idx = udsof_idx;
+
+		/* retriving af info of stats */
+		paddrlocal = (uint8 *)alisp_metadata + pispmeta.uafstatsaddr;
+		offset = 0;
+		//memcpy( &alisp_metadata_af->af_stats_info.udpixelsperblocks  , paddrlocal, 4 );
+		alisp_metadata_af->af_stats_info.udpixelsperblocks = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+		//paddrlocal+= 4;
+		offset+= 4;
+		//memcpy( &alisp_metadata_af->af_stats_info.udbanksize         , paddrlocal, 4 );
+		alisp_metadata_af->af_stats_info.udbanksize = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+		//paddrlocal+= 4;
+		offset+= 4;
+		//memcpy( &alisp_metadata_af->af_stats_info.ucvalidblocks      , paddrlocal, 1 );
+		alisp_metadata_af->af_stats_info.ucvalidblocks = paddrlocal[offset];
+		//paddrlocal+= 1;
+		offset+= 1;
+		//memcpy( &alisp_metadata_af->af_stats_info.ucvalidbanks       , paddrlocal, 1 );
+		alisp_metadata_af->af_stats_info.ucvalidbanks = paddrlocal[offset];
+		//paddrlocal+= 1;
+		offset+= 1;
+
+		/* copy af stats to indicated buffer address, make 8 alignment */
+		offset_start = pispmeta.uafstatsaddr + offset;  /* offset is accumulation value of af info of stats */
+		padding = (offset_start % 8 == 0 ) ? 0:(8- (offset_start % 8));
+		offset_start = offset_start + padding;
+
+		/* allocate memory buffer base on meta size of AF stats */
+		if ( alisp_metadata_af->uafstatssize > HW3A_AF_STATS_BUFFER_SIZE ) {
+			return ERR_WRP_ALLOCATE_BUFFER;
+		}
+
+		/* shift to data addr */
+		ptempaddr = (uint8 *)alisp_metadata + offset_start;
+
+		alisp_metadata_af->b_isstats_byaddr = 0;
+
+#ifdef _ENABLE_STATS_PRE_ALLOC_BUF
+#if ( _ENABLE_STATS_PRE_ALLOC_BUF )
+		alisp_metadata_af->b_isstats_byaddr = 1;
+#endif
+#endif
+
+		if ( alisp_metadata_af->b_isstats_byaddr == 0 ) {
+			/* copy data to buffer addr */
+			memcpy( (void *)alisp_metadata_af->paf_stats , (void *)ptempaddr, alisp_metadata_af->uafstatssize );
+		} else {
+			/* assign by addr if buffer is allocated from 3A ctrl layer  */
+			alisp_metadata_af->puc_af_stats = (uint8 *)ptempaddr;
+		}
+
+		uwValidstats_Num++;
+	} else { /* set pseudo flag */
+		pispmetaaf = (struct isp_drv_meta_af_t *)alisp_metadata_af;
+		/* udpate common info */
+		pispmetaaf->umagicnum = pispmeta.umagicnum;
+		pispmetaaf->uhwengineid = pispmeta.uhwengineid;
+		pispmetaaf->uframeidx = pispmeta.uframeidx;
+
+		/* update af info */
+		pispmetaaf->uaftokenid = pispmeta.uaftokenid;
+		pispmetaaf->uafstatssize = pispmeta.uafstatssize;
+		pispmetaaf->upseudoflag = 1;
+
+		memcpy( &pispmetaaf->systemtime, &systemtime, sizeof(struct timeval));
+		pispmetaaf->udsys_sof_idx = udsof_idx;
+
+		if ( pispmeta.uafstatsaddr != 0) {
+			/* retriving af info of stats */
+			paddrlocal = (uint8 *)alisp_metadata + pispmeta.uafstatsaddr;
+			offset = 0;
+			//memcpy( &alisp_metadata_af->af_stats_info.udpixelsperblocks  , paddrlocal, 4 );
+			alisp_metadata_af->af_stats_info.udpixelsperblocks = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+			//paddrlocal+= 4;
+			offset+= 4;
+			//memcpy( &alisp_metadata_af->af_stats_info.udbanksize         , paddrlocal, 4 );
+			alisp_metadata_af->af_stats_info.udbanksize = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+			//paddrlocal+= 4;
+			offset+= 4;
+			//memcpy( &alisp_metadata_af->af_stats_info.ucvalidblocks      , paddrlocal, 1 );
+			alisp_metadata_af->af_stats_info.ucvalidblocks = paddrlocal[offset];
+			//paddrlocal+= 1;
+			offset+= 1;
+			//memcpy( &alisp_metadata_af->af_stats_info.ucvalidbanks       , paddrlocal, 1 );
+			alisp_metadata_af->af_stats_info.ucvalidbanks = paddrlocal[offset];
+		}
+
+		pispmetaaf->b_isstats_byaddr = 0;
+	}
+
+	if ( uwValidstats_Num == 0 )
+		return ERR_WRP_EMPTY_METADATA;
+
+	gettimeofday(&systemtime_e, NULL);
+	time_e = systemtime_e.tv_sec * 1000000 + systemtime_e.tv_usec;
+
+#ifndef LOCAL_NDK_BUILD
+	ISP_LOGI("al3awrapper_dispatchhw3astats process total_time:%d,commom_t:%d,memsetAF:%d,af:%d\r\n", (uint32)(time_e - time_s),(uint32)(time_1 - time_s),(uint32)(time_2 - time_1),(uint32)(time_e - time_2));
+#endif
+
+
+	return ret;
+}
+
 /*  for 3A ctrl layer */
 /*
  * API name: al3awrapper_dispatchhw3astats
@@ -109,6 +323,22 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 	//paddrlocal+= 4;
 	offset+= 4;
 
+#ifndef LOCAL_NDK_BUILD
+	ISP_LOGI("al3awrapper_dispatchhw3astats process magicnum:%d engineid:%d frameidx:%d checksum:%d\r\n",pispmeta.umagicnum, pispmeta.uhwengineid, pispmeta.uframeidx, pispmeta.uchecksum);
+#endif
+
+	/* check HW3A stats's type ID */
+	if ( (pispmeta.umagicnum & 0xFF000000) != HW3A_VERSION_NUMBER_TYPEID ) {
+		ret =  ERR_WRP_MISMACTHED_ISPSTATS_VER;	/* keep error code only in early phase, if need return immediatedly then return here */
+#ifndef LOCAL_NDK_BUILD
+		ISP_LOGI("al3awrapper_dispatchhw3astats process error:%d\r\n",ret);
+#endif
+		return ret;
+	}
+
+	// Data D Gain
+	offset += 16;
+
 	/*  1. ae  stats info */
 	//memcpy( &pispmeta.uaetag           , paddrlocal, 2 );
 	pispmeta.uaetag = ((paddrlocal[offset]) + (paddrlocal[offset+1]<<8));
@@ -126,6 +356,9 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 	pispmeta.uaestatsaddr = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
 	//paddrlocal+= 4;
 	offset+= 4;
+#ifndef LOCAL_NDK_BUILD
+	ISP_LOGI("al3awrapper_dispatchhw3astats process aetag:%d tokenid:%d statssize:%d statsaddr:%d\r\n",pispmeta.uaetag,pispmeta.uaetokenid,pispmeta.uaestatssize,pispmeta.uaestatsaddr);
+#endif
 
 	/*   2. awb stats info */
 	//memcpy( &pispmeta.uawbtag          , paddrlocal, 2 );
@@ -218,7 +451,7 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 	offset+= 4;
 
 	/* check HW3A stats define version with magic number, which should be maintained & update at each ISP release */
-	if ( pispmeta.umagicnum != HW3A_MAGIC_NUMBER_VERSION )
+	if ( (pispmeta.umagicnum & 0x00FFFFFF) != HW3A_MAGIC_NUMBER_VERSION )
 		ret =  ERR_WRP_MISMACTHED_STATS_VER;	/* keep error code only in early phase, if need return immediatedly then return here */
 
 	gettimeofday(&systemtime, NULL);
@@ -300,6 +533,10 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 		alisp_metadata_ae->ae_stats_info.ucvalidbanks = paddrlocal[offset];
 		//paddrlocal+= 1;
 		offset+=1;
+
+#ifndef LOCAL_NDK_BUILD
+		ISP_LOGI("al3awrapper_dispatchhw3astats process ae:%d,%d,%d,%d\r\n",alisp_metadata_ae->ae_stats_info.udpixelsperblocks,alisp_metadata_ae->ae_stats_info.udbanksize,alisp_metadata_ae->ae_stats_info.ucvalidblocks,alisp_metadata_ae->ae_stats_info.ucvalidbanks);
+#endif
 
 		/* copy AE stats to indicated buffer address, make 8 alignment */
 		offset_start = pispmeta.uaestatsaddr + offset;		/* 10 is accumulation value of ae info of stats, 4+4+1+1 */
@@ -454,6 +691,8 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 		alisp_metadata_awb->awb_stats_info.ucvalidbanks = paddrlocal[offset];
 		//paddrlocal+= 1;
 		offset+= 1;
+		alisp_metadata_awb->awb_stats_info.ucRGBFmt = paddrlocal[offset];
+		offset += 1;
 
 		/* copy AWB stats to indicated buffer address, make 8 alignment */
 		offset_start = pispmeta.uawbstatsaddr + offset;		/* offset is accumulation value of awb info of stats */
@@ -571,6 +810,7 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 		/* update af info */
 		pispmetaaf->uaftokenid = pispmeta.uaftokenid;
 		pispmetaaf->uafstatssize = pispmeta.uafstatssize;
+		pispmetaaf->upseudoflag = 0;
 
 		memcpy( &pispmetaaf->systemtime, &systemtime, sizeof(struct timeval));
 		pispmetaaf->udsys_sof_idx = udsof_idx;
@@ -625,6 +865,42 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 		}
 
 		uwValidstats_Num++;
+	} else { /* set pseudo flag */
+		pispmetaaf = (struct isp_drv_meta_af_t *)alisp_metadata_af;
+		/* udpate common info */
+		pispmetaaf->umagicnum = pispmeta.umagicnum;
+		pispmetaaf->uhwengineid = pispmeta.uhwengineid;
+		pispmetaaf->uframeidx = pispmeta.uframeidx;
+
+		/* update af info */
+		pispmetaaf->uaftokenid = pispmeta.uaftokenid;
+		pispmetaaf->uafstatssize = pispmeta.uafstatssize;
+		pispmetaaf->upseudoflag = 1;
+
+		memcpy( &pispmetaaf->systemtime, &systemtime, sizeof(struct timeval));
+		pispmetaaf->udsys_sof_idx = udsof_idx;
+
+		if ( pispmeta.uafstatsaddr != 0) {
+			/* retriving af info of stats */
+			paddrlocal = (uint8 *)alisp_metadata + pispmeta.uafstatsaddr;
+			offset = 0;
+			//memcpy( &alisp_metadata_af->af_stats_info.udpixelsperblocks  , paddrlocal, 4 );
+			alisp_metadata_af->af_stats_info.udpixelsperblocks = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+			//paddrlocal+= 4;
+			offset+= 4;
+			//memcpy( &alisp_metadata_af->af_stats_info.udbanksize         , paddrlocal, 4 );
+			alisp_metadata_af->af_stats_info.udbanksize = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
+			//paddrlocal+= 4;
+			offset+= 4;
+			//memcpy( &alisp_metadata_af->af_stats_info.ucvalidblocks      , paddrlocal, 1 );
+			alisp_metadata_af->af_stats_info.ucvalidblocks = paddrlocal[offset];
+			//paddrlocal+= 1;
+			offset+= 1;
+			//memcpy( &alisp_metadata_af->af_stats_info.ucvalidbanks       , paddrlocal, 1 );
+			alisp_metadata_af->af_stats_info.ucvalidbanks = paddrlocal[offset];
+		}
+
+		pispmetaaf->b_isstats_byaddr = 0;
 	}
 
 
@@ -817,6 +1093,9 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 #ifndef LOCAL_NDK_BUILD
 	ISP_LOGI("al3awrapper_dispatchhw3astats process total_time:%d,commom_t:%d,memset3A:%d,memset_flk:%d,memset_sub:%d,ae_t:%d,wb:%d,af:%d,y_t_m:%d,flk_t_m:%d,sub_t_m:%d\r\n", (uint32)(time_e - time_s),(uint32)(time_1 - time_s),(uint32)(time_2 - time_1),
 	         (uint32)(time_3 - time_2),(uint32)(time_4 - time_3),(uint32)(time_5 - time_4),(uint32)(time_6 - time_5),(uint32)(time_7 - time_6),(uint32)(time_8-time_7),(uint32)(time_9-time_8),(uint32)(time_e-time_9));
+#endif
+#ifndef LOCAL_NDK_BUILD
+	ISP_LOGI("al3awrapper_dispatchhw3astats process error:%d\r\n",ret);
 #endif
 
 

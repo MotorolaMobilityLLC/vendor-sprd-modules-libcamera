@@ -37,7 +37,9 @@
 /* for wrapper */
 #define HW3A_MAX_DLSQL_NUM              (20)	/* maximun download sequence list number */
 
-#define HW3A_MAGIC_NUMBER_VERSION       (20151210)
+#define HW3A_MAGIC_NUMBER_VERSION       (0x00110113)
+#define HW3A_VERSION_NUMBER_TYPEID       (0x00000000)    /*  for main ISP stats  */
+#define HW3A_VERSION_NUMBER_AF_TYPEID       (0x01000000)    /*  for AF stats only for AF line meet Interrupt */
 
 #define HW3A_METADATA_SIZE              HW3A_MAX_TOTAL_STATS_BUFFER_SIZE
 
@@ -53,11 +55,11 @@
 #define HW3A_MAX_YHIST_BUFFER_SIZE              ( HW3A_YHIST_STATS_BUFFER_SIZE + 64 )
 #define HW3A_MAX_SUBIMG_BUFFER_SIZE             ( HW3A_SUBIMG_STATS_BUFFER_SIZE + 64 )
 
-#define HW3A_MAX_TOTAL_STATS_BUFFER_SIZE        ( 182*1024 )
+#define HW3A_MAX_TOTAL_STATS_BUFFER_SIZE        ( 230*1024 )
 
 /* Define for MAX buffer of single stats */
 #define HW3A_AE_STATS_BUFFER_SIZE               ( 31*1024  + 128 )
-#define HW3A_AWB_STATS_BUFFER_SIZE              ( 26*1024  + 128 )
+#define HW3A_AWB_STATS_BUFFER_SIZE              ( (26 + 48)*1024 + 128 )
 #define HW3A_AF_STATS_BUFFER_SIZE               ( 19*1024 + 128 )
 #define HW3A_ANTIF_STATS_BUFFER_SIZE            ( 10*1024 + 128 )
 #define HW3A_YHIST_STATS_BUFFER_SIZE            ( 1*1024 + 128 )
@@ -479,6 +481,7 @@ struct isp_drv_meta_awb_stats_info_t {
 	uint16 uwgrasscount;
 	uint8  ucvalidblocks;
 	uint8  ucvalidbanks;
+	uint8  ucRGBFmt;
 };
 #pragma pack(pop)  /* restore old alignment setting from stack */
 
@@ -533,6 +536,7 @@ struct isp_drv_meta_af_t {
 	uint8  *puc_af_stats;
 	uint16 uaftokenid;
 	uint32 uafstatssize;
+	uint16 upseudoflag;		/* 0: normal stats, 1: PseudoFlag flag */
 
 	/* framework time/frame idx info */
 	struct timeval systemtime;
@@ -744,7 +748,11 @@ struct al3awrapper_stats_awb_t {
 	uint8   ucvalidblocks;
 	uint8   ucvalidbanks;
 	uint8   ucstatsdepth;		/* 8: 8 bits, 10: 10 bits */
-	uint8   ucstats_format;		/* 0: ISP format */
+	uint8   ucstats_format;		/* 0: No RGB output, 1: 10-bit RGB */
+
+	uint32 statsr[AL_MAX_AWB_STATS_NUM];
+	uint32 statsg[AL_MAX_AWB_STATS_NUM];
+	uint32 statsb[AL_MAX_AWB_STATS_NUM];
 };
 #pragma pack(pop)  /* restore old alignment setting from stack */
 

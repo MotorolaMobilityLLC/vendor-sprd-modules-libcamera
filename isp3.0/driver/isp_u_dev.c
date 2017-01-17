@@ -237,6 +237,12 @@ cmr_int isp_dev_start(isp_handle handle)
 	cmr_u64                       kaddr_temp;
 	cmr_s32                       fds[2];
 
+	if (!file) {
+		ret = -1;
+		ISP_LOGE("isp_handle is null error.");
+		return ret;
+	}
+
 	if (file->isp_is_inited) {
 		ISP_LOGE("isp firmware no need load again ");
 		goto exit;
@@ -267,6 +273,11 @@ cmr_int isp_dev_start(isp_handle handle)
 	load_input.fw_buf_dev_fd = fds[1];
 	load_input.shading_bin_offset = file->init_param.shading_bin_offset;
 	load_input.irp_bin_offset = file->init_param.irp_bin_offset;
+#ifdef CONFIG_ISP_SUPPORT_AF_STATS
+	load_input.af_stats_independence = 1;
+#else
+	load_input.af_stats_independence = 0;
+#endif
 	ISP_LOGI("shading offset 0x%x irp offset 0x%x", load_input.shading_bin_offset, load_input.irp_bin_offset);
 	ISP_LOGI("shading bin addr 0x%p size 0x%x irq bin addr 0x%p size %x, cbc bin addr 0x%p size %x",
 		 file->init_param.shading_bin_addr, file->init_param.shading_bin_size,
@@ -635,6 +646,33 @@ static cmr_int isp_dev_handle_statis(isp_handle handle, struct isp_irq_info *irq
 	return 0;
 }
 
+static cmr_int isp_dev_handle_af_statis(isp_handle handle, struct isp_irq_info *irq_info)
+{
+	struct isp_file *file = (struct isp_file *)handle;
+	struct isp_statis_info statis_info;
+
+	cmr_bzero(&statis_info, sizeof(statis_info));
+	statis_info.statis_frame.format = irq_info->format;
+	statis_info.statis_frame.buf_size = irq_info->length;
+	statis_info.statis_frame.phy_addr = irq_info->yaddr;
+	statis_info.statis_frame.vir_addr = irq_info->yaddr_vir;
+	statis_info.statis_frame.time_stamp.sec = irq_info->time_stamp.sec;
+	statis_info.statis_frame.time_stamp.usec = irq_info->time_stamp.usec;
+	statis_info.timestamp = systemTime(CLOCK_MONOTONIC);
+	statis_info.statis_cnt = irq_info->frm_index;
+	ISP_LOGI("got one frame statis sensor id %d vaddr 0x%lx paddr 0x%lx buf_size 0x%lx stats_cnt %ld",
+		 file->camera_id, irq_info->yaddr_vir, irq_info->yaddr,
+		 irq_info->length, statis_info.statis_cnt);
+	pthread_mutex_lock(&file->cb_mutex);
+	if (file->isp_event_cb) {
+		(*file->isp_event_cb)(ISP_DRV_AF_STATISTICE, &statis_info,
+				      sizeof(struct isp_statis_info), (void *)file->evt_3a_handle);
+	}
+	pthread_mutex_unlock(&file->cb_mutex);
+
+	return 0;
+}
+
 static cmr_int isp_dev_handle_sof(isp_handle handle, struct isp_irq_info *irq_info)
 {
 	struct isp_file *file = (struct isp_file *)handle;
@@ -744,6 +782,9 @@ static void* isp_dev_thread_proc(void *data)
 				switch (irq_info.irq_type) {
 				case ISP_IRQ_STATIS:
 					isp_dev_handle_statis(file, &irq_info);
+					break;
+				case ISP_IRQ_AF_STATIS:
+					isp_dev_handle_af_statis(file, &irq_info);
 					break;
 				case ISP_IRQ_3A_SOF:
 					isp_dev_handle_sof(file, &irq_info);

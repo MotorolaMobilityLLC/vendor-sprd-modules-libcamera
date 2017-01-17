@@ -53,6 +53,9 @@ uint32 al3awrapper_dispatchhw3a_awbstats(void *alisp_metadata_awb, void *alwrapp
 	if (utotalblocks > AL_MAX_AWB_STATS_NUM)
 		return ERR_WRP_AWB_INVALID_BLOCKS;
 
+	if (pmetadata_awb->awb_stats_info.ucRGBFmt > 1)
+		return ERR_WRP_AWB_INVALID_STATS_FORMAT;
+
 	/*  Common info */
 	pwrapper_stat_awb->umagicnum   = pmetadata_awb->umagicnum;
 	pwrapper_stat_awb->uhwengineid = pmetadata_awb->uhwengineid;
@@ -63,9 +66,11 @@ uint32 al3awrapper_dispatchhw3a_awbstats(void *alisp_metadata_awb, void *alwrapp
 		if ( pmetadata_awb->puc_awb_stats == NULL )
 			return ERR_WRP_AWB_INVALID_STATS_ADDR;
 		pwrapper_stat_awb->pawb_stats    = pmetadata_awb->puc_awb_stats;
-	} else
+		//memcpy( (void *)pwrapper_stat_awb->pawb_stats_buffer, (void *)pmetadata_awb->puc_awb_stats, AL_MAX_AWB_STATS_NUM);
+	} else {
 		pwrapper_stat_awb->pawb_stats    = pmetadata_awb->pawb_stats;
-
+		//memcpy( (void *)pwrapper_stat_awb->pawb_stats_buffer, (void *)pmetadata_awb->pawb_stats, AL_MAX_AWB_STATS_NUM);
+	}
 	pwrapper_stat_awb->uawbtokenid   = pmetadata_awb->uawbtokenid;
 	pwrapper_stat_awb->uawbstatssize = pmetadata_awb->uawbstatssize;
 	/* uPseudoFlag 0: normal stats, 1: PseudoFlag flag (for lib, smoothing/progressive run) */
@@ -75,8 +80,14 @@ uint32 al3awrapper_dispatchhw3a_awbstats(void *alisp_metadata_awb, void *alwrapp
 	pwrapper_stat_awb->udbanksize        = pmetadata_awb->awb_stats_info.udbanksize;
 	pwrapper_stat_awb->ucvalidblocks     = pmetadata_awb->awb_stats_info.ucvalidblocks;
 	pwrapper_stat_awb->ucvalidbanks      = pmetadata_awb->awb_stats_info.ucvalidbanks;
-	pwrapper_stat_awb->ucstatsdepth      = 8;
-	pwrapper_stat_awb->ucstats_format    = 0;
+
+	if ( pmetadata_awb->awb_stats_info.ucRGBFmt == 0 ) {
+		pwrapper_stat_awb->ucstats_format = 0;
+		pwrapper_stat_awb->ucstatsdepth   = 8;
+	} else {
+		pwrapper_stat_awb->ucstats_format = 1;
+		pwrapper_stat_awb->ucstatsdepth   = 10;
+	}
 
 	/* store frame & timestamp */
 	memcpy(&pwrapper_stat_awb->systemtime, &pmetadata_awb->systemtime, sizeof(struct timeval));
@@ -85,6 +96,102 @@ uint32 al3awrapper_dispatchhw3a_awbstats(void *alisp_metadata_awb, void *alwrapp
 	return ret;
 }
 
+
+/*
+ * API name: al3awrapper_dispatchhw3a_awb_stats_rgbdata
+ * This API used for patching HW3A stats from ISP(Altek) for third party libary.
+ * param alISP_MetaData_AWB[In]: patched data after calling al3AWrapper_DispatchHW3AStats,
+ *                               used for patch AWB stats for AWB lib
+ * param alWrappered_AWB_Dat[Out]: result AWB stats
+ * return: error code
+ */
+uint32 al3awrapper_dispatchhw3a_awb_stats_rgbdata(void *alisp_metadata_awb, void *alwrappered_awb_dat)
+{
+	uint16 i, j, cnt;
+	uint32 data;
+	uint32 *pstats_addr, *pstats_bank;
+	uint32 ret = ERR_WPR_AWB_SUCCESS;
+	uint32 utotalblocks;
+	struct isp_drv_meta_awb_t      *pmetadata_awb;
+	struct al3awrapper_stats_awb_t *pwrapper_stat_awb;
+
+	/* check input parameter validity */
+	if (alisp_metadata_awb == NULL)
+		return ERR_WRP_AWB_EMPTY_METADATA;
+
+	if (alwrappered_awb_dat == NULL)
+		return ERR_WRP_AWB_INVALID_INPUT_PARAM;
+
+	pmetadata_awb = (struct isp_drv_meta_awb_t *) alisp_metadata_awb;
+	pwrapper_stat_awb = (struct al3awrapper_stats_awb_t *) alwrappered_awb_dat;
+
+	utotalblocks = pmetadata_awb->awb_stats_info.ucvalidblocks * pmetadata_awb->awb_stats_info.ucvalidbanks;
+
+	/* check data AWB blocks validity */
+	if (utotalblocks > AL_MAX_AWB_STATS_NUM)
+		return ERR_WRP_AWB_INVALID_BLOCKS;
+
+	if (pmetadata_awb->awb_stats_info.ucRGBFmt > 1)
+		return ERR_WRP_AWB_INVALID_STATS_FORMAT;
+
+	/*  Common info */
+	pwrapper_stat_awb->umagicnum   = pmetadata_awb->umagicnum;
+	pwrapper_stat_awb->uhwengineid = pmetadata_awb->uhwengineid;
+	pwrapper_stat_awb->uframeidx   = pmetadata_awb->uframeidx;
+
+	/*  AWB info */
+	if ( pmetadata_awb->b_isstats_byaddr == 1 ) {
+		if ( pmetadata_awb->puc_awb_stats == NULL )
+			return ERR_WRP_AWB_INVALID_STATS_ADDR;
+		pwrapper_stat_awb->pawb_stats    = pmetadata_awb->puc_awb_stats;
+		//memcpy( (void *)pwrapper_stat_awb->pawb_stats_buffer, (void *)pmetadata_awb->puc_awb_stats, AL_MAX_AWB_STATS_NUM);
+	} else {
+		pwrapper_stat_awb->pawb_stats    = pmetadata_awb->pawb_stats;
+		//memcpy( (void *)pwrapper_stat_awb->pawb_stats_buffer, (void *)pmetadata_awb->pawb_stats, AL_MAX_AWB_STATS_NUM);
+	}
+	pwrapper_stat_awb->uawbtokenid   = pmetadata_awb->uawbtokenid;
+	pwrapper_stat_awb->uawbstatssize = pmetadata_awb->uawbstatssize;
+	/* uPseudoFlag 0: normal stats, 1: PseudoFlag flag (for lib, smoothing/progressive run) */
+	pwrapper_stat_awb->upseudoflag   = pmetadata_awb->upseudoflag;
+	/* AWB stats info */
+	pwrapper_stat_awb->udpixelsperblocks = pmetadata_awb->awb_stats_info.udpixelsperblocks;
+	pwrapper_stat_awb->udbanksize        = pmetadata_awb->awb_stats_info.udbanksize;
+	pwrapper_stat_awb->ucvalidblocks     = pmetadata_awb->awb_stats_info.ucvalidblocks;
+	pwrapper_stat_awb->ucvalidbanks      = pmetadata_awb->awb_stats_info.ucvalidbanks;
+
+	memset(pwrapper_stat_awb->statsr, 0, sizeof(uint32)* AL_MAX_AWB_STATS_NUM);
+	memset(pwrapper_stat_awb->statsg, 0, sizeof(uint32)* AL_MAX_AWB_STATS_NUM);
+	memset(pwrapper_stat_awb->statsb, 0, sizeof(uint32)* AL_MAX_AWB_STATS_NUM);
+
+	cnt = 0;
+	pstats_bank = (uint32*)pwrapper_stat_awb->pawb_stats;
+	if ( pmetadata_awb->awb_stats_info.ucRGBFmt == 0 ) {
+		pwrapper_stat_awb->ucstats_format = 0;
+		pwrapper_stat_awb->ucstatsdepth   = 8;
+	} else {
+		pwrapper_stat_awb->ucstats_format = 1;
+		pwrapper_stat_awb->ucstatsdepth   = 10;
+
+		for(j = 0; j < pwrapper_stat_awb->ucvalidbanks; j++) {
+			pstats_addr = pstats_bank + 1;
+			for(i = 0; i < pwrapper_stat_awb->ucvalidblocks; i++) {
+				data = (uint32)(*pstats_addr);
+				pwrapper_stat_awb->statsr[cnt] = (data & (0x03FF));
+				pwrapper_stat_awb->statsg[cnt] = ((data >> 10) & (0x03FF));
+				pwrapper_stat_awb->statsb[cnt] = ((data >> 20) & (0x03FF));
+				cnt++;
+				pstats_addr += 2;
+			}
+			pstats_bank += 2 * AWB_STATS_MAX_BANKS;
+		}
+	}
+
+	/* store frame & timestamp */
+	memcpy(&pwrapper_stat_awb->systemtime, &pmetadata_awb->systemtime, sizeof(struct timeval));
+	pwrapper_stat_awb->udsys_sof_idx       = pmetadata_awb->udsys_sof_idx;
+
+	return ret;
+}
 
 /*
  * API name: al3awrapperawb_translatescenemodefromawblib2ap
@@ -141,7 +248,6 @@ uint32 al3awrapperawb_getdefaultcfg(struct alhw3a_awb_cfginfo_t *aawbconfig)
 {
 	uint32 ret = ERR_WPR_AWB_SUCCESS;
 	struct alhw3a_awb_cfginfo_t localparam;
-	uint8   i;
 	uint8   yfactor[16] = { 0, 0, 0, 4, 7, 10, 12, 14,
 	                        15, 15, 15, 15, 14, 13, 10, 5
 	                      };
@@ -171,21 +277,7 @@ uint32 al3awrapperawb_getdefaultcfg(struct alhw3a_awb_cfginfo_t *aawbconfig)
 	localparam.ucquantize                   = 0;
 	localparam.ucdamp                       = 7;
 	localparam.ucsumshift                   = 5;
-	localparam.tawbhis.benable              = TRUE;
-	localparam.tawbhis.ccrstart             = -46;
-	localparam.tawbhis.ccrend               = 110;
-	localparam.tawbhis.coffsetup            = 10;
-	localparam.tawbhis.coffsetdown          = -90;
-	localparam.tawbhis.ccrpurple            = 0;
-	localparam.tawbhis.ucoffsetpurple       = 2;
-	localparam.tawbhis.cgrassoffset         = -22;
-	localparam.tawbhis.cgrassstart          = -30;
-	localparam.tawbhis.cgrassend            = 25;
-	localparam.tawbhis.ucdampgrass          = 4;
-	localparam.tawbhis.coffset_bbr_w_start  = -2;
-	localparam.tawbhis.coffset_bbr_w_end    = 2;
-	localparam.tawbhis.ucyfac_w             = 2;
-	localparam.tawbhis.dhisinterp           = -178;
+	localparam.tawbhis.benable              = 0;
 	localparam.uwrlineargain                = 128;
 	localparam.uwblineargain                = 128;
 	memcpy(aawbconfig, &localparam, sizeof(struct alhw3a_awb_cfginfo_t));
@@ -222,7 +314,7 @@ uint32 al3awrapperawb_queryispconfig_awb(struct alhw3a_awb_cfginfo_t *aawbconfig
 
 /*
  * API name: al3awrapperawb_updateispconfig_awb
- * This API is used for query ISP config before calling al3awrapperawb_updateispconfig_awb
+ * This API is used for updating ISP config
  * param a_ucSensor[in]: AHB sensor ID
  * param aAWBConfig[out]: input buffer, API would manage parameter and return via this pointer
  * return: error code
@@ -297,7 +389,7 @@ uint32 al3awrapperawb_getversion(float *fwrapversion)
 {
 	uint32 ret = ERR_WPR_AWB_SUCCESS;
 
-	*fwrapversion = _WRAPPER_AWB_VER;
+	*fwrapversion = (float)_WRAPPER_AWB_VER;
 
 	return ret;
 }
