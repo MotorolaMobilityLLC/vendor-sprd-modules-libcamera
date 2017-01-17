@@ -597,7 +597,7 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config, cmr_u32
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
 
-	CMR_LOGI("frm_num %d dst width %d dst height %d.", config->frm_num, config->cfg.dst_img_size.width, config->cfg.dst_img_size.height);
+	CMR_LOGI("frm_num %d dst width %d dst height %d,slowmotion %d.", config->frm_num, config->cfg.dst_img_size.width, config->cfg.dst_img_size.height,config->cfg.slowmotion);
 
 	parm.dst_size.w = config->cfg.dst_img_size.width;
 	parm.dst_size.h = config->cfg.dst_img_size.height;
@@ -607,6 +607,8 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config, cmr_u32
 	parm.need_isp = config->cfg.need_isp;
 	parm.regular_desc = config->cfg.regular_desc;
 	parm.rt_refocus = config->cfg.pdaf_ctrl.mode;
+	parm.slowmotion = config->cfg.slowmotion;
+
 	parm.crop_rect.x = config->cfg.src_img_rect.start_x;
 	parm.crop_rect.y = config->cfg.src_img_rect.start_y;
 	parm.crop_rect.w = config->cfg.src_img_rect.width;
@@ -657,7 +659,7 @@ cmr_int cmr_grab_buff_cfg(cmr_handle grab_handle, struct buffer_cfg *buf_cfg)
 	struct cmr_grab          *p_grab;
 	struct sprd_img_parm     parm;
 
-	if (NULL == buf_cfg || buf_cfg->count > GRAB_BUF_MAX)
+	if (NULL == buf_cfg || buf_cfg->count > IMG_PATH_BUFFER_COUNT)
 		return -1;
 	p_grab = (struct cmr_grab *)grab_handle;
 
@@ -674,31 +676,34 @@ cmr_int cmr_grab_buff_cfg(cmr_handle grab_handle, struct buffer_cfg *buf_cfg)
 	CMR_RTN_IF_ERR(ret);
 
 	/* secondly , set the frame address */
+	parm.channel_id   = buf_cfg->channel_id;
+	parm.is_reserved_buf  = buf_cfg->is_reserved_buf;
+	parm.buf_flag         = buf_cfg->flag;
+	parm.buffer_count = buf_cfg->count;
+	parm.reserved[0]      = buf_cfg->zsl_private;
 	for (i = 0; i < buf_cfg->count; i++) {
-		parm.channel_id   = buf_cfg->channel_id;
-		parm.frame_addr.y = buf_cfg->addr[i].addr_y;
-		parm.frame_addr.u = buf_cfg->addr[i].addr_u;
-		parm.frame_addr.v = buf_cfg->addr[i].addr_v;
-		parm.frame_addr_vir.y = buf_cfg->addr_vir[i].addr_y;
-		parm.frame_addr_vir.u = buf_cfg->addr_vir[i].addr_u;
-		parm.frame_addr_vir.v = buf_cfg->addr_vir[i].addr_v;
-		parm.index            = buf_cfg->index[i];
-		parm.is_reserved_buf  = buf_cfg->is_reserved_buf;
-		parm.buf_flag         = buf_cfg->flag;
-		parm.reserved[0]      = buf_cfg->zsl_private;
-		parm.reserved[1]      = buf_cfg->fd[i];
-		parm.reserved[2]      = buf_cfg->fd[i];
-		parm.reserved[3]      = buf_cfg->fd[i];
+
+		parm.frame_addr_array[i].y = buf_cfg->addr[i].addr_y;
+		parm.frame_addr_array[i].u = buf_cfg->addr[i].addr_u;
+		parm.frame_addr_array[i].v = buf_cfg->addr[i].addr_v;
+		parm.frame_addr_vir_array[i].y = buf_cfg->addr_vir[i].addr_y;
+		parm.frame_addr_vir_array[i].u = buf_cfg->addr_vir[i].addr_u;
+		parm.frame_addr_vir_array[i].v = buf_cfg->addr_vir[i].addr_v;
+		parm.fd_array[i]      = buf_cfg->fd[i];
+		parm.index             = buf_cfg->index[i];
 		CMR_LOGD("chn_id=%d, i=%d, fd=0x%x, offset: y=0x%lx, u=0x%lx, v=0x%lx, is_reserved_buf=%d\n",
 			 buf_cfg->channel_id, i, buf_cfg->fd[i],
 			 buf_cfg->addr[i].addr_y, buf_cfg->addr[i].addr_u,
 			 buf_cfg->addr[i].addr_v, buf_cfg->is_reserved_buf);
-		if (0 != buf_cfg->addr_vir[i].addr_y) {
-			ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_FRAME_ADDR, &parm);
-			if (ret) {
-				CMR_LOGE("Failed to QBuf i=%d, ret=%ld,", i, ret);
-				break;
-			}
+
+	}
+
+	if(buf_cfg->count > 0)
+	{
+		ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_FRAME_ADDR, &parm);
+		if (ret) {
+			CMR_LOGE("Failed to QBuf i=%d, ret=%ld,", i, ret);
+			goto exit;
 		}
 	}
 

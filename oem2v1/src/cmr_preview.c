@@ -224,7 +224,8 @@ struct prev_context {
 	cmr_s32                         video_reserved_fd;
 	cmr_uint                        video_mem_size;
 	cmr_uint                        video_mem_num;
-	cmr_uint                         video_mem_valid_num;
+	cmr_int                          video_mem_valid_num;
+         cmr_int		             cache_buffer_cont;
 
 	/*capture*/
 	cmr_uint                        cap_mode;
@@ -4034,6 +4035,8 @@ cmr_int prev_alloc_video_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_
 	}
 	if (!is_restart) {
 		prev_cxt->video_mem_valid_num = 0;
+		prev_cxt->cache_buffer_cont = 0;
+
 		for (i = 0; i < prev_cxt->video_mem_num; i++) {
 			prev_cxt->video_phys_addr_array[i] = 0;
 			prev_cxt->video_virt_addr_array[i] = 0;
@@ -5386,7 +5389,7 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id)
 		}
 	}
 
-	if (handle->prev_cxt[camera_id].prev_param.video_slowmotion_eb) {
+	if (handle->prev_cxt[camera_id].prev_param.video_slowmotion_eb && handle->prev_cxt[camera_id].prev_param.video_eb) {
 		for (sn_mode = SENSOR_MODE_PREVIEW_ONE; sn_mode < SENSOR_MODE_MAX; sn_mode++) {
 			ret = handle->ops.get_sensor_fps_info(handle->oem_handle,
 						camera_id, sn_mode, &fps_info);
@@ -6482,6 +6485,7 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 	/* in slowmotion, we want do decimation in preview channel,
 	bug video buffer and preview buffer is in one request, so we cant
 	do decimation for now, otherwise the fps is low */
+
 	chn_param.cap_inf_cfg.chn_deci_factor  = 0;
 	chn_param.cap_inf_cfg.frm_num          = -1;
 	chn_param.cap_inf_cfg.buffer_cfg_isp = 0;
@@ -6504,6 +6508,7 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 	chn_param.cap_inf_cfg.cfg.src_img_rect.width   = sensor_mode_info->scaler_trim.width;
 	chn_param.cap_inf_cfg.cfg.src_img_rect.height  = sensor_mode_info->scaler_trim.height;
 	chn_param.cap_inf_cfg.cfg.sence_mode = DCAM_SCENE_MODE_PREVIEW;
+	chn_param.cap_inf_cfg.cfg.slowmotion = prev_cxt->prev_param.video_slowmotion_eb;
 
 	CMR_LOGI("skip_mode %ld, skip_num %ld, image_format %d",
 		prev_cxt->skip_mode,
@@ -6870,9 +6875,11 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_
 	chn_param.cap_inf_cfg.cfg.dst_img_fmt  = prev_cxt->prev_param.preview_fmt;
 	chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode= 1;
 	chn_param.cap_inf_cfg.cfg.sence_mode = DCAM_SCENE_MODE_RECORDING;
+	chn_param.cap_inf_cfg.cfg.slowmotion = prev_cxt->prev_param.video_slowmotion_eb;
 
 	if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
-		prev_cxt->skip_mode = IMG_SKIP_SW_KER;
+		if(!prev_cxt->prev_param.video_slowmotion_eb)
+			prev_cxt->skip_mode = IMG_SKIP_SW_KER;
 		chn_param.cap_inf_cfg.cfg.need_isp = 1;
 	}
 
@@ -7471,21 +7478,18 @@ static cmr_int prev_update_cap_param(struct prev_handle *handle,
 		prev_cxt->prev_param.frame_count,
 		encode_angle);
 
-	if (!prev_cxt->prev_param.preview_eb && prev_cxt->prev_param.snapshot_eb) {
+	if (prev_cxt->prev_param.preview_eb && prev_cxt->prev_param.snapshot_eb) {
 		/*normal cap ignore this*/
-		return ret;
+		cmr_bzero(&chn_param, sizeof(struct channel_start_param));
+		prev_cxt->prev_param.encode_angle = encode_angle;
+
+		/*trigger cap mem re-arrange*/
+		ret = prev_alloc_cap_buf(handle, camera_id, 1, &chn_param.buffer);
+		if (ret) {
+			CMR_LOGE("update cap buf failed");
+			ret = CMR_CAMERA_FAIL;
+		}
 	}
-
-	cmr_bzero(&chn_param, sizeof(struct channel_start_param));
-	prev_cxt->prev_param.encode_angle = encode_angle;
-
-	/*trigger cap mem re-arrange*/
-	ret = prev_alloc_cap_buf(handle, camera_id, 1, &chn_param.buffer);
-	if (ret) {
-		CMR_LOGE("update cap buf failed");
-		ret = CMR_CAMERA_FAIL;
-	}
-
 	return ret;
 }
 
@@ -8978,6 +8982,7 @@ cmr_int prev_set_video_buffer(struct prev_handle *handle, cmr_u32 camera_id, cmr
 	cmr_u32                     width, height, buffer_size, frame_size;
 	struct buffer_cfg           buf_cfg;
 	cmr_uint                    rot_index = 0;
+	cmr_int 			        i = 0;
 
 	CHECK_HANDLE_VALID(handle);
 	CHECK_CAMERA_ID(camera_id);
@@ -8991,6 +8996,12 @@ cmr_int prev_set_video_buffer(struct prev_handle *handle, cmr_u32 camera_id, cmr
 	cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
 	prev_cxt  = &handle->prev_cxt[camera_id];
 	valid_num = prev_cxt->video_mem_valid_num;
+
+	if (valid_num >= PREV_FRM_CNT || valid_num < 0) {
+		CMR_LOGE("wrong valid_num %ld", valid_num);
+		return CMR_CAMERA_INVALID_PARAM;
+	}
+
 	width     = prev_cxt->actual_video_size.width;
 	height    = prev_cxt->actual_video_size.height;
 
@@ -9011,36 +9022,58 @@ cmr_int prev_set_video_buffer(struct prev_handle *handle, cmr_u32 camera_id, cmr
 	prev_cxt->video_frm[valid_num].size.height     = prev_cxt->actual_video_size.height;
 	prev_cxt->video_mem_valid_num++;
 
-	buf_cfg.channel_id  = prev_cxt->video_channel_id;
-	buf_cfg.base_id     = CMR_VIDEO_ID_BASE;
-	buf_cfg.count       = 1;
-	buf_cfg.length      = frame_size;
-	buf_cfg.flag        = BUF_FLAG_RUNNING;
+	if(prev_cxt->prev_param.video_slowmotion_eb == ISP_SLW_VIDEO) {
+		prev_cxt->cache_buffer_cont++;
+		if(prev_cxt->cache_buffer_cont< CAMERA_CONFIG_BUFFER_TO_KERNAL_ARRAY_SIZE || prev_cxt->video_mem_valid_num < CAMERA_CONFIG_BUFFER_TO_KERNAL_ARRAY_SIZE)
+			goto exit;
 
-	if (prev_cxt->prev_param.prev_rot) {
-		if (CMR_CAMERA_SUCCESS == prev_search_rot_buffer(prev_cxt, CAMERA_VIDEO)) {
-			rot_index                  = prev_cxt->video_rot_index % PREV_ROT_FRM_CNT;
-			buf_cfg.addr[0].addr_y     = prev_cxt->video_rot_frm[rot_index].addr_phy.addr_y;
-			buf_cfg.addr[0].addr_u     = prev_cxt->video_rot_frm[rot_index].addr_phy.addr_u;
-			buf_cfg.addr_vir[0].addr_y = prev_cxt->video_rot_frm[rot_index].addr_vir.addr_y;
-			buf_cfg.addr_vir[0].addr_u = prev_cxt->video_rot_frm[rot_index].addr_vir.addr_u;
-			buf_cfg.fd[0]               = prev_cxt->video_rot_frm[rot_index].fd;
-			ret = prev_set_rot_buffer_flag(prev_cxt, CAMERA_VIDEO, rot_index, 1);
-			if (ret) {
-				CMR_LOGE("prev_set_rot_buffer_flag failed");
+		buf_cfg.channel_id  = prev_cxt->video_channel_id;
+		buf_cfg.base_id     = CMR_VIDEO_ID_BASE;
+		buf_cfg.count       = CAMERA_CONFIG_BUFFER_TO_KERNAL_ARRAY_SIZE;
+		buf_cfg.length      = frame_size;
+		buf_cfg.flag        = BUF_FLAG_RUNNING;
+	         CMR_LOGD(" buffer_cont=0x%x, valid_num=%ld, camera_id = %ld",prev_cxt->cache_buffer_cont,prev_cxt->video_mem_valid_num,prev_cxt->camera_id);
+		for(i= 0;i < CAMERA_CONFIG_BUFFER_TO_KERNAL_ARRAY_SIZE;i++)  {
+			buf_cfg.addr[i].addr_y     = prev_cxt->video_frm[prev_cxt->video_mem_valid_num-CAMERA_CONFIG_BUFFER_TO_KERNAL_ARRAY_SIZE+i].addr_phy.addr_y;
+			buf_cfg.addr[i].addr_u     = prev_cxt->video_frm[prev_cxt->video_mem_valid_num-CAMERA_CONFIG_BUFFER_TO_KERNAL_ARRAY_SIZE+i].addr_phy.addr_u;
+			buf_cfg.addr_vir[i].addr_y = prev_cxt->video_frm[prev_cxt->video_mem_valid_num-CAMERA_CONFIG_BUFFER_TO_KERNAL_ARRAY_SIZE+i].addr_vir.addr_y;
+			buf_cfg.addr_vir[i].addr_u = prev_cxt->video_frm[prev_cxt->video_mem_valid_num-CAMERA_CONFIG_BUFFER_TO_KERNAL_ARRAY_SIZE+i].addr_vir.addr_u;
+			buf_cfg.fd[i]              = prev_cxt->video_frm[prev_cxt->video_mem_valid_num-CAMERA_CONFIG_BUFFER_TO_KERNAL_ARRAY_SIZE+i].fd;
+		}
+		prev_cxt->cache_buffer_cont = 0;
+	}
+	else {
+		buf_cfg.channel_id  = prev_cxt->video_channel_id;
+		buf_cfg.base_id     = CMR_VIDEO_ID_BASE;
+		buf_cfg.count       = 1;
+		buf_cfg.length      = frame_size;
+		buf_cfg.flag        = BUF_FLAG_RUNNING;
+
+		if (prev_cxt->prev_param.prev_rot) {
+			if (CMR_CAMERA_SUCCESS == prev_search_rot_buffer(prev_cxt, CAMERA_VIDEO)) {
+				rot_index                  = prev_cxt->video_rot_index % PREV_ROT_FRM_CNT;
+				buf_cfg.addr[0].addr_y     = prev_cxt->video_rot_frm[rot_index].addr_phy.addr_y;
+				buf_cfg.addr[0].addr_u     = prev_cxt->video_rot_frm[rot_index].addr_phy.addr_u;
+				buf_cfg.addr_vir[0].addr_y = prev_cxt->video_rot_frm[rot_index].addr_vir.addr_y;
+				buf_cfg.addr_vir[0].addr_u = prev_cxt->video_rot_frm[rot_index].addr_vir.addr_u;
+				buf_cfg.fd[0]               = prev_cxt->video_rot_frm[rot_index].fd;
+				ret = prev_set_rot_buffer_flag(prev_cxt, CAMERA_VIDEO, rot_index, 1);
+				if (ret) {
+					CMR_LOGE("prev_set_rot_buffer_flag failed");
+					goto exit;
+				}
+				CMR_LOGI("rot_index %ld prev_rot_frm_is_lock %ld", rot_index, prev_cxt->video_rot_frm_is_lock[rot_index]);
+			} else {
+				CMR_LOGE("error no rot buffer");
 				goto exit;
 			}
-			CMR_LOGI("rot_index %ld prev_rot_frm_is_lock %ld", rot_index, prev_cxt->video_rot_frm_is_lock[rot_index]);
 		} else {
-			CMR_LOGE("error no rot buffer");
-			goto exit;
+			buf_cfg.addr[0].addr_y     = prev_cxt->video_frm[valid_num].addr_phy.addr_y;
+			buf_cfg.addr[0].addr_u     = prev_cxt->video_frm[valid_num].addr_phy.addr_u;
+			buf_cfg.addr_vir[0].addr_y = prev_cxt->video_frm[valid_num].addr_vir.addr_y;
+			buf_cfg.addr_vir[0].addr_u = prev_cxt->video_frm[valid_num].addr_vir.addr_u;
+			buf_cfg.fd[0]              = prev_cxt->video_frm[valid_num].fd;
 		}
-	} else {
-		buf_cfg.addr[0].addr_y     = prev_cxt->video_frm[valid_num].addr_phy.addr_y;
-		buf_cfg.addr[0].addr_u     = prev_cxt->video_frm[valid_num].addr_phy.addr_u;
-		buf_cfg.addr_vir[0].addr_y = prev_cxt->video_frm[valid_num].addr_vir.addr_y;
-		buf_cfg.addr_vir[0].addr_u = prev_cxt->video_frm[valid_num].addr_vir.addr_u;
-		buf_cfg.fd[0]              = prev_cxt->video_frm[valid_num].fd;
 	}
 	ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);
 	if (ret) {
@@ -9049,11 +9082,12 @@ cmr_int prev_set_video_buffer(struct prev_handle *handle, cmr_u32 camera_id, cmr
 	}
 
 exit:
-	CMR_LOGD("fd=0x%x, channel_id=0x%lx, valid_num=%ld, camera_id = %ld",
+	CMR_LOGD("fd=0x%x, channel_id=0x%x, valid_num=%ld, camera_id = %ld,cache_buffer_cont =%d",
 		prev_cxt->video_frm[valid_num].fd,
 		prev_cxt->video_channel_id,
 		prev_cxt->video_mem_valid_num,
-		prev_cxt->camera_id);
+		prev_cxt->camera_id,
+		prev_cxt->cache_buffer_cont);
 	ATRACE_END();
 	return ret;
 }

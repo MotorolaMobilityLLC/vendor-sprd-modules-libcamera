@@ -35,7 +35,7 @@
 #include "isp_video.h"
 #include "pthread.h"
 /**********************************************************************************************/
-#define PREVIEW_MSG_QUEUE_SIZE                       50
+#define PREVIEW_MSG_QUEUE_SIZE                       100
 #define SNAPSHOT_MSG_QUEUE_SIZE                      50
 #define CMR_EVT_INIT                                 (CMR_EVT_OEM_BASE)
 #define CMR_EVT_WAIT                                 (CMR_EVT_OEM_BASE + 1)
@@ -6533,6 +6533,10 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 		}
 		out_param_ptr->video_slowmotion_eb = setting_param.cmd_type_value;
 		CMR_LOGD("video_slowmotion_eb = %d", out_param_ptr->video_slowmotion_eb);
+		#ifdef FMCU_SUPPORT
+		if(out_param_ptr->video_slowmotion_eb > 0)
+			out_param_ptr->video_slowmotion_eb = ISP_SLW_VIDEO
+		#endif
 
 		CMR_LOGD("mode = %d", mode);
 		if (CAMERA_ZSL_MODE == mode) {

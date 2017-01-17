@@ -1162,11 +1162,14 @@ int SprdCamera3OEMIf::setTakePictureSize(uint32_t width, uint32_t height)
 status_t SprdCamera3OEMIf::faceDectect(bool enable)
 {
 	status_t ret = NO_ERROR;
-
+	SPRD_DEF_Tag sprddefInfo;
 	if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
 		HAL_LOGE("oem is null or oem ops is null");
 		return UNKNOWN_ERROR;
 	}
+	mSetting->getSPRDDEFTag(&sprddefInfo);
+	if(sprddefInfo.slowmotion >1)
+		return ret;
 
 	if(enable)
 	{
@@ -1179,11 +1182,16 @@ status_t SprdCamera3OEMIf::faceDectect(bool enable)
 status_t SprdCamera3OEMIf::faceDectect_enable(bool enable)
 {
 	status_t ret = NO_ERROR;
+	SPRD_DEF_Tag sprddefInfo;
 
 	if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
 		HAL_LOGE("oem is null or oem ops is null");
 		return UNKNOWN_ERROR;
 	}
+
+	mSetting->getSPRDDEFTag(&sprddefInfo);
+	if(sprddefInfo.slowmotion >1)
+		return ret;
 
 	if(enable)
 	{
@@ -6950,7 +6958,7 @@ int SprdCamera3OEMIf::SetDimensionVideo(cam_dimension_t video_size)
 	SPRD_DEF_Tag sprddefInfo;
 	mSetting->getSPRDDEFTag(&sprddefInfo);
 
-	if (mVideoWidth > 0) {
+	if (mVideoWidth > 0&& sprddefInfo.slowmotion <= 1) {
 		mVideoSnapshotType = 1;
 	} else {
 		mVideoSnapshotType = 0;

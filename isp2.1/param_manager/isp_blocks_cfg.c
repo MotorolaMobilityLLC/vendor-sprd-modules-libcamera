@@ -152,7 +152,6 @@ struct isp_block_cfg* isp_pm_get_block_cfg(isp_u32 id)
 	struct isp_block_cfg *blk_cfg_array = s_blk_cfgs;
 
 	num = sizeof (s_blk_cfgs) / sizeof(struct isp_block_cfg);
-	ISP_LOGE("id is %x\n", id);
 	for (i = 0; i < num; ++i) {
 		blk_id = blk_cfg_array[i].id;
 		if (blk_id == id) {

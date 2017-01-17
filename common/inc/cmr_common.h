@@ -74,6 +74,7 @@ extern "C"
 #define CMR_MAX_SKIP_NUM                   10
 #define CAMERA_DEPTH_META_SIZE             (480 * 360 + 1280)
 #define CAMERA_DEPTH_META_DATA_TYPE        0x35
+#define CAMERA_CONFIG_BUFFER_TO_KERNAL_ARRAY_SIZE  4
 
 #define HDR_CAP_NUM                        3
 #define FACE_DETECT_NUM                    10
@@ -537,7 +538,8 @@ struct img_frm_cap {
 	cmr_u32                             flip_on;
 	cmr_u32                             pdaf_type3;
 	struct sprd_pdaf_control            pdaf_ctrl;
-	cmr_u32 sence_mode;
+	cmr_u32                            sence_mode;
+	cmr_u32                            slowmotion;
 };
 
 struct buffer_cfg {
@@ -549,10 +551,10 @@ struct buffer_cfg {
 	cmr_u32                             start_buf_id;
 	cmr_u32                             is_reserved_buf;
 	cmr_u32                             flag;
-	cmr_u32                             index[GRAB_BUF_MAX];
-	struct img_addr                     addr[GRAB_BUF_MAX];
-	struct img_addr                     addr_vir[GRAB_BUF_MAX];
-	cmr_u32                             fd[GRAB_BUF_MAX];
+	cmr_u32                             index[IMG_PATH_BUFFER_COUNT];
+	struct img_addr                     addr[IMG_PATH_BUFFER_COUNT];
+	struct img_addr                     addr_vir[IMG_PATH_BUFFER_COUNT];
+	cmr_u32                             fd[IMG_PATH_BUFFER_COUNT];
 	cmr_uint                            zsl_private;
 };
 
