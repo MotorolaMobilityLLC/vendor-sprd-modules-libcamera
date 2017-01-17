@@ -64,12 +64,12 @@
 #define PREVIEW_MIPI_PER_LANE_BPS	360
 
 /*line time unit: 1ns*/
-#define SNAPSHOT_LINE_TIME		108000
-#define PREVIEW_LINE_TIME		54000*2
+#define SNAPSHOT_LINE_TIME		26674
+#define PREVIEW_LINE_TIME		26674
 
 /* frame length*/
-#define SNAPSHOT_FRAME_LENGTH		623 
-#define PREVIEW_FRAME_LENGTH		623 
+#define SNAPSHOT_FRAME_LENGTH		4230 //623
+#define PREVIEW_FRAME_LENGTH		2160 //623
 
 /* please ref your spec */
 #define FRAME_OFFSET			0
@@ -104,8 +104,8 @@
 
 
 //#define IMAGE_NORMAL_MIRROR 
-#define IMAGE_H_MIRROR 
-//#define IMAGE_V_MIRROR 
+//#define IMAGE_H_MIRROR
+#define IMAGE_V_MIRROR
 //#define IMAGE_HV_MIRROR 
 
 #ifdef IMAGE_NORMAL_MIRROR
@@ -201,7 +201,7 @@ static const SENSOR_REG_T gc8024_preview_setting[] = {
 	{0xf9,0x00},
 	{0xfa,0x84},
 	{0xfc,0xce},
-	
+
 	/*Analog*/
 	{0xfe,0x00},
 	{0x03,0x08},
@@ -223,7 +223,7 @@ static const SENSOR_REG_T gc8024_preview_setting[] = {
 	{0x19,0x0b},
 	{0x1a,0x19},
 	{0x1c,0x0c},
-	{0x1d,0x11},//add 20160527	
+	{0x1d,0x11},//add 20160527
 	{0x21,0x12},
 	{0x23,0xb0},
 	{0x28,0xdf},
@@ -255,14 +255,14 @@ static const SENSOR_REG_T gc8024_preview_setting[] = {
 	{0xee,0x01},
 	{0xef,0x02},
 
-	/*ISP*/ 
+	/*ISP*/
 	{0x80,0x50},
 	{0x88,0x03},
 	{0x89,0x03},
 
 	/*scaler mode*/
-	{0x66,0x3c},	
-	
+	{0x66,0x3c},
+
 	/*window*/
 	{0x90,0x01},
 	{0x92,PRE_STARTY}, //crop y
@@ -271,8 +271,8 @@ static const SENSOR_REG_T gc8024_preview_setting[] = {
 	{0x96,0xc8},
 	{0x97,0x06},
 	{0x98,0x60},
-	
-	/*gain*/	  
+
+	/*gain*/
 	{0xfe,0x01},
 	{0x50,0x00},
 	{0x51,0x08},
@@ -283,7 +283,7 @@ static const SENSOR_REG_T gc8024_preview_setting[] = {
 	{0x56,0x1b},
 	{0x57,0x1c},
 	{0x58,0x3c},
-	{0xfe,0x00},	
+	{0xfe,0x00},
 	{0xb0,0x48},
 	{0xb1,0x01},
 	{0xb2,0x00},
@@ -301,23 +301,23 @@ static const SENSOR_REG_T gc8024_preview_setting[] = {
 	{0x6c,0x00},
 	{0x6d,0x0f},
 
-	/*dark offset*/	  
+	/*dark offset*/
 	{0x35,0x30},
-	{0x36,0x00}, 
+	{0x36,0x00},
 
-	/*dark sun*/		  
+	/*dark sun*/
 	{0x37,0xf0},
 	{0x38,0x80},
 	{0x3b,0xf0},
 	{0x3d,0x00},
-	
+
 	/*DD*/
 	{0xfe,0x01},
 	{0xc2,0x03},
-	{0xc3,0x00},	
+	{0xc3,0x00},
 	{0xc4,0xd8},
 	{0xc5,0x00},
-	
+
 	/*mipi*/
 	{0xfe,0x03},
 	{0x10,0x01},
@@ -383,7 +383,7 @@ static const SENSOR_REG_T gc8024_snapshot_setting[] = {
 	{0x28,0x5f},
 	{0x29,0xd4},
 	{0x2f,0x4c},
-	{0x30,0xf8},		
+	{0x30,0xf8},
 	{0xcd,0x9a},
 	{0xce,0xfd},
 	{0xd0,0xd2},
@@ -399,7 +399,7 @@ static const SENSOR_REG_T gc8024_snapshot_setting[] = {
 	{0xe3,0x71},
 	{0xe4,0x78},
 	{0xe5,0x44},
-	{0xe6,0xdf},		
+	{0xe6,0xdf},
 	{0xe8,0x02},
 	{0xe9,0x01},
 	{0xea,0x01},
@@ -408,12 +408,12 @@ static const SENSOR_REG_T gc8024_snapshot_setting[] = {
 	{0xed,0x01},
 	{0xee,0x01},
 	{0xef,0x02},
-		
+
 	/*ISP*/
 	{0x80,0x50},
 	{0x88,0x03},
 	{0x89,0x03},
-		
+
 	/*window*/
 	{0x90,0x01},
 	{0x92,CAP_STARTY},
@@ -422,8 +422,8 @@ static const SENSOR_REG_T gc8024_snapshot_setting[] = {
 	{0x96,0x90},
 	{0x97,0x0c},
 	{0x98,0xc0},
-		
-	/*gain*/	
+
+	/*gain*/
 	{0xfe,0x01},
 	{0x50,0x00},
 	{0x51,0x08},
@@ -435,12 +435,12 @@ static const SENSOR_REG_T gc8024_snapshot_setting[] = {
 	{0x57,0x1c},
 	{0x58,0x3c},
 	{0xfe,0x00},
-		
+
 	{0xb0,0x48},
 	{0xb1,0x01},
 	{0xb2,0x00},
 	{0xb6,0x00},
-		
+
 	/*blk*/
 	{0x40,0x22},
 	{0x41,0x20},
@@ -452,24 +452,24 @@ static const SENSOR_REG_T gc8024_snapshot_setting[] = {
 	{0x69,0x03},
 	{0x6c,0x00},
 	{0x6d,0x0f},
-		
-	/*dark offset*/ 	
+
+	/*dark offset*/
 	{0x35,0x30},
-	{0x36,0x00}, 
-		
-	/*dark sun*/		
+	{0x36,0x00},
+
+	/*dark sun*/
 	{0x37,0xf0},
 	{0x38,0x80},
 	{0x3b,0xf0},
 	{0x3d,0x00},
-	
+
 	/*dd*/
 	{0xfe,0x01},
 	{0xc2,0x03},
 	{0xc3,0x00},
 	{0xc4,0xd8},
 	{0xc5,0x00},
-	
+
 	/*mipi*/
 	{0xfe,0x03},
 	{0x10,0x01},
@@ -501,9 +501,9 @@ static const SENSOR_REG_T gc8024_snapshot_setting[] = {
 static SENSOR_REG_TAB_INFO_T s_gc8024_resolution_tab_raw[SENSOR_MODE_MAX] = {
 	{ADDR_AND_LEN_OF_ARRAY(gc8024_init_setting), 0, 0, EX_MCLK,
 	 SENSOR_IMAGE_FORMAT_RAW},
-	{ADDR_AND_LEN_OF_ARRAY(gc8024_preview_setting),
+/*	{ADDR_AND_LEN_OF_ARRAY(gc8024_preview_setting),
 	 PREVIEW_WIDTH, PREVIEW_HEIGHT, EX_MCLK,
-	 SENSOR_IMAGE_FORMAT_RAW},
+	 SENSOR_IMAGE_FORMAT_RAW},*/
 	{ADDR_AND_LEN_OF_ARRAY(gc8024_snapshot_setting),
 	 SNAPSHOT_WIDTH, SNAPSHOT_HEIGHT, EX_MCLK,
 	 SENSOR_IMAGE_FORMAT_RAW},
@@ -511,9 +511,9 @@ static SENSOR_REG_TAB_INFO_T s_gc8024_resolution_tab_raw[SENSOR_MODE_MAX] = {
 
 static SENSOR_TRIM_T s_gc8024_resolution_trim_tab[SENSOR_MODE_MAX] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-	{PREVIEW_TRIM_X, PREVIEW_TRIM_Y, PREVIEW_TRIM_W, PREVIEW_TRIM_H,
+/*	{PREVIEW_TRIM_X, PREVIEW_TRIM_Y, PREVIEW_TRIM_W, PREVIEW_TRIM_H,
 	 PREVIEW_LINE_TIME, PREVIEW_MIPI_PER_LANE_BPS, PREVIEW_FRAME_LENGTH,
-	 {0, 0, PREVIEW_TRIM_W, PREVIEW_TRIM_H}},
+	 {0, 0, PREVIEW_TRIM_W, PREVIEW_TRIM_H}},*/
 	{SNAPSHOT_TRIM_X, SNAPSHOT_TRIM_Y, SNAPSHOT_TRIM_W, SNAPSHOT_TRIM_H,
 	 SNAPSHOT_LINE_TIME, SNAPSHOT_MIPI_PER_LANE_BPS, SNAPSHOT_FRAME_LENGTH,
 	 {0, 0, SNAPSHOT_TRIM_W, SNAPSHOT_TRIM_H}},

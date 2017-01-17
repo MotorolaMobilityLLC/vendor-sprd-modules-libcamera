@@ -36,7 +36,7 @@
 //#endif
 //#include "packet_convert.c"
 
-//#define CAMERA_IMAGE_180
+#define CAMERA_IMAGE_180
 
 #define SENSOR_NAME			"ov5675"
 #define I2C_SLAVE_ADDR			0x20 //0x6c    /* 8bit slave address*/
@@ -372,7 +372,7 @@ static const SENSOR_REG_T ov5675_snapshot_setting[] = {
 	{0x3815,0x01},  
 	{0x3816,0x01}, 
 #ifdef CAMERA_IMAGE_180
-	{0x3820,0xb6},  //flip on
+	{0x3820,0xb3},  //flip on
 	{0x373d,0x26},  
 #else
 	{0x3820,0x88}, 

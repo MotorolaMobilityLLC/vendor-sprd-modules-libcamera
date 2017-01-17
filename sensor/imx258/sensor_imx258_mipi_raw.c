@@ -242,16 +242,16 @@ static const SENSOR_REG_T imx258_2096x1552_setting[] = {
 };
 
 static const SENSOR_REG_T imx258_4208x3120_setting[] = {
-    /*4Lane     
-    reg_A30     
-    Full (4:3) 30fps        
-    H: 4208     
-    V: 3120     
-    Output format Setting       
+    /*4Lane
+    reg_A30
+    Full (4:3) 30fps
+    H: 4208
+    V: 3120
+    Output format Setting
         Address value*/
         {0x0112,0x0A},
         {0x0113,0x0A},
-        {0x0114,0x03},//Clock Setting       
+        {0x0114,0x03},//Clock Setting
         {0x0301,0x05},
         {0x0303,0x02},
         {0x0305,0x04},
@@ -266,11 +266,11 @@ static const SENSOR_REG_T imx258_4208x3120_setting[] = {
         {0x0820,0x14},
         {0x0821,0x40},
         {0x0822,0x00},
-        {0x0823,0x00},//Line Length Setting     
+        {0x0823,0x00},//Line Length Setting
         {0x0342,0x14},
-        {0x0343,0xE8},//Frame Length Setting        
+        {0x0343,0xE8},//Frame Length Setting
         {0x0340,0x0C},
-        {0x0341,0x98},//ROI Setting     
+        {0x0341,0x98},//ROI Setting
         {0x0344,0x00},
         {0x0345,0x00},
         {0x0346,0x00},
@@ -278,13 +278,13 @@ static const SENSOR_REG_T imx258_4208x3120_setting[] = {
         {0x0348,0x10},
         {0x0349,0x6F},
         {0x034A,0x0C},
-        {0x034B,0x2F},//Analog Image Size Setting       
+        {0x034B,0x2F},//Analog Image Size Setting
         {0x0381,0x01},
         {0x0383,0x01},
         {0x0385,0x01},
         {0x0387,0x01},
         {0x0900,0x00},
-        {0x0901,0x11},//Digital Image Size Setting      
+        {0x0901,0x11},//Digital Image Size Setting
         {0x0401,0x00},
         {0x0404,0x00},
         {0x0405,0x10},
@@ -299,13 +299,13 @@ static const SENSOR_REG_T imx258_4208x3120_setting[] = {
         {0x3038,0x00},
         {0x303A,0x00},
         {0x303B,0x10},
-        {0x300D,0x00},//Output Size Setting     
+        {0x300D,0x00},//Output Size Setting
         {0x034C,0x10},
         {0x034D,0x70},
         {0x034E,0x0C},
-        {0x034F,0x30},//Integration Time Setting        
+        {0x034F,0x30},//Integration Time Setting
         {0x0202,0x0C},
-        {0x0203,0x8E},//Gain Setting        
+        {0x0203,0x8E},//Gain Setting
         {0x0204,0x00},
         {0x0205,0x00},
         {0x020E,0x01},
@@ -315,8 +315,8 @@ static const SENSOR_REG_T imx258_4208x3120_setting[] = {
         {0x0212,0x01},
         {0x0213,0x00},
         {0x0214,0x01},
-        {0x0215,0x00},//Added Setting(AF)       
-        {0x7BCD,0x00},//Added Setting(IQ)       
+        {0x0215,0x00},//Added Setting(AF)
+        {0x7BCD,0x00},//Added Setting(IQ)
         {0x94DC,0x20},
         {0x94DD,0x20},
         {0x94DE,0x20},
@@ -345,35 +345,41 @@ static const SENSOR_REG_T imx258_4208x3120_setting[] = {
 };
 
 static const SENSOR_REG_T imx258_1048x780_setting[] = {
-    /*4Lane     
-    reg_B30     
-    HV1/4 (4:3) 60fps       
-    H: 1048     
-    V: 780      
-    Output format Setting       
+    /*4Lane
+    reg_E30
+    HV1/4 (4:3) 120fps
+    H: 1048
+    V: 780
+    Output format Setting
         Address value*/
         {0x0112,0x0A},
         {0x0113,0x0A},
-        {0x0114,0x03},//Clock Setting       
+        {0x0114,0x03},//Clock Setting
         {0x0301,0x05},
         {0x0303,0x02},
         {0x0305,0x04},
         {0x0306,0x00},
-        {0x0307,0x6E},
+        {0x0307,0xD8},//6E},
         {0x0309,0x0A},
         {0x030B,0x01},
         {0x030D,0x02},
         {0x030E,0x00},
         {0x030F,0xD8},
         {0x0310,0x00},
-        {0x0820,0x0A},
-        {0x0821,0x50},
+        {0x0820,0x14},//0A},
+        {0x0821,0x40},//50},
         {0x0822,0x00},
-        {0x0823,0x00},//Line Length Setting     
+        {0x0823,0x00},//Clock Adjustment Setting
+        {0x4648,0x7F},
+        {0x7420,0x00},
+        {0x7421,0x1C},
+        {0x7422,0x00},
+        {0x7423,0xD7},
+        {0x9104,0x00},//Line Length Setting
         {0x0342,0x14},
-        {0x0343,0xE8},//Frame Length Setting        
+        {0x0343,0xE8},//Frame Length Setting
         {0x0340,0x03},
-        {0x0341,0x34},//ROI Setting     
+        {0x0341,0x2C},//34},//ROI Setting
         {0x0344,0x00},
         {0x0345,0x00},
         {0x0346,0x00},
@@ -381,13 +387,13 @@ static const SENSOR_REG_T imx258_1048x780_setting[] = {
         {0x0348,0x10},
         {0x0349,0x6F},
         {0x034A,0x0C},
-        {0x034B,0x2F},//Analog Image Size Setting       
+        {0x034B,0x2F},//Analog Image Size Setting
         {0x0381,0x01},
         {0x0383,0x01},
         {0x0385,0x01},
         {0x0387,0x01},
         {0x0900,0x01},
-        {0x0901,0x14},//Digital Image Size Setting      
+        {0x0901,0x14},//Digital Image Size Setting
         {0x0401,0x01},
         {0x0404,0x00},
         {0x0405,0x40},
@@ -402,13 +408,13 @@ static const SENSOR_REG_T imx258_1048x780_setting[] = {
         {0x3038,0x00},
         {0x303A,0x00},
         {0x303B,0x10},
-        {0x300D,0x00},//Output Size Setting     
+        {0x300D,0x00},//Output Size Setting
         {0x034C,0x04},
         {0x034D,0x18},
         {0x034E,0x03},
-        {0x034F,0x0C},//Integration Time Setting        
+        {0x034F,0x0C},//Integration Time Setting
         {0x0202,0x03},
-        {0x0203,0x2A},//Gain Setting        
+        {0x0203,0x22},//2A},//Gain Setting
         {0x0204,0x00},
         {0x0205,0x00},
         {0x020E,0x01},
@@ -418,8 +424,8 @@ static const SENSOR_REG_T imx258_1048x780_setting[] = {
         {0x0212,0x01},
         {0x0213,0x00},
         {0x0214,0x01},
-        {0x0215,0x00},//Added Setting(AF)       
-        {0x7BCD,0x00},//Added Setting(IQ)       
+        {0x0215,0x00},//Added Setting(AF)
+        {0x7BCD,0x00},//Added Setting(IQ)
         {0x94DC,0x20},
         {0x94DD,0x20},
         {0x94DE,0x20},
@@ -431,7 +437,7 @@ static const SENSOR_REG_T imx258_1048x780_setting[] = {
         {0x9419,0x50},
         {0x941B,0x50},
         {0x9519,0x50},
-        {0x951B,0x50},//Added Setting(mode)     
+        {0x951B,0x50},//Added Setting(mode)
         {0x3030,0x00},
         {0x3032,0x00},
         {0x0220,0x00},
@@ -441,23 +447,18 @@ static const SENSOR_REG_T imx258_1048x780_setting[] = {
 
 static SENSOR_REG_TAB_INFO_T s_imx258_resolution_tab_raw[SENSOR_MODE_MAX] = {
 	{ADDR_AND_LEN_OF_ARRAY(imx258_init_setting), 0, 0, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
-	{ADDR_AND_LEN_OF_ARRAY(imx258_1048x780_setting), 1048, 780, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
+	//{ADDR_AND_LEN_OF_ARRAY(imx258_1048x780_setting), 1048, 780, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
+	//{ADDR_AND_LEN_OF_ARRAY(imx258_2096x1552_setting), 2096, 1552, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
 	{ADDR_AND_LEN_OF_ARRAY(imx258_4208x3120_setting), 4208, 3120, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
 	//{ADDR_AND_LEN_OF_ARRAY(imx258_5344x4016_setting), 5344, 4016, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
 };
 
 static SENSOR_TRIM_T s_imx258_resolution_trim_tab[SENSOR_MODE_MAX] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-	{0, 0, 1048, 780, 20275 , 660, 820, {0, 0, 1048, 780}},
+	//{0, 0, 1048, 780, 10325 , 1296, 812, {0, 0, 1048, 780}},
+	//{0, 0, 2096, 1552, 20650, 1296, 3224, {0, 0, 2096, 1552}},
 	{0, 0, 4208, 3120, 10325, 1296, 3224, {0, 0, 4208, 3120}},
 	//{0, 0, 5344, 4016, 10040, SNAPSHOT_MIPI_PER_LANE_BPS, 4140, {0, 0, 5344, 4016}},
-	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}}
 };
 
 static const SENSOR_REG_T s_imx258_preview_size_video_tab[SENSOR_VIDEO_MODE_MAX][1] = {
@@ -678,38 +679,7 @@ SENSOR_INFO_T g_imx258_mipi_raw_info = {
 	35,
 	/* vertical view angle*/
 	35,
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
-	"imx258v1"
-#else
 	"imx258v1",//sensor version info
-	{
-	0x00070005,
-	{
-		{
-			0x32786D69,
-			0x00003835,
-			0x00000000,
-			0x00000000,
-			0x00000000,
-			0x00000000,
-			0x00000000,
-			0x00000000
-		}
-	},
-	AE_VERSION,
-	AWB_VERSION,
-	NR_VERSION,
-	LNC_VERSION,
-	
-	0x00000000,
-	0x00000000,
-	0x00000000,
-	0x00000000,
-	0x00000000,
-	0x00000000,
-	0x00000000
-}
-#endif
 };
 
 /*==============================================================================

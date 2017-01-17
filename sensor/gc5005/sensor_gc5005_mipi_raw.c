@@ -14,7 +14,7 @@
  * limitations under the License.
  * V4.0
  */
-#define LOG_TAG "sensor_gc5005_pike"
+#define LOG_TAG "sensor_gc5005"
  
 #include <utils/Log.h>
 #include "sensor.h"
