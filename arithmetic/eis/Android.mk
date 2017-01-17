@@ -16,6 +16,13 @@
 ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)
 LOCAL_PATH := $(call my-dir)
 
+ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
+LIB_PATH := lib/lib
+else ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))
+LIB_PATH := lib/x86_lib
+endif
+
+#SPRD eis
 include $(CLEAR_VARS)
 LOCAL_MODULE := libgyrostab
 LOCAL_MODULE_CLASS := SHARED_LIBRARIES
@@ -23,7 +30,7 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_MULTILIB := both
 LOCAL_MODULE_STEM_32 := libgyrostab.so
 LOCAL_MODULE_STEM_64 := libgyrostab.so
-LOCAL_SRC_FILES_32 := lib32/libgyrostab.so
-LOCAL_SRC_FILES_64 := lib64/libgyrostab.so
+LOCAL_SRC_FILES_32 := $(LIB_PATH)/libgyrostab.so
+LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libgyrostab.so
 include $(BUILD_PREBUILT)
 endif
