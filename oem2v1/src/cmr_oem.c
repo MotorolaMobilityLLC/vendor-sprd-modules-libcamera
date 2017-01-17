@@ -61,7 +61,7 @@ enum oem_ev_level {
 };
 
 #define OFF_THE_FLY_PATH_BIT                         0x8
-#define OFF_THE_FLY_CHANNEL                          2
+#define OFF_THE_FLY_CHANNEL                          3
 
 #define CHECK_HANDLE_VALID(handle) \
                                                      do { \
@@ -5451,16 +5451,19 @@ cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits, cmr_ui
 	}
 	is_zsl_enable = setting_param.cmd_type_value;
 
-	/* for sharkl2 off-the-fly path */
-	if ((channel_bits & OFF_THE_FLY_PATH_BIT) &&
-	    is_zsl_enable == 0) {
-		cmr_grab_off_the_fly_path_start(cxt->grab_cxt.grab_handle);
-	}
-
 	ret = cmr_grab_cap_start(cxt->grab_cxt.grab_handle, skip_number);
 	if (ret) {
 		CMR_LOGE("failed to start cap %ld", ret);
 		goto exit;
+	}
+
+	/* for sharkl2 off-the-fly path */
+	if ((channel_bits & OFF_THE_FLY_PATH_BIT) &&
+	    is_zsl_enable == 0) {
+		ret = cmr_grab_off_the_fly_path_start(cxt->grab_cxt.grab_handle);
+		if (ret) {
+			CMR_LOGE("failed to start off the fly path,ret %ld", ret);
+		}
 	}
 exit:
 	CMR_LOGV("done %ld", ret);
@@ -5480,8 +5483,12 @@ cmr_int camera_channel_pause(cmr_handle oem_handle, cmr_uint channel_id, cmr_u32
 	CMR_LOGI("channel id %ld, reconfig flag %d", channel_id, reconfig_flag);
 
 	/* for sharkl2 off-the-fly path */
-	if (channel_id == OFF_THE_FLY_PATH_BIT)
-		cmr_grab_off_the_fly_path_stop(cxt->grab_cxt.grab_handle);
+	if (channel_id == OFF_THE_FLY_CHANNEL) {
+		ret = cmr_grab_off_the_fly_path_stop(cxt->grab_cxt.grab_handle);
+		if (ret) {
+			CMR_LOGE("failed to stop off the fly path %ld", ret);
+		}
+	}
 
 	ret = cmr_grab_cap_pause(cxt->grab_cxt.grab_handle, channel_id, reconfig_flag);
 	if (ret) {
@@ -5514,8 +5521,12 @@ cmr_int camera_channel_resume(cmr_handle oem_handle, cmr_uint channel_id, cmr_u3
 	camera_set_vendor_hdr_ev(oem_handle);
 
 	/* for sharkl2 off-the-fly path */
-	if (channel_id == OFF_THE_FLY_PATH_BIT)
-		cmr_grab_off_the_fly_path_start(cxt->grab_cxt.grab_handle);
+	if (channel_id == OFF_THE_FLY_CHANNEL) {
+		ret = cmr_grab_off_the_fly_path_start(cxt->grab_cxt.grab_handle);
+		if (ret) {
+			CMR_LOGE("failed to start off the fly path,ret %ld", ret);
+		}
+	}
 
 	ret = cmr_grab_cap_resume(cxt->grab_cxt.grab_handle, channel_id, skip_number, deci_factor, frm_num);
 	if (ret) {
@@ -5560,8 +5571,12 @@ cmr_int camera_channel_stop(cmr_handle oem_handle, cmr_u32 channel_bits)
 	}
 
 	/* for sharkl2 off-the-fly path */
-	if (channel_bits & OFF_THE_FLY_PATH_BIT)
-		cmr_grab_off_the_fly_path_stop(cxt->grab_cxt.grab_handle);
+	if (channel_bits & OFF_THE_FLY_PATH_BIT) {
+		ret = cmr_grab_off_the_fly_path_stop(cxt->grab_cxt.grab_handle);
+		if (ret) {
+			CMR_LOGE("failed to stop off the fly path %ld", ret);
+		}
+	}
 
 	ret = cmr_grab_cap_stop(cxt->grab_cxt.grab_handle);
 	if (ret) {
