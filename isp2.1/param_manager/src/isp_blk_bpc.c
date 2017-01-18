@@ -22,6 +22,7 @@ isp_u32 _pm_bpc_convert_param(void *dst_param, isp_u32 strength_level, isp_u32 m
 {
 	isp_s32 rtn = ISP_SUCCESS;
 	isp_s32 i = 0;
+	isp_u32 total_offset_units = 0;
 	struct isp_bpc_param_v1 *dst_ptr = (struct isp_bpc_param_v1*)dst_param;
 	struct sensor_bpc_level *bpc_param;
 
@@ -30,7 +31,7 @@ isp_u32 _pm_bpc_convert_param(void *dst_param, isp_u32 strength_level, isp_u32 m
 	} else {
 		isp_u32 *multi_nr_map_ptr = PNULL;
 		multi_nr_map_ptr = (isp_u32 *)dst_ptr->scene_ptr;
-		isp_u32 total_offset_units = _pm_calc_nr_addr_offset(mode_flag, scene_flag, multi_nr_map_ptr);
+		total_offset_units = _pm_calc_nr_addr_offset(mode_flag, scene_flag, multi_nr_map_ptr);
 		bpc_param = (struct sensor_bpc_level *)((isp_u8 *)dst_ptr->param_ptr + total_offset_units * dst_ptr->level_num * sizeof(struct sensor_bpc_level));
 	}
 	strength_level = PM_CLIP(strength_level, 0, dst_ptr->level_num - 1);
@@ -43,7 +44,7 @@ isp_u32 _pm_bpc_convert_param(void *dst_param, isp_u32 strength_level, isp_u32 m
 		for (i=0; i<8; i++){
 			dst_ptr->cur.lut_level[i]= bpc_param[strength_level].bpc_comm.lut_level[i];
 			dst_ptr->cur.slope_k[i]= bpc_param[strength_level].bpc_comm.slope_k[i];
-			dst_ptr->cur.intercept_b[i]= bpc_param[strength_level].bpc_comm.intercept_b[i];		
+			dst_ptr->cur.intercept_b[i]= bpc_param[strength_level].bpc_comm.intercept_b[i];
 		}
 		for (i = 0; i < 4; i++) {
 			dst_ptr->cur.double_badpixel_th[i] = bpc_param[strength_level].bpc_thr.double_th[i];

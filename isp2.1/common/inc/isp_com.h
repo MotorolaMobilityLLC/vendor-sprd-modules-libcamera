@@ -643,7 +643,7 @@ struct isp_awb_param_v1 {
 };
 
 //aem
-struct isp_rgb_ae_param {
+struct isp_rgb_aem_param {
 	struct isp_dev_raw_aem_info cur;
 	struct isp_awb_statistic_info stat;
 };
@@ -715,10 +715,6 @@ struct isp_3d_nr_cap_param {
 	isp_u32 nr_mode_setting;
 };
 
-//grgb2
-struct isp_rgb_gain2_param{
-	struct isp_dev_rgb_gain2_info cur;
-};
 
 /********************************************************************************************/
 //nlm
@@ -932,7 +928,7 @@ struct isp_context {
 	struct isp_1d_lsc_param lsc_1d;
 	struct isp_binning4awb_param_v1 binning4awb_v1;
 	struct isp_awb_param_v1 awb_v1;
-	struct isp_rgb_ae_param  ae_v1;
+	struct isp_rgb_aem_param  aem;
 	struct isp_rgb_afm_param  afm;
 	struct isp_bpc_param_v1 bpc_v1;
 
@@ -940,7 +936,6 @@ struct isp_context {
 	struct isp_ynr_param ynr;
 	struct isp_pdaf_correction_param pdaf_correct;
 	struct isp_pdaf_extraction_param pdaf_extraction;
-	struct isp_rgb_gain2_param rgb_gain2;
 	struct isp_nlm_param_v1 nlm_v1;
 	struct isp_cfa_param_v1 cfa_v1;
 	struct isp_cmc10_param cmc10;
@@ -948,9 +943,10 @@ struct isp_context {
 
 	struct isp_cce_param_v1 cce_v1;
 	struct isp_hsv_param hsv;
-	struct isp_yuv_pre_cdn_param rgb_pre_cdn;
+	struct isp_yuv_pre_cdn_param yuv_pre_cdn;
 	struct isp_posterize_param posterize;
 	struct isp_yiq_afl_param_v1 yiq_afl_v1;
+	struct isp_yiq_afl_param_v3 yiq_afl_v3;
 	struct isp_rgb_dither_param rgb_dither;
 
 	struct isp_hist_param_v1 hist_v1;
@@ -965,7 +961,7 @@ struct isp_context {
 	struct isp_iircnr_iir_param iircnr_iir;
 	struct isp_iircnr_yrandom_param iircnr_yrandom;
 	struct isp_cce_uvdiv_param_v1 uv_div_v1;
-
+	struct isp_dev_noise_filter_param yuv_noisefilter;
 	struct isp_3d_nr_pre_param nr_3d_pre;
 	struct isp_3d_nr_cap_param nr_3d_cap;
 

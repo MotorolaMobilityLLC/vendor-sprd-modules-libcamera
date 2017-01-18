@@ -23,6 +23,7 @@ isp_u32 _pm_rgb_afm_convert_param(void *dst_param, isp_u32 strength_level, isp_u
 {
 	isp_s32 rtn = ISP_SUCCESS;
 	isp_s32 i = 0, j =0;
+	isp_u32 total_offset_units = 0;
 	struct isp_rgb_afm_param *dst_ptr = (struct isp_rgb_afm_param*)dst_param;
 	struct sensor_rgb_afm_level* rgb_afm_param = PNULL;
 
@@ -31,7 +32,7 @@ isp_u32 _pm_rgb_afm_convert_param(void *dst_param, isp_u32 strength_level, isp_u
 	} else {
 		isp_u32 *multi_nr_map_ptr = PNULL;
 		multi_nr_map_ptr = (isp_u32 *)dst_ptr->scene_ptr;
-		isp_u32 total_offset_units = _pm_calc_nr_addr_offset(mode_flag, scene_flag, multi_nr_map_ptr);
+		total_offset_units = _pm_calc_nr_addr_offset(mode_flag, scene_flag, multi_nr_map_ptr);
 		rgb_afm_param = (struct sensor_rgb_afm_level *)((isp_u8 *)dst_ptr->param_ptr + total_offset_units * dst_ptr->level_num * sizeof(struct sensor_rgb_afm_level));
 
 	}

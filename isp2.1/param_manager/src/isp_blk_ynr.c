@@ -23,6 +23,7 @@ isp_u32 _pm_ynr_convert_param(void *dst_param, isp_u32 strength_level, isp_u32 m
 {
 	isp_s32 rtn = ISP_SUCCESS;
 	isp_s32 i = 0;
+	isp_u32 total_offset_units = 0;
 	struct isp_ynr_param *dst_ptr = (struct isp_ynr_param*)dst_param;
 	struct sensor_ynr_level *ynr_param = PNULL;
 
@@ -31,7 +32,7 @@ isp_u32 _pm_ynr_convert_param(void *dst_param, isp_u32 strength_level, isp_u32 m
 	} else {
 		isp_u32 *multi_nr_map_ptr = PNULL;
 		multi_nr_map_ptr = (isp_u32 *)dst_ptr->scene_ptr;
-		isp_u32 total_offset_units = _pm_calc_nr_addr_offset(mode_flag, scene_flag, multi_nr_map_ptr);
+		total_offset_units = _pm_calc_nr_addr_offset(mode_flag, scene_flag, multi_nr_map_ptr);
 		ynr_param = (struct sensor_ynr_level *)((isp_u8 *)dst_ptr->param_ptr +
 			total_offset_units * dst_ptr->level_num * sizeof(struct sensor_ynr_level));
 
@@ -99,7 +100,7 @@ isp_u32 _pm_ynr_convert_param(void *dst_param, isp_u32 strength_level, isp_u32 m
 isp_s32 _pm_ynr_init(void *dst_ynr_param, void *src_ynr_param, void* param1, void* param2)
 {
 	isp_s32 rtn = ISP_SUCCESS;
-	isp_s32 i = 0;;
+	isp_s32 i = 0;
 	struct isp_ynr_param *dst_ptr = (struct isp_ynr_param*)dst_ynr_param;
 	struct sensor_nr_header_param *src_ptr = (struct sensor_nr_header_param*)src_ynr_param;
 	struct isp_pm_block_header *ynr_header_ptr =(struct isp_pm_block_header*)param1;

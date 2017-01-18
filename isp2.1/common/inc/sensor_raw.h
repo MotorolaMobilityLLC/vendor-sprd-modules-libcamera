@@ -25,10 +25,6 @@
 #include "cmr_sensor_info.h"
 #include "../../ae/inc/ae_types.h"
 
-#define AE_VERSION  0x00000001
-#define AWB_VERSION  0x00000001
-#define NR_VERSION  0x00000001
-#define LNC_VERSION  0x00000001
 #define AWB_POS_WEIGHT_LEN 64
 #define AWB_POS_WEIGHT_WIDTH_HEIGHT 4
 
@@ -120,39 +116,12 @@ struct ae_scene_info_2 {
 	struct ae_scence_info_header_2 ae_header;
 	struct ae_exp_gain_table_2 ae_table[AE_FLICKER_NUM];
 };
-
-struct ae_config_param_2 {
-	uint32_t version;
-	uint32_t verify;
-	uint32_t alg_id;
-	uint32_t target_lum;
-	uint32_t target_lum_zone; // x16
-	uint32_t convergence_speed; // x16
-	uint32_t flicker_index;
-	uint32_t min_line;
-	uint32_t start_index;
-	uint32_t exp_skip_num;
-	uint32_t gain_skip_num;
-	struct ae_stat_req stat_req;
-	struct ae_flash_tuning flash_tuning;
-	struct touch_zone touch_param;
-	struct ae_ev_table ev_table;
-
-	struct ae_exp_anti exp_anti;
-	struct ae_ev_cali ev_cali;
-	struct ae_convergence_parm cvgn_param[AE_CVGN_NUM];
-	uint32_t reserved[256];
-};
 struct ae_table_param_2 {
 	struct ae_exp_gain_table_2 ae_table[AE_FLICKER_NUM][AE_ISO_NUM];
 	struct ae_exp_gain_table_2 flash_table[AE_FLICKER_NUM][AE_ISO_NUM];
 	struct ae_weight_table weight_table[AE_WEIGHT_TABLE_NUM];
 	struct ae_scene_info_2 scene_info[AE_SCENE_NUM];
 	struct ae_auto_iso_tab auto_iso_tab;
-};
-struct ae_tuning_param_2 {
-	struct ae_config_param_2 ae_configure_parameter;
-	struct ae_table_param_2 ae_table_parameter;
 };
 #endif
 
@@ -969,7 +938,6 @@ struct sensor_cce_matrix_info {
 };
 
 struct sensor_cce_param {
-	uint32_t mode;
 	isp_u32 cur_idx;
 	struct sensor_cce_matrix_info tab[SENSOR_CCE_NUM];
 	struct sensor_cce_matrix_info specialeffect[MAX_SPECIALEFFECT_NUM];

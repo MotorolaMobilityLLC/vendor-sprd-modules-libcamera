@@ -39,6 +39,7 @@
 #define ISP_NR_13_MODE_BIT (0x01 << 13)
 #define ISP_NR_14_MODE_BIT (0x01 << 14)
 #define ISP_NR_15_MODE_BIT (0x01 << 15)
+uint8_t nr_tool_flag[17] = {0};
 
 isp_u32 scene_mode_matrix[MAX_SCENEMODE_NUM] = {
 	ISP_NR_AUTO_MODE_BIT,

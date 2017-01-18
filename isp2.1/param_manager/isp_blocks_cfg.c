@@ -34,7 +34,7 @@ struct isp_block_operations s_contrast_ops = {_pm_contrast_init, _pm_contrast_se
 struct isp_block_operations s_flash_ops = {_pm_flashlight_init, _pm_flashlight_set_param, _pm_flashlight_get_param, PNULL, PNULL};
 struct isp_block_operations s_envi_detect_ops = {_pm_envi_detect_init, _pm_envi_detect_set_param, _pm_envi_detect_get_param, PNULL, PNULL};
 
-/************************************Tshark2*******************************************************/
+/************************************sharkl2*******************************************************/
 struct isp_block_operations s_pre_gbl_gain_ops_v1 = {_pm_pre_gbl_gain_init_v1,_pm_pre_gbl_gain_set_param_v1,_pm_pre_gbl_gain_get_param_v1, PNULL,PNULL};
 struct isp_block_operations s_blc_ops_v1 = {_pm_blc_init,_pm_blc_set_param,_pm_blc_get_param, PNULL, PNULL};
 struct isp_block_operations s_postblc_ops = {_pm_postblc_init,_pm_postblc_set_param,_pm_postblc_get_param, PNULL, PNULL};
@@ -83,9 +83,10 @@ struct isp_block_operations s_awb_new_ops = {_pm_awb_new_init, _pm_awb_new_set_p
 struct isp_block_operations s_af_new_ops = {_pm_af_new_init, _pm_af_new_set_param, _pm_af_new_get_param, PNULL, PNULL};
 struct isp_block_operations s_3d_nr_pre_ops = {_pm_3d_nr_pre_init, _pm_3d_nr_pre_set_param, _pm_3d_nr_pre_get_param, PNULL, PNULL};
 struct isp_block_operations s_3d_nr_cap_ops = {_pm_3d_nr_cap_init, _pm_3d_nr_cap_set_param, _pm_3d_nr_cap_get_param, PNULL, PNULL};
+struct isp_block_operations s_yuv_noisefilter_ops = {_pm_yuv_noisefilter_init,_pm_yuv_noisefilter_set_param,_pm_yuv_noisefilter_get_param, PNULL, PNULL};
 
 struct isp_block_cfg s_blk_cfgs[] = {
-	/************************************Tshark2*******************************************************/
+	/************************************sharkl2*******************************************************/
 	{ISP_BLK_FLASH_CALI, array_offset(struct isp_context, flash), sizeof(struct isp_flash_param), &s_flash_ops},
 	{ISP_BLK_ENVI_DETECT, array_offset(struct isp_context, envi_detect), sizeof(struct isp_envi_detect_param), &s_envi_detect_ops},
 	{ISP_BLK_PRE_GBL_GAIN,array_offset(struct isp_context,pre_gbl_gain_v1),sizeof(struct isp_pre_global_gain_param_v1),&s_pre_gbl_gain_ops_v1},
@@ -101,9 +102,9 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_GRGB,array_offset(struct isp_context,grgb),sizeof(struct isp_grgb_param),&s_grgb_ops_v1},
 	{ISP_BLK_YNR,array_offset(struct isp_context,ynr),sizeof(struct isp_ynr_param),&s_ynr_ops},
 	{ISP_BLK_PDAF_CORRECT,array_offset(struct isp_context,pdaf_correct),sizeof(struct isp_pdaf_correction_param),&s_pdaf_correct_ops},
-	{ISP_BLK_PDAF_CORRECT,array_offset(struct isp_context,pdaf_extraction),sizeof(struct isp_pdaf_extraction_param),&s_pdaf_extraction_ops},
+	{ISP_BLK_PDAF_EXTRACT,array_offset(struct isp_context,pdaf_extraction),sizeof(struct isp_pdaf_extraction_param),&s_pdaf_extraction_ops},
 	{ISP_BLK_NLM,array_offset(struct isp_context,nlm_v1),sizeof(struct isp_nlm_param_v1),&s_nlm_ops_v1},
-	{ISP_BLK_CFA, array_offset(struct isp_context,cfa_v1), sizeof(struct isp_cfa_param_v1),                        &s_cfa_ops_v1},
+	{ISP_BLK_CFA, array_offset(struct isp_context,cfa_v1), sizeof(struct isp_cfa_param_v1),&s_cfa_ops_v1},
 	{ISP_BLK_CMC10,array_offset(struct isp_context,cmc10),sizeof(struct isp_cmc10_param),&s_cmc10_ops},
 	{ISP_BLK_HSV,array_offset(struct isp_context,hsv),sizeof(struct isp_hsv_param),&s_hsv_ops},
 	{ISP_BLK_POSTERIZE,array_offset(struct isp_context,posterize),sizeof(struct isp_posterize_param),&s_posterize_ops},
@@ -117,15 +118,28 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_EDGE, array_offset(struct isp_context,edge_v1),sizeof(struct isp_edge_param_v1),&s_edge_ops_v1},
 	{ISP_BLK_SATURATION,array_offset(struct isp_context,saturation_v1),sizeof(struct isp_chrom_saturation_param),&s_saturation_ops_v1},
 	{ISP_BLK_HUE,array_offset(struct isp_context,hue_v1),sizeof(struct isp_hue_param_v1),&s_hue_ops_v1},
-	{ISP_BLK_UV_POSTCDN,     array_offset(struct isp_context,uv_postcdn),           sizeof(struct isp_uv_postcdn_param),                     &s_uv_postcdn_ops},
+	{ISP_BLK_UV_POSTCDN,     array_offset(struct isp_context,uv_postcdn),sizeof(struct isp_uv_postcdn_param),&s_uv_postcdn_ops},
 	{ISP_BLK_Y_GAMMC,array_offset(struct isp_context,yuv_ygamma),sizeof(struct isp_yuv_ygamma_param),&s_yuv_ygamma_ops},
 	{ISP_BLK_Y_DELAY,array_offset(struct isp_context,ydelay),sizeof(struct isp_ydelay_param),&s_ydelay_ops},
 	{ISP_BLK_IIRCNR_IIR,array_offset(struct isp_context,iircnr_iir),sizeof(struct isp_iircnr_iir_param),&s_iircnr_iir_ops},
 	{ISP_BLK_IIRCNR_YRANDOM,array_offset(struct isp_context,iircnr_yrandom),sizeof(struct isp_iircnr_yrandom_param),&s_iircnr_yrandom_ops},
 	{ISP_BLK_UVDIV, array_offset(struct isp_context, uv_div_v1), sizeof(struct isp_cce_uvdiv_param_v1), &s_uvdiv_ops_v1},
 	{ISP_BLK_SMART, array_offset(struct isp_context, smart), sizeof(struct isp_smart_param), &s_smart_ops},
-	{ISP_BLK_SFT_AF, array_offset(struct isp_context, sft_af), sizeof(struct isp_sft_af_param), &s_sft_af_ops},
-	{ISP_BLK_ALSC, array_offset(struct isp_context, alsc), sizeof(struct isp_alsc_param), &s_alsc_ops},
+	//{ISP_BLK_SFT_AF, array_offset(struct isp_context, sft_af), sizeof(struct isp_sft_af_param), &s_sft_af_ops},
+	//{ISP_BLK_ALSC, array_offset(struct isp_context, alsc), sizeof(struct isp_alsc_param), &s_alsc_ops}, 
+	{ISP_BLK_3DNR_CAP, array_offset(struct isp_context, nr_3d_cap), sizeof(struct isp_3d_nr_cap_param), &s_3d_nr_cap_ops},
+	{ISP_BLK_3DNR_PRE, array_offset(struct isp_context, nr_3d_pre), sizeof(struct isp_3d_nr_pre_param), &s_3d_nr_pre_ops},
+	//{ISP_BLK_AE_NEW, array_offset(struct isp_context, ae), sizeof(struct isp_ae_param), &s_ae_new_ops},
+	//{ISP_BLK_AF_NEW, array_offset(struct isp_context, af), sizeof(struct isp_af_param), &s_af_new_ops},
+	//{ISP_BLK_AWB_NEW, array_offset(struct isp_context, awb), sizeof(struct isp_awb_param), &s_awb_new_ops},
+	{ISP_BLK_CCE, array_offset(struct isp_context, cce_v1), sizeof(struct isp_cce_param_v1), &s_cce_ops_v1},
+	{ISP_BLK_RGB_GAMC, array_offset(struct isp_context, frgb_gamc), sizeof(struct isp_frgb_gamc_param), &s_frgb_gamc_ops},
+	{ISP_BLK_RGB_AEM, array_offset(struct isp_context, aem), sizeof(struct isp_rgb_aem_param), &s_rgb_aem_ops},
+	{ISP_BLK_RGB_AFM, array_offset(struct isp_context, afm), sizeof(struct isp_rgb_afm_param), &s_rgb_afm_ops},
+	{ISP_BLK_YIQ_AFL_V1, array_offset(struct isp_context, yiq_afl_v1), sizeof(struct isp_yiq_afl_param_v1), &s_yiq_afl_ops_v1},
+	{ISP_BLK_YIQ_AFL_V3, array_offset(struct isp_context, yiq_afl_v3), sizeof(struct isp_yiq_afl_param_v3), &s_yiq_afl_ops_v3},
+	{ISP_BLK_YUV_NOISEFILTER, array_offset(struct isp_context, yuv_noisefilter), sizeof(struct isp_dev_noise_filter_param), &s_yuv_noisefilter_ops},
+	{ISP_BLK_YUV_PRECDN, array_offset(struct isp_context, yuv_pre_cdn), sizeof(struct isp_yuv_pre_cdn_param), &s_yuv_precdn_ops},
 	{ISP_BLK_AFT, array_offset(struct isp_context, aft), sizeof(struct isp_aft_param), &s_aft_ops},
 };
 

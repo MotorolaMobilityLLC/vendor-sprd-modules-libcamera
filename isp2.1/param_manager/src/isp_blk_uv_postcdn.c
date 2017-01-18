@@ -23,6 +23,7 @@
 {
 	isp_s32 rtn = ISP_SUCCESS;
 	isp_s32 i = 0, j = 0;
+	isp_u32 total_offset_units = 0;
 	struct isp_uv_postcdn_param *dst_ptr = (struct isp_uv_postcdn_param *)dst_postcdn_param;
 	struct sensor_uv_postcdn_level *postcdn_param = PNULL;
 
@@ -31,7 +32,7 @@
 	} else {
 		isp_u32 *multi_nr_map_ptr = PNULL;
 		multi_nr_map_ptr = (isp_u32 *)dst_ptr->scene_ptr;
-		isp_u32 total_offset_units = _pm_calc_nr_addr_offset(mode_flag, scene_flag, multi_nr_map_ptr);
+		total_offset_units = _pm_calc_nr_addr_offset(mode_flag, scene_flag, multi_nr_map_ptr);
 		postcdn_param = (struct sensor_uv_postcdn_level*)((isp_u8 *)dst_ptr->param_ptr +
 			total_offset_units * dst_ptr->level_num * sizeof(struct sensor_uv_postcdn_level));
 	}

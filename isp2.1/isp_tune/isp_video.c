@@ -310,7 +310,6 @@ static int capture_img_end_flag = 1; // 1: capture image send complete
 static int capture_format = 1; // 1: start preview
 static int capture_flag = 0; // 1: call get pic
 char raw_filename[200] = {0};
-uint8_t nr_tool_flag[17] = {0};
 uint32_t tool_fmt_pattern = INVALID_FORMAT_PATTERN;
 static FILE* raw_fp = NULL;
 static struct isptool_scene_param scene_param = {0,0,0,0,0,0,0,0};

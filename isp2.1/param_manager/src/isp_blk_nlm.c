@@ -22,6 +22,7 @@ isp_u32 _pm_nlm_convert_param(void *dst_nlm_param, isp_u32 strength_level, isp_u
 {
 	isp_s32 rtn = ISP_SUCCESS;
 	isp_s32 i = 0, j = 0;
+	isp_u32 total_offset_units = 0;
 	struct isp_nlm_param_v1 *dst_ptr = (struct isp_nlm_param_v1 *)dst_nlm_param;
 	void *addr = NULL;
 
@@ -37,7 +38,7 @@ isp_u32 _pm_nlm_convert_param(void *dst_nlm_param, isp_u32 strength_level, isp_u
 		isp_u32 *multi_nr_map_ptr = PNULL;
 		multi_nr_map_ptr = (isp_u32 *)dst_ptr->scene_ptr;
 
-		isp_u32 total_offset_units = _pm_calc_nr_addr_offset(mode_flag, scene_flag, multi_nr_map_ptr);
+		total_offset_units = _pm_calc_nr_addr_offset(mode_flag, scene_flag, multi_nr_map_ptr);
 		nlm_param = (struct sensor_nlm_level *)((isp_u8 *)dst_ptr->nlm_ptr+ total_offset_units * dst_ptr->level_num * sizeof(struct sensor_nlm_level));
 
 		vst_param = (struct sensor_vst_level *)((isp_u8 *)dst_ptr->vst_ptr+ total_offset_units * dst_ptr->level_num * sizeof(struct sensor_vst_level));
@@ -145,10 +146,10 @@ isp_s32 _pm_nlm_init(void *dst_nlm_param, void *src_nlm_param, void* param1, voi
 		}
 	}
 	memset((void *)dst_ptr->vst_map.data_ptr, 0x00, dst_ptr->vst_map.size);
-	#if 1  //only WORDSIZE 32 
+	#if 1  //only WORDSIZE 32
 	dst_ptr->cur.vst_addr = (isp_uint)(dst_ptr->vst_map.data_ptr);
 	#endif
-#if 0 //wait for kernel modefy the parameter vst_addr and ivst_addr to vst_addr[2] and ivst_addr[2](array type) 
+#if 0 //wait for kernel modefy the parameter vst_addr and ivst_addr to vst_addr[2] and ivst_addr[2](array type)
 #if __WORDSIZE == 64
 	dst_ptr->cur.vst_addr[0] = (isp_uint)(dst_ptr->vst_map.data_ptr) & 0xffffffff;
 	dst_ptr->cur.vst_addr[1] = (isp_uint)(dst_ptr->vst_map.data_ptr) >> 32;
@@ -169,10 +170,10 @@ isp_s32 _pm_nlm_init(void *dst_nlm_param, void *src_nlm_param, void* param1, voi
 		}
 	}
 	memset((void *)dst_ptr->ivst_map.data_ptr, 0x00, dst_ptr->ivst_map.size);
-	#if 1 //only WORDSIZE 32 
+	#if 1 //only WORDSIZE 32
 	dst_ptr->cur.ivst_addr = (isp_uint)(dst_ptr->vst_map.data_ptr);
 	#endif
-#if 0 //wait for kernel modefy the parameter vst_addr and ivst_addr to vst_addr[2] and ivst_addr[2](array type) 
+#if 0 //wait for kernel modefy the parameter vst_addr and ivst_addr to vst_addr[2] and ivst_addr[2](array type)
 #if __WORDSIZE == 64
 	dst_ptr->cur.ivst_addr[0] = (isp_uint)(dst_ptr->ivst_map.data_ptr) & 0xffffffff;
 	dst_ptr->cur.ivst_addr[1] = (isp_uint)(dst_ptr->ivst_map.data_ptr) >> 32;

@@ -22,6 +22,7 @@ isp_u32 _pm_yuv_noisefilter_convert_param(void *dst_yuv_noisefilter_param, isp_u
 {
 	isp_s32 rtn = ISP_SUCCESS;
 	isp_s32 i = 0;
+	isp_u32 total_offset_units = 0;
 	struct isp_dev_noise_filter_param *dst_ptr = (struct isp_dev_noise_filter_param *)dst_yuv_noisefilter_param;
 	struct sensor_yuv_noisefilter_level *yuv_noisefilter_param = PNULL;
 
@@ -30,7 +31,7 @@ isp_u32 _pm_yuv_noisefilter_convert_param(void *dst_yuv_noisefilter_param, isp_u
 	} else {
 		isp_u32 *multi_nr_map_ptr = PNULL;
 		multi_nr_map_ptr = (isp_u32 *)dst_ptr->scene_ptr;
-		isp_u32 total_offset_units = _pm_calc_nr_addr_offset(mode_flag, scene_flag, multi_nr_map_ptr);
+		total_offset_units = _pm_calc_nr_addr_offset(mode_flag, scene_flag, multi_nr_map_ptr);
 		yuv_noisefilter_param = (struct sensor_yuv_noisefilter_level *)((isp_u8 *)dst_ptr->param_ptr +
 			total_offset_units * dst_ptr->level_num * sizeof(struct sensor_yuv_noisefilter_level));
 	}
