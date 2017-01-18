@@ -20,18 +20,20 @@
 #include "jpeg_exif_header.h"
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
-//#include "../vcm/vcm_dw9800.h"
+#ifdef CONFIG_AF_VCM_DW9800W
+#include "../vcm/vcm_dw9800.h"
+#else
 #include "af_bu64297gwz.h"
-
+#endif
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
 #include "sensor_imx258_raw_param_v3.c"
 #else
 #include "imx258_param/sensor_imx258_raw_param_main.c"
 #endif
 #include "sensor_imx258_otp_truly.h"
-
+#ifndef CONFIG_AF_VCM_DW9800W
 #define DW9800_VCM_SLAVE_ADDR (0x0c)
-
+#endif
 #define SENSOR_NAME			"imx258_mipi_raw"
 #define I2C_SLAVE_ADDR			0x34 //0x20    /* 16bit slave address*/
 
@@ -968,8 +970,11 @@ static unsigned long imx258_identify(SENSOR_HW_HANDLE handle, unsigned long para
 		if (imx258_VER_VALUE == ver_value) {
 			ret_value = SENSOR_SUCCESS;
 			SENSOR_LOGI("this is imx258 sensor");
-			//vcm_dw9800_init(handle);
+#ifdef CONFIG_AF_VCM_DW9800W
+			vcm_dw9800_init(handle);
+#else
 			bu64297gwz_init(handle);
+#endif
 			imx258_init_mode_fps_info(handle);
 		} else {
 			SENSOR_LOGI("Identify this is %x%x sensor", pid_value, ver_value);
@@ -1276,7 +1281,11 @@ static unsigned long imx258_stream_off(SENSOR_HW_HANDLE handle, unsigned long pa
 
 static unsigned long imx258_write_af(SENSOR_HW_HANDLE handle, unsigned long param)
 {
-	return bu64297gwz_write_af(handle, param);// vcm_dw9800_set_position(handle, param);
+#ifdef CONFIG_AF_VCM_DW9800W
+	return vcm_dw9800_set_position(handle, param);
+#else
+	return bu64297gwz_write_af(handle, param);
+#endif
 }
 
 static uint32_t imx258_get_static_info(SENSOR_HW_HANDLE handle, uint32_t *param)
@@ -1303,8 +1312,11 @@ static uint32_t imx258_get_static_info(SENSOR_HW_HANDLE handle, uint32_t *param)
 	ex_info->capture_skip_num = g_imx258_mipi_raw_info.capture_skip_num;
 	ex_info->name = g_imx258_mipi_raw_info.name;
 	ex_info->sensor_version_info = g_imx258_mipi_raw_info.sensor_version_info;
-	//vcm_dw9800_get_pose_dis(handle, &up, &down);
+#ifdef CONFIG_AF_VCM_DW9800W
+	vcm_dw9800_get_pose_dis(handle, &up, &down);
+#else
 	bu64297gwz_get_pose_dis(handle, &up, &down);
+#endif
 	ex_info->pos_dis.up2hori = up;
 	ex_info->pos_dis.hori2down = down;
 	SENSOR_LOGI("SENSOR_imx258: f_num: %d", ex_info->f_num);
