@@ -22,7 +22,7 @@
 #include "cmr_msg.h"
 #include "af_adpt.h"
 
-//#define SUPPORT_AF_THREAD
+#define SUPPORT_AF_THREAD
 
 #define AFCTRL_MSG_QUEUE_SIZE			100
 #define AFCTRL_EVT_BASE				0x2000
@@ -289,7 +289,7 @@ static cmr_int afctrl_thread_proc(struct cmr_msg *message, void *p_data)
 		ret = -ISP_PARAM_NULL;
 		goto exit;
 	}
-	ISP_LOGI("message.msg_type 0x%x, data %p", message->msg_type, message->data);
+	ISP_LOGV("message.msg_type 0x%x, data %p", message->msg_type, message->data);
 
 	switch (message->msg_type) {
 	case AFCTRL_EVT_INIT:
@@ -313,7 +313,7 @@ static cmr_int afctrl_thread_proc(struct cmr_msg *message, void *p_data)
 		break;
 	}
 exit:
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGV("done %ld", ret);
 	return ret;
 }
 
@@ -563,6 +563,8 @@ cmr_int af_ctrl_process(cmr_handle handle, struct af_ctrl_process_in *in,
 	struct af_ctrl_msg_proc msg_proc;
 	CMR_MSG_INIT(message);
 
+	if (!cxt->af_support)
+		goto exit;
 	msg_proc.in = in;
 	msg_proc.out = out;
 
@@ -599,10 +601,14 @@ cmr_int af_ctrl_ioctrl(cmr_handle handle, cmr_int cmd,
 	struct af_ctrl_msg_ctrl msg_ctrl;
 	CMR_MSG_INIT(message);
 
+	if (!cxt->af_support) {
+		ret = ISP_SUCCESS;
+		goto exit;
+	}
 	msg_ctrl.cmd = cmd;
 	msg_ctrl.in = in;
 	msg_ctrl.out = out;
-	if (AF_CTRL_CMD_SET_PROC_START == cmd) {
+	if (0) {//{AF_CTRL_CMD_SET_PROC_START == cmd) {
 		message.data = malloc(sizeof(msg_ctrl));
 		message.msg_type = AFCTRL_EVT_IOCTRL;
 		message.sync_flag = CMR_MSG_SYNC_NONE;
