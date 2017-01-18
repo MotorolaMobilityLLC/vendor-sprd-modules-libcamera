@@ -6512,12 +6512,13 @@ int SprdCamera3OEMIf::Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint 
 		}
 	}
 
-	if(type == CAMERA_SNAPSHOT_ZSL_RESERVED) {
-		if (NULL != mZslHeapReserved) {
-			freeCameraMem(mZslHeapReserved);
-			mZslHeapReserved = NULL;
-		}
-	}
+// Performance optimization:move Callback_CaptureFree to closeCamera function
+//	if(type == CAMERA_SNAPSHOT_ZSL_RESERVED) {
+//		if (NULL != mZslHeapReserved) {
+//			freeCameraMem(mZslHeapReserved);
+//			mZslHeapReserved = NULL;
+//		}
+//	}
 
 	if (type == CAMERA_ISP_LSC) {
 		if (NULL != mIspLscHeapReserved) {
