@@ -6669,6 +6669,8 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32
 		*vir_addr++ = (cmr_uint)mIspLscHeapReserved->data;
 		*fd++ = mIspLscHeapReserved->fd;
 	} else if (type == CAMERA_ISP_STATIS) {
+		cmr_u64 kaddr = 0;
+		size_t ksize = 0;
 		if(mIspStatisHeapReserved == NULL) {
 			memory = allocCameraMem(size, 1, false);
 			if (NULL == memory) {
@@ -6677,9 +6679,12 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32
 			}
 			mIspStatisHeapReserved = memory;
 		}
-		*phy_addr++ = (cmr_uint)mIspStatisHeapReserved->phys_addr;
+		memory->ion_heap->get_kaddr(&kaddr, &ksize);
+		*phy_addr = kaddr;
 		*vir_addr++ = (cmr_uint)mIspStatisHeapReserved->data;
 		*fd++ = mIspStatisHeapReserved->fd;
+		HAL_LOGE("LIKE: phy_kaddr=0x%x", *phy_addr);
+		HAL_LOGE("LIKE: test_kaddr=0x%x\n", kaddr);
 	} else if (type == CAMERA_ISP_BINGING4AWB) {
 			cmr_u64* phy_addr_64 = (cmr_u64*)phy_addr;
 			cmr_u64* vir_addr_64 = (cmr_u64*)vir_addr;

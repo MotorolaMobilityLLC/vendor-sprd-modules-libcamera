@@ -594,7 +594,7 @@ isp_s32 isp_u_raw_afm_win(isp_handle handle, void *win_range)
 
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_AFM_V1;
+	param.sub_block = ISP_BLOCK_RAW_AFM;
 	param.property = ISP_PRO_RGB_AFM_WIN;
 	param.property_param = win_range;
 

@@ -450,6 +450,8 @@ struct isp_anti_flicker_cfg {
 	cmr_handle thr_handle;
 	cmr_handle dev_handle;
 	cmr_uint vir_addr;
+	cmr_uint height;
+	cmr_uint width;
 	struct afl_ctrl_proc_out proc_out;
 };
 

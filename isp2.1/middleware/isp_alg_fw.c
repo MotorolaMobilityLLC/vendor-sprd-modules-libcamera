@@ -414,13 +414,17 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle,
 	struct ae_calc_in               in_param;
 	struct awb_gain                 gain;
 	struct ae_calc_out ae_result = {0};
-	struct isp_awb_statistic_info *ae_stat_ptr=NULL;
+	struct isp_awb_statistic_info ae_stat_ptr;
 	struct isp_statis_info	*statis_info = NULL;
 	int32_t node_type = 0;
-	uint64_t k_addr = 0;
-	uint64_t u_addr = 0;
+	uint32_t k_addr = 0;
+	uint32_t u_addr = 0;
+	uint32_t val0 = 0;
+	uint32_t val1 = 0;
+	uint32_t i =0;
 	nsecs_t system_time0 = 0;
 	nsecs_t system_time1 = 0;
+
 
 	if (cxt->lib_use_info->ae_lib_info.product_id) {
 		ISP_LOGI("Not use our ae lib!");
@@ -433,8 +437,17 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle,
 	statis_info = (struct isp_statis_info *)data;
 	k_addr = statis_info->phy_addr;
 	u_addr = statis_info->vir_addr;
-	memcpy((void *)ae_stat_ptr, (void *)u_addr, sizeof(struct isp_awb_statistic_info));
+	ISP_LOGE("WUYI:vir_addr:0x%08x, phy_addr:0x%08x", u_addr, k_addr);
+	for (i = 0x00; i < ISP_RAW_AEM_ITEM; i++) {
+		val0 = *((uint32_t *)u_addr);
+		val1 = *(((uint32_t *)u_addr) + i);
+		ae_stat_ptr.r_info[i] = (val1 >> 11) & 0x1fffff;
+		ae_stat_ptr.g_info[i] = val0 & 0x3fffff;
+		ae_stat_ptr.b_info[i] = ((val1 & 0x7ff) << 10) | ((val0 >> 22) & 0x3ff);
+	}
 
+	//memcpy((void *)&ae_stat_ptr, (void *)u_addr, sizeof(struct isp_awb_statistic_info));
+	return 0;
 	if (rtn || (0==u_addr) || (0==k_addr)) {
 		ISP_LOGE("k_addr or u_addr is 0, %ld", rtn);
 		return rtn;
@@ -455,8 +468,8 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle,
 
 	in_param.stat_fmt = AE_AEM_FMT_RGB;
 	if (AE_AEM_FMT_RGB & in_param.stat_fmt) {
-		in_param.rgb_stat_img = (uint32_t*)ae_stat_ptr->r_info;
-		in_param.stat_img     = (uint32_t*)ae_stat_ptr->r_info;
+		in_param.rgb_stat_img = (uint32_t*)ae_stat_ptr.r_info;
+		in_param.stat_img     = (uint32_t*)ae_stat_ptr.r_info;
 	}
 
 	in_param.sec  = cxt->ae_cxt.time.sec;
@@ -474,7 +487,7 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle,
 	}
 
 	awb_calc_info->ae_result = ae_result;
-	awb_calc_info->ae_stat_ptr = ae_stat_ptr;
+	awb_calc_info->ae_stat_ptr = &ae_stat_ptr;
 	awb_calc_info->k_addr = k_addr;
 	awb_calc_info->u_addr = u_addr;
 	awb_calc_info->type = node_type;
@@ -815,7 +828,8 @@ cmr_int ispalg_ae_awb_process(cmr_handle isp_alg_handle, void *data)
 	statis_buf.phy_addr = statis_info->phy_addr;
 	statis_buf.vir_addr = statis_info->vir_addr;
 
-	rtn = ispalg_start_ae_process((cmr_handle)cxt, &awb_calc_info, data);
+	rtn = ispalg_start_ae_process((cmr_handle)cxt, &awb_calc_info, statis_info);
+	return 0;
 	if (rtn) {
 		goto exit;
 	}
@@ -854,7 +868,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	int32_t ae_exp_flag = 0;
 	float ae_exp = 0.0;
 	cmr_int nxt_flicker = 0;
-	struct isp_awb_statistic_info   *ae_stat_ptr = NULL;
+	struct isp_awb_statistic_info   ae_stat_ptr;
 	struct isp_pm_param_data        param_data;
 	struct isp_pm_ioctl_input       input = {NULL, 0};
 	struct isp_pm_ioctl_output      output = {NULL, 0};
@@ -865,6 +879,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	uint64_t u_addr = 0;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
+	return 0;
 #if 0
 	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_AEM_STATISTIC, ISP_BLK_AE_NEW, NULL, 0);
 	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void*)&input, (void*)&output);
@@ -877,7 +892,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	statis_info = (struct isp_statis_info *)data;
 	k_addr = statis_info->phy_addr;
 	u_addr = statis_info->vir_addr;
-	memcpy((void *)ae_stat_ptr, (void *)u_addr, sizeof(struct isp_awb_statistic_info));
+	memcpy((void *)&ae_stat_ptr, (void *)u_addr, sizeof(struct isp_awb_statistic_info));
 
 	bypass = 1;
 	isp_dev_anti_flicker_bypass(cxt->dev_access_handle, bypass);
@@ -895,7 +910,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_FLICKER_SWITCH_FLAG, &cur_exp_flag, NULL);
 	ISP_LOGI("cur exposure flag %d", cur_exp_flag);
 
-	afl_input.ae_stat_ptr = ae_stat_ptr;
+	afl_input.ae_stat_ptr = &ae_stat_ptr;
 	afl_input.ae_exp_flag = ae_exp_flag;
 	afl_input.cur_exp_flag = cur_exp_flag;
 	afl_input.cur_flicker = cur_flicker;
@@ -931,7 +946,7 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 	cmr_s32 i = 0;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
-
+	return 0;
 	memset((void*)&calc_param, 0, sizeof(calc_param));
 	memset((void*)&calc_result, 0, sizeof(calc_result));
 	ISP_LOGI("LiuY begin data_type %d", data_type);
@@ -1037,7 +1052,7 @@ void ispalg_dev_evt_cb(cmr_int evt, void *data, void *privdata)
 	message.msg_type = evt;
 	message.sub_msg_type = 0;
 	message.sync_flag = CMR_MSG_SYNC_NONE;
-	message.alloc_flag = 0;
+	message.alloc_flag = 1;
 	message.data = data;
 	rtn = cmr_thread_msg_send(cxt->thr_handle, &message);
 	if (rtn) {
@@ -1659,6 +1674,8 @@ static int32_t isp_alg_cfg(cmr_handle isp_alg_handle)
 		param_data ++;
 	}
 
+	((struct isp_anti_flicker_cfg *)cxt->afl_cxt.handle)->width = cxt->commn_cxt.src.w;
+	((struct isp_anti_flicker_cfg *)cxt->afl_cxt.handle)->height = cxt->commn_cxt.src.h;
 	rtn = afl_ctrl_cfg(cxt->afl_cxt.handle);
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("anti_flicker param update failed");

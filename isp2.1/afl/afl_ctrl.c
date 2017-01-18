@@ -317,22 +317,38 @@ exit:
 cmr_int afl_ctrl_cfg(isp_handle isp_afl_handle)
 {
 	cmr_int rtn = ISP_SUCCESS;
-#if 0/*Solve compile problem*/
 	struct isp_anti_flicker_cfg *cxt_ptr = (struct isp_anti_flicker_cfg*)isp_afl_handle;;
 	struct isp_dev_anti_flicker_info_v1 afl_info;
+#if 0
 
 	afl_info.bypass         = cxt_ptr->bypass;
 	afl_info.skip_frame_num = cxt_ptr->skip_frame_num;
 	afl_info.mode           = cxt_ptr->mode;
-	afl_info.line_step      = cxt_ptr->line_step;
+	//afl_info.line_step      = cxt_ptr->line_step;
 	afl_info.frame_num      = cxt_ptr->frame_num;
 	afl_info.start_col      = cxt_ptr->start_col;
 	afl_info.end_col        = cxt_ptr->end_col;
-	afl_info.vheight        = cxt_ptr->vheight;
-
-	rtn = isp_dev_access_ioctl(cxt_ptr->dev_handle, ISP_DEV_SET_AFL_BLOCK, &afl_info, NULL);
-	ISP_LOGI("LiuY: done %ld", rtn);
+	//afl_info.vheight        = cxt_ptr->vheight;
 #endif
+	afl_info.bypass         = 0;
+	afl_info.skip_frame_num = 3;
+	afl_info.mode           = 1;
+	//afl_info.line_step      = cxt_ptr->line_step;
+	afl_info.afl_stepx      = 0xA0000;
+	afl_info.afl_stepy      = 0x100000;
+	afl_info.frame_num      = 0x3;
+	afl_info.start_col      = 0;
+	afl_info.end_col      = 640;
+	afl_info.step_x_region      = 0x280000;
+	afl_info.step_y_region      = 0x1E0000;
+	afl_info.step_x_start_region      = 0;
+	afl_info.step_x_end_region      = 640;
+	afl_info.step_x_end_region      = 640;
+	afl_info.img_size.height = cxt_ptr->height;
+	afl_info.img_size.width = cxt_ptr->width;
+
+	rtn = isp_dev_access_ioctl(cxt_ptr->dev_handle, ISP_DEV_SET_AFL_NEW_BLOCK, &afl_info, NULL);
+	ISP_LOGI("LiuY: done %ld", rtn);
 	return rtn;
 }
 
