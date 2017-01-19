@@ -3766,6 +3766,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 									HAL_LOGD("frame_num=%d, videobuf_phy=0x%lx, videobuf_vir=0x%lx", frame_num, videobuf_phy, videobuf_vir);
 									HAL_LOGD("frame_num=%d, prebuf_phy=0x%lx, prebuf_vir=0x%lx", frame_num, prebuf_phy, prebuf_vir);
 									memcpy((void*)videobuf_vir, (void*)prebuf_vir, mPreviewWidth * mPreviewHeight * 3 / 2);
+									MemIon::Flush_ion_buffer(frame->fd, (void*)prebuf_vir, NULL, mPreviewWidth * mPreviewHeight * 3 / 2);
 									channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp, CAMERA_STREAM_TYPE_VIDEO);
 									if(frame_num == (mDropVideoFrameNum+1)) //for IOMMU error
 										 channel->channelClearInvalidQBuff(mDropVideoFrameNum, buffer_timestamp, CAMERA_STREAM_TYPE_VIDEO);
