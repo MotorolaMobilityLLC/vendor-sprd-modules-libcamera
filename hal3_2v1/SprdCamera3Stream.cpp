@@ -101,7 +101,7 @@ int SprdCamera3Stream::buffDoneQ2(uint32_t frameNumber, buffer_handle_t *buffer)
 
 	hal_mem_info_t* buf_mem_info = &(buff_hal->mem_info);
 	if(buff_hal == NULL) {
-		HAL_LOGE("ERROR: buff_hal is 0x%lx", buff_hal);
+		HAL_LOGE("ERROR: buff_hal is %p", buff_hal);
 		return BAD_VALUE;
 	}
 
@@ -114,7 +114,7 @@ int SprdCamera3Stream::buffDoneQ2(uint32_t frameNumber, buffer_handle_t *buffer)
 	buff_hal->buffer_handle = buffer;
 	ret = mMemory->map2(buffer, buf_mem_info);
 	if(ret != NO_ERROR) {
-		HAL_LOGE("buffer queue Done Q buffer(0x%lx) error", buffer);
+		HAL_LOGE("buffer queue Done Q buffer(%p) error", buffer);
 		mBuffNum++;
 		buff_hal->buffer_handle = buffer;
 		buff_hal->frame_number = frameNumber;
@@ -124,11 +124,11 @@ int SprdCamera3Stream::buffDoneQ2(uint32_t frameNumber, buffer_handle_t *buffer)
 		mBufferList.add(buff_hal);
 		ret = NO_ERROR;
 	} else {
-		HAL_LOGV("addr_phy = 0x%lx, addr_vir = 0x%lx, size = 0x%lx, mStreamType = %d", buf_mem_info->addr_phy, buf_mem_info->addr_vir, buf_mem_info->size, mStreamType);
+		HAL_LOGV("addr_phy = %p, addr_vir = %p, size = %d, mStreamType = %d", buf_mem_info->addr_phy, buf_mem_info->addr_vir, buf_mem_info->size, mStreamType);
 		mBuffNum++;
 		buff_hal->buffer_handle = buffer;
 		buff_hal->frame_number = frameNumber;
-		HAL_LOGV("frame_number %d, handle 0x%lx, mStreamType %d",
+		HAL_LOGV("frame_number %d, handle %p, mStreamType %d",
 			     buff_hal->frame_number,buffer, mStreamType);
 		mBufferList.add(buff_hal);
 	}
@@ -144,7 +144,7 @@ int SprdCamera3Stream::buffDoneQ(uint32_t frameNumber, buffer_handle_t *buffer)
 
 	hal_mem_info_t* buf_mem_info = &(buff_hal->mem_info);
 	if(buff_hal == NULL) {
-		HAL_LOGE("ERROR: buff_hal is 0x%lx", buff_hal);
+		HAL_LOGE("ERROR: buff_hal is %p", buff_hal);
 		return BAD_VALUE;
 	}
 
@@ -157,7 +157,7 @@ int SprdCamera3Stream::buffDoneQ(uint32_t frameNumber, buffer_handle_t *buffer)
 	buff_hal->buffer_handle = buffer;
 	ret = mMemory->map(buffer, buf_mem_info);
 	if(ret != NO_ERROR) {
-		HAL_LOGE("buffer queue Done Q buffer(0x%lx) error", buffer);
+		HAL_LOGE("buffer queue Done Q buffer(%p) error", buffer);
 		mBuffNum++;
 		buff_hal->buffer_handle = buffer;
 		buff_hal->frame_number = frameNumber;
@@ -167,11 +167,11 @@ int SprdCamera3Stream::buffDoneQ(uint32_t frameNumber, buffer_handle_t *buffer)
 		mBufferList.add(buff_hal);
 		ret = NO_ERROR;
 	} else {
-		HAL_LOGV("addr_phy = 0x%lx, addr_vir = 0x%lx, size = 0x%lx, mStreamType = %d", buf_mem_info->addr_phy, buf_mem_info->addr_vir, buf_mem_info->size, mStreamType);
+		HAL_LOGV("addr_phy = %p, addr_vir = %p, size = %d, mStreamType = %d", buf_mem_info->addr_phy, buf_mem_info->addr_vir, buf_mem_info->size, mStreamType);
 		mBuffNum++;
 		buff_hal->buffer_handle = buffer;
 		buff_hal->frame_number = frameNumber;
-		HAL_LOGV("frame_number %d, handle 0x%lx, mStreamType %d",
+		HAL_LOGV("frame_number %d, handle %p, mStreamType %d",
 		          buff_hal->frame_number,buffer, mStreamType);
 		mBufferList.add(buff_hal);
 	}

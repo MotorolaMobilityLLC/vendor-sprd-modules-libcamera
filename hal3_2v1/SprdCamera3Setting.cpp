@@ -1348,16 +1348,31 @@ const camera_info kCameraInfo[] = {
 	{
 		CAMERA_FACING_BACK,
 		90,/*orientation*/
+		0,
+		0,
+		0,
+		0,
+		0
 	},
 #ifndef CONFIG_DCAM_SENSOR_NO_FRONT_SUPPORT
 	{
 		CAMERA_FACING_FRONT,
 		270,/*orientation*/
+		0,
+		0,
+		0,
+		0,
+		0
 	},
 #else
 		{
 			-1,
 			-1,/*orientation*/
+			0,
+			0,
+			0,
+			0,
+			0
 		},
 #endif
 
@@ -1365,11 +1380,21 @@ const camera_info kCameraInfo[] = {
 		{
 			CAMERA_FACING_BACK,
 			90,/*orientation*/
+			0,
+			0,
+			0,
+			0,
+			0
 		},
 #else
 		{
 			-1,
 			-1,/*orientation*/
+			0,
+			0,
+			0,
+			0,
+			0
 		},
 #endif
 
@@ -1377,11 +1402,21 @@ const camera_info kCameraInfo[] = {
 		{
 			CAMERA_FACING_FRONT,
 			270,/*orientation*/
+			0,
+			0,
+			0,
+			0,
+			0
 		},
 #else
 		{
 			-1,
 			-1,/*orientation*/
+			0,
+			0,
+			0,
+			0,
+			0
 		},
 #endif
 
@@ -3159,7 +3194,7 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 	if (frame_settings.exists(ANDROID_SENSOR_SENSITIVITY)) {
 		valueI32 = frame_settings.find(ANDROID_SENSOR_SENSITIVITY).data.i32[0];
 		GET_VALUE_IF_DIF(s_setting[mCameraId].sensorInfo.sensitivity, valueI32, ANDROID_SENSOR_SENSITIVITY)
-		HAL_LOGV("sensitivity is %ld", valueI32);
+		HAL_LOGV("sensitivity is %d", valueI32);
 	}
 
 	if (frame_settings.exists(ANDROID_SPRD_SENSOR_ORIENTATION)) {
@@ -3328,7 +3363,7 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 	if (frame_settings.exists(ANDROID_CONTROL_AE_ANTIBANDING_MODE)) {
 		valueU8 = frame_settings.find(ANDROID_CONTROL_AE_ANTIBANDING_MODE).data.u8[0];
 		GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.ae_abtibanding_mode, valueU8, ANDROID_CONTROL_AE_ANTIBANDING_MODE)
-		HAL_LOGV("ANDROID_CONTROL_AE_ANTIBANDING_MODE %d %d",valueU8);
+		HAL_LOGV("ANDROID_CONTROL_AE_ANTIBANDING_MODE %d",valueU8);
 	}
 //SPRD
 	if (frame_settings.exists(ANDROID_SPRD_CAPTURE_MODE)) {

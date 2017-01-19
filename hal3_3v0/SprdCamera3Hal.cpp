@@ -53,7 +53,7 @@ camera_module_t HAL_MODULE_INFO_SYM = {
 	get_camera_info: sprdcamera::SprdCamera3Factory::get_camera_info,
 	set_callbacks: sprdcamera::SprdCamera3Factory::set_callbacks,/*HAL 3.2*/
 	get_vendor_tag_ops: sprdcamera::SprdCamera3Factory::get_vendor_tag_ops,/*HAL 3.2*/
-//->open_legacy             :HAL_open_legacy,/*HAL1.0*/
+//    open_legacy             :HAL_open_legacy,/*HAL1.0*/
 	open_legacy: NULL,
 	set_torch_mode: sprdcamera::SprdCamera3Factory::setTorchMode,
 };

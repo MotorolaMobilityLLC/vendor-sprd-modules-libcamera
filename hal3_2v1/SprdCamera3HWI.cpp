@@ -292,7 +292,6 @@ static int ispVideoSetParam(uint32_t width, uint32_t height)
 	SprdCamera3OEMIf* oemIf = dev->getOEMif();
 	cam_dimension_t capture_size;
 
-	HAL_LOGD("width:%d, height:%d", width, height);
 	if (NULL != picChannel) {
 		//picChannel->setCaptureSize(width,height);
 		capture_size.width = width;
@@ -323,7 +322,7 @@ int SprdCamera3HWI::openCamera(struct hw_device_t **hw_device)
 	Mutex::Autolock l(mLock);
 
 	//single camera mode can only open one camera .multicamera mode can only open two cameras.
-	if (mCameraSessionActive == 1 && !(isMultiCameraMode(mMultiCameraMode))
+	if ((mCameraSessionActive == 1 && !(isMultiCameraMode(mMultiCameraMode)))
 	    || mCameraSessionActive > 2) {
 		HAL_LOGE("multiple simultaneous camera instance not supported");
 		return -EUSERS;

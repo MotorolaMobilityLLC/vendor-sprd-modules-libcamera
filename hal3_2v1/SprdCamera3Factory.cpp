@@ -286,7 +286,7 @@ int SprdCamera3Factory::camera_device_open(
 }
 
 struct hw_module_methods_t SprdCamera3Factory::mModuleMethods = {
-    open: SprdCamera3Factory::camera_device_open,
+    .open = SprdCamera3Factory::camera_device_open,
 };
 
 /*Camera ID Expose To Camera Apk On MultiCameraMode

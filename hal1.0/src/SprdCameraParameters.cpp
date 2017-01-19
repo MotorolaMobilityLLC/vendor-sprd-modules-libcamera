@@ -28,7 +28,9 @@ namespace android {
 #define LOGI ALOGI
 #define LOGW ALOGW
 #define LOGD ALOGD
+#ifndef ARRAY_SIZE
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
+#endif
 #define SIZE_ALIGN_16(x) (((x)+15)&(~15))
 
 static int lookup(const struct str_map *const arr, const char *name, int def);

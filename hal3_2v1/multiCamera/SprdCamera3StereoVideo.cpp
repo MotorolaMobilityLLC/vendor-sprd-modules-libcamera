@@ -75,25 +75,25 @@ SprdCamera3StereoVideo *mMuxer = NULL;
             } \
 
 camera3_device_ops_t SprdCamera3StereoVideo::mCameraMuxerOps = {
-    initialize:                               SprdCamera3StereoVideo::initialize,
-    configure_streams:                        SprdCamera3StereoVideo::configure_streams,
-    register_stream_buffers:                  NULL,
-    construct_default_request_settings:       SprdCamera3StereoVideo::construct_default_request_settings,
-    process_capture_request:                  SprdCamera3StereoVideo::process_capture_request,
-    get_metadata_vendor_tag_ops:              NULL,
-    dump:                                     SprdCamera3StereoVideo::dump,
-    flush:                                    SprdCamera3StereoVideo::flush,
-    reserved:{0},
+    .initialize =                               SprdCamera3StereoVideo::initialize,
+    .configure_streams =                        SprdCamera3StereoVideo::configure_streams,
+    .register_stream_buffers =                  NULL,
+    .construct_default_request_settings =       SprdCamera3StereoVideo::construct_default_request_settings,
+    .process_capture_request =                  SprdCamera3StereoVideo::process_capture_request,
+    .get_metadata_vendor_tag_ops =              NULL,
+    .dump =                                     SprdCamera3StereoVideo::dump,
+    .flush =                                    SprdCamera3StereoVideo::flush,
+    .reserved = {0},
 };
 
 camera3_callback_ops SprdCamera3StereoVideo::callback_ops_main = {
-    process_capture_result:                   SprdCamera3StereoVideo::process_capture_result_main,
-    notify:                                   SprdCamera3StereoVideo::notifyMain
+    .process_capture_result =                   SprdCamera3StereoVideo::process_capture_result_main,
+    .notify =                                   SprdCamera3StereoVideo::notifyMain
 };
 
 camera3_callback_ops SprdCamera3StereoVideo::callback_ops_aux = {
-    process_capture_result:                   SprdCamera3StereoVideo::process_capture_result_aux,
-    notify:                                   SprdCamera3StereoVideo::notifyAux
+    .process_capture_result =                   SprdCamera3StereoVideo::process_capture_result_aux,
+    .notify =                                   SprdCamera3StereoVideo::notifyAux
 };
 
 /*===========================================================================
@@ -161,7 +161,7 @@ void SprdCamera3StereoVideo::freeLocalBuffer(new_mem_t* LocalBuffer, List<buffer
 {
     HAL_LOGD("free local buffer,bufferNum=%d",bufferNum);
     bufferList.clear();
-    for(size_t i = 0; i < bufferNum; i++){
+    for(int i = 0; i < bufferNum; i++){
         if(LocalBuffer[i].buffer != NULL){
             delete ((private_handle_t*)*(LocalBuffer[i].buffer));
             LocalBuffer[i].buffer = NULL;
@@ -1533,7 +1533,7 @@ void SprdCamera3StereoVideo::MuxerThread::videoErrorCallback(uint32_t frame_numb
             return;
         }
     }
-    camera3_stream_buffer_t *result_buffers = new camera3_stream_buffer_t[1];
+    camera3_stream_buffer_t *result_buffers = new camera3_stream_buffer_t;
 
     result_buffers->stream = i->stream;
     result_buffers->buffer = i->buffer;
@@ -1641,7 +1641,7 @@ bool SprdCamera3StereoVideo::matchTwoFrame(hwi_frame_buffer_info_t result1,List 
         itor2=list.begin();
         while(itor2!=list.end()) {
             int64_t diff = result1.timestamp-itor2->timestamp;
-            if(abs(diff) < TIME_DIFF) {
+            if(abs((cmr_s32)diff) < VIDEO_TIME_DIFF) {
                 *result2 =*itor2;
                 list.erase(itor2);
                 HAL_LOGV("[%d:match:%d],diff=%llu T1:%llu,T2:%llu",

@@ -359,7 +359,7 @@ int SprdCamera3RegularChannel::request(camera3_stream_t *stream, buffer_handle_t
 	}
 
 	if(i == CHANNEL_MAX_STREAM_NUM) {
-		HAL_LOGE("buff request failed, has no stream 0x%lx",stream);
+		HAL_LOGE("buff request failed, has no stream %p",stream);
 		return INVALID_OPERATION;
 	}
 
@@ -655,7 +655,7 @@ int32_t SprdCamera3PicChannel::request(camera3_stream_t *stream, buffer_handle_t
 		}
 	}
 
-	HAL_LOGE("buff request failed, has no stream 0x%lx",stream);
+	HAL_LOGE("buff request failed, has no stream %p",stream);
 	return INVALID_OPERATION;
 }
 
@@ -1053,7 +1053,9 @@ int SprdCamera3MetadataChannel::getCapRequestPara(const CameraMetadata &metadata
 		HAL_LOGD("3dcalibration exist, set sprd_zsl_enabled %d",request_para->sprd_zsl_enabled);
 	}
 	else {
-		SPRD_DEF_Tag sprddefInfo = {0,};
+		SPRD_DEF_Tag sprddefInfo;
+		memset(&sprddefInfo, 0, sizeof(SPRD_DEF_Tag));
+
 		mSetting->getSPRDDEFTag(&sprddefInfo);
 		if ( sprddefInfo.sprd_3dcalibration_enabled )
         {

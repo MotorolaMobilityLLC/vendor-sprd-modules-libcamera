@@ -224,11 +224,15 @@ void SprdCamera3OEMIf::shakeTestInit(ShakeTest *tmpShakeTest)
 }
 
 SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
-	mPreviewDcamAllocBufferCnt(0),
+	mSprdPipVivEnabled(0),
+	mSprdHighIsoEnabled(0),
+	mSprdRefocusEnabled(0),
+	mSprd3dCalibrationEnabled(0),/**add for 3d calibration*/
+	mSprdRawCallBack(0),/**add for 3d capture*/
+	mSprdReprocessing(0),/**add for 3d capture*/
+	mNeededTimestamp(0),/**add for 3d capture*/
 	mRawHeap(NULL),
-	mHalOem(NULL),
 	mRawHeapSize(0),
-	mSubRawHeapNum(0),
 	mParameters(),
 	mPreviewHeight_trimy(0),
 	mPreviewWidth_trimx(0),
@@ -243,6 +247,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mJpegSize(0),
 	mUser(0),
 	mPreviewWindow(NULL),
+	mHalOem(NULL),
 	mIsStoreMetaData(false),
 	mIsFreqChanged(false),
 	mCameraId(cameraId),
@@ -258,7 +263,23 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mReleaseFLag(false),
 	mTimeCoeff(1),
 	mPreviewBufferUsage(PREVIEW_BUFFER_USAGE_GRAPHICS),
+	mCameraDfsPolicyCur(CAM_EXIT),
+	mIsPerformanceTestable(false),
+	mIsAndroidZSL(false),
 	mSetting(setting),
+	BurstCapCnt(0),
+	mCapIntent(0),
+	mPrvTimerID(NULL),
+	mFlashMode(-1),
+	mIsAutoFocus(false),
+	mIspToolStart(false),
+	mSubRawHeapNum(0),
+	mSubRawHeapSize(0),
+	mPathRawHeapNum(0),
+	mPreviewDcamAllocBufferCnt(0),
+	mPreviewFrameNum(0),
+	mRecordFrameNum(0),
+	mIsRecording(false),
 #if defined(CONFIG_PRE_ALLOC_CAPTURE_MEM)
 	mIsPreAllocCapMem(1),
 #else
@@ -268,45 +289,25 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mIsPreAllocCapMemDone(0),
 	mZSLModeMonitorMsgQueHandle(0),
 	mZSLModeMonitorInited(0),
-	mIsPerformanceTestable(false),
-	mIsAndroidZSL(false),
-	BurstCapCnt(0),
-	mCapIntent(0),
-	mFlashMode(-1),
-	mPrvTimerID(NULL),
-	mIsAutoFocus(false),
-	mIspToolStart(false),
-	mPreviewFrameNum(0),
-	mRecordFrameNum(0),
 	m_pPowerModule(NULL),
 	mHDRPowerHint(0),
 	mHDRPowerHintFlag(0),
 	mGyroInit(0),
 	mGyroDeinit(0),
-	mGyroNum(0),
 	mEisInit(0),
+	mGyroNum(0),
 	mSprdEisEnabled(false),
-	mSprdPipVivEnabled(0),
-	mSprdRefocusEnabled(0),
-	mSprdHighIsoEnabled(0),
-	mSprd3dCalibrationEnabled(0),/**add for 3d calibration*/
-	mSprdRawCallBack(0),/**add for 3d capture*/
-	mSprdReprocessing(0),/**add for 3d capture*/
-	mNeededTimestamp(0),/**add for 3d capture*/
-	mVideoSnapshotType(0),
-	mIsRecording(false),
 	mIsUpdateRangeFps(false),
 	mPrvBufferTimestamp(0),
 	mUpdateRangeFpsCount(0),
 	mPrvMinFps(0),
 	mPrvMaxFps(0),
+	mVideoSnapshotType(0),
+	mIommuEnabled(false),
 	mFlashCaptureFlag(0),
 	mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM),
-	mIommuEnabled(false),
-	mFlagOffTheFlyZslStart(0),
-	mCameraDfsPolicyCur(CAM_EXIT),
-	mSubRawHeapSize(0),
-	mPathRawHeapNum(0)
+	mFlagOffTheFlyZslStart(0)
+
 {
 	ATRACE_CALL();
 
@@ -485,6 +486,7 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf()
 	ATRACE_CALL();
 
 	int i;
+	uint32_t j;
 	HAL_LOGI("closeCameraHardware: E cameraId: %d.", mCameraId);
 
 	if (!mReleaseFLag) {
@@ -509,10 +511,10 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf()
 		mReDisplayHeap = NULL;
 	}
 
-	for (i = 0; i < mZslHeapNum; i++) {
-		if (NULL != mZslHeapArray[i]) {
-			freeCameraMem(mZslHeapArray[i]);
-			mZslHeapArray[i] = NULL;
+	for (j = 0; j < mZslHeapNum; j++) {
+		if (NULL != mZslHeapArray[j]) {
+			freeCameraMem(mZslHeapArray[j]);
+			mZslHeapArray[j] = NULL;
 		}
 	}
 	mZslHeapNum = 0;
@@ -1713,7 +1715,7 @@ void SprdCamera3OEMIf::setCameraPreviewMode(bool isRecordMode)
 	}
 	SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_RANGE_FPS, (cmr_uint)&fps_param);
 
-	HAL_LOGD("min_fps=%d, max_fps=%d, video_mode=%d", fps_param.min_fps, fps_param.max_fps, fps_param.video_mode);
+	HAL_LOGD("min_fps=0x%lx, max_fps=0x%lx, video_mode=0x%lx", fps_param.min_fps, fps_param.max_fps, fps_param.video_mode);
 #if 1 //for cts
 	mIsUpdateRangeFps = true;
 	mUpdateRangeFpsCount++;
@@ -2139,10 +2141,10 @@ bool SprdCamera3OEMIf::WaitForBurstCaptureDone()
 
 	if(pic_channel == NULL)
 		return true;
-	HAL_LOGD("pic_channel 0x%lx", pic_channel);
+	HAL_LOGD("pic_channel %p", pic_channel);
 	pic_channel->getStream(CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT, &jpeg_stream);
 	pic_channel->getStream(CAMERA_STREAM_TYPE_PICTURE_CALLBACK, &callback_stream);
-	HAL_LOGD("jpeg_stream 0x%lx, callback_stream 0x%lx", jpeg_stream, callback_stream);
+	HAL_LOGD("jpeg_stream %p, callback_stream %p", jpeg_stream, callback_stream);
 	if(jpeg_stream == NULL && callback_stream == NULL)
 		return true;
 
@@ -2223,12 +2225,15 @@ bool SprdCamera3OEMIf::startCameraIfNecessary()
 	cmr_uint is_support_zsl = 0;
 	cmr_uint max_width = 0;
 	cmr_uint max_height = 0;
-	struct exif_info exif_info = {0};
+	struct exif_info exif_info = {0, 0};
 	LENS_Tag lensInfo;
 	/**add for 3d calibration get max sensor size begin*/
-	SPRD_DEF_Tag sprddefInfo = {0,};
+	SPRD_DEF_Tag sprddefInfo;
+	memset(&sprddefInfo, 0, sizeof(SPRD_DEF_Tag));
 	int         i = 0;
-	struct sensor_mode_info mode_info[SENSOR_MODE_MAX] = {0,};
+	struct sensor_mode_info mode_info[SENSOR_MODE_MAX];
+	memset(mode_info, 0, sizeof(struct sensor_mode_info) * SENSOR_MODE_MAX);
+
 	/**add for 3d calibration get max sensor size end*/
 
 	if (NULL == mHalOem || NULL == mHalOem->ops) {
@@ -2307,10 +2312,12 @@ bool SprdCamera3OEMIf::startCameraIfNecessary()
 				dual_otp_data = NULL;
 			}
 #else
-			OTP_Tag otpInfo = {0};
+			OTP_Tag otpInfo;
+			memset(&otpInfo, 0, sizeof(OTP_Tag));
 			mSetting->getOTPTag(&otpInfo);
 
-			struct sensor_otp_cust_info otp_info = {0};
+			struct sensor_otp_cust_info otp_info;
+			memset(&otp_info, 0, sizeof(struct sensor_otp_cust_info));
 			mHalOem->ops->camera_get_sensor_otp_info(mCameraHandle, &otp_info);
 			if(otp_info.total_otp.data_ptr != NULL && otp_info.dual_otp.dual_flag)
 			{
@@ -2781,7 +2788,7 @@ bool SprdCamera3OEMIf::iSDisplayCaptureFrame()
 	SprdCamera3RegularChannel *channel = reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
 	SprdCamera3Stream *stream = NULL;
 	int32_t ret = BAD_VALUE;
-	cmr_uint addr_vir = NULL;
+	cmr_uint addr_vir = 0;
 
 	if(channel) {
 		channel->getStream(CAMERA_STREAM_TYPE_PREVIEW, &stream);
@@ -3011,7 +3018,7 @@ void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame)
 	int32_t sy = 0;
 	int32_t ex = 0;
 	int32_t ey = 0;
-	struct img_rect rect = {0};
+	struct img_rect rect = {0,0,0,0};
 	mSetting->getFACETag(&faceInfo);
 	memset(&faceInfo,0,sizeof(FACE_Tag));
 	HAL_LOGD("receive face_num %d.mid=%d",frame->face_num,mCameraId);
@@ -3474,13 +3481,13 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 		mSetting->getVCMTag(&sprdvcmInfo);
 		uint32_t vcm_step = 0;
 		 mHalOem->ops->camera_get_sensor_vcm_step(mCameraHandle,mCameraId,&vcm_step);
-		HAL_LOGD("vcm step is%ld", vcm_step);
+		HAL_LOGD("vcm step is 0x%x", vcm_step);
 		sprdvcmInfo.vcm_step = vcm_step;
 		mSetting->setVCMTag(sprdvcmInfo);
 	}
 
 	SprdCamera3RegularChannel* channel = reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
-	cmr_uint pre_addr_vir = NULL, rec_addr_vir = NULL, callback_addr_vir = NULL;
+	cmr_uint pre_addr_vir = 0, rec_addr_vir = 0, callback_addr_vir = 0;
 	SprdCamera3Stream *pre_stream = NULL, *rec_stream = NULL, *callback_stream = NULL;
 	int32_t pre_dq_num;
 	uint32_t frame_num = 0;
@@ -3510,7 +3517,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 		channel->getStream(CAMERA_STREAM_TYPE_PREVIEW, &pre_stream);
 		channel->getStream(CAMERA_STREAM_TYPE_VIDEO, &rec_stream);
 		channel->getStream(CAMERA_STREAM_TYPE_CALLBACK, &callback_stream);
-		HAL_LOGV("pre_stream 0x%lx, rec_stream 0x%lx, callback_stream 0x%lx",
+		HAL_LOGV("pre_stream %p, rec_stream %p, callback_stream %p",
 			pre_stream, rec_stream, callback_stream);
 
 #ifdef CONFIG_FACE_BEAUTY
@@ -3528,7 +3535,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 			if(ret == NO_ERROR) {
 				ATRACE_BEGIN("video_frame");
 
-				HAL_LOGI("record, fd=0x%x, buff_vir = 0x%lx, frame_num = %d, buffer_timestamp = %lld, frame->type = %d rec=%lld",
+				HAL_LOGI("record, fd=%d, buff_vir = 0x%lx, frame_num = %ld, buffer_timestamp = %lld, frame->type = %d rec=%lld",
 					 frame->fd, buff_vir, frame_num, buffer_timestamp,frame->type, mSlowPara.rec_timestamp);
 				if(frame->type == PREVIEW_VIDEO_FRAME && frame_num >= mRecordFrameNum && (frame_num > mPictureFrameNum ||frame_num == 0)) {
 					if (mVideoWidth <= mCaptureWidth && mVideoHeight <= mCaptureHeight) {
@@ -3599,8 +3606,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 			if(ret == NO_ERROR) {
 				ATRACE_BEGIN("preview_frame");
 
-				HAL_LOGI("prev buff fd=0x%x, buff_vir=0x%lx, num %d, ret %d, time 0x%llx, frame type = %d rec=%lld, ",
-					frame->fd, buff_vir, frame_num, ret, buffer_timestamp,
+				HAL_LOGI("prev buff fd=0x%x, buff_vir=0x%lx, num %d, ret %d, time 0x%llx, frame type = %ld rec=%lld, ",
+					(cmr_uint)frame->fd, buff_vir, frame_num, ret, buffer_timestamp,
 					frame->type, mSlowPara.rec_timestamp);
 				if(frame->type == PREVIEW_FRAME && frame_num >= mPreviewFrameNum && (frame_num > mPictureFrameNum ||frame_num == 0)) {
 					if (mVideoWidth > mCaptureWidth && mVideoHeight > mCaptureHeight) {
@@ -3721,7 +3728,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 			if(ret == NO_ERROR) {
 				ATRACE_BEGIN("callback_frame");
 
-				HAL_LOGI("callback buff fd=0x%x, vir=0x%lx, num %d, ret %d, time 0x%llx, frame type = %d",
+				HAL_LOGI("callback buff fd=%d, vir=0x%lx, num %d, ret %d, time 0x%llx, frame type = %ld",
 					frame->fd, buff_vir, frame_num, ret, buffer_timestamp,frame->type);
 
 				if((!pre_stream || (frame->type != PREVIEW_ZSL_CANCELED_FRAME))&& frame_num >= mZslFrameNum && (frame_num > mPictureFrameNum ||frame_num == 0)) {
@@ -3748,7 +3755,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 			if (PREVIEW_ZSL_FRAME == frame->type) {
 				ATRACE_BEGIN("zsl_frame");
 
-				HAL_LOGI("zsl buff fd=0x%x, frame type=%d", frame->fd, frame->type);
+				HAL_LOGI("zsl buff fd=0x%x, frame type=%ld", frame->fd, frame->type);
 				pushZslFrame(frame);
 				message.msg_type = CMR_EVT_ZSL_MON_PUSH;
 				message.sync_flag = CMR_MSG_SYNC_NONE;
@@ -3799,7 +3806,7 @@ int SprdCamera3OEMIf::getRedisplayMem(uint32_t width,uint32_t height)
 	if (NULL == mReDisplayHeap)
 		return 0;
 
-	HAL_LOGD("addr=0x%p, fd 0x%x",mReDisplayHeap->data, mReDisplayHeap->fd);
+	HAL_LOGD("addr=%p, fd 0x%x",mReDisplayHeap->data, mReDisplayHeap->fd);
 
 	return mReDisplayHeap->fd;
 }
@@ -3817,7 +3824,7 @@ bool SprdCamera3OEMIf::displayOneFrameForCapture(uint32_t width, uint32_t height
 {
 	ATRACE_CALL();
 
-	HAL_LOGD("E: size = %dx%d, phy_addr = 0x%lx, virtual_addr = 0x%lx", width, height, phy_addr, virtual_addr);
+	HAL_LOGD("E: size = %dx%d, phy_addr = %p, virtual_addr = %p", width, height, phy_addr, virtual_addr);
 
 	Mutex::Autolock cbLock(&mPreviewCbLock);
 	int64_t timestamp = systemTime();
@@ -3825,7 +3832,7 @@ bool SprdCamera3OEMIf::displayOneFrameForCapture(uint32_t width, uint32_t height
 	SprdCamera3PicChannel *pic_channel = reinterpret_cast<SprdCamera3PicChannel *>(mPictureChan);
 	SprdCamera3Stream *pre_stream = NULL, *pic_stream = NULL;
 	int32_t ret = 0;
-	cmr_uint addr_vir = NULL, addr_phy = NULL;
+	cmr_uint addr_vir = 0, addr_phy = 0;
 	cmr_s32 ion_fd = 0;
 	uint32_t frame_num = 0;
 
@@ -3846,7 +3853,7 @@ bool SprdCamera3OEMIf::displayOneFrameForCapture(uint32_t width, uint32_t height
 			}
 			HAL_LOGD("pic_addr_vir = 0x%lx, frame_num = %d, ret = %d", addr_vir, frame_num, ret);
 			if(ret == NO_ERROR) {
-				if(addr_vir != NULL && virtual_addr != NULL)
+				if(addr_vir != 0 && virtual_addr != NULL)
 					memcpy((char *)addr_vir, (char *)virtual_addr, (width * height * 3) / 2);
 				regular_channel->channelCbRoutine(frame_num, timestamp, CAMERA_STREAM_TYPE_PREVIEW);
 			}
@@ -3863,7 +3870,7 @@ bool SprdCamera3OEMIf::iSCallbackCaptureFrame()
 	SprdCamera3PicChannel *pic_channel = reinterpret_cast<SprdCamera3PicChannel *>(mPictureChan);
 	SprdCamera3Stream *stream = NULL;
 	int32_t ret = BAD_VALUE;
-	cmr_uint addr_vir = NULL;
+	cmr_uint addr_vir = 0;
 
 	if(pic_channel) {
 		pic_channel->getStream(CAMERA_STREAM_TYPE_PICTURE_CALLBACK, &stream);
@@ -3879,14 +3886,14 @@ bool SprdCamera3OEMIf::receiveCallbackPicture(uint32_t width, uint32_t height, c
 {
 	ATRACE_CALL();
 
-	HAL_LOGD("E: size = %dx%d, phy_addr = 0x%lx, virtual_addr = 0x%lx", width, height, phy_addr, virtual_addr);
+	HAL_LOGD("E: size = %dx%d, phy_addr = %p, virtual_addr = %p", width, height, phy_addr, virtual_addr);
 
 	Mutex::Autolock cbLock(&mPreviewCbLock);
 	int64_t timestamp = systemTime();
 	SprdCamera3PicChannel *pic_channel = reinterpret_cast<SprdCamera3PicChannel *>(mPictureChan);
 	SprdCamera3Stream *stream = NULL;
 	int32_t ret = 0;
-	cmr_uint addr_vir = NULL;
+	cmr_uint addr_vir = 0;
 	uint32_t frame_num = 0;
 
 	if(pic_channel) {
@@ -4044,7 +4051,7 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame)
 {
 	ATRACE_CALL();
 
-	HAL_LOGD("E, mReDisplayHeap = %p,frame->y_vir_addr 0x%x ", mReDisplayHeap,frame->y_vir_addr);
+	HAL_LOGD("E, mReDisplayHeap = %p,frame->y_vir_addr 0x%lx ", mReDisplayHeap,frame->y_vir_addr);
 	Mutex::Autolock cbLock(&mCaptureCbLock);
 	bool display_flag, callback_flag;
 	char prop[PROPERTY_VALUE_MAX] = {0,};/**add for 3d calibration return yuv buff begin*/
@@ -4113,9 +4120,9 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame)
 		property_get("debug.camera.save.3dcalfile", prop, "0");
 		if (atoi(prop) == 1)
 		{
-			struct img_addr   imgadd = { 0, };
+			struct img_addr   imgadd = { 0, 0, 0};
 			HAL_LOGD("3dcalibration yuv picture: width:%d, height:%d, fd:%d,"
-					"yaddp:%d, uaddp:%d, vaddp:%d, yaddv:%d, uaddv:%d, vaddv:%d",
+					"yaddp:0x%lx, uaddp:0x%lx, vaddp:0x%lx, yaddv:0x%lx, uaddv:0x%lx, vaddv:0x%lx",
 					 frame->width, frame->height, frame->fd,
 					 frame->y_phy_addr, frame->uv_phy_addr, frame->uv_phy_addr+frame->width*frame->height/2,
 					 frame->y_vir_addr, frame->uv_vir_addr, frame->uv_vir_addr+frame->width*frame->height/2);
@@ -5032,11 +5039,11 @@ int SprdCamera3OEMIf::flush_buffer(camera_flush_mem_type_e  type, int index, voi
 	}
 
 	if (pHeapIon) {
-		HAL_LOGV("index=%d,vaddr=0x%p, paddr=0x%p,size=0x%zx", index, v_addr, p_addr,size);
+		HAL_LOGV("index=%d,vaddr=%p, paddr=%p,size=0x%zx", index, v_addr, p_addr,size);
 		ret = pHeapIon->flush_ion_buffer(v_addr, p_addr, size);
 		if (ret) {
 			HAL_LOGW("abnormal ret=%d", ret);
-			HAL_LOGW("index=%d,vaddr=0x%p, paddr=0x%p", index, v_addr, p_addr);
+			HAL_LOGW("index=%d,vaddr=%p, paddr=%p", index, v_addr, p_addr);
 		}
 	}
 

@@ -76,7 +76,9 @@ namespace android {
 
 #define PRINT_TIME 0
 #define ROUND_TO_PAGE(x) (((x)+0xfff)&~0xfff)
+#ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(*x))
+#endif
 #define METADATA_SIZE 32/* (7 * 4) */
 #define SET_PARM(h,x,y,z) do {\
 			LOGI("%s: set camera param: %s, %d", __func__, #x, y);\
@@ -160,16 +162,31 @@ const camera_info SprdCameraHardware::kCameraInfo[] = {
 	{
 		CAMERA_FACING_BACK,
 		90,/*orientation*/
+		0,
+		0,
+		0,
+		0,
+		0,
 	},
 #ifndef CONFIG_DCAM_SENSOR_NO_FRONT_SUPPORT
 	{
 		CAMERA_FACING_FRONT,
 		270,/*orientation*/
+		0,
+		0,
+		0,
+		0,
+		0,
 	},
 #else
 	{
 		-1,
 		-1,/*orientation*/
+		0,
+		0,
+		0,
+		0,
+		0,
 	},
 #endif
 
@@ -177,11 +194,21 @@ const camera_info SprdCameraHardware::kCameraInfo[] = {
 	{
 		CAMERA_FACING_BACK,
 		90,/*orientation*/
+		0,
+		0,
+		0,
+		0,
+		0,
 	},
 #else
 	{
 		-1,
 		-1,/*orientation*/
+		0,
+		0,
+		0,
+		0,
+		0,
 	},
 #endif
 
@@ -189,11 +216,21 @@ const camera_info SprdCameraHardware::kCameraInfo[] = {
 	{
 		CAMERA_FACING_FRONT,
 		270,/*orientation*/
+		0,
+		0,
+		0,
+		0,
+		0,
 	},
 #else
 	{
 		-1,
 		-1,/*orientation*/
+		0,
+		0,
+		0,
+		0,
+		0,
 	},
 #endif
 
@@ -204,16 +241,31 @@ const camera_info SprdCameraHardware::kCameraInfo3[] = {
 	{
 		CAMERA_FACING_BACK,
 		90,/*orientation*/
+		0,
+		0,
+		0,
+		0,
+		0,
 	},
 
 	{
 		CAMERA_FACING_FRONT,
 		270,/*orientation*/
+		0,
+		0,
+		0,
+		0,
+		0,
 	},
 
 	{
 		2,
 		0,/* orientation */
+		0,
+		0,
+		0,
+		0,
+		0,
 	}
 };
 
@@ -390,8 +442,8 @@ SprdCameraHardware::SprdCameraHardware(int cameraId):
 	mPreviewHeapNum(0),
 	mVideoHeapNum(0),
 	mZslHeapNum(4),/*Total zsl number*/
-	mZSLFrameNum(2),/*Snapshot, which frame select, 2 means the last 2nd frame will be sent to jpge encode*/
 	mZslChannelStatus(1),
+	mZSLFrameNum(2),/*Snapshot, which frame select, 2 means the last 2nd frame will be sent to jpge encode*/
 	mPreviewDcamAllocBufferCnt(0),
 	mPreviewHeapArray(NULL),
 	mVideoHeapArray(NULL),
@@ -466,21 +518,23 @@ SprdCameraHardware::SprdCameraHardware(int cameraId):
 #endif
 	mPreAllocCapMemInited(0),
 	mIsPreAllocCapMemDone(0),
-	mIsPerformanceTestable(false),
 	mCommonHeapReserved(NULL),
+	mIsPerformanceTestable(false),
 	mIspLscHeapReserved(NULL),
 	mIspFirmwareReserved(NULL),
+#ifdef CONFIG_CAMERA_ISP_DIR_3
 	mHighIsoSnapshotHeapReserved(NULL),
+#endif
 	mIspYUVReserved (NULL),
 	mIspAntiFlickerHeapReserved(NULL),
 	mVideoShotPushFlag(0),
 	mZslShotPushFlag(0),
-	mIsRestartPreview(0),
-	mVideoWidth(0),
 	mVideoHeight(0),
+	mVideoWidth(0),
+	mIsRestartPreview(0),
 	mHalOem(NULL),
-	mIsSupportCallback(0),
-	mPdafRawHeapNum(0)
+	mPdafRawHeapNum(0),
+	mIsSupportCallback(0)
 {
 	mIsPerformanceTestable = sprd_isPerformanceTestable();
 	if (mIsPerformanceTestable) {
@@ -530,7 +584,10 @@ SprdCameraHardware::SprdCameraHardware(int cameraId):
 	mPreviewHeapBakUseFlag = 0;
 	memset(&mRawHeapInfoBak, 0, sizeof(mRawHeapInfoBak));
 	mRawHeapBakUseFlag = 0;
+
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
 	memset(mIspRawDataReserved, 0, sizeof(mIspRawDataReserved));
+#endif
 
 	setCameraState(SPRD_INIT, STATE_CAMERA);
 
@@ -684,6 +741,8 @@ void SprdCameraHardware::release()
 		freeCameraMem(mCommonHeapReserved);
 		mCommonHeapReserved = NULL;
 	}
+
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
 	if (NULL != mHighIsoSnapshotHeapReserved) {
 		freeCameraMem(mHighIsoSnapshotHeapReserved);
 		mHighIsoSnapshotHeapReserved = NULL;
@@ -695,7 +754,7 @@ void SprdCameraHardware::release()
 			mIspRawDataReserved[i] = NULL;
 		}
 	}
-
+#endif
 	if (NULL != mIspYUVReserved) {
 		freeCameraMem(mIspYUVReserved);
 		mIspYUVReserved = NULL;
@@ -2672,6 +2731,7 @@ status_t SprdCameraHardware::sendCommand(int32_t cmd, int32_t arg1, int32_t arg2
 			mHalOem->ops->camera_fd_enable(mCameraHandle, 1);
 		}
 		mHalOem->ops->camera_fd_start(mCameraHandle, 0);
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
 	} else if(AUTO_LOW_LIGHT_SET == cmd) {
 		/* lls is enabled with arg1= 1, disabled with arg1=0 */
 		mHalOem->ops->camera_lls_enable(mCameraHandle, arg1);
@@ -2682,6 +2742,7 @@ status_t SprdCameraHardware::sendCommand(int32_t cmd, int32_t arg1, int32_t arg2
 		/* vendor hdr mode is enabled with arg1 = 1, disabled with arg1=0 */
 		mHalOem->ops->camera_vendor_hdr_enable(mCameraHandle, arg1);
 /*fix me*/
+#endif
 //	} else if(CAMERA_CMD_FLIP_ON == cmd){
 	} else if(SPRD_CMD_START_BURST_TAKE == cmd) {
 		LOGD("sendCommand: start burst take");
@@ -3911,6 +3972,7 @@ int SprdCameraHardware::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u
 			*fd++ = memory->fd;
 			LOGI("kaddr 0x%llx, fd =0x%x", kaddr,  memory->fd);
 			return 0;
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
 	}	else if (type == CAMERA_SNAPSHOT_HIGHISO) {
 		if(mHighIsoSnapshotHeapReserved == NULL) {
 			memory = allocReservedMem(size, true);
@@ -3947,6 +4009,7 @@ int SprdCameraHardware::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u
 			LOGI("mfd=%d, vir_addr=0x%0x", memory->fd, memory->data);
 		}
 		*sum_ptr = i;
+#endif
 	}else if (type == CAMERA_ISP_PREVIEW_YUV) {
 		if (mIspYUVReserved ==  NULL) {
 			memory = allocCameraMem(size, true);
@@ -4262,6 +4325,7 @@ int SprdCameraHardware::Callback_OtherFree(enum camera_mem_cb_type type, cmr_uin
 		mIspFirmwareReserved = NULL;
 	}
 
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
 	if (type == CAMERA_SNAPSHOT_HIGHISO) {
 		if (NULL != mHighIsoSnapshotHeapReserved) {
 			freeCameraMem(mHighIsoSnapshotHeapReserved);
@@ -4277,7 +4341,7 @@ int SprdCameraHardware::Callback_OtherFree(enum camera_mem_cb_type type, cmr_uin
 			}
 		}
 	}
-
+#endif
 	if (type == CAMERA_ISP_PREVIEW_YUV) {
 		if (NULL != mIspYUVReserved) {
 			freeCameraMem(mIspYUVReserved);
@@ -7070,8 +7134,8 @@ void SprdCameraHardware::receivePreviewFrame(struct camera_frame_type *frame)
 
 	ssize_t offset = frame->buf_id;
 	camera_frame_metadata_t metadata;
-	metadata.light_condition = frame->lls_info;
-	LOGI("receivePreviewFrame lls_info = %d frame->type = %d", metadata.light_condition, frame->type);
+//	metadata.light_condition = frame->lls_info;
+//	LOGI("receivePreviewFrame lls_info = %d frame->type = %d", metadata.light_condition, frame->type);
 	camera_face_t face_info[FACE_DETECT_NUM];
 	uint32_t k = 0;
 	int width, height, frame_size;
@@ -7325,14 +7389,14 @@ void SprdCameraHardware::receiveRawPicture(struct camera_frame_type *frame)
 				if (mMsgEnabled & CAMERA_MSG_COMPRESSED_IMAGE){
 					camera_memory_t *mem = mGetMemory_cb(-1, frame_size * 3 / 2, 1, 0);
 					memcpy(mem->data, (void*)(frame->y_vir_addr), frame_size);
-					memcpy(mem->data + frame_size, (void*)(frame->uv_vir_addr), frame_size >> 1);
+					memcpy((void *)((cmr_uint)mem->data + frame_size), (void*)(frame->uv_vir_addr), frame_size >> 1);
 					mData_cb(CAMERA_MSG_COMPRESSED_IMAGE,mem, 0, NULL, mUser );
 					mem->release(mem);
 				}
 			} else {
 				camera_memory_t *mem = mGetMemory_cb(-1, frame_size * 3 / 2, 1, 0);
 				memcpy(mem->data, (void*)(frame->y_vir_addr), frame_size);
-				memcpy(mem->data + frame_size, (void*)(frame->uv_vir_addr), frame_size >> 1);
+				memcpy((void *)((cmr_uint)mem->data + frame_size), (void*)(frame->uv_vir_addr), frame_size >> 1);
 				mData_cb(CAMERA_MSG_COMPRESSED_IMAGE,mem, 0, NULL, mUser );
 				mem->release(mem);
 			}
@@ -7499,7 +7563,7 @@ void SprdCameraHardware::receiveJpegPicture(struct camera_frame_type *frame)
 				camera_memory_t *mem = mGetMemory_cb(-1, (mJpegSize+isp_info_size), 1, 0);
 				memcpy(mem->data, encInfo->outPtr, mJpegSize);
 				if (isp_info_addr) {
-					memcpy((mem->data+mJpegSize),isp_info_addr,isp_info_size);
+					memcpy((void *)((cmr_uint)mem->data+mJpegSize),isp_info_addr,isp_info_size);
 				}
 
 				char debug_value[PROPERTY_VALUE_MAX];
@@ -7516,7 +7580,7 @@ void SprdCameraHardware::receiveJpegPicture(struct camera_frame_type *frame)
 			camera_memory_t *mem = mGetMemory_cb(-1, (mJpegSize+isp_info_size), 1, 0);
 			memcpy(mem->data, encInfo->outPtr, mJpegSize);
 			if (isp_info_addr) {
-				memcpy((mem->data+mJpegSize),isp_info_addr,isp_info_size);
+				memcpy((void *)((cmr_uint)mem->data+mJpegSize),isp_info_addr,isp_info_size);
 			}
 			mData_cb(CAMERA_MSG_COMPRESSED_IMAGE,mem, 0, NULL, mUser );
 			mem->release(mem);

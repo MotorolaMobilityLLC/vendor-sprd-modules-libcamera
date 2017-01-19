@@ -74,25 +74,25 @@ SprdCamera3Capture *mCapture = NULL;
             } \
 
 camera3_device_ops_t SprdCamera3Capture::mCameraCaptureOps = {
-    initialize:                               SprdCamera3Capture::initialize,
-    configure_streams:                        SprdCamera3Capture::configure_streams,
-    register_stream_buffers:                  NULL,
-    construct_default_request_settings:       SprdCamera3Capture::construct_default_request_settings,
-    process_capture_request:                  SprdCamera3Capture::process_capture_request,
-    get_metadata_vendor_tag_ops:              NULL,
-    dump:                                     SprdCamera3Capture::dump,
-    flush:                                    SprdCamera3Capture::flush,
-    reserved:{0},
+    .initialize =                               SprdCamera3Capture::initialize,
+    .configure_streams =                        SprdCamera3Capture::configure_streams,
+    .register_stream_buffers =                  NULL,
+    .construct_default_request_settings =       SprdCamera3Capture::construct_default_request_settings,
+    .process_capture_request =                  SprdCamera3Capture::process_capture_request,
+    .get_metadata_vendor_tag_ops =              NULL,
+    .dump =                                     SprdCamera3Capture::dump,
+    .flush =                                    SprdCamera3Capture::flush,
+    .reserved = {0},
 };
 
 camera3_callback_ops SprdCamera3Capture::callback_ops_main = {
-    process_capture_result:                   SprdCamera3Capture::process_capture_result_main,
-    notify:                                   SprdCamera3Capture::notifyMain
+    .process_capture_result =                   SprdCamera3Capture::process_capture_result_main,
+    .notify =                                   SprdCamera3Capture::notifyMain
 };
 
 camera3_callback_ops SprdCamera3Capture::callback_ops_aux = {
-    process_capture_result:                   SprdCamera3Capture::process_capture_result_aux,
-    notify:                                   SprdCamera3Capture::notifyAux
+    .process_capture_result =                   SprdCamera3Capture::process_capture_result_aux,
+    .notify =                                   SprdCamera3Capture::notifyAux
 };
 
 /*===========================================================================
@@ -543,7 +543,7 @@ int SprdCamera3Capture::allocateOne(int w,int h, uint32_t is_cache,new_mem_t *ne
     new_mem->buffer = &nBuf;
     new_mem->pHeapIon = pHeapIon;
 
-    HAL_LOGD("fd=0x%x, size=0x%lx, heap=%p", buffer->share_fd, mem_size, pHeapIon);
+    HAL_LOGD("fd=0x%x, size=%d, heap=%p", buffer->share_fd, mem_size, pHeapIon);
     HAL_LOGV("X");
 
     return result;
@@ -624,7 +624,7 @@ int SprdCamera3Capture::allocateCapBuff(int w,int h, uint32_t is_cache,new_mem_t
     new_mem->buffer = &nBuf;
     new_mem->pHeapIon = pHeapIon;
 
-    HAL_LOGD("fd=0x%x, size=0x%lx, heap=%p", buffer->share_fd, mem_size, pHeapIon);
+    HAL_LOGD("fd=0x%x, size=0x%lx, heap=%p", buffer->share_fd, (cmr_uint)mem_size, pHeapIon);
     HAL_LOGV("X");
 
     return result;
@@ -647,7 +647,7 @@ getpmem_fail:
  *==========================================================================*/
 void SprdCamera3Capture::freeLocalBuffer(new_mem_t* pLocalBuffer)
 {
-    for(size_t i = 0; i < MAX_QEQUEST_BUF; i++){
+    for(size_t i = 0; i < MAX_CAPTURE_QEQUEST_BUF; i++){
         if(pLocalBuffer[i].buffer != NULL){
             delete ((private_handle_t*)*(pLocalBuffer[i].buffer));
             pLocalBuffer[i].buffer = NULL;
@@ -1365,9 +1365,11 @@ bool SprdCamera3Capture::CaptureThread::threadLoop()
                     reProcessFrame(output_buffer,capture_msg.combo_buff.frame_number) ;
 #endif
                     CameraMetadata meta;
-                    camera3_capture_request_t       request = {0,};
+                    camera3_capture_request_t       request;
                     camera3_stream_buffer_t* output_buffers = NULL;
                     camera3_stream_buffer_t* input_buffer = NULL;
+
+                    memset(&request, 0x00, sizeof(camera3_capture_request_t));
 
                     output_buffers = (camera3_stream_buffer_t *)malloc(sizeof(camera3_stream_buffer_t));
                     if (!output_buffers) {
@@ -1410,15 +1412,15 @@ bool SprdCamera3Capture::CaptureThread::threadLoop()
                     mReprocessing = true;
 
                     HAL_LOGD("capture combined success: framenumber %d", request.frame_number);
-                    HAL_LOGD("capture combined success: cmbbuff 0x%x", output_buffer);
+                    HAL_LOGD("capture combined success: cmbbuff %p", output_buffer);
 
-                    HAL_LOGD("reprocess request input buff 0x%x, stream:0x%x, yaddr_v:0x%x, width:%d, height:%d",
+                    HAL_LOGD("reprocess request input buff %p, stream:%p, yaddr_v:%d, width:%d, height:%d",
                              request.input_buffer->buffer, request.input_buffer->stream,
-                             ((struct private_handle_t*)(*request.input_buffer->buffer))->base,
+                             (cmr_s32)((struct private_handle_t*)(*request.input_buffer->buffer))->base,
                              input_buffer->stream->width, input_buffer->stream->height);
-                    HAL_LOGD("reprocess request output buff 0x%x, stream:0x%x, yaddr_v:0x%x, width:%d, height:%d",
+                    HAL_LOGD("reprocess request output buff %p, stream:%p, yaddr_v:%d, width:%d, height:%d",
                              request.output_buffers[0].buffer, request.output_buffers[0].stream,
-                             ((struct private_handle_t*)(*request.output_buffers[0].buffer))->base,
+                             (cmr_s32)((struct private_handle_t*)(*request.output_buffers[0].buffer))->base,
                              request.output_buffers[0].stream->width, request.output_buffers[0].stream->height);
                     if(0 > mDevMain->hwi->process_capture_request(mDevMain->dev,&request)){
                         HAL_LOGE("failed. process capture request!");
@@ -1543,7 +1545,7 @@ int SprdCamera3Capture::CaptureThread::combineTwoPicture(buffer_handle_t *&outpu
         HAL_LOGE("Error, null buffer detected! input_buf1:%p input_buf2:%p",input_buf1, input_buf2);
         return BAD_VALUE;
     }
-    HAL_LOGD("combine two picture:%d, %d", input_buf1, input_buf2);
+    HAL_LOGD("combine two picture:%p, %p", input_buf1, input_buf2);
 
     output_buf = mCapture->mLocalCapBuffer[mCaptureStreamsNum].buffer;
     dcam_info_t dcam;
@@ -1578,20 +1580,20 @@ int SprdCamera3Capture::CaptureThread::combineTwoPicture(buffer_handle_t *&outpu
         }
     }
     HAL_LOGD(" combine rot_angle:%d", dcam.rot_angle );
-    HAL_LOGD(" before cmb yaddr_v:%d", ((struct private_handle_t*)output_buf)->base );
+    HAL_LOGD(" before cmb yaddr_v:%d", (cmr_s32)((struct private_handle_t*)output_buf)->base );
     if(mGpuApi->imageStitchingWithGPU == NULL){
         HAL_LOGE("mGpuApi imageStitchingWithGPU is null.");
         return -1;
     }
     mGpuApi->imageStitchingWithGPU(&dcam);
-    HAL_LOGD(" after cmb yaddr_v:%d", ((struct private_handle_t*)output_buf)->base );
+    HAL_LOGD(" after cmb yaddr_v:%d", (cmr_s32)((struct private_handle_t*)output_buf)->base );
     {
         char prop[PROPERTY_VALUE_MAX] = {0,};
         property_get("debug.camera.3dcap.savefile", prop, "0");
         if ( 1 == atoi(prop) )
         {
             static int nCont = 0;
-            struct img_addr   imgadd = { 0, };
+            struct img_addr   imgadd = { 0, 0, 0};
             imgadd.addr_y = (cmr_uint)(((struct private_handle_t*)*input_buf1)->base);
             imgadd.addr_u = imgadd.addr_y+m3DCaptureWidth*m3DCaptureHeight;
             save_yuv_to_file(100+nCont, IMG_DATA_TYPE_YUV420, m3DCaptureWidth, m3DCaptureHeight, &imgadd);
@@ -1717,12 +1719,12 @@ int SprdCamera3Capture::initialize(const camera3_callback_ops_t *callback_ops)
     }
 
     //init buffer_handle_t
-    mLocalBuffer = (new_mem_t*)malloc(sizeof(new_mem_t)*MAX_QEQUEST_BUF);
+    mLocalBuffer = (new_mem_t*)malloc(sizeof(new_mem_t)*MAX_CAPTURE_QEQUEST_BUF);
     if (NULL == mLocalBuffer) {
         HAL_LOGE("fatal error! mLocalBuffer pointer is null.");
         return NO_MEMORY;
     }
-    memset(mLocalBuffer, 0 , sizeof(new_mem_t)*MAX_QEQUEST_BUF);
+    memset(mLocalBuffer, 0 , sizeof(new_mem_t)*MAX_CAPTURE_QEQUEST_BUF);
 
     mLocalCapBuffer = (new_mem_t*)malloc(sizeof(new_mem_t)*LOCAL_CAPBUFF_NUM);
     if (NULL == mLocalCapBuffer) {
@@ -1777,7 +1779,7 @@ int SprdCamera3Capture::configureStreams(const struct camera3_device *device,cam
 
                 freeLocalBuffer(mLocalBuffer);
 
-                for(size_t j = 0; j < MAX_QEQUEST_BUF; j++){
+                for(size_t j = 0; j < MAX_CAPTURE_QEQUEST_BUF; j++){
                     int tmp = allocateOne(w,h,1,&(mLocalBuffer[j]),mNativeBuffer[j]);
                     if(tmp < 0){
                         HAL_LOGE("request one buf failed.");
@@ -2037,9 +2039,9 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
             CameraMetadata meta;
             HAL_LOGD(" orgtype:%d", req->output_buffers[i].stream->format );
             mCaptureThread->mSavedResultBuff = NULL;
-            HAL_LOGD("org snp request output buff 0x%x, stream:0x%x, yaddr_v:0x%x",
+            HAL_LOGD("org snp request output buff %p, stream:%p, yaddr_v:%d",
                      request->output_buffers[i].buffer, request->output_buffers[i].stream,
-                     ((struct private_handle_t*)(*request->output_buffers[i].buffer))->base);
+                     (cmr_s32)((struct private_handle_t*)(*request->output_buffers[i].buffer))->base);
             memcpy( &mCaptureThread->mSavedCapRequest, req, sizeof(camera3_capture_request_t));
             memcpy( &mCaptureThread->mSavedCapReqstreambuff, &req->output_buffers[i], sizeof(camera3_stream_buffer_t));
             if ( NULL != mCaptureThread->mSavedCapReqsettings )
@@ -2055,12 +2057,12 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
             out_streams_main[i].stream->height=mCaptureThread->m3DCaptureHeight;
             out_streams_main[i].buffer = mLocalCapBuffer[0].buffer;
             HAL_LOGD("newtype:%d, rotation:%d", out_streams_main[i].stream->format, out_streams_main[i].stream->rotation);
-            HAL_LOGD("org snp request output buff 0x%x, stream:0x%x, yaddr_v:0x%x",
+            HAL_LOGD("org snp request output buff %p, stream:%p, yaddr_v:%d",
                      request->output_buffers[i].buffer, request->output_buffers[i].stream,
-                     ((struct private_handle_t*)(*request->output_buffers[i].buffer))->base);
-            HAL_LOGD("snp request buffer:0x%x, stream:0x%x, yaddr_v:0x%x",
+                     (cmr_s32)((struct private_handle_t*)(*request->output_buffers[i].buffer))->base);
+            HAL_LOGD("snp request buffer:%p, stream:%p, yaddr_v:%d",
                      mLocalCapBuffer[2].buffer, &mCaptureThread->mMainStreams[mCaptureThread->mCaptureStreamsNum-1],
-                     ((struct private_handle_t*)(*mLocalCapBuffer[2].buffer))->base );
+                     (cmr_s32)((struct private_handle_t*)(*mLocalCapBuffer[2].buffer))->base );
             mIsCapturing = true;
             is_captureing = true;
         }
@@ -2084,7 +2086,7 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
         HAL_LOGE("failed");
         goto req_fail;
     }
-    memset(out_streams_aux, 0x00, (sizeof(camera3_stream_buffer_t))*(req_aux.num_output_buffers));
+    memset(out_streams_aux, 0, (sizeof(camera3_stream_buffer_t))*(req_aux.num_output_buffers));
 
     for(size_t i = 0;i < req->num_output_buffers; i++)
     {
@@ -2098,7 +2100,7 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
             out_streams_aux[i].stream->width =mCaptureThread->m3DCaptureWidth;
             out_streams_aux[i].stream->height=mCaptureThread->m3DCaptureHeight;
             out_streams_aux[i].acquire_fence = -1;
-            HAL_LOGD("mCaptureThread->mCaptureStreamsNum, stream:0x%x", mCaptureThread->mCaptureStreamsNum, out_streams_aux[i].stream);
+            HAL_LOGD("mCaptureThread->mCaptureStreamsNum:%d, stream:%p", mCaptureThread->mCaptureStreamsNum, out_streams_aux[i].stream);
             if(NULL == out_streams_aux[i].buffer){
                 HAL_LOGE("failed, LocalBufferList is empty!");
                 goto req_fail;
@@ -2112,7 +2114,7 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
                 HAL_LOGV("hide sub preview");
                 out_streams_aux[i].buffer = popRequestList(mLocalBufferList);
             }
-            HAL_LOGD("mPreviewStreamsNum:%d, stream:0x%x", mPreviewStreamsNum, out_streams_aux[i].stream);
+            HAL_LOGD("mPreviewStreamsNum:%d, stream:%p", mPreviewStreamsNum, out_streams_aux[i].stream);
             if(NULL == out_streams_aux[i].buffer){
                 HAL_LOGE("failed, LocalBufferList is empty!");
                 goto req_fail;
@@ -2279,11 +2281,11 @@ void SprdCamera3Capture::processCaptureResultMain( const camera3_capture_result_
     int currStreamType = getStreamType(result_buffer->stream);
     if ( mIsCapturing && currStreamType == DEFAULT_DEFAULT )
     {
-        HAL_LOGD("framenumber:%d, currStreamType:%d, stream:0x%x, buffer:0x%x, format:%d",
+        HAL_LOGD("framenumber:%d, currStreamType:%d, stream:%p, buffer:%p, format:%d",
                  result->frame_number, currStreamType, result_buffer->stream, result_buffer->buffer, result_buffer->stream->format);
-        HAL_LOGD("main yuv picture: format:%d, width:%d, height:%d, buff:%d",
+        HAL_LOGD("main yuv picture: format:%d, width:%d, height:%d, buff:%p",
                  result_buffer->stream->format, result_buffer->stream->width, result_buffer->stream->height, result_buffer->buffer);
-        HAL_LOGD("main capture result frame:%d, mSavedResult:0x%x", result->frame_number, mCaptureThread->mSavedResultBuff);
+        HAL_LOGD("main capture result frame:%d, mSavedResult:%p", result->frame_number, mCaptureThread->mSavedResultBuff);
         if ( NULL == mCaptureThread->mSavedResultBuff )
         {
             mCaptureThread->mSavedResultBuff = result->output_buffers->buffer;
@@ -2297,8 +2299,8 @@ void SprdCamera3Capture::processCaptureResultMain( const camera3_capture_result_
             capture_msg.combo_buff.buffer2 = mCaptureThread->mSavedResultBuff;
             capture_msg.combo_buff.input_buffer=result->input_buffer;
             HAL_LOGD("capture combined begin: framenumber %d", capture_msg.combo_buff.frame_number);
-            HAL_LOGD("capture combined begin: buff1 0x%x", capture_msg.combo_buff.buffer1);
-            HAL_LOGD("capture combined begin: buff2 0x%x", capture_msg.combo_buff.buffer2);
+            HAL_LOGD("capture combined begin: buff1 %p", capture_msg.combo_buff.buffer1);
+            HAL_LOGD("capture combined begin: buff2 %p", capture_msg.combo_buff.buffer2);
             {
                 Mutex::Autolock l(mCaptureThread->mMergequeueMutex);
                 HAL_LOGD("Enqueue combo frame:%d for frame merge!", capture_msg.combo_buff.frame_number);
@@ -2309,25 +2311,27 @@ void SprdCamera3Capture::processCaptureResultMain( const camera3_capture_result_
     }
     else if ( mIsCapturing && currStreamType == SNAPSHOT_STREAM )
     {
-        camera3_capture_result_t   newResult = {0,};
-        camera3_stream_buffer_t    newOutput_buffers = {0,};
+        camera3_capture_result_t   newResult;
+        camera3_stream_buffer_t    newOutput_buffers;
 
-        HAL_LOGD("result framenumber:%d, result num_output_buffers:%d, result output_buffers:0x%x",
+        memset(&newResult, 0, sizeof(camera3_capture_result_t));
+        memset(&newOutput_buffers, 0, sizeof(camera3_stream_buffer_t));
+
+        HAL_LOGD("result framenumber:%d, result num_output_buffers:%d, result output_buffers:%p",
                  result->frame_number, result->num_output_buffers, &result->output_buffers[0]);
         memcpy( &newResult, result, sizeof(camera3_capture_result_t) );
         memcpy( &newOutput_buffers, &result->output_buffers[0], sizeof(camera3_stream_buffer_t) );
 
-        HAL_LOGD("result stream:0x%x, result buffer:0x%x, savedreqstream:0x%x",
-                 result->output_buffers[0].stream, result->output_buffers[0].buffer, mSavedReqStreams[mCaptureThread->mCaptureStreamsNum-1]);
+        HAL_LOGD("result stream:%p, result buffer:%p, savedreqstream:0x%x",
+                 result->output_buffers[0].stream, result->output_buffers[0].buffer, (cmr_u32)mSavedReqStreams[mCaptureThread->mCaptureStreamsNum-1]);
         memcpy( mSavedReqStreams[mCaptureThread->mCaptureStreamsNum-1], result->output_buffers[0].stream, sizeof(camera3_stream_t) );
         newOutput_buffers.stream = mSavedReqStreams[mCaptureThread->mCaptureStreamsNum-1];
 
-        HAL_LOGD("output_buffers:0x%x ", result->output_buffers[0]);
         memcpy( (void*)&newResult.output_buffers[0], &newOutput_buffers, sizeof(camera3_stream_buffer_t) );
         newResult.input_buffer = NULL;
         newResult.result = NULL;
         newResult.partial_result = 0;
-        HAL_LOGD("framenumber:%d, buffer:0x%x, stream:0x%x, streamtype:%d",
+        HAL_LOGD("framenumber:%d, buffer:%p, stream:%p, streamtype:%d",
                  newResult.frame_number, newResult.output_buffers[0].buffer, newResult.output_buffers[0].stream,
                  newResult.output_buffers[0].stream->stream_type);
         mCaptureThread->mCallbackOps->process_capture_result(mCaptureThread->mCallbackOps, &newResult);
@@ -2336,8 +2340,11 @@ void SprdCamera3Capture::processCaptureResultMain( const camera3_capture_result_
     }
     else
     {
-        camera3_capture_result_t   newResult = {0,};
-        camera3_stream_buffer_t    newOutput_buffers = {0,};
+        camera3_capture_result_t   newResult;
+        camera3_stream_buffer_t    newOutput_buffers;
+        memset(&newResult, 0, sizeof(camera3_capture_result_t));
+        memset(&newOutput_buffers, 0, sizeof(camera3_stream_buffer_t));
+
         int request_preview_id = -1;
         {
             Mutex::Autolock l(mRequestLock);
@@ -2407,12 +2414,12 @@ void SprdCamera3Capture::processCaptureResultAux( const camera3_capture_result_t
     {
         const camera3_stream_buffer_t *result_buffer  =  result->output_buffers;
 
-        HAL_LOGD("framenumber:%d, currStreamType:%d, stream:%d, buffer:%d, format:%d",
+        HAL_LOGD("framenumber:%d, currStreamType:%d, stream:%p, buffer:%p, format:%d",
                  result->frame_number, currStreamType,
                  result->output_buffers->stream, result->output_buffers->buffer, result->output_buffers->stream->format);
-        HAL_LOGD("aux yuv picture: format:%d, width:%d, height:%d, buff:%d",
+        HAL_LOGD("aux yuv picture: format:%d, width:%d, height:%d, buff:%p",
                  result_buffer->stream->format, result_buffer->stream->width, result_buffer->stream->height, result_buffer->buffer);
-        HAL_LOGD("aux capture result:%d, mSavedResult:%d", result->frame_number, mCaptureThread->mSavedResultBuff);
+        HAL_LOGD("aux capture result:%d, mSavedResult:%p", result->frame_number, mCaptureThread->mSavedResultBuff);
         if ( NULL == mCaptureThread->mSavedResultBuff )
         {
             mCaptureThread->mSavedResultBuff = result->output_buffers->buffer;
@@ -2426,8 +2433,8 @@ void SprdCamera3Capture::processCaptureResultAux( const camera3_capture_result_t
             capture_msg.combo_buff.buffer2 = result->output_buffers->buffer;
             capture_msg.combo_buff.input_buffer=result->input_buffer;
             HAL_LOGD("capture combined begin: framenumber %d", capture_msg.combo_buff.frame_number);
-            HAL_LOGD("capture combined begin: buff1 %d", capture_msg.combo_buff.buffer1);
-            HAL_LOGD("capture combined begin: buff2 %d", capture_msg.combo_buff.buffer2);
+            HAL_LOGD("capture combined begin: buff1 %p", capture_msg.combo_buff.buffer1);
+            HAL_LOGD("capture combined begin: buff2 %p", capture_msg.combo_buff.buffer2);
             {
                 Mutex::Autolock l(mCaptureThread->mMergequeueMutex);
                 HAL_LOGD("Enqueue combo frame:%d for frame merge!", capture_msg.combo_buff.frame_number);
@@ -2442,8 +2449,11 @@ void SprdCamera3Capture::processCaptureResultAux( const camera3_capture_result_t
     }
     else
     {
-        camera3_capture_result_t   newResult = {0,};
-        camera3_stream_buffer_t    newOutput_buffers = {0,};
+        camera3_capture_result_t   newResult;
+        camera3_stream_buffer_t    newOutput_buffers;
+        memset(&newResult, 0, sizeof(camera3_capture_result_t));
+        memset(&newOutput_buffers, 0, sizeof(camera3_stream_buffer_t));
+
         int request_preview_id = -1;
         {
             Mutex::Autolock l(mRequestLock);

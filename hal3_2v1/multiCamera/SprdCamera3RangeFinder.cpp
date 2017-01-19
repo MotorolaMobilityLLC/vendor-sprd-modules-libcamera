@@ -26,6 +26,8 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#define LOG_TAG "SprdCamera3RangeFinder"
 #include "SprdCamera3RangeFinder.h"
 
 using namespace android;
@@ -35,7 +37,6 @@ SprdCamera3RangeFinder *gRangeFinder = NULL;
 
 #define IMG_DUMP_DEBUG              0
 
-#define LOG_TAG "SprdCamera3RangeFinder"
 #define NULL_CHECKER(expr, ret, args...)    \
     if((expr) == NULL){                     \
         HAL_LOGE("failed,NULL pointer detected: " #expr ":" args);  \
@@ -81,25 +82,25 @@ SprdCamera3RangeFinder *gRangeFinder = NULL;
             } \
 
 camera3_device_ops_t SprdCamera3RangeFinder::mCameraFinderOps = {
-    initialize:                               SprdCamera3RangeFinder::initialize,
-    configure_streams:                        SprdCamera3RangeFinder::configure_streams,
-    register_stream_buffers:                  NULL,
-    construct_default_request_settings:       SprdCamera3RangeFinder::construct_default_request_settings,
-    process_capture_request:                  SprdCamera3RangeFinder::process_capture_request,
-    get_metadata_vendor_tag_ops:              NULL,
-    dump:                                     SprdCamera3RangeFinder::dump,
-    flush:                                    SprdCamera3RangeFinder::flush,
-    reserved:{0},
+    .initialize =                               SprdCamera3RangeFinder::initialize,
+    .configure_streams =                        SprdCamera3RangeFinder::configure_streams,
+    .register_stream_buffers =                  NULL,
+    .construct_default_request_settings =       SprdCamera3RangeFinder::construct_default_request_settings,
+    .process_capture_request =                  SprdCamera3RangeFinder::process_capture_request,
+    .get_metadata_vendor_tag_ops =              NULL,
+    .dump =                                     SprdCamera3RangeFinder::dump,
+    .flush =                                    SprdCamera3RangeFinder::flush,
+    .reserved = {0},
 };
 
 camera3_callback_ops SprdCamera3RangeFinder::callback_ops_main = {
-    process_capture_result:                   SprdCamera3RangeFinder::process_capture_result_main,
-    notify:                                   SprdCamera3RangeFinder::notifyMain
+    .process_capture_result =                   SprdCamera3RangeFinder::process_capture_result_main,
+    .notify =                                   SprdCamera3RangeFinder::notifyMain
 };
 
 camera3_callback_ops SprdCamera3RangeFinder::callback_ops_aux = {
-    process_capture_result:                   SprdCamera3RangeFinder::process_capture_result_aux,
-    notify:                                   SprdCamera3RangeFinder::notifyAux
+    .process_capture_result =                   SprdCamera3RangeFinder::process_capture_result_aux,
+    .notify =                                   SprdCamera3RangeFinder::notifyAux
 };
 
 /*===========================================================================
@@ -119,7 +120,7 @@ SprdCamera3RangeFinder::SprdCamera3RangeFinder()
     mStaticMetadata = NULL;
     mSyncThread = new SyncThread();
     mMeasureThread = new MeasureThread();
-    mSyncThread->mMaxLocalBufferNum = MAX_QEQUEST_BUF;
+    mSyncThread->mMaxLocalBufferNum = MAX_FINDER_QEQUEST_BUF;
     mSyncThread->mLocalBuffer = NULL;
     setupPhysicalCameras();
     mLastWidth = 0;
@@ -757,7 +758,7 @@ bool SprdCamera3RangeFinder::matchTwoFrame(hwi_frame_buffer_info_t result1,List 
         itor2=list.begin();
         while(itor2!=list.end()) {
             int64_t tmp=result1.timestamp-itor2->timestamp;
-            if(abs(tmp) <= TIME_DIFF) {
+            if(abs((cmr_s32)tmp) <= FINDER_TIME_DIFF) {
                 *result2=*itor2;
                 list.erase(itor2);
                 return MATCH_SUCCESS;
