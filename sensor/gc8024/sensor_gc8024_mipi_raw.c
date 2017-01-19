@@ -25,7 +25,7 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 
-#include "param/sensor_gc8024_raw_param_main.c"
+#include "gc8024_param/sensor_gc8024_raw_param_main.c"
 #define CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
 #ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
 #include "../af_dw9714.h"
