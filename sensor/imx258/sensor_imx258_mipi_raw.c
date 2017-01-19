@@ -26,7 +26,7 @@
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
 #include "sensor_imx258_raw_param_v3.c"
 #else
-#include "param/sensor_imx258_raw_param_main.c"
+#include "imx258_param/sensor_imx258_raw_param_main.c"
 #endif
 #include "sensor_imx258_otp_truly.h"
 
