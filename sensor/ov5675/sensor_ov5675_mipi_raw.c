@@ -26,7 +26,7 @@
 #include "sensor_raw.h"
 
 #if defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4)
-#include "param/sensor_ov5675_raw_param_main.c"
+#include "ov5675_param//sensor_ov5675_raw_param_main.c"
 #else
 #include "sensor_ov5675_raw_param.c"
 #endif
