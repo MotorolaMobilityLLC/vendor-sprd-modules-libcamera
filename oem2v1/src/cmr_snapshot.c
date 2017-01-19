@@ -1432,72 +1432,6 @@ static int camera_save_mipi_raw_to_file(cmr_handle snp_handle, char *name,
 
 }
 
-/* dump altek raw */
-static int camera_save_raw2_to_file(cmr_handle snp_handle, char *name,
-				uint32_t img_fmt,uint32_t width,
-				uint32_t height, struct img_addr *addr)
-{
-	struct snp_context         *snp_cxt = (struct snp_context*)snp_handle;
-#define FILE_NAME_LEN 200
-	int ret = CMR_CAMERA_SUCCESS;
-	char file_name[FILE_NAME_LEN] = {0};
-	char tmp_str[20] = {0};
-	FILE *fp = NULL;
-	uint32_t gain = 0;
-	uint32_t exp = 0;
-	struct isp_awbc_cfg_test awbc_cfg;
-	void *   isp_handle = ispvideo_GetIspHandle();
-	uint32_t pos = 0;
-	struct isp_adgain_exp_info adgain_exp_info;
-
-	snp_cxt->ops.get_tuning_info(snp_cxt->oem_handle, &adgain_exp_info);
-	gain = adgain_exp_info.adgain;
-	exp = adgain_exp_info.exp_time;
-
-	read_otp_awb_gain(isp_handle, (void*)&awbc_cfg);
-	read_position(isp_handle, &pos);
-
-	CMR_LOGI("name %s, format %d, width %d, heght %d",
-			name, img_fmt, width, height);
-
-	strcpy(file_name, CAMERA_DUMP_PATH);
-	sprintf(tmp_str, "%s", name);
-	strcat(file_name, tmp_str);
-	strcat(file_name, "_");
-
-	sprintf(tmp_str, "%d", width);
-	strcat(file_name, tmp_str);
-	strcat(file_name, "X");
-	sprintf(tmp_str, "%d", height);
-	strcat(file_name, tmp_str);
-
-	strcat(file_name, "_");
-	strcat(file_name, "gain");
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%d", gain);
-	strcat(file_name, tmp_str);
-	strcat(file_name, "_");
-	strcat(file_name, "exp");
-	strcat(file_name, "_");
-	sprintf(tmp_str, "%d", exp);
-	strcat(file_name, tmp_str);
-
-	strcat(file_name, ".altek_raw");
-	CMR_LOGI("file name %s", file_name);
-
-	fp = fopen(file_name, "wb");
-	if (NULL == fp) {
-		CMR_LOGE("can not open file: %s errno = %d\n", file_name, errno);
-		return -1;
-	}
-
-	fwrite((void *)addr->addr_y, 1, (uint32_t)width * height * 4 / 3, fp);
-	fclose(fp);
-
-	return 0;
-
-}
-
 cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data)
 {
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
@@ -1507,80 +1441,68 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data)
 	struct raw_proc_param          isp_in_param;
 	cmr_u32                        index = frm_ptr->frame_id - frm_ptr->base;
 
-	if (snp_cxt->ops.raw_proc) {
-		isp_in_param = chn_param_ptr->isp_proc_in[index];
-		isp_in_param.slice_num = 1;
-		chn_param_ptr->isp_process[index].slice_num = 1;
-		if ((CAMERA_ISP_TUNING_MODE == snp_cxt->req_param.mode) || (CAMERA_ISP_SIMULATION_MODE == snp_cxt->req_param.mode)) {
-			cmr_u32              raw_format, raw_pixel_width;
-			struct cmr_cap_mem   *mem_ptr = &snp_cxt->req_param.post_proc_setting.mem[snp_cxt->index];
-			raw_pixel_width = snp_cxt->sensor_info.sn_interface.pixel_width;
-			if (raw_pixel_width < SENSOR_DEFAULT_PIX_WIDTH)
-				raw_pixel_width = SENSOR_DEFAULT_PIX_WIDTH;
-			if (snp_cxt->sensor_info.sn_interface.type) {
-				isp_in_param.src_frame.fmt = ISP_DATA_CSI2_RAW10;
-				raw_format=0x08;
-			} else {
-				isp_in_param.src_frame.fmt = ISP_DATA_NORMAL_RAW10;
-				raw_format=0x04;
-			}
-			send_capture_data(raw_format,/* raw */
-								mem_ptr->cap_raw.size.width,
-								mem_ptr->cap_raw.size.height,
-								(char *)mem_ptr->cap_raw.addr_vir.addr_y,
-								mem_ptr->cap_raw.size.width*mem_ptr->cap_raw.size.height*raw_pixel_width /8,
-								0, 0, 0, 0);
-#if 0
-			camera_save_to_file(isp_get_saved_file_count(snp_handle),
-								IMG_DATA_TYPE_RAW,
-								mem_ptr->cap_raw.size.width,
-								mem_ptr->cap_raw.size.height,
-								&mem_ptr->cap_raw.addr_vir);
-#else
-			if ((CAMERA_ISP_TUNING_MODE == snp_cxt->req_param.mode) || (CAMERA_ISP_SIMULATION_MODE == snp_cxt->req_param.mode)) {
-				char datetime[15] = {0};
-				CMR_LOGI("save mipi raw to file");
-				camera_get_system_time(datetime);
-				camera_save_mipi_raw_to_file(snp_handle,
+	if (snp_cxt->ops.raw_proc == NULL) {
+		CMR_LOGE("raw_proc is null");
+		ret = -CMR_CAMERA_FAIL;
+		goto exit;
+	}
+
+	isp_in_param = chn_param_ptr->isp_proc_in[index];
+	isp_in_param.slice_num = 1;
+	chn_param_ptr->isp_process[index].slice_num = 1;
+	if ((CAMERA_ISP_TUNING_MODE == snp_cxt->req_param.mode) ||
+	    (CAMERA_ISP_SIMULATION_MODE == snp_cxt->req_param.mode)) {
+		cmr_u32 raw_format, raw_pixel_width;
+		struct cmr_cap_mem *mem_ptr = &snp_cxt->req_param.post_proc_setting.mem[snp_cxt->index];
+		raw_pixel_width = snp_cxt->sensor_info.sn_interface.pixel_width;
+		if (raw_pixel_width < SENSOR_DEFAULT_PIX_WIDTH)
+			raw_pixel_width = SENSOR_DEFAULT_PIX_WIDTH;
+		if (snp_cxt->sensor_info.sn_interface.type) {
+			isp_in_param.src_frame.fmt = ISP_DATA_CSI2_RAW10;
+			raw_format=0x08;
+		} else {
+			isp_in_param.src_frame.fmt = ISP_DATA_NORMAL_RAW10;
+			raw_format=0x04;
+		}
+		send_capture_data(raw_format,/* raw */
+			mem_ptr->cap_raw.size.width,
+			mem_ptr->cap_raw.size.height,
+			(char *)mem_ptr->cap_raw.addr_vir.addr_y,
+			mem_ptr->cap_raw.size.width*mem_ptr->cap_raw.size.height*raw_pixel_width /8,
+			0, 0, 0, 0);
+
+		char datetime[15] = {0};
+		CMR_LOGI("save mipi raw to file");
+		camera_get_system_time(datetime);
+		camera_save_mipi_raw_to_file(snp_handle,
 					datetime,
 					IMG_DATA_TYPE_RAW,
 					mem_ptr->cap_raw.size.width,
 					mem_ptr->cap_raw.size.height,
 					&mem_ptr->cap_raw.addr_vir);
-/*
-				camera_save_raw_to_file(datetime,
-							IMG_DATA_TYPE_RAW,
-							mem_ptr->cap_raw.size.width,
-							mem_ptr->cap_raw.size.height,
-							&mem_ptr->cap_raw.addr_vir);
-*/
-			}
-#endif
-		}
-
-		struct cmr_cap_mem   *mem_ptr2 = &snp_cxt->req_param.post_proc_setting.mem[snp_cxt->index];
-		isp_in_param.src_frame = mem_ptr2->cap_raw;
-		isp_in_param.dst_frame = mem_ptr2->target_yuv;
-		isp_in_param.dst2_frame = mem_ptr2->cap_raw2;
-		isp_in_param.src_avail_height = mem_ptr2->cap_raw.size.height;
-		isp_in_param.src_slice_height = isp_in_param.src_avail_height;
-		isp_in_param.dst_slice_height = isp_in_param.src_avail_height;
-		isp_in_param.dst2_slice_height = isp_in_param.src_avail_height;
-		isp_in_param.slice_num = 1;
-
-		ret = snp_cxt->ops.raw_proc(snp_cxt->oem_handle, snp_handle, &isp_in_param);
-		if (ret) {
-			CMR_LOGE("failed to start isp proc %ld", ret);
-		}
-		chn_param_ptr->isp_process[index].frame_info = *frm_ptr;
-		snp_cxt->cvt.out_frame = chn_param_ptr->isp_proc_in[index].dst_frame;
-
-	} else {
-		CMR_LOGE("err raw_proc is null");
-		ret = -CMR_CAMERA_FAIL;
 	}
+
+	struct cmr_cap_mem *mem_ptr2 = &snp_cxt->req_param.post_proc_setting.mem[snp_cxt->index];
+	isp_in_param.src_frame = mem_ptr2->cap_raw;
+	isp_in_param.src_frame.fmt = ISP_DATA_CSI2_RAW10;
+	isp_in_param.dst_frame = mem_ptr2->target_yuv;
+	isp_in_param.dst2_frame = mem_ptr2->cap_raw2;
+	isp_in_param.src_avail_height = mem_ptr2->cap_raw.size.height;
+	isp_in_param.src_slice_height = isp_in_param.src_avail_height;
+	isp_in_param.dst_slice_height = isp_in_param.src_avail_height;
+	isp_in_param.dst2_slice_height = isp_in_param.src_avail_height;
+	isp_in_param.slice_num = 1;
+
+	ret = snp_cxt->ops.raw_proc(snp_cxt->oem_handle, snp_handle, &isp_in_param);
+	if (ret) {
+		CMR_LOGE("failed to start isp proc %ld", ret);
+	}
+	chn_param_ptr->isp_process[index].frame_info = *frm_ptr;
+	snp_cxt->cvt.out_frame = chn_param_ptr->isp_proc_in[index].dst_frame;
+
 	//snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_STATE, SNAPSHOT_EVT_START_ISP, (void*)ret, sizeof(cmr_int));
 	CMR_LOGI("done %ld", ret);
+exit:
 	return ret;
 }
 
@@ -4279,21 +4201,6 @@ cmr_int snp_post_proc_for_isp_tuning(cmr_handle snp_handle, void *data)
 	ret = cmr_thread_msg_send(cxt->thread_cxt.cvt_thr_handle, &message);
 	if (ret) {
 		CMR_LOGE("failed to send start cvt msg to cvt thr %ld", ret);
-	}
-
-	property_get("persist.sys.camera.alraw.mode", value, "0");
-	if (1 == atoi(value)) {
-		if (CAMERA_ISP_TUNING_MODE == cxt->req_param.mode) {
-			char datetime[15] = {0};
-			CMR_LOGI("save altek raw to file");
-			camera_get_system_time(datetime);
-			camera_save_raw2_to_file(snp_handle,
-					datetime,
-					IMG_DATA_TYPE_RAW,
-					mem_ptr->cap_raw2.size.width,
-					mem_ptr->cap_raw2.size.height,
-					&mem_ptr->cap_raw2.addr_vir);
-		}
 	}
 
 #if 0
