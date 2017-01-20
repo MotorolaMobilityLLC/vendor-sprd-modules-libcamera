@@ -314,7 +314,7 @@ struct sensor_rgb_gain_param {
 //YUV noisefilter
 struct sensor_yuv_noisefilter_gaussian {
 	uint16_t random_r_shift;
-	int16_t random_r_offset;
+	uint16_t random_r_offset;
 	uint32_t random_seed[4];
 	uint8_t random_takebit[8];
 };
@@ -323,7 +323,7 @@ struct sensor_yuv_noisefilter_adv {
 	uint8_t filter_thr;
 	uint8_t filter_thr_mode;
 	uint8_t filter_clip_p;
-	int8_t filter_clip_n;
+	uint8_t filter_clip_n;
 	uint16_t filter_cv_t[4];
 	uint8_t filter_cv_r[3];
 	uint8_t reserved;
@@ -343,7 +343,7 @@ struct sensor_rgb_dither_level {
 	uint8_t yrandom_mode;
 	uint16_t yrandom_shift;
 	uint32_t yrandom_seed;
-	int32_t yrandom_offset;
+	uint16_t yrandom_offset;
 	uint8_t yrandom_takebit[8];
 	uint32_t pseudo_random_raw_bypass;
 };
@@ -555,8 +555,9 @@ struct sensor_ynr_level {
 /************************************************************************************/
 // UVDIV
 struct sensor_cce_uvdiv_th {
-	int16_t uvdiv_th_l;
-	int16_t uvdiv_th_h;
+	uint8_t uvdiv_th_l;
+	uint8_t uvdiv_th_h;
+	uint8_t reserved[2];
 };
 
 struct sensor_cce_uvdiv_chroma {
@@ -707,19 +708,20 @@ struct sesor_simple_bpc{
 };
 
 struct sensor_nlm_flat_degree {
-	int8_t flat_inc_str;
+	uint8_t flat_inc_str;
 	uint8_t flat_match_cnt;
 	uint16_t flat_thresh;
 	uint16_t addback0;//for G channel
 	uint16_t addback1;//for R and B channel
 	uint16_t addback_clip_max;//plus noise
-	int16_t addback_clip_min;//minus noise
+	uint16_t addback_clip_min;//minus noise
 };
 
 struct sensor_nlm_texture {
-	int16_t texture_dec_str;
+	uint8_t texture_dec_str;
 	uint8_t addback30;
 	uint8_t addback31;
+	uint8_t reserved;
 	uint16_t addback_clip_max;
 	uint16_t addback_clip_min;
 };
@@ -733,8 +735,9 @@ struct sensor_nlm_first_lum {
 	uint8_t nlm_flat_opt_bypass;
 	uint8_t flat_opt_mode;
 	uint8_t first_lum_bypass;
-	uint8_t lum_thr0;
-	uint32_t lum_thr1;
+	uint8_t reserve;
+	uint16_t lum_thr0;
+	uint16_t lum_thr1;
 	struct sensor_nlm_lum nlm_lum[3];
 };
 
@@ -862,8 +865,8 @@ struct sensor_cfa_param_level {
 struct sensor_rgb_afm_iir_denoise {
 	uint8_t afm_iir_en;
 	uint8_t reserved[3];
-	int16_t iir_g[2];
-	int16_t iir_c[10];
+	uint16_t iir_g[2];
+	uint16_t iir_c[10];
 };
 
 struct sensor_rgb_afm_enhanced_fv {
@@ -882,7 +885,7 @@ struct sensor_rgb_afm_enhanced_pre {
 };
 
 struct sensor_rgb_afm_enhanced_process {
-	int8_t fv1_coeff[4][9];//4x3x3, fv0 is fixed in the code
+	uint8_t fv1_coeff[4][9];//4x3x3, fv0 is fixed in the code
 };
 
 struct sensor_rgb_afm_enhanced_post {
@@ -1169,8 +1172,8 @@ struct sensor_uv_cdn_level {
 /************************************************************************************/
 //Edge Enhancement
 struct sensor_ee_pn {
-	int16_t negative;
-	int16_t positive;
+	uint16_t negative;
+	uint16_t positive;
 };
 
 struct sensor_ee_ratio {
@@ -1195,10 +1198,10 @@ struct sensor_ee_r_cfg {
 };
 
 struct sensor_ee_c_cfg {
-	int8_t ee_c1_cfg;
-	int8_t ee_c2_cfg;
-	int8_t ee_c3_cfg;
-	int8_t reserved;
+	uint8_t ee_c1_cfg;
+	uint8_t ee_c2_cfg;
+	uint8_t ee_c3_cfg;
+	uint8_t reserved;
 };
 
 struct sensor_ee_polyline_cfg {
@@ -1726,8 +1729,8 @@ struct sensor_iircnr_post {
 };
 
 struct sensor_iircnr_level{
-	uint8_t cnr_iir_mode;
-	uint8_t cnr_uv_pg_th;
+	uint16_t cnr_iir_mode;
+	uint16_t cnr_uv_pg_th;
 	uint32_t ymd_u;
 	uint32_t ymd_v;
 	uint32_t ymd_min_u;
