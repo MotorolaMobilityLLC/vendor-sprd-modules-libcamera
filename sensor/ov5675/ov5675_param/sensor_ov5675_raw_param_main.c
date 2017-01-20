@@ -31,6 +31,8 @@
 /* Begin Include */
 #include "sensor_ov5675_raw_param_common.c"
 #include "sensor_ov5675_raw_param_prv_0.c"
+#include "sensor_ov5675_raw_param_cap_0.c"
+#include "sensor_ov5675_raw_param_video_0.c"
 
 /* End Include */
 
@@ -81,6 +83,14 @@ static struct sensor_raw_ioctrl s_ov5675_ioctrl=
 	0,
 	0,
 	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
 	0
 };
 
@@ -92,14 +102,16 @@ static struct sensor_version_info s_ov5675_version_info=
 {
 	0x00070005,
 	{
-		0x00000000,
-		0x32786D69,
-		0x00003835,
-		0x00000000,
-		0x00000000,
-		0x00000000,
-		0x00000000,
-		0x00000000,
+		{
+			0x32786D69,
+			0x00003835,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000
+		}
 	},
 	0x00000000,
 	0x00000000,
@@ -112,7 +124,7 @@ static struct sensor_version_info s_ov5675_version_info=
 	0x00000000,
 	0x00000000,
 	0x00000000,
-	0x00000000,
+	0x00000000
 };
 
 
@@ -121,14 +133,14 @@ static struct sensor_version_info s_ov5675_version_info=
 
 static uint32_t s_ov5675_libuse_info[]=
 {
-    0x00000002,0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
-    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
-    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
-    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
-    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
-    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
-    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
-    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000005,0x00000003
+	0x00000002,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000
 };
 
 
@@ -144,15 +156,14 @@ static struct sensor_raw_info s_ov5675_mipi_raw_info=
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
+		{s_ov5675_tune_info_cap_0, sizeof(s_ov5675_tune_info_cap_0)},
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
+		{s_ov5675_tune_info_video_0, sizeof(s_ov5675_tune_info_video_0)},
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
-		{NULL, 0},
-		{NULL, 0},
-
 	},
 	&s_ov5675_trim_info,
 	&s_ov5675_ioctrl,
@@ -163,15 +174,14 @@ static struct sensor_raw_info s_ov5675_mipi_raw_info=
 		NULL,
 		NULL,
 		NULL,
+		&s_ov5675_fix_info_cap_0,
 		NULL,
 		NULL,
 		NULL,
+		&s_ov5675_fix_info_video_0,
 		NULL,
 		NULL,
 		NULL,
-		NULL,
-		NULL,
-
 	},
 	{
 		{s_ov5675_common_tool_ui_input, sizeof(s_ov5675_common_tool_ui_input)},
@@ -179,11 +189,11 @@ static struct sensor_raw_info s_ov5675_mipi_raw_info=
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
+		{s_ov5675_cap_0_tool_ui_input, sizeof(s_ov5675_cap_0_tool_ui_input)},
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
-		{NULL, 0},
-		{NULL, 0},
+		{s_ov5675_video_0_tool_ui_input, sizeof(s_ov5675_video_0_tool_ui_input)},
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
