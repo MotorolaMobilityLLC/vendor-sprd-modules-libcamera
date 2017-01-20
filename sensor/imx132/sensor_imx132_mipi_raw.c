@@ -437,7 +437,7 @@ SENSOR_INFO_T g_imx132_mipi_raw_info = {
 	/* max height of source image */
 	SNAPSHOT_HEIGHT,
 	/* name of sensor */
-	SENSOR_NAME,
+	(cmr_s8 *)SENSOR_NAME,
 	/* define in SENSOR_IMAGE_FORMAT_E enum,SENSOR_IMAGE_FORMAT_MAX
 	 * if set to SENSOR_IMAGE_FORMAT_MAX here,
 	 * image format depent on SENSOR_REG_TAB_INFO_T
@@ -481,7 +481,7 @@ SENSOR_INFO_T g_imx132_mipi_raw_info = {
 	35,
 	/* vertical view angle*/
 	35,
-	"imx132_v1"
+	(cmr_s8 *)"imx132_v1"
 };
 
 

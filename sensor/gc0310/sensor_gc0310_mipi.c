@@ -23,22 +23,22 @@
 #define GC0310_MIPI_I2C_ADDR_R      0x21
 #define SENSOR_GAIN_SCALE           16
 
-static unsigned long set_preview_mode(unsigned long preview_mode);
-static unsigned long GC0310_MIPI_PowerOn(unsigned long power_on);
+static unsigned long set_preview_mode(SENSOR_HW_HANDLE handle,unsigned long preview_mode);
+static unsigned long GC0310_MIPI_PowerOn(SENSOR_HW_HANDLE handle,unsigned long power_on);
 static unsigned long GC0310_GetResolutionTrimTab(unsigned long param);
-static unsigned long GC0310_MIPI_Identify(unsigned long param);
-static unsigned long GC0310_MIPI_BeforeSnapshot(unsigned long param);
-static unsigned long GC0310_MIPI_After_Snapshot(unsigned long param);
-static unsigned long set_brightness(unsigned long level);
-static unsigned long set_contrast(unsigned long level);
-static unsigned long set_image_effect(unsigned long effect_type);
-static unsigned long set_GC0310_MIPI_ev(unsigned long level);
-static unsigned long set_GC0310_MIPI_awb(unsigned long mode);
-static unsigned long set_GC0310_MIPI_anti_flicker(unsigned long mode);
-static unsigned long GC0310_MIPI_StreamOn(unsigned long param);
-static unsigned long GC0310_MIPI_StreamOff(unsigned long param);
-static unsigned long set_saturation(unsigned long level);
-static unsigned long set_GC0310_video_mode(unsigned long mode);
+static unsigned long GC0310_MIPI_Identify(SENSOR_HW_HANDLE handle,unsigned long param);
+static unsigned long GC0310_MIPI_BeforeSnapshot(SENSOR_HW_HANDLE handle,unsigned long param);
+static unsigned long GC0310_MIPI_After_Snapshot(SENSOR_HW_HANDLE handle,unsigned long param);
+static unsigned long set_brightness(SENSOR_HW_HANDLE handle,unsigned long level);
+static unsigned long set_contrast(SENSOR_HW_HANDLE handle,unsigned long level);
+static unsigned long set_image_effect(SENSOR_HW_HANDLE handle,unsigned long effect_type);
+static unsigned long set_GC0310_MIPI_ev(SENSOR_HW_HANDLE handle,unsigned long level);
+static unsigned long set_GC0310_MIPI_awb(SENSOR_HW_HANDLE handle,unsigned long mode);
+static unsigned long set_GC0310_MIPI_anti_flicker(SENSOR_HW_HANDLE handle,unsigned long mode);
+static unsigned long GC0310_MIPI_StreamOn(SENSOR_HW_HANDLE handle,unsigned long param);
+static unsigned long GC0310_MIPI_StreamOff(SENSOR_HW_HANDLE handle,unsigned long param);
+static unsigned long set_saturation(SENSOR_HW_HANDLE handle,unsigned long level);
+static unsigned long set_GC0310_video_mode(SENSOR_HW_HANDLE handle,unsigned long mode);
 
 typedef enum
 {
@@ -575,12 +575,12 @@ SENSOR_INFO_T g_GC0310_MIPI_yuv_info =
 	48,								// vertical view angle
 };
 
-static void GC0310_MIPI_WriteReg( uint8_t  subaddr, uint8_t data)
+static void GC0310_MIPI_WriteReg(SENSOR_HW_HANDLE handle, uint8_t  subaddr, uint8_t data)
 {
 	Sensor_WriteReg_8bits(subaddr, data);
 }
 
-static uint8_t GC0310_MIPI_ReadReg( uint8_t subaddr)
+static uint8_t GC0310_MIPI_ReadReg(SENSOR_HW_HANDLE handle, uint8_t subaddr)
 {
 	uint8_t  value;
 	value = Sensor_ReadReg( subaddr);
@@ -592,7 +592,7 @@ static unsigned long GC0310_GetResolutionTrimTab(unsigned long param)
 	return (unsigned long) s_Gc0310_Resolution_Trim_Tab;
 }
 
-static unsigned long GC0310_MIPI_PowerOn(unsigned long power_on)
+static unsigned long GC0310_MIPI_PowerOn(SENSOR_HW_HANDLE handle,unsigned long power_on)
 {
 	SENSOR_AVDD_VAL_E dvdd_val = g_GC0310_MIPI_yuv_info.dvdd_val;
 	SENSOR_AVDD_VAL_E avdd_val = g_GC0310_MIPI_yuv_info.avdd_val;
@@ -625,7 +625,7 @@ static unsigned long GC0310_MIPI_PowerOn(unsigned long power_on)
 	return SENSOR_SUCCESS;
 }
 
-static unsigned long GC0310_MIPI_Identify(unsigned long param)
+static unsigned long GC0310_MIPI_Identify(SENSOR_HW_HANDLE handle,unsigned long param)
 {
 #define GC0310_MIPI_PID_ADDR1     0xf0
 #define GC0310_MIPI_PID_ADDR2     0xf1
@@ -637,8 +637,8 @@ static unsigned long GC0310_MIPI_Identify(unsigned long param)
 	int i;
 
 	for (i = 0; i < 3; i++) {
-		sensor_id = GC0310_MIPI_ReadReg(GC0310_MIPI_PID_ADDR1) << 8;
-		sensor_id |= GC0310_MIPI_ReadReg(GC0310_MIPI_PID_ADDR2);
+		sensor_id = GC0310_MIPI_ReadReg(handle,GC0310_MIPI_PID_ADDR1) << 8;
+		sensor_id |= GC0310_MIPI_ReadReg(handle,GC0310_MIPI_PID_ADDR2);
 		ALOGE("%s sensor_id gc0310 is %x\n", __func__, sensor_id);
 		if (sensor_id == GC0310_MIPI_SENSOR_ID) {
 			SENSOR_LOGI("the main sensor is GC0310_MIPI\n");
@@ -660,7 +660,7 @@ SENSOR_REG_T GC0310_MIPI_brightness_tab[][2]=
 	{{0xd5, 0x40}, {0xff, 0xff}},
 };
 
-static unsigned long set_brightness(unsigned long level)
+static unsigned long set_brightness(SENSOR_HW_HANDLE handle,unsigned long level)
 {
 	uint16_t i;
 	SENSOR_REG_T* sensor_reg_ptr = (SENSOR_REG_T*)GC0310_MIPI_brightness_tab[level];
@@ -669,7 +669,7 @@ static unsigned long set_brightness(unsigned long level)
 		return 0;
 
 	for (i = 0; (0xFF != sensor_reg_ptr[i].reg_addr) && (0xFF != sensor_reg_ptr[i].reg_value); i++) {
-		GC0310_MIPI_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
+		GC0310_MIPI_WriteReg(handle,sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
 	return 0;
@@ -704,7 +704,7 @@ LOCAL const SENSOR_REG_T gc0310_video_mode_tab[][18]=
 	}
 };
 
-static unsigned long set_GC0310_video_mode(unsigned long mode)
+static unsigned long set_GC0310_video_mode(SENSOR_HW_HANDLE handle,unsigned long mode)
 {
 	SENSOR_REG_T_PTR sensor_reg_ptr=(SENSOR_REG_T_PTR)gc0310_video_mode_tab[mode];
 	uint16_t i=0x00;
@@ -714,7 +714,7 @@ static unsigned long set_GC0310_video_mode(unsigned long mode)
 		return 0;
 
 	for(i=0x00; (0xff!=sensor_reg_ptr[i].reg_addr)||(0xff!=sensor_reg_ptr[i].reg_value); i++) {
-		GC0310_MIPI_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
+		GC0310_MIPI_WriteReg(handle,sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
 	return 0;
@@ -732,7 +732,7 @@ SENSOR_REG_T GC0310_MIPI_ev_tab[][4]=
 	{{0xfe, 0x01}, {0x13, 0x50}, {0xfe, 0x00}, {0xff, 0xff}},
 };
 
-static unsigned long set_GC0310_MIPI_ev(unsigned long level)
+static unsigned long set_GC0310_MIPI_ev(SENSOR_HW_HANDLE handle,unsigned long level)
 {
 	uint16_t i;
 	SENSOR_REG_T* sensor_reg_ptr = (SENSOR_REG_T*)GC0310_MIPI_ev_tab[level];
@@ -741,54 +741,54 @@ static unsigned long set_GC0310_MIPI_ev(unsigned long level)
 		return 0;
 
 	for (i = 0; (0xFF != sensor_reg_ptr[i].reg_addr) ||(0xFF != sensor_reg_ptr[i].reg_value) ; i++) {
-		GC0310_MIPI_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
+		GC0310_MIPI_WriteReg(handle,sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
 	return 0;
 }
 
-static unsigned long set_GC0310_MIPI_anti_flicker(unsigned long param)
+static unsigned long set_GC0310_MIPI_anti_flicker(SENSOR_HW_HANDLE handle,unsigned long param)
 {
 	switch (param) {
 	case FLICKER_50HZ:
-		GC0310_MIPI_WriteReg(0xfe , 0x00);
-		GC0310_MIPI_WriteReg(0x05 , 0x02);//hb
-		GC0310_MIPI_WriteReg(0x06 , 0xd1);
-		GC0310_MIPI_WriteReg(0x07 , 0x00);//vb
-		GC0310_MIPI_WriteReg(0x08 , 0x22);
-		GC0310_MIPI_WriteReg(0xfe , 0x01);
-		GC0310_MIPI_WriteReg(0x25 , 0x00);//step
-		GC0310_MIPI_WriteReg(0x26 , 0x6a);
-		GC0310_MIPI_WriteReg(0x27 , 0x02);//level1
-		GC0310_MIPI_WriteReg(0x28 , 0x12);
-		GC0310_MIPI_WriteReg(0x29 , 0x03);//level2
-		GC0310_MIPI_WriteReg(0x2a , 0x50);
-		GC0310_MIPI_WriteReg(0x2b , 0x05);//6e8//level3 640
-		GC0310_MIPI_WriteReg(0x2c , 0xcc);
-		GC0310_MIPI_WriteReg(0x2d , 0x07);//level4
-		GC0310_MIPI_WriteReg(0x2e , 0x74);
-		GC0310_MIPI_WriteReg(0xfe , 0x00);
+		GC0310_MIPI_WriteReg(handle,0xfe , 0x00);
+		GC0310_MIPI_WriteReg(handle,0x05 , 0x02);//hb
+		GC0310_MIPI_WriteReg(handle,0x06 , 0xd1);
+		GC0310_MIPI_WriteReg(handle,0x07 , 0x00);//vb
+		GC0310_MIPI_WriteReg(handle,0x08 , 0x22);
+		GC0310_MIPI_WriteReg(handle,0xfe , 0x01);
+		GC0310_MIPI_WriteReg(handle,0x25 , 0x00);//step
+		GC0310_MIPI_WriteReg(handle,0x26 , 0x6a);
+		GC0310_MIPI_WriteReg(handle,0x27 , 0x02);//level1
+		GC0310_MIPI_WriteReg(handle,0x28 , 0x12);
+		GC0310_MIPI_WriteReg(handle,0x29 , 0x03);//level2
+		GC0310_MIPI_WriteReg(handle,0x2a , 0x50);
+		GC0310_MIPI_WriteReg(handle,0x2b , 0x05);//6e8//level3 640
+		GC0310_MIPI_WriteReg(handle,0x2c , 0xcc);
+		GC0310_MIPI_WriteReg(handle,0x2d , 0x07);//level4
+		GC0310_MIPI_WriteReg(handle,0x2e , 0x74);
+		GC0310_MIPI_WriteReg(handle,0xfe , 0x00);
 		break;
 
 	case FLICKER_60HZ:
-		GC0310_MIPI_WriteReg(0xfe, 0x00);
-		GC0310_MIPI_WriteReg(0x05, 0x02);
-		GC0310_MIPI_WriteReg(0x06, 0x60);
-		GC0310_MIPI_WriteReg(0x07, 0x00);
-		GC0310_MIPI_WriteReg(0x08, 0x58);
-		GC0310_MIPI_WriteReg(0xfe, 0x01);
-		GC0310_MIPI_WriteReg(0x25, 0x00);   //anti-flicker step [11:8]
-		GC0310_MIPI_WriteReg(0x26, 0x60);   //anti-flicker step [7:0]
+		GC0310_MIPI_WriteReg(handle,0xfe, 0x00);
+		GC0310_MIPI_WriteReg(handle,0x05, 0x02);
+		GC0310_MIPI_WriteReg(handle,0x06, 0x60);
+		GC0310_MIPI_WriteReg(handle,0x07, 0x00);
+		GC0310_MIPI_WriteReg(handle,0x08, 0x58);
+		GC0310_MIPI_WriteReg(handle,0xfe, 0x01);
+		GC0310_MIPI_WriteReg(handle,0x25, 0x00);   //anti-flicker step [11:8]
+		GC0310_MIPI_WriteReg(handle,0x26, 0x60);   //anti-flicker step [7:0]
 
-		GC0310_MIPI_WriteReg(0x27, 0x02);   //exp level 0  14.28fps
-		GC0310_MIPI_WriteReg(0x28, 0x40);
-		GC0310_MIPI_WriteReg(0x29, 0x03);   //exp level 1  12.50fps
-		GC0310_MIPI_WriteReg(0x2a, 0x60);
-		GC0310_MIPI_WriteReg(0x2b, 0x06);   //exp level 2  6.67fps
-		GC0310_MIPI_WriteReg(0x2c, 0x00);
-		GC0310_MIPI_WriteReg(0x2d, 0x08);   //exp level 3  5.55fps
-		GC0310_MIPI_WriteReg(0x2e, 0x40);
-		GC0310_MIPI_WriteReg(0xfe, 0x00);
+		GC0310_MIPI_WriteReg(handle,0x27, 0x02);   //exp level 0  14.28fps
+		GC0310_MIPI_WriteReg(handle,0x28, 0x40);
+		GC0310_MIPI_WriteReg(handle,0x29, 0x03);   //exp level 1  12.50fps
+		GC0310_MIPI_WriteReg(handle,0x2a, 0x60);
+		GC0310_MIPI_WriteReg(handle,0x2b, 0x06);   //exp level 2  6.67fps
+		GC0310_MIPI_WriteReg(handle,0x2c, 0x00);
+		GC0310_MIPI_WriteReg(handle,0x2d, 0x08);   //exp level 3  5.55fps
+		GC0310_MIPI_WriteReg(handle,0x2e, 0x40);
+		GC0310_MIPI_WriteReg(handle,0xfe, 0x00);
 		break;
 
 	default:
@@ -858,7 +858,7 @@ SENSOR_REG_T GC0310_MIPI_awb_tab[][6]=
 	},
 };
 
-static unsigned long set_GC0310_MIPI_awb(unsigned long mode)
+static unsigned long set_GC0310_MIPI_awb(SENSOR_HW_HANDLE handle,unsigned long mode)
 {
 	uint8_t awb_en_value;
 	uint16_t i;
@@ -869,7 +869,7 @@ static unsigned long set_GC0310_MIPI_awb(unsigned long mode)
 		return 0;
 
 	for (i = 0; (0xFF != sensor_reg_ptr[i].reg_addr) || (0xFF != sensor_reg_ptr[i].reg_value); i++) {
-		GC0310_MIPI_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
+		GC0310_MIPI_WriteReg(handle,sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
 	return 0;
@@ -906,7 +906,7 @@ SENSOR_REG_T GC0310_MIPI_contrast_tab[][2]=
 	},
 };
 
-static unsigned long set_contrast(unsigned long level)
+static unsigned long set_contrast(SENSOR_HW_HANDLE handle,unsigned long level)
 {
 	uint16_t i;
 	SENSOR_REG_T* sensor_reg_ptr;
@@ -916,7 +916,7 @@ static unsigned long set_contrast(unsigned long level)
 		return 0;
 
 	for (i = 0; (0xFF != sensor_reg_ptr[i].reg_addr) && (0xFF != sensor_reg_ptr[i].reg_value); i++) {
-		GC0310_MIPI_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
+		GC0310_MIPI_WriteReg(handle,sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
 	return 0;
@@ -953,7 +953,7 @@ SENSOR_REG_T GC0310_MIPI_saturation_tab[][3]=
 	},
 };
 
-static unsigned long set_saturation(unsigned long level)
+static unsigned long set_saturation(SENSOR_HW_HANDLE handle,unsigned long level)
 {
 	uint16_t i;
 	SENSOR_REG_T* sensor_reg_ptr;
@@ -963,69 +963,69 @@ static unsigned long set_saturation(unsigned long level)
 		return 0;
 
 	for (i = 0; (0xFF != sensor_reg_ptr[i].reg_addr) && (0xFF != sensor_reg_ptr[i].reg_value); i++) {
-		GC0310_MIPI_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
+		GC0310_MIPI_WriteReg(handle,sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
 	return 0;
 }
 
-static unsigned long set_preview_mode(unsigned long preview_mode)
+static unsigned long set_preview_mode(SENSOR_HW_HANDLE handle,unsigned long preview_mode)
 {
 	SENSOR_LOGI("set_preview_mode: preview_mode = %ld\n", preview_mode);
 
-	set_GC0310_MIPI_anti_flicker(0);
+	set_GC0310_MIPI_anti_flicker(handle,0);
 	switch (preview_mode) {
 	case DCAMERA_ENVIRONMENT_NORMAL:
 		//YCP_saturation
-		//GC0310_MIPI_WriteReg(0xd1 , 0x34);
-		//GC0310_MIPI_WriteReg(0xd2 , 0x34);
-		GC0310_MIPI_WriteReg(0xfe , 0x01);
-		GC0310_MIPI_WriteReg(0x3c , 0x20);
-		GC0310_MIPI_WriteReg(0xfe , 0x00);
+		//GC0310_MIPI_WriteReg(handle,0xd1 , 0x34);
+		//GC0310_MIPI_WriteReg(handle,0xd2 , 0x34);
+		GC0310_MIPI_WriteReg(handle,0xfe , 0x01);
+		GC0310_MIPI_WriteReg(handle,0x3c , 0x20);
+		GC0310_MIPI_WriteReg(handle,0xfe , 0x00);
 		SENSOR_LOGI("set_preview_mode: DCAMERA_ENVIRONMENT_NORMAL\n");
 		break;
 
 	case 1://DCAMERA_ENVIRONMENT_NIGHT:
 		//YCP_saturation
-		//GC0310_MIPI_WriteReg(0xd1 , 0x28);
-		//GC0310_MIPI_WriteReg(0xd2 , 0x28);
+		//GC0310_MIPI_WriteReg(handle,0xd1 , 0x28);
+		//GC0310_MIPI_WriteReg(handle,0xd2 , 0x28);
 
-		GC0310_MIPI_WriteReg(0xfe , 0x01);
-		GC0310_MIPI_WriteReg(0x3c , 0x30);
-		GC0310_MIPI_WriteReg(0xfe , 0x00);
+		GC0310_MIPI_WriteReg(handle,0xfe , 0x01);
+		GC0310_MIPI_WriteReg(handle,0x3c , 0x30);
+		GC0310_MIPI_WriteReg(handle,0xfe , 0x00);
 		SENSOR_LOGI("set_preview_mode: DCAMERA_ENVIRONMENT_NIGHT\n");
 		break;
 
 	case 3://SENSOR_ENVIROMENT_PORTRAIT:
 		//YCP_saturation
-		GC0310_MIPI_WriteReg(0xd1 , 0x34);
-		GC0310_MIPI_WriteReg(0xd2 , 0x34);
-		GC0310_MIPI_WriteReg(0xfe , 0x01);
-		GC0310_MIPI_WriteReg(0x3c , 0x20);
-		GC0310_MIPI_WriteReg(0xfe , 0x00);
+		GC0310_MIPI_WriteReg(handle,0xd1 , 0x34);
+		GC0310_MIPI_WriteReg(handle,0xd2 , 0x34);
+		GC0310_MIPI_WriteReg(handle,0xfe , 0x01);
+		GC0310_MIPI_WriteReg(handle,0x3c , 0x20);
+		GC0310_MIPI_WriteReg(handle,0xfe , 0x00);
 		SENSOR_LOGI("set_preview_mode: SENSOR_ENVIROMENT_PORTRAIT\n");
 		break;
 
 	case 4://SENSOR_ENVIROMENT_LANDSCAPE://4
 		//nightmode disable
-		GC0310_MIPI_WriteReg(0xd1 , 0x4c);
-		GC0310_MIPI_WriteReg(0xd2 , 0x4c);
+		GC0310_MIPI_WriteReg(handle,0xd1 , 0x4c);
+		GC0310_MIPI_WriteReg(handle,0xd2 , 0x4c);
 
-		GC0310_MIPI_WriteReg(0xfe , 0x01);
-		GC0310_MIPI_WriteReg(0x3c , 0x20);
-		GC0310_MIPI_WriteReg(0xfe , 0x00);
+		GC0310_MIPI_WriteReg(handle,0xfe , 0x01);
+		GC0310_MIPI_WriteReg(handle,0x3c , 0x20);
+		GC0310_MIPI_WriteReg(handle,0xfe , 0x00);
 		SENSOR_LOGI("set_preview_mode: SENSOR_ENVIROMENT_LANDSCAPE\n");
 		break;
 
 	case 2://SENSOR_ENVIROMENT_SPORTS://2
 		//nightmode disable
 		//YCP_saturation
-		GC0310_MIPI_WriteReg(0xd1 , 0x40);
-		GC0310_MIPI_WriteReg(0xd2 , 0x40);
+		GC0310_MIPI_WriteReg(handle,0xd1 , 0x40);
+		GC0310_MIPI_WriteReg(handle,0xd2 , 0x40);
 
-		GC0310_MIPI_WriteReg(0xfe , 0x01);
-		GC0310_MIPI_WriteReg(0x3c , 0x20);
-		GC0310_MIPI_WriteReg(0xfe , 0x00);
+		GC0310_MIPI_WriteReg(handle,0xfe , 0x01);
+		GC0310_MIPI_WriteReg(handle,0x3c , 0x20);
+		GC0310_MIPI_WriteReg(handle,0xfe , 0x00);
 		SENSOR_LOGI("set_preview_mode: SENSOR_ENVIROMENT_SPORTS\n");
 		break;
 
@@ -1097,7 +1097,7 @@ SENSOR_REG_T GC0310_MIPI_image_effect_tab[][4]=
 	},
 };
 
-static unsigned long set_image_effect(unsigned long effect_type)
+static unsigned long set_image_effect(SENSOR_HW_HANDLE handle,unsigned long effect_type)
 {
 	uint16_t i;
 
@@ -1112,13 +1112,13 @@ static unsigned long set_image_effect(unsigned long effect_type)
 	return 0;
 }
 
-static unsigned long GC0310_MIPI_After_Snapshot(unsigned long param)
+static unsigned long GC0310_MIPI_After_Snapshot(SENSOR_HW_HANDLE handle,unsigned long param)
 {
 	Sensor_SetMode((uint32_t)param);
 	return SENSOR_SUCCESS;
 }
 
-static unsigned long GC0310_MIPI_BeforeSnapshot(unsigned long sensor_snapshot_mode)
+static unsigned long GC0310_MIPI_BeforeSnapshot(SENSOR_HW_HANDLE handle,unsigned long sensor_snapshot_mode)
 {
 	sensor_snapshot_mode &= 0xffff;
 	Sensor_SetMode((uint32_t)sensor_snapshot_mode);
@@ -1139,22 +1139,22 @@ static unsigned long GC0310_MIPI_BeforeSnapshot(unsigned long sensor_snapshot_mo
 	return 0;
 }
 
-static unsigned long GC0310_MIPI_StreamOn(unsigned long param)
+static unsigned long GC0310_MIPI_StreamOn(SENSOR_HW_HANDLE handle,unsigned long param)
 {
 	SENSOR_LOGI("Start");
-	GC0310_MIPI_WriteReg(0xfe, 0x03);
-	GC0310_MIPI_WriteReg(0x10, 0x94);
-	GC0310_MIPI_WriteReg(0xfe, 0x00);
+	GC0310_MIPI_WriteReg(handle,0xfe, 0x03);
+	GC0310_MIPI_WriteReg(handle,0x10, 0x94);
+	GC0310_MIPI_WriteReg(handle,0xfe, 0x00);
 
 	return 0;
 }
 
-static unsigned long GC0310_MIPI_StreamOff(unsigned long param)
+static unsigned long GC0310_MIPI_StreamOff(SENSOR_HW_HANDLE handle,unsigned long param)
 {
 	SENSOR_LOGI("Stop");
-	GC0310_MIPI_WriteReg(0xfe, 0x03);
-	GC0310_MIPI_WriteReg(0x10, 0x84);
-	GC0310_MIPI_WriteReg(0xfe, 0x00);
+	GC0310_MIPI_WriteReg(handle,0xfe, 0x03);
+	GC0310_MIPI_WriteReg(handle,0x10, 0x84);
+	GC0310_MIPI_WriteReg(handle,0xfe, 0x00);
 
 	return 0;
 }

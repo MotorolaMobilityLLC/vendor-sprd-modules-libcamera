@@ -1002,8 +1002,10 @@ cmr_int hw_Sensor_SendRegTabToSensor(SENSOR_HW_HANDLE handle, SENSOR_REG_TAB_INF
 
 
 cmr_int hw_Sensor_Device_WriteRegTab(SENSOR_HW_HANDLE handle, SENSOR_REG_TAB_PTR reg_tab);
-#define Sensor_Device_WriteRegTab(reg_tab)    hw_Sensor_Device_WriteRegTab(handle, reg_tab)
+#define Sensor_Device_WriteRegTab(reg_tab)    hw_Sensor_Device_WriteRegTab(handle, reg_tab);
 
+cmr_int hw_Sensor_ReadI2C(SENSOR_HW_HANDLE handle, cmr_u16 slave_addr, cmr_u8 *cmd, cmr_u16 cmd_length);
+#define Sensor_ReadI2C(slave_addr, cmd, cmd_length)    hw_Sensor_ReadI2C(handle, slave_addr, cmd, cmd_length)
 
 cmr_int hw_Sensor_WriteI2C(SENSOR_HW_HANDLE handle, cmr_u16 slave_addr, cmr_u8 *cmd, cmr_u16 cmd_length);
 #define Sensor_WriteI2C(slave_addr, cmd, cmd_length)    hw_Sensor_WriteI2C(handle, slave_addr, cmd, cmd_length)

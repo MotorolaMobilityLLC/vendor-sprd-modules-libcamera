@@ -23,11 +23,21 @@
 typedef struct vcm_ioctl_func_tab_tag{
 	uint32_t(*vcm_init)(uint32_t mode);
 	uint32_t(*vcm_set_pos)(uint32_t pos,uint32_t slewrate);
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+	//af control and DVT test funcs valid only af_enable works
+	uint32_t (*set_pos)(SENSOR_HW_HANDLE handle,uint16_t pos);
+	uint32_t (*get_otp)(SENSOR_HW_HANDLE handle,uint16_t *inf,uint16_t *macro);
+	uint32_t (*get_motor_pos)(SENSOR_HW_HANDLE handle,uint16_t *pos);
+	uint32_t (*set_motor_bestmode)(SENSOR_HW_HANDLE handle);
+	uint32_t (*get_test_vcm_mode)(SENSOR_HW_HANDLE handle);
+	uint32_t (*set_test_vcm_mode)(SENSOR_HW_HANDLE handle,char* vcm_mode);
+#endif
 }vcm_ioctl_func_tab_t;
 
 typedef enum{
 	VCM_DRIVER_DW9714 = 0,
 	VCM_DRIVER_DW9714A,
+	VCM_DRIVER_DW9800,
 	VCM_DRIVER_DW9806,
 	VCM_DRIVER_DW8714,
 	VCM_DRIVER_OV8825,

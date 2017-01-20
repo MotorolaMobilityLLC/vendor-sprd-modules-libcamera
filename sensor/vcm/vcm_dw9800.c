@@ -16,12 +16,23 @@
 #include <utils/Log.h>
 #include "vcm_dw9800.h"
 #include "sensor_drv_u.h"
+vcm_ioctl_func_tab_t s_driver_dw9800_tab = {
+	vcm_dw9800_init,
+	vcm_dw9800_set_position,
+#if 0 //defined(CONFIG_CAMERA_ISP_DIR_2_1)
+	dw9800_set_pos,
+	dw9800_get_otp,
+	dw9800_get_motor_pos,
+	dw9800_set_motor_bestmode,
+	dw9800_get_test_vcm_mode,
+	dw9800_set_test_vcm_mode
+#endif
+};
 
-#define DW9800_VCM_SLAVE_ADDR (0x18 >> 1)
-#define SENSOR_SUCCESS      0
-/* accroding to vcm module spec */
-#define POSE_UP_HORIZONTAL 32
-#define POSE_DOWN_HORIZONTAL 37
+vcm_info_tab_t driver_dw9800 = {
+	VCM_DRIVER_DW9800,
+	&s_driver_dw9800_tab,
+};
 
 uint32_t vcm_dw9800_init(SENSOR_HW_HANDLE handle)
 {
@@ -81,3 +92,4 @@ uint32_t vcm_dw9800_get_pose_dis(SENSOR_HW_HANDLE handle, uint32_t *up2h, uint32
 
 	return 0;
 }
+

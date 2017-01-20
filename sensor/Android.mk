@@ -122,7 +122,6 @@ LOCAL_SRC_FILES += \
 				ov5675/sensor_ov5675_mipi_raw.c \
 				gc8024/sensor_gc8024_mipi_raw.c \
 				gc5005/sensor_gc5005_mipi_raw.c
-
 endif
 
 ifeq ($(strip $(TARGET_CAMERA_OIS_FUNC)),true)

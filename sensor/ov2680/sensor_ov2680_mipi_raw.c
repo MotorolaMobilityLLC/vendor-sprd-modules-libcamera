@@ -798,7 +798,7 @@ SENSOR_INFO_T g_ov2680_mipi_raw_info = {
 
 	1600,			// max width of source image
 	1200,			// max height of source image
-	"ov2680_mipi_raw",		// name of sensor
+	(cmr_s8 *)"ov2680_mipi_raw",		// name of sensor
 
 	SENSOR_IMAGE_FORMAT_RAW,	// define in SENSOR_IMAGE_FORMAT_E enum,SENSOR_IMAGE_FORMAT_MAX
 	// if set to SENSOR_IMAGE_FORMAT_MAX here, image format depent on SENSOR_REG_TAB_INFO_T
@@ -826,7 +826,7 @@ SENSOR_INFO_T g_ov2680_mipi_raw_info = {
 	1,			// skip frame num while change setting
 	48,			//horizontal_view_angle,need check
 	48,			//vertical_view_angle,need check
-	"ov2680v1"	//sensor version info
+	(cmr_s8 *)"ov2680v1"	//sensor version info
 };
 
 LOCAL struct sensor_raw_info* Sensor_GetContext(SENSOR_HW_HANDLE handle)

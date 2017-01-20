@@ -15,7 +15,18 @@
  */
 #include "vcm_dw_9714.h"
 
-uint32_t vcm_dw9714_init(SENSOR_HW_HANDLE handle, uint32_t mode)
+
+vcm_ioctl_func_tab_t s_driver_DW9714_tab = {
+	vcm_dw9714_init,
+	vcm_dw9714_set_position,
+};
+
+vcm_info_tab_t driver_dw9714 = {
+	VCM_DRIVER_DW9714,
+	&s_driver_DW9714_tab,
+};
+
+uint32_t vcm_dw9714_init(SENSOR_HW_HANDLE handle,uint32_t mode)
 {
 	uint8_t cmd_val[6] = {0x00};
 	uint16_t  slave_addr = 0;
@@ -47,7 +58,8 @@ uint32_t vcm_dw9714_init(SENSOR_HW_HANDLE handle, uint32_t mode)
 
 	return ret_value;
 }
-uint32_t vcm_dw9714_set_position(SENSOR_HW_HANDLE handle, uint32_t pos,uint32_t slewrate)
+
+uint32_t vcm_dw9714_set_position(SENSOR_HW_HANDLE handle,uint32_t pos,uint32_t slewrate)
 {
 	uint32_t ret_value = SENSOR_SUCCESS;
 	uint8_t cmd_val[2] = {0x00};
@@ -63,3 +75,4 @@ uint32_t vcm_dw9714_set_position(SENSOR_HW_HANDLE handle, uint32_t pos,uint32_t 
 	SENSOR_LOGI("VCM ret_value%d  ",ret_value);
 	return ret_value;
 }
+
