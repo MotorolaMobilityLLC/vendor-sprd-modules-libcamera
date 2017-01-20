@@ -26,9 +26,10 @@
 #include "sensor_raw.h"
 
 #include "gc8024_param/sensor_gc8024_raw_param_main.c"
-#define CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
 #ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-#include "../af_dw9714.h"
+#ifdef CONFIG_AF_VCM_DW9714
+#include "../vcm/vcm_dw_9714.h"
+#endif
 #endif
 
 #define CAMERA_IMAGE_180
@@ -1446,8 +1447,9 @@ static uint32_t gc8024_power_on(SENSOR_HW_HANDLE handle,uint32_t power_on)
 		#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
 		usleep(5 * 1000);
-		//vcm_dw9714A_init(2);
-		dw9714_init(2);
+#ifdef CONFIG_AF_VCM_DW9714
+		vcm_dw9714_init(handle,2);
+#endif
 		#else
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 		#endif
@@ -1455,8 +1457,9 @@ static uint32_t gc8024_power_on(SENSOR_HW_HANDLE handle,uint32_t power_on)
 	} else {
 
 		#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-		//vcm_dw9714A_init(2);
-		dw9714_init(2);
+#ifdef CONFIG_AF_VCM_DW9714
+		vcm_dw9714_init(handle,2);
+#endif
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 		#endif
 
@@ -1765,8 +1768,9 @@ static uint32_t gc8024_write_gain_value(SENSOR_HW_HANDLE handle,uint32_t param)
  *============================================================================*/
 static uint32_t gc8024_write_af(SENSOR_HW_HANDLE handle,uint32_t param)
 {
-//	return vcm_dw9714A_set_position(param,2);
-	return dw9714_write_af(param);
+#ifdef CONFIG_AF_VCM_DW9714
+	return vcm_dw9714_set_position(handle,param,2);
+#endif
 }
 #endif
 

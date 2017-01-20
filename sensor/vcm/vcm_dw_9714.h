@@ -13,7 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifdef CONFIG_AF_VCM_9714
+#include "sensor_drv_u.h"
+#else
 #include "vcm_drv.h"
+#endif
 #define DW9714_VCM_SLAVE_ADDR (0x18>>1)
-uint32_t vcm_dw9714_init(uint32_t mode);
-uint32_t vcm_dw9714_set_position(uint32_t pos,uint32_t slewrate);
+uint32_t vcm_dw9714_init(SENSOR_HW_HANDLE handle, uint32_t mode);
+uint32_t vcm_dw9714_set_position(SENSOR_HW_HANDLE handle, uint32_t pos,uint32_t slewrate);

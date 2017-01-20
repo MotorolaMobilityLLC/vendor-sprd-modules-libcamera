@@ -102,6 +102,7 @@ LOCAL_SRC_FILES += \
 				s5k4h8yx/sensor_s5k4h8yx_mipi_raw.c \
 				s5k5e3yx/sensor_s5k5e3yx_mipi_raw.c \
 				vcm/vcm_dw9800.c \
+				vcm/vcm_dw_9714.c \
 				s5k3l2xx/sensor_s5k3l2xx_mipi_raw.c \
 				s5k3l8xxm3/sensor_s5k3l8xxm3_mipi_raw.c\
 				sp2509/sensor_sp2509_mipi_raw.c \
