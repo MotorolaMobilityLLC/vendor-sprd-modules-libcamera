@@ -117,8 +117,8 @@ struct ae_scene_info_2 {
 	struct ae_exp_gain_table_2 ae_table[AE_FLICKER_NUM];
 };
 struct ae_table_param_2 {
-	struct ae_exp_gain_table_2 ae_table[AE_FLICKER_NUM][AE_ISO_NUM];
-	struct ae_exp_gain_table_2 flash_table[AE_FLICKER_NUM][AE_ISO_NUM];
+	struct ae_exp_gain_table_2 ae_table[AE_FLICKER_NUM][AE_ISO_NUM_NEW];
+	struct ae_exp_gain_table_2 flash_table[AE_FLICKER_NUM][AE_ISO_NUM_NEW];
 	struct ae_weight_table weight_table[AE_WEIGHT_TABLE_NUM];
 	struct ae_scene_info_2 scene_info[AE_SCENE_NUM];
 	struct ae_auto_iso_tab auto_iso_tab;
@@ -528,7 +528,7 @@ struct sensor_ynr_den_str {
 	uint8_t sal_offset[8];
 	uint8_t subthresh[9];
 	uint8_t lut_thresh[7];
-	uint8_t addback[9];// should named filter_ratio in tuning tool, sunny.wang
+	uint8_t addback[9];//filter_ratio in ISP TOOL
 	uint8_t reserved[3];
 	struct sensor_ynr_layer_str layer1;
 	struct sensor_ynr_layer_str layer2;
@@ -2097,6 +2097,7 @@ struct sensor_lsc_2d_map_info {
 };
 struct sensor_lsc_2d_tab_info_param {
 	struct sensor_lsc_2d_map_info lsc_2d_map_info;
+	uint16_t lsc_2d_weight[4096];
 	uint32_t lsc_2d_len;
 	uint32_t lsc_2d_offset;
 };

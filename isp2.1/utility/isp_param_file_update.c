@@ -448,7 +448,7 @@ int read_fix_ae_info(FILE *fp,struct sensor_ae_tab *ae_ptr)
 		if (strstr(line_buf,"_common_ae_tab_") != NULL ) {
 			for (i = 0;i < AE_FLICKER_NUM;i++) {
 				int break_flag = 0;
-				for (j = 0;j < AE_ISO_NUM;j++) {
+				for (j = 0;j < AE_ISO_NUM_NEW;j++) {
 					sprintf(ae_tab_info[0],"_common_ae_tab_index_%d%d",i,j);
 					sprintf(ae_tab_info[1],"_common_ae_tab_exposure_%d%d",i,j);
 					sprintf(ae_tab_info[2],"_common_ae_tab_dummy_%d%d",i,j);
@@ -504,7 +504,7 @@ int read_fix_ae_info(FILE *fp,struct sensor_ae_tab *ae_ptr)
 		if (strstr(line_buf,"_ae_flash_tab_") != NULL ) {
 			for (i = 0;i < AE_FLICKER_NUM;i++) {
 				int break_flag = 0;
-				for (j = 0;j < AE_ISO_NUM;j++) {
+				for (j = 0;j < AE_ISO_NUM_NEW;j++) {
 					sprintf(ae_tab_info[0],"_ae_flash_tab_index_%d%d",i,j);
 					sprintf(ae_tab_info[1],"_ae_flash_tab_exposure_%d%d",i,j);
 					sprintf(ae_tab_info[2],"_ae_flash_tab_dummy_%d%d",i,j);

@@ -46,8 +46,8 @@ struct ae_tuning_param {//total bytes must be 263480
 	struct ae_flash_tuning flash_tuning;
 	struct touch_zone touch_param;
 	struct ae_ev_table ev_table;
-	struct ae_exp_gain_table ae_table[AE_FLICKER_NUM][AE_ISO_NUM];
-	struct ae_exp_gain_table backup_ae_table[AE_FLICKER_NUM][AE_ISO_NUM];
+	struct ae_exp_gain_table ae_table[AE_FLICKER_NUM][AE_ISO_NUM_NEW];
+	struct ae_exp_gain_table backup_ae_table[AE_FLICKER_NUM][AE_ISO_NUM_NEW];
 	struct ae_weight_table weight_table[AE_WEIGHT_TABLE_NUM];
 	struct ae_scene_info scene_info[AE_SCENE_NUM];
 	struct ae_auto_iso_tab auto_iso_tab;

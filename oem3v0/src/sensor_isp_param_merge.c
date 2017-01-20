@@ -92,7 +92,7 @@ static int sensor_isp_get_param_len(struct sensor_raw_info* sensor_info_ptr,uint
 		auto_iso_tab = (struct ae_auto_iso_tab_v1*)ae_table_ptr->auto_iso_tab;
 		/*ae_gain table*/
 		for (i = 0 ;i < AE_FLICKER_NUM;i++) {
-			for (j = 0;j < AE_ISO_NUM;j++) {
+			for (j = 0;j < AE_ISO_NUM_NEW;j++) {
 				again_len = ae_tab[i*AE_ISO_NUM_NEW+j].again_len;
 				dgain_len = ae_tab[i*AE_ISO_NUM_NEW+j].dgain_len;
 				dummy_len = ae_tab[i*AE_ISO_NUM_NEW+j].dummy_len;
@@ -442,7 +442,7 @@ int  sensor_isp_param_merge(struct sensor_raw_info* sensor_info_ptr,struct isp_d
 
 		/*copy ae gain table data*/
 		for (i = 0;i < AE_FLICKER_NUM; i++) {
-			for (j = 0;j < AE_ISO_NUM;j++) {
+			for (j = 0;j < AE_ISO_NUM_NEW;j++) {
 				memcpy((void*)tmp_ptr,(void*)ae_tab[i*AE_ISO_NUM_NEW+j].index,ae_tab[i*AE_ISO_NUM_NEW+j].index_len);
 				tmp_ptr = tmp_ptr + ae_tab[i*AE_ISO_NUM_NEW+j].index_len;
 				memcpy((void*)tmp_ptr,(void*)ae_tab[i*AE_ISO_NUM_NEW+j].exposure,ae_tab[i*AE_ISO_NUM_NEW+j].exposure_len);
@@ -458,7 +458,7 @@ int  sensor_isp_param_merge(struct sensor_raw_info* sensor_info_ptr,struct isp_d
 
 		/*for flash_table*/
 		for (i = 0;i < AE_FLICKER_NUM; i++) {
-			for (j = 0;j < AE_ISO_NUM;j++) {
+			for (j = 0;j < AE_ISO_NUM_NEW;j++) {
 				tmp_ptr = tmp_ptr + ae_tab[i*AE_ISO_NUM_NEW+j].index_len;
 				tmp_ptr = tmp_ptr + ae_tab[i*AE_ISO_NUM_NEW+j].exposure_len;
 				tmp_ptr = tmp_ptr + ae_tab[i*AE_ISO_NUM_NEW+j].dummy_len;
