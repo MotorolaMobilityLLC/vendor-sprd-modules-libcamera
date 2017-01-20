@@ -1114,7 +1114,7 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type, e
 		}
 
 		break;
-	case CAMERA_EXIT_CB_PREPARE:
+	case PREVIEW_EXIT_CB_PREPARE:
 		oem_cb_type = CAMERA_EXIT_CB_PREPARE;
 		break;
 	case PREVIEW_EVT_CB_RESUME:
