@@ -280,6 +280,7 @@ struct isp_statis_info {
 	uint32_t phy_addr;
 	uint32_t vir_addr;
 	uint32_t buf_size;
+	int mfd;
 };
 
 typedef struct {

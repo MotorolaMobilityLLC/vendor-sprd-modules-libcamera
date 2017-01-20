@@ -827,6 +827,7 @@ cmr_int ispalg_ae_awb_process(cmr_handle isp_alg_handle, void *data)
 	statis_buf.buf_size = statis_info->buf_size;
 	statis_buf.phy_addr = statis_info->phy_addr;
 	statis_buf.vir_addr = statis_info->vir_addr;
+	statis_buf.mfd = statis_info->mfd;
 
 	rtn = ispalg_start_ae_process((cmr_handle)cxt, &awb_calc_info, statis_info);
 	return 0;

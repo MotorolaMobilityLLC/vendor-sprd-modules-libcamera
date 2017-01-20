@@ -1169,7 +1169,7 @@ static void* cmr_grab_thread_proc(void* data)
 						 evt_id,
 						 op.parm.frame.sec,
 						 op.parm.frame.usec,
-						 op.parm.frame.reserved[1]);
+						 op.parm.frame.mfd);
 
 				frame.height          = op.parm.frame.height;
 				frame.frame_id        = op.parm.frame.index;
@@ -1186,7 +1186,7 @@ static void* cmr_grab_thread_proc(void* data)
 				frame.yaddr_vir       = op.parm.frame.yaddr_vir;
 				frame.uaddr_vir       = op.parm.frame.uaddr_vir;
 				frame.vaddr_vir       = op.parm.frame.vaddr_vir;
-				frame.fd              = op.parm.frame.reserved[1];
+				frame.fd              = op.parm.frame.mfd;
 
 				CMR_LOGV("frame.fd=0x%x, y_virt=0x%x", frame.fd, frame.yaddr_vir);
 				pthread_mutex_lock(&p_grab->status_mutex);
@@ -1204,12 +1204,13 @@ static void* cmr_grab_thread_proc(void* data)
 					statis_info.phy_addr = op.parm.frame.phy_addr;
 					statis_info.vir_addr = op.parm.frame.vir_addr;
 					statis_info.irq_property = op.parm.frame.irq_property;
-					CMR_LOGE("WUYI:got one frame statis buf_size 0x%lx phy_addr 0x%lx vir_addr 0x%lx irq_property 0x%lx",
+					statis_info.mfd = op.parm.frame.mfd;
+					CMR_LOGI("got one frame statis buf_size 0x%lx phy_addr 0x%lx vir_addr 0x%lx irq_property 0x%lx",
 							statis_info.buf_size, statis_info.phy_addr, statis_info.vir_addr, statis_info.irq_property);
 
 					pthread_mutex_lock(&p_grab->cb_mutex);
 					if (p_grab->isp_statis_evt_cb) {
-						(p_grab->isp_statis_evt_cb)(evt_id, &statis_info, (void*)cxt->isp_cxt.isp_handle);
+						(*p_grab->isp_statis_evt_cb)(evt_id, &statis_info, (void*)cxt->isp_cxt.isp_handle);
 					}
 					pthread_mutex_unlock(&p_grab->cb_mutex);
 				}
