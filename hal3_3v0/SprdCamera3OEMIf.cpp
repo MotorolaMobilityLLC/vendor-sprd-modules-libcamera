@@ -2724,17 +2724,11 @@ int SprdCamera3OEMIf::startPreviewInternal()
 		PushFirstZslbuff();
 	}
 
-	property_get("volte.incall.camera.enable", value, "false");
-	is_volte = !strcmp(value, "true");
-	if (is_volte||mCaptureMode == CAMERA_ZSL_MODE) {
-		SPRD_DEF_Tag sprddefInfo;
-		mSetting->getSPRDDEFTag(&sprddefInfo);
-		property_get("sys.cam.multi.camera.mode", multicameramode, "0");
-		if(!sprddefInfo.perfect_skin_level  || 0 != atoi(multicameramode))
-			PushFirstVideobuff();
-		if (!is_push_zsl)
-			PushFirstZslbuff();
-	}
+	if(!sprddefInfo.perfect_skin_level)
+		PushFirstVideobuff();
+	if (!is_push_zsl)
+		PushFirstZslbuff();
+
 	HAL_LOGD("X camera id %d",mCameraId);
 
 	return NO_ERROR;

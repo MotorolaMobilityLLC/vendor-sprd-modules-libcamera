@@ -347,8 +347,7 @@ int SprdCamera3RegularChannel::request(camera3_stream_t *stream, buffer_handle_t
 				else if(i == (CAMERA_STREAM_TYPE_VIDEO - REGULAR_STREAM_TYPE_BASE)) {
 					SPRD_DEF_Tag sprddefInfo;
 					mSetting->getSPRDDEFTag(&sprddefInfo);
-					property_get("sys.cam.multi.camera.mode", multicameramode, "0");
-					if(!sprddefInfo.perfect_skin_level  ||0 != atoi(multicameramode))
+					if(!sprddefInfo.perfect_skin_level )
 						mOEMIf->PushVideobuff(buffer);
 				} else if(i == (CAMERA_STREAM_TYPE_CALLBACK - REGULAR_STREAM_TYPE_BASE))
 					mOEMIf->PushZslbuff(buffer);
