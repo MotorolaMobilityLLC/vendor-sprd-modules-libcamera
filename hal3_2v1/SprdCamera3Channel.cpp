@@ -341,12 +341,8 @@ int SprdCamera3RegularChannel::request(camera3_stream_t *stream, buffer_handle_t
 				if(i == 0)
 					mOEMIf->PushPreviewbuff(buffer);
 				else if(i == (CAMERA_STREAM_TYPE_VIDEO - REGULAR_STREAM_TYPE_BASE)) {
-#ifdef CONFIG_FACE_BEAUTY
-					SPRD_DEF_Tag sprddefInfo;
-					mSetting->getSPRDDEFTag(&sprddefInfo);
-					property_get("sys.cam.multi.camera.mode", multicameramode, "0");
-					if(!sprddefInfo.perfect_skin_level  ||0 != atoi(multicameramode))
-						mOEMIf->PushVideobuff(buffer);
+#ifdef CONFIG_VIDEO_COPY_PREVIEW
+					HAL_LOGD("video stream copy preview stream");
 #else
 					mOEMIf->PushVideobuff(buffer);
 #endif

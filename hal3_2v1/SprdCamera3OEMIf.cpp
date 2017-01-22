@@ -1563,7 +1563,11 @@ bool SprdCamera3OEMIf::setCameraPreviewDimensions()
 			mCaptureMode = CAMERA_ZSL_MODE;
 	}
 
+#ifdef CONFIG_VIDEO_COPY_PREVIEW
+	HAL_LOGD("video stream copy preview stream");
+#else
 	SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_VIDEO_SIZE, (cmr_uint)&video_size);
+#endif
 
 	if(mZslPreviewMode == false) {
 		if(mSprdZslEnabled == false) {
@@ -2581,7 +2585,6 @@ int SprdCamera3OEMIf::startPreviewInternal()
 {
 	ATRACE_CALL();
 
-	bool is_push_zsl = false;
 	bool is_volte = false;
 	char value[PROPERTY_VALUE_MAX];
 	char multicameramode[PROPERTY_VALUE_MAX];
@@ -2682,17 +2685,16 @@ int SprdCamera3OEMIf::startPreviewInternal()
 
 	HAL_LOGV("mVideoSnapshotType=%d", mVideoSnapshotType);
 	SET_PARM(mHalOem,mCameraHandle, CAMERA_PARAM_VIDEO_SNAPSHOT_TYPE, (cmr_uint)mVideoSnapshotType);
-	HAL_LOGD("mCaptureMode=%d", mCaptureMode);
 
 	/**add for 3dcapture, increase zsl buffer number for frame sync*/
-	if (sprddefInfo.sprd_3dcapture_enabled)
-	{
+	if (sprddefInfo.sprd_3dcapture_enabled) {
 	    mZslNum = DUALCAM_ZSL_NUM;
 	}
-	cmr_int qret = mHalOem->ops->camera_start_preview(mCameraHandle, mCaptureMode);
 
+	HAL_LOGD("mCaptureMode=%d", mCaptureMode);
+	cmr_int qret = mHalOem->ops->camera_start_preview(mCameraHandle, mCaptureMode);
 	if (qret != CMR_CAMERA_SUCCESS) {
-		HAL_LOGE("failed: sensor error.");
+		HAL_LOGE("camera_start_preview failed");
 		setCameraState(SPRD_ERROR, STATE_PREVIEW);
 		deinitPreview();
 		return UNKNOWN_ERROR;
@@ -2700,26 +2702,11 @@ int SprdCamera3OEMIf::startPreviewInternal()
 	if (mIspToolStart) {
 		mIspToolStart = false;
 	}
-	if (PushFirstPreviewbuff()) {
-		is_push_zsl = true;
-		PushFirstZslbuff();
-	}
 
-	property_get("volte.incall.camera.enable", value, "false");
-	is_volte = !strcmp(value, "true");
-	if (is_volte||mCaptureMode == CAMERA_ZSL_MODE) {
-#ifdef CONFIG_FACE_BEAUTY
-		SPRD_DEF_Tag sprddefInfo;
-		mSetting->getSPRDDEFTag(&sprddefInfo);
-		property_get("sys.cam.multi.camera.mode", multicameramode, "0");
-		if(!sprddefInfo.perfect_skin_level  || 0 != atoi(multicameramode))
-			PushFirstVideobuff();
-#else
-		PushFirstVideobuff();
-#endif
-		if (!is_push_zsl)
-			PushFirstZslbuff();
-	}
+	PushFirstPreviewbuff();
+	PushFirstVideobuff();
+	PushFirstZslbuff();
+
 	HAL_LOGD("X camera id %d",mCameraId);
 
 	return NO_ERROR;
@@ -3497,7 +3484,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 	buffer_handle_t* buff_handle = NULL;
 	int32_t buf_deq_num = 0;
 	int32_t buf_num = 0;
-#ifdef CONFIG_FACE_BEAUTY
+
+#ifdef CONFIG_VIDEO_COPY_PREVIEW
 	cmr_uint videobuf_phy = 0;
 	cmr_uint videobuf_vir = 0;
 	cmr_uint prebuf_phy = 0;
@@ -3664,8 +3652,9 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 						}
 					}
 #endif
-#ifdef CONFIG_FACE_BEAUTY
-					if(rec_stream && sprddefInfo.perfect_skin_level >0 ) {
+
+#ifdef CONFIG_VIDEO_COPY_PREVIEW
+					if(rec_stream) {
 						ret = rec_stream->getQBufAddrForNum(frame_num, &videobuf_vir, &videobuf_phy, &fd0);
 						if (ret == NO_ERROR && videobuf_vir != 0) {
 							mIsRecording = true;
@@ -3674,27 +3663,28 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 								mSlowPara.rec_timestamp = buffer_timestamp;
 							}
 						}
-					}//recording cts
+					}
 #endif
 
 					if (mIsRecording && rec_stream) {
 						if (frame_num > mRecordFrameNum)
 							calculateTimestampForSlowmotion(buffer_timestamp);
-#ifdef CONFIG_FACE_BEAUTY
-							if( sprddefInfo.perfect_skin_level >0 && 0 == atoi(multicameramode) ) { //for 2D video recoding face_beauty
-								ret=rec_stream->getQBufAddrForNum(frame_num, &videobuf_vir, &videobuf_phy,&fd0);
-								if (ret == NO_ERROR && videobuf_vir != 0 ){
-									pre_stream->getQBufAddrForNum(frame_num, &prebuf_vir, &prebuf_phy,&fd1);
-									HAL_LOGD("frame_num=%d, videobuf_phy=0x%lx, videobuf_vir=0x%lx", frame_num, videobuf_phy, videobuf_vir);
-									HAL_LOGD("frame_num=%d, prebuf_phy=0x%lx, prebuf_vir=0x%lx", frame_num, prebuf_phy, prebuf_vir);
-									memcpy((void*)videobuf_vir, (void*)prebuf_vir, mPreviewWidth * mPreviewHeight * 3 / 2);
-									channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp, CAMERA_STREAM_TYPE_VIDEO);
-									if(frame_num == (mDropVideoFrameNum+1)) //for IOMMU error
-										 channel->channelClearInvalidQBuff(mDropVideoFrameNum, buffer_timestamp, CAMERA_STREAM_TYPE_VIDEO);
-									if(frame_num > mRecordFrameNum)
-										mRecordFrameNum = frame_num;
-								}
-							} //copy preview buffer to video
+#ifdef CONFIG_VIDEO_COPY_PREVIEW
+						ret=rec_stream->getQBufAddrForNum(frame_num, &videobuf_vir, &videobuf_phy,&fd0);
+						if (ret || videobuf_vir == 0) {
+							HAL_LOGE("getQBufAddrForNum failed");
+							goto exit;
+						}
+
+						pre_stream->getQBufAddrForNum(frame_num, &prebuf_vir, &prebuf_phy,&fd1);
+						HAL_LOGD("frame_num=%d, videobuf_phy=0x%lx, videobuf_vir=0x%lx", frame_num, videobuf_phy, videobuf_vir);
+						HAL_LOGD("frame_num=%d, prebuf_phy=0x%lx, prebuf_vir=0x%lx", frame_num, prebuf_phy, prebuf_vir);
+						memcpy((void*)videobuf_vir, (void*)prebuf_vir, mPreviewWidth * mPreviewHeight * 3 / 2);
+						channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp, CAMERA_STREAM_TYPE_VIDEO);
+						if(frame_num == (mDropVideoFrameNum+1)) //for IOMMU error
+							 channel->channelClearInvalidQBuff(mDropVideoFrameNum, buffer_timestamp, CAMERA_STREAM_TYPE_VIDEO);
+						if(frame_num > mRecordFrameNum)
+							mRecordFrameNum = frame_num;
 #endif
 						channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp, CAMERA_STREAM_TYPE_PREVIEW);
 					} else {
@@ -3704,8 +3694,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 						channel->channelClearInvalidQBuff(mDropPreviewFrameNum, buffer_timestamp, CAMERA_STREAM_TYPE_PREVIEW);
 				} else {
 					channel->channelClearInvalidQBuff(frame_num, buffer_timestamp, CAMERA_STREAM_TYPE_PREVIEW);
-#ifdef CONFIG_FACE_BEAUTY
-					if (rec_stream&&sprddefInfo.perfect_skin_level >0)
+#ifdef CONFIG_VIDEO_COPY_PREVIEW
+					if (rec_stream)
 						channel->channelClearInvalidQBuff(frame_num, buffer_timestamp, CAMERA_STREAM_TYPE_VIDEO);
 #endif
 				}
@@ -3776,6 +3766,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 		}
 	}
 
+exit:
 	HAL_LOGV("X");
 }
 
@@ -5069,6 +5060,7 @@ int SprdCamera3OEMIf::openCamera()
 #ifdef CONFIG_CAMERA_GYRO
 	gyro_monitor_thread_init((void *)this);
 #endif
+
 #ifdef CONFIG_FACE_BEAUTY
 	ts_printVersionInfo();
 #endif

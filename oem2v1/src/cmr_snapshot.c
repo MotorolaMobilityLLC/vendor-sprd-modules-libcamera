@@ -1574,7 +1574,6 @@ void snp_cvt_done(cmr_handle snp_handle)
 	CMR_MSG_INIT(message);
 
 	sem_post(&cxt->cvt.cvt_sync_sm);
-//	snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_STATE, SNAPSHOT_EVT_CVT_DONE, (void*)ret, sizeof(cmr_int));
 	CMR_LOGI("cvt done");
 }
 
@@ -1587,12 +1586,13 @@ cmr_int snp_start_cvt(cmr_handle snp_handle, void *data)
 	cxt->cur_frame_info = *frm_ptr;
 	if (IMG_DATA_TYPE_JPEG == frm_ptr->fmt) {
 		ret = snp_start_decode_sync(snp_handle, data);
-	//	snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_STATE, SNAPSHOT_EVT_START_CVT, (void*)ret, sizeof(cmr_int));
 		snp_cvt_done(snp_handle);
 	} else if (IMG_DATA_TYPE_RAW == frm_ptr->fmt) {
 		ret = snp_start_isp_proc(snp_handle, data);
-//		snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_STATE, SNAPSHOT_EVT_START_CVT, (void*)ret, sizeof(cmr_int));
+		//for raw capture brinup, skip isp postprocess
+		//snp_cvt_done(snp_handle);
 	}
+
 	if (ret) {
 		CMR_LOGE("failed to start cvt %ld", ret);
 		goto exit;
