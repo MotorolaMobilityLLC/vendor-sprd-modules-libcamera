@@ -30,7 +30,6 @@
 #include "cmr_oem.h"
 //#include "ylog.h"
 
-
 #define CMR_CHECK_FD \
 	do { \
 		if (-1 == p_grab->fd) { \
@@ -81,8 +80,8 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr, cmr_handle *grab_h
 	cmr_u32                  i = 0;
 	cmr_u32                  channel_id;
 	struct cmr_grab          *p_grab = NULL;
-	struct sprd_img_res       res = {0};
-
+	struct sprd_img_res       res;
+	cmr_bzero(&res, sizeof(res));
 	p_grab = (struct cmr_grab *)malloc(sizeof(struct cmr_grab));
 	if (!p_grab) {
 		CMR_LOGE("No mem");
@@ -191,8 +190,8 @@ cmr_int cmr_grab_deinit(cmr_handle grab_handle)
 	cmr_int                  ret = 0;
 	cmr_u32                  channel_id = 0;
 	struct cmr_grab          *p_grab;
-	struct sprd_img_res      res = {0x0};
-
+	struct sprd_img_res      res;
+	cmr_bzero(&res, sizeof(res));
 	CMR_LOGI("close dev %p", grab_handle);
 	p_grab = (struct cmr_grab *)grab_handle;
 
@@ -1114,8 +1113,10 @@ static void* cmr_grab_thread_proc(void* data)
 	struct cmr_grab          *p_grab;
 	struct img_data_end      endian;
 	struct sprd_img_read_op  op;
-	struct sprd_img_res res = {0};
-	struct sprd_img_statis_info statis_info = {0};
+	struct sprd_img_res res;
+	struct sprd_img_statis_info statis_info;
+	cmr_bzero(&res, sizeof(res));
+	cmr_bzero(&statis_info, sizeof(statis_info));
 
 	p_grab = (struct cmr_grab *)data;
 	if (!p_grab)
@@ -1205,7 +1206,7 @@ static void* cmr_grab_thread_proc(void* data)
 					statis_info.vir_addr = op.parm.frame.vir_addr;
 					statis_info.irq_property = op.parm.frame.irq_property;
 					statis_info.mfd = op.parm.frame.mfd;
-					CMR_LOGV("got one frame statis buf_size 0x%lx phy_addr 0x%lx vir_addr 0x%lx irq_property 0x%lx",
+					CMR_LOGV("got one frame statis buf_size 0x%x phy_addr 0x%x vir_addr 0x%x irq_property 0x%x",
 							statis_info.buf_size, statis_info.phy_addr, statis_info.vir_addr, statis_info.irq_property);
 
 					pthread_mutex_lock(&p_grab->cb_mutex);

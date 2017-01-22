@@ -868,11 +868,12 @@ cmr_int af_start(cmr_handle af_handle, cmr_u32 camera_id)
 	struct common_isp_cmd_param     com_isp_af;
 	struct sensor_exp_info          sensor_info;
 	struct af_context               *af_cxt               = (struct af_context *)af_handle;
-	struct common_sn_cmd_param      yuv_sn_param          = {0};
+	struct common_sn_cmd_param      yuv_sn_param;
 
 	cmr_bzero(&af_param, sizeof(af_param));
 	cmr_bzero(&isp_af_param, sizeof(isp_af_param));
 	cmr_bzero(&com_isp_af, sizeof(com_isp_af));
+	cmr_bzero(&yuv_sn_param, sizeof(yuv_sn_param));
 
 	CMR_LOGI("E");
 
@@ -1009,7 +1010,8 @@ cmr_int af_start_lightly(cmr_handle af_handle, cmr_u32 camera_id)
 	SENSOR_EXT_FUN_PARAM_T          af_param;
 	struct sensor_exp_info          sensor_info;
 	struct af_context               *af_cxt      = (struct af_context *)af_handle;
-	struct common_sn_cmd_param      yuv_sn_param = {0};
+	struct common_sn_cmd_param      yuv_sn_param;
+	cmr_bzero(&yuv_sn_param, sizeof(yuv_sn_param));
 
 	CMR_LOGI("E");
 

@@ -208,7 +208,7 @@ static cmr_int req_hdr_save_frame(cmr_handle class_handle, struct ipm_frame_in *
 
 	hdr_handle->common.save_frame_count++;
 	if(hdr_handle->common.save_frame_count <= hdr_handle->ev_effect_frame_interval){
-		CMR_LOGD("ev_effect_frame_interval is %d, donot need save this frame, just for set ev in pipeline.frame count:%d"
+		CMR_LOGD("ev_effect_frame_interval is %ld, donot need save this frame, just for set ev in pipeline.frame count:%ld"
 		,hdr_handle->ev_effect_frame_interval,hdr_handle->common.save_frame_count);
 		return CMR_CAMERA_SUCCESS;
 	}
@@ -438,7 +438,7 @@ static cmr_int hdr_arithmetic(cmr_handle class_handle, struct img_addr *dst_addr
 	cmr_u8             *temp_addr0 = NULL;
 	cmr_u8             *temp_addr1 = NULL;
 	cmr_u8             *temp_addr2 = NULL;
-	cmr_s8             *p_format   = IMAGE_FORMAT;
+	char               *p_format   = IMAGE_FORMAT;
 	struct class_hdr  *hdr_handle = (struct class_hdr *)class_handle;
 
 	if (!class_handle || !dst_addr) {
@@ -446,7 +446,7 @@ static cmr_int hdr_arithmetic(cmr_handle class_handle, struct img_addr *dst_addr
 		return CMR_CAMERA_INVALID_PARAM;
 	}
 
-	cmr_s8 value[PROPERTY_VALUE_MAX];
+	char value[PROPERTY_VALUE_MAX];
 	property_get("debug.camera.dump.hdr.frame",value,"0");
 	if(!strcmp(value,"1")){
 		ret = hdr_save_yuv(class_handle, width, height);
@@ -510,11 +510,11 @@ static cmr_int hdr_save_frame(cmr_handle class_handle, struct ipm_frame_in *in)
 		return CMR_CAMERA_FAIL;
 	}
 
-	CMR_LOGI(" HDR frame_sn %d, y_addr %p", frame_sn, in->src_frame.addr_vir.addr_y);
-	if (hdr_handle->mem_size >= in->src_frame.buf_size && NULL != in->src_frame.addr_vir.addr_y)
+	CMR_LOGI(" HDR frame_sn %ld, y_addr 0x%lx", frame_sn, in->src_frame.addr_vir.addr_y);
+	if (hdr_handle->mem_size >= in->src_frame.buf_size && NULL != (void *)in->src_frame.addr_vir.addr_y)
 		hdr_handle->alloc_addr[frame_sn] = (cmr_u8*)(in->src_frame.addr_vir.addr_y);
 	 else
-		CMR_LOGE(" HDR:mem size:0x%lx,data y_size:0x%lx. %p",hdr_handle->mem_size,y_size,in->src_frame.addr_vir.addr_y);
+		CMR_LOGE(" HDR:mem size:0x%lx,data y_size:0x%lx. 0x%lx",hdr_handle->mem_size,y_size,in->src_frame.addr_vir.addr_y);
 
 	return ret;
 }
