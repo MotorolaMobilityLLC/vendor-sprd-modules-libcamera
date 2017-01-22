@@ -266,6 +266,7 @@ struct sensor_pdaf_extraction {
 	uint8_t continuous_mode;
 	uint8_t skip_num;
 	struct sensor_pdaf_af_win pdaf_af_win;
+	struct sensor_pdaf_region pdaf_region;
 };
 
 /************************************************************************************/
