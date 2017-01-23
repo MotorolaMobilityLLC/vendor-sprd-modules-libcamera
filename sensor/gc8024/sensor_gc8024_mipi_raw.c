@@ -26,12 +26,10 @@
 #include "sensor_raw.h"
 
 #include "gc8024_param/sensor_gc8024_raw_param_main.c"
-
 #ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
 #ifdef CONFIG_AF_VCM_DW9714
 #include "../vcm/vcm_dw_9714.h"
 #endif
-
 #endif
 
 #define CAMERA_IMAGE_180
@@ -662,7 +660,7 @@ SENSOR_INFO_T g_gc8024_mipi_raw_info = {
 	/* max height of source image */
 	SNAPSHOT_HEIGHT,
 	/* name of sensor */
-	(cmr_s8 *)SENSOR_NAME,
+	SENSOR_NAME,
 	/* define in SENSOR_IMAGE_FORMAT_E enum,SENSOR_IMAGE_FORMAT_MAX
 	 * if set to SENSOR_IMAGE_FORMAT_MAX here,
 	 * image format depent on SENSOR_REG_TAB_INFO_T
@@ -706,7 +704,7 @@ SENSOR_INFO_T g_gc8024_mipi_raw_info = {
 	65,
 	/* vertical view angle*/
 	60,
-	(cmr_s8 *)"gc8024_v1",
+	"gc8024_v1",
 };
 
 static SENSOR_STATIC_INFO_T s_gc8024_static_info = {
@@ -1448,11 +1446,10 @@ static uint32_t gc8024_power_on(SENSOR_HW_HANDLE handle,uint32_t power_on)
 		
 		#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
-
+		usleep(5 * 1000);
 #ifdef CONFIG_AF_VCM_DW9714
 		vcm_dw9714_init(handle,2);
 #endif
-
 		#else
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 		#endif
@@ -1460,11 +1457,9 @@ static uint32_t gc8024_power_on(SENSOR_HW_HANDLE handle,uint32_t power_on)
 	} else {
 
 		#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-
 #ifdef CONFIG_AF_VCM_DW9714
 		vcm_dw9714_init(handle,2);
 #endif
-
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
 		#endif
 
@@ -1912,208 +1907,6 @@ static uint32_t gc8024_stream_off(SENSOR_HW_HANDLE handle,uint32_t param)
 
 	return 0;
 }
-#define DW9714_VCM_SLAVE_ADDR (0x18>>1)
-
-cmr_uint dw9714_set_pos(SENSOR_HW_HANDLE handle,uint16_t pos){
-	uint8_t cmd_val[2] ={0};
-
-	// set pos
-	cmd_val[0] = 0x03;
-	cmd_val[1] = (pos>>8)&0x03;
-	Sensor_WriteI2C(DW9714_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],2);
-
-	cmd_val[0] = 0x04;
-	cmd_val[1] = pos&0xff;
-	Sensor_WriteI2C(DW9714_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],2);
-	return 0;
-}
-
-cmr_uint dw9714_get_otp(SENSOR_HW_HANDLE handle,uint16_t *inf,uint16_t *macro){
-	uint8_t bTransfer[2] = {0,0};
-
-	// get otp
-	bTransfer[0] = 0x00;
-	bTransfer[1] = 0x00;
-	Sensor_WriteI2C(DW9714_VCM_SLAVE_ADDR, &bTransfer[0], 2);
-	usleep(1000);
-	//Macro
-	bTransfer[0] = 0x01;
-	bTransfer[1] = 0x0c;
-	Sensor_ReadI2C(DW9714_VCM_SLAVE_ADDR, &bTransfer[0], 2);
-	*macro = bTransfer[0];
-	bTransfer[0] = 0x01;
-	bTransfer[1] = 0x0d;
-	Sensor_ReadI2C(DW9714_VCM_SLAVE_ADDR, &bTransfer[0], 2);
-	*macro += bTransfer[0]<<8;
-	//Infi
-	bTransfer[0] = 0x01;
-	bTransfer[1] = 0x10;
-	Sensor_ReadI2C(DW9714_VCM_SLAVE_ADDR, &bTransfer[0], 2);
-	*inf = bTransfer[0];
-	bTransfer[0] = 0x01;
-	bTransfer[1] = 0x11;
-	Sensor_ReadI2C(DW9714_VCM_SLAVE_ADDR, &bTransfer[0], 2);
-	*inf += bTransfer[0]<<8;
-	return 0;
-}
-
-cmr_uint dw9714_get_motor_pos(SENSOR_HW_HANDLE handle,uint16_t *pos){
-	uint8_t cmd_val[2];
-	// read
-	cmd_val[0] = 0x03;
-	cmd_val[1] = 0x03;
-	Sensor_ReadI2C(DW9714_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],1);
-	*pos = cmd_val[0]<<8;
-	usleep(200);
-	cmd_val[0] = 0x04;
-	cmd_val[1] = 0x04;
-	Sensor_ReadI2C(DW9714_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],1);
-	*pos += cmd_val[0];
-	return 0;
-}
-
-cmr_uint dw9714_set_motor_bestmode(SENSOR_HW_HANDLE handle){
-
-	uint8_t ctrl,mode,freq;
-	uint8_t pos1,pos2;
-	uint8_t cmd_val[2];
-
-	//set
-	cmd_val[0] = 0x02;
-	cmd_val[1] = 0x2;
-	Sensor_WriteI2C(DW9714_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],2);
-	usleep(200);
-	cmd_val[0] = 0x06;
-	cmd_val[1] = 0x61;
-	Sensor_WriteI2C(DW9714_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],2);
-	usleep(200);
-	cmd_val[0] = 0x07;
-	cmd_val[1] = 0x38;
-	Sensor_WriteI2C(DW9714_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],2);
-	usleep(200*1000);
-	// read
-	cmd_val[0] = 0x02;
-	cmd_val[1] = 0x02;
-	Sensor_ReadI2C(DW9714_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],1);
-	ctrl = cmd_val[0];
-	usleep(200);
-	cmd_val[0] = 0x06;
-	cmd_val[1] = 0x06;
-	Sensor_ReadI2C(DW9714_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],1);
-	mode = cmd_val[0];
-	usleep(200);
-	cmd_val[0] = 0x07;
-	cmd_val[1] = 0x07;
-	Sensor_ReadI2C(DW9714_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],1);
-	freq = cmd_val[0];
-	usleep(200);
-	cmd_val[0] = 0x03;
-	cmd_val[1] = 0x03;
-	Sensor_ReadI2C(DW9714_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],1);
-	pos1 = cmd_val[0];
-	usleep(200);
-	cmd_val[0] = 0x04;
-	cmd_val[1] = 0x04;
-	Sensor_ReadI2C(DW9714_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],1);
-	pos2 = cmd_val[0];
-
-	CMR_LOGI("VCM ctrl mode freq pos 2nd,%d %d %d %d",ctrl,mode,freq,(pos1<<8)+pos2);
-	return 0;
-}
-
-cmr_uint dw9714_get_test_vcm_mode(SENSOR_HW_HANDLE handle){
-
-	uint8_t ctrl,mode,freq;
-	uint8_t pos1,pos2;
-	uint8_t cmd_val[2];
-
-	FILE* fp = NULL;
-	fp = fopen("/data/misc/cameraserver/cur_vcm_info.txt","wb");
-	// read
-	cmd_val[0] = 0x02;
-	cmd_val[1] = 0x02;
-	Sensor_ReadI2C(DW9714_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],1);
-	ctrl = cmd_val[0];
-	usleep(200);
-	cmd_val[0] = 0x06;
-	cmd_val[1] = 0x06;
-	Sensor_ReadI2C(DW9714_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],1);
-	mode = cmd_val[0];
-	usleep(200);
-	cmd_val[0] = 0x07;
-	cmd_val[1] = 0x07;
-	Sensor_ReadI2C(DW9714_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],1);
-	freq = cmd_val[0];
-
-	// read
-	cmd_val[0] = 0x03;
-	cmd_val[1] = 0x03;
-	Sensor_ReadI2C(DW9714_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],1);
-	pos1 = cmd_val[0];
-	usleep(200);
-	cmd_val[0] = 0x04;
-	cmd_val[1] = 0x04;
-	Sensor_ReadI2C(DW9714_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],1);
-	pos2 = cmd_val[0];
-
-	fprintf(fp,"VCM ctrl mode freq pos ,%d %d %d %d",ctrl,mode,freq,(pos1<<8)+pos2);
-	fclose(fp);
-	return 0;
-}
-
-cmr_uint dw9714_set_test_vcm_mode(SENSOR_HW_HANDLE handle,char* vcm_mode){
-
-	uint8_t ctrl,mode,freq;
-	uint8_t pos1,pos2;
-	uint8_t cmd_val[2];
-	char* p1=vcm_mode;
-
-	while( *p1!='~'  && *p1!='\0' )
-		p1++;
-	*p1++ = '\0';
-	ctrl = atoi(vcm_mode);
-	vcm_mode = p1;
-	while( *p1!='~'  && *p1!='\0' )
-		p1++;
-	*p1++ = '\0';
-	mode = atoi(vcm_mode);
-	vcm_mode = p1;
-	while( *p1!='~'  && *p1!='\0' )
-		p1++;
-	*p1++ = '\0';
-	freq = atoi(vcm_mode);
-	CMR_LOGI("VCM ctrl mode freq pos 1nd,%d %d %d",ctrl,mode,freq);
-	//set
-	cmd_val[0] = 0x02;
-	cmd_val[1] = ctrl;
-	Sensor_WriteI2C(DW9714_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],2);
-	usleep(200);
-	cmd_val[0] = 0x06;
-	cmd_val[1] = mode;
-	Sensor_WriteI2C(DW9714_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],2);
-	usleep(200);
-	cmd_val[0] = 0x07;
-	cmd_val[1] = freq;
-	Sensor_WriteI2C(DW9714_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],2);
-	usleep(200*1000);
-	// read
-	cmd_val[0] = 0x02;
-	cmd_val[1] = 0x02;
-	Sensor_ReadI2C(DW9714_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],1);
-	ctrl = cmd_val[0];
-	usleep(200);
-	cmd_val[0] = 0x06;
-	cmd_val[1] = 0x06;
-	Sensor_ReadI2C(DW9714_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],1);
-	mode = cmd_val[0];
-	usleep(200);
-	cmd_val[0] = 0x07;
-	cmd_val[1] = 0x07;
-	Sensor_ReadI2C(DW9714_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],1);
-	freq = cmd_val[0];
-	CMR_LOGI("VCM ctrl mode freq pos 2nd,%d %d %d",ctrl,mode,freq);
-	return 0;
-}
 
 /*==============================================================================
  * Description:
@@ -2139,17 +1932,7 @@ static SENSOR_IOCTL_FUNC_TAB_T s_gc8024_ioctl_func_tab = {
 	.stream_on = gc8024_stream_on,
 	.stream_off = gc8024_stream_off,
 	.cfg_otp=gc8024_access_val,
-#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
-	//af control and DVT test funcs valid only af_enable works
-	.set_pos = dw9714_set_pos,// set vcm pos
-	.get_otp = PNULL,
-	.get_motor_pos = dw9714_get_motor_pos,// get vcm pos in register
-	.set_motor_bestmode = dw9714_set_motor_bestmode,// set vcm best mode and avoid damping
-	.get_test_vcm_mode = dw9714_get_test_vcm_mode,// test whether vcm mode valid in register
-	.set_test_vcm_mode = dw9714_set_test_vcm_mode,// set vcm mode and test best mode for damping
-	//.set_shutter_gain_delay_info = gc8024_set_shutter_gain_delay_info,
 
-#endif
 	//.group_hold_on = gc8024_group_hold_on,
 	//.group_hold_of = gc8024_group_hold_off,
 };

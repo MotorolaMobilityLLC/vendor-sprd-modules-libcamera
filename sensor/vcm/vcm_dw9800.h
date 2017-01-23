@@ -14,20 +14,7 @@
  * limitations under the License.
  */
 #include "sensor_drv_u.h"
-#include "vcm_drv.h"
+
 uint32_t vcm_dw9800_init(SENSOR_HW_HANDLE handle);
 uint32_t vcm_dw9800_set_position(SENSOR_HW_HANDLE handle, uint32_t pos);
 uint32_t vcm_dw9800_get_pose_dis(SENSOR_HW_HANDLE handle, uint32_t *up2h, uint32_t *h2down);
-/*uint32_t dw9800_set_pos(SENSOR_HW_HANDLE handle,uint16_t pos);
-uint32_t dw9800_get_otp(SENSOR_HW_HANDLE handle,uint16_t *inf,uint16_t *macro);
-uint32_t dw9800_get_motor_pos(SENSOR_HW_HANDLE handle,uint16_t *pos);
-uint32_t dw9800_set_motor_bestmode(SENSOR_HW_HANDLE handle);
-uint32_t dw9800_get_test_vcm_mode(SENSOR_HW_HANDLE handle);
-uint32_t dw9800_set_test_vcm_mode(SENSOR_HW_HANDLE handle,char* vcm_mode);
-*/
-#define DW9800_VCM_SLAVE_ADDR (0x18 >> 1)
-#define SENSOR_SUCCESS      0
-	/* accroding to vcm module spec */
-#define POSE_UP_HORIZONTAL 32
-#define POSE_DOWN_HORIZONTAL 37
-

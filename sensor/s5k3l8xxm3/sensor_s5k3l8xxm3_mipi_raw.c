@@ -1291,7 +1291,7 @@ SENSOR_INFO_T g_s5k3l8xxm3_mipi_raw_info = {
 	/* max height of source image */
 	SNAPSHOT_HEIGHT,
 	/* name of sensor */
-	(cmr_s8 *)SENSOR_NAME,
+	SENSOR_NAME,
 	/* define in SENSOR_IMAGE_FORMAT_E enum,SENSOR_IMAGE_FORMAT_MAX
 	 * if set to SENSOR_IMAGE_FORMAT_MAX here,
 	 * image format depent on SENSOR_REG_TAB_INFO_T
@@ -1335,7 +1335,7 @@ SENSOR_INFO_T g_s5k3l8xxm3_mipi_raw_info = {
 	65,
 	/* vertical view angle*/
 	60,
-	(cmr_s8 *)"s5k3l8xxm3_v1"
+	"s5k3l8xxm3_v1"
 };
 
 static SENSOR_STATIC_INFO_T s_s5k3l8xxm3_static_info = {

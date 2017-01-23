@@ -2241,7 +2241,7 @@ SENSOR_INFO_T g_s5k3l2xx_mipi_raw_info = {
 
 	4144,			// max width of source image
 	3106,			// max height of source image
-	(cmr_s8 *)"s5k3l2xx_mipi_raw",		// name of sensor
+	"s5k3l2xx_mipi_raw",		// name of sensor
 
 	SENSOR_IMAGE_FORMAT_RAW,	// define in SENSOR_IMAGE_FORMAT_E enum,SENSOR_IMAGE_FORMAT_MAX
 	// if set to SENSOR_IMAGE_FORMAT_MAX here, image format depent on SENSOR_REG_TAB_INFO_T
@@ -2272,7 +2272,7 @@ SENSOR_INFO_T g_s5k3l2xx_mipi_raw_info = {
 	3,			// skip frame num while change setting
 	48,			// horizontal view angle
 	48,			// vertical view angle
-	(cmr_s8 *)"s5k3l2xx_truly_v1",
+	"s5k3l2xx_truly_v1",
 };
 static SENSOR_STATIC_INFO_T s_s5k3l2xx_static_info = {
 	200,	//f-number,focal ratio

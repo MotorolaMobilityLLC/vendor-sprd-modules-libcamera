@@ -19,12 +19,5 @@
 #include "vcm_drv.h"
 #endif
 #define DW9714_VCM_SLAVE_ADDR (0x18>>1)
-uint32_t vcm_dw9714_init(SENSOR_HW_HANDLE handle,uint32_t mode);
-uint32_t vcm_dw9714_set_position(SENSOR_HW_HANDLE handle,uint32_t pos,uint32_t slewrate);
-/*cmr_uint dw9714_set_pos(SENSOR_HW_HANDLE handle,uint16_t pos);
-cmr_uint dw9714_get_otp(SENSOR_HW_HANDLE handle,uint16_t *inf,uint16_t *macro);
-cmr_uint dw9714_get_motor_pos(SENSOR_HW_HANDLE handle,uint16_t *pos);
-cmr_uint dw9714_set_motor_bestmode(SENSOR_HW_HANDLE handle);
-cmr_uint dw9714_get_test_vcm_mode(SENSOR_HW_HANDLE handle);
-cmr_uint dw9714_set_test_vcm_mode(SENSOR_HW_HANDLE handle,char* vcm_mode);
-*/
+uint32_t vcm_dw9714_init(SENSOR_HW_HANDLE handle, uint32_t mode);
+uint32_t vcm_dw9714_set_position(SENSOR_HW_HANDLE handle, uint32_t pos,uint32_t slewrate);
