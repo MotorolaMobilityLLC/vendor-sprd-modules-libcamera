@@ -443,9 +443,14 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mPdafRawHeapNum = 0;
 	mSubRawHeapSize = 0;
 
-	mPreviewHeapReserved= NULL;
-	mVideoHeapReserved= NULL;
-	mZslHeapReserved= NULL;
+#ifdef USE_ONE_RESERVED_BUF
+	mCommonHeapReserved = NULL;
+#else
+	mPreviewHeapReserved = NULL;
+	mVideoHeapReserved = NULL;
+	mZslHeapReserved = NULL;
+#endif
+
 	mDepthHeapReserved= NULL;
 	mIspLscHeapReserved = NULL;
 	mIspStatisHeapReserved = NULL;
@@ -588,6 +593,12 @@ void SprdCamera3OEMIf::closeCamera()
 		stopPreviewInternal();
 	}
 
+#ifdef USE_ONE_RESERVED_BUF
+	if (NULL != mCommonHeapReserved) {
+		freeCameraMem(mCommonHeapReserved);
+		mCommonHeapReserved = NULL;
+	}
+#else
 	if (NULL != mPreviewHeapReserved) {
 		freeCameraMem(mPreviewHeapReserved);
 		mPreviewHeapReserved = NULL;
@@ -602,6 +613,7 @@ void SprdCamera3OEMIf::closeCamera()
 		freeCameraMem(mZslHeapReserved);
 		mZslHeapReserved = NULL;
 	}
+#endif
 
 	if (NULL != mDepthHeapReserved) {
 		freeCameraMem(mDepthHeapReserved);
@@ -6498,6 +6510,7 @@ int SprdCamera3OEMIf::Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint 
 
 	HAL_LOGD("sum %d", sum);
 
+#ifndef USE_ONE_RESERVED_BUF
 	if(type == CAMERA_PREVIEW_RESERVED) {
 		if (NULL != mPreviewHeapReserved) {
 			freeCameraMem(mPreviewHeapReserved);
@@ -6519,6 +6532,7 @@ int SprdCamera3OEMIf::Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint 
 //			mZslHeapReserved = NULL;
 //		}
 //	}
+#endif
 
 	if (type == CAMERA_ISP_LSC) {
 		if (NULL != mIspLscHeapReserved) {
@@ -6589,6 +6603,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32
 	cmr_u32 mem_size;
 	cmr_u32 mem_sum;
 	int buffer_id;
+	int ret;
 
 	cmr_u32 sum = *sum_ptr;
 
@@ -6596,6 +6611,31 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32
 	*phy_addr = 0;
 	*vir_addr = 0;
 	*fd = 0;
+
+#ifdef USE_ONE_RESERVED_BUF
+	if (type == CAMERA_PREVIEW_RESERVED ||
+	    type == CAMERA_VIDEO_RESERVED ||
+	    type == CAMERA_SNAPSHOT_ZSL_RESERVED) {
+		if(mCommonHeapReserved == NULL) {
+			buffer_id = camera_pre_capture_get_buffer_id(mCameraId);
+			ret = camera_get_reserve_buffer_size(mCameraId, buffer_id,
+							     &mem_size, &mem_sum);
+			if (ret) {
+				HAL_LOGE("camera_get_reserve_buffer_size failed");
+				goto mem_fail;
+			}
+			memory = allocCameraMem(mem_size, 1, true);
+			if (NULL == memory) {
+				HAL_LOGE("memory is null");
+				goto mem_fail;
+			}
+			mCommonHeapReserved = memory;
+		}
+		*phy_addr++ = (cmr_uint)mCommonHeapReserved->phys_addr;
+		*vir_addr++ = (cmr_uint)mCommonHeapReserved->data;
+		*fd++ = mCommonHeapReserved->fd;
+	}
+#else
 	if (type == CAMERA_PREVIEW_RESERVED) {
 		if(mPreviewHeapReserved == NULL) {
 			memory = allocCameraMem(size, 1, true);
@@ -6632,7 +6672,9 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32
 		*phy_addr++ = (cmr_uint)mZslHeapReserved->phys_addr;
 		*vir_addr++ = (cmr_uint)mZslHeapReserved->data;
 		*fd++ = mZslHeapReserved->fd;
-	} else if(type == CAMERA_DEPTH_MAP_RESERVED) {
+	}
+#endif
+	else if(type == CAMERA_DEPTH_MAP_RESERVED) {
 		if(mDepthHeapReserved == NULL) {
 			memory = allocCameraMem(size, 1, true);
 			if (NULL == memory) {

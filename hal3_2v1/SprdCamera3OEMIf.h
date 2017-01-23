@@ -125,6 +125,8 @@ typedef struct sprd_zsl_capture_info {
 #define MAX_Y_UV_COUNT 2
 #define ISP_TUNING_WAIT_MAX_TIME 4000
 
+#define USE_ONE_RESERVED_BUF 1
+
 class SprdCamera3OEMIf : public virtual RefBase {
 public:
 	SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting);
@@ -590,9 +592,13 @@ private:
 	uint32_t                        mRefocusHeapArray_size[kRefocusBufferCount+1];
 	uint32_t                        mRefocusHeapArray_mfd[kRefocusBufferCount+1];
 
+#ifdef USE_ONE_RESERVED_BUF
+	sprd_camera_memory_t*           mCommonHeapReserved;
+#else
 	sprd_camera_memory_t*           mPreviewHeapReserved;
 	sprd_camera_memory_t*           mVideoHeapReserved;
 	sprd_camera_memory_t*           mZslHeapReserved;
+#endif
 	sprd_camera_memory_t*           mDepthHeapReserved;
 	sprd_camera_memory_t*           mPdafRawHeapReserved;
 	sprd_camera_memory_t*           mIspLscHeapReserved;

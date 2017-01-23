@@ -188,19 +188,21 @@ static const struct cap_size_to_mem mem_size_tab[IMG_SIZE_NUM] = {
 };
 
 static const struct cap_size_to_mem reserve_mem_size_tab[IMG_SIZE_NUM] = {
-	{PIXEL_1P3_MEGA, (3  << 20)},
-	{PIXEL_2P0_MEGA, (3  << 20)},
-	{PIXEL_3P0_MEGA, (5 << 20)},
-	{PIXEL_4P0_MEGA, (6 << 20)},
+	{PIXEL_1P3_MEGA, (8  << 20)},
+	{PIXEL_2P0_MEGA, (8  << 20)},
+	{PIXEL_3P0_MEGA, (8 << 20)},
+	{PIXEL_4P0_MEGA, (8 << 20)},
 	{PIXEL_5P0_MEGA, (8 << 20)},
-	{PIXEL_6P0_MEGA, (9 << 20)},
-	{PIXEL_7P0_MEGA, (11 << 20)},
+	{PIXEL_6P0_MEGA, (12 << 20)},
+	{PIXEL_7P0_MEGA, (12 << 20)},
 	{PIXEL_8P0_MEGA, (12 << 20)},
-	{PIXEL_9P0_MEGA, (14 << 20)},
-	{PIXEL_AP0_MEGA, (15 << 20)},
-	{PIXEL_BP0_MEGA, (17 << 20)},
-	{PIXEL_CP0_MEGA, (18 << 20)},
-	{PIXEL_DP0_MEGA, (20 << 20)}
+	{PIXEL_9P0_MEGA, (20 << 20)},
+	{PIXEL_AP0_MEGA, (20 << 20)},
+	{PIXEL_BP0_MEGA, (20 << 20)},
+	{PIXEL_CP0_MEGA, (20 << 20)},
+	{PIXEL_DP0_MEGA, (20 << 20)},
+	{PIXEL_10P0_MEGA, (25 << 20)},
+	{PIXEL_15P0_MEGA, (32 << 20)}
 };
 
 extern int camera_get_is_noscale(void);
@@ -383,7 +385,7 @@ int camera_reserve_buf_size(cmr_u32 camera_id,
 	mem_tab_ptr = (struct cap_size_to_mem*)&reserve_mem_size_tab[0];
 	*mem_size = mem_tab_ptr[mem_size_id].mem_size;
 
-	CMR_LOGI("image size num, %d, mem size 0x%x",
+	CMR_LOGI("mem_size_id = %d, mem_size = 0x%x",
 		mem_size_id,
 		mem_tab_ptr[mem_size_id].mem_size);
 
