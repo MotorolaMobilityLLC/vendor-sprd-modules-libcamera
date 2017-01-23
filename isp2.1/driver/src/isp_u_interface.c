@@ -436,17 +436,24 @@ isp_s32 isp_set_fetch_param_v1(isp_handle isp_handler)
 	isp_s32 rtn = ISP_SUCCESS;
 	struct isp_interface_param_v1 *isp_context_ptr = (struct isp_interface_param_v1 *)isp_handler;
 	struct isp_dev_fetch_info_v1 *fetch_param_ptr = &isp_context_ptr->fetch;
+	struct isp_dev_fetch_addr *fetch_addr = &fetch_param_ptr->fetch_addr;
 
 	fetch_param_ptr->bypass = ISP_ZERO;
 	fetch_param_ptr->subtract = ISP_ZERO;
 	fetch_param_ptr->size.width = isp_context_ptr->data.input_size.w;
 	fetch_param_ptr->size.height = isp_context_ptr->data.input_size.h;
 	fetch_param_ptr->color_format = isp_get_fetch_format(isp_context_ptr->data.input_format);
-	fetch_param_ptr->addr.chn0 = isp_context_ptr->data.input_addr.chn0;
-	fetch_param_ptr->addr.chn1 = isp_context_ptr->data.input_addr.chn1;
-	fetch_param_ptr->addr.chn2 = isp_context_ptr->data.input_addr.chn2;
+	fetch_addr->img_offset.chn0 = isp_context_ptr->data.input_addr.chn0;
+	fetch_addr->img_offset.chn1 = isp_context_ptr->data.input_addr.chn1;
+	fetch_addr->img_offset.chn2 = isp_context_ptr->data.input_addr.chn2;
+	fetch_addr->img_vir.chn0 = isp_context_ptr->data.input_vir.chn0;
+	fetch_addr->img_vir.chn1 = isp_context_ptr->data.input_vir.chn1;
+	fetch_addr->img_vir.chn2 = isp_context_ptr->data.input_vir.chn2;
+	fetch_addr->img_fd = isp_context_ptr->data.input_fd;
 	isp_get_fetch_pitch(&(fetch_param_ptr->pitch), isp_context_ptr->data.input_size.w,
 		isp_context_ptr->data.input_format);
+
+	ISP_LOGI("fetch format %d\n", fetch_param_ptr->color_format);
 
 	return rtn;
 }

@@ -295,6 +295,19 @@ void cmr_grab_evt_reg(cmr_handle grab_handle, cmr_evt_cb  grab_event_cb)
 	pthread_mutex_unlock(&p_grab->cb_mutex);
 }
 
+void cmr_grab_isp_irq_proc_evt_reg(cmr_handle grab_handle, cmr_evt_cb  isp_irq_proc_event_cb)
+{
+	struct cmr_grab          *p_grab;
+
+	p_grab = (struct cmr_grab*)grab_handle;
+	if (!p_grab)
+		return;
+
+	pthread_mutex_lock(&p_grab->cb_mutex);
+	p_grab->isp_irq_proc_evt_cb = isp_irq_proc_event_cb;
+	pthread_mutex_unlock(&p_grab->cb_mutex);
+	return;
+}
 
 void cmr_grab_isp_statis_evt_reg(cmr_handle grab_handle, cmr_evt_cb  isp_statis_event_cb)
 {
@@ -1115,8 +1128,11 @@ static void* cmr_grab_thread_proc(void* data)
 	struct sprd_img_read_op  op;
 	struct sprd_img_res res;
 	struct sprd_img_statis_info statis_info;
+	struct sprd_irq_info irq_info;
+
 	cmr_bzero(&res, sizeof(res));
 	cmr_bzero(&statis_info, sizeof(statis_info));
+	cmr_bzero(&irq_info, sizeof(irq_info));
 
 	p_grab = (struct cmr_grab *)data;
 	if (!p_grab)
@@ -1212,6 +1228,14 @@ static void* cmr_grab_thread_proc(void* data)
 					pthread_mutex_lock(&p_grab->cb_mutex);
 					if (p_grab->isp_statis_evt_cb) {
 						(*p_grab->isp_statis_evt_cb)(evt_id, &statis_info, (void*)cxt->isp_cxt.isp_handle);
+					}
+					pthread_mutex_unlock(&p_grab->cb_mutex);
+				} else if (op.parm.frame.irq_type == CAMERA_IRQ_DONE){
+					irq_info.irq_property = op.parm.frame.irq_property;
+
+					pthread_mutex_lock(&p_grab->cb_mutex);
+					if (p_grab->isp_irq_proc_evt_cb) {
+						(p_grab->isp_irq_proc_evt_cb)(evt_id, &irq_info, (void*)cxt->isp_cxt.isp_handle);
 					}
 					pthread_mutex_unlock(&p_grab->cb_mutex);
 				}

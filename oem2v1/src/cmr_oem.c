@@ -1942,6 +1942,7 @@ cmr_int camera_grab_init(cmr_handle  oem_handle)
 		cmr_grab_evt_reg(grab_handle, camera_grab_evt_cb);
 		cmr_grab_stream_cb(grab_handle, camera_sensor_streamctrl);
 		cmr_grab_isp_statis_evt_reg(grab_handle, isp_statis_evt_cb);
+		cmr_grab_isp_irq_proc_evt_reg(grab_handle, isp_irq_proc_evt_cb);
 		grab_cxt->inited = 1;
 		grab_cxt->grab_handle = grab_handle;
 	}

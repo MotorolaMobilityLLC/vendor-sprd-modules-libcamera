@@ -203,10 +203,12 @@ struct isp_data_param
 	uint32_t format_pattern;
 	struct isp_size input_size;
 	struct isp_addr input_addr;
+	struct isp_addr input_vir;
 	enum isp_format output_format;
 	enum isp_match_mode output;
 	struct isp_addr output_addr;
 	uint16_t slice_height;
+	unsigned int input_fd;
 };
 
 

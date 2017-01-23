@@ -1030,12 +1030,16 @@ static cmr_int _ispProcessEndHandle(cmr_handle isp_alg_handle)
 	struct ips_out_param callback_param = {0x00};
 	struct isp_interface_param_v1 *interface_ptr_v1 = &cxt->commn_cxt.interface_param_v1;
 
+	ISP_LOGI("isp start raw proc callback\n");
 	if (NULL != cxt->commn_cxt.callback) {
 		callback_param.output_height = interface_ptr_v1->data.input_size.h;
 		ISP_LOGI("callback ISP_PROC_CALLBACK");
-		cxt->commn_cxt.callback(cxt->commn_cxt.caller_id, ISP_CALLBACK_EVT|ISP_PROC_CALLBACK, (void*)&callback_param, sizeof(struct ips_out_param));
+		cxt->commn_cxt.callback(cxt->commn_cxt.caller_id,
+			ISP_CALLBACK_EVT|ISP_PROC_CALLBACK,
+			(void*)&callback_param, sizeof(struct ips_out_param));
 	}
 
+	ISP_LOGI("isp end raw proc callback\n");
 	return rtn;
 }
 
@@ -1045,7 +1049,7 @@ void ispalg_dev_evt_cb(cmr_int evt, void *data, void *privdata)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context*)privdata;
 	CMR_MSG_INIT(message);
 
-	if (!cxt || !data) {
+	if (!cxt) {
 		ISP_LOGE("handle is NULL");
 		return;
 	}
@@ -1977,6 +1981,44 @@ exit:
 	return rtn;
 }
 
+cmr_int isp_slice_raw_proc(struct isp_alg_fw_context *cxt,
+	struct ips_in_param *in_ptr)
+{
+	cmr_int rtn = ISP_SUCCESS;
+	struct isp_raw_proc_info slice_raw_info;;
+	struct isp_dev_access_context *isp_dev = NULL;
+	struct isp_file *file = NULL;
+
+	if (!cxt || !in_ptr) {
+		rtn = ISP_PARAM_ERROR;
+		goto exit;
+	}
+
+	isp_dev = (struct isp_dev_access_context *)cxt->dev_access_handle;
+	file = (struct isp_file *)(isp_dev->isp_driver_handle);
+	memset((void *)&slice_raw_info, 0x0, sizeof(struct isp_raw_proc_info));
+
+	slice_raw_info.in_size.width = in_ptr->src_frame.img_size.w;
+	slice_raw_info.in_size.height = in_ptr->src_frame.img_size.h;
+	slice_raw_info.out_size.width = in_ptr->dst_frame.img_size.w;
+	slice_raw_info.out_size.height = in_ptr->dst_frame.img_size.h;
+	slice_raw_info.img_fd = in_ptr->dst_frame.img_fd.y;
+	slice_raw_info.img_vir.chn0 = in_ptr->dst_frame.img_addr_vir.chn0;
+	slice_raw_info.img_vir.chn1 = in_ptr->dst_frame.img_addr_vir.chn1;
+	slice_raw_info.img_vir.chn2 = in_ptr->dst_frame.img_addr_vir.chn2;
+	slice_raw_info.img_offset.chn0 = in_ptr->dst_frame.img_addr_phy.chn0;
+	slice_raw_info.img_offset.chn1 = in_ptr->dst_frame.img_addr_phy.chn1;
+	slice_raw_info.img_offset.chn2 = in_ptr->dst_frame.img_addr_phy.chn2;
+
+	rtn = ioctl(file->fd, SPRD_ISP_IO_RAW_CAP, &slice_raw_info);
+	ISP_RETURN_IF_FAIL(rtn, ("isp raw cap ioctl error"));
+
+	isp_u_fetch_start_isp(isp_dev->isp_driver_handle, ISP_ONE);
+
+exit:
+	return rtn;
+}
+
 cmr_int isp_alg_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
@@ -1984,6 +2026,7 @@ cmr_int isp_alg_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in_pt
 	struct isp_interface_param_v1 *interface_ptr_v1 = &cxt->commn_cxt.interface_param_v1;
 	struct isp_size                 org_size;
 
+	ISP_LOGI("isp proc start\n");
 	org_size.w    = cxt->commn_cxt.src.w;
 	org_size.h    = cxt->commn_cxt.src.h;
 
@@ -1997,13 +2040,17 @@ cmr_int isp_alg_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in_pt
 	if (INVALID_FORMAT_PATTERN == in_ptr->src_frame.format_pattern) {
 		interface_ptr_v1->data.format_pattern = cxt->commn_cxt.image_pattern;
 	} else {
-		interface_ptr_v1->data.format_pattern = in_ptr->src_frame.format_pattern;
+		interface_ptr_v1->data.format_pattern = cxt->commn_cxt.image_pattern;;
 	}
 	interface_ptr_v1->data.input_size.w     = in_ptr->src_frame.img_size.w;
 	interface_ptr_v1->data.input_size.h     = in_ptr->src_frame.img_size.h;
 	interface_ptr_v1->data.input_addr.chn0  = in_ptr->src_frame.img_addr_phy.chn0;
 	interface_ptr_v1->data.input_addr.chn1  = in_ptr->src_frame.img_addr_phy.chn1;
 	interface_ptr_v1->data.input_addr.chn2  = in_ptr->src_frame.img_addr_phy.chn2;
+	interface_ptr_v1->data.input_vir.chn0 = in_ptr->src_frame.img_addr_vir.chn0;
+	interface_ptr_v1->data.input_vir.chn1 = in_ptr->src_frame.img_addr_vir.chn1;
+	interface_ptr_v1->data.input_vir.chn2 = in_ptr->src_frame.img_addr_vir.chn2;
+	interface_ptr_v1->data.input_fd = in_ptr->src_frame.img_fd.y;
 	interface_ptr_v1->data.slice_height     = in_ptr->src_frame.img_size.h;
 
 	interface_ptr_v1->data.output_format    = in_ptr->dst_frame.img_fmt;
@@ -2031,11 +2078,14 @@ cmr_int isp_alg_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in_pt
 	rtn = isp_alg_cfg(cxt);
 	ISP_RETURN_IF_FAIL(rtn, ("isp cfg error"));
 
-	ISP_RETURN_IF_FAIL(rtn, ("isp_dev_enable_irq error"));
-
 	rtn = isp_dev_start(cxt->dev_access_handle, interface_ptr_v1);
 	ISP_RETURN_IF_FAIL(rtn, ("video isp start error"));
 	cxt->gamma_sof_cnt_eb = 1;
+
+	ISP_LOGI("isp start raw proc\n");
+	rtn = isp_slice_raw_proc(cxt, in_ptr);
+	ISP_RETURN_IF_FAIL(rtn, ("isp_slice_raw_proc error"));
+
 exit:
 	ISP_LOGI("LiuY: done %ld", rtn);
 	return rtn;

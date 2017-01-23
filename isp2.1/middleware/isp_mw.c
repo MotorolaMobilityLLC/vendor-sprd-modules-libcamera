@@ -44,6 +44,15 @@ void isp_statis_evt_cb(cmr_int evt, void* data, void* privdata)
 
 }
 
+void isp_irq_proc_evt_cb(cmr_int evt, void* data, void* privdata)
+{
+	int32_t                         rtn = ISP_SUCCESS;
+	struct isp_mw_context *mw_cxt = (struct isp_mw_context *)privdata;
+
+	ISP_LOGV("SOF:isp_irq_proc_evt_cb");
+	rtn = isp_dev_irq_info_proc(mw_cxt->dev_access_handle, data);
+}
+
 static int32_t _isp_check_video_param(struct isp_video_start *param_ptr)
 {
 	int32_t                         rtn = ISP_SUCCESS;

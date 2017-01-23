@@ -41,6 +41,30 @@ isp_s32 isp_u_fetch_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
+isp_s32 isp_u_fetch_raw_transaddr(isp_handle handle,
+	struct isp_dev_fetch_addr *addr)
+{
+	isp_s32 ret = 0;
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle) {
+		ISP_LOGE("handle is null error.");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+	param.isp_id = file->isp_id;
+	param.sub_block = ISP_BLOCK_FETCH;
+	param.property = ISP_PRO_FETCH_TRANSADDR;
+	param.property_param = addr;
+
+	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+
+	return ret;
+}
+
+
 isp_s32 isp_u_fetch_slice_size(isp_handle handle, isp_u32 w, isp_u32 h)
 {
 	isp_s32 ret = 0;

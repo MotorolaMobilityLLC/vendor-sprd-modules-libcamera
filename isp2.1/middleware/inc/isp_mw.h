@@ -743,6 +743,7 @@ cmr_int isp_proc_next(isp_handle isp_handler, struct ipn_in_param* in_ptr, struc
 cmr_int isp_cap_buff_cfg(cmr_handle isp_handle, struct isp_img_param *buf_cfg);
 void ispmw_dev_buf_cfg_evt_cb(cmr_handle isp_handle, isp_buf_cfg_evt_cb grab_event_cb);
 void isp_statis_evt_cb(cmr_int evt, void* data, void* privdata);
+void isp_irq_proc_evt_cb(cmr_int evt, void* data, void* privdata);
 /**---------------------------------------------------------------------------*/
 
 #endif

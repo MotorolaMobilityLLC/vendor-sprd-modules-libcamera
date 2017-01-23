@@ -822,11 +822,8 @@ cmr_int snp_proc_cb_thread_proc(struct cmr_msg *message, void* p_data)
 	switch (message->msg_type) {
 	case SNP_EVT_RAW_PROC:
 	case SNP_EVT_CVT_RAW_DATA:
-		ret = snp_start_isp_next_proc((cmr_handle)cxt, message->data);
-		if (CMR_CAMERA_NORNAL_EXIT == ret) {
-			snp_cvt_done((cmr_handle)cxt);
-			ret = CMR_CAMERA_SUCCESS;
-		}
+		snp_cvt_done((cmr_handle)cxt);
+		ret = CMR_CAMERA_SUCCESS;
 		CMR_LOGI("ret %ld", ret);
 		break;
 	case SNP_EVT_SC_DONE:
@@ -1594,7 +1591,6 @@ cmr_int snp_start_cvt(cmr_handle snp_handle, void *data)
 		snp_cvt_done(snp_handle);
 	} else if (IMG_DATA_TYPE_RAW == frm_ptr->fmt) {
 		ret = snp_start_isp_proc(snp_handle, data);
-		snp_cvt_done(snp_handle);
 //		snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_STATE, SNAPSHOT_EVT_START_CVT, (void*)ret, sizeof(cmr_int));
 	}
 	if (ret) {
@@ -4218,10 +4214,10 @@ cmr_int snp_post_proc_for_isp_tuning(cmr_handle snp_handle, void *data)
 	}
 #endif
 
-	CMR_LOGV("post_proc_setting.data_endian.uv_endian=%d",
+	CMR_LOGI("post_proc_setting.data_endian.uv_endian=%d",
 		cxt->req_param.post_proc_setting.data_endian.uv_endian);
 	cxt->req_param.post_proc_setting.data_endian.uv_endian = 1;
-	CMR_LOGV("post_proc_setting.data_endian.uv_endian=%d",
+	CMR_LOGI("post_proc_setting.data_endian.uv_endian=%d",
 		cxt->req_param.post_proc_setting.data_endian.uv_endian);
 
 	chn_data_ptr->fmt = IMG_DATA_TYPE_YUV420;

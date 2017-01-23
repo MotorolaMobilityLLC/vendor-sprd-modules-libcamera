@@ -79,6 +79,7 @@ struct cmr_grab {
 	cmr_s32                 fd;
 	cmr_evt_cb              grab_evt_cb;
 	cmr_evt_cb              isp_statis_evt_cb;
+	cmr_evt_cb              isp_irq_proc_evt_cb;
 	sem_t                   close_sem;
 	pthread_mutex_t         cb_mutex;
 	pthread_mutex_t         dcam_mutex;
@@ -101,6 +102,7 @@ cmr_int cmr_grab_deinit(cmr_handle grab_handle);
 cmr_s32 cmr_grab_get_iommu_status(cmr_handle grab_handle);
 void cmr_grab_evt_reg(cmr_handle grab_handle, cmr_evt_cb  v4l2_event_cb);
 void cmr_grab_isp_statis_evt_reg(cmr_handle grab_handle, cmr_evt_cb  isp_statis_event_cb);
+void cmr_grab_isp_irq_proc_evt_reg(cmr_handle grab_handle, cmr_evt_cb  isp_irq_proc_event_cb);
 cmr_int cmr_grab_if_cfg(cmr_handle grab_handle, struct sensor_if *sn_if);
 cmr_int cmr_grab_if_decfg(cmr_handle grab_handle, struct sensor_if *sn_if);
 cmr_int cmr_grab_sn_cfg(cmr_handle grab_handle, struct sn_cfg *config);
