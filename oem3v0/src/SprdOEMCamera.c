@@ -662,11 +662,11 @@ int camera_get_reserve_buffer_size(cmr_u32 camera_id,
 	return ret;
 }
 
-int camera_pre_capture_get_buffer_id(cmr_u32 camera_id)
+int camera_pre_capture_get_buffer_id(cmr_u32 camera_id, cmr_u16 width, cmr_u16 height)
 {
 	int buffer_id = 0;
 
-	buffer_id = camera_pre_capture_buf_id(camera_id);
+	buffer_id = camera_pre_capture_buf_id(camera_id, width, height);
 
 	return buffer_id;
 }
@@ -956,6 +956,15 @@ exit:
 	return ret;
 }
 
+cmr_int camera_pre_capture_set_buffer_size(cmr_u32 camera_id, cmr_u16 width, cmr_u16 height)
+{
+	cmr_int ret = 0;
+
+	ret = camera_pre_capture_sensor_size_set(camera_id, width, height);
+
+	return ret;
+}
+
 cmr_int dump_jpeg_file(void *virt_addr, unsigned int size, int width, int height)
 {
 	cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -1081,6 +1090,7 @@ static oem_ops_t oem_module_ops = {
 	camera_stop_multi_layer,
 	camera_set_sensor_close_flag,
 	camera_set_reprocess_picture_size,/**add for 3d capture to reset reprocessing capture size*/
+	camera_pre_capture_set_buffer_size,
 };
 
 struct oem_module OEM_MODULE_INFO_SYM = {

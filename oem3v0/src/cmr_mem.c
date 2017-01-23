@@ -286,6 +286,55 @@ static const cmr_get_size get_size[BUF_TYPE_NUM] = {
 
 };
 
+#define  SENSOR_MAX_NUM 6
+
+static cmr_u16 max_sensor_width[SENSOR_MAX_NUM];
+static cmr_u16 max_sensor_height[SENSOR_MAX_NUM];
+
+int camera_pre_capture_sensor_size_set(cmr_u32 camera_id, cmr_u16 width, cmr_u16 height)
+{
+	max_sensor_width[camera_id] = width;
+	max_sensor_height[camera_id] = height;
+
+	return 0;
+}
+
+int camera_pre_capture_sensor_size_get(cmr_u32 camera_id, cmr_u16 *width, cmr_u16 *height)
+{
+	*width  =  max_sensor_width[camera_id];
+	*height =  max_sensor_height[camera_id];
+
+	return 0;
+}
+int camera_pre_capture_buf_id(cmr_u32 camera_id, cmr_u16 width, cmr_u16 height)
+{
+
+	UNUSED(camera_id);
+
+	int buffer_id = 0;
+
+	CMR_LOGI("camera_pre_capture_buf_id width = %d, height = %d", width, height);
+	if(width * height  >= 5312*3984)    // 21M
+		buffer_id = IMG_15P0_MEGA;
+	else if(width * height  >= 4608*3456)    // 16M
+		buffer_id = IMG_10P0_MEGA;
+	else if(width * height  >= 4208*3120)    // 13M
+		buffer_id = IMG_DP0_MEGA;
+	else if(width * height >= 3264*2448)  //8M
+	   buffer_id = IMG_8P0_MEGA;
+	else if(width * height >= 2592*1944)  //5M
+		buffer_id = IMG_5P0_MEGA;
+	else if(width * height >= 1600*1200)  //2M
+		buffer_id = IMG_2P0_MEGA;
+	else
+		CMR_LOGI("unsupport buffer id = %d", buffer_id);
+
+	CMR_LOGI("buffer id = %d", buffer_id);
+
+	return buffer_id;
+}
+
+#if 0
 int camera_pre_capture_buf_id(cmr_u32 camera_id)
 {
 	UNUSED(camera_id);
@@ -363,6 +412,7 @@ int camera_pre_capture_buf_id(cmr_u32 camera_id)
 
 	return buffer_id;
 }
+#endif
 
 int camera_reserve_buf_size(cmr_u32 camera_id,
 					cmr_s32 mem_size_id,

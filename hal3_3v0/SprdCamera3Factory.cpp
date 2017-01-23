@@ -164,6 +164,13 @@ int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info)
 
     SprdCamera3Setting::initDefaultParameters(camera_id);
 
+#ifdef CONFIG_CAMERA_AUTO_DETECT_SENSOR
+    rc = SprdCamera3Setting::getSensorSizeInfo(camera_id);
+    if(rc < 0){
+	return rc;
+    }
+#endif
+
     rc = SprdCamera3Setting::getStaticMetadata(camera_id, &mStaticMetadata);
     if (rc < 0) {
         return rc;

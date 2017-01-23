@@ -35,7 +35,12 @@ struct cmr_cap_2_frm {
 	alloc_mem_ptr alloc_mem;
 	free_mem_ptr free_mem;
 };
-int camera_pre_capture_buf_id(cmr_u32 camera_id);
+
+int camera_pre_capture_sensor_size_set(cmr_u32 camera_id, cmr_u16 width, cmr_u16 height);
+
+int camera_pre_capture_sensor_size_get(cmr_u32 camera_id, cmr_u16 *width, cmr_u16 *height);
+
+int camera_pre_capture_buf_id(cmr_u32 camera_id, cmr_u16 width, cmr_u16 height);
 
 int camera_pre_capture_buf_size(cmr_u32 camera_id,
 					cmr_s32 mem_size_id,

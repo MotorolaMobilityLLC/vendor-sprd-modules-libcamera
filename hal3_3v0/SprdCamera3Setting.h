@@ -130,7 +130,7 @@ typedef int64_t nsecs_t;
 
 
 
-#define CAMERA_SETTINGS_CONFIG_ARRAYSIZE 80
+#define CAMERA_SETTINGS_CONFIG_ARRAYSIZE 90
 #define CAMERA_SETTINGS_THUMBNAILSIZE_ARRAYSIZE 8
 
 #define SPRD_3DCALIBRATION_CAPSIZE_ARRAYSIZE 2/**add for 3d calibration capture size*/
@@ -449,6 +449,11 @@ public:
 	SprdCamera3Setting(int cameraId);
 	virtual ~SprdCamera3Setting();
 
+	static int getSensorSizeInfo(int32_t cameraId);
+	static int getLargestSensorSize(int32_t cameraId,cmr_u16 *width,cmr_u16 *height);
+	static int setLargestSensorSize(int32_t cameraId,cmr_u16 width,cmr_u16 height);
+	static int getJpegStreamSize(int32_t cameraId, cmr_u16 width, cmr_u16 height);
+	static int getLargestPictureSize(int32_t cameraId, cmr_u16 *width, cmr_u16 *height);
 	static int getCameraInfo(int32_t cameraId, struct camera_info *cameraInfo);
 	static int getNumberOfCameras();
 	static int initDefaultParameters(int32_t cameraId);
