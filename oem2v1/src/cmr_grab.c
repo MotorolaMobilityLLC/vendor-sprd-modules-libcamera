@@ -1205,7 +1205,7 @@ static void* cmr_grab_thread_proc(void* data)
 					statis_info.vir_addr = op.parm.frame.vir_addr;
 					statis_info.irq_property = op.parm.frame.irq_property;
 					statis_info.mfd = op.parm.frame.mfd;
-					CMR_LOGI("got one frame statis buf_size 0x%lx phy_addr 0x%lx vir_addr 0x%lx irq_property 0x%lx",
+					CMR_LOGV("got one frame statis buf_size 0x%lx phy_addr 0x%lx vir_addr 0x%lx irq_property 0x%lx",
 							statis_info.buf_size, statis_info.phy_addr, statis_info.vir_addr, statis_info.irq_property);
 
 					pthread_mutex_lock(&p_grab->cb_mutex);

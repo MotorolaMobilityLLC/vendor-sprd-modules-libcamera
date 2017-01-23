@@ -6683,8 +6683,6 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32
 		*phy_addr = kaddr;
 		*vir_addr++ = (cmr_uint)mIspStatisHeapReserved->data;
 		*fd++ = mIspStatisHeapReserved->fd;
-		HAL_LOGE("LIKE: phy_kaddr=0x%x", *phy_addr);
-		HAL_LOGE("LIKE: test_kaddr=0x%x\n", kaddr);
 	} else if (type == CAMERA_ISP_BINGING4AWB) {
 			cmr_u64* phy_addr_64 = (cmr_u64*)phy_addr;
 			cmr_u64* vir_addr_64 = (cmr_u64*)vir_addr;

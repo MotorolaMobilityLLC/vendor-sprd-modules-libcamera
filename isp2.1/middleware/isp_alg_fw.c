@@ -437,7 +437,7 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle,
 	statis_info = (struct isp_statis_info *)data;
 	k_addr = statis_info->phy_addr;
 	u_addr = statis_info->vir_addr;
-	ISP_LOGE("WUYI:vir_addr:0x%08x, phy_addr:0x%08x", u_addr, k_addr);
+
 	for (i = 0x00; i < ISP_RAW_AEM_ITEM; i++) {
 		val0 = *((uint32_t *)u_addr);
 		val1 = *(((uint32_t *)u_addr) + i);
