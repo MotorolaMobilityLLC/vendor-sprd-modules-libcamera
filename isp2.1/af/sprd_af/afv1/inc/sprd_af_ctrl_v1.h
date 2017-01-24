@@ -270,12 +270,12 @@ typedef struct _ae_cali {
 } ae_cali_t;
 
 typedef struct _vcm_ops {
-	void (*set_pos) (uint16_t pos);
-	void (*get_otp) (uint16_t * inf, uint16_t * macro);
-	void (*set_motor_bestmode) ();
-	void (*set_test_vcm_mode) (char *vcm_mode);
-	void (*get_test_vcm_mode) ();
-	void (*get_motor_pos) (uint16_t * pos);
+	void (*set_pos) (void* handle, uint16_t pos);
+	void (*get_otp) (void* handle, uint16_t * inf, uint16_t * macro);
+	void (*set_motor_bestmode) (void* handle);
+	void (*set_test_vcm_mode) (void* handle, char *vcm_mode);
+	void (*get_test_vcm_mode) (void* handle);
+	void (*get_motor_pos) (void* handle, uint16_t * pos);
 } vcm_ops_t;
 
 typedef struct _prime_face_base_info {

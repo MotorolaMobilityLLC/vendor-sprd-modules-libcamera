@@ -90,6 +90,43 @@ enum af_calc_data_type {
 
 };
 
+struct afctrl_init_in{
+	uint32_t af_bypass;
+	void* caller;
+	uint32_t af_mode;
+	uint32_t tuning_param_cnt;
+	uint32_t cur_tuning_mode;
+	uint32_t camera_id;
+	isp_af_cb af_set_cb;
+	cmr_handle caller_handle;
+	struct third_lib_info lib_param;
+	struct af_plat_info plat_info;
+	struct af_tuning_param *tuning_param;
+	struct isp_size src;
+	int32_t(*go_position) (void* handle,struct af_motor_pos* in_param);
+	int32_t(*end_notice) (void* handle,struct af_result_param* in_param);
+	int32_t(*start_notice) (void* handle);
+	int32_t(*set_monitor) (void* handle, struct af_monitor_set* in_param, uint32_t cur_envi);
+	int32_t(*set_monitor_win) (void* handle, struct af_monitor_win* in_param);
+	int32_t(*get_monitor_win_num) (void* handle, uint32_t *win_num);
+	int32_t(*ae_awb_lock) (void* handle);
+	int32_t(*ae_awb_release) (void* handle);
+};
+
+struct afctrl_init_out {
+	uint32_t init_motor_pos;
+};
+
+struct afctrl_calc_in {
+	uint32_t data_type;
+	void* data;
+};
+
+struct afctrl_calc_out{
+	uint32_t motor_pos;
+	uint32_t suc_win;
+};
+
 struct afctrl_work_lib {
 	cmr_handle lib_handle;
 	struct adpt_ops_type *adpt_ops;
@@ -99,13 +136,13 @@ struct afctrl_cxt {
 	cmr_handle thr_handle;
 	cmr_handle caller_handle;
 	struct afctrl_work_lib work_lib;
-	struct af_result_param proc_out;
+	struct afctrl_calc_out proc_out;
 	isp_af_cb af_set_cb;
 };
 
-cmr_int af_ctrl_init(struct af_init_in_param *input_ptr, cmr_handle *handle_af);
+cmr_int af_ctrl_init(struct afctrl_init_in *input_ptr, cmr_handle *handle_af);
 cmr_int af_ctrl_deinit(cmr_handle handle_af);
-cmr_int af_ctrl_process(cmr_handle handle_af, void *in_ptr, struct af_result_param *result);
+cmr_int af_ctrl_process(cmr_handle handle_af, void *in_ptr, struct afctrl_calc_out *result);
 cmr_int af_ctrl_ioctrl(cmr_handle handle_af, cmr_int cmd, void *in_ptr, void *out_ptr);
 /*------------------------------------------------------------------------------*
 *					Compiler Flag				*

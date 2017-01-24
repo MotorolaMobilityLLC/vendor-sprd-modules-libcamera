@@ -939,15 +939,15 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 {
 	cmr_int                         rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context*)isp_alg_handle;
-	struct af_result_param calc_result;
-	struct af_calc_param calc_param;
+	struct afctrl_calc_in calc_param;
+	struct afctrl_calc_out calc_result;
 	struct isp_statis_info *statis_info = NULL;
 	uint64_t k_addr = 0;
 	uint64_t u_addr = 0;
 	cmr_s32 i = 0;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
-	return 0;
+//	return 0;
 	memset((void*)&calc_param, 0, sizeof(calc_param));
 	memset((void*)&calc_result, 0, sizeof(calc_result));
 	ISP_LOGI("LiuY begin data_type %d", data_type);
@@ -1368,7 +1368,7 @@ exit:
 static cmr_int isp_af_sw_init(struct isp_alg_fw_context *cxt)
 {
 	cmr_int rtn = ISP_SUCCESS;
-	struct af_init_in_param af_input;
+	struct afctrl_init_in af_input;
 	struct isp_pm_ioctl_input af_pm_input;
 	struct isp_pm_ioctl_output af_pm_output;
 	struct af_tuning_param *af_tuning = NULL;
@@ -1377,7 +1377,11 @@ static cmr_int isp_af_sw_init(struct isp_alg_fw_context *cxt)
 	memset((void*)&af_input, 0, sizeof(af_input));
 	memset((void*)&af_pm_input, 0, sizeof(af_pm_input));
 	memset((void*)&af_pm_output, 0, sizeof(af_pm_output));
+
+	af_input.camera_id = cxt->camera_id;
 	af_input.lib_param = cxt->lib_use_info->af_lib_info;
+	af_input.caller_handle = (cmr_handle)cxt;
+	af_input.af_set_cb = isp_af_set_cb;
 
 	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AF, &af_pm_input, &af_pm_output);
 	if (ISP_SUCCESS == rtn) {
@@ -1397,8 +1401,6 @@ static cmr_int isp_af_sw_init(struct isp_alg_fw_context *cxt)
 			af_pm_output.param_data++;
 		}
 
-		af_input.af_set_cb = isp_af_set_cb;
-		af_input.caller_handle = (cmr_handle)cxt;
 		af_input.src.w = cxt->commn_cxt.src.w;
 		af_input.src.h = cxt->commn_cxt.src.h;
 		af_input.tuning_param = af_tuning;

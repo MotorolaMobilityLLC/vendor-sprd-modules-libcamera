@@ -258,7 +258,7 @@ exit:
 	return rtn;
 }
 
-static cmr_int afctrl_init_lib(struct afctrl_cxt *cxt_ptr, struct af_init_in_param *in_ptr, struct af_init_result *out_ptr)
+static cmr_int afctrl_init_lib(struct afctrl_cxt *cxt_ptr, struct afctrl_init_in *in_ptr, struct afctrl_init_out *out_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct afctrl_work_lib *lib_ptr = NULL;
@@ -279,7 +279,7 @@ exit:
 	return ret;
 }
 
-static cmr_int afctrl_init_adpt(struct afctrl_cxt *cxt_ptr, struct af_init_in_param *in_ptr, struct af_init_result *out_ptr)
+static cmr_int afctrl_init_adpt(struct afctrl_cxt *cxt_ptr, struct afctrl_init_in *in_ptr, struct afctrl_init_out *out_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct afctrl_work_lib *lib_ptr = NULL;
@@ -303,11 +303,11 @@ exit:
 	return rtn;
 }
 
-cmr_int af_ctrl_init(struct af_init_in_param *input_ptr, cmr_handle *handle_af)
+cmr_int af_ctrl_init(struct afctrl_init_in *input_ptr, cmr_handle *handle_af)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct afctrl_cxt *cxt_ptr = NULL;
-	struct af_init_result result;
+	struct afctrl_init_out result;
 
 	memset((void*)&result, 0, sizeof(result));
 	input_ptr->go_position = af_set_pos;
@@ -378,7 +378,7 @@ exit:
 	return rtn;
 }
 
-cmr_int af_ctrl_process(cmr_handle handle_af, void *in_ptr, struct af_result_param *result)
+cmr_int af_ctrl_process(cmr_handle handle_af, void *in_ptr, struct afctrl_calc_out *result)
 {
 	cmr_int                         rtn = ISP_SUCCESS;
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;

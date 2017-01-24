@@ -87,7 +87,7 @@ extern "C" {
 		return rtn;
 	}
 
-	static int32_t _alg_init(af_handle_t handle, struct af_init_in_param *init_param, struct af_init_result *result) {
+	static int32_t _alg_init(af_handle_t handle, struct afctrl_init_in *init_param, struct afctrl_init_out *result) {
 		int32_t rtn = AF_SUCCESS;
 		struct af_context_t *af_cxt = (struct af_context_t *)handle;
 		struct af_alg_init_param alg_init_param;
@@ -724,9 +724,9 @@ extern "C" {
 		}
 	}
 
-	static uint32_t afm_get_win_num(struct af_init_in_param *input_param) {
+	static uint32_t afm_get_win_num(struct afctrl_init_in *input_param) {
 		uint32_t num;
-		struct af_init_in_param *input_ptr = input_param;
+		struct afctrl_init_in *input_ptr = input_param;
 		//isp_u_raw_afm_win_num(isp->handle_device, &num);
 		input_ptr->get_monitor_win_num(input_ptr->caller, &num);
 		return num;
@@ -907,14 +907,14 @@ extern "C" {
 					last_pos -= af->soft_landing_step;
 				else
 					last_pos = pos;
-				af->vcm_ops.set_pos(last_pos);	// must be provided
+				af->vcm_ops.set_pos(af->caller, last_pos);	// must be provided
 				usleep(1000 * af->soft_landing_dly);
 				AF_LOGD("pos,last_pos,step,dly = %d %d %d %d", pos, last_pos, af->soft_landing_step,
 					af->soft_landing_dly);
 			}
 			//*/
 			if (last_pos != pos)
-				af->vcm_ops.set_pos(pos);	// must be provided
+				af->vcm_ops.set_pos(af->caller, pos);	// must be provided
 			af->lens.pos = pos;
 		}
 	}
@@ -926,7 +926,7 @@ extern "C" {
 
 	static int32_t lens_move_to_infi(af_ctrl_t * af, uint16 pos) {
 		if (NULL != af->vcm_ops.set_pos) {
-			af->vcm_ops.set_pos(pos);	// must be provided
+			af->vcm_ops.set_pos(af->caller, pos);	// must be provided
 		}
 		return 0;
 	}
@@ -2382,7 +2382,7 @@ v=v>(max)?(max):v; hist[v]++;}
 
 		// get otp
 		if (NULL != af->vcm_ops.get_otp) {
-			af->vcm_ops.get_otp(&pAF_OTP->INF, &pAF_OTP->MACRO);
+			af->vcm_ops.get_otp(af->caller, &pAF_OTP->INF, &pAF_OTP->MACRO);
 			af->fv.AF_OTP.bIsExist = T_LENS_BY_OTP;
 			AF_LOGD("otp (infi,macro) = (%d,%d)", pAF_OTP->INF, pAF_OTP->MACRO);
 		}
@@ -2396,7 +2396,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		//isp_ctrl_context *isp = af->isp_ctx;
 		// read
 		if (NULL != af->vcm_ops.get_motor_pos) {
-			af->vcm_ops.get_motor_pos(motor_pos);
+			af->vcm_ops.get_motor_pos(af->caller, motor_pos);
 			AF_LOGD("motor pos in register %d", *motor_pos);
 		}
 
@@ -2409,7 +2409,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		//isp_ctrl_context *isp = af->isp_ctx;
 
 		if (NULL != af->vcm_ops.set_motor_bestmode)
-			af->vcm_ops.set_motor_bestmode();
+			af->vcm_ops.set_motor_bestmode(af->caller);
 
 		return 0;
 	}
@@ -2686,7 +2686,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		uint16_t pos = 0;
 
 		if (NULL != af->vcm_ops.get_motor_pos) {
-			af->vcm_ops.get_motor_pos(&pos);
+			af->vcm_ops.get_motor_pos(af->caller, &pos);
 			af->fv.vcm_register = pos;
 			AF_LOGD("VCM registor pos :%d", af->fv.vcm_register);
 		}
@@ -2709,7 +2709,7 @@ v=v>(max)?(max):v; hist[v]++;}
 	static void get_vcm_mode(af_ctrl_t * af) {
 
 		if (NULL != af->vcm_ops.get_test_vcm_mode)
-			af->vcm_ops.get_test_vcm_mode();
+			af->vcm_ops.get_test_vcm_mode(af->caller);
 
 		return;
 	}
@@ -2717,7 +2717,7 @@ v=v>(max)?(max):v; hist[v]++;}
 	static void set_vcm_mode(af_ctrl_t * af, char *vcm_mode) {
 
 		if (NULL != af->vcm_ops.set_test_vcm_mode)
-			af->vcm_ops.set_test_vcm_mode(vcm_mode);
+			af->vcm_ops.set_test_vcm_mode(af->caller, vcm_mode);
 
 		return;
 	}
@@ -3296,8 +3296,9 @@ v=v>(max)?(max):v; hist[v]++;}
 	cmr_handle sprd_afv1_init(void *in, void *out) {
 #if 1
 		AF_LOGE("B");
-		struct af_init_in_param *init_param = (struct af_init_in_param *)in;
-		struct af_init_result *result = (struct af_init_result *)out;
+//		struct af_init_in_param *init_param = (struct af_init_in_param *)in;
+		struct afctrl_init_in *init_param = (struct afctrl_init_in *)in;
+		struct afctrl_init_out *result = (struct afctrl_init_out *)out;
 		struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)init_param->caller_handle;
 		int32_t rtn = AFV1_SUCCESS;
 
@@ -3444,8 +3445,8 @@ v=v>(max)?(max):v; hist[v]++;}
 #else
 //------------------------------------------------------------------------
 		struct af_context_t *af_cxt = NULL;
-		struct af_init_in_param *init_param = (struct af_init_in_param *)in;
-		struct af_init_result *result = (struct af_init_result *)out;
+		struct afctrl_init_in *init_param = (struct afctrl_init_in *)in;
+		struct afctrl_init_out *result = (struct afctrl_init_out *)out;
 		int32_t rtn = AF_SUCCESS;
 		if (NULL == init_param) {
 			AF_LOGE("init_param error!!init_param : %p , result : %p  !!!", init_param, result);
@@ -3520,6 +3521,8 @@ v=v>(max)?(max):v; hist[v]++;}
 #if 1
 		//af_ctrl_t *af = isp->handle_af;
 		af_ctrl_t *af = (af_ctrl_t *) handle;
+		struct afctrl_calc_in * inparam = (struct afctrl_calc_in *)in;
+		struct afctrl_calc_out *result = (struct afctrl_calc_out *)out;
 		cmr_int rtn = AF_SUCCESS;
 		nsecs_t system_time0 = 0;
 		nsecs_t system_time1 = 0;

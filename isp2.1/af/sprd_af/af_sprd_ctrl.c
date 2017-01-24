@@ -92,8 +92,8 @@ static int32_t _af_set_motor_pos(af_handle_t handle, uint32_t motot_pos)
 
 
 static int32_t _alg_init(af_handle_t handle,
-				struct af_init_in_param *init_param,
-				struct af_init_result *result)
+				struct afctrl_init_in *init_param,//struct af_init_in_param *  in af_sprd_ctrl.h
+				struct afctrl_init_out *result)//struct af_init_result *
 {
 	int32_t rtn = AF_SUCCESS;
 	struct af_context_t *af_cxt = (struct af_context_t *)handle;
@@ -662,8 +662,10 @@ exit:
 cmr_handle af_sprd_init(void *in, void *out)
 {
 	struct af_context_t *af_cxt = NULL;
-	struct af_init_in_param *init_param = (struct af_init_in_param *)in;
-	struct af_init_result *result = (struct af_init_result *)out;
+//	struct af_init_in_param *init_param = (struct af_init_in_param *)in;
+//	struct af_init_result *result = (struct af_init_result *)out;
+	struct afctrl_init_in *init_param = (struct afctrl_init_in *)in;
+	struct afctrl_init_out *result = (struct afctrl_init_out *)out;
 	int32_t rtn = AF_SUCCESS;
 	if (NULL == init_param) {
 		AF_LOGE("init_param error!!init_param : %p , result : %p  !!!", init_param, result);
@@ -737,11 +739,12 @@ cmr_int af_sprd_process(af_handle_t handle, void *in, void *out)
 {
 	cmr_int rtn = AF_SUCCESS;
 	struct af_context_t *af_cxt = (struct af_context_t *)handle;
-	struct af_calc_param *param = (struct af_calc_param *)in;
-	struct af_result_param *result = (struct af_result_param *)out;
+	struct afctrl_calc_in * inparam = (struct afctrl_calc_in *)in;
+	struct afctrl_calc_out *result = (struct afctrl_calc_out *)out;
 	struct af_alg_calc_param alg_calc_param;
 	struct af_alg_result alg_calc_result;
-
+	struct af_calc_param param;
+	struct af_result_param rlt;
 
 	rtn = _check_handle(handle);
 	if (AF_SUCCESS != rtn) {
@@ -754,7 +757,10 @@ cmr_int af_sprd_process(af_handle_t handle, void *in, void *out)
 		return rtn;
 	}
 
-	_cfg_af_calc_param(handle,param,&alg_calc_param);
+	param.data_type = inparam->data_type;
+	param.data = inparam->data;
+
+	_cfg_af_calc_param(handle,&param,&alg_calc_param);
 	alg_calc_result = af_cxt->alg_result;
 	alg_calc_result.is_caf_trig = AF_FALSE;
 	alg_calc_result.is_finish = AF_FALSE;
@@ -771,7 +777,9 @@ cmr_int af_sprd_process(af_handle_t handle, void *in, void *out)
 	if ((!af_cxt->alg_result.is_finish) && alg_calc_result.is_finish) {
 		result->motor_pos = alg_calc_result.motor_pos;
 		result->suc_win = alg_calc_result.suc_win;
-		_af_finish(handle,result);
+		rlt.motor_pos = alg_calc_result.motor_pos;
+		rlt.suc_win = alg_calc_result.motor_pos;
+		_af_finish(handle,&rlt);
 		_caf_reset_after_af(handle);
 	}else if ((!af_cxt->alg_result.is_caf_trig) && alg_calc_result.is_caf_trig) {
 		af_cxt->start_notice(af_cxt->caller);

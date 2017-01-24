@@ -568,12 +568,12 @@ typedef struct sensor_ioctl_func_tab_tag {
 	cmr_uint(*set_shutter_gain_delay_info) (void*);
 	cmr_uint(*read_aec_info) (SENSOR_HW_HANDLE handle, cmr_uint param);
 	//af control and DVT test funcs valid only af_enable works
-	cmr_uint (*set_pos)(uint16_t pos);
-	cmr_uint (*get_otp)(uint16_t *inf,uint16_t *macro);
-	cmr_uint (*get_motor_pos)(uint16_t *pos);
-	cmr_uint (*set_motor_bestmode)();
-	cmr_uint (*get_test_vcm_mode)();
-	cmr_uint (*set_test_vcm_mode)(char* vcm_mode);
+	cmr_uint (*set_pos)(SENSOR_HW_HANDLE handle, uint16_t pos);
+	cmr_uint (*get_otp)(SENSOR_HW_HANDLE handle, uint16_t *inf,uint16_t *macro);
+	cmr_uint (*get_motor_pos)(SENSOR_HW_HANDLE handle, uint16_t *pos);
+	cmr_uint (*set_motor_bestmode)(SENSOR_HW_HANDLE handle);
+	cmr_uint (*get_test_vcm_mode)(SENSOR_HW_HANDLE handle);
+	cmr_uint (*set_test_vcm_mode)(SENSOR_HW_HANDLE handle, char* vcm_mode);
 } SENSOR_IOCTL_FUNC_TAB_T, *SENSOR_IOCTL_FUNC_TAB_T_PTR;
 
 struct raw_param_info_tab {
