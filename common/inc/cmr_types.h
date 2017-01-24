@@ -67,8 +67,9 @@ typedef unsigned char   cmr_u8;
 typedef signed char     cmr_s8;
 typedef void*           cmr_handle;
 
-
+#ifndef bzero
 #define bzero(p, len) memset(p, 0, len);
+#endif
 
 #define UNUSED(x) (void)x
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))

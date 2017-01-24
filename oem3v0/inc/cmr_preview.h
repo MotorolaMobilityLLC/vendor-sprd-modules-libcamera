@@ -22,6 +22,7 @@ extern "C"
 #endif
 
 #include "cmr_common.h"
+#include "sensor_drv_u.h"
 
 enum preview_func_type {
 	PREVIEW_FUNC_START_PREVIEW = 0,
@@ -37,6 +38,7 @@ enum preview_cb_type {
 	PREVIEW_EVT_CB_FLUSH,
 	PREVIEW_EVT_CB_FD,
 	PREVIEW_EVT_CB_RESUME,
+	PREVIEW_EXIT_CB_PREPARE,
 	PREVIEW_EVT_MAX
 };
 

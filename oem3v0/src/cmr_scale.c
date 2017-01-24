@@ -56,7 +56,7 @@ struct scale_cfg_param_t{
 
 extern cmr_s32 cmr_grab_get_cpp_fd(cmr_handle grab_handle);
 
-static cmr_s8 scaler_dev_name[50] = "/dev/sprd_cpp";
+static char scaler_dev_name[50] = "/dev/sprd_cpp";
 
 static cmr_int cmr_scale_restart(struct scale_file *file);
 
@@ -192,7 +192,7 @@ static cmr_int cmr_scale_sw_start(struct scale_cfg_param_t *cfg_params, struct s
 		ret = CMR_CAMERA_FAIL;
 	}
 exit:
-	CMR_LOGI("done ret %d", ret);
+	CMR_LOGI("done ret %ld", ret);
 	return ret;
 }
 static cmr_int cmr_scale_thread_proc(struct cmr_msg *message, void *private_data)
@@ -598,6 +598,8 @@ cmr_int cmr_scale_close(cmr_handle scale_handle)
 	}
 
 	if (-1 != file->handle) {
+		if (ret)
+			CMR_LOGE("scale handle: error");
 		if (-1 == close(file->handle)) {
 			CMR_LOGE("scale error: close");
 		}

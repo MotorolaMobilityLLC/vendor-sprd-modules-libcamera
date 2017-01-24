@@ -139,8 +139,8 @@ struct afl_info {
 };
 
 struct other_stats_info {
-	struct isp3a_yhis_hw_cfg yhis_hw_cfg;
-	struct isp3a_subsample_hw_cfg subsample_hw_cfg;
+//	struct isp3a_yhis_hw_cfg yhis_hw_cfg;
+//	struct isp3a_subsample_hw_cfg subsample_hw_cfg;
 	struct isp3a_statistics_data yhis_buffer[ISP3A_STATISTICS_BUF_NUM];
 	struct isp3a_statistics_data sub_sample_buffer[ISP3A_STATISTICS_BUF_NUM];
 };
@@ -4218,8 +4218,8 @@ cmr_int isp_3a_fw_get_cfg(cmr_handle isp_3a_handle, struct isp_3a_cfg_param *dat
 	data->awb_cfg = cxt->awb_cxt.hw_cfg;
 	data->af_cfg = cxt->af_cxt.hw_cfg;
 	data->afl_cfg = cxt->afl_cxt.hw_cfg;
-	data->yhis_cfg = cxt->other_stats_cxt.yhis_hw_cfg;
-	data->subsample_cfg = cxt->other_stats_cxt.subsample_hw_cfg;
+	//data->yhis_cfg = cxt->other_stats_cxt.yhis_hw_cfg;
+	//data->subsample_cfg = cxt->other_stats_cxt.subsample_hw_cfg;
 	data->awb_gain = cxt->awb_cxt.proc_out.gain;
 	data->awb_gain_balanced = cxt->awb_cxt.proc_out.gain_balanced;
 	ISP_LOGI("done %ld", ret);

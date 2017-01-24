@@ -22,7 +22,7 @@
 #include "cmr_cvt.h"
 #include "sprd_cpp.h"
 
-static cmr_s8 rot_dev_name[50] = "/dev/sprd_cpp";
+static char rot_dev_name[50] = "/dev/sprd_cpp";
 
 extern cmr_s32 cmr_grab_get_cpp_fd(cmr_handle grab_handle);
 
@@ -137,7 +137,7 @@ cmr_int cmr_rot(struct cmr_rot_param *rot_param)
 		goto rot_exit;
 	}
 
-	CMR_LOGI("angle %ld, src fd 0x%lx, w h %ld %ld, dst fd 0x%lx",
+	CMR_LOGI("angle %ld, src fd 0x%x, w h %ld %ld, dst fd 0x%x",
 		(cmr_int)angle,
 		src_img->fd,
 		(cmr_int)src_img->size.width,

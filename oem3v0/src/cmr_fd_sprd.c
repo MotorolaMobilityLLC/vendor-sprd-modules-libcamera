@@ -478,9 +478,11 @@ static void fd_recognize_face_attribute(FD_DETECTOR_HANDLE hDT,
 	cmr_int face_count = 0;
 	cmr_int fd_idx = 0;
 	cmr_int i = 0;
-	struct class_faceattr_array new_attr_array = {0};
-	FA_IMAGE img = {0};
+	struct class_faceattr_array new_attr_array;
+	FA_IMAGE img;
 
+	cmr_bzero(&new_attr_array, sizeof(struct class_faceattr_array));
+	cmr_bzero(&img, sizeof(FA_IMAGE));
 	/* Don't update face attribute, if the frame interval is not enough. For reducing computation cost */
 	if ( (i_curr_frame_idx - io_faceattr_arr->frame_idx) < FD_RUN_FAR_INTERVAL ) {
 		return;
@@ -611,7 +613,7 @@ static void fd_get_fd_results(FD_DETECTOR_HANDLE hDT,
 		/* Gets the detection result for each face */
 		ret = FdGetFaceInfo(hDT, face_idx, &info);
 		if (ret != FD_OK) {
-			CMR_LOGW("FdGetFaceInfo(%d) Error : %d", face_idx, ret);
+			CMR_LOGW("FdGetFaceInfo(%ld) Error : %ld", face_idx, ret);
 			continue;
 		}
 
@@ -708,7 +710,7 @@ static cmr_int fd_create_detector(FD_DETECTOR_HANDLE *hDT,
 	opt.directions      = FD_DIRECTION_ALL;
 	opt.angleFrontal    = FD_ANGLE_RANGE_90;
 	opt.angleHalfProfile= FD_ANGLE_RANGE_30;
-	opt.angleFullProfile= FD_ANGLE_NONE;
+	opt.angleFullProfile= FD_ANGLE_RANGE_30;//FD_ANGLE_NONE; for Bug 636739;
 	opt.detectDensity   = 5;
 	opt.scoreThreshold  = 0;
 	opt.initFrames      = 2;
@@ -771,10 +773,10 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data)
 	cmr_int                   evt           = 0;
 	struct fd_start_parameter *start_param = NULL;
 	struct img_size *fd_img_size = NULL;
-	FD_IMAGE fd_img = {0};
+	FD_IMAGE fd_img;
 	clock_t start_time, end_time;
 	int duration;
-
+	cmr_bzero(&fd_img, sizeof(fd_img));
 	if (!message || !class_handle) {
 		CMR_LOGE("parameter is fail");
 		return CMR_CAMERA_INVALID_PARAM;
@@ -850,7 +852,7 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data)
 		class_handle->frame_out.dst_frame.size.height = class_handle->frame_in.src_frame.size.height;
 
 		duration = (end_time - start_time) * 1000 / CLOCKS_PER_SEC;
-		CMR_LOGI("SPRD_FD: frame(%dx%d), face_num=%d, time=%d ms", class_handle->frame_in.src_frame.size.width,
+		CMR_LOGI("SPRD_FD: frame(%dx%d), face_num=%ld, time=%d ms", class_handle->frame_in.src_frame.size.width,
 				class_handle->frame_in.src_frame.size.height, class_handle->frame_out.face_area.face_count, duration);
 		/*callback*/
 		if (class_handle->frame_cb) {

@@ -283,8 +283,9 @@ cmr_int cmr_grab_if_cfg(cmr_handle grab_handle, struct sensor_if *sn_if)
 	cmr_int                  ret = 0;
 	struct cmr_grab          *p_grab;
 	struct sprd_img_sensor_if sensor_if;
-	struct sprd_img_res       res = {0};
+	struct sprd_img_res       res;
 
+	cmr_bzero(&res, sizeof(res));
 	p_grab = (struct cmr_grab *)grab_handle;
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
@@ -572,6 +573,7 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config, cmr_u32
 	parm.reserved[0] = config->cfg.src_img_change;
 	parm.reserved[1] = config->cfg.src_img_size.width;
 	parm.reserved[2] = config->cfg.src_img_size.height;
+	parm.scene_mode = config->cfg.sence_mode;
 
 	ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_OUTPUT_SIZE, &parm);
 	CMR_RTN_IF_ERR(ret);
@@ -704,8 +706,9 @@ cmr_int cmr_grab_cap_stop(cmr_handle grab_handle)
 	cmr_s32                  i;
 	struct cmr_grab          *p_grab;
 	cmr_u32                  stream_on = 0;
-	struct sprd_img_res      res = {0x0};
+	struct sprd_img_res      res;
 
+	cmr_bzero(&res, sizeof(res));
 	p_grab = (struct cmr_grab *)grab_handle;
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
@@ -1065,7 +1068,7 @@ static cmr_int cmr_grab_kill_thread(cmr_handle grab_handle)
 		ret = pthread_join(p_grab->thread_handle, &dummy);
 		p_grab->thread_handle = 0;
 	} else {
-		CMR_LOGE("write error ret %d", ret);
+		CMR_LOGE("write error ret %ld", ret);
 		ret = cnt;
 	}
 
@@ -1083,7 +1086,8 @@ static void* cmr_grab_thread_proc(void* data)
 	struct cmr_grab          *p_grab;
 	struct img_data_end      endian;
 	struct sprd_img_read_op  op;
-	struct sprd_img_res res = {0};
+	struct sprd_img_res res;
+	cmr_bzero(&res, sizeof(res));
 
 	p_grab = (struct cmr_grab *)data;
 	if (!p_grab)

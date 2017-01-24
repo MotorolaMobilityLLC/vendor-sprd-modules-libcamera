@@ -301,19 +301,19 @@ if((SWITCH_MODE == jpeg_fw_codec->work_mode) || (jpeg_fw_codec->is_first_slice &
 	if(g_flush_word_count)
 	{
 		int i = 0;
-		
+
 		cmd = (32<<24) | 1;
-		
+
 		for (i = 0; i < g_flush_word_count; i++)
 		{
 			if(JPG_READ_REG_POLL(JPG_BSM_REG_BASE+BSM_STS0_OFFSET, 1<<3, 1<<3, TIME_OUT_CLK,
 				"polling bsm fifo fifo depth >= 8 words for gob header"))
 			{
-				JPEG_PRINT("%s",("[START_HW_DECODE] flush failed, i = %d", i));
+				JPEG_PRINT("%s,[START_HW_DECODE] flush failed, i = %d",__FUNCTION__, i);
 				return JPEG_FAILED;
 			}
-			
-			JPG_WRITE_REG(JPG_BSM_REG_BASE+BSM_CFG2_OFFSET, cmd, "BSM_CFG2: flush one word");	
+
+			JPG_WRITE_REG(JPG_BSM_REG_BASE+BSM_CFG2_OFFSET, cmd, "BSM_CFG2: flush one word");
 		}
 
 		g_flush_word_count = 0;

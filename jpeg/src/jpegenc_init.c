@@ -159,19 +159,19 @@ PUBLIC void JpegEnc_HwTopRegCfg(void)
 	//Source Buffer0 and Buffer1 Addr Init
 //	VSP_WRITE_REG(pTableAddr+ 16, (uint32)(jpeg_fw_codec->YUV_Info_0.y_data_ptr)>>2, "Source Y0 Frame buffer ");
 //	VSP_WRITE_REG(pTableAddr+ 20, (uint32)(jpeg_fw_codec->YUV_Info_1.y_data_ptr)>>2, "Source Y1 Frame buffer ");
-	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR0_OFFSET, (unsigned long)(jpeg_fw_codec->YUV_Info_0.y_data_ptr), "Source Y0 Frame buffer ");
-	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR1_OFFSET, (unsigned long)(jpeg_fw_codec->YUV_Info_0.u_data_ptr), "Source U0 Frame buffer ");
-	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR6_OFFSET, (unsigned long)(jpeg_fw_codec->YUV_Info_0.v_data_ptr), "Source V0 Frame buffer ");
+	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR0_OFFSET, (unsigned int)(jpeg_fw_codec->YUV_Info_0.y_data_ptr), "Source Y0 Frame buffer ");
+	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR1_OFFSET, (unsigned int)(jpeg_fw_codec->YUV_Info_0.u_data_ptr), "Source U0 Frame buffer ");
+	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR6_OFFSET, (unsigned int)(jpeg_fw_codec->YUV_Info_0.v_data_ptr), "Source V0 Frame buffer ");
 
-	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR0_OFFSET, (unsigned long)(jpeg_fw_codec->YUV_Info_1.y_data_ptr), "Source Y1 Frame buffer ");
-	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR1_OFFSET, (unsigned long)(jpeg_fw_codec->YUV_Info_1.u_data_ptr), "Source U1 Frame buffer ");
-	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR6_OFFSET, (unsigned long)(jpeg_fw_codec->YUV_Info_1.v_data_ptr), "Source V1 Frame buffer ");
+	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR0_OFFSET, (unsigned int)(jpeg_fw_codec->YUV_Info_1.y_data_ptr), "Source Y1 Frame buffer ");
+	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR1_OFFSET, (unsigned int)(jpeg_fw_codec->YUV_Info_1.u_data_ptr), "Source U1 Frame buffer ");
+	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR6_OFFSET, (unsigned int)(jpeg_fw_codec->YUV_Info_1.v_data_ptr), "Source V1 Frame buffer ");
 
 //	VSP_WRITE_REG(VSP_AHBM_REG_BASE+AHBM_BASE_ADDR_OFFSET, (uint32)jpeg_fw_codec->stream_0>>26, "AHBM_BASE_ADDR: PSRAM base address offset");
 
 	//encoded bitstream addr0 and addr1
-	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR4_OFFSET,  (unsigned long)(jpeg_fw_codec->stream_0), "Encoded bit stream buffer0 ");
-	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR5_OFFSET, (unsigned long)(jpeg_fw_codec->stream_1), "Encoded bit stream buffer1 ");
+	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR4_OFFSET,  (unsigned int)(jpeg_fw_codec->stream_0), "Encoded bit stream buffer0 ");
+	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR5_OFFSET, (unsigned int)(jpeg_fw_codec->stream_1), "Encoded bit stream buffer1 ");
 #endif //_CMODEL_
 
 	SCI_TRACE_LOW("stream0: %lx, stream1: %lx.\n", (unsigned long)jpeg_fw_codec->stream_0,(unsigned long)jpeg_fw_codec->stream_1);
@@ -180,13 +180,13 @@ PUBLIC void JpegEnc_HwTopRegCfg(void)
 	//cmd = (1 << 6) | (jpeg_fw_codec->y_interleaved << 4) | (1 << 2)| (1 << 1) | (1 << 0);/*(0 << 4)*/
 	cmd = (1 << 6) | (0 << 4) | (1 << 2)| (1 << 1) | (1 << 0);/*(0 << 4)*/
 	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_CTRL_OFFSET, cmd, "GLB_CTRL: enable JPEG encoder");
-	
+
 	//VSP_CFG1
 	/*jpeg_fw_codec->uv_interleaved = (jpeg_fw_codec->YUV_Info_0.v_data_ptr == NULL)?1:0;//1: uv_interleaved, two plane, 0: three plane*/
 	ALOGI("JpegEnc_HwTopRegCfg y %d uv %d", jpeg_fw_codec->y_interleaved, jpeg_fw_codec->uv_interleaved);
 	cmd = ((jpeg_fw_codec->uv_interleaved - 1)<<28)|(((jpeg_fw_codec->uv_interleaved == 0? 1:0) << 27)) | (jpeg_fw_codec->input_mcu_info << 24) | ((jpeg_fw_codec->mcu_num_y & 0x3ff) << 12) | (jpeg_fw_codec->mcu_num_x & 0x3ff);
 	JPG_WRITE_REG(JPG_GLB_REG_BASE+MB_CFG_OFFSET, cmd, "uv_interleaved, input mcu infor, mcu max number x and y");
-	
+
 	//cmd = ((uint32)0xffff << 0) | (0 << 16);
 //	cmd = (0<< 31)|(0 << 30)|((uint32)TIME_OUT_CLK);
 //	VSP_WRITE_REG(VSP_DCAM_REG_BASE+DCAM_VSP_TIME_OUT_OFF, cmd, "DCAM_VSP_TIME_OUT: disable hardware timer out");
@@ -233,13 +233,13 @@ PUBLIC void JpegEnc_HwTopUpdateYUVAddr(uint32 y_phy_addr,uint32_t u_phy_addr,uin
 	jpeg_fw_codec->YUV_Info_1.u_data_ptr = (unsigned char*)((unsigned long)u_phy_addr);
 
 	//Source Buffer0 and Buffer1 Addr Init
-        JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR0_OFFSET, (unsigned long)(jpeg_fw_codec->YUV_Info_0.y_data_ptr), "Source Y0 Frame buffer ");
-	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR1_OFFSET, (unsigned long)(jpeg_fw_codec->YUV_Info_0.u_data_ptr), "Source U0 Frame buffer ");
-	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR6_OFFSET, (unsigned long)(jpeg_fw_codec->YUV_Info_0.v_data_ptr), "Source V0 Frame buffer ");
+        JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR0_OFFSET, (unsigned int)(jpeg_fw_codec->YUV_Info_0.y_data_ptr), "Source Y0 Frame buffer ");
+	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR1_OFFSET, (unsigned int)(jpeg_fw_codec->YUV_Info_0.u_data_ptr), "Source U0 Frame buffer ");
+	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR6_OFFSET, (unsigned int)(jpeg_fw_codec->YUV_Info_0.v_data_ptr), "Source V0 Frame buffer ");
 
-	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR2_OFFSET, (unsigned long)(jpeg_fw_codec->YUV_Info_1.y_data_ptr), "Source Y1 Frame buffer ");
-	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR3_OFFSET, (unsigned long)(jpeg_fw_codec->YUV_Info_1.u_data_ptr), "Source U1 Frame buffer ");
-	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR7_OFFSET, (unsigned long)(jpeg_fw_codec->YUV_Info_1.v_data_ptr), "Source V1 Frame buffer ");
+	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR2_OFFSET, (unsigned int)(jpeg_fw_codec->YUV_Info_1.y_data_ptr), "Source Y1 Frame buffer ");
+	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR3_OFFSET, (unsigned int)(jpeg_fw_codec->YUV_Info_1.u_data_ptr), "Source U1 Frame buffer ");
+	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR7_OFFSET, (unsigned int)(jpeg_fw_codec->YUV_Info_1.v_data_ptr), "Source V1 Frame buffer ");
 
 	SCI_TRACE_LOW("jpeg, update yu addr,0x%x,0x%x.\n",y_phy_addr,u_phy_addr);
 }
@@ -271,17 +271,17 @@ PUBLIC void JpegEnc_HwSubModuleCfg(void)
         SCI_TRACE_LOW("%s,%d,stream_buffer_size 0x%x",__FUNCTION__,__LINE__,stream_buffer_size);
 	/*cmd = (0<<31) | ((jpeg_fw_codec->pingpang_buf_len+3)>>2);*/
 	JPG_WRITE_REG(JPG_BSM_REG_BASE+BSM_CFG0_OFFSET, cmd, "BSM_CFG0: buffer0 for write, and the max buffer size");
-	jpeg_fw_codec->stream_1 =  (void*)(jpeg_fw_codec->stream_0 + (uint32)stream_buffer_size);
-	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR5_OFFSET, (unsigned long)(jpeg_fw_codec->stream_1), "Encoded bit stream buffer1 ");
+	jpeg_fw_codec->stream_1 =  (void*)((unsigned int*)jpeg_fw_codec->stream_0 + (uint32)stream_buffer_size);
+	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR5_OFFSET, (unsigned int)(jpeg_fw_codec->stream_1), "Encoded bit stream buffer1 ");
 #if _CMODEL_
 	g_bs_pingpang_bfr0 = jpeg_fw_codec->stream_0;
 	g_bs_pingpang_bfr1 = jpeg_fw_codec->stream_1;
 	init_bsm();
-#endif	
+#endif
 	//VLC Module cfg, config total mcu number here, it will be modified for slice mode in JPEG_HWEncStart() function.
 	cmd = ((jpeg_fw_codec->mcu_num_y * jpeg_fw_codec->mcu_num_x)  & 0xfffff);
 	JPG_WRITE_REG(JPG_VLC_REG_BASE+VLC_TOTAL_MCU_OFFSET, cmd, "VLC_CFG_OFF: total mcu number");
-	
+
 	//DCT Module cfg
 	cmd = (DCT_QUANT_EN << 8) | (DCT_AUTO_MODE << 1) | (DCT_MODE);
 	JPG_WRITE_REG(JPG_DCT_REG_BASE+DCT_CFG_OFFSET, cmd, "DCT_CONFIG: enable quant, auto-mode, dct-mode");
@@ -415,12 +415,12 @@ PUBLIC JPEG_RET_E JpegEnc_InitParam(JPEG_ENC_INPUT_PARA_T *input_para_ptr)
 	jpeg_fw_codec->stream_1 = input_para_ptr->stream_buf1;
 	jpeg_fw_codec->pingpang_buf_len = input_para_ptr->bitstream_buf_len;
 	//.....
-	
+
 	jpeg_fw_codec->dc_huff_tbl[JPEG_FW_LUM_ID].bits = &jpeg_fw_lum_dc_bits_default[0];
 	jpeg_fw_codec->dc_huff_tbl[JPEG_FW_LUM_ID].huffval = &jpeg_fw_lum_dc_huffvalue_default[0];
 	jpeg_fw_codec->ac_huff_tbl[JPEG_FW_LUM_ID].bits = &jpeg_fw_lum_ac_bits_default[0];
 	jpeg_fw_codec->ac_huff_tbl[JPEG_FW_LUM_ID].huffval = &jpeg_fw_lum_ac_huffvalue_default[0];
-	
+
 	jpeg_fw_codec->dc_huff_tbl[JPEG_FW_CHR_ID].bits = &jpeg_fw_chr_dc_bits_default[0];
 	jpeg_fw_codec->dc_huff_tbl[JPEG_FW_CHR_ID].huffval = &jpeg_fw_chr_dc_huffvalue_default[0];
 	jpeg_fw_codec->ac_huff_tbl[JPEG_FW_CHR_ID].bits = &jpeg_fw_chr_ac_bits_default[0];
@@ -429,7 +429,7 @@ PUBLIC JPEG_RET_E JpegEnc_InitParam(JPEG_ENC_INPUT_PARA_T *input_para_ptr)
 	jpeg_fw_codec->restart_interval = input_para_ptr->restart_interval;
 	jpeg_fw_codec->restart_to_go	= 0;
 	jpeg_fw_codec->next_restart_num = 0;
-	
+
 	/*init sample ratio*/	
 	switch(jpeg_fw_codec->input_mcu_info)
 	{
@@ -452,21 +452,21 @@ PUBLIC JPEG_RET_E JpegEnc_InitParam(JPEG_ENC_INPUT_PARA_T *input_para_ptr)
 	default:
 		return JPEG_FAILED;
 	}
-	
+
 	/*get the mcu size*/
 	v_ratio_max = JPEG_FW_MAX3(jpeg_fw_codec->ratio[JPEG_FW_Y_ID].v_ratio, jpeg_fw_codec->ratio[JPEG_FW_U_ID].v_ratio, jpeg_fw_codec->ratio[JPEG_FW_V_ID].v_ratio);
 	h_ratio_max = JPEG_FW_MAX3(jpeg_fw_codec->ratio[JPEG_FW_Y_ID].h_ratio, jpeg_fw_codec->ratio[JPEG_FW_U_ID].h_ratio, jpeg_fw_codec->ratio[JPEG_FW_V_ID].h_ratio);
 	jpeg_fw_codec->mcu_height = 8 * v_ratio_max;
 	jpeg_fw_codec->mcu_width = 8 * h_ratio_max;
-	
+
 	jpeg_fw_codec->mcu_num_x = (jpeg_fw_codec->width + jpeg_fw_codec->mcu_width -1)/jpeg_fw_codec->mcu_width;
 	jpeg_fw_codec->mcu_num_y = (jpeg_fw_codec->height + jpeg_fw_codec->mcu_height -1)/jpeg_fw_codec->mcu_height;
-	
+
 	//Adjusted image width and height
 	jpeg_fw_codec->c_width = jpeg_fw_codec->mcu_num_x * jpeg_fw_codec->mcu_width;
 	jpeg_fw_codec->c_height = jpeg_fw_codec->mcu_num_y * jpeg_fw_codec->mcu_height;
 
-		
+
 	return JPEG_SUCCESS;
 }
 

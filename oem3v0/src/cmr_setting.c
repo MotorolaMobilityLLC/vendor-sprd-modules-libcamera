@@ -499,7 +499,7 @@ static cmr_int setting_set_general(struct setting_component *cpt,
 		{SETTING_GENERAL_SATURATION, &hal_param->hal_common.saturation, COM_ISP_SET_SATURATION, COM_SN_SET_SATURATION},
 		{SETTING_GENERAL_SCENE_MODE, &hal_param->hal_common.scene_mode, COM_ISP_SET_AE_MODE, COM_SN_SET_PREVIEW_MODE},
 		{SETTING_GENERAL_SENSOR_ROTATION, &hal_param->capture_angle, COM_ISP_TYPE_MAX, COM_SN_TYPE_MAX},
-		{SETTING_GENERAL_AE_LOCK_UNLOCK, &hal_param->is_ae_lock, COM_ISP_SET_AE_LOCK_UNLOCK},
+		{SETTING_GENERAL_AE_LOCK_UNLOCK, &hal_param->is_ae_lock, COM_ISP_SET_AE_LOCK_UNLOCK, COM_SN_TYPE_MAX},
 	};
 	struct setting_general_item   *item = NULL;
 	struct after_set_cb_param     after_cb_param;
@@ -566,8 +566,8 @@ static cmr_int setting_set_general(struct setting_component *cpt,
 
 			if (type == SETTING_GENERAL_PREVIEW_FPS) {
 				if (parm->preview_fps_param.frame_rate != 0) {
-					struct setting_cmd_parameter isoParm = {0};
-
+					struct setting_cmd_parameter isoParm;
+					cmr_bzero(&isoParm, sizeof(struct setting_cmd_parameter));
 					isoParm.camera_id = parm->camera_id;
 					isoParm.cmd_type_value = 5;
 					if (setting_is_rawrgb_format(cpt, &isoParm)) {
@@ -818,7 +818,7 @@ static cmr_int setting_set_auto_exposure_mode(struct setting_component *cpt,
 	struct isp_pos_rect            trim;
 
 	ret = setting_set_general(cpt, SETTING_GENERAL_AUTO_EXPOSURE_MODE, parm);
-	CMR_LOGI("parm->ae_param.mode:%d)",parm->ae_param.mode );
+	CMR_LOGI("parm->ae_param.mode:%ld",parm->ae_param.mode);
 	//delete this if because app change metering condition
 	//if (CAMERA_AE_SPOT_METERING == parm->ae_param.mode)
 	{
@@ -829,7 +829,7 @@ static cmr_int setting_set_auto_exposure_mode(struct setting_component *cpt,
 			trim.end_x = isp_param.win_area.rect[0].start_x + isp_param.win_area.rect[0].width;
 			trim.end_y = isp_param.win_area.rect[0].start_y +  isp_param.win_area.rect[0].height;
 
-			CMR_LOGI("trim rect (%ld,%ld,%ld,%ld)",trim.start_x,trim.start_y,trim.end_x,trim.end_y );
+			CMR_LOGI("trim rect (%d,%d,%d,%d)",trim.start_x,trim.start_y,trim.end_x,trim.end_y );
 			cpt->is_touch_focus  =1;
 			if (trim.end_x <= (uint32_t)trim.start_x
 			|| trim.end_y <= (uint32_t)trim.start_y
@@ -1551,8 +1551,8 @@ static cmr_int setting_get_preview_mode(struct setting_component *cpt,
 {
 	cmr_int 					 ret = 0;
 	struct setting_init_in		 *init_in = &cpt->init_in;
-	struct setting_io_parameter  io_param = {0};
-
+	struct setting_io_parameter  io_param;
+	cmr_bzero(&io_param, sizeof(struct setting_io_parameter));
 	if (init_in->io_cmd_ioctl) {
 		ret = (*init_in->io_cmd_ioctl)(init_in->oem_handle, SETTING_IO_GET_PREVIEW_MODE, &io_param);
 		parm->preview_fps_param.video_mode = io_param.cmd_value;
@@ -1575,7 +1575,7 @@ static cmr_int setting_get_video_mode(struct setting_component *cpt,
 	setting_get_preview_mode(cpt, parm);
 	frame_rate = hal_param->hal_common.frame_rate;
 	sensor_mode = parm->preview_fps_param.video_mode;
-	sensor_ae_info = (SENSOR_AE_INFO_T *)&local_param->sensor_static_info.video_info[sensor_mode].ae_info[0];
+	sensor_ae_info = &local_param->sensor_static_info.video_info[sensor_mode].ae_info[0];
 
 	parm->preview_fps_param.video_mode = 0;
 	for (i = 0 ; i < SENSOR_VIDEO_MODE_MAX; i++) {
@@ -1695,7 +1695,7 @@ static cmr_int setting_get_sprd_highiso_enabled(struct setting_component *cpt,
 								struct setting_cmd_parameter *parm)
 {
 	cmr_int ret = 0;
-	cmr_s8                         value[PROPERTY_VALUE_MAX];
+	char                         value[PROPERTY_VALUE_MAX];
 	struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
 	property_get("persist.camera.highiso", value, "0");
@@ -1886,15 +1886,15 @@ static cmr_int setting_set_touch_xy(struct setting_component *cpt,
 
 	cmr_int 					 ret = 0;
 	struct setting_init_in		 *init_in = &cpt->init_in;
-	struct setting_io_parameter  io_param = {0};
+	struct setting_io_parameter  io_param;
 	struct setting_hal_param    *hal_param = get_hal_param(cpt, parm->camera_id);
-
+	cmr_bzero(&io_param, sizeof(struct setting_io_parameter));
 	if (init_in->io_cmd_ioctl) {
 		io_param.touch_xy.touchX = parm->touch_param.touchX;
 		io_param.touch_xy.touchY = parm->touch_param.touchY;
 		hal_param->touch_info.touchX = parm->touch_param.touchX;
 		hal_param->touch_info.touchY = parm->touch_param.touchY;
-		CMR_LOGD("touch_param %ld %ld",parm->touch_param.touchX,parm->touch_param.touchY);
+		CMR_LOGD("touch_param %d %d",parm->touch_param.touchX,parm->touch_param.touchY);
 		ret = (*init_in->io_cmd_ioctl)(init_in->oem_handle, SETTING_IO_SET_TOUCH, &io_param);
 	}
 	return ret;
@@ -1928,16 +1928,16 @@ static cmr_int setting_set_3dcalibration_enable(struct setting_component *cpt,
 {
 	cmr_int                       ret = 0;
 	struct setting_hal_param     *hal_param = get_hal_param(cpt, parm->camera_id);
-    struct common_isp_cmd_param   isp_param = {0,};
+    struct common_isp_cmd_param   isp_param;
     struct setting_init_in       *init_in = &cpt->init_in;
-
+	cmr_bzero(&isp_param, sizeof(struct common_isp_cmd_param));
 	hal_param->sprd_3dcalibration_enable = parm->cmd_type_value;
 
     CMR_LOGD("set COM_ISP_SET_ROI_CONVERGENCE_REQ? %d", 0 != init_in->setting_isp_ioctl);
 	if (init_in && init_in->setting_isp_ioctl) {
         isp_param.camera_id = parm->camera_id;
         isp_param.cmd_value = parm->cmd_type_value;
-        CMR_LOGD("set COM_ISP_SET_ROI_CONVERGENCE_REQ begin, ome_handle:%d", init_in->oem_handle);
+        CMR_LOGD("set COM_ISP_SET_ROI_CONVERGENCE_REQ begin, ome_handle:%p", init_in->oem_handle);
         ret = (*init_in->setting_isp_ioctl)(init_in->oem_handle, COM_ISP_SET_ROI_CONVERGENCE_REQ, &isp_param);
 	}
 	CMR_LOGD("3dcalibration_enable=%ld", hal_param->sprd_3dcalibration_enable);
@@ -1965,7 +1965,7 @@ static cmr_int setting_get_touch_info(struct setting_component *cpt,
 
 	 parm->touch_param.touchX = hal_param->touch_info.touchX;
 	 parm->touch_param.touchY = hal_param->touch_info.touchY;
-	 CMR_LOGD("touch_param %ld %ld",parm->touch_param.touchX,parm->touch_param.touchY);
+	 CMR_LOGD("touch_param %d %d",parm->touch_param.touchX,parm->touch_param.touchY);
 	return ret;
 }
 
@@ -2118,7 +2118,7 @@ static cmr_int setting_set_flip_on(struct setting_component *cpt,
 cmr_int                     ret = 0;
 	struct setting_hal_param    *hal_param = get_hal_param(cpt, parm->camera_id);
 	hal_param->flip_on = parm->cmd_type_value;
-	CMR_LOGD("hal_param->flip_on = %d",hal_param->flip_on);
+	CMR_LOGD("hal_param->flip_on = %ld",hal_param->flip_on);
 	return ret;
 }
 
@@ -2128,7 +2128,7 @@ static cmr_int setting_get_flip_on(struct setting_component *cpt,
 	cmr_int                     ret = 0;
 	struct setting_hal_param    *hal_param = get_hal_param(cpt, parm->camera_id);
     parm->cmd_type_value = hal_param->flip_on;
-	CMR_LOGD("hal_param->flip_on = %d",hal_param->flip_on);
+	CMR_LOGD("hal_param->flip_on = %ld",hal_param->flip_on);
 	return ret;
 }
 
@@ -2267,28 +2267,28 @@ static cmr_int setting_set_environment(struct setting_component *cpt,
 	}
 
 	if (hal_param->is_update_range_fps) {
-                if (setting_is_rawrgb_format(cpt, parm)) {
-                        if (hal_param->range_fps.video_mode) {
-                                struct setting_cmd_parameter isoParm = {0};
-
-                                isoParm.camera_id = parm->camera_id;
-                                isoParm.cmd_type_value = 5;
-                                if (setting_is_rawrgb_format(cpt, &isoParm)) {
-                                       // ret = setting_isp_ctrl(cpt, COM_ISP_SET_ISO, &isoParm); // remove ISO 1600 in video mode
-                                        if (ret) {
-                                                CMR_LOGE("iso set failed %ld", ret);
-                                        }
-                                }
-                        }
-                        cmd_param.range_fps = hal_param->range_fps;
-                        ret = setting_isp_ctrl(cpt, COM_ISP_SET_RANGE_FPS, &cmd_param);
-                } else {
-                        hal_param->hal_common.frame_rate = hal_param->range_fps.max_fps;
-                        setting_get_video_mode(cpt, parm);
-                        cmd_param.cmd_type_value = parm->preview_fps_param.video_mode;
-                        setting_sn_ctrl(cpt, COM_SN_SET_VIDEO_MODE, &cmd_param);
-                }
-        }
+		if (setting_is_rawrgb_format(cpt, parm)) {
+			if (hal_param->range_fps.video_mode) {
+				struct setting_cmd_parameter isoParm;
+				cmr_bzero(&isoParm, sizeof(struct setting_cmd_parameter));
+				isoParm.camera_id = parm->camera_id;
+				isoParm.cmd_type_value = 5;
+				if (setting_is_rawrgb_format(cpt, &isoParm)) {
+					// ret = setting_isp_ctrl(cpt, COM_ISP_SET_ISO, &isoParm); // remove ISO 1600 in video mode
+					if (ret) {
+						CMR_LOGE("iso set failed %ld", ret);
+					}
+				}
+			}
+			cmd_param.range_fps = hal_param->range_fps;
+			ret = setting_isp_ctrl(cpt, COM_ISP_SET_RANGE_FPS, &cmd_param);
+		} else {
+			hal_param->hal_common.frame_rate = hal_param->range_fps.max_fps;
+			setting_get_video_mode(cpt, parm);
+			cmd_param.cmd_type_value = parm->preview_fps_param.video_mode;
+			setting_sn_ctrl(cpt, COM_SN_SET_VIDEO_MODE, &cmd_param);
+		}
+	}
 
 exit:
 	cpt->force_set = 0;
@@ -2324,7 +2324,7 @@ static cmr_int setting_is_need_flash(struct setting_component *cpt,
 	flash_mode = hal_param->flash_param.flash_mode;
 	shot_num = hal_param->shot_num;
 
-	CMR_LOGI("flash_mode=%d, flash_status=%d, capture_mode=%d, shot_num=%d",
+	CMR_LOGI("flash_mode=%ld, flash_status=%ld, capture_mode=%d, shot_num=%ld",
 		flash_mode, flash_status, capture_mode, shot_num);
 
 	if (CAMERA_FLASH_MODE_TORCH != flash_mode && flash_status) {
@@ -2473,7 +2473,7 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
 	flash_hw_status = hal_param->flash_param.flash_hw_status;
 
 	ctrl_flash_status = parm->ctrl_flash.flash_type;
-	CMR_LOGI("is_active %ld, flash_mode %ld, ctrl_flash_status %d flash_status %d",
+	CMR_LOGI("is_active %ld, flash_mode %ld, ctrl_flash_status %d flash_status %ld",
 		is_active, flash_mode, (cmr_u32)ctrl_flash_status, flash_hw_status);
 
 	work_mode = parm->ctrl_flash.work_mode;
@@ -2565,7 +2565,7 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
 			if ((uint32_t)CAMERA_FLASH_MODE_TORCH != flash_mode) {
 				setting_set_flashdevice(cpt, parm, FLASH_CLOSE_AFTER_OPEN);
 				CMR_LOGI("flash close");
-				CMR_LOGV("parm->ctrl_flash.will_capture=%d", parm->ctrl_flash.will_capture);
+				CMR_LOGV("parm->ctrl_flash.will_capture=%ld", parm->ctrl_flash.will_capture);
 				if (!parm->ctrl_flash.will_capture) {
 					hal_param->flash_param.has_preflashed = 0;
 				}
@@ -2829,14 +2829,14 @@ static cmr_int setting_get_pre_lowflash_value(struct setting_component *cpt,
 	struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
 	parm->cmd_type_value = hal_param->flash_param.has_preflashed;
-	CMR_LOGI("hal_param->flash_param.has_preflashed=%d", hal_param->flash_param.has_preflashed);
+	CMR_LOGI("hal_param->flash_param.has_preflashed=%ld", hal_param->flash_param.has_preflashed);
 
 	return ret;
 }
 
 static cmr_int cmr_setting_clear_sem (struct setting_component *cpt)
 {
-	cmr_int tmpVal = 0;
+	cmr_s32 tmpVal = 0;
 
 	if (!cpt) {
 		CMR_LOGE("camera_context is null.");
@@ -3329,7 +3329,7 @@ cmr_int cmr_setting_ioctl(cmr_handle setting_handle, cmr_uint cmd_type,
 		|| SETTING_TYPE_MAX != cmr_array_size(setting_list)
 		|| parm->camera_id >= CAMERA_ID_MAX) {
 
-		CMR_LOGE("param has error cpt 0x%p, camera_id %ld, array_size %ld, cmd_type %ld",
+		CMR_LOGE("param has error cpt 0x%p, camera_id %ld, array_size %zu, cmd_type %ld",
 			cpt, parm->camera_id, cmr_array_size(setting_list), cmd_type);
 		return -CMR_CAMERA_INVALID_PARAM;
 	}

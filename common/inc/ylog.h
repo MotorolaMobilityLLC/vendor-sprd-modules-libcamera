@@ -529,7 +529,9 @@ typedef enum {
 
 
 // TODO: remove these prototypes and their users
+#ifndef android_testLog
 #define android_testLog(prio, tag) (1)
+#endif
 #define android_writevLog(vec,num) do{}while(0)
 #define android_write1Log(str,len) do{}while (0)
 #define android_setMinPriority(tag, prio) do{}while(0)

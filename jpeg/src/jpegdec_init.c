@@ -159,19 +159,19 @@ PUBLIC void JpegDec_HwTopRegCfg(void)
 		jpeg_fw_codec->YUV_Info_0.y_data_ptr,
 		jpeg_fw_codec->YUV_Info_1.y_data_ptr);
 
-	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR0_OFFSET, (unsigned long)(jpeg_fw_codec->YUV_Info_0.y_data_ptr), "Reconstructed Y0 frame buffer ");
-	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR1_OFFSET, (unsigned long)(jpeg_fw_codec->YUV_Info_0.u_data_ptr), "Reconstructed U0 frame buffer ");
-	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR6_OFFSET, (unsigned long)(jpeg_fw_codec->YUV_Info_0.v_data_ptr), "Reconstructed V0 frame buffer ");
+	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR0_OFFSET, (unsigned int)(jpeg_fw_codec->YUV_Info_0.y_data_ptr), "Reconstructed Y0 frame buffer ");
+	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR1_OFFSET, (unsigned int)(jpeg_fw_codec->YUV_Info_0.u_data_ptr), "Reconstructed U0 frame buffer ");
+	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR6_OFFSET, (unsigned int)(jpeg_fw_codec->YUV_Info_0.v_data_ptr), "Reconstructed V0 frame buffer ");
 
-	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR2_OFFSET, (unsigned long)(jpeg_fw_codec->YUV_Info_1.y_data_ptr), "Reconstructed Y1 frame buffer ");
-	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR3_OFFSET, (unsigned long)(jpeg_fw_codec->YUV_Info_1.u_data_ptr), "Reconstructed U1 frame buffer ");
-	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR7_OFFSET, (unsigned long)(jpeg_fw_codec->YUV_Info_1.v_data_ptr), "Reconstructed V1 frame buffer ");
+	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR2_OFFSET, (unsigned int)(jpeg_fw_codec->YUV_Info_1.y_data_ptr), "Reconstructed Y1 frame buffer ");
+	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR3_OFFSET, (unsigned int)(jpeg_fw_codec->YUV_Info_1.u_data_ptr), "Reconstructed U1 frame buffer ");
+	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR7_OFFSET, (unsigned int)(jpeg_fw_codec->YUV_Info_1.v_data_ptr), "Reconstructed V1 frame buffer ");
 
 // 	VSP_WRITE_REG (VSP_AHBM_REG_BASE+AHBM_BASE_ADDR_OFFSET, (uint32)jpeg_fw_codec->stream_0>>26, "AHBM_BASE_ADDR: PSRAM base address offset");
 
 	//decoded bitstream addr0 and addr1
-	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR4_OFFSET, (unsigned long)(jpeg_fw_codec->stream_0), "Decoded bit stream buffer0 ");
-	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR5_OFFSET, (unsigned long)(jpeg_fw_codec->stream_1), "Decoded bit stream buffer1 ");//modified by leon @2012.09.27
+	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR4_OFFSET, (unsigned int)(jpeg_fw_codec->stream_0), "Decoded bit stream buffer0 ");
+	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR5_OFFSET, (unsigned int)(jpeg_fw_codec->stream_1), "Decoded bit stream buffer1 ");//modified by leon @2012.09.27
 
 	JPEG_TRACE("jpeg_fw_codec->YUV_Info_0.y_data_ptr 0x%x YUV_Info_0.u_data_ptr 0x%x",
 		jpeg_fw_codec->YUV_Info_0.y_data_ptr,
@@ -475,14 +475,14 @@ PUBLIC void JpegDec_HwTopUpdateYUVAddr(uint32 y_phy_addr,uint32_t u_phy_addr,uin
 	jpeg_fw_codec->YUV_Info_0.v_data_ptr = (unsigned char*)((unsigned long)v_phy_addr);
 	jpeg_fw_codec->YUV_Info_1.v_data_ptr = (unsigned char*)((unsigned long)v_phy_addr);
 
-	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR0_OFFSET, (unsigned long)(jpeg_fw_codec->YUV_Info_0.y_data_ptr), "Reconstructed Y0 frame buffer ");
-	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR1_OFFSET, (unsigned long)(jpeg_fw_codec->YUV_Info_0.u_data_ptr), "Reconstructed U0 frame buffer ");
-	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR6_OFFSET, (unsigned long)(jpeg_fw_codec->YUV_Info_0.v_data_ptr), "Reconstructed V0 frame buffer ");
+	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR0_OFFSET, (unsigned int)(jpeg_fw_codec->YUV_Info_0.y_data_ptr), "Reconstructed Y0 frame buffer ");
+	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR1_OFFSET, (unsigned int)(jpeg_fw_codec->YUV_Info_0.u_data_ptr), "Reconstructed U0 frame buffer ");
+	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR6_OFFSET, (unsigned int)(jpeg_fw_codec->YUV_Info_0.v_data_ptr), "Reconstructed V0 frame buffer ");
 
-	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR2_OFFSET, (unsigned long)(jpeg_fw_codec->YUV_Info_1.y_data_ptr), "Reconstructed Y1 frame buffer ");
-	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR3_OFFSET, (unsigned long)(jpeg_fw_codec->YUV_Info_1.u_data_ptr), "Reconstructed U1 frame buffer ");
-	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR7_OFFSET, (unsigned long)(jpeg_fw_codec->YUV_Info_1.v_data_ptr), "Reconstructed V1 frame buffer ");
-    
+	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR2_OFFSET, (unsigned int)(jpeg_fw_codec->YUV_Info_1.y_data_ptr), "Reconstructed Y1 frame buffer ");
+	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR3_OFFSET, (unsigned int)(jpeg_fw_codec->YUV_Info_1.u_data_ptr), "Reconstructed U1 frame buffer ");
+	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_FRM_ADDR7_OFFSET, (unsigned int)(jpeg_fw_codec->YUV_Info_1.v_data_ptr), "Reconstructed V1 frame buffer ");
+
 	SCI_TRACE_LOW("jpeg, update yu addr,0x%x,0x%x.\n",y_phy_addr,u_phy_addr);
 }
 

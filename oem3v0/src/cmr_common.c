@@ -207,7 +207,7 @@ cmr_int camera_save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt,
 	char                         tmp_str[10];
 	FILE                         *fp = NULL;
 
-	CMR_LOGI("index 0x%x format %d width %d height %d, addr 0x%x 0x%x", index, img_fmt, width, height,
+	CMR_LOGI("index 0x%x format %d width %d height %d, addr 0x%lx 0x%lx", index, img_fmt, width, height,
 		addr->addr_y, addr->addr_u);
 
 
@@ -301,7 +301,7 @@ cmr_int camera_save_jpg_to_file(cmr_u32 index, cmr_u32 img_fmt,
 	char                         tmp_str[10];
 	FILE                         *fp = NULL;
 
-	CMR_LOGI("index 0x%x format %d width %d height %d, addr 0x%x 0x%x", index, img_fmt, width, height,
+	CMR_LOGI("index 0x%x format %d width %d height %d, addr 0x%lx 0x%lx", index, img_fmt, width, height,
 		addr->addr_y, addr->addr_u);
 
 	cmr_bzero(file_name, 80);

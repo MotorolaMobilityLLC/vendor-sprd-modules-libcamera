@@ -628,7 +628,7 @@ struct isp_video_start {
 	void * tuning_ae_addr;
 	cmr_s32 raw_buf_fd[ISP_RAWBUF_NUM];
 	cmr_uint raw_buf_phys_addr[ISP_RAWBUF_NUM];
-	cmr_u64 raw_buf_virt_addr[ISP_RAWBUF_NUM];
+	cmr_uint raw_buf_virt_addr[ISP_RAWBUF_NUM];
 	cmr_u32  raw_buf_cnt;
 	cmr_uint raw_buf_size;
 	cmr_uint raw_buf_width;
@@ -655,7 +655,7 @@ struct ips_in_param {
 	cmr_u32 cap_mode;
 	cmr_s32 raw_buf_fd[ISP_RAWBUF_NUM];
 	cmr_uint raw_buf_phys_addr[ISP_RAWBUF_NUM];
-	cmr_u64 raw_buf_virt_addr[ISP_RAWBUF_NUM];
+	cmr_uint raw_buf_virt_addr[ISP_RAWBUF_NUM];
 	cmr_u32  raw_buf_cnt;
 	cmr_uint raw_buf_size;
 	cmr_uint raw_buf_width;

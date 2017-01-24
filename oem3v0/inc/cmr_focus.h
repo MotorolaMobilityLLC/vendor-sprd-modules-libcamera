@@ -44,7 +44,7 @@ enum focus_receive_evt_type {
 	FOCUS_EVT_MAX
 };
 
-typedef void (*af_cb_func_ptr)(enum af_cb_type cb, cmr_s32 parm, void *privdata);
+typedef void (*af_cb_func_ptr)(enum af_cb_type cb, cmr_uint parm, void *privdata);
 
 struct af_param {
 	cmr_u32                   param;

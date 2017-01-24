@@ -716,7 +716,7 @@ int JPEGCODEC_Open(void) {
   jpeg_fw_enc->jpg_addr = jpg_addr;
   jpeg_fw_dec->fd = jpg_fd;
   jpeg_fw_dec->jpg_addr = jpg_addr;
-  SCI_TRACE_LOW("jpeg dev fd %d, reg addr 0x%x", jpeg_fw_enc->fd,
+  SCI_TRACE_LOW("jpeg dev fd %d, reg addr %p", jpeg_fw_enc->fd,
                 jpeg_fw_enc->jpg_addr);
   return 0;
 }
@@ -773,7 +773,7 @@ int JPEGENC_Slice_Start(JPEGENC_PARAMS_T *jpegenc_params,
 
   jpg_fd = jpeg_fw_codec->fd;
   jpg_addr = jpeg_fw_codec->jpg_addr;
-  SCI_TRACE_LOW("JPEGENC_Slice_Start, fd %d jpg_addr 0x%x", jpg_fd, jpg_addr);
+  SCI_TRACE_LOW("JPEGENC_Slice_Start, fd %d jpg_addr %p", jpg_fd, jpg_addr);
   if ((jpg_fd < 0) || (NULL == jpg_addr)) {
     SCI_TRACE_LOW("JPEGENC_Slice_Start, param err %d", jpg_fd);
     return -1;
@@ -796,23 +796,23 @@ int JPEGENC_Slice_Start(JPEGENC_PARAMS_T *jpegenc_params,
   ioctl(jpg_fd, JPG_VERSION, &(jpeg_fw_codec->jpg_version));
   JPG_SetVirtualBaseAddr((unsigned long)jpg_addr);
   JPG_reg_reset_callback(JPG_reset_cb, jpg_fd);
-	SCI_TRACE_LOW("fd %x,%x => %x\n",jpegenc_params->src_fd, jpegenc_params->stream_buf_fd);
+	SCI_TRACE_LOW("fd %x => %x\n",jpegenc_params->src_fd, jpegenc_params->stream_buf_fd);
 	SCI_TRACE_LOW("offset %x,%x => %x\n",jpegenc_params->yuv_phy_buf, jpegenc_params->yuv_u_phy_buf, jpegenc_params->stream_phy_buf[0]);
 
     JPG_Get_IOVA(jpg_fd, jpegenc_params->stream_buf_fd, &phy_ddr, &iova_size);
-	SCI_TRACE_LOW("mfd %x,iova 0x%x\n",jpegenc_params->stream_buf_fd, phy_ddr);
+	SCI_TRACE_LOW("mfd %x,iova 0x%lx\n",jpegenc_params->stream_buf_fd, phy_ddr);
 	jpegenc_params->stream_phy_buf[0] = jpegenc_params->stream_phy_buf[0] + phy_ddr;
 	jpegenc_params->iova[0] = phy_ddr;
 	jpegenc_params->iova_size[0] = iova_size;
 
 	JPG_Get_IOVA(jpg_fd, jpegenc_params->src_fd, &phy_ddr, &iova_size);
-	SCI_TRACE_LOW("fd %x,iova 0x%x\n",jpegenc_params->src_fd, phy_ddr);
+	SCI_TRACE_LOW("fd %x,iova 0x%lx\n",jpegenc_params->src_fd, phy_ddr);
 	jpegenc_params->yuv_phy_buf = jpegenc_params->yuv_phy_buf + phy_ddr;
 	jpegenc_params->iova[1] = phy_ddr;
 	jpegenc_params->iova_size[1] = iova_size;
 
 	JPG_Get_IOVA(jpg_fd, jpegenc_params->src_fd, &phy_ddr, &iova_size);
-	SCI_TRACE_LOW("fd %x,iova 0x%x\n",jpegenc_params->src_fd, phy_ddr);
+	SCI_TRACE_LOW("fd %x,iova 0x%lx\n",jpegenc_params->src_fd, phy_ddr);
 	jpegenc_params->yuv_u_phy_buf = jpegenc_params->yuv_u_phy_buf + phy_ddr;
 	jpegenc_params->iova[2] = phy_ddr;
 	jpegenc_params->iova_size[2] = iova_size;

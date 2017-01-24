@@ -39,7 +39,10 @@ extern "C"
 #include "string.h"
 
 #ifdef _VSP_LINUX_
+#ifndef LOG_TAG
+#undef LOG_TAG
 #define LOG_TAG __FILE__
+#endif
 #include <utils/Log.h>
 #if (MINICAMERA == 1)
 #include "cmr_common.h"

@@ -3084,7 +3084,7 @@ PUBLIC JPEG_RET_E Jpeg_WriteAPP4(uint8 *target_buf,
 				EXIF_ISP_DEBUG_INFO_T exif_isp_debug_info,
 				uint32 *app4_size_ptr)
 {
-	uint32 i = 0;
+	cmr_int i = 0;
 	uint8 exif_id[6] = "APP4";
 	uint16 app4_lengh;
 	uint32                  begin_offset    = 0;
@@ -3096,7 +3096,7 @@ PUBLIC JPEG_RET_E Jpeg_WriteAPP4(uint8 *target_buf,
 		JPEG_PRINT_LOW("params error");
 		return -1;
 	}
-	if (target_buf_size < exif_isp_debug_info.size) {
+	if (target_buf_size < (uint32)exif_isp_debug_info.size) {
 		JPEG_PRINT_LOW("out of memory");
 		return -1;
 	}

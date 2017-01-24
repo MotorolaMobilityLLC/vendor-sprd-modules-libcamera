@@ -85,8 +85,8 @@ struct isp_3a_cfg_param {
 	struct isp3a_ae_hw_cfg ae_cfg;
 	struct isp3a_af_hw_cfg af_cfg;
 	struct isp3a_afl_hw_cfg afl_cfg;
-	struct isp3a_yhis_hw_cfg yhis_cfg;
-	struct isp3a_subsample_hw_cfg subsample_cfg;
+//	struct isp3a_yhis_hw_cfg yhis_cfg;
+//	struct isp3a_subsample_hw_cfg subsample_cfg;
 	struct isp_awb_gain awb_gain;
 	struct isp_awb_gain awb_gain_balanced;
 };

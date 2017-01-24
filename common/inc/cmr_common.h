@@ -1162,7 +1162,7 @@ struct camera_frame_type {
 	cmr_uint                  uv_phy_addr;
 	cmr_uint                  uv_vir_addr;
 	cmr_u32                   fd;
-	cmr_s64                   timestamp;
+	cmr_u64                   timestamp;
 	cmr_int                   status;
 	cmr_int                   type;
 	cmr_int                   lls_info;

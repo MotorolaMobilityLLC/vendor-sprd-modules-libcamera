@@ -278,15 +278,13 @@ struct isp3a_afl_hw_cfg {
 	cmr_u16 offset_ratiox;
 	cmr_u16 offset_ratioy;
 };
-
+/*
 struct isp3a_yhis_hw_cfg {
-
 };
 
 struct isp3a_subsample_hw_cfg {
-
 };
-
+*/
 struct ispae_sync_info {
 	cmr_u32 exposure_time;
 	cmr_u32 adgain;

@@ -835,7 +835,7 @@ typedef enum {
 	} while(0)
 
 #define SENSOR_PARAM_NUM  8
-#define SENSOR_PARA "/data/misc/media/sensor.file"
+#define SENSOR_PARA "/data/misc/cameraserver/sensor.file"
 
 enum SENSOR_EVT_TYPE {
 	SENSOR_EVT_INIT = CMR_EVT_SENSOR_BASE,

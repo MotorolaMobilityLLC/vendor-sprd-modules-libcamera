@@ -946,7 +946,7 @@ cmr_uint camera_get_sensor_vcm_step(cmr_handle camera_handle,cmr_u32 camera_id, 
 		return ret;
 	}
 	ret = cmr_get_sensor_vcm_step(camera_handle,camera_id,vcm_step);
-	CMR_LOGI("vcm_step %ld", *vcm_step);
+	CMR_LOGI("vcm_step %d", *vcm_step);
 	return ret;
 
 
@@ -1083,7 +1083,7 @@ static oem_ops_t oem_module_ops = {
 };
 
 struct oem_module OEM_MODULE_INFO_SYM = {
-	tag : 0,
-	ops: &oem_module_ops,
-	dso : NULL
+	.tag = 0,
+	.ops = &oem_module_ops,
+	.dso = NULL
 };

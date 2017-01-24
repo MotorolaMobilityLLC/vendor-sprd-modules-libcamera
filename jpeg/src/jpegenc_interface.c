@@ -301,7 +301,7 @@ PUBLIC uint32  JPEG_HWGetSize(void)
 		SCI_TRACE_LOW("invalid jpg file");
 	}
 #endif
-	SCI_TRACE_LOW("LEON STREAM_BUF 0x%x, buf[0] %x %x \n",buf, buf[0],buf[1]);
+	SCI_TRACE_LOW("LEON STREAM_BUF %p, buf[0] %02hhx %02hhx \n",buf, buf[0],buf[1]);
 
 	while(!(0xff == buf[jpeg_fw_codec->encoded_stream_len-2]&&0xd9==buf[jpeg_fw_codec->encoded_stream_len-1]))
 	{
