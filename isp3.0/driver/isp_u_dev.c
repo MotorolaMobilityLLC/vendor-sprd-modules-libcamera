@@ -2028,6 +2028,52 @@ cmr_int isp_dev_cfg_sof_info(isp_handle handle, struct isp_sof_cfg_info *data)
 	return ret;
 }
 
+cmr_int isp_dev_cfg_d_gain(isp_handle handle, struct altek_d_gain_info *data)
+{
+	cmr_int ret = 0;
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle) {
+		ISP_LOGE("handle is null error.");
+		return -1;
+	}
+
+	param.sub_id = ISP_CFG_SET_D_GAIN;
+	param.property_param = data;
+
+	file = (struct isp_file *)(handle);
+
+	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
+	if (ret)
+		ISP_LOGE("isp_dev_cfg_d_gain error.");
+
+	return ret;
+}
+
+cmr_int isp_dev_cfg_y_offset(isp_handle handle, cmr_u32 *data)
+{
+	cmr_int ret = 0;
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle) {
+		ISP_LOGE("handle is null error.");
+		return -1;
+	}
+
+	param.sub_id = ISP_CFG_SET_Y_OFFSET;
+	param.property_param = data;
+
+	file = (struct isp_file *)(handle);
+
+	ret = ioctl(file->fd, ISP_IO_CFG_PARAM, &param);
+	if (ret)
+		ISP_LOGE("isp_dev_cfg_y_offset error.");
+
+	return ret;
+}
+
 cmr_int isp_dev_capability_fw_size(isp_handle handle, cmr_int *size)
 {
 	cmr_int ret = 0;
