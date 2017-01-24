@@ -66,6 +66,8 @@ struct sn_cfg {
 	struct img_size          sn_size;
 	struct img_rect          sn_trim;
 	cmr_u32                  frm_num;
+	// sensor_max_size is for isp alloc memory use
+	struct img_size          sensor_max_size;
 };
 
 struct grab_flash_opt {

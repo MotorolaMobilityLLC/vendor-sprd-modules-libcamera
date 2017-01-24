@@ -398,7 +398,7 @@ cmr_int cmr_grab_sn_cfg(cmr_handle grab_handle, struct sn_cfg *config)
 	//struct grab_streamparm   stream_parm;
 	struct cmr_grab          *p_grab;
 	cmr_u32                  mode;
-	struct sprd_img_size     size;
+	struct sprd_img_size     size, sn_max_size;
 	struct sprd_img_rect     rect;
 
 	p_grab = (struct cmr_grab *)grab_handle;
@@ -415,7 +415,9 @@ cmr_int cmr_grab_sn_cfg(cmr_handle grab_handle, struct sn_cfg *config)
 	size.w = config->sn_size.width;
 	size.h = config->sn_size.height;
 	ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_SENSOR_SIZE, &size);
-	//CMR_RTN_IF_ERR(ret);
+	if (ret) {
+		CMR_LOGE("SPRD_IMG_IO_SET_SENSOR_SIZE failed");
+	}
 
 	CMR_LOGI("sn_trim x y w h %d, %d, %d, %d",
 		 config->sn_trim.start_x,
@@ -428,7 +430,21 @@ cmr_int cmr_grab_sn_cfg(cmr_handle grab_handle, struct sn_cfg *config)
 	rect.w = config->sn_trim.width;
 	rect.h = config->sn_trim.height;
 	ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_SENSOR_TRIM, &rect);
+	if (ret) {
+		CMR_LOGE("SPRD_IMG_IO_SET_SENSOR_TRIM failed");
+	}
 
+	// for isp alloc memory use
+	CMR_LOGI("sensor_max_size: w=%d, h=%d",
+		config->sensor_max_size.width, config->sensor_max_size.height);
+	sn_max_size.w = config->sensor_max_size.width;
+	sn_max_size.h = config->sensor_max_size.height;
+/*
+	ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_SENSOR_MAX_SIZE, &sn_max_size);
+	if (ret) {
+		CMR_LOGE("SPRD_IMG_IO_SET_SENSOR_MAX_SIZE failed");
+	}
+*/
 exit:
 	ATRACE_END();
 	return ret;

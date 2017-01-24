@@ -5265,11 +5265,13 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle, cmr_
 	ATRACE_BEGIN(__FUNCTION__);
 
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
+	cmr_uint                       i;
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 	struct sensor_context          *sn_cxt = &cxt->sn_cxt;
 	struct sensor_exp_info         sensor_info;
-	struct sensor_mode_info        *sensor_mode_info;
+	struct sensor_mode_info        *sensor_mode_info, *tmp;
 	struct sn_cfg                  sensor_cfg;
+	struct img_size                sensor_max_size;
 
 	if (!oem_handle || !caller_handle || !param_ptr || !channel_id || !endian) {
 		CMR_LOGE("in parm error 0x%lx 0x%lx 0x%lx 0x%lx 0x%lx", (cmr_uint)oem_handle, (cmr_uint)caller_handle,
@@ -5317,21 +5319,37 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle, cmr_
 	else
 		param_ptr->sn_if.res[0] = 0;
 
+	cmr_bzero(&sensor_max_size, sizeof(sensor_max_size));
+	for (i = 1; i < SENSOR_MODE_MAX; i++) {
+		tmp = &sensor_info.mode_info[i];
+		if (tmp->width * tmp->height > sensor_max_size.width * sensor_max_size.height) {
+			sensor_max_size.width = tmp->width;
+			sensor_max_size.height = tmp->height;
+		}
+	}
+	sensor_cfg.sensor_max_size.width = sensor_max_size.width;
+	sensor_cfg.sensor_max_size.height = sensor_max_size.height;
+	CMR_LOGD("sensor_max_size: width=%d, height=%d",
+		sensor_max_size.width, sensor_max_size.height);
+
 	ret = cmr_grab_if_cfg(cxt->grab_cxt.grab_handle, &param_ptr->sn_if);
 	if (ret) {
 		CMR_LOGE("failed interface cfg %ld", ret);
 		goto exit;
 	}
+
 	ret = cmr_grab_sn_cfg(cxt->grab_cxt.grab_handle, &sensor_cfg);
 	if (ret) {
 		CMR_LOGE("failed to sn cfg %ld", ret);
 		goto exit;
 	}
+
 	if (caller_handle == cxt->prev_cxt.preview_handle) {
 		cxt->prev_cxt.rect = param_ptr->cap_inf_cfg.cfg.src_img_rect;
 		CMR_LOGI("prev rect %d %d %d %d", cxt->prev_cxt.rect.start_x, cxt->prev_cxt.rect.start_y,
 				  cxt->prev_cxt.rect.width, cxt->prev_cxt.rect.height);
 	}
+
 	if (!param_ptr->is_lightly) {
 		ret = cmr_grab_cap_cfg(cxt->grab_cxt.grab_handle, &param_ptr->cap_inf_cfg, channel_id, endian);
 		if (ret) {
