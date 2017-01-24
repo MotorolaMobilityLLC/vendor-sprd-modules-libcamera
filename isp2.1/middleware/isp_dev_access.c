@@ -459,7 +459,7 @@ exit:
 static cmr_int dev_ae_set_statistics_mode(cmr_handle isp_dev_handle, cmr_int mode, cmr_u32 skip_number)
 {
 
-	return 0;
+
 	cmr_int                                rtn = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 

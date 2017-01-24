@@ -168,7 +168,7 @@ static cmr_int isp_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *para
 		rtn = isp_alg_ae_callback(cxt, *(cmr_int *)param0);
 		break;
 	case ISP_AE_GET_SYSTEM_TIME:
-		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AE_STATISTICS_MODE, param0, param1);
+		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_GET_AE_SYSTEM_TIME, param0, param1);
 		break;
 	case ISP_AE_SET_RGB_GAIN:
 		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, param0, param1);
