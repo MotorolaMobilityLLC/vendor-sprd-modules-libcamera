@@ -210,16 +210,15 @@ static int32_t smart_ctl_check_param(struct isp_smart_param *param)
 	struct isp_range *bv_range = NULL;
 	char value = 0;
 
-	ISP_LOGV("block_num:%d.", param->block_num);
-
 	if (0 == is_print_log())
 		return rtn;
+
+	ISP_LOGI("block_num:%d.", param->block_num);
 
 	for (i = 0; i < param->block_num; i++) {
 		blk_cfg = &param->block[i];
 
-		ISP_LOGI("block[%d], smart id=%x, block id=%x, enable=%d, comp num=%d",
-			 i, blk_cfg->smart_id, blk_cfg->block_id, blk_cfg->enable, blk_cfg->component_num);
+		ISP_LOGI("block[%d], smart id=%x, block id=%x, enable=%d, comp num=%d", i, blk_cfg->smart_id, blk_cfg->block_id, blk_cfg->enable, blk_cfg->component_num);
 
 		if (blk_cfg->smart_id > ISP_SMART_MAX) {
 			ISP_LOGI("block[%d]: smart_id is invalid.\n", i);
@@ -228,6 +227,7 @@ static int32_t smart_ctl_check_param(struct isp_smart_param *param)
 		if (blk_cfg->block_id > ISP_BLK_ID_MAX) {
 			ISP_LOGI("block[%d]: block_id is invalid.\n", i);
 		}
+
 
 		for (j = 0; j < blk_cfg->component_num; j++) {
 			uint32_t k = 0;
@@ -635,7 +635,8 @@ static int32_t smart_ctl_calc_component(struct isp_smart_component_cfg * cfg, in
 		break;
 	}
 
-	result->type = cfg->y_type;
+	result->y_type = cfg->y_type;
+	result->x_type = cfg->x_type;
 
 	return rtn;
 }
@@ -669,7 +670,8 @@ static int32_t smart_ctl_calc_component_flash(struct isp_smart_component_cfg * c
 
 	}
 
-	result->type = cfg->y_type;
+	result->y_type = cfg->y_type;
+	result->x_type = cfg->x_type;
 
 	return rtn;
 }
@@ -679,7 +681,7 @@ static int32_t smart_ctl_calc_block(struct isp_smart_block_cfg * cfg, int32_t bv
 {
 	int32_t rtn = ISP_SUCCESS;
 	uint32_t i = 0;
-	struct smart_component_result component_result = { 0 };
+	struct smart_component_result component_result = { 0, 0, 0,0,{0}, NULL };
 	uint32_t component_num = cfg->component_num;
 	uint32_t update_num = 0;
 
@@ -694,7 +696,7 @@ static int32_t smart_ctl_calc_block(struct isp_smart_block_cfg * cfg, int32_t bv
 	component_num = component_num > ISP_SMART_MAX_VALUE_NUM ? ISP_SMART_MAX_VALUE_NUM : component_num;
 
 	if (1 == is_print_log()) {
-		ISP_LOGI("ISP_TAG: use_flash_val = %d. block_id = %d. smart_id = %d.\n",
+		ISP_LOGI("ISP_TAG: use_flash_val = %d. block_id = %x. smart_id = %x.\n",
 			 cfg->component[i].use_flash_val, cfg->block_id, cfg->smart_id);
 	}
 
@@ -736,7 +738,7 @@ static const char *smart_ctl_find_block_name(uint32_t smart_id)
 }
 
 static void smart_ctl_print_debug_file(debug_handle_t debug_file, struct smart_calc_param *calc_param,
-			      uint32_t mode, struct smart_calc_result *result, char *debug_buf)
+			      struct smart_calc_result *result, char *debug_buf)
 {
 	struct smart_block_result *blk = NULL;
 	struct smart_component_result *comp = NULL;
@@ -770,19 +772,28 @@ static void smart_ctl_print_debug_file(debug_handle_t debug_file, struct smart_c
 		for (j = 0; j < blk->component_num; j++) {
 			comp = &blk->component[j];
 
-			switch (comp->type) {
+			switch (comp->y_type) {
 			case ISP_SMART_Y_TYPE_VALUE:
 				sprintf(debug_buf, "%s: [%d]:val=%d", block_name, j, comp->fix_data[0]);
 				break;
 
 			case ISP_SMART_Y_TYPE_WEIGHT_VALUE:
 				weight_value = (struct isp_weight_value *)comp->fix_data;
-				sprintf(debug_buf, "%s, [%d]:val=(%d, %d), w=(%d, %d) %d(%d, %d):(%d, %d) %d(%d, %d):(%d, %d)", block_name, j,
-					weight_value[0].value[0], weight_value[0].value[1],
-					weight_value[0].weight[0], weight_value[0].weight[1],
-					weight_value[0].value[0], weight_value[1].value[0],weight_value[1].value[1], weight_value[1].weight[0],weight_value[1].weight[1],
-					weight_value[0].value[1], weight_value[2].value[0],weight_value[2].value[1], weight_value[2].weight[0],weight_value[2].weight[1]
-					);
+
+				if(comp->x_type==ISP_SMART_X_TYPE_BV_CT){
+					sprintf(debug_buf, "%s, [%d]:val=(%d, %d), w=(%d, %d) %d(%d, %d):(%d, %d) %d(%d, %d):(%d, %d)", block_name, j,
+						weight_value[0].value[0], weight_value[0].value[1],
+						weight_value[0].weight[0], weight_value[0].weight[1],
+						weight_value[0].value[0], weight_value[1].value[0],weight_value[1].value[1], weight_value[1].weight[0],weight_value[1].weight[1],
+						weight_value[0].value[1], weight_value[2].value[0],weight_value[2].value[1], weight_value[2].weight[0],weight_value[2].weight[1]
+						);
+				}else{
+					sprintf(debug_buf, "%s, [%d]:val=(%d, %d), w=(%d, %d) ", block_name, j,
+						weight_value[0].value[0], weight_value[0].value[1],
+						weight_value[0].weight[0], weight_value[0].weight[1]
+						);
+				}
+
 				break;
 
 			default:
@@ -806,13 +817,16 @@ static void smart_ctl_print_smart_result(uint32_t mode, struct smart_calc_result
 	uint32_t i = 0, j = 0, k = 0;
 	const char *block_name = NULL;
 
-	ISP_LOGV("block num = %d", result->counts);
+	if (0 == is_print_log())
+		return;
+
+	ISP_LOGI("block num = %d", result->counts);
 
 	for (i = 0; i < result->counts; i++) {
 		blk = &result->block_result[i];
 		block_name = smart_ctl_find_block_name(blk->smart_id);
 
-		ISP_LOGV("block[%d]: %s, block_id=0x%x, smart_id=%d, update=%d, mode=%d",
+		ISP_LOGI("block[%d]: %s, block_id=0x%x, smart_id=%d, update=%d, mode=%d",
 			 i, block_name, blk->block_id, blk->smart_id, blk->update, mode);
 
 		if (!blk->update)
@@ -821,16 +835,26 @@ static void smart_ctl_print_smart_result(uint32_t mode, struct smart_calc_result
 		for (j = 0; j < blk->component_num; j++) {
 			comp = &blk->component[j];
 
-			switch (comp->type) {
+			switch (comp->y_type) {
 			case ISP_SMART_Y_TYPE_VALUE:
-				ISP_LOGV(" component[%d]: value=%d", j, comp->fix_data[0]);
+				ISP_LOGI(" component[%d]: value=%d", j, comp->fix_data[0]);
 				break;
 
 			case ISP_SMART_Y_TYPE_WEIGHT_VALUE:
 				weight_value = (struct isp_weight_value *)comp->fix_data;
-				ISP_LOGV(" component[%d]: value=(%d, %d), weight=(%d, %d)", j,
-					 weight_value->value[0], weight_value->value[1],
-					 weight_value->weight[0], weight_value->weight[1]);
+
+				if(comp->x_type==ISP_SMART_X_TYPE_BV_CT){
+					ISP_LOGI("component[%d]: value=(%d, %d), weight=(%d, %d), %d(%d, %d):(%d, %d), %d(%d, %d):(%d, %d)", j,
+						weight_value[0].value[0], weight_value[0].value[1],
+						weight_value[0].weight[0], weight_value[0].weight[1],
+						weight_value[0].value[0], weight_value[1].value[0],weight_value[1].value[1], weight_value[1].weight[0],weight_value[1].weight[1],
+						weight_value[0].value[1], weight_value[2].value[0],weight_value[2].value[1], weight_value[2].weight[0],weight_value[2].weight[1]
+						);
+				}else{
+					ISP_LOGI(" component[%d]: value=(%d, %d), weight=(%d, %d)", j,
+						 weight_value->value[0], weight_value->value[1],
+						 weight_value->weight[0], weight_value->weight[1]);
+				}
 				break;
 			}
 		}
@@ -919,6 +943,7 @@ static int32_t smart_ctl_calculation(smart_handle_t handle, struct smart_calc_pa
 	}
 
 	smart_param = &cur_param->param;
+	smart_ctl_check_param(smart_param);
 
 	for (i = 0; i < smart_param->block_num; i++) {
 		cxt->block_result.update = 0;
@@ -938,7 +963,7 @@ static int32_t smart_ctl_calculation(smart_handle_t handle, struct smart_calc_pa
 
 	ISP_LOGV("bv=%d, ct=%d, flash=%d", param->bv, param->ct, flash_mode);
 	smart_ctl_print_smart_result(cxt->flash_mode, result);
-	smart_ctl_print_debug_file(cxt->debug_file, param, cxt->flash_mode, result, (char *)cxt->debug_buf);
+	smart_ctl_print_debug_file(cxt->debug_file, param,  result, (char *)cxt->debug_buf);
 
 EXIT:
 
@@ -1168,9 +1193,9 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input *in_ptr)
 {
 	cmr_int                        rtn = ISP_SUCCESS;
 	struct smart_calc_param *smart_calc_param = &in_ptr->cal_para;
-	struct smart_calc_result        smart_calc_result = {0};
-	struct isp_pm_ioctl_input       io_pm_input = {0};
-	struct isp_pm_param_data        pm_param = {0};
+	struct smart_calc_result        smart_calc_result = {NULL, 0};
+	struct isp_pm_ioctl_input       io_pm_input = {NULL, 0};
+	struct isp_pm_param_data        pm_param = {0,0,0,NULL,0,{0}};
 	struct smart_block_result       *block_result = NULL;
 	cmr_u32 alc_awb = in_ptr->alc_awb;
 	uint32_t                        i = 0;

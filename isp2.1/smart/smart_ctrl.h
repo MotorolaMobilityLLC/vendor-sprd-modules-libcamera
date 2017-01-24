@@ -53,8 +53,9 @@ enum smart_ctrl_flash_mode {
 };
 
 struct smart_component_result {
-	uint32_t type;	//0: normal data(directly to driver); 1: index (few block support);
+	uint32_t y_type;	//0: normal data(directly to driver); 1: index (few block support);
 	// 2: index and weight (few block support); 3 gain: gain (new lens shading support)
+	uint32_t x_type;
 	uint32_t offset;
 	uint32_t size;	//if data is not NULL, use the data as the output buffer
 	int32_t fix_data[12];

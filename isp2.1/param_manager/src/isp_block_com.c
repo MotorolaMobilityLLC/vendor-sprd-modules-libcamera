@@ -183,8 +183,8 @@ isp_u32 _pm_calc_nr_addr_offset(isp_u32 mode_flag, isp_u32 scene_flag, isp_u32 *
 	}
 
 	for (i=0; i<comp_num; i++) {
-		if (type != block_result->component[0].type) {
-			ISP_LOGE("block type error: %d (%d)\n", block_result->component[0].type, type);
+		if (type != block_result->component[0].y_type) {
+			ISP_LOGE("block type error: %d (%d)\n", block_result->component[0].y_type, type);
 			return ISP_ERROR;
 		}
 
