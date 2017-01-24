@@ -39,7 +39,7 @@
 #include "include/SprdCamera3Tags.h"
 #include "SprdCamera3HALHeader.h"
 #include "SprdCameraParameters.h"
-
+#include <inttypes.h>
 
 using namespace android;
 
@@ -52,7 +52,9 @@ namespace sprdcamera {
 #define LOGD ALOGD
 #define PRINT_TIME 0
 #define ROUND_TO_PAGE(x) (((x)+0xfff)&~0xfff)
+#ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(*x))
+#endif
 #define METADATA_SIZE (2*sizeof(unsigned long)+5*sizeof(unsigned int))//28/* (7 * 4) */
 #define SET_PARM(h,x,y,z) do {\
 			LOGV("%s: set camera param: %s, %d", __func__, #x, y);\

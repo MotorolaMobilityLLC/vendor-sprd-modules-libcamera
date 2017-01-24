@@ -237,7 +237,7 @@ int SprdCamera3GrallocMemory::map(buffer_handle_t *buffer_handle ,hal_mem_info_t
                 ALOGE("onQueueFilled, mapper.lock fail %p, ret %d",*buffer_handle,ret);
         }
         mem_info->addr_vir = vaddr;
-        HAL_LOGD("fd=0x%x, addr_phy offset =0x%lx, addr_vir = 0x%x,buf size=0x%lx,width = %d,height =%d",
+        HAL_LOGD("fd=0x%x, addr_phy offset =%p, addr_vir = %p,buf size=%zu,width = %d,height =%d",
                 mem_info->fd, mem_info->addr_phy,mem_info->addr_vir, mem_info->size,width,height);
 // need to 4k alignment
 #else
@@ -257,7 +257,7 @@ int SprdCamera3GrallocMemory::map(buffer_handle_t *buffer_handle ,hal_mem_info_t
 	mem_info->addr_vir = (void*)private_handle->base;
 	// need to 4k alignment
 	mem_info->size = private_handle->size;;
-	HAL_LOGD("fd=0x%x, addr_phy offset =0x%lx, buf size=0x%lx",
+	HAL_LOGD("fd=0x%x, addr_phy offset =%p, buf size=%zu",
 		mem_info->fd, mem_info->addr_phy, mem_info->size);
 	return 0;
 #endif
@@ -296,7 +296,7 @@ int SprdCamera3GrallocMemory::map2(buffer_handle_t *buffer_handle ,hal_mem_info_
                 ALOGE("onQueueFilled, mapper.lock fail %p, ret %d",*buffer_handle,ret);
         }
         mem_info->addr_vir = vaddr;
-        HAL_LOGD("fd=0x%x, addr_phy offset =0x%lx, addr_vir = 0x%x,buf size=0x%lx,width = %d,height =%d",
+        HAL_LOGD("fd=0x%x, addr_phy offset =%p, addr_vir = %p,buf size=%zu,width = %d,height =%d",
                 mem_info->fd, mem_info->addr_phy,mem_info->addr_vir, mem_info->size,width,height);
 
 #else

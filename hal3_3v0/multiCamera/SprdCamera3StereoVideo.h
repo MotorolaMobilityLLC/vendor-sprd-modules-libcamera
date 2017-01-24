@@ -52,17 +52,23 @@
 namespace sprdcamera {
 
 #define MAX_NUM_CAMERAS    3
+#ifndef MAX_NUM_STREAMS
 #define MAX_NUM_STREAMS    3
+#endif
 #define MAX_VIDEO_QEQUEST_BUF 20
 #define MAX_UNMATCHED_QUEUE_SIZE 3
 #define MAX_SAVE_REQUEST_QUEUE_SIZE 10
-#define TIME_DIFF (15e6)
+#define VIDEO_TIME_DIFF (15e6)
 #define LIB_GPU_PATH "libimagestitcher.so"
 #define CONTEXT_SUCCESS 1
 #define CONTEXT_FAIL 0
+#ifndef THREAD_TIMEOUT
 #define THREAD_TIMEOUT    30e6
+#endif
 #define WAIT_FRAME_TIMEOUT    2000e6
+#ifndef MAX_NOTIFY_QUEUE_SIZE
 #define MAX_NOTIFY_QUEUE_SIZE 10
+#endif
 
 typedef struct {
     int srcWidth;

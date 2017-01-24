@@ -1322,16 +1322,31 @@ const camera_info kCameraInfo[] = {
 	{
 		CAMERA_FACING_BACK,
 		90,/*orientation*/
+		0,
+		0,
+		0,
+		0,
+		0
 	},
 #ifndef CONFIG_DCAM_SENSOR_NO_FRONT_SUPPORT
 	{
 		CAMERA_FACING_FRONT,
 		270,/*orientation*/
+		0,
+		0,
+		0,
+		0,
+		0
 	},
 #else
 		{
 			-1,
 			-1,/*orientation*/
+			0,
+			0,
+			0,
+			0,
+			0
 		},
 #endif
 
@@ -1339,11 +1354,21 @@ const camera_info kCameraInfo[] = {
 		{
 			CAMERA_FACING_BACK,
 			90,/*orientation*/
+			0,
+			0,
+			0,
+			0,
+			0
 		},
 #else
 		{
 			-1,
 			-1,/*orientation*/
+			0,
+			0,
+			0,
+			0,
+			0
 		},
 #endif
 
@@ -1351,11 +1376,21 @@ const camera_info kCameraInfo[] = {
 		{
 			CAMERA_FACING_FRONT,
 			270,/*orientation*/
+			0,
+			0,
+			0,
+			0,
+			0
 		},
 #else
 		{
 			-1,
 			-1,/*orientation*/
+			0,
+			0,
+			0,
+			0,
+			0
 		},
 #endif
 
@@ -2996,7 +3031,7 @@ void SprdCamera3Setting::pushAndroidParaTag(sprd_camera_metadata_tag_t tag)
 void SprdCamera3Setting::releaseAndroidParaTag()
 {
 	List<camera_metadata_tag_t>::iterator round;
-	HAL_LOGD("para changed.size : %d", mParaChangedTagQueue.size());
+	HAL_LOGD("para changed.size : %zu", mParaChangedTagQueue.size());
 
 	while (mParaChangedTagQueue.size() > 0) {
 		round  = mParaChangedTagQueue.begin()++;
@@ -3124,19 +3159,19 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 	if (frame_settings.exists(ANDROID_SENSOR_EXPOSURE_TIME)) {
 		valueI64 = frame_settings.find(ANDROID_SENSOR_EXPOSURE_TIME).data.i64[0];
 		GET_VALUE_IF_DIF(s_setting[mCameraId].sensorInfo.exposure_time, valueI64, ANDROID_SENSOR_EXPOSURE_TIME)
-		HAL_LOGV("sensor exposure_time is %lld", valueI64);
+		HAL_LOGV("sensor exposure_time is %" PRId64, valueI64);
 	}
 
 	if (frame_settings.exists(ANDROID_SENSOR_FRAME_DURATION)) {
 		valueI64 = frame_settings.find(ANDROID_SENSOR_FRAME_DURATION).data.i64[0];
 		GET_VALUE_IF_DIF(s_setting[mCameraId].sensorInfo.frame_duration, valueI64, ANDROID_SENSOR_FRAME_DURATION)
-		HAL_LOGV("frame duration %lld", valueI64);
+		HAL_LOGV("frame duration %" PRId64, valueI64);
 	}
 
 	if (frame_settings.exists(ANDROID_SENSOR_SENSITIVITY)) {
 		valueI32 = frame_settings.find(ANDROID_SENSOR_SENSITIVITY).data.i32[0];
 		GET_VALUE_IF_DIF(s_setting[mCameraId].sensorInfo.sensitivity, valueI32, ANDROID_SENSOR_SENSITIVITY)
-		HAL_LOGV("sensitivity is %ld", valueI32);
+		HAL_LOGV("sensitivity is %d", valueI32);
 	}
 
 	if (frame_settings.exists(ANDROID_SPRD_SENSOR_ORIENTATION)) {
@@ -3247,7 +3282,7 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 
 	if (frame_settings.exists(ANDROID_JPEG_GPS_TIMESTAMP) && is_capture) {
 		s_setting[mCameraId].jpgInfo.gps_timestamp = frame_settings.find(ANDROID_JPEG_GPS_TIMESTAMP).data.i64[0];
-		HAL_LOGD("GPS timestamp %lld",s_setting[mCameraId].jpgInfo.gps_timestamp);
+		HAL_LOGD("GPS timestamp %" PRId64,s_setting[mCameraId].jpgInfo.gps_timestamp);
 		pushAndroidParaTag(ANDROID_JPEG_GPS_TIMESTAMP);
 	}
 
@@ -3305,7 +3340,7 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 	if (frame_settings.exists(ANDROID_CONTROL_AE_ANTIBANDING_MODE)) {
 		valueU8 = frame_settings.find(ANDROID_CONTROL_AE_ANTIBANDING_MODE).data.u8[0];
 		GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.ae_abtibanding_mode, valueU8, ANDROID_CONTROL_AE_ANTIBANDING_MODE)
-		HAL_LOGV("ANDROID_CONTROL_AE_ANTIBANDING_MODE %d %d",valueU8);
+		HAL_LOGV("ANDROID_CONTROL_AE_ANTIBANDING_MODE %d",valueU8);
 	}
 //SPRD
 	if (frame_settings.exists(ANDROID_SPRD_CAPTURE_MODE)) {
@@ -3368,7 +3403,7 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 		area[3] = area[3] - area[1];
 		for (size_t i=0; i < frame_settings.find(ANDROID_CONTROL_AE_REGIONS).count; i++)
 			s_setting[mCameraId].sprddefInfo.am_regions[i] = area[i];
-		HAL_LOGD("AM region %d %d %d %d %d cnt %d",area[0],area[1],area[2],area[3],area[4],frame_settings.find(ANDROID_CONTROL_AE_REGIONS).count);
+		HAL_LOGD("AM region %d %d %d %d %d cnt %zu",area[0],area[1],area[2],area[3],area[4],frame_settings.find(ANDROID_CONTROL_AE_REGIONS).count);
 	}
 	/*if (frame_settings.exists(ANDROID_SPRD_METERING_AREA)) {
 		HAL_LOGI(" metering area cnt is %d", frame_settings.find(ANDROID_SPRD_METERING_AREA).count);
@@ -3529,7 +3564,7 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 					s_setting[mCameraId].controlInfo.ae_regions[i] = ae_area[i];
 				pushAndroidParaTag(ANDROID_CONTROL_AE_REGIONS);
 			}
-			HAL_LOGD("ANDROID_CONTROL_AE_REGIONS (%d %d %d %d %d cnt=%d)",ae_area[0],ae_area[1],ae_area[2],ae_area[3],ae_area[4],frame_settings.find(ANDROID_CONTROL_AE_REGIONS).count);
+			HAL_LOGD("ANDROID_CONTROL_AE_REGIONS (%d %d %d %d %d cnt=%zu)",ae_area[0],ae_area[1],ae_area[2],ae_area[3],ae_area[4],frame_settings.find(ANDROID_CONTROL_AE_REGIONS).count);
 		}
 	}
 	/*if (frame_settings.exists(ANDROID_CONTROL_AE_REGIONS)) {
@@ -3625,7 +3660,7 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 					s_setting[mCameraId].controlInfo.af_regions[i] = af_area[i];
 				pushAndroidParaTag(ANDROID_CONTROL_AF_REGIONS);
 			}
-			HAL_LOGD("ANDROID_CONTROL_AF_REGIONS AF region(%d %d %d %d %d cnt=%d)",af_area[0],af_area[1],af_area[2],af_area[3],af_area[4],frame_settings.find(ANDROID_CONTROL_AF_REGIONS).count);
+			HAL_LOGD("ANDROID_CONTROL_AF_REGIONS AF region(%d %d %d %d %d cnt=%zu)",af_area[0],af_area[1],af_area[2],af_area[3],af_area[4],frame_settings.find(ANDROID_CONTROL_AF_REGIONS).count);
 		}
 	}
 	/*if (frame_settings.exists(ANDROID_CONTROL_AF_REGIONS)) {

@@ -434,7 +434,7 @@ private:
 	uint32_t getZslBufferIDForFd(cmr_s32 fd);
 	int pushZslFrame(struct camera_frame_type *frame);
 	struct camera_frame_type popZslFrame();
-	struct camera_frame_type popZslList(uint64_t timestamp);/**add for 3dcapture, record received zsl buffer end*/
+	struct camera_frame_type popZslList(cmr_u64 timestamp);/**add for 3dcapture, record received zsl buffer end*/
 	void pushZslList(ZslBufferQueue frame);/**add for 3dcapture, record received zsl buffer end*/
 	void processStopMultiLayer(void *p_data);
 
@@ -690,8 +690,8 @@ private:
 	bool                          mIsUpdateRangeFps;
 	int64_t                       mPrvBufferTimestamp;
 	int                           mUpdateRangeFpsCount;
-	int                           mPrvMinFps;
-	int                           mPrvMaxFps;
+	cmr_uint                           mPrvMinFps;
+	cmr_uint                           mPrvMaxFps;
 	/* 0 - not use, default value is 0; 1 - use video buffer to jpeg enc; */
 	int32_t                       mVideoSnapshotType;
 

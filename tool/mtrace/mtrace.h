@@ -62,9 +62,9 @@ typedef struct
 }memstat_t;
 
 #if(TRACE_MEM_MODE&2)
-#define   DEFINE_MEMSTAT(hinst)   memstat_t hinst={0,0,0,0, 0,0, 0,0,0,0,0, {0,MAX_ALLOC_ENTRYS,-1,0,0,0,{NULL},0,0,NULL}}
+#define   DEFINE_MEMSTAT(hinst)   memstat_t hinst={0,0,0,0,0,0,0,0,0,0,MAX_ALLOC_ENTRYS,{-1,0,0,0,0,0,NULL,0,0,NULL}}
 #else
-#define   DEFINE_MEMSTAT(hinst)   memstat_t hinst={0,0,0,0,0,0,0,0,0,0,0,{0,MAX_ALLOC_ENTRYS}}
+#define   DEFINE_MEMSTAT(hinst)   memstat_t hinst={0,0,0,0,0,0,0,0,0,0,MAX_ALLOC_ENTRYS,{-1,0,0,0,NULL}}
 #endif
 #define   DECLARE_MEMSTAT(hinst)  extern  memstat_t hinst
 

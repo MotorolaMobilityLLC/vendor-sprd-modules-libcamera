@@ -77,9 +77,9 @@ static unsigned char camera_id = 0; /*camera id: fore=1,back=0*/
 #define PREVIEW_BUFF_NUM    4  /*preview buffer*/
 #define SPRD_MAX_PREVIEW_BUF    PREVIEW_BUFF_NUM
 struct frame_buffer_t {
-    size_t phys_addr;
-	size_t virt_addr;
-    size_t length; //buffer's length is different from cap_image_size
+    cmr_uint phys_addr;
+    cmr_uint virt_addr;
+    cmr_uint length; //buffer's length is different from cap_image_size
 };
 static struct frame_buffer_t fb_buf[SPRD_MAX_PREVIEW_BUF+1];
 static uint8_t *tmpbuf2,*tmpbuf3;//*tmpbuf1, *tmpbuf,
@@ -465,7 +465,7 @@ static unsigned int getPreviewBufferIDForFd(cmr_s32 fd)
 
         if (!(cmr_uint)previewHeapArray[i]->fd) continue;
 
-        if ((cmr_uint)previewHeapArray[i]->fd == fd) return i;
+        if (previewHeapArray[i]->fd == fd) return i;
     }
 
     return 0xFFFFFFFF;
@@ -644,7 +644,7 @@ void eng_tst_camera_cb(enum camera_cb_type cb , const void *client_data , enum c
 
 	/*lock*/
 	previewLock.lock();
-	ALOGI("Native MMI Test: fb_buf[0].virt_addr=%0x,var.xres=%d,var.yres=%d,var.bits_per_pixel=%d\n",fb_buf[0].virt_addr,var.xres,var.yres,var.bits_per_pixel);
+	ALOGI("Native MMI Test: fb_buf[0].virt_addr=0x%lx,var.xres=%d,var.yres=%d,var.bits_per_pixel=%d\n",fb_buf[0].virt_addr,var.xres,var.yres,var.bits_per_pixel);
 
 	//4. update
 	eng_test_fb_update(frame);
@@ -767,7 +767,7 @@ static cmr_int Callback_Free(enum camera_mem_cb_type type, cmr_uint *phy_addr, c
 
 	/*  */
 	if (!private_data || !vir_addr || !fd) {
-		ALOGE("Native MMI Test: %s,%d, error param 0x%lx 0x%lx 0x%lx 0x%lx\n", __func__, __LINE__, (cmr_uint)phy_addr, (cmr_uint)vir_addr, fd, (cmr_uint)private_data);
+		ALOGE("Native MMI Test: %s,%d, error param 0x%lx 0x%lx 0x%x 0x%lx\n", __func__, __LINE__, (cmr_uint)phy_addr, (cmr_uint)vir_addr, *fd, (cmr_uint)private_data);
 		return -1;
 	}
 

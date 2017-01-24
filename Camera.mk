@@ -116,6 +116,9 @@ endif
 endif
 
 LOCAL_CFLAGS += -fno-strict-aliasing -D_VSP_ -DJPEG_ENC -D_VSP_LINUX_ -DCHIP_ENDIAN_LITTLE -Wno-unused-parameter
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),3)
+LOCAL_CFLAGS += -Werror
+endif
 
 include $(LOCAL_PATH)/SprdCtrl.mk
 

@@ -50,15 +50,23 @@
 namespace sprdcamera {
 
 #define MAX_NUM_CAMERAS    3
+#ifndef MAX_NUM_STREAMS
 #define MAX_NUM_STREAMS    2
-#define MAX_QEQUEST_BUF 16
+#endif
+#ifndef MAX_FINDER_QEQUEST_BUF
+#define MAX_FINDER_QEQUEST_BUF 16
+#endif
 #define MAX_UNMATCHED_QUEUE_SIZE 3
-#define TIME_DIFF (1000e6)
+#define FINDER_TIME_DIFF (1000e6)
 #define DEPTH_ENGINE_PATH "libdepthengine.so"
 #define CONTEXT_SUCCESS 1
 #define CONTEXT_FAIL 0
+#ifndef THREAD_TIMEOUT
 #define THREAD_TIMEOUT    50e6
+#endif
+#ifndef MAX_NOTIFY_QUEUE_SIZE
 #define MAX_NOTIFY_QUEUE_SIZE 100
+#endif
 #define CLEAR_NOTIFY_QUEUE 50
 #define SFACTOR 100
 #define AR4_3 133
@@ -215,7 +223,7 @@ public:
         Mutex      mMergequeueMutex;
         Condition  mMergequeueSignal;
         uint8_t mMaxLocalBufferNum;
-        const native_handle_t* mNativeBuffer[MAX_QEQUEST_BUF];
+        const native_handle_t* mNativeBuffer[MAX_FINDER_QEQUEST_BUF];
         new_mem_t* mLocalBuffer;
 
     private:
