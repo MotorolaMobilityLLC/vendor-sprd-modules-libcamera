@@ -955,14 +955,21 @@ exit:
 	return ret;
 }
 
-void dump_jpeg_file(void *virt_addr, unsigned int size, int width, int height)
+cmr_int dump_jpeg_file(void *virt_addr, unsigned int size, int width, int height)
 {
+	cmr_int ret = CMR_CAMERA_SUCCESS;
 	char str_buf[100];
 	FILE* fp;
 	char tmp_str[20] = {0};
 	char datetime[100];
 	time_t timep;
 	struct tm *p;
+
+	if ((NULL == virt_addr) || (0 == size)) {
+		CMR_LOGE("invalid virt_addr or size\n");
+		return CMR_CAMERA_FAIL;
+	}
+
 	time(&timep);
 	p = localtime(&timep);
 	snprintf(datetime, sizeof(str_buf), "%04d%02d%02d%02d%02d%02d",
@@ -983,14 +990,17 @@ void dump_jpeg_file(void *virt_addr, unsigned int size, int width, int height)
 	strcat(str_buf, datetime);
 	strcat(str_buf, ".jpg");
 
-	CMR_LOGD("file name %s", str_buf);
-	fp = fopen(str_buf, "ab+");
+	CMR_LOGV("file name %s", str_buf);
+	fp = fopen(str_buf, "wb+");
 	if (NULL == fp) {
-		printf("open %s failed\n", str_buf);
+		CMR_LOGE("open %s failed\n", str_buf);
+		return CMR_CAMERA_FAIL;
 	}
 	fwrite((uint8_t *)virt_addr, 1, size, fp);
 	fflush(fp);
 	fclose(fp);
+
+	return ret;
 }
 
 cmr_int camera_stop_multi_layer(cmr_handle camera_handle)
