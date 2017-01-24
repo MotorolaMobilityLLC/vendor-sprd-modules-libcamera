@@ -45,9 +45,9 @@
 		dst_ptr->cur.uv_th = iir_cnr_param[strength_level].iircnr_ee.iircnr_uv_th;
 		dst_ptr->cur.uv_dist = iir_cnr_param[strength_level].iircnr_ee.iircnr_uv_dist;
 		dst_ptr->cur.uv_s_th = iir_cnr_param[strength_level].iircnr_ee.iircnr_uv_s_th;
+
 		for (i = 0; i < 8; i++) {
 			dst_ptr->cur.y_edge_thr_max[i]   = iir_cnr_param[strength_level].iircnr_ee.y_edge_thr_max[i];
-			dst_ptr->cur.uv_low_thr[i][0]= iir_cnr_param[strength_level].iircnr_ee.uv_low_thr1[i];
 			dst_ptr->cur.y_edge_thr_min[i] = iir_cnr_param[strength_level].iircnr_str.y_edge_thr_min[i];
 		}
 
@@ -57,14 +57,24 @@
 		dst_ptr->cur.uv_diff_thr         = iir_cnr_param[strength_level].iircnr_str.iircnr_uv_diff_thr;
 		dst_ptr->cur.alpha_low_u = iir_cnr_param[strength_level].iircnr_str.iircnr_alpha_low_u;
 		dst_ptr->cur.alpha_low_v = iir_cnr_param[strength_level].iircnr_str.iircnr_alpha_low_v;
+
 		for (i = 0; i < 8; i++) {
-			dst_ptr->cur.uv_low_thr[i][1]    = iir_cnr_param[strength_level].iircnr_str.cnr_uv_thr2[i].uv_low_thr2;
-			dst_ptr->cur.uv_high_thr2[i]     = iir_cnr_param[strength_level].iircnr_str.cnr_uv_thr2[i].uv_high_thr2;
 			dst_ptr->cur.slope_uv[i]     = iir_cnr_param[strength_level].slop_uv[i];
-			dst_ptr->cur.slope_y[i]     = iir_cnr_param[strength_level].slop_y[i];
 			dst_ptr->cur.middle_factor_uv[i]     = iir_cnr_param[strength_level].middle_factor_uv[i];
-			dst_ptr->cur.middle_factor_y[i]     = iir_cnr_param[strength_level].middle_factor_y[i];
 		}
+		dst_ptr->cur.uv_low_thr1 = iir_cnr_param[strength_level].iircnr_ee.uv_low_thr1[0];
+		dst_ptr->cur.uv_low_thr2 = iir_cnr_param[strength_level].iircnr_str.cnr_uv_thr2[0].uv_low_thr2;
+		dst_ptr->cur.slope_y_0 = iir_cnr_param[strength_level].slop_y[0];
+		dst_ptr->cur.middle_factor_y_0 = iir_cnr_param[strength_level].middle_factor_y[0];
+		dst_ptr->cur.uv_high_thr2_0 = iir_cnr_param[strength_level].iircnr_str.cnr_uv_thr2[0].uv_high_thr2;
+		for (i = 0; i < 7; i++) {
+			dst_ptr->cur.uv_low_thr[i][0]= iir_cnr_param[strength_level].iircnr_ee.uv_low_thr1[i + 1];
+			dst_ptr->cur.uv_low_thr[i][1] = iir_cnr_param[strength_level].iircnr_str.cnr_uv_thr2[i + 1].uv_low_thr2;
+			dst_ptr->cur.uv_high_thr2[i] = iir_cnr_param[strength_level].iircnr_str.cnr_uv_thr2[i + 1].uv_high_thr2;
+			dst_ptr->cur.slope_y[i]     = iir_cnr_param[strength_level].slop_y[i + 1];
+			dst_ptr->cur.middle_factor_y[i]     = iir_cnr_param[strength_level].middle_factor_y[i + 1];
+		}
+
 		dst_ptr->cur.css_lum_thr         = iir_cnr_param[strength_level].css_lum_thr.iircnr_css_lum_thr;
 		dst_ptr->cur.mode = iir_cnr_param[strength_level].cnr_iir_mode;
 		dst_ptr->cur.uv_pg_th = iir_cnr_param[strength_level].cnr_uv_pg_th;

@@ -22,6 +22,7 @@ isp_s32 _pm_pdaf_extraction_init(void *dst_pdaf_extraction_param, void *src_pdaf
 	struct isp_pdaf_extraction_param *dst_ptr = (struct isp_pdaf_extraction_param *)dst_pdaf_extraction_param;
 	struct sensor_pdaf_extraction *src_ptr = (struct sensor_pdaf_extraction*)src_pdaf_extraction_param;
 	struct isp_pm_block_header *header_ptr =(struct isp_pm_block_header*)param1;
+	isp_s32 i = 0;
 	UNUSED(param2);
 
 	dst_ptr->cur.ppi_extractor_bypass = src_ptr->extractor_bypass;
@@ -32,7 +33,19 @@ isp_s32 _pm_pdaf_extraction_init(void *dst_pdaf_extraction_param, void *src_pdaf
 	dst_ptr->cur.ppi_af_win_sx0       = src_ptr->pdaf_af_win.af_win_sx0;
 	dst_ptr->cur.ppi_af_win_ey0       = src_ptr->pdaf_af_win.af_win_ey0;
 	dst_ptr->cur.ppi_af_win_ex0       = src_ptr->pdaf_af_win.af_win_ex0;
-
+	#if 1
+	dst_ptr->cur.ppi_block_start_col = src_ptr->pdaf_region.start_col;
+	dst_ptr->cur.ppi_block_start_row = src_ptr->pdaf_region.start_row;
+	dst_ptr->cur.ppi_block_end_col = src_ptr->pdaf_region.end_col;
+	dst_ptr->cur.ppi_block_end_row = src_ptr->pdaf_region.end_row;
+	dst_ptr->cur.ppi_block_width = src_ptr->pdaf_region.width;
+	dst_ptr->cur.ppi_block_height = src_ptr->pdaf_region.height;
+	for(i = 0 ; i < 64 ; i++){
+	dst_ptr->cur.pattern_pos[i] = src_ptr->pdaf_region.pdaf_pattern[i].is_right;
+	dst_ptr->cur.pattern_row[i] = src_ptr->pdaf_region.pdaf_pattern[i].pattern_pixel.x;
+	dst_ptr->cur.pattern_col[i] = src_ptr->pdaf_region.pdaf_pattern[i].pattern_pixel.y;
+	}
+	#endif
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("ISP_PM_ppi_CONVERT_PARAM: error!");
 		return rtn;
@@ -53,7 +66,7 @@ isp_s32 _pm_pdaf_extraction_set_param(void *pdaf_extraction_param, isp_u32 cmd, 
 	case ISP_PM_BLK_PDAF_BYPASS:
 		dst_ptr->cur.ppi_extractor_bypass = *((isp_u32*)param_ptr0);
 		header_ptr->is_update = ISP_ONE;
-	break;	
+	break;
 	default:
 		header_ptr->is_update = ISP_ZERO;
 	break;

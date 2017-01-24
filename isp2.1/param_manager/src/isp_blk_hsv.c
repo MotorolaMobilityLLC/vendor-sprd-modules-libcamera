@@ -26,8 +26,9 @@ isp_s32 _pm_hsv_init(void *dst_hsv_param, void *src_hsv_param, void* param1, voi
 	isp_u32 j = 0;
 	isp_u32 index = 0;
 	isp_s32 rtn = ISP_SUCCESS;
-	intptr_t addr = 0;
+	intptr_t addr = 0, tmp_addr = 0;
 	isp_u32 *buf_ptr = PNULL;
+	struct isp_data_bin_info *specialeffect = PNULL;
 	struct isp_hsv_param *dst_ptr = (struct isp_hsv_param *)dst_hsv_param;
 	struct sensor_hsv_param *src_ptr = (struct sensor_hsv_param *)src_hsv_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
@@ -44,10 +45,14 @@ isp_s32 _pm_hsv_init(void *dst_hsv_param, void *src_hsv_param, void* param1, voi
 		addr = (intptr_t)&src_ptr->data_area + src_ptr->map[i].offset;
 		dst_ptr->map[i].data_ptr = (void*)addr;
 	}
+	addr += src_ptr->map[SENSOR_HSV_NUM-1].size;
+	specialeffect = (struct isp_data_bin_info *)addr;
+	addr += sizeof(struct isp_data_bin_info) * MAX_SPECIALEFFECT_NUM;
 	for (i=0; i<MAX_SPECIALEFFECT_NUM; i++) {
-		dst_ptr->specialeffect_tab[i].size = src_ptr->specialeffect[i].size;
-		addr = (intptr_t)(&src_ptr->specialeffect_data_area + src_ptr->specialeffect[i].offset);
-		dst_ptr->specialeffect_tab[i].data_ptr = (void*)addr;
+		dst_ptr->specialeffect_tab[i].size = specialeffect[i].size;
+		tmp_addr = (intptr_t)(addr + specialeffect[i].offset);
+		dst_ptr->specialeffect_tab[i].data_ptr = (void*)tmp_addr;
+
 	}
 
 	if (PNULL == dst_ptr->final_map.data_ptr) {
