@@ -296,13 +296,17 @@ struct ae_ctrl_cxt {
 	uint8_t debug_info_buf[20 * 1024];
 	//struct debug_ae_param debug_buf;
 	/*
-	 * Isp gain control 
+	 * Isp gain control
 	 */
 	double isp_g_buff[3];
 	int8_t isp_g_b_r;
 	int8_t isp_g_b_w;
 	/*
-	 * ae misc layer handle 
+	 * for manual ae stat
+	 */
+	uint8_t manual_ae_on;
+	/*
+	 * ae misc layer handle
 	 */
 	void *misc_handle;
 	uint32_t end_id;
@@ -2392,6 +2396,7 @@ void* ae_sprd_init(void *param, void *in_param)
 {
 	int32_t rtn = AE_SUCCESS;
 	int32_t i 	= 0;
+	char ae_property[PROPERTY_VALUE_MAX];
 	void *seq_handle = NULL;
 	struct ae_ctrl_cxt	*cxt 	= NULL;
 	struct ae_in_out	*reserve = NULL;
@@ -2522,6 +2527,15 @@ void* ae_sprd_init(void *param, void *in_param)
 	 * cmr_thread_msg_send(cxt->thread_handle, &msg); rtn =
 	 * cmr_thread_msg_send(cxt->thread_handle, &msg); 
 	 */
+	memset((void*)&ae_property, 0, sizeof(ae_property));
+	property_get("persist.sys.isp.ae.manual", ae_property, "off");
+	//AE_LOGD("persist.sys.isp.ae.manual: %s", ae_property);
+	if (!strcmp("on", ae_property)) {
+		 cxt->manual_ae_on = 1;
+	}else {
+		 cxt->manual_ae_on = 0;
+	}
+
 	return (void *)cxt;
 ERR_EXIT:
 	if (NULL != cxt) {
@@ -2562,6 +2576,8 @@ int32_t ae_sprd_calculation(void *handle, void* param, void* result)
 {
 	int32_t rtn = AE_ERROR;
 	int32_t i = 0;
+	char ae_exp[PROPERTY_VALUE_MAX];
+	char ae_gain[PROPERTY_VALUE_MAX];
 	static int8_t send_once[3] = {0, 0, 0};
 	struct ae_ctrl_cxt *cxt = NULL;
 	struct ae_alg_calc_param *current_status;
@@ -2705,9 +2721,22 @@ int32_t ae_sprd_calculation(void *handle, void* param, void* result)
 			send_once[0] = send_once[1] = send_once[2] = 0;
 		}
 
-		rt.expline = cxt->cur_result.wts.cur_exp_line;
-		rt.gain    = cxt->cur_result.wts.cur_again;
-		rt.dummy   = cxt->cur_result.wts.cur_dummy;
+	   if (cxt->manual_ae_on == 1) {
+		   memset((void*)&ae_exp, 0, sizeof(ae_exp));
+		   memset((void*)&ae_gain, 0, sizeof(ae_gain));
+		   property_get("persist.sys.isp.ae.exp_time", ae_exp, "1000");
+		   property_get("persist.sys.isp.ae.gain", ae_gain, "128");
+
+		   rt.expline = (atoi(ae_exp) * 100)/cxt->snr_info.line_time;
+		   rt.gain	  = atoi(ae_gain);
+		   rt.dummy   = 0;
+	   }else {
+		   rt.expline = cxt->cur_result.wts.cur_exp_line;
+		   rt.gain	  = cxt->cur_result.wts.cur_again;
+		   rt.dummy   = cxt->cur_result.wts.cur_dummy;
+		}
+
+		//AE_LOGD(" expline = %d, gain = %d, dummy = %d", rt.expline, rt.gain, rt.dummy);
 		ae_calc_result_queue_write(&cxt->ae_result_queue, &rt);
 		msg.msg_type = AE_WRITE_EXP_GAIN;
 	}else{
