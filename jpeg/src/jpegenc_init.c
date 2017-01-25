@@ -91,7 +91,8 @@ PUBLIC void JpegEnc_HwTopRegCfg(void)
 //	JPEG_TRACE("[JpegEnc_VspTopRegCfg] int mask = 0x%x", int_mask);
 
 	/*reset vsp*/
-	JPG_Reset();
+	if (jpeg_fw_codec->jpg_version != SHARKL2)
+	    JPG_Reset();
 #endif
 
 //	cmd = (1<<3);
