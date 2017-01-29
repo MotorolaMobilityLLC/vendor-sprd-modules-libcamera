@@ -5278,7 +5278,6 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id)
 	cmr_int                 sn_mode = 0;
 	struct sensor_mode_fps_tag fps_info;
 	char                    value[PROPERTY_VALUE_MAX];
-	cmr_u32                 is_raw_capture = 0;
 
 	CHECK_HANDLE_VALID(handle);
 
@@ -5467,17 +5466,11 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
 	cmr_int                  offset1 = 0, offset2 = 0;
 	struct sensor_mode_fps_tag fps_info;
 	char                     value[PROPERTY_VALUE_MAX];
-	cmr_u32                  is_raw_capture = 0;
 	cmr_u32                  is_3D_video = 0;
 
 	if (!sensor_info) {
 		CMR_LOGE("sn info is null!");
 		return CMR_CAMERA_FAIL;
-	}
-
-	property_get("persist.sys.camera.raw.mode", value, "jpeg");
-	if (!strcmp(value, "raw")) {
-		is_raw_capture = 1;
 	}
 
 	property_get("sys.cam.multi.camera.mode", value, "0");
@@ -5505,15 +5498,13 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
 			height = CAMERA_ALIGNED_16(height);
 			if (IMG_DATA_TYPE_JPEG != sensor_info->mode_info[i].image_format) {
 				if (search_height <= height && search_width <= width) {
-					if (is_raw_capture == 0) {
-						/* dont choose high fps setting for no-slowmotion */
-						ret = handle->ops.get_sensor_fps_info(handle->oem_handle,
-										      camera_id, i, &fps_info);
-						CMR_LOGV("mode=%d, is_high_fps=%d", i, fps_info.is_high_fps);
-						if (fps_info.is_high_fps) {
-							CMR_LOGD("dont choose high fps setting");
-							continue;
-						}
+					/* dont choose high fps setting for no-slowmotion */
+					ret = handle->ops.get_sensor_fps_info(handle->oem_handle,
+									      camera_id, i, &fps_info);
+					CMR_LOGV("mode=%d, is_high_fps=%d", i, fps_info.is_high_fps);
+					if (fps_info.is_high_fps) {
+						CMR_LOGD("dont choose high fps setting");
+						continue;
 					}
 
 					target_mode = i;
@@ -5549,7 +5540,6 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
 	cmr_u32                 last_mode = SENSOR_MODE_PREVIEW_ONE;
 	struct sensor_mode_fps_tag fps_info;
 	char                     value[PROPERTY_VALUE_MAX];
-	cmr_u32                  is_raw_capture = 0;
 	cmr_u32                  is_3D_video = 0;
 
 	if (!sensor_info) {
@@ -5570,11 +5560,6 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
 		search_height = target_size->height;
 	}
 
-	property_get("persist.sys.camera.raw.mode", value, "jpeg");
-	if (!strcmp(value, "raw")) {
-		is_raw_capture = 1;
-	}
-
 	CMR_LOGI("search_height = %d", search_height);
 	for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
 		if (SENSOR_MODE_MAX != sensor_info->mode_info[i].mode) {
@@ -5583,15 +5568,13 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
 			CMR_LOGI("height = %d, width = %d", height, width);
 			height = CAMERA_ALIGNED_16(height);
 			if (search_height <= height && search_width <= width) {
-				if (is_raw_capture == 0) {
-					/* dont choose high fps setting for no-slowmotion */
-					ret = handle->ops.get_sensor_fps_info(handle->oem_handle,
-									      camera_id, i, &fps_info);
-					CMR_LOGV("mode=%d, is_high_fps=%d", i, fps_info.is_high_fps);
-					if (fps_info.is_high_fps) {
-						CMR_LOGD("dont choose high fps setting");
-						continue;
-					}
+				/* dont choose high fps setting for no-slowmotion */
+				ret = handle->ops.get_sensor_fps_info(handle->oem_handle,
+								      camera_id, i, &fps_info);
+				CMR_LOGV("mode=%d, is_high_fps=%d", i, fps_info.is_high_fps);
+				if (fps_info.is_high_fps) {
+					CMR_LOGD("dont choose high fps setting");
+					continue;
 				}
 				target_mode = i;
 				ret = CMR_CAMERA_SUCCESS;

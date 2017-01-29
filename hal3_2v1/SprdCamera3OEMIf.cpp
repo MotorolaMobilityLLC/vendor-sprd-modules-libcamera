@@ -994,9 +994,9 @@ int SprdCamera3OEMIf::zslTakePicture()
 
 	// for off-the-fly zsl
 	if (mSprdZslEnabled == 1 && mVideoSnapshotType == 0) {
-		ret = mHalOem->ops->camera_off_the_fly_path_start(mCameraHandle);
+		ret = mHalOem->ops->camera_start_capture(mCameraHandle);
 		if (ret) {
-			HAL_LOGE("camera_off_the_fly_path_start failed");
+			HAL_LOGE("camera_start_capture failed");
 			goto exit;
 		}
 		mFlagOffTheFlyZslStart = 1;
@@ -7725,9 +7725,9 @@ cmr_int SprdCamera3OEMIf::ZSLMode_monitor_thread_proc(struct cmr_msg *message, v
 			obj->snapshotZsl(p_data);
 			break;
 		case CMR_EVT_ZSL_STOP_OFF_THE_FLY_PATH:
-			ret = obj->mHalOem->ops->camera_off_the_fly_path_stop(obj->mCameraHandle);
+			ret = obj->mHalOem->ops->camera_stop_capture(obj->mCameraHandle);
 			if (ret) {
-				HAL_LOGE("camera_off_the_fly_path_stop failedd");
+				HAL_LOGE("camera_stop_capture failedd");
 			}
 			obj->mFlagOffTheFlyZslStart = 0;
 			break;

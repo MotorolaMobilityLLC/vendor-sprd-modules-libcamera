@@ -5473,7 +5473,7 @@ cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits, cmr_ui
 	/* for sharkl2 off-the-fly path */
 	if ((channel_bits & OFF_THE_FLY_PATH_BIT) &&
 	    is_zsl_enable == 0) {
-		ret = cmr_grab_off_the_fly_path_start(cxt->grab_cxt.grab_handle);
+		ret = cmr_grab_start_capture(cxt->grab_cxt.grab_handle);
 		if (ret) {
 			CMR_LOGE("failed to start off the fly path,ret %ld", ret);
 		}
@@ -5497,7 +5497,7 @@ cmr_int camera_channel_pause(cmr_handle oem_handle, cmr_uint channel_id, cmr_u32
 
 	/* for sharkl2 off-the-fly path */
 	if (channel_id == OFF_THE_FLY_CHANNEL) {
-		ret = cmr_grab_off_the_fly_path_stop(cxt->grab_cxt.grab_handle);
+		ret = cmr_grab_stop_capture(cxt->grab_cxt.grab_handle);
 		if (ret) {
 			CMR_LOGE("failed to stop off the fly path %ld", ret);
 		}
@@ -5535,7 +5535,7 @@ cmr_int camera_channel_resume(cmr_handle oem_handle, cmr_uint channel_id, cmr_u3
 
 	/* for sharkl2 off-the-fly path */
 	if (channel_id == OFF_THE_FLY_CHANNEL) {
-		ret = cmr_grab_off_the_fly_path_start(cxt->grab_cxt.grab_handle);
+		ret = cmr_grab_start_capture(cxt->grab_cxt.grab_handle);
 		if (ret) {
 			CMR_LOGE("failed to start off the fly path,ret %ld", ret);
 		}
@@ -5585,7 +5585,7 @@ cmr_int camera_channel_stop(cmr_handle oem_handle, cmr_u32 channel_bits)
 
 	/* for sharkl2 off-the-fly path */
 	if (channel_bits & OFF_THE_FLY_PATH_BIT) {
-		ret = cmr_grab_off_the_fly_path_stop(cxt->grab_cxt.grab_handle);
+		ret = cmr_grab_stop_capture(cxt->grab_cxt.grab_handle);
 		if (ret) {
 			CMR_LOGE("failed to stop off the fly path %ld", ret);
 		}
@@ -6535,7 +6535,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 		CMR_LOGD("video_slowmotion_eb = %d", out_param_ptr->video_slowmotion_eb);
 		#ifdef FMCU_SUPPORT
 		if(out_param_ptr->video_slowmotion_eb > 0)
-			out_param_ptr->video_slowmotion_eb = ISP_SLW_VIDEO
+			out_param_ptr->video_slowmotion_eb = ISP_SLW_VIDEO;
 		#endif
 
 		CMR_LOGD("mode = %d", mode);
@@ -8821,14 +8821,14 @@ exit:
 }
 
 // for off-the-fly zsl
-cmr_int camera_local_off_the_fly_path_start(cmr_handle oem_handle)
+cmr_int camera_local_start_capture(cmr_handle oem_handle)
 {
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 
-	ret = cmr_grab_off_the_fly_path_start(cxt->grab_cxt.grab_handle);
+	ret = cmr_grab_start_capture(cxt->grab_cxt.grab_handle);
 	if (ret) {
-		CMR_LOGE("cmr_grab_off_the_fly_path_start failed");
+		CMR_LOGE("cmr_grab_start_capture failed");
 		goto exit;
 	}
 
@@ -8837,14 +8837,14 @@ exit:
 }
 
 // for off-the-fly zsl
-cmr_int camera_local_off_the_fly_path_stop(cmr_handle oem_handle)
+cmr_int camera_local_stop_capture(cmr_handle oem_handle)
 {
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
 
-	ret = cmr_grab_off_the_fly_path_stop(cxt->grab_cxt.grab_handle);
+	ret = cmr_grab_stop_capture(cxt->grab_cxt.grab_handle);
 	if (ret) {
-		CMR_LOGE("cmr_grab_off_the_fly_path_start failed");
+		CMR_LOGE("cmr_grab_start_capture failed");
 		goto exit;
 	}
 

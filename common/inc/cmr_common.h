@@ -1322,8 +1322,8 @@ cmr_int (*camera_stop_multi_layer)(cmr_handle camera_handle);
 cmr_int (*camera_set_sensor_close_flag)(cmr_handle camera_handle);
 cmr_int (*camera_set_reprocess_picture_size)(cmr_handle camera_handle, cmr_uint is_reprocessing, cmr_u32 camera_id, cmr_u32 width, cmr_u32 height);/**add for 3d capture to reset reprocessing capture size*/
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
-cmr_int (*camera_off_the_fly_path_start)(cmr_handle camera_handle);
-cmr_int (*camera_off_the_fly_path_stop)(cmr_handle camera_handle);
+cmr_int (*camera_start_capture)(cmr_handle camera_handle);
+cmr_int (*camera_stop_capture)(cmr_handle camera_handle);
 #endif
 
 }oem_ops_t;

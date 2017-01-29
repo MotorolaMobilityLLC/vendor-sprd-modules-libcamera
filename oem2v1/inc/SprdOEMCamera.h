@@ -140,8 +140,8 @@ cmr_uint camera_get_sensor_vcm_step(cmr_handle camera_handle,cmr_u32 camera_id, 
 
 cmr_int camera_set_reprocess_picture_size(cmr_handle camera_handle, cmr_uint is_reprocessing, cmr_u32 camera_id, cmr_u32 width, cmr_u32 height);/**add for 3d capture to reset reprocessing capture size*/
 
-cmr_int camera_off_the_fly_path_start(cmr_handle camera_handle);
-cmr_int camera_off_the_fly_path_stop(cmr_handle camera_handle);
+cmr_int camera_start_capture(cmr_handle camera_handle);
+cmr_int camera_stop_capture(cmr_handle camera_handle);
 
 #ifdef __cplusplus
 }

@@ -128,8 +128,8 @@ cmr_int cmr_grab_cfg_flash(cmr_handle grab_handle, struct sprd_flash_cfg_param *
 cmr_s32 cmr_grab_get_cpp_fd(cmr_handle grab_handle);
 cmr_int cmr_grab_set_rt_refocus(cmr_handle grab_handle, cmr_u32 rt_refocus);
 // for sharkl2-like capture path
-cmr_int cmr_grab_off_the_fly_path_start(cmr_handle grab_handle);
-cmr_int cmr_grab_off_the_fly_path_stop(cmr_handle grab_handle);
+cmr_int cmr_grab_start_capture(cmr_handle grab_handle);
+cmr_int cmr_grab_stop_capture(cmr_handle grab_handle);
 
 #ifdef __cplusplus
 }

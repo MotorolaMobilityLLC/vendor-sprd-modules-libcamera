@@ -780,7 +780,7 @@ cmr_int cmr_grab_cap_stop(cmr_handle grab_handle)
 }
 
 // for sharkl2-like capture path
-cmr_int cmr_grab_off_the_fly_path_start(cmr_handle grab_handle)
+cmr_int cmr_grab_start_capture(cmr_handle grab_handle)
 {
 	struct cmr_grab          *p_grab;
 	cmr_int                  ret = 0;
@@ -789,16 +789,16 @@ cmr_int cmr_grab_off_the_fly_path_start(cmr_handle grab_handle)
 	p_grab = (struct cmr_grab *)grab_handle;
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
-	ret = ioctl(p_grab->fd, SPRD_IMG_IO_OFF_THE_FLY_PATH_START, &start);
+	ret = ioctl(p_grab->fd, SPRD_IMG_IO_START_CAPTURE, &start);
 	if (ret) {
-		CMR_LOGE("failed to start off-the-fly path");
+		CMR_LOGE("failed to start capture.");
 	}
 	CMR_LOGI("ret = %ld", ret);
 	return ret;
 }
 
 // for sharkl2-like capture path
-cmr_int cmr_grab_off_the_fly_path_stop(cmr_handle grab_handle)
+cmr_int cmr_grab_stop_capture(cmr_handle grab_handle)
 {
 	struct cmr_grab          *p_grab;
 	cmr_int                  ret = 0;
@@ -807,7 +807,7 @@ cmr_int cmr_grab_off_the_fly_path_stop(cmr_handle grab_handle)
 	p_grab = (struct cmr_grab *)grab_handle;
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
-	ret = ioctl(p_grab->fd, SPRD_IMG_IO_OFF_THE_FLY_PATH_STOP, &stop);
+	ret = ioctl(p_grab->fd, SPRD_IMG_IO_STOP_CAPTURE, &stop);
 	if (ret) {
 		CMR_LOGE("failed to stop off-the-fly path");
 	}

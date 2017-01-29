@@ -999,7 +999,7 @@ cmr_int camera_set_sensor_close_flag(cmr_handle camera_handle)
 	return 0;
 }
 
-cmr_int camera_off_the_fly_path_start(cmr_handle camera_handle)
+cmr_int camera_start_capture(cmr_handle camera_handle)
 {
 	cmr_int                          ret = CMR_CAMERA_SUCCESS;
 
@@ -1009,7 +1009,7 @@ cmr_int camera_off_the_fly_path_start(cmr_handle camera_handle)
 		goto exit;
 	}
 
-	ret = camera_local_off_the_fly_path_start(camera_handle);
+	ret = camera_local_start_capture(camera_handle);
 	if (ret) {
 		CMR_LOGE("failed to start snapshot %ld", ret);
 		goto exit;
@@ -1019,7 +1019,7 @@ exit:
 	return ret;
 }
 
-cmr_int camera_off_the_fly_path_stop(cmr_handle camera_handle)
+cmr_int camera_stop_capture(cmr_handle camera_handle)
 {
 	cmr_int                          ret = CMR_CAMERA_SUCCESS;
 
@@ -1029,7 +1029,7 @@ cmr_int camera_off_the_fly_path_stop(cmr_handle camera_handle)
 		goto exit;
 	}
 
-	ret = camera_local_off_the_fly_path_stop(camera_handle);
+	ret = camera_local_stop_capture(camera_handle);
 	if (ret) {
 		CMR_LOGE("failed to start snapshot %ld", ret);
 		goto exit;
@@ -1103,8 +1103,8 @@ static oem_ops_t oem_module_ops = {
 	camera_get_sensor_vcm_step,
 	camera_set_sensor_close_flag,
 	camera_set_reprocess_picture_size,/**add for 3d capture to reset reprocessing capture size*/
-	camera_off_the_fly_path_start,
-	camera_off_the_fly_path_stop,
+	camera_start_capture,
+	camera_stop_capture,
 };
 
 struct oem_module OEM_MODULE_INFO_SYM = {
