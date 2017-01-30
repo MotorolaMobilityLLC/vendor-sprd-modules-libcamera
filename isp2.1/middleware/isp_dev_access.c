@@ -66,7 +66,7 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 				  &statis_mem_info->isp_statis_k_addr,
 				  &statis_mem_info->isp_statis_u_addr,
 				  &statis_mem_info->statis_mfd,
-				  &statis_mem_info->buffer_client_data);
+				  statis_mem_info->buffer_client_data);
 		} else {
 			ISP_LOGE("failed to malloc statis_bq buffer");
 			return ISP_PARAM_NULL;
