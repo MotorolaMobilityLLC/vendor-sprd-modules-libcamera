@@ -624,6 +624,9 @@ struct isp_2d_lsc_param{
 	struct isp_size resolution;
 	isp_u32 update_flag;
 	isp_u32 is_init;
+
+	void *tmp_ptr_a;
+	void *tmp_ptr_b;
 };
 
 //radial lens(1D)

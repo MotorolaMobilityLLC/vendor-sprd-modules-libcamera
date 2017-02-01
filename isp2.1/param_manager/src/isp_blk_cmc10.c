@@ -143,22 +143,49 @@
 			}
 
 			weight_value = (struct isp_weight_value *)block_result->component[0].fix_data;
-			cmc_value = *weight_value;
 
-			cmc_value.weight[0] = cmc_value.weight[0] / (SMART_WEIGHT_UNIT / 16)
-								* (SMART_WEIGHT_UNIT / 16);
-			cmc_value.weight[1] = SMART_WEIGHT_UNIT - cmc_value.weight[0];
+			struct isp_weight_value *bv_value = &weight_value[0];
+			struct isp_weight_value* ct_value[2] = {&weight_value[1], &weight_value[2]};
 
-			if (cmc_value.value[0] != cmc10_ptr->cur_idx_info.x0
-				|| cmc_value.weight[0] != cmc10_ptr->cur_idx_info.weight0) {
-				cmc10_ptr->cur_idx_info.x0 = cmc_value.value[0];
-				cmc10_ptr->cur_idx_info.x1 = cmc_value.value[1];
-				cmc10_ptr->cur_idx_info.weight0 = cmc_value.weight[0];
-				cmc10_ptr->cur_idx_info.weight1 = cmc_value.weight[1];
+			uint16_t bv_result[SENSOR_CMC_POINT_NUM] = {0};
+			uint16_t ct_result[2][SENSOR_CMC_POINT_NUM] = {0};
+			int i;
+			for (i=0; i<2; i++)
+			{
+				void *src_matrix[2] = {NULL};
+				src_matrix[0] = cmc10_ptr->matrix[ct_value[i]->value[0]];
+				src_matrix[1] = cmc10_ptr->matrix[ct_value[i]->value[1]];
 
-				is_reduce = 0;
-				update = 1;
+				isp_u16 weight[2] = {0};
+				weight[0] = ct_value[i]->weight[0];
+				weight[1] = ct_value[i]->weight[1];
+				weight[0] = weight[0] / (SMART_WEIGHT_UNIT / 16) * (SMART_WEIGHT_UNIT / 16);
+				weight[1] = SMART_WEIGHT_UNIT -weight[0];
+
+				isp_interp_data(ct_result[i], src_matrix, weight, 9, ISP_INTERP_INT14);
 			}
+
+
+			void *src_matrix[2] = {NULL};
+			src_matrix[0] = &ct_result[0][0];
+			src_matrix[1] = &ct_result[1][0];
+
+			isp_u16 weight[2] = {0};
+			weight[0] = bv_value->weight[0];
+			weight[1] = bv_value->weight[1];
+			weight[0] = weight[0] / (SMART_WEIGHT_UNIT / 16) * (SMART_WEIGHT_UNIT / 16);
+			weight[1] = SMART_WEIGHT_UNIT -weight[0];
+
+			isp_interp_data(bv_result, src_matrix, weight, 9, ISP_INTERP_INT14);
+
+
+			memcpy(cmc10_ptr->result_cmc, bv_result, sizeof(cmc10_ptr->result_cmc));
+			for (i=0; i<SENSOR_CMC_POINT_NUM; i++) {
+				cmc10_ptr->cur.matrix.val[i] = cmc10_ptr->result_cmc[i];
+			}
+
+			cmc10_header_ptr->is_update = 1;
+
 		} else if (ISP_SMART_SATURATION_DEPRESS == block_result->smart_id) {
 
 			val_range.min = 1;
@@ -173,11 +200,11 @@
 			cmc10_ptr->reduce_percent = block_result->component[0].fix_data[0];
 			is_reduce = 1;
 			update = 1;
-		}
 
-		if (0 != update) {
-				_pm_cmc10_adjust(cmc10_ptr, is_reduce);
-			cmc10_header_ptr->is_update = 1;
+			if (0 != update) {
+					_pm_cmc10_adjust(cmc10_ptr, is_reduce);
+				cmc10_header_ptr->is_update = 1;
+			}
 		}
 	}
 	break;

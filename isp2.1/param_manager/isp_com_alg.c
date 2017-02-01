@@ -391,7 +391,7 @@ static void _interp_int14(uint16_t *dst, uint16_t *src[2], uint16_t weight[2], u
 	uint32_t data_bytes = 0;
 	uint32_t i = 0;
 
-	data_bytes = data_num * sizeof(uint32_t);
+	data_bytes = data_num * sizeof(uint16_t);
 
 	if (INTERP_WEIGHT_UNIT == weight[0]) {
 		memcpy(dst, src[0], data_bytes);

@@ -67,6 +67,10 @@
 	memcpy((void*)dst_ptr->final_lsc_param.data_ptr, (void*)dst_ptr->map_tab[index].param_addr, dst_ptr->map_tab[index].len);
 	dst_ptr->cur.buf_len = dst_ptr->final_lsc_param.size;
 	dst_ptr->final_lsc_param.param_ptr = (void*)malloc(src_ptr->map[0].len);
+
+	dst_ptr->tmp_ptr_a = (void*)malloc(src_ptr->map[0].len);
+	dst_ptr->tmp_ptr_b = (void*)malloc(src_ptr->map[0].len);
+
 #if __WORDSIZE == 64
 	dst_ptr->cur.buf_addr[0] = (isp_uint)(dst_ptr->final_lsc_param.data_ptr) & 0xffffffff;
 	dst_ptr->cur.buf_addr[1] = (isp_uint)(dst_ptr->final_lsc_param.data_ptr) >> 32;
@@ -252,48 +256,53 @@
 		}
 
 		weight_value = (struct isp_weight_value *)block_result->component[0].fix_data;
-		lnc_value = *weight_value;
 
-		ISP_LOGV("value=(%d, %d), weight=(%d, %d) 0, ", lnc_value.value[0], lnc_value.value[1],
-							lnc_value.weight[0], lnc_value.weight[1]);
+		struct isp_weight_value *bv_value = &weight_value[0];
+		struct isp_weight_value* ct_value[2] = {&weight_value[1], &weight_value[2]};
 
-		lnc_value.weight[0] = lnc_value.weight[0] / (SMART_WEIGHT_UNIT / 16) * (SMART_WEIGHT_UNIT / 16);
-		lnc_value.weight[1] = SMART_WEIGHT_UNIT - lnc_value.weight[0];
-
-		ISP_LOGV("value=(%d, %d), weight=(%d, %d) 1", lnc_value.value[0], lnc_value.value[1],
-							lnc_value.weight[0], lnc_value.weight[1]);
-
-		if (lnc_value.weight[0] != dst_lnc_ptr->cur_index_info.weight0
-			|| lnc_value.value[0] != dst_lnc_ptr->cur_index_info.x0) {
-
+		void* ct_result[2] = {dst_lnc_ptr->tmp_ptr_a, dst_lnc_ptr->tmp_ptr_b};
+		int i;
+		for (i=0; i<2; i++)
+		{
 			void *src[2] = {NULL};
-			void *dst = NULL;
-			isp_u32 data_num = 0;
+			src[0] = (void*)dst_lnc_ptr->map_tab[ct_value[i]->value[0]].param_addr;
+			src[1] = (void*)dst_lnc_ptr->map_tab[ct_value[i]->value[1]].param_addr;
 
-			index = lnc_value.value[0];
-			dst_lnc_ptr->cur.grid_pitch = dst_lnc_ptr->map_tab[index].grid_pitch;
-			dst_lnc_ptr->cur.grid_width = dst_lnc_ptr->map_tab[index].grid_mode;
-			dst_lnc_ptr->cur.buf_len = dst_lnc_ptr->map_tab[index].len;
-			src[0] = (void*)dst_lnc_ptr->map_tab[lnc_value.value[0]].param_addr;
-			src[1] = (void*)dst_lnc_ptr->map_tab[lnc_value.value[1]].param_addr;
+			isp_u16 weight[2] = {0};
+			weight[0] = ct_value[i]->weight[0];
+			weight[1] = ct_value[i]->weight[1];
+			weight[0] = weight[0] / (SMART_WEIGHT_UNIT / 16) * (SMART_WEIGHT_UNIT / 16);
+			weight[1] = SMART_WEIGHT_UNIT -weight[0];
+
+			isp_u32 data_num = dst_lnc_ptr->cur.buf_len / sizeof(isp_u16);
+			void *dst = ct_result[i];
+			isp_interp_data(dst, src, (isp_u16*)weight, data_num, ISP_INTERP_UINT16);
+		}
+
+		void *src[2] = {NULL};
+		src[0] = ct_result[0];
+		src[1] = ct_result[1];
+
+		isp_u16 weight[2] = {0};
+		weight[0] = bv_value->weight[0];
+		weight[1] = bv_value->weight[1];
+		weight[0] = weight[0] / (SMART_WEIGHT_UNIT / 16) * (SMART_WEIGHT_UNIT / 16);
+		weight[1] = SMART_WEIGHT_UNIT -weight[0];
+
+		isp_u32 data_num = dst_lnc_ptr->cur.buf_len / sizeof(isp_u16);
+		void *dst = NULL;
 		#if __WORDSIZE == 64
 			dst = (void*)((isp_uint)dst_lnc_ptr->cur.buf_addr[1]<<32 | dst_lnc_ptr->cur.buf_addr[0]);
 		#else
 			dst = (void*)(dst_lnc_ptr->cur.buf_addr[0]);
 		#endif
-			data_num = dst_lnc_ptr->cur.buf_len / sizeof(isp_u16);
+		isp_interp_data(dst, src, (isp_u16*)weight, data_num, ISP_INTERP_UINT16);
 
-			rtn = isp_interp_data(dst, src, (isp_u16*)lnc_value.weight, data_num, ISP_INTERP_UINT16);
-			if (ISP_SUCCESS == rtn) {
-				dst_lnc_ptr->cur_index_info.x0 = lnc_value.value[0];
-				dst_lnc_ptr->cur_index_info.x1 = lnc_value.value[1];
-				dst_lnc_ptr->cur_index_info.weight0 = lnc_value.weight[0];
-				dst_lnc_ptr->cur_index_info.weight1 = lnc_value.weight[1];
-				lnc_header_ptr->is_update |= ISP_PM_BLK_LSC_UPDATE_MASK_VALIDATE;
-				dst_lnc_ptr->update_flag = lnc_header_ptr->is_update;
-				memcpy(dst_lnc_ptr->final_lsc_param.param_ptr, dst, dst_lnc_ptr->cur.buf_len);
-			}
-		}
+
+		lnc_header_ptr->is_update |= ISP_PM_BLK_LSC_UPDATE_MASK_VALIDATE;
+		dst_lnc_ptr->update_flag = lnc_header_ptr->is_update;
+		memcpy(dst_lnc_ptr->final_lsc_param.param_ptr, dst, dst_lnc_ptr->cur.buf_len);
+
 	}
 	break;
 
@@ -429,5 +438,17 @@
 		free (lsc_param_ptr->final_lsc_param.param_ptr);
 		lsc_param_ptr->final_lsc_param.param_ptr = PNULL;
 	}
+
+
+	if (lsc_param_ptr->tmp_ptr_a) {
+		free(lsc_param_ptr->tmp_ptr_a);
+		lsc_param_ptr->tmp_ptr_a = PNULL;
+	}
+
+	if (lsc_param_ptr->tmp_ptr_b) {
+		free(lsc_param_ptr->tmp_ptr_b);
+		lsc_param_ptr->tmp_ptr_b = PNULL;
+	}
+
 	return rtn;
 }
