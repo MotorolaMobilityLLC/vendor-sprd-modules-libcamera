@@ -374,12 +374,12 @@ static const SENSOR_REG_T ov5675_snapshot_setting[] = {
 	{0x3815,0x01},  
 	{0x3816,0x01}, 
 #ifndef CAMERA_IMAGE_180
-	{0x3820, 0x86}, // vflip on
-	{0x3821, 0x40}, // hsync_en_o, mirror off, dig_bin off
+	{0x3820, 0x96}, // vflip on
+	{0x3821, 0x41}, // hsync_en_o, mirror off, dig_bin off
 	{0x450b, 0x20}, // need to set when flip
 #else
-	{0x3820, 0x80}, // vflip off
-	{0x3821, 0x46}, // hsync_en_o, mirror on, dig_bin off
+	{0x3820, 0x90}, // vflip off
+	{0x3821, 0x47}, // hsync_en_o, mirror on, dig_bin off
 #endif
 	{0x3821,0x01},   
 	{0x4008,0x02},  
