@@ -7507,19 +7507,17 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle, enum takepicture_mode
 		goto exit;
 	}
 
-	if (0 == cxt->camera_id) {
-		setting_param.camera_id = cxt->camera_id;
-		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_HW_FLASH_STATUS, &setting_param);
-		if (ret) {
-			CMR_LOGE("failed to get flash mode %ld", ret);
-			//goto exit;
-		} else {
-			flash_status = setting_param.cmd_type_value;
-		}
-		CMR_LOGI("HW flash_status=%ld", flash_status);
-		if (flash_status != FLASH_TORCH) {
-			cmr_sensor_set_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_EXIF_CTRL_FLASH, 0);
-		}
+	setting_param.camera_id = cxt->camera_id;
+	ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_HW_FLASH_STATUS, &setting_param);
+	if (ret) {
+		CMR_LOGE("failed to get flash mode %ld", ret);
+		//goto exit;
+	} else {
+		flash_status = setting_param.cmd_type_value;
+	}
+	CMR_LOGI("HW flash_status=%ld", flash_status);
+	if (flash_status != FLASH_TORCH) {
+		cmr_sensor_set_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_EXIF_CTRL_FLASH, 0);
 	}
 
 	ret = cmr_snapshot_post_proc(cxt->snp_cxt.snapshot_handle, &snp_param);
