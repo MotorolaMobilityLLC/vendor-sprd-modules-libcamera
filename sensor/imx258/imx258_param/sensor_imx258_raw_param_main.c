@@ -30,8 +30,6 @@
 /* Begin Include */
 #include "sensor_imx258_raw_param_common.c"
 #include "sensor_imx258_raw_param_prv_0.c"
-#include "sensor_imx258_raw_param_cap_0.c"
-#include "sensor_imx258_raw_param_video_0.c"
 
 /* End Include */
 
@@ -132,14 +130,14 @@ static struct sensor_version_info s_imx258_version_info=
 
 static uint32_t s_imx258_libuse_info[]=
 {
-    0x00000000,0x00000001,0x00000000,0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,
+    0x00000000,0x00000000,0x00000000,0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,
     0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
     0x00000000,0x00000000,0x00000000,0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,
     0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
     0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
     0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
     0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
-    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000005,0x00000003
+    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000
 };
 
 
@@ -155,11 +153,11 @@ static struct sensor_raw_info s_imx258_mipi_raw_info=
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
-		{s_imx258_tune_info_cap_0, sizeof(s_imx258_tune_info_cap_0)},
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
-		{s_imx258_tune_info_video_0, sizeof(s_imx258_tune_info_video_0)},
+		{NULL, 0},
+		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
@@ -173,11 +171,11 @@ static struct sensor_raw_info s_imx258_mipi_raw_info=
 		NULL,
 		NULL,
 		NULL,
-		&s_imx258_fix_info_cap_0,
 		NULL,
 		NULL,
 		NULL,
-		&s_imx258_fix_info_video_0,
+		NULL,
+		NULL,
 		NULL,
 		NULL,
 		NULL,
@@ -188,11 +186,11 @@ static struct sensor_raw_info s_imx258_mipi_raw_info=
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
-		{s_imx258_cap_0_tool_ui_input, sizeof(s_imx258_cap_0_tool_ui_input)},
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
-		{s_imx258_video_0_tool_ui_input, sizeof(s_imx258_video_0_tool_ui_input)},
+		{NULL, 0},
+		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},

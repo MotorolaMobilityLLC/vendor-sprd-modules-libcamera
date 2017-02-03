@@ -1528,10 +1528,11 @@ static uint32_t ov5675_write_exposure(SENSOR_HW_HANDLE handle,uint32_t param)
 	uint16_t exposure_line = 0x00;
 	uint16_t dummy_line = 0x00;
 	uint16_t mode = 0x00;
+	struct sensor_ex_exposure  *ex = (struct sensor_ex_exposure*)param;
 
-	exposure_line = param & 0xffff;
-	dummy_line = (param >> 0x10) & 0xfff; /*for cits frame rate test*/
-	mode = (param >> 0x1c) & 0x0f;
+	exposure_line = ex->exposure;
+	dummy_line = ex->dummy;
+	mode = ex->size_index;
 
 	SENSOR_PRINT("current mode = %d, exposure_line = %d, dummy_line=%d", mode, exposure_line,dummy_line);
 	s_current_default_frame_length = ov5675_get_default_frame_length(handle,mode);

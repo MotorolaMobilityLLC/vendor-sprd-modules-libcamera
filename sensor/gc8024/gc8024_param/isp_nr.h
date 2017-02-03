@@ -7,8 +7,8 @@ static struct sensor_nr_level_map_param s_gc8024_nr_level_number_map_param = {{
 }};
 
 static struct sensor_nr_level_map_param s_gc8024_default_nr_level_map_param = {{
-	16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,
-	16,16,16,16,16,16,16,16,16,16,16,16,16,16,16
+	16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,
+	16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16
 }};
 
 static struct sensor_nr_scene_map_param s_gc8024_nr_scene_map_param = {{
