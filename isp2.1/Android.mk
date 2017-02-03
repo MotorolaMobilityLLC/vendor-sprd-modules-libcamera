@@ -83,6 +83,7 @@ LOCAL_SHARED_LIBRARIES := libcutils libutils libdl libcamcommon
 LOCAL_SHARED_LIBRARIES += libspaf libawb1 liblsc libcalibration libae
 LOCAL_SHARED_LIBRARIES += libAF libsft_af_ctrl libaf_tune
 LOCAL_SHARED_LIBRARIES += libaf_running
+LOCAL_SHARED_LIBRARIES += libcamsensor
 
 LOCAL_SHARED_LIBRARIES += libspafv1 libcutils
 LOCAL_SHARED_LIBRARIES += libspcaftrigger

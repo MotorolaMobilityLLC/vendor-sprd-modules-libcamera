@@ -55,6 +55,9 @@
 #define LNC_VERSION   0x00000001
 #define PM_CODE_VERSION  0x00070005
 
+#define TUNE_FILE_CHIP_VER_MASK 0x0000FFFF
+#define TUNE_FILE_SW_VER_MASK 0xFFFF0000
+
 enum isp_scene_mode {
 	ISP_SCENEMODE_AUTO = 0x00,
 	ISP_SCENEMODE_NIGHT,
@@ -1897,12 +1900,14 @@ struct isp_block_param {
 	unsigned int  data_size;
 };
 
-struct sensor_version_info {
-	uint32_t version_id;
-	union {
+union sensor_version_name{
 		uint32_t sensor_name_in_word[8];
 		uint8_t sensor_name[32];
 	};
+
+struct sensor_version_info {
+	uint32_t version_id;
+	union sensor_version_name sensor_ver_name;
 	uint32_t ae_struct_version;
 	uint32_t awb_struct_version;
 	uint32_t lnc_struct_version;
@@ -2003,7 +2008,7 @@ struct sensor_lens_map {
 
 struct sensor_lsc_map{
 	struct sensor_lnc_tab_param lnc_param;
-	struct sensor_lens_map map[9];
+	struct sensor_lens_map map[LNC_MAP_COUNT];
 };
 
 struct sensor_nr_scene_map_param {
@@ -2173,7 +2178,8 @@ struct denoise_param_update {
 	struct sensor_yuv_noisefilter_level *yuv_noisefilter_level_ptr;
 	//struct sensor_y_afm_level *y_afm_level_ptr;
 	uint32_t *nr_scene_map_ptr;
-	uint8_t *nr_level_map_ptr;
+	uint8_t *nr_level_number_map_ptr;
+	uint8_t *nr_default_level_map_ptr;
 	uint32_t multi_nr_flag;
 };
 

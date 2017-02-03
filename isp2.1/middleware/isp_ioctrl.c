@@ -920,15 +920,12 @@ static cmr_int _ispSpecialEffectIOCtrl(cmr_handle isp_alg_handle, void *param_pt
 static cmr_int _ispFixParamUpdateIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, int (*call_back)())
 {
 	cmr_int                         rtn = ISP_SUCCESS;
-	#if 0
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct sensor_raw_info          *sensor_raw_info_ptr= NULL;
 	struct isp_pm_init_input        input;
 	uint32_t                        i;
+	struct sensor_version_info *version_info = PNULL;
 	uint32_t param_source = 0;
-	struct sensor_ae_tab            *ae = NULL;
-	struct sensor_lsc_map           *lnc = NULL;
-	struct sensor_awb_map_weight_param *awb = NULL;
 	struct isp_pm_ioctl_input awb_input= {0};
 	struct isp_pm_ioctl_output awb_output = {0};
 	struct awb_data_info awb_data_ptr = {0};
@@ -939,7 +936,12 @@ static cmr_int _ispFixParamUpdateIOCtrl(cmr_handle isp_alg_handle, void *param_p
 		return rtn;
 	}
 	sensor_raw_info_ptr = (struct sensor_raw_info *)cxt->sn_cxt.sn_raw_info;
-	ISP_LOGI("--IOCtrl--FIX_PARAM_UPDATE--");
+	if(sensor_raw_info_ptr == NULL) {
+		ISP_LOGI("ISP_TOOL:sensor_raw_info_ptr is  null");
+	}
+
+	version_info =  (struct sensor_version_info *)sensor_raw_info_ptr->version_info;
+	input.sensor_name = version_info->sensor_ver_name.sensor_name;
 
 	if (NULL == cxt->handle_pm) {
 		ISP_LOGE("param is NULL error!");
@@ -953,26 +955,15 @@ static cmr_int _ispFixParamUpdateIOCtrl(cmr_handle isp_alg_handle, void *param_p
 	input.num = MAX_MODE_NUM;
 	for (i = 0; i < MAX_MODE_NUM; i++) {
 		if (NULL != sensor_raw_info_ptr->mode_ptr[i].addr) {
-			ae  = &sensor_raw_info_ptr->fix_ptr[i]->ae;
-			lnc = &sensor_raw_info_ptr->fix_ptr[i]->lnc;
-			awb = &sensor_raw_info_ptr->fix_ptr[i]->awb;
-			if (NULL != ae->block.block_info || NULL != awb->block.block_info || NULL != lnc->block.block_info ) {
-				if ( NULL != cxt->sn_cxt.isp_update_data[i].data_ptr ) {
-					free(cxt->sn_cxt.isp_update_data[i].data_ptr);
-					cxt->sn_cxt.isp_update_data[i].data_ptr = NULL;
-					cxt->sn_cxt.isp_update_data[i].size     = 0;
-				}
-			}
+			input.tuning_data[i].data_ptr = sensor_raw_info_ptr->mode_ptr[i].addr;
+			input.tuning_data[i].size     = sensor_raw_info_ptr->mode_ptr[i].len;
+			input.fix_data[i] = sensor_raw_info_ptr->fix_ptr[i];
+		} else {
+			input.tuning_data[i].data_ptr = NULL;
+			input.tuning_data[i].size = 0;
 		}
-		/* ISP can't call the function of OEM */
-		/*rtn = sensor_isp_param_merge(sensor_raw_info_ptr, &cxt->sn_cxt.isp_update_data[i], i);
-		if (0 != rtn ) {
-			ISP_LOGE("isp get param error");
-		}*/
-		input.tuning_data[i].data_ptr = cxt->sn_cxt.isp_update_data[i].data_ptr;
-		input.tuning_data[i].size     = cxt->sn_cxt.isp_update_data[i].size;
-		ISP_LOGI("ISP_TOOL: input.tuning_data[%d].data_ptr = %p,input.tuning_data[i].size = %d", i, input.tuning_data[i].data_ptr, input.tuning_data[i].size);
 	}
+
 	rtn = isp_pm_update(cxt->handle_pm, ISP_PM_CMD_UPDATE_ALL_PARAMS, &input, PNULL);
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("isp param update failed");
@@ -1016,7 +1007,6 @@ static cmr_int _ispFixParamUpdateIOCtrl(cmr_handle isp_alg_handle, void *param_p
 			ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_ON_OFF_THR, (void*)&flash_param_ptr->cur.auto_flash_thr, NULL);
 		}
 	}
-	#endif
 	return rtn;
 }
 
@@ -1436,96 +1426,118 @@ static cmr_int _ispSetAeLockUnlock(cmr_handle isp_alg_handle, void *param_ptr, i
 static cmr_int _ispDenoiseParamRead(cmr_handle isp_alg_handle, void *param_ptr, int (*call_back)())
 {
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct sensor_raw_info          *raw_sensor_ptr = cxt->sn_cxt.sn_raw_info;
+	struct sensor_raw_info *raw_sensor_ptr = cxt->sn_cxt.sn_raw_info;
 	struct isp_mode_param *mode_common_ptr = (struct isp_mode_param *)raw_sensor_ptr->mode_ptr[0].addr;
-	struct denoise_param_update     *update_param = (struct denoise_param_update*)param_ptr;
+	struct denoise_param_update *update_param = (struct denoise_param_update*)param_ptr;
 	uint32_t i;
+	struct sensor_raw_fix_info *fix_data_ptr = PNULL;
+	struct sensor_nr_param *nr_param_ptr = PNULL;
+	struct sensor_nr_fix_info *nr_fix = PNULL;
+	fix_data_ptr = raw_sensor_ptr->fix_ptr[0];
+	nr_fix = &raw_sensor_ptr->nr_fix;
 
 	if (NULL == param_ptr) {
 		return ISP_PARAM_NULL;
 	}
-	#if 0
+
+//	if(cxt->commn_cxt.multi_nr_flag == SENSOR_MULTI_MODE_FLAG) {
+		update_param->multi_nr_flag = SENSOR_MULTI_MODE_FLAG;
+		update_param->nr_scene_map_ptr = nr_fix->nr_scene_ptr;
+		update_param->nr_level_number_map_ptr = nr_fix->nr_level_number_ptr;
+		update_param->nr_default_level_map_ptr = nr_fix->nr_default_level_ptr;
+	if (update_param->nr_level_number_map_ptr) {
+		 ISP_LOGI("ISP_TOOL:update_param->nr_level_number_map_ptr sizeof = %d", sizeof(update_param->nr_level_number_map_ptr));
+	} else {
+		 ISP_LOGI("ISP_TOOL:_ispDenoiseParamRead nr map is null");
+	}
+//	} else {
+//		update_param->multi_nr_flag = 0x0;
+//		update_param->nr_scene_map_ptr = PNULL;
+//		update_param->nr_level_map_ptr = PNULL;
+//	}
+//	update_param->multi_nr_flag = SENSOR_MULTI_MODE_FLAG;
+//	update_param->nr_scene_map_ptr = fix_data_ptr->nr.nr_map_group.nr_scene_map_ptr;
+//	update_param->nr_level_map_ptr = fix_data_ptr->nr.nr_map_group.nr_level_map_ptr;
 	for (i = 0; i < mode_common_ptr->block_num; i++) {
 		struct isp_block_header *header = &(mode_common_ptr->block_header[i]);
 		uint8_t *data = (uint8_t*)mode_common_ptr + header->offset;
 
 		switch (header->block_id) {
-		case ISP_BLK_BPC: {
-			struct sensor_bpc_param* block = (struct sensor_bpc_param*)data;
-			update_param->bpc_level_ptr = (struct sensor_bpc_level *)block->param_ptr;
-			update_param->multi_mode_enable = block->reserved[0];
-			break;
-		}
-		case ISP_BLK_GRGB: {
-			struct sensor_grgb_param* block = (struct sensor_grgb_param*)data;
-			update_param->grgb_level_ptr = (struct sensor_grgb_level *)block->param_ptr;
-			update_param->multi_mode_enable = block->reserved[0];
-			break;
-		}
-		case ISP_BLK_NLM: {
-			struct sensor_nlm_param* block = (struct sensor_nlm_param*)data;
-			update_param->nlm_level_ptr = (struct sensor_nlm_level *)block->param_nlm_ptr;
-			update_param->vst_level_ptr = (struct sensor_vst_level *)block->param_vst_ptr;
-			update_param->ivst_level_ptr = (struct sensor_ivst_level *)block->param_ivst_ptr;
-			//update_param->flat_offset_level_ptr = (struct sensor_flat_offset_level *)block->param_flat_offset_ptr;
-	//		update_param->multi_mode_enable = block->reserved[0];
-			break;
-		}
-		case ISP_BLK_CFA: {
-			struct sensor_cfa_param* block = (struct sensor_cfa_param*)data;
-			update_param->cfae_level_ptr = (struct sensor_cfai_level *)block->param_ptr;
-			update_param->multi_mode_enable = block->reserved[0];
-			break;
-		}
-		case ISP_BLK_YUV_PRECDN: {
-			struct sensor_yuv_precdn_param* block = (struct sensor_yuv_precdn_param*)data;
-			update_param->yuv_precdn_level_ptr = (struct sensor_yuv_precdn_level *)block->param_ptr;
-			update_param->multi_mode_enable = block->reserved3[0];
-			break;
-		}
-		case ISP_BLK_UV_CDN: {
-			struct sensor_uv_cdn_param* block = (struct sensor_uv_cdn_param*)data;
-			update_param->uv_cdn_level_ptr = (struct sensor_uv_cdn_level *)block->param_ptr;
-			update_param->multi_mode_enable = block->reserved2[0];
-			break;
-		}
-		case ISP_BLK_EDGE: {
-			struct sensor_ee_param* block = (struct sensor_ee_param*)data;
-			update_param->ee_level_ptr = (struct sensor_ee_level *)block->param_ptr;
-			update_param->multi_mode_enable = block->reserved[0];
-			break;
-		}
-		case ISP_BLK_UV_POSTCDN: {
-			struct sensor_uv_postcdn_param* block = (struct sensor_uv_postcdn_param*)data;
-			update_param->uv_postcdn_level_ptr = (struct sensor_uv_postcdn_level *)block->param_ptr;
-			update_param->multi_mode_enable = block->reserved[0];
-			break;
-		}
-		case ISP_BLK_IIRCNR_IIR: {
-			struct sensor_iircnr_param* block = (struct sensor_iircnr_param*)data;
-			update_param->iircnr_level_ptr = (struct sensor_iircnr_level *)block->param_ptr;
-			update_param->multi_mode_enable = block->reserved[0];
-			break;
-		}
-		case ISP_BLK_IIRCNR_YRANDOM: {
-			struct sensor_iircnr_yrandom_param* block = (struct sensor_iircnr_yrandom_param*)data;
-			update_param->iircnr_yrandom_level_ptr = (struct sensor_iircnr_yrandom_level *)block->param_ptr;
-			update_param->multi_mode_enable = block->reserved[0];
-			break;
-		}
-		case ISP_BLK_UVDIV: {
-			struct sensor_cce_uvdiv_param* block = (struct sensor_cce_uvdiv_param*)data;
-			update_param->cce_uvdiv_level_ptr = (struct sensor_cce_uvdiv_level *)block->param_ptr;
-			update_param->multi_mode_enable = block->reserved1[0];
-			break;
-		}
-		default:
-			break;
+			case ISP_BLK_PDAF_CORRECT: {
+				update_param->pdaf_correction_level_ptr = fix_data_ptr->nr.nr_set_group.pdaf_correct;//0x14
+				break;
+			}
+			case ISP_BLK_BPC: {
+				update_param->bpc_level_ptr = fix_data_ptr->nr.nr_set_group.bpc;//0x19
+				break;
+			}
+			case ISP_BLK_GRGB: {
+				update_param->grgb_level_ptr = fix_data_ptr->nr.nr_set_group.grgb;//0x1A
+				break;
+			}
+			case ISP_BLK_NLM: {
+				update_param->nlm_level_ptr = fix_data_ptr->nr.nr_set_group.nlm;//0x15
+				update_param->vst_level_ptr = fix_data_ptr->nr.nr_set_group.vst;//0x16
+				update_param->ivst_level_ptr = fix_data_ptr->nr.nr_set_group.ivst;//0x17
+				break;
+			}
+			case ISP_BLK_RGB_DITHER: {
+				update_param->rgb_dither_level_ptr = fix_data_ptr->nr.nr_set_group.rgb_dither;//0x18
+				break;
+			}
+			case ISP_BLK_CFA: {
+				update_param->cfae_level_ptr = fix_data_ptr->nr.nr_set_group.cfa;//0x1B
+				break;
+			}
+			case ISP_BLK_RGB_AFM: {
+				update_param->rgb_afm_level_ptr = fix_data_ptr->nr.nr_set_group.rgb_afm;//0x1C
+				break;
+			}
+			case ISP_BLK_UVDIV: {
+				update_param->cce_uvdiv_level_ptr = fix_data_ptr->nr.nr_set_group.uvdiv;//0x1D
+				break;
+			}
+			case ISP_BLK_3DNR_PRE: {
+				update_param->dnr_pre_level_ptr = fix_data_ptr->nr.nr_set_group.nr3d_pre;//0x1E
+				break;
+			}
+			case ISP_BLK_3DNR_CAP: {
+				update_param->dnr_cap_level_ptr = fix_data_ptr->nr.nr_set_group.nr3d_cap;//0x1F
+				break;
+			}
+			case ISP_BLK_EDGE: {
+				update_param->ee_level_ptr = fix_data_ptr->nr.nr_set_group.edge;//0x20
+				break;
+			}
+			case ISP_BLK_YUV_PRECDN: {
+				update_param->yuv_precdn_level_ptr = fix_data_ptr->nr.nr_set_group.yuv_precdn;//0x21
+				break;
+			}
+			case ISP_BLK_YNR: {
+				update_param->ynr_level_ptr = fix_data_ptr->nr.nr_set_group.ynr;//0x22
+				break;
+			}
+			case ISP_BLK_UV_CDN: {
+				update_param->uv_cdn_level_ptr = fix_data_ptr->nr.nr_set_group.cdn;//0x23
+				break;
+			}
+			case ISP_BLK_UV_POSTCDN: {
+				update_param->uv_postcdn_level_ptr = fix_data_ptr->nr.nr_set_group.postcdn;//0x24
+				break;
+			}
+			case ISP_BLK_IIRCNR_IIR: {
+				update_param->iircnr_level_ptr = fix_data_ptr->nr.nr_set_group.iircnr;//0x25
+				break;
+			}
+			case ISP_BLK_YUV_NOISEFILTER: {
+				update_param->yuv_noisefilter_level_ptr = fix_data_ptr->nr.nr_set_group.yuv_noisefilter;//0x26
+				break;
+			}
+			default:
+				break;
 		}
 	}
 
-	ISP_LOGI("_ispDenoiseParamRead over, multi_mode_enable = 0x%x", update_param->multi_mode_enable);
-	#endif
 	return ISP_SUCCESS;
 }
 

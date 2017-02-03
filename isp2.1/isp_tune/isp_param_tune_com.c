@@ -79,9 +79,7 @@ static int32_t _ispParserDownParam(isp_handle isp_handler, void* in_param_ptr)
 	void* data_addr=(void*)&param_ptr[4];
 	uint32_t data_len =packet_len-0x10;
 	uint32_t mode_offset = 0;
-	/* ISP can't call the function of OEM */
-	//SENSOR_EXP_INFO_T* sensor_info_ptr=Sensor_GetInfo();
-	SENSOR_EXP_INFO_T* sensor_info_ptr=NULL;
+	SENSOR_EXP_INFO_T* sensor_info_ptr=Sensor_GetInfo();
 	CMR_LOGE(" _ispParserDownParam");
 
 	while(mode_offset<data_len) {
@@ -115,9 +113,7 @@ static int32_t _ispParserDownLevel(isp_handle isp_handler, void* in_param_ptr)
 
 	if(ISP_CTRL_AF==cmd)
 	{
-		/* ISP can't call the function of OEM */
-		//SENSOR_EXP_INFO_T_PTR sensor_info_ptr=Sensor_GetInfo();
-		SENSOR_EXP_INFO_T_PTR sensor_info_ptr=NULL;
+		SENSOR_EXP_INFO_T_PTR sensor_info_ptr=Sensor_GetInfo();
 		struct isp_af_win af_param;
 		struct isp_af_win* in_af_ptr=(struct isp_af_win*)&param_ptr[3];
 		uint16_t img_width=(param_ptr[2]>>0x10)&0xffff;
@@ -152,15 +148,14 @@ static int32_t _ispParserDownLevel(isp_handle isp_handler, void* in_param_ptr)
 static int32_t _ispParserUpMainInfo(void* rtn_param_ptr)
 {
 	uint32_t rtn=0x00;
-	/* ISP can't call the function of OEM */
-	//SENSOR_EXP_INFO_T_PTR sensor_info_ptr=Sensor_GetInfo();
-	SENSOR_EXP_INFO_T_PTR sensor_info_ptr=NULL;
+	SENSOR_EXP_INFO_T_PTR sensor_info_ptr=Sensor_GetInfo();
 	struct isp_parser_buf_rtn* rtn_ptr=(struct isp_parser_buf_rtn*)rtn_param_ptr;
 	uint32_t i=0x00;
 	uint32_t j=0x00;
 	uint32_t* data_addr=NULL;
 	uint32_t data_len =0x10;
 	struct isp_main_info* param_ptr=NULL;
+	struct sensor_version_info *temp_param_version = NULL;
 
 	data_len=sizeof(struct isp_main_info);
 	data_addr=ispParserAlloc(data_len);
@@ -168,6 +163,14 @@ static int32_t _ispParserUpMainInfo(void* rtn_param_ptr)
 		CMR_LOGE("ispParserAlloc fail");
 		return -1;
 	}
+
+	temp_param_version = ispParserAlloc(ISP_PARASER_VERSION_INFO_SIZE);
+	//CMR_LOGE("ISP_TOOL:temp_param_version size=%d", sizeof(temp_param_version));
+	if (!temp_param_version) {
+		CMR_LOGE("temp_param_version ispParserAlloc fail");
+		return -1;
+	}
+
 	param_ptr=(struct isp_main_info*)data_addr;
 
 	memset((void*)data_addr, 0x00, sizeof(struct isp_main_info));
@@ -179,15 +182,22 @@ static int32_t _ispParserUpMainInfo(void* rtn_param_ptr)
 		/*&&(NULL!=sensor_info_ptr->raw_info_ptr)*/)
 	{
 		/*get sensor name*/
-		strcpy((char*)&param_ptr->sensor_id, sensor_info_ptr->name);
-		if(NULL != sensor_info_ptr->raw_info_ptr)
+		if(NULL != sensor_info_ptr->raw_info_ptr) {
 			param_ptr->version_id = sensor_info_ptr->raw_info_ptr->version_info->version_id;
-		else
+			strcpy((char*)&param_ptr->sensor_id,
+				(char*)&sensor_info_ptr->raw_info_ptr->version_info->sensor_ver_name.sensor_name);
+		} else {
 			param_ptr->version_id = TOOL_DEFAULT_VER;
+			memset((char*)&param_ptr->sensor_id,0,sizeof(param_ptr->sensor_id));
+		}
 
 		/* get version info: version_info[0] is tune version; version_info[1] is code version */
 		memcpy(param_ptr->version_info[0], (char *)sensor_info_ptr->raw_info_ptr->version_info, ISP_PARASER_VERSION_INFO_SIZE);
-		memcpy(param_ptr->version_info[1], (char *)Sensor_GetVersion(), ISP_PARASER_VERSION_INFO_SIZE);
+		temp_param_version->ae_struct_version = AE_VERSION;
+		temp_param_version->awb_struct_version = AWB_VERSION;
+		temp_param_version->lnc_struct_version = LNC_VERSION;
+		temp_param_version->nr_struct_version = NR_VERSION;
+		memcpy(param_ptr->version_info[1], (char *)temp_param_version, ISP_PARASER_VERSION_INFO_SIZE);
 
 		/*set preview param*/
 		param_ptr->preview_size=(sensor_info_ptr->sensor_mode_info[1].width<<0x10)&0xffff0000;
@@ -232,6 +242,8 @@ static int32_t _ispParserUpMainInfo(void* rtn_param_ptr)
 #endif
 	}
 
+	ispParserFree(temp_param_version);
+
 	return rtn;
 }
 
@@ -239,9 +251,7 @@ static int32_t _ispParserUpParam(void* rtn_param_ptr)
 {
 	int32_t rtn=0x00;
 	int32_t i =0;
-	/* ISP can't call the function of OEM */
-	//SENSOR_EXP_INFO_T_PTR sensor_info_ptr=Sensor_GetInfo();
-	SENSOR_EXP_INFO_T_PTR sensor_info_ptr=NULL;
+	SENSOR_EXP_INFO_T_PTR sensor_info_ptr=Sensor_GetInfo();
 	uint32_t version_id=sensor_info_ptr->raw_info_ptr->version_info->version_id;
 	struct sensor_raw_info* sensor_raw_info_ptr=(struct sensor_raw_info*)sensor_info_ptr->raw_info_ptr;
 	struct isp_parser_buf_rtn* rtn_ptr=(struct isp_parser_buf_rtn*)rtn_param_ptr;
@@ -351,6 +361,7 @@ static int32_t _ispParserReadSensorReg(void* in_param_ptr, void* rtn_param_ptr)
 	uint16_t reg_addr=(uint16_t)in_ptr->param[1];
 	uint16_t reg_data=0x00;
 	uint32_t i=0x00;
+	struct sensor_drv_context *current_sensor_cxt = (struct sensor_drv_context *)sensor_get_dev_cxt();
 
 	rtn_ptr->buf_addr = (unsigned long)NULL;
 	rtn_ptr->buf_len = 0x00;
@@ -366,8 +377,7 @@ static int32_t _ispParserReadSensorReg(void* in_param_ptr, void* rtn_param_ptr)
 
 		for(i=0x00; i<reg_num; i++)
 		{
-			/* ISP can't call the function of OEM */
-			//reg_data=Sensor_ReadReg(reg_addr);
+			reg_data = hw_Sensor_ReadReg(current_sensor_cxt->sensor_hw_handler, reg_addr);
 			data_addr[3+i*2]=(uint32_t)reg_addr;
 			data_addr[4+i*2]=(uint32_t)reg_data;
 			reg_addr++;
@@ -390,13 +400,13 @@ static int32_t _ispParserWriteSensorReg(void* in_param_ptr)
 	uint16_t reg_addr=0x00;
 	uint16_t reg_data=0x00;
 	uint32_t i=0x00;
+	struct sensor_drv_context *current_sensor_cxt = (struct sensor_drv_context *)sensor_get_dev_cxt();
 
 	for(i=0x00; i<reg_num; i++)
 	{
 		reg_addr=(uint16_t)in_ptr->param[2+i*2];
 		reg_data=(uint16_t)in_ptr->param[3+i*2];
-		/* ISP can't call the function of OEM */
-		//Sensor_WriteReg(reg_addr, reg_data);
+		hw_Sensor_WriteReg(current_sensor_cxt->sensor_hw_handler, reg_addr, reg_data);
 	}
 
 	return rtn;

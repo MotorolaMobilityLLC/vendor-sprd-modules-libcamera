@@ -46,7 +46,7 @@ typedef int32_t (*isp_fun)(isp_handle isp_handler, void* param_ptr);
 
 #define ISP_TOOL_CMD_ID 0x80000000
 
-#define ISP_PARASER_VERSION_INFO_SIZE 80
+#define ISP_PARASER_VERSION_INFO_SIZE sizeof(struct sensor_version_info)
 
 //parser cmd
 #define ISP_PARSER_DOWN 0x0000
