@@ -1572,7 +1572,7 @@ static int32_t _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 		for (i = 0; i < init_param->param_num && i < AE_MAX_PARAM_NUM; ++i) {
 			rtn = _unpack_tunning_param(init_param->param[i].param, init_param->param[i].size, &cxt->tuning_param[i]);
 			memcpy(cxt->tuning_param[i].backup_ae_table, cxt->tuning_param[i].ae_table, sizeof(struct ae_exp_gain_table));
-			exposure_time2line(&(cxt->tuning_param[i]), init_param->resolution_info.line_time,
+			exposure_time2line(&(cxt->tuning_param[i]), init_param->resolution_info.line_time/100,
 								cxt->tuning_param[i].ae_tbl_exp_mode);
 
 			if (AE_SUCCESS == rtn)
@@ -1587,7 +1587,7 @@ static int32_t _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 
 		cxt->snr_info = init_param->resolution_info;
 		cxt->cur_status.frame_size = init_param->resolution_info.frame_size;
-		cxt->cur_status.line_time = init_param->resolution_info.line_time;
+		cxt->cur_status.line_time = init_param->resolution_info.line_time/100;
 		trim.x = 0;
 		trim.y = 0;
 		trim.w = init_param->resolution_info.frame_size.w;
@@ -2293,7 +2293,7 @@ static int32_t _set_video_start(struct ae_ctrl_cxt *cxt, void *param)
 
 	cxt->snr_info = work_info->resolution_info;
 	cxt->cur_status.frame_size = work_info->resolution_info.frame_size;
-	cxt->cur_status.line_time = work_info->resolution_info.line_time;
+	cxt->cur_status.line_time = work_info->resolution_info.line_time/100;
 
 	cxt->start_id = AE_START_ID;
 	cxt->monitor_unit.mode = AE_STATISTICS_MODE_CONTINUE;
@@ -2429,7 +2429,7 @@ void* ae_sprd_init(void *param, void *in_param)
 	/*AE_LOGD("resol w %d h %d lt %d",
 			work_param.resolution_info.frame_size.w,
 			work_param.resolution_info.frame_size.h,
-			work_param.resolution_info.line_time);*/
+			work_param.resolution_info.line_time/100);*/
 
 	cxt->cur_status.ae_initial = AE_PARAM_INIT;
 	rtn = _set_ae_param(cxt, init_param, &work_param, AE_PARAM_INIT);
