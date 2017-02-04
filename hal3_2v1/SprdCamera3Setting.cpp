@@ -3478,10 +3478,10 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 	/**add for 3d calibration update metadata end*/
 
 	if (frame_settings.exists(ANDROID_SPRD_ZSL_ENABLED)) {
-		s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled = 0;//frame_settings.find(ANDROID_SPRD_ZSL_ENABLED).data.u8[0];
+		s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled = frame_settings.find(ANDROID_SPRD_ZSL_ENABLED).data.u8[0];
 		/**add for 3d calibration force set sprd zsl enable begin*/
 		if ( s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled )
-			s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled = 0;//s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled;
+			s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled = s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled;
 		/**add for 3d calibration force set sprd zsl enable end*/
 		pushAndroidParaTag(ANDROID_SPRD_ZSL_ENABLED);
 		HAL_LOGD("camera id %d,sprd zsl enabled is %d", mCameraId,s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled);
