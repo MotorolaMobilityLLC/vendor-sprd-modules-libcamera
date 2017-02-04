@@ -1732,7 +1732,7 @@ static int32_t _ispSetCaptureRawMode(isp_handle isp_handler, void *param_ptr, in
 	isp_video_start.work_mode = 1;
 	isp_video_start.size.w = size_param->width;
 	isp_video_start.size.h = size_param->height;
-	rtn = isp_pm_ioctl(handle->handle_pm, ISP_PM_CMD_GET_MODEID_BY_RESOLUTION, &isp_video_start, &mode);
+	//rtn = isp_pm_ioctl(handle->handle_pm, ISP_PM_CMD_GET_MODEID_BY_RESOLUTION, &isp_video_start, &mode);
 	handle->mode_flag = mode;
 	return rtn;
 }
