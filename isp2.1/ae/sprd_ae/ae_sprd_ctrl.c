@@ -2437,7 +2437,7 @@ void* ae_sprd_init(void *param, void *in_param)
 	rtn = _fd_info_init(cxt);
 
 	/*
-	 * create write/effective E&G thread 
+	 * create write/effective E&G thread
 	 */
 	rtn = cmr_thread_create(&cxt->thread_handle, AE_THREAD_QUEUE_NUM, (msg_process) ae_write_thread_proc, (void *)cxt);
 	if (rtn) {

@@ -80,14 +80,14 @@ static cmr_int isp_get_rgb_gain(cmr_handle isp_fw_handle, cmr_u32 *param)
 	struct isp_pm_param_data        param_data = {0};
 	struct isp_pm_ioctl_input       input = {NULL, 0};
 	struct isp_pm_ioctl_output      output = {NULL, 0};
-	struct isp_dev_rgb_gain_info_v1 *gain_info;
+	struct isp_dev_rgb_gain_info *gain_info;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context*)isp_fw_handle;
 
 	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_RGB_GAIN, NULL, 0);
 	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
 	if (ISP_SUCCESS == rtn && 1 == output.param_num) {
-	//	gain_info = (struct isp_dev_rgb_gain_info_v1*)output.param_data->data_ptr;
-//*param = gain_info->global_gain;
+		 gain_info = (struct isp_dev_rgb_gain_info*)output.param_data->data_ptr;
+		*param = gain_info->global_gain;
 	} else {
 		*param = 4096;
 	}
@@ -1036,7 +1036,6 @@ cmr_int isp_alg_thread_proc(struct cmr_msg *message, void* p_data)
 		break;
 	}
 	case ISP_CTRL_EVT_SOF:
-		ISP_LOGE("SOF:ISP_CTRL_EVT_SOF");
 		if (cxt->gamma_sof_cnt_eb) {
 			cxt->gamma_sof_cnt++;
 			if (cxt->gamma_sof_cnt >= 2) {
