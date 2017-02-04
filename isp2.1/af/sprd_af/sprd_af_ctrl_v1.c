@@ -894,6 +894,8 @@ extern "C" {
 
 // len
 	static void lens_move_to(af_ctrl_t * af, int32_t pos) {
+		struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
+		struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
 		// AF_LOGD("pos = %d", pos);
 		uint16_t last_pos = 0;
 		if_get_motor_pos(&last_pos, af);
@@ -907,14 +909,16 @@ extern "C" {
 					last_pos -= af->soft_landing_step;
 				else
 					last_pos = pos;
-				af->vcm_ops.set_pos(af->caller, last_pos);	// must be provided
+				//af->vcm_ops.set_pos(af->caller, last_pos);    // must be provided
+				af->vcm_ops.set_pos(isp_ctx->ioctrl_ptr->caller_handler, last_pos);	// must be provided
 				usleep(1000 * af->soft_landing_dly);
 				AF_LOGD("pos,last_pos,step,dly = %d %d %d %d", pos, last_pos, af->soft_landing_step,
 					af->soft_landing_dly);
 			}
 			//*/
 			if (last_pos != pos)
-				af->vcm_ops.set_pos(af->caller, pos);	// must be provided
+				//af->vcm_ops.set_pos(af->caller, pos); // must be provided
+				af->vcm_ops.set_pos(isp_ctx->ioctrl_ptr->caller_handler, pos);	// must be provided
 			af->lens.pos = pos;
 		}
 	}
@@ -925,8 +929,11 @@ extern "C" {
 	}
 
 	static int32_t lens_move_to_infi(af_ctrl_t * af, uint16 pos) {
+		struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
+		struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
 		if (NULL != af->vcm_ops.set_pos) {
-			af->vcm_ops.set_pos(af->caller, pos);	// must be provided
+			//af->vcm_ops.set_pos(af->caller, pos); // must be provided
+			af->vcm_ops.set_pos(isp_ctx->ioctrl_ptr->caller_handler, pos);
 		}
 		return 0;
 	}
@@ -2379,10 +2386,13 @@ v=v>(max)?(max):v; hist[v]++;}
 		// TODO
 		af_ctrl_t *af = cookie;
 		//isp_ctrl_context *isp = af->isp_ctx;
+		struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
+		struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
 
 		// get otp
 		if (NULL != af->vcm_ops.get_otp) {
-			af->vcm_ops.get_otp(af->caller, &pAF_OTP->INF, &pAF_OTP->MACRO);
+			//af->vcm_ops.get_otp(af->caller, &pAF_OTP->INF, &pAF_OTP->MACRO);
+			af->vcm_ops.get_otp(isp_ctx->ioctrl_ptr->caller_handler, &pAF_OTP->INF, &pAF_OTP->MACRO);
 			af->fv.AF_OTP.bIsExist = T_LENS_BY_OTP;
 			AF_LOGD("otp (infi,macro) = (%d,%d)", pAF_OTP->INF, pAF_OTP->MACRO);
 		}
@@ -2394,9 +2404,12 @@ v=v>(max)?(max):v; hist[v]++;}
 		// TODO
 		af_ctrl_t *af = cookie;
 		//isp_ctrl_context *isp = af->isp_ctx;
+		struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
+		struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
 		// read
 		if (NULL != af->vcm_ops.get_motor_pos) {
-			af->vcm_ops.get_motor_pos(af->caller, motor_pos);
+			//af->vcm_ops.get_motor_pos(af->caller, motor_pos);
+			af->vcm_ops.get_motor_pos(isp_ctx->ioctrl_ptr->caller_handler, motor_pos);
 			AF_LOGD("motor pos in register %d", *motor_pos);
 		}
 
@@ -2407,9 +2420,12 @@ v=v>(max)?(max):v; hist[v]++;}
 		// TODO
 		af_ctrl_t *af = cookie;
 		//isp_ctrl_context *isp = af->isp_ctx;
+		struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
+		struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
 
 		if (NULL != af->vcm_ops.set_motor_bestmode)
-			af->vcm_ops.set_motor_bestmode(af->caller);
+			//af->vcm_ops.set_motor_bestmode(af->caller);
+			af->vcm_ops.set_motor_bestmode(isp_ctx->ioctrl_ptr->caller_handler);
 
 		return 0;
 	}
@@ -2683,10 +2699,13 @@ v=v>(max)?(max):v; hist[v]++;}
 	}
 
 	static uint16_t get_vcm_registor_pos(af_ctrl_t * af) {
+		struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
+		struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
 		uint16_t pos = 0;
 
 		if (NULL != af->vcm_ops.get_motor_pos) {
-			af->vcm_ops.get_motor_pos(af->caller, &pos);
+			//af->vcm_ops.get_motor_pos(af->caller, &pos);
+			af->vcm_ops.get_motor_pos(isp_ctx->ioctrl_ptr->caller_handler, &pos);
 			af->fv.vcm_register = pos;
 			AF_LOGD("VCM registor pos :%d", af->fv.vcm_register);
 		}
@@ -2707,17 +2726,23 @@ v=v>(max)?(max):v; hist[v]++;}
 	};
 */
 	static void get_vcm_mode(af_ctrl_t * af) {
+		struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
+		struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
 
 		if (NULL != af->vcm_ops.get_test_vcm_mode)
-			af->vcm_ops.get_test_vcm_mode(af->caller);
+			//af->vcm_ops.get_test_vcm_mode(af->caller);
+			af->vcm_ops.get_test_vcm_mode(isp_ctx->ioctrl_ptr->caller_handler);
 
 		return;
 	}
 
 	static void set_vcm_mode(af_ctrl_t * af, char *vcm_mode) {
+		struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
+		struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
 
 		if (NULL != af->vcm_ops.set_test_vcm_mode)
-			af->vcm_ops.set_test_vcm_mode(af->caller, vcm_mode);
+			//af->vcm_ops.set_test_vcm_mode(af->caller, vcm_mode);
+			af->vcm_ops.set_test_vcm_mode(isp_ctx->ioctrl_ptr->caller_handler, vcm_mode);
 
 		return;
 	}
@@ -3296,7 +3321,7 @@ v=v>(max)?(max):v; hist[v]++;}
 	cmr_handle sprd_afv1_init(void *in, void *out) {
 #if 1
 		AF_LOGE("B");
-//		struct af_init_in_param *init_param = (struct af_init_in_param *)in;
+//      struct af_init_in_param *init_param = (struct af_init_in_param *)in;
 		struct afctrl_init_in *init_param = (struct afctrl_init_in *)in;
 		struct afctrl_init_out *result = (struct afctrl_init_out *)out;
 		struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)init_param->caller_handle;
@@ -3521,7 +3546,7 @@ v=v>(max)?(max):v; hist[v]++;}
 #if 1
 		//af_ctrl_t *af = isp->handle_af;
 		af_ctrl_t *af = (af_ctrl_t *) handle;
-		struct afctrl_calc_in * inparam = (struct afctrl_calc_in *)in;
+		struct afctrl_calc_in *inparam = (struct afctrl_calc_in *)in;
 		struct afctrl_calc_out *result = (struct afctrl_calc_out *)out;
 		cmr_int rtn = AF_SUCCESS;
 		nsecs_t system_time0 = 0;

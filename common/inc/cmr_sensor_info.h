@@ -152,12 +152,12 @@ struct sensor_raw_ioctrl {
 	cmr_int(*write_aec_info) (cmr_handle caller_handler, void *param);
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
 	//af control and DVT test funcs valid only af_enable works
-	uint32_t (*set_pos)(cmr_handle, uint16_t pos);
-	uint32_t (*get_otp)(cmr_handle, uint16_t *inf,uint16_t *macro);
-	uint32_t (*get_motor_pos)(cmr_handle, uint16_t *pos);
-	uint32_t (*set_motor_bestmode)(cmr_handle);
-	uint32_t (*get_test_vcm_mode)(cmr_handle);
-	uint32_t (*set_test_vcm_mode)(cmr_handle, char* vcm_mode);
+	uint32_t (*set_pos)(cmr_handle caller_handler, uint16_t pos);
+	uint32_t (*get_otp)(cmr_handle caller_handler, uint16_t *inf,uint16_t *macro);
+	uint32_t (*get_motor_pos)(cmr_handle caller_handler, uint16_t *pos);
+	uint32_t (*set_motor_bestmode)(cmr_handle caller_handler);
+	uint32_t (*get_test_vcm_mode)(cmr_handle caller_handler);
+	uint32_t (*set_test_vcm_mode)(cmr_handle caller_handler, char* vcm_mode);
 #endif
 };
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
