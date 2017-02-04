@@ -119,6 +119,9 @@ struct jpeg_enc {
 	struct img_data_end        src_endian;
 	int                         src_fd;
 	int                         stream_buf_fd;
+	cmr_u32                    flip;
+	cmr_u32                    mirror;
+	cmr_u32                    rotation;
 };
 
 static cmr_int _dec_next(cmr_handle dec_handle, struct jpeg_codec_context  *jcontext, struct jpeg_dec_next_param *param_ptr);
@@ -314,6 +317,9 @@ static cmr_int _enc_start(cmr_handle handle, struct jpeg_codec_context *jcontext
 #endif
 	jenc_parm_ptr->stream_buf_len = jpeg_enc_buf_len;
 	jenc_parm_ptr->stream_size = 0;
+	jenc_parm_ptr->flip = enc_cxt_ptr->flip;
+	jenc_parm_ptr->mirror = enc_cxt_ptr->mirror;
+	jenc_parm_ptr->rotation = enc_cxt_ptr->rotation;
 
 	if (_jpeg_is_stop(jcontext)) {
 		CMR_LOGI("jpeg: cancel");
@@ -1132,6 +1138,9 @@ static cmr_int _get_enc_start_param(struct jpeg_enc *cxt_ptr,
 
 	cxt_ptr->slice_height = in_parm_ptr->slice_height;
 	cxt_ptr->slice_mod = in_parm_ptr->slice_mod;
+	cxt_ptr->flip = in_parm_ptr->flip;
+	cxt_ptr->mirror = in_parm_ptr->mirror;
+	cxt_ptr->rotation = in_parm_ptr->rotation;
 
 	return ret;
 }

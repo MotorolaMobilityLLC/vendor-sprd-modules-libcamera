@@ -214,3 +214,24 @@ out:
 	CMR_LOGI("ret=%ld",ret);
 	return ret;
 }
+
+cmr_int cmr_get_mirror(enum cmr_mirror_type  *mirror_type) {
+	cmr_int              ret = CMR_CAMERA_SUCCESS;
+	enum cmr_mirror_type mirror = CMR_MIRROR_DEFAULT;
+
+#ifdef CONFIG_CAMERA_MIRROR_DCAM
+	mirror = CMR_MIRROR_DCAM;
+#endif
+
+#ifdef CONFIG_CAMERA_MIRROR_JPG
+	mirror = CMR_MIRROR_JPG;
+#endif
+
+#ifdef CONFIG_CAMERA_MIRROR_CPP
+	mirror = CMR_MIRROR_CPP;
+#endif
+
+	*mirror_type = mirror;
+
+	return ret;
+}

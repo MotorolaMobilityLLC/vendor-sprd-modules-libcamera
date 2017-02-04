@@ -1475,13 +1475,20 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
 		p_exif_info->primary.data_struct_ptr->valid.Orientation = 1;
 		p_exif_info->primary.data_struct_ptr->Orientation =
 			setting_get_exif_orientation(hal_param->encode_rotation);
-			if(hal_param->sprd_zsl_enabled && 1 == parm->camera_id && 1 == hal_param->flip_on){
-				if(270 == hal_param->encode_rotation){
+
+		enum cmr_mirror_type  mirror_type = CMR_MIRROR_DEFAULT;
+		cmr_get_mirror(&mirror_type);
+		if (CMR_MIRROR_DCAM == mirror_type) {
+			if ((hal_param->sprd_zsl_enabled) && (1 == parm->camera_id) && (1 == hal_param->flip_on)){
+				if(270 == hal_param->encode_rotation)
 					p_exif_info->primary.data_struct_ptr->Orientation = ORIENTATION_ROTATE_90;
-				}else if(90 == hal_param->encode_rotation){
+				else if(90 == hal_param->encode_rotation)
 					p_exif_info->primary.data_struct_ptr->Orientation = ORIENTATION_ROTATE_270;
-				}
 			}
+		} else if (CMR_MIRROR_JPG == mirror_type) {
+			if ((1 == parm->camera_id) && (1 == hal_param->flip_on))
+				p_exif_info->primary.data_struct_ptr->Orientation = ORIENTATION_ROTATE_90;
+		}
 	}
 
 	if (NULL != p_exif_info->primary.img_desc_ptr) {

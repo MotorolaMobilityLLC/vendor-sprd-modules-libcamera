@@ -4253,9 +4253,33 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 	cmr_uint                       stream_size;
 	struct setting_context         *setting_cxt = &cxt->setting_cxt;
 	struct setting_cmd_parameter   setting_param;
+
+	cmr_bzero((void*)&enc_in_param, sizeof(enc_in_param));
+	cmr_bzero((void*)&setting_param, sizeof(setting_param));
+
 	setting_param.camera_id = cxt->camera_id;
 
 	sem_wait(&cxt->access_sm);
+
+	cmr_u32 rotation = 0;
+	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_ENCODE_ROTATION, &setting_param);
+	if (ret) {
+		CMR_LOGE("failed to get enc rotation %ld", ret);
+		goto exit;
+	}
+	rotation = setting_param.cmd_type_value;
+	enum cmr_mirror_type  mirror_type = CMR_MIRROR_DEFAULT;
+	cmr_get_mirror(&mirror_type);
+	ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_FLIP_ON, &setting_param);
+	if (ret)
+		CMR_LOGE("failed to get flip_on enabled flag %ld", ret);
+
+	if ((CMR_MIRROR_JPG == mirror_type) && (1 == setting_param.cmd_type_value)) {
+		if (90 == rotation || 270 == rotation)
+			enc_in_param.mirror = 1;// mirror
+		else if (0 == rotation || 180 == rotation)
+			enc_in_param.flip = 1; // flip
+	}
 
 	enc_in_param.slice_height = mean->slice_height;
 	enc_in_param.slice_mod = mean->slice_mode;
@@ -6987,18 +7011,22 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	rotation = setting_param.cmd_type_value;
 
 	/*for bug500099*/
-	ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_FLIP_ON, &setting_param);
-	if (ret) {
-		CMR_LOGE("failed to get preview sprd flip_on enabled flag %ld", ret);
-		goto exit;
-	}
-	out_param_ptr->flip_on = setting_param.cmd_type_value;
-	if (out_param_ptr->flip_on) {
-		CMR_LOGI("encode_rotation:%d, flip:%d", rotation, out_param_ptr->flip_on);
-		if (90 == rotation || 270 == rotation) {
-			out_param_ptr->flip_on = 0x1; // flip
-		} else if (0 == rotation || 180 == rotation) {
-			out_param_ptr->flip_on = 0x3; // mirror
+	enum cmr_mirror_type  mirror_type = CMR_MIRROR_DEFAULT;
+	cmr_get_mirror(&mirror_type);
+	if (CMR_MIRROR_DCAM == mirror_type) {
+		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_FLIP_ON, &setting_param);
+		if (ret) {
+			CMR_LOGE("failed to get preview sprd flip_on enabled flag %ld", ret);
+			goto exit;
+		}
+		out_param_ptr->flip_on = setting_param.cmd_type_value;
+		if (out_param_ptr->flip_on) {
+			CMR_LOGI("encode_rotation:%d, flip:%d", rotation, out_param_ptr->flip_on);
+			if (90 == rotation || 270 == rotation) {
+				out_param_ptr->flip_on = 0x1; // flip
+			} else if (0 == rotation || 180 == rotation) {
+				out_param_ptr->flip_on = 0x3; // mirror
+			}
 		}
 	}
 	//bug500099 front cam mirror end

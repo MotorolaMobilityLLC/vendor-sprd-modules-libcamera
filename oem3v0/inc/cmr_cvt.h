@@ -42,6 +42,13 @@ struct cmr_rot_param{
 	struct img_frm          dst_img;
 };
 
+enum cmr_mirror_type {
+	CMR_MIRROR_DEFAULT,
+	CMR_MIRROR_DCAM,
+	CMR_MIRROR_JPG,
+	CMR_MIRROR_CPP,
+};
+
 cmr_int cmr_rot_open(cmr_handle *rot_handle);
 cmr_int cmr_rot(struct cmr_rot_param *rot_param);
 cmr_int cmr_rot_close(cmr_handle rot_handle);
@@ -53,6 +60,7 @@ cmr_int cmr_scale_capability(cmr_handle scale_handle,cmr_u32 *width, cmr_u32 *sc
 int cmr_dma_copy_init(void);
 int cmr_dma_copy_deinit(void);
 int cmr_dma_cpy(struct _dma_copy_cfg_tag dma_copy_cfg);
+cmr_int cmr_get_mirror(enum cmr_mirror_type  *mirror_type);
 
 #ifdef __cplusplus
 }

@@ -28,6 +28,7 @@
 #include "cmr_grab.h"
 #include "cmr_sensor.h"
 #include "SprdOEMCamera.h"
+#include "cmr_cvt.h"
 
 #undef YUV_TO_ISP
 /**************************MCARO DEFINITION********************************************************************/
@@ -7293,11 +7294,13 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_
 		goto exit;
 	}
 
-	if ((handle->prev_cxt[camera_id].prev_param.flip_on)&&(1 == camera_id)){
+	enum cmr_mirror_type  mirror_type = CMR_MIRROR_DEFAULT;
+	cmr_get_mirror(&mirror_type);
+	if ((CMR_MIRROR_DCAM == mirror_type) && (handle->prev_cxt[camera_id].prev_param.flip_on) && (1 == camera_id))
 		chn_param.cap_inf_cfg.cfg.flip_on = handle->prev_cxt[camera_id].prev_param.flip_on;
-	}else {
+	else
 		chn_param.cap_inf_cfg.cfg.flip_on = 0;
-	}
+
 	CMR_LOGD("channel config flip:%d",chn_param.cap_inf_cfg.cfg.flip_on);
 
 	/*config channel*/
@@ -7649,11 +7652,14 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 			ret = CMR_CAMERA_FAIL;
 			goto exit;
 		}
-		if ((handle->prev_cxt[camera_id].prev_param.flip_on)&&(1 == camera_id)){
+
+		enum cmr_mirror_type  mirror_type = CMR_MIRROR_DEFAULT;
+		cmr_get_mirror(&mirror_type);
+		if ((CMR_MIRROR_DCAM == mirror_type) && (handle->prev_cxt[camera_id].prev_param.flip_on) && (1 == camera_id))
 			chn_param.cap_inf_cfg.cfg.flip_on = handle->prev_cxt[camera_id].prev_param.flip_on;
-		}else {
+		else
 			chn_param.cap_inf_cfg.cfg.flip_on = 0;
-		}
+
 		CMR_LOGI("channel config flip:%d",chn_param.cap_inf_cfg.cfg.flip_on);
 
 		ret = handle->ops.channel_cfg(handle->oem_handle, handle, camera_id, &chn_param, &channel_id, &endian);
