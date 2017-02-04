@@ -436,7 +436,7 @@ isp_s32 isp_set_fetch_param_v1(isp_handle isp_handler)
 	isp_s32 rtn = ISP_SUCCESS;
 	struct isp_interface_param_v1 *isp_context_ptr = (struct isp_interface_param_v1 *)isp_handler;
 	struct isp_dev_fetch_info_v1 *fetch_param_ptr = &isp_context_ptr->fetch;
-	struct isp_dev_fetch_addr *fetch_addr = &fetch_param_ptr->fetch_addr;
+	struct isp_dev_block_addr *fetch_addr = &fetch_param_ptr->fetch_addr;
 
 	fetch_param_ptr->bypass = ISP_ZERO;
 	fetch_param_ptr->subtract = ISP_ZERO;

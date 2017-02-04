@@ -1413,7 +1413,7 @@ static int camera_save_mipi_raw_to_file(cmr_handle snp_handle, char *name,
 	sprintf(tmp_str, "%d", exp);
 	strcat(file_name, tmp_str);
 
-	strcat(file_name, ".raw");
+	strcat(file_name, ".mipi_raw");
 	CMR_LOGI("file name %s", file_name);
 
 	fp = fopen(file_name, "wb");
