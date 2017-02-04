@@ -2498,6 +2498,7 @@ static cmr_int aealtek_set_capture_mode(struct aealtek_cxt *cxt_ptr, enum isp_ca
 		break;
 	}
 
+	ISP_LOGI("lib_cap_mode=%d",lib_cap_mode);
 	type = AE_SET_PARAM_CAPTURE_MODE;
 	in_param.ae_set_param_type = type;
 	param_ct_ptr->capture_mode = lib_cap_mode;
@@ -2700,7 +2701,7 @@ static cmr_int aealtek_work_capture(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 		goto exit;
 	}
 	cap_mode = in_ptr->work_param.capture_mode;
-
+	ISP_LOGI("cap_mode=%d",cap_mode);
 	ret = aealtek_set_capture_mode(cxt_ptr, cap_mode);
 	if (ret)
 		goto exit;
@@ -2846,6 +2847,7 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 		ret = aealtek_set_sync_mode(cxt_ptr, 1);
 
 	work_mode = in_ptr->work_param.work_mode;
+	ISP_LOGI("work_mode=%ld",in_ptr->work_param.work_mode);
 	switch (work_mode) {
 	case ISP3A_WORK_MODE_PREVIEW:
 		cxt_ptr->nxt_status.is_hdr_status = 0;
