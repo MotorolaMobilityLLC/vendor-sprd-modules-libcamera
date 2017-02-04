@@ -40,13 +40,13 @@ struct aectrl_cxt {
 	pthread_mutex_t ioctrl_sync_lock;
 };
 
-
 int32_t _isp_get_flash_cali_param(isp_pm_handle_t pm_handle, struct isp_flash_param **out_param_ptr)
 {
 	int32_t                         rtn = ISP_SUCCESS;
-	struct isp_pm_param_data        param_data = {0};
+	struct isp_pm_param_data        param_data;
 	struct isp_pm_ioctl_input       input = {NULL, 0};
 	struct isp_pm_ioctl_output      output = {NULL, 0};
+	memset(&param_data, 0, sizeof(param_data));
 
 	if (NULL == out_param_ptr) {
 		return ISP_PARAM_NULL;
@@ -176,8 +176,9 @@ static int32_t ae_get_system_time(void *handler, uint32_t *sec, uint32_t *usec)
 static int32_t ae_flash_get_charge(void *handler, struct ae_flash_cell *cell)
 {
 	int32_t                         ret = 0;
-	struct isp_flash_cell           isp_cell = {0};
+	struct isp_flash_cell           isp_cell;
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
+	memset(&isp_cell, 0, sizeof(isp_cell));
 
 	switch (cell->type) {
 	case AE_FLASH_TYPE_PREFLASH:
@@ -210,8 +211,9 @@ out:
 static int32_t ae_flash_get_time(void *handler, struct ae_flash_cell *cell)
 {
 	int32_t                         ret = 0;
-	struct isp_flash_cell           isp_cell = {0};
+	struct isp_flash_cell           isp_cell;
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
+	memset(&isp_cell, 0, sizeof(isp_cell));
 
 	switch (cell->type) {
 	case AE_FLASH_TYPE_PREFLASH:
@@ -243,9 +245,10 @@ out:
 static int32_t ae_flash_set_charge(void *handler, uint8_t type, struct ae_flash_element *element)
 {
 	int32_t                         ret = 0;
-	struct isp_flash_element        isp_ele = {0};
+	struct isp_flash_element        isp_ele;
 	uint8_t                         isp_type = 0;
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
+	memset(&isp_ele, 0, sizeof(isp_ele));
 
 	switch (type) {
 	case AE_FLASH_TYPE_PREFLASH:
@@ -270,9 +273,10 @@ out:
 static int32_t ae_flash_set_time(void *handler, uint8_t type, struct ae_flash_element *element)
 {
 	int32_t                         ret = 0;
-	struct isp_flash_element        isp_ele = {0};
+	struct isp_flash_element        isp_ele;
 	uint8_t                         isp_type = 0;
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
+	memset(&isp_ele, 0, sizeof(isp_ele));
 
 	switch (type) {
 	case AE_FLASH_TYPE_MAIN:
@@ -291,7 +295,7 @@ exit:
 	return ret;
 }
 
-static cmr_int ae_set_rgb_gain(void *handler, double gain)
+static int32_t ae_set_rgb_gain(void *handler, double gain)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	cmr_u32 final_gain = 0;
@@ -327,7 +331,7 @@ static int32_t ae_set_shutter_gain_delay_info(void* handler, void* param)
 		return ISP_PARAM_NULL;
 	}
 
-	struct ae_valid_fn valid_info = {0};
+	struct ae_valid_fn valid_info = {0, 0, 0};
 	struct ae_exp_gain_delay_info *delay_info_ptr = (struct ae_exp_gain_delay_info*)param;
 
 	valid_info.group_hold_flag = delay_info_ptr->group_hold_flag;

@@ -369,14 +369,6 @@ struct isp_flash_cfg {
 	cmr_u32 led_idx; //enum isp_flash_led
 };
 
-struct isp_ops {
-	int32_t (*flash_get_charge)(void *handler, struct isp_flash_cell *cell);
-	int32_t (*flash_get_time)(void *handler, struct isp_flash_cell *cell);
-	int32_t (*flash_set_charge)(void *handler, uint8_t type, struct isp_flash_element *element);
-	int32_t (*flash_set_time)(void *handler, uint8_t type, struct isp_flash_element *element);
-	int32_t (*flash_ctrl)(void *handler, struct isp_flash_element *element);
-};
-
 struct isp_adgain_exp_info {
 	cmr_u32 adgain;
 	cmr_u32 exp_time;
@@ -555,32 +547,6 @@ struct  isp_sensor_ex_info {
 	cmr_u32 af_supported;
 };
 
-struct isp_init_param {
-	void* setting_param_ptr;
-	struct isp_size size;
-	proc_callback ctrl_callback;
-	isp_handle oem_handle;
-	struct isp_data_info calibration_param;
-	uint32_t camera_id;
-	void* sensor_lsc_golden_data;
-	struct isp_ops ops;
-	struct isp_data_info mode_ptr[ISP_MODE_NUM_MAX];
-	cmr_malloc alloc_cb;
-	cmr_free   free_cb;
-	void *setting_param_list_ptr[3];//0:back,1:front,2:dual back
-	struct isp_sensor_ex_info ex_info;
-	struct sensor_otp_cust_info *otp_data;
-	struct sensor_data_info pdaf_otp;
-	struct sensor_pdaf_info *pdaf_info;
-#ifdef CONFIG_CAMERA_RT_REFOCUS
-	struct isp_sensor_ex_info ex_info_slv;
-	void *setting_param_ptr_slv; // slave sensor
-	struct sensor_otp_cust_info *otp_data_slv;
-#endif
-	cmr_u32 image_pattern;
-	cmr_s32           dcam_fd;
-};
-
 struct isp_video_limit {
 	uint16_t width;
 	uint16_t height;
@@ -722,6 +688,39 @@ struct isp_img_param {
 	cmr_uint                   zsl_private;
 };
 
+struct isp_ops {
+	int32_t (*flash_get_charge)(void *handler, struct isp_flash_cell *cell);
+	int32_t (*flash_get_time)(void *handler, struct isp_flash_cell *cell);
+	int32_t (*flash_set_charge)(void *handler, uint8_t type, struct isp_flash_element *element);
+	int32_t (*flash_set_time)(void *handler, uint8_t type, struct isp_flash_element *element);
+	int32_t (*flash_ctrl)(void *handler, struct isp_flash_element *element);
+};
+
+struct isp_init_param {
+	void* setting_param_ptr;
+	struct isp_size size;
+	proc_callback ctrl_callback;
+	isp_handle oem_handle;
+	struct isp_data_info calibration_param;
+	uint32_t camera_id;
+	void* sensor_lsc_golden_data;
+	struct isp_ops ops;
+	struct isp_data_info mode_ptr[ISP_MODE_NUM_MAX];
+	cmr_malloc alloc_cb;
+	cmr_free   free_cb;
+	void *setting_param_list_ptr[3];//0:back,1:front,2:dual back
+	struct isp_sensor_ex_info ex_info;
+	struct sensor_otp_cust_info *otp_data;
+	struct sensor_data_info pdaf_otp;
+	struct sensor_pdaf_info *pdaf_info;
+#ifdef CONFIG_CAMERA_RT_REFOCUS
+	struct isp_sensor_ex_info ex_info_slv;
+	void *setting_param_ptr_slv; // slave sensor
+	struct sensor_otp_cust_info *otp_data_slv;
+#endif
+	cmr_u32 image_pattern;
+	cmr_s32           dcam_fd;
+};
 
 typedef isp_uint (*isp_cb_of_malloc)(isp_uint type, isp_uint *size_ptr, isp_uint *sum_ptr, isp_uint *phy_addr, isp_uint *vir_addr, isp_s32 *mfd, void* private_data);
 typedef isp_uint (*isp_cb_of_free)(isp_uint type, isp_uint *phy_addr, isp_uint *vir_addr, isp_s32 *fd, isp_uint sum, void* private_data);
@@ -747,4 +746,3 @@ void isp_irq_proc_evt_cb(cmr_int evt, void* data, void* privdata);
 /**---------------------------------------------------------------------------*/
 
 #endif
-

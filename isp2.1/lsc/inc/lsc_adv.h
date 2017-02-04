@@ -138,21 +138,6 @@ struct LSC_Setting{
 	int num_seg_vote_th;//The voting threshold for segmenet voting.
 };
 
-struct lsc_lib_ops{
-	int32_t (* alsc_calc)(void* handle, struct lsc_adv_calc_param *param, struct lsc_adv_calc_result *adv_calc_result);
-	void* (* alsc_init)(struct lsc_adv_init_param *param);
-	int32_t (* alsc_deinit)(void* handle);
-	int32_t (*alsc_io_ctrl)(void* handler, enum alsc_io_ctrl_cmd cmd, void *in_param, void *out_param);
-};
-
-struct lsc_ctrl_context{
-	pthread_mutex_t status_lock;
-	void* alsc_handle;    // alsc handler
-	void *lib_handle;
-	struct lsc_lib_ops lib_ops;
-	struct third_lib_info *lib_info;
-};
-
 struct statistic_raw_t {
 	uint32_t *r;
 	uint32_t *gr;
@@ -316,6 +301,20 @@ struct lsc_adv_context {
     struct LSC_Setting SLSC_setting;
 };
 
+struct lsc_lib_ops{
+	int32_t (* alsc_calc)(void* handle, struct lsc_adv_calc_param *param, struct lsc_adv_calc_result *adv_calc_result);
+	void* (* alsc_init)(struct lsc_adv_init_param *param);
+	int32_t (* alsc_deinit)(void* handle);
+	int32_t (*alsc_io_ctrl)(void* handler, enum alsc_io_ctrl_cmd cmd, void *in_param, void *out_param);
+};
+
+struct lsc_ctrl_context{
+	pthread_mutex_t status_lock;
+	void* alsc_handle;    // alsc handler
+	void *lib_handle;
+	struct lsc_lib_ops lib_ops;
+	struct third_lib_info *lib_info;
+};
 
 /**---------------------------------------------------------------------------*
 **					Data Prototype				**

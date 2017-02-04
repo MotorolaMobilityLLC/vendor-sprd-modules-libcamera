@@ -16,6 +16,8 @@
 #ifndef _LIB_CTRL_H_
 #define _LIB_CTRL_H_
 #include "ae_ctrl_types.h"
+#include "lsc_adv.h"
+#include "ae_ctrl.h"
 #include "AlAwbInterface.h"
 
 //awb start

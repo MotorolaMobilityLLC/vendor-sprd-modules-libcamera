@@ -77,11 +77,13 @@ static nsecs_t isp_get_timestamp(void)
 static cmr_int isp_get_rgb_gain(cmr_handle isp_fw_handle, cmr_u32 *param)
 {
 	int32_t                         rtn = ISP_SUCCESS;
-	struct isp_pm_param_data        param_data = {0};
+	struct isp_pm_param_data        param_data;
 	struct isp_pm_ioctl_input       input = {NULL, 0};
 	struct isp_pm_ioctl_output      output = {NULL, 0};
 	struct isp_dev_rgb_gain_info *gain_info;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context*)isp_fw_handle;
+
+	memset(&param_data, 0, sizeof(param_data));
 
 	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_RGB_GAIN, NULL, 0);
 	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
@@ -250,11 +252,13 @@ int32_t alsc_calc(cmr_handle isp_alg_handle,
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context*)isp_alg_handle;
 	lsc_adv_handle_t lsc_adv_handle = cxt->lsc_cxt.handle;
 	isp_pm_handle_t pm_handle = cxt->handle_pm;
-	struct isp_pm_ioctl_input io_pm_input = {0x00};
-	struct isp_pm_ioctl_output io_pm_output= {PNULL, 0};
-	struct isp_pm_param_data pm_param = {0x00};
+	struct isp_pm_ioctl_input io_pm_input = {NULL, 0};
+	struct isp_pm_ioctl_output io_pm_output = {NULL, 0};
+	struct isp_pm_param_data pm_param;
 	uint32_t i = 0;
 	int32_t bv0 = 0;
+
+	memset(&pm_param, 0, sizeof(pm_param));
 
 	if (NULL == ae_stat_r) {
 		ALOGE("invalid stat info param");
@@ -333,9 +337,9 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 {
 	cmr_int                         rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context*)isp_alg_handle;
-	struct isp_pm_ioctl_input       input;
-	struct isp_pm_ioctl_output      output;
-	struct isp_pm_param_data        *param_data;
+	struct isp_pm_ioctl_input       input = {NULL, 0};
+	struct isp_pm_ioctl_output      output = {NULL, 0};
+	struct isp_pm_param_data        *param_data = NULL;
 	uint32_t                        i;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
@@ -420,12 +424,13 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle,
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context*)isp_alg_handle;
 	struct ae_calc_in               in_param;
 	struct awb_gain                 gain;
-	struct ae_calc_out ae_result = {0};
+	struct ae_calc_out ae_result;
 	nsecs_t system_time0 = 0;
 	nsecs_t system_time1 = 0;
 
 	rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_GAIN, (void*)&gain, NULL);
 
+	memset((void*)&ae_result, 0, sizeof(ae_result));
 	memset((void*)&in_param, 0, sizeof(in_param));
 	if ((0 == gain.r) || (0 == gain.g) || (0 == gain.b)) {
 		in_param.awb_gain_r = 1024;
@@ -476,7 +481,8 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle, struct isp_awb_calc_in
 	float exposure = 0;
 	int32_t bv = 0;
 	int32_t iso = 0;
-	struct ae_get_ev ae_ev = {0};
+	struct ae_get_ev ae_ev;
+	memset(&ae_ev, 0, sizeof(ae_ev));
 
 	if (!in_ptr || !out_ptr || !isp_alg_handle) {
 		rtn = ISP_PARAM_NULL;
@@ -514,9 +520,11 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle, struct isp_awb_calc_in
 	out_ptr->scalar_factor = (info.win_size.h/2)*(info.win_size.w/2);
 
 // simulation info
-	struct isp_pm_ioctl_input io_pm_input = {0x00};
-	struct isp_pm_ioctl_output io_pm_output= {PNULL, 0};
-	struct isp_pm_param_data pm_param = {0x00};
+	struct isp_pm_ioctl_input io_pm_input = {NULL, 0};
+	struct isp_pm_ioctl_output io_pm_output = {NULL, 0};
+	struct isp_pm_param_data pm_param;
+
+	memset(&pm_param, 0, sizeof(pm_param));
 
 	// LSC
 	BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
@@ -676,14 +684,17 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context*)isp_alg_handle;
 	struct isp_awb_statistic_info *ae_stat_ptr = awb_calc_info->ae_stat_ptr;
 	struct ae_calc_out *ae_result = &awb_calc_info->ae_result;
-	struct smart_proc_input smart_proc_in = {0};
-	struct awb_size stat_img_size = {0};
-	struct awb_size win_size = {0};
+	struct smart_proc_input smart_proc_in;
+	struct awb_size stat_img_size = {0, 0};
+	struct awb_size win_size = {0, 0};
 	nsecs_t system_time0 = 0;
 	nsecs_t system_time1 = 0;
 	int32_t bv = 0;
 	int32_t bv_gain = 0;
     struct ae_out_bv ae_out_bv;
+
+	memset(&smart_proc_in, 0, sizeof(smart_proc_in));
+	memset(&ae_out_bv, 0, sizeof(ae_out_bv));
 
 	if (!isp_alg_handle || !awb_calc_info || !result) {
 		rtn = ISP_PARAM_NULL;
@@ -708,9 +719,10 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 			rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_STAT_SIZE, (void *)&stat_img_size, NULL);
 			rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_WIN_SIZE, (void *)&win_size, NULL);
 
-			struct isp_pm_param_data param_data_alsc = {0};
+			struct isp_pm_param_data param_data_alsc;
 			struct isp_pm_ioctl_input  param_data_alsc_input = {NULL, 0};
 			struct isp_pm_ioctl_output	param_data_alsc_output = {NULL, 0};
+			memset(&param_data_alsc, 0, sizeof(param_data_alsc));
 
 			BLOCK_PARAM_CFG(param_data_alsc_input, param_data_alsc, ISP_PM_BLK_LSC_GET_LSCTAB, ISP_BLK_2D_LSC, NULL, 0);
 			rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void*)&param_data_alsc_input, (void*)&param_data_alsc_output);
@@ -781,12 +793,13 @@ cmr_int ispalg_ae_awb_process(cmr_handle isp_alg_handle)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context*)isp_alg_handle;
 	struct  isp_awb_calc_info awb_calc_info;
 	struct awb_ctrl_calc_result awb_result;
-	struct ae_calc_out ae_result = {0};
+	struct ae_calc_out ae_result;
 	struct isp_awb_statistic_info *ae_stat_ptr=NULL;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 	memset((void*)&awb_calc_info, 0, sizeof(awb_calc_info));
 	memset(&awb_result, 0, sizeof(awb_result));
+	memset(&ae_result, 0, sizeof(ae_result));
 
 	rtn = ispalg_start_ae_process((cmr_handle)cxt, &awb_calc_info);
 	return 0;
@@ -1125,13 +1138,14 @@ static uint32_t _ispGetIspParamIndex(struct sensor_raw_resolution_info* input_si
 static cmr_int isp_ae_sw_init(struct isp_alg_fw_context *cxt)
 {
 	cmr_int rtn = ISP_SUCCESS;
-	struct ae_init_in                      ae_input;
-	struct isp_pm_ioctl_output      output = {0};
+	struct ae_init_in               ae_input;
+	struct isp_pm_ioctl_output      output;
 	struct isp_pm_param_data        *param_data = NULL;
 	struct isp_flash_param *flash = NULL;
 	uint32_t                        num = 0;
 	uint32_t                        i = 0;
 
+	memset(&output, 0, sizeof(output));
 	memset((void*)&ae_input, 0, sizeof(ae_input));
 	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AE, NULL, &output);
 	if (ISP_SUCCESS != rtn) {
@@ -1285,9 +1299,12 @@ static cmr_int isp_smart_sw_init(struct isp_alg_fw_context *cxt)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct smart_init_param         smart_init_param;
-	struct isp_pm_ioctl_input       pm_input = {0};
-	struct isp_pm_ioctl_output      pm_output = {0};
+	struct isp_pm_ioctl_input       pm_input;
+	struct isp_pm_ioctl_output      pm_output;
 	uint32_t                        i = 0;
+
+	memset(&pm_input, 0, sizeof(pm_input));
+	memset(&pm_output, 0, sizeof(pm_output));
 
 	cxt->smart_cxt.isp_smart_eb = 0;
 	memset(&smart_init_param, 0, sizeof(smart_init_param));
@@ -1372,11 +1389,16 @@ static cmr_int isp_lsc_sw_init(struct isp_alg_fw_context *cxt)
 {
 	uint32_t rtn = ISP_SUCCESS;
 	lsc_adv_handle_t lsc_adv_handle = NULL;
-	struct lsc_adv_init_param lsc_param = {0};
+	struct lsc_adv_init_param lsc_param;
 	isp_pm_handle_t pm_handle = cxt->handle_pm;
-	struct isp_pm_ioctl_input io_pm_input = {0x00};
-	struct isp_pm_ioctl_output io_pm_output= {PNULL, 0};
-	struct isp_pm_param_data pm_param = {0x00};
+	struct isp_pm_ioctl_input io_pm_input;
+	struct isp_pm_ioctl_output io_pm_output;
+	struct isp_pm_param_data pm_param;
+
+	memset(&lsc_param, 0, sizeof(lsc_param));
+	memset(&io_pm_input, 0, sizeof(io_pm_input));
+	memset(&io_pm_output, 0, sizeof(io_pm_output));
+	memset(&pm_param, 0, sizeof(pm_param));
 
 	BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
 	rtn = isp_pm_ioctl(pm_handle, ISP_PM_CMD_GET_SINGLE_SETTING, (void*)&io_pm_input, (void*)&io_pm_output);
@@ -1457,9 +1479,10 @@ static cmr_int isp_pm_sw_init(cmr_handle isp_alg_handle, struct isp_init_param *
 	struct sensor_version_info *version_info = PNULL;
 	struct isp_pm_init_input input;
 	struct isp_otp_init_in otp_input;
-	isp_ctrl_context isp_ctrl_cxt = {0};
+	isp_ctrl_context isp_ctrl_cxt;
 	uint32_t i = 0;
 
+	memset(&isp_ctrl_cxt, 0, sizeof(isp_ctrl_cxt));
 	cxt->sn_cxt.sn_raw_info = sensor_raw_info_ptr;
 	memcpy((void *)cxt->sn_cxt.isp_init_data,(void *)input_ptr->mode_ptr,ISP_MODE_NUM_MAX*sizeof(struct isp_data_info));
 
@@ -1467,6 +1490,7 @@ static cmr_int isp_pm_sw_init(cmr_handle isp_alg_handle, struct isp_init_param *
 	input.isp_ctrl_cxt_handle = &isp_ctrl_cxt;
 	version_info =  (struct sensor_version_info *)sensor_raw_info_ptr->version_info;
 	input.sensor_name = version_info->sensor_ver_name.sensor_name;
+
 	for (i = 0; i < MAX_MODE_NUM; i++) {
 		input.tuning_data[i].data_ptr = sensor_raw_info_ptr->mode_ptr[i].addr;
 		input.tuning_data[i].size     = sensor_raw_info_ptr->mode_ptr[i].len;
@@ -1694,7 +1718,7 @@ static cmr_int isp_update_alg_param(cmr_handle isp_alg_handle)
 {
 	cmr_int                         rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct smart_proc_input smart_proc_in = {0};
+	struct smart_proc_input smart_proc_in;
 	struct awb_gain                 result;
 	struct isp_pm_ioctl_input       ioctl_input;
 	struct isp_pm_param_data        ioctl_data;
@@ -1728,6 +1752,7 @@ static cmr_int isp_update_alg_param(cmr_handle isp_alg_handle)
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_LUM, NULL, (void*)&bv);
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_GAIN, NULL, (void*)&bv_gain);
 	rtn = smart_ctl_ioctl(cxt->smart_cxt.handle, ISP_SMART_IOCTL_SET_WORK_MODE,(void*)&cxt->commn_cxt.isp_mode, NULL);
+	memset(&smart_proc_in, 0, sizeof(smart_proc_in));
 	if ((0 != bv_gain) && (0 != ct)) {
 		smart_proc_in.cal_para.bv = bv;
 		smart_proc_in.cal_para.bv_gain = bv_gain;
@@ -1742,10 +1767,11 @@ static cmr_int isp_update_alg_param(cmr_handle isp_alg_handle)
 	cmr_handle lsc_adv_handle = cxt->lsc_cxt.handle;
 	struct isp_pm_ioctl_input input = {PNULL, 0};
 	struct isp_pm_ioctl_output output= {PNULL, 0};
-	struct isp_pm_param_data param_data = {0};
+	struct isp_pm_param_data param_data;
 	struct lsc_adv_calc_param calc_param;
 	struct lsc_adv_calc_result calc_result = {0};
 	uint32_t i = 0;
+	memset(&param_data, 0, sizeof(param_data));
 	memset(&calc_param, 0, sizeof(calc_param));
 
 	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
@@ -1875,7 +1901,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 		} else {
 			cxt->commn_cxt.mode_flag = mode;
 		}
-		if (cxt->commn_cxt.mode_flag != cxt->commn_cxt.isp_mode) {
+		if (cxt->commn_cxt.mode_flag != (cmr_u32)cxt->commn_cxt.isp_mode) {
 			 cxt->commn_cxt.isp_mode = cxt->commn_cxt.mode_flag;
 			rtn = isp_pm_ioctl(cxt->handle_pm,  ISP_PM_CMD_SET_MODE, &cxt->commn_cxt.isp_mode, NULL);
 		}
@@ -1916,6 +1942,7 @@ exit:
 cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle)
 {
 	cmr_int rtn = ISP_SUCCESS;
+	UNUSED(isp_alg_handle);
 #if 0/*modify for Solve compile problem*/
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	cmr_u32 interrupt_mode = ISP_INT_CLEAR_MODE;
@@ -2046,7 +2073,7 @@ cmr_int isp_alg_proc_next(cmr_handle isp_alg_handle, struct ipn_in_param *in_ptr
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-
+	UNUSED(in_ptr);
 	/*do not support silce capture function now*/
 	ISP_LOGI("If need slice capture process, add releated code!");
 exit:

@@ -47,9 +47,7 @@ extern "C" {
 #define AE_START_ID 0x71717567
 #define AE_END_ID 	0x69656E64
 #define AE_CONVERGED_NUM 2
-#define UNUSED(param)  (void)(param)
 #define AE_FRAME_INFO_NUM 8
-
 
 #define AE_SAVE_MLOG     "persist.sys.isp.ae.mlog" /**/
 #define AE_SAVE_MLOG_DEFAULT ""
@@ -534,7 +532,7 @@ static int32_t ae_write_thread_proc(struct cmr_msg *message, void *data)
 	int32_t rtn = AE_SUCCESS;
 	struct ae_ctrl_cxt *cxt = (struct ae_ctrl_cxt *)data;
 	uint32_t evt = (uint32_t) (message->msg_type);
-	uint32_t max_again;
+	int32_t max_again;
 	double rgb_gain_coeff;
 	int32_t expline;
 	int32_t dummy;
@@ -544,7 +542,7 @@ static int32_t ae_write_thread_proc(struct cmr_msg *message, void *data)
 	 * message->first_in){ pipe_fd =
 	 * open("/dev/isp_pipe/pipe_1", O_RDWR); if(pipe_fd < 0) {
 	 * AE_LOGE("open pipe error!!"); }else{ tid = gettid();
-	 * write(pipe_fd,&tid,sizeof(pid_t)); close(pipe_fd); } } 
+	 * write(pipe_fd,&tid,sizeof(pid_t)); close(pipe_fd); } }
 	 */
 	if (NULL == cxt) {
 		AE_LOGE("cxt is NULL error!");
@@ -655,7 +653,8 @@ static int32_t save_to_mlog_file(struct ae_ctrl_cxt *cxt, struct ae_misc_calc_ou
 {
 	int32_t rtn = 0;
 	char *tmp_str = (char *)cxt->debug_str;
-	
+	UNUSED(result);
+
 	memset(tmp_str, 0, sizeof(cxt->debug_str));
 	rtn = debug_file_open((debug_handle_t) cxt->debug_info_handle, 1, 0);
 	if (0 == rtn) {
@@ -1048,6 +1047,8 @@ static int32_t is_in_rect(uint32_t x, uint32_t y, struct ae_rect *rect)
 static int32_t _set_touch_zone(struct ae_ctrl_cxt *cxt, struct ae_trim *touch_zone)
 {
 #if 1
+	UNUSED(cxt);
+	UNUSED(touch_zone);
 	return AE_SUCCESS;
 #else
 	int32_t rtn = AE_SUCCESS;
@@ -1333,7 +1334,8 @@ EXIT:
 static int32_t _set_snapshot_notice(struct ae_ctrl_cxt *cxt, struct ae_snapshot_notice *notice)
 {
 	int32_t rtn = AE_SUCCESS;
-
+	UNUSED(cxt);
+	UNUSED(notice);
 	return rtn;
 }
 
@@ -1557,6 +1559,7 @@ static int32_t _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 	int8_t cur_work_mode = AE_WORK_MODE_COMMON;
 	struct ae_trim trim;
 	struct ae_ev_table *ev_table = NULL;
+	UNUSED(work_param);
 
 	AE_LOGD("Init param %d\r\n", init);
 
@@ -1774,7 +1777,7 @@ static int32_t _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 static int32_t _sof_handler(struct ae_ctrl_cxt *cxt)
 {
 	int32_t rtn = AE_SUCCESS;
-
+	UNUSED(cxt);
 	// _fdae_update_state(cxt);
 	return rtn;
 }
@@ -1922,7 +1925,7 @@ static int32_t _fd_info_pre_set(struct ae_ctrl_cxt *cxt)
 {
 	int32_t rtn = AE_SUCCESS;
 	struct ae1_fd_param *ae1_fd = NULL;
-	int32_t i = 0;
+	uint32_t i = 0;
 
 	if (NULL == cxt) {
 		AE_LOGE("cxt is null");
@@ -2057,7 +2060,7 @@ static int32_t _get_skip_frame_num(struct ae_ctrl_cxt *cxt, void *param, void *r
 {
 	int32_t rtn = AE_SUCCESS;
 	int32_t frame_num = 0;
-
+	UNUSED(param);
 	frame_num = cxt->monitor_unit.cfg.skip_num;
 
 	if (result) {
@@ -2242,6 +2245,8 @@ DEBUG_INFO_EXIT:
 static int32_t ae_get_debug_info_for_display(struct ae_ctrl_cxt *cxt, void *result)
 {
 	int32_t rtn = AE_SUCCESS;
+	UNUSED(cxt);
+	UNUSED(result);
 #if 0
 	struct debug_ae_display_param *emParam = (struct debug_ae_display_param *)result;
 	emParam->version = AE_DEBUG_VERSION_ID;
@@ -2400,10 +2405,10 @@ void* ae_sprd_init(void *param, void *in_param)
 	void *seq_handle = NULL;
 	struct ae_ctrl_cxt	*cxt 	= NULL;
 	struct ae_in_out	*reserve = NULL;
-	struct ae_misc_init_in misc_init_in = { 0 };
-	struct ae_misc_init_out misc_init_out = { 0 };
-	struct seq_init_in init_in = { 0 };
-	struct ae_set_work_param work_param = { 0x00 };
+	struct ae_misc_init_in misc_init_in = { 0, 0, NULL, 0 };
+	struct ae_misc_init_out misc_init_out = { 0, {0} };
+	struct seq_init_in init_in = { 0, 0, 0, 0, 0 };
+	struct ae_set_work_param work_param;
 	struct ae_init_in *init_param = NULL;
 
 	cxt = (struct ae_ctrl_cxt *)malloc(sizeof(struct ae_ctrl_cxt));
@@ -2413,7 +2418,7 @@ void* ae_sprd_init(void *param, void *in_param)
 		AE_LOGE("alloc is error!");
 		goto ERR_EXIT;
 	}
-
+	memset(&work_param, 0, sizeof(work_param));
 	memset(cxt, 0, sizeof(*cxt));
 
 	if (NULL == param) {
@@ -2494,7 +2499,7 @@ void* ae_sprd_init(void *param, void *in_param)
 	*/
 	{
 		if (cxt->isp_ops.set_shutter_gain_delay_info) {
-			struct ae_exp_gain_delay_info delay_info = {0};
+			struct ae_exp_gain_delay_info delay_info = {0, 0, 0};
 			delay_info.group_hold_flag = 0;
 			delay_info.valid_exp_num  = cxt->cur_param->sensor_cfg.exp_skip_num;
 			delay_info.valid_gain_num = cxt->cur_param->sensor_cfg.gain_skip_num;
@@ -2504,7 +2509,7 @@ void* ae_sprd_init(void *param, void *in_param)
 		}
 	}
 	/*
-	 * read info from last ae_deinit 
+	 * read info from last ae_deinit
 	 */
 	if (NULL != in_param && 1 == ((struct ae_in_out *)in_param)->enable){
 		reserve = (struct ae_in_out *)in_param;
@@ -2513,7 +2518,7 @@ void* ae_sprd_init(void *param, void *in_param)
 		cxt->ae_result.dummy 	= reserve->cur_dummy;
 	}
 	/*
-	 * init for video start/stop 
+	 * init for video start/stop
 	 */
 	cxt->last_expline = 0;
 	cxt->last_dummy = 0;
@@ -2525,7 +2530,7 @@ void* ae_sprd_init(void *param, void *in_param)
 	 * //msg.sync_flag = CMR_MSG_SYNC_PROCESSED; //init
 	 * sensor: need write two times rtn =
 	 * cmr_thread_msg_send(cxt->thread_handle, &msg); rtn =
-	 * cmr_thread_msg_send(cxt->thread_handle, &msg); 
+	 * cmr_thread_msg_send(cxt->thread_handle, &msg);
 	 */
 	memset((void*)&ae_property, 0, sizeof(ae_property));
 	property_get("persist.sys.isp.ae.manual", ae_property, "off");
