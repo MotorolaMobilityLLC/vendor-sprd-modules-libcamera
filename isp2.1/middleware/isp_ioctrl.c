@@ -1335,7 +1335,8 @@ static cmr_int _ispHdrIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, int (*c
 		ISP_LOGE("cxt=%p param_ptr=%p is NULL error", isp_alg_handle, param_ptr);
 		return ISP_PARAM_NULL;
 	}
-
+	//add for STACK ERROR
+	return ISP_SUCCESS;
 	isp_hdr = (struct isp_hdr_ev_param*)param_ptr;
 
 	memset(&smart_block_eb, 0x00, sizeof(smart_block_eb));
