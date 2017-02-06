@@ -348,6 +348,7 @@ struct sensor_rgb_dither_level {
 	uint16_t yrandom_shift;
 	uint32_t yrandom_seed;
 	uint16_t yrandom_offset;
+	uint16_t reserved;
 	uint8_t yrandom_takebit[8];
 	uint32_t pseudo_random_raw_bypass;
 };
