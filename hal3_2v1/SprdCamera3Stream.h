@@ -74,7 +74,7 @@ public:
 	int getQBuffFirstNum(uint32_t* frameNumber);
 	int getQBufAddrForNum(uint32_t frameNumber, cmr_uint* addr_vir, cmr_uint* addr_phy, cmr_s32* fd);
 	int getQBufHandleForNum(uint32_t frameNumber, buffer_handle_t** buff);
-	int getQBufNumForVir(uintptr_t addr_vir, uint32_t* frameNumber);
+	int getQBufNumForVir(cmr_uint addr_vir, uint32_t* frameNumber);
 	int getQBufForHandle(buffer_handle_t* buff, cmr_uint* addr_vir, cmr_uint* addr_phy, cmr_s32* fd);
 	int getQBuffFirstPhy(cmr_uint* addr_phy);
 	int getQBuffFirstFd(cmr_s32* fd);

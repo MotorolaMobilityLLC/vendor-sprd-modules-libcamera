@@ -391,7 +391,7 @@ int SprdCamera3Stream::getQBufHandleForNum(uint32_t frameNumber, buffer_handle_t
 	}
 	return BAD_VALUE;
 }
-int SprdCamera3Stream::getQBufNumForVir(uintptr_t addr_vir, uint32_t* frameNumber)
+int SprdCamera3Stream::getQBufNumForVir(cmr_uint addr_vir, uint32_t* frameNumber)
 {
 	Mutex::Autolock l(mLock);
 	int ret = NO_ERROR;

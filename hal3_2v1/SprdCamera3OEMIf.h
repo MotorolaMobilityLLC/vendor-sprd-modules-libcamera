@@ -147,8 +147,8 @@ public:
 	void setCallBackRawMode(bool mode);/**add for 3d capture*/
 	void setCaptureReprocessMode(bool mode, uint32_t width, uint32_t height);/**add for 3d capture*/
 	void antiShakeParamSetup();
-	int displayCopy(uintptr_t dst_phy_addr, uintptr_t dst_virtual_addr,
-			uintptr_t src_phy_addr, uintptr_t src_virtual_addr, uint32_t src_w, uint32_t src_h);
+	int displayCopy(cmr_uint dst_phy_addr, cmr_uint dst_virtual_addr,
+			cmr_uint src_phy_addr, cmr_uint src_virtual_addr, uint32_t src_w, uint32_t src_h);
 
 	enum camera_flush_mem_type_e {
 		CAMERA_FLUSH_RAW_HEAP,
@@ -272,7 +272,7 @@ private:
 	void receiveCameraExitError(void);
 	void receiveTakePictureError(void);
 	void receiveJpegPictureError(void);
-	bool receiveCallbackPicture(uint32_t width, uint32_t height, cmr_s32 fd, uintptr_t phy_addr, char *virtual_addr);
+	bool receiveCallbackPicture(uint32_t width, uint32_t height, cmr_s32 fd, cmr_uint phy_addr, char *virtual_addr);
 	void HandleStopCamera(enum camera_cb_type cb, void* parm4);
 	void HandleStartCamera(enum camera_cb_type cb, void* parm4);
 	void HandleStartPreview(enum camera_cb_type cb, void* parm4);
@@ -365,7 +365,7 @@ private:
 	bool setCameraCaptureDimensions();
 	void setCameraPreviewMode(bool isRecordMode);
 	bool setCameraPreviewFormat();
-	bool displayOneFrameForCapture(uint32_t width, uint32_t height, int fd, uintptr_t phy_addr, char *virtual_addr);
+	bool displayOneFrameForCapture(uint32_t width, uint32_t height, int fd, cmr_uint phy_addr, char *virtual_addr);
 	bool iSDisplayCaptureFrame();
 	bool iSCallbackCaptureFrame();
 	bool iSZslMode();
@@ -587,8 +587,8 @@ private:
 	sprd_camera_memory_t*           mZslHeapArray[kZslBufferCount+kZslRotBufferCount+1];
 	sprd_camera_memory_t*           mRefocusHeapArray[kRefocusBufferCount+1];
 	sprd_camera_memory_t*           mPdafRawHeapArray[kPdafRawBufferCount+1];
-	uintptr_t                       mRefocusHeapArray_phy[kRefocusBufferCount+1];
-	uintptr_t                       mRefocusHeapArray_vir[kRefocusBufferCount+1];
+	cmr_uint                       mRefocusHeapArray_phy[kRefocusBufferCount+1];
+	cmr_uint                       mRefocusHeapArray_vir[kRefocusBufferCount+1];
 	uint32_t                        mRefocusHeapArray_size[kRefocusBufferCount+1];
 	uint32_t                        mRefocusHeapArray_mfd[kRefocusBufferCount+1];
 
