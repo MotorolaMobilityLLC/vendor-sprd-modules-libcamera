@@ -474,8 +474,8 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle, struct isp_awb_calc_in
 	cmr_int                         rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context*)isp_alg_handle;
 	struct isp_pm_param_data param_data;
-	struct isp_pm_ioctl_input input = {NULL, 0};
-	struct isp_pm_ioctl_output output = {NULL, 0};
+//	struct isp_pm_ioctl_input input = {NULL, 0};
+//	struct isp_pm_ioctl_output output = {NULL, 0};
 	struct ae_monitor_info info;
 	float gain = 0;
 	float exposure = 0;
@@ -488,12 +488,13 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle, struct isp_awb_calc_in
 		rtn = ISP_PARAM_NULL;
 		goto exit;
 	}
-
+#if 0
 	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_AEM_STATISTIC, ISP_BLK_AE_NEW, NULL, 0);
 	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void*)&input, (void*)&output);
 	if (NULL != output.param_data) {
 		memcpy(output.param_data->data_ptr, (void*)in_ptr->ae_stat_ptr, sizeof(struct isp_awb_statistic_info));
 	}
+#endif
 
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_LUM_NEW, NULL, (void *)&bv);
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_ISO, NULL, (void *)&iso);
@@ -714,6 +715,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 		smart_proc_in.mode_flag = cxt->commn_cxt.mode_flag;
 		rtn = _smart_calc(cxt->smart_cxt.handle, &smart_proc_in);
 
+#if 0
 		gCntSendMsgLsc++;
 		if(0 == gCntSendMsgLsc % 3){
 			rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_STAT_SIZE, (void *)&stat_img_size, NULL);
@@ -754,6 +756,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 
 			rtn = alsc_calc(isp_alg_handle, ptr_r_stat,ptr_g_stat, ptr_b_stat, &alsc_info.stat_img_size, &alsc_info.win_size, alsc_info.image_width, alsc_info.image_height,alsc_info.awb_ct, alsc_info.awb_r_gain, alsc_info.awb_b_gain,alsc_info.stable);
 		}
+#endif
 	}
 	system_time1 = isp_get_timestamp();
 	ISP_LOGI("SYSTEM_TEST-smart:%lldms", system_time1-system_time0);
@@ -802,7 +805,7 @@ cmr_int ispalg_ae_awb_process(cmr_handle isp_alg_handle)
 	memset(&ae_result, 0, sizeof(ae_result));
 
 	rtn = ispalg_start_ae_process((cmr_handle)cxt, &awb_calc_info);
-	return 0;
+
 	if (rtn) {
 		goto exit;
 	}
