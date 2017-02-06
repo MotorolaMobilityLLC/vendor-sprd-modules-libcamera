@@ -38,7 +38,7 @@ extern "C"
 
 #define UNUSED(x) (void)x
 
-#define CAMERA_BRINGUP                     1
+//#define CAMERA_BRINGUP                   1
 
 #define CMR_EVT_GRAB_BASE                  (1 << 16)
 #define CMR_EVT_CVT_BASE                   (1 << 17)
@@ -1234,8 +1234,8 @@ cmr_int (*camera_get_sn_trim)(cmr_handle camera_handle, cmr_u32 mode, cmr_uint *
 
 cmr_int (*camera_set_mem_func)(cmr_handle camera_handle, void* cb_of_malloc, void* cb_of_free, void* private_data);
 
-cmr_int (*camera_get_redisplay_data)(cmr_handle camera_handle, cmr_s32 output_fd, cmr_uint output_addr, cmr_uint output_width, cmr_uint output_height,
-									            cmr_s32 input_fd, cmr_uint input_addr_y, cmr_uint input_addr_uv, cmr_uint input_width, cmr_uint input_height);
+cmr_int (*camera_get_redisplay_data)(cmr_handle camera_handle, cmr_s32 output_fd, cmr_uint output_addr, cmr_uint output_vir_addr, cmr_uint output_width, cmr_uint output_height,
+									            cmr_s32 input_fd, cmr_uint input_addr_y, cmr_uint input_addr_uv, cmr_uint input_vir_addr, cmr_uint input_width, cmr_uint input_height);
 
 cmr_int (*camera_is_change_size)(cmr_handle camera_handle, cmr_u32 cap_width,
 	                                        cmr_u32 cap_height, cmr_u32 preview_width,

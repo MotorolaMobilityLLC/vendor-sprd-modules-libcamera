@@ -7928,10 +7928,11 @@ exit:
 }
 
 cmr_int camera_local_redisplay_data(cmr_handle oem_handle, cmr_s32 output_fd,
-							    cmr_uint output_addr, cmr_uint output_width,
-							    cmr_uint output_height, cmr_s32 input_fd,
-                                                   cmr_uint input_addr_y, cmr_uint input_addr_uv,
-                                                   cmr_uint input_width, cmr_uint input_height)
+				    cmr_uint output_addr, cmr_uint output_vir_addr,
+				    cmr_uint output_width, cmr_uint output_height,
+				    cmr_s32 input_fd, cmr_uint input_addr_y,
+				    cmr_uint input_addr_uv, cmr_uint input_vir_addr,
+				    cmr_uint input_width, cmr_uint input_height)
 {
 	ATRACE_BEGIN(__FUNCTION__);
 
@@ -8014,12 +8015,33 @@ cmr_int camera_local_redisplay_data(cmr_handle oem_handle, cmr_s32 output_fd,
 	CMR_LOGD("cpp is not ok, sw scale crashed, so dont do scale here");
 	//camera_scale_down_software(&src_img, &dst_img);
 #else
+	CMR_LOGD("src_img with %d, height %d, dst_img with %d, height %d",src_img.size.width,src_img.size.height,dst_img.size.width,dst_img.size.height);
 	ret = cmr_scale_start(cxt->scaler_cxt.scaler_handle, &src_img, &dst_img, (cmr_evt_cb)NULL, NULL);
 	if (ret) {
 		CMR_LOGE("failed to start start %ld", ret);
 		ret = - CMR_CAMERA_FAIL;
 		goto exit;
 	}
+#endif
+
+	/*for redisplay scale debug*/
+#if 0
+	struct img_addr src_addr;
+	src_addr.addr_y = input_vir_addr;
+	src_addr.addr_u = input_vir_addr + src_img.size.width * src_img.size.height;
+	camera_save_yuv_to_file(11111,
+		IMG_DATA_TYPE_YUV420,
+		src_img.size.width,
+		src_img.size.height,
+		&src_addr);
+	struct img_addr dst_addr;
+	dst_addr.addr_y = output_vir_addr;
+	dst_addr.addr_u = output_vir_addr + dst_img.size.width * dst_img.size.height;
+	camera_save_yuv_to_file(22222,
+		IMG_DATA_TYPE_YUV420,
+		dst_img.size.width,
+		dst_img.size.height,
+		&dst_addr);
 #endif
 
 	/* start roattion*/

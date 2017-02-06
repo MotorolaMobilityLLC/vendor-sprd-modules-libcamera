@@ -3834,7 +3834,6 @@ bool SprdCamera3OEMIf::displayOneFrameForCapture(uint32_t width, uint32_t height
 	cmr_uint addr_vir = 0, addr_phy = 0;
 	cmr_s32 ion_fd = 0;
 	uint32_t frame_num = 0;
-
 	if(regular_channel) {
 		regular_channel->getStream(CAMERA_STREAM_TYPE_PREVIEW, &pre_stream);
 		pic_channel->getStream(CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT, &pic_stream);
@@ -4078,15 +4077,15 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame)
 		uintptr_t dst_paddr = 0;
 		uint32_t dst_width = mPreviewWidth;
 		uint32_t dst_height = mPreviewHeight;
-
+		unsigned long dst_vaddr = (unsigned long)mReDisplayHeap->data;
 		dst_fd = getRedisplayMem(dst_width,dst_height);
 		if (0 == dst_fd) {
 			HAL_LOGE("get review memory failed");
 			return;
 		}
 
-		if ( 0 != mHalOem->ops->camera_get_redisplay_data(mCameraHandle, dst_fd, dst_paddr, dst_width, dst_height, frame->fd, frame->y_phy_addr,
-				frame->uv_phy_addr, frame->width, frame->height)) {
+		if ( 0 != mHalOem->ops->camera_get_redisplay_data(mCameraHandle, dst_fd, dst_paddr, dst_vaddr, dst_width, dst_height, frame->fd, frame->y_phy_addr,
+				frame->uv_phy_addr, frame->y_vir_addr, frame->width, frame->height)) {
 			HAL_LOGE("Fail to camera_get_data_redisplay.");
 			FreeReDisplayMem();
 			return;
@@ -4101,15 +4100,15 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame)
 		uintptr_t dst_paddr = 0;
 		uint32_t dst_width = mRawWidth;
 		uint32_t dst_height = mRawHeight;
-
+		unsigned long dst_vaddr = (unsigned long)mReDisplayHeap->data;
 		dst_fd = getRedisplayMem(dst_width,dst_height);
 		if (0 == dst_fd) {
 			HAL_LOGE("get review memory failed");
 			return;
 		}
 
-		if ( 0 != mHalOem->ops->camera_get_redisplay_data(mCameraHandle, dst_fd, dst_paddr, dst_width, dst_height, frame->fd, frame->y_phy_addr,
-				frame->uv_phy_addr, frame->width, frame->height)) {
+		if ( 0 != mHalOem->ops->camera_get_redisplay_data(mCameraHandle, dst_fd, dst_paddr, dst_vaddr, dst_width, dst_height, frame->fd, frame->y_phy_addr,
+				frame->uv_phy_addr, frame->y_vir_addr, frame->width, frame->height)) {
 			HAL_LOGE("Fail to camera_get_data_redisplay.");
 			FreeReDisplayMem();
 			return;

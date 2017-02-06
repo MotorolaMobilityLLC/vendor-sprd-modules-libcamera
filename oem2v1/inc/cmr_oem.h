@@ -306,9 +306,10 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle, enum takepicture_mode
 cmr_int camera_local_stop_snapshot(cmr_handle oem_handle);
 
 cmr_int camera_local_redisplay_data(cmr_handle oem_handle, cmr_s32 output_fd,
-                                                     cmr_uint output_addr, cmr_uint output_width,
-                                                     cmr_uint output_height, cmr_s32 input_fd,
-                                                     cmr_uint input_addr_y, cmr_uint input_addr_uv,
+                                                     cmr_uint output_addr, cmr_uint output_vir_addr,
+                                                     cmr_uint output_width, cmr_uint output_height,
+                                                     cmr_s32 input_fd, cmr_uint input_addr_y,
+                                                     cmr_uint input_addr_uv, cmr_uint input_vir_addr,
                                                      cmr_uint input_width, cmr_uint input_height);
 
 cmr_int camera_local_get_prev_rect(cmr_handle oem_handle, struct img_rect *param_ptr);
