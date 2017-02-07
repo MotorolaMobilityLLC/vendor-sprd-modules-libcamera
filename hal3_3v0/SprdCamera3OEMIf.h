@@ -107,6 +107,13 @@ struct ZslBufferQueue {
 };
 
 typedef struct {
+	List<ZslBufferQueue>* cam1_ZSLQueue;
+	List<ZslBufferQueue>* cam3_ZSLQueue;
+	ZslBufferQueue        match_frame1;
+	ZslBufferQueue        match_frame3;
+}multi_camera_zsl_match_frame;
+
+typedef struct {
 	int32_t			preWidth;
 	int32_t			preHeight;
 	uint32_t*			buffPhy;
@@ -197,6 +204,9 @@ public:
 	void setSensorCloseFlag();
 	uint64_t getZslBufferTimestamp();/**add for 3dcapture, get zsl buffer's timestamp in zsl query*/
 	void setZslBufferTimestamp(uint64_t timestamp);/**add for 3dcapture, set the needed timestamp*/
+	void setMultiCallBackRawMode(bool mode);
+	int getMultiCameraMode(void);
+	void setSprdCameraLowpower(int flag);
 public:
 	static int      pre_alloc_cap_mem_thread_init(void *p_data);
 	static int      pre_alloc_cap_mem_thread_deinit(void *p_data);
@@ -208,7 +218,7 @@ public:
 	static cmr_int  ZSLMode_monitor_thread_proc(struct cmr_msg *message, void *p_data);
 
 	void            setIspFlashMode(uint32_t mode);
-
+	void            matchZSLQueue(ZslBufferQueue frame);
 #ifdef CONFIG_CAMERA_EIS
 	virtual void EisPreview_init();
 	virtual void EisVideo_init();
@@ -258,6 +268,12 @@ private:
 		shake_test_state          mShakeTestState;
 	};
 
+	enum Sprd_Camera_Temp {
+		CAMERA_NORMAL_TEMP,
+		CAMERA_HIGH_TEMP,
+		CAMERA_DANGER_TEMP,
+	};
+
 	void freeCameraMem(sprd_camera_memory_t *camera_memory);
 	void canclePreviewMem();
 	bool allocatePreviewMemByGraphics();
@@ -290,6 +306,8 @@ private:
 	void HandleCancelPicture(enum camera_cb_type cb, void* parm4);
 	void calculateTimestampForSlowmotion(int64_t frm_timestamp);
 	void doFaceMakeup(struct camera_frame_type *frame);
+	int  getCameraTemp();
+	void adjustFpsByTemp();
 
 	enum Sprd_camera_state {
 		SPRD_INIT,
@@ -424,6 +442,7 @@ private:
 
 	// zsl start
 	int getZSLQueueFrameNum();
+	ZslBufferQueue popZSLQueue(uint64_t need_timestamp);
 	ZslBufferQueue popZSLQueue();
 	void pushZSLQueue(ZslBufferQueue frame);
 	void releaseZSLQueue();
@@ -433,9 +452,7 @@ private:
 	void snapshotZsl(void *p_data);
 	uint32_t getZslBufferIDForFd(cmr_s32 fd);
 	int pushZslFrame(struct camera_frame_type *frame);
-	struct camera_frame_type popZslFrame();
-	struct camera_frame_type popZslList(cmr_u64 timestamp);/**add for 3dcapture, record received zsl buffer end*/
-	void pushZslList(ZslBufferQueue frame);/**add for 3dcapture, record received zsl buffer end*/
+	struct camera_frame_type popZslFrame(uint64_t need_timestam);
 	void processStopMultiLayer(void *p_data);
 
 	List<ZslBufferQueue> mZSLQueue;
@@ -456,9 +473,9 @@ private:
 	bool                              mSprdRefocusEnabled;
 	bool                              mSprd3dCalibrationEnabled;/**add for 3d calibration */
 	bool                              mSprdRawCallBack;/**add for 3d capture */
+	bool                              mSprdMultiRawCallBack;/**add for 3d capture */
 	bool                              mSprdReprocessing;/**add for 3d capture */
 	uint64_t                          mNeededTimestamp;/**add for 3d capture */
-	List<ZslBufferQueue>              mZSLList;/**add for 3dcapture, record received zsl buffer end*/
 	bool                              mIsUnpopped;/**add for 3dcapture, record unpoped zsl buffer*/
 
 	void yuvNv12ConvertToYv12(struct camera_frame_type *frame, char* tmpbuf);
@@ -479,6 +496,7 @@ private:
 	static const int                kJpegBufferCount       = 1;
 	static const int                kRawFrameHeaderSize    = 0x0;
 	static const int                kISPB4awbCount         = 16;
+	static multi_camera_zsl_match_frame*    mMultiCameraMatchZsl;
 	Mutex                           mLock; // API lock -- all public methods
 	Mutex                           mPreviewCbLock;
 	Mutex                           mCaptureCbLock;
@@ -708,6 +726,9 @@ private:
 	bool                          isNeedBeautify;
 	TSRect                        mSkinWhitenTsface;
 #endif
+	int                           mTempStates;
+	int                           mIsTempChanged;
+	int                           mSprdCameraLowpower;
 };
 
 }; // namespace sprdcamera

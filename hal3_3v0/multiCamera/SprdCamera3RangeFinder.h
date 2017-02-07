@@ -212,22 +212,15 @@ public:
         virtual bool  threadLoop();
         virtual void requestExit();
         void unLoadGpuApi();
-        void freeLocalBuffer(new_mem_t* mLocalBuffer);
-        int allocateOne(int w,int h,uint32_t is_cache,new_mem_t*,const native_handle_t *& nBuf );
         void initGpuData(int w,int h,int );
         bool mGetNewestFrameForMeasure;
         //This queue stores matched buffer as frame_matched_info_t
         List <frame_matched_msg_t> mSyncMsgList;
-        List<buffer_handle_t*> mLocalBufferList;
 
         Mutex      mMergequeueMutex;
         Condition  mMergequeueSignal;
-        uint8_t mMaxLocalBufferNum;
-        const native_handle_t* mNativeBuffer[MAX_FINDER_QEQUEST_BUF];
-        new_mem_t* mLocalBuffer;
 
     private:
-        bool mIommuEnabled;
         int mVFrameCount;
         int mVLastFrameCount;
         nsecs_t mVLastFpsTime;
@@ -255,7 +248,15 @@ public:
         Condition  mMeasureQueueSignal;
         depth_engine_api_t* mDepthEngineApi;
         uint8_t mOtpData[SPRD_DUAL_OTP_SIZE];
+
+        void freeLocalBuffer(new_mem_t* mLocalBuffer);
+        new_mem_t* mLocalBuffer;
+        uint8_t mMaxLocalBufferNum;
+        List<buffer_handle_t*> mLocalBufferList;
+        const native_handle_t* mNativeBuffer[MAX_FINDER_QEQUEST_BUF];
+        int allocateOne(int w,int h,uint32_t is_cache,new_mem_t*,const native_handle_t *& nBuf );
     private:
+        bool mIommuEnabled;
         uw_Coordinate mCurUwcoods;
         uw_Coordinate mLastPreCoods;
     };

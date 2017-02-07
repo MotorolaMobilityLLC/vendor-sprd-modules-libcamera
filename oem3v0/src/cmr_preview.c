@@ -5733,6 +5733,7 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
 	char                     value[PROPERTY_VALUE_MAX];
 	cmr_u32                  is_raw_capture = 0;
 	cmr_u32                  is_3D_video = 0;
+	cmr_u32                  is_3D_caputre = 0;
 
 	if (!sensor_info) {
 		CMR_LOGE("sn info is null!");
@@ -5747,12 +5748,14 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
 	property_get("sys.cam.multi.camera.mode", value, "0");
 	if (atoi(value) == 3) {
 		is_3D_video = 1;
+	}else if (atoi(value) == 5) {
+		is_3D_caputre = 1;
 	}
 
 	if (1 == handle->prev_cxt[camera_id].prev_param.pdaf_eb){
 		search_width = sensor_info->source_width_max;
 		search_height = sensor_info->source_height_max;
-	} else if (1 == is_3D_video) {
+	} else if (1 == is_3D_video || 1 == is_3D_caputre) {
 		search_width = sensor_info->source_width_max/2;
 		search_height = sensor_info->source_height_max/2;
 	} else {
@@ -6786,7 +6789,8 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 		chn_param.cap_inf_cfg.cfg.src_img_rect.height);
 
 	if (prev_cxt->prev_param.sprd_burstmode_enabled ||
-		!prev_cxt->prev_param.snapshot_eb){
+			(!prev_cxt->prev_param.snapshot_eb && !prev_cxt->prev_param.video_eb)){
+
 		struct img_size sensor_size;
 		struct img_size  lv_size;
 		struct img_size  video_size;
@@ -6805,7 +6809,7 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 
 		prev_cxt->lv_size = lv_size;
 		prev_cxt->video_size = video_size;
-	} else if (prev_cxt->prev_param.preview_eb && prev_cxt->prev_param.snapshot_eb) {
+	} else/* if (prev_cxt->prev_param.preview_eb && prev_cxt->prev_param.snapshot_eb)*/ {
 		prev_cxt->video_size.width = sensor_mode_info->scaler_trim.width;
 		prev_cxt->video_size.height = sensor_mode_info->scaler_trim.height;
 	}
@@ -6820,7 +6824,7 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 				zoom_param->zoom_level,
 				&chn_param.cap_inf_cfg.cfg.dst_img_size);
 	} else if (prev_cxt->prev_param.sprd_burstmode_enabled ||
-		!prev_cxt->prev_param.snapshot_eb) {
+			(!prev_cxt->prev_param.snapshot_eb && !prev_cxt->prev_param.video_eb)) {
 		ret = camera_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
 				zoom_param->zoom_info.zoom_ratio,
 				zoom_param->zoom_info.prev_aspect_ratio,
@@ -7066,7 +7070,7 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle, cmr_u32 camera_i
 		chn_param.cap_inf_cfg.cfg.src_img_rect.height);
 
 	if (prev_cxt->prev_param.sprd_burstmode_enabled ||
-		!prev_cxt->prev_param.snapshot_eb) {
+			(!prev_cxt->prev_param.snapshot_eb && !prev_cxt->prev_param.video_eb)) {
 		struct img_size sensor_size;
 		struct img_size  lv_size;
 		struct img_size  video_size;
@@ -7096,7 +7100,7 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle, cmr_u32 camera_i
 				zoom_param->zoom_level,
 				&chn_param.cap_inf_cfg.cfg.dst_img_size);
 	} else if (prev_cxt->prev_param.sprd_burstmode_enabled ||
-		!prev_cxt->prev_param.snapshot_eb) {
+			(!prev_cxt->prev_param.snapshot_eb && !prev_cxt->prev_param.video_eb)) {
 		ret = camera_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
 				zoom_param->zoom_info.zoom_ratio,
 				zoom_param->zoom_info.prev_aspect_ratio,

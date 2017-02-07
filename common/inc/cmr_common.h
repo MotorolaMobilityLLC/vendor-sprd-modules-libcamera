@@ -1176,6 +1176,7 @@ struct camera_frame_type {
 	cmr_s64                   ae_time;
 	cmr_s64                   monoboottime;
 	cmr_u32                   vcm_step;
+	cmr_int                   isMatchFlag;
 };
 /*
 struct camera_cap_frm_info {

@@ -35,6 +35,12 @@
 
 namespace sprdcamera {
 
+#define WAIT_FRAME_TIMEOUT    2000e6
+#define THREAD_TIMEOUT    30e6
+#define LIB_GPU_PATH "libimagestitcher.so"
+#define CONTEXT_SUCCESS 1
+#define CONTEXT_FAIL 0
+
 typedef enum {
     STATE_NOT_READY,
     STATE_IDLE,
@@ -66,7 +72,7 @@ typedef enum {
 } cameraIndex;
 
 typedef enum {
-    DEFAULT_DEFAULT = 0,
+    DEFAULT_STREAM = 0,
     PREVIEW_STREAM,
     VIDEO_STREAM,
     CALLBACK_STREAM,
@@ -133,6 +139,15 @@ typedef struct {
     int vcmSteps;
 } frame_matched_info_t;
 
+typedef enum {
+    MUXER_MSG_DATA_PROC = 1,
+    MUXER_MSG_EXIT
+} muxerMsgType;
+
+typedef struct {
+    muxerMsgType  msg_type;
+    frame_matched_info_t combo_frame;
+} muxer_queue_msg_t;
 
 typedef struct {
     uint32_t frame_number;
@@ -141,7 +156,9 @@ typedef struct {
     int32_t perfectskinlevel;
     int32_t   g_face_info[4];
     buffer_handle_t*  buffer;
-    camera3_stream_t *stream;
+    camera3_stream_t* stream;
+    camera3_stream_t* callback_stream;
+    buffer_handle_t* callback_buffer;
     camera3_stream_buffer_t* input_buffer;
     int rotation;
 }old_request;
