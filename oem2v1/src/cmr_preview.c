@@ -4093,7 +4093,7 @@ cmr_int prev_alloc_video_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_
 	buffer->length     = frame_size;
 	buffer->flag       = BUF_FLAG_INIT;
 
-	for (i = 0; i < prev_cxt->video_mem_valid_num; i++) {
+	for (i = 0; (cmr_int)i < prev_cxt->video_mem_valid_num; i++) {
 		prev_cxt->video_frm[i].buf_size        = frame_size;
 		prev_cxt->video_frm[i].addr_vir.addr_y = prev_cxt->video_virt_addr_array[i];
 		prev_cxt->video_frm[i].addr_vir.addr_u = prev_cxt->video_frm[i].addr_vir.addr_y + buffer_size;
@@ -9023,7 +9023,7 @@ cmr_int prev_set_video_buffer(struct prev_handle *handle, cmr_u32 camera_id, cmr
 		buf_cfg.count       = CAMERA_CONFIG_BUFFER_TO_KERNAL_ARRAY_SIZE;
 		buf_cfg.length      = frame_size;
 		buf_cfg.flag        = BUF_FLAG_RUNNING;
-	         CMR_LOGD(" buffer_cont=0x%x, valid_num=%ld, camera_id = %ld",prev_cxt->cache_buffer_cont,prev_cxt->video_mem_valid_num,prev_cxt->camera_id);
+	         CMR_LOGD(" buffer_cont=%ld, valid_num=%ld, camera_id = %ld",prev_cxt->cache_buffer_cont,prev_cxt->video_mem_valid_num,prev_cxt->camera_id);
 		for(i= 0;i < CAMERA_CONFIG_BUFFER_TO_KERNAL_ARRAY_SIZE;i++)  {
 			buf_cfg.addr[i].addr_y     = prev_cxt->video_frm[prev_cxt->video_mem_valid_num-CAMERA_CONFIG_BUFFER_TO_KERNAL_ARRAY_SIZE+i].addr_phy.addr_y;
 			buf_cfg.addr[i].addr_u     = prev_cxt->video_frm[prev_cxt->video_mem_valid_num-CAMERA_CONFIG_BUFFER_TO_KERNAL_ARRAY_SIZE+i].addr_phy.addr_u;
@@ -9073,7 +9073,7 @@ cmr_int prev_set_video_buffer(struct prev_handle *handle, cmr_u32 camera_id, cmr
 	}
 
 exit:
-	CMR_LOGD("fd=0x%x, channel_id=0x%x, valid_num=%ld, camera_id = %ld,cache_buffer_cont =%d",
+	CMR_LOGD("fd=0x%x, channel_id=%ld, valid_num=%ld, camera_id = %ld,cache_buffer_cont =%ld",
 		prev_cxt->video_frm[valid_num].fd,
 		prev_cxt->video_channel_id,
 		prev_cxt->video_mem_valid_num,

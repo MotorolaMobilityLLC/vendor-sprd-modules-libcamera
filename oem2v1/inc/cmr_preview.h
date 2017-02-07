@@ -22,6 +22,7 @@ extern "C"
 #endif
 
 #include "cmr_common.h"
+#include "sensor_drv_u.h"
 
 enum preview_func_type {
 	PREVIEW_FUNC_START_PREVIEW = 0,
