@@ -819,7 +819,8 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number)
 
 		case ANDROID_SCALER_CROP_REGION:
 			HAL_LOGV("SCALER_CROP_REGION");
-			mOEMIf->setCameraConvertCropRegion();
+			//close zoom function by temp for sysdump issue
+			//mOEMIf->setCameraConvertCropRegion();
 			break;
 		case ANDROID_CONTROL_CAPTURE_INTENT:
 			mOEMIf->SetCameraParaTag(ANDROID_CONTROL_CAPTURE_INTENT);
