@@ -5134,7 +5134,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 		work_mode = param_ptr->work_mode;
 	}
 	isp_param.work_mode = work_mode;
-
+	isp_param.is_snapshot = param_ptr->is_snapshot;
 	cmr_bzero(&setting_param, sizeof(setting_param));
 	setting_param.camera_id = cxt->camera_id;
 	ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_CAPTURE_MODE, &setting_param);

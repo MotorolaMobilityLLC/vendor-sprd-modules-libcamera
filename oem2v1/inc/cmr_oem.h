@@ -75,6 +75,7 @@ struct isp_context {
     cmr_u32                  inited;
     cmr_u32                  width_limit;
     cmr_u32                  is_work;
+	cmr_u32                  is_snapshot;
 };
 
 struct jpeg_context {

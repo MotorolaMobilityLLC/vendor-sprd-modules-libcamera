@@ -3403,6 +3403,7 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_res
 			video_param.img_format	= ISP_DATA_NORMAL_RAW10;
 			video_param.work_mode = 1;
 			video_param.capture_skip_num = prev_cxt->cap_skip_num;
+			video_param.is_snapshot = 1;
 			if (FRAME_FLASH_MAX == prev_cxt->prev_param.frame_count) {
 				video_param.is_need_flash = 1;
 				video_param.video_mode = ISP_VIDEO_MODE_CONTINUE;
@@ -6280,6 +6281,13 @@ cmr_int prev_set_param_internal(struct prev_handle *handle,
 		if (handle->prev_cxt[camera_id].prev_param.tool_eb) {
 			ret = prev_set_cap_param_raw(handle, camera_id, is_restart, out_param_ptr);
 		} else {
+			if (!handle->prev_cxt[camera_id].prev_param.preview_eb) {
+				ret = prev_pre_set(handle, camera_id);
+				if (ret) {
+					CMR_LOGE("pre set failed");
+					goto exit;
+				}
+			}
 			ret = prev_set_cap_param(handle, camera_id, is_restart, 0, out_param_ptr);
 		}
 		if (ret) {
@@ -6638,7 +6646,7 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 		video_param.img_format  = ISP_DATA_NORMAL_RAW10;
 		video_param.video_mode  = ISP_VIDEO_MODE_CONTINUE;
 		video_param.work_mode = 0;
-
+		video_param.is_snapshot = 0;
 		if (!handle->ops.isp_start_video) {
 			CMR_LOGE("ops isp_start_video is null");
 			ret = CMR_CAMERA_FAIL;

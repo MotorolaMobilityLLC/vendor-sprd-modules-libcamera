@@ -627,6 +627,7 @@ struct ipn_in_param {
 };
 
 struct isp_video_start {
+	uint16_t is_snapshot;
 	uint32_t dv_mode;
 	void* cb_of_malloc;
 	void* cb_of_free;

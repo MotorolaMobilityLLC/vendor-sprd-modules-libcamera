@@ -1704,14 +1704,16 @@ static cmr_int ae_set_work_mode(cmr_handle isp_alg_handle, uint32_t new_mode, ui
 
 	ae_param.mode                               = ae_mode;
 	ae_param.fly_eb                             = fly_mode;
-	ae_param.highflash_measure.highflash_flag = param_ptr->is_need_flash;
+	ae_param.highflash_measure.highflash_flag 	= param_ptr->is_need_flash;
 	ae_param.highflash_measure.capture_skip_num = param_ptr->capture_skip_num;
-	ae_param.resolution_info.frame_size.w = cxt->commn_cxt.src.w;
-	ae_param.resolution_info.frame_size.h = cxt->commn_cxt.src.h;
-	ae_param.resolution_info.frame_line = cxt->commn_cxt.input_size_trim[cxt->commn_cxt.param_index].frame_line;
-	ae_param.resolution_info.line_time = cxt->commn_cxt.input_size_trim[cxt->commn_cxt.param_index].line_time;
-	ae_param.resolution_info.sensor_size_index = cxt->commn_cxt.param_index;
+	ae_param.resolution_info.frame_size.w 		= cxt->commn_cxt.src.w;
+	ae_param.resolution_info.frame_size.h 		= cxt->commn_cxt.src.h;
+	ae_param.resolution_info.frame_line 		= cxt->commn_cxt.input_size_trim[cxt->commn_cxt.param_index].frame_line;
+	ae_param.resolution_info.line_time 			= cxt->commn_cxt.input_size_trim[cxt->commn_cxt.param_index].line_time;
+	ae_param.resolution_info.sensor_size_index 	= cxt->commn_cxt.param_index;
+	ae_param.is_snapshot						= param_ptr->is_snapshot;
 
+	//ISP_LOGI("is_snapshot %d param_ptr->mode %d", param_ptr->is_snapshot, param_ptr->mode);
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_VIDEO_START, &ae_param, NULL);
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_DC_DV, &param_ptr->dv_mode, NULL);
 
@@ -1946,9 +1948,10 @@ exit:
 cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle)
 {
 	cmr_int rtn = ISP_SUCCESS;
-	UNUSED(isp_alg_handle);
-#if 0/*modify for Solve compile problem*/
+
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_VIDEO_STOP, NULL, NULL);
+#if 0/*modify for Solve compile problem*/
 	cmr_u32 interrupt_mode = ISP_INT_CLEAR_MODE;
 
 	rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_SET_ISP_STOP_INFO, NULL, NULL);
