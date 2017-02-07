@@ -609,6 +609,27 @@ cmr_int sns_dev_mipi_deinit(struct sensor_drv_context *sensor_cxt)
 	return ret;
 }
 
+cmr_int hw_Sensor_ReadI2C(SENSOR_HW_HANDLE handle, cmr_u16 slave_addr, cmr_u8 *cmd, cmr_u16 cmd_length)
+{
+	SENSOR_I2C_T i2c_tab;
+	cmr_int ret = SENSOR_SUCCESS;
+	if (NULL == handle || NULL == handle->privatedata)
+		return SENSOR_CTX_ERROR;
+	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)(handle->privatedata);
+
+	i2c_tab.slave_addr 	= slave_addr;
+	i2c_tab.i2c_data	= cmd;
+	i2c_tab.i2c_count	= cmd_length;
+	i2c_tab.read_len	= cmd_length;
+
+	CMR_LOGV("Sensor_ReadI2C, slave_addr=0x%x, ptr=0x%p, count=%d\n",
+		i2c_tab.slave_addr, i2c_tab.i2c_data, i2c_tab.i2c_count);
+
+	ret = sns_dev_i2c_read(sensor_cxt, &i2c_tab);
+
+	return ret;
+}
+
 cmr_int hw_Sensor_WriteI2C(SENSOR_HW_HANDLE handle, cmr_u16 slave_addr, cmr_u8 *cmd, cmr_u16 cmd_length)
 {
 	SENSOR_I2C_T i2c_tab;
@@ -1348,6 +1369,7 @@ void Sensor_SetExportInfo(struct sensor_drv_context *sensor_cxt)
 			exp_info_ptr->raw_info_ptr->ioctrl_ptr->set_gain = exp_info_ptr->ioctl_func_ptr->write_gain_value;
 			exp_info_ptr->raw_info_ptr->ioctrl_ptr->ext_fuc = exp_info_ptr->ioctl_func_ptr->set_focus;
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+			exp_info_ptr->raw_info_ptr->ioctrl_ptr->caller_handler = sensor_cxt->sensor_hw_handler;
 			exp_info_ptr->raw_info_ptr->ioctrl_ptr->set_pos = exp_info_ptr->ioctl_func_ptr->set_pos;
 			exp_info_ptr->raw_info_ptr->ioctrl_ptr->get_otp = exp_info_ptr->ioctl_func_ptr->get_otp;
 			exp_info_ptr->raw_info_ptr->ioctrl_ptr->get_motor_pos = exp_info_ptr->ioctl_func_ptr->get_motor_pos;
