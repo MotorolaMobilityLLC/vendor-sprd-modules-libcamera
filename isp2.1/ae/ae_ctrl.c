@@ -123,6 +123,12 @@ static int32_t ae_set_monitor_win(void *handler, struct ae_monitor_info *in_para
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
 
 	if (cxt_ptr->ae_set_cb) {
+
+		if (in_param->win_size.w < 120)
+			in_param->shift = 0;
+		else
+			in_param->shift = 1;
+
 		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_MONITOR_WIN, in_param, NULL);
 	}
 

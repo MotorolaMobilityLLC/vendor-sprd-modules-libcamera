@@ -396,13 +396,14 @@ static cmr_int ispalg_aem_stat_data_parser(cmr_handle isp_alg_handle, void *data
 	u_addr = statis_info->vir_addr;
 
 	ae_stat_ptr = &cxt->aem_stats;
+
 	for (i = 0x00; i < ISP_RAW_AEM_ITEM; i++) {
 		val0 = *((uint32_t *)u_addr + i * 2);
 		val1 = *(((uint32_t *)u_addr) + i * 2 + 1);
 		ae_stat_ptr->r_info[i] = (val1 >> 11) & 0x1fffff;
-		ae_stat_ptr->g_info[i] = val0 & 0x3fffff;
-		ae_stat_ptr->b_info[i] = ((val1 & 0x7ff) << 10) | ((val0 >> 22) & 0x3ff);
-	}
+		ae_stat_ptr->g_info[i] = ((val1 & 0x7ff) << 11) | ((val0 >> 21) & 0x3ff);
+		ae_stat_ptr->b_info[i] = val0 & 0x1fffff;
+    }
 
 	memset((void*)&statis_buf, 0, sizeof(statis_buf));
 	statis_buf.buf_size = statis_info->buf_size;

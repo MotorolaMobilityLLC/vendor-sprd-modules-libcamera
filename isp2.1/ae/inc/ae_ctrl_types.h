@@ -340,6 +340,7 @@ struct ae_monitor_cfg {
 };
 
 struct ae_monitor_info {
+	uint32_t shift;
 	struct ae_size win_size;
 	struct ae_size win_num;
 	struct ae_trim trim;

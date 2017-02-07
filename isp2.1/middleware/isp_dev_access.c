@@ -528,6 +528,7 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *param
 		break;
 	case ISP_DEV_SET_AE_MONITOR_WIN: {
 		struct ae_monitor_info *in_param = (struct ae_monitor_info *)param0;
+		rtn = isp_u_raw_aem_shift(cxt->isp_driver_handle, in_param->shift);
 		rtn = isp_u_raw_aem_offset(cxt->isp_driver_handle, in_param->trim.x, in_param->trim.y);
 		rtn = isp_u_raw_aem_blk_size(cxt->isp_driver_handle, in_param->win_size.w, in_param->win_size.h);
 		break;
