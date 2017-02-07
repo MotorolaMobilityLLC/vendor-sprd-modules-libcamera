@@ -289,9 +289,10 @@ exit:
 }
 
 cmr_int camera_get_redisplay_data(cmr_handle camera_handle, cmr_s32 output_fd,
-                                                     cmr_uint output_addr,cmr_uint output_width,
-                                                     cmr_uint output_height, cmr_s32 input_fd,
-                                                     cmr_uint input_addr_y, cmr_uint input_addr_uv,
+                                                     cmr_uint output_addr, cmr_uint output_vir_addr,
+                                                     cmr_uint output_width, cmr_uint output_height,
+                                                     cmr_s32 input_fd, cmr_uint input_addr_y,
+                                                     cmr_uint input_addr_uv, cmr_uint input_vir_addr,
                                                      cmr_uint input_width, cmr_uint input_height)
 {
 	cmr_int                          ret = CMR_CAMERA_SUCCESS;
@@ -305,8 +306,8 @@ cmr_int camera_get_redisplay_data(cmr_handle camera_handle, cmr_s32 output_fd,
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}
-	ret = camera_local_redisplay_data(camera_handle, output_fd, output_addr, output_width, output_height,input_fd,
-		                              input_addr_y, input_addr_uv, input_width, input_height);
+	ret = camera_local_redisplay_data(camera_handle, output_fd, output_addr, output_vir_addr, output_width, output_height,input_fd,
+		                              input_addr_y, input_addr_uv, input_vir_addr, input_width, input_height);
 	if (ret) {
 		CMR_LOGE("failed to redisplay %ld", ret);
 	}
