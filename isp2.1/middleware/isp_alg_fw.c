@@ -28,6 +28,7 @@
 #include "lsc_adv.h"
 #include "isp_dev_access.h"
 #include "isp_ioctrl.h"
+#include "isp_param_file_update.h"
 
 uint32_t isp_cur_bv;
 uint32_t isp_cur_ct;
@@ -1493,6 +1494,7 @@ static cmr_int isp_pm_sw_init(cmr_handle isp_alg_handle, struct isp_init_param *
 
 	memset(&isp_ctrl_cxt, 0, sizeof(isp_ctrl_cxt));
 	cxt->sn_cxt.sn_raw_info = sensor_raw_info_ptr;
+	isp_pm_raw_para_update_from_file(sensor_raw_info_ptr);
 	memcpy((void *)cxt->sn_cxt.isp_init_data,(void *)input_ptr->mode_ptr,ISP_MODE_NUM_MAX*sizeof(struct isp_data_info));
 
 	input.num = MAX_MODE_NUM;

@@ -36,27 +36,33 @@ extern "C"
 
 #define LNC_MAP_NUM 9
 #define SCENE_INFO_NUM 10
-#define ISP_PARAM_VERSION_OLD 0x00030002
+#define ISP_PARAM_VERSION_V21 0x0005
 
 static int32_t count = 8;
 extern isp_s8 nr_mode_name[MAX_MODE_NUM][8];
-extern isp_s8 isp_param_update_path[64];
 
-int read_mode(FILE* fp, uint8_t * buf, int* plen)
+int update_param_v1(struct sensor_raw_info* sensor_raw_info_ptr, const char *sensor_name)
 {
 	int rtn = 0x00;
-	uint8_t* param_buf = buf;
-	int i;
-	unsigned char line_buff[1024];
+	UNUSED(sensor_raw_info_ptr);
+	UNUSED(sensor_name);
+	return rtn;
+}
+
+int read_nr_level_number_info(FILE *fp, uint8_t *data_ptr)
+{
+	int rtn =0x00;
+
+	char line_buff[256] = {0};
+	int i = 0;
+	uint8_t *param_buf = data_ptr;
 
 	while (!feof(fp)) {
-		uint8_t c[16];
+		uint32_t c[16];
 		int n = 0;
-
-		if (fgets(line_buff, 1024, fp) == NULL) {
+		if (fgets(line_buff, 256, fp) == NULL) {
 			break;
 		}
-
 		if (strstr(line_buff, "{") != NULL) {
 			continue;
 		}
@@ -65,115 +71,52 @@ int read_mode(FILE* fp, uint8_t * buf, int* plen)
 			continue;
 		}
 
-		if (strstr(line_buff, "};") != NULL) {
+		if (strstr(line_buff, "}};") != NULL) {
 			break;
 		}
 
-
-		n = sscanf(line_buff, "%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x", &c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10], &c[11], &c[12], &c[13], &c[14], &c[15]);
+		n = sscanf(line_buff, "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d", &c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10], &c[11], &c[12], &c[13], &c[14], &c[15]);
 		for (i=0; i<n; i++) {
-			*param_buf ++ = c[i];
+			*param_buf ++ = (uint8_t)c[i];
 		}
 	}
-
-	*plen = (long)param_buf - (long)(buf);
 	return rtn;
 }
 
-int update_param_v1(struct sensor_raw_info* sensor_raw_info_ptr,unsigned char *sensor_name)
+int read_nr_scene_map_info(FILE *fp, uint32_t *data_ptr)
 {
 	int rtn = 0x00;
 
-	FILE* fp = NULL;
-	unsigned char filename[80];
-	unsigned char line_buff[512];
-	int mode_flag[16] = {0};
-	unsigned char mode_name_prefix[80];
-	unsigned char mode_name[16][80];
-	unsigned char mode_info_array[80];
-	unsigned char mode_info[16][80];
-	int i;
-
-	sprintf(filename,"/data/misc/cameraserver/sensor_%s_raw_param_v3.c", sensor_name);
-
-	sprintf(mode_name_prefix, "static uint8_t s_%s_tune_info_", sensor_name);
-
-	sprintf(mode_name[0], "static uint8_t s_%s_tune_info_common[]=", sensor_name);
-	sprintf(mode_name[1], "static uint8_t s_%s_tune_info_prv_0[]=", sensor_name);
-	sprintf(mode_name[2], "static uint8_t s_%s_tune_info_prv_1[]=", sensor_name);
-	sprintf(mode_name[3], "static uint8_t s_%s_tune_info_prv_2[]=", sensor_name);
-	sprintf(mode_name[4], "static uint8_t s_%s_tune_info_prv_3[]=", sensor_name);
-	sprintf(mode_name[5], "static uint8_t s_%s_tune_info_cap_0[]=", sensor_name);
-	sprintf(mode_name[6], "static uint8_t s_%s_tune_info_cap_1[]=", sensor_name);
-	sprintf(mode_name[7], "static uint8_t s_%s_tune_info_cap_2[]=", sensor_name);
-	sprintf(mode_name[8], "static uint8_t s_%s_tune_info_cap_3[]=", sensor_name);
-	sprintf(mode_name[9], "static uint8_t s_%s_tune_info_video_0[]=", sensor_name);
-	sprintf(mode_name[10], "static uint8_t s_%s_tune_info_video_1[]=", sensor_name);
-	sprintf(mode_name[11], "static uint8_t s_%s_tune_info_video_2[]=", sensor_name);
-	sprintf(mode_name[12], "static uint8_t s_%s_tune_info_video_3[]=", sensor_name);
-
-
-	sprintf(mode_info_array, "static struct sensor_raw_info s_%s_mipi_raw_info=", sensor_name);
-
-	sprintf(mode_info[0], "{s_%s_tune_info_common, sizeof(s_%s_tune_info_common)},", sensor_name, sensor_name);
-	sprintf(mode_info[1], "{s_%s_tune_info_prv_0, sizeof(s_%s_tune_info_prv_0)},", sensor_name, sensor_name);
-	sprintf(mode_info[2], "{s_%s_tune_info_prv_1, sizeof(s_%s_tune_info_prv_1)},", sensor_name, sensor_name);
-	sprintf(mode_info[3], "{s_%s_tune_info_prv_2, sizeof(s_%s_tune_info_prv_2)},", sensor_name, sensor_name);
-	sprintf(mode_info[4], "{s_%s_tune_info_prv_3, sizeof(s_%s_tune_info_prv_3)},", sensor_name, sensor_name);
-	sprintf(mode_info[5], "{s_%s_tune_info_cap_0, sizeof(s_%s_tune_info_cap_0)},", sensor_name, sensor_name);
-	sprintf(mode_info[6], "{s_%s_tune_info_cap_1, sizeof(s_%s_tune_info_cap_1)},", sensor_name, sensor_name);
-	sprintf(mode_info[7], "{s_%s_tune_info_cap_2, sizeof(s_%s_tune_info_cap_2)},", sensor_name, sensor_name);
-	sprintf(mode_info[8], "{s_%s_tune_info_cap_3, sizeof(s_%s_tune_info_cap_3)},", sensor_name, sensor_name);
-	sprintf(mode_info[9], "{s_%s_tune_info_video_0, sizeof(s_%s_tune_info_video_0)},", sensor_name, sensor_name);
-	sprintf(mode_info[10], "{s_%s_tune_info_video_1, sizeof(s_%s_tune_info_video_1)},", sensor_name, sensor_name);
-	sprintf(mode_info[11], "{s_%s_tune_info_video_2, sizeof(s_%s_tune_info_video_2)},", sensor_name, sensor_name);
-	sprintf(mode_info[12], "{s_%s_tune_info_video_3, sizeof(s_%s_tune_info_video_3)},", sensor_name, sensor_name);
-
-
-	ISP_LOGI("ISP try to read %s", filename);
-	fp = fopen(filename, "r");
-	if (fp == NULL) {
-		return -1;
-	}
-
-
+	int i = 0;
+	char line_buf[256] = {0};
+	uint32_t *param_buf = data_ptr;
 	while (!feof(fp)) {
-		if (fgets(line_buff, 512, fp) == NULL) {
+		uint32_t c1[16];
+		int n = 0;
+
+		if (fgets(line_buf, 256, fp) == NULL) {
 			break;
 		}
 
-		if (strstr(line_buff, mode_name_prefix) != NULL) {
-			for (i=0; i<16; i++) {
-				if (strstr(line_buff, mode_name[i]) != NULL) {
-					read_mode(fp, sensor_raw_info_ptr->mode_ptr[i].addr, &(sensor_raw_info_ptr->mode_ptr[i].len));
-					break;
-				}
-			}
-		} else if (strstr(line_buff, mode_info_array) != NULL) {
-			while (!feof(fp)) {
-				if (fgets(line_buff, 512, fp) == NULL) {
-					break;
-				}
+		if (strstr(line_buf, "{") != NULL) {
+			continue;
+		}
 
-				for (i=0; i<16; i++) {
-					if (strstr(line_buff, mode_info[i]) != NULL) {
-						mode_flag[i] = 1;
-						break;
-					}
-				}
-			}
+		if (strstr(line_buf, "/*") != NULL) {
+			continue;
+		}
+
+		if (strstr(line_buf, "}};") != NULL) {
+			break;
+		}
+
+		n = sscanf(line_buf, "%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x", &c1[0], &c1[1], &c1[2], &c1[3], &c1[4], &c1[5], &c1[6], &c1[7], &c1[8], &c1[9], &c1[10], &c1[11], &c1[12], &c1[13], &c1[14], &c1[15]);
+
+		for (i=0; i<n; i++) {
+			*param_buf ++ = c1[i];
 		}
 	}
 
-
-	for (i=0; i<16; i++) {
-		if (mode_flag[i] == 0) {
-			sensor_raw_info_ptr->mode_ptr[i].addr = NULL;
-			sensor_raw_info_ptr->mode_ptr[i].len = 0;
-		}
-	}
-
-	fclose(fp);
 	return rtn;
 }
 
@@ -182,11 +125,11 @@ int read_tune_info(FILE *fp,uint8_t *data_ptr,uint32_t *data_len)
 	int rtn =0x00;
 
 	uint8_t *param_buf = data_ptr;
-	unsigned char line_buff[256];
+	char line_buff[256];
 	int i;
 
 	while (!feof(fp)) {
-		uint8_t c[16];
+		uint32_t c[16];
 		int n = 0;
 		if (fgets(line_buff, 256, fp) == NULL) {
 			break;
@@ -205,7 +148,7 @@ int read_tune_info(FILE *fp,uint8_t *data_ptr,uint32_t *data_len)
 
 		n = sscanf(line_buff, "%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x", &c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10], &c[11], &c[12], &c[13], &c[14], &c[15]);
 		for (i=0; i<n; i++) {
-			*param_buf ++ = c[i];
+			*param_buf ++ = (uint8_t)c[i];
 		}
 	}
 	*data_len = (long)param_buf - (long)(data_ptr);
@@ -219,7 +162,7 @@ int read_ae_table_32bit(FILE *fp,uint32_t *data_ptr,uint32_t *data_len)
 
 	int i;
 	uint32_t *param_buf = data_ptr;
-	unsigned char line_buf[512];
+	char line_buf[512];
 
 	while (!feof(fp)) {
 		uint32_t c1[16];
@@ -261,10 +204,10 @@ int read_ae_table_16bit(FILE *fp,uint16_t *data_ptr,uint32_t *data_len)
 
 	int i;
 	uint16_t *param_buf = data_ptr;
-	unsigned char line_buf[512];
+	char line_buf[512];
 
 	while (!feof(fp)) {
-		uint16_t c2[16];
+		uint32_t c2[16];
 		int n = 0;
 
 		if (fgets(line_buf, 512, fp) == NULL) {
@@ -286,7 +229,7 @@ int read_ae_table_16bit(FILE *fp,uint16_t *data_ptr,uint32_t *data_len)
 		n = sscanf(line_buf, "%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x", &c2[0], &c2[1], &c2[2], &c2[3], &c2[4], &c2[5], &c2[6], &c2[7], &c2[8], &c2[9], &c2[10], &c2[11], &c2[12], &c2[13], &c2[14], &c2[15]);
 
 		for (i=0; i<n; i++) {
-			*param_buf ++ = c2[i];
+			*param_buf ++ = (uint16_t)c2[i];
 		}
 	}
 
@@ -301,10 +244,10 @@ int read_ae_weight(FILE *fp,struct ae_weight_tab *weight_ptr)
 
 	uint8_t *param_buf = weight_ptr->weight_table;
 	int i;
-	unsigned char line_buff[512];
+	char line_buff[512];
 
 	while (!feof(fp)) {
-		uint8_t c[16];
+		uint32_t c[16];
 		int n = 0;
 
 		if (fgets(line_buff, 512, fp) == NULL) {
@@ -321,7 +264,7 @@ int read_ae_weight(FILE *fp,struct ae_weight_tab *weight_ptr)
 		}
 		n = sscanf(line_buff, "%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x", &c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10], &c[11], &c[12], &c[13], &c[14], &c[15]);
 		for (i=0; i<n; i++) {
-			*param_buf ++ = c[i];
+			*param_buf ++ = (uint8_t)c[i];
 		}
 	}
 	weight_ptr->len = (long)param_buf - (long)(weight_ptr->weight_table);
@@ -335,8 +278,8 @@ int read_ae_scene_info(FILE *fp,struct sensor_ae_tab *ae_ptr,int scene_mode)
 
 	uint32_t *param_buf = ae_ptr->scene_tab[scene_mode][0].scene_info;
 	uint32_t *param_buf1 = ae_ptr->scene_tab[scene_mode][1].scene_info;
-	int i,j;
-	unsigned char line_buff[512];
+	int i = 0;
+	char line_buff[512] = {0};
 
 	while (!feof(fp)) {
 		uint32_t c[16];
@@ -373,10 +316,10 @@ int read_ae_auto_iso(FILE *fp,struct ae_auto_iso_tab_v1 *auto_iso_ptr)
 
 	uint16_t *param_buf = auto_iso_ptr->auto_iso_tab;
 	int i;
-	unsigned char line_buff[512];
+	char line_buff[512];
 
 	while (!feof(fp)) {
-		uint16_t c[16];
+		uint32_t c[16];
 		int n = 0;
 
 		if (fgets(line_buff, 512, fp) == NULL) {
@@ -398,7 +341,7 @@ int read_ae_auto_iso(FILE *fp,struct ae_auto_iso_tab_v1 *auto_iso_ptr)
 
 		n = sscanf(line_buff, "%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x", &c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10], &c[11], &c[12], &c[13], &c[14], &c[15]);
 		for (i=0; i<n; i++) {
-			*param_buf ++ = c[i];
+			*param_buf ++ = (uint16_t)c[i];
 		}
 	}
 
@@ -412,12 +355,12 @@ int read_fix_ae_info(FILE *fp,struct sensor_ae_tab *ae_ptr)
 
 	int flag_end = 0;
 	int i,j;
-	unsigned char *ae_tab_info[5] = {NULL};
-	unsigned char *ae_scene_info[6] = {NULL};
-	unsigned char ae_auto_iso_info[50];
-	unsigned char *ae_weight_info[50];
+	char *ae_tab_info[5] = {NULL};
+	char *ae_scene_info[6] = {NULL};
+	char ae_auto_iso_info[50];
+	char ae_weight_info[50];
 
-	unsigned char *line_buf = (unsigned char *)malloc(512*sizeof(unsigned char));
+	char *line_buf = (char *)malloc(512*sizeof(char));
 	if ( NULL == line_buf) {
 		ISP_LOGE("malloc mem was error!");
 		rtn = 0x01;
@@ -425,7 +368,7 @@ int read_fix_ae_info(FILE *fp,struct sensor_ae_tab *ae_ptr)
 	}
 
 	for(i = 0;i < 5;i++) {
-		ae_tab_info[i] = (unsigned char *)malloc(50*sizeof(unsigned char));
+		ae_tab_info[i] = (char *)malloc(50*sizeof(char));
 		if ( NULL == ae_tab_info[i]) {
 			ISP_LOGE("malloc mem was error!");
 			rtn = 0x01;
@@ -434,7 +377,7 @@ int read_fix_ae_info(FILE *fp,struct sensor_ae_tab *ae_ptr)
 	}
 
 	for (i = 0;i < 6;i++) {
-		ae_scene_info[i] = (unsigned char *)malloc(50*sizeof(unsigned char));
+		ae_scene_info[i] = (char *)malloc(50*sizeof(char));
 		if ( NULL == ae_scene_info[i]) {
 			ISP_LOGE("malloc mem was error!");
 			rtn = 0x01;
@@ -671,12 +614,133 @@ exit:
 	return rtn;
 }
 
+int read_awb_win_map(FILE *fp,struct sensor_awb_map *awb_map_ptr)
+{
+	int rtn = 0x00;
+
+	uint16_t *param_buf = awb_map_ptr->addr;
+	int i;
+	char line_buff[512];
+
+	while (!feof(fp)) {
+		uint32_t c[16];
+		int n = 0;
+
+		if (fgets(line_buff, 512, fp) == NULL) {
+			break;
+		}
+
+		if (strstr(line_buff, "{") != NULL) {
+			continue;
+		}
+
+		if (strstr(line_buff, "/*") != NULL) {
+			continue;
+		}
+
+		if (strstr(line_buff, "},") != NULL) {
+			break;
+		}
+
+
+		n = sscanf(line_buff, "%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x", &c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10], &c[11], &c[12], &c[13], &c[14], &c[15]);
+		for (i = 0; i < n; i++) {
+			*param_buf ++ = (uint16_t)c[i];
+		}
+	}
+
+	awb_map_ptr->len = (long)param_buf - (long)(awb_map_ptr->addr);
+
+	return 0;
+}
+
+int read_awb_pos_weight(FILE *fp,struct sensor_awb_weight *awb_weight_ptr)
+{
+	int rtn = 0x00;
+
+	uint8_t *param_buf = awb_weight_ptr->addr;
+	int i;
+	char line_buff[512];
+
+	while (!feof(fp)) {
+		uint32_t c[16];
+		int n = 0;
+
+		if (fgets(line_buff, 512, fp) == NULL) {
+			break;
+		}
+//		ISP_LOGI("read_awb_width line_buff = %s", line_buff);
+
+		if (strstr(line_buff, "{") != NULL) {
+			continue;
+		}
+
+		if (strstr(line_buff, "/*") != NULL) {
+			continue;
+		}
+
+		if (strstr(line_buff, "},") != NULL) {
+			break;
+		}
+
+
+		n = sscanf(line_buff, "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d", &c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10], &c[11], &c[12], &c[13], &c[14], &c[15]);
+		for (i=0; i<n; i++) {
+			*param_buf ++ = (uint8_t)c[i];
+		}
+	}
+
+	awb_weight_ptr->weight_len = (long)param_buf - (long)(awb_weight_ptr->addr);
+
+	return rtn;
+}
+
+int	read_awb_width_height(FILE *fp,struct sensor_awb_weight *awb_weight_ptr)
+{
+	int rtn = 0x00;
+
+	uint16_t *param_buf = awb_weight_ptr->size;
+	int i;
+	char line_buff[512];
+
+	while (!feof(fp)) {
+		uint32_t c[16];
+		int n = 0;
+
+		if (fgets(line_buff, 512, fp) == NULL) {
+			break;
+		}
+
+		if (strstr(line_buff, "{") != NULL) {
+			continue;
+		}
+
+		if (strstr(line_buff, "/*") != NULL) {
+			continue;
+		}
+
+		if (strstr(line_buff, "},") != NULL) {
+			break;
+		}
+
+
+		n = sscanf(line_buff, "%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x", &c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10], &c[11], &c[12], &c[13], &c[14], &c[15]);
+		for (i=0; i<n; i++) {
+			*param_buf ++ = (uint16_t)c[i];
+		}
+	}
+
+	awb_weight_ptr->size_param_len = (long)param_buf - (long)(awb_weight_ptr->size);
+
+	return 0;
+}
+
 int read_fix_awb_info(FILE *fp,struct sensor_awb_map_weight_param *awb_ptr)
 {
 	int rtn = 0x00;
 
 	int flag_end = 0;
-	unsigned char line_buf[512];
+	char line_buf[512];
 
 	while (!feof(fp)) {
 		if (NULL == fgets(line_buf,512,fp)) {
@@ -708,6 +772,206 @@ int read_fix_awb_info(FILE *fp,struct sensor_awb_map_weight_param *awb_ptr)
 	return rtn;
 }
 
+int read_lnc_map_info(FILE *fp,struct sensor_lens_map *lnc_map_ptr)
+{
+	int rtn = 0x00;
+
+	uint32_t *param_buf = lnc_map_ptr->map_info;
+	int i;
+	char line_buff[512];
+
+	while (!feof(fp)) {
+		uint32_t c[16];
+		int n = 0;
+
+		if (fgets(line_buff, 512, fp) == NULL)
+		{
+			break;
+		}
+
+		if (strstr(line_buff, "{") != NULL) {
+			continue;
+		}
+
+		if (strstr(line_buff, "/*") != NULL) {
+			continue;
+		}
+
+		if (strstr(line_buff, "},") != NULL) {
+			break;
+		}
+
+		n = sscanf(line_buff, "%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x", &c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10], &c[11], &c[12], &c[13], &c[14], &c[15]);
+		for (i=0; i<n; i++) {
+			*param_buf ++ = c[i];
+		}
+	}
+
+	lnc_map_ptr->map_info_len = (long)param_buf - (long)(lnc_map_ptr->map_info);
+
+	return rtn;
+}
+
+int read_lnc_weight_info(FILE *fp,struct sensor_lens_map *lnc_map_ptr)
+{
+	int rtn = 0x00;
+	int i;
+	char line_buff[512];
+	uint16_t *param_buf = PNULL;
+	param_buf = lnc_map_ptr->weight_info;
+	while (!feof(fp)) {
+		uint32_t c[16];
+		int n = 0;
+
+		if (fgets(line_buff, 512, fp) == NULL)
+		{
+			break;
+		}
+
+		if (strstr(line_buff, "{") != NULL) {
+			continue;
+		}
+
+		if (strstr(line_buff, "/*") != NULL) {
+			continue;
+		}
+
+		if (strstr(line_buff, "},") != NULL) {
+			break;
+		}
+
+		n = sscanf(line_buff, "%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x", &c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10], &c[11], &c[12], &c[13], &c[14], &c[15]);
+		for (i=0; i<n; i++) {
+			*param_buf ++ = (uint16_t)c[i];
+		}
+	}
+
+	lnc_map_ptr->weight_info_len= (long)param_buf - (long)(lnc_map_ptr->weight_info);
+
+	return rtn;
+}
+
+ int find_digit(char *dst, const char *src, int out_buff_size)
+ {
+	int num = 0, i = 0, cur = 0;
+	char *dst_ptr = dst;
+	num = strlen(src);
+	for(i = 0; i < num; i++) {
+		//if(isdigit(src[i])) {
+		if( src[i] >= '0' && src[i] <= '9') {
+			*dst_ptr++ = src[i];
+			cur++;
+		}
+		if(cur == out_buff_size) {
+			break;
+		}
+	}
+ 	*dst_ptr = '\0';
+	if(cur == 0)
+		return -1;
+ 	return cur;
+}
+
+int read_lnc_tab_size_offset_info(FILE *fp,struct sensor_lsc_map *lsc_ptr)
+{
+	int rtn = 0x00;
+
+	uint32_t map_tab_offset = 0;
+	int i = 0;
+	char line_buff[512];
+	char digit_buff[8];
+	char lsc_2d_macro[64] = {0};
+	int lnc_flag_len = 0;
+	uint32_t c = 0;
+
+	struct sensor_lens_map  *lnc_map_ptr = PNULL;
+	uint8_t *lnc_start_addr = PNULL;
+	lnc_map_ptr = (struct sensor_lens_map *)&(lsc_ptr->map[0]);
+	lnc_start_addr = (uint8_t *)lsc_ptr->map[0].lnc_addr;
+	for (i = 0; i < LNC_MAP_COUNT; i++) {
+		lnc_flag_len = sprintf(lsc_2d_macro,"#define LSC_2D_MAP_%d",i);
+		while(1) {
+			if(feof(fp)) {
+				return -1;
+			}
+			if (fgets(line_buff, 512, fp) == NULL)
+			{
+				return -1;
+			}
+
+			if (strstr(line_buff, "/*") != NULL) {
+				continue;
+			}
+
+			if (strstr(line_buff, "#undef") != NULL) {
+				continue;
+			}
+
+			if (strstr(line_buff, lsc_2d_macro) != NULL) {
+				if(find_digit(digit_buff, &line_buff[lnc_flag_len], sizeof(digit_buff)) < 0) {
+					return -1;
+				}
+				sscanf(digit_buff, "%d", &c);
+
+				lnc_map_ptr[i].lnc_addr  = (uint16_t *)(lnc_start_addr + map_tab_offset);
+				//lnc_map_ptr[i].lnc_len = c;
+				*(lnc_map_ptr[i].lnc_map_tab_len) = c;
+				map_tab_offset += c;
+				*(lnc_map_ptr[i].lnc_map_tab_offset)  = map_tab_offset;
+				#if 0
+				ISP_LOGV("offset calc:%d,%d,%d,%d,%p,%p\n",i,map_tab_offset,
+					*(lnc_map_ptr[i].lnc_map_tab_len),*(lnc_map_ptr[i].lnc_map_tab_offset),
+					lnc_map_ptr[i].lnc_addr,lnc_map_ptr[i].lnc_len);
+				#endif
+				break;
+			}
+		}
+	}
+
+	return rtn;
+}
+
+int read_lnc_info(FILE *fp,struct sensor_lens_map *lnc_map_ptr)
+{
+	int rtn = 0x00;
+
+	uint16_t *param_buf = lnc_map_ptr->lnc_addr;
+	int i;
+	char line_buff[512];
+
+	while (!feof(fp)) {
+		uint32_t c[16];
+		int n = 0;
+
+		if (fgets(line_buff, 512, fp) == NULL) {
+			break;
+		}
+
+		if (strstr(line_buff, "{") != NULL) {
+			continue;
+		}
+
+		if (strstr(line_buff, "/*") != NULL) {
+			if (strstr(line_buff, "_lnc") != NULL) {
+				break;
+			} else {
+				continue;
+			}
+		}
+
+		if (strstr(line_buff, "};") != NULL) {
+			break;
+		}
+
+		n = sscanf(line_buff, "%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x", &c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10], &c[11], &c[12], &c[13], &c[14], &c[15]);
+		for (i=0; i<n; i++) {
+			*param_buf ++ = (uint16_t)c[i];
+		}
+	}
+
+	lnc_map_ptr->lnc_len = (long)param_buf - (long)(lnc_map_ptr->lnc_addr);
+	return rtn;
+}
 int read_fix_lnc_info(FILE *fp,struct sensor_lsc_map *lnc_ptr)
 {
 	int rtn = 0x00;
@@ -715,11 +979,11 @@ int read_fix_lnc_info(FILE *fp,struct sensor_lsc_map *lnc_ptr)
 	int i;
 	int flag_end = 0;
 
-	unsigned char lnc_map_info[50];
-	unsigned char lnc_info[20];
-	//unsigned char line_buf[512];
+	char lnc_map_info[50];
+	char lnc_weight_info[50];
+	char lnc_info[20];
 
-	unsigned char *line_buf = (unsigned char *)malloc(512*sizeof(unsigned char));
+	char *line_buf = (char *)malloc(512*sizeof(char));
 	if (NULL == line_buf) {
 		ISP_LOGE("malloc mem was error!");
 		rtn = 0x01;
@@ -729,9 +993,9 @@ int read_fix_lnc_info(FILE *fp,struct sensor_lsc_map *lnc_ptr)
 		if (NULL == fgets(line_buf,512,fp)) {
 			break;
 		}
-		if (NULL != strstr(line_buf,"_inc_map_info")) {
+		if (NULL != strstr(line_buf,"_lnc_map_info")) {
 			for(i = 0;i < LNC_MAP_NUM;i++) {
-				sprintf(lnc_map_info,"_inc_map_info_0%d",i);
+				sprintf(lnc_map_info,"_lnc_map_info_0%d",i);
 				if (strstr(line_buf,lnc_map_info) != NULL) {
 					rtn = read_lnc_map_info(fp,&lnc_ptr->map[i]);
 					if (0x00 != rtn) {
@@ -741,7 +1005,19 @@ int read_fix_lnc_info(FILE *fp,struct sensor_lsc_map *lnc_ptr)
 				}
 			}
 		}
-		if (NULL != strstr(line_buf,"_common_lnc_0")) {
+		if (NULL != strstr(line_buf,"_lnc_weight_0")) {
+			for(i = 0;i < LNC_MAP_NUM;i++) {
+				sprintf(lnc_weight_info,"_lnc_weight_0%d",i);
+				if (strstr(line_buf,lnc_weight_info) != NULL) {
+					rtn = read_lnc_weight_info(fp,&lnc_ptr->map[i]);
+					if (0x00 != rtn) {
+						return rtn;
+					}
+					break;
+				}
+			}
+		}
+		if (NULL != strstr(line_buf,"_lnc_0")) {
 			for (i = 0;i < LNC_MAP_NUM;i++) {
 				sprintf(lnc_info,"_lnc_0%d",i);
 				rtn = read_lnc_info(fp,&lnc_ptr->map[i]);
@@ -760,136 +1036,13 @@ int read_fix_lnc_info(FILE *fp,struct sensor_lsc_map *lnc_ptr)
 	return rtn;
 }
 
-
-int read_awb_win_map(FILE *fp,struct sensor_awb_map *awb_map_ptr)
-{
-	int rtn = 0x00;
-
-	uint16_t *param_buf = awb_map_ptr->addr;
-	int i;
-	unsigned char line_buff[512];
-
-	while (!feof(fp)) {
-		uint16_t c[16];
-		int n = 0;
-
-		if (fgets(line_buff, 512, fp) == NULL) {
-			break;
-		}
-
-		if (strstr(line_buff, "{") != NULL) {
-			continue;
-		}
-
-		if (strstr(line_buff, "/*") != NULL) {
-			continue;
-		}
-
-		if (strstr(line_buff, "},") != NULL) {
-			break;
-		}
-
-
-		n = sscanf(line_buff, "%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x", &c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10], &c[11], &c[12], &c[13], &c[14], &c[15]);
-		for (i = 0; i < n; i++) {
-			*param_buf ++ = c[i];
-		}
-	}
-
-	awb_map_ptr->len = (long)param_buf - (long)(awb_map_ptr->addr);
-
-	return 0;
-}
-
-int read_awb_pos_weight(FILE *fp,struct sensor_awb_weight *awb_weight_ptr)
-{
-	int rtn = 0x00;
-
-	uint8_t *param_buf = awb_weight_ptr->addr;
-	int i;
-	unsigned char line_buff[512];
-
-	while (!feof(fp)) {
-		uint8_t c[16];
-		int n = 0;
-
-		if (fgets(line_buff, 512, fp) == NULL) {
-			break;
-		}
-//		ISP_LOGI("read_awb_width line_buff = %s", line_buff);
-
-		if (strstr(line_buff, "{") != NULL) {
-			continue;
-		}
-
-		if (strstr(line_buff, "/*") != NULL) {
-			continue;
-		}
-
-		if (strstr(line_buff, "},") != NULL) {
-			break;
-		}
-
-
-		n = sscanf(line_buff, "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d", &c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10], &c[11], &c[12], &c[13], &c[14], &c[15]);
-		for (i=0; i<n; i++) {
-			*param_buf ++ = c[i];
-		}
-	}
-
-	awb_weight_ptr->weight_len = (long)param_buf - (long)(awb_weight_ptr->addr);
-
-	return rtn;
-}
-
-int	read_awb_width_height(FILE *fp,struct sensor_awb_weight *awb_weight_ptr)
-{
-	int rtn = 0x00;
-
-	uint16_t *param_buf = awb_weight_ptr->size;
-	int i;
-	unsigned char line_buff[512];
-
-	while (!feof(fp)) {
-		uint16_t c[16];
-		int n = 0;
-
-		if (fgets(line_buff, 512, fp) == NULL) {
-			break;
-		}
-
-		if (strstr(line_buff, "{") != NULL) {
-			continue;
-		}
-
-		if (strstr(line_buff, "/*") != NULL) {
-			continue;
-		}
-
-		if (strstr(line_buff, "},") != NULL) {
-			break;
-		}
-
-
-		n = sscanf(line_buff, "%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x", &c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10], &c[11], &c[12], &c[13], &c[14], &c[15]);
-		for (i=0; i<n; i++) {
-			*param_buf ++ = c[i];
-		}
-	}
-
-	awb_weight_ptr->size_param_len = (long)param_buf - (long)(awb_weight_ptr->size);
-
-	return 0;
-}
-
-
 int read_lnc_map(FILE *fp,struct sensor_lens_map *lnc_map_ptr)
 {
 	int rtn = 0x00;
 
 	uint32_t *param_buf = lnc_map_ptr->map_info;
 	int i;
-	unsigned char line_buff[512];
+	char line_buff[512];
 
 	while (!feof(fp)) {
 		uint32_t c[16];
@@ -920,89 +1073,6 @@ int read_lnc_map(FILE *fp,struct sensor_lens_map *lnc_map_ptr)
 
 	lnc_map_ptr->map_info_len = (long)param_buf - (long)(lnc_map_ptr->map_info);
 
-	return rtn;
-}
-
-
-int read_lnc_map_info(FILE *fp,struct sensor_lens_map *lnc_map_ptr)
-{
-	int rtn = 0x00;
-
-	uint32_t *param_buf = lnc_map_ptr->map_info;
-	int i;
-	unsigned char line_buff[512];
-
-	while (!feof(fp)) {
-		uint32_t c[16];
-		int n = 0;
-
-		if (fgets(line_buff, 512, fp) == NULL)
-		{
-			break;
-		}
-
-		if (strstr(line_buff, "{") != NULL) {
-			continue;
-		}
-
-		if (strstr(line_buff, "/*") != NULL) {
-			continue;
-		}
-
-		if (strstr(line_buff, "},") != NULL) {
-			break;
-		}
-
-		n = sscanf(line_buff, "%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x", &c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10], &c[11], &c[12], &c[13], &c[14], &c[15]);
-		for (i=0; i<n; i++) {
-			*param_buf ++ = c[i];
-		}
-	}
-
-	lnc_map_ptr->map_info_len = (long)param_buf - (long)(lnc_map_ptr->map_info);
-
-	return rtn;
-}
-
-int read_lnc_info(FILE *fp,struct sensor_lens_map *lnc_map_ptr)
-{
-	int rtn = 0x00;
-
-	uint16_t *param_buf = lnc_map_ptr->lnc_addr;
-	int i;
-	unsigned char line_buff[512];
-
-	while (!feof(fp)) {
-		uint16_t c[16];
-		int n = 0;
-
-		if (fgets(line_buff, 512, fp) == NULL) {
-			break;
-		}
-
-		if (strstr(line_buff, "{") != NULL) {
-			continue;
-		}
-
-		if (strstr(line_buff, "/*") != NULL) {
-			if (strstr(line_buff, "_ov8858_common_lnc") != NULL) {
-				break;
-			} else {
-				continue;
-			}
-		}
-
-		if (strstr(line_buff, "};") != NULL) {
-			break;
-		}
-
-		n = sscanf(line_buff, "%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x", &c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10], &c[11], &c[12], &c[13], &c[14], &c[15]);
-		for (i=0; i<n; i++) {
-			*param_buf ++ = c[i];
-		}
-	}
-
-	lnc_map_ptr->lnc_len = (long)param_buf - (long)(lnc_map_ptr->lnc_addr);
 	return rtn;
 }
 
@@ -1010,9 +1080,9 @@ int read_libuse_info(FILE *fp,struct sensor_raw_info *sensor_raw_ptr)
 {
 	int rtn = 0x00;
 
-	uint32_t *param_buf = sensor_raw_ptr->libuse_info;
+	uint32_t *param_buf = (uint32_t *)sensor_raw_ptr->libuse_info;
 	int i;
-	unsigned char line_buff[512];
+	char line_buff[512];
 
 	while (!feof(fp)) {
 		uint32_t c[16];
@@ -1043,21 +1113,30 @@ int read_libuse_info(FILE *fp,struct sensor_raw_info *sensor_raw_ptr)
 	return 0;
 }
 
-int update_param_v2(struct sensor_raw_info *sensor_raw_ptr,unsigned char *sensor_name)
+int update_param_v21(struct sensor_raw_info *sensor_raw_ptr,const char *sensor_name)
 {
 	int rtn = 0x00;
 
 	int i,j = 0;
 
-	unsigned char tune_info[80];
-	unsigned char fixname[50];
-	unsigned char note_name[50];
-	unsigned char libuse_info[50];
-	unsigned char ae_tab[80];
-	unsigned char awb_tab[80];
-	unsigned char lsc_tab[80];
-	unsigned char *line_buf = (unsigned char *)malloc(512*sizeof(unsigned char));
-	unsigned char *filename[14] = {NULL};
+	char tune_info[128];
+	char note_name[128];
+	char libuse_info[128];
+	char ae_tab[128];
+	char awb_tab[128];
+	char lsc_tab[128];
+	char lsc_2d_map_flag1[64];
+	char lsc_2d_map_flag2[64];
+	char nr_level_number[256];
+	char nr_default_level[256];
+	char nr_scene_map[256];
+	struct sensor_nr_level_map_param *nr_level_number_ptr = PNULL;
+	struct sensor_nr_level_map_param *nr_default_level_ptr = PNULL;
+	struct sensor_nr_scene_map_param *nr_map_ptr = PNULL;
+
+	char *line_buf = (char *)malloc(512*sizeof(char));
+	char *filename[14] = {PNULL};
+	FILE *fp = PNULL;
 
 	if (NULL == line_buf) {
 		ISP_LOGI("malloc mem was error!");
@@ -1066,23 +1145,81 @@ int update_param_v2(struct sensor_raw_info *sensor_raw_ptr,unsigned char *sensor
 	}
 
 	for (i = 0;i < 14;i++) {
-		filename[i] = (unsigned char *)malloc(80*sizeof(unsigned char));
+		filename[i] = (char *)malloc(128*sizeof(char));
 		if (NULL == filename[i]) {
 			ISP_LOGI("malloc mem was error!");
 			rtn = 0x01;
 			goto exit;
 		}
 	}
+
+	sprintf(filename[0],"%s%s",CAMERA_DUMP_PATH, "isp_nr.h");
+	sprintf(nr_level_number,"static struct sensor_nr_level_map_param s_%s_nr_level_number_map_param",sensor_name);
+	sprintf(nr_default_level,"static struct sensor_nr_level_map_param s_%s_default_nr_level_map_param",sensor_name);
+	sprintf(nr_scene_map,"static struct sensor_nr_scene_map_param s_%s_nr_scene_map_param",sensor_name);
+	sprintf(lsc_2d_map_flag1,"#undef LSC_2D_MAP_0");
+	sprintf(lsc_2d_map_flag2,"#undef LSC_2D_MAP_0_OFFSET");
+
+	nr_level_number_ptr = sensor_raw_ptr->nr_fix.nr_level_number_ptr;
+	nr_default_level_ptr = sensor_raw_ptr->nr_fix.nr_default_level_ptr;
+	nr_map_ptr = sensor_raw_ptr->nr_fix.nr_scene_ptr;
+	fp = fopen(filename[0],"r");
+	if (NULL == fp) {
+		ISP_LOGI("The param file %s is not exit!\n",filename[0]);
+	}
+
+	while (!feof(fp))
+	{
+		if (fgets(line_buf, 512, fp) == NULL) {
+			break;
+		}
+
+		if (strstr(line_buf,nr_level_number) != NULL) {
+			if(nr_level_number_ptr != NULL) {
+				rtn = read_nr_level_number_info(fp,&(nr_level_number_ptr->nr_level_map[0]));
+				if (0x00 != rtn) {
+					ISP_LOGE("nr_level_number_info was error!");
+					fclose(fp);
+					goto exit;
+				}
+			}
+			continue;
+		}
+		if (strstr(line_buf,nr_default_level) != NULL) {
+			if(nr_default_level_ptr != NULL) {
+				rtn = read_nr_level_number_info(fp,&(nr_default_level_ptr->nr_level_map[0]));
+				if (0x00 != rtn) {
+					ISP_LOGE("nr_default_level_info was error!");
+					fclose(fp);
+					goto exit;
+				}
+			}
+			continue;
+		}
+		if (strstr(line_buf,nr_scene_map) != NULL) {
+			if(nr_default_level_ptr != NULL) {
+				rtn = read_nr_scene_map_info(fp,&(nr_map_ptr->nr_scene_map[0]));
+				if (0x00 != rtn) {
+					ISP_LOGE("nr_scene_map_info was error!");
+					fclose(fp);
+					goto exit;
+				}
+			}
+			break;
+		}
+	}
+	fclose(fp);
+
 	sprintf(libuse_info,"static uint32_t s_%s_libuse_info",sensor_name);
 	for (i = 0;i < 14;i++) {
-		sprintf(filename[i],"/%s/sensor_%s_raw_param_%s.c",isp_param_update_path, sensor_name,&nr_mode_name[i][0]);
+		sprintf(filename[i],"%ssensor_%s_raw_param_%s.c",CAMERA_DUMP_PATH, sensor_name,&nr_mode_name[i][0]);
 		sprintf(tune_info,"static uint8_t s_%s_tune_info_%s",sensor_name, &nr_mode_name[i][0]);
 		sprintf(note_name,"static uint8_t s_%s_%s_tool_ui_input",sensor_name, &nr_mode_name[i][0]);
 		sprintf(ae_tab,"static struct ae_table_param_2 s_%s_%s_ae_table_param",sensor_name, &nr_mode_name[i][0]);
 		sprintf(awb_tab,"static struct sensor_awb_table_param s_%s_%s_awb_table_param",sensor_name, &nr_mode_name[i][0]);
 		sprintf(lsc_tab,"static struct sensor_lsc_2d_table_param s_%s_%s_lsc_2d_table_param",sensor_name, &nr_mode_name[i][0]);
 
-		FILE *fp = fopen(filename[i],"r");
+		fp = fopen(filename[i],"r");
 		if (NULL == fp) {
 			ISP_LOGI("The param file %s is not exit!\n",filename[i]);
 			continue;
@@ -1098,9 +1235,21 @@ int update_param_v2(struct sensor_raw_info *sensor_raw_ptr,unsigned char *sensor
 				rtn = read_libuse_info(fp,sensor_raw_ptr);
 				if (0x00 != rtn) {
 					ISP_LOGE("libuse_info was error!");
-					return rtn;
+					fclose(fp);
+					goto exit;
 				}
 				break;
+			}
+			if ((strstr(line_buf,lsc_2d_map_flag1) != NULL) && (strstr(line_buf,lsc_2d_map_flag2) == NULL)) {
+				if(sensor_raw_ptr->fix_ptr[i]->lnc.lnc_param.lnc != NULL) {
+					rtn = read_lnc_tab_size_offset_info(fp,&sensor_raw_ptr->fix_ptr[i]->lnc);
+					if (0x00 != rtn) {
+						ISP_LOGE("read_lnc_size_offset was error!");
+						fclose(fp);
+						goto exit;
+					}
+				}
+				continue;
 			}
 			if (strstr(line_buf,tune_info) != NULL) {
 				rtn = read_tune_info(fp,sensor_raw_ptr->mode_ptr[i].addr,&sensor_raw_ptr->mode_ptr[i].len);
@@ -1112,33 +1261,39 @@ int update_param_v2(struct sensor_raw_info *sensor_raw_ptr,unsigned char *sensor
 				continue;
 			}
 			if (strstr(line_buf,ae_tab) != NULL) {
-				rtn = read_fix_ae_info(fp,&sensor_raw_ptr->fix_ptr[i]->ae);
-				if(0x00 != rtn){
-					ISP_LOGE("read_ae_info was error!");
-					fclose(fp);
-					goto exit;
+				if(sensor_raw_ptr->fix_ptr[i]->ae.ae_param.ae != NULL) {
+					rtn = read_fix_ae_info(fp,&sensor_raw_ptr->fix_ptr[i]->ae);
+					if(0x00 != rtn){
+						ISP_LOGE("read_ae_info was error!");
+						fclose(fp);
+						goto exit;
+					}
 				}
 				continue;
 			}
 			if (strstr(line_buf,awb_tab) != NULL) {
-				rtn = read_fix_awb_info(fp,&sensor_raw_ptr->fix_ptr[i]->awb);
-				if (0x00 != rtn) {
-					ISP_LOGE("read_awb_info was error!");
-					fclose(fp);
-					goto exit;
+				if(sensor_raw_ptr->fix_ptr[i]->awb.awb_param.awb != NULL) {
+					rtn = read_fix_awb_info(fp,&sensor_raw_ptr->fix_ptr[i]->awb);
+					if (0x00 != rtn) {
+						ISP_LOGE("read_awb_info was error!");
+						fclose(fp);
+						goto exit;
+					}
 				}
 				continue;
 			}
 			if (strstr(line_buf,lsc_tab) != NULL) {
-				rtn = read_fix_lnc_info(fp,&sensor_raw_ptr->fix_ptr[i]->lnc);
-				if (0x00 != rtn) {
-					ISP_LOGE("read_lnc_info was error!");
-					fclose(fp);
-					goto exit;
+				if(sensor_raw_ptr->fix_ptr[i]->lnc.lnc_param.lnc != NULL) {
+					rtn = read_fix_lnc_info(fp,&sensor_raw_ptr->fix_ptr[i]->lnc);
+					if (0x00 != rtn) {
+						ISP_LOGE("read_lnc_info was error!");
+						fclose(fp);
+						goto exit;
+					}
 				}
 			}
 			if (strstr(line_buf,note_name) != NULL) {
-			ISP_LOGI("update file _tool_ui_input");
+				ISP_LOGI("update file _tool_ui_input");
 				break;
 			}
 		}
@@ -1146,33 +1301,30 @@ int update_param_v2(struct sensor_raw_info *sensor_raw_ptr,unsigned char *sensor
 	}
 
 exit:
-	if (NULL != line_buf) {
+	if (PNULL != line_buf) {
 		free(line_buf);
 	}
 	for (i = 0; i < 14; i++) {
-		if (NULL != filename[i]) {
+		if (PNULL != filename[i]) {
 			free(filename[i]);
 		}
 	}
 	return rtn;
 }
-
-uint32_t isp_raw_para_update_from_file(SENSOR_INFO_T *sensor_info_ptr,SENSOR_ID_E sensor_id)
+uint32_t isp_pm_raw_para_update_from_file(struct sensor_raw_info *raw_info_ptr)
 {
 	int rtn = 0x00;
-
-	const char *sensor_name = sensor_info_ptr->name;
-	struct sensor_raw_info* sensor_raw_info_ptr = *(sensor_info_ptr->raw_info_ptr);
+	const char *sensor_name = PNULL;
+	struct sensor_raw_info* sensor_raw_info_ptr = raw_info_ptr;
 
 	int version = 0;
-	unsigned char *filename = NULL;
-	unsigned char filename0[80];
-	unsigned char filename1[80];
-	unsigned char filename2[80];
+	char *filename = NULL;
+	char filename0[80];
+	char filename1[80];
+	sensor_name = (char*)&sensor_raw_info_ptr->version_info->sensor_ver_name.sensor_name;
 
-	sprintf(filename0,"/data/misc/cameraserver/sensor_%s_raw_param.c",sensor_name);
-	sprintf(filename1,"/data/misc/cameraserver/sensor_%s_raw_param_v3.c",sensor_name);
-	sprintf(filename2,"/data/misc/cameraserver/sensor_%s_raw_param_common.c",sensor_name);
+	sprintf(filename0,"%ssensor_%s_raw_param.c",CAMERA_DUMP_PATH, sensor_name);
+	sprintf(filename1,"%ssensor_%s_raw_param_common.c",CAMERA_DUMP_PATH, sensor_name);
 
 	if (-1 != access(filename0,0)) {
 		ISP_LOGI("%s is exit!\n",filename0);
@@ -1185,13 +1337,6 @@ uint32_t isp_raw_para_update_from_file(SENSOR_INFO_T *sensor_info_ptr,SENSOR_ID_
 			filename = filename1;
 			version = 2;
 		}
-		if(NULL == filename) {
-			if(-1 != access(filename2,0)) {
-				ISP_LOGI("%s is exit!\n",filename2);
-				filename = filename2;
-				version = 3;
-			}
-		}
 	}
 	if (NULL == filename && 0 == version) {
 		ISP_LOGI("there is no param file!\n");
@@ -1200,8 +1345,8 @@ uint32_t isp_raw_para_update_from_file(SENSOR_INFO_T *sensor_info_ptr,SENSOR_ID_
 		ISP_LOGI("the param file is %s,version = %d",filename,version);
 	}
 
-	if ( ISP_PARAM_VERSION_OLD < sensor_raw_info_ptr->version_info->version_id) {
-		rtn = update_param_v2(sensor_raw_info_ptr,sensor_name);
+	if ( ISP_PARAM_VERSION_V21 == (TUNE_FILE_CHIP_VER_MASK &  sensor_raw_info_ptr->version_info->version_id)) {
+		rtn = update_param_v21(sensor_raw_info_ptr,sensor_name);
 		if(0x00 != rtn) {
 			ISP_LOGI("update param error!");
 			return rtn;
@@ -1215,3 +1360,17 @@ uint32_t isp_raw_para_update_from_file(SENSOR_INFO_T *sensor_info_ptr,SENSOR_ID_
 	}
 	return rtn;
 }
+#ifndef WIN32
+uint32_t isp_raw_para_update_from_file(SENSOR_INFO_T *sensor_info_ptr,SENSOR_ID_E sensor_id)
+{
+	int rtn = 0x00;
+	struct sensor_raw_info* sensor_raw_info_ptr = *(sensor_info_ptr->raw_info_ptr);
+	UNUSED(sensor_id);
+	isp_pm_raw_para_update_from_file(sensor_raw_info_ptr);
+
+	return rtn;
+}
+#endif
+#ifdef __cplusplus
+}
+#endif

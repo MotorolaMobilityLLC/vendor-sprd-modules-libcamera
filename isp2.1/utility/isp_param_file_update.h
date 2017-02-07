@@ -21,6 +21,7 @@
 #include <sys/types.h>
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
+#include "isp_com.h"
 
 
 /**---------------------------------------------------------------------------*
@@ -34,8 +35,10 @@ extern "C"
 /**---------------------------------------------------------------------------*
 **				Micro Define					*
 **----------------------------------------------------------------------------*/
-
+uint32_t isp_pm_raw_para_update_from_file(struct sensor_raw_info *raw_info_ptr);
+#ifndef WIN32
 uint32_t isp_raw_para_update_from_file(SENSOR_INFO_T *sensor_info_ptr,SENSOR_ID_E sensor_id);
+#endif
 
 
 /**----------------------------------------------------------------------------*
