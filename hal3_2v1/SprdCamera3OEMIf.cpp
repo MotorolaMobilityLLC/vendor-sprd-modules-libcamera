@@ -4077,12 +4077,14 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame)
 		cmr_uint dst_paddr = 0;
 		uint32_t dst_width = mPreviewWidth;
 		uint32_t dst_height = mPreviewHeight;
-		unsigned long dst_vaddr = (unsigned long)mReDisplayHeap->data;
+		cmr_uint dst_vaddr = 0;
 		dst_fd = getRedisplayMem(dst_width,dst_height);
 		if (0 == dst_fd) {
 			HAL_LOGE("get review memory failed");
 			return;
 		}
+		if (mReDisplayHeap != NULL)
+			dst_vaddr = (cmr_uint)mReDisplayHeap->data;
 
 		if ( 0 != mHalOem->ops->camera_get_redisplay_data(mCameraHandle, dst_fd, dst_paddr, dst_vaddr, dst_width, dst_height, frame->fd, frame->y_phy_addr,
 				frame->uv_phy_addr, frame->y_vir_addr, frame->width, frame->height)) {
@@ -4100,12 +4102,14 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame)
 		cmr_uint dst_paddr = 0;
 		uint32_t dst_width = mRawWidth;
 		uint32_t dst_height = mRawHeight;
-		unsigned long dst_vaddr = (unsigned long)mReDisplayHeap->data;
+		cmr_uint dst_vaddr = 0;
 		dst_fd = getRedisplayMem(dst_width,dst_height);
 		if (0 == dst_fd) {
 			HAL_LOGE("get review memory failed");
 			return;
 		}
+		if (mReDisplayHeap != NULL)
+			dst_vaddr = (cmr_uint)mReDisplayHeap->data;
 
 		if ( 0 != mHalOem->ops->camera_get_redisplay_data(mCameraHandle, dst_fd, dst_paddr, dst_vaddr, dst_width, dst_height, frame->fd, frame->y_phy_addr,
 				frame->uv_phy_addr, frame->y_vir_addr, frame->width, frame->height)) {
