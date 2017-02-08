@@ -681,9 +681,9 @@ static cmr_int _ispGetInfoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, int
 	info_ptr->size = cxt->ae_cxt.log_alc_size;
 	ISP_LOGI("ISP INFO:addr 0x%p, size = %d", info_ptr->addr, info_ptr->size);
 
-	char AF_version[20];//AF-yyyymmdd-xx
+	char AF_version[30];//AF-yyyymmdd-xx
 	uint32_t len = sizeof(AF_version);
-	rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_GET_AF_LIB_INFO, (void*)&AF_version, (void*)len);
+	rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_GET_AF_LIB_INFO, (void*)&AF_version, (void*)&len);
 
 	return rtn;
 }

@@ -3585,7 +3585,7 @@ v=v>(max)?(max):v; hist[v]++;}
 			AF_LOGD("test AF_MODE %s, AF_POS %s", AF_MODE, AF_POS);
 			if (0 != strcmp(AF_POS, "none")) {
 				af_test_lens(af);
-				//property_set("af_set_pos", "none");
+				property_set("af_set_pos", "none");
 				return 0;
 			}
 		}
@@ -3603,6 +3603,7 @@ v=v>(max)?(max):v; hist[v]++;}
 
 		system_time0 = systemTime(CLOCK_MONOTONIC) / 1000000LL;
 
+		//AF_LOGD("data_type = %d,af->state = %d", inparam->data_type,af->state);
 		switch (inparam->data_type) {
 		case AF_DATA_AF:
 			{

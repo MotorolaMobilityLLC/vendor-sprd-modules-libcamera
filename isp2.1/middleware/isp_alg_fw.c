@@ -766,6 +766,11 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 	isp_cur_bv = bv;
 	isp_cur_ct = result->ct;
 
+	ae_out_bv.ae_result = ae_result;
+	ae_out_bv.bv = bv;
+	rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AE_INFO, (void*)ae_stat_ptr, (void*)&ae_out_bv);
+	rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AWB_INFO, (void*)result, NULL);
+
 	message.msg_type = ISP_CTRL_EVT_AF;
 	message.sub_msg_type = AF_DATA_AE;
 	message.sync_flag = CMR_MSG_SYNC_NONE;
@@ -780,12 +785,6 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 	message.alloc_flag = 0;
 	message.data = (void*)ae_stat_ptr;
 	rtn = cmr_thread_msg_send(cxt->thr_handle, &message);
-
-    ae_out_bv.ae_result = ae_result;
-    ae_out_bv.bv = bv;
-
-	rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AE_INFO, (void*)ae_stat_ptr, (void*)&ae_out_bv);
-	rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AWB_INFO, (void*)result, NULL);
 
 exit:
 	ISP_LOGI("LiuY: done rtn %ld", rtn);
