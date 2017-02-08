@@ -292,8 +292,8 @@ extern "C" {
 		property_get("af_mode", AF_MODE, "none");
 		if (0 == strcmp(AF_MODE, "none")) {
 			AF_LOGD("state = %s, mode = %d", STATE_STRING(af->state), af_mode);
-			if (STATE_INACTIVE == af->state)
-				return 0;
+			/*if (STATE_INACTIVE == af->state)
+			   return 0; */
 
 			switch (af_mode) {
 			case AF_MODE_CONTINUE:
@@ -764,6 +764,7 @@ extern "C" {
 		struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
 		struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_ctx->dev_access_handle;
 		cmr_handle device = cxt->isp_driver_handle;
+		AF_LOGE("B");
 
 		num = 0;
 		p = fv;
@@ -877,6 +878,7 @@ extern "C" {
 				}
 			}
 		}
+		AF_LOGE("E");
 		return num;
 	}
 
@@ -1619,6 +1621,7 @@ v=v>(max)?(max):v; hist[v]++;}
 	static void caf_monitor_process_af(af_ctrl_t * af) {
 		uint64_t fv[10];
 		struct aft_proc_calc_param *prm = &prm_af;
+		AF_LOGE("B");
 
 		memset(fv, 0, sizeof(fv));
 		memset(prm, 0, sizeof(struct aft_proc_calc_param));
@@ -1662,12 +1665,13 @@ v=v>(max)?(max):v; hist[v]++;}
 		prm->active_data_type = AFT_DATA_AF;
 
 		caf_monitor_calc(af, prm);
+		AF_LOGE("E");
 	}
 
 	static void caf_process_af(af_ctrl_t * af) {
 		//pthread_mutex_lock(&af->caf_lock);
 
-		// AF_LOGD("caf_state = %s", CAF_STATE_STR(af->caf_state));
+		AF_LOGD("caf_state = %s", CAF_STATE_STR(af->caf_state));
 
 		switch (af->caf_state) {
 		case CAF_SEARCHING:
@@ -3566,13 +3570,14 @@ v=v>(max)?(max):v; hist[v]++;}
 		AF_LOGE("B");
 
 		uint32_t *af_fv_val = NULL;
-		af_fv_val = (uint32_t *)(inparam->data);
+		af_fv_val = (uint32_t *) (inparam->data);
 
-		for (i = 0; i<10; i++) {
-			af->af_fv_val.af_fv0[i] = (uint64_t)((af_fv_val[20 + i]&0x0000ffff)<<32) | (uint64_t)af_fv_val[i];
-			af->af_fv_val.af_fv1[i] = (uint64_t)(((af_fv_val[20 + i] >> 12)&0x00000fff) << 32) | (uint64_t)af_fv_val[10 + i];
+		for (i = 0; i < 10; i++) {
+			af->af_fv_val.af_fv0[i] =
+			    (uint64_t) ((af_fv_val[20 + i] & 0x0000ffff) << 32) | (uint64_t) af_fv_val[i];
+			af->af_fv_val.af_fv1[i] =
+			    (uint64_t) (((af_fv_val[20 + i] >> 12) & 0x00000fff) << 32) | (uint64_t) af_fv_val[10 + i];
 		}
-
 
 		if (1 == af->bypass)
 			return 0;
@@ -3603,7 +3608,7 @@ v=v>(max)?(max):v; hist[v]++;}
 
 		system_time0 = systemTime(CLOCK_MONOTONIC) / 1000000LL;
 
-		//AF_LOGD("data_type = %d,af->state = %d", inparam->data_type,af->state);
+		AF_LOGD("state = %s, caf_state = %s", STATE_STRING(af->state), CAF_STATE_STR(af->caf_state));
 		switch (inparam->data_type) {
 		case AF_DATA_AF:
 			{
@@ -3966,17 +3971,21 @@ v=v>(max)?(max):v; hist[v]++;}
 			}
 
 		case AF_CMD_SET_ISP_START_INFO:
-			AF_LOGD("state = %s", STATE_STRING(af->state));
-			af->state = af->pre_state = STATE_IDLE;
-
-			ae_calc_win_size(af, param0);
+			AF_LOGD("ISP_START state = %s", STATE_STRING(af->state));
+			//af->state = af->pre_state = STATE_IDLE;
+			property_get("af_mode", AF_MODE, "none");
+			if (0 == strcmp(AF_MODE, "none")) {
+				af->state = af->pre_state = STATE_CAF;
+				caf_start(af);
+				ae_calc_win_size(af, param0);
+			}
 			break;
 
 		case AF_CMD_SET_ISP_STOP_INFO:
 //              if (af_cxt->is_running) {
 //                      rtn = _af_end_proc(handle,&af_cxt->af_result,AF_FALSE);
 //              }
-			AF_LOGD("state = %s", STATE_STRING(af->state));
+			AF_LOGD("ISP_STOP state = %s", STATE_STRING(af->state));
 			if (STATE_IDLE != af->state)
 				do_stop_af(af);
 
@@ -4050,6 +4059,7 @@ v=v>(max)?(max):v; hist[v]++;}
 			break;
 		case AF_CMD_SET_FACE_DETECT:
 			{
+				break;
 				struct isp_face_area *face = (struct isp_face_area *)param0;
 
 				AF_LOGD("state = %s", STATE_STRING(af->state));
@@ -4099,7 +4109,7 @@ v=v>(max)?(max):v; hist[v]++;}
 			{
 				//af_ctrl_t *af = ((isp_ctrl_context *)handle)->handle_af;
 				char *version = (char *)param0;
-				uint32_t len = *(uint32_t *)param1;
+				uint32_t len = *(uint32_t *) param1;
 				memset(version, '\0', len);
 				memcpy(version, "AF-", 3);
 				if (len - 3 >= sizeof(af->fv.AF_Version)) {
