@@ -31,9 +31,9 @@
 #include "imx258_param/sensor_imx258_raw_param_main.c"
 #endif
 #include "sensor_imx258_otp_truly.h"
-#ifdef CONFIG_AF_VCM_DW9800W
+
 #define DW9800_VCM_SLAVE_ADDR (0x18 >> 1)
-#endif
+
 #define SENSOR_NAME			"imx258_mipi_raw"
 #define I2C_SLAVE_ADDR			0x34 //0x20    /* 16bit slave address*/
 
@@ -638,7 +638,7 @@ SENSOR_INFO_T g_imx258_mipi_raw_info = {
 	/* max height of source image */
 	SNAPSHOT_HEIGHT,
 	/* name of sensor */
-	SENSOR_NAME,
+	(cmr_s8 *)SENSOR_NAME,
 	/* define in SENSOR_IMAGE_FORMAT_E enum,SENSOR_IMAGE_FORMAT_MAX
 	 * if set to SENSOR_IMAGE_FORMAT_MAX here,
 	 * image format depent on SENSOR_REG_TAB_INFO_T
@@ -681,7 +681,7 @@ SENSOR_INFO_T g_imx258_mipi_raw_info = {
 	35,
 	/* vertical view angle*/
 	35,
-	"imx258v1",//sensor version info
+	(cmr_s8 *)"imx258v1",//sensor version info
 };
 
 /*==============================================================================
