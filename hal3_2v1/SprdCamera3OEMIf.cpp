@@ -836,7 +836,7 @@ int SprdCamera3OEMIf::takePicture()
 		if (isPreviewing()) {
 			HAL_LOGD("call stopPreviewInternal in takePicture().");
 			if (CAMERA_ZSL_MODE != mCaptureMode) {
-				//mHalOem->ops->camera_start_preflash(mCameraHandle);
+				mHalOem->ops->camera_start_preflash(mCameraHandle);
 			}
 			stopPreviewInternal();
 		}
