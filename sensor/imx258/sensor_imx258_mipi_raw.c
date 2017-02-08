@@ -645,7 +645,7 @@ SENSOR_INFO_T g_imx258_mipi_raw_info = {
 	 */
 	SENSOR_IMAGE_FORMAT_RAW,
 	/*  pattern of input image form sensor */
-	SENSOR_IMAGE_PATTERN_RAWRGB_B,
+	SENSOR_IMAGE_PATTERN_RAWRGB_R,
 	/* point to resolution table information structure */
 	s_imx258_resolution_tab_raw,
 	/* point to ioctl function table */
