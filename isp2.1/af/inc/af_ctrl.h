@@ -79,6 +79,7 @@ enum af_cmd {
 	AF_CMD_GET_AF_CUR_POS       = 0x2002,
 	AF_CMD_GET_AF_INIT_POS      = 0x2003,
 	AF_CMD_GET_MULTI_WIN_CFG    = 0x2004,
+	AF_CMD_GET_AF_LIB_INFO      = 0x2005,
 };
 
 enum af_calc_data_type {

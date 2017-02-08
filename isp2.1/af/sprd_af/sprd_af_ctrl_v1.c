@@ -919,6 +919,7 @@ extern "C" {
 			if (last_pos != pos)
 				//af->vcm_ops.set_pos(af->caller, pos); // must be provided
 				af->vcm_ops.set_pos(isp_ctx->ioctrl_ptr->caller_handler, pos);	// must be provided
+			AF_LOGD("af->vcm_ops.set_pos = %d", pos);
 			af->lens.pos = pos;
 		}
 	}
@@ -2055,7 +2056,11 @@ v=v>(max)?(max):v; hist[v]++;}
 			memcpy(&af->fv.AF_Tuning_Data, &af->af_tuning_data.AF_Tuning_Data[af->curr_scene],
 			       sizeof(af->fv.AF_Tuning_Data));
 		}
-
+#if 1
+		if ((STATE_CAF == af->state) || (STATE_RECORD_CAF == af->state)) {
+			p->ae = *ae;
+		}
+#else
 		if ((STATE_CAF == af->state) || (STATE_RECORD_CAF == af->state)) {
 			CMR_MSG_INIT(msg);
 
@@ -2086,8 +2091,10 @@ v=v>(max)?(max):v; hist[v]++;}
         }
 */
 		}
-	}
+#endif
 
+	}
+/*
 	isp_awb_statistic_hist_info_t af_tmp;
 //static int32_t image_data_update(isp_ctrl_context *isp)
 	static int32_t image_data_update(af_ctrl_t * af) {
@@ -2125,7 +2132,7 @@ v=v>(max)?(max):v; hist[v]++;}
 
 		return 0;
 	}
-
+*/
 	static void set_awb_info(af_ctrl_t * af, const struct awb_ctrl_calc_result *awb, const struct awb_gain *gain) {
 		af->awb.r_gain = gain->r;
 		af->awb.g_gain = gain->g;
@@ -3561,9 +3568,10 @@ v=v>(max)?(max):v; hist[v]++;}
 			set_af_test_mode(af, AF_MODE);
 			property_set("af_mode", "ISP_DEFAULT");
 			property_get("af_set_pos", AF_POS, "none");
+			AF_LOGD("test AF_MODE %s, AF_POS %s", AF_MODE, AF_POS);
 			if (0 != strcmp(AF_POS, "none")) {
 				af_test_lens(af);
-				property_set("af_set_pos", "none");
+				//property_set("af_set_pos", "none");
 				return 0;
 			}
 		}
@@ -3581,41 +3589,74 @@ v=v>(max)?(max):v; hist[v]++;}
 
 		system_time0 = systemTime(CLOCK_MONOTONIC) / 1000000LL;
 
-		switch (af->state) {
-		case STATE_NORMAL_AF:
-			pthread_mutex_lock(&af->af_work_lock);
-			if (saf_process_frame(af)) {
-				af->state = STATE_IDLE;
-				//  saf_stop(af);
-				//do_stop_af(af);
+		switch (inparam->data_type) {
+		case AF_DATA_AF:
+			{
+				switch (af->state) {
+				case STATE_NORMAL_AF:
+					pthread_mutex_lock(&af->af_work_lock);
+					if (saf_process_frame(af)) {
+						af->state = STATE_IDLE;
+						//  saf_stop(af);
+						//do_stop_af(af);
 
-				/*if ((STATE_CAF == af->pre_state) || (STATE_RECORD_CAF == af->pre_state))
-				   {
-				   resume_caf(af);
-				   } */
+						/*if ((STATE_CAF == af->pre_state) || (STATE_RECORD_CAF == af->pre_state))
+						   {
+						   resume_caf(af);
+						   } */
+					}
+					pthread_mutex_unlock(&af->af_work_lock);
+					break;
+				case STATE_CAF:
+				case STATE_RECORD_CAF:
+					caf_process_af(af);
+					break;
+				case STATE_FAF:
+					pthread_mutex_lock(&af->af_work_lock);
+					if (faf_process_frame(af)) {
+						af->state = STATE_CAF;
+						caf_start(af);
+					}
+					pthread_mutex_unlock(&af->af_work_lock);
+					break;
+				default:
+					pthread_mutex_lock(&af->af_work_lock);
+					AF_Process_Frame(&af->fv);
+					AF_LOGD("AF_mode = %d", af->fv.AF_mode);
+					pthread_mutex_unlock(&af->af_work_lock);
+					break;
+				}
+				break;
 			}
-			pthread_mutex_unlock(&af->af_work_lock);
-			break;
-		case STATE_CAF:
-		case STATE_RECORD_CAF:
-			caf_process_af(af);
-			break;
-		case STATE_FAF:
-			pthread_mutex_lock(&af->af_work_lock);
-			if (faf_process_frame(af)) {
-				af->state = STATE_CAF;
-				caf_start(af);
+
+		case AF_DATA_IMG_BLK:
+			{
+				if ((STATE_CAF == af->state) || (STATE_RECORD_CAF == af->state)) {
+					struct af_img_blk_info *img_blk_info = (struct af_img_blk_info *)inparam->data;
+					isp_awb_statistic_hist_info_t af_tmp;
+					if (NULL != img_blk_info->data) {
+						struct isp_awb_statistic_info *ae_stat =
+						    (struct isp_awb_statistic_info *)img_blk_info->data;
+						memcpy(af_tmp.r_info, ae_stat->r_info, sizeof(af_tmp.r_info));
+						memcpy(af_tmp.g_info, ae_stat->g_info, sizeof(af_tmp.g_info));
+						memcpy(af_tmp.b_info, ae_stat->b_info, sizeof(af_tmp.b_info));
+
+						isp_awb_statistic_hist_info_t *stat = &af_tmp;
+						//              struct isp_awb_statistic_info *stat = &isp->aem_statistic;
+						caf_process_ae(af, &af->ae.ae, stat);
+					}
+				}
+				break;
 			}
-			pthread_mutex_unlock(&af->af_work_lock);
-			break;
+
 		default:
-			pthread_mutex_lock(&af->af_work_lock);
-			AF_Process_Frame(&af->fv);
-			AF_LOGD("AF_mode = %d", af->fv.AF_mode);
-			pthread_mutex_unlock(&af->af_work_lock);
-			break;
-		}
+			{
+				AF_LOGE("unsupport data type! type: %d", inparam->data_type);
+				rtn = AF_ERROR;
+				break;
+			}
 
+		}
 		system_time1 = systemTime(CLOCK_MONOTONIC) / 1000000LL;
 		AF_LOGD("SYSTEM_TEST-af:%lldms", system_time1 - system_time0);
 
@@ -4039,6 +4080,21 @@ v=v>(max)?(max):v; hist[v]++;}
 				}
 				break;
 			}
+		case AF_CMD_GET_AF_LIB_INFO:
+			{
+				//af_ctrl_t *af = ((isp_ctrl_context *)handle)->handle_af;
+				char *version = (char *)param0;
+				uint32_t len = *(uint32_t *)param1;
+				memset(version, '\0', len);
+				memcpy(version, "AF-", 3);
+				if (len - 3 >= sizeof(af->fv.AF_Version)) {
+					uint8 i = 0;
+					memcpy(version + 3, af->fv.AF_Version, sizeof(af->fv.AF_Version));
+					i = strlen(af->fv.AF_Version) + 3;
+					memcpy(version + i, "-20160927-15", 12);
+				}
+				break;
+			}
 		default:
 			AF_LOGE("cmd not support! cmd: %ld", cmd);
 			rtn = AF_ERROR;
@@ -4069,8 +4125,8 @@ int32_t sprd_afv1_module_init(struct af_lib_fun *ops)
     ops->af_ioctrl_af_start	          = sprd_afv1_start;//ok
     ops->af_ioctrl_set_af_stop        = sprd_afv1_stop;//ok
     ops->af_calc_interface            = sprd_afv1_calc;//ok
-    ops->af_ioctrl_set_ae_awb_info    = sprd_afv1_set_ae_awb_info;
-    ops->af_image_data_update         = image_data_update; //gwbtodo
+    ops->af_ioctrl_set_ae_awb_info    = sprd_afv1_set_ae_awb_info;//ok
+    ops->af_image_data_update         = image_data_update; //ok
     ops->af_ioctrl_set_isp_start_info = sprd_afv1_isp_start;//ok
     ops->af_ioctrl_set_isp_stop_info  = sprd_afv1_isp_stop;//ok
     ops->af_ioctrl_set_flash_notice   = set_flash_status;//ok

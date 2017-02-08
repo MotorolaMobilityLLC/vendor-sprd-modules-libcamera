@@ -54,7 +54,7 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/awb/alc_awb/inc \
 	$(LOCAL_PATH)/awb/sprd_awb/inc \
 	$(LOCAL_PATH)/af/inc \
-	$(LOCAL_PATH)/af/sprd_af/inc \
+	$(LOCAL_PATH)/af/sprd_af/afv0/inc \
 	$(LOCAL_PATH)/af/sprd_af/afv1/inc \
 	$(LOCAL_PATH)/af/sprd_af/aft/inc \
 	$(LOCAL_PATH)/af/sft_af/inc \
