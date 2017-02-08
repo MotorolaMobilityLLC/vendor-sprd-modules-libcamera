@@ -34,24 +34,25 @@
 	dst_ptr->tab_num = src_ptr->tab_num;
 	for (i = 0; i < ISP_COLOR_TEMPRATURE_NUM ; ++i) {
 	//yongheng.lu
-		addr = (intptr_t)&(src_ptr->data_area) + src_ptr->map[i].offset;
+		addr = (intptr_t)&(src_ptr->tab_info.lsc_2d_map) + src_ptr->tab_info.lsc_2d_info[i].lsc_2d_offset;
 		dst_ptr->map_tab[i].param_addr = (void*)addr;
-		dst_ptr->map_tab[i].len = src_ptr->map[i].len;
-		dst_ptr->map_tab[i].grid = src_ptr->map[i].grid;
-		dst_ptr->map_tab[i].grid_mode = src_ptr->map[i].grid;
-		dst_ptr->map_tab[i].grid_pitch = _pm_get_lens_grid_pitch(src_ptr->map[i].grid, img_size_ptr->w, ISP_ONE);
+		dst_ptr->map_tab[i].len = src_ptr->tab_info.lsc_2d_info[i].lsc_2d_len;
+		dst_ptr->map_tab[i].grid = src_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.grid;
+		dst_ptr->map_tab[i].grid_mode = src_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.grid;
+		dst_ptr->map_tab[i].grid_pitch = _pm_get_lens_grid_pitch(src_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.grid, img_size_ptr->w, ISP_ONE);
 
 		dst_ptr->map_tab[i].gain_w = dst_ptr->map_tab[i].grid_pitch;
-		dst_ptr->map_tab[i].gain_h = _pm_get_lens_grid_pitch(src_ptr->map[i].grid, img_size_ptr->h, ISP_ONE);
+		dst_ptr->map_tab[i].gain_h = _pm_get_lens_grid_pitch(src_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.grid, img_size_ptr->h, ISP_ONE);
+
 	}
 	if ((PNULL != dst_ptr->final_lsc_param.data_ptr)\
-		&& (dst_ptr->final_lsc_param.size < src_ptr->map[0].len)) {
+		&& (dst_ptr->final_lsc_param.size < src_ptr->tab_info.lsc_2d_info[0].lsc_2d_len)) {
 		free(dst_ptr->final_lsc_param.data_ptr);
 		dst_ptr->final_lsc_param.data_ptr = PNULL;
 		dst_ptr->final_lsc_param.size = 0;
 	}
 	if (PNULL == dst_ptr->final_lsc_param.data_ptr) {
-		dst_ptr->final_lsc_param.data_ptr = (void*)malloc(src_ptr->map[0].len);
+		dst_ptr->final_lsc_param.data_ptr = (void*)malloc(src_ptr->tab_info.lsc_2d_info[0].lsc_2d_len);
 		if (PNULL == dst_ptr->final_lsc_param.data_ptr) {
 			rtn = ISP_ERROR;
 			ISP_LOGE("_pm_2d_lsc_init: malloc failed\n");
@@ -63,13 +64,13 @@
 	index  = src_ptr->cur_idx.x0;
 	dst_ptr->cur_index_info.weight0 = 0;
 	dst_ptr->cur_index_info.x0 = 0;
-	dst_ptr->final_lsc_param.size = src_ptr->map[index].len;
+	dst_ptr->final_lsc_param.size = src_ptr->tab_info.lsc_2d_info[index].lsc_2d_len;
 	memcpy((void*)dst_ptr->final_lsc_param.data_ptr, (void*)dst_ptr->map_tab[index].param_addr, dst_ptr->map_tab[index].len);
 	dst_ptr->cur.buf_len = dst_ptr->final_lsc_param.size;
-	dst_ptr->final_lsc_param.param_ptr = (void*)malloc(src_ptr->map[0].len);
-
-	dst_ptr->tmp_ptr_a = (void*)malloc(src_ptr->map[0].len);
-	dst_ptr->tmp_ptr_b = (void*)malloc(src_ptr->map[0].len);
+	dst_ptr->cur.weight_num = sizeof(src_ptr->tab_info.lsc_2d_info[index].lsc_2d_weight);
+	dst_ptr->final_lsc_param.param_ptr = (void*)malloc(src_ptr->tab_info.lsc_2d_info[0].lsc_2d_len);
+	dst_ptr->tmp_ptr_a = (void*)malloc(src_ptr->tab_info.lsc_2d_info[0].lsc_2d_len);
+	dst_ptr->tmp_ptr_b = (void*)malloc(src_ptr->tab_info.lsc_2d_info[0].lsc_2d_len);
 
 #if __WORDSIZE == 64
 	dst_ptr->cur.buf_addr[0] = (isp_uint)(dst_ptr->final_lsc_param.data_ptr) & 0xffffffff;
@@ -77,6 +78,13 @@
 #else
 	dst_ptr->cur.buf_addr[0] = (isp_uint)(dst_ptr->final_lsc_param.data_ptr);
 	dst_ptr->cur.buf_addr[1] = 0;
+#endif
+#if __WORDSIZE == 64
+	dst_ptr->cur.data_ptr[0] = (isp_uint)((void*)src_ptr->tab_info.lsc_2d_info[index].lsc_2d_weight) & 0xffffffff;
+	dst_ptr->cur.data_ptr[1] = (isp_uint)((void*)src_ptr->tab_info.lsc_2d_info[index].lsc_2d_weight) >> 32;
+#else
+	dst_ptr->cur.data_ptr[0] = (isp_uint)((void*)src_ptr->tab_info.lsc_2d_info[index].lsc_2d_weight);
+	dst_ptr->cur.data_ptr[1] = 0;
 #endif
 	dst_ptr->cur.slice_size.width = img_size_ptr->w;
 	dst_ptr->cur.slice_size.height = img_size_ptr->h;
@@ -91,8 +99,6 @@
 
 	dst_ptr->cur.bypass = header_ptr->bypass;
 	header_ptr->is_update = ISP_PM_BLK_LSC_UPDATE_MASK_PARAM;
-
-
 	return rtn;
 }
 
@@ -125,8 +131,8 @@
 		ISP_LOGI("origin lsc map num=%d", lsc_ptr->tab_num);
 		for (i=0; i<lsc_ptr->tab_num; i++) {
 			ISP_LOGI("[%d], envi=%d, ct=%d, grid=%d, offset=%d, len=%d", i,
-				lsc_ptr->map[i].envi, lsc_ptr->map[i].ct, lsc_ptr->map[i].grid, lsc_ptr->map[i].offset,
-				lsc_ptr->map[i].len);
+				lsc_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.envi, lsc_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.ct, lsc_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.grid, lsc_ptr->tab_info.lsc_2d_info[i].lsc_2d_offset,
+				lsc_ptr->tab_info.lsc_2d_info[i].lsc_2d_len);
 		}
 	}
 
@@ -143,8 +149,8 @@
 			ISP_LOGI("%d: ------------------", i);
 
 		for (j=0; j<lsc_ptr->tab_num; j++) {
-			isp_u32 dst_envi = lsc_ptr->map[j].envi;
-			isp_u32 dst_ct = lsc_ptr->map[j].ct;
+			isp_u32 dst_envi = lsc_ptr->tab_info.lsc_2d_info[j].lsc_2d_map_info.envi;
+			isp_u32 dst_ct = lsc_ptr->tab_info.lsc_2d_info[j].lsc_2d_map_info.ct;
 
 			if (dst_envi == src_envi) {
 				isp_u32 ct_diff = abs(dst_ct - src_ct);
@@ -166,10 +172,10 @@
 
 			src_size.w = cali_lsc_ptr->map[dst_index].width;
 			src_size.h = cali_lsc_ptr->map[dst_index].height;
-			dst_size.w = lsc_ptr->map[dst_index].width;
-			dst_size.h = lsc_ptr->map[dst_index].height;
-			isp_u16 *dst_data = (isp_u16 *)((isp_u8 *)&lsc_ptr->data_area +  lsc_ptr->map[dst_index].offset);
-			isp_u32 dst_data_size = lsc_ptr->map[dst_index].len;
+			dst_size.w = lsc_ptr->tab_info.lsc_2d_info[dst_index].lsc_2d_map_info.width;
+			dst_size.h = lsc_ptr->tab_info.lsc_2d_info[dst_index].lsc_2d_map_info.height;
+			isp_u16 *dst_data = (isp_u16 *)((isp_u8 *)&lsc_ptr->tab_info.lsc_2d_map + lsc_ptr->tab_info.lsc_2d_info[dst_index].lsc_2d_offset)  ;
+			isp_u32 dst_data_size = lsc_ptr->tab_info.lsc_2d_info[dst_index].lsc_2d_len;
 
 			if (src_size.w == dst_size.w && src_size.h == dst_size.h
 				&& src_data_size == dst_data_size) {

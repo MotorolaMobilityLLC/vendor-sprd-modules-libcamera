@@ -48,6 +48,7 @@
 #define AE_WEIGHT_TABLE_NUM 3
 #define AE_SCENE_NUM 8
 #define LNC_MAP_COUNT 9
+#define LNC_WEIGHT_LEN 4096
 
 #define AE_VERSION    0x00000000
 #define AWB_VERSION   0x00000000
@@ -367,21 +368,27 @@ struct sensor_nlc_param {
 
 /************************************************************************************/
 // 2D-lens shading correction
-struct sensor_lens_map_addr {
+struct sensor_lsc_2d_map_info {
 	uint32_t envi;
 	uint32_t ct;
 	uint32_t width;
 	uint32_t height;
 	uint32_t grid;
-	uint32_t len;
-	uint32_t offset;
 };
-
+struct sensor_lsc_2d_tab_info_param {
+	struct sensor_lsc_2d_map_info lsc_2d_map_info;
+	uint16_t lsc_2d_weight[LNC_WEIGHT_LEN];
+	uint32_t lsc_2d_len;
+	uint32_t lsc_2d_offset;
+};
+struct sensor_lsc_2d_table_param {
+	struct sensor_lsc_2d_tab_info_param lsc_2d_info[LNC_MAP_COUNT];
+	uint16_t lsc_2d_map[];
+};
 struct sensor_2d_lsc_param {
 	struct isp_sample_point_info cur_idx;
 	isp_u32 tab_num;
-	struct sensor_lens_map_addr map[SENSOR_LENS_NUM];
-	void *data_area;
+	struct sensor_lsc_2d_table_param tab_info;
 };
 /************************************************************************************/
 // 1D-lens shading correction, Radial lens
@@ -2106,23 +2113,6 @@ struct sensor_awb_table_param {
 	uint8_t awb_pos_weight[AWB_POS_WEIGHT_LEN];
 	uint16_t awb_pos_weight_width_height[AWB_POS_WEIGHT_WIDTH_HEIGHT/sizeof(uint16_t)];
 	uint16_t awb_map[];
-};
-struct sensor_lsc_2d_map_info {
-	uint32_t envi;
-	uint32_t ct;
-	uint32_t width;
-	uint32_t height;
-	uint32_t grid;
-};
-struct sensor_lsc_2d_tab_info_param {
-	struct sensor_lsc_2d_map_info lsc_2d_map_info;
-	uint16_t lsc_2d_weight[4096];
-	uint32_t lsc_2d_len;
-	uint32_t lsc_2d_offset;
-};
-struct sensor_lsc_2d_table_param {
-	struct sensor_lsc_2d_tab_info_param lsc_2d_info[LNC_MAP_COUNT];
-	uint16_t lsc_2d_map[];
 };
 struct sensor_raw_fix_info{
 	struct sensor_ae_tab ae;
