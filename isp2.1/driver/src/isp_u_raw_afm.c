@@ -62,6 +62,54 @@ isp_s32 isp_u_raw_afm_slice_size(isp_handle handle, isp_u32 width, isp_u32 heigh
 	return ret;
 }
 
+
+
+isp_s32 isp_u_raw_afm_iir_nr_cfg(isp_handle handle, void *block_info)
+{
+	isp_s32 ret = 0;
+
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle || !block_info) {
+		ISP_LOGE("handle is null error: 0x%p 0x%p", handle, block_info);
+		return -1;
+	}
+	file = (struct isp_file *)(handle);
+	param.isp_id = file->isp_id;
+	param.sub_block = ISP_BLOCK_RAW_AFM;
+	param.property = ISP_PRO_RGB_AFM_IIR_NR_CFG;
+	param.property_param = block_info;
+
+	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+
+	return ret;
+}
+
+
+isp_s32 isp_u_raw_afm_modules_cfg(isp_handle handle, void *block_info)
+{
+	isp_s32 ret = 0;
+
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle || !block_info) {
+		ISP_LOGE("handle is null error: 0x%p 0x%p", handle, block_info);
+		return -1;
+	}
+	file = (struct isp_file *)(handle);
+	param.isp_id = file->isp_id;
+	param.sub_block = ISP_BLOCK_RAW_AFM;
+	param.property = ISP_PRO_RGB_AFM_MODULE_CFG;
+	param.property_param = block_info;
+
+	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+
+	return ret;
+}
+
+
 isp_s32 isp_u_raw_afm_type1_statistic(isp_handle handle, void *statis)
 {
 	isp_s32 ret = 0;
@@ -155,7 +203,7 @@ isp_s32 isp_u_raw_afm_bypass(isp_handle handle, isp_u32 bypass)
 isp_s32 isp_u_raw_afm_mode(isp_handle handle, isp_u32 mode)
 {
 	isp_s32 ret = 0;
-#if 0/*modify for Solve compile problem*/
+
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -166,19 +214,19 @@ isp_s32 isp_u_raw_afm_mode(isp_handle handle, isp_u32 mode)
 
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_AFM_V1;
+	param.sub_block = ISP_BLOCK_RAW_AFM;
 	param.property = ISP_PRO_RGB_AFM_MODE;
 	param.property_param = &mode;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-#endif
+
 	return ret;
 }
 
 isp_s32 isp_u_raw_afm_skip_num(isp_handle handle, isp_u32 skip_num)
 {
 	isp_s32 ret = 0;
-#if 0/*modify for Solve compile problem*/
+
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -189,19 +237,19 @@ isp_s32 isp_u_raw_afm_skip_num(isp_handle handle, isp_u32 skip_num)
 
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_AFM_V1;
+	param.sub_block = ISP_BLOCK_RAW_AFM;
 	param.property = ISP_PRO_RGB_AFM_SKIP_NUM;
 	param.property_param = &skip_num;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-#endif
+
 	return ret;
 }
 
 isp_s32 isp_u_raw_afm_skip_num_clr(isp_handle handle, isp_u32 clear)
 {
 	isp_s32 ret = 0;
-#if 0/*modify for Solve compile problem*/
+
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -212,12 +260,12 @@ isp_s32 isp_u_raw_afm_skip_num_clr(isp_handle handle, isp_u32 clear)
 
 	file = (struct isp_file*)(handle);
 	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_AFM_V1;
+	param.sub_block = ISP_BLOCK_RAW_AFM;
 	param.property = ISP_PRO_RGB_AFM_SKIP_NUM_CLR;
 	param.property_param = &clear;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-#endif
+
 	return ret;
 }
 
@@ -583,7 +631,6 @@ isp_s32 isp_u_raw_afm_threshold_rgb(isp_handle handle, void *thr_rgb)
 isp_s32 isp_u_raw_afm_win(isp_handle handle, void *win_range)
 {
 	isp_s32 ret = 0;
-#if 0 /*used for old chip, for example: tshark2*/
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -599,14 +646,14 @@ isp_s32 isp_u_raw_afm_win(isp_handle handle, void *win_range)
 	param.property_param = win_range;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-#endif
+
 	return ret;
 }
 
 isp_s32 isp_u_raw_afm_win_num(isp_handle handle, isp_u32 *win_num)
 {
 	isp_s32 ret = 0;
-#if 0 /*used for old chip, for example: tshark2*/
+
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -617,11 +664,11 @@ isp_s32 isp_u_raw_afm_win_num(isp_handle handle, isp_u32 *win_num)
 
 	file = (struct isp_file *)(handle);
 	param.isp_id = file->isp_id;
-	param.sub_block = ISP_BLOCK_AFM_V1;
+	param.sub_block = ISP_BLOCK_RAW_AFM;
 	param.property = ISP_PRO_RGB_AFM_WIN_NUM;
 	param.property_param = win_num;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
-#endif
+
 	return ret;
 }

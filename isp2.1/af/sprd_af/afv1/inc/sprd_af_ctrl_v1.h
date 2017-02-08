@@ -297,6 +297,11 @@ typedef struct _focus_stat {
 	unsigned int reg_param[10];
 } focus_stat_reg_t;
 
+typedef struct _af_fv_info {
+	uint64 af_fv0[10];	//[10]:10 ROI, sum of FV0
+	uint64 af_fv1[10];	//[10]:10 ROI, sum of FV1
+} af_fv;
+
 typedef struct _af_ctrl {
 	enum af_state state;
 	enum af_state pre_state;
@@ -353,6 +358,9 @@ typedef struct _af_ctrl {
 	uint8_t bypass;
 	uint8_t soft_landing_dly;
 	uint8_t soft_landing_step;
+	af_fv	af_fv_val;
+	struct af_iir_nr_info af_iir_nr;
+	struct af_enhanced_module_info af_enhanced_module;
 
 	//porting from isp2.1 af 1.0
 	pthread_mutex_t status_lock;

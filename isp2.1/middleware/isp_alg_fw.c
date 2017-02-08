@@ -906,8 +906,8 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 	struct afctrl_calc_in calc_param;
 	struct afctrl_calc_out calc_result;
 	struct isp_statis_info *statis_info = NULL;
-	uint64_t k_addr = 0;
-	uint64_t u_addr = 0;
+	uint32_t k_addr = 0;
+	uint32_t u_addr = 0;
 	cmr_s32 i = 0;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
@@ -927,14 +927,19 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 		statis_info = (struct isp_statis_info *)in_ptr;
 		k_addr = statis_info->phy_addr;
 		u_addr = statis_info->vir_addr;
-		memcpy((void *)afm_stat.info, (void *)u_addr, sizeof(afm_stat.info));
+
+		uint32_t af_temp[30];
+		for (i=0; i<30; i++) {
+			af_temp[i] = *((uint32_t *)u_addr + i);
+		}
 
 		afm_data.data = (uint64_t *)&afm_stat;
 		afm_data.type = 1;
 		afm_param.filter_num = 1;
 		afm_param.filter_data = &afm_data;
 		calc_param.data_type = AF_DATA_AF;
-		calc_param.data = (void*)(&afm_param);
+		//calc_param.data = (void*)(&afm_param);
+		calc_param.data = (void*)(af_temp);
 		rtn = af_ctrl_process(cxt->af_cxt.handle, (void *)&calc_param, &calc_result);
 		break;
 	}

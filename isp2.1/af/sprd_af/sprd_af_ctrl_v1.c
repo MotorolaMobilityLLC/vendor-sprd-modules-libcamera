@@ -706,9 +706,9 @@ extern "C" {
 			isp_u_raw_afm_threshold_rgb(device, &af->thrd);
 			isp_u_raw_afm_mode(device, 1);
 		} else {
+#if 0
 			isp_u_raw_afm_skip_num_clr(device, 1);
 			isp_u_raw_afm_skip_num_clr(device, 0);
-			isp_u_raw_afm_skip_num(device, 0);
 			isp_u_raw_afm_spsmd_rtgbot_enable(device, 1);
 			isp_u_raw_afm_spsmd_diagonal_enable(device, 1);
 			isp_u_raw_afm_spsmd_cal_mode(device, 1);
@@ -720,7 +720,11 @@ extern "C" {
 						      af->thrd.sobel9_thr_max_green);
 			isp_u_raw_afm_spsmd_threshold(device, af->thrd.spsmd_thr_min_green,
 						      af->thrd.spsmd_thr_max_green);
+#endif
+			isp_u_raw_afm_skip_num(device, 0);
 			isp_u_raw_afm_mode(device, 1);
+			isp_u_raw_afm_iir_nr_cfg(cxt->isp_driver_handle, af->af_iir_nr);
+			isp_u_raw_afm_modules_cfg(cxt->isp_driver_handle, af->af_enhanced_module);
 		}
 	}
 
@@ -3556,9 +3560,19 @@ v=v>(max)?(max):v; hist[v]++;}
 		struct afctrl_calc_in *inparam = (struct afctrl_calc_in *)in;
 		struct afctrl_calc_out *result = (struct afctrl_calc_out *)out;
 		cmr_int rtn = AF_SUCCESS;
+		cmr_int i = 0;
 		nsecs_t system_time0 = 0;
 		nsecs_t system_time1 = 0;
 		AF_LOGE("B");
+
+		uint32_t *af_fv_val = NULL;
+		af_fv_val = (uint32_t *)(inparam->data);
+
+		for (i = 0; i<10; i++) {
+			af->af_fv_val.af_fv0[i] = (uint64_t)((af_fv_val[20 + i]&0x0000ffff)<<32) | (uint64_t)af_fv_val[i];
+			af->af_fv_val.af_fv1[i] = (uint64_t)(((af_fv_val[20 + i] >> 12)&0x00000fff) << 32) | (uint64_t)af_fv_val[10 + i];
+		}
+
 
 		if (1 == af->bypass)
 			return 0;
