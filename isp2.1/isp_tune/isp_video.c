@@ -1085,29 +1085,22 @@ int isp_denoise_read(uint8_t *tx_buf, uint32_t len, struct isp_data_header_read 
 	struct sensor_nr_scene_map_param *multi_nr_scene_map_ptr = PNULL;
 	struct sensor_nr_level_map_param *multi_nr_level_map_ptr = PNULL;
 	struct sensor_nr_level_map_param *multi_nr_default_level_map_ptr = PNULL;
-	//ISP_LOGE("ISP_TOOL:isp_denoise_read:nr_update_param.multi_nr_flag = %d", nr_update_param.multi_nr_flag);
 
-	//if(nr_update_param.multi_nr_flag != SENSOR_MULTI_MODE_FLAG) {
-	//	isp_mode = 0;
-	//	nr_mode = 0;
-	//} else {
-		isp_mode = data_head->isp_mode;
-		nr_mode = data_head->nr_mode;
-		if (nr_update_param.nr_scene_map_ptr != PNULL) {
-			multi_nr_scene_map_ptr =  (struct sensor_nr_scene_map_param *)nr_update_param.nr_scene_map_ptr;
-		}
-		if (nr_update_param.nr_level_number_map_ptr != PNULL) {
-			multi_nr_level_map_ptr =  (struct sensor_nr_level_map_param *)nr_update_param.nr_level_number_map_ptr;
-		}
-		if (nr_update_param.nr_default_level_map_ptr != PNULL) {
-			multi_nr_default_level_map_ptr =  (struct sensor_nr_level_map_param *)nr_update_param.nr_default_level_map_ptr;
-		}
-	//}
-	//ISP_LOGE("ISP_TOOL:isp_denoise_read:file_num = %x", file_num);
+	isp_mode = data_head->isp_mode;
+	nr_mode = data_head->nr_mode;
+	if (nr_update_param.nr_scene_map_ptr != PNULL) {
+		multi_nr_scene_map_ptr =  (struct sensor_nr_scene_map_param *)nr_update_param.nr_scene_map_ptr;
+	}
+	if (nr_update_param.nr_level_number_map_ptr != PNULL) {
+		multi_nr_level_map_ptr =  (struct sensor_nr_level_map_param *)nr_update_param.nr_level_number_map_ptr;
+	}
+	if (nr_update_param.nr_default_level_map_ptr != PNULL) {
+		multi_nr_default_level_map_ptr =  (struct sensor_nr_level_map_param *)nr_update_param.nr_default_level_map_ptr;
+	}
 	switch(file_num) {
 		case SCENEINFO :
 		{
-			data_head_ptr->sub_type = SCENEINFO; //0x14
+			data_head_ptr->sub_type = SCENEINFO; //0x00
 			src_size = sizeof(struct sensor_nr_scene_map_param)
 						+ sizeof(struct sensor_nr_level_map_param)
 						+ sizeof(struct sensor_nr_level_map_param);
@@ -1119,15 +1112,10 @@ int isp_denoise_read(uint8_t *tx_buf, uint32_t len, struct isp_data_header_read 
 					return -1;
 				}
 				memcpy(nr_scene_and_level_map, multi_nr_scene_map_ptr, sizeof(struct sensor_nr_scene_map_param));
-				//ISP_LOGE("ISP_TOOL:nr addr0=%p", nr_scene_and_level_map);
 				temp_nr_map_addr = (uint32_t *)((uint8_t *)nr_scene_and_level_map + sizeof(struct sensor_nr_scene_map_param));
-				//ISP_LOGE("ISP_TOOL:nr addr1=%p", temp_nr_map_addr);
 				memcpy(temp_nr_map_addr, multi_nr_level_map_ptr, sizeof(struct sensor_nr_level_map_param));
 				temp_nr_map_addr = (uint32_t *)((uint8_t *)temp_nr_map_addr + sizeof(struct sensor_nr_level_map_param));
-				//ISP_LOGE("ISP_TOOL:nr addr2=%p", temp_nr_map_addr);
 				memcpy(temp_nr_map_addr, multi_nr_default_level_map_ptr, sizeof(struct sensor_nr_level_map_param));
-				//for (i = 0; i < 128; i++)
-				//	ISP_LOGE("ISP_TOOL:nr_scene_and_level_map[%d]=%d", i, nr_scene_and_level_map[i]);
 				nr_offset_addr = (uint32_t *)nr_scene_and_level_map;
 
 			} else {
@@ -1290,7 +1278,7 @@ int isp_denoise_read(uint8_t *tx_buf, uint32_t len, struct isp_data_header_read 
 		default :
 			break;
 	}
-	ISP_LOGE("ISP_TOOL:nr_offset_addr = %p, size_src = %d", nr_offset_addr, src_size);
+	ISP_LOGI("ISP_TOOL:nr_offset_addr = %p, size_src = %d", nr_offset_addr, src_size);
 	denoise_param_send(tx_buf, data_valid_len, (void*)nr_offset_addr, src_size, data_ptr,
 							&msg_ret->len, &data_head_ptr->packet_status);
 
@@ -1506,8 +1494,6 @@ int send_tune_info_param(struct isp_data_header_read *read_cmd,struct msg_head_t
 
 	uint32_t len_msg = sizeof(struct msg_head_tag);
 	uint32_t len_data_header = sizeof(struct isp_data_header_normal);
-	uint32_t len_mode_info = 0;
-
 	uint8_t *data_ptr = NULL;
 	struct isp_data_header_normal data_header = {0};
 	struct msg_head_tag msg_tag = {0};
@@ -1521,7 +1507,7 @@ int send_tune_info_param(struct isp_data_header_read *read_cmd,struct msg_head_t
 	msg_tag.type = msg->type;
 
 	packet_num = get_tune_packet_num(data_len);
-	data_ptr = (uint8_t *)((uint8_t *)data_addr + len_mode_info);
+	data_ptr = (uint8_t *)data_addr;
 
 	for (i = 0; i < packet_num; i++) {
 		uint32_t rsp_len = 0;
@@ -1569,9 +1555,6 @@ int send_fix_param(struct isp_data_header_read *read_cmd,struct msg_head_tag *ms
 
 	uint32_t len_msg = sizeof(struct msg_head_tag);
 	uint32_t len_data_header = sizeof(struct isp_data_header_normal);
-	uint32_t len_mode_info = 0;
-	uint32_t len_block_info = 0;
-
 	struct isp_data_header_normal data_header = {0};
 	struct msg_head_tag msg_tag = {0};
 
@@ -1584,8 +1567,7 @@ int send_fix_param(struct isp_data_header_read *read_cmd,struct msg_head_tag *ms
 	msg_tag.type = msg->type;
 
 	packet_num = get_fix_packet_num(data_len);
-	data_ptr = (uint8_t *)((uint8_t *)data_addr + len_mode_info);
-	data_ptr = data_ptr + len_block_info;
+	data_ptr = (uint8_t *)data_addr;
 
 	for (i=0; i<packet_num; i++) {
 		uint32_t tmp = 0;
@@ -1607,9 +1589,8 @@ int send_fix_param(struct isp_data_header_read *read_cmd,struct msg_head_tag *ms
 		memcpy(eng_rsp_diag + rsp_len,(uint8_t *)&data_header,len_data_header);
 		rsp_len = rsp_len + len_data_header;
 		if (0 == i) {
-			rsp_len = rsp_len + len_mode_info;
-			memcpy(eng_rsp_diag + rsp_len,(uint8_t *)data_ptr,len - len_msg - len_data_header - len_mode_info -len_block_info);
-			data_ptr = (uint8_t *)data_ptr + len - len_msg - len_data_header - len_mode_info - len_block_info;
+			memcpy(eng_rsp_diag + rsp_len,(uint8_t *)data_ptr,len - len_msg - len_data_header);
+			data_ptr = (uint8_t *)data_ptr + len - len_msg - len_data_header;
 		}else {
 			memcpy(eng_rsp_diag + rsp_len,(uint8_t *)data_ptr,len - len_msg - len_data_header);
 			data_ptr = (uint8_t *)data_ptr + len - len_msg - len_data_header ;
@@ -1840,21 +1821,25 @@ int get_lnc_param_length(struct sensor_raw_fix_info *sensor_raw_fix,uint16_t sub
 {
 	int rtn = 0x00;
 	uint16_t lnc_ct =sub_type;
+
 	*data_len = *data_len + sensor_raw_fix->lnc.map[lnc_ct].map_info_len;
 	*data_len = *data_len + sensor_raw_fix->lnc.map[lnc_ct].lnc_len;
+	*data_len = *data_len + sensor_raw_fix->lnc.map[lnc_ct].weight_info_len;
 	return rtn;
 }
 
 int get_lnc_param(struct sensor_raw_fix_info *sensor_raw_fix,uint16_t sub_type,uint32_t *data_addr)
 {
 	int rtn =0x00;
-
 	uint32_t *tmp_ptr = NULL;
 	uint16_t lnc_ct = sub_type;
+
 	if(NULL != data_addr) {
 		memcpy((void *)data_addr,(void *)sensor_raw_fix->lnc.map[lnc_ct].map_info,sensor_raw_fix->lnc.map[lnc_ct].map_info_len);
 		tmp_ptr = (uint32_t *)((uint8_t *)data_addr + sensor_raw_fix->lnc.map[lnc_ct].map_info_len);
 		memcpy((void *)tmp_ptr,(void *)sensor_raw_fix->lnc.map[lnc_ct].lnc_addr,sensor_raw_fix->lnc.map[lnc_ct].lnc_len);
+		tmp_ptr = (uint32_t *)((uint8_t *)tmp_ptr + sensor_raw_fix->lnc.map[lnc_ct].lnc_len);
+		memcpy((void *)tmp_ptr,(void *)sensor_raw_fix->lnc.map[lnc_ct].weight_info,sensor_raw_fix->lnc.map[lnc_ct].weight_info_len);
 	}
 	return rtn;
 }
@@ -1972,6 +1957,7 @@ int send_isp_param(struct isp_data_header_read *read_cmd,struct msg_head_tag *ms
 	if (NULL != sensor_raw_info_ptr->note_ptr[mode_id].note) {
 		sensor_note_param = sensor_raw_info_ptr->note_ptr[mode_id];
 	}
+	ISP_LOGI("ISP_TOOL:read_cmd->main_type = %d", read_cmd->main_type);
 
 	switch (read_cmd->main_type) {
 	case MODE_ISP_ID:
@@ -2002,14 +1988,14 @@ int send_isp_param(struct isp_data_header_read *read_cmd,struct msg_head_tag *ms
 		data_len = mode_param_info.len;
 		data_addr = (uint32_t *)ispParserAlloc(data_len);
 		memset((uint8_t *)data_addr,0x00,data_len);
-		if (0 != data_len && NULL != data_addr && NULL != mode_param) {
+		if (0 != data_len && NULL != data_addr) {
 			data_addr[0] = mode_param->version_id;
 			data_addr[1] = mode_id;
 			data_addr[2] = mode_param->width;
 			data_addr[3] = mode_param->height;
 			memcpy((void *)((uint8_t *)data_addr),(void *)mode_param_info.addr,mode_param_info.len);
 			rtn = send_tune_info_param(read_cmd,msg,data_addr,data_len);
-			if (0x00 == rtn) {
+			if (0x00 != rtn) {
 				DBG("ISP_TOOL : send tune_info is error");
 			}
 		}
@@ -2017,10 +2003,6 @@ int send_isp_param(struct isp_data_header_read *read_cmd,struct msg_head_tag *ms
 	break;
 	case MODE_AE_TABLE:
 	{
-		uint32_t *data_addr_tmp = NULL;
-		uint32_t *data_addr_tmp1 = NULL;
-		int i;
-		struct isp_mode_param *mode_param = (struct isp_mode_param *)mode_param_info.addr;
 		if (NULL == sensor_raw_fix) {
 			return rtn;
 		}
@@ -2028,23 +2010,14 @@ int send_isp_param(struct isp_data_header_read *read_cmd,struct msg_head_tag *ms
 		rtn = get_ae_table_param_length(sensor_raw_fix,read_cmd->sub_type,&data_len);
 		data_addr = (uint32_t *)ispParserAlloc(data_len);
 		memset((uint8_t *)data_addr,0x00,data_len);
-		if (0 != data_len && NULL != data_addr && NULL != mode_param) {
-			data_addr[0] = mode_param->version_id;
-			data_addr[1] = mode_id;
-			data_addr[2] = mode_param->width;
-			data_addr[3] = mode_param->height;
-			data_addr_tmp = (uint32_t *)((uint8_t *)data_addr);
-			rtn = get_ae_table_param(sensor_raw_fix,read_cmd->sub_type,data_addr_tmp);
+		if (0 != data_len && NULL != data_addr) {
+			rtn = get_ae_table_param(sensor_raw_fix,read_cmd->sub_type,data_addr);
 			rtn = send_fix_param(read_cmd,msg,data_addr,data_len);
 		}
 	}
 	break;
 	case MODE_AE_WEIGHT_TABLE:
 	{
-		uint32_t *data_addr_tmp = NULL;
-		uint32_t *data_addr_tmp1 = NULL;
-
-		struct isp_mode_param *mode_param = (struct isp_mode_param *)mode_param_info.addr;
 		if (NULL == sensor_raw_fix) {
 			return rtn;
 		}
@@ -2052,46 +2025,29 @@ int send_isp_param(struct isp_data_header_read *read_cmd,struct msg_head_tag *ms
 		rtn = get_ae_weight_param_length(sensor_raw_fix,read_cmd->sub_type,&data_len);
 		data_addr = (uint32_t *)ispParserAlloc(data_len);
 		memset((uint8_t *)data_addr,0x00,data_len);
-		if (0 != data_len && NULL != data_addr && NULL != mode_param) {
-			data_addr[0] = mode_param->version_id;
-			data_addr[1] = mode_id;
-			data_addr[2] = mode_param->width;
-			data_addr[3] = mode_param->height;
-			data_addr_tmp = (uint32_t *)((uint8_t *)data_addr);
-			rtn = get_ae_weight_param(sensor_raw_fix,read_cmd->sub_type,data_addr_tmp);
+		if (0 != data_len && NULL != data_addr) {
+			rtn = get_ae_weight_param(sensor_raw_fix,read_cmd->sub_type,data_addr);
 			rtn = send_fix_param(read_cmd,msg,data_addr,data_len);
 		}
 	}
 	break;
 	case MODE_AE_SCENE_TABLE:
 	{
-		uint32_t *data_addr_tmp = NULL;
-		uint32_t *data_addr_tmp1 = NULL;
-
-		struct isp_mode_param *mode_param = (struct isp_mode_param *)mode_param_info.addr;
 		if (NULL == sensor_raw_fix) {
 			return rtn;
 		}
-			data_len = 0;
+		data_len = 0;
 		rtn = get_ae_scene_param_length(sensor_raw_fix,read_cmd->sub_type,&data_len);
 		data_addr = (uint32_t *)ispParserAlloc(data_len);
 		memset((uint8_t *)data_addr,0x00,data_len);
-		if (0 != data_len && NULL != data_addr && NULL != mode_param) {
-			data_addr[0] = mode_param->version_id;
-			data_addr[1] = mode_id;
-			data_addr[2] = mode_param->width;
-			data_addr[3] = mode_param->height;
-			data_addr_tmp = (uint32_t *)((uint8_t *)data_addr);
-			rtn = get_ae_scene_param(sensor_raw_fix,read_cmd->sub_type,data_addr_tmp);
+		if (0 != data_len && NULL != data_addr) {
+			rtn = get_ae_scene_param(sensor_raw_fix,read_cmd->sub_type,data_addr);
 			rtn = send_fix_param(read_cmd,msg,data_addr,data_len);
 		}
 	}
 	break;
 	case MODE_AE_AUTO_ISO_TABLE:
 	{
-		uint32_t *data_addr_tmp = NULL;
-		uint32_t *data_addr_tmp1 = NULL;
-		struct isp_mode_param *mode_param = (struct isp_mode_param *)mode_param_info.addr;
 		if (NULL == sensor_raw_fix) {
 			return rtn;
 		}
@@ -2099,24 +2055,14 @@ int send_isp_param(struct isp_data_header_read *read_cmd,struct msg_head_tag *ms
 		rtn = get_ae_auto_iso_param_length(sensor_raw_fix,read_cmd->sub_type,&data_len);
 		data_addr = (uint32_t *)ispParserAlloc(data_len);
 		memset((uint8_t *)data_addr,0x00,data_len);
-		if (0 != data_len && NULL != data_addr && NULL != mode_param) {
-			data_addr[0] = mode_param->version_id;
-			data_addr[1] = mode_id;
-			data_addr[2] = mode_param->width;
-			data_addr[3] = mode_param->height;
-			data_addr_tmp = (uint32_t *)((uint8_t *)data_addr);
-			rtn = get_ae_auto_iso_param(sensor_raw_fix,read_cmd->sub_type,data_addr_tmp);
+		if (0 != data_len && NULL != data_addr) {
+			rtn = get_ae_auto_iso_param(sensor_raw_fix,read_cmd->sub_type,data_addr);
 			rtn = send_fix_param(read_cmd,msg,data_addr,data_len);
 		}
 	}
 	break;
 	case MODE_LNC_DATA:
 	{
-		uint32_t *data_addr_tmp = NULL;
-		uint32_t *data_addr_tmp1 = NULL;
-		uint32_t value = 1;
-		uint32_t value1 = 2;
-		struct isp_mode_param *mode_param = (struct isp_mode_param *)mode_param_info.addr;
 		if (NULL == sensor_raw_fix) {
 			return rtn;
 		}
@@ -2124,40 +2070,29 @@ int send_isp_param(struct isp_data_header_read *read_cmd,struct msg_head_tag *ms
 		rtn = get_lnc_param_length(sensor_raw_fix,read_cmd->sub_type,&data_len);
 		data_addr = (uint32_t *)ispParserAlloc(data_len);
 		memset((uint8_t *)data_addr,0x00,data_len);
-		if (0 != data_len && NULL != data_addr && NULL != mode_param) {
-			data_addr[0] = mode_param->version_id;
-			data_addr[1] = mode_id;
-			data_addr[2] = mode_param->width;
-			data_addr[3] = mode_param->height;
-			data_addr_tmp = (uint32_t *)((uint8_t *)data_addr);
-			rtn = get_lnc_param(sensor_raw_fix,read_cmd->sub_type,data_addr_tmp);
+		if (0 != data_len && NULL != data_addr) {
+			rtn = get_lnc_param(sensor_raw_fix,read_cmd->sub_type,data_addr);
 			rtn = send_fix_param(read_cmd,msg,data_addr,data_len);
 		}
 	}
 	break;
+#if 0
 	case MODE_AWB_DATA:
 	{
-		uint32_t *data_addr_tmp = NULL;
-		uint32_t *data_addr_tmp1 = NULL;
-		struct isp_mode_param *mode_param = (struct isp_mode_param *)mode_param_info.addr;
 		if (NULL == sensor_raw_fix) {
 			return rtn;
 		}
-			data_len = 0; //sizeof(struct sensor_fix_param_mode_info);// + sensor_raw_fix->awb.block.len;
+		data_len = 0;
 		rtn = get_awb_param_length(sensor_raw_fix,read_cmd->sub_type,&data_len);
 		data_addr = (uint32_t *)ispParserAlloc(data_len);
 		memset((uint8_t *)data_addr,0x00,data_len);
 		if (0 != data_len && NULL != data_addr && NULL != mode_param) {
-			data_addr[0] = mode_param->version_id;
-			data_addr[1] = mode_id;
-			data_addr[2] = mode_param->width;
-			data_addr[3] = mode_param->height;
-			data_addr_tmp = (uint32_t *)((uint8_t *)data_addr);
-			rtn = get_awb_param(sensor_raw_fix,read_cmd->sub_type,data_addr_tmp);
+			rtn = get_awb_param(sensor_raw_fix,read_cmd->sub_type,data_addr);
 			rtn = send_fix_param(read_cmd,msg,data_addr,data_len);
 		}
 	}
 	break;
+#endif
 	case MODE_NOTE_DATA:
 	{
 		data_len = sensor_note_param.node_len;
@@ -2197,19 +2132,11 @@ int down_ae_table_param(struct sensor_raw_fix_info *sensor_raw_fix,uint16_t sub_
 	uint8_t iso = sub_type & 0x0f;
 	uint32_t offset_tmp = 0;
 
-	uint32_t len_mode_info = 0;
-	uint32_t len_block_info = 0;
-
 	if (NULL == sensor_raw_fix || NULL == data_addr) {
 		DBG("ISP_TOOL : get ae_table param error");
 		rtn = 0x01;
 		return rtn;
 	}
-
-	//memcpy((void *)sensor_raw_fix->mode.mode_info,(void *)(data_addr + offset_tmp),len_mode_info);
-	offset_tmp +=  len_mode_info;
-	//memcpy((void *)sensor_raw_fix->ae.block.block_info,(void *)(data_addr + offset_tmp),len_block_info);
-	offset_tmp += len_block_info;
 	memcpy((void *)sensor_raw_fix->ae.ae_tab[flicker][iso].index,(void *)(data_addr + offset_tmp),sensor_raw_fix->ae.ae_tab[flicker][iso].index_len);
 	offset_tmp += sensor_raw_fix->ae.ae_tab[flicker][iso].index_len;
 	memcpy((void *)sensor_raw_fix->ae.ae_tab[flicker][iso].exposure,(void *)(data_addr + offset_tmp),sensor_raw_fix->ae.ae_tab[flicker][iso].exposure_len);
@@ -2225,49 +2152,30 @@ int down_ae_table_param(struct sensor_raw_fix_info *sensor_raw_fix,uint16_t sub_
 int down_ae_weight_param(struct sensor_raw_fix_info *sensor_raw_fix,uint16_t sub_type,uint8_t *data_addr)
 {
 	int rtn = 0x00;
-	#if 0
 	uint8_t weight = sub_type;
 	uint32_t offset_tmp = 0;
-
-	uint32_t len_mode_info = sizeof(struct sensor_fix_param_mode_info);
-	uint32_t len_block_info = sizeof(struct sensor_fix_param_block_info);
 
 	if (NULL == sensor_raw_fix || NULL == data_addr) {
 		DBG("ISP_TOOL : get ae_weight param error");
 		rtn = 0x01;
 		return rtn;
 	}
-
-//	memcpy((void *)sensor_raw_fix->mode.mode_info,(void *)(data_addr + offset_tmp),len_mode_info);
-	offset_tmp +=  len_mode_info;
-//	memcpy((void *)sensor_raw_fix->ae.block.block_info,(void *)(data_addr + offset_tmp),len_block_info);
-	offset_tmp += len_block_info;
 	memcpy((void *)sensor_raw_fix->ae.weight_tab[weight].weight_table,(void *)(data_addr + offset_tmp),sensor_raw_fix->ae.weight_tab[weight].len);
-	#endif
 	return rtn;
 }
 
 int down_ae_scene_param(struct sensor_raw_fix_info *sensor_raw_fix,uint16_t sub_type,uint8_t *data_addr)
 {
 	int rtn = 0x00;
-	#if 0
 	uint8_t scene = (sub_type>>4) & 0x0f;
 	uint8_t flicker = sub_type & 0x0f;
 	uint32_t offset_tmp = 0;
-
-	uint32_t len_mode_info = sizeof(struct sensor_fix_param_mode_info);
-	uint32_t len_block_info = sizeof(struct sensor_fix_param_block_info);
 
 	if (NULL == sensor_raw_fix || NULL == data_addr) {
 		DBG("ISP_TOOL : get ae_scene param error");
 		rtn = 0x01;
 		return rtn;
 	}
-
-//	memcpy((void *)sensor_raw_fix->mode.mode_info,(void *)(data_addr + offset_tmp),len_mode_info);
-	offset_tmp +=  len_mode_info;
-//	memcpy((void *)sensor_raw_fix->ae.block.block_info,(void *)(data_addr + offset_tmp),len_block_info);
-	offset_tmp += len_block_info;
 	memcpy((void *)sensor_raw_fix->ae.scene_tab[scene][flicker].scene_info,(void *)(data_addr + offset_tmp),sensor_raw_fix->ae.scene_tab[scene][flicker].scene_info_len);
 	offset_tmp += sensor_raw_fix->ae.scene_tab[scene][flicker].scene_info_len;
 	memcpy((void *)sensor_raw_fix->ae.scene_tab[scene][flicker].index,(void *)(data_addr + offset_tmp),sensor_raw_fix->ae.scene_tab[scene][flicker].index_len);
@@ -2279,60 +2187,41 @@ int down_ae_scene_param(struct sensor_raw_fix_info *sensor_raw_fix,uint16_t sub_
 	memcpy((void *)sensor_raw_fix->ae.scene_tab[scene][flicker].again,(void *)(data_addr + offset_tmp),sensor_raw_fix->ae.scene_tab[scene][flicker].again_len);
 	offset_tmp += sensor_raw_fix->ae.scene_tab[scene][flicker].again_len;
 	memcpy((void *)sensor_raw_fix->ae.scene_tab[scene][flicker].dgain,(void *)(data_addr + offset_tmp),sensor_raw_fix->ae.scene_tab[scene][flicker].dgain_len);
-	#endif
 	return rtn;
 }
 
 int down_ae_auto_iso_param(struct sensor_raw_fix_info *sensor_raw_fix,uint16_t sub_type,uint8_t *data_addr)
 {
 	int rtn = 0x00;
-	#if 0
 	uint8_t iso = sub_type;
 	uint32_t offset_tmp = 0;
-
-	uint32_t len_mode_info = sizeof(struct sensor_fix_param_mode_info);
-	uint32_t len_block_info = sizeof(struct sensor_fix_param_block_info);
 
 	if (NULL == sensor_raw_fix || NULL == data_addr) {
 		DBG("ISP_TOOL : get ae_table param error");
 		rtn = 0x01;
 		return rtn;
 	}
-
-//	memcpy((void *)sensor_raw_fix->mode.mode_info,(void *)(data_addr + offset_tmp),len_mode_info);
-	offset_tmp +=  len_mode_info;
-//	memcpy((void *)sensor_raw_fix->ae.block.block_info,(void *)(data_addr + offset_tmp),len_block_info);
-	offset_tmp += len_block_info;
 	memcpy((void *)sensor_raw_fix->ae.auto_iso_tab[iso].auto_iso_tab,(void *)(data_addr + offset_tmp),sensor_raw_fix->ae.auto_iso_tab[iso].len);
-	#endif
 	return rtn;
 }
 
 int down_lnc_param(struct sensor_raw_fix_info *sensor_raw_fix,uint16_t sub_type,uint8_t *data_addr,uint32_t data_len)
 {
 	int rtn =0x00;
-	#if 0
 	uint32_t offset_tmp = 0;
 	uint16_t lnc_ct = sub_type;
-
-	uint32_t len_mode_info = sizeof(struct sensor_fix_param_mode_info);
-	uint32_t len_block_info = sizeof(struct sensor_fix_param_block_info);
 
 	if (NULL == sensor_raw_fix || NULL == data_addr) {
 		DBG("ISP_TOOL : get lnc param error");
 		rtn = 0x01;
 		return rtn;
 	}
-
-//	memcpy((void *)sensor_raw_fix->mode.mode_info,(void *)(data_addr + offset_tmp),len_mode_info);
-	offset_tmp +=  len_mode_info;
-//	memcpy((void *)sensor_raw_fix->lnc.block.block_info,(void *)(data_addr + offset_tmp),len_block_info);
-	offset_tmp += len_block_info;
 	memcpy((void *)sensor_raw_fix->lnc.map[lnc_ct].map_info,(void *)(data_addr + offset_tmp),sensor_raw_fix->lnc.map[lnc_ct].map_info_len);
 	offset_tmp += sensor_raw_fix->lnc.map[lnc_ct].map_info_len;
-	sensor_raw_fix->lnc.map[lnc_ct].lnc_addr = (uint16_t *)(data_addr +offset_tmp);
-	sensor_raw_fix->lnc.map[lnc_ct].lnc_len = data_len - len_mode_info - len_block_info - sensor_raw_fix->lnc.map[lnc_ct].map_info_len;
-	#endif
+	sensor_raw_fix->lnc.map[lnc_ct].lnc_len = data_len - sensor_raw_fix->lnc.map[lnc_ct].map_info_len - sensor_raw_fix->lnc.map[lnc_ct].weight_info_len;
+	memcpy((void *)sensor_raw_fix->lnc.map[lnc_ct].lnc_addr,(void *)(data_addr + offset_tmp), sensor_raw_fix->lnc.map[lnc_ct].lnc_len);
+	offset_tmp += sensor_raw_fix->lnc.map[lnc_ct].lnc_len;
+	memcpy((void *)sensor_raw_fix->lnc.map[lnc_ct].weight_info,(void *)(data_addr + offset_tmp),sensor_raw_fix->lnc.map[lnc_ct].weight_info_len);
 	return rtn;
 }
 
@@ -2397,8 +2286,6 @@ int down_isp_param(isp_handle isp_handler,struct isp_data_header_normal *write_c
 
 	uint32_t len_msg = sizeof(struct msg_head_tag);
 	uint32_t len_data_header = sizeof(struct isp_data_header_normal);
-	uint32_t len_mode_info = 0;//sizeof(struct sensor_fix_param_mode_info);
-	uint32_t len_block_info = 0;//sizeof(struct sensor_fix_param_block_info);
 
 	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
 	struct sensor_raw_info* sensor_raw_info_ptr=(struct sensor_raw_info*)sensor_info_ptr->raw_info_ptr;
@@ -2421,13 +2308,13 @@ int down_isp_param(isp_handle isp_handler,struct isp_data_header_normal *write_c
 		{
 			if (0 == flag) {
 				data_len = mode_param_info.len;
-				ISP_LOGE("ISP_TOOL:mode tune data len = %d", data_len);
+				ISP_LOGI("ISP_TOOL:mode tune data len = %d", data_len);
 				data_addr = (uint8_t *)ispParserAlloc(data_len);
 				if (!data_addr) {
 					ISP_LOGE("ISP_TOOL: tune info data malloc mem error !");
 				}
-				data_len = msg->len - len_msg - len_data_header -len_mode_info;
-				memcpy(data_addr + offset, isp_data_ptr + len_mode_info, data_len);
+				data_len = msg->len - len_msg - len_data_header;
+				memcpy(data_addr + offset, isp_data_ptr, data_len);
 				offset += data_len;
 				flag++;
 			} else {
@@ -2442,7 +2329,6 @@ int down_isp_param(isp_handle isp_handler,struct isp_data_header_normal *write_c
 					ISP_LOGE("ISP_TOOL: sensor raw mode ptr addr is null, mode_id=%d", mode_id);
 				}
 				memcpy(sensor_raw_info_ptr->mode_ptr[mode_id].addr,data_addr,sensor_raw_info_ptr->mode_ptr[mode_id].len);
-				ISP_LOGE("ISP_TOOL: sensor raw mode ptr data addr==%p; data len = %d", data_addr, sensor_raw_info_ptr->mode_ptr[mode_id].len);
 				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE|ISP_TOOL_CMD_ID, data_addr);
 				if(NULL != data_addr) {
 					free(data_addr);
@@ -2466,7 +2352,6 @@ int down_isp_param(isp_handle isp_handler,struct isp_data_header_normal *write_c
 					return rtn;
 				}
 				rtn = get_ae_table_param_length(sensor_raw_fix,write_cmd->sub_type,&data_len);
-				data_len = data_len + len_mode_info + len_block_info;
 				data_addr = (uint8_t *)ispParserAlloc(data_len);
 				if (NULL == data_addr) {
 					ISP_LOGE("malloc mem error !");
@@ -2507,7 +2392,6 @@ int down_isp_param(isp_handle isp_handler,struct isp_data_header_normal *write_c
 					return rtn;
 				}
 				rtn = get_ae_weight_param_length(sensor_raw_fix,write_cmd->sub_type,&data_len);
-				data_len = data_len + len_mode_info + len_block_info;
 				data_addr = (uint8_t *)ispParserAlloc(data_len);
 				if (NULL == data_addr) {
 					ISP_LOGE("malloc mem error !");
@@ -2546,7 +2430,6 @@ int down_isp_param(isp_handle isp_handler,struct isp_data_header_normal *write_c
 		{
 			if (0 == flag) {
 				rtn = get_ae_scene_param_length(sensor_raw_fix,write_cmd->sub_type,&data_len);
-				data_len = data_len + len_mode_info + len_block_info;
 				data_addr = (uint8_t *)ispParserAlloc(data_len);
 				if (NULL == data_addr) {
 					ISP_LOGE("malloc mem error !");
@@ -2581,7 +2464,6 @@ int down_isp_param(isp_handle isp_handler,struct isp_data_header_normal *write_c
 		{
 			if (0 == flag) {
 				rtn = get_ae_auto_iso_param_length(sensor_raw_fix,write_cmd->sub_type,&data_len);
-				data_len = data_len + len_mode_info + len_block_info;
 				data_addr = (uint8_t *)ispParserAlloc(data_len);
 				if (NULL == data_addr) {
 					ISP_LOGE("malloc mem error !");

@@ -2003,6 +2003,10 @@ struct sensor_lens_map_info{
 struct sensor_lens_map {
 	uint32_t *map_info;
 	uint32_t  map_info_len;
+	uint16_t *weight_info;
+	uint32_t  weight_info_len;
+	uint32_t *lnc_map_tab_len;
+	uint32_t *lnc_map_tab_offset;
 	uint16_t *lnc_addr;
 	uint32_t lnc_len;
 };

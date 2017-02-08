@@ -935,6 +935,8 @@ static cmr_int _ispFixParamUpdateIOCtrl(cmr_handle isp_alg_handle, void *param_p
 	struct isp_pm_ioctl_output awb_output = {0};
 	struct awb_data_info awb_data_ptr = {0};
 
+	ISP_LOGI("ISP_TOOL:_ispFixParamUpdateIOCtrl");
+
 	if (NULL == isp_alg_handle || NULL == cxt->sn_cxt.sn_raw_info) {
 		ISP_LOGE("update param error");
 		rtn = ISP_ERROR;
@@ -968,6 +970,7 @@ static cmr_int _ispFixParamUpdateIOCtrl(cmr_handle isp_alg_handle, void *param_p
 			input.tuning_data[i].size = 0;
 		}
 	}
+	input.nr_fix_info = &(sensor_raw_info_ptr->nr_fix);
 
 	rtn = isp_pm_update(cxt->handle_pm, ISP_PM_CMD_UPDATE_ALL_PARAMS, &input, PNULL);
 	if (ISP_SUCCESS != rtn) {
