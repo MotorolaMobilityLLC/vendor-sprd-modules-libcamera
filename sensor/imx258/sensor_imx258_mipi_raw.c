@@ -1622,7 +1622,7 @@ static SENSOR_IOCTL_FUNC_TAB_T s_imx258_ioctl_func_tab = {
 	//.group_hold_of = imx132_group_hold_off,
 	.cfg_otp = imx258_access_val,
 //	.set_motor_bestmode = dw9800_set_motor_bestmode,// set vcm best mode and avoid damping
-#if 1 //defined(CONFIG_CAMERA_ISP_DIR_2_1)
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
 	.set_pos = dw9800_set_pos,// set vcm pos
 	.get_otp = PNULL,
 	.get_motor_pos = dw9800_get_motor_pos,// get vcm pos in register

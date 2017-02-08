@@ -1929,7 +1929,9 @@ static uint32_t s5k3l8xxm3_identify(SENSOR_HW_HANDLE handle,uint32_t param)
 		if (s5k3l8xxm3_VER_VALUE == ver_value) {
 			SENSOR_PRINT_HIGH("this is s5k3l8xxm3 sensor");
 			//_ak7371_init(handle, 2);
+#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
 			vcm_ak7371_init(handle,2);
+#endif
 			#ifdef FEATURE_OTP
 			/*if read otp info failed or module id mismatched ,identify failed ,return SENSOR_FAIL ,exit identify*/
 			if(PNULL!=s_s5k3l8xxm3_raw_param_tab_ptr->identify_otp){
