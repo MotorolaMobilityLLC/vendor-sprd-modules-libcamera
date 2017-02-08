@@ -69,12 +69,12 @@ static int rot_fd = -1;
 /*process control*/
 static Mutex previewLock; /*preview lock*/
 static int previewvalid = 0; /*preview flag*/
-static int s_mem_method = 0;/*0: physical address, 1: iommu  address*/
+static int s_mem_method = 1;/*0: physical address, 1: iommu  address*/
 static unsigned char camera_id = 0; /*camera id: fore=1,back=0*/
 
 /*data processing useful*/
-#define PREVIEW_WIDTH       1600//1280//640
-#define PREVIEW_HIGHT       1200//960//480
+#define PREVIEW_WIDTH       960//1600//1280//640
+#define PREVIEW_HIGHT       720//1200//960//480
 #define PREVIEW_BUFF_NUM 8  /*preview buffer*/
 #define SPRD_MAX_PREVIEW_BUF    PREVIEW_BUFF_NUM
 struct frame_buffer_t {
@@ -112,6 +112,26 @@ static struct client_t client_data;
 static cmr_handle oem_handle = 0;
 
 static uint32_t lcd_w = 0, lcd_h = 0;
+
+int autotest_IommuIsEnabled(void)
+{
+	int ret;
+	int iommuIsEnabled = 0;
+
+        if (NULL == oem_handle || NULL == mHalOem || NULL == mHalOem->ops) {
+		ALOGE("AutoTest: %s,%d, oem is null or oem ops is null.\n", __func__, __LINE__);
+                return 0;
+        }
+
+	ret = mHalOem->ops->camera_get_iommu_status(oem_handle);
+	if (ret) {
+		iommuIsEnabled = 0;
+		return iommuIsEnabled;
+	}
+
+	iommuIsEnabled = 1;
+	return iommuIsEnabled;
+}
 
 static bool getLcdSize(uint32_t *width, uint32_t *height)
 {
@@ -906,24 +926,20 @@ static int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size, cmr_
 		}
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
 	} else if (type == CAMERA_ISP_STATIS) {
+		cmr_u64 kaddr = 0;
+		size_t ksize = 0;
 		if(mIspStatisHeapReserved == NULL) {
-			ALOGI("AutoTest: %s,%s,%d IN\n", __FILE__,__func__, __LINE__);
 			memory = allocCameraMem(size, 1, false);
 			if (NULL == memory) {
-				ALOGE("AutoTest: %s,%d, failed: alloc camera mem err.\n", __func__, __LINE__);
-				ALOGE("error memory is null,malloced type %d",type);
+				ALOGE("memory is null");
 				goto mem_fail;
 			}
 			mIspStatisHeapReserved = memory;
-			*phy_addr++ = (cmr_uint)memory->phys_addr;
-			*vir_addr++ = (cmr_uint)memory->data;
-			*fd++ = memory->fd;
-		} else {
-			ALOGI("malloc isp lsc memory, malloced type %d,request num %d, request size 0x%x", type, sum, size);
-			*phy_addr++ = (cmr_uint)mIspStatisHeapReserved->phys_addr;
-			*vir_addr++ = (cmr_uint)mIspStatisHeapReserved->data;
-			*fd++ = mIspStatisHeapReserved->fd;
 		}
+		memory->ion_heap->get_kaddr(&kaddr, &ksize);
+		*phy_addr = kaddr;
+		*vir_addr++ = (cmr_uint)mIspStatisHeapReserved->data;
+		*fd++ = mIspStatisHeapReserved->fd;
 #endif
 	} else if (type == CAMERA_ISP_BINGING4AWB) {
 		cmr_u64* phy_addr_64 = (cmr_u64*)phy_addr;
@@ -986,7 +1002,6 @@ static int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size, cmr_
 		cmr_u64 kaddr = 0;
 		size_t ksize = 0;
 		if(mIspFirmwareReserved == NULL) {
-			ALOGI("AutoTest: %s,%s,%d IN\n", __FILE__,__func__, __LINE__);
 			memory = allocCameraMem(size, 1, false);
 			if (NULL == memory) {
 				ALOGE("AutoTest: %s,%d, failed: alloc camera mem err.\n", __func__, __LINE__);
@@ -998,11 +1013,12 @@ static int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size, cmr_
 			*phy_addr++ = kaddr >> 32;
 			*vir_addr++ = (cmr_uint)memory->data;
 			*fd++ = memory->fd;
+			*fd++ = memory->dev_fd;
 		} else {
-			ALOGI("malloc isp afl memory, malloced type %d,request num %d, request size 0x%x", type, sum, size);
 			*phy_addr++ = (cmr_uint)mIspFirmwareReserved->phys_addr;
 			*vir_addr++ = (cmr_uint)mIspFirmwareReserved->data;
 			*fd++ = mIspFirmwareReserved->fd;
+			*fd++ = mIspFirmwareReserved->dev_fd;
 		}
 	} else {
 		ALOGE("AutoTest: %s,%s,%d, type ignore: %d, do nothing.\n", __FILE__, __func__, __LINE__, type);
@@ -1021,7 +1037,7 @@ static cmr_int Callback_Malloc(enum camera_mem_cb_type type, cmr_u32 *size_ptr, 
 	cmr_u32 size;
 	cmr_u32 sum;
 
-	ALOGI("AutoTest: %s,%s,%d IN\n", __FILE__,__func__, __LINE__);
+	ALOGI("AutoTest: %s,%s,%d type %d IN\n", __FILE__,__func__, __LINE__, type);
 
 	/*lock*/
 	previewLock.lock();
@@ -1207,7 +1223,7 @@ int autotest_camera_init(int cameraId, minui_backend* backend, GRSurface* draw)
 {
 	int ret = 0;
 
-	ALOGI("AutoTest:%s,%d IN\n", __func__, __LINE__);
+	ALOGI("AutoTest:%s,%d IN, cameraId %d\n", __func__, __LINE__, cameraId);
 //	gr_init();
 	gr_backend = backend;
 	gr_draw = draw;
@@ -1238,6 +1254,7 @@ int autotest_camera_init(int cameraId, minui_backend* backend, GRSurface* draw)
         return -1;
     }
 
+	//s_mem_method = autotest_IommuIsEnabled();
 	ret = mHalOem->ops->camera_init(cameraId, autotest_camera_cb , &client_data , 0 , &oem_handle, (void*)Callback_Malloc, (void*)Callback_Free);
 	ALOGI("AutoTest: %s,%s,%d IN\n", __FILE__,__func__, __LINE__);
 
