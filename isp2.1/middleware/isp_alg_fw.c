@@ -457,7 +457,7 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle,
 	rtn = ae_ctrl_process(cxt->ae_cxt.handle, &in_param, &ae_result);
 	cxt->smart_cxt.isp_smart_eb = 1;
 	system_time1 = isp_get_timestamp();
-	ISP_LOGE("SYSTEM_TEST-ae:%lldms", system_time1-system_time0);
+	ISP_LOGD("SYSTEM_TEST-ae:%lldms", system_time1-system_time0);
 
 	if (AL_AE_LIB == cxt->lib_use_info->ae_lib_info.product_id) {
 		cxt->ae_cxt.log_alc_ae = ae_result.log_ae.log;
