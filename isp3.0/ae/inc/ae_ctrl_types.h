@@ -21,6 +21,7 @@
  **---------------------------------------------------------------------------*/
 #include "isp_common_types.h"
 #include "isp_type.h"
+#include "isp_3a_adpt.h"
 /**---------------------------------------------------------------------------*
  **				 Compiler Flag				*
  **---------------------------------------------------------------------------*/
@@ -88,6 +89,7 @@ enum ae_ctrl_cmd {
 	AE_CTRL_SET_MANUAL_GAIN,
 	AE_CTRL_SET_MANUAL_ISO,
 	AE_CTRL_SET_ENGINEER_MODE,
+	AE_CTRL_SET_TUNING_MODE,
 	AE_CTRL_SYNC_MSG_END,
 
 	/*
@@ -281,6 +283,7 @@ struct ae_ctrl_param_work {
 
 struct ae_ctrl_param_scene {
 	cmr_int scene_mode;
+	struct scene_setting_info  scene_info;
 };
 
 struct ae_ctrl_param_measure_lum {
@@ -425,6 +428,7 @@ struct ae_ctrl_param_out {
 struct ae_ctrl_param_in {
 	union {
 	cmr_u32 value;
+	cmr_u32 idx_num;
 	struct ae_ctrl_param_scene scene;
 	struct ae_ctrl_param_measure_lum measure_lum;
 	struct ae_ctrl_param_touch_zone touch_zone;
@@ -442,6 +446,7 @@ struct ae_ctrl_param_in {
 	struct ae_ctrl_param_gyro gyro;
 	struct ae_ctrl_param_flash flash;
 	struct isp3a_statistics_data *y_hist_stat;
+
 	};
 };
 
@@ -482,7 +487,7 @@ struct ae_ctrl_init_out {
 struct ae_ctrl_init_in {
 	cmr_u32 camera_id;
 	cmr_u8 is_master;
-	void *tuning_param;
+	void *tuning_param[ISP_INDEX_MAX];
 	struct ae_ctrl_otp_data otp_data;
 	struct ae_ctrl_otp_data otp_data_slv;
 	cmr_handle caller_handle;

@@ -35,7 +35,7 @@
 #include <android/log.h>
 
 /* Debug only */
-#if 1
+#if 0
 #define WRAP_LOG(...) __android_log_print(ANDROID_LOG_DEBUG, "af_wrapper", __VA_ARGS__)
 #else
 #define WRAP_LOG(...) do { } while(0)
@@ -121,22 +121,21 @@ uint32 al3awrapper_dispatchhw3a_afstats(void *isp_meta_data,void *alaf_stats)
 	WRAP_LOG("al3awrapper_dispatchhw3a_afstats start");
 
 	/* check input parameter validity*/
-	if(isp_meta_data == NULL) {
+	if (isp_meta_data == NULL) {
 		WRAP_LOG("ERR_WRP_AF_EMPTY_METADATA");
 		return ERR_WRP_AF_EMPTY_METADATA;
 	}
 
-	if(alaf_stats == NULL) {
+	if (alaf_stats == NULL) {
 		WRAP_LOG("ERR_WRP_AF_INVALID_INPUT_PARAM");
 		return ERR_WRP_AF_INVALID_INPUT_PARAM;
 	}
 
-
 	p_meta_data_af = (struct isp_drv_meta_af_t *)isp_meta_data;
 	p_patched_stats = (struct allib_af_hw_stats_t *)alaf_stats;
-	WRAP_LOG("isp_meta_data %p, alaf_stats %p, isp_meta_data->upseudoflag %d",isp_meta_data, alaf_stats, p_meta_data_af->upseudoflag);
+	WRAP_LOG("isp_meta_data: %p, alaf_stats: %p, p_meta_data_af->upseudoflag: %d", isp_meta_data, alaf_stats, p_meta_data_af->upseudoflag);
 
-	if(p_meta_data_af->upseudoflag) {
+	if (p_meta_data_af->upseudoflag) {
 		WRAP_LOG("ERR_WRP_AF_PSEUDO_DATA");
 		return ERR_WRP_AF_PSEUDO_DATA;
 	}
@@ -145,46 +144,42 @@ uint32 al3awrapper_dispatchhw3a_afstats(void *isp_meta_data,void *alaf_stats)
 	bank_size = p_meta_data_af->af_stats_info.udbanksize;
 	blocks = p_meta_data_af->af_stats_info.ucvalidblocks;
 	banks = p_meta_data_af->af_stats_info.ucvalidbanks;
-	WRAP_LOG("total_blocks %d, bank_size %d, blocks %d, banks %d", total_blocks, bank_size, blocks, banks);
+	WRAP_LOG("total_blocks: %d, bank_size: %d, blocks: %d, banks: %d", total_blocks, bank_size, blocks, banks);
 
-	if ( total_blocks == 0 ) {
-		WRAP_LOG("ERR_WRP_AF_INVALID_INPUT_PARAM with total blocks: %d ", total_blocks );
+	if (total_blocks == 0) {
+		WRAP_LOG("ERR_WRP_AF_INVALID_INPUT_PARAM with total blocks: %d", total_blocks);
 		return ERR_WRP_AF_INVALID_INPUT_PARAM;
 	}
 
-	if(blocks > MAX_STATS_COLUMN_NUM)
+	if (blocks > MAX_STATS_COLUMN_NUM)
 		blocks = MAX_STATS_COLUMN_NUM;
 
-	if(banks > MAX_STATS_ROW_NUM)
+	if (banks > MAX_STATS_ROW_NUM)
 		banks = MAX_STATS_ROW_NUM;
 
 	p_patched_stats->valid_column_num = blocks;
 	p_patched_stats->valid_row_num = banks;
 	index = 0;
-	WRAP_LOG("uhwengineid %d",p_meta_data_af->uhwengineid);
 
-	if ( p_meta_data_af->b_isstats_byaddr == 1 ) {
-		if ( p_meta_data_af->puc_af_stats == NULL )
+	WRAP_LOG("uhwengineid: %d", p_meta_data_af->uhwengineid);
+
+	if (p_meta_data_af->b_isstats_byaddr == 1) {
+		if (p_meta_data_af->puc_af_stats == NULL)
 			return ERR_WRP_AF_INVALID_STATS_ADDR;
 		stats = p_meta_data_af->puc_af_stats;
 	} else
 		stats = p_meta_data_af->paf_stats;
 
-
-
 	/* AP3AMGR_HW3A_A_0 and AP3AMGR_HW3A_B_0, see the AP3AMgr.h*/
-	if(AL3A_HW3A_DEV_ID_A_0 == p_meta_data_af->uhwengineid) {
-		for(j = 0; j < banks; j++) {
-			stats_addr_32 = (uint32 *)(stats)+j* bank_size/4;
-
+	if (AL3A_HW3A_DEV_ID_A_0 == p_meta_data_af->uhwengineid) {
+		for (j = 0; j < banks; j++) {
+			stats_addr_32 = (uint32 *)(stats) + j * bank_size / 4;
 			stats_addr_64 = (uint64 *)stats_addr_32;
-
-			add_stat_32 = stats + j* bank_size;
+			add_stat_32 = stats + j * bank_size;
 			add_stat_64 = add_stat_32;
 
-			for(i = 0; i < blocks; i++) {
-				index = i+j*blocks;
-
+			for (i = 0; i < blocks; i++) {
+				index = i + j * blocks;
 #if 0
 				p_patched_stats->cnt_hor[index] = stats_addr_32[1];
 				p_patched_stats->cnt_ver[index] = stats_addr_32[0];
@@ -196,8 +191,10 @@ uint32 al3awrapper_dispatchhw3a_afstats(void *isp_meta_data,void *alaf_stats)
 #else
 				udoffset = 4;
 				p_patched_stats->cnt_hor[index] = ( add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24) );
+
 				udoffset = 0;
 				p_patched_stats->cnt_ver[index] = ( add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24) );
+
 				udoffset = 3 * 8;
 				p_patched_stats->filter_value1[index] = ( (uint64)(add_stat_64[udoffset]) + ((uint64)(add_stat_64[udoffset+1])<<8) + ((uint64)(add_stat_64[udoffset+2])<<16) + ((uint64)(add_stat_64[udoffset+3])<<24) +
 				                                        ((uint64)(add_stat_64[udoffset+4])<<32) + ((uint64)(add_stat_64[udoffset+5])<<40) + ((uint64)(add_stat_64[udoffset+6])<<48) + ((uint64)(add_stat_64[udoffset+7])<<56) );
@@ -209,28 +206,28 @@ uint32 al3awrapper_dispatchhw3a_afstats(void *isp_meta_data,void *alaf_stats)
 				                                     ((uint64)(add_stat_64[udoffset+4])<<32) + ((uint64)(add_stat_64[udoffset+5])<<40) + ((uint64)(add_stat_64[udoffset+6])<<48) + ((uint64)(add_stat_64[udoffset+7])<<56) );
 				udoffset = 5 * 4;
 				p_patched_stats->fv_hor[index] = ( add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24) );
+
 				udoffset = 4 * 4;
 				p_patched_stats->fv_ver[index] = ( add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24) );
-
 #endif
 				/*40 Bytes(HW3A AF Block Size) = 10 * uint32(4 Bytes)*/
-				stats_addr_32+= 10;
+				stats_addr_32 += 10;
 				/*40 Bytes(HW3A AF Block Size) = 5 * uint64(8 Bytes)*/
-				stats_addr_64+= 5;
+				stats_addr_64 += 5;
 
 				add_stat_32 += 40;
 				add_stat_64 += 40;
 
-				WRAP_LOG("fv_hor[%d] %d",index,p_patched_stats->fv_hor[index]);
+				WRAP_LOG("fv_hor[%d]: %d", index, p_patched_stats->fv_hor[index]);
 			}
 		}
 	} else if(AL3A_HW3A_DEV_ID_B_0 == p_meta_data_af->uhwengineid) {
-		for(j = 0; j < banks; j++) {
-			stats_addr_32 = (uint32 *)(stats)+j*bank_size/4;
+		for (j = 0; j < banks; j++) {
+			stats_addr_32 = (uint32 *)(stats) + j * bank_size / 4;
 			add_stat_32 = stats + j* bank_size;
-			for(i = 0; i < blocks; i++) {
-				index = i+j*banks;
 
+			for (i = 0; i < blocks; i++) {
+				index = i + j * banks;
 #if 0
 				p_patched_stats->cnt_hor[index] = stats_addr_32[1];
 				p_patched_stats->cnt_ver[index] = stats_addr_32[0];
@@ -242,22 +239,29 @@ uint32 al3awrapper_dispatchhw3a_afstats(void *isp_meta_data,void *alaf_stats)
 #else
 				udoffset = 4;
 				p_patched_stats->cnt_hor[index] = ( add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24) );
+
 				udoffset = 0;
 				p_patched_stats->cnt_ver[index] = ( add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24) );
+
 				p_patched_stats->filter_value1[index] = 0;
+
 				p_patched_stats->filter_value2[index] = 0;
+
 				udoffset = 2 * 4;
 				p_patched_stats->y_factor[index] = ( add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24) );
+
 				udoffset = 4 * 4;
 				p_patched_stats->fv_hor[index] = ( add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24) );
+
 				udoffset = 3 * 4;
 				p_patched_stats->fv_ver[index] = ( add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24) );
 #endif
 				/*24 Bytes(HW3A AF Block Size) = 6 * uint32(4 Bytes)*/
-				stats_addr_32+= 6;
+				stats_addr_32 += 6;
 
 				add_stat_32 += 24;
-				WRAP_LOG("fv_hor[%d] %d",index,p_patched_stats->fv_hor[index]);
+
+				WRAP_LOG("fv_hor[%d]: %d", index, p_patched_stats->fv_hor[index]);
 			}
 		}
 	} else {
@@ -430,71 +434,135 @@ uint32 al3awrapperaf_updateispconfig_af(struct allib_af_out_stats_config_t *lib_
 {
 	uint32 ret = ERR_WPR_AF_SUCCESS;
 	uint32 udTemp = 0;
-	WRAP_LOG("al3awrapperaf_updateispconfig_af start ID %d",lib_config->token_id);
+	WRAP_LOG("al3awrapperaf_updateispconfig_af start ID: %d", lib_config->token_id);
 
 	isp_config->tokenid = lib_config->token_id;
 
 	isp_config->tafregion.uwblknumx = lib_config->num_blk_hor;
-	WRAP_LOG("uwblknumx %d",isp_config->tafregion.uwblknumx);
-	isp_config->tafregion.uwblknumy = lib_config->num_blk_ver;
-	WRAP_LOG("uwblknumy%d",isp_config->tafregion.uwblknumy);
+	WRAP_LOG("uwblknumx: %d", isp_config->tafregion.uwblknumx);
 
-	if(0 == lib_config->src_img_sz.uw_width)
+	isp_config->tafregion.uwblknumy = lib_config->num_blk_ver;
+	WRAP_LOG("uwblknumy: %d", isp_config->tafregion.uwblknumy);
+
+	if (0 == lib_config->src_img_sz.uw_width)
 		return ERR_WRP_AF_ZERO_SRC_IMG_WIDTH;
 
-	if(0 == lib_config->src_img_sz.uw_height)
+	if (0 == lib_config->src_img_sz.uw_height)
 		return ERR_WRP_AF_ZERO_SRC_IMG_HEIGHT;
 
-	udTemp = 100*((uint32)(lib_config->roi.uw_dx))/((uint32)(lib_config->src_img_sz.uw_width));
-	WRAP_LOG("uw_dx%d uwWidth%d ",lib_config->roi.uw_dx,lib_config->src_img_sz.uw_width);
-	isp_config->tafregion.uwsizeratiox = (uint16)udTemp;
-	WRAP_LOG("uwsizeratiox%d",isp_config->tafregion.uwsizeratiox);
-	udTemp = 100*((uint32)(lib_config->roi.uw_dy))/((uint32)(lib_config->src_img_sz.uw_height));
-	isp_config->tafregion.uwsizeratioy = (uint16)udTemp;
-	WRAP_LOG("uwsizeratioy%d",isp_config->tafregion.uwsizeratioy);
-	udTemp = 100*((uint32)(lib_config->roi.uw_left))/((uint32)(lib_config->src_img_sz.uw_width));
-	isp_config->tafregion.uwoffsetratiox = (uint16)udTemp;
-	WRAP_LOG("uwoffsetratiox%d",isp_config->tafregion.uwoffsetratiox);
-	udTemp = 100*((uint32)(lib_config->roi.uw_top))/((uint32)(lib_config->src_img_sz.uw_height));
-	isp_config->tafregion.uwoffsetratioy = (uint16)udTemp;
-	WRAP_LOG("uwoffsetratioy%d",isp_config->tafregion.uwoffsetratioy);
-	isp_config->benableaflut = lib_config->b_enable_af_lut;
-	WRAP_LOG("benableaflut%d",isp_config->benableaflut);
-	memcpy(isp_config->auwlut,lib_config->auw_lut,sizeof(uint16)*259);
-	memcpy(isp_config->auwaflut,lib_config->auw_af_lut,sizeof(uint16)*259);
-	memcpy(isp_config->aucweight,lib_config->auc_weight,sizeof(uint8)*6);
-	isp_config->uwsh = lib_config->uw_sh;
-	WRAP_LOG("uwsh%d",isp_config->uwsh);
-	isp_config->ucthmode = lib_config->uc_th_mode;
-	WRAP_LOG("ucthmode%d",isp_config->ucthmode);
-	memcpy(isp_config->aucindex,lib_config->auc_index,sizeof(uint8)*82);
-	memcpy(isp_config->auwth,lib_config->auw_th,sizeof(uint16)*4);
-	memcpy(isp_config->pwtv,lib_config->pw_tv,sizeof(uint16)*4);
-	isp_config->udafoffset = lib_config->ud_af_offset;
-	WRAP_LOG("udafoffset%d",isp_config->udafoffset);
-	isp_config->baf_py_enable = lib_config->b_af_py_enable;
-	WRAP_LOG("baf_py_enable%d",isp_config->baf_py_enable);
-	isp_config->baf_lpf_enable = lib_config->b_af_lpf_enable;
-	WRAP_LOG("baf_lpf_enable%d",isp_config->baf_lpf_enable);
+	udTemp = 100 * ((uint32)(lib_config->roi.uw_dx)) / ((uint32)(lib_config->src_img_sz.uw_width));
+	WRAP_LOG("uw_dx: %d, uw_width: %d", lib_config->roi.uw_dx, lib_config->src_img_sz.uw_width);
 
-	switch(lib_config->n_filter_mode) {
+	isp_config->tafregion.uwsizeratiox = (uint16)udTemp;
+	WRAP_LOG("uwsizeratiox: %d", isp_config->tafregion.uwsizeratiox);
+
+	udTemp = 100 * ((uint32)(lib_config->roi.uw_dy)) / ((uint32)(lib_config->src_img_sz.uw_height));
+	WRAP_LOG("uw_dy: %d, uw_height: %d", lib_config->roi.uw_dy, lib_config->src_img_sz.uw_height);
+
+	isp_config->tafregion.uwsizeratioy = (uint16)udTemp;
+	WRAP_LOG("uwsizeratioy: %d", isp_config->tafregion.uwsizeratioy);
+
+	udTemp = 100 * ((uint32)(lib_config->roi.uw_left)) / ((uint32)(lib_config->src_img_sz.uw_width));
+	WRAP_LOG("uw_left: %d, uw_width: %d", lib_config->roi.uw_left, lib_config->src_img_sz.uw_width);
+
+	isp_config->tafregion.uwoffsetratiox = (uint16)udTemp;
+	WRAP_LOG("uwoffsetratiox: %d", isp_config->tafregion.uwoffsetratiox);
+
+	udTemp = 100 * ((uint32)(lib_config->roi.uw_top)) / ((uint32)(lib_config->src_img_sz.uw_height));
+	WRAP_LOG("uw_top: %d, uw_height: %d", lib_config->roi.uw_top, lib_config->src_img_sz.uw_height);
+
+	isp_config->tafregion.uwoffsetratioy = (uint16)udTemp;
+	WRAP_LOG("uwoffsetratioy: %d", isp_config->tafregion.uwoffsetratioy);
+
+	isp_config->benableaflut = lib_config->b_enable_af_lut;
+	WRAP_LOG("benableaflut: %d", isp_config->benableaflut);
+
+	memcpy(isp_config->auwlut, lib_config->auw_lut, sizeof(uint16) * 259);
+	memcpy(isp_config->auwaflut, lib_config->auw_af_lut, sizeof(uint16) * 259);
+	memcpy(isp_config->aucweight, lib_config->auc_weight, sizeof(uint8) * 6);
+
+	isp_config->uwsh = lib_config->uw_sh;
+	WRAP_LOG("uwsh: %d", isp_config->uwsh);
+
+	isp_config->ucthmode = lib_config->uc_th_mode;
+	WRAP_LOG("ucthmode: %d", isp_config->ucthmode);
+
+	memcpy(isp_config->aucindex, lib_config->auc_index, sizeof(uint8) * 82);
+	memcpy(isp_config->auwth, lib_config->auw_th, sizeof(uint16) * 4);
+	memcpy(isp_config->pwtv, lib_config->pw_tv, sizeof(uint16) * 4);
+
+	isp_config->udafoffset = lib_config->ud_af_offset;
+	WRAP_LOG("udafoffset: %d", isp_config->udafoffset);
+
+	isp_config->baf_py_enable = lib_config->b_af_py_enable;
+	WRAP_LOG("baf_py_enable: %d", isp_config->baf_py_enable);
+
+	isp_config->baf_lpf_enable = lib_config->b_af_lpf_enable;
+	WRAP_LOG("baf_lpf_enable: %d", isp_config->baf_lpf_enable);
+
+	switch (lib_config->n_filter_mode) {
 	case MODE_51:
 		isp_config->nfiltermode = HW3A_MF_51_MODE;
 		break;
+
 	case MODE_31:
 		isp_config->nfiltermode = HW3A_MF_31_MODE;
 		break;
+
 	case DISABLE:
 	default:
 		isp_config->nfiltermode = HW3A_MF_DISABLE;
 		break;
 	}
 
-	WRAP_LOG("nfiltermode%d",isp_config->nfiltermode);
+	WRAP_LOG("nfiltermode: %d", isp_config->nfiltermode);
+
 	isp_config->ucfilterid = lib_config->uc_filter_id;
-	WRAP_LOG("ucfilterid%d",isp_config->ucfilterid);
+	WRAP_LOG("ucfilterid: %d", isp_config->ucfilterid);
+
 	isp_config->uwlinecnt = lib_config->uw_line_cnt;
-	WRAP_LOG("uwlinecnt%d\n",isp_config->uwlinecnt);
+	WRAP_LOG("uwlinecnt: %d",isp_config->uwlinecnt);
+
+#ifdef IIR_PARAM_ENABLE
+	isp_config->tlpf.udb0 = lib_config->t_lpf.udb0;
+	isp_config->tlpf.udb1 = lib_config->t_lpf.udb1;
+	isp_config->tlpf.udb2 = lib_config->t_lpf.udb2;
+	isp_config->tlpf.udb3 = lib_config->t_lpf.udb3;
+	isp_config->tlpf.udb4 = lib_config->t_lpf.udb4;
+	isp_config->tlpf.udb5 = lib_config->t_lpf.udb5;
+	isp_config->tlpf.udb6 = lib_config->t_lpf.udb6;
+	isp_config->tlpf.udshift = lib_config->t_lpf.udshift;
+
+	isp_config->atiir[0].binitbyuser = lib_config->at_iir[0].binitbyuser;
+	isp_config->atiir[0].udp = lib_config->at_iir[0].udp;
+	isp_config->atiir[0].udq = lib_config->at_iir[0].udq;
+	isp_config->atiir[0].udr = lib_config->at_iir[0].udr;
+	isp_config->atiir[0].uds = lib_config->at_iir[0].uds;
+	isp_config->atiir[0].udt = lib_config->at_iir[0].udt;
+	isp_config->atiir[0].udabsshift = lib_config->at_iir[0].udabsshift;
+	isp_config->atiir[0].udth = lib_config->at_iir[0].udth;
+	isp_config->atiir[0].udinita = lib_config->at_iir[0].udinita;
+	isp_config->atiir[0].udinitb = lib_config->at_iir[0].udinitb;
+
+	isp_config->atiir[1].binitbyuser = lib_config->at_iir[1].binitbyuser;
+	isp_config->atiir[1].udp = lib_config->at_iir[1].udp;
+	isp_config->atiir[1].udq = lib_config->at_iir[1].udq;
+	isp_config->atiir[1].udr = lib_config->at_iir[1].udr;
+	isp_config->atiir[1].uds = lib_config->at_iir[1].uds;
+	isp_config->atiir[1].udt = lib_config->at_iir[1].udt;
+	isp_config->atiir[1].udabsshift = lib_config->at_iir[1].udabsshift;
+	isp_config->atiir[1].udth = lib_config->at_iir[1].udth;
+	isp_config->atiir[1].udinita = lib_config->at_iir[1].udinita;
+	isp_config->atiir[1].udinitb = lib_config->at_iir[1].udinitb;
+
+	isp_config->tpseudoy.udwr = lib_config->t_pseudoy.udwr;
+	isp_config->tpseudoy.udwgr = lib_config->t_pseudoy.udwgr;
+	isp_config->tpseudoy.udwgb = lib_config->t_pseudoy.udwgb;
+	isp_config->tpseudoy.udwb = lib_config->t_pseudoy.udwb;
+	isp_config->tpseudoy.udshift = lib_config->t_pseudoy.udshift;
+	isp_config->tpseudoy.udoffset = lib_config->t_pseudoy.udoffset;
+	isp_config->tpseudoy.udgain = lib_config->t_pseudoy.udgain;
+#endif
 
 	return ret;
 }

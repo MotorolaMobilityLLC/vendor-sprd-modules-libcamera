@@ -289,6 +289,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SET_PREV_YIMG,
 	ISP_CTRL_SET_PREV_YUV,
 	ISP_CTRL_GET_VCM_INFO,
+	ISP_CTRL_SET_TUNING_MODE,
 
 	/*
 	 * warning if you wanna send async msg
@@ -323,6 +324,21 @@ enum isp_capture_mode {
 	ISP_CAP_MODE_DRAM,
 	ISP_CAP_MODE_BURST,
 	ISP_CAP_MODE_MAX
+};
+
+enum isp_tuning_mode {
+	ISP_TUNING_PREVIEW_BINNING = 0x00, /*bining size for non zsl preview*/
+	ISP_TUNING_PREVIEW_FULL,   /*sensor full size for non zsl preview*/
+	ISP_TUNING_VIDEO_BINNING,  /*sensor bining size for video record*/
+	ISP_TUNING_VIDEO_FULL,        /*sensor full size for video record*/
+	ISP_TUNING_CAPTURE_BINNING,    /*sensor bining size for capture*/
+	ISP_TUNING_CAPTURE_FULL,       /*sensor full size for capture*/
+	ISP_TUNING_MULTILAYER_BINNING,/*bining size of multilayer capture*/
+	ISP_TUNING_MULTILAYER_FULL, /*full size of multilayer capture*/
+	ISP_TUNING_HDR_BINNING,      /*sensor bining size for  hdr capture*/
+	ISP_TUNING_HDR_FULL,            /*sensor full size for  hdr capture*/
+	ISP_TUNING_SLOWVIDEO,        /*sensor size for  slowmotion*/
+	ISP_TUNING_MAX
 };
 
 enum isp_mw_evt {
@@ -608,6 +624,7 @@ struct isp_video_start {
 	cmr_u16 is_refocus;
 	enum isp_format format;
 	enum isp_video_mode mode;
+	enum isp_tuning_mode tuning_mode;
 	cmr_u32 work_mode;
 	cmr_u32 capture_mode; //enum isp_capture_mode
 	cmr_uint lsc_buf_size;
@@ -625,7 +642,6 @@ struct isp_video_start {
 	cmr_u32 is_need_flash;
 	cmr_u32 capture_skip_num;
 	struct isp_sensor_fps_info sensor_fps;
-	void * tuning_ae_addr;
 	cmr_s32 raw_buf_fd[ISP_RAWBUF_NUM];
 	cmr_uint raw_buf_phys_addr[ISP_RAWBUF_NUM];
 	cmr_uint raw_buf_virt_addr[ISP_RAWBUF_NUM];

@@ -49,6 +49,7 @@ enum af_ctrl_cmd_type {
 	AF_CTRL_CMD_SET_PRV_IMG_SIZE,
 	AF_CTRL_CMD_SET_PD_INFO,
 	AF_CTRL_CMD_SET_PD_ENABLE,
+	AF_CTRL_CMD_SET_AF_TUNING_MODE,
 	AF_CTRL_CMD_SET_MAX,
 
 	AF_CTRL_CMD_GET_BASE = AF_CTRL_CMD_SET_MAX,
@@ -258,7 +259,7 @@ struct af_ctrl_init_in {
 	cmr_u8 pdaf_support;
 	struct isp_lib_config af_lib_info;
 	struct af_ctrl_otp_info_t otp_info;
-	struct af_ctrl_tuning_file_t tuning_info;
+	struct af_ctrl_tuning_file_t tuning_info[ISP_INDEX_MAX];
 	struct af_ctrl_isp_info_t isp_info;
 	struct af_ctrl_sensor_info_type sensor_info;
 	struct af_ctrl_module_info_type module_info;
@@ -306,6 +307,7 @@ struct af_ctrl_param_in {
 		struct af_ctrl_input_pd_info_t pd_info;
 		cmr_u8 haf_enable;
 		void *y_img;
+		cmr_u32 idx_num;
 	};
 };
 

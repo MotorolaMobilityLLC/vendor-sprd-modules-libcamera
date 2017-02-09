@@ -21,6 +21,7 @@
 
 #include <sys/types.h>
 #include "isp_common_types.h"
+#include "isp_3a_adpt.h"
 
 
 /**********************************ENUM*************************************/
@@ -57,6 +58,7 @@ enum awb_ctrl_cmd {
 	AWB_CTRL_CMD_GET_DEBUG_INFO,//to jpeg tail
 	AWB_CTRL_CMD_SET_SLAVE_ISO_SPEED,
 	AWB_CTRL_CMD_SET_MASTER,
+	AWB_CTRL_CMD_SET_TUNING_MODE,
 	AWB_CTRL_CMD_MAX
 };
 
@@ -92,11 +94,17 @@ enum awb_ctrl_wb_mode {
 };
 
 enum awb_ctrl_scene_mode {
-	AWB_CTRL_SCENEMODE_AUTO,
-	AWB_CTRL_SCENEMODE_DUSK,
-	AWB_CTRL_SCENEMODE_USER_0,
-	AWB_CTRL_SCENEMODE_USER_1,
-	AWB_CTRL_SCENEMODE_MAX
+	//AWB_CTRL_SCENEMODE_AUTO,
+	//AWB_CTRL_SCENEMODE_DUSK,
+	//AWB_CTRL_SCENEMODE_USER_0,
+	//AWB_CTRL_SCENEMODE_USER_1,
+	//AWB_CTRL_SCENEMODE_MAX
+	AWB_CTRL_SCENE_NORMAL,
+	AWB_CTRL_SCENE_NIGHT,
+	AWB_CTRL_SCENE_SPORT,
+	AWB_CTRL_SCENE_PORTRAIT,
+	AWB_CTRL_SCENE_LANDSCAPE,
+	AWB_CTRL_SCENE_MAX
 };
 
 enum awb_ctrl_flash_status {
@@ -133,7 +141,6 @@ struct awb_ctrl_work_param {
 	cmr_u16 is_refocus;
 	struct isp_size sensor_size;
 };
-
 struct awb_ctrl_callback_in {
 
 };
@@ -157,8 +164,8 @@ struct awb_ctrl_init_in {
 	struct isp_calibration_awb_gain calibration_gain_slv;
 	cmr_u32 awb_process_type;
 	cmr_u32 awb_process_level;
-	void *tuning_param;
-	void *tuning_param_slv;
+	void *tuning_param[ISP_INDEX_MAX];
+	void *tuning_param_slv[ISP_INDEX_MAX];
 	cmr_u32 param_size;
 	void *lsc_otp_random;
 	void *lsc_otp_golden;
@@ -219,6 +226,7 @@ union awb_ctrl_cmd_in {
 	cmr_u32 flash_status;
 	cmr_u32 bypass;
 	cmr_u32 sof_frame_idx;
+	cmr_u32 idx_num;
 	cmr_u16 iso_speed;
 	cmr_u8 is_master;
 	struct awb_ctrl_wbmode_param wb_mode;
@@ -227,6 +235,7 @@ union awb_ctrl_cmd_in {
 	struct isp3a_ae_info ae_info;
 	struct awb_ctrl_manual_lock lock_param;
 	struct awb_ctrl_af_report af_report;
+	struct scene_setting_info  scene_info;
 };
 
 union awb_ctrl_cmd_out {

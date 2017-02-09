@@ -210,6 +210,7 @@ struct af_altek_context {
 	struct af_ctrl_sensor_info_type sensor_info;
 	struct caf_context af_caf_cxt;
 	struct af_ae_working_info ae_info;
+	struct af_ctrl_tuning_file_t tuning_bin[ISP_INDEX_MAX];
 	enum af_ctrl_lens_status lens_status;
 	struct isp_af_win last_roi;
 	TriggerInReg haf_trigger_reg;
@@ -1798,6 +1799,20 @@ static cmr_int afaltek_adpt_update_awb(cmr_handle adpt_handle, void *in)
 	return ret;
 }
 
+static cmr_int afaltek_adpt_set_tuning_mode(cmr_handle adpt_handle, void *in)
+{
+	cmr_int ret = -ISP_ERROR;
+	struct af_altek_context *cxt = (struct af_altek_context *)adpt_handle;
+	struct af_ctrl_param_in *af_tuning_bin = (struct af_ctrl_param_in *)in;
+	cmr_u32 idx_num;
+
+	UNUSED(in);
+	idx_num = af_tuning_bin->idx_num;
+	ISP_LOGI("idx_num=%d af_addr %p", idx_num, cxt->tuning_bin[idx_num].tuning_file);
+	ret = afaltek_adpt_set_setting_file(cxt, &cxt->tuning_bin[idx_num]);
+	return ret;
+}
+
 static cmr_int afaltek_adpt_update_aux_sensor(cmr_handle adpt_handle, void *in)
 {
 	cmr_int ret = -ISP_ERROR;
@@ -1966,7 +1981,7 @@ static cmr_int afaltek_adpt_reset_af_setting(cmr_handle adpt_handle)
 	struct allib_af_input_set_param_t p;
 
 	cmr_bzero(&p, sizeof(p));
-	p.type = alAFLIB_SET_PARAM_SET_DEFAULT_SETTING;
+	//p.type = alAFLIB_SET_PARAM_SET_DEFAULT_SETTING;
 
 	ret = afaltek_adpt_set_parameters(cxt, &p);
 	return ret;
@@ -2506,6 +2521,9 @@ static cmr_int afaltek_adpt_inctrl(cmr_handle adpt_handle, cmr_int cmd,
 	case AF_CTRL_CMD_SET_PRV_IMG_SIZE:
 		ret = afaltek_adpt_update_imgsize_info(adpt_handle, in);
 		break;
+	case AF_CTRL_CMD_SET_AF_TUNING_MODE:
+		ret = afaltek_adpt_set_tuning_mode(adpt_handle, in);
+		break;
 	default:
 		ISP_LOGE("failed to case cmd = %ld", cmd);
 		break;
@@ -2712,6 +2730,7 @@ static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 	struct allib_af_input_sensor_info_t sensor_info;
 	struct allib_af_input_init_info_t init_info;
 	struct sensor_otp_af_info *otp_af_info;
+	cmr_u32 i = 0;
 	cmr_u8 haf_support = 0;
 
 	cmr_bzero(&move_lens_info, sizeof(move_lens_info));
@@ -2753,7 +2772,11 @@ static cmr_int afaltek_adpt_param_init(cmr_handle adpt_handle,
 	}
 
 	/* tuning file setting */
-	ret = afaltek_adpt_set_setting_file(cxt, &in->tuning_info);
+	for (i = 0; i < ISP_INDEX_MAX; i++) {
+		cxt->tuning_bin[i] = in->tuning_info[i];
+		ISP_LOGI("af_addr %p", cxt->tuning_bin[i].tuning_file);
+	}
+	ret = afaltek_adpt_set_setting_file(cxt, &in->tuning_info[0]);
 	if (ret)
 		ISP_LOGI("failed to set tuning file ret = %ld", ret);
 

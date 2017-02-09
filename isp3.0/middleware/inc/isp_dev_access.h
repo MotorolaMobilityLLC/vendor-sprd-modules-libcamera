@@ -44,6 +44,7 @@ enum isp_dev_access_ctrl_cmd {
 	ISP_DEV_ACCESS_SET_STATIS_BUF,
 	ISP_DEV_ACCESS_SET_CCM,
 	ISP_DEV_ACCESS_SET_COLOR_TEMP,
+	ISP_DEV_ACCESS_SET_TUNING_BIN,
 	ISP_DEV_ACCESS_GET_STATIS_BUF,
 	ISP_DEV_ACCESS_GET_TIME,
 	ISP_DEV_ACCESS_CMD_MAX
@@ -152,6 +153,7 @@ cmr_int isp_dev_access_cfg_awb_param(cmr_handle isp_dev_handle, struct isp3a_awb
 cmr_int isp_dev_access_cfg_awb_gain(cmr_handle isp_dev_handle, struct isp_awb_gain *data);
 cmr_int isp_dev_access_cfg_awb_gain_balanced(cmr_handle isp_dev_handle, struct isp_awb_gain *data);
 cmr_int isp_dev_access_set_stats_buf(cmr_handle isp_dev_handle, struct isp_statis_buf *buf);
+cmr_int isp_dev_access_set_tuning_bin(cmr_handle isp_dev_handle, union isp_dev_ctrl_cmd_in *input_ptr);
 cmr_int isp_dev_access_cfg_af_param(cmr_handle isp_dev_handle, struct isp3a_af_hw_cfg *data);
 cmr_int isp_dev_access_cfg_iso_speed(cmr_handle isp_dev_handle, cmr_u32 *data);
 cmr_int isp_dev_access_get_exif_debug_info(cmr_handle isp_dev_handle, struct debug_info1 *exif_info);

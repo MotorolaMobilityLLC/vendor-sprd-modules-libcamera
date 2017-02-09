@@ -65,6 +65,20 @@ cmr_int isp_separate_3a_bin(void *bin, void **ae_tuning_buf, void **awb_tuning_b
 	return ret;
 }
 
+cmr_int isp_separate_one_bin(uint8* bin, uint32 uw_bin_size, uint32 uw_IDX_number, struct bin1_sep_info* a_bin1_info, struct bin2_sep_info* a_bin2_info, struct bin3_sep_info* a_bin3_info)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+
+	al3awrapper_com_separate_one_bin((uint8*)bin, uw_bin_size, uw_IDX_number, a_bin1_info, a_bin2_info, a_bin3_info);
+	//al3awrapper_com_separate_one_bin((uint8*)bin, (uint8**)ae_tuning_buf, (uint8**)af_tuning_buf, (uint8**)awb_tuning_buf);
+	return ret;
+}
+cmr_int isp_separate_scenesetting(enum scene_setting_list_t scene, void *setting_file, struct scene_setting_info *scene_info)
+{
+	cmr_int                             ret = ISP_SUCCESS;
+	al3awrapper_com_separate_scenesetting( scene, setting_file, scene_info);
+	return ret;
+}
 cmr_int isp_separate_drv_bin(void *bin, void **shading_buf, void **irp_buf)
 {
 	cmr_int                                     ret = ISP_SUCCESS;

@@ -19,7 +19,7 @@
 /* Wrapper define */
 #include "alwrapper_3a.h"
 
-#define _WRAPPER_AE_VER 0.8100
+#define _WRAPPER_AE_VER 0.8110
 #define _DEFAULT_WRAPPER_MINISO  50
 
 
@@ -136,6 +136,17 @@ uint32 al3awrapper_getaelib_param( void * udatatype, void * get_param, struct al
  * return: error code
  */
 uint32 al3awrapper_updateaesettingfile( void * ae_set_file, struct alaeruntimeobj_t *aaelibcallback, struct ae_output_data_t *ae_output, void * ae_runtimedat );
+
+/*
+ * API name: al3AWrapperAE_SetSceneSetting
+ * This API is used for setting scene event file to alAELib
+ * param setting_info[in]: scene info addr
+ * param alAERuntimeObj_t[in]: callback lookup table, must passing correct table into this API for querying HW3A config
+ * param ae_output[in]: returned output result after calling ae lib estimation
+ * param ae_runtimedat[in]: AE lib runtime buffer after calling init, must passing correct addr to into this API
+ * return: error code
+ */
+uint32 al3awrapperae_setscenesetting(void *setting_info, struct alaeruntimeobj_t *aaelibcallback, struct ae_output_data_t *ae_output , void * ae_runtimedat );
 
 /*
  * API name: al3AWrapperAE_GetVersion

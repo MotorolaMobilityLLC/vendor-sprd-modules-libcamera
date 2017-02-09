@@ -105,11 +105,10 @@ cmr_int isp_dev_init(struct isp_dev_init_info *init_param_ptr, isp_handle *handl
 
 	/*file->init_param = *init_param_ptr;*/
 	memcpy((void *)&file->init_param, init_param_ptr, sizeof(struct isp_dev_init_info));
-
 	file->init_param.shading_bin_offset = ISP_SHADING_BIN_BASE;
 	file->init_param.irp_bin_offset = ISP_IRP_BIN_BASE;
 	file->init_param.cbc_bin_offset = ISP_CBC_BIN_BASE;
-	ISP_LOGE("cbc bin addr %p, size is %x\n", (cmr_u32 *) file->init_param.cbc_bin_addr,
+	ISP_LOGE("cbc bin addr %p, size is %x\n", (cmr_u32 *)file->init_param.cbc_bin_addr,
 		file->init_param.cbc_bin_size);
 	fd = open(isp_dev_name, O_RDWR, 0);
 	file->fd = fd;
@@ -281,7 +280,7 @@ cmr_int isp_dev_start(isp_handle handle)
 	load_input.cbc_bin_offset = file->init_param.cbc_bin_offset;
 	load_input.pdaf_supported = file->pdaf_supported;
 	ISP_LOGI("shading offset 0x%x irp offset 0x%x", load_input.shading_bin_offset, load_input.irp_bin_offset);
-	ISP_LOGI("shading bin addr 0x%p size 0x%x irq bin addr 0x%p size %x, cbc bin addr 0x%p size %x",
+	ISP_LOGI("shading bin addr %p size 0x%x irq bin addr 0x%p size %x, cbc bin addr %p size %x",
 		 file->init_param.shading_bin_addr, file->init_param.shading_bin_size,
 		 file->init_param.irp_bin_addr, file->init_param.irp_bin_size, file->init_param.cbc_bin_addr,
 		 file->init_param.cbc_bin_size);
@@ -402,7 +401,9 @@ static cmr_int isp_dev_load_binary(isp_handle handle)
 	if (file->init_param.shading_bin_size > ISP_SHADING_BIN_BUF_SIZE ||
 		file->init_param.irp_bin_size > ISP_IRP_BIN_BUF_SIZE) {
 		ret = -1;
-		ISP_LOGE("the shading/irp binary size is out of range.");
+		ISP_LOGE("the shading/irp binary size is out of range. shading = 0x%x irp = 0x%x",
+			 file->init_param.shading_bin_size,
+			 file->init_param.irp_bin_size);
 		goto exit;
 	}
 
@@ -425,6 +426,44 @@ static cmr_int isp_dev_load_binary(isp_handle handle)
 
 exit:
 	ATRACE_END();
+	return ret;
+}
+
+cmr_int isp_dev_sel_iq_param_index(isp_handle handle , cmr_u32 tuning_idx)
+{
+	cmr_int                  ret = 0;
+	struct isp_file          *file = (struct isp_file *)handle;
+	cmr_u32                  isp_id = 0;
+	cmr_uint                 shading;
+	cmr_uint                 irp;
+	cmr_int                  fw_size = 0;
+	cmr_u32                  fw_buf_num = 1;
+	cmr_u32                  kaddr[2];
+	cmr_u64                  kaddr_temp;
+	cmr_s32                  fds[2];
+	struct isp_init_mem_param     load_input;
+
+	ISP_LOGI("E mode=%d", tuning_idx);
+	//file->idx = tuning_idx;
+
+
+	if (!file) {
+		ret = -1;
+		ISP_LOGI("file hand is null error.");
+		return ret;
+	}
+
+	if (!file->init_param.shading_bin_addr || !file->init_param.irp_bin_addr) {
+		ret = -1;
+		ISP_LOGI("param null error");
+		goto exit;
+	}
+	ret = ioctl(file->fd, ISP_IO_SEL_TUNING_IQ, &tuning_idx);
+	if (ret) {
+		ISP_LOGE("isp set iq error.");
+	}
+
+exit:
 	return ret;
 }
 

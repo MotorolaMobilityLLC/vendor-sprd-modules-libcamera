@@ -17,13 +17,15 @@
 #include "allib_awb_errcode.h"
 /* Wrapper define */
 #include "alwrapper_3a.h"
+/* Scene define */
+#include "alwrapper_scene_setting.h"
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-#define _WRAPPER_AWB_VER        0.8080
+#define _WRAPPER_AWB_VER        0.8090
 
 #define AWB_STATS_MAX_BLOCKS    (64)
 #define AWB_STATS_MAX_BANKS     (48)
@@ -112,6 +114,18 @@ uint32 al3awrapper_dispatchhw3a_awb_stats_rgbdata(void *alisp_metadata_awb, void
  * return: error code
  */
 uint32 al3awrapperawb_settuningfile(void *setting_file, struct allib_awb_runtime_obj_t *aawblibcallback);
+
+
+/*
+ * API name: al3awrapperawb_setscenesetting
+ * This API is used for setting scene event file to alAWBLib
+ * param setting_info[in]: scene info addr
+ * param aAWBLibCallback[in]: callback lookup table, must passing correct table into this API for setting file
+ * return: error code
+ */
+uint32 al3awrapperawb_setscenesetting(void *setting_info, struct allib_awb_runtime_obj_t *aawblibcallback);
+
+
 
 /*
  * API name: al3awrapperawb_getversion

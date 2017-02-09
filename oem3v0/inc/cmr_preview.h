@@ -67,6 +67,13 @@ enum preview_frame_type {
 	PREVIEW_ZSL_CANCELED_FRAME,
 	PREVIEW_FRAME_TYPE_MAX
 };
+
+enum sensor_mode_size {
+	SENSOR_SIZE_FULL = 0x00,
+	SENSOR_SIZE_BINNING,
+	SENSOR_SIZE_MAX
+};
+
 typedef cmr_int (*preview_cb_func)(cmr_handle oem_handle, enum preview_cb_type cb_type, enum preview_func_type func_type, void *parm);
 
 struct preview_md_ops {
@@ -243,6 +250,7 @@ cmr_int prev_set_ae_time(cmr_handle preview_handle, cmr_u32 camera_id, void *dat
 
 cmr_int cmr_preview_get_zoom_factor(cmr_handle preview_handle, cmr_u32 camera_id,float* zoom_factor);
 cmr_int cmr_camera_isp_stop_video(cmr_handle  preview_handle, cmr_u32 camera_id);
+enum isp_tuning_mode cmr_camera_get_isp_tuning_mode(cmr_handle  preview_handle, cmr_u32 camera_id, cmr_u32 capture_mode);
 #ifdef __cplusplus
 }
 #endif

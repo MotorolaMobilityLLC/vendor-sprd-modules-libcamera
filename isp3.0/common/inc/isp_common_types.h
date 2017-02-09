@@ -339,6 +339,7 @@ struct isp_bin_info {
 	void *awb_addr;
 	void *af_addr;
 	void *isp_3a_addr;
+	void *scene_addr;
 	cmr_u32 isp_3a_size;
 	void *isp_shading_addr;
 	cmr_u32 isp_shading_size;

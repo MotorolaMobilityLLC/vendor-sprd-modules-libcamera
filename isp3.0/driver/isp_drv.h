@@ -98,6 +98,7 @@ cmr_int isp_dev_set_rawaddr(isp_handle handle, struct isp_raw_data *param);
 cmr_int isp_dev_set_post_yuv_mem(isp_handle handle, struct isp_img_mem *param);
 cmr_int isp_dev_set_fetch_src_buf(isp_handle handle, struct isp_img_mem *param);
 cmr_int isp_dev_load_firmware(isp_handle handle, struct isp_init_mem_param *param);
+cmr_int isp_dev_sel_iq_param_index(isp_handle handle, cmr_u32 tuning_idx);
 cmr_int isp_dev_set_statis_buf(isp_handle handle, struct isp_statis_buf *param);
 cmr_int isp_dev_get_statis_buf(isp_handle handle, struct isp_img_read_op *param);
 cmr_int isp_dev_set_img_buf(isp_handle handle, struct isp_cfg_img_buf *param);

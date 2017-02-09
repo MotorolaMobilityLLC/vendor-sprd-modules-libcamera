@@ -102,6 +102,7 @@ static cmr_int awbctrl_get_exif_debug_info(cmr_handle awb_ctrl_handle, void *inp
 static cmr_int awbctrl_get_debug_info(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr);
 static cmr_int awbctrl_set_slave_iso(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr);
 static cmr_int awbctrl_set_master(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr);
+static cmr_int awbctrl_set_tuning_mode(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr);
 /**************************************LOCAL VARIABLE******************************************/
 static struct awbctrl_ioctrl_fun s_awbctrl_func[AWB_CTRL_CMD_MAX+1] = {
 	{AWB_CTRL_CMD_SET_BASE, NULL},
@@ -135,6 +136,7 @@ static struct awbctrl_ioctrl_fun s_awbctrl_func[AWB_CTRL_CMD_MAX+1] = {
 	{AWB_CTRL_CMD_GET_DEBUG_INFO, awbctrl_get_debug_info},
 	{AWB_CTRL_CMD_SET_SLAVE_ISO_SPEED, awbctrl_set_slave_iso},
 	{AWB_CTRL_CMD_SET_MASTER, awbctrl_set_master},
+	{AWB_CTRL_CMD_SET_TUNING_MODE, awbctrl_set_tuning_mode},
 	{AWB_CTRL_CMD_MAX, NULL},
 };
 
@@ -616,6 +618,19 @@ cmr_int awbctrl_set_master(cmr_handle awb_ctrl_handle, void *input_ptr, void *ou
 
 	return ret;
 }
+
+cmr_int awbctrl_set_tuning_mode(cmr_handle awb_ctrl_handle, void *input_ptr, void *output_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct awbctrl_context                      *cxt = (struct awbctrl_context *)awb_ctrl_handle;
+
+	if (cxt->awb_adpt_ops->adpt_ioctrl) {
+		ret = cxt->awb_adpt_ops->adpt_ioctrl(cxt->lib_handle, AWB_CTRL_CMD_SET_TUNING_MODE, input_ptr, output_ptr);
+	}
+
+	return ret;
+}
+
 /*************************************EXTERNAL FUNCTION ***************************************/
 cmr_int awb_ctrl_init(struct awb_ctrl_init_in *input_ptr, struct awb_ctrl_init_out *output_ptr, cmr_handle *awb_handle)
 {

@@ -312,6 +312,7 @@ struct prev_context {
 	struct frm_info   *preview_bakcup_data;
 	struct camera_frame_type *preview_bakcup_frame_type;
 	struct touch_coordinate   touch_info;
+	enum sensor_mode_size     sensor_size_mode;    // add for isp tuning mode 0: sensor full size. 1:sensor bining size
 
 	/*pdaf raw*/
 	struct img_rect                 pdaf_rect;
@@ -1606,6 +1607,87 @@ exit:
 	return ret;
 
 }
+
+enum isp_tuning_mode cmr_camera_get_isp_tuning_mode(cmr_handle  preview_handle, cmr_u32 camera_id, cmr_u32 capture_mode) {
+	struct prev_handle     *handle = (struct prev_handle*)preview_handle;
+	struct prev_context      *prev_cxt = NULL;
+	cmr_u32                     preview_enable = 0;
+	cmr_u32                     snapshot_enable = 0;
+	cmr_u32                     video_enable = 0;
+	cmr_u32                     tool_eb = 0;
+	cmr_u32                     sprd_zsl_enabled;
+	cmr_u32                     video_slowmotion_eb;
+	enum sensor_mode_size       sensor_size_mode = SENSOR_SIZE_FULL;
+	enum isp_tuning_mode tuning_mode = ISP_TUNING_PREVIEW_BINNING;
+
+	CHECK_HANDLE_VALID(handle);
+
+	prev_cxt     = &handle->prev_cxt[camera_id];
+
+	preview_enable  = prev_cxt->prev_param.preview_eb;
+	snapshot_enable = prev_cxt->prev_param.snapshot_eb;
+	video_enable    = prev_cxt->prev_param.video_eb;
+	tool_eb = prev_cxt->prev_param.tool_eb;
+	video_slowmotion_eb       = prev_cxt->prev_param.video_slowmotion_eb;
+	sprd_zsl_enabled = prev_cxt->prev_param.sprd_zsl_enabled;
+	sensor_size_mode = prev_cxt->sensor_size_mode;
+
+	CMR_LOGD("sensor_size_mode %d, preview_enable %d, snapshot_enable %d, video_enable %d, tool_eb %d, video_slowmotion_eb %d, sprd_zsl_enabled %d, capture_mode %d",
+		sensor_size_mode,
+		preview_enable,
+		snapshot_enable,
+		video_enable,
+		tool_eb,
+		video_slowmotion_eb,
+		sprd_zsl_enabled,
+		capture_mode);
+
+	if ((ISP_CAP_MODE_HIGHISO == capture_mode) || (ISP_CAP_MODE_BURST == capture_mode && sprd_zsl_enabled)) {
+		if (sensor_size_mode == SENSOR_SIZE_FULL) {
+			tuning_mode = ISP_TUNING_MULTILAYER_FULL;
+		} else if (sensor_size_mode == SENSOR_SIZE_BINNING) {
+			tuning_mode = ISP_TUNING_MULTILAYER_BINNING;
+		}
+		return tuning_mode;
+	} else if (ISP_CAP_MODE_HDR == capture_mode && snapshot_enable) {
+		if (sensor_size_mode == SENSOR_SIZE_FULL) {
+			tuning_mode = ISP_TUNING_HDR_FULL;
+		} else if (sensor_size_mode == SENSOR_SIZE_BINNING) {
+			tuning_mode = ISP_TUNING_HDR_BINNING;
+		}
+		return tuning_mode;
+	} else if (video_slowmotion_eb) {
+		tuning_mode = ISP_TUNING_SLOWVIDEO;
+		return tuning_mode;
+	}
+
+	if (preview_enable) {
+		if (sensor_size_mode == SENSOR_SIZE_FULL) {
+			tuning_mode = ISP_TUNING_PREVIEW_FULL;
+		} else if (sensor_size_mode == SENSOR_SIZE_BINNING) {
+			tuning_mode = ISP_TUNING_PREVIEW_BINNING;
+		}
+	}
+
+	if (snapshot_enable) {
+		if (sensor_size_mode == SENSOR_SIZE_FULL) {
+			tuning_mode = ISP_TUNING_CAPTURE_FULL;
+		} else if (sensor_size_mode == SENSOR_SIZE_BINNING) {
+			tuning_mode = ISP_TUNING_CAPTURE_BINNING;
+		}
+	}
+
+	if (video_enable) {
+		if (sensor_size_mode == SENSOR_SIZE_FULL) {
+			tuning_mode = ISP_TUNING_VIDEO_FULL;
+		} else if (sensor_size_mode == SENSOR_SIZE_BINNING) {
+			tuning_mode = ISP_TUNING_VIDEO_BINNING;
+		}
+	}
+
+	return tuning_mode;
+}
+
 
 /**************************LOCAL FUNCTION ***************************************************************************/
 cmr_int prev_create_thread(struct prev_handle *handle)
@@ -6028,10 +6110,12 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
 				struct img_size *target_size, cmr_uint *work_mode)
 {
 	cmr_int                  ret = CMR_CAMERA_FAIL;
-	cmr_u32                  width = 0, height = 0, i, last_one = 0;
+	cmr_u32                  width = 0, height = 0, i;
+	cmr_u32                  maxwidth = 0, maxheight = 0;
 	cmr_u32                  search_height;
 	cmr_u32                  search_width;
-	cmr_u32                  target_mode = SENSOR_MODE_MAX;
+	cmr_u32                  target_mode = SENSOR_MODE_PREVIEW_ONE;
+	cmr_u32                  last_mode = SENSOR_MODE_PREVIEW_ONE;
 	cmr_int                  offset1 = 0, offset2 = 0;
 	struct sensor_mode_fps_tag fps_info;
 	char                     value[PROPERTY_VALUE_MAX];
@@ -6067,7 +6151,7 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
 		search_height = target_size->height;
 	}
 
-	CMR_LOGI("search_height = %d", search_height);
+    CMR_LOGI("search_height = %d, search_width = %d", search_height, search_width);
 	for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
 		if (SENSOR_MODE_MAX != sensor_info->mode_info[i].mode) {
 			height = sensor_info->mode_info[i].trim_height;
@@ -6091,7 +6175,7 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
 					ret = CMR_CAMERA_SUCCESS;
 					break;
 				} else {
-					last_one = i;
+					last_mode = i;
 				}
 			}
 		}
@@ -6099,11 +6183,32 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
 
 	if (i == SENSOR_MODE_MAX) {
 		CMR_LOGI("can't find the right mode, %d", i);
-		target_mode = last_one;
+		target_mode = last_mode;
 		ret = CMR_CAMERA_SUCCESS;
 	}
 
-	CMR_LOGI("target_mode %d", target_mode);
+	height = sensor_info->mode_info[target_mode].trim_height;
+	width = sensor_info->mode_info[target_mode].trim_width;
+	//CMR_LOGI("i %d, height %ld, width %ld, last_mode %ld, target_mode %ld", i, height, width, last_mode, target_mode);
+	for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
+		if (SENSOR_MODE_MAX != sensor_info->mode_info[i].mode) {
+			cmr_u32  tmpwidth = 0, tmpheight = 0;
+			tmpheight = sensor_info->mode_info[i].trim_height;
+			tmpwidth = sensor_info->mode_info[i].trim_width;
+			//CMR_LOGV("i: %ld, sensor size tmpheight = %d, tmpwidth = %d", i, tmpheight, tmpwidth);
+			if (tmpheight >= maxheight && tmpwidth >= maxwidth) {
+				maxheight = tmpheight;
+				maxwidth = tmpwidth;
+			}
+		}
+	}
+	if (height == maxheight && (width == maxwidth)) {
+		handle->prev_cxt[camera_id].sensor_size_mode = SENSOR_SIZE_FULL;
+	} else {
+		handle->prev_cxt[camera_id].sensor_size_mode = SENSOR_SIZE_BINNING;
+	}
+
+	CMR_LOGI("target_mode %d, sensor_size_mode %d", target_mode, handle->prev_cxt[camera_id].sensor_size_mode);
 	*work_mode = target_mode;
 
 	return ret;
@@ -6114,9 +6219,10 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
 {
 	cmr_int                 ret = CMR_CAMERA_FAIL;
 	cmr_u32                 width = 0, height = 0, i;
+	cmr_u32                 maxwidth = 0, maxheight = 0;
 	cmr_u32                 search_width;
 	cmr_u32                 search_height;
-	cmr_u32                 target_mode = SENSOR_MODE_MAX;
+	cmr_u32                 target_mode = SENSOR_MODE_PREVIEW_ONE;
 	cmr_u32                 last_mode = SENSOR_MODE_PREVIEW_ONE;
 	struct sensor_mode_fps_tag fps_info;
 	char                     value[PROPERTY_VALUE_MAX];
@@ -6146,7 +6252,7 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
 		is_raw_capture = 1;
 	}
 
-	CMR_LOGI("search_height = %d", search_height);
+	CMR_LOGI("search_height = %d, search_width = %d", search_height, search_width);
 	for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
 		if (SENSOR_MODE_MAX != sensor_info->mode_info[i].mode) {
 			height = sensor_info->mode_info[i].trim_height;
@@ -6180,10 +6286,34 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
 		ret = CMR_CAMERA_SUCCESS;
 	}
 
-	CMR_LOGI("mode %d, width %d height %d",
+	height = sensor_info->mode_info[target_mode].trim_height;
+	width = sensor_info->mode_info[target_mode].trim_width;
+	if (handle->prev_cxt[camera_id].sensor_size_mode == SENSOR_SIZE_FULL) {
+		CMR_LOGV("preview mode selected full sensor mode");
+	} else if (handle->prev_cxt[camera_id].sensor_size_mode == SENSOR_SIZE_BINNING) {
+		for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
+			if (SENSOR_MODE_MAX != sensor_info->mode_info[i].mode) {
+				cmr_u32  tmpwidth = 0, tmpheight = 0;
+				tmpheight = sensor_info->mode_info[i].trim_height;
+				tmpwidth = sensor_info->mode_info[i].trim_width;
+				if (tmpheight >= maxheight && tmpwidth >= maxwidth) {
+					maxheight = tmpheight;
+					maxwidth = tmpwidth;
+				}
+			}
+		}
+		if (height == maxheight && width == maxwidth) {
+			handle->prev_cxt[camera_id].sensor_size_mode = SENSOR_SIZE_FULL;
+		} else {
+			handle->prev_cxt[camera_id].sensor_size_mode = SENSOR_SIZE_BINNING;
+		}
+	}
+
+	CMR_LOGI("mode %d, width %d height %d, sensor_size_mode %d",
 		target_mode,
-		sensor_info->mode_info[i].trim_width,
-		sensor_info->mode_info[i].trim_height);
+		sensor_info->mode_info[target_mode].trim_width,
+		sensor_info->mode_info[target_mode].trim_height,
+		handle->prev_cxt[camera_id].sensor_size_mode);
 
 	*work_mode = target_mode;
 

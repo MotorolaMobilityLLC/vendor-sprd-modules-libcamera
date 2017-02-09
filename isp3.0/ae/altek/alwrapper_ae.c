@@ -3,8 +3,8 @@
  *
  *  Created on: 2015/12/06
  *      Author: MarkTseng
- *  Latest update: 2016/5/3
- *      Reviser: Allenwang
+ *  Latest update: 2017/01/18
+ *      Reviser: HanTseng
  *  Comments:
  *       This c file is mainly used for AP framework to:
  *       1. Query HW3A config setting
@@ -27,6 +27,7 @@
 #include "alwrapper_3a.h"
 #include "alwrapper_ae.h"   /* include wrapper AE define */
 #include "alwrapper_ae_errcode.h"
+#include "alwrapper_scene_setting.h"
 
 #include <math.h>
 #include <string.h>
@@ -443,6 +444,49 @@ uint32 al3awrapperae_updateispconfig_ae( uint8 a_ucsensor, struct alhw3a_ae_cfgi
 	UNUSED(a_ucsensor);
 	UNUSED(aaeconfig);
 #endif
+	return ret;
+}
+
+/*
+ * API name: al3AWrapperAE_SetSceneSetting
+ * This API is used for setting scene event file to alAELib
+ * param setting_info[in]: scene info addr
+ * param alAERuntimeObj_t[in]: callback lookup table, must passing correct table into this API for querying HW3A config
+ * param ae_output[in]: returned output result after calling ae lib estimation
+ * param ae_runtimedat[in]: AE lib runtime buffer after calling init, must passing correct addr to into this API
+ * return: error code
+ */
+uint32 al3awrapperae_setscenesetting(void *setting_info, struct alaeruntimeobj_t *aaelibcallback, struct ae_output_data_t *ae_output , void * ae_runtimedat )
+{
+	uint32 ret = ERR_WPR_AE_SUCCESS;
+	struct ae_set_param_t localparam;    /* local parameter set */
+	struct scene_setting_info *info;
+	struct alwrapper_scene_setting *setting;
+
+	if (setting_info == NULL)
+		return ERR_WRP_AE_INVALID_INPUT_PARAM;
+
+	info = (struct scene_setting_info*)setting_info;
+	if (info->uw_mode == Auto) {
+		localparam.ae_set_param_type = AE_SET_PARAM_SCENE_SETTING;
+		localparam.set_param.ae_scene_param.scene_ui_evcomp = 0;
+		localparam.set_param.ae_scene_param.pcurve_idx = 0;
+		localparam.set_param.ae_scene_param.exposure_priority = 0;
+		localparam.set_param.ae_scene_param.manual_exptime = 0;
+		localparam.set_param.ae_scene_param.manual_gain = 0;
+		ret = aaelibcallback->set_param( &localparam, ae_output, ae_runtimedat );
+	}
+	if (info->uw_mode != Auto && info->puc_addr != NULL) {
+		setting = (struct alwrapper_scene_setting*)info->puc_addr;
+
+		localparam.ae_set_param_type = AE_SET_PARAM_SCENE_SETTING;
+		localparam.set_param.ae_scene_param.scene_ui_evcomp = setting->d_ae_ev_comp;
+		localparam.set_param.ae_scene_param.pcurve_idx = setting->d_ae_p_curve;
+		localparam.set_param.ae_scene_param.exposure_priority = 0;
+		localparam.set_param.ae_scene_param.manual_exptime = 0;
+		localparam.set_param.ae_scene_param.manual_gain = 0;
+		ret = aaelibcallback->set_param( &localparam, ae_output, ae_runtimedat );
+	}
 	return ret;
 }
 

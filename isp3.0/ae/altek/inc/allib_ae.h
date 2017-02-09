@@ -44,7 +44,6 @@ enum ae_metering_mode_type_t {
 	AE_METERING_AVERAGE,
 	AE_METERING_CENTERWT,
 	AE_METERING_SPOTWT,
-	AE_METERING_INTELLIWT,
 	AE_METERING_USERDEF_WT,
 	AE_METERING_MAX_MODE
 };
@@ -326,7 +325,7 @@ enum ae_set_param_type_t {
 	AE_SET_PARAM_SYNC_MODE,                       /* update sync mdoe flag */
 	AE_SET_PARAM_ENGINEER_MODE,                       /* Turn on/off Engineer mode,1:on;0:off */
 	AE_SET_PARAM_SENSOR_CTRL_TEST,               /* Turn on/off test mode,and config max 4 sets of test exposure param*/
-
+	AE_SET_PARAM_SCENE_SETTING,               /* Set Scene UIEVcomp,Pcurve node,exposure priority,manual exposure param*/
 	AE_SET_PARAM_MAX
 };
 
@@ -695,6 +694,21 @@ struct ae_timegain_sync_test_t {
 #pragma pack(pop)  /* restore old alignment setting from stack */
 
 /*
+ *@typedef ae_sceneparam_setting_t
+ *@brief scene relation param
+ */
+#pragma pack(push) /* push current alignment setting to stack */
+#pragma pack(4)    /* new alignment setting */
+struct ae_sceneparam_setting_t {
+	int32   scene_ui_evcomp;
+	uint8   pcurve_idx;
+	uint8   exposure_priority;
+	uint32  manual_exptime;
+	uint32  manual_gain;
+};
+#pragma pack(pop)  /* restore old alignment setting from stack */
+
+/*
  *@typedef ae_set_param_content_t
  *@brief parameter body of set param
  */
@@ -787,7 +801,9 @@ struct ae_set_param_content_t {
 	struct ae_hw_config_t ae_hw_config;  /* reserved,  sensor info, hw3a info */
 	struct ae_engineer_mode_param_t ae_engineer_mode_param;
 	struct ae_timegain_sync_test_t ae_sensorctrl_test_param;
+	struct ae_sceneparam_setting_t ae_scene_param;
 
+	uint8  ae_manual_wtb_enable_flg;    /*True:Set weight table by AP,False:use tuning bin table*/
 };
 #pragma pack(pop)  /* restore old alignment setting from stack  */
 

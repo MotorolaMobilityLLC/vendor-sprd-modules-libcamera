@@ -3,8 +3,8 @@
  *
  *  Created on: 2015/12/07
  *      Author: HanTseng
- *  Latest update: 2016/5/3
- *      Reviser: Allenwang
+ *  Latest update: 2017/1/16
+ *      Reviser: HanTseng
  *  Comments:
  *       This c file is mainly used for AP framework to:
  *       1. Query HW3A config setting
@@ -19,6 +19,7 @@
 #include "alwrapper_3a.h"
 #include "alwrapper_awb.h"  /* include wrapper AWB define */
 #include "alwrapper_awb_errcode.h"
+#include "alwrapper_scene_setting.h"
 
 /*
  * API name: al3awrapper_dispatchhw3a_awbstats
@@ -333,6 +334,39 @@ uint32 al3awrapperawb_updateispconfig_awb(uint8 a_ucSensor, struct alhw3a_awb_cf
 
 
 /*
+ * API name: al3awrapperawb_setscenesetting
+ * This API is used for setting scene event file to alAWBLib
+ * param setting_info[in]: scene info addr
+ * param aAWBLibCallback[in]: callback lookup table, must passing correct table into this API for setting file
+ * return: error code
+ */
+uint32 al3awrapperawb_setscenesetting(void *setting_info, struct allib_awb_runtime_obj_t *aawblibcallback)
+{
+	uint32 ret = ERR_WPR_AWB_SUCCESS;
+	struct allib_awb_set_parameter_t localparam;
+	struct scene_setting_info *info;
+	struct alwrapper_scene_setting *setting;
+	if (setting_info == NULL || aawblibcallback->awb == NULL)
+		return ERR_WRP_AWB_INVALID_INPUT_PARAM;
+
+	info = (struct scene_setting_info*)setting_info;
+
+	if (info->uw_mode == Auto) {
+		localparam.type = alawb_set_param_awb_mode_setting;
+		localparam.para.awb_mode_setting.wbmode_type = AL3A_WB_MODE_AUTO;
+		ret = aawblibcallback->set_param(&localparam, aawblibcallback->awb);
+	}
+	if (info->uw_mode != Auto && info->puc_addr != NULL) {
+		setting = (struct alwrapper_scene_setting*)info->puc_addr;
+		localparam.type = alawb_set_param_awb_mode_setting;
+		localparam.para.awb_mode_setting.wbmode_type = (enum awb_mode_type_t)setting->d_awb_mode;
+		ret = aawblibcallback->set_param(&localparam, aawblibcallback->awb);
+	}
+	return ret;
+}
+
+
+/*
  * API name: al3awrapperawb_setotpcalibration
  * This API is used for setting stylish file to alAWBLib
  * param calib_data[in]: calibration data, scale 1000
@@ -360,7 +394,7 @@ uint32 al3awrapperawb_setotpcalibration(struct calibration_data_t *calib_data , 
 /*
  * API name: al3awrapperawb_settuningfile
  * This API is used for setting Tuning file to alAWBLib
- * param setting_file[in]: file address pointer to setting file [TBD, need confirm with 3A data file format
+ * param setting_file[in]: file address pointer to setting file
  * param aAWBLibCallback[in]: callback lookup table, must passing correct table into this API for setting file
  * return: error code
  */

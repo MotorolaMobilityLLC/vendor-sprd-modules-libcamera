@@ -238,6 +238,7 @@ struct aealtek_cxt {
 	struct aealtek_exposure_param pre_write_exp_data_slv;
 	struct aealtek_tuning_info tuning_info;
 	struct aealtek_stat_info stat_info[10];
+	void *tuning_param[ISP_INDEX_MAX];
 	cmr_u32 stat_info_num;
 	cmr_u32 is_3dcalibration;/**add for 3d calibration*/
 	int flash_state_machine;
@@ -707,23 +708,23 @@ static void aealtek_weight_ui2lib(enum ae_ctrl_measure_lum_mode from, enum ae_me
 		break;
 	case AE_CTRL_MEASURE_LUM_CENTER:
 		//lib_metering = AE_METERING_CENTERWT;
-		lib_metering = AE_METERING_INTELLIWT;
+		lib_metering = AE_METERING_CENTERWT;
 		break;
 	case AE_CTRL_MEASURE_LUM_SPOT:
 		//lib_metering = AE_METERING_SPOTWT;
-		lib_metering = AE_METERING_INTELLIWT;
+		lib_metering = AE_METERING_CENTERWT;
 		break;
 	case AE_CTRL_MEASURE_LUM_INTELLIWT:
-		lib_metering = AE_METERING_INTELLIWT;
+		lib_metering = AE_METERING_CENTERWT;
 		break;
 	case AE_CTRL_MEASURE_LUM_TOUCH:
-		lib_metering = AE_METERING_INTELLIWT;
+		lib_metering = AE_METERING_CENTERWT;
 		break;
 	case AE_CTRL_MEASURE_LUM_USERDEF:
 		lib_metering = AE_METERING_USERDEF_WT;
 		break;
 	default:
-		lib_metering = AE_METERING_INTELLIWT;
+		lib_metering = AE_METERING_CENTERWT;
 		ISP_LOGW("not support weight mode %d", from);
 		break;
 	}
@@ -999,6 +1000,7 @@ static cmr_int aealtek_init(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_init_in 
 	UINT32 identityID = 0;
 	struct ae_set_parameter_init_t init_setting;
 	struct seq_init_in seq_in;
+	cmr_u32 i = 0;
 
 
 	if (!cxt_ptr || !in_ptr || !out_ptr) {
@@ -1053,7 +1055,11 @@ static cmr_int aealtek_init(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_init_in 
 	if (ret)
 		goto exit;
 
-	ret = aealtek_set_tuning_param(cxt_ptr, in_ptr->tuning_param);
+	for (i = 0; i < ISP_INDEX_MAX; i++) {
+		cxt_ptr->tuning_param[i] = in_ptr->tuning_param[i];
+		ISP_LOGI("ae_addr=%p", cxt_ptr->tuning_param[i]);
+	}
+	ret = aealtek_set_tuning_param(cxt_ptr, in_ptr->tuning_param[0]);
 	if (ret)
 		ISP_LOGW("ae set tuning bin failed");
 
@@ -1614,6 +1620,22 @@ exit:
 	return ret;
 }
 
+static cmr_int aealtek_set_tuning_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+	cmr_u32 idx_num;
+
+	if (!cxt_ptr || !in_ptr) {
+		ISP_LOGE("param is NULL error!");
+		goto exit;
+	}
+	idx_num = in_ptr->idx_num;
+	ISP_LOGI("idx_num=%d ae_addr %p", idx_num, cxt_ptr->tuning_param[idx_num]);
+	aealtek_set_tuning_param(cxt_ptr, cxt_ptr->tuning_param[idx_num]);
+exit:
+	return  ISP_SUCCESS;
+}
+
 static cmr_int aealtek_set_engineer_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param_in *in_ptr, struct ae_ctrl_param_out *out_ptr)
 {
 	cmr_int ret = ISP_ERROR;
@@ -1782,12 +1804,11 @@ static cmr_int aealtek_set_scene_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 		ISP_LOGE("param is NULL error!");
 		goto exit;
 	}
-	cxt_ptr->nxt_status.ui_param.iso = in_ptr->scene.scene_mode;
-
+	cxt_ptr->nxt_status.ui_param.scene= in_ptr->scene.scene_mode;
 	obj_ptr = &cxt_ptr->al_obj;
 	output_param_ptr = &cxt_ptr->lib_data.output_data;
+	#if 0
 	param_ct_ptr = &in_param.set_param;
-
 	switch (in_ptr->scene.scene_mode) {
 	case AE_CTRL_SCENE_NORMAL:
 		lib_scene_mode = SCENE_MODE_AUTO;
@@ -1814,6 +1835,11 @@ static cmr_int aealtek_set_scene_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 	if (obj_ptr && obj_ptr->set_param)
 		lib_ret = obj_ptr->set_param(&in_param, output_param_ptr, obj_ptr->ae);
 	if (lib_ret)
+		goto exit;
+	#endif
+	lib_ret = al3awrapperae_setscenesetting(&in_ptr->scene.scene_info, obj_ptr,output_param_ptr, obj_ptr->ae);
+	ISP_LOGI("scene %ld lib_scene_mode %d scene addr %p lib_ret=%ld",in_ptr->scene.scene_mode,lib_scene_mode,in_ptr->scene.scene_info.puc_addr, lib_ret);
+	if(lib_ret)
 		goto exit;
 	return ISP_SUCCESS;
 exit:
@@ -2826,13 +2852,6 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 	if (!cxt_ptr || !in_ptr || !out_ptr) {
 		ISP_LOGE("param %p %p %p is NULL error!", cxt_ptr, in_ptr, out_ptr);
 		goto exit;
-	}
-
-	ISP_LOGI("ae second tuning_param:%p", in_ptr->work_param.tuning_param);
-	if (in_ptr->work_param.tuning_param) {
-		ret = aealtek_set_tuning_param(cxt_ptr, in_ptr->work_param.tuning_param);
-		if (ret)
-			ISP_LOGW("ae set second tuning bin failed");
 	}
 
 	ISP_LOGI("frame size:%dx%d, line_time=%d", in_ptr->work_param.resolution.frame_size.w,
@@ -4921,6 +4940,9 @@ static cmr_int ae_altek_adpt_ioctrl(cmr_handle handle, cmr_int cmd, void *in, vo
 		break;
 	case AE_CTRL_SET_ENGINEER_MODE:
 		ret = aealtek_set_engineer_mode(cxt_ptr, in_ptr, out_ptr);
+		break;
+	case AE_CTRL_SET_TUNING_MODE:
+		ret = aealtek_set_tuning_mode(cxt_ptr, in_ptr);
 		break;
 	default:
 		ISP_LOGE("cmd %ld is not defined!", cmd);

@@ -68,6 +68,7 @@
 /* for wrapper */
 #define HW3A_MAX_FRMWK_AE_BLOCKS                AL_MAX_AE_STATS_NUM
 #define HW3A_MAX_FRMWK_AF_BLOCKS                (9)
+//#define IIR_PARAM_ENABLE
 
 /******************************************************************************
  * Static declarations
@@ -302,6 +303,60 @@ struct alhw3a_af_statisticsdldregion_t {
 };
 #pragma pack(pop)  /* restore old alignment setting from stack */
 
+/*
+ * @typedef alhw3a_af_lpf_t
+ * @brief AF LPF config info
+ */
+#pragma pack(push) /* push current alignment setting to stack */
+#pragma pack(4)    /* new alignment setting */
+struct alhw3a_af_lpf_t {
+	uint32 udb0;
+	uint32 udb1;
+	uint32 udb2;
+	uint32 udb3;
+	uint32 udb4;
+	uint32 udb5;
+	uint32 udb6;
+	uint32 udshift;
+};
+#pragma pack(pop)  /* restore old alignment setting from stack */
+
+/*
+ * @typedef alhw3a_af_iir_t
+ * @brief AF IIR config info
+ */
+#pragma pack(push) /* push current alignment setting to stack */
+#pragma pack(4)    /* new alignment setting */
+struct alhw3a_af_iir_t {
+	uint8   binitbyuser;
+	uint32 udp;
+	uint32 udq;
+	uint32 udr;
+	uint32 uds;
+	uint32 udt;
+	uint32 udabsshift;
+	uint32 udth;
+	uint32 udinita;
+	uint32 udinitb;
+};
+#pragma pack(pop)  /* restore old alignment setting from stack */
+
+/*
+ * @typedef alhw3a_af_pseudoy_t
+ * @brief AF PseudoY config info
+ */
+#pragma pack(push) /* push current alignment setting to stack */
+#pragma pack(4)    /* new alignment setting */
+struct alhw3a_af_pseudoy_t {
+	uint32 udwr;
+	uint32 udwgr;
+	uint32 udwgb;
+	uint32 udwb;
+	uint32 udshift;
+	uint32 udoffset;
+	uint32 udgain;
+};
+#pragma pack(pop)  /* restore old alignment setting from stack */
 
 /*
  * @typedef alhw3a_af_cfginfo_t
@@ -327,7 +382,11 @@ struct alhw3a_af_cfginfo_t {
 	enum alhw3a_mid_mode nfiltermode;
 	uint8 ucfilterid;
 	uint16 uwlinecnt;
-
+#ifdef IIR_PARAM_ENABLE
+	struct alhw3a_af_lpf_t tlpf;
+	struct alhw3a_af_iir_t atiir[2];
+	struct alhw3a_af_pseudoy_t tpseudoy;
+#endif
 };
 #pragma pack(pop)  /* restore old alignment setting from stack */
 
@@ -748,6 +807,7 @@ struct al3awrapper_stats_awb_t {
 	uint8   ucvalidblocks;
 	uint8   ucvalidbanks;
 	uint8   ucstatsdepth;		/* 8: 8 bits, 10: 10 bits */
+
 	uint8   ucstats_format;		/* 0: No RGB output, 1: 10-bit RGB */
 
 	uint32 statsr[AL_MAX_AWB_STATS_NUM];

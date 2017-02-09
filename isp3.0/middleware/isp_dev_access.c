@@ -49,6 +49,7 @@ struct isp_dev_access_context {
 	struct isp_dev_init_in input_param;
 	struct iommu_mem fw_buffer;
 	cmr_u8 pdaf_supported;
+	cmr_u32 idx;
 };
 
 /*************************************INTERNAK FUNCTION ***************************************/
@@ -64,6 +65,7 @@ cmr_int isp_dev_access_init(struct isp_dev_init_in *input_ptr, cmr_handle *isp_d
 	struct isp_init_mem_param              load_input;
 	cmr_int                                fw_size = 0;
 	cmr_u32                                fw_buf_num = 1;
+	cmr_int                                i = 0;
 
 	if (!input_ptr || !isp_dev_handle) {
 		ISP_LOGE("input is NULL, 0x%lx", (cmr_int)input_ptr);
@@ -78,7 +80,7 @@ cmr_int isp_dev_access_init(struct isp_dev_init_in *input_ptr, cmr_handle *isp_d
 		ret = ISP_ALLOC_ERROR;
 		goto exit;
 	}
-	ISP_LOGV("input_ptr->camera_id %d\n", input_ptr->camera_id);
+	ISP_LOGV("input_ptr->camera_id %d", input_ptr->camera_id);
 	cmr_bzero(cxt, sizeof(*cxt));
 	cxt->camera_id = input_ptr->camera_id;
 	cxt->caller_handle = input_ptr->caller_handle;
@@ -97,7 +99,7 @@ cmr_int isp_dev_access_init(struct isp_dev_init_in *input_ptr, cmr_handle *isp_d
 	input.cbc_bin_addr = input_ptr->pdaf_cbcp_bin_addr;
 	input.cbc_bin_size = input_ptr->pdaf_cbc_bin_size;
 	input.pdaf_supported = input_ptr->pdaf_supported;
-	ISP_LOGI("cbc addr is %p ,cbc size is 0x%x", (cmr_u32 *)input.cbc_bin_addr, input.cbc_bin_size);
+	ISP_LOGI("cbc addr is %p, cbc size is 0x%x", (cmr_u32 *)input.cbc_bin_addr, input.cbc_bin_size);
 	memcpy(&cxt->input_param, input_ptr, sizeof(struct isp_dev_init_in));
 
 	ret = isp_dev_init(&input, &cxt->isp_driver_handle);
@@ -126,6 +128,35 @@ exit:
 	return ret;
 }
 
+cmr_int isp_dev_access_set_tuning_bin(cmr_handle isp_dev_handle, union isp_dev_ctrl_cmd_in *input_ptr)
+{
+	cmr_int                                ret = ISP_SUCCESS;
+	struct isp_dev_access_context          *cxt = NULL;
+	struct isp_dev_init_info               input;
+	cmr_int                                fw_size = 0;
+	cmr_u32                                fw_buf_num = 1;
+	cmr_u32                                kaddr[2];
+	cmr_u64                                kaddr_temp;
+	cmr_s32                                fds[2];
+
+	ISP_LOGI("E");
+	if (!input_ptr || !isp_dev_handle) {
+		ISP_LOGI("input is NULL, 0x%lx", (cmr_int)input_ptr);
+		ret = ISP_PARAM_NULL;
+		goto exit;
+	}
+
+	cxt = isp_dev_handle;
+	cxt->idx = input_ptr->value;
+	ISP_LOGI("idx %d value %d", cxt->idx,input_ptr->value);
+	ret = isp_dev_sel_iq_param_index(cxt->isp_driver_handle,cxt->idx);
+	if (0 != ret) {
+		ISP_LOGE("failed to load binary %ld", ret);
+		goto exit;
+	}
+exit:
+	return ret;
+}
 cmr_int isp_dev_access_deinit(cmr_handle isp_dev_handle)
 {
 	ATRACE_BEGIN(__func__);
@@ -426,6 +457,9 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, enum isp_dev_access_ctrl
 		break;
 	case ISP_DEV_ACCESS_SET_BRIGHTNESS:
 		ret = isp_dev_access_set_brightness(isp_dev_handle, input_ptr);
+		break;
+	case ISP_DEV_ACCESS_SET_TUNING_BIN:
+		isp_dev_access_set_tuning_bin(isp_dev_handle, input_ptr);
 		break;
 	case ISP_DEV_ACCESS_SET_SATURATION:
 		if (!input_ptr) {
@@ -731,6 +765,7 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 		tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutWidth = 0;
 		tSecnarioInfo.tBayerSCLOutInfo.uwBayerSCLOutHeight = 0;
 	}
+	tSecnarioInfo.tIqParamIdxInfo.iq_param_idx_still = 0;
 
 	if (cxt->pdaf_supported)
 		tSecnarioInfo.tSensorInfo.cbc_enabled = 1;

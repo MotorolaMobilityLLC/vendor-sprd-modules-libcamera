@@ -16,10 +16,11 @@
 #define ALAF_DEBUG_INFO_SIZE (7168)
 #define ALAF_MAX_STATS_ROI_NUM (5)
 #define MAX_AF_DEBUG_DATA_SIZE (7168)
-#define MAX_STATS_COLUMN_NUM (9)
+#define MAX_STATS_COLUMN_NUM (16)
 #define MAX_STATS_ROW_NUM (9)
 #define ALAF_MAX_STATS_NUM (MAX_STATS_COLUMN_NUM*MAX_STATS_ROW_NUM)
 #define ALAF_MAX_ZONE (9)
+//#define IIR_PARAM_ENABLE
 
 /*
  * allib_af_version_t
@@ -60,8 +61,8 @@ struct allib_af_time_stamp_t {
 #pragma pack(push, 4)
 struct allib_af_input_move_lens_cb_t {
 	uint8 uc_device_id;
-	void* p_handle;
-	uint8 (*move_lens_cb)(void* p_handle, int16 w_vcm_dac, uint8 uc_device_id);
+	void *p_handle;
+	uint8 (*move_lens_cb)(void *p_handle, int16 w_vcm_dac, uint8 uc_device_id);
 };
 #pragma pack(pop)
 
@@ -165,7 +166,7 @@ struct allib_af_input_from_calib_t {
 	int16 mech_top;
 	int16 mech_bottom;
 	uint8 lens_move_stable_time;
-	void* extend_calib_ptr;
+	void *extend_calib_ptr;
 	int32 extend_calib_data_size;
 };
 #pragma pack(pop)
@@ -209,6 +210,11 @@ struct allib_af_input_initial_set_t {
 };
 #pragma pack(pop)
 
+#pragma pack(push, 4)
+struct allib_af_input_update_bin_t {
+	void*	p_bin_data;
+};
+#pragma pack(pop)
 /*
  * allib_af_hybrid_type
  *
@@ -253,20 +259,18 @@ struct allib_af_get_data_info_t {
 	uint32	size;
 };
 #pragma pack(pop)
-//diff >>>
 /*
  * allib_af_get_pd_info_t
  * pd_range:	pd confidence.
  *
  */
-#pragma pack(push, 4)/*new*/
+#pragma pack(push, 4)
 struct allib_af_get_pd_info_t {
 	uint8	update_pd_info;
 	uint32	pd_range;
 
 };
 #pragma pack(pop)
-//diff <<<
 /*
  * allib_af_input_focus_mode_type
  *
@@ -462,7 +466,7 @@ struct allib_af_input_aec_info_t {
 #pragma pack(push, 4)
 struct allib_af_input_awb_info_t {
 	uint8 awb_ready;
-	void* p_awb_report;
+	void *p_awb_report;
 };
 #pragma pack(pop)
 
@@ -516,8 +520,6 @@ struct allib_af_input_gravity_vector_t {
  * time_stamp:	time when hw3a compute stats. unit: ms
  * fv_hor[ALAF_MAX_STATS_NUM]:		focus value horizontal;
  * fv_ver[ALAF_MAX_STATS_NUM]:		focus value vertical;
- * filter_value1[ALAF_MAX_STATS_NUM]:	IIR filter type 1;
- * filter_value2[ALAF_MAX_STATS_NUM]:	IIR filter type 2;
  * y_factor[ALAF_MAX_STATS_NUM]:		Arrays with the sums for the intensity.
  * cnt_hor[ALAF_MAX_STATS_NUM]:		Counts for the horizontal focus value above the threshold
  * cnt_ver[ALAF_MAX_STATS_NUM]:		Counts for the vertical focus value above the threshold
@@ -576,9 +578,9 @@ struct allib_af_input_altune_t {
 	uint8 cbaf_tuning_enable;
 	uint8 scdet_tuning_enable;
 	uint8 haf_tuning_enable;
-	void* p_cbaf_tuning_ptr;
-	void* p_scdet_tuning_ptr;
-	void* p_haf_tuning_ptr;
+	void *p_cbaf_tuning_ptr;
+	void *p_scdet_tuning_ptr;
+	void *p_haf_tuning_ptr;
 };
 #pragma pack(pop)
 
@@ -646,7 +648,7 @@ struct allib_af_input_pd_info_t {
 	uint32 frame_id;
 	uint8 enable;
 	struct allib_af_time_stamp_t time_stamp;
-	void* extend_data_ptr;
+	void *extend_data_ptr;
 	uint32 extend_data_size;
 };
 #pragma pack(pop)
@@ -680,7 +682,7 @@ struct allib_af_input_pd_info_t {
  * alAFLIB_SET_PARAM_RESET_CAF,		// 23 //         To reset CAF
  * alAFLIB_SET_PARAM_HYBIRD_AF_ENABLE,	// 24 //         Enable Hybrid AF
  * alAFLIB_SET_PARAM_SET_IMGBUF,		// 25 //         Set Image Buffer into alAFLib
- * alAFLIB_SET_PARAM_SET_DEFAULT_SETTING,	// 26 //        Set alAFLib to default setting. The current setting will be remove, and no longer to recover until restart camera and load such setting file.
+ * alAFLIB_SET_PARAM_UPDATE_BIN,	// 26 //        Set alAFLib to default setting. The current setting will be remove, and no longer to recover until restart camera and load such setting file.
  * alAFLIB_SET_PARAM_SPECIAL_EVENT,	// 27 //        To inform alAFLib if event change status. Event Type please reference to alAFLib_input_special_event_type
  * alAFLIB_SET_PARAM_UPDATE_PD_INFO      // 28 //        Update PD Info.
  * alAFLIB_SET_PARAM_MAX			// 29 //	0xff
@@ -713,7 +715,7 @@ enum allib_af_set_param_type {
 	alAFLIB_SET_PARAM_RESET_CAF,
 	alAFLIB_SET_PARAM_HYBIRD_AF_ENABLE,
 	alAFLIB_SET_PARAM_SET_IMGBUF,
-	alAFLIB_SET_PARAM_SET_DEFAULT_SETTING,
+	alAFLIB_SET_PARAM_UPDATE_BIN,
 	alAFLIB_SET_PARAM_SPECIAL_EVENT,
 	alAFLIB_SET_PARAM_UPDATE_PD_INFO,
 	alAFLIB_SET_PARAM_MAX
@@ -777,6 +779,7 @@ struct allib_af_input_set_param_t {
 		struct allib_af_input_enable_hybrid_t   haf_info;
 		struct allib_af_input_image_buf_t	img_buf;
 		struct allib_af_input_pd_info_t pd_info;
+		struct allib_af_input_update_bin_t update_bin;
 	} u_set_data;
 };
 #pragma pack(pop)
@@ -801,9 +804,7 @@ enum allib_af_get_param_type {
 	alAFLIB_GET_PARAM_DEBUG_INFO,
 	alAFLIB_GET_PARAM_EXIF_INFO,
 	alAFLIB_GET_PARAM_NOTHING,
-//diff >>>
-	alAFLIB_GET_PARAM_PD_INFO,/*new*/
-//diff <<<
+	alAFLIB_GET_PARAM_PD_INFO,
 	alAFLIB_GET_PARAM_MAX
 };
 #pragma pack(pop)
@@ -829,9 +830,7 @@ struct allib_af_input_get_param_t {
 		uint16				uw_default_lens_pos;
 		struct allib_af_get_data_info_t debug_data_info;
 		struct allib_af_get_data_info_t exif_data_info;
-//diff >>>
-		struct allib_af_get_pd_info_t pd_data_info;/*new*/
-//diff <<<
+		struct allib_af_get_pd_info_t pd_data_info;
 	} u_get_data;
 };
 #pragma pack(pop)
@@ -862,10 +861,8 @@ enum allib_af_status_type {
 	alAFLib_STATUS_AF_ABORT,
 	alAFLib_STATUS_FORCE_ABORT,
 	alAFLib_STATUS_FOCUSING,
-//diff >>>
-	alAFLib_STATUS_PD_SEARCH_START,/*new*/
-	alAFLib_STATUS_PD_SEARCH_DONE/*new*/
-//diff <<<
+	alAFLib_STATUS_PD_SEARCH_START,
+	alAFLib_STATUS_PD_SEARCH_DONE
 };
 #pragma pack(pop)
 
@@ -896,6 +893,61 @@ enum allib_af_med_filter_mode {
 	DISABLE,
 };
 #pragma pack(pop)
+
+/*
+ * @typedef allib_af_lpf_t
+ * @brief AF LPF config info
+ */
+#pragma pack(push) /* push current alignment setting to stack */
+#pragma pack(4)    /* new alignment setting */
+struct allib_af_lpf_t {
+	uint32 udb0;
+	uint32 udb1;
+	uint32 udb2;
+	uint32 udb3;
+	uint32 udb4;
+	uint32 udb5;
+	uint32 udb6;
+	uint32 udshift;
+};
+#pragma pack(pop)  /* restore old alignment setting from stack */
+
+/*
+ * @typedef allib_af_iir_t
+ * @brief AF IIR config info
+ */
+#pragma pack(push) /* push current alignment setting to stack */
+#pragma pack(4)    /* new alignment setting */
+struct allib_af_iir_t {
+	uint8   binitbyuser;
+	uint32 udp;
+	uint32 udq;
+	uint32 udr;
+	uint32 uds;
+	uint32 udt;
+	uint32 udabsshift;
+	uint32 udth;
+	uint32 udinita;
+	uint32 udinitb;
+};
+#pragma pack(pop)  /* restore old alignment setting from stack */
+
+/*
+ * @typedef allib_af_pseudoy_t
+ * @brief AF PseudoY config info
+ */
+#pragma pack(push) /* push current alignment setting to stack */
+#pragma pack(4)    /* new alignment setting */
+struct allib_af_pseudoy_t {
+	uint32 udwr;
+	uint32 udwgr;
+	uint32 udwgb;
+	uint32 udwb;
+	uint32 udshift;
+	uint32 udoffset;
+	uint32 udgain;
+};
+#pragma pack(pop)  /* restore old alignment setting from stack */
 
 /*
  * allib_af_out_stats_config_t
@@ -944,6 +996,11 @@ struct allib_af_out_stats_config_t {
 	enum allib_af_med_filter_mode n_filter_mode;
 	uint8 uc_filter_id;
 	uint16 uw_line_cnt;
+#ifdef IIR_PARAM_ENABLE
+	struct allib_af_lpf_t t_lpf;
+	struct allib_af_iir_t at_iir[2];
+	struct allib_af_pseudoy_t t_pseudoy;
+#endif
 };
 #pragma pack(pop)
 
@@ -1031,9 +1088,9 @@ struct allib_af_output_report_t {
 	struct allib_af_out_status_t focus_status;
 	struct allib_af_out_stats_config_t stats_config;
 	struct allib_af_out_pd_config_t pd_config;
-	void* p_al_af_debug_data;
+	void *p_al_af_debug_data;
 	uint32 al_af_debug_data_size;
-	void*  p_al_af_exif_data;
+	void *p_al_af_exif_data;
 	uint32 al_af_exif_data_size;
 	uint32 wrap_result;
 	uint16 param_result;
@@ -1043,12 +1100,12 @@ struct allib_af_output_report_t {
 /* alAFLib API */
 
 /* callback functions */
-typedef uint8 (* allib_af_set_param_func)(struct allib_af_input_set_param_t *param,void* allib_af_out_obj, void* allib_af_runtime_obj);
-typedef uint8 (* allib_af_get_param_func)(struct allib_af_input_get_param_t *param,void* allib_af_out_obj, void* allib_af_runtime_obj);
-typedef uint8 (* allib_af_process_func)(void* allib_af_hw_stats, void* allib_af_out_obj, void* allib_af_runtime_obj);
-typedef void* (* allib_af_intial_func)(void* allib_af_out_obj);
-typedef uint8 (* allib_af_deinit_func)(void* allib_af_runtime_obj, void* allib_af_out_obj);
-typedef void (* allib_af_callback_func)(struct allib_af_output_report_t *output, void* phandle);
+typedef uint8 (*allib_af_set_param_func)(struct allib_af_input_set_param_t *param, void *allib_af_out_obj, void *allib_af_runtime_obj);
+typedef uint8 (*allib_af_get_param_func)(struct allib_af_input_get_param_t *param, void *allib_af_out_obj, void *allib_af_runtime_obj);
+typedef uint8 (*allib_af_process_func)(void *allib_af_hw_stats, void *allib_af_out_obj, void *allib_af_runtime_obj);
+typedef void* (*allib_af_intial_func)(void *allib_af_out_obj);
+typedef uint8 (*allib_af_deinit_func)(void *allib_af_runtime_obj, void *allib_af_out_obj);
+typedef void (*allib_af_callback_func)(struct allib_af_output_report_t *output, void *phandle);
 
 /*
  * allib_af_ops_t

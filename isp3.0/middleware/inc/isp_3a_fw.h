@@ -31,11 +31,12 @@ struct isp_3a_fw_init_in {
 	cmr_u16 is_refocus;
 	cmr_handle dev_access_handle;
 	cmr_u32 camera_id;
+	cmr_u32 idx_num;
 	proc_callback isp_mw_callback;
 	void *setting_param_ptr;
 	void *setting_param_ptr_slv;
-	struct isp_bin_info bin_info;
-	struct isp_bin_info bin_info_slv;
+	struct isp_bin_info bin_info[ISP_INDEX_MAX];
+	struct isp_bin_info bin_info_slv[ISP_INDEX_MAX];
 	struct isp_size size;
 	struct isp_data_info calibration_param;
 	struct isp_lib_config af_config;
@@ -100,13 +101,14 @@ cmr_int isp_3a_fw_deinit(cmr_handle isp_3a_handle);
 cmr_int isp_3a_fw_capability(cmr_handle isp_3a_handle, enum isp_capbility_cmd cmd, void *param_ptr);
 cmr_int isp_3a_fw_ioctl(cmr_handle isp_3a_handle, enum isp_ctrl_cmd cmd, void *param_ptr);
 cmr_int isp_3a_fw_start(cmr_handle isp_3a_handle, struct isp_video_start *param_ptr);
+cmr_int isp_3a_fw_set_tuning_mode(cmr_handle isp_3a_handle, struct isp_video_start *input_ptr);
 cmr_int isp_3a_fw_stop(cmr_handle isp_3a_handle);
 cmr_int isp_3a_fw_receive_data(cmr_handle isp_3a_handle, cmr_int evt, void *data);
 cmr_int isp_3a_fw_get_cfg(cmr_handle isp_3a_handle, struct isp_3a_cfg_param *data);
 cmr_int isp_3a_fw_get_iso_speed(cmr_handle isp_3a_handle, cmr_u32 *hw_iso_speed);
 cmr_int isp_3a_fw_get_dldseq(cmr_handle isp_3a_handle, struct isp_3a_get_dld_in *input, struct isp_3a_dld_sequence *data);
 cmr_int isp_3a_fw_get_awb_gain(cmr_handle isp_3a_handle, struct isp_awb_gain *gain, struct isp_awb_gain *gain_balanced);
-
+cmr_int isp_3a_fw_set_tuning_mode(cmr_handle isp_3a_handle, struct isp_video_start *param_ptr);
 /**---------------------------------------------------------------------------*/
 
 #endif

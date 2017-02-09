@@ -63,6 +63,7 @@
 #define ISP3A_PROC_EVT_SENSOR_SOF                                    (ISP3A_EVT_BASE+27)
 #define ISP3A_PROC_EVT_START                                         (ISP3A_EVT_BASE+28)
 #define ISP3A_PROC_EVT_STOP                                          (ISP3A_EVT_BASE+29)
+#define ISP3A_PROC_EVT_SET_TUNING_MODE                               (ISP3A_EVT_BASE+30)
 
 #define ISP3A_RECEIVER_EVT_INIT                                      (ISP3A_EVT_BASE+40)
 #define ISP3A_RECEIVER_EVT_DEINIT                                    (ISP3A_EVT_BASE+41)
@@ -180,8 +181,9 @@ struct isp3a_fw_debug_context {
 };
 
 struct isp3a_fw_bin_context {
-	struct isp_bin_info bin_info;
+	struct isp_bin_info bin_info[ISP_INDEX_MAX];
 	cmr_u32 is_write_to_debug_buf;
+	cmr_u16 idx_num;
 };
 
 struct isp3a_fw_context {
@@ -258,6 +260,7 @@ static cmr_int isp3a_afl_thread_proc(struct cmr_msg *message, void *p_data);
 static cmr_int isp3a_destroy_afl_thread(cmr_handle isp_3a_handle);
 static cmr_int isp3a_create_thread(cmr_handle isp_3a_handle);
 static cmr_int isp3a_destroy_thread(cmr_handle isp_3a_handle);
+static cmr_int isp3a_set_tuning_mode(cmr_handle isp_3a_handle, void *param_ptr);
 static isp3a_ioctrl_fun isp3a_get_ioctrl_fun(enum isp_ctrl_cmd cmd);
 static cmr_int isp3a_ioctrl(cmr_handle isp_3a_handle, enum isp_ctrl_cmd cmd, void *param_ptr);
 static cmr_int isp3a_set_awb_mode(cmr_handle isp_3a_handle, void *param_ptr);
@@ -997,17 +1000,22 @@ cmr_int isp3a_set_cfg_otp_info(cmr_handle isp_3a_handle)
 			memcpy(&iq_info.lsc[0], cxt->dual_otp->slave_lsc_info.lsc_data_addr, size);
 			iq_info.lsc_length = size;
 		}
-	} else if (cxt->bin_cxt.bin_info.otp_data_addr) {
+	} else if (cxt->bin_cxt.bin_info[0].otp_data_addr) {
 		ISP_LOGI("set bin otp data");
 		iq_info.cali_status = 0;
-		iq_info.iso = cxt->bin_cxt.bin_info.otp_data_addr->iso;
-		iq_info.r_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_r;
-		iq_info.g_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_g;
-		iq_info.b_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_b;
+		iq_info.iso = cxt->bin_cxt.bin_info[0].otp_data_addr->iso;
+		iq_info.r_gain = cxt->bin_cxt.bin_info[0].otp_data_addr->gain_r;
+		iq_info.g_gain = cxt->bin_cxt.bin_info[0].otp_data_addr->gain_g;
+		iq_info.b_gain = cxt->bin_cxt.bin_info[0].otp_data_addr->gain_b;
 		iq_info.lsc_length = 0;
 	}
 	ISP_LOGI("set otp data iso r g b %d, %d, %d, %d, lsc size %d",
 			iq_info.iso, iq_info.r_gain, iq_info.g_gain, iq_info.b_gain, iq_info.lsc_length);
+
+	if (0 == iq_info.r_gain || 0 == iq_info.g_gain || 0 == iq_info.b_gain) {
+		ISP_LOGE("failed to otp data is wrong");
+		return -ISP_PARAM_ERROR;
+	}
 	ret = isp_dev_access_set_cfg_otp_info(cxt->dev_access_handle, &iq_info);
 	if (ret)
 		ISP_LOGE("failed to set cfg otp info");
@@ -1035,6 +1043,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 #endif
 	float                                       libVersion;
 	char                                        value[PROPERTY_VALUE_MAX];
+	cmr_int                                     i = 0;
 
 	ISP_CHECK_HANDLE_VALID(isp_3a_handle);
 
@@ -1043,6 +1052,8 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 	cxt->af_cxt.af_support = input_ptr->ex_info.af_supported;
 	cxt->pdaf_cxt.pdaf_support = input_ptr->ex_info.pdaf_supported;
 
+	//default 3a tuning mode ;
+	cxt->bin_cxt.idx_num = 0;
 	property_get("persist.sys.camera.pdaf.off", (char *)value, "0");
 	if (0 == cxt->af_cxt.af_support || atoi(value) || cxt->is_refocus) {
 		cxt->pdaf_cxt.pdaf_support = 0;
@@ -1104,9 +1115,12 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 	af_input.af_ctrl_cb_ops.cfg_pdaf_enable = isp3a_set_pdaf_enable;
 	af_input.af_ctrl_cb_ops.cfg_pdaf_config = isp3a_set_pdaf_config;
 	af_input.af_ctrl_cb_ops.get_system_time = isp3a_get_dev_time;
-	af_input.tuning_info.tuning_file = input_ptr->bin_info.af_addr;
-	af_input.caf_tuning_info.tuning_file = input_ptr->bin_info.isp_caf_addr;
-	af_input.caf_tuning_info.size = input_ptr->bin_info.isp_caf_size;
+	for (i = 0; i < ISP_INDEX_MAX; i++) {
+		af_input.tuning_info[i].tuning_file = input_ptr->bin_info[i].af_addr;
+		ISP_LOGI("af %p",af_input.tuning_info[i].tuning_file);
+	}
+	af_input.caf_tuning_info.tuning_file = input_ptr->bin_info[cxt->bin_cxt.idx_num].isp_caf_addr;
+	af_input.caf_tuning_info.size = input_ptr->bin_info[cxt->bin_cxt.idx_num].isp_caf_size;
 	if (cxt->single_otp_data) {
 		af_input.otp_info.otp_data = &cxt->single_otp_data->af_info;
 		af_input.otp_info.size = sizeof(cxt->single_otp_data->af_info);
@@ -1123,7 +1137,9 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 #ifdef CONFIG_CAMERA_DUAL_SYNC
 	awb_input.is_refocus = cxt->is_refocus;
 	awb_input.is_master = cxt->is_master;
-	awb_input.tuning_param_slv = input_ptr->bin_info_slv.awb_addr;
+	for(i = 0; i < ISP_INDEX_MAX; i++) {
+		awb_input.tuning_param_slv[i] = input_ptr->bin_info_slv[i].awb_addr;
+	}
 	awb_input.calibration_gain_slv.r = cxt->slave_iso_awb_info.gain_r;
 	awb_input.calibration_gain_slv.g = cxt->slave_iso_awb_info.gain_g;
 	awb_input.calibration_gain_slv.b = cxt->slave_iso_awb_info.gain_b;
@@ -1134,7 +1150,10 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 	awb_input.caller_handle = isp_3a_handle;
 	awb_input.awb_process_type = AWB_CTRL_RESPONSE_STABLE;
 	awb_input.awb_process_level = AWB_CTRL_RESPONSE_NORMAL;
-	awb_input.tuning_param = input_ptr->bin_info.awb_addr;
+	for(i = 0; i < ISP_INDEX_MAX; i++) {
+		awb_input.tuning_param[i] = input_ptr->bin_info[i].awb_addr;
+		ISP_LOGI("awb %p", awb_input.tuning_param[i]);
+	}
 	if (cxt->single_otp_data) {
 		awb_input.calibration_gain.r = cxt->single_otp_data->iso_awb_info.gain_r;
 		awb_input.calibration_gain.g = cxt->single_otp_data->iso_awb_info.gain_g;
@@ -1143,12 +1162,12 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 		awb_input.calibration_gain.r = cxt->dual_otp->slave_iso_awb_info.gain_r;
 		awb_input.calibration_gain.g = cxt->dual_otp->slave_iso_awb_info.gain_g;
 		awb_input.calibration_gain.b = cxt->dual_otp->slave_iso_awb_info.gain_b;
-	} else if (input_ptr->bin_info.otp_data_addr) {
-		awb_input.calibration_gain.r = input_ptr->bin_info.otp_data_addr->gain_r;
-		awb_input.calibration_gain.g = input_ptr->bin_info.otp_data_addr->gain_g;
-		awb_input.calibration_gain.b = input_ptr->bin_info.otp_data_addr->gain_b;
+	} else if (input_ptr->bin_info[0].otp_data_addr) {
+		awb_input.calibration_gain.r = input_ptr->bin_info[0].otp_data_addr->gain_r;
+		awb_input.calibration_gain.g = input_ptr->bin_info[0].otp_data_addr->gain_g;
+		awb_input.calibration_gain.b = input_ptr->bin_info[0].otp_data_addr->gain_b;
 	}
-	ISP_LOGI("awb bin %p", awb_input.tuning_param);
+
 	ret = awb_ctrl_init(&awb_input, &awb_output, &cxt->awb_cxt.handle);
 	if (ret) {
 		ISP_LOGE("failed to AWB initialize");
@@ -1225,7 +1244,10 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 	ae_input.otp_data_slv.iso = cxt->slave_iso_awb_info.iso;
 #endif
 
-	ae_input.tuning_param = input_ptr->bin_info.ae_addr;
+	for (i = 0; i < ISP_INDEX_MAX; i++) {
+		ae_input.tuning_param[i] = input_ptr->bin_info[i].ae_addr;
+		ISP_LOGI("i %ld tuning_param %p ae_input=%p", i, input_ptr->bin_info[i].ae_addr, ae_input.tuning_param[i]);
+	}
 	if (cxt->single_otp_data) {
 		ae_input.otp_data.r = cxt->single_otp_data->iso_awb_info.gain_r;
 		ae_input.otp_data.g = cxt->single_otp_data->iso_awb_info.gain_g;
@@ -1236,11 +1258,11 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 		ae_input.otp_data.g = cxt->dual_otp->slave_iso_awb_info.gain_g;
 		ae_input.otp_data.b = cxt->dual_otp->slave_iso_awb_info.gain_b;
 		ae_input.otp_data.iso = cxt->dual_otp->slave_iso_awb_info.iso;
-	} else if (input_ptr->bin_info.otp_data_addr) {
-		ae_input.otp_data.r = input_ptr->bin_info.otp_data_addr->gain_r;
-		ae_input.otp_data.g = input_ptr->bin_info.otp_data_addr->gain_g;
-		ae_input.otp_data.b = input_ptr->bin_info.otp_data_addr->gain_b;
-		ae_input.otp_data.iso = input_ptr->bin_info.otp_data_addr->iso;
+	} else if (input_ptr->bin_info[0].otp_data_addr) {
+		ae_input.otp_data.r = input_ptr->bin_info[0].otp_data_addr->gain_r;
+		ae_input.otp_data.g = input_ptr->bin_info[0].otp_data_addr->gain_g;
+		ae_input.otp_data.b = input_ptr->bin_info[0].otp_data_addr->gain_b;
+		ae_input.otp_data.iso = input_ptr->bin_info[0].otp_data_addr->iso;
 	}
 	ret = ae_ctrl_init(&ae_input, &ae_output, &cxt->ae_cxt.handle);
 	if (ret) {
@@ -1442,6 +1464,9 @@ cmr_int isp3a_process_thread_proc(struct cmr_msg *message, void *p_data)
 		break;
 	case ISP3A_PROC_EVT_STOP:
 		ret = isp3a_stop((cmr_handle)cxt);
+		break;
+	case ISP3A_PROC_EVT_SET_TUNING_MODE:
+		ret = isp3a_set_tuning_mode((cmr_handle)cxt, message->data);
 		break;
 	default:
 		ISP_LOGI("don't support msg");
@@ -1913,6 +1938,7 @@ cmr_int isp3a_set_scene_mode(cmr_handle isp_3a_handle, void *param_ptr)
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
 	struct ae_ctrl_param_in                     ae_in;
+	union awb_ctrl_cmd_in                       awb_in;
 	cmr_u32                                     saturation;
 	cmr_u32                                     contrast;
 
@@ -1932,10 +1958,23 @@ cmr_int isp3a_set_scene_mode(cmr_handle isp_3a_handle, void *param_ptr)
 		isp3a_set_saturation(isp_3a_handle, &saturation);
 		isp3a_set_contrast(isp_3a_handle, &contrast);
 	}
-
+	ISP_LOGI("idx=%d scene=%ld scene_addr=%p", cxt->bin_cxt.idx_num,
+		ae_in.scene.scene_mode, cxt->bin_cxt.bin_info[cxt->bin_cxt.idx_num].scene_addr);
+	isp_separate_scenesetting(ae_in.scene.scene_mode, cxt->bin_cxt.bin_info[cxt->bin_cxt.idx_num].scene_addr, &ae_in.scene.scene_info);
+	ISP_LOGI("scene_addr=%p uw_mode=%d", ae_in.scene.scene_info.puc_addr, ae_in.scene.scene_info.uw_mode);
+	memcpy(&awb_in.scene_info, &ae_in.scene.scene_info, sizeof(struct scene_setting_info));
 	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_SCENE_MODE, &ae_in, NULL);
+	if(ret) {
+		ISP_LOGE("ae ioctrl  error!");
+		goto exit;
+	}
+	ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_SCENE_MODE, &awb_in, NULL);
+	if(ret) {
+		ISP_LOGE("awb ioctrl  error!");
+		goto exit;
+	}
 	cxt->irp_cxt.scene_mode = ae_in.scene.scene_mode;
-
+	ISP_LOGI("exit %ld",ret);
 exit:
 	return ret;
 }
@@ -2081,7 +2120,7 @@ cmr_int isp3a_set_contrast(cmr_handle isp_3a_handle, void *param_ptr)
 	}
 	dev_ioctrl_in.value = *((cmr_u32 *)param_ptr);
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_ACCESS_SET_CONSTRACT, &dev_ioctrl_in, NULL);
-
+	ISP_LOGI("dev_ioctrl_in.value %d", dev_ioctrl_in.value);
 	cxt->irp_cxt.contrast = dev_ioctrl_in.value;
 
 exit:
@@ -2511,11 +2550,11 @@ cmr_int isp3a_get_info(cmr_handle isp_3a_handle, void *param_ptr)
 	memset(&afl_out, 0, sizeof(afl_out));
 	memset(&af_out, 0, sizeof(af_out));
 	if (0 == cxt->bin_cxt.is_write_to_debug_buf) {
-		if (cxt->bin_cxt.bin_info.isp_3a_addr && cxt->bin_cxt.bin_info.isp_shading_addr) {
-			size = MIN(MAX_BIN1_DEBUG_SIZE_STRUCT2, cxt->bin_cxt.bin_info.isp_3a_size);
-			memcpy((void *)&cxt->debug_data.debug_info.bin_file1[0], cxt->bin_cxt.bin_info.isp_3a_addr, size);
-			size = MIN(MAX_BIN2_DEBUG_SIZE_STRUCT2, cxt->bin_cxt.bin_info.isp_shading_size);
-			memcpy((void *)&cxt->debug_data.debug_info.bin_file2, cxt->bin_cxt.bin_info.isp_shading_addr, size);
+		if (cxt->bin_cxt.bin_info[cxt->bin_cxt.idx_num].isp_3a_addr && cxt->bin_cxt.bin_info[cxt->bin_cxt.idx_num].isp_shading_addr) {
+			size = MIN(MAX_BIN1_DEBUG_SIZE_STRUCT2, cxt->bin_cxt.bin_info[cxt->bin_cxt.idx_num].isp_3a_size);
+			memcpy((void *)&cxt->debug_data.debug_info.bin_file1[0], cxt->bin_cxt.bin_info[cxt->bin_cxt.idx_num].isp_3a_addr, size);
+			size = MIN(MAX_BIN2_DEBUG_SIZE_STRUCT2, cxt->bin_cxt.bin_info[cxt->bin_cxt.idx_num].isp_shading_size);
+			memcpy((void *)&cxt->debug_data.debug_info.bin_file2, cxt->bin_cxt.bin_info[cxt->bin_cxt.idx_num].isp_shading_addr, size);
 			cxt->bin_cxt.is_write_to_debug_buf = 1;
 		}
 	}
@@ -2598,11 +2637,11 @@ cmr_int isp3a_get_info(cmr_handle isp_3a_handle, void *param_ptr)
 			size = MIN(cxt->dual_otp->slave_lsc_info.lsc_data_size, OTP_LSC_DATA_SIZE);
 			memcpy(&otp_info->current_module_lsc[0], cxt->dual_otp->slave_lsc_info.lsc_data_addr, size);
 		}
-	} else if (cxt->bin_cxt.bin_info.otp_data_addr) {
-		otp_info->current_module_iso = cxt->bin_cxt.bin_info.otp_data_addr->iso;
-		otp_info->current_module_r_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_r;
-		otp_info->current_module_g_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_g;
-		otp_info->current_module_b_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_b;
+	} else if (cxt->bin_cxt.bin_info[0].otp_data_addr) {
+		otp_info->current_module_iso = cxt->bin_cxt.bin_info[0].otp_data_addr->iso;
+		otp_info->current_module_r_gain = cxt->bin_cxt.bin_info[0].otp_data_addr->gain_r;
+		otp_info->current_module_g_gain = cxt->bin_cxt.bin_info[0].otp_data_addr->gain_g;
+		otp_info->current_module_b_gain = cxt->bin_cxt.bin_info[0].otp_data_addr->gain_b;
 	}
 	cxt->debug_data.debug_info.structure_size2 = sizeof(struct debug_info2);
 	info_ptr->size = sizeof(struct debug_info2);
@@ -2883,6 +2922,49 @@ exit:
 	return ret;
 }
 
+cmr_int isp3a_set_tuning_mode(cmr_handle isp_3a_handle, void *param_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
+	struct ae_ctrl_param_in                     ae_in;
+	union awb_ctrl_cmd_in                       awb_in;
+	struct af_ctrl_param_in                     af_in;
+	struct isp_video_start                      *tuning_param;
+	union isp_dev_ctrl_cmd_in                   dev_ioctrl_in;
+	struct scene_setting_info                   scene_info;
+	if (!param_ptr) {
+		ISP_LOGW("input is NULL");
+		goto exit;
+	}
+
+	tuning_param = (struct isp_video_start *) param_ptr;
+	dev_ioctrl_in.value = tuning_param->tuning_mode;
+	cxt->bin_cxt.idx_num = tuning_param->tuning_mode;
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_ACCESS_SET_TUNING_BIN, &dev_ioctrl_in, NULL);
+	ae_in.idx_num = tuning_param->tuning_mode;
+	awb_in.idx_num = tuning_param->tuning_mode;
+	af_in.idx_num = tuning_param->tuning_mode;
+	ISP_LOGI("mode=%d", tuning_param->tuning_mode);
+	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_TUNING_MODE, &ae_in, NULL);
+	if(ret) {
+		ISP_LOGE("ae ioctrl  error!");
+		goto exit;
+	}
+	ret = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_TUNING_MODE, &awb_in, NULL);
+	if(ret) {
+		ISP_LOGE("awb ioctrl  error!");
+		goto exit;
+	}
+	ret = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CTRL_CMD_SET_AF_TUNING_MODE, &af_in, NULL);
+	if(ret) {
+		ISP_LOGE("af ioctrl  error!");
+		goto exit;
+	}
+	ISP_LOGI("exit %ld",ret);
+exit:
+	return ret;
+}
+
 cmr_int isp3a_set_ae_engineer_mode(cmr_handle isp_3a_handle, void *param_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
@@ -3006,11 +3088,11 @@ cmr_int isp3a_get_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr)
 		exif_ptr->otp_report_debug_info1.current_module_r_gain = cxt->dual_otp->slave_iso_awb_info.gain_r;
 		exif_ptr->otp_report_debug_info1.current_module_g_gain = cxt->dual_otp->slave_iso_awb_info.gain_g;
 		exif_ptr->otp_report_debug_info1.current_module_b_gain = cxt->dual_otp->slave_iso_awb_info.gain_b;
-	} else if (cxt->bin_cxt.bin_info.otp_data_addr) {
-		exif_ptr->otp_report_debug_info1.current_module_iso = cxt->bin_cxt.bin_info.otp_data_addr->iso;
-		exif_ptr->otp_report_debug_info1.current_module_r_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_r;
-		exif_ptr->otp_report_debug_info1.current_module_g_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_g;
-		exif_ptr->otp_report_debug_info1.current_module_b_gain = cxt->bin_cxt.bin_info.otp_data_addr->gain_b;
+	} else if (cxt->bin_cxt.bin_info[0].otp_data_addr) {
+		exif_ptr->otp_report_debug_info1.current_module_iso = cxt->bin_cxt.bin_info[0].otp_data_addr->iso;
+		exif_ptr->otp_report_debug_info1.current_module_r_gain = cxt->bin_cxt.bin_info[0].otp_data_addr->gain_r;
+		exif_ptr->otp_report_debug_info1.current_module_g_gain = cxt->bin_cxt.bin_info[0].otp_data_addr->gain_g;
+		exif_ptr->otp_report_debug_info1.current_module_b_gain = cxt->bin_cxt.bin_info[0].otp_data_addr->gain_b;
 	}
 
 	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_GET_EXT_DEBUG_INFO, NULL, &ae_out);
@@ -3071,7 +3153,6 @@ cmr_int isp3a_get_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr)
 	exif_info_ptr->addr = (void *)&cxt->debug_data.exif_debug_info;
 exit:
 	ISP_LOGI("exif debug info size %ld", exif_info_ptr->size);
-
 	return ret;
 }
 
@@ -4033,6 +4114,7 @@ cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start *input_ptr)
 	}
 
 	cxt->sof_idx = 0;
+	ISP_LOGI("idx =%d", input_ptr->tuning_mode);
 	if (cxt->is_refocus && cxt->is_master) {
 		cmr_handle isp_3a_handle_slv;
 		struct isp3a_fw_context *cxt_slv = NULL;
@@ -4085,7 +4167,6 @@ cmr_int isp3a_start(cmr_handle isp_3a_handle, struct isp_video_start *input_ptr)
 	ae_in.work_param.resolution.min_fps = input_ptr->resolution_info.fps.min_fps;
 	ae_in.work_param.resolution.max_gain = input_ptr->resolution_info.max_gain;
 	ae_in.work_param.sensor_fps = input_ptr->sensor_fps;
-	ae_in.work_param.tuning_param = input_ptr->tuning_ae_addr;
 
 	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_WORK_MODE, &ae_in, &ae_out);
 	cxt->ae_cxt.proc_out = ae_out.proc_out;
@@ -4175,12 +4256,12 @@ cmr_int isp_3a_fw_init_otp(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *i
 		} else if(input_ptr->otp_data_slv) {
 			ISP_LOGI("use single otp slave");
 			cxt->slave_iso_awb_info = input_ptr->otp_data_slv->single_otp.iso_awb_info;
-		} else if (input_ptr->bin_info_slv.otp_data_addr) {
+		} else if (input_ptr->bin_info_slv[0].otp_data_addr) {
 			ISP_LOGI("use bin otp slave");
-			cxt->slave_iso_awb_info.iso = input_ptr->bin_info_slv.otp_data_addr->iso;
-			cxt->slave_iso_awb_info.gain_r = input_ptr->bin_info_slv.otp_data_addr->gain_r;
-			cxt->slave_iso_awb_info.gain_g = input_ptr->bin_info_slv.otp_data_addr->gain_g;
-			cxt->slave_iso_awb_info.gain_b = input_ptr->bin_info_slv.otp_data_addr->gain_b;
+			cxt->slave_iso_awb_info.iso = input_ptr->bin_info_slv[0].otp_data_addr->iso;
+			cxt->slave_iso_awb_info.gain_r = input_ptr->bin_info_slv[0].otp_data_addr->gain_r;
+			cxt->slave_iso_awb_info.gain_g = input_ptr->bin_info_slv[0].otp_data_addr->gain_g;
+			cxt->slave_iso_awb_info.gain_b = input_ptr->bin_info_slv[0].otp_data_addr->gain_b;
 		}
 		ISP_LOGI("slave iso r g b %d %d,%d,%d",
 					cxt->slave_iso_awb_info.iso, cxt->slave_iso_awb_info.gain_r,
@@ -4198,6 +4279,7 @@ cmr_int isp_3a_fw_init(struct isp_3a_fw_init_in *input_ptr, cmr_handle *isp_3a_h
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = NULL;
 	struct sensor_raw_info                      *sensor_raw_info_ptr = NULL;
+	cmr_int                                     i = 0;
 
 	if (!input_ptr || !isp_3a_handle) {
 		ISP_LOGE("input is NULL, 0x%lx", (cmr_uint)input_ptr);
@@ -4221,7 +4303,9 @@ cmr_int isp_3a_fw_init(struct isp_3a_fw_init_in *input_ptr, cmr_handle *isp_3a_h
 	if (NULL != sensor_raw_info_ptr)
 		cxt->ioctrl_ptr = sensor_raw_info_ptr->ioctrl_ptr;
 	cxt->dev_access_handle = input_ptr->dev_access_handle;
-	cxt->bin_cxt.bin_info = input_ptr->bin_info;
+	for (i = 0; i < ISP_INDEX_MAX; i++) {
+		cxt->bin_cxt.bin_info[i] = input_ptr->bin_info[i];
+	}
 	cxt->bin_cxt.is_write_to_debug_buf = 0;
 	cxt->ex_info = input_ptr->ex_info;
 	if ((0 == cxt->camera_id) || (1 == cxt->camera_id))
@@ -4407,6 +4491,26 @@ cmr_int isp_3a_fw_start(cmr_handle isp_3a_handle, struct isp_video_start *input_
 		ret = cxt->err_code;
 	}
 exit:
+	ISP_LOGI("done %ld", ret);
+	return ret;
+}
+
+cmr_int isp_3a_fw_set_tuning_mode(cmr_handle isp_3a_handle, struct isp_video_start *input_ptr)
+{
+	cmr_int                                     ret = ISP_SUCCESS;
+	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)isp_3a_handle;
+	CMR_MSG_INIT(message);
+
+	ISP_CHECK_HANDLE_VALID(isp_3a_handle);
+	message.msg_type = ISP3A_PROC_EVT_SET_TUNING_MODE;
+	message.sub_msg_type = 0;
+	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+	message.alloc_flag = 0;
+	message.data = (void *)input_ptr;
+	ret = cmr_thread_msg_send(cxt->thread_cxt.process_thr_handle, &message);
+	if (!ret) {
+		ret = cxt->err_code;
+	}
 	ISP_LOGI("done %ld", ret);
 	return ret;
 }

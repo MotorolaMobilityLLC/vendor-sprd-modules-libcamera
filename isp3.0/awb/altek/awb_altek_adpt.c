@@ -51,6 +51,8 @@ struct awb_altek_context {
 	cmr_u32 is_lock;
 	cmr_u32 is_bypass;
 	awb_callback callback;
+	void *tuning_param[ISP_INDEX_MAX];
+	void *tuning_param_slv[ISP_INDEX_MAX];
 	struct awb_altek_lib_ops ops;
 	struct isp_awb_gain cur_gain;
 	struct awb_ctrl_work_param work_mode;
@@ -617,8 +619,8 @@ static cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *in
 	/* set OTP */
 	set_otp_param.type = alawb_set_param_camera_calib_data;
 	if (0 == input_ptr->calibration_gain.r
-		&& 0 == input_ptr->calibration_gain.g
-		&& 0 == input_ptr->calibration_gain.b) {
+		|| 0 == input_ptr->calibration_gain.g
+		|| 0 == input_ptr->calibration_gain.b) {
 		set_otp_param.para.awb_calib_data.calib_r_gain = AWB_OTP_DEFAULT_R_GAIN;
 		set_otp_param.para.awb_calib_data.calib_g_gain = AWB_OTP_DEFAULT_G_GAIN;
 		set_otp_param.para.awb_calib_data.calib_b_gain = AWB_OTP_DEFAULT_B_GAIN;
@@ -634,10 +636,13 @@ static cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *in
 		ISP_LOGE("failed to set otp %lx", ret);
 	}
 
-	if (input_ptr->tuning_param) {
-		ISP_LOGI("set tuning file");
+	for (i = 0; i < ISP_INDEX_MAX; i++) {
+		cxt->tuning_param[i] = input_ptr->tuning_param[i];
+		ISP_LOGI("set tuning file %p", input_ptr->tuning_param[i]);
+	}
+	if (input_ptr->tuning_param[0]) {
 		set_param.type = alawb_set_param_tuning_file;
-		set_param.para.tuning_file = input_ptr->tuning_param;
+		set_param.para.tuning_file = input_ptr->tuning_param[0];
 		ret = (cmr_int)cxt->lib_func.set_param(&set_param, cxt->lib_func.awb);
 		if (ret) {
 			ISP_LOGE("failed to set tuning file %lx", ret);
@@ -648,8 +653,8 @@ static cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *in
 		set_otp_param.type = alawb_set_param_slave_calib_data;
 
 		if (0 == input_ptr->calibration_gain_slv.r
-			&& 0 == input_ptr->calibration_gain_slv.g
-			&& 0 == input_ptr->calibration_gain_slv.b) {
+			|| 0 == input_ptr->calibration_gain_slv.g
+			|| 0 == input_ptr->calibration_gain_slv.b) {
 			set_otp_param.para.awb_calib_data.calib_r_gain = AWB_OTP_DEFAULT_R_GAIN;
 			set_otp_param.para.awb_calib_data.calib_g_gain = AWB_OTP_DEFAULT_G_GAIN;
 			set_otp_param.para.awb_calib_data.calib_b_gain = AWB_OTP_DEFAULT_B_GAIN;
@@ -666,10 +671,14 @@ static cmr_int awbaltek_init(cmr_handle adpt_handle, struct awb_ctrl_init_in *in
 			ISP_LOGE("failed to set otp %lx", ret);
 		}
 
-		if (input_ptr->tuning_param_slv) {
+		for (i = 0; i < ISP_INDEX_MAX; i++) {
+			cxt->tuning_param_slv[i] = input_ptr->tuning_param_slv[i];
+			ISP_LOGI("set tuning file %p", input_ptr->tuning_param_slv[i]);
+		}
+		if (input_ptr->tuning_param_slv[0]) {
 			ISP_LOGI("set slv tuning file");
 			set_param.type = alawb_set_param_slave_tuning_file;
-			set_param.para.tuning_file = input_ptr->tuning_param_slv;
+			set_param.para.tuning_file = input_ptr->tuning_param_slv[0];
 			ret = (cmr_int)cxt->lib_func.set_param(&set_param, cxt->lib_func.awb);
 			if (ret) {
 				ISP_LOGE("failed to set tuning file %lx", ret);
@@ -888,6 +897,88 @@ static cmr_int awbaltek_open_pre_flash(cmr_handle adpt_handle)
 	return ret;
 }
 
+static cmr_int awbaltek_set_tuning_param(cmr_handle adpt_handle, void *tuning_param)
+{
+	struct allib_awb_set_parameter_t   set_param;
+	cmr_int ret = ISP_ERROR;
+	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
+
+	if(!cxt) {
+		ISP_LOGE("param is NULL error!");
+		return ret;
+	}
+	ISP_LOGI("tuning_param %p", tuning_param);
+	if (tuning_param) {
+		ISP_LOGI("set tuning file");
+		set_param.type = alawb_set_param_tuning_file;
+		set_param.para.tuning_file = tuning_param;
+		ret = (cmr_int)cxt->lib_func.set_param(&set_param, cxt->lib_func.awb);
+		if (ret) {
+			ISP_LOGE("failed to set tuning file %lx", ret);
+		}
+	}
+	return ret;
+}
+
+static cmr_int awbaltek_set_tuning_param_slv(cmr_handle adpt_handle, void *tuning_param_slv)
+{
+	struct allib_awb_set_parameter_t   set_param;
+	cmr_int ret = ISP_ERROR;
+	struct awb_altek_context                    *cxt = (struct awb_altek_context *)adpt_handle;
+
+	if(!cxt) {
+		ISP_LOGE("param is NULL error!");
+		return ret;
+	}
+	ISP_LOGI("tuning_param %p", tuning_param_slv);
+	if (tuning_param_slv) {
+		ISP_LOGI("set slv tuning file");
+		set_param.type = alawb_set_param_slave_tuning_file;
+		set_param.para.tuning_file = tuning_param_slv;
+		ret = (cmr_int)cxt->lib_func.set_param(&set_param, cxt->lib_func.awb);
+		if (ret) {
+			ISP_LOGE("failed to set tuning file %lx", ret);
+		}
+	}
+	return ret;
+}
+
+static cmr_int awbaltek_set_tuning_mode(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+	cmr_u32 idx_num;
+	struct awb_altek_context                   *cxt = (struct awb_altek_context *)adpt_handle;
+
+	if (!cxt) {
+		ISP_LOGE("param is NULL error!");
+		return ret;
+	}
+	idx_num = input_ptr->idx_num;
+	ISP_LOGI("idx_num=%d awb_addr %p", idx_num, cxt->tuning_param[idx_num]);
+	ret = awbaltek_set_tuning_param(adpt_handle, (void *)cxt->tuning_param[idx_num]);
+
+	if (cxt->work_mode.is_refocus && cxt->is_master)
+		ret = awbaltek_set_tuning_param_slv(adpt_handle, (void *)cxt->tuning_param_slv[idx_num]);
+	return ret;
+}
+
+static cmr_int awbaltek_set_scene_mode(cmr_handle adpt_handle, union awb_ctrl_cmd_in *input_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+	struct awb_altek_context                   *cxt = (struct awb_altek_context *)adpt_handle;
+
+	if (!cxt) {
+		ISP_LOGE("param is NULL error!");
+		return ret;
+	}
+
+	ISP_LOGI("awb_addr %p mode %d ", input_ptr->scene_info.puc_addr, input_ptr->scene_info.uw_mode);
+	ret = al3awrapperawb_setscenesetting(&input_ptr->scene_info,  &cxt->lib_func);
+	ISP_LOGI("ret %ld ", ret);
+	return ret;
+
+}
+
 static cmr_int awbaltek_ioctrl(cmr_handle adpt_handle, enum awb_ctrl_cmd cmd, union awb_ctrl_cmd_in *input_ptr, union awb_ctrl_cmd_out *output_ptr)
 {
 	cmr_int                                     ret = ISP_SUCCESS;
@@ -959,6 +1050,8 @@ static cmr_int awbaltek_ioctrl(cmr_handle adpt_handle, enum awb_ctrl_cmd cmd, un
 		ret = awbaltek_set_slave_iso_speed(adpt_handle, input_ptr, output_ptr);
 		break;
 	case AWB_CTRL_CMD_SET_SCENE_MODE:
+		ret = awbaltek_set_scene_mode(adpt_handle, input_ptr);
+		break;
 	case AWB_CTRL_CMD_GET_STAT_SIZE:
 	case AWB_CTRL_CMD_GET_WIN_SIZE:
 	case AWB_CTRL_CMD_SET_STAT_IMG_SIZE:
@@ -971,6 +1064,9 @@ static cmr_int awbaltek_ioctrl(cmr_handle adpt_handle, enum awb_ctrl_cmd cmd, un
 		break;
 	case AWB_CTRL_CMD_GET_DEBUG_INFO:
 		ret = awbaltek_get_debug_info(adpt_handle, input_ptr, output_ptr);
+		break;
+	case AWB_CTRL_CMD_SET_TUNING_MODE:
+		ret = awbaltek_set_tuning_mode(adpt_handle, input_ptr);
 		break;
 	default:
 		break;

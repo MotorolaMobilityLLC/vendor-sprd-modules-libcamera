@@ -323,16 +323,9 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 	//paddrlocal+= 4;
 	offset+= 4;
 
-#ifndef LOCAL_NDK_BUILD
-	ISP_LOGI("al3awrapper_dispatchhw3astats process magicnum:%d engineid:%d frameidx:%d checksum:%d\r\n",pispmeta.umagicnum, pispmeta.uhwengineid, pispmeta.uframeidx, pispmeta.uchecksum);
-#endif
-
 	/* check HW3A stats's type ID */
 	if ( (pispmeta.umagicnum & 0xFF000000) != HW3A_VERSION_NUMBER_TYPEID ) {
 		ret =  ERR_WRP_MISMACTHED_ISPSTATS_VER;	/* keep error code only in early phase, if need return immediatedly then return here */
-#ifndef LOCAL_NDK_BUILD
-		ISP_LOGI("al3awrapper_dispatchhw3astats process error:%d\r\n",ret);
-#endif
 		return ret;
 	}
 
@@ -356,9 +349,6 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 	pispmeta.uaestatsaddr = (paddrlocal[offset] + (paddrlocal[offset+1]<<8) + (paddrlocal[offset+2]<<16) + (paddrlocal[offset+3]<<24));
 	//paddrlocal+= 4;
 	offset+= 4;
-#ifndef LOCAL_NDK_BUILD
-	ISP_LOGI("al3awrapper_dispatchhw3astats process aetag:%d tokenid:%d statssize:%d statsaddr:%d\r\n",pispmeta.uaetag,pispmeta.uaetokenid,pispmeta.uaestatssize,pispmeta.uaestatsaddr);
-#endif
 
 	/*   2. awb stats info */
 	//memcpy( &pispmeta.uawbtag          , paddrlocal, 2 );
@@ -533,10 +523,6 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 		alisp_metadata_ae->ae_stats_info.ucvalidbanks = paddrlocal[offset];
 		//paddrlocal+= 1;
 		offset+=1;
-
-#ifndef LOCAL_NDK_BUILD
-		ISP_LOGI("al3awrapper_dispatchhw3astats process ae:%d,%d,%d,%d\r\n",alisp_metadata_ae->ae_stats_info.udpixelsperblocks,alisp_metadata_ae->ae_stats_info.udbanksize,alisp_metadata_ae->ae_stats_info.ucvalidblocks,alisp_metadata_ae->ae_stats_info.ucvalidbanks);
-#endif
 
 		/* copy AE stats to indicated buffer address, make 8 alignment */
 		offset_start = pispmeta.uaestatsaddr + offset;		/* 10 is accumulation value of ae info of stats, 4+4+1+1 */
@@ -1093,9 +1079,6 @@ uint32 al3awrapper_dispatchhw3astats( void * alisp_metadata, struct isp_drv_meta
 #ifndef LOCAL_NDK_BUILD
 	ISP_LOGI("al3awrapper_dispatchhw3astats process total_time:%d,commom_t:%d,memset3A:%d,memset_flk:%d,memset_sub:%d,ae_t:%d,wb:%d,af:%d,y_t_m:%d,flk_t_m:%d,sub_t_m:%d\r\n", (uint32)(time_e - time_s),(uint32)(time_1 - time_s),(uint32)(time_2 - time_1),
 	         (uint32)(time_3 - time_2),(uint32)(time_4 - time_3),(uint32)(time_5 - time_4),(uint32)(time_6 - time_5),(uint32)(time_7 - time_6),(uint32)(time_8-time_7),(uint32)(time_9-time_8),(uint32)(time_e-time_9));
-#endif
-#ifndef LOCAL_NDK_BUILD
-	ISP_LOGI("al3awrapper_dispatchhw3astats process error:%d\r\n",ret);
 #endif
 
 
