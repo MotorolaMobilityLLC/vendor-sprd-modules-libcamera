@@ -3602,7 +3602,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 			if(ret == NO_ERROR) {
 				ATRACE_BEGIN("preview_frame");
 
-				HAL_LOGI("prev buff fd=%d, buff_vir=0x%lx, num %d, ret %d, time 0x%llx, frame type = %ld rec=%lld, ",
+				HAL_LOGI("prev buff fd=%d, buff_vir=0x%lx, num %d, ret %d, time %lld, frame type = %ld rec=%lld, ",
 					frame->fd, buff_vir, frame_num, ret, buffer_timestamp,
 					frame->type, mSlowPara.rec_timestamp);
 				if(frame->type == PREVIEW_FRAME && frame_num >= mPreviewFrameNum && (frame_num > mPictureFrameNum ||frame_num == 0)) {
@@ -3726,7 +3726,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 			if(ret == NO_ERROR) {
 				ATRACE_BEGIN("callback_frame");
 
-				HAL_LOGI("callback buff fd=%d, vir=0x%lx, num %d, ret %d, time 0x%llx, frame type = %ld",
+				HAL_LOGI("callback buff fd=%d, vir=0x%lx, num %d, ret %d, time %lld, frame type = %ld",
 					frame->fd, buff_vir, frame_num, ret, buffer_timestamp,frame->type);
 
 				if((!pre_stream || (frame->type != PREVIEW_ZSL_CANCELED_FRAME))&& frame_num >= mZslFrameNum && (frame_num > mPictureFrameNum ||frame_num == 0)) {

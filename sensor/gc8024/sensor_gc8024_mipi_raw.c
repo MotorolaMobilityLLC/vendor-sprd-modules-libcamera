@@ -1771,6 +1771,8 @@ static uint32_t gc8024_write_af(SENSOR_HW_HANDLE handle,uint32_t param)
 {
 #ifdef CONFIG_AF_VCM_DW9714
 	return vcm_dw9714_set_position(handle,param,2);
+#else
+	return 0;
 #endif
 }
 #endif

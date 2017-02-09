@@ -6167,6 +6167,7 @@ cmr_int prev_construct_zsl_frame(struct prev_handle *handle,
 		frame_type->width        = prev_cxt->cap_zsl_frm[frm_id].size.width;
 		frame_type->height       = prev_cxt->cap_zsl_frm[frm_id].size.height;
 		frame_type->timestamp    = info->sec * 1000000000LL + info->usec * 1000;
+		frame_type->monoboottime = info->monoboottime;
 		frame_type->type         = PREVIEW_ZSL_FRAME;
 		CMR_LOGV("timestamp=%lld, width=%d, height=%d, fd=0x%x",
 			  frame_type->timestamp, frame_type->width, frame_type->height, frame_type->fd);
