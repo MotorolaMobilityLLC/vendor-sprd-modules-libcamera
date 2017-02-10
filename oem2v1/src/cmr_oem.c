@@ -5694,8 +5694,9 @@ cmr_int camera_get_tuning_info(cmr_handle oem_handle, struct isp_adgain_exp_info
 	ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CUR_ADGAIN_EXP, &isp_param);
 	adgain_exp_info_ptr->adgain = isp_param.isp_adgain.adgain;
 	adgain_exp_info_ptr->exp_time = isp_param.isp_adgain.exp_time;
-	CMR_LOGV("adgain=%d, exp_time=%d",
-		adgain_exp_info_ptr->adgain, adgain_exp_info_ptr->exp_time);
+	adgain_exp_info_ptr->bv = isp_param.isp_adgain.bv;
+	CMR_LOGV("adgain=%d, exp_time=%d, bv=%d",
+		adgain_exp_info_ptr->adgain, adgain_exp_info_ptr->exp_time, adgain_exp_info_ptr->bv);
 	return ret;
 }
 

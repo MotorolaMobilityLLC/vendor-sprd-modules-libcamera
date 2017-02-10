@@ -3203,8 +3203,8 @@ int32_t ae_sprd_io_ctrl(void *handle, enum ae_io_ctrl_cmd cmd, void *param, void
 		break;
 
 	case AE_GET_EXP_TIME:
-		if (param) {
-			*(uint32_t *) param = cxt->cur_result.wts.exposure_time;
+		if (result) {
+			*(uint32_t *) result = cxt->cur_result.wts.exposure_time;
 		}
 		break;
 	case AE_GET_SENSITIVITY:

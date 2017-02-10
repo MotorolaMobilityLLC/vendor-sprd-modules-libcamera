@@ -1375,14 +1375,17 @@ static int camera_save_mipi_raw_to_file(cmr_handle snp_handle, char *name,
 	FILE *fp = NULL;
 	uint32_t gain = 0;
 	uint32_t exp = 0;
+	int32_t bv =0;
 	struct isp_awbc_cfg_test awbc_cfg;
 	void *   isp_handle = ispvideo_GetIspHandle();
 	uint32_t pos = 0;
 	struct isp_adgain_exp_info adgain_exp_info;
 
 	snp_cxt->ops.get_tuning_info(snp_cxt->oem_handle, &adgain_exp_info);
+
 	gain = adgain_exp_info.adgain;
 	exp = adgain_exp_info.exp_time;
+	bv = adgain_exp_info.bv;
 
 	read_otp_awb_gain(isp_handle, (void*)&awbc_cfg);
 	read_position(isp_handle, &pos);
@@ -1411,6 +1414,11 @@ static int camera_save_mipi_raw_to_file(cmr_handle snp_handle, char *name,
 	strcat(file_name, "exp");
 	strcat(file_name, "_");
 	sprintf(tmp_str, "%d", exp);
+	strcat(file_name, tmp_str);
+	strcat(file_name, "_");
+	strcat(file_name, "bv");
+	strcat(file_name, "_");
+	sprintf(tmp_str, "%d", bv);
 	strcat(file_name, tmp_str);
 
 	strcat(file_name, ".mipi_raw");

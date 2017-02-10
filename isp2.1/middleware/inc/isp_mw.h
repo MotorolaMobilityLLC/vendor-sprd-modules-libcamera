@@ -372,6 +372,7 @@ struct isp_flash_cfg {
 struct isp_adgain_exp_info {
 	cmr_u32 adgain;
 	cmr_u32 exp_time;
+	cmr_u32 bv;
 };
 
 struct isp_yimg_info {

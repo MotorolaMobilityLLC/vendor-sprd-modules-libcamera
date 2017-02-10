@@ -1018,6 +1018,28 @@ static cmr_int _ispFixParamUpdateIOCtrl(cmr_handle isp_alg_handle, void *param_p
 	return rtn;
 }
 
+static cmr_int _ispGetAdgainExpInfo(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int                                     rtn = ISP_SUCCESS;
+	struct isp_alg_fw_context                   *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_adgain_exp_info                  *info_ptr = (struct isp_adgain_exp_info *)param_ptr;
+	float gain = 0;
+	uint32_t exp_time = 0;
+	int32_t bv =0;
+
+	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_GAIN, NULL, (void *)&gain);
+	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_EXP_TIME, NULL, (void *)&exp_time);
+	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_LUM_NEW, NULL, (void *)&bv);
+
+	if (!rtn) {
+		info_ptr->adgain 	= (uint32_t)gain;
+		info_ptr->exp_time 	= exp_time;
+		info_ptr->bv 		= bv;
+	}
+	ISP_LOGV("adgain = %d, exp = %d, bv = %d", info_ptr->adgain, info_ptr->exp_time, info_ptr->bv);
+	return rtn;
+}
+
 static cmr_int _ispParamUpdateIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, int (*call_back)())
 {
 	cmr_int                         rtn = ISP_SUCCESS;
@@ -1807,6 +1829,7 @@ static struct isp_io_ctrl_fun _s_isp_io_ctrl_fun_tab[] = {
 
 	{ISP_CTRL_PARAM_UPDATE,              _ispParamUpdateIOCtrl},
 	{ISP_CTRL_IFX_PARAM_UPDATE,          _ispFixParamUpdateIOCtrl},
+	{ISP_CTRL_GET_CUR_ADGAIN_EXP,		 _ispGetAdgainExpInfo},
 	{ISP_CTRL_AE_CTRL,                   _ispAeOnlineIOCtrl}, // for isp tool cali
 	{ISP_CTRL_SET_LUM,                   _ispSetLumIOCtrl}, // for tool cali
 	{ISP_CTRL_GET_LUM,                   _ispGetLumIOCtrl}, // for tool cali
