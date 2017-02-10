@@ -1473,6 +1473,8 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
 		p_exif_info->primary.data_struct_ptr->valid.Orientation = 1;
 		p_exif_info->primary.data_struct_ptr->Orientation =
 			setting_get_exif_orientation(hal_param->encode_rotation);
+#ifdef MIRROR_FLIP_BY_ISP
+			/* check why put these code here later */
 			if(hal_param->sprd_zsl_enabled && 1 == parm->camera_id && 1 == hal_param->flip_on){
 				if(270 == hal_param->encode_rotation){
 					p_exif_info->primary.data_struct_ptr->Orientation = ORIENTATION_ROTATE_90;
@@ -1480,6 +1482,7 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
 					p_exif_info->primary.data_struct_ptr->Orientation = ORIENTATION_ROTATE_270;
 				}
 			}
+#endif
 	}
 
 	if (NULL != p_exif_info->primary.img_desc_ptr) {

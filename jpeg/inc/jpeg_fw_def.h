@@ -72,6 +72,9 @@ typedef struct enc_input_para_tag
 	uint32				restart_interval;
 	int32 				y_interleaved;
 	int32 				uv_interleaved;
+	uint32				mirror;
+	uint32				flip;
+	uint32				rotation;
 } JPEG_ENC_INPUT_PARA_T;
 
 typedef struct enc_output_para_tag

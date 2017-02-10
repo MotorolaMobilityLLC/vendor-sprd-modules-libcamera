@@ -109,6 +109,9 @@ LOCAL void JPEGENC_init_fw_param(JPEGENC_PARAMS_T *jpegenc_params,
   enc_fw_info_ptr->bsm_buf1_valid = FALSE;
   enc_fw_info_ptr->work_mode = ALONE_MODE;
   enc_fw_info_ptr->restart_interval = 0;
+  enc_fw_info_ptr->mirror = jpegenc_params->mirror;
+  enc_fw_info_ptr->flip = jpegenc_params->flip;
+  enc_fw_info_ptr->rotation = jpegenc_params->rotation;
 
   SCI_TRACE_LOW(
       "[JPEG_EncInitFwParam] jpeg fw info, len = %d, ping addr = 0x%lx, pong "

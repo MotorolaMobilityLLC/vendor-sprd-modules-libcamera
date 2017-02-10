@@ -262,6 +262,9 @@ typedef struct jpeg_codec_tag
 	uint32                stream_switch_num;
 	uint8                 *g_stream_buf_ptr;
 	uint32                jpg_version;
+	uint32                mirror_flag;
+	uint32                flip_flag;
+	uint32                rotation_flag;
 }JPEG_CODEC_T;
 
 typedef struct jpeg_progressive_info_tag

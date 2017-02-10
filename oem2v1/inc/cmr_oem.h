@@ -48,6 +48,9 @@ extern "C"
 #define ISP_B4AWB_BUF_CNT                            2
 #define ISP_B4AWB_BUF_SIZE                           640 * 480 * 2
 
+/* should only define just one of the following two */
+#define MIRROR_FLIP_BY_JPEG                          1
+//#define MIRROR_FLIP_BY_ISP                         1
 
 struct grab_context {
 	cmr_handle               grab_handle;

@@ -82,6 +82,9 @@ typedef struct jpegenc_params
 
 	uint32_t iova[3];
 	uint32_t iova_size[3];
+	uint32_t mirror;
+	uint32_t flip;
+	uint32_t rotation;
 
 #if 0
 	

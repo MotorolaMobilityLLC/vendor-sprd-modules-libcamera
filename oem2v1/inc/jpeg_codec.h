@@ -55,8 +55,11 @@ struct jpeg_enc_in_param {
 	struct img_size          out_size;
 	struct img_addr          src_addr_phy;
 	struct img_addr          src_addr_vir;
-	cmr_u32                 src_fd;
+	cmr_u32                  src_fd;
 	struct img_data_end      src_endian;
+	cmr_u8                   mirror;
+	cmr_u8                   flip;
+	cmr_u8                   rotation;
 };
 
 struct jpeg_enc_next_param {

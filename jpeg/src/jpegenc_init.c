@@ -64,7 +64,7 @@ extern void VLC_DONE_INT_PROC(void);
 /************************************************************************/
 /* configure the TOP register                                           */
 /************************************************************************/
-PUBLIC void JpegEnc_HwTopRegCfg(void)
+PUBLIC void JpegEnc_HwTopRegCfg()
 {
 	int32 cmd = 0;
 	JPEG_CODEC_T *jpeg_fw_codec = Get_JPEGEncCodec();
@@ -178,7 +178,17 @@ PUBLIC void JpegEnc_HwTopRegCfg(void)
 
 	//VSP_CFG0
 	//cmd = (1 << 6) | (jpeg_fw_codec->y_interleaved << 4) | (1 << 2)| (1 << 1) | (1 << 0);/*(0 << 4)*/
+
+	SCI_TRACE_LOW("mirror=%d, flip=%d, rotation=%d",
+		jpeg_fw_codec->mirror_flag, jpeg_fw_codec->flip_flag, jpeg_fw_codec->rotation_flag);
 	cmd = (1 << 6) | (0 << 4) | (1 << 2)| (1 << 1) | (1 << 0);/*(0 << 4)*/
+	if (1 == jpeg_fw_codec->mirror_flag)
+		cmd |= (1 << 10);
+	if (1 == jpeg_fw_codec->flip_flag)
+		cmd |= (1 << 11);
+	if (1 == jpeg_fw_codec->rotation_flag)
+		cmd |= (1 << 9);
+
 	JPG_WRITE_REG(JPG_GLB_REG_BASE+GLB_CTRL_OFFSET, cmd, "GLB_CTRL: enable JPEG encoder");
 
 	//VSP_CFG1
@@ -397,6 +407,9 @@ PUBLIC JPEG_RET_E JpegEnc_InitParam(JPEG_ENC_INPUT_PARA_T *input_para_ptr)
 	jpeg_fw_codec->jpg_version = jpg_version;
 	jpeg_fw_codec->y_interleaved = input_para_ptr->y_interleaved;
 	jpeg_fw_codec->uv_interleaved = input_para_ptr->uv_interleaved;
+	jpeg_fw_codec->mirror_flag = input_para_ptr->mirror;
+	jpeg_fw_codec->flip_flag = input_para_ptr->flip;
+	jpeg_fw_codec->rotation_flag = input_para_ptr->rotation;
 	jpeg_fw_codec->RST_Count = M_RST0;
 	jpeg_fw_codec->mbio_bfr0_valid = TRUE;
 	jpeg_fw_codec->mbio_bfr1_valid = FALSE;
