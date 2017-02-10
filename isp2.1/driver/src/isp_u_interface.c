@@ -208,28 +208,12 @@ isp_s32 isp_set_arbiter(isp_handle isp_handler)
 	isp_s32 rtn = ISP_SUCCESS;
 	struct isp_interface_param_v1 *isp_context_ptr = (struct isp_interface_param_v1 *)isp_handler;
 	struct isp_dev_arbiter_info_v1 *isp_arbiter_ptr = &isp_context_ptr->arbiter;
-#if 0
-	isp_arbiter_ptr->endian_ch0.bpc_endian = ISP_ENDIAN_BIG;
-	isp_arbiter_ptr->endian_ch0.lens_endian = ISP_ENDIAN_BIG;
-	isp_arbiter_ptr->endian_ch0.fetch_bit_reorder = ISP_LSB;
-	if (ISP_EMC_MODE == isp_context_ptr->data.input) {
-		isp_arbiter_ptr->endian_ch0.fetch_endian = ISP_ENDIAN_LITTLE;
-	} else {
-		isp_arbiter_ptr->endian_ch0.fetch_endian = ISP_ENDIAN_BIG;
-	}
-	if (ISP_EMC_MODE == isp_context_ptr->data.output) {
-		isp_arbiter_ptr->endian_ch0.store_endian = ISP_ENDIAN_LITTLE;
-	} else {
-		isp_arbiter_ptr->endian_ch0.store_endian = ISP_ENDIAN_BIG;
-	}
-#endif
-	if (ISP_EMC_MODE == isp_context_ptr->data.input) {
-		isp_arbiter_ptr->fetch_raw_endian = ISP_ENDIAN_BIG;
-		isp_arbiter_ptr->fetch_raw_word_change = ISP_ZERO;
-		isp_arbiter_ptr->fetch_bit_reorder = ISP_ZERO;
-		isp_arbiter_ptr->fetch_yuv_endian = ISP_ENDIAN_LITTLE;
-		isp_arbiter_ptr->fetch_yuv_word_change = ISP_ZERO;
-	}
+
+	isp_arbiter_ptr->fetch_raw_endian = ISP_ENDIAN_HALFBIG;
+	isp_arbiter_ptr->fetch_raw_word_change = ISP_ZERO;
+	isp_arbiter_ptr->fetch_bit_reorder = ISP_ZERO;
+	isp_arbiter_ptr->fetch_yuv_endian = ISP_ENDIAN_HALFBIG;
+	isp_arbiter_ptr->fetch_yuv_word_change = ISP_ZERO;
 
 	return rtn;
 }

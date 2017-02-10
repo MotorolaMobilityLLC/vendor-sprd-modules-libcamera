@@ -95,8 +95,11 @@ enum isp_match_mode{
 };
 
 enum isp_endian{
-	ISP_ENDIAN_LITTLE=0x00,
 	ISP_ENDIAN_BIG,
+	ISP_ENDIAN_LITTLE,
+	ISP_ENDIAN_HALFBIG,
+	ISP_ENDIAN_HALFLITTLE,
+	ISP_ENDIAN_MAX
 };
 
 enum isp_bit_reorder{
