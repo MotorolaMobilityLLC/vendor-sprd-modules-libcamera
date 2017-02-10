@@ -31,17 +31,17 @@ isp_s32 _pm_awb_new_init(void *dst_awb_new, void *src_awb_new, void* param1, voi
 	/*AWBC*/
 	dst_ptr->cur.awbc_bypass = header_ptr->bypass;
 
-	dst_ptr->cur.gain.r  = src_ptr->awbc_gain.r_gain;
-	dst_ptr->cur.gain.gr = src_ptr->awbc_gain.gr_gain;
-	dst_ptr->cur.gain.gb = src_ptr->awbc_gain.gb_gain;
-	dst_ptr->cur.gain.b  = src_ptr->awbc_gain.b_gain;
+	dst_ptr->cur.gain.r  = 0x700; //src_ptr->awbc_gain.r_gain;
+	dst_ptr->cur.gain.gr = 0x400;//src_ptr->awbc_gain.gr_gain;
+	dst_ptr->cur.gain.gb = 0x400;//src_ptr->awbc_gain.gb_gain;
+	dst_ptr->cur.gain.b  = 0x5d0;//src_ptr->awbc_gain.b_gain;
 	dst_ptr->cur.thrd.r = 0x3ff;//src_ptr->awbc.awbc_thr.r_thr;
 	dst_ptr->cur.thrd.g = 0x3ff;//src_ptr->awbc.awbc_thr.g_thr;
 	dst_ptr->cur.thrd.b = 0x3ff;//src_ptr->awbc.awbc_thr.b_thr;
-	dst_ptr->cur.gain_offset.r  = src_ptr->awbc_offset.r_offset;
-	dst_ptr->cur.gain_offset.gr = src_ptr->awbc_offset.gr_offset;
-	dst_ptr->cur.gain_offset.gb = src_ptr->awbc_offset.gb_offset;
-	dst_ptr->cur.gain_offset.b  = src_ptr->awbc_offset.b_offset;
+	dst_ptr->cur.gain_offset.r  = 0;//src_ptr->awbc_offset.r_offset;
+	dst_ptr->cur.gain_offset.gr = 0;//src_ptr->awbc_offset.gr_offset;
+	dst_ptr->cur.gain_offset.gb = 0;//src_ptr->awbc_offset.gb_offset;
+	dst_ptr->cur.gain_offset.b  = 0;//src_ptr->awbc_offset.b_offset;
 
 	header_ptr->is_update = ISP_ONE;
 
