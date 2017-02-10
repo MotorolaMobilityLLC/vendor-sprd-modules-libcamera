@@ -137,7 +137,7 @@ isp_s32 _pm_postblc_set_param(void *blc_param, isp_u32 cmd, void *param_ptr0, vo
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
 	isp_u32 *update_flag = (isp_u32*)rtn_param1;
 
-	param_data_ptr->id = ISP_BLK_BLC;
+	param_data_ptr->id = ISP_BLK_POSTBLC;
 	param_data_ptr->cmd = cmd;
 	switch (cmd) {
 	case ISP_PM_BLK_ISP_SETTING:
