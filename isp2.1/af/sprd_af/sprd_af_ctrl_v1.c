@@ -692,6 +692,70 @@ extern "C" {
 			AF_LOGD("force write reg: %d ~ %d \n", af->stat_reg.reg_param[0]
 				, af->stat_reg.reg_param[1]);
 		}
+/*
+		struct af_enhanced_module_info {
+			unsigned char chl_sel;
+			unsigned char nr_mode;
+			unsigned char center_weight;
+			unsigned char fv_enhanced_mode[2];
+			unsigned char clip_en[2];
+			unsigned int max_th[2];
+			unsigned int min_th[2];
+			unsigned char fv_shift[2];
+			char fv1_coeff[36];
+		};
+
+		struct af_iir_nr_info {
+			unsigned char iir_nr_en;
+			short iir_g0;
+			short iir_c1;
+			short iir_c2;
+			short iir_c3;
+			short iir_c4;
+			short iir_c5;
+			short iir_g1;
+			short iir_c6;
+			short iir_c7;
+			short iir_c8;
+			short iir_c9;
+			short iir_c10;
+		};
+*/
+		af->af_iir_nr.iir_nr_en = 1;
+		af->af_iir_nr.iir_g0 = 185;
+		af->af_iir_nr.iir_c1 = 0;
+		af->af_iir_nr.iir_c2 = -229;
+		af->af_iir_nr.iir_c3 = 512;
+		af->af_iir_nr.iir_c4 = 1024;
+		af->af_iir_nr.iir_c5 = 512;
+		af->af_iir_nr.iir_g1 = 133;
+		af->af_iir_nr.iir_c6 = 0;
+		af->af_iir_nr.iir_c7 = -20;
+		af->af_iir_nr.iir_c8 = 512;
+		af->af_iir_nr.iir_c9 = 1024;
+		af->af_iir_nr.iir_c10 = 512;
+
+		char fv1_coeff[36] = {
+			-2, -2, -2, -2, 16, -2, -2, -2, -2,
+			-3, 5, 3, 5, 0, -5, 3, -5, -3,
+			3, 5, -3, -5, 0, 5, -3, -5, 3,
+			0, -8, 0, -8, 16, 0, 0, 0, 0
+		};
+		af->af_enhanced_module.chl_sel = 0;
+		af->af_enhanced_module.nr_mode = 2;
+		af->af_enhanced_module.center_weight = 2;
+		af->af_enhanced_module.fv_enhanced_mode[0] = 5;
+		af->af_enhanced_module.fv_enhanced_mode[1] = 5;
+		af->af_enhanced_module.clip_en[0] = 0;
+		af->af_enhanced_module.clip_en[1] = 0;
+		af->af_enhanced_module.max_th[0] = 131071;
+		af->af_enhanced_module.max_th[1] = 100;
+		af->af_enhanced_module.min_th[0] = 131071;
+		af->af_enhanced_module.min_th[1] = 100;
+		af->af_enhanced_module.fv_shift[0] = 0;
+		af->af_enhanced_module.fv_shift[1] = 0;
+		memcpy(&(af->af_enhanced_module.fv1_coeff), &fv1_coeff, sizeof(fv1_coeff));
+
 		if (ISP_CHIP_ID_TSHARK3 == isp_dev_get_chip_id(device)) {
 			isp_u_raw_afm_skip_num_clr(device, 1);
 			isp_u_raw_afm_skip_num_clr(device, 0);
@@ -723,8 +787,8 @@ extern "C" {
 #endif
 			isp_u_raw_afm_skip_num(device, 0);
 			isp_u_raw_afm_mode(device, 1);
-			isp_u_raw_afm_iir_nr_cfg(cxt->isp_driver_handle, af->af_iir_nr);
-			isp_u_raw_afm_modules_cfg(cxt->isp_driver_handle, af->af_enhanced_module);
+			isp_u_raw_afm_iir_nr_cfg(cxt->isp_driver_handle, (void *)&(af->af_iir_nr));
+			isp_u_raw_afm_modules_cfg(cxt->isp_driver_handle, (void *)&(af->af_enhanced_module));
 		}
 	}
 
@@ -733,6 +797,7 @@ extern "C" {
 		struct afctrl_init_in *input_ptr = input_param;
 		//isp_u_raw_afm_win_num(isp->handle_device, &num);
 		input_ptr->get_monitor_win_num(input_ptr->caller, &num);
+		AF_LOGE("win_num %d", num);
 		return num;
 	}
 
@@ -764,7 +829,6 @@ extern "C" {
 		struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
 		struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_ctx->dev_access_handle;
 		cmr_handle device = cxt->isp_driver_handle;
-		AF_LOGE("B");
 
 		num = 0;
 		p = fv;
@@ -797,6 +861,7 @@ extern "C" {
 						*p++ = data[61 + i * 3] + high;
 					}
 				}
+
 			} else {
 				uint32_t data[25];
 
@@ -819,6 +884,23 @@ extern "C" {
 					for (i = 0; i < roi_num; ++i)
 						*p++ = data[i];
 				}
+
+				if (filter_mask & ENHANCED_BIT) {
+					num++;
+
+					for (i = 0; i < 5; i++) {
+						AF_LOGE("fv0[%d]:%ld,", i, af->af_fv_val.af_fv0[i]);
+					}
+
+					for (i = 0; i < 5; i++) {
+						AF_LOGE("fv1[%d]:%ld,", i, af->af_fv_val.af_fv0[i]);
+					}
+
+					for (i = 0; i < roi_num; ++i) {
+						*p++ = af->af_fv_val.af_fv0[i];
+					}
+				}
+
 			}
 		} else {	// ring buffer path
 			if (ISP_CHIP_ID_TSHARK3 == isp_dev_get_chip_id(device)) {
@@ -876,9 +958,25 @@ extern "C" {
 						//*p++ = data[i];
 						*p++ = af->af_statistics[i];
 				}
+
+				if (filter_mask & ENHANCED_BIT) {
+					num++;
+
+					for (i = 0; i < 5; i++) {
+						//AF_LOGE("fv0[%d]:%ld,", i, af->af_fv_val.af_fv0[i]);
+					}
+
+					for (i = 0; i < 5; i++) {
+						//AF_LOGE("fv1[%d]:%ld,", i, af->af_fv_val.af_fv0[i]);
+					}
+
+					for (i = 0; i < roi_num; ++i) {
+						//*p++ = af->af_fv_val.af_fv0[i];
+					}
+				}
+
 			}
 		}
-		AF_LOGE("E");
 		return num;
 	}
 
@@ -982,16 +1080,18 @@ static void do_notify(af_ctrl_t *af, enum notify_event evt, const notify_result_
     }
 
     if (!sys->isp_callback_bypass)
-        sys->callback(sys->caller_id, ISP_CALLBACK_EVT|ISP_AF_NOTICE_CALLBACK, 
+        sys->callback(sys->caller_id, ISP_CALLBACK_EVT|ISP_AF_NOTICE_CALLBACK,
             &param, sizeof(param));
 }
 */
 	static void notify_start(af_ctrl_t * af) {
+		AF_LOGE(".");
 		//do_notify(af->isp_ctx, NOTIFY_START, NULL);
 		af->start_notice(af->caller);
 	}
 
 	static void notify_stop(af_ctrl_t * af, int win_num) {
+		AF_LOGE(".");
 //      notify_result_t res;
 //      res.win_num = win_num;
 		struct af_result_param af_result;
@@ -1621,7 +1721,6 @@ v=v>(max)?(max):v; hist[v]++;}
 	static void caf_monitor_process_af(af_ctrl_t * af) {
 		uint64_t fv[10];
 		struct aft_proc_calc_param *prm = &prm_af;
-		AF_LOGE("B");
 
 		memset(fv, 0, sizeof(fv));
 		memset(prm, 0, sizeof(struct aft_proc_calc_param));
@@ -1636,7 +1735,9 @@ v=v>(max)?(max):v; hist[v]++;}
 			int i;
 			uint64_t sum;
 */
-				afm_get_fv(af, fv, SPSMD_BIT, 3, AF_RING_BUFFER);
+				AF_LOGE("if");
+//                              afm_get_fv(af, fv, SPSMD_BIT, 3, AF_RING_BUFFER);
+				afm_get_fv(af, fv, ENHANCED_BIT, 3, AF_RING_BUFFER);
 /*
 			sum = 0;
 			for (i=0; i<9; ++i)
@@ -1649,7 +1750,10 @@ v=v>(max)?(max):v; hist[v]++;}
 			}
 #endif
 		} else {
-			afm_get_fv(af, fv, SPSMD_BIT, af->roi.num, AF_RING_BUFFER);
+			AF_LOGE("else %d,", af->roi.num);
+//                      afm_get_fv(af, fv, SPSMD_BIT, af->roi.num, AF_RING_BUFFER);
+			afm_get_fv(af, fv, ENHANCED_BIT, af->roi.num, AF_RING_BUFFER);
+
 			AF_LOGD("spsmd %lld", fv[af->roi.num - 1]);
 			fv[0] = fv[af->roi.num - 1];	// the fv in last window is for caf trigger
 		}
@@ -1665,7 +1769,6 @@ v=v>(max)?(max):v; hist[v]++;}
 		prm->active_data_type = AFT_DATA_AF;
 
 		caf_monitor_calc(af, prm);
-		AF_LOGE("E");
 	}
 
 	static void caf_process_af(af_ctrl_t * af) {
@@ -2222,7 +2325,9 @@ v=v>(max)?(max):v; hist[v]++;}
 				//int i;
 				uint64_t sum;
 
-				afm_get_fv(af, spsmd, SPSMD_BIT, 3, AF_RING_BUFFER);
+//                              afm_get_fv(af, spsmd, SPSMD_BIT, 3, AF_RING_BUFFER);
+				afm_get_fv(af, spsmd, ENHANCED_BIT, 3, AF_RING_BUFFER);
+
 				//sum = 0.2*spsmd[0]+spsmd[1]+3*spsmd[2];
 				switch (af->state) {
 				case STATE_FAF:
@@ -2253,11 +2358,14 @@ v=v>(max)?(max):v; hist[v]++;}
 */
 			}
 #endif
+			//_LOGD("fv[T_SPSMD] %lld", fv[T_SPSMD]);
 		} else {
 			uint32_t i;
 			uint64_t sum;
 
-			afm_get_fv(af, spsmd, SPSMD_BIT, af->roi.num, AF_RING_BUFFER);
+//                      afm_get_fv(af, spsmd, SPSMD_BIT, af->roi.num, AF_RING_BUFFER);
+			afm_get_fv(af, spsmd, ENHANCED_BIT, af->roi.num, AF_RING_BUFFER);
+
 			sum = 0;
 			for (i = 0; i < af->roi.num; ++i)	// for caf, the weight in last window is 0
 				sum += spsmd[i] * af->win_config->win_weight[i];
@@ -3569,16 +3677,6 @@ v=v>(max)?(max):v; hist[v]++;}
 		nsecs_t system_time1 = 0;
 		AF_LOGE("B");
 
-		uint32_t *af_fv_val = NULL;
-		af_fv_val = (uint32_t *) (inparam->data);
-
-		for (i = 0; i < 10; i++) {
-			af->af_fv_val.af_fv0[i] =
-			    (uint64_t) ((af_fv_val[20 + i] & 0x0000ffff) << 32) | (uint64_t) af_fv_val[i];
-			af->af_fv_val.af_fv1[i] =
-			    (uint64_t) (((af_fv_val[20 + i] >> 12) & 0x00000fff) << 32) | (uint64_t) af_fv_val[10 + i];
-		}
-
 		if (1 == af->bypass)
 			return 0;
 
@@ -3612,6 +3710,18 @@ v=v>(max)?(max):v; hist[v]++;}
 		switch (inparam->data_type) {
 		case AF_DATA_AF:
 			{
+				uint32_t *af_fv_val = NULL;
+				af_fv_val = (uint32_t *) (inparam->data);
+
+				for (i = 0; i < 10; i++) {
+					af->af_fv_val.af_fv0[i] =
+					    ((((uint64_t) af_fv_val[20 + i]) & 0x00000fff) << 32) |
+					    (((uint64_t) af_fv_val[i]));
+					af->af_fv_val.af_fv1[i] =
+					    (((((uint64_t) af_fv_val[20 + i]) >> 12) & 0x00000fff) << 32) |
+					    ((uint64_t) af_fv_val[10 + i]);
+				}
+
 				switch (af->state) {
 				case STATE_NORMAL_AF:
 					pthread_mutex_lock(&af->af_work_lock);
@@ -3971,7 +4081,7 @@ v=v>(max)?(max):v; hist[v]++;}
 			}
 
 		case AF_CMD_SET_ISP_START_INFO:
-			AF_LOGD("ISP_START state = %s", STATE_STRING(af->state));
+			AF_LOGD("isp start af state = %s", STATE_STRING(af->state));
 			//af->state = af->pre_state = STATE_IDLE;
 			property_get("af_mode", AF_MODE, "none");
 			if (0 == strcmp(AF_MODE, "none")) {
@@ -3985,7 +4095,7 @@ v=v>(max)?(max):v; hist[v]++;}
 //              if (af_cxt->is_running) {
 //                      rtn = _af_end_proc(handle,&af_cxt->af_result,AF_FALSE);
 //              }
-			AF_LOGD("ISP_STOP state = %s", STATE_STRING(af->state));
+			AF_LOGD("isp stop af state = %s", STATE_STRING(af->state));
 			if (STATE_IDLE != af->state)
 				do_stop_af(af);
 
@@ -4062,7 +4172,7 @@ v=v>(max)?(max):v; hist[v]++;}
 				break;
 				struct isp_face_area *face = (struct isp_face_area *)param0;
 
-				AF_LOGD("state = %s", STATE_STRING(af->state));
+				AF_LOGD("face detect af state = %s", STATE_STRING(af->state));
 				if (STATE_INACTIVE == af->state)
 					return 0;
 

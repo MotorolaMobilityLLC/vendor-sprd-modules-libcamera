@@ -240,12 +240,14 @@ enum filter_type {
 	FILTER_SOBEL5 = 0,
 	FILTER_SOBEL9,
 	FILTER_SPSMD,
+	FILTER_ENHANCED,
 	FILTER_NUM
 };
 
 #define SOBEL5_BIT  (1 << FILTER_SOBEL5)
 #define SOBEL9_BIT  (1 << FILTER_SOBEL9)
 #define SPSMD_BIT   (1 << FILTER_SPSMD)
+#define ENHANCED_BIT   (1 << FILTER_ENHANCED)
 
 // caf trigger
 typedef struct _caf_trigger_ops {
