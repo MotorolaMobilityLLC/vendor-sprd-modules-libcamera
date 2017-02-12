@@ -7611,6 +7611,19 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data)
 		    zsl_frame = obj->popZslList(mNeededTimestamp);
 		}
 
+		// for whale2/sharkl2 zsl
+		if (obj->mSprdZslEnabled == 1 &&
+		    sprddefInfo.capture_mode == 1) {
+			if (zsl_frame.y_vir_addr != 0) {
+				// set last time buffer to kernel for right scene
+				mHalOem->ops->camera_set_zsl_buffer(obj->mCameraHandle,
+								zsl_frame.y_phy_addr,
+								zsl_frame.y_vir_addr,
+								zsl_frame.fd);
+				zsl_frame.y_vir_addr = 0;
+			}
+		}
+
 		if (obj->mFlashCaptureFlag == 1) {
 			while (1) {
 				if ((zsl_frame.y_vir_addr != 0) &&
