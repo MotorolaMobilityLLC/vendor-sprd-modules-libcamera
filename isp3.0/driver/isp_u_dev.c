@@ -278,6 +278,8 @@ cmr_int isp_dev_start(isp_handle handle)
 #else
 	load_input.af_stats_independence = 0;
 #endif
+	load_input.cbc_bin_offset = file->init_param.cbc_bin_offset;
+	load_input.pdaf_supported = file->pdaf_supported;
 	ISP_LOGI("shading offset 0x%x irp offset 0x%x", load_input.shading_bin_offset, load_input.irp_bin_offset);
 	ISP_LOGI("shading bin addr 0x%p size 0x%x irq bin addr 0x%p size %x, cbc bin addr 0x%p size %x",
 		 file->init_param.shading_bin_addr, file->init_param.shading_bin_size,
