@@ -3554,6 +3554,12 @@ v=v>(max)?(max):v; hist[v]++;}
 			FILE *fp = NULL;
 			af_tuning_param_t tuning_data;
 			fp = fopen("/data/misc/cameraserver/af_tuning_default.bin", "wb");
+			if(fp == NULL)
+			{
+				AF_LOGE("af init error rtn!!!\n");
+				af = NULL;
+				return (cmr_handle) af;
+			}
 			memset(&tuning_data, 0, sizeof(tuning_data));
 			memcpy(tuning_data.filter_clip, af->filter_clip, sizeof(af->filter_clip));
 			memcpy(tuning_data.bv_threshold, af->bv_threshold, sizeof(af->bv_threshold));

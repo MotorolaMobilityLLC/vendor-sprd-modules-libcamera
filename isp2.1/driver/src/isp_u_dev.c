@@ -57,7 +57,7 @@ isp_s32 isp_dev_open(cmr_s32 fd, isp_handle *handle)
 
 isp_free:
 	if (file)
-		free(file);
+		free((void*)file);
 	file = NULL;
 
 	return ret;
@@ -76,15 +76,10 @@ isp_s32 isp_dev_close(isp_handle handle)
 
 	file = (struct isp_file *)handle;
 
-	if (-1 != file->fd) {
-		if (-1 == close(file->fd)) {
-			ISP_LOGE("close error.");
-		}
-	} else {
-		ISP_LOGE("handle is null error.");
+	if (file) {
+		free((void*)file);
+		file = NULL;
 	}
-
-	free(file);
 
 	return ret;
 }

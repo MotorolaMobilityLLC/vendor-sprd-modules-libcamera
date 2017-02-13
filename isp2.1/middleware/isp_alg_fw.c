@@ -1633,6 +1633,10 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 	}
 
 	isp_alg_destroy_thread_proc((cmr_handle)cxt);
+	if (cxt) {
+		free((void*)cxt);
+		cxt = NULL;
+	}
 
 	return rtn;
 }

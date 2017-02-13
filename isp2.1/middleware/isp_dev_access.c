@@ -344,7 +344,8 @@ void isp_dev_irq_info_proc(cmr_handle isp_dev_handle, void* param_ptr)
 	statis_info = malloc(sizeof(*statis_info));
 
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-	irq_info = (struct sprd_img_irq_info *)param_ptr;
+	irq_info = (struct sprd_irq_info *)param_ptr;
+
 	statis_info->irq_property = irq_info->irq_property;
 
 	if (irq_info->irq_property == IRQ_DCAM_SOF) {
@@ -418,8 +419,13 @@ cmr_int isp_dev_access_deinit(cmr_handle isp_handler)
 
 		statis_mem_info->isp_statis_alloc_flag = 0;
 	}
+	isp_dev_close(cxt->isp_driver_handle);
+	if (cxt) {
+		free((void*)cxt);
+		cxt = NULL;
+	}
 
-	ISP_LOGI("LiuY: done %ld", rtn);
+	ISP_LOGI("isp_dev_access_deinit done %ld", rtn);
 
 	return rtn;
 }
