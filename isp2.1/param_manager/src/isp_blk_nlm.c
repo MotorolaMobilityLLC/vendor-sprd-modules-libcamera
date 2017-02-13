@@ -171,7 +171,7 @@ isp_s32 _pm_nlm_init(void *dst_nlm_param, void *src_nlm_param, void* param1, voi
 	}
 	memset((void *)dst_ptr->ivst_map.data_ptr, 0x00, dst_ptr->ivst_map.size);
 	#if 1 //only WORDSIZE 32
-	dst_ptr->cur.ivst_addr = (isp_uint)(dst_ptr->vst_map.data_ptr);
+	dst_ptr->cur.ivst_addr = (isp_uint)(dst_ptr->ivst_map.data_ptr);
 	#endif
 #if 0 //wait for kernel modefy the parameter vst_addr and ivst_addr to vst_addr[2] and ivst_addr[2](array type)
 #if __WORDSIZE == 64
