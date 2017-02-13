@@ -88,34 +88,14 @@ endif
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL/usr
 
 include $(LOCAL_PATH)/../SprdCtrl.mk
+include $(LOCAL_PATH)/af_drv/Sprdroid.mk
+include $(LOCAL_PATH)/otp_drv/Sprdroid.mk
+include $(LOCAL_PATH)/sensor_drv/Sprdroid.mk
 
 LOCAL_SRC_FILES += \
-				s5k3p8sm/sensor_s5k3p8sm_mipi_raw.c \
-				imx230/sensor_imx230_mipi_raw.c \
-				imx258/sensor_imx258_mipi_raw.c \
-				ov2680/sensor_ov2680_mipi_raw.c \
-				af_bu64297gwz.c \
-				s5k4h8yx/sensor_s5k4h8yx_mipi_raw.c \
-				vcm/vcm_dw9800.c \
-				vcm/vcm_dw_9714.c \
-				s5k3l8xxm3/sensor_s5k3l8xxm3_mipi_raw.c\
-				sp2509/sensor_sp2509_mipi_raw.c \
-				ov8856/sensor_ov8856_mipi_raw.c \
-				ov8856s/sensor_ov8856s_mipi_raw.c \
-				vcm/vcm_dw9807.c \
-				vcm/vcm_ak7371.c \
-				dummy/isp_otp_calibration.c \
-				sensor_cfg.c \
-				sensor_drv_u.c
-
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
-LOCAL_SRC_FILES += \
-				ov5675/sensor_ov5675_mipi_raw.c \
-				gc8024/sensor_gc8024_mipi_raw.c \
-				gc5005/sensor_gc5005_mipi_raw.c
-
-endif
+	dummy/isp_otp_calibration.c \
+	sensor_cfg.c \
+	sensor_drv_u.c
 
 ifeq ($(strip $(TARGET_CAMERA_OIS_FUNC)),true)
 	LOCAL_C_INCLUDES += \

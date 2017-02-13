@@ -17,7 +17,9 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../vsp/inc \
 	$(LOCAL_PATH)/../tool/mtrace \
 	$(LOCAL_PATH)/../arithmetic/facebeauty/inc \
-	$(LOCAL_PATH)/../sensor/dummy
+	$(LOCAL_PATH)/../sensor/dummy \
+	$(LOCAL_PATH)/../sensor/af_drv \
+	$(LOCAL_PATH)/../sensor/otp_drv
 
 LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../isp2.1/isp_tune \

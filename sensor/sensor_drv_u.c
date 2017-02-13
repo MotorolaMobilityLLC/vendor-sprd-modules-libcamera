@@ -54,7 +54,7 @@ static cmr_int sensor_set_modone(struct sensor_drv_context *sensor_cxt);
 static cmr_int sns_stream_on(struct sensor_drv_context *sensor_cxt);
 static cmr_int sns_stream_off(struct sensor_drv_context *sensor_cxt);
 static cmr_int sns_set_id(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E sensor_id);
-static cmr_int sns_cfg_otp_update_isparam(struct sensor_drv_context *sensor_cxt, cmr_u32 sensor_id);
+static cmr_int sns_cfg_otp_update_isparam(struct sensor_drv_context *sensor_cxt, cmr_u32 sensor_id, int cmd, void* data);
 static cmr_int sns_open(struct sensor_drv_context *sensor_cxt, cmr_u32 sensor_id);
 static cmr_int sns_dev_pwdn(struct sensor_drv_context *sensor_cxt, cmr_u32 power_level);
 static SENSOR_ID_E snr_get_cur_id(struct sensor_drv_context *sensor_cxt);
@@ -64,6 +64,8 @@ static cmr_int snr_chk_snr_mode(SENSOR_MODE_INFO_T *mode_info);
 static cmr_u32 sns_get_mipi_phy_id(struct sensor_drv_context *sensor_cxt);
 static cmr_int sensor_cfg_otp_update_isparam(struct sensor_drv_context *sensor_cxt,
 						cmr_u32 sensor_id);
+static cmr_int sensor_ctrl_otp_data(struct sensor_drv_context *sensor_cxt,
+						cmr_u32 sensor_id,uint8_t cmd,void* data);
 static cmr_int sns_create_ctrl_thread(struct sensor_drv_context *sensor_cxt);
 static cmr_int sns_ctrl_thread_proc(struct cmr_msg *message, void *p_data);
 static cmr_int sns_destroy_ctrl_thread(struct sensor_drv_context *sensor_cxt);
@@ -610,7 +612,12 @@ cmr_int sns_dev_mipi_deinit(struct sensor_drv_context *sensor_cxt)
 	return ret;
 }
 
-cmr_int hw_Sensor_ReadI2C(SENSOR_HW_HANDLE handle, cmr_u16 slave_addr, cmr_u8 *cmd, cmr_u16 cmd_length)
+/*
+ * handle    : the sensor hardware instance.
+ * cmd_length: the high 16 bits is read data length and the low 16 bits is register length
+ *             that we want to read continuously.
+ **/
+cmr_int hw_Sensor_ReadI2C(SENSOR_HW_HANDLE handle, cmr_u16 slave_addr, cmr_u8 *cmd, cmr_u32 cmd_length)
 {
 	SENSOR_I2C_T i2c_tab;
 	cmr_int ret = SENSOR_SUCCESS;
@@ -618,10 +625,13 @@ cmr_int hw_Sensor_ReadI2C(SENSOR_HW_HANDLE handle, cmr_u16 slave_addr, cmr_u8 *c
 		return SENSOR_CTX_ERROR;
 	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)(handle->privatedata);
 
-	i2c_tab.slave_addr 	= slave_addr;
-	i2c_tab.i2c_data	= cmd;
-	i2c_tab.i2c_count	= cmd_length;
-	i2c_tab.read_len	= cmd_length;
+	i2c_tab.slave_addr  = slave_addr;
+	i2c_tab.i2c_data    = cmd;
+	i2c_tab.i2c_count   = cmd_length & 0xffff;
+	i2c_tab.read_len    = (cmd_length >> 16) & 0xffff;
+
+	if ((((cmd_length >> 16) & 0xffff)) == 0)
+		i2c_tab.read_len = cmd_length & 0xffff;
 
 	CMR_LOGV("Sensor_ReadI2C, slave_addr=0x%x, ptr=0x%p, count=%d\n",
 		i2c_tab.slave_addr, i2c_tab.i2c_data, i2c_tab.i2c_count);
@@ -639,9 +649,9 @@ cmr_int hw_Sensor_WriteI2C(SENSOR_HW_HANDLE handle, cmr_u16 slave_addr, cmr_u8 *
 		return SENSOR_CTX_ERROR;
 	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)(handle->privatedata);
 
-	i2c_tab.slave_addr 	= slave_addr;
-	i2c_tab.i2c_data	= cmd;
-	i2c_tab.i2c_count	= cmd_length;
+	i2c_tab.slave_addr = slave_addr;
+	i2c_tab.i2c_data   = cmd;
+	i2c_tab.i2c_count  = cmd_length;
 
 	SENSOR_LOGV("slave_addr=0x%x, ptr=0x%p, count=%d",
 		i2c_tab.slave_addr, i2c_tab.i2c_data, i2c_tab.i2c_count);
@@ -673,6 +683,64 @@ cmr_int hw_sensor_muti_i2c_write(SENSOR_HW_HANDLE handle, struct sensor_muti_aec
 	sns_dev_muti_i2c_write(sensor_cxt, aec_i2c_info);
 
 	return 0;
+}
+
+cmr_int hw_sensor_init_otp_module(SENSOR_HW_HANDLE handle)
+{
+	cmr_int ret;
+	if (NULL == handle || NULL == handle->privatedata)
+		return SENSOR_CTX_ERROR;
+	SENSOR_LOGI("in");
+	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)(handle->privatedata);
+	SENSOR_MATCH_T *module = sensor_cxt->module_cxt;
+
+	if (module && (module->otp_drv_info) && (!sensor_cxt->sensor_otp_cxt)){
+		otp_ctrl_cxt_t *ctr_cxt = malloc(sizeof(otp_ctrl_cxt_t)); /*malloc a otp handle*/
+		ctr_cxt->otp_params.buffer = NULL;
+		ctr_cxt->otp_data = NULL;
+		ctr_cxt->otp_drv_cxt = module->otp_drv_info; /*save otp driver context*/
+		sensor_cxt->sensor_otp_cxt = ctr_cxt;
+	} else {
+		SENSOR_LOGE("error:otp driver module:0x%x,otp_drv:0x%x",module,module->otp_drv_info);
+	}
+	SENSOR_LOGI("out");
+	return ret;
+}
+
+cmr_int hw_sensor_deinit_otp_module(SENSOR_HW_HANDLE handle,cmr_u32 sensor_id)
+{
+	cmr_int ret;
+	if (NULL == handle || NULL == handle->privatedata)
+		return SENSOR_CTX_ERROR;
+	SENSOR_LOGI("in");
+	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)(handle->privatedata);
+	SENSOR_MATCH_T *module = sensor_cxt->module_cxt;
+
+	if (module && module->otp_drv_info && sensor_cxt->sensor_otp_cxt)
+		sensor_ctrl_otp_data(sensor_cxt,sensor_id,RELEASE_OTP_DATA,NULL); /*releas otp data*/
+	if (sensor_cxt->sensor_otp_cxt){
+		free(sensor_cxt->sensor_otp_cxt);
+		sensor_cxt->sensor_otp_cxt = NULL;
+	} else {
+		SENSOR_LOGE("Otp_module is null ,no need release otp_module");
+	}
+	SENSOR_LOGI("out");
+	return ret;
+}
+
+cmr_int hw_sensor_init_af_dev(SENSOR_HW_HANDLE handle)
+{
+	cmr_int ret;
+	if (NULL == handle || NULL == handle->privatedata)
+		return SENSOR_CTX_ERROR;
+	struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)(handle->privatedata);
+	SENSOR_MATCH_T *module = sensor_cxt->module_cxt;
+
+	if(module && module->af_dev_info) {
+		if(module->af_dev_info->af_ops.set_motor_bestmode)
+			ret = module->af_dev_info->af_ops.set_motor_bestmode(handle);
+	}
+	return ret;
 }
 
 static cmr_int sns_grc_read_i2c(struct sensor_drv_context *sensor_cxt, cmr_u16 slave_addr, cmr_u16 addr, cmr_u16 *reg, cmr_int bits)
@@ -1212,7 +1280,8 @@ void Sensor_SetExportInfo(struct sensor_drv_context *sensor_cxt)
 	SENSOR_DRV_CHECK_ZERO_VOID(sensor_cxt);
 
 	SENSOR_EXP_INFO_T            *exp_info_ptr = &sensor_cxt->sensor_exp_info;
-
+	//SENSOR_MATCH_T               *module = container_of(sensor_cxt->sensor_info_ptr,SENSOR_MATCH_T,sensor_info);
+	SENSOR_MATCH_T *module = sensor_cxt->module_cxt;
 	if (PNULL == sensor_cxt->sensor_info_ptr) {
 		SENSOR_LOGE("X. sensor_info_ptr is null.");
 		return;
@@ -1377,6 +1446,17 @@ void Sensor_SetExportInfo(struct sensor_drv_context *sensor_cxt)
 			exp_info_ptr->raw_info_ptr->ioctrl_ptr->set_motor_bestmode = exp_info_ptr->ioctl_func_ptr->set_motor_bestmode;
 			exp_info_ptr->raw_info_ptr->ioctrl_ptr->get_test_vcm_mode = exp_info_ptr->ioctl_func_ptr->get_test_vcm_mode;
 			exp_info_ptr->raw_info_ptr->ioctrl_ptr->set_test_vcm_mode = exp_info_ptr->ioctl_func_ptr->set_test_vcm_mode;
+			if(module && module->af_dev_info){
+				exp_info_ptr->raw_info_ptr->ioctrl_ptr->caller_handler = sensor_cxt->sensor_hw_handler;
+				exp_info_ptr->raw_info_ptr->ioctrl_ptr->set_pos = module->af_dev_info->af_ops.set_motor_pos;
+				exp_info_ptr->raw_info_ptr->ioctrl_ptr->get_otp = NULL;
+				exp_info_ptr->raw_info_ptr->ioctrl_ptr->get_motor_pos = module->af_dev_info->af_ops.get_motor_pos;
+				exp_info_ptr->raw_info_ptr->ioctrl_ptr->set_motor_bestmode = module->af_dev_info->af_ops.set_motor_bestmode;
+				exp_info_ptr->raw_info_ptr->ioctrl_ptr->get_test_vcm_mode = module->af_dev_info->af_ops.get_test_motor_mode;
+				exp_info_ptr->raw_info_ptr->ioctrl_ptr->set_test_vcm_mode = module->af_dev_info->af_ops.set_test_motor_mode;
+			} else {
+				CMR_LOGE("AF device driver has problem,please double check it.module:0x%x,af_dev:0x%x",module,module?module->af_dev_info:NULL);
+			}
 #endif
 			exp_info_ptr->raw_info_ptr->ioctrl_ptr->write_i2c = hw_Sensor_WriteI2C;
 			//exp_info_ptr->raw_info_ptr->ioctrl_ptr->read_i2c = Sensor_ReadI2C;
@@ -2668,7 +2748,8 @@ cmr_int sns_ctrl_thread_proc(struct cmr_msg *message, void *p_data)
 
 	case SENSOR_CTRL_EVT_CFGOTP:
 		camera_id = (cmr_u32)message->sub_msg_type;
-		sns_cfg_otp_update_isparam(sensor_cxt, camera_id);
+		otp_ctrl_cmd_t *otp_ctrl_data = (otp_ctrl_cmd_t*)message->data;
+		sns_cfg_otp_update_isparam(sensor_cxt, camera_id, otp_ctrl_data->cmd, otp_ctrl_data->data);
 		break;
 	case SENSOR_CTRL_EVT_STREAM_CTRL:
 		on_off = (cmr_u32)message->sub_msg_type;
@@ -2870,6 +2951,8 @@ cmr_int sns_open(struct sensor_drv_context *sensor_cxt, cmr_u32 sensor_id)
 	cmr_u32 ret_val = SENSOR_FAIL;
 	cmr_u32 is_inited = 0;
 	SENSOR_REGISTER_INFO_T_PTR sensor_register_info_ptr = PNULL;
+	//SENSOR_MATCH_T *module = container_of(sensor_cxt->sensor_info_ptr,SENSOR_MATCH_T,sensor_info);
+	SENSOR_MATCH_T *module = NULL;
 
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 	sensor_register_info_ptr = &sensor_cxt->sensor_register_info;
@@ -2903,7 +2986,9 @@ cmr_int sns_open(struct sensor_drv_context *sensor_cxt, cmr_u32 sensor_id)
 			return SENSOR_FAIL;
 		}
 		ATRACE_END();
-
+		module = (SENSOR_MATCH_T*)Sensor_GetInforTab(sensor_cxt, sensor_id) + 
+								sensor_cxt->sensor_index[sensor_id];
+		sensor_cxt->module_cxt = module;
 		Sensor_SetExportInfo(sensor_cxt);
 
 		ret_val = SENSOR_SUCCESS;
@@ -2913,14 +2998,20 @@ cmr_int sns_open(struct sensor_drv_context *sensor_cxt, cmr_u32 sensor_id)
 			ret_val = SENSOR_FAIL;
 		}
 		if (SENSOR_SUCCESS == ret_val) {
-			sensor_cfg_otp_update_isparam(sensor_cxt, sensor_id);
-
+			//sensor_cfg_otp_update_isparam(sensor_cxt, sensor_id);
+			//sensor_ctrl_otp_data(sensor_cxt,sensor_id,READ_FORMAT_OTP_DATA,NULL);
 			if (SENSOR_SUCCESS != sensor_set_mode(sensor_cxt, SENSOR_MODE_PREVIEW_ONE, is_inited)) {
 				SENSOR_LOGE("Sensor set init mode error!");
 				sns_i2c_deinit(sensor_cxt, sensor_id);
 				ret_val = SENSOR_FAIL;
 			}
 		}
+		hw_sensor_init_otp_module(sensor_cxt->sensor_hw_handler);
+		if((SENSOR_IMAGE_FORMAT_RAW == sensor_cxt->sensor_info_ptr->image_format) &&
+                                       module && module->otp_drv_info){
+			sensor_ctrl_otp_data(sensor_cxt, sensor_id,READ_FORMAT_OTP_DATA,NULL);
+		}
+		hw_sensor_init_af_dev(sensor_cxt->sensor_hw_handler);
 		sensor_cxt->stream_on = 1;
 		sns_stream_ctrl_common(sensor_cxt, 0);
 		SENSOR_LOGI("4 open success");
@@ -3284,6 +3375,7 @@ cmr_int sensor_close_common(struct sensor_drv_context *sensor_cxt, cmr_u32 senso
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 
 	sensor_register_info_ptr = &sensor_cxt->sensor_register_info;
+	hw_sensor_deinit_otp_module(sensor_cxt->sensor_hw_handler,sensor_id);
 
 	sns_destroy_ctrl_thread(sensor_cxt);
 
@@ -3431,7 +3523,6 @@ cmr_int sensor_close_common(struct sensor_drv_context *sensor_cxt, cmr_u32 senso
 #endif
 	}
 	SENSOR_LOGI("9.");
-
 	sns_device_deinit(sensor_cxt);
 	free((void*)sensor_cxt->sensor_hw_handler);
 	sensor_cxt->sensor_hw_handler = NULL;
@@ -4207,6 +4298,43 @@ cmr_int hw_Sensor_WriteData(SENSOR_HW_HANDLE handle, cmr_u8 *regPtr, cmr_u32 len
 	ret = sns_device_write(sensor_cxt, regPtr, length);
 	return ret;
 }
+/*data is a struct otp_ctrl_cmd_t*/
+cmr_int sensor_ctrl_otp_data(struct sensor_drv_context *sensor_cxt,
+                                  cmr_u32 sensor_id,uint8_t cmd,void* data)
+{
+	CMR_MSG_INIT(message);
+	cmr_int ret = CMR_CAMERA_SUCCESS;
+
+	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
+	otp_ctrl_cmd_t *otp_cmd = malloc(sizeof(otp_ctrl_cmd_t));
+	if(!otp_cmd) {
+		CMR_LOGE("otp cmd buffer alloc failed!");
+		return -1;
+	}
+	otp_cmd->cmd  = cmd;
+	otp_cmd->data = data;
+	/*the set mode function can be async control*/
+	message.msg_type     = SENSOR_CTRL_EVT_CFGOTP;
+	message.sub_msg_type = sensor_id;
+	if( cmd == WRITE_FORMAT_OTP_DATA ) {
+		//message.sync_flag = CMR_MSG_SYNC_RECEIVED;
+		message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+	} else {
+		message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+	}
+	message.alloc_flag = 1; /*alloc from sender*/
+	message.data = (void*)otp_cmd;
+
+	ret = cmr_thread_msg_send(sensor_cxt->ctrl_thread_cxt.thread_handle, &message);
+	if (ret) {
+		CMR_LOGE("send msg failed!");
+		if (message.data) {
+			free(message.data);
+		}
+		return CMR_CAMERA_FAIL;
+	}
+	return ret;
+}
 
 cmr_int sensor_cfg_otp_update_isparam(struct sensor_drv_context *sensor_cxt,
 						cmr_u32 sensor_id)
@@ -4252,25 +4380,30 @@ cmr_int sensor_read_otp_info(struct sensor_drv_context *sensor_cxt,
 }
 
 cmr_int sns_cfg_otp_update_isparam(struct sensor_drv_context *sensor_cxt,
-						cmr_u32 sensor_id)
+						cmr_u32 sensor_id, int cmd, void* data)
 {
 	ATRACE_BEGIN(__FUNCTION__);
 
 	cmr_int                      ret = 0;
-	struct _sensor_val_tag	     param;
+	struct _sensor_val_tag       param;
+	//SENSOR_MATCH_T              *module = container_of(sensor_cxt->sensor_info_ptr,SENSOR_MATCH_T,sensor_info);
+	SENSOR_MATCH_T               *module = sensor_cxt->module_cxt;
 
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
-	if ((NULL != sensor_cxt->sensor_info_ptr)
-			&& (NULL != sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr)){
-		param.type = SENSOR_VAL_TYPE_INIT_OTP;
-		if(PNULL != sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr->cfg_otp){
-			sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr->cfg_otp(sensor_cxt->sensor_hw_handler, (cmr_uint)&param);
+	if(module && module->otp_drv_info && sensor_cxt->sensor_otp_cxt){
+		ret = sensor_otp_process(sensor_cxt->sensor_hw_handler,cmd,data);
+	} else {
+		if ((NULL != sensor_cxt->sensor_info_ptr)
+				&& (NULL != sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr)){
+			param.type = SENSOR_VAL_TYPE_INIT_OTP;
+			if(PNULL != sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr->cfg_otp){
+				sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr->cfg_otp(sensor_cxt->sensor_hw_handler, (cmr_uint)&param);
+			}
+		}else{
+			SENSOR_LOGE("invalid param failed!");
+			return CMR_CAMERA_INVALID_PARAM;
 		}
-	}else{
-		SENSOR_LOGE("invalid param failed!");
-		return CMR_CAMERA_INVALID_PARAM;
 	}
-
 	ATRACE_END();
 	return ret;
 }
@@ -4354,4 +4487,3 @@ ERROR:
 	close(fd);
 	}
 }
-

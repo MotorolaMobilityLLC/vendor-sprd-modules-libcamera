@@ -512,6 +512,18 @@ typedef struct{
 }*SENSOR_HW_HANDLE;
 typedef cmr_uint(*SENSOR_IOCTL_FUNC_PTR) (SENSOR_HW_HANDLE handle, cmr_uint param);
 
+struct hdr_info_t {
+	uint32_t capture_max_shutter;
+	uint32_t capture_shutter;
+	uint32_t capture_gain;
+};
+
+struct sensor_ev_info_t {
+	uint16_t preview_shutter;
+	float preview_gain;
+	uint16_t preview_framelength;
+};
+
 typedef struct sensor_ioctl_func_tab_tag {
 	/*1: Internal IOCTL function */
        //SENSOR_HW_HANDLE (*create)(void *privatedata);    // malloc SENSOR_HW_HANDLE,  privatedata == sensor_drv_ctx.
@@ -906,6 +918,8 @@ struct sensor_drv_context {
 	cmr_u32                             error_cnt;
 	cmr_uint                            lnc_addr_bakup[8][4];
 	cmr_u32                             bypass_mode;
+	void                                *sensor_otp_cxt;
+	void                                *module_cxt;
 };
 
 enum {
@@ -1008,8 +1022,9 @@ cmr_int hw_Sensor_SendRegTabToSensor(SENSOR_HW_HANDLE handle, SENSOR_REG_TAB_INF
 cmr_int hw_Sensor_Device_WriteRegTab(SENSOR_HW_HANDLE handle, SENSOR_REG_TAB_PTR reg_tab);
 #define Sensor_Device_WriteRegTab(reg_tab)    hw_Sensor_Device_WriteRegTab(handle, reg_tab)
 
-cmr_int hw_Sensor_ReadI2C(SENSOR_HW_HANDLE handle, cmr_u16 slave_addr, cmr_u8 *cmd, cmr_u16 cmd_length);
+cmr_int hw_Sensor_ReadI2C(SENSOR_HW_HANDLE handle, cmr_u16 slave_addr, cmr_u8 *cmd, cmr_u32 cmd_length);
 #define Sensor_ReadI2C(slave_addr, cmd, cmd_length)    hw_Sensor_ReadI2C(handle, slave_addr, cmd, cmd_length)
+#define Sensor_ReadI2C_SEQ(slave_addr, cmd, reg_len, read_len)    hw_Sensor_ReadI2C(handle, slave_addr, cmd, reg_len | (read_len << 16))
 
 cmr_int hw_Sensor_WriteI2C(SENSOR_HW_HANDLE handle, cmr_u16 slave_addr, cmr_u8 *cmd, cmr_u16 cmd_length);
 #define Sensor_WriteI2C(slave_addr, cmd, cmd_length)    hw_Sensor_WriteI2C(handle, slave_addr, cmd, cmd_length)
