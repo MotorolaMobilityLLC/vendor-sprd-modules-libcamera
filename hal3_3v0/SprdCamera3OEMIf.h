@@ -149,7 +149,7 @@ public:
 	virtual int openCamera();
 	void initialize();
 	void setCaptureRawMode(bool mode);
-	void setCallBackRawMode(bool mode);/**add for 3d capture*/
+	void setCallBackYuvMode(bool mode);/**add for 3d capture*/
 	void setCaptureReprocessMode(bool mode, uint32_t width, uint32_t height);/**add for 3d capture*/
 	void antiShakeParamSetup();
 	int displayCopy(uintptr_t dst_phy_addr, uintptr_t dst_virtual_addr,
@@ -204,7 +204,7 @@ public:
 	void setSensorCloseFlag();
 	uint64_t getZslBufferTimestamp();/**add for 3dcapture, get zsl buffer's timestamp in zsl query*/
 	void setZslBufferTimestamp(uint64_t timestamp);/**add for 3dcapture, set the needed timestamp*/
-	void setMultiCallBackRawMode(bool mode);
+	void setMultiCallBackYuvMode(bool mode);
 	int getMultiCameraMode(void);
 	void setSprdCameraLowpower(int flag);
 public:
@@ -452,7 +452,7 @@ private:
 	void snapshotZsl(void *p_data);
 	uint32_t getZslBufferIDForFd(cmr_s32 fd);
 	int pushZslFrame(struct camera_frame_type *frame);
-	struct camera_frame_type popZslFrame(uint64_t need_timestam);
+	struct camera_frame_type popZslFrame();
 	void processStopMultiLayer(void *p_data);
 
 	List<ZslBufferQueue> mZSLQueue;
@@ -472,8 +472,8 @@ private:
 
 	bool                              mSprdRefocusEnabled;
 	bool                              mSprd3dCalibrationEnabled;/**add for 3d calibration */
-	bool                              mSprdRawCallBack;/**add for 3d capture */
-	bool                              mSprdMultiRawCallBack;/**add for 3d capture */
+	bool                              mSprdYuvCallBack;/**add for 3d capture */
+	bool                              mSprdMultiYuvCallBack;/**add for 3d capture */
 	bool                              mSprdReprocessing;/**add for 3d capture */
 	uint64_t                          mNeededTimestamp;/**add for 3d capture */
 	bool                              mIsUnpopped;/**add for 3dcapture, record unpoped zsl buffer*/

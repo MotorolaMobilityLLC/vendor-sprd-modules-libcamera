@@ -106,9 +106,10 @@ LOCAL_SRC_FILES+= \
 ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
 LOCAL_SRC_FILES+= \
 	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3StereoVideo.cpp \
+        hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3StereoPreview.cpp \
 	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3RangeFinder.cpp \
 	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3Wrapper.cpp  \
-    hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3Capture.cpp
+        hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3Capture.cpp
 #	hal1.0/src/SprdCameraHardwareInterface.cpp \
 #	hal1.0/src/SprdCameraFlash.cpp
 

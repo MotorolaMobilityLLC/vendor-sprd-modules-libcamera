@@ -51,17 +51,21 @@
 
 namespace sprdcamera {
 
-#define MAX_NUM_CAMERAS    3
+#ifndef MAX_NUM_STREAMS
 #define MAX_NUM_STREAMS    2
+#endif
+#ifndef MAX_PREVIEW_QEQUEST_BUF
 #define MAX_PREVIEW_QEQUEST_BUF 20
+#endif
+#ifndef MAX_UNMATCHED_QUEUE_SIZE
 #define MAX_UNMATCHED_QUEUE_SIZE 3
+#endif
+#ifndef MAX_SAVE_REQUEST_QUEUE_SIZE
 #define MAX_SAVE_REQUEST_QUEUE_SIZE 10
-#define TIME_DIFF (15e6)
-#define LIB_GPU_PATH "libimagestitcher.so"
-#define CONTEXT_SUCCESS 1
-#define CONTEXT_FAIL 0
-#define THREAD_TIMEOUT    30e6
+#endif
+#ifndef MAX_NOTIFY_QUEUE_SIZE
 #define MAX_NOTIFY_QUEUE_SIZE 10
+#endif
 
 typedef struct {
     int srcWidth;
@@ -154,7 +158,7 @@ public:
         double mVFps;
         void dumpFps();
         void waitMsgAvailable();
-        int reProcessFrame(const buffer_handle_t* frame_buffer,int32_t cur_frameid);
+        int reProcessFrame(const buffer_handle_t* frame_buffer,uint32_t cur_frameid);
         void CallBackResult(frame_matched_info_t* combPreviewResult);
         void preview_3d_convert_face_info(int *ptr_cam_face_inf,int width,int height);
         void preview_3d_doFaceMakeup( private_handle_t *private_handle ,int perfect_level,int *face_info);

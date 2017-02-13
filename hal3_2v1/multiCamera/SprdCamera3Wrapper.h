@@ -42,6 +42,7 @@
 #include <system/camera.h>
 #include <sys/mman.h>
 #include "SprdCamera3StereoVideo.h"
+#include "SprdCamera3StereoPreview.h"
 #include "SprdCamera3RangeFinder.h"
 #include "SprdCamera3Capture.h"
 
@@ -61,6 +62,7 @@ public:
 
 private:
 	SprdCamera3StereoVideo      *mStereoVideo;
+	SprdCamera3StereoPreview    *mStereoPreview;
 	SprdCamera3RangeFinder      *mRangeFinder;
 	SprdCamera3Capture          *mCapture;
 };

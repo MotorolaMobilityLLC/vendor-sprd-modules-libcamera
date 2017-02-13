@@ -435,8 +435,11 @@ int camera_pre_capture_buf_size(cmr_u32 camera_id,
             CMR_LOGI("current mode is 3D video");
             mem_tab_ptr = (struct cap_size_to_mem*)&Stereo_video_mem_size_tab[0];
             yuv_mem_tab_ptr = (struct cap_size_to_mem*)&Stereo_video_mem_size_tab[0];
-        }
-        else if(cameraMode == 5){/**add for reducing mem size in 3D capture mode begin*/
+        }else if(cameraMode == 7){
+            CMR_LOGI("current mode is 3D preview");
+            mem_tab_ptr = (struct cap_size_to_mem*)&Stereo_video_mem_size_tab[0];
+            yuv_mem_tab_ptr = (struct cap_size_to_mem*)&Stereo_video_mem_size_tab[0];
+        }else if(cameraMode == 5){/**add for reducing mem size in 3D capture mode begin*/
             CMR_LOGI("current mode is 3D capture");
             mem_tab_ptr = (struct cap_size_to_mem*)&front_cam_mem_size_tab[0];
             yuv_mem_tab_ptr = (struct cap_size_to_mem*)&front_cam_mem_size_tab[0];

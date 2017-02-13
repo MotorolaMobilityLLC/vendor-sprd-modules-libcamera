@@ -61,9 +61,6 @@ namespace sprdcamera {
 #define DEPTH_ENGINE_PATH "libdepthengine.so"
 #define CONTEXT_SUCCESS 1
 #define CONTEXT_FAIL 0
-#ifndef THREAD_TIMEOUT
-#define THREAD_TIMEOUT    50e6
-#endif
 #ifndef MAX_NOTIFY_QUEUE_SIZE
 #define MAX_NOTIFY_QUEUE_SIZE 100
 #endif

@@ -3536,10 +3536,10 @@ int SprdCamera3Setting::updateWorkParameters(const CameraMetadata &frame_setting
 		HAL_LOGD("AE precap trigger id = %d", s_setting[mCameraId].controlInfo.ae_precapture_id);
 	}
 	if (frame_settings.exists(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)) {
-		if((s_setting[mCameraId].controlInfo.ae_target_fps_range[1] !=frame_settings.find(ANDROID_CONTROL_AE_TARGET_FPS_RANGE).data.i32[1])) {
+		//if((s_setting[mCameraId].controlInfo.ae_target_fps_range[1] !=frame_settings.find(ANDROID_CONTROL_AE_TARGET_FPS_RANGE).data.i32[1])) {
 			HAL_LOGV("AE target fps min %d, max %d", s_setting[mCameraId].controlInfo.ae_target_fps_range[0], s_setting[mCameraId].controlInfo.ae_target_fps_range[1]);
 			pushAndroidParaTag(ANDROID_CONTROL_AE_TARGET_FPS_RANGE);
-		}
+		//}
 		s_setting[mCameraId].controlInfo.ae_target_fps_range[0] = frame_settings.find(ANDROID_CONTROL_AE_TARGET_FPS_RANGE).data.i32[0];
 		s_setting[mCameraId].controlInfo.ae_target_fps_range[1] = frame_settings.find(ANDROID_CONTROL_AE_TARGET_FPS_RANGE).data.i32[1];
 		HAL_LOGV("AE target fps min %d, max %d", s_setting[mCameraId].controlInfo.ae_target_fps_range[0], s_setting[mCameraId].controlInfo.ae_target_fps_range[1]);

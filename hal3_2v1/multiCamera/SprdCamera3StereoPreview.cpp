@@ -590,15 +590,15 @@ int SprdCamera3StereoPreview::validateCaptureRequest(camera3_capture_request_t *
     if (request->input_buffer != NULL) {
         b = request->input_buffer;
         if (b->status != CAMERA3_BUFFER_STATUS_OK) {
-            HAL_LOGE("Request: Buffer: Status not OK!");
+            HAL_LOGE("Request %d: Buffer %d: Status not OK!", frameNumber, idx);
             return BAD_VALUE;
         }
         if (b->release_fence != -1) {
-            HAL_LOGE("Request: Buffer: Has a release fence!");
+            HAL_LOGE("Request %d: Buffer %d: Has a release fence!", frameNumber, idx);
             return BAD_VALUE;
         }
         if (b->buffer == NULL) {
-            HAL_LOGE("Request: Buffer: NULL buffer handle!");
+            HAL_LOGE("Request %d: Buffer %d: NULL buffer handle!", frameNumber, idx);
             return BAD_VALUE;
         }
     }
@@ -607,15 +607,15 @@ int SprdCamera3StereoPreview::validateCaptureRequest(camera3_capture_request_t *
     b = request->output_buffers;
     do {
         if (b->status != CAMERA3_BUFFER_STATUS_OK) {
-            HAL_LOGE("Request: Buffer: Status not OK!");
+            HAL_LOGE("Request %d: Buffer %d: Status not OK!", frameNumber, idx);
             return BAD_VALUE;
         }
         if (b->release_fence != -1) {
-            HAL_LOGE("Request: Buffer: Has a release fence!");
+            HAL_LOGE("Request %d: Buffer %d: Has a release fence!", frameNumber, idx);
             return BAD_VALUE;
         }
         if (b->buffer == NULL) {
-            HAL_LOGE("Request: Buffer: NULL buffer handle!");
+            HAL_LOGE("Request %d: Buffer %d: NULL buffer handle!", frameNumber, idx);
             return BAD_VALUE;
         }
         idx++;
@@ -819,6 +819,7 @@ bool SprdCamera3StereoPreview::ReProcessThread::threadLoop()
         switch (muxer_msg.msg_type) {
          case MUXER_MSG_EXIT:
             if(mReprocessMsgList.size() != 0){
+                HAL_LOGD("has frame need to reprocess.size=%d",mReprocessMsgList.size());
                 for (List < muxer_queue_msg_t >::iterator i = mReprocessMsgList.begin(); \
                       i != mReprocessMsgList.end();i++){
                         muxer_msg = *i;
@@ -830,7 +831,7 @@ bool SprdCamera3StereoPreview::ReProcessThread::threadLoop()
          case MUXER_MSG_DATA_PROC:
             {
                 if(reProcessFrame(muxer_msg.combo_frame.buffer1,muxer_msg.combo_frame.frame_number) !=  NO_ERROR){
-                    HAL_LOGD("frameid: reprocess frame failed!");
+                    HAL_LOGD("frame %d: reprocess frame failed!",muxer_msg.combo_frame.frame_number);
                 }
                 CallBackResult(&muxer_msg.combo_frame);
             }
@@ -910,7 +911,7 @@ void SprdCamera3StereoPreview::ReProcessThread::preview_3d_doFaceMakeup( private
     int tab_skinWhitenLevel[10]={0,15,25,35,45,55,65,75,85,95};
     int tab_skinCleanLevel[10]={0,25,45,50,55,60,70,80,85,95};
     struct camera_frame_type preview_3d_frame;
-	bzero(&preview_3d_frame,sizeof(struct camera_frame_type));
+    bzero(&preview_3d_frame,sizeof(struct camera_frame_type));
     struct camera_frame_type *frame = &preview_3d_frame;
     frame->y_vir_addr =(cmr_uint)private_handle->base;
     frame->width = private_handle->width;
@@ -924,7 +925,7 @@ void SprdCamera3StereoPreview::ReProcessThread::preview_3d_doFaceMakeup( private
         Tsface.top = face_info[1];
         Tsface.right = face_info[2];
         Tsface.bottom = face_info[3];
-        //HAL_LOGD("FACE_BEAUTY rect:%d-%d-%d-%d",Tsface.left,Tsface.top,Tsface.right,Tsface.bottom);
+        HAL_LOGD("FACE_BEAUTY rect:%ld-%ld-%ld-%ld",Tsface.left,Tsface.top,Tsface.right,Tsface.bottom);
 
         int level = perfect_level;
         int skinWhitenLevel = 0;
@@ -1330,6 +1331,9 @@ bool SprdCamera3StereoPreview::MuxerThread::threadLoop()
         case MUXER_MSG_EXIT:
             {
                 //flush queue
+                HAL_LOGW("MuxerThread Stopping bef, mPreviewMuxerMsgList.size=%d, mOldPreviewRequestList.size:%d",
+                        mPreviewMuxerMsgList.size(), mPreviewMuxer->mOldPreviewRequestList.size());
+
                 for (List < muxer_queue_msg_t >::iterator i = mPreviewMuxerMsgList.begin(); i != mPreviewMuxerMsgList.end();)
                 {
                     if(i != mPreviewMuxerMsgList.end()){
@@ -1358,6 +1362,8 @@ bool SprdCamera3StereoPreview::MuxerThread::threadLoop()
                     }
                     i++;
                 };
+                HAL_LOGW("MuxerThread Stopped, mPreviewMuxerMsgList.size=%d, mOldPreviewRequestList.size:%d",
+                    mPreviewMuxerMsgList.size(), mPreviewMuxer->mOldPreviewRequestList.size());
                 mGpuApi->destroyRenderContext();
                 isInitRenderContest = false;
                 if(mReProcessThread != NULL){
@@ -1689,16 +1695,16 @@ bool SprdCamera3StereoPreview::matchTwoFrame(hwi_frame_buffer_info_t result1,Lis
         itor2=list.begin();
         while(itor2!=list.end()) {
             int64_t diff = result1.timestamp-itor2->timestamp;
-            if(abs((int)diff) < TIME_DIFF) {
+            if(abs((cmr_s32)diff) < TIME_DIFF) {
                 *result2 =*itor2;
                 list.erase(itor2);
-               // HAL_LOGV("[%d:match:%d],diff=%llu T1:%llu,T2:%llu",
-                  //  result1.frame_number,itor2->frame_number,diff,result1.timestamp,itor2->timestamp);
+                HAL_LOGV("[%d:match:%d],diff=%llu T1:%llu,T2:%llu",
+                    result1.frame_number,itor2->frame_number,diff,result1.timestamp,itor2->timestamp);
                 return MATCH_SUCCESS;
             }
             itor2++;
         }
-       // HAL_LOGV("match failed for idx:%d, could not find matched frame", result1.frame_number);
+        HAL_LOGV("match failed for idx:%d, could not find matched frame", result1.frame_number);
         return MATCH_FAILED;
     }
 }
@@ -2145,6 +2151,7 @@ void SprdCamera3StereoPreview::notifyMain( const camera3_notify_msg_t* msg)
 {
     camera3_notify_msg_t newMsg = *msg;
 
+    HAL_LOGD("main:id%d time=%llu",msg->message.shutter.frame_number,msg->message.shutter.timestamp);
      mCallbackOps->notify(mCallbackOps, msg);
     {
         Mutex::Autolock l(mNotifyLockMain);
@@ -2295,6 +2302,7 @@ void SprdCamera3StereoPreview::notifyAux( const camera3_notify_msg_t* msg)
 {
     camera3_notify_msg_t newMsg = *msg;
 
+    HAL_LOGD("aux:id%d time=%llu",msg->message.shutter.frame_number,msg->message.shutter.timestamp);
     {
         Mutex::Autolock l(mNotifyLockAux);
         mNotifyListAux.push_back(*msg);
@@ -2471,6 +2479,7 @@ int SprdCamera3StereoPreview::_flush(const struct camera3_device *device)
     SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_AUX].hwi;
     rc = hwiAux->flush(m_pPhyCamera[CAM_TYPE_AUX].dev);
 
+    HAL_LOGD(" list size =%d:%d", mUnmatchedFrameListAux.size(),mUnmatchedFrameListMain.size());
     if(mPreviewMuxerThread != NULL){
         if(mPreviewMuxerThread->isRunning()){
             mPreviewMuxerThread->requestExit();

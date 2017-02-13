@@ -55,21 +55,7 @@ namespace sprdcamera {
 #ifndef MAX_NUM_STREAMS
 #define MAX_NUM_STREAMS          3
 #endif
-#ifndef MAX_CAPTURE_QEQUEST_BUF
-#define MAX_CAPTURE_QEQUEST_BUF          5
-#endif
-#define MAX_UNMATCHED_QUEUE_SIZE 3
-#define TIME_DIFF                (100e6)
-#define CONTEXT_SUCCESS          1
-#define CONTEXT_FAIL             0
-#ifndef THREAD_TIMEOUT
-#define THREAD_TIMEOUT           50e6
-#endif
-#ifndef MAX_NOTIFY_QUEUE_SIZE
-#define MAX_NOTIFY_QUEUE_SIZE    100
-#endif
-#define CLEAR_NOTIFY_QUEUE       50
-#define LIB_GPU_PATH "libimagestitcher.so"
+#define MAX_CAP_QEQUEST_BUF          5
 
 typedef struct {
     uint32_t                 frame_number;
@@ -134,7 +120,7 @@ private:
     bool                              mIommuEnabled;
     new_mem_t                        *mLocalBuffer;
     new_mem_t                        *mLocalCapBuffer;
-    const native_handle_t            *mNativeBuffer[MAX_CAPTURE_QEQUEST_BUF];
+    const native_handle_t            *mNativeBuffer[MAX_CAP_QEQUEST_BUF];
     const native_handle_t            *mNativeCapBuffer[LOCAL_CAPBUFF_NUM];
     List<buffer_handle_t*>            mLocalBufferList;
     List <request_saved_t>            mSavedRequestList;
@@ -142,6 +128,11 @@ private:
     uint8_t                           mPreviewStreamsNum;
     int                               mPreviewID;
     Mutex                             mRequestLock;
+    int                               mLastShowPreviewDeviceId;
+    uint32_t                          mHasSendFrameNumber;
+    uint32_t                          mWaitFrameNumber;
+    Mutex                             mWaitFrameMutex;
+    Condition                         mWaitFrameSignal;
     bool                              mIsCapturing;
     int32_t                           mPerfectskinlevel;
     int32_t                           g_face_info[4];

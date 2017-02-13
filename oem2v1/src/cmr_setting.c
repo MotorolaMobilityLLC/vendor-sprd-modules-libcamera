@@ -1862,6 +1862,7 @@ static cmr_int setting_set_touch_xy(struct setting_component *cpt,
 	}
 	return ret;
 }
+
 static cmr_int setting_set_video_snapshot_type(struct setting_component *cpt,
 						struct setting_cmd_parameter *parm)
 {
@@ -1886,6 +1887,7 @@ static cmr_int setting_get_3dcalibration_enable(struct setting_component *cpt,
 	return ret;
 
 }
+
 static cmr_int setting_set_3dcalibration_enable(struct setting_component *cpt,
                                                 struct setting_cmd_parameter *parm)
 {

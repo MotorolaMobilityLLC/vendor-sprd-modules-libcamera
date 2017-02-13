@@ -5470,6 +5470,8 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
 	struct sensor_mode_fps_tag fps_info;
 	char                     value[PROPERTY_VALUE_MAX];
 	cmr_u32                  is_3D_video = 0;
+	cmr_u32                  is_3D_caputre = 0;
+	cmr_u32                  is_3D_preview = 0;
 
 	if (!sensor_info) {
 		CMR_LOGE("sn info is null!");
@@ -5479,12 +5481,17 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
 	property_get("sys.cam.multi.camera.mode", value, "0");
 	if (atoi(value) == 3) {
 		is_3D_video = 1;
+	} else if (atoi(value) == 5) {
+		is_3D_caputre = 1;
+	}
+	if (atoi(value) == 7) {
+		is_3D_preview = 1;
 	}
 
 	if (1 == handle->prev_cxt[camera_id].prev_param.pdaf_eb){
 		search_width = sensor_info->source_width_max;
 		search_height = sensor_info->source_height_max;
-	} else if (1 == is_3D_video) {
+	} else if (1 == is_3D_video || 1 == is_3D_caputre || 1 == is_3D_preview) {
 		search_width = sensor_info->source_width_max/2;
 		search_height = sensor_info->source_height_max/2;
 	} else {
@@ -5544,6 +5551,8 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
 	struct sensor_mode_fps_tag fps_info;
 	char                     value[PROPERTY_VALUE_MAX];
 	cmr_u32                  is_3D_video = 0;
+	cmr_u32                  is_3D_caputre = 0;
+	cmr_u32                  is_3D_preview = 0;
 
 	if (!sensor_info) {
 		CMR_LOGE("sn info is null!");

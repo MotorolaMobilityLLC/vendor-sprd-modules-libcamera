@@ -51,7 +51,6 @@
 namespace sprdcamera {
 
 #define LOCAL_CAPBUFF_NUM        3
-#define MAX_NUM_CAMERAS          3
 #ifndef MAX_NUM_STREAMS
 #define MAX_NUM_STREAMS          3
 #endif

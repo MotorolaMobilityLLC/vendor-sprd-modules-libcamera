@@ -1182,10 +1182,11 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 				} else if(capturePara.cap_intent == ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE
 					|| capturePara.cap_intent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT) {
 					/**add for 3d capture, set raw callback mode when stream format is 420_888 begin*/
-					if ( (mMultiCameraMode == MODE_3D_CAPTURE || mMultiCameraMode == MODE_3D_CALIBRATION)&& stream->format == HAL_PIXEL_FORMAT_YCbCr_420_888)
+					if ( (mMultiCameraMode == MODE_3D_CAPTURE || mMultiCameraMode == MODE_3D_CALIBRATION)
+						&& stream->format == HAL_PIXEL_FORMAT_YCbCr_420_888)
 					{
 						HAL_LOGE("call back stream request!");
-						mOEMIf->setCallBackRawMode(1);
+						mOEMIf->setCallBackYuvMode(1);
 					}
 					/**add for 3d capture, set raw callback mode when stream format is 420_888 end*/
 					ret = mPicChan->request(stream, output.buffer, frameNumber);
@@ -1429,7 +1430,9 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info)
 					result.input_buffer = i->input_buffer;
 					result.partial_result = 0;
 
-					setVideoBufferTimestamp(capture_time);
+					if(mMultiCameraMode == MODE_3D_VIDEO){
+						setVideoBufferTimestamp(capture_time);
+					}
 					mCallbackOps->process_capture_result(mCallbackOps, &result);
 					HAL_LOGV("data frame_number = %d, input_buffer = %p", result.frame_number, i->input_buffer);
 
@@ -1473,6 +1476,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info)
 		mRequestSignal.signal();
 	}
 }
+
 /**add for 3d capture, get/set needed zsl buffer's timestamp in zsl query begin*/
 uint64_t SprdCamera3HWI::getZslBufferTimestamp()
 {
@@ -1483,15 +1487,18 @@ void SprdCamera3HWI::setZslBufferTimestamp(uint64_t timestamp)
 {
     mOEMIf->setZslBufferTimestamp(timestamp);
 }
+
 /**add for 3d capture, get/set needed zsl buffer's timestamp in zsl query end*/
-void SprdCamera3HWI::setMultiCallBackRawMode(bool mode)
+void SprdCamera3HWI::setMultiCallBackYuvMode(bool mode)
 {
-    mOEMIf->setMultiCallBackRawMode(mode);
+    mOEMIf->setMultiCallBackYuvMode(mode);
 }
+
 void SprdCamera3HWI::setVideoBufferTimestamp(uint64_t timestamp)
 {
     mCurFrameTimeStamp = timestamp;
 }
+
 uint64_t SprdCamera3HWI::getVideoBufferTimestamp()
 {
     return mCurFrameTimeStamp;
@@ -1564,7 +1571,6 @@ int SprdCamera3HWI::flush()
 
 	return 0;
 }
-
 
 void SprdCamera3HWI::captureResultCb(cam_result_data_info_t *result_info)
 {
@@ -1655,7 +1661,6 @@ SprdCamera3HWI::construct_default_request_settings(const struct camera3_device *
 	HAL_LOGD("mCameraOps X");
 	return fwk_metadata;
 }
-
 
 int SprdCamera3HWI::process_capture_request(const struct camera3_device *device,
 						camera3_capture_request_t * request)
@@ -1898,6 +1903,5 @@ void SprdCamera3HWI::setPropForMultiCameraMode(multiCameraMode multiCameraModeId
 
     return;
 }
-
 
 };				//end namespace sprdcamera

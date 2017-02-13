@@ -2052,8 +2052,8 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
     {
         uint64_t currentMainTimestamp = hwiMain->getZslBufferTimestamp();
         uint64_t currentAuxTimestamp = hwiAux->getZslBufferTimestamp();
-        hwiMain->setMultiCallBackRawMode(true);
-        hwiAux->setMultiCallBackRawMode(true);
+        hwiMain->setMultiCallBackYuvMode(true);
+        hwiAux->setMultiCallBackYuvMode(true);
         HAL_LOGD("currentMainTimestamp:%" PRId64", currentAuxTimestamp=%" PRId64,currentMainTimestamp, currentAuxTimestamp);
         if ( currentMainTimestamp < currentAuxTimestamp )
         {
@@ -2221,8 +2221,8 @@ void SprdCamera3Capture::processCaptureResultMain( const camera3_capture_result_
             HAL_LOGD("capture combined begin: buff1 %p", capture_msg.combo_buff.buffer1);
             HAL_LOGD("capture combined begin: buff2 %p", capture_msg.combo_buff.buffer2);
             {
-                hwiMain->setMultiCallBackRawMode(false);
-                hwiAux->setMultiCallBackRawMode(false);
+                hwiMain->setMultiCallBackYuvMode(false);
+                hwiAux->setMultiCallBackYuvMode(false);
                 Mutex::Autolock l(mCaptureThread->mMergequeueMutex);
                 HAL_LOGD("Enqueue combo frame:%d for frame merge!", capture_msg.combo_buff.frame_number);
                 mCaptureThread->mCaptureMsgList.push_back(capture_msg);
@@ -2364,8 +2364,8 @@ void SprdCamera3Capture::processCaptureResultAux( const camera3_capture_result_t
             HAL_LOGD("capture combined begin: buff1 %p", capture_msg.combo_buff.buffer1);
             HAL_LOGD("capture combined begin: buff2 %p", capture_msg.combo_buff.buffer2);
             {
-                hwiMain->setMultiCallBackRawMode(false);
-                hwiAux->setMultiCallBackRawMode(false);
+                hwiMain->setMultiCallBackYuvMode(false);
+                hwiAux->setMultiCallBackYuvMode(false);
                 Mutex::Autolock l(mCaptureThread->mMergequeueMutex);
                 HAL_LOGD("Enqueue combo frame:%d for frame merge!", capture_msg.combo_buff.frame_number);
                 mCaptureThread->mCaptureMsgList.push_back(capture_msg);

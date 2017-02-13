@@ -282,7 +282,7 @@ static cmr_int snp_send_msg_redisplay_thr(cmr_handle snp_handle, cmr_int evt, vo
 static cmr_int snp_send_msg_thumb_thr(cmr_handle snp_handle, cmr_int evt, void *data);
 static cmr_int snp_checkout_exit(cmr_handle snp_handle);
 static cmr_int snp_take_picture_done(cmr_handle snp_handle, struct frm_info *data);
-static cmr_int snp_3dcalibration_take_picture_done(cmr_handle snp_handle, struct frm_info *data);/**modified for 3d calibration*/
+static cmr_int snp_yuv_callback_take_picture_done(cmr_handle snp_handle, struct frm_info *data);/**modified for 3d calibration*/
 static cmr_int snp_thumbnail(cmr_handle snp_handle, struct frm_info *data);
 static cmr_int camera_set_frame_type(cmr_handle snp_handle, struct camera_frame_type *frame_type, struct frm_info* info);
 static void snp_takepic_callback_done(cmr_handle snp_handle);
@@ -560,7 +560,7 @@ cmr_int snp_scale_cb_handle(cmr_handle snp_handle, void *data)
 		/**modified for 3d calibration begin   */
 		if (cxt->req_param.is_3dcalibration_mode)
 		{
-			ret = snp_3dcalibration_take_picture_done(snp_handle, &cxt->cur_frame_info);
+			ret = snp_yuv_callback_take_picture_done(snp_handle, &cxt->cur_frame_info);
 		}
 		else
 		{
@@ -3810,7 +3810,7 @@ exit:
 	return ret;
 }
 /**modified for 3d calibration begin   */
-cmr_int snp_3dcalibration_take_picture_done(cmr_handle snp_handle, struct frm_info *data)
+cmr_int snp_yuv_callback_take_picture_done(cmr_handle snp_handle, struct frm_info *data)
 {
 	cmr_int                          ret = CMR_CAMERA_SUCCESS;
 	struct snp_context              *cxt = (struct snp_context*)snp_handle;
@@ -4012,7 +4012,7 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data)
 			/**modified for 3d calibration begin   */
 			if (cxt->req_param.is_3dcalibration_mode)
 			{
-				ret = snp_3dcalibration_take_picture_done(snp_handle, chn_data_ptr);
+				ret = snp_yuv_callback_take_picture_done(snp_handle, chn_data_ptr);
 			}
 			else
 			{

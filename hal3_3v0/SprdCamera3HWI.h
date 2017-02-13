@@ -108,7 +108,7 @@ public:
 	void setZslBufferTimestamp(uint64_t timestamp);
 	void setVideoBufferTimestamp(uint64_t timestamp);
 	uint64_t getVideoBufferTimestamp(void);
-	void setMultiCallBackRawMode(bool mode);
+	void setMultiCallBackYuvMode(bool mode);
 	SprdCamera3RegularChannel* getRegularChan();
 	SprdCamera3PicChannel* getPicChan();
 	SprdCamera3OEMIf* getOEMif();

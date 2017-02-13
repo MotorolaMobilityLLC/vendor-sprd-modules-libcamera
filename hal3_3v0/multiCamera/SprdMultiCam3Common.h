@@ -40,6 +40,7 @@ namespace sprdcamera {
 #define LIB_GPU_PATH "libimagestitcher.so"
 #define CONTEXT_SUCCESS 1
 #define CONTEXT_FAIL 0
+#define TIME_DIFF (15e6)
 
 typedef enum {
     STATE_NOT_READY,

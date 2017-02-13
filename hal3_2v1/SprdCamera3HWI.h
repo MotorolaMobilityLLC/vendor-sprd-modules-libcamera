@@ -69,6 +69,7 @@ typedef enum {
 	MODE_3D_CAPTURE,        //Camera2 apk open  camera id is MODE_3D_CAPTURE,camera hal transform to open physics Camera id is 1 and 3
 	MODE_3D_CALIBRATION = 8, //ValidationTools apk open  camera id is MODE_3D_CALIBRATION and 3 ,camera hal transform to open physics Camera id is 1 and 3
 	MODE_REFOCUS = 9,             //Camera2 apk open  camera id is MODE_REFOCUS and 2 ,camera hal transform to open physics Camera id is 0 and 2
+	MODE_3D_PREVIEW = 10,       //Camera2 apk open  camera id is MODE_3D_PREVIEW,camera hal transform to open physics Camera id is 1 and 3
 	MODE_MAX
 }multiCameraMode;
 
@@ -106,11 +107,15 @@ public:
 	void captureResultCb(cam_result_data_info_t *result_info);
 	uint64_t getZslBufferTimestamp();
 	void setZslBufferTimestamp(uint64_t timestamp);
+	void setVideoBufferTimestamp(uint64_t timestamp);
+	uint64_t getVideoBufferTimestamp(void);
+	void setMultiCallBackYuvMode(bool mode);
 	SprdCamera3RegularChannel* getRegularChan();
 	SprdCamera3PicChannel* getPicChan();
 	SprdCamera3OEMIf* getOEMif();
 	void setMultiCameraMode(multiCameraMode multiCameraModeId);
 	static bool isMultiCameraMode(int cameraId);
+	void setSprdCameraLowpower(int flag);
 private:
 	int openCamera();
 	int closeCamera();
@@ -198,7 +203,8 @@ private:
 
 	uint8_t				mReciveQeqMax;
 	bool					mHDRProcessFlag;
-
+	uint64_t            mCurFrameTimeStamp;
+	int                 mSprdCameraLowpower;
 };
 
 };				// namespace sprdcamera
