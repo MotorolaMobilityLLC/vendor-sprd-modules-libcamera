@@ -3471,6 +3471,9 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 	int64_t buffer_timestamp = buffer_timestamp_fps;
 #endif
 
+	if(0 == buffer_timestamp)
+		HAL_LOGE("buffer_timestamp shouldn't be 0,please check your code");
+
 	VCM_Tag sprdvcmInfo;
 	if(mSprdRefocusEnabled == true && mCameraId == 0) {
 		mSetting->getVCMTag(&sprdvcmInfo);

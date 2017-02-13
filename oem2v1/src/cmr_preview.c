@@ -2345,6 +2345,7 @@ cmr_int prev_preview_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
 			frame_type.fd		  = prev_cxt->preview_bakcup_data->fd;
 			frame_type.type 	  = PREVIEW_FRAME;
 			frame_type.timestamp = prev_cxt->preview_bakcup_data->sec * 1000000000LL + prev_cxt->preview_bakcup_data->usec * 1000;
+			frame_type.monoboottime = prev_cxt->preview_bakcup_data->monoboottime;
 
 			/*notify refoucs info directly*/
 			cb_data_info.cb_type	= PREVIEW_EVT_CB_FRAME;
@@ -2526,6 +2527,7 @@ cmr_int prev_depthmap_frame_handle(struct prev_handle *handle, cmr_u32 camera_id
 					frame_type.fd		  = prev_cxt->preview_bakcup_data->fd;
 					frame_type.type 	  = PREVIEW_FRAME;
 					frame_type.timestamp = prev_cxt->preview_bakcup_data->sec * 1000000000LL + prev_cxt->preview_bakcup_data->usec * 1000;
+					frame_type.monoboottime = prev_cxt->preview_bakcup_data->monoboottime;
 
 					/*notify refoucs info directly*/
 					cb_data_info.cb_type	= PREVIEW_EVT_CB_FRAME;
@@ -8708,6 +8710,7 @@ cmr_int prev_pop_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id, s
 		prev_cxt->prev_mem_valid_num--;
 		if (is_to_hal) {
 			frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000;
+			frame_type.monoboottime = data->monoboottime;
 			cb_data_info.cb_type    = PREVIEW_EVT_CB_FRAME;
 			cb_data_info.func_type  = PREVIEW_FUNC_START_PREVIEW;
 			cb_data_info.frame_data = &frame_type;
@@ -9130,6 +9133,7 @@ cmr_int prev_pop_video_buffer(struct prev_handle *handle, cmr_u32 camera_id, str
 		prev_cxt->video_mem_valid_num--;
 		if (is_to_hal) {
 			frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000;
+			frame_type.monoboottime = data->monoboottime;
 			cb_data_info.cb_type    = PREVIEW_EVT_CB_FRAME;
 			cb_data_info.func_type  = PREVIEW_FUNC_START_PREVIEW;
 			cb_data_info.frame_data = &frame_type;
@@ -9284,6 +9288,7 @@ cmr_int prev_pop_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id, struc
 		prev_cxt->cap_zsl_mem_valid_num--;
 		if (is_to_hal) {
 			frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000;
+			frame_type.monoboottime = data->monoboottime;
 			cb_data_info.cb_type    = PREVIEW_EVT_CB_FRAME;
 			cb_data_info.func_type  = PREVIEW_FUNC_START_PREVIEW;
 			cb_data_info.frame_data = &frame_type;
@@ -10564,6 +10569,7 @@ cmr_int prev_depthmap_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param)
 	frame_type.fd		  = prev_cxt->preview_bakcup_data->fd;
 	frame_type.type 	  = PREVIEW_FRAME;
 	frame_type.timestamp = prev_cxt->preview_bakcup_data->sec * 1000000000LL + prev_cxt->preview_bakcup_data->usec * 1000;
+	frame_type.monoboottime = prev_cxt->preview_bakcup_data->monoboottime;
 
 
 	/*notify refoucs info directly*/

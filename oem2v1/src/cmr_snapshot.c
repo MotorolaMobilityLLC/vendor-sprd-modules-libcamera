@@ -1761,6 +1761,7 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data)
 		camera_take_snapshot_step(CMR_STEP_CALL_BACK);
 		camera_snapshot_step_statisic(&image_size);
 		frame_type.timestamp = frame->sec * 1000000000LL + frame->usec * 1000;
+		frame_type.monoboottime = frame->monoboottime;
 		memcpy((void *)&frame_type.jpeg_param, (void *)&enc_param, sizeof(struct camera_jpeg_param));
 		snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_ENCODE_PICTURE, SNAPSHOT_EXIT_CB_DONE, (void*)&frame_type, sizeof(struct camera_frame_type));
 	//	snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_STATE, SNAPSHOT_EVT_EXIF_JPEG_DONE, (void*)ret, sizeof(cmr_int));
@@ -3646,6 +3647,8 @@ cmr_int camera_set_frame_type(cmr_handle snp_handle, struct camera_frame_type *f
 	    frame_type->height = req_param_ptr->post_proc_setting.actual_snp_size.height;
 	}
 	frame_type->timestamp = info->sec * 1000000000LL + info->usec * 1000;
+	frame_type->monoboottime = info->monoboottime;
+
 	switch (req_param_ptr->mode) {
 	case CAMERA_UTEST_MODE:
 		frame_type->y_vir_addr = mem_ptr->target_yuv.addr_vir.addr_y;
@@ -3836,6 +3839,7 @@ cmr_int snp_3dcalibration_take_picture_done(cmr_handle snp_handle, struct frm_in
 	frame_type.width = cxt->req_param.post_proc_setting.dealign_actual_snp_size.width;
 	frame_type.height = cxt->req_param.post_proc_setting.dealign_actual_snp_size.height;
 	frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000;
+	frame_type.monoboottime = data->monoboottime;
 	frame_type.y_vir_addr = data->yaddr_vir;
 	frame_type.uv_vir_addr = data->uaddr_vir;
 	frame_type.y_phy_addr = data->yaddr;
