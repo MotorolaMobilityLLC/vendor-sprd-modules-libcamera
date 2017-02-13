@@ -265,6 +265,7 @@ static cmr_int _enc_start(cmr_handle handle, struct jpeg_codec_context *jcontext
 		CMR_LOGE("jpeg:malloc fail");
 		return JPEG_CODEC_NO_MEM;
 	}
+	memset((void*)jenc_parm_ptr,0,sizeof(JPEGENC_PARAMS_T));
 
 	enc_cxt_ptr = (struct jpeg_enc *)handle;
 	if (enc_cxt_ptr->slice_height == enc_cxt_ptr->size.height ) {
