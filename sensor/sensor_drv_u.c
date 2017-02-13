@@ -69,6 +69,7 @@ static cmr_int sns_ctrl_thread_proc(struct cmr_msg *message, void *p_data);
 static cmr_int sns_destroy_ctrl_thread(struct sensor_drv_context *sensor_cxt);
 static cmr_int sns_stream_ctrl_common(struct sensor_drv_context *sensor_cxt, cmr_u32 on_off);
 extern uint32_t isp_raw_para_update_from_file(SENSOR_INFO_T *sensor_info_ptr,SENSOR_ID_E sensor_id);
+void sensor_rid_save_sensor_info(struct sensor_drv_context *sensor_cxt);
 
 
 /***---------------------------------------------------------------------------*
@@ -1921,11 +1922,11 @@ void sns_set_status(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E sensor_id
 				SENSOR_LOGI("Sensor_sleep of id %d",i);
 			}
 #endif
-			if (sensor_id == 3 & i == 1 || sensor_id == 1 & i == 3)
+/*			if (sensor_id == 3 & i == 1 || sensor_id == 1 & i == 3)
 				SENSOR_LOGI("no need to hw_Sensor_PowerDown");
 			else
 				hw_Sensor_PowerDown(sensor_cxt->sensor_hw_handler, (cmr_u32)sensor_cxt->sensor_info_ptr->power_down_level);
-			SENSOR_LOGI("Sensor_sleep of id %d",i);
+			SENSOR_LOGI("Sensor_sleep of id %d",i);*/
 		}
 	}
 
@@ -2827,6 +2828,7 @@ cmr_int sns_destroy_ctrl_thread(struct sensor_drv_context *sensor_cxt)
 	}
 
 	sns_save_sensor_type(sensor_cxt);
+	sensor_rid_save_sensor_info(sensor_cxt);
 	SENSOR_LOGI("1 debug %p", sensor_cxt->sensor_info_ptr);    //for debug
 //	SENSOR_LOGI("2 debug %d", sensor_cxt->sensor_info_ptr->image_format);    //for debug
 	if (sensor_cxt->sensor_info_ptr &&
@@ -4174,9 +4176,7 @@ cmr_int snr_get_mark(struct sensor_drv_context *sensor_cxt,
 			cmr_u8 *is_saved_ptr)
 {
 	cmr_u32 i, j = 0;
-	cmr_u8 *ptr = buf;//,str[255];
-
-	SENSOR_LOGI("open sensor driver interface");
+	cmr_u8 *ptr = buf;
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 
 	if(SCI_TRUE == sensor_cxt->sensor_param_saved) {
@@ -4188,20 +4188,12 @@ cmr_int snr_get_mark(struct sensor_drv_context *sensor_cxt,
 		for( i=0 ; i<4 ; i++) {
 			*ptr++ = sensor_cxt->sensor_index[i];
 		}
-	/*	for( i=0 ; i<4 ; i++) {
-			strcat(str,":");
-			strcat(str, sensor_cxt->sensor_list_ptr[i]->sensor_version_info);
-			strcat(str," ");
-		}
-
-		memcpy(ptr++,str,strlen(str));*/
-		SENSOR_LOGI("index is %d,%d",
+		SENSOR_LOGI("index is %d,%d.",
 			sensor_cxt->sensor_index[SENSOR_MAIN],
 			sensor_cxt->sensor_index[SENSOR_SUB]);
 	} else {
 		*is_saved_ptr = 0;
 	}
-
 	return 0;
 }
 
@@ -4317,178 +4309,49 @@ cmr_int hw_Sensor_SetFlash(SENSOR_HW_HANDLE handle, uint32_t is_open)
 
 #include <cutils/properties.h>
 
-const char *sensor_rid_info[SENSOR_ID_MAX];
-struct sensor_drv_context *s_p_sensor_cxt;
-SENSOR_HW_HANDLE sensor_hw_handle;
-static int sensor_rid_power_on(SENSOR_HW_HANDLE handle,SENSOR_INFO_T *sensor_info_ptr, BOOLEAN on)
-{
-	if (PNULL != sensor_info_ptr->ioctl_func_tab_ptr->power) {
-		sensor_info_ptr->ioctl_func_tab_ptr->power(handle,on);
-	} else {
-		if (on) {
-			Sensor_PowerDown(sensor_info_ptr->power_down_level);
-			SENSOR_Sleep(20);
-
-			Sensor_SetAvddVoltage(sensor_info_ptr->avdd_val);
-			SENSOR_Sleep(20);
-			Sensor_SetDvddVoltage(sensor_info_ptr->dvdd_val);
-			SENSOR_Sleep(20);
-			Sensor_SetIovddVoltage(sensor_info_ptr->iovdd_val);
-			SENSOR_Sleep(20);
-
-			//Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
-			SENSOR_Sleep(20);
-
-			Sensor_SetMCLK(SENSOR_DEFALUT_MCLK);
-			SENSOR_Sleep(5);
-			Sensor_PowerDown(!sensor_info_ptr->power_down_level);
-			SENSOR_Sleep(20);
-			Sensor_Reset(sensor_info_ptr->reset_pulse_level);
-		} else {
-			//Sensor_PowerDown(sensor_info_ptr->power_down_level);
-			SENSOR_Sleep(20);
-			Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
-			Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);
-			Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
-		}
-	}
-
-	return 0;
-}
-
-static int sensor_rid_open_ioctl(void)
-{
-	int ret = 0;
-
-	s_p_sensor_cxt->fd_sensor = open("/dev/sprd_sensor", O_RDWR, 0);
-	if (0 > s_p_sensor_cxt->fd_sensor) {
-		SENSOR_LOGE("open dev failed, ret = %d \n",  s_p_sensor_cxt->fd_sensor);
-		ret = -1;
-	}
-	return ret;
-}
-
-static int sensor_rid_close_ioctl(void)
-{
-	int ret;
-	if (-1 != s_p_sensor_cxt->fd_sensor) {
-		ret = close(s_p_sensor_cxt->fd_sensor);
-		s_p_sensor_cxt->fd_sensor = -1;
-	}
-
-	return 0;
-}
-
-int sensor_rid_all_read_id(SENSOR_ID_E sensor_id)
-{
-	SENSOR_MATCH_T *sensor_strinfo_tab_ptr = PNULL;
-	uint32_t i = 0,j=0;
-	int ret = -1;
-
-	sns_identify(s_p_sensor_cxt,sensor_id);
-	SENSOR_LOGE("E30 %s",s_p_sensor_cxt->sensor_list_ptr[sensor_id]->sensor_version_info);
-
-	return ret;
-}
-
-static int sensor_rid_init(void)
-{
-	s_p_sensor_cxt = (struct sensor_drv_context *)malloc(sizeof(struct sensor_drv_context));
-
-	if (NULL == s_p_sensor_cxt)
-		return -1;
-
-	memset((void*)s_p_sensor_cxt, 0, sizeof(struct sensor_drv_context));
-	s_p_sensor_cxt->fd_sensor = -1;
-	s_p_sensor_cxt->i2c_addr = 0xff;
-
-	sensor_hw_handle = (SENSOR_HW_HANDLE)malloc(sizeof(SENSOR_HW_HANDLE));
-	if (NULL == sensor_hw_handle) {
-		SENSOR_LOGE("failed to create context");
-		return CMR_CAMERA_NO_MEM;
-	}
-	cmr_bzero(sensor_hw_handle, sizeof(*sensor_hw_handle));
-	sensor_hw_handle->privatedata = s_p_sensor_cxt;
-
-	// sencod, save the sensor_hw_handle in sensor_cxt.
-	s_p_sensor_cxt->sensor_hw_handler = (cmr_handle)sensor_hw_handle;
-
-	return 0;
-}
-
-static int sensor_rid_deinit(void)
-{
-	if (PNULL != s_p_sensor_cxt) {
-		free(s_p_sensor_cxt);
-		s_p_sensor_cxt = PNULL;
-	}
-	return 0;
-}
-
-void sensor_rid_save_sensor_info(void)
+void sensor_rid_save_sensor_info(struct sensor_drv_context *sensor_cxt)
 {
 	char sensor_info[80] = {0};
 	const char* const sensorInterface0 = "/sys/devices/virtual/misc/sprd_sensor/camera_sensor_name";
 	ssize_t wr_ret;
 	cmr_u32 fd;
-	SENSOR_LOGE("srid E\n");
+	cmr_s8      value[PROPERTY_VALUE_MAX];
 
-	sprintf(sensor_info, "%s %s %s %s",
-		s_p_sensor_cxt->sensor_list_ptr[SENSOR_MAIN]->sensor_version_info,
-		s_p_sensor_cxt->sensor_list_ptr[SENSOR_SUB]->sensor_version_info,
-		s_p_sensor_cxt->sensor_list_ptr[SENSOR_DEVICE2]->sensor_version_info,
-		s_p_sensor_cxt->sensor_list_ptr[SENSOR_DEVICE3]->sensor_version_info);
+	property_get("persist.sys.sensor.id", value, "0");
+	if (!strcmp(value,"trigger_srid")) {
+	SENSOR_LOGI("srid E\n");
+	if(sensor_cxt->sensor_list_ptr[SENSOR_MAIN]!=NULL &&
+			sensor_cxt->sensor_list_ptr[SENSOR_MAIN]->sensor_version_info!=NULL &&
+			strlen(sensor_cxt->sensor_list_ptr[SENSOR_MAIN]->sensor_version_info)>1)
+		sprintf(sensor_info, "%s ",sensor_cxt->sensor_list_ptr[SENSOR_MAIN]->sensor_version_info);
+	if(sensor_cxt->sensor_list_ptr[SENSOR_SUB]!=NULL &&
+			sensor_cxt->sensor_list_ptr[SENSOR_SUB]->sensor_version_info!=NULL &&
+			strlen(sensor_cxt->sensor_list_ptr[SENSOR_SUB]->sensor_version_info)>1)
+		sprintf(sensor_info, "%s %s ",sensor_info,sensor_cxt->sensor_list_ptr[SENSOR_SUB]->sensor_version_info);
+	if(sensor_cxt->sensor_list_ptr[SENSOR_DEVICE2]!=NULL &&
+			sensor_cxt->sensor_list_ptr[SENSOR_DEVICE2]->sensor_version_info!=NULL &&
+			strlen(sensor_cxt->sensor_list_ptr[SENSOR_DEVICE2]->sensor_version_info)>1)
+		sprintf(sensor_info, "%s %s ",sensor_info,sensor_cxt->sensor_list_ptr[SENSOR_DEVICE2]->sensor_version_info);
+	if(sensor_cxt->sensor_list_ptr[SENSOR_DEVICE3]!=NULL &&
+			sensor_cxt->sensor_list_ptr[SENSOR_DEVICE3]->sensor_version_info!=NULL &&
+			strlen(sensor_cxt->sensor_list_ptr[SENSOR_DEVICE3]->sensor_version_info)>1)
+		sprintf(sensor_info, "%s %s ",sensor_info,sensor_cxt->sensor_list_ptr[SENSOR_DEVICE3]->sensor_version_info);
 	SENSOR_LOGE("WRITE srid %s \n",sensor_info);
 
 	fd = open(sensorInterface0, O_WRONLY|O_TRUNC);
 	if (-1 == fd) {
 		SENSOR_LOGE("Failed to open: sensorInterface");
-		//return -EINVAL;
+		goto ERROR;
 	}
 	wr_ret = write(fd,sensor_info,strlen(sensor_info));
 	if (-1 == wr_ret){
 		SENSOR_LOGE("WRITE FAILED \n");
-		//retVal = -EINVAL;
+		goto ERROR;
 	}
-
-	close(fd);
-
 	property_set("sys.sensor.info", sensor_info);
-}
-
-int sensor_rid_read_sensor(void)
-{
-	int ret = 0;
-	SENSOR_LOGE("srid E\n");
-
-	if (0 != (ret = sensor_rid_init())) {
-		SENSOR_LOGE("init error!");
-		ret = -1;
-		goto sensor_rid_init_err;
+	property_set("persist.sys.sensor.id", "0");
+ERROR:
+	close(fd);
 	}
-
-	if (0 != (ret = sensor_rid_open_ioctl())) {
-		SENSOR_LOGE("ioctl open error!");
-		ret = -1;
-		goto sensor_rid_ioctl_err;
-	}
-
-	sensor_rid_all_read_id(SENSOR_MAIN);
-//#ifndef CONFIG_DCAM_SENSOR_NO_FRONT_SUPPORT
-	sensor_rid_all_read_id(SENSOR_SUB);
-//#endif
-#ifdef CONFIG_DCAM_SENSOR2_SUPPORT
-	sensor_rid_all_read_id(SENSOR_DEVICE2);
-#endif
-#ifdef CONFIG_DCAM_SENSOR3_SUPPORT
-	sensor_rid_all_read_id(SENSOR_DEVICE3);
-#endif
-	sensor_rid_close_ioctl();
-	sensor_rid_save_sensor_info();
-	SENSOR_LOGE("X\n");
-sensor_rid_ioctl_err:
-	sensor_rid_deinit();
-sensor_rid_init_err:
-	return ret;
 }
 

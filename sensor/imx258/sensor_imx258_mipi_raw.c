@@ -339,10 +339,11 @@ static const SENSOR_REG_T imx258_4208x3120_setting[] = {
         {0x3032,0x01},//0},//1},
         {0x0220,0x00},
         {0x4041,0x00},
- #ifndef PDAF_TYPE2
+ #ifdef PDAF_TYPE3
         {0x3052,0x00},//1},
         {0x7BCB,0x00},
         {0x7BC8,0x00},
+        {0x7BC9,0x00},
 #endif
 };
 
@@ -449,15 +450,15 @@ static const SENSOR_REG_T imx258_1048x780_setting[] = {
 
 static SENSOR_REG_TAB_INFO_T s_imx258_resolution_tab_raw[SENSOR_MODE_MAX] = {
 	{ADDR_AND_LEN_OF_ARRAY(imx258_init_setting), 0, 0, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
-	//{ADDR_AND_LEN_OF_ARRAY(imx258_2096x1552_setting), 2096, 1552, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
 	{ADDR_AND_LEN_OF_ARRAY(imx258_1048x780_setting), 1048, 780, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
+//	{ADDR_AND_LEN_OF_ARRAY(imx258_2096x1552_setting), 2096, 1552, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
 	{ADDR_AND_LEN_OF_ARRAY(imx258_4208x3120_setting), 4208, 3120, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
 	//{ADDR_AND_LEN_OF_ARRAY(imx258_5344x4016_setting), 5344, 4016, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
 };
 
 static SENSOR_TRIM_T s_imx258_resolution_trim_tab[SENSOR_MODE_MAX] = {
 	{0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-	{0, 0, 1048, 780, 10325 , 1296, 812, {0, 0, 1048, 780}},
+	{0, 0, 1048, 780, 10325*4 , 1296, 812, {0, 0, 1048, 780}},
 	//{0, 0, 2096, 1552, 20650, 1296, 3224, {0, 0, 2096, 1552}},
 	{0, 0, 4208, 3120, 10325, 1296, 3224, {0, 0, 4208, 3120}},
 	//{0, 0, 5344, 4016, 10040, SNAPSHOT_MIPI_PER_LANE_BPS, 4140, {0, 0, 5344, 4016}},
@@ -753,7 +754,7 @@ static void imx258_write_gain(SENSOR_HW_HANDLE handle, float gain)
 	Sensor_WriteReg(0x0204, (sensor_again>>8)& 0xFF);
 	Sensor_WriteReg(0x0205, sensor_again & 0xFF);
 
-	temp_gain = gain/8;
+	temp_gain = gain/16;
 	if (temp_gain >16.0)
 		temp_gain = 16.0;
 	else if (temp_gain < 1.0)
@@ -770,7 +771,7 @@ static void imx258_write_gain(SENSOR_HW_HANDLE handle, float gain)
 
 	SENSOR_LOGI("realgain=%f,again=%d,dgain=%f", gain, sensor_again, temp_gain);
 
-	imx258_group_hold_off(handle);
+	//imx258_group_hold_off(handle);
 
 }
 
@@ -1492,11 +1493,11 @@ uint32_t dw9800_set_motor_bestmode(SENSOR_HW_HANDLE handle){
 	Sensor_WriteI2C(DW9800_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],2);
 	usleep(200);
 	cmd_val[0] = 0x06;
-	cmd_val[1] = 0x61;
+	cmd_val[1] = 0x80;//61;
 	Sensor_WriteI2C(DW9800_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],2);
 	usleep(200);
 	cmd_val[0] = 0x07;
-	cmd_val[1] = 0x38;
+	cmd_val[1] = 0x75;//38;
 	Sensor_WriteI2C(DW9800_VCM_SLAVE_ADDR,(uint8_t*)&cmd_val[0],2);
 	usleep(200*1000);
 
