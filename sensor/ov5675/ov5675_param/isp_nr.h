@@ -1,3 +1,4 @@
+
 #ifdef _NR_MAP_PARAM_
 static struct sensor_nr_level_map_param s_ov5675_nr_level_number_map_param = {{
 	25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,
@@ -5,8 +6,8 @@ static struct sensor_nr_level_map_param s_ov5675_nr_level_number_map_param = {{
 }};
 
 static struct sensor_nr_level_map_param s_ov5675_default_nr_level_map_param = {{
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+	16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,
+	16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16
 }};
 
 static struct sensor_nr_scene_map_param s_ov5675_nr_scene_map_param = {{
@@ -55,19 +56,14 @@ static struct sensor_nr_scene_map_param s_ov5675_nr_scene_map_param = {{
 #include "NR/prv_0/normal/cfai_param.h"
 #endif
 
+#ifdef _NR_RGB_AFM_PARAM_
+#include "NR/common/normal/rgb_afm_param.h"
+#include "NR/prv_0/normal/rgb_afm_param.h"
+#endif
+
 #ifdef _NR_CCE_UVDIV_PARAM_
 #include "NR/common/normal/cce_uvdiv_param.h"
 #include "NR/prv_0/normal/cce_uvdiv_param.h"
-#endif
-
-#ifdef _NR_YNR_PARAM_
-#include "NR/common/normal/ynr_param.h"
-#include "NR/prv_0/normal/ynr_param.h"
-#endif
-
-#ifdef _NR_EE_PARAM_
-#include "NR/common/normal/ee_param.h"
-#include "NR/prv_0/normal/ee_param.h"
 #endif
 
 #ifdef _NR_PRE_3DNR_PARAM_
@@ -78,21 +74,6 @@ static struct sensor_nr_scene_map_param s_ov5675_nr_scene_map_param = {{
 #ifdef _NR_CAP_3DNR_PARAM_
 #include "NR/common/normal/cap_3dnr_param.h"
 #include "NR/prv_0/normal/cap_3dnr_param.h"
-#endif
-
-#ifdef _NR_YUV_NOISEFILTER_PARAM_
-#include "NR/common/normal/yuv_noisefilter_param.h"
-#include "NR/prv_0/normal/yuv_noisefilter_param.h"
-#endif
-
-#ifdef _NR_RGB_AFM_PARAM_
-#include "NR/common/normal/rgb_afm_param.h"
-#include "NR/prv_0/normal/rgb_afm_param.h"
-#endif
-
-#ifdef _NR_IIRCNR_PARAM_
-#include "NR/common/normal/iircnr_param.h"
-#include "NR/prv_0/normal/iircnr_param.h"
 #endif
 
 #ifdef _NR_YUV_PRECDN_PARAM_
@@ -110,3 +91,22 @@ static struct sensor_nr_scene_map_param s_ov5675_nr_scene_map_param = {{
 #include "NR/prv_0/normal/uv_postcdn_param.h"
 #endif
 
+#ifdef _NR_YNR_PARAM_
+#include "NR/common/normal/ynr_param.h"
+#include "NR/prv_0/normal/ynr_param.h"
+#endif
+
+#ifdef _NR_EE_PARAM_
+#include "NR/common/normal/ee_param.h"
+#include "NR/prv_0/normal/ee_param.h"
+#endif
+
+#ifdef _NR_IIRCNR_PARAM_
+#include "NR/common/normal/iircnr_param.h"
+#include "NR/prv_0/normal/iircnr_param.h"
+#endif
+
+#ifdef _NR_YUV_NOISEFILTER_PARAM_
+#include "NR/common/normal/yuv_noisefilter_param.h"
+#include "NR/prv_0/normal/yuv_noisefilter_param.h"
+#endif
