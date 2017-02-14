@@ -5,8 +5,8 @@ static struct sensor_nr_level_map_param s_imx258_nr_level_number_map_param = {{
 }};
 
 static struct sensor_nr_level_map_param s_imx258_default_nr_level_map_param = {{
-	16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,
-	16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 }};
 
 static struct sensor_nr_scene_map_param s_imx258_nr_scene_map_param = {{
