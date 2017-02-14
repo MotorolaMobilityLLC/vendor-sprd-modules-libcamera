@@ -31,29 +31,27 @@
 #define ISP_PM_MAGIC_FLAG  0xFFEE5511
 #define UNUSED(param) (void)(param)
 
-isp_s8 nr_param_name[ISP_BLK_TYPE_MAX][16] = {
-	"pwd",
-	"bpc",
-	"bdn",
-	"grgb",
-	"nlm",
+isp_s8 nr_param_name[ISP_BLK_TYPE_MAX][32] = {
+	"pdaf_correction",
+	"bayer_nr",
 	"vst",
 	"ivst",
-	"flat_offset",
-	"cfae",
-	"rgb_precdn",
+	"rgb_dither",
+	"bpc",
+	"grgb",
+	"cfai",
+	"rgb_afm",
+	"cce_uvdiv",
+	"pre_3dnr",
+	"cap_3dnr",
 	"yuv_precdn",
-	"prfy",
-	"yuv_cdn",
-	"edge",
-	"yuv_postcdn",
+	"uv_cdn",
+	"uv_postcdn",
+	"ynr",
+	"ee",
 	"iircnr",
-	"iir_yrandom",
-	"cce_uv",
-	"y_afm"
+	"yuv_noisefilter",
 };
-
-isp_s8 isp_param_update_path[64] = CAMERA_DUMP_PATH;
 
 isp_s8 nr_mode_name[MAX_MODE_NUM][8] = {
 	"common",
@@ -357,6 +355,31 @@ static isp_s32 isp_pm_context_deinit(isp_pm_handle_t handle)
 
 	pm_cxt_ptr = (struct isp_pm_context *)handle;
 
+	isp_cxt_ptr = (struct isp_context *)pm_cxt_ptr->active_cxt_ptr;
+	isp_cxt_start_addr = (intptr_t)isp_cxt_ptr;
+	mode_param_ptr = (struct isp_pm_mode_param *)pm_cxt_ptr->active_mode;
+	blk_header_array =(struct isp_pm_block_header *)mode_param_ptr->header;
+	blk_num = mode_param_ptr->block_num;
+	for (i = 0; i < blk_num; i++) {
+		id = blk_header_array[i].block_id;
+		blk_cfg_ptr = isp_pm_get_block_cfg(id);
+		blk_header_ptr = &blk_header_array[i];
+		if ((PNULL != blk_cfg_ptr) && (PNULL != blk_header_ptr)) {
+			if (blk_cfg_ptr->ops) {
+				ops = blk_cfg_ptr->ops;
+				if (ops->deinit) {
+					offset = blk_cfg_ptr->offset;
+					blk_ptr = (void*)(isp_cxt_start_addr + offset);
+					if (PNULL != blk_ptr) {
+						ops->deinit(blk_ptr);
+					} else {
+						ISP_LOGE("blk_addr is null erro");
+					}
+				}
+			}
+		}
+	}
+
 	for (j = 0; j < ISP_TUNE_MODE_MAX; j++) {
 		if (PNULL == pm_cxt_ptr->tune_mode_array[j]) {
 			continue;
@@ -581,16 +604,17 @@ static isp_s32 isp_nr_param_update(struct isp_nr_param_update_info * nr_param_up
 		for( scene_number = 0; scene_number <  MAX_SCENEMODE_NUM; scene_number++ ) {
 
 			if( (one_multi_mode_ptr[sensor_mode] >> scene_number) & 0x01 ) {
-				sprintf(filename, "/%s/%s_%s_%s_%s_param.bin", isp_param_update_path, sensor_name, nr_mode_name[sensor_mode],
+				sprintf(filename, "%s%s_%s_%s_%s_param.bin", CAMERA_DUMP_PATH, sensor_name, nr_mode_name[sensor_mode],
 								nr_scene_name[scene_number], nr_param_name[param_type]);
 				if(0 != access(filename,R_OK)) {
 					ISP_LOGV("param access %s not exist",filename);
 				} else {
 					if( NULL!=(fp=fopen(filename,"rb")) ) {
+						ISP_LOGV("param open %s, succeed!",filename);
 						fread((void*)nr_param_ptr,1, size_of_per_unit, fp);
 						fclose(fp);
 					}else{
-						ISP_LOGV("param open %s, not succeed",filename);\
+						ISP_LOGV("param open %s, not succeed!",filename);
 					}
 				}
 				nr_param_ptr += size_of_per_unit;
@@ -627,6 +651,7 @@ static isp_s32 isp_pm_mode_list_init(isp_pm_handle_t handle, struct isp_pm_init_
 	isp_u32 isp_blk_nr_type = ISP_BLK_TYPE_MAX;
 	intptr_t nr_set_addr = 0;
 	isp_u32 nr_set_size = 0;
+	struct nr_set_group_unit *nr_ptr = PNULL;
 
 	if (PNULL == cxt_ptr->isp_ctrl_cxt_handle)
 		cxt_ptr->isp_ctrl_cxt_handle = input->isp_ctrl_cxt_handle;
@@ -667,7 +692,7 @@ static isp_s32 isp_pm_mode_list_init(isp_pm_handle_t handle, struct isp_pm_init_
 		add_lnc_len = fix_data_ptr->lnc.lnc_param.lnc_len;
 		add_awb_len = fix_data_ptr->awb.awb_param.awb_len;
 
-		struct nr_set_group_unit *nr_ptr = (struct nr_set_group_unit *)&(fix_data_ptr->nr.nr_set_group);
+		nr_ptr = (struct nr_set_group_unit *)&(fix_data_ptr->nr.nr_set_group);
 
 		add_ae_len = fix_data_ptr->ae.ae_param.ae_len;
 		add_lnc_len = fix_data_ptr->lnc.lnc_param.lnc_len;
@@ -718,7 +743,7 @@ static isp_s32 isp_pm_mode_list_init(isp_pm_handle_t handle, struct isp_pm_init_
 					memcpy((void *)(dst_data_ptr + sizeof(struct ae_param_tmp_001)), (void *)(fix_data_ptr->ae.ae_param.ae), add_ae_len);
 					memcpy((void *)(dst_data_ptr + sizeof(struct ae_param_tmp_001) + add_ae_len),
 						(void *)(src_data_ptr + sizeof(struct ae_param_tmp_001)),
-						src_header[j].size - sizeof(struct ae_param_tmp_001));
+						(src_header[j].size - sizeof(struct ae_param_tmp_001)));
 					}
 					break;
 				case ISP_BLK_AWB_NEW: {
