@@ -3323,7 +3323,9 @@ void SprdCamera3OEMIf::doFaceMakeup(struct camera_frame_type *frame)
 		mSkinWhitenTsface.top = faceInfo.face[0].rect[1];
 		mSkinWhitenTsface.right = faceInfo.face[0].rect[2];
 		mSkinWhitenTsface.bottom = faceInfo.face[0].rect[3];
-		HAL_LOGV("FACE_BEAUTY rect:%d-%d-%d-%d",mSkinWhitenTsface.left,mSkinWhitenTsface.top,mSkinWhitenTsface.right,mSkinWhitenTsface.bottom);
+		HAL_LOGV("FACE_BEAUTY rect:%ld-%ld-%ld-%ld",
+			mSkinWhitenTsface.left,mSkinWhitenTsface.top,
+			mSkinWhitenTsface.right,mSkinWhitenTsface.bottom);
 	}  else {
 		HAL_LOGE("Not detect face!");
 	}
@@ -3360,10 +3362,11 @@ void SprdCamera3OEMIf::doFaceMakeup(struct camera_frame_type *frame)
 			memcpy((unsigned char *)(frame->y_vir_addr), tmpBuf, frame->width * frame->height * 3 / 2);
 		}
 	} else {
-		HAL_LOGE("No face beauty! frame size %d, %d. If size is not zero, then outMakeupData.yBuf is null!");
+		HAL_LOGE("No face beauty! frame size %d, %d. If size is not zero, then outMakeupData.yBuf is null!",
+			frame->width, frame->height);
 	}
 	if(NULL != tmpBuf) {
-		delete tmpBuf;
+		delete[] tmpBuf;
 		tmpBuf = NULL;
 	}
 }

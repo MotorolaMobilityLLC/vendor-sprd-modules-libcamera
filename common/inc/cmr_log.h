@@ -39,6 +39,7 @@ extern cmr_int g_isp_log_level;
 extern cmr_int g_oem_log_level;
 extern cmr_int g_sensor_log_level;
 
+#ifndef WIN32
 #define ISP_LOGE(format,...) \
 	ALOGE(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
 #define ISP_LOGW(format,...) \
@@ -50,6 +51,13 @@ extern cmr_int g_sensor_log_level;
 /* ISP_LOGV uses ALOGD_IF */
 #define ISP_LOGV(format,...) \
 	ALOGD_IF(g_isp_log_level >= LEVEL_OVER_LOGV, DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+#else
+#define ISP_LOGE printf
+#define ISP_LOGW printf
+#define ISP_LOGI printf
+#define ISP_LOGD printf
+#define ISP_LOGV printf
+#endif
 
 #define CMR_LOGE(format,...) \
 	ALOGE(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)

@@ -38,7 +38,11 @@ extern	 "C"
 #define SENSOR_MEMSET                                 memset
 
 #define BOOLEAN                                       cmr_u32
-#define PNULL                                         0
+
+#ifndef PNULL
+#define PNULL                                         ((void*)0)
+#endif
+
 #define LOCAL                                         static
 
 

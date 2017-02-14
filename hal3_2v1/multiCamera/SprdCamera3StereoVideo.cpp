@@ -849,7 +849,7 @@ bool SprdCamera3StereoVideo::ReProcessThread::threadLoop()
             {
 #ifdef CONFIG_FACE_BEAUTY
                 if(reProcessFrame(muxer_msg.combo_frame.buffer1,muxer_msg.combo_frame.frame_number) !=  NO_ERROR){
-                    HAL_LOGD("frameid: reprocess frame failed!",muxer_msg.combo_frame.frame_number);
+                    HAL_LOGD("frame_number=%d, reprocess frame failed!",muxer_msg.combo_frame.frame_number);
                 }
 #endif
                 videoCallBackResult(&muxer_msg.combo_frame);
@@ -930,7 +930,8 @@ void SprdCamera3StereoVideo::ReProcessThread::video_3d_doFaceMakeup( private_han
     // init the parameters table. save the value until the process is restart or the device is restart.
     int tab_skinWhitenLevel[10]={0,15,25,35,45,55,65,75,85,95};
     int tab_skinCleanLevel[10]={0,25,45,50,55,60,70,80,85,95};
-    struct camera_frame_type video_3d_frame = {0};
+    struct camera_frame_type video_3d_frame;
+    memset(&video_3d_frame, 0, sizeof(camera_frame_type));
     struct camera_frame_type *frame = &video_3d_frame;
     frame->y_vir_addr =(cmr_uint)private_handle->base;
     frame->width = private_handle->width;
@@ -944,7 +945,7 @@ void SprdCamera3StereoVideo::ReProcessThread::video_3d_doFaceMakeup( private_han
         Tsface.top = face_info[1];
         Tsface.right = face_info[2];
         Tsface.bottom = face_info[3];
-        HAL_LOGD("FACE_BEAUTY rect:%d-%d-%d-%d",Tsface.left,Tsface.top,Tsface.right,Tsface.bottom);
+        HAL_LOGD("FACE_BEAUTY rect:%ld-%ld-%ld-%ld",Tsface.left,Tsface.top,Tsface.right,Tsface.bottom);
 
         int level = perfect_level;
         int skinWhitenLevel = 0;
@@ -981,10 +982,11 @@ void SprdCamera3StereoVideo::ReProcessThread::video_3d_doFaceMakeup( private_han
                 memcpy((unsigned char *)(frame->y_vir_addr), tmpBuf, frame->width * frame->height * 3 / 2);
             }
         } else {
-            HAL_LOGE("No face beauty! frame size %d, %d. If size is not zero, then outMakeupData.yBuf is null!");
+            HAL_LOGE("No face beauty! frame size %d, %d. If size is not zero, then outMakeupData.yBuf is null!",
+                     frame->width, frame->height);
         }
         if(NULL != tmpBuf) {
-            delete tmpBuf;
+            delete[] tmpBuf;
             tmpBuf = NULL;
         }
     } else {
@@ -1002,7 +1004,7 @@ void SprdCamera3StereoVideo::ReProcessThread::video_3d_doFaceMakeup( private_han
  *
  * RETURN     : None
  *==========================================================================*/
-int SprdCamera3StereoVideo::ReProcessThread::reProcessFrame(const buffer_handle_t* frame_buffer,int cur_frameid)
+int SprdCamera3StereoVideo::ReProcessThread::reProcessFrame(const buffer_handle_t* frame_buffer,uint32_t cur_frameid)
 {
     int rc = 0;
     int32_t perfectskinlevel = 0;

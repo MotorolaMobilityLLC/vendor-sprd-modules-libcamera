@@ -25,7 +25,7 @@ extern "C"
 #include <sys/types.h>
 #endif
 #include "cmr_msg.h"
-
+#include "cmr_log.h"
 
 /**---------------------------------------------------------------------------*
 **				Micro Define					*
@@ -52,23 +52,6 @@ typedef short           isp_s16;
 typedef unsigned char   isp_u8;
 typedef char            isp_s8;
 typedef void*           isp_handle;
-
-#define ISP_DEBUG_STR       "ISP: L %d, %s: "
-#define ISP_DEBUG_ARGS    __LINE__,__FUNCTION__
-
-#ifndef WIN32
-#define ISP_LOGE(format,...) ALOGE(ISP_DEBUG_STR format, ISP_DEBUG_ARGS, ##__VA_ARGS__)
-#define ISP_LOGW(format,...) ALOGW(ISP_DEBUG_STR format, ISP_DEBUG_ARGS, ##__VA_ARGS__)
-#define ISP_LOGI(format,...) ALOGI(ISP_DEBUG_STR format, ISP_DEBUG_ARGS, ##__VA_ARGS__)
-#define ISP_LOGD(format,...) ALOGD(ISP_DEBUG_STR format, ISP_DEBUG_ARGS, ##__VA_ARGS__)
-#define ISP_LOGV(format,...) ALOGV(ISP_DEBUG_STR format, ISP_DEBUG_ARGS, ##__VA_ARGS__)
-#else
-#define ISP_LOGE printf
-#define ISP_LOGW printf
-#define ISP_LOGI printf
-#define ISP_LOGD printf
-#define ISP_LOGV printf
-#endif
 
 #ifndef PNULL
 #define PNULL ((void*)0)

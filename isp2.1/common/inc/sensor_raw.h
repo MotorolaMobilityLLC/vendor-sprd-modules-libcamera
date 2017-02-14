@@ -1549,12 +1549,14 @@ struct tuning_param {
 /**************************************************************************/
 //sft af
 struct isp_sft_af_param {
-
+	// add for buid warning, isp owners shoud complete the struct
+	int dummy;
 };
 
 /*************************************************************************/
 struct isp_alsc_param {
-
+	// add for buid warning, isp owners shoud complete the struct
+	int dummy;
 };
 /************************************************************************************/
 //smart param begin

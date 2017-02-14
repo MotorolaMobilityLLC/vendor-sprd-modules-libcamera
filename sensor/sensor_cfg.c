@@ -133,7 +133,7 @@ const SENSOR_MATCH_T main_sensor_infor_tab[]=
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
 	//{"ov13850r2a_mipi_raw", &g_ov13850r2a_mipi_raw_info},
 #endif
-	PNULL
+	{0}
 };
 
 const SENSOR_MATCH_T sub_sensor_infor_tab[]=
@@ -144,14 +144,14 @@ const SENSOR_MATCH_T sub_sensor_infor_tab[]=
 #endif
 	{"s5k4h8yx_mipi_raw", &g_s5k4h8yx_mipi_raw_info},
 	{"ov8856_mipi_raw", &g_ov8856_mipi_raw_info},
-	PNULL
+	{0}
 };
 
 const SENSOR_MATCH_T sensor2_infor_tab[]=
 {
 	{"ov2680_mipi_raw", &g_ov2680_mipi_raw_info},
 	{"sp2509_mipi_raw", &g_sp2509_mipi_raw_info},
-	PNULL
+	{0}
 };
 
 const SENSOR_MATCH_T sensor3_infor_tab[]=
@@ -160,14 +160,14 @@ const SENSOR_MATCH_T sensor3_infor_tab[]=
 #ifdef SC_FPGA
 //	{"ov5640_mipi_raw", &g_ov5640_mipi_raw_info},
 #endif
-	PNULL
+	{0}
 };
 
 
 const SENSOR_MATCH_T atv_infor_tab[]=
 {
 	//&g_nmi600_yuv_info, //&g_tlg1120_yuv_info,
-	PNULL
+	{0}
 };
 
 /*
@@ -203,7 +203,7 @@ const SENSOR_MATCH_T  at_main_sensor_infor_tab[]=
 #endif
 #endif
 
-PNULL
+	{0}
 
 };
 const SENSOR_MATCH_T  at_sub_sensor_infor_tab[]=
@@ -233,7 +233,7 @@ const SENSOR_MATCH_T  at_sub_sensor_infor_tab[]=
 #endif
 #endif
 
-PNULL
+	{0}
 
 };
 const SENSOR_MATCH_T  at_dev2_sensor_infor_tab[]=
@@ -241,14 +241,14 @@ const SENSOR_MATCH_T  at_dev2_sensor_infor_tab[]=
 	{"at_ov2680_mipi_raw", &g_ov2680_mipi_raw_info},
 	{"at_sp2509_mipi_raw", &g_sp2509_mipi_raw_info},
 
-PNULL
+	{0}
 };
 
 const SENSOR_MATCH_T at_atv_infor_tab[]=
 {
 	//{"nmi600_yuv", &g_nmi600_yuv_info},
 	//{"tlg1120_yuv", &g_tlg1120_yuv_info},  bonnie
-	PNULL
+	{0}
 };
 
 /*

@@ -998,7 +998,8 @@ void SprdCamera3Capture::CaptureThread::cap_3d_doFaceMakeup( private_handle_t *p
     // init the parameters table. save the value until the process is restart or the device is restart.
     int tab_skinWhitenLevel[10]={0,15,25,35,45,55,65,75,85,95};
     int tab_skinCleanLevel[10]={0,25,45,50,55,60,70,80,85,95};
-    struct camera_frame_type cap_3d_frame = {0};
+    struct camera_frame_type cap_3d_frame;
+    memset(&cap_3d_frame, 0, sizeof(camera_frame_type));
     struct camera_frame_type *frame = &cap_3d_frame;
     frame->y_vir_addr =(cmr_uint)private_handle->base;
     frame->width = private_handle->width;
@@ -1012,7 +1013,7 @@ void SprdCamera3Capture::CaptureThread::cap_3d_doFaceMakeup( private_handle_t *p
         Tsface.top = face_info[1];
         Tsface.right = face_info[2];
         Tsface.bottom = face_info[3];
-        HAL_LOGD("FACE_BEAUTY rect:%d-%d-%d-%d",Tsface.left,Tsface.top,Tsface.right,Tsface.bottom);
+        HAL_LOGD("FACE_BEAUTY rect:%ld-%ld-%ld-%ld",Tsface.left,Tsface.top,Tsface.right,Tsface.bottom);
 
         int level = perfect_level;
         int skinWhitenLevel = 0;
@@ -1049,10 +1050,11 @@ void SprdCamera3Capture::CaptureThread::cap_3d_doFaceMakeup( private_handle_t *p
                 memcpy((unsigned char *)(frame->y_vir_addr), tmpBuf, frame->width * frame->height * 3 / 2);
             }
         } else {
-            HAL_LOGE("No face beauty! frame size %d, %d. If size is not zero, then outMakeupData.yBuf is null!");
+            HAL_LOGE("No face beauty! frame size %d, %d. If size is not zero, then outMakeupData.yBuf is null!",
+                     frame->width, frame->height);
         }
         if(NULL != tmpBuf) {
-            delete tmpBuf;
+            delete[] tmpBuf;
             tmpBuf = NULL;
         }
     } else {
@@ -1070,7 +1072,7 @@ void SprdCamera3Capture::CaptureThread::cap_3d_doFaceMakeup( private_handle_t *p
  *
  * RETURN     : None
  *==========================================================================*/
-void  SprdCamera3Capture::CaptureThread::reProcessFrame(const buffer_handle_t* frame_buffer,int cur_frameid)
+void  SprdCamera3Capture::CaptureThread::reProcessFrame(const buffer_handle_t* frame_buffer,uint32_t cur_frameid)
 {
     int32_t perfectskinlevel = 0;
     int32_t   face_info[4];

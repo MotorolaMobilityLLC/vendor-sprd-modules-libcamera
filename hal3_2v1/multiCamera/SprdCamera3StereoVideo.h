@@ -177,7 +177,7 @@ public:
         double mVFps;
         void dumpFps();
         void waitMsgAvailable();
-        int reProcessFrame(const buffer_handle_t* frame_buffer,int32_t cur_frameid);
+        int reProcessFrame(const buffer_handle_t* frame_buffer,uint32_t cur_frameid);
         void videoCallBackResult(frame_matched_info_t* combVideoResult);
         void video_3d_convert_face_info_from_preview2video(int *ptr_cam_face_inf,int width,int height);
         void video_3d_doFaceMakeup( private_handle_t *private_handle ,int perfect_level,int *face_info);
