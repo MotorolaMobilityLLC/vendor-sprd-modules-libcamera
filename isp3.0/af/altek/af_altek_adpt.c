@@ -1510,17 +1510,17 @@ static cmr_int afaltek_adpt_haf_start(cmr_handle adpt_handle)
 	cmr_bzero(&roi, sizeof(roi));
 	cmr_bzero(&lib_roi, sizeof(lib_roi));
 
+	roi.valid_win = 1;
+	afaltek_adpt_set_centor(&roi, &cxt->sensor_info.crop_info);
+	afaltek_adpt_config_roi(adpt_handle, &roi,
+						alAFLib_ROI_TYPE_NORMAL, &lib_roi);
+
+	ret = afaltek_adpt_set_roi(adpt_handle, &lib_roi);
+	if (ret)
+		ISP_LOGE("failed to set roi");
+
 	if (cxt->af_touch_mode) {
 		cxt->af_touch_mode = 0;
-		roi.valid_win = 1;
-		afaltek_adpt_set_centor(&roi, &cxt->sensor_info.crop_info);
-		afaltek_adpt_config_roi(adpt_handle, &roi,
-							alAFLib_ROI_TYPE_NORMAL, &lib_roi);
-
-		ret = afaltek_adpt_set_roi(adpt_handle, &lib_roi);
-		if (ret)
-			ISP_LOGE("failed to set roi");
-
 		/* notify oem to show box */
 		ret = afaltek_adpt_start_notify(adpt_handle);
 		if (ret)
