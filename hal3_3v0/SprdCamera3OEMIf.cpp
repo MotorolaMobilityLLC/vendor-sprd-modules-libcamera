@@ -7775,6 +7775,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data)
 	SprdCamera3OEMIf * obj = (SprdCamera3OEMIf *)p_data;
 	cmr_int need_pause;
 	struct camera_frame_type zsl_frame;
+	bzero(&zsl_frame,sizeof(struct camera_frame_type));
 	uint32_t cnt = 0;
 	SPRD_DEF_Tag sprddefInfo;
 	obj->mSetting->getSPRDDEFTag(&sprddefInfo);
