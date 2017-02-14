@@ -68,7 +68,7 @@ static int rot_fd = -1;
 /*process control*/
 Mutex previewLock; /*preview lock*/
 int previewvalid = 0; /*preview flag*/
-static int s_mem_method = 1;/*0: physical address, 1: iommu  address*/
+static int s_mem_method = 0;/*0: physical address, 1: iommu  address*/
 static unsigned char camera_id = 0; /*camera id: fore=1,back=0*/
 
 /*data processing useful*/
@@ -1309,9 +1309,9 @@ int eng_tst_camera_init(int cameraId, minui_backend* backend, GRSurface* draw)
         return -1;
     }
 
-	//s_mem_method = IommuIsEnabled();
 	ret = mHalOem->ops->camera_init(cameraId, eng_tst_camera_cb , &client_data , 0 , &oem_handle, (void*)Callback_Malloc, (void*)Callback_Free);
-	ALOGI("Native MMI Test: %s,%s,%d IN\n", __FILE__,__func__, __LINE__);
+	s_mem_method = IommuIsEnabled();
+	ALOGI("Native MMI Test: %s,%s,%d, s_mem_method %d IN\n", __FILE__,__func__, __LINE__, s_mem_method);
 
 	eng_tst_camera_startpreview();
 

@@ -69,7 +69,7 @@ static int rot_fd = -1;
 /*process control*/
 static Mutex previewLock; /*preview lock*/
 static int previewvalid = 0; /*preview flag*/
-static int s_mem_method = 1;/*0: physical address, 1: iommu  address*/
+static int s_mem_method = 0;/*0: physical address, 1: iommu  address*/
 static unsigned char camera_id = 0; /*camera id: fore=1,back=0*/
 
 /*data processing useful*/
@@ -1008,18 +1008,16 @@ static int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size, cmr_
 				goto mem_fail;
 			}
 			mIspFirmwareReserved = memory;
-			memory->ion_heap->get_kaddr(&kaddr, &ksize);
-			*phy_addr++ = kaddr;
-			*phy_addr++ = kaddr >> 32;
-			*vir_addr++ = (cmr_uint)memory->data;
-			*fd++ = memory->fd;
-			*fd++ = memory->dev_fd;
 		} else {
-			*phy_addr++ = (cmr_uint)mIspFirmwareReserved->phys_addr;
-			*vir_addr++ = (cmr_uint)mIspFirmwareReserved->data;
-			*fd++ = mIspFirmwareReserved->fd;
-			*fd++ = mIspFirmwareReserved->dev_fd;
+			memory = mIspFirmwareReserved;
 		}
+		if(memory->ion_heap)
+			memory->ion_heap->get_kaddr(&kaddr, &ksize);
+		*phy_addr++ = kaddr;
+		*phy_addr++ = kaddr >> 32;
+		*vir_addr++ = (cmr_uint)memory->data;
+		*fd++ = memory->fd;
+		*fd++ = memory->dev_fd;
 	} else {
 		ALOGE("AutoTest: %s,%s,%d, type ignore: %d, do nothing.\n", __FILE__, __func__, __LINE__, type);
 	}
@@ -1232,6 +1230,7 @@ int autotest_camera_init(int cameraId, minui_backend* backend, GRSurface* draw)
 	else
 		ALOGI("AutoTest:%s,line:%d in BBAT mode\n", __func__, __LINE__);
 
+
 	if (2 == cameraId)
 		camera_id = 2; // back camera
 	else if (1 == cameraId)
@@ -1254,9 +1253,9 @@ int autotest_camera_init(int cameraId, minui_backend* backend, GRSurface* draw)
         return -1;
     }
 
-	//s_mem_method = autotest_IommuIsEnabled();
 	ret = mHalOem->ops->camera_init(cameraId, autotest_camera_cb , &client_data , 0 , &oem_handle, (void*)Callback_Malloc, (void*)Callback_Free);
-	ALOGI("AutoTest: %s,%s,%d IN\n", __FILE__,__func__, __LINE__);
+	s_mem_method = autotest_IommuIsEnabled();
+	ALOGI("AutoTest: %s,%s,%d， s_mem_method %d IN\n", __FILE__,__func__, __LINE__, s_mem_method);
 
 	autotest_camera_startpreview();
 
