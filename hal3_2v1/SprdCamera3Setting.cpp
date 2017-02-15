@@ -1890,7 +1890,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId)
 	for(size_t i=0;i<4;i++)
 		s_setting[cameraId].sensorInfo.black_level_pattern[i] = default_info->common.black_level;
 	memcpy(s_setting[cameraId].sensor_InfoInfo.sensitivity_range, ksensitivity_range, sizeof(ksensitivity_range));
-	s_setting[cameraId].sensor_InfoInfo.timestamp_source = ANDROID_SENSOR_INFO_TIMESTAMP_SOURCE_REALTIME;
+	s_setting[cameraId].sensor_InfoInfo.timestamp_source = 0;
 
 	//sensor
 	s_setting[cameraId].sensorInfo.orientation = cameraId ? 270 : 90;

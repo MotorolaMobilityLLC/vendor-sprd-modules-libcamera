@@ -3565,16 +3565,16 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 		fps_range_up = (1000000000 / fps_param.min_fps) * (1 + 0.015);
 
 		if (mPrvBufferTimestamp == 0) {
-			buffer_timestamp_fps = frame->monoboottime;
+			buffer_timestamp_fps = frame->timestamp;
 		} else {
 			if (mIsUpdateRangeFps) {
-				buffer_timestamp_fps = frame->monoboottime;
+				buffer_timestamp_fps = frame->timestamp;
 				mIsUpdateRangeFps = false;
 			} else {
-				timestamp = frame->monoboottime - mPrvBufferTimestamp;
+				timestamp = frame->timestamp - mPrvBufferTimestamp;
 				HAL_LOGD("timestamp is %lld", timestamp);
 				if ((timestamp > fps_range_low) && (timestamp < fps_range_up)) {
-					buffer_timestamp_fps = frame->monoboottime;
+					buffer_timestamp_fps = frame->timestamp;
 				} else {
 					buffer_timestamp_fps = mPrvBufferTimestamp + fps_range_offset;
 					HAL_LOGD("fix buffer_timestamp_fps is %lld", buffer_timestamp_fps);
@@ -3583,7 +3583,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 		}
 		mPrvBufferTimestamp = buffer_timestamp_fps;
 	} else {
-		buffer_timestamp_fps = frame->monoboottime;
+		buffer_timestamp_fps = frame->timestamp;
 	}
 #endif
 
