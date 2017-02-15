@@ -64,8 +64,8 @@
 		dst_cce_ptr->cur_level[1] = saturation;
 
 		for(i=0; i<3; i++){
-			uint32_t color_cast_coef = dst_cce_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][i];
-			uint32_t gain_offset_coef = dst_cce_ptr->cce_coef[ISP_CCE_COEF_COLOR_CAST][i];
+			uint32_t color_cast_coef = dst_cce_ptr->cce_coef[ISP_CCE_COEF_COLOR_CAST][i];
+			uint32_t gain_offset_coef = dst_cce_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][i];
 
 			cce_coef[i] = gain_offset_coef * color_cast_coef / ISP_FIX_8BIT_UNIT;
 		}
@@ -150,8 +150,8 @@
 		dst_cce_ptr->cce_coef[cce_coef_index][2] = b_gain;
 
 		for(i=0; i<3; i++){
-			uint32_t color_cast_coef = dst_cce_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][i];
-			uint32_t gain_offset_coef = dst_cce_ptr->cce_coef[ISP_CCE_COEF_COLOR_CAST][i];
+			uint32_t color_cast_coef = dst_cce_ptr->cce_coef[ISP_CCE_COEF_COLOR_CAST][i];
+			uint32_t gain_offset_coef = dst_cce_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][i];
 
 			cce_coef[i] = gain_offset_coef * color_cast_coef / ISP_FIX_8BIT_UNIT;
 		}

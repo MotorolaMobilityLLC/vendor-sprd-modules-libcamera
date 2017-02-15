@@ -67,7 +67,7 @@ static struct isp_cfg_fun s_isp_cfg_fun_tab_tshark2[] = {
 	{ISP_BLK_RGB_GAMC,         isp_u_gamma_block},
 	{ISP_BLK_HSV,              isp_u_hsv_block},
 	{ISP_BLK_POSTERIZE,        isp_u_posterize_block},
-//  {ISP_BLK_CCE,              isp_u_cce_matrix_block},
+	{ISP_BLK_CCE,              isp_u_cce_matrix_block},
 	{ISP_BLK_UVDIV,            isp_u_uvd_block},
 //	{ISP_BLK_YIQ_AFL_V1,       isp_u_anti_flicker_block},
 //	{ISP_BLK_YIQ_AFL_V3,       isp_u_anti_flicker_new_block},
