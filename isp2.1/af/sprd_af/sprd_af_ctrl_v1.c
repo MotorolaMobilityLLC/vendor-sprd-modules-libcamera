@@ -1097,6 +1097,7 @@ static void do_notify(af_ctrl_t *af, enum notify_event evt, const notify_result_
 		struct af_result_param af_result;
 		af_result.suc_win = win_num;
 
+		af->inited_af_req = (AFV1_FALSE);
 		af->vcm_stable = 1;
 		if (DCAM_AFTER_VCM_YES == compare_timestamp(af)) {
 			sem_post(&af->af_wait_caf);	// should be protected by af_work_lock mutex exclusives
@@ -1633,7 +1634,7 @@ static void do_notify(af_ctrl_t *af, enum notify_event evt, const notify_result_
 
 		trigger_calc(af, prm, &res);
 		//AF_LOGD("is_caf_trig = %d, is_need_rough_search = %d", res.is_caf_trig, res.is_need_rough_search);
-		if (res.is_caf_trig) {
+		if (res.is_caf_trig || AFV1_TRUE == af->inited_af_req) {
 			//caf_stop_monitor(af);
 			af->caf_state = CAF_SEARCHING;
 			caf_start_search(af, !res.is_need_rough_search);
@@ -3546,16 +3547,27 @@ v=v>(max)?(max):v; hist[v]++;}
 
 //    isp->handle_af = af;
 		// TODO: for debug only
-//    isp->log_af = (uint8_t *)af;
-//    isp->log_af_size = sizeof(*af);
+		// isp->log_af = (uint8_t *)af;
+		// isp->log_af_size = sizeof(*af);
+		isp_ctx->af_cxt.log_af = (uint8_t *) af;
+		isp_ctx->af_cxt.log_af_size = sizeof(*af);
 		lens_move_to_infi(af, af->fv.AF_OTP.INF);
+		/*
+		   AF process need to do af once when af init done.
+		 */
+		af->inited_af_req = AFV1_TRUE;
+		assert(sizeof(af->af_version) >= strlen("AF-") + strlen(af->fv.AF_Version) + strlen(AF_SYS_VERSION));
+		memcpy(af->af_version, "AF-", strlen("AF-"));
+		memcpy(af->af_version + strlen("AF-"), af->fv.AF_Version, sizeof(af->fv.AF_Version));
+		memcpy(af->af_version + strlen("AF-") + strlen(af->fv.AF_Version), AF_SYS_VERSION,
+		       strlen(AF_SYS_VERSION));
+
 		property_set("af_mode", "none");
 		{
 			FILE *fp = NULL;
 			af_tuning_param_t tuning_data;
 			fp = fopen("/data/misc/cameraserver/af_tuning_default.bin", "wb");
-			if(fp == NULL)
-			{
+			if (fp == NULL) {
 				AF_LOGE("af init error rtn!!!\n");
 				af = NULL;
 				return (cmr_handle) af;

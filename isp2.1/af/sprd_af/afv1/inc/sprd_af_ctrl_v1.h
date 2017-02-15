@@ -17,6 +17,7 @@
 #define _SPRD_AF_CTRL_V1_H
 
 #include <utils/Timers.h>
+#include <pthread.h>
 
 #include "ae_ctrl_types.h"
 #include "lsc_adv.h"
@@ -34,26 +35,25 @@
 #include "AFv1_Tune.h"
 
 //#include "af_sprd_ctrl.h"
-#include <pthread.h>
-
 #include "aft_interface.h"
-
-#define ISP_CALLBACK_EVT 0x00040000	// FIXME: should be defined in isp_app.h
-#define ISP_PROC_AF_IMG_DATA_UPDATE (1 << 3)	// FIXME
-#define AF_SAVE_MLOG_STR     "persist.sys.isp.af.mlog"	/*save/no */
-
-//int32_t sprd_afv1_module_init(struct af_lib_fun *ops);
-
 /*------------------------------------------------------------------------------*
 *					Micro Define				*
 *-------------------------------------------------------------------------------*/
+#ifndef AFV1_TRUE
+#define AFV1_TRUE (1)
+#endif
+#ifndef AFV1_FALSE
+#define AFV1_FALSE (0)
+#endif
+
+//#define ISP_CALLBACK_EVT 0x00040000	// FIXME: should be defined in isp_app.h
+//#define ISP_PROC_AF_IMG_DATA_UPDATE (1 << 3)	// FIXME
+#define AF_SAVE_MLOG_STR     "persist.sys.isp.af.mlog"	/*save/no */
+
 #define ISP_AF_END_FLAG 0x80000000
 
 #define AFV1_MAGIC_START		0xe5a55e5a
 #define AFV1_MAGIC_END		0x5e5ae5a5
-
-#define AFV1_TRUE 1
-#define AFV1_FALSE 0
 
 #define AFV1_TRAC(_x_) AF_LOGI _x_
 #define AFV1_RETURN_IF_FAIL(exp,warning) do{if(exp) {AF_TRAC(warning); return exp;}}while(0)
@@ -65,6 +65,7 @@
 #define SPLIT_TEST      1
 #define AF_WAIT_CAF_FINISH     1
 #define AF_RING_BUFFER         0
+#define AF_SYS_VERSION "-20161129-15"
 
 //int32_t _smart_io_ctrl(isp_ctrl_context* handle, uint32_t cmd);
 //int32_t lsc_adv_ioctrl(lsc_adv_handle_t handle, enum alsc_io_ctrl_cmd cmd, void *in_param, void *out_param);
@@ -305,6 +306,7 @@ typedef struct _af_fv_info {
 } af_fv;
 
 typedef struct _af_ctrl {
+	char af_version[40];
 	enum af_state state;
 	enum af_state pre_state;
 	enum caf_state caf_state;
@@ -360,6 +362,7 @@ typedef struct _af_ctrl {
 	uint8_t bypass;
 	uint8_t soft_landing_dly;
 	uint8_t soft_landing_step;
+	unsigned int inited_af_req;
 	af_fv	af_fv_val;
 	struct af_iir_nr_info af_iir_nr;
 	struct af_enhanced_module_info af_enhanced_module;

@@ -24,6 +24,7 @@
 #include "af_ctrl.h"
 #include "isp_alg_fw.h"
 #include "isp_dev_access.h"
+#include "isp_debug.h"
 //#include "sensor_isp_param_merge.h"
 
 #define ISP_REG_NUM                          20467
@@ -625,6 +626,44 @@ static cmr_int _ispSetAeFpsIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, in
 	return rtn;
 }
 
+static const char *DEBUG_MAGIC = "SPRD_ISP";  // 8 bytes
+static const char *AE_START    = "ISP_AE__";
+static const char *AE_END      = "ISP_AE__";
+static const char *AF_START    = "ISP_AF__";
+static const char *AF_END      = "ISP_AF__";
+static const char *AWB_START   = "ISP_AWB_";
+static const char *AWB_END     = "ISP_AWB_";
+static const char *LSC_START   = "ISP_LSC_";
+static const char *LSC_END     = "ISP_LSC_";
+
+static size_t calc_log_size(const void *log, size_t size, const char *begin_magic, const char *end_magic)
+{
+    if (!log || !size)
+        return 0;
+
+    return size + strlen(begin_magic) + strlen(end_magic);
+}
+
+#define COPY_MAGIC(m) \
+{size_t len; len = strlen(m); memcpy((char *)dst + off, m, len); off += len;}
+
+static size_t copy_log(void *dst, const void *log, size_t size, const char *begin_magic, const char *end_magic)
+{
+    size_t off = 0;
+
+    if (!log || !size)
+        return 0;
+
+    COPY_MAGIC(begin_magic);
+    memcpy((char *)dst + off, log, size); off += size;
+    COPY_MAGIC(end_magic);
+    return off;
+}
+
+#define COPY_LOG(l, L) \
+{size_t len = copy_log(cxt->commn_cxt.log_isp + off, cxt->l##_cxt.log_##l, cxt->l##_cxt.log_##l##_size, L##_START, L##_END); \
+if (len) {log.l##_off = off; off += len; log.l##_len = len;} else {log.l##_off = 0;}}
+
 static cmr_int _ispGetInfoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, int (*call_back)())
 {
 	cmr_int                         rtn = ISP_SUCCESS;
@@ -633,6 +672,9 @@ static cmr_int _ispGetInfoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, int
 	uint32_t                        total_size = 0;
 	uint32_t                        mem_offset = 0;
 	uint32_t                        log_ae_size = 0;
+	struct sprd_isp_debug_info *p;
+	struct _isp_log_info log;
+	size_t total, off;
 
 	if (NULL == info_ptr) {
 		ISP_LOGE("err,param is null");
@@ -675,16 +717,59 @@ static cmr_int _ispGetInfoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, int
 			}
 			mem_offset += cxt->ae_cxt.log_alc_ae_size;
 		}
-	}
 
-	info_ptr->addr = cxt->ae_cxt.log_alc;
-	info_ptr->size = cxt->ae_cxt.log_alc_size;
+		info_ptr->addr = cxt->ae_cxt.log_alc;
+		info_ptr->size = cxt->ae_cxt.log_alc_size;
+	} else {
+		total_size = sizeof(struct sprd_isp_debug_info) + sizeof(isp_log_info_t)
+				+ calc_log_size(cxt->ae_cxt.log_ae, cxt->ae_cxt.log_ae_size, AE_START, AE_END)
+				+ calc_log_size(cxt->af_cxt.log_af, cxt->af_cxt.log_af_size, AF_START, AF_END)
+				+ calc_log_size(cxt->awb_cxt.log_awb, cxt->awb_cxt.log_awb_size, AWB_START, AWB_END)
+				+ calc_log_size(cxt->lsc_cxt.log_lsc, cxt->lsc_cxt.log_lsc_size, LSC_START, LSC_END)
+				+ sizeof(uint32_t)/*for end flag*/;
+
+		if (cxt->commn_cxt.log_isp_size < total_size) {
+			if (cxt->commn_cxt.log_isp!= NULL) {
+				free (cxt->commn_cxt.log_isp);
+				cxt->commn_cxt.log_isp = NULL;
+			}
+			cxt->commn_cxt.log_isp = malloc(total_size);
+			if (cxt->commn_cxt.log_isp == NULL) {
+				ISP_LOGE("failed to malloc %d", total_size);
+				cxt->commn_cxt.log_isp_size = 0;
+				info_ptr->addr = 0;
+				info_ptr->size = 0;
+				return ISP_ERROR;
+			}
+			cxt->commn_cxt.log_isp_size = total_size;
+		}
+
+		p = (struct sprd_isp_debug_info *)cxt->commn_cxt.log_isp;
+		p->debug_startflag = SPRD_DEBUG_START_FLAG;
+		*((uint32_t*)((uint8_t*)p + total_size - 4))= SPRD_DEBUG_END_FLAG;
+		p->debug_len	   = total_size;
+		p->version_id	   = SPRD_DEBUG_VERSION_ID;
+
+		memset(&log, 0, sizeof(log));
+		memcpy(log.magic, DEBUG_MAGIC, sizeof(log.magic));
+		log.ver = 0;
+
+		off = sizeof(struct sprd_isp_debug_info) + sizeof(isp_log_info_t);
+		COPY_LOG(ae, AE);
+		COPY_LOG(af, AF);
+		COPY_LOG(awb, AWB);
+		COPY_LOG(lsc, LSC);
+		memcpy((char*)cxt->commn_cxt.log_isp + sizeof(struct sprd_isp_debug_info), &log, sizeof(log));
+
+		info_ptr->addr = cxt->commn_cxt.log_isp;
+		info_ptr->size = cxt->commn_cxt.log_isp_size;
+    }
+
+	//char AF_version[30];//AF-yyyymmdd-xx
+	//uint32_t len = sizeof(AF_version);
+	//rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_GET_AF_LIB_INFO, (void*)&AF_version, (void*)&len);
+
 	ISP_LOGI("ISP INFO:addr 0x%p, size = %d", info_ptr->addr, info_ptr->size);
-
-	char AF_version[30];//AF-yyyymmdd-xx
-	uint32_t len = sizeof(AF_version);
-	rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_GET_AF_LIB_INFO, (void*)&AF_version, (void*)&len);
-
 	return rtn;
 }
 

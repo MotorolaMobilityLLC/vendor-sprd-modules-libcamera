@@ -1632,6 +1632,11 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 		cxt->ae_cxt.log_alc = NULL;
 	}
 
+	if (cxt->commn_cxt.log_isp) {
+		free(cxt->commn_cxt.log_isp);
+		cxt->commn_cxt.log_isp = NULL;
+	}
+
 	isp_alg_destroy_thread_proc((cmr_handle)cxt);
 	if (cxt) {
 		free((void*)cxt);

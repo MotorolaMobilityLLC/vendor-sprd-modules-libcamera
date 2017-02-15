@@ -25,6 +25,24 @@
 #include "isp_pm.h"
 #include "sprd_isp_r6p10.h"
 
+struct commn_info {
+	cmr_s32 isp_mode;
+	cmr_u32 mode_flag;
+	cmr_u32 multi_nr_flag;
+	cmr_u32 scene_flag;
+	cmr_u32 image_pattern;
+	cmr_u32 param_index;
+	cmr_u32 isp_callback_bypass;
+	proc_callback callback;
+	cmr_handle caller_id;
+	uint8_t *log_isp;
+	uint32_t log_isp_size;
+	struct isp_size src;
+	struct isp_ops ops;
+	struct isp_interface_param_v1 interface_param_v1;
+	struct sensor_raw_resolution_info input_size_trim[ISP_INPUT_SIZE_NUM_MAX];
+};
+
 struct ae_info {
 	cmr_handle handle;
 	struct isp_time time;
@@ -32,6 +50,8 @@ struct ae_info {
 	uint32_t log_alc_ae_size;
 	uint8_t* log_alc;
 	uint32_t log_alc_size;
+	uint8_t *log_ae;
+	uint32_t log_ae_size;
 	cmr_uint vir_addr;
 	cmr_int buf_size;
 	cmr_int buf_num;
@@ -70,24 +90,10 @@ struct afl_info {
 	void*  buffer_client_data;
 };
 
-struct commn_info {
-	cmr_s32 isp_mode;
-	cmr_u32 mode_flag;
-	cmr_u32 multi_nr_flag;
-	cmr_u32 scene_flag;
-	cmr_u32 image_pattern;
-	cmr_u32 param_index;
-	cmr_u32 isp_callback_bypass;
-	proc_callback callback;
-	cmr_handle caller_id;
-	struct isp_size src;
-	struct isp_ops ops;
-	struct isp_interface_param_v1 interface_param_v1;
-	struct sensor_raw_resolution_info input_size_trim[ISP_INPUT_SIZE_NUM_MAX];
-};
-
 struct af_info {
 	cmr_handle handle;
+	uint8_t *log_af;
+	uint32_t log_af_size;
 };
 
 struct lsc_info {
@@ -95,6 +101,8 @@ struct lsc_info {
 	void * lsc_tab_address;
 	uint32_t lsc_tab_size;
 	uint32_t isp_smart_lsc_lock;
+	uint8_t *log_lsc;
+	uint32_t log_lsc_size;
 };
 
 struct isp_alg_fw_context {

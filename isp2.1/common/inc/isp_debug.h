@@ -429,18 +429,31 @@ struct em_param {
 	void *param_ptr;
 };
 
-
-//	from Shengzhu.Shi
 struct sprd_isp_debug_info{
 	uint32_t debug_startflag;  //0x65786966
 	uint32_t debug_len;
 	uint32_t version_id;          //0x00000001
-	uint8_t data[0];
+	//uint8_t data[0];
 	//uint32_t debug_endflag;  // 0x637a6768
 };
 
+typedef struct _isp_log_info
+{
+	int32_t ae_off;
+	uint32_t ae_len;
+	int32_t af_off;
+	uint32_t af_len;
+	int32_t awb_off;
+	uint32_t awb_len;
+	int32_t lsc_off;
+	uint32_t lsc_len;
+	int32_t ver;
+	char AF_version[20];//AF-yyyymmdd-xx
+	char magic[8];
+} isp_log_info_t;
+
 #define SPRD_DEBUG_START_FLAG   0x65786966
 #define SPRD_DEBUG_END_FLAG     0x637a6768
-
+#define SPRD_DEBUG_VERSION_ID   (0x00000003)
 
 #endif
