@@ -8324,6 +8324,8 @@ void * SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data)
 	int events;
 	int32_t result = 0;
 	uint32_t Timeout = 100; //ms
+	uint32_t Gyro_flag = 0;
+	uint32_t Gsensor_flag = 0;
 
 	SprdCamera3OEMIf * obj = (SprdCamera3OEMIf *)p_data;
 	HAL_LOGD("E");
@@ -8365,32 +8367,46 @@ void * SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data)
 	HAL_LOGI("EventQueue fd %d",fd);
 	sp<Looper> loop = NULL;
 
-	ret = q->enableSensor(gyroscope);
-	if (ret) {
-		HAL_LOGE("enable gyroscope fail");
-		goto exit;
-	}
-	q->setEventRate(gyroscope, ms2ns(GyroRate));
+	if (gyroscope != NULL) {
+		ret = q->enableSensor(gyroscope, ms2ns(GyroRate));
+		if (ret)
+			HAL_LOGE("enable gyroscope fail");
+		else
+			Gyro_flag = 1;
+	} else
+		HAL_LOGW("this device not support gyro");
 
-	if(NULL != obj->mCameraHandle) {
+	if (NULL != obj->mCameraHandle) {
 		obj->mHalOem->ops->camera_get_sensor_max_fps(obj->mCameraHandle,obj->mCameraId,&eventRate);
 		if(0 == eventRate)
-		      eventRate = default_max_fps;
+			eventRate = default_max_fps;
 		eventRate = 1000/eventRate;//fps->rate:ms
 	}
-	ret = q->enableSensor(gsensor);
-	if (ret) {
-		HAL_LOGE("enable gsensor fail");
-		q->disableSensor(gyroscope);
-		goto exit;
+	if (gsensor != NULL) {
+		ret = q->enableSensor(gsensor, ms2ns(eventRate));
+		if (ret) {
+			HAL_LOGE("enable gsensor fail");
+			if (Gyro_flag == 0)
+				goto exit;
+		} else
+			Gsensor_flag = 1;
+	} else {
+		HAL_LOGW("this device not support Gsensor");
+		if (Gyro_flag == 0)
+			goto exit;
 	}
-	q->setEventRate(gsensor, ms2ns(eventRate));
 
 	loop = new Looper(true);
 	if (loop == NULL) {
 		HAL_LOGE("creat loop fail");
-		q->disableSensor(gsensor);
-		q->disableSensor(gyroscope);
+		if (Gsensor_flag) {
+			q->disableSensor(gsensor);
+			Gsensor_flag = 0;
+		}
+		if (Gyro_flag) {
+			q->disableSensor(gyroscope);
+			Gyro_flag = 0;
+		}
 		goto exit;
 	}
 	loop->addFd(fd, fd, ALOOPER_EVENT_INPUT, NULL, NULL);
@@ -8401,19 +8417,30 @@ void * SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data)
 		result = loop->pollOnce(Timeout, NULL, &events, NULL);
 		if ((result == ALOOPER_POLL_ERROR) || (events & ALOOPER_EVENT_HANGUP)) {
 			HAL_LOGE("SensorEventQueue::waitForEvent error");
-			q->disableSensor(gyroscope);
-			q->disableSensor(gsensor);
+			if (Gsensor_flag) {
+				q->disableSensor(gsensor);
+				Gsensor_flag = 0;
+			}
+			if (Gyro_flag) {
+				q->disableSensor(gyroscope);
+				Gyro_flag = 0;
+			}
 			goto exit;
 		}else if(result == ALOOPER_POLL_TIMEOUT) {
 			HAL_LOGW("SensorEventQueue::waitForEvent timeout");
 		}
 		if (!obj) {
 			HAL_LOGE("obj is null,exit thread loop");
-			q->disableSensor(gyroscope);
-			q->disableSensor(gsensor);
+			if (Gsensor_flag) {
+				q->disableSensor(gsensor);
+				Gsensor_flag = 0;
+			}
+			if (Gyro_flag) {
+				q->disableSensor(gyroscope);
+				Gyro_flag = 0;
+			}
 			goto exit;
 		}
-		//q->waitForEvent();
 		if ((result == fd)&&(n = q->read(buffer, 8)) > 0) {
 			for (int i=0 ; i<n ; i++) {
 				memset((void*)&sensor_info, 0, sizeof(sensor_info));
@@ -8457,6 +8484,7 @@ void * SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data)
 					sensor_info.gsensor_info.vertical_up = buffer[i].data[0];
 					sensor_info.gsensor_info.vertical_down = buffer[i].data[1];
 					sensor_info.gsensor_info.horizontal = buffer[i].data[2];
+					HAL_LOGV("gsensor timestamp %lld, x: %f, y: %f, z: %f",buffer[i].timestamp, buffer[i].data[0], buffer[i].data[1], buffer[i].data[2]);
 					if (NULL != obj->mCameraHandle && NULL!=obj->mHalOem) {
 						obj->mHalOem->ops->camera_set_sensor_info_to_af(obj->mCameraHandle, &sensor_info);
 					}
@@ -8470,8 +8498,14 @@ void * SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data)
 		}
 	}
 
-	q->disableSensor(gyroscope);
-	q->disableSensor(gsensor);
+	if (Gsensor_flag) {
+		q->disableSensor(gsensor);
+		Gsensor_flag = 0;
+	}
+	if (Gyro_flag) {
+		q->disableSensor(gyroscope);
+		Gyro_flag = 0;
+	}
 exit:
 	sem_post(&obj->mGyro_sem);
 	obj->mGyroDeinit = 1;

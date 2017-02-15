@@ -20,9 +20,6 @@ endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_GYRO)),true)
 LOCAL_SHARED_LIBRARIES +=libgui
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
-LOCAL_SHARED_LIBRARIES += libandroid
-endif
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)

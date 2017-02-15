@@ -123,7 +123,7 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_GYRO)),true)
-	LOCAL_SHARED_LIBRARIES +=libgui libandroid
+	LOCAL_SHARED_LIBRARIES +=libgui
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
