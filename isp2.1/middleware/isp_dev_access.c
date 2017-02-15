@@ -321,19 +321,19 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void* param_ptr)
 		if (cxt->isp_event_cb) {
 			(*cxt->isp_event_cb)(ISP_CTRL_EVT_AE, statis_info, (void *)cxt->evt_alg_handle);
 		}
-	}
-
-	if (irq_info->irq_property == IRQ_AFM_STATIS) {
+	} else if (irq_info->irq_property == IRQ_AFM_STATIS) {
 		if (cxt->isp_event_cb) {
 			(*cxt->isp_event_cb)(ISP_CTRL_EVT_AF, statis_info, (void *)cxt->evt_alg_handle);
 		}
-	}
-
-	if (irq_info->irq_property == IRQ_AFL_STATIS) {
+	} else if (irq_info->irq_property == IRQ_AFL_STATIS) {
 		if (cxt->isp_event_cb) {
 			(*cxt->isp_event_cb)(ISP_PROC_AFL_DONE, statis_info, (void *)cxt->evt_alg_handle);
 		}
+	} else {
+		free((void*)statis_info);
+		statis_info = NULL;
 	}
+
 }
 
 void isp_dev_irq_info_proc(cmr_handle isp_dev_handle, void* param_ptr)
@@ -352,13 +352,15 @@ void isp_dev_irq_info_proc(cmr_handle isp_dev_handle, void* param_ptr)
 		if (cxt->isp_event_cb) {
 			(cxt->isp_event_cb)(ISP_CTRL_EVT_SOF, statis_info, (void *)cxt->evt_alg_handle);
 		}
-	}
-
-	if (irq_info->irq_property == IRQ_RAW_CAP_DONE) {
+	} else if (irq_info->irq_property == IRQ_RAW_CAP_DONE) {
 		if (cxt->isp_event_cb) {
 			(cxt->isp_event_cb)(ISP_CTRL_EVT_TX, NULL, (void *)cxt->evt_alg_handle);
 		}
+	} else {
+		free((void*)statis_info);
+		statis_info = NULL;
 	}
+
 }
 
 cmr_int isp_dev_access_init(cmr_s32 fd, cmr_handle *isp_dev_handle)
