@@ -399,8 +399,8 @@ cmr_int cmr_sns_copy_info(struct sensor_exp_info *out_sensor_info, SENSOR_EXP_IN
 	}
 	out_sensor_info->view_angle.horizontal_val = in_sensor_info->horizontal_view_angle;
 	out_sensor_info->view_angle.vertical_val =in_sensor_info->vertical_view_angle;
-	out_sensor_info->name = in_sensor_info->name;
-	out_sensor_info->sensor_version_info =in_sensor_info->sensor_version_info;
+	out_sensor_info->name = (cmr_s8*)in_sensor_info->name;
+	out_sensor_info->sensor_version_info = (cmr_s8*)in_sensor_info->sensor_version_info;
 
 	return CMR_CAMERA_SUCCESS;
 

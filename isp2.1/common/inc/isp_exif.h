@@ -274,7 +274,7 @@ typedef struct exif_isp_info{
 
 typedef struct exif_isp_debug_info{
 	void *addr;
-	uint32_t size;
+	int size;
 } EXIF_ISP_DEBUG_INFO_T;
 
 #endif //_ISP_EXIF_H_

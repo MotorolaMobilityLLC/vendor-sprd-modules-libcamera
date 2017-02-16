@@ -947,7 +947,7 @@ cmr_uint camera_get_sensor_vcm_step(cmr_handle camera_handle,cmr_u32 camera_id, 
 		return ret;
 	}
 	ret = cmr_get_sensor_vcm_step(camera_handle,camera_id,vcm_step);
-	CMR_LOGI("vcm_step %ld", *vcm_step);
+	CMR_LOGI("vcm_step %d", *vcm_step);
 	return ret;
 
 
@@ -956,7 +956,7 @@ exit:
 	return ret;
 }
 
-void dump_jpeg_file(void *virt_addr, unsigned int size, int width, int height)
+cmr_int dump_jpeg_file(void *virt_addr, unsigned int size, int width, int height)
 {
 	char str_buf[100];
 	FILE* fp;
@@ -988,10 +988,13 @@ void dump_jpeg_file(void *virt_addr, unsigned int size, int width, int height)
 	fp = fopen(str_buf, "ab+");
 	if (NULL == fp) {
 		printf("open %s failed\n", str_buf);
+		goto exit;
 	}
 	fwrite((uint8_t *)virt_addr, 1, size, fp);
 	fflush(fp);
 	fclose(fp);
+exit:
+	return 0;
 }
 
 cmr_int camera_set_sensor_close_flag(cmr_handle camera_handle)
@@ -1109,7 +1112,7 @@ static oem_ops_t oem_module_ops = {
 };
 
 struct oem_module OEM_MODULE_INFO_SYM = {
-	tag : 0,
-	ops: &oem_module_ops,
-	dso : NULL
+	.tag = 0,
+	.ops = &oem_module_ops,
+	.dso = NULL
 };

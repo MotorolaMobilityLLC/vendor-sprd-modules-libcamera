@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#define LOG_TAG "jpeg_codec"
 #define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 
 #include <cutils/trace.h>
@@ -24,7 +26,6 @@
 #include "jpegenc_api.h"
 
 #define JPEG_CODE_DEBUG
-#define LOG_TAG "jpeg_codec"
 
 #define JPEG_MSG_QUEUE_SIZE                   40
 #define JPEG_EXIT_THREAD_FLAG                 1
@@ -309,7 +310,7 @@ static cmr_int _enc_start(cmr_handle handle, struct jpeg_codec_context *jcontext
 	/*save_inputdata(enc_cxt_ptr->src_addr_vir.addr_y,
 		enc_cxt_ptr->src_addr_vir.addr_u,
 		enc_cxt_ptr->size.width*enc_cxt_ptr->size.height);*/
-	CMR_LOGV("jpeg:jpegenc_params[%d]: virt: %x, phys: %x,size %d.",
+	CMR_LOGV("jpeg:jpegenc_params[%d]: virt: %lx, phys: %x,size %d.",
 			  i,(cmr_uint)jenc_parm_ptr->stream_virt_buf[i],
 			  jenc_parm_ptr->stream_phy_buf[i],jpeg_enc_buf_len);
 #endif
@@ -1109,13 +1110,13 @@ static cmr_int _get_enc_start_param(struct jpeg_enc *cxt_ptr,
 	CMR_LOGV("jpeg:all param");
 
 #ifdef JPEG_CODE_DEBUG
-	CMR_LOGI("jpeg:stream_buf_phy: 0x%x", in_parm_ptr->stream_buf_phy);
-	CMR_LOGI("jpeg:stream_buf_vir: 0x%x", in_parm_ptr->stream_buf_vir);
+	CMR_LOGI("jpeg:stream_buf_phy: 0x%lx", in_parm_ptr->stream_buf_phy);
+	CMR_LOGI("jpeg:stream_buf_vir: 0x%lx", in_parm_ptr->stream_buf_vir);
 	CMR_LOGI("jpeg:stream_buf_size: 0x%x", in_parm_ptr->stream_buf_size);
 	CMR_LOGI("jpeg:img_size: w:%d, h:%d", in_parm_ptr->size.width, in_parm_ptr->size.height);
 #endif
 	CMR_LOGI("jpeg:slice_height:%d", in_parm_ptr->slice_height);
-	CMR_LOGI("jpeg:src_fd:0x%x, stream_buf_fd 0x%x ", in_parm_ptr->src_fd,in_parm_ptr->stream_buf_fd);
+	CMR_LOGI("jpeg:src_fd:0x%x, stream_buf_fd 0x%lx ", in_parm_ptr->src_fd,in_parm_ptr->stream_buf_fd);
 
 	cxt_ptr->stream_buf_phy = in_parm_ptr->stream_buf_phy;
 	cxt_ptr->stream_buf_vir = in_parm_ptr->stream_buf_vir;
@@ -1271,7 +1272,7 @@ cmr_int jpeg_enc_next(struct jpeg_enc_next_param *param_ptr)
 		return JPEG_CODEC_PARAM_ERR;
 	}
 
-	CMR_LOGV("jpeg:start,handle 0x%x.",param_ptr->jpeg_handle);
+	CMR_LOGV("jpeg:start,handle 0x%lx",param_ptr->jpeg_handle);
 	jcontext = (struct jpeg_codec_context*)param_ptr->jpeg_handle;
 	sem_wait(&jcontext->access_sem);
 	enc_cxt_ptr = (struct jpeg_enc *)jcontext->active_handle;

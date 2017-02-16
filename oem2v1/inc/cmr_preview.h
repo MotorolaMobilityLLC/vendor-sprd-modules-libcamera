@@ -24,6 +24,15 @@ extern "C"
 #include "cmr_common.h"
 #include "sensor_drv_u.h"
 
+// just for fix build warning, pdaf owner shoud be add it
+struct pd_raw_info {
+	int dummy;
+};
+// just for fix build warning, pdaf owner shoud be add it
+struct pd_raw_open {
+	int dummy;
+};
+
 enum preview_func_type {
 	PREVIEW_FUNC_START_PREVIEW = 0,
 	PREVIEW_FUNC_STOP_PREVIEW,

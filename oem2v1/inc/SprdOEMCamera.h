@@ -127,7 +127,7 @@ void camera_end_burst_notice(cmr_handle camera_handle);
 cmr_int camera_transfer_caf_to_af(cmr_handle camera_handle);
 cmr_int camera_transfer_af_to_caf(cmr_handle camera_handle);
 
-void dump_jpeg_file(void *virt_addr, unsigned int size, int width, int height);
+cmr_int dump_jpeg_file(void *virt_addr, unsigned int size, int width, int height);
 
 cmr_int camera_get_gain_thrs(cmr_handle camera_handle, cmr_u32 *is_over_thrs);
 

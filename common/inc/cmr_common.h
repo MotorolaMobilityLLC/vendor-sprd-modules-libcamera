@@ -1204,12 +1204,24 @@ struct cmr_focus_param {
 
 typedef void (*camera_cb_of_type)(enum camera_cb_type cb, const void *client_data, enum camera_func_type func, void  *parm4);
 
-typedef cmr_int (*camera_cb_of_malloc)(enum camera_mem_cb_type type, cmr_u32 *size_ptr, cmr_u32 *sum_ptr, cmr_uint *phy_addr,
-	                                    cmr_uint *vir_addr, cmr_s32 *mfd, void* private_data);
-typedef cmr_int (*camera_cb_of_free)(enum camera_mem_cb_type type, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum, void* private_data);
+typedef cmr_int (*camera_cb_of_malloc)(enum camera_mem_cb_type type,
+				       cmr_u32 *size_ptr,
+				       cmr_u32 *sum_ptr,
+				       cmr_uint *phy_addr,
+				       cmr_uint *vir_addr,
+				       cmr_s32 *mfd,
+				       void* private_data);
+typedef cmr_int (*camera_cb_of_free)(enum camera_mem_cb_type type,
+				     cmr_uint *phy_addr,
+				     cmr_uint *vir_addr,
+				     cmr_s32 *fd,
+				     cmr_u32 sum,
+				     void* private_data);
 typedef struct oem_ops {
-cmr_int (*camera_init)(cmr_u32 camera_id, camera_cb_of_type callback, void *client_data,  cmr_uint is_autotest, cmr_handle *camera_handle, void* cb_of_malloc,
-                                           void* cb_of_free);
+cmr_int (*camera_init)(cmr_u32 camera_id, camera_cb_of_type callback,
+		       void *client_data,  cmr_uint is_autotest,
+		       cmr_handle *camera_handle, void* cb_of_malloc,
+		       void* cb_of_free);
 
 cmr_int (*camera_deinit)(cmr_handle camera_handle);
 

@@ -2605,7 +2605,7 @@ static int camera_get_reloadinfo(cmr_handle  oem_handle, struct isp_cali_param *
 }
 #endif
 
-int32_t camera_isp_flash_get_charge(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell)
+int32_t camera_isp_flash_get_charge(void *handler, struct isp_flash_cell *cell)
 {
 	int32_t                       ret = 0;
 	struct camera_context         *cxt = (struct camera_context*)handler;
@@ -2651,7 +2651,7 @@ out:
 	return ret;
 }
 
-int32_t camera_isp_flash_get_time(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell)
+int32_t camera_isp_flash_get_time(void *handler, struct isp_flash_cell *cell)
 {
 	int32_t ret = 0;
 	struct camera_context		  *cxt = (struct camera_context*)handler;
@@ -2697,11 +2697,11 @@ out:
 	return ret;
 }
 
-int32_t camera_isp_flash_set_charge(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element)
+int32_t camera_isp_flash_set_charge(void *handler, uint8_t type, struct isp_flash_element *element)
 {
 	cmr_s32                           ret = 0;
 	struct camera_context		  *cxt = (struct camera_context*)handler;
-#if 1
+#if 0
 
 	struct sprd_flash_cfg_param       cfg;
 	cmr_u8                            real_type = 0;
@@ -2741,14 +2741,15 @@ out:
 	return ret;
 }
 
-int32_t camera_isp_flash_ctrl(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element)
+int32_t camera_isp_flash_ctrl(void *handler, struct isp_flash_element *element)
 {
+
 	int32_t                           ret = 0;
 	struct camera_context             *cxt = (struct camera_context *)handler;
 	cmr_u8                            real_type = 0;
 	struct grab_flash_opt             flash_opt;
 
-
+#if 0
 	if (!cxt || !cfg_ptr) {
 		CMR_LOGE("err param, %p %p", cxt, cfg_ptr);
 		ret = -CMR_CAMERA_INVALID_PARAM;
@@ -2780,10 +2781,11 @@ int32_t camera_isp_flash_ctrl(void *handler, struct isp_flash_cfg *cfg_ptr, stru
 	flash_opt.flash_index = cxt->camera_id;
 	ret = cmr_grab_flash_cb(cxt->grab_cxt.grab_handle, &flash_opt);
 out:
+#endif
 	return ret;
 }
 
-int32_t camera_isp_flash_set_time(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element)
+int32_t camera_isp_flash_set_time(void *handler, uint8_t type, struct isp_flash_element *element)
 {
 	int32_t ret = 0;
 	struct camera_context		  *cxt = (struct camera_context*)handler;
@@ -4207,7 +4209,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 	}
 	flip_on = setting_param.cmd_type_value;
 	if (flip_on) {
-		CMR_LOGI("encode_rotation:%d, flip:%d", rotation, flip_on);
+		CMR_LOGI("encode_rotation:%ld, flip:%ld", rotation, flip_on);
 		if (90 == rotation || 270 == rotation) {
 			enc_in_param.flip = 1;
 		} else if (0 == rotation || 180 == rotation) {
@@ -4284,10 +4286,11 @@ void camera_face_makeup(cmr_handle oem_handle, struct img_frm *src)
 	cmr_int PerfectSkinLevel=0;
 	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_PERFECT_SKINLEVEL, &setting_param);
 	if (ret) {
-		CMR_LOGE("failed to get perfect skinlevel %ld, setting_cxt->setting_handle is 0x%x", ret, setting_cxt->setting_handle);
+		CMR_LOGE("failed to get perfect skinlevel %ld, setting_cxt->setting_handle is %p",
+			ret, setting_cxt->setting_handle);
 	} else {
 		PerfectSkinLevel = setting_param.cmd_type_value;
-		CMR_LOGV("kinlin perfectskinlevel is %d", PerfectSkinLevel);
+		CMR_LOGV("kinlin perfectskinlevel is %ld", PerfectSkinLevel);
 	}
 	// init the parameters table. save the value until the process is restart or the device is restart.
 	int tab_skinWhitenLevel[10]={0,15,25,35,45,55,65,75,85,95};
@@ -4316,9 +4319,9 @@ void camera_face_makeup(cmr_handle oem_handle, struct img_frm *src)
 			SkinWhitenTsface.top = (cxt->fd_face_area.face_info[0].sy*pic_height)/(cxt->fd_face_area.frame_height);
 			SkinWhitenTsface.right = (cxt->fd_face_area.face_info[0].ex*pic_width)/(cxt->fd_face_area.frame_width);
 			SkinWhitenTsface.bottom = (cxt->fd_face_area.face_info[0].ey*pic_height)/(cxt->fd_face_area.frame_height);
-			CMR_LOGD("UCAM update rect:%d-%d-%d-%d",SkinWhitenTsface.left,SkinWhitenTsface.top,
+			CMR_LOGD("UCAM update rect:%ld-%ld-%ld-%ld",
+				SkinWhitenTsface.left,SkinWhitenTsface.top,
 				SkinWhitenTsface.right,SkinWhitenTsface.bottom);
-
 
 			TSMakeupData  inMakeupData, outMakeupData;
 			unsigned char *yBuf = (unsigned char *)(src->addr_vir.addr_y);
@@ -5121,12 +5124,17 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 
 #if (defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4))
 	if (cxt->lsc_malloc_flag == 0) {
+		cmr_u32 lsc_buf_size = 0;
+		cmr_u32 lsc_buf_num = 0;
 		isp_param.lsc_buf_num = ISP_LSC_BUF_NUM;
 		isp_param.lsc_buf_size = ISP_LSC_BUF_SIZE;
-
+		lsc_buf_size = isp_param.lsc_buf_size;
+		lsc_buf_num = isp_param.lsc_buf_num;
 		if (cxt->hal_malloc) {
-			cxt->hal_malloc(CAMERA_ISP_LSC, &isp_param.lsc_buf_size, &isp_param.lsc_buf_num,
-					&cxt->isp_lsc_phys_addr,&cxt->isp_lsc_virt_addr, &cxt->lsc_mfd, cxt->client_data);
+			cxt->hal_malloc(CAMERA_ISP_LSC, &lsc_buf_size,
+					&lsc_buf_num, &cxt->isp_lsc_phys_addr,
+					&cxt->isp_lsc_virt_addr, &cxt->lsc_mfd,
+					cxt->client_data);
 			cxt->lsc_malloc_flag = 1;
 		} else {
 			ret = -CMR_CAMERA_NO_MEM;
