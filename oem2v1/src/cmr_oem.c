@@ -4180,6 +4180,8 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 	struct setting_cmd_parameter   setting_param;
 	cmr_uint                       rotation = 0;
 	cmr_uint                       flip_on = 0;
+	cmr_u32                        is_raw_capture = 0;
+	char                           value[PROPERTY_VALUE_MAX];
 
 	if (!caller_handle || !oem_handle || !src || !dst || !mean) {
 		CMR_LOGE("in parm error");
@@ -4192,31 +4194,6 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 	cmr_bzero((void*)&enc_in_param, sizeof(enc_in_param));
 	cmr_bzero((void*)&setting_param, sizeof(setting_param));
 	setting_param.camera_id = cxt->camera_id;
-
-	/* from sharkl2, jpeg support mirror/flip, mirror feature always use jpeg if jpeg support it */
-#ifdef MIRROR_FLIP_BY_JPEG
-	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_ENCODE_ROTATION, &setting_param);
-	if (ret) {
-		CMR_LOGE("failed to get enc rotation %ld", ret);
-		goto exit;
-	}
-	rotation = setting_param.cmd_type_value;
-
-	ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_FLIP_ON, &setting_param);
-	if (ret) {
-		CMR_LOGE("failed to get preview sprd flip_on enabled flag %ld", ret);
-		goto exit;
-	}
-	flip_on = setting_param.cmd_type_value;
-	if (flip_on) {
-		CMR_LOGI("encode_rotation:%ld, flip:%ld", rotation, flip_on);
-		if (90 == rotation || 270 == rotation) {
-			enc_in_param.flip = 1;
-		} else if (0 == rotation || 180 == rotation) {
-			enc_in_param.mirror = 1;
-		}
-	}
-#endif
 
 	enc_in_param.slice_height = mean->slice_height;
 	enc_in_param.slice_mod = mean->slice_mode;
@@ -4233,15 +4210,67 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 	enc_in_param.src_fd = src->fd;
 	enc_in_param.src_endian = src->data_end;
 
+	property_get("persist.sys.camera.raw.mode", value, "jpeg");
+	if (!strcmp(value, "raw")) {
+		is_raw_capture = 1;
+	}
+
+	/* from sharkl2, jpeg support mirror/flip/rotation, mirror feature always use jpeg if jpeg support it */
+#ifdef MIRROR_FLIP_ROTATION_BY_JPEG
+	/* raw capture not support mirror/flip/rotation*/
+	if (is_raw_capture == 0) {
+		ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_ENCODE_ROTATION, &setting_param);
+		if (ret) {
+			CMR_LOGE("failed to get enc rotation %ld", ret);
+			goto exit;
+		}
+		rotation = setting_param.cmd_type_value;
+
+		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_FLIP_ON, &setting_param);
+		if (ret) {
+			CMR_LOGE("failed to get preview sprd flip_on enabled flag %ld", ret);
+			goto exit;
+		}
+		flip_on = setting_param.cmd_type_value;
+		CMR_LOGI("encode_rotation:%ld, flip:%ld", rotation, flip_on);
+
+		if (0 != rotation) {
+			if (90 == rotation)
+				enc_in_param.rotation = 1;
+			else if (180 == rotation) {
+				enc_in_param.flip = 1;
+				enc_in_param.mirror = 1;
+			} else if (270 == rotation) {
+				enc_in_param.rotation = 1;
+				enc_in_param.flip = 1;
+				enc_in_param.mirror = 1;
+			}
+		}
+
+		if (flip_on) {
+			if (enc_in_param.mirror)
+				enc_in_param.mirror = 0;
+			else
+				enc_in_param.mirror = 1;
+		}
+
+		if ((90 == rotation || 270 == rotation)) {
+			enc_in_param.out_size.height = dst->size.width;
+			enc_in_param.out_size.width = dst->size.height;
+		}
+	}
+#endif
+
+
 	cxt->jpeg_cxt.enc_caller_handle = caller_handle;
 
 	CMR_LOGI("src: fd=0x%x, y_offset=0x%lx, u_offset=0x%lx, virt_y=0x%lx, virt_u=0x%lx",
 		enc_in_param.src_fd, enc_in_param.src_addr_phy.addr_y, enc_in_param.src_addr_phy.addr_u,
 		enc_in_param.src_addr_vir.addr_y, enc_in_param.src_addr_vir.addr_u);
-	CMR_LOGI("src: width=%d, height=%d, y_endian=%d, uv_endian=%d, mirror=%d, flip=%d",
+	CMR_LOGI("src: width=%d, height=%d, y_endian=%d, uv_endian=%d, mirror=%d, flip=%d,rotation=%d",
 		enc_in_param.size.width, enc_in_param.size.height,
 		enc_in_param.src_endian.y_endian, enc_in_param.src_endian.uv_endian,
-		enc_in_param.mirror, enc_in_param.flip);
+		enc_in_param.mirror, enc_in_param.flip, enc_in_param.rotation);
 	CMR_LOGI("dst: fd=0x%lx, stream_offset=0x%lx, stream_vir=0x%lx, width=%d, height=%d",
 		enc_in_param.stream_buf_fd, enc_in_param.stream_buf_phy, enc_in_param.stream_buf_vir,
 		enc_in_param.out_size.width, enc_in_param.out_size.height);

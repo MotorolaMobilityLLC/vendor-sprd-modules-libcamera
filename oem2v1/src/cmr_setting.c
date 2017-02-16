@@ -1398,6 +1398,8 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
 	uint32_t                          focal_length_denominator;
 	uint32_t                          rotation_angle;
 	char                              property[PROPERTY_VALUE_MAX];
+	cmr_u32                           is_raw_capture = 0;
+	char                              value[PROPERTY_VALUE_MAX];
 
 	#define EXIF_DEF_MAKER            "Spreadtrum"
 	#define EXIF_DEF_MODEL            "spxxxx"
@@ -1469,10 +1471,28 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
 			p_exif_info->spec_ptr->basic.PixelXDimension,
 			p_exif_info->spec_ptr->basic.PixelYDimension);
 
+	property_get("persist.sys.camera.raw.mode", value, "jpeg");
+	if (!strcmp(value, "raw")) {
+		is_raw_capture = 1;
+	}
+
 	if (NULL != p_exif_info->primary.data_struct_ptr) {
+#ifdef MIRROR_FLIP_ROTATION_BY_JPEG
+		/* raw capture not support mirror/flip/rotation*/
+		if(is_raw_capture == 0) {
+			p_exif_info->primary.data_struct_ptr->valid.Orientation = 0;
+			p_exif_info->primary.data_struct_ptr->Orientation = ORIENTATION_NORMAL;
+		} else {
+			p_exif_info->primary.data_struct_ptr->valid.Orientation = 1;
+			p_exif_info->primary.data_struct_ptr->Orientation =
+				setting_get_exif_orientation(hal_param->encode_rotation);
+		}
+#else
 		p_exif_info->primary.data_struct_ptr->valid.Orientation = 1;
 		p_exif_info->primary.data_struct_ptr->Orientation =
 			setting_get_exif_orientation(hal_param->encode_rotation);
+#endif
+
 #ifdef MIRROR_FLIP_BY_ISP
 			/* check why put these code here later */
 			if(hal_param->sprd_zsl_enabled && 1 == parm->camera_id && 1 == hal_param->flip_on){

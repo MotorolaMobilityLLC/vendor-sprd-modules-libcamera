@@ -210,7 +210,7 @@ static void _prc_enc_cbparam(cmr_handle handle, struct jpeg_enc_cb_param *parm_p
 	parm_ptr->slice_height = enc_cxt_ptr->slice_height;
 	parm_ptr->total_height = enc_cxt_ptr->cur_line_num;
 
-	if ((enc_cxt_ptr->cur_line_num == enc_cxt_ptr->size.height) && (1 != parm_ptr->is_thumbnail)) {
+	if (enc_cxt_ptr->cur_line_num == enc_cxt_ptr->size.height) {
 		CMR_LOGI("jpeg:adjust %d,%d.",enc_cxt_ptr->out_size.width,enc_cxt_ptr->out_size.height);
 		adjust_jpg_resolution((void*)parm_ptr->stream_buf_vir, parm_ptr->stream_size,
 								enc_cxt_ptr->out_size.width, enc_cxt_ptr->out_size.height);

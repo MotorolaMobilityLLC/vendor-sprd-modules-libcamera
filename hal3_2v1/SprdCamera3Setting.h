@@ -73,6 +73,7 @@ namespace sprdcamera {
 // some vsp and jpeg need height 16 alignment
 #define HEIGHT_2M    1088
 #define HEIGHT_5M    1952
+#define HEIGHT_6M    1840
 
 #ifdef CONFIG_CAMERA_SUPPORT_21M
 #define BACK_SENSOR_ORIG_WIDTH 5312
