@@ -868,6 +868,7 @@ SprdCamera3Capture::CaptureThread::~CaptureThread()
     mCaptureMsgList.clear();
 }
 
+#ifdef CONFIG_FACE_BEAUTY
 /*===========================================================================
  * FUNCTION   :cap_3d_convert_face_info_from_preview2cap
  *
@@ -877,7 +878,6 @@ SprdCamera3Capture::CaptureThread::~CaptureThread()
  *
  * RETURN     : None
  *==========================================================================*/
- #ifdef CONFIG_FACE_BEAUTY
 void SprdCamera3Capture::CaptureThread::cap_3d_convert_face_info_from_preview2cap(int *ptr_cam_face_inf,int width,int height)
 {
     float zoomWidth,zoomHeight;
@@ -969,7 +969,6 @@ void SprdCamera3Capture::CaptureThread::cap_3d_doFaceMakeup( private_handle_t *p
     }
 
 }
-#endif
 
 /*===========================================================================
  * FUNCTION   :reProcessFrame face makeup
@@ -996,6 +995,7 @@ void  SprdCamera3Capture::CaptureThread::reProcessFrame(const buffer_handle_t* f
 
     return;
 }
+#endif
 
 /*===========================================================================
  * FUNCTION   :loadGpuApi

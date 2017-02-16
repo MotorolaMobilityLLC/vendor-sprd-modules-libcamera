@@ -893,6 +893,8 @@ void SprdCamera3StereoVideo::ReProcessThread::requestExit()
     mSignal.signal();
 
 }
+
+#ifdef CONFIG_FACE_BEAUTY
 /*===========================================================================
  * FUNCTION   :video_3d_convert_face_info_from_preview2video
  *
@@ -902,7 +904,6 @@ void SprdCamera3StereoVideo::ReProcessThread::requestExit()
  *
  * RETURN     : None
  *==========================================================================*/
- #ifdef CONFIG_FACE_BEAUTY
 void SprdCamera3StereoVideo::ReProcessThread::video_3d_convert_face_info_from_preview2video(int *ptr_cam_face_inf,int width,int height)
 {
     float zoomWidth,zoomHeight;
@@ -1032,6 +1033,7 @@ int SprdCamera3StereoVideo::ReProcessThread::reProcessFrame(const buffer_handle_
     return rc;
 }
 #endif
+
 /*===========================================================================
  * FUNCTION   :Video_CallBack_Result
  *

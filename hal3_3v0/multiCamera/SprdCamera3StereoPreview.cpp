@@ -829,9 +829,11 @@ bool SprdCamera3StereoPreview::ReProcessThread::threadLoop()
             break;
          case MUXER_MSG_DATA_PROC:
             {
+#ifdef CONFIG_FACE_BEAUTY
                 if(reProcessFrame(muxer_msg.combo_frame.buffer1,muxer_msg.combo_frame.frame_number) !=  NO_ERROR){
                     HAL_LOGD("frameid: reprocess frame failed!");
                 }
+#endif
                 CallBackResult(&muxer_msg.combo_frame);
             }
                 break;
@@ -863,6 +865,8 @@ void SprdCamera3StereoPreview::ReProcessThread::requestExit()
     mSignal.signal();
 
 }
+
+#ifdef CONFIG_FACE_BEAUTY
 /*===========================================================================
  * FUNCTION   :preview_3d_convert_face_info
  *
@@ -894,6 +898,7 @@ void SprdCamera3StereoPreview::ReProcessThread::preview_3d_convert_face_info(int
 
     return;
 }
+
 /*===========================================================================
  * FUNCTION   :preview_3d_doFaceMakeup
  *
@@ -1000,6 +1005,7 @@ int SprdCamera3StereoPreview::ReProcessThread::reProcessFrame(const buffer_handl
 
     return rc;
 }
+#endif
 
 /*===========================================================================
  * FUNCTION   :Video_CallBack_Result

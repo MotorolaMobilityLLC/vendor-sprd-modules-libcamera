@@ -877,7 +877,7 @@ SprdCamera3Capture::CaptureThread::~CaptureThread()
  *
  * RETURN     : None
  *==========================================================================*/
- #ifdef CONFIG_FACE_BEAUTY
+#ifdef CONFIG_FACE_BEAUTY
 void SprdCamera3Capture::CaptureThread::cap_3d_convert_face_info_from_preview2cap(int *ptr_cam_face_inf,int width,int height)
 {
     float zoomWidth,zoomHeight;
@@ -900,9 +900,10 @@ void SprdCamera3Capture::CaptureThread::cap_3d_convert_face_info_from_preview2ca
     ptr_cam_face_inf[2] = ptr_cam_face_inf[2] * zoomWidth/2;
     ptr_cam_face_inf[3] = ptr_cam_face_inf[3] * zoomHeight;
     HAL_LOGV("ptr_cam_face_inf 0 %d 1 %d 2%d 3 %d", ptr_cam_face_inf[0], ptr_cam_face_inf[1], ptr_cam_face_inf[2], ptr_cam_face_inf[3]);
-    return;
 
+	return;
 }
+
 /*===========================================================================
  * FUNCTION   :cap_3d_doFaceMakeup
  *
@@ -969,7 +970,7 @@ void SprdCamera3Capture::CaptureThread::cap_3d_doFaceMakeup( private_handle_t *p
     }
 
 }
-#endif
+
 /*===========================================================================
  * FUNCTION   :reProcessFrame face makeup
  *
@@ -995,6 +996,7 @@ void  SprdCamera3Capture::CaptureThread::reProcessFrame(const buffer_handle_t* f
 
     return;
 }
+#endif
 
 /*===========================================================================
  * FUNCTION   :loadGpuApi
