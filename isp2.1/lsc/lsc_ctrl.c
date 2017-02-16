@@ -396,12 +396,13 @@ static int32_t lsc_sprd_ioctrl(void* handle, enum alsc_io_ctrl_cmd cmd,void *in,
 	return rtn;
 }
 
+/*
 void alsc_set_param(struct lsc_adv_init_param *lsc_param)
 {
-	/*	alg_open  */
-	/*	0: front_camera close, back_camera close;	*/
-	/*	1: front_camera open, back_camera open;	*/
-	/*	2: front_camera close, back_camera open;	*/
+	//	alg_open
+	//	0: front_camera close, back_camera close;
+	//	1: front_camera open, back_camera open;
+	//	2: front_camera close, back_camera open;
 	lsc_param->alg_open = 1;
        	lsc_param->tune_param.enable = 1;
 #if SMART_LSC_VERSION
@@ -446,6 +447,7 @@ void alsc_set_param(struct lsc_adv_init_param *lsc_param)
 	lsc_param->SLSC_setting.segs[4].max_CT = 10000;
 	lsc_param->SLSC_setting.segs[4].min_CT = 0;
 }
+*/
 
 
 cmr_int lsc_ctrl_init(struct lsc_adv_init_param *input_ptr, cmr_handle *handle_lsc)
@@ -453,13 +455,13 @@ cmr_int lsc_ctrl_init(struct lsc_adv_init_param *input_ptr, cmr_handle *handle_l
 	cmr_int                         rtn = ISP_SUCCESS;
 	struct lsc_ctrl_cxt *cxt_ptr = NULL;
 
-	cxt_ptr = (struct lsc_ctrl_cxt*)malloc(sizeof(*cxt_ptr));
+	cxt_ptr = (struct lsc_ctrl_cxt*)malloc(sizeof(struct lsc_ctrl_cxt));
 	if (NULL == cxt_ptr) {
 		LSC_ADV_LOGE("failed to create lsc ctrl context!");
 		rtn = LSC_ALLOC_ERROR;
 		goto exit;
 	}
-	cmr_bzero(cxt_ptr, sizeof(*cxt_ptr));
+	memset(cxt_ptr, 0, sizeof(struct lsc_ctrl_cxt));
 
 	rtn = _lscctrl_create_thread(cxt_ptr);
 	if (rtn) {

@@ -1651,6 +1651,9 @@ static isp_s32 isp_pm_get_param(isp_pm_handle_t handle, enum isp_pm_cmd cmd, voi
 		case ISP_PM_CMD_GET_INIT_AE:
 			block_id = ISP_BLK_AE_NEW;
 			break;
+		case ISP_PM_CMD_GET_INIT_ALSC:
+			block_id = ISP_BLK_ALSC;
+			break;
 		case ISP_PM_CMD_GET_INIT_AWB:
 			block_id = ISP_BLK_AWB_NEW;
 			break;

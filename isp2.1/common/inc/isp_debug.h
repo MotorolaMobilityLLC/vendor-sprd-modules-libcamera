@@ -178,7 +178,7 @@ struct debug_af_param{
 	//Reserve
 	uint32_t reserved2[256];		   /*resurve for future*/
 };
-
+/*
 struct debug_lsc_param{
 	int error[9];
 	int eratio_before_smooth[9];
@@ -191,7 +191,7 @@ struct debug_lsc_param{
 	uint16_t otp_tab[1024*4];
 	uint32_t reserved[256];
 };
-
+*/
 
  struct smart_component {
      uint32_t type;
@@ -218,7 +218,7 @@ struct debug_lsc_param{
 	 struct debug_awb_param awb;
 	 struct debug_af_param af;
 	 struct debug_smart_param smart;
-	 struct debug_lsc_param lsc;
+//	 struct debug_lsc_param lsc;
  }DEBUG_ISP_INFO_T;
 
 

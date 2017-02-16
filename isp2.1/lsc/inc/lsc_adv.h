@@ -6,16 +6,16 @@
  **---------------------------------------------------------------------------*/
 #ifdef WIN32
 #include "data_type.h"
+#include "win_dummy.h"
 #else
-#include <sys/types.h>
-#endif
-
-#include "stdio.h"
 #include "sensor_raw.h"
-#include "sensor_drv_u.h"
+//#include "sensor_drv_u.h"
 #include <sys/types.h>
 #include <pthread.h>
 #include <utils/Log.h>
+#endif
+
+#include "stdio.h"
 
 /**---------------------------------------------------------------------------*
 **				Compiler Flag				*
@@ -25,6 +25,9 @@ extern "C"
 {
 #endif
 
+#define max(A,B) (((A) > (B)) ? (A) : (B))
+#define min(A,B) (((A) < (B)) ? (A) : (B))
+
 /**---------------------------------------------------------------------------*
 **				Micro Define				**
 **----------------------------------------------------------------------------*/
@@ -33,11 +36,9 @@ extern "C"
 
 #define LSC_ADV_LOGE(format,...) ALOGE(LSC_ADV_DEBUG_STR format, LSC_ADV_DEBUG_ARGS, ##__VA_ARGS__)
 #define LSC_ADV_LOGW(format,...) ALOGW(LSC_ADV_DEBUG_STR, format, LSC_ADV_DEBUG_ARGS, ##__VA_ARGS__)
-
 #define LSC_ADV_LOGI(format,...) ALOGI(LSC_ADV_DEBUG_STR format, LSC_ADV_DEBUG_ARGS, ##__VA_ARGS__)
 #define LSC_ADV_LOGD(format,...) ALOGD(LSC_ADV_DEBUG_STR format, LSC_ADV_DEBUG_ARGS, ##__VA_ARGS__)
 #define LSC_ADV_LOGV(format,...) ALOGV(LSC_ADV_DEBUG_STR format, LSC_ADV_DEBUG_ARGS, ##__VA_ARGS__)
-
 
 /**---------------------------------------------------------------------------*
 **				Data Structures 				*
@@ -55,12 +56,11 @@ typedef void* lsc_adv_handle_t;
 
 #define MAX_SEGS 8
 
-#define MAX_TAB_WIDTH  64
-#define MAX_TAB_HEIGHT  64
-#define MAX_SHD_TABLE MAX_TAB_WIDTH*MAX_TAB_HEIGHT
+#define MAX_WIDTH   64
+#define MAX_HEIGHT  64
 
-#define ALSC_STAT_W 18
-#define ALSC_STAT_H 14
+
+
 
 /*RAW RGB BAYER*/
 #define SENSOR_IMAGE_PATTERN_RAWRGB_GR                0x00
@@ -83,13 +83,70 @@ enum alsc_io_ctrl_cmd{
 	SMART_LSC_ALG_LOCK = 1,
 	ALSC_CMD_GET_DEBUG_INFO = 2,
 	LSC_INFO_TO_AWB = 3,
+	ALSC_GET_VER = 4,
+	ALSC_FLASH_ON = 5,
+	ALSC_FLASH_OFF = 6,
 };
+
+
+struct tg_alsc_debug_info {
+	uint8_t *log;
+	uint32_t size;
+};
+
+
+struct alsc_ver_info{
+	unsigned int LSC_SPD_VERSION;   // LSC version of Spreadtrum
+};
+
+
+struct debug_lsc_param{
+	char LSC_version[30];
+	unsigned short TB_DNP[12];
+	unsigned short TB_A[12];
+	unsigned short TB_TL84[12];
+	unsigned short TB_D65[12];
+	unsigned short TB_CWF[12];
+	unsigned int STAT_R[5];
+	unsigned int STAT_GR[5];
+	unsigned int STAT_GB[5];
+	unsigned int STAT_B[5];
+	unsigned int gain_width;
+	unsigned int gain_height;
+	unsigned int gain_pattern;
+	unsigned int grid;
+
+	//SLSC
+	int error_x10000[9];
+	int eratio_before_smooth_x10000[9];
+	int eratio_after_smooth_x10000[9];
+	int final_ratio_x10000;
+	int final_index;
+	unsigned short smart_lsc_table[1024*4];
+
+	//ALSC
+	unsigned short alsc_lsc_table[1024*4];
+
+	//ALSC_SMOOTH
+	unsigned short alsc_smooth_lsc_table[1024*4];
+
+	//OUTPUT
+	unsigned short last_lsc_table[1024*4];
+	unsigned short output_lsc_table[1024*4];
+};
+
 
 enum lsc_gain_pattern {
 	LSC_GAIN_PATTERN_GRBG = 0,
 	LSC_GAIN_PATTERN_RGGB = 1,
 	LSC_GAIN_PATTERN_BGGR = 2,
 	LSC_GAIN_PATTERN_GBRG = 3,
+};
+
+
+struct LSC_info2AWB{
+	uint16_t  value[2];//final_index;
+	uint16_t  weight[2];// final_ratio;
 };
 
 
@@ -113,6 +170,8 @@ enum lsc_gain_pattern {
 	LSC_RTN_MAX
 };
 
+
+/*
 enum interp_table_index{
 	LSC_TAB_A = 0,
 	LSC_TAB_TL84,
@@ -137,22 +196,19 @@ struct LSC_Setting{
 	int num_seg_queue;//The number of elements for segement voting.
 	int num_seg_vote_th;//The voting threshold for segmenet voting.
 };
+*/
 
-struct statistic_raw_t {
-	uint32_t *r;
-	uint32_t *gr;
-	uint32_t *gb;
-	uint32_t *b;
-};
 
-struct lsc_size {
-	uint32_t w;
-	uint32_t h;
-};
+
+
+
+
+
 
 struct lsc_adv_tune_param {
 	uint32_t enable;
 	uint32_t alg_id;
+
 	uint32_t debug_level;
 	uint32_t restore_open;
 
@@ -161,14 +217,14 @@ struct lsc_adv_tune_param {
 	float pa;				//threshold for seg
 	float pb;
 	uint32_t fft_core_id; 	//fft param ID
-	uint32_t con_weight;		//convergence rate
+	uint32_t con_weight;	//convergence rate
 	uint32_t freq;
 
 	/* alg 1 */
 	//global
 	uint32_t alg_effective_freq;
 	double gradient_threshold_rg_coef[5];
-	double gradient_threshold_bg_coef[5];	
+	double gradient_threshold_bg_coef[5];
 	uint32_t thres_bv;
 	double ds_sub_pixel_ratio;
 	double es_statistic_credibility;
@@ -183,11 +239,12 @@ struct lsc_adv_tune_param {
 	double iir_factor;
 };
 
+
 struct alsc_alg0_turn_para{
 	float pa;				//threshold for seg
 	float pb;
 	uint32_t fft_core_id; 	//fft param ID
-	uint32_t con_weight;		//convergence rate
+	uint32_t con_weight;	//convergence rate
 	uint32_t bv;
 	uint32_t ct;
 	uint32_t pre_ct;
@@ -197,55 +254,14 @@ struct alsc_alg0_turn_para{
 	float threshold_grad;
 };
 
-struct lsc_adv_init_param {
-	uint32_t gain_pattern;
-	int gain_width;
-	int gain_height;
-	uint16_t *lum_gain;
-	struct lsc_adv_tune_param tune_param;
-	uint32_t alg_open;
-	uint32_t param_level;
-	uint32_t camera_id;
-	struct LSC_Setting SLSC_setting;
-	uint32_t grid;
-	struct third_lib_info lib_param;
-};
 
-struct lsc_adv_calc_param{
-	struct statistic_raw_t stat_img;
-	struct lsc_size stat_size;
-	struct lsc_size img_size;
-
-	int gain_width;
-	int gain_height;
-	uint16_t *lum_gain;
-
-	struct lsc_size block_size;
-	uint32_t bv;
-	uint32_t pre_bv;
-	uint32_t ct;
-
-	int r_gain;
-	int b_gain;
-
-	uint32_t pre_ct;
-	uint32_t camera_id;
-	uint32_t ae_stable;
-	uint32_t isp_mode;
-	uint32_t isp_id;
-
-	int awb_pg_flag;
-	unsigned short* lsc_tab_address[9];
-	uint32_t lsc_tab_size;
-};
-struct lsc_adv_calc_result {
-	uint16_t *dst_gain;
-};
 struct lsc_weight_value {
 	int32_t value[2];
 	uint32_t weight[2];
 };
 
+
+// smart1.0_log_info
 struct lsc_adv_info {
 	uint32_t flat_num;
 	uint32_t flat_status1;
@@ -268,38 +284,170 @@ struct lsc_adv_info {
 	uint32_t center_same_num[4];
 };
 
+
 struct lsc_adv_context {
-    void* lsc_alg;
-    int32_t gain_pattern;
-    int32_t alg_locked;
-    int gain_width;
+    unsigned int LSC_SPD_VERSION;
+	uint32_t grid;
+	int32_t gain_pattern;
+	int gain_width;
     int gain_height;
 
-    int image_width;
-    int image_height;
+	int32_t alg_locked;  // lock alsc or not from ioctrl
+	uint32_t alg_open;   // open front camera or not
 
-    uint16_t *lum_gain;
-	uint32_t * stat_ptr;
-	uint32_t grid;
 	pthread_mutex_t 	mutex_stat_buf;
-
+	uint32_t * stat_ptr;
 	uint32_t* stat_for_alsc;
 
-	int stat_buf_lock;
-    float  color_gain[NUM_ROWS * NUM_COLS * 4];
-    float  color_gain_bak[NUM_ROWS * NUM_COLS * 4];
+	void* lsc_alg;
+    uint16_t *lum_gain;
     uint32_t pbayer_r_sums[NUM_ROWS * NUM_COLS];
     uint32_t pbayer_gr_sums[NUM_ROWS * NUM_COLS];
     uint32_t pbayer_gb_sums[NUM_ROWS * NUM_COLS];
     uint32_t pbayer_b_sums[NUM_ROWS * NUM_COLS];
-    uint32_t alg_open;
-	float color_gain_r_10f[NUM_ROWS * NUM_COLS];
-	float color_gain_b_10f[NUM_ROWS * NUM_COLS];
-	float color_gain_rg_10f[NUM_ROWS * NUM_COLS];
-	float color_gain_xxx[10][NUM_ROWS * NUM_COLS*4];
+	float color_gain[NUM_ROWS * NUM_COLS * 4];
+    float color_gain_bak[NUM_ROWS * NUM_COLS * 4];
     struct alsc_alg0_turn_para alg0_turn_para;
-    struct LSC_Setting SLSC_setting;
 };
+
+
+////////////////////////////// HLSC_V2.0 structure //////////////////////////////
+
+
+struct lsc2_tune_param{     // if modified, please contact to TOOL team
+	// system setting
+	unsigned int LSC_SPD_VERSION;   // LSC version of Spreadtrum
+	unsigned int number_table;          // number of used original shading tables
+
+	// control_param
+	unsigned int alg_mode;
+	unsigned int table_base_index;
+	unsigned int user_mode;
+	unsigned int freq;
+	unsigned int IIR_weight;
+
+	// slsc2_param
+	unsigned int num_seg_queue;
+	unsigned int num_seg_vote_th;
+	unsigned int IIR_smart2;
+
+	// alsc1_param
+	int strength;
+
+	// alsc2_param
+	unsigned int lambda_r;        // need to add lambda_r , lambda_b and change type to unsigned int
+	unsigned int lambda_b;        // need to add lambda_r , lambda_b and change type to unsigned int
+	unsigned int weight_r;	 // need to add weight_r , weight_b and change type to unsigned int
+	unsigned int weight_b;	 // need to add weight_r , weight_b and change type to unsigned int
+};
+
+
+struct lsc2_context{
+	pthread_mutex_t 	mutex_stat_buf;
+	unsigned int LSC_SPD_VERSION;   // LSC version of Spreadtrum
+	unsigned int alg_locked;         // lock alsc or not by ioctrl
+	unsigned int flash_mode;
+	unsigned int alg_open;           // complie alg0.c or alg2.c
+	unsigned int gain_width;
+	unsigned int gain_height;
+	unsigned int gain_pattern;
+	unsigned int grid;
+
+	unsigned short* lsc_table_ptr_r;    // storage to save Rfirst table
+	unsigned short* tabptr[9]; // address of origianl shading table will be used to interperlation in slsc2
+	unsigned short* tabptrPlane[9]; // address R-first shading table ( lsc_table_ptr )
+
+	void* control_param;
+	void* slsc2_param;
+	void* alsc1_param;
+	void* alsc2_param;
+	void* lsc1d_param;
+
+	// tmp storage
+	unsigned short* color_gain_r;
+	unsigned short* color_gain_gr;
+	unsigned short* color_gain_gb;
+	unsigned short* color_gain_b;
+
+	// debug info output address
+	void* lsc_debug_info_ptr;
+};
+
+
+////////////////////////////// calculation dependent //////////////////////////////
+
+
+struct lsc_adv_init_param {
+	unsigned int alg_open;   // complie alg0.c or alg2.c
+	unsigned int gain_width;
+	unsigned int gain_height;
+	unsigned int gain_pattern;
+	unsigned int grid;
+
+	// isp2.1 added , need to modify to match old version
+	struct third_lib_info lib_param;
+
+	/* added parameters */
+	void* tune_param_ptr;
+	unsigned short* lsc_tab_address[9];  // the copy of table in parameter file
+	struct lsc2_tune_param lsc2_tune_param;  // HLSC_V2.0 tuning structure
+
+	/* no use in lsc_adv2 */
+	uint32_t param_level;
+	uint16_t *lum_gain;  // space to save pre_table from smart1.0
+	struct lsc_adv_tune_param tune_param;
+};
+
+
+struct statistic_raw_t {
+	uint32_t *r;
+	uint32_t *gr;
+	uint32_t *gb;
+	uint32_t *b;
+};
+
+
+struct lsc_size {
+	uint32_t w;
+	uint32_t h;
+};
+
+
+struct lsc_adv_calc_param{
+	struct statistic_raw_t stat_img;    // statistic value of 4 channels
+	struct lsc_size stat_size;          // size of statistic value matrix
+	int gain_width;                     // width  of shading table
+	int gain_height;	                // height of shading table
+	uint32_t ct;                        // ct from AWB calc
+	int r_gain;                         // r_gain from AWB calc
+	int b_gain;                         // b_gain from AWB calc
+	uint32_t bv;                        // bv from AE calc
+	uint32_t isp_mode;                  // about the mode of interperlation of shading table
+	uint32_t isp_id;                    // 0. alg0.c ,  2. alg2.c
+	uint32_t camera_id;                 // 0. back camera  ,  1. front camera
+	struct lsc_size img_size;           // raw size
+
+	// no use in HLSC_V2.0
+	struct lsc_size block_size;
+	uint16_t *lum_gain;                 // pre_table from smart1.0
+	uint32_t ae_stable;                 // ae stable info from AE calc
+	int awb_pg_flag;
+
+	unsigned short* lsc_tab_address[9]; // lsc_tab_address
+	uint32_t lsc_tab_size;
+
+	// not fount in isp_app.c
+	uint32_t pre_bv;
+	uint32_t pre_ct;
+};
+
+
+struct lsc_adv_calc_result {
+	uint16_t *dst_gain;
+};
+
+
+
 
 struct lsc_lib_ops{
 	int32_t (* alsc_calc)(void* handle, struct lsc_adv_calc_param *param, struct lsc_adv_calc_result *adv_calc_result);
@@ -339,8 +487,13 @@ cmr_int lsc_ctrl_deinit(cmr_handle handle_lsc);
 cmr_int lsc_ctrl_process(cmr_handle handle_lsc, struct lsc_adv_calc_param *in_ptr, struct lsc_adv_calc_result *result);
 cmr_int lsc_ctrl_ioctrl(cmr_handle handle_lsc, enum alsc_io_ctrl_cmd cmd, void *in_ptr, void *out_ptr);
 
-void alsc_set_param(struct lsc_adv_init_param *lsc_param);
-
+int otp_lsc_mod(unsigned short* otpLscTabGolden, unsigned short* otpLSCTabRandom,  //T1, T2
+				    unsigned short* otpLscTabGoldenRef, //Ts1
+				    unsigned int* otpAWBMeanGolden, unsigned int* otpAWBMeanRandom,
+				    unsigned short* otpLscTabGoldenMod, //output: Td2
+				    unsigned int gainWidth, unsigned int gainHeight,
+				    int bayerPattern
+				    );
 /**----------------------------------------------------------------------------*
 **					Compiler Flag				**
 **----------------------------------------------------------------------------*/

@@ -1211,13 +1211,19 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input *in_ptr)
 		return rtn;
 	}
 
-#if  SMART_LSC_VERSION
-	for (i=0; i<smart_calc_result.counts; i++) {
-		if (ISP_SMART_LNC == smart_calc_result.block_result[i].smart_id) {
-			smart_calc_result.block_result[i].update = 0;
+	//use LSC_SPD_VERSION to control the output of smart lsc
+//	struct alsc_ver_info lsc_ver = {0};
+//	rtn  = lsc_ctrl_ioctrl(cxt->lsc_cxt.handle, ALSC_GET_VER, NULL, (void *)&lsc_ver);
+//	if (ISP_SUCCESS != rtn) {
+//		ISP_LOGE("Get ALSC ver info failed!");
+//	}
+//	if( lsc_ver.LSC_SPD_VERSION >= 3 ){
+		for (i=0; i<smart_calc_result.counts; i++) {
+			if (ISP_SMART_LNC == smart_calc_result.block_result[i].smart_id) {
+				smart_calc_result.block_result[i].update = 0;
+			}
 		}
-	}
-#endif
+//	}
 
 	/*use alc ccm, disable spreadtrum smart ccm*/
 	for (i = 0; i < smart_calc_result.counts; i++) {
