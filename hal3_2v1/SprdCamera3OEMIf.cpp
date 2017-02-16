@@ -7115,7 +7115,7 @@ int SprdCamera3OEMIf::SetDimensionVideo(cam_dimension_t video_size)
 	SPRD_DEF_Tag sprddefInfo;
 	mSetting->getSPRDDEFTag(&sprddefInfo);
 
-	if (mVideoWidth > 0&& sprddefInfo.slowmotion <= 1) {
+	if (mVideoWidth > 2048 && sprddefInfo.slowmotion <= 1) {
 		mVideoSnapshotType = 1;
 	} else {
 		mVideoSnapshotType = 0;

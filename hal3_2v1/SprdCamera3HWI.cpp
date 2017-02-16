@@ -778,13 +778,6 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 	mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE;
 	mOEMIf->SetChannelHandle(mRegularChan, mPicChan);
 
-	// temp resolution for video snpashot, wait zsl ok, will remove later
-	if (video_size.width > 0 && video_size.height > 0 &&
-	    capture_size.width > 0 && capture_size.height > 0) {
-		capture_size.width = video_size.width;
-		capture_size.height = video_size.height;
-	}
-
 	HAL_LOGI("preview: width=%d, height=%d, video: width=%d, height=%d",
 		preview_size.width, preview_size.height,
 		video_size.width, video_size.height);

@@ -5484,6 +5484,7 @@ cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits, cmr_ui
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 	struct setting_cmd_parameter    setting_param;
 	cmr_uint is_zsl_enable = 0;
+	cmr_uint video_snapshot_type = VIDEO_SNAPSHOT_NONE;
 
 	if (!oem_handle) {
 		CMR_LOGE("in parm error");
@@ -5503,6 +5504,14 @@ cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits, cmr_ui
 	}
 	is_zsl_enable = setting_param.cmd_type_value;
 
+	cmr_bzero(&setting_param, sizeof(setting_param));
+	ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_VIDEO_SNAPSHOT_TYPE, &setting_param);
+	if (ret) {
+		CMR_LOGE("failed to get preview sprd eis enabled flag %ld", ret);
+		goto exit;
+	}
+	video_snapshot_type = setting_param.cmd_type_value;
+
 	ret = cmr_grab_cap_start(cxt->grab_cxt.grab_handle, skip_number);
 	if (ret) {
 		CMR_LOGE("failed to start cap %ld", ret);
@@ -5511,7 +5520,8 @@ cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits, cmr_ui
 
 	/* for sharkl2 off-the-fly path */
 	if ((channel_bits & OFF_THE_FLY_PATH_BIT) &&
-	    is_zsl_enable == 0) {
+	    is_zsl_enable == 0 &&
+	    video_snapshot_type != VIDEO_SNAPSHOT_VIDEO) {
 		ret = cmr_grab_start_capture(cxt->grab_cxt.grab_handle);
 		if (ret) {
 			CMR_LOGE("failed to start off the fly path,ret %ld", ret);
