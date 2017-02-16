@@ -130,7 +130,7 @@ isp_s32 _pm_yuv_noisefilter_set_param(void *yuv_noisefilter_param, isp_u32 cmd, 
 
 		if (level != dst_ptr->cur_level || nr_tool_flag[15] ||block_result->mode_flag_changed) {
 			dst_ptr->cur_level = level;
-			header_ptr->is_update = 1;
+			header_ptr->is_update = ISP_ONE;
 			nr_tool_flag[15] = 0;
 			block_result->mode_flag_changed = 0;
 

@@ -148,7 +148,7 @@ isp_s32 _pm_iircnr_iir_set_param(void *iircnr_param, isp_u32 cmd, void *param_pt
 
 		if (cur_level != dst_ptr->cur_level || nr_tool_flag[6] || block_result->mode_flag_changed) {
 			dst_ptr->cur_level = cur_level;
-			header_ptr->is_update = 1;
+			header_ptr->is_update = ISP_ONE;
 			nr_tool_flag[6] = 0;
 			block_result->mode_flag_changed = 0;
 			rtn=_pm_iircnr_iir_convert_param(dst_ptr,dst_ptr->cur_level,block_result->mode_flag,block_result->scene_flag);

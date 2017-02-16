@@ -129,7 +129,7 @@
 				gamc_ptr->cur_idx.x1 = weight_value->value[1];
 				gamc_ptr->cur_idx.weight0 = weight_value->weight[0];
 				gamc_ptr->cur_idx.weight1 = weight_value->weight[1];
-				gamc_header_ptr->is_update = 1;
+				gamc_header_ptr->is_update = ISP_ONE;
 
 				for (i = 0; i < ISP_PINGPANG_FRGB_GAMC_NUM; i++) {
 					gamc_ptr->cur.nodes[i].node_x = gamc_ptr->final_curve.points[i].x;

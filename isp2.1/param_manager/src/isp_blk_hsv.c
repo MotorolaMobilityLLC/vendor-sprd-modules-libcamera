@@ -116,7 +116,7 @@ isp_s32 _pm_hsv_set_param(void *hsv_param, isp_u32 cmd, void* param_ptr0, void* 
 		struct isp_range val_range = {0, 0};
 		struct isp_weight_value hsv_value = {{0}, {0}};
 
-		hsv_header_ptr->is_update = 0;
+		hsv_header_ptr->is_update = ISP_ZERO;
 		val_range.min = 0;
 		val_range.max = 255;
 		rtn = _pm_check_smart_param(block_result, &val_range, 1,
@@ -155,7 +155,7 @@ isp_s32 _pm_hsv_set_param(void *hsv_param, isp_u32 cmd, void* param_ptr0, void* 
 				dst_hsv_ptr->cur_idx.x1 = hsv_value.value[1];
 				dst_hsv_ptr->cur_idx.weight0 = hsv_value.weight[0];
 				dst_hsv_ptr->cur_idx.weight1 = hsv_value.weight[1];
-				hsv_header_ptr->is_update = 1;
+				hsv_header_ptr->is_update = ISP_ONE;
 			}
 		}
 	}
@@ -185,7 +185,7 @@ isp_s32 _pm_hsv_set_param(void *hsv_param, isp_u32 cmd, void* param_ptr0, void* 
 			dst_hsv_ptr->cur.data_ptr[1] = 0;
 		#endif
 		}
-		hsv_header_ptr->is_update = ISP_ZERO;
+		hsv_header_ptr->is_update = ISP_ONE;
 	}
 	break;
 

@@ -118,6 +118,7 @@ isp_s32 _pm_3d_nr_pre_set_param(void *nr_3d_param, isp_u32 cmd, void *param_ptr0
 
 	case ISP_PM_BLK_3D_NR_STRENGTH_LEVEL:
 		dst_ptr->cur_level= *((isp_u32*)param_ptr0);
+		header_ptr->is_update = ISP_ONE;
 	break;
 
 	case ISP_PM_BLK_SMART_SETTING:
@@ -139,7 +140,7 @@ isp_s32 _pm_3d_nr_pre_set_param(void *nr_3d_param, isp_u32 cmd, void *param_ptr0
 
 		if (level != dst_ptr->cur_level || nr_tool_flag[1] || block_result->mode_flag_changed) {
 			dst_ptr->cur_level = level;
-			header_ptr->is_update = 1;
+			header_ptr->is_update = ISP_ONE;
 			nr_tool_flag[1] = 0;
 			block_result->mode_flag_changed = 0;
 

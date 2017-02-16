@@ -57,7 +57,7 @@
 	switch (cmd) {
 	case ISP_PM_BLK_SATURATION_BYPASS:
 		csa_ptr->cur.bypass = *((isp_u32*)param_ptr0);
-		csa_header_ptr->is_update = ISP_ZERO;
+		csa_header_ptr->is_update = ISP_ONE;
 	break;
 
 	case ISP_PM_BLK_SATURATION:
@@ -67,7 +67,7 @@
 		csa_ptr->cur_v_idx = level;
 		csa_ptr->cur.factor_u = csa_ptr->tab[0][csa_ptr->cur_u_idx];
 		csa_ptr->cur.factor_v = csa_ptr->tab[1][csa_ptr->cur_v_idx];
-		csa_header_ptr->is_update = ISP_ZERO;
+		csa_header_ptr->is_update = ISP_ONE;
 	}
 	break;
 
@@ -81,7 +81,7 @@
 			csa_ptr->cur.factor_u = csa_ptr->scene_mode_tab[0][idx];
 			csa_ptr->cur.factor_v = csa_ptr->scene_mode_tab[1][idx];
 		}
-		csa_header_ptr->is_update = ISP_ZERO;
+		csa_header_ptr->is_update = ISP_ONE;
 	}
 	break;
 
@@ -106,7 +106,7 @@
 		factor_v = csa_ptr->tab[1][csa_ptr->cur_v_idx];
 		csa_ptr->cur.factor_u = (factor_u*reduce_percent)/255;
 		csa_ptr->cur.factor_v = (factor_v*reduce_percent)/255;
-		csa_header_ptr->is_update = ISP_ZERO;
+		csa_header_ptr->is_update = ISP_ONE;
 	}
 	break;
 

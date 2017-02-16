@@ -184,7 +184,7 @@
 				cmc10_ptr->cur.matrix.val[i] = cmc10_ptr->result_cmc[i];
 			}
 
-			cmc10_header_ptr->is_update = 1;
+			cmc10_header_ptr->is_update = ISP_ONE;
 
 		} else if (ISP_SMART_SATURATION_DEPRESS == block_result->smart_id) {
 
@@ -203,7 +203,7 @@
 
 			if (0 != update) {
 					_pm_cmc10_adjust(cmc10_ptr, is_reduce);
-				cmc10_header_ptr->is_update = 1;
+				cmc10_header_ptr->is_update = ISP_ONE;
 			}
 		}
 	}

@@ -236,7 +236,7 @@ isp_s32 _pm_nlm_set_param(void *nlm_param, isp_u32 cmd, void *param_ptr0, void *
 
 		if (nlm_level != nlm_ptr->cur_level || nr_tool_flag[7] || block_result->mode_flag_changed) {
 			nlm_ptr->cur_level = nlm_level;
-			nlm_header_ptr->is_update = 1;
+			nlm_header_ptr->is_update = ISP_ONE;
 			nr_tool_flag[7] = 0;
 			block_result->mode_flag_changed = 0;
 

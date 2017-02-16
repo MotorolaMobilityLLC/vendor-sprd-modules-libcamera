@@ -169,9 +169,9 @@
 				ygamma_ptr->cur_idx_weight.weight1 = weight_value->weight[1];
 
 				if (ygamma_ptr->cur.bypass) {
-					gamc_header_ptr->is_update = 0;
+					gamc_header_ptr->is_update = ISP_ZERO;
 				} else {
-					gamc_header_ptr->is_update = 1;
+					gamc_header_ptr->is_update = ISP_ONE;
 				}
 
 				for (i = 0; i < ISP_PINGPANG_YUV_YGAMMA_NUM; i++) {

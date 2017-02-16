@@ -138,7 +138,7 @@ isp_s32 _pm_3d_nr_cap_set_param(void *nr_3d_param, isp_u32 cmd, void *param_ptr0
 
 		if (level != dst_ptr->cur_level || nr_tool_flag[0] || block_result->mode_flag_changed) {
 			dst_ptr->cur_level = level;
-			header_ptr->is_update = 1;
+			header_ptr->is_update = ISP_ONE;
 			nr_tool_flag[0] = 0;
 			block_result->mode_flag_changed = 0;
 

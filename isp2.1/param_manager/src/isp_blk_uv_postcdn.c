@@ -134,7 +134,7 @@
 
 		if (cur_level != dst_ptr->cur_level || nr_tool_flag[13] || block_result->mode_flag_changed) {
 			dst_ptr->cur_level = cur_level;
-			header_ptr->is_update = 1;
+			header_ptr->is_update = ISP_ONE;
 			nr_tool_flag[13] = 0;
 			block_result->mode_flag_changed = 0;
 			rtn = _pm_uv_postcdn_convert_param(dst_ptr, dst_ptr->cur_level, block_result->mode_flag, block_result->scene_flag);

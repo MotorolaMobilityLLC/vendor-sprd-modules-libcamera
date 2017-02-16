@@ -233,7 +233,7 @@ isp_s32 _pm_edge_set_param_v1(void *edge_param, isp_u32 cmd, void *param_ptr0, v
 
 		if (level != dst_ptr->cur_level || nr_tool_flag[4] || block_result->mode_flag_changed) {
 			dst_ptr->cur_level = level;
-			header_ptr->is_update = 1;
+			header_ptr->is_update = ISP_ONE;
 			nr_tool_flag[4] = 0;
 			block_result->mode_flag_changed = 0;
 

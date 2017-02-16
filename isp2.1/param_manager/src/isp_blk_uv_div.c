@@ -133,7 +133,7 @@ isp_s32 _pm_uv_div_set_param_v1(void *uv_div_param, isp_u32 cmd, void *param_ptr
 
 		if (cur_idx != dst_ptr->cur_level || nr_tool_flag[12] || block_result->mode_flag_changed) {
 			dst_ptr->cur_level = cur_idx;
-			header_ptr->is_update = 1;
+			header_ptr->is_update = ISP_ONE;
 			nr_tool_flag[12] = 0;
 			block_result->mode_flag_changed = 0;
 			rtn=_pm_uv_div_convert_param(dst_ptr, dst_ptr->cur_level, block_result->mode_flag, block_result->scene_flag);

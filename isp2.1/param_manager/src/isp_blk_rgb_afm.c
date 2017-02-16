@@ -112,11 +112,11 @@ isp_s32 _pm_rgb_afm_set_param(void *rgb_aem_param, isp_u32 cmd, void* param_ptr0
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header*)param_ptr1;
 	UNUSED(cmd);
 
-	header_ptr->is_update = ISP_ONE;
 
 	switch (cmd) {
 	case ISP_PM_BLK_RGB_AFM_BYPASS:
 		dst_ptr->cur.bypass = *((isp_u32*)param_ptr0);
+		header_ptr->is_update = ISP_ONE;
 	break;
 	case ISP_PM_BLK_SMART_SETTING:
 	{
@@ -137,7 +137,7 @@ isp_s32 _pm_rgb_afm_set_param(void *rgb_aem_param, isp_u32 cmd, void* param_ptr0
 
 		if (cur_level != dst_ptr->cur_level || nr_tool_flag[9] || block_result->mode_flag_changed) {
 			dst_ptr->cur_level = cur_level;
-			header_ptr->is_update = 1;
+			header_ptr->is_update = ISP_ONE;
 			nr_tool_flag[9] = 0;
 			block_result->mode_flag_changed = 0;
 			rtn=_pm_rgb_afm_convert_param(dst_ptr, dst_ptr->cur_level, block_result->mode_flag, block_result->scene_flag);

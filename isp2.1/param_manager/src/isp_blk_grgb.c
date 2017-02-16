@@ -159,7 +159,7 @@ isp_s32 _pm_grgb_init_v1(void *dst_grgb_param, void *src_grgb_param, void* param
 		cur_level = (isp_u32)block_result->component[0].fix_data[0];
 		if(cur_level != dst_ptr->cur_level || nr_tool_flag[5] || block_result->mode_flag_changed){
 			dst_ptr->cur_level = cur_level;
-			header_ptr->is_update = 1;
+			header_ptr->is_update = ISP_ONE;
 			nr_tool_flag[5] = 0;
 			block_result->mode_flag_changed = 0;
 			rtn = _pm_grgb_convert_param(dst_ptr,cur_level,block_result->mode_flag,block_result->scene_flag);
