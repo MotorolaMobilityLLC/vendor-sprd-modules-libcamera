@@ -634,8 +634,8 @@ cmr_int ispalg_awb_post_process(cmr_handle isp_alg_handle, struct awb_ctrl_calc_
 		ISP_TRACE_IF_FAIL(rtn, ("pm init isp block param error"));
 
 	}
-		cxt->awb_cxt.log_alc_awb      = result->log_awb.log;
-		cxt->awb_cxt.log_alc_awb_size = result->log_awb.size;
+		cxt->awb_cxt.log_awb      = result->log_awb.log;
+		cxt->awb_cxt.log_awb_size = result->log_awb.size;
 
 
 	if (result->use_lsc) {
