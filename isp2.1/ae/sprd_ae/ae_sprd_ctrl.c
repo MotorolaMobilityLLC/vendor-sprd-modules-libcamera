@@ -1509,7 +1509,7 @@ static int32_t exposure_time2line(struct ae_tuning_param *tp, int16_t linetime, 
 		}
 
 		for (i = 0; i <= mx; i++){
-			if (833333 <= tp->backup_ae_table[AE_FLICKER_50HZ][AE_ISO_AUTO].exposure[i]){
+			if (83333 <= tp->backup_ae_table[AE_FLICKER_50HZ][AE_ISO_AUTO].exposure[i]){
 				tmp_1 = tp->ae_table[AE_FLICKER_50HZ][AE_ISO_AUTO].exposure[i] * 5 / 6.0;
 				tp->ae_table[AE_FLICKER_60HZ][AE_ISO_AUTO].exposure[i] = (int32_t)tmp_1;
 
@@ -1529,7 +1529,7 @@ static int32_t exposure_time2line(struct ae_tuning_param *tp, int16_t linetime, 
 		}
 	}else{
 		for (i = 0; i <= mx; i++){
-			if (833333 <= tp->ae_table[AE_FLICKER_50HZ][AE_ISO_AUTO].exposure[i] * linetime){
+			if (83333 <= tp->ae_table[AE_FLICKER_50HZ][AE_ISO_AUTO].exposure[i] * linetime){
 				tmp_1 = tp->ae_table[AE_FLICKER_50HZ][AE_ISO_AUTO].exposure[i] * 5 / 6.0;
 				tp->ae_table[AE_FLICKER_60HZ][AE_ISO_AUTO].exposure[i] = (int32_t)tmp_1;
 
@@ -2664,13 +2664,14 @@ int32_t ae_sprd_calculation(void *handle, void* param, void* result)
 		// current_status->ae1_finfo.enable_flag);
 		rtn = ae_misc_calculation(cxt->misc_handle, &misc_calc_in, &misc_calc_out);
 		cxt->cur_status.ae1_finfo.update_flag = 0;	// add by match box for fd_ae reset the status
-		
+
 		memcpy(current_result, &cxt->cur_result, sizeof(struct ae_alg_calc_result));
 		make_isp_result(current_result, calc_out);
 		{
 			/*just for debug: reset the status */
 			if (1 == cxt->cur_status.settings.touch_scrn_status) {
 				cxt->cur_status.settings.touch_scrn_status = 0;
+				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_TOUCH_AE_NOTIFY);//temp code for bug642910, remove later
 			}
 		}
 		// AE_LOGD("calc_module_f %.2f %d\r\n",
@@ -2764,6 +2765,7 @@ int32_t ae_sprd_calculation(void *handle, void* param, void* result)
 	if (1 == cxt->debug_enable) {
 		save_to_mlog_file(cxt, &misc_calc_out);
 	}
+#if 0
 /******bethany lock ae*******
   *****touch have 3 states,0:touch before/release;1:touch doing; 2: toch done and AE stable*****/
     AE_LOGD("TCCTL_tcAE_status and ae_stable is %d,%d",current_result->tcAE_status,current_result->wts.stable);
@@ -2782,7 +2784,7 @@ int32_t ae_sprd_calculation(void *handle, void* param, void* result)
 		current_result->tcRls_flag = 0;
 	}
 	AE_LOGD("TCCTL_rls_ae_lock is %d",cxt->cur_status.settings.lock_ae);
-
+#endif
 	rtn = cmr_thread_msg_send(cxt->thread_handle, &msg);
 
 	cxt->cur_status.frame_id++;

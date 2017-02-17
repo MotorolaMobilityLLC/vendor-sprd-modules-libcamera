@@ -114,6 +114,7 @@ static cmr_int isp_alg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type)
 		case AE_CB_CLOSE_PREFLASH:
 		case AE_CB_PREFLASH_PERIOD_END:
 		case AE_CB_CLOSE_MAIN_FLASH:
+		case AE_CB_TOUCH_AE_NOTIFY:
 			cmd = ISP_AE_STAB_CALLBACK;
 			break;
 		case AE_CB_QUICKMODE_DOWN:
