@@ -1017,6 +1017,10 @@ int SprdCamera3OEMIf::zslTakePicture()
 	}
 
 	setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
+#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
+	HAL_LOGV("set focus af mode %d",CAMERA_FOCUS_MODE_PICTURE);
+	SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE, CAMERA_FOCUS_MODE_PICTURE);
+#endif
 	if (CMR_CAMERA_SUCCESS != mHalOem->ops->camera_take_picture(mCameraHandle, mCaptureMode)) {
 		setCameraState(SPRD_ERROR, STATE_CAPTURE);
 		HAL_LOGE("fail to camera_take_picture.");

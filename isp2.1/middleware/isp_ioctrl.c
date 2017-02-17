@@ -1248,6 +1248,9 @@ static cmr_int _ispAfModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, int 
 	case ISP_FOCUS_MANUAL:
 		set_mode = AF_MODE_MANUAL;
 		break;
+	case ISP_FOCUS_PICTURE:
+		set_mode = AF_MODE_PICTURE;
+		break;
 	default:
 		set_mode = AF_MODE_NORMAL;
 		break;

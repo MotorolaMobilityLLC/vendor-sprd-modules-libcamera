@@ -285,6 +285,9 @@ extern "C" {
 	static void caf_start(af_ctrl_t * af);
 	static void caf_stop_monitor(af_ctrl_t * af);
 	static uint16_t get_vcm_registor_pos(af_ctrl_t * af);
+	static int32_t compare_timestamp(af_ctrl_t * af);
+	static ERRCODE af_clear_sem(af_ctrl_t * af);
+	static ERRCODE af_wait_caf_finish(af_ctrl_t * af);
 
 	static int32_t _af_set_mode(af_handle_t handle, void *in_param) {
 #if 1
@@ -314,8 +317,8 @@ extern "C" {
 					caf_start(af);
 				}
 				break;
-#if 0
-			case ISP_FOCUS_TAKE_PICTURE:	//gwb
+#if 1
+			case AF_MODE_PICTURE:
 				if (af->need_re_trigger != 1)
 					caf_stop_monitor(af);
 				AF_LOGD("AF_mode = %d, SAF_Search_Process = %d, need_re_trigger :%d", af->fv.AF_mode,
