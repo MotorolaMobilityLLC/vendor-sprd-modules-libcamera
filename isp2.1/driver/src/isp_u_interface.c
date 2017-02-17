@@ -217,10 +217,10 @@ isp_s32 isp_set_arbiter(isp_handle isp_handler)
 	struct isp_interface_param_v1 *isp_context_ptr = (struct isp_interface_param_v1 *)isp_handler;
 	struct isp_dev_arbiter_info_v1 *isp_arbiter_ptr = &isp_context_ptr->arbiter;
 
-	isp_arbiter_ptr->fetch_raw_endian = ISP_ENDIAN_HALFBIG;
+	isp_arbiter_ptr->fetch_raw_endian = ISP_ENDIAN_LITTLE;
 	isp_arbiter_ptr->fetch_raw_word_change = ISP_ZERO;
 	isp_arbiter_ptr->fetch_bit_reorder = ISP_ZERO;
-	isp_arbiter_ptr->fetch_yuv_endian = ISP_ENDIAN_HALFBIG;
+	isp_arbiter_ptr->fetch_yuv_endian = ISP_ENDIAN_LITTLE;
 	isp_arbiter_ptr->fetch_yuv_word_change = ISP_ZERO;
 
 	return rtn;
