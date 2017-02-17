@@ -51,16 +51,21 @@
 #include <stdio.h>
 #include <memory.h>
 #include <stdarg.h>
-#include <sys/time.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h> 
+#ifndef WIN32
+#include <jni.h>
+#include <android/log.h>
+#endif
 #include "AFv1_Type.h"
-
 
 //=========================================================================//
 // Public Definition
 //=========================================================================//
 /* ============================================================================================== */
 /*1.System info*/	
-#define VERSION             "8.2"
+#define VERSION             "2.101"
 #define STRING(s) #s
 
 
@@ -74,17 +79,24 @@
 #define AF_SEARCH_DEBUG     0
 
 #define SAF_FINE_SEARCH     1   //0:without fine search, 1:with fine search
+#define DEBUG_PRINT_ENA		1
 
+#define null_print			do {} while(0)
 //#define AfDebugPrint( str, args... )    ( !AF_SEARCH_DEBUG ) ? : printf( str, ##args );
 
 #ifdef WIN32
 #define AfDebugPrint(x) do { if (AF_SEARCH_DEBUG) printf x; } while (0) 
 #define Printf printf 
+#define _assert(a)	do { if (!(a)) printf("!!! ASSERT: %s(),%d \r\n",__FUNCTION__, __LINE__); } while(0)
 #else 
 extern ERRCODE (*ANDROID_LOG)(const char* format, ...); 
 #define AfDebugPrint(x) do { if (AF_SEARCH_DEBUG) ANDROID_LOG x; } while (0) 
+#if (DEBUG_PRINT_ENA)
 #define Printf (*ANDROID_LOG) 
-
+#else
+#define Printf(fmt, args...) null_print
+#endif
+#define _assert(a)	do { if (!(a)) (*ANDROID_LOG)("!!! ASSERT: %s(),%d \r\n",__FUNCTION__, __LINE__); } while(0)
 #endif
 
 #define START_F(func)		    ERRCODE err = ERR_SUCCESS; \
@@ -130,11 +142,39 @@ extern ERRCODE (*ANDROID_LOG)(const char* format, ...);
 #define FINE_INTERVAL		8
 */
 
-#define TOTAL_AF_ZONE 9
+#define TOTAL_AF_ZONE 10
 
+#ifndef MAX
 #define MAX(a,b)  (((a) > (b)) ? (a) : (b))
+#endif
+
+#ifndef MIN
 #define MIN(a,b)  (((a) < (b)) ? (a) : (b))
+#endif
+
+#ifndef ABS_AB
+#define ABS_AB(a, b)				((a)>(b)? (a)-(b): (b)-(a))
+#endif
+
+#ifndef ABS
+#define ABS(a)				ABS_AB(a, 0)
+#endif
+
+#ifndef DABS
+#define DABS(a) 				(((a) > 0.0) ? (a) : -(a))	/* floating absolute value */
+#endif
+
+#ifndef MIN_ABC
+#define MIN_ABC(a, b, c)			((a)<(b) ? MIN((a),(c)) : MIN((b),(c)))
+#endif
+
+#ifndef CLAMP_ABC
+#define CLAMP_ABC(a, b, c)		MIN(MAX((a), (b)), (c))
+#endif
   
+#ifndef STR_EQUAL
+#define STR_EQUAL(a, b)	(strcmp((char *)(a), (char *)(b)) == 0)
+#endif
 
 //=========================================================================================//
 // Public enum Instance
@@ -177,7 +217,6 @@ typedef enum _eAF_MODE {
   FAF,                   //Face AF
   MAF,                   //Multi zone AF 
   TMODE_1,               //Test mode 1
-  DEFOCUS,				//full search for analysis
   Wait_Trigger           //wait for AF trigger
 } eAF_MODE;
 
@@ -188,6 +227,7 @@ typedef enum _eAF_Triger_Type {
   RF_FAST,              //Fast R/F search for AFT
   R_FAST,              //Fast Rough search for AFT
   F_FAST,              //Fast Fine search for AFT
+  DEFOCUS,
 } eAF_Triger_Type;
 
 typedef enum _eSAF_Status {
@@ -302,6 +342,16 @@ typedef enum _e_AF_AE_Gain {
 //=========================================================================================//
 //#pragma pack(push, 1)
 
+typedef struct _AE_Report
+{
+	uint8   bAEisConverge;//flag: check AE is converged or not
+    int16   AE_BV;        //brightness value
+    uint16  AE_EXP;       //exposure time (ms)
+    uint16  AE_Gain;      //X128: gain1x = 128
+    uint32  AE_Pixel_Sum; //AE pixel sum which needs to match AF blcok 
+    uint16  AE_Idx;       //AE exposure level
+} AE_Report;
+
 typedef struct _AF_FV_DATA
 {
     uint8   MaxIdx[MAX_SAMPLE_NUM];         //index of max statistic value
@@ -334,6 +384,7 @@ typedef struct _AF_FV_DATA
 typedef struct _AF_FV
 {
     AF_FV_DATA   Filter[T_TOTAL_FILTER_TYPE];  
+    AE_Report    AE_Rpt[MAX_SAMPLE_NUM];
    
 
 }AF_FV;
@@ -428,6 +479,27 @@ typedef struct _AF_Scan_Table
 }AF_Scan_Table;
 
 
+typedef struct aftuning_param_s{
+	unsigned int 	enable_adapt_af;
+	unsigned int	_alg_select;
+	unsigned int	_lowlight_agc;
+	unsigned int	_std_rto;
+	unsigned int 	_falling_rto;
+	unsigned int 	_rising_rto;
+	unsigned int	_stat_min_value;
+	unsigned int	_stat_min_diff;
+	unsigned int	_break_rto;
+	unsigned int	_turnback_rto;
+	unsigned int	_forcebreak_rto;
+	unsigned int	_break_count;
+	unsigned int	_max_shift_idx;
+	unsigned int	_lowlight_ma_count;
+	int				_posture_diff_slop;
+	unsigned int	_temporal_flat_slop;
+	unsigned int	_limit_search_interval;	
+	unsigned int	_sky_scene_thr;
+}aftuning_param_t;
+
 typedef struct _AF_Tuning_Para
 {
     //AF Scan Table
@@ -460,9 +532,269 @@ typedef struct _AF_Tuning
     AF_Tuning_Para SAFTuningPara;   //SAF parameters
     AF_Tuning_Para CAFTuningPara;   //CAF parameters
     AF_Tuning_Para VCAFTuningPara;  //Video CAF parameters
-    
-    uint16 dummy[200];
+    aftuning_param_t adapt_af_param;	//adapt AF parameter
+    /* 
+    68 bytes for aftuning_param_t;
+	*/
+    unsigned char dummy[400-72];
 }AF_Tuning;
+
+typedef enum {
+	AF_STATISTIC_LOCAL = 0,
+	AF_STATISTIC_DEFOCUS,
+	AF_STATISTIC_TOTAL,
+} _af_select_t;
+
+typedef enum{
+	SCAN_FORWARD,
+	SCAN_BACKWARD,
+	SCAN_BOUNDARY = (1<<SCAN_FORWARD | 1<<SCAN_BACKWARD),
+}scan_direction_t;
+
+typedef enum{
+	AF_SCAN_INIT = 0,
+	AF_SCAN_ROUGH,
+	AF_SCAN_FINE,
+	//AF_SCAN_GLOBAL,
+	//AF_BLUR,
+	//AF_STABLE,
+	AF_SCAN_LOCK,
+	AF_SCAN_IDLE,
+}_alg_state_t;
+
+typedef enum
+{
+    CTRL_STATE_INIT = 0,
+	CTRL_STATE_IDLE,
+	CTRL_STATE_SETENV,
+    CTRL_STATE_FOCUS,
+    CTRL_STATE_STOP_PROC,
+    CTRL_STATE_RESET_PROC,
+    CTRL_STATE_TOTAL,
+}ctrl_state_t;
+
+typedef enum 
+{
+	SCENE_LUMA_SLOP_WEAK		= 20,
+	SCENE_LUMA_SLOP_MEDIUM		= 50,
+	SCENE_LUMA_SLOP_STRONG		= 80,	
+}scene_luma_slop_t;
+
+typedef enum 
+{
+	CURVE_UNRECOGNIZED = 0,
+	CURVE_FALLING,
+	CURVE_RISING,
+	CURVE_HILL,
+}curve_slop_type_t;
+
+#define AFAUTO_SCAN_STOP_NMAX (256)
+#define MULTI_STATIC_TOTAL (9)
+#define AF_CHECK_SCENE_HISTORY	(15)
+#define AF_RESULT_DATA_SIZE	(32)
+#define FOCUS_STAT_WIN_TOTAL	(9)
+#define ALGO_DECIMAL_NUM	(100) 
+#define FOCUS_STAT_DATA_ALIGMENT_BIT	(4)
+
+typedef struct _afscan_status_s {
+	unsigned int n_stops;
+	unsigned int pos_from;
+	unsigned int pos_to;
+	unsigned int pos_jump;
+	unsigned int scan_idx;
+	unsigned int stat_log[AFAUTO_SCAN_STOP_NMAX];
+	unsigned int stat_sum_log[AFAUTO_SCAN_STOP_NMAX];
+	unsigned int scan_tbl[AFAUTO_SCAN_STOP_NMAX];
+	unsigned int frmid[AFAUTO_SCAN_STOP_NMAX];
+	int bv_log[AFAUTO_SCAN_STOP_NMAX];
+	unsigned int luma[AFAUTO_SCAN_STOP_NMAX];
+	unsigned int scan_tbl_posidx[AFAUTO_SCAN_STOP_NMAX];	
+	unsigned int scan_tbl_pos[AFAUTO_SCAN_STOP_NMAX];
+	unsigned int scan_tbl_stat[AFAUTO_SCAN_STOP_NMAX];
+	unsigned int scan_tbl_stat2[AFAUTO_SCAN_STOP_NMAX];
+	unsigned int scan_tbl_macrv[AFAUTO_SCAN_STOP_NMAX]; 
+	int scan_tbl_slop[AFAUTO_SCAN_STOP_NMAX];
+	int scan_tbl_maslop[AFAUTO_SCAN_STOP_NMAX];
+	unsigned int scan_tbl_luma[AFAUTO_SCAN_STOP_NMAX];
+	unsigned int scan_tbl_jump[AFAUTO_SCAN_STOP_NMAX];
+	unsigned int scan_tbl_pkidx[AFAUTO_SCAN_STOP_NMAX];
+	unsigned int scan_tbl_start;
+	unsigned int scan_tbl_end;
+	unsigned int scan_interval;
+	unsigned int peak_idx;
+	unsigned int peak_pos;
+	unsigned int peak_stat;
+	unsigned int peak_stat_sum;
+	unsigned int turnback_status;
+	unsigned int valley_stat;
+	unsigned int valley_idx;
+	unsigned int last_idx;
+	unsigned int last_stat;
+	_alg_state_t alg_sts;
+	unsigned int scan_dir;
+	unsigned int last_dir;
+	unsigned int init_pos;
+	unsigned int tbl_falling_cnt[AFAUTO_SCAN_STOP_NMAX];
+	unsigned int tbl_flat_cnt[AFAUTO_SCAN_STOP_NMAX];	
+	unsigned int turnback_cnt;
+	unsigned int turnback_idx;
+	unsigned int turnback_cond;
+	unsigned int break_idx;
+	unsigned int break_cond;
+	unsigned int fine_begin;
+	unsigned int fine_end;
+	unsigned int fine_stat;
+	unsigned int fine_pkidx;
+	unsigned int blcpeak_idx;
+	unsigned int bound_cnt;
+	unsigned int stat_vari_rto;
+	unsigned int stat_rising_rto;	
+	unsigned int stat_falling_rto;
+	unsigned int vly_far_stat;
+	unsigned int vly_far_rto;
+	unsigned int vly_far_pos;
+	unsigned int vly_near_stat;
+	unsigned int vly_near_rto;
+	unsigned int vly_near_pos;
+	unsigned int breakcount;
+	unsigned int breakratio;
+
+	unsigned int frm_num;
+	unsigned int pkfrm_num;
+	unsigned int vly_far_idx;
+	unsigned int vly_near_idx;
+	unsigned int spdup_num;
+	int local_scrtbl[AFAUTO_SCAN_STOP_NMAX];
+	int localma_scrtbl[AFAUTO_SCAN_STOP_NMAX];
+	int localsum_scrtbl[AFAUTO_SCAN_STOP_NMAX];
+	int localluma_scrtbl[AFAUTO_SCAN_STOP_NMAX];
+	unsigned int local_idx;
+	unsigned int localma_idx;
+	unsigned int localsum_idx;
+	unsigned int localluma_idx;
+	unsigned int lock_pos;
+	//multi AF
+	//unsigned int multi_pkstat[MULTI_STATIC_TOTAL];
+	//unsigned int multi_pkpos[MULTI_STATIC_TOTAL];	
+
+	unsigned int min_stat_diff;
+	unsigned int min_stat_val;
+
+	unsigned int fine_range;
+	unsigned int luma_slop;
+	unsigned int scan_algorithm;
+	
+	unsigned int pos_far;
+	unsigned int pos_near;
+	unsigned int far_idx;
+	unsigned int near_idx;	
+	int scan_tbl_full_slop[AFAUTO_SCAN_STOP_NMAX];
+	int far_slop;
+	int near_slop;
+	unsigned int scan_tbl_slop_type;
+	unsigned int far_falling_cnt;
+	unsigned int near_falling_cnt;
+	int lk_loacl_scrtbl[AFAUTO_SCAN_STOP_NMAX];
+	unsigned int lk_local_idx;
+	unsigned int focus_inf;
+	unsigned int focus_macro;
+	unsigned int peak_inverse;
+	unsigned int peak_quad;
+} afscan_status_t;
+
+typedef struct _af_control_status_s {
+	ctrl_state_t				state;
+	unsigned int				frmid;
+	unsigned int				scene_reg;
+	unsigned int				scene_result;
+	unsigned int				scene_event;	
+	unsigned int				env_ena;
+	unsigned int				env_reconv_cnt;
+	unsigned int 				env_reconv_limit;
+	unsigned int				motor_excitation;
+	unsigned int				idsp_enable;
+	unsigned int 				idsp_resume_thd;
+	unsigned int 				idsp_reconv_thd;
+	unsigned int 				idsp_reconv_limit;
+	unsigned int 				idsp_reconv_cnt;
+	unsigned int				stat_nsy_enable;
+	unsigned int				idsp_frmbuff_clr_cnt;
+	unsigned int				idsp_frmbuff_clr_limit;
+	unsigned int				idsp_reset_frmid;
+	unsigned int				debug_cb;
+	unsigned int				env_avgy_histroy[AF_CHECK_SCENE_HISTORY];
+} afctrl_status_t;
+
+typedef struct af_scan_env_info_s{
+	unsigned int fps;
+	unsigned int ae_state;
+	unsigned int exp_boundary;
+	unsigned int y_avg;
+	unsigned int y_tgt;	
+	unsigned int curr_gain;
+	unsigned int exp_time;
+	unsigned int y_stdev;
+	int curr_bv;
+	int next_bv;
+	int diff_bv;	
+} scan_env_info_t;
+
+typedef struct af_scan_info_s{
+	unsigned int lowlight_af;
+	unsigned int dark_af;
+	unsigned int lowcontrast_af;
+	unsigned int curr_fpos;
+	scan_env_info_t env;
+	scan_env_info_t report;
+	unsigned int luma_slop;
+	unsigned int times_result;
+	unsigned int position_result[AF_RESULT_DATA_SIZE];
+	unsigned int frmid_result[AF_RESULT_DATA_SIZE];	
+	unsigned int coast_result[AF_RESULT_DATA_SIZE];
+	unsigned int ma_count;
+}afscan_info_t;
+
+/* ========================== Structure ============================ */
+typedef struct afstat_frame_buffer_s{
+	//unsigned int curr_frm_edge[FOCUS_STAT_WIN_TOTAL];
+	//unsigned int curr_frm_y[FOCUS_STAT_WIN_TOTAL];
+	//unsigned int last_frm_edge[FOCUS_STAT_WIN_TOTAL];
+	//unsigned int last_frm_y[FOCUS_STAT_WIN_TOTAL];
+	//unsigned int focus_block_idx;
+	//unsigned int peak_block_edge;	
+	//unsigned int peak_block_y;
+	//int peak_block_edge_rela;	
+	//int peak_block_y_rela;
+	//int peak_block_around_rela[FOCUS_STAT_AROUND_BLOCK_DATA];
+	unsigned int stat_weight;
+	unsigned int stat_sum;
+	unsigned int luma_avg;
+	//unsigned int multi_grid_sum[MULTI_STATIC_TOTAL];	
+	//unsigned int multi_edge_tbl[AFAUTO_SCAN_STOP_NMAX][MULTI_STATIC_TOTAL];	/*debug info of defocus function*/
+} afstat_frmbuf_t;
+
+typedef struct defocus_param_s{
+	unsigned int scan_from;
+	unsigned int scan_to;
+	unsigned int per_steps;
+}defocus_param_t;
+
+typedef struct afdbg_ctrl_s{
+	unsigned int alg_msg;
+	unsigned int dump_info;
+	defocus_param_t defocus;
+}afdbg_ctrl_t;
+
+typedef struct _af_process_s
+{
+	afctrl_status_t ctrl_status;
+	afscan_status_t scan_status;	
+	afscan_info_t scan_info;
+	afstat_frmbuf_t stat_data;
+	afdbg_ctrl_t dbg_ctrl;
+	aftuning_param_t adapt_af_param;	//adapt AF parameter
+}_af_process_t;
+
 #pragma pack(pop)
 
 typedef struct _CAF_Tuning_Para
@@ -515,14 +847,7 @@ typedef struct _CAF_Data
     
 }CAF_Data;
 
-typedef struct _AE_Report
-{
-	uint8   bAEisConverge;//flag: check AE is converged or not
-    int16   AE_BV;        //brightness value
-    uint16  AE_EXP;       //exposure time (ms)
-    uint16  AE_Gain;      //X128: gain1x = 128
-    uint32  AE_Pixel_Sum; //AE pixel sum which needs to match AF blcok 
-} AE_Report;
+
 
 typedef struct _AF_OTP_Data
 {
@@ -532,11 +857,17 @@ typedef struct _AF_OTP_Data
     
 } AF_OTP_Data;
 
+typedef struct _af_stat_data_s
+{
+	unsigned int roi_num;
+	unsigned int stat_num;
+	uint64 *p_stat;
+}_af_stat_data_t;
 
 typedef struct _AF_Ctrl_Ops
 {
 	ERRCODE (*statistics_wait_cal_done)(void *cookie);
-	ERRCODE (*statistics_get_data)(uint64 fv[T_TOTAL_FILTER_TYPE], void *cookie);
+	ERRCODE (*statistics_get_data)(uint64 fv[T_TOTAL_FILTER_TYPE],_af_stat_data_t *p_stat_data,void *cookie);
 	ERRCODE (*lens_get_pos)(uint16 *pos, void *cookie);
 	ERRCODE (*lens_move_to)(uint16 pos, void *cookie);
 	ERRCODE (*lens_wait_stop)(void *cookie);
@@ -554,9 +885,6 @@ typedef struct _AF_Ctrl_Ops
     ERRCODE (*af_log)(const char* format, ...);
     ERRCODE (*af_start_notify)(eAF_MODE  AF_mode, void *cookie);
     ERRCODE (*af_end_notify)(eAF_MODE  AF_mode, void *cookie);
-    
-
-
 	void *cookie;
 } AF_Ctrl_Ops;
 
@@ -592,8 +920,9 @@ typedef struct _AF_Data
     uint32 vcm_register;
     int8 AF_Version[10];
     AF_Tuning AF_Tuning_Data;
-    AF_Ctrl_Ops AF_Ops;
+	_af_process_t af_proc_data;
 	unsigned int dump_log;
+    AF_Ctrl_Ops AF_Ops;
 }AF_Data;
 
 

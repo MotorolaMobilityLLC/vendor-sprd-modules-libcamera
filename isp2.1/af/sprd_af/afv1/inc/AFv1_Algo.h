@@ -62,6 +62,7 @@ ERRCODE AF_Cal_FV_Confidence(AF_Data* pAF_Data,AF_FV_DATA* pAF_FV_DATA, uint8 Fr
 ERRCODE AF_RvereseArray16(uint16* arr, uint8 start, uint8 end);
 ERRCODE AF_RvereseArray32(uint32* arr, uint8 start, uint8 end);
 ERRCODE AF_RvereseArray64(uint64* arr, uint8 start, uint8 end);
+ERRCODE AF_RvereseAE_Rpt(AE_Report* arr, uint8 start, uint8 end);
 ERRCODE AF_AnalyzeFV(AF_Data* pAF_Data,AF_FV* pFV, uint16* SearchTable, uint8 FrameNum, uint8 MaxTableNum, uint8 DIR);
 ERRCODE AF_Check_FV_Confidence(AF_Data* pAF_Data,AF_FV* pFV, uint8 FrameNum, uint8* SAF_Result, AF_TH* pAF_TH, uint16* pPeak_POS, uint8 Search_Process);
 

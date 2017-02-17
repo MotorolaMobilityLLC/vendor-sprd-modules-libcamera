@@ -60,6 +60,7 @@ typedef __int64               int64_t;
 typedef unsigned __int64      uint64_t;
 #else
 #include <sys/types.h>
+#include <sys/time.h>
 #endif
 
 typedef int8_t     int8;

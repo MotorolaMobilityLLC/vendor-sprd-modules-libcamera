@@ -37,6 +37,9 @@ extern "C" {
 /**---------------------------------------------------------------------------*
 **				Micro Define					*
 **----------------------------------------------------------------------------*/
+#define MULTI_WIN	1
+#define ROI_RATIO	60
+#define FOCUS_STAT_DATA_NUM	2
 
 	char libafv1_path[][20] = {
 		"libspafv1.so",
@@ -887,15 +890,15 @@ extern "C" {
 
 				if (filter_mask & ENHANCED_BIT) {
 					num++;
-
-					for (i = 0; i < 5; i++) {
+					/*
+					for (i = 0; i < roi_num; i++) {
 						AF_LOGE("fv0[%d]:%ld,", i, af->af_fv_val.af_fv0[i]);
 					}
 
-					for (i = 0; i < 5; i++) {
-						AF_LOGE("fv1[%d]:%ld,", i, af->af_fv_val.af_fv0[i]);
+					for (i = 0; i < roi_num; i++) {
+						AF_LOGE("fv1[%d]:%ld,", i, af->af_fv_val.af_fv1[i]);
 					}
-
+					*/
 					for (i = 0; i < roi_num; ++i) {
 						*p++ = af->af_fv_val.af_fv0[i];
 					}
@@ -1145,7 +1148,16 @@ static void do_notify(af_ctrl_t *af, enum notify_event evt, const notify_result_
 
 	static int split_roi(af_ctrl_t * af) {
 		roi_info_t *r = &af->roi;
-		win_coord_t w;
+		win_coord_t win_info;
+
+#if MULTI_WIN
+	unsigned int i,j;
+	isp_info_t *hw = &af->isp_info;
+    uint32_t w = hw->width*ROI_RATIO/100;
+    uint32_t h = hw->height*ROI_RATIO/100;
+	unsigned int x_offset = (hw->width*(100-ROI_RATIO)/100) >> 1;
+	unsigned int y_offset = (hw->height*(100-ROI_RATIO)/100) >> 1;
+#endif
 
 		if (1 != r->num)
 			return 0;
@@ -1155,10 +1167,42 @@ static void do_notify(af_ctrl_t *af, enum notify_event evt, const notify_result_
 */
 		switch (af->state) {
 		case STATE_FAF:
-			w = r->win[0];
+			win_info = r->win[0];
 			r->num = split_win(&w, 3, 3, r->win);
 			break;
 		default:
+	#if MULTI_WIN
+		/*	0	1	2
+			3	4	5
+			6	7	8	*/
+		memcpy(&(r->win[4]),&(r->win[0]),sizeof(win_coord_t));
+		w = w/3;
+		h = h/3;
+		r->num = 9;
+		for (i=0 ; i < (r->num/3) ; i++){
+			for(j = 0; j < (r->num/3) ; j++){
+				r->win[i*3+j].start_x = (x_offset + (j*w))&0xfffffffe;
+				r->win[i*3+j].end_x = (x_offset + ((j+1)*w))&0xfffffffe;
+				r->win[i*3+j].start_y = (y_offset + (i*h))&0xfffffffe;	
+				r->win[i*3+j].end_y = (y_offset + ((i+1)*h))&0xfffffffe;			
+			}
+		}
+
+		if(af->isp_info.win_num > r->num){	//sum 
+			r->win[r->num].start_x = x_offset&0xfffffffe;
+			r->win[r->num].end_x = (x_offset + (hw->width*ROI_RATIO/100))&0xfffffffe;
+			r->win[r->num].start_y = y_offset&0xfffffffe;;	
+			r->win[r->num].end_y = (y_offset + (hw->height*ROI_RATIO/100))&0xfffffffe;	
+			AF_LOGD("Roi[%d]sx %d sy %d ex %d ey %d \n "
+				,r->num
+				,r->win[r->num].start_x
+				,r->win[r->num].start_y
+				,r->win[r->num].end_x
+				,r->win[r->num].end_y);			
+			r->num ++ ;
+		}
+
+	#else
 			r->win[1].start_x = r->win[0].start_x + 1.0 * (r->win[0].end_x - r->win[0].start_x) / 5;
 			r->win[1].end_x = r->win[0].end_x - 1.0 * (r->win[0].end_x - r->win[0].start_x) / 5;
 			r->win[1].start_y = r->win[0].start_y + 1.0 * (r->win[0].end_y - r->win[0].start_y) / 5;
@@ -1180,6 +1224,7 @@ static void do_notify(af_ctrl_t *af, enum notify_event evt, const notify_result_
 			r->win[2].end_y = r->win[2].end_y & 0xfffffffe;
 
 			r->num = 3;
+	#endif	
 			break;
 		}
 		return r->num;
@@ -1189,8 +1234,13 @@ static void do_notify(af_ctrl_t *af, enum notify_event evt, const notify_result_
 		isp_info_t *hw = &af->isp_info;
 		roi_info_t *roi = &af->roi;
 
+#if MULTI_WIN
+    uint32_t w = hw->width*ROI_RATIO/100;
+    uint32_t h = hw->height*ROI_RATIO/100;
+#else
 		uint32_t w = hw->width;
 		uint32_t h = hw->height;
+#endif
 
 		switch (af->state) {
 		case STATE_FAF:
@@ -1259,9 +1309,7 @@ static void do_notify(af_ctrl_t *af, enum notify_event evt, const notify_result_
 						roi->win[i].end_y);
 				}
 			}
-#if (SPLIT_TEST)
 			split_roi(af);
-#endif
 		} else {
 			if (!win || (0 == win->win_num)) {
 				uint32_t i = 0;
@@ -1726,19 +1774,12 @@ v=v>(max)?(max):v; hist[v]++;}
 		memset(fv, 0, sizeof(fv));
 		memset(prm, 0, sizeof(struct aft_proc_calc_param));
 
-		//afm_get_fv(af->isp_ctx, fv, SPSMD_BIT, 1);
 		if (1 != af->af_tuning_data.flag || 1 != af->win_config->win_strategic) {	//default window config
-#if !(SPLIT_TEST)
-			afm_get_fv(af->isp_ctx, fv, SPSMD_BIT, 1, AF_RING_BUFFER);
-#else
-			{
 /*
 			int i;
 			uint64_t sum;
 */
-				AF_LOGE("if");
-//                              afm_get_fv(af, fv, SPSMD_BIT, 3, AF_RING_BUFFER);
-				afm_get_fv(af, fv, ENHANCED_BIT, 3, AF_RING_BUFFER);
+				afm_get_fv(af, fv, ENHANCED_BIT, af->roi.num, AF_RING_BUFFER);
 /*
 			sum = 0;
 			for (i=0; i<9; ++i)
@@ -1748,14 +1789,9 @@ v=v>(max)?(max):v; hist[v]++;}
 			fv[7], fv[8], sum);
 			fv[0] = sum;
 */
-			}
-#endif
+			AF_LOGD("af->roi.num %d spsmd %lld",af->roi.num, fv[af->roi.num - 1]);
 		} else {
-			AF_LOGE("else %d,", af->roi.num);
-//                      afm_get_fv(af, fv, SPSMD_BIT, af->roi.num, AF_RING_BUFFER);
 			afm_get_fv(af, fv, ENHANCED_BIT, af->roi.num, AF_RING_BUFFER);
-
-			AF_LOGD("spsmd %lld", fv[af->roi.num - 1]);
 			fv[0] = fv[af->roi.num - 1];	// the fv in last window is for caf trigger
 		}
 
@@ -2309,25 +2345,18 @@ v=v>(max)?(max):v; hist[v]++;}
 		return 0;
 	}
 
-	static ERRCODE if_statistics_get_data(uint64 fv[T_TOTAL_FILTER_TYPE], void *cookie) {
+	static ERRCODE if_statistics_get_data(uint64 fv[T_TOTAL_FILTER_TYPE],_af_stat_data_t *p_stat_data,void *cookie) {
 		af_ctrl_t *af = cookie;
 		//isp_ctrl_context *isp = af->isp_ctx;
 		uint64_t spsmd[MAX_ROI_NUM];
-
+		unsigned int i;
 		memset(fv, 0, sizeof(fv[0]) * T_TOTAL_FILTER_TYPE);
 
 		if (1 != af->af_tuning_data.flag || 1 != af->win_config->win_strategic) {	//default window config
-#if !(SPLIT_TEST)
-			afm_get_fv(af, spsmd, SPSMD_BIT, 1, AF_RING_BUFFER);
-			fv[T_SPSMD] = spsmd[0];	// TODO only one window now
-			// AF_LOGD("spsmd g = %lld", fv[T_SPSMD]);
-#else
-			{
 				//int i;
 				uint64_t sum;
 
-//                              afm_get_fv(af, spsmd, SPSMD_BIT, 3, AF_RING_BUFFER);
-				afm_get_fv(af, spsmd, ENHANCED_BIT, 3, AF_RING_BUFFER);
+				afm_get_fv(af, spsmd, ENHANCED_BIT, af->roi.num, AF_RING_BUFFER);
 
 				//sum = 0.2*spsmd[0]+spsmd[1]+3*spsmd[2];
 				switch (af->state) {
@@ -2338,33 +2367,39 @@ v=v>(max)?(max):v; hist[v]++;}
 					fv[T_SPSMD] = sum;
 					break;
 				default:
+					#if MULTI_WIN
+					sum = spsmd[4];
+					#else
 					sum = spsmd[1] + 8 * spsmd[2];
+					#endif
 					fv[T_SPSMD] = sum;
 					break;
 				}
-/*
-			sum = 0;
-			for (i=0; i<4; ++i)
-				sum += spsmd[i];
 
-			sum += (spsmd[4]<<3);
+				if(p_stat_data){
+					p_stat_data->roi_num = af->roi.num;
+					p_stat_data->stat_num = FOCUS_STAT_DATA_NUM;
+					/*
+					AF_LOGE("Copy data struct %lld / %lld / %lld %lld / %lld / %lld "
+						,af->af_fv_val.af_fv0[0],af->af_fv_val.af_fv0[1],af->af_fv_val.af_fv0[2]
+						,af->af_fv_val.af_fv1[0],af->af_fv_val.af_fv1[1],af->af_fv_val.af_fv1[2]);
 
-			for (i=5; i<9; ++i)
-				sum += spsmd[i];
-			//        sum = sum>>4;
-			fv[T_SPSMD] = sum;
-			AF_LOGD("spsmd %lld, %lld, %lld, %lld, %lld, %lld, %lld, %lld, %lld: %lld",
-			spsmd[0], spsmd[1], spsmd[2], spsmd[3], spsmd[4], spsmd[5], spsmd[6],
-			spsmd[7], spsmd[8], sum);
-*/
-			}
-#endif
+					for (i = 0; i < p_stat_data->roi_num; i++) {
+						AF_LOGE("fv0[%d]:%ld,", i, af->af_fv_val.af_fv0[i]);
+					}
+
+					for (i = 0; i < p_stat_data->roi_num; i++) {
+						AF_LOGE("fv1[%d]:%ld,", i, af->af_fv_val.af_fv1[i]);
+					}
+					*/
+					p_stat_data->p_stat = &(af->af_fv_val.af_fv0[0]);
+				}
+			AF_LOGD("[%d][%d]spsmd sum %lld",af->state,af->roi.num, sum);
 			//_LOGD("fv[T_SPSMD] %lld", fv[T_SPSMD]);
 		} else {
 			uint32_t i;
 			uint64_t sum;
 
-//                      afm_get_fv(af, spsmd, SPSMD_BIT, af->roi.num, AF_RING_BUFFER);
 			afm_get_fv(af, spsmd, ENHANCED_BIT, af->roi.num, AF_RING_BUFFER);
 
 			sum = 0;
@@ -2940,7 +2975,7 @@ v=v>(max)?(max):v; hist[v]++;}
 
 		if_lock_lsc(LOCK, af);
 		if_lock_ae(LOCK, af);
-		if_statistics_get_data(af->fv_combine, af);
+		if_statistics_get_data(af->fv_combine,NULL, af);
 		for (i = 0; i < 9; i++) {
 			ISP_LOGD
 			    ("pos %d AE_MEAN_WIN_%d R %d G %d B %d r_avg_all %d g_avg_all %d b_avg_all %d FV %lld\n",
@@ -3491,7 +3526,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		memset(af, 0, sizeof(*af));
 		//af->isp_ctx = isp_cxt;
 		af->isp_info.width = init_param->src.w;	//init_param->plat_info.isp_w;   //gwb
-		af->isp_info.height = init_param->src.w;	//init_param->plat_info.isp_h;
+		af->isp_info.height = init_param->src.h;	//init_param->plat_info.isp_h;
 		af->isp_info.win_num = afm_get_win_num(init_param);
 		af->caller = init_param->caller;
 		af->go_position = init_param->go_position;
@@ -3561,7 +3596,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		memcpy(af->af_version + strlen("AF-"), af->fv.AF_Version, sizeof(af->fv.AF_Version));
 		memcpy(af->af_version + strlen("AF-") + strlen(af->fv.AF_Version), AF_SYS_VERSION,
 		       strlen(AF_SYS_VERSION));
-
+		AF_LOGD("AFVER %s ",af->af_version);
 		property_set("af_mode", "none");
 		{
 			FILE *fp = NULL;
