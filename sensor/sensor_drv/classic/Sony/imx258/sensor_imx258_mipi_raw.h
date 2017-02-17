@@ -723,6 +723,8 @@ SENSOR_INFO_T g_imx258_mipi_raw_info =
 
 	.preview_skip_num        = 1,
 	.capture_skip_num        = 1,
+	.flash_capture_skip_num  = 6,
+	.mipi_cap_skip_num       = 0,
 	.preview_deci_num        = 0,
 	.video_preview_deci_num  = 0,
 

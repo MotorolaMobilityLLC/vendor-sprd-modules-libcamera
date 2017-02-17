@@ -1693,7 +1693,12 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture)
 	struct common_isp_cmd_param    isp_param;
 	cmr_uint                        video_snapshot_type;
 	cmr_uint                        has_preflashed = 0;
+	cmr_u32                         flash_capture_skip_num = 0;
+	struct sensor_exp_info          exp_info_ptr;
+
 	cmr_bzero(&setting_param, sizeof(struct setting_cmd_parameter));
+	cmr_bzero(&exp_info_ptr, sizeof(struct sensor_exp_info));
+
 	/*close flash*/
 	CMR_LOGI("camera_focus_post_proc %ld", will_capture);
 
@@ -1706,6 +1711,13 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture)
 		if (video_snapshot_type == VIDEO_SNAPSHOT_VIDEO)
 			need_close_flash = 0;
 	}
+
+	ret = camera_get_sensor_info(oem_handle, cxt->camera_id, &exp_info_ptr);
+	if (ret) {
+		CMR_LOGE("camera_get_sensor_info failed");
+	}
+	flash_capture_skip_num = exp_info_ptr.flash_capture_skip_num;
+	CMR_LOGI("flash_capture_skip_num = %d",flash_capture_skip_num);
 
 #ifndef CONFIG_ZSL_FLASH_CAPTURE
 	ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_SPRD_ZSL_ENABLED, &setting_param);
@@ -1745,7 +1757,7 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture)
 			setting_param.ctrl_flash.will_capture = will_capture;
 			prev_set_preview_skip_frame_num(cxt->prev_cxt.preview_handle,
 							cxt->camera_id,
-							CAMERA_FRAME_SKIP_NUM_AFTER_FLASH,
+							flash_capture_skip_num,
 							has_preflashed);
 			ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_CTRL_FLASH, &setting_param);
 			if (ret) {
@@ -1772,7 +1784,7 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle, cmr_int will_capture)
 			//setting_param.ctrl_flash.will_capture = 1;
 			prev_set_preview_skip_frame_num(cxt->prev_cxt.preview_handle,
 							cxt->camera_id,
-							CAMERA_FRAME_SKIP_NUM_AFTER_FLASH,
+							flash_capture_skip_num,
 							has_preflashed);
 			ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_CTRL_FLASH, &setting_param);
 			if (ret) {

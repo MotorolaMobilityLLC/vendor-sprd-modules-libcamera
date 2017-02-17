@@ -564,6 +564,10 @@ SENSOR_INFO_T g_ov8856s_mipi_raw_info = {
 	1,
 	/* skip frame num before capture */
 	1,
+	/* skip frame num for flash capture */
+	6,
+	/* skip frame num on mipi cap */
+	0,
 	/* deci frame num during preview */
 	0,
 	/* deci frame num during video preview */

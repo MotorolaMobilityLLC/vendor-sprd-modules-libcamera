@@ -757,6 +757,8 @@ SENSOR_INFO_T g_s5k3p8sm_mipi_raw_info = {
 	SENSOR_AVDD_1000MV,	// dvdd
 	3,			// skip frame num before preview
 	3,			// skip frame num before capture
+	6,			// skip frame num for flash capture
+	0,			// skip frame num on mipi cap
 	0,			// deci frame num during preview
 	0,			// deci frame num during video preview
 

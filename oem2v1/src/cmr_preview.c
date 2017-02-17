@@ -3364,18 +3364,17 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_res
 
 	if (preview_enable && snapshot_enable) {
 		channel_bits = (1 << prev_cxt->prev_channel_id) | (1 << prev_cxt->cap_channel_id);
-		skip_num     = prev_cxt->prev_skip_num;
 	} else if (preview_enable) {
 		channel_bits = 1 << prev_cxt->prev_channel_id;
-		skip_num     = prev_cxt->prev_skip_num;
 	} else if (snapshot_enable) {
 		channel_bits = 1 << prev_cxt->cap_channel_id;
-		skip_num     = prev_cxt->cap_skip_num;
 	} else {
 		CMR_LOGE("invalid param");
 		ret = CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}
+
+	skip_num = prev_cxt->sensor_info.mipi_cap_skip_num;
 
 	CMR_LOGI("channel_bits %d, skip_num %ld", channel_bits, skip_num);
 
@@ -3441,11 +3440,6 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id, cmr_u32 is_res
 			ret = CMR_CAMERA_INVALID_PARAM;
 			goto exit;
 		}
-	}
-
-	/*start channel*/
-	if (FRAME_HDR_PROC == prev_cxt->prev_param.frame_ctrl) {
-		skip_num = 0;
 	}
 
 	ret = handle->ops.channel_start(handle->oem_handle, channel_bits, skip_num);
@@ -6474,16 +6468,11 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 	prev_cxt->prev_frm_cnt   = 0;
 	prev_cxt->prev_preflash_skip_en = 0;
 	prev_cxt->prev_skip_num  = sensor_info->preview_skip_num;
-	prev_cxt->skip_mode      = IMG_SKIP_HW;
-
+	prev_cxt->skip_mode      = IMG_SKIP_SW_KER;
 
 	chn_param.is_lightly = 0;
 	chn_param.frm_num    = -1;
-	if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
-		chn_param.skip_num = 0;
-	} else {
-		chn_param.skip_num   = prev_cxt->prev_skip_num;
-	}
+	chn_param.skip_num = sensor_info->mipi_cap_skip_num;
 
 	/* in slowmotion, we want do decimation in preview channel,
 	bug video buffer and preview buffer is in one request, so we cant
@@ -6498,7 +6487,6 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 	chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
 
 	if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
-		prev_cxt->skip_mode = IMG_SKIP_SW_KER;
 		chn_param.cap_inf_cfg.cfg.need_isp = 1;
 	}
 
@@ -6728,16 +6716,12 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle, cmr_u32 camera_i
 
 //	cmr_bzero(prev_cxt->prev_rot_frm_is_lock, PREV_ROT_FRM_CNT * sizeof(cmr_uint));
 	prev_cxt->prev_rot_index = 0;
-	prev_cxt->skip_mode      = IMG_SKIP_HW;
+	prev_cxt->skip_mode      = IMG_SKIP_SW_KER;
 
 
 	chn_param.is_lightly = 1; /*config channel lightly*/
 	chn_param.frm_num    = -1;
-	if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
-		chn_param.skip_num = 0;
-	} else {
-		chn_param.skip_num   = prev_cxt->prev_skip_num;
-	}
+	chn_param.skip_num = sensor_info->mipi_cap_skip_num;
 
 	chn_param.cap_inf_cfg.chn_deci_factor  = 0;
 	chn_param.cap_inf_cfg.frm_num	       = -1;
@@ -6748,7 +6732,6 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle, cmr_u32 camera_i
 	chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
 
 	if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
-		prev_cxt->skip_mode = IMG_SKIP_SW_KER;
 		chn_param.cap_inf_cfg.cfg.need_isp = 1;
 	}
 
@@ -6859,16 +6842,11 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_
 	prev_cxt->video_rot_index = 0;
 	prev_cxt->video_frm_cnt   = 0;
 	prev_cxt->prev_skip_num  = sensor_info->preview_skip_num;
-	prev_cxt->skip_mode      = IMG_SKIP_HW;
-
+	prev_cxt->skip_mode      = IMG_SKIP_SW_KER;
 
 	chn_param.is_lightly = 0;
 	chn_param.frm_num    = -1;
-	if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
-		chn_param.skip_num = 0;
-	} else {
-		chn_param.skip_num   = prev_cxt->prev_skip_num;
-	}
+	chn_param.skip_num = sensor_info->mipi_cap_skip_num;
 
 	chn_param.cap_inf_cfg.chn_deci_factor  = 0;
 	chn_param.cap_inf_cfg.frm_num          = -1;
@@ -6881,8 +6859,6 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_
 	chn_param.cap_inf_cfg.cfg.slowmotion = prev_cxt->prev_param.video_slowmotion_eb;
 
 	if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
-		if(!prev_cxt->prev_param.video_slowmotion_eb)
-			prev_cxt->skip_mode = IMG_SKIP_SW_KER;
 		chn_param.cap_inf_cfg.cfg.need_isp = 1;
 	}
 
@@ -6982,7 +6958,7 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_
 	prev_cxt->video_channel_status = PREV_CHN_BUSY;
 	prev_cxt->video_data_endian = endian;
 
-	if (prev_cxt->skip_mode == IMG_SKIP_SW_KER) {
+	if (prev_cxt->skip_mode == IMG_SKIP_SW_KER && !prev_cxt->prev_param.video_slowmotion_eb) {
 		/*config skip buffer*/
 		for (i = 0; i < prev_cxt->prev_skip_num; i++) {
 			cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
@@ -7086,16 +7062,11 @@ cmr_int prev_set_video_param_lightly(struct prev_handle *handle, cmr_u32 camera_
 
 	cmr_bzero(prev_cxt->video_rot_frm_is_lock, PREV_ROT_FRM_CNT * sizeof(cmr_uint));
 	prev_cxt->prev_rot_index = 0;
-	prev_cxt->skip_mode      = IMG_SKIP_HW;
-
+	prev_cxt->skip_mode      = IMG_SKIP_SW_KER;
 
 	chn_param.is_lightly = 1; /*config channel lightly*/
 	chn_param.frm_num    = -1;
-	if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
-		chn_param.skip_num = 0;
-	} else {
-		chn_param.skip_num   = prev_cxt->prev_skip_num;
-	}
+	chn_param.skip_num = sensor_info->mipi_cap_skip_num;
 
 	chn_param.cap_inf_cfg.chn_deci_factor  = 0;
 	chn_param.cap_inf_cfg.frm_num	       = -1;
@@ -7106,7 +7077,6 @@ cmr_int prev_set_video_param_lightly(struct prev_handle *handle, cmr_u32 camera_
 	chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode= 1;
 
 	if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
-		prev_cxt->skip_mode = IMG_SKIP_SW_KER;
 		chn_param.cap_inf_cfg.cfg.need_isp = 1;
 	}
 
@@ -7215,11 +7185,7 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 	chn_param.sensor_mode  = prev_cxt->cap_mode;
 	prev_cxt->skip_mode    = IMG_SKIP_SW_KER;
 	prev_cxt->cap_skip_num = sensor_info->capture_skip_num;
-	if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
-		chn_param.skip_num = 0;
-	} else {
-		chn_param.skip_num   = prev_cxt->cap_skip_num;
-	}
+	chn_param.skip_num = sensor_info->mipi_cap_skip_num;
 
 	CMR_LOGI("preview_eb %d , snapshot_eb %d, frame_ctrl %d, frame_count %d, is_restart %d",
 		prev_cxt->prev_param.preview_eb,
@@ -7524,16 +7490,11 @@ cmr_int prev_set_zsl_param_lightly(struct prev_handle *handle, cmr_u32 camera_id
 
 	cmr_bzero(prev_cxt->cap_zsl_rot_frm_is_lock, PREV_ROT_FRM_CNT * sizeof(cmr_uint));
 	prev_cxt->prev_rot_index = 0;
-	prev_cxt->skip_mode      = IMG_SKIP_HW;
-
+	prev_cxt->skip_mode      = IMG_SKIP_SW_KER;
 
 	chn_param.is_lightly = 1; /*config channel lightly*/
 	chn_param.frm_num    = -1;
-	if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
-		chn_param.skip_num = 0;
-	} else {
-		chn_param.skip_num   = prev_cxt->cap_skip_num;
-	}
+	chn_param.skip_num = sensor_info->mipi_cap_skip_num;
 
 	chn_param.buffer.base_id = CMR_CAP1_ID_BASE;
 	chn_param.cap_inf_cfg.chn_deci_factor  = 0;
@@ -7545,7 +7506,6 @@ cmr_int prev_set_zsl_param_lightly(struct prev_handle *handle, cmr_u32 camera_id
 	chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
 
 	if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
-		prev_cxt->skip_mode = IMG_SKIP_SW_KER;
 		chn_param.cap_inf_cfg.cfg.need_isp = 1;
 	}
 
@@ -7603,7 +7563,6 @@ cmr_int prev_set_cap_param_raw(struct prev_handle *handle,
 		CMR_LOGE("ops get_sensor_autotest_mode null");
 		return CMR_CAMERA_INVALID_PARAM;
 	}
-	CMR_LOGD(" in");
 
 	cmr_bzero(&chn_param, sizeof(struct channel_start_param));
 	cmr_bzero(&video_param, sizeof(struct video_start_param));
@@ -7619,10 +7578,10 @@ cmr_int prev_set_cap_param_raw(struct prev_handle *handle,
 		CMR_LOGE("get mode err");
 	}
 	if (is_autotest) {
-			CMR_LOGE("0 sensor_mode->image_format =%d \n", sensor_mode_info->image_format);
-			CMR_LOGE("inorde to out yuv raw data ,so force set yuv to SENSOR_IMAGE_FORMAT_RAW \n");
-			sensor_mode_info->image_format=SENSOR_IMAGE_FORMAT_RAW;
-			CMR_LOGE("1 sensor_mode->image_format =%d \n", sensor_mode_info->image_format);
+		CMR_LOGE("0 sensor_mode->image_format =%d \n", sensor_mode_info->image_format);
+		CMR_LOGE("inorde to out yuv raw data ,so force set yuv to SENSOR_IMAGE_FORMAT_RAW \n");
+		sensor_mode_info->image_format=SENSOR_IMAGE_FORMAT_RAW;
+		CMR_LOGE("1 sensor_mode->image_format =%d \n", sensor_mode_info->image_format);
 	}
 
 
@@ -7630,10 +7589,10 @@ cmr_int prev_set_cap_param_raw(struct prev_handle *handle,
 		prev_cxt->cap_frm_cnt  = 0;
 	}
 
+	prev_cxt->cap_skip_num = sensor_info->capture_skip_num;
 	chn_param.is_lightly   = 0;
 	chn_param.sensor_mode  = prev_cxt->cap_mode;
-	chn_param.skip_num     = sensor_info->capture_skip_num;
-	prev_cxt->cap_skip_num = chn_param.skip_num;
+	chn_param.skip_num = sensor_info->mipi_cap_skip_num;
 
 	CMR_LOGI("preview_eb %d , snapshot_eb %d, frame_ctrl %d, frame_count %d, is_restart %d",
 		prev_cxt->prev_param.preview_eb,

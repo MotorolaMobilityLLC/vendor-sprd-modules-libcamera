@@ -689,6 +689,8 @@ struct sensor_exp_info {
 	cmr_u32                             step_count;
 	cmr_u32                             preview_skip_num;
 	cmr_u32                             capture_skip_num;
+	cmr_u32                             flash_capture_skip_num;
+	cmr_u32                             mipi_cap_skip_num;
 	cmr_u32                             preview_deci_num;
 	cmr_u32                             video_preview_deci_num;
 	cmr_u16                             threshold_eb;

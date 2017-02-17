@@ -382,6 +382,8 @@ cmr_int cmr_sns_copy_info(struct sensor_exp_info *out_sensor_info, SENSOR_EXP_IN
 	out_sensor_info->step_count = in_sensor_info->step_count;
 	out_sensor_info->preview_skip_num = in_sensor_info->preview_skip_num;
 	out_sensor_info->capture_skip_num = in_sensor_info->capture_skip_num;
+	out_sensor_info->flash_capture_skip_num = in_sensor_info->flash_capture_skip_num;
+	out_sensor_info->mipi_cap_skip_num = in_sensor_info->mipi_cap_skip_num;
 	out_sensor_info->video_preview_deci_num = in_sensor_info->video_preview_deci_num;
 	out_sensor_info->threshold_eb = in_sensor_info->threshold_eb;
 	out_sensor_info->threshold_mode = in_sensor_info->threshold_mode;

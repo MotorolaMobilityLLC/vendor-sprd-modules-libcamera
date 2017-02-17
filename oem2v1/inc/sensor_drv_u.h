@@ -707,6 +707,8 @@ typedef struct sensor_exp_info_tag {
 	SENSOR_EXTEND_INFO_T_PTR ext_info_ptr;
 	cmr_u32 preview_skip_num;
 	cmr_u32 capture_skip_num;
+	cmr_u32 flash_capture_skip_num;
+	cmr_u32 mipi_cap_skip_num;
 	cmr_u32 preview_deci_num;
 	cmr_u32 video_preview_deci_num;
 	cmr_u16 threshold_eb;
@@ -777,6 +779,8 @@ typedef struct sensor_info_tag {
 	cmr_u32 preview_skip_num;
 	cmr_u32 capture_skip_num;
 	cmr_u32 preview_deci_num;
+	cmr_u32 flash_capture_skip_num;
+	cmr_u32 mipi_cap_skip_num;
 	cmr_u32 video_preview_deci_num;
 	cmr_u16 threshold_eb;
 	cmr_u16 threshold_mode;

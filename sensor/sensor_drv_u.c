@@ -1324,6 +1324,8 @@ void Sensor_SetExportInfo(struct sensor_drv_context *sensor_cxt)
 
 	exp_info_ptr->preview_skip_num = sensor_info_ptr->preview_skip_num;
 	exp_info_ptr->capture_skip_num = sensor_info_ptr->capture_skip_num;
+	exp_info_ptr->flash_capture_skip_num = sensor_info_ptr->flash_capture_skip_num;
+	exp_info_ptr->mipi_cap_skip_num = sensor_info_ptr->mipi_cap_skip_num;
 	exp_info_ptr->preview_deci_num = sensor_info_ptr->preview_deci_num;
 	exp_info_ptr->change_setting_skip_num = sensor_info_ptr->change_setting_skip_num;
 	exp_info_ptr->video_preview_deci_num =
