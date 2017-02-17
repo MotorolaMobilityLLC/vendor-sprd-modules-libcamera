@@ -81,6 +81,8 @@ struct frame_buffer_t {
     cmr_uint virt_addr;
     cmr_uint length; //buffer's length is different from cap_image_size
 };
+static char af_tuning_path[] = "/data/misc/cameraserver/af_tuning_default.bin";
+static char sensor_para_path[] = "/data/misc/cameraserver/sensor.file";
 static struct frame_buffer_t fb_buf[SPRD_MAX_PREVIEW_BUF+1];
 static uint8_t *tmpbuf2,*tmpbuf3;//*tmpbuf1, *tmpbuf,
 static uint32_t post_preview_buf[PREVIEW_WIDTH*PREVIEW_HIGHT];
@@ -1232,6 +1234,12 @@ int eng_tst_camera_deinit()
     free((void *)mHalOem);
     mHalOem = NULL;
 
+	if (remove(af_tuning_path) != 0) {
+		ALOGE("Native MMI Test: %s,%d, failed: to delete af_tuning_path file \n", __func__, __LINE__);
+	}
+	if (remove(sensor_para_path) != 0) {
+		ALOGE("Native MMI Test: %s,%d, failed: to delete sensor_para_path file \n", __func__, __LINE__);
+	}
 //	free(tmpbuf);
 //	free(tmpbuf1);
 	free(tmpbuf2);
