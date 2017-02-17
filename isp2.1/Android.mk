@@ -88,9 +88,7 @@ LOCAL_SHARED_LIBRARIES += libcamsensor
 LOCAL_SHARED_LIBRARIES += libspafv1 libcutils
 LOCAL_SHARED_LIBRARIES += libspcaftrigger
 
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ANTI_FLICKER)),true)
 LOCAL_SHARED_LIBRARIES += libdeflicker
-endif
 
 ifeq ($(strip $(TARGET_BOARD_USE_ALC_AE_AWB)),true)
 LOCAL_CFLAGS += -DCONFIG_USE_ALC_AE

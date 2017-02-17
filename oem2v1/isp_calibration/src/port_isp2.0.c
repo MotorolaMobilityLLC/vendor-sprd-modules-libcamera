@@ -203,22 +203,6 @@ void AF_Control_CAF(		AFDATA *afCtl, 	AFDATA_RO *afv, AFDATA_FV *fv,	BYTE bEnb)
 #endif
 
 
-#ifndef CONFIG_CAMERA_AFL_AUTO_DETECTION
-int antiflcker_sw_init()
-{
-	return 0;
-}
-
-int antiflcker_sw_deinit()
-{
-	return 0;
-}
-
-int antiflcker_sw_process(int input_img_width, int input_img_height, int *debug_sat_img_H_scaling, int exposure_time, int reg_flicker_thrd_frame, int reg_flicker_thrd_frame_still, int reg_flicker_thrd_video_still)
-{
-	return 0;
-}
-#endif
 
 
 size_t strlcpy(register char * dst,

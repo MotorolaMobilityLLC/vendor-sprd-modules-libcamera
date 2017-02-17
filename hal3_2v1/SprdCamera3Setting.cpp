@@ -2050,11 +2050,8 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId)
 
 	s_setting[cameraId].sprddefInfo.availabe_smile_enable = 1;
 
-	#ifdef CONFIG_CAMERA_AFL_AUTO_DETECTION
 	s_setting[cameraId].sprddefInfo.availabe_antiband_auto_supported = 1;
-	#else
-	s_setting[cameraId].sprddefInfo.availabe_antiband_auto_supported = 0;
-	#endif
+
 	#ifdef CONFIG_CAMERA_RT_REFOCUS
 	s_setting[cameraId].sprddefInfo.is_support_refocus = 1;
 	#else
@@ -4334,11 +4331,11 @@ int SprdCamera3Setting::androidAntibandingModeToDrvAntibandingMode(uint8_t andro
 	case ANDROID_CONTROL_AE_ANTIBANDING_MODE_60HZ:
 		*convertAntibandingMode = 1;
 		break;
-#ifdef CONFIG_CAMERA_AFL_AUTO_DETECTION
+
 	case ANDROID_CONTROL_AE_ANTIBANDING_MODE_AUTO:
-		*convertAntibandingMode = 2;
+		*convertAntibandingMode = 3;
 		break;
-#endif
+
 	default:
 		*convertAntibandingMode = 0;
 		break;

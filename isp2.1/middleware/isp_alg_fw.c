@@ -415,7 +415,6 @@ static cmr_int ispalg_aem_stat_data_parser(cmr_handle isp_alg_handle, void *data
 		ae_stat_ptr->g_info[i] = ((val1 & 0x7ff) << 11) | ((val0 >> 21) & 0x3ff);
 		ae_stat_ptr->b_info[i] = val0 & 0x1fffff;
     }
-
 	memset((void*)&statis_buf, 0, sizeof(statis_buf));
 	statis_buf.buf_size = statis_info->buf_size;
 	statis_buf.phy_addr = statis_info->phy_addr;
@@ -850,11 +849,11 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	struct afl_proc_in afl_input;
 	struct afl_ctrl_proc_out afl_output;
 	struct isp_statis_info *statis_info = NULL;
-	uint64_t k_addr = 0;
-	uint64_t u_addr = 0;
+	uint32_t k_addr = 0;
+	uint32_t u_addr = 0;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
-	return 0;
+	//return 0;
 #if 0
 	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_AEM_STATISTIC, ISP_BLK_AE_NEW, NULL, 0);
 	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void*)&input, (void*)&output);
@@ -864,10 +863,13 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	}
 	ae_stat_ptr = output.param_data->data_ptr;
 #endif
+	ae_stat_ptr = cxt->aem_stats;
 	statis_info = (struct isp_statis_info *)data;
 	k_addr = statis_info->phy_addr;
 	u_addr = statis_info->vir_addr;
-	memcpy((void *)&ae_stat_ptr, (void *)u_addr, sizeof(struct isp_awb_statistic_info));
+	//memcpy((void *)&ae_stat_ptr, (void *)u_addr, sizeof(struct isp_awb_statistic_info));
+
+	ae_stat_ptr  =  cxt->aem_stats;
 
 	bypass = 1;
 	isp_dev_anti_flicker_bypass(cxt->dev_access_handle, bypass);
@@ -889,6 +891,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	afl_input.ae_exp_flag = ae_exp_flag;
 	afl_input.cur_exp_flag = cur_exp_flag;
 	afl_input.cur_flicker = cur_flicker;
+	afl_input.vir_addr = u_addr;
 
 	rtn = afl_ctrl_process(cxt->afl_cxt.handle, &afl_input, &afl_output);
 	//change ae table

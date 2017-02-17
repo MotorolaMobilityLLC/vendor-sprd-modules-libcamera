@@ -62,7 +62,7 @@ isp_s32 isp_u_anti_flicker_bypass(isp_handle handle, void *block_info)
 	param.property_param = block_info;
 
 	ISP_LOGE("$$LHC:bypass %d", *(uint32_t *)block_info);
-	//ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
 
 	return ret;
 }

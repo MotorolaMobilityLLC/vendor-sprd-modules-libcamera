@@ -33,6 +33,7 @@ struct afl_proc_in {
 	uint32_t cur_flicker;
 	uint32_t cur_exp_flag;
 	int32_t ae_exp_flag;
+	uint32_t vir_addr;
 	struct isp_awb_statistic_info *ae_stat_ptr;
 };
 
