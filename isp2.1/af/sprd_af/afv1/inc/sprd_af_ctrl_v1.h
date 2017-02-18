@@ -273,12 +273,12 @@ typedef struct _ae_cali {
 } ae_cali_t;
 
 typedef struct _vcm_ops {
-	void (*set_pos) (void* handle, uint16_t pos);
-	void (*get_otp) (void* handle, uint16_t * inf, uint16_t * macro);
-	void (*set_motor_bestmode) (void* handle);
-	void (*set_test_vcm_mode) (void* handle, char *vcm_mode);
-	void (*get_test_vcm_mode) (void* handle);
-	void (*get_motor_pos) (void* handle, uint16_t * pos);
+	uint32_t (*set_pos) (void* handle, uint16_t pos);
+	uint32_t (*get_otp) (void* handle, uint16_t * inf, uint16_t * macro);
+	uint32_t (*set_motor_bestmode) (void* handle);
+	uint32_t (*set_test_vcm_mode) (void* handle, char *vcm_mode);
+	uint32_t (*get_test_vcm_mode) (void* handle);
+	uint32_t (*get_motor_pos) (void* handle, uint16_t * pos);
 } vcm_ops_t;
 
 typedef struct _prime_face_base_info {
@@ -386,7 +386,7 @@ typedef struct _test_mode_command {
 	void (*command_func) (af_ctrl_t * af, char *test_param);
 } test_mode_command_t;
 
-typedef void *af_handle_t;
+typedef void *afv1_handle_t;
 
 struct ae_out_bv {
 	struct ae_calc_out *ae_result;
