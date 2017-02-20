@@ -2862,9 +2862,7 @@ int32_t ae_sprd_io_ctrl(void *handle, enum ae_io_ctrl_cmd cmd, void *param, void
 			struct ae_set_weight *weight = param;
 
 			AE_LOGD("setweight %d", weight->mode);
-			// bad area
-			weight->mode = 1;
-			// bad area
+
 			if (weight->mode < AE_WEIGHT_MAX) {
 				cxt->cur_status.settings.metering_mode = weight->mode;
 			}
