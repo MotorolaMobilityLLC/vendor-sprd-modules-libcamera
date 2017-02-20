@@ -122,11 +122,6 @@ typedef struct {
 	uint32_t			heapNum;
 }camera_oem_buff_info_t;
 
-typedef struct sprd_zsl_capture_info {
-	struct frm_info zslCapInfo;
-	cmr_uint addr_vir;
-}sprd_zsl_capture_info_t;
-
 #define MAX_SUB_RAWHEAP_NUM 10
 #define MAX_LOOP_COLOR_COUNT 3
 #define MAX_Y_UV_COUNT 2
@@ -506,9 +501,8 @@ private:
 	sprd_camera_memory_t            *mRawHeap;
 	uint32_t                        mRawHeapSize;
 
-	sprd_camera_memory_t			*mSubRawHeapArray[MAX_SUB_RAWHEAP_NUM];
-	sprd_camera_memory_t			*mPathRawHeapArray[MAX_SUB_RAWHEAP_NUM];
-	sprd_zsl_capture_info_t                 mZSLCapInfo[MAX_SUB_RAWHEAP_NUM];
+	sprd_camera_memory_t            *mSubRawHeapArray[MAX_SUB_RAWHEAP_NUM];
+	sprd_camera_memory_t            *mPathRawHeapArray[MAX_SUB_RAWHEAP_NUM];
 	sprd_camera_memory_t            *mReDisplayHeap;
 	//TODO: put the picture dimensions in the CameraParameters object;
 	SprdCameraParameters            mParameters;

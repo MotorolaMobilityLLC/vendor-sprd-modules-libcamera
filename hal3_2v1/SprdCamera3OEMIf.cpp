@@ -2805,11 +2805,50 @@ int SprdCamera3OEMIf::startPreviewInternal()
 	}
 	SprdCamera3Flash::reserveFlash(mCameraId);
 
+
 	if (mCaptureMode == CAMERA_ZSL_MODE) {
-		memset(mZSLCapInfo, 0, sizeof(mZSLCapInfo));
+		int i;
 		struct img_size jpeg_thumb_size;
-		jpeg_thumb_size.width = 320;
-		jpeg_thumb_size.height = 240;
+		JPEG_Tag jpgInfo;
+		float capRatio = 0.0f, thumbRatio = 0.0f, diff = 1.0f, minDiff = 1.0f;
+		unsigned char thumbCnt = 0;
+		unsigned char matchCnt = 0;
+
+		mSetting->getJPEGTag(&jpgInfo);
+		thumbCnt = sizeof(jpgInfo.available_thumbnail_sizes) / sizeof(jpgInfo.available_thumbnail_sizes[0]);
+		if (mCaptureWidth > 0 && mCaptureHeight > 0) {
+			capRatio = static_cast<float>(mCaptureWidth) / mCaptureHeight;
+			for (i = 0; i < thumbCnt / 2; i ++) {
+				if (jpgInfo.available_thumbnail_sizes[2*i] <= 0 ||
+				    jpgInfo.available_thumbnail_sizes[2*i+1] <= 0)
+					continue;
+
+				thumbRatio = static_cast<float>(jpgInfo.available_thumbnail_sizes[2*i]) / jpgInfo.available_thumbnail_sizes[2*i+1];
+				if (thumbRatio < 1.0f) {
+					HAL_LOGE("available_thumbnail_sizes change sequences");
+				}
+
+				if (capRatio > thumbRatio)
+					diff = capRatio - thumbRatio;
+				else
+					diff = thumbRatio - capRatio;
+
+				if (diff < minDiff) {
+					minDiff = diff;
+					matchCnt = i;
+				}
+			}
+		}
+
+		if (minDiff < 1.0f) {
+			jpeg_thumb_size.width = jpgInfo.available_thumbnail_sizes[2 * matchCnt];
+			jpeg_thumb_size.height = jpgInfo.available_thumbnail_sizes[2 * matchCnt + 1];
+		} else {
+			jpeg_thumb_size.width = 320;
+			jpeg_thumb_size.height = 240;
+		}
+
+		HAL_LOGD("JPEG thumbnail size = %d x %d", jpeg_thumb_size.width, jpeg_thumb_size.height);
 		SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_SIZE, (cmr_uint)&jpeg_thumb_size);
 	}
 
