@@ -62,10 +62,9 @@
 //#define AF_LOGD ISP_LOGD
 //#define AF_LOGE ISP_LOGE
 
-#define SPLIT_TEST      1
 #define AF_WAIT_CAF_FINISH     1
 #define AF_RING_BUFFER         0
-#define AF_SYS_VERSION "-20161129-15"
+#define AF_SYS_VERSION "-20170218-15"
 
 //int32_t _smart_io_ctrl(isp_ctrl_context* handle, uint32_t cmd);
 //int32_t lsc_adv_ioctrl(lsc_adv_handle_t handle, enum alsc_io_ctrl_cmd cmd, void *in_param, void *out_param);
@@ -319,6 +318,11 @@ typedef struct _af_ctrl {
 	uint64_t dcam_timestamp;
 	uint64_t takepic_timestamp;
 	AF_Data fv;
+	//Andrew : close address begin for easy parsing
+	af_fv	af_fv_val;
+	struct af_iir_nr_info af_iir_nr;
+	struct af_enhanced_module_info af_enhanced_module;
+	
 	struct afm_thrd_rgb thrd;
 	struct isp_face_area face_info;
 	uint32_t Y_sum_trigger;
@@ -363,10 +367,6 @@ typedef struct _af_ctrl {
 	uint8_t soft_landing_dly;
 	uint8_t soft_landing_step;
 	unsigned int inited_af_req;
-	af_fv	af_fv_val;
-	struct af_iir_nr_info af_iir_nr;
-	struct af_enhanced_module_info af_enhanced_module;
-
 	//porting from isp2.1 af 1.0
 	pthread_mutex_t status_lock;
 	void *caller;

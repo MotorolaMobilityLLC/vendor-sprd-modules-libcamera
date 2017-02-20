@@ -79,7 +79,7 @@
 #define AF_SEARCH_DEBUG     0
 
 #define SAF_FINE_SEARCH     1   //0:without fine search, 1:with fine search
-#define DEBUG_PRINT_ENA		1
+#define DEBUG_PRINT_ENA		0
 
 #define null_print			do {} while(0)
 //#define AfDebugPrint( str, args... )    ( !AF_SEARCH_DEBUG ) ? : printf( str, ##args );
@@ -589,10 +589,11 @@ typedef enum
 }curve_slop_type_t;
 
 #define AFAUTO_SCAN_STOP_NMAX (256)
+#define FOCUS_STAT_WIN_TOTAL	(10)
 #define MULTI_STATIC_TOTAL (9)
 #define AF_CHECK_SCENE_HISTORY	(15)
 #define AF_RESULT_DATA_SIZE	(32)
-#define FOCUS_STAT_WIN_TOTAL	(9)
+
 #define ALGO_DECIMAL_NUM	(100) 
 #define FOCUS_STAT_DATA_ALIGMENT_BIT	(4)
 
@@ -674,8 +675,8 @@ typedef struct _afscan_status_s {
 	unsigned int localluma_idx;
 	unsigned int lock_pos;
 	//multi AF
-	//unsigned int multi_pkstat[MULTI_STATIC_TOTAL];
-	//unsigned int multi_pkpos[MULTI_STATIC_TOTAL];	
+	unsigned int multi_pkstat[MULTI_STATIC_TOTAL];
+	unsigned int multi_pkpos[MULTI_STATIC_TOTAL];	
 
 	unsigned int min_stat_diff;
 	unsigned int min_stat_val;
@@ -756,9 +757,9 @@ typedef struct af_scan_info_s{
 
 /* ========================== Structure ============================ */
 typedef struct afstat_frame_buffer_s{
-	//unsigned int curr_frm_edge[FOCUS_STAT_WIN_TOTAL];
+	unsigned int curr_frm_stat[FOCUS_STAT_WIN_TOTAL];
 	//unsigned int curr_frm_y[FOCUS_STAT_WIN_TOTAL];
-	//unsigned int last_frm_edge[FOCUS_STAT_WIN_TOTAL];
+	unsigned int last_frm_stat[FOCUS_STAT_WIN_TOTAL];
 	//unsigned int last_frm_y[FOCUS_STAT_WIN_TOTAL];
 	//unsigned int focus_block_idx;
 	//unsigned int peak_block_edge;	
@@ -770,7 +771,7 @@ typedef struct afstat_frame_buffer_s{
 	unsigned int stat_sum;
 	unsigned int luma_avg;
 	//unsigned int multi_grid_sum[MULTI_STATIC_TOTAL];	
-	//unsigned int multi_edge_tbl[AFAUTO_SCAN_STOP_NMAX][MULTI_STATIC_TOTAL];	/*debug info of defocus function*/
+	unsigned int multi_stat_tbl[AFAUTO_SCAN_STOP_NMAX][MULTI_STATIC_TOTAL];	/*debug info of defocus function*/
 } afstat_frmbuf_t;
 
 typedef struct defocus_param_s{
