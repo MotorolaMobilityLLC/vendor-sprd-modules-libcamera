@@ -1406,7 +1406,7 @@ static cmr_int _ispFaceAreaIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, in
 
 		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_FD_PARAM, &fd_param, NULL);
 
-		rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_SET_FACE_DETECT, (void*)&param_ptr, NULL);
+		rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_SET_FACE_DETECT, (void*)param_ptr, NULL);
 	}
 
 	return rtn;
@@ -1878,7 +1878,7 @@ static cmr_int _ispSetDcamTimestamp(cmr_handle isp_alg_handle, void *param_ptr, 
 	struct isp_af_ts *af_ts = (struct isp_af_ts*)param_ptr;
 	UNUSED(call_back);
 
-	rtn = af_ctrl_ioctrl(cxt->ae_cxt.handle, AF_CMD_SET_DCAM_TIMESTAMP, (void*)af_ts, NULL);
+	rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_SET_DCAM_TIMESTAMP, (void*)af_ts, NULL);
 	return rtn;
 }
 

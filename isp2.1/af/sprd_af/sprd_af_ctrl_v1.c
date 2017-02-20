@@ -765,8 +765,8 @@ extern "C" {
 		af->af_enhanced_module.clip_en[0] = 0;
 		af->af_enhanced_module.clip_en[1] = 0;
 		af->af_enhanced_module.max_th[0] = 131071;
-		af->af_enhanced_module.max_th[1] = 100;
-		af->af_enhanced_module.min_th[0] = 131071;
+		af->af_enhanced_module.max_th[1] = 131071;
+		af->af_enhanced_module.min_th[0] = 100;
 		af->af_enhanced_module.min_th[1] = 100;
 		af->af_enhanced_module.fv_shift[0] = 0;
 		af->af_enhanced_module.fv_shift[1] = 0;
