@@ -270,7 +270,7 @@ static unsigned long imx258_power_on(SENSOR_HW_HANDLE handle, unsigned long powe
 		Sensor_SetResetLevel(!reset_level);
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
 	} else {
-		Sensor_Reset(reset_level);
+		Sensor_SetResetLevel(reset_level);
 		Sensor_PowerDown(power_down);
 		Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
 		Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED);

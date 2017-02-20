@@ -119,6 +119,8 @@ extern SENSOR_INFO_T g_gc5005_mipi_raw_info;
 #define AUTO_TEST_CAMERA 1
 extern otp_drv_cxt_t imx258_drv_cxt;
 extern af_drv_info_t dw9800_drv_info;
+extern af_drv_info_t dw9714a_drv_info;
+
 /*---------------------------------------------------------------------------*
  **                         Constant Variables                                *
  **---------------------------------------------------------------------------*/
@@ -126,7 +128,7 @@ const SENSOR_MATCH_T main_sensor_infor_tab[]=
 {
 	{"s5k3p8sm_mipi_raw", &g_s5k3p8sm_mipi_raw_info,NULL,NULL},
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
-	{"gc8024_mipi_raw", &g_gc8024_mipi_raw_info,NULL,NULL},
+	{"gc8024_mipi_raw", &g_gc8024_mipi_raw_info,&dw9714a_drv_info,NULL},
 #endif
 	{"imx230_mipi_raw", &g_imx230_mipi_raw_info,NULL,NULL},
 	//{"imx258_mipi_raw", &g_imx258_mipi_raw_info,&dw9800_drv_info,&imx258_drv_cxt},

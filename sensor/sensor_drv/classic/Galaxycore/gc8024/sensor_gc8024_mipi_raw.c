@@ -28,7 +28,7 @@
 #include "parameters/sensor_gc8024_raw_param_main.c"
 #ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
 #ifdef CONFIG_AF_VCM_DW9714
-#include "../vcm/vcm_dw_9714.h"
+#include "../vcm/vcm_dw9714a.h"
 #endif
 #endif
 
@@ -1437,7 +1437,7 @@ static uint32_t gc8024_power_on(SENSOR_HW_HANDLE handle,uint32_t power_on)
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
 		usleep(5 * 1000);
 #ifdef CONFIG_AF_VCM_DW9714
-		vcm_dw9714_init(handle,2);
+		vcm_dw9714A_init(handle,2);
 #endif
 		#else
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
@@ -1651,15 +1651,15 @@ static uint32_t gc8024_before_snapshot(SENSOR_HW_HANDLE handle,uint32_t param)
 	Sensor_SetMode(capture_mode);
 	Sensor_SetMode_WaitDone();
 
-	cap_shutter = prv_shutter * prv_linetime / cap_linetime * BINNING_FACTOR;
-
+	cap_shutter = prv_shutter * prv_linetime / cap_linetime ;//* BINNING_FACTOR;
+/*
 	while (gain >= (2 * SENSOR_BASE_GAIN)) {
 		if (cap_shutter * 2 > s_current_default_frame_length)
 			break;
 		cap_shutter = cap_shutter * 2;
 		gain = gain / 2;
 	}
-
+*/
 	cap_shutter = gc8024_update_exposure(handle,cap_shutter,0);
 	cap_gain = gain;
 	gc8024_write_gain(handle,cap_gain);
@@ -1759,7 +1759,7 @@ static uint32_t gc8024_write_gain_value(SENSOR_HW_HANDLE handle,uint32_t param)
 static uint32_t gc8024_write_af(SENSOR_HW_HANDLE handle,uint32_t param)
 {
 #ifdef CONFIG_AF_VCM_DW9714
-	return vcm_dw9714_set_position(handle,param,2);
+	return vcm_dw9714A_set_position(handle,param,2);
 #endif
 	return 0;
 }

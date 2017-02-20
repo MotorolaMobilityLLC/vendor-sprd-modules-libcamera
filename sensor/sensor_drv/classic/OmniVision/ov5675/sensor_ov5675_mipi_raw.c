@@ -80,7 +80,7 @@
 
 /* please ref your spec */
 #define FRAME_OFFSET			4
-#define SENSOR_MAX_GAIN			0x800
+#define SENSOR_MAX_GAIN			0x7c0
 #define SENSOR_BASE_GAIN		0x80
 #define SENSOR_MIN_SHUTTER		4
 
@@ -1477,15 +1477,15 @@ static uint32_t ov5675_before_snapshot(SENSOR_HW_HANDLE handle,uint32_t param)
 	Sensor_SetMode(capture_mode);
 	Sensor_SetMode_WaitDone();
 
-	cap_shutter = prv_shutter * prv_linetime / cap_linetime * BINNING_FACTOR;
-
+	cap_shutter = prv_shutter * prv_linetime / cap_linetime;// * BINNING_FACTOR;
+/*
 	while (gain >= (2 * SENSOR_BASE_GAIN)) {
 		if (cap_shutter * 2 > s_current_default_frame_length)
 			break;
 		cap_shutter = cap_shutter * 2;
 		gain = gain / 2;
 	}
-
+*/
 	cap_shutter = ov5675_update_exposure(handle,cap_shutter,0);
 	cap_gain = gain;
 	ov5675_write_gain(handle,cap_gain);
