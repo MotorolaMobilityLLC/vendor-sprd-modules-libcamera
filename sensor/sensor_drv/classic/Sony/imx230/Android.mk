@@ -16,31 +16,32 @@
 LOCAL_PATH := $(call my-dir)
 
 TUNING_PATH := $(TARGET_OUT)/lib/tuning
+LOCAL_TUNING_PATH := parameters/tuning_bin
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := parameters/tuning_bin/imx230_mipi_raw_3a.bin
-LOCAL_SRC_FILES := $(LOCAL_MODULE)
+LOCAL_MODULE := imx230_mipi_raw_3a.bin
+LOCAL_SRC_FILES := $(LOCAL_TUNING_PATH)/$(LOCAL_MODULE)
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH := $(TUNING_PATH)
 include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := parameters/tuning_bin/imx230_mipi_raw_1280_3a.bin
-LOCAL_SRC_FILES := $(LOCAL_MODULE)
+LOCAL_MODULE := imx230_mipi_raw_1280_3a.bin
+LOCAL_SRC_FILES := $(LOCAL_TUNING_PATH)/$(LOCAL_MODULE)
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH := $(TUNING_PATH)
 include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := parameters/tuning_bin/imx230_mipi_raw_shading.bin
-LOCAL_SRC_FILES := $(LOCAL_MODULE)
+LOCAL_MODULE := imx230_mipi_raw_shading.bin
+LOCAL_SRC_FILES := $(LOCAL_TUNING_PATH)/$(LOCAL_MODULE)
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH := $(TUNING_PATH)
 include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := parameters/tuning_bin/imx230_mipi_raw_caf.bin
-LOCAL_SRC_FILES := $(LOCAL_MODULE)
+LOCAL_MODULE := imx230_mipi_raw_caf.bin
+LOCAL_SRC_FILES := $(LOCAL_TUNING_PATH)/$(LOCAL_MODULE)
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH := $(TUNING_PATH)
 include $(BUILD_PREBUILT)

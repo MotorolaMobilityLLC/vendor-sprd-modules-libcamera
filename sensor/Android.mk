@@ -121,4 +121,4 @@ LOCAL_SHARED_LIBRARIES := libcutils libcamcommon libdl libcamsensortuning
 
 include $(BUILD_SHARED_LIBRARY)
 
-include $(wildcard $(LOCAL_PATH)/*/Android.mk)
+include $(wildcard $(LOCAL_PATH)/*/*/*/*/Android.mk)
