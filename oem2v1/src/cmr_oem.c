@@ -5223,7 +5223,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 			goto exit;
 		}
 	isp_param.capture_mode =  setting_param.cmd_type_value;
-//	isp_param.dv_mode = dv_mode;
+	isp_param.dv_mode = dv_mode;
 {
 	struct sensor_mode_info        *sensor_mode_info;
 	cmr_uint                       sn_mode = 0;
