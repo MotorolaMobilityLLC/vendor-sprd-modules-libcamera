@@ -15,13 +15,14 @@
  */
 #include "vcm_dw9714a.h"
 
-uint32_t vcm_dw9714A_init(SENSOR_HW_HANDLE handle, uint32_t mode)
+uint32_t vcm_dw9714A_init(SENSOR_HW_HANDLE handle)
 {
 	uint8_t cmd_val[2] = {0x00};
 	uint16_t  slave_addr = 0;
 	uint16_t cmd_len = 0;
 	uint32_t ret_value = AF_SUCCESS;
 	int i = 0;
+	uint32_t mode = 2;
 
 	slave_addr = DW9714A_VCM_SLAVE_ADDR;
 	AF_LOGI("vcm_dw9714A_init: _DW9714A_SRCInit: mode = %d\n", mode);

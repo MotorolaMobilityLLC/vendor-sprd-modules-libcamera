@@ -901,7 +901,7 @@ static unsigned long _s5k4h8yx_set_video_mode(SENSOR_HW_HANDLE handle, unsigned 
 		Sensor_WriteReg(sensor_reg_ptr[i].reg_addr, sensor_reg_ptr[i].reg_value);
 	}
 
-	SENSOR_LOGI("0x%02x", param);
+	SENSOR_LOGI("%ld", param);
 	return 0;
 }
 

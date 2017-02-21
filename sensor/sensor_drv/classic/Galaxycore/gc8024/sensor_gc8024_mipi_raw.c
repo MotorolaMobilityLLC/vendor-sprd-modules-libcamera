@@ -28,7 +28,7 @@
 #include "parameters/sensor_gc8024_raw_param_main.c"
 #ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
 #ifdef CONFIG_AF_VCM_DW9714
-#include "../vcm/vcm_dw9714a.h"
+#include "af_dw9714.h"
 #endif
 #endif
 
@@ -649,7 +649,7 @@ SENSOR_INFO_T g_gc8024_mipi_raw_info = {
 	/* max height of source image */
 	SNAPSHOT_HEIGHT,
 	/* name of sensor */
-	SENSOR_NAME,
+	(cmr_s8 *)SENSOR_NAME,
 	/* define in SENSOR_IMAGE_FORMAT_E enum,SENSOR_IMAGE_FORMAT_MAX
 	 * if set to SENSOR_IMAGE_FORMAT_MAX here,
 	 * image format depent on SENSOR_REG_TAB_INFO_T
@@ -697,18 +697,18 @@ SENSOR_INFO_T g_gc8024_mipi_raw_info = {
 	65,
 	/* vertical view angle*/
 	60,
-	"gc8024_v1",
+	(cmr_s8 *)"gc8024_v1",
 };
 
 static SENSOR_STATIC_INFO_T s_gc8024_static_info = {
 	220,	//f-number,focal ratio
 	346,	//focal_length;
 	0,	//max_fps,max fps of sensor's all settings,it will be calculated from sensor mode fps
-	16, //max_adgain,AD-gain
+	8, //max_adgain,AD-gain
 	0,	//ois_supported;
 	0,	//pdaf_supported;
 	1,	//exp_valid_frame_num;N+2-1
-	64,	//clamp_level,black level
+	0,	//clamp_level,black level
 	1,	//adgain_valid_frame_num;N+1-1
  };
 
@@ -1436,25 +1436,19 @@ static uint32_t gc8024_power_on(SENSOR_HW_HANDLE handle,uint32_t power_on)
 		Sensor_PowerDown(!power_down);
 		usleep(1* 1000);
 		Sensor_SetResetLevel(!reset_level);
-		
-		#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
+
+#if 1 //ndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
 		usleep(5 * 1000);
 #ifdef CONFIG_AF_VCM_DW9714
-		vcm_dw9714A_init(handle,2);
+		dw9714_init(handle);
 #endif
-		#else
-		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
-		#endif
+#endif
 
 	} else {
-
-		#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-#ifdef CONFIG_AF_VCM_DW9714
-		vcm_dw9714_init(handle,2);
-#endif
+#if 1 //ndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
 		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
-		#endif
+#endif
 
 		Sensor_PowerDown(power_down);
 		Sensor_SetResetLevel(reset_level);
@@ -1763,7 +1757,7 @@ static uint32_t gc8024_write_gain_value(SENSOR_HW_HANDLE handle,uint32_t param)
 static uint32_t gc8024_write_af(SENSOR_HW_HANDLE handle,uint32_t param)
 {
 #ifdef CONFIG_AF_VCM_DW9714
-	return vcm_dw9714A_set_position(handle,param,2);
+	return dw9714_set_position(handle,param);
 #endif
 	return 0;
 }

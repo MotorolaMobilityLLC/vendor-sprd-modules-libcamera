@@ -23,6 +23,7 @@
 
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
 #include "parameters/sensor_imx258_raw_param_v3.c"
+#include "vcm_lc898214.h"
 #else
 #include "parameters/sensor_imx258_raw_param_main.c"
 #endif
@@ -322,6 +323,7 @@ static const SENSOR_REG_T imx258_4208x3120_setting[] = {
 #ifdef PDAF_TYPE3
     {0x3052,0x00},//1},
     {0x7BCB,0x00},
+    {0x7BC8,0x00},
     {0x7BC9,0x00},
 #endif
 };
@@ -426,6 +428,106 @@ static const SENSOR_REG_T imx258_1048x780_setting[] = {
     {0x4041,0x00},
 };
 
+static const SENSOR_REG_T imx258_1280x720_setting[] = {
+	/*4Lane
+	reg_J30
+	HV1/3 (16:9) 120fps
+	H: 1280
+	V: 720
+	Output format Setting*/
+		{0x0112,	0x0A},
+		{0x0113,	0x0A},
+		{0x0114,	0x03},	//Clock Setting
+		{0x0301,	0x05},
+		{0x0303,	0x02},
+		{0x0305,	0x04},
+		{0x0306,	0x00},
+		{0x0307,	0xA0},
+		{0x0309,	0x0A},
+		{0x030B,	0x01},
+		{0x030D,	0x02},
+		{0x030E,	0x00},
+		{0x030F,	0xD8},
+		{0x0310,	0x00},
+		{0x0820,	0x0F},
+		{0x0821,	0x00},
+		{0x0822,	0x00},
+		{0x0823,	0x00},//Clock Adjustment Setting
+		{0x4648,	0x7F},
+		{0x7420,	0x00},
+		{0x7421,	0x1C},
+		{0x7422,	0x00},
+		{0x7423,	0xD7},
+		{0x9104,	0x00},//Line Length Setting
+		{0x0342,	0x14},
+		{0x0343,	0xE8},//Frame Length Setting
+		{0x0340,	0x03},
+		{0x0341,	0x1C},//ROI Setting
+		{0x0344,	0x00},
+		{0x0345,	0x00},
+		{0x0346,	0x01},
+		{0x0347,	0xB0},
+		{0x0348,	0x10},
+		{0x0349,	0x6F},
+		{0x034A,	0x0A},
+		{0x034B,	0x7F},//Analog Image Size Setting
+		{0x0381,	0x01},
+		{0x0383,	0x01},
+		{0x0385,	0x03},
+		{0x0387,	0x03},
+		{0x0900,	0x01},
+		{0x0901,	0x12},//Digital Image Size Setting
+		{0x0401,	0x01},
+		{0x0404,	0x00},
+		{0x0405,	0x30},
+		{0x0408,	0x00},
+		{0x0409,	0xB2},
+		{0x040A,	0x00},
+		{0x040B,	0x10},
+		{0x040C,	0x0F},
+		{0x040D,	0x0C},
+		{0x040E,	0x02},
+		{0x040F,	0xD0},
+		{0x3038,	0x00},
+		{0x303A,	0x00},
+		{0x303B,	0x10},
+		{0x300D,	0x01},//Output Size Setting
+		{0x034C,	0x05},
+		{0x034D,	0x00},
+		{0x034E,	0x02},
+		{0x034F,	0xD0},//Integration Time Setting
+		{0x0202,	0x03},
+		{0x0203,	0x12},//Gain Setting
+		{0x0204,	0x00},
+		{0x0205,	0x00},
+		{0x020E,	0x01},
+		{0x020F,	0x00},
+		{0x0210,	0x01},
+		{0x0211,	0x00},
+		{0x0212,	0x01},
+		{0x0213,	0x00},
+		{0x0214,	0x01},
+		{0x0215,	0x00},//Added Setting(AF)
+		{0x7BCD,	0x01},//Added Setting(IQ)
+		{0x94DC,	0x20},
+		{0x94DD,	0x20},
+		{0x94DE,	0x20},
+		{0x95DC,	0x20},
+		{0x95DD,	0x20},
+		{0x95DE,	0x20},
+		{0x7FB0,	0x00},
+		{0x9010,	0x3E},
+		{0x9419,	0x50},
+		{0x941B,	0x50},
+		{0x9519,	0x50},
+		{0x951B,	0x50},//Added Setting(mode)
+		{0x3030,	0x00},
+		{0x3032,	0x00},
+		{0x0220,	0x00},
+		{0x0401,  0x00},
+
+};
+
 /*==============================================================================
  * Description:
  * sensor static info need by isp
@@ -492,7 +594,15 @@ LOCAL SENSOR_REG_TAB_INFO_T s_imx258_resolution_tab_raw[] =
 		.xclk_to_sensor     = 24,
 		.image_format       = SENSOR_IMAGE_FORMAT_RAW,
 	},
-/*  {
+	/*{
+		.sensor_reg_tab_ptr = (SENSOR_REG_T*)imx258_1280x720_setting,
+		.reg_count          = NUMBER_OF_ARRAY(imx258_1280x720_setting),
+		.width              = 1280,
+		.height             = 720,
+		.xclk_to_sensor     = 24,
+		.image_format       = SENSOR_IMAGE_FORMAT_RAW,
+	},
+	{
 		.sensor_reg_tab_ptr = (SENSOR_REG_T*)imx258_2096x1552_setting,
 		.reg_count          = NUMBER_OF_ARRAY(imx258_2096x1552_setting),
 		.width              = 2096,
@@ -500,8 +610,14 @@ LOCAL SENSOR_REG_TAB_INFO_T s_imx258_resolution_tab_raw[] =
 		.xclk_to_sensor     = 24,
 		.image_format       = SENSOR_IMAGE_FORMAT_RAW,
 	},
-*/
-
+	{
+		.sensor_reg_tab_ptr = (SENSOR_REG_T*)imx258_4208x3120_setting,
+		.reg_count          = NUMBER_OF_ARRAY(imx258_4208x3120_setting),
+		.width              = 4208,
+		.height             = 3120,
+		.xclk_to_sensor     = 24,
+		.image_format       = SENSOR_IMAGE_FORMAT_RAW,
+	},
 /*	{
 		.sensor_reg_tab_ptr = (SENSOR_REG_T*)imx258_5344x4016_setting,
 		.reg_count          = NUMBER_OF_ARRAY(imx258_5344x4016_setting),
@@ -563,7 +679,23 @@ LOCAL SENSOR_TRIM_T s_imx258_resolution_trim_tab[SENSOR_MODE_MAX] =
 			.h = 780,
 		}
 	},
-/*	{ //mode2
+	/*{ //mode1
+		.trim_start_x   = 0,
+		.trim_start_y   = 0,
+		.trim_width     = 1280,
+		.trim_height    = 720,
+		.line_time      = 13939 ,
+		.bps_per_lane   = 960,
+		.frame_line     = 796,
+		.scaler_trim =
+		{
+			.x = 0,
+			.y = 0,
+			.w = 1280,
+			.h = 720,
+		}
+	},
+	{ //mode2
 		.trim_start_x   = 0,
 		.trim_start_y   = 0,
 		.trim_width     = 2096,
@@ -716,8 +848,11 @@ SENSOR_INFO_T g_imx258_mipi_raw_info =
 	.source_height_max  = SNAPSHOT_HEIGHT, /* max height of source image */
 	.name               = SENSOR_NAME,
 	.image_format       = SENSOR_IMAGE_FORMAT_RAW,
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
+	.image_pattern      = SENSOR_IMAGE_PATTERN_RAWRGB_B,
+#else
 	.image_pattern      = SENSOR_IMAGE_PATTERN_RAWRGB_R,
-
+#endif
 	.resolution_tab_info_ptr = s_imx258_resolution_tab_raw,
 	.ioctl_func_tab_ptr      = &s_imx258_ioctl_func_tab,
 	.raw_info_ptr            = &s_imx258_mipi_raw_info_ptr,

@@ -30,12 +30,13 @@ static int32_t m_cur_dac_code =0;
  * 2: Dual Level Control Mode
  * 3: Linear Slope Cntrol Mode
  *============================================================================*/
-uint32_t dw9714_init(SENSOR_HW_HANDLE handle, uint32_t mode)
+uint32_t dw9714_init(SENSOR_HW_HANDLE handle)
 {
 	uint8_t cmd_val[2] = { 0x00 };
 	uint16_t slave_addr = 0;
 	uint16_t cmd_len = 0;
 	uint32_t ret_value = AF_SUCCESS;
+	uint32_t mode = 2;
 
 	slave_addr = DW9714_VCM_SLAVE_ADDR;
 	SENSOR_PRINT("mode = %d\n", mode);

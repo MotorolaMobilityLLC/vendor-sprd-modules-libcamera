@@ -78,7 +78,7 @@ uint32_t dw9718s_write_dac_code(SENSOR_HW_HANDLE handle,int32_t param)
 	uint16_t slave_addr = 0;
 	uint16_t cmd_len = 0;
 
-	SENSOR_PRINT("SENSOR_S5K4H5YC: _write_af %ld", param);
+	SENSOR_PRINT("SENSOR_S5K4H5YC: _write_af %d", param);
 	slave_addr = DW9718S_VCM_SLAVE_ADDR;
 
 	cmd_val[0] = 0x02;

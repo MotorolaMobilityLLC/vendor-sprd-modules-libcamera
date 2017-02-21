@@ -30,11 +30,6 @@
 
 //#define FEATURE_OTP    /*OTP function switch*/
 
-#define CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-#include "../af_dw9714.h"
-#endif
-
 #define SENSOR_NAME			"gc5005"
 #define I2C_SLAVE_ADDR		0x6e    /* 8bit slave address*/
 
@@ -58,8 +53,8 @@
 #define PREVIEW_MIPI_PER_LANE_BPS	864
 
 /*line time unit: 1ns*/
-#define SNAPSHOT_LINE_TIME		16800
-#define PREVIEW_LINE_TIME		16800
+#define SNAPSHOT_LINE_TIME		16778
+#define PREVIEW_LINE_TIME		16778
 
 /* frame length*/
 #define SNAPSHOT_FRAME_LENGTH		1984
@@ -461,7 +456,7 @@ SENSOR_INFO_T g_gc5005_mipi_raw_info = {
 	/* max height of source image */
 	SNAPSHOT_HEIGHT,
 	/* name of sensor */
-	SENSOR_NAME,
+	(cmr_s8 *)SENSOR_NAME,
 	/* define in SENSOR_IMAGE_FORMAT_E enum,SENSOR_IMAGE_FORMAT_MAX
 	 * if set to SENSOR_IMAGE_FORMAT_MAX here,
 	 * image format depent on SENSOR_REG_TAB_INFO_T
@@ -509,18 +504,18 @@ SENSOR_INFO_T g_gc5005_mipi_raw_info = {
 	65,
 	/* vertical view angle*/
 	60,
-	"gc5005_v1",
+	(cmr_s8 *)"gc5005_v1",
 };
 
 static SENSOR_STATIC_INFO_T s_gc5005_static_info = {
 	220,	//f-number,focal ratio
 	346,	//focal_length;
 	0,	//max_fps,max fps of sensor's all settings,it will be calculated from sensor mode fps
-	16, //max_adgain,AD-gain
+	6, //max_adgain,AD-gain
 	0,	//ois_supported;
 	0,	//pdaf_supported;
 	1,	//exp_valid_frame_num;N+2-1
-	64,	//clamp_level,black level
+	0,	//clamp_level,black level
 	1,	//adgain_valid_frame_num;N+1-1
  };
 
@@ -1239,25 +1234,13 @@ static uint32_t gc5005_power_on(SENSOR_HW_HANDLE handle,uint32_t power_on)
 		Sensor_SetDvddVoltage(dvdd_val);
 		usleep(1* 1000);
 		Sensor_SetAvddVoltage(avdd_val);
+		usleep(1* 1000);
 		Sensor_SetMCLK(SENSOR_DEFALUT_MCLK);
 		usleep(10 * 1000);
 		Sensor_PowerDown(!power_down);
 		usleep(1* 1000);
 		Sensor_SetResetLevel(!reset_level);
-		
-		#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-//		Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
-//		usleep(5 * 1000);
-//		dw9714_init(2);
-		#endif
-
 	} else {
-
-		#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-//		dw9714_deinit(2);
-//		Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
-		#endif
-
 		Sensor_PowerDown(power_down);
 		Sensor_SetResetLevel(reset_level);
 		Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
@@ -1543,7 +1526,7 @@ static uint32_t gc5005_write_gain_value(SENSOR_HW_HANDLE handle,uint32_t param)
 	return ret_value;
 }
 
-#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
+#if 0 //ndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
 /*==============================================================================
  * Description:
  * write parameter to vcm
@@ -1770,14 +1753,14 @@ static SENSOR_IOCTL_FUNC_TAB_T s_gc5005_ioctl_func_tab = {
 	.before_snapshort = gc5005_before_snapshot,
 	.ex_write_exp = gc5005_write_exposure,
 	.write_gain_value = gc5005_write_gain_value,
-	#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
+	#if 0 //ndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
 //	.af_enable = gc5005_write_af,
 	#endif
 	.set_focus = gc5005_ext_func,
 	//.set_video_mode = gc5005_set_video_mode,
 	.stream_on = gc5005_stream_on,
 	.stream_off = gc5005_stream_off,
-	#ifdef FEATURE_OTP
+	#if 0 //def FEATURE_OTP
 	.cfg_otp=gc5005_cfg_otp,
 	#endif	
 	.cfg_otp = gc5005_access_val,

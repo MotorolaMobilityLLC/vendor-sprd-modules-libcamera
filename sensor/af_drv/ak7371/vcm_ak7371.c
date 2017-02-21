@@ -18,7 +18,9 @@
 #include "sensor_drv_u.h"
 
 #define AK7371_VCM_SLAVE_ADDR (0x18 >> 1)
+#ifndef SENSOR_SUCCESS
 #define SENSOR_SUCCESS      0
+#endif
 #define POSE_UP_HORIZONTAL 32
 #define POSE_DOWN_HORIZONTAL 37
 static uint32_t m_cur_pos=0;

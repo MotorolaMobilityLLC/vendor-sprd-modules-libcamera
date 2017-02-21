@@ -20,7 +20,7 @@
 
 #define DW9714A_VCM_SLAVE_ADDR  (0x18>>1)
 
-uint32_t vcm_dw9714A_init(SENSOR_HW_HANDLE handle, uint32_t mode);
+uint32_t vcm_dw9714A_init(SENSOR_HW_HANDLE handle);
 uint32_t vcm_dw9714A_set_position(SENSOR_HW_HANDLE handle, uint32_t pos);
 
 #endif

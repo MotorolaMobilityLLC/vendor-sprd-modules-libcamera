@@ -349,6 +349,11 @@ static unsigned long imx258_identify(SENSOR_HW_HANDLE handle, unsigned long para
 		if (imx258_VER_VALUE == ver_value) {
 			ret_value = SENSOR_SUCCESS;
 			SENSOR_LOGI("this is imx258 sensor");
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
+			vcm_LC898214_init(handle);
+//#else
+//			bu64297gwz_init(handle);
+#endif
 			imx258_init_mode_fps_info(handle);
 		} else {
 			SENSOR_LOGI("Identify this is %x%x sensor", pid_value, ver_value);
@@ -628,8 +633,20 @@ static unsigned long imx258_ext_func(SENSOR_HW_HANDLE handle, unsigned long para
  *============================================================================*/
 static unsigned long imx258_stream_on(SENSOR_HW_HANDLE handle, unsigned long param)
 {
+#if 1
+	cmr_s8 value1[PROPERTY_VALUE_MAX];
+	property_get("debug.camera.test.mode",value1,"0");
+	if(!strcmp(value1,"1")){
+		SENSOR_LOGI("SENSOR_imx230: enable test mode");
+		Sensor_WriteReg(0x0600, 0x00);
+		Sensor_WriteReg(0x0601, 0x02);
+	}
+#endif
 	SENSOR_LOGI("E");
 	UNUSED(param);
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
+	Sensor_WriteReg(0x0101, 0x03);
+#endif
 	Sensor_WriteReg(0x0100, 0x01);
 	/*delay*/
 	//usleep(10 * 1000);
@@ -651,6 +668,15 @@ static unsigned long imx258_stream_off(SENSOR_HW_HANDLE handle, unsigned long pa
 	usleep(100 * 1000);
 
 	return 0;
+}
+
+static unsigned long imx258_write_af(SENSOR_HW_HANDLE handle, unsigned long param)
+{
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
+	return vcm_LC898214_set_position(handle, param);
+#else
+	return 0;//bu64297gwz_write_af(handle, param);
+#endif
 }
 
 static uint32_t imx258_get_static_info(SENSOR_HW_HANDLE handle, uint32_t *param)
@@ -677,9 +703,10 @@ static uint32_t imx258_get_static_info(SENSOR_HW_HANDLE handle, uint32_t *param)
 	ex_info->capture_skip_num = g_imx258_mipi_raw_info.capture_skip_num;
 	ex_info->name = g_imx258_mipi_raw_info.name;
 	ex_info->sensor_version_info = g_imx258_mipi_raw_info.sensor_version_info;
-#if 0
-#ifdef CONFIG_AF_VCM_DW9800W
-	vcm_dw9800_get_pose_dis(handle, &up, &down);
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
+#if 1 //def CONFIG_AF_VCM_DW9800W
+	vcm_LC898214_get_pose_dis(handle, &up, &down);
+//	vcm_dw9800_get_pose_dis(handle, &up, &down);
 #else
 	bu64297gwz_get_pose_dis(handle, &up, &down);
 #endif
@@ -808,7 +835,9 @@ static SENSOR_IOCTL_FUNC_TAB_T s_imx258_ioctl_func_tab =
 	//.set_video_mode = imx132_set_video_mode,
 	.stream_on  = imx258_stream_on,
 	.stream_off = imx258_stream_off,
-	//.af_enable  = imx258_write_af,
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
+	.af_enable  = imx258_write_af,
+#endif
 	//.group_hold_on = imx132_group_hold_on,
 	//.group_hold_of = imx132_group_hold_off,
 	.cfg_otp = imx258_access_val,
