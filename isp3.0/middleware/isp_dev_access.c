@@ -758,6 +758,40 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 	/*set still image buffer format*/
 
 #if defined(CONFIG_CAMERA_NO_DCAM_DATA_PATH)
+	if (ISP_CAP_MODE_BURST == param_ptr->common_in.capture_mode) {
+		memset(&img_buf_param, 0, sizeof(img_buf_param));
+
+		if (2 == isp_id) {
+			img_buf_param.img_id = ISP_IMG_PREVIEW;
+		} else {
+			img_buf_param.img_id = ISP_IMG_STILL_CAPTURE;
+		}
+		img_buf_param.format = ISP_OUT_IMG_YUY2;
+
+		if (ISP_CAP_MODE_HIGHISO == param_ptr->common_in.capture_mode
+			|| ISP_CAP_MODE_DRAM == param_ptr->common_in.capture_mode
+			|| ISP_CAP_MODE_BURST == param_ptr->common_in.capture_mode) {
+			img_buf_param.format = ISP_OUT_IMG_NV12;
+			img_buf_param.width = cxt->input_param.init_param.size.w;
+			img_buf_param.height = cxt->input_param.init_param.size.h;
+		} else {
+			img_buf_param.width = param_ptr->common_in.video_size.w;
+			img_buf_param.height = param_ptr->common_in.video_size.h;
+		}
+		img_buf_param.dram_eb = 0;
+		img_buf_param.buf_num = 4;
+		if (ISP_OUT_IMG_YUY2 == img_buf_param.format)
+			img_buf_param.line_offset = 2 * img_buf_param.width;
+		else if (ISP_OUT_IMG_NV12 == img_buf_param.format)
+			img_buf_param.line_offset = img_buf_param.width;
+		img_buf_param.addr[0].chn0 = 0x2FFFFFFF;
+		img_buf_param.addr[1].chn0 = 0x2FFFFFFF;
+		img_buf_param.addr[2].chn0 = 0x2FFFFFFF;
+		img_buf_param.addr[3].chn0 = 0x2FFFFFFF;
+		ISP_LOGI("set still image buffer param img_id %d w %d h %d", img_buf_param.img_id,
+				img_buf_param.width, img_buf_param.height);
+		ret = isp_dev_set_img_param(cxt->isp_driver_handle, &img_buf_param);
+	}
 #else
 	memset(&img_buf_param, 0, sizeof(img_buf_param));
 
@@ -868,6 +902,28 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 
 	if (ISP_CAP_MODE_HIGHISO == param_ptr->common_in.capture_mode ||
 	    ISP_CAP_MODE_BURST == param_ptr->common_in.capture_mode) {
+#if defined(CONFIG_CAMERA_NO_DCAM_DATA_PATH)
+		if (ISP_CAP_MODE_HIGHISO == param_ptr->common_in.capture_mode) {
+			/*set still image buffer format*/
+			memset(&img_buf_param, 0, sizeof(img_buf_param));
+
+			img_buf_param.format = ISP_OUT_IMG_YUY2;
+			img_buf_param.img_id = ISP_IMG_PREVIEW;
+			img_buf_param.dram_eb = 0;
+			img_buf_param.buf_num = 4;
+			img_buf_param.width = param_ptr->common_in.lv_size.w;//cxt->input_param.init_param.size.w;
+			img_buf_param.height = param_ptr->common_in.lv_size.h;//cxt->input_param.init_param.size.h;
+			img_buf_param.line_offset = img_buf_param.width * 2;
+			img_buf_param.addr[0].chn0 = 0x2FFFFFFF;
+			img_buf_param.addr[1].chn0 = 0x2FFFFFFF;
+			img_buf_param.addr[2].chn0 = 0x2FFFFFFF;
+			img_buf_param.addr[3].chn0 = 0x2FFFFFFF;
+			ISP_LOGI("set preview image buffer param img_id %d w %d h %d", img_buf_param.img_id,
+				img_buf_param.width, img_buf_param.height);
+			ret = isp_dev_set_img_param(cxt->isp_driver_handle, &img_buf_param);
+
+		}
+#else
 		/*set still image buffer format*/
 		memset(&img_buf_param, 0, sizeof(img_buf_param));
 
@@ -903,7 +959,7 @@ cmr_int isp_dev_access_start_multiframe(cmr_handle isp_dev_handle, struct isp_de
 			img_buf_param.width, img_buf_param.height);
 		ret = isp_dev_set_img_param(cxt->isp_driver_handle, &img_buf_param);
 #endif
-
+#endif
 		memset(&isp_raw_mem, 0, sizeof(isp_raw_mem));
 //		isp_raw_mem.fd[0] = param_ptr->common_in.raw_buf_fd[0];
 //		isp_raw_mem.phy_addr[0] = param_ptr->common_in.raw_buf_phys_addr[0];
@@ -1555,7 +1611,7 @@ cmr_int isp_dev_access_drammode_takepic(isp_handle isp_dev_handle, cmr_u32 is_st
 {
 	cmr_int                                ret = ISP_SUCCESS;
 	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-
+	ISP_LOGI("is_start %d", is_start);
 	ret = isp_dev_drammode_takepic(cxt->isp_driver_handle, is_start);
 	return ret;
 }
