@@ -3764,6 +3764,7 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	}
 
 	if(cxt_ptr->hdr_enable && cxt_ptr->nxt_status.is_hdr_status) {
+		aealtek_set_lock(cxt_ptr, 1, __func__);
 		ret = aealtek_set_hdr_ev(cxt_ptr, in_ptr, out_ptr);
 		return ISP_SUCCESS;
 	}
@@ -4052,8 +4053,10 @@ static cmr_int aealtek_set_hdr_ev(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_pa
 	cxt_ptr->nxt_status.ui_param.hdr_level = in_ptr->sof_param.frame_index - 1;
 	level = cxt_ptr->nxt_status.ui_param.hdr_level;
 	ISP_LOGI("hdr_level=%d", level);
-	if(level >= 3) //if (level < 0 || level >= 3)    modify cause:  comparison of unsigned enum expression < 0 is always false
+	if(level >= 3) {//if (level < 0 || level >= 3)    modify cause:  comparison of unsigned enum expression < 0 is always false
+		aealtek_set_lock(cxt_ptr, 0, __func__);
 		return ISP_SUCCESS;
+	}
 
 	switch (level) {
 	case AE_CTRL_HDR_EV_UNDEREXPOSURE:
