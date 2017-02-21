@@ -160,13 +160,12 @@ cmr_int isp_dev_start(cmr_handle isp_dev_handle, struct isp_interface_param_v1 *
 	//ISP_RETURN_IF_FAIL(rtn, ("isp get store addr error"));
 
 #ifdef ISP_DEFAULT_CFG_FOR_BRING_UP
-	rtn = isp_get_cfa_default_param(in_ptr, &cfa_param);
-	ISP_RETURN_IF_FAIL(rtn, ("isp get cfa default param error"));
 
 	rtn = isp_get_cce_default_param(in_ptr, &cce_param);
 	ISP_RETURN_IF_FAIL(rtn, ("isp get cce default param error"));
 
 	isp_u_cfa_block(cxt->isp_driver_handle,(void*)&cfa_param);
+	ISP_RETURN_IF_FAIL(rtn, ("isp cfg cfa error"));
 
 	isp_u_cce_matrix_block(cxt->isp_driver_handle,(void*)&cce_param);
 #endif

@@ -88,7 +88,7 @@ static struct isp_cfg_fun s_isp_cfg_fun_tab_tshark2[] = {
 	{ISP_BLK_HUE,              isp_u_hue_block},
 	{ISP_BLK_IIRCNR_IIR,       isp_u_iircnr_block},
 	{ISP_BLK_IIRCNR_YRANDOM,   isp_u_yrandom_block},
-//	{SP_BLK_YUV_NOISEFILTER,   isp_u_noise_filter_block},
+	{ISP_BLK_YUV_NOISEFILTER,  isp_u_noise_filter_block},
 
 //	{ISP_BLK_SMART,
 //	{ISP_BLK_SFT_AF,
