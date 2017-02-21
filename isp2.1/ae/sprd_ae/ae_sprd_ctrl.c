@@ -55,6 +55,9 @@ extern "C" {
 #define USE_ISO_TBL 0
 #define SEGMENTED_ISO 1
 #define AE_CHECKSUM_FLAG 1024
+#define SENSOR_EXP_NS_BASE     1000000000 /*unit:ns*/
+#define SENSOR_LINETIME_BASE   100 /*uint:0.1us*/
+
 /*
  * should be read from driver later
  */
@@ -632,16 +635,16 @@ static void _print_ae_debug_info(char* log_str, struct ae_ctrl_cxt *cxt_ptr)
 	sync_cur_status_ptr = &(cxt_ptr->sync_cur_status);
 	result_ptr = &cxt_ptr->sync_cur_result;
 
-	fps = 10000000.0
+	fps = SENSOR_EXP_NS_BASE * 1.0
 			/ (cxt_ptr->snr_info.line_time * (result_ptr->wts.cur_dummy + result_ptr->wts.cur_exp_line));
 	if (fps > cxt_ptr->sync_cur_status.settings.max_fps) {
 		fps = cxt_ptr->sync_cur_status.settings.max_fps;
 	}
 
-	pos = sprintf(log_str, "cam-id:%d frm-id:%d,flicker: %d\nidx(%d-%d):%d,cur-l:%d, tar-l:%d, lv:%d, bv: %d,expl(%d):%d, expt: %d, gain:%d, dmy:%d, FR(%d-%d):%.2f\n",
+	pos = sprintf(log_str, "cam-id:%d frm-id:%d,flicker: %d\nidx(%d-%d):%d,cur-l:%d, tar-l:%d, lv:%d, bv: %d,expl(%d ns):%d, expt: %d, gain:%d, dmy:%d, FR(%d-%d):%.2f\n",
 			cxt_ptr->camera_id, sync_cur_status_ptr->frame_id,sync_cur_status_ptr->settings.flicker, sync_cur_status_ptr->ae_table->min_index, sync_cur_status_ptr->ae_table->max_index,result_ptr->wts.cur_index,\
 			cxt_ptr->sync_cur_result.cur_lum, cxt_ptr->sync_cur_result.target_lum, cxt_ptr->cur_result.cur_bv, cxt_ptr->cur_result.cur_bv_nonmatch, cxt_ptr->snr_info.line_time,\
-			result_ptr->wts.cur_exp_line, result_ptr->wts.cur_exp_line * cxt_ptr->snr_info.line_time, result_ptr->wts.cur_again, result_ptr->wts.cur_dummy,\
+			result_ptr->wts.cur_exp_line, result_ptr->wts.cur_exp_line * cxt_ptr->snr_info.line_time/SENSOR_LINETIME_BASE, result_ptr->wts.cur_again, result_ptr->wts.cur_dummy,\
 			cxt_ptr->sync_cur_status.settings.min_fps,cxt_ptr->sync_cur_status.settings.max_fps,fps);
 
 	if (result_ptr->log) {
@@ -1575,7 +1578,7 @@ static int32_t _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 		for (i = 0; i < init_param->param_num && i < AE_MAX_PARAM_NUM; ++i) {
 			rtn = _unpack_tunning_param(init_param->param[i].param, init_param->param[i].size, &cxt->tuning_param[i]);
 			memcpy(cxt->tuning_param[i].backup_ae_table, cxt->tuning_param[i].ae_table, sizeof(struct ae_exp_gain_table));
-			exposure_time2line(&(cxt->tuning_param[i]), init_param->resolution_info.line_time/100,
+			exposure_time2line(&(cxt->tuning_param[i]), init_param->resolution_info.line_time/SENSOR_LINETIME_BASE,
 								cxt->tuning_param[i].ae_tbl_exp_mode);
 
 			if (AE_SUCCESS == rtn)
@@ -1590,7 +1593,7 @@ static int32_t _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 
 		cxt->snr_info = init_param->resolution_info;
 		cxt->cur_status.frame_size = init_param->resolution_info.frame_size;
-		cxt->cur_status.line_time = init_param->resolution_info.line_time/100;
+		cxt->cur_status.line_time = init_param->resolution_info.line_time/SENSOR_LINETIME_BASE;
 		trim.x = 0;
 		trim.y = 0;
 		trim.w = init_param->resolution_info.frame_size.w;
@@ -2087,7 +2090,7 @@ static int32_t _set_sensor_exp_time(struct ae_ctrl_cxt *cxt, void *param)
 {
 	int32_t rtn = AE_SUCCESS;
 	uint32_t exp_time = *(uint32_t *) param;
-	uint32_t line_time = cxt->snr_info.line_time;
+	uint32_t line_time = cxt->snr_info.line_time / SENSOR_LINETIME_BASE;
 
 	if (AE_STATE_LOCKED == cxt->cur_status.settings.lock_ae) {
 		cxt->cur_status.settings.exp_line = exp_time * 10 / line_time;
@@ -2298,7 +2301,7 @@ static int32_t _set_video_start(struct ae_ctrl_cxt *cxt, void *param)
 
 	cxt->snr_info = work_info->resolution_info;
 	cxt->cur_status.frame_size = work_info->resolution_info.frame_size;
-	cxt->cur_status.line_time = work_info->resolution_info.line_time/100;
+	cxt->cur_status.line_time = work_info->resolution_info.line_time/SENSOR_LINETIME_BASE;
 
 	cxt->start_id = AE_START_ID;
 	cxt->monitor_unit.mode = AE_STATISTICS_MODE_CONTINUE;
@@ -2434,7 +2437,7 @@ void* ae_sprd_init(void *param, void *in_param)
 	/*AE_LOGD("resol w %d h %d lt %d",
 			work_param.resolution_info.frame_size.w,
 			work_param.resolution_info.frame_size.h,
-			work_param.resolution_info.line_time/100);*/
+			work_param.resolution_info.line_time);*/
 
 	cxt->cur_status.ae_initial = AE_PARAM_INIT;
 	rtn = _set_ae_param(cxt, init_param, &work_param, AE_PARAM_INIT);
