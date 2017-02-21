@@ -717,7 +717,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 
 	system_time0 = isp_get_timestamp();
 	if (1 == cxt->smart_cxt.isp_smart_eb) {
-		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_LUM, NULL, (void *)&bv);
+		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_LUM_NEW, NULL, (void *)&bv);
 		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_GAIN, NULL, (void *)&bv_gain);
 		smart_proc_in.cal_para.bv = bv;
 		smart_proc_in.cal_para.bv_gain = bv_gain;
@@ -1874,7 +1874,7 @@ static cmr_int isp_update_alg_param(cmr_handle isp_alg_handle)
 
 	/*update smart param*/
 	rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_CT, (void*)&ct, NULL);
-	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_LUM, NULL, (void*)&bv);
+	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_LUM_NEW, NULL, (void*)&bv);
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_GAIN, NULL, (void*)&bv_gain);
 	rtn = smart_ctl_ioctl(cxt->smart_cxt.handle, ISP_SMART_IOCTL_SET_WORK_MODE,(void*)&cxt->commn_cxt.isp_mode, NULL);
 	memset(&smart_proc_in, 0, sizeof(smart_proc_in));
@@ -2256,7 +2256,7 @@ cmr_int isp_alg_fw_capability(cmr_handle isp_alg_handle, enum isp_capbility_cmd 
 	}
 	case ISP_CTRL_GET_AE_LUM: {
 		uint32_t out_param = 0;
-		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_LUM, NULL, &out_param);
+		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_LUM_NEW, NULL, &out_param);
 		*((uint32_t*)param_ptr) = out_param;
 		break;
 	}
