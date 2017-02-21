@@ -23,6 +23,15 @@ extern "C"
 
 #include "cmr_common.h"
 #include "sensor_drv_u.h"
+#if defined(CONFIG_CAMERA_NO_DCAM_DATA_PATH)
+#define PREV_RESERVED_FRM_CNT           3
+#define VIDEO_RESERVED_FRM_CNT          3
+#define CAP_ZSL_RESERVED_FRM_CNT        3
+#else
+#define PREV_RESERVED_FRM_CNT           1
+#define VIDEO_RESERVED_FRM_CNT          1
+#define CAP_ZSL_RESERVED_FRM_CNT        1
+#endif
 
 enum preview_func_type {
 	PREVIEW_FUNC_START_PREVIEW = 0,
