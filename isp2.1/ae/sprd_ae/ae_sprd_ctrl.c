@@ -2862,7 +2862,7 @@ int32_t ae_sprd_io_ctrl(void *handle, enum ae_io_ctrl_cmd cmd, void *param, void
 		if (param) {
 			struct ae_set_flicker *flicker = param;
 
-			if (flicker->mode < AE_FLICKER_MAX) {
+			if (flicker->mode < AE_FLICKER_OFF) {
 				cxt->cur_status.settings.flicker = flicker->mode;
 			}
 		}
