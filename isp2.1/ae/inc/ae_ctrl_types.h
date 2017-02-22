@@ -169,6 +169,7 @@ enum ae_io_ctrl_cmd {
 	AE_SET_DC_DV,
 	AE_VIDEO_STOP,
 	AE_VIDEO_START,
+	AE_GET_AF_INFO,
 	AE_IO_MAX
 };
 

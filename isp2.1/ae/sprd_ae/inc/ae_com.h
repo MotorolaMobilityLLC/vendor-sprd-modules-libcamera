@@ -97,6 +97,7 @@ struct ae_settings {
 	int8_t work_mode;/* DC DV */
 	int8_t scene_mode;/* pano sports night */
 	int16_t intelligent_module;/* pano sports night */
+	int8_t af_info;				/*AF trigger info*/
 	int8_t reserve_case;
 	uint8_t * reserve_info;/* reserve for future */
 	int16_t reserve_len;/*len for reserve */
