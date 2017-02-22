@@ -30,7 +30,13 @@ LOCAL_SRC_FILES += \
 	sensor_drv/classic/OmniVision/ov2680/sensor_ov2680_mipi_raw.c \
 	sensor_drv/classic/OmniVision/ov8856/sensor_ov8856_mipi_raw.c \
 	sensor_drv/classic/OmniVision/ov8856s/sensor_ov8856s_mipi_raw.c \
+	sensor_drv/classic/OmniVision/ov13855/sensor_ov13855_mipi_raw.c \
 	sensor_drv/classic/Other/sp2509/sensor_sp2509_mipi_raw.c
+
+ifeq ($(strip $(TARGET_BOARD_COVERED_SENSOR_SUPPORT)),true)
+	LOCAL_SRC_FILES += \
+	sensor_drv/classic/Galaxycore/gc0310/sensor_gc0310_mipi.c
+endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
 	LOCAL_SRC_FILES += \

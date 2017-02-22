@@ -76,11 +76,10 @@ extern SENSOR_INFO_T g_hi255_yuv_info;
 extern SENSOR_INFO_T g_ov2680_mipi_raw_info;
 extern SENSOR_INFO_T g_ov5670_mipi_raw_info;
 extern SENSOR_INFO_T g_sr030pc50_yuv_info;
-extern SENSOR_INFO_T g_GC0310_MIPI_yuv_info;
 extern SENSOR_INFO_T g_ov8858_mipi_raw_info;
+extern SENSOR_INFO_T g_ov13855_mipi_raw_info;
 #else
 extern SENSOR_INFO_T g_ov5670_mipi_raw_info;
-extern SENSOR_INFO_T g_GC0310_MIPI_yuv_info;
 extern SENSOR_INFO_T g_ov8825_mipi_raw_info;
 extern SENSOR_INFO_T g_hi544_mipi_raw_info;
 extern SENSOR_INFO_T g_GC2155_MIPI_yuv_info;
@@ -102,7 +101,6 @@ extern SENSOR_INFO_T g_imx214_mipi_raw_info;
 extern SENSOR_INFO_T g_autotest_ov13850_mipi_raw_info;
 extern SENSOR_INFO_T g_at_ov5648_mipi_raw_info;
 extern SENSOR_INFO_T g_at_ov5670_mipi_raw_info;
-
 extern SENSOR_INFO_T g_s5k3p8sm_mipi_raw_info;
 extern SENSOR_INFO_T g_s5k4h8yx_mipi_raw_info;
 extern SENSOR_INFO_T g_imx230_mipi_raw_info;
@@ -112,6 +110,10 @@ extern SENSOR_INFO_T g_s5k3l8xxm3_mipi_raw_info;
 extern SENSOR_INFO_T g_sp2509_mipi_raw_info;
 extern SENSOR_INFO_T g_ov8856_mipi_raw_info;
 extern SENSOR_INFO_T g_ov8856s_mipi_raw_info;
+extern SENSOR_INFO_T g_ov13855_mipi_raw_info;
+#ifdef CONFIG_COVERED_SENSOR
+extern SENSOR_INFO_T g_GC0310_MIPI_yuv_info;
+#endif
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
 extern SENSOR_INFO_T g_gc8024_mipi_raw_info;
 extern SENSOR_INFO_T g_gc5005_mipi_raw_info;
@@ -120,6 +122,7 @@ extern SENSOR_INFO_T g_gc5005_mipi_raw_info;
 extern otp_drv_entry_t imx258_drv_entry;
 extern af_drv_info_t dw9800_drv_info;
 extern af_drv_info_t dw9714_drv_info;
+extern af_drv_info_t dw9718s_drv_info;
 
 /*---------------------------------------------------------------------------*
  **                         Constant Variables                                *
@@ -137,6 +140,7 @@ const SENSOR_MATCH_T main_sensor_infor_tab[]=
 	{"imx258_mipi_raw", &g_imx258_mipi_raw_info,NULL,NULL},
 #endif
 	{"s5k3l8xxm3_mipi_raw", &g_s5k3l8xxm3_mipi_raw_info,NULL,NULL},
+	{"ov13855_mipi_raw", &g_ov13855_mipi_raw_info,&dw9718s_drv_info,NULL},
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
 	//{"ov13850r2a_mipi_raw", &g_ov13850r2a_mipi_raw_info},
 #endif
@@ -145,6 +149,9 @@ const SENSOR_MATCH_T main_sensor_infor_tab[]=
 
 const SENSOR_MATCH_T sub_sensor_infor_tab[]=
 {
+#ifdef CONFIG_COVERED_SENSOR
+	{"GC0310_MIPI", &g_GC0310_MIPI_yuv_info,NULL,NULL},
+#endif
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
 	{"5005_mipi_raw", &g_gc5005_mipi_raw_info,NULL,NULL},
 	{"ov5675_mipi_raw", &g_ov5675_mipi_raw_info,NULL,NULL},
@@ -217,7 +224,7 @@ const SENSOR_MATCH_T  at_sub_sensor_infor_tab[]=
 {
 #ifndef SC_FPGA
 	{"autotest_ov5648_mipi_raw", &g_at_ov5648_mipi_raw_info,NULL,NULL},
-	{"autotest_GC0310_MIPI_yuv", &g_GC0310_MIPI_yuv_info,NULL,NULL},
+//	{"autotest_GC0310_MIPI_yuv", &g_GC0310_MIPI_yuv_info,NULL,NULL},
 #if !(defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4))
 #ifdef CONFIG_FRONT_CAMERA_CCIR
 	{"GC0308_yuv", &g_GC0308_yuv_info,NULL,NULL},
