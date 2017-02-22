@@ -1373,8 +1373,9 @@ cmr_int (*camera_set_reprocess_picture_size)(cmr_handle camera_handle, cmr_uint 
 cmr_int (*camera_start_capture)(cmr_handle camera_handle);
 cmr_int (*camera_stop_capture)(cmr_handle camera_handle);
 #endif
-
+#if defined(CONFIG_CAMERA_ISP_DIR_3)
 cmr_int (*camera_pre_capture_set_buffer_size)(cmr_u32 camera_id, cmr_u16 width, cmr_u16 height);
+#endif
 
 }oem_ops_t;
 
