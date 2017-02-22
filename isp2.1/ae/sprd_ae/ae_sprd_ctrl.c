@@ -2232,17 +2232,16 @@ DEBUG_INFO_EXIT:
 
 	memset((void*)&debug_info_in, 0, sizeof(struct ae_debug_info_packet_in));
 	memset((void*)&debug_info_out, 0, sizeof(struct ae_debug_info_packet_out));
-	//alg_id_ptr = ae_debug_info_get_lib_version();
+	alg_id_ptr = ae_debug_info_get_lib_version();
 	debug_info_in.aem_stats = (void*)cxt->sync_aem;
 	debug_info_in.alg_status = (void*)&cxt->sync_cur_status;
 	debug_info_in.alg_results = (void*)&cxt->sync_cur_result;
 	debug_info_in.packet_buf = (void*)&cxt->debug_info_buf[0];
 	memcpy((void*)&debug_info_in.id[0], alg_id_ptr, sizeof(debug_info_in.id));
 
-	//rtn = ae_debug_info_packet((void*)&debug_info_in, (void*)&debug_info_out);
+	rtn = ae_debug_info_packet((void*)&debug_info_in, (void*)&debug_info_out);
 	debug_info_result->log = (uint8_t*)debug_info_in.packet_buf;
 	debug_info_result->size = debug_info_out.size;
-
 #endif
 
 	return rtn;
@@ -2884,9 +2883,7 @@ int32_t ae_sprd_io_ctrl(void *handle, enum ae_io_ctrl_cmd cmd, void *param, void
 	case AE_SET_TOUCH_ZONE:
 		if (param) {
 			struct ae_set_tuoch_zone *touch_zone = param;
-			if ((touch_zone->touch_zone.x >= 0)\
-				&& (touch_zone->touch_zone.y >= 0)\
-				&& (touch_zone->touch_zone.w > 1)\
+			if ((touch_zone->touch_zone.w > 1)\
 				&& (touch_zone->touch_zone.h > 1)) {
 				/*touch screen coordination */
 				cxt->cur_status.touch_scrn_win = touch_zone->touch_zone;	// for touch ae

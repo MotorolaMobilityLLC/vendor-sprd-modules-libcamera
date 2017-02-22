@@ -629,6 +629,32 @@ static cmr_int _ispSetAeFpsIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, in
 	return rtn;
 }
 
+static int32_t ispGetAeDebugInfoIOCtrl(cmr_handle isp_alg_handle)
+{
+	int32_t rtn = ISP_SUCCESS;
+	int32_t ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct tg_ae_ctrl_alc_log ae_log = {NULL, 0};
+
+	if ( NULL == cxt) {
+		ISP_LOGE("Get AE debug info error!");
+		rtn =ISP_ERROR;
+		return rtn;
+	}
+
+	if ( 0x00 == cxt->lib_use_info->ae_lib_info.product_id ) {
+		rtn  = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_DEBUG_INFO, NULL, (void *)&ae_log);
+		if ( ISP_SUCCESS != rtn ) {
+			ISP_LOGE("Get AE debug info failed!");
+		}
+		cxt->ae_cxt.log_ae = ae_log.log;
+		cxt->ae_cxt.log_ae_size = ae_log.size;
+		ret += rtn;
+	}
+
+	return ret;
+}
+
 static const char *DEBUG_MAGIC = "SPRD_ISP";  // 8 bytes
 static const char *AE_START    = "ISP_AE__";
 static const char *AE_END      = "ISP_AE__";
@@ -724,6 +750,10 @@ static cmr_int _ispGetInfoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, int
 		info_ptr->addr = cxt->ae_cxt.log_alc;
 		info_ptr->size = cxt->ae_cxt.log_alc_size;
 	} else {
+		if (ISP_SUCCESS != ispGetAeDebugInfoIOCtrl(cxt)) {
+			ISP_LOGE("isp_get_debug_info failed");
+		}
+
 		total_size = sizeof(struct sprd_isp_debug_info) + sizeof(isp_log_info_t)
 				+ calc_log_size(cxt->ae_cxt.log_ae, cxt->ae_cxt.log_ae_size, AE_START, AE_END)
 				+ calc_log_size(cxt->af_cxt.log_af, cxt->af_cxt.log_af_size, AF_START, AF_END)
