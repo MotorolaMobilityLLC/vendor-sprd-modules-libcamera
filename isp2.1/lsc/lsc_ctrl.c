@@ -248,14 +248,14 @@ static int32_t _lscsprd_load_lib(struct lsc_ctrl_context *cxt)
 		goto error_dlsym;
 	}
 
-	cxt->lib_ops.alsc_io_ctrl = dlsym(cxt->lib_handle, "lsc_adv_deinit");
+	cxt->lib_ops.alsc_io_ctrl = dlsym(cxt->lib_handle, "lsc_adv_ioctrl");
 	if (!cxt->lib_ops.alsc_io_ctrl) {
 		LSC_ADV_LOGE("failed to dlsym lsc_sprd_io_ctrl");
 		rtn = LSC_ERROR;
 		goto error_dlsym;
 	}
 
-	cxt->lib_ops.alsc_deinit = dlsym(cxt->lib_handle, "lsc_adv_ioctrl");
+	cxt->lib_ops.alsc_deinit = dlsym(cxt->lib_handle, "lsc_adv_deinit");
 	if (!cxt->lib_ops.alsc_deinit) {
 		LSC_ADV_LOGE("failed to dlsym lsc_sprd_deinit");
 		rtn = LSC_ERROR;

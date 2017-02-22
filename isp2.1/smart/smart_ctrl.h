@@ -98,6 +98,7 @@ struct smart_proc_input {
 	struct smart_calc_param cal_para;
 	cmr_u32 mode_flag;
 	cmr_u32 scene_flag;
+	unsigned int LSC_SPD_VERSION;   // LSC version of Spreadtrum
 };
 
 struct smart_calc_result {

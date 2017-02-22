@@ -716,6 +716,14 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 
 	system_time0 = isp_get_timestamp();
 	if (1 == cxt->smart_cxt.isp_smart_eb) {
+
+		struct alsc_ver_info lsc_ver = {0};
+		rtn  = lsc_ctrl_ioctrl(cxt->lsc_cxt.handle, ALSC_GET_VER, NULL, (void *)&lsc_ver);
+		if (ISP_SUCCESS != rtn) {
+			ISP_LOGE("Get ALSC ver info failed!");
+		}
+		ISP_LOGI("LSC_SPD_VERSION = %d", lsc_ver.LSC_SPD_VERSION);
+
 		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_LUM_NEW, NULL, (void *)&bv);
 		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_GAIN, NULL, (void *)&bv_gain);
 		smart_proc_in.cal_para.bv = bv;
@@ -724,6 +732,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 		smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
 		smart_proc_in.handle_pm = cxt->handle_pm;
 		smart_proc_in.mode_flag = cxt->commn_cxt.mode_flag;
+		smart_proc_in.LSC_SPD_VERSION = lsc_ver.LSC_SPD_VERSION;
 		rtn = _smart_calc(cxt->smart_cxt.handle, &smart_proc_in);
 
 #if 0
@@ -1882,12 +1891,20 @@ static cmr_int isp_update_alg_param(cmr_handle isp_alg_handle)
 	rtn = smart_ctl_ioctl(cxt->smart_cxt.handle, ISP_SMART_IOCTL_SET_WORK_MODE,(void*)&cxt->commn_cxt.isp_mode, NULL);
 	memset(&smart_proc_in, 0, sizeof(smart_proc_in));
 	if ((0 != bv_gain) && (0 != ct)) {
+
+		struct alsc_ver_info lsc_ver = {0};
+		rtn  = lsc_ctrl_ioctrl(cxt->lsc_cxt.handle, ALSC_GET_VER, NULL, (void *)&lsc_ver);
+		if (ISP_SUCCESS != rtn) {
+			ISP_LOGE("Get ALSC ver info failed!");
+		}
+
 		smart_proc_in.cal_para.bv = bv;
 		smart_proc_in.cal_para.bv_gain = bv_gain;
 		smart_proc_in.cal_para.ct = ct;
 		smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
 		smart_proc_in.handle_pm = cxt->handle_pm;
 		smart_proc_in.mode_flag = cxt->commn_cxt.mode_flag;
+		smart_proc_in.LSC_SPD_VERSION = lsc_ver.LSC_SPD_VERSION;
 		rtn = _smart_calc(cxt->smart_cxt.handle, &smart_proc_in);
 	}
 
