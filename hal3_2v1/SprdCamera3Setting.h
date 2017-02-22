@@ -67,7 +67,7 @@ namespace sprdcamera {
 #define CAMERA_ID_COUNT   4
 
 #define MIN_DIGITAL_ZOOM_RATIO                       (1.0f)
-#define MAX_DIGITAL_ZOOM_RATIO                       (4.0f)
+#define MAX_DIGITAL_ZOOM_RATIO                       (2.0f)
 
 
 // some vsp and jpeg need height 16 alignment
