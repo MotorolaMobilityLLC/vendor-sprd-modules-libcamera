@@ -78,9 +78,10 @@ struct awbParaGenIn
 
 	// BalanceRange
 	double ctShiftBv[4];
-	double ctBalanceRange[4][2];
-	double ctDefault[4];
-	double PgrDefault[4];
+	double null_data1[4][2];
+
+	double null_data2[4];
+	double null_data3[4];
 
 	int ctShiftTickNum[4];
 	float ctShiftTick[4][64];
@@ -130,12 +131,21 @@ struct awbParaGenIn
 	float limPgRatioDn2[4];
 	float limPgRatioDn3[4];
 	float limCtMid[4];
+	float limDefaultCt[4];
+	float limDefaultPgRatio[4];
 
 	//awbMode
 	int modeNum;
 	int modeId[10];
 	double modeCt[10];
 	double modePgr[10];
+
+	short ctShiftCt[10];
+	float ctShiftPgRatio[10];
+	short ctShiftNeutral[10];
+	short ctShiftDown[10];
+	short ctShiftNum;
+
 };
 
 struct awb_tuning_param
@@ -184,11 +194,11 @@ struct awb_tuning_param
 	int dct_sh_bv[4];
 	short dct_sh[4][512];
 	short dct_pg_sh100[4][512];
-	short dct_range[4][2];
-	short dct_range2[4];
-	short dct_range3[4];
-	short dct_def[4];
-	short dct_def2[4];
+	short null_data1[4][2];
+	short null_data2[4];
+	short null_data3[4];
+	short null_data4[4];
+	short null_data5[4];
 	int red_num;
 	short red_x[10];
 	short red_y[10];
@@ -205,6 +215,7 @@ struct awb_tuning_param
 	short defx[9][4];
 	short defxDev[4][4];
 	short defrange[4][4];
+	short defxy[2][4];
 
 	short grassGreenLevel;//1024;
 
@@ -220,9 +231,14 @@ struct awb_tuning_param
 	short purpleDnCt[5][10];
 	short purpleDnPg[5][10];
 
+	int cwfPgAbs100;
 	unsigned char ui_data[sizeof(struct awbParaGenIn)];
-	int reserved[(8236-sizeof(struct awbParaGenIn))/4];
+	int reserved[(8204-sizeof(struct awbParaGenIn))/4];
 
+	// awb control param
+	unsigned int skip_frame_num;
+	unsigned int calc_interval_num;
+	unsigned int smooth_buffer_num;
 	int check;
 };
 

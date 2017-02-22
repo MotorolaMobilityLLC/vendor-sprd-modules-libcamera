@@ -188,6 +188,7 @@ struct awb_ctrl_cxt {
 	struct awb_gain_queue gain_queue;
 	uint8_t* log;
 	uint32_t size;
+	unsigned int frame_count;
 	/*must be the last one*/
 	uint32_t magic_end;
 
@@ -902,10 +903,23 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 	cxt->otp_info.rdm_stat_info.g = param->otp_info.rdm_stat_info.g;
 	cxt->otp_info.rdm_stat_info.b = param->otp_info.rdm_stat_info.b;
 
+	if (cxt->awb_init_param.tuning_param.skip_frame_num > 8)
+	{
+		cxt->awb_init_param.tuning_param.skip_frame_num = 0;
+	}
+	if ((cxt->awb_init_param.tuning_param.calc_interval_num == 0) || (cxt->awb_init_param.tuning_param.calc_interval_num > 10))
+	{
+		cxt->awb_init_param.tuning_param.calc_interval_num = 1;
+	}
+	if ((cxt->awb_init_param.tuning_param.smooth_buffer_num <= 2) || (cxt->awb_init_param.tuning_param.smooth_buffer_num > 64))
+	{
+		cxt->awb_init_param.tuning_param.smooth_buffer_num = 8;
+	}
 	struct awb_rgb_gain awb_gain;
 	cxt->alg_handle =cxt->lib_ops.awb_init_v1(&cxt->awb_init_param, &awb_gain);
 
-	_init_gain_queue(&cxt->gain_queue, 32);
+	unsigned int smooth_buffer_num = cxt->awb_init_param.tuning_param.smooth_buffer_num;
+	_init_gain_queue(&cxt->gain_queue, smooth_buffer_num);
 
 	result->gain.r = awb_gain.r_gain;
 	result->gain.g = awb_gain.g_gain;
@@ -920,6 +934,9 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 	cxt->output_gain.r = result->gain.r;
 	cxt->output_gain.g = result->gain.g;
 	cxt->output_gain.b = result->gain.b;
+	cxt->output_ct = result->ct;
+
+	AWB_CTRL_LOGE("AWB init: (%d,%d,%d)", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b);
 
 	pthread_mutex_init(&cxt->status_lock, NULL);
 	return (awb_ctrl_handle_t)cxt;
@@ -1002,11 +1019,15 @@ cmr_int awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 		return AWB_CTRL_ERROR;
 	}
 
+	unsigned int smooth_buffer_num = cxt->awb_init_param.tuning_param.smooth_buffer_num;
+	unsigned int skip_frame_num = cxt->awb_init_param.tuning_param.skip_frame_num;
+	unsigned int calc_interval_num = cxt->awb_init_param.tuning_param.calc_interval_num;
+
 	if ((AWB_CTRL_SCENEMODE_AUTO == cxt->scene_mode) && (AWB_CTRL_WB_MODE_AUTO == cxt->wb_mode))
 	{
-		static unsigned int num = 0;
-		num ++;
-		if ((num > 32) && (num % 2 == 1)) // for power saving, do awb calc once every two frames
+		cxt->frame_count ++;
+		if ((cxt->frame_count <= skip_frame_num) ||
+			((cxt->frame_count > smooth_buffer_num) && (cxt->frame_count % calc_interval_num == 1))) // for power saving, do awb calc once every two frames
 		{
 			result->gain.r = cxt->output_gain.r;
 			result->gain.g = cxt->output_gain.g;
@@ -1038,7 +1059,7 @@ cmr_int awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	uint64_t time0 = systemTime(CLOCK_MONOTONIC);
 	rtn = cxt->lib_ops.awb_calc_v1(cxt->alg_handle, &calc_param, &calc_result);
 	uint64_t time1 = systemTime(CLOCK_MONOTONIC);
-	AWB_CTRL_LOGE("AWB: (%d,%d,%d) %dK, %dus", calc_result.awb_gain[0].r_gain, calc_result.awb_gain[0].g_gain, calc_result.awb_gain[0].b_gain, calc_result.awb_gain[0].ct, (int)((time1-time0)/1000));
+	AWB_CTRL_LOGE("AWB: (%d,%d,%d) %dK, pg=%d, %dus", calc_result.awb_gain[0].r_gain, calc_result.awb_gain[0].g_gain, calc_result.awb_gain[0].b_gain, calc_result.awb_gain[0].ct, result->pg_flag, (int)((time1-time0)/1000));
 
 	result->gain.r = calc_result.awb_gain[0].r_gain;
 	result->gain.g = calc_result.awb_gain[0].g_gain;
@@ -1048,8 +1069,6 @@ cmr_int awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	result->green100 = calc_result.awb_gain[0].green100;
 	result->log_awb.log = calc_result.log_buffer;
 	result->log_awb.size = calc_result.log_size;
-
-	AWB_CTRL_LOGE("AWB: pg_flag = %d", result->pg_flag);
 
 	cxt->cur_gain.r = result->gain.r;
 	cxt->cur_gain.g = result->gain.g;
