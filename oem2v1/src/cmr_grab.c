@@ -1372,6 +1372,7 @@ static cmr_u32 cmr_grab_get_data_endian(struct img_data_end *in_endian, struct i
 		break;
 
 	case IMG_ENDIAN_HALFBIG:
+	case IMG_ENDIAN_BIG:
 		out_endian->uv_endian = IMG_DATA_ENDIAN_2PLANE_VUVU;
 		break;
 
