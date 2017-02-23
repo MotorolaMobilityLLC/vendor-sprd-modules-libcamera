@@ -3771,7 +3771,8 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	}
 
 	if(cxt_ptr->hdr_enable && cxt_ptr->nxt_status.is_hdr_status) {
-		aealtek_set_lock(cxt_ptr, 1, __func__);
+		if (0 == cxt_ptr->lock_cnt)
+			aealtek_set_lock(cxt_ptr, 1, __func__);
 		ret = aealtek_set_hdr_ev(cxt_ptr, in_ptr, out_ptr);
 		return ISP_SUCCESS;
 	}
