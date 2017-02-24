@@ -152,6 +152,7 @@ typedef struct {
 
 typedef struct {
     uint32_t frame_number;
+    int32_t request_id;
     bool invalid;
     int showPreviewDeviceId;
     int32_t perfectskinlevel;
@@ -165,7 +166,7 @@ typedef struct {
 }old_request;
 
 typedef struct {
-    buffer_handle_t* buffer;
+    const native_handle_t* native_handle;
     MemIon *pHeapIon;
 }new_mem_t;
 

@@ -38,6 +38,13 @@ SprdCamera3Wrapper::SprdCamera3Wrapper()
     SprdCamera3StereoVideo::getCameraMuxer(&mStereoVideo);
     SprdCamera3StereoPreview::getCameraMuxer(&mStereoPreview);
     SprdCamera3Capture::getCameraCapture(&mCapture);
+#ifdef CONFIG_BLUR_SUPPORT
+    SprdCamera3Blur::getCameraBlur(&mBlur);
+#endif
+#ifdef CONFIG_COVERED_SENSOR
+    SprdCamera3SelfShot::getCameraMuxer(&mSelfShot);
+    SprdCamera3PageTurn::getCameraMuxer(&mPageturn);
+#endif
 }
 
 SprdCamera3Wrapper::~SprdCamera3Wrapper()
@@ -75,6 +82,19 @@ int SprdCamera3Wrapper::cameraDeviceOpen(
         case MODE_3D_PREVIEW:
             rc = mStereoPreview->camera_device_open(module, id, hw_device);
             return rc;
+#ifdef CONFIG_BLUR_SUPPORT
+        case MODE_BLUR:
+            rc = mBlur->camera_device_open(module, id, hw_device);
+            return rc;
+#endif
+#ifdef CONFIG_COVERED_SENSOR
+        case MODE_SELF_SHOT:
+            rc = mSelfShot->camera_device_open(module, id, hw_device);
+            return rc;
+        case MODE_PAGE_TURN:
+            rc = mPageturn->camera_device_open(module, id, hw_device);
+            return rc;
+#endif
         default:
 
             HAL_LOGE("cameraId:%d not supported yet!", atoi(id));
@@ -104,6 +124,19 @@ int SprdCamera3Wrapper::getCameraInfo(__unused int camera_id, struct camera_info
         case MODE_3D_PREVIEW:
             rc = mStereoPreview->get_camera_info(camera_id, info);
             return rc;
+#ifdef CONFIG_BLUR_SUPPORT
+        case MODE_BLUR:
+            rc = mBlur->get_camera_info(camera_id, info);
+            return rc;
+#endif
+#ifdef CONFIG_COVERED_SENSOR
+        case MODE_SELF_SHOT:
+            rc = mSelfShot->get_camera_info(camera_id, info);
+            return rc;
+        case MODE_PAGE_TURN:
+            rc = mPageturn->get_camera_info(camera_id, info);
+            return rc;
+#endif
         default:
 
             HAL_LOGE("cameraId:%d not supported yet!", camera_id);

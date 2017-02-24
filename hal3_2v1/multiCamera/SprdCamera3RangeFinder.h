@@ -249,7 +249,7 @@ public:
         uint8_t mMaxLocalBufferNum;
         List<buffer_handle_t*> mLocalBufferList;
         const native_handle_t* mNativeBuffer[MAX_FINDER_QEQUEST_BUF];
-        int allocateOne(int w,int h,uint32_t is_cache,new_mem_t*,const native_handle_t *& nBuf );
+        int allocateOne(int w,int h,uint32_t is_cache,new_mem_t *new_mem);
     private:
         bool mIommuEnabled;
         uw_Coordinate mCurUwcoods;

@@ -143,8 +143,7 @@ private:
     int getStreamType(camera3_stream_t *new_stream );
     void freeLocalBuffer(new_mem_t* pLocalBuffer);
     void freeLocalCapBuffer(new_mem_t* pLocalCapBuffer);
-    int allocateOne(int w,int h,uint32_t is_cache,new_mem_t*,const native_handle_t *& nBuf );
-    int allocateCapBuff(int w,int h,uint32_t is_cache,new_mem_t*,const native_handle_t *& nBuf );
+    int allocateOne(int w,int h,uint32_t is_cache,new_mem_t *new_mem);
     int validateCaptureRequest(camera3_capture_request_t *request);
     void saveRequest(camera3_capture_request_t *request,uint32_t showPreviewDeviceId);
     int pushRequestList( buffer_handle_t *request,List <buffer_handle_t*>&);

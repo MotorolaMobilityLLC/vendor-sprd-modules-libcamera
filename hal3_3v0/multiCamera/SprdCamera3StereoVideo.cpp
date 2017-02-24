@@ -169,9 +169,9 @@ void SprdCamera3StereoVideo::freeLocalBuffer(new_mem_t* LocalBuffer, List<buffer
     bufferList.clear();
     if(LocalBuffer != NULL){
     for(int i = 0; i < bufferNum; i++){
-        if(LocalBuffer[i].buffer != NULL){
-            delete ((private_handle_t*)*(LocalBuffer[i].buffer));
-            LocalBuffer[i].buffer = NULL;
+        if(LocalBuffer[i].native_handle != NULL){
+            delete ((private_handle_t*)*(&(LocalBuffer[i].native_handle)));
+            LocalBuffer[i].native_handle = NULL;
         }
         if(LocalBuffer[i].pHeapIon != NULL){
             delete LocalBuffer[i].pHeapIon;
@@ -513,7 +513,7 @@ void SprdCamera3StereoVideo::notifyAux(const struct camera3_callback_ops *ops, c
  *
  * RETURN     :
  *==========================================================================*/
-int SprdCamera3StereoVideo::allocateOne(int w,int h, uint32_t is_cache,new_mem_t *new_mem,const native_handle_t *& nBuf )
+int SprdCamera3StereoVideo::allocateOne(int w,int h, uint32_t is_cache,new_mem_t *new_mem)
 {
 
     int result = 0;
@@ -572,8 +572,7 @@ int SprdCamera3StereoVideo::allocateOne(int w,int h, uint32_t is_cache,new_mem_t
     buffer->internalWidth = w;
     buffer->internalHeight = h;
 
-    nBuf = buffer;
-    new_mem->buffer = &nBuf;
+    new_mem->native_handle = buffer;
     new_mem->pHeapIon = pHeapIon;
 
     HAL_LOGD("X");
@@ -1764,7 +1763,7 @@ int SprdCamera3StereoVideo::initialize(const camera3_callback_ops_t *callback_op
     mVideoSize.stereoVideoHeight = 0;
     mWaitFrameNumber = 0;
     mHasSendFrameNumber = 0;
-    mPreviewLocalBuffer.buffer  = NULL;
+    mPreviewLocalBuffer.native_handle  = NULL;
     mPreviewLocalBuffer.pHeapIon = NULL;
     mFirstConfig = false;
     mFirstFrameNum = 0;
@@ -1854,12 +1853,12 @@ int SprdCamera3StereoVideo::configureStreams(const struct camera3_device *device
                 get3DVideoSize( &mVideoSize.stereoVideoWidth, &mVideoSize.stereoVideoHeight);
                 for(size_t j = 0; j < mMaxLocalBufferNum; ){
                     int tmp = allocateOne(mVideoSize.stereoVideoWidth,mVideoSize.stereoVideoHeight,\
-                            1,&(mVideoLocalBuffer[j]),mVideoNativeBuffer[j]);
+                            1,&(mVideoLocalBuffer[j]));
                     if(tmp < 0){
                         HAL_LOGE("request one buf failed.");
                         continue;
                     }
-                    mVideoLocalBufferList.push_back(mVideoLocalBuffer[j].buffer);
+                    mVideoLocalBufferList.push_back(&(mVideoLocalBuffer[j].native_handle));
                     j++;
                 }
             }
@@ -2155,14 +2154,14 @@ int SprdCamera3StereoVideo::processCaptureRequest(const struct camera3_device *d
                 mFirstFrameNum = request->frame_number;
                 mFirstShowPreviewDeviceId = mShowPreviewDeviceId;
                 int tmp = allocateOne(preview_width,preview_height,\
-                        1,&mPreviewLocalBuffer,mPreviewNativeBuffer);
+                        1,&mPreviewLocalBuffer);
                 if(tmp < 0){
                     HAL_LOGE("request preview buf failed.");
                 }
                 req_aux = *req;
                 camera3_stream_buffer_t out_streams_aux = *(req->output_buffers);
                 out_streams_aux.stream = &mAuxStreams[mPreviewStreamsNum];
-                out_streams_aux.buffer = mPreviewLocalBuffer.buffer;
+                out_streams_aux.buffer = &mPreviewLocalBuffer.native_handle;
                 out_streams_aux.acquire_fence = -1;
                 out_streams_aux.release_fence = -1;
                 req_aux.output_buffers = &out_streams_aux;
@@ -2189,13 +2188,13 @@ int SprdCamera3StereoVideo::processCaptureRequest(const struct camera3_device *d
                 mFirstFrameNum = request->frame_number;
                 mFirstShowPreviewDeviceId = mShowPreviewDeviceId;
                 int tmp = allocateOne(preview_width,preview_height,\
-                        1,&mPreviewLocalBuffer,mPreviewNativeBuffer);
+                        1,&mPreviewLocalBuffer);
                 if(tmp < 0){
                     HAL_LOGE("request preview buf failed.");
                 }
                 req_main = *req;
                 camera3_stream_buffer_t out_streams_main = *(req->output_buffers);
-                out_streams_main.buffer = mPreviewLocalBuffer.buffer;
+                out_streams_main.buffer = &mPreviewLocalBuffer.native_handle;
                 out_streams_main.acquire_fence = -1;
                 out_streams_main.release_fence = -1;
                 req_main.output_buffers = &out_streams_main;
@@ -2362,9 +2361,9 @@ void SprdCamera3StereoVideo::processCaptureResultMain( const camera3_capture_res
     HAL_LOGD("id = %d mIsRecording=%d num_output_buffers=%d",result->frame_number,isRecording,result->num_output_buffers);
     if(cur_frame_number == mFirstFrameNum && mFirstShowPreviewDeviceId == CAM_TYPE_AUX){
         if(result->output_buffers != NULL){
-            delete ((private_handle_t*)*(mPreviewLocalBuffer.buffer));
+            delete ((private_handle_t*)*(&mPreviewLocalBuffer.native_handle));
             delete mPreviewLocalBuffer.pHeapIon;
-            mPreviewLocalBuffer.buffer = NULL;
+            mPreviewLocalBuffer.native_handle = NULL;
             mPreviewLocalBuffer.pHeapIon = NULL;
             HAL_LOGD("first frame is from aux device,free main buffer");
         }
@@ -2536,9 +2535,9 @@ void SprdCamera3StereoVideo::processCaptureResultAux( const camera3_capture_resu
     if(!isRecording){
         if(cur_frame_number == mFirstFrameNum && mFirstShowPreviewDeviceId == CAM_TYPE_MAIN){
             if(result->output_buffers != NULL){
-                delete ((private_handle_t*)*(mPreviewLocalBuffer.buffer));
+                delete ((private_handle_t*)*(&mPreviewLocalBuffer.native_handle));
                 delete mPreviewLocalBuffer.pHeapIon;
-                mPreviewLocalBuffer.buffer = NULL;
+                mPreviewLocalBuffer.native_handle = NULL;
                 mPreviewLocalBuffer.pHeapIon = NULL;
                 HAL_LOGD("first frame is from main device,free aux buffer");
             }

@@ -556,17 +556,16 @@ cmr_int snp_scale_cb_handle(cmr_handle snp_handle, void *data)
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct snp_context             *cxt = (struct snp_context*)snp_handle;
 	struct img_frm                 *scale_out_ptr = (struct img_frm*)data;
-	if (cxt->req_param.lls_shot_mode || cxt->req_param.is_vendor_hdr || cxt->req_param.is_pipviv_mode || cxt->req_param.is_3dcalibration_mode/**add for 3d calibration*/) {
-		/**modified for 3d calibration begin   */
-		if (cxt->req_param.is_3dcalibration_mode)
-		{
+	if (cxt->req_param.lls_shot_mode ||
+	    cxt->req_param.is_vendor_hdr ||
+	    cxt->req_param.is_pipviv_mode ||
+	    cxt->req_param.is_3dcalibration_mode ||
+	    cxt->req_param.is_yuv_callback_mode) {
+		if (cxt->req_param.is_3dcalibration_mode || cxt->req_param.is_yuv_callback_mode) {
 			ret = snp_yuv_callback_take_picture_done(snp_handle, &cxt->cur_frame_info);
-		}
-		else
-		{
+		} else {
 			ret = snp_take_picture_done(snp_handle, &cxt->cur_frame_info);
 		}
-		/**modified for 3d calibration end   */
 		snp_post_proc_done(snp_handle);
 		return ret;
 	}
@@ -4036,7 +4035,8 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data)
 	if (cxt->req_param.lls_shot_mode ||
 	    cxt->req_param.is_vendor_hdr ||
 	    cxt->req_param.is_pipviv_mode ||
-	    cxt->req_param.is_3dcalibration_mode/**add for 3d calibration*/) {
+	    cxt->req_param.is_3dcalibration_mode ||
+	    cxt->req_param.is_yuv_callback_mode) {
 		if (chn_param_ptr->is_rot) {
 			CMR_LOGI("need rotate");
 			ret = snp_start_rot(snp_handle, data);
@@ -4054,16 +4054,11 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data)
 				goto exit;
 			}
 		} else {
-			/**modified for 3d calibration begin   */
-			if (cxt->req_param.is_3dcalibration_mode)
-			{
+			if (cxt->req_param.is_3dcalibration_mode || cxt->req_param.is_yuv_callback_mode) {
 				ret = snp_yuv_callback_take_picture_done(snp_handle, chn_data_ptr);
-			}
-			else
-			{
+			} else {
 				ret = snp_take_picture_done(snp_handle, chn_data_ptr);
 			}
-			/**modified for 3d calibration end   */
 			snp_post_proc_done(snp_handle);
 			CMR_LOGV("is_pipviv_mode %d chn_data_ptr %p",cxt->req_param.is_pipviv_mode,chn_data_ptr);
 		}

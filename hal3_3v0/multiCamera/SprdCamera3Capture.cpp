@@ -481,7 +481,7 @@ void SprdCamera3Capture::notifyAux(const struct camera3_callback_ops *ops, const
  *
  * RETURN     :
  *==========================================================================*/
-int SprdCamera3Capture::allocateOne(int w,int h, uint32_t is_cache,new_mem_t *new_mem,const native_handle_t *& nBuf )
+int SprdCamera3Capture::allocateOne(int w,int h, uint32_t is_cache,new_mem_t *new_mem)
 {
 
     int result = 0;
@@ -539,8 +539,7 @@ int SprdCamera3Capture::allocateOne(int w,int h, uint32_t is_cache,new_mem_t *ne
     buffer->internalWidth = w;
     buffer->internalHeight = h;
 
-    nBuf = buffer;
-    new_mem->buffer = &nBuf;
+    new_mem->native_handle = buffer;
     new_mem->pHeapIon = pHeapIon;
 
     HAL_LOGD("fd=0x%x, size=%zu, heap=%p", buffer->share_fd, mem_size, pHeapIon);
@@ -567,9 +566,9 @@ getpmem_fail:
 void SprdCamera3Capture::freeLocalBuffer(new_mem_t* pLocalBuffer)
 {
     for(size_t i = 0; i < MAX_QEQUEST_BUF; i++){
-        if(pLocalBuffer[i].buffer != NULL){
-            delete ((private_handle_t*)*(pLocalBuffer[i].buffer));
-            pLocalBuffer[i].buffer = NULL;
+        if(pLocalBuffer[i].native_handle != NULL){
+            delete ((private_handle_t*)*(&(pLocalBuffer[i].native_handle)));
+            pLocalBuffer[i].native_handle = NULL;
         }
         if(pLocalBuffer[i].pHeapIon != NULL){
             HAL_LOGD("fd=0x%x, heap=%p", pLocalBuffer[i].pHeapIon->getHeapID(), pLocalBuffer[i].pHeapIon);
@@ -592,9 +591,9 @@ void SprdCamera3Capture::freeLocalBuffer(new_mem_t* pLocalBuffer)
 void SprdCamera3Capture::freeLocalCapBuffer(new_mem_t* pLocalCapBuffer)
 {
     for(size_t i = 0; i < LOCAL_CAPBUFF_NUM; i++){
-        if(pLocalCapBuffer[i].buffer != NULL){
-            delete ((private_handle_t*)*(pLocalCapBuffer[i].buffer));
-            pLocalCapBuffer[i].buffer = NULL;
+        if(pLocalCapBuffer[i].native_handle != NULL){
+            delete ((private_handle_t*)*(&(pLocalCapBuffer[i].native_handle)));
+            pLocalCapBuffer[i].native_handle = NULL;
         }
         if(pLocalCapBuffer[i].pHeapIon != NULL){
             HAL_LOGD("fd=0x%x, heap=%p", pLocalCapBuffer[i].pHeapIon->getHeapID(), pLocalCapBuffer[i].pHeapIon);
@@ -1457,7 +1456,7 @@ int SprdCamera3Capture::CaptureThread::combineTwoPicture(buffer_handle_t *&outpu
     }
     HAL_LOGD("combine two picture:%p, %p", input_buf1, input_buf2);
 
-    output_buf = mCapture->mLocalCapBuffer[mCaptureStreamsNum].buffer;
+    output_buf = &(mCapture->mLocalCapBuffer[mCaptureStreamsNum].native_handle);
     dcam_info_t dcam;
 
     dcam.left_buf = (struct private_handle_t *)*input_buf1;
@@ -1694,12 +1693,12 @@ int SprdCamera3Capture::configureStreams(const struct camera3_device *device,cam
                 freeLocalBuffer(mLocalBuffer);
 
                 for(size_t j = 0; j < MAX_QEQUEST_BUF; j++){
-                    int tmp = allocateOne(w,h,1,&(mLocalBuffer[j]),mNativeBuffer[j]);
+                    int tmp = allocateOne(w,h,1,&(mLocalBuffer[j]));
                     if(tmp < 0){
                         HAL_LOGE("request one buf failed.");
                         continue;
                     }
-                    mLocalBufferList.push_back(mLocalBuffer[j].buffer);
+                    mLocalBufferList.push_back(&mLocalBuffer[j].native_handle);
                 }
             }
             mLastWidth = w;
@@ -1716,12 +1715,12 @@ int SprdCamera3Capture::configureStreams(const struct camera3_device *device,cam
                 freeLocalCapBuffer(mLocalCapBuffer);
 
                 for(size_t j = 0; j < LOCAL_CAPBUFF_NUM-1; j++){
-                    if(0 > allocateOne(mCaptureThread->m3DCaptureWidth,mCaptureThread->m3DCaptureHeight,1,&(mLocalCapBuffer[j]),mNativeCapBuffer[j])){
+                    if(0 > allocateOne(mCaptureThread->m3DCaptureWidth,mCaptureThread->m3DCaptureHeight,1,&(mLocalCapBuffer[j]))){
                         HAL_LOGE("request one buf failed.");
                         continue;
                     }
                 }
-                if(0 > allocateOne(w,h,1,&(mLocalCapBuffer[stream_list->num_streams]),mNativeCapBuffer[stream_list->num_streams])){
+                if(0 > allocateOne(w,h,1,&(mLocalCapBuffer[stream_list->num_streams]))){
                     HAL_LOGE("request one buf failed.");
                     continue;
                 }
@@ -1977,7 +1976,7 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
             out_streams_main[i].stream = &mCaptureThread->mMainStreams[mCaptureThread->mCaptureStreamsNum];
             out_streams_main[i].stream->width =mCaptureThread->m3DCaptureWidth;
             out_streams_main[i].stream->height=mCaptureThread->m3DCaptureHeight;
-            out_streams_main[i].buffer = mLocalCapBuffer[0].buffer;
+            out_streams_main[i].buffer = &mLocalCapBuffer[0].native_handle;
             HAL_LOGD("[caputre]start.caputre frame num=%d",request->frame_number);
             HAL_LOGD("newtype:%d, rotation:%d", out_streams_main[i].stream->format, out_streams_main[i].stream->rotation);
 
@@ -2013,7 +2012,7 @@ int SprdCamera3Capture::processCaptureRequest(const struct camera3_device *devic
         if(getStreamType(new_stream) == SNAPSHOT_STREAM) {
             req_aux.settings = mCaptureThread->mSavedCapReqsettings;
             out_streams_aux[i] = req->output_buffers[i];
-            out_streams_aux[i].buffer = mLocalCapBuffer[1].buffer;
+            out_streams_aux[i].buffer = &mLocalCapBuffer[1].native_handle;
             out_streams_aux[i].stream = &mCaptureThread->mAuxStreams[mCaptureThread->mCaptureStreamsNum];
             out_streams_aux[i].stream->width =mCaptureThread->m3DCaptureWidth;
             out_streams_aux[i].stream->height=mCaptureThread->m3DCaptureHeight;

@@ -964,7 +964,7 @@ SprdCamera3RangeFinder::MeasureThread::~MeasureThread()
  *
  * RETURN     :
  *==========================================================================*/
-int SprdCamera3RangeFinder::MeasureThread::allocateOne(int w,int h, uint32_t is_cache,new_mem_t *new_mem,const native_handle_t *& nBuf )
+int SprdCamera3RangeFinder::MeasureThread::allocateOne(int w,int h, uint32_t is_cache,new_mem_t *new_mem)
 {
 
     int result = 0;
@@ -1013,8 +1013,7 @@ int SprdCamera3RangeFinder::MeasureThread::allocateOne(int w,int h, uint32_t is_
     buffer->internalWidth = w;
     buffer->internalHeight = h;
 
-    nBuf = buffer;
-    new_mem->buffer = &nBuf;
+    new_mem->native_handle = buffer;
     new_mem->pHeapIon = pHeapIon;
 
     HAL_LOGD("X");
@@ -1062,10 +1061,10 @@ void SprdCamera3RangeFinder::MeasureThread::freeLocalBuffer(new_mem_t* mLocalBuf
 
     mLocalBufferList.clear();
     for(size_t i = 0; i < mMaxLocalBufferNum; i++){
-        if(mLocalBuffer[i].buffer != NULL){
-            delete ((private_handle_t*)*(mLocalBuffer[i].buffer));
+        if(mLocalBuffer[i].native_handle != NULL){
+            delete ((private_handle_t*)*(&(mLocalBuffer[i].native_handle)));
             delete mLocalBuffer[i].pHeapIon;
-            *(mLocalBuffer[i].buffer) = NULL;
+            mLocalBuffer[i].native_handle = NULL;
         }
     }
     free(mLocalBuffer);
@@ -1640,12 +1639,12 @@ int SprdCamera3RangeFinder::configureStreams(const struct camera3_device *device
         getDepthImageSize(w,h,&mDepthWidth,&mDepthHeight);
         for(size_t j = 0; j < mMeasureThread->mMaxLocalBufferNum; ){
             int tmp = mMeasureThread->allocateOne(mDepthWidth,mDepthHeight,\
-                            1,&(mMeasureThread->mLocalBuffer[j]),mMeasureThread->mNativeBuffer[j]);
+                            1,&(mMeasureThread->mLocalBuffer[j]));
             if(tmp < 0){
                 HAL_LOGE("request one buf failed.");
                 continue;
             }
-            mMeasureThread->mLocalBufferList.push_back(mMeasureThread->mLocalBuffer[j].buffer);
+            mMeasureThread->mLocalBufferList.push_back(&mMeasureThread->mLocalBuffer[j].native_handle);
             j++;
         }
         mLastWidth = w;

@@ -44,12 +44,16 @@ typedef enum sprd_camera_ext_tags{
         ANDROID_SPRD_AF_MODE_MACRO_FIXED,
         ANDROID_SPRD_VCM_STEP,
         ANDROID_SPRD_OTP_DATA,
-        ANDROID_SPRD_3DCALIBRATION_ENABLED,/**add for 3d calibration enable flag*/
-        ANDROID_SPRD_3DCALIBRATION_CAPTURE_SIZE,/**add for 3d calibration capture size*/
+        ANDROID_SPRD_3DCALIBRATION_ENABLED,
+        ANDROID_SPRD_3DCALIBRATION_CAPTURE_SIZE,
         ANDROID_SPRD_BURSTMODE_ENABLED,
         ANDROID_SPRD_3D_RANGEFINDER_DISTANCE,
         ANDROID_SPRD_3D_RANGEFINDER_POINTS,
         ANDROID_SPRD_MULTI_CAM3_PREVIEW_ID,
+        ANDROID_SPRD_BLUR_F_NUMBER,
+        ANDROID_SPRD_BLUR_COVERED,
+        ANDROID_SPRD_AVAILABLE_SENSOR_SELF_SHOT,
+        ANDROID_SPRD_BLUR_CIRCLE_SIZE,
         VENDOR_SECTION_END,
         /*not parameter but only flag between framework and hal*/
         /*sprd add flag end*/

@@ -160,7 +160,7 @@ struct preview_param {
 	cmr_u32                  sprd_eis_enabled;
 	cmr_u32                  isp_to_dram;
 	cmr_u32                  video_snapshot_type;
-	cmr_u32                  sprd_3dcalibration_enabled;/**add for 3d calibration*/
+	cmr_u32                  sprd_3dcalibration_enabled;
 };
 
 struct preview_out_param {

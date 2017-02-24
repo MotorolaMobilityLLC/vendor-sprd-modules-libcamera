@@ -241,9 +241,10 @@ int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
         ALOGE("Allocation of hardware interface failed");
         return NO_MEMORY;
     }
-    if (hw->isMultiCameraMode(camera_id))
+    HAL_LOGD("camera_id %d",camera_id);
+    if (hw->isMultiCameraMode(camera_id)) {
         hw->setMultiCameraMode((multiCameraMode)camera_id);
-
+    }
     rc = hw->openCamera(hw_device);
     if (rc != 0) {
         delete hw;
@@ -303,7 +304,10 @@ bool SprdCamera3Factory::isSingleIdExposeOnMultiCameraMode(int cameraId)
     if ((MODE_3D_VIDEO == cameraId) ||
         (MODE_RANGE_FINDER == cameraId) ||
         (MODE_3D_CAPTURE == cameraId) ||
-        (MODE_3D_PREVIEW== cameraId)) {
+        (MODE_3D_PREVIEW == cameraId) ||
+        (MODE_BLUR == cameraId) ||
+        (MODE_SELF_SHOT == cameraId) ||
+        (MODE_PAGE_TURN == cameraId)) {
         return true;
     } else if (MODE_REFOCUS == cameraId || (MODE_3D_CALIBRATION == cameraId)) {
         return false;

@@ -60,18 +60,7 @@ typedef struct {
 } stream_info_t;
 
 #define MIN_MULTI_CAMERA_FAKE_ID   5
-#define MAX_MULTI_CAMERA_FAKE_ID   15
-
-typedef enum {
-	MODE_SINGLE_CAMERA = 0,
-	MODE_3D_VIDEO = 5,       //Camera2 apk open  camera id is MODE_3D_VIDEO,camera hal transform to open physics Camera id is 1 and 3
-	MODE_RANGE_FINDER,     //Camera2 apk open  camera id is MODE_RANGE_FINDER,camera hal transform to open physics Camera id is 1 and 3
-	MODE_3D_CAPTURE,        //Camera2 apk open  camera id is MODE_3D_CAPTURE,camera hal transform to open physics Camera id is 1 and 3
-	MODE_3D_CALIBRATION = 8, //ValidationTools apk open  camera id is MODE_3D_CALIBRATION and 3 ,camera hal transform to open physics Camera id is 1 and 3
-	MODE_REFOCUS = 9,             //Camera2 apk open  camera id is MODE_REFOCUS and 2 ,camera hal transform to open physics Camera id is 0 and 2
-	MODE_3D_PREVIEW = 10,       //Camera2 apk open  camera id is MODE_3D_PREVIEW,camera hal transform to open physics Camera id is 1 and 3
-	MODE_MAX
-}multiCameraMode;
+#define MAX_MULTI_CAMERA_FAKE_ID   50
 
 class SprdCamera3HWI {
 public:
@@ -116,6 +105,7 @@ public:
 	void setMultiCameraMode(multiCameraMode multiCameraModeId);
 	static bool isMultiCameraMode(int cameraId);
 	void setSprdCameraLowpower(int flag);
+	int getCoveredValue(uint32_t* value);
 private:
 	int openCamera();
 	int closeCamera();
@@ -126,7 +116,6 @@ private:
 	int32_t checkStreamSizeAndFormat(camera3_stream_t* new_stream);
 	void flushRequest(uint32_t frame_num);
 	void getLogLevel();
-	void setPropForMultiCameraMode(multiCameraMode multiCameraModeId);
 
 public:
 	SprdCamera3Setting *mSetting;

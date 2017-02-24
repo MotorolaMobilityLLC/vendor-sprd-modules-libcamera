@@ -1128,6 +1128,7 @@ enum camera_param_type{
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
 	CAMERA_PARAM_SPRD_BURSTMODE_ENABLED,
 #endif
+	CAMERA_PARAM_SPRD_YUV_CALLBACK_ENABLE,
 	CAMERA_PARAM_TYPE_MAX
 };
 
@@ -1231,6 +1232,31 @@ struct cmr_focus_param {
 	struct img_rect           zone[FOCUS_ZONE_CNT_MAX];
 };
 
+typedef enum {
+	MODE_SINGLE_CAMERA = 0,
+	MODE_3D_VIDEO = 5,       //Camera2 apk open  camera id is MODE_3D_VIDEO,camera hal transform to open physics Camera id is 1 and 3
+	MODE_RANGE_FINDER,     //Camera2 apk open  camera id is MODE_RANGE_FINDER,camera hal transform to open physics Camera id is 1 and 3
+	MODE_3D_CAPTURE,        //Camera2 apk open  camera id is MODE_3D_CAPTURE,camera hal transform to open physics Camera id is 1 and 3
+	MODE_3D_CALIBRATION = 8, //ValidationTools apk open  camera id is MODE_3D_CALIBRATION and 3 ,camera hal transform to open physics Camera id is 1 and 3
+	MODE_REFOCUS = 9,             //Camera2 apk open  camera id is MODE_REFOCUS and 2 ,camera hal transform to open physics Camera id is 0 and 2
+	MODE_3D_PREVIEW = 10,       //Camera2 apk open  camera id is MODE_3D_PREVIEW,camera hal transform to open physics Camera id is 1 and 3
+	MODE_SOFY_OPTICAL_ZOOM = 11,
+	MODE_BLUR = 12,
+	MODE_SELF_SHOT = 13,       //Camera2 apk open  camera id is MODE_SELF_SHOT,camera hal transform to open physics Camera id is 1 and 2
+	MODE_PAGE_TURN = 14,       //Camera2 apk open  camera id is MODE_PAGE_TURN,camera hal transform to open physics Camera id is 2
+	MODE_CAMERA_MAX
+}multiCameraMode;
+
+typedef enum {
+	CAMERA_IOCTRL_SET_MULTI_CAMERAMODE = 0,
+	CAMERA_IOCTRL_GET_SENSOR_LUMA,
+	CAMERA_IOCTRL_CMD_MAX
+}cmr_ioctr_cmd;
+
+typedef enum {
+	/* covered camera device id*/
+	CAM_COVERED_ID = 2,
+}covered_camera_id;
 
 typedef void (*camera_cb_of_type)(enum camera_cb_type cb, const void *client_data, enum camera_func_type func, void  *parm4);
 
@@ -1376,7 +1402,7 @@ cmr_int (*camera_stop_capture)(cmr_handle camera_handle);
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
 cmr_int (*camera_pre_capture_set_buffer_size)(cmr_u32 camera_id, cmr_u16 width, cmr_u16 height);
 #endif
-
+cmr_int (*camera_ioctrl)(cmr_handle handle, int cmd, void *param);
 }oem_ops_t;
 
 typedef struct oem_module {

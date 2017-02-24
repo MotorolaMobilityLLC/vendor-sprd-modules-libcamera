@@ -70,6 +70,12 @@ enum oem_ev_level {
                                                                 return CMR_CAMERA_INVALID_PARAM; \
                                                             } \
                                                      } while(0)
+
+#define CONVERED_CAMERA_INIT \
+                                                     ((cxt->camera_id == CAM_COVERED_ID &&\
+                                                     (is_multi_camera_mode_oem == MODE_BLUR ||\
+                                                     is_multi_camera_mode_oem == MODE_SELF_SHOT ||\
+                                                     is_multi_camera_mode_oem == MODE_PAGE_TURN)))
 /**********************************************************************************************/
 
 static uint32_t                                      is_support_reload = 0;
@@ -77,6 +83,7 @@ static uint32_t                                      is_dual_capture = 0;
 static pthread_mutex_t  close_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t   close_cond = PTHREAD_COND_INITIALIZER;
 static uint32_t closing = 0;
+static multiCameraMode is_multi_camera_mode_oem;
 
 /************************************internal interface ***************************************/
 static void camera_send_channel_data(cmr_handle oem_handle, cmr_handle receiver_handle, cmr_uint evt, void *data);
@@ -2853,7 +2860,6 @@ cmr_int camera_isp_init(cmr_handle oem_handle)
 	struct isp_video_limit          isp_limit;
 	SENSOR_VAL_T                    val;
 	struct sensor_pdaf_info         pdaf_info;
-	char                            value[PROPERTY_VALUE_MAX];
 	struct grab_context               *grab_cxt = NULL;
 	struct cmr_grab                     *p_grab = NULL;
 #if defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4)
@@ -3019,10 +3025,6 @@ cmr_int camera_isp_init(cmr_handle oem_handle)
 		isp_param.ex_info.af_supported = 0;
 
 #ifdef CONFIG_CAMERA_DUAL_SYNC
-
-	property_get("sys.cam.multi.camera.mode", value, "0");
-	cxt->is_multi_mode = atoi(value);//TBD
-	CMR_LOGI("is_multi_mode %d", cxt->is_multi_mode);
 
 	isp_param.is_refocus = cxt->is_multi_mode;
 	if ((CAMERA_ID_0 == cxt->camera_id || CAMERA_ID_1 == cxt->camera_id) && cxt->is_multi_mode) {
@@ -3872,6 +3874,17 @@ static cmr_int camera_res_init_internal(cmr_handle oem_handle)
 	cmr_int                   ret = CMR_CAMERA_SUCCESS;
 
 	CMR_PRINT_TIME;
+	struct camera_context     *cxt = (struct camera_context*)oem_handle;
+
+	/*for multicamera mode,when open convered sensor,only need to init setting*/
+	if (CONVERED_CAMERA_INIT) {
+		ret = camera_setting_init(oem_handle);
+		if (ret) {
+			CMR_LOGE("failed to init setting %ld", ret);
+		}
+		goto exit;
+	}
+
 	ret = camera_ipm_init(oem_handle);
 	if (ret) {
 		CMR_LOGE("failed to init ipm %ld", ret);
@@ -3943,6 +3956,15 @@ static cmr_int camera_res_deinit_internal(cmr_handle oem_handle)
 	ATRACE_BEGIN(__FUNCTION__);
 
 	CMR_LOGI("In");
+	struct camera_context      *cxt = (struct camera_context*)oem_handle;
+
+	/*for multicamera mode,when close convered sensor,only need to deinit setting*/
+	if (CONVERED_CAMERA_INIT) {
+		camera_setting_deinit(oem_handle);
+		camera_deinit_thread(oem_handle);
+		goto exit;
+	}
+
 	camera_snapshot_deinit(oem_handle);
 
 	camera_preview_deinit(oem_handle);
@@ -3962,6 +3984,9 @@ static cmr_int camera_res_deinit_internal(cmr_handle oem_handle)
 	camera_ipm_deinit(oem_handle);
 
 	camera_deinit_thread(oem_handle);
+
+exit:
+
 	CMR_LOGI("Out");
 
 	ATRACE_END();
@@ -4109,7 +4134,25 @@ cmr_int camera_init_internal(cmr_handle  oem_handle, cmr_uint is_autotest)
 		pthread_cond_wait(&close_cond, &close_mutex);
 	}
 	pthread_mutex_unlock(&close_mutex);
+	struct camera_context           *cxt = (struct camera_context*)oem_handle;
+
 	CMR_LOGI("E");
+	/*for multicamera mode,when open convered sensor,only need to init sensor and res*/
+	if (CONVERED_CAMERA_INIT) {
+		ret = camera_sensor_init(oem_handle, is_autotest);
+		if (ret) {
+			CMR_LOGE("failed to init sensor %ld", ret);
+			goto exit;
+		}
+		ret = camera_res_init(oem_handle);
+		if (ret) {
+			CMR_LOGE("failed to init res %ld", ret);
+			goto grab_deinit;
+		}
+		ret = camera_res_init_done(oem_handle);
+		goto exit;
+	}
+
 	ret = camera_sensor_init(oem_handle, is_autotest);
 	if (ret) {
 		CMR_LOGE("failed to init sensor %ld", ret);
@@ -4169,6 +4212,21 @@ cmr_int camera_deinit_internal(cmr_handle  oem_handle)
 	closing++;
 	pthread_mutex_unlock(&close_mutex);
 	CMR_LOGI("E");
+	struct camera_context           *cxt = (struct camera_context*)oem_handle;
+
+	/*for multicamera mode,when close convered sensor,only need to deinit sensor and res*/
+	if (CONVERED_CAMERA_INIT) {
+		camera_res_deinit(oem_handle);
+		camera_sensor_deinit(oem_handle);
+		pthread_mutex_lock(&close_mutex);
+		closing--;
+		if (closing==0) {
+			pthread_cond_signal(&close_cond);
+		}
+		pthread_mutex_unlock(&close_mutex);
+		goto exit;
+	}
+
 	camera_isp_deinit_notice(oem_handle);
 	camera_isp_deinit(oem_handle);
 	camera_res_deinit(oem_handle);
@@ -4180,6 +4238,9 @@ cmr_int camera_deinit_internal(cmr_handle  oem_handle)
 		pthread_cond_signal(&close_cond);
 	}
 	pthread_mutex_unlock(&close_mutex);
+
+exit:
+
 	ATRACE_END();
 	CMR_LOGI("X");
 	return ret;
@@ -4192,7 +4253,6 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 	ATRACE_BEGIN(__FUNCTION__);
 
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
-	char multicameramode[PROPERTY_VALUE_MAX];
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 	struct jpeg_enc_in_param       enc_in_param;
 	cmr_uint                       stream_size;
@@ -4297,9 +4357,11 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 
 	if (1 != mean->is_thumb ) {
 #ifdef CONFIG_FACE_BEAUTY
-		property_get("sys.cam.multi.camera.mode", multicameramode, "0");
-		if(atoi(multicameramode) == 0)
+		if (cxt->is_multi_mode == MODE_SINGLE_CAMERA ||
+		    cxt->is_multi_mode == MODE_BLUR ||
+		    cxt->is_multi_mode == MODE_SELF_SHOT) {
 			camera_face_makeup(oem_handle, src);
+		}
 #endif
 
 		ret = jpeg_enc_start(&enc_in_param);
@@ -4330,7 +4392,6 @@ void camera_face_makeup(cmr_handle oem_handle, struct img_frm *src)
 	struct setting_context         *setting_cxt = &cxt->setting_cxt;
 	struct setting_cmd_parameter   setting_param;
 	setting_param.camera_id = cxt->camera_id;
-	char multicameramode[PROPERTY_VALUE_MAX];
 
 	cmr_int PerfectSkinLevel=0;
 	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_PERFECT_SKINLEVEL, &setting_param);
@@ -4376,8 +4437,7 @@ void camera_face_makeup(cmr_handle oem_handle, struct img_frm *src)
 			unsigned char *yBuf = (unsigned char *)(src->addr_vir.addr_y);
 			unsigned char *uvBuf = (unsigned char *)(src->addr_vir.addr_u) ;
 			unsigned char * tmpBuf = (unsigned char*)malloc(pic_width*pic_height* 3 / 2);
-			property_get("sys.cam.multi.camera.mode", multicameramode, "0");
-			if(atoi(multicameramode) == 0) {
+			if (cxt->is_multi_mode == MODE_SINGLE_CAMERA) {
 				yuvFormat = TSFB_FMT_NV12;
 			}
 
@@ -7018,19 +7078,23 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle, struct snapshot_param *
 	out_ptr->lls_shot_mode = cxt->lls_shot_mode;
 	out_ptr->is_vendor_hdr = cxt->is_vendor_hdr;
 	out_ptr->is_pipviv_mode = cxt->is_pipviv_mode;
-	out_ptr->is_3dcalibration_mode = cxt->is_3dcalibration_mode;/**add for 3d calibration*/
+	out_ptr->is_3dcalibration_mode = cxt->is_3dcalibration_mode;
 	setting_param.camera_id = cxt->camera_id;
 
-	/**add for 3d capture, use 3d calibration tag for call back yuv buffer begin*/
 	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_SPRD_3DCAL_ENABLE, &setting_param);
 	if (ret) {
-		CMR_LOGE("failed to get preview sprd eis enabled flag %ld", ret);
+		CMR_LOGE("failed to get 3dcal flag %ld", ret);
 		goto exit;
 	}
 	cxt->is_3dcalibration_mode = setting_param.cmd_type_value;
 	out_ptr->is_3dcalibration_mode = setting_param.cmd_type_value;
-	/**add for 3d capture, use 3d calibration tag for call back yuv buffer end*/
-
+	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_SPRD_YUV_CALLBACK_ENABLE, &setting_param);
+	if (ret) {
+		CMR_LOGE("failed to get yuv callback flag %ld", ret);
+		goto exit;
+	}
+	cxt->is_yuv_callback_mode = setting_param.cmd_type_value;
+	out_ptr->is_yuv_callback_mode = setting_param.cmd_type_value;
 	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_HDR, &setting_param);
 	if (ret) {
 		CMR_LOGE("failed to get envir %ld", ret);
@@ -7361,10 +7425,14 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id, cmr
 		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
 					id, &setting_param);
 		break;
-	case CAMERA_PARAM_SPRD_3DCAL_ENABLE:/**add for 3d calibration setting params begin*/
+	case CAMERA_PARAM_SPRD_3DCAL_ENABLE:
 		setting_param.cmd_type_value = param;
 		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);
-		break;/**add for 3d calibration setting params end*/
+		break;
+	case CAMERA_PARAM_SPRD_YUV_CALLBACK_ENABLE:
+		setting_param.cmd_type_value = param;
+		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);
+		break;
 	default:
 		CMR_LOGI("don't support %d", id);
 	}
@@ -7424,6 +7492,7 @@ cmr_int camera_local_int(cmr_u32 camera_id, camera_cb_of_type callback,
 	cxt->client_data = client_data;
 	cxt->hal_malloc = cb_of_malloc;
 	cxt->hal_free = cb_of_free;
+	cxt->is_multi_mode = is_multi_camera_mode_oem;
 
 	CMR_LOGI("create handle 0x%lx 0x%lx", (cmr_uint)cxt, (cmr_uint)cxt->client_data);
 	ret = camera_init_internal((cmr_handle)cxt, is_autotest);
@@ -9012,3 +9081,24 @@ cmr_int camera_local_stop_capture(cmr_handle oem_handle)
 exit:
 	return ret;
 }
+void camera_set_oem_multimode(multiCameraMode camera_mode)
+{
+	CMR_LOGD("camera_mode %d",camera_mode);
+	is_multi_camera_mode_oem = camera_mode;
+}
+
+cmr_int camera_local_get_cover(cmr_handle oem_handle, cmr_u32 *cover_value)
+{
+	cmr_int ret;
+	SENSOR_VAL_T                    val;
+	struct camera_context*          cxt = (struct camera_context*)oem_handle;
+
+	CMR_LOGD("E");
+	val.type = SENSOR_VAL_TYPE_GET_BV;
+	val.pval = cover_value;
+	ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_ACCESS_VAL, (cmr_uint)&val);
+
+	CMR_LOGD("done");
+	return ret;
+}
+

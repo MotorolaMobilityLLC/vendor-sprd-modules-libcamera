@@ -166,8 +166,8 @@ int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info)
 
 #ifdef CONFIG_CAMERA_AUTO_DETECT_SENSOR
     rc = SprdCamera3Setting::getSensorSizeInfo(camera_id);
-    if(rc < 0){
-	return rc;
+    if (rc < 0) {
+        return rc;
     }
 #endif
 
@@ -253,8 +253,9 @@ int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
         ALOGE("Allocation of hardware interface failed");
         return NO_MEMORY;
     }
-    if (hw->isMultiCameraMode(camera_id))
+    if (hw->isMultiCameraMode(camera_id)) {
         hw->setMultiCameraMode((multiCameraMode)camera_id);
+    }
 
     rc = hw->openCamera(hw_device);
     if (rc != 0) {
@@ -293,11 +294,11 @@ int SprdCamera3Factory::camera_device_open(
 #ifndef CONFIG_GPU_PLATFORM_ROGUE
     if(isSingleIdExposeOnMultiCameraMode(atoi(id))){
         return gSprdCamera3Wrapper->cameraDeviceOpen(module, id, hw_device);
-    }else{
+    } else {
         return gSprdCamera3Factory.cameraDeviceOpen(atoi(id), hw_device);
     }
 #else
-	return gSprdCamera3Factory.cameraDeviceOpen(atoi(id), hw_device);
+    return gSprdCamera3Factory.cameraDeviceOpen(atoi(id), hw_device);
 #endif
 }
 

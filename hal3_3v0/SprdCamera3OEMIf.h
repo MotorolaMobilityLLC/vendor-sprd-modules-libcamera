@@ -220,6 +220,7 @@ public:
 
 	void            setIspFlashMode(uint32_t mode);
 	void            matchZSLQueue(ZslBufferQueue frame);
+	void            setMultiCameraMode(multiCameraMode mode);
 #ifdef CONFIG_CAMERA_EIS
 	virtual void EisPreview_init();
 	virtual void EisVideo_init();
@@ -498,6 +499,7 @@ private:
 	static const int                kJpegBufferCount       = 1;
 	static const int                kRawFrameHeaderSize    = 0x0;
 	static const int                kISPB4awbCount         = 16;
+	static multiCameraMode          mMultiCameraMode;
 	static multi_camera_zsl_match_frame*    mMultiCameraMatchZsl;
 	Mutex                           mLock; // API lock -- all public methods
 	Mutex                           mPreviewCbLock;

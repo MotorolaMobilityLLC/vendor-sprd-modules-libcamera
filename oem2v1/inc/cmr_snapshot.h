@@ -175,7 +175,8 @@ struct snapshot_param {
 	cmr_u32                  lls_shot_mode;
 	cmr_u32                  is_vendor_hdr;
 	cmr_u32                  is_pipviv_mode;
-	cmr_u32                  is_3dcalibration_mode;/**add for 3d calibration*/
+	cmr_u32                  is_3dcalibration_mode;
+	cmr_u32                  is_yuv_callback_mode;
 };
 
 struct encode_cb_param {

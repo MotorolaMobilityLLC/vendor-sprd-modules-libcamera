@@ -334,8 +334,6 @@ int SprdCamera3HWI::openCamera(struct hw_device_t **hw_device)
 		return PERMISSION_DENIED;
 	}
 
-	setPropForMultiCameraMode(mMultiCameraMode);
-
 	ret = openCamera();
 	if (ret == 0) {
 		*hw_device = &mCameraDevice.common;
@@ -350,7 +348,6 @@ int SprdCamera3HWI::openCamera(struct hw_device_t **hw_device)
 #endif
 	} else
 		*hw_device = NULL;
-
 	HAL_LOGD("X mCameraSessionActive %d",mCameraSessionActive);
 	return ret;
 }
@@ -381,6 +378,7 @@ int SprdCamera3HWI::openCamera()
 		}
 		return NO_MEMORY;
 	}
+	mOEMIf->setMultiCameraMode(mMultiCameraMode);
 	ret = mOEMIf->openCamera();
 	if (NO_ERROR != ret) {
 		HAL_LOGE("camera_open failed.");
@@ -408,6 +406,10 @@ int SprdCamera3HWI::closeCamera()
 	int ret = NO_ERROR;
 
 	if (mOEMIf) {
+		if (mCameraSessionActive == 0) {
+			mMultiCameraMode = MODE_SINGLE_CAMERA;
+			mOEMIf->setMultiCameraMode(mMultiCameraMode);
+		}
 		mOEMIf->closeCamera();
 		delete mOEMIf;
 		mOEMIf = NULL;
@@ -1170,9 +1172,8 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 				} else if(capturePara.cap_intent == ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE
 					|| capturePara.cap_intent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT) {
 					/**add for 3d capture, set raw callback mode when stream format is 420_888 begin*/
-					if ((mMultiCameraMode == MODE_3D_CAPTURE || mMultiCameraMode == MODE_3D_CALIBRATION)&&
-					    stream->format == HAL_PIXEL_FORMAT_YCbCr_420_888)
-					{
+					if ((mMultiCameraMode == MODE_BLUR || mMultiCameraMode == MODE_3D_CAPTURE ||
+					    mMultiCameraMode == MODE_3D_CALIBRATION) && stream->format == HAL_PIXEL_FORMAT_YCbCr_420_888) {
 						HAL_LOGE("call back stream request!");
 						mOEMIf->setCallBackYuvMode(1);
 					}
@@ -1247,9 +1248,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 	/* For take picture channel request*/
 	if(mPictureRequest) {
 		/*refocus mode, need sync timestamp*/
-		char multicameramode[PROPERTY_VALUE_MAX];
-		property_get("sys.cam.multi.camera.mode", multicameramode, "0");
-		if( 2 == atoi(multicameramode) ){
+		if (MODE_REFOCUS == mMultiCameraMode) {
 			uint64_t currentTimestamp = getZslBufferTimestamp();
 			setZslBufferTimestamp(currentTimestamp);
 		}
@@ -1757,8 +1756,8 @@ int SprdCamera3HWI::close_camera_device(struct hw_device_t *device)
 	if (mCameraSessionActive > 0)
 		mCameraSessionActive--;
 	mMultiCameraMode = MODE_SINGLE_CAMERA;
-	property_set("sys.cam.multi.camera.mode", "0");
 	HAL_LOGI("X mCameraSessionActive %d", mCameraSessionActive);
+
 	return ret;
 }
 
@@ -1855,46 +1854,12 @@ void SprdCamera3HWI::setSprdCameraLowpower(int flag)
      mOEMIf->setSprdCameraLowpower(flag);
 }
 
-void SprdCamera3HWI::setPropForMultiCameraMode(multiCameraMode multiCameraModeId)
+int SprdCamera3HWI::getCoveredValue(uint32_t* value)
 {
-    int multiCameraMode = 0;
-    char value[PROPERTY_VALUE_MAX];
-    memset(value, 0, sizeof(value));
+	int rc = 0;
+	rc = mOEMIf->getCoveredValue(value);
 
-    switch(multiCameraModeId){
-        case MODE_3D_VIDEO:
-               multiCameraMode = 3;
-               break;
-        case MODE_RANGE_FINDER:
-               multiCameraMode = 4;
-               break;
-        case MODE_3D_CAPTURE:
-               multiCameraMode = 5;
-               break;
-        case MODE_REFOCUS:
-               multiCameraMode = 2;
-               break;
-        case MODE_3D_CALIBRATION:
-               multiCameraMode = 6;
-               break;
-	case MODE_3D_PREVIEW:
-               multiCameraMode = 7;
-               break;
-        default:
-		  break;
-    }
-    sprintf(&value[0], "%d", multiCameraMode);
-    //First open camera non multicameramode, set 	sys.cam.multi.camera.mode as 0, make sure the default value is 0
-    if (mCameraSessionActive == 0 && !(isMultiCameraMode(mMultiCameraMode))) {
-		property_set("sys.cam.multi.camera.mode", "0");
-    }
-    // Only multicameraId to set the sys.cam.multi.camera.mode value.
-    if (isMultiCameraMode(mMultiCameraMode)) {
-		 property_set("sys.cam.multi.camera.mode", value);
-    }
-    HAL_LOGI("multiCameraModeId:%d, multiCameraMode value:%s",multiCameraModeId, value);
-
-    return;
+	return rc;
 }
 
 };				//end namespace sprdcamera

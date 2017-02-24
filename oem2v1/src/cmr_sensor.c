@@ -1225,11 +1225,7 @@ cmr_int cmr_sns_ioctl(struct sensor_drv_context *sensor_cxt, cmr_uint cmd, cmr_u
 	}
 
 	func_tab_ptr = sensor_cxt->sensor_info_ptr->ioctl_func_tab_ptr;
-#ifdef __LP64__
-	temp = *(cmr_uint *) ((cmr_uint) func_tab_ptr + sns_cmd * S_BIT_3);
-#else
-	temp = *(cmr_uint *) ((cmr_uint) func_tab_ptr + sns_cmd * S_BIT_2);
-#endif
+	temp = *((cmr_uint*)func_tab_ptr + sns_cmd);
 	func_ptr = (SENSOR_IOCTL_FUNC_PTR) temp;
 
 	if (!module->otp_drv_info) {

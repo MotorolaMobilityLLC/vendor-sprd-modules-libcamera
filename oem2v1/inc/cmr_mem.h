@@ -65,6 +65,8 @@ int camera_arrange_capture_buf(struct cmr_cap_2_frm *cap_2_frm,
 						uint32_t image_cnt);
 uint32_t camera_get_aligned_size(uint32_t type, uint32_t size);
 
+void camera_set_mem_multimode(multiCameraMode camera_mode);
+
 #ifdef __cplusplus
 }
 #endif

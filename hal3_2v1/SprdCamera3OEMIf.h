@@ -204,6 +204,7 @@ public:
 	void setMultiCallBackYuvMode(bool mode);
 	int getMultiCameraMode(void);
 	void setSprdCameraLowpower(int flag);
+	int getCoveredValue(uint32_t* value);
 public:
 	static int      pre_alloc_cap_mem_thread_init(void *p_data);
 	static int      pre_alloc_cap_mem_thread_deinit(void *p_data);
@@ -216,6 +217,7 @@ public:
 
 	void            setIspFlashMode(uint32_t mode);
 	void            matchZSLQueue(ZslBufferQueue frame);
+	void            setMultiCameraMode(multiCameraMode mode);
 #ifdef CONFIG_CAMERA_EIS
 	virtual void EIS_init();
 	vsOutFrame processEIS(vsInFrame frame_in);
@@ -485,6 +487,7 @@ private:
 	static const int                kJpegBufferCount       = 1;
 	static const int                kRawFrameHeaderSize    = 0x0;
 	static const int                kISPB4awbCount         = 16;
+	static multiCameraMode          mMultiCameraMode;
 	static multi_camera_zsl_match_frame*    mMultiCameraMatchZsl;
 	Mutex                           mLock; // API lock -- all public methods
 	Mutex                           mPreviewCbLock;

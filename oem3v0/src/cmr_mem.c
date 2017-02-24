@@ -203,7 +203,7 @@ static const struct cap_size_to_mem reserve_mem_size_tab[IMG_SIZE_NUM] = {
 	{PIXEL_CP0_MEGA, (18 << 20)},
 	{PIXEL_DP0_MEGA, (20 << 20)}
 };
-
+static multiCameraMode is_multi_camera_mode_mem;
 extern int camera_get_is_noscale(void);
 
 static uint32_t get_jpeg_size(uint32_t width, uint32_t height, uint32_t thum_width, uint32_t thum_height);
@@ -476,22 +476,18 @@ int camera_pre_capture_buf_size(cmr_u32 camera_id,
 		else
 			*mem_size = yuv_mem_tab_ptr[mem_size_id].mem_size;
 	} else if (FRONT_CAMERA_ID == camera_id || DEV3_CAMERA_ID == camera_id) {
-        char multicameramode[PROPERTY_VALUE_MAX];
         int cameraMode = 0;
 
-        property_get("sys.cam.multi.camera.mode", multicameramode, "0");
-        cameraMode = atoi(multicameramode);
-        if(cameraMode == 3){
+        cameraMode = is_multi_camera_mode_mem;
+        if (cameraMode == MODE_3D_VIDEO) {
             CMR_LOGI("current mode is 3D video");
             mem_tab_ptr = (struct cap_size_to_mem*)&Stereo_video_mem_size_tab[0];
             yuv_mem_tab_ptr = (struct cap_size_to_mem*)&Stereo_video_mem_size_tab[0];
-        }
-        else if(cameraMode == 5){/**add for reducing mem size in 3D capture mode begin*/
+        } else if (cameraMode == MODE_3D_CAPTURE) {/**add for reducing mem size in 3D capture mode begin*/
             CMR_LOGI("current mode is 3D capture");
             mem_tab_ptr = (struct cap_size_to_mem*)&front_cam_mem_size_tab[0];
             yuv_mem_tab_ptr = (struct cap_size_to_mem*)&front_cam_mem_size_tab[0];
-        }/**add for reducing mem size in 3D capture mode end*/
-        else{
+        } else {
             mem_tab_ptr = (struct cap_size_to_mem*)&front_cam_raw_mem_size_tab[0];
             yuv_mem_tab_ptr = (struct cap_size_to_mem*)&front_cam_mem_size_tab[0];
         }
@@ -1391,4 +1387,10 @@ uint32_t camera_get_aligned_size(uint32_t type, uint32_t size)
 	}
 
 	return size_aligned;
+}
+
+void camera_set_mem_multimode(multiCameraMode camera_mode)
+{
+	CMR_LOGD("camera_mode %d",camera_mode);
+	is_multi_camera_mode_mem = camera_mode;
 }

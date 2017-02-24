@@ -267,9 +267,10 @@ struct camera_context {
 	cmr_u32                  is_pipviv_mode;
 	cmr_u32                  isp_to_dram;
 	cmr_int                  cap_cnt;
-	cmr_u32                  is_multi_mode;
+	multiCameraMode          is_multi_mode;
 	cmr_u32                  is_refocus_mode;
-	cmr_u32                  is_3dcalibration_mode;/**add for 3d calibration*/
+	cmr_u32                  is_3dcalibration_mode;
+	cmr_uint                 is_yuv_callback_mode;
 
 	/*memory func*/
 	camera_cb_of_malloc      hal_malloc;
@@ -383,6 +384,9 @@ cmr_int camera_local_set_cap_size(cmr_handle oem_handle, cmr_u32 is_reprocessing
 cmr_int camera_local_start_capture(cmr_handle oem_handle);
 cmr_int camera_local_stop_capture(cmr_handle oem_handle);
 
+void camera_set_oem_multimode(multiCameraMode camera_mode);
+
+cmr_int camera_local_get_cover(cmr_handle cmr_handle, cmr_u32 *cover_value);
 #ifdef __cplusplus
 }
 #endif

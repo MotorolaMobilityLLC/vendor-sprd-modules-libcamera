@@ -1019,6 +1019,26 @@ cmr_int camera_stop_multi_layer(cmr_handle camera_handle)
 	return 0;
 }
 
+cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param)
+{
+	cmr_int ret = 0;
+
+	switch (cmd) {
+	case CAMERA_IOCTRL_SET_MULTI_CAMERAMODE:
+		{
+			multiCameraMode *camera_mode = (multiCameraMode *)param;
+			CMR_LOGD("camera_mode %d",*camera_mode);
+			camera_set_mem_multimode(*camera_mode);
+			camera_set_oem_multimode(*camera_mode);
+			break;
+		}
+	default:
+		break;
+	}
+
+	return ret;
+}
+
 cmr_int camera_set_sensor_close_flag(cmr_handle camera_handle)
 {
 	camera_local_set_sensor_close_flag(camera_handle);
@@ -1089,8 +1109,9 @@ static oem_ops_t oem_module_ops = {
 	camera_get_sensor_vcm_step,
 	camera_stop_multi_layer,
 	camera_set_sensor_close_flag,
-	camera_set_reprocess_picture_size,/**add for 3d capture to reset reprocessing capture size*/
+	camera_set_reprocess_picture_size,
 	camera_pre_capture_set_buffer_size,
+	camera_ioctrl,
 };
 
 struct oem_module OEM_MODULE_INFO_SYM = {

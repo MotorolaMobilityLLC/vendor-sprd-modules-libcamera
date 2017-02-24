@@ -29,6 +29,7 @@
 #include "cmr_sensor.h"
 #include "SprdOEMCamera.h"
 #include "cmr_cvt.h"
+#include "cmr_oem.h"
 
 #undef YUV_TO_ISP
 /**************************MCARO DEFINITION********************************************************************/
@@ -6037,6 +6038,7 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
 	cmr_u32                  is_raw_capture = 0;
 	cmr_u32                  is_3D_video = 0;
 	cmr_u32                  is_3D_caputre = 0;
+	struct camera_context*   cxt = (struct camera_context*)(handle->oem_handle);
 
 	if (!sensor_info) {
 		CMR_LOGE("sn info is null!");
@@ -6048,10 +6050,9 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
 		is_raw_capture = 1;
 	}
 
-	property_get("sys.cam.multi.camera.mode", value, "0");
-	if (atoi(value) == 3) {
+	if (cxt->is_multi_mode == MODE_3D_VIDEO) {
 		is_3D_video = 1;
-	}else if (atoi(value) == 5) {
+	} else if (cxt->is_multi_mode == MODE_3D_CAPTURE) {
 		is_3D_caputre = 1;
 	}
 
@@ -6121,14 +6122,14 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
 	char                     value[PROPERTY_VALUE_MAX];
 	cmr_u32                  is_raw_capture = 0;
 	cmr_u32                  is_3D_video = 0;
+	struct camera_context*   cxt = (struct camera_context*)handle->oem_handle;
 
 	if (!sensor_info) {
 		CMR_LOGE("sn info is null!");
 		return CMR_CAMERA_FAIL;
 	}
 
-	property_get("sys.cam.multi.camera.mode", value, "0");
-	if (atoi(value) == 3) {
+	if (cxt->is_multi_mode == MODE_3D_VIDEO) {
 		is_3D_video = 1;
 	}
 
@@ -9876,6 +9877,7 @@ cmr_int prev_set_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 	struct buffer_cfg           buf_cfg;
 	cmr_uint                    rot_index = 0;
 	cmr_int                     zoom_post_proc = 0;
+	struct camera_context*      cxt = (struct camera_context*)(handle->oem_handle);
 
 	CHECK_HANDLE_VALID(handle);
 	CHECK_CAMERA_ID(camera_id);
@@ -9908,10 +9910,10 @@ cmr_int prev_set_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 		width     = prev_cxt->actual_pic_size.width;
 		height    = prev_cxt->actual_pic_size.height;
 	}
-    if (prev_cxt->is_reprocessing){
-        width = prev_cxt->cap_sn_size.width;
-        height = prev_cxt->cap_sn_size.height;
-    } 
+	if (prev_cxt->is_reprocessing && cxt->is_multi_mode == MODE_3D_CAPTURE) {
+	    width = prev_cxt->cap_sn_size.width;
+	    height = prev_cxt->cap_sn_size.height;
+	}
 	buffer_size = width * height;
 	frame_size = prev_cxt->cap_zsl_mem_size;
 
@@ -11552,6 +11554,7 @@ cmr_u32 prev_get_aligned_type(cmr_handle preview_handle, cmr_u32 camera_id)
 	char                    value[PROPERTY_VALUE_MAX];
 	cmr_u32                 is_raw_capture = 0;
 	cmr_u32                 is_3D_caputre = 0;
+	struct camera_context*  cxt = (struct camera_context*)handle->oem_handle;
 
 	CHECK_HANDLE_VALID(handle);
 	CHECK_CAMERA_ID(camera_id);
@@ -11561,8 +11564,7 @@ cmr_u32 prev_get_aligned_type(cmr_handle preview_handle, cmr_u32 camera_id)
 		is_raw_capture = 1;
 	}
 
-	property_get("sys.cam.multi.camera.mode", value, "0");
-	if (atoi(value) == 5) {
+	if (cxt->is_multi_mode == MODE_3D_CAPTURE) {
 		is_3D_caputre = 1;
 	}
 

@@ -163,9 +163,9 @@ void SprdCamera3StereoPreview::freeLocalBuffer(new_mem_t* LocalBuffer, List<buff
     bufferList.clear();
     if(LocalBuffer != NULL){
         for(int i = 0; i < bufferNum; i++){
-            if(LocalBuffer[i].buffer != NULL){
-                delete ((private_handle_t*)*(LocalBuffer[i].buffer));
-                LocalBuffer[i].buffer = NULL;
+            if(LocalBuffer[i].native_handle != NULL){
+                delete ((private_handle_t*)*(&(LocalBuffer[i].native_handle)));
+                LocalBuffer[i].native_handle = NULL;
             }
             if(LocalBuffer[i].pHeapIon != NULL){
                 delete LocalBuffer[i].pHeapIon;
@@ -486,7 +486,7 @@ void SprdCamera3StereoPreview::notifyAux(const struct camera3_callback_ops *ops,
  *
  * RETURN     :
  *==========================================================================*/
-int SprdCamera3StereoPreview::allocateOne(int w,int h, uint32_t is_cache,new_mem_t *new_mem, const native_handle_t* &nBuf )
+int SprdCamera3StereoPreview::allocateOne(int w,int h, uint32_t is_cache,new_mem_t *new_mem)
 {
     int result = 0;
     size_t mem_size = 0;
@@ -544,8 +544,7 @@ int SprdCamera3StereoPreview::allocateOne(int w,int h, uint32_t is_cache,new_mem
     buffer->internalWidth = w;
     buffer->internalHeight = h;
 
-    nBuf = buffer;
-    new_mem->buffer = &nBuf;
+    new_mem->native_handle = buffer;
     new_mem->pHeapIon = pHeapIon;
 
     HAL_LOGD("X");
@@ -1859,12 +1858,12 @@ int SprdCamera3StereoPreview::configureStreams(const struct camera3_device *devi
                 get3DPreviewSize( &mPreviewSize.stereoPreviewWidth, &mPreviewSize.stereoPreviewHeight);
                 for(size_t j = 0; j < mMaxLocalBufferNum; ){
                     int tmp = allocateOne(mPreviewSize.stereoPreviewWidth,mPreviewSize.stereoPreviewHeight,\
-                            1,&(mLocalBuffer[j]),mPreviewNativeBuffer[j]);
+                            1,&(mLocalBuffer[j]));
                     if(tmp < 0){
                         HAL_LOGE("request one buf failed.");
                         continue;
                     }
-                    mLocalBufferList.push_back(mLocalBuffer[j].buffer);
+                    mLocalBufferList.push_back(&(mLocalBuffer[j].native_handle));
                     j++;
                 }
             }

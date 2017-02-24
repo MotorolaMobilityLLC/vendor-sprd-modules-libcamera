@@ -45,7 +45,13 @@
 #include "SprdCamera3StereoPreview.h"
 #include "SprdCamera3RangeFinder.h"
 #include "SprdCamera3Capture.h"
-
+#ifdef CONFIG_BLUR_SUPPORT
+#include "SprdCamera3Blur.h"
+#endif
+#ifdef CONFIG_COVERED_SENSOR
+#include "SprdCamera3SelfShot.h"
+#include "SprdCamera3PageTurn.h"
+#endif
 
 namespace sprdcamera {
 
@@ -65,6 +71,13 @@ private:
 	SprdCamera3StereoPreview    *mStereoPreview;
 	SprdCamera3RangeFinder      *mRangeFinder;
 	SprdCamera3Capture          *mCapture;
+#ifdef CONFIG_BLUR_SUPPORT
+	SprdCamera3Blur             *mBlur;
+#endif
+#ifdef CONFIG_COVERED_SENSOR
+	SprdCamera3SelfShot         *mSelfShot;
+	SprdCamera3PageTurn         *mPageturn;
+#endif
 };
 
 

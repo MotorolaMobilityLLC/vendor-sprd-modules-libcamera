@@ -146,6 +146,7 @@ sprd_camera_memory_t* SprdCamera3OEMIf::mIspFirmwareReserved = NULL;
 uint32_t     		 SprdCamera3OEMIf::mIspFirmwareReserved_cnt = 0;
 bool			SprdCamera3OEMIf::mZslCaptureExitLoop = false;
 multi_camera_zsl_match_frame*		SprdCamera3OEMIf::mMultiCameraMatchZsl = NULL;
+multiCameraMode SprdCamera3OEMIf::mMultiCameraMode = MODE_SINGLE_CAMERA;
 
 static void writeCamInitTimeToApct(char *buf)
 {
@@ -234,8 +235,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mSprdPipVivEnabled(0),
 	mSprdHighIsoEnabled(0),
 	mSprdRefocusEnabled(0),
-	mSprd3dCalibrationEnabled(0),/**add for 3d calibration*/
-	mSprdYuvCallBack(0),/**add for 3d capture*/
+	mSprd3dCalibrationEnabled(0),
+	mSprdYuvCallBack(0),
 	mSprdMultiYuvCallBack(0),
 	mSprdReprocessing(0),
 	mNeededTimestamp(0),
@@ -1001,16 +1002,29 @@ int SprdCamera3OEMIf::zslTakePicture()
 	HAL_LOGI("JPEG thumbnail size = %d x %d", jpgInfo.thumbnail_size[0], jpgInfo.thumbnail_size[1]);
 	SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_SIZE, (cmr_uint)&jpeg_thumb_size);
 
-	/**add for 3d capture, set raw call back mode & reprocess capture size begin*/
-	if ((mSprdYuvCallBack) && (!mSprdReprocessing)) {
-		mSprd3dCalibrationEnabled = true;
-		SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DCAL_ENABLE, mSprd3dCalibrationEnabled);
-		HAL_LOGD("raw call back mode, force enable 3d cal");
+	if (mSprdYuvCallBack && (!mSprdReprocessing)) {
+		mSprdYuvCallBack = true;
+		if (getMultiCameraMode() == MODE_3D_CAPTURE) {
+			mSprd3dCalibrationEnabled = true;
+			SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DCAL_ENABLE, mSprd3dCalibrationEnabled);
+			HAL_LOGD("yuv call back mode, force enable 3d cal");
+		}
+
+		if (getMultiCameraMode() == MODE_BLUR) {
+			SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_YUV_CALLBACK_ENABLE, mSprdYuvCallBack);
+			HAL_LOGD("yuv call back mode");
+		}
 	} else {
-		mSprd3dCalibrationEnabled = sprddefInfo.sprd_3dcalibration_enabled;
-		SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DCAL_ENABLE, sprddefInfo.sprd_3dcalibration_enabled);
+		mSprdYuvCallBack = false;
+		if (getMultiCameraMode() == MODE_3D_CAPTURE) {
+			mSprd3dCalibrationEnabled = sprddefInfo.sprd_3dcalibration_enabled;
+			SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DCAL_ENABLE, sprddefInfo.sprd_3dcalibration_enabled);
+		}
+		if (getMultiCameraMode() == MODE_BLUR) {
+			SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_YUV_CALLBACK_ENABLE, mSprdYuvCallBack);
+			HAL_LOGD("reprocess mode, force enable reprocess");
+		}
 	}
-	/**add for 3d capture, set raw call back mode & reprocess capture size end*/
 
 #ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
 	if (sprddefInfo.capture_mode == 1) {
@@ -1330,17 +1344,11 @@ status_t SprdCamera3OEMIf::cancelAutoFocus()
 	return ret;
 }
 
-/**add for 3d capture, set 3d capture special mode begin   */
 int SprdCamera3OEMIf::getMultiCameraMode()
 {
-	char multicameramode[PROPERTY_VALUE_MAX];
-	int cameraMode = 0;
+	int mode = (int)mMultiCameraMode;
 
-	property_get("sys.cam.multi.camera.mode", multicameramode, "0");
-	cameraMode = atoi(multicameramode);
-
-	HAL_LOGD("cameraMode=%d ", cameraMode);
-	return cameraMode;
+	return mode;
 }
 
 void SprdCamera3OEMIf::setCallBackYuvMode(bool mode)
@@ -1374,7 +1382,16 @@ void SprdCamera3OEMIf::setCaptureReprocessMode(bool mode, uint32_t width, uint32
 	mHalOem->ops->camera_set_reprocess_picture_size(mCameraHandle, mSprdReprocessing, mCameraId, width, height);
 }
 
-/**add for 3d capture, set 3d capture special mode end   */
+int SprdCamera3OEMIf::getCoveredValue(uint32_t* value)
+{
+	int32_t ret = 0;
+
+	HAL_LOGD("E");
+	ret = mHalOem->ops->camera_ioctrl(mCameraHandle,CAMERA_IOCTRL_GET_SENSOR_LUMA,value);
+
+	return ret;
+}
+
 status_t SprdCamera3OEMIf::setAePrecaptureSta(uint8_t state)
 {
 	status_t ret = 0;
@@ -1386,6 +1403,15 @@ status_t SprdCamera3OEMIf::setAePrecaptureSta(uint8_t state)
 	mSetting->setAeCONTROLTag(controlInfo);
 	HAL_LOGD("ae sta %d", state);
 	return ret;
+}
+
+void SprdCamera3OEMIf::setMultiCameraMode(multiCameraMode mode)
+{
+	mMultiCameraMode = mode;
+	if (mHalOem) {
+		mHalOem->ops->camera_ioctrl(mCameraHandle,CAMERA_IOCTRL_SET_MULTI_CAMERAMODE,&mMultiCameraMode);
+	}
+	HAL_LOGD("mMultiCameraMode %d",mMultiCameraMode);
 }
 
 void SprdCamera3OEMIf::setCaptureRawMode(bool mode)
@@ -1694,14 +1720,12 @@ bool SprdCamera3OEMIf::setCameraPreviewDimensions()
 	if(mVideoWidth != 0 && mVideoHeight != 0) {
 		video_size.width = (cmr_u32)mVideoWidth;
 		video_size.height = (cmr_u32)mVideoHeight;
-		char value[PROPERTY_VALUE_MAX];
 		bool is_3D_video = false;
 		bool is_3D_preview= false;
-		property_get("sys.cam.multi.camera.mode", value, "0");
-		if (atoi(value) == 3) {
+		if (mMultiCameraMode == MODE_3D_VIDEO) {
 			is_3D_video = true;
 		}
-		if (atoi(value) == 7) {
+		if (mMultiCameraMode == MODE_3D_PREVIEW) {
 			is_3D_preview = true;
 		}
 		if (sprddefInfo.slowmotion <= 1 && !is_3D_video && !is_3D_preview)
@@ -2381,14 +2405,11 @@ bool SprdCamera3OEMIf::startCameraIfNecessary()
 	cmr_uint max_height = 0;
 	struct exif_info exif_info = {0, 0};
 	LENS_Tag lensInfo;
-	/**add for 3d calibration get max sensor size begin*/
 	SPRD_DEF_Tag sprddefInfo;
 	memset(&sprddefInfo, 0, sizeof(SPRD_DEF_Tag));
 	int         i = 0;
 	struct sensor_mode_info mode_info[SENSOR_MODE_MAX];
 	memset(mode_info, 0, sizeof(struct sensor_mode_info) * SENSOR_MODE_MAX);
-
-	/**add for 3d calibration get max sensor size end*/
 
 	if (NULL == mHalOem || NULL == mHalOem->ops) {
 		HAL_LOGE("oem is null or oem ops is null");
@@ -2430,11 +2451,12 @@ bool SprdCamera3OEMIf::startCameraIfNecessary()
 		/*get sensor otp from oem layer*/
 
 		/*read refoucs mode begin*/
-		char multicameramode[PROPERTY_VALUE_MAX];
-		property_get("sys.cam.multi.camera.mode", multicameramode, "0");
-		if( 0 != atoi(multicameramode) && 5 != atoi(multicameramode) )/**modified for 3d capture, should not set refocus enable in 3d capture mode*/
+		if (MODE_SINGLE_CAMERA != mMultiCameraMode &&
+		    MODE_3D_CAPTURE != mMultiCameraMode &&
+		    MODE_BLUR != mMultiCameraMode) {
 			mSprdRefocusEnabled = true;
 			CMR_LOGI("mSprdRefocusEnabled %d", mSprdRefocusEnabled);
+		}
 		/*read refoucs mode end*/
 
 		/*read refoucs otp begin*/
@@ -2503,8 +2525,11 @@ bool SprdCamera3OEMIf::startCameraIfNecessary()
 	} else {
 		HAL_LOGD("camera hardware has been started already");
 	}
-
-	mIommuEnabled = IommuIsEnabled();
+	if (!(mCameraId == CAM_COVERED_ID &&
+	    (getMultiCameraMode() == MODE_BLUR ||
+	    getMultiCameraMode() == MODE_SELF_SHOT ||
+	    getMultiCameraMode() == MODE_PAGE_TURN)))
+		mIommuEnabled = IommuIsEnabled();
 	HAL_LOGD("mIommuEnabled=%d mSprdRefocusEnabled %d", mIommuEnabled,mSprdRefocusEnabled);
 
 	return true;
@@ -2836,11 +2861,13 @@ int SprdCamera3OEMIf::startPreviewInternal()
 		   mRawWidth != 0) {
 		mSprdZslEnabled = true;
 		changeDfsPolicy(CAM_HIGH);
-	}else if (mSprd3dCalibrationEnabled == true &&
-		  mRawHeight != 0 &&
-		  mRawWidth != 0) {
+	} else if (mSprd3dCalibrationEnabled == true &&
+		   mRawHeight != 0 &&
+		   mRawWidth != 0) {
 		mSprdZslEnabled = true;
-	}else {
+	} else if (getMultiCameraMode() == MODE_BLUR) {
+		mSprdZslEnabled = true;
+	} else {
 		mSprdZslEnabled = false;
 	}
 
@@ -3682,12 +3709,10 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 	cmr_s32 fd1 = 0;
 #endif
 	SENSOR_Tag sensorInfo;
-	char multicameramode[PROPERTY_VALUE_MAX];
 
 	mSetting->getSENSORTag(&sensorInfo);
 	sensorInfo.timestamp = buffer_timestamp;
 	mSetting->setSENSORTag(sensorInfo);
-	property_get("sys.cam.multi.camera.mode", multicameramode, "0");
 
 	if (channel == NULL) {
 		HAL_LOGE("channel=%p", channel);
@@ -3701,10 +3726,10 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 		pre_stream, rec_stream, callback_stream);
 
 #ifdef CONFIG_FACE_BEAUTY
-	if (PREVIEW_ZSL_FRAME != frame->type && sprddefInfo.perfect_skin_level > 0 ) {
+	if (PREVIEW_ZSL_FRAME != frame->type && sprddefInfo.perfect_skin_level > 0) {
 		faceDectect(1);
-		if(isPreviewing() && frame->type == PREVIEW_FRAME ) {
-			if(3 != atoi(multicameramode) && 7 != atoi(multicameramode)) {
+		if (isPreviewing() && frame->type == PREVIEW_FRAME) {
+			if (MODE_3D_VIDEO != mMultiCameraMode && MODE_3D_PREVIEW != mMultiCameraMode) {
 				doFaceMakeup(frame);
 			}
 		}
@@ -3770,7 +3795,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 				}
 			}
 #endif
-			if(atoi(multicameramode) == 3){
+			if(mMultiCameraMode == MODE_3D_VIDEO){
 				mSlowPara.rec_timestamp = buffer_timestamp;
 			}
 			channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp, CAMERA_STREAM_TYPE_VIDEO);
@@ -4370,22 +4395,16 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame)
 			return;
 		}
 
-		if(mReDisplayHeap)
-		{
-			if(mSprd3dCalibrationEnabled)/**modified for 3d calibration return yuv buff if redisplay exist*/
+		if (mReDisplayHeap) {
+			if (mSprd3dCalibrationEnabled || mSprdYuvCallBack)
 				mReDisplayHeap->data = (void *)frame->y_vir_addr;
 			receiveCallbackPicture(dst_width, dst_height, dst_fd, dst_paddr, (char *)mReDisplayHeap->data);
-		}
-		else
-		{
-			/**add for 3d calibration return yuv buff begin*/
-			if (mSprd3dCalibrationEnabled)
-			{
+		} else {
+			if (mSprd3dCalibrationEnabled  || mSprdYuvCallBack) {
 				HAL_LOGD("3dcalibration call back picture: width:%d, height:%d, fd:%d, phyadd:%ld, viradd:%ld",
 						  frame->width, frame->height, frame->fd, frame->y_phy_addr, frame->y_vir_addr);
 				receiveCallbackPicture(frame->width, frame->height, frame->fd, frame->y_phy_addr, (char *)&frame->y_vir_addr);
 			}
-			/**add for 3d calibration return yuv buff end*/
 		}
 		FreeReDisplayMem();
 	}
@@ -4913,33 +4932,31 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb,
 		HAL_LOGV("CAMERA_EVT_CB_HAL2_ZSL_NEW_FRM");
 		break;
 	}
-	case CAMERA_EVT_CB_RETURN_ZSL_BUF:/**add for 3d calibration & 3d capture return zsl buffer begin */
+	case CAMERA_EVT_CB_RETURN_ZSL_BUF:
 	{
-		if (isPreviewing() && iSZslMode() && (mSprd3dCalibrationEnabled||mSprdYuvCallBack))
-		{
+		if (isPreviewing() &&
+		    iSZslMode() &&
+		    (mSprd3dCalibrationEnabled || mSprdYuvCallBack || mMultiCameraMode == MODE_BLUR)) {
 		    cmr_u32                   buf_id = 0;
 		    struct camera_frame_type *zsl_frame = NULL;
 		    zsl_frame = (struct camera_frame_type *)parm4;
-		    if (mIsUnpopped)
-		    {
+		    if (mIsUnpopped) {
 		        mIsUnpopped = false;
 		    }
-		    if (zsl_frame->fd <= 0)
-		    {
+		    if (zsl_frame->fd <= 0) {
 		        HAL_LOGW("zsl lost a buffer, this should not happen");
 		        break;
 		    }
 		    HAL_LOGD("zsl_frame->fd=0x%x", zsl_frame->fd);
 		    buf_id = getZslBufferIDForFd(zsl_frame->fd);
-		    if (buf_id != 0xFFFFFFFF)
-		    {
+		    if (buf_id != 0xFFFFFFFF) {
 		        mHalOem->ops->camera_set_zsl_buffer(mCameraHandle,
 								    mZslHeapArray[buf_id]->phys_addr,
 								    (cmr_uint)mZslHeapArray[buf_id]->data,
 								    mZslHeapArray[buf_id]->fd);
 		    }
 		}
-		break;/**add for 3d calibration return zsl buffer end */
+		break;
 	}
 	default:
 	{
@@ -5882,7 +5899,8 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag)
 			SPRD_DEF_Tag sprddefInfo;
 			mSetting->getSPRDDEFTag(&sprddefInfo);
 			HAL_LOGD("sprd_zsl_enabled=%d", sprddefInfo.sprd_zsl_enabled);
-			if(sprddefInfo.sprd_zsl_enabled == 0 && mRecordingMode == false && mSprdRefocusEnabled == false) {
+			if (sprddefInfo.sprd_zsl_enabled == 0 && mRecordingMode == false &&
+			    mSprdRefocusEnabled == false && getMultiCameraMode() != MODE_BLUR) {
 				mSprdZslEnabled = false;
 				SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ZSL_ENABLED, 0);
 			}
@@ -7767,9 +7785,9 @@ void SprdCamera3OEMIf::matchZSLQueue(ZslBufferQueue frame)
 void SprdCamera3OEMIf::pushZSLQueue(ZslBufferQueue frame)
 {
 	Mutex::Autolock l(&mZslLock);
-	if(getMultiCameraMode() == 5){
+	if (getMultiCameraMode() == MODE_3D_CAPTURE) {
 		frame.frame.isMatchFlag = 0;
-		if(!mSprdMultiYuvCallBack){
+		if (!mSprdMultiYuvCallBack) {
 			matchZSLQueue(frame);
 		}
 	}
@@ -7835,7 +7853,7 @@ struct camera_frame_type SprdCamera3OEMIf::popZslFrame()
 	bzero(&zslFrame,sizeof(zslFrame));
 	bzero(&zsl_frame,sizeof(struct camera_frame_type));
 
-	if(getMultiCameraMode() == 5){
+	if (getMultiCameraMode() == MODE_3D_CAPTURE) {
 		zslFrame = popZSLQueue(mNeededTimestamp);
 	} else {
 		zslFrame = popZSLQueue();

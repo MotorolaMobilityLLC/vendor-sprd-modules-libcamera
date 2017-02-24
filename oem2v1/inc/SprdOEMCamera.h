@@ -143,6 +143,8 @@ cmr_int camera_set_reprocess_picture_size(cmr_handle camera_handle, cmr_uint is_
 cmr_int camera_start_capture(cmr_handle camera_handle);
 cmr_int camera_stop_capture(cmr_handle camera_handle);
 
+cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param);
+
 #ifdef __cplusplus
 }
 #endif

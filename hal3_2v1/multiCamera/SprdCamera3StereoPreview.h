@@ -205,7 +205,7 @@ public:
     Mutex      mRequestLock;
     Condition  mRequestSignal;
     void freeLocalBuffer(new_mem_t* LocalBuffer, List<buffer_handle_t*>& bufferList,int bufferNum);
-    int allocateOne(int w,int h,uint32_t is_cache,new_mem_t*,const native_handle_t *& nBuf );
+    int allocateOne(int w,int h,uint32_t is_cache,new_mem_t *new_mem);
     int initialize(const camera3_callback_ops_t *callback_ops);
     int configureStreams(const struct camera3_device *device,camera3_stream_configuration_t* stream_list);
     void clearFrameNeverMatched(int whichCamera);

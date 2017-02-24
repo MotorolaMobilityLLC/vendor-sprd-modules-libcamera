@@ -48,7 +48,6 @@ extern "C"
 #define ISP_B4AWB_BUF_CNT                            2
 #define ISP_B4AWB_BUF_SIZE                           640 * 480 * 2
 
-
 struct grab_context {
 	cmr_handle               grab_handle;
 /*	struct process_status    proc_status;*/
@@ -268,9 +267,10 @@ struct camera_context {
 	cmr_u32                  burst_mode;
 	cmr_u32                  isp_to_dram;
 	cmr_int                  cap_cnt;
-	cmr_u32                  is_multi_mode;
+	multiCameraMode          is_multi_mode;
 	cmr_u32                  is_refocus_mode;
-	cmr_u32                  is_3dcalibration_mode;/**add for 3d calibration*/
+	cmr_u32                  is_3dcalibration_mode;
+	cmr_uint                 is_yuv_callback_mode;
 
 	/*memory func*/
 	camera_cb_of_malloc      hal_malloc;
@@ -389,6 +389,7 @@ cmr_int cmr_get_sensor_vcm_step(cmr_handle  oem_handle,cmr_u32 camera_id, cmr_u3
 cmr_int camera_local_stop_multi_layer(cmr_handle oem_handle);
 cmr_int camera_local_set_sensor_close_flag(cmr_handle oem_handle);
 cmr_int camera_local_set_cap_size(cmr_handle oem_handle, cmr_u32 is_reprocessing, cmr_u32 camera_id, cmr_u32 width, cmr_u32 height);/**add for 3d capture to reset reprocessing capture size*/
+void camera_set_oem_multimode(multiCameraMode camera_mode);
 #ifdef __cplusplus
 }
 #endif
