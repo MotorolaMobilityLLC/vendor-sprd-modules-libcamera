@@ -4307,19 +4307,21 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame)
 		uint32_t dst_width = mRawWidth;
 		uint32_t dst_height = mRawHeight;
 		cmr_uint dst_vaddr = 0;
-		dst_fd = getRedisplayMem(dst_width,dst_height);
-		if (0 == dst_fd) {
-			HAL_LOGE("get review memory failed");
-			return;
-		}
-		if (mReDisplayHeap != NULL)
-			dst_vaddr = (cmr_uint)mReDisplayHeap->data;
+		if ((dst_width != frame->width) || (dst_height != frame->height)){
+			dst_fd = getRedisplayMem(dst_width,dst_height);
+			if (0 == dst_fd) {
+				HAL_LOGE("get review memory failed");
+				return;
+			}
+			if (mReDisplayHeap != NULL)
+				dst_vaddr = (cmr_uint)mReDisplayHeap->data;
 
-		if ( 0 != mHalOem->ops->camera_get_redisplay_data(mCameraHandle, dst_fd, dst_paddr, dst_vaddr, dst_width, dst_height, frame->fd, frame->y_phy_addr,
-				frame->uv_phy_addr, frame->y_vir_addr, frame->width, frame->height)) {
-			HAL_LOGE("Fail to camera_get_data_redisplay.");
-			FreeReDisplayMem();
-			return;
+			if ( 0 != mHalOem->ops->camera_get_redisplay_data(mCameraHandle, dst_fd, dst_paddr, dst_vaddr, dst_width, dst_height, frame->fd, frame->y_phy_addr,
+					frame->uv_phy_addr, frame->y_vir_addr, frame->width, frame->height)) {
+				HAL_LOGE("Fail to camera_get_data_redisplay.");
+				FreeReDisplayMem();
+				return;
+			}
 		}
 		/**add for 3d calibration return yuv buff begin*/
 		HAL_LOGD("is callback_flag:%d", callback_flag);
@@ -4345,6 +4347,13 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame)
 		if(mSprdRefocusEnabled)
 		{
 			mReDisplayHeap->data = (void *)frame->y_vir_addr;
+		}
+
+		if ((dst_width == frame->width) && (dst_height == frame->height)) {
+			HAL_LOGI("dst_width = %d, dst_height = %d, frame->y_vir_addr 0x%lx", dst_width, dst_height, frame->y_vir_addr);
+			receiveCallbackPicture(frame->width, frame->height, frame->fd, frame->y_phy_addr, (char*)frame->y_vir_addr);
+			FreeReDisplayMem();
+			return;
 		}
 
 		if(mReDisplayHeap)

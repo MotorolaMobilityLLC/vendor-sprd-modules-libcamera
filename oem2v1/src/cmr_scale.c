@@ -233,11 +233,14 @@ static cmr_int cmr_scale_thread_proc(struct cmr_msg *message, void *private_data
 			file->err_code = CMR_CAMERA_SUCCESS;
 			ret = ioctl(file->handle, SPRD_CPP_IO_START_SCALE, frame_params);
 			if (ret) {
+				CMR_LOGI("CPP error ret %ld; SW scaler also not working", ret);
+#ifdef  CAMERA_SW_SCALER
 				if (!(ret = cmr_scale_sw_start(cfg_params, file))) {
 					break;
 				}
 				CMR_PERROR;
 				CMR_LOGE("scale error: start");
+#endif
 			}
 			CMR_LOGI("scale started");
 
