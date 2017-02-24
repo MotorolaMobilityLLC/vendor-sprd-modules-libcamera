@@ -2861,7 +2861,7 @@ int SprdCamera3OEMIf::startPreviewInternal()
 	    mZslMaxFrameNum = DUALCAM_MAX_ZSL_NUM;
 	}
 
-	mSetting->getLargestSensorSize(mCameraId,&mLargestSensorWidth,&mLargestSensorHeight);
+	mSetting->getLargestPictureSize(mCameraId,&mLargestSensorWidth,&mLargestSensorHeight);
 
 	mHalOem->ops->camera_pre_capture_set_buffer_size(mCameraId,mLargestSensorWidth, mLargestSensorHeight);
 
@@ -3077,7 +3077,7 @@ int SprdCamera3OEMIf::CameraConvertCoordinateToFramework(int32_t *cropRegion)
 	    sensorOrgH = BACK_EXT_SENSOR_ORIG_HEIGHT;
 	}
 #else
-	 mSetting->getLargestSensorSize(mCameraId,&mLargestPictureWidth,&mLargestPictureHeight);
+	 mSetting->getLargestPictureSize(mCameraId,&mLargestPictureWidth,&mLargestPictureHeight);
 	 sensorOrgW =  mLargestPictureWidth;
 	 sensorOrgH = mLargestPictureHeight;
 #endif
@@ -3119,7 +3119,7 @@ int SprdCamera3OEMIf::CameraConvertCoordinateFromFramework(int32_t *cropRegion)
 	    sensorOrgH = BACK_EXT_SENSOR_ORIG_HEIGHT;
 	}
 #else
-	mSetting->getLargestSensorSize(mCameraId,&mLargestPictureWidth,&mLargestPictureHeight);
+	mSetting->getLargestPictureSize(mCameraId,&mLargestPictureWidth,&mLargestPictureHeight);
 	sensorOrgW =  mLargestPictureWidth;
 	sensorOrgH = mLargestPictureHeight;
 #endif
@@ -5267,7 +5267,7 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void)
 		sensorOrgH = BACK_EXT_SENSOR_ORIG_HEIGHT;
 	}
 #else
-	mSetting->getLargestSensorSize(mCameraId,&mLargestPictureWidth,&mLargestPictureHeight);
+	mSetting->getLargestPictureSize(mCameraId,&mLargestPictureWidth,&mLargestPictureHeight);
 	sensorOrgW =  mLargestPictureWidth;
 	sensorOrgH = mLargestPictureHeight;
 #endif
@@ -5369,7 +5369,7 @@ int SprdCamera3OEMIf::CameraConvertCropRegion(uint32_t sensorWidth, uint32_t sen
 		sensorOrgH = BACK_EXT_SENSOR_ORIG_HEIGHT;
 	}
 #else
-         mSetting->getLargestSensorSize(mCameraId,&mLargestPictureWidth,&mLargestPictureHeight);
+         mSetting->getLargestPictureSize(mCameraId,&mLargestPictureWidth,&mLargestPictureHeight);
          sensorOrgW =  mLargestPictureWidth;
          sensorOrgH = mLargestPictureHeight;
 #endif

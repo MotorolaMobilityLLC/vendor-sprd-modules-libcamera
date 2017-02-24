@@ -1694,20 +1694,21 @@ int SprdCamera3Setting::coordinate_convert(int *rect_arr,int arr_size,int angle,
 int SprdCamera3Setting::getJpegStreamSize(int32_t cameraId, cmr_u16 width, cmr_u16 height)
 {
 
-	if(width * height  >= 5312*3984)    // 21M
+	if((width * height  <= 5312*3984) && (width * height  >  4608*3456)) {   // 21M
 		 jpeg_stream_size = (5312 * 3984 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
-	else if(width * height  >= 4608*3456)    // 16M
+	}else if((width * height  <= 4608*3456) && (width * height  >	 4160*3120)){	 // 16M
 		 jpeg_stream_size = (4608 * 3456 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
-	else if(width * height  >= 4160*3120)    // 13M
+	}else if((width * height  <= 4160*3120) && (width * height  >	3264*2448)){	// 13M
 		jpeg_stream_size = (4160 * 3120 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
-	else if(width * height >= 3264*2448)  //8M
+	}else if((width * height <= 3264*2448) && (width * height  >  2592*1944)){	//8M
 		jpeg_stream_size = (3264 * 2448 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
-	else if(width * height >= 2592*1944)  //5M
+	}else if((width * height <= 2592*1944) && (width * height  >1600*1200)){  //5M
 		jpeg_stream_size = (2048 * 1536 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
-	else if(width * height >= 1600*1200)  //2M
+	}else if(width * height <= 1600*1200){  //2M
 		jpeg_stream_size = (1600 * 1200 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
-	else
+	}else{
 		CMR_LOGI("unsupport jpeg_stream_size = %d", jpeg_stream_size);
+	}
 
 	CMR_LOGI("jpeg_stream_size = %d", jpeg_stream_size);
 
@@ -2083,7 +2084,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId)
 	cmr_u16 largest_sensor_width, largest_sensor_height;
 	getLargestSensorSize(cameraId,&largest_sensor_width,&largest_sensor_height);
 
-	HAL_LOGD("camera ID = %d, getLargestSensorSize->width = %d, getLargestPictureSize->height = %d",cameraId, largest_sensor_width,largest_sensor_height);
+	HAL_LOGD("camera ID = %d, getLargestSensorSize->width = %d, getLargestSensorSize->height = %d",cameraId, largest_sensor_width,largest_sensor_height);
 
 	/* Add input/output stream configurations for each scaler formats*/
 	Vector<int32_t> available_stream_configs;

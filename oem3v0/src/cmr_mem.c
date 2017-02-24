@@ -314,20 +314,21 @@ int camera_pre_capture_buf_id(cmr_u32 camera_id, cmr_u16 width, cmr_u16 height)
 	int buffer_id = 0;
 
 	CMR_LOGI("camera_pre_capture_buf_id width = %d, height = %d", width, height);
-	if(width * height  >= 5312*3984)    // 21M
+	if((width * height  <= 5312*3984) && (width * height  >  4608*3456)) {   // 21M
 		buffer_id = IMG_15P0_MEGA;
-	else if(width * height  >= 4608*3456)    // 16M
+	}else if((width * height  <= 4608*3456) && (width * height  >   4160*3120)){    // 16M
 		buffer_id = IMG_10P0_MEGA;
-	else if(width * height  >= 4208*3120)    // 13M
+	}else if((width * height  <= 4160*3120) && (width * height  >  3264*2448)){    // 13M
 		buffer_id = IMG_DP0_MEGA;
-	else if(width * height >= 3264*2448)  //8M
-	   buffer_id = IMG_8P0_MEGA;
-	else if(width * height >= 2592*1944)  //5M
+	}else if((width * height <= 3264*2448) && (width * height  >  2592*1944)){  //8M
+		buffer_id = IMG_8P0_MEGA;
+	}else if((width * height <= 2592*1944) && (width * height  >1600*1200)){  //5M
 		buffer_id = IMG_5P0_MEGA;
-	else if(width * height >= 1600*1200)  //2M
+	}else if(width * height <= 1600*1200){  //2M
 		buffer_id = IMG_2P0_MEGA;
-	else
+	}else{
 		CMR_LOGI("unsupport buffer id = %d", buffer_id);
+	}
 
 	CMR_LOGI("buffer id = %d", buffer_id);
 
