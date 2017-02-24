@@ -100,6 +100,7 @@ namespace sprdcamera {
 #define DUALCAM_ZSL_NUM   (7)/**add for 3d capture*/
 #define DUALCAM_MAX_ZSL_NUM (4)
 
+#define SHINWHITED_NOT_DETECTFD_MAXNUM 10
 
 // dfs policy
 enum DFS_POLICY {
@@ -2727,6 +2728,52 @@ void SprdCamera3OEMIf::deinitCapture(bool isPreAllocCapMem)
 	Callback_CapturePathFree(0, 0, 0, 0);
 }
 
+int SprdCamera3OEMIf::chooseDefaultThumbnailSize(uint32_t *thumbWidth, uint32_t *thumbHeight)
+{
+	int i;
+	JPEG_Tag jpgInfo;
+	float capRatio = 0.0f, thumbRatio = 0.0f, diff = 1.0f, minDiff = 1.0f;
+	unsigned char thumbCnt = 0;
+	unsigned char matchCnt = 0;
+
+	mSetting->getJPEGTag(&jpgInfo);
+	thumbCnt = sizeof(jpgInfo.available_thumbnail_sizes) / sizeof(jpgInfo.available_thumbnail_sizes[0]);
+	if (mCaptureWidth > 0 && mCaptureHeight > 0) {
+		capRatio = static_cast<float>(mCaptureWidth) / mCaptureHeight;
+		for (i = 0; i < thumbCnt / 2; i ++) {
+			if (jpgInfo.available_thumbnail_sizes[2*i] <= 0 ||
+			    jpgInfo.available_thumbnail_sizes[2*i+1] <= 0)
+				continue;
+
+			thumbRatio = static_cast<float>(jpgInfo.available_thumbnail_sizes[2*i]) / jpgInfo.available_thumbnail_sizes[2*i+1];
+			if (thumbRatio < 1.0f) {
+				HAL_LOGE("available_thumbnail_sizes change sequences");
+			}
+
+			if (capRatio > thumbRatio)
+				diff = capRatio - thumbRatio;
+			else
+				diff = thumbRatio - capRatio;
+
+			if (diff < minDiff) {
+				minDiff = diff;
+				matchCnt = i;
+			}
+		}
+	}
+
+	if (minDiff < 1.0f) {
+		*thumbWidth = jpgInfo.available_thumbnail_sizes[2 * matchCnt];
+		*thumbHeight = jpgInfo.available_thumbnail_sizes[2 * matchCnt + 1];
+	} else {
+		*thumbWidth = 320;
+		*thumbHeight = 240;
+	}
+
+	HAL_LOGV("JPEG thumbnail size = %d x %d", *thumbWidth, *thumbHeight);
+	return 0;
+}
+
 int SprdCamera3OEMIf::startPreviewInternal()
 {
 	ATRACE_CALL();
@@ -2734,6 +2781,8 @@ int SprdCamera3OEMIf::startPreviewInternal()
 	bool is_volte = false;
 	char value[PROPERTY_VALUE_MAX];
 	char multicameramode[PROPERTY_VALUE_MAX];
+	struct img_size jpeg_thumb_size;
+
 	HAL_LOGD("E camera id %d",mCameraId);
 
 	SPRD_DEF_Tag sprddefInfo;
@@ -2806,49 +2855,8 @@ int SprdCamera3OEMIf::startPreviewInternal()
 	}
 	SprdCamera3Flash::reserveFlash(mCameraId);
 
-
 	if (mCaptureMode == CAMERA_ZSL_MODE) {
-		int i;
-		struct img_size jpeg_thumb_size;
-		JPEG_Tag jpgInfo;
-		float capRatio = 0.0f, thumbRatio = 0.0f, diff = 1.0f, minDiff = 1.0f;
-		unsigned char thumbCnt = 0;
-		unsigned char matchCnt = 0;
-
-		mSetting->getJPEGTag(&jpgInfo);
-		thumbCnt = sizeof(jpgInfo.available_thumbnail_sizes) / sizeof(jpgInfo.available_thumbnail_sizes[0]);
-		if (mCaptureWidth > 0 && mCaptureHeight > 0) {
-			capRatio = static_cast<float>(mCaptureWidth) / mCaptureHeight;
-			for (i = 0; i < thumbCnt / 2; i ++) {
-				if (jpgInfo.available_thumbnail_sizes[2*i] <= 0 ||
-				    jpgInfo.available_thumbnail_sizes[2*i+1] <= 0)
-					continue;
-
-				thumbRatio = static_cast<float>(jpgInfo.available_thumbnail_sizes[2*i]) / jpgInfo.available_thumbnail_sizes[2*i+1];
-				if (thumbRatio < 1.0f) {
-					HAL_LOGE("available_thumbnail_sizes change sequences");
-				}
-
-				if (capRatio > thumbRatio)
-					diff = capRatio - thumbRatio;
-				else
-					diff = thumbRatio - capRatio;
-
-				if (diff < minDiff) {
-					minDiff = diff;
-					matchCnt = i;
-				}
-			}
-		}
-
-		if (minDiff < 1.0f) {
-			jpeg_thumb_size.width = jpgInfo.available_thumbnail_sizes[2 * matchCnt];
-			jpeg_thumb_size.height = jpgInfo.available_thumbnail_sizes[2 * matchCnt + 1];
-		} else {
-			jpeg_thumb_size.width = 320;
-			jpeg_thumb_size.height = 240;
-		}
-
+		chooseDefaultThumbnailSize(&jpeg_thumb_size.width, &jpeg_thumb_size.height);
 		HAL_LOGD("JPEG thumbnail size = %d x %d", jpeg_thumb_size.width, jpeg_thumb_size.height);
 		SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_SIZE, (cmr_uint)&jpeg_thumb_size);
 	}
@@ -3493,7 +3501,7 @@ void SprdCamera3OEMIf::doFaceMakeup(struct camera_frame_type *frame)
 	FACE_Tag faceInfo;
 	YuvFormat yuvFormat = TSFB_FMT_NV21;
 	mSetting->getFACETag(&faceInfo);
-	if(faceInfo.face_num>0){
+	if(faceInfo.face_num > 0){
 		mSkinWhitenNotDetectFDNum = 0;
 		isNeedBeautify = true;
 		CameraConvertCoordinateFromFramework(faceInfo.face[0].rect);
@@ -3504,11 +3512,11 @@ void SprdCamera3OEMIf::doFaceMakeup(struct camera_frame_type *frame)
 		HAL_LOGV("FACE_BEAUTY rect:%ld-%ld-%ld-%ld",
 			mSkinWhitenTsface.left,mSkinWhitenTsface.top,
 			mSkinWhitenTsface.right,mSkinWhitenTsface.bottom);
-	}  else {
-		HAL_LOGE("Not detect face!");
+	} else {
+		HAL_LOGW("Not detect face");
 	}
+
 	mSkinWhitenNotDetectFDNum++;
-#define SHINWHITED_NOT_DETECTFD_MAXNUM 10
 	if(mSkinWhitenNotDetectFDNum>SHINWHITED_NOT_DETECTFD_MAXNUM){
 		HAL_LOGD("UCAM:can not find fd in %d frame.reset mSkinWhitenTsface",SHINWHITED_NOT_DETECTFD_MAXNUM);
 		mSkinWhitenNotDetectFDNum = 0;
@@ -3526,15 +3534,16 @@ void SprdCamera3OEMIf::doFaceMakeup(struct camera_frame_type *frame)
 	inMakeupData.uvBuf = uvBuf;
 
 	 if (frame->width > 0 && frame->height > 0 && isNeedBeautify) {
-		int mu_retVal = ts_face_beautify(&inMakeupData, &inMakeupData, skinCleanLevel, skinWhitenLevel, &mSkinWhitenTsface, 0, yuvFormat);
-		if(mu_retVal !=  TS_OK) {
-			HAL_LOGE("UCAM ts_face_beautify ret is %d", mu_retVal);
+		int mu_retVal = ts_face_beautify(&inMakeupData, &inMakeupData,
+						skinCleanLevel, skinWhitenLevel,
+						&mSkinWhitenTsface, 0, yuvFormat);
+		if(mu_retVal != TS_OK) {
+			HAL_LOGW("UCAM ts_face_beautify ret is %d", mu_retVal);
 		} else {
-			HAL_LOGD("UCAM ts_face_beautify return OK");
+			HAL_LOGV("UCAM ts_face_beautify return OK");
 		}
 	} else {
-		HAL_LOGE("No face beauty! frame size %d, %d. If size is not zero, then outMakeupData.yBuf is null!",
-			frame->width, frame->height);
+		HAL_LOGW("No face beauty! frame size %d, %d", frame->width, frame->height);
 	}
 }
 #endif
@@ -4361,13 +4370,26 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame)
 	int64_t temp = 0, temp1 = 0;;
 	buffer_handle_t *jpeg_buff_handle = NULL;
 	ssize_t maxJpegSize = -1;
+	camera3_jpeg_blob * jpegBlob = NULL;
+	int64_t timestamp;
+	cmr_uint pic_addr_vir = 0x0;
+	SprdCamera3Stream *pic_stream = NULL;
+	int ret;
+	uint32_t heap_size;
+	SprdCamera3PicChannel* picChannel = reinterpret_cast<SprdCamera3PicChannel *>(mPictureChan);
+	uint32_t frame_num = 0;
+	char value[PROPERTY_VALUE_MAX];
+	char debug_value[PROPERTY_VALUE_MAX];
+	unsigned char is_raw_capture = 0;
+	void *isp_info_addr = NULL;
+	int isp_info_size = 0;
 
 	HAL_LOGD("E encInfo->size = %d, enc->buffer = %p, encInfo->need_free = %d time=%lld",
 		encInfo->size, encInfo->outPtr, encInfo->need_free, frame->timestamp);
 
 	if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
 		HAL_LOGE("oem is null or oem ops is null");
-		return;
+		goto exit;
 	}
 
 	SENSOR_Tag sensorInfo;
@@ -4377,84 +4399,90 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame)
 	}
 	sensorInfo.timestamp = frame->timestamp;
 	mSetting->setSENSORTag(sensorInfo);
-	camera3_jpeg_blob * jpegBlob = NULL;
-	int64_t timestamp = sensorInfo.timestamp;
-	cmr_uint pic_addr_vir = (cmr_uint)NULL;
-	SprdCamera3Stream *pic_stream = NULL;
-	int ret;
-	uint32_t heap_size;
-	SprdCamera3PicChannel* picChannel = reinterpret_cast<SprdCamera3PicChannel *>(mPictureChan);
-	uint32_t frame_num = 0;
-	char value[PROPERTY_VALUE_MAX];
-	char debug_value[PROPERTY_VALUE_MAX];
+	timestamp = sensorInfo.timestamp;
+
 	property_get("persist.sys.camera.raw.mode", value, "jpeg");
+	if (!strcmp(value, "raw")) {
+		is_raw_capture = 1;
+	}
 	property_get("persist.sys.camera.debug.mode", debug_value, "non-debug");
 
-	if(picChannel && ((mCaptureMode != CAMERA_ISP_TUNING_MODE) || ((mCaptureMode == CAMERA_ISP_TUNING_MODE)&&(!strcmp(value, "raw")))
-		|| ((mCaptureMode == CAMERA_ISP_SIMULATION_MODE)&&(!strcmp(value, "sim"))))) {
-		picChannel->getStream(CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT, &pic_stream);
-		if(pic_stream) {
-			ret = pic_stream->getQBuffFirstVir(&pic_addr_vir);
-			pic_stream->getQBuffFirstNum(&frame_num);
-			HAL_LOGV("pic_addr_vir = 0x%lx, frame_num = %d", pic_addr_vir, frame_num);
-			if(ret == NO_ERROR && pic_addr_vir != (cmr_uint)NULL) {
-				void *isp_info_addr;
-				int isp_info_size = 0;
-				if(encInfo->outPtr != NULL) {
-					memcpy((char *)pic_addr_vir, (char *)(encInfo->outPtr), encInfo->size);
-					if((mCaptureMode == CAMERA_ISP_TUNING_MODE) || (!strcmp(debug_value, "debug"))) {
-						if (!mHalOem->ops->camera_get_isp_info(mCameraHandle, &isp_info_addr, &isp_info_size) && (0 != isp_info_size)) {
-							mJpegSize = encInfo->size;
-							memcpy(((char *)pic_addr_vir+mJpegSize),(char *)isp_info_addr,isp_info_size);
-						}
-					}
-				}
+	if (picChannel == NULL || encInfo->outPtr == NULL) {
+		HAL_LOGE("picChannel=%p, encInfo->outPtr=%p",
+			picChannel, encInfo->outPtr);
+		goto exit;
+	}
 
-				if ((mCaptureMode == CAMERA_ISP_TUNING_MODE) || (!strcmp(debug_value, "debug"))) {
-					mHalOem->ops->dump_jpeg_file((void *)pic_addr_vir, encInfo->size+isp_info_size, mCaptureWidth, mCaptureHeight);
-				}
+	picChannel->getStream(CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT, &pic_stream);
+	if (pic_stream == NULL) {
+		HAL_LOGE("pic_stream=%p", pic_stream);
+		goto exit;
+	}
 
-				pic_stream->getHeapSize(&heap_size);
-				pic_stream->getQBufHandleForNum(frame_num, &jpeg_buff_handle);
-				if (jpeg_buff_handle == NULL) {
-					HAL_LOGE("failed to get jpeg buffer handle");
-					return;
-				}
-				maxJpegSize = ((private_handle_t*)(*jpeg_buff_handle))->width;
-				if ((uint32_t)maxJpegSize > heap_size) {
-					maxJpegSize = heap_size;
-				}
+	ret = pic_stream->getQBuffFirstVir(&pic_addr_vir);
+	if (ret || pic_addr_vir == 0x0) {
+		HAL_LOGE("getQBuffFirstVir failed, ret=%d, pic_addr_vir=%ld",
+			ret, pic_addr_vir);
+		goto exit;
+	}
 
-				jpegBlob = (camera3_jpeg_blob*)((char *)pic_addr_vir + (maxJpegSize - sizeof(camera3_jpeg_blob)));
-				jpegBlob->jpeg_size = encInfo->size+isp_info_size;
-				jpegBlob->jpeg_blob_id = CAMERA3_JPEG_BLOB_ID;
-				picChannel->channelCbRoutine(frame_num, timestamp, CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT);
-
-				if(frame_num > mPictureFrameNum)
-					mPictureFrameNum = frame_num;
-
-				/**add for 3d capture, set raw call back mode & reprocess capture size begin*/
-				if ( mSprdReprocessing )
-				{
-				    HAL_LOGI("jpeg encode doen, reprocessing end");
-				    setCaptureReprocessMode(false, mRawWidth, mRawHeight);
-				}
-			}
+	HAL_LOGV("pic_addr_vir = 0x%lx", pic_addr_vir);
+	memcpy((char *)pic_addr_vir, (char *)(encInfo->outPtr), encInfo->size);
+	if((mCaptureMode == CAMERA_ISP_TUNING_MODE) ||
+	   (!strcmp(debug_value, "debug")) ||
+	   is_raw_capture) {
+		// add isp debug info
+		ret = mHalOem->ops->camera_get_isp_info(mCameraHandle, &isp_info_addr, &isp_info_size);
+		if (ret == 0 && isp_info_size > 0) {
+			mJpegSize = encInfo->size;
+			memcpy(((char *)pic_addr_vir+mJpegSize),(char *)isp_info_addr,isp_info_size);
 		}
 
-		if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE || mTakePictureMode == SNAPSHOT_DEFAULT_MODE) {
-			SprdCamera3RegularChannel* regularChannel = reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
-			if(regularChannel) {
-				regularChannel->channelClearInvalidQBuff(mPictureFrameNum, timestamp, CAMERA_STREAM_TYPE_PREVIEW);
-				regularChannel->channelClearInvalidQBuff(mPictureFrameNum, timestamp, CAMERA_STREAM_TYPE_VIDEO);
-				regularChannel->channelClearInvalidQBuff(mPictureFrameNum, timestamp, CAMERA_STREAM_TYPE_CALLBACK);
-			}
-		}
+		// dump jpeg file
+		mHalOem->ops->dump_jpeg_file((void *)pic_addr_vir,
+					encInfo->size+isp_info_size,
+					mCaptureWidth,
+					mCaptureHeight);
+	}
 
-		if (encInfo->need_free) {
-			if (!iSZslMode()) {
-				deinitCapture(mIsPreAllocCapMem);
-			}
+	pic_stream->getQBuffFirstNum(&frame_num);
+	pic_stream->getHeapSize(&heap_size);
+	pic_stream->getQBufHandleForNum(frame_num, &jpeg_buff_handle);
+	if (jpeg_buff_handle == NULL) {
+		HAL_LOGE("failed to get jpeg buffer handle");
+		goto exit;
+	}
+	maxJpegSize = ((private_handle_t*)(*jpeg_buff_handle))->width;
+	if ((uint32_t)maxJpegSize > heap_size) {
+		maxJpegSize = heap_size;
+	}
+	jpegBlob = (camera3_jpeg_blob*)((char *)pic_addr_vir + (maxJpegSize - sizeof(camera3_jpeg_blob)));
+	jpegBlob->jpeg_size = encInfo->size+isp_info_size;
+	jpegBlob->jpeg_blob_id = CAMERA3_JPEG_BLOB_ID;
+	picChannel->channelCbRoutine(frame_num, timestamp, CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT);
+
+	if(frame_num > mPictureFrameNum)
+		mPictureFrameNum = frame_num;
+
+	/**add for 3d capture, set raw call back mode & reprocess capture size begin*/
+	if (mSprdReprocessing) {
+		HAL_LOGI("jpeg encode doen, reprocessing end");
+		setCaptureReprocessMode(false, mRawWidth, mRawHeight);
+	}
+
+	if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE ||
+	    mTakePictureMode == SNAPSHOT_DEFAULT_MODE) {
+		SprdCamera3RegularChannel* regularChannel = reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
+		if(regularChannel) {
+			regularChannel->channelClearInvalidQBuff(mPictureFrameNum, timestamp, CAMERA_STREAM_TYPE_PREVIEW);
+			regularChannel->channelClearInvalidQBuff(mPictureFrameNum, timestamp, CAMERA_STREAM_TYPE_VIDEO);
+			regularChannel->channelClearInvalidQBuff(mPictureFrameNum, timestamp, CAMERA_STREAM_TYPE_CALLBACK);
+		}
+	}
+
+	if (encInfo->need_free) {
+		if (!iSZslMode()) {
+			deinitCapture(mIsPreAllocCapMem);
 		}
 	}
 
@@ -4463,11 +4491,13 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame)
 		mHDRPowerHintFlag = 0;
 	}
 
-	if ((mSprdZslEnabled == 0) || (mSprdZslEnabled == 1 && mRecordingMode == true)) {
+	if ((mSprdZslEnabled == 0) ||
+	    (mSprdZslEnabled == 1 && mRecordingMode == true)) {
 		changeDfsPolicy(CAM_LOW);
-		HAL_LOGI("after take picture,enter non-zsl preview: set dfs CAM_LOW");
+		HAL_LOGV("after take picture,enter non-zsl preview: set dfs CAM_LOW");
 	}
 
+exit:
 	HAL_LOGD("X");
 }
 

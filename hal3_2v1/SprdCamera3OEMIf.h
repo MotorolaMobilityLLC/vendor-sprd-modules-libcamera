@@ -400,6 +400,7 @@ private:
 	int zslTakePicture();
 	int VideoTakePicture();
 	int setVideoSnapshotParameter();
+	int chooseDefaultThumbnailSize(uint32_t *thumbWidth, uint32_t *thumbHeight);
 
 	int timer_stop();
 	int timer_set(void *obj, int32_t delay_ms, timer_handle_func handler);
