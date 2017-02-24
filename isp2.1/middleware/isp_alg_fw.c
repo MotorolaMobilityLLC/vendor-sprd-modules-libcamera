@@ -817,7 +817,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 	message.alloc_flag = 0;
 	message.data = (void*)ae_result;
 	rtn = cmr_thread_msg_send(cxt->thr_handle, &message);
-	ISP_LOGI("LiuY: done message_data %p rtn %ld", message.data, rtn);
+	ISP_LOGV("LiuY: done message_data %p rtn %ld", message.data, rtn);
 
 	message.msg_type = ISP_CTRL_EVT_AF;
 	message.sub_msg_type = AF_DATA_IMG_BLK;
@@ -1075,6 +1075,7 @@ void ispalg_dev_evt_cb(cmr_int evt, void *data, void *privdata)
 	rtn = cmr_thread_msg_send(cxt->thr_handle, &message);
 	if (rtn) {
 		ISP_LOGE("failed to send a message, evt is %ld", evt);
+		free(message.data);
 	}
 
 }

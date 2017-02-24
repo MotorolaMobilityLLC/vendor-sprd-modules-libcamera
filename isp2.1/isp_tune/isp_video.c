@@ -4028,7 +4028,7 @@ static void * ispserver_thread(void *args)
 	pthread_t tdiag;
 	pthread_attr_t attr;
 
-	DBG("ISP_TOOL:isp-video server version 1.0\n");
+	ISP_LOGV("ISP_TOOL:isp-video server version 1.0\n");
 
 	memset(&sock_addr, 0, sizeof (struct sockaddr_in));
 	sock_addr.sin_family = AF_INET;        /* Allows IPv4*/
@@ -4037,7 +4037,7 @@ static void * ispserver_thread(void *args)
 
 	lfd = socket(sock_addr.sin_family, SOCK_STREAM, 0);
 	if (lfd == -1) {
-		 DBG("ISP_TOOL:socket error\n");
+		 DBG("ISP_TOOL:socket is not build.\n");
 		 return NULL;
 	}
 	sock_fd=lfd;
@@ -4156,7 +4156,7 @@ void stopispserver()
 {
 	uint32_t handler_id=0x00;
 
-	DBG("ISP_TOOL:stopispserver \n");
+	ISP_LOGI("ISP_TOOL:stopispserver\n");
 	wire_connected = 0;
 
 	if((1 == preview_flag) && (0 == preview_img_end_flag)) {
@@ -4190,7 +4190,7 @@ void startispserver()
     int ret=-1;
 #endif
 
-	DBG("ISP_TOOL:startispserver\n");
+	ISP_LOGI("ISP_TOOL:startispserver\n");
 
 	preview_flag = 0;
 	capture_flag = 0;
@@ -4216,5 +4216,5 @@ void setispserver(void* handle)
 {
 	isp_handler = handle;
 	isp_ioctl(handle, ISP_CTRL_DENOISE_PARAM_READ,(void*)&nr_update_param);
-	DBG("ISP_TOOL:setispserver %p\n", handle);
+	ISP_LOGV("ISP_TOOL:setispserver %p\n", handle);
 }

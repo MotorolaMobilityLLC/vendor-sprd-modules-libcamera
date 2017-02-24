@@ -61,7 +61,7 @@ typedef isp_int ( *proc_callback)(isp_handle handler_id, uint32_t mode, void* pa
 					|ISP_CTRL_EVT_MONITOR_STOP)
 
 
-#define ISP_THREAD_QUEUE_NUM                 (50)
+#define ISP_THREAD_QUEUE_NUM                 (100)
 
 #define ISP_PROC_AFL_DONE                    (1 << 2)
 #define ISP_PROC_AFL_STOP                    (1 << 3)

@@ -509,7 +509,7 @@ cmr_int camera_isp_ctrl_done(cmr_u32 cmd, void* data)
 		goto exit;
 	}
 
-	CMR_LOGI("isp cmd, 0x%x, ret %ld", cmd, ret);
+	CMR_LOGV("isp cmd, 0x%x, ret %ld", cmd, ret);
 exit:
 	return ret;
 }
@@ -8608,7 +8608,7 @@ cmr_int camera_isp_set_sensor_info_to_af(cmr_handle oem_handle, struct cmr_af_au
 			aux_sensor_info.gsensor_info.vertical_up = sensor_info->gsensor_info.vertical_up;
 			aux_sensor_info.gsensor_info.vertical_down = sensor_info->gsensor_info.vertical_down;
 			aux_sensor_info.gsensor_info.horizontal = sensor_info->gsensor_info.horizontal;
-			ret = isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_SET_AUX_SENSOR_INFO, &aux_sensor_info);
+			//ret = isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_SET_AUX_SENSOR_INFO, &aux_sensor_info);
 			break;
 		case CAMERA_AF_MAGNETIC_FIELD:
 			aux_sensor_info.type = AF_MAGNETIC_FIELD;
@@ -8619,7 +8619,7 @@ cmr_int camera_isp_set_sensor_info_to_af(cmr_handle oem_handle, struct cmr_af_au
 			aux_sensor_info.gyro_info.x = sensor_info->gyro_info.x;
 			aux_sensor_info.gyro_info.y = sensor_info->gyro_info.y;
 			aux_sensor_info.gyro_info.z = sensor_info->gyro_info.z;
-			ret = isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_SET_AUX_SENSOR_INFO, &aux_sensor_info);
+			//ret = isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_SET_AUX_SENSOR_INFO, &aux_sensor_info);
 			break;
 		case CAMERA_AF_LIGHT:
 			aux_sensor_info.type = AF_LIGHT;

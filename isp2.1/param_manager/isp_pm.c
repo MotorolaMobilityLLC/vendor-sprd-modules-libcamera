@@ -26,10 +26,10 @@
 #include "isp_pm_com_type.h"
 #include "isp_otp_calibration.h"
 #include "isp_drv.h"
+#include "cmr_types.h"
 
 #define ISP_PM_BUF_NUM     10
 #define ISP_PM_MAGIC_FLAG  0xFFEE5511
-#define UNUSED(param) (void)(param)
 
 isp_s8 nr_param_name[ISP_BLK_TYPE_MAX][32] = {
 	"pdaf_correction",

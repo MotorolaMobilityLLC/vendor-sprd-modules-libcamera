@@ -30,6 +30,7 @@
 #include "isp_otp_calibration.h"
 #include <cutils/properties.h>
 #include "isp_video.h"
+#include "cmr_types.h"
 
 
 
@@ -43,7 +44,6 @@ extern	 "C"
 
 #define ISP_PM_LEVEL_DEFAULT 3
 #define ISP_PM_CCE_DEFAULT 0
-#define UNUSED(param) (void)(param)
 
 /*************************************************************************/
 
