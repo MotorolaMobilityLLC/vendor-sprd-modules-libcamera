@@ -107,6 +107,69 @@ static int32_t af_ae_awb_release(void* handle_af)
 	return ISP_SUCCESS;
 }
 
+static int32_t af_lock_module(void* handle_af, cmr_int af_locker_type)
+{
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
+	struct ae_calc_out ae_result = {0};
+	cmr_int rtn = ISP_SUCCESS;
+
+	if (NULL == cxt_ptr->af_set_cb) {
+		ISP_LOGE("af_set_cb is NULL error!");
+		return ISP_PARAM_NULL;
+	}
+
+	switch(af_locker_type){
+	case AF_LOCKER_AE:
+		rtn = cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_AE_LOCK, NULL, (void *)&ae_result);
+		break;
+	case AF_LOCKER_AWB:
+		rtn = cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_AWB_LOCK, NULL, NULL);
+		break;
+	case AF_LOCKER_LSC:
+		rtn = cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_LSC_LOCK, NULL, NULL);
+		break;
+	case AF_LOCKER_NLM:
+		rtn = cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_NLM_LOCK, NULL, NULL);
+		break;
+	default:
+		ISP_LOGE("af_locker_type is not supported!");
+		break;
+	}
+
+	return rtn;
+}
+
+static int32_t af_unlock_module(void* handle_af, cmr_int af_locker_type)
+{
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
+	struct ae_calc_out ae_result = {0};
+	cmr_int rtn = ISP_SUCCESS;
+
+	if (NULL == cxt_ptr->af_set_cb) {
+		ISP_LOGE("af_set_cb is NULL error!");
+		return ISP_PARAM_NULL;
+	}
+
+	switch(af_locker_type){
+	case AF_LOCKER_AE:
+		rtn = cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_AE_UNLOCK, NULL, (void *)&ae_result);
+		break;
+	case AF_LOCKER_AWB:
+		rtn = cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_AWB_UNLOCK, NULL, NULL);
+		break;
+	case AF_LOCKER_LSC:
+		rtn = cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_LSC_UNLOCK, NULL, NULL);
+		break;
+	case AF_LOCKER_NLM:
+		rtn = cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_NLM_UNLOCK, NULL, NULL);
+		break;
+	default:
+		ISP_LOGE("af_unlocker_type is not supported!");
+		break;
+	}
+
+	return rtn;
+}
 
 static int32_t af_set_monitor(void* handle_af, struct af_monitor_set* in_param, uint32_t cur_envi)
 {
@@ -318,6 +381,8 @@ cmr_int af_ctrl_init(struct afctrl_init_in *input_ptr, cmr_handle *handle_af)
 	input_ptr->get_monitor_win_num  = af_get_monitor_win_num;
 	input_ptr->ae_awb_lock = af_ae_awb_lock;
 	input_ptr->ae_awb_release = af_ae_awb_release;
+	input_ptr->lock_module = af_lock_module;
+	input_ptr->unlock_module = af_unlock_module;
 
 	cxt_ptr = (struct afctrl_cxt*)malloc(sizeof(*cxt_ptr));
 	if (NULL == cxt_ptr) {

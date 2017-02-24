@@ -225,6 +225,28 @@ static cmr_int isp_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *para
 		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_RESTORE, NULL, param1);
 		rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_UNLOCK, NULL,NULL);
 		break;
+	case ISP_AF_AE_LOCK:
+		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_PAUSE, NULL, param1);
+		break;
+	case ISP_AF_AE_UNLOCK:
+		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_RESTORE, NULL, param1);
+		break;
+	case ISP_AF_AWB_LOCK:
+		rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_LOCK, NULL,NULL);
+		break;
+	case ISP_AF_AWB_UNLOCK:
+		rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_UNLOCK, NULL,NULL);
+		break;
+	case ISP_AF_LSC_LOCK:
+		rtn = lsc_ctrl_ioctrl(cxt->lsc_cxt.handle, SMART_LSC_ALG_LOCK, NULL, NULL);
+		break;
+	case ISP_AF_LSC_UNLOCK:
+		rtn = lsc_ctrl_ioctrl(cxt->lsc_cxt.handle, SMART_LSC_ALG_UNLOCK, NULL, NULL);
+		break;
+	case ISP_AF_NLM_LOCK:
+		break;
+	case ISP_AF_NLM_UNLOCK:
+		break;
 	case ISP_AF_SET_MONITOR:
 		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MONITOR, param0, param1);
 		break;
@@ -2245,7 +2267,7 @@ cmr_int isp_alg_fw_ioctl(cmr_handle isp_alg_handle, enum isp_ctrl_cmd io_cmd, vo
 	if (NULL != io_ctrl) {
 		rtn = io_ctrl(cxt, param_ptr, call_back);
 	} else {
-		ISP_LOGD("io ctrl fun is null error");
+		ISP_LOGD("cmd %d io ctrl fun is null error", cmd);
 	}
 
 	if (NULL != cxt->commn_cxt.callback) {

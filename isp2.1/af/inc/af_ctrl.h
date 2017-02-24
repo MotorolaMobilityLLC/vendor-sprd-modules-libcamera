@@ -89,7 +89,14 @@ enum af_calc_data_type {
 	AF_DATA_AE,
 	AF_DATA_FD,
 	AF_DATA_MAX
+};
 
+enum af_locker_type {
+	AF_LOCKER_AE,
+	AF_LOCKER_AWB,
+	AF_LOCKER_LSC,
+	AF_LOCKER_NLM,
+	AF_LOCKER_MAX
 };
 
 struct afctrl_init_in{
@@ -113,6 +120,8 @@ struct afctrl_init_in{
 	int32_t(*get_monitor_win_num) (void* handle, uint32_t *win_num);
 	int32_t(*ae_awb_lock) (void* handle);
 	int32_t(*ae_awb_release) (void* handle);
+	int32_t(*lock_module) (void* handle, cmr_int af_locker_type);
+	int32_t(*unlock_module) (void* handle, cmr_int af_locker_type);
 };
 
 struct afctrl_init_out {

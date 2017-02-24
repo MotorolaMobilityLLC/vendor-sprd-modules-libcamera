@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define LOG_TAG "sprd_afv1"
 
 //#include<time.h>
 #include <assert.h>
@@ -51,7 +52,7 @@ extern "C" {
 	};
 
 	static int32_t _check_handle(afv1_handle_t handle) {
-		int32_t rtn = AF_SUCCESS;
+		int32_t rtn = AFV1_SUCCESS;
 //              struct af_context_t *cxt = (struct af_context_t *)handle;
 		af_ctrl_t *af = (af_ctrl_t *) handle;
 
@@ -72,14 +73,14 @@ extern "C" {
 	cmr_int af_ioctrl(void *handle, cmr_int cmd, void *param0, void *param1);
 
 	static int32_t _af_set_motor_pos(afv1_handle_t handle, uint32_t motot_pos) {
-		int32_t rtn = AF_SUCCESS;
+		int32_t rtn = AFV1_SUCCESS;
 		struct af_context_t *af_cxt = (struct af_context_t *)handle;
 		struct af_motor_pos set_pos;
 
 		rtn = _check_handle(handle);
-		if (AF_SUCCESS != rtn) {
+		if (AFV1_SUCCESS != rtn) {
 			AF_LOGE("_check_cxt failed");
-			return AF_ERROR;
+			return AFV1_ERROR;
 		}
 
 		set_pos.motor_pos = motot_pos;
@@ -93,16 +94,16 @@ extern "C" {
 
 	static int32_t _alg_init(afv1_handle_t handle, struct afctrl_init_in *init_param,
 				 struct afctrl_init_out *result) {
-		int32_t rtn = AF_SUCCESS;
+		int32_t rtn = AFV1_SUCCESS;
 		struct af_context_t *af_cxt = (struct af_context_t *)handle;
 		struct af_alg_init_param alg_init_param;
 		struct af_alg_init_result alg_result;
 		uint32_t i;
 
 		rtn = _check_handle(handle);
-		if (AF_SUCCESS != rtn) {
+		if (AFV1_SUCCESS != rtn) {
 			AF_LOGE("_check_cxt failed");
-			return AF_ERROR;
+			return AFV1_ERROR;
 		}
 
 		alg_init_param.tuning_param_cnt = init_param->tuning_param_cnt;
@@ -116,7 +117,7 @@ extern "C" {
 								       init_param->tuning_param_cnt);
 			if (NULL == alg_init_param.tuning_param) {
 				AF_LOGE("mem alloc for tuning_param error !!!");
-				return AF_ERROR;
+				return AFV1_ERROR;
 			}
 			for (i = 0; i < init_param->tuning_param_cnt; i++) {
 				alg_init_param.tuning_param[i].data = init_param->tuning_param[i].data;
@@ -129,7 +130,7 @@ extern "C" {
 		free(alg_init_param.tuning_param);
 		if (NULL == af_cxt->af_alg_handle) {
 			AF_LOGE("init af_alg_handle error !!!");
-			return AF_ERROR;
+			return AFV1_ERROR;
 		}
 		result->init_motor_pos = alg_result.init_motor_pos;
 		return rtn;
@@ -138,14 +139,14 @@ extern "C" {
 
 	static int32_t _cfg_af_calc_param(afv1_handle_t handle,
 					  struct af_calc_param *param, struct af_alg_calc_param *alg_calc_param) {
-		int32_t rtn = AF_SUCCESS;
+		int32_t rtn = AFV1_SUCCESS;
 		struct af_context_t *af_cxt = (struct af_context_t *)handle;
 		uint32_t i;
 
 		rtn = _check_handle(handle);
-		if (AF_SUCCESS != rtn) {
+		if (AFV1_SUCCESS != rtn) {
 			AF_LOGE("_check_cxt failed");
-			return AF_ERROR;
+			return AFV1_ERROR;
 		}
 
 		switch (param->data_type) {
@@ -217,7 +218,7 @@ extern "C" {
 
 		default:
 			AF_LOGE("unsupport data type! type: %d", param->data_type);
-			rtn = AF_ERROR;
+			rtn = AFV1_ERROR;
 			break;
 		}
 
@@ -226,7 +227,7 @@ extern "C" {
 
 	static int32_t _af_cfg_afm_win(afv1_handle_t handle, uint32_t type, uint32_t win_num,
 				       struct af_win_rect *win_pos) {
-		int32_t rtn = AF_SUCCESS;
+		int32_t rtn = AFV1_SUCCESS;
 		struct af_context_t *af_cxt = (struct af_context_t *)handle;
 //      isp_ctrl_context *ctrl_context = NULL;
 		uint32_t hw_max_win_num;
@@ -236,9 +237,9 @@ extern "C" {
 		struct af_monitor_win monitor_win;
 
 		rtn = _check_handle(handle);
-		if (AF_SUCCESS != rtn) {
+		if (AFV1_SUCCESS != rtn) {
 			AF_LOGE("_check_cxt failed");
-			return AF_ERROR;
+			return AFV1_ERROR;
 		}
 //      ctrl_context = (isp_ctrl_context *)af_cxt->caller;
 
@@ -286,14 +287,14 @@ extern "C" {
 	}
 
 	static int32_t _af_set_status(afv1_handle_t handle, uint32_t af_status) {
-		int32_t rtn = AF_SUCCESS;
+		int32_t rtn = AFV1_SUCCESS;
 		struct af_context_t *af_cxt = (struct af_context_t *)handle;
 		uint32_t set_status;
 
 		rtn = _check_handle(handle);
-		if (AF_SUCCESS != rtn) {
+		if (AFV1_SUCCESS != rtn) {
 			AF_LOGE("_check_cxt failed");
-			return AF_ERROR;
+			return AFV1_ERROR;
 		}
 
 		switch (af_status) {
@@ -323,7 +324,7 @@ extern "C" {
 			rtn = AF_PARAM_ERROR;
 			break;
 		}
-		if (AF_SUCCESS == rtn) {
+		if (AFV1_SUCCESS == rtn) {
 			rtn =
 			    af_cxt->lib_ops.af_ioctrl(af_cxt->af_alg_handle, AF_ALG_CMD_SET_AF_STATUS,
 						      (void *)&set_status, NULL);
@@ -334,15 +335,15 @@ extern "C" {
 	}
 
 	static int32_t _af_set_start(afv1_handle_t handle, struct af_trig_info *trig_info) {
-		int32_t rtn = AF_SUCCESS;
+		int32_t rtn = AFV1_SUCCESS;
 		struct af_context_t *af_cxt = (struct af_context_t *)handle;
 		struct af_monitor_set monitor_set;
 		uint32_t af_pos;
 
 		rtn = _check_handle(handle);
-		if (AF_SUCCESS != rtn) {
+		if (AFV1_SUCCESS != rtn) {
 			AF_LOGE("_check_cxt failed");
-			return AF_ERROR;
+			return AFV1_ERROR;
 		}
 		rtn =
 		    af_cxt->lib_ops.af_ioctrl(af_cxt->af_alg_handle, AF_ALG_CMD_GET_AF_INIT_POS, (void *)&af_pos, NULL);
@@ -366,14 +367,14 @@ extern "C" {
 	}
 
 	static int32_t _af_end_proc(afv1_handle_t handle, struct af_result_param *result, uint32_t need_notice) {
-		int32_t rtn = AF_SUCCESS;
+		int32_t rtn = AFV1_SUCCESS;
 		struct af_context_t *af_cxt = (struct af_context_t *)handle;
 		struct af_monitor_set monitor_set;
 
 		rtn = _check_handle(handle);
-		if (AF_SUCCESS != rtn) {
+		if (AFV1_SUCCESS != rtn) {
 			AF_LOGE("_check_cxt failed");
-			return AF_ERROR;
+			return AFV1_ERROR;
 		}
 		monitor_set.bypass = 1;
 		monitor_set.int_mode = 1;
@@ -396,13 +397,13 @@ extern "C" {
 	}
 
 	static int32_t _af_finish(afv1_handle_t handle, struct af_result_param *result) {
-		int32_t rtn = AF_SUCCESS;
+		int32_t rtn = AFV1_SUCCESS;
 		struct af_context_t *af_cxt = (struct af_context_t *)handle;
 
 		rtn = _check_handle(handle);
-		if (AF_SUCCESS != rtn) {
+		if (AFV1_SUCCESS != rtn) {
 			AF_LOGE("_check_cxt failed");
-			return AF_ERROR;
+			return AFV1_ERROR;
 		}
 		rtn = af_ioctrl(handle, AF_CMD_SET_AF_FINISH, (void *)result, NULL);
 
@@ -410,14 +411,14 @@ extern "C" {
 	}
 
 	static int32_t _caf_trig_af_start(afv1_handle_t handle) {
-		int32_t rtn = AF_SUCCESS;
+		int32_t rtn = AFV1_SUCCESS;
 		struct af_context_t *af_cxt = (struct af_context_t *)handle;
 		struct af_trig_info trig_info;
 
 		rtn = _check_handle(handle);
-		if (AF_SUCCESS != rtn) {
+		if (AFV1_SUCCESS != rtn) {
 			AF_LOGE("_check_cxt failed");
-			return AF_ERROR;
+			return AFV1_ERROR;
 		}
 
 		trig_info.win_num = 0;
@@ -429,13 +430,13 @@ extern "C" {
 	}
 
 	static int32_t _caf_reset(afv1_handle_t handle) {
-		int32_t rtn = AF_SUCCESS;
+		int32_t rtn = AFV1_SUCCESS;
 		struct af_context_t *af_cxt = (struct af_context_t *)handle;
 
 		rtn = _check_handle(handle);
-		if (AF_SUCCESS != rtn) {
+		if (AFV1_SUCCESS != rtn) {
 			AF_LOGE("_check_cxt failed");
-			return AF_ERROR;
+			return AFV1_ERROR;
 		}
 
 		rtn = af_ioctrl(handle, AF_CMD_SET_CAF_RESET, NULL, NULL);
@@ -444,13 +445,13 @@ extern "C" {
 	}
 
 	static int32_t _caf_stop(afv1_handle_t handle) {
-		int32_t rtn = AF_SUCCESS;
+		int32_t rtn = AFV1_SUCCESS;
 		struct af_context_t *af_cxt = (struct af_context_t *)handle;
 
 		rtn = _check_handle(handle);
-		if (AF_SUCCESS != rtn) {
+		if (AFV1_SUCCESS != rtn) {
 			AF_LOGE("_check_cxt failed");
-			return AF_ERROR;
+			return AFV1_ERROR;
 		}
 
 		rtn = af_ioctrl(handle, AF_CMD_SET_CAF_STOP, NULL, NULL);
@@ -459,13 +460,13 @@ extern "C" {
 	}
 
 	static int32_t _caf_reset_after_af(afv1_handle_t handle) {
-		int32_t rtn = AF_SUCCESS;
+		int32_t rtn = AFV1_SUCCESS;
 		struct af_context_t *af_cxt = (struct af_context_t *)handle;
 
 		rtn = _check_handle(handle);
-		if (AF_SUCCESS != rtn) {
+		if (AFV1_SUCCESS != rtn) {
 			AF_LOGE("_check_cxt failed");
-			return AF_ERROR;
+			return AFV1_ERROR;
 		}
 
 		if ((AF_MODE_CONTINUE == af_cxt->af_mode) || (AF_MODE_VIDEO == af_cxt->af_mode)) {
@@ -490,9 +491,9 @@ extern "C" {
 		int32_t rtn = AFV1_SUCCESS;
 
 		rtn = _check_handle(handle);
-		if (AF_SUCCESS != rtn) {
+		if (AFV1_SUCCESS != rtn) {
 			AF_LOGE("_check_cxt failed");
-			return AF_ERROR;
+			return AFV1_ERROR;
 		}
 
 		property_get("af_mode", AF_MODE, "none");
@@ -556,16 +557,16 @@ extern "C" {
 		}
 		return rtn;
 #else
-		int32_t rtn = AF_SUCCESS;
+		int32_t rtn = AFV1_SUCCESS;
 		struct af_context_t *af_cxt = (struct af_context_t *)handle;
 		uint32_t af_mode = *(uint32_t *) in_param;
 		uint32_t set_mode;
 		uint32_t init_pos;
 
 		rtn = _check_handle(handle);
-		if (AF_SUCCESS != rtn) {
+		if (AFV1_SUCCESS != rtn) {
 			AF_LOGE("_check_cxt failed");
-			return AF_ERROR;
+			return AFV1_ERROR;
 		}
 
 		if (0 == af_cxt->flash_on) {
@@ -591,7 +592,7 @@ extern "C" {
 				rtn = AF_PARAM_ERROR;
 				break;
 			}
-			if (AF_SUCCESS == rtn) {
+			if (AFV1_SUCCESS == rtn) {
 				rtn =
 				    af_cxt->lib_ops.af_ioctrl(af_cxt->af_alg_handle, AF_ALG_CMD_SET_AF_MODE,
 							      (void *)&set_mode, NULL);
@@ -737,6 +738,8 @@ extern "C" {
 			short iir_c10;
 		};
 */
+#if 1
+		//medium
 		af->af_iir_nr.iir_nr_en = 1;
 		af->af_iir_nr.iir_g0 = 185;
 		af->af_iir_nr.iir_c1 = 0;
@@ -750,6 +753,39 @@ extern "C" {
 		af->af_iir_nr.iir_c8 = 512;
 		af->af_iir_nr.iir_c9 = 1024;
 		af->af_iir_nr.iir_c10 = 512;
+#endif
+#if 0
+		//weak
+		af->af_iir_nr.iir_nr_en = 1;
+		af->af_iir_nr.iir_g0 = 378;
+		af->af_iir_nr.iir_c1 = -676;
+		af->af_iir_nr.iir_c2 = -324;
+		af->af_iir_nr.iir_c3 = 512;
+		af->af_iir_nr.iir_c4 = 1024;
+		af->af_iir_nr.iir_c5 = 512;
+		af->af_iir_nr.iir_g1 = 300;
+		af->af_iir_nr.iir_c6 = -537;
+		af->af_iir_nr.iir_c7 = -152;
+		af->af_iir_nr.iir_c8 = 512;
+		af->af_iir_nr.iir_c9 = 1024;
+		af->af_iir_nr.iir_c10 = 512;
+#endif
+#if 0
+		//high
+		af->af_iir_nr.iir_nr_en = 1;
+		af->af_iir_nr.iir_g0 = 81;
+		af->af_iir_nr.iir_c1 = 460;
+		af->af_iir_nr.iir_c2 = -270;
+		af->af_iir_nr.iir_c3 = 512;
+		af->af_iir_nr.iir_c4 = 1024;
+		af->af_iir_nr.iir_c5 = 512;
+		af->af_iir_nr.iir_g1 = 60;
+		af->af_iir_nr.iir_c6 = 344;
+		af->af_iir_nr.iir_c7 = 74;
+		af->af_iir_nr.iir_c8 = 512;
+		af->af_iir_nr.iir_c9 = 1024;
+		af->af_iir_nr.iir_c10 = 512;
+#endif
 
 		char fv1_coeff[36] = {
 			-2, -2, -2, -2, 16, -2, -2, -2, -2,
@@ -1522,6 +1558,13 @@ static void do_notify(af_ctrl_t *af, enum notify_event evt, const notify_result_
 			AF_LOGE("aft tuning param ok ");
 			aft_in.data_len = aft_pm_output.param_data[0].data_size;
 			aft_in.data = aft_pm_output.param_data[0].data_ptr;
+#if 0
+			FILE *fp = NULL;
+			fp = fopen("/data/mlog/aft_tuning.bin", "wb");
+			fwrite(aft_in.data, 1, aft_in.data_len, fp);
+			fclose(fp);
+			AF_LOGD("aft tuning size = %d", aft_in.data_len);
+#endif
 		}
 		af->trig_ops.handle.aft_ops.aft_cookie = af;
 		af->trig_ops.handle.aft_ops.get_sys_time = if_get_sys_time;
@@ -2441,83 +2484,77 @@ v=v>(max)?(max):v; hist[v]++;}
 
 	static ERRCODE if_lock_ae(e_LOCK lock, void *cookie) {
 		af_ctrl_t *af = cookie;
-//    isp_ctrl_context *isp = af->isp_ctx;
-		enum ae_io_ctrl_cmd cmd;
-		struct ae_calc_out out;
-
 		AF_LOGD("%s, lock_num = %d", LOCK == lock ? "lock" : "unlock", af->ae_lock_num);
 
 		if (LOCK == lock) {
-			af->ae_lock_num++;
-			cmd = AE_SET_PAUSE;
-//        isp->lock_ae = 1;//gwb
-
+			if (0 == af->ae_lock_num) {
+				af->lock_module(af->caller, AF_LOCKER_AE);
+				af->ae_lock_num++;
+			}
 		} else {
-			af->ae_lock_num--;
-			cmd = AE_SET_RESTORE;
-//        isp->lock_ae = 0;//gwb
+			if (af->ae_lock_num) {
+				af->unlock_module(af->caller, AF_LOCKER_AE);
+				af->ae_lock_num--;
+			}
 		}
 
-		memset(&out, 0, sizeof(out));
-		//isp->ae_lib_fun->ae_io_ctrl(isp->handle_ae, cmd, NULL, &out);//gwb
 		return 0;
 	}
 
 	static ERRCODE if_lock_awb(e_LOCK lock, void *cookie) {
 		af_ctrl_t *af = cookie;
-		//isp_ctrl_context *isp = af->isp_ctx;
-		enum awb_ctrl_cmd cmd;
-
 		AF_LOGD("%s, lock_num = %d", LOCK == lock ? "lock" : "unlock", af->awb_lock_num);
 
 		if (LOCK == lock) {
-			af->awb_lock_num++;
-			cmd = AWB_CTRL_CMD_LOCK;
+			if (0 == af->awb_lock_num) {
+				af->lock_module(af->caller, AF_LOCKER_AWB);
+				af->awb_lock_num++;
+			}
 		} else {
-			af->awb_lock_num--;
-			cmd = AWB_CTRL_CMD_UNLOCK;
+			if (af->awb_lock_num) {
+				af->unlock_module(af->caller, AF_LOCKER_AWB);
+				af->awb_lock_num--;
+			}
 		}
 
-		//isp->awb_lib_fun->awb_ctrl_ioctrl(isp->handle_awb, cmd, NULL, NULL);//gwb
-		return 0;
-	}
-
-//isp_s32 _set_nlm_lock_state(uint8_t state);
-	static ERRCODE if_lock_nlm(e_LOCK lock, void *cookie) {
-		af_ctrl_t *af = cookie;
-		//isp_ctrl_context *isp = af->isp_ctx;
-		enum awb_ctrl_cmd cmd;
-
-		AF_LOGD("%s, lock_num = %d", LOCK == lock ? "lock" : "unlock", af->lsc_lock_num);
-
-		if (LOCK == lock) {
-			cmd = 1;
-		} else {
-			cmd = 0;
-		}
-
-		//lsc_adv_ioctrl(isp->handle_lsc_adv, cmd, NULL, NULL);
-//      _set_nlm_lock_state(cmd);
 		return 0;
 	}
 
 	static ERRCODE if_lock_lsc(e_LOCK lock, void *cookie) {
 		af_ctrl_t *af = cookie;
-		//isp_ctrl_context *isp = af->isp_ctx;
-		enum awb_ctrl_cmd cmd;
-
 		AF_LOGD("%s, lock_num = %d", LOCK == lock ? "lock" : "unlock", af->lsc_lock_num);
 
 		if (LOCK == lock) {
-			af->lsc_lock_num++;
-			cmd = SMART_LSC_ALG_LOCK;
+			if (0 == af->lsc_lock_num) {
+				af->lock_module(af->caller, AF_LOCKER_LSC);
+				af->lsc_lock_num++;
+			}
 		} else {
-			af->lsc_lock_num--;
-			cmd = SMART_LSC_ALG_UNLOCK;
+			if (af->lsc_lock_num) {
+				af->unlock_module(af->caller, AF_LOCKER_LSC);
+				af->lsc_lock_num--;
+			}
 		}
 
-//      lsc_adv_ioctrl(isp->handle_lsc_adv, cmd, NULL, NULL);//gwb
-		//      _smart_io_ctrl(isp,cmd);
+		return 0;
+	}
+
+	static ERRCODE if_lock_nlm(e_LOCK lock, void *cookie) {
+		af_ctrl_t *af = cookie;
+		AF_LOGD("%s, lock_num = %d", LOCK == lock ? "lock" : "unlock", af->nlm_lock_num);
+
+		if (LOCK == lock) {
+			if (0 == af->nlm_lock_num) {
+				af->lock_module(af->caller, AF_LOCKER_NLM);
+				af->nlm_lock_num++;
+			}
+		} else {
+			if (af->nlm_lock_num) {
+				af->unlock_module(af->caller, AF_LOCKER_NLM);
+				af->nlm_lock_num--;
+			}
+		}
+
 		return 0;
 	}
 
@@ -3204,7 +3241,7 @@ v=v>(max)?(max):v; hist[v]++;}
 /***************************************************************************/
 #if 0
 	static int32_t afsprd_unload_lib(struct af_context_t *cxt) {
-		int32_t rtn = AF_SUCCESS;
+		int32_t rtn = AFV1_SUCCESS;
 
 		if (NULL == cxt) {
 			AF_LOGE("param is NULL");
@@ -3232,9 +3269,9 @@ v=v>(max)?(max):v; hist[v]++;}
 //    af_ctrl_t *af = isp->handle_af;
 //    assert(af);
 		rtn = _check_handle(handle);
-		if (AF_SUCCESS != rtn) {
+		if (AFV1_SUCCESS != rtn) {
 			AF_LOGE("_check_cxt failed");
-			return AF_ERROR;
+			return AFV1_ERROR;
 		}
 
 		lens_move_to(af, 0);
@@ -3257,14 +3294,14 @@ v=v>(max)?(max):v; hist[v]++;}
 //------------------------------------------------------
 		UNUSED(param);
 		UNUSED(result);
-		cmr_int rtn = AF_SUCCESS;
+		cmr_int rtn = AFV1_SUCCESS;
 		struct af_context_t *af_cxt = (struct af_context_t *)handle;
 		struct af_monitor_set monitor_set;
 
 		rtn = _check_handle(handle);
-		if (AF_SUCCESS != rtn) {
+		if (AFV1_SUCCESS != rtn) {
 			AF_LOGE("_check_cxt failed");
-			return AF_ERROR;
+			return AFV1_ERROR;
 		}
 
 		af_cxt = (struct af_context_t *)handle;
@@ -3295,7 +3332,7 @@ v=v>(max)?(max):v; hist[v]++;}
 
 #if 0
 	static int32_t afsprd_load_lib(struct af_context_t *cxt) {
-		int32_t rtn = AF_SUCCESS;
+		int32_t rtn = AFV1_SUCCESS;
 		uint32_t v_count = 0;
 		uint32_t v_id = 0;
 
@@ -3310,7 +3347,7 @@ v=v>(max)?(max):v; hist[v]++;}
 
 		if (v_id >= v_count) {
 			AF_LOGE("version_id is error version_id :%d", v_id);
-			rtn = AF_ERROR;
+			rtn = AFV1_ERROR;
 			goto exit;
 		}
 		AF_LOGI("af lib v_count:%d, v_id:%d, version_name:%s", v_count, v_id, libafv1_path[v_id]);
@@ -3318,7 +3355,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		cxt->lib_handle = dlopen(libafv1_path[v_id], RTLD_NOW);
 		if (!cxt->lib_handle) {
 			AF_LOGE("failed to af lib dlopen");
-			rtn = AF_ERROR;
+			rtn = AFV1_ERROR;
 			goto exit;
 		}
 
@@ -3331,7 +3368,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		    NULL == cxt->lib_ops.af_calculation ||
 		    NULL == cxt->lib_ops.af_deinit || NULL == cxt->lib_ops.af_ioctrl) {
 			AF_LOGE("failed to af lib dlsym");
-			rtn = AF_ERROR;
+			rtn = AFV1_ERROR;
 			goto load_error;
 		}
 
@@ -3397,9 +3434,8 @@ v=v>(max)?(max):v; hist[v]++;}
 		//afm_setup(isp); // default settings
 
 		memset(af, 0, sizeof(*af));
-		//af->isp_ctx = isp_cxt;
-		af->isp_info.width = init_param->src.w;	//init_param->plat_info.isp_w;   //gwb
-		af->isp_info.height = init_param->src.h;	//init_param->plat_info.isp_h;
+		af->isp_info.width = init_param->src.w; //init_param->plat_info.isp_w;
+		af->isp_info.height = init_param->src.h; //init_param->plat_info.isp_h;
 		af->isp_info.win_num = afm_get_win_num(init_param);
 		af->caller = init_param->caller;
 		af->go_position = init_param->go_position;
@@ -3410,6 +3446,8 @@ v=v>(max)?(max):v; hist[v]++;}
 		af->get_monitor_win_num = init_param->get_monitor_win_num;
 		af->ae_awb_lock = init_param->ae_awb_lock;
 		af->ae_awb_release = init_param->ae_awb_release;
+		af->lock_module = init_param->lock_module;
+		af->unlock_module = init_param->unlock_module;
 
 		af->fv.AF_Ops.cookie = af;
 		af->fv.AF_Ops.statistics_wait_cal_done = if_statistics_wait_cal_done;
@@ -3419,6 +3457,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		af->fv.AF_Ops.lens_wait_stop = if_lens_wait_stop;
 		af->fv.AF_Ops.lock_ae = if_lock_ae;
 		af->fv.AF_Ops.lock_awb = if_lock_awb;
+		af->fv.AF_Ops.lock_lsc = if_lock_lsc;
 		af->fv.AF_Ops.get_sys_time = if_get_sys_time;
 		af->fv.AF_Ops.sys_sleep_time = if_sys_sleep_time;
 		af->fv.AF_Ops.get_ae_report = if_get_ae_report;
@@ -3427,11 +3466,15 @@ v=v>(max)?(max):v; hist[v]++;}
 		af->fv.AF_Ops.get_motor_pos = if_get_motor_pos;
 		af->fv.AF_Ops.set_motor_sacmode = if_set_motor_sacmode;
 		af->fv.AF_Ops.binfile_is_exist = if_binfile_is_exist;
-		af->fv.AF_Ops.lock_lsc = if_lock_lsc;
 		af->fv.AF_Ops.af_log = if_af_log;
 		af->fv.AF_Ops.af_start_notify = if_af_start_notify;
 		af->fv.AF_Ops.af_end_notify = if_af_end_notify;
 		af->curr_scene = INDOOR_SCENE;
+
+		af->ae_lock_num = 1;
+		af->awb_lock_num = 0;
+		af->lsc_lock_num = 0;
+		af->nlm_lock_num = 0;
 
 		pthread_mutex_init(&af->af_work_lock, NULL);
 		pthread_mutex_init(&af->caf_work_lock, NULL);
@@ -3448,12 +3491,11 @@ v=v>(max)?(max):v; hist[v]++;}
 			goto INIT_ERROR_EXIT;
 		}
 		//pthread_mutex_init(&af->caf_lock, NULL);
-//    af->af_task = isp->system.thread_af_proc;
+		//af->af_task = isp->system.thread_af_proc;
 
 		AF_LOGD("width = %d, height = %d, win_num = %d", af->isp_info.width,
 			af->isp_info.height, af->isp_info.win_num);
 
-//    isp->handle_af = af;
 		isp_ctx->af_cxt.log_af = (uint8_t *) af;
 		isp_ctx->af_cxt.log_af_size = sizeof(*af);
 		lens_move_to_infi(af, af->fv.AF_OTP.INF);
@@ -3519,7 +3561,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		struct af_context_t *af_cxt = NULL;
 		struct afctrl_init_in *init_param = (struct afctrl_init_in *)in;
 		struct afctrl_init_out *result = (struct afctrl_init_out *)out;
-		int32_t rtn = AF_SUCCESS;
+		int32_t rtn = AFV1_SUCCESS;
 		if (NULL == init_param) {
 			AF_LOGE("init_param error!!init_param : %p , result : %p  !!!", init_param, result);
 			goto INIT_ERROR_EXIT;
@@ -3557,13 +3599,13 @@ v=v>(max)?(max):v; hist[v]++;}
 		af_cxt->lib_info = &init_param->lib_param;
 
 		rtn = afsprd_load_lib(af_cxt);
-		if (AF_SUCCESS != rtn) {
+		if (AFV1_SUCCESS != rtn) {
 			AF_LOGE("af lib load error");
 			goto INIT_ERROR_EXIT;
 		}
 
 		rtn = _alg_init((afv1_handle_t) af_cxt, init_param, result);
-		if (AF_SUCCESS != rtn) {
+		if (AFV1_SUCCESS != rtn) {
 			AF_LOGE("af_alg_handle init fail!!!");
 			goto INIT_ERROR_EXIT;
 		}
@@ -3594,16 +3636,16 @@ v=v>(max)?(max):v; hist[v]++;}
 		af_ctrl_t *af = (af_ctrl_t *) handle;
 		struct afctrl_calc_in *inparam = (struct afctrl_calc_in *)in;
 		struct afctrl_calc_out *result = (struct afctrl_calc_out *)out;
-		cmr_int rtn = AF_SUCCESS;
+		cmr_int rtn = AFV1_SUCCESS;
 		cmr_int i = 0;
 		nsecs_t system_time0 = 0;
 		nsecs_t system_time1 = 0;
 		AF_LOGE("B");
 
 		rtn = _check_handle(handle);
-		if (AF_SUCCESS != rtn) {
+		if (AFV1_SUCCESS != rtn) {
 			AF_LOGE("_check_cxt failed");
-			return AF_ERROR;
+			return AFV1_ERROR;
 		}
 
 		if (1 == af->bypass)
@@ -3711,7 +3753,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		default:
 			{
 				AF_LOGE("unsupport data type! type: %d", inparam->data_type);
-				rtn = AF_ERROR;
+				rtn = AFV1_ERROR;
 				break;
 			}
 
@@ -3725,7 +3767,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		AF_LOGE("E");
 		return rtn;
 #else
-		cmr_int rtn = AF_SUCCESS;
+		cmr_int rtn = AFV1_SUCCESS;
 		struct af_context_t *af_cxt = (struct af_context_t *)handle;
 		struct af_calc_param *param = (struct af_calc_param *)in;
 		struct af_result_param *result = (struct af_result_param *)out;
@@ -3733,9 +3775,9 @@ v=v>(max)?(max):v; hist[v]++;}
 		struct af_alg_result alg_calc_result;
 
 		rtn = _check_handle(handle);
-		if (AF_SUCCESS != rtn) {
+		if (AFV1_SUCCESS != rtn) {
 			AF_LOGE("_check_cxt failed");
-			return AF_ERROR;
+			return AFV1_ERROR;
 		}
 
 		if (1 == af_cxt->isp_tool_af_test) {	// isp tool af test
@@ -3786,9 +3828,9 @@ v=v>(max)?(max):v; hist[v]++;}
 		struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
 
 		rtn = _check_handle(handle);
-		if (AF_SUCCESS != rtn) {
+		if (AFV1_SUCCESS != rtn) {
 			AF_LOGE("_check_cxt failed");
-			return AF_ERROR;
+			return AFV1_ERROR;
 		}
 
 		pthread_mutex_lock(&af->status_lock);
@@ -4148,7 +4190,7 @@ v=v>(max)?(max):v; hist[v]++;}
 			}
 		default:
 			AF_LOGE("cmd not support! cmd: %ld", cmd);
-			rtn = AF_ERROR;
+			rtn = AFV1_ERROR;
 			break;
 
 		}

@@ -46,8 +46,6 @@
 #define AFV1_FALSE (0)
 #endif
 
-//#define ISP_CALLBACK_EVT 0x00040000	// FIXME: should be defined in isp_app.h
-//#define ISP_PROC_AF_IMG_DATA_UPDATE (1 << 3)	// FIXME
 #define AF_SAVE_MLOG_STR     "persist.sys.isp.af.mlog"	/*save/no */
 
 #define ISP_AF_END_FLAG 0x80000000
@@ -65,9 +63,6 @@
 #define AF_WAIT_CAF_FINISH     1
 #define AF_RING_BUFFER         0
 #define AF_SYS_VERSION "-20170218-15"
-
-//int32_t _smart_io_ctrl(isp_ctrl_context* handle, uint32_t cmd);
-//int32_t lsc_adv_ioctrl(lsc_adv_handle_t handle, enum alsc_io_ctrl_cmd cmd, void *in_param, void *out_param);
 
 /*------------------------------------------------------------------------------*
 *					Data Structures				*
@@ -349,6 +344,7 @@ typedef struct _af_ctrl {
 	int ae_lock_num;
 	int awb_lock_num;
 	int lsc_lock_num;
+	int nlm_lock_num;
 	void *trig_lib;
 	caf_trigger_ops_t trig_ops;
 	//pthread_mutex_t     caf_lock;
@@ -378,6 +374,8 @@ typedef struct _af_ctrl {
 	 int32_t(*get_monitor_win_num) (void *handler, uint32_t * win_num);
 	 int32_t(*ae_awb_lock) (void *handle);
 	 int32_t(*ae_awb_release) (void *handle);
+	 int32_t(*lock_module) (void* handle, cmr_int af_locker_type);
+	 int32_t(*unlock_module) (void* handle, cmr_int af_locker_type);
 } af_ctrl_t;
 
 typedef struct _test_mode_command {
