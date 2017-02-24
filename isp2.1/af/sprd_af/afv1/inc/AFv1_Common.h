@@ -65,7 +65,7 @@
 //=========================================================================//
 /* ============================================================================================== */
 /*1.System info*/	
-#define VERSION             "2.101"
+#define VERSION             "2.103"
 #define STRING(s) #s
 
 
@@ -79,7 +79,7 @@
 #define AF_SEARCH_DEBUG     0
 
 #define SAF_FINE_SEARCH     1   //0:without fine search, 1:with fine search
-#define DEBUG_PRINT_ENA		0
+#define DEBUG_PRINT_ENA		1
 
 #define null_print			do {} while(0)
 //#define AfDebugPrint( str, args... )    ( !AF_SEARCH_DEBUG ) ? : printf( str, ##args );
@@ -91,12 +91,14 @@
 #else 
 extern ERRCODE (*ANDROID_LOG)(const char* format, ...); 
 #define AfDebugPrint(x) do { if (AF_SEARCH_DEBUG) ANDROID_LOG x; } while (0) 
+#define  LOG_TAG    "AFv1Lib"
+#define  AFLIB_LOG(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #if (DEBUG_PRINT_ENA)
-#define Printf (*ANDROID_LOG) 
+#define Printf AFLIB_LOG 
 #else
 #define Printf(fmt, args...) null_print
 #endif
-#define _assert(a)	do { if (!(a)) (*ANDROID_LOG)("!!! ASSERT: %s(),%d \r\n",__FUNCTION__, __LINE__); } while(0)
+#define _assert(a)	do { if (!(a)) AFLIB_LOG("!!! ASSERT: %s(),%d \r\n",__FUNCTION__, __LINE__); } while(0)
 #endif
 
 #define START_F(func)		    ERRCODE err = ERR_SUCCESS; \
@@ -483,7 +485,7 @@ typedef struct aftuning_param_s{
 	unsigned int 	enable_adapt_af;
 	unsigned int	_alg_select;
 	unsigned int	_lowlight_agc;
-	unsigned int	_std_rto;
+	unsigned int	_flat_rto;
 	unsigned int 	_falling_rto;
 	unsigned int 	_rising_rto;
 	unsigned int	_stat_min_value;
@@ -869,6 +871,7 @@ typedef struct _AF_Ctrl_Ops
 {
 	ERRCODE (*statistics_wait_cal_done)(void *cookie);
 	ERRCODE (*statistics_get_data)(uint64 fv[T_TOTAL_FILTER_TYPE],_af_stat_data_t *p_stat_data,void *cookie);
+	ERRCODE (*statistics_set_data)(unsigned int set_stat, void * cookie);
 	ERRCODE (*lens_get_pos)(uint16 *pos, void *cookie);
 	ERRCODE (*lens_move_to)(uint16 pos, void *cookie);
 	ERRCODE (*lens_wait_stop)(void *cookie);
@@ -884,7 +887,7 @@ typedef struct _AF_Ctrl_Ops
     ERRCODE (*set_motor_sacmode)(void *cookie);
     ERRCODE (*binfile_is_exist)(uint8* bisExist, void *cookie);
     ERRCODE (*af_log)(const char* format, ...);
-    ERRCODE (*af_start_notify)(eAF_MODE  AF_mode, void *cookie);
+    ERRCODE (*af_start_notify)(eAF_MODE AF_mode, void *cookie);
     ERRCODE (*af_end_notify)(eAF_MODE  AF_mode, void *cookie);
 	void *cookie;
 } AF_Ctrl_Ops;

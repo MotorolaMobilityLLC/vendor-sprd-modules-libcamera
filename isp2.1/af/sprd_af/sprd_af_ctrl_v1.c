@@ -42,6 +42,62 @@ extern "C" {
 #define ROI_RATIO	60
 #define FOCUS_STAT_DATA_NUM	2
 
+static unsigned int iir_level,nr_mode,cw_mode,fv0_e,fv1_e;
+static struct af_iir_nr_info af_iir_nr[3] ={
+	{	//weak
+		.iir_nr_en = 1,
+		.iir_g0 = 378,
+		.iir_c1 = -676,
+		.iir_c2 = -324,
+		.iir_c3 = 512,
+		.iir_c4 = 1024,
+		.iir_c5 = 512,
+		.iir_g1 = 300,
+		.iir_c6 = -537,
+		.iir_c7 = -152,
+		.iir_c8 = 512,
+		.iir_c9 = 1024,
+		.iir_c10 = 512,
+	},
+	{	//medium
+		.iir_nr_en = 1,
+		.iir_g0 = 185,
+		.iir_c1 = 0,
+		.iir_c2 = -229,
+		.iir_c3 = 512,
+		.iir_c4 = 1024,
+		.iir_c5 = 512,
+		.iir_g1 = 133,
+		.iir_c6 = 0,
+		.iir_c7 = -20,
+		.iir_c8 = 512,
+		.iir_c9 = 1024,
+		.iir_c10 = 512,
+	},
+	{	//strong
+		.iir_nr_en = 1,
+		.iir_g0 = 81,
+		.iir_c1 = 460,
+		.iir_c2 = -270,
+		.iir_c3 = 512,
+		.iir_c4 = 1024,
+		.iir_c5 = 512,
+		.iir_g1 = 60,
+		.iir_c6 = 344,
+		.iir_c7 = 74,
+		.iir_c8 = 512,
+		.iir_c9 = 1024,
+		.iir_c10 = 512,
+	},
+};
+static char fv1_coeff[36] = {
+	-2, -2, -2, -2, 16, -2, -2, -2, -2,
+	-3, 5, 3, 5, 0, -5, 3, -5, -3,
+	3, 5, -3, -5, 0, 5, -3, -5, 3,
+	0, -8, 0, -8, 16, 0, 0, 0, 0
+};
+
+
 	char libafv1_path[][20] = {
 		"libspafv1.so",
 		"libaf_v1.so",
@@ -738,66 +794,12 @@ extern "C" {
 			short iir_c10;
 		};
 */
-#if 1
-		//medium
-		af->af_iir_nr.iir_nr_en = 1;
-		af->af_iir_nr.iir_g0 = 185;
-		af->af_iir_nr.iir_c1 = 0;
-		af->af_iir_nr.iir_c2 = -229;
-		af->af_iir_nr.iir_c3 = 512;
-		af->af_iir_nr.iir_c4 = 1024;
-		af->af_iir_nr.iir_c5 = 512;
-		af->af_iir_nr.iir_g1 = 133;
-		af->af_iir_nr.iir_c6 = 0;
-		af->af_iir_nr.iir_c7 = -20;
-		af->af_iir_nr.iir_c8 = 512;
-		af->af_iir_nr.iir_c9 = 1024;
-		af->af_iir_nr.iir_c10 = 512;
-#endif
-#if 0
-		//weak
-		af->af_iir_nr.iir_nr_en = 1;
-		af->af_iir_nr.iir_g0 = 378;
-		af->af_iir_nr.iir_c1 = -676;
-		af->af_iir_nr.iir_c2 = -324;
-		af->af_iir_nr.iir_c3 = 512;
-		af->af_iir_nr.iir_c4 = 1024;
-		af->af_iir_nr.iir_c5 = 512;
-		af->af_iir_nr.iir_g1 = 300;
-		af->af_iir_nr.iir_c6 = -537;
-		af->af_iir_nr.iir_c7 = -152;
-		af->af_iir_nr.iir_c8 = 512;
-		af->af_iir_nr.iir_c9 = 1024;
-		af->af_iir_nr.iir_c10 = 512;
-#endif
-#if 0
-		//high
-		af->af_iir_nr.iir_nr_en = 1;
-		af->af_iir_nr.iir_g0 = 81;
-		af->af_iir_nr.iir_c1 = 460;
-		af->af_iir_nr.iir_c2 = -270;
-		af->af_iir_nr.iir_c3 = 512;
-		af->af_iir_nr.iir_c4 = 1024;
-		af->af_iir_nr.iir_c5 = 512;
-		af->af_iir_nr.iir_g1 = 60;
-		af->af_iir_nr.iir_c6 = 344;
-		af->af_iir_nr.iir_c7 = 74;
-		af->af_iir_nr.iir_c8 = 512;
-		af->af_iir_nr.iir_c9 = 1024;
-		af->af_iir_nr.iir_c10 = 512;
-#endif
-
-		char fv1_coeff[36] = {
-			-2, -2, -2, -2, 16, -2, -2, -2, -2,
-			-3, 5, 3, 5, 0, -5, 3, -5, -3,
-			3, 5, -3, -5, 0, 5, -3, -5, 3,
-			0, -8, 0, -8, 16, 0, 0, 0, 0
-		};
+		memcpy(&(af->af_iir_nr),&(af_iir_nr[iir_level]),sizeof(struct af_iir_nr_info));
 		af->af_enhanced_module.chl_sel = 0;
-		af->af_enhanced_module.nr_mode = 2;
-		af->af_enhanced_module.center_weight = 2;
-		af->af_enhanced_module.fv_enhanced_mode[0] = 5;
-		af->af_enhanced_module.fv_enhanced_mode[1] = 5;
+		af->af_enhanced_module.nr_mode = (unsigned char)nr_mode;
+		af->af_enhanced_module.center_weight = (unsigned char)cw_mode;
+		af->af_enhanced_module.fv_enhanced_mode[0] = (unsigned char)fv0_e;
+		af->af_enhanced_module.fv_enhanced_mode[1] = (unsigned char)fv1_e;
 		af->af_enhanced_module.clip_en[0] = 0;
 		af->af_enhanced_module.clip_en[1] = 0;
 		af->af_enhanced_module.max_th[0] = 131071;
@@ -2356,21 +2358,6 @@ v=v>(max)?(max):v; hist[v]++;}
 
 // i/f to AF model
 	static ERRCODE if_af_start_notify(eAF_MODE AF_mode, void *cookie) {
-/*
-    af_ctrl_t *af = cookie;
-    struct isp_system *sys = &af->isp_ctx->system;
-    struct isp_af_notice param;
-
-    memset(&param, 0, sizeof(param));
-
-    param.mode = ISP_FOCUS_MOVE_START;
-    param.valid_win = 0;
-    AF_LOGD("ISP_FOCUS_MOVE_START");
-
-    if (!sys->isp_callback_bypass)
-        sys->callback(sys->caller_id, ISP_CALLBACK_EVT|ISP_AF_NOTICE_CALLBACK,
-            &param, sizeof(param));
-*/
 		return 0;
 	}
 
@@ -2464,7 +2451,21 @@ v=v>(max)?(max):v; hist[v]++;}
 
 		return 0;
 	}
+	static ERRCODE if_statistics_set_data(unsigned int set_stat,void *cookie) {
+		af_ctrl_t *af = cookie;
 
+		fv0_e = (set_stat & 0x0f);
+		fv1_e = (set_stat & 0xf0) >> 4;
+		nr_mode = (set_stat & 0xff00) >> 8;
+		cw_mode = (set_stat & 0xff0000) >> 16;
+		iir_level = (set_stat & 0xff000000) >> 24;
+
+		AF_LOGE("set afm param  0x%x ",set_stat);
+		AF_LOGE("fv0e %d, fv1e %d, nr %d, cw %d iir %d"
+			,fv0_e,fv1_e,nr_mode,cw_mode,iir_level);
+		//afm_setup(af);
+		return 0;
+	}
 	static ERRCODE if_lens_get_pos(uint16 * pos, void *cookie) {
 		af_ctrl_t *af = cookie;
 		*pos = lens_get_pos(af);
@@ -2711,7 +2712,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		return 0;
 	}
 	static char AFlog_buffer[2048] = { 0 };
-	static ERRCODE if_af_log(const char *format, ...) {
+	static ERRCODE if_af_log(const char *format, ...) {	
 //      char buffer[2048]={0};
 		va_list arg;
 		va_start(arg, format);
@@ -3435,7 +3436,7 @@ v=v>(max)?(max):v; hist[v]++;}
 
 		memset(af, 0, sizeof(*af));
 		af->isp_info.width = init_param->src.w; //init_param->plat_info.isp_w;
-		af->isp_info.height = init_param->src.h; //init_param->plat_info.isp_h;
+		af->isp_info.height = init_param->src.h;	//init_param->plat_info.isp_h;
 		af->isp_info.win_num = afm_get_win_num(init_param);
 		af->caller = init_param->caller;
 		af->go_position = init_param->go_position;
@@ -3452,6 +3453,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		af->fv.AF_Ops.cookie = af;
 		af->fv.AF_Ops.statistics_wait_cal_done = if_statistics_wait_cal_done;
 		af->fv.AF_Ops.statistics_get_data = if_statistics_get_data;
+		af->fv.AF_Ops.statistics_set_data = if_statistics_set_data;
 		af->fv.AF_Ops.lens_get_pos = if_lens_get_pos;
 		af->fv.AF_Ops.lens_move_to = if_lens_move_to;
 		af->fv.AF_Ops.lens_wait_stop = if_lens_wait_stop;
@@ -3491,7 +3493,7 @@ v=v>(max)?(max):v; hist[v]++;}
 			goto INIT_ERROR_EXIT;
 		}
 		//pthread_mutex_init(&af->caf_lock, NULL);
-		//af->af_task = isp->system.thread_af_proc;
+//    af->af_task = isp->system.thread_af_proc;
 
 		AF_LOGD("width = %d, height = %d, win_num = %d", af->isp_info.width,
 			af->isp_info.height, af->isp_info.win_num);
@@ -3508,7 +3510,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		memcpy(af->af_version + strlen("AF-"), af->fv.AF_Version, sizeof(af->fv.AF_Version));
 		memcpy(af->af_version + strlen("AF-") + strlen(af->fv.AF_Version), AF_SYS_VERSION,
 		       strlen(AF_SYS_VERSION));
-		AF_LOGD("AFVER %s ", af->af_version);
+		AF_LOGD("AFVER %s lib mem %d ", af->af_version,sizeof(AF_Data));
 		property_set("af_mode", "none");
 		{
 			FILE *fp = NULL;
@@ -3538,6 +3540,10 @@ v=v>(max)?(max):v; hist[v]++;}
 			fclose(fp);
 			AF_LOGD("sizeof(tuning_data) = %d", sizeof(tuning_data));
 		}
+		iir_level = 1;
+		nr_mode = 2;
+		cw_mode = 2;
+		fv0_e =fv1_e = 5;
 		return af;
 #if 0
 	      ISP_MALLOC_ERROR:

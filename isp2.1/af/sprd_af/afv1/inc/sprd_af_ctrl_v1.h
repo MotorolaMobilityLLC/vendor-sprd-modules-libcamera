@@ -62,7 +62,7 @@
 
 #define AF_WAIT_CAF_FINISH     1
 #define AF_RING_BUFFER         0
-#define AF_SYS_VERSION "-20170218-15"
+#define AF_SYS_VERSION "-20170225-02"
 
 /*------------------------------------------------------------------------------*
 *					Data Structures				*
