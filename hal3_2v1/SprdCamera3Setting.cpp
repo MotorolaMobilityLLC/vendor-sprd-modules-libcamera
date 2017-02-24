@@ -2988,11 +2988,21 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
 			size_t count = characteristicsInfo.find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS).count;
 			for (i=0; i < count; i++) {
 				if(characteristicsInfo.find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS).data.i32[i] == ANDROID_EDGE_MODE) {
-					uint8_t edgeMode = ANDROID_EDGE_MODE_OFF;
-					requestInfo.update(ANDROID_EDGE_MODE, &edgeMode, 1);
+					if(type == CAMERA3_TEMPLATE_PREVIEW || type == CAMERA3_TEMPLATE_VIDEO_RECORD){
+						uint8_t edgeMode = ANDROID_EDGE_MODE_FAST;
+						requestInfo.update(ANDROID_EDGE_MODE, &edgeMode, 1);
+					} else {
+						uint8_t edgeMode = ANDROID_EDGE_MODE_OFF;
+						requestInfo.update(ANDROID_EDGE_MODE, &edgeMode, 1);
+					}
 				} else if(characteristicsInfo.find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS).data.i32[i] == ANDROID_NOISE_REDUCTION_MODE) {
-					uint8_t noiseReducMode = ANDROID_NOISE_REDUCTION_MODE_OFF;
-					requestInfo.update(ANDROID_NOISE_REDUCTION_MODE, &noiseReducMode, 1);
+					if(type == CAMERA3_TEMPLATE_PREVIEW || type == CAMERA3_TEMPLATE_VIDEO_RECORD){
+						uint8_t noiseReducMode = ANDROID_NOISE_REDUCTION_MODE_FAST;
+						requestInfo.update(ANDROID_NOISE_REDUCTION_MODE, &noiseReducMode, 1);
+					} else {
+						uint8_t noiseReducMode = ANDROID_NOISE_REDUCTION_MODE_OFF;
+						requestInfo.update(ANDROID_NOISE_REDUCTION_MODE, &noiseReducMode, 1);
+					}
 				} else if(characteristicsInfo.find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS).data.i32[i] == ANDROID_TONEMAP_MODE) {
 					uint8_t toneMapMode = ANDROID_TONEMAP_MODE_FAST;
 					requestInfo.update(ANDROID_TONEMAP_MODE, &toneMapMode, 1);
