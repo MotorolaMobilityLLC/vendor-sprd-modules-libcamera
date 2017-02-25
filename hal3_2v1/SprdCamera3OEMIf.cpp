@@ -741,7 +741,9 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type, uint32_t frame_n
 #endif
 
 			ret = startPreviewInternal();
-			if ((mVideoSnapshotType == 1) && (mCaptureWidth != 0 && mCaptureHeight != 0) && mVideoParameterSetFlag == 0) {
+			if ((mVideoSnapshotType == 1) &&
+			    (mCaptureWidth != 0 && mCaptureHeight != 0) &&
+			    mVideoParameterSetFlag == 0) {
 				mPicCaptureCnt = 1;
 				ret = setVideoSnapshotParameter();
 				mVideoParameterSetFlag = true;
@@ -1150,7 +1152,11 @@ int SprdCamera3OEMIf::setVideoSnapshotParameter()
 	SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_QUALITY, jpgInfo.thumbnail_quality);
 	jpeg_thumb_size.width = jpgInfo.thumbnail_size[0];
 	jpeg_thumb_size.height = jpgInfo.thumbnail_size[1];
-	HAL_LOGD("JPEG thumbnail size = %d x %d", jpgInfo.thumbnail_size[0], jpgInfo.thumbnail_size[1]);
+
+	if (jpeg_thumb_size.width <= 0 || jpeg_thumb_size.height <= 0)
+		chooseDefaultThumbnailSize(&jpeg_thumb_size.width, &jpeg_thumb_size.height);
+
+	HAL_LOGD("JPEG thumbnail size = %d x %d", jpeg_thumb_size.width, jpeg_thumb_size.height);
 	SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_SIZE, (cmr_uint)&jpeg_thumb_size);
 
 	if (CMR_CAMERA_SUCCESS != mHalOem->ops->camera_take_picture(mCameraHandle, mCaptureMode)) {
@@ -2736,6 +2742,7 @@ int SprdCamera3OEMIf::chooseDefaultThumbnailSize(uint32_t *thumbWidth, uint32_t 
 	unsigned char thumbCnt = 0;
 	unsigned char matchCnt = 0;
 
+	HAL_LOGV("mCaptureWidth=%d, mCaptureHeight=%d", mCaptureWidth, mCaptureHeight);
 	mSetting->getJPEGTag(&jpgInfo);
 	thumbCnt = sizeof(jpgInfo.available_thumbnail_sizes) / sizeof(jpgInfo.available_thumbnail_sizes[0]);
 	if (mCaptureWidth > 0 && mCaptureHeight > 0) {
@@ -7196,7 +7203,7 @@ int SprdCamera3OEMIf::SetDimensionVideo(cam_dimension_t video_size)
 	SPRD_DEF_Tag sprddefInfo;
 	mSetting->getSPRDDEFTag(&sprddefInfo);
 
-	if (mVideoWidth > 2048 && sprddefInfo.slowmotion <= 1) {
+	if (mVideoWidth > 0 && sprddefInfo.slowmotion <= 1) {
 		mVideoSnapshotType = 1;
 	} else {
 		mVideoSnapshotType = 0;

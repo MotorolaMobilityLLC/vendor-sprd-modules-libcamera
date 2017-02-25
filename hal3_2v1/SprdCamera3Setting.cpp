@@ -169,10 +169,12 @@ const int32_t klens_shading_map_size[2] = {1, 1};
 const int64_t kexposure_time_range[2] = {1000L, 30000000000L}; // 1 us - 30 sec
 const int64_t kframe_duration_range[2] = {33331760L, 30000000000L}; // ~1/30 s - 30 sec
 const int32_t ksharpness_map_size[2] = {64, 64};
-const int32_t ksupported_preview_formats[4] = {HAL_PIXEL_FORMAT_RAW16,
-												HAL_PIXEL_FORMAT_BLOB,
-												HAL_PIXEL_FORMAT_YV12,
-												HAL_PIXEL_FORMAT_YCrCb_420_SP};
+const int32_t ksupported_preview_formats[4] = {
+	HAL_PIXEL_FORMAT_RAW16,
+	HAL_PIXEL_FORMAT_BLOB,
+	HAL_PIXEL_FORMAT_YV12,
+	HAL_PIXEL_FORMAT_YCrCb_420_SP
+};
 
 const int32_t kavailable_fps_ranges_back[] = {5,15, 5,20, 5,24, 5,30, 24,24, 25,25, 30,30};//{5, 20, 8, 20, 10, 20, 5, 25, 10, 25, 5, 30, 10, 30};
 const int32_t kavailable_fps_ranges_front[] = {5,15, 5,30, 15,30, 25,25, 30,30};//{5, 15, 5, 20, 10, 20, 5, 25, 10, 25, 5, 30, 10, 30};
