@@ -91,8 +91,8 @@
 #else 
 extern ERRCODE (*ANDROID_LOG)(const char* format, ...); 
 #define AfDebugPrint(x) do { if (AF_SEARCH_DEBUG) ANDROID_LOG x; } while (0) 
-#define  LOG_TAG    "AFv1Lib"
-#define  AFLIB_LOG(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+#define  AFLib    "AFv1Lib"
+#define  AFLIB_LOG(...)  __android_log_print(ANDROID_LOG_INFO, AFLib, __VA_ARGS__)
 #if (DEBUG_PRINT_ENA)
 #define Printf AFLIB_LOG 
 #else

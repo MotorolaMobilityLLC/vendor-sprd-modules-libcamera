@@ -3510,7 +3510,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		memcpy(af->af_version + strlen("AF-"), af->fv.AF_Version, sizeof(af->fv.AF_Version));
 		memcpy(af->af_version + strlen("AF-") + strlen(af->fv.AF_Version), AF_SYS_VERSION,
 		       strlen(AF_SYS_VERSION));
-		AF_LOGD("AFVER %s lib mem %d ", af->af_version,sizeof(AF_Data));
+		AF_LOGD("AFVER %s lib mem 0x%x ", af->af_version,sizeof(AF_Data));
 		property_set("af_mode", "none");
 		{
 			FILE *fp = NULL;
