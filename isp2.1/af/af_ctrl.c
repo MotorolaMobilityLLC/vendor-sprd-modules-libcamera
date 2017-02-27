@@ -334,6 +334,10 @@ static cmr_int afctrl_init_lib(struct afctrl_cxt *cxt_ptr, struct afctrl_init_in
 	lib_ptr = &cxt_ptr->work_lib;
 	if (lib_ptr->adpt_ops->adpt_init) {
 		lib_ptr->lib_handle = lib_ptr->adpt_ops->adpt_init(in_ptr, out_ptr);
+		if(NULL == lib_ptr->lib_handle){
+			ISP_LOGE("af lib_handle is NULL error!");
+			ret = ISP_ERROR;
+        }
 	} else {
 		ISP_LOGI("adpt_init fun is NULL");
 	}

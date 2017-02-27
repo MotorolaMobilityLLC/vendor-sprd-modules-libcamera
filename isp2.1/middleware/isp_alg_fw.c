@@ -2268,7 +2268,7 @@ cmr_int isp_alg_fw_ioctl(cmr_handle isp_alg_handle, enum isp_ctrl_cmd io_cmd, vo
 	if (NULL != io_ctrl) {
 		rtn = io_ctrl(cxt, param_ptr, call_back);
 	} else {
-		ISP_LOGD("cmd %d io ctrl fun is null error", cmd);
+		ISP_LOGD("io ctrl fun is null error, cmd %d", cmd);
 	}
 
 	if (NULL != cxt->commn_cxt.callback) {

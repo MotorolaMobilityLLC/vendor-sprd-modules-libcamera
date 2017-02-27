@@ -60,7 +60,7 @@
 //#define AF_LOGD ISP_LOGD
 //#define AF_LOGE ISP_LOGE
 
-#define AF_WAIT_CAF_FINISH     1
+#define AF_WAIT_CAF_FINISH     0
 #define AF_RING_BUFFER         0
 #define AF_SYS_VERSION "-20170225-02"
 

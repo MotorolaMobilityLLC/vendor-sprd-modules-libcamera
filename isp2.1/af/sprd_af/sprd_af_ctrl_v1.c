@@ -42,61 +42,60 @@ extern "C" {
 #define ROI_RATIO	60
 #define FOCUS_STAT_DATA_NUM	2
 
-static unsigned int iir_level,nr_mode,cw_mode,fv0_e,fv1_e;
-static struct af_iir_nr_info af_iir_nr[3] ={
-	{	//weak
-		.iir_nr_en = 1,
-		.iir_g0 = 378,
-		.iir_c1 = -676,
-		.iir_c2 = -324,
-		.iir_c3 = 512,
-		.iir_c4 = 1024,
-		.iir_c5 = 512,
-		.iir_g1 = 300,
-		.iir_c6 = -537,
-		.iir_c7 = -152,
-		.iir_c8 = 512,
-		.iir_c9 = 1024,
-		.iir_c10 = 512,
-	},
-	{	//medium
-		.iir_nr_en = 1,
-		.iir_g0 = 185,
-		.iir_c1 = 0,
-		.iir_c2 = -229,
-		.iir_c3 = 512,
-		.iir_c4 = 1024,
-		.iir_c5 = 512,
-		.iir_g1 = 133,
-		.iir_c6 = 0,
-		.iir_c7 = -20,
-		.iir_c8 = 512,
-		.iir_c9 = 1024,
-		.iir_c10 = 512,
-	},
-	{	//strong
-		.iir_nr_en = 1,
-		.iir_g0 = 81,
-		.iir_c1 = 460,
-		.iir_c2 = -270,
-		.iir_c3 = 512,
-		.iir_c4 = 1024,
-		.iir_c5 = 512,
-		.iir_g1 = 60,
-		.iir_c6 = 344,
-		.iir_c7 = 74,
-		.iir_c8 = 512,
-		.iir_c9 = 1024,
-		.iir_c10 = 512,
-	},
-};
-static char fv1_coeff[36] = {
-	-2, -2, -2, -2, 16, -2, -2, -2, -2,
-	-3, 5, 3, 5, 0, -5, 3, -5, -3,
-	3, 5, -3, -5, 0, 5, -3, -5, 3,
-	0, -8, 0, -8, 16, 0, 0, 0, 0
-};
-
+	static unsigned int iir_level, nr_mode, cw_mode, fv0_e, fv1_e;
+	static struct af_iir_nr_info af_iir_nr[3] = {
+		{		//weak
+		 .iir_nr_en = 1,
+		 .iir_g0 = 378,
+		 .iir_c1 = -676,
+		 .iir_c2 = -324,
+		 .iir_c3 = 512,
+		 .iir_c4 = 1024,
+		 .iir_c5 = 512,
+		 .iir_g1 = 300,
+		 .iir_c6 = -537,
+		 .iir_c7 = -152,
+		 .iir_c8 = 512,
+		 .iir_c9 = 1024,
+		 .iir_c10 = 512,
+		 },
+		{		//medium
+		 .iir_nr_en = 1,
+		 .iir_g0 = 185,
+		 .iir_c1 = 0,
+		 .iir_c2 = -229,
+		 .iir_c3 = 512,
+		 .iir_c4 = 1024,
+		 .iir_c5 = 512,
+		 .iir_g1 = 133,
+		 .iir_c6 = 0,
+		 .iir_c7 = -20,
+		 .iir_c8 = 512,
+		 .iir_c9 = 1024,
+		 .iir_c10 = 512,
+		 },
+		{		//strong
+		 .iir_nr_en = 1,
+		 .iir_g0 = 81,
+		 .iir_c1 = 460,
+		 .iir_c2 = -270,
+		 .iir_c3 = 512,
+		 .iir_c4 = 1024,
+		 .iir_c5 = 512,
+		 .iir_g1 = 60,
+		 .iir_c6 = 344,
+		 .iir_c7 = 74,
+		 .iir_c8 = 512,
+		 .iir_c9 = 1024,
+		 .iir_c10 = 512,
+		 },
+	};
+	static char fv1_coeff[36] = {
+		-2, -2, -2, -2, 16, -2, -2, -2, -2,
+		-3, 5, 3, 5, 0, -5, 3, -5, -3,
+		3, 5, -3, -5, 0, 5, -3, -5, 3,
+		0, -8, 0, -8, 16, 0, 0, 0, 0
+	};
 
 	char libafv1_path[][20] = {
 		"libspafv1.so",
@@ -794,7 +793,7 @@ static char fv1_coeff[36] = {
 			short iir_c10;
 		};
 */
-		memcpy(&(af->af_iir_nr),&(af_iir_nr[iir_level]),sizeof(struct af_iir_nr_info));
+		memcpy(&(af->af_iir_nr), &(af_iir_nr[iir_level]), sizeof(struct af_iir_nr_info));
 		af->af_enhanced_module.chl_sel = 0;
 		af->af_enhanced_module.nr_mode = (unsigned char)nr_mode;
 		af->af_enhanced_module.center_weight = (unsigned char)cw_mode;
@@ -2451,7 +2450,7 @@ v=v>(max)?(max):v; hist[v]++;}
 
 		return 0;
 	}
-	static ERRCODE if_statistics_set_data(unsigned int set_stat,void *cookie) {
+	static ERRCODE if_statistics_set_data(unsigned int set_stat, void *cookie) {
 		af_ctrl_t *af = cookie;
 
 		fv0_e = (set_stat & 0x0f);
@@ -2460,9 +2459,8 @@ v=v>(max)?(max):v; hist[v]++;}
 		cw_mode = (set_stat & 0xff0000) >> 16;
 		iir_level = (set_stat & 0xff000000) >> 24;
 
-		AF_LOGE("set afm param  0x%x ",set_stat);
-		AF_LOGE("fv0e %d, fv1e %d, nr %d, cw %d iir %d"
-			,fv0_e,fv1_e,nr_mode,cw_mode,iir_level);
+		AF_LOGE("set afm param  0x%x ", set_stat);
+		AF_LOGE("fv0e %d, fv1e %d, nr %d, cw %d iir %d", fv0_e, fv1_e, nr_mode, cw_mode, iir_level);
 		//afm_setup(af);
 		return 0;
 	}
@@ -2712,7 +2710,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		return 0;
 	}
 	static char AFlog_buffer[2048] = { 0 };
-	static ERRCODE if_af_log(const char *format, ...) {	
+	static ERRCODE if_af_log(const char *format, ...) {
 //      char buffer[2048]={0};
 		va_list arg;
 		va_start(arg, format);
@@ -2872,6 +2870,8 @@ v=v>(max)?(max):v; hist[v]++;}
 			rtn = -1;
 		} else {
 			ts.tv_sec += AF_WAIT_CAF_FINISH;
+			ts.tv_nsec += 200 * 1000 * 1000;	//1s == (1000 * 1000 * 1000)
+
 /*
 		if (ts.tv_nsec + ISP_PROCESS_NSEC_TIMEOUT >= (1000 * 1000 * 1000)) {
 			ts.tv_nsec = ts.tv_nsec + ISP_PROCESS_NSEC_TIMEOUT - (1000 * 1000 * 1000);
@@ -3435,7 +3435,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		//afm_setup(isp); // default settings
 
 		memset(af, 0, sizeof(*af));
-		af->isp_info.width = init_param->src.w; //init_param->plat_info.isp_w;
+		af->isp_info.width = init_param->src.w;	//init_param->plat_info.isp_w;
 		af->isp_info.height = init_param->src.h;	//init_param->plat_info.isp_h;
 		af->isp_info.win_num = afm_get_win_num(init_param);
 		af->caller = init_param->caller;
@@ -3510,7 +3510,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		memcpy(af->af_version + strlen("AF-"), af->fv.AF_Version, sizeof(af->fv.AF_Version));
 		memcpy(af->af_version + strlen("AF-") + strlen(af->fv.AF_Version), AF_SYS_VERSION,
 		       strlen(AF_SYS_VERSION));
-		AF_LOGD("AFVER %s lib mem 0x%x ", af->af_version,sizeof(AF_Data));
+		AF_LOGD("AFVER %s lib mem 0x%x ", af->af_version, sizeof(AF_Data));
 		property_set("af_mode", "none");
 		{
 			FILE *fp = NULL;
@@ -3543,7 +3543,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		iir_level = 1;
 		nr_mode = 2;
 		cw_mode = 2;
-		fv0_e =fv1_e = 5;
+		fv0_e = fv1_e = 5;
 		return af;
 #if 0
 	      ISP_MALLOC_ERROR:
@@ -3832,6 +3832,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		af_ctrl_t *af = (af_ctrl_t *) handle;
 		struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
 		struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
+		struct isp_video_start *in_ptr = NULL;
 
 		rtn = _check_handle(handle);
 		if (AFV1_SUCCESS != rtn) {
@@ -4043,6 +4044,10 @@ v=v>(max)?(max):v; hist[v]++;}
 			}
 
 		case AF_CMD_SET_ISP_START_INFO:
+			in_ptr = (struct isp_video_start *)param0;
+			af->isp_info.width = in_ptr->size.w;
+			af->isp_info.height = in_ptr->size.h;
+			AF_LOGD("isp start af width = %d, height = %d", in_ptr->size.w, in_ptr->size.h);
 			AF_LOGD("isp start af state = %s", STATE_STRING(af->state));
 			//af->state = af->pre_state = STATE_IDLE;
 			property_get("af_mode", AF_MODE, "none");
@@ -4131,7 +4136,7 @@ v=v>(max)?(max):v; hist[v]++;}
 			break;
 		case AF_CMD_SET_FACE_DETECT:
 			{
-				break;
+				//break;
 				struct isp_face_area *face = (struct isp_face_area *)param0;
 
 				AF_LOGD("face detect af state = %s", STATE_STRING(af->state));
