@@ -1195,6 +1195,7 @@ cmr_int cmr_sns_ioctl(struct sensor_drv_context *sensor_cxt, cmr_uint cmd, cmr_u
 	cmr_u32 ret = CMR_CAMERA_SUCCESS;
 	cmr_u32 sns_cmd = SENSOR_IOCTL_GET_STATUS;
 	cmr_u8 read_flag = 0;
+	SENSOR_MATCH_T               *module = sensor_cxt->module_cxt;
 
 	ret = cmr_sns_get_ioctl_cmd(&sns_cmd, cmd);
 	if (ret) {
@@ -1231,9 +1232,17 @@ cmr_int cmr_sns_ioctl(struct sensor_drv_context *sensor_cxt, cmr_uint cmd, cmr_u
 #endif
 	func_ptr = (SENSOR_IOCTL_FUNC_PTR) temp;
 
-	ret = cmr_get_otp_from_kernel(sensor_cxt, cmd, arg, func_ptr,&read_flag);
-	if (read_flag) {
-		return ret;
+	if (!module->otp_drv_info) {
+		ret = cmr_get_otp_from_kernel(sensor_cxt, cmd, arg, func_ptr,&read_flag);
+		if (read_flag) {
+			return ret;
+		}
+	} else {
+		if(cmd == SENSOR_ACCESS_VAL) {
+			SENSOR_VAL_T * val = (SENSOR_VAL_T*)arg;
+			if(val->type == SENSOR_VAL_TYPE_READ_OTP)
+				sensor_otp_ioctl(sensor_cxt,OTP_IOCTL,OTP_DATA_COMPATIBLE_CONVERT,(void*)arg);
+		}
 	}
 
 	if (PNULL != func_ptr) {

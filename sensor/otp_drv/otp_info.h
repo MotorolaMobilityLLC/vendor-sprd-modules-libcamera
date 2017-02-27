@@ -2,7 +2,6 @@
 #define _OTP_PARSE_COMMON_H_
 
 #include "cmr_common.h"
-#include "sensor_drv_u.h"
 #include <cutils/properties.h>
 
 #ifndef TRUE
@@ -47,15 +46,19 @@
 #define GAIN_MASK_12BITS           (0xfff)
 #define GAIN_MASK_14BITS           (0x3fff)
 
-enum otp_ctrl{
-	READ_FORMAT_OTP_DATA,
-	WRITE_FORMAT_OTP_DATA,
-	READ_FORMAT_OTP_FROM_BIN,
-	WRITE_FORMAT_OTP_TO_BIN,
-	/*add*/
-	RELEASE_OTP_DATA,
+enum otp_main_cmd{
+	OTP_READ_RAW_DATA,
+	OTP_READ_PARSE_DATA,
+	OTP_WRITE_DATA,
+	OTP_IOCTL,
 };
-
+enum otp_sub_cmd{
+	OTP_RESERVE, /*just reserve*/
+	OTP_READ_FORMAT_FROM_BIN,
+	OTP_WRITE_FORMAT_TO_BIN,
+	OTP_DATA_COMPATIBLE_CONVERT,
+	/*expand,you can add your */
+};
 enum otp_compress_type{
 	OTP_COMPRESSED_12BITS = 0,
 	OTP_COMPRESSED_14BITS = 1,
@@ -85,15 +88,17 @@ enum awb_light_type
 	AWB_MAX_LIGHT,
 };
 
-typedef struct{
+typedef struct {
 	uint16_t  reg_addr;  /* otp start address.if read ,we don't need care it*/
 	uint8_t   *data;     /* format otp data saved or otp data write to sensor*/
 	uint32_t  num_bytes; /* if read ,we don't need care it*/
 }otp_buffer_t;
 
-typedef struct{
-	uint8_t       cmd;     /* read or write*/
-	void          *data;
+/* ctrl data*/
+typedef struct {
+	uint8_t  cmd;
+	uint8_t  sub_cmd;
+	void     *data;
 }otp_ctrl_cmd_t;
 
 struct wb_source_packet {
@@ -103,13 +108,17 @@ struct wb_source_packet {
 	uint16_t B;
 };
 
-typedef struct{
+typedef struct {
 	unsigned char moule_id;
 	unsigned char vcm_id;
 	unsigned char drvier_ic_id;
 	unsigned char ir_bg_id;
 }module_data_t;
 
+typedef struct otp_data_info {
+	uint32_t size;
+	void *buffer;
+}otp_data_info_t;
 /*
 * AWB data will transmitted to ISP
 */
@@ -173,13 +182,12 @@ typedef struct {
 	afcalib_data_t   af_cali_dat;
 	awbcalib_data_t  awb_cali_dat;
 	optical_center_t opt_center_dat;
-	void             *pdaf_cali_dat;     /*reserver*/
-	void             *dual_cam_cali_dat; /*reserver*/
+	otp_data_info_t  pdaf_cali_dat;     /*reserver*/
+	otp_data_info_t  dual_cam_cali_dat; /*reserver*/
 	lsccalib_data_t  lsc_cali_dat;
 }otp_format_data_t;
 
 typedef struct {
-	char     dev_name[32];
 	uint16_t reg_addr;
 	uint8_t  *buffer;
 	uint32_t num_bytes;
@@ -205,6 +213,7 @@ typedef struct {
  * here include base info include
  */
 typedef struct{
+	int  is_lsc_drv_decompression;
 	int  compress_flag;
 	int  bayer_pattern;
 	int  image_width;
@@ -213,49 +222,40 @@ typedef struct{
 	int  grid_height;
 	int  gain_width;
 	int  gain_height;
+
 }otp_base_info_cfg_t;
 
 typedef struct{
 	otp_calib_items_t cali_items;
 	otp_base_info_cfg_t base_info_cfg;
 }otp_config_t;
+
 /*
  * if not supported some feature items,please set NULL
  */
 typedef struct {
-  uint32_t (*format_calibration_data)(SENSOR_HW_HANDLE handle);
-  uint32_t (*awb_calibration)(SENSOR_HW_HANDLE handle);
-  uint32_t (*lsc_calibration)(SENSOR_HW_HANDLE handle);
-  uint32_t (*pdaf_calibration)(SENSOR_HW_HANDLE handle);
-  uint32_t (*dul_cam_calibration)(SENSOR_HW_HANDLE handle);
-  uint32_t (*read_otp_data)(SENSOR_HW_HANDLE handle);
-  uint32_t (*write_otp_data)(SENSOR_HW_HANDLE handle);
-}otp_ops_t;
+  void *(*sensor_otp_create)(SENSOR_HW_HANDLE handle,char* sensor_name);
+  int (*sensor_otp_delete)(void *otp_drv_handle);
+  int (*sensor_otp_read)(void *otp_drv_handle,otp_params_t *p_data);
+  int (*sensor_otp_write)(void *otp_drv_handle,otp_params_t *p_data);
+  int (*sensor_otp_parse)(void *otp_drv_handle,void *p_data);
+  int (*sensor_otp_calibration)(void *otp_drv_handle);
+  int (*sensor_otp_ioctl)(void *otp_drv_handle,int cmd, void *p_params); /*expend*/
+}sensor_otp_ops_t;
 
 typedef struct {
-	otp_config_t otp_cfg;
-	otp_ops_t    otp_ops;
-}otp_drv_cxt_t;
-typedef struct otp_data{
-	otp_config_t       otp_cfg;
-	otp_format_data_t  otp_format_data;
-}otp_data_t;
+	otp_config_t        otp_cfg;
+	sensor_otp_ops_t    otp_ops;
+}otp_drv_entry_t;
+
 typedef struct {
-	otp_params_t        otp_params;   /*raw otp data buffer*/
-	otp_drv_cxt_t       *otp_drv_cxt;
+	SENSOR_HW_HANDLE    hw_handle;
+	char                dev_name[32];
+	otp_params_t        otp_raw_data;   /*raw otp data buffer*/
 	otp_format_data_t   *otp_data;    /*format otp data*/
 	uint32_t            otp_data_len; /*format otp data length*/
-}otp_ctrl_cxt_t;
+	void                *compat_convert_data;
+}otp_drv_cxt_t;
 
-static uint32_t sensor_otp_calibration_data(SENSOR_HW_HANDLE handle);
-static uint32_t sensor_otp_read_format_data(SENSOR_HW_HANDLE handle);
-static uint32_t sensor_otp_rw_data_from_file(SENSOR_HW_HANDLE handle, uint8_t cmd);
-static uint32_t sensor_otp_write_format_data(SENSOR_HW_HANDLE handle);
-uint32_t sensor_otp_process(SENSOR_HW_HANDLE handle, int cmd, void *params);
-static uint32_t sensor_otp_lsc_decompress(SENSOR_HW_HANDLE handle);
-static uint32_t sensor_otp_decompress_gain(uint16_t *src, uint32_t src_bytes,
-        uint32_t src_uncompensate_bytes, uint16_t *dst,uint32_t GAIN_COMPRESSED_BITS,uint32_t GAIN_MASK);
-static void sensor_otp_change_pattern(uint32_t pattern, uint16_t *interlaced_gain, uint16_t *chn_gain[4], uint16_t gain_num);
-uint32_t sensor_otp_dump_raw_data(SENSOR_HW_HANDLE handle);
 #endif
 

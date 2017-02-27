@@ -117,7 +117,7 @@ extern SENSOR_INFO_T g_gc8024_mipi_raw_info;
 extern SENSOR_INFO_T g_gc5005_mipi_raw_info;
 #endif
 #define AUTO_TEST_CAMERA 1
-extern otp_drv_cxt_t imx258_drv_cxt;
+extern otp_drv_entry_t imx258_drv_entry;
 extern af_drv_info_t dw9800_drv_info;
 extern af_drv_info_t dw9714_drv_info;
 
@@ -131,9 +131,8 @@ const SENSOR_MATCH_T main_sensor_infor_tab[]=
 	{"gc8024_mipi_raw", &g_gc8024_mipi_raw_info,&dw9714_drv_info,NULL},
 #endif
 	{"imx230_mipi_raw", &g_imx230_mipi_raw_info,NULL,NULL},
-	//{"imx258_mipi_raw", &g_imx258_mipi_raw_info,&dw9800_drv_info,&imx258_drv_cxt},
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
-	{"imx258_mipi_raw", &g_imx258_mipi_raw_info,&dw9800_drv_info,NULL},
+	{"imx258_mipi_raw", &g_imx258_mipi_raw_info,&dw9800_drv_info,&imx258_drv_entry},
 #else
 	{"imx258_mipi_raw", &g_imx258_mipi_raw_info,NULL,NULL},
 #endif

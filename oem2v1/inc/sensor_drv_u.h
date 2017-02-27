@@ -903,7 +903,7 @@ struct sensor_drv_context {
 	cmr_int                             fd_sensor;         /*sensor device id, used when sensor dev alive*/
 	cmr_u32                             is_calibration;
 	cmr_u32                             stream_on;
-	void                                   *sensor_hw_handler;
+	void                                *sensor_hw_handler;
 	SENSOR_INFO_T                       *sensor_list_ptr[SENSOR_ID_MAX];
 	SENSOR_INFO_T                       *sensor_info_ptr;
 	SENSOR_EXP_INFO_T                   sensor_exp_info;   /*!!!BE CAREFUL!!! for the 3rd party issue, the SENSOR_EXP_INFO_T must equal the sensor_exp_info*/
@@ -922,7 +922,7 @@ struct sensor_drv_context {
 	cmr_u32                             error_cnt;
 	cmr_uint                            lnc_addr_bakup[8][4];
 	cmr_u32                             bypass_mode;
-	void                                *sensor_otp_cxt;
+	void                                *otp_drv_handle;
 	void                                *module_cxt;
 };
 
@@ -952,6 +952,9 @@ cmr_int sensor_update_isparm_from_file(struct sensor_drv_context *sensor_cxt, cm
 
 
 cmr_int sensor_is_init_common(struct sensor_drv_context *sensor_cxt);
+
+cmr_int sensor_otp_ioctl(struct sensor_drv_context *sensor_cxt,
+                                  uint8_t cmd,uint8_t sub_cmd,void* data);
 
 cmr_int sensor_stream_ctrl_common(struct sensor_drv_context *sensor_cxt, cmr_u32 on_off);
 

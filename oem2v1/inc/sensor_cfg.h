@@ -16,9 +16,9 @@
 #ifndef _SENSOR_CFG_H_
 #define _SENSOR_CFG_H_
 
-#include "sensor_drv_u.h"
+//#include "sensor_drv_u.h"
 #include "af_drv.h"
-#include "otp_parse.h"
+#include "otp_info.h"
 
 #if 0
 struct sensor_drv_cfg {
@@ -35,7 +35,7 @@ typedef struct sensor_match_tab{
 	char  sn_name[36];
 	SENSOR_INFO_T* sensor_info;
 	af_drv_info_t*  af_dev_info;
-	otp_drv_cxt_t*  otp_drv_info;
+	otp_drv_entry_t*  otp_drv_info;
 }SENSOR_MATCH_T;
 SENSOR_MATCH_T * Sensor_GetInforTab(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E sensor_id);
 uint32_t Sensor_GetInforTabLenght(struct sensor_drv_context *sensor_cxt, SENSOR_ID_E sensor_id);

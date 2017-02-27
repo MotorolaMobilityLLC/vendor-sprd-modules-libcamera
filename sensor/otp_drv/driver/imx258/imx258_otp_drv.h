@@ -3,21 +3,23 @@
  *	All Rights Reserved.
  *	Confidential and Proprietary - Spreadtrum Technologies, Inc.
  **/
+#define LOG_TAG "imx258_otp_drv"
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include <utils/Log.h>
 #include "sensor_drv_u.h"
-#include "otp_parse.h"
+#include "otp_common.h"
 #include "imx258_golden_otp.h"
+#include "cmr_sensor_info.h"
 
 #define GT24C64A_I2C_ADDR 0xA0 >> 1
 #define OTP_START_ADDR    0x0000
 #define OTP_END_ADDR      0x0FFF
 
 #define OTP_LEN           8192
-#define GAIN_WIDTH         20
-#define GAIN_HEIGHT        17
+#define GAIN_WIDTH         23
+#define GAIN_HEIGHT        18
 
 #define WB_DATA_SIZE      8 * 2 /*Don't forget golden wb data*/
 #define AF_DATA_SIZE        6
@@ -25,14 +27,14 @@
 #define LSC_CHANNEL_SIZE  876
 
 /*Don't forget golden lsc otp data*/
-#define FORMAT_DATA_LEN     WB_DATA_SIZE+AF_DATA_SIZE+GAIN_WIDTH*GAIN_WIDTH*4*2*2 
+#define FORMAT_DATA_LEN     WB_DATA_SIZE+AF_DATA_SIZE+GAIN_WIDTH*GAIN_WIDTH*4*2*2
 /*module base info*/
 #define MODULE_INFO_OFFSET      0x0000
 #define MODULE_INFO_CHECK_SUM   0x000F
 /**/
-#define AWB_INFO_OFFSET          0x0016
-#define AWB_INFO_SIZE			  6     /*byte*/
-#define AWB_SECTION_NUM			  2
+#define AWB_INFO_OFFSET         0x0016
+#define AWB_INFO_SIZE             6     /*byte*/
+#define AWB_SECTION_NUM           2
 #define AWB_INFO_CHECKSUM       0x0022
 /**/
 #define AF_INFO_OFFSET          0x0010
@@ -42,11 +44,11 @@
 #define OPTICAL_INFO_OFFSET    0x0023
 /*Lens shading calibration*/
 #define LSC_INFO_OFFSET         0x0033
-#define LSC_INFO_CHANNEL_SIZE	 726
+#define LSC_INFO_CHANNEL_SIZE    726
 #define LSC_INFO_CHECKSUM       0x0b8b
 /*PDAF*/
 #define PDAF_INFO_OFFSET        0x0b8c
-#define PDAF_INFO_SIZE			 384
+#define PDAF_INFO_SIZE           384
 #define PDAF_INFO_CHECKSUM      0x0d0c
 
 #define LSC_GRID_SIZE           726
@@ -69,16 +71,60 @@ typedef struct {
 	unsigned char af_cali_dir;
 } module_info_t;
 
-uint32_t imx258_section_checksum(unsigned char *buf,
-unsigned int first, unsigned int last, unsigned int position);
-uint32_t imx258_formatdata_buffer_init(SENSOR_HW_HANDLE handle);
-uint32_t imx258_format_wbdata(SENSOR_HW_HANDLE handle);
-uint32_t imx258_format_lensdata(SENSOR_HW_HANDLE handle);
-uint32_t imx258_awbc_calibration (SENSOR_HW_HANDLE handle);
-uint32_t imx258_lsc_calibration(SENSOR_HW_HANDLE handle);
-uint32_t imx258_pdaf_calibration(SENSOR_HW_HANDLE handle);
-uint32_t imx258_format_calibration_data(SENSOR_HW_HANDLE handle);
-uint32_t imx258_read_otp_data(SENSOR_HW_HANDLE handle);
-uint32_t imx258_write_otp_data(SENSOR_HW_HANDLE handle);
+static int _imx258_section_checksum(unsigned char *buf,
+                    unsigned int first, unsigned int last, unsigned int position);
+static int _imx258_buffer_init(void *otp_drv_handle);
+static int _imx258_parse_awb_data(void *otp_drv_handle);
+static int _imx258_parse_lsc_data(void *otp_drv_handle);
+static int _imx258_parse_af_data(void *otp_drv_handle);
+static int _imx258_parse_pdaf_data(void *otp_drv_handle);
 
+static int _imx258_awb_calibration (void *otp_drv_handle);
+static int _imx258_lsc_calibration(void *otp_drv_handle);
+static int _imx258_pdaf_calibration(void *otp_drv_handle);
+
+void *imx258_otp_create(SENSOR_HW_HANDLE handle, char* sensor_name);
+int imx258_otp_drv_delete(void *otp_drv_handle);
+int imx258_otp_drv_read(void *otp_drv_handle, otp_params_t* p_data);
+int imx258_otp_drv_write(void *otp_drv_handle, otp_params_t* p_data);
+int imx258_otp_drv_parse(void *otp_drv_handle, void* P_params);
+int imx258_otp_drv_calibration(void *otp_drv_handle);
+int imx258_otp_drv_ioctl(otp_drv_cxt_t *otp_drv_handle, int cmd, void* params);
+
+otp_drv_entry_t imx258_drv_entry =
+{
+	.otp_cfg =
+	{
+		.cali_items =
+		{
+			.is_self_cal = TRUE,    /*1:calibration at sensor side,0:calibration at isp*/
+			.is_dul_camc = FALSE,   /* support dual camera calibration */
+			.is_awbc     = TRUE,    /* support write balance calibration */
+			.is_lsc      = TRUE,    /* support lens shadding calibration */
+			.is_pdafc    = FALSE,   /* support pdaf calibration */
+
+		},
+		.base_info_cfg =
+		{
+			.is_lsc_drv_decompression = FALSE, /*decompression on otp driver or isp*/
+			.compress_flag = OTP_COMPRESSED_FLAG,/*otp data compressed format ,should confirm with sensor fae*/
+			.image_width   = 4208, /*the width of the stream the sensor can output*/
+			.image_height  = 3120, /*the height of the stream the sensor can output*/
+			.grid_width    = 23,   /*the height of the stream the sensor can output*/
+			.grid_height   = 18,
+			.gain_width    = GAIN_WIDTH,
+			.gain_height   = GAIN_HEIGHT,
+		},
+	},
+	.otp_ops =
+	{
+		.sensor_otp_create = imx258_otp_create,
+		.sensor_otp_delete = imx258_otp_drv_delete,
+		.sensor_otp_read   = imx258_otp_drv_read,
+		.sensor_otp_write  = imx258_otp_drv_write,
+		.sensor_otp_parse  = imx258_otp_drv_parse,
+		.sensor_otp_calibration = imx258_otp_drv_calibration,
+		.sensor_otp_ioctl       = imx258_otp_drv_ioctl,/*expend*/
+	},
+};
 

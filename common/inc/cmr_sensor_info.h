@@ -335,6 +335,17 @@ struct sensor_otp_pdaf_info {
 	cmr_u8 *pdaf_data_addr;
 	cmr_u16 pdaf_data_size;
 };
+struct point {
+	uint16_t x;
+	uint16_t y;
+};
+
+struct sensor_otp_optCenter_info{
+	struct point R;
+	struct point GR;
+	struct point GB;
+	struct point B;
+};
 
 struct sensor_single_otp_info {
 	cmr_u8 program_flag;
@@ -343,6 +354,7 @@ struct sensor_single_otp_info {
 	struct sensor_otp_lsc_info lsc_info;
 	struct sensor_otp_af_info af_info;
 	struct sensor_otp_pdaf_info pdaf_info;
+	struct sensor_otp_optCenter_info optical_center_info;
 	cmr_u16 checksum;
 };
 
