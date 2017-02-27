@@ -191,9 +191,7 @@ static cmr_int pdafaltek_adpt_get_version(cmr_handle adpt_handle)
 
 	ISP_CHECK_HANDLE_VALID(adpt_handle);
 	//ret = cxt->lib_api.pdaf_altek_version(&version, sizeof(version));
-#ifndef CONFIG_CAMERA_NO_DCAM_DATA_PATH
 	ret = alPDAF_VersionInfo_Get(&version, sizeof(version));
-#endif
 	ISP_LOGI("version %s", version);
 	return ret;
 }
@@ -470,9 +468,7 @@ static cmr_int pdafaltek_adpt_init(void *in, void *out, cmr_handle *adpt_handle)
 	/* init lib */
 	ISP_LOGI("otp ptr %p size %ld", in_p->pdaf_otp.otp_data, in_p->pdaf_otp.size);
 	//ret = cxt->ops.init(cxt->pdotp_pack_data, in_p->pdaf_otp.otp_data, in_p->pdaf_otp.size);
-#ifndef CONFIG_CAMERA_NO_DCAM_DATA_PATH
 	ret = alPDAF_Initial(cxt->pdotp_pack_data, in_p->pdaf_otp.otp_data, in_p->pdaf_otp.size);
-#endif
 	if (ret) {
 		ISP_LOGE("failed to init lib %ld", ret);
 		goto error_lib_init;
@@ -511,10 +507,8 @@ static cmr_int pdafaltek_adpt_deinit(cmr_handle adpt_handle)
 	if (cxt) {
 		/* deinit lib */
 		//ret = cxt->ops.deinit();
-#ifndef CONFIG_CAMERA_NO_DCAM_DATA_PATH
 		ret = alPDAF_Close();
 		//ret = pdafaltek_libops_deinit(cxt);
-#endif
 		if (cxt->pd_right) {
 			free(cxt->pd_right);
 			cxt->pd_right = NULL;
@@ -693,10 +687,8 @@ static cmr_int pdafaltek_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 
 	//ret = cxt->extract_ops.getsize(&cxt->pd_info, &cxt->roi, image_width, image_height,
 							//(cmr_u16 *)&pdroi.m_wWidth, (cmr_u16 *)&pdroi.m_wHeight);
-#ifndef CONFIG_CAMERA_NO_DCAM_DATA_PATH
 	ret = alPDExtract_GetSize(&cxt->pd_info, &cxt->roi, image_width, image_height,
 							(cmr_u16 *)&pdroi.m_wWidth, (cmr_u16 *)&pdroi.m_wHeight);
-#endif
 	if (ret) {
 		ISP_LOGE("failed to get pd data size%ld", ret);
 		goto exit;
@@ -705,10 +697,8 @@ static cmr_int pdafaltek_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 
 	//ret = cxt->extract_ops.extract((cmr_u8 *)proc_in->pd_raw.addr, &cxt->roi, image_width, image_height,
 							//(cmr_u16 *)cxt->pd_left, (cmr_u16 *)cxt->pd_right);
-#ifndef CONFIG_CAMERA_NO_DCAM_DATA_PATH
 	ret = alPDExtract_Run((cmr_u8 *)proc_in->pd_raw.addr, &cxt->roi, image_width, image_height,
 							(cmr_u16 *)cxt->pd_left, (cmr_u16 *)cxt->pd_right);
-#endif
 	if (ret) {
 		ISP_LOGE("failed to extract pd data %ld", ret);
 		goto exit;
@@ -753,10 +743,8 @@ static cmr_int pdafaltek_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 
 	//ret = cxt->ops.calc(&cxt->report_data.pd_value, cxt->report_data.pd_reg_out, cxt->pd_left, cxt->pd_right,
 					//pdroi.m_wWidth, pdroi.m_wHeight, pdroi, bit, &cxt->pd_reg_in);
-#ifndef CONFIG_CAMERA_NO_DCAM_DATA_PATH
 	ret = alPDAF_Calculate(&cxt->report_data.pd_value, cxt->report_data.pd_reg_out, cxt->pd_left, cxt->pd_right,
 					pdroi.m_wWidth, pdroi.m_wHeight, pdroi, bit, &cxt->pd_reg_in);
-#endif
 	if (ret) {
 		ISP_LOGE("failed to calc pd data %ld", ret);
 		goto exit;

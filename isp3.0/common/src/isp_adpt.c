@@ -171,9 +171,7 @@ static cmr_int (*modules_ops[]) (struct isp_lib_config *,
 	[ADPT_LIB_AWB] = adpt_get_awb_ops,
 	[ADPT_LIB_LSC] = adpt_get_lsc_ops,
 	[ADPT_LIB_AFL] = adpt_get_afl_ops,
-#ifndef CONFIG_CAMERA_NO_DCAM_DATA_PATH
 	[ADPT_LIB_PDAF] = adpt_get_pdaf_ops,
-#endif
 };
 
 cmr_int adpt_get_ops(cmr_int lib_type, struct isp_lib_config *lib_info,
