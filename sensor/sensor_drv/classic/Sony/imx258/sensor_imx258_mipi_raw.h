@@ -477,6 +477,14 @@ LOCAL SENSOR_REG_TAB_INFO_T s_imx258_resolution_tab_raw[] =
 		.image_format       = SENSOR_IMAGE_FORMAT_RAW,
 	},
 	{
+		.sensor_reg_tab_ptr = (SENSOR_REG_T*)imx258_4208x3120_setting,
+		.reg_count          = NUMBER_OF_ARRAY(imx258_4208x3120_setting),
+		.width              = 4208,
+		.height             = 3120,
+		.xclk_to_sensor     = 24,
+		.image_format       = SENSOR_IMAGE_FORMAT_RAW,
+	},
+	{
 		.sensor_reg_tab_ptr = (SENSOR_REG_T*)imx258_1048x780_setting,
 		.reg_count          = NUMBER_OF_ARRAY(imx258_1048x780_setting),
 		.width              = 1048,
@@ -493,14 +501,7 @@ LOCAL SENSOR_REG_TAB_INFO_T s_imx258_resolution_tab_raw[] =
 		.image_format       = SENSOR_IMAGE_FORMAT_RAW,
 	},
 */
-	{
-		.sensor_reg_tab_ptr = (SENSOR_REG_T*)imx258_4208x3120_setting,
-		.reg_count          = NUMBER_OF_ARRAY(imx258_4208x3120_setting),
-		.width              = 4208,
-		.height             = 3120,
-		.xclk_to_sensor     = 24,
-		.image_format       = SENSOR_IMAGE_FORMAT_RAW,
-	},
+
 /*	{
 		.sensor_reg_tab_ptr = (SENSOR_REG_T*)imx258_5344x4016_setting,
 		.reg_count          = NUMBER_OF_ARRAY(imx258_5344x4016_setting),
@@ -528,6 +529,22 @@ LOCAL SENSOR_TRIM_T s_imx258_resolution_trim_tab[SENSOR_MODE_MAX] =
 			.y = 0,
 			.w = 0,
 			.h = 0,
+		}
+	},
+	{ //mode3
+		.trim_start_x   = 0,
+		.trim_start_y   = 0,
+		.trim_width     = 4208,
+		.trim_height    = 3120,
+		.line_time      = 10325,
+		.bps_per_lane   = 1296,
+		.frame_line     = 3224,
+		.scaler_trim    =
+		{
+			.x = 0,
+			.y = 0,
+			.w = 4208,
+			.h = 3120,
 		}
 	},
 	{ //mode1
@@ -562,22 +579,7 @@ LOCAL SENSOR_TRIM_T s_imx258_resolution_trim_tab[SENSOR_MODE_MAX] =
 			.h = 1552,
 		}
 	},*/
-	{ //mode3
-		.trim_start_x   = 0,
-		.trim_start_y   = 0,
-		.trim_width     = 4208,
-		.trim_height    = 3120,
-		.line_time      = 10325,
-		.bps_per_lane   = 1296,
-		.frame_line     = 3224,
-		.scaler_trim    =
-		{
-			.x = 0,
-			.y = 0,
-			.w = 4208,
-			.h = 3120,
-		}
-	},
+
 };
 
 LOCAL const SENSOR_REG_T s_imx258_preview_size_video_tab[SENSOR_VIDEO_MODE_MAX][1] =
