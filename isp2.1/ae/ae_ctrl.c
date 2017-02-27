@@ -179,125 +179,63 @@ static int32_t ae_get_system_time(void *handler, uint32_t *sec, uint32_t *usec)
 	return 0;
 }
 
-static int32_t ae_flash_get_charge(void *handler, struct ae_flash_cell *cell)
+static int32_t ae_flash_get_charge(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell_ptr)
 {
 	int32_t                         ret = 0;
-	struct isp_flash_cell           isp_cell;
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
-	memset(&isp_cell, 0, sizeof(isp_cell));
 
-	switch (cell->type) {
-	case AE_FLASH_TYPE_PREFLASH:
-		isp_cell.type = ISP_FLASH_TYPE_PREFLASH;
-		break;
-	case AE_FLASH_TYPE_MAIN:
-		isp_cell.type = ISP_FLASH_TYPE_MAIN;
-		break;
-	default:
-		ISP_LOGE("not support type!!!");
-		goto out;
-	}
 	if (cxt_ptr->ae_set_cb) {
-		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_GET_FLASH_CHARGE, &isp_cell, NULL);
+		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_GET_FLASH_CHARGE, cfg_ptr, cell_ptr);
 	}
-	if (0 == ret) {
-		uint32_t i = 0;
 
-		for (i = 0; i < isp_cell.count; ++i) {
-			cell->element[i].index = isp_cell.element[i].index;
-			cell->element[i].val   = isp_cell.element[i].val;
-		}
-		cell->count   = isp_cell.count;
-		cell->def_val = isp_cell.def_val;
-	}
-out:
 	return ret;
 }
 
-static int32_t ae_flash_get_time(void *handler, struct ae_flash_cell *cell)
+static int32_t ae_flash_get_time(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell_ptr)
 {
 	int32_t                         ret = 0;
-	struct isp_flash_cell           isp_cell;
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
-	memset(&isp_cell, 0, sizeof(isp_cell));
 
-	switch (cell->type) {
-	case AE_FLASH_TYPE_PREFLASH:
-		isp_cell.type = ISP_FLASH_TYPE_PREFLASH;
-		break;
-	case AE_FLASH_TYPE_MAIN:
-		isp_cell.type = ISP_FLASH_TYPE_MAIN;
-		break;
-	default:
-		ISP_LOGE("not support type!!!");
-		goto out;
-	}
 	if (cxt_ptr->ae_set_cb) {
-		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_GET_FLASH_TIME, &isp_cell, NULL);
+		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_GET_FLASH_TIME, cfg_ptr, cell_ptr);
 	}
-	if (0 == ret) {
-		uint32_t i = 0;
 
-		for (i = 0; i < isp_cell.count; ++i) {
-			cell->element[i].index = isp_cell.element[i].index;
-			cell->element[i].val   = isp_cell.element[i].val;
-		}
-		cell->count = isp_cell.count;
-	}
-out:
 	return ret;
 }
 
-static int32_t ae_flash_set_charge(void *handler, uint8_t type, struct ae_flash_element *element)
+static int32_t ae_flash_set_charge(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element_ptr)
 {
 	int32_t                         ret = 0;
-	struct isp_flash_element        isp_ele;
-	uint8_t                         isp_type = 0;
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
-	memset(&isp_ele, 0, sizeof(isp_ele));
 
-	switch (type) {
-	case AE_FLASH_TYPE_PREFLASH:
-		isp_type = ISP_FLASH_TYPE_PREFLASH;
-		break;
-	case AE_FLASH_TYPE_MAIN:
-		isp_type = ISP_FLASH_TYPE_MAIN;
-		break;
-	default:
-		ISP_LOGE("not support type!!!");
-		goto out;
-	}
-	isp_ele.index = element->index;
-	isp_ele.val   = element->val;
 	if (cxt_ptr->ae_set_cb) {
-		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_FLASH_CHARGE, &isp_type, &isp_ele);
+		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_FLASH_CHARGE, cfg_ptr, element_ptr);
 	}
-out:
+
 	return ret;
 }
 
-static int32_t ae_flash_set_time(void *handler, uint8_t type, struct ae_flash_element *element)
+static int32_t ae_flash_set_time(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element_ptr)
 {
 	int32_t                         ret = 0;
-	struct isp_flash_element        isp_ele;
-	uint8_t                         isp_type = 0;
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
-	memset(&isp_ele, 0, sizeof(isp_ele));
 
-	switch (type) {
-	case AE_FLASH_TYPE_MAIN:
-		isp_type = ISP_FLASH_TYPE_MAIN;
-		break;
-	default:
-		ISP_LOGE("not support type!!!");
-		goto exit;
-	}
-	isp_ele.index = element->index;
-	isp_ele.val   = element->val;
 	if (cxt_ptr->ae_set_cb) {
-		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_FLASH_TIME, &isp_type, &isp_ele);
+		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_FLASH_TIME, cfg_ptr, element_ptr);
 	}
-exit:
+
+	return ret;
+}
+
+static int32_t ae_flash_ctrl_enable(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element_ptr)
+{
+	int32_t                         ret = 0;
+	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
+
+	if (cxt_ptr->ae_set_cb) {
+		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_FLASH_CTRL, cfg_ptr, element_ptr);
+	}
+
 	return ret;
 }
 
@@ -575,6 +513,7 @@ int32_t ae_ctrl_init(struct ae_init_in *input_ptr, cmr_handle *handle_ae)
 	input_ptr->isp_ops.flash_get_time            	= ae_flash_get_time;
 	input_ptr->isp_ops.flash_set_charge          	= ae_flash_set_charge;
 	input_ptr->isp_ops.flash_set_time            	= ae_flash_set_time;
+	input_ptr->isp_ops.flash_ctrl					= ae_flash_ctrl_enable;
 	input_ptr->isp_ops.ex_set_exposure           	= ae_ex_set_exposure;
 	input_ptr->isp_ops.set_rgb_gain              	= ae_set_rgb_gain;
 	input_ptr->isp_ops.set_shutter_gain_delay_info 	= ae_set_shutter_gain_delay_info;

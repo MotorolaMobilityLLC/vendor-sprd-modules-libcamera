@@ -97,6 +97,7 @@ enum isp_alg_set_cmd {
 	ISP_AE_GET_SYSTEM_TIME,
 	ISP_AE_GET_FLASH_CHARGE,
 	ISP_AE_GET_FLASH_TIME,
+	ISP_AE_FLASH_CTRL,
 	ISP_AE_GET_RGB_GAIN,
 	/*AF*/
 	ISP_AF_SET_POS,
@@ -700,11 +701,11 @@ struct isp_img_param {
 };
 
 struct isp_ops {
-	int32_t (*flash_get_charge)(void *handler, struct isp_flash_cell *cell);
-	int32_t (*flash_get_time)(void *handler, struct isp_flash_cell *cell);
-	int32_t (*flash_set_charge)(void *handler, uint8_t type, struct isp_flash_element *element);
-	int32_t (*flash_set_time)(void *handler, uint8_t type, struct isp_flash_element *element);
-	int32_t (*flash_ctrl)(void *handler, struct isp_flash_element *element);
+	cmr_s32 (*flash_get_charge)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell);
+	cmr_s32 (*flash_get_time)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell);
+	cmr_s32 (*flash_set_charge)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element);
+	cmr_s32 (*flash_set_time)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element);
+	cmr_s32 (*flash_ctrl)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element);
 };
 
 struct isp_init_param {

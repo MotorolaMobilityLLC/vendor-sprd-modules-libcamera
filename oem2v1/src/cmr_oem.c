@@ -2617,7 +2617,7 @@ static int camera_get_reloadinfo(cmr_handle  oem_handle, struct isp_cali_param *
 }
 #endif
 
-int32_t camera_isp_flash_get_charge(void *handler, struct isp_flash_cell *cell)
+int32_t camera_isp_flash_get_charge(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell)
 {
 	int32_t                       ret = 0;
 	struct camera_context         *cxt = (struct camera_context*)handler;
@@ -2663,7 +2663,7 @@ out:
 	return ret;
 }
 
-int32_t camera_isp_flash_get_time(void *handler, struct isp_flash_cell *cell)
+int32_t camera_isp_flash_get_time(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell)
 {
 	int32_t ret = 0;
 	struct camera_context		  *cxt = (struct camera_context*)handler;
@@ -2709,16 +2709,14 @@ out:
 	return ret;
 }
 
-int32_t camera_isp_flash_set_charge(void *handler, uint8_t type, struct isp_flash_element *element)
+int32_t camera_isp_flash_set_charge(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element)
 {
 	cmr_s32                           ret = 0;
 	struct camera_context		  *cxt = (struct camera_context*)handler;
-#if 0
 
 	struct sprd_flash_cfg_param       cfg;
 	cmr_u8                            real_type = 0;
 	struct sprd_flash_cell		  real_cell;
-
 
 	if (!cxt || !element) {
 		CMR_LOGE("err param, %p %p", cxt, element);
@@ -2747,13 +2745,11 @@ int32_t camera_isp_flash_set_charge(void *handler, uint8_t type, struct isp_flas
 	cfg.io_id = FLASH_IOID_SET_CHARGE;
 	cfg.flash_idx = cxt->camera_id;
 	ret = cmr_grab_cfg_flash(cxt->grab_cxt.grab_handle, &cfg);
-
 out:
-#endif
 	return ret;
 }
 
-int32_t camera_isp_flash_ctrl(void *handler, struct isp_flash_element *element)
+int32_t camera_isp_flash_ctrl(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element)
 {
 
 	int32_t                           ret = 0;
@@ -2761,7 +2757,6 @@ int32_t camera_isp_flash_ctrl(void *handler, struct isp_flash_element *element)
 	cmr_u8                            real_type = 0;
 	struct grab_flash_opt             flash_opt;
 
-#if 0
 	if (!cxt || !cfg_ptr) {
 		CMR_LOGE("err param, %p %p", cxt, cfg_ptr);
 		ret = -CMR_CAMERA_INVALID_PARAM;
@@ -2793,11 +2788,10 @@ int32_t camera_isp_flash_ctrl(void *handler, struct isp_flash_element *element)
 	flash_opt.flash_index = cxt->camera_id;
 	ret = cmr_grab_flash_cb(cxt->grab_cxt.grab_handle, &flash_opt);
 out:
-#endif
 	return ret;
 }
 
-int32_t camera_isp_flash_set_time(void *handler, uint8_t type, struct isp_flash_element *element)
+int32_t camera_isp_flash_set_time(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element)
 {
 	int32_t ret = 0;
 	struct camera_context		  *cxt = (struct camera_context*)handler;

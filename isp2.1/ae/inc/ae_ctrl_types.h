@@ -20,6 +20,7 @@
  **				 Dependencies				*
  **---------------------------------------------------------------------------*/
 #include "ae_types.h"
+#include "isp_mw.h"
 /**---------------------------------------------------------------------------*
  **				 Compiler Flag				*
  **---------------------------------------------------------------------------*/
@@ -396,14 +397,16 @@ struct ae_isp_ctrl_ops {
 	 int32_t(*get_system_time) (void *handler, uint32_t * sec, uint32_t * usec);
 	 int32_t(*set_statistics_mode) (void *handler, enum ae_statistics_mode mode, uint32_t skip_number);
 
-	 int32_t(*flash_get_charge) (void *handler, struct ae_flash_cell * cell);
-	 int32_t(*flash_get_time) (void *handler, struct ae_flash_cell * cell);
-	 int32_t(*flash_set_charge) (void *handler, uint8_t type, struct ae_flash_element * element);
-	 int32_t(*flash_set_time) (void *handler, uint8_t type, struct ae_flash_element * element);
+	 int32_t(*flash_get_charge) (void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell_ptr);
+	 int32_t(*flash_get_time) (void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell_ptr);
+	 int32_t(*flash_set_charge) (void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element_ptr);
+	 int32_t(*flash_set_time) (void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element_ptr);
+	 int32_t(*flash_ctrl) (void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element_ptr);
+
 	 int32_t(*ex_set_exposure) (void *handler, struct ae_exposure * in_param);
 	 int32_t(*lcd_set_awb) (void *handler, uint32_t effect);
 	 int32_t(*set_rgb_gain) (void *handler, double rgb_gain_coeff);
-	 int32_t (*set_shutter_gain_delay_info)(void*handler, void* param);
+	 int32_t(*set_shutter_gain_delay_info)(void*handler, void* param);
 };
 
 struct ae_stat_img_info {

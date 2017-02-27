@@ -178,19 +178,21 @@ static cmr_int isp_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *para
 		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, param0, param1);
 		break;
 	case ISP_AE_GET_FLASH_CHARGE:
-		rtn = cxt->commn_cxt.ops.flash_get_charge(cxt->commn_cxt.caller_id, param0);
+		rtn = cxt->commn_cxt.ops.flash_get_charge(cxt->commn_cxt.caller_id, param0, param1);
 		break;
 	case ISP_AE_GET_FLASH_TIME:
-		rtn = cxt->commn_cxt.ops.flash_get_time(cxt->commn_cxt.caller_id, param0);
+		rtn = cxt->commn_cxt.ops.flash_get_time(cxt->commn_cxt.caller_id, param0, param1);
+		break;
+	case ISP_AE_SET_FLASH_CHARGE:
+		rtn = cxt->commn_cxt.ops.flash_set_charge(cxt->commn_cxt.caller_id, param0, param1);
+		break;
+	case ISP_AE_SET_FLASH_TIME:
+		rtn = cxt->commn_cxt.ops.flash_set_time(cxt->commn_cxt.caller_id, param0, param1);
+	case ISP_AE_FLASH_CTRL:
+		rtn = cxt->commn_cxt.ops.flash_ctrl(cxt->commn_cxt.caller_id, param0, param1);
 		break;
 	case ISP_AE_GET_RGB_GAIN:
 		rtn  =isp_get_rgb_gain(cxt, param0);
-		break;
-	case ISP_AE_SET_FLASH_CHARGE:
-		rtn = cxt->commn_cxt.ops.flash_set_charge(cxt->commn_cxt.caller_id, *(cmr_u8 *)param0, param1);
-		break;
-	case ISP_AE_SET_FLASH_TIME:
-		rtn = cxt->commn_cxt.ops.flash_set_time(cxt->commn_cxt.caller_id, *(cmr_u8 *)param0, param1);
 		break;
 	default:
 		break;
