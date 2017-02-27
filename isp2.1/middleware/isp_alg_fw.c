@@ -1072,6 +1072,164 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 	return rtn;
 }
 
+static uint32_t binning_data_cvt(uint32_t bayermode, uint32_t width, uint32_t height, uint16_t *raw_in, struct isp_binning_statistic_info *binning_info)
+{
+	uint32_t rtn = 0;
+	int32_t i,j;
+	uint32_t *binning_r = binning_info->r_info;
+	uint32_t *binning_g = binning_info->g_info;
+	uint32_t *binning_b = binning_info->b_info;
+	uint32_t blk_id=0;
+	uint32_t *binning_block[4] = {binning_g, binning_r, binning_b, binning_g};
+	uint16_t pixel_type;
+
+	if(NULL == raw_in || NULL == binning_r || NULL == binning_g|| NULL == binning_b) {
+		ISP_LOGE("Pointer NULL error");
+		return -1;
+	}
+
+	if((width % 2 != 0) || (height % 2 != 0)) {
+		ISP_LOGE("Alignment error");
+		return -1;
+	}
+
+	for(i = 0;i < height; i += 2) {
+		for(j = 0;j < width; j += 2) {
+			binning_r[blk_id] = 0;
+			binning_g[blk_id] = 0;
+			binning_b[blk_id] = 0;
+			pixel_type = bayermode^((((i)&1)<<1)|((j)&1));
+			binning_block[pixel_type][blk_id] += raw_in[i*width+j];
+
+			pixel_type = bayermode^((((i)&1)<<1)|((j+1)&1));
+			binning_block[pixel_type][blk_id] += raw_in[i*width+j+1];
+
+			pixel_type = bayermode^((((i+1)&1)<<1)|((j)&1));
+			binning_block[pixel_type][blk_id] += raw_in[(i+1)*width+j];
+
+			pixel_type = bayermode^((((i+1)&1)<<1)|((j+1)&1));
+			binning_block[pixel_type][blk_id] += raw_in[(i+1)*width+j+1];
+
+			binning_g[blk_id] = (binning_g[blk_id]+1)>>1;
+
+			blk_id++;
+		}
+	}
+
+	binning_info->binning_size.w = width / 2;
+	binning_info->binning_size.h = height / 2;
+	return rtn;
+}
+
+static cmr_int ispalg_binning_stat_data_parser(cmr_handle isp_alg_handle, void *data)
+{
+	cmr_int                         rtn = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context*)isp_alg_handle;
+	struct isp_statis_buf_input statis_buf;
+	struct isp_statis_info *statis_info = (struct isp_statis_info *)data;
+	uint64_t k_addr = 0;
+	uint64_t u_addr = 0;
+	uint32_t val = 0;
+	uint32_t last_val0 = 0;
+	uint32_t last_val1 = 0;
+	uint32_t binning_hx = 5;
+	uint32_t binning_vx = 5;
+	uint32_t src_w = cxt->commn_cxt.src.w;
+	uint32_t src_h = cxt->commn_cxt.src.h;
+	uint32_t binnng_w = (src_w >> binning_hx) & ~0x1;
+	uint32_t binnng_h = (src_h >> binning_vx) & ~0x1;
+	uint32_t double_binning_num = binnng_w *binnng_h / 6 * 2;
+	uint32_t remainder = 0;
+	uint16_t *binning_img_data = NULL;
+	uint16_t *binning_img_ptr = NULL;
+	uint32_t bayermode = cxt->commn_cxt.image_pattern;
+	uint32_t i =0;
+
+	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
+	k_addr = statis_info->phy_addr;
+	u_addr = statis_info->vir_addr;
+
+	ISP_LOGV("bayer: %d, src_size=(%d,%d)\n", bayermode, src_w, src_h);
+
+	binning_img_data = (uint16_t *)malloc(binnng_w * binnng_h *2);
+	if (binning_img_data == NULL) {
+		ISP_LOGE("failed to malloc binning img data\n");
+		return -1;
+	}
+	memset(binning_img_data, 0, binnng_w * binnng_h *2);
+	binning_img_ptr = binning_img_data;
+
+	for (i = 0; i< double_binning_num; i++) {
+		val = *((uint32_t *)u_addr + i);
+		*binning_img_ptr++ = val & 0x3FF;
+		*binning_img_ptr++ = (val >> 10) & 0x3FF;
+		*binning_img_ptr++ = (val >> 20) & 0x3FF;
+	}
+	remainder = binnng_w *binnng_h % 6;
+	last_val0 = *((uint32_t *)u_addr + i);
+	last_val1 = *((uint32_t *)u_addr + i + 1);
+
+	switch (remainder) {
+	case 1:{
+		*binning_img_ptr++ = last_val0 & 0x3FF;
+		break;
+	}
+	case 2:{
+		*binning_img_ptr++ = last_val0 & 0x3FF;
+		*binning_img_ptr++ = (last_val0 >> 10) & 0x3FF;
+		break;
+	}
+	case 3:{
+		*binning_img_ptr++ = last_val0 & 0x3FF;
+		*binning_img_ptr++ = (last_val0 >> 10) & 0x3FF;
+		*binning_img_ptr++ = (last_val0 >> 20) & 0x3FF;
+		break;
+	}
+	case 4:{
+		*binning_img_ptr++ = last_val0 & 0x3FF;
+		*binning_img_ptr++ = (last_val0 >> 10) & 0x3FF;
+		*binning_img_ptr++ = (last_val0 >> 20) & 0x3FF;
+		*binning_img_ptr++ = last_val1 & 0x3FF;
+		break;
+	}
+	case 5:{
+		*binning_img_ptr++ = last_val0 & 0x3FF;
+		*binning_img_ptr++ = (last_val0 >> 10) & 0x3FF;
+		*binning_img_ptr++ = (last_val0 >> 20) & 0x3FF;
+		*binning_img_ptr++ = last_val1 & 0x3FF;
+		*binning_img_ptr++ = (last_val1 >> 10) & 0x3FF;
+		break;
+	}
+	default:
+		break;
+	}
+
+	binning_data_cvt(bayermode, binnng_w, binnng_h, binning_img_data, &cxt->binning_stats);
+
+	ISP_LOGV("binning_stats_size=(%d, %d)\n",
+		cxt->binning_stats.binning_size.w, cxt->binning_stats.binning_size.h);
+
+	memset((void*)&statis_buf, 0, sizeof(statis_buf));
+	statis_buf.buf_size = statis_info->buf_size;
+	statis_buf.phy_addr = statis_info->phy_addr;
+	statis_buf.vir_addr = statis_info->vir_addr;
+	statis_buf.buf_property = ISP_BINNING_BLOCK,
+	statis_buf.buf_flag = 1;
+	rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, &statis_buf, NULL);
+	if (rtn) {
+		ISP_LOGE("failed to set statis buf");
+	}
+
+	if (binning_img_data != NULL) {
+		free(binning_img_data);
+		binning_img_data = NULL;
+	}
+
+	ISP_LOGI("done %ld", rtn);
+	return rtn;
+
+}
+
 static cmr_int _ispProcessEndHandle(cmr_handle isp_alg_handle)
 {
 	cmr_int rtn = ISP_SUCCESS;
@@ -1162,6 +1320,8 @@ cmr_int isp_alg_thread_proc(struct cmr_msg *message, void* p_data)
 	case ISP_CTRL_EVT_AF:
 		rtn = ispalg_af_process((cmr_handle)cxt, message->sub_msg_type, message->data);
 		break;
+	case ISP_CTRL_EVT_BINNING:
+		rtn = ispalg_binning_stat_data_parser((cmr_handle)cxt, message->data);
 	default:
 		ISP_LOGI("don't support msg");
 		break;
@@ -1680,6 +1840,8 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in *input_ptr, cmr_handle *isp_al
 	struct isp_alg_sw_init_in isp_alg_input;
 	struct sensor_raw_info *sensor_raw_info_ptr = (struct sensor_raw_info*)input_ptr->init_param->setting_param_ptr;
 	struct sensor_libuse_info *libuse_info = NULL;
+	uint32_t *binning_info = NULL;
+	uint32_t max_binning_num = ISP_BINNING_MAX_STAT_W * ISP_BINNING_MAX_STAT_H / 4;
 
 	if (!input_ptr || !isp_alg_handle) {
 		ISP_LOGE("input is NULL, 0x%lx", (cmr_uint)input_ptr);
@@ -1703,6 +1865,17 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in *input_ptr, cmr_handle *isp_al
 	isp_alg_input.size.w = input_ptr->init_param->size.w;
 	isp_alg_input.size.h = input_ptr->init_param->size.h;
 	cxt->lib_use_info = sensor_raw_info_ptr->libuse_info;
+
+	binning_info = (uint32_t *)malloc(max_binning_num *3 *sizeof(uint32_t));
+	if (!binning_info) {
+		ISP_LOGE("XSHG:faield to malloc");
+		rtn = ISP_ALLOC_ERROR;
+		goto exit;
+	}
+	cmr_bzero(binning_info, max_binning_num *3 *sizeof(uint32_t));
+	cxt->binning_stats.r_info = binning_info;
+	cxt->binning_stats.g_info = binning_info + max_binning_num;
+	cxt->binning_stats.b_info = cxt->binning_stats.g_info + max_binning_num;
 	rtn = isp_alg_sw_init(cxt, &isp_alg_input);
 	if (rtn) {
 		goto exit;
@@ -1714,6 +1887,9 @@ exit:
 	if (rtn) {
 		isp_alg_sw_deinit((cmr_handle)cxt);
 		isp_alg_destroy_thread_proc((cmr_handle)cxt);
+		if(binning_info) {
+			free((void*)binning_info);
+		}
 		if (cxt) {
 			free((void*)cxt);
 		}
@@ -1756,6 +1932,9 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 	}
 
 	isp_alg_destroy_thread_proc((cmr_handle)cxt);
+	if(cxt->binning_stats.r_info) {
+		free((void*)cxt->binning_stats.r_info);
+	}
 	if (cxt) {
 		free((void*)cxt);
 		cxt = NULL;

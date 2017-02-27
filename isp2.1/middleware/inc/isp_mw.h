@@ -36,6 +36,8 @@ typedef isp_int ( *proc_callback)(isp_handle handler_id, uint32_t mode, void* pa
 
 #define ISP_FLASH_MAX_CELL	40
 #define ISP_MODE_NUM_MAX 16
+#define ISP_BINNING_MAX_STAT_W    640
+#define ISP_BINNING_MAX_STAT_H     480
 
 #define ISP_CTRL_EVT_INIT                    (1 << 2)
 #define ISP_CTRL_EVT_DEINIT                  (1 << 3)
@@ -52,13 +54,14 @@ typedef isp_int ( *proc_callback)(isp_handle handler_id, uint32_t mode, void* pa
 #define ISP_CTRL_EVT_AF                      (1 << 14)
 #define ISP_CTRL_EVT_CTRL_SYNC               (1 << 15)
 #define ISP_CTRL_EVT_CONTINUE_AF             (1 << 16)
+#define ISP_CTRL_EVT_BINNING                     (1 << 18)
 #define ISP_CTRL_EVT_MONITOR_STOP            (1 << 31)
 #define ISP_CTRL_EVT_MASK                    (uint32_t)(ISP_CTRL_EVT_INIT \
 					|ISP_CTRL_EVT_CONTINUE_STOP|ISP_CTRL_EVT_DEINIT|ISP_CTRL_EVT_CONTINUE \
 					|ISP_CTRL_EVT_SIGNAL|ISP_CTRL_EVT_SIGNAL_NEXT|ISP_CTRL_EVT_IOCTRL \
 					|ISP_CTRL_EVT_TX|ISP_CTRL_EVT_SOF|ISP_CTRL_EVT_EOF|ISP_CTRL_EVT_AWB \
 					|ISP_CTRL_EVT_AE|ISP_CTRL_EVT_AF|ISP_CTRL_EVT_CTRL_SYNC|ISP_CTRL_EVT_CONTINUE_AF \
-					|ISP_CTRL_EVT_MONITOR_STOP)
+					|ISP_CTRL_EVT_BINNING|ISP_CTRL_EVT_MONITOR_STOP)
 
 
 #define ISP_THREAD_QUEUE_NUM                 (100)

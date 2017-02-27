@@ -26,15 +26,17 @@
 	struct isp_binning4awb_param_v1 *dst_ptr = (struct isp_binning4awb_param_v1*)dst_binning4awb;
 	struct isp_bin_param *src_ptr = (struct isp_bin_param*)src_binning4awb;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header*)param1;
+	struct isp_size *img_size_ptr = (struct isp_size*)param2;
 	UNUSED(param2);
 
 	memset((void*)&dst_ptr->cur,0x00,sizeof(dst_ptr->cur));
-	dst_ptr->cur.bypass = header_ptr->bypass;
-	dst_ptr->cur.hx = src_ptr->hx;
-	dst_ptr->cur.vx = src_ptr->vx;
+	/*modify to debug binning*/
+	dst_ptr->cur.bypass = 1;//header_ptr->bypass;
+	dst_ptr->cur.hx = 5;//src_ptr->hx;
+	dst_ptr->cur.vx = 5;//src_ptr->vx;
+	dst_ptr->cur.img_size.width = img_size_ptr->w;
+	dst_ptr->cur.img_size.height = img_size_ptr->h;
 	header_ptr->is_update = ISP_ONE;
-
-
 
 	return rtn;
 }

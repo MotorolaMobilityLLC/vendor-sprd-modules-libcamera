@@ -112,6 +112,7 @@ struct isp_alg_fw_context {
 	cmr_int camera_id;
 	cmr_u8 aem_is_update;
 	struct isp_awb_statistic_info aem_stats;
+	struct isp_binning_statistic_info binning_stats;
 	struct commn_info commn_cxt;
 	struct sensor_data_info sn_cxt;
 	struct ae_info ae_cxt;

@@ -184,6 +184,12 @@ struct isp_awb_statistic_info{
 	uint32_t b_info[1024];
 };
 
+struct isp_binning_statistic_info{
+	uint32_t *r_info;
+	uint32_t *g_info;
+	uint32_t *b_info;
+	struct isp_size binning_size;
+};
 
 enum isp_ctrl_mode{
 	ISP_CTRL_SET=0x00,
