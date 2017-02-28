@@ -1115,6 +1115,8 @@ cmr_int isp_alg_thread_proc(struct cmr_msg *message, void* p_data)
 		if (cxt->aem_is_update) {
 			rtn = ispalg_ae_awb_process((cmr_handle)cxt);
 			cxt->aem_is_update = 0;
+			if (rtn)
+				goto exit;
 		}
 		rtn = ispalg_handle_sensor_sof((cmr_handle)cxt);
 		break;
@@ -1122,7 +1124,6 @@ cmr_int isp_alg_thread_proc(struct cmr_msg *message, void* p_data)
 		if (cxt->afl_cxt.afl_mode > AE_FLICKER_60HZ) {
 			rtn = ispalg_afl_process((cmr_handle)cxt, message->data);
 		}
-		rtn = ispalg_afl_process((cmr_handle)cxt, message->data);
 		break;
 	case ISP_CTRL_EVT_AF:
 		rtn = ispalg_af_process((cmr_handle)cxt, message->sub_msg_type, message->data);
@@ -2270,7 +2271,7 @@ cmr_int isp_alg_fw_ioctl(cmr_handle isp_alg_handle, enum isp_ctrl_cmd io_cmd, vo
 	if (NULL != io_ctrl) {
 		rtn = io_ctrl(cxt, param_ptr, call_back);
 	} else {
-		ISP_LOGD("io ctrl fun is null error, cmd %d", cmd);
+		ISP_LOGD("io_ctrl fun is null, cmd %d", cmd);
 	}
 
 	if (NULL != cxt->commn_cxt.callback) {

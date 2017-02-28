@@ -143,57 +143,57 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 
 	if(cur_exp_flag) {
 		if(cur_flicker) {
-			rtn = _set_afl_thr(NULL, thr);
-			if(0 == rtn) {
-				ISP_LOGI("%d %d %d %d %d %d %d %d %d", thr[0], thr[1], thr[2], thr[3], thr[4], thr[5], thr[6], thr[7], thr[8]);
-				ISP_LOGI("60Hz setting working");
-			} else {
-				thr[0] = 200;
-				thr[1] = 20;
-				thr[2] = 160;
-				thr[3] = (ae_exp_flag==1) ? 100 : 240;
-				thr[4] = 100;
-				thr[5] = 4;
-				thr[6] = 30;
-				thr[7] = 20;
-				thr[8] = 120;
-				ISP_LOGI("60Hz using default threshold");
-			}
+			//rtn = _set_afl_thr(NULL, thr);
+			ISP_LOGV("%d %d %d %d %d %d %d %d %d", thr[0], thr[1],
+				 thr[2], thr[3], thr[4], thr[5], thr[6], thr[7], thr[8]);
+			ISP_LOGV("60Hz setting working");
+			thr[0] = 200;
+			thr[1] = 20;
+			thr[2] = 160;
+			thr[3] = (ae_exp_flag==1) ? 100 : 240;
+			thr[4] = 100;
+			thr[5] = 4;
+			thr[6] = 30;
+			thr[7] = 20;
+			thr[8] = 120;
 		} else {
-			rtn = _set_afl_thr(NULL, thr);
-			if(0 == rtn) {
-				ISP_LOGI("%d %d %d %d %d %d %d %d %d", thr[0], thr[1], thr[2], thr[3], thr[4], thr[5], thr[6], thr[7], thr[8]);
-				ISP_LOGI("50Hz setting working");
-			} else {
-				thr[0] = 200;
-				thr[1] = 20;
-				thr[2] = 160;
-				thr[3] = 200;
-				thr[3] = (ae_exp_flag==1) ? 100 : 280;
-				thr[4] = 100;
-				thr[5] = 4;
-				thr[6] = 30;
-				thr[7] = 20;
-				thr[8] = 120;
-				ISP_LOGI("50Hz using default threshold");
-			}
+			//rtn = _set_afl_thr(NULL, thr);
+			ISP_LOGV("%d %d %d %d %d %d %d %d %d", thr[0], thr[1],
+				 thr[2], thr[3], thr[4], thr[5], thr[6], thr[7], thr[8]);
+			ISP_LOGV("50Hz setting working");
+			thr[0] = 200;
+			thr[1] = 20;
+			thr[2] = 160;
+			thr[3] = 200;
+			thr[3] = (ae_exp_flag==1) ? 100 : 280;
+			thr[4] = 100;
+			thr[5] = 4;
+			thr[6] = 30;
+			thr[7] = 20;
+			thr[8] = 120;
 		}
 
 		for(i = 0;i < cxt_ptr->frame_num;i++) {
-#if 1/*Solve compile problem*/
 			if(cur_flicker) {
-				flag = antiflcker_sw_process(cxt_ptr->width, cxt_ptr->height, addr, 0, thr[0], thr[1], thr[2],\
-					thr[3], thr[4], thr[5], thr[6], thr[7], thr[8], (int *)ae_stat_ptr->r_info, (int *)ae_stat_ptr->g_info, (int *)ae_stat_ptr->b_info);
-				ISP_LOGI("flag %ld %s", flag, "60Hz");
+				flag = antiflcker_sw_process(cxt_ptr->width,
+					cxt_ptr->height, addr, 0, thr[0], thr[1],
+					thr[2], thr[3], thr[4], thr[5], thr[6],
+					thr[7], thr[8], (int *)ae_stat_ptr->r_info,
+					(int *)ae_stat_ptr->g_info,
+					(int *)ae_stat_ptr->b_info);
+				ISP_LOGV("flag %ld %s", flag, "60Hz");
 			} else {
-				flag = antiflcker_sw_process(cxt_ptr->width, cxt_ptr->height, addr, 1, thr[0], thr[1], thr[2],\
-					thr[3], thr[4], thr[5], thr[6], thr[7], thr[8], (int *)ae_stat_ptr->r_info, (int *)ae_stat_ptr->g_info, (int *)ae_stat_ptr->b_info);
-				ISP_LOGI("flag %ld %s", flag, "50Hz");
+				flag = antiflcker_sw_process(cxt_ptr->width,
+					cxt_ptr->height, addr, 1, thr[0], thr[1],
+					thr[2], thr[3], thr[4], thr[5], thr[6],
+					thr[7], thr[8], (int *)ae_stat_ptr->r_info,
+					(int *)ae_stat_ptr->g_info,
+					(int *)ae_stat_ptr->b_info);
+				ISP_LOGV("flag %ld %s", flag, "50Hz");
 			}
-#endif
-			if(flag) {
+			if (flag)
 				break;
-			}
+
 			addr += cxt_ptr->vheight;
 		}
 	}
