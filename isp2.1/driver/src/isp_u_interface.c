@@ -693,8 +693,8 @@ isp_s32 isp_set_comm_param_v1(isp_handle isp_handler)
 
 	com_param_ptr->shadow_ctrl_ch0.shadow_mctrl = 1;
 	com_param_ptr->shadow_ctrl_ch1.shadow_mctrl = 1;
-	com_param_ptr->lbuf_off.ydly_lbuf_offset = 0x119;
-	com_param_ptr->lbuf_off.comm_lbuf_offset = 0x460;
+	com_param_ptr->lbuf_off.ydly_lbuf_offset = 0x121;
+	com_param_ptr->lbuf_off.comm_lbuf_offset = 0x480;
 
 	com_param_ptr->gclk_ctrl_rrgb = 0xffffffff;
 	com_param_ptr->gclk_ctrl_yiq_frgb = 0xffffffff;
