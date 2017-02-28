@@ -21,7 +21,6 @@
 #include "isp_com.h"
 #include "isp_drv.h"
 
-#define ISP_DEFAULT_CFG_FOR_BRING_UP
 
 enum isp_dev_access_ctrl_cmd {
 	ISP_DEV_SET_AE_MONITOR,
