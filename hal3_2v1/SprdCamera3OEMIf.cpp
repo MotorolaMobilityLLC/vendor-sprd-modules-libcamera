@@ -948,6 +948,8 @@ int SprdCamera3OEMIf::zslTakePicture()
 	ATRACE_CALL();
 
 	uint32_t ret = 0;
+	SPRD_DEF_Tag sprddefInfo;
+	mSetting->getSPRDDEFTag(&sprddefInfo);
 
 	HAL_LOGI("E");
 	GET_START_TIME;
@@ -995,20 +997,22 @@ int SprdCamera3OEMIf::zslTakePicture()
 	SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_SIZE, (cmr_uint)&jpeg_thumb_size);
 
 	/**add for 3d capture, set raw call back mode & reprocess capture size begin*/
-	if ((mSprdYuvCallBack) && (!mSprdReprocessing))
-	{
-	    mSprd3dCalibrationEnabled = true;
-	    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DCAL_ENABLE, mSprd3dCalibrationEnabled);
-	    HAL_LOGD("raw call back mode, force enable 3d cal");
-	}
-	else
-	{
-	    SPRD_DEF_Tag sprddefInfo;
-	    mSetting->getSPRDDEFTag(&sprddefInfo);
-	    mSprd3dCalibrationEnabled = sprddefInfo.sprd_3dcalibration_enabled;
-	    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DCAL_ENABLE, sprddefInfo.sprd_3dcalibration_enabled);
+	if ((mSprdYuvCallBack) && (!mSprdReprocessing)) {
+		mSprd3dCalibrationEnabled = true;
+		SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DCAL_ENABLE, mSprd3dCalibrationEnabled);
+		HAL_LOGD("raw call back mode, force enable 3d cal");
+	} else {
+		mSprd3dCalibrationEnabled = sprddefInfo.sprd_3dcalibration_enabled;
+		SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DCAL_ENABLE, sprddefInfo.sprd_3dcalibration_enabled);
 	}
 	/**add for 3d capture, set raw call back mode & reprocess capture size end*/
+
+#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
+	if (sprddefInfo.capture_mode == 1) {
+		HAL_LOGV("set focus af mode %d",CAMERA_FOCUS_MODE_PICTURE);
+		SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE, CAMERA_FOCUS_MODE_PICTURE);
+	}
+#endif
 
 	// for off-the-fly zsl
 	if (mSprdZslEnabled == 1 && mVideoSnapshotType == 0) {
@@ -1021,10 +1025,6 @@ int SprdCamera3OEMIf::zslTakePicture()
 	}
 
 	setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
-#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-	HAL_LOGV("set focus af mode %d",CAMERA_FOCUS_MODE_PICTURE);
-	SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE, CAMERA_FOCUS_MODE_PICTURE);
-#endif
 	if (CMR_CAMERA_SUCCESS != mHalOem->ops->camera_take_picture(mCameraHandle, mCaptureMode)) {
 		setCameraState(SPRD_ERROR, STATE_CAPTURE);
 		HAL_LOGE("fail to camera_take_picture.");
@@ -1069,7 +1069,8 @@ int SprdCamera3OEMIf::checkIfNeedToStopOffTheFlyZsl()
 	// capture_mode: 1 single capture; >1: n capture
 	if (mFlagOffTheFlyZslStart &&
 	    mSprdZslEnabled == 1 &&
-	    sprddefInfo.capture_mode == 1) {
+	    sprddefInfo.capture_mode == 1 &&
+	    mZslShotPushFlag == 0) {
 		HAL_LOGI("mFlagOffTheFlyZslStart=%d, sprddefInfo.capture_mode=%d",
 			mFlagOffTheFlyZslStart, sprddefInfo.capture_mode);
 		CMR_MSG_INIT(message);
