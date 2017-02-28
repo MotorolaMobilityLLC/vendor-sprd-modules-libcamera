@@ -135,7 +135,7 @@ exit:
 	} else {
 		*handle_awb = (cmr_handle)cxt_ptr;
 	}
-	ISP_LOGI("done %ld", rtn);
+	ISP_LOGI("isp_3a_ctrl awb_init rtn = %d", rtn);
 
 	return rtn;
 }
@@ -193,7 +193,7 @@ cmr_int awb_ctrl_deinit(cmr_handle handle_awb)
 			handle_awb = NULL;
 		}
 	}
-	ISP_LOGI("LiuY: done %ld", rtn);
+	ISP_LOGI("isp_3a_ctrl awb_deinit rtn = %d", rtn);
 	return rtn;
 }
 

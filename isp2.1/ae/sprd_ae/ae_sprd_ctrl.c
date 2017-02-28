@@ -2594,7 +2594,7 @@ int32_t ae_sprd_calculation(void *handle, void* param, void* result)
 
 			if (1 == cxt->cur_status.settings.touch_scrn_status) {
 				cxt->ae_cb_cnt++;
-				if (cxt->ae_cb_cnt >= 2) {
+				if (cxt->ae_cb_cnt >= 4) {
 					(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_TOUCH_AE_NOTIFY);//temp code for bug642910, remove later
 					cxt->cur_status.settings.touch_scrn_status = 0;
 					cxt->ae_cb_cnt = 0;

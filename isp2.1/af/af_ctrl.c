@@ -410,6 +410,7 @@ cmr_int af_ctrl_init(struct afctrl_init_in *input_ptr, cmr_handle *handle_af)
 	}
 
 	*handle_af = (cmr_handle)cxt_ptr;
+	ISP_LOGI("isp_3a_ctrl af_init rtn = %d", rtn);
 	return rtn;
 
 error_adpt_init:
@@ -443,7 +444,7 @@ cmr_int af_ctrl_deinit(cmr_handle handle_af)
 	afctrl_destroy_thread(cxt_ptr);
 	free((void*)handle_af);
 exit:
-	ISP_LOGI("done %ld", rtn);
+	ISP_LOGI("isp_3a_ctrl af_deinit rtn = %d", rtn);
 	return rtn;
 }
 

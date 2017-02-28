@@ -308,6 +308,7 @@ static void* lsc_sprd_init(void *in, void *out)
 
 	pthread_mutex_init(&cxt->status_lock, NULL);
 
+	LSC_ADV_LOGI("isp_3a_ctrl lsc_init rtn = %d", rtn);
 	return (void *)cxt;
 
 EXIT:
@@ -356,6 +357,7 @@ static int32_t lsc_sprd_deinit(void *handle, void *in, void *out)
 
 	memset(cxt, 0, sizeof(*cxt));
 	free(cxt);
+	LSC_ADV_LOGI("isp_3a_ctrl lsc_deinit rtn = %d", rtn);
 
 	return rtn;
 }

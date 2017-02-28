@@ -536,7 +536,7 @@ int32_t ae_ctrl_init(struct ae_init_in *input_ptr, cmr_handle *handle_ae)
 	if (rtn) {
 		goto exit;
 	}
-	
+
 	rtn = aectrl_init_adpt(cxt_ptr, input_ptr);
 	if (rtn) {
 		goto error_adpt_init;
@@ -545,6 +545,7 @@ int32_t ae_ctrl_init(struct ae_init_in *input_ptr, cmr_handle *handle_ae)
 	ae_get_rgb_gain(cxt_ptr, &cxt_ptr->bakup_rgb_gain);
 
 	*handle_ae = (cmr_handle)cxt_ptr;
+	ISP_LOGI("isp_3a_ctrl ae_init rtn = %d", rtn);
 	return rtn;
 
 error_adpt_init:
@@ -579,7 +580,7 @@ cmr_int ae_ctrl_deinit(cmr_handle handle_ae)
 	pthread_mutex_destroy(&cxt_ptr->ioctrl_sync_lock);
 	free((void*)handle_ae);
 exit:
-	ISP_LOGI("done %ld", rtn);
+	ISP_LOGI("isp_3a_ctrl ae_deinit rtn = %d", rtn);
 	return rtn;
 }
 
