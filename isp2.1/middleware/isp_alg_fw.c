@@ -486,6 +486,12 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle,
 	in_param.sec  = cxt->ae_cxt.time.sec;
 	in_param.usec = cxt->ae_cxt.time.usec;
 
+	in_param.sensor_fps.mode = cxt->sensor_fps.mode;
+	in_param.sensor_fps.max_fps = cxt->sensor_fps.max_fps;
+	in_param.sensor_fps.min_fps = cxt->sensor_fps.min_fps;
+	in_param.sensor_fps.is_high_fps = cxt->sensor_fps.is_high_fps;
+	in_param.sensor_fps.high_fps_skip_num = cxt->sensor_fps.high_fps_skip_num;
+
 	system_time0 = isp_get_timestamp();
 	rtn = ae_ctrl_process(cxt->ae_cxt.handle, &in_param, &ae_result);
 	cxt->smart_cxt.isp_smart_eb = 1;
@@ -1812,6 +1818,12 @@ static cmr_int ae_set_work_mode(cmr_handle isp_alg_handle, uint32_t new_mode, ui
 	ae_param.resolution_info.sensor_size_index 	= cxt->commn_cxt.param_index;
 	ae_param.is_snapshot						= param_ptr->is_snapshot;
 
+	ae_param.sensor_fps.mode = param_ptr->sensor_fps.mode;
+	ae_param.sensor_fps.max_fps= param_ptr->sensor_fps.max_fps;
+	ae_param.sensor_fps.min_fps= param_ptr->sensor_fps.min_fps;
+	ae_param.sensor_fps.is_high_fps= param_ptr->sensor_fps.is_high_fps;
+	ae_param.sensor_fps.high_fps_skip_num= param_ptr->sensor_fps.high_fps_skip_num;
+
 	//ISP_LOGI("is_snapshot %d param_ptr->mode %d", param_ptr->is_snapshot, param_ptr->mode);
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_VIDEO_START, &ae_param, NULL);
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_DC_DV, &param_ptr->dv_mode, NULL);
@@ -2021,6 +2033,12 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 		rtn = ISP_PARAM_ERROR;
 		goto exit;
 	}
+
+	cxt->sensor_fps.mode = in_ptr->sensor_fps.mode;
+	cxt->sensor_fps.max_fps= in_ptr->sensor_fps.max_fps;
+	cxt->sensor_fps.min_fps= in_ptr->sensor_fps.min_fps;
+	cxt->sensor_fps.is_high_fps= in_ptr->sensor_fps.is_high_fps;
+	cxt->sensor_fps.high_fps_skip_num= in_ptr->sensor_fps.high_fps_skip_num;
 
 	org_size.w = cxt->commn_cxt.src.w;
 	org_size.h = cxt->commn_cxt.src.h;

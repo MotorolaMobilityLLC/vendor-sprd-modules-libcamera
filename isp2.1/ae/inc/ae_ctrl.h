@@ -76,6 +76,7 @@ struct ae_calc_in {
 	struct ae_stat_img_info info;
 	uint32_t sec;
 	uint32_t usec;
+	struct isp_sensor_fps_info sensor_fps;
 };
 
 struct ae_calc_out {

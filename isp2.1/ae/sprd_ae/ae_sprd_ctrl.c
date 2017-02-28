@@ -3181,6 +3181,7 @@ int32_t ae_sprd_io_ctrl(void *handle, enum ae_io_ctrl_cmd cmd, void *param, void
 				int32_t i;
 				int32_t again;
 				float	rgb_gain_coeff;
+				int32_t ae_skip_num = 0;
 				struct ae_trim trim;
 				struct ae_set_work_param *work_info = param;
 
@@ -3197,6 +3198,15 @@ int32_t ae_sprd_io_ctrl(void *handle, enum ae_io_ctrl_cmd cmd, void *param, void
 				cxt->monitor_unit.mode = AE_STATISTICS_MODE_CONTINUE;
 				cxt->monitor_unit.cfg.skip_num = 0;
 				cxt->monitor_unit.is_stop_monitor = 0;
+
+				if (work_info->sensor_fps.is_high_fps) {
+						ae_skip_num = work_info->sensor_fps.high_fps_skip_num - 1;
+						if (ae_skip_num > 0)
+							cxt->monitor_unit.cfg.skip_num = ae_skip_num;
+						else
+							cxt->monitor_unit.cfg.skip_num = 0;
+						AE_LOGI("cxt->monitor_unit.cfg.skip_num %d", cxt->monitor_unit.cfg.skip_num);
+					}
 
 				trim.x = 0;
 				trim.y = 0;

@@ -289,6 +289,7 @@ struct ae_set_work_param {
 	enum ae_work_mode mode;
 	struct ae_resolution_info resolution_info;
 	struct ae_measure_highflash highflash_measure;
+	struct isp_sensor_fps_info sensor_fps;
 };
 
 struct ae_set_iso {
