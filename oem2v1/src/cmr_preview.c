@@ -7221,7 +7221,10 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 	chn_param.cap_inf_cfg.frm_num         = chn_param.frm_num;
 	chn_param.cap_inf_cfg.buffer_cfg_isp = 0;
 	chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
-	chn_param.cap_inf_cfg.cfg.sence_mode = DCAM_SCENE_MODE_CAPTURE;
+	if (!prev_cxt->prev_param.sprd_zsl_enabled && is_capture_zsl)
+		chn_param.cap_inf_cfg.cfg.sence_mode = DCAM_SCENE_MODE_CAPTURE_CALLBACK;
+	else
+		chn_param.cap_inf_cfg.cfg.sence_mode = DCAM_SCENE_MODE_CAPTURE;
 
 	if (prev_cxt->prev_param.video_eb ||
 	    (prev_cxt->prev_param.preview_eb && prev_cxt->prev_param.snapshot_eb)) {
