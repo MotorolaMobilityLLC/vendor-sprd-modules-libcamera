@@ -729,7 +729,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 	struct isp_awb_statistic_info *ae_stat_ptr = awb_calc_info->ae_stat_ptr;
 	struct ae_calc_out *ae_result = &awb_calc_info->ae_result;
 	struct smart_proc_input smart_proc_in;
-	struct awb_size stat_img_size = {0, 0};
+	struct ae_monitor_info          info;
 	struct awb_size win_size = {0, 0};
 	nsecs_t system_time0 = 0;
 	nsecs_t system_time1 = 0;
@@ -770,11 +770,10 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 		cxt->smart_cxt.log_smart =smart_proc_in.log;
 		cxt->smart_cxt.log_smart_size =smart_proc_in.size;
 
-#if 0
 		gCntSendMsgLsc++;
 		if(0 == gCntSendMsgLsc % 3){
-			rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_STAT_SIZE, (void *)&stat_img_size, NULL);
-			rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_WIN_SIZE, (void *)&win_size, NULL);
+
+			rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_MONITOR_INFO, NULL, (void*)&info);
 
 			struct isp_pm_param_data param_data_alsc;
 			struct isp_pm_ioctl_input  param_data_alsc_input = {NULL, 0};
@@ -801,17 +800,16 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 			alsc_info.awb_b_gain = result->gain.b;
 			alsc_info.awb_r_gain = result->gain.r;
 			alsc_info.awb_ct = result->ct;
-			alsc_info.stat_img_size.w= stat_img_size.w;
-			alsc_info.stat_img_size.h= stat_img_size.h;
-			alsc_info.win_size.w = win_size.w;
-			alsc_info.win_size.h = win_size.h;
-			alsc_info.stable = awb_calc_info->ae_result.is_stab; // jiyao
+			alsc_info.stat_img_size.w = info.win_num.w;
+			alsc_info.stat_img_size.h = info.win_num.h;
+			//alsc_info.win_size.w = win_size.w;
+			//alsc_info.win_size.h = win_size.h;
+			alsc_info.stable = awb_calc_info->ae_result.is_stab;
 			alsc_info.image_width = cxt->commn_cxt.src.w;
 			alsc_info.image_height = cxt->commn_cxt.src.h;
 
 			rtn = alsc_calc(isp_alg_handle, ptr_r_stat,ptr_g_stat, ptr_b_stat, &alsc_info.stat_img_size, &alsc_info.win_size, alsc_info.image_width, alsc_info.image_height,alsc_info.awb_ct, alsc_info.awb_r_gain, alsc_info.awb_b_gain,alsc_info.stable);
 		}
-#endif
 	}
 	system_time1 = isp_get_timestamp();
 	ISP_LOGI("SYSTEM_TEST-smart:%lldms", system_time1-system_time0);

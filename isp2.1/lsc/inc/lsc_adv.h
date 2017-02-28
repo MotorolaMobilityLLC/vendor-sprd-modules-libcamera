@@ -101,7 +101,7 @@ struct alsc_ver_info{
 
 
 struct debug_lsc_param{
-	char LSC_version[30];
+	char LSC_version[20];
 	unsigned short TB_DNP[12];
 	unsigned short TB_A[12];
 	unsigned short TB_TL84[12];
@@ -371,6 +371,12 @@ struct lsc2_context{
 
 	// debug info output address
 	void* lsc_debug_info_ptr;
+
+	// AEM storage address
+	unsigned int* stat_for_lsc;
+
+	// Copy the dst_gain address
+	uint16_t* dst_gain;
 };
 
 
