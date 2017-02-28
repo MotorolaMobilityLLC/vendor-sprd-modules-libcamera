@@ -2754,7 +2754,8 @@ int32_t camera_isp_flash_ctrl(void *handler, struct isp_flash_cfg *cfg_ptr, stru
 
 	int32_t                           ret = 0;
 	struct camera_context             *cxt = (struct camera_context *)handler;
-	cmr_u8                            real_type = 0;
+	cmr_u8                            led0_status = 0;
+	cmr_u8                            led1_status = 0;
 	struct grab_flash_opt             flash_opt;
 
 	if (!cxt || !cfg_ptr) {
@@ -2766,16 +2767,20 @@ int32_t camera_isp_flash_ctrl(void *handler, struct isp_flash_cfg *cfg_ptr, stru
 	switch (cfg_ptr->type) {
 	case ISP_FLASH_TYPE_PREFLASH:
 		if (cfg_ptr->led_idx) {
-			real_type = FLASH_OPEN;
+			led0_status = FLASH_OPEN;
+			led1_status = FLASH_OPEN;
 		} else {
-			real_type = FLASH_CLOSE_AFTER_OPEN;
+			led0_status = FLASH_CLOSE_AFTER_OPEN;
+			led1_status = FLASH_CLOSE_AFTER_OPEN;
 		}
 		break;
 	case ISP_FLASH_TYPE_MAIN:
 		if (cfg_ptr->led_idx) {
-			real_type = FLASH_HIGH_LIGHT;
+			led0_status = FLASH_HIGH_LIGHT;
+			led1_status = FLASH_HIGH_LIGHT;
 		} else {
-			real_type = FLASH_CLOSE_AFTER_OPEN;
+			led0_status = FLASH_CLOSE_AFTER_OPEN;
+			led1_status = FLASH_CLOSE_AFTER_OPEN;
 		}
 		break;
 	default:
@@ -2784,7 +2789,8 @@ int32_t camera_isp_flash_ctrl(void *handler, struct isp_flash_cfg *cfg_ptr, stru
 		break;
 	}
 
-	flash_opt.opt = real_type;
+	flash_opt.led0_status = led0_status;
+	flash_opt.led1_status = led1_status;
 	flash_opt.flash_index = cxt->camera_id;
 	ret = cmr_grab_flash_cb(cxt->grab_cxt.grab_handle, &flash_opt);
 out:
@@ -5835,7 +5841,8 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type, struc
 			} else {
 				//cmr_sensor_set_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_EXIF_CTRL_FLASH, 0);
 			}
-			flash_opt.opt = param_ptr->cmd_value;
+			flash_opt.led0_status = param_ptr->cmd_value;
+			flash_opt.led1_status = param_ptr->cmd_value;
 			flash_opt.flash_index = cxt->camera_id;
 			cmr_grab_flash_cb(grab_handle, &flash_opt);
 		}

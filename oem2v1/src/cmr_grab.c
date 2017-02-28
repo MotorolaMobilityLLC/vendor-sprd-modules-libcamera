@@ -1427,7 +1427,8 @@ cmr_int cmr_grab_flash_cb(cmr_handle grab_handle, struct grab_flash_opt *flash_o
 	CMR_CHECK_FD;
 
 	bzero(&set_flash, sizeof(struct sprd_img_set_flash));
-	if (FLASH_TORCH == flash_opt->opt) {
+	if (FLASH_TORCH == flash_opt->led0_status &&
+		FLASH_TORCH == flash_opt->led1_status) {
 #ifdef CONFIG_CAMERA_FLASH_LED_SWITCH
 		set_flash.led1_ctrl = 1;
 #else
@@ -1441,8 +1442,8 @@ cmr_int cmr_grab_flash_cb(cmr_handle grab_handle, struct grab_flash_opt *flash_o
 		set_flash.led1_ctrl = 1;
 #endif
 	}
-	set_flash.led0_status = flash_opt->opt;
-	set_flash.led1_status = flash_opt->opt;
+	set_flash.led0_status = flash_opt->led0_status;
+	set_flash.led1_status = flash_opt->led1_status;
 	set_flash.flash_index = flash_opt->flash_index;
 	ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_FLASH, &set_flash);
 	if (ret) {
