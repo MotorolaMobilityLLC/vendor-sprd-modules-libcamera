@@ -44,7 +44,7 @@ enum al_awb_lib_version_id {
 
 typedef void* sprd_af_handle_t;
 typedef void* sft_af_handle_t;
-typedef void* awb_ctrl_handle_t;
+//typedef void* awb_ctrl_handle_t;
 
 struct awb_lib_fun {
 	cmr_int (*awb_ctrl_init) (void *in, void *out);

@@ -17,7 +17,7 @@
 #define LOG_TAG "awb_al_ctrl"
 
 #include "awb_ctrl.h"
-#include "isp_awb.h"
+//#include "isp_awb.h"
 #include "awb_packet.h"
 #include "isp_com.h"
 #include "ae_misc.h"

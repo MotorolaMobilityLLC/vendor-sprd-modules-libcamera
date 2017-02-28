@@ -20,8 +20,8 @@
 *-------------------------------------------------------------------------------*/
 
 void * awb_sprd_ctrl_init(void *param, void *result);
-cmr_int awb_sprd_ctrl_deinit(void * handle, void *param, void *result);
-cmr_int awb_sprd_ctrl_calculation(void * handle, void *param, void *result);
-cmr_int awb_sprd_ctrl_ioctrl(void * handle, cmr_int cmd, void *param0, void *param1);
+cmr_s32 awb_sprd_ctrl_deinit(void * handle, void *param, void *result);
+cmr_s32 awb_sprd_ctrl_calculation(void * handle, void *param, void *result);
+cmr_s32 awb_sprd_ctrl_ioctrl(void * handle, cmr_s32 cmd, void *param0, void *param1);
 
 #endif

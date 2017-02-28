@@ -2099,6 +2099,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 	ISP_RETURN_IF_FAIL(rtn, ("isp cfg error"));
 
 	rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_WORK_MODE, &in_ptr->work_mode, NULL);
+	rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_PIX_CNT, &in_ptr->size, NULL);
 	ISP_RETURN_IF_FAIL(rtn, ("awb set_work_mode error"));
 
 	rtn = ae_set_work_mode(cxt, mode, 1, in_ptr);
