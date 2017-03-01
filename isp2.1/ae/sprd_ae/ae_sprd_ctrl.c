@@ -172,7 +172,7 @@ struct ae_update_list {
 
 /**************************************************************************/
 /*
- * BEGIN: FDAE related definitions 
+ * BEGIN: FDAE related definitions
  */
 struct ae_fd_info {
 	int8_t enable;
@@ -182,77 +182,81 @@ struct ae_fd_info {
 	struct ae_fd_param face_info;	/* The current face information */
 };
 /*
- * END: FDAE related definitions 
+ * END: FDAE related definitions
  */
 /**************************************************************************/
 /*
- * ae handler for isp_app 
+ * ae handler for isp_app
  */
 struct ae_ctrl_cxt {
 	uint32_t start_id;
 	char alg_id[32];
 	uint32_t checksum;
 	/*
-	 * camera id: front camera or rear camera 
+	 * camera id: front camera or rear camera
 	 */
 	int8_t camera_id;
 	pthread_mutex_t data_sync_lock;
 	/*
-	 * ae control operation infaces 
+	 * ae control operation infaces
 	 */
 	struct ae_isp_ctrl_ops isp_ops;
 	/*
-	 * ae stat monitor config 
+	 * ae stat monitor config
 	 */
 	struct ae_monitor_unit monitor_unit;
 	/*
-	 * for ae tuning parameters 
+	 * ae slow motion info
+	 */
+	struct isp_sensor_fps_info high_fps_info;
+	/*
+	 * for ae tuning parameters
 	 */
 	struct ae_tuning_param tuning_param[AE_MAX_PARAM_NUM];
 	int8_t tuning_param_enable[AE_MAX_PARAM_NUM];
 	struct ae_tuning_param *cur_param;
 	/*
-	 * sensor related information 
+	 * sensor related information
 	 */
 	struct ae_resolution_info snr_info;
 	/*
 	 * ae current status: include some tuning
-	 * param/calculatioin result and so on 
+	 * param/calculatioin result and so on
 	 */
 	struct ae_alg_calc_param cur_status;
 	struct ae_alg_calc_param sync_cur_status;
 	uint32_t sync_aem[3 * 1024 + 4];/*0: frame id;1: exposure time, 2: dummy line, 3: gain;*/
 	/*
-	 * convergence & stable zone 
+	 * convergence & stable zone
 	 */
 	int8_t stable_zone_ev[16];
 	uint8_t cnvg_stride_ev_num;
 	int16_t cnvg_stride_ev[32];
 	/*
-	 * Touch ae param 
+	 * Touch ae param
 	 */
 	struct touch_zone_param touch_zone_param;
 	/*
-	 * flash ae param 
+	 * flash ae param
 	 */
 	int16_t mflash_wait_use;		//for non-zsl
 	int16_t flash_on_off_thr;
 	uint32_t flash_effect;
 	/*
-	 * fd-ae param 
+	 * fd-ae param
 	 */
 	struct ae_fd_info fdae;
 	/*
-	 * lcd flash param 
+	 * lcd flash param
 	 */
 	uint32_t lcd_mon_no_write;
 	/*
-	 * control information for sensor update 
+	 * control information for sensor update
 	 */
 	struct ae_alg_calc_result cur_result;
 	struct ae_alg_calc_result sync_cur_result;
 	/*
-	 * AE write/effective E&G queue 
+	 * AE write/effective E&G queue
 	 */
 	void *thread_handle;
 	void *seq_handle;
@@ -263,7 +267,7 @@ struct ae_ctrl_cxt {
 	uint32_t capture_skip_num;
 	int16_t sensor_gain_precision;
 	/*
-	 * AE calc E&G queue 
+	 * AE calc E&G queue
 	 */
 	struct ae_calc_result ae_result;
 	struct ae_calc_result_queue ae_result_queue;
@@ -271,11 +275,11 @@ struct ae_ctrl_cxt {
 	struct seq_cell out_write_cell;
 	struct seq_cell out_actual_cell;
 	/*
-	 * AE effective E&G matching queue 
+	 * AE effective E&G matching queue
 	 */
 	struct ae_calc_result actual_cell[20];
 	/*
-	 * No-sof write sensor recording 
+	 * No-sof write sensor recording
 	 */
 	int32_t No_sof_expline;
 	int32_t No_sof_dummy;
@@ -2497,7 +2501,173 @@ static int32_t _get_flicker_switch_flag(struct ae_ctrl_cxt *cxt, void *in_param)
 	return rtn;
 }
 
-int32_t ae_sprd_calculation(void *handle, void* param, void* result)
+static int32_t ae_calculation_slow_motion(void* handle, void* param, void* result)
+{
+	int32_t rtn = AE_ERROR;
+	int32_t i = 0;
+	char ae_exp[PROPERTY_VALUE_MAX];
+	char ae_gain[PROPERTY_VALUE_MAX];
+	struct ae_ctrl_cxt *cxt = NULL;
+	struct ae_alg_calc_param *current_status;
+	struct ae_alg_calc_result *current_result;
+	struct ae_calc_result rt;
+	struct ae_misc_calc_in misc_calc_in = { 0 };
+	struct ae_misc_calc_out misc_calc_out = { 0 };
+	struct ae_calc_in *calc_in = NULL;
+	struct ae_calc_out *calc_out = NULL;
+
+	int32_t max_again;
+	double rgb_gain_coeff;
+	int32_t expline;
+	int32_t dummy;
+	int32_t again;
+
+	if ((NULL == param) || (NULL == result)) {
+		AE_LOGE("in %p out %p param is error!", param, result);
+		return AE_PARAM_NULL;
+	}
+
+	rtn = _check_handle(handle);
+	AE_RETURN_IF_FAIL(rtn, ("handle = %p", handle));
+	cxt = (struct ae_ctrl_cxt *)handle;
+
+	pthread_mutex_lock(&cxt->data_sync_lock);
+
+	current_status = &cxt->sync_cur_status;
+	current_result = &cxt->sync_cur_result;
+
+	calc_in = (struct ae_calc_in*)param;
+	calc_out = (struct ae_calc_out*)result;
+
+	// acc_info_print(cxt);
+	cxt->cur_status.awb_gain.b = calc_in->awb_gain_b;
+	cxt->cur_status.awb_gain.g = calc_in->awb_gain_g;
+	cxt->cur_status.awb_gain.r = calc_in->awb_gain_r;
+	memcpy(cxt->sync_aem, calc_in->stat_img, 3 * 1024 * sizeof(uint32_t));
+	cxt->cur_status.stat_img = cxt->sync_aem;
+	// get effective E&g
+	if ((current_status->ae_start_delay + 1) >= cxt->cur_status.frame_id){
+		cxt->cur_status.effect_expline = cxt->actual_cell[0].expline;
+		cxt->cur_status.effect_gain = cxt->actual_cell[0].gain;
+		cxt->cur_status.effect_dummy = cxt->actual_cell[0].dummy;
+	}else{
+		cxt->cur_status.effect_expline = current_result->wts.cur_exp_line;
+		cxt->cur_status.effect_gain = current_result->wts.cur_again;
+		cxt->cur_status.effect_dummy = current_result->wts.cur_dummy;
+	}
+	cxt->cur_result.face_lum = current_result->face_lum;//for debug face lum
+	cxt->sync_aem[3 * 1024] = cxt->cur_status.frame_id;
+	cxt->sync_aem[3 * 1024 + 1] = cxt->cur_status.effect_expline;
+	cxt->sync_aem[3 * 1024 + 2] = cxt->cur_status.effect_dummy;
+	cxt->sync_aem[3 * 1024 + 3] = cxt->cur_status.effect_gain;
+	memcpy(current_status, &cxt->cur_status, sizeof(struct ae_alg_calc_param));
+	memcpy(&cxt->cur_result, current_result, sizeof(struct ae_alg_calc_result));
+	cxt->cur_param = &cxt->tuning_param[0];
+	// change weight_table
+	current_status->weight_table = cxt->cur_param->weight_table[current_status->settings.metering_mode].weight;
+	// change ae_table
+#if 0
+	current_status->ae_table = &cxt->cur_param->scene_info[current_status->settings.scene_mode].ae_table[current_status->settings.flicker];
+#else
+	// for now video using
+	current_status->ae_table = &cxt->cur_param->ae_table[current_status->settings.flicker][AE_ISO_AUTO];
+	current_status->ae_table->min_index = 0;//AE table start index = 0
+#endif
+	// change settings related by EV
+	current_status->target_lum = _calc_target_lum(cxt->cur_param->target_lum, cxt->cur_status.settings.ev_index, &cxt->cur_param->ev_table);
+	current_status->target_lum_zone = cxt->stable_zone_ev[current_status->settings.ev_index];
+	current_status->stride_config[0] = cxt->cnvg_stride_ev[current_status->settings.ev_index * 2];
+	current_status->stride_config[1] = cxt->cnvg_stride_ev[current_status->settings.ev_index * 2 + 1];
+	// AE_LOGD("e_expline %d e_gain %d\r\n",
+	// current_status.effect_expline,
+	// current_status.effect_gain);
+	// skip the first aem data (error data)
+	if (current_status->ae_start_delay <= current_status->frame_id) {
+		misc_calc_in.sync_settings = current_status;
+		misc_calc_out.ae_output = &cxt->cur_result;
+		// AE_LOGD("ae_flash_status calc %d",
+		// current_status.settings.flash);
+		// AE_LOGD("fd_ae: updata_flag:%d ef %d",
+		// current_status->ae1_finfo.update_flag,
+		// current_status->ae1_finfo.enable_flag);
+		cxt->cur_status.settings.min_fps = cxt->high_fps_info.min_fps;
+		cxt->cur_status.settings.max_fps = cxt->high_fps_info.max_fps;
+		AE_LOGD("slow motion fps=(%d, %d)", cxt->cur_status.settings.min_fps, cxt->cur_status.settings.max_fps);
+		rtn = ae_misc_calculation(cxt->misc_handle, &misc_calc_in, &misc_calc_out);
+		cxt->cur_status.ae1_finfo.update_flag = 0;	// add by match box for fd_ae reset the status
+
+		memcpy(current_result, &cxt->cur_result, sizeof(struct ae_alg_calc_result));
+		make_isp_result(current_result, calc_out);
+		{
+			/*just for debug: reset the status */
+
+			if (1 == cxt->cur_status.settings.touch_scrn_status) {
+				cxt->ae_cb_cnt++;
+				if (cxt->ae_cb_cnt >= 2) {
+					(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_TOUCH_AE_NOTIFY);//temp code for bug642910, remove later
+					cxt->cur_status.settings.touch_scrn_status = 0;
+					cxt->ae_cb_cnt = 0;
+				}
+			}
+		}
+
+		if (cxt->manual_ae_on == 1) {
+			memset((void*)&ae_exp, 0, sizeof(ae_exp));
+			memset((void*)&ae_gain, 0, sizeof(ae_gain));
+			property_get("persist.sys.isp.ae.exp_time", ae_exp, "1000");
+			property_get("persist.sys.isp.ae.gain", ae_gain, "128");
+
+			rt.expline = (atoi(ae_exp) * 100)/cxt->snr_info.line_time;
+			rt.gain	  = atoi(ae_gain);
+			rt.dummy   = 0;
+		}else{
+			rt.expline = cxt->cur_result.wts.cur_exp_line;
+			rt.gain	  = cxt->cur_result.wts.cur_again;
+			rt.dummy   = cxt->cur_result.wts.cur_dummy;
+		}
+
+		//AE_LOGD(" expline = %d, gain = %d, dummy = %d", rt.expline, rt.gain, rt.dummy);
+		expline = rt.expline;
+		dummy = rt.dummy;
+		max_again = cxt->cur_status.max_gain;
+		//AE_LOGD("D-gain--setting--- %d %d %d\n", cxt->sensor_gain_precision, cxt->exp_skip_num, cxt->gain_skip_num);
+
+		if (rt.gain <= max_again) {
+			if (0 == rt.gain % cxt->sensor_gain_precision) {
+				again = rt.gain;
+				rgb_gain_coeff = 1;
+			} else {
+				again = (rt.gain / cxt->sensor_gain_precision) * cxt->sensor_gain_precision;
+				rgb_gain_coeff = (double)rt.gain / (double)again;
+			}
+		} else {
+			again = max_again;
+			rgb_gain_coeff = (double)rt.gain / (double)max_again;
+		}
+
+		cxt->isp_ops.set_rgb_gain(cxt->isp_ops.isp_handler, rgb_gain_coeff);
+		rtn = _ae_write_exp_gain(cxt, expline, dummy, again);
+	}else{
+		;
+	}
+
+	cxt->sof_id++;
+	//AE_LOGD("sof_handler %d", cxt->sof_id);
+
+	if (1 == cxt->debug_enable) {
+		save_to_mlog_file(cxt, &misc_calc_out);
+	}
+
+	cxt->cur_status.frame_id++;
+	//AE_LOGD("AE_V2_frame id = %d\r\n", cxt->cur_status.frame_id);
+	//AE_LOGD("rt_expline %d rt_gain %d rt_dummy %d\r\n", rt.expline, rt.gain, rt.dummy);
+	cxt->cur_status.ae_initial = AE_PARAM_NON_INIT;
+ERROR_EXIT:
+	pthread_mutex_unlock(&cxt->data_sync_lock);
+	return rtn;
+}
+
+int32_t ae_calculation(void *handle, void* param, void* result)
 {
 	int32_t rtn = AE_ERROR;
 	int32_t i = 0;
@@ -2713,6 +2883,20 @@ int32_t ae_sprd_calculation(void *handle, void* param, void* result)
 	cxt->cur_status.ae_initial = AE_PARAM_NON_INIT;
 ERROR_EXIT:
 	pthread_mutex_unlock(&cxt->data_sync_lock);
+	return rtn;
+}
+
+
+int32_t ae_sprd_calculation(void* handle, void* param, void* result)
+{
+	int32_t rtn = AE_ERROR;
+	struct ae_ctrl_cxt *cxt = (struct ae_ctrl_cxt *)handle;
+	AE_LOGD("is slow motion=%d", cxt->high_fps_info.is_high_fps);
+
+	if (cxt->high_fps_info.is_high_fps)
+		rtn = ae_calculation_slow_motion(handle, param, result);
+	else
+		rtn = ae_calculation(handle, param, result);
 	return rtn;
 }
 
@@ -3192,15 +3376,19 @@ int32_t ae_sprd_io_ctrl(void *handle, enum ae_io_ctrl_cmd cmd, void *param, void
 				cxt->monitor_unit.mode = AE_STATISTICS_MODE_CONTINUE;
 				cxt->monitor_unit.cfg.skip_num = 0;
 				cxt->monitor_unit.is_stop_monitor = 0;
+				cxt->high_fps_info.is_high_fps = work_info->sensor_fps.is_high_fps;
 
 				if (work_info->sensor_fps.is_high_fps) {
 						ae_skip_num = work_info->sensor_fps.high_fps_skip_num - 1;
-						if (ae_skip_num > 0)
+						if (ae_skip_num > 0) {
 							cxt->monitor_unit.cfg.skip_num = ae_skip_num;
-						else
+							cxt->high_fps_info.min_fps = work_info->sensor_fps.max_fps;
+							cxt->high_fps_info.max_fps = work_info->sensor_fps.max_fps;
+						} else {
 							cxt->monitor_unit.cfg.skip_num = 0;
 						AE_LOGI("cxt->monitor_unit.cfg.skip_num %d", cxt->monitor_unit.cfg.skip_num);
-					}
+						}
+				}
 
 				trim.x = 0;
 				trim.y = 0;
