@@ -312,10 +312,6 @@ struct ae_ctrl_cxt {
 	 */
 	uint8_t manual_ae_on;
 	/*
-	 * for touch ae cb
-	 */
-	 uint8_t ae_cb_cnt;
-	/*
 	 * flash_callback control
 	 */
 	int8_t send_once[3];
@@ -1599,7 +1595,7 @@ static int32_t _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 			else
 				cxt->tuning_param_enable[i] = 0;
 		}
-		cxt->ae_cb_cnt = 0;
+
 		cxt->camera_id = init_param->camera_id;
 		cxt->isp_ops = init_param->isp_ops;
 		cxt->monitor_unit.win_num = init_param->monitor_win_num;
@@ -2602,12 +2598,7 @@ static int32_t ae_calculation_slow_motion(void* handle, void* param, void* resul
 			/*just for debug: reset the status */
 
 			if (1 == cxt->cur_status.settings.touch_scrn_status) {
-				cxt->ae_cb_cnt++;
-				if (cxt->ae_cb_cnt >= 2) {
-					(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_TOUCH_AE_NOTIFY);//temp code for bug642910, remove later
 					cxt->cur_status.settings.touch_scrn_status = 0;
-					cxt->ae_cb_cnt = 0;
-				}
 			}
 		}
 
@@ -2759,14 +2750,8 @@ int32_t ae_calculation(void *handle, void* param, void* result)
 		make_isp_result(current_result, calc_out);
 		{
 			/*just for debug: reset the status */
-
 			if (1 == cxt->cur_status.settings.touch_scrn_status) {
-				cxt->ae_cb_cnt++;
-				if (cxt->ae_cb_cnt >= 4) {
-					(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_TOUCH_AE_NOTIFY);//temp code for bug642910, remove later
 					cxt->cur_status.settings.touch_scrn_status = 0;
-					cxt->ae_cb_cnt = 0;
-				}
 			}
 		}
 		// AE_LOGD("calc_module_f %.2f %d\r\n",
@@ -2849,7 +2834,7 @@ int32_t ae_calculation(void *handle, void* param, void* result)
 	cxt->sensor_calc_item.cell.gain 	= cxt->ae_result.gain;
 	cxt->sensor_calc_item.cell.dummy 	= cxt->ae_result.dummy;
 	rtn = cmr_thread_msg_send(cxt->thread_handle, &msg);
-#if 0
+
 /***********************************************************/
 /******bethany lock ae*******
   *****touch have 3 states,0:touch before/release;1:touch doing; 2: toch done and AE stable*****/
@@ -2858,10 +2843,12 @@ int32_t ae_calculation(void *handle, void* param, void* result)
 		AE_LOGD("TC_start lock ae");
 		//AE_LOGD("TC_pause num is %d",cxt->cur_status.settings.pause_cnt);
 		rtn = _set_pause(cxt);
+		AE_LOGD("touch ae stable cb");
+		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_TOUCH_AE_NOTIFY);
 		current_result->tcAE_status = 2;
 	}
 	cxt->cur_status.to_ae_state = current_result->tcAE_status;
-	//AE_LOGD("TCCTL_to_AE_state is %d",cxt->cur_status.to_ae_state);
+	AE_LOGD("TCCTL_to_AE_state is %d",cxt->cur_status.to_ae_state);
 	AE_LOGD("TCCTL_rls_cond is %d,%d",current_result->tcAE_status,current_result->tcRls_flag);
 	if(0 == current_result->tcAE_status && 1 == current_result->tcRls_flag){
 		rtn = _set_restore_cnt(cxt);
@@ -2869,7 +2856,6 @@ int32_t ae_calculation(void *handle, void* param, void* result)
 		current_result->tcRls_flag = 0;
 	}
 	AE_LOGD("TCCTL_rls_ae_lock is %d",cxt->cur_status.settings.lock_ae);
-#endif
 /***********************************************************/
 /*display the AE running status*/
 	if (1 == cxt->debug_enable) {
