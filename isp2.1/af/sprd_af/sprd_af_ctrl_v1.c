@@ -4136,7 +4136,7 @@ v=v>(max)?(max):v; hist[v]++;}
 			break;
 		case AF_CMD_SET_FACE_DETECT:
 			{
-				//break;
+				break;
 				struct isp_face_area *face = (struct isp_face_area *)param0;
 
 				AF_LOGD("face detect af state = %s", STATE_STRING(af->state));
