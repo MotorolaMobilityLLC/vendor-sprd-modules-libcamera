@@ -1197,6 +1197,7 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input *in_ptr)
 	struct isp_pm_ioctl_input       io_pm_input = {NULL, 0};
 	struct isp_pm_param_data        pm_param = {0,0,0,NULL,0,{0}};
 	struct smart_block_result       *block_result = NULL;
+	struct smart_debug_result      debug_result;
 	cmr_u32 alc_awb = in_ptr->alc_awb;
 	uint32_t                        i = 0;
 
@@ -1215,6 +1216,14 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input *in_ptr)
 	if( in_ptr->LSC_SPD_VERSION >= 3 ){
 		for (i=0; i<smart_calc_result.counts; i++) {
 			if (ISP_SMART_LNC == smart_calc_result.block_result[i].smart_id) {
+				smart_calc_result.block_result[i].update = 0;
+			}
+		}
+	}
+
+	if( in_ptr->lock_nlm== 1){
+		for (i=0; i<smart_calc_result.counts; i++) {
+			if (ISP_SMART_NLM == smart_calc_result.block_result[i].smart_id) {
 				smart_calc_result.block_result[i].update = 0;
 			}
 		}
@@ -1277,6 +1286,22 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input *in_ptr)
 		}
 	#endif
 	}
+
+	for (i = 0; i < smart_calc_result.counts; i++) {
+		block_result = &smart_calc_result.block_result[i];
+		if (!block_result->update)
+			continue;
+		char *block_name = smart_ctl_find_block_name(block_result->smart_id);
+		memcpy(debug_result.block_result[i].block_name, block_name, sizeof(block_name));
+		for(int j = 0; j<block_result->component_num; j++){
+			debug_result.block_result[i].component[j].x_type = block_result->component[j].x_type;
+			debug_result.block_result[i].component[j].y_type = block_result->component[j].y_type;
+			memcpy(debug_result.block_result[i].component[j].fix_data, block_result->component[j].fix_data, sizeof(int32_t)*12);
+		}
+	ISP_LOGI("block[%d]: %s", i, debug_result.block_result[i].block_name);
+	}
+	in_ptr->log = &debug_result;
+	in_ptr->size = (sizeof(struct smart_debug_result));
 
 exit:
 	ISP_LOGI("LiuY: done %ld", rtn);

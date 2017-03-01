@@ -76,6 +76,9 @@ struct awb_info {
 struct smart_info {
 	cmr_handle handle;
 	uint32_t isp_smart_eb;
+	uint8_t *log_smart;
+	uint32_t log_smart_size;
+	uint8_t lock_en;
 };
 
 struct afl_info {

@@ -99,11 +99,30 @@ struct smart_proc_input {
 	cmr_u32 mode_flag;
 	cmr_u32 scene_flag;
 	unsigned int LSC_SPD_VERSION;   // LSC version of Spreadtrum
+	uint8_t *log;
+	uint32_t size;
+	uint8_t lock_nlm;
 };
 
 struct smart_calc_result {
 	struct smart_block_result *block_result;
 	isp_u32 counts;
+};
+
+struct smart_debug_component{
+	uint32_t y_type;
+	uint32_t x_type;
+	int32_t fix_data[12];
+};
+
+struct smart_debug_block{
+	unsigned char block_name[100];
+	struct smart_debug_component component[4];
+	int component_num;
+};
+
+struct smart_debug_result{
+	struct smart_debug_block block_result[ISP_SMART_MAX];
 };
 
 int32_t smart_ctl_ioctl(smart_handle_t handle, uint32_t cmd, void *param, void *result);

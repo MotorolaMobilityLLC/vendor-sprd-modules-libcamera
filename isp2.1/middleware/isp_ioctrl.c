@@ -664,6 +664,8 @@ static const char *AWB_START   = "ISP_AWB_";
 static const char *AWB_END     = "ISP_AWB_";
 static const char *LSC_START   = "ISP_LSC_";
 static const char *LSC_END     = "ISP_LSC_";
+static const char *SMART_START   = "ISP_SMART_";
+static const char *SMART_END     = "ISP_SMART_";
 
 static size_t calc_log_size(const void *log, size_t size, const char *begin_magic, const char *end_magic)
 {
@@ -759,6 +761,7 @@ static cmr_int _ispGetInfoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, int
 				+ calc_log_size(cxt->af_cxt.log_af, cxt->af_cxt.log_af_size, AF_START, AF_END)
 				+ calc_log_size(cxt->awb_cxt.log_awb, cxt->awb_cxt.log_awb_size, AWB_START, AWB_END)
 				+ calc_log_size(cxt->lsc_cxt.log_lsc, cxt->lsc_cxt.log_lsc_size, LSC_START, LSC_END)
+				+ calc_log_size(cxt->smart_cxt.log_smart, cxt->smart_cxt.log_smart_size, SMART_START, SMART_END)
 				+ sizeof(uint32_t)/*for end flag*/;
 
 		if (cxt->commn_cxt.log_isp_size < total_size) {
@@ -792,6 +795,7 @@ static cmr_int _ispGetInfoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, int
 		COPY_LOG(af, AF);
 		COPY_LOG(awb, AWB);
 		COPY_LOG(lsc, LSC);
+		COPY_LOG(smart, SMART);
 		memcpy((char*)cxt->commn_cxt.log_isp + sizeof(struct sprd_isp_debug_info), &log, sizeof(log));
 
 		info_ptr->addr = cxt->commn_cxt.log_isp;

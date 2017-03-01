@@ -447,6 +447,8 @@ typedef struct _isp_log_info
 	uint32_t awb_len;
 	int32_t lsc_off;
 	uint32_t lsc_len;
+	int32_t smart_off;
+	uint32_t smart_len;
 	int32_t ver;
 	char AF_version[20];//AF-yyyymmdd-xx
 	char magic[8];
