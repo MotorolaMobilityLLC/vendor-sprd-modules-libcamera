@@ -2242,7 +2242,6 @@ static int32_t ae_get_debug_info(struct ae_ctrl_cxt *cxt, void *result)
 DEBUG_INFO_EXIT:
 
 #else
-
 	struct ae_debug_info_packet_in debug_info_in;
 	struct ae_debug_info_packet_out debug_info_out;
 	char *alg_id_ptr = NULL;
@@ -2260,7 +2259,6 @@ DEBUG_INFO_EXIT:
 	rtn = ae_debug_info_packet((void*)&debug_info_in, (void*)&debug_info_out);
 	debug_info_result->log = (uint8_t*)debug_info_in.packet_buf;
 	debug_info_result->size = debug_info_out.size;
-
 #endif
 
 	return rtn;
@@ -2783,30 +2781,26 @@ int32_t ae_sprd_io_ctrl(void *handle, enum ae_io_ctrl_cmd cmd, void *param, void
 				struct ae_set_weight *weight = param;
 
 				AE_LOGD("setweight %d", weight->mode);
-				// bad area
-				weight->mode = 1;
-				// bad area
 				if (weight->mode < AE_WEIGHT_MAX) {
 					cxt->cur_status.settings.metering_mode = weight->mode;
 				}
 			}
 			break;
 
-	case AE_SET_TOUCH_ZONE:
-		if (param) {
-			struct ae_set_tuoch_zone *touch_zone = param;
-			if ((touch_zone->touch_zone.w > 1)\
-				&& (touch_zone->touch_zone.h > 1)) {
-				/*touch screen coordination */
-				cxt->cur_status.touch_scrn_win = touch_zone->touch_zone;	// for touch ae
-				cxt->cur_status.settings.touch_scrn_status = 1;	// for touch ae
-				rtn = _set_restore_cnt(cxt);
-				AE_LOGD("TC_TOUCH ae triger %d",cxt->cur_status.settings.touch_scrn_status);
-			} else {
-				AE_LOGD("touch ignore\n");
+		case AE_SET_TOUCH_ZONE:
+			if (param) {
+				struct ae_set_tuoch_zone *touch_zone = param;
+				if ((touch_zone->touch_zone.w > 1)\
+					&& (touch_zone->touch_zone.h > 1)) {
+					/*touch screen coordination */
+					cxt->cur_status.touch_scrn_win = touch_zone->touch_zone;	// for touch ae
+					cxt->cur_status.settings.touch_scrn_status = 1;	// for touch ae
+					rtn = _set_restore_cnt(cxt);
+					AE_LOGD("TC_TOUCH ae triger %d",cxt->cur_status.settings.touch_scrn_status);
+				} else {
+					AE_LOGD("touch ignore\n");
+				}
 			}
-
-		}
 			break;
 
 		case AE_SET_EV_OFFSET:
@@ -3082,16 +3076,16 @@ int32_t ae_sprd_io_ctrl(void *handle, enum ae_io_ctrl_cmd cmd, void *param, void
 			cxt->cur_status.settings.scene_mode = AE_SCENE_NORMAL;
 			break;
 
-	case AE_SET_BYPASS:
-		if (param){
-			if (1 == *(int32_t*)param){
-				rtn = _set_pause(cxt);
-			}else{
-				cxt->cur_status.settings.lock_ae = AE_STATE_NORMAL;
-				cxt->cur_status.settings.pause_cnt = 0;
+		case AE_SET_BYPASS:
+			if (param){
+				if (1 == *(int32_t*)param){
+					rtn = _set_pause(cxt);
+				}else{
+					cxt->cur_status.settings.lock_ae = AE_STATE_NORMAL;
+					cxt->cur_status.settings.pause_cnt = 0;
+				}
 			}
-		}
-		break;
+			break;
 
 		case AE_GET_NORMAL_INFO:
 			if (result) {

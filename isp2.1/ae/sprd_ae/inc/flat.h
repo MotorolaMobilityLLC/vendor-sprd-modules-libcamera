@@ -75,14 +75,12 @@ typedef struct  {
 	flat_rt result_flat;
 	uint32_t mlog_buf[256];
 } flat_stat;
-
 /**---------------------------------------------------------------------------*
-**                              EBD Function Prototype                          *
+**                              FLAT Function Prototype                          *
 **----------------------------------------------------------------------------*/
 int32_t flat_init(flat_stat * cxt, struct flat_tuning_param *tune_param_ptr);
 int32_t flat_calc(flat_stat * cxt);
 int32_t flat_deinit(flat_stat * cxt);
-
 /**----------------------------------------------------------------------------*
 **                                      Compiler Flag                           **
 **----------------------------------------------------------------------------*/
