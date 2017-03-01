@@ -1409,6 +1409,8 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
 	uint32_t                          focal_length_denominator;
 	uint32_t                          rotation_angle;
 	char                              property[PROPERTY_VALUE_MAX];
+	cmr_u32                           is_raw_capture = 0;
+	char                              value[PROPERTY_VALUE_MAX];
 
 	#define EXIF_DEF_MAKER            "Spreadtrum"
 	#define EXIF_DEF_MODEL            "spxxxx"
@@ -1480,23 +1482,39 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
 			p_exif_info->spec_ptr->basic.PixelXDimension,
 			p_exif_info->spec_ptr->basic.PixelYDimension);
 
-	if (NULL != p_exif_info->primary.data_struct_ptr) {
-		p_exif_info->primary.data_struct_ptr->valid.Orientation = 1;
-		p_exif_info->primary.data_struct_ptr->Orientation =
-			setting_get_exif_orientation(hal_param->encode_rotation);
+	property_get("persist.sys.camera.raw.mode", value, "jpeg");
+	if (!strcmp(value, "raw")) {
+		is_raw_capture = 1;
+	}
 
+	if (NULL != p_exif_info->primary.data_struct_ptr) {
 		enum cmr_mirror_type  mirror_type = CMR_MIRROR_DEFAULT;
 		cmr_get_mirror(&mirror_type);
-		if (CMR_MIRROR_DCAM == mirror_type) {
-			if ((hal_param->sprd_zsl_enabled) && (1 == parm->camera_id) && (1 == hal_param->flip_on)){
-				if(270 == hal_param->encode_rotation)
-					p_exif_info->primary.data_struct_ptr->Orientation = ORIENTATION_ROTATE_90;
-				else if(90 == hal_param->encode_rotation)
-					p_exif_info->primary.data_struct_ptr->Orientation = ORIENTATION_ROTATE_270;
+		if (CMR_MIRROR_JPG == mirror_type) {
+			/* raw capture not support mirror/flip/rotation*/
+			if(is_raw_capture == 0) {
+				p_exif_info->primary.data_struct_ptr->valid.Orientation = 0;
+				p_exif_info->primary.data_struct_ptr->Orientation = ORIENTATION_NORMAL;
+			} else {
+				p_exif_info->primary.data_struct_ptr->valid.Orientation = 1;
+				p_exif_info->primary.data_struct_ptr->Orientation =
+					setting_get_exif_orientation(hal_param->encode_rotation);
 			}
-		} else if (CMR_MIRROR_JPG == mirror_type) {
-			if ((1 == parm->camera_id) && (1 == hal_param->flip_on))
-				p_exif_info->primary.data_struct_ptr->Orientation = ORIENTATION_ROTATE_90;
+		} else {
+			p_exif_info->primary.data_struct_ptr->valid.Orientation = 1;
+			p_exif_info->primary.data_struct_ptr->Orientation =
+				setting_get_exif_orientation(hal_param->encode_rotation);
+		}
+
+		if (CMR_MIRROR_DCAM == mirror_type) {
+			/* check why put these code here later */
+			if(hal_param->sprd_zsl_enabled && 1 == parm->camera_id && 1 == hal_param->flip_on){
+				if(270 == hal_param->encode_rotation){
+					p_exif_info->primary.data_struct_ptr->Orientation = ORIENTATION_ROTATE_90;
+				}else if(90 == hal_param->encode_rotation){
+					p_exif_info->primary.data_struct_ptr->Orientation = ORIENTATION_ROTATE_270;
+				}
+			}
 		}
 	}
 
