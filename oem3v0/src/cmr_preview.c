@@ -41,17 +41,11 @@
 #define PDAF_FRM_CNT                    4
 
 // actually, the num alloced for preview/video/zsl, hal1.0 will use this
-#if defined(CONFIG_CAMERA_NO_DCAM_DATA_PATH)
-#define PREV_FRM_ALLOC_CNT              6
-#define PREV_ROT_FRM_ALLOC_CNT          6
-#define ZSL_FRM_ALLOC_CNT               6
-#define ZSL_ROT_FRM_ALLOC_CNT           6
-#else
 #define PREV_FRM_ALLOC_CNT              8
 #define PREV_ROT_FRM_ALLOC_CNT          8
 #define ZSL_FRM_ALLOC_CNT               8
 #define ZSL_ROT_FRM_ALLOC_CNT           8
-#endif
+
 
 #define PREV_MSG_QUEUE_SIZE             50
 #define PREV_RECOVERY_CNT               3
