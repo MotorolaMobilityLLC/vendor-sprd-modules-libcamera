@@ -36,6 +36,7 @@ uint32_t isp_cur_bv;
 uint32_t isp_cur_ct;
 
 #define LSC_ADV_ENABLE
+//#define ANTI_FLICKER_INFO_VERSION_NEW
 
 int gAWBGainR = 1;
 int gAWBGainB = 1;
@@ -917,7 +918,6 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	uint32_t u_addr = 0;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
-	//return 0;
 #if 0
 	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_AEM_STATISTIC, ISP_BLK_AE_NEW, NULL, 0);
 	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, (void*)&input, (void*)&output);
@@ -927,12 +927,10 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	}
 	ae_stat_ptr = output.param_data->data_ptr;
 #endif
-	ae_stat_ptr = cxt->aem_stats;
 	statis_info = (struct isp_statis_info *)data;
 	k_addr = statis_info->phy_addr;
 	u_addr = statis_info->vir_addr;
 	//memcpy((void *)&ae_stat_ptr, (void *)u_addr, sizeof(struct isp_awb_statistic_info));
-
 	ae_stat_ptr  =  cxt->aem_stats;
 
 	bypass = 1;
@@ -2098,7 +2096,11 @@ static int32_t isp_alg_cfg(cmr_handle isp_alg_handle)
 
 	((struct isp_anti_flicker_cfg *)cxt->afl_cxt.handle)->width = cxt->commn_cxt.src.w;
 	((struct isp_anti_flicker_cfg *)cxt->afl_cxt.handle)->height = cxt->commn_cxt.src.h;
+#ifdef ANTI_FLICKER_INFO_VERSION_NEW
+	rtn = aflnew_ctrl_cfg(cxt->afl_cxt.handle);
+#else
 	rtn = afl_ctrl_cfg(cxt->afl_cxt.handle);
+#endif
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to do anti_flicker param update");
 		return rtn;

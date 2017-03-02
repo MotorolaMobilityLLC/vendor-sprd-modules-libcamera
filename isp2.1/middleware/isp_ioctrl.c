@@ -220,6 +220,7 @@ static cmr_int _ispFlickerIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, int
 	cmr_int                         rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct ae_set_flicker           set_flicker = {0};
+	cmr_int bypass = 0;
 
 	if (NULL == param_ptr) {
 		return ISP_PARAM_NULL;
@@ -229,6 +230,11 @@ static cmr_int _ispFlickerIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, int
 	set_flicker.mode = *(uint32_t*)param_ptr;
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_FLICKER, &set_flicker, NULL);
 	ISP_LOGI("ISP_AE: AE_SET_FLICKER=%d, rtn=%ld", set_flicker.mode, rtn);
+
+	if (set_flicker.mode == AE_FLICKER_AUTO) {
+		bypass = 0;
+		isp_dev_anti_flicker_bypass(cxt->dev_access_handle, bypass);
+	}
 
 	return rtn;
 }
