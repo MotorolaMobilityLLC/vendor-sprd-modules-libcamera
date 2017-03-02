@@ -6462,6 +6462,20 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 	do decimation for now, otherwise the fps is low */
 
 	chn_param.cap_inf_cfg.chn_deci_factor  = 0;
+
+#ifdef SPRD_SLOWMOTION_OPTIMIZE
+	if (prev_cxt->prev_param.video_eb && prev_cxt->prev_param.video_slowmotion_eb) {
+		if(prev_cxt->prev_param.video_slowmotion_eb == 4) {
+			chn_param.cap_inf_cfg.chn_deci_factor  = 3;
+			prev_cxt->prev_skip_num = 2;
+		}
+		else if(prev_cxt->prev_param.video_slowmotion_eb == 3) {
+			chn_param.cap_inf_cfg.chn_deci_factor  = 2;
+			prev_cxt->prev_skip_num = 2;
+		}
+	}
+#endif
+
 	chn_param.cap_inf_cfg.frm_num          = -1;
 	chn_param.cap_inf_cfg.buffer_cfg_isp = 0;
 	chn_param.cap_inf_cfg.cfg.need_binning = 0;
@@ -6482,7 +6496,6 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 	chn_param.cap_inf_cfg.cfg.src_img_rect.width   = sensor_mode_info->scaler_trim.width;
 	chn_param.cap_inf_cfg.cfg.src_img_rect.height  = sensor_mode_info->scaler_trim.height;
 	chn_param.cap_inf_cfg.cfg.sence_mode = DCAM_SCENE_MODE_PREVIEW;
-	chn_param.cap_inf_cfg.cfg.slowmotion = prev_cxt->prev_param.video_slowmotion_eb;
 
 	CMR_LOGI("skip_mode %ld, skip_num %ld, image_format %d",
 		prev_cxt->skip_mode,
@@ -6839,7 +6852,12 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_
 	chn_param.cap_inf_cfg.cfg.dst_img_fmt  = prev_cxt->prev_param.preview_fmt;
 	chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode= 1;
 	chn_param.cap_inf_cfg.cfg.sence_mode = DCAM_SCENE_MODE_RECORDING;
-	chn_param.cap_inf_cfg.cfg.slowmotion = prev_cxt->prev_param.video_slowmotion_eb;
+	if(prev_cxt->prev_param.video_slowmotion_eb && prev_cxt->prev_param.video_eb) {
+		chn_param.cap_inf_cfg.cfg.slowmotion = 1;
+		#ifdef FMCU_SUPPORT
+		chn_param.cap_inf_cfg.cfg.slowmotion = 2;
+		#endif
+	}
 
 	if (IMG_DATA_TYPE_RAW == sensor_mode_info->image_format) {
 		chn_param.cap_inf_cfg.cfg.need_isp = 1;
@@ -6852,6 +6870,11 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_
 	chn_param.cap_inf_cfg.cfg.src_img_rect.start_y = sensor_mode_info->scaler_trim.start_y;
 	chn_param.cap_inf_cfg.cfg.src_img_rect.width   = sensor_mode_info->scaler_trim.width;
 	chn_param.cap_inf_cfg.cfg.src_img_rect.height  = sensor_mode_info->scaler_trim.height;
+
+#ifdef SPRD_SLOWMOTION_OPTIMIZE
+	if(prev_cxt->prev_param.video_slowmotion_eb && prev_cxt->prev_param.video_eb)
+		prev_cxt->prev_skip_num = 2*prev_cxt->prev_param.video_slowmotion_eb;
+#endif
 
 	CMR_LOGI("skip_mode %ld, skip_num %ld, image_format %d w=%d h=%d",
 		prev_cxt->skip_mode,
@@ -6941,7 +6964,7 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_
 	prev_cxt->video_channel_status = PREV_CHN_BUSY;
 	prev_cxt->video_data_endian = endian;
 
-	if (prev_cxt->skip_mode == IMG_SKIP_SW_KER && !prev_cxt->prev_param.video_slowmotion_eb) {
+	if (prev_cxt->skip_mode == IMG_SKIP_SW_KER ) {
 		/*config skip buffer*/
 		for (i = 0; i < prev_cxt->prev_skip_num; i++) {
 			cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));

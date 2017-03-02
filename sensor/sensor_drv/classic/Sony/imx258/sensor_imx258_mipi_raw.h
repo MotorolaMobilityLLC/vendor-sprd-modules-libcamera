@@ -524,7 +524,7 @@ static const SENSOR_REG_T imx258_1280x720_setting[] = {
 		{0x3030,	0x00},
 		{0x3032,	0x00},
 		{0x0220,	0x00},
-		{0x0401,  0x00},
+		{0x4041,	0x00},
 
 };
 
@@ -578,14 +578,14 @@ LOCAL SENSOR_REG_TAB_INFO_T s_imx258_resolution_tab_raw[] =
 		.xclk_to_sensor     = 24,
 		.image_format       = SENSOR_IMAGE_FORMAT_RAW,
 	},
-	{
+	/*{
 		.sensor_reg_tab_ptr = (SENSOR_REG_T*)imx258_1048x780_setting,
 		.reg_count          = NUMBER_OF_ARRAY(imx258_1048x780_setting),
 		.width              = 1048,
 		.height             = 780,
 		.xclk_to_sensor     = 24,
 		.image_format       = SENSOR_IMAGE_FORMAT_RAW,
-	},
+	},*/
 	{
 		.sensor_reg_tab_ptr = (SENSOR_REG_T*)imx258_4208x3120_setting,
 		.reg_count          = NUMBER_OF_ARRAY(imx258_4208x3120_setting),
@@ -594,7 +594,7 @@ LOCAL SENSOR_REG_TAB_INFO_T s_imx258_resolution_tab_raw[] =
 		.xclk_to_sensor     = 24,
 		.image_format       = SENSOR_IMAGE_FORMAT_RAW,
 	},
-	/*{
+	{
 		.sensor_reg_tab_ptr = (SENSOR_REG_T*)imx258_1280x720_setting,
 		.reg_count          = NUMBER_OF_ARRAY(imx258_1280x720_setting),
 		.width              = 1280,
@@ -602,7 +602,7 @@ LOCAL SENSOR_REG_TAB_INFO_T s_imx258_resolution_tab_raw[] =
 		.xclk_to_sensor     = 24,
 		.image_format       = SENSOR_IMAGE_FORMAT_RAW,
 	},
-	{
+	/*{
 		.sensor_reg_tab_ptr = (SENSOR_REG_T*)imx258_2096x1552_setting,
 		.reg_count          = NUMBER_OF_ARRAY(imx258_2096x1552_setting),
 		.width              = 2096,
@@ -647,7 +647,7 @@ LOCAL SENSOR_TRIM_T s_imx258_resolution_trim_tab[SENSOR_MODE_MAX] =
 			.h = 0,
 		}
 	},
-	{ //mode1
+	/*{ //mode1
 		.trim_start_x   = 0,
 		.trim_start_y   = 0,
 		.trim_width     = 1048,
@@ -662,7 +662,7 @@ LOCAL SENSOR_TRIM_T s_imx258_resolution_trim_tab[SENSOR_MODE_MAX] =
 			.w = 1048,
 			.h = 780,
 		}
-	},
+	},*/
 	{ //mode3
 		.trim_start_x   = 0,
 		.trim_start_y   = 0,
@@ -679,7 +679,7 @@ LOCAL SENSOR_TRIM_T s_imx258_resolution_trim_tab[SENSOR_MODE_MAX] =
 			.h = 3120,
 		}
 	},
-	/*{ //mode1
+	{ //mode1
 		.trim_start_x   = 0,
 		.trim_start_y   = 0,
 		.trim_width     = 1280,
@@ -695,7 +695,7 @@ LOCAL SENSOR_TRIM_T s_imx258_resolution_trim_tab[SENSOR_MODE_MAX] =
 			.h = 720,
 		}
 	},
-	{ //mode2
+	/*{ //mode2
 		.trim_start_x   = 0,
 		.trim_start_y   = 0,
 		.trim_width     = 2096,

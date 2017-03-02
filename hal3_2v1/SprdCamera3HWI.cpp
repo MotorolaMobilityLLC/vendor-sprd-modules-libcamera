@@ -717,7 +717,9 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 				if (preview_size.width > 3264 && preview_size.height > 2448)
 					SprdCamera3RegularChannel::kMaxBuffers = 2;
 				else if (sprddefInfo.slowmotion > 1) {
-					SprdCamera3RegularChannel::kMaxBuffers = 24 ;
+					SprdCamera3RegularChannel::kMaxBuffers = 16 ;
+					if (stream_type == CAMERA_STREAM_TYPE_PREVIEW)
+						SprdCamera3RegularChannel::kMaxBuffers = 4;
 				}
 				else
 					SprdCamera3RegularChannel::kMaxBuffers = 4;

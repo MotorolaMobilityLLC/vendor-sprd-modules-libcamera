@@ -5884,7 +5884,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag)
 			mSetting->getSPRDDEFTag(&sprddefInfo);
 			HAL_LOGD("slow_motion=%d", sprddefInfo.slowmotion);
 			if (sprddefInfo.slowmotion > 1) {
-				SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SLOW_MOTION_FLAG, 1);
+				SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SLOW_MOTION_FLAG, sprddefInfo.slowmotion);
 			} else {
 				SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SLOW_MOTION_FLAG, 0);
 			}
