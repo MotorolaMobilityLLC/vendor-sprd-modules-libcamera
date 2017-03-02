@@ -1011,6 +1011,9 @@ int SprdCamera3OEMIf::zslTakePicture()
 	if (sprddefInfo.capture_mode == 1) {
 		HAL_LOGV("set focus af mode %d",CAMERA_FOCUS_MODE_PICTURE);
 		SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE, CAMERA_FOCUS_MODE_PICTURE);
+
+		/*after caf picture, set af mode again to isp*/
+		SetCameraParaTag(ANDROID_CONTROL_AF_MODE);
 	}
 #endif
 
