@@ -2883,8 +2883,7 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 		break;
 	case ISP3A_WORK_MODE_CAPTURE:
 		ret = aealtek_work_capture(cxt_ptr, in_ptr, out_ptr);
-		if (cxt_ptr->nxt_status.is_hdr_status)
-			force_write_sensor = 1;
+		force_write_sensor = 1;
 		break;
 	case ISP3A_WORK_MODE_VIDEO:
 		cxt_ptr->nxt_status.is_hdr_status = 0;
