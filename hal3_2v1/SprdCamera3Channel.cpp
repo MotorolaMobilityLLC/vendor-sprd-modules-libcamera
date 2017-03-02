@@ -138,6 +138,13 @@ int SprdCamera3RegularChannel::channelCbRoutine(uint32_t frame_number, int64_t t
 	cam_result_data_info_t  result_info;
 	int8_t index = stream_type - REGULAR_STREAM_TYPE_BASE;
 
+#ifdef CAMERA_POWER_DEBUG_ENABLE
+	bool cam_not_disp;
+        char value[PROPERTY_VALUE_MAX];
+        property_get("sys.camera.nodisplay", value, "false");
+        cam_not_disp = !strcmp(value,"true");
+#endif
+
 	if(index < 0) {
 		HAL_LOGE("stream_type %d is not valied type",stream_type);
 		return BAD_VALUE;
@@ -184,6 +191,11 @@ int SprdCamera3RegularChannel::channelCbRoutine(uint32_t frame_number, int64_t t
 	result_info.stream = stream;
 	result_info.timestamp = timestamp;
 	result_info.buff_status = CAMERA3_BUFFER_STATUS_OK;
+#ifdef CAMERA_POWER_DEBUG_ENABLE
+        if(cam_not_disp) {
+                result_info.buff_status = CAMERA3_BUFFER_STATUS_ERROR;
+        }
+#endif
 	result_info.msg_type = CAMERA3_MSG_SHUTTER;
 
 	mChannelCB(&result_info, mUserData);
