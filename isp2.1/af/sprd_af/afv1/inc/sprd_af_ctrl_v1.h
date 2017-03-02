@@ -367,6 +367,8 @@ typedef struct _af_ctrl {
 	//porting from isp2.1 af 1.0
 	pthread_mutex_t status_lock;
 	void *caller;
+	uint32_t is_high_fps;
+	uint32_t afm_skip_num;
 	 int32_t(*go_position) (void *handle, struct af_motor_pos * in_param);
 	 int32_t(*end_notice) (void *handle, struct af_result_param * in_param);
 	 int32_t(*start_notice) (void *handle);

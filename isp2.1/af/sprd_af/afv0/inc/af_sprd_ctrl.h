@@ -230,7 +230,7 @@ struct af_ae_info {
 struct af_calc_param {
 	uint32_t data_type;
 	void* data;
-
+	struct isp_sensor_fps_info sensor_fps;
 };
 
 struct af_result_param {

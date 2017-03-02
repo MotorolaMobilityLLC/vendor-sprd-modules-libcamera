@@ -517,7 +517,6 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle,
 	in_param.sensor_fps.min_fps = cxt->sensor_fps.min_fps;
 	in_param.sensor_fps.is_high_fps = cxt->sensor_fps.is_high_fps;
 	in_param.sensor_fps.high_fps_skip_num = cxt->sensor_fps.high_fps_skip_num;
-
 	system_time0 = isp_get_timestamp();
 	rtn = ae_ctrl_process(cxt->ae_cxt.handle, &in_param, &ae_result);
 	cxt->smart_cxt.isp_smart_eb = 1;
@@ -1027,6 +1026,7 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 		afm_param.filter_num = 1;
 		afm_param.filter_data = &afm_data;
 		calc_param.data_type = AF_DATA_AF;
+		calc_param.sensor_fps = cxt->sensor_fps;
 		//calc_param.data = (void*)(&afm_param);
 		calc_param.data = (void*)(af_temp);
 		rtn = af_ctrl_process(cxt->af_cxt.handle, (void *)&calc_param, &calc_result);

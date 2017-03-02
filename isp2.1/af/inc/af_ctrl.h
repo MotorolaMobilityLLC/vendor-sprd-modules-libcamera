@@ -133,6 +133,7 @@ struct afctrl_init_out {
 struct afctrl_calc_in {
 	uint32_t data_type;
 	void* data;
+	struct isp_sensor_fps_info sensor_fps;
 };
 
 struct afctrl_calc_out{

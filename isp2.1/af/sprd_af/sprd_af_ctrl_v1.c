@@ -838,7 +838,7 @@ extern "C" {
 			isp_u_raw_afm_spsmd_threshold(device, af->thrd.spsmd_thr_min_green,
 						      af->thrd.spsmd_thr_max_green);
 #endif
-			isp_u_raw_afm_skip_num(device, 0);
+			isp_u_raw_afm_skip_num(device, af->afm_skip_num);
 			isp_u_raw_afm_mode(device, 1);
 			isp_u_raw_afm_iir_nr_cfg(cxt->isp_driver_handle, (void *)&(af->af_iir_nr));
 			isp_u_raw_afm_modules_cfg(cxt->isp_driver_handle, (void *)&(af->af_enhanced_module));
@@ -3755,6 +3755,7 @@ static cmr_int af_sprd_adpt_update_aux_sensor(cmr_handle handle, void *in)
 		case AF_DATA_AF:
 			{
 				uint32_t *af_fv_val = NULL;
+				int32_t afm_skip_num = 0;
 				af_fv_val = (uint32_t *) (inparam->data);
 
 				for (i = 0; i < 10; i++) {
@@ -3764,6 +3765,15 @@ static cmr_int af_sprd_adpt_update_aux_sensor(cmr_handle handle, void *in)
 					af->af_fv_val.af_fv1[i] =
 					    (((((uint64_t) af_fv_val[20 + i]) >> 12) & 0x00000fff) << 32) |
 					    ((uint64_t) af_fv_val[10 + i]);
+				}
+				af->afm_skip_num = 0;
+				if (inparam->sensor_fps.is_high_fps) {
+					afm_skip_num = inparam->sensor_fps.high_fps_skip_num - 1;
+					if (afm_skip_num > 0)
+						af->afm_skip_num = afm_skip_num;
+					else
+						af->afm_skip_num = 0;
+					AF_LOGI("af.skip_num %d", af->afm_skip_num);
 				}
 
 				switch (af->state) {
