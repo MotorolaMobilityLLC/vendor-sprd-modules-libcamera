@@ -284,6 +284,7 @@ struct isp_statis_info {
 	uint32_t irq_property;
 	uint32_t phy_addr;
 	uint32_t vir_addr;
+	uint32_t kaddr;
 	uint32_t buf_size;
 	int mfd;
 };

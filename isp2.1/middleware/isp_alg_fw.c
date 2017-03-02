@@ -445,6 +445,7 @@ static cmr_int ispalg_aem_stat_data_parser(cmr_handle isp_alg_handle, void *data
 	statis_buf.buf_size = statis_info->buf_size;
 	statis_buf.phy_addr = statis_info->phy_addr;
 	statis_buf.vir_addr = statis_info->vir_addr;
+	statis_buf.buf_property = ISP_AEM_BLOCK;
 	statis_buf.buf_flag = 1;
 	rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, &statis_buf, NULL);
 	if (rtn) {
@@ -735,7 +736,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 	nsecs_t system_time1 = 0;
 	int32_t bv = 0;
 	int32_t bv_gain = 0;
-    struct ae_out_bv ae_out_bv;
+	struct ae_out_bv ae_out_bv;
 
 	memset(&smart_proc_in, 0, sizeof(smart_proc_in));
 	memset(&ae_out_bv, 0, sizeof(ae_out_bv));
@@ -891,6 +892,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	struct afl_proc_in afl_input;
 	struct afl_ctrl_proc_out afl_output;
 	struct isp_statis_info *statis_info = NULL;
+	struct isp_statis_buf_input     statis_buf;
 	uint32_t k_addr = 0;
 	uint32_t u_addr = 0;
 
@@ -936,6 +938,17 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	afl_input.vir_addr = u_addr;
 
 	rtn = afl_ctrl_process(cxt->afl_cxt.handle, &afl_input, &afl_output);
+
+	memset((void*)&statis_buf, 0, sizeof(statis_buf));
+	statis_buf.buf_size = statis_info->buf_size;
+	statis_buf.phy_addr = statis_info->phy_addr;
+	statis_buf.vir_addr = statis_info->vir_addr;
+	statis_buf.buf_property = ISP_AFL_BLOCK;
+	statis_buf.buf_flag = 1;
+	rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, &statis_buf, NULL);
+	if (rtn) {
+		ISP_LOGE("failed to set statis buf");
+	}
 	//change ae table
 	if(afl_output.flag) {
 		if(afl_output.cur_flicker) {
@@ -966,12 +979,12 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 	cmr_s32 i = 0;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
-//	return 0;
 	memset((void*)&calc_param, 0, sizeof(calc_param));
 	memset((void*)&calc_result, 0, sizeof(calc_result));
 	ISP_LOGI("LiuY begin data_type %d", data_type);
 	switch (data_type) {
 	case AF_DATA_AF:{
+		struct isp_statis_buf_input	statis_buf;
 		struct isp_af_statistic_info afm_stat;
 		struct af_filter_info afm_param;
 		struct af_filter_data afm_data;
@@ -980,7 +993,7 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 		memset((void*)&afm_data, 0, sizeof(afm_data));
 
 		statis_info = (struct isp_statis_info *)in_ptr;
-		k_addr = statis_info->phy_addr;
+		k_addr = statis_info->kaddr;
 		u_addr = statis_info->vir_addr;
 
 		uint32_t af_temp[30];
@@ -996,6 +1009,18 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 		//calc_param.data = (void*)(&afm_param);
 		calc_param.data = (void*)(af_temp);
 		rtn = af_ctrl_process(cxt->af_cxt.handle, (void *)&calc_param, &calc_result);
+
+		memset((void*)&statis_buf, 0, sizeof(statis_buf));
+		statis_buf.buf_size = statis_info->buf_size;
+		statis_buf.phy_addr = statis_info->phy_addr;
+		statis_buf.vir_addr = statis_info->vir_addr;
+		statis_buf.kaddr = statis_info->kaddr;
+		statis_buf.buf_property = ISP_AFM_BLOCK;
+		statis_buf.buf_flag = 1;
+		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, &statis_buf, NULL);
+		if (rtn) {
+			ISP_LOGE("failed to set statis buf");
+		}
 		break;
 	}
 	case AF_DATA_IMG_BLK:{

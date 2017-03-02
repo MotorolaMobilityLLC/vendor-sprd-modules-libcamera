@@ -313,6 +313,7 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void* param_ptr)
 
 	statis_info->phy_addr = irq_info->phy_addr;
 	statis_info->vir_addr = irq_info->vir_addr;
+	statis_info->kaddr = irq_info->kaddr;
 	statis_info->irq_property = irq_info->irq_property;
 	statis_info->buf_size = irq_info->buf_size;
 	statis_info->mfd = irq_info->mfd;
