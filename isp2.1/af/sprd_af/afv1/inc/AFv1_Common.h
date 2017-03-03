@@ -65,7 +65,7 @@
 //=========================================================================//
 /* ============================================================================================== */
 /*1.System info*/	
-#define VERSION             "2.103"
+#define VERSION             "2.104"
 #define STRING(s) #s
 
 
@@ -75,108 +75,15 @@
 #define ERR_FAIL            0x0001
 #define ERR_UNKNOW          0x0002
 
-
-#define AF_SEARCH_DEBUG     0
-
-#define SAF_FINE_SEARCH     1   //0:without fine search, 1:with fine search
-#define DEBUG_PRINT_ENA		1
-
-#define null_print			do {} while(0)
-//#define AfDebugPrint( str, args... )    ( !AF_SEARCH_DEBUG ) ? : printf( str, ##args );
-
-#ifdef WIN32
-#define AfDebugPrint(x) do { if (AF_SEARCH_DEBUG) printf x; } while (0) 
-#define Printf printf 
-#define _assert(a)	do { if (!(a)) printf("!!! ASSERT: %s(),%d \r\n",__FUNCTION__, __LINE__); } while(0)
-#else 
-extern ERRCODE (*ANDROID_LOG)(const char* format, ...); 
-#define AfDebugPrint(x) do { if (AF_SEARCH_DEBUG) ANDROID_LOG x; } while (0) 
-#define  AFLib    "AFv1Lib"
-#define  AFLIB_LOG(...)  __android_log_print(ANDROID_LOG_INFO, AFLib, __VA_ARGS__)
-#if (DEBUG_PRINT_ENA)
-#define Printf AFLIB_LOG 
-#else
-#define Printf(fmt, args...) null_print
-#endif
-#define _assert(a)	do { if (!(a)) AFLIB_LOG("!!! ASSERT: %s(),%d \r\n",__FUNCTION__, __LINE__); } while(0)
-#endif
-
-#define START_F(func)		    ERRCODE err = ERR_SUCCESS; \
-							    AfDebugPrint(("(%s)line(%d)Enter %s!\n", __FILE__,__LINE__, func));
-
-#define END_F(func)             AfDebugPrint(("(%s)line(%d)Exit %s! Ret = %d\n", __FILE__, __LINE__, func, err));\
-                                    return err;
-#define ERR_LOG(func)           {\
-                                AfDebugPrint(("(%s)line(%d) %s Error Happen!!! Ret = %d\n", __FILE__, __LINE__, func, err));\
-                                goto EXIT;}
-#define AF_LOG(func, data)      AfDebugPrint(("(%s)line(%d) %s %s\n", __FILE__, __LINE__, func, data))
-#define Debug_log_Filter T_SPSMD
-
 #define TOTAL_POS 1024
 
-
-#define NORMAL_START_IDX	ROUGH_SAMPLE_NUM_L1
+//Data num for AF
+#define TOTAL_AF_ZONE 10
 #define MAX_SAMPLE_NUM	    25
 #define TOTAL_SAMPLE_NUM	29
-
-#define ROUGH_START_POS_L1  225
-#define ROUGH_START_POS_L2  295
-#define ROUGH_START_POS_L3  695
-#define ROUGH_END_POS       895
-
-#define ROUGH_SAMPLE_NUM_L1	4
-#define ROUGH_SAMPLE_NUM_L2	16
-#define ROUGH_SAMPLE_NUM_L3	9
-
 #define ROUGH_SAMPLE_NUM	25         //MAX((ROUGH_SAMPLE_NUM_L3+ROUGH_SAMPLE_NUM_L2),(ROUGH_START_POS_L1+ROUGH_START_POS_L2))
 #define FINE_SAMPLE_NUM		10
 #define MAX_TIME_SAMPLE_NUM	100
-#define FINE_INTERVAL		8
-#define FINE_INIT_NUM		5
-
-/*
-#define NORMAL_START_IDX	5
-#define MAX_SAMPLE_NUM	    25
-#define TOTAL_SAMPLE_NUM	28
-#define ROUGH_SAMPLE_NUM	25
-#define FINE_SAMPLE_NUM		20
-#define MAX_TIME_SAMPLE_NUM	100
-#define FINE_INTERVAL		8
-*/
-
-#define TOTAL_AF_ZONE 10
-
-#ifndef MAX
-#define MAX(a,b)  (((a) > (b)) ? (a) : (b))
-#endif
-
-#ifndef MIN
-#define MIN(a,b)  (((a) < (b)) ? (a) : (b))
-#endif
-
-#ifndef ABS_AB
-#define ABS_AB(a, b)				((a)>(b)? (a)-(b): (b)-(a))
-#endif
-
-#ifndef ABS
-#define ABS(a)				ABS_AB(a, 0)
-#endif
-
-#ifndef DABS
-#define DABS(a) 				(((a) > 0.0) ? (a) : -(a))	/* floating absolute value */
-#endif
-
-#ifndef MIN_ABC
-#define MIN_ABC(a, b, c)			((a)<(b) ? MIN((a),(c)) : MIN((b),(c)))
-#endif
-
-#ifndef CLAMP_ABC
-#define CLAMP_ABC(a, b, c)		MIN(MAX((a), (b)), (c))
-#endif
-  
-#ifndef STR_EQUAL
-#define STR_EQUAL(a, b)	(strcmp((char *)(a), (char *)(b)) == 0)
-#endif
 
 //=========================================================================================//
 // Public enum Instance
@@ -480,6 +387,13 @@ typedef struct _AF_Scan_Table
     
 }AF_Scan_Table;
 
+typedef struct aftuning_coeff_s{
+	unsigned int 	saf_coeff[4];
+	unsigned int	caf_coeff[4];
+	unsigned int	saf_stat_param[AE_Gain_Total];
+	unsigned int	caf_stat_param[AE_Gain_Total];
+	unsigned char 	reserve[16*4];
+}aftuning_coeff_t;
 
 typedef struct aftuning_param_s{
 	unsigned int 	enable_adapt_af;
@@ -488,8 +402,8 @@ typedef struct aftuning_param_s{
 	unsigned int	_flat_rto;
 	unsigned int 	_falling_rto;
 	unsigned int 	_rising_rto;
-	unsigned int	_stat_min_value;
-	unsigned int	_stat_min_diff;
+	unsigned int	_stat_min_value[AE_Gain_Total];
+	unsigned int	_stat_min_diff[AE_Gain_Total];
 	unsigned int	_break_rto;
 	unsigned int	_turnback_rto;
 	unsigned int	_forcebreak_rto;
@@ -500,6 +414,7 @@ typedef struct aftuning_param_s{
 	unsigned int	_temporal_flat_slop;
 	unsigned int	_limit_search_interval;	
 	unsigned int	_sky_scene_thr;
+	unsigned char 	reserve[32*4];
 }aftuning_param_t;
 
 typedef struct _AF_Tuning_Para
@@ -530,65 +445,19 @@ typedef struct _AF_Tuning
 {
     //Lens Info
     Lens_Info Lens_Para;
-   
     AF_Tuning_Para SAFTuningPara;   //SAF parameters
     AF_Tuning_Para CAFTuningPara;   //CAF parameters
     AF_Tuning_Para VCAFTuningPara;  //Video CAF parameters
-    aftuning_param_t adapt_af_param;	//adapt AF parameter
     /* 
-    68 bytes for aftuning_param_t;
+    144 bytes for aftuning_param_t;
 	*/
-    unsigned char dummy[400-72];
+    aftuning_coeff_t af_coeff;		//AF coefficient for control speed and overshot
+    /*
+    240 bytes for aftuning_param_t;
+	*/
+    aftuning_param_t adapt_af_param;	//adapt AF parameter
+    unsigned char dummy[400-(384)];
 }AF_Tuning;
-
-typedef enum {
-	AF_STATISTIC_LOCAL = 0,
-	AF_STATISTIC_DEFOCUS,
-	AF_STATISTIC_TOTAL,
-} _af_select_t;
-
-typedef enum{
-	SCAN_FORWARD,
-	SCAN_BACKWARD,
-	SCAN_BOUNDARY = (1<<SCAN_FORWARD | 1<<SCAN_BACKWARD),
-}scan_direction_t;
-
-typedef enum{
-	AF_SCAN_INIT = 0,
-	AF_SCAN_ROUGH,
-	AF_SCAN_FINE,
-	//AF_SCAN_GLOBAL,
-	//AF_BLUR,
-	//AF_STABLE,
-	AF_SCAN_LOCK,
-	AF_SCAN_IDLE,
-}_alg_state_t;
-
-typedef enum
-{
-    CTRL_STATE_INIT = 0,
-	CTRL_STATE_IDLE,
-	CTRL_STATE_SETENV,
-    CTRL_STATE_FOCUS,
-    CTRL_STATE_STOP_PROC,
-    CTRL_STATE_RESET_PROC,
-    CTRL_STATE_TOTAL,
-}ctrl_state_t;
-
-typedef enum 
-{
-	SCENE_LUMA_SLOP_WEAK		= 20,
-	SCENE_LUMA_SLOP_MEDIUM		= 50,
-	SCENE_LUMA_SLOP_STRONG		= 80,	
-}scene_luma_slop_t;
-
-typedef enum 
-{
-	CURVE_UNRECOGNIZED = 0,
-	CURVE_FALLING,
-	CURVE_RISING,
-	CURVE_HILL,
-}curve_slop_type_t;
 
 #define AFAUTO_SCAN_STOP_NMAX (256)
 #define FOCUS_STAT_WIN_TOTAL	(10)
@@ -596,8 +465,6 @@ typedef enum
 #define AF_CHECK_SCENE_HISTORY	(15)
 #define AF_RESULT_DATA_SIZE	(32)
 
-#define ALGO_DECIMAL_NUM	(100) 
-#define FOCUS_STAT_DATA_ALIGMENT_BIT	(4)
 
 typedef struct _afscan_status_s {
 	unsigned int n_stops;
@@ -633,7 +500,7 @@ typedef struct _afscan_status_s {
 	unsigned int valley_idx;
 	unsigned int last_idx;
 	unsigned int last_stat;
-	_alg_state_t alg_sts;
+	unsigned int alg_sts;
 	unsigned int scan_dir;
 	unsigned int last_dir;
 	unsigned int init_pos;
@@ -706,7 +573,7 @@ typedef struct _afscan_status_s {
 } afscan_status_t;
 
 typedef struct _af_control_status_s {
-	ctrl_state_t				state;
+	unsigned int				state;
 	unsigned int				frmid;
 	unsigned int				scene_reg;
 	unsigned int				scene_result;

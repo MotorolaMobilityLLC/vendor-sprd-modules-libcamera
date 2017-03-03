@@ -850,7 +850,7 @@ extern "C" {
 		struct afctrl_init_in *input_ptr = input_param;
 		//isp_u_raw_afm_win_num(isp->handle_device, &num);
 		input_ptr->get_monitor_win_num(input_ptr->caller, &num);
-		AF_LOGE("win_num %d", num);
+		AF_LOGI("win_num %d", num);
 		return num;
 	}
 
@@ -1138,13 +1138,13 @@ static void do_notify(af_ctrl_t *af, enum notify_event evt, const notify_result_
 }
 */
 	static void notify_start(af_ctrl_t * af) {
-		AF_LOGE(".");
+		AF_LOGI(".");
 		//do_notify(af->isp_ctx, NOTIFY_START, NULL);
 		af->start_notice(af->caller);
 	}
 
 	static void notify_stop(af_ctrl_t * af, int win_num) {
-		AF_LOGE(".");
+		AF_LOGI(". %s ",(win_num)?"Suc":"Fail");
 //      notify_result_t res;
 //      res.win_num = win_num;
 		struct af_result_param af_result;
@@ -1552,11 +1552,11 @@ static void do_notify(af_ctrl_t *af, enum notify_event evt, const notify_result_
 
 		if (PNULL == aft_pm_output.param_data || PNULL == aft_pm_output.param_data[0].data_ptr
 		    || 0 == aft_pm_output.param_data[0].data_size) {
-			AF_LOGE("aft tuning param error ");
+			AF_LOGI("aft tuning param error ");
 			aft_in.data_len = 0;
 			aft_in.data = NULL;
 		} else {
-			AF_LOGE("aft tuning param ok ");
+			AF_LOGI("aft tuning param ok ");
 			aft_in.data_len = aft_pm_output.param_data[0].data_size;
 			aft_in.data = aft_pm_output.param_data[0].data_ptr;
 #if 0
@@ -1813,7 +1813,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		prm->ae_info.cur_scene = af->curr_scene;
 		if_get_motor_pos(&prm->ae_info.registor_pos, (void *)af);	//gwb 32 to 16
 		// AF_LOGD("exp_time = %d, gain = %d, cur_lum = %d, is_stable = %d",
-		//     prm.ae_info.exp_time, prm.ae_info.gain, prm.ae_info.cur_lum, prm.ae_info.is_stable);
+		//   prm->ae_info.exp_time, prm->ae_info.gain, prm->ae_info.cur_lum, prm->ae_info.is_stable);
 
 		caf_monitor_calc(af, prm);
 	}
@@ -1841,7 +1841,7 @@ v=v>(max)?(max):v; hist[v]++;}
 			fv[7], fv[8], sum);
 			fv[0] = sum;
 */
-			AF_LOGD("af->roi.num %d spsmd %lld", af->roi.num, fv[af->roi.num - 1]);
+			//AF_LOGD("af->roi.num %d spsmd %lld", af->roi.num, fv[af->roi.num - 1]);
 		} else {
 			afm_get_fv(af, fv, ENHANCED_BIT, af->roi.num, AF_RING_BUFFER);
 			fv[0] = fv[af->roi.num - 1];	// the fv in last window is for caf trigger
@@ -2395,6 +2395,8 @@ v=v>(max)?(max):v; hist[v]++;}
 			//int i;
 			uint64_t sum;
 
+			sum = 0;
+			memset(&(spsmd[0]),0,sizeof(uint64_t)*MAX_ROI_NUM);
 			afm_get_fv(af, spsmd, ENHANCED_BIT, af->roi.num, AF_RING_BUFFER);
 
 			//sum = 0.2*spsmd[0]+spsmd[1]+3*spsmd[2];
@@ -2459,8 +2461,8 @@ v=v>(max)?(max):v; hist[v]++;}
 		cw_mode = (set_stat & 0xff0000) >> 16;
 		iir_level = (set_stat & 0xff000000) >> 24;
 
-		AF_LOGE("set afm param  0x%x ", set_stat);
-		AF_LOGE("fv0e %d, fv1e %d, nr %d, cw %d iir %d", fv0_e, fv1_e, nr_mode, cw_mode, iir_level);
+		AF_LOGI("[0x%x] fv0e %d, fv1e %d, nr %d, cw %d iir %d"
+			,set_stat,fv0_e,fv1_e,nr_mode,cw_mode,iir_level);
 		//afm_setup(af);
 		return 0;
 	}
@@ -2716,7 +2718,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		va_start(arg, format);
 		vsnprintf(AFlog_buffer, 2048, format, arg);
 		va_end(arg);
-		AF_LOGE("ISP_AFv1: %s", AFlog_buffer);
+		AF_LOGI("ISP_AFv1: %s", AFlog_buffer);
 
 		return 0;
 	}
@@ -2744,7 +2746,7 @@ v=v>(max)?(max):v; hist[v]++;}
 			ALOGE("%s", AFlog_buffer);
 			break;
 		default:
-			AF_LOGE("default log level not support");
+			AF_LOGD("default log level not support");
 			break;
 		}
 
@@ -2769,7 +2771,7 @@ v=v>(max)?(max):v; hist[v]++;}
 			fseek(fp, 0, SEEK_END);
 			len = ftell(fp);
 			if (len != af->trig_ops.handle.tuning_param_len) {
-				AF_LOGE("aft_tuning.bin len dismatch with aft_alg len %d",
+				AF_LOGD("aft_tuning.bin len dismatch with aft_alg len %d",
 					af->trig_ops.handle.tuning_param_len);
 				fclose(fp);
 				*is_exist = 0;
@@ -3384,7 +3386,7 @@ v=v>(max)?(max):v; hist[v]++;}
 #endif
 	cmr_handle sprd_afv1_init(void *in, void *out) {
 #if 1
-		AF_LOGE("B");
+		AF_LOGI("B");
 		struct afctrl_init_in *init_param = (struct afctrl_init_in *)in;
 		struct afctrl_init_out *result = (struct afctrl_init_out *)out;
 		struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)init_param->caller_handle;
@@ -3560,7 +3562,7 @@ v=v>(max)?(max):v; hist[v]++;}
 			}
 		}
 		af = NULL;
-		AF_LOGE("E");
+		AF_LOGI("E");
 		return (cmr_handle) af;
 #else
 //------------------------------------------------------------------------
@@ -3646,7 +3648,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		cmr_int i = 0;
 		nsecs_t system_time0 = 0;
 		nsecs_t system_time1 = 0;
-		AF_LOGE("B");
+		AF_LOGI("B");
 
 		rtn = _check_handle(handle);
 		if (AFV1_SUCCESS != rtn) {
@@ -3758,7 +3760,7 @@ v=v>(max)?(max):v; hist[v]++;}
 
 		default:
 			{
-				AF_LOGE("unsupport data type! type: %d", inparam->data_type);
+				AF_LOGD("unsupport data type! type: %d", inparam->data_type);
 				rtn = AFV1_ERROR;
 				break;
 			}
@@ -3770,7 +3772,7 @@ v=v>(max)?(max):v; hist[v]++;}
 #if (AF_RING_BUFFER)
 		af_enqueue_in_ringbuffer(af);
 #endif
-		AF_LOGE("E");
+		AF_LOGI("E");
 		return rtn;
 #else
 		cmr_int rtn = AFV1_SUCCESS;
