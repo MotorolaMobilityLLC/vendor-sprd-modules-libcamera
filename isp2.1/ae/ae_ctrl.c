@@ -85,25 +85,14 @@ static int32_t ae_set_exposure(void *handler, struct ae_exposure *in_param)
 	return 0;
 }
 
-/*
- * temp function to save cur real gain
- */
-int g_cur_real_gain = 0;
-int get_cur_real_gain(void)
-{
-	return g_cur_real_gain;
-}
 static int32_t ae_set_again(void *handler, struct ae_gain *in_param)
 {
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
 
-	/* temp code begin */
-	g_cur_real_gain = in_param->gain;
-	/* temp code end */
 	if (cxt_ptr->ae_set_cb) {
 		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_GAIN, &in_param->gain, NULL);
 	}
-	ISP_LOGI("AE_DEBUG gain %d", in_param->gain);
+	ISP_LOGD("AE set gain %d", in_param->gain);
 	return 0;
 }
 

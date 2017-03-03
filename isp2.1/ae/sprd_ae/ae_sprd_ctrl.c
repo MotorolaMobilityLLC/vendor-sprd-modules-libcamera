@@ -193,6 +193,7 @@ struct ae_ctrl_cxt {
 	uint32_t start_id;
 	char alg_id[32];
 	uint32_t checksum;
+	uint32_t bypass;
 	/*
 	 * camera id: front camera or rear camera
 	 */
@@ -2397,7 +2398,7 @@ void* ae_sprd_init(void *param, void *in_param)
 	seq_init(AE_WRITE_QUEUE_NUM, &init_in, &seq_handle);
 	cxt->seq_handle = seq_handle;
 	/*
-	 * create AE calc E&G queue 
+	 * create AE calc E&G queue
 	 */
 	rtn = ae_calc_result_queue_init(&cxt->ae_result_queue);
 	if (rtn) {
@@ -2405,10 +2406,15 @@ void* ae_sprd_init(void *param, void *in_param)
 		goto ERR_EXIT;
 	}
 	/*
-	 * create ISP gain queue 
+	 * create ISP gain queue
 	 */
 	isp_gain_buffer_init(cxt);
 
+	cxt->bypass = init_param->has_force_bypass;
+	if (init_param->has_force_bypass) {
+		cxt->cur_param->touch_info.enable = 0;
+		cxt->cur_param->face_param.face_tuning_enable = 0;
+	}
 	cxt->debug_enable = _is_ae_mlog(cxt);
 	cxt->cur_status.mlog_en = cxt->debug_enable;
 	misc_init_in.alg_id			= cxt->cur_status.alg_id;
@@ -2422,7 +2428,7 @@ void* ae_sprd_init(void *param, void *in_param)
 
 	/*
 	 * update the sensor related information to cur_result
-	 * structure 
+	 * structure
 	 */
 	cxt->cur_result.wts.stable = 0;
 	cxt->cur_result.wts.cur_dummy = 0;
@@ -2702,6 +2708,9 @@ int32_t ae_calculation(void *handle, void* param, void* result)
 	cxt = (struct ae_ctrl_cxt *)handle;
 
 	pthread_mutex_lock(&cxt->data_sync_lock);
+	if (cxt->bypass) {
+		_set_pause(cxt);
+	}
 
 	current_status = &cxt->sync_cur_status;
 	current_result = &cxt->sync_cur_result;
@@ -3265,10 +3274,11 @@ int32_t ae_sprd_io_ctrl(void *handle, enum ae_io_ctrl_cmd cmd, void *param, void
 		case AE_SET_BYPASS:
 			if (param){
 				if (1 == *(int32_t*)param){
-					rtn = _set_pause(cxt);
+					cxt->bypass = 1;
 				}else{
 					cxt->cur_status.settings.lock_ae = AE_STATE_NORMAL;
 					cxt->cur_status.settings.pause_cnt = 0;
+					cxt->bypass = 0;
 				}
 			}
 			break;
