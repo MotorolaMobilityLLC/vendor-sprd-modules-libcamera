@@ -114,6 +114,7 @@ struct ae_alg_calc_param {
 	struct face_tuning_param face_tp;//for face tuning
 	uint8_t * weight_table;
 	uint32_t * stat_img;
+	uint8_t monitor_shift;//for ae monitor data overflow
 	uint8_t win1_weight;//for touch ae
 	uint8_t win2_weight;//for touch ae
 	//uint8_t touch_tuning_enable;//for touch ae

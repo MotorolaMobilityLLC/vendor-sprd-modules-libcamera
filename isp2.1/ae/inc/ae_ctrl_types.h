@@ -20,7 +20,6 @@
  **				 Dependencies				*
  **---------------------------------------------------------------------------*/
 #include "ae_types.h"
-#include "isp_mw.h"
 /**---------------------------------------------------------------------------*
  **				 Compiler Flag				*
  **---------------------------------------------------------------------------*/
@@ -283,13 +282,21 @@ struct ae_measure_highflash {
 	uint32_t capture_skip_num;
 };
 
+struct ae_sensor_fps_info {
+	uint32_t mode;	//sensor mode
+	uint32_t max_fps;
+	uint32_t min_fps;
+	uint32_t is_high_fps;
+	uint32_t high_fps_skip_num;
+};
+
 struct ae_set_work_param {
 	uint16_t fly_eb;
 	uint16_t is_snapshot;
 	enum ae_work_mode mode;
 	struct ae_resolution_info resolution_info;
 	struct ae_measure_highflash highflash_measure;
-	struct isp_sensor_fps_info sensor_fps;
+	struct ae_sensor_fps_info sensor_fps;
 };
 
 struct ae_set_iso {
@@ -387,6 +394,11 @@ struct ae_flash_cell {
 	struct ae_flash_element element[AE_FLASH_MAX_CELL];
 };
 
+struct ae_flash_cfg {
+	uint32_t type; // enum isp_flash_type
+	uint32_t led_idx; //enum isp_flash_led
+};
+
 struct ae_isp_ctrl_ops {
 	void *isp_handler;
 	 int32_t(*set_exposure) (void *handler, struct ae_exposure * in_param);
@@ -398,11 +410,11 @@ struct ae_isp_ctrl_ops {
 	 int32_t(*get_system_time) (void *handler, uint32_t * sec, uint32_t * usec);
 	 int32_t(*set_statistics_mode) (void *handler, enum ae_statistics_mode mode, uint32_t skip_number);
 
-	 int32_t(*flash_get_charge) (void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell_ptr);
-	 int32_t(*flash_get_time) (void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell_ptr);
-	 int32_t(*flash_set_charge) (void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element_ptr);
-	 int32_t(*flash_set_time) (void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element_ptr);
-	 int32_t(*flash_ctrl) (void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element_ptr);
+	 int32_t(*flash_get_charge) (void *handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_cell *cell_ptr);
+	 int32_t(*flash_get_time) (void *handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_cell *cell_ptr);
+	 int32_t(*flash_set_charge) (void *handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_element *element_ptr);
+	 int32_t(*flash_set_time) (void *handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_element *element_ptr);
+	 int32_t(*flash_ctrl) (void *handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_element *element_ptr);
 
 	 int32_t(*ex_set_exposure) (void *handler, struct ae_exposure * in_param);
 	 int32_t(*lcd_set_awb) (void *handler, uint32_t effect);

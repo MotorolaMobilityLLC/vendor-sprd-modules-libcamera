@@ -1287,7 +1287,16 @@ static int32_t _cfg_monitor_win(struct ae_ctrl_cxt *cxt)
 		info.win_size = cxt->monitor_unit.win_size;
 		info.trim = cxt->monitor_unit.trim;
 
-		//AE_LOGD("info x=%d,y=%d,w=%d,h=%d, block_size.w=%d,block_size.h=%d", info.trim.x, info.trim.y, info.trim.w, info.trim.h, info.win_size.w, info.win_size.h);
+		if (cxt->monitor_unit.win_size.w < 120) {
+			cxt->cur_status.monitor_shift = 0;
+			info.shift = 0;
+		} else {
+			cxt->cur_status.monitor_shift = 1;
+			info.shift = 1;
+		}
+		//AE_LOGD("info x=%d,y=%d,w=%d,h=%d, block_size.w=%d,block_size.h=%d, shift=%d",
+		//	info.trim.x, info.trim.y, info.trim.w, info.trim.h, info.win_size.w,
+		//	info.win_size.h, info.shift);
 		rtn = cxt->isp_ops.set_monitor_win(cxt->isp_ops.isp_handler, &info);
 	}
 
@@ -1612,6 +1621,7 @@ static int32_t _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 		cxt->snr_info = init_param->resolution_info;
 		cxt->cur_status.frame_size = init_param->resolution_info.frame_size;
 		cxt->cur_status.line_time = init_param->resolution_info.line_time/SENSOR_LINETIME_BASE;
+
 		trim.x = 0;
 		trim.y = 0;
 		trim.w = init_param->resolution_info.frame_size.w;
@@ -2514,6 +2524,41 @@ static int32_t _get_flicker_switch_flag(struct ae_ctrl_cxt *cxt, void *in_param)
 	return rtn;
 }
 
+static void _set_led(struct ae_ctrl_cxt *cxt){
+	char str[50];
+	int16_t i = 0;
+	int16_t j = 0;
+	int8_t led_ctl[2] = {0, 0};
+	struct ae_flash_element tmp;
+	property_get("persist.sys.isp.ae.led", str, "");
+
+	if ('\0' == str[i]){
+		return;
+	}else{
+		while(' ' == str[i])
+			i++;
+
+		while(('0' <= str[i] && '9' >= str[i]) || ' ' == str[i]){
+			if (' ' == str[i]){
+				if (' ' == str[i + 1]){
+					;
+				}else{
+					if (j > 0)
+						j = 1;
+					else
+						j++;
+				}
+			}else{
+				led_ctl[j] = 10 * led_ctl[j] + str[i] - '0';
+			}
+			i++;
+		}
+		//AE_LOGD("isp_set_led: %d\r\n", led_ctl[0]);
+		//cxt->isp_ops.flash_set_charge(cxt->isp_ops.isp_handler, led_ctl[0], &tmp);
+	}
+	return;
+}
+
 static int32_t ae_calculation_slow_motion(void* handle, void* param, void* result)
 {
 	int32_t rtn = AE_ERROR;
@@ -2763,6 +2808,12 @@ int32_t ae_calculation(void *handle, void* param, void* result)
 		// AE_LOGD("fd_ae: updata_flag:%d ef %d",
 		// current_status->ae1_finfo.update_flag,
 		// current_status->ae1_finfo.enable_flag);
+
+		//4test
+		//_set_led(cxt);
+		//ae_hdr_ctrl(cxt, param);
+		//4test
+
 		rtn = ae_misc_calculation(cxt->misc_handle, &misc_calc_in, &misc_calc_out);
 		cxt->cur_status.ae1_finfo.update_flag = 0;	// add by match box for fd_ae reset the status
 
