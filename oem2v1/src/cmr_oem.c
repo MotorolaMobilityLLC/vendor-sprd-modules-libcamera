@@ -2744,6 +2744,7 @@ int32_t camera_isp_flash_set_charge(void *handler, struct isp_flash_cfg *cfg_ptr
 	cfg.real_cell.element[0].val = element->val;
 	cfg.io_id = FLASH_IOID_SET_CHARGE;
 	cfg.flash_idx = cxt->camera_id;
+	CMR_LOGD("led_idx=%d, flash_type=%d, idx=%d", cfg_ptr->led_idx, real_type, element->index);
 	ret = cmr_grab_cfg_flash(cxt->grab_cxt.grab_handle, &cfg);
 out:
 	return ret;
@@ -2763,7 +2764,7 @@ int32_t camera_isp_flash_ctrl(void *handler, struct isp_flash_cfg *cfg_ptr, stru
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto out;
 	}
-
+	CMR_LOGD("led_en%d, led1_type=%d", cfg_ptr->led_idx, cfg_ptr->type);
 	switch (cfg_ptr->type) {
 	case ISP_FLASH_TYPE_PREFLASH:
 		if (cfg_ptr->led_idx) {

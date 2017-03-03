@@ -209,6 +209,7 @@ static int32_t ae_flash_set_charge(void *handler, struct isp_flash_cfg *cfg_ptr,
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
 
 	if (cxt_ptr->ae_set_cb) {
+		ISP_LOGD("led_idx=%d, led_type=%d, level=%d", cfg_ptr->led_idx, cfg_ptr->type, element_ptr->index);
 		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_FLASH_CHARGE, cfg_ptr, element_ptr);
 	}
 
@@ -233,6 +234,7 @@ static int32_t ae_flash_ctrl_enable(void *handler, struct isp_flash_cfg *cfg_ptr
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
 
 	if (cxt_ptr->ae_set_cb) {
+		ISP_LOGD("led_en=%d, led_type=%d", cfg_ptr->led_idx, cfg_ptr->type);
 		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_FLASH_CTRL, cfg_ptr, element_ptr);
 	}
 
