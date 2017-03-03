@@ -4853,6 +4853,8 @@ cmr_int camera_capture_zsl_highflash(cmr_handle oem_handle, cmr_u32 camera_id)
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 	struct snapshot_context        *snp_cxt;
 	struct setting_cmd_parameter   setting_param;
+	cmr_uint                       has_preflashed;
+	cmr_uint                       flash_status;
 
 	if (!oem_handle || (camera_id != cxt->camera_id)) {
 		CMR_LOGE("in parm error");
@@ -4874,9 +4876,16 @@ cmr_int camera_capture_zsl_highflash(cmr_handle oem_handle, cmr_u32 camera_id)
 		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_FLASH_STATUS, &setting_param);
 		if (ret) {
 			CMR_LOGE("failed to get flash mode %ld", ret);
+			goto exit;
 		}
-		CMR_LOGI("setting_param.cmd_type_value = %ld", setting_param.cmd_type_value);
-		if (!ret && setting_param.cmd_type_value) {
+		flash_status = setting_param.cmd_type_value;
+		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_PRE_LOWFLASH_VALUE, &setting_param);
+		if (ret) {
+			CMR_LOGE("failed to get preflashed flag %ld", ret);
+		}
+		has_preflashed = setting_param.cmd_type_value;
+		CMR_LOGD("flash_status = %ld, has_preflashed=%ld", flash_status, has_preflashed);
+		if (!ret && flash_status && has_preflashed) {
 			ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_CTRL_FLASH, &setting_param);
 			if (ret) {
 				CMR_LOGE("failed to open flash");
