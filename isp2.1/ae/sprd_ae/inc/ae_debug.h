@@ -63,6 +63,7 @@ extern "C" {
 *				Functions					*
 *-------------------------------------------------------------------------------*/
 /*new interface*/
+	uint32_t debug_print_enable(void);
 	debug_handle_t debug_file_init(const char file_name[], const char open_mode[]);
 
 	void debug_file_deinit(debug_handle_t handle);

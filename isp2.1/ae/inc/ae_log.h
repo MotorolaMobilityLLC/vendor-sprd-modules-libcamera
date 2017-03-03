@@ -44,18 +44,22 @@ extern "C" {
 #include <sys/ioctl.h>
 #include <errno.h>
 
-#define AE_DEBUG_STR      "ISP_AE: %05d line, %s : "
-#define AE_DEBUG_ARGS    __LINE__,__FUNCTION__
-#define AE_DEBUG_STRX      "AEX: %05d line, %s : "
-
+enum {
+	AE_LOG_LEVEL_OVER_LOGE = 1,
+	AE_LOG_LEVEL_OVER_LOGW = 2,
+	AE_LOG_LEVEL_OVER_LOGI = 3,
+	AE_LOG_LEVEL_OVER_LOGD = 4,
+	AE_LOG_LEVEL_OVER_LOGV = 5
+};
 
 /*android*/
-#define AE_LOG(format,...) ALOGE(AE_DEBUG_STR format, AE_DEBUG_ARGS, ##__VA_ARGS__)
-#define AE_LOGI(format,...) ALOGI(AE_DEBUG_STR format, AE_DEBUG_ARGS, ##__VA_ARGS__)
-#define AE_LOGE(format,...) ALOGE(AE_DEBUG_STR format, AE_DEBUG_ARGS, ##__VA_ARGS__)
-#define AE_LOGV(format,...) ALOGV(AE_DEBUG_STR format, AE_DEBUG_ARGS, ##__VA_ARGS__)
-#define AE_LOGD(format,...) ALOGD(AE_DEBUG_STR format, AE_DEBUG_ARGS, ##__VA_ARGS__)
-#define AE_LOGX(format,...) ALOGI(AE_DEBUG_STRX format, AE_DEBUG_ARGS, ##__VA_ARGS__)
+extern uint32_t g_ae_log_level;
+#define AE_LOG(fmt, args...) ALOGE("%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
+#define AE_LOGE(fmt, args...)  ALOGE("%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
+#define AE_LOGW(fmt, args...) ALOGW_IF(g_ae_log_level >= AE_LOG_LEVEL_OVER_LOGW, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
+#define AE_LOGI(fmt, args...) ALOGI_IF(g_ae_log_level >= AE_LOG_LEVEL_OVER_LOGI, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
+#define AE_LOGD(fmt, args...) ALOGD_IF(g_ae_log_level >= AE_LOG_LEVEL_OVER_LOGD, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
+#define AE_LOGV(fmt, args...) ALOGV_IF(g_ae_log_level >= AE_LOG_LEVEL_OVER_LOGV, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
 #else
 #define AE_LOG printf
 #define AE_LOGI printf
@@ -70,10 +74,10 @@ extern "C" {
 #define AE_RETURN_IF_FAIL(exp,warning) do{if(exp) {AE_TRAC(warning); return exp;}}while(0)
 #define AE_TRACE_IF_FAIL(exp,warning) do{if(exp) {AE_TRAC(warning);}}while(0)
 
+void ae_init_log_level(void);
 /**---------------------------------------------------------------------------*
 **				Data Prototype				*
 **----------------------------------------------------------------------------*/
-
 
 /**----------------------------------------------------------------------------*
 **					Compiler Flag				**
@@ -83,4 +87,3 @@ extern "C" {
 #endif
 /**---------------------------------------------------------------------------*/
 #endif
-

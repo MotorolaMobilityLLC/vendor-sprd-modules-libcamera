@@ -20,6 +20,7 @@
 #include "ae_debug.h"
 #include "ae_ctrl.h"
 #include "isp_debug.h"
+
 #ifndef WIN32
 #include <utils/Timers.h>
 #include <cutils/properties.h>
@@ -342,6 +343,18 @@ static int32_t ae_calc_result_queue_read(struct ae_calc_result_queue *queue, str
 /**---------------------------------------------------------------------------*
 ** 				Local Function Prototypes				*
 **---------------------------------------------------------------------------*/
+uint32_t g_ae_log_level = AE_LOG_LEVEL_OVER_LOGD;
+void ae_init_log_level(void)
+{
+	char prop[PROPERTY_VALUE_MAX];
+	int val = 0;
+
+	property_get("persist.sys.isp.ae.log.level", prop, "0");
+	val = atoi(prop);
+	if (0 < val)
+		g_ae_log_level = (uint32_t)val;
+}
+
 static int32_t isp_gain_buffer_init(struct ae_ctrl_cxt *cxt)
 {
 	int32_t rtn = AE_SUCCESS;
@@ -380,21 +393,23 @@ static int32_t isp_gain_buffer_process(struct ae_ctrl_cxt *cxt, double rgb_gain_
 static int32_t ae_info_print(struct ae_ctrl_cxt *cxt)
 {
 	int32_t rtn = AE_SUCCESS;
-	AE_LOGD("dydl_camera_id %d\r\n", cxt->camera_id);
+	if (debug_print_enable()) {
+		AE_LOGV("cam_id %d, alg id: %\n", cxt->camera_id, cxt->cur_status.alg_id);
 
-	AE_LOGD("dydl_alg_id %d   frame_id %d\r\n", cxt->cur_status.alg_id, cxt->cur_status.frame_id);
+		AE_LOGV("frame id %d\r\n", , cxt->cur_status.frame_id);
 
-	AE_LOGD("dydl_stidx %d   linetime %d\r\n", cxt->cur_status.start_index, cxt->cur_status.line_time);
+		AE_LOGV("start idx %d   linetime %d\r\n", cxt->cur_status.start_index, cxt->cur_status.line_time);
 
-	AE_LOGD("dydl_mxidx %d   mnidx %d\r\n", cxt->cur_status.ae_table->max_index, cxt->cur_status.ae_table->min_index);
+		AE_LOGV("mxidx %d   mnidx %d\r\n", cxt->cur_status.ae_table->max_index, cxt->cur_status.ae_table->min_index);
 
-	AE_LOGD("dydl_target %d   target_zone %d\r\n", cxt->cur_status.target_lum, cxt->cur_status.target_lum_zone);
+		AE_LOGV("tar %d   tar_zone %d\r\n", cxt->cur_status.target_lum, cxt->cur_status.target_lum_zone);
 
-	AE_LOGD("dydl_flicker %d   ISO %d\r\n", cxt->cur_status.settings.flicker, cxt->cur_status.settings.iso);
+		AE_LOGV("flicker %d   ISO %d\r\n", cxt->cur_status.settings.flicker, cxt->cur_status.settings.iso);
 
-	AE_LOGD("dydl_wmode %d   smode %d\r\n", cxt->cur_status.settings.work_mode, cxt->cur_status.settings.scene_mode);
+		AE_LOGV("work mod %d   scene mod %d\r\n", cxt->cur_status.settings.work_mode, cxt->cur_status.settings.scene_mode);
 
-	AE_LOGD("dydl_metering mode %d\r\n", cxt->cur_status.settings.metering_mode);
+		AE_LOGV("metering:%d\r\n", cxt->cur_status.settings.metering_mode);
+	}
 	return rtn;
 }
 
@@ -1108,7 +1123,6 @@ static int32_t _set_touch_zone(struct ae_ctrl_cxt *cxt, struct ae_trim *touch_zo
 	level_0_trim.y = touch_y * new_h / org_h;
 	level_0_trim.w = touch_w * new_w / org_w;
 	level_0_trim.h = touch_h * new_h / org_h;
-
 
 	map_trim.x = 0;
 	map_trim.y = 0;
@@ -2120,7 +2134,7 @@ static int32_t _set_sensor_sensitivity(struct ae_ctrl_cxt *cxt, void *param)
 static int32_t _set_pause(struct ae_ctrl_cxt *cxt)
 {
 	int32_t ret = AE_SUCCESS;
-	
+
 	cxt->cur_status.settings.lock_ae = AE_STATE_PAUSE;
 	cxt->cur_status.settings.pause_cnt++;
 	return ret;
@@ -2331,6 +2345,9 @@ void* ae_sprd_init(void *param, void *in_param)
 	struct ae_set_work_param work_param;
 	struct ae_init_in *init_param = NULL;
 
+	ae_init_log_level();
+
+	AE_LOGD("V2_INIT ST\r\n");
 	cxt = (struct ae_ctrl_cxt *)malloc(sizeof(struct ae_ctrl_cxt));
 
 	if (NULL == cxt) {
@@ -2951,6 +2968,7 @@ int32_t ae_sprd_io_ctrl(void *handle, enum ae_io_ctrl_cmd cmd, void *param, void
 				struct ae_set_weight *weight = param;
 
 				AE_LOGD("setweight %d", weight->mode);
+
 				if (weight->mode < AE_WEIGHT_MAX) {
 					cxt->cur_status.settings.metering_mode = weight->mode;
 				}
@@ -2978,9 +2996,7 @@ int32_t ae_sprd_io_ctrl(void *handle, enum ae_io_ctrl_cmd cmd, void *param, void
 				struct ae_set_ev *ev = param;
 
 				AE_LOGD("setev %d", ev->level);
-				// bad area
-				// ev->level++;
-				// bad area
+
 				if (ev->level < AE_LEVEL_MAX) {
 					cxt->cur_status.settings.ev_index = ev->level;
 				}
