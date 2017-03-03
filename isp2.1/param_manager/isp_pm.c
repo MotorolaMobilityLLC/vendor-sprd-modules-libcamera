@@ -1309,7 +1309,7 @@ static isp_s32 isp_pm_change_mode(isp_pm_handle_t handle, isp_u32 mode_id)
 
 	next_mode_param = isp_pm_get_mode(merged_mode_param, mode_id);
 	if (PNULL == next_mode_param) {
-		ISP_LOGE("mode pointer is null error");
+		ISP_LOGV("mode pointer is null error");
 		rtn = ISP_ERROR;
 		goto _pm_set_mode_error_exit;
 	}
