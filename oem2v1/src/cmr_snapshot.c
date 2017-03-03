@@ -4226,11 +4226,12 @@ cmr_int snp_post_proc_for_isp_tuning(cmr_handle snp_handle, void *data)
 	}
 #endif
 
-	CMR_LOGI("post_proc_setting.data_endian.uv_endian=%d",
-		cxt->req_param.post_proc_setting.data_endian.uv_endian);
-	cxt->req_param.post_proc_setting.data_endian.uv_endian = 1;
-	CMR_LOGI("post_proc_setting.data_endian.uv_endian=%d",
-		cxt->req_param.post_proc_setting.data_endian.uv_endian);
+	// keep these code here, just for isp postprocess can't output nv21
+	//CMR_LOGI("post_proc_setting.data_endian.uv_endian=%d",
+	//	cxt->req_param.post_proc_setting.data_endian.uv_endian);
+	//cxt->req_param.post_proc_setting.data_endian.uv_endian = 1;
+	//CMR_LOGI("post_proc_setting.data_endian.uv_endian=%d",
+	//	cxt->req_param.post_proc_setting.data_endian.uv_endian);
 
 	chn_data_ptr->fmt = IMG_DATA_TYPE_YUV420;
 	ret = snp_post_proc_for_yuv(snp_handle, data);
