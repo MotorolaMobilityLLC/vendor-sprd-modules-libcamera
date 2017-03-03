@@ -308,6 +308,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SFT_GET_AF_VALUE,// added for sft
 	ISP_CTRL_SFT_SET_BYPASS,// added for sft
 	ISP_CTRL_GET_AWB_GAIN,// for mp tool
+	ISP_CTRL_GET_AWB_CT,
 	ISP_CTRL_RANGE_FPS,
 	ISP_CTRL_SET_AE_FPS, // for LLS feature
 	ISP_CTRL_BURST_NOTICE,// burst mode notice

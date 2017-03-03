@@ -810,7 +810,7 @@ static cmr_int _ispGetInfoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, int
 	return rtn;
 }
 
-static cmr_int _isp_get_awb_gain_ioctrl(cmr_handle isp_alg_handle, void *param_ptr, int (*call_back)())
+static cmr_int _ispGetAwbGainIoctrl(cmr_handle isp_alg_handle, void *param_ptr, int (*call_back)())
 {
 	cmr_int                         rtn = ISP_SUCCESS;
 	struct awb_gain                 result;
@@ -836,6 +836,22 @@ static cmr_int _isp_get_awb_gain_ioctrl(cmr_handle isp_alg_handle, void *param_p
 	return rtn;
 }
 
+static cmr_int _ispAwbCtIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, int (*call_back)())
+{
+	cmr_int                         rtn = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	uint32_t                        param = 0;
+
+	if (NULL == param_ptr) {
+		ISP_LOGE("param is NULL error!");
+		return ISP_PARAM_NULL;
+	}
+
+	rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_CT, (void*)&param, NULL);
+	*(uint32_t*)param_ptr = param;
+
+	return rtn;
+}
 
 static cmr_int _ispSetLumIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, int (*call_back)())
 {
@@ -1971,19 +1987,20 @@ static struct isp_io_ctrl_fun _s_isp_io_ctrl_fun_tab[] = {
 
 	{ISP_CTRL_AE_FORCE_CTRL,             _ispAeForceIOCtrl}, // for mp tool cali
 	{ISP_CTRL_GET_AE_STATE,              _ispGetAeStateIOCtrl}, // for mp tool cali
-	{ISP_CTRL_GET_AWB_GAIN,              _isp_get_awb_gain_ioctrl}, // for mp tool cali
+	{ISP_CTRL_GET_AWB_GAIN,              _ispGetAwbGainIoctrl}, // for mp tool cali
+	{ISP_CTRL_GET_AWB_CT,				 _ispAwbCtIOCtrl},
 	{ISP_CTRL_SET_AE_FPS,                _ispSetAeFpsIOCtrl},  //for LLS feature
 	{ISP_CTRL_GET_INFO,                  _ispGetInfoIOCtrl},
 	{ISP_CTRL_SET_AE_NIGHT_MODE,         _ispSetAeNightModeIOCtrl},
 	{ISP_CTRL_SET_AE_AWB_LOCK_UNLOCK,    _ispSetAeAwbLockUnlock}, // AE & AWB Lock or Unlock
 	{ISP_CTRL_SET_AE_LOCK_UNLOCK,        _ispSetAeLockUnlock},//AE Lock or Unlock
 	{ISP_CTRL_TOOL_SET_SCENE_PARAM,      _ispToolSetSceneParam}, // for tool scene param setting
-	{ISP_CTRL_FORCE_AE_QUICK_MODE,      _ispForceAeQuickMode},
+	{ISP_CTRL_FORCE_AE_QUICK_MODE,       _ispForceAeQuickMode},
 	{ISP_CTRL_DENOISE_PARAM_UPDATE,      _ispSensorDenoiseParamUpdate}, //for tool cali
-	{ISP_CTRL_SET_AE_EXP_TIME,      _ispSetAeExpTime},
-	{ISP_CTRL_SET_AE_SENSITIVITY,      _ispSetAeSensitivity},
+	{ISP_CTRL_SET_AE_EXP_TIME,           _ispSetAeExpTime},
+	{ISP_CTRL_SET_AE_SENSITIVITY,        _ispSetAeSensitivity},
 	{ISP_CTRL_SET_CAPTURE_RAW_MODE,      _ispSetCaptureRawMode},
-	{ISP_CTRL_SET_DCAM_TIMESTAMP,      _ispSetDcamTimestamp},
+	{ISP_CTRL_SET_DCAM_TIMESTAMP,        _ispSetDcamTimestamp},
 	{ISP_CTRL_MAX,                       NULL}
 };
 
