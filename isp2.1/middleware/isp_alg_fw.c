@@ -1367,7 +1367,7 @@ cmr_int isp_alg_destroy_thread_proc(cmr_handle isp_alg_handle)
 		}
 	}
 exit:
-	ISP_LOGI("done %ld", rtn);
+	ISP_LOGI("done %d", rtn);
 	return rtn;
 }
 
@@ -1830,6 +1830,7 @@ static uint32_t isp_alg_sw_deinit(cmr_handle isp_alg_handle)
 
 	lsc_ctrl_deinit(cxt->lsc_cxt.handle);
 
+	ISP_LOGI("done");
 	return ISP_SUCCESS;
 }
 
@@ -1940,6 +1941,7 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 		cxt = NULL;
 	}
 
+	ISP_LOGI("done %d", rtn);
 	return rtn;
 }
 

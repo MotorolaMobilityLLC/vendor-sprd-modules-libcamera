@@ -193,7 +193,8 @@ cmr_int awb_ctrl_deinit(cmr_handle handle_awb)
 			handle_awb = NULL;
 		}
 	}
-	ISP_LOGI("isp_3a_ctrl awb_deinit rtn = %d", rtn);
+
+	ISP_LOGI("done %d", rtn);
 	return rtn;
 }
 

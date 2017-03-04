@@ -96,7 +96,7 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handler)
 	struct isp_mw_context *cxt = NULL;
 	struct isp_alg_fw_init_in ispalg_input;
 
-	ISP_LOGI("isp_init");
+	ISP_LOGI("E");
 
 	cxt = (struct isp_mw_context *)malloc(sizeof(struct isp_mw_context));
 	if (!input_ptr || !isp_handler) {
@@ -130,7 +130,7 @@ exit:
 		*isp_handler = (isp_handle)cxt;
 	}
 
-	ISP_LOGV("---isp_init-- end, %ld", rtn);
+	ISP_LOGI("X %d", rtn);
 
 	return rtn;
 }
@@ -152,7 +152,7 @@ cmr_int isp_deinit(isp_handle isp_handler)
 		cxt = NULL;
 	}
 
-	ISP_LOGV("---isp_deinit------- end, %ld", rtn);
+	ISP_LOGI("done %ld", rtn);
 
 	return rtn;
 }

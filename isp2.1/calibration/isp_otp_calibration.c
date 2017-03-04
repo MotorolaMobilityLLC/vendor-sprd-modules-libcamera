@@ -938,7 +938,7 @@ cmr_int otp_ctrl_deinit(cmr_handle isp_otp_handle)
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_otp_info *otp_info = (struct isp_otp_info *)isp_otp_handle;
 
-	ISP_LOGI("isp_otp_deinit-- begin");
+	ISP_LOGI("E");
 	ISP_CHECK_HANDLE_VALID(isp_otp_handle);
 
 	if (NULL != otp_info->awb.data_ptr) {
@@ -956,7 +956,7 @@ cmr_int otp_ctrl_deinit(cmr_handle isp_otp_handle)
 	free((void *)otp_info);
 	otp_info = NULL;
 
-	ISP_LOGI("---isp_otp_deinit-- end, 0x%lx", rtn);
+	ISP_LOGI("X");
 
 	return rtn;
 }

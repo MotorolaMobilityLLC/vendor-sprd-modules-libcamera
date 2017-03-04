@@ -414,7 +414,7 @@ cmr_int isp_dev_access_deinit(cmr_handle isp_handler)
 	cmr_uint type = 0;
 	void *dummy;
 
-	ISP_LOGI("isp_dev_access_deinit-- begin");
+	ISP_LOGI("E");
 	ISP_CHECK_HANDLE_VALID(isp_handler);
 
 	if(statis_mem_info->isp_statis_alloc_flag == 1) {
@@ -434,7 +434,7 @@ cmr_int isp_dev_access_deinit(cmr_handle isp_handler)
 		cxt = NULL;
 	}
 
-	ISP_LOGI("isp_dev_access_deinit done %ld", rtn);
+	ISP_LOGI("done %d", rtn);
 
 	return rtn;
 }

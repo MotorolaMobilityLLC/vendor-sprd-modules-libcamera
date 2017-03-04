@@ -293,7 +293,6 @@ static cmr_int aectrl_deinit_adpt(struct aectrl_cxt *cxt_ptr)
 		ISP_LOGI("adpt_deinit fun is NULL");
 	}
 
-	ISP_LOGI("LiuY: ae_deinit is OK!");
 exit:
 	ISP_LOGI("done %ld", rtn);
 	return rtn;
@@ -330,7 +329,7 @@ static cmr_int aectrl_process(struct aectrl_cxt *cxt_ptr, struct ae_calc_in *in_
 		ISP_LOGE("param is NULL error!");
 		goto exit;
 	}
-	
+
 	pthread_mutex_lock(&cxt_ptr->ioctrl_sync_lock);
 	lib_ptr = &cxt_ptr->work_lib;
 	if (lib_ptr->adpt_ops->adpt_process) {
@@ -571,7 +570,7 @@ cmr_int ae_ctrl_deinit(cmr_handle handle_ae)
 	pthread_mutex_destroy(&cxt_ptr->ioctrl_sync_lock);
 	free((void*)handle_ae);
 exit:
-	ISP_LOGI("isp_3a_ctrl ae_deinit rtn = %d", rtn);
+	ISP_LOGI("done %d", rtn);
 	return rtn;
 }
 

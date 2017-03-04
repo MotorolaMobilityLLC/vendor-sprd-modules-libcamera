@@ -997,6 +997,7 @@ int32_t smart_ctl_deinit(smart_handle_t handle, void *param, void *result)
 	cxt = NULL;
 
 ERROR_EXIT:
+	ISP_LOGI("done %d", rtn);
 	return rtn;
 }
 

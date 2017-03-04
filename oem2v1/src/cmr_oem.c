@@ -3179,6 +3179,7 @@ cmr_int camera_isp_deinit_notice(cmr_handle  oem_handle)
 	ret = cmr_setting_deinit_notice(cxt->setting_cxt.setting_handle);
 	ret = cmr_focus_deinit_notice(cxt->focus_cxt.focus_handle);
 
+	CMR_LOGI("done %ld", ret);
 	return ret;
 }
 
@@ -3219,7 +3220,7 @@ cmr_int camera_isp_deinit(cmr_handle  oem_handle)
 #endif
 
 exit:
-	CMR_LOGD("done %ld", ret);
+	CMR_LOGI("done %ld", ret);
 	ATRACE_END();
 	return ret;
 }

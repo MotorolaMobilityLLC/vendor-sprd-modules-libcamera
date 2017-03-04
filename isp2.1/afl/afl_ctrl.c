@@ -408,7 +408,7 @@ cmr_int afl_ctrl_deinit(cmr_handle isp_afl_handle)
 		return ISP_ERROR;
 	}
 
-	ISP_LOGI("LiuY: done %ld", rtn);
+	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
 

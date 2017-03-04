@@ -443,8 +443,9 @@ cmr_int af_ctrl_deinit(cmr_handle handle_af)
 
 	afctrl_destroy_thread(cxt_ptr);
 	free((void*)handle_af);
+
 exit:
-	ISP_LOGI("isp_3a_ctrl af_deinit rtn = %d", rtn);
+	ISP_LOGI("done %d", rtn);
 	return rtn;
 }
 
