@@ -2954,15 +2954,6 @@ cmr_int prev_capture_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
 				ret = prev_restart_cap_channel(handle, camera_id, data);
 			}
 			if (FRAME_HDR_PROC == prev_cxt->prev_param.frame_ctrl) {
-#if 0
-				ret = handle->ops.channel_pause(handle->oem_handle, prev_cxt->cap_channel_id, 1);
-				if (ret) {
-					CMR_LOGE("pause chn failed");
-					ret = CMR_CAMERA_FAIL;
-					goto exit;
-				}
-#endif
-
 				if (prev_cxt->prev_param.snapshot_eb && !prev_cxt->prev_param.preview_eb) {
 					if (handle->ops.capture_pre_proc) {
 						if (prev_cxt->cap_frm_cnt <= prev_cxt->prev_param.frame_count - hdr_num)
@@ -3009,14 +3000,6 @@ cmr_int prev_capture_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
 						goto exit;
 					}
 				}
-#if 0
-				ret = handle->ops.channel_resume(handle->oem_handle, prev_cxt->cap_channel_id, 0, 0, 1);
-				if (ret) {
-					CMR_LOGE("resume chn failed");
-					ret = CMR_CAMERA_FAIL;
-					goto exit;
-				}
-#endif
 			}
 	}
 
@@ -8389,27 +8372,7 @@ static cmr_int prev_before_set_param(struct prev_handle *handle, cmr_u32 camera_
 		}
 		prev_cxt->restart_timestamp = sec * 1000000000LL + usec * 1000;
 		prev_cxt->video_restart_timestamp = prev_cxt->restart_timestamp;
-	} else {
-		/*zoom in or zoom out*/
-		if (prev_cxt->prev_param.snapshot_eb && PREV_CHN_BUSY == prev_cxt->cap_channel_status && !prev_cxt->is_zsl_frm) {
-
-			if (!handle->ops.channel_pause) {
-				CMR_LOGE("ops channel_pause null");
-				ret = CMR_CAMERA_INVALID_PARAM;
-				goto exit;
-			}
-
-			/*pause cap channel*/
-			ret = handle->ops.channel_pause(handle->oem_handle, prev_cxt->cap_channel_id, 1);
-			if (ret) {
-				CMR_LOGE("pause chn failed");
-				ret = CMR_CAMERA_FAIL;
-				goto exit;
-			}
-			prev_cxt->cap_channel_status = PREV_CHN_IDLE;
-		}
 	}
-
 
 exit:
 	return ret;
@@ -8478,17 +8441,8 @@ static cmr_int prev_after_set_param(struct prev_handle *handle,
 			}
 		}
 
-		if (prev_cxt->prev_param.preview_eb && prev_cxt->prev_param.snapshot_eb) {
-			//struct preview_out_param out_param;
-			/*update capture param*/
-			//ret = prev_set_cap_param(handle, camera_id, 1, NULL);
-			ret = prev_set_cap_param(handle, camera_id, 1, 1, NULL);
-			if (ret) {
-				CMR_LOGE("failed to update cap param when previewing");
-				ret = CMR_CAMERA_FAIL;
-				goto exit;
-			}
-
+		if (prev_cxt->prev_param.preview_eb &&
+		    prev_cxt->prev_param.snapshot_eb) {
 			if (prev_cxt->is_zsl_frm) {
 				ret = prev_set_zsl_param_lightly(handle, camera_id);
 				if (ret) {
@@ -8496,40 +8450,6 @@ static cmr_int prev_after_set_param(struct prev_handle *handle,
 					ret = CMR_CAMERA_FAIL;
 					goto exit;
 				}
-			}
-
-			if (!handle->ops.channel_path_capability) {
-				CMR_LOGE("ops channel_path_capability is null");
-				ret = CMR_CAMERA_FAIL;
-				goto exit;
-			}
-
-			ret = handle->ops.channel_path_capability(handle->oem_handle, &capability);
-			if (ret) {
-				CMR_LOGE("channel_path_capability failed");
-				ret = CMR_CAMERA_FAIL;
-				goto exit;
-			}
-			if (!(prev_cxt->prev_param.video_eb && !capability.is_video_prev_diff) && !prev_cxt->is_zsl_frm) {
-				if (!handle->ops.channel_resume) {
-					CMR_LOGE("ops channel_resume null");
-					ret = CMR_CAMERA_INVALID_PARAM;
-					goto exit;
-				}
-
-				/*resume cap channel*/
-				frm_num      = -1;
-				if (IMG_SKIP_HW == skip_mode) {
-					skip_num = skip_number;
-				}
-
-				ret = handle->ops.channel_resume(handle->oem_handle, prev_cxt->cap_channel_id, skip_num, 0, frm_num);
-				if (ret) {
-					CMR_LOGE("resume chn failed");
-					ret = CMR_CAMERA_FAIL;
-					goto exit;
-				}
-				prev_cxt->cap_channel_status = PREV_CHN_BUSY;
 			}
 		}
 	}
