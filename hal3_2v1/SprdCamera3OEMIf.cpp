@@ -1017,21 +1017,16 @@ int SprdCamera3OEMIf::zslTakePicture()
 	}
 #endif
 
-	// for off-the-fly zsl
-	if (mSprdZslEnabled == 1 && mVideoSnapshotType == 0) {
-		ret = mHalOem->ops->camera_start_capture(mCameraHandle);
-		if (ret) {
-			HAL_LOGE("camera_start_capture failed");
-			goto exit;
-		}
-		mFlagOffTheFlyZslStart = 1;
-	}
-
 	setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
 	if (CMR_CAMERA_SUCCESS != mHalOem->ops->camera_take_picture(mCameraHandle, mCaptureMode)) {
 		setCameraState(SPRD_ERROR, STATE_CAPTURE);
 		HAL_LOGE("fail to camera_take_picture.");
 		return UNKNOWN_ERROR;
+	}
+
+	// for off-the-fly zsl
+	if (mSprdZslEnabled == 1 && mVideoSnapshotType == 0) {
+		mFlagOffTheFlyZslStart = 1;
 	}
 
 	if((mSprdZslEnabled == true) && (!mSprdReprocessing)) {/**add for 3d capture, enable reprocess request*/
@@ -7954,12 +7949,13 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data)
 				zsl_frame.y_vir_addr = 0;
 			}
 		}
-		if (obj->mFlashCaptureFlag == 1) {
+		if(0) {
+		//if (obj->mFlashCaptureFlag == 1) {
 			while (1) {
 				if ((zsl_frame.y_vir_addr != 0) &&
 				    (obj->mFlashCaptureFlag == 1) &&
 				    (cnt <= obj->mFlashCaptureSkipNum)) {
-					HAL_LOGV("skip one frame");
+					HAL_LOGD("skip one frame");
 					mHalOem->ops->camera_set_zsl_buffer(obj->mCameraHandle,
 									zsl_frame.y_phy_addr,
 									zsl_frame.y_vir_addr,

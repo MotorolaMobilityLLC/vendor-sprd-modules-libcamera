@@ -290,7 +290,8 @@ struct camera_context {
 	cmr_uint                 b4awb_virt_addr[ISP_B4AWB_BUF_CNT];
 #endif
 	cmr_u8                   flag_highiso_alloc_mem;
-	cmr_uint		 dump_cnt;;
+	cmr_uint                 dump_cnt;
+	cmr_uint                 is_start_snapshot;
 };
 
 cmr_int camera_local_int(cmr_u32 camera_id, camera_cb_of_type callback,  void *client_data, cmr_uint is_autotest, cmr_handle *oem_handle, void* cb_of_malloc, void* cb_of_free);

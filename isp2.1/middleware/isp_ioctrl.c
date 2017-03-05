@@ -349,10 +349,10 @@ static cmr_int _ispFlashNoticeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr,
 		break;
 
 	case ISP_FLASH_MAIN_LIGHTING:
-		if (cxt->lib_use_info->ae_lib_info.product_id) {
+		//if (cxt->lib_use_info->ae_lib_info.product_id) {
 			ae_notice.mode = AE_FLASH_MAIN_LIGHTING;
 			rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_NOTICE, &ae_notice, NULL);
-		}
+		//}
 		rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASH_OPEN_M, NULL, NULL);
 		rtn = _isp_set_awb_flash_gain((cmr_handle)cxt);
 		awb_flash_status = AWB_FLASH_MAIN_LIGHTING;

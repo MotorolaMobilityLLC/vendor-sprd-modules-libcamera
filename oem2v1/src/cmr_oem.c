@@ -4715,19 +4715,6 @@ cmr_int camera_capture_pre_proc(cmr_handle oem_handle, cmr_u32 camera_id, cmr_u3
 	CMR_LOGI("camera id %d, capture mode %d preview mode %d,  is_restart %d is_sn_reopen %d, snapshot_sn_mode %d",
 			camera_id, capture_mode, preview_mode, is_restart, is_sn_reopen, snp_cxt->snp_mode);
 
-	if ((CAMERA_ZSL_MODE != snp_cxt->snp_mode) && (!is_restart) && (1 != camera_get_hdr_flag(cxt))) {
-		/*open flash*/
-		memset(&setting_param, 0, sizeof(setting_param));
-		setting_param.ctrl_flash.capture_mode.capture_mode= snp_cxt->snp_mode;
-		setting_param.camera_id = camera_id;
-		setting_param.ctrl_flash.is_active = 1;
-		setting_param.ctrl_flash.flash_type = FLASH_HIGH_LIGHT;
-		setting_param.ctrl_flash.work_mode = 1; //capture
-		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_CTRL_FLASH, &setting_param);
-		if (ret) {
-			CMR_LOGE("failed to open flash");
-		}
-	}
 	if ((CAMERA_ZSL_MODE != snp_cxt->snp_mode) && (!is_restart || is_sn_reopen)) {
 		snp_cxt = &cxt->snp_cxt;
 		snp_cxt->snapshot_sn_mode = capture_mode;
@@ -4824,7 +4811,6 @@ cmr_int camera_local_snapshot_is_need_flash(cmr_handle oem_handle, cmr_u32 camer
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
 	struct snapshot_context        *snp_cxt;
 	struct setting_cmd_parameter   setting_param;
-
 	if (!oem_handle || (camera_id != cxt->camera_id)) {
 		CMR_LOGE("in parm error");
 		ret = -CMR_CAMERA_INVALID_PARAM;
@@ -4835,7 +4821,11 @@ cmr_int camera_local_snapshot_is_need_flash(cmr_handle oem_handle, cmr_u32 camer
 	CMR_LOGI("camera id %d, capture mode %d", camera_id,  snp_cxt->snp_mode);
 
 	memset(&setting_param, 0, sizeof(setting_param));
+	setting_param.ctrl_flash.capture_mode.capture_mode= snp_cxt->snp_mode;
 	setting_param.camera_id = camera_id;
+	setting_param.ctrl_flash.is_active = 1;
+	setting_param.ctrl_flash.flash_type = FLASH_HIGH_LIGHT;
+	setting_param.ctrl_flash.work_mode = 1; //capture
 	ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_FLASH_STATUS, &setting_param);
 	if (ret) {
 		CMR_LOGE("failed to get flash mode %ld", ret);
@@ -4847,7 +4837,7 @@ exit:
 	return ret;
 }
 
-cmr_int camera_capture_zsl_highflash(cmr_handle oem_handle, cmr_u32 camera_id)
+cmr_int camera_capture_highflash(cmr_handle oem_handle, cmr_u32 camera_id)
 {
 	cmr_int                        ret = CMR_CAMERA_SUCCESS;
 	struct camera_context          *cxt = (struct camera_context*)oem_handle;
@@ -5542,26 +5532,8 @@ cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits, cmr_ui
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}
-	cmr_bzero(&setting_param, sizeof(struct setting_cmd_parameter));
 	CMR_LOGI("skip num %ld %d", skip_number, channel_bits);
 	camera_take_snapshot_step(CMR_STEP_CAP_S);
-
-	cmr_bzero(&setting_param, sizeof(setting_param));
-	setting_param.camera_id = cxt->camera_id;
-	ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_SPRD_ZSL_ENABLED, &setting_param);
-	if (ret) {
-		CMR_LOGE("failed to get preview sprd zsl enabled flag %ld", ret);
-		goto exit;
-	}
-	is_zsl_enable = setting_param.cmd_type_value;
-
-	cmr_bzero(&setting_param, sizeof(setting_param));
-	ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_VIDEO_SNAPSHOT_TYPE, &setting_param);
-	if (ret) {
-		CMR_LOGE("failed to get preview sprd eis enabled flag %ld", ret);
-		goto exit;
-	}
-	video_snapshot_type = setting_param.cmd_type_value;
 
 	ret = cmr_grab_cap_start(cxt->grab_cxt.grab_handle, skip_number);
 	if (ret) {
@@ -5569,17 +5541,38 @@ cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits, cmr_ui
 		goto exit;
 	}
 
-	/* for sharkl2 off-the-fly path */
-	if ((channel_bits & OFF_THE_FLY_PATH_BIT) &&
-	    is_zsl_enable == 0 &&
-	    video_snapshot_type != VIDEO_SNAPSHOT_VIDEO) {
-		ret = cmr_grab_start_capture(cxt->grab_cxt.grab_handle);
-		if (ret) {
-			CMR_LOGE("failed to start off the fly path,ret %ld", ret);
-		}
+	if(cxt->is_start_snapshot != 1)
+	{
+			cmr_bzero(&setting_param, sizeof(setting_param));
+			setting_param.camera_id = cxt->camera_id;
+			ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_SPRD_ZSL_ENABLED, &setting_param);
+			if (ret) {
+				CMR_LOGE("failed to get preview sprd zsl enabled flag %ld", ret);
+				goto exit;
+			}
+			is_zsl_enable = setting_param.cmd_type_value;
+
+			cmr_bzero(&setting_param, sizeof(setting_param));
+			ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_VIDEO_SNAPSHOT_TYPE, &setting_param);
+			if (ret) {
+				CMR_LOGE("failed to get preview sprd eis enabled flag %ld", ret);
+				goto exit;
+			}
+			video_snapshot_type = setting_param.cmd_type_value;
+
+			/* for sharkl2 off-the-fly path */
+			if ((channel_bits & OFF_THE_FLY_PATH_BIT) &&
+			    is_zsl_enable == 0 &&
+			    video_snapshot_type != VIDEO_SNAPSHOT_VIDEO) {
+				ret = cmr_grab_start_capture(cxt->grab_cxt.grab_handle,1);
+				if (ret) {
+					CMR_LOGE("failed to start off the fly path,ret %ld", ret);
+				}
+			}
 	}
 exit:
 	CMR_LOGV("done %ld", ret);
+	cxt->is_start_snapshot = 0;
 	return ret;
 }
 
@@ -5635,10 +5628,7 @@ cmr_int camera_channel_resume(cmr_handle oem_handle, cmr_uint channel_id, cmr_u3
 
 	/* for sharkl2 off-the-fly path */
 	if (channel_id == OFF_THE_FLY_CHANNEL) {
-		ret = cmr_grab_start_capture(cxt->grab_cxt.grab_handle);
-		if (ret) {
-			CMR_LOGE("failed to start off the fly path,ret %ld", ret);
-		}
+		camera_local_start_capture(oem_handle);
 	}
 
 	ret = cmr_grab_cap_resume(cxt->grab_cxt.grab_handle, channel_id, skip_number, deci_factor, frm_num);
@@ -7625,10 +7615,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle, enum takepicture_mode
 		goto exit;
 	}
 
-	if (CAMERA_ZSL_MODE == mode) {
-		camera_capture_zsl_highflash(cxt, cxt->camera_id);
-	}
-
+	cxt->is_start_snapshot = 1;
 	cxt->snp_cxt.actual_capture_size = snp_param.post_proc_setting.chn_out_frm[0].size;
 	if (CAMERA_ISP_SIMULATION_MODE == mode) {
 		cxt->camera_mode = mode;
@@ -7641,6 +7628,15 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle, enum takepicture_mode
 		}
 		cxt->camera_mode = mode;
 	}
+
+	camera_capture_highflash(cxt, cxt->camera_id);
+
+	ret = camera_local_start_capture(oem_handle);
+	if (ret) {
+		CMR_LOGE("camera_start_capture failed");
+		goto exit;
+	}
+
 	camera_set_snp_req((cmr_handle)cxt, TAKE_PICTURE_NEEDED);
 	camera_snapshot_started((cmr_handle)cxt);
 	ret = camera_get_cap_time((cmr_handle)cxt);
@@ -8939,13 +8935,17 @@ exit:
 	return ret;
 }
 
-// for off-the-fly zsl
+
 cmr_int camera_local_start_capture(cmr_handle oem_handle)
 {
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;
 	struct camera_context           *cxt = (struct camera_context*)oem_handle;
-
-	ret = cmr_grab_start_capture(cxt->grab_cxt.grab_handle);
+	cmr_uint capture_status  = DCAM_CAPTURE_START;
+	cmr_u32 flash_status = 0;
+	camera_local_snapshot_is_need_flash(oem_handle,cxt->camera_id,&flash_status);
+	if(flash_status > 0)
+		capture_status = DCAM_CAPTURE_START_WITH_FLASH;
+	ret = cmr_grab_start_capture(cxt->grab_cxt.grab_handle,capture_status);
 	if (ret) {
 		CMR_LOGE("cmr_grab_start_capture failed");
 		goto exit;
@@ -8955,7 +8955,6 @@ exit:
 	return ret;
 }
 
-// for off-the-fly zsl
 cmr_int camera_local_stop_capture(cmr_handle oem_handle)
 {
 	cmr_int                         ret = CMR_CAMERA_SUCCESS;

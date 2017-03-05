@@ -2300,16 +2300,18 @@ static cmr_int setting_is_need_flash(struct setting_component *cpt,
 	struct setting_hal_param    *hal_param = get_hal_param(cpt, parm->camera_id);
 	cmr_uint                    flash_status = 0;
 	cmr_uint                    flash_mode = 0;
+	cmr_uint                    pre_flash_status = 0;
 
 	capture_mode = (enum takepicture_mode)parm->ctrl_flash.capture_mode.capture_mode;
 	flash_status = hal_param->flash_param.flash_status;
 	flash_mode = hal_param->flash_param.flash_mode;
 	shot_num = hal_param->shot_num;
+	pre_flash_status = hal_param->flash_param.has_preflashed;
 
 	CMR_LOGI("flash_mode=%ld, flash_status=%ld, capture_mode=%d, shot_num=%ld",
 		flash_mode, flash_status, capture_mode, shot_num);
 
-	if (CAMERA_FLASH_MODE_TORCH != flash_mode && flash_status) {
+	if (CAMERA_FLASH_MODE_TORCH != flash_mode && flash_status && (parm->ctrl_flash.flash_type != FLASH_HIGH_LIGHT || (parm->ctrl_flash.flash_type == FLASH_HIGH_LIGHT && pre_flash_status))) {
 		if (CAMERA_NORMAL_MODE == capture_mode ||
 			CAMERA_ISP_TUNING_MODE == capture_mode ||
 			CAMERA_ISP_SIMULATION_MODE == capture_mode ||
@@ -2474,12 +2476,14 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
 			if (IMG_DATA_TYPE_RAW == image_format) {
 				switch (ctrl_flash_status) {
 				case FLASH_HIGH_LIGHT: //high flash
-					CMR_LOGI("high flash open");
+					CMR_LOGI("high flash Set Ae setting");
 					setting_isp_flash_notify(cpt, parm, ISP_FLASH_MAIN_BEFORE);
+					setting_isp_wait_notice(cpt);
+					CMR_LOGI("high flash Open flash");
 					setting_set_flashdevice(cpt, parm, ctrl_flash_status);
-
 					setting_isp_flash_notify(cpt, parm, ISP_FLASH_MAIN_LIGHTING);
-					hal_param->flash_param.has_preflashed = 0;
+					setting_isp_wait_notice(cpt);
+					CMR_LOGI("high flash Will do-capture");
 					break;
 				case FLASH_AF_DONE:
 					CMR_LOGI("pre flash AF DONE");
@@ -2551,11 +2555,6 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
 				if (!parm->ctrl_flash.will_capture) {
 					hal_param->flash_param.has_preflashed = 0;
 				}
-				if ((hal_param->flash_param.has_preflashed == 0) && hal_param->flash_param.set_flash_mode_off_after_close_flash) {
-					hal_param->flash_param.flash_mode = CAMERA_FLASH_MODE_OFF;
-					hal_param->flash_param.set_flash_mode_off_after_close_flash = 0;
-					setting_set_flash_mode(cpt, parm);
-				}
 			}
 			if (IMG_DATA_TYPE_RAW == image_format) {
 				is_to_isp = 1;
@@ -2583,7 +2582,13 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
 					CMR_LOGI("wait to capture end");
 					setting_isp_wait_notice(cpt);
 				}
+				hal_param->flash_param.has_preflashed = 0;
 				setting_isp_flash_notify(cpt, parm, ISP_FLASH_MAIN_AFTER);
+			}
+			if ((hal_param->flash_param.has_preflashed == 0) && hal_param->flash_param.set_flash_mode_off_after_close_flash) {
+				hal_param->flash_param.flash_mode = CAMERA_FLASH_MODE_OFF;
+				hal_param->flash_param.set_flash_mode_off_after_close_flash = 0;
+				setting_set_flash_mode(cpt, parm);
 			}
 		}
 

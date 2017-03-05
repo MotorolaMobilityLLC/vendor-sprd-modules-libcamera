@@ -241,7 +241,6 @@ struct ae_ctrl_cxt {
 	/*
 	 * flash ae param
 	 */
-	int16_t mflash_wait_use;		//for non-zsl
 	int16_t flash_on_off_thr;
 	uint32_t flash_effect;
 	/*
@@ -1404,7 +1403,6 @@ static int32_t _set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_notice
 			{
 				cxt->cur_status.settings.flash = FLASH_PRE;
 				cxt->cur_status.settings.flash_target = cxt->cur_param->flash_param.target_lum;
-				cxt->mflash_wait_use = 1;
 			}
 			break;
 
@@ -1429,16 +1427,12 @@ static int32_t _set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_notice
 
 		case AE_FLASH_MAIN_AE_MEASURE:
 			AE_LOGD("ae_flash_status FLASH_MAIN_AE_MEASURE");
-			cxt->cur_status.settings.flash = FLASH_MAIN;
-			//for non-zsl
-			cxt->mflash_wait_use = 0;
+			//cxt->cur_status.settings.flash = FLASH_MAIN;
 			break;
 
 		case AE_FLASH_MAIN_LIGHTING:
 			AE_LOGD("ae_flash_status FLASH_MAIN_LIGHTING");
-			cxt->cur_status.settings.flash = FLASH_MAIN;
-			//for non-zsl
-			cxt->mflash_wait_use = 0;
+			//cxt->cur_status.settings.flash = FLASH_MAIN;
 			break;
 #if 0
 		case AE_LCD_FLASH_PRE_START:
@@ -2816,14 +2810,19 @@ int32_t ae_calculation(void *handle, void* param, void* result)
 			cxt->send_once[1] = 0;
 		}
 
-		if (FLASH_MAIN_RECEIVE == cxt->cur_result.flash_status && FLASH_MAIN == current_status->settings.flash) {
-			AE_LOGD("ae_flash_status shake_5 %d %d", cxt->cur_result.wts.stable, cxt->cur_result.cur_lum);
+		if (FLASH_MAIN_BEFORE_RECEIVE == cxt->cur_result.flash_status && FLASH_MAIN_BEFORE== current_status->settings.flash) {
+			AE_LOGD("ae_flash_status shake_4 %d %d", cxt->cur_result.wts.stable, cxt->cur_result.cur_lum);
 			if (cxt->cur_result.wts.stable){
-				if (0 == cxt->send_once[2]){
-					cxt->send_once[2]++;
+				if (1 == cxt->send_once[2]){
+					(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_CONVERGED);
+					AE_LOGD("ae_flash_callback do-main-flash!\r\n");
+				}else if (4 == cxt->send_once[2]){
 					(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_CONVERGED);
 					AE_LOGD("ae_flash_callback do-capture!\r\n");
+				}else{
+					AE_LOGD("ae_flash wait-capture!\r\n");
 				}
+				cxt->send_once[2]++;
 			}
 		}
 
@@ -3474,10 +3473,10 @@ int32_t ae_sprd_io_ctrl(void *handle, enum ae_io_ctrl_cmd cmd, void *param, void
 					cxt->cur_status.frame_id = 0;
 					memset(&cxt->cur_result.wts, 0, sizeof(struct ae1_senseor_out));
 					memset(&cxt->sync_cur_result.wts, 0, sizeof(struct ae1_senseor_out));
+					cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = 0;
 				}else{
 					;
 				}
-				cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = 0;
 				AE_LOGD("AE_VIDEO_START lt %d", cxt->cur_status.line_time);
 			}
 			break;

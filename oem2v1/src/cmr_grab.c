@@ -780,20 +780,19 @@ cmr_int cmr_grab_cap_stop(cmr_handle grab_handle)
 }
 
 // for sharkl2-like capture path
-cmr_int cmr_grab_start_capture(cmr_handle grab_handle)
+cmr_int cmr_grab_start_capture(cmr_handle grab_handle,cmr_uint capture_status)
 {
 	struct cmr_grab          *p_grab;
 	cmr_int                  ret = 0;
-	cmr_u32                  start = 1;
 
 	p_grab = (struct cmr_grab *)grab_handle;
 	CMR_CHECK_HANDLE;
 	CMR_CHECK_FD;
-	ret = ioctl(p_grab->fd, SPRD_IMG_IO_START_CAPTURE, &start);
+	ret = ioctl(p_grab->fd, SPRD_IMG_IO_START_CAPTURE, &capture_status);
 	if (ret) {
 		CMR_LOGE("failed to start capture.");
 	}
-	CMR_LOGI("ret = %ld", ret);
+	CMR_LOGI("ret = %ld,capture_status %ld", ret,capture_status);
 	return ret;
 }
 
