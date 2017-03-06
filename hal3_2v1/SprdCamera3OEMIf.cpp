@@ -1088,6 +1088,8 @@ int SprdCamera3OEMIf::VideoTakePicture()
 {
 	ATRACE_CALL();
 
+	JPEG_Tag jpgInfo;
+
 	HAL_LOGI("E");
 	GET_START_TIME;
 	print_time();
@@ -1101,6 +1103,12 @@ int SprdCamera3OEMIf::VideoTakePicture()
 		HAL_LOGE("in error status, deinit capture at first ");
 		deinitCapture(mIsPreAllocCapMem);
 	}
+
+	mSetting->getJPEGTag(&jpgInfo);
+	HAL_LOGD("JPEG quality = %d",jpgInfo.quality);
+	SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_JPEG_QUALITY, jpgInfo.quality);
+	HAL_LOGD("JPEG thumbnail quality = %d",jpgInfo.thumbnail_quality);
+	SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_QUALITY, jpgInfo.thumbnail_quality);
 
 	if (isCapturing()) {
 		WaitForCaptureDone();
@@ -1141,22 +1149,6 @@ int SprdCamera3OEMIf::setVideoSnapshotParameter()
 		SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FOCAL_LENGTH,  (int32_t)(lensInfo.focal_length * 1000));
 		HAL_LOGD("lensInfo.focal_length = %f",lensInfo.focal_length);
 	}
-
-	JPEG_Tag jpgInfo;
-	struct img_size jpeg_thumb_size;
-	mSetting->getJPEGTag(&jpgInfo);
-	HAL_LOGV("JPEG quality = %d",jpgInfo.quality);
-	SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_JPEG_QUALITY, jpgInfo.quality);
-	HAL_LOGV("JPEG thumbnail quality = %d",jpgInfo.thumbnail_quality);
-	SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_QUALITY, jpgInfo.thumbnail_quality);
-	jpeg_thumb_size.width = jpgInfo.thumbnail_size[0];
-	jpeg_thumb_size.height = jpgInfo.thumbnail_size[1];
-
-	if (jpeg_thumb_size.width <= 0 || jpeg_thumb_size.height <= 0)
-		chooseDefaultThumbnailSize(&jpeg_thumb_size.width, &jpeg_thumb_size.height);
-
-	HAL_LOGD("JPEG thumbnail size = %d x %d", jpeg_thumb_size.width, jpeg_thumb_size.height);
-	SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_SIZE, (cmr_uint)&jpeg_thumb_size);
 
 	if (CMR_CAMERA_SUCCESS != mHalOem->ops->camera_take_picture(mCameraHandle, mCaptureMode)) {
 		setCameraState(SPRD_ERROR, STATE_CAPTURE);
@@ -2861,11 +2853,10 @@ int SprdCamera3OEMIf::startPreviewInternal()
 	}
 	SprdCamera3Flash::reserveFlash(mCameraId);
 
-	if (mCaptureMode == CAMERA_ZSL_MODE) {
-		chooseDefaultThumbnailSize(&jpeg_thumb_size.width, &jpeg_thumb_size.height);
-		HAL_LOGD("JPEG thumbnail size = %d x %d", jpeg_thumb_size.width, jpeg_thumb_size.height);
-		SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_SIZE, (cmr_uint)&jpeg_thumb_size);
-	}
+	// api1 dont set thumbnail size when preview, so we calculate the value same as camera app
+	chooseDefaultThumbnailSize(&jpeg_thumb_size.width, &jpeg_thumb_size.height);
+	HAL_LOGD("JPEG thumbnail size = %d x %d", jpeg_thumb_size.width, jpeg_thumb_size.height);
+	SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_SIZE, (cmr_uint)&jpeg_thumb_size);
 
 	setCameraState(SPRD_INTERNAL_PREVIEW_REQUESTED, STATE_PREVIEW);
 

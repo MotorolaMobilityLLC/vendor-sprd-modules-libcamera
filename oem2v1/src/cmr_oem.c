@@ -197,6 +197,7 @@ static cmr_int camera_get_snapshot_param(cmr_handle oem_handle, struct snapshot_
 static cmr_int camera_get_sensor_info(cmr_handle oem_handle, cmr_uint sensor_id, struct sensor_exp_info *exp_info_ptr);
 static cmr_int camera_get_sensor_fps_info(cmr_handle oem_handle, cmr_uint sensor_id, cmr_u32 sn_mode, struct sensor_mode_fps_tag *fps_info);
 cmr_int camera_get_tuning_info(cmr_handle oem_handle, struct isp_adgain_exp_info *adgain_exp_info_ptr);
+cmr_int camera_get_jpeg_param_info(cmr_handle oem_handle, struct jpeg_param *param);
 static cmr_int camera_get_sensor_autotest_mode(cmr_handle oem_handle, cmr_uint sensor_id, cmr_uint *is_autotest);
 static cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id, cmr_uint param);
 static void camera_set_hdr_flag(struct camera_context *cxt, cmr_u32 hdr_flag);
@@ -3357,6 +3358,7 @@ cmr_int camera_snapshot_init(cmr_handle  oem_handle)
 	init_param.ops.channel_cap_cfg = camera_channel_cap_cfg;
 	init_param.ops.get_sensor_info = camera_get_sensor_info;
 	init_param.ops.get_tuning_info = camera_get_tuning_info;
+	init_param.ops.get_jpeg_param_info = camera_get_jpeg_param_info;
 	init_param.ops.stop_codec = camera_stop_codec;
 	init_param.private_data = NULL;
 	ret = cmr_snapshot_init(&init_param, &snp_cxt->snapshot_handle);
@@ -8936,6 +8938,42 @@ exit:
 	return ret;
 }
 
+cmr_int camera_get_jpeg_param_info(cmr_handle oem_handle, struct jpeg_param *param)
+{
+	cmr_int                        ret = CMR_CAMERA_SUCCESS;
+	struct camera_context          *cxt = (struct camera_context*)oem_handle;
+	struct setting_context         *setting_cxt = &cxt->setting_cxt;
+	struct setting_cmd_parameter   setting_param;
+
+	setting_param.camera_id = cxt->camera_id;
+
+	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_JPEG_QUALITY, &setting_param);
+	if (ret) {
+		CMR_LOGE("failed to get image quality %ld", ret);
+		goto exit;
+	}
+	param->quality = setting_param.cmd_type_value;
+
+	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_THUMB_QUALITY, &setting_param);
+	if (ret) {
+		CMR_LOGE("failed to get thumb quality %ld", ret);
+		goto exit;
+	}
+	param->thumb_quality = setting_param.cmd_type_value;
+
+	// thum_size is not use for now
+	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_THUMB_SIZE, &setting_param);
+	if (ret) {
+		CMR_LOGE("failed to get thumb size %ld", ret);
+		goto exit;
+	}
+	param->thum_size = setting_param.size_param;
+
+	CMR_LOGV("quality=%d, thumb_quality=%d, thum_size: %d %d",
+		param->quality, param->thumb_quality, param->thum_size.width, param->thum_size.height);
+exit:
+	return ret;
+}
 
 cmr_int camera_local_start_capture(cmr_handle oem_handle)
 {

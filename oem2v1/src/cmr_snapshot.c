@@ -893,6 +893,7 @@ cmr_int snp_start_encode(cmr_handle snp_handle, void *data)
 	struct frm_info                *frm_ptr = (struct frm_info*)data;
 	struct snp_jpeg_param          *jpeg_in_ptr;
 	cmr_u32                        index = frm_ptr->frame_id - frm_ptr->base;
+	struct jpeg_param              quality_param;
 
 	if (CMR_CAMERA_NORNAL_EXIT == snp_checkout_exit(snp_handle)) {
 		sem_post(&snp_cxt->jpeg_sync_sm);
@@ -901,9 +902,15 @@ cmr_int snp_start_encode(cmr_handle snp_handle, void *data)
 		goto exit;
 	}
 	CMR_PRINT_TIME;
+
+	snp_cxt->ops.get_jpeg_param_info(snp_cxt->oem_handle, &quality_param);
+
 	snp_cxt->index = index;
 	jpeg_in_ptr = &chn_param_ptr->jpeg_in[index];
 	jpeg_in_ptr->src.data_end = snp_cxt->req_param.post_proc_setting.data_endian;
+	jpeg_in_ptr->mean.quality_level = quality_param.quality;
+	CMR_LOGD("jpeg_in_ptr->mean.quality_level=%d", jpeg_in_ptr->mean.quality_level);
+
 	if (snp_cxt->ops.start_encode) {
 		char value[PROPERTY_VALUE_MAX];
 		property_get("debug.camera.save.snpfile", value, "0");
@@ -982,6 +989,7 @@ cmr_int snp_start_encode_thumb(cmr_handle snp_handle)
 	struct snp_channel_param       *chn_param_ptr = &snp_cxt->chn_param;
 	struct snp_jpeg_param          *jpeg_in_ptr;
 	cmr_u32                        index = snp_cxt->index;
+	struct jpeg_param              quality_param;
 
 	if (CMR_CAMERA_NORNAL_EXIT == snp_checkout_exit(snp_handle)) {
 		CMR_LOGI("post proc has been cancel");
@@ -1001,10 +1009,14 @@ cmr_int snp_start_encode_thumb(cmr_handle snp_handle)
 		goto exit;
 	}
 
+	snp_cxt->ops.get_jpeg_param_info(snp_cxt->oem_handle, &quality_param);
+
 	camera_take_snapshot_step(CMR_STEP_THUM_ENC_S);
 	jpeg_in_ptr = &chn_param_ptr->thumb_in[index];
 	jpeg_in_ptr->src.data_end = snp_cxt->req_param.post_proc_setting.data_endian;
 	jpeg_in_ptr->dst.data_end = snp_cxt->req_param.post_proc_setting.data_endian;
+	jpeg_in_ptr->mean.quality_level = quality_param.thumb_quality;
+	CMR_LOGD("jpeg_in_ptr->mean.quality_level=%d", jpeg_in_ptr->mean.quality_level);
 
 	ret = snp_cxt->ops.start_encode(snp_cxt->oem_handle, snp_handle,
 					&jpeg_in_ptr->src, &jpeg_in_ptr->dst,
