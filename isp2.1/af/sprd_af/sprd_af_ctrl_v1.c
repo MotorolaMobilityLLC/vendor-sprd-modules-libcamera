@@ -1438,6 +1438,17 @@ static void do_notify(af_ctrl_t *af, enum notify_event evt, const notify_result_
 		}
 	}
 
+	//reload tuning data by  curr_scene
+	static void get_tuning_param(af_ctrl_t * af){
+	
+		if (1 == af->af_tuning_data.flag) {
+			memcpy(&af->fv.AF_Tuning_Data, &af->af_tuning_data.AF_Tuning_Data[af->curr_scene],
+			       sizeof(af->fv.AF_Tuning_Data));
+		}	
+		
+		return ;
+	}
+	
 // start hardware
 	static int do_start_af(af_ctrl_t * af) {
 //    isp_ctrl_context *isp = af->isp_ctx;
@@ -1446,6 +1457,7 @@ static void do_notify(af_ctrl_t *af, enum notify_event evt, const notify_result_
 		afm_set_win(af, af->roi.win, af->roi.num, af->isp_info.win_num);
 		afm_setup(af);
 		afm_enable(af);
+		get_tuning_param(af);	//reload tuning data by  curr_scene
 		return 0;
 	}
 
@@ -1459,9 +1471,9 @@ static void do_notify(af_ctrl_t *af, enum notify_event evt, const notify_result_
 	static int faf_trigger_init(af_ctrl_t * af);
 // saf stuffs
 	static void saf_start(af_ctrl_t * af, struct af_trig_info *win) {
-		af->algo_mode = (af->defocus) ? (DEFOCUS) : (SAF);
+		af->algo_mode = SAF;
 		calc_roi(af, win, af->algo_mode);
-		AF_Trigger(&af->fv, af->algo_mode, RF_NORMAL);
+		AF_Trigger(&af->fv, af->algo_mode, (1==af->defocus)? DEFOCUS : RF_NORMAL);
 		do_start_af(af);
 		af->vcm_stable = 0;
 		faf_trigger_init(af);
@@ -1723,6 +1735,7 @@ static void do_notify(af_ctrl_t *af, enum notify_event evt, const notify_result_
 				caf_start_monitor(af);	//need reset trigger
 				//do_start_af(af);
 			}
+			af->caf_first_stable=0;
 		}
 
 	}
@@ -2057,14 +2070,25 @@ v=v>(max)?(max):v; hist[v]++;}
 	}
 
 	static uint32_t Is_ae_stable(af_ctrl_t * af) {
+/*
 		if (af->request_mode != AF_MODE_CONTINUE && af->request_mode != AF_MODE_VIDEO) {	// non caf mode
 			return af->ae.stable;
 		} else {
 			return 1;
 		}
+*/
+		if( (STATE_CAF==af->state||STATE_RECORD_CAF==af->state) && 
+			0==af->caf_first_stable && 1==af->ae.stable ){
+			af->caf_first_stable=1;
+			return 1;
+		}
 
+		if( 1==af->caf_first_stable )
+			return 1;
+
+		return af->ae.stable;
 	}
-
+	
 	static void get_isp_size(af_ctrl_t * af, uint16_t * widith, uint16_t * height) {
 
 //      *widith = isp->input_size_trim[isp->param_index].width;
@@ -2644,7 +2668,7 @@ v=v>(max)?(max):v; hist[v]++;}
 
 		char *af_tuning_path = "/data/misc/cameraserver/af_tuning.bin";
 		FILE *fp = NULL;
-
+		AF_LOGD("B");
 		if (0 == access(af_tuning_path, R_OK)) {	//read request successs
 			uint32_t len = 0;
 
@@ -2708,7 +2732,7 @@ v=v>(max)?(max):v; hist[v]++;}
 					 af->fv.AF_OTP.MACRO);
 			}
 		}
-
+		AF_LOGD("E");
 		return 0;
 	}
 	static char AFlog_buffer[2048] = { 0 };
@@ -2836,7 +2860,8 @@ v=v>(max)?(max):v; hist[v]++;}
 		af->soft_landing_dly = 10;	//avoid vcm crash
 		af->soft_landing_step = 20;
 
-		if (PNULL == af_pm_output->param_data || PNULL == af_pm_output->param_data[0].data_ptr
+		if (PNULL == af_pm_output->param_data 
+			|| PNULL == af_pm_output->param_data[0].data_ptr
 		    || af_pm_output->param_data[0].data_size != sizeof(af->af_tuning_data)) {
 
 			if (PNULL == af_pm_output->param_data[0].data_ptr)
@@ -3017,6 +3042,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		af->request_mode = AF_MODE_NORMAL;
 		af->state = STATE_NORMAL_AF;
 		af->caf_state = CAF_IDLE;
+		af->defocus = (1 == atoi(test_param))? (1):(af->defocus);
 		saf_start(af, NULL);	//SAF, win is NULL using default
 	}
 
@@ -3479,7 +3505,8 @@ v=v>(max)?(max):v; hist[v]++;}
 		af->awb_lock_num = 0;
 		af->lsc_lock_num = 0;
 		af->nlm_lock_num = 0;
-
+		af->caf_first_stable=0;
+		
 		pthread_mutex_init(&af->af_work_lock, NULL);
 		pthread_mutex_init(&af->caf_work_lock, NULL);
 		sem_init(&af->af_wait_caf, 0, 0);

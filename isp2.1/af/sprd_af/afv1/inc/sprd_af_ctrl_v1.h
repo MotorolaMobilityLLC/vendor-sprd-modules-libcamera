@@ -362,6 +362,7 @@ typedef struct _af_ctrl {
 	uint8_t bypass;
 	uint8_t soft_landing_dly;
 	uint8_t soft_landing_step;
+	uint8_t caf_first_stable;
 	unsigned int inited_af_req;
 	//porting from isp2.1 af 1.0
 	pthread_mutex_t status_lock;

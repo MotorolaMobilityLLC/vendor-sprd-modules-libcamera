@@ -49,8 +49,8 @@
 #define MC_MIN  220      //minimal mechenical position 
 #define MC_MAX  950      //maximal mechenical position
 
-#define OTP_INF  440      //INF position of OTP 
-#define OTP_MACRO  562    //MACRO position of OTP
+#define OTP_INF  350      //INF position of OTP 
+#define OTP_MACRO  700    //MACRO position of OTP
 
 #define HYPER    410      //Hyper Focus position 
 
@@ -117,11 +117,11 @@
 #define	SAF_RS_SPSMD_UB_Ratio_TH_J1	10000
 #define	SAF_RS_SPSMD_UB_Ratio_TH_J2	10000
 #define	SAF_RS_SPSMD_UB_Ratio_TH_J3	10000
-#define	SAF_RS_SPSMD_LB_Ratio_TH_Total	1500
+#define	SAF_RS_SPSMD_LB_Ratio_TH_Total	1700
 #define	SAF_RS_SPSMD_LB_Ratio_TH_Slope_Total	25
-#define	SAF_RS_SPSMD_LB_Ratio_TH_J1	400
-#define	SAF_RS_SPSMD_LB_Ratio_TH_J2	500
-#define	SAF_RS_SPSMD_LB_Ratio_TH_J3	800
+#define	SAF_RS_SPSMD_LB_Ratio_TH_J1	500
+#define	SAF_RS_SPSMD_LB_Ratio_TH_J2	600
+#define	SAF_RS_SPSMD_LB_Ratio_TH_J3	1100
 			
 #define	SAF_FS_SPSMD_UB_Ratio_TH_Total	10000
 #define	SAF_FS_SPSMD_UB_Ratio_TH_Slope_Total	10000
@@ -129,12 +129,12 @@
 #define	SAF_FS_SPSMD_UB_Ratio_TH_J2	10000
 #define	SAF_FS_SPSMD_UB_Ratio_TH_J3	10000
 #define	SAF_FS_SPSMD_LB_Ratio_TH_Total	500
-#define	SAF_FS_SPSMD_LB_Ratio_TH_Slope_Total	0
-#define	SAF_FS_SPSMD_LB_Ratio_TH_J1	300
-#define	SAF_FS_SPSMD_LB_Ratio_TH_J2	350
-#define	SAF_FS_SPSMD_LB_Ratio_TH_J3	400
+#define	SAF_FS_SPSMD_LB_Ratio_TH_Slope_Total	10
+#define	SAF_FS_SPSMD_LB_Ratio_TH_J1	350
+#define	SAF_FS_SPSMD_LB_Ratio_TH_J2	400
+#define	SAF_FS_SPSMD_LB_Ratio_TH_J3	450
 
-#define	SAF_SPSMD_MIN_FV_TH	    1000
+#define	SAF_SPSMD_MIN_FV_TH	    2000
 
 // the threshold of spsmd 16x			
 #define	SAF_RS_SPSMD_UB_Ratio_TH_Total_16x	10000
@@ -142,11 +142,11 @@
 #define	SAF_RS_SPSMD_UB_Ratio_TH_J1_16x	10000
 #define	SAF_RS_SPSMD_UB_Ratio_TH_J2_16x	10000
 #define	SAF_RS_SPSMD_UB_Ratio_TH_J3_16x	10000
-#define	SAF_RS_SPSMD_LB_Ratio_TH_Total_16x	1500
+#define	SAF_RS_SPSMD_LB_Ratio_TH_Total_16x	1700
 #define	SAF_RS_SPSMD_LB_Ratio_TH_Slope_Total_16x	12
-#define	SAF_RS_SPSMD_LB_Ratio_TH_J1_16x	400
-#define	SAF_RS_SPSMD_LB_Ratio_TH_J2_16x	500
-#define	SAF_RS_SPSMD_LB_Ratio_TH_J3_16x	800
+#define	SAF_RS_SPSMD_LB_Ratio_TH_J1_16x	500
+#define	SAF_RS_SPSMD_LB_Ratio_TH_J2_16x	600
+#define	SAF_RS_SPSMD_LB_Ratio_TH_J3_16x	1100
 			
 #define	SAF_FS_SPSMD_UB_Ratio_TH_Total_16x	10000
 #define	SAF_FS_SPSMD_UB_Ratio_TH_Slope_Total_16x	10000
@@ -154,10 +154,10 @@
 #define	SAF_FS_SPSMD_UB_Ratio_TH_J2_16x	10000
 #define	SAF_FS_SPSMD_UB_Ratio_TH_J3_16x	10000
 #define	SAF_FS_SPSMD_LB_Ratio_TH_Total_16x	500
-#define	SAF_FS_SPSMD_LB_Ratio_TH_Slope_Total_16x	0
-#define	SAF_FS_SPSMD_LB_Ratio_TH_J1_16x	300
-#define	SAF_FS_SPSMD_LB_Ratio_TH_J2_16x	350
-#define	SAF_FS_SPSMD_LB_Ratio_TH_J3_16x	400
+#define	SAF_FS_SPSMD_LB_Ratio_TH_Slope_Total_16x	2
+#define	SAF_FS_SPSMD_LB_Ratio_TH_J1_16x	350
+#define	SAF_FS_SPSMD_LB_Ratio_TH_J2_16x	400
+#define	SAF_FS_SPSMD_LB_Ratio_TH_J3_16x	450
 
 
 #define	SAF_SPSMD_MIN_FV_TH_16x	    1000
@@ -226,38 +226,6 @@
 #define	SAF_COV_MIN_FV_TH	    1000
 
 #define Final_Select_Filter T_SPSMD
-
-//For adapt AF 
-#define ADAPT_AF_TUNING_BASE			(100)
-#define ADAPT_AF_ENABLE 				(0x55aa)
-
-#define ADAPT_AF_HIGH_GAIN_THR				(8 << 7)
-#define ADAPT_AF_FALLING_RATIO			(3*ADAPT_AF_TUNING_BASE)
-#define ADAPT_AF_RISING_RATIO			(3*ADAPT_AF_TUNING_BASE)
-#define ADAPT_AF_FLAT_RATIO				(5*ADAPT_AF_TUNING_BASE)
-//#define ADAPT_AF_MIN_STAT_THR			((60000) >> FOCUS_STAT_DATA_ALIGMENT_BIT)//(16000 >> FOCUS_STAT_DATA_ALIGMENT_BIT)
-//#define ADAPT_AF_DIFF_STAT_THR		((8000) >> FOCUS_STAT_DATA_ALIGMENT_BIT)//(8000 >> FOCUS_STAT_DATA_ALIGMENT_BIT)
-#define ADAPT_AF_TURNBACK_RATIO			(12*ADAPT_AF_TUNING_BASE)
-#define ADAPT_AF_FORCEBREAK_RATIO		(ADAPT_AF_TURNBACK_RATIO-(2*ADAPT_AF_TUNING_BASE))
-#define ADAPT_AF_BREAK_RATIO			(ADAPT_AF_FORCEBREAK_RATIO-(2*ADAPT_AF_TUNING_BASE))
-
-#define ADAPT_AF_INTEGRA_SCR			(5*ADAPT_AF_TUNING_BASE)
-#define ADAPT_AF_MAX_SHIFT_IDX			(6)
-#define ADAPT_AF_BREAK_COUNT			(2)
-#define ADAPT_AF_LL_MA_COUNT			(3)
-#define ADAPT_AF_POSTURE_SLOP			(3*100*ADAPT_AF_TUNING_BASE)
-#define ADAPT_AF_TEMPOR_FLAT_SLOP		(5*100*ADAPT_AF_TUNING_BASE)
-#define ADAPT_AF_LIMIT_SEARCH_ITVL		(2)
-#define ADAPT_AF_SKY_SCENE_THR			(800)
-#if 1	//sharkL2
-static unsigned int ADAPT_AF_MIN_STAT_THR[AE_Gain_Total] = {43202,59363,88126,366151,1095499,1095499};
-static unsigned int ADAPT_AF_DIFF_STAT_THR[AE_Gain_Total] = {255153,187470,159633,111763,13622,13622};
-#else	//sharkLS
-const unsigned int ADAPT_AF_DIFF_STAT_THR[AE_Gain_Total] = {27013,21610,16208,10805,7127,7127};
-const unsigned int ADAPT_AF_MIN_STAT_THR[AE_Gain_Total] = {47847,212007,904953,1809906,800747,800747};
-#endif
-//sp9832 800bv8	
-//J3 111bv LV8
 
 ERRCODE Get_AF_tuning_Data(AF_Data* pAF_Data);
 ERRCODE Get_Defocus_RoughScan_Table(AF_Data* pAF_Data);

@@ -65,7 +65,7 @@
 //=========================================================================//
 /* ============================================================================================== */
 /*1.System info*/	
-#define VERSION             "2.104"
+#define VERSION             "2.105"
 #define STRING(s) #s
 
 
@@ -388,11 +388,11 @@ typedef struct _AF_Scan_Table
 }AF_Scan_Table;
 
 typedef struct aftuning_coeff_s{
-	unsigned int 	saf_coeff[4];
-	unsigned int	caf_coeff[4];
+	unsigned int 	saf_coeff[8];
+	unsigned int	caf_coeff[8];
 	unsigned int	saf_stat_param[AE_Gain_Total];
 	unsigned int	caf_stat_param[AE_Gain_Total];
-	unsigned char 	reserve[16*4];
+	unsigned char 	reserve[32*4];
 }aftuning_coeff_t;
 
 typedef struct aftuning_param_s{
@@ -448,15 +448,11 @@ typedef struct _AF_Tuning
     AF_Tuning_Para SAFTuningPara;   //SAF parameters
     AF_Tuning_Para CAFTuningPara;   //CAF parameters
     AF_Tuning_Para VCAFTuningPara;  //Video CAF parameters
-    /* 
-    144 bytes for aftuning_param_t;
-	*/
+    unsigned int tuning_ver_code;		//ex Algo AF2.104 , tuning-0001-> 0x21040001
+    unsigned int tuning_date_code;		//ex 20170306 -> 0x20170306
     aftuning_coeff_t af_coeff;		//AF coefficient for control speed and overshot
-    /*
-    240 bytes for aftuning_param_t;
-	*/
     aftuning_param_t adapt_af_param;	//adapt AF parameter
-    unsigned char dummy[400-(384)];
+    unsigned char dummy[400];
 }AF_Tuning;
 
 #define AFAUTO_SCAN_STOP_NMAX (256)
@@ -478,6 +474,7 @@ typedef struct _afscan_status_s {
 	unsigned int frmid[AFAUTO_SCAN_STOP_NMAX];
 	int bv_log[AFAUTO_SCAN_STOP_NMAX];
 	unsigned int luma[AFAUTO_SCAN_STOP_NMAX];
+	unsigned int gain[AFAUTO_SCAN_STOP_NMAX];
 	unsigned int scan_tbl_posidx[AFAUTO_SCAN_STOP_NMAX];	
 	unsigned int scan_tbl_pos[AFAUTO_SCAN_STOP_NMAX];
 	unsigned int scan_tbl_stat[AFAUTO_SCAN_STOP_NMAX];
