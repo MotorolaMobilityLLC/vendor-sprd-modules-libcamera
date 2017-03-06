@@ -1932,6 +1932,17 @@ static cmr_int _ispSetDcamTimestamp(cmr_handle isp_alg_handle, void *param_ptr, 
 	return rtn;
 }
 
+static cmr_int _ispSetAuxSensorInfo(cmr_handle isp_alg_handle, void *param_ptr, int(*call_back)())
+{
+	cmr_int 				    ret = ISP_SUCCESS;
+	struct isp_alg_fw_context 		    *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	ret = af_ctrl_ioctrl(cxt->af_cxt.handle,
+			     AF_CMD_SET_UPDATE_AUX_SENSOR,
+			     (void *)param_ptr, NULL);
+
+	return ret;
+}
 
 static struct isp_io_ctrl_fun _s_isp_io_ctrl_fun_tab[] = {
 	{IST_CTRL_SNAPSHOT_NOTICE,           _ispSnapshotNoticeIOCtrl},
@@ -2001,6 +2012,8 @@ static struct isp_io_ctrl_fun _s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_SET_AE_SENSITIVITY,        _ispSetAeSensitivity},
 	{ISP_CTRL_SET_CAPTURE_RAW_MODE,      _ispSetCaptureRawMode},
 	{ISP_CTRL_SET_DCAM_TIMESTAMP,        _ispSetDcamTimestamp},
+	{ISP_CTRL_SET_AUX_SENSOR_INFO,     _ispSetAuxSensorInfo},
+
 	{ISP_CTRL_MAX,                       NULL}
 };
 

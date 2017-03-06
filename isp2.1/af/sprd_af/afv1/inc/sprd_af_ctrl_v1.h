@@ -317,12 +317,12 @@ typedef struct _af_ctrl {
 	af_fv	af_fv_val;
 	struct af_iir_nr_info af_iir_nr;
 	struct af_enhanced_module_info af_enhanced_module;
-	
 	struct afm_thrd_rgb thrd;
 	struct isp_face_area face_info;
 	uint32_t Y_sum_trigger;
 	uint32_t Y_sum_normalize;
 	uint64 fv_combine[T_TOTAL_FILTER_TYPE];
+	struct af_gsensor_info gsensor_info;
 	prime_face_base_info_t face_base;
 //    isp_ctrl_context    *isp_ctx;
 	pthread_mutex_t af_work_lock;

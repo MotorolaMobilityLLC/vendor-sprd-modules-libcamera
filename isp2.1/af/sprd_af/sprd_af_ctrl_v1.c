@@ -3666,6 +3666,44 @@ v=v>(max)?(max):v; hist[v]++;}
 #endif
 	}
 
+static cmr_int af_sprd_adpt_update_aux_sensor(cmr_handle handle, void *in)
+{
+	af_ctrl_t *cxt = (af_ctrl_t *)handle;
+	struct af_aux_sensor_info_t *aux_sensor_info = (struct af_aux_sensor_info_t *)in;
+
+
+	switch (aux_sensor_info->type) {
+	case AF_ACCELEROMETER:
+		ISP_LOGI("accelerometer vertical_up = %f vertical_down = %f horizontal = %f",
+			 aux_sensor_info->gsensor_info.vertical_up,
+			 aux_sensor_info->gsensor_info.vertical_down,
+			 aux_sensor_info->gsensor_info.horizontal);
+		cxt->gsensor_info.vertical_up = aux_sensor_info->gsensor_info.vertical_up;
+		cxt->gsensor_info.vertical_down = aux_sensor_info->gsensor_info.vertical_down;
+		cxt->gsensor_info.horizontal = aux_sensor_info->gsensor_info.horizontal;
+		cxt->gsensor_info.valid = 1;
+		break;
+	case AF_MAGNETIC_FIELD:
+		ISP_LOGI("magnetic field E");
+		break;
+	case AF_GYROSCOPE:
+		/*TBD trans_data_to CAF*/
+		ISP_LOGI("af_sprd_adpt_update_aux_sensor");
+		//afaltek_adpt_trans_data_to_caf(cxt, aux_sensor_info, AFT_DATA_SENSOR);
+		break;
+	case AF_LIGHT:
+		ISP_LOGI("light E");
+		break;
+	case AF_PROXIMITY:
+		ISP_LOGI("proximity E");
+		break;
+	default:
+		ISP_LOGI("sensor type not support");
+		break;
+	}
+
+	return ISP_SUCCESS;
+}
 	cmr_int sprd_afv1_process(afv1_handle_t handle, void *in, void *out) {
 #if 1
 		af_ctrl_t *af = (af_ctrl_t *) handle;
@@ -4228,8 +4266,12 @@ v=v>(max)?(max):v; hist[v]++;}
 				}
 				break;
 			}
+
 		case AF_CMD_SET_PD_INFO:
 			ISP_LOGI("pdaf set callback end");
+			break;
+		case AF_CMD_SET_UPDATE_AUX_SENSOR:
+			rtn = af_sprd_adpt_update_aux_sensor(handle, param0);
 			break;
 		default:
 			AF_LOGE("cmd not support! cmd: %ld", cmd);
