@@ -1399,8 +1399,9 @@ static int camera_save_mipi_raw_to_file(cmr_handle snp_handle, char *name,
 	exp = adgain_exp_info.exp_time;
 	bv = adgain_exp_info.bv;
 
-	read_otp_awb_gain(isp_handle, (void*)&awbc_cfg);
-	read_position(isp_handle, &pos);
+	isp_ioctl(isp_handle, ISP_CTRL_GET_AWB_GAIN, (void*)&awbc_cfg);
+	isp_ioctl(isp_handle, ISP_CTRL_GET_AWB_CT, (void*)&isp_cur_ct);
+	isp_ioctl(isp_handle, ISP_CTRL_GET_AF_POS, (void*)&pos);
 
 	CMR_LOGI("name %s, format %d, width %d, heght %d",
 			name, img_fmt, width, height);
@@ -1431,6 +1432,38 @@ static int camera_save_mipi_raw_to_file(cmr_handle snp_handle, char *name,
 	strcat(file_name, "bv");
 	strcat(file_name, "_");
 	sprintf(tmp_str, "%d", bv);
+	strcat(file_name, tmp_str);
+
+	strcat(file_name, "_");
+	strcat(file_name, "awbgain");
+	strcat(file_name, "_");
+	strcat(file_name, "r");
+	strcat(file_name, "_");
+	sprintf(tmp_str, "%d", awbc_cfg.r_gain);
+	strcat(file_name, tmp_str);
+	strcat(file_name, "_");
+	strcat(file_name, "g");
+	strcat(file_name, "_");
+	sprintf(tmp_str, "%d", awbc_cfg.g_gain);
+	strcat(file_name, tmp_str);
+	strcat(file_name, "_");
+	strcat(file_name, "b");
+	strcat(file_name, "_");
+	sprintf(tmp_str, "%d", awbc_cfg.b_gain);
+	strcat(file_name, tmp_str);
+
+	memset(tmp_str, 0, sizeof(tmp_str));
+	strcat(file_name, "_");
+	strcat(file_name, "ct");
+	strcat(file_name, "_");
+	sprintf(tmp_str, "%d", isp_cur_ct);
+	strcat(file_name, tmp_str);
+
+	memset(tmp_str, 0, sizeof(tmp_str));
+	strcat(file_name, "_");
+	strcat(file_name, "afpos");
+	strcat(file_name, "_");
+	sprintf(tmp_str, "%d", pos);
 	strcat(file_name, tmp_str);
 
 	strcat(file_name, ".mipi_raw");
