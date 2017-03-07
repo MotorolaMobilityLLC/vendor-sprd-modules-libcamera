@@ -27,12 +27,18 @@ enum lsc_product_lib_id {
 	ADPT_MAX_LSC_LIB,
 };
 
+enum pdaf_product_lib_id {
+	ADPT_SPRD_PDAF_LIB,
+	ADPT_MAX_PDAF_LIB,
+};
+
 enum adpt_lib_type {
 	ADPT_LIB_AE,
 	ADPT_LIB_AF,
 	ADPT_LIB_AWB,
 	ADPT_LIB_LSC,
 	ADPT_LIB_AFL,
+	ADPT_LIB_PDAF,
 	ADPT_LIB_MAX,
 };
 

@@ -59,6 +59,8 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/af/sprd_af/aft/inc \
 	$(LOCAL_PATH)/af/sft_af/inc \
 	$(LOCAL_PATH)/af/alc_af/inc \
+	$(LOCAL_PATH)/pdaf/inc \
+	$(LOCAL_PATH)/pdaf/sprd/inc \
 	$(LOCAL_PATH)/lsc/inc \
 	$(LOCAL_PATH)/common/inc/ \
 	$(LOCAL_PATH)/afl/inc \
@@ -89,6 +91,7 @@ LOCAL_SHARED_LIBRARIES += libspafv1 libcutils
 LOCAL_SHARED_LIBRARIES += libspcaftrigger
 
 LOCAL_SHARED_LIBRARIES += libdeflicker
+LOCAL_SHARED_LIBRARIES += libSprdPdAlgo
 
 ifeq ($(strip $(TARGET_BOARD_USE_ALC_AE_AWB)),true)
 LOCAL_CFLAGS += -DCONFIG_USE_ALC_AE

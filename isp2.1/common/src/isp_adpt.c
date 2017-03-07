@@ -27,6 +27,7 @@
 #include "af_sprd_ctrl.h"
 #include "sprd_af_ctrl_v1.h"
 #include "sp_af_ctrl.h"
+#include "sprd_pdaf_adpt.h"
 #include <dlfcn.h>
 #include "ALC_AF_Ctrl.h"
 
@@ -180,6 +181,45 @@ static cmr_int adpt_get_lsc_ops(struct third_lib_info *lib_info,
 	return rtn;
 }
 
+extern struct adpt_ops_type sprd_pdaf_adpt_ops;
+static uint32_t *pdaf_sprd_version_ops[]= {
+	(uint32_t*)&sprd_pdaf_adpt_ops,
+};
+
+uint32_t get_sprd_pdaf_ops(uint32_t pdaf_lib_version, struct adpt_ops_type **pdaf_ops)
+{
+	uint32_t rtn = ISP_SUCCESS;
+	struct adpt_ops_type **table = (struct adpt_ops_type **)pdaf_sprd_version_ops;
+	*pdaf_ops = table[pdaf_lib_version];
+	return rtn;
+}
+
+static uint32_t (*pdaf_product_ops[]) (uint32_t, struct adpt_ops_type **) = {
+	[ADPT_SPRD_PDAF_LIB] = get_sprd_pdaf_ops,
+};
+
+static int32_t adpt_get_pdaf_ops(struct third_lib_info *lib_info,
+			       struct adpt_ops_type **ops)
+{
+	int32_t rtn = -1;
+	uint32_t pdaf_producer_id = 0;
+	uint32_t pdaf_lib_version = 0;
+
+	pdaf_producer_id = lib_info->product_id;
+	pdaf_lib_version = lib_info->version_id;
+	pdaf_producer_id = 0;
+	pdaf_lib_version = 0;
+
+	ISP_LOGI("pdaf_producer_id %d,pdaf_lib_version %d",pdaf_producer_id,pdaf_lib_version);
+	if (ADPT_MAX_PDAF_LIB > pdaf_producer_id) {
+		rtn = pdaf_product_ops[pdaf_producer_id] (pdaf_lib_version, ops);
+	} else {
+		rtn = AF_ERROR;
+	}
+
+	return rtn;
+}
+
 
 static int32_t (*modules_ops[]) (struct third_lib_info *,
 				 struct adpt_ops_type **) = {
@@ -187,6 +227,7 @@ static int32_t (*modules_ops[]) (struct third_lib_info *,
 	[ADPT_LIB_AWB] = adpt_get_awb_ops,
 	[ADPT_LIB_AF] = adpt_get_af_ops,
 	[ADPT_LIB_LSC] = adpt_get_lsc_ops,
+	[ADPT_LIB_PDAF] = adpt_get_pdaf_ops,
 };
 
 int32_t adpt_get_ops(int32_t lib_type, struct third_lib_info *lib_info,

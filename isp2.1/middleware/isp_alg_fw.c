@@ -29,6 +29,8 @@
 #include "isp_dev_access.h"
 #include "isp_ioctrl.h"
 #include "isp_param_file_update.h"
+#include "pdaf_ctrl.h"
+
 
 uint32_t isp_cur_bv;
 uint32_t isp_cur_ct;
@@ -259,6 +261,25 @@ static cmr_int isp_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *para
 		break;
 	case ISP_AF_GET_MONITOR_WIN_NUM:
 		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_GET_AF_MONITOR_WIN_NUM, param0, param1);
+		break;
+	default:
+		break;
+	}
+
+	return rtn;
+}
+
+static cmr_int isp_pdaf_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *param0, void *param1)
+{
+	cmr_int rtn = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context*)isp_alg_handle;
+
+	ISP_LOGE("isp_pdaf_set_cb type = 0x%x", type);
+	switch (type) {
+	case ISP_AF_SET_PD_INFO:
+		//rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF, param0, param1);
+		//break;
+		rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_SET_PD_INFO, param0, param1);
 		break;
 	default:
 		break;
@@ -1071,6 +1092,45 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 	ISP_LOGI("LiuY: done %ld", rtn);
 	return rtn;
 }
+static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type, void *in_ptr)
+{
+	cmr_int 			rtn = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context*)isp_alg_handle;
+	struct isp_statis_info *statis_info = NULL;
+	uint32_t k_addr = 0;
+	uint32_t u_addr = 0;
+	cmr_s32 i = 0;
+	struct pdaf_ctrl_process_in pdaf_param_in;
+	struct isp_statis_buf_input     statis_buf;
+
+	memset((void *)&pdaf_param_in, 0x00, sizeof(pdaf_param_in));
+	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
+
+	statis_info = (struct isp_statis_info *)in_ptr;
+	k_addr = statis_info->phy_addr;
+	u_addr = statis_info->vir_addr;
+
+	uint32_t pdaf_temp[30];
+	for (i=0; i<30; i++) {
+		pdaf_temp[i] = *((uint32_t *)u_addr + i);
+	}
+
+	pdaf_param_in.dBv = pdaf_temp[0];
+	memset((void*)&statis_buf, 0, sizeof(statis_buf));
+
+	rtn = pdaf_ctrl_process(cxt->pdaf_cxt.handle, &pdaf_param_in, NULL);
+
+	statis_buf.buf_size = statis_info->buf_size;
+	statis_buf.phy_addr = statis_info->phy_addr;
+	statis_buf.vir_addr = statis_info->vir_addr;
+	statis_buf.kaddr = statis_info->kaddr;
+	statis_buf.buf_property = ISP_PDAF_BLOCK;
+	statis_buf.buf_flag = 1;
+	rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, &statis_buf, NULL);
+
+	ISP_LOGI("done %ld", rtn);
+	return rtn;
+}
 
 static uint32_t binning_data_cvt(uint32_t bayermode, uint32_t width, uint32_t height, uint16_t *raw_in, struct isp_binning_statistic_info *binning_info)
 {
@@ -1320,8 +1380,14 @@ cmr_int isp_alg_thread_proc(struct cmr_msg *message, void* p_data)
 	case ISP_CTRL_EVT_AF:
 		rtn = ispalg_af_process((cmr_handle)cxt, message->sub_msg_type, message->data);
 		break;
+
 	case ISP_CTRL_EVT_BINNING:
 		rtn = ispalg_binning_stat_data_parser((cmr_handle)cxt, message->data);
+		break;
+	case ISP_CTRL_EVT_PDAF:
+		rtn = ispalg_pdaf_process((cmr_handle)cxt, message->sub_msg_type, message->data);
+		break;
+
 	default:
 		ISP_LOGI("don't support msg");
 		break;
@@ -1636,6 +1702,32 @@ exit:
 	return rtn;
 }
 
+static cmr_int isp_pdaf_sw_init(struct isp_alg_fw_context *cxt)
+{
+	cmr_int rtn = ISP_SUCCESS;
+	struct pdaf_ctrl_init_in                    pdaf_input;
+	struct pdaf_ctrl_init_out                   pdaf_output;
+
+	memset(&pdaf_input, 0x00, sizeof(pdaf_input));
+	memset(&pdaf_output, 0x00, sizeof(pdaf_output));
+
+	pdaf_input.camera_id = cxt->camera_id;
+	//pdaf_input.pdaf_lib_info = cxt->lib_use_info->pdaf_lib_info;
+	pdaf_input.caller_handle = (cmr_handle)cxt;;
+
+	pdaf_input.pdaf_set_cb = isp_pdaf_set_cb;
+
+	rtn = pdaf_ctrl_init(&pdaf_input, &pdaf_output, &cxt->pdaf_cxt.handle);
+
+exit:
+	if (rtn) {
+		ISP_LOGE("failed to PDAF initialize");
+	}
+	ISP_LOGI("done %d",rtn);
+
+	return rtn;
+}
+
 static cmr_int isp_lsc_sw_init(struct isp_alg_fw_context *cxt)
 {
 	uint32_t rtn = ISP_SUCCESS;
@@ -1751,6 +1843,10 @@ static uint32_t isp_alg_sw_init(struct isp_alg_fw_context *cxt, struct isp_alg_s
 	rtn = isp_af_sw_init(cxt);
 	ISP_TRACE_IF_FAIL(rtn, ("af_ctrl_init error"));
 
+	rtn = isp_pdaf_sw_init(cxt);
+	ISP_TRACE_IF_FAIL(rtn, ("pdaf_ctrl_init error"));
+
+
 	rtn = isp_lsc_sw_init(cxt);
 	ISP_TRACE_IF_FAIL(rtn, ("_smart_lsc_init error"));
 
@@ -1827,6 +1923,8 @@ static uint32_t isp_alg_sw_deinit(cmr_handle isp_alg_handle)
 	awb_ctrl_deinit(cxt->awb_cxt.handle);
 
 	af_ctrl_deinit(cxt->af_cxt.handle);
+
+	pdaf_ctrl_deinit(cxt->pdaf_cxt.handle);
 
 	lsc_ctrl_deinit(cxt->lsc_cxt.handle);
 

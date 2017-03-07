@@ -74,6 +74,7 @@ enum af_cmd {
 	AF_CMD_SET_AWB_INFO         = 0x1013,
 	AF_CMD_SET_FACE_DETECT      = 0x1014,
 	AF_CMD_SET_DCAM_TIMESTAMP   = 0x1015,
+	AF_CMD_SET_PD_INFO	    = 0x1016,
 
 	AF_CMD_GET_BASE             = 0x2000,
 	AF_CMD_GET_AF_MODE          = 0X2001,

@@ -336,6 +336,10 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void* param_ptr)
 		if (cxt->isp_event_cb) {
 			(*cxt->isp_event_cb)(ISP_CTRL_EVT_BINNING, statis_info, (void *)cxt->evt_alg_handle);
 		}
+	} else if (irq_info->irq_property == IRQ_PDAF_STATIS) {
+		if (cxt->isp_event_cb) {
+			(*cxt->isp_event_cb)(ISP_CTRL_EVT_PDAF, statis_info, (void *)cxt->evt_alg_handle);
+		}
 	} else {
 		free((void*)statis_info);
 		statis_info = NULL;
@@ -593,6 +597,9 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *param
 		break;
 	case ISP_DEV_SET_STSTIS_BUF:
 		rtn = isp_dev_set_statis_buf(cxt->isp_driver_handle, param0);
+		break;
+	case ISP_DEV_SET_PDAF:
+		rtn = isp_u_pdaf_block(cxt->isp_driver_handle, param0);
 		break;
 	default:
 		break;

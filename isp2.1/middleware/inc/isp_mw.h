@@ -54,15 +54,16 @@ typedef isp_int ( *proc_callback)(isp_handle handler_id, uint32_t mode, void* pa
 #define ISP_CTRL_EVT_AF                      (1 << 14)
 #define ISP_CTRL_EVT_CTRL_SYNC               (1 << 15)
 #define ISP_CTRL_EVT_CONTINUE_AF             (1 << 16)
+#define ISP_CTRL_EVT_PDAF		     (1 << 17)
 #define ISP_CTRL_EVT_BINNING                     (1 << 18)
+
 #define ISP_CTRL_EVT_MONITOR_STOP            (1 << 31)
 #define ISP_CTRL_EVT_MASK                    (uint32_t)(ISP_CTRL_EVT_INIT \
 					|ISP_CTRL_EVT_CONTINUE_STOP|ISP_CTRL_EVT_DEINIT|ISP_CTRL_EVT_CONTINUE \
 					|ISP_CTRL_EVT_SIGNAL|ISP_CTRL_EVT_SIGNAL_NEXT|ISP_CTRL_EVT_IOCTRL \
 					|ISP_CTRL_EVT_TX|ISP_CTRL_EVT_SOF|ISP_CTRL_EVT_EOF|ISP_CTRL_EVT_AWB \
 					|ISP_CTRL_EVT_AE|ISP_CTRL_EVT_AF|ISP_CTRL_EVT_CTRL_SYNC|ISP_CTRL_EVT_CONTINUE_AF \
-					|ISP_CTRL_EVT_BINNING|ISP_CTRL_EVT_MONITOR_STOP)
-
+					|ISP_CTRL_EVT_BINNING|ISP_CTRL_EVT_PDAF|ISP_CTRL_EVT_MONITOR_STOP)
 
 #define ISP_THREAD_QUEUE_NUM                 (100)
 
@@ -119,6 +120,8 @@ enum isp_alg_set_cmd {
 	ISP_AF_SET_MONITOR,
 	ISP_AF_SET_MONITOR_WIN,
 	ISP_AF_GET_MONITOR_WIN_NUM,
+	ISP_AF_SET_PD_INFO,
+	ISP_PDAF_BLOCK_CFG,
 };
 
 enum isp_callback_cmd {
@@ -742,6 +745,7 @@ typedef isp_uint (*isp_cb_of_malloc)(isp_uint type, isp_uint *size_ptr, isp_uint
 typedef isp_uint (*isp_cb_of_free)(isp_uint type, isp_uint *phy_addr, isp_uint *vir_addr, isp_s32 *fd, isp_uint sum, void* private_data);
 typedef cmr_int (*isp_ae_cb)(cmr_handle handle, cmr_int type, void *param0, void *param1);
 typedef cmr_int (*isp_af_cb)(cmr_handle handle, cmr_int type, void *param0, void *param1);
+typedef cmr_int (*isp_pdaf_cb)(cmr_handle handle, cmr_int type, void *param0, void *param1);
 
 /**---------------------------------------------------------------------------*
 **				API					*

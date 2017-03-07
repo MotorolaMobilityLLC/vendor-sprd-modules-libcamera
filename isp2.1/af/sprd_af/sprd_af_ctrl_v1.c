@@ -4228,6 +4228,9 @@ v=v>(max)?(max):v; hist[v]++;}
 				}
 				break;
 			}
+		case AF_CMD_SET_PD_INFO:
+			ISP_LOGI("pdaf set callback end");
+			break;
 		default:
 			AF_LOGE("cmd not support! cmd: %ld", cmd);
 			rtn = AFV1_ERROR;

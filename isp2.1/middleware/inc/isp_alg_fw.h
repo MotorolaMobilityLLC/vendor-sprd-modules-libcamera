@@ -99,6 +99,12 @@ struct af_info {
 	uint32_t log_af_size;
 };
 
+struct pdaf_info {
+	cmr_handle handle;
+	cmr_u8 pdaf_support;
+	//struct pdaf_ctrl_process_out proc_out;
+};
+
 struct lsc_info {
 	cmr_handle handle;
 	void * lsc_tab_address;
@@ -121,6 +127,7 @@ struct isp_alg_fw_context {
 	struct af_info af_cxt;
 	struct lsc_info lsc_cxt;
 	struct afl_info afl_cxt;
+	struct pdaf_info pdaf_cxt;
 	struct sensor_libuse_info *lib_use_info;
 	struct sensor_raw_ioctrl* ioctrl_ptr;
 	cmr_handle thr_handle;

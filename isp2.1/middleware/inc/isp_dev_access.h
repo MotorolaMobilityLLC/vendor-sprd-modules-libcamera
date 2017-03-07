@@ -40,6 +40,7 @@ enum isp_dev_access_ctrl_cmd {
 	ISP_DEV_STOP,
 	ISP_DEV_ENABLE_IRQ,
 	ISP_DEV_SET_STSTIS_BUF,
+	ISP_DEV_SET_PDAF,
 	ISP_DEV_CMD_MAX
 };
 
