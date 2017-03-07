@@ -214,6 +214,7 @@ struct aealtek_cxt {
 	void *seq_handle;
 
 	cmr_s32 lock_cnt;
+	cmr_s32 hdr_lock_cnt;
 	cmr_s32 pre_cnt;
 	cmr_s32 ae_state;
 
@@ -247,6 +248,7 @@ struct aealtek_cxt {
 
 static cmr_int aealtek_reset_touch_ack(struct aealtek_cxt *cxt_ptr);
 static cmr_int aealtek_set_lock(struct aealtek_cxt *cxt_ptr, cmr_int is_lock, const char *cb_func);
+static cmr_int aealtek_set_hdr_lock(struct aealtek_cxt *cxt_ptr, cmr_int is_lock, const char *cb_func);
 static cmr_int aealtek_set_flash_est(struct aealtek_cxt *cxt_ptr, cmr_u32 is_reset);
 static cmr_int aealtek_enable_debug_report(struct aealtek_cxt *cxt_ptr, cmr_int enable);
 static cmr_int aealtek_set_tuning_param(struct aealtek_cxt *cxt_ptr, void *tuning_param);
@@ -2878,6 +2880,8 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 	ISP_LOGI("work_mode=%ld",in_ptr->work_param.work_mode);
 	switch (work_mode) {
 	case ISP3A_WORK_MODE_PREVIEW:
+		if (1 == cxt_ptr->nxt_status.is_hdr_status)
+			aealtek_set_hdr_lock(cxt_ptr, 0, __func__);
 		cxt_ptr->nxt_status.is_hdr_status = 0;
 		if (in_ptr->work_param.capture_mode != ISP_CAP_MODE_AUTO &&
 		    in_ptr->work_param.capture_mode != ISP_CAP_MODE_BURST) {
@@ -3001,6 +3005,35 @@ static cmr_int aealtek_set_lock(struct aealtek_cxt *cxt_ptr, cmr_int is_lock, co
 		is_lock = 0;
 
 	ret = aealtek_set_lib_lock(cxt_ptr, is_lock);
+	if (ret)
+		goto exit;
+
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGI("ret=%ld !!!", ret);
+	return ret;
+}
+
+static cmr_int aealtek_set_hdr_lock(struct aealtek_cxt *cxt_ptr, cmr_int is_lock, const char *cb_func)
+{
+	cmr_int ret = ISP_ERROR;
+
+	if (!cxt_ptr) {
+		ISP_LOGE("param is NULL error!");
+		goto exit;
+	}
+	ISP_LOGI("hdr_lock_cnt=%d, is_lock=%ld cb: %s", cxt_ptr->hdr_lock_cnt, is_lock, cb_func);
+
+	if (is_lock && 0 == cxt_ptr->hdr_lock_cnt) {
+		ret = aealtek_set_lib_lock(cxt_ptr, is_lock);
+		cxt_ptr->hdr_lock_cnt++;
+	} else if (0 == is_lock && cxt_ptr->hdr_lock_cnt > 0){
+		ret = aealtek_set_lib_lock(cxt_ptr, is_lock);
+		cxt_ptr->hdr_lock_cnt--;
+	} else {
+		return ISP_SUCCESS;
+	}
+
 	if (ret)
 		goto exit;
 
@@ -3778,11 +3811,11 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	memset(&callback_in, 0x00, sizeof(callback_in));
 
 	if(cxt_ptr->hdr_enable && cxt_ptr->nxt_status.is_hdr_status) {
-		if (0 == cxt_ptr->lock_cnt)
-			aealtek_set_lock(cxt_ptr, 1, __func__);
+		aealtek_set_hdr_lock(cxt_ptr, 1, __func__);
 		ret = aealtek_set_hdr_ev(cxt_ptr, in_ptr, out_ptr);
 		return ISP_SUCCESS;
 	}
+
 	if (cxt_ptr->main_flash_status && cxt_ptr->pre_cnt == 0) {
 		ret = aealtek_convert_lib_exposure2outdata(cxt_ptr,
 					&cxt_ptr->flash_param.main_flash_est.exp_cell, &cxt_ptr->lib_data.output_data);
@@ -4108,7 +4141,6 @@ static cmr_int aealtek_set_hdr_ev(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_pa
 	level = cxt_ptr->nxt_status.ui_param.hdr_level;
 	ISP_LOGI("hdr_level=%d", level);
 	if(level >= 3) {//if (level < 0 || level >= 3)    modify cause:  comparison of unsigned enum expression < 0 is always false
-		aealtek_set_lock(cxt_ptr, 0, __func__);
 		return ISP_SUCCESS;
 	}
 
