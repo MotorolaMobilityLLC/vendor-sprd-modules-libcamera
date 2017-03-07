@@ -65,8 +65,8 @@
 #define PREVIEW_MIPI_PER_LANE_BPS	360
 
 /*line time unit: 1ns*/
-#define SNAPSHOT_LINE_TIME		26674
-#define PREVIEW_LINE_TIME		26674
+#define SNAPSHOT_LINE_TIME		53333 //26674
+#define PREVIEW_LINE_TIME		106000 //26674
 
 /* frame length*/
 #define SNAPSHOT_FRAME_LENGTH		4230 //623
@@ -74,7 +74,7 @@
 
 /* please ref your spec */
 #define FRAME_OFFSET			0
-#define SENSOR_MAX_GAIN			0xabcd
+#define SENSOR_MAX_GAIN			0x200 //8x
 #define SENSOR_BASE_GAIN		0x40
 #define SENSOR_MIN_SHUTTER		4
 
@@ -1191,17 +1191,17 @@ static void gc8024_write_gain(SENSOR_HW_HANDLE handle,uint32_t gain)
 	uint8_t value=0;
 
 	value = (Sensor_ReadReg(0xfa)>>7)&0x01;
-	
+
 	if(value==1)
 		PreorCap=0;//preview mode
 	else
 		PreorCap=1;//capture mode
 	if (SENSOR_MAX_GAIN < gain)
 			gain = SENSOR_MAX_GAIN;
-	if(gain < 0x40)
-		gain = 0x40;
+	if(gain < SENSOR_BASE_GAIN)
+		gain = SENSOR_BASE_GAIN;
 	if((ANALOG_GAIN_1<= gain)&&(gain < ANALOG_GAIN_2))
-	{	
+	{
 		Sensor_WriteReg(0x21,0x0b);
 		Sensor_WriteReg(0xd8,0x20);
 		//analog gain

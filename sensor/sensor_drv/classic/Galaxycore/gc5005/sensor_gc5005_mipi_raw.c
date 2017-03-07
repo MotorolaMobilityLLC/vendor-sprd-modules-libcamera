@@ -62,7 +62,7 @@
 
 /* please ref your spec */
 #define FRAME_OFFSET			0
-#define SENSOR_MAX_GAIN			0xabcd
+#define SENSOR_MAX_GAIN			0x180 //6x
 #define SENSOR_BASE_GAIN		0x40
 #define SENSOR_MIN_SHUTTER		4
 
@@ -1001,10 +1001,10 @@ static void gc5005_write_gain(SENSOR_HW_HANDLE handle,uint32_t gain)
 	Sensor_WriteReg(0xfe,0x00);
 	if (SENSOR_MAX_GAIN < gain)
 			gain = SENSOR_MAX_GAIN;
-	if(gain < 0x40)
-		gain = 0x40;
+	if(gain < SENSOR_BASE_GAIN)
+		gain = SENSOR_BASE_GAIN;
 	if((ANALOG_GAIN_1<= gain)&&(gain < ANALOG_GAIN_2))
-	{	
+	{
 		Sensor_WriteReg(0xfe, 0x00);
 		Sensor_WriteReg(0x21, 0x0f);
 		Sensor_WriteReg(0x29, 0x22);
