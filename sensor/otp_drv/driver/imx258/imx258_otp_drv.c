@@ -451,6 +451,10 @@ int imx258_compatible_convert(otp_drv_cxt_t *otp_drv_handle,void* p_data)
 	convert_data->single_otp.iso_awb_info.gain_r = format_data->awb_cali_dat.awb_rdm_info[0].R;
 	convert_data->single_otp.iso_awb_info.gain_g = format_data->awb_cali_dat.awb_rdm_info[0].G;
 	convert_data->single_otp.iso_awb_info.gain_b = format_data->awb_cali_dat.awb_rdm_info[0].B;
+	/*awb golden data*/
+	convert_data->single_otp.awb_golden_info.gain_r = format_data->awb_cali_dat.awb_gld_info[0].R;
+	convert_data->single_otp.awb_golden_info.gain_g = format_data->awb_cali_dat.awb_gld_info[0].G;
+	convert_data->single_otp.awb_golden_info.gain_b = format_data->awb_cali_dat.awb_gld_info[0].B;
 	/*optical center*/
 	memcpy((void*)&convert_data->single_otp.optical_center_info,
                             (void*)&format_data->opt_center_dat,
@@ -459,6 +463,10 @@ int imx258_compatible_convert(otp_drv_cxt_t *otp_drv_handle,void* p_data)
 	convert_data->single_otp.lsc_info.lsc_data_addr = (uint8_t*)&format_data->lsc_cali_dat + \
                                                       format_data->lsc_cali_dat.lsc_calib_random.offset;
 	convert_data->single_otp.lsc_info.lsc_data_size = format_data->lsc_cali_dat.lsc_calib_random.length;
+	/*lsc golden data*/
+	convert_data->single_otp.lsc_golden_info.lsc_data_addr = (uint8_t*)&format_data->lsc_cali_dat + \
+                                                      format_data->lsc_cali_dat.lsc_calib_golden.offset;
+	convert_data->single_otp.lsc_golden_info.lsc_data_size = format_data->lsc_cali_dat.lsc_calib_golden.length;
 	/*af convert*/
 	convert_data->single_otp.af_info.infinite_cali = format_data->af_cali_dat.infinity_dac;
 	convert_data->single_otp.af_info.macro_cali = format_data->af_cali_dat.macro_dac;

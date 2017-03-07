@@ -350,11 +350,15 @@ struct sensor_otp_optCenter_info{
 struct sensor_single_otp_info {
 	cmr_u8 program_flag;
 	struct sensor_otp_module_info module_info;
-	struct sensor_otp_iso_awb_info iso_awb_info;
-	struct sensor_otp_lsc_info lsc_info;
+	struct sensor_otp_iso_awb_info iso_awb_info; /*random awb*/
+	struct sensor_otp_lsc_info lsc_info; /*random lsc*/
 	struct sensor_otp_af_info af_info;
 	struct sensor_otp_pdaf_info pdaf_info;
+
 	struct sensor_otp_optCenter_info optical_center_info;
+	/*awb,lsc golden data*/
+	struct sensor_otp_lsc_info lsc_golden_info;
+	struct sensor_otp_iso_awb_info awb_golden_info;
 	cmr_u16 checksum;
 };
 
