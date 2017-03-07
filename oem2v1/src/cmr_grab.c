@@ -808,7 +808,7 @@ cmr_int cmr_grab_stop_capture(cmr_handle grab_handle)
 	CMR_CHECK_FD;
 	ret = ioctl(p_grab->fd, SPRD_IMG_IO_STOP_CAPTURE, &stop);
 	if (ret) {
-		CMR_LOGE("failed to stop off-the-fly path");
+		CMR_LOGE("failed to stop offline path");
 	}
 	CMR_LOGI("ret = %ld", ret);
 

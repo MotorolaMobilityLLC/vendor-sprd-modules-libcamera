@@ -198,7 +198,7 @@ public:
 	int releaseDfsPolicy(int dfs_policy);
 	int IommuIsEnabled(void);
 	void setSensorCloseFlag();
-	int checkIfNeedToStopOffTheFlyZsl();
+	int checkIfNeedToStopOffLineZsl();
 	uint64_t getZslBufferTimestamp();/**add for 3dcapture, get zsl buffer's timestamp in zsl query*/
 	void setZslBufferTimestamp(uint64_t timestamp);/**add for 3dcapture, set the needed timestamp*/
 	void setMultiCallBackYuvMode(bool mode);
@@ -438,9 +438,8 @@ private:
 	void pushZSLQueue(ZslBufferQueue frame);
 	void releaseZSLQueue();
 	void setZslBuffers();
-	void receiveZslFrame(struct camera_frame_type *frame);
-	void processZslFrame(void *p_data);
 	void snapshotZsl(void *p_data);
+	void skipZslFrameForFlashCapture();
 	uint32_t getZslBufferIDForFd(cmr_s32 fd);
 	int pushZslFrame(struct camera_frame_type *frame);
 	struct camera_frame_type popZslFrame();
@@ -713,7 +712,8 @@ private:
 	int                           mTempStates;
 	int                           mIsTempChanged;
 	int                           mSprdCameraLowpower;
-	uint32_t                      mFlagOffTheFlyZslStart;
+	uint32_t                      mFlagOffLineZslStart;
+	int64_t                       mZslSnapshotTime;
 };
 
 }; // namespace sprdcamera

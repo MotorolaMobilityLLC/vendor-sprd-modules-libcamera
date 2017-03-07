@@ -991,8 +991,8 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request)
 		mHDRProcessFlag = false;
 	}
 
-	// check if need to stop off-the-fly zsl
-	mOEMIf->checkIfNeedToStopOffTheFlyZsl();
+	// check if need to stop offline zsl
+	mOEMIf->checkIfNeedToStopOffLineZsl();
 
 	switch(capturePara.cap_intent)
 	{

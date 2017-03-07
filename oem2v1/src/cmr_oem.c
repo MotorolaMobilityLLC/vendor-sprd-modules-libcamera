@@ -60,8 +60,8 @@ enum oem_ev_level {
 	OEM_EV_LEVEL_3
 };
 
-#define OFF_THE_FLY_PATH_BIT                         0x8
-#define OFF_THE_FLY_CHANNEL                          3
+#define OFFLINE_CHANNEL_BIT                         0x8
+#define OFFLINE_CHANNEL                             3
 
 #define CHECK_HANDLE_VALID(handle) \
                                                      do { \
@@ -5563,8 +5563,8 @@ cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits, cmr_ui
 			}
 			video_snapshot_type = setting_param.cmd_type_value;
 
-			/* for sharkl2 off-the-fly path */
-			if ((channel_bits & OFF_THE_FLY_PATH_BIT) &&
+			/* for sharkl2 offline path */
+			if ((channel_bits & OFFLINE_CHANNEL_BIT) &&
 			    is_zsl_enable == 0 &&
 			    video_snapshot_type != VIDEO_SNAPSHOT_VIDEO) {
 				ret = cmr_grab_start_capture(cxt->grab_cxt.grab_handle,1);
@@ -5591,8 +5591,8 @@ cmr_int camera_channel_pause(cmr_handle oem_handle, cmr_uint channel_id, cmr_u32
 	}
 	CMR_LOGI("channel id %ld, reconfig flag %d", channel_id, reconfig_flag);
 
-	/* for sharkl2 off-the-fly path */
-	if (channel_id == OFF_THE_FLY_CHANNEL) {
+	/* for sharkl2 offline path */
+	if (channel_id == OFFLINE_CHANNEL) {
 		ret = cmr_grab_stop_capture(cxt->grab_cxt.grab_handle);
 		if (ret) {
 			CMR_LOGE("failed to stop off the fly path %ld", ret);
@@ -5629,8 +5629,8 @@ cmr_int camera_channel_resume(cmr_handle oem_handle, cmr_uint channel_id, cmr_u3
 	camera_set_discard_frame(cxt, 0);
 	camera_set_vendor_hdr_ev(oem_handle);
 
-	/* for sharkl2 off-the-fly path */
-	if (channel_id == OFF_THE_FLY_CHANNEL) {
+	/* for sharkl2 offline path */
+	if (channel_id == OFFLINE_CHANNEL) {
 		camera_local_start_capture(oem_handle);
 	}
 
@@ -5676,8 +5676,8 @@ cmr_int camera_channel_stop(cmr_handle oem_handle, cmr_u32 channel_bits)
 		goto exit;
 	}
 
-	/* for sharkl2 off-the-fly path */
-	if (channel_bits & OFF_THE_FLY_PATH_BIT) {
+	/* for sharkl2 offline path */
+	if (channel_bits & OFFLINE_CHANNEL_BIT) {
 		ret = cmr_grab_stop_capture(cxt->grab_cxt.grab_handle);
 		if (ret) {
 			CMR_LOGE("failed to stop off the fly path %ld", ret);
