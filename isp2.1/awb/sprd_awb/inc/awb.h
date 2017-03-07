@@ -260,11 +260,8 @@ extern "C"
 
 	struct awb_init_param
 	{
-		uint32_t stat_img_w;	// will be removed
-		uint32_t stat_img_h;	// will be removed
-		uint32_t r_pix_cnt;		// will be removed
-		uint32_t g_pix_cnt;		// will be removed
-		uint32_t b_pix_cnt;		// will be removed
+		uint32_t stat_img_w;
+		uint32_t stat_img_h;
 
 		uint32_t otp_random_r;
 		uint32_t otp_random_g;
@@ -279,8 +276,6 @@ extern "C"
 	struct awb_calc_param
 	{
 		struct awb_stat_img stat_img;
-		uint32_t stat_img_w;
-		uint32_t stat_img_h;
 		uint32_t r_pix_cnt;
 		uint32_t g_pix_cnt;
 		uint32_t b_pix_cnt;
@@ -327,13 +322,12 @@ extern "C"
 /*------------------------------------------------------------------------------*
 *				Function Prototype					*
 *-------------------------------------------------------------------------------*/
-//void* awb_init_v1(struct awb_param_init* init_param, struct awb_rgb_gain* gain);
-
-//int awb_calc_v1(void* awb_handle, struct awb_calc_param* calc_param, struct awb_calc_result* calc_result);
-
-//int awb_ioctrl_v1(void* awb_handle, int cmd, void* param);
-
-//int awb_deinit_v1(void* awb_handle);
+#ifdef WIN32
+void *awb_init_v1(struct awb_init_param *init_param, struct awb_rgb_gain *gain);
+int awb_calc_v1(void *awb_handle, struct awb_calc_param *calc_param, struct awb_calc_result *calc_result);
+int awb_ioctrl_v1(void *awb_handle, int cmd, void *param);
+int awb_deinit_v1(void *awb_handle);
+#endif
 
 /*------------------------------------------------------------------------------*
 *				Compiler Flag					*

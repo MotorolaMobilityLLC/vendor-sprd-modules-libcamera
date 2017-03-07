@@ -494,20 +494,7 @@ static uint32_t _awb_get_pix_cnt(struct awb_ctrl_cxt *cxt, void *param)
 	cxt->init_param.stat_win_size.w = in_ptr->w /2/32*2;
 	cxt->init_param.stat_win_size.h = in_ptr->h /2/32*2;
 
-	if (cxt->init_param.stat_win_size.w < 120){
-		cxt->awb_init_param.b_pix_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) / 4;
-		cxt->awb_init_param.g_pix_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) / 4;
-		cxt->awb_init_param.r_pix_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) / 4;
-	}
-	else{
-		// if sensor big than 8M, AEM statistics information must div 2.
-		cxt->awb_init_param.b_pix_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) /2/4;
-		cxt->awb_init_param.g_pix_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) /2/4;
-		cxt->awb_init_param.r_pix_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) /2/4;
-	}
-
 	return rtn;
-
 }
 
 static uint32_t _awb_get_stat_size(struct awb_ctrl_cxt *cxt, void *param)
@@ -920,6 +907,8 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 	cxt->otp_info.rdm_stat_info.g = param->otp_info.rdm_stat_info.g;
 	cxt->otp_info.rdm_stat_info.b = param->otp_info.rdm_stat_info.b;
 
+	AWB_CTRL_LOGE("stat %d x %d", param->stat_img_size.w, param->stat_img_size.h);
+
 	if (cxt->awb_init_param.tuning_param.skip_frame_num > 8)
 	{
 		cxt->awb_init_param.tuning_param.skip_frame_num = 0;
@@ -1069,17 +1058,30 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	struct awb_calc_result calc_result;
 	memset(&calc_param, 0x00, sizeof(calc_param));
 	memset(&calc_result, 0x00, sizeof(calc_result));
+#if 0
 	calc_param.stat_img.r = param->stat_img.chn_img.r;
 	calc_param.stat_img.g = param->stat_img.chn_img.g;
 	calc_param.stat_img.b = param->stat_img.chn_img.b;
+	calc_param.b_pix_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) / 4;
+	calc_param.g_pix_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) / 4;
+	calc_param.r_pix_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) / 4;
+	if (cxt->stat_win_size.w >= 120){
+		// if sensor big than 8M, AEM statistics information must div 2.
+		calc_param.b_pix_cnt /= 2;
+		calc_param.g_pix_cnt /= 2;
+		calc_param.r_pix_cnt /= 2;
+	}
+#else
+	calc_param.stat_img.r = param->stat_img_awb.chn_img.r;
+	calc_param.stat_img.g = param->stat_img_awb.chn_img.g;
+	calc_param.stat_img.b = param->stat_img_awb.chn_img.b;
+	calc_param.r_pix_cnt = 1;
+	calc_param.g_pix_cnt = 1;
+	calc_param.b_pix_cnt = 1;
+#endif
 	calc_param.bv = param->bv;
 	calc_param.iso = param->ae_info.iso;
 
-	calc_param.stat_img_w = cxt->awb_init_param.stat_img_w;
-	calc_param.stat_img_h = cxt->awb_init_param.stat_img_h;
-	calc_param.r_pix_cnt = cxt->awb_init_param.r_pix_cnt;
-	calc_param.g_pix_cnt = cxt->awb_init_param.g_pix_cnt;
-	calc_param.b_pix_cnt = cxt->awb_init_param.b_pix_cnt;
 
 	memcpy(calc_param.matrix, param->matrix, 9*sizeof(int));
 	memcpy(calc_param.gamma, param->gamma, 256);

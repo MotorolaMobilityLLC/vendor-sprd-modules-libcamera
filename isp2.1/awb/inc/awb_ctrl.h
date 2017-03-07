@@ -234,19 +234,19 @@ struct awb_ctrl_ae_info {
 	int32_t ev_table[16];
 };
 
-/*ALC_E*/
 struct awb_ctrl_calc_param {
 	uint32_t quick_mode;
 	int32_t bv;
-	union awb_ctrl_stat_img stat_img;
-	struct awb_ctrl_envi_info envi_info[2];
+	union awb_ctrl_stat_img stat_img;	// stat from aem
+
+	union awb_ctrl_stat_img stat_img_awb;	// stat from binning
+	unsigned int stat_width_awb;
+	unsigned int stat_height_awb;
+
 	struct awb_ctrl_ae_info ae_info;
 	uint32_t scalar_factor;
 
 	// just for simulation
-	int lsc_width;
-	int lsc_height;
-	unsigned short lsc_table[100*100*4];
 	int matrix[9];
 	unsigned char gamma[256];
 };

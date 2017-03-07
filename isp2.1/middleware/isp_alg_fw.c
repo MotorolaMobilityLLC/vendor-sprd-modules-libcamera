@@ -46,6 +46,7 @@ static uint32_t aeStatistic[32*32*4];
 struct isp_awb_calc_info {
 	struct ae_calc_out ae_result;
 	struct isp_awb_statistic_info *ae_stat_ptr;
+	struct isp_binning_statistic_info *awb_stat_ptr;
 	uint64_t k_addr;
 	uint64_t u_addr;
 	isp_u32 type;
@@ -531,6 +532,8 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle,
 	awb_calc_info->ae_result = ae_result;
 	awb_calc_info->ae_stat_ptr = &cxt->aem_stats;
 
+	awb_calc_info->awb_stat_ptr = &cxt->binning_stats;
+
 	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
@@ -572,6 +575,13 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle, struct isp_awb_calc_in
 	out_ptr->stat_img.chn_img.r = in_ptr->ae_stat_ptr->r_info;
 	out_ptr->stat_img.chn_img.g = in_ptr->ae_stat_ptr->g_info;
 	out_ptr->stat_img.chn_img.b = in_ptr->ae_stat_ptr->b_info;
+
+	out_ptr->stat_img_awb.chn_img.r = in_ptr->awb_stat_ptr->r_info;
+	out_ptr->stat_img_awb.chn_img.g = in_ptr->awb_stat_ptr->g_info;
+	out_ptr->stat_img_awb.chn_img.b = in_ptr->awb_stat_ptr->b_info;
+	out_ptr->stat_width_awb = in_ptr->awb_stat_ptr->binning_size.w;
+	out_ptr->stat_height_awb = in_ptr->awb_stat_ptr->binning_size.h;
+
 	out_ptr->bv                 = bv;
 //ALC_S
 	out_ptr->ae_info.bv		= bv;
@@ -592,17 +602,6 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle, struct isp_awb_calc_in
 	struct isp_pm_param_data pm_param;
 
 	memset(&pm_param, 0, sizeof(pm_param));
-
-	// LSC
-	BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
-	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING,  (void*)&io_pm_input, (void*)&io_pm_output);
-	struct isp_lsc_info *lsc_info = (struct isp_lsc_info *)io_pm_output.param_data->data_ptr;
-	out_ptr->lsc_width = lsc_info->gain_w;
-	out_ptr->lsc_height = lsc_info->gain_h;
-	if (lsc_info->data_ptr != NULL)
-	{
-		memcpy(out_ptr->lsc_table, lsc_info->data_ptr, lsc_info->len);
-	}
 
 	// CMC
 	BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_CMC10, ISP_BLK_CMC10, 0, 0);
@@ -1562,6 +1561,10 @@ static cmr_int isp_awb_sw_init(struct isp_alg_fw_context *cxt)
 			param.stat_img_size.h = info.win_num.h;
 			param.stat_win_size.w = info.win_size.w;
 			param.stat_win_size.h = info.win_size.h;
+
+			param.stat_img_size.w = cxt->binning_stats.binning_size.w;
+			param.stat_img_size.h = cxt->binning_stats.binning_size.h;
+
 			param.tuning_param    = output.param_data->data_ptr;
 			param.param_size      = output.param_data->data_size;
 			param.lib_param = cxt->lib_use_info->awb_lib_info;
@@ -1979,6 +1982,16 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in *input_ptr, cmr_handle *isp_al
 	cxt->binning_stats.r_info = binning_info;
 	cxt->binning_stats.g_info = binning_info + max_binning_num;
 	cxt->binning_stats.b_info = cxt->binning_stats.g_info + max_binning_num;
+
+	uint32_t binning_hx = 5;
+	uint32_t binning_vx = 5;
+	uint32_t src_w = cxt->commn_cxt.src.w;
+	uint32_t src_h = cxt->commn_cxt.src.h;
+	uint32_t binnng_w = (src_w >> binning_hx) & ~0x1;
+	uint32_t binnng_h = (src_h >> binning_vx) & ~0x1;
+	cxt->binning_stats.binning_size.w = binnng_w/2;
+	cxt->binning_stats.binning_size.h = binnng_h/2;
+
 	rtn = isp_alg_sw_init(cxt, &isp_alg_input);
 	if (rtn) {
 		goto exit;
@@ -2141,64 +2154,6 @@ static cmr_int ae_set_work_mode(cmr_handle isp_alg_handle, uint32_t new_mode, ui
 
 	return rtn;
 }
-
-void writeBmpEx2(const char* fname, unsigned int* rArr, unsigned int* gArr, unsigned int* bArr, int w, int h, double maxRGB )
-{
-	//unsigned char* pBuf;
-	unsigned char pBuf[32*3*32+54];
-	int line_width;
-	line_width = (((w * 3) + 3) >> 2) << 2;
-	unsigned char* prgb;
-	//pBuf = new unsigned char[line_width*h + 54];
-	unsigned char* header = pBuf;
-	prgb = pBuf + 54;
-
-
-	header[0] = 'B';
-	header[1] = 'M';
-	*(int*)(header + 2) = line_width*w + 54;
-	*(int*)(header + 0xa) = 54;
-	*(int*)(header + 0xe) = 40;
-	*(int*)(header + 0x12) = w;
-	*(int*)(header + 0x16) = h;
-	*(short*)(header + 0x1a) = 1;
-	*(short*)(header + 0x1c) = 24;
-	*(int*)(header + 0x1e) = 0;
-	*(int*)(header + 0x22) = line_width*w;
-	*(int*)(header + 0x26) = 3000;
-	*(int*)(header + 0x2a) = 3000;
-	*(int*)(header + 0x2e) = 0;
-	*(int*)(header + 0x32) = 0;
-
-	int ind;
-	int indBmp;
-	int i;
-	int j;
-	for (j = 0;j < h;j++)
-		for (i = 0;i < w;i++)
-		{
-			int r;
-			int g;
-			int b;
-			indBmp = line_width*(h - j - 1) + i * 3;
-			ind = j*w + i;
-			r = rArr[ind] * 255.0 / maxRGB + 0.5;
-			g = gArr[ind] * 255.0 / maxRGB + 0.5;
-			b = bArr[ind] * 255.0 / maxRGB + 0.5;
-			prgb[indBmp] = b;
-			prgb[indBmp + 1] = g;
-			prgb[indBmp + 2] = r;
-		}
-
-	FILE* fp;
-	fp = fopen(fname, "wb");
-	fwrite(pBuf, line_width*h + 54, 1, fp);
-	fclose(fp);
-
-
-	//delete[]pBuf;
-}
-
 
 static cmr_int isp_update_alg_param(cmr_handle isp_alg_handle)
 {
