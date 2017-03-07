@@ -4,9 +4,9 @@
 /*v21_sensor_iircnr_level*/
 {
 	/*cnr_iir_mode*/
-	0x00,
+	0x0000,
 	/*cnr_uv_pg_th*/
-	0x00,
+	0x0000,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -59,7 +59,7 @@
 	/*iircnr_str*/
 	{
 		/*iircnr_y_max_th*/
-		0xfa,
+		0xFA,
 		/*iircnr_y_th*/
 		0xF0,
 		/*iircnr_y_min_th*/
@@ -160,9 +160,9 @@
 /*v21_sensor_iircnr_level*/
 {
 	/*cnr_iir_mode*/
-	0x00,
+	0x0000,
 	/*cnr_uv_pg_th*/
-	0x00,
+	0x0000,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -215,7 +215,7 @@
 	/*iircnr_str*/
 	{
 		/*iircnr_y_max_th*/
-		0xfa,
+		0xFA,
 		/*iircnr_y_th*/
 		0xF0,
 		/*iircnr_y_min_th*/
@@ -316,9 +316,9 @@
 /*v21_sensor_iircnr_level*/
 {
 	/*cnr_iir_mode*/
-	0x00,
+	0x0000,
 	/*cnr_uv_pg_th*/
-	0x00,
+	0x0000,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -371,7 +371,7 @@
 	/*iircnr_str*/
 	{
 		/*iircnr_y_max_th*/
-		0xfa,
+		0xFA,
 		/*iircnr_y_th*/
 		0xF0,
 		/*iircnr_y_min_th*/
@@ -472,9 +472,9 @@
 /*v21_sensor_iircnr_level*/
 {
 	/*cnr_iir_mode*/
-	0x00,
+	0x0000,
 	/*cnr_uv_pg_th*/
-	0x00,
+	0x0000,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -527,7 +527,7 @@
 	/*iircnr_str*/
 	{
 		/*iircnr_y_max_th*/
-		0xfa,
+		0xFA,
 		/*iircnr_y_th*/
 		0xF0,
 		/*iircnr_y_min_th*/
@@ -628,9 +628,9 @@
 /*v21_sensor_iircnr_level*/
 {
 	/*cnr_iir_mode*/
-	0x00,
+	0x0000,
 	/*cnr_uv_pg_th*/
-	0x00,
+	0x0000,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -683,7 +683,7 @@
 	/*iircnr_str*/
 	{
 		/*iircnr_y_max_th*/
-		0xfa,
+		0xFA,
 		/*iircnr_y_th*/
 		0xF0,
 		/*iircnr_y_min_th*/
@@ -784,9 +784,9 @@
 /*v21_sensor_iircnr_level*/
 {
 	/*cnr_iir_mode*/
-	0x00,
+	0x0000,
 	/*cnr_uv_pg_th*/
-	0x00,
+	0x0000,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -839,7 +839,7 @@
 	/*iircnr_str*/
 	{
 		/*iircnr_y_max_th*/
-		0xfa,
+		0xFA,
 		/*iircnr_y_th*/
 		0xF0,
 		/*iircnr_y_min_th*/
@@ -940,9 +940,9 @@
 /*v21_sensor_iircnr_level*/
 {
 	/*cnr_iir_mode*/
-	0x00,
+	0x0000,
 	/*cnr_uv_pg_th*/
-	0x00,
+	0x0000,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -995,7 +995,7 @@
 	/*iircnr_str*/
 	{
 		/*iircnr_y_max_th*/
-		0xfa,
+		0xFA,
 		/*iircnr_y_th*/
 		0xF0,
 		/*iircnr_y_min_th*/
@@ -1096,9 +1096,9 @@
 /*v21_sensor_iircnr_level*/
 {
 	/*cnr_iir_mode*/
-	0x00,
+	0x0000,
 	/*cnr_uv_pg_th*/
-	0x00,
+	0x0000,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -1151,7 +1151,7 @@
 	/*iircnr_str*/
 	{
 		/*iircnr_y_max_th*/
-		0xfa,
+		0xFA,
 		/*iircnr_y_th*/
 		0xF0,
 		/*iircnr_y_min_th*/
@@ -1252,9 +1252,9 @@
 /*v21_sensor_iircnr_level*/
 {
 	/*cnr_iir_mode*/
-	0x00,
+	0x0000,
 	/*cnr_uv_pg_th*/
-	0x00,
+	0x0000,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -1307,7 +1307,7 @@
 	/*iircnr_str*/
 	{
 		/*iircnr_y_max_th*/
-		0xfa,
+		0xFA,
 		/*iircnr_y_th*/
 		0xF0,
 		/*iircnr_y_min_th*/
@@ -1408,9 +1408,9 @@
 /*v21_sensor_iircnr_level*/
 {
 	/*cnr_iir_mode*/
-	0x00,
+	0x0000,
 	/*cnr_uv_pg_th*/
-	0x00,
+	0x0000,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -1463,7 +1463,7 @@
 	/*iircnr_str*/
 	{
 		/*iircnr_y_max_th*/
-		0xfa,
+		0xFA,
 		/*iircnr_y_th*/
 		0xF0,
 		/*iircnr_y_min_th*/
@@ -1564,9 +1564,9 @@
 /*v21_sensor_iircnr_level*/
 {
 	/*cnr_iir_mode*/
-	0x00,
+	0x0000,
 	/*cnr_uv_pg_th*/
-	0x00,
+	0x0000,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -1619,7 +1619,7 @@
 	/*iircnr_str*/
 	{
 		/*iircnr_y_max_th*/
-		0xfa,
+		0xFA,
 		/*iircnr_y_th*/
 		0xF0,
 		/*iircnr_y_min_th*/
@@ -1720,9 +1720,9 @@
 /*v21_sensor_iircnr_level*/
 {
 	/*cnr_iir_mode*/
-	0x00,
+	0x0000,
 	/*cnr_uv_pg_th*/
-	0x00,
+	0x0000,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -1775,7 +1775,7 @@
 	/*iircnr_str*/
 	{
 		/*iircnr_y_max_th*/
-		0xfa,
+		0xFA,
 		/*iircnr_y_th*/
 		0xF0,
 		/*iircnr_y_min_th*/
@@ -1876,9 +1876,9 @@
 /*v21_sensor_iircnr_level*/
 {
 	/*cnr_iir_mode*/
-	0x00,
+	0x0000,
 	/*cnr_uv_pg_th*/
-	0x00,
+	0x0000,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -1931,7 +1931,7 @@
 	/*iircnr_str*/
 	{
 		/*iircnr_y_max_th*/
-		0xfa,
+		0xFA,
 		/*iircnr_y_th*/
 		0xF0,
 		/*iircnr_y_min_th*/
@@ -2032,9 +2032,9 @@
 /*v21_sensor_iircnr_level*/
 {
 	/*cnr_iir_mode*/
-	0x00,
+	0x0000,
 	/*cnr_uv_pg_th*/
-	0x00,
+	0x0000,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -2087,7 +2087,7 @@
 	/*iircnr_str*/
 	{
 		/*iircnr_y_max_th*/
-		0xfa,
+		0xFA,
 		/*iircnr_y_th*/
 		0xF0,
 		/*iircnr_y_min_th*/
@@ -2188,9 +2188,9 @@
 /*v21_sensor_iircnr_level*/
 {
 	/*cnr_iir_mode*/
-	0x00,
+	0x0000,
 	/*cnr_uv_pg_th*/
-	0x00,
+	0x0000,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -2243,7 +2243,7 @@
 	/*iircnr_str*/
 	{
 		/*iircnr_y_max_th*/
-		0xfa,
+		0xFA,
 		/*iircnr_y_th*/
 		0xF0,
 		/*iircnr_y_min_th*/
@@ -2344,9 +2344,9 @@
 /*v21_sensor_iircnr_level*/
 {
 	/*cnr_iir_mode*/
-	0x00,
+	0x0000,
 	/*cnr_uv_pg_th*/
-	0x00,
+	0x0000,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -2399,7 +2399,7 @@
 	/*iircnr_str*/
 	{
 		/*iircnr_y_max_th*/
-		0xfa,
+		0xFA,
 		/*iircnr_y_th*/
 		0xF0,
 		/*iircnr_y_min_th*/
@@ -2500,9 +2500,9 @@
 /*v21_sensor_iircnr_level*/
 {
 	/*cnr_iir_mode*/
-	0x00,
+	0x0000,
 	/*cnr_uv_pg_th*/
-	0x00,
+	0x0000,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -2555,7 +2555,7 @@
 	/*iircnr_str*/
 	{
 		/*iircnr_y_max_th*/
-		0xfa,
+		0xFA,
 		/*iircnr_y_th*/
 		0xF0,
 		/*iircnr_y_min_th*/
@@ -2656,9 +2656,9 @@
 /*v21_sensor_iircnr_level*/
 {
 	/*cnr_iir_mode*/
-	0x00,
+	0x0000,
 	/*cnr_uv_pg_th*/
-	0x00,
+	0x0000,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -2711,7 +2711,7 @@
 	/*iircnr_str*/
 	{
 		/*iircnr_y_max_th*/
-		0xfa,
+		0xFA,
 		/*iircnr_y_th*/
 		0xF0,
 		/*iircnr_y_min_th*/
@@ -2812,9 +2812,9 @@
 /*v21_sensor_iircnr_level*/
 {
 	/*cnr_iir_mode*/
-	0x00,
+	0x0000,
 	/*cnr_uv_pg_th*/
-	0x00,
+	0x0000,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -2867,7 +2867,7 @@
 	/*iircnr_str*/
 	{
 		/*iircnr_y_max_th*/
-		0xfa,
+		0xFA,
 		/*iircnr_y_th*/
 		0xF0,
 		/*iircnr_y_min_th*/
@@ -2968,9 +2968,9 @@
 /*v21_sensor_iircnr_level*/
 {
 	/*cnr_iir_mode*/
-	0x00,
+	0x0000,
 	/*cnr_uv_pg_th*/
-	0x00,
+	0x0000,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -3023,7 +3023,7 @@
 	/*iircnr_str*/
 	{
 		/*iircnr_y_max_th*/
-		0xfa,
+		0xFA,
 		/*iircnr_y_th*/
 		0xF0,
 		/*iircnr_y_min_th*/
@@ -3124,9 +3124,9 @@
 /*v21_sensor_iircnr_level*/
 {
 	/*cnr_iir_mode*/
-	0x00,
+	0x0000,
 	/*cnr_uv_pg_th*/
-	0x00,
+	0x0000,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -3179,7 +3179,7 @@
 	/*iircnr_str*/
 	{
 		/*iircnr_y_max_th*/
-		0xfa,
+		0xFA,
 		/*iircnr_y_th*/
 		0xF0,
 		/*iircnr_y_min_th*/
@@ -3280,9 +3280,9 @@
 /*v21_sensor_iircnr_level*/
 {
 	/*cnr_iir_mode*/
-	0x00,
+	0x0000,
 	/*cnr_uv_pg_th*/
-	0x00,
+	0x0000,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -3335,7 +3335,7 @@
 	/*iircnr_str*/
 	{
 		/*iircnr_y_max_th*/
-		0xfa,
+		0xFA,
 		/*iircnr_y_th*/
 		0xF0,
 		/*iircnr_y_min_th*/
@@ -3436,9 +3436,9 @@
 /*v21_sensor_iircnr_level*/
 {
 	/*cnr_iir_mode*/
-	0x00,
+	0x0000,
 	/*cnr_uv_pg_th*/
-	0x00,
+	0x0000,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -3491,7 +3491,7 @@
 	/*iircnr_str*/
 	{
 		/*iircnr_y_max_th*/
-		0xfa,
+		0xFA,
 		/*iircnr_y_th*/
 		0xF0,
 		/*iircnr_y_min_th*/
@@ -3592,9 +3592,9 @@
 /*v21_sensor_iircnr_level*/
 {
 	/*cnr_iir_mode*/
-	0x00,
+	0x0000,
 	/*cnr_uv_pg_th*/
-	0x00,
+	0x0000,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -3647,7 +3647,7 @@
 	/*iircnr_str*/
 	{
 		/*iircnr_y_max_th*/
-		0xfa,
+		0xFA,
 		/*iircnr_y_th*/
 		0xF0,
 		/*iircnr_y_min_th*/
@@ -3748,9 +3748,9 @@
 /*v21_sensor_iircnr_level*/
 {
 	/*cnr_iir_mode*/
-	0x00,
+	0x0000,
 	/*cnr_uv_pg_th*/
-	0x00,
+	0x0000,
 	/*ymd_u*/
 	0x00000000,
 	/*ymd_v*/
@@ -3803,7 +3803,7 @@
 	/*iircnr_str*/
 	{
 		/*iircnr_y_max_th*/
-		0xfa,
+		0xFA,
 		/*iircnr_y_th*/
 		0xF0,
 		/*iircnr_y_min_th*/

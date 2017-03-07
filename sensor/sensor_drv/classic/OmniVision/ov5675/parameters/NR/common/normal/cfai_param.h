@@ -20,7 +20,7 @@
 		/*grid_tr*/
 		0x0090,
 		/*smooth_tr*/
-		0x000002BC,
+		0x00000064,
 		/*uni_dir_intplt_tr*/
 		0x0064,
 		/*rb_high_sat_thr*/
