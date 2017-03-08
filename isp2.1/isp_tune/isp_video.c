@@ -4037,7 +4037,7 @@ static void * ispserver_thread(void *args)
 
 	lfd = socket(sock_addr.sin_family, SOCK_STREAM, 0);
 	if (lfd == -1) {
-		 DBG("ISP_TOOL:socket is not build.\n");
+		 ISP_LOGW("ISP_TOOL:socket is not build.\n");
 		 return NULL;
 	}
 	sock_fd=lfd;
