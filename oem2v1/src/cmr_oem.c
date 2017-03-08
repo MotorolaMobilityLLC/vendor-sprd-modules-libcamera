@@ -3008,6 +3008,10 @@ cmr_int camera_isp_init(cmr_handle oem_handle)
 		goto exit;
 	}
 
+	if (val.pval) {
+		isp_param.otp_data = val.pval;
+	}
+
 	if (sensor_info_ptr->raw_info_ptr && sensor_info_ptr->raw_info_ptr->ioctrl_ptr
 		&& sensor_info_ptr->raw_info_ptr->ioctrl_ptr->set_focus)
 		isp_param.ex_info.af_supported = 1;

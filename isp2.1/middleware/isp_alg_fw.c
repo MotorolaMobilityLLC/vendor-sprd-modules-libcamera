@@ -65,6 +65,7 @@ struct isp_alg_sw_init_in {
 	cmr_handle dev_access_handle;
 	struct sensor_libuse_info *lib_use_info;
 	struct isp_size size;
+	struct sensor_otp_cust_info *otp_data;
 };
 
 static nsecs_t isp_get_timestamp(void)
@@ -1964,6 +1965,9 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in *input_ptr, cmr_handle *isp_al
 	isp_alg_input.size.w = input_ptr->init_param->size.w;
 	isp_alg_input.size.h = input_ptr->init_param->size.h;
 	cxt->lib_use_info = sensor_raw_info_ptr->libuse_info;
+
+	cxt->otp_data = input_ptr->init_param->otp_data;
+	isp_alg_input.otp_data = input_ptr->init_param->otp_data;
 
 	binning_info = (uint32_t *)malloc(max_binning_num *3 *sizeof(uint32_t));
 	if (!binning_info) {

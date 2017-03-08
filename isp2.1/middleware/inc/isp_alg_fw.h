@@ -139,6 +139,7 @@ struct isp_alg_fw_context {
 	uint32_t gamma_sof_cnt_eb;
 	uint32_t update_gamma_eb;
 	struct isp_sensor_fps_info sensor_fps;
+	struct sensor_otp_cust_info *otp_data;
 };
 
 struct isp_alg_fw_init_in {
