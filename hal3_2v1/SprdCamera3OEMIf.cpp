@@ -3556,17 +3556,13 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 	Mutex::Autolock cbLock(&mPreviewCbLock);
 	int ret = NO_ERROR;
 
-	if (NULL == frame) {
-		HAL_LOGE("invalid frame pointer");
-		return;
-	}
-
-	if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
-		HAL_LOGE("oem is null or oem ops is null");
-		return;
-	}
-
 	HAL_LOGV("E");
+	if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops ||
+	    NULL == frame) {
+		HAL_LOGE("mCameraHandle=%p, mHalOem=%p,", mCameraHandle, mHalOem);
+		HAL_LOGE("frame=%p", frame);
+		return;
+	}
 
 	if(SHAKE_TEST == getShakeTestState()) {
 		overwritePreviewFrame(frame);
@@ -3693,283 +3689,303 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 	mSetting->setSENSORTag(sensorInfo);
 	property_get("sys.cam.multi.camera.mode", multicameramode, "0");
 
-	if(channel) {
-		channel->getStream(CAMERA_STREAM_TYPE_PREVIEW, &pre_stream);
-		channel->getStream(CAMERA_STREAM_TYPE_VIDEO, &rec_stream);
-		channel->getStream(CAMERA_STREAM_TYPE_CALLBACK, &callback_stream);
-		HAL_LOGV("pre_stream %p, rec_stream %p, callback_stream %p",
-			pre_stream, rec_stream, callback_stream);
+	if (channel == NULL) {
+		HAL_LOGE("channel=%p", channel);
+		goto exit;
+	}
+
+	channel->getStream(CAMERA_STREAM_TYPE_PREVIEW, &pre_stream);
+	channel->getStream(CAMERA_STREAM_TYPE_VIDEO, &rec_stream);
+	channel->getStream(CAMERA_STREAM_TYPE_CALLBACK, &callback_stream);
+	HAL_LOGV("pre_stream %p, rec_stream %p, callback_stream %p",
+		pre_stream, rec_stream, callback_stream);
 
 #ifdef CONFIG_FACE_BEAUTY
-		if (PREVIEW_ZSL_FRAME != frame->type && sprddefInfo.perfect_skin_level > 0 ) {
-			faceDectect(1);
-			if( isPreviewing() && frame->type == PREVIEW_FRAME ) {
-				if( 3 != atoi(multicameramode) && 7 != atoi(multicameramode)) {
-					doFaceMakeup(frame);
-				}
+	if (PREVIEW_ZSL_FRAME != frame->type && sprddefInfo.perfect_skin_level > 0 ) {
+		faceDectect(1);
+		if(isPreviewing() && frame->type == PREVIEW_FRAME ) {
+			if(3 != atoi(multicameramode) && 7 != atoi(multicameramode)) {
+				doFaceMakeup(frame);
 			}
 		}
+	}
 #endif
-		//recording stream
-		if(rec_stream) {
-			//reset timestamp and mIsRecording after recording
-			rec_stream->getQBufListNum(&buf_deq_num);
-			if (buf_deq_num == 0) {
-				mSlowPara.last_frm_timestamp = 0;
-				mIsRecording = false;
+
+	if(rec_stream) {
+		//reset timestamp and mIsRecording after recording
+		rec_stream->getQBufListNum(&buf_deq_num);
+		if (buf_deq_num == 0) {
+			mSlowPara.last_frm_timestamp = 0;
+			mIsRecording = false;
+		}
+
+		ret = rec_stream->getQBufNumForVir(buff_vir, &frame_num);
+		if (ret) {
+			goto bypass_rec;
+		}
+
+		ATRACE_BEGIN("video_frame");
+		HAL_LOGI("record, fd=%d, vir = 0x%lx, frame_num = %d, timestamp = %lld, frame->type = %ld rec=%lld",
+			 frame->fd, buff_vir, frame_num, buffer_timestamp,
+			 frame->type, mSlowPara.rec_timestamp);
+		if(frame->type == PREVIEW_VIDEO_FRAME &&
+		   frame_num >= mRecordFrameNum &&
+		   (frame_num > mPictureFrameNum ||frame_num == 0)) {
+			if (mVideoWidth <= mCaptureWidth && mVideoHeight <= mCaptureHeight) {
+				if(mVideoShotFlag && (frame_num >=  mVideoSnapshotFrameNum))
+					PushVideoSnapShotbuff(frame_num, CAMERA_STREAM_TYPE_VIDEO);
 			}
 
-			ret = rec_stream->getQBufNumForVir(buff_vir, &frame_num);
-			if(ret == NO_ERROR) {
-				ATRACE_BEGIN("video_frame");
+			if (mSlowPara.last_frm_timestamp == 0) {/*record first frame*/
+				mSlowPara.last_frm_timestamp = buffer_timestamp;
+				mSlowPara.rec_timestamp = buffer_timestamp;
+				mIsRecording = true;
+			}
+			if (frame_num > mPreviewFrameNum) {/*record first coming*/
+				calculateTimestampForSlowmotion(buffer_timestamp);
+			}
 
-				HAL_LOGI("record, fd=%d, buff_vir = 0x%lx, frame_num = %d, buffer_timestamp = %lld, frame->type = %ld rec=%lld",
-					 frame->fd, buff_vir, frame_num, buffer_timestamp,frame->type, mSlowPara.rec_timestamp);
-				if(frame->type == PREVIEW_VIDEO_FRAME && frame_num >= mRecordFrameNum && (frame_num > mPictureFrameNum ||frame_num == 0)) {
-					if (mVideoWidth <= mCaptureWidth && mVideoHeight <= mCaptureHeight) {
-						if(mVideoShotFlag && (frame_num >=  mVideoSnapshotFrameNum))
-							PushVideoSnapShotbuff(frame_num, CAMERA_STREAM_TYPE_VIDEO);
+#ifdef CONFIG_CAMERA_EIS
+			HAL_LOGV("eis_enable = %d", sprddefInfo.sprd_eis_enabled);
+			if(sprddefInfo.sprd_eis_enabled){
+				int64_t boot_time = frame->monoboottime;
+				int64_t ae_time =frame->ae_time;
+				//int64_t sleep_time = boot_time -buffer_timestamp;
+				//uint32_t zoom_ratio =(uint32_t)(frame->zoom_ratio * 100);
+				rec_stream->getQBufHandleForNum(frame_num, &buff_handle);
+				private_handle_t *private_handle = (struct private_handle_t*) (*buff_handle);
+				if(frame->zoom_ratio == 0)
+					frame->zoom_ratio = 1.0f;
+				if(&mEisInfo != NULL) {
+					memset(&mEisInfo, 0, sizeof(eis_info_t));
+					mEisInfo.zoom_ratio = frame->zoom_ratio;
+					mEisInfo.timestamp = boot_time - ae_time/2;
+					HAL_LOGV("rec_timestamp = %lld, boot_time = %lld\n", buffer_timestamp, boot_time);
+					HAL_LOGV("ae_time = %lld, zoom_ratio = %f\n", ae_time, frame->zoom_ratio);
+					private_handle->phyaddr = (unsigned long)&mEisInfo;
+					HAL_LOGV("private_handle->phyaddr = %p", private_handle->phyaddr);
+				} else {
+					private_handle->phyaddr = NULL;
+					HAL_LOGE("mEisInfo is null");
+				}
+			}
+#endif
+			if(atoi(multicameramode) == 3){
+				mSlowPara.rec_timestamp = buffer_timestamp;
+			}
+			channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp, CAMERA_STREAM_TYPE_VIDEO);
+			if(frame_num == (mDropVideoFrameNum+1)) //for IOMMU error
+				channel->channelClearInvalidQBuff(mDropVideoFrameNum, buffer_timestamp, CAMERA_STREAM_TYPE_VIDEO);
+		} else {
+			channel->channelClearInvalidQBuff(frame_num, buffer_timestamp, CAMERA_STREAM_TYPE_VIDEO);
+		}
+
+		if(frame_num > mRecordFrameNum)
+			mRecordFrameNum = frame_num;
+
+		ATRACE_END();
+
+		if((mVideoSnapshotFrameNum <= mRecordFrameNum) && mZslShotPushFlag == 1) {
+			mZslPopFlag = 1;
+			mZslShotWait.signal();
+		}
+bypass_rec:
+		HAL_LOGV("rec_stream X");
+	}
+
+	if(pre_stream) {
+		ret = pre_stream->getQBufNumForVir(buff_vir, &frame_num);
+		if (ret) {
+			pre_stream = NULL;
+			goto bypass_pre;
+		}
+
+		ATRACE_BEGIN("preview_frame");
+
+		HAL_LOGI("prev buff fd=%d, buff_vir=0x%lx, num %d, ret %d, time %lld, frame type = %ld rec=%lld, ",
+			frame->fd, buff_vir, frame_num, ret, buffer_timestamp,
+			frame->type, mSlowPara.rec_timestamp);
+		if(frame->type == PREVIEW_FRAME && frame_num >= mPreviewFrameNum && (frame_num > mPictureFrameNum ||frame_num == 0)) {
+			if (mVideoWidth > mCaptureWidth && mVideoHeight > mCaptureHeight) {
+				if(mVideoShotFlag)
+					PushVideoSnapShotbuff(frame_num, CAMERA_STREAM_TYPE_PREVIEW);
+			}
+
+#ifdef CONFIG_CAMERA_EIS
+			HAL_LOGV("eis_enable = %d", sprddefInfo.sprd_eis_enabled);
+			if(mRecordingMode && sprddefInfo.sprd_eis_enabled){
+				if(mGyroInit && !mGyroDeinit){
+					int64_t boot_time = frame->monoboottime;
+					int64_t ae_time =frame->ae_time;
+					int64_t sleep_time = boot_time - buffer_timestamp;
+					if(frame->zoom_ratio == 0)
+						frame->zoom_ratio = 1.0f;
+					float zoom_ratio = frame->zoom_ratio;
+					HAL_LOGV("prev_timestamp = %lld, boot_time = %lld\n", buffer_timestamp, boot_time);
+					HAL_LOGV("ae_time = %lld, zoom_ratio = %f\n", ae_time, zoom_ratio);
+					if(!mEisInit){
+						EIS_init();
+						mEisInit = true;
 					}
+					vsInFrame frame_in;
+					vsOutFrame frame_out;
+					frame_in.frame_data = NULL;
+					frame_out.frame_data = NULL;
+					frame_in.frame_data = (uint8_t*)buff_vir;
+					frame_in.timestamp = (double)(boot_time - ae_time/2);
+					frame_in.timestamp = frame_in.timestamp /1000000000;
+					frame_in.zoom = (double)zoom_ratio;
+					frame_out = processEIS(frame_in);
+					HAL_LOGD("transfer_matrix wrap %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf",
+						frame_out.warp.dat[0][0], frame_out.warp.dat[0][1], frame_out.warp.dat[0][2],
+						frame_out.warp.dat[1][0], frame_out.warp.dat[1][1], frame_out.warp.dat[1][2],
+						frame_out.warp.dat[2][0], frame_out.warp.dat[2][1], frame_out.warp.dat[2][2]);
 
-					if (mSlowPara.last_frm_timestamp == 0) {/*record first frame*/
+					EIS_CROP_Tag eiscrop_Info;
+					double crop_start_w = frame_out.warp.dat[0][2] + mParam.src_w /12;
+					double crop_start_h = frame_out.warp.dat[1][2] + mParam.src_h /12;
+					eiscrop_Info.crop[0] = (int)(crop_start_w + 0.5);
+					eiscrop_Info.crop[1] = (int)(crop_start_h + 0.5);
+					eiscrop_Info.crop[2] = (int)(crop_start_w + 0.5) + mParam.dst_w;
+					eiscrop_Info.crop[3] = (int)(crop_start_h + 0.5) + mParam.dst_h;
+					mSetting->setEISCROPTag(eiscrop_Info);
+				}else{
+					HAL_LOGW("gyro is not enable, eis process is not work");
+					EIS_CROP_Tag eiscrop_Info;
+					eiscrop_Info.crop[0] = 0;
+					eiscrop_Info.crop[1] = 0;
+					eiscrop_Info.crop[2] = mPreviewWidth;
+					eiscrop_Info.crop[3] = mPreviewHeight;
+					mSetting->setEISCROPTag(eiscrop_Info);
+				}
+			}
+#endif
+
+#ifdef CONFIG_VIDEO_COPY_PREVIEW
+			if(rec_stream) {
+				ret = rec_stream->getQBufAddrForNum(frame_num, &videobuf_vir, &videobuf_phy, &fd0);
+				if (ret == NO_ERROR && videobuf_vir != 0) {
+					mIsRecording = true;
+					if (mSlowPara.last_frm_timestamp == 0) {
 						mSlowPara.last_frm_timestamp = buffer_timestamp;
 						mSlowPara.rec_timestamp = buffer_timestamp;
-						mIsRecording = true;
 					}
-					if (frame_num > mPreviewFrameNum) {/*record first coming*/
-						calculateTimestampForSlowmotion(buffer_timestamp);
-					}
-#ifdef CONFIG_CAMERA_EIS
-					HAL_LOGV("eis_enable = %d", sprddefInfo.sprd_eis_enabled);
-					if(sprddefInfo.sprd_eis_enabled){
-						int64_t boot_time = frame->monoboottime;
-						int64_t ae_time =frame->ae_time;
-						//int64_t sleep_time = boot_time -buffer_timestamp;
-						//uint32_t zoom_ratio =(uint32_t)(frame->zoom_ratio * 100);
-						rec_stream->getQBufHandleForNum(frame_num, &buff_handle);
-						private_handle_t *private_handle = (struct private_handle_t*) (*buff_handle);
-						if(frame->zoom_ratio == 0)
-							frame->zoom_ratio = 1.0f;
-						if(&mEisInfo != NULL) {
-							memset(&mEisInfo, 0, sizeof(eis_info_t));
-							mEisInfo.zoom_ratio = frame->zoom_ratio;
-							mEisInfo.timestamp = boot_time - ae_time/2;
-							HAL_LOGV("rec_timestamp = %lld, boot_time = %lld\n", buffer_timestamp, boot_time);
-							HAL_LOGV("ae_time = %lld, zoom_ratio = %f\n", ae_time, frame->zoom_ratio);
-							private_handle->phyaddr = (unsigned long)&mEisInfo;
-							HAL_LOGV("private_handle->phyaddr = %p", private_handle->phyaddr);
-						} else {
-							private_handle->phyaddr = NULL;
-							HAL_LOGE("mEisInfo is null");
-						}
-					}
-#endif
-					if(atoi(multicameramode) == 3){
-						mSlowPara.rec_timestamp = buffer_timestamp;
-					}
-					channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp, CAMERA_STREAM_TYPE_VIDEO);
-					if(frame_num == (mDropVideoFrameNum+1)) //for IOMMU error
-						channel->channelClearInvalidQBuff(mDropVideoFrameNum, buffer_timestamp, CAMERA_STREAM_TYPE_VIDEO);
 				}
-				else {
-					channel->channelClearInvalidQBuff(frame_num, buffer_timestamp, CAMERA_STREAM_TYPE_VIDEO);
+			}
+#endif
+
+			if (mIsRecording && rec_stream) {
+				if (frame_num > mRecordFrameNum)
+					calculateTimestampForSlowmotion(buffer_timestamp);
+#ifdef CONFIG_VIDEO_COPY_PREVIEW
+				ret=rec_stream->getQBufAddrForNum(frame_num, &videobuf_vir, &videobuf_phy,&fd0);
+				if (ret || videobuf_vir == 0) {
+					HAL_LOGE("getQBufAddrForNum failed");
+					goto exit;
 				}
 
+				pre_stream->getQBufAddrForNum(frame_num, &prebuf_vir, &prebuf_phy,&fd1);
+				HAL_LOGV("frame_num=%d, videobuf_phy=0x%lx, videobuf_vir=0x%lx", frame_num, videobuf_phy, videobuf_vir);
+				HAL_LOGV("frame_num=%d, prebuf_phy=0x%lx, prebuf_vir=0x%lx", frame_num, prebuf_phy, prebuf_vir);
+				memcpy((void*)videobuf_vir, (void*)prebuf_vir, mPreviewWidth * mPreviewHeight * 3 / 2);
+				channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp, CAMERA_STREAM_TYPE_VIDEO);
+				if(frame_num == (mDropVideoFrameNum+1)) //for IOMMU error
+					 channel->channelClearInvalidQBuff(mDropVideoFrameNum, buffer_timestamp, CAMERA_STREAM_TYPE_VIDEO);
 				if(frame_num > mRecordFrameNum)
 					mRecordFrameNum = frame_num;
-
-				ATRACE_END();
-			}
-			if((mVideoSnapshotFrameNum <= mRecordFrameNum) && mZslShotPushFlag == 1)
-			{
-				mZslPopFlag = 1;
-				mZslShotWait.signal();
-			}
-		}
-
-		// preview stream
-		if(pre_stream) {
-			ret = pre_stream->getQBufNumForVir(buff_vir, &frame_num);
-			if(ret == NO_ERROR) {
-				ATRACE_BEGIN("preview_frame");
-
-				HAL_LOGI("prev buff fd=%d, buff_vir=0x%lx, num %d, ret %d, time %lld, frame type = %ld rec=%lld, ",
-					frame->fd, buff_vir, frame_num, ret, buffer_timestamp,
-					frame->type, mSlowPara.rec_timestamp);
-				if(frame->type == PREVIEW_FRAME && frame_num >= mPreviewFrameNum && (frame_num > mPictureFrameNum ||frame_num == 0)) {
-					if (mVideoWidth > mCaptureWidth && mVideoHeight > mCaptureHeight) {
-						if(mVideoShotFlag)
-							PushVideoSnapShotbuff(frame_num, CAMERA_STREAM_TYPE_PREVIEW);
-					}
-
-#ifdef CONFIG_CAMERA_EIS
-					HAL_LOGV("eis_enable = %d", sprddefInfo.sprd_eis_enabled);
-					if(mRecordingMode && sprddefInfo.sprd_eis_enabled){
-						if(mGyroInit && !mGyroDeinit){
-							int64_t boot_time = frame->monoboottime;
-							int64_t ae_time =frame->ae_time;
-							int64_t sleep_time = boot_time - buffer_timestamp;
-							if(frame->zoom_ratio == 0)
-								frame->zoom_ratio = 1.0f;
-							float zoom_ratio = frame->zoom_ratio;
-							HAL_LOGV("prev_timestamp = %lld, boot_time = %lld\n", buffer_timestamp, boot_time);
-							HAL_LOGV("ae_time = %lld, zoom_ratio = %f\n", ae_time, zoom_ratio);
-							if(!mEisInit){
-								EIS_init();
-								mEisInit = true;
-							}
-							vsInFrame frame_in;
-							vsOutFrame frame_out;
-							frame_in.frame_data = NULL;
-							frame_out.frame_data = NULL;
-							frame_in.frame_data = (uint8_t*)buff_vir;
-							frame_in.timestamp = (double)(boot_time - ae_time/2);
-							frame_in.timestamp = frame_in.timestamp /1000000000;
-							frame_in.zoom = (double)zoom_ratio;
-							frame_out = processEIS(frame_in);
-							HAL_LOGD("transfer_matrix wrap %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf",
-								frame_out.warp.dat[0][0], frame_out.warp.dat[0][1], frame_out.warp.dat[0][2],
-								frame_out.warp.dat[1][0], frame_out.warp.dat[1][1], frame_out.warp.dat[1][2],
-								frame_out.warp.dat[2][0], frame_out.warp.dat[2][1], frame_out.warp.dat[2][2]);
-
-							EIS_CROP_Tag eiscrop_Info;
-							double crop_start_w = frame_out.warp.dat[0][2] + mParam.src_w /12;
-							double crop_start_h = frame_out.warp.dat[1][2] + mParam.src_h /12;
-							eiscrop_Info.crop[0] = (int)(crop_start_w + 0.5);
-							eiscrop_Info.crop[1] = (int)(crop_start_h + 0.5);
-							eiscrop_Info.crop[2] = (int)(crop_start_w + 0.5) + mParam.dst_w;
-							eiscrop_Info.crop[3] = (int)(crop_start_h + 0.5) + mParam.dst_h;
-							mSetting->setEISCROPTag(eiscrop_Info);
-						}else{
-							HAL_LOGW("gyro is not enable, eis process is not work");
-							EIS_CROP_Tag eiscrop_Info;
-							eiscrop_Info.crop[0] = 0;
-							eiscrop_Info.crop[1] = 0;
-							eiscrop_Info.crop[2] = mPreviewWidth;
-							eiscrop_Info.crop[3] = mPreviewHeight;
-							mSetting->setEISCROPTag(eiscrop_Info);
-						}
-					}
 #endif
-
-#ifdef CONFIG_VIDEO_COPY_PREVIEW
-					if(rec_stream) {
-						ret = rec_stream->getQBufAddrForNum(frame_num, &videobuf_vir, &videobuf_phy, &fd0);
-						if (ret == NO_ERROR && videobuf_vir != 0) {
-							mIsRecording = true;
-							if (mSlowPara.last_frm_timestamp == 0) {
-								mSlowPara.last_frm_timestamp = buffer_timestamp;
-								mSlowPara.rec_timestamp = buffer_timestamp;
-							}
-						}
-					}
-#endif
-
-					if (mIsRecording && rec_stream) {
-						if (frame_num > mRecordFrameNum)
-							calculateTimestampForSlowmotion(buffer_timestamp);
-#ifdef CONFIG_VIDEO_COPY_PREVIEW
-						ret=rec_stream->getQBufAddrForNum(frame_num, &videobuf_vir, &videobuf_phy,&fd0);
-						if (ret || videobuf_vir == 0) {
-							HAL_LOGE("getQBufAddrForNum failed");
-							goto exit;
-						}
-
-						pre_stream->getQBufAddrForNum(frame_num, &prebuf_vir, &prebuf_phy,&fd1);
-						HAL_LOGV("frame_num=%d, videobuf_phy=0x%lx, videobuf_vir=0x%lx", frame_num, videobuf_phy, videobuf_vir);
-						HAL_LOGV("frame_num=%d, prebuf_phy=0x%lx, prebuf_vir=0x%lx", frame_num, prebuf_phy, prebuf_vir);
-						memcpy((void*)videobuf_vir, (void*)prebuf_vir, mPreviewWidth * mPreviewHeight * 3 / 2);
-						channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp, CAMERA_STREAM_TYPE_VIDEO);
-						if(frame_num == (mDropVideoFrameNum+1)) //for IOMMU error
-							 channel->channelClearInvalidQBuff(mDropVideoFrameNum, buffer_timestamp, CAMERA_STREAM_TYPE_VIDEO);
-						if(frame_num > mRecordFrameNum)
-							mRecordFrameNum = frame_num;
-#endif
-						channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp, CAMERA_STREAM_TYPE_PREVIEW);
-					} else {
-						channel->channelCbRoutine(frame_num, buffer_timestamp, CAMERA_STREAM_TYPE_PREVIEW);
-					}
-					if(frame_num == (mDropPreviewFrameNum+1)) //for IOMMU error
-						channel->channelClearInvalidQBuff(mDropPreviewFrameNum, buffer_timestamp, CAMERA_STREAM_TYPE_PREVIEW);
-				} else {
-					channel->channelClearInvalidQBuff(frame_num, buffer_timestamp, CAMERA_STREAM_TYPE_PREVIEW);
-#ifdef CONFIG_VIDEO_COPY_PREVIEW
-					if (rec_stream)
-						channel->channelClearInvalidQBuff(frame_num, buffer_timestamp, CAMERA_STREAM_TYPE_VIDEO);
-#endif
-				}
-				if (callback_stream)
-					callback_stream->getQBufListNum(&buf_num);
-				if (mTakePictureMode == SNAPSHOT_PREVIEW_MODE && buf_num == 0) {
-					timer_set(this, 1, timer_hand_take);
-				}
-				if(frame_num > mPreviewFrameNum)
-					mPreviewFrameNum = frame_num;
-
-				if (mSprdCameraLowpower && (0 == frame_num%100)) {
-					adjustFpsByTemp();
-				}
-
-				ATRACE_END();
+				channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp, CAMERA_STREAM_TYPE_PREVIEW);
 			} else {
-				pre_stream = NULL;
+				channel->channelCbRoutine(frame_num, buffer_timestamp, CAMERA_STREAM_TYPE_PREVIEW);
+			}
+			if(frame_num == (mDropPreviewFrameNum+1)) //for IOMMU error
+				channel->channelClearInvalidQBuff(mDropPreviewFrameNum, buffer_timestamp, CAMERA_STREAM_TYPE_PREVIEW);
+		} else {
+			channel->channelClearInvalidQBuff(frame_num, buffer_timestamp, CAMERA_STREAM_TYPE_PREVIEW);
+#ifdef CONFIG_VIDEO_COPY_PREVIEW
+			if (rec_stream)
+				channel->channelClearInvalidQBuff(frame_num, buffer_timestamp, CAMERA_STREAM_TYPE_VIDEO);
+#endif
+		}
+		if (callback_stream)
+			callback_stream->getQBufListNum(&buf_num);
+		if (mTakePictureMode == SNAPSHOT_PREVIEW_MODE && buf_num == 0) {
+			timer_set(this, 1, timer_hand_take);
+		}
+		if(frame_num > mPreviewFrameNum)
+			mPreviewFrameNum = frame_num;
+
+		if (mSprdCameraLowpower && (0 == frame_num%100)) {
+			adjustFpsByTemp();
+		}
+
+		ATRACE_END();
+bypass_pre:
+		HAL_LOGV("pre_stream X");
+	}
+
+	if(callback_stream) {
+		ret = callback_stream->getQBufNumForVir(buff_vir, &frame_num);
+		if (ret) {
+			goto bypass_callback;
+		}
+
+		ATRACE_BEGIN("callback_frame");
+
+		HAL_LOGI("callback buff fd=%d, vir=0x%lx, num %d, ret %d, time %lld, frame type = %ld",
+			frame->fd, buff_vir, frame_num, ret, buffer_timestamp,frame->type);
+
+		if((!pre_stream || (frame->type != PREVIEW_ZSL_CANCELED_FRAME)) &&
+		   frame_num >= mZslFrameNum &&
+		   (frame_num > mPictureFrameNum || frame_num == 0)) {
+			channel->channelCbRoutine(frame_num, buffer_timestamp, CAMERA_STREAM_TYPE_CALLBACK);
+			if(frame_num == (mDropZslFrameNum+1)) //for IOMMU error
+				channel->channelClearInvalidQBuff(mDropZslFrameNum, buffer_timestamp, CAMERA_STREAM_TYPE_CALLBACK);
+		} else {
+			channel->channelClearInvalidQBuff(frame_num, buffer_timestamp, CAMERA_STREAM_TYPE_CALLBACK);
+		}
+
+		if (mTakePictureMode == SNAPSHOT_PREVIEW_MODE) {
+			timer_set(this, 1, timer_hand_take);
+		}
+
+		if(frame_num > mZslFrameNum)
+			mZslFrameNum = frame_num;
+
+		ATRACE_END();
+
+bypass_callback:
+		HAL_LOGV("callback_stream X");
+	}
+
+	if(mSprdZslEnabled) {
+		cmr_int need_pause;
+		CMR_MSG_INIT(message);
+		mHalOem->ops->camera_zsl_snapshot_need_pause(mCameraHandle, &need_pause);
+		if (PREVIEW_ZSL_FRAME == frame->type) {
+			ATRACE_BEGIN("zsl_frame");
+
+			HAL_LOGI("zsl buff fd=0x%x, frame type=%ld", frame->fd, frame->type);
+			pushZslFrame(frame);
+
+			if (getZSLQueueFrameNum() > mZslMaxFrameNum) {
+				struct camera_frame_type zsl_frame;
+				zsl_frame = popZslFrame();
+				if (zsl_frame.y_vir_addr != 0) {
+					mHalOem->ops->camera_set_zsl_buffer(mCameraHandle,
+									    zsl_frame.y_phy_addr,
+									    zsl_frame.y_vir_addr,
+									    zsl_frame.fd);
+				}
+			}
+
+			ATRACE_END();
+		} else if (PREVIEW_ZSL_CANCELED_FRAME == frame->type) {
+			if (!isCapturing() || !need_pause) {
+				mHalOem->ops->camera_set_zsl_buffer(mCameraHandle, frame->y_phy_addr, frame->y_vir_addr, frame->fd);
 			}
 		}
 
-		if(callback_stream) {//callback stream
-			ret = callback_stream->getQBufNumForVir(buff_vir, &frame_num);
-			if(ret == NO_ERROR) {
-				ATRACE_BEGIN("callback_frame");
-
-				HAL_LOGI("callback buff fd=%d, vir=0x%lx, num %d, ret %d, time %lld, frame type = %ld",
-					frame->fd, buff_vir, frame_num, ret, buffer_timestamp,frame->type);
-
-				if((!pre_stream || (frame->type != PREVIEW_ZSL_CANCELED_FRAME))&& frame_num >= mZslFrameNum && (frame_num > mPictureFrameNum ||frame_num == 0)) {
-					channel->channelCbRoutine(frame_num, buffer_timestamp, CAMERA_STREAM_TYPE_CALLBACK);
-					if(frame_num == (mDropZslFrameNum+1)) //for IOMMU error
-						channel->channelClearInvalidQBuff(mDropZslFrameNum, buffer_timestamp, CAMERA_STREAM_TYPE_CALLBACK);
-				} else {
-					channel->channelClearInvalidQBuff(frame_num, buffer_timestamp, CAMERA_STREAM_TYPE_CALLBACK);
-				}
-				if (mTakePictureMode == SNAPSHOT_PREVIEW_MODE) {
-					timer_set(this, 1, timer_hand_take);
-				}
-				if(frame_num > mZslFrameNum)
-					mZslFrameNum = frame_num;
-
-				ATRACE_END();
-			}
-		}
-
-		if(mSprdZslEnabled) {
-			cmr_int need_pause;
-			CMR_MSG_INIT(message);
-			mHalOem->ops->camera_zsl_snapshot_need_pause(mCameraHandle, &need_pause);
-			if (PREVIEW_ZSL_FRAME == frame->type) {
-				ATRACE_BEGIN("zsl_frame");
-
-				HAL_LOGI("zsl buff fd=0x%x, frame type=%ld", frame->fd, frame->type);
-				pushZslFrame(frame);
-
-				if (getZSLQueueFrameNum() > mZslMaxFrameNum) {
-					struct camera_frame_type zsl_frame;
-					zsl_frame = popZslFrame();
-					if (zsl_frame.y_vir_addr != 0) {
-						mHalOem->ops->camera_set_zsl_buffer(mCameraHandle,
-										    zsl_frame.y_phy_addr,
-										    zsl_frame.y_vir_addr,
-										    zsl_frame.fd);
-					}
-				}
-
-				ATRACE_END();
-			} else if (PREVIEW_ZSL_CANCELED_FRAME == frame->type) {
-				if (!isCapturing() || !need_pause) {
-					mHalOem->ops->camera_set_zsl_buffer(mCameraHandle, frame->y_phy_addr, frame->y_vir_addr, frame->fd);
-				}
-			}
-
-		}
 	}
 
 exit:
@@ -7914,6 +7930,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data)
 		mZslShotWait.waitRelative(mZslPopLock,ZSL_FRAME_TIMEOUT);
 		mZslPopLock.unlock();
 	}
+	mZslPopFlag = 0;
 
 	// this is for real zsl flash capture, like sharkls/sharklt8, not sharkl2-like
 	//obj->skipZslFrameForFlashCapture();
@@ -7932,7 +7949,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data)
 			continue;
 		}
 
-		if (mZslSnapshotTime > (int64_t)zsl_frame.timestamp) {
+		if (mZslSnapshotTime > zsl_frame.timestamp) {
 			diff_ms = (mZslSnapshotTime - zsl_frame.timestamp) / 1000000;
 			HAL_LOGD("diff_ms=%lld", diff_ms);
 			if (diff_ms > ZSL_SNAPSHOT_THRESHOLD_TIME) {
