@@ -78,7 +78,7 @@ static cmr_int pdafctrl_init_adpt(cmr_handle handle, struct pdaf_ctrl_init_in *i
 	struct pdafctrl_work_lib *lib_ptr = NULL;
 
 	if (!cxt_ptr) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to check param is NULL!");
 		goto exit;
 	}
 
@@ -86,11 +86,11 @@ static cmr_int pdafctrl_init_adpt(cmr_handle handle, struct pdaf_ctrl_init_in *i
 	if (lib_ptr->adpt_ops->adpt_init) {
 		lib_ptr->lib_handle = lib_ptr->adpt_ops->adpt_init(in, out);
 	} else {
-		ISP_LOGI("adpt_init fun is NULL");
+		ISP_LOGI(":ISP:adpt_init fun is NULL");
 	}
 
 exit:
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGI(":ISP:done %ld", ret);
 	return ret;
 }
 
@@ -101,7 +101,7 @@ static cmr_int pdafctrl_deinit_adpt(cmr_handle handle)
 	struct pdafctrl_work_lib *lib_ptr = NULL;
 
 	if (!cxt_ptr) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to check param is NULL!");
 		goto exit;
 	}
 
@@ -109,11 +109,11 @@ static cmr_int pdafctrl_deinit_adpt(cmr_handle handle)
 	if (lib_ptr->adpt_ops->adpt_deinit) {
 		rtn = lib_ptr->adpt_ops->adpt_deinit(lib_ptr->lib_handle, NULL, NULL);
 	} else {
-		ISP_LOGI("adpt_deinit fun is NULL");
+		ISP_LOGI(":ISP:adpt_deinit fun is NULL");
 	}
 
 exit:
-	ISP_LOGI("done %ld", rtn);
+	ISP_LOGI(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -126,7 +126,7 @@ static cmr_int pdafctrl_ioctrl(cmr_handle handle, cmr_int cmd,
 	struct pdafctrl_work_lib *lib_ptr = NULL;
 
 	if (!cxt_ptr) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to check param!");
 		goto exit;
 	}
 
@@ -134,11 +134,11 @@ static cmr_int pdafctrl_ioctrl(cmr_handle handle, cmr_int cmd,
 	if (lib_ptr->adpt_ops->adpt_ioctrl) {
 		rtn = lib_ptr->adpt_ops->adpt_ioctrl(lib_ptr->lib_handle, cmd, in, out);
 	} else {
-		ISP_LOGI("ioctrl fun is NULL");
+		ISP_LOGI(":ISP:ioctrl fun is NULL");
 	}
 
 exit:
-	ISP_LOGI("cmd = %ld,done %ld", cmd, rtn);
+	ISP_LOGI(":ISP:cmd = %ld,done %ld", cmd, rtn);
 	return rtn;
 
 }
@@ -152,17 +152,17 @@ static cmr_int pdafctrl_process(cmr_handle handle,
 	struct pdafctrl_work_lib *lib_ptr = NULL;
 
 	if (!cxt_ptr) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to check param is NULL!");
 		goto exit;
 	}
 	lib_ptr = &cxt_ptr->work_lib;
 	if (lib_ptr->adpt_ops->adpt_process) {
 		rtn = lib_ptr->adpt_ops->adpt_process(lib_ptr->lib_handle, in, out);
 	} else {
-		ISP_LOGI("ioctrl fun is NULL");
+		ISP_LOGI(":ISP:ioctrl fun is NULL");
 	}
 exit:
-	ISP_LOGI("done %ld", rtn);
+	ISP_LOGI(":ISP:done %ld", rtn);
 	return rtn;
 
 }
@@ -202,11 +202,11 @@ static cmr_int pdafctrl_thread_proc(struct cmr_msg *message, void *p_data)
 					NULL);
 		break;
 	default:
-		ISP_LOGE("don't support msg");
+		ISP_LOGE("fail to proc,don't support msg");
 		break;
 	}
 exit:
-	ISP_LOGV("done %ld", ret);
+	ISP_LOGV(":ISP:done %ld", ret);
 	return ret;
 }
 
@@ -220,11 +220,11 @@ static cmr_int pdafctrl_create_thread(cmr_handle handle)
 				pdafctrl_thread_proc,
 				(void *)handle);
 	if (CMR_MSG_SUCCESS != ret) {
-		ISP_LOGE("failed to create main thread %ld", ret);
+		ISP_LOGE("fail to create main thread %ld", ret);
 		ret = ISP_ERROR;
 	}
 
-	ISP_LOGV("done %ld", ret);
+	ISP_LOGV(":ISP:done %ld", ret);
 	return ret;
 }
 
@@ -238,12 +238,12 @@ static cmr_int pdafctrl_destroy_thread(cmr_handle handle)
 	if (pdaf_thread_cxt->ctrl_thr_handle) {
 		ret = cmr_thread_destroy(pdaf_thread_cxt->ctrl_thr_handle);
 		if (ret) {
-			ISP_LOGE("failed to destroy ctrl thread %ld", ret);
+			ISP_LOGE("fail to destroy ctrl thread %ld", ret);
 		}
 		pdaf_thread_cxt->ctrl_thr_handle = NULL;
 	}
 exit:
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGI(":ISP:done %ld", ret);
 	return ret;
 }
 
@@ -261,11 +261,12 @@ static cmr_int pdafctrl_init_adapt(struct pdafctrl_context *cxt, struct pdaf_ctr
 	message.data = &msg_init;
 	ret = cmr_thread_msg_send(cxt->thread_cxt.ctrl_thr_handle, &message);
 	if (ret) {
-		ISP_LOGE("failed to send msg to main thr %ld", ret);
+		ISP_LOGE("fail to send msg to main thr %ld", ret);
 		goto exit;
 	}
 
 exit:
+	ISP_LOGI(":ISP:done ret = %d", ret);
 	return ret;
 }
 
@@ -279,7 +280,7 @@ cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in *in,
 	in->af_set_pdinfo = af_set_pdinfo;
 
 	if (!in ||  !handle) {
-		ISP_LOGE("init param is null, input_ptr is %p", in);
+		ISP_LOGE("fail to check init param, input_ptr is %p", in);
 		ret = ISP_PARAM_NULL;
 		goto exit;
 	}
@@ -287,7 +288,7 @@ cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in *in,
 	*handle = NULL;
 	cxt = (struct pdafctrl_context *)malloc(sizeof(*cxt));
 	if (NULL == cxt) {
-		ISP_LOGE("failed to malloc cxt");
+		ISP_LOGE("fail to malloc cxt");
 		ret = ISP_ALLOC_ERROR;
 		goto exit;
 	}
@@ -299,7 +300,7 @@ cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in *in,
 	cxt->pdaf_support = 0;//in->pdaf_support;
 	//cxt->init_in_param = *in;
 	if (!cxt->pdaf_support) {
-		ISP_LOGI("this module isnot support pdaf");
+		ISP_LOGI(":ISP:this module isnot support pdaf");
 		ret = ISP_SUCCESS;
 		goto sucess_exit;
 	}
@@ -308,7 +309,7 @@ cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in *in,
 	ret  = adpt_get_ops(ADPT_LIB_PDAF, &in->lib_param, &cxt->work_lib.adpt_ops);
 
 	if (ret) {
-		ISP_LOGE("failed to get adapter layer ret = %ld", ret);
+		ISP_LOGE("fail to get adapter layer ret = %ld", ret);
 		goto exit;
 	}
 	in->caller = (void *)cxt;
@@ -318,18 +319,18 @@ cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in *in,
 	ret = pdafctrl_create_thread((cmr_handle) cxt);
 
 	if (ret) {
-		ISP_LOGE("failed to create thread ret = %ld", ret);
+		ISP_LOGE("fail to create thread ret = %ld", ret);
 		goto exit;
 	}
 	/* adpter init */
 	ret = pdafctrl_init_adapt(cxt, in, out);
 
 	if (ret) {
-		ISP_LOGE("failed to init adapter layer ret = %ld", ret);
+		ISP_LOGE("fail to init adapter layer ret = %ld", ret);
 		goto error_adpt_init;
 	}
 sucess_exit:
-
+	ISP_LOGI(":ISP: done ret=%d",ret);
 	*handle = (cmr_handle) cxt;
 	return ret;
 error_adpt_init:
@@ -360,11 +361,11 @@ cmr_int pdaf_ctrl_deinit(cmr_handle handle)
 	message.data = NULL;
 	ret = cmr_thread_msg_send(cxt->thread_cxt.ctrl_thr_handle, &message);
 	if (ret) {
-		ISP_LOGE("failed to send msg to main thr %ld", ret);
+		ISP_LOGE("fail tosend msg to main thr %ld", ret);
 	}
 	ret = pdafctrl_destroy_thread(cxt);
 	if (ret)
-		ISP_LOGE("failed to destroy thread ret = %ld", ret);
+		ISP_LOGE("fail to destroy thread ret = %ld", ret);
 
 sucess_exit:
 	//cmr_bzero(cxt, sizeof(*cxt));
@@ -372,7 +373,7 @@ sucess_exit:
 	free(cxt);
 	cxt = NULL;
 exit:
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGI(":ISP:done %ld", ret);
 	return ret;
 }
 
@@ -385,7 +386,7 @@ cmr_int pdaf_ctrl_process(cmr_handle handle, struct pdaf_ctrl_process_in *in,
 	ISP_CHECK_HANDLE_VALID(handle);
 	UNUSED(out);
 	if (!in) {
-		ISP_LOGI("input param %p is error !!!", in);
+		ISP_LOGE("fail to check param,input param %p !!!", in);
 		goto exit;
 	}
 
@@ -396,7 +397,7 @@ cmr_int pdaf_ctrl_process(cmr_handle handle, struct pdaf_ctrl_process_in *in,
 
 	message.data = malloc(sizeof(*in));
 	if (!message.data) {
-		ISP_LOGE("failed to malloc msg");
+		ISP_LOGE("fail to malloc msg");
 		ret = -ISP_ALLOC_ERROR;
 		goto exit;
 	}
@@ -406,14 +407,14 @@ cmr_int pdaf_ctrl_process(cmr_handle handle, struct pdaf_ctrl_process_in *in,
 	message.sync_flag = CMR_MSG_SYNC_NONE;
 	ret = cmr_thread_msg_send(cxt->thread_cxt.ctrl_thr_handle, &message);
 	if (ret) {
-		ISP_LOGE("failed to send msg to main thr %ld", ret);
+		ISP_LOGE("fail to send msg to main thr %ld", ret);
 		if (message.data)
 			free(message.data);
 		goto exit;
 	}
 	return ISP_SUCCESS;
 exit:
-	ISP_LOGV("done %ld", ret);
+	ISP_LOGI(":ISP:done %ld", ret);
 	return ret;
 }
 
@@ -446,7 +447,7 @@ cmr_int pdaf_ctrl_ioctrl(cmr_handle handle, cmr_int cmd,
 
 		ret = cmr_thread_msg_send(cxt->thread_cxt.ctrl_thr_handle, &message);
 		if (ret) {
-			ISP_LOGE("failed to send msg to main thr %ld", ret);
+			ISP_LOGE("fail to send msg to main thr %ld", ret);
 			goto exit;
 		}
 	}

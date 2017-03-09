@@ -41,13 +41,13 @@ static int32_t _set_afl_thr(cmr_handle handle, int *thr)
 	int i = 0, j = 0;
 
 	if(NULL == handle){
-		ISP_LOGE(" _is_isp_reg_log param error ");
+		ISP_LOGE("fail to check param ");
 		return -1;
 	}
 	char value[PROPERTY_VALUE_MAX];
 
 	property_get(ISP_SET_AFL_THR, value, "/dev/close_afl");
-	ISP_LOGI("_set_afl_thr:%s", value);
+	ISP_LOGI(":ISP:_set_afl_thr:%s", value);
 
 	if (strcmp(value, "/dev/close_afl")) {
 		for(i = 0; i < 9; i++) {
@@ -60,7 +60,7 @@ static int32_t _set_afl_thr(cmr_handle handle, int *thr)
 
 			if(0 == temp) {
 				rtn = -1;
-				ISP_LOGE("ERR:Invalid anti_flicker threshold param!");
+				ISP_LOGE("fail to do anti_flicker threshold param!");
 				break;
 			}
 		}
@@ -88,10 +88,10 @@ cmr_int afl_statistc_file_open()
 	strcat(file_name, tmp_str);
 
 	strcat(file_name, "_afl");
-	ISP_LOGE("file name %s", file_name);
+	ISP_LOGI(":ISP:file name %s", file_name);
 	fp = fopen(file_name, "w+");
 	if (NULL == fp) {
-		ISP_LOGI("can not open file: %s \n", file_name);
+		ISP_LOGI(":ISP:can not open file: %s \n", file_name);
 		return -1;
 	}
 
@@ -104,7 +104,7 @@ static int32_t afl_statistic_save_to_file(int32_t height, int32_t *addr, FILE *f
 	int32_t                         *ptr = addr;
 	FILE                            *fp = fp_ptr;
 
-	ISP_LOGI("addr %p line num %d", ptr, height);
+	ISP_LOGI(":ISP:addr %p line num %d", ptr, height);
 
 	for (i = 0; i < height; i++) {
 		fprintf(fp, "%d\n", *ptr);
@@ -137,7 +137,7 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 	int32_t *addr = NULL;
 	addr = (int32_t *)in_ptr->vir_addr;
 	if (!cxt_ptr || !in_ptr) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to check param is NULL!");
 		goto exit;
 	}
 
@@ -202,7 +202,7 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 	out_ptr->cur_flicker = cur_flicker;
 
 exit:
-	ISP_LOGI("done %ld", rtn);
+	ISP_LOGI(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -212,10 +212,10 @@ static cmr_int aflctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 	struct isp_anti_flicker_cfg *cxt_ptr = (struct isp_anti_flicker_cfg *)p_data;
 
 	if (!message || !p_data) {
-		ISP_LOGE("param error");
+		ISP_LOGE("fail to check param");
 		goto exit;
 	}
-	ISP_LOGI("message.msg_type 0x%x, data %p", message->msg_type,
+	ISP_LOGI(":ISP:message.msg_type 0x%x, data %p", message->msg_type,
 		 message->data);
 
 	switch (message->msg_type) {
@@ -223,12 +223,12 @@ static cmr_int aflctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 		rtn = aflctrl_process(cxt_ptr, (struct afl_proc_in*)message->data, &cxt_ptr->proc_out);
 		break;
 	default:
-		ISP_LOGE("don't support msg");
+		ISP_LOGE("fail to proc,don't support msg");
 		break;
 	}
 
 exit:
-	ISP_LOGI("done %ld", rtn);
+	ISP_LOGI(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -238,11 +238,11 @@ static cmr_int aflctrl_create_thread(struct isp_anti_flicker_cfg *cxt_ptr)
 
 	rtn = cmr_thread_create(&cxt_ptr->thr_handle, ISP_THREAD_QUEUE_NUM, aflctrl_ctrl_thr_proc, (void*)cxt_ptr);
 	if (rtn) {
-		ISP_LOGE("create ctrl thread error");
+		ISP_LOGE("fail to create ctrl thread ");
 		rtn = ISP_ERROR;
 	}
 
-	ISP_LOGI("LiuY:afl_ctrl thread rtn %ld", rtn);
+	ISP_LOGI(":ISP::afl_ctrl thread rtn %ld", rtn);
 	return rtn;
 }
 
@@ -261,20 +261,20 @@ cmr_int afl_ctrl_init(cmr_handle *isp_afl_handle, struct afl_ctrl_init_in *input
 	rtn = antiflcker_sw_init();
 #endif
 	if (rtn) {
-		ISP_LOGE("AFL_TAG:antiflcker_sw_init failed");
+		ISP_LOGE("fail to do antiflcker_sw_init");
 		return ISP_ERROR;
 	}
 
 	cxt_ptr = (struct isp_anti_flicker_cfg*)malloc(sizeof(struct isp_anti_flicker_cfg));
 	if (NULL == cxt_ptr){
-		ISP_LOGE("AFL_TAG:malloc failed");
+		ISP_LOGE("fail to do:malloc");
 		return ISP_ERROR;
 	}
 	memset((void *)cxt_ptr, 0x00, sizeof(*cxt_ptr));
 
 	afl_buf_ptr = (void*)malloc(ISP_AFL_BUFFER_LEN); //(handle->src.h * 4 * 16);//max frame_num 15
 	if (NULL == afl_buf_ptr) {
-		ISP_LOGE("AFL_TAG:malloc failed");
+		ISP_LOGE("fail to do AFL_TAG:malloc");
 		free(cxt_ptr);
 		return ISP_ERROR;
 	}
@@ -308,7 +308,7 @@ exit:
 		*isp_afl_handle = (void *)cxt_ptr;
 	}
 
-	ISP_LOGI("LiuY: done %ld", rtn);
+	ISP_LOGI(":ISP: done %ld", rtn);
 	return rtn;
 }
 
@@ -353,7 +353,7 @@ cmr_int afl_ctrl_cfg(isp_handle isp_afl_handle)
 	rtn = isp_dev_access_ioctl(cxt_ptr->dev_handle, ISP_DEV_SET_AFL_NEW_BLOCK, &afl_info, NULL);
 #endif
 
-	ISP_LOGI("LiuY: done %ld", rtn);
+	ISP_LOGI(":ISP: done %ld", rtn);
 	return rtn;
 }
 
@@ -362,7 +362,7 @@ static cmr_int aflctrl_destroy_thread(struct isp_anti_flicker_cfg *cxt)
 	cmr_int rtn = ISP_SUCCESS;
 
 	if (!cxt) {
-		ISP_LOGE("in parm error");
+		ISP_LOGE("fail to check param, in parm is NULL");
 		rtn = ISP_ERROR;
 		goto exit;
 	}
@@ -372,11 +372,11 @@ static cmr_int aflctrl_destroy_thread(struct isp_anti_flicker_cfg *cxt)
 		if (!rtn) {
 			cxt->thr_handle = NULL;
 		} else {
-			ISP_LOGE("failed to destroy ctrl thread %ld", rtn);
+			ISP_LOGE("fail to destroy ctrl thread %ld", rtn);
 		}
 	}
 exit:
-	ISP_LOGI("done %ld", rtn);
+	ISP_LOGI(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -404,11 +404,11 @@ cmr_int afl_ctrl_deinit(cmr_handle isp_afl_handle)
 	rtn = antiflcker_sw_deinit();
 #endif
 	if (rtn) {
-		ISP_LOGE("AFL_TAG:antiflcker_sw_deinit error");
+		ISP_LOGE("fail to do AFL_TAG:antiflcker_sw_deinit");
 		return ISP_ERROR;
 	}
 
-	ISP_LOGI("done %ld", rtn);
+	ISP_LOGI(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -420,13 +420,12 @@ cmr_int afl_ctrl_process(cmr_handle isp_afl_handle, struct afl_proc_in *in_ptr, 
 		rtn = ISP_PARAM_ERROR;
 		goto exit;
 	}
-	ISP_LOGI("LiuY: begin %ld", rtn);
+	ISP_LOGI(":ISP: begin %ld", rtn);
 
 	CMR_MSG_INIT(message);
-	ISP_LOGI("LiuY: begin %ld", rtn);
 	message.data = malloc(sizeof(*in_ptr));
 	if (!message.data) {
-		ISP_LOGE("failed to malloc msg");
+		ISP_LOGE("fail to malloc msg");
 		rtn = ISP_ALLOC_ERROR;
 		goto exit;
 	}
@@ -440,6 +439,6 @@ cmr_int afl_ctrl_process(cmr_handle isp_afl_handle, struct afl_proc_in *in_ptr, 
 		*out_ptr = cxt_ptr->proc_out;
 	}
 exit:
-	ISP_LOGI("LiuY: done %ld", rtn);
+	ISP_LOGI(":ISP: done %ld", rtn);
 	return rtn;
 }

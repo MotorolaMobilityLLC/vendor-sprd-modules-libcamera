@@ -114,7 +114,7 @@ static int32_t af_lock_module(void* handle_af, cmr_int af_locker_type)
 	cmr_int rtn = ISP_SUCCESS;
 
 	if (NULL == cxt_ptr->af_set_cb) {
-		ISP_LOGE("af_set_cb is NULL error!");
+		ISP_LOGE("fail to check param!");
 		return ISP_PARAM_NULL;
 	}
 
@@ -132,7 +132,7 @@ static int32_t af_lock_module(void* handle_af, cmr_int af_locker_type)
 		rtn = cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_NLM_LOCK, NULL, NULL);
 		break;
 	default:
-		ISP_LOGE("af_locker_type is not supported!");
+		ISP_LOGE("fail to do af lock,af_locker_type is not supported!");
 		break;
 	}
 
@@ -146,7 +146,7 @@ static int32_t af_unlock_module(void* handle_af, cmr_int af_locker_type)
 	cmr_int rtn = ISP_SUCCESS;
 
 	if (NULL == cxt_ptr->af_set_cb) {
-		ISP_LOGE("af_set_cb is NULL error!");
+		ISP_LOGE("fail to check param!");
 		return ISP_PARAM_NULL;
 	}
 
@@ -164,7 +164,7 @@ static int32_t af_unlock_module(void* handle_af, cmr_int af_locker_type)
 		rtn = cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_NLM_UNLOCK, NULL, NULL);
 		break;
 	default:
-		ISP_LOGE("af_unlocker_type is not supported!");
+		ISP_LOGE("fail to unlock, af_unlocker_type is not supported!");
 		break;
 	}
 
@@ -210,17 +210,17 @@ static cmr_int afctrl_process(struct afctrl_cxt *cxt_ptr, struct af_calc_param *
 	struct afctrl_work_lib *lib_ptr = NULL;
 
 	if (!cxt_ptr) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to check param!");
 		goto exit;
 	}
 	lib_ptr = &cxt_ptr->work_lib;
 	if (lib_ptr->adpt_ops->adpt_process) {
 		rtn = lib_ptr->adpt_ops->adpt_process(lib_ptr->lib_handle, in_ptr, out_ptr);
 	} else {
-		ISP_LOGI("ioctrl fun is NULL");
+		ISP_LOGI(":ISP:ioctrl fun is NULL");
 	}
 exit:
-	ISP_LOGI("done %ld", rtn);
+	ISP_LOGI(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -238,12 +238,12 @@ static cmr_int afctrl_deinit_adpt(struct afctrl_cxt *cxt_ptr)
 	if (lib_ptr->adpt_ops->adpt_deinit) {
 		rtn = lib_ptr->adpt_ops->adpt_deinit(lib_ptr->lib_handle, NULL, NULL);
 	} else {
-		ISP_LOGI("adpt_deinit fun is NULL");
+		ISP_LOGI(":ISP:adpt_deinit fun is NULL");
 	}
 
-	ISP_LOGI("LiuY: af_deinit is OK!");
+	ISP_LOGI(":ISP: af_deinit is OK!");
 exit:
-	ISP_LOGI("done %ld", rtn);
+	ISP_LOGI(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -254,10 +254,10 @@ static cmr_int afctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)p_data;
 
 	if (!message || !p_data) {
-		ISP_LOGE("param error");
+		ISP_LOGE("fail to check param");
 		goto exit;
 	}
-	ISP_LOGI("message.msg_type 0x%x, data %p", message->msg_type,
+	ISP_LOGI(":ISP:message.msg_type 0x%x, data %p", message->msg_type,
 		 message->data);
 
 	switch (message->msg_type) {
@@ -274,12 +274,12 @@ static cmr_int afctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 		rtn = afctrl_process(cxt_ptr, (struct af_calc_param *)message->data, &cxt_ptr->proc_out);
 		break;
 	default:
-		ISP_LOGE("don't support msg");
+		ISP_LOGE("fail to proc ,don't support msg");
 		break;
 	}
 
 exit:
-	ISP_LOGI("done %ld", rtn);
+	ISP_LOGI(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -290,11 +290,11 @@ static cmr_int afctrl_create_thread(struct afctrl_cxt *cxt_ptr)
 
 	rtn = cmr_thread_create(&cxt_ptr->thr_handle, ISP_THREAD_QUEUE_NUM, afctrl_ctrl_thr_proc, (void*)cxt_ptr);
 	if (rtn) {
-		ISP_LOGE("create ctrl thread error");
+		ISP_LOGE("fail to create ctrl thread");
 		rtn = ISP_ERROR;
 	}
 
-	ISP_LOGI("af_ctrl thread rtn %ld", rtn);
+	ISP_LOGI(":ISP:af_ctrl thread rtn %ld", rtn);
 	return rtn;
 }
 
@@ -303,7 +303,7 @@ static cmr_int afctrl_destroy_thread(struct afctrl_cxt *cxt_ptr)
 	cmr_int rtn = ISP_SUCCESS;
 
 	if (!cxt_ptr) {
-		ISP_LOGE("in parm error");
+		ISP_LOGE("fail to check param");
 		rtn = ISP_ERROR;
 		goto exit;
 	}
@@ -313,11 +313,11 @@ static cmr_int afctrl_destroy_thread(struct afctrl_cxt *cxt_ptr)
 		if (!rtn) {
 			cxt_ptr->thr_handle = NULL;
 		} else {
-			ISP_LOGE("failed to destroy ctrl thread %ld", rtn);
+			ISP_LOGE("fail to destroy ctrl thread %ld", rtn);
 		}
 	}
 exit:
-	ISP_LOGI("done %ld", rtn);
+	ISP_LOGI(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -327,7 +327,7 @@ static cmr_int afctrl_init_lib(struct afctrl_cxt *cxt_ptr, struct afctrl_init_in
 	struct afctrl_work_lib *lib_ptr = NULL;
 
 	if (!cxt_ptr) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to check param!");
 		goto exit;
 	}
 
@@ -335,14 +335,14 @@ static cmr_int afctrl_init_lib(struct afctrl_cxt *cxt_ptr, struct afctrl_init_in
 	if (lib_ptr->adpt_ops->adpt_init) {
 		lib_ptr->lib_handle = lib_ptr->adpt_ops->adpt_init(in_ptr, out_ptr);
 		if(NULL == lib_ptr->lib_handle){
-			ISP_LOGE("af lib_handle is NULL error!");
+			ISP_LOGE("fail to check af lib_handle!");
 			ret = ISP_ERROR;
         }
 	} else {
-		ISP_LOGI("adpt_init fun is NULL");
+		ISP_LOGI(":ISP:adpt_init fun is NULL");
 	}
 exit:
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGI(":ISP:done %ld", ret);
 	return ret;
 }
 
@@ -353,20 +353,20 @@ static cmr_int afctrl_init_adpt(struct afctrl_cxt *cxt_ptr, struct afctrl_init_i
 	ISP_LOGI("E %ld", rtn);
 
 	if (!cxt_ptr) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to check param!");
 		goto exit;
 	}
 
 	/* find vendor adpter */
 	rtn  = adpt_get_ops(ADPT_LIB_AF, &in_ptr->lib_param, &cxt_ptr->work_lib.adpt_ops);
 	if (rtn) {
-		ISP_LOGE("failed to get adapter layer ret = %ld", rtn);
+		ISP_LOGE("fail to get adapter layer ret = %ld", rtn);
 		goto exit;
 	}
 
 	rtn = afctrl_init_lib(cxt_ptr, in_ptr, out_ptr);
 exit:
-	ISP_LOGI("done %ld", rtn);
+	ISP_LOGI(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -390,7 +390,7 @@ cmr_int af_ctrl_init(struct afctrl_init_in *input_ptr, cmr_handle *handle_af)
 
 	cxt_ptr = (struct afctrl_cxt*)malloc(sizeof(*cxt_ptr));
 	if (NULL == cxt_ptr) {
-		ISP_LOGE("failed to create af ctrl context!");
+		ISP_LOGE("fail to create af ctrl context!");
 		rtn = ISP_ALLOC_ERROR;
 		goto exit;
 	}
@@ -410,7 +410,7 @@ cmr_int af_ctrl_init(struct afctrl_init_in *input_ptr, cmr_handle *handle_af)
 	}
 
 	*handle_af = (cmr_handle)cxt_ptr;
-	ISP_LOGI("isp_3a_ctrl af_init rtn = %d", rtn);
+	ISP_LOGI(":ISP:isp_3a_ctrl af_init rtn = %d", rtn);
 	return rtn;
 
 error_adpt_init:
@@ -437,7 +437,7 @@ cmr_int af_ctrl_deinit(cmr_handle handle_af)
 	message.data = NULL;
 	rtn = cmr_thread_msg_send(cxt_ptr->thr_handle, &message);
 	if (rtn) {
-		ISP_LOGE("failed to send msg to main thr %ld", rtn );
+		ISP_LOGE("fail to send msg to main thr %ld", rtn );
 		goto exit;
 	}
 
@@ -445,7 +445,7 @@ cmr_int af_ctrl_deinit(cmr_handle handle_af)
 	free((void*)handle_af);
 
 exit:
-	ISP_LOGI("done %d", rtn);
+	ISP_LOGI(":ISP:done %d", rtn);
 	return rtn;
 }
 
@@ -459,7 +459,7 @@ cmr_int af_ctrl_process(cmr_handle handle_af, void *in_ptr, struct afctrl_calc_o
 
 	message.data = malloc(sizeof(struct af_calc_param));
 	if (!message.data) {
-		ISP_LOGE("failed to malloc msg");
+		ISP_LOGE("fail to malloc msg");
 		rtn = ISP_ALLOC_ERROR;
 		goto exit;
 	}
@@ -471,7 +471,7 @@ cmr_int af_ctrl_process(cmr_handle handle_af, void *in_ptr, struct afctrl_calc_o
 	rtn = cmr_thread_msg_send(cxt_ptr->thr_handle, &message);
 
 	if (rtn) {
-		ISP_LOGE("failed to send msg to main thr %ld", rtn);
+		ISP_LOGE("fail to send msg to main thr %ld", rtn);
 		if (message.data)
 			free(message.data);
 		goto exit;
@@ -482,7 +482,7 @@ cmr_int af_ctrl_process(cmr_handle handle_af, void *in_ptr, struct afctrl_calc_o
 	}
 
 exit:
-	ISP_LOGI("done %ld", rtn);
+	ISP_LOGI(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -493,7 +493,7 @@ cmr_int af_ctrl_ioctrl(cmr_handle handle_af, cmr_int cmd, void *in_ptr, void *ou
 	struct afctrl_work_lib *lib_ptr = NULL;
 
 	if (!cxt_ptr) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to check param is NULL!");
 		goto exit;
 	}
 
@@ -501,10 +501,10 @@ cmr_int af_ctrl_ioctrl(cmr_handle handle_af, cmr_int cmd, void *in_ptr, void *ou
 	if (lib_ptr->adpt_ops->adpt_ioctrl) {
 		rtn = lib_ptr->adpt_ops->adpt_ioctrl(lib_ptr->lib_handle, cmd, in_ptr, out_ptr);
 	} else {
-		ISP_LOGI("ioctrl fun is NULL");
+		ISP_LOGI(":ISP:ioctrl fun is NULL");
 	}
 
 exit:
-	ISP_LOGI("cmd = %ld,done %ld", cmd, rtn);
+	ISP_LOGI(":ISP:cmd = %ld,done %ld", cmd, rtn);
 	return rtn;
 }

@@ -59,7 +59,7 @@ static int32_t _isp_check_video_param(struct isp_video_start *param_ptr)
 
 	if ((ISP_ZERO != (param_ptr->size.w&ISP_ONE)) || (ISP_ZERO != (param_ptr->size.h&ISP_ONE))) {
 		rtn = ISP_PARAM_ERROR;
-		ISP_RETURN_IF_FAIL(rtn, ("input size: w:%d, h:%d error", param_ptr->size.w, param_ptr->size.h));
+		ISP_RETURN_IF_FAIL(rtn, ("fail to check video param input size: w:%d, h:%d error", param_ptr->size.w, param_ptr->size.h));
 	}
 
 	return rtn;
@@ -71,7 +71,7 @@ static int32_t _isp_check_proc_start_param(struct ips_in_param* in_param_ptr)
 
 	if ((ISP_ZERO != (in_param_ptr->src_frame.img_size.w&ISP_ONE)) || (ISP_ZERO != (in_param_ptr->src_frame.img_size.h&ISP_ONE))) {
 		rtn = ISP_PARAM_ERROR;
-		ISP_RETURN_IF_FAIL(rtn, ("input size: w:%d, h:%d error", in_param_ptr->src_frame.img_size.w, in_param_ptr->src_frame.img_size.h));
+		ISP_RETURN_IF_FAIL(rtn, ("ifail to check start param input size: w:%d, h:%d error", in_param_ptr->src_frame.img_size.w, in_param_ptr->src_frame.img_size.h));
 	}
 
 	return rtn;
@@ -83,7 +83,7 @@ static int32_t _isp_check_proc_next_param(struct ipn_in_param* in_param_ptr)
 
 	if ((ISP_ZERO != (in_param_ptr->src_slice_height&ISP_ONE)) || (ISP_ZERO != (in_param_ptr->src_avail_height&ISP_ONE))) {
 		rtn = ISP_PARAM_ERROR;
-		ISP_RETURN_IF_FAIL(rtn, ("input size:src_slice_h:%d,src_avail_h:%d error", in_param_ptr->src_slice_height, in_param_ptr->src_avail_height));
+		ISP_RETURN_IF_FAIL(rtn, ("fail to check param,input size:src_slice_h:%d,src_avail_h:%d error", in_param_ptr->src_slice_height, in_param_ptr->src_avail_height));
 	}
 
 	return rtn;
@@ -96,11 +96,11 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handler)
 	struct isp_mw_context *cxt = NULL;
 	struct isp_alg_fw_init_in ispalg_input;
 
-	ISP_LOGI("E");
+	ISP_LOGI(":ISP:E");
 
 	cxt = (struct isp_mw_context *)malloc(sizeof(struct isp_mw_context));
 	if (!input_ptr || !isp_handler) {
-		ISP_LOGE("init param is null,input_ptr is 0x%lx & handler is 0x%lx", (isp_uint)input_ptr,(isp_uint)isp_handler);
+		ISP_LOGE("fail to check init param,input_ptr is 0x%lx & handler is 0x%lx", (isp_uint)input_ptr,(isp_uint)isp_handler);
 		rtn = ISP_PARAM_NULL;
 		goto exit;
 	}
@@ -130,7 +130,7 @@ exit:
 		*isp_handler = (isp_handle)cxt;
 	}
 
-	ISP_LOGI("X %d", rtn);
+	ISP_LOGI(":ISP:X %d", rtn);
 
 	return rtn;
 }
@@ -152,7 +152,7 @@ cmr_int isp_deinit(isp_handle isp_handler)
 		cxt = NULL;
 	}
 
-	ISP_LOGI("done %ld", rtn);
+	ISP_LOGI(":ISP:done %ld", rtn);
 
 	return rtn;
 }
@@ -186,13 +186,13 @@ cmr_int isp_ioctl(isp_handle isp_handler, enum isp_ctrl_cmd cmd, void *param_ptr
 	struct isp_mw_context *cxt = (struct isp_mw_context *)isp_handler;
 
 	if (NULL == cxt) {
-		ISP_LOGE("isp handler is NULL");
+		ISP_LOGE("fail to check isp handler");
 		return ISP_PARAM_NULL;
 	}
 
 	rtn = isp_alg_fw_ioctl(cxt->alg_fw_handle, cmd, param_ptr, NULL);
 
-	ISP_TRACE_IF_FAIL(rtn, ("isp_ioctl error"));
+	ISP_TRACE_IF_FAIL(rtn, ("fail to do isp_ioctl"));
 
 	return rtn;
 }
@@ -209,7 +209,7 @@ cmr_int isp_video_start(isp_handle isp_handler, struct isp_video_start *param_pt
 	rtn = isp_alg_fw_start(cxt->alg_fw_handle, param_ptr);
 
 exit:
-	ISP_LOGI("LiuY: done %ld", rtn);
+	ISP_LOGI(":ISP: done %ld", rtn);
 	return rtn;
 }
 
@@ -235,12 +235,12 @@ cmr_int isp_proc_start(isp_handle isp_handler, struct ips_in_param *in_ptr, stru
 	struct isp_mw_context *cxt = (struct isp_mw_context *)isp_handler;
 
 	if (NULL == cxt) {
-		ISP_LOGE("isp handler is NULL");
+		ISP_LOGE("fail to check isp handler");
 		return ISP_PARAM_NULL;
 	}
 
 	rtn = _isp_check_proc_start_param(in_ptr);
-	ISP_RETURN_IF_FAIL(rtn, ("check init param error"));
+	ISP_RETURN_IF_FAIL(rtn, ("fail to check init param"));
 
 	rtn = isp_alg_proc_start(cxt->alg_fw_handle, in_ptr);
 
@@ -253,12 +253,12 @@ cmr_int isp_proc_next(isp_handle isp_handler, struct ipn_in_param *in_ptr, struc
 	struct isp_mw_context *cxt = (struct isp_mw_context *)isp_handler;
 
 	if (NULL == cxt) {
-		ISP_LOGE("isp handler is NULL");
+		ISP_LOGE("fail to check isp handler");
 		return ISP_PARAM_NULL;
 	}
 
 	rtn = _isp_check_proc_next_param(in_ptr);
-	ISP_RETURN_IF_FAIL(rtn, ("check init param error"));
+	ISP_RETURN_IF_FAIL(rtn, ("fail to check init param"));
 
 	rtn = isp_alg_proc_next(cxt->alg_fw_handle, in_ptr);
 

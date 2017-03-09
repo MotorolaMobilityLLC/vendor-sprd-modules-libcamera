@@ -45,7 +45,7 @@ static cmr_int awbctrl_deinit_adpt(struct awbctrl_cxt *cxt_ptr)
 	struct awbctrl_work_lib *lib_ptr = NULL;
 
 	if (!cxt_ptr) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to check param,param is NULL!");
 		goto exit;
 	}
 
@@ -53,11 +53,11 @@ static cmr_int awbctrl_deinit_adpt(struct awbctrl_cxt *cxt_ptr)
 	if (lib_ptr->adpt_ops->adpt_deinit) {
 		rtn = lib_ptr->adpt_ops->adpt_deinit(lib_ptr->lib_handle, NULL, NULL);
 	} else {
-		ISP_LOGI("adpt_deinit fun is NULL");
+		ISP_LOGI(":ISP:adpt_deinit fun is NULL");
 	}
 
 exit:
-	ISP_LOGI("done %ld", rtn);
+	ISP_LOGI(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -68,7 +68,7 @@ static cmr_int awbctrl_init_lib(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_ini
 	struct awbctrl_work_lib *lib_ptr = NULL;
 
 	if (!cxt_ptr) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to check param,param is NULL!");
 		goto exit;
 	}
 
@@ -76,10 +76,10 @@ static cmr_int awbctrl_init_lib(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_ini
 	if (lib_ptr->adpt_ops->adpt_init) {
 		lib_ptr->lib_handle = lib_ptr->adpt_ops->adpt_init(in_ptr, out_ptr);
 	} else {
-		ISP_LOGI("adpt_init fun is NULL");
+		ISP_LOGI(":ISP:adpt_init fun is NULL");
 	}
 exit:
-	ISP_LOGI("done %ld", rtn);
+	ISP_LOGI(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -89,20 +89,20 @@ static cmr_int awbctrl_init_adpt(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_in
 	struct awbctrl_work_lib *lib_ptr = NULL;
 
 	if (!cxt_ptr) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to check para, param is NULL!");
 		goto exit;
 	}
 
 	/* find vendor adpter */
 	rtn  = adpt_get_ops(ADPT_LIB_AWB, &in_ptr->lib_param, &cxt_ptr->work_lib.adpt_ops);
 	if (rtn) {
-		ISP_LOGE("failed to get adapter layer ret = %ld", rtn);
+		ISP_LOGE("fail to get adapter layer ret = %ld", rtn);
 		goto exit;
 	}
 
 	rtn = awbctrl_init_lib(cxt_ptr, in_ptr, out_ptr);
 exit:
-	ISP_LOGI("done %ld", rtn);
+	ISP_LOGI(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -116,7 +116,7 @@ cmr_int awb_ctrl_init(struct awb_ctrl_init_param *input_ptr, cmr_handle *handle_
 
 	cxt_ptr = (struct awbctrl_cxt*)malloc(sizeof(*cxt_ptr));
 	if (NULL == cxt_ptr) {
-		ISP_LOGE("failed to create awb ctrl context!");
+		ISP_LOGE("fail to create awb ctrl context!");
 		rtn = ISP_ALLOC_ERROR;
 		goto exit;
 	}
@@ -135,7 +135,7 @@ exit:
 	} else {
 		*handle_awb = (cmr_handle)cxt_ptr;
 	}
-	ISP_LOGI("isp_3a_ctrl awb_init rtn = %d", rtn);
+	ISP_LOGI(":ISP:isp_3a_ctrl awb_init rtn = %d", rtn);
 
 	return rtn;
 }
@@ -146,17 +146,17 @@ static cmr_int awbctrl_process(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_calc
 	struct awbctrl_work_lib *lib_ptr = NULL;
 
 	if (!cxt_ptr) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to check param, param is NULL!");
 		goto exit;
 	}
 	lib_ptr = &cxt_ptr->work_lib;
 	if (lib_ptr->adpt_ops->adpt_process) {
 		rtn = lib_ptr->adpt_ops->adpt_process(lib_ptr->lib_handle, in_ptr, out_ptr);
 	} else {
-		ISP_LOGI("process fun is NULL");
+		ISP_LOGI(":ISP:process fun is NULL");
 	}
 exit:
-	ISP_LOGI("done %ld", rtn);
+	ISP_LOGI(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -168,14 +168,14 @@ cmr_int awb_ctrl_process(cmr_handle handle_awb, struct awb_ctrl_calc_param *para
 	ISP_CHECK_HANDLE_VALID(handle_awb);
 
 	if (!param || !result) {
-		ISP_LOGI("input param is error 0x%lx", (cmr_uint)param);
+		ISP_LOGI(":ISP:input param is error 0x%lx", (cmr_uint)param);
 		goto exit;
 	}
 
 	rtn = awbctrl_process(cxt_ptr, param, result);
 
 exit:
-	ISP_LOGI("LiuY: done %ld", rtn);
+	ISP_LOGI(":ISP: done %ld", rtn);
 	return rtn;
 }
 
@@ -194,7 +194,7 @@ cmr_int awb_ctrl_deinit(cmr_handle handle_awb)
 		}
 	}
 
-	ISP_LOGI("done %d", rtn);
+	ISP_LOGI(":ISP:done %d", rtn);
 	return rtn;
 }
 
@@ -205,7 +205,7 @@ cmr_int awb_ctrl_ioctrl(cmr_handle handle_awb, enum awb_ctrl_cmd cmd, void *in_p
 	struct awbctrl_work_lib *lib_ptr = NULL;
 
 	if (!cxt_ptr) {
-		ISP_LOGE("param is NULL error!");
+		ISP_LOGE("fail to check param,param is NULL!");
 		goto exit;
 	}
 
@@ -213,9 +213,9 @@ cmr_int awb_ctrl_ioctrl(cmr_handle handle_awb, enum awb_ctrl_cmd cmd, void *in_p
 	if (lib_ptr->adpt_ops->adpt_ioctrl) {
 		rtn = lib_ptr->adpt_ops->adpt_ioctrl(lib_ptr->lib_handle, cmd, in_ptr, out_ptr);
 	} else {
-		ISP_LOGI("ioctrl fun is NULL");
+		ISP_LOGI(":ISP:ioctrl fun is NULL");
 	}
 exit:
-	ISP_LOGI("cmd = %d,done %ld", cmd, rtn);
+	ISP_LOGI(":ISP:cmd = %d,done %ld", cmd, rtn);
 	return rtn;
 }

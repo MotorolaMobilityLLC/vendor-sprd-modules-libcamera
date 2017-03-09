@@ -869,14 +869,14 @@ smart_handle_t smart_ctl_init(struct smart_init_param *param, void *result)
 	struct smart_context *cxt = NULL;
 
 	if (NULL == param) {
-		ISP_LOGE("input is validated, in: %p, out: %p\n", param, result);
+		ISP_LOGE("fail to check param,input is validated, in: %p, out: %p\n", param, result);
 		goto param_failed;
 	}
 
 	/* create isp_smart_context handle. */
 	cxt = (struct smart_context *)malloc(sizeof(struct smart_context));
 	if (NULL == cxt) {
-		ISP_LOGE("malloc failed, size: %d\n", sizeof(struct smart_context));
+		ISP_LOGE("fail to  malloc, size: %d\n", sizeof(struct smart_context));
 		goto malloc_failed;
 	}
 
@@ -886,7 +886,7 @@ smart_handle_t smart_ctl_init(struct smart_init_param *param, void *result)
 	rtn = smart_ctl_parse_tuning_param(param->tuning_param, cxt->tuning_param, SMART_MAX_WORK_MODE);
 	memcpy(cxt->tuning_param_org, cxt->tuning_param, sizeof(cxt->tuning_param_org));
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("parse tuning param failed: rtn = %d", rtn);
+		ISP_LOGE("fail to parse tuning param: rtn = %d", rtn);
 		goto parse_tuning_failed;
 	}
 
@@ -897,6 +897,7 @@ smart_handle_t smart_ctl_init(struct smart_init_param *param, void *result)
 	cxt->debug_file = smart_debug_file_init(DEBUG_FILE_NAME, "wt");
 	handle = (smart_handle_t) cxt;
 
+	ISP_LOGI(":ISP:done rtn =%d", rtn);
 	return handle;
 
 parse_tuning_failed:
@@ -980,7 +981,7 @@ int32_t smart_ctl_deinit(smart_handle_t handle, void *param, void *result)
 
 	rtn = check_handle_validate(handle);
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("deinit check handle failed, rtn = %d\n", rtn);
+		ISP_LOGE("fail to check handle, rtn = %d\n", rtn);
 		rtn = ISP_ERROR;
 		goto ERROR_EXIT;
 	}
@@ -997,7 +998,7 @@ int32_t smart_ctl_deinit(smart_handle_t handle, void *param, void *result)
 	cxt = NULL;
 
 ERROR_EXIT:
-	ISP_LOGI("done %d", rtn);
+	ISP_LOGI(":ISP:done %d", rtn);
 	return rtn;
 }
 
@@ -1009,7 +1010,7 @@ int32_t smart_ctl_ioctl(smart_handle_t handle, uint32_t cmd, void *param, void *
 
 	rtn = check_handle_validate(handle);
 	if (ISP_SUCCESS != rtn) {
-		ISP_LOGE("deinit check handle failed, rtn = %d\n", rtn);
+		ISP_LOGE("fail to  check handle, rtn = %d\n", rtn);
 		return rtn;
 	}
 
@@ -1299,12 +1300,12 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input *in_ptr)
 			debug_result.block_result[i].component[j].y_type = block_result->component[j].y_type;
 			memcpy(debug_result.block_result[i].component[j].fix_data, block_result->component[j].fix_data, sizeof(int32_t)*12);
 		}
-	ISP_LOGI("block[%d]: %s", i, debug_result.block_result[i].block_name);
+	ISP_LOGV("block[%d]: %s", i, debug_result.block_result[i].block_name);
 	}
 	in_ptr->log = &debug_result;
 	in_ptr->size = (sizeof(struct smart_debug_result));
 
 exit:
-	ISP_LOGI("LiuY: done %ld", rtn);
+	ISP_LOGI(":ISP: done %ld", rtn);
 	return rtn;
 }
