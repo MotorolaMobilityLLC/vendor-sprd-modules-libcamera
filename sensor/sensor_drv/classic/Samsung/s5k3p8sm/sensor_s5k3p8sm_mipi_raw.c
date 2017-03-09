@@ -419,8 +419,8 @@ static SENSOR_REG_TAB_INFO_T s_s5k3p8sm_resolution_Tab_RAW[9] = {
      SENSOR_IMAGE_FORMAT_RAW},
     {ADDR_AND_LEN_OF_ARRAY(s5k3p8sm_1280x720_4lane_setting), 1280, 720, 24,
      SENSOR_IMAGE_FORMAT_RAW},
-    {ADDR_AND_LEN_OF_ARRAY(s5k3p8sm_2320x1744_4lane_setting), 2320, 1744, 24,
-     SENSOR_IMAGE_FORMAT_RAW},
+    //{ADDR_AND_LEN_OF_ARRAY(s5k3p8sm_2320x1744_4lane_setting), 2320, 1744, 24,
+    // SENSOR_IMAGE_FORMAT_RAW},
     {ADDR_AND_LEN_OF_ARRAY(s5k3p8sm_4640x3488_4lane_setting), 4640, 3488, 24,
      SENSOR_IMAGE_FORMAT_RAW},
     //{ADDR_AND_LEN_OF_ARRAY(s5k3p8sm_1920x1080_4lane_30fps_setting), 1920,
@@ -436,7 +436,7 @@ static SENSOR_REG_TAB_INFO_T s_s5k3p8sm_resolution_Tab_RAW[9] = {
 static SENSOR_TRIM_T s_s5k3p8sm_Resolution_Trim_Tab[SENSOR_MODE_MAX] = {
     {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
     {0, 0, 1280, 720, 9248, 1320, 965, {0, 0, 1280, 720}},
-    {0, 0, 2320, 1744, 9140, 1320, 3643, {0, 0, 2320, 1744}},
+    //{0, 0, 2320, 1744, 9140, 1320, 3643, {0, 0, 2320, 1744}},
     {0, 0, 4640, 3488, 9140, 2784, 3643, {0, 0, 4640, 3488}},
     //{0, 0, 1920, 1080, 9430, 1320, 3534, {0, 0, 1920, 1080}},
     //{0, 0, 1920, 1080, 9430, 1320, 1767, {0, 0, 1920, 1080}},
@@ -516,7 +516,7 @@ static SENSOR_STATIC_INFO_T s_s5k3p8sm_static_info = {
          // sensor mode fps
     16 * 256,                 // max_adgain,AD-gain
     0,                        // ois_supported;
-    0, //SENSOR_PDAF_TYPE3_ENABLE, // pdaf_supported;
+    SENSOR_PDAF_TYPE3_ENABLE, // pdaf_supported;
     1,                        // exp_valid_frame_num;N+2-1
     64,                       // clamp_level,black level
     1,                        // adgain_valid_frame_num;N+1-1

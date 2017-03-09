@@ -27,7 +27,7 @@
 #include "alPDAF.h"
 #include "PDExtract.h"
 
-#define FEATURE_DL_OPEN
+#undef FEATURE_DL_OPEN
 
 #define PDLIB_PATH "libalPDAF.so"
 #define PDEXTRACT_LIBPATH "libalPDExtract.so"
@@ -35,24 +35,24 @@
 #define PD_OTP_PACK_SIZE 550
 
 struct pdaf_altek_lib_ops {
-	cmr_u8 (*init)(void *a_pInPDPackData, void *a_pInOTPData, int a_dInOTPSize);
-	cmr_u8 (*calc)(float *a_pfInPDValue, void *a_pOutPDReg, void *a_pInImageBuf_left,
+	cmr_s32 (*init)(void *a_pInPDPackData, void *a_pInOTPData, int a_dInOTPSize);
+	cmr_s32 (*calc)(float *a_pfInPDValue, void *a_pOutPDReg, void *a_pInImageBuf_left,
 				void *a_pInImageBuf_right, unsigned short a_uwInWidth, unsigned short a_uwInHeight,
 				alGE_RECT a_tInWOI, DataBit a_tInbit, PDInReg *a_tInPDReg);
-	cmr_u8 (*deinit)(void);
-	cmr_u8 (*reset)(void);
+	cmr_s32 (*deinit)(void);
+	cmr_s32 (*reset)(void);
 };
 
 struct pdaf_extract_ops {
-	cmr_int (*getsize)(struct altek_pdaf_info *PDSensorInfo, alPD_RECT *InputROI,
+	cmr_s32 (*getsize)(struct altek_pdaf_info *PDSensorInfo, alPD_RECT *InputROI,
 					unsigned short RawFileWidth, unsigned short RawFileHeight,
 					unsigned short *PDDataWidth, unsigned short *PDDataHeight);
-	cmr_int (*extract)(cmr_u8 *RawFile, alPD_RECT *InputROI, cmr_u16 RawFileWidth,
+	cmr_s32 (*extract)(cmr_u8 *RawFile, alPD_RECT *InputROI, cmr_u16 RawFileWidth,
 					cmr_u16 RawFileHeight, cmr_u16 *PDOutLeft, cmr_u16 *PDOutRight);
 };
 
 struct pdaf_altek_lib_api {
-	cmr_int (*pdaf_altek_version)(void *a_pOutBuf, int a_dInBufMaxSize);
+	cmr_s32 (*pdaf_altek_version)(void *a_pOutBuf, int a_dInBufMaxSize);
 };
 
 struct pdaf_altek_context {
