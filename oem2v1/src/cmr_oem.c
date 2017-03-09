@@ -6577,6 +6577,7 @@ void camera_get_iso_value(cmr_handle oem_handle)
 		#if !(defined(CONFIG_CAMERA_ISP_VERSION_V3) || defined(CONFIG_CAMERA_ISP_VERSION_V4))
 			isp_param = POWER2(isp_param-1) * ONE_HUNDRED;
 		#endif
+		CMR_LOGI("iso value is %d", isp_param);
 		cmr_sensor_set_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_EXIF_CTRL_ISOSPEEDRATINGS, isp_param);
 	}
 }
@@ -8500,6 +8501,8 @@ cmr_int camera_local_set_video_snapshot_buffer(cmr_handle oem_handle, cmr_uint s
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}
+
+	camera_get_iso_value(oem_handle);
 
 	cxt = (struct camera_context*)oem_handle;
 	CMR_LOGI("in video w=%d h=%d cap w=%d h=%d",
