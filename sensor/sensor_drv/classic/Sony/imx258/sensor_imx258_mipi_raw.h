@@ -609,6 +609,46 @@ LOCAL SENSOR_REG_TAB_INFO_T s_imx258_resolution_tab_raw[] =
 		.xclk_to_sensor     = 24,
 		.image_format       = SENSOR_IMAGE_FORMAT_RAW,
 	},
+	{
+		.sensor_reg_tab_ptr = PNULL,
+		.reg_count          = 0,
+		.width              = 0,
+		.height             = 0,
+		.xclk_to_sensor     = 0,
+		.image_format       = 0,
+	},
+	{
+		.sensor_reg_tab_ptr = PNULL,
+		.reg_count          = 0,
+		.width              = 0,
+		.height             = 0,
+		.xclk_to_sensor     = 0,
+		.image_format       = 0,
+	},
+	{
+		.sensor_reg_tab_ptr = PNULL,
+		.reg_count          = 0,
+		.width              = 0,
+		.height             = 0,
+		.xclk_to_sensor     = 0,
+		.image_format       = 0,
+	},
+	{
+		.sensor_reg_tab_ptr = PNULL,
+		.reg_count          = 0,
+		.width              = 0,
+		.height             = 0,
+		.xclk_to_sensor     = 0,
+		.image_format       = 0,
+	},
+	{
+		.sensor_reg_tab_ptr = PNULL,
+		.reg_count          = 0,
+		.width              = 0,
+		.height             = 0,
+		.xclk_to_sensor     = 0,
+		.image_format       = 0,
+	},
 };
 
 LOCAL SENSOR_TRIM_T s_imx258_resolution_trim_tab[SENSOR_MODE_MAX] = 
@@ -691,6 +731,86 @@ LOCAL SENSOR_TRIM_T s_imx258_resolution_trim_tab[SENSOR_MODE_MAX] =
 			.y = 0,
 			.w = 4208,
 			.h = 3120,
+		}
+	},
+	{
+		.trim_start_x   = 0,
+		.trim_start_y   = 0,
+		.trim_width     = 0,
+		.trim_height    = 0,
+		.line_time      = 0,
+		.bps_per_lane   = 0,
+		.frame_line     = 0,
+		.scaler_trim =
+		{
+			.x = 0,
+			.y = 0,
+			.w = 0,
+			.h = 0,
+		}
+	},
+	{
+		.trim_start_x   = 0,
+		.trim_start_y   = 0,
+		.trim_width     = 0,
+		.trim_height    = 0,
+		.line_time      = 0,
+		.bps_per_lane   = 0,
+		.frame_line     = 0,
+		.scaler_trim =
+		{
+			.x = 0,
+			.y = 0,
+			.w = 0,
+			.h = 0,
+		}
+	},
+	{
+		.trim_start_x   = 0,
+		.trim_start_y   = 0,
+		.trim_width     = 0,
+		.trim_height    = 0,
+		.line_time      = 0,
+		.bps_per_lane   = 0,
+		.frame_line     = 0,
+		.scaler_trim =
+		{
+			.x = 0,
+			.y = 0,
+			.w = 0,
+			.h = 0,
+		}
+	},
+	{
+		.trim_start_x   = 0,
+		.trim_start_y   = 0,
+		.trim_width     = 0,
+		.trim_height    = 0,
+		.line_time      = 0,
+		.bps_per_lane   = 0,
+		.frame_line     = 0,
+		.scaler_trim =
+		{
+			.x = 0,
+			.y = 0,
+			.w = 0,
+			.h = 0,
+		}
+	},
+	{
+		.trim_start_x   = 0,
+		.trim_start_y   = 0,
+		.trim_width     = 0,
+		.trim_height    = 0,
+		.line_time      = 0,
+		.bps_per_lane   = 0,
+		.frame_line     = 0,
+		.scaler_trim =
+		{
+			.x = 0,
+			.y = 0,
+			.w = 0,
+			.h = 0,
 		}
 	},
 
