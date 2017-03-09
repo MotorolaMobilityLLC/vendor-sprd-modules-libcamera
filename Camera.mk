@@ -109,20 +109,12 @@ LOCAL_SRC_FILES+= \
 	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3StereoPreview.cpp \
 	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3RangeFinder.cpp \
 	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3Wrapper.cpp \
-	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3Capture.cpp
+	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3Capture.cpp \
+	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3Blur.cpp  \
+	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3PageTurn.cpp  \
+	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3SelfShot.cpp
 #	hal1.0/src/SprdCameraHardwareInterface.cpp \
 #	hal1.0/src/SprdCameraFlash.cpp
-
-ifeq ($(strip $(TARGET_BOARD_BLUR_MODE_SUPPORT)),true)
-LOCAL_SRC_FILES+= \
-    hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3Blur.cpp  \
-endif
-
-ifeq ($(strip $(TARGET_BOARD_COVERED_SENSOR_SUPPORT)),true)
-LOCAL_SRC_FILES+= \
-    hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3PageTurn.cpp  \
-    hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3SelfShot.cpp  \
-endif
 
 endif
 endif

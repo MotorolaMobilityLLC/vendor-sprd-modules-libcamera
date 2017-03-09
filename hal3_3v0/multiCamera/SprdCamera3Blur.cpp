@@ -482,8 +482,6 @@ int SprdCamera3Blur::allocateOne(int w,int h, uint32_t is_cache,new_ion_mem_blur
     new_mem->native_handle = buffer;
     new_mem->pHeapIon = pHeapIon;
 
-    HAL_LOGD("X fd=0x%zx, size=0x%x, heap=%p", buffer->share_fd, mem_size, pHeapIon);
-
     return result;
 
 getpmem_fail:
@@ -919,7 +917,6 @@ int SprdCamera3Blur::CaptureThread::blurHandle(struct private_handle_t *input, s
                         HAL_LOGD("Deinit Err:%d",ret);
                     }
                     mBlurApi[i]->mHandle = NULL;
-                    HAL_LOGD("iSmoothDeinit%d cost %lld ms",i,ns2ms(systemTime()-deinitStart));
                 }
                 int64_t initStart = systemTime();
                 if (0 == i) {
@@ -932,7 +929,6 @@ int SprdCamera3Blur::CaptureThread::blurHandle(struct private_handle_t *input, s
                     ret = mBlurApi[i]->iSmoothCapInit(&(mBlurApi[i]->mHandle), w, h,min_slope,max_slope,Findex2Gamma_AdjustRatio,
                         w/BLUR_SMOOTH_SIZE_SCALE,h/BLUR_SMOOTH_SIZE_SCALE);
                 }
-                HAL_LOGD("iSmoothInit%d %dx%d cost %lld ms",i,w,h,ns2ms(systemTime()-initStart));
                 if (ret != 0) {
                     HAL_LOGD("Init Err:%d",ret);
                 }
@@ -965,7 +961,6 @@ int SprdCamera3Blur::CaptureThread::blurHandle(struct private_handle_t *input, s
                 if (ret != 0) {
                     HAL_LOGD("CreateWeightMap Err:%d",ret);
                 }
-                HAL_LOGD("iSmoothCreateWeightMap x:%d y:%d f:%d circle%d cost %lld ms",x,y,f_number,c,ns2ms(systemTime()-creatStart));
             }
         }
 
@@ -973,11 +968,6 @@ int SprdCamera3Blur::CaptureThread::blurHandle(struct private_handle_t *input, s
         ret = mBlurApi[libid]->iSmoothBlurImage(mBlurApi[libid]->mHandle, srcYUV, destYUV);
         if (ret != 0) {
             HAL_LOGD("BlurImage Err:%d",ret);
-        }
-        if (libid) {
-            HAL_LOGD("capture iSmoothBlurImage cost %lld ms",ns2ms(systemTime()-blurStart));
-        } else {
-            HAL_LOGD("preview BlurImage cost %lld ms",ns2ms(systemTime()-blurStart));
         }
     }
 
@@ -1399,13 +1389,10 @@ int SprdCamera3Blur::configureStreams(const struct camera3_device *device,camera
                     HAL_LOGD("Deinit Err:%d",rc);
                 }
                 mCaptureThread->mBlurApi[0]->mHandle = NULL;
-                HAL_LOGD("iSmoothDeinit0 cost %lld ms",ns2ms(systemTime()-deinitStart));
             }
             int64_t initStart = systemTime();
             rc = mCaptureThread->mBlurApi[0]->iSmoothInit(&(mCaptureThread->mBlurApi[0]->mHandle),
                 stream_list->streams[i]->width, stream_list->streams[i]->height,min_slope,max_slope,Findex2Gamma_AdjustRatio);
-            HAL_LOGD("iSmoothInit%d %dx%d cost %lld ms",i,stream_list->streams[i]->width,stream_list->streams[i]->height,
-                ns2ms(systemTime()-initStart));
         } else if (requestStreamType == SNAPSHOT_STREAM) {
             w = stream_list->streams[i]->width;
             h = stream_list->streams[i]->height;
@@ -1438,12 +1425,10 @@ int SprdCamera3Blur::configureStreams(const struct camera3_device *device,camera
                         HAL_LOGD("Deinit Err:%d",rc);
                     }
                     mCaptureThread->mBlurApi[1]->mHandle = NULL;
-                    HAL_LOGD("iSmoothDeinit1 cost %lld ms",ns2ms(systemTime()-deinitStart));
                 }
                 int64_t initStart = systemTime();
                 rc = mCaptureThread->mBlurApi[1]->iSmoothCapInit(&(mCaptureThread->mBlurApi[1]->mHandle),
                             w, h,min_slope,max_slope,Findex2Gamma_AdjustRatio,w/BLUR_SMOOTH_SIZE_SCALE,h/BLUR_SMOOTH_SIZE_SCALE);
-                HAL_LOGD("iSmoothInit%d %dx%d cost %lld ms",i,w,h,ns2ms(systemTime()-initStart));
             }
         }
         mCaptureThread->mMainStreams[i] = *stream_list->streams[i];
