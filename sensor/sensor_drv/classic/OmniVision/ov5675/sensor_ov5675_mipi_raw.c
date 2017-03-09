@@ -261,11 +261,7 @@ static const SENSOR_REG_T ov5675_init_setting[] = {
 	{0x3500,0x00},
 	{0x3501,0x3E},// ;max expo= ([380e,380f]-4)/2.
 	{0x3502,0x60},
-#ifdef CONFIG_CAMERA_ISP_AE_VERSION_V1
-	{0x3503,0x78},// ;Bit[6:4]=1, AE1 do not delay frame
-#else
-	{0x3503,0x08},// ;[2]=0 real gain
-#endif
+	{0x3503,0x78},// ;Bit[6:4]=1, AE1 do not delay frame, [2]=0 real gain
 	{0x3508,0x04},
 	{0x3509,0x00},// ;[3508,3509]=0x0080 is 1xgain
 	{0x3832,0x48},// ; [7:4]vsync_width ; R3002[5] p_fsin_oen
