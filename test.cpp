@@ -28,6 +28,11 @@ using namespace sprdcamera;
 
 #include <dlfcn.h>
 
+typedef enum enumYUVFormat {
+    FMT_NV21 = 0,
+    FMT_NV12,
+} YUVFormat;
+
 typedef struct {
     int width;
     int height;
@@ -372,7 +377,7 @@ static void StretchColors(void *pDest, int nDestWidth, int nDestHeight,
 }
 
 static void yuv420_to_rgb(int width, int height, unsigned char *src,
-                          unsigned int *dst) {
+                          unsigned int *dst, unsigned int format) {
     int frameSize = width * height;
     int j = 0, yp = 0, i = 0;
     unsigned short *dst16 = (unsigned short *)dst;
@@ -386,9 +391,16 @@ static void yuv420_to_rgb(int width, int height, unsigned char *src,
 
             if (y < 0)
                 y = 0;
-            if ((i & 1) == 0) {
-                u = (0xff & yuv420sp[uvp++]) - 128;
-                v = (0xff & yuv420sp[uvp++]) - 128;
+            if (format == FMT_NV21) {
+                if ((i & 1) == 0) {
+                    u = (0xff & yuv420sp[uvp++]) - 128;
+                    v = (0xff & yuv420sp[uvp++]) - 128;
+                }
+            } else {
+                if ((i & 1) == 0) {
+                    v = (0xff & yuv420sp[uvp++]) - 128;
+                    u = (0xff & yuv420sp[uvp++]) - 128;
+                }
             }
 
             int y1192 = 1192 * y;
@@ -701,10 +713,15 @@ void eng_tst_camera_cb(enum camera_cb_type cb, const void *client_data,
         return;
     }
 
+#ifdef CONFIG_CAMERA_DCAM_SUPPORT_FORMAT_NV12
+    unsigned int format = FMT_NV12;
+#else
+    unsigned int format = FMT_NV21;
+#endif
     // 1.yuv -> rgb
     yuv420_to_rgb(PREVIEW_WIDTH, PREVIEW_HIGHT,
                   (unsigned char *)previewHeapArray[frame->buf_id]->data,
-                  post_preview_buf);
+                  post_preview_buf, format);
 
     /*unlock*/
     previewLock.unlock();
