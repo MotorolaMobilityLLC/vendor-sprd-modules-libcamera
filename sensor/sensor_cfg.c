@@ -86,9 +86,9 @@ extern SENSOR_INFO_T g_GC2155_MIPI_yuv_info;
 extern SENSOR_INFO_T g_hi255_yuv_info;
 extern SENSOR_INFO_T g_s5k4h5yc_mipi_raw_info;
 extern SENSOR_INFO_T g_s5k4h5yc_jsl_mipi_raw_info;
-extern SENSOR_INFO_T g_ov13850_mipi_raw_info;
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
 extern SENSOR_INFO_T g_ov5675_mipi_raw_info;
+extern SENSOR_INFO_T g_ov13850_mipi_raw_info;
 #endif
 extern SENSOR_INFO_T g_t4kb3_mipi_raw_info;
 extern SENSOR_INFO_T g_ov5648_mipi_raw_info;
@@ -136,11 +136,11 @@ const SENSOR_MATCH_T main_sensor_infor_tab[]=
 	{"imx230_mipi_raw", &g_imx230_mipi_raw_info,NULL,NULL},
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
 	{"imx258_mipi_raw", &g_imx258_mipi_raw_info,&dw9800_drv_info,&imx258_drv_entry},
+	{"ov13855_mipi_raw", &g_ov13855_mipi_raw_info,&dw9718s_drv_info,NULL},
 #else
 	{"imx258_mipi_raw", &g_imx258_mipi_raw_info,NULL,NULL},
 #endif
 	{"s5k3l8xxm3_mipi_raw", &g_s5k3l8xxm3_mipi_raw_info,NULL,NULL},
-	{"ov13855_mipi_raw", &g_ov13855_mipi_raw_info,&dw9718s_drv_info,NULL},
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
 	//{"ov13850r2a_mipi_raw", &g_ov13850r2a_mipi_raw_info},
 #endif
