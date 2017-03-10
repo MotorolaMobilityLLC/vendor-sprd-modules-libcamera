@@ -5368,7 +5368,7 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id)
 		}
 	}
 
-	if (handle->prev_cxt[camera_id].prev_param.video_slowmotion_eb && handle->prev_cxt[camera_id].prev_param.video_eb) {
+	if (handle->prev_cxt[camera_id].prev_param.video_slowmotion_eb) {
 		for (sn_mode = SENSOR_MODE_PREVIEW_ONE; sn_mode < SENSOR_MODE_MAX; sn_mode++) {
 			ret = handle->ops.get_sensor_fps_info(handle->oem_handle,
 						camera_id, sn_mode, &fps_info);
