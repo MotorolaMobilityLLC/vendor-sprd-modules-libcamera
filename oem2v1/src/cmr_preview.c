@@ -10134,7 +10134,7 @@ cmr_int prev_fd_open(struct prev_handle *handle, cmr_u32 camera_id)
 
 	if (prev_cxt->fd_handle) {
 		CMR_LOGI("fd inited already");
-		return ret;
+		goto exit;
 	}
 
 	in_param.frame_cnt          = 1;

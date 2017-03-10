@@ -439,12 +439,12 @@ cmr_int cmr_grab_sn_cfg(cmr_handle grab_handle, struct sn_cfg *config)
 		config->sensor_max_size.width, config->sensor_max_size.height);
 	sn_max_size.w = config->sensor_max_size.width;
 	sn_max_size.h = config->sensor_max_size.height;
-/*
+
 	ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_SENSOR_MAX_SIZE, &sn_max_size);
 	if (ret) {
 		CMR_LOGE("SPRD_IMG_IO_SET_SENSOR_MAX_SIZE failed");
 	}
-*/
+
 exit:
 	ATRACE_END();
 	return ret;

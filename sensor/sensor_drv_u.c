@@ -684,6 +684,8 @@ cmr_int hw_sensor_muti_i2c_write(SENSOR_HW_HANDLE handle, struct sensor_muti_aec
 
 cmr_int sensor_otp_module_init(struct sensor_drv_context *sensor_cxt)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int ret;
 	SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 	SENSOR_LOGI("in");
@@ -698,6 +700,7 @@ cmr_int sensor_otp_module_init(struct sensor_drv_context *sensor_cxt)
                                                             module, module->otp_drv_info);
 	}
 	SENSOR_LOGI("out");
+	ATRACE_END();
 	return ret;
 }
 
@@ -720,6 +723,8 @@ cmr_int sensor_otp_module_deinit(struct sensor_drv_context *sensor_cxt)
 
 cmr_int sensor_af_dev_init(SENSOR_HW_HANDLE handle)
 {
+	ATRACE_BEGIN(__FUNCTION__);
+
 	cmr_int ret;
 	if (NULL == handle || NULL == handle->privatedata)
 		return SENSOR_CTX_ERROR;
@@ -730,6 +735,8 @@ cmr_int sensor_af_dev_init(SENSOR_HW_HANDLE handle)
 		if(module->af_dev_info->af_ops.set_motor_bestmode)
 			ret = module->af_dev_info->af_ops.set_motor_bestmode(handle);
 	}
+
+	ATRACE_END();
 	return ret;
 }
 
