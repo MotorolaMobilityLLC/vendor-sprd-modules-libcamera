@@ -6,15 +6,15 @@
 	/*ynr_region*/
 	{
 		/*max_radius*/
-		0x0660,
+		0x0CA9,
 		/*radius*/
-		0x04C8,
+		0x03CC,
 		/*imgcetx*/
-		0x0660,
+		0x0510,
 		/*imgcety*/
-		0x04C8,
+		0x03CC,
 		/*dist_interval*/
-		0x00000066,
+		0x00000237,
 
 	},
 	/*ynr_txt_calc*/
@@ -121,7 +121,7 @@
 			/*blf_en*/
 			0x01,
 			/*wfindex*/
-			0x02,
+			0x01,
 			/*eurodist*/
 			{
 				0x0F,0x08,0x04/*0-2*/
