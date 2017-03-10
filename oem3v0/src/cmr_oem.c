@@ -5273,6 +5273,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 		ret = -CMR_CAMERA_INVALID_PARAM;
 		goto exit;
 	}
+
 	isp_param.size.w = param_ptr->size.width;
 	isp_param.size.h = param_ptr->size.height;
 	isp_param.format = ISP_DATA_NORMAL_RAW10;
@@ -5462,8 +5463,8 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
  		} else {
 			isp_raw_buf_num = 3;
 		}
-		raw_buf_size = (((isp_param.size.w * 4 / 3 + 7) >> 3) << 3) * isp_param.size.h;
-		tmp_buf_size = isp_param.size.w * isp_param.size.h * 27 / 10;
+		raw_buf_size = (((isp_param.resolution_info.sensor_size.w * 4 / 3 + 7) >> 3) << 3) * isp_param.resolution_info.sensor_size.h;
+		tmp_buf_size = isp_param.resolution_info.sensor_size.w * isp_param.resolution_info.sensor_size.h* 27 / 10;
 		num = tmp_buf_size / BUF_BLOCK_SIZE;
 		if (tmp_buf_size >  num * BUF_BLOCK_SIZE)
 			num++;
@@ -5497,8 +5498,8 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 		memcpy(isp_param.raw_buf_phys_addr, cxt->raw_buf_phys_addr, sizeof(cmr_u32) * isp_raw_buf_num);
 		memcpy(isp_param.raw_buf_virt_addr, cxt->raw_buf_virt_addr, sizeof(cmr_u64) * isp_raw_buf_num);
 		isp_param.raw_buf_size = raw_buf_size;
-		isp_param.raw_buf_width = isp_param.size.w;
-		isp_param.raw_buf_height = isp_param.size.h;
+		isp_param.raw_buf_width = isp_param.resolution_info.sensor_size.w;
+		isp_param.raw_buf_height = isp_param.resolution_info.sensor_size.h;
 		isp_param.raw_buf_cnt = isp_raw_buf_num;
 
 		isp_param.highiso_buf_fd = cxt->highiso_buf_fd;
