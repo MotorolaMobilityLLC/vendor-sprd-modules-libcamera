@@ -118,6 +118,7 @@ extern SENSOR_INFO_T g_GC0310_MIPI_yuv_info;
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
 extern SENSOR_INFO_T g_gc8024_mipi_raw_info;
 extern SENSOR_INFO_T g_gc5005_mipi_raw_info;
+extern SENSOR_INFO_T g_gc2375_mipi_raw_info;
 #endif
 #define AUTO_TEST_CAMERA 1
 extern otp_drv_entry_t imx258_drv_entry;
@@ -154,6 +155,7 @@ const SENSOR_MATCH_T sub_sensor_infor_tab[] = {
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
     {"5005_mipi_raw", &g_gc5005_mipi_raw_info, NULL, NULL},
     {"ov5675_mipi_raw", &g_ov5675_mipi_raw_info, NULL, NULL},
+    {"gc2375_mipi_raw", &g_gc2375_mipi_raw_info,NULL,NULL},
 #endif
     {"s5k4h8yx_mipi_raw", &g_s5k4h8yx_mipi_raw_info, NULL, NULL},
     {"ov8856_mipi_raw", &g_ov8856_mipi_raw_info, NULL, NULL},
