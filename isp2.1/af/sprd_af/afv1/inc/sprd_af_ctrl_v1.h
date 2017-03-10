@@ -290,8 +290,8 @@ typedef struct _prime_face_base_info {
 } prime_face_base_info_t;
 
 typedef struct _focus_stat {
-	unsigned int force_write;
-	unsigned int reg_param[10];
+	uint32_t force_write;
+	uint32_t reg_param[10];
 } focus_stat_reg_t;
 
 typedef struct _af_fv_info {
@@ -358,12 +358,12 @@ typedef struct _af_ctrl {
 	uint64_t k_addr;
 	uint64_t u_addr;
 	focus_stat_reg_t stat_reg;
-	unsigned int defocus;
+	uint32_t defocus;
 	uint8_t bypass;
 	uint8_t soft_landing_dly;
 	uint8_t soft_landing_step;
 	uint8_t caf_first_stable;
-	unsigned int inited_af_req;
+	uint32_t inited_af_req;
 	//porting from isp2.1 af 1.0
 	pthread_mutex_t status_lock;
 	void *caller;
