@@ -74,7 +74,7 @@ isp_s8 nr_scene_name[MAX_SCENEMODE_NUM][16] = {
 	"night",
 	"sport",
 	"portrait",
-	"landspace",
+	"landscape",
 	"panorama",
 };
 
@@ -817,7 +817,7 @@ static isp_s32 isp_pm_mode_list_init(isp_pm_handle_t handle, struct isp_pm_init_
 				case ISP_BLK_CFA: {
 					isp_blk_nr_type = ISP_BLK_CFA_T;
 					nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.cfa);
-					nr_set_size = sizeof(struct sensor_cfai_level);
+					nr_set_size = sizeof(struct sensor_cfa_param_level);
 					}
 					break;
 				case ISP_BLK_RGB_AFM: {

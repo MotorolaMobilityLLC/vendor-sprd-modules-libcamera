@@ -765,9 +765,9 @@ int isp_denoise_write(uint8_t *data_buf, uint32_t *data_size)
         case V21PPI :
 		{
 			static uint32_t ppi_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_PDAF_CORRECT_T], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_pdaf_correction_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_PDAF_CORRECT_T];
-			memcpy(((uint8_t*)(nr_update_param.pdaf_correction_level_ptr))  + nr_offset_addr + ppi_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
+			memcpy(((uint8_t*)(nr_update_param.pdaf_correction_level_ptr)) + nr_offset_addr + ppi_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				ppi_ptr_offset += data_actual_len;
 			else
@@ -778,9 +778,9 @@ int isp_denoise_write(uint8_t *data_buf, uint32_t *data_size)
         case V21BAYER_NR :
 		{
 			static uint32_t bayer_nr_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_NLM_T], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_nlm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_NLM_T];
-			memcpy(((uint8_t*)(nr_update_param.nlm_level_ptr))  + nr_offset_addr + bayer_nr_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
+			memcpy(((uint8_t*)(nr_update_param.nlm_level_ptr)) + nr_offset_addr + bayer_nr_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				bayer_nr_ptr_offset += data_actual_len;
 			else
@@ -791,9 +791,9 @@ int isp_denoise_write(uint8_t *data_buf, uint32_t *data_size)
         case V21VST :
         {
 			static uint32_t vst_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_BPC_T], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_vst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_BPC_T];
-			memcpy(((uint8_t*)(nr_update_param.vst_level_ptr))  + nr_offset_addr + vst_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_vst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_VST_T];
+			memcpy(((uint8_t*)(nr_update_param.vst_level_ptr)) + nr_offset_addr + vst_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				vst_ptr_offset += data_actual_len;
 			else
@@ -804,9 +804,9 @@ int isp_denoise_write(uint8_t *data_buf, uint32_t *data_size)
         case V21IVST :
         {
 			static uint32_t ivst_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_BPC_T], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_ivst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_BPC_T];
-			memcpy(((uint8_t*)(nr_update_param.ivst_level_ptr))  + nr_offset_addr + ivst_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_ivst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IVST_T];
+			memcpy(((uint8_t*)(nr_update_param.ivst_level_ptr)) + nr_offset_addr + ivst_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				ivst_ptr_offset += data_actual_len;
 			else
@@ -817,9 +817,9 @@ int isp_denoise_write(uint8_t *data_buf, uint32_t *data_size)
         case V21DITHER :
         {
 			static uint32_t rgb_dither_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_BPC_T], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_rgb_dither_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_BPC_T];
-			memcpy(((uint8_t*)(nr_update_param.rgb_dither_level_ptr))  + nr_offset_addr + rgb_dither_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_rgb_dither_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RGB_DITHER_T];
+			memcpy(((uint8_t*)(nr_update_param.rgb_dither_level_ptr)) + nr_offset_addr + rgb_dither_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				rgb_dither_ptr_offset += data_actual_len;
 			else
@@ -830,9 +830,9 @@ int isp_denoise_write(uint8_t *data_buf, uint32_t *data_size)
 		case V21BPC :
 		{
 			static uint32_t bpc_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_BPC_T], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_bpc_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_BPC_T];
-			memcpy(((uint8_t*)(nr_update_param.bpc_level_ptr))  + nr_offset_addr + bpc_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
+			memcpy(((uint8_t*)(nr_update_param.bpc_level_ptr)) + nr_offset_addr + bpc_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				bpc_ptr_offset += data_actual_len;
 			else
@@ -843,9 +843,9 @@ int isp_denoise_write(uint8_t *data_buf, uint32_t *data_size)
         case V21GRGB :
         {
 			static uint32_t grgb_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_BPC_T], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_grgb_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_BPC_T];
-			memcpy(((uint8_t*)(nr_update_param.grgb_level_ptr))  + nr_offset_addr + grgb_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_grgb_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_GRGB_T];
+			memcpy(((uint8_t*)(nr_update_param.grgb_level_ptr)) + nr_offset_addr + grgb_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				grgb_ptr_offset += data_actual_len;
 			else
@@ -856,9 +856,9 @@ int isp_denoise_write(uint8_t *data_buf, uint32_t *data_size)
         case V21CFA :
         {
 			static uint32_t cfae_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_BPC_T], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_cfa_param_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_BPC_T];
-			memcpy(((uint8_t*)(nr_update_param.cfae_level_ptr))  + nr_offset_addr + cfae_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_cfa_param_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CFA_T];
+			memcpy(((uint8_t*)(nr_update_param.cfae_level_ptr)) + nr_offset_addr + cfae_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				cfae_ptr_offset += data_actual_len;
 			else
@@ -869,9 +869,9 @@ int isp_denoise_write(uint8_t *data_buf, uint32_t *data_size)
         case V21RGB_AFM :
         {
 			static uint32_t rgb_afm_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_BPC_T], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_y_afm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_BPC_T];
-			memcpy(((uint8_t*)(nr_update_param.rgb_afm_level_ptr))  + nr_offset_addr + rgb_afm_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_rgb_afm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RGB_AFM_T];
+			memcpy(((uint8_t*)(nr_update_param.rgb_afm_level_ptr)) + nr_offset_addr + rgb_afm_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				rgb_afm_ptr_offset += data_actual_len;
 			else
@@ -882,9 +882,9 @@ int isp_denoise_write(uint8_t *data_buf, uint32_t *data_size)
         case V21UVDIV :
         {
 			static uint32_t uvdiv_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_BPC_T], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_cce_uvdiv_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_BPC_T];
-			memcpy(((uint8_t*)(nr_update_param.cce_uvdiv_level_ptr))  + nr_offset_addr + uvdiv_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_cce_uvdiv_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_UVDIV_T];
+			memcpy(((uint8_t*)(nr_update_param.cce_uvdiv_level_ptr)) + nr_offset_addr + uvdiv_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				uvdiv_ptr_offset += data_actual_len;
 			else
@@ -895,9 +895,9 @@ int isp_denoise_write(uint8_t *data_buf, uint32_t *data_size)
         case V21PRE3DNR :
         {
 			static uint32_t dnr_pre_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_BPC_T], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_BPC_T];
-			memcpy(((uint8_t*)(nr_update_param.dnr_pre_level_ptr))  + nr_offset_addr + dnr_pre_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_3DNR_PRE_T];
+			memcpy(((uint8_t*)(nr_update_param.dnr_pre_level_ptr)) + nr_offset_addr + dnr_pre_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				dnr_pre_ptr_offset += data_actual_len;
 			else
@@ -908,7 +908,7 @@ int isp_denoise_write(uint8_t *data_buf, uint32_t *data_size)
         case V21CAP3DNR :
         {
 			static uint32_t dnr_cap_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_3DNR_CAP_T], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_3DNR_CAP_T];
 			memcpy(((uint8_t*)(nr_update_param.dnr_cap_level_ptr)) + nr_offset_addr + dnr_cap_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
@@ -921,7 +921,7 @@ int isp_denoise_write(uint8_t *data_buf, uint32_t *data_size)
 		case V21EDGE :
         {
 			static uint32_t edge_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_EDGE_T], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_ee_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_EDGE_T];
 			memcpy(((uint8_t*)(nr_update_param.ee_level_ptr)) + nr_offset_addr + edge_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
@@ -934,7 +934,7 @@ int isp_denoise_write(uint8_t *data_buf, uint32_t *data_size)
 		case YUV_PRECDN :
 		{
 			static uint32_t precdn_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_YUV_PRECDN_T], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_yuv_precdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_PRECDN_T];
 			memcpy(((uint8_t*)(nr_update_param.yuv_precdn_level_ptr)) + nr_offset_addr + precdn_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
@@ -947,7 +947,7 @@ int isp_denoise_write(uint8_t *data_buf, uint32_t *data_size)
 		case V21Y_NR :
 		{
 			static uint32_t ynr_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_YNR_T], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_ynr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YNR_T];
 			memcpy(((uint8_t*)(nr_update_param.ynr_level_ptr)) + nr_offset_addr + ynr_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
@@ -960,7 +960,7 @@ int isp_denoise_write(uint8_t *data_buf, uint32_t *data_size)
 		case V21CDN :
 		{
 			static uint32_t cdn_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_CDN_T], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_uv_cdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CDN_T];
 			memcpy(((uint8_t*)(nr_update_param.uv_cdn_level_ptr)) + nr_offset_addr + cdn_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
@@ -973,7 +973,7 @@ int isp_denoise_write(uint8_t *data_buf, uint32_t *data_size)
 		case V21POSTCDN :
 		{
 			static uint32_t postcdn_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_POSTCDN_T], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_uv_postcdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_POSTCDN_T];
 			memcpy(((uint8_t*)(nr_update_param.uv_postcdn_level_ptr)) + nr_offset_addr + postcdn_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
@@ -986,9 +986,9 @@ int isp_denoise_write(uint8_t *data_buf, uint32_t *data_size)
         case V21IIRCNR :
         {
 			static uint32_t ynr_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_IIRCNR_T], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_iircnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IIRCNR_T];
-			memcpy(((uint8_t*)(nr_update_param.ynr_level_ptr)) + nr_offset_addr + ynr_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
+			memcpy(((uint8_t*)(nr_update_param.iircnr_level_ptr)) + nr_offset_addr + ynr_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
 				ynr_ptr_offset += data_actual_len;
 			else
@@ -999,7 +999,7 @@ int isp_denoise_write(uint8_t *data_buf, uint32_t *data_size)
 		case V21NOISEFILTER:
 		{
 			static uint32_t yuv_noisefilter_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_YUV_NOISEFILTER_T], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = offset_units * sizeof(struct sensor_yuv_noisefilter_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_NOISEFILTER_T];
 			memcpy(((uint8_t*)(nr_update_param.yuv_noisefilter_level_ptr)) + nr_offset_addr + yuv_noisefilter_ptr_offset, (uint8_t*)data_actual_ptr, data_actual_len);
 			if (0x01 != data_head->packet_status)
@@ -1127,7 +1127,7 @@ int isp_denoise_read(uint8_t *tx_buf, uint32_t len, struct isp_data_header_read 
 		{
 			data_head_ptr->sub_type = V21PPI; //0x14
 			src_size = sizeof(struct sensor_pdaf_correction_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_PDAF_CORRECT_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_PDAF_CORRECT_T], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (uint8_t *)nr_update_param.pdaf_correction_level_ptr + offset_units * src_size;
 			break;
 		}
@@ -1135,7 +1135,7 @@ int isp_denoise_read(uint8_t *tx_buf, uint32_t len, struct isp_data_header_read 
 		{
 			data_head_ptr->sub_type = V21BAYER_NR;//0x15
 			src_size = sizeof(struct sensor_nlm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_NLM_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_NLM_T], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (uint8_t *)nr_update_param.nlm_level_ptr + offset_units * src_size;
 			break;
 		}
@@ -1143,7 +1143,7 @@ int isp_denoise_read(uint8_t *tx_buf, uint32_t len, struct isp_data_header_read 
 		{
 			data_head_ptr->sub_type = V21VST;//0x16
 			src_size = sizeof(struct sensor_vst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_VST_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_VST_T], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (uint8_t *)nr_update_param.vst_level_ptr + offset_units * src_size;
 			break;
 		}
@@ -1151,7 +1151,7 @@ int isp_denoise_read(uint8_t *tx_buf, uint32_t len, struct isp_data_header_read 
 		{
 			data_head_ptr->sub_type = V21IVST;//0x17
 			src_size = sizeof(struct sensor_ivst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IVST_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_IVST_T], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (uint8_t *)nr_update_param.ivst_level_ptr + offset_units * src_size;
 			break;
 		}
@@ -1159,7 +1159,7 @@ int isp_denoise_read(uint8_t *tx_buf, uint32_t len, struct isp_data_header_read 
 		{
 			data_head_ptr->sub_type = V21DITHER; //0x18
 			src_size = sizeof(struct sensor_rgb_dither_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RGB_DITHER_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_RGB_DITHER_T], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (uint8_t *)nr_update_param.rgb_dither_level_ptr + offset_units * src_size;
 			break;
 		}
@@ -1167,7 +1167,7 @@ int isp_denoise_read(uint8_t *tx_buf, uint32_t len, struct isp_data_header_read 
 		{
 			data_head_ptr->sub_type = V21BPC; //0x19
 			src_size = sizeof(struct sensor_bpc_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_BPC_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_BPC_T], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (uint8_t *)nr_update_param.bpc_level_ptr + offset_units * src_size;
 			break;
 		}
@@ -1175,7 +1175,7 @@ int isp_denoise_read(uint8_t *tx_buf, uint32_t len, struct isp_data_header_read 
 		{
 			data_head_ptr->sub_type = V21GRGB;//0x1A
 			src_size = sizeof(struct sensor_grgb_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_GRGB_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_GRGB_T], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (uint8_t *)nr_update_param.grgb_level_ptr + offset_units * src_size;
 			break;
 		}
@@ -1183,15 +1183,15 @@ int isp_denoise_read(uint8_t *tx_buf, uint32_t len, struct isp_data_header_read 
 		{
 			data_head_ptr->sub_type = V21CFA;//0x1B
 			src_size = sizeof(struct sensor_cfa_param_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CFA_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_CFA_T], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (uint8_t *)nr_update_param.cfae_level_ptr + offset_units * src_size;
 			break;
 		}
 		case V21RGB_AFM :
 		{
 			data_head_ptr->sub_type = V21RGB_AFM;//0x0C
-			src_size = sizeof(struct sensor_y_afm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RGB_AFM_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_RGB_AFM_T], &offset_units);
+			src_size = sizeof(struct sensor_rgb_afm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RGB_AFM_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (uint8_t *)nr_update_param.rgb_afm_level_ptr + offset_units * src_size;
 			break;
 		}
@@ -1199,7 +1199,7 @@ int isp_denoise_read(uint8_t *tx_buf, uint32_t len, struct isp_data_header_read 
 		{
 			data_head_ptr->sub_type = V21UVDIV;//0x0D
 			src_size = sizeof(struct sensor_cce_uvdiv_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_UVDIV_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_UVDIV_T], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (uint8_t *)nr_update_param.cce_uvdiv_level_ptr + offset_units * src_size;
 			break;
 		}
@@ -1207,7 +1207,7 @@ int isp_denoise_read(uint8_t *tx_buf, uint32_t len, struct isp_data_header_read 
 		{
 			data_head_ptr->sub_type = V21PRE3DNR;//0x0E
 			src_size = sizeof(struct sensor_3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_3DNR_PRE_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_3DNR_PRE_T], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (uint8_t *)nr_update_param.dnr_pre_level_ptr + offset_units * src_size;
 			break;
 		}
@@ -1215,7 +1215,7 @@ int isp_denoise_read(uint8_t *tx_buf, uint32_t len, struct isp_data_header_read 
 		{
 			data_head_ptr->sub_type = V21CAP3DNR;//0x0F
 			src_size = sizeof(struct sensor_3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_3DNR_CAP_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_3DNR_CAP_T], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (uint8_t *)nr_update_param.dnr_cap_level_ptr + offset_units * src_size;
 			break;
 		}
@@ -1223,7 +1223,7 @@ int isp_denoise_read(uint8_t *tx_buf, uint32_t len, struct isp_data_header_read 
 		{
 			data_head_ptr->sub_type = V21EDGE;//0x20
 			src_size = sizeof(struct sensor_ee_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_EDGE_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_EDGE_T], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (uint8_t *)nr_update_param.ee_level_ptr+ offset_units * src_size;
 			break;
 		}
@@ -1231,7 +1231,7 @@ int isp_denoise_read(uint8_t *tx_buf, uint32_t len, struct isp_data_header_read 
 		{
 			data_head_ptr->sub_type = V21PRECDN;//0x21
 			src_size = sizeof(struct sensor_yuv_precdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_PRECDN_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_YUV_PRECDN_T], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (uint8_t *)nr_update_param.yuv_precdn_level_ptr + offset_units * src_size;
 			break;
 		}
@@ -1239,7 +1239,7 @@ int isp_denoise_read(uint8_t *tx_buf, uint32_t len, struct isp_data_header_read 
 		{
 			data_head_ptr->sub_type = V21Y_NR;//0x22
 			src_size = sizeof(struct sensor_ynr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YNR_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_YNR_T], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (uint8_t *)nr_update_param.ynr_level_ptr + offset_units * src_size;
 			break;
 		}
@@ -1247,7 +1247,7 @@ int isp_denoise_read(uint8_t *tx_buf, uint32_t len, struct isp_data_header_read 
 		{
 			data_head_ptr->sub_type = V21CDN;//0x23
 			src_size = sizeof(struct sensor_uv_cdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CDN_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_CDN_T], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (uint8_t *)nr_update_param.uv_cdn_level_ptr + offset_units * src_size;
 			break;
 		}
@@ -1255,7 +1255,7 @@ int isp_denoise_read(uint8_t *tx_buf, uint32_t len, struct isp_data_header_read 
 		{
 			data_head_ptr->sub_type = V21POSTCDN;//0x24
 			src_size = sizeof(struct sensor_uv_postcdn_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_POSTCDN_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_POSTCDN_T], &offset_units);
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (uint8_t *)nr_update_param.uv_postcdn_level_ptr + offset_units * src_size;
 			break;
 		}
@@ -1263,15 +1263,15 @@ int isp_denoise_read(uint8_t *tx_buf, uint32_t len, struct isp_data_header_read 
 		{
 			data_head_ptr->sub_type = V21IIRCNR;//0x25
 			src_size = sizeof(struct sensor_iircnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IIRCNR_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_IIRCNR_T], &offset_units);
-			nr_offset_addr = (uint8_t *)nr_update_param.ynr_level_ptr + offset_units * src_size;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (uint8_t *)nr_update_param.iircnr_level_ptr + offset_units * src_size;
 			break;
 		}
 		case V21NOISEFILTER :
 		{
 			data_head_ptr->sub_type = V21NOISEFILTER;//0x26
-			src_size = sizeof(struct sensor_iircnr_yrandom_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_NOISEFILTER_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[ISP_BLK_YUV_NOISEFILTER_T], &offset_units);
+			src_size = sizeof(struct sensor_yuv_noisefilter_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_NOISEFILTER_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (uint32_t *)&multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (uint8_t *)nr_update_param.yuv_noisefilter_level_ptr + offset_units * src_size;
 			break;
 		}
