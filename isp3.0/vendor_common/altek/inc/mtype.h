@@ -21,7 +21,9 @@
 #define NULL                    ((void *)0)
 #endif
 
-#define UNUSED(x) (void)x
+#ifndef UNUSED
+#define UNUSED(x) (void) x
+#endif
 
 /* Global data type */
 

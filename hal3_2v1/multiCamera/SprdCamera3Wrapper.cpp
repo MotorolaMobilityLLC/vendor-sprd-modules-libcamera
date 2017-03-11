@@ -32,8 +32,7 @@
 using namespace android;
 namespace sprdcamera {
 
-SprdCamera3Wrapper::SprdCamera3Wrapper()
-{
+SprdCamera3Wrapper::SprdCamera3Wrapper() {
     SprdCamera3RangeFinder::getCameraRangeFinder(&mRangeFinder);
     SprdCamera3StereoVideo::getCameraMuxer(&mStereoVideo);
     SprdCamera3StereoPreview::getCameraMuxer(&mStereoPreview);
@@ -47,13 +46,9 @@ SprdCamera3Wrapper::SprdCamera3Wrapper()
 #endif
 }
 
-SprdCamera3Wrapper::~SprdCamera3Wrapper()
-{
+SprdCamera3Wrapper::~SprdCamera3Wrapper() {}
 
-}
-
-void SprdCamera3Wrapper::getCameraWrapper(SprdCamera3Wrapper** pFinder)
-{
+void SprdCamera3Wrapper::getCameraWrapper(SprdCamera3Wrapper **pFinder) {
     *pFinder = NULL;
     *pFinder = new SprdCamera3Wrapper();
     HAL_LOGV("gWrapper: %p ", *pFinder);
@@ -61,90 +56,87 @@ void SprdCamera3Wrapper::getCameraWrapper(SprdCamera3Wrapper** pFinder)
 }
 
 int SprdCamera3Wrapper::cameraDeviceOpen(
-        __unused const struct hw_module_t *module, const char *id,
-        struct hw_device_t **hw_device)
-{
+    __unused const struct hw_module_t *module, const char *id,
+    struct hw_device_t **hw_device) {
 
     int rc = NO_ERROR;
 
-    HAL_LOGD("id= %d",atoi(id));
+    HAL_LOGD("id= %d", atoi(id));
 
-    switch(atoi(id)){
-        case MODE_3D_VIDEO:
-            rc = mStereoVideo->camera_device_open(module, id, hw_device);
-            return rc;
-        case MODE_RANGE_FINDER:
-            rc = mRangeFinder->camera_device_open(module, id, hw_device);
-            return rc;
-        case MODE_3D_CAPTURE:
-            rc = mCapture->camera_device_open(module, id, hw_device);
-            return rc;
-        case MODE_3D_PREVIEW:
-            rc = mStereoPreview->camera_device_open(module, id, hw_device);
-            return rc;
+    switch (atoi(id)) {
+    case MODE_3D_VIDEO:
+        rc = mStereoVideo->camera_device_open(module, id, hw_device);
+        return rc;
+    case MODE_RANGE_FINDER:
+        rc = mRangeFinder->camera_device_open(module, id, hw_device);
+        return rc;
+    case MODE_3D_CAPTURE:
+        rc = mCapture->camera_device_open(module, id, hw_device);
+        return rc;
+    case MODE_3D_PREVIEW:
+        rc = mStereoPreview->camera_device_open(module, id, hw_device);
+        return rc;
 #ifdef CONFIG_BLUR_SUPPORT
-        case MODE_BLUR:
-            rc = mBlur->camera_device_open(module, id, hw_device);
-            return rc;
+    case MODE_BLUR:
+        rc = mBlur->camera_device_open(module, id, hw_device);
+        return rc;
 #endif
 #ifdef CONFIG_COVERED_SENSOR
-        case MODE_SELF_SHOT:
-            rc = mSelfShot->camera_device_open(module, id, hw_device);
-            return rc;
-        case MODE_PAGE_TURN:
-            rc = mPageturn->camera_device_open(module, id, hw_device);
-            return rc;
+    case MODE_SELF_SHOT:
+        rc = mSelfShot->camera_device_open(module, id, hw_device);
+        return rc;
+    case MODE_PAGE_TURN:
+        rc = mPageturn->camera_device_open(module, id, hw_device);
+        return rc;
 #endif
-        default:
+    default:
 
-            HAL_LOGE("cameraId:%d not supported yet!", atoi(id));
-            return -EINVAL;
+        HAL_LOGE("cameraId:%d not supported yet!", atoi(id));
+        return -EINVAL;
     }
 
     return rc;
 }
 
-int SprdCamera3Wrapper::getCameraInfo(__unused int camera_id, struct camera_info *info)
-{
+int SprdCamera3Wrapper::getCameraInfo(__unused int camera_id,
+                                      struct camera_info *info) {
 
     int rc = NO_ERROR;
 
     HAL_LOGD("id= %d", camera_id);
 
-    switch(camera_id){
-        case MODE_3D_VIDEO:
-            rc = mStereoVideo->get_camera_info(camera_id, info);
-            return rc;
-        case MODE_RANGE_FINDER:
-            rc = mRangeFinder->get_camera_info(camera_id, info);
-            return rc;
-        case MODE_3D_CAPTURE:
-            rc = mCapture->get_camera_info(camera_id, info);
-            return rc;
-        case MODE_3D_PREVIEW:
-            rc = mStereoPreview->get_camera_info(camera_id, info);
-            return rc;
+    switch (camera_id) {
+    case MODE_3D_VIDEO:
+        rc = mStereoVideo->get_camera_info(camera_id, info);
+        return rc;
+    case MODE_RANGE_FINDER:
+        rc = mRangeFinder->get_camera_info(camera_id, info);
+        return rc;
+    case MODE_3D_CAPTURE:
+        rc = mCapture->get_camera_info(camera_id, info);
+        return rc;
+    case MODE_3D_PREVIEW:
+        rc = mStereoPreview->get_camera_info(camera_id, info);
+        return rc;
 #ifdef CONFIG_BLUR_SUPPORT
-        case MODE_BLUR:
-            rc = mBlur->get_camera_info(camera_id, info);
-            return rc;
+    case MODE_BLUR:
+        rc = mBlur->get_camera_info(camera_id, info);
+        return rc;
 #endif
 #ifdef CONFIG_COVERED_SENSOR
-        case MODE_SELF_SHOT:
-            rc = mSelfShot->get_camera_info(camera_id, info);
-            return rc;
-        case MODE_PAGE_TURN:
-            rc = mPageturn->get_camera_info(camera_id, info);
-            return rc;
+    case MODE_SELF_SHOT:
+        rc = mSelfShot->get_camera_info(camera_id, info);
+        return rc;
+    case MODE_PAGE_TURN:
+        rc = mPageturn->get_camera_info(camera_id, info);
+        return rc;
 #endif
-        default:
+    default:
 
-            HAL_LOGE("cameraId:%d not supported yet!", camera_id);
-            return -EINVAL;
+        HAL_LOGE("cameraId:%d not supported yet!", camera_id);
+        return -EINVAL;
     }
 
     return rc;
 }
-
-
 };

@@ -25,32 +25,35 @@
  * LEVEL_OVER_LOGV - show ALOGE, ALOGW, ALOGI and ALOGD, ALOGV
  */
 enum {
-	LEVEL_OVER_LOGE = 1,
-	LEVEL_OVER_LOGW,
-	LEVEL_OVER_LOGI,
-	LEVEL_OVER_LOGD,
-	LEVEL_OVER_LOGV,
+    LEVEL_OVER_LOGE = 1,
+    LEVEL_OVER_LOGW,
+    LEVEL_OVER_LOGI,
+    LEVEL_OVER_LOGD,
+    LEVEL_OVER_LOGV,
 };
 
-#define DEBUG_STR     "%d, %s: "
-#define DEBUG_ARGS    __LINE__,__FUNCTION__
+#define DEBUG_STR "%d, %s: "
+#define DEBUG_ARGS __LINE__, __FUNCTION__
 
 extern cmr_int g_isp_log_level;
 extern cmr_int g_oem_log_level;
 extern cmr_int g_sensor_log_level;
 
 #ifndef WIN32
-#define ISP_LOGE(format,...) \
-	ALOGE(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define ISP_LOGW(format,...) \
-	ALOGW_IF(g_isp_log_level >= LEVEL_OVER_LOGW, DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define ISP_LOGI(format,...) \
-	ALOGI_IF(g_isp_log_level >= LEVEL_OVER_LOGI, DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define ISP_LOGD(format,...) \
-	ALOGD_IF(g_isp_log_level >= LEVEL_OVER_LOGD, DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+#define ISP_LOGE(format, ...) ALOGE(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+#define ISP_LOGW(format, ...)                                                  \
+    ALOGW_IF(g_isp_log_level >= LEVEL_OVER_LOGW, DEBUG_STR format, DEBUG_ARGS, \
+             ##__VA_ARGS__)
+#define ISP_LOGI(format, ...)                                                  \
+    ALOGI_IF(g_isp_log_level >= LEVEL_OVER_LOGI, DEBUG_STR format, DEBUG_ARGS, \
+             ##__VA_ARGS__)
+#define ISP_LOGD(format, ...)                                                  \
+    ALOGD_IF(g_isp_log_level >= LEVEL_OVER_LOGD, DEBUG_STR format, DEBUG_ARGS, \
+             ##__VA_ARGS__)
 /* ISP_LOGV uses ALOGD_IF */
-#define ISP_LOGV(format,...) \
-	ALOGD_IF(g_isp_log_level >= LEVEL_OVER_LOGV, DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+#define ISP_LOGV(format, ...)                                                  \
+    ALOGD_IF(g_isp_log_level >= LEVEL_OVER_LOGV, DEBUG_STR format, DEBUG_ARGS, \
+             ##__VA_ARGS__)
 #else
 #define ISP_LOGE printf
 #define ISP_LOGW printf
@@ -59,33 +62,40 @@ extern cmr_int g_sensor_log_level;
 #define ISP_LOGV printf
 #endif
 
-#define CMR_LOGE(format,...) \
-	ALOGE(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define CMR_LOGW(format,...) \
-	ALOGW_IF(g_oem_log_level >= LEVEL_OVER_LOGW, DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define CMR_LOGI(format,...) \
-	ALOGI_IF(g_oem_log_level >= LEVEL_OVER_LOGI, DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define CMR_LOGD(format,...) \
-	ALOGD_IF(g_oem_log_level >= LEVEL_OVER_LOGD, DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+#define CMR_LOGE(format, ...) ALOGE(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+#define CMR_LOGW(format, ...)                                                  \
+    ALOGW_IF(g_oem_log_level >= LEVEL_OVER_LOGW, DEBUG_STR format, DEBUG_ARGS, \
+             ##__VA_ARGS__)
+#define CMR_LOGI(format, ...)                                                  \
+    ALOGI_IF(g_oem_log_level >= LEVEL_OVER_LOGI, DEBUG_STR format, DEBUG_ARGS, \
+             ##__VA_ARGS__)
+#define CMR_LOGD(format, ...)                                                  \
+    ALOGD_IF(g_oem_log_level >= LEVEL_OVER_LOGD, DEBUG_STR format, DEBUG_ARGS, \
+             ##__VA_ARGS__)
 /* CMR_LOGV uses ALOGD_IF */
-#define CMR_LOGV(format,...) \
-	ALOGD_IF(g_oem_log_level >= LEVEL_OVER_LOGV, DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+#define CMR_LOGV(format, ...)                                                  \
+    ALOGD_IF(g_oem_log_level >= LEVEL_OVER_LOGV, DEBUG_STR format, DEBUG_ARGS, \
+             ##__VA_ARGS__)
 
-#define SENSOR_LOGE(format,...) \
-	ALOGE(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define SENSOR_LOGW(format,...) \
-	ALOGW_IF(g_sensor_log_level >= LEVEL_OVER_LOGW, DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define SENSOR_LOGI(format,...) \
-	ALOGI_IF(g_sensor_log_level >= LEVEL_OVER_LOGI, DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define SENSOR_LOGD(format,...) \
-	ALOGD_IF(g_sensor_log_level >= LEVEL_OVER_LOGD, DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+#define SENSOR_LOGE(format, ...)                                               \
+    ALOGE(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+#define SENSOR_LOGW(format, ...)                                               \
+    ALOGW_IF(g_sensor_log_level >= LEVEL_OVER_LOGW, DEBUG_STR format,          \
+             DEBUG_ARGS, ##__VA_ARGS__)
+#define SENSOR_LOGI(format, ...)                                               \
+    ALOGI_IF(g_sensor_log_level >= LEVEL_OVER_LOGI, DEBUG_STR format,          \
+             DEBUG_ARGS, ##__VA_ARGS__)
+#define SENSOR_LOGD(format, ...)                                               \
+    ALOGD_IF(g_sensor_log_level >= LEVEL_OVER_LOGD, DEBUG_STR format,          \
+             DEBUG_ARGS, ##__VA_ARGS__)
 /* SENSOR_LOGV uses ALOGD_IF */
-#define SENSOR_LOGV(format,...) \
-	ALOGD_IF(g_sensor_log_level >= LEVEL_OVER_LOGV, DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define SENSOR_PRINT_ERR                              SENSOR_LOGE
-#define SENSOR_PRINT_HIGH                             SENSOR_LOGI
-#define SENSOR_PRINT                                  SENSOR_LOGI
-#define SENSOR_TRACE                                  SENSOR_LOGI
+#define SENSOR_LOGV(format, ...)                                               \
+    ALOGD_IF(g_sensor_log_level >= LEVEL_OVER_LOGV, DEBUG_STR format,          \
+             DEBUG_ARGS, ##__VA_ARGS__)
+#define SENSOR_PRINT_ERR SENSOR_LOGE
+#define SENSOR_PRINT_HIGH SENSOR_LOGI
+#define SENSOR_PRINT SENSOR_LOGI
+#define SENSOR_TRACE SENSOR_LOGI
 
 void isp_init_log_level(void);
 void oem_init_log_level(void);

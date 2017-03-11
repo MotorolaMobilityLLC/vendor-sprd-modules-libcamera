@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef  _CMR_EXIF_H_
+#ifndef _CMR_EXIF_H_
 #define _CMR_EXIF_H_
-
 
 #include "jpeg_exif_header.h"
 #include "cmr_setting.h"
 
-
-cmr_int cmr_exif_init(JINF_EXIF_INFO_T *jinf_exif_info_ptr, setting_get_pic_taking_cb setting_cb, void *priv_data);
+cmr_int cmr_exif_init(JINF_EXIF_INFO_T *jinf_exif_info_ptr,
+                      setting_get_pic_taking_cb setting_cb, void *priv_data);
 
 #endif

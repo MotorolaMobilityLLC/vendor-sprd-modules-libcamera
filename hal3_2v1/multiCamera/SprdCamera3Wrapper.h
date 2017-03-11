@@ -55,32 +55,27 @@
 
 namespace sprdcamera {
 
-class SprdCamera3Wrapper
-{
-public:
-	SprdCamera3Wrapper();
+class SprdCamera3Wrapper {
+  public:
+    SprdCamera3Wrapper();
     virtual ~SprdCamera3Wrapper();
-	static void getCameraWrapper(SprdCamera3Wrapper** pWrapper);
-	int cameraDeviceOpen(
-        __unused const struct hw_module_t *module, const char *id,
-        struct hw_device_t **hw_device);
-	int getCameraInfo(int camera_id, struct camera_info *info);
+    static void getCameraWrapper(SprdCamera3Wrapper **pWrapper);
+    int cameraDeviceOpen(__unused const struct hw_module_t *module,
+                         const char *id, struct hw_device_t **hw_device);
+    int getCameraInfo(int camera_id, struct camera_info *info);
 
-private:
-	SprdCamera3StereoVideo      *mStereoVideo;
-	SprdCamera3StereoPreview    *mStereoPreview;
-	SprdCamera3RangeFinder      *mRangeFinder;
-	SprdCamera3Capture          *mCapture;
+  private:
+    SprdCamera3StereoVideo *mStereoVideo;
+    SprdCamera3StereoPreview *mStereoPreview;
+    SprdCamera3RangeFinder *mRangeFinder;
+    SprdCamera3Capture *mCapture;
 #ifdef CONFIG_BLUR_SUPPORT
-	SprdCamera3Blur             *mBlur;
+    SprdCamera3Blur *mBlur;
 #endif
 #ifdef CONFIG_COVERED_SENSOR
-	SprdCamera3SelfShot         *mSelfShot;
-	SprdCamera3PageTurn         *mPageturn;
+    SprdCamera3SelfShot *mSelfShot;
+    SprdCamera3PageTurn *mPageturn;
 #endif
 };
-
-
-
 };
 #endif

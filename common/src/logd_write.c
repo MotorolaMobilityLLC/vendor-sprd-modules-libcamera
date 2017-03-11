@@ -29,8 +29,8 @@
 //#include <cutils/logd.h>
 #include <cutils/log.h>
 
-#define LOG_BUF_SIZE	512
-#define  LOG_TO_COMM  1
+#define LOG_BUF_SIZE 512
+#define LOG_TO_COMM 1
 //#define  LOG_THREAD  1
 
 #if 0
@@ -47,16 +47,8 @@ typedef enum android_LogPriority {
 } android_LogPriority;
 #endif
 
-static char *pristr[ANDROID_LOG_SILENT+1] = {
-	"U",
-	"T",
-	"V",
-	"D",
-	"I",
-	"W",
-	"E",
-	"F",
-	"S",
+static char *pristr[ANDROID_LOG_SILENT + 1] = {
+    "U", "T", "V", "D", "I", "W", "E", "F", "S",
 };
 
 #if FAKE_LOG_DEVICE
@@ -65,11 +57,11 @@ static char *pristr[ANDROID_LOG_SILENT+1] = {
 #define log_writev(filedes, vector, count) fakeLogWritev(filedes, vector, count)
 #define log_close(filedes) fakeLogClose(filedes)
 
-#elif  LOG_TO_COMM
+#elif LOG_TO_COMM
 #define log_open(pathname, flags) open(pathname, flags)
 #define log_writev(filedes, vector, count) writev(STDOUT_FILENO, vector, count)
 #define log_close(filedes) close(filedes)
-int  log_flag = ANDROID_LOG_DEFAULT;
+int log_flag = ANDROID_LOG_DEFAULT;
 
 #else
 #define log_open(pathname, flags) open(pathname, flags)
@@ -78,12 +70,13 @@ int  log_flag = ANDROID_LOG_DEFAULT;
 #endif
 
 static int __write_to_log_init(log_id_t, struct iovec *vec, size_t nr);
-static int (*write_to_log)(log_id_t, struct iovec *vec, size_t nr) = __write_to_log_init;
+static int (*write_to_log)(log_id_t, struct iovec *vec,
+                           size_t nr) = __write_to_log_init;
 #ifdef HAVE_PTHREADS
 static pthread_mutex_t log_init_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
-static int log_fds[(int)LOG_ID_MAX] = { -1, -1, -1, -1 };
+static int log_fds[(int)LOG_ID_MAX] = {-1, -1, -1, -1};
 
 /*
  * This is used by the C++ code to decide if it should write logs through
@@ -91,13 +84,14 @@ static int log_fds[(int)LOG_ID_MAX] = { -1, -1, -1, -1 };
  * the simulator rather than a desktop tool and want to use the device.
  */
 static enum {
-    kLogUninitialized, kLogNotAvailable, kLogAvailable
+    kLogUninitialized,
+    kLogNotAvailable,
+    kLogAvailable
 } g_log_status = kLogUninitialized;
 
-int __android_ylog_dev_available(void)
-{
+int __android_ylog_dev_available(void) {
     if (g_log_status == kLogUninitialized) {
-#if  0
+#if 0
         if (access("/dev/"LOGGER_LOG_MAIN, W_OK) == 0)
             g_log_status = kLogAvailable;
         else
@@ -108,9 +102,8 @@ int __android_ylog_dev_available(void)
     return (g_log_status == kLogAvailable);
 }
 
-static int __write_to_log_null(log_id_t log_fd, struct iovec *vec, size_t nr)
-{
-#if  LOG_TO_COMM
+static int __write_to_log_null(log_id_t log_fd, struct iovec *vec, size_t nr) {
+#if LOG_TO_COMM
     ssize_t ret;
 
     if (/*(int)log_id >= 0 &&*/ (int)log_fd < (int)LOG_ID_MAX) {
@@ -128,14 +121,14 @@ static int __write_to_log_null(log_id_t log_fd, struct iovec *vec, size_t nr)
     return -1;
 }
 
-static int __write_to_log_kernel(log_id_t log_id, struct iovec *vec, size_t nr)
-{
+static int __write_to_log_kernel(log_id_t log_id, struct iovec *vec,
+                                 size_t nr) {
     ssize_t ret;
     int log_fd;
 
     struct iovec pvec[3];
-    struct timespec         ts;
-    char   head[64];
+    struct timespec ts;
+    char head[64];
 
     if (/*(int)log_id >= 0 &&*/ (int)log_id < (int)LOG_ID_MAX) {
         log_fd = log_fds[(int)log_id];
@@ -144,9 +137,9 @@ static int __write_to_log_kernel(log_id_t log_id, struct iovec *vec, size_t nr)
     }
 
     clock_gettime(CLOCK_REALTIME, &ts);
-    sprintf(head, "%d.%06d: ", (int)ts.tv_sec, (int)(ts.tv_nsec/1000));
-    pvec[0].iov_base = (void *) head;
-    pvec[0].iov_len  = strlen(head) + 1;
+    sprintf(head, "%d.%06d: ", (int)ts.tv_sec, (int)(ts.tv_nsec / 1000));
+    pvec[0].iov_base = (void *)head;
+    pvec[0].iov_len = strlen(head) + 1;
     ret = log_writev(log_fd, pvec, 1);
 
     do {
@@ -156,23 +149,22 @@ static int __write_to_log_kernel(log_id_t log_id, struct iovec *vec, size_t nr)
     return ret;
 }
 
-static int __write_to_log_init(log_id_t log_id, struct iovec *vec, size_t nr)
-{
+static int __write_to_log_init(log_id_t log_id, struct iovec *vec, size_t nr) {
 #ifdef HAVE_PTHREADS
     pthread_mutex_lock(&log_init_lock);
 #endif
 
     if (write_to_log == __write_to_log_init) {
-#if  !LOG_TO_COMM
-        log_fds[LOG_ID_MAIN] = log_open("/dev/"LOGGER_LOG_MAIN, O_WRONLY);
-        log_fds[LOG_ID_RADIO] = log_open("/dev/"LOGGER_LOG_RADIO, O_WRONLY);
-        log_fds[LOG_ID_EVENTS] = log_open("/dev/"LOGGER_LOG_EVENTS, O_WRONLY);
-        log_fds[LOG_ID_SYSTEM] = log_open("/dev/"LOGGER_LOG_SYSTEM, O_WRONLY);
+#if !LOG_TO_COMM
+        log_fds[LOG_ID_MAIN] = log_open("/dev/" LOGGER_LOG_MAIN, O_WRONLY);
+        log_fds[LOG_ID_RADIO] = log_open("/dev/" LOGGER_LOG_RADIO, O_WRONLY);
+        log_fds[LOG_ID_EVENTS] = log_open("/dev/" LOGGER_LOG_EVENTS, O_WRONLY);
+        log_fds[LOG_ID_SYSTEM] = log_open("/dev/" LOGGER_LOG_SYSTEM, O_WRONLY);
 
         write_to_log = __write_to_log_kernel;
 
         if (log_fds[LOG_ID_MAIN] < 0 || log_fds[LOG_ID_RADIO] < 0 ||
-                log_fds[LOG_ID_EVENTS] < 0) {
+            log_fds[LOG_ID_EVENTS] < 0) {
             log_close(log_fds[LOG_ID_MAIN]);
             log_close(log_fds[LOG_ID_RADIO]);
             log_close(log_fds[LOG_ID_EVENTS]);
@@ -186,7 +178,7 @@ static int __write_to_log_init(log_id_t log_id, struct iovec *vec, size_t nr)
             log_fds[LOG_ID_SYSTEM] = log_fds[LOG_ID_MAIN];
         }
 #else
-	write_to_log = __write_to_log_kernel;
+        write_to_log = __write_to_log_kernel;
 #endif
     }
 
@@ -349,192 +341,187 @@ int __android_ylog_btwrite(int32_t tag, char type, const void *payload,
 
 #ifndef __RELEASE
 
-	int __android_ylog_write(int prio, const char *tag, const char *msg)
-	{
-		struct iovec vec[3];
-		log_id_t log_id = LOG_ID_MAIN;
+int __android_ylog_write(int prio, const char *tag, const char *msg) {
+    struct iovec vec[3];
+    log_id_t log_id = LOG_ID_MAIN;
 
-		vec[0].iov_base   = (void *) msg;
-		vec[0].iov_len	  = strlen(msg) + 1;
+    vec[0].iov_base = (void *)msg;
+    vec[0].iov_len = strlen(msg) + 1;
 
-		return write_to_log(log_id, vec, 1);
-	}
+    return write_to_log(log_id, vec, 1);
+}
 
-	int __android_ylog_buf_write(int bufID, int prio, const char *tag, const char *msg)
-	{
-		struct iovec vec[3];
+int __android_ylog_buf_write(int bufID, int prio, const char *tag,
+                             const char *msg) {
+    struct iovec vec[3];
 
-		vec[0].iov_base   = (void *) msg;
-		vec[0].iov_len	  = strlen(msg) + 1;
+    vec[0].iov_base = (void *)msg;
+    vec[0].iov_len = strlen(msg) + 1;
 
-		return write_to_log((log_id_t)bufID, vec, 1);
-	}
+    return write_to_log((log_id_t)bufID, vec, 1);
+}
 
-	int __android_ylog_vprint(int prio, const char *tag, const char *fmt, va_list ap)
-	{
-		char buf[LOG_BUF_SIZE];
-		int  len;
-		pid_t  pid = getpid();
+int __android_ylog_vprint(int prio, const char *tag, const char *fmt,
+                          va_list ap) {
+    char buf[LOG_BUF_SIZE];
+    int len;
+    pid_t pid = getpid();
 
 #if LOG_THREAD
-		pid = pthread_self();
+    pid = pthread_self();
 #endif
-		if(prio < log_flag)
-			return 0;
+    if (prio < log_flag)
+        return 0;
 
-		if (!tag)
-			tag = "\t";
+    if (!tag)
+        tag = "\t";
 
-		len= sprintf(buf, "%s", pristr[prio]);
+    len = sprintf(buf, "%s", pristr[prio]);
 #if LOG_THREAD
-		len += sprintf(buf + len,  "/%s(%6x): ", tag, pid);
+    len += sprintf(buf + len, "/%s(%6x): ", tag, pid);
 #else
-		len += sprintf(buf + len,  "/%s(%6d): ", tag, pid);
+    len += sprintf(buf + len, "/%s(%6d): ", tag, pid);
 #endif
 
-		len += vsnprintf(buf + len, LOG_BUF_SIZE - len, fmt, ap);
-		len += sprintf(buf + len, "%s", "\n");
+    len += vsnprintf(buf + len, LOG_BUF_SIZE - len, fmt, ap);
+    len += sprintf(buf + len, "%s", "\n");
 
-		return __android_ylog_write(prio, tag, buf);
-	}
+    return __android_ylog_write(prio, tag, buf);
+}
 
-	int __android_ylog_print(int prio, const char *tag, const char *fmt, ...)
-	{
-		va_list ap;
-		char buf[LOG_BUF_SIZE];
-		int  len;
-		pid_t  pid = getpid();
+int __android_ylog_print(int prio, const char *tag, const char *fmt, ...) {
+    va_list ap;
+    char buf[LOG_BUF_SIZE];
+    int len;
+    pid_t pid = getpid();
 
 #if LOG_THREAD
-		pid = pthread_self();
+    pid = pthread_self();
 #endif
 
-		if(prio < log_flag)
-			return 0;
+    if (prio < log_flag)
+        return 0;
 
-		if (!tag)
-			tag = "\t";
+    if (!tag)
+        tag = "\t";
 
-		len= sprintf(buf, "%s", pristr[prio]);
+    len = sprintf(buf, "%s", pristr[prio]);
 #if LOG_THREAD
-		len += sprintf(buf + len,  "/%s(%6x): ", tag, pid);
+    len += sprintf(buf + len, "/%s(%6x): ", tag, pid);
 #else
-		len += sprintf(buf + len,  "/%s(%6d): ", tag, pid);
+    len += sprintf(buf + len, "/%s(%6d): ", tag, pid);
 #endif
 
-		va_start(ap, fmt);
-		len += vsnprintf(buf + len, LOG_BUF_SIZE - len, fmt, ap);
-		va_end(ap);
-		len += sprintf(buf+len, "%s", "\n");
+    va_start(ap, fmt);
+    len += vsnprintf(buf + len, LOG_BUF_SIZE - len, fmt, ap);
+    va_end(ap);
+    len += sprintf(buf + len, "%s", "\n");
 
-		return __android_ylog_write(prio, tag, buf);
-	}
+    return __android_ylog_write(prio, tag, buf);
+}
 
-	int __android_ylog_buf_print(int bufID, int prio, const char *tag, const char *fmt, ...)
-	{
-		va_list ap;
-		char buf[LOG_BUF_SIZE];
-		int  len;
-		pid_t  pid = getpid();
+int __android_ylog_buf_print(int bufID, int prio, const char *tag,
+                             const char *fmt, ...) {
+    va_list ap;
+    char buf[LOG_BUF_SIZE];
+    int len;
+    pid_t pid = getpid();
 
 #if LOG_THREAD
-		pid = pthread_self();
+    pid = pthread_self();
 #endif
 
-		if(prio < log_flag)
-			return 0;
+    if (prio < log_flag)
+        return 0;
 
-		if (!tag)
-			tag = "\t";
+    if (!tag)
+        tag = "\t";
 
-		len= sprintf(buf, "%s", pristr[prio]);
+    len = sprintf(buf, "%s", pristr[prio]);
 #if LOG_THREAD
-		len += sprintf(buf + len,  "/%s(%6x): ", tag, pid);
+    len += sprintf(buf + len, "/%s(%6x): ", tag, pid);
 #else
-		len += sprintf(buf + len,  "/%s(%6d): ", tag, pid);
+    len += sprintf(buf + len, "/%s(%6d): ", tag, pid);
 #endif
 
-		va_start(ap, fmt);
-		len += vsnprintf(buf+len, LOG_BUF_SIZE - len, fmt, ap);
-		va_end(ap);
-		len += sprintf(buf+len,  "%s:", "\n");
+    va_start(ap, fmt);
+    len += vsnprintf(buf + len, LOG_BUF_SIZE - len, fmt, ap);
+    va_end(ap);
+    len += sprintf(buf + len, "%s:", "\n");
 
-		return __android_ylog_buf_write(bufID, prio, tag, buf);
-	}
+    return __android_ylog_buf_write(bufID, prio, tag, buf);
+}
 
-	void __android_ylog_assert(const char *cond, const char *tag,
-				  const char *fmt, ...)
-	{
-		char buf[LOG_BUF_SIZE];
+void __android_ylog_assert(const char *cond, const char *tag, const char *fmt,
+                           ...) {
+    char buf[LOG_BUF_SIZE];
 
-		if (fmt) {
-			va_list ap;
-			va_start(ap, fmt);
-			vsnprintf(buf, LOG_BUF_SIZE, fmt, ap);
-			va_end(ap);
-		} else {
-			/* Msg not provided, log condition.  N.B. Do not use cond directly as
-			 * format string as it could contain spurious '%' syntax (e.g.
-			 * "%d" in "blocks%devs == 0").
-			 */
-			if (cond)
-				snprintf(buf, LOG_BUF_SIZE, "Assertion failed: %s", cond);
-			else
-				strcpy(buf, "Unspecified assertion failed");
-		}
+    if (fmt) {
+        va_list ap;
+        va_start(ap, fmt);
+        vsnprintf(buf, LOG_BUF_SIZE, fmt, ap);
+        va_end(ap);
+    } else {
+        /* Msg not provided, log condition.  N.B. Do not use cond directly as
+         * format string as it could contain spurious '%' syntax (e.g.
+         * "%d" in "blocks%devs == 0").
+         */
+        if (cond)
+            snprintf(buf, LOG_BUF_SIZE, "Assertion failed: %s", cond);
+        else
+            strcpy(buf, "Unspecified assertion failed");
+    }
 
-		__android_ylog_write(ANDROID_LOG_FATAL, tag, buf);
+    __android_ylog_write(ANDROID_LOG_FATAL, tag, buf);
 
-		__builtin_trap(); /* trap so we have a chance to debug the situation */
-	}
+    __builtin_trap(); /* trap so we have a chance to debug the situation */
+}
 
-	int __android_ylog_bwrite(int32_t tag, const void *payload, size_t len)
-	{
-		struct iovec vec[2];
+int __android_ylog_bwrite(int32_t tag, const void *payload, size_t len) {
+    struct iovec vec[2];
 
-		vec[0].iov_base = &tag;
-		vec[0].iov_len = sizeof(tag);
-		vec[1].iov_base = (void*)payload;
-		vec[1].iov_len = len;
+    vec[0].iov_base = &tag;
+    vec[0].iov_len = sizeof(tag);
+    vec[1].iov_base = (void *)payload;
+    vec[1].iov_len = len;
 
-		return write_to_log(LOG_ID_EVENTS, vec, 2);
-	}
+    return write_to_log(LOG_ID_EVENTS, vec, 2);
+}
 
-	/*
-	 * Like __android_ylog_bwrite, but takes the type as well.  Doesn't work
-	 * for the general case where we're generating lists of stuff, but very
-	 * handy if we just want to dump an integer into the log.
-	 */
-	int __android_ylog_btwrite(int32_t tag, char type, const void *payload,
-		size_t len)
-	{
-		struct iovec vec[3];
+/*
+ * Like __android_ylog_bwrite, but takes the type as well.  Doesn't work
+ * for the general case where we're generating lists of stuff, but very
+ * handy if we just want to dump an integer into the log.
+ */
+int __android_ylog_btwrite(int32_t tag, char type, const void *payload,
+                           size_t len) {
+    struct iovec vec[3];
 
-		vec[0].iov_base = &tag;
-		vec[0].iov_len = sizeof(tag);
-		vec[1].iov_base = &type;
-		vec[1].iov_len = sizeof(type);
-		vec[2].iov_base = (void*)payload;
-		vec[2].iov_len = len;
+    vec[0].iov_base = &tag;
+    vec[0].iov_len = sizeof(tag);
+    vec[1].iov_base = &type;
+    vec[1].iov_len = sizeof(type);
+    vec[2].iov_base = (void *)payload;
+    vec[2].iov_len = len;
 
-		return write_to_log(LOG_ID_EVENTS, vec, 3);
-	}
+    return write_to_log(LOG_ID_EVENTS, vec, 3);
+}
 #endif
 
 #include <pthread.h>
 
-void pthread_debug_setname(pthread_t handle, const char *format, ...)
-{
+void pthread_debug_setname(pthread_t handle, const char *format, ...) {
 #if LOG_THREAD
-	char	threadname[256];
-//	unsigned char *ptc = (unsigned char*)handle;
+    char threadname[256];
+    //	unsigned char *ptc = (unsigned char*)handle;
 
-	sprintf(threadname,"%s", format);
-	pthread_setname_np(handle, threadname);
-	__android_ylog_print(ANDROID_LOG_INFO, "tdebug", "thread %x name %s\n", (long)handle, threadname);
-//	__android_ylog_print(ANDROID_LOG_INFO, "tdebug", "thread %s name %s\n", ptc, threadname);
+    sprintf(threadname, "%s", format);
+    pthread_setname_np(handle, threadname);
+    __android_ylog_print(ANDROID_LOG_INFO, "tdebug", "thread %x name %s\n",
+                         (long)handle, threadname);
+//	__android_ylog_print(ANDROID_LOG_INFO, "tdebug", "thread %s name %s\n",
+//ptc, threadname);
 #endif
 }
-
 
 #endif

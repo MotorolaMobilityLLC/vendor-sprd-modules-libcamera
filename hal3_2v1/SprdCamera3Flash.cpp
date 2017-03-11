@@ -18,7 +18,8 @@
 * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
 * ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
 * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-* CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+* CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF *
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
 * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
 * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
@@ -48,18 +49,18 @@
 volatile uint32_t gCamHal3LogLevel = 1;
 
 namespace sprdcamera {
-SprdCamera3Flash* SprdCamera3Flash::_instance = 0;
+SprdCamera3Flash *SprdCamera3Flash::_instance = 0;
 /*===========================================================================
 * FUNCTION    : getInstance
 * DESCRIPTION : Get and create the SprdCameraFlash singleton.
 * PARAMETERS  : None
 * RETURN      : Instance of SprdCameraFlash class
 *==========================================================================*/
-SprdCamera3Flash* SprdCamera3Flash::getInstance() {
-	if(!_instance){
-		_instance = new SprdCamera3Flash();
-	}
-	return _instance;
+SprdCamera3Flash *SprdCamera3Flash::getInstance() {
+    if (!_instance) {
+        _instance = new SprdCamera3Flash();
+    }
+    return _instance;
 }
 /*===========================================================================
 * FUNCTION    : SprdCameraFlash
@@ -68,9 +69,9 @@ SprdCamera3Flash* SprdCamera3Flash::getInstance() {
 * RETURN      : None
 *==========================================================================*/
 SprdCamera3Flash::SprdCamera3Flash() : m_callbacks(NULL) {
-	LOGV("%s : In", __func__);
-	memset(&m_flashOn, 0, sizeof(m_flashOn));
-	memset(&m_cameraOpen, 0, sizeof(m_cameraOpen));
+    LOGV("%s : In", __func__);
+    memset(&m_flashOn, 0, sizeof(m_flashOn));
+    memset(&m_cameraOpen, 0, sizeof(m_cameraOpen));
 }
 /*===========================================================================
 * FUNCTION    : ~SprdCameraFlash
@@ -79,7 +80,7 @@ SprdCamera3Flash::SprdCamera3Flash() : m_callbacks(NULL) {
 * RETURN      : None
 *==========================================================================*/
 SprdCamera3Flash::~SprdCamera3Flash() {
-	//Destructor
+    // Destructor
 }
 /*===========================================================================
 * FUNCTION    : registerCallbacks
@@ -88,14 +89,15 @@ SprdCamera3Flash::~SprdCamera3Flash() {
 *		callbacks : Framework's function pointers to update flash
 * RETURN      : None
 *==========================================================================*/
-int32_t SprdCamera3Flash::registerCallbacks(const camera_module_callbacks_t* callbacks) {
-	LOGV("%s : In", __func__);
-	int32_t retVal = 0;
-	if(!_instance)
-		_instance = new SprdCamera3Flash();
-	_instance->m_callbacks = callbacks;
+int32_t SprdCamera3Flash::registerCallbacks(
+    const camera_module_callbacks_t *callbacks) {
+    LOGV("%s : In", __func__);
+    int32_t retVal = 0;
+    if (!_instance)
+        _instance = new SprdCamera3Flash();
+    _instance->m_callbacks = callbacks;
 
-	return retVal;
+    return retVal;
 }
 /*===========================================================================
 * FUNCTION    : setFlashMode
@@ -106,31 +108,32 @@ int32_t SprdCamera3Flash::registerCallbacks(const camera_module_callbacks_t* cal
 * RETURN      : 0 -- success
 *==========================================================================*/
 int32_t SprdCamera3Flash::setFlashMode(const int camera_id, const bool mode) {
-	int32_t retVal = 0;
-	const char* const flashInterface = "/sys/devices/virtual/misc/sprd_flash/test";
-	ssize_t wr_ret;
-	LOGV("open flash driver interface");
-	int fd = open(flashInterface, O_WRONLY);
-	/* open sysfs file parition */
-	if (-1 == fd) {
-		LOGE("Failed to open: flash_light_interface, %s", flashInterface);
-		return -EINVAL;
-	}
-	if(mode) {
-		m_flashOn[0]=SPRD_FLASH_STATUS_ON;
-		wr_ret = write(fd,SPRD_FLASH_CMD_ON,4);
-	} else {
-		m_flashOn[0]=SPRD_FLASH_STATUS_OFF;
-		wr_ret = write(fd,SPRD_FLASH_CMD_OFF,4);
-	}
-	if (-1 == wr_ret){
-		LOGE("WRITE FAILED \n");
-		retVal = -EINVAL;
-	}
+    int32_t retVal = 0;
+    const char *const flashInterface =
+        "/sys/devices/virtual/misc/sprd_flash/test";
+    ssize_t wr_ret;
+    LOGV("open flash driver interface");
+    int fd = open(flashInterface, O_WRONLY);
+    /* open sysfs file parition */
+    if (-1 == fd) {
+        LOGE("Failed to open: flash_light_interface, %s", flashInterface);
+        return -EINVAL;
+    }
+    if (mode) {
+        m_flashOn[0] = SPRD_FLASH_STATUS_ON;
+        wr_ret = write(fd, SPRD_FLASH_CMD_ON, 4);
+    } else {
+        m_flashOn[0] = SPRD_FLASH_STATUS_OFF;
+        wr_ret = write(fd, SPRD_FLASH_CMD_OFF, 4);
+    }
+    if (-1 == wr_ret) {
+        LOGE("WRITE FAILED \n");
+        retVal = -EINVAL;
+    }
 
-	close(fd);
-	LOGV("Close file");
-	return retVal;
+    close(fd);
+    LOGV("Close file");
+    return retVal;
 }
 /*===========================================================================
 * FUNCTION    : set_torch_mode
@@ -141,18 +144,20 @@ int32_t SprdCamera3Flash::setFlashMode(const int camera_id, const bool mode) {
 * RETURN      : 0  -- success
 *             none-zero failure code
 *==========================================================================*/
-int32_t SprdCamera3Flash::set_torch_mode(const char* cameraIdStr, bool on) {
-	LOGV("%s : cameraId:%s", __func__,cameraIdStr);
-	int retVal = 0;
-	char* cmd_str;
-	if(on){
-		setFlashMode((int)(*cameraIdStr),on);
-		m_callbacks->torch_mode_status_change(m_callbacks, cameraIdStr, TORCH_MODE_STATUS_AVAILABLE_ON);
-	} else {
-		setFlashMode((int)(*cameraIdStr),on);
-		m_callbacks->torch_mode_status_change(m_callbacks, cameraIdStr, TORCH_MODE_STATUS_AVAILABLE_OFF);
-	}
-	return retVal;
+int32_t SprdCamera3Flash::set_torch_mode(const char *cameraIdStr, bool on) {
+    LOGV("%s : cameraId:%s", __func__, cameraIdStr);
+    int retVal = 0;
+    char *cmd_str;
+    if (on) {
+        setFlashMode((int)(*cameraIdStr), on);
+        m_callbacks->torch_mode_status_change(m_callbacks, cameraIdStr,
+                                              TORCH_MODE_STATUS_AVAILABLE_ON);
+    } else {
+        setFlashMode((int)(*cameraIdStr), on);
+        m_callbacks->torch_mode_status_change(m_callbacks, cameraIdStr,
+                                              TORCH_MODE_STATUS_AVAILABLE_OFF);
+    }
+    return retVal;
 }
 
 /*===========================================================================
@@ -166,28 +171,29 @@ int32_t SprdCamera3Flash::set_torch_mode(const char* cameraIdStr, bool on) {
 *             No callback available for torch_mode_status_change.
 *==========================================================================*/
 int32_t SprdCamera3Flash::reserveFlashForCamera(const int cameraId) {
-	int retVal = 0;
-	LOGV("%s : cameraId = %d",__func__, cameraId);
-	if (cameraId < 0 || cameraId >= SPRD_CAMERA_MAX_NUM_SENSORS) {
-		LOGE("%s: Invalid camera id: %d", __func__, cameraId);
-		retVal = -EINVAL;
-	}
-	if (m_callbacks == NULL || m_callbacks->torch_mode_status_change == NULL) {
-		LOGE("%s: Callback is not defined!", __func__);
-		retVal = -EINVAL;
-	}
-	char cameraIdStr[STRING_LENGTH];
-	snprintf(cameraIdStr, STRING_LENGTH, "%d", cameraId);
-	if(m_cameraOpen[cameraId]){
-		LOGV("FLash already reserved for camera ");
-	}else{
-		if (!cameraId && m_flashOn[0]) {
-			set_torch_mode(cameraIdStr,SPRD_FLASH_STATUS_OFF);
-		}
-		m_cameraOpen[cameraId] = true;
-		m_callbacks->torch_mode_status_change(m_callbacks, cameraIdStr, TORCH_MODE_STATUS_NOT_AVAILABLE);
-	}
-	return retVal;
+    int retVal = 0;
+    LOGV("%s : cameraId = %d", __func__, cameraId);
+    if (cameraId < 0 || cameraId >= SPRD_CAMERA_MAX_NUM_SENSORS) {
+        LOGE("%s: Invalid camera id: %d", __func__, cameraId);
+        retVal = -EINVAL;
+    }
+    if (m_callbacks == NULL || m_callbacks->torch_mode_status_change == NULL) {
+        LOGE("%s: Callback is not defined!", __func__);
+        retVal = -EINVAL;
+    }
+    char cameraIdStr[STRING_LENGTH];
+    snprintf(cameraIdStr, STRING_LENGTH, "%d", cameraId);
+    if (m_cameraOpen[cameraId]) {
+        LOGV("FLash already reserved for camera ");
+    } else {
+        if (!cameraId && m_flashOn[0]) {
+            set_torch_mode(cameraIdStr, SPRD_FLASH_STATUS_OFF);
+        }
+        m_cameraOpen[cameraId] = true;
+        m_callbacks->torch_mode_status_change(m_callbacks, cameraIdStr,
+                                              TORCH_MODE_STATUS_NOT_AVAILABLE);
+    }
+    return retVal;
 }
 /*===========================================================================
 * FUNCTION    : releaseFlashFromCamera
@@ -200,44 +206,45 @@ int32_t SprdCamera3Flash::reserveFlashForCamera(const int cameraId) {
 *       No callback available for torch_mode_status_change.
 *==========================================================================*/
 int32_t SprdCamera3Flash::releaseFlashFromCamera(const int cameraId) {
-	int retVal = 0;
-	LOGV("%s : cameraId = %d",__func__, cameraId);
+    int retVal = 0;
+    LOGV("%s : cameraId = %d", __func__, cameraId);
 
-	if (cameraId < 0 || cameraId >= SPRD_CAMERA_MAX_NUM_SENSORS) {
-		LOGE("%s: Invalid camera id: %d", __func__, cameraId);
-		retVal = -EINVAL;
-	}
-	if (m_callbacks == NULL) {
-		LOGE("%s: Callback is not defined!", __func__);
-		retVal = -EINVAL;
-	}
-	char cameraIdStr[STRING_LENGTH];
-	snprintf(cameraIdStr, STRING_LENGTH, "%d", cameraId);
-	if(!m_cameraOpen[cameraId]){
-		LOGV(" Flash unit is already released");
-	}else{
-		m_cameraOpen[cameraId] = false;
-		m_callbacks->torch_mode_status_change(m_callbacks, cameraIdStr, TORCH_MODE_STATUS_AVAILABLE_OFF);
-	}
-	return retVal;
+    if (cameraId < 0 || cameraId >= SPRD_CAMERA_MAX_NUM_SENSORS) {
+        LOGE("%s: Invalid camera id: %d", __func__, cameraId);
+        retVal = -EINVAL;
+    }
+    if (m_callbacks == NULL) {
+        LOGE("%s: Callback is not defined!", __func__);
+        retVal = -EINVAL;
+    }
+    char cameraIdStr[STRING_LENGTH];
+    snprintf(cameraIdStr, STRING_LENGTH, "%d", cameraId);
+    if (!m_cameraOpen[cameraId]) {
+        LOGV(" Flash unit is already released");
+    } else {
+        m_cameraOpen[cameraId] = false;
+        m_callbacks->torch_mode_status_change(m_callbacks, cameraIdStr,
+                                              TORCH_MODE_STATUS_AVAILABLE_OFF);
+    }
+    return retVal;
 }
-int32_t SprdCamera3Flash::setTorchMode(const char* cameraIdStr, bool on){
-	int retVal = 0;
-	if(_instance)
-		retVal = _instance->set_torch_mode(cameraIdStr,on);
-	return retVal;
+int32_t SprdCamera3Flash::setTorchMode(const char *cameraIdStr, bool on) {
+    int retVal = 0;
+    if (_instance)
+        retVal = _instance->set_torch_mode(cameraIdStr, on);
+    return retVal;
 }
 int32_t SprdCamera3Flash::reserveFlash(const int cameraId) {
-	int retVal = 0;
-	if(_instance)
-		retVal = _instance->reserveFlashForCamera(cameraId);
-	return retVal;
+    int retVal = 0;
+    if (_instance)
+        retVal = _instance->reserveFlashForCamera(cameraId);
+    return retVal;
 }
 int32_t SprdCamera3Flash::releaseFlash(const int cameraId) {
-	int retVal = 0;
-	if(_instance)
-		retVal = _instance->releaseFlashFromCamera(cameraId);
-	return retVal;
+    int retVal = 0;
+    if (_instance)
+        retVal = _instance->releaseFlashFromCamera(cameraId);
+    return retVal;
 }
 
 }; // namespace sprdcamera

@@ -49,7 +49,7 @@
 
 namespace sprdcamera {
 
-#define SELFSHOT_ALL_CONVERED_VALURE    70
+#define SELFSHOT_ALL_CONVERED_VALURE 70
 
 typedef enum {
     /* Main camera device id*/
@@ -58,62 +58,72 @@ typedef enum {
     SELF_SHOT_CAM_AUX_ID = 2
 } SelfShotCameraID;
 
-class SprdCamera3SelfShot
-{
-public:
-    static void getCameraMuxer(SprdCamera3SelfShot** pMuxer);
-    static int camera_device_open(
-        __unused const struct hw_module_t *module, const char *id,
-        struct hw_device_t **hw_device);
+class SprdCamera3SelfShot {
+  public:
+    static void getCameraMuxer(SprdCamera3SelfShot **pMuxer);
+    static int camera_device_open(__unused const struct hw_module_t *module,
+                                  const char *id,
+                                  struct hw_device_t **hw_device);
     static int close_camera_device(struct hw_device_t *device);
     static int get_camera_info(int camera_id, struct camera_info *info);
-    static int initialize(const struct camera3_device *device, const camera3_callback_ops_t *ops);
-    static int configure_streams(const struct camera3_device *device, camera3_stream_configuration_t* stream_list);
-    static const camera_metadata_t *construct_default_request_settings(const struct camera3_device *, int type);
-    static int process_capture_request(const struct camera3_device* device, camera3_capture_request_t *request);
-    static void notifyMain(const struct camera3_callback_ops *ops, const camera3_notify_msg_t* msg);
-    static void process_capture_result_main(const struct camera3_callback_ops *ops, const camera3_capture_result_t *result);
-    static void process_capture_result_aux(const struct camera3_callback_ops *ops, const camera3_capture_result_t *result);
-    static void notifyAux(const struct camera3_callback_ops *ops, const camera3_notify_msg_t* msg);
+    static int initialize(const struct camera3_device *device,
+                          const camera3_callback_ops_t *ops);
+    static int configure_streams(const struct camera3_device *device,
+                                 camera3_stream_configuration_t *stream_list);
+    static const camera_metadata_t *
+    construct_default_request_settings(const struct camera3_device *, int type);
+    static int process_capture_request(const struct camera3_device *device,
+                                       camera3_capture_request_t *request);
+    static void notifyMain(const struct camera3_callback_ops *ops,
+                           const camera3_notify_msg_t *msg);
+    static void
+    process_capture_result_main(const struct camera3_callback_ops *ops,
+                                const camera3_capture_result_t *result);
+    static void
+    process_capture_result_aux(const struct camera3_callback_ops *ops,
+                               const camera3_capture_result_t *result);
+    static void notifyAux(const struct camera3_callback_ops *ops,
+                          const camera3_notify_msg_t *msg);
     static void dump(const struct camera3_device *device, int fd);
     static int flush(const struct camera3_device *device);
 
     static camera3_device_ops_t mCameraMuxerOps;
     static camera3_callback_ops callback_ops_main;
     static camera3_callback_ops callback_ops_aux;
-private:
-    sprdcamera_physical_descriptor_t        *m_pPhyCamera;
-    sprd_virtual_camera_t                 m_VirtualCamera;
-    uint8_t                                 m_nPhyCameras;
-    Mutex                                           mLock;
-    camera_metadata_t                    *mStaticMetadata;
-    int                            mAvailableSensorSelfSot;
-    bool                                    mOpenSubsensor;
-    int                                      mCoveredValue;
-    int cameraDeviceOpen(int camera_id,struct hw_device_t **hw_device);
+
+  private:
+    sprdcamera_physical_descriptor_t *m_pPhyCamera;
+    sprd_virtual_camera_t m_VirtualCamera;
+    uint8_t m_nPhyCameras;
+    Mutex mLock;
+    camera_metadata_t *mStaticMetadata;
+    int mAvailableSensorSelfSot;
+    bool mOpenSubsensor;
+    int mCoveredValue;
+    int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
     int setupPhysicalCameras();
     int getCameraInfo(struct camera_info *info);
 
-public:
-
+  public:
     SprdCamera3SelfShot();
     virtual ~SprdCamera3SelfShot();
-    const camera3_callback_ops_t*   mCallbackOps;
+    const camera3_callback_ops_t *mCallbackOps;
     int initialize(const camera3_callback_ops_t *callback_ops);
-    int configureStreams(const struct camera3_device *device,camera3_stream_configuration_t* stream_list);
-    int processCaptureRequest(const struct camera3_device *device,camera3_capture_request_t *request);
-    void notifyMain( const camera3_notify_msg_t* msg);
+    int configureStreams(const struct camera3_device *device,
+                         camera3_stream_configuration_t *stream_list);
+    int processCaptureRequest(const struct camera3_device *device,
+                              camera3_capture_request_t *request);
+    void notifyMain(const camera3_notify_msg_t *msg);
     int getCoveredValue();
     void processCaptureResultMain(camera3_capture_result_t *result);
-    const camera_metadata_t *constructDefaultRequestSettings( const struct camera3_device *device,int type);
+    const camera_metadata_t *
+    constructDefaultRequestSettings(const struct camera3_device *device,
+                                    int type);
     void _dump(const struct camera3_device *device, int fd);
-    void dumpImg(void* addr,int size,int w,int h,int fd,int flag);
+    void dumpImg(void *addr, int size, int w, int h, int fd, int flag);
     int _flush(const struct camera3_device *device);
     int closeCameraDevice();
-
 };
-
 };
 
 #endif /* SPRDCAMERA3SELFSHOT_H_HEADER*/
-

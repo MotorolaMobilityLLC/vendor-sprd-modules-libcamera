@@ -20,42 +20,40 @@
 
 namespace android {
 
-#define SIGNAL_THREAD_TERMINATE     (1<<0)
-#define SIGNAL_THREAD_PAUSE         (1<<1)
+#define SIGNAL_THREAD_TERMINATE (1 << 0)
+#define SIGNAL_THREAD_PAUSE (1 << 1)
 
-#define SIGNAL_THREAD_COMMON_LAST   (1<<3)
+#define SIGNAL_THREAD_COMMON_LAST (1 << 3)
 
-class SprdBaseThread:public Thread {
-public:
-                        SprdBaseThread();
-                        SprdBaseThread(const char *name,
-                            int32_t priority, size_t stack);
-    virtual             ~SprdBaseThread();
+class SprdBaseThread : public Thread {
+  public:
+    SprdBaseThread();
+    SprdBaseThread(const char *name, int32_t priority, size_t stack);
+    virtual ~SprdBaseThread();
 
-            status_t    SetSignal(uint32_t signal);
+    status_t SetSignal(uint32_t signal);
 
-            uint32_t    GetProcessingSignal();
-            //void        ClearProcessingSignal(uint32_t signal);
-            void        Start(const char *name,
-                            int32_t priority, size_t stack);
-            bool        IsTerminated();
+    uint32_t GetProcessingSignal();
+    // void        ClearProcessingSignal(uint32_t signal);
+    void Start(const char *name, int32_t priority, size_t stack);
+    bool IsTerminated();
 
-private:
-            status_t    readyToRun();
-            status_t    readyToRunInternal();
+  private:
+    status_t readyToRun();
+    status_t readyToRunInternal();
 
-            bool        threadLoop();
-    virtual void        threadDealWithSiganl() = 0;
+    bool threadLoop();
+    virtual void threadDealWithSiganl() = 0;
 
-            void        ClearSignal();
+    void ClearSignal();
 
-            uint32_t    m_receivedSignal;
-            uint32_t    m_processingSignal;
-            uint32_t    m_pendingSignal;
+    uint32_t m_receivedSignal;
+    uint32_t m_processingSignal;
+    uint32_t m_pendingSignal;
 
-            Mutex       m_signalMutex;
-            Condition   m_threadCondition;
-            bool	    m_isTerminated;
+    Mutex m_signalMutex;
+    Condition m_threadCondition;
+    bool m_isTerminated;
 };
 
 }; // namespace android

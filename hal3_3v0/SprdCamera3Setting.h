@@ -62,7 +62,10 @@ namespace sprdcamera {
 				h->ops->camera_set_param (x, y, z);\
 		} while(0)
 #define SIZE_ALIGN(x) (((x)+15)&(~15))
-#define UNUSED(x) (void)x
+
+#ifndef UNUSED
+#define UNUSED(x) (void) x
+#endif
 
 #define CAMERA_ID_COUNT   4
 

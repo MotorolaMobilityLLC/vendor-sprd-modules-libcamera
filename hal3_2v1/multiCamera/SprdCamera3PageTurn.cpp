@@ -36,60 +36,60 @@ namespace sprdcamera {
 
 SprdCamera3PageTurn *mPageTurn = NULL;
 
-//Error Check Macros
-#define CHECK_MUXER() \
-    if (!mPageTurn) { \
-        HAL_LOGE("Error getting muxer "); \
-        return; \
-    } \
+// Error Check Macros
+#define CHECK_MUXER()                                                          \
+    if (!mPageTurn) {                                                          \
+        HAL_LOGE("Error getting muxer ");                                      \
+        return;                                                                \
+    }
 
-//Error Check Macros
-#define CHECK_MUXER_ERROR() \
-    if (!mPageTurn) { \
-        HAL_LOGE("Error getting muxer "); \
-        return -ENODEV; \
-    } \
+// Error Check Macros
+#define CHECK_MUXER_ERROR()                                                    \
+    if (!mPageTurn) {                                                          \
+        HAL_LOGE("Error getting muxer ");                                      \
+        return -ENODEV;                                                        \
+    }
 
-#define CHECK_HWI(hwi) \
-    if (!hwi) { \
-        HAL_LOGE("Error !! HWI not found!!"); \
-        return; \
-    } \
+#define CHECK_HWI(hwi)                                                         \
+    if (!hwi) {                                                                \
+        HAL_LOGE("Error !! HWI not found!!");                                  \
+        return;                                                                \
+    }
 
-#define CHECK_HWI_ERROR(hwi) \
-    if (!hwi) { \
-        HAL_LOGE("Error !! HWI not found!!"); \
-        return -ENODEV; \
-    } \
+#define CHECK_HWI_ERROR(hwi)                                                   \
+    if (!hwi) {                                                                \
+        HAL_LOGE("Error !! HWI not found!!");                                  \
+        return -ENODEV;                                                        \
+    }
 
-#define CHECK_CAMERA(sprdCam) \
-            if (!sprdCam) { \
-                HAL_LOGE("Error getting physical camera"); \
-                return; \
-            } \
+#define CHECK_CAMERA(sprdCam)                                                  \
+    if (!sprdCam) {                                                            \
+        HAL_LOGE("Error getting physical camera");                             \
+        return;                                                                \
+    }
 
-#define CHECK_CAMERA_ERROR(sprdCam) \
-            if (!sprdCam) { \
-                HAL_LOGE("Error getting physical camera"); \
-                return -ENODEV; \
-            } \
+#define CHECK_CAMERA_ERROR(sprdCam)                                            \
+    if (!sprdCam) {                                                            \
+        HAL_LOGE("Error getting physical camera");                             \
+        return -ENODEV;                                                        \
+    }
 
 camera3_device_ops_t SprdCamera3PageTurn::mCameraMuxerOps = {
-    .initialize =                               SprdCamera3PageTurn::initialize,
-    .configure_streams =                        SprdCamera3PageTurn::configure_streams,
-    .register_stream_buffers =                  NULL,
-    .construct_default_request_settings =       SprdCamera3PageTurn::construct_default_request_settings,
-    .process_capture_request =                  SprdCamera3PageTurn::process_capture_request,
-    .get_metadata_vendor_tag_ops =              NULL,
-    .dump =                                     SprdCamera3PageTurn::dump,
-    .flush =                                    SprdCamera3PageTurn::flush,
+    .initialize = SprdCamera3PageTurn::initialize,
+    .configure_streams = SprdCamera3PageTurn::configure_streams,
+    .register_stream_buffers = NULL,
+    .construct_default_request_settings =
+        SprdCamera3PageTurn::construct_default_request_settings,
+    .process_capture_request = SprdCamera3PageTurn::process_capture_request,
+    .get_metadata_vendor_tag_ops = NULL,
+    .dump = SprdCamera3PageTurn::dump,
+    .flush = SprdCamera3PageTurn::flush,
     .reserved = {0},
 };
 
 camera3_callback_ops SprdCamera3PageTurn::callback_ops_main = {
-    .process_capture_result =                   SprdCamera3PageTurn::process_capture_result_main,
-    .notify =                                   SprdCamera3PageTurn::notifyMain
-};
+    .process_capture_result = SprdCamera3PageTurn::process_capture_result_main,
+    .notify = SprdCamera3PageTurn::notifyMain};
 
 /*===========================================================================
  * FUNCTION         : SprdCamera3PageTurn
@@ -100,8 +100,7 @@ camera3_callback_ops SprdCamera3PageTurn::callback_ops_main = {
  *   @num_of_cameras  : Number of Physical Cameras on device
  *
  *==========================================================================*/
-SprdCamera3PageTurn::SprdCamera3PageTurn()
-{
+SprdCamera3PageTurn::SprdCamera3PageTurn() {
     HAL_LOGD(" E");
     m_nPhyCameras = 1;
 
@@ -109,7 +108,6 @@ SprdCamera3PageTurn::SprdCamera3PageTurn()
     setupPhysicalCameras();
     m_VirtualCamera.id = PAGE_TURN_CAM_MAIN_ID;
     HAL_LOGD("X");
-
 }
 
 /*===========================================================================
@@ -118,15 +116,13 @@ SprdCamera3PageTurn::SprdCamera3PageTurn()
  * DESCRIPTION     : SprdCamera3PageTurn Desctructor
  *
  *==========================================================================*/
-SprdCamera3PageTurn::~SprdCamera3PageTurn()
-{
+SprdCamera3PageTurn::~SprdCamera3PageTurn() {
     HAL_LOGD("E");
     if (m_pPhyCamera) {
-        delete [] m_pPhyCamera;
+        delete[] m_pPhyCamera;
         m_pPhyCamera = NULL;
     }
     HAL_LOGD("X");
-
 }
 
 /*===========================================================================
@@ -140,8 +136,7 @@ SprdCamera3PageTurn::~SprdCamera3PageTurn()
  *
  * RETURN             :  NONE
  *==========================================================================*/
-void SprdCamera3PageTurn::getCameraMuxer(SprdCamera3PageTurn** pMuxer)
-{
+void SprdCamera3PageTurn::getCameraMuxer(SprdCamera3PageTurn **pMuxer) {
     *pMuxer = NULL;
     if (!mPageTurn) {
         mPageTurn = new SprdCamera3PageTurn();
@@ -167,13 +162,13 @@ void SprdCamera3PageTurn::getCameraMuxer(SprdCamera3PageTurn** pMuxer)
  *              ENODEV : Camera not found
  *              other: non-zero failure code
  *==========================================================================*/
-int SprdCamera3PageTurn::get_camera_info(__unused int camera_id, struct camera_info *info)
-{
+int SprdCamera3PageTurn::get_camera_info(__unused int camera_id,
+                                         struct camera_info *info) {
     int rc = NO_ERROR;
 
     HAL_LOGD("E");
     if (info) {
-         rc = mPageTurn->getCameraInfo(info);
+        rc = mPageTurn->getCameraInfo(info);
     }
     HAL_LOGD("X, rc: %d", rc);
 
@@ -196,18 +191,17 @@ int SprdCamera3PageTurn::get_camera_info(__unused int camera_id, struct camera_i
  *              other: non-zero failure code
  *==========================================================================*/
 int SprdCamera3PageTurn::camera_device_open(
-        __unused const struct hw_module_t *module, const char *id,
-        struct hw_device_t **hw_device)
-{
+    __unused const struct hw_module_t *module, const char *id,
+    struct hw_device_t **hw_device) {
     int rc = NO_ERROR;
 
-    HAL_LOGD("id= %d",atoi(id));
+    HAL_LOGD("id= %d", atoi(id));
     if (!id) {
-         HAL_LOGE("Invalid camera id");
+        HAL_LOGE("Invalid camera id");
         return BAD_VALUE;
-     }
+    }
 
-    rc =  mPageTurn->cameraDeviceOpen(atoi(id), hw_device);
+    rc = mPageTurn->cameraDeviceOpen(atoi(id), hw_device);
     HAL_LOGD("id= %d, rc: %d", atoi(id), rc);
 
     return rc;
@@ -225,8 +219,7 @@ int SprdCamera3PageTurn::camera_device_open(
  *              NO_ERROR  : success
  *              other: non-zero failure code
  *==========================================================================*/
-int SprdCamera3PageTurn::close_camera_device(__unused hw_device_t *hw_dev)
-{
+int SprdCamera3PageTurn::close_camera_device(__unused hw_device_t *hw_dev) {
     if (hw_dev == NULL) {
         HAL_LOGE("failed.hw_dev null");
         return -1;
@@ -246,15 +239,14 @@ int SprdCamera3PageTurn::close_camera_device(__unused hw_device_t *hw_dev)
  *              NO_ERROR  : success
  *              other: non-zero failure code
  *==========================================================================*/
-int SprdCamera3PageTurn::closeCameraDevice()
-{
+int SprdCamera3PageTurn::closeCameraDevice() {
     int rc = NO_ERROR;
     sprdcamera_physical_descriptor_t *sprdCam = NULL;
 
     // Attempt to close all cameras regardless of unbundle results
     for (uint32_t i = 0; i < m_nPhyCameras; i++) {
         sprdCam = &m_pPhyCamera[i];
-        hw_device_t *dev = (hw_device_t*)(sprdCam->dev);
+        hw_device_t *dev = (hw_device_t *)(sprdCam->dev);
         if (dev == NULL) {
             continue;
         }
@@ -281,9 +273,9 @@ int SprdCamera3PageTurn::closeCameraDevice()
  *
  * RETURN     :
  *==========================================================================*/
-int SprdCamera3PageTurn::initialize(__unused const struct camera3_device *device,
-                        const camera3_callback_ops_t *callback_ops)
-{
+int SprdCamera3PageTurn::initialize(
+    __unused const struct camera3_device *device,
+    const camera3_callback_ops_t *callback_ops) {
     int rc = NO_ERROR;
 
     HAL_LOGD("E");
@@ -304,16 +296,17 @@ int SprdCamera3PageTurn::initialize(__unused const struct camera3_device *device
  *
  * RETURN     :
  *==========================================================================*/
-const camera_metadata_t * SprdCamera3PageTurn::construct_default_request_settings(const struct camera3_device *device, int type)
-{
-    const camera_metadata_t* rc;
+const camera_metadata_t *
+SprdCamera3PageTurn::construct_default_request_settings(
+    const struct camera3_device *device, int type) {
+    const camera_metadata_t *rc;
 
     HAL_LOGD("E");
     if (!mPageTurn) {
         HAL_LOGE("Error getting muxer ");
         return NULL;
     }
-    rc = mPageTurn->constructDefaultRequestSettings(device,type);
+    rc = mPageTurn->constructDefaultRequestSettings(device, type);
 
     HAL_LOGD("X");
 
@@ -329,13 +322,14 @@ const camera_metadata_t * SprdCamera3PageTurn::construct_default_request_setting
  *
  * RETURN     :
  *==========================================================================*/
-int SprdCamera3PageTurn::configure_streams(const struct camera3_device *device, camera3_stream_configuration_t* stream_list)
-{
-    int rc=0;
+int SprdCamera3PageTurn::configure_streams(
+    const struct camera3_device *device,
+    camera3_stream_configuration_t *stream_list) {
+    int rc = 0;
 
     HAL_LOGD(" E");
     CHECK_MUXER_ERROR();
-    rc = mPageTurn->configureStreams(device,stream_list);
+    rc = mPageTurn->configureStreams(device, stream_list);
 
     HAL_LOGD(" X");
 
@@ -351,13 +345,13 @@ int SprdCamera3PageTurn::configure_streams(const struct camera3_device *device, 
  *
  * RETURN     :
  *==========================================================================*/
-int SprdCamera3PageTurn::process_capture_request(const struct camera3_device* device, camera3_capture_request_t *request)
-{
-    int rc=0;
+int SprdCamera3PageTurn::process_capture_request(
+    const struct camera3_device *device, camera3_capture_request_t *request) {
+    int rc = 0;
 
     HAL_LOGV("idx:%d", request->frame_number);
     CHECK_MUXER_ERROR();
-    rc = mPageTurn->processCaptureRequest(device,request);
+    rc = mPageTurn->processCaptureRequest(device, request);
 
     return rc;
 }
@@ -371,8 +365,9 @@ int SprdCamera3PageTurn::process_capture_request(const struct camera3_device* de
  *
  * RETURN     :
  *==========================================================================*/
-void SprdCamera3PageTurn::process_capture_result_main(const struct camera3_callback_ops *ops, const camera3_capture_result_t *result)
-{
+void SprdCamera3PageTurn::process_capture_result_main(
+    const struct camera3_callback_ops *ops,
+    const camera3_capture_result_t *result) {
     HAL_LOGV("idx:%d", result->frame_number);
     CHECK_MUXER();
 }
@@ -386,8 +381,8 @@ void SprdCamera3PageTurn::process_capture_result_main(const struct camera3_callb
  *
  * RETURN     :
  *==========================================================================*/
-void SprdCamera3PageTurn::notifyMain(const struct camera3_callback_ops *ops, const camera3_notify_msg_t* msg)
-{
+void SprdCamera3PageTurn::notifyMain(const struct camera3_callback_ops *ops,
+                                     const camera3_notify_msg_t *msg) {
     CHECK_MUXER();
 }
 
@@ -404,8 +399,7 @@ void SprdCamera3PageTurn::notifyMain(const struct camera3_callback_ops *ops, con
  *              none-zero failure code
  *==========================================================================*/
 int SprdCamera3PageTurn::cameraDeviceOpen(__unused int camera_id,
-        struct hw_device_t **hw_device)
-{
+                                          struct hw_device_t **hw_device) {
     int rc = NO_ERROR;
     uint32_t phyId = 0;
 
@@ -428,14 +422,14 @@ int SprdCamera3PageTurn::cameraDeviceOpen(__unused int camera_id,
         closeCameraDevice();
         return rc;
     }
-    m_pPhyCamera[0].dev = reinterpret_cast<camera3_device_t*>(hw_dev[0]);
+    m_pPhyCamera[0].dev = reinterpret_cast<camera3_device_t *>(hw_dev[0]);
     m_pPhyCamera[0].hwi = hw;
 
     m_VirtualCamera.dev.common.tag = HARDWARE_DEVICE_TAG;
     m_VirtualCamera.dev.common.version = CAMERA_DEVICE_API_VERSION_3_2;
     m_VirtualCamera.dev.common.close = close_camera_device;
     m_VirtualCamera.dev.ops = &mCameraMuxerOps;
-    m_VirtualCamera.dev.priv = (void*)&m_VirtualCamera;
+    m_VirtualCamera.dev.priv = (void *)&m_VirtualCamera;
     *hw_device = &m_VirtualCamera.dev.common;
 
     HAL_LOGD("X");
@@ -454,8 +448,7 @@ int SprdCamera3PageTurn::cameraDeviceOpen(__unused int camera_id,
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int SprdCamera3PageTurn::getCameraInfo(struct camera_info *info)
-{
+int SprdCamera3PageTurn::getCameraInfo(struct camera_info *info) {
     int rc = NO_ERROR;
     int camera_id = m_VirtualCamera.id;
     HAL_LOGD("E, camera_id = %d", camera_id);
@@ -469,7 +462,8 @@ int SprdCamera3PageTurn::getCameraInfo(struct camera_info *info)
 
     SprdCamera3Setting::getCameraInfo(camera_id, info);
 
-    info->device_version = CAMERA_DEVICE_API_VERSION_3_2;//CAMERA_DEVICE_API_VERSION_3_0;
+    info->device_version =
+        CAMERA_DEVICE_API_VERSION_3_2; // CAMERA_DEVICE_API_VERSION_3_0;
     info->static_camera_characteristics = mStaticMetadata;
 
     info->conflicting_devices_length = 0;
@@ -487,14 +481,14 @@ int SprdCamera3PageTurn::getCameraInfo(struct camera_info *info)
  *              NO_ERROR  : success
  *              other: non-zero failure code
  *==========================================================================*/
-int SprdCamera3PageTurn::setupPhysicalCameras()
-{
+int SprdCamera3PageTurn::setupPhysicalCameras() {
     m_pPhyCamera = new sprdcamera_physical_descriptor_t[m_nPhyCameras];
     if (!m_pPhyCamera) {
         HAL_LOGE("Error allocating camera info buffer!!");
         return NO_MEMORY;
     }
-    memset(m_pPhyCamera, 0x00,(m_nPhyCameras * sizeof(sprdcamera_physical_descriptor_t)));
+    memset(m_pPhyCamera, 0x00,
+           (m_nPhyCameras * sizeof(sprdcamera_physical_descriptor_t)));
     m_pPhyCamera[CAM_TYPE_MAIN].id = PAGE_TURN_CAM_MAIN_ID;
 
     return NO_ERROR;
@@ -509,12 +503,11 @@ int SprdCamera3PageTurn::setupPhysicalCameras()
  *
  * RETURN     :
  *==========================================================================*/
-void SprdCamera3PageTurn::dump(const struct camera3_device *device, int fd)
-{
+void SprdCamera3PageTurn::dump(const struct camera3_device *device, int fd) {
     HAL_LOGD("E");
     CHECK_MUXER();
 
-    mPageTurn->_dump(device,fd);
+    mPageTurn->_dump(device, fd);
 
     HAL_LOGD("X");
 }
@@ -528,9 +521,8 @@ void SprdCamera3PageTurn::dump(const struct camera3_device *device, int fd)
  *
  * RETURN     :
  *==========================================================================*/
-int SprdCamera3PageTurn::flush(const struct camera3_device *device)
-{
-    int rc=0;
+int SprdCamera3PageTurn::flush(const struct camera3_device *device) {
+    int rc = 0;
 
     HAL_LOGD(" E");
     CHECK_MUXER_ERROR();
@@ -551,8 +543,8 @@ int SprdCamera3PageTurn::flush(const struct camera3_device *device)
  *
  * RETURN     :
  *==========================================================================*/
-int SprdCamera3PageTurn::initialize(const camera3_callback_ops_t *callback_ops)
-{
+int SprdCamera3PageTurn::initialize(
+    const camera3_callback_ops_t *callback_ops) {
     int rc = NO_ERROR;
     sprdcamera_physical_descriptor_t sprdCam = m_pPhyCamera[CAM_TYPE_MAIN];
     SprdCamera3HWI *hwiMain = sprdCam.hwi;
@@ -574,8 +566,9 @@ int SprdCamera3PageTurn::initialize(const camera3_callback_ops_t *callback_ops)
  *
  * RETURN     :
  *==========================================================================*/
-int SprdCamera3PageTurn::configureStreams(const struct camera3_device *device,camera3_stream_configuration_t* stream_list)
-{
+int SprdCamera3PageTurn::configureStreams(
+    const struct camera3_device *device,
+    camera3_stream_configuration_t *stream_list) {
     HAL_LOGD("E");
 
     int rc = 0;
@@ -594,7 +587,7 @@ int SprdCamera3PageTurn::configureStreams(const struct camera3_device *device,ca
         se.sigev_notify_function = timer_handler;
         se.sigev_notify_attributes = NULL;
 
-        int status = timer_create(CLOCK_MONOTONIC, &se,&mPageTurnPrvTimerID);
+        int status = timer_create(CLOCK_MONOTONIC, &se, &mPageTurnPrvTimerID);
         if (status != 0) {
             HAL_LOGI("time create failed");
             return status;
@@ -614,8 +607,8 @@ int SprdCamera3PageTurn::configureStreams(const struct camera3_device *device,ca
  *
  * RETURN     :
  *==========================================================================*/
-const camera_metadata_t * SprdCamera3PageTurn::constructDefaultRequestSettings(const struct camera3_device *device, int type)
-{
+const camera_metadata_t *SprdCamera3PageTurn::constructDefaultRequestSettings(
+    const struct camera3_device *device, int type) {
     HAL_LOGD("E");
     const camera_metadata_t *fwk_metadata = NULL;
 
@@ -626,7 +619,8 @@ const camera_metadata_t * SprdCamera3PageTurn::constructDefaultRequestSettings(c
         return NULL;
     }
 
-    fwk_metadata = hw->construct_default_request_settings(m_pPhyCamera[CAM_TYPE_MAIN].dev,type);
+    fwk_metadata = hw->construct_default_request_settings(
+        m_pPhyCamera[CAM_TYPE_MAIN].dev, type);
     if (!fwk_metadata) {
         HAL_LOGE("constructDefaultMetadata failed");
         return NULL;
@@ -636,26 +630,26 @@ const camera_metadata_t * SprdCamera3PageTurn::constructDefaultRequestSettings(c
     return fwk_metadata;
 }
 
- /*===========================================================================
- * FUNCTION   :processCaptureRequest
- *
- * DESCRIPTION: process Capture Request
- *
- * PARAMETERS :
- *    @device: camera3 device
- *    @request:camera3 request
- * RETURN     :
- *==========================================================================*/
-int SprdCamera3PageTurn::processCaptureRequest(const struct camera3_device *device,camera3_capture_request_t *request)
-{
+/*===========================================================================
+* FUNCTION   :processCaptureRequest
+*
+* DESCRIPTION: process Capture Request
+*
+* PARAMETERS :
+*    @device: camera3 device
+*    @request:camera3 request
+* RETURN     :
+*==========================================================================*/
+int SprdCamera3PageTurn::processCaptureRequest(
+    const struct camera3_device *device, camera3_capture_request_t *request) {
     int rc = 0;
     int status = 0;
     HAL_LOGD("E");
     old_request newRequest;
-    bzero(&newRequest,sizeof(old_request));
+    bzero(&newRequest, sizeof(old_request));
     newRequest.frame_number = request->frame_number;
     newRequest.buffer = request->output_buffers->buffer;
-    newRequest.stream= request->output_buffers->stream;
+    newRequest.stream = request->output_buffers->stream;
 
     CameraMetadata metadata;
 
@@ -664,20 +658,22 @@ int SprdCamera3PageTurn::processCaptureRequest(const struct camera3_device *devi
         mOldRequestId = metadata.find(ANDROID_REQUEST_ID).data.i32[0];
     }
     newRequest.request_id = mOldRequestId;
-    HAL_LOGD("mOldRequestId=%d",mOldRequestId);
-    HAL_LOGD("frame_number=%u,newRequest.buffer =%p,newRequest.stream=%p",  newRequest.frame_number,newRequest.buffer,newRequest.stream );
+    HAL_LOGD("mOldRequestId=%d", mOldRequestId);
+    HAL_LOGD("frame_number=%u,newRequest.buffer =%p,newRequest.stream=%p",
+             newRequest.frame_number, newRequest.buffer, newRequest.stream);
     if (request->num_output_buffers > 1) {
-        HAL_LOGD("failed .pageturn feature num_output_buffers should be > 1,app is error");
+        HAL_LOGD("failed .pageturn feature num_output_buffers should be > "
+                 "1,app is error");
     }
     for (size_t i = 0; i < request->num_output_buffers; i++) {
-        const camera3_stream_buffer_t & output = request->output_buffers[i];
+        const camera3_stream_buffer_t &output = request->output_buffers[i];
 
-        HAL_LOGD("acquire_fence = %d",output.acquire_fence);
-        sp < Fence > acquireFence = new Fence(output.acquire_fence);
+        HAL_LOGD("acquire_fence = %d", output.acquire_fence);
+        sp<Fence> acquireFence = new Fence(output.acquire_fence);
 
         rc = acquireFence->wait(Fence::TIMEOUT_NEVER);
         if (rc != OK) {
-            HAL_LOGE("%s: fence wait failed %d " , __func__, rc);
+            HAL_LOGE("%s: fence wait failed %d ", __func__, rc);
             return rc;
         }
 
@@ -691,7 +687,9 @@ int SprdCamera3PageTurn::processCaptureRequest(const struct camera3_device *devi
         return rc;
 
     struct itimerspec ts;
-    char prop[PROPERTY_VALUE_MAX] = {0,};
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
     property_get("debug.camera.pageturn.timer", prop, "30");
     ts.it_value.tv_sec = 0;
     ts.it_value.tv_nsec = atoi(prop) * 1000000;
@@ -716,11 +714,12 @@ int SprdCamera3PageTurn::processCaptureRequest(const struct camera3_device *devi
  *
  * RETURN     : covered value
  *==========================================================================*/
-int SprdCamera3PageTurn::getCoveredValue()
-{
+int SprdCamera3PageTurn::getCoveredValue() {
     int rc = 0;
     uint32_t couvered_value = 0;
-    char prop[PROPERTY_VALUE_MAX] = {0,};
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
     property_get("debug.camera.covered", prop, "0");
 
     SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
@@ -748,18 +747,17 @@ int SprdCamera3PageTurn::getCoveredValue()
  *
  * RETURN     : None
  *==========================================================================*/
-void SprdCamera3PageTurn::processCaptureResultMain()
-{
+void SprdCamera3PageTurn::processCaptureResultMain() {
     HAL_LOGD("E");
     camera3_capture_result_t result;
-    List <old_request>::iterator i;
+    List<old_request>::iterator i;
     camera3_stream_buffer_t output_buffers;
     uint32_t cur_frame_number = 0;
-    buffer_handle_t*  cur_buffer = NULL;
-    camera3_stream_t* cur_stream = NULL;
+    buffer_handle_t *cur_buffer = NULL;
+    camera3_stream_t *cur_stream = NULL;
 
-    bzero(&result,sizeof(camera3_capture_result_t));
-    bzero(&output_buffers,sizeof(camera3_stream_buffer_t));
+    bzero(&result, sizeof(camera3_capture_result_t));
+    bzero(&output_buffers, sizeof(camera3_stream_buffer_t));
     {
         Mutex::Autolock l(mLock);
         i = mOldRequestList.begin();
@@ -771,21 +769,22 @@ void SprdCamera3PageTurn::processCaptureResultMain()
         }
     }
 
-    HAL_LOGD("cur_frame_number=%u,cur_stream=%p,cur_buffer=%p",cur_frame_number,cur_stream,cur_buffer);
-    //send notify
+    HAL_LOGD("cur_frame_number=%u,cur_stream=%p,cur_buffer=%p",
+             cur_frame_number, cur_stream, cur_buffer);
+    // send notify
 
     camera3_notify_msg_t notify_msg;
-    bzero(&notify_msg,sizeof(camera3_notify_msg_t));
+    bzero(&notify_msg, sizeof(camera3_notify_msg_t));
     int64_t capture_time = systemTime();
     notify_msg.type = CAMERA3_MSG_SHUTTER;
     notify_msg.message.shutter.frame_number = cur_frame_number;
     notify_msg.message.shutter.timestamp = capture_time;
     mCallbackOps->notify(mCallbackOps, &notify_msg);
-    //send meta
+    // send meta
     CameraMetadata metadata;
     mCoveredValue = getCoveredValue();
     if (cur_frame_number > 100) {
-        metadata.update(ANDROID_SPRD_BLUR_COVERED,&mCoveredValue,1);
+        metadata.update(ANDROID_SPRD_BLUR_COVERED, &mCoveredValue, 1);
     }
     metadata.update(ANDROID_SENSOR_TIMESTAMP, &(capture_time), 1);
     metadata.update(ANDROID_REQUEST_ID, &(mOldRequestId), 1);
@@ -797,11 +796,11 @@ void SprdCamera3PageTurn::processCaptureResultMain()
     result.input_buffer = NULL;
     result.num_output_buffers = 0;
     result.partial_result = 1;
-    mCallbackOps->process_capture_result(mCallbackOps,&result);
+    mCallbackOps->process_capture_result(mCallbackOps, &result);
 
     free_camera_metadata((camera_metadata_t *)result.result);
-    //send buffer
-    bzero(&result,sizeof(camera3_capture_result_t));
+    // send buffer
+    bzero(&result, sizeof(camera3_capture_result_t));
     output_buffers.stream = cur_stream;
     output_buffers.buffer = cur_buffer;
     output_buffers.status = CAMERA3_BUFFER_STATUS_OK;
@@ -815,9 +814,8 @@ void SprdCamera3PageTurn::processCaptureResultMain()
     result.input_buffer = NULL;
     result.partial_result = 0;
 
-    mCallbackOps->process_capture_result(mCallbackOps,&result);
+    mCallbackOps->process_capture_result(mCallbackOps, &result);
     mWaitFrameSignal.signal();
-
 }
 
 /*===========================================================================
@@ -829,8 +827,7 @@ void SprdCamera3PageTurn::processCaptureResultMain()
  *
  * RETURN     : None
  *==========================================================================*/
-int SprdCamera3PageTurn::timer_stop()
-{
+int SprdCamera3PageTurn::timer_stop() {
     HAL_LOGD("E");
 
     if (mPageTurnPrvTimerID) {
@@ -851,8 +848,7 @@ int SprdCamera3PageTurn::timer_stop()
  * RETURN     : None
  *==========================================================================*/
 
-void SprdCamera3PageTurn::timer_handler(union sigval arg)
-{
+void SprdCamera3PageTurn::timer_handler(union sigval arg) {
     HAL_LOGD("E");
     mPageTurn->processCaptureResultMain();
     HAL_LOGD("X");
@@ -867,8 +863,7 @@ void SprdCamera3PageTurn::timer_handler(union sigval arg)
  *
  * RETURN     : None
  *==========================================================================*/
-void SprdCamera3PageTurn::_dump(const struct camera3_device *device, int fd)
-{
+void SprdCamera3PageTurn::_dump(const struct camera3_device *device, int fd) {
     HAL_LOGD(" E");
     HAL_LOGD("X");
 }
@@ -882,14 +877,11 @@ void SprdCamera3PageTurn::_dump(const struct camera3_device *device, int fd)
  *
  * RETURN     : None
  *==========================================================================*/
-int SprdCamera3PageTurn::_flush(const struct camera3_device *device)
-{
+int SprdCamera3PageTurn::_flush(const struct camera3_device *device) {
     int rc = 0;
 
     HAL_LOGD("E");
 
     return rc;
 }
-
 };
-

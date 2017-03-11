@@ -50,70 +50,78 @@
 
 namespace sprdcamera {
 
-#define PAGETURN_ALL_CONVERED_VALURE   70
+#define PAGETURN_ALL_CONVERED_VALURE 70
 
 typedef enum {
     /* Main camera device id*/
     PAGE_TURN_CAM_MAIN_ID = 2,
 } PageTurnCameraID;
 
-class SprdCamera3PageTurn
-{
-public:
-    static void getCameraMuxer(SprdCamera3PageTurn** pMuxer);
-    static int camera_device_open(
-        __unused const struct hw_module_t *module, const char *id,
-        struct hw_device_t **hw_device);
+class SprdCamera3PageTurn {
+  public:
+    static void getCameraMuxer(SprdCamera3PageTurn **pMuxer);
+    static int camera_device_open(__unused const struct hw_module_t *module,
+                                  const char *id,
+                                  struct hw_device_t **hw_device);
     static int close_camera_device(struct hw_device_t *device);
     static int get_camera_info(int camera_id, struct camera_info *info);
-    static int initialize(const struct camera3_device *device, const camera3_callback_ops_t *ops);
-    static int configure_streams(const struct camera3_device *device, camera3_stream_configuration_t* stream_list);
-    static const camera_metadata_t *construct_default_request_settings(const struct camera3_device *, int type);
-    static int process_capture_request(const struct camera3_device* device, camera3_capture_request_t *request);
-    static void notifyMain(const struct camera3_callback_ops *ops, const camera3_notify_msg_t* msg);
-    static void process_capture_result_main(const struct camera3_callback_ops *ops, const camera3_capture_result_t *result);
+    static int initialize(const struct camera3_device *device,
+                          const camera3_callback_ops_t *ops);
+    static int configure_streams(const struct camera3_device *device,
+                                 camera3_stream_configuration_t *stream_list);
+    static const camera_metadata_t *
+    construct_default_request_settings(const struct camera3_device *, int type);
+    static int process_capture_request(const struct camera3_device *device,
+                                       camera3_capture_request_t *request);
+    static void notifyMain(const struct camera3_callback_ops *ops,
+                           const camera3_notify_msg_t *msg);
+    static void
+    process_capture_result_main(const struct camera3_callback_ops *ops,
+                                const camera3_capture_result_t *result);
     static void dump(const struct camera3_device *device, int fd);
     static int flush(const struct camera3_device *device);
     static void timer_handler(union sigval arg);
 
-    static camera3_device_ops_t           mCameraMuxerOps;
-    static camera3_callback_ops         callback_ops_main;
-private:
-    sprdcamera_physical_descriptor_t        *m_pPhyCamera;
-    sprd_virtual_camera_t                 m_VirtualCamera;
-    uint8_t                                 m_nPhyCameras;
-    Mutex                                           mLock;
-    camera_metadata_t                    *mStaticMetadata;
-    Mutex                                 mWaitFrameMutex;
-    Condition                            mWaitFrameSignal;
-    timer_t                           mPageTurnPrvTimerID;
-    List <old_request >                   mOldRequestList;
-    int                                     mCoveredValue;
-    int cameraDeviceOpen(int camera_id,struct hw_device_t **hw_device);
+    static camera3_device_ops_t mCameraMuxerOps;
+    static camera3_callback_ops callback_ops_main;
+
+  private:
+    sprdcamera_physical_descriptor_t *m_pPhyCamera;
+    sprd_virtual_camera_t m_VirtualCamera;
+    uint8_t m_nPhyCameras;
+    Mutex mLock;
+    camera_metadata_t *mStaticMetadata;
+    Mutex mWaitFrameMutex;
+    Condition mWaitFrameSignal;
+    timer_t mPageTurnPrvTimerID;
+    List<old_request> mOldRequestList;
+    int mCoveredValue;
+    int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
     int setupPhysicalCameras();
     int getCameraInfo(struct camera_info *info);
     int32_t mOldRequestId;
-public:
 
+  public:
     SprdCamera3PageTurn();
     virtual ~SprdCamera3PageTurn();
-    const camera3_callback_ops_t*   mCallbackOps;
+    const camera3_callback_ops_t *mCallbackOps;
     int timer_stop();
     int timer_set(void *obj, int32_t delay_ms);
     int initialize(const camera3_callback_ops_t *callback_ops);
-    int configureStreams(const struct camera3_device *device,camera3_stream_configuration_t* stream_list);
-    int processCaptureRequest(const struct camera3_device *device,camera3_capture_request_t *request);
-    void notifyMain( const camera3_notify_msg_t* msg);
+    int configureStreams(const struct camera3_device *device,
+                         camera3_stream_configuration_t *stream_list);
+    int processCaptureRequest(const struct camera3_device *device,
+                              camera3_capture_request_t *request);
+    void notifyMain(const camera3_notify_msg_t *msg);
     void processCaptureResultMain();
-    const camera_metadata_t *constructDefaultRequestSettings( const struct camera3_device *device,int type);
+    const camera_metadata_t *
+    constructDefaultRequestSettings(const struct camera3_device *device,
+                                    int type);
     void _dump(const struct camera3_device *device, int fd);
     int _flush(const struct camera3_device *device);
     int closeCameraDevice();
     int getCoveredValue();
-
 };
-
 };
 
 #endif /* SPRDCAMERA3PAGETURN_H_HEADER*/
-

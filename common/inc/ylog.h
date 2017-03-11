@@ -75,22 +75,26 @@ extern "C" {
 #ifndef YLOGV
 #define __YLOGV(...) ((void)YLOG(LOG_VERBOSE, LOG_TAG, __VA_ARGS__))
 #if LOG_NDEBUG
-#define YLOGV(...) do { if (0) { __YLOGV(__VA_ARGS__); } } while (0)
+#define YLOGV(...)                                                             \
+    do {                                                                       \
+        if (0) {                                                               \
+            __YLOGV(__VA_ARGS__);                                              \
+        }                                                                      \
+    } while (0)
 #else
 #define YLOGV(...) __YLOGV(__VA_ARGS__)
 #endif
 #endif
 
-#define CONDITION(cond)     (__builtin_expect((cond)!=0, 0))
+#define CONDITION(cond) (__builtin_expect((cond) != 0, 0))
 
 #ifndef YLOGV_IF
 #if LOG_NDEBUG
-#define YLOGV_IF(cond, ...)   ((void)0)
+#define YLOGV_IF(cond, ...) ((void)0)
 #else
-#define YLOGV_IF(cond, ...) \
-    ( (CONDITION(cond)) \
-    ? ((void)YLOG(LOG_VERBOSE, LOG_TAG, __VA_ARGS__)) \
-    : (void)0 )
+#define YLOGV_IF(cond, ...)                                                    \
+    ((CONDITION(cond)) ? ((void)YLOG(LOG_VERBOSE, LOG_TAG, __VA_ARGS__))       \
+                       : (void)0)
 #endif
 #endif
 
@@ -102,10 +106,9 @@ extern "C" {
 #endif
 
 #ifndef YLOGD_IF
-#define YLOGD_IF(cond, ...) \
-    ( (CONDITION(cond)) \
-    ? ((void)YLOG(LOG_DEBUG, LOG_TAG, __VA_ARGS__)) \
-    : (void)0 )
+#define YLOGD_IF(cond, ...)                                                    \
+    ((CONDITION(cond)) ? ((void)YLOG(LOG_DEBUG, LOG_TAG, __VA_ARGS__))         \
+                       : (void)0)
 #endif
 
 /*
@@ -116,10 +119,8 @@ extern "C" {
 #endif
 
 #ifndef YLOGI_IF
-#define YLOGI_IF(cond, ...) \
-    ( (CONDITION(cond)) \
-    ? ((void)YLOG(LOG_INFO, LOG_TAG, __VA_ARGS__)) \
-    : (void)0 )
+#define YLOGI_IF(cond, ...)                                                    \
+    ((CONDITION(cond)) ? ((void)YLOG(LOG_INFO, LOG_TAG, __VA_ARGS__)) : (void)0)
 #endif
 
 /*
@@ -130,10 +131,8 @@ extern "C" {
 #endif
 
 #ifndef YLOGW_IF
-#define YLOGW_IF(cond, ...) \
-    ( (CONDITION(cond)) \
-    ? ((void)YLOG(LOG_WARN, LOG_TAG, __VA_ARGS__)) \
-    : (void)0 )
+#define YLOGW_IF(cond, ...)                                                    \
+    ((CONDITION(cond)) ? ((void)YLOG(LOG_WARN, LOG_TAG, __VA_ARGS__)) : (void)0)
 #endif
 
 /*
@@ -144,10 +143,9 @@ extern "C" {
 #endif
 
 #ifndef YLOGE_IF
-#define YLOGE_IF(cond, ...) \
-    ( (CONDITION(cond)) \
-    ? ((void)YLOG(LOG_ERROR, LOG_TAG, __VA_ARGS__)) \
-    : (void)0 )
+#define YLOGE_IF(cond, ...)                                                    \
+    ((CONDITION(cond)) ? ((void)YLOG(LOG_ERROR, LOG_TAG, __VA_ARGS__))         \
+                       : (void)0)
 #endif
 
 // ---------------------------------------------------------------------
@@ -196,114 +194,147 @@ extern "C" {
 #define IF_YLOGE() IF_YLOG(LOG_ERROR, LOG_TAG)
 #endif
 
-
 // ---------------------------------------------------------------------
 
 /*
- * Simplified macro to send a verbose system log message using the current LOG_TAG.
+ * Simplified macro to send a verbose system log message using the current
+ * LOG_TAG.
  */
 #ifndef SLOGV
-#define __SLOGV(...) ((void)__android_ylog_buf_print(LOG_ID_SYSTEM, ANDROID_LOG_VERBOSE, LOG_TAG, __VA_ARGS__))
+#define __SLOGV(...)                                                           \
+    ((void)__android_ylog_buf_print(LOG_ID_SYSTEM, ANDROID_LOG_VERBOSE,        \
+                                    LOG_TAG, __VA_ARGS__))
 #if LOG_NDEBUG
-#define SLOGV(...) do { if (0) { __SLOGV(__VA_ARGS__); } } while (0)
+#define SLOGV(...)                                                             \
+    do {                                                                       \
+        if (0) {                                                               \
+            __SLOGV(__VA_ARGS__);                                              \
+        }                                                                      \
+    } while (0)
 #else
 #define SLOGV(...) __SLOGV(__VA_ARGS__)
 #endif
 #endif
 
-#define CONDITION(cond)     (__builtin_expect((cond)!=0, 0))
+#define CONDITION(cond) (__builtin_expect((cond) != 0, 0))
 
 #ifndef SLOGV_IF
 #if LOG_NDEBUG
-#define SLOGV_IF(cond, ...)   ((void)0)
+#define SLOGV_IF(cond, ...) ((void)0)
 #else
-#define SLOGV_IF(cond, ...) \
-    ( (CONDITION(cond)) \
-    ? ((void)__android_ylog_buf_print(LOG_ID_SYSTEM, ANDROID_LOG_VERBOSE, LOG_TAG, __VA_ARGS__)) \
-    : (void)0 )
+#define SLOGV_IF(cond, ...)                                                    \
+    ((CONDITION(cond))                                                         \
+         ? ((void)__android_ylog_buf_print(LOG_ID_SYSTEM, ANDROID_LOG_VERBOSE, \
+                                           LOG_TAG, __VA_ARGS__))              \
+         : (void)0)
 #endif
 #endif
 
 /*
- * Simplified macro to send a debug system log message using the current LOG_TAG.
+ * Simplified macro to send a debug system log message using the current
+ * LOG_TAG.
  */
 #ifndef SLOGD
-#define SLOGD(...) ((void)__android_ylog_buf_print(LOG_ID_SYSTEM, ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__))
+#define SLOGD(...)                                                             \
+    ((void)__android_ylog_buf_print(LOG_ID_SYSTEM, ANDROID_LOG_DEBUG, LOG_TAG, \
+                                    __VA_ARGS__))
 #endif
 
 #ifndef SLOGD_IF
-#define SLOGD_IF(cond, ...) \
-    ( (CONDITION(cond)) \
-    ? ((void)__android_ylog_buf_print(LOG_ID_SYSTEM, ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)) \
-    : (void)0 )
+#define SLOGD_IF(cond, ...)                                                    \
+    ((CONDITION(cond))                                                         \
+         ? ((void)__android_ylog_buf_print(LOG_ID_SYSTEM, ANDROID_LOG_DEBUG,   \
+                                           LOG_TAG, __VA_ARGS__))              \
+         : (void)0)
 #endif
 
 /*
- * Simplified macro to send an info system log message using the current LOG_TAG.
+ * Simplified macro to send an info system log message using the current
+ * LOG_TAG.
  */
 #ifndef SLOGI
-#define SLOGI(...) ((void)__android_ylog_buf_print(LOG_ID_SYSTEM, ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__))
+#define SLOGI(...)                                                             \
+    ((void)__android_ylog_buf_print(LOG_ID_SYSTEM, ANDROID_LOG_INFO, LOG_TAG,  \
+                                    __VA_ARGS__))
 #endif
 
 #ifndef SLOGI_IF
-#define SLOGI_IF(cond, ...) \
-    ( (CONDITION(cond)) \
-    ? ((void)__android_ylog_buf_print(LOG_ID_SYSTEM, ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)) \
-    : (void)0 )
+#define SLOGI_IF(cond, ...)                                                    \
+    ((CONDITION(cond))                                                         \
+         ? ((void)__android_ylog_buf_print(LOG_ID_SYSTEM, ANDROID_LOG_INFO,    \
+                                           LOG_TAG, __VA_ARGS__))              \
+         : (void)0)
 #endif
 
 /*
- * Simplified macro to send a warning system log message using the current LOG_TAG.
+ * Simplified macro to send a warning system log message using the current
+ * LOG_TAG.
  */
 #ifndef SLOGW
-#define SLOGW(...) ((void)__android_ylog_buf_print(LOG_ID_SYSTEM, ANDROID_LOG_WARN, LOG_TAG, __VA_ARGS__))
+#define SLOGW(...)                                                             \
+    ((void)__android_ylog_buf_print(LOG_ID_SYSTEM, ANDROID_LOG_WARN, LOG_TAG,  \
+                                    __VA_ARGS__))
 #endif
 
 #ifndef SLOGW_IF
-#define SLOGW_IF(cond, ...) \
-    ( (CONDITION(cond)) \
-    ? ((void)__android_ylog_buf_print(LOG_ID_SYSTEM, ANDROID_LOG_WARN, LOG_TAG, __VA_ARGS__)) \
-    : (void)0 )
+#define SLOGW_IF(cond, ...)                                                    \
+    ((CONDITION(cond))                                                         \
+         ? ((void)__android_ylog_buf_print(LOG_ID_SYSTEM, ANDROID_LOG_WARN,    \
+                                           LOG_TAG, __VA_ARGS__))              \
+         : (void)0)
 #endif
 
 /*
- * Simplified macro to send an error system log message using the current LOG_TAG.
+ * Simplified macro to send an error system log message using the current
+ * LOG_TAG.
  */
 #ifndef SLOGE
-#define SLOGE(...) ((void)__android_ylog_buf_print(LOG_ID_SYSTEM, ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__))
+#define SLOGE(...)                                                             \
+    ((void)__android_ylog_buf_print(LOG_ID_SYSTEM, ANDROID_LOG_ERROR, LOG_TAG, \
+                                    __VA_ARGS__))
 #endif
 
 #ifndef SLOGE_IF
-#define SLOGE_IF(cond, ...) \
-    ( (CONDITION(cond)) \
-    ? ((void)__android_ylog_buf_print(LOG_ID_SYSTEM, ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)) \
-    : (void)0 )
+#define SLOGE_IF(cond, ...)                                                    \
+    ((CONDITION(cond))                                                         \
+         ? ((void)__android_ylog_buf_print(LOG_ID_SYSTEM, ANDROID_LOG_ERROR,   \
+                                           LOG_TAG, __VA_ARGS__))              \
+         : (void)0)
 #endif
 
 // ---------------------------------------------------------------------
 
 /*
- * Simplified macro to send a verbose radio log message using the current LOG_TAG.
+ * Simplified macro to send a verbose radio log message using the current
+ * LOG_TAG.
  */
 #ifndef RLOGV
-#define __RLOGV(...) ((void)__android_ylog_buf_print(LOG_ID_RADIO, ANDROID_LOG_VERBOSE, LOG_TAG, __VA_ARGS__))
+#define __RLOGV(...)                                                           \
+    ((void)__android_ylog_buf_print(LOG_ID_RADIO, ANDROID_LOG_VERBOSE,         \
+                                    LOG_TAG, __VA_ARGS__))
 #if LOG_NDEBUG
-#define RLOGV(...) do { if (0) { __RLOGV(__VA_ARGS__); } } while (0)
+#define RLOGV(...)                                                             \
+    do {                                                                       \
+        if (0) {                                                               \
+            __RLOGV(__VA_ARGS__);                                              \
+        }                                                                      \
+    } while (0)
 #else
 #define RLOGV(...) __RLOGV(__VA_ARGS__)
 #endif
 #endif
 
-#define CONDITION(cond)     (__builtin_expect((cond)!=0, 0))
+#define CONDITION(cond) (__builtin_expect((cond) != 0, 0))
 
 #ifndef RLOGV_IF
 #if LOG_NDEBUG
-#define RLOGV_IF(cond, ...)   ((void)0)
+#define RLOGV_IF(cond, ...) ((void)0)
 #else
-#define RLOGV_IF(cond, ...) \
-    ( (CONDITION(cond)) \
-    ? ((void)__android_ylog_buf_print(LOG_ID_RADIO, ANDROID_LOG_VERBOSE, LOG_TAG, __VA_ARGS__)) \
-    : (void)0 )
+#define RLOGV_IF(cond, ...)                                                    \
+    ((CONDITION(cond))                                                         \
+         ? ((void)__android_ylog_buf_print(LOG_ID_RADIO, ANDROID_LOG_VERBOSE,  \
+                                           LOG_TAG, __VA_ARGS__))              \
+         : (void)0)
 #endif
 #endif
 
@@ -311,58 +342,71 @@ extern "C" {
  * Simplified macro to send a debug radio log message using the current LOG_TAG.
  */
 #ifndef RLOGD
-#define RLOGD(...) ((void)__android_ylog_buf_print(LOG_ID_RADIO, ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__))
+#define RLOGD(...)                                                             \
+    ((void)__android_ylog_buf_print(LOG_ID_RADIO, ANDROID_LOG_DEBUG, LOG_TAG,  \
+                                    __VA_ARGS__))
 #endif
 
 #ifndef RLOGD_IF
-#define RLOGD_IF(cond, ...) \
-    ( (CONDITION(cond)) \
-    ? ((void)__android_ylog_buf_print(LOG_ID_RADIO, ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)) \
-    : (void)0 )
+#define RLOGD_IF(cond, ...)                                                    \
+    ((CONDITION(cond))                                                         \
+         ? ((void)__android_ylog_buf_print(LOG_ID_RADIO, ANDROID_LOG_DEBUG,    \
+                                           LOG_TAG, __VA_ARGS__))              \
+         : (void)0)
 #endif
 
 /*
  * Simplified macro to send an info radio log message using the current LOG_TAG.
  */
 #ifndef RLOGI
-#define RLOGI(...) ((void)__android_ylog_buf_print(LOG_ID_RADIO, ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__))
+#define RLOGI(...)                                                             \
+    ((void)__android_ylog_buf_print(LOG_ID_RADIO, ANDROID_LOG_INFO, LOG_TAG,   \
+                                    __VA_ARGS__))
 #endif
 
 #ifndef RLOGI_IF
-#define RLOGI_IF(cond, ...) \
-    ( (CONDITION(cond)) \
-    ? ((void)__android_ylog_buf_print(LOG_ID_RADIO, ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)) \
-    : (void)0 )
+#define RLOGI_IF(cond, ...)                                                    \
+    ((CONDITION(cond))                                                         \
+         ? ((void)__android_ylog_buf_print(LOG_ID_RADIO, ANDROID_LOG_INFO,     \
+                                           LOG_TAG, __VA_ARGS__))              \
+         : (void)0)
 #endif
 
 /*
- * Simplified macro to send a warning radio log message using the current LOG_TAG.
+ * Simplified macro to send a warning radio log message using the current
+ * LOG_TAG.
  */
 #ifndef RLOGW
-#define RLOGW(...) ((void)__android_ylog_buf_print(LOG_ID_RADIO, ANDROID_LOG_WARN, LOG_TAG, __VA_ARGS__))
+#define RLOGW(...)                                                             \
+    ((void)__android_ylog_buf_print(LOG_ID_RADIO, ANDROID_LOG_WARN, LOG_TAG,   \
+                                    __VA_ARGS__))
 #endif
 
 #ifndef RLOGW_IF
-#define RLOGW_IF(cond, ...) \
-    ( (CONDITION(cond)) \
-    ? ((void)__android_ylog_buf_print(LOG_ID_RADIO, ANDROID_LOG_WARN, LOG_TAG, __VA_ARGS__)) \
-    : (void)0 )
+#define RLOGW_IF(cond, ...)                                                    \
+    ((CONDITION(cond))                                                         \
+         ? ((void)__android_ylog_buf_print(LOG_ID_RADIO, ANDROID_LOG_WARN,     \
+                                           LOG_TAG, __VA_ARGS__))              \
+         : (void)0)
 #endif
 
 /*
- * Simplified macro to send an error radio log message using the current LOG_TAG.
+ * Simplified macro to send an error radio log message using the current
+ * LOG_TAG.
  */
 #ifndef RLOGE
-#define RLOGE(...) ((void)__android_ylog_buf_print(LOG_ID_RADIO, ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__))
+#define RLOGE(...)                                                             \
+    ((void)__android_ylog_buf_print(LOG_ID_RADIO, ANDROID_LOG_ERROR, LOG_TAG,  \
+                                    __VA_ARGS__))
 #endif
 
 #ifndef RLOGE_IF
-#define RLOGE_IF(cond, ...) \
-    ( (CONDITION(cond)) \
-    ? ((void)__android_ylog_buf_print(LOG_ID_RADIO, ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)) \
-    : (void)0 )
+#define RLOGE_IF(cond, ...)                                                    \
+    ((CONDITION(cond))                                                         \
+         ? ((void)__android_ylog_buf_print(LOG_ID_RADIO, ANDROID_LOG_ERROR,    \
+                                           LOG_TAG, __VA_ARGS__))              \
+         : (void)0)
 #endif
-
 
 // ---------------------------------------------------------------------
 
@@ -373,15 +417,15 @@ extern "C" {
  * is -inverted- from the normal assert() semantics.
  */
 #ifndef LOG_ALWAYS_FATAL_IF
-#define LOG_ALWAYS_FATAL_IF(cond, ...) \
-    ( (CONDITION(cond)) \
-    ? ((void)android_printAssert(#cond, LOG_TAG, ## __VA_ARGS__)) \
-    : (void)0 )
+#define LOG_ALWAYS_FATAL_IF(cond, ...)                                         \
+    ((CONDITION(cond))                                                         \
+         ? ((void)android_printAssert(#cond, LOG_TAG, ##__VA_ARGS__))          \
+         : (void)0)
 #endif
 
 #ifndef LOG_ALWAYS_FATAL
-#define LOG_ALWAYS_FATAL(...) \
-    ( ((void)android_printAssert(NULL, LOG_TAG, ## __VA_ARGS__)) )
+#define LOG_ALWAYS_FATAL(...)                                                  \
+    (((void)android_printAssert(NULL, LOG_TAG, ##__VA_ARGS__)))
 #endif
 
 /*
@@ -400,7 +444,7 @@ extern "C" {
 #else
 
 #ifndef LOG_FATAL_IF
-#define LOG_FATAL_IF(cond, ...) LOG_ALWAYS_FATAL_IF(cond, ## __VA_ARGS__)
+#define LOG_FATAL_IF(cond, ...) LOG_ALWAYS_FATAL_IF(cond, ##__VA_ARGS__)
 #endif
 #ifndef LOG_FATAL
 #define LOG_FATAL(...) LOG_ALWAYS_FATAL(__VA_ARGS__)
@@ -413,7 +457,7 @@ extern "C" {
  * Stripped out of release builds.  Uses the current LOG_TAG.
  */
 #ifndef YLOG_ASSERT
-#define YLOG_ASSERT(cond, ...) LOG_FATAL_IF(!(cond), ## __VA_ARGS__)
+#define YLOG_ASSERT(cond, ...) LOG_FATAL_IF(!(cond), ##__VA_ARGS__)
 //#define YLOG_ASSERT(cond) LOG_FATAL_IF(!(cond), "Assertion failed: " #cond)
 #endif
 
@@ -428,15 +472,14 @@ extern "C" {
  * The second argument may be NULL or "" to indicate the "global" tag.
  */
 #ifndef YLOG
-#define YLOG(priority, tag, ...) \
-    YLOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
+#define YLOG(priority, tag, ...) YLOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
 #endif
 
 /*
  * Log macro that allows you to specify a number for the priority.
  */
 #ifndef YLOG_PRI
-#define YLOG_PRI(priority, tag, ...) \
+#define YLOG_PRI(priority, tag, ...)                                           \
     android_printyLog(priority, tag, __VA_ARGS__)
 #endif
 
@@ -444,7 +487,7 @@ extern "C" {
  * Log macro that allows you to pass in a varargs ("args" is a va_list).
  */
 #ifndef YLOG_PRI_VA
-#define YLOG_PRI_VA(priority, tag, fmt, args) \
+#define YLOG_PRI_VA(priority, tag, fmt, args)                                  \
     android_vprintyLog(priority, NULL, tag, fmt, args)
 #endif
 
@@ -452,8 +495,7 @@ extern "C" {
  * Conditional given a desired logging priority and tag.
  */
 #ifndef IF_YLOG
-#define IF_YLOG(priority, tag) \
-    if (android_testLog(ANDROID_##priority, tag))
+#define IF_YLOG(priority, tag) if (android_testLog(ANDROID_##priority, tag))
 #endif
 
 // ---------------------------------------------------------------------
@@ -478,22 +520,24 @@ typedef enum {
 #define typeof_AndroidEventLogType unsigned char
 
 #ifndef LOG_EVENT_INT
-#define LOG_EVENT_INT(_tag, _value) {                                       \
-        int intBuf = _value;                                                \
-        (void) android_btWriteLog(_tag, EVENT_TYPE_INT, &intBuf,            \
-            sizeof(intBuf));                                                \
+#define LOG_EVENT_INT(_tag, _value)                                            \
+    {                                                                          \
+        int intBuf = _value;                                                   \
+        (void)                                                                 \
+            android_btWriteLog(_tag, EVENT_TYPE_INT, &intBuf, sizeof(intBuf)); \
     }
 #endif
 #ifndef LOG_EVENT_LONG
-#define LOG_EVENT_LONG(_tag, _value) {                                      \
-        long long longBuf = _value;                                         \
-        (void) android_btWriteLog(_tag, EVENT_TYPE_LONG, &longBuf,          \
-            sizeof(longBuf));                                               \
+#define LOG_EVENT_LONG(_tag, _value)                                           \
+    {                                                                          \
+        long long longBuf = _value;                                            \
+        (void) android_btWriteLog(_tag, EVENT_TYPE_LONG, &longBuf,             \
+                                  sizeof(longBuf));                            \
     }
 #endif
 #ifndef LOG_EVENT_STRING
-#define LOG_EVENT_STRING(_tag, _value)                                      \
-        (void) __android_ylog_bswrite(_tag, _value);
+#define LOG_EVENT_STRING(_tag, _value)                                         \
+    (void) __android_ylog_bswrite(_tag, _value);
 #endif
 /* TODO: something for LIST */
 
@@ -503,10 +547,10 @@ typedef enum {
  * The stuff in the rest of this file should not be used directly.
  */
 
-#define android_printyLog(prio, tag, fmt...) \
+#define android_printyLog(prio, tag, fmt...)                                   \
     __android_ylog_print(prio, tag, fmt)
 
-#define android_vprintyLog(prio, cond, tag, fmt...) \
+#define android_vprintyLog(prio, cond, tag, fmt...)                            \
     __android_ylog_vprint(prio, tag, fmt)
 
 /* XXX Macros to work around syntax errors in places where format string
@@ -517,24 +561,28 @@ typedef enum {
 /* Returns 2nd arg.  Used to substitute default value if caller's vararg list
  * is empty.
  */
-#define __android_second(dummy, second, ...)     second
+#define __android_second(dummy, second, ...) second
 
 /* If passed multiple args, returns ',' followed by all but 1st arg, otherwise
  * returns nothing.
  */
-#define __android_rest(first, ...)               , ## __VA_ARGS__
-
-
-
-
+#ifndef __android_rest
+#define __android_rest(first, ...) , ##__VA_ARGS__
+#endif
 
 // TODO: remove these prototypes and their users
 #ifndef android_testLog
 #define android_testLog(prio, tag) (1)
 #endif
-#define android_writevLog(vec,num) do{}while(0)
-#define android_write1Log(str,len) do{}while (0)
-#define android_setMinPriority(tag, prio) do{}while(0)
+#define android_writevLog(vec, num)                                            \
+    do {                                                                       \
+    } while (0)
+#define android_write1Log(str, len)                                            \
+    do {                                                                       \
+    } while (0)
+#define android_setMinPriority(tag, prio)                                      \
+    do {                                                                       \
+    } while (0)
 //#define android_logToCallback(func) do{}while(0)
 #define android_logToFile(tag, file) (0)
 #define android_logToFd(tag, fd) (0)
@@ -558,8 +606,10 @@ typedef enum log_id {
  * Send a simple string to the log.
  */
 int __android_ylog_print(int prio, const char *tag, const char *fmt, ...);
-int __android_ylog_buf_write(int bufID, int prio, const char *tag, const char *text);
-int __android_ylog_buf_print(int bufID, int prio, const char *tag, const char *fmt, ...)
+int __android_ylog_buf_write(int bufID, int prio, const char *tag,
+                             const char *text);
+int __android_ylog_buf_print(int bufID, int prio, const char *tag,
+                             const char *fmt, ...)
 #if defined(__GNUC__)
     __attribute__((__format__(printf, 4, 5)))
 #endif

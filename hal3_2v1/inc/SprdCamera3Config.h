@@ -17,17 +17,17 @@
 #define _SPRD_CAMERA3_CONFIG_H_
 #include "cmr_oem.h"
 
- /* Effect type, used for CAMERA_PARM_EFFECT */
+/* Effect type, used for CAMERA_PARM_EFFECT */
 enum {
-	CAMERA_EFFECT_NONE = 0,
-	CAMERA_EFFECT_MONO,
-	CAMERA_EFFECT_RED,
-	CAMERA_EFFECT_GREEN,
-	CAMERA_EFFECT_BLUE,
-	CAMERA_EFFECT_YELLOW,
-	CAMERA_EFFECT_NEGATIVE,
-	CAMERA_EFFECT_SEPIA,
-	CAMERA_EFFECT_MAX
+    CAMERA_EFFECT_NONE = 0,
+    CAMERA_EFFECT_MONO,
+    CAMERA_EFFECT_RED,
+    CAMERA_EFFECT_GREEN,
+    CAMERA_EFFECT_BLUE,
+    CAMERA_EFFECT_YELLOW,
+    CAMERA_EFFECT_NEGATIVE,
+    CAMERA_EFFECT_SEPIA,
+    CAMERA_EFFECT_MAX
 };
 #if 0
 /* White balancing type, used for CAMERA_PARM_WHITE_BALANCING */
@@ -518,7 +518,7 @@ struct config_element sprd_front_camera_hardware_config[] = {
 	{"smile-snap-mode","0"},
 	{"hdr-supported","false"},
 	{"hdr","0"},
-#if	defined(CONFIG_CAMERA_ZSL_CAPTURE)
+#if defined(CONFIG_CAMERA_ZSL_CAPTURE)
 	{"zsl-supported","true"},
 #else
 	{"zsl-supported","false"},
@@ -620,7 +620,7 @@ struct config_element sprd_back_camera_hardware_config[] = {
 	{"sharpness", "3"},
 #endif
 #ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-#if	defined(CONFIG_CAMERA_CAF)
+#if defined(CONFIG_CAMERA_CAF)
 	{"focus-mode-values", "auto,macro,continuous-picture,continuous-video,infinity"},
 	{"focus-mode", "auto"},
 #else
@@ -666,7 +666,7 @@ struct config_element sprd_back_camera_hardware_config[] = {
 	{"smile-snap-mode","0"},
 	{"hdr-supported","true"},
 	{"hdr","0"},
-#if	defined(CONFIG_CAMERA_ZSL_CAPTURE)
+#if defined(CONFIG_CAMERA_ZSL_CAPTURE)
 	{"zsl-supported","true"},
 #else
 	{"zsl-supported","false"},
@@ -685,7 +685,7 @@ struct config_element sprd_back_camera_hardware_config[] = {
 	{"auto-exposure","frame-average"},
 	{"auto-exposure-values", "frame-average,center-weighted,spot-metering"},
 	{"preview-env","0"},
-#if  defined(CONFIG_CAMERA_ZSL_CAPTURE)
+#if defined(CONFIG_CAMERA_ZSL_CAPTURE)
 	{"video-snapshot-supported","true"}
 #else
 	{"video-snapshot-supported","false"}
