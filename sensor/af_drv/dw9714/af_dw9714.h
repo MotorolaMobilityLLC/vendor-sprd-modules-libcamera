@@ -19,7 +19,7 @@
 #include "af_drv.h"
 #define DW9714_VCM_SLAVE_ADDR (0x18 >> 1)
 #define MOVE_CODE_STEP_MAX 20
-#define WAIT_STABLE_TIME   10    //ms
+#define WAIT_STABLE_TIME 10 // ms
 
 uint32_t dw9714_init(SENSOR_HW_HANDLE handle);
 uint32_t dw9714_set_position(SENSOR_HW_HANDLE handle, uint32_t param);

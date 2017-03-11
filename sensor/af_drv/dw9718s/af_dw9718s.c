@@ -19,7 +19,7 @@
 #include "sensor.h"
 #include "af_dw9718s.h"
 
-static int32_t m_cur_dac_code =0;
+static int32_t m_cur_dac_code = 0;
 
 /*==============================================================================
  * Description:
@@ -30,40 +30,39 @@ static int32_t m_cur_dac_code =0;
  * 2: Dual Level Control Mode
  * 3: Linear Slope Cntrol Mode
  *============================================================================*/
-uint32_t dw9718s_init(SENSOR_HW_HANDLE handle,uint32_t mode)
-{
-	uint8_t cmd_val[2] = {0x00};
-	uint16_t slave_addr = 0;
-	uint16_t cmd_len = 0;
-	uint32_t ret_value = AF_SUCCESS;
-	SENSOR_PRINT("SENSOR_OV13850R2A: %d",mode);
+uint32_t dw9718s_init(SENSOR_HW_HANDLE handle, uint32_t mode) {
+    uint8_t cmd_val[2] = {0x00};
+    uint16_t slave_addr = 0;
+    uint16_t cmd_len = 0;
+    uint32_t ret_value = AF_SUCCESS;
+    SENSOR_PRINT("SENSOR_OV13850R2A: %d", mode);
 
-	slave_addr = DW9718S_VCM_SLAVE_ADDR;
-	switch (mode) {
-	case 1:
-		break;
-	case 2:
-	{
-		cmd_len = 2;
-		cmd_val[0] = 0x01;
-		cmd_val[1] = 0x39;
-		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
-		if(ret_value){
-			SENSOR_PRINT("SENSOR_OV13850R2A: _dw9718s_SRCInit 1 fail!");
-		}
-		cmd_val[0] = 0x05;
-		cmd_val[1] = 0x79;
-		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
-		if(ret_value){
-			SENSOR_PRINT("SENSOR_OV13850R2A: _dw9718s_SRCInit 5 fail!");
-		}
-	}
-		break;
-	case 3:
-		break;
-	}
+    slave_addr = DW9718S_VCM_SLAVE_ADDR;
+    switch (mode) {
+    case 1:
+        break;
+    case 2: {
+        cmd_len = 2;
+        cmd_val[0] = 0x01;
+        cmd_val[1] = 0x39;
+        ret_value =
+            Sensor_WriteI2C(slave_addr, (uint8_t *)&cmd_val[0], cmd_len);
+        if (ret_value) {
+            SENSOR_PRINT("SENSOR_OV13850R2A: _dw9718s_SRCInit 1 fail!");
+        }
+        cmd_val[0] = 0x05;
+        cmd_val[1] = 0x79;
+        ret_value =
+            Sensor_WriteI2C(slave_addr, (uint8_t *)&cmd_val[0], cmd_len);
+        if (ret_value) {
+            SENSOR_PRINT("SENSOR_OV13850R2A: _dw9718s_SRCInit 5 fail!");
+        }
+    } break;
+    case 3:
+        break;
+    }
 
-	return ret_value;
+    return ret_value;
 }
 /*==============================================================================
  * Description:
@@ -71,31 +70,32 @@ uint32_t dw9718s_init(SENSOR_HW_HANDLE handle,uint32_t mode)
  * you can change this function acording your spec if it's necessary
  * code: Dac code for vcm driver
  *============================================================================*/
-uint32_t dw9718s_write_dac_code(SENSOR_HW_HANDLE handle,int32_t param)
-{
-	uint32_t ret_value = AF_SUCCESS;
-	uint8_t cmd_val[2] = {0x00};
-	uint16_t slave_addr = 0;
-	uint16_t cmd_len = 0;
+uint32_t dw9718s_write_dac_code(SENSOR_HW_HANDLE handle, int32_t param) {
+    uint32_t ret_value = AF_SUCCESS;
+    uint8_t cmd_val[2] = {0x00};
+    uint16_t slave_addr = 0;
+    uint16_t cmd_len = 0;
 
-	SENSOR_PRINT("SENSOR_S5K4H5YC: _write_af %d", param);
-	slave_addr = DW9718S_VCM_SLAVE_ADDR;
+    SENSOR_PRINT("SENSOR_S5K4H5YC: _write_af %d", param);
+    slave_addr = DW9718S_VCM_SLAVE_ADDR;
 
-	cmd_val[0] = 0x02;
-	cmd_val[1] = (param>>8)&0x03;
-	cmd_len = 2;
-	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
-	SENSOR_PRINT("ov13850r2a_write_af: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
+    cmd_val[0] = 0x02;
+    cmd_val[1] = (param >> 8) & 0x03;
+    cmd_len = 2;
+    ret_value = Sensor_WriteI2C(slave_addr, (uint8_t *)&cmd_val[0], cmd_len);
+    SENSOR_PRINT("ov13850r2a_write_af: _write_af, ret =  %d, MSL:%x, LSL:%x\n",
+                 ret_value, cmd_val[0], cmd_val[1]);
 
-	cmd_val[0] = 0x03;
-	cmd_val[1] = param&0xff;
-	cmd_len = 2;
-	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
+    cmd_val[0] = 0x03;
+    cmd_val[1] = param & 0xff;
+    cmd_len = 2;
+    ret_value = Sensor_WriteI2C(slave_addr, (uint8_t *)&cmd_val[0], cmd_len);
 
-	SENSOR_PRINT("ov13850r2a_write_af: _write_af, ret =  %d, MSL:%x, LSL:%x\n", ret_value, cmd_val[0], cmd_val[1]);
+    SENSOR_PRINT("ov13850r2a_write_af: _write_af, ret =  %d, MSL:%x, LSL:%x\n",
+                 ret_value, cmd_val[0], cmd_val[1]);
 
-	return AF_SUCCESS;
-	return ret_value;
+    return AF_SUCCESS;
+    return ret_value;
 }
 /*==============================================================================
  * Description:
@@ -103,31 +103,30 @@ uint32_t dw9718s_write_dac_code(SENSOR_HW_HANDLE handle,int32_t param)
  *
  * Param: ISP write dac code
  *============================================================================*/
-uint32_t dw9718s_write_af(SENSOR_HW_HANDLE handle,uint32_t param)
-{
-	uint32_t ret_value = AF_SUCCESS;
-	int32_t target_code=param&0x3FF;
+uint32_t dw9718s_write_af(SENSOR_HW_HANDLE handle, uint32_t param) {
+    uint32_t ret_value = AF_SUCCESS;
+    int32_t target_code = param & 0x3FF;
 
-	SENSOR_PRINT("%d", target_code);
+    SENSOR_PRINT("%d", target_code);
 
-	while((m_cur_dac_code-target_code)>=MOVE_CODE_STEP_MAX){
-		m_cur_dac_code=m_cur_dac_code-MOVE_CODE_STEP_MAX;
-		dw9718s_write_dac_code(handle,m_cur_dac_code);
-		usleep(WAIT_STABLE_TIME*1000);
-	}
+    while ((m_cur_dac_code - target_code) >= MOVE_CODE_STEP_MAX) {
+        m_cur_dac_code = m_cur_dac_code - MOVE_CODE_STEP_MAX;
+        dw9718s_write_dac_code(handle, m_cur_dac_code);
+        usleep(WAIT_STABLE_TIME * 1000);
+    }
 
-	while((target_code-m_cur_dac_code)>=MOVE_CODE_STEP_MAX){
-		m_cur_dac_code=m_cur_dac_code+MOVE_CODE_STEP_MAX;
-		dw9718s_write_dac_code(handle,m_cur_dac_code);
-		usleep(WAIT_STABLE_TIME*1000);
-	}
+    while ((target_code - m_cur_dac_code) >= MOVE_CODE_STEP_MAX) {
+        m_cur_dac_code = m_cur_dac_code + MOVE_CODE_STEP_MAX;
+        dw9718s_write_dac_code(handle, m_cur_dac_code);
+        usleep(WAIT_STABLE_TIME * 1000);
+    }
 
-	if(m_cur_dac_code!=target_code){
-		m_cur_dac_code=target_code;
-		dw9718s_write_dac_code(handle,m_cur_dac_code);
-	}
+    if (m_cur_dac_code != target_code) {
+        m_cur_dac_code = target_code;
+        dw9718s_write_dac_code(handle, m_cur_dac_code);
+    }
 
-	return ret_value;
+    return ret_value;
 }
 
 /*==============================================================================
@@ -138,23 +137,21 @@ uint32_t dw9718s_write_af(SENSOR_HW_HANDLE handle,uint32_t param)
  * 1: PWM Mode
  * 2: Linear Mode
  *============================================================================*/
-uint32_t dw9718s_deinit(SENSOR_HW_HANDLE handle,uint32_t mode)
-{
-	dw9718s_write_af(handle,0);
+uint32_t dw9718s_deinit(SENSOR_HW_HANDLE handle, uint32_t mode) {
+    dw9718s_write_af(handle, 0);
 
-	return 0;
+    return 0;
 }
 
-af_drv_info_t dw9718s_drv_info = 
-{
-		.af_work_mode = 0,
-		.af_ops =
-		{
-			.set_motor_pos       = dw9718s_write_af,
-			.get_motor_pos       = NULL,
-			.set_motor_bestmode  = dw9718s_init,
-			.motor_deinit        = dw9718s_deinit,
-			.set_test_motor_mode = NULL,
-			.get_test_motor_mode = NULL,
-		},
+af_drv_info_t dw9718s_drv_info = {
+    .af_work_mode = 0,
+    .af_ops =
+        {
+            .set_motor_pos = dw9718s_write_af,
+            .get_motor_pos = NULL,
+            .set_motor_bestmode = dw9718s_init,
+            .motor_deinit = dw9718s_deinit,
+            .set_test_motor_mode = NULL,
+            .get_test_motor_mode = NULL,
+        },
 };

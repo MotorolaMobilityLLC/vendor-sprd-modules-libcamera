@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- #include "sensor_drv_u.h"
+#include "sensor_drv_u.h"
 uint32_t vcm_LC898214_init(SENSOR_HW_HANDLE handle);
 uint32_t vcm_LC898214_set_position(SENSOR_HW_HANDLE handle, uint32_t pos);
-uint32_t vcm_LC898214_get_pose_dis(SENSOR_HW_HANDLE handle, uint32_t *up2h, uint32_t *h2down);
+uint32_t vcm_LC898214_get_pose_dis(SENSOR_HW_HANDLE handle, uint32_t *up2h,
+                                   uint32_t *h2down);
 uint32_t vcm_LC898214_deinit(SENSOR_HW_HANDLE handle);
 int16_t Hall_Max;
-int16_t Hall_Min; 
+int16_t Hall_Min;
 int16_t HallValue;
 int16_t rCode;
-

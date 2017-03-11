@@ -15,81 +15,75 @@
  */
 #include "vcm_dw9806.h"
 
-uint32_t vcm_dw9806_init(SENSOR_HW_HANDLE handle, uint32_t mode)
-{
-	uint8_t cmd_val[6] = {0x00};
-	uint16_t  slave_addr = 0;
-	uint16_t cmd_len = 0;
-	uint32_t ret_value = AF_SUCCESS;
+uint32_t vcm_dw9806_init(SENSOR_HW_HANDLE handle, uint32_t mode) {
+    uint8_t cmd_val[6] = {0x00};
+    uint16_t slave_addr = 0;
+    uint16_t cmd_len = 0;
+    uint32_t ret_value = AF_SUCCESS;
 
-	slave_addr = DW9806_VCM_SLAVE_ADDR;
+    slave_addr = DW9806_VCM_SLAVE_ADDR;
 
-	switch (mode) {
-		case 1:
-		break;
+    switch (mode) {
+    case 1:
+        break;
 
-		case 2:
-		{
-			cmd_len = 2;
-			cmd_val[0] = 0x02;
-			cmd_val[1] = 0x01;
-			Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
-			usleep(1000);
-			cmd_val[0] = 0x02;
-			cmd_val[1] = 0x00;
-			Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
-			usleep(1000);
-			cmd_val[0] = 0x02;
-			cmd_val[1] = 0x02;
-			Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
-			usleep(1000);
-			cmd_val[0] = 0x06;
-			cmd_val[1] = 0x61;
-			Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
-			usleep(1000);
-			cmd_val[0] = 0x07;
-			cmd_val[1] = 0x1c;
-			Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
-			usleep(1000);
-		}
-		break;
+    case 2: {
+        cmd_len = 2;
+        cmd_val[0] = 0x02;
+        cmd_val[1] = 0x01;
+        Sensor_WriteI2C(slave_addr, (uint8_t *)&cmd_val[0], cmd_len);
+        usleep(1000);
+        cmd_val[0] = 0x02;
+        cmd_val[1] = 0x00;
+        Sensor_WriteI2C(slave_addr, (uint8_t *)&cmd_val[0], cmd_len);
+        usleep(1000);
+        cmd_val[0] = 0x02;
+        cmd_val[1] = 0x02;
+        Sensor_WriteI2C(slave_addr, (uint8_t *)&cmd_val[0], cmd_len);
+        usleep(1000);
+        cmd_val[0] = 0x06;
+        cmd_val[1] = 0x61;
+        Sensor_WriteI2C(slave_addr, (uint8_t *)&cmd_val[0], cmd_len);
+        usleep(1000);
+        cmd_val[0] = 0x07;
+        cmd_val[1] = 0x1c;
+        Sensor_WriteI2C(slave_addr, (uint8_t *)&cmd_val[0], cmd_len);
+        usleep(1000);
+    } break;
 
-		case 3:
-		break;
+    case 3:
+        break;
+    }
 
-	}
-
-	return ret_value;
+    return ret_value;
 }
-uint32_t vcm_dw9806_set_position(SENSOR_HW_HANDLE handle, uint32_t pos)
-{
-	uint32_t ret_value = AF_SUCCESS;
-	uint8_t cmd_val[2] = {0x00};
-	uint16_t  slave_addr = 0;
-	uint16_t cmd_len = 0;
-	uint32_t time_out = 0;
+uint32_t vcm_dw9806_set_position(SENSOR_HW_HANDLE handle, uint32_t pos) {
+    uint32_t ret_value = AF_SUCCESS;
+    uint8_t cmd_val[2] = {0x00};
+    uint16_t slave_addr = 0;
+    uint16_t cmd_len = 0;
+    uint32_t time_out = 0;
 
-	slave_addr = DW9806_VCM_SLAVE_ADDR;
-	cmd_len = 2;
-	cmd_val[0] = 0x03;
-	cmd_val[1] = (pos&0x300)>>8;
-	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
-	cmd_val[0] = 0x04;
-	cmd_val[1] = (pos&0xff);
-	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
-	return ret_value;
+    slave_addr = DW9806_VCM_SLAVE_ADDR;
+    cmd_len = 2;
+    cmd_val[0] = 0x03;
+    cmd_val[1] = (pos & 0x300) >> 8;
+    ret_value = Sensor_WriteI2C(slave_addr, (uint8_t *)&cmd_val[0], cmd_len);
+    cmd_val[0] = 0x04;
+    cmd_val[1] = (pos & 0xff);
+    ret_value = Sensor_WriteI2C(slave_addr, (uint8_t *)&cmd_val[0], cmd_len);
+    return ret_value;
 }
 
-af_drv_info_t dw9806_drv_info =
-{
-	.af_work_mode = 0,
-	.af_ops =
-	{
-		.set_motor_pos       = vcm_dw9806_set_position,
-		.get_motor_pos       = NULL,
-		.set_motor_bestmode  = vcm_dw9806_init,
-		.motor_deinit        = NULL,
-		.set_test_motor_mode = NULL,
-		.get_test_motor_mode = NULL,
-	},
+af_drv_info_t dw9806_drv_info = {
+    .af_work_mode = 0,
+    .af_ops =
+        {
+            .set_motor_pos = vcm_dw9806_set_position,
+            .get_motor_pos = NULL,
+            .set_motor_bestmode = vcm_dw9806_init,
+            .motor_deinit = NULL,
+            .set_test_motor_mode = NULL,
+            .get_test_motor_mode = NULL,
+        },
 };

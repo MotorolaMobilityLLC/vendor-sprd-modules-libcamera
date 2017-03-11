@@ -19,9 +19,9 @@
 #include "af_drv.h"
 
 #define DW9800_VCM_SLAVE_ADDR (0x18 >> 1)
-#define SENSOR_SUCCESS      0
+#define SENSOR_SUCCESS 0
 /* accroding to vcm module spec */
-#define POSE_UP_HORIZONTAL   32
+#define POSE_UP_HORIZONTAL 32
 #define POSE_DOWN_HORIZONTAL 37
 
 uint32_t dw9800_init(SENSOR_HW_HANDLE handle);
@@ -29,6 +29,6 @@ uint32_t dw9800_set_motor_pos(SENSOR_HW_HANDLE handle, uint16_t pos);
 uint32_t dw9800_get_motor_pos(SENSOR_HW_HANDLE handle, uint16_t *pos);
 uint32_t dw9800_set_motor_bestmode(SENSOR_HW_HANDLE handle);
 uint32_t dw9800_get_test_vcm_mode(SENSOR_HW_HANDLE handle);
-uint32_t dw9800_set_test_vcm_mode(SENSOR_HW_HANDLE handle, char* vcm_mode);
+uint32_t dw9800_set_test_vcm_mode(SENSOR_HW_HANDLE handle, char *vcm_mode);
 
 #endif

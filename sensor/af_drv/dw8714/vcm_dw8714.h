@@ -17,7 +17,7 @@
 #define _DW8714_H_
 
 #include "af_drv.h"
-#define DW8714_VCM_SLAVE_ADDR (0x18>>1)
+#define DW8714_VCM_SLAVE_ADDR (0x18 >> 1)
 
 uint32_t vcm_dw8714_init(SENSOR_HW_HANDLE handle, uint32_t mode);
 uint32_t vcm_dw8714_set_position(SENSOR_HW_HANDLE handle, uint32_t pos);

@@ -19,10 +19,10 @@
 
 #define et9714_VCM_SLAVE_ADDR (0x18 >> 1)
 #define MOVE_CODE_STEP_MAX 40
-#define WAIT_STABLE_TIME  20    //ms
+#define WAIT_STABLE_TIME 20 // ms
 
-uint32_t et9714_init(SENSOR_HW_HANDLE handle,uint32_t mode);
-uint32_t et9714_write_af(SENSOR_HW_HANDLE handle,uint32_t param);
-uint32_t et9714_deinit(SENSOR_HW_HANDLE handle,uint32_t mode);
+uint32_t et9714_init(SENSOR_HW_HANDLE handle, uint32_t mode);
+uint32_t et9714_write_af(SENSOR_HW_HANDLE handle, uint32_t param);
+uint32_t et9714_deinit(SENSOR_HW_HANDLE handle, uint32_t mode);
 
 #endif

@@ -16,34 +16,32 @@
 #ifndef _ISP_PARAM_FILE_UPDATE_H_
 #define _ISP_PARAM_FILE_UPDATE_H_
 /*----------------------------------------------------------------------------*
- **				Dependencies					*
+ **				Dependencies *
  **---------------------------------------------------------------------------*/
 #include <sys/types.h>
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 
 /**---------------------------------------------------------------------------*
- **				Compiler Flag					*
+ **				Compiler Flag *
  **---------------------------------------------------------------------------*/
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 /**---------------------------------------------------------------------------*
-**				Micro Define					*
+**				Micro Define *
 **----------------------------------------------------------------------------*/
 
-uint32_t isp_raw_para_update_from_file(SENSOR_INFO_T *sensor_info_ptr,SENSOR_ID_E sensor_id);
-
+uint32_t isp_raw_para_update_from_file(SENSOR_INFO_T *sensor_info_ptr,
+                                       SENSOR_ID_E sensor_id);
 
 /**----------------------------------------------------------------------------*
-**				Compiler Flag					*
+**				Compiler Flag *
 **----------------------------------------------------------------------------*/
-#ifdef   __cplusplus
+#ifdef __cplusplus
 }
 #endif
 /**---------------------------------------------------------------------------*/
 #endif
 // End
-

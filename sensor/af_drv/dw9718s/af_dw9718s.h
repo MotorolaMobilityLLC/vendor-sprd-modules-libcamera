@@ -19,10 +19,10 @@
 
 #define DW9718S_VCM_SLAVE_ADDR (0x18 >> 1)
 #define MOVE_CODE_STEP_MAX 20
-#define WAIT_STABLE_TIME  10    //ms
+#define WAIT_STABLE_TIME 10 // ms
 
-uint32_t dw9718s_init(SENSOR_HW_HANDLE handle,uint32_t mode);
-uint32_t dw9718s_write_af(SENSOR_HW_HANDLE handle,uint32_t param);
-uint32_t dw9718s_deinit(SENSOR_HW_HANDLE handle,uint32_t mode);
+uint32_t dw9718s_init(SENSOR_HW_HANDLE handle, uint32_t mode);
+uint32_t dw9718s_write_af(SENSOR_HW_HANDLE handle, uint32_t param);
+uint32_t dw9718s_deinit(SENSOR_HW_HANDLE handle, uint32_t mode);
 
 #endif

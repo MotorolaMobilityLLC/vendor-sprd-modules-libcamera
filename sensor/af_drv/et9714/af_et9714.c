@@ -19,84 +19,97 @@
 #include "sensor.h"
 #include "af_et9714.h"
 
-static int32_t m_cur_dac_code =0;
+static int32_t m_cur_dac_code = 0;
 
 /*==============================================================================
  * Description:
- * init vcm driver 
+ * init vcm driver
  * you can change this function acording your spec if it's necessary
  * mode:
  * 1: Direct Mode
  * 2: Dual Level Control Mode
  * 3: Linear Slope Cntrol Mode
  *============================================================================*/
-uint32_t et9714_init(SENSOR_HW_HANDLE handle,uint32_t mode)
-{
-	uint8_t cmd_val[2] = { 0x00 };
-	uint16_t slave_addr = 0;
-	uint16_t cmd_len = 0;
-	uint32_t ret_value = AF_SUCCESS;
+uint32_t et9714_init(SENSOR_HW_HANDLE handle, uint32_t mode) {
+    uint8_t cmd_val[2] = {0x00};
+    uint16_t slave_addr = 0;
+    uint16_t cmd_len = 0;
+    uint32_t ret_value = AF_SUCCESS;
 
-	slave_addr = et9714_VCM_SLAVE_ADDR; SENSOR_PRINT("mode = %d\n", mode); switch (mode) {
-	case 1:
-		/* When you use direct mode after power on, you don't need register set. Because, DLC disable is default.*/
-		break;
-	case 2:
-		/*Protection off */
-		cmd_val[0] = 0xec;
-		cmd_val[1] = 0xa3;
-		cmd_len = 2;
-		ret_value = Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
+    slave_addr = et9714_VCM_SLAVE_ADDR;
+    SENSOR_PRINT("mode = %d\n", mode);
+    switch (mode) {
+    case 1:
+        /* When you use direct mode after power on, you don't need register set.
+         * Because, DLC disable is default.*/
+        break;
+    case 2:
+        /*Protection off */
+        cmd_val[0] = 0xec;
+        cmd_val[1] = 0xa3;
+        cmd_len = 2;
+        ret_value =
+            Sensor_WriteI2C(slave_addr, (uint8_t *)&cmd_val[0], cmd_len);
 
-		/*DLC and MCLK[1:0] setting */
-		cmd_val[0] = 0xa1;
-		/*for better performace, cmd_val[1][1:0] should adjust to matching with Tvib of your camera VCM*/
-		cmd_val[1] = 0x0e;
-		cmd_len = 2;
-		ret_value = Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
+        /*DLC and MCLK[1:0] setting */
+        cmd_val[0] = 0xa1;
+        /*for better performace, cmd_val[1][1:0] should adjust to matching with
+         * Tvib of your camera VCM*/
+        cmd_val[1] = 0x0e;
+        cmd_len = 2;
+        ret_value =
+            Sensor_WriteI2C(slave_addr, (uint8_t *)&cmd_val[0], cmd_len);
 
-		/*T_SRC[4:0] setting */
-		cmd_val[0] = 0xf2;
-		/*for better performace, cmd_val[1][7:3] should be adjusted to matching with Tvib of your camera VCM*/
-		cmd_val[1] = 0x90;
-		cmd_len = 2;
-		ret_value = Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
+        /*T_SRC[4:0] setting */
+        cmd_val[0] = 0xf2;
+        /*for better performace, cmd_val[1][7:3] should be adjusted to matching
+         * with Tvib of your camera VCM*/
+        cmd_val[1] = 0x90;
+        cmd_len = 2;
+        ret_value =
+            Sensor_WriteI2C(slave_addr, (uint8_t *)&cmd_val[0], cmd_len);
 
-		/*Protection on */
-		cmd_val[0] = 0xdc;
-		cmd_val[1] = 0x51;
-		cmd_len = 2;
-		ret_value = Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
-		break;
-	case 3:
-		/*Protection off */
-		cmd_val[0] = 0xec;
-		cmd_val[1] = 0xa3;
-		cmd_len = 2;
-		ret_value = Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
+        /*Protection on */
+        cmd_val[0] = 0xdc;
+        cmd_val[1] = 0x51;
+        cmd_len = 2;
+        ret_value =
+            Sensor_WriteI2C(slave_addr, (uint8_t *)&cmd_val[0], cmd_len);
+        break;
+    case 3:
+        /*Protection off */
+        cmd_val[0] = 0xec;
+        cmd_val[1] = 0xa3;
+        cmd_len = 2;
+        ret_value =
+            Sensor_WriteI2C(slave_addr, (uint8_t *)&cmd_val[0], cmd_len);
 
-		/*DLC and MCLK[1:0] setting */
-		cmd_val[0] = 0xa1;
-		cmd_val[1] = 0x05;
-		cmd_len = 2;
-		ret_value = Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
+        /*DLC and MCLK[1:0] setting */
+        cmd_val[0] = 0xa1;
+        cmd_val[1] = 0x05;
+        cmd_len = 2;
+        ret_value =
+            Sensor_WriteI2C(slave_addr, (uint8_t *)&cmd_val[0], cmd_len);
 
-		/*T_SRC[4:0] setting */
-		cmd_val[0] = 0xf2;
-		/*for better performace, cmd_val[1][7:3] should be adjusted to matching with the Tvib of your camera VCM*/
-		cmd_val[1] = 0x00;
-		cmd_len = 2;
-		ret_value = Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
+        /*T_SRC[4:0] setting */
+        cmd_val[0] = 0xf2;
+        /*for better performace, cmd_val[1][7:3] should be adjusted to matching
+         * with the Tvib of your camera VCM*/
+        cmd_val[1] = 0x00;
+        cmd_len = 2;
+        ret_value =
+            Sensor_WriteI2C(slave_addr, (uint8_t *)&cmd_val[0], cmd_len);
 
-		/*Protection on */
-		cmd_val[0] = 0xdc;
-		cmd_val[1] = 0x51;
-		cmd_len = 2;
-		ret_value = Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
-		break;
-	}
+        /*Protection on */
+        cmd_val[0] = 0xdc;
+        cmd_val[1] = 0x51;
+        cmd_len = 2;
+        ret_value =
+            Sensor_WriteI2C(slave_addr, (uint8_t *)&cmd_val[0], cmd_len);
+        break;
+    }
 
-	return ret_value;
+    return ret_value;
 }
 /*==============================================================================
  * Description:
@@ -104,55 +117,53 @@ uint32_t et9714_init(SENSOR_HW_HANDLE handle,uint32_t mode)
  * you can change this function acording your spec if it's necessary
  * code: Dac code for vcm driver
  *============================================================================*/
-uint32_t et9714_write_dac_code(SENSOR_HW_HANDLE handle,int32_t code)
-{
-	uint32_t ret_value = AF_SUCCESS;
-	uint8_t cmd_val[2] = { 0x00 };
-	uint16_t slave_addr = et9714_VCM_SLAVE_ADDR;
-	uint16_t cmd_len = 0;
-	uint16_t step_4bit = 0x09;
+uint32_t et9714_write_dac_code(SENSOR_HW_HANDLE handle, int32_t code) {
+    uint32_t ret_value = AF_SUCCESS;
+    uint8_t cmd_val[2] = {0x00};
+    uint16_t slave_addr = et9714_VCM_SLAVE_ADDR;
+    uint16_t cmd_len = 0;
+    uint16_t step_4bit = 0x09;
 
-	SENSOR_PRINT("%d", code);
+    SENSOR_PRINT("%d", code);
 
-	cmd_val[0] = (code & 0xfff0) >> 4;
-	cmd_val[1] = ((code & 0x0f) << 4) | step_4bit;
-	cmd_len = 2;
-	ret_value = Sensor_WriteI2C(slave_addr, (uint8_t *) & cmd_val[0], cmd_len);
+    cmd_val[0] = (code & 0xfff0) >> 4;
+    cmd_val[1] = ((code & 0x0f) << 4) | step_4bit;
+    cmd_len = 2;
+    ret_value = Sensor_WriteI2C(slave_addr, (uint8_t *)&cmd_val[0], cmd_len);
 
-	SENSOR_PRINT("ret_value=%d", ret_value);
-	return ret_value;
+    SENSOR_PRINT("ret_value=%d", ret_value);
+    return ret_value;
 }
 /*==============================================================================
  * Description:
  * calculate vcm driver dac code and write to vcm driver;
- * 
+ *
  * Param: ISP write dac code
  *============================================================================*/
-uint32_t et9714_write_af(SENSOR_HW_HANDLE handle,uint32_t param)
-{
-	uint32_t ret_value = AF_SUCCESS;
-	int32_t target_code=param&0x3FF;
+uint32_t et9714_write_af(SENSOR_HW_HANDLE handle, uint32_t param) {
+    uint32_t ret_value = AF_SUCCESS;
+    int32_t target_code = param & 0x3FF;
 
-	SENSOR_PRINT("%d", target_code);
+    SENSOR_PRINT("%d", target_code);
 
-	while((m_cur_dac_code-target_code)>=MOVE_CODE_STEP_MAX){
-		m_cur_dac_code=m_cur_dac_code-MOVE_CODE_STEP_MAX;
-		et9714_write_dac_code(handle,m_cur_dac_code);
-		usleep(WAIT_STABLE_TIME*1000);
-	}
+    while ((m_cur_dac_code - target_code) >= MOVE_CODE_STEP_MAX) {
+        m_cur_dac_code = m_cur_dac_code - MOVE_CODE_STEP_MAX;
+        et9714_write_dac_code(handle, m_cur_dac_code);
+        usleep(WAIT_STABLE_TIME * 1000);
+    }
 
-	while((target_code-m_cur_dac_code)>=MOVE_CODE_STEP_MAX){
-		m_cur_dac_code=m_cur_dac_code+MOVE_CODE_STEP_MAX;
-		et9714_write_dac_code(handle,m_cur_dac_code);
-		usleep(WAIT_STABLE_TIME*1000);
-	}
+    while ((target_code - m_cur_dac_code) >= MOVE_CODE_STEP_MAX) {
+        m_cur_dac_code = m_cur_dac_code + MOVE_CODE_STEP_MAX;
+        et9714_write_dac_code(handle, m_cur_dac_code);
+        usleep(WAIT_STABLE_TIME * 1000);
+    }
 
-	if(m_cur_dac_code!=target_code){
-		m_cur_dac_code=target_code;
-		et9714_write_dac_code(handle,m_cur_dac_code);
-	}
+    if (m_cur_dac_code != target_code) {
+        m_cur_dac_code = target_code;
+        et9714_write_dac_code(handle, m_cur_dac_code);
+    }
 
-	return ret_value;
+    return ret_value;
 }
 
 /*==============================================================================
@@ -163,23 +174,21 @@ uint32_t et9714_write_af(SENSOR_HW_HANDLE handle,uint32_t param)
  * 1: PWM Mode
  * 2: Linear Mode
  *============================================================================*/
-uint32_t et9714_deinit(SENSOR_HW_HANDLE handle,uint32_t mode)
-{
-	et9714_write_af(handle,0);
+uint32_t et9714_deinit(SENSOR_HW_HANDLE handle, uint32_t mode) {
+    et9714_write_af(handle, 0);
 
-	return 0;
+    return 0;
 }
 
-af_drv_info_t et9714_drv_info =
-{
-	.af_work_mode = 0, /*default mode*/
-	.af_ops = 
-	{
-		.set_motor_pos       = et9714_write_af,
-		.get_motor_pos       = NULL,
-		.set_motor_bestmode  = et9714_init,
-		.motor_deinit        = et9714_deinit,
-		.set_test_motor_mode = NULL,
-		.get_test_motor_mode = NULL,
-	},
+af_drv_info_t et9714_drv_info = {
+    .af_work_mode = 0, /*default mode*/
+    .af_ops =
+        {
+            .set_motor_pos = et9714_write_af,
+            .get_motor_pos = NULL,
+            .set_motor_bestmode = et9714_init,
+            .motor_deinit = et9714_deinit,
+            .set_test_motor_mode = NULL,
+            .get_test_motor_mode = NULL,
+        },
 };

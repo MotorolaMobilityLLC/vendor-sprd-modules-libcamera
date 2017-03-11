@@ -19,103 +19,99 @@
 
 #define AK7371_VCM_SLAVE_ADDR (0x18 >> 1)
 #ifndef SENSOR_SUCCESS
-#define SENSOR_SUCCESS      0
+#define SENSOR_SUCCESS 0
 #endif
 #define POSE_UP_HORIZONTAL 32
 #define POSE_DOWN_HORIZONTAL 37
-static uint32_t m_cur_pos=0;
+static uint32_t m_cur_pos = 0;
 
-uint32_t vcm_ak7371_init(SENSOR_HW_HANDLE handle,int mode)
-{
-	uint8_t cmd_val[2] = {0x00};
-	uint16_t  slave_addr = 0;
-	uint16_t cmd_len = 0;
-	uint32_t ret_value = SENSOR_SUCCESS;
+uint32_t vcm_ak7371_init(SENSOR_HW_HANDLE handle, int mode) {
+    uint8_t cmd_val[2] = {0x00};
+    uint16_t slave_addr = 0;
+    uint16_t cmd_len = 0;
+    uint32_t ret_value = SENSOR_SUCCESS;
 
-	slave_addr = AK7371_VCM_SLAVE_ADDR;
-	SENSOR_LOGI("E");
-	usleep(100);
-	switch (mode) {
-	case 1:
-		break;
+    slave_addr = AK7371_VCM_SLAVE_ADDR;
+    SENSOR_LOGI("E");
+    usleep(100);
+    switch (mode) {
+    case 1:
+        break;
 
-	case 2:
-	{
-		cmd_len = 2;
+    case 2: {
+        cmd_len = 2;
 
-		cmd_val[0] = 0x02;
-		cmd_val[1] = 0x00;
-		ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
-		if(ret_value){
-			SENSOR_LOGI("SENSOR_vcm: _ak7371_SRCInit 1 fail!");
-		}
+        cmd_val[0] = 0x02;
+        cmd_val[1] = 0x00;
+        ret_value =
+            Sensor_WriteI2C(slave_addr, (uint8_t *)&cmd_val[0], cmd_len);
+        if (ret_value) {
+            SENSOR_LOGI("SENSOR_vcm: _ak7371_SRCInit 1 fail!");
+        }
 
-		usleep(200);
-	
-	}
-		break;
-	default:
-		break;
-	}
-	return ret_value;
+        usleep(200);
+
+    } break;
+    default:
+        break;
+    }
+    return ret_value;
 }
 
-uint32_t vcm_ak7371_set_position(SENSOR_HW_HANDLE handle, uint32_t pos)
-{
-	uint32_t ret_value = SENSOR_SUCCESS;
-	uint8_t cmd_val[2] = {0x00};
-	uint16_t  slave_addr = 0;
-	uint16_t cmd_len = 0;
-	uint32_t time_out = 0;
+uint32_t vcm_ak7371_set_position(SENSOR_HW_HANDLE handle, uint32_t pos) {
+    uint32_t ret_value = SENSOR_SUCCESS;
+    uint8_t cmd_val[2] = {0x00};
+    uint16_t slave_addr = 0;
+    uint16_t cmd_len = 0;
+    uint32_t time_out = 0;
 
-	if ((int32_t)pos < 0)
-		pos = 0;
-	else if ((int32_t)pos > 0x3FF)
-		pos = 0x3FF;
-	m_cur_pos=pos&0x3FF;
+    if ((int32_t)pos < 0)
+        pos = 0;
+    else if ((int32_t)pos > 0x3FF)
+        pos = 0x3FF;
+    m_cur_pos = pos & 0x3FF;
 
-	SENSOR_LOGI("set position %d", pos);
-	slave_addr = AK7371_VCM_SLAVE_ADDR;
-	cmd_len = 2;
-	cmd_val[0] = 0x00;
-	cmd_val[1] = (pos&0x3ff)>>2;
-	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
-	cmd_val[0] = 0x01;
-	cmd_val[1] = (pos&0x03)<<6;
-	ret_value = Sensor_WriteI2C(slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
+    SENSOR_LOGI("set position %d", pos);
+    slave_addr = AK7371_VCM_SLAVE_ADDR;
+    cmd_len = 2;
+    cmd_val[0] = 0x00;
+    cmd_val[1] = (pos & 0x3ff) >> 2;
+    ret_value = Sensor_WriteI2C(slave_addr, (uint8_t *)&cmd_val[0], cmd_len);
+    cmd_val[0] = 0x01;
+    cmd_val[1] = (pos & 0x03) << 6;
+    ret_value = Sensor_WriteI2C(slave_addr, (uint8_t *)&cmd_val[0], cmd_len);
 
-	//cmd_len=sensor_grc_read_i2c(ak7371_VCM_SLAVE_ADDR,  0x03, BITS_ADDR8_REG8);
-	//time_out=sensor_grc_read_i2c(ak7371_VCM_SLAVE_ADDR,  0x04, BITS_ADDR8_REG8);
-	//SENSOR_LOGI("set position %d %d", pos,((cmd_len&0x03)<<8)|time_out);
+    // cmd_len=sensor_grc_read_i2c(ak7371_VCM_SLAVE_ADDR,  0x03,
+    // BITS_ADDR8_REG8);
+    // time_out=sensor_grc_read_i2c(ak7371_VCM_SLAVE_ADDR,  0x04,
+    // BITS_ADDR8_REG8);
+    // SENSOR_LOGI("set position %d %d", pos,((cmd_len&0x03)<<8)|time_out);
 
-	return ret_value;
+    return ret_value;
 }
 
-uint32_t vcm_ak7371_get_pose_dis(SENSOR_HW_HANDLE handle, uint32_t *up2h, uint32_t *h2down)
-{
-	*up2h = POSE_UP_HORIZONTAL;
-	*h2down = POSE_DOWN_HORIZONTAL;
+uint32_t vcm_ak7371_get_pose_dis(SENSOR_HW_HANDLE handle, uint32_t *up2h,
+                                 uint32_t *h2down) {
+    *up2h = POSE_UP_HORIZONTAL;
+    *h2down = POSE_DOWN_HORIZONTAL;
 
-	return 0;
+    return 0;
 }
 
-uint32_t vcm_ak7371_deinit(SENSOR_HW_HANDLE handle)
-{
-	uint32_t ret_value = SENSOR_SUCCESS;
-	uint32_t pos = m_cur_pos;
-	uint32_t vcm_last_pos = pos & 0xffff;
-	uint32_t vcm_last_delay = pos & 0xffff0000;
+uint32_t vcm_ak7371_deinit(SENSOR_HW_HANDLE handle) {
+    uint32_t ret_value = SENSOR_SUCCESS;
+    uint32_t pos = m_cur_pos;
+    uint32_t vcm_last_pos = pos & 0xffff;
+    uint32_t vcm_last_delay = pos & 0xffff0000;
 
+    while (vcm_last_pos > 0) {
+        vcm_last_pos = vcm_last_pos >> 2;
+        SENSOR_LOGI("vcm_last_pos=%d  ,%d", vcm_last_pos,
+                    (vcm_last_pos | vcm_last_delay));
+        vcm_ak7371_set_position(handle, vcm_last_pos | vcm_last_delay);
+        usleep(1 * 1000);
+    }
 
-	while(vcm_last_pos > 0) {
-		vcm_last_pos = vcm_last_pos >> 2;
-		SENSOR_LOGI("vcm_last_pos=%d  ,%d",vcm_last_pos,(vcm_last_pos|vcm_last_delay));
-		vcm_ak7371_set_position(handle,vcm_last_pos|vcm_last_delay);
-		usleep(1*1000);
-	}
-
-	SENSOR_LOGI("vcm_ak7371_deinit");
-	return ret_value;
+    SENSOR_LOGI("vcm_ak7371_deinit");
+    return ret_value;
 }
-
-

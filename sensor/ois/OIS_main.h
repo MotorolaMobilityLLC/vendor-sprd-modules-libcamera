@@ -22,12 +22,12 @@
 uint32_t ois_pre_open(SENSOR_HW_HANDLE handle);
 uint32_t OpenOIS(SENSOR_HW_HANDLE handle);
 uint32_t CloseOIS(SENSOR_HW_HANDLE handle);
-uint32_t  SetOisMode(SENSOR_HW_HANDLE handle, unsigned char mode);
+uint32_t SetOisMode(SENSOR_HW_HANDLE handle, unsigned char mode);
 unsigned char GetOisMode(SENSOR_HW_HANDLE handle);
-unsigned short  OisLensRead(SENSOR_HW_HANDLE handle, unsigned short  cmd);
-uint32_t OisLensWrite(SENSOR_HW_HANDLE handle, unsigned short  cmd);
+unsigned short OisLensRead(SENSOR_HW_HANDLE handle, unsigned short cmd);
+uint32_t OisLensWrite(SENSOR_HW_HANDLE handle, unsigned short cmd);
 uint32_t OIS_write_af(SENSOR_HW_HANDLE handle, uint32_t param);
-uint32_t Ois_get_pose_dis(SENSOR_HW_HANDLE handle, uint32_t *up2h, uint32_t *h2down);
+uint32_t Ois_get_pose_dis(SENSOR_HW_HANDLE handle, uint32_t *up2h,
+                          uint32_t *h2down);
 
 #endif // __OIS_MAIN_H__
-

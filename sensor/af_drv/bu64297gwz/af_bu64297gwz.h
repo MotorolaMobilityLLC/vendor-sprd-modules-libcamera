@@ -20,6 +20,7 @@
 uint32_t bu64297gwz_init(SENSOR_HW_HANDLE handle);
 uint32_t bu64297gwz_write_af(SENSOR_HW_HANDLE handle, uint32_t param);
 uint32_t bu64297gwz_deinit(SENSOR_HW_HANDLE handle, uint32_t mode);
-uint32_t bu64297gwz_get_pose_dis(SENSOR_HW_HANDLE handle, uint32_t *up2h, uint32_t *h2down);
+uint32_t bu64297gwz_get_pose_dis(SENSOR_HW_HANDLE handle, uint32_t *up2h,
+                                 uint32_t *h2down);
 
 #endif
