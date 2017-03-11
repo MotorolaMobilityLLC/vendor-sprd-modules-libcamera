@@ -50,10 +50,10 @@
 #define PREVIEW_MIPI_PER_LANE_BPS 540
 
 /* please ref your spec */
-#define FRAME_OFFSET 16 // 32
-#define SENSOR_MAX_GAIN 0x7ff
+#define FRAME_OFFSET 8	//16 // 32
+#define SENSOR_MAX_GAIN 0x780
 #define SENSOR_BASE_GAIN 0x80
-#define SENSOR_MIN_SHUTTER 6
+#define SENSOR_MIN_SHUTTER 4
 
 /* isp parameters, please don't change it*/
 #if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
