@@ -270,7 +270,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     ATRACE_CALL();
 
     // mIsPerformanceTestable = sprd_isPerformanceTestable();
-    HAL_LOGI("openCameraHardware: E cameraId: %d.", cameraId);
+    HAL_LOGI("::hal3:: E openCamera: cameraId: %d.", cameraId);
 
 #ifdef CONFIG_FACE_BEAUTY
     mSkinWhitenNotDetectFDNum = 0;
@@ -445,7 +445,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mVideoParameterSetFlag = false;
     mZslCaptureExitLoop = false;
     mSprdCameraLowpower = 0;
-    HAL_LOGI("openCameraHardware: X cameraId: %d.", cameraId);
+    HAL_LOGI("::hal3:: X openCamera: cameraId: %d.", cameraId);
 }
 
 SprdCamera3OEMIf::~SprdCamera3OEMIf() {
@@ -453,7 +453,7 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf() {
 
     int i;
     uint32_t j;
-    HAL_LOGI("closeCameraHardware: E cameraId: %d.", mCameraId);
+    HAL_LOGI("::hal3:: E cameraId: %d.", mCameraId);
 
     if (!mReleaseFLag) {
         closeCamera();
@@ -535,14 +535,14 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf() {
         mHalOem = NULL;
     }
 
-    HAL_LOGD("closeCameraHardware: X cameraId: %d.", mCameraId);
+    HAL_LOGD("::hal3:: X cameraId: %d.", mCameraId);
     timer_stop();
 }
 
 void SprdCamera3OEMIf::closeCamera() {
     ATRACE_CALL();
 
-    HAL_LOGI("E");
+    HAL_LOGI("::hal3:: E");
     Mutex::Autolock l(&mLock);
     mZslCaptureExitLoop = true;
     // Either preview was ongoing, or we are in the middle or taking a
@@ -621,7 +621,7 @@ void SprdCamera3OEMIf::closeCamera() {
         // camera_cb was called inline.
         setCameraState(SPRD_INTERNAL_STOPPING, STATE_CAMERA);
 
-        HAL_LOGD("stopping camera.");
+        HAL_LOGD("::hal3:: stopping camera");
         if (CMR_CAMERA_SUCCESS != mHalOem->ops->camera_deinit(mCameraHandle)) {
             setCameraState(SPRD_ERROR, STATE_CAMERA);
             mReleaseFLag = true;
@@ -639,7 +639,7 @@ void SprdCamera3OEMIf::closeCamera() {
     FreeReDisplayMem();
 
     mReleaseFLag = true;
-    HAL_LOGI("X");
+    HAL_LOGI("::hal3:: X");
 }
 
 int SprdCamera3OEMIf::getCameraId() const { return mCameraId; }
