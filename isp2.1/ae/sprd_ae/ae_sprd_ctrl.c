@@ -3040,6 +3040,7 @@ int32_t ae_sprd_io_ctrl(void *handle, enum ae_io_ctrl_cmd cmd, void *param, void
 				if ((touch_zone->touch_zone.w > 1)\
 					&& (touch_zone->touch_zone.h > 1)) {
 					/*touch screen coordination */
+					cxt->cur_result.wts.stable = 0;
 					cxt->cur_status.touch_scrn_win = touch_zone->touch_zone;	// for touch ae
 					cxt->cur_status.settings.touch_scrn_status = 1;	// for touch ae
 					rtn = _set_restore_cnt(cxt);
