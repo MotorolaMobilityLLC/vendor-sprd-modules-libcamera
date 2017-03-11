@@ -921,6 +921,7 @@ cmr_int isp3a_start_af_notify(cmr_handle handle, void *data)
 	cmr_int                                     ret = ISP_SUCCESS;
 	struct isp3a_fw_context                     *cxt = (struct isp3a_fw_context *)handle;
 	struct isp_af_notice                        af_notice;
+	struct ae_ctrl_param_in                     ae_in;
 
 	UNUSED(data);
 	ISP_LOGI("move start");
@@ -935,6 +936,10 @@ cmr_int isp3a_start_af_notify(cmr_handle handle, void *data)
 
 	ret = cxt->caller_callback(cxt->caller_handle, ISP_CALLBACK_EVT|ISP_AF_NOTICE_CALLBACK,
 				   (void *)&af_notice, sizeof(struct isp_af_notice));
+
+	/* change ae measure mode */
+	ae_in.measure_lum.lum_mode = AE_CTRL_MEASURE_LUM_CENTER;
+	ret = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_MEASURE_LUM, &ae_in, NULL);
 exit:
 	ISP_LOGI("done, %ld", ret);
 	return ret;

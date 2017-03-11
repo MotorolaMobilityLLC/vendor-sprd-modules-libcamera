@@ -1946,6 +1946,9 @@ static cmr_int aealtek_set_measure_lum(struct aealtek_cxt *cxt_ptr, struct ae_ct
 		ISP_LOGE("param %p %p is NULL error!", cxt_ptr, in_ptr);
 		goto exit;
 	}
+
+	if (cxt_ptr->nxt_status.ui_param.weight == in_ptr->measure_lum.lum_mode)
+		goto exit;
 	cxt_ptr->nxt_status.ui_param.weight = in_ptr->measure_lum.lum_mode;
 
 	ISP_LOGI("flash_enable:%d,touch_flag:%d,lum_mode:%ld", cxt_ptr->flash_param.enable
