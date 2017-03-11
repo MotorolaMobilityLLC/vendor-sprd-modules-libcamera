@@ -144,8 +144,7 @@ typedef int64_t nsecs_t;
 #define CAMERA_SETTINGS_CONFIG_ARRAYSIZE 90
 #define CAMERA_SETTINGS_THUMBNAILSIZE_ARRAYSIZE 8
 
-#define SPRD_3DCALIBRATION_CAPSIZE_ARRAYSIZE                                   \
-    2 /**add for 3d calibration capture size*/
+#define SPRD_3DCALIBRATION_CAPSIZE_ARRAYSIZE 2
 
 typedef struct {
     uint8_t correction_mode;
