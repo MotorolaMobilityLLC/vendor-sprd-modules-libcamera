@@ -5323,7 +5323,7 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle,
         in_param.src_frame.img_addr_vir.chn1 =
             param_ptr->src_frame.addr_vir.addr_u;
         //		in_param.src_frame.format_pattern =
-        //param_ptr->src_frame.format_pattern;
+        // param_ptr->src_frame.format_pattern;
         in_param.src_avail_height = param_ptr->src_avail_height;
         in_param.src_slice_height = param_ptr->src_slice_height;
         in_param.dst_frame.img_fmt = param_ptr->dst_frame.fmt;
@@ -8261,7 +8261,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         cmr_sensor_update_isparm_from_file(cxt->sn_cxt.sensor_handle,
                                            cxt->camera_id);
         //		isp_ioctl(isp_cxt->isp_handle,
-        //ISP_CTRL_DENOISE_PARAM_UPDATE, (void*)&nr_update_param);
+        // ISP_CTRL_DENOISE_PARAM_UPDATE, (void*)&nr_update_param);
         camera_isp_deinit(oem_handle);
         camera_isp_init(oem_handle);
 
@@ -8293,7 +8293,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
 			}
 #endif
             //			ret = isp_ioctl(isp_cxt->isp_handle,
-            //ISP_CTRL_TOOL_SET_SCENE_PARAM, (void*)&scene_param);
+            // ISP_CTRL_TOOL_SET_SCENE_PARAM, (void*)&scene_param);
             if (ret) {
                 CMR_LOGE("failed isp ioctl %ld", ret);
             }

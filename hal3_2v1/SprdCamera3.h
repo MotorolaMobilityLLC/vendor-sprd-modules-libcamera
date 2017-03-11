@@ -67,7 +67,7 @@ const int32_t jpegResolutionSensorFront[] = {
 };
 
 const int32_t PreviewResolutionSensorBack[] = {
-    /*supported video size must be same as supported preview size*/
+/*supported video size must be same as supported preview size*/
 #ifndef CONFIG_CAMERA_SMALL_PREVSIZE
     1920, 1088, 1280, 720, // 16:9
 #endif

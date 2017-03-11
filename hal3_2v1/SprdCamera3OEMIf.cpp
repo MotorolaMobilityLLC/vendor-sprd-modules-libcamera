@@ -1800,7 +1800,7 @@ bool SprdCamera3OEMIf::setCameraCaptureDimensions() {
         if (mVideoWidth != 0 && mVideoHeight != 0 && mRecordingMode == true &&
             ((mCaptureMode != CAMERA_ISP_TUNING_MODE) &&
              (mCaptureMode != CAMERA_ISP_SIMULATION_MODE))) {
-            capture_size.width = (cmr_u32)mPreviewWidth; // mVideoWidth;
+            capture_size.width = (cmr_u32)mPreviewWidth;   // mVideoWidth;
             capture_size.height = (cmr_u32)mPreviewHeight; // mVideoHeight;
         } else {
             capture_size.width = (cmr_u32)mCaptureWidth;
@@ -8407,7 +8407,7 @@ void SprdCamera3OEMIf::EIS_init() {
     for (i = 0; i < num; i++) {
         if (strcmp(eis_init_info_tab[i].board_name, CAMERA_EIS_BOARD_PARAM) ==
             0) {
-            mParam.f = eis_init_info_tab[i].f; // 1230;
+            mParam.f = eis_init_info_tab[i].f;   // 1230;
             mParam.td = eis_init_info_tab[i].td; // 0.004;
             mParam.ts = eis_init_info_tab[i].ts; // 0.021;
         }

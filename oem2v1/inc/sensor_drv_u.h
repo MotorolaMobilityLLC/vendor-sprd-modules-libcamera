@@ -258,9 +258,9 @@ MIPI CSI2 and Lane3
 */
 typedef struct {
     SENSOR_INF_TYPE_E type;
-    cmr_u32 bus_width; // lane number or bit-width
+    cmr_u32 bus_width;   // lane number or bit-width
     cmr_u32 pixel_width; // bits per pixel
-    cmr_u32 is_loose; // 0 packet, 1 half word per pixel
+    cmr_u32 is_loose;    // 0 packet, 1 half word per pixel
 } SENSOR_INF_T;
 
 typedef enum {
@@ -643,7 +643,7 @@ typedef struct sensor_reg_tab_info_tag {
 
 typedef struct sensor_mode_info_tag {
     enum sensor_mode mode;
-    cmr_u16 width; // width before trim,maybe after binning?
+    cmr_u16 width;  // width before trim,maybe after binning?
     cmr_u16 height; // height before trim,maybe after binning?
     cmr_u16 trim_start_x;
     cmr_u16 trim_start_y;
@@ -654,7 +654,7 @@ typedef struct sensor_mode_info_tag {
     cmr_u32 bps_per_lane;
     cmr_u32 frame_line;
     SENSOR_RECT_T scaler_trim;
-    cmr_u16 out_width; // sensor output width after binning and crop/trim
+    cmr_u16 out_width;  // sensor output width after binning and crop/trim
     cmr_u16 out_height; // sensor output height after binning and crop/trim
 } SENSOR_MODE_INFO_T, *SENSOR_MODE_INFO_T_PTR;
 
@@ -716,10 +716,10 @@ typedef struct sensor_exp_info_tag {
 } SENSOR_EXP_INFO_T, *SENSOR_EXP_INFO_T_PTR;
 
 typedef struct sensor_static_info_tag {
-    cmr_u32 f_num; // f-number,focal ratio,actual f-number*100
+    cmr_u32 f_num;        // f-number,focal ratio,actual f-number*100
     cmr_u32 focal_length; // actual focal_length*100
-    cmr_u32 max_fps; // max fps of sensor's all settings
-    cmr_u32 max_adgain; // AD-gain
+    cmr_u32 max_fps;      // max fps of sensor's all settings
+    cmr_u32 max_adgain;   // AD-gain
     cmr_u32 ois_supported;
     cmr_u32 pdaf_supported;
     cmr_u32 exp_valid_frame_num;
@@ -729,10 +729,10 @@ typedef struct sensor_static_info_tag {
 
 typedef struct sensor_mode_fps_tag {
     enum sensor_mode mode;
-    cmr_u32 max_fps; // max fps in current sensor
-                     // mode,10*1000000/(line_time*frame_line)
-    cmr_u32 min_fps; // min fps, we set it to 1.
-    cmr_u32 is_high_fps; // if max_fps > 30,then is high fps.
+    cmr_u32 max_fps;           // max fps in current sensor
+                               // mode,10*1000000/(line_time*frame_line)
+    cmr_u32 min_fps;           // min fps, we set it to 1.
+    cmr_u32 is_high_fps;       // if max_fps > 30,then is high fps.
     cmr_u32 high_fps_skip_num; // max_fps/30
 } SENSOR_MODE_FPS_T, *SENSOR_MODE_FPS_T_PTR;
 

@@ -197,7 +197,7 @@ cmr_int camera_scale_down_software(struct img_frm *src, struct img_frm *dst) {
         for (j = 0; j < dst_uv_w; j++) {
             cur_w = (ratio_w * j) >> 10;
             cur_byte = cur_size + cur_w * 2;
-            *dst_uv_buf++ = src_uv_buf[cur_byte]; // u
+            *dst_uv_buf++ = src_uv_buf[cur_byte];     // u
             *dst_uv_buf++ = src_uv_buf[cur_byte + 1]; // v
         }
     }

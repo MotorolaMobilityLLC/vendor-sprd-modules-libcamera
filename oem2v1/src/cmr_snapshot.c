@@ -1095,7 +1095,7 @@ cmr_int snp_start_encode_thumb(cmr_handle snp_handle) {
     }
 
 //	snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_STATE,
-//SNAPSHOT_EVT_ENC_THUMB_DONE, (void*)ret, sizeof(cmr_int));
+// SNAPSHOT_EVT_ENC_THUMB_DONE, (void*)ret, sizeof(cmr_int));
 
 exit:
     CMR_LOGI("done %ld", ret);
@@ -1266,7 +1266,7 @@ cmr_int snp_start_scale(cmr_handle snp_handle, void *data) {
         ret = -CMR_CAMERA_FAIL;
     }
 //	snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_STATE,
-//SNAPSHOT_EVT_START_SCALE, (void*)ret, sizeof(cmr_int));
+// SNAPSHOT_EVT_START_SCALE, (void*)ret, sizeof(cmr_int));
 exit:
     CMR_LOGI("done %ld", ret);
     if (ret) {
@@ -1870,7 +1870,7 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data) {
                                 SNAPSHOT_EXIT_CB_DONE, (void *)&frame_type,
                                 sizeof(struct camera_frame_type));
         //	snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_STATE,
-        //SNAPSHOT_EVT_EXIF_JPEG_DONE, (void*)ret, sizeof(cmr_int));
+        // SNAPSHOT_EVT_EXIF_JPEG_DONE, (void*)ret, sizeof(cmr_int));
         if (CMR_CAMERA_NORNAL_EXIT == snp_checkout_exit(snp_handle)) {
             CMR_LOGI("snp has been cancel");
             ret = CMR_CAMERA_NORNAL_EXIT;
@@ -5394,7 +5394,7 @@ cmr_int camera_open_refocus(struct camera_context *cxt,
     in_ptr1.frame_size.height =
         cxt->snp_cxt.post_proc_setting.actual_snp_size.height;
     in_ptr1.otp_data.otp_size = 8192; // otp_data->size;//TBD
-    in_ptr1.otp_data.otp_ptr = NULL; // TBD
+    in_ptr1.otp_data.otp_ptr = NULL;  // TBD
     in_ptr1.frame_cnt = 0;
     ret = cmr_ipm_open(cxt->ipm_cxt.ipm_handle, IPM_TYPE_REFOCUS, &in_ptr1,
                        &out_ptr1, &cxt->ipm_cxt.refocus_handle);
@@ -5432,8 +5432,8 @@ static cmr_int camera_start_refocus(struct camera_context *cxt,
     ipm_in_param.src_frame = *src;
     ipm_in_param.touch_x = cxt->snp_cxt.touch_xy.touchX;
     ipm_in_param.touch_y = cxt->snp_cxt.touch_xy.touchY;
-    ipm_in_param.depth_map.width = 480; // TBD
-    ipm_in_param.depth_map.height = 360; // TBD
+    ipm_in_param.depth_map.width = 480;          // TBD
+    ipm_in_param.depth_map.height = 360;         // TBD
     ipm_in_param.depth_map.depth_map_ptr = NULL; // TBD
     ret = ipm_transfer_frame(cxt->ipm_cxt.refocus_handle, &ipm_in_param, NULL);
     if (ret) {

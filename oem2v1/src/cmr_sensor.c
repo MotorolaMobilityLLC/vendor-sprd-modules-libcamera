@@ -1477,7 +1477,8 @@ static cmr_int cmr_sns_fmove_proc(void *p_data) {
             cnt = 0;
             for (i = 0; i < CAMERA_ID_MAX; i++) {
                 if (0 != (sensor_handle->sensor_bits & (1 << i))) {
-                    /*					CMR_LOGV("valid camera id
+                    /*					CMR_LOGV("valid camera
+                     * id
                      * =%d",i);*/
                     cmr_sns_check_fmove(sensor_handle, i);
                 }

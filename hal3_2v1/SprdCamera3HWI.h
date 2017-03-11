@@ -173,7 +173,7 @@ class SprdCamera3HWI {
     bool mIsSkipFrm;
 
     static unsigned int mCameraSessionActive;
-    static const int64_t kPendingTime = 1000000; // 1ms
+    static const int64_t kPendingTime = 1000000;       // 1ms
     static const int64_t kPendingTimeOut = 5000000000; // 5s
     bool mFlush;
 

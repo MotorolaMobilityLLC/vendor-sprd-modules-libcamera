@@ -661,7 +661,7 @@ void add_border_uv(cmr_u8 *dst, cmr_u8 *src, cmr_u32 w, cmr_u32 h,
     for (i = 0; i < h; i++) {
         src_ptr += border_w * PIXEL_STRIDE;
         for (j = 0; j < border_w; j++) {
-            *dst_ptr = *src_ptr; // u
+            *dst_ptr = *src_ptr;             // u
             *(dst_ptr + 1) = *(src_ptr + 1); // v
 
             src_ptr -= PIXEL_STRIDE;
@@ -674,7 +674,7 @@ void add_border_uv(cmr_u8 *dst, cmr_u8 *src, cmr_u32 w, cmr_u32 h,
 
         src_ptr -= 2 * PIXEL_STRIDE;
         for (j = 0; j < border_w; j++) {
-            *dst_ptr = *src_ptr; // u
+            *dst_ptr = *src_ptr;             // u
             *(dst_ptr + 1) = *(src_ptr + 1); // v
 
             src_ptr -= PIXEL_STRIDE;

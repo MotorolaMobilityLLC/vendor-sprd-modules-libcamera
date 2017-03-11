@@ -163,7 +163,7 @@ struct preview_param {
     cmr_u32 is_cfg_rot_cap;
     cmr_u32 is_dv;
     cmr_u32 is_hdr;
-    cmr_u32 frame_ctrl; // 0:stop,1:continue
+    cmr_u32 frame_ctrl;  // 0:stop,1:continue
     cmr_u32 frame_count; // 0xffffffff for zsl
     cmr_u32 isp_width_limit;
     cmr_u32 encode_angle;

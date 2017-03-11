@@ -7009,7 +7009,7 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle,
     zoom_param = &prev_cxt->prev_param.zoom_setting;
 
     //	cmr_bzero(prev_cxt->prev_rot_frm_is_lock, PREV_ROT_FRM_CNT *
-    //sizeof(cmr_uint));
+    // sizeof(cmr_uint));
     prev_cxt->prev_rot_index = 0;
     prev_cxt->skip_mode = IMG_SKIP_SW_KER;
 
@@ -10843,7 +10843,7 @@ cmr_int prev_depthmap_open(struct prev_handle *handle, cmr_u32 camera_id,
         in_param.frame_rect.start_y = 0;
         in_param.frame_rect.width = in_param.frame_size.height;
         in_param.frame_rect.height = in_param.frame_size.width;
-        in_param.otp_data.otp_size = 8192; // otp_data->size;//TBD
+        in_param.otp_data.otp_size = 8192;             // otp_data->size;//TBD
         in_param.otp_data.otp_ptr = otp_data.data_ptr; // TBD
     } else {
         in_param.frame_size.width = prev_cxt->actual_prev_size.width;
@@ -10852,7 +10852,7 @@ cmr_int prev_depthmap_open(struct prev_handle *handle, cmr_u32 camera_id,
         in_param.frame_rect.start_y = 0;
         in_param.frame_rect.width = in_param.frame_size.width;
         in_param.frame_rect.height = in_param.frame_size.height;
-        in_param.otp_data.otp_size = 8192; // otp_data->size;//TBD
+        in_param.otp_data.otp_size = 8192;             // otp_data->size;//TBD
         in_param.otp_data.otp_ptr = otp_data.data_ptr; // TBD
     }
 
@@ -10923,7 +10923,7 @@ cmr_int prev_depthmap_send_data(struct prev_handle *handle, cmr_u32 camera_id,
     ipm_in_param.dst_frame = *frm;
     ipm_in_param.touch_x = prev_cxt->touch_info.touchX;
     ipm_in_param.touch_y = prev_cxt->touch_info.touchY;
-    ipm_in_param.depth_map.width = 480; // TBD
+    ipm_in_param.depth_map.width = 480;  // TBD
     ipm_in_param.depth_map.height = 360; // TBD
     ipm_in_param.depth_map.depth_map_ptr =
         (void *)((unsigned long)depthmap_frm->yaddr_vir); // TBD

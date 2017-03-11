@@ -139,7 +139,7 @@ class SprdCamera3StereoVideo {
     bool mIommuEnabled;
     Mutex mWaitFrameMutex;
     Condition mWaitFrameSignal;
-    static const int64_t kPendingTime = 1000000; // 1ms
+    static const int64_t kPendingTime = 1000000;       // 1ms
     static const int64_t kPendingTimeOut = 5000000000; // 5s
 
     int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);

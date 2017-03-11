@@ -77,7 +77,7 @@ typedef struct {
     // void 		*ptr;       //content buffer
     char ptr[256];
     uint32_t count; // count of content by type
-    uint32_t size; // size of content buffer by byte
+    uint32_t size;  // size of content buffer by byte
 } EXIF_CUSTOM_T;
 
 #define MAX_ASCII_STR_SIZE 256
@@ -149,11 +149,11 @@ typedef struct exif_pri_desc_tag {
 } EXIF_PRI_DESC_T;
 
 typedef struct exif_primary_tag {
-    EXIF_PRI_BASIC_T basic; // Mandatory
+    EXIF_PRI_BASIC_T basic;                  // Mandatory
     EXIF_PRI_DATA_STRUCT_T *data_struct_ptr; // Optional. Set NULL to ignore it
-    EXIF_PRI_DATA_CHAR_T *data_char_ptr; // Optional. Set NULL to ignore it
-    EXIF_PRI_DESC_T *img_desc_ptr; // Optional. Set NULL to ignore it
-    uint32_t reserved; // reserved
+    EXIF_PRI_DATA_CHAR_T *data_char_ptr;     // Optional. Set NULL to ignore it
+    EXIF_PRI_DESC_T *img_desc_ptr;           // Optional. Set NULL to ignore it
+    uint32_t reserved;                       // reserved
 } EXIF_PRIMARY_INFO_T;
 
 // Tags relating to image data characteristics and image configuration.
@@ -339,14 +339,14 @@ typedef struct exif_spec_other_tag {
 typedef struct exif_specific_info_tag {
     EXIF_SPEC_BASIC_T basic; // Mandatory
     EXIF_SPEC_VERSION_T
-        *version_ptr; // Optional. Read only. Set NULL to ignore it
+    *version_ptr; // Optional. Read only. Set NULL to ignore it
     EXIF_SPEC_IMG_CONFIG_T *img_config_ptr; // Optional. Set NULL to ignore it
-    EXIF_SPEC_USER_T *user_ptr; // Optional. Set NULL to ignore it
+    EXIF_SPEC_USER_T *user_ptr;             // Optional. Set NULL to ignore it
     EXIF_SPEC_RELATED_FILE_T
-        *related_file_ptr; // Optional. Set NULL to ignore it
+    *related_file_ptr;                    // Optional. Set NULL to ignore it
     EXIF_SPEC_DATE_TIME_T *date_time_ptr; // Optional. Set NULL to ignore it
     EXIF_SPEC_PIC_TAKING_COND_T
-        *pic_taking_cond_ptr; // Optional. Set NULL to ignore it
+    *pic_taking_cond_ptr;         // Optional. Set NULL to ignore it
     EXIF_SPEC_OTHER_T *other_ptr; // Optional. Set NULL to ignore it
 } EXIF_SPECIFIC_INFO_T;
 
@@ -433,9 +433,9 @@ typedef struct exif_interoperability_info_t {
 
 // structure of EXIF information
 typedef struct exif_info_tag {
-    EXIF_PRIMARY_INFO_T primary; // Mandatory
-    EXIF_SPECIFIC_INFO_T *spec_ptr; // Optional. Set NULL to ignore it
-    EXIF_GPS_INFO_T *gps_ptr; // Optional. Set NULL to ignore it
+    EXIF_PRIMARY_INFO_T primary;             // Mandatory
+    EXIF_SPECIFIC_INFO_T *spec_ptr;          // Optional. Set NULL to ignore it
+    EXIF_GPS_INFO_T *gps_ptr;                // Optional. Set NULL to ignore it
     EXIF_INTEROPERABILITY_INFO_T *inter_ptr; // Optional. Set NULL to ignore it
 } JINF_EXIF_INFO_T;
 
