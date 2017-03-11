@@ -10,7 +10,7 @@
 #ifndef MORPHO_API_H
 #define MORPHO_API_H
 
-/**  
+/**
  * API関数を定義するときに使用.
  * WindowsでDLLを作成する際等に書き換えることで切り替え可能
  */

@@ -1,14 +1,13 @@
 #ifndef MORPHO_HDR
 #define MORPHO_HDR
 
-typedef unsigned char   BYTE;
-
+typedef unsigned char BYTE;
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
-int HDR_Function(BYTE *Y0, BYTE *Y1, BYTE *Y2, BYTE* output, int height, int width, char *format);
+int HDR_Function(BYTE *Y0, BYTE *Y1, BYTE *Y2, BYTE *output, int height,
+                 int width, char *format);
 #ifdef __cplusplus
 }
 #endif
