@@ -221,7 +221,9 @@ typedef struct _af_tuning_param {
 	AF_Window_Config VAF_win;	// VAF window config
 	// default param for indoor/outdoor/dark
 	AF_Tuning AF_Tuning_Data[SCENE_NUM];	// Algorithm related parameter
-	uint8_t dummy[101];	// for 4-bytes alignment issue
+	uint8_t soft_landing_dly;
+	uint8_t soft_landing_step;
+	uint8_t dummy[99];	// for 4-bytes alignment issue
 } af_tuning_param_t;
 
 #pragma pack(pop)

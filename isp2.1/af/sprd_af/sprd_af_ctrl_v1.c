@@ -1092,6 +1092,7 @@ extern "C" {
 		if (NULL != af->vcm_ops.set_pos) {
 			//af->vcm_ops.set_pos(af->caller, pos); // must be provided
 			af->vcm_ops.set_pos(isp_ctx->ioctrl_ptr->caller_handler, pos);
+			af->lens.pos = pos;
 		}
 		return 0;
 	}
@@ -2695,8 +2696,8 @@ v=v>(max)?(max):v; hist[v]++;}
 				ISP_LOGD("skip af_tuning");
 				*bisExist = 0;
 			} else {
-				af->soft_landing_dly = af->af_tuning_data.dummy[0];
-				af->soft_landing_step = af->af_tuning_data.dummy[1];
+				af->soft_landing_dly = af->af_tuning_data.soft_landing_dly;
+				af->soft_landing_step = af->af_tuning_data.soft_landing_step;				
 				memcpy(&af->filter_clip[0], &af->af_tuning_data.filter_clip[0],
 				       sizeof(af->af_tuning_data.filter_clip));
 				memcpy(&af->bv_threshold[0], &af->af_tuning_data.bv_threshold[0],
@@ -2873,8 +2874,8 @@ v=v>(max)?(max):v; hist[v]++;}
 			memcpy(&af->af_tuning_data, af_pm_output->param_data[0].data_ptr, sizeof(af->af_tuning_data));
 			AF_LOGD("sensor tuning param size match");
 			if (1 == af->af_tuning_data.flag) {
-				af->soft_landing_dly = af->af_tuning_data.dummy[0];
-				af->soft_landing_step = af->af_tuning_data.dummy[1];
+				af->soft_landing_dly = af->af_tuning_data.soft_landing_dly;
+				af->soft_landing_step = af->af_tuning_data.soft_landing_step;
 				memcpy(af->filter_clip, af->af_tuning_data.filter_clip, sizeof(af->filter_clip));
 				memcpy(af->bv_threshold, af->af_tuning_data.bv_threshold, sizeof(af->bv_threshold));
 				memcpy(&af->fv.AF_Tuning_Data, &af->af_tuning_data.AF_Tuning_Data[INDOOR_SCENE],
