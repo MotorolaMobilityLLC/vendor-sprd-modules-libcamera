@@ -493,7 +493,7 @@ private:
 	static const int                kVideoRotBufferCount = 24;
 	static const int                kZslBufferCount    = 24;
 	static const int                kZslRotBufferCount = 24;
-	static const int                kRefocusBufferCount    = 24;
+	static const int                kRefocusBufferCount    = 4; //24;
 	static const int                kPdafRawBufferCount    = 4;
 	static const int                kRawBufferCount        = 1;
 	static const int                kJpegBufferCount       = 1;

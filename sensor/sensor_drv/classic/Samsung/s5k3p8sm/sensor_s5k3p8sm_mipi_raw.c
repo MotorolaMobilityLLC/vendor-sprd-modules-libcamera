@@ -514,12 +514,12 @@ static SENSOR_STATIC_INFO_T s_s5k3p8sm_static_info = {
     357, // focal_length;
     0,   // max_fps,max fps of sensor's all settings,it will be calculated from
          // sensor mode fps
-    16 * 256, // max_adgain,AD-gain
-    0,        // ois_supported;
-    0,        // pdaf_supported;
-    1,        // exp_valid_frame_num;N+2-1
-    64,       // clamp_level,black level
-    1,        // adgain_valid_frame_num;N+1-1
+    16 * 256,                 // max_adgain,AD-gain
+    0,                        // ois_supported;
+    0, //SENSOR_PDAF_TYPE3_ENABLE, // pdaf_supported;
+    1,                        // exp_valid_frame_num;N+2-1
+    64,                       // clamp_level,black level
+    1,                        // adgain_valid_frame_num;N+1-1
 };
 
 static SENSOR_MODE_FPS_INFO_T s_s5k3p8sm_mode_fps_info = {
@@ -1506,6 +1506,54 @@ static uint32_t _s5k3p8sm_get_fps_info(SENSOR_HW_HANDLE handle,
     return rtn;
 }
 
+static const struct pd_pos_info _s5k3p8sm_pd_pos_r[] = {
+    {28, 35}, {44, 39}, {64, 39}, {80, 35}, {32, 47}, {48, 51},
+    {60, 51}, {76, 47}, {32, 71}, {48, 67}, {60, 67}, {76, 71},
+    {28, 83}, {44, 79}, {64, 79}, {80, 83},
+};
+
+static const struct pd_pos_info _s5k3p8sm_pd_pos_l[] = {
+    {28, 31}, {44, 35}, {64, 35}, {80, 31}, {32, 51}, {48, 55},
+    {60, 55}, {76, 51}, {32, 67}, {48, 63}, {60, 63}, {76, 67},
+    {28, 87}, {44, 83}, {64, 83}, {80, 87},
+};
+
+static uint32_t _s5k3p8sm_get_pdaf_info(SENSOR_HW_HANDLE handle,
+                                        uint32_t *param) {
+    uint32_t rtn = SENSOR_SUCCESS;
+    struct sensor_pdaf_info *pdaf_info = NULL;
+    cmr_u16 pd_pos_r_size = 0;
+    cmr_u16 pd_pos_l_size = 0;
+
+    /*TODO*/
+    if (param == NULL) {
+        SENSOR_PRINT_ERR("null input");
+        return -1;
+    }
+    pdaf_info = (struct sensor_pdaf_info *)param;
+    pd_pos_r_size = NUMBER_OF_ARRAY(_s5k3p8sm_pd_pos_r);
+    pd_pos_l_size = NUMBER_OF_ARRAY(_s5k3p8sm_pd_pos_l);
+    if (pd_pos_r_size != pd_pos_l_size) {
+        SENSOR_PRINT_ERR(
+            "s5k3l8xxm3_pd_pos_r size not match s5k3l8xxm3_pd_pos_l");
+        return -1;
+    }
+
+    pdaf_info->pd_offset_x = 16;
+    pdaf_info->pd_offset_y = 16;
+    pdaf_info->pd_pitch_x = 64;
+    pdaf_info->pd_pitch_y = 64;
+    pdaf_info->pd_density_x = 16;
+    pdaf_info->pd_density_y = 16;
+    pdaf_info->pd_block_num_x = 65;
+    pdaf_info->pd_block_num_y = 48;
+    pdaf_info->pd_pos_size = pd_pos_r_size;
+    pdaf_info->pd_pos_r = (struct pd_pos_info *)_s5k3p8sm_pd_pos_r;
+    pdaf_info->pd_pos_l = (struct pd_pos_info *)_s5k3p8sm_pd_pos_l;
+
+    return rtn;
+}
+
 static unsigned long _s5k3p8sm_access_val(SENSOR_HW_HANDLE handle,
                                           unsigned long param) {
     uint32_t rtn = SENSOR_SUCCESS;
@@ -1560,6 +1608,9 @@ static unsigned long _s5k3p8sm_access_val(SENSOR_HW_HANDLE handle,
         break;
     case SENSOR_VAL_TYPE_GET_FPS_INFO:
         rtn = _s5k3p8sm_get_fps_info(handle, param_ptr->pval);
+        break;
+    case SENSOR_VAL_TYPE_GET_PDAF_INFO:
+        rtn = _s5k3p8sm_get_pdaf_info(handle, param_ptr->pval);
         break;
     default:
         break;

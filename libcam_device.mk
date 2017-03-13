@@ -35,6 +35,8 @@ TUNING_BIN += sp2509_mipi_raw_tuning.bin
 TUNING_BIN += ov8856s_mipi_raw_tuning.bin
 TUNING_BIN += sp2509_mipi_raw_tuning.bin
 TUNING_BIN += s5k3p8sm_mipi_raw_tuning.bin
+TUNING_BIN += s5k3p8sm_mipi_raw_pdotp.bin
+TUNING_BIN += s5k3p8sm_mipi_raw_cbc.bin
 
 ALTEK_LIB := libalAWBLib \
 	libalAELib \
