@@ -131,7 +131,7 @@ int32_t smart_ctl_block_enable_recover(smart_handle_t handle, uint32_t smart_id)
 int32_t smart_ctl_block_disable(smart_handle_t handle, uint32_t smart_id);
 
 smart_handle_t smart_ctl_init(struct smart_init_param *param, void *result);
-int32_t smart_ctl_deinit(smart_handle_t handle, void *param, void *result);
+int32_t smart_ctl_deinit(smart_handle_t *handle, void *param, void *result);
 cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input *in_ptr);
 
 #ifdef	 __cplusplus

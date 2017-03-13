@@ -972,32 +972,32 @@ EXIT:
 	return rtn;
 }
 
-int32_t smart_ctl_deinit(smart_handle_t handle, void *param, void *result)
+int32_t smart_ctl_deinit(smart_handle_t *handle, void *param, void *result)
 {
 	UNUSED(param);
 	UNUSED(result);
 	isp_s32 rtn = ISP_SUCCESS;
-	struct smart_context *cxt = NULL;
+	struct smart_context *cxt_ptr = *handle;
 
-	rtn = check_handle_validate(handle);
+	rtn = check_handle_validate(*handle);
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to check handle, rtn = %d\n", rtn);
 		rtn = ISP_ERROR;
 		goto ERROR_EXIT;
 	}
 
-	cxt = (struct smart_context *)handle;
-	if (NULL != cxt->debug_file) {
-		smart_debug_file_deinit(cxt->debug_file);
-		cxt->debug_file = NULL;
+	if (NULL != cxt_ptr->debug_file) {
+		smart_debug_file_deinit(cxt_ptr->debug_file);
+		cxt_ptr->debug_file = NULL;
 	}
 
-	pthread_mutex_destroy(&cxt->status_lock);
-	memset(cxt, 0, sizeof(*cxt));
-	free(cxt);
-	cxt = NULL;
+	pthread_mutex_destroy(&cxt_ptr->status_lock);
 
 ERROR_EXIT:
+	if (cxt_ptr) {
+		free((void*)cxt_ptr);
+		*handle = NULL;
+	}
 	ISP_LOGI(":ISP:done %d", rtn);
 	return rtn;
 }

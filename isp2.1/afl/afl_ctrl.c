@@ -389,32 +389,43 @@ exit:
 	return rtn;
 }
 
-cmr_int afl_ctrl_deinit(cmr_handle isp_afl_handle)
+cmr_int afl_ctrl_deinit(cmr_handle *isp_afl_handle)
 {
 	cmr_int                         rtn = ISP_SUCCESS;
-	struct isp_anti_flicker_cfg     *cxt_ptr = (struct isp_anti_flicker_cfg*)isp_afl_handle;
+	struct isp_anti_flicker_cfg     *cxt_ptr = *isp_afl_handle;
 	cmr_int bypass = 1;
 
 	ISP_CHECK_HANDLE_VALID(isp_afl_handle);
+	if (!cxt_ptr) {
+		ISP_LOGE("fail to check param, in parm is NULL");
+		rtn = ISP_ERROR;
+	}
 
 	isp_dev_anti_flicker_bypass(cxt_ptr->dev_handle, bypass);
 
 	rtn = aflctrl_destroy_thread(cxt_ptr);
+	if (rtn) {
+		ISP_LOGE("fail to destroy aflctrl thread.");
+		rtn = antiflcker_sw_deinit();
+		if (rtn)
+			ISP_LOGE("fail to do antiflcker deinit.");
+		goto exit;
+	}
 
+	rtn = antiflcker_sw_deinit();
+	if (rtn) {
+		ISP_LOGE("fail to do antiflcker deinit.");
+		return ISP_ERROR;
+	}
+
+exit:
 	if (cxt_ptr) {
 		if (cxt_ptr->addr) {
 			free(cxt_ptr->addr);
 			cxt_ptr->addr = NULL;
 		}
 		free((void*)cxt_ptr);
-		cxt_ptr = NULL;
-	}
-#if 1/*Solve compile problem*/
-	rtn = antiflcker_sw_deinit();
-#endif
-	if (rtn) {
-		ISP_LOGE("fail to do AFL_TAG:antiflcker_sw_deinit");
-		return ISP_ERROR;
+		*isp_afl_handle = NULL;
 	}
 
 	ISP_LOGI(":ISP:done %ld", rtn);

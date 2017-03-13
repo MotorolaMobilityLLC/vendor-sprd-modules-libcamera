@@ -179,19 +179,24 @@ exit:
 	return rtn;
 }
 
-cmr_int awb_ctrl_deinit(cmr_handle handle_awb)
+cmr_int awb_ctrl_deinit(cmr_handle *handle_awb)
 {
-	cmr_int                         rtn = ISP_SUCCESS;
-	struct awbctrl_cxt *cxt_ptr = (struct awbctrl_cxt *)handle_awb;
+	cmr_int		rtn = ISP_SUCCESS;
+	struct awbctrl_cxt *cxt_ptr = *handle_awb;
 
-	ISP_CHECK_HANDLE_VALID(handle_awb);
+	if (!cxt_ptr) {
+		ISP_LOGE("fail to check param,param is NULL!");
+		return -ISP_ERROR;
+	}
 
 	rtn = awbctrl_deinit_adpt(cxt_ptr);
-	if (ISP_SUCCESS == rtn) {
-		if (handle_awb) {
-			free(handle_awb);
-			handle_awb = NULL;
-		}
+	if (rtn) {
+		ISP_LOGE("fail to deinit awbctrl adpt %ld", rtn);
+	}
+
+	if (cxt_ptr) {
+		free((void*)cxt_ptr);
+		*handle_awb = NULL;
 	}
 
 	ISP_LOGI(":ISP:done %d", rtn);

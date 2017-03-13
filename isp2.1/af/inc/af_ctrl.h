@@ -155,7 +155,7 @@ struct afctrl_cxt {
 };
 
 cmr_int af_ctrl_init(struct afctrl_init_in *input_ptr, cmr_handle *handle_af);
-cmr_int af_ctrl_deinit(cmr_handle handle_af);
+cmr_int af_ctrl_deinit(cmr_handle *handle_af);
 cmr_int af_ctrl_process(cmr_handle handle_af, void *in_ptr, struct afctrl_calc_out *result);
 cmr_int af_ctrl_ioctrl(cmr_handle handle_af, cmr_int cmd, void *in_ptr, void *out_ptr);
 /*------------------------------------------------------------------------------*

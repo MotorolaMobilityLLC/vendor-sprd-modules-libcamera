@@ -40,7 +40,7 @@ struct afl_proc_in {
 cmr_int afl_ctrl_init(cmr_handle *isp_afl_handle, struct afl_ctrl_init_in *input_ptr);
 cmr_int afl_ctrl_process(cmr_handle isp_afl_handle, struct afl_proc_in *in_ptr, struct afl_ctrl_proc_out *out_ptr);
 cmr_int afl_ctrl_cfg(cmr_handle isp_afl_handle);
-cmr_int afl_ctrl_deinit(cmr_handle isp_afl_handle);
+cmr_int afl_ctrl_deinit(cmr_handle *isp_afl_handle);
 
 #ifdef __cplusplus
 }

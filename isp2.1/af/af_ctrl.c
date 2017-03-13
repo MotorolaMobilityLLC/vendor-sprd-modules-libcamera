@@ -410,27 +410,35 @@ cmr_int af_ctrl_init(struct afctrl_init_in *input_ptr, cmr_handle *handle_af)
 	}
 
 	*handle_af = (cmr_handle)cxt_ptr;
-	ISP_LOGI(":ISP:isp_3a_ctrl af_init rtn = %d", rtn);
+
+	ISP_LOGI(":ISP: done %d", rtn);
 	return rtn;
 
 error_adpt_init:
-	afctrl_destroy_thread(cxt_ptr);
+	rtn = afctrl_destroy_thread(cxt_ptr);
+	if (rtn) {
+		ISP_LOGE("fail to destroy afctrl thr %ld", rtn );
+	}
 
 exit:
 	if (cxt_ptr) {
 		free((void*)cxt_ptr);
+		cxt_ptr = NULL;
 	}
 
 	return ISP_SUCCESS;
 }
 
-cmr_int af_ctrl_deinit(cmr_handle handle_af)
+cmr_int af_ctrl_deinit(cmr_handle *handle_af)
 {
 	cmr_int rtn = ISP_SUCCESS;
-	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
+	struct afctrl_cxt *cxt_ptr = *handle_af;
 	CMR_MSG_INIT(message);
 
-	ISP_CHECK_HANDLE_VALID(handle_af);
+	if (!cxt_ptr) {
+		ISP_LOGE("fail to deinit, handle_af is NULL");
+		return -ISP_ERROR;
+	}
 	message.msg_type = AFCTRL_EVT_DEINIT;
 	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
 	message.alloc_flag = 0;
@@ -441,10 +449,18 @@ cmr_int af_ctrl_deinit(cmr_handle handle_af)
 		goto exit;
 	}
 
-	afctrl_destroy_thread(cxt_ptr);
-	free((void*)handle_af);
+	rtn = afctrl_destroy_thread(cxt_ptr);
+	if (rtn) {
+		ISP_LOGE("fail to destroy afctrl thr %ld", rtn );
+		goto exit;
+	}
 
 exit:
+	if (cxt_ptr) {
+		free((void*)cxt_ptr);
+		*handle_af = NULL;
+	}
+
 	ISP_LOGI(":ISP:done %d", rtn);
 	return rtn;
 }

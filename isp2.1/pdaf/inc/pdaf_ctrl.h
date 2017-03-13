@@ -137,7 +137,7 @@ struct pdafctrl_work_lib {
 cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in *in,
 		     struct pdaf_ctrl_init_out *out, cmr_handle *handle);
 
-cmr_int pdaf_ctrl_deinit(cmr_handle handle);
+cmr_int pdaf_ctrl_deinit(cmr_handle *handle);
 
 cmr_int pdaf_ctrl_process(cmr_handle handle, struct pdaf_ctrl_process_in *in,
 			struct pdaf_ctrl_process_out *out);

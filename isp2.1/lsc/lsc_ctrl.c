@@ -37,7 +37,7 @@ static int32_t _lscctrl_deinit_adpt(struct lsc_ctrl_cxt *cxt_ptr)
 	struct lsc_ctrl_work_lib *lib_ptr = NULL;
 
 	if (!cxt_ptr) {
-		LSC_ADV_LOGE("fail to check param, param is NULL!");
+		ISP_LOGE("fail to check param, param is NULL!");
 		goto exit;
 	}
 
@@ -45,11 +45,11 @@ static int32_t _lscctrl_deinit_adpt(struct lsc_ctrl_cxt *cxt_ptr)
 	if (lib_ptr->adpt_ops->adpt_deinit) {
 		rtn = lib_ptr->adpt_ops->adpt_deinit(lib_ptr->lib_handle, NULL, NULL);
 	} else {
-		LSC_ADV_LOGI(":ISP:adpt_deinit fun is NULL");
+		ISP_LOGI(":ISP:adpt_deinit fun is NULL");
 	}
 
 exit:
-	LSC_ADV_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGI(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -59,7 +59,7 @@ static int32_t _lscctrl_destroy_thread(struct lsc_ctrl_cxt *cxt_ptr)
 	cmr_int rtn = LSC_SUCCESS;
 
 	if (!cxt_ptr) {
-		LSC_ADV_LOGE("fail to check param , param is NULL");
+		ISP_LOGE("fail to check param , param is NULL");
 		rtn = LSC_ERROR;
 		goto exit;
 	}
@@ -69,11 +69,11 @@ static int32_t _lscctrl_destroy_thread(struct lsc_ctrl_cxt *cxt_ptr)
 		if (!rtn) {
 			cxt_ptr->thr_handle = NULL;
 		} else {
-			LSC_ADV_LOGE("fail to destroy ctrl thread %ld", rtn);
+			ISP_LOGE("fail to destroy ctrl thread %ld", rtn);
 		}
 	}
 exit:
-	LSC_ADV_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGI(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -83,17 +83,17 @@ static int32_t _lscctrl_process(struct lsc_ctrl_cxt *cxt_ptr, struct lsc_adv_cal
 	struct lsc_ctrl_work_lib *lib_ptr = NULL;
 
 	if (!cxt_ptr) {
-		LSC_ADV_LOGE("fail to check param,param is NULL!");
+		ISP_LOGE("fail to check param,param is NULL!");
 		goto exit;
 	}
 	lib_ptr = &cxt_ptr->work_lib;
 	if (lib_ptr->adpt_ops->adpt_process) {
 		rtn = lib_ptr->adpt_ops->adpt_process(lib_ptr->lib_handle, in_ptr, out_ptr);
 	} else {
-		LSC_ADV_LOGI(":ISP:process fun is NULL");
+		ISP_LOGI(":ISP:process fun is NULL");
 	}
 exit:
-	LSC_ADV_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGI(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -103,10 +103,10 @@ static int32_t _lscctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 	struct lsc_ctrl_cxt *handle = (struct lsc_ctrl_cxt *)p_data;
 
 	if (!message || !p_data) {
-		LSC_ADV_LOGE("fail to chcek param");
+		ISP_LOGE("fail to chcek param");
 		goto exit;
 	}
-	LSC_ADV_LOGI(":ISP:message.msg_type 0x%x, data %p", message->msg_type,
+	ISP_LOGI(":ISP:message.msg_type 0x%x, data %p", message->msg_type,
 		 message->data);
 
 	switch (message->msg_type) {
@@ -120,12 +120,12 @@ static int32_t _lscctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 		rtn = _lscctrl_process(handle, (struct lsc_adv_calc_param*)message->data, &handle->proc_out);
 		break;
 	default:
-		LSC_ADV_LOGE("fail to proc,don't support msg");
+		ISP_LOGE("fail to proc,don't support msg");
 		break;
 	}
 
 exit:
-	LSC_ADV_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGI(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -135,7 +135,7 @@ static int32_t _lscctrl_init_lib(struct lsc_ctrl_cxt *cxt_ptr, struct lsc_adv_in
 	struct lsc_ctrl_work_lib *lib_ptr = NULL;
 
 	if (!cxt_ptr) {
-		LSC_ADV_LOGE("fail to check param ,param is NULL!");
+		ISP_LOGE("fail to check param ,param is NULL!");
 		goto exit;
 	}
 
@@ -156,20 +156,20 @@ static int32_t _lscctrl_init_adpt(struct lsc_ctrl_cxt *cxt_ptr, struct lsc_adv_i
 	struct lsc_ctrl_work_lib *lib_ptr = NULL;
 
 	if (!cxt_ptr) {
-		LSC_ADV_LOGE("fail to check param, param is NULL!");
+		ISP_LOGE("fail to check param, param is NULL!");
 		goto exit;
 	}
 
 	/* find vendor adpter */
 	rtn  = adpt_get_ops(ADPT_LIB_LSC, &in_ptr->lib_param, &cxt_ptr->work_lib.adpt_ops);
 	if (rtn) {
-		LSC_ADV_LOGE("fail to get adapter layer ret = %ld", rtn);
+		ISP_LOGE("fail to get adapter layer ret = %ld", rtn);
 		goto exit;
 	}
 
 	rtn = _lscctrl_init_lib(cxt_ptr, in_ptr);
 exit:
-	LSC_ADV_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGI(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -179,11 +179,11 @@ static int32_t _lscctrl_create_thread(struct lsc_ctrl_cxt *cxt_ptr)
 
 	rtn = cmr_thread_create(&cxt_ptr->thr_handle, ISP_THREAD_QUEUE_NUM, _lscctrl_ctrl_thr_proc, (void*)cxt_ptr);
 	if (rtn) {
-		LSC_ADV_LOGE("fail to create ctrl thread");
+		ISP_LOGE("fail to create ctrl thread");
 		rtn = LSC_ERROR;
 	}
 
-	LSC_ADV_LOGI(":ISP:lsc_ctrl thread rtn %ld", rtn);
+	ISP_LOGI(":ISP:lsc_ctrl thread rtn %ld", rtn);
 	return rtn;
 }
 
@@ -192,7 +192,7 @@ static int32_t _lscsprd_unload_lib(struct lsc_ctrl_context *cxt)
 	int32_t rtn = LSC_SUCCESS;
 
 	if (NULL == cxt) {
-		LSC_ADV_LOGE("fail to check param, Param is NULL");
+		ISP_LOGE("fail to check param, Param is NULL");
 		rtn = LSC_PARAM_NULL;
 		goto exit;
 	}
@@ -213,55 +213,55 @@ static int32_t _lscsprd_load_lib(struct lsc_ctrl_context *cxt)
 	uint32_t version_id = cxt->lib_info->version_id;
 
 	if (NULL == cxt) {
-		LSC_ADV_LOGE("fail to check param,Param is NULL");
+		ISP_LOGE("fail to check param,Param is NULL");
 		rtn = LSC_PARAM_NULL;
 		goto exit;
 	}
 
 	v_count = sizeof(liblsc_path) / sizeof(liblsc_path[0]);
 	if (version_id >= v_count) {
-		LSC_ADV_LOGE("fail to get lsc lib version , version_id :%d", version_id);
+		ISP_LOGE("fail to get lsc lib version , version_id :%d", version_id);
 		rtn = LSC_ERROR;
 		goto exit;
 	}
 
-	LSC_ADV_LOGI(":ISP:lib lsc v_count : %d, version id: %d, libae path :%s", v_count ,version_id, liblsc_path[version_id]);
+	ISP_LOGI(":ISP:lib lsc v_count : %d, version id: %d, libae path :%s", v_count ,version_id, liblsc_path[version_id]);
 
 	cxt->lib_handle = dlopen(liblsc_path[version_id], RTLD_NOW);
 	if (!cxt->lib_handle) {
-		LSC_ADV_LOGE("fail to dlopen lsc lib");
+		ISP_LOGE("fail to dlopen lsc lib");
 		rtn = LSC_ERROR;
 		goto exit;
 	}
 
 	cxt->lib_ops.alsc_init = dlsym(cxt->lib_handle, "lsc_adv_init");
 	if (!cxt->lib_ops.alsc_init) {
-		LSC_ADV_LOGE("fail to dlsym lsc_sprd_init");
+		ISP_LOGE("fail to dlsym lsc_sprd_init");
 		rtn = LSC_ERROR;
 		goto error_dlsym;
 	}
 
 	cxt->lib_ops.alsc_calc = dlsym(cxt->lib_handle, "lsc_adv_calculation");
 	if (!cxt->lib_ops.alsc_calc) {
-		LSC_ADV_LOGE("fail to dlsym lsc_sprd_calculation");
+		ISP_LOGE("fail to dlsym lsc_sprd_calculation");
 		rtn = LSC_ERROR;
 		goto error_dlsym;
 	}
 
 	cxt->lib_ops.alsc_io_ctrl = dlsym(cxt->lib_handle, "lsc_adv_ioctrl");
 	if (!cxt->lib_ops.alsc_io_ctrl) {
-		LSC_ADV_LOGE("fail to dlsym lsc_sprd_io_ctrl");
+		ISP_LOGE("fail to dlsym lsc_sprd_io_ctrl");
 		rtn = LSC_ERROR;
 		goto error_dlsym;
 	}
 
 	cxt->lib_ops.alsc_deinit = dlsym(cxt->lib_handle, "lsc_adv_deinit");
 	if (!cxt->lib_ops.alsc_deinit) {
-		LSC_ADV_LOGE("fail to dlsym lsc_sprd_deinit");
+		ISP_LOGE("fail to dlsym lsc_sprd_deinit");
 		rtn = LSC_ERROR;
 		goto error_dlsym;
 	}
-	LSC_ADV_LOGI(":ISP:load lsc lib success");
+	ISP_LOGI(":ISP:load lsc lib success");
 
 	return LSC_SUCCESS;
 
@@ -269,7 +269,7 @@ error_dlsym:
 	rtn = _lscsprd_unload_lib(cxt);
 
 exit:
-	LSC_ADV_LOGE("fail to load lsc lib ret = %d", rtn);
+	ISP_LOGE("fail to load lsc lib ret = %d", rtn);
 	return rtn;
 }
 
@@ -283,7 +283,7 @@ static void* lsc_sprd_init(void *in, void *out)
 	cxt = (struct lsc_ctrl_context *)malloc(sizeof(struct lsc_ctrl_context));
 	if (NULL == cxt) {
 		rtn = LSC_ALLOC_ERROR;
-		LSC_ADV_LOGE("fail to alloc!");
+		ISP_LOGE("fail to alloc!");
 		goto EXIT;
 	}
 
@@ -293,13 +293,13 @@ static void* lsc_sprd_init(void *in, void *out)
 
 	rtn = _lscsprd_load_lib(cxt);
 	if (LSC_SUCCESS != rtn) {
-		LSC_ADV_LOGE("fail to load lsc lib");
+		ISP_LOGE("fail to load lsc lib");
 		goto EXIT;
 	}
 
 	alsc_handle = cxt->lib_ops.alsc_init(init_param);
 	if (NULL == alsc_handle) {
-		LSC_ADV_LOGE("fail to do alsc init!");
+		ISP_LOGE("fail to do alsc init!");
 		rtn = LSC_ALLOC_ERROR;
 		goto EXIT;
 	}
@@ -308,7 +308,7 @@ static void* lsc_sprd_init(void *in, void *out)
 
 	pthread_mutex_init(&cxt->status_lock, NULL);
 
-	LSC_ADV_LOGI(":ISP:isp_3a_ctrl lsc_init rtn = %d", rtn);
+	ISP_LOGI(":ISP:isp_3a_ctrl lsc_init rtn = %d", rtn);
 	return (void *)cxt;
 
 EXIT:
@@ -324,7 +324,7 @@ EXIT:
 		cxt = NULL;
 	}
 
-	LSC_ADV_LOGI(":ISP:done rtn = %d", rtn);
+	ISP_LOGI(":ISP:done rtn = %d", rtn);
 
 	return NULL;
 }
@@ -337,7 +337,7 @@ static int32_t lsc_sprd_deinit(void *handle, void *in, void *out)
 	UNUSED(out);
 
 	if (!handle) {
-		LSC_ADV_LOGE("fail to check param!");
+		ISP_LOGE("fail to check param!");
 		return LSC_ERROR;
 	}
 
@@ -345,19 +345,19 @@ static int32_t lsc_sprd_deinit(void *handle, void *in, void *out)
 
 	rtn = cxt->lib_ops.alsc_deinit(cxt->alsc_handle);
 	if (LSC_SUCCESS != rtn) {
-		LSC_ADV_LOGE("fail to do alsc deinit!");
+		ISP_LOGE("fail to do alsc deinit!");
 	}
 
 	rtn = _lscsprd_unload_lib(cxt);
 	if (LSC_SUCCESS != rtn) {
-		LSC_ADV_LOGE("fail to unload lsc lib");
+		ISP_LOGE("fail to unload lsc lib");
 	}
 
 	pthread_mutex_destroy(&cxt->status_lock);
 
 	memset(cxt, 0, sizeof(*cxt));
 	free(cxt);
-	LSC_ADV_LOGI(":ISP:done rtn = %d", rtn);
+	ISP_LOGI(":ISP:done rtn = %d", rtn);
 
 	return rtn;
 }
@@ -370,7 +370,7 @@ static int32_t lsc_sprd_calculation(void* handle, void *in, void *out)
 	struct lsc_adv_calc_result *result = (struct lsc_adv_calc_result *)out;
 
 	if (!handle) {
-		LSC_ADV_LOGE("fail to check param is NULL!");
+		ISP_LOGE("fail to check param is NULL!");
 		return LSC_ERROR;
 	}
 
@@ -387,7 +387,7 @@ static int32_t lsc_sprd_ioctrl(void* handle, enum alsc_io_ctrl_cmd cmd,void *in,
 	struct lsc_ctrl_context *cxt = NULL;
 
 	if (!handle) {
-		LSC_ADV_LOGE("fail to check param, param is NULL!");
+		ISP_LOGE("fail to check param, param is NULL!");
 		return LSC_ERROR;
 	}
 
@@ -459,7 +459,7 @@ cmr_int lsc_ctrl_init(struct lsc_adv_init_param *input_ptr, cmr_handle *handle_l
 
 	cxt_ptr = (struct lsc_ctrl_cxt*)malloc(sizeof(struct lsc_ctrl_cxt));
 	if (NULL == cxt_ptr) {
-		LSC_ADV_LOGE("fail to create lsc ctrl context!");
+		ISP_LOGE("fail to create lsc ctrl context!");
 		rtn = LSC_ALLOC_ERROR;
 		goto exit;
 	}
@@ -483,28 +483,43 @@ exit:
 	} else {
 		*handle_lsc = (cmr_handle)cxt_ptr;
 	}
-	LSC_ADV_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGI(":ISP:done %ld", rtn);
 
 	return rtn;
 }
 
-cmr_int lsc_ctrl_deinit(cmr_handle handle_lsc)
+cmr_int lsc_ctrl_deinit(cmr_handle *handle_lsc)
 {
 	cmr_int rtn = LSC_SUCCESS;
-	struct lsc_ctrl_cxt *cxt_ptr = (struct lsc_ctrl_cxt*)handle_lsc;
+	struct lsc_ctrl_cxt *cxt_ptr = *handle_lsc;
 
-	if (!handle_lsc) {
-		LSC_ADV_LOGE("fail to check param, param is NULL!");
+	if (!cxt_ptr) {
+		ISP_LOGE("fail to check param, param is NULL!");
 		rtn = LSC_HANDLER_NULL;
 	}
 
 	rtn = _lscctrl_deinit_adpt(cxt_ptr);
+	if (rtn) {
+		ISP_LOGE("fail to deinit lscctrl adpt %ld", rtn );
+		rtn = _lscctrl_destroy_thread(cxt_ptr);
+		if (rtn)
+			ISP_LOGE("fail to destroy lscctrl thread %ld", rtn );
+		goto exit;
+	}
 
 	rtn = _lscctrl_destroy_thread(cxt_ptr);
+	if (rtn) {
+		ISP_LOGE("fail to destroy lscctrl thread %ld", rtn );
+		goto exit;
+	}
 
-	free((void*)handle_lsc);
+exit:
+	if (cxt_ptr) {
+		free((void*)cxt_ptr);
+		*handle_lsc = NULL;
+	}
 
-	LSC_ADV_LOGI(":ISP:done %d", rtn);
+	ISP_LOGI(":ISP:done %d", rtn);
 	return rtn;
 }
 
@@ -514,7 +529,7 @@ cmr_int lsc_ctrl_process(cmr_handle handle_lsc, struct lsc_adv_calc_param *in_pt
 	struct lsc_ctrl_cxt *cxt_ptr = (struct lsc_ctrl_cxt*)handle_lsc;
 
 	if (!handle_lsc) {
-		LSC_ADV_LOGE("fail to check param, param is NULL!");
+		ISP_LOGE("fail to check param, param is NULL!");
 		rtn = LSC_HANDLER_NULL;
 		goto exit;
 	}
@@ -536,14 +551,14 @@ cmr_int lsc_ctrl_process(cmr_handle handle_lsc, struct lsc_adv_calc_param *in_pt
 	rtn = cmr_thread_msg_send(cxt_ptr->thr_handle, &message);
 
 	if (rtn) {
-		LSC_ADV_LOGE("fail to send msg to main thr %ld", rtn);
+		ISP_LOGE("fail to send msg to main thr %ld", rtn);
 		if (message.data)
 			free(message.data);
 		goto exit;
 	}
 
 exit:
-	LSC_ADV_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGI(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -554,7 +569,7 @@ cmr_int lsc_ctrl_ioctrl(cmr_handle handle_lsc, enum alsc_io_ctrl_cmd cmd, void *
 	struct lsc_ctrl_work_lib *lib_ptr = NULL;
 
 	if (!handle_lsc) {
-		LSC_ADV_LOGE("fail to check param, param is NULL!");
+		ISP_LOGE("fail to check param, param is NULL!");
 		rtn = LSC_HANDLER_NULL;
 		goto exit;
 	}
@@ -563,10 +578,10 @@ cmr_int lsc_ctrl_ioctrl(cmr_handle handle_lsc, enum alsc_io_ctrl_cmd cmd, void *
 	if (lib_ptr->adpt_ops->adpt_ioctrl) {
 		rtn = lib_ptr->adpt_ops->adpt_ioctrl(lib_ptr->lib_handle, cmd, in_ptr, out_ptr);
 	} else {
-		LSC_ADV_LOGI(":ISP:ioctrl fun is NULL");
+		ISP_LOGI(":ISP:ioctrl fun is NULL");
 	}
 exit:
-	LSC_ADV_LOGI(":ISP:cmd = %d,done %ld", cmd, rtn);
+	ISP_LOGI(":ISP:cmd = %d,done %ld", cmd, rtn);
 	return rtn;
 }
 

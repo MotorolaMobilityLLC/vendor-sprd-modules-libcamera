@@ -298,7 +298,7 @@ struct awb_data_info {
 
 cmr_int awb_ctrl_init(struct awb_ctrl_init_param *input_ptr, cmr_handle *handle_awb);
 cmr_int awb_ctrl_process(cmr_handle handle_awb, struct awb_ctrl_calc_param *param, struct awb_ctrl_calc_result *result);
-cmr_int  awb_ctrl_deinit(cmr_handle handle_awb);
+cmr_int  awb_ctrl_deinit(cmr_handle *handle_awb);
 cmr_int awb_ctrl_ioctrl(cmr_handle handle_awb, enum awb_ctrl_cmd cmd, void *in_ptr, void *out_ptr);
 
 /*------------------------------------------------------------------------------*

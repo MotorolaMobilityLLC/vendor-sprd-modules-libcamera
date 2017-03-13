@@ -529,7 +529,8 @@ int32_t ae_ctrl_init(struct ae_init_in *input_ptr, cmr_handle *handle_ae)
 	ae_get_rgb_gain(cxt_ptr, &cxt_ptr->bakup_rgb_gain);
 
 	*handle_ae = (cmr_handle)cxt_ptr;
-	ISP_LOGI(":ISP:isp_3a_ctrl ae_init rtn = %d", rtn);
+
+	ISP_LOGI(":ISP: done %d", rtn);
 	return rtn;
 
 error_adpt_init:
@@ -538,18 +539,23 @@ error_adpt_init:
 exit:
 	if (cxt_ptr) {
 		free((void*)cxt_ptr);
+		cxt_ptr = NULL;
 	}
 
 	return rtn;
 }
 
-cmr_int ae_ctrl_deinit(cmr_handle handle_ae)
+cmr_int ae_ctrl_deinit(cmr_handle *handle_ae)
 {
 	cmr_int rtn = ISP_SUCCESS;
-	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handle_ae;
+	struct aectrl_cxt *cxt_ptr = *handle_ae;
 	CMR_MSG_INIT(message);
 
-	ISP_CHECK_HANDLE_VALID(handle_ae);
+	if (!cxt_ptr) {
+		ISP_LOGE("fail to check param, in parm is NULL");
+		return ISP_ERROR;
+	}
+
 	message.msg_type = AECTRL_EVT_DEINIT;
 	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
 	message.alloc_flag = 0;
@@ -560,10 +566,20 @@ cmr_int ae_ctrl_deinit(cmr_handle handle_ae)
 		goto exit;
 	}
 
-	aectrl_destroy_thread(cxt_ptr);
+	rtn = aectrl_destroy_thread(cxt_ptr);
+	if (rtn) {
+		pthread_mutex_destroy(&cxt_ptr->ioctrl_sync_lock);
+		ISP_LOGE("fail to destroy aectrl thread %ld", rtn );
+		goto exit;
+	}
+
 	pthread_mutex_destroy(&cxt_ptr->ioctrl_sync_lock);
-	free((void*)handle_ae);
 exit:
+	if (cxt_ptr) {
+		free((void*)cxt_ptr);
+		*handle_ae = NULL;
+	}
+
 	ISP_LOGI(":ISP:done %d", rtn);
 	return rtn;
 }

@@ -344,35 +344,37 @@ exit:
 	return ret;
 }
 
-cmr_int pdaf_ctrl_deinit(cmr_handle handle)
+cmr_int pdaf_ctrl_deinit(cmr_handle *handle)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct pdafctrl_context *cxt = (struct pdafctrl_context *)handle;
+	struct pdafctrl_context *cxt_ptr = *handle;
 	CMR_MSG_INIT(message);
 
-	ISP_CHECK_HANDLE_VALID(handle);
-	if (!cxt->pdaf_support) {
+	if (!cxt_ptr) {
+		ISP_LOGE("fail to deinit, handle_pdaf is NULL");
+		return -ISP_ERROR;
+	}
+	if (!cxt_ptr->pdaf_support) {
 		ret = ISP_SUCCESS;
-		goto sucess_exit;
+		goto exit;
 	}
 	message.msg_type = PDAFCTRL_EVT_DEINIT;
 	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
 	message.alloc_flag = 0;
 	message.data = NULL;
-	ret = cmr_thread_msg_send(cxt->thread_cxt.ctrl_thr_handle, &message);
+	ret = cmr_thread_msg_send(cxt_ptr->thread_cxt.ctrl_thr_handle, &message);
 	if (ret) {
-		ISP_LOGE("fail tosend msg to main thr %ld", ret);
+		ISP_LOGE("fail to send msg to main thr %ld", ret);
 	}
-	ret = pdafctrl_destroy_thread(cxt);
+	ret = pdafctrl_destroy_thread(cxt_ptr);
 	if (ret)
 		ISP_LOGE("fail to destroy thread ret = %ld", ret);
 
-sucess_exit:
-	//cmr_bzero(cxt, sizeof(*cxt));
-	/* free handle */
-	free(cxt);
-	cxt = NULL;
 exit:
+	if (cxt_ptr) {
+		free((void*)cxt_ptr);
+		*handle = NULL;
+	}
 	ISP_LOGI(":ISP:done %ld", ret);
 	return ret;
 }

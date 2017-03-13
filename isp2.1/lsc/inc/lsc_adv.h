@@ -489,7 +489,7 @@ int32_t is_print_lsc_log(void);
 
 // extern used API
 cmr_int lsc_ctrl_init(struct lsc_adv_init_param *input_ptr, cmr_handle *handle_lsc);
-cmr_int lsc_ctrl_deinit(cmr_handle handle_lsc);
+cmr_int lsc_ctrl_deinit(cmr_handle *handle_lsc);
 cmr_int lsc_ctrl_process(cmr_handle handle_lsc, struct lsc_adv_calc_param *in_ptr, struct lsc_adv_calc_result *result);
 cmr_int lsc_ctrl_ioctrl(cmr_handle handle_lsc, enum alsc_io_ctrl_cmd cmd, void *in_ptr, void *out_ptr);
 

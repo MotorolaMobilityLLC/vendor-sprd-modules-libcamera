@@ -1926,19 +1926,20 @@ static uint32_t isp_alg_sw_deinit(cmr_handle isp_alg_handle)
 {
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
-	afl_ctrl_deinit(cxt->afl_cxt.handle);
+	af_ctrl_deinit(&cxt->af_cxt.handle);
 
-	ae_ctrl_deinit(cxt->ae_cxt.handle);
+	lsc_ctrl_deinit(&cxt->lsc_cxt.handle);
 
-	smart_ctl_deinit(cxt->smart_cxt.handle, NULL, NULL);
+	smart_ctl_deinit(&cxt->smart_cxt.handle, NULL, NULL);
 
-	awb_ctrl_deinit(cxt->awb_cxt.handle);
+	awb_ctrl_deinit(&cxt->awb_cxt.handle);
 
-	af_ctrl_deinit(cxt->af_cxt.handle);
+	ae_ctrl_deinit(&cxt->ae_cxt.handle);
 
-	pdaf_ctrl_deinit(cxt->pdaf_cxt.handle);
+	afl_ctrl_deinit(&cxt->afl_cxt.handle);
 
-	lsc_ctrl_deinit(cxt->lsc_cxt.handle);
+	pdaf_ctrl_deinit(&cxt->pdaf_cxt.handle);
+
 
 	ISP_LOGI(":ISP:done");
 	return ISP_SUCCESS;
