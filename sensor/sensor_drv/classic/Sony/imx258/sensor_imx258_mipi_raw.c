@@ -249,22 +249,19 @@ static unsigned long imx258_power_on(SENSOR_HW_HANDLE handle,
     BOOLEAN reset_level = g_imx258_mipi_raw_info.reset_pulse_level;
 
     if (SENSOR_TRUE == power_on) {
-        Sensor_PowerDown(power_down);
         Sensor_SetResetLevel(reset_level);
         Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
         Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED,
                           SENSOR_AVDD_CLOSED);
-        usleep(10 * 1000);
+        usleep(1 * 1000);
         Sensor_SetVoltage(dvdd_val, avdd_val, iovdd_val);
-        usleep(10 * 1000);
+        usleep(1 * 1000);
         Sensor_SetMCLK(SENSOR_DEFALUT_MCLK);
-        usleep(10 * 1000);
-        Sensor_PowerDown(!power_down);
+        usleep(1 * 1000);
         Sensor_SetResetLevel(!reset_level);
         Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
     } else {
         Sensor_SetResetLevel(reset_level);
-        Sensor_PowerDown(power_down);
         Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
         Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED,
                           SENSOR_AVDD_CLOSED);

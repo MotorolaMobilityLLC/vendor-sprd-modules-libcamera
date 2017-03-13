@@ -566,16 +566,14 @@ LOCAL SENSOR_REG_TAB_INFO_T s_imx258_resolution_tab_raw[] = {
         .xclk_to_sensor = 24,
         .image_format = SENSOR_IMAGE_FORMAT_RAW,
     },
-    /*	{
-                    .sensor_reg_tab_ptr =
-       (SENSOR_REG_T*)imx258_2096x1552_setting,
-                    .reg_count          =
-       NUMBER_OF_ARRAY(imx258_2096x1552_setting),
-                    .width              = 2096,
-                    .height             = 1552,
-                    .xclk_to_sensor     = 24,
-                    .image_format       = SENSOR_IMAGE_FORMAT_RAW,
-            },*/
+    {
+        .sensor_reg_tab_ptr = (SENSOR_REG_T *)imx258_2096x1552_setting,
+        .reg_count = NUMBER_OF_ARRAY(imx258_2096x1552_setting),
+        .width = 2096,
+        .height = 1552,
+        .xclk_to_sensor = 24,
+        .image_format = SENSOR_IMAGE_FORMAT_RAW,
+    },
     {
         .sensor_reg_tab_ptr = (SENSOR_REG_T *)imx258_4208x3120_setting,
         .reg_count = NUMBER_OF_ARRAY(imx258_4208x3120_setting),
@@ -669,22 +667,18 @@ s_imx258_resolution_trim_tab[SENSOR_MODE_MAX] = {
          {
              .x = 0, .y = 0, .w = 1280, .h = 720,
          }},
-    /*	{ //mode2
-                    .trim_start_x   = 0,
-                    .trim_start_y   = 0,
-                    .trim_width     = 2096,
-                    .trim_height    = 1552,
-                    .line_time      = 20650,
-                    .bps_per_lane   = 1296,
-                    .frame_line     = 3224,
-                    .scaler_trim =
-                    {
-                            .x = 0,
-                            .y = 0,
-                            .w = 2096,
-                            .h = 1552,
-                    }
-            },*/
+    {// mode2
+     .trim_start_x = 0,
+     .trim_start_y = 0,
+     .trim_width = 2096,
+     .trim_height = 1552,
+     .line_time = 20650,
+     .bps_per_lane = 1296,
+     .frame_line = 3224,
+     .scaler_trim =
+         {
+             .x = 0, .y = 0, .w = 2096, .h = 1552,
+         }},
     {// mode3
      .trim_start_x = 0,
      .trim_start_y = 0,

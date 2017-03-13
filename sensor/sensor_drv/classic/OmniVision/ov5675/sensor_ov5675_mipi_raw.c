@@ -1233,15 +1233,13 @@ static uint32_t ov5675_power_on(SENSOR_HW_HANDLE handle, uint32_t power_on) {
     BOOLEAN reset_level = g_ov5675_mipi_raw_info.reset_pulse_level;
 
     if (SENSOR_TRUE == power_on) {
-        Sensor_PowerDown(power_down);
         Sensor_SetResetLevel(reset_level);
-        usleep(10 * 1000);
+        usleep(1 * 1000);
         Sensor_SetAvddVoltage(avdd_val);
         Sensor_SetDvddVoltage(dvdd_val);
         Sensor_SetIovddVoltage(iovdd_val);
-        Sensor_PowerDown(!power_down);
         Sensor_SetResetLevel(!reset_level);
-        usleep(10 * 1000);
+        usleep(1 * 1000);
         Sensor_SetMCLK(EX_MCLK);
 
 #ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
@@ -1264,11 +1262,10 @@ static uint32_t ov5675_power_on(SENSOR_HW_HANDLE handle, uint32_t power_on) {
 
         Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
         Sensor_SetResetLevel(reset_level);
-        Sensor_PowerDown(power_down);
         Sensor_SetDvddVoltage(SENSOR_AVDD_CLOSED);
-        usleep(5 * 1000);
+        usleep(1 * 1000);
         Sensor_SetAvddVoltage(SENSOR_AVDD_CLOSED);
-        usleep(5 * 1000);
+        usleep(1 * 1000);
         Sensor_SetIovddVoltage(SENSOR_AVDD_CLOSED);
     }
     SENSOR_PRINT("(1:on, 0:off): %d", power_on);

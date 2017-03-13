@@ -1206,7 +1206,7 @@ static uint32_t gc5005_power_on(SENSOR_HW_HANDLE handle, uint32_t power_on) {
         Sensor_SetAvddVoltage(avdd_val);
         usleep(1 * 1000);
         Sensor_SetMCLK(SENSOR_DEFALUT_MCLK);
-        usleep(10 * 1000);
+        usleep(1 * 1000);
         Sensor_PowerDown(!power_down);
         usleep(1 * 1000);
         Sensor_SetResetLevel(!reset_level);

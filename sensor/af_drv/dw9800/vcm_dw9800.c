@@ -117,7 +117,7 @@ uint32_t dw9800_set_motor_bestmode(SENSOR_HW_HANDLE handle) {
     cmd_val[0] = 0x07;
     cmd_val[1] = 0x75;
     Sensor_WriteI2C(DW9800_VCM_SLAVE_ADDR, (uint8_t *)&cmd_val[0], 2);
-    usleep(200 * 1000);
+    usleep(2 * 1000);
 
     CMR_LOGI("VCM ctrl mode freq pos 2nd,%d %d %d %d", ctrl, mode, freq,
              (pos1 << 8) + pos2);
