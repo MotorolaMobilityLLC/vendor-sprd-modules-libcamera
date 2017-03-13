@@ -2857,8 +2857,8 @@ v=v>(max)?(max):v; hist[v]++;}
 		af->bv_threshold[DARK_SCENE][INDOOR_SCENE] = 55 + 10;
 		af->bv_threshold[DARK_SCENE][DARK_SCENE] = 0;
 
-		af->soft_landing_dly = 10;	//avoid vcm crash
-		af->soft_landing_step = 20;
+		af->soft_landing_dly = 0;//10;	//avoid vcm crash
+		af->soft_landing_step = 0;//20;
 
 		if (PNULL == af_pm_output->param_data 
 			|| PNULL == af_pm_output->param_data[0].data_ptr
@@ -2885,6 +2885,8 @@ v=v>(max)?(max):v; hist[v]++;}
 				AF_LOGD("sensor tuning param take no effect");
 			}
 		}
+		af->soft_landing_dly = 0;//10;	//avoid vcm crash
+		af->soft_landing_step = 0;//20;
 		af->pre_scene = INDOOR_SCENE;
 
 	}
