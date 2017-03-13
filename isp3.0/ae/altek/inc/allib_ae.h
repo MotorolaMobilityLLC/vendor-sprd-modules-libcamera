@@ -346,6 +346,7 @@ enum ae_get_param_type_t {
 	AE_GET_ISO_FROM_ADGAIN,
 	AE_GET_COMMON_EXIF,
 	AE_GET_FULL_DEBUG,
+	AE_GET_IQINFO_TO_ISP,
 
 	AE_GET_PARAM_MAX
 } ;
@@ -476,6 +477,15 @@ struct ae_single_expo_set_t {
 struct ae_deubg_info_t {
 	uint32  size;
 	void* ptr;
+};
+#pragma pack(pop)  /* restore old alignment setting from stack  */
+
+
+#pragma pack(push) /* push current alignment setting to stack */
+#pragma pack(4)    /* new alignment setting  */
+struct ae_iq_info_to_isp_t {
+	uint8  valid_flg;  /* 0:AE Not Process yet,1:AE already process */
+	uint8  reserved[MAX_AE_IQ_INFO_RESERVED_SIZE];  /*reserved 16 bytes*/
 };
 #pragma pack(pop)  /* restore old alignment setting from stack  */
 
@@ -841,6 +851,7 @@ struct ae_get_param_t {
 		struct ae_iso_adgain_info_t   iso_adgain_info;
 		struct ae_deubg_info_t commom_exif;
 		struct ae_deubg_info_t full_debug;
+		struct ae_iq_info_to_isp_t ae_iq_info;
 	} para;
 };
 #pragma pack(pop)  /* restore old alignment setting from stack  */

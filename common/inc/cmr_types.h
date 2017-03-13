@@ -75,7 +75,9 @@ typedef void *cmr_handle;
 #define bzero(p, len) memset(p, 0, len);
 #endif
 
+#ifndef UNUSED
 #define UNUSED(x) (void) x
+#endif
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
 typedef cmr_int (*cmr_malloc)(cmr_u32 mem_type, cmr_handle oem_handle,

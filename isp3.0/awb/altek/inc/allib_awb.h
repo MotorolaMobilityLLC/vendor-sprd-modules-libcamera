@@ -136,30 +136,6 @@ enum allib_awb_awb_debug_type_t {
 	alawb_dbg_manual,
 	alawb_dbg_manual_flowCheck,
 };
-enum awb_scene_mode_t {
-	AWB_SCENE_MODE_AUTO,
-	AWB_SCENE_MODE_PROGRAM,
-	AWB_SCENE_MODE_PORTRAIT,
-	AWB_SCENE_MODE_LANDSCAPE,
-	AWB_SCENE_MODE_NIGHT,
-	AWB_SCENE_MODE_NIGHT_PORTRAIT,
-	AWB_SCENE_MODE_BEACH,
-	AWB_SCENE_MODE_SNOW,
-	AWB_SCENE_MODE_SUNSET,
-	AWB_SCENE_MODE_FLOWER,
-	AWB_SCENE_MODE_TEXT,
-	AWB_SCENE_MODE_BACKLIGHT,
-	AWB_SCENE_MODE_FIREWORK,
-	AWB_SCENE_MODE_PANORAMA,
-	AWB_SCENE_MODE_SPORT,
-	AWB_SCENE_MODE_PARTY,
-	AWB_SCENE_MODE_ANTI_SHAKE,
-	AWB_SCENE_MODE_CANDLELIGHT,
-	AWB_SCENE_MODE_HDR,			/* for HDR algoritm , should have some priority AE (highkey priority, lowkey priority) */
-	AWB_SCENE_MODE_BARCODE,		/* this scene mode may same as text scene mode  */
-	AWB_SCENE_MODE_MAX
-};
-
 
 /* Report */
 #pragma pack(push) /* push current alignment setting to stack */

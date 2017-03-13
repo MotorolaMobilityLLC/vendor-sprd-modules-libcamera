@@ -61,6 +61,8 @@
 #define _AL_AELIB_INVALID_OTHERS_PCURVE_NODE           ( _AL_AELIB_SETTINGFILE + 0x12 )
 #define _AL_AELIB_INVALID_OTHERS_PCURVE_PARAM         ( _AL_AELIB_SETTINGFILE + 0x13 )
 #define _AL_AELIB_INVALID_PCURVE_BUILD                      ( _AL_AELIB_SETTINGFILE + 0x14 )
+#define _AL_AELIB_EXT_ID_NOT_MATCH                          ( _AL_AELIB_SETTINGFILE + 0x15 )
+#define _AL_AELIB_AE_VALID_FLAG_EXT_SIZE_NOT_MATCH            ( _AL_AELIB_SETTINGFILE + 0x16 )
 
 /* for Lib processing */
 #define _AL_AELIB_PURE_DARK_IMAGE                                  (_AL_AELIB_LIBPROCESS + 0x01 )

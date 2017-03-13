@@ -70,6 +70,9 @@
 #define HW3A_MAX_FRMWK_AF_BLOCKS                (9)
 //#define IIR_PARAM_ENABLE
 
+
+/* Define AE IQ info reserved size*/
+#define MAX_AE_IQ_INFO_RESERVED_SIZE            (16)
 /******************************************************************************
  * Static declarations
  ******************************************************************************/
