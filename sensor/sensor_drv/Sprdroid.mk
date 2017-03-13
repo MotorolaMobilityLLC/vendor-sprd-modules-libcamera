@@ -48,5 +48,6 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_DIR)),2.1)
 	sensor_drv/classic/OmniVision/ov5675/sensor_ov5675_mipi_raw.c \
 	sensor_drv/classic/Galaxycore/gc8024/sensor_gc8024_mipi_raw.c \
 	sensor_drv/classic/Galaxycore/gc2375/sensor_gc2375_mipi_raw.c \
-	sensor_drv/classic/Galaxycore/gc5005/sensor_gc5005_mipi_raw.c
+	sensor_drv/classic/Galaxycore/gc5005/sensor_gc5005_mipi_raw.c \
+	sensor_drv/classic/Other/c2390/sensor_c2390_mipi_raw.c 
 endif

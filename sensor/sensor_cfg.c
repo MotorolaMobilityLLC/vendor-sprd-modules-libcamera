@@ -44,6 +44,7 @@ extern SENSOR_INFO_T g_ov13850_mipi_raw_info;
 extern SENSOR_INFO_T g_gc8024_mipi_raw_info;
 extern SENSOR_INFO_T g_gc5005_mipi_raw_info;
 extern SENSOR_INFO_T g_gc2375_mipi_raw_info;
+extern SENSOR_INFO_T g_c2390_mipi_raw_info;
 #endif
 #define AUTO_TEST_CAMERA 1
 extern otp_drv_entry_t imx258_drv_entry;
@@ -72,6 +73,7 @@ const SENSOR_MATCH_T main_sensor_infor_tab[] = {
      &g_ov13855_mipi_raw_info,
      {&dw9718s_drv_entry, 0},
      &ov13855_drv_entry},
+     {"g_c2390_mipi_raw_info", &g_c2390_mipi_raw_info,{NULL,0},NULL},
 #endif
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
 #ifdef CAMERA_SENSOR_BACK_I2C_SWITCH
