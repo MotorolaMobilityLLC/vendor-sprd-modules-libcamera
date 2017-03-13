@@ -50,7 +50,7 @@
  isp_s32 _pm_yiq_afl_set_param_v3(void *afl_param, isp_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
 	isp_s32 rtn = ISP_SUCCESS;
-	struct isp_yiq_afl_param_v1 *dst_ptr = (struct isp_yiq_afl_param_v3 *)afl_param;
+	struct isp_yiq_afl_param_v3 *dst_ptr = (struct isp_yiq_afl_param_v3 *)afl_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param_ptr1;
 	struct isp_anti_flicker_cfg *cfl_cfg_ptr = (struct isp_anti_flicker_cfg *)param_ptr0;
 
@@ -64,8 +64,6 @@
 	case ISP_PM_BLK_YIQ_AFL_CFG:
 		ISP_LOGE("$$LHC:skip-num %d", cfl_cfg_ptr->skip_frame_num);
 
-		dst_ptr->cur.line_step = cfl_cfg_ptr->line_step;
-		dst_ptr->cur.vheight = cfl_cfg_ptr->vheight;
 		dst_ptr->cur.bypass  = header_ptr->bypass;
 		dst_ptr->cur.mode = cfl_cfg_ptr->mode;
 		dst_ptr->cur.skip_frame_num = cfl_cfg_ptr->skip_frame_num;

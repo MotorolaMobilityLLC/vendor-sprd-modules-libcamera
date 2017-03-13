@@ -18,7 +18,7 @@
 #include "isp_dev_access.h"
 #include "ae_ctrl_types.h"
 #include "af_ctrl.h"
-#define ISP_DEFAULT_CFG_FOR_BRING_UP
+//#define ISP_DEFAULT_CFG_FOR_BRING_UP
 /**************************************** MACRO DEFINE *****************************************/
 
 
