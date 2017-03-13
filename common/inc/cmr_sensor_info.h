@@ -28,6 +28,30 @@
 
 typedef void (*isp_buf_cfg_evt_cb)(cmr_int evt, void *data, cmr_u32 data_len,
                                    void *privdata);
+enum sns_cmd_section {
+    CMD_SNS_OTP,
+    CMD_SNS_IC,
+    CMD_SNS_AF
+};
+
+enum sns_cmd_section_start {
+    CMD_SNS_OTP_START  = CMD_SNS_OTP << 8,
+    CMD_SNS_IC_START   = CMD_SNS_IC  << 8,
+    CMD_SNS_AF_START   = CMD_SNS_AF  << 8,
+};
+
+enum sns_cmd {
+    //OTP_DATA_COMPATIBLE_CONVERT
+    CMD_SNS_OTP_DATA_COMPATIBLE_CONVERT = CMD_SNS_OTP_START,/*include 256 sub OTP cmd*/
+
+
+    CMD_SNS_IC_DEFAULT  = CMD_SNS_IC_START, /*include 256 sub IC cmd*/
+
+
+    CMD_SNS_AF_SET_BEST_MODE  = CMD_SNS_AF_START, /*include 256 sub AF cmd*/
+    CMD_SNS_AF_GET_TEST_MODE,
+    CMD_SNS_AF_SET_TEST_MODE
+};
 
 struct isp_block_header {
     cmr_u8 block_name[8];
@@ -161,6 +185,7 @@ struct sensor_raw_ioctrl {
     uint32_t (*get_test_vcm_mode)(cmr_handle caller_handler);
     uint32_t (*set_test_vcm_mode)(cmr_handle caller_handler, char *vcm_mode);
 #endif
+    int (*sns_ioctl)(cmr_handle sns_af_drv_handle, enum sns_cmd cmd, void* param);
 };
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
 /*************new***************************/

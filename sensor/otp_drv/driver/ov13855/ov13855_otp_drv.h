@@ -85,7 +85,8 @@ static int _ov13855_awb_calibration(void *otp_drv_handle);
 static int _ov13855_lsc_calibration(void *otp_drv_handle);
 static int _ov13855_pdaf_calibration(void *otp_drv_handle);
 
-void *ov13855_otp_create(SENSOR_HW_HANDLE handle, char *sensor_name);
+int ov13855_otp_create(otp_drv_init_para_t *input_para,
+                               cmr_handle* sns_af_drv_handle);
 int ov13855_otp_drv_delete(void *otp_drv_handle);
 int ov13855_otp_drv_read(void *otp_drv_handle, otp_params_t *p_data);
 int ov13855_otp_drv_write(void *otp_drv_handle, otp_params_t *p_data);

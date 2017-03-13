@@ -13,105 +13,145 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <utils/Log.h>
 #include "vcm_ak7371.h"
-#include "sensor_drv_u.h"
 
-#define AK7371_VCM_SLAVE_ADDR (0x18 >> 1)
-#ifndef SENSOR_SUCCESS
-#define SENSOR_SUCCESS 0
+#if 0
+uint32_t vcm_ak7371_get_pose_dis(SENSOR_HW_HANDLE handle, uint32_t *up2h, uint32_t *h2down)
+{
+	*up2h = POSE_UP_HORIZONTAL;
+	*h2down = POSE_DOWN_HORIZONTAL;
+
+	return 0;
+}
 #endif
-#define POSE_UP_HORIZONTAL 32
-#define POSE_DOWN_HORIZONTAL 37
-static uint32_t m_cur_pos = 0;
 
-uint32_t vcm_ak7371_init(SENSOR_HW_HANDLE handle, int mode) {
-    uint8_t cmd_val[2] = {0x00};
-    uint16_t slave_addr = 0;
-    uint16_t cmd_len = 0;
-    uint32_t ret_value = SENSOR_SUCCESS;
+static int vcm_ak7371_drv_create(struct af_drv_init_para *input_ptr, cmr_handle* sns_af_drv_handle)
+{
+	cmr_int ret = AF_SUCCESS;
+	CHECK_PTR(input_ptr);
+	ret = af_drv_create(input_ptr,sns_af_drv_handle);
+	if (ret != AF_SUCCESS) {
+		ret = AF_FAIL;
+	} else {
+		ret =_vcm_ak7371_set_mode(*sns_af_drv_handle);
+		if (ret != AF_SUCCESS)
+			ret = AF_FAIL;
+	}
 
-    slave_addr = AK7371_VCM_SLAVE_ADDR;
-    SENSOR_LOGI("E");
-    usleep(100);
-    switch (mode) {
-    case 1:
-        break;
-
-    case 2: {
-        cmd_len = 2;
-
-        cmd_val[0] = 0x02;
-        cmd_val[1] = 0x00;
-        ret_value =
-            Sensor_WriteI2C(slave_addr, (uint8_t *)&cmd_val[0], cmd_len);
-        if (ret_value) {
-            SENSOR_LOGI("SENSOR_vcm: _ak7371_SRCInit 1 fail!");
-        }
-
-        usleep(200);
-
-    } break;
-    default:
-        break;
-    }
-    return ret_value;
+	return ret;
 }
 
-uint32_t vcm_ak7371_set_position(SENSOR_HW_HANDLE handle, uint32_t pos) {
-    uint32_t ret_value = SENSOR_SUCCESS;
-    uint8_t cmd_val[2] = {0x00};
-    uint16_t slave_addr = 0;
-    uint16_t cmd_len = 0;
-    uint32_t time_out = 0;
-
-    if ((int32_t)pos < 0)
-        pos = 0;
-    else if ((int32_t)pos > 0x3FF)
-        pos = 0x3FF;
-    m_cur_pos = pos & 0x3FF;
-
-    SENSOR_LOGI("set position %d", pos);
-    slave_addr = AK7371_VCM_SLAVE_ADDR;
-    cmd_len = 2;
-    cmd_val[0] = 0x00;
-    cmd_val[1] = (pos & 0x3ff) >> 2;
-    ret_value = Sensor_WriteI2C(slave_addr, (uint8_t *)&cmd_val[0], cmd_len);
-    cmd_val[0] = 0x01;
-    cmd_val[1] = (pos & 0x03) << 6;
-    ret_value = Sensor_WriteI2C(slave_addr, (uint8_t *)&cmd_val[0], cmd_len);
-
-    // cmd_len=sensor_grc_read_i2c(ak7371_VCM_SLAVE_ADDR,  0x03,
-    // BITS_ADDR8_REG8);
-    // time_out=sensor_grc_read_i2c(ak7371_VCM_SLAVE_ADDR,  0x04,
-    // BITS_ADDR8_REG8);
-    // SENSOR_LOGI("set position %d %d", pos,((cmd_len&0x03)<<8)|time_out);
-
-    return ret_value;
+static int vcm_ak7371_drv_delete(cmr_handle sns_af_drv_handle, void* param)
+{
+	cmr_int ret = AF_SUCCESS;
+	CHECK_PTR(sns_af_drv_handle);
+	ret = af_drv_delete(sns_af_drv_handle,param);
+	return ret;
 }
 
-uint32_t vcm_ak7371_get_pose_dis(SENSOR_HW_HANDLE handle, uint32_t *up2h,
-                                 uint32_t *h2down) {
-    *up2h = POSE_UP_HORIZONTAL;
-    *h2down = POSE_DOWN_HORIZONTAL;
+static int vcm_ak7371_drv_set_pos(cmr_handle sns_af_drv_handle, uint16_t pos)
+{
+	uint8_t cmd_val[2] = {0x00};
+	uint32_t ret_value = AF_SUCCESS;
 
-    return 0;
+	struct sns_af_drv_cxt *af_drv_cxt = (struct sns_af_drv_cxt*)sns_af_drv_handle;
+	CHECK_PTR(sns_af_drv_handle);
+
+	uint16_t  slave_addr = AK7371_VCM_SLAVE_ADDR;
+	uint16_t cmd_len = 0;
+	uint32_t time_out = 0;
+
+	if ((int32_t)pos < 0)
+		pos = 0;
+	else if ((int32_t)pos > 0x3FF)
+		pos = 0x3FF;
+	af_drv_cxt->current_pos = pos & 0x3FF;
+
+	AF_LOGI("set position %d", pos);
+	cmd_len = 2;
+	cmd_val[0] = 0x00;
+	cmd_val[1] = (pos & 0x3ff)>>2;
+	ret_value = hw_Sensor_WriteI2C(af_drv_cxt->hw_handle,slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
+	cmd_val[0] = 0x01;
+	cmd_val[1] = (pos & 0x03)<<6;
+	ret_value = hw_Sensor_WriteI2C(af_drv_cxt->hw_handle,slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
+
+	return ret_value;
 }
 
-uint32_t vcm_ak7371_deinit(SENSOR_HW_HANDLE handle) {
-    uint32_t ret_value = SENSOR_SUCCESS;
-    uint32_t pos = m_cur_pos;
-    uint32_t vcm_last_pos = pos & 0xffff;
-    uint32_t vcm_last_delay = pos & 0xffff0000;
+static int vcm_ak7371_drv_ioctl(cmr_handle sns_af_drv_handle, enum sns_cmd cmd, void* param)
+{
+	uint32_t ret_value = AF_SUCCESS;
+	struct sns_af_drv_cxt *af_drv_cxt = (struct sns_af_drv_cxt*)sns_af_drv_handle;
+	CHECK_PTR(sns_af_drv_handle);
+	AF_LOGI("cmd is ",cmd);
+	switch(cmd) {
+		case CMD_SNS_AF_SET_BEST_MODE:
+			break;
+		case CMD_SNS_AF_GET_TEST_MODE:
+			break;
+		case CMD_SNS_AF_SET_TEST_MODE:
+			break;
+		default:
+			break;
+	}
+	return ret_value;
+}
 
-    while (vcm_last_pos > 0) {
-        vcm_last_pos = vcm_last_pos >> 2;
-        SENSOR_LOGI("vcm_last_pos=%d  ,%d", vcm_last_pos,
-                    (vcm_last_pos | vcm_last_delay));
-        vcm_ak7371_set_position(handle, vcm_last_pos | vcm_last_delay);
-        usleep(1 * 1000);
-    }
+struct sns_af_drv_entry vcm_ak7371_drv_entry =
+{
+		.motor_avdd_val = SENSOR_AVDD_2800MV,
+		.default_work_mode = 2,
+		.af_ops =
+		{
+			.create  = vcm_ak7371_drv_create,
+			.delete  = vcm_ak7371_drv_delete,
+			.set_pos = vcm_ak7371_drv_set_pos,
+			.get_pos = NULL,
+			.ioctl   = vcm_ak7371_drv_ioctl,
+		},
+};
 
-    SENSOR_LOGI("vcm_ak7371_deinit");
-    return ret_value;
+static int _vcm_ak7371_set_mode(cmr_handle sns_af_drv_handle)
+{
+	uint32_t ret_value = AF_SUCCESS;
+
+	struct sns_af_drv_cxt *af_drv_cxt = (struct sns_af_drv_cxt*)sns_af_drv_handle;
+	CHECK_PTR(sns_af_drv_handle);
+
+	uint8_t cmd_val[2] = {0x00},mode = 0;
+	uint16_t  slave_addr = AK7371_VCM_SLAVE_ADDR;
+	uint16_t cmd_len = 0;
+
+	if(af_drv_cxt->af_work_mode) {
+		mode = af_drv_cxt->af_work_mode;
+	} else {
+		mode = vcm_ak7371_drv_entry.default_work_mode;
+	}
+	AF_LOGI("mode: %d",mode);
+
+	usleep(100);
+	switch (mode) {
+	case 1:
+		break;
+
+	case 2:
+	{
+		cmd_len = 2;
+
+		cmd_val[0] = 0x02;
+		cmd_val[1] = 0x00;
+		ret_value = hw_Sensor_WriteI2C(af_drv_cxt->hw_handle,slave_addr,(uint8_t*)&cmd_val[0], cmd_len);
+		if(ret_value){
+			SENSOR_LOGI("SENSOR_vcm: _ak7371_SRCInit 1 fail!");
+		}
+
+		usleep(200);
+	
+	}
+		break;
+	default:
+		break;
+	}
+	return ret_value;
 }

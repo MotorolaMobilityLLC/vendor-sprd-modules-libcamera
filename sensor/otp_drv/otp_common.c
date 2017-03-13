@@ -344,25 +344,27 @@ int sensor_otp_dump_raw_data(uint8_t *buffer, int size, char *dev_name) {
  * CMR_CAMERA_SUCCESS : read or write success.
  * CMR_CAMERA_FAILURE : read or write failed
  **/
-void *sensor_otp_drv_create(SENSOR_HW_HANDLE handle, char *sensor_name) {
-    cmr_int ret = OTP_CAMERA_SUCCESS;
-    if (NULL == handle || NULL == handle->privatedata)
-        return PNULL;
-    OTP_LOGI("In");
+int sensor_otp_drv_create(otp_drv_init_para_t *input_para, cmr_handle* sns_otp_drv_handle) {
+	cmr_int ret = OTP_CAMERA_SUCCESS;
+	CHECK_PTR(input_para);
+	CHECK_PTR((void*)sns_otp_drv_handle);
+	OTP_LOGI("In");
 
-    otp_drv_cxt_t *otp_cxt = malloc(sizeof(otp_drv_cxt_t));
-    if (!otp_cxt) {
-        OTP_LOGD("otp handle create failed!");
-        return PNULL;
-    }
-    memset(otp_cxt, 0, sizeof(otp_drv_cxt_t));
-    memcpy(otp_cxt->dev_name, sensor_name, 32);
-    otp_cxt->otp_raw_data.buffer = NULL;
-    otp_cxt->otp_data = NULL;
-    otp_cxt->hw_handle = handle;
-    OTP_LOGI("out");
+	otp_drv_cxt_t *otp_cxt = malloc(sizeof(otp_drv_cxt_t));
+	if(!otp_cxt) {
+		OTP_LOGD("otp handle create failed!");
+		return OTP_CAMERA_FAIL;
+	}
+	memset(otp_cxt,0,sizeof(otp_drv_cxt_t));
+	if(input_para->sensor_name)
+		memcpy(otp_cxt->dev_name,input_para->sensor_name,32);
+	otp_cxt->otp_raw_data.buffer = NULL;
+	otp_cxt->otp_data = NULL;
+	otp_cxt->hw_handle= input_para->hw_handle;
+	OTP_LOGI("out");
+	*sns_otp_drv_handle = otp_cxt;
 
-    return otp_cxt;
+	return ret;
 }
 
 /** sensor_otp_drv_delete:

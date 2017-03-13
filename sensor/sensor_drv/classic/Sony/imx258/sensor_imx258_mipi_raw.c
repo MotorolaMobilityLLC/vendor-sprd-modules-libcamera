@@ -261,13 +261,13 @@ static unsigned long imx258_power_on(SENSOR_HW_HANDLE handle,
         Sensor_SetMCLK(SENSOR_DEFALUT_MCLK);
         usleep(1 * 1000);
         Sensor_SetResetLevel(!reset_level);
-        Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
+        //Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
     } else {
         Sensor_SetResetLevel(reset_level);
         Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
         Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED,
                           SENSOR_AVDD_CLOSED);
-        Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
+        //Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
     }
     SENSOR_LOGI("(1:on, 0:off): %ld", power_on);
     return SENSOR_SUCCESS;
@@ -346,7 +346,7 @@ static unsigned long imx258_identify(SENSOR_HW_HANDLE handle,
             ret_value = SENSOR_SUCCESS;
             SENSOR_LOGI("this is imx258 sensor");
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
-            vcm_LC898214_init(handle);
+            //vcm_LC898214_init(handle);
 //#else
 //			bu64297gwz_init(handle);
 #endif
@@ -701,7 +701,8 @@ static unsigned long imx258_stream_off(SENSOR_HW_HANDLE handle,
 static unsigned long imx258_write_af(SENSOR_HW_HANDLE handle,
                                      unsigned long param) {
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
-    return vcm_LC898214_set_position(handle, param);
+    //return vcm_LC898214_set_position(handle, param);
+	return 0;
 #else
     return 0; // bu64297gwz_write_af(handle, param);
 #endif
@@ -734,7 +735,7 @@ static uint32_t imx258_get_static_info(SENSOR_HW_HANDLE handle,
     ex_info->sensor_version_info = g_imx258_mipi_raw_info.sensor_version_info;
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
 #if 1 // def CONFIG_AF_VCM_DW9800W
-    vcm_LC898214_get_pose_dis(handle, &up, &down);
+    //vcm_LC898214_get_pose_dis(handle, &up, &down);
 //	vcm_dw9800_get_pose_dis(handle, &up, &down);
 #else
     bu64297gwz_get_pose_dis(handle, &up, &down);
@@ -881,7 +882,7 @@ static SENSOR_IOCTL_FUNC_TAB_T s_imx258_ioctl_func_tab = {
     .stream_on = imx258_stream_on,
     .stream_off = imx258_stream_off,
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
-    .af_enable = imx258_write_af,
+    //.af_enable = imx258_write_af,
 #endif
     //.group_hold_on = imx132_group_hold_on,
     //.group_hold_of = imx132_group_hold_off,

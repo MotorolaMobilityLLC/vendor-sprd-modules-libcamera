@@ -264,8 +264,8 @@ static int _imx258_pdaf_calibration(void *otp_drv_handle) {
 *				External interface
 ====================================================*/
 
-void *imx258_otp_create(SENSOR_HW_HANDLE handle, char *sensor_name) {
-    return sensor_otp_drv_create(handle, sensor_name);
+int imx258_otp_create(otp_drv_init_para_t *input_para, cmr_handle* sns_af_drv_handle) {
+    return sensor_otp_drv_create(input_para, sns_af_drv_handle);
 }
 
 int imx258_otp_drv_delete(void *otp_drv_handle) {
@@ -505,7 +505,7 @@ int imx258_otp_drv_ioctl(otp_drv_cxt_t *otp_drv_handle, int cmd, void *params) {
     params = params;
     /*you can add you command*/
     switch (cmd) {
-    case OTP_DATA_COMPATIBLE_CONVERT:
+    case CMD_SNS_OTP_DATA_COMPATIBLE_CONVERT:
         imx258_compatible_convert(otp_drv_handle, params);
         break;
     default:

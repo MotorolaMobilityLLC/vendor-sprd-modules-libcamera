@@ -1039,7 +1039,6 @@ static unsigned long imx230_power_on(SENSOR_HW_HANDLE handle,
         usleep(1000);
         Sensor_PowerDown(!power_down);
         Sensor_SetResetLevel(!reset_level);
-        Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
     } else {
         Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
         Sensor_SetResetLevel(reset_level);
@@ -1047,7 +1046,6 @@ static unsigned long imx230_power_on(SENSOR_HW_HANDLE handle,
         Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED,
                           SENSOR_AVDD_CLOSED);
         Sensor_PowerDown(power_down);
-        Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
     }
     SENSOR_LOGI("(1:on, 0:off): %ld", power_on);
     return SENSOR_SUCCESS;
@@ -1125,7 +1123,7 @@ static unsigned long imx230_identify(SENSOR_HW_HANDLE handle,
         if (imx230_VER_VALUE == ver_value) {
             ret_value = SENSOR_SUCCESS;
             SENSOR_LOGI("this is imx230 sensor");
-            dw9800_init(handle);
+            //dw9800_init(handle);
             imx230_init_mode_fps_info(handle);
         } else {
             SENSOR_LOGI("Identify this is %x%x sensor", pid_value, ver_value);
@@ -1150,8 +1148,7 @@ static unsigned long imx230_get_resolution_trim_tab(SENSOR_HW_HANDLE handle,
 
 /*==============================================================================
  * Description:
- * before snapshot
- * you can change this function if it's necessary
+ * before snapshot * you can change this function if it's necessary
  *============================================================================*/
 static unsigned long imx230_before_snapshot(SENSOR_HW_HANDLE handle,
                                             unsigned long param) {
@@ -1622,11 +1619,6 @@ static unsigned long imx230_stream_off(SENSOR_HW_HANDLE handle,
     return 0;
 }
 
-static unsigned long imx230_write_af(SENSOR_HW_HANDLE handle,
-                                     unsigned long param) {
-    return dw9800_set_motor_pos(handle, param);
-}
-
 static uint32_t imx230_get_static_info(SENSOR_HW_HANDLE handle,
                                        uint32_t *param) {
     uint32_t rtn = SENSOR_SUCCESS;
@@ -1793,7 +1785,7 @@ static SENSOR_IOCTL_FUNC_TAB_T s_imx230_ioctl_func_tab = {
     //.set_video_mode = imx132_set_video_mode,
     .stream_on = imx230_stream_on,
     .stream_off = imx230_stream_off,
-    .af_enable = imx230_write_af,
+    //.af_enable = imx230_write_af,
     //.group_hold_on = imx132_group_hold_on,
     //.group_hold_of = imx132_group_hold_off,
     .cfg_otp = imx230_access_val,

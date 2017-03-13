@@ -13,13 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <utils/Log.h>
 #include "sensor_drv_u.h"
-uint32_t vcm_LC898214_init(SENSOR_HW_HANDLE handle);
-uint32_t vcm_LC898214_set_position(SENSOR_HW_HANDLE handle, uint32_t pos);
-uint32_t vcm_LC898214_get_pose_dis(SENSOR_HW_HANDLE handle, uint32_t *up2h,
-                                   uint32_t *h2down);
-uint32_t vcm_LC898214_deinit(SENSOR_HW_HANDLE handle);
-int16_t Hall_Max;
-int16_t Hall_Min;
-int16_t HallValue;
-int16_t rCode;
+#include "sns_af_drv.h"
+
+#define LOG_TAG "af_lc898214"
+
+#define LC898214_VCM_SLAVE_ADDR (0xE4 >> 1)
+#define SENSOR_SUCCESS           0
+#define POSE_UP_HORIZONTAL       32
+#define POSE_DOWN_HORIZONTAL     37
+
+static int _lc898214_drv_init(cmr_handle sns_af_drv_handle);
+static int lc898214_drv_create(struct af_drv_init_para *input_ptr, cmr_handle* sns_af_drv_handle);
+static int lc898214_drv_delete(cmr_handle sns_af_drv_handle, void* param);
+static int lc898214_drv_set_pos(cmr_handle sns_af_drv_handle, uint32_t pos);
+static int lc898214_drv_ioctl(cmr_handle sns_af_drv_handle, enum sns_cmd cmd, void* param);
+
+struct lc898214_pri_data 
+{
+	int16_t Hall_Max;
+	int16_t Hall_Min; 
+	int16_t HallValue;
+	int16_t rCode;
+};
+
+

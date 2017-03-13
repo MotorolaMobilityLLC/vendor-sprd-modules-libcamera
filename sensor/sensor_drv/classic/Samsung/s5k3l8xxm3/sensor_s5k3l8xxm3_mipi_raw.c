@@ -843,21 +843,8 @@ static uint32_t s5k3l8xxm3_power_on(SENSOR_HW_HANDLE handle,
         usleep(20);
         Sensor_SetMCLK(EX_MCLK);
         Sensor_SetMIPILevel(0);
-
-#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-        Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
-        usleep(5 * 1000);
-// zzz_init(2);
-#else
-        Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
-#endif
-
     } else {
 
-#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-        // zzz_deinit(2);
-        Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
-#endif
         Sensor_SetMIPILevel(1);
 
         Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
@@ -1197,7 +1184,7 @@ static uint32_t s5k3l8xxm3_identify(SENSOR_HW_HANDLE handle, uint32_t param) {
         if (s5k3l8xxm3_VER_VALUE == ver_value) {
             SENSOR_PRINT_HIGH("this is s5k3l8xxm3 sensor");
             //_ak7371_init(handle, 2);
-            vcm_ak7371_init(handle, 2);
+            //vcm_ak7371_init(handle, 2);
 #ifdef FEATURE_OTP
             /*if read otp info failed or module id mismatched ,identify failed
              * ,return SENSOR_FAIL ,exit identify*/
@@ -1521,17 +1508,6 @@ static unsigned long s5k3l8xxm3_read_aec_info(SENSOR_HW_HANDLE handle,
     return ret_value;
 }
 
-#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-/*==============================================================================
- * Description:
- * write parameter to vcm
- * please add your VCM function to this function
- *============================================================================*/
-static uint32_t s5k3l8xxm3_write_af(SENSOR_HW_HANDLE handle, uint32_t param) {
-    return vcm_ak7371_set_position(handle, param);
-}
-#endif
-
 /*==============================================================================
  * Description:
  * write parameter to frame sync
@@ -1603,9 +1579,6 @@ static SENSOR_IOCTL_FUNC_TAB_T s_s5k3l8xxm3_ioctl_func_tab = {
     .before_snapshort = s5k3l8xxm3_before_snapshot,
     .ex_write_exp = s5k3l8xxm3_write_exposure,
     .write_gain_value = s5k3l8xxm3_write_gain_value,
-#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-    .af_enable = s5k3l8xxm3_write_af,
-#endif
     .stream_on = s5k3l8xxm3_stream_on,
     .stream_off = s5k3l8xxm3_stream_off,
     .cfg_otp = s5k3l8xxm3_access_val,

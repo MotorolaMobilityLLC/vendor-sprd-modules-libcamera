@@ -493,7 +493,7 @@ static SENSOR_IOCTL_FUNC_TAB_T s_s5k3p8sm_ioctl_func_tab = {
     _s5k3p8sm_write_gain,
     PNULL,             // read_gain_scale
     PNULL,             // set_frame_rate
-    s5k3p8sm_write_af, // s5k3p8sm_write_af,
+    PNULL,//s5k3p8sm_write_af, // s5k3p8sm_write_af,
     PNULL,
     PNULL, //_s5k3p8sm_set_awb,
     PNULL, PNULL,
@@ -753,7 +753,7 @@ static unsigned long _s5k3p8sm_Identify(SENSOR_HW_HANDLE handle,
             if (ret == 0)
                 OpenOIS(handle);
 #else
-            bu64297gwz_init(handle);
+            //bu64297gwz_init(handle);
 #endif
             _s5k3p8sm_init_mode_fps_info(handle);
         } else {
@@ -1153,7 +1153,8 @@ static unsigned long s5k3p8sm_write_af(SENSOR_HW_HANDLE handle,
 #if defined(CONFIG_CAMERA_OIS_FUNC)
     OIS_write_af(handle, param);
 #else
-    bu64297gwz_write_af(handle, param);
+    //bu64297gwz_write_af(handle, param);
+    return 0;
 #endif
     return 0;
 }
@@ -1336,7 +1337,6 @@ static unsigned long _s5k3p8sm_PowerOn(SENSOR_HW_HANDLE handle,
         Sensor_SetResetLevel(reset_level);
         Sensor_PowerDown(power_down);
         Sensor_SetVoltage(dvdd_val, avdd_val, iovdd_val);
-        Sensor_SetMonitorVoltage(SENSOR_AVDD_3000MV);
         usleep(1);
         Sensor_SetResetLevel(!reset_level);
         Sensor_PowerDown(!power_down);
@@ -1350,7 +1350,6 @@ static unsigned long _s5k3p8sm_PowerOn(SENSOR_HW_HANDLE handle,
         Sensor_PowerDown(power_down);
         Sensor_SetVoltage(SENSOR_AVDD_CLOSED, SENSOR_AVDD_CLOSED,
                           SENSOR_AVDD_CLOSED);
-        Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
     }
 
     SENSOR_PRINT_ERR("SENSOR_S5K3P8SM: _s5k3p8sm_PowerOn(1:on, 0:off): %ld, "
@@ -1454,7 +1453,7 @@ static uint32_t _s5k3p8sm_get_static_info(SENSOR_HW_HANDLE handle,
 #if defined(CONFIG_CAMERA_OIS_FUNC)
     Ois_get_pose_dis(handle, &up, &down);
 #else
-    bu64297gwz_get_pose_dis(handle, &up, &down);
+    //bu64297gwz_get_pose_dis(handle, &up, &down);
 #endif
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;

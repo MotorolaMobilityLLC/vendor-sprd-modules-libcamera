@@ -1241,7 +1241,8 @@ cmr_int cmr_sns_ioctl(struct sensor_drv_context *sensor_cxt, cmr_uint cmd, cmr_u
 		if(cmd == SENSOR_ACCESS_VAL) {
 			SENSOR_VAL_T * val = (SENSOR_VAL_T*)arg;
 			if(val->type == SENSOR_VAL_TYPE_READ_OTP)
-				sensor_otp_ioctl(sensor_cxt,OTP_IOCTL,OTP_DATA_COMPATIBLE_CONVERT,(void*)arg);
+				sensor_drv_ioctl(sensor_cxt,
+                                     CMD_SNS_OTP_DATA_COMPATIBLE_CONVERT, (void*)arg);
 		}
 	}
 

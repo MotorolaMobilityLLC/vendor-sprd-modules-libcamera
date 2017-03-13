@@ -123,28 +123,33 @@ extern SENSOR_INFO_T g_gc2375_mipi_raw_info;
 #define AUTO_TEST_CAMERA 1
 extern otp_drv_entry_t imx258_drv_entry;
 extern otp_drv_entry_t ov13855_drv_entry;
-extern af_drv_info_t dw9800_drv_info;
-extern af_drv_info_t dw9714_drv_info;
-extern af_drv_info_t dw9718s_drv_info;
+
+extern struct sns_af_drv_entry dw9800_drv_entry;
+extern struct sns_af_drv_entry dw9714_drv_entry;
+extern struct sns_af_drv_entry dw9718s_drv_entry;
+extern struct sns_af_drv_entry bu64297gwz_drv_entry;
+extern struct sns_af_drv_entry vcm_ak7371_drv_entry;
+extern struct sns_af_drv_entry lc898214_drv_entry;
 
 /*---------------------------------------------------------------------------*
  **                         Constant Variables                                *
  **---------------------------------------------------------------------------*/
 const SENSOR_MATCH_T main_sensor_infor_tab[] = {
-    {"s5k3p8sm_mipi_raw", &g_s5k3p8sm_mipi_raw_info, NULL, NULL},
+    {"s5k3p8sm_mipi_raw", &g_s5k3p8sm_mipi_raw_info, {&bu64297gwz_drv_entry,0}, NULL},
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
-    {"gc8024_mipi_raw", &g_gc8024_mipi_raw_info, &dw9714_drv_info, NULL},
+    {"gc8024_mipi_raw", &g_gc8024_mipi_raw_info, {&dw9714_drv_entry,0}, NULL},
 #endif
-    {"imx230_mipi_raw", &g_imx230_mipi_raw_info, NULL, NULL},
+    {"imx230_mipi_raw", &g_imx230_mipi_raw_info, {&dw9800_drv_entry,0}, NULL},
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
-    {"imx258_mipi_raw", &g_imx258_mipi_raw_info, &dw9800_drv_info,
+    {"imx258_mipi_raw", &g_imx258_mipi_raw_info, {&dw9800_drv_entry,0},
      &imx258_drv_entry},
-    {"ov13855_mipi_raw", &g_ov13855_mipi_raw_info, &dw9718s_drv_info,
+    {"ov13855_mipi_raw", &g_ov13855_mipi_raw_info, {&dw9718s_drv_entry,0},
      &ov13855_drv_entry},
 #else
-    {"imx258_mipi_raw", &g_imx258_mipi_raw_info, NULL, NULL},
+    {"imx258_mipi_raw", &g_imx258_mipi_raw_info, {&lc898214_drv_entry,0}, NULL},
 #endif
-    {"s5k3l8xxm3_mipi_raw", &g_s5k3l8xxm3_mipi_raw_info, NULL, NULL},
+    {"s5k3l8xxm3_mipi_raw", &g_s5k3l8xxm3_mipi_raw_info,
+                                {&vcm_ak7371_drv_entry,2}, NULL},
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
 //{"ov13850r2a_mipi_raw", &g_ov13850r2a_mipi_raw_info},
 #endif
@@ -152,24 +157,24 @@ const SENSOR_MATCH_T main_sensor_infor_tab[] = {
 
 const SENSOR_MATCH_T sub_sensor_infor_tab[] = {
 #ifdef CONFIG_COVERED_SENSOR
-    {"GC0310_MIPI", &g_GC0310_MIPI_yuv_info, NULL, NULL},
+    {"GC0310_MIPI", &g_GC0310_MIPI_yuv_info, {NULL,0}, NULL},
 #endif
 #if defined(CONFIG_CAMERA_ISP_DIR_2_1)
-    {"5005_mipi_raw", &g_gc5005_mipi_raw_info, NULL, NULL},
-    {"ov5675_mipi_raw", &g_ov5675_mipi_raw_info, NULL, NULL},
-    {"gc2375_mipi_raw", &g_gc2375_mipi_raw_info,NULL,NULL},
+    {"5005_mipi_raw", &g_gc5005_mipi_raw_info, {NULL,0}, NULL},
+    {"ov5675_mipi_raw", &g_ov5675_mipi_raw_info, {NULL,0}, NULL},
+    {"gc2375_mipi_raw", &g_gc2375_mipi_raw_info,{NULL,0},NULL},
 #endif
-    {"s5k4h8yx_mipi_raw", &g_s5k4h8yx_mipi_raw_info, NULL, NULL},
-    {"ov8856_mipi_raw", &g_ov8856_mipi_raw_info, NULL, NULL},
+    {"s5k4h8yx_mipi_raw", &g_s5k4h8yx_mipi_raw_info, {NULL,0}, NULL},
+    {"ov8856_mipi_raw", &g_ov8856_mipi_raw_info, {NULL,0}, NULL},
     {0}};
 
 const SENSOR_MATCH_T sensor2_infor_tab[] = {
-    {"ov2680_mipi_raw", &g_ov2680_mipi_raw_info, NULL, NULL},
-    {"sp2509_mipi_raw", &g_sp2509_mipi_raw_info, NULL, NULL},
+    {"ov2680_mipi_raw", &g_ov2680_mipi_raw_info, {NULL,0}, NULL},
+    {"sp2509_mipi_raw", &g_sp2509_mipi_raw_info, {NULL,0}, NULL},
     {0}};
 
 const SENSOR_MATCH_T sensor3_infor_tab[] = {
-    {"ov8856s_mipi_raw", &g_ov8856s_mipi_raw_info, NULL, NULL},
+    {"ov8856s_mipi_raw", &g_ov8856s_mipi_raw_info, {NULL,0}, NULL},
 #ifdef SC_FPGA
 //	{"ov5640_mipi_raw", &g_ov5640_mipi_raw_info},
 #endif
@@ -185,29 +190,29 @@ const SENSOR_MATCH_T atv_infor_tab[] = {
 */
 const SENSOR_MATCH_T at_main_sensor_infor_tab[] = {
 #ifndef SC_FPGA
-    {"autotest_ov13850_mipi_raw", &g_autotest_ov13850_mipi_raw_info, NULL,
+    {"autotest_ov13850_mipi_raw", &g_autotest_ov13850_mipi_raw_info, {NULL,0},
      NULL},
-    {"autotest_ov5670_mipi_raw", &g_at_ov5670_mipi_raw_info, NULL, NULL},
+    {"autotest_ov5670_mipi_raw", &g_at_ov5670_mipi_raw_info, {NULL,0}, NULL},
 #if !(defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                 \
       defined(CONFIG_CAMERA_ISP_VERSION_V4))
 #ifdef CONFIG_BACK_CAMERA_MIPI
-    {"autotest_ov8825_mipi_raw", &g_autotest_ov8825_mipi_raw_info, NULL, NULL},
-    {"autotest_ov5640_mipi_yuv", &g_autotest_ov5640_mipi_yuv_info, NULL, NULL},
-    {"ov5648_mipi_raw", &g_ov5648_mipi_raw_info, NULL, NULL},
+    {"autotest_ov8825_mipi_raw", &g_autotest_ov8825_mipi_raw_info, {NULL,0}, NULL},
+    {"autotest_ov5640_mipi_yuv", &g_autotest_ov5640_mipi_yuv_info, {NULL,0}, NULL},
+    {"ov5648_mipi_raw", &g_ov5648_mipi_raw_info, {NULL,0}, NULL},
 #endif
 #ifdef CONFIG_BACK_CAMERA_CCIR
-    {"at_ov5640_ccir_yuv", &g_at_ov5640_ccir_yuv_info, NULL, NULL},
-    {"at_hi253_yuv", &g_hi253_yuv_info, NULL, NULL},
+    {"at_ov5640_ccir_yuv", &g_at_ov5640_ccir_yuv_info, {NULL,0}, NULL},
+    {"at_hi253_yuv", &g_hi253_yuv_info, {NULL,0}, NULL},
     //{"at_GT2005_yuv", &g_GT2005_yuv_info},
     //{"at_s5k4ec_yuv", &g_s5k4ec_yuv_info},
-    {"autotest_yuv", &g_autotest_yuv_info, NULL, NULL},
+    {"autotest_yuv", &g_autotest_yuv_info, {NULL,0}, NULL},
 #endif
 #else
 #ifdef CONFIG_BACK_CAMERA_MIPI
-    {"at_s5k3m2xxm3_mipi_raw", &g_s5k3m2xxm3_mipi_raw_info, NULL, NULL},
-    {"at_imx230_mipi_raw", &g_imx230_mipi_raw_info, NULL, NULL},
-    {"at_imx258_mipi_raw", &g_imx258_mipi_raw_info, NULL, NULL},
-    {"at_s5k3l8xx3_mipi_raw", &g_s5k3l8xxm3_mipi_raw_info, NULL, NULL},
+    {"at_s5k3m2xxm3_mipi_raw", &g_s5k3m2xxm3_mipi_raw_info, {NULL,0}, NULL},
+    {"at_imx230_mipi_raw", &g_imx230_mipi_raw_info, {NULL,0}, NULL},
+    {"at_imx258_mipi_raw", &g_imx258_mipi_raw_info, {NULL,0}, NULL},
+    {"at_s5k3l8xx3_mipi_raw", &g_s5k3l8xxm3_mipi_raw_info, {NULL,0}, NULL},
 
 #endif
 #endif
@@ -218,26 +223,26 @@ const SENSOR_MATCH_T at_main_sensor_infor_tab[] = {
 };
 const SENSOR_MATCH_T at_sub_sensor_infor_tab[] = {
 #ifndef SC_FPGA
-    {"autotest_ov5648_mipi_raw", &g_at_ov5648_mipi_raw_info, NULL, NULL},
+    {"autotest_ov5648_mipi_raw", &g_at_ov5648_mipi_raw_info, {NULL,0}, NULL},
 //	{"autotest_GC0310_MIPI_yuv", &g_GC0310_MIPI_yuv_info,NULL,NULL},
 #if !(defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                 \
       defined(CONFIG_CAMERA_ISP_VERSION_V4))
 #ifdef CONFIG_FRONT_CAMERA_CCIR
-    {"GC0308_yuv", &g_GC0308_yuv_info, NULL, NULL},
-    {"GC2035_yuv", &g_GC2035_yuv_info, NULL, NULL},
+    {"GC0308_yuv", &g_GC0308_yuv_info, {NULL,0}, NULL},
+    {"GC2035_yuv", &g_GC2035_yuv_info, {NULL,0}, NULL},
     //	{"HI702_yuv", &g_HI702_yuv_info},
-    {"OV7675_yuv", &g_OV7675_yuv_info, NULL, NULL},
+    {"OV7675_yuv", &g_OV7675_yuv_info, {NULL,0}, NULL},
 //	{"autotest_yuv", &g_autotest_yuv_info},
 #endif
 #ifdef CONFIG_FRONT_CAMERA_MIPI
-    {"GC2155_MIPI_yuv", &g_GC2155_MIPI_yuv_info, NULL, NULL},
+    {"GC2155_MIPI_yuv", &g_GC2155_MIPI_yuv_info, {NULL,0}, NULL},
 #endif
 #else
 #ifdef CONFIG_FRONT_CAMERA_MIPI
-    {"ov5648_mipi_raw", &g_ov5648_mipi_raw_info, NULL, NULL},
-    {"ov5648_darling_mipi_raw", &g_ov5648_darling_mipi_raw_info, NULL, NULL},
-    {"ov8856_mipi_raw", &g_ov8856_mipi_raw_info, NULL, NULL},
-    {"at_s5k4h8yx_mipi_raw", &g_s5k4h8yx_mipi_raw_info, NULL, NULL},
+    {"ov5648_mipi_raw", &g_ov5648_mipi_raw_info, {NULL,0}, NULL},
+    {"ov5648_darling_mipi_raw", &g_ov5648_darling_mipi_raw_info, {NULL,0}, NULL},
+    {"ov8856_mipi_raw", &g_ov8856_mipi_raw_info, {NULL,0}, NULL},
+    {"at_s5k4h8yx_mipi_raw", &g_s5k4h8yx_mipi_raw_info, {NULL,0}, NULL},
 
 #endif
 #endif
@@ -247,8 +252,8 @@ const SENSOR_MATCH_T at_sub_sensor_infor_tab[] = {
 
 };
 const SENSOR_MATCH_T at_dev2_sensor_infor_tab[] = {
-    {"at_ov2680_mipi_raw", &g_ov2680_mipi_raw_info, NULL, NULL},
-    {"at_sp2509_mipi_raw", &g_sp2509_mipi_raw_info, NULL, NULL},
+    {"at_ov2680_mipi_raw", &g_ov2680_mipi_raw_info, {NULL,0}, NULL},
+    {"at_sp2509_mipi_raw", &g_sp2509_mipi_raw_info, {NULL,0}, NULL},
 
     {0}};
 

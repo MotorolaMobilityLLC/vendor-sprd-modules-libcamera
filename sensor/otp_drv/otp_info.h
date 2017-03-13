@@ -2,7 +2,9 @@
 #define _OTP_PARSE_COMMON_H_
 
 #include "cmr_common.h"
+#include "cmr_types.h"
 #include <cutils/properties.h>
+#include "sensor_drv_u.h"
 
 #ifndef TRUE
 #define TRUE 1
@@ -228,11 +230,18 @@ typedef struct {
     otp_base_info_cfg_t base_info_cfg;
 } otp_config_t;
 
+typedef struct otp_drv_init_para
+{
+    SENSOR_HW_HANDLE hw_handle;
+    char *sensor_name;
+    /*you can add your param here*/
+}otp_drv_init_para_t;
 /*
  * if not supported some feature items,please set NULL
  */
 typedef struct {
-    void *(*sensor_otp_create)(SENSOR_HW_HANDLE handle, char *sensor_name);
+    int (*sensor_otp_create)(otp_drv_init_para_t *input_para,
+                             cmr_handle* sns_af_drv_handle);
     int (*sensor_otp_delete)(void *otp_drv_handle);
     int (*sensor_otp_read)(void *otp_drv_handle, otp_params_t *p_data);
     int (*sensor_otp_write)(void *otp_drv_handle, otp_params_t *p_data);

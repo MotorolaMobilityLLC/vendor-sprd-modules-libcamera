@@ -15,14 +15,18 @@
  */
 #ifndef _ET9714_H_
 #define _ET9714_H_
-#include "af_drv.h"
+#include "sns_af_drv.h"
 
 #define et9714_VCM_SLAVE_ADDR (0x18 >> 1)
 #define MOVE_CODE_STEP_MAX 40
-#define WAIT_STABLE_TIME 20 // ms
+#define WAIT_STABLE_TIME  20    //ms
 
-uint32_t et9714_init(SENSOR_HW_HANDLE handle, uint32_t mode);
-uint32_t et9714_write_af(SENSOR_HW_HANDLE handle, uint32_t param);
-uint32_t et9714_deinit(SENSOR_HW_HANDLE handle, uint32_t mode);
+static uint32_t _et9714_write_dac_code(cmr_handle sns_af_drv_handle,int32_t code);
+static int _et9714_drv_set_mode(cmr_handle sns_af_drv_handle);
+static int et9714_drv_create(struct af_drv_init_para *input_ptr, cmr_handle* sns_af_drv_handle);
+static int et9714_drv_delete(cmr_handle sns_af_drv_handle, void* param);
+static int et9714_drv_set_pos(cmr_handle sns_af_drv_handle, uint32_t pos);
+static int et9714_drv_ioctl(cmr_handle sns_af_drv_handle, enum sns_cmd cmd, void* param);
+
 
 #endif

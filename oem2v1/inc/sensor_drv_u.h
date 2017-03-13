@@ -893,7 +893,6 @@ struct sensor_drv_context {
     cmr_int fd_sensor; /*sensor device id, used when sensor dev alive*/
     cmr_u32 is_calibration;
     cmr_u32 stream_on;
-    void *sensor_hw_handler;
     SENSOR_INFO_T *sensor_list_ptr[SENSOR_ID_MAX];
     SENSOR_INFO_T *sensor_info_ptr;
     SENSOR_EXP_INFO_T sensor_exp_info; /*!!!BE CAREFUL!!! for the 3rd party
@@ -914,8 +913,12 @@ struct sensor_drv_context {
     cmr_u32 error_cnt;
     cmr_uint lnc_addr_bakup[8][4];
     cmr_u32 bypass_mode;
-    void *otp_drv_handle;
-    void *module_cxt;
+
+    cmr_handle sensor_hw_handler;
+    void  *module_cxt;
+    cmr_handle  otp_drv_handle;
+    cmr_handle  af_drv_handle;
+    cmr_handle  sns_ic_drv_handle;
 };
 
 enum {
@@ -949,8 +952,8 @@ cmr_int sensor_update_isparm_from_file(struct sensor_drv_context *sensor_cxt,
 
 cmr_int sensor_is_init_common(struct sensor_drv_context *sensor_cxt);
 
-cmr_int sensor_otp_ioctl(struct sensor_drv_context *sensor_cxt, uint8_t cmd,
-                         uint8_t sub_cmd, void *data);
+cmr_int sensor_otp_rw_ctrl(struct sensor_drv_context *sensor_cxt,
+                        uint8_t cmd,uint8_t sub_cmd,void* data);
 
 cmr_int sensor_stream_ctrl_common(struct sensor_drv_context *sensor_cxt,
                                   cmr_u32 on_off);
@@ -967,6 +970,32 @@ cmr_int sensor_get_info_common(struct sensor_drv_context *sensor_cxt,
 
 cmr_int sns_dev_get_flash_level(struct sensor_drv_context *sensor_cxt,
                                 struct sensor_flash_level *level);
+/*af device*/
+cmr_int sensor_af_init(cmr_handle sns_module_handle);
+
+cmr_int sensor_af_deinit(cmr_handle sns_module_handle);
+
+cmr_int sensor_af_set_pos(cmr_handle sns_module_handle, uint16_t pos);
+
+cmr_int sensor_af_get_pos(cmr_handle sns_module_handle, uint16_t *pos);
+
+cmr_int sensor_drv_ioctl(cmr_handle sns_module_handle,enum sns_cmd cmd,void* param);
+
+/*otp drv*/
+cmr_int sensor_otp_module_init(struct sensor_drv_context *sensor_cxt);
+cmr_int sensor_otp_module_deinit(struct sensor_drv_context * sensor_cxt);
+
+/*hardware device*/
+cmr_int sensor_hw_ReadI2C(cmr_handle sns_module_handle, cmr_u16 slave_addr,
+                           cmr_u8 *cmd, cmr_u16 cmd_length);
+cmr_int sensor_hw_WriteI2C(cmr_handle sns_module_handle, cmr_u16 slave_addr,
+                           cmr_u8 *cmd, cmr_u16 cmd_length);
+/*sensor ic device*/
+cmr_uint sensor_ic_write_gain(cmr_handle sns_module_handle, cmr_uint param);
+unsigned long sensor_ic_ex_write_exposure(cmr_handle sns_module_handle, unsigned long param);
+unsigned long sensor_ic_write_ae_value(cmr_handle sns_module_handle, unsigned long param);
+unsigned long sensor_ic_read_aec_info(cmr_handle sns_module_handle, unsigned long param);
+unsigned long sensor_ic_read_aec_info(cmr_handle sns_module_handle, unsigned long param);
 
 /*for 3rd party functions*/
 cmr_int hw_Sensor_WriteData(SENSOR_HW_HANDLE handle, cmr_u8 *regPtr,

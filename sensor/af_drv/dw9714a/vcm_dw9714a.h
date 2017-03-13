@@ -16,11 +16,14 @@
 #ifndef _DW9714A_H_
 #define _DW9714A_H_
 
-#include "af_drv.h"
+#include "sns_af_drv.h"
 
-#define DW9714A_VCM_SLAVE_ADDR (0x18 >> 1)
+#define DW9714A_VCM_SLAVE_ADDR  (0x18>>1)
 
-uint32_t vcm_dw9714A_init(SENSOR_HW_HANDLE handle);
-uint32_t vcm_dw9714A_set_position(SENSOR_HW_HANDLE handle, uint32_t pos);
+static int _dw9714a_drv_set_mode(cmr_handle sns_af_drv_handle);
+static int dw9714a_drv_create(struct af_drv_init_para *input_ptr, cmr_handle* sns_af_drv_handle);
+static int dw9714a_drv_delete(cmr_handle sns_af_drv_handle, void* param);
+static int dw9714a_drv_set_pos(cmr_handle sns_af_drv_handle, uint16_t pos);
+static int dw9714a_drv_ioctl(cmr_handle sns_af_drv_handle, enum sns_cmd cmd, void* param);
 
 #endif

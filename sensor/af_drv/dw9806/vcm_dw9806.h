@@ -16,10 +16,14 @@
 #ifndef _DW9806_H_
 #define _DW9806_H_
 
-#include "af_drv.h"
+#include "sns_af_drv.h"
 
-#define DW9806_VCM_SLAVE_ADDR (0x18 >> 1)
-uint32_t vcm_dw9806_init(SENSOR_HW_HANDLE handle, uint32_t mode);
-uint32_t vcm_dw9806_set_position(SENSOR_HW_HANDLE handle, uint32_t pos);
+#define DW9806_VCM_SLAVE_ADDR (0x18>>1)
+
+static int _dw9806_drv_set_mode(cmr_handle sns_af_drv_handle);
+static int dw9806_drv_create(struct af_drv_init_para *input_ptr, cmr_handle* sns_af_drv_handle);
+static int dw9806_drv_delete(cmr_handle sns_af_drv_handle, void* param);
+static int dw9806_drv_set_pos(cmr_handle sns_af_drv_handle, uint32_t pos);
+static int dw9806_drv_ioctl(cmr_handle sns_af_drv_handle, enum sns_cmd cmd, void* param);
 
 #endif

@@ -16,11 +16,19 @@
 #ifndef _AK7371_H_
 #define _AK7371_H_
 #include "sensor_drv_u.h"
+#include "sns_af_drv.h"
+#include <utils/Log.h>
 
-uint32_t vcm_ak7371_init(SENSOR_HW_HANDLE handle, int mode);
-uint32_t vcm_ak7371_set_position(SENSOR_HW_HANDLE handle, uint32_t pos);
-uint32_t vcm_ak7371_get_pose_dis(SENSOR_HW_HANDLE handle, uint32_t *up2h,
-                                 uint32_t *h2down);
-uint32_t vcm_ak7371_deinit(SENSOR_HW_HANDLE handle);
+#define AK7371_VCM_SLAVE_ADDR (0x18 >> 1)
+
+#define POSE_UP_HORIZONTAL 32
+#define POSE_DOWN_HORIZONTAL 37
+
+static int _vcm_ak7371_set_mode(cmr_handle sns_af_drv_handle);
+static int vcm_ak7371_drv_create(struct af_drv_init_para *input_ptr, cmr_handle* sns_af_drv_handle);
+static int vcm_ak7371_drv_delete(cmr_handle sns_af_drv_handle, void* param);
+static int vcm_ak7371_drv_set_pos(cmr_handle sns_af_drv_handle, uint16_t pos);
+static int vcm_ak7371_drv_ioctl(cmr_handle sns_af_drv_handle, enum sns_cmd cmd, void* param);
 
 #endif
+
