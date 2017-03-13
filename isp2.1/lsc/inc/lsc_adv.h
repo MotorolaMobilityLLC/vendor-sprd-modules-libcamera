@@ -382,6 +382,10 @@ struct lsc2_context{
 
 
 ////////////////////////////// calculation dependent //////////////////////////////
+struct lsc_size {
+	uint32_t w;
+	uint32_t h;
+};
 
 
 struct lsc_adv_init_param {
@@ -403,6 +407,22 @@ struct lsc_adv_init_param {
 	uint32_t param_level;
 	uint16_t *lum_gain;  // space to save pre_table from smart1.0
 	struct lsc_adv_tune_param tune_param;
+
+	//otp data
+	uint32_t lsc_otp_table_en;
+	uint32_t lsc_otp_table_width;
+	uint32_t lsc_otp_table_height;
+	unsigned short*lsc_otp_table_addr;
+
+	uint32_t lsc_otp_oc_en;
+	uint32_t lsc_otp_oc_r_x;
+	uint32_t lsc_otp_oc_r_y;
+	uint32_t lsc_otp_oc_gr_x;
+	uint32_t lsc_otp_oc_gr_y;
+	uint32_t lsc_otp_oc_gb_x;
+	uint32_t lsc_otp_oc_gb_y;
+	uint32_t lsc_otp_oc_b_x;
+	uint32_t lsc_otp_oc_b_y;
 };
 
 
@@ -411,12 +431,6 @@ struct statistic_raw_t {
 	uint32_t *gr;
 	uint32_t *gb;
 	uint32_t *b;
-};
-
-
-struct lsc_size {
-	uint32_t w;
-	uint32_t h;
 };
 
 

@@ -81,7 +81,7 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_SHARED_LIBRARIES := libcutils libutils libdl libcamcommon
 
-LOCAL_SHARED_LIBRARIES += libspaf libawb1 liblsc libcalibration libae
+LOCAL_SHARED_LIBRARIES += libspaf libawb1 liblsc libcalibration libae libsprdlsc
 LOCAL_SHARED_LIBRARIES += libAF libsft_af_ctrl libaf_tune
 LOCAL_SHARED_LIBRARIES += libaf_running
 LOCAL_SHARED_LIBRARIES += libcamsensor
