@@ -4735,8 +4735,7 @@ cmr_int prev_alloc_video_buf(struct prev_handle *handle, cmr_u32 camera_id, cmr_
 		buffer->fd[i]                   = prev_cxt->video_frm[i].fd;
 	}
 
-	
-	for (i = 0; i < PREV_RESERVED_FRM_CNT; i++) {
+	for (i = 0; i < VIDEO_RESERVED_FRM_CNT; i++) {
 		prev_cxt->video_reserved_frm[i].buf_size        = frame_size;
 		prev_cxt->video_reserved_frm[i].addr_vir.addr_y = prev_cxt->video_reserved_virt_addr[i];
 		prev_cxt->video_reserved_frm[i].addr_vir.addr_u = prev_cxt->video_reserved_frm[i].addr_vir.addr_y + buffer_size;
