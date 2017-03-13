@@ -137,6 +137,8 @@ static SENSOR_IOCTL_FUNC_TAB_T s_ov5675_ioctl_func_tab;
 struct sensor_raw_info *s_ov5675_mipi_raw_info_ptr = &s_ov5675_mipi_raw_info;
 static EXIF_SPEC_PIC_TAKING_COND_T s_ov5675_exif_info;
 
+static uint32_t s_ov5675_sensor_close_flag = 0;
+
 /*//delay 200ms
 {SENSOR_WRITE_DELAY, 200},
 */
@@ -1754,10 +1756,31 @@ static uint32_t ov5675_stream_on(SENSOR_HW_HANDLE handle, uint32_t param) {
  *============================================================================*/
 static uint32_t ov5675_stream_off(SENSOR_HW_HANDLE handle, uint32_t param) {
     SENSOR_PRINT("E");
-    Sensor_WriteReg(0x0100, 0x00);
-    /*delay*/
-    usleep(50 * 1000);
+    unsigned char value;
+    unsigned int sleep_time = 0;
+
+    value = Sensor_ReadReg(0x0100);
+    if (value != 0x00) {
+        Sensor_WriteReg(0x0100, 0x00);
+        if (!s_ov5675_sensor_close_flag) {
+            sleep_time = 50 * 1000;
+            usleep(sleep_time);
+        }
+    } else {
+        Sensor_WriteReg(0x0100, 0x00);
+    }
+
+    s_ov5675_sensor_close_flag = 0;
+    SENSOR_LOGI("X sleep_time=%dus", sleep_time);
     return 0;
+}
+
+static uint32_t ov5675_set_sensor_close_flag(SENSOR_HW_HANDLE handle) {
+    uint32_t rtn = SENSOR_SUCCESS;
+
+    s_ov5675_sensor_close_flag = 1;
+
+    return rtn;
 }
 
 static unsigned long ov5675_access_val(SENSOR_HW_HANDLE handle,
@@ -1813,6 +1836,9 @@ static unsigned long ov5675_access_val(SENSOR_HW_HANDLE handle,
         break;
     case SENSOR_VAL_TYPE_GET_FPS_INFO:
         rtn = ov5675_get_fps_info(handle, param_ptr->pval);
+        break;
+    case SENSOR_VAL_TYPE_SET_SENSOR_CLOSE_FLAG:
+        rtn = ov5675_set_sensor_close_flag(handle);
         break;
     default:
         break;

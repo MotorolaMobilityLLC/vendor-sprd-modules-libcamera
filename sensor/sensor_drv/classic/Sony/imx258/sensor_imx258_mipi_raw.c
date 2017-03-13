@@ -25,6 +25,8 @@ static struct hdr_info_t s_hdr_info;
 static uint32_t s_current_default_frame_length;
 struct sensor_ev_info_t s_sensor_ev_info;
 
+static uint32_t s_imx258_sensor_close_flag = 0;
+
 /*==============================================================================
  * Description:
  * set video mode
@@ -677,10 +679,22 @@ static unsigned long imx258_stream_off(SENSOR_HW_HANDLE handle,
                                        unsigned long param) {
     SENSOR_LOGI("E");
     UNUSED(param);
-    Sensor_WriteReg(0x0100, 0x00);
-    /*delay*/
-    usleep(100 * 1000);
+    unsigned char value;
+    unsigned int sleep_time = 0;
 
+    value = Sensor_ReadReg(0x0100);
+    if (value != 0x00) {
+        Sensor_WriteReg(0x0100, 0x00);
+        if (!s_imx258_sensor_close_flag) {
+            sleep_time = 100 * 1000;
+            usleep(sleep_time);
+        }
+    } else {
+        Sensor_WriteReg(0x0100, 0x00);
+    }
+
+    s_imx258_sensor_close_flag = 0;
+    SENSOR_LOGI("X sleep_time=%dus", sleep_time);
     return 0;
 }
 
@@ -772,6 +786,14 @@ static uint32_t imx258_get_fps_info(SENSOR_HW_HANDLE handle, uint32_t *param) {
     return rtn;
 }
 
+static uint32_t imx258_set_sensor_close_flag(SENSOR_HW_HANDLE handle) {
+    uint32_t rtn = SENSOR_SUCCESS;
+
+    s_imx258_sensor_close_flag = 1;
+
+    return rtn;
+}
+
 static unsigned long imx258_access_val(SENSOR_HW_HANDLE handle,
                                        unsigned long param) {
     uint32_t rtn = SENSOR_SUCCESS;
@@ -826,6 +848,9 @@ static unsigned long imx258_access_val(SENSOR_HW_HANDLE handle,
         break;
     case SENSOR_VAL_TYPE_GET_FPS_INFO:
         rtn = imx258_get_fps_info(handle, param_ptr->pval);
+        break;
+    case SENSOR_VAL_TYPE_SET_SENSOR_CLOSE_FLAG:
+        rtn = imx258_set_sensor_close_flag(handle);
         break;
     default:
         break;
