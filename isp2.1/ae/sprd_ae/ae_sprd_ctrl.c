@@ -3414,7 +3414,8 @@ int32_t ae_sprd_io_ctrl(void *handle, enum ae_io_ctrl_cmd cmd, void *param, void
 				cxt->last_linetime = cxt->cur_status.line_time;
 			}
 			cxt->last_enable = 1;
-			AE_LOGD("AE_VIDEO_STOP E %d G %d", cxt->last_expline, cxt->last_aegain);
+			AE_LOGD("AE_VIDEO_STOP E %d G %d W %d H %d", cxt->last_expline, cxt->last_aegain,
+				cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h);
 			break;
 
 		case AE_VIDEO_START:
@@ -3529,7 +3530,8 @@ int32_t ae_sprd_io_ctrl(void *handle, enum ae_io_ctrl_cmd cmd, void *param, void
 				}else{
 					;
 				}
-				AE_LOGD("AE_VIDEO_START lt %d", cxt->cur_status.line_time);
+				AE_LOGD("AE_VIDEO_START lt %d W %d H %d", cxt->cur_status.line_time,
+					cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h);
 			}
 			break;
 
