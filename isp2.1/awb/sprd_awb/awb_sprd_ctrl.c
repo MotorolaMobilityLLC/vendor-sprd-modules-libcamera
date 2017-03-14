@@ -550,6 +550,10 @@ static uint32_t _awb_get_recgain(struct awb_ctrl_cxt *cxt, void *param)
 	awb_gain.g = cxt->recover_gain.g;
 	awb_gain.b = cxt->recover_gain.b;
 
+	cxt->output_gain.r= cxt->recover_gain.r;
+	cxt->output_gain.g= cxt->recover_gain.g;
+	cxt->output_gain.b= cxt->recover_gain.b;
+	cxt->output_ct= cxt->recover_ct;
 
 	cxt->cur_gain.r = awb_gain.r;
 	cxt->cur_gain.g = awb_gain.g;
@@ -582,19 +586,17 @@ static uint32_t _awb_set_flash_gain(struct awb_ctrl_cxt *cxt, void *param)
 	AWB_CTRL_LOGD("FLASH_TAG: flashing mode = %d", cxt->flash_info.flash_mode);
 	//flash change awb gain
 	if ((AWB_CTRL_WB_MODE_AUTO == cxt->wb_mode) && (AWB_CTRL_SCENEMODE_AUTO == cxt->scene_mode)) {
-		if (AWB_CTRL_FLASH_MAIN == cxt->flash_info.flash_mode) {
-			if(0 == cxt->flash_info.patten) {
-				//alpha padding
-				AWB_CTRL_LOGD("FLASH_TAG:before flash rgb(%d,%d,%d)", cxt->recover_gain.r,
-				cxt->recover_gain.g, cxt->recover_gain.b);
-				if (cxt->flash_info.flash_ratio.r > 0 && cxt->flash_info.flash_ratio.g > 0 && cxt->flash_info.flash_ratio.b > 0) {
-					cxt->output_gain.r=((cxt->recover_gain.r *(1024-cxt->flash_info.effect))+cxt->flash_info.flash_ratio.r*cxt->flash_info.effect)>>0x0a;
-					cxt->output_gain.g=((cxt->recover_gain.g *(1024-cxt->flash_info.effect))+cxt->flash_info.flash_ratio.g*cxt->flash_info.effect)>>0x0a;
-					cxt->output_gain.b=((cxt->recover_gain.b *(1024-cxt->flash_info.effect))+cxt->flash_info.flash_ratio.b*cxt->flash_info.effect)>>0x0a;
-				}
+		if(0 == cxt->flash_info.patten) {
+			//alpha padding
+			AWB_CTRL_LOGD("FLASH_TAG:before flash rgb(%d,%d,%d)", cxt->recover_gain.r,
+			cxt->recover_gain.g, cxt->recover_gain.b);
+			if (cxt->flash_info.flash_ratio.r > 0 && cxt->flash_info.flash_ratio.g > 0 && cxt->flash_info.flash_ratio.b > 0) {
+				cxt->output_gain.r=((cxt->recover_gain.r *(1024-cxt->flash_info.effect))+cxt->flash_info.flash_ratio.r*cxt->flash_info.effect)>>0x0a;
+				cxt->output_gain.g=((cxt->recover_gain.g *(1024-cxt->flash_info.effect))+cxt->flash_info.flash_ratio.g*cxt->flash_info.effect)>>0x0a;
+				cxt->output_gain.b=((cxt->recover_gain.b *(1024-cxt->flash_info.effect))+cxt->flash_info.flash_ratio.b*cxt->flash_info.effect)>>0x0a;
 			}
-			AWB_CTRL_LOGD("FLASH_TAG:cap flash rgb(%d,%d,%d)", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b);
 		}
+		AWB_CTRL_LOGD("FLASH_TAG:cap flash effect= %d  rgb(%d,%d,%d)",cxt->flash_info.effect,cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b);
 	}
 
 	return rtn;
@@ -621,7 +623,7 @@ static uint32_t _awb_set_lock(struct awb_ctrl_cxt *cxt, void *param)
 
 		cxt->lock_info.lock_ct = cxt->output_ct;
 	}
-	AWB_CTRL_LOGD("AWB_TEST _awb_set_lock1: luck=%d, mode:%d", cxt->lock_info.lock_num, cxt->lock_info.lock_mode);
+	AWB_CTRL_LOGD("AWB_TEST _awb_set_lock1: luck=%d, mode:%d   rgb[%d %d %d]", cxt->lock_info.lock_num, cxt->lock_info.lock_mode,cxt->output_gain.r,cxt->output_gain.g,cxt->output_gain.b);
 	return rtn;
 
 }
