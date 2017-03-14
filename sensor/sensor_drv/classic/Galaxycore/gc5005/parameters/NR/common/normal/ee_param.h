@@ -6,33 +6,33 @@
 	/*str_d_p*/
 	{
 		/*negative*/
-		0x0000,
+		0x0010,
 		/*positive*/
-		0x0000,
+		0x0010,
 
 	},
 	/*ee_thr_d*/
 	{
 		/*negative*/
-		0x0000,
+		0x0010,
 		/*positive*/
-		0x0000,
+		0x0010,
 
 	},
 	/*ee_incr_d*/
 	{
 		/*negative*/
-		0x0000,
+		0x0010,
 		/*positive*/
-		0x0000,
+		0x0010,
 
 	},
 	/*ee_cv_clip*/
 	{
 		/*negative*/
-		0x0000,
+		0x0014,
 		/*positive*/
-		0x0000,
+		0xFFEC,
 
 	},
 	/*ee_cv*/
@@ -40,23 +40,23 @@
 		/*t_cfg*/
 		{
 			/*ee_t1_cfg*/
-			0x0000,
+			0x00C8,
 			/*ee_t2_cfg*/
-			0x0000,
+			0x0108,
 			/*ee_t3_cfg*/
-			0x0000,
+			0x0128,
 			/*ee_t4_cfg*/
-			0x0000,
+			0x0168,
 
 		},
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
-			0x00,
+			0x20,
 			/*ee_r2_cfg*/
-			0x00,
+			0x40,
 			/*ee_r3_cfg*/
-			0x00,
+			0x80,
 			/*reserved*/
 			0x00,
 
@@ -187,11 +187,11 @@
 		/*ee_neg_c*/
 		{
 			/*ee_c1_cfg*/
-			0xD3,
+			0xD8,
 			/*ee_c2_cfg*/
-			0xD3,
+			0xD8,
 			/*ee_c3_cfg*/
-			0xD3,
+			0xD8,
 			/*reserved*/
 			0x00,
 
@@ -208,25 +208,25 @@
 		/*ee_corner_th*/
 		{
 			/*negative*/
-			0x0000,
+			0x0005,
 			/*positive*/
-			0x0000,
+			0x0005,
 
 		},
 		/*ee_corner_gain*/
 		{
 			/*negative*/
-			0x0000,
+			0x0005,
 			/*positive*/
-			0x0000,
+			0x0005,
 
 		},
 		/*ee_corner_sm*/
 		{
 			/*negative*/
-			0x0000,
+			0x0001,
 			/*positive*/
-			0x0000,
+			0x0001,
 
 		}
 	},
@@ -428,11 +428,11 @@
 		}
 	},
 	/*ee_mode*/
-	0x00,
+	0x01,
 	/*flat_smooth_mode*/
-	0x00,
+	0x01,
 	/*edge_smooth_mode*/
-	0x00,
+	0x01,
 	/*bypass*/
 	0x00,
 }
