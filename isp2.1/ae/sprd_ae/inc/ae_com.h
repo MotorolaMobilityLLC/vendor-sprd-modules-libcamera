@@ -140,6 +140,8 @@ struct ae_alg_calc_param {
 	float lv_cali_bv;
 /*for mlog function*/
 	uint8_t mlog_en;
+/*modify the lib log level, if necissary*/
+	uint8_t log_level;
 //refer to convergence
 	uint8_t ae_start_delay;
 	int16_t stride_config[2];

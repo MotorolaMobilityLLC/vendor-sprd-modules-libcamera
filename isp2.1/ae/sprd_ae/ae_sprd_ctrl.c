@@ -20,7 +20,6 @@
 #include "ae_debug.h"
 #include "ae_ctrl.h"
 #include "isp_debug.h"
-
 #ifndef WIN32
 #include <utils/Timers.h>
 #include <cutils/properties.h>
@@ -84,7 +83,7 @@ extern "C" {
 #define AE_WRITE_QUEUE_NUM		(8)
 
 #define AE_CALC_RESULT_QUEUE_LENGTH		8
-	const char AE_MAGIC_TAG[] = "ae_debug_info";
+const char AE_MAGIC_TAG[] = "ae_debug_info";
 /**---------------------------------------------------------------------------*
 **				Data Structures					*
 **---------------------------------------------------------------------------*/
@@ -122,32 +121,11 @@ enum ae_flash_state {
 	AE_FLASH_STATE_MAX,
 };
 
-struct flash_param {
-	uint32_t enable;
-	enum ae_flash_state flash_state;
-	uint32_t flash_ratio;	// high/low, x256
-	struct ae_misc_calc_out before_result;
-	struct ae_misc_calc_out capture_result;
-	uint32_t effect;	// x1024
-	uint32_t main_flash_lum;
-	uint32_t convergence_speed;
-	uint32_t flash_tuning_eb;
-	struct ae_misc_calc_out flash_tuning_result;
-	uint32_t highflash_skip_cnt;
-	uint32_t highflash_skip_en;
-
-	struct ae_misc_calc_out preflash_converged_result;
-
-	uint32_t main_lum;
-	uint32_t target_lum;
-	uint32_t backup_target_lum;
-	uint32_t calc_time;
-	uint32_t lcd_rec_lum[LCD_REC_MAX];
-	uint32_t lcd_rec_time[LCD_REC_MAX];
-	uint32_t lcd_rec_idx;
-	uint32_t lcd_start_time;
-	uint32_t lcd_tuning_a;
-	uint32_t lcd_tuning_b;
+struct flash_cali_data {
+	uint16_t ydata;			//1024
+	uint16_t rdata;			// base on gdata1024
+	uint16_t bdata;			// base on gdata1024
+	int8_t	 used;
 };
 
 struct ae_monitor_unit {
@@ -243,6 +221,7 @@ struct ae_ctrl_cxt {
 	 */
 	int16_t flash_on_off_thr;
 	uint32_t flash_effect;
+	struct flash_cali_data flash_cali[32][32];
 	/*
 	 * fd-ae param
 	 */
@@ -1621,7 +1600,6 @@ static int32_t _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 		cxt->snr_info = init_param->resolution_info;
 		cxt->cur_status.frame_size = init_param->resolution_info.frame_size;
 		cxt->cur_status.line_time = init_param->resolution_info.line_time/SENSOR_LINETIME_BASE;
-
 		trim.x = 0;
 		trim.y = 0;
 		trim.w = init_param->resolution_info.frame_size.w;
@@ -1665,6 +1643,8 @@ static int32_t _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 	cxt->exp_skip_num = cxt->cur_param->sensor_cfg.exp_skip_num;
 	cxt->gain_skip_num = cxt->cur_param->sensor_cfg.gain_skip_num;
 
+
+	cxt->cur_status.log_level = g_ae_log_level;
 	cxt->cur_status.alg_id = cxt->cur_param->alg_id;
 	cxt->cur_status.win_size = cxt->monitor_unit.win_size;
 	cxt->cur_status.win_num = cxt->monitor_unit.win_num;
@@ -2528,33 +2508,136 @@ static void _set_led(struct ae_ctrl_cxt *cxt){
 	char str[50];
 	int16_t i = 0;
 	int16_t j = 0;
+	float tmp =0;
+	uint32_t type = ISP_FLASH_TYPE_MAIN;		//ISP_FLASH_TYPE_MAIN   ISP_FLASH_TYPE_PREFLASH
 	int8_t led_ctl[2] = {0, 0};
-	struct ae_flash_element tmp;
-	property_get("persist.sys.isp.ae.led", str, "");
+	static int8_t led_record[2] = {0, 0};
+	struct ae_flash_cfg cfg;
+	struct ae_flash_element element;
 
-	if ('\0' == str[i]){
-		return;
+	memset(str, 0, sizeof(str));
+	property_get("persist.sys.isp.ae.manual", str, "");
+	if ((strcmp(str, "fasim") & strcmp(str, "facali") & strcmp(str, "led"))){
+		//AE_LOGD("isp_set_led_noctl!\r\n");
 	}else{
-		while(' ' == str[i])
-			i++;
+		if (!strcmp(str, "facali"))
+			type = ISP_FLASH_TYPE_MAIN;
+		else
+			type = ISP_FLASH_TYPE_PREFLASH;
 
-		while(('0' <= str[i] && '9' >= str[i]) || ' ' == str[i]){
-			if (' ' == str[i]){
-				if (' ' == str[i + 1]){
-					;
+		memset(str, 0, sizeof(str));
+		property_get("persist.sys.isp.ae.led", str, "");
+		if ('\0' == str[i]){
+			return;
+		}else{
+			while(' ' == str[i])
+				i++;
+
+			while(('0' <= str[i] && '9' >= str[i]) || ' ' == str[i]){
+				if (' ' == str[i]){
+					if (' ' == str[i + 1]){
+						;
+					}else{
+						if (j > 0)
+							j = 1;
+						else
+							j++;
+					}
 				}else{
-					if (j > 0)
-						j = 1;
-					else
-						j++;
+					led_ctl[j] = 10 * led_ctl[j] + str[i] - '0';
 				}
-			}else{
-				led_ctl[j] = 10 * led_ctl[j] + str[i] - '0';
+				i++;
 			}
-			i++;
 		}
-		//AE_LOGD("isp_set_led: %d\r\n", led_ctl[0]);
-		//cxt->isp_ops.flash_set_charge(cxt->isp_ops.isp_handler, led_ctl[0], &tmp);
+
+		AE_LOGD("isp_set_led: %d %d\r\n", led_ctl[0], led_ctl[1]);
+		if (0 == led_ctl[0] || 0 == led_ctl[1]){
+//close
+			cfg.led_idx = 0;
+			//cfg.type = ISP_FLASH_TYPE_MAIN;
+			cfg.type = type;
+			cxt->isp_ops.flash_ctrl(cxt->isp_ops.isp_handler, &cfg, NULL);
+
+			led_record[0] = led_ctl[0];
+			led_record[1] = led_ctl[1];
+		}else if(led_record[0] != led_ctl[0] || led_record[1] != led_ctl[1]){
+//set led_1
+			cfg.led_idx = 1;
+			//cfg.type = ISP_FLASH_TYPE_MAIN;
+			cfg.type = type;
+			element.index = led_ctl[0] - 1;
+			cxt->isp_ops.flash_set_charge(cxt->isp_ops.isp_handler, &cfg, &element);
+//set led_2
+			cfg.led_idx = 2;
+			//cfg.type = ISP_FLASH_TYPE_MAIN;
+			cfg.type = type;
+			element.index = led_ctl[1] - 1;
+			cxt->isp_ops.flash_set_charge(cxt->isp_ops.isp_handler, &cfg, &element);
+//open
+			cfg.led_idx = 1;
+			//cfg.type = ISP_FLASH_TYPE_MAIN;
+			cfg.type = type;
+			cxt->isp_ops.flash_ctrl(cxt->isp_ops.isp_handler, &cfg, NULL);
+
+			led_record[0] = led_ctl[0];
+			led_record[1] = led_ctl[1];
+		}else{
+			cxt->flash_cali[led_ctl[0]][led_ctl[1]].used = 1;
+			cxt->flash_cali[led_ctl[0]][led_ctl[1]].ydata = cxt->sync_cur_result.cur_lum * 4;
+			tmp = 1024.0 / cxt->cur_status.awb_gain.g;
+			cxt->flash_cali[led_ctl[0]][led_ctl[1]].rdata = (uint16_t)(cxt->cur_status.awb_gain.r * tmp);
+			cxt->flash_cali[led_ctl[0]][led_ctl[1]].bdata = (uint16_t)(cxt->cur_status.awb_gain.b * tmp);
+		}
+
+		memset(str, 0, sizeof(str));
+		property_get("persist.sys.isp.ae.facali.dump", str, "");
+		if (!strcmp(str, "on")){
+			FILE *p = NULL;
+			p = fopen("/data/misc/cameraserver/flashcali.txt", "w+");
+			if(!p){
+				AE_LOGD("Write flash cali file error!!\r\n");
+			}else{
+				fprintf(p, "shutter: %d  gain: %d\r\n",
+					cxt->sync_cur_result.wts.cur_exp_line, cxt->sync_cur_result.wts.cur_again);
+
+				fprintf(p, "Used\r\n");
+				for(i = 0; i < 32; i++){
+					for(j = 0; j < 32; j++){
+						fprintf(p, "%1d ", cxt->flash_cali[i][j].used);
+					}
+					fprintf(p, "\r\n");
+				}
+
+				fprintf(p, "Ydata\r\n");
+				for(i = 0; i < 32; i++){
+					for(j = 0; j < 32; j++){
+						fprintf(p, "%4d ", cxt->flash_cali[i][j].ydata);
+					}
+					fprintf(p, "\r\n");
+				}
+
+				fprintf(p, "R_gain\r\n");
+				for(i = 0; i < 32; i++){
+					for(j = 0; j < 32; j++){
+						fprintf(p, "%4d ", cxt->flash_cali[i][j].rdata);
+					}
+					fprintf(p, "\r\n");
+				}
+
+				fprintf(p, "B_gain\r\n");
+				for(i = 0; i < 32; i++){
+					for(j = 0; j < 32; j++){
+						fprintf(p, "%4d ", cxt->flash_cali[i][j].bdata);
+					}
+					fprintf(p, "\r\n");
+				}
+			}
+			fclose(p);
+		}else if (!strcmp(str, "clear")){
+			memset(cxt->flash_cali, 0, sizeof(cxt->flash_cali));
+		}else{
+			;
+		}
 	}
 	return;
 }
@@ -2810,7 +2893,7 @@ int32_t ae_calculation(void *handle, void* param, void* result)
 		// current_status->ae1_finfo.enable_flag);
 
 		//4test
-		//_set_led(cxt);
+		_set_led(cxt);
 		//ae_hdr_ctrl(cxt, param);
 		//4test
 
@@ -2993,8 +3076,8 @@ int32_t ae_sprd_io_ctrl(void *handle, enum ae_io_ctrl_cmd cmd, void *param, void
 		case AE_SET_WORK_MODE:
 			break;
 
-	case AE_SET_SCENE_MODE:
-		break;
+		case AE_SET_SCENE_MODE:
+			break;
 
 		case AE_SET_ISO:
 			if (param) {
@@ -3027,7 +3110,6 @@ int32_t ae_sprd_io_ctrl(void *handle, enum ae_io_ctrl_cmd cmd, void *param, void
 				struct ae_set_weight *weight = param;
 
 				AE_LOGD("setweight %d", weight->mode);
-
 				if (weight->mode < AE_WEIGHT_MAX) {
 					cxt->cur_status.settings.metering_mode = weight->mode;
 				}
@@ -3054,9 +3136,7 @@ int32_t ae_sprd_io_ctrl(void *handle, enum ae_io_ctrl_cmd cmd, void *param, void
 		case AE_SET_EV_OFFSET:
 			if (param) {
 				struct ae_set_ev *ev = param;
-
 				AE_LOGD("setev %d", ev->level);
-
 				if (ev->level < AE_LEVEL_MAX) {
 					cxt->cur_status.settings.ev_index = ev->level;
 				}
