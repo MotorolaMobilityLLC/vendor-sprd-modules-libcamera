@@ -913,12 +913,14 @@ int SprdCamera3HWI::validateCaptureRequest(camera3_capture_request_t *request) {
 void SprdCamera3HWI::flushRequest(uint32_t frame_num) {
     ATRACE_CALL();
 
+    HAL_LOGD("::hal3:: E");
+
     SprdCamera3RegularChannel *regularChannel =
         reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
     SprdCamera3PicChannel *picChannel =
         reinterpret_cast<SprdCamera3PicChannel *>(mPicChan);
     int64_t timestamp = 0;
-    HAL_LOGD("ent");
+
     if (mMetadataChannel)
         mMetadataChannel->stop(mFrameNum);
     if (mRegularChan)
@@ -927,7 +929,6 @@ void SprdCamera3HWI::flushRequest(uint32_t frame_num) {
         mPicChan->stop(mFrameNum);
 
     timestamp = systemTime();
-    HAL_LOGD("clear stream");
     if (regularChannel) {
         regularChannel->channelUnmapCurrentQBuff(frame_num, timestamp,
                                                  CAMERA_STREAM_TYPE_PREVIEW);
@@ -949,7 +950,7 @@ void SprdCamera3HWI::flushRequest(uint32_t frame_num) {
         picChannel->channelClearAllQBuff(timestamp,
                                          CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT);
     }
-    HAL_LOGD("exit");
+    HAL_LOGD("::hal3:: X");
 }
 
 void SprdCamera3HWI::getLogLevel() {
