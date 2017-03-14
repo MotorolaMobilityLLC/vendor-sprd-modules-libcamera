@@ -730,6 +730,8 @@ private:
 	uint32_t                      mFlashCaptureSkipNum;
 	bool                          mFlagMultiLayerStart;
 	bool                          mSprdBurstModeEnabled;
+	bool			      mUhdRecodingEnabled;
+	bool			      mUhdVideoSnapshotSupport;
 #ifdef CONFIG_FACE_BEAUTY
 	uint32_t                      mSkinWhitenNotDetectFDNum;
 	bool                          isNeedBeautify;

@@ -7216,6 +7216,14 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 	out_param_ptr->sprd_3dcalibration_enabled = cxt->is_3dcalibration_mode;
 	CMR_LOGD("sprd_3dcalibration_enabled flag %d", out_param_ptr->sprd_3dcalibration_enabled);
 
+	ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_UHD_RECORDING_ENABLED, &setting_param);
+	if (ret) {
+		CMR_LOGE("failed to get uhd  enabled flag %ld", ret);
+		goto exit;
+	}
+	out_param_ptr->is_uhd_recording_mode =  setting_param.cmd_type_value;
+	CMR_LOGD("is_udh_recording_mode flag %d", out_param_ptr->is_uhd_recording_mode);
+
 	// init value
 	cxt->burst_mode = 0;
 	out_param_ptr->sprd_highiso_enabled = 0;
@@ -7690,6 +7698,10 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id, cmr
 		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);
 		break;
 	case CAMERA_PARAM_SPRD_YUV_CALLBACK_ENABLE:
+		setting_param.cmd_type_value = param;
+		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);
+		break;
+	case CAMERA_PARAM_UHD_RECORDING_ENABLED:
 		setting_param.cmd_type_value = param;
 		ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);
 		break;

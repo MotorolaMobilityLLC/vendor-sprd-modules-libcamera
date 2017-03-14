@@ -104,6 +104,8 @@ namespace sprdcamera {
 #define DUALCAM_ZSL_NUM   (7)/**add for 3d capture*/
 #define DUALCAM_MAX_ZSL_NUM (4)
 
+#define UHD_WIDTH     3840
+#define UHD_HEIGHT    2160
 
 // dfs policy
 enum DFS_POLICY {
@@ -800,8 +802,17 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type, uint32_t frame_n
 				mEisVideoInit = true;
 			}
 #endif
-
+#ifdef CONFIG_CAMERA_UHD_VIDEOSNAPSHOT_SUPPORT
+			mUhdVideoSnapshotSupport = true;
+#else
+			mUhdVideoSnapshotSupport = false;
+#endif
 			ret = startPreviewInternal();
+
+			if(mUhdVideoSnapshotSupport == false && mUhdRecodingEnabled ==  true){
+				HAL_LOGI("uhd video snapshot is not support");
+				break;
+			}
 			if ((mVideoSnapshotType == 1) && (mCaptureWidth != 0 && mCaptureHeight != 0) && mVideoParameterSetFlag == 0) {
 				mPicCaptureCnt = 1;
 				ret = setVideoSnapshotParameter();
@@ -2914,6 +2925,13 @@ int SprdCamera3OEMIf::startPreviewInternal()
 
 	HAL_LOGD("mSprdBurstModeEnabled=%d", mSprdBurstModeEnabled);
 	SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_BURSTMODE_ENABLED, (cmr_uint)mSprdBurstModeEnabled);
+
+	if(mVideoWidth*mVideoHeight >= UHD_WIDTH*UHD_HEIGHT){
+		mUhdRecodingEnabled = true;
+	}
+	HAL_LOGD("mUhdRecodingEnabled=%d", mUhdRecodingEnabled);
+	SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_UHD_RECORDING_ENABLED, (cmr_uint)mUhdRecodingEnabled);
+
 	/**add for 3dcapture, increase zsl buffer number for frame sync*/
 	if (sprddefInfo.sprd_3dcapture_enabled) {
 	    mZslNum = DUALCAM_ZSL_NUM;

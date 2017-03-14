@@ -7984,6 +7984,14 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 	sensor_mode_info = &sensor_info->mode_info[prev_cxt->cap_mode];
 	zoom_param       = &prev_cxt->prev_param.zoom_setting;
 
+#ifdef CONFIG_CAMERA_UHD_VIDEOSNAPSHOT_SUPPORT
+	CMR_LOGI("is_uhd_recording_mode %d support", prev_cxt->prev_param.is_uhd_recording_mode);
+#else
+	if(prev_cxt->prev_param.is_uhd_recording_mode == 1) {
+		CMR_LOGI("is_uhd_recording_mode %d not support", prev_cxt->prev_param.is_uhd_recording_mode);
+		return 0;
+	}
+#endif
 	if (!is_restart) {
 		prev_cxt->cap_frm_cnt  = 0;
 		prev_cxt->cap_zsl_frm_cnt = 0;
@@ -8091,6 +8099,7 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 		ret = CMR_CAMERA_FAIL;
 		goto exit;
 	}
+
 	if (capability.yuv_available_cnt && !chn_param.is_lightly) {
 		/*config channel*/
 		if (!handle->ops.channel_cfg) {

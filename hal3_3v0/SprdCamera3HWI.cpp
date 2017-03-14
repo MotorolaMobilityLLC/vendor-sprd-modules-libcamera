@@ -724,18 +724,6 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 					raw_size.height = newStream->height;
 				}
 
-#ifdef CONFIG_CAMERA_NO_DCAM_DATA_PATH
-				mSetting->getSPRDDEFTag(&sprddefInfo);
-				if (preview_size.width > 3264 && preview_size.height > 2448)
-					SprdCamera3RegularChannel::kMaxBuffers = 2;
-				else if ((video_size.width >= 3840 && video_size.height >= 2160) && (stream_type == CAMERA_STREAM_TYPE_VIDEO) )
-					SprdCamera3RegularChannel::kMaxBuffers = 1;
-				else if (sprddefInfo.slowmotion > 1)
-					SprdCamera3RegularChannel::kMaxBuffers = 8;
-				else
-					SprdCamera3RegularChannel::kMaxBuffers = 8;
-
-#else
 				mSetting->getSPRDDEFTag(&sprddefInfo);
 				if (preview_size.width > 3264 && preview_size.height > 2448)
 					SprdCamera3RegularChannel::kMaxBuffers = 2;
@@ -743,7 +731,7 @@ int SprdCamera3HWI::configureStreams(camera3_stream_configuration_t *streamList)
 					SprdCamera3RegularChannel::kMaxBuffers = 8;
 				else
 					SprdCamera3RegularChannel::kMaxBuffers = 4;
-#endif
+
 				HAL_LOGD("slowmotion=%d, kMaxBuffers=%d",
 					sprddefInfo.slowmotion, SprdCamera3RegularChannel::kMaxBuffers);
 
