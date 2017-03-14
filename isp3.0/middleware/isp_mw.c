@@ -510,7 +510,7 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 	isp_dev_input.irp_bin_size = cxt->tuning_bin[0].isp_dev_bin_info.uw_irp_bin_size;
 	isp_dev_input.pdaf_cbcp_bin_addr = cxt->pdaf_info.pdaf_cbc_addr;
 	isp_dev_input.pdaf_cbc_bin_size = cxt->pdaf_info.pdaf_cbc_size;
-	isp_dev_input.pdaf_supported = 0;//input_ptr->ex_info.pdaf_supported;
+	isp_dev_input.pdaf_supported = input_ptr->ex_info.pdaf_supported;
 	memcpy(&isp_dev_input.init_param, input_ptr, sizeof(struct isp_init_param));
 	ISP_LOGI("cbc bin addr is %p size 0x%x", (cmr_u32 *)isp_dev_input.pdaf_cbcp_bin_addr,
 		isp_dev_input.pdaf_cbc_bin_size);
