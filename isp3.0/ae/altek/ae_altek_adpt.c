@@ -851,7 +851,10 @@ exit:
 	return ret;
 }
 
-cmr_int aealtek_set_slv_otp(struct calib_wb_gain_t acalibwbgain, struct alaeruntimeobj_t *aaelibcallback, struct ae_output_data_t *ae_output , void *ae_runtimedat)
+cmr_int aealtek_set_slv_otp(struct calib_wb_gain_t acalibwbgain,
+			    struct alaeruntimeobj_t *aaelibcallback,
+			    struct ae_output_data_t *ae_output,
+			    void *ae_runtimedat)
 {
 	cmr_int ret = ERR_WPR_AE_SUCCESS;
 	struct ae_set_param_t localparam;    /* local parameter set */
@@ -1804,7 +1807,7 @@ static cmr_int aealtek_set_scene_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 		ISP_LOGE("param is NULL error!");
 		goto exit;
 	}
-	cxt_ptr->nxt_status.ui_param.scene= in_ptr->scene.scene_mode;
+	cxt_ptr->nxt_status.ui_param.scene = in_ptr->scene.scene_mode;
 	obj_ptr = &cxt_ptr->al_obj;
 	output_param_ptr = &cxt_ptr->lib_data.output_data;
 	#if 0
@@ -1837,9 +1840,10 @@ static cmr_int aealtek_set_scene_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 	if (lib_ret)
 		goto exit;
 	#endif
-	lib_ret = al3awrapperae_setscenesetting(&in_ptr->scene.scene_info, obj_ptr,output_param_ptr, obj_ptr->ae);
-	ISP_LOGI("scene %ld lib_scene_mode %d scene addr %p lib_ret=%ld",in_ptr->scene.scene_mode,lib_scene_mode,in_ptr->scene.scene_info.puc_addr, lib_ret);
-	if(lib_ret)
+	lib_ret = al3awrapperae_setscenesetting(&in_ptr->scene.scene_info, obj_ptr, output_param_ptr, obj_ptr->ae);
+	ISP_LOGI("scene %ld lib_scene_mode %d scene addr %p lib_ret=%ld",
+		 in_ptr->scene.scene_mode, lib_scene_mode, in_ptr->scene.scene_info.puc_addr, lib_ret);
+	if (lib_ret)
 		goto exit;
 	return ISP_SUCCESS;
 exit:
@@ -1947,8 +1951,9 @@ static cmr_int aealtek_set_measure_lum(struct aealtek_cxt *cxt_ptr, struct ae_ct
 		goto exit;
 	}
 
-	if (cxt_ptr->nxt_status.ui_param.weight == in_ptr->measure_lum.lum_mode)
-		goto exit;
+	if (cxt_ptr->nxt_status.ui_param.weight == in_ptr->measure_lum.lum_mode) {
+		return ISP_SUCCESS;
+	}
 	cxt_ptr->nxt_status.ui_param.weight = in_ptr->measure_lum.lum_mode;
 
 	ISP_LOGI("flash_enable:%d,touch_flag:%d,lum_mode:%ld", cxt_ptr->flash_param.enable
@@ -2121,11 +2126,15 @@ static cmr_int aealtek_set_touch_zone(struct aealtek_cxt *cxt_ptr, struct ae_ctr
 	cxt_ptr->touch_param.touch_flag = 1;
 	temp_param.measure_lum.lum_mode = AE_CTRL_MEASURE_LUM_TOUCH;
 	ret = aealtek_set_measure_lum(cxt_ptr, &temp_param, NULL);
-	if (ret)
+	if (ret) {
+		ISP_LOGE("failed to set ae measure");
 		goto exit;
+	}
 	ret = aealtek_set_lib_roi(cxt_ptr, in_ptr, out_ptr);
-	if (ret)
+	if (ret) {
+		ISP_LOGE("failed to set lib roi");
 		goto exit;
+	}
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld !!!", ret);
@@ -2535,7 +2544,7 @@ static cmr_int aealtek_set_capture_mode(struct aealtek_cxt *cxt_ptr, enum isp_ca
 		break;
 	}
 
-	ISP_LOGI("lib_cap_mode=%d",lib_cap_mode);
+	ISP_LOGI("lib_cap_mode=%d", lib_cap_mode);
 	type = AE_SET_PARAM_CAPTURE_MODE;
 	in_param.ae_set_param_type = type;
 	param_ct_ptr->capture_mode = lib_cap_mode;
@@ -2738,7 +2747,7 @@ static cmr_int aealtek_work_capture(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 		goto exit;
 	}
 	cap_mode = in_ptr->work_param.capture_mode;
-	ISP_LOGI("cap_mode=%d",cap_mode);
+	ISP_LOGI("cap_mode=%d", cap_mode);
 	ret = aealtek_set_capture_mode(cxt_ptr, cap_mode);
 	if (ret)
 		goto exit;
@@ -2899,7 +2908,7 @@ static cmr_int aealtek_set_work_mode(struct aealtek_cxt *cxt_ptr, struct ae_ctrl
 
 	cxt_ptr->zsl_mode = in_ptr->work_param.capture_mode;
 	work_mode = in_ptr->work_param.work_mode;
-	ISP_LOGI("work_mode=%ld",in_ptr->work_param.work_mode);
+	ISP_LOGI("work_mode=%ld", in_ptr->work_param.work_mode);
 	switch (work_mode) {
 	case ISP3A_WORK_MODE_PREVIEW:
 		if (1 == cxt_ptr->nxt_status.is_hdr_status)
@@ -3049,7 +3058,7 @@ static cmr_int aealtek_set_hdr_lock(struct aealtek_cxt *cxt_ptr, cmr_int is_lock
 	if (is_lock && 0 == cxt_ptr->hdr_lock_cnt) {
 		ret = aealtek_set_lib_lock(cxt_ptr, is_lock);
 		cxt_ptr->hdr_lock_cnt++;
-	} else if (0 == is_lock && cxt_ptr->hdr_lock_cnt > 0){
+	} else if (0 == is_lock && cxt_ptr->hdr_lock_cnt > 0) {
 		ret = aealtek_set_lib_lock(cxt_ptr, is_lock);
 		cxt_ptr->hdr_lock_cnt--;
 	} else {
@@ -3317,10 +3326,12 @@ static cmr_int aealtek_set_flash_notice(struct aealtek_cxt *cxt_ptr, struct ae_c
 		if (ret)
 			goto exit;
 
-		/*ret = aealtek_set_flash_est(cxt_ptr, 0);
+		/*
+		ret = aealtek_set_flash_est(cxt_ptr, 0);
 		if (ret)
 			goto exit;
-		aealtek_set_hw_flash_status(cxt_ptr, 1);*/
+		aealtek_set_hw_flash_status(cxt_ptr, 1);
+		*/
 
 		aealtek_change_flash_state(cxt_ptr, cxt_ptr->flash_param.flash_state, AEALTEK_FLASH_STATE_LIGHTING);
 		cxt_ptr->flash_skip_number = 4;
@@ -3832,7 +3843,7 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	}
 	memset(&callback_in, 0x00, sizeof(callback_in));
 
-	if(cxt_ptr->hdr_enable && cxt_ptr->nxt_status.is_hdr_status) {
+	if (cxt_ptr->hdr_enable && cxt_ptr->nxt_status.is_hdr_status) {
 		aealtek_set_hdr_lock(cxt_ptr, 1, __func__);
 		ret = aealtek_set_hdr_ev(cxt_ptr, in_ptr, out_ptr);
 		return ISP_SUCCESS;
@@ -3858,7 +3869,7 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 			goto exit;
 		}
 	}
-	ISP_LOGI("pre_cnt=%d main_flash_status=%d",cxt_ptr->pre_cnt, cxt_ptr->main_flash_status);
+	ISP_LOGI("pre_cnt=%d main_flash_status=%d", cxt_ptr->pre_cnt, cxt_ptr->main_flash_status);
 	if (cxt_ptr->main_flash_status == 0) {
 		cxt_ptr->pre_cnt = 0;
 	}
@@ -3927,7 +3938,8 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 		out_write = in_est.cell;
 	}
 
-	ISP_LOGI("cxt_ptr->is_refocus %d sout_actual exp_line=%d, exp_time=%d, gain=%d",cxt_ptr->is_refocus, out_actual.exp_line, out_actual.exp_time, out_actual.gain);
+	ISP_LOGI("cxt_ptr->is_refocus %d sout_actual exp_line=%d, exp_time=%d, gain=%d",
+		 cxt_ptr->is_refocus, out_actual.exp_line, out_actual.exp_time, out_actual.gain);
 
 	if (0 == out_actual.exp_line || 0 == out_actual.gain) {
 		out_actual = in_est.cell;
@@ -4162,7 +4174,7 @@ static cmr_int aealtek_set_hdr_ev(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_pa
 	cxt_ptr->nxt_status.ui_param.hdr_level = in_ptr->sof_param.frame_index - 1;
 	level = cxt_ptr->nxt_status.ui_param.hdr_level;
 	ISP_LOGI("hdr_level=%d", level);
-	if(level >= 3) {//if (level < 0 || level >= 3)    modify cause:  comparison of unsigned enum expression < 0 is always false
+	if (level >= 3) {
 		return ISP_SUCCESS;
 	}
 
@@ -5270,7 +5282,7 @@ static cmr_int aealtek_post_process(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_
 				aealtek_change_ae_state(cxt_ptr, cxt_ptr->ae_state, ISP3A_AE_CTRL_ST_CONVERGED);
 				cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRl_CB_TOUCH_CONVERGED, &callback_in);
 				//cxt_ptr->touch_param.touch_flag = 0;
-				cxt_ptr->touch_param.ctrl_convergence_req_flag=0;
+				cxt_ptr->touch_param.ctrl_convergence_req_flag = 0;
 			}
 		}
 	}
