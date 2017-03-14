@@ -1641,7 +1641,8 @@ static int32_t _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 		return AE_ERROR;
 	}
 
-	cxt->start_id = AE_START_ID;	
+	cxt->start_id = AE_START_ID;
+
 	cxt->monitor_unit.mode = AE_STATISTICS_MODE_CONTINUE;
 	cxt->monitor_unit.cfg.skip_num = 0;
 	cxt->monitor_unit.is_stop_monitor = 0;
@@ -1664,7 +1665,6 @@ static int32_t _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 	cxt->exp_skip_num = cxt->cur_param->sensor_cfg.exp_skip_num;
 	cxt->gain_skip_num = cxt->cur_param->sensor_cfg.gain_skip_num;
 
-	cxt->cur_status.log_level = g_ae_log_level;
 	cxt->cur_status.alg_id = cxt->cur_param->alg_id;
 	cxt->cur_status.win_size = cxt->monitor_unit.win_size;
 	cxt->cur_status.win_num = cxt->monitor_unit.win_num;
