@@ -3082,6 +3082,74 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
 		}
 
 		{
+			bool color_correction_aberration_mode_request = false;
+			bool color_correction_aberration_mode_capabilities = false;
+			if (characteristicsInfo.exists(
+					ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS)) {
+				size_t count =
+					characteristicsInfo
+						.find(ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS)
+						.count;
+				for (i = 0; i < count; i++) {
+					if (characteristicsInfo
+							.find(
+								ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS)
+							.data.i32[i] ==
+						ANDROID_COLOR_CORRECTION_AVAILABLE_ABERRATION_MODES) {
+						color_correction_aberration_mode_capabilities = true;
+						break;
+					}
+				}
+			}
+			if (characteristicsInfo.exists(
+					ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)) {
+				size_t count = characteristicsInfo
+								.find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)
+								.count;
+				for (i = 0; i < count; i++) {
+					if (characteristicsInfo
+							.find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)
+							.data.i32[i] ==
+						ANDROID_COLOR_CORRECTION_ABERRATION_MODE) {
+						color_correction_aberration_mode_request = true;
+						break;
+					}
+				}
+			}
+			if (color_correction_aberration_mode_capabilities !=
+				color_correction_aberration_mode_request) {
+				HAL_LOGE("color correction aberration mode must be present in "
+					"request if available color correction aberration "
+					"mode are present in metadata");
+				return -1;
+			}
+			if (color_correction_aberration_mode_request == true) {
+				uint8_t colorCorrectionAberrationMode =
+					ANDROID_COLOR_CORRECTION_ABERRATION_MODE_OFF;
+				size_t count =
+					characteristicsInfo
+						.find(
+							ANDROID_COLOR_CORRECTION_AVAILABLE_ABERRATION_MODES)
+						.count;
+				for (i = 0; i < count; i++) {
+					uint8_t availableColorCorrectionAberrationMode =
+						characteristicsInfo
+							.find(
+								ANDROID_COLOR_CORRECTION_AVAILABLE_ABERRATION_MODES)
+							.data.u8[i];
+					if (availableColorCorrectionAberrationMode ==
+						ANDROID_COLOR_CORRECTION_ABERRATION_MODE_HIGH_QUALITY) {
+						colorCorrectionAberrationMode =
+							ANDROID_COLOR_CORRECTION_ABERRATION_MODE_HIGH_QUALITY;
+						break;
+					}
+				}
+				requestInfo.update(ANDROID_COLOR_CORRECTION_ABERRATION_MODE,
+								&colorCorrectionAberrationMode, 1);
+			}
+		}
+
+		{
 			bool noise_reduction_request = false;
 			bool noise_reduction_capabilities = false;
 			if(characteristicsInfo.exists(ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS)) {
@@ -3193,21 +3261,59 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
 			}
 		}
 	} else {
-		if(characteristicsInfo.exists(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)) {
-			size_t count = characteristicsInfo.find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS).count;
-			for (i=0; i < count; i++) {
-				if(characteristicsInfo.find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS).data.i32[i] == ANDROID_EDGE_MODE) {
-					uint8_t edgeMode = ANDROID_EDGE_MODE_OFF;
-					requestInfo.update(ANDROID_EDGE_MODE, &edgeMode, 1);
-				} else if(characteristicsInfo.find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS).data.i32[i] == ANDROID_NOISE_REDUCTION_MODE) {
-					uint8_t noiseReducMode = ANDROID_NOISE_REDUCTION_MODE_OFF;
-					requestInfo.update(ANDROID_NOISE_REDUCTION_MODE, &noiseReducMode, 1);
-				} else if(characteristicsInfo.find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS).data.i32[i] == ANDROID_TONEMAP_MODE) {
+		if (characteristicsInfo.exists(
+				ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)) {
+			size_t count =
+				characteristicsInfo.find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)
+					.count;
+			for (i = 0; i < count; i++) {
+				if (characteristicsInfo
+						.find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)
+						.data.i32[i] == ANDROID_EDGE_MODE) {
+					if (type == CAMERA3_TEMPLATE_PREVIEW ||
+						type == CAMERA3_TEMPLATE_VIDEO_RECORD) {
+						uint8_t edgeMode = ANDROID_EDGE_MODE_FAST;
+						requestInfo.update(ANDROID_EDGE_MODE, &edgeMode, 1);
+					} else {
+						uint8_t edgeMode = ANDROID_EDGE_MODE_OFF;
+						requestInfo.update(ANDROID_EDGE_MODE, &edgeMode, 1);
+					}
+				} else if (characteristicsInfo
+							 .find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)
+							 .data.i32[i] == ANDROID_NOISE_REDUCTION_MODE) {
+					if (type == CAMERA3_TEMPLATE_PREVIEW ||
+						type == CAMERA3_TEMPLATE_VIDEO_RECORD) {
+						uint8_t noiseReducMode =
+							ANDROID_NOISE_REDUCTION_MODE_FAST;
+						requestInfo.update(ANDROID_NOISE_REDUCTION_MODE,
+										&noiseReducMode, 1);
+					} else {
+						uint8_t noiseReducMode =
+							ANDROID_NOISE_REDUCTION_MODE_OFF;
+						requestInfo.update(ANDROID_NOISE_REDUCTION_MODE,
+										&noiseReducMode, 1);
+					}
+				} else if (characteristicsInfo
+							.find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)
+							.data.i32[i] == ANDROID_TONEMAP_MODE) {
 					uint8_t toneMapMode = ANDROID_TONEMAP_MODE_FAST;
 					requestInfo.update(ANDROID_TONEMAP_MODE, &toneMapMode, 1);
-				} else if(characteristicsInfo.find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS).data.i32[i] == ANDROID_STATISTICS_LENS_SHADING_MAP_MODE) {
-					uint8_t shadingMapMode = ANDROID_STATISTICS_LENS_SHADING_MAP_MODE_OFF;
-					requestInfo.update(ANDROID_STATISTICS_LENS_SHADING_MAP_MODE, &shadingMapMode, 1);
+				} else if (characteristicsInfo
+							.find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)
+							 .data.i32[i] ==
+						ANDROID_STATISTICS_LENS_SHADING_MAP_MODE) {
+					uint8_t shadingMapMode =
+						ANDROID_STATISTICS_LENS_SHADING_MAP_MODE_OFF;
+					requestInfo.update(ANDROID_STATISTICS_LENS_SHADING_MAP_MODE,
+									&shadingMapMode, 1);
+				} else if (characteristicsInfo
+							.find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)
+							.data.i32[i] ==
+						ANDROID_COLOR_CORRECTION_ABERRATION_MODE) {
+					uint8_t colorCorrectionAberrationMode =
+						ANDROID_COLOR_CORRECTION_ABERRATION_MODE_FAST;
+					requestInfo.update(ANDROID_COLOR_CORRECTION_ABERRATION_MODE,
+									&colorCorrectionAberrationMode, 1);
 				}
 			}
 		}
