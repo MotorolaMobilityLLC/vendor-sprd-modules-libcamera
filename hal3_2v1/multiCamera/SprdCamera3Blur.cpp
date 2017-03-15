@@ -1402,10 +1402,6 @@ int SprdCamera3Blur::initialize(const camera3_callback_ops_t *callback_ops) {
     mPreviewStreamsNum = 0;
     mCaptureThread->mCaptureStreamsNum = 0;
     mCaptureThread->mReprocessing = false;
-    mCaptureThread->mLastWidth = 0;
-    mCaptureThread->mLastHeight = 0;
-    mCaptureThread->mLastSelCoordX = 0;
-    mCaptureThread->mLastSelCoordY = 0;
     mCaptureThread->mLastCircleSize = 0;
     mCaptureThread->mLastFNum = 0;
     mCaptureThread->mLastMinScope = 5;
@@ -1552,6 +1548,8 @@ int SprdCamera3Blur::configureStreams(
     }
     mSelCoordX = stream_list->streams[mPreviewStreamsNum]->width / 2;
     mSelCoordY = stream_list->streams[mPreviewStreamsNum]->height / 2;
+    mCaptureThread->mLastSelCoordX = 0;
+    mCaptureThread->mLastSelCoordY = 0;
 
     camera3_stream_configuration mainconfig;
     mainconfig = *stream_list;
@@ -1778,8 +1776,8 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
                         max = (req->output_buffers[i].stream)->width /
                               BLUR_CIRCLE_SIZE_SCALE;
                     }
-                    mCircleSize = BLUR_CIRCLE_VALUE_MIN +
-                                  (max - BLUR_CIRCLE_VALUE_MIN) * circle / 255;
+                    mCircleSize =
+                        max - (max - BLUR_CIRCLE_VALUE_MIN) * circle / 255;
                     HAL_LOGD("circle=%d, max=%d  mCircleSize=%d", circle, max,
                              mCircleSize);
                 }

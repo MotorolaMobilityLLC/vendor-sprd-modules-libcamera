@@ -216,8 +216,6 @@ class SprdCamera3Blur {
         uint8_t mCaptureStreamsNum;
         bool mReprocessing;
         BlurAPI_t *mBlurApi[BLUR_LIB_BOKEH_NUM];
-        int mLastWidth;
-        int mLastHeight;
         int mLastSelCoordX;
         int mLastSelCoordY;
         int mLastCircleSize;
