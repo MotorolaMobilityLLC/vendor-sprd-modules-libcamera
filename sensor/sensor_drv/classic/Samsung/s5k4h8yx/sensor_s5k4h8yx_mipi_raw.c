@@ -1662,25 +1662,8 @@ static unsigned long _s5k4h8yx_StreamOff(SENSOR_HW_HANDLE handle,
 
     SENSOR_LOGI("E");
 
-    // Sensor_WriteReg(0x0100, 0x0003);
-    // usleep(50*1000);
-    value = Sensor_ReadReg(0x0100);
-    if (value == 0x0103) {
-        Sensor_WriteReg(0x0100, 0x0003);
-        if (!s_s5k4h8yx_sensor_close_flag) {
-            frame_time =
-                s_current_default_line_time * s_current_frame_length / 1000 +
-                1000;
-            sleep_time = frame_time > 50 * 1000 ? frame_time : 50 * 1000;
-            usleep(sleep_time);
-        }
-    } else {
-        Sensor_WriteReg(0x0100, 0x0003);
-    }
-
-    s_s5k4h8yx_sensor_close_flag = 0;
-
-    SENSOR_LOGI("X sleep_time=%dus", sleep_time);
+    Sensor_WriteReg(0x0100, 0x0003);
+    usleep(50*1000);
 
     return 0;
 }
