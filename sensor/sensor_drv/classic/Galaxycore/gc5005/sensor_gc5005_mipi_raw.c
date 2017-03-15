@@ -594,8 +594,8 @@ static uint32_t gc5005_get_static_info(SENSOR_HW_HANDLE handle,
         s_gc5005_static_info.adgain_valid_frame_num;
     ex_info->preview_skip_num = g_gc5005_mipi_raw_info.preview_skip_num;
     ex_info->capture_skip_num = g_gc5005_mipi_raw_info.capture_skip_num;
-    ex_info->name = g_gc5005_mipi_raw_info.name;
-    ex_info->sensor_version_info = g_gc5005_mipi_raw_info.sensor_version_info;
+    ex_info->name = (cmr_s8 *)g_gc5005_mipi_raw_info.name;
+    ex_info->sensor_version_info = (cmr_s8 *)g_gc5005_mipi_raw_info.sensor_version_info;
     // vcm_ak7371_get_pose_dis(handle, &up, &down);
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
@@ -1361,7 +1361,7 @@ static uint32_t gc5005_identify(SENSOR_HW_HANDLE handle, uint32_t param) {
  * get resolution trim
  *
  *============================================================================*/
-static unsigned long gc5005_get_resolution_trim_tab(uint32_t param) {
+static unsigned long gc5005_get_resolution_trim_tab(SENSOR_HW_HANDLE handle, uint32_t param) {
     return (unsigned long)s_gc5005_resolution_trim_tab;
 }
 
@@ -1412,7 +1412,7 @@ static uint32_t gc5005_before_snapshot(SENSOR_HW_HANDLE handle,
     cap_shutter = gc5005_update_exposure(handle, cap_shutter, 0);
     cap_gain = gain;
     gc5005_write_gain(handle, cap_gain);
-    SENSOR_PRINT("preview_shutter = 0x%x, preview_gain = 0x%x",
+    SENSOR_PRINT("preview_shutter = 0x%x, preview_gain = %f",
                  s_sensor_ev_info.preview_shutter,
                  s_sensor_ev_info.preview_gain);
 
@@ -1436,7 +1436,7 @@ snapshot_info:
  * get the shutter from isp
  * please don't change this function unless it's necessary
  *============================================================================*/
-static uint32_t gc5005_write_exposure(SENSOR_HW_HANDLE handle, uint32_t param) {
+static uint32_t gc5005_write_exposure(SENSOR_HW_HANDLE handle, unsigned long param) {
     uint32_t ret_value = SENSOR_SUCCESS;
     uint16_t exposure_line = 0x00;
     uint16_t dummy_line = 0x00;

@@ -32,7 +32,7 @@
 #define ov2680_I2C_ADDR_R (0x6c >> 1)
 #define RAW_INFO_END_ID 0x71717567
 #define FRAME_OFFSET 4
-
+#define CONFIG_CAMERA_IMAGE_180
 #define ov2680_MIN_FRAME_LEN_PRV 0x484
 #define ov2680_MIN_FRAME_LEN_CAP 0x7B6
 #define ov2680_RAW_PARAM_COM 0x0000
@@ -179,7 +179,7 @@ LOCAL const SENSOR_REG_T ov2680_com_mipi_raw[] = {
     {0x3814, 0x31},
     {0x3815, 0x31},
     {0x3819, 0x04},
-#ifdef CONFIG_CAMERA_IMAGE_180
+#if 0//def CONFIG_CAMERA_IMAGE_180
     {0x3820, 0xc2},
     {0x3821, 0x00},
 #else
@@ -371,8 +371,13 @@ LOCAL const SENSOR_REG_T ov2680_1600X1200_altek_mipi_raw[] = {
     {0x3814, 0x11},
     {0x3815, 0x11},
     {0x3819, 0x04},
+#if 1//ndef CAMERA_IMAGE_180
     {0x3820, 0xc0},
     {0x3821, 0x00},
+#else
+	{0x3820, 0xc4},
+	{0x3821, 0x04},
+#endif
     {0x4000, 0x81},
     {0x4001, 0x40},
     {0x4008, 0x02},
@@ -517,7 +522,7 @@ LOCAL const SENSOR_REG_T ov2680_1600X1200_mipi_raw[] = {
     {0x380e, 0x0a}, {0x380f, 0x1c},
 #endif
     {0x3811, 0x08}, {0x3813, 0x08}, {0x3814, 0x11}, {0x3815, 0x11},
-#ifdef CONFIG_CAMERA_IMAGE_180
+#if 0 //def CONFIG_CAMERA_IMAGE_180
     {0x3820, 0xc0}, {0x3821, 0x00},
 #else
     {0x3820, 0xc4}, {0x3821, 0x04},
@@ -631,7 +636,7 @@ LOCAL unsigned long _ov2680_set_video_mode(SENSOR_HW_HANDLE handle,
                         sensor_reg_ptr[i].reg_value);
     }
 
-    SENSOR_LOGI("0x%02x", param);
+    SENSOR_LOGI("%lu", param);
     return 0;
 }
 
@@ -761,7 +766,7 @@ SENSOR_INFO_T g_ov2680_mipi_raw_info = {
 
     1600,              // max width of source image
     1200,              // max height of source image
-    "ov2680_mipi_raw", // name of sensor
+   (cmr_s8 *) "ov2680_mipi_raw", // name of sensor
 
     SENSOR_IMAGE_FORMAT_RAW, // define in SENSOR_IMAGE_FORMAT_E
                              // enum,SENSOR_IMAGE_FORMAT_MAX
@@ -795,7 +800,7 @@ SENSOR_INFO_T g_ov2680_mipi_raw_info = {
     1,         // skip frame num while change setting
     48,        // horizontal_view_angle,need check
     48,        // vertical_view_angle,need check
-    "ov2680v1" // sensor version info
+    (cmr_s8 *)"ov2680v1" // sensor version info
 };
 
 LOCAL struct sensor_raw_info *Sensor_GetContext(SENSOR_HW_HANDLE handle) {
@@ -890,7 +895,7 @@ LOCAL unsigned long _ov2680_PowerOn(SENSOR_HW_HANDLE handle,
         Sensor_SetAvddVoltage(SENSOR_AVDD_CLOSED);
         Sensor_SetIovddVoltage(SENSOR_AVDD_CLOSED);
     }
-    SENSOR_LOGI("SENSOR_ov2680: _ov2680_Power_On(1:on, 0:off): %d", power_on);
+    SENSOR_LOGI("SENSOR_ov2680: _ov2680_Power_On(1:on, 0:off): %lu", power_on);
     return SENSOR_SUCCESS;
 }
 
@@ -1494,7 +1499,7 @@ LOCAL unsigned long _ov2680_write_gain(SENSOR_HW_HANDLE handle,
         real_gain = 0x7ff;
     }
 
-    SENSOR_LOGI("SENSOR_ov2680: real_gain:0x%x, param: 0x%x", real_gain, param);
+    SENSOR_LOGI("SENSOR_ov2680: real_gain:0x%x, param: %lu", real_gain, param);
 
     value = real_gain & 0xff;
     ret_value = Sensor_WriteReg(0x350b, value); /*0-7*/
@@ -1652,7 +1657,7 @@ LOCAL unsigned long _ov2680_write_af(SENSOR_HW_HANDLE handle,
     uint16_t slave_addr = 0;
     uint16_t cmd_len = 0;
 
-    SENSOR_LOGI("SENSOR_ov2680: _write_af %d", param);
+    SENSOR_LOGI("SENSOR_ov2680: _write_af %lu", param);
 
     slave_addr = DW9714_VCM_SLAVE_ADDR;
     cmd_val[0] = (param & 0xfff0) >> 4;
@@ -1736,7 +1741,7 @@ LOCAL unsigned long _ov2680_SetEV(SENSOR_HW_HANDLE handle,
     uint32_t gain = s_ov2680_gain;
     uint32_t ev = param;
 
-    SENSOR_LOGI("_ov2680_SetEV param: 0x%x,0x%x,0x%x,0x%x", param,
+    SENSOR_LOGI("_ov2680_SetEV param: %lu,0x%x,0x%x,0x%x", param,
                 s_ov2680_gain, s_capture_VTS, s_capture_shutter);
 
     switch (ev) {
@@ -1808,7 +1813,7 @@ LOCAL unsigned long _ov2680_PreBeforeSnapshot(SENSOR_HW_HANDLE handle,
     uint32_t cap_linetime =
         s_ov2680_Resolution_Trim_Tab[capture_mode].line_time;
 
-    SENSOR_LOGI("SENSOR_ov2680: BeforeSnapshot mode: 0x%08x", param);
+    SENSOR_LOGI("SENSOR_ov2680: BeforeSnapshot mode: %lu", param);
 
     if (preview_mode == capture_mode) {
         SENSOR_LOGI("SENSOR_ov2680: prv mode equal to capmode");
@@ -1873,7 +1878,7 @@ LOCAL unsigned long _ov2680_BeforeSnapshot(SENSOR_HW_HANDLE handle,
     uint32_t cap_mode = (param >> CAP_MODE_BITS);
     uint32_t rtn = SENSOR_SUCCESS;
 
-    SENSOR_LOGI("%d,%d.", cap_mode, param);
+    SENSOR_LOGI("%d,%ul.", cap_mode, param);
 
     rtn = _ov2680_PreBeforeSnapshot(handle, param);
 
@@ -1899,7 +1904,7 @@ LOCAL unsigned long _ov2680_StreamOn(SENSOR_HW_HANDLE handle,
     usleep(100 * 1000);
     Sensor_WriteReg(0x0100, 0x01);
 #if 1
-    cmr_s8 value1[PROPERTY_VALUE_MAX];
+    char value1[PROPERTY_VALUE_MAX];
     property_get("debug.camera.test.mode", value1, "0");
     if (!strcmp(value1, "1")) {
         SENSOR_LOGI("SENSOR_ov2680: enable test mode");
@@ -1972,8 +1977,8 @@ LOCAL uint32_t _ov2680_get_static_info(SENSOR_HW_HANDLE handle,
         s_ov2680_static_info.adgain_valid_frame_num;
     ex_info->preview_skip_num = g_ov2680_mipi_raw_info.preview_skip_num;
     ex_info->capture_skip_num = g_ov2680_mipi_raw_info.capture_skip_num;
-    ex_info->name = g_ov2680_mipi_raw_info.name;
-    ex_info->sensor_version_info = g_ov2680_mipi_raw_info.sensor_version_info;
+    ex_info->name = (cmr_s8 *)g_ov2680_mipi_raw_info.name;
+    ex_info->sensor_version_info = (cmr_s8 *)g_ov2680_mipi_raw_info.sensor_version_info;
     SENSOR_LOGI("SENSOR_ov2680: f_num: %d", ex_info->f_num);
     SENSOR_LOGI("SENSOR_ov2680: max_fps: %d", ex_info->max_fps);
     SENSOR_LOGI("SENSOR_ov2680: max_adgain: %d", ex_info->max_adgain);

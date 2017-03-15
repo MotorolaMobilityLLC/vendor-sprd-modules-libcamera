@@ -507,7 +507,7 @@ static SENSOR_IOCTL_FUNC_TAB_T s_s5k3p8sm_ioctl_func_tab = {
     PNULL, // get_status
     _s5k3p8sm_StreamOn, _s5k3p8sm_StreamOff,
     _s5k3p8sm_access_val, // s5k3p8sm_cfg_otp,
-    _s5k3p8sm_ex_write_exposure};
+    _s5k3p8sm_ex_write_exposure,PNULL};
 
 static SENSOR_STATIC_INFO_T s_s5k3p8sm_static_info = {
     200, // f-number,focal ratio
@@ -1111,7 +1111,7 @@ static unsigned long _s5k3p8sm_update_gain(SENSOR_HW_HANDLE handle,
 
     real_gain = param >> 2; // / 128 * 32;
 
-    SENSOR_PRINT("SENSOR_S5K3P8SM: real_gain:%d, param: %d", real_gain, param);
+    SENSOR_PRINT("SENSOR_S5K3P8SM: real_gain:%d, param: %ld", real_gain, param);
 
     if (real_gain <= 16 * 32) {
         a_gain = real_gain;
@@ -1141,7 +1141,7 @@ static unsigned long _s5k3p8sm_update_gain(SENSOR_HW_HANDLE handle,
 static unsigned long _s5k3p8sm_write_gain(SENSOR_HW_HANDLE handle,
                                           unsigned long param) {
     uint32_t ret_value = SENSOR_SUCCESS;
-    SENSOR_PRINT("SENSOR_S5K3P8SM: param: %d", param);
+    SENSOR_PRINT("SENSOR_S5K3P8SM: param: %ld", param);
     _s5k3p8sm_update_gain(handle, param);
     s_sensor_ev_info.preview_gain = param;
 
@@ -1283,7 +1283,7 @@ static unsigned long _s5k3p8sm_StreamOn(SENSOR_HW_HANDLE handle,
 
     Sensor_WriteReg(0x0100, 0x0100);
 #if 1
-    cmr_s8 value1[PROPERTY_VALUE_MAX];
+    char value1[PROPERTY_VALUE_MAX];
     property_get("debug.camera.test.mode", value1, "0");
     if (!strcmp(value1, "1")) {
         SENSOR_PRINT_ERR("SENSOR_s5k3p8sm: enable test mode");
@@ -1448,8 +1448,8 @@ static uint32_t _s5k3p8sm_get_static_info(SENSOR_HW_HANDLE handle,
         s_s5k3p8sm_static_info.adgain_valid_frame_num;
     ex_info->preview_skip_num = g_s5k3p8sm_mipi_raw_info.preview_skip_num;
     ex_info->capture_skip_num = g_s5k3p8sm_mipi_raw_info.capture_skip_num;
-    ex_info->name = g_s5k3p8sm_mipi_raw_info.name;
-    ex_info->sensor_version_info = g_s5k3p8sm_mipi_raw_info.sensor_version_info;
+    ex_info->name = (cmr_s8 *)g_s5k3p8sm_mipi_raw_info.name;
+    ex_info->sensor_version_info = (cmr_s8 *)g_s5k3p8sm_mipi_raw_info.sensor_version_info;
 #if defined(CONFIG_CAMERA_OIS_FUNC)
     Ois_get_pose_dis(handle, &up, &down);
 #else

@@ -242,8 +242,8 @@ write_sensor_shutter:
  * sensor power on
  * please modify this function acording your spec
  *============================================================================*/
-static unsigned long imx258_power_on(SENSOR_HW_HANDLE handle,
-                                     unsigned long power_on) {
+static uint32_t imx258_power_on(SENSOR_HW_HANDLE handle,
+                                     uint32_t power_on) {
     SENSOR_AVDD_VAL_E dvdd_val = g_imx258_mipi_raw_info.dvdd_val;
     SENSOR_AVDD_VAL_E avdd_val = g_imx258_mipi_raw_info.avdd_val;
     SENSOR_AVDD_VAL_E iovdd_val = g_imx258_mipi_raw_info.iovdd_val;
@@ -269,7 +269,7 @@ static unsigned long imx258_power_on(SENSOR_HW_HANDLE handle,
                           SENSOR_AVDD_CLOSED);
         //Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
     }
-    SENSOR_LOGI("(1:on, 0:off): %ld", power_on);
+    SENSOR_LOGI("(1:on, 0:off): %d", power_on);
     return SENSOR_SUCCESS;
 }
 
@@ -328,8 +328,8 @@ static uint32_t imx258_init_mode_fps_info(SENSOR_HW_HANDLE handle) {
  * identify sensor id
  * please modify this function acording your spec
  *============================================================================*/
-static unsigned long imx258_identify(SENSOR_HW_HANDLE handle,
-                                     unsigned long param) {
+static uint32_t imx258_identify(SENSOR_HW_HANDLE handle,
+                                     uint32_t param) {
     uint8_t pid_value = 0x00;
     uint8_t ver_value = 0x00;
     uint32_t ret_value = SENSOR_FAIL;
@@ -367,7 +367,7 @@ static unsigned long imx258_identify(SENSOR_HW_HANDLE handle,
  *
  *============================================================================*/
 static unsigned long imx258_get_resolution_trim_tab(SENSOR_HW_HANDLE handle,
-                                                    unsigned long param) {
+                                                    uint32_t param) {
     UNUSED(param);
     return (unsigned long)s_imx258_resolution_trim_tab;
 }
@@ -377,8 +377,8 @@ static unsigned long imx258_get_resolution_trim_tab(SENSOR_HW_HANDLE handle,
  * before snapshot
  * you can change this function if it's necessary
  *============================================================================*/
-static unsigned long imx258_before_snapshot(SENSOR_HW_HANDLE handle,
-                                            unsigned long param) {
+static uint32_t imx258_before_snapshot(SENSOR_HW_HANDLE handle,
+                                            uint32_t param) {
     uint32_t cap_shutter = 0;
     uint32_t prv_shutter = 0;
     float gain = 0;
@@ -467,7 +467,7 @@ static unsigned long imx258_write_exposure(SENSOR_HW_HANDLE handle,
     return ret_value;
 }
 
-static unsigned long imx258_ex_write_exposure(SENSOR_HW_HANDLE handle,
+static uint32_t imx258_ex_write_exposure(SENSOR_HW_HANDLE handle,
                                               unsigned long param) {
     uint32_t ret_value = SENSOR_SUCCESS;
     uint16_t exposure_line = 0x00;
@@ -524,8 +524,8 @@ static uint32_t isp_to_real_gain(SENSOR_HW_HANDLE handle, uint32_t param) {
  * write gain value to sensor
  * you can change this function if it's necessary
  *============================================================================*/
-static unsigned long imx258_write_gain_value(SENSOR_HW_HANDLE handle,
-                                             unsigned long param) {
+static uint32_t imx258_write_gain_value(SENSOR_HW_HANDLE handle,
+                                             uint32_t param) {
     unsigned long ret_value = SENSOR_SUCCESS;
     float real_gain = 0;
 
@@ -647,10 +647,10 @@ static unsigned long imx258_ext_func(SENSOR_HW_HANDLE handle,
  * mipi stream on
  * please modify this function acording your spec
  *============================================================================*/
-static unsigned long imx258_stream_on(SENSOR_HW_HANDLE handle,
-                                      unsigned long param) {
+static uint32_t imx258_stream_on(SENSOR_HW_HANDLE handle,
+                                      uint32_t param) {
 #if 1
-    cmr_s8 value1[PROPERTY_VALUE_MAX];
+    char value1[PROPERTY_VALUE_MAX];
     property_get("debug.camera.test.mode", value1, "0");
     if (!strcmp(value1, "1")) {
         SENSOR_LOGI("SENSOR_imx230: enable test mode");
@@ -661,7 +661,9 @@ static unsigned long imx258_stream_on(SENSOR_HW_HANDLE handle,
     SENSOR_LOGI("E");
     UNUSED(param);
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
+#ifndef CAMERA_SENSOR_BACK_I2C_SWITCH
     Sensor_WriteReg(0x0101, 0x03);
+#endif
 #endif
     Sensor_WriteReg(0x0100, 0x01);
     /*delay*/
@@ -675,8 +677,8 @@ static unsigned long imx258_stream_on(SENSOR_HW_HANDLE handle,
  * mipi stream off
  * please modify this function acording your spec
  *============================================================================*/
-static unsigned long imx258_stream_off(SENSOR_HW_HANDLE handle,
-                                       unsigned long param) {
+static uint32_t imx258_stream_off(SENSOR_HW_HANDLE handle,
+                                       uint32_t param) {
     SENSOR_LOGI("E");
     UNUSED(param);
     unsigned char value;
@@ -698,8 +700,8 @@ static unsigned long imx258_stream_off(SENSOR_HW_HANDLE handle,
     return 0;
 }
 
-static unsigned long imx258_write_af(SENSOR_HW_HANDLE handle,
-                                     unsigned long param) {
+static uint32_t imx258_write_af(SENSOR_HW_HANDLE handle,
+                                     uint32_t param) {
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
     //return vcm_LC898214_set_position(handle, param);
 	return 0;
@@ -731,8 +733,8 @@ static uint32_t imx258_get_static_info(SENSOR_HW_HANDLE handle,
         s_imx258_static_info.adgain_valid_frame_num;
     ex_info->preview_skip_num = g_imx258_mipi_raw_info.preview_skip_num;
     ex_info->capture_skip_num = g_imx258_mipi_raw_info.capture_skip_num;
-    ex_info->name = g_imx258_mipi_raw_info.name;
-    ex_info->sensor_version_info = g_imx258_mipi_raw_info.sensor_version_info;
+    ex_info->name = (cmr_s8 *)g_imx258_mipi_raw_info.name;
+    ex_info->sensor_version_info = (cmr_s8 *)g_imx258_mipi_raw_info.sensor_version_info;
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
 #if 1 // def CONFIG_AF_VCM_DW9800W
     //vcm_LC898214_get_pose_dis(handle, &up, &down);
@@ -890,3 +892,4 @@ static SENSOR_IOCTL_FUNC_TAB_T s_imx258_ioctl_func_tab = {
     //	.set_motor_bestmode = dw9800_set_motor_bestmode,// set vcm best mode and
     // avoid damping
 };
+

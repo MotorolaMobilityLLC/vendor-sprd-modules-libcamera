@@ -30,7 +30,11 @@
 #include "parameters/sensor_imx258_otp_truly.h"
 
 #define SENSOR_NAME "imx258_mipi_raw"
-#define I2C_SLAVE_ADDR 0x34 // 0x20    /* 16bit slave address*/
+#ifdef CAMERA_SENSOR_BACK_I2C_SWITCH
+#define I2C_SLAVE_ADDR  0x20//0x34 // 0x20    /* 16bit slave address*/
+#else
+#define I2C_SLAVE_ADDR  0x34 // 0x20    /* 16bit slave address*/
+#endif
 
 #define BINNING_FACTOR 2
 #define imx258_PID_ADDR 0x0016

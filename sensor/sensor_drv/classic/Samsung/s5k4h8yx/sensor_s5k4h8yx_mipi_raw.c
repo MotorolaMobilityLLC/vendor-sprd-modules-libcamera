@@ -606,7 +606,7 @@ static SENSOR_IOCTL_FUNC_TAB_T s_s5k4h8yx_ioctl_func_tab = {
     PNULL, // meter_mode
     PNULL, // get_status
     _s5k4h8yx_StreamOn, _s5k4h8yx_StreamOff, _s5k4h8yx_access_val,
-    _s5k4h8yx_ex_write_exposure};
+    _s5k4h8yx_ex_write_exposure,PNULL};
 
 static SENSOR_STATIC_INFO_T s_s5k4h8yx_static_info = {
     200,      // f-number,focal ratio
@@ -1137,7 +1137,7 @@ static unsigned long _s5k4h8yx_PowerOn(SENSOR_HW_HANDLE handle,
                           SENSOR_AVDD_CLOSED);
     }
 
-    SENSOR_LOGI("SENSOR_S5K4H8YX: _s5k4h8yx_Power_On(1:on, 0:off): %d, "
+    SENSOR_LOGI("SENSOR_S5K4H8YX: _s5k4h8yx_Power_On(1:on, 0:off): %ld, "
                 "reset_level %d, dvdd_val %d",
                 power_on, reset_level, dvdd_val);
     return SENSOR_SUCCESS;
@@ -1479,7 +1479,7 @@ static unsigned long _s5k4h8yx_write_gain(SENSOR_HW_HANDLE handle,
 
     real_gain = 1.0f * param * 0x0020 / 0x80;
 
-    SENSOR_LOGI("_s5k4h8yx: real_gain:0x%x, param: 0x%x", (uint32_t)real_gain,
+    SENSOR_LOGI("_s5k4h8yx: real_gain:0x%x, param: %ul", (uint32_t)real_gain,
                 param);
     s_sensor_ev_info.preview_gain = param;
 
@@ -1550,7 +1550,7 @@ static unsigned long _s5k4h8yx_BeforeSnapshot(SENSOR_HW_HANDLE handle,
     uint32_t cap_linetime =
         s_s5k4h8yx_Resolution_Trim_Tab[capture_mode].line_time;
     uint32_t gain = 0;
-    SENSOR_LOGI("SENSOR_S5K4H8YX: BeforeSnapshot mode: 0x%08x", param);
+    SENSOR_LOGI("SENSOR_S5K4H8YX: BeforeSnapshot mode: %ul", param);
 
     if (preview_mode == capture_mode) {
         SENSOR_LOGI("SENSOR_S5K4H8YX: prv mode equal to capmode");
@@ -1644,7 +1644,7 @@ static unsigned long _s5k4h8yx_StreamOn(SENSOR_HW_HANDLE handle,
 
     Sensor_WriteReg(0x0100, 0x0103);
 #if 1
-    cmr_s8 value1[PROPERTY_VALUE_MAX];
+    char value1[PROPERTY_VALUE_MAX];
     property_get("debug.camera.test.mode", value1, "0");
     if (!strcmp(value1, "1")) {
         SENSOR_LOGI("SENSOR_s5k4h8yx: enable test mode");
@@ -2223,8 +2223,8 @@ static uint32_t _s5k4h8yx_get_static_info(SENSOR_HW_HANDLE handle,
         s_s5k4h8yx_static_info.adgain_valid_frame_num;
     ex_info->preview_skip_num = g_s5k4h8yx_mipi_raw_info.preview_skip_num;
     ex_info->capture_skip_num = g_s5k4h8yx_mipi_raw_info.capture_skip_num;
-    ex_info->name = g_s5k4h8yx_mipi_raw_info.name;
-    ex_info->sensor_version_info = g_s5k4h8yx_mipi_raw_info.sensor_version_info;
+    ex_info->name = (cmr_s8 *)g_s5k4h8yx_mipi_raw_info.name;
+    ex_info->sensor_version_info = (cmr_s8 *)g_s5k4h8yx_mipi_raw_info.sensor_version_info;
     SENSOR_LOGI("SENSOR_s5k4h8yx: f_num: %d", ex_info->f_num);
     SENSOR_LOGI("SENSOR_s5k4h8yx: focal_length: %d", ex_info->focal_length);
     SENSOR_LOGI("SENSOR_s5k4h8yx: max_fps: %d", ex_info->max_fps);

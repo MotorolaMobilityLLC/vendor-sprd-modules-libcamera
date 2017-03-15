@@ -517,14 +517,14 @@ typedef struct sensor_ioctl_func_tab_tag {
        //void (*destroy)(SENSOR_HW_HANDLE *handle);
        //
 	cmr_uint(*reset) (SENSOR_HW_HANDLE handle, cmr_uint param);
-	cmr_uint(*power) (SENSOR_HW_HANDLE handle, cmr_uint param);
+	uint32_t(*power) (SENSOR_HW_HANDLE handle, uint32_t param);
 	cmr_uint(*enter_sleep) (SENSOR_HW_HANDLE handle, cmr_uint param);
-	cmr_uint(*identify) (SENSOR_HW_HANDLE handle, cmr_uint param);
+	uint32_t(*identify) (SENSOR_HW_HANDLE handle, uint32_t param);
 	cmr_uint(*write_reg) (SENSOR_HW_HANDLE handle, cmr_uint param);
 	cmr_uint(*read_reg) (SENSOR_HW_HANDLE handle, cmr_uint param);
 	/*Custom function */
 	cmr_uint(*cus_func_1) (SENSOR_HW_HANDLE handle, cmr_uint param);
-	cmr_uint(*get_trim) (SENSOR_HW_HANDLE handle, cmr_uint param);
+	unsigned long(*get_trim) (SENSOR_HW_HANDLE handle, uint32_t param);
 	/*External IOCTL function */
 	cmr_uint(*ae_enable) (SENSOR_HW_HANDLE handle, cmr_uint param);
 	cmr_uint(*hmirror_enable) (SENSOR_HW_HANDLE handle, cmr_uint param);
@@ -538,16 +538,16 @@ typedef struct sensor_ioctl_func_tab_tag {
 
 	cmr_uint(*set_image_effect) (SENSOR_HW_HANDLE handle, cmr_uint param);
 	//low 16bits is resolution table index,hight 16bits is cap mode containing normal and HDR.
-	cmr_uint(*before_snapshort) (SENSOR_HW_HANDLE handle, cmr_uint param);
+	uint32_t(*before_snapshort) (SENSOR_HW_HANDLE handle, uint32_t param);
 	cmr_uint(*after_snapshort) (SENSOR_HW_HANDLE handle, cmr_uint param);
 	cmr_uint(*flash) (SENSOR_HW_HANDLE handle, cmr_uint param);
 	cmr_uint(*read_ae_value) (SENSOR_HW_HANDLE handle, cmr_uint param);
 	cmr_uint(*write_ae_value) (SENSOR_HW_HANDLE handle, cmr_uint param);
 	cmr_uint(*read_gain_value) (SENSOR_HW_HANDLE handle, cmr_uint param);
-	cmr_uint(*write_gain_value) (SENSOR_HW_HANDLE handle, cmr_uint param);
+	uint32_t(*write_gain_value) (SENSOR_HW_HANDLE handle, uint32_t param);
 	cmr_uint(*read_gain_scale) (SENSOR_HW_HANDLE handle, cmr_uint param);
 	cmr_uint(*set_frame_rate) (SENSOR_HW_HANDLE handle, cmr_uint param);
-	cmr_uint(*af_enable) (SENSOR_HW_HANDLE handle, cmr_uint param);
+	uint32_t(*af_enable) (SENSOR_HW_HANDLE handle, uint32_t param);
 	cmr_uint(*af_get_status) (SENSOR_HW_HANDLE handle, cmr_uint param);
 	cmr_uint(*set_wb_mode) (SENSOR_HW_HANDLE handle, cmr_uint param);
 	cmr_uint(*get_skip_frame) (SENSOR_HW_HANDLE handle, cmr_uint param);
@@ -557,17 +557,17 @@ typedef struct sensor_ioctl_func_tab_tag {
 	cmr_uint(*change_image_format) (SENSOR_HW_HANDLE handle, cmr_uint param);
 	cmr_uint(*set_zoom) (SENSOR_HW_HANDLE handle, cmr_uint param);
 	/*CUSTOMER FUNCTION */
-	cmr_uint(*get_exif) (SENSOR_HW_HANDLE handle, cmr_uint param);
-	cmr_uint(*set_focus) (SENSOR_HW_HANDLE handle, cmr_uint param);
+	unsigned long (*get_exif) (SENSOR_HW_HANDLE handle, unsigned long param);
+	uint32_t(*set_focus) (SENSOR_HW_HANDLE handle, unsigned long param);
 	cmr_uint(*set_anti_banding_flicker) (SENSOR_HW_HANDLE handle, cmr_uint param);
 	cmr_uint(*set_video_mode) (SENSOR_HW_HANDLE handle, cmr_uint param);
 	cmr_uint(*pick_jpeg_stream) (SENSOR_HW_HANDLE handle, cmr_uint param);
 	cmr_uint(*set_meter_mode) (SENSOR_HW_HANDLE handle, cmr_uint param);
 	cmr_uint(*get_status) (SENSOR_HW_HANDLE handle, cmr_uint param);
-	cmr_uint(*stream_on) (SENSOR_HW_HANDLE handle, cmr_uint param);
-	cmr_uint(*stream_off) (SENSOR_HW_HANDLE handle, cmr_uint param);
-	cmr_uint(*cfg_otp) (SENSOR_HW_HANDLE handle, cmr_uint param);
-	cmr_uint(*ex_write_exp) (SENSOR_HW_HANDLE handle, cmr_uint param);
+	uint32_t(*stream_on) (SENSOR_HW_HANDLE handle, uint32_t param);
+	uint32_t(*stream_off) (SENSOR_HW_HANDLE handle, uint32_t param);
+	unsigned long(*cfg_otp) (SENSOR_HW_HANDLE handle, unsigned long param);
+	uint32_t(*ex_write_exp) (SENSOR_HW_HANDLE handle, unsigned long param);
 	cmr_uint(*read_aec_info) (SENSOR_HW_HANDLE handle, cmr_uint param);
 } SENSOR_IOCTL_FUNC_TAB_T, *SENSOR_IOCTL_FUNC_TAB_T_PTR;
 

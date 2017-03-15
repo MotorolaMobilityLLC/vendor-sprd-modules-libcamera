@@ -407,7 +407,7 @@ SENSOR_INFO_T g_ov8856s_mipi_raw_info = {
     /* max height of source image */
     SNAPSHOT_HEIGHT,
     /* name of sensor */
-    SENSOR_NAME,
+    (cmr_s8 *)SENSOR_NAME,
     /* define in SENSOR_IMAGE_FORMAT_E enum,SENSOR_IMAGE_FORMAT_MAX
      * if set to SENSOR_IMAGE_FORMAT_MAX here,
      * image format depent on SENSOR_REG_TAB_INFO_T
@@ -454,7 +454,7 @@ SENSOR_INFO_T g_ov8856s_mipi_raw_info = {
     65,
     /* vertical view angle*/
     60,
-    "ov8856s_v1"};
+    (cmr_s8 *)"ov8856s_v1"};
 
 static SENSOR_STATIC_INFO_T s_ov8856s_static_info = {
     220, // f-number,focal ratio
@@ -789,8 +789,8 @@ static uint32_t ov8856s_get_static_info(SENSOR_HW_HANDLE handle,
         s_ov8856s_static_info.adgain_valid_frame_num;
     ex_info->preview_skip_num = g_ov8856s_mipi_raw_info.preview_skip_num;
     ex_info->capture_skip_num = g_ov8856s_mipi_raw_info.capture_skip_num;
-    ex_info->name = g_ov8856s_mipi_raw_info.name;
-    ex_info->sensor_version_info = g_ov8856s_mipi_raw_info.sensor_version_info;
+    ex_info->name = (cmr_s8 *)g_ov8856s_mipi_raw_info.name;
+    ex_info->sensor_version_info = (cmr_s8 *)g_ov8856s_mipi_raw_info.sensor_version_info;
     // vcm_dw9800_get_pose_dis(handle, &up, &down);
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;

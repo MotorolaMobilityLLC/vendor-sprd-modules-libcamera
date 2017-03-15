@@ -339,8 +339,8 @@ static uint32_t ov13855_get_static_info(SENSOR_HW_HANDLE handle,
         s_ov13855_static_info.adgain_valid_frame_num;
     ex_info->preview_skip_num = g_ov13855_mipi_raw_info.preview_skip_num;
     ex_info->capture_skip_num = g_ov13855_mipi_raw_info.capture_skip_num;
-    ex_info->name = g_ov13855_mipi_raw_info.name;
-    ex_info->sensor_version_info = g_ov13855_mipi_raw_info.sensor_version_info;
+    ex_info->name = (cmr_s8 *)g_ov13855_mipi_raw_info.name;
+    ex_info->sensor_version_info = (cmr_s8 *)g_ov13855_mipi_raw_info.sensor_version_info;
     // vcm_dw9800_get_pose_dis(handle, &up, &down);
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
@@ -557,7 +557,7 @@ static uint32_t ov13855_before_snapshot(SENSOR_HW_HANDLE handle,
     cap_shutter = ov13855_write_exposure_dummy(handle, cap_shutter, 0, 0);
     cap_gain = gain;
     ov13855_write_gain(handle, cap_gain);
-    SENSOR_PRINT("preview_shutter = 0x%x, preview_gain = 0x%x",
+    SENSOR_PRINT("preview_shutter = 0x%x, preview_gain = %f",
                  s_sensor_ev_info.preview_shutter,
                  s_sensor_ev_info.preview_gain);
 
@@ -575,7 +575,7 @@ snapshot_info:
  * get the shutter from isp
  * please don't change this function unless it's necessary
  *============================================================================*/
-static unsigned long ov13855_write_exposure(SENSOR_HW_HANDLE handle,
+static uint32_t ov13855_write_exposure(SENSOR_HW_HANDLE handle,
                                             unsigned long param) {
     uint32_t ret_value = SENSOR_SUCCESS;
     uint16_t exposure_line = 0x00;
@@ -630,7 +630,7 @@ static uint32_t isp_to_real_gain(SENSOR_HW_HANDLE handle, uint32_t param) {
  * you can change this function if it's necessary
  *============================================================================*/
 static uint32_t ov13855_write_gain_value(SENSOR_HW_HANDLE handle,
-                                         unsigned long param) {
+                                         uint32_t param) {
     uint32_t ret_value = SENSOR_SUCCESS;
     float real_gain = 0;
 

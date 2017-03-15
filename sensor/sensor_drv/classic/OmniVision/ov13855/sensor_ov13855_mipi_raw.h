@@ -651,7 +651,7 @@ SENSOR_INFO_T g_ov13855_mipi_raw_info = {
     .dvdd_val = SENSOR_AVDD_1200MV,
     .source_width_max = SNAPSHOT_WIDTH,   /* max width of source image */
     .source_height_max = SNAPSHOT_HEIGHT, /* max height of source image */
-    .name = SENSOR_NAME,
+    .name = (cmr_s8 *)SENSOR_NAME,
     .image_format = SENSOR_IMAGE_FORMAT_RAW,
     .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_B,
 
@@ -684,5 +684,5 @@ SENSOR_INFO_T g_ov13855_mipi_raw_info = {
     .change_setting_skip_num = 1,
     .horizontal_view_angle = 35,
     .vertical_view_angle = 35,
-    .sensor_version_info = "ov13855v1",
+    .sensor_version_info = (cmr_s8 *)"ov13855v1",
 };

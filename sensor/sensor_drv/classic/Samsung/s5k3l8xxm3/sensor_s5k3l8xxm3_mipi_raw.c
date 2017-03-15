@@ -576,7 +576,7 @@ SENSOR_INFO_T g_s5k3l8xxm3_mipi_raw_info = {
     /* max height of source image */
     SNAPSHOT_HEIGHT,
     /* name of sensor */
-    SENSOR_NAME,
+    (cmr_s8 *)SENSOR_NAME,
     /* define in SENSOR_IMAGE_FORMAT_E enum,SENSOR_IMAGE_FORMAT_MAX
      * if set to SENSOR_IMAGE_FORMAT_MAX here,
      * image format depent on SENSOR_REG_TAB_INFO_T
@@ -623,7 +623,7 @@ SENSOR_INFO_T g_s5k3l8xxm3_mipi_raw_info = {
     65,
     /* vertical view angle*/
     60,
-    "s5k3l8xxm3_v1"};
+    (cmr_s8 *)"s5k3l8xxm3_v1"};
 
 static SENSOR_STATIC_INFO_T s_s5k3l8xxm3_static_info = {
     220, // f-number,focal ratio
@@ -986,9 +986,9 @@ static uint32_t s5k3l8xxm3_get_static_info(SENSOR_HW_HANDLE handle,
         s_s5k3l8xxm3_static_info.adgain_valid_frame_num;
     ex_info->preview_skip_num = g_s5k3l8xxm3_mipi_raw_info.preview_skip_num;
     ex_info->capture_skip_num = g_s5k3l8xxm3_mipi_raw_info.capture_skip_num;
-    ex_info->name = g_s5k3l8xxm3_mipi_raw_info.name;
+    ex_info->name = (cmr_s8 *)g_s5k3l8xxm3_mipi_raw_info.name;
     ex_info->sensor_version_info =
-        g_s5k3l8xxm3_mipi_raw_info.sensor_version_info;
+        (cmr_s8 *)g_s5k3l8xxm3_mipi_raw_info.sensor_version_info;
     // vcm_ak7371_get_pose_dis(handle, &up, &down);
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;

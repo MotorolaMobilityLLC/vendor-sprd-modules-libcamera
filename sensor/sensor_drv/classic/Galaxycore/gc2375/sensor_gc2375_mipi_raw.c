@@ -172,7 +172,7 @@ static struct hdr_info_t s_hdr_info = {
     SNAPSHOT_FRAME_LENGTH - FRAME_OFFSET, SENSOR_BASE_GAIN};
 static uint32_t s_current_default_frame_length = PREVIEW_FRAME_LENGTH;
 static struct sensor_ev_info_t s_sensor_ev_info = {
-    PREVIEW_FRAME_LENGTH - FRAME_OFFSET, SENSOR_BASE_GAIN};
+    PREVIEW_FRAME_LENGTH - FRAME_OFFSET, SENSOR_BASE_GAIN,PREVIEW_FRAME_LENGTH};
 
 //#define FEATURE_OTP    /*OTP function switch*/
 
@@ -500,7 +500,7 @@ SENSOR_INFO_T g_gc2375_mipi_raw_info = {
     /* max height of source image */
     SNAPSHOT_HEIGHT,
     /* name of sensor */
-    SENSOR_NAME,
+    (cmr_s8 *)SENSOR_NAME,
     /* define in SENSOR_IMAGE_FORMAT_E enum,SENSOR_IMAGE_FORMAT_MAX
      * if set to SENSOR_IMAGE_FORMAT_MAX here,
      * image format depent on SENSOR_REG_TAB_INFO_T
@@ -647,8 +647,8 @@ static uint32_t gc2375_get_static_info(SENSOR_HW_HANDLE handle,
         s_gc2375_static_info.adgain_valid_frame_num;
     ex_info->preview_skip_num = g_gc2375_mipi_raw_info.preview_skip_num;
     ex_info->capture_skip_num = g_gc2375_mipi_raw_info.capture_skip_num;
-    ex_info->name = g_gc2375_mipi_raw_info.name;
-    ex_info->sensor_version_info = g_gc2375_mipi_raw_info.sensor_version_info;
+    ex_info->name = (cmr_s8 *)g_gc2375_mipi_raw_info.name;
+    ex_info->sensor_version_info = (cmr_s8 *)g_gc2375_mipi_raw_info.sensor_version_info;
     // vcm_ak7371_get_pose_dis(handle, &up, &down);
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
@@ -1365,8 +1365,8 @@ static uint32_t gc2375_InitExifInfo(void) {
     return SENSOR_SUCCESS;
 }
 
-static uint32_t gc2375_get_exif_info(unsigned long param) {
-    return (unsigned long)&s_gc2375_exif_info;
+static unsigned long gc2375_get_exif_info(SENSOR_HW_HANDLE handle, unsigned long param) {
+    return (uint32_t)&s_gc2375_exif_info;
 }
 
 /*==============================================================================
@@ -1442,7 +1442,7 @@ static uint32_t gc2375_identify(SENSOR_HW_HANDLE handle, uint32_t param) {
  * get resolution trim
  *
  *============================================================================*/
-static unsigned long gc2375_get_resolution_trim_tab(uint32_t param) {
+static unsigned long gc2375_get_resolution_trim_tab(SENSOR_HW_HANDLE handle, uint32_t param) {
     return (unsigned long)s_gc2375_resolution_trim_tab;
 }
 
@@ -1494,7 +1494,7 @@ static uint32_t gc2375_before_snapshot(SENSOR_HW_HANDLE handle,
     cap_shutter = gc2375_update_exposure(handle, cap_shutter, 0);
     cap_gain = gain;
     gc2375_write_gain(handle, cap_gain);
-    SENSOR_PRINT("preview_shutter = 0x%x, preview_gain = 0x%x",
+    SENSOR_PRINT("preview_shutter = 0x%x, preview_gain = %f",
                  s_sensor_ev_info.preview_shutter,
                  s_sensor_ev_info.preview_gain);
 
@@ -1518,7 +1518,7 @@ snapshot_info:
  * get the shutter from isp
  * please don't change this function unless it's necessary
  *============================================================================*/
-static uint32_t gc2375_write_exposure(SENSOR_HW_HANDLE handle, uint32_t param) {
+static uint32_t gc2375_write_exposure(SENSOR_HW_HANDLE handle, unsigned long param) {
     uint32_t ret_value = SENSOR_SUCCESS;
     uint16_t exposure_line = 0x00;
     uint16_t dummy_line = 0x00;
