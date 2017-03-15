@@ -130,7 +130,7 @@ static const SENSOR_REG_T ov13855_init_setting[] = {
     {0x5315, 0x20}, {0x5316, 0x08}, {0x5317, 0x08}, {0x5318, 0x10},
     {0x5319, 0x88}, {0x531a, 0x88}, {0x531b, 0xa9}, {0x531c, 0xaa},
     {0x531d, 0x0a}, {0x5405, 0x02}, {0x5406, 0x67}, {0x5407, 0x01},
-    {0x5408, 0x4a},
+    {0x5408, 0x4a}, {0x3503, 0x78},
     //   {0x0100,0x01},
 };
 
@@ -252,11 +252,11 @@ static const SENSOR_REG_T ov13855_1280x720_setting[] = {
  * please modify this variable acording your spec
  *============================================================================*/
 static SENSOR_STATIC_INFO_T s_ov13855_static_info = {
-    .f_num = 220,         // f-number,focal ratio
-    .focal_length = 462,  // focal_length;
+    .f_num = 200,         // f-number,focal ratio
+    .focal_length = 354,  // focal_length;
     .max_fps = 0,         // max_fps,max fps of sensor's all settings,it will be
                           // calculated from sensor mode fps
-    .max_adgain = 16 * 2, // max_adgain,AD-gain
+    .max_adgain = 15 * 2, // max_adgain,AD-gain
     .ois_supported = 0,   // ois_supported;
     .pdaf_supported = 0,  // pdaf_supported;
     .exp_valid_frame_num = 1,    // exp_valid_frame_num;N+2-1
