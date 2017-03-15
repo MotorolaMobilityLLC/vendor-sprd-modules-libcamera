@@ -277,7 +277,7 @@ static cmr_int isp_pdaf_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *pa
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context*)isp_alg_handle;
 
-	ISP_LOGI(":ISP:isp_pdaf_set_cb type = 0x%x", type);
+	ISP_LOGI(":ISP:isp_pdaf_set_cb type = 0x%lx", type);
 	switch (type) {
 	case ISP_AF_SET_PD_INFO:
 		//rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF, param0, param1);
@@ -1100,6 +1100,7 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 	cmr_s32 i = 0;
 	struct pdaf_ctrl_process_in pdaf_param_in;
 	struct isp_statis_buf_input     statis_buf;
+	UNUSED(data_type);
 
 	memset((void *)&pdaf_param_in, 0x00, sizeof(pdaf_param_in));
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
@@ -1133,7 +1134,7 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 static uint32_t binning_data_cvt(uint32_t bayermode, uint32_t width, uint32_t height, uint16_t *raw_in, struct isp_binning_statistic_info *binning_info)
 {
 	uint32_t rtn = 0;
-	int32_t i,j;
+	uint32_t i,j;
 	uint32_t *binning_r = binning_info->r_info;
 	uint32_t *binning_g = binning_info->g_info;
 	uint32_t *binning_b = binning_info->b_info;
@@ -1431,7 +1432,7 @@ cmr_int isp_alg_destroy_thread_proc(cmr_handle isp_alg_handle)
 		}
 	}
 exit:
-	ISP_LOGI(":ISP:done %d", rtn);
+	ISP_LOGI(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -1735,7 +1736,7 @@ exit:
 	if (rtn) {
 		ISP_LOGE("fail to do PDAF initialize");
 	}
-	ISP_LOGI(":ISP: done %d",rtn);
+	ISP_LOGI(":ISP: done %ld",rtn);
 
 	return rtn;
 }

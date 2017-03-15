@@ -31,26 +31,28 @@ struct isp_mw_context {
 
 void ispmw_dev_buf_cfg_evt_cb(cmr_handle isp_handle, isp_buf_cfg_evt_cb grab_event_cb)
 {
+	UNUSED(isp_handle);
+	UNUSED(grab_event_cb);
 }
 
 void isp_statis_evt_cb(cmr_int evt, void* data, void* privdata)
 {
-	int32_t                         rtn = ISP_SUCCESS;
 	//struct camera_context *cxt = (struct camera_context *)privdata;
 	//struct isp_context *isp_cxt = cxt->isp_cxt;
 	struct isp_mw_context *mw_cxt = (struct isp_mw_context *)privdata;//isp_cxt->isp_handle;
+	UNUSED(evt);
 
-	rtn = isp_dev_statis_info_proc(mw_cxt->dev_access_handle, data);
+	isp_dev_statis_info_proc(mw_cxt->dev_access_handle, data);
 
 }
 
 void isp_irq_proc_evt_cb(cmr_int evt, void* data, void* privdata)
 {
-	int32_t                         rtn = ISP_SUCCESS;
 	struct isp_mw_context *mw_cxt = (struct isp_mw_context *)privdata;
+	UNUSED(evt);
 
 	ISP_LOGV("SOF:isp_irq_proc_evt_cb");
-	rtn = isp_dev_irq_info_proc(mw_cxt->dev_access_handle, data);
+	isp_dev_irq_info_proc(mw_cxt->dev_access_handle, data);
 }
 
 static int32_t _isp_check_video_param(struct isp_video_start *param_ptr)
@@ -130,7 +132,7 @@ exit:
 		*isp_handler = (isp_handle)cxt;
 	}
 
-	ISP_LOGI(":ISP:X %d", rtn);
+	ISP_LOGI(":ISP:X %ld", rtn);
 
 	return rtn;
 }
@@ -233,6 +235,7 @@ cmr_int isp_proc_start(isp_handle isp_handler, struct ips_in_param *in_ptr, stru
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_mw_context *cxt = (struct isp_mw_context *)isp_handler;
+	UNUSED(out_ptr);
 
 	if (NULL == cxt) {
 		ISP_LOGE("fail to check isp handler");
@@ -251,6 +254,7 @@ cmr_int isp_proc_next(isp_handle isp_handler, struct ipn_in_param *in_ptr, struc
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_mw_context *cxt = (struct isp_mw_context *)isp_handler;
+	UNUSED(out_ptr);
 
 	if (NULL == cxt) {
 		ISP_LOGE("fail to check isp handler");
@@ -268,6 +272,8 @@ cmr_int isp_proc_next(isp_handle isp_handler, struct ipn_in_param *in_ptr, struc
 cmr_int isp_cap_buff_cfg(cmr_handle isp_handle, struct isp_img_param *buf_cfg)
 {
 	cmr_int                    ret = ISP_SUCCESS;
+	UNUSED(isp_handle);
+	UNUSED(buf_cfg);
 
 	return ret;
 }

@@ -757,7 +757,7 @@ cmr_int isp_capability(isp_handle isp_handler, enum isp_capbility_cmd cmd, void*
 cmr_int isp_ioctl(isp_handle isp_handler, enum isp_ctrl_cmd cmd, void* param_ptr);
 cmr_int isp_video_start(isp_handle isp_handler, struct isp_video_start* param_ptr);
 cmr_int isp_video_stop(isp_handle isp_handler);
-cmr_int isp_proc_start(isp_handle isp_handler, struct ips_in_param* in_param_ptr, struct ips_out_param* out_param_ptr);
+cmr_int isp_proc_start(isp_handle isp_handler, struct ips_in_param* in_param_ptr, struct ips_out_param *out_ptr);
 cmr_int isp_proc_next(isp_handle isp_handler, struct ipn_in_param* in_ptr, struct ips_out_param *out_ptr);
 cmr_int isp_cap_buff_cfg(cmr_handle isp_handle, struct isp_img_param *buf_cfg);
 void ispmw_dev_buf_cfg_evt_cb(cmr_handle isp_handle, isp_buf_cfg_evt_cb grab_event_cb);

@@ -1265,7 +1265,7 @@ static cmr_int _ispFixParamUpdateIOCtrl(cmr_handle isp_alg_handle, void *param_p
 	return rtn;
 }
 
-static cmr_int _ispGetAdgainExpInfo(cmr_handle isp_alg_handle, void *param_ptr)
+static cmr_int _ispGetAdgainExpInfo(cmr_handle isp_alg_handle, void *param_ptr, int (*call_back)())
 {
 	cmr_int                                     rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context                   *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -1273,6 +1273,7 @@ static cmr_int _ispGetAdgainExpInfo(cmr_handle isp_alg_handle, void *param_ptr)
 	float gain = 0;
 	uint32_t exp_time = 0;
 	cmr_int bv =0;
+	UNUSED(call_back);
 
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_GAIN, NULL, (void *)&gain);
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_EXP_TIME, NULL, (void *)&exp_time);
@@ -1749,9 +1750,9 @@ static cmr_int _ispDenoiseParamRead(cmr_handle isp_alg_handle, void *param_ptr, 
 
 //	if(cxt->commn_cxt.multi_nr_flag == SENSOR_MULTI_MODE_FLAG) {
 		update_param->multi_nr_flag = SENSOR_MULTI_MODE_FLAG;
-		update_param->nr_scene_map_ptr = nr_fix->nr_scene_ptr;
-		update_param->nr_level_number_map_ptr = nr_fix->nr_level_number_ptr;
-		update_param->nr_default_level_map_ptr = nr_fix->nr_default_level_ptr;
+		update_param->nr_scene_map_ptr = (uint32_t *)nr_fix->nr_scene_ptr;
+		update_param->nr_level_number_map_ptr = (uint8_t *)nr_fix->nr_level_number_ptr;
+		update_param->nr_default_level_map_ptr = (uint8_t *)nr_fix->nr_default_level_ptr;
 	if (update_param->nr_level_number_map_ptr) {
 		 ISP_LOGI("ISP_TOOL:update_param->nr_level_number_map_ptr sizeof = %d", sizeof(update_param->nr_level_number_map_ptr));
 	} else {
@@ -1771,73 +1772,73 @@ static cmr_int _ispDenoiseParamRead(cmr_handle isp_alg_handle, void *param_ptr, 
 
 		switch (header->block_id) {
 			case ISP_BLK_PDAF_CORRECT: {
-				update_param->pdaf_correction_level_ptr = fix_data_ptr->nr.nr_set_group.pdaf_correct;//0x14
+				update_param->pdaf_correction_level_ptr = (struct sensor_pdaf_correction_level *)fix_data_ptr->nr.nr_set_group.pdaf_correct;//0x14
 				break;
 			}
 			case ISP_BLK_BPC: {
-				update_param->bpc_level_ptr = fix_data_ptr->nr.nr_set_group.bpc;//0x19
+				update_param->bpc_level_ptr = (struct sensor_bpc_level *)fix_data_ptr->nr.nr_set_group.bpc;//0x19
 				break;
 			}
 			case ISP_BLK_GRGB: {
-				update_param->grgb_level_ptr = fix_data_ptr->nr.nr_set_group.grgb;//0x1A
+				update_param->grgb_level_ptr = (struct sensor_grgb_level *)fix_data_ptr->nr.nr_set_group.grgb;//0x1A
 				break;
 			}
 			case ISP_BLK_NLM: {
-				update_param->nlm_level_ptr = fix_data_ptr->nr.nr_set_group.nlm;//0x15
-				update_param->vst_level_ptr = fix_data_ptr->nr.nr_set_group.vst;//0x16
-				update_param->ivst_level_ptr = fix_data_ptr->nr.nr_set_group.ivst;//0x17
+				update_param->nlm_level_ptr = (struct sensor_nlm_level *)fix_data_ptr->nr.nr_set_group.nlm;//0x15
+				update_param->vst_level_ptr = (struct sensor_vst_level *)fix_data_ptr->nr.nr_set_group.vst;//0x16
+				update_param->ivst_level_ptr = (struct sensor_ivst_level *)fix_data_ptr->nr.nr_set_group.ivst;//0x17
 				break;
 			}
 			case ISP_BLK_RGB_DITHER: {
-				update_param->rgb_dither_level_ptr = fix_data_ptr->nr.nr_set_group.rgb_dither;//0x18
+				update_param->rgb_dither_level_ptr = (struct sensor_rgb_dither_level *)fix_data_ptr->nr.nr_set_group.rgb_dither;//0x18
 				break;
 			}
 			case ISP_BLK_CFA: {
-				update_param->cfae_level_ptr = fix_data_ptr->nr.nr_set_group.cfa;//0x1B
+				update_param->cfae_level_ptr = (struct sensor_cfai_level *)fix_data_ptr->nr.nr_set_group.cfa;//0x1B
 				break;
 			}
 			case ISP_BLK_RGB_AFM: {
-				update_param->rgb_afm_level_ptr = fix_data_ptr->nr.nr_set_group.rgb_afm;//0x1C
+				update_param->rgb_afm_level_ptr = (struct sensor_rgb_afm_level *)fix_data_ptr->nr.nr_set_group.rgb_afm;//0x1C
 				break;
 			}
 			case ISP_BLK_UVDIV: {
-				update_param->cce_uvdiv_level_ptr = fix_data_ptr->nr.nr_set_group.uvdiv;//0x1D
+				update_param->cce_uvdiv_level_ptr = (struct sensor_cce_uvdiv_level *)fix_data_ptr->nr.nr_set_group.uvdiv;//0x1D
 				break;
 			}
 			case ISP_BLK_3DNR_PRE: {
-				update_param->dnr_pre_level_ptr = fix_data_ptr->nr.nr_set_group.nr3d_pre;//0x1E
+				update_param->dnr_pre_level_ptr = (struct sensor_3dnr_level *)fix_data_ptr->nr.nr_set_group.nr3d_pre;//0x1E
 				break;
 			}
 			case ISP_BLK_3DNR_CAP: {
-				update_param->dnr_cap_level_ptr = fix_data_ptr->nr.nr_set_group.nr3d_cap;//0x1F
+				update_param->dnr_cap_level_ptr = (struct sensor_3dnr_level *)fix_data_ptr->nr.nr_set_group.nr3d_cap;//0x1F
 				break;
 			}
 			case ISP_BLK_EDGE: {
-				update_param->ee_level_ptr = fix_data_ptr->nr.nr_set_group.edge;//0x20
+				update_param->ee_level_ptr = (struct sensor_ee_level *)fix_data_ptr->nr.nr_set_group.edge;//0x20
 				break;
 			}
 			case ISP_BLK_YUV_PRECDN: {
-				update_param->yuv_precdn_level_ptr = fix_data_ptr->nr.nr_set_group.yuv_precdn;//0x21
+				update_param->yuv_precdn_level_ptr = (struct sensor_yuv_precdn_level *)fix_data_ptr->nr.nr_set_group.yuv_precdn;//0x21
 				break;
 			}
 			case ISP_BLK_YNR: {
-				update_param->ynr_level_ptr = fix_data_ptr->nr.nr_set_group.ynr;//0x22
+				update_param->ynr_level_ptr = (struct sensor_ynr_level *)fix_data_ptr->nr.nr_set_group.ynr;//0x22
 				break;
 			}
 			case ISP_BLK_UV_CDN: {
-				update_param->uv_cdn_level_ptr = fix_data_ptr->nr.nr_set_group.cdn;//0x23
+				update_param->uv_cdn_level_ptr = (struct sensor_uv_cdn_level *)fix_data_ptr->nr.nr_set_group.cdn;//0x23
 				break;
 			}
 			case ISP_BLK_UV_POSTCDN: {
-				update_param->uv_postcdn_level_ptr = fix_data_ptr->nr.nr_set_group.postcdn;//0x24
+				update_param->uv_postcdn_level_ptr = (struct sensor_uv_postcdn_level *)fix_data_ptr->nr.nr_set_group.postcdn;//0x24
 				break;
 			}
 			case ISP_BLK_IIRCNR_IIR: {
-				update_param->iircnr_level_ptr = fix_data_ptr->nr.nr_set_group.iircnr;//0x25
+				update_param->iircnr_level_ptr = (struct sensor_iircnr_level *)fix_data_ptr->nr.nr_set_group.iircnr;//0x25
 				break;
 			}
 			case ISP_BLK_YUV_NOISEFILTER: {
-				update_param->yuv_noisefilter_level_ptr = fix_data_ptr->nr.nr_set_group.yuv_noisefilter;//0x26
+				update_param->yuv_noisefilter_level_ptr = (struct sensor_yuv_noisefilter_level *)fix_data_ptr->nr.nr_set_group.yuv_noisefilter;//0x26
 				break;
 			}
 			default:
