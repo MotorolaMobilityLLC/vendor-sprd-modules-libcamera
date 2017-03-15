@@ -135,7 +135,7 @@ exit:
 	} else {
 		*handle_awb = (cmr_handle)cxt_ptr;
 	}
-	ISP_LOGI(":ISP:isp_3a_ctrl awb_init rtn = %d", rtn);
+	ISP_LOGI(":ISP:isp_3a_ctrl awb_init rtn = %ld", rtn);
 
 	return rtn;
 }
@@ -199,7 +199,7 @@ cmr_int awb_ctrl_deinit(cmr_handle *handle_awb)
 		*handle_awb = NULL;
 	}
 
-	ISP_LOGI(":ISP:done %d", rtn);
+	ISP_LOGI(":ISP:done %ld", rtn);
 	return rtn;
 }
 
