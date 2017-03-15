@@ -560,7 +560,7 @@ extern "C" {
 			switch (af_mode) {
 			case AF_MODE_CONTINUE:
 			case AF_MODE_VIDEO:
-				AF_LOGD("af state = %s, caf state = %d", STATE_STRING(af->state),
+				AF_LOGD("af state = %s, caf state = %s", STATE_STRING(af->state),
 					CAF_STATE_STR(af->caf_state));
 				//            if (STATE_IDLE == af->state)
 				if (STATE_FAF == af->state) {
@@ -1219,7 +1219,7 @@ static void do_notify(af_ctrl_t *af, enum notify_event evt, const notify_result_
 		switch (af->state) {
 		case STATE_FAF:
 			win_info = r->win[0];
-			r->num = split_win(&w, 3, 3, r->win);
+			r->num = split_win(&win_info, 3, 3, r->win);
 			break;
 		default:
 #if MULTI_WIN
@@ -1684,7 +1684,7 @@ static void do_notify(af_ctrl_t *af, enum notify_event evt, const notify_result_
 		if (STATE_RECORD_CAF == af->state)
 			af->algo_mode = VAF;
 		else
-			af->algo_mode = (af->defocus) ? (DEFOCUS) : (CAF);
+			af->algo_mode = CAF;//(af->defocus) ? (DEFOCUS) : (CAF);
 
 		calc_roi(af, NULL, af->algo_mode);
 
@@ -1825,7 +1825,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		prm->ae_info.bv = af->ae.bv;
 		prm->ae_info.y_sum = af->Y_sum_trigger;
 		prm->ae_info.cur_scene = af->curr_scene;
-		if_get_motor_pos(&prm->ae_info.registor_pos, (void *)af);	//gwb 32 to 16
+		prm->ae_info.registor_pos = lens_get_pos(af);//if_get_motor_pos(&prm->ae_info.registor_pos, (void *)af);	//gwb 32 to 16
 		// AF_LOGD("exp_time = %d, gain = %d, cur_lum = %d, is_stable = %d",
 		//   prm->ae_info.exp_time, prm->ae_info.gain, prm->ae_info.cur_lum, prm->ae_info.is_stable);
 
@@ -2250,7 +2250,7 @@ v=v>(max)?(max):v; hist[v]++;}
 			gain = (1 << GAIN_32x);
 
 		i = 0;
-		while (gain = gain >> 1) {	//gwb suggest parentheses around assignment used as truth value [-Wparentheses]
+		while ( (gain = (gain >> 1)) ) {	//gwb suggest parentheses around assignment used as truth value [-Wparentheses]
 			i++;
 		}
 		return i;
@@ -2382,10 +2382,14 @@ v=v>(max)?(max):v; hist[v]++;}
 
 // i/f to AF model
 	static ERRCODE if_af_start_notify(eAF_MODE AF_mode, void *cookie) {
+		UNUSED(AF_mode);
+		UNUSED(cookie);
 		return 0;
 	}
 
 	static ERRCODE if_af_end_notify(eAF_MODE AF_mode, void *cookie) {
+		UNUSED(AF_mode);
+		UNUSED(cookie);
 /*
     af_ctrl_t *af = cookie;
     struct isp_system *sys = &af->isp_ctx->system;
@@ -2405,6 +2409,7 @@ v=v>(max)?(max):v; hist[v]++;}
 	}
 
 	static ERRCODE if_statistics_wait_cal_done(void *cookie) {
+		UNUSED(cookie);
 		return 0;
 	}
 
@@ -2505,6 +2510,7 @@ v=v>(max)?(max):v; hist[v]++;}
 	}
 
 	static ERRCODE if_lens_wait_stop(void *cookie) {
+		UNUSED(cookie);
 		return 0;
 	}
 
@@ -2585,6 +2591,7 @@ v=v>(max)?(max):v; hist[v]++;}
 	}
 
 	static ERRCODE if_get_sys_time(uint64 * time, void *cookie) {
+		UNUSED(cookie);
 		*time = get_systemtime_ns();
 		return 0;
 	}
@@ -2612,6 +2619,8 @@ v=v>(max)?(max):v; hist[v]++;}
 
 	static ERRCODE if_set_af_exif(const void *data, void *cookie) {
 		// TODO
+		UNUSED(data);
+		UNUSED(cookie);
 		return 0;
 	}
 
@@ -2812,6 +2821,7 @@ v=v>(max)?(max):v; hist[v]++;}
 	}
 
 	static ERRCODE if_is_aft_mlog(uint32_t * is_save, void *cookie) {
+		UNUSED(cookie);
 #ifndef WIN32
 		char value[PROPERTY_VALUE_MAX] = { '\0' };
 
@@ -2963,10 +2973,10 @@ v=v>(max)?(max):v; hist[v]++;}
 		uint32_t size_index;
 	};
 */
-	static void get_vcm_mode(af_ctrl_t * af) {
+	static void get_vcm_mode(af_ctrl_t * af, char *vcm_mode) {
 		struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
 		struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
-
+		UNUSED(vcm_mode);
 		if (NULL != af->vcm_ops.get_test_vcm_mode)
 			//af->vcm_ops.get_test_vcm_mode(af->caller);
 			af->vcm_ops.get_test_vcm_mode(isp_ctx->ioctrl_ptr->caller_handler);
@@ -3001,8 +3011,10 @@ v=v>(max)?(max):v; hist[v]++;}
 	}
 
 	static void set_ae_gain_exp(af_ctrl_t * af, char *ae_param) {
-		char *p1 = ae_param;
+		UNUSED(af);
+		UNUSED(ae_param);
 #if 0				//gwb
+		char *p1 = ae_param;
 		isp_ctrl_context *isp = (isp_ctrl_context *) af->isp_ctx;
 		struct sensor_ex_exposure ex_exposure;
 
@@ -3021,6 +3033,7 @@ v=v>(max)?(max):v; hist[v]++;}
 	}
 
 	static void set_manual(af_ctrl_t * af, char *test_param) {
+		UNUSED(test_param);
 		af->state = STATE_IDLE;
 		af->caf_state = CAF_IDLE;
 		//property_set("af_set_pos","0");// to fix lens to position 0
@@ -3052,7 +3065,7 @@ v=v>(max)?(max):v; hist[v]++;}
 	static void calibration_ae_mean(af_ctrl_t * af, char *test_param) {
 		FILE *fp = fopen("/data/misc/cameraserver/calibration_ae_mean.txt", "ab");
 		uint8_t i = 0;
-
+		UNUSED(test_param);
 		if_lock_lsc(LOCK, af);
 		if_lock_ae(LOCK, af);
 		if_statistics_get_data(af->fv_combine, NULL, af);
@@ -3290,7 +3303,9 @@ v=v>(max)?(max):v; hist[v]++;}
 		return rtn;
 	}
 #endif
-	cmr_int sprd_afv1_deinit(cmr_handle handle, void *param, void *result) {
+	int32_t sprd_afv1_deinit(cmr_handle handle, void *param, void *result) {
+		UNUSED(param);
+		UNUSED(result);
 #if 1
 //    isp_ctrl_context *isp = (isp_ctrl_context *)handle;
 		AF_LOGD("E");
@@ -3414,6 +3429,7 @@ v=v>(max)?(max):v; hist[v]++;}
 	}
 #endif
 	cmr_handle sprd_afv1_init(void *in, void *out) {
+		af_ctrl_t *af =NULL;
 #if 1
 		AF_LOGI("B");
 		struct afctrl_init_in *init_param = (struct afctrl_init_in *)in;
@@ -3457,7 +3473,7 @@ v=v>(max)?(max):v; hist[v]++;}
 			return NULL;
 		}
 
-		af_ctrl_t *af = (af_ctrl_t *) malloc(sizeof(*af));
+		af = (af_ctrl_t *) malloc(sizeof(*af));
 		if (NULL == af) {
 			AF_LOGD("malloc fail");
 			return NULL;
@@ -3540,7 +3556,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		assert(sizeof(af->af_version) >= strlen("AF-") + strlen(af->fv.AF_Version) + strlen(AF_SYS_VERSION));
 		memcpy(af->af_version, "AF-", strlen("AF-"));
 		memcpy(af->af_version + strlen("AF-"), af->fv.AF_Version, sizeof(af->fv.AF_Version));
-		memcpy(af->af_version + strlen("AF-") + strlen(af->fv.AF_Version), AF_SYS_VERSION,
+		memcpy(af->af_version + strlen("AF-") + strlen((char*)af->fv.AF_Version), AF_SYS_VERSION,
 		       strlen(AF_SYS_VERSION));
 		AF_LOGD("AFVER %s lib mem 0x%x ", af->af_version, sizeof(AF_Data));
 		property_set("af_mode", "none");
@@ -3585,7 +3601,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		}
 #endif
 	      INIT_ERROR_EXIT:
-		if (af) {
+		if (NULL!=af) {
 			rtn = sprd_afv1_deinit((cmr_handle) af, NULL, NULL);
 			if (rtn) {
 				AF_LOGE("af deinit error rtn:%d !!!", rtn);
@@ -3707,7 +3723,7 @@ static cmr_int af_sprd_adpt_update_aux_sensor(cmr_handle handle, void *in)
 
 	return ISP_SUCCESS;
 }
-	cmr_int sprd_afv1_process(afv1_handle_t handle, void *in, void *out) {
+	int32_t sprd_afv1_process(afv1_handle_t handle, void *in, void *out) {
 #if 1
 		af_ctrl_t *af = (af_ctrl_t *) handle;
 		struct afctrl_calc_in *inparam = (struct afctrl_calc_in *)in;
@@ -3906,7 +3922,7 @@ static cmr_int af_sprd_adpt_update_aux_sensor(cmr_handle handle, void *in)
 #endif
 	}
 
-	cmr_int sprd_afv1_ioctrl(void *handle, cmr_int cmd, void *param0, void *param1) {
+	int32_t sprd_afv1_ioctrl(void *handle, int32_t cmd, void *param0, void *param1) {
 		UNUSED(param1);
 		cmr_int rtn = AFV1_SUCCESS;
 		af_ctrl_t *af = (af_ctrl_t *) handle;
@@ -3921,7 +3937,7 @@ static cmr_int af_sprd_adpt_update_aux_sensor(cmr_handle handle, void *in)
 		}
 
 		pthread_mutex_lock(&af->status_lock);
-		ISP_LOGI("cmd is %lx", cmd);
+		ISP_LOGI("cmd is %d", cmd);
 		switch (cmd) {
 		case AF_CMD_SET_AF_MODE:
 			rtn = _af_set_mode(handle, param0);
@@ -4274,7 +4290,7 @@ static cmr_int af_sprd_adpt_update_aux_sensor(cmr_handle handle, void *in)
 				if (len - 3 >= sizeof(af->fv.AF_Version)) {
 					uint8 i = 0;
 					memcpy(version + 3, af->fv.AF_Version, sizeof(af->fv.AF_Version));
-					i = strlen(af->fv.AF_Version) + 3;
+					i = strlen((char*)af->fv.AF_Version) + 3;
 					memcpy(version + i, "-20160927-15", 12);
 				}
 				break;
@@ -4287,7 +4303,7 @@ static cmr_int af_sprd_adpt_update_aux_sensor(cmr_handle handle, void *in)
 			rtn = af_sprd_adpt_update_aux_sensor(handle, param0);
 			break;
 		default:
-			AF_LOGE("cmd not support! cmd: %ld", cmd);
+			AF_LOGE("cmd not support! cmd: %d", cmd);
 			rtn = AFV1_ERROR;
 			break;
 

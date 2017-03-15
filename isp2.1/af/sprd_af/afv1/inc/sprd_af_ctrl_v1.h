@@ -397,8 +397,8 @@ struct ae_out_bv {
 };
 
 cmr_handle sprd_afv1_init(void *in, void *out);
-cmr_int sprd_afv1_deinit(cmr_handle handle, void *param, void *result);
-cmr_int sprd_afv1_process(void *handle, void *in, void *out);
-cmr_int sprd_afv1_ioctrl(void *handle, cmr_int cmd, void *param0, void *param1);
+int32_t sprd_afv1_deinit(cmr_handle handle, void *param, void *result);
+int32_t sprd_afv1_process(void *handle, void *in, void *out);
+int32_t sprd_afv1_ioctrl(void *handle, int32_t cmd, void *param0, void *param1);
 
 #endif
