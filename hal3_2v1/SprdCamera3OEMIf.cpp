@@ -369,6 +369,10 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mVideoHeight = 0;
     mCaptureWidth = 0;
     mCaptureHeight = 0;
+    mLargestSensorWidth = 0;
+    mLargestSensorHeight = 0;
+    mLargestPictureWidth = 0;
+    mLargestPictureHeight = 0;
     mRawWidth = 0;
     mRawHeight = 0;
     mRegularChan = NULL;
@@ -3158,6 +3162,7 @@ int SprdCamera3OEMIf::CameraConvertCoordinateToFramework(int32_t *cropRegion) {
     uint32_t sensorOrgW = 0, sensorOrgH = 0, fdWid = 0, fdHeight = 0;
     HAL_LOGD("crop %d %d %d %d", cropRegion[0], cropRegion[1], cropRegion[2],
              cropRegion[3]);
+#if 0
     if (mCameraId == 0) {
         sensorOrgW = BACK_SENSOR_ORIG_WIDTH;
         sensorOrgH = BACK_SENSOR_ORIG_HEIGHT;
@@ -3168,6 +3173,12 @@ int SprdCamera3OEMIf::CameraConvertCoordinateToFramework(int32_t *cropRegion) {
         sensorOrgW = BACK_EXT_SENSOR_ORIG_WIDTH;
         sensorOrgH = BACK_EXT_SENSOR_ORIG_HEIGHT;
     }
+#else
+    mSetting->getLargestPictureSize(mCameraId, &mLargestPictureWidth,
+                                    &mLargestPictureHeight);
+    sensorOrgW = mLargestPictureWidth;
+    sensorOrgH = mLargestPictureHeight;
+#endif
     fdWid = cropRegion[2] - cropRegion[0];
     fdHeight = cropRegion[3] - cropRegion[1];
     if (fdWid == 0 || fdHeight == 0) {
@@ -3193,6 +3204,7 @@ int SprdCamera3OEMIf::CameraConvertCoordinateFromFramework(
     uint32_t sensorOrgW = 0, sensorOrgH = 0, fdWid = 0, fdHeight = 0;
     HAL_LOGD("crop %d %d %d %d", cropRegion[0], cropRegion[1], cropRegion[2],
              cropRegion[3]);
+#if 0
     if (mCameraId == 0) {
         sensorOrgW = BACK_SENSOR_ORIG_WIDTH;
         sensorOrgH = BACK_SENSOR_ORIG_HEIGHT;
@@ -3203,6 +3215,12 @@ int SprdCamera3OEMIf::CameraConvertCoordinateFromFramework(
         sensorOrgW = BACK_EXT_SENSOR_ORIG_WIDTH;
         sensorOrgH = BACK_EXT_SENSOR_ORIG_HEIGHT;
     }
+#else
+    mSetting->getLargestPictureSize(mCameraId, &mLargestPictureWidth,
+                                    &mLargestPictureHeight);
+    sensorOrgW = mLargestPictureWidth;
+    sensorOrgH = mLargestPictureHeight;
+#endif
     fdWid = cropRegion[2] - cropRegion[0];
     fdHeight = cropRegion[3] - cropRegion[1];
     if (fdWid == 0 || fdHeight == 0) {
@@ -5517,6 +5535,12 @@ int SprdCamera3OEMIf::openCamera() {
 
     GET_START_TIME;
 
+    mSetting->getLargestPictureSize(mCameraId, &mLargestSensorWidth,
+                                    &mLargestSensorHeight);
+
+    mHalOem->ops->camera_pre_capture_set_buffer_size(
+        mCameraId, mLargestSensorWidth, mLargestSensorHeight);
+
     if (!startCameraIfNecessary()) {
         ret = UNKNOWN_ERROR;
         HAL_LOGE("start failed");
@@ -5581,6 +5605,7 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
              cropRegion.start_x, cropRegion.start_y, cropRegion.width,
              cropRegion.height);
 
+#if 0
     if (mCameraId == 0) {
         sensorOrgW = BACK_SENSOR_ORIG_WIDTH;
         sensorOrgH = BACK_SENSOR_ORIG_HEIGHT;
@@ -5591,6 +5616,12 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
         sensorOrgW = BACK_EXT_SENSOR_ORIG_WIDTH;
         sensorOrgH = BACK_EXT_SENSOR_ORIG_HEIGHT;
     }
+#else
+    mSetting->getLargestPictureSize(mCameraId, &mLargestPictureWidth,
+                                    &mLargestPictureHeight);
+    sensorOrgW = mLargestPictureWidth;
+    sensorOrgH = mLargestPictureHeight;
+#endif
 
     sensorAspectRatio = static_cast<float>(sensorOrgW) / sensorOrgH;
 
@@ -5680,6 +5711,7 @@ int SprdCamera3OEMIf::CameraConvertCropRegion(uint32_t sensorWidth,
     HAL_LOGD("crop %d %d %d %d sens w/h %d %d.", cropRegion->start_x,
              cropRegion->start_y, cropRegion->width, cropRegion->height,
              sensorWidth, sensorHeight);
+#if 0
     if (mCameraId == 0) {
         sensorOrgW = BACK_SENSOR_ORIG_WIDTH;
         sensorOrgH = BACK_SENSOR_ORIG_HEIGHT;
@@ -5695,6 +5727,13 @@ int SprdCamera3OEMIf::CameraConvertCropRegion(uint32_t sensorWidth,
         HAL_LOGW("cropRegion->height or cropRegion->width is 0");
         return 1;
     }
+#else
+    mSetting->getLargestPictureSize(mCameraId, &mLargestPictureWidth,
+                                    &mLargestPictureHeight);
+    sensorOrgW = mLargestPictureWidth;
+    sensorOrgH = mLargestPictureHeight;
+#endif
+
     SensorRotate = mHalOem->ops->camera_get_preview_rot_angle(mCameraHandle);
     if (sensorWidth == sensorOrgW && sensorHeight == sensorOrgH &&
         SensorRotate == IMG_ANGLE_0) {
@@ -7148,7 +7187,8 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
     if (type == CAMERA_PREVIEW_RESERVED || type == CAMERA_VIDEO_RESERVED ||
         type == CAMERA_SNAPSHOT_ZSL_RESERVED) {
         if (mCommonHeapReserved == NULL) {
-            buffer_id = camera_pre_capture_get_buffer_id(mCameraId);
+            buffer_id = camera_pre_capture_get_buffer_id(
+                mCameraId, mLargestSensorWidth, mLargestSensorHeight);
             ret = camera_get_reserve_buffer_size(mCameraId, buffer_id,
                                                  &mem_size, &mem_sum);
             if (ret) {
@@ -8402,8 +8442,8 @@ void *SprdCamera3OEMIf::pre_alloc_cap_mem_thread_proc(void *p_data) {
         return NULL;
     }
 
-    buffer_id =
-        obj->mHalOem->ops->camera_pre_capture_get_buffer_id(obj->mCameraId);
+    buffer_id = obj->mHalOem->ops->camera_pre_capture_get_buffer_id(
+        obj->mCameraId, obj->mLargestSensorWidth, obj->mLargestSensorHeight);
 
     if (obj->mHalOem->ops->camera_pre_capture_get_buffer_size(
             obj->mCameraId, buffer_id, &mem_size, &sum)) {

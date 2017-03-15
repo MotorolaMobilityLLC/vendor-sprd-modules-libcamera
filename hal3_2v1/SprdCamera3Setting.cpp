@@ -119,6 +119,10 @@ typedef struct sensor_fov_tab {
 
 static SprdCamera3DefaultInfo camera3_default_info;
 
+static cam_dimension_t largest_picture_size[CAMERA_ID_COUNT];
+static cmr_u16 sensor_max_width[CAMERA_ID_COUNT];
+static cmr_u16 sensor_max_height[CAMERA_ID_COUNT];
+
 const sensor_fov_tab_t back_sensor_fov_tab[] = {
     {"ov8825_mipi_raw", {4.614f, 3.444f}, 4.222f},
     {"ov5648_mipi_raw", {3.50f, 2.625f}, 3.75f},
@@ -302,6 +306,7 @@ const uint8_t availableIso[] = {
     CAMERA_ISO_AUTO, CAMERA_ISO_100,  CAMERA_ISO_200, CAMERA_ISO_400,
     CAMERA_ISO_800,  CAMERA_ISO_1600, CAMERA_ISO_MAX};
 
+#if 0
 const int32_t
     kavailable_back_stream_configurations[CAMERA_SETTINGS_CONFIG_ARRAYSIZE][4] =
         {
@@ -1197,6 +1202,111 @@ const int64_t
         {HAL_PIXEL_FORMAT_BLOB, 640, 480, 33331760L},
         {HAL_PIXEL_FORMAT_BLOB, 320, 240, 33331760L},
 };
+#endif
+
+typedef struct cam_stream_info {
+    cam_dimension_t stream_sizes_tbl;
+    int64_t stream_min_duration;
+    int64_t stream_stall_duration;
+} cam_stream_info_t;
+
+const cam_dimension_t default_sensor_max_sizes[CAMERA_ID_COUNT] = {
+#if defined(CONFIG_CAMERA_SUPPORT_21M)
+    {5312, 3984},
+#elif defined(CONFIG_CAMERA_SUPPORT_16M)
+    {4608, 3456},
+#elif defined(CONFIG_CAMERA_SUPPORT_13M)
+    {4160, 3120},
+#elif defined(CONFIG_CAMERA_SUPPORT_8M)
+    {3264, 2448},
+#elif defined(CONFIG_CAMERA_SUPPORT_5M)
+    {2592, 1944},
+#elif defined(CONFIG_CAMERA_SUPPORT_3M)
+    {2048, 1536},
+#else
+    {1920, HEIGHT_2M},
+#endif
+
+#if defined(CONFIG_FRONT_CAMERA_SUPPORT_21M)
+    {5312, 3984},
+#elif defined(CONFIG_FRONT_CAMERA_SUPPORT_16M)
+    {4608, 3456},
+#elif defined(CONFIG_FRONT_CAMERA_SUPPORT_13M)
+    {4160, 3120},
+#elif defined(CONFIG_FRONT_CAMERA_SUPPORT_8M)
+    {3264, 2448},
+#elif defined(CONFIG_FRONT_CAMERA_SUPPORT_5M)
+    {2592, 1944},
+#elif defined(CONFIG_FRONT_CAMERA_SUPPORT_3M)
+    {2048, 1536},
+#else
+    {1920, HEIGHT_2M},
+#endif
+
+#if defined(CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_21M)
+    {5312, 3984},
+#elif defined(CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_16M)
+    {4608, 3456},
+#elif defined(CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_13M)
+    {4160, 3120},
+#elif defined(CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_8M)
+    {3264, 2448},
+#elif defined(CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_5M)
+    {2592, 1944},
+#elif defined(CONFIG_BACK_EXT_CAMERA_SUPPORT_SIZE_3M)
+    {2048, 1536},
+#else
+    {1920, HEIGHT_2M},
+#endif
+
+#if defined(CONFIG_FRONT_CAMERA_SUPPORT_21M)
+    {5312, 3984},
+#elif defined(CONFIG_FRONT_CAMERA_SUPPORT_16M)
+    {4608, 3456},
+#elif defined(CONFIG_FRONT_CAMERA_SUPPORT_13M)
+    {4160, 3120},
+#elif defined(CONFIG_FRONT_CAMERA_SUPPORT_8M)
+    {3264, 2448},
+#elif defined(CONFIG_FRONT_CAMERA_SUPPORT_5M)
+    {2592, 1944},
+#elif defined(CONFIG_FRONT_CAMERA_SUPPORT_3M)
+    {2048, 1536},
+#else
+    {1920, HEIGHT_2M},
+#endif
+};
+
+const cam_stream_info_t stream_info[] = {
+    {{5312, 3984}, 41666666L, 41666666L},
+    {{4608, 3456}, 33331760L, 33331760L},
+    {{4160, 3120}, 33331760L, 33331760L},
+    {{3840, 2160}, 33331760L, 33331760L},
+    {{3264, 2448}, 33331760L, 33331760L},
+    {{3264, 1836}, 33331760L, 33331760L},
+    {{2592, 1944}, 33331760L, 33331760L},
+    {{2560, 1920}, 33331760L, 33331760L},
+    {{2560, 1440}, 33331760L, 33331760L},
+    {{2048, 1536}, 33331760L, 33331760L},
+    //{{1920, 1920}, 33331760L, 33331760L},
+    {{1920, HEIGHT_2M}, 33331760L, 33331760L},
+    //{{1600, 1200},33331760L,33331760L},
+    //{{1440, 1080},33331760L,33331760L},
+    {{1280, 960}, 33331760L, 33331760L},
+    {{1280, 720}, 33331760L, 33331760L},
+    {{960, 720}, 33331760L, 33331760L},
+    {{864, 480}, 33331760L, 33331760L},
+    {{720, 544}, 33331760L, 33331760L},
+    {{720, 480}, 33331760L, 33331760L},
+    {{640, 480}, 33331760L, 33331760L},
+    {{640, 360}, 33331760L, 33331760L},
+    {{624, 352}, 33331760L, 33331760L},
+    {{480, 640}, 33331760L, 33331760L},
+    {{480, 480}, 33331760L, 33331760L},
+    {{352, 288}, 33331760L, 33331760L},
+    {{320, 240}, 33331760L, 33331760L},
+    {{288, 352}, 33331760L, 33331760L},
+    {{240, 320}, 33331760L, 33331760L},
+    {{176, 144}, 33331760L, 33331760L}};
 
 const float kavailable_lens_info_aperture[] = {1.8, 2.0, 2.2, 2.6, 2.8, 3.0};
 
@@ -1574,6 +1684,99 @@ void SprdCamera3Setting::SprdCamera3Setting::parseStringfloat(
         sizeStartPtr++;
         fdStartStr++;
     }
+}
+
+int SprdCamera3Setting::getJpegStreamSize(int32_t cameraId, cmr_u16 width,
+                                          cmr_u16 height) {
+
+    if ((width * height <= 5312 * 3984) &&
+        (width * height > 4608 * 3456)) { // 21M
+        jpeg_stream_size = (5312 * 3984 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    } else if ((width * height <= 4608 * 3456) &&
+               (width * height > 4160 * 3120)) { // 16M
+        jpeg_stream_size = (4608 * 3456 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    } else if ((width * height <= 4160 * 3120) &&
+               (width * height > 3264 * 2448)) { // 13M
+        jpeg_stream_size = (4160 * 3120 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    } else if ((width * height <= 3264 * 2448) &&
+               (width * height > 2592 * 1944)) { // 8M
+        jpeg_stream_size = (3264 * 2448 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    } else if ((width * height <= 2592 * 1944) &&
+               (width * height > 1920 * HEIGHT_2M)) { // 5M
+        jpeg_stream_size = (2048 * 1536 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    } else if (width * height <= 1920 * HEIGHT_2M) { // 2M
+        jpeg_stream_size =
+            (1920 * HEIGHT_2M * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    } else {
+        CMR_LOGI("unsupport jpeg_stream_size = %d", jpeg_stream_size);
+    }
+
+    CMR_LOGI("jpeg_stream_size = %d", jpeg_stream_size);
+
+    return jpeg_stream_size;
+}
+
+int SprdCamera3Setting::setLargestSensorSize(int32_t cameraId, cmr_u16 width,
+                                             cmr_u16 height) {
+    sensor_max_width[cameraId] = width;
+    sensor_max_height[cameraId] = height;
+
+    HAL_LOGD("camera id = %d, max_width =%d, max_height = %d", cameraId,
+             sensor_max_width[cameraId], sensor_max_height[cameraId]);
+
+    return 0;
+}
+
+int SprdCamera3Setting::getLargestSensorSize(int32_t cameraId, cmr_u16 *width,
+                                             cmr_u16 *height) {
+#ifdef CONFIG_CAMERA_AUTO_DETECT_SENSOR
+    *width = sensor_max_width[cameraId];
+    *height = sensor_max_height[cameraId];
+#else
+    *width = default_sensor_max_sizes[cameraId].width;
+    *height = default_sensor_max_sizes[cameraId].height;
+#endif
+    HAL_LOGD("camera id = %d, max_width =%d, max_height = %d", cameraId, *width,
+             *height);
+    return 0;
+}
+
+int SprdCamera3Setting::getLargestPictureSize(int32_t cameraId, cmr_u16 *width,
+                                              cmr_u16 *height) {
+    *width = largest_picture_size[cameraId].width;
+    *height = largest_picture_size[cameraId].height;
+    HAL_LOGD("camera id = %d, max_width =%d, max_height = %d", cameraId, *width,
+             *height);
+    return 0;
+}
+
+int SprdCamera3Setting::getSensorSizeInfo(int32_t cameraId) {
+    struct sensor_drv_context *sensor_cxt =
+        (struct sensor_drv_context *)malloc(sizeof(struct sensor_drv_context));
+    int ret = 0;
+
+    ret = sensor_open_common(sensor_cxt, cameraId, 0);
+    if (ret) {
+        HAL_LOGE("open camera (%d) failed, can't get sensor info", cameraId);
+        return -1;
+    } else {
+        HAL_LOGD("camera id = %d, sensor_max_height = %d, sensor_max_width= %d",
+                 cameraId,
+                 sensor_cxt->sensor_list_ptr[cameraId]->source_height_max,
+                 sensor_cxt->sensor_list_ptr[cameraId]->source_width_max);
+    }
+
+    setLargestSensorSize(
+        cameraId, sensor_cxt->sensor_list_ptr[cameraId]->source_width_max,
+        sensor_cxt->sensor_list_ptr[cameraId]->source_height_max);
+
+    sensor_close_common(sensor_cxt, cameraId);
+
+    if (sensor_cxt != NULL)
+        free(sensor_cxt);
+    sensor_cxt = NULL;
+
+    return 0;
 }
 
 void SprdCamera3Setting::coordinate_struct_convert(int *rect_arr,
@@ -1958,61 +2161,6 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].lens_InfoInfo.focus_distance_calibration =
         ANDROID_LENS_INFO_FOCUS_DISTANCE_CALIBRATION_UNCALIBRATED;
 
-    // sensor_info
-    memcpy(s_setting[cameraId].sensor_InfoInfo.physical_size,
-           camera3_default_info.common.sensor_physical_size,
-           sizeof(camera3_default_info.common.sensor_physical_size));
-    memcpy(s_setting[cameraId].sensor_InfoInfo.exposupre_time_range,
-           camera3_default_info.common.exposure_time_range,
-           sizeof(camera3_default_info.common.exposure_time_range));
-    s_setting[cameraId].sensor_InfoInfo.max_frame_duration =
-        camera3_default_info.common.frame_duration_range[1];
-    s_setting[cameraId].sensor_InfoInfo.color_filter_arrangement =
-        default_info->common.color_arrangement;
-    if (cameraId == 0) {
-        memcpy(s_setting[cameraId].sensor_InfoInfo.pixer_array_size,
-               kavailable_back_pixer_size, sizeof(kavailable_back_pixer_size));
-        memcpy(s_setting[cameraId].sensor_InfoInfo.active_array_size,
-               kavailable_back_active_size,
-               sizeof(kavailable_back_active_size));
-    } else if (cameraId == 1) {
-        memcpy(s_setting[cameraId].sensor_InfoInfo.pixer_array_size,
-               kavailable_front_pixer_size,
-               sizeof(kavailable_front_pixer_size));
-        memcpy(s_setting[cameraId].sensor_InfoInfo.active_array_size,
-               kavailable_front_active_size,
-               sizeof(kavailable_front_active_size));
-    }
-#ifdef CONFIG_DCAM_SENSOR2_SUPPORT
-    else if (cameraId == 2) {
-        memcpy(s_setting[cameraId].sensor_InfoInfo.pixer_array_size,
-               kavailable_back_ext_pixer_size,
-               sizeof(kavailable_back_ext_pixer_size));
-        memcpy(s_setting[cameraId].sensor_InfoInfo.active_array_size,
-               kavailable_back_ext_active_size,
-               sizeof(kavailable_back_ext_active_size));
-    }
-#endif
-#ifdef CONFIG_DCAM_SENSOR3_SUPPORT
-    else if (cameraId == 3) {
-        memcpy(s_setting[cameraId].sensor_InfoInfo.pixer_array_size,
-               kavailable_front_ext_pixer_size,
-               sizeof(kavailable_front_ext_pixer_size));
-        memcpy(s_setting[cameraId].sensor_InfoInfo.active_array_size,
-               kavailable_front_ext_active_size,
-               sizeof(kavailable_front_ext_active_size));
-    }
-#endif
-
-    s_setting[cameraId].sensor_InfoInfo.white_level =
-        default_info->common.white_level;
-    for (size_t i = 0; i < 4; i++)
-        s_setting[cameraId].sensorInfo.black_level_pattern[i] =
-            default_info->common.black_level;
-    memcpy(s_setting[cameraId].sensor_InfoInfo.sensitivity_range,
-           ksensitivity_range, sizeof(ksensitivity_range));
-    s_setting[cameraId].sensor_InfoInfo.timestamp_source = 0;
-
     // sensor
     s_setting[cameraId].sensorInfo.orientation = cameraId ? 270 : 90;
     memcpy(s_setting[cameraId].sensorInfo.available_test_pattern_modes,
@@ -2048,7 +2196,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     // scaler
     s_setting[cameraId].scalerInfo.raw_min_duration[0] =
         default_info->common.raw_min_duration[0];
-
+#if 0
     if (cameraId == 0) {
         memcpy(s_setting[cameraId].scalerInfo.min_frame_durations,
                kavailable_back_min_frame_durations,
@@ -2096,6 +2244,106 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                sizeof(kavailable_front_stream_configurations));
     }
 #endif
+#endif
+
+    int32_t scaler_formats[] = {HAL_PIXEL_FORMAT_YCbCr_420_888,
+                                HAL_PIXEL_FORMAT_BLOB,
+                                HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED};
+
+    size_t scaler_formats_count = sizeof(scaler_formats) / sizeof(int32_t);
+    size_t stream_sizes_tbl_cnt = sizeof(stream_info) / sizeof(cam_stream_info);
+
+    cmr_u16 largest_sensor_width, largest_sensor_height;
+    getLargestSensorSize(cameraId, &largest_sensor_width,
+                         &largest_sensor_height);
+
+    HAL_LOGD("camera ID = %d, getLargestSensorSize->width = %d, "
+             "getLargestSensorSize->height = %d",
+             cameraId, largest_sensor_width, largest_sensor_height);
+
+    /* Add input/output stream configurations for each scaler formats*/
+    Vector<int32_t> available_stream_configs;
+    for (size_t j = 0; j < scaler_formats_count; j++) {
+        for (size_t i = 0; i < stream_sizes_tbl_cnt; i++) {
+            if ((stream_info[i].stream_sizes_tbl.width <=
+                 largest_sensor_width) &&
+                (stream_info[i].stream_sizes_tbl.height <=
+                 largest_sensor_height)) {
+                available_stream_configs.add(scaler_formats[j]);
+                available_stream_configs.add(
+                    stream_info[i].stream_sizes_tbl.width);
+                available_stream_configs.add(
+                    stream_info[i].stream_sizes_tbl.height);
+                available_stream_configs.add(
+                    ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT);
+                /* keep largest */
+                if (stream_info[i].stream_sizes_tbl.width >=
+                        largest_picture_size[cameraId].width &&
+                    stream_info[i].stream_sizes_tbl.height >=
+                        largest_picture_size[cameraId].height)
+                    largest_picture_size[cameraId] =
+                        stream_info[i].stream_sizes_tbl;
+            }
+        }
+    }
+    memcpy(s_setting[cameraId].scalerInfo.available_stream_configurations,
+           &(available_stream_configs[0]),
+           available_stream_configs.size() * sizeof(int32_t));
+
+    /* android.scaler.availableMinFrameDurations */
+    Vector<int64_t> available_min_durations;
+    for (size_t j = 0; j < scaler_formats_count; j++) {
+        for (size_t i = 0; i < stream_sizes_tbl_cnt; i++) {
+            if ((stream_info[i].stream_sizes_tbl.width <=
+                 largest_sensor_width) &&
+                (stream_info[i].stream_sizes_tbl.height <=
+                 largest_sensor_height)) {
+                available_min_durations.add(scaler_formats[j]);
+                available_min_durations.add(
+                    stream_info[i].stream_sizes_tbl.width);
+                available_min_durations.add(
+                    stream_info[i].stream_sizes_tbl.height);
+                available_min_durations.add(stream_info[i].stream_min_duration);
+            }
+        }
+    }
+    memcpy(s_setting[cameraId].scalerInfo.min_frame_durations,
+           &(available_min_durations[0]),
+           available_min_durations.size() * sizeof(int64_t));
+
+    /*available stall durations*/
+    Vector<int64_t> available_stall_durations;
+    for (size_t j = 0; j < scaler_formats_count; j++) {
+        for (size_t i = 0; i < stream_sizes_tbl_cnt; i++) {
+            if ((stream_info[i].stream_sizes_tbl.width <=
+                 largest_sensor_width) &&
+                (stream_info[i].stream_sizes_tbl.height <=
+                 largest_sensor_height)) {
+                if (scaler_formats[j] ==
+                    (HAL_PIXEL_FORMAT_BLOB ||
+                     HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
+                     HAL_PIXEL_FORMAT_RAW16)) {
+                    available_stall_durations.add(scaler_formats[j]);
+                    available_stall_durations.add(
+                        stream_info[i].stream_sizes_tbl.width);
+                    available_stall_durations.add(
+                        stream_info[i].stream_sizes_tbl.height);
+                    available_stall_durations.add(
+                        stream_info[i].stream_stall_duration);
+                } else {
+                    available_stall_durations.add(scaler_formats[j]);
+                    available_stall_durations.add(
+                        stream_info[i].stream_sizes_tbl.width);
+                    available_stall_durations.add(
+                        stream_info[i].stream_sizes_tbl.height);
+                    available_stall_durations.add(0);
+                }
+            }
+        }
+    }
+    memcpy(s_setting[cameraId].scalerInfo.stall_durations,
+           &(available_stall_durations[0]),
+           available_stall_durations.size() * sizeof(int64_t));
 
     HAL_LOGI("id=%d format=%d", cameraId,
              s_setting[cameraId].scalerInfo.available_stream_configurations[0]);
@@ -2107,6 +2355,76 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
            sizeof(camera3_default_info.common.FrameDurationRange));
     s_setting[cameraId].scalerInfo.cropping_type =
         ANDROID_SCALER_CROPPING_TYPE_FREEFORM;
+
+    // sensor_info
+    memcpy(s_setting[cameraId].sensor_InfoInfo.physical_size,
+           camera3_default_info.common.sensor_physical_size,
+           sizeof(camera3_default_info.common.sensor_physical_size));
+    memcpy(s_setting[cameraId].sensor_InfoInfo.exposupre_time_range,
+           camera3_default_info.common.exposure_time_range,
+           sizeof(camera3_default_info.common.exposure_time_range));
+    s_setting[cameraId].sensor_InfoInfo.max_frame_duration =
+        camera3_default_info.common.frame_duration_range[1];
+    s_setting[cameraId].sensor_InfoInfo.color_filter_arrangement =
+        default_info->common.color_arrangement;
+
+    s_setting[cameraId].sensor_InfoInfo.pixer_array_size[0] =
+        largest_picture_size[cameraId].width;
+    s_setting[cameraId].sensor_InfoInfo.pixer_array_size[1] =
+        largest_picture_size[cameraId].height;
+    s_setting[cameraId].sensor_InfoInfo.active_array_size[0] = 0;
+    s_setting[cameraId].sensor_InfoInfo.active_array_size[1] = 0;
+    s_setting[cameraId].sensor_InfoInfo.active_array_size[2] =
+        largest_picture_size[cameraId].width;
+    s_setting[cameraId].sensor_InfoInfo.active_array_size[3] =
+        largest_picture_size[cameraId].height;
+
+#if 0
+    if (cameraId == 0) {
+        memcpy(s_setting[cameraId].sensor_InfoInfo.pixer_array_size,
+               kavailable_back_pixer_size, sizeof(kavailable_back_pixer_size));
+        memcpy(s_setting[cameraId].sensor_InfoInfo.active_array_size,
+               kavailable_back_active_size,
+               sizeof(kavailable_back_active_size));
+    } else if (cameraId == 1) {
+        memcpy(s_setting[cameraId].sensor_InfoInfo.pixer_array_size,
+               kavailable_front_pixer_size,
+               sizeof(kavailable_front_pixer_size));
+        memcpy(s_setting[cameraId].sensor_InfoInfo.active_array_size,
+               kavailable_front_active_size,
+               sizeof(kavailable_front_active_size));
+    }
+#ifdef CONFIG_DCAM_SENSOR2_SUPPORT
+    else if (cameraId == 2) {
+        memcpy(s_setting[cameraId].sensor_InfoInfo.pixer_array_size,
+               kavailable_back_ext_pixer_size,
+               sizeof(kavailable_back_ext_pixer_size));
+        memcpy(s_setting[cameraId].sensor_InfoInfo.active_array_size,
+               kavailable_back_ext_active_size,
+               sizeof(kavailable_back_ext_active_size));
+    }
+#endif
+#ifdef CONFIG_DCAM_SENSOR3_SUPPORT
+    else if (cameraId == 3) {
+        memcpy(s_setting[cameraId].sensor_InfoInfo.pixer_array_size,
+               kavailable_front_ext_pixer_size,
+               sizeof(kavailable_front_ext_pixer_size));
+        memcpy(s_setting[cameraId].sensor_InfoInfo.active_array_size,
+               kavailable_front_ext_active_size,
+               sizeof(kavailable_front_ext_active_size));
+    }
+#endif
+#endif
+
+    s_setting[cameraId].sensor_InfoInfo.white_level =
+        default_info->common.white_level;
+    for (size_t i = 0; i < 4; i++)
+        s_setting[cameraId].sensorInfo.black_level_pattern[i] =
+            default_info->common.black_level;
+    memcpy(s_setting[cameraId].sensor_InfoInfo.sensitivity_range,
+           ksensitivity_range, sizeof(ksensitivity_range));
+    s_setting[cameraId].sensor_InfoInfo.timestamp_source =
+        ANDROID_SENSOR_INFO_TIMESTAMP_SOURCE_REALTIME;
 
     // control
     if (cameraId == 0)
@@ -2172,7 +2490,16 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     else
         s_setting[cameraId].lensInfo.facing = ANDROID_LENS_FACING_BACK;
 
+    // lens shading
+    s_setting[cameraId].shadingInfo.factor_count = SPRD_SHADING_FACTOR_NUM;
+    for (i = 0; i < SPRD_SHADING_FACTOR_NUM; i++) {
+        s_setting[cameraId].shadingInfo.gain_factor[i] = 1.0f;
+    }
+
     // jpeg
+    jpeg_stream_size =
+        getJpegStreamSize(cameraId, largest_picture_size[cameraId].width,
+                          largest_picture_size[cameraId].height);
     memcpy(s_setting[cameraId].jpgInfo.available_thumbnail_sizes,
            camera3_default_info.common.jpegThumbnailSizes,
            sizeof(camera3_default_info.common.jpegThumbnailSizes));
@@ -2529,12 +2856,8 @@ int SprdCamera3Setting::initStaticMetadata(
                       &(s_setting[cameraId].requestInfo.pipeline_max_depth), 1);
 
     /*LENS SHADING*/
-    s_setting[cameraId].shadingInfo.factor_count = SPRD_SHADING_FACTOR_NUM;
     staticInfo.update(ANDROID_STATISTICS_LENS_SHADING_CORRECTION_MAP,
                       &(s_setting[cameraId].shadingInfo.factor_count), 1);
-    for (i = 0; i < SPRD_SHADING_FACTOR_NUM; i++) {
-        s_setting[cameraId].shadingInfo.gain_factor[i] = 1.0f;
-    }
     staticInfo.update(ANDROID_STATISTICS_LENS_SHADING_MAP,
                       s_setting[cameraId].shadingInfo.gain_factor,
                       SPRD_SHADING_FACTOR_NUM);
@@ -2626,21 +2949,8 @@ SprdCamera3Setting::SprdCamera3Setting(int cameraId) {
 }
 
 SprdCamera3Setting::~SprdCamera3Setting() {
-    // reset some paramters/tag to default value
-    s_setting[mCameraId].controlInfo.scene_mode = 0;
-    s_setting[mCameraId].controlInfo.af_mode = 0;
-    s_setting[mCameraId].controlInfo.ae_mode = 0;
-    s_setting[mCameraId].flashInfo.mode = 0;
-    s_setting[mCameraId].controlInfo.effect_mode = 0;
-    s_setting[mCameraId].controlInfo.antibanding_mode = 0;
-    s_setting[mCameraId].controlInfo.capture_intent = 0;
-    s_setting[mCameraId].lensInfo.focal_length = 0.0f;
-    s_setting[mCameraId].jpgInfo.quality = 0;
-    s_setting[mCameraId].controlInfo.awb_mode = 0;
-    s_setting[mCameraId].controlInfo.ae_abtibanding_mode = 0;
-    s_setting[mCameraId].sprddefInfo.capture_mode = 0;
-    s_setting[mCameraId].sprddefInfo.sprd_eis_enabled = 0;
-    memset(s_setting[mCameraId].scalerInfo.crop_region, 0, sizeof(int32_t) * 4);
+    // reset paramters/tag to default value
+    initStaticParameters(mCameraId);
 
     for (size_t i = 0; i < CAMERA3_TEMPLATE_COUNT; i++) {
         if (mDefaultMetadata[i])

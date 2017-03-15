@@ -89,6 +89,11 @@ extern "C" {
 #define INVALID_FORMAT_PATTERN 255
 #define FLASH_CAPTURE_SKIP_FRAME_NUM 0
 
+#if defined(CONFIG_CAMERA_ISP_DIR_2_1)
+// some vsp and jpeg need height 16 alignment
+#define HEIGHT_2M 1088
+#endif
+
 #define PREV_OUT_DATA 0xF000    /*debug.camera.save.snpfile 16*/
 #define SNP_CHN_OUT_DATA 0x8000 /*debug.camera.save.snpfile 1*/
 #define SNP_ROT_DATA 0x8001     /*debug.camera.save.snpfile 2*/
@@ -1305,12 +1310,8 @@ typedef struct oem_ops {
                                      cmr_u32 video_width, cmr_u32 video_height,
                                      cmr_uint *is_change);
 
-#ifdef CONFIG_CAMERA_ISP_DIR_3
     int (*camera_pre_capture_get_buffer_id)(cmr_u32 camera_id, cmr_u16 width,
                                             cmr_u16 height);
-#else
-    int (*camera_pre_capture_get_buffer_id)(cmr_u32 camera_id);
-#endif
 
     int (*camera_get_reserve_buffer_size)(cmr_u32 camera_id,
                                           cmr_s32 mem_size_id,
@@ -1436,11 +1437,9 @@ typedef struct oem_ops {
     cmr_int (*camera_start_capture)(cmr_handle camera_handle);
     cmr_int (*camera_stop_capture)(cmr_handle camera_handle);
 #endif
-#if defined(CONFIG_CAMERA_ISP_DIR_3)
     cmr_int (*camera_pre_capture_set_buffer_size)(cmr_u32 camera_id,
                                                   cmr_u16 width,
                                                   cmr_u16 height);
-#endif
     cmr_int (*camera_ioctrl)(cmr_handle handle, int cmd, void *param);
 } oem_ops_t;
 

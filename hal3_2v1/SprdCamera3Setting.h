@@ -73,8 +73,6 @@ namespace sprdcamera {
 #define MIN_DIGITAL_ZOOM_RATIO (1.0f)
 #define MAX_DIGITAL_ZOOM_RATIO (2.0f)
 
-#define HEIGHT_2M 1088
-
 #ifdef CONFIG_CAMERA_SUPPORT_21M
 #define BACK_SENSOR_ORIG_WIDTH 5312
 #define BACK_SENSOR_ORIG_HEIGHT 3984
@@ -448,6 +446,15 @@ class SprdCamera3Setting {
     SprdCamera3Setting(int cameraId);
     virtual ~SprdCamera3Setting();
 
+    static int getSensorSizeInfo(int32_t cameraId);
+    static int getLargestSensorSize(int32_t cameraId, cmr_u16 *width,
+                                    cmr_u16 *height);
+    static int setLargestSensorSize(int32_t cameraId, cmr_u16 width,
+                                    cmr_u16 height);
+    static int getJpegStreamSize(int32_t cameraId, cmr_u16 width,
+                                 cmr_u16 height);
+    static int getLargestPictureSize(int32_t cameraId, cmr_u16 *width,
+                                     cmr_u16 *height);
     static int getCameraInfo(int32_t cameraId, struct camera_info *cameraInfo);
     static int getNumberOfCameras();
     static int initDefaultParameters(int32_t cameraId);
