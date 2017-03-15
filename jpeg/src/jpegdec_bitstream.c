@@ -70,7 +70,7 @@ int32 check_RstMarker(void)
 //	flush_read(0xFFFFFFFF);	
 	s_jremain_bit_num = i*8;
  
-	ret = (uint8)JPEG_GETBITS(8);
+	JPEG_GETBITS(8);
 	ret = (uint8)JPEG_GETBITS(8); 
 
 	if((ret < M_RST0) || (ret > M_RST7))

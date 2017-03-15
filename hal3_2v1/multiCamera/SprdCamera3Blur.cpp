@@ -1499,6 +1499,9 @@ int SprdCamera3Blur::configureStreams(
                 &(mCaptureThread->mBlurApi[0]->mHandle),
                 stream_list->streams[i]->width, stream_list->streams[i]->height,
                 min_slope, max_slope, Findex2Gamma_AdjustRatio);
+            if (rc != 0) {
+                HAL_LOGD("init Err:%d", rc);
+            }
             HAL_LOGD("iSmoothInit%d %dx%d cost %lld ms", i,
                      stream_list->streams[i]->width,
                      stream_list->streams[i]->height,
@@ -1560,6 +1563,9 @@ int SprdCamera3Blur::configureStreams(
                     &(mCaptureThread->mBlurApi[1]->mHandle), w, h, min_slope,
                     max_slope, Findex2Gamma_AdjustRatio,
                     w / BLUR_SMOOTH_SIZE_SCALE, h / BLUR_SMOOTH_SIZE_SCALE);
+                if (rc != 0) {
+                    HAL_LOGD("Capinit Err:%d", rc);
+                }
                 HAL_LOGD("iSmoothInit%d %dx%d cost %lld ms", i, w, h,
                          ns2ms(systemTime() - initStart));
             }

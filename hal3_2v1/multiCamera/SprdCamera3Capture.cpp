@@ -2041,7 +2041,6 @@ int SprdCamera3Capture::processCaptureRequest(
         int requestStreamType =
             getStreamType(request->output_buffers[i].stream);
         out_streams_main[i] = req->output_buffers[i];
-        new_stream = (req->output_buffers[i]).stream;
         HAL_LOGD("num_output_buffers:%d, streamtype:%d",
                  req->num_output_buffers, requestStreamType);
         if (requestStreamType == SNAPSHOT_STREAM) {

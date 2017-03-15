@@ -453,6 +453,9 @@ static cmr_int hdr_arithmetic(cmr_handle class_handle,
     property_get("debug.camera.dump.hdr.frame", value, "0");
     if (!strcmp(value, "1")) {
         ret = hdr_save_yuv(class_handle, width, height);
+        if (ret != 0) {
+            CMR_LOGE("hdr save yuv failed!");
+        }
     }
 
     temp_addr0 = hdr_handle->alloc_addr[0];
