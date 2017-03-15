@@ -6,7 +6,6 @@
 
 #define SMART_LSC_VERSION 1
 
-#define UNUSED(param)  (void)(param)
 
 
 /************************************* INTERNAL DATA TYPE ***************************************/
@@ -97,7 +96,7 @@ exit:
 	return rtn;
 }
 
-static int32_t _lscctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
+static cmr_int _lscctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 {
 	cmr_int rtn = LSC_SUCCESS;
 	struct lsc_ctrl_cxt *handle = (struct lsc_ctrl_cxt *)p_data;
@@ -209,7 +208,7 @@ exit:
 static int32_t _lscsprd_load_lib(struct lsc_ctrl_context *cxt)
 {
 	int32_t rtn = LSC_SUCCESS;
-	int32_t v_count = 0;
+	uint32_t v_count = 0;
 	uint32_t version_id = cxt->lib_info->version_id;
 
 	if (NULL == cxt) {
@@ -279,6 +278,7 @@ static void* lsc_sprd_init(void *in, void *out)
 	struct lsc_ctrl_context *cxt = NULL;
 	struct lsc_adv_init_param *init_param = (struct lsc_adv_init_param *)in;
 	void *alsc_handle = NULL;
+	UNUSED(out);
 
 	cxt = (struct lsc_ctrl_context *)malloc(sizeof(struct lsc_ctrl_context));
 	if (NULL == cxt) {
@@ -381,7 +381,7 @@ static int32_t lsc_sprd_calculation(void* handle, void *in, void *out)
 	return rtn;
 }
 
-static int32_t lsc_sprd_ioctrl(void* handle, enum alsc_io_ctrl_cmd cmd,void *in, void *out)
+static int32_t lsc_sprd_ioctrl(void* handle, int32_t cmd,void *in, void *out)
 {
 	cmr_int rtn = LSC_SUCCESS;
 	struct lsc_ctrl_context *cxt = NULL;
@@ -393,7 +393,7 @@ static int32_t lsc_sprd_ioctrl(void* handle, enum alsc_io_ctrl_cmd cmd,void *in,
 
 	cxt = (struct lsc_ctrl_context*)handle;
 
-	rtn = cxt->lib_ops.alsc_io_ctrl(cxt->alsc_handle, cmd, in, out);
+	rtn = cxt->lib_ops.alsc_io_ctrl(cxt->alsc_handle, (enum alsc_io_ctrl_cmd) cmd, in, out);
 
 	return rtn;
 }
@@ -490,7 +490,7 @@ exit:
 
 cmr_int lsc_ctrl_deinit(cmr_handle *handle_lsc)
 {
-	cmr_int rtn = LSC_SUCCESS;
+	int rtn = LSC_SUCCESS;
 	struct lsc_ctrl_cxt *cxt_ptr = *handle_lsc;
 
 	if (!cxt_ptr) {
@@ -500,16 +500,16 @@ cmr_int lsc_ctrl_deinit(cmr_handle *handle_lsc)
 
 	rtn = _lscctrl_deinit_adpt(cxt_ptr);
 	if (rtn) {
-		ISP_LOGE("fail to deinit lscctrl adpt %ld", rtn );
+		ISP_LOGE("fail to deinit lscctrl adpt %d", rtn );
 		rtn = _lscctrl_destroy_thread(cxt_ptr);
 		if (rtn)
-			ISP_LOGE("fail to destroy lscctrl thread %ld", rtn );
+			ISP_LOGE("fail to destroy lscctrl thread %d", rtn );
 		goto exit;
 	}
 
 	rtn = _lscctrl_destroy_thread(cxt_ptr);
 	if (rtn) {
-		ISP_LOGE("fail to destroy lscctrl thread %ld", rtn );
+		ISP_LOGE("fail to destroy lscctrl thread %d", rtn );
 		goto exit;
 	}
 
@@ -562,7 +562,7 @@ exit:
 	return rtn;
 }
 
-cmr_int lsc_ctrl_ioctrl(cmr_handle handle_lsc, enum alsc_io_ctrl_cmd cmd, void *in_ptr, void *out_ptr)
+cmr_int lsc_ctrl_ioctrl(cmr_handle handle_lsc,  int32_t cmd, void *in_ptr, void *out_ptr)
 {
 	cmr_int rtn = LSC_SUCCESS;
 	struct lsc_ctrl_cxt *cxt_ptr = (struct lsc_ctrl_cxt*)handle_lsc;
