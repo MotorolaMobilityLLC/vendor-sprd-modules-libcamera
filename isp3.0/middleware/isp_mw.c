@@ -166,7 +166,7 @@ cmr_int ispmw_get_tuning_onebin(cmr_handle isp_mw_handle, const cmr_s8 *sensor_n
 	/* get onebin bin */
 	ISP_LOGI("sensor_name %s camera_id =%d", sensor_name, cxt->camera_id);
 	sprintf((void *)&file_name[0], "/system/lib/tuning/%s_tuning.bin", sensor_name);
-	ISP_LOGI("sensor_name %s", &file_name[0]);
+	ISP_LOGV("sensor_name %s", &file_name[0]);
 	fp = fopen((void *)&file_name[0], "rb");
 	if (NULL == fp) {
 		ISP_LOGE("failed to open tuning bin");
@@ -239,7 +239,7 @@ cmr_int ispmw_parse_tuning_onebin_slv(cmr_handle isp_mw_handle)
 		cxt->tuning_bin_slv[i].isp_dev_bin_info.uw_irp_bin_size = a_bin2_info.uw_irp_bin_size;
 		cxt->tuning_bin_slv[i].scene_bin_addr = a_bin3_info.puc_scene_bin_addr;
 		cxt->tuning_bin_slv[i].scene_bin_size = a_bin3_info.uw_scene_bin_size;
-		ISP_LOGI("onebin i=%ld ae_addr %p awb_addr=%p af_addr=%p caf_addr=%p shading_addr=%p shading_size=0x%x irp_addr=%p irp_size=0x%x",
+		ISP_LOGV("onebin i=%ld ae_addr %p awb_addr=%p af_addr=%p caf_addr=%p shading_addr=%p shading_size=0x%x irp_addr=%p irp_size=0x%x",
 			 i,
 			 cxt->tuning_bin_slv[i].ae_tuning_addr,
 			 cxt->tuning_bin_slv[i].awb_tuning_addr,
@@ -534,7 +534,7 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handle)
 		isp3a_input.bin_info[i].awb_addr = cxt->tuning_bin[i].awb_tuning_addr;
 		isp3a_input.bin_info[i].af_addr = cxt->tuning_bin[i].af_tuning_addr;
 		isp3a_input.bin_info[i].scene_addr = cxt->tuning_bin[i].scene_bin_addr;
-		ISP_LOGI("i=%ld ae_addr %p awb=%p  af_addr=%p scene=%p",
+		ISP_LOGV("i=%ld ae_addr %p awb=%p  af_addr=%p scene=%p",
 			i,
 			isp3a_input.bin_info[i].ae_addr,
 			isp3a_input.bin_info[i].awb_addr,

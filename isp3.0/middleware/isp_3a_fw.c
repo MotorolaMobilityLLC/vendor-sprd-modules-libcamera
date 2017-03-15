@@ -569,6 +569,10 @@ cmr_int isp3a_ispdrv_cfg_info(cmr_handle handle, struct ae_ctrl_callback_in *res
 		sof_cfg_info.iq_ae_info.update_bv = result_ptr->ae_cfg_info.bv_val;
 		sof_cfg_info.iq_ae_info.update_bgbv = result_ptr->ae_cfg_info.bg_bvresult;
 	}
+	sof_cfg_info.iq_ae_info.valid_flg = result_ptr->ae_cfg_info.ae_iq_info.valid_flg;
+	memcpy(&sof_cfg_info.iq_ae_info.reserved,
+	       &result_ptr->ae_cfg_info.ae_iq_info.reserved,
+	       sizeof(result_ptr->ae_cfg_info.ae_iq_info.reserved));
 	cxt->ae_cxt.hw_iso_speed = sof_cfg_info.iso_val;
 	ret = isp_dev_access_cfg_sof_info(cxt->dev_access_handle, &sof_cfg_info);
 	if (ret) {
@@ -1122,7 +1126,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 	af_input.af_ctrl_cb_ops.get_system_time = isp3a_get_dev_time;
 	for (i = 0; i < ISP_INDEX_MAX; i++) {
 		af_input.tuning_info[i].tuning_file = input_ptr->bin_info[i].af_addr;
-		ISP_LOGI("af %p",af_input.tuning_info[i].tuning_file);
+		ISP_LOGV("af %p",af_input.tuning_info[i].tuning_file);
 	}
 	af_input.caf_tuning_info.tuning_file = input_ptr->bin_info[cxt->bin_cxt.idx_num].isp_caf_addr;
 	af_input.caf_tuning_info.size = input_ptr->bin_info[cxt->bin_cxt.idx_num].isp_caf_size;
@@ -1157,7 +1161,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 	awb_input.awb_process_level = AWB_CTRL_RESPONSE_NORMAL;
 	for(i = 0; i < ISP_INDEX_MAX; i++) {
 		awb_input.tuning_param[i] = input_ptr->bin_info[i].awb_addr;
-		ISP_LOGI("awb %p", awb_input.tuning_param[i]);
+		ISP_LOGV("awb %p", awb_input.tuning_param[i]);
 	}
 	if (cxt->single_otp_data) {
 		awb_input.calibration_gain.r = cxt->single_otp_data->iso_awb_info.gain_r;
@@ -1251,7 +1255,7 @@ cmr_int isp3a_alg_init(cmr_handle isp_3a_handle, struct isp_3a_fw_init_in *input
 
 	for (i = 0; i < ISP_INDEX_MAX; i++) {
 		ae_input.tuning_param[i] = input_ptr->bin_info[i].ae_addr;
-		ISP_LOGI("i %ld tuning_param %p ae_input=%p", i, input_ptr->bin_info[i].ae_addr, ae_input.tuning_param[i]);
+		ISP_LOGV("i %ld tuning_param %p ae_input=%p", i, input_ptr->bin_info[i].ae_addr, ae_input.tuning_param[i]);
 	}
 	if (cxt->single_otp_data) {
 		ae_input.otp_data.r = cxt->single_otp_data->iso_awb_info.gain_r;

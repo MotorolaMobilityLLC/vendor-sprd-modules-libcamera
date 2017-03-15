@@ -351,8 +351,8 @@ struct ae_ctrl_param_sof {
 };
 
 struct ae_ctrl_param_gyro {
-	cmr_u32	param_type;   // 1: interger, 0: float
-	cmr_u32	uinfo[3];
+	cmr_u32 param_type;   // 1: interger, 0: float
+	cmr_u32 uinfo[3];
 	cmr_u32 finfo[3];
 };
 
@@ -383,12 +383,18 @@ struct ae_ctrl_exp_gain_param {
 	cmr_u32 gain;
 };
 
+struct ae_ctrl_iq_info {
+	cmr_u8 valid_flg;  /* 0:AE Not Process yet,1:AE already process */
+	cmr_u8 reserved[16];  /*reserved 16 bytes*/
+};
+
 struct ae_ctrl_sof_cfg_info {
 	cmr_u32 hw_iso_speed;
 	cmr_u32 curmean;
 	cmr_s32 bv_val;
 	cmr_s32 bg_bvresult;
 	cmr_u32 ae_cur_iso;
+	struct ae_ctrl_iq_info ae_iq_info;
 };
 
 struct ae_ctrl_proc_out {

@@ -1633,8 +1633,10 @@ static cmr_int aealtek_set_tuning_mode(struct aealtek_cxt *cxt_ptr, struct ae_ct
 		goto exit;
 	}
 	idx_num = in_ptr->idx_num;
-	ISP_LOGI("idx_num=%d ae_addr %p", idx_num, cxt_ptr->tuning_param[idx_num]);
-	aealtek_set_tuning_param(cxt_ptr, cxt_ptr->tuning_param[idx_num]);
+	ret = aealtek_set_tuning_param(cxt_ptr, cxt_ptr->tuning_param[idx_num]);
+	if (ret) {
+		ISP_LOGI("idx_num=%d ae_addr %p", idx_num, cxt_ptr->tuning_param[idx_num]);
+	}
 exit:
 	return  ISP_SUCCESS;
 }
@@ -2236,6 +2238,35 @@ static cmr_int aealtek_get_lib_init_expousre(struct aealtek_cxt *cxt_ptr, struct
 		in_param.para.ae_get_expo_param.init_expo.exp_linecount,
 		in_param.para.ae_get_expo_param.init_expo.exp_time,
 		in_param.para.ae_get_expo_param.init_expo.ISO);
+	return ISP_SUCCESS;
+exit:
+	ISP_LOGE("ret=%ld, lib_ret=%ld !!!", ret, lib_ret);
+	return ret;
+}
+
+static cmr_int aealtek_get_iq_info(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_iq_info *iq_info_ptr)
+{
+	cmr_int ret = ISP_ERROR;
+	cmr_int lib_ret = 0;
+	struct alaeruntimeobj_t *obj_ptr = NULL;
+	struct ae_get_param_t in_param;
+	enum ae_get_param_type_t type = 0;
+
+	if (!cxt_ptr) {
+		ISP_LOGE("param %p is NULL error!", cxt_ptr);
+		goto exit;
+	}
+	obj_ptr = &cxt_ptr->al_obj;
+	memset(&in_param, 0x00, sizeof(in_param));
+	type = AE_GET_IQINFO_TO_ISP;
+	in_param.ae_get_param_type = type;
+	if (obj_ptr && obj_ptr->get_param)
+		lib_ret = obj_ptr->get_param(&in_param, obj_ptr->ae);
+	if (lib_ret)
+		goto exit;
+
+	memcpy(iq_info_ptr, &in_param.para.ae_iq_info, sizeof(struct ae_ctrl_iq_info));
+
 	return ISP_SUCCESS;
 exit:
 	ISP_LOGE("ret=%ld, lib_ret=%ld !!!", ret, lib_ret);
@@ -3978,6 +4009,9 @@ static cmr_int aealtek_set_sof(struct aealtek_cxt *cxt_ptr, struct ae_ctrl_param
 	callback_in.ae_cfg_info.bv_val = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.bv_val;
 	callback_in.ae_cfg_info.bg_bvresult = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.BG_BVResult;
 	callback_in.ae_cfg_info.ae_cur_iso = cxt_ptr->lib_data.output_data.rpt_3a_update.ae_update.ae_cur_iso;
+
+	aealtek_get_iq_info(cxt_ptr, &callback_in.ae_cfg_info.ae_iq_info);
+
 	cxt_ptr->init_in_param.ops_in.ae_callback(cxt_ptr->caller_handle, AE_CTRL_CB_SOF, &callback_in);
 	if (ret)
 		goto exit;
