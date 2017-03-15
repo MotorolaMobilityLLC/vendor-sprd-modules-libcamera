@@ -81,6 +81,9 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr,
     cmr_u32 channel_id;
     struct cmr_grab *p_grab = NULL;
     struct sprd_img_res res;
+
+    CMR_LOGD("E");
+
     cmr_bzero(&res, sizeof(res));
     p_grab = (struct cmr_grab *)malloc(sizeof(struct cmr_grab));
     if (!p_grab) {
@@ -89,18 +92,16 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr,
     }
     memset(p_grab, 0, sizeof(struct cmr_grab));
     p_grab->init_param = *init_param_ptr;
-    CMR_LOGI("Start to open GRAB device. %p", p_grab);
     p_grab->fd = open(CMR_GRAB_DEV_NAME, O_RDWR, 0);
-    CMR_LOGI("cmr_grab  dcam_fd. 0x%x", p_grab->fd);
     if (-1 == p_grab->fd) {
         CMR_LOGE("Failed to open dcam device.errno : %d", errno);
         fprintf(stderr, "Cannot open '%s': %d, %s\n", CMR_GRAB_DEV_NAME, errno,
                 strerror(errno));
         cmr_grap_free_grab(p_grab);
         exit(EXIT_FAILURE);
-    } else {
-        CMR_LOGI("OK to open device.");
     }
+    CMR_LOGI("dcam_fd=0x%x", p_grab->fd);
+
     sem_init(&p_grab->close_sem, 0, 0);
     ret = pthread_mutex_init(&p_grab->cb_mutex, NULL);
     if (ret) {
@@ -182,6 +183,7 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr,
     *grab_handle = (cmr_handle)p_grab;
 
 exit:
+    CMR_LOGD("X");
     ATRACE_END();
     return ret;
 }
@@ -194,10 +196,11 @@ cmr_int cmr_grab_deinit(cmr_handle grab_handle) {
     struct cmr_grab *p_grab;
     struct sprd_img_res res;
     cmr_bzero(&res, sizeof(res));
-    CMR_LOGI("close dev %p", grab_handle);
+
     p_grab = (struct cmr_grab *)grab_handle;
 
     CMR_CHECK_HANDLE;
+    CMR_LOGI("E");
 
     /* thread should be killed before fd deinited */
     ret = cmr_grab_kill_thread(grab_handle);
@@ -234,7 +237,7 @@ cmr_int cmr_grab_deinit(cmr_handle grab_handle) {
         p_grab->fd = -1;
         CMR_LOGI("p_grab->fd closed");
     }
-    CMR_LOGI("thread kill done, mode_enable = %d\n", p_grab->mode_enable);
+    CMR_LOGI("mode_enable = %d", p_grab->mode_enable);
     pthread_mutex_lock(&p_grab->cb_mutex);
     p_grab->grab_evt_cb = NULL;
     p_grab->is_prev_trace = 0;
@@ -249,9 +252,9 @@ cmr_int cmr_grab_deinit(cmr_handle grab_handle) {
         pthread_mutex_destroy(&p_grab->path_mutex[channel_id]);
     }
     free((void *)grab_handle);
-    CMR_LOGI("close dev done");
 
 exit:
+    CMR_LOGI("X");
     ATRACE_END();
     return 0;
 }
@@ -355,8 +358,8 @@ cmr_int cmr_grab_if_cfg(cmr_handle grab_handle, struct sensor_if *sn_if) {
 
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_SENSOR_IF, &sensor_if);
 
-    CMR_LOGI("Set dv timing, ret %ld, if type %d, mode %d, deci %d, status %d",
-             ret, sensor_if.if_type, sensor_if.img_fmt, sensor_if.frm_deci,
+    CMR_LOGI("ret %ld, if type %d, mode %d, deci %d, status %d", ret,
+             sensor_if.if_type, sensor_if.img_fmt, sensor_if.frm_deci,
              sensor_if.res[0]);
 
     ATRACE_END();
@@ -377,8 +380,8 @@ cmr_int cmr_grab_if_decfg(cmr_handle grab_handle, struct sensor_if *sn_if) {
 
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_SENSOR_IF, &sensor_if);
 
-    CMR_LOGI("Set dv timing, ret %ld, if type %d, status %d.", ret,
-             sensor_if.if_type, sensor_if.res[0]);
+    CMR_LOGI("ret %ld, if type %d, status %d.", ret, sensor_if.if_type,
+             sensor_if.res[0]);
 
     return ret;
 }
@@ -868,7 +871,7 @@ cmr_int cmr_grab_cap_pause(cmr_handle grab_handle, cmr_u32 channel_id,
     p_grab = (struct cmr_grab *)grab_handle;
     CMR_CHECK_HANDLE;
     CMR_CHECK_FD;
-    CMR_LOGI("channel_id %d,reconfig_flag %d.", channel_id, reconfig_flag);
+    CMR_LOGI("channel_id %d,reconfig_flag %d", channel_id, reconfig_flag);
 
     parm.channel_id = channel_id;
     parm.reserved[0] = reconfig_flag;
@@ -877,7 +880,6 @@ cmr_int cmr_grab_cap_pause(cmr_handle grab_handle, cmr_u32 channel_id,
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_PATH_PAUSE, &parm);
     pthread_mutex_unlock(&p_grab->path_mutex[channel_id]);
 
-    CMR_LOGI("done.");
     return ret;
 }
 
@@ -1145,16 +1147,17 @@ static void *cmr_grab_thread_proc(void *data) {
     if (-1 == p_grab->fd)
         return NULL;
 
+    CMR_LOGI("E");
+
     struct camera_context *cxt =
         (struct camera_context *)p_grab->init_param.oem_handle;
-    CMR_LOGI("In");
 
     while (1) {
         cnt = sizeof(struct sprd_img_read_op);
         op.cmd = SPRD_IMG_GET_FRM_BUFFER;
         op.sensor_id = p_grab->init_param.sensor_id;
         if (cnt != read(p_grab->fd, &op, sizeof(struct sprd_img_read_op))) {
-            CMR_LOGI("Failed to read frame buffer");
+            CMR_LOGE("read failed");
             break;
         } else {
             if (IMG_TX_STOP == op.evt) {
@@ -1163,7 +1166,7 @@ static void *cmr_grab_thread_proc(void *data) {
                 break;
             } else if (IMG_SYS_BUSY == op.evt) {
                 usleep(10000);
-                CMR_LOGI("continue.");
+                CMR_LOGI("continue");
                 continue;
             } else {
                 // normal irq
@@ -1175,21 +1178,13 @@ static void *cmr_grab_thread_proc(void *data) {
 
                     frame.channel_id = op.parm.frame.channel_id;
 
-                    if ((p_grab->is_prev_trace && CHN_1 == frame.channel_id) ||
-                        (p_grab->is_cap_trace && CHN_1 != frame.channel_id))
-                        CMR_LOGI("got one frame! sensor_id %d, channel_id "
-                                 "0x%x, id 0x%x, evt_id 0x%x sec %d usec %d",
-                                 p_grab->init_param.sensor_id,
-                                 op.parm.frame.channel_id, op.parm.frame.index,
-                                 evt_id, op.parm.frame.sec, op.parm.frame.usec);
-                    else
-                        CMR_LOGV("got one frame! sensor_id %d, channel_id "
-                                 "0x%x, id 0x%x, evt_id 0x%x sec %u usec %u fd "
-                                 "0x%x",
-                                 p_grab->init_param.sensor_id,
-                                 op.parm.frame.channel_id, op.parm.frame.index,
-                                 evt_id, op.parm.frame.sec, op.parm.frame.usec,
-                                 op.parm.frame.mfd);
+                    CMR_LOGV("sensor_id %d, channel_id "
+                             "0x%x, id 0x%x, evt_id 0x%x sec %u usec %u fd "
+                             "0x%x, yaddr_vir 0x%x",
+                             p_grab->init_param.sensor_id,
+                             op.parm.frame.channel_id, op.parm.frame.index,
+                             evt_id, op.parm.frame.sec, op.parm.frame.usec,
+                             op.parm.frame.mfd, op.parm.frame.yaddr_vir);
 
                     frame.height = op.parm.frame.height;
                     frame.frame_id = op.parm.frame.index;
@@ -1208,8 +1203,6 @@ static void *cmr_grab_thread_proc(void *data) {
                     frame.vaddr_vir = op.parm.frame.vaddr_vir;
                     frame.fd = op.parm.frame.mfd;
 
-                    CMR_LOGV("frame.fd=0x%x, y_virt=0x%x", frame.fd,
-                             frame.yaddr_vir);
                     pthread_mutex_lock(&p_grab->status_mutex);
                     on_flag = p_grab->is_on;
                     pthread_mutex_unlock(&p_grab->status_mutex);
@@ -1256,7 +1249,7 @@ static void *cmr_grab_thread_proc(void *data) {
     }
 
     sem_post(&p_grab->close_sem);
-    CMR_LOGI("Out");
+    CMR_LOGI("X");
     return NULL;
 }
 

@@ -209,7 +209,7 @@ int SprdCamera3GrallocMemory::map(buffer_handle_t *buffer_handle,
     mem_info->addr_vir = (void *)private_handle->base;
     // need to 4k alignment
     mem_info->size = private_handle->size;
-    ;
+
     HAL_LOGD("fd=0x%x, addr_phy offset =%p, buf size=%d", mem_info->fd,
              mem_info->addr_phy, mem_info->size);
     return 0;

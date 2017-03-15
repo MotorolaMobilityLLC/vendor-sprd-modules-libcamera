@@ -6244,12 +6244,12 @@ cmr_int prev_construct_frame(struct prev_handle *handle, cmr_u32 camera_id,
         frame_type->zoom_ratio =
             prev_cxt->prev_param.zoom_setting.zoom_info.zoom_ratio;
         frame_type->ae_time = ae_time;
-        CMR_LOGV("ae_time: %lld, zoom_ratio: %f", frame_type->ae_time,
-                 frame_type->zoom_ratio);
         frame_type->vcm_step = (cmr_u32)prev_cxt->vcm_step;
-        CMR_LOGI("vcm_step: %d", frame_type->vcm_step);
         frame_type->type = PREVIEW_FRAME;
-        CMR_LOGV("%lld", frame_type->timestamp);
+        CMR_LOGV("ae_time: %lld, zoom_ratio: %f, vcm_step: %d, timestamp: %lld",
+                 frame_type->ae_time, frame_type->zoom_ratio,
+                 frame_type->vcm_step, frame_type->timestamp);
+
         if (prev_cxt->prev_param.is_support_fd &&
             prev_cxt->prev_param.is_fd_on) {
             prev_fd_send_data(handle, camera_id, frm_ptr);
@@ -10698,7 +10698,7 @@ cmr_int prev_fd_send_data(struct prev_handle *handle, cmr_u32 camera_id,
         goto exit;
     }
 
-    CMR_LOGD("is_support_fd %ld, is_fd_on %ld",
+    CMR_LOGV("is_support_fd %ld, is_fd_on %ld",
              prev_cxt->prev_param.is_support_fd, prev_cxt->prev_param.is_fd_on);
 
     if (!prev_cxt->prev_param.is_support_fd || !prev_cxt->prev_param.is_fd_on) {
@@ -10719,7 +10719,7 @@ cmr_int prev_fd_send_data(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
 exit:
-    CMR_LOGD("out, ret %ld", ret);
+    CMR_LOGV("ret %ld", ret);
     ATRACE_END();
     return ret;
 }
@@ -10757,7 +10757,7 @@ cmr_int prev_fd_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param) {
     frame_type.width = cb_param->dst_frame.size.width;
     frame_type.height = cb_param->dst_frame.size.height;
     frame_type.face_num = (cmr_u32)cb_param->face_area.face_count;
-    CMR_LOGD("face_num %d", frame_type.face_num);
+    CMR_LOGV("face_num %d", frame_type.face_num);
     for (i = 0; i < frame_type.face_num; i++) {
         frame_type.face_info[i].face_id = cb_param->face_area.range[i].face_id;
         frame_type.face_info[i].sx = cb_param->face_area.range[i].sx;

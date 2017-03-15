@@ -2079,7 +2079,7 @@ bool SprdCamera3OEMIf::isCameraIdle() {
 }
 
 bool SprdCamera3OEMIf::isPreviewing() {
-    HAL_LOGD("%s", getCameraStateStr(mCameraState.preview_state));
+    HAL_LOGV("%s", getCameraStateStr(mCameraState.preview_state));
     return (SPRD_PREVIEW_IN_PROGRESS == mCameraState.preview_state);
 }
 
@@ -3239,7 +3239,7 @@ void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame) {
     struct img_rect rect = {0, 0, 0, 0};
     mSetting->getFACETag(&faceInfo);
     memset(&faceInfo, 0, sizeof(FACE_Tag));
-    HAL_LOGD("receive face_num %d.mid=%d", frame->face_num, mCameraId);
+    HAL_LOGV("receive face_num %d.mid=%d", frame->face_num, mCameraId);
     int32_t number_of_faces =
         frame->face_num <= FACE_DETECT_NUM ? frame->face_num : FACE_DETECT_NUM;
     faceInfo.face_num = number_of_faces;

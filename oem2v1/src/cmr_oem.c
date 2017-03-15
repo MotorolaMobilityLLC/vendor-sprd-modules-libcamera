@@ -1210,7 +1210,7 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
             face_area.frame_width = sensor_mode_info->trim_width;
             face_area.frame_height = sensor_mode_info->trim_height;
             face_area.face_num = frame_param->face_num;
-            CMR_LOGD("face_num %d, size:%dx%d", face_area.face_num,
+            CMR_LOGV("face_num %d, size:%dx%d", face_area.face_num,
                      face_area.frame_width, face_area.frame_height);
 
             if (face_info_max_num < face_area.face_num) {
