@@ -1915,7 +1915,7 @@ struct isp_block_param {
 
 union sensor_version_name{
 		uint32_t sensor_name_in_word[8];
-		uint8_t sensor_name[32];
+		int8_t sensor_name[32];
 	};
 
 struct sensor_version_info {
@@ -2151,23 +2151,17 @@ struct raw_param_info_tab {
 };
 #endif
 struct denoise_param_update {
-	//struct sensor_pwd_level *pwd_level_ptr;
 	struct sensor_bpc_level *bpc_level_ptr;
-	//struct sensor_bdn_level *bdn_level_ptr;
 	struct sensor_grgb_level *grgb_level_ptr;
 	struct sensor_nlm_level *nlm_level_ptr;
 	struct sensor_vst_level *vst_level_ptr;
 	struct sensor_ivst_level *ivst_level_ptr;
-	//struct sensor_flat_offset_level *flat_offset_level_ptr;
 	struct sensor_cfai_level *cfae_level_ptr;
-	//struct sensor_rgb_precdn_level *rgb_precdn_level_ptr;
 	struct sensor_yuv_precdn_level *yuv_precdn_level_ptr;
-	//struct sensor_prfy_level *prfy_level_ptr;
 	struct sensor_uv_cdn_level *uv_cdn_level_ptr;
 	struct sensor_ee_level *ee_level_ptr;
 	struct sensor_uv_postcdn_level *uv_postcdn_level_ptr;
 	struct sensor_iircnr_level *iircnr_level_ptr;
-	//struct sensor_iircnr_yrandom_level *iircnr_yrandom_level_ptr;
 	struct sensor_cce_uvdiv_level *cce_uvdiv_level_ptr;
 	struct sensor_3dnr_level *dnr_cap_level_ptr;
 	struct sensor_3dnr_level *dnr_pre_level_ptr;
@@ -2176,10 +2170,9 @@ struct denoise_param_update {
 	struct sensor_rgb_dither_level *rgb_dither_level_ptr;
 	struct sensor_ynr_level *ynr_level_ptr;
 	struct sensor_yuv_noisefilter_level *yuv_noisefilter_level_ptr;
-	//struct sensor_y_afm_level *y_afm_level_ptr;
-	uint32_t *nr_scene_map_ptr;
-	uint8_t *nr_level_number_map_ptr;
-	uint8_t *nr_default_level_map_ptr;
+	struct sensor_nr_scene_map_param *nr_scene_map_ptr;
+	struct sensor_nr_level_map_param *nr_level_number_map_ptr;
+	struct sensor_nr_level_map_param *nr_default_level_map_ptr;
 	uint32_t multi_nr_flag;
 };
 

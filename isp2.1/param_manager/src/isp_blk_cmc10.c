@@ -148,7 +148,7 @@
 			struct isp_weight_value* ct_value[2] = {&weight_value[1], &weight_value[2]};
 
 			uint16_t bv_result[SENSOR_CMC_POINT_NUM] = {0};
-			uint16_t ct_result[2][SENSOR_CMC_POINT_NUM] = {0};
+			uint16_t ct_result[2][SENSOR_CMC_POINT_NUM] = {{0},{0}};
 			int i;
 			for (i=0; i<2; i++)
 			{

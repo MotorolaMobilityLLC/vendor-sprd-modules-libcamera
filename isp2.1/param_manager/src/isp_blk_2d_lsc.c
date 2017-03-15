@@ -153,7 +153,7 @@
 			isp_u32 dst_ct = lsc_ptr->tab_info.lsc_2d_info[j].lsc_2d_map_info.ct;
 
 			if (dst_envi == src_envi) {
-				isp_u32 ct_diff = abs(dst_ct - src_ct);
+				isp_u32 ct_diff = abs((isp_s32)dst_ct - (isp_s32)src_ct);
 				if (ct_diff < min_ct_diff) {
 					min_ct_diff = ct_diff;
 					dst_index = j;

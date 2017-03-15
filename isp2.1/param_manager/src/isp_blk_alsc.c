@@ -21,7 +21,10 @@
 isp_s32 _pm_alsc_init(void *dst_alsc_param, void *src_alsc_param, void *param1, void *param_ptr2)
 {
 	isp_s32 rtn = ISP_SUCCESS;
-
+	UNUSED(dst_alsc_param);
+	UNUSED(src_alsc_param);
+	UNUSED(param1);
+	UNUSED(param_ptr2);
 #if 0
 	struct alsc_alg0_turn_param *src_ptr = (struct alsc_alg0_turn_param *)src_alsc_param;
 	struct alsc_alg0_turn_param *dst_ptr = (struct alsc_alg0_turn_param*)dst_alsc_param;
@@ -49,6 +52,10 @@ isp_s32 _pm_alsc_set_param(void *alsc_param, isp_u32 cmd, void *param_ptr0, void
 isp_s32 _pm_alsc_get_param(void *alsc_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
 	isp_s32 rtn = ISP_SUCCESS;
+	UNUSED(alsc_param);
+	UNUSED(cmd);
+	UNUSED(rtn_param0);
+	UNUSED(rtn_param1);
 #if 0
 	struct isp_alsc_param *alsc_ptr = (struct isp_alsc_param*)alsc_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;

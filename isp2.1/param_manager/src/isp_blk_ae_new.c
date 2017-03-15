@@ -20,6 +20,9 @@
 isp_s32 _pm_ae_new_init(void *dst_ae_new, void *src_ae_new, void* param1, void* param2)
 {
 	isp_s32 rtn = ISP_SUCCESS;
+	UNUSED(dst_ae_new);
+	UNUSED(src_ae_new);
+	UNUSED(param1);
 	UNUSED(param2);
 
 
@@ -29,7 +32,10 @@ isp_s32 _pm_ae_new_init(void *dst_ae_new, void *src_ae_new, void* param1, void* 
 isp_s32 _pm_ae_new_set_param(void *ae_new_param, isp_u32 cmd, void* param_ptr0, void* param_ptr1)
 {
 	isp_s32 rtn = ISP_SUCCESS;
+	UNUSED(ae_new_param);
 	UNUSED(cmd);
+	UNUSED(param_ptr0);
+	UNUSED(param_ptr1);
 
 
 	return rtn;
@@ -38,6 +44,9 @@ isp_s32 _pm_ae_new_set_param(void *ae_new_param, isp_u32 cmd, void* param_ptr0, 
 isp_s32 _pm_ae_new_get_param(void *ae_new_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
 	isp_s32 rtn = ISP_SUCCESS;
+	UNUSED(ae_new_param);
+	UNUSED(rtn_param0);
+	UNUSED(rtn_param1);
 
 	switch (cmd) {
 	case ISP_PM_BLK_ISP_SETTING:

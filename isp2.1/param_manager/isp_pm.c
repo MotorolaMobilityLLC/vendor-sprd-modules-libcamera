@@ -1129,7 +1129,7 @@ static isp_u32 isp_pm_active_mode_param_update(
 	isp_u32 blcok_num_active = 0;
 	isp_u32 blcok_num_next = 0;
 	intptr_t isp_cxt_start_addr = 0;
-	uint32_t tmp_idx = 0;
+	int32_t tmp_idx = 0;
 	void* blk_ptr = PNULL;
 	void* param_data_ptr = PNULL;
 	struct isp_block_cfg *blk_cfg_ptr = PNULL;
@@ -1216,7 +1216,7 @@ static isp_s32 isp_pm_set_block_param (struct isp_pm_context *pm_cxt_ptr, struct
 	void *blk_ptr = PNULL;
 	intptr_t cxt_start_addr = 0;
 	isp_u32 id = 0, cmd = 0, offset = 0, size = 0;
-	uint32_t tmp_idx = 0;
+	int32_t tmp_idx = 0;
 	struct isp_block_operations *ops = PNULL;
 	struct isp_block_cfg *blk_cfg_ptr = PNULL;
 	struct isp_pm_block_header *blk_header_ptr = PNULL;
@@ -1432,7 +1432,7 @@ static isp_s32 isp_pm_get_single_block_param(
 	isp_s32 rtn = ISP_SUCCESS;
 	intptr_t isp_cxt_start_addr  =0;
 	void* blk_ptr = NULL;
-	isp_u32 tm_idx = 0;
+	isp_s32 tm_idx = 0;
 	isp_u32 i = 0, id =0, cmd = 0, counts = 0, offset = 0, blk_num = 0;
 	struct isp_pm_block_header *blk_header_ptr = PNULL;
 	struct isp_pm_param_data *block_param_data_ptr = NULL;
@@ -1764,7 +1764,7 @@ static isp_s32 isp_pm_lsc_otp_param_update(isp_pm_handle_t handle, struct isp_pm
 	void *blk_ptr = PNULL;
 	isp_u32 i = 0, offset = 0;
 	isp_u32 mod_id = 0, id = 0;
-	isp_u32 tmp_idx = 0;
+	isp_s32 tmp_idx = 0;
 	intptr_t isp_cxt_start_addr = 0;
 	struct isp_context *isp_cxt_ptr = PNULL;
 	struct isp_block_cfg *blk_cfg = PNULL;

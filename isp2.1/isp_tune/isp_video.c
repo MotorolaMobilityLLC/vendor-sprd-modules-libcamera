@@ -428,7 +428,7 @@ int ispvideo_GetSceneInfo(unsigned char* dig_ptr, struct isptool_scene_param *sc
 
 	data_ptr = dig_ptr + 1 + sizeof(MSG_HEAD_T);
 	//little endian
-	memcpy(((void*)scene_parm)+8, data_ptr, sizeof(struct isptool_scene_param) -8);
+	memcpy(((char *)scene_parm)+8, data_ptr, sizeof(struct isptool_scene_param) -8);
 
 	return rtn;
 }
@@ -1368,6 +1368,7 @@ static int isp_nr_write(isp_handle handler, uint8_t *tx_buf, uint8_t *rx_buf)
 	int ret = ISP_SUCCESS;
 	MSG_HEAD_T *msg, *msg_ret;
 	int rsp_len = 0;
+	UNUSED(handler);
 
 	msg = (MSG_HEAD_T *)(rx_buf + 1);
 	msg_ret = (MSG_HEAD_T *)(tx_buf + 1);
@@ -1455,8 +1456,10 @@ int send_isp_mode_id_param(struct isp_data_header_read *read_cmd,struct msg_head
 	uint32_t len_data_header = sizeof(struct isp_data_header_normal);
 
 	uint8_t *data_ptr = NULL;
-	struct isp_data_header_normal data_header = {0};
-	struct msg_head_tag msg_tag = {0};
+	struct isp_data_header_normal data_header;
+	struct msg_head_tag msg_tag;
+	memset(&data_header, 0, sizeof(struct isp_data_header_normal));
+	memset(&msg_tag, 0, sizeof(struct msg_head_tag));
 
 	data_header.isp_mode = read_cmd->isp_mode;
 	data_header.main_type = read_cmd->main_type;
@@ -1495,8 +1498,10 @@ int send_tune_info_param(struct isp_data_header_read *read_cmd,struct msg_head_t
 	uint32_t len_msg = sizeof(struct msg_head_tag);
 	uint32_t len_data_header = sizeof(struct isp_data_header_normal);
 	uint8_t *data_ptr = NULL;
-	struct isp_data_header_normal data_header = {0};
-	struct msg_head_tag msg_tag = {0};
+	struct isp_data_header_normal data_header;
+	struct msg_head_tag msg_tag;
+	memset(&data_header, 0, sizeof(struct isp_data_header_normal));
+	memset(&msg_tag, 0, sizeof(struct msg_head_tag));
 
 	data_header.isp_mode = read_cmd->isp_mode;
 	data_header.main_type = read_cmd->main_type;
@@ -1555,8 +1560,10 @@ int send_fix_param(struct isp_data_header_read *read_cmd,struct msg_head_tag *ms
 
 	uint32_t len_msg = sizeof(struct msg_head_tag);
 	uint32_t len_data_header = sizeof(struct isp_data_header_normal);
-	struct isp_data_header_normal data_header = {0};
-	struct msg_head_tag msg_tag = {0};
+	struct isp_data_header_normal data_header;
+	struct msg_head_tag msg_tag;
+	memset(&data_header, 0, sizeof(struct isp_data_header_normal));
+	memset(&msg_tag, 0, sizeof(struct msg_head_tag));
 
 	data_header.isp_mode = read_cmd->isp_mode;
 	data_header.main_type = read_cmd->main_type;
@@ -1615,8 +1622,10 @@ int send_note_param(struct isp_data_header_read *read_cmd,struct msg_head_tag *m
 	uint32_t len_data_header = sizeof(struct isp_data_header_normal);
 
 	uint8_t *data_ptr = (uint8_t *)data_addr;
-	struct isp_data_header_normal data_header = {0};
-	struct msg_head_tag msg_tag = {0};
+	struct isp_data_header_normal data_header;
+	struct msg_head_tag msg_tag;
+	memset(&data_header, 0, sizeof(struct isp_data_header_normal));
+	memset(&msg_tag, 0, sizeof(struct msg_head_tag));
 
 	data_header.isp_mode = read_cmd->isp_mode;
 	data_header.main_type = read_cmd->main_type;
@@ -1664,8 +1673,10 @@ int send_libuse_info_param(struct isp_data_header_read *read_cmd, struct msg_hea
 	uint32_t len_data_header = sizeof(struct isp_data_header_normal);
 
 	uint8_t *data_ptr = (uint8_t *)data_addr;
-	struct isp_data_header_normal data_header = {0};
-	struct msg_head_tag msg_tag = {0};
+	struct isp_data_header_normal data_header;
+	struct msg_head_tag msg_tag;
+	memset(&data_header, 0, sizeof(struct isp_data_header_normal));
+	memset(&msg_tag, 0, sizeof(struct msg_head_tag));
 
 	data_header.isp_mode = read_cmd->isp_mode;
 	data_header.main_type = read_cmd->main_type;
@@ -1937,8 +1948,10 @@ int send_isp_param(struct isp_data_header_read *read_cmd,struct msg_head_tag *ms
 	uint8_t mode_id = 0;
 
 	struct sensor_raw_fix_info *sensor_raw_fix = NULL;
-	struct isp_mode_param_info mode_param_info = {0};
-	struct sensor_raw_note_info sensor_note_param ={0};
+	struct isp_mode_param_info mode_param_info;
+	struct sensor_raw_note_info sensor_note_param;
+	memset(&mode_param_info, 0, sizeof(struct isp_mode_param_info));
+	memset(&sensor_note_param, 0, sizeof(struct sensor_raw_note_info));
 
 	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
 	struct sensor_raw_info* sensor_raw_info_ptr=(struct sensor_raw_info*)sensor_info_ptr->raw_info_ptr;
@@ -2228,7 +2241,12 @@ int down_lnc_param(struct sensor_raw_fix_info *sensor_raw_fix,uint16_t sub_type,
 int down_awb_param(struct sensor_raw_fix_info *sensor_raw_fix,uint16_t sub_type,uint8_t *data_addr,uint32_t data_len)
 {
 	int rtn =0x00;
-	#if 0
+	#if 1
+	UNUSED(sensor_raw_fix);
+	UNUSED(sub_type);
+	UNUSED(data_addr);
+	UNUSED(data_len);
+	#else
 	uint32_t offset_tmp = 0;
 
 	uint32_t len_mode_info = sizeof(struct sensor_fix_param_mode_info);
@@ -2280,10 +2298,11 @@ int down_isp_param(isp_handle isp_handler,struct isp_data_header_normal *write_c
 
 	uint8_t mode_id = write_cmd->isp_mode;
 	struct sensor_raw_fix_info *sensor_raw_fix = NULL;
-	struct isp_mode_param_info mode_param_info = {0};
-	struct sensor_raw_note_info sensor_note_param ={0};
+	struct isp_mode_param_info mode_param_info;
+	struct sensor_raw_note_info sensor_note_param;
 	struct msg_head_tag *msg_ret = (struct msg_head_tag *)(eng_rsp_diag + 1);
-
+	memset(&mode_param_info, 0, sizeof(struct isp_mode_param_info));
+	memset(&sensor_note_param, 0, sizeof(struct sensor_raw_note_info));
 	uint32_t len_msg = sizeof(struct msg_head_tag);
 	uint32_t len_data_header = sizeof(struct isp_data_header_normal);
 
@@ -2628,10 +2647,12 @@ int check_cmd_valid(struct isp_check_cmd_valid *cmd,struct msg_head_tag *msg)
 
 	uint32_t len_msg = sizeof(struct msg_head_tag);
 	uint32_t len_data_header = sizeof(struct isp_data_header_normal);
-	struct isp_data_header_normal data_header = {0};
-	struct msg_head_tag msg_tag = {0};
+	struct isp_data_header_normal data_header;
+	struct msg_head_tag msg_tag;
+	memset(&data_header, 0, sizeof(struct isp_data_header_normal));
+	memset(&msg_tag, 0, sizeof(struct msg_head_tag));
 
-	struct isp_check_cmd_valid *cmd_ptr = (struct isp_data_header_read *)cmd;
+	struct isp_check_cmd_valid *cmd_ptr = (struct isp_check_cmd_valid *)cmd;
 	uint32_t unvalid_flag = 0;
 	if (MODE_MAX >= cmd_ptr->main_type  ) {
 		switch( cmd_ptr->main_type) {
@@ -2744,10 +2765,11 @@ static int handle_isp_data(unsigned char *buf, unsigned int len)
 	int ret = 1, res = 0;
 	int image_type = 0;
 	MSG_HEAD_T *msg, *msg_ret;
-	//add
-	ISP_DATA_HEADER_T isp_msg = {0};
+
+	ISP_DATA_HEADER_T isp_msg;
 	int preview_tmpflag = 0;
-	//
+	memset(&isp_msg, 0, sizeof(ISP_DATA_HEADER_T));
+
 	struct camera_func* fun_ptr=ispvideo_GetCameraFunc();
 	int is_stop_preview = 0;
 
@@ -3236,7 +3258,8 @@ static int handle_isp_data(unsigned char *buf, unsigned int len)
 			uint32_t data_len = 0;
 			uint8_t* dig_ptr = buf;
 			uint8_t* isp_ptr = buf+sizeof(MSG_HEAD_T)+1;
-			struct isp_check_cmd_valid cmd = {0};
+			struct isp_check_cmd_valid cmd;
+			memset(&cmd, 0, sizeof(struct isp_check_cmd_valid));
 
 			data_len = ispvideo_GetIspParamLenFromSt(dig_ptr);
 			DBG("ISP_TOOL : data_len = %d",data_len);
@@ -3269,7 +3292,8 @@ static int handle_isp_data(unsigned char *buf, unsigned int len)
 			uint8_t *dig_ptr = buf;
 			uint8_t *isp_ptr = buf +sizeof(MSG_HEAD_T) +1;
 			uint8_t *isp_data_ptr = isp_ptr + sizeof(struct isp_data_header_normal);
-			struct isp_check_cmd_valid cmd = {0};
+			struct isp_check_cmd_valid cmd;
+			memset(&cmd, 0, sizeof(struct isp_check_cmd_valid));
 
 			write_cmd = (struct isp_data_header_normal *)isp_ptr;
 			cmd.isp_mode = write_cmd->isp_mode;
@@ -3700,7 +3724,7 @@ static int handle_isp_data(unsigned char *buf, unsigned int len)
 			if (0x00 == ret) {
 				ret = isp_ioctl(isp_handler, ISP_CTRL_TOOL_SET_SCENE_PARAM, (void*)&scene_info);
 				if (ret) {
-					CMR_LOGE("failed isp ioctl for scene parameter %ld", ret);
+					CMR_LOGE("failed isp ioctl for scene parameter %d", ret);
 				}
 				memcpy(&(scene_param.gain), &(scene_info.gain), sizeof(struct isptool_scene_param)-8);
 				ISP_LOGI("width/height %d/%d, gain 0x%x, awb r/g/b  0x%x, 0x%x, 0x%x, ct 0x%x, bv 0x%x",

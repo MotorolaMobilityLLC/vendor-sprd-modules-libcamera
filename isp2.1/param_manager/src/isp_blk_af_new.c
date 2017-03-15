@@ -20,6 +20,9 @@
 isp_s32 _pm_af_new_init(void *dst_af_new, void *src_af_new, void* param1, void* param2)
 {
 	isp_s32 rtn = ISP_SUCCESS;
+	UNUSED(dst_af_new);
+	UNUSED(src_af_new);
+	UNUSED(param1);
 	UNUSED(param2);
 
 	return rtn;
@@ -28,7 +31,10 @@ isp_s32 _pm_af_new_init(void *dst_af_new, void *src_af_new, void* param1, void* 
 isp_s32 _pm_af_new_set_param(void *af_new_param, isp_u32 cmd, void* param_ptr0, void* param_ptr1)
 {
 	isp_s32 rtn = ISP_SUCCESS;
+	UNUSED(af_new_param);
 	UNUSED(cmd);
+	UNUSED(param_ptr0);
+	UNUSED(param_ptr1);
 
 	return rtn;
 }
@@ -36,6 +42,7 @@ isp_s32 _pm_af_new_set_param(void *af_new_param, isp_u32 cmd, void* param_ptr0, 
 isp_s32 _pm_af_new_get_param(void *af_new_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
 	isp_s32 rtn = ISP_SUCCESS;
+	UNUSED(af_new_param);
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
 	isp_u32 *update_flag =(isp_u32*)rtn_param1;
 

@@ -37,6 +37,7 @@ extern   "C"
 *				Data Prototype					*
 **----------------------------------------------------------------------------*/
 
+extern void *sensor_get_dev_cxt(void);
 static int32_t _ispParamVerify(void* in_param_ptr)
 {
 	int32_t rtn=0x00;
@@ -164,7 +165,7 @@ static int32_t _ispParserUpMainInfo(void* rtn_param_ptr)
 		return -1;
 	}
 
-	temp_param_version = ispParserAlloc(ISP_PARASER_VERSION_INFO_SIZE);
+	temp_param_version = (struct sensor_version_info *)ispParserAlloc(ISP_PARASER_VERSION_INFO_SIZE);
 	//CMR_LOGE("ISP_TOOL:temp_param_version size=%d", sizeof(temp_param_version));
 	if (!temp_param_version) {
 		CMR_LOGE("temp_param_version ispParserAlloc fail");
