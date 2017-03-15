@@ -109,10 +109,14 @@ struct wb_source_packet {
 };
 
 typedef struct {
-    unsigned char moule_id;
-    unsigned char vcm_id;
-    unsigned char drvier_ic_id;
-    unsigned char ir_bg_id;
+    cmr_u8 year;
+    cmr_u8 month;
+    cmr_u8 day;
+    cmr_u8 moule_id;
+    cmr_u8 vcm_id;
+    cmr_u8 drvier_ic_id;
+    cmr_u8 ir_bg_id;
+    cmr_u8 lens_id;
 } module_data_t;
 
 typedef struct otp_data_info {
@@ -172,18 +176,28 @@ typedef struct {
     point_t GB;
     point_t B;
 } optical_center_t;
-
+typedef struct {
+    cmr_u8 program_flag;
+    cmr_u8 af_flag;
+    cmr_u8 pdaf_flag;
+    cmr_u16 checksum;
+    /*you can add some items here*/
+}extended_data_t;
 /**
  * here include formate data
  * you can add some items if you need.
  **/
 typedef struct {
     module_data_t module_dat;
+    cmr_u16       iso_dat;
     afcalib_data_t af_cali_dat;
     awbcalib_data_t awb_cali_dat;
     optical_center_t opt_center_dat;
-    otp_data_info_t pdaf_cali_dat;     /*reserver*/
-    otp_data_info_t dual_cam_cali_dat; /*reserver*/
+    otp_data_info_t pdaf_cali_dat;
+    /*spc:sensor pixel calibration,used by pdaf*/
+    otp_data_info_t spc_cali_dat;
+    otp_data_info_t dual_cam_cali_dat;
+    extended_data_t extend_dat;
     lsccalib_data_t lsc_cali_dat;
 } otp_format_data_t;
 

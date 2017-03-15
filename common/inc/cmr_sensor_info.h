@@ -381,6 +381,8 @@ struct sensor_single_otp_info {
     struct sensor_otp_lsc_info lsc_info;         /*random lsc*/
     struct sensor_otp_af_info af_info;
     struct sensor_otp_pdaf_info pdaf_info;
+    /*spc:sesor pixel calibration,used by pdaf*/
+    struct sensor_otp_pdaf_info spc_info;
 
     struct sensor_otp_optCenter_info optical_center_info;
     /*awb,lsc golden data*/

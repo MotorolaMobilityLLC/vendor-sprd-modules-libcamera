@@ -59,8 +59,9 @@ int sensor_otp_rw_data_from_file(uint8_t cmd, char *sensor_name,
                 *otp_data = malloc(*format_otp_size);
                 if (*otp_data) {
                     while (try_time--) {
+                        fseek(fp, 0, SEEK_SET);
                         mRead = fread(*otp_data, 1, *format_otp_size, fp);
-                        if ((mRead == 0) && (feof(fp) != 0))
+                        if (mRead == *format_otp_size)
                             break;
                         else
                             OTP_LOGE("error:otp lenght doesn't "
@@ -334,6 +335,30 @@ int sensor_otp_dump_raw_data(uint8_t *buffer, int size, char *dev_name) {
     return ret;
 }
 
+int sensor_otp_dump_data2txt(uint8_t *buffer, int size, char *dev_name) {
+    cmr_int ret = OTP_CAMERA_SUCCESS,i = 0;
+    char value[255];
+    char otp_bin_ext_path[255];
+
+    snprintf(otp_bin_ext_path, sizeof(otp_bin_ext_path),
+                 "%s%s_otp_dump.txt", otp_bin_path, dev_name);
+
+    FILE* fp_txt = fopen(otp_bin_ext_path, "w");
+    if (fp_txt != NULL) {
+        unsigned short* pbuffer = (unsigned short*)buffer;
+        for (i=0; i< (size/2); i++){
+            fprintf(fp_txt,"0x%04x,", *pbuffer++);
+            if (i%16 == 15) {
+                fprintf(fp_txt, "\n");
+            }
+        }
+        fclose(fp_txt);
+    } else {
+        ret = OTP_CAMERA_FAIL;
+    }
+
+    return ret;
+}
 /** sensor_otp_drv_create:
  *  @handle: create sensor driver instance.
  *

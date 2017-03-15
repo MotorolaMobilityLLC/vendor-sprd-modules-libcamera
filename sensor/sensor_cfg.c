@@ -47,6 +47,7 @@ extern SENSOR_INFO_T g_gc2375_mipi_raw_info;
 #define AUTO_TEST_CAMERA 1
 extern otp_drv_entry_t imx258_drv_entry;
 extern otp_drv_entry_t ov13855_drv_entry;
+extern otp_drv_entry_t imx258_truly_drv_entry;
 
 extern struct sns_af_drv_entry dw9800_drv_entry;
 extern struct sns_af_drv_entry dw9714_drv_entry;
@@ -70,7 +71,8 @@ const SENSOR_MATCH_T main_sensor_infor_tab[] = {
 #ifdef CAMERA_SENSOR_BACK_I2C_SWITCH
 	{"imx258_mipi_raw", &g_imx258_mipi_raw_info, {NULL,0}, NULL},
 #else
-    {"imx258_mipi_raw", &g_imx258_mipi_raw_info, {&lc898214_drv_entry,0}, NULL},
+    {"imx258_mipi_raw", &g_imx258_mipi_raw_info, {&lc898214_drv_entry,0},
+     &imx258_truly_drv_entry},
 #endif
     //{"ov13850r2a_mipi_raw", &g_ov13850r2a_mipi_raw_info, {NULL,0}, NULL},
     {"s5k3l8xxm3_mipi_raw", &g_s5k3l8xxm3_mipi_raw_info, {&vcm_ak7371_drv_entry,0}, NULL},

@@ -18,6 +18,9 @@ int sensor_otp_decompress_gain(uint16_t *src, uint32_t src_bytes,
 void sensor_otp_change_pattern(uint32_t pattern, uint16_t *interlaced_gain,
                                uint16_t *chn_gain[4], uint16_t gain_num);
 int sensor_otp_dump_raw_data(uint8_t *buffer, int size, char *dev_name);
+
+int sensor_otp_dump_data2txt(uint8_t *buffer, int size, char *dev_name);
+
 int sensor_otp_drv_create(otp_drv_init_para_t *input_para,
                               cmr_handle* sns_af_drv_handle);
 int sensor_otp_drv_delete(void *otp_drv_handle);
