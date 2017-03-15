@@ -162,7 +162,7 @@ static int32_t ae_get_system_time(void *handler, uint32_t *sec, uint32_t *usec)
 	return 0;
 }
 
-static int32_t ae_flash_get_charge(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell_ptr)
+static int32_t ae_flash_get_charge(void *handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_cell *cell_ptr)
 {
 	int32_t                         ret = 0;
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
@@ -174,7 +174,7 @@ static int32_t ae_flash_get_charge(void *handler, struct isp_flash_cfg *cfg_ptr,
 	return ret;
 }
 
-static int32_t ae_flash_get_time(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell_ptr)
+static int32_t ae_flash_get_time(void *handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_cell *cell_ptr)
 {
 	int32_t                         ret = 0;
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
@@ -186,7 +186,7 @@ static int32_t ae_flash_get_time(void *handler, struct isp_flash_cfg *cfg_ptr, s
 	return ret;
 }
 
-static int32_t ae_flash_set_charge(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element_ptr)
+static int32_t ae_flash_set_charge(void *handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_element *element_ptr)
 {
 	int32_t                         ret = 0;
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
@@ -199,7 +199,7 @@ static int32_t ae_flash_set_charge(void *handler, struct isp_flash_cfg *cfg_ptr,
 	return ret;
 }
 
-static int32_t ae_flash_set_time(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element_ptr)
+static int32_t ae_flash_set_time(void *handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_element *element_ptr)
 {
 	int32_t                         ret = 0;
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
@@ -211,7 +211,7 @@ static int32_t ae_flash_set_time(void *handler, struct isp_flash_cfg *cfg_ptr, s
 	return ret;
 }
 
-static int32_t ae_flash_ctrl_enable(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_element *element_ptr)
+static int32_t ae_flash_ctrl_enable(void *handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_element *element_ptr)
 {
 	int32_t                         ret = 0;
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
@@ -580,7 +580,7 @@ exit:
 		*handle_ae = NULL;
 	}
 
-	ISP_LOGI(":ISP:done %d", rtn);
+	ISP_LOGI(":ISP:done %ld", rtn);
 	return rtn;
 }
 
