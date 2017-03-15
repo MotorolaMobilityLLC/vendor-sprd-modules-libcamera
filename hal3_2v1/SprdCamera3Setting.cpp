@@ -4141,8 +4141,11 @@ int SprdCamera3Setting::updateWorkParameters(
 
     bool UpdateAE = false;
     if (frame_settings.exists(ANDROID_SPRD_METERING_MODE)) {
-        s_setting[mCameraId].sprddefInfo.am_mode =
-            frame_settings.find(ANDROID_SPRD_METERING_MODE).data.u8[0];
+        valueU8 = frame_settings.find(ANDROID_SPRD_METERING_MODE).data.u8[0];
+        if (s_setting[mCameraId].sprddefInfo.am_mode != valueU8) {
+            s_setting[mCameraId].sprddefInfo.am_mode = valueU8;
+            UpdateAE = true;
+        }
 
         int area[5 + 1] = {0};
         if (frame_settings.find(ANDROID_CONTROL_AE_REGIONS).count == 5) {
