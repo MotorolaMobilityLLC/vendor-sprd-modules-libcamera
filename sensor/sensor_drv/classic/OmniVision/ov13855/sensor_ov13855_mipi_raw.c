@@ -25,7 +25,7 @@
  * 0: driver caculate
  */
 /* frame length*/
-#define SNAPSHOT_FRAME_LENGTH 3210
+#define SNAPSHOT_FRAME_LENGTH 3214
 #define PREVIEW_FRAME_LENGTH 1608
 
 #define IMAGE_NORMAL_MIRROR

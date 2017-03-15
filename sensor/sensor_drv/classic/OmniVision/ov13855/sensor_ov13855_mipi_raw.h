@@ -37,8 +37,8 @@
 
 /* sensor parameters begin */
 /* effective sensor output image size */
-#define SNAPSHOT_WIDTH 4208  // 5344
-#define SNAPSHOT_HEIGHT 3120 // 4016
+#define SNAPSHOT_WIDTH 4224  // 5344
+#define SNAPSHOT_HEIGHT 3136 // 4016
 #define PREVIEW_WIDTH 2112   // 2672
 #define PREVIEW_HEIGHT 1568
 
@@ -101,7 +101,7 @@ static const SENSOR_REG_T ov13855_init_setting[] = {
     {0x37e4, 0x2A}, {0x37e5, 0x03}, {0x37e6, 0x04}, {0x3800, 0x00},
     {0x3801, 0x00}, {0x3802, 0x00}, {0x3803, 0x08}, {0x3804, 0x10},
     {0x3805, 0x9f}, {0x3806, 0x0c}, {0x3807, 0x57}, {0x3808, 0x10},
-    {0x3809, 0x70}, {0x380a, 0x0c}, {0x380b, 0x30}, {0x380c, 0x04},
+    {0x3809, 0x80}, {0x380a, 0x0c}, {0x380b, 0x40}, {0x380c, 0x04},
     {0x380d, 0x62}, {0x380e, 0x0c}, {0x380f, 0x8e}, {0x3811, 0x10},
     {0x3813, 0x08}, {0x3814, 0x01}, {0x3815, 0x01}, {0x3816, 0x01},
     {0x3817, 0x01}, {0x3820, 0xa8}, {0x3821, 0x00}, {0x3822, 0xc2},
@@ -169,8 +169,8 @@ static const SENSOR_REG_T ov13855_4224x3136_30fps_setting[] = {
     {0x3737, 0x04}, {0x3739, 0x12}, {0x37c2, 0x04}, {0x37e3, 0x04},
     {0x37e4, 0x26}, {0x37e6, 0x04}, {0x3800, 0x00}, {0x3801, 0x00},
     {0x3802, 0x00}, {0x3803, 0x08}, {0x3804, 0x10}, {0x3805, 0x9f},
-    {0x3806, 0x0c}, {0x3807, 0x57}, {0x3808, 0x10}, {0x3809, 0x70},
-    {0x380a, 0x0c}, {0x380b, 0x30}, {0x380c, 0x04}, {0x380d, 0x62},
+    {0x3806, 0x0c}, {0x3807, 0x57}, {0x3808, 0x10}, {0x3809, 0x80},
+    {0x380a, 0x0c}, {0x380b, 0x40}, {0x380c, 0x04}, {0x380d, 0x62},
     {0x380e, 0x0c}, {0x380f, 0x8e}, {0x3811, 0x10}, {0x3813, 0x08},
     {0x3814, 0x01}, {0x3816, 0x01}, {0x3820, 0xa8}, {0x3826, 0x11},
     {0x3827, 0x1c}, {0x3829, 0x03}, {0x4009, 0x0f}, {0x4050, 0x04},
@@ -193,8 +193,8 @@ static const SENSOR_REG_T ov13855_4224x3136_15fps_setting[] = {
     {0x3737, 0x04}, {0x3739, 0x12}, {0x37c2, 0x04}, {0x37e3, 0x04},
     {0x37e4, 0x26}, {0x37e6, 0x04}, {0x3800, 0x00}, {0x3801, 0x00},
     {0x3802, 0x00}, {0x3803, 0x08}, {0x3804, 0x10}, {0x3805, 0x9f},
-    {0x3806, 0x0c}, {0x3807, 0x57}, {0x3808, 0x10}, {0x3809, 0x70},
-    {0x380a, 0x0c}, {0x380b, 0x30}, {0x380c, 0x08}, {0x380d, 0xc4},
+    {0x3806, 0x0c}, {0x3807, 0x57}, {0x3808, 0x10}, {0x3809, 0x80},
+    {0x380a, 0x0c}, {0x380b, 0x40}, {0x380c, 0x08}, {0x380d, 0xc4},
     {0x380e, 0x0c}, {0x380f, 0x8e}, {0x3811, 0x10}, {0x3813, 0x08},
     {0x3814, 0x01}, {0x3816, 0x01}, {0x3820, 0xa8}, {0x3826, 0x11},
     {0x3827, 0x1c}, {0x3829, 0x03}, {0x4009, 0x0f}, {0x4050, 0x04},
@@ -324,8 +324,8 @@ LOCAL SENSOR_REG_TAB_INFO_T s_ov13855_resolution_tab_raw[] = {
     {
         .sensor_reg_tab_ptr = (SENSOR_REG_T *)ov13855_4224x3136_30fps_setting,
         .reg_count = NUMBER_OF_ARRAY(ov13855_4224x3136_30fps_setting),
-        .width = 4208,  // 4224,
-        .height = 3120, // 3136,
+        .width = 4224,
+        .height = 3136,
         .xclk_to_sensor = 24,
         .image_format = SENSOR_IMAGE_FORMAT_RAW,
     },
@@ -375,8 +375,8 @@ LOCAL SENSOR_REG_TAB_INFO_T s_ov13855_resolution_tab_raw[] = {
     //(SENSOR_REG_T*)ov13855_4224x3136_15fps_setting,
     //		.reg_count          =
     // NUMBER_OF_ARRAY(ov13855_4224x3136_15fps_setting),
-    //		.width              = 4208,// 4224,
-    //		.height             = 3120,//3136,
+    //		.width              = 4224,
+    //		.height             = 3136,
     //		.xclk_to_sensor     = 24,
     //		.image_format       = SENSOR_IMAGE_FORMAT_RAW,
     //	},
@@ -438,8 +438,8 @@ LOCAL
                 {// fps 30 full size
                  .trim_start_x = 0,
                  .trim_start_y = 0,
-                 .trim_width = 4208,  // 4224,
-                 .trim_height = 3120, // 3136,
+                 .trim_width =  4224,
+                 .trim_height = 3136,
                  .line_time = 10380,
                  .bps_per_lane = 1080,
                  .frame_line = 3214, // 3214
@@ -447,8 +447,8 @@ LOCAL
                      {
                          .x = 0,
                          .y = 0,
-                         .w = 4208, // 4224,
-                         .h = 3120, // 3136,
+                         .w = 4224,
+                         .h = 3136,
                      }},
                 {.trim_start_x = 0,
                  .trim_start_y = 0,
@@ -509,8 +509,8 @@ LOCAL
                 //	{ //fps 15 full size
                 //		.trim_start_x   = 0,
                 //		.trim_start_y   = 0,
-                //		.trim_width     = 4208,//4224,
-                //		.trim_height    = 3120,//3136,
+                //		.trim_width     = 4224,
+                //		.trim_height    = 3136,
                 //		.line_time      = 20770,
                 //		.bps_per_lane   = 540,
                 //		.frame_line     = 3214,
@@ -518,8 +518,8 @@ LOCAL
                 //		{
                 //			.x = 0,
                 //			.y = 0,
-                //			.w =4208,// 4224,
-                //			.h = 3120,//3136,
+                //			.w = 4224,
+                //			.h = 3136,
                 //		}
                 //	},
 };
