@@ -1199,7 +1199,8 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input *in_ptr)
 	struct isp_pm_ioctl_input       io_pm_input = {NULL, 0};
 	struct isp_pm_param_data        pm_param = {0,0,0,NULL,0,{0}};
 	struct smart_block_result       *block_result = NULL;
-	struct smart_debug_result      debug_result;
+	struct nr_data                          nr={{0,9,0},{0,10,0},{0,11,0},{0,12,0},{0,13,0},
+		{0,14,0},{0,15,0},{0,16,0},{0,17,0},{0,18,0},{0,19,0},{0,20,0},{0,21,0},{0,22,0},{0,23,0},{0,24,0},{0,25,0},{0,26,0}};
 	cmr_u32 alc_awb = in_ptr->alc_awb;
 	uint32_t                        i = 0;
 
@@ -1288,23 +1289,90 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input *in_ptr)
 		}
 	#endif
 	}
-
-	for (i = 0; i < smart_calc_result.counts; i++) {
+	for (i = 0; i < ISP_SMART_MAX; i++) {
 		block_result = &smart_calc_result.block_result[i];
-		if (!block_result->update)
-			continue;
-		char *block_name = smart_ctl_find_block_name(block_result->smart_id);
-		memcpy(debug_result.block_result[i].block_name, block_name, sizeof(block_name));
-		for(int j = 0; j<block_result->component_num; j++){
-			debug_result.block_result[i].component[j].x_type = block_result->component[j].x_type;
-			debug_result.block_result[i].component[j].y_type = block_result->component[j].y_type;
-			memcpy(debug_result.block_result[i].component[j].fix_data, block_result->component[j].fix_data, sizeof(int32_t)*12);
-		}
-	ISP_LOGV("block[%d]: %s", i, debug_result.block_result[i].block_name);
+		if(block_result->smart_id > 8){
+			switch(block_result->smart_id){
+				case 9:
+					nr.PPI[0] = 1;
+					nr.PPI[2] = block_result->component[0].fix_data[0];
+					break;
+				case 10:
+					nr.BayerNR[0] = 1;
+					nr.BayerNR[2] = block_result->component[0].fix_data[0];
+					break;
+				case 11:
+					nr.RGB_DITHER[0] = 1;
+					nr.RGB_DITHER[2] = block_result->component[0].fix_data[0];
+					break;
+				case 12:
+					nr.BPC[0] = 1;
+					nr.BPC[2] = block_result->component[0].fix_data[0];
+					break;
+				case 13:
+					nr.GRGB[0] = 1;
+					nr.GRGB[2] = block_result->component[0].fix_data[0];
+					break;
+				case 14:
+					nr.CFAE[0] = 1;
+					nr.CFAE[2] = block_result->component[0].fix_data[0];
+					break;
+				case 15:
+					nr.RGB_AFM[0] = 1;
+					nr.RGB_AFM[2] = block_result->component[0].fix_data[0];
+					break;
+				case 16:
+					nr.UVDIV[0] = 1;
+					nr.UVDIV[2] = block_result->component[0].fix_data[0];
+					break;
+				case 17:
+					nr.DNR3_PRE[0] = 1;
+					nr.DNR3_PRE[2] = block_result->component[0].fix_data[0];
+					break;
+				case 18:
+					nr.DNR3_CAP[0] = 1;
+					nr.DNR3_CAP[2] = block_result->component[0].fix_data[0];
+					break;
+				case 19:
+					nr.EDGE[0] = 1;
+					nr.EDGE[2] = block_result->component[0].fix_data[0];
+					break;
+				case 20:
+					nr.YUV_PRECDN[0] = 1;
+					nr.YUV_PRECDN[2] = block_result->component[0].fix_data[0];
+					break;
+				case 21:
+					nr.YNR[0] = 1;
+					nr.YNR[2] = block_result->component[0].fix_data[0];
+					break;
+				case 22:
+					nr.UVCDN[0] = 1;
+					nr.UVCDN[2] = block_result->component[0].fix_data[0];
+					break;
+				case 23:
+					nr.POSTCDN[0] = 1;
+					nr.POSTCDN[2] = block_result->component[0].fix_data[0];
+					break;
+				case 24:
+					nr.IIRCNR_IIR[0] = 1;
+					nr.IIRCNR_IIR[2] = block_result->component[0].fix_data[0];
+					break;
+				case 25:
+					nr.IIR_YRANDOM[0] = 1;
+					nr.IIR_YRANDOM[2] = block_result->component[0].fix_data[0];
+					break;
+				case 26:
+					nr.YUV_NOISEFILTER[0] = 1;
+					nr.YUV_NOISEFILTER[2] = block_result->component[0].fix_data[0];
+					break;
+				default:
+					break;
+				}
+			}
 	}
-	in_ptr->log = &debug_result;
-	in_ptr->size = (sizeof(struct smart_debug_result));
-
+	in_ptr->log = (void *)malloc(sizeof(struct nr_data));
+	memcpy(in_ptr->log, &nr, sizeof(struct nr_data));
+	in_ptr->size = (sizeof(struct nr_data));
 exit:
 	ISP_LOGI(":ISP: done %ld", rtn);
 	return rtn;

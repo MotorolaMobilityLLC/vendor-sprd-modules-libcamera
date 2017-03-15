@@ -109,20 +109,25 @@ struct smart_calc_result {
 	isp_u32 counts;
 };
 
-struct smart_debug_component{
-	uint32_t y_type;
-	uint32_t x_type;
-	int32_t fix_data[12];
-};
-
-struct smart_debug_block{
-	unsigned char block_name[100];
-	struct smart_debug_component component[4];
-	int component_num;
-};
-
-struct smart_debug_result{
-	struct smart_debug_block block_result[ISP_SMART_MAX];
+struct nr_data{
+	uint32_t PPI[3];
+	uint32_t BayerNR[3];
+	uint32_t RGB_DITHER[3];
+	uint32_t BPC[3];
+	uint32_t GRGB[3];
+	uint32_t CFAE[3];
+	uint32_t RGB_AFM[3];
+	uint32_t UVDIV[3];
+	uint32_t DNR3_PRE[3];
+	uint32_t DNR3_CAP[3];
+	uint32_t EDGE[3];
+	uint32_t YUV_PRECDN[3];
+	uint32_t YNR[3];
+	uint32_t UVCDN[3];
+	uint32_t POSTCDN[3];
+	uint32_t IIRCNR_IIR[3];
+	uint32_t IIR_YRANDOM[3];
+	uint32_t YUV_NOISEFILTER[3];
 };
 
 int32_t smart_ctl_ioctl(smart_handle_t handle, uint32_t cmd, void *param, void *result);
