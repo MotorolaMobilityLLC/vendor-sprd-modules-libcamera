@@ -60,7 +60,7 @@ struct pdaf_ctrl_msg_ctrl {
 };
 
 
-static af_set_pdinfo(void* handle, struct pd_result* in_param)
+static cmr_u32 af_set_pdinfo(void* handle, struct pd_result* in_param)
 {
 	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context*)handle;
 
@@ -266,7 +266,7 @@ static cmr_int pdafctrl_init_adapt(struct pdafctrl_context *cxt, struct pdaf_ctr
 	}
 
 exit:
-	ISP_LOGI(":ISP:done ret = %d", ret);
+	ISP_LOGI(":ISP:done ret = %ld", ret);
 	return ret;
 }
 
@@ -330,7 +330,7 @@ cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in *in,
 		goto error_adpt_init;
 	}
 sucess_exit:
-	ISP_LOGI(":ISP: done ret=%d",ret);
+	ISP_LOGI(":ISP: done ret=%ld",ret);
 	*handle = (cmr_handle) cxt;
 	return ret;
 error_adpt_init:
