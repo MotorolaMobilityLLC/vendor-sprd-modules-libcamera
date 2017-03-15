@@ -388,7 +388,8 @@ static int32_t ae_info_print(struct ae_ctrl_cxt *cxt)
 		AE_LOGV("work mod %d   scene mod %d\r\n", cxt->cur_status.settings.work_mode, cxt->cur_status.settings.scene_mode);
 
 		AE_LOGV("metering:%d\r\n", cxt->cur_status.settings.metering_mode);
-	}
+	} else
+		UNUSED(cxt);
 	return rtn;
 }
 
@@ -3045,7 +3046,7 @@ int32_t ae_sprd_calculation(void* handle, void* param, void* result)
 	return rtn;
 }
 
-int32_t ae_sprd_io_ctrl(void *handle, enum ae_io_ctrl_cmd cmd, void *param, void *result)
+int32_t ae_sprd_io_ctrl(void *handle, int32_t cmd, void *param, void *result)
 {
 	int32_t rtn = AE_SUCCESS;
 	struct ae_ctrl_cxt *cxt = NULL;

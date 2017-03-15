@@ -131,9 +131,10 @@ struct af_lib_fun {
 			void *awb_result,
 			void *bv,
 			void *rgb_statistics);
+
 	int32_t (*af_ioctrl_thread_msg_send)(isp_ctrl_context* handle,
-			struct ae_calc_out* ae_result,
-			struct cmr_msg* msg);
+			struct ae_calc_out* ae_result,struct cmr_msg* msg);
+
 	int32_t (*sft_af_ioctrl_set_fd_update)(isp_handle isp_handler,
 			void* param_ptr, int(*call_back)());
 	int32_t (*af_image_data_update)(isp_ctrl_context* handle);

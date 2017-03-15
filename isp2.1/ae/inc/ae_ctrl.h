@@ -23,7 +23,6 @@
 #include "ae_ctrl_types.h"
 #include "isp_pm.h"
 #include "isp_drv.h"
-#include "lib_ctrl.h"
 #include "isp_adpt.h"
 #include "sensor_drv_u.h"
 #include "awb_ctrl.h"

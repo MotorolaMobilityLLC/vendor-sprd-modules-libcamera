@@ -39,7 +39,7 @@ struct ae_in_out {
 void* ae_sprd_init(void* in_param, void *out_param);
 int32_t ae_sprd_deinit(void *handler, void *in_param, void *out_param);
 int32_t ae_sprd_calculation(void *handler, void* in_param, void* out_param);
-int32_t ae_sprd_io_ctrl(void *handler, enum ae_io_ctrl_cmd cmd, void *in_param, void *out_param);
+int32_t ae_sprd_io_ctrl(void *handler, int32_t cmd, void *in_param, void *out_param);
 /**----------------------------------------------------------------------------*
 **					Compiler Flag				**
 **----------------------------------------------------------------------------*/

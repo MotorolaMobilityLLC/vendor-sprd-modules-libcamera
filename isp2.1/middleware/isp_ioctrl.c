@@ -16,6 +16,7 @@
 
 #define LOG_TAG "isp_ioctrl"
 
+#include "lib_ctrl.h"
 #include "isp_ioctrl.h"
 #include "smart_ctrl.h"
 #include "isp_drv.h"
