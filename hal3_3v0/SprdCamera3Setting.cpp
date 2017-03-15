@@ -86,7 +86,7 @@ typedef struct
 	uint8_t availableAmModes[4];
 	uint8_t avail_awb_modes[9];
 	uint8_t availableAeModes[5];
-	uint8_t availableSlowMotion[4];
+	uint8_t availableSlowMotion[3];
 	int32_t max_output_streams[3];
 	uint8_t availableBrightNess[7];
 	uint8_t availableIso[7];
