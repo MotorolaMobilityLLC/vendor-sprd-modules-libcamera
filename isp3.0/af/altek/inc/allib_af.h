@@ -12,14 +12,21 @@
 
 #include "mtype.h"
 
-#define ALAF_EXIF_INFO_SIZE (379)
-#define ALAF_DEBUG_INFO_SIZE (7168)
+#define ALAF_EXIF_INFO_SIZE (2060)
+#define ALAF_DEBUG_INFO_SIZE (15500)
 #define ALAF_MAX_STATS_ROI_NUM (5)
-#define MAX_AF_DEBUG_DATA_SIZE (7168)
 #define MAX_STATS_COLUMN_NUM (16)
 #define MAX_STATS_ROW_NUM (9)
 #define ALAF_MAX_STATS_NUM (MAX_STATS_COLUMN_NUM*MAX_STATS_ROW_NUM)
 #define ALAF_MAX_ZONE (9)
+
+//#define NEW_AF_ALGORITHM
+#ifdef NEW_AF_ALGORITHM
+/// ALTEK_MODIFIED >>>
+#define ALAF_MAX_HIST_NUM (256)
+/// ALTEK_MODIFIED <<<
+#endif /* NEW_AF_ALGORITHM */
+
 //#define IIR_PARAM_ENABLE
 
 /*
@@ -504,6 +511,54 @@ struct allib_af_input_gravity_vector_t {
 };
 #pragma pack(pop)
 
+#ifdef NEW_AF_ALGORITHM
+/// ALTEK_MODIFIED >>>
+#pragma pack(push, 4)
+enum allib_af_process_type {
+	alAFLIB_PROCESS_UNKNOWN,
+	alAFLIB_PROCESS_FV,
+	alAFLIB_PROCESS_YHIST,
+	alAFLIB_PROCESS_MAX
+};
+#pragma pack(pop)
+
+#pragma pack(push, 4)
+struct allib_af_hw_fv_t {
+	uint16 af_token_id;
+	uint16 curr_frame_id;
+	uint32 hw3a_frame_id;
+	uint8  valid_column_num;
+	uint8  valid_row_num;
+	struct allib_af_time_stamp_t time_stamp;
+	uint32 fv_hor[ALAF_MAX_STATS_NUM];
+	uint32 fv_ver[ALAF_MAX_STATS_NUM];
+	uint64 filter_value1[ALAF_MAX_STATS_NUM];
+	uint64 filter_value2[ALAF_MAX_STATS_NUM];
+	uint64 y_factor[ALAF_MAX_STATS_NUM];
+	uint32 cnt_hor[ALAF_MAX_STATS_NUM];
+	uint32 cnt_ver[ALAF_MAX_STATS_NUM];
+};
+#pragma pack(pop)
+
+#pragma pack(push, 4)
+struct allib_af_yhist_t {
+	uint32 ustructuresize;		/* here for confirmation */
+	/* Common info */
+	uint32 umagicnum;
+	uint16 uhwengineid;
+	uint16 uframeidx;			/* HW3a_frame_idx */
+	/* yhist info */
+	uint16 u_yhist_tokenid;
+	uint32 u_yhist_statssize;
+	/* framework time/frame idx info */
+	struct allib_af_time_stamp_t systemtime;
+	uint32 udsys_sof_idx;
+	/* yhist stats */
+	uint8  b_is_stats_byaddr;			/* true: use addr to passing stats, flase: use array define */
+	uint32 hist_y[ALAF_MAX_HIST_NUM];	/* Y histogram accumulate pixel number */
+	void* pt_hist_y;					/* store stats Y, each element should be uint32, 256 elements */
+};
+#pragma pack(pop)  /* restore old alignment setting from stack */
 /*
  * the definition is depends on isp (hw3a), please confirm the value defined if isp changed
  * ALAF_MAX_STATS_NUM:	corresponds to hw3a definition (AL_MAX_AF_STATS_NUM)
@@ -526,6 +581,17 @@ struct allib_af_input_gravity_vector_t {
  */
 #pragma pack(push, 4)
 struct allib_af_hw_stats_t {
+	enum allib_af_process_type type;
+	union {
+		struct allib_af_hw_fv_t hw_fv;
+		struct allib_af_yhist_t y_hist;
+	};
+};
+#pragma pack(pop)
+/// ALTEK_MODIFIED <<<
+#else
+#pragma pack(push, 4)
+struct allib_af_hw_stats_t {
 	uint16 af_token_id;
 	uint16 curr_frame_id;
 	uint32 hw3a_frame_id;
@@ -541,7 +607,7 @@ struct allib_af_hw_stats_t {
 	uint32 cnt_ver[ALAF_MAX_STATS_NUM];
 };
 #pragma pack(pop)
-
+#endif /* NEW_AF_ALGORITHM */
 /*
  * allib_af_input_hwaf_info_t
  * hw_stats_ready:        af_stats data from hw is ready

@@ -20,6 +20,13 @@
  */
 uint32 al3awrapper_dispatchhw3a_afstats(void *isp_meta_data,void *alaf_stats);
 
+//#define NEW_AF_ALGORITHM
+#ifdef NEW_AF_ALGORITHM
+/// ALTEK_MODIFIED >>>
+uint32 al3awrapper_dispatchhw3a_yhist(void *isp_yhist,void *alaf_yhist);
+/// ALTEK_MODIFIED <<<
+#endif /* NEW_AF_ALGORITHM */
+
 /*
  * API name: al3awrapperaf_translatefocusmodetoaptype
  * This API used for translating AF lib focus mode define to framework
@@ -71,6 +78,19 @@ uint32 al3awrapperaf_translateaeinfotoaflibtype(struct ae_report_update_t *ae_re
  * return: error code
  */
 uint32 al3awrapperaf_updateispconfig_af(struct allib_af_out_stats_config_t *lib_config,struct alhw3a_af_cfginfo_t *isp_config);
+
+#ifdef NEW_AF_ALGORITHM
+/// ALTEK_MODIFIED >>>
+/*
+ * API name: al3awrapperaf_updateispconfig_yhis
+ * This API is used for translate ISP config
+ * param lib_config[in]: AF stats config info from AF lib
+ * param isp_config[out]: input buffer, API would manage parameter and return via this pointer
+ * return: error code
+ */
+uint32 al3awrapperaf_updateispconfig_yhis(struct allib_af_out_stats_config_t *lib_config, struct alhw3a_yhist_cfginfo_t *isp_config);
+/// ALTEK_MODIFIED <<<
+#endif /* NEW_AF_ALGORITHM */
 
 /*
  * API name: al3awrapperaf_GetDefaultCfg

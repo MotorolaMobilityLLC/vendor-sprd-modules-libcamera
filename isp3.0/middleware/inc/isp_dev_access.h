@@ -157,6 +157,7 @@ cmr_int isp_dev_access_set_tuning_bin(cmr_handle isp_dev_handle, union isp_dev_c
 cmr_int isp_dev_access_cfg_af_param(cmr_handle isp_dev_handle, struct isp3a_af_hw_cfg *data);
 cmr_int isp_dev_access_cfg_iso_speed(cmr_handle isp_dev_handle, cmr_u32 *data);
 cmr_int isp_dev_access_get_exif_debug_info(cmr_handle isp_dev_handle, struct debug_info1 *exif_info);
+cmr_int isp_dev_access_get_img_exif_debug_info(cmr_handle isp_dev_handle, struct debug_info1 *exif_info);
 cmr_int isp_dev_access_set_cfg_otp_info(cmr_handle isp_dev_handle, struct isp_iq_otp_info *data);
 cmr_int isp_dev_access_get_debug_info(cmr_handle isp_dev_handle, struct debug_info2 *debug_info);
 cmr_int isp_dev_access_cfg_sof_info(isp_handle handle, struct isp_sof_cfg_info *data);

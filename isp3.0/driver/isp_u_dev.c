@@ -2303,22 +2303,61 @@ cmr_int isp_dev_get_iq_param(isp_handle handle, struct debug_info1 *info1, struc
 	}
 
 	if (info1) {
-		memcpy((void *)&info1->raw_debug_info1, &param.iq_info_1.tRawInfo, sizeof(struct raw_img_debug));
-		memcpy((void *)&info1->shading_debug_info1, &param.iq_info_1.tShadingInfo, sizeof(struct shading_debug));
-		memcpy((void *)&info1->irp_tuning_para_debug_info1, &param.iq_info_1.tIrpInfo, sizeof(struct irp_tuning_debug));
-		memcpy((void *)&info1->sw_debug1, &param.iq_info_1.tSWInfo, sizeof(struct isp_sw_debug));
+		memcpy((void *)&info1->raw_debug_info1, &param.iq_info_1.raw_info, sizeof(struct raw_img_debug));
+		memcpy((void *)&info1->shading_debug_info1, &param.iq_info_1.shading_info, sizeof(struct shading_debug));
+		memcpy((void *)&info1->irp_tuning_para_debug_info1, &param.iq_info_1.irp_info, sizeof(struct irp_tuning_debug));
+		memcpy((void *)&info1->sw_debug1, &param.iq_info_1.sw_info, sizeof(struct isp_sw_debug));
 	}
 	if (info2) {
 		memcpy((void *)&info2->irp_tuning_para_debug_info2, &param.iq_info_2.tGammaTone, sizeof(struct irp_gamma_tone));
 	}
 
 	ISP_LOGV("%d %d %d %d %d %d\n",
-		param.iq_info_1.tRawInfo.uwWidth,
-		param.iq_info_1.tRawInfo.uwHeight,
-		param.iq_info_1.tRawInfo.ucFormat,
-		param.iq_info_1.tRawInfo.ucBitNumber,
-		param.iq_info_1.tRawInfo.ucMirrorFlip,
-		param.iq_info_1.tRawInfo.nColorOrder);
+		param.iq_info_1.raw_info.width,
+		param.iq_info_1.raw_info.height,
+		param.iq_info_1.raw_info.format,
+		param.iq_info_1.raw_info.bit_number,
+		param.iq_info_1.raw_info.mirror_flip,
+		param.iq_info_1.raw_info.n_color_order);
+
+	return ret;
+}
+
+cmr_int isp_dev_get_img_iq_param(isp_handle handle, struct debug_info1 *info1, struct debug_info2 *info2)
+{
+	cmr_int ret = 0;
+	struct isp_file *file = NULL;
+	struct altek_iq_info param;
+
+	if (!handle) {
+		ISP_LOGE("handle is null error.");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+
+	ret = ioctl(file->fd, ISP_IO_GET_IMG_IQ_PARAM, &param);
+	if (ret) {
+		ISP_LOGE("ioctl error.");
+	}
+
+	if (info1) {
+		memcpy((void *)&info1->raw_debug_info1, &param.iq_info_1.raw_info, sizeof(struct raw_img_debug));
+		memcpy((void *)&info1->shading_debug_info1, &param.iq_info_1.shading_info, sizeof(struct shading_debug));
+		memcpy((void *)&info1->irp_tuning_para_debug_info1, &param.iq_info_1.irp_info, sizeof(struct irp_tuning_debug));
+		memcpy((void *)&info1->sw_debug1, &param.iq_info_1.sw_info, sizeof(struct isp_sw_debug));
+	}
+	if (info2) {
+		memcpy((void *)&info2->irp_tuning_para_debug_info2, &param.iq_info_2.tGammaTone, sizeof(struct irp_gamma_tone));
+	}
+
+	ISP_LOGV("%d %d %d %d %d %d\n",
+		param.iq_info_1.raw_info.width,
+		param.iq_info_1.raw_info.height,
+		param.iq_info_1.raw_info.format,
+		param.iq_info_1.raw_info.bit_number,
+		param.iq_info_1.raw_info.mirror_flip,
+		param.iq_info_1.raw_info.n_color_order);
 
 	return ret;
 }

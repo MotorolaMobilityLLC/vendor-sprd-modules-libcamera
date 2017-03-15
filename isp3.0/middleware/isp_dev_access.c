@@ -1569,6 +1569,17 @@ cmr_int isp_dev_access_get_exif_debug_info(cmr_handle isp_dev_handle, struct deb
 	return ret;
 }
 
+cmr_int isp_dev_access_get_img_exif_debug_info(cmr_handle isp_dev_handle, struct debug_info1 *exif_info)
+{
+	cmr_int                                ret = ISP_SUCCESS;
+	struct isp_dev_access_context          *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+
+	ret = isp_dev_get_img_iq_param(cxt->isp_driver_handle, exif_info, NULL);
+
+	ISP_LOGV("done %ld", ret);
+	return ret;
+}
+
 cmr_int isp_dev_access_set_cfg_otp_info(cmr_handle isp_dev_handle, struct isp_iq_otp_info *data)
 {
 	cmr_int                                ret = ISP_SUCCESS;

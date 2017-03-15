@@ -157,8 +157,16 @@ uint32 al3awrapper_dispatchhw3a_afstats(void *isp_meta_data,void *alaf_stats)
 	if (banks > MAX_STATS_ROW_NUM)
 		banks = MAX_STATS_ROW_NUM;
 
+#ifdef NEW_AF_ALGORITHM
+/// ALTEK_MODIFIED >>>
+	p_patched_stats->hw_fv.valid_column_num = blocks;
+	p_patched_stats->hw_fv.valid_row_num = banks;
+/// ALTEK_MODIFIED <<<
+#else
 	p_patched_stats->valid_column_num = blocks;
 	p_patched_stats->valid_row_num = banks;
+#endif /* NEW_AF_ALGORITHM */
+
 	index = 0;
 
 	WRAP_LOG("uhwengineid: %d", p_meta_data_af->uhwengineid);
@@ -189,26 +197,69 @@ uint32 al3awrapper_dispatchhw3a_afstats(void *isp_meta_data,void *alaf_stats)
 				p_patched_stats->fv_hor[index] = stats_addr_32[5];
 				p_patched_stats->fv_ver[index] = stats_addr_32[4];
 #else
+#ifdef NEW_AF_ALGORITHM
 				udoffset = 4;
-				p_patched_stats->cnt_hor[index] = ( add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24) );
+/// ALTEK_MODIFIED >>>
+				p_patched_stats->hw_fv.cnt_hor[index] = (add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24));
+/// ALTEK_MODIFIED <<<
 
 				udoffset = 0;
-				p_patched_stats->cnt_ver[index] = ( add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24) );
+/// ALTEK_MODIFIED >>>
+				p_patched_stats->hw_fv.cnt_ver[index] = (add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24));
+/// ALTEK_MODIFIED <<<
 
 				udoffset = 3 * 8;
-				p_patched_stats->filter_value1[index] = ( (uint64)(add_stat_64[udoffset]) + ((uint64)(add_stat_64[udoffset+1])<<8) + ((uint64)(add_stat_64[udoffset+2])<<16) + ((uint64)(add_stat_64[udoffset+3])<<24) +
-				                                        ((uint64)(add_stat_64[udoffset+4])<<32) + ((uint64)(add_stat_64[udoffset+5])<<40) + ((uint64)(add_stat_64[udoffset+6])<<48) + ((uint64)(add_stat_64[udoffset+7])<<56) );
+/// ALTEK_MODIFIED >>>
+				p_patched_stats->hw_fv.filter_value1[index] = ((uint64)(add_stat_64[udoffset]) + ((uint64)(add_stat_64[udoffset+1])<<8) + ((uint64)(add_stat_64[udoffset+2])<<16) + ((uint64)(add_stat_64[udoffset+3])<<24) +
+				        ((uint64)(add_stat_64[udoffset+4])<<32) + ((uint64)(add_stat_64[udoffset+5])<<40) + ((uint64)(add_stat_64[udoffset+6])<<48) + ((uint64)(add_stat_64[udoffset+7])<<56));
+/// ALTEK_MODIFIED <<<
+
 				udoffset = 4 * 8;
-				p_patched_stats->filter_value2[index] = ( (uint64)(add_stat_64[udoffset]) + ((uint64)(add_stat_64[udoffset+1])<<8) + ((uint64)(add_stat_64[udoffset+2])<<16) + ((uint64)(add_stat_64[udoffset+3])<<24) +
-				                                        ((uint64)(add_stat_64[udoffset+4])<<32) + ((uint64)(add_stat_64[udoffset+5])<<40) + ((uint64)(add_stat_64[udoffset+6])<<48) + ((uint64)(add_stat_64[udoffset+7])<<56) );
+/// ALTEK_MODIFIED >>>
+				p_patched_stats->hw_fv.filter_value2[index] = ((uint64)(add_stat_64[udoffset]) + ((uint64)(add_stat_64[udoffset+1])<<8) + ((uint64)(add_stat_64[udoffset+2])<<16) + ((uint64)(add_stat_64[udoffset+3])<<24) +
+				        ((uint64)(add_stat_64[udoffset+4])<<32) + ((uint64)(add_stat_64[udoffset+5])<<40) + ((uint64)(add_stat_64[udoffset+6])<<48) + ((uint64)(add_stat_64[udoffset+7])<<56));
+/// ALTEK_MODIFIED <<<
+
 				udoffset = 1 * 8;
-				p_patched_stats->y_factor[index] = ( (uint64)(add_stat_64[udoffset]) + ((uint64)(add_stat_64[udoffset+1])<<8) + ((uint64)(add_stat_64[udoffset+2])<<16) + ((uint64)(add_stat_64[udoffset+3])<<24) +
-				                                     ((uint64)(add_stat_64[udoffset+4])<<32) + ((uint64)(add_stat_64[udoffset+5])<<40) + ((uint64)(add_stat_64[udoffset+6])<<48) + ((uint64)(add_stat_64[udoffset+7])<<56) );
+/// ALTEK_MODIFIED >>>
+				p_patched_stats->hw_fv.y_factor[index] = ((uint64)(add_stat_64[udoffset]) + ((uint64)(add_stat_64[udoffset+1])<<8) + ((uint64)(add_stat_64[udoffset+2])<<16) + ((uint64)(add_stat_64[udoffset+3])<<24) +
+				        ((uint64)(add_stat_64[udoffset+4])<<32) + ((uint64)(add_stat_64[udoffset+5])<<40) + ((uint64)(add_stat_64[udoffset+6])<<48) + ((uint64)(add_stat_64[udoffset+7])<<56));
+/// ALTEK_MODIFIED <<<
+
 				udoffset = 5 * 4;
-				p_patched_stats->fv_hor[index] = ( add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24) );
+/// ALTEK_MODIFIED >>>
+				p_patched_stats->hw_fv.fv_hor[index] = (add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24));
+/// ALTEK_MODIFIED <<<
 
 				udoffset = 4 * 4;
-				p_patched_stats->fv_ver[index] = ( add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24) );
+/// ALTEK_MODIFIED >>>
+				p_patched_stats->hw_fv.fv_ver[index] = (add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24));
+/// ALTEK_MODIFIED <<<
+#else
+				udoffset = 4;
+				p_patched_stats->cnt_hor[index] = (add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24));
+
+				udoffset = 0;
+				p_patched_stats->cnt_ver[index] = (add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24));
+
+				udoffset = 3 * 8;
+				p_patched_stats->filter_value1[index] = ((uint64)(add_stat_64[udoffset]) + ((uint64)(add_stat_64[udoffset+1])<<8) + ((uint64)(add_stat_64[udoffset+2])<<16) + ((uint64)(add_stat_64[udoffset+3])<<24) +
+				                                        ((uint64)(add_stat_64[udoffset+4])<<32) + ((uint64)(add_stat_64[udoffset+5])<<40) + ((uint64)(add_stat_64[udoffset+6])<<48) + ((uint64)(add_stat_64[udoffset+7])<<56));
+
+				udoffset = 4 * 8;
+				p_patched_stats->filter_value2[index] = ((uint64)(add_stat_64[udoffset]) + ((uint64)(add_stat_64[udoffset+1])<<8) + ((uint64)(add_stat_64[udoffset+2])<<16) + ((uint64)(add_stat_64[udoffset+3])<<24) +
+				                                        ((uint64)(add_stat_64[udoffset+4])<<32) + ((uint64)(add_stat_64[udoffset+5])<<40) + ((uint64)(add_stat_64[udoffset+6])<<48) + ((uint64)(add_stat_64[udoffset+7])<<56));
+
+				udoffset = 1 * 8;
+				p_patched_stats->y_factor[index] = ((uint64)(add_stat_64[udoffset]) + ((uint64)(add_stat_64[udoffset+1])<<8) + ((uint64)(add_stat_64[udoffset+2])<<16) + ((uint64)(add_stat_64[udoffset+3])<<24) +
+				                                    ((uint64)(add_stat_64[udoffset+4])<<32) + ((uint64)(add_stat_64[udoffset+5])<<40) + ((uint64)(add_stat_64[udoffset+6])<<48) + ((uint64)(add_stat_64[udoffset+7])<<56));
+
+				udoffset = 5 * 4;
+				p_patched_stats->fv_hor[index] = (add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24));
+
+				udoffset = 4 * 4;
+				p_patched_stats->fv_ver[index] = (add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24));
+#endif /* NEW_AF_ALGORITHM */
 #endif
 				/*40 Bytes(HW3A AF Block Size) = 10 * uint32(4 Bytes)*/
 				stats_addr_32 += 10;
@@ -218,7 +269,13 @@ uint32 al3awrapper_dispatchhw3a_afstats(void *isp_meta_data,void *alaf_stats)
 				add_stat_32 += 40;
 				add_stat_64 += 40;
 
+#ifdef NEW_AF_ALGORITHM
+/// ALTEK_MODIFIED >>>
+				WRAP_LOG("fv_hor[%d]: %d", index, p_patched_stats->hw_fv.fv_hor[index]);
+/// ALTEK_MODIFIED <<<
+#else
 				WRAP_LOG("fv_hor[%d]: %d", index, p_patched_stats->fv_hor[index]);
+#endif /* NEW_AF_ALGORITHM */
 			}
 		}
 	} else if(AL3A_HW3A_DEV_ID_B_0 == p_meta_data_af->uhwengineid) {
@@ -237,31 +294,69 @@ uint32 al3awrapper_dispatchhw3a_afstats(void *isp_meta_data,void *alaf_stats)
 				p_patched_stats->fv_hor[index] = stats_addr_32[4];
 				p_patched_stats->fv_ver[index] = stats_addr_32[3];
 #else
+#ifdef NEW_AF_ALGORITHM
 				udoffset = 4;
-				p_patched_stats->cnt_hor[index] = ( add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24) );
+/// ALTEK_MODIFIED >>>
+				p_patched_stats->hw_fv.cnt_hor[index] = (add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24));
+/// ALTEK_MODIFIED <<<
 
 				udoffset = 0;
-				p_patched_stats->cnt_ver[index] = ( add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24) );
+/// ALTEK_MODIFIED >>>
+				p_patched_stats->hw_fv.cnt_ver[index] = (add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24));
+/// ALTEK_MODIFIED <<<
+
+/// ALTEK_MODIFIED >>>
+				p_patched_stats->hw_fv.filter_value1[index] = 0;
+
+				p_patched_stats->hw_fv.filter_value2[index] = 0;
+/// ALTEK_MODIFIED <<<
+
+				udoffset = 2 * 4;
+/// ALTEK_MODIFIED >>>
+				p_patched_stats->hw_fv.y_factor[index] = (add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24));
+/// ALTEK_MODIFIED <<<
+
+				udoffset = 4 * 4;
+/// ALTEK_MODIFIED >>>
+				p_patched_stats->hw_fv.fv_hor[index] = (add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24));
+/// ALTEK_MODIFIED <<<
+
+				udoffset = 3 * 4;
+/// ALTEK_MODIFIED >>>
+				p_patched_stats->hw_fv.fv_ver[index] = (add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24));
+/// ALTEK_MODIFIED <<<
+#else
+				udoffset = 4;
+				p_patched_stats->cnt_hor[index] = (add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24));
+
+				udoffset = 0;
+				p_patched_stats->cnt_ver[index] = (add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24));
 
 				p_patched_stats->filter_value1[index] = 0;
-
 				p_patched_stats->filter_value2[index] = 0;
 
 				udoffset = 2 * 4;
-				p_patched_stats->y_factor[index] = ( add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24) );
+				p_patched_stats->y_factor[index] = (add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24));
 
 				udoffset = 4 * 4;
-				p_patched_stats->fv_hor[index] = ( add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24) );
+				p_patched_stats->fv_hor[index] = (add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24));
 
 				udoffset = 3 * 4;
-				p_patched_stats->fv_ver[index] = ( add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24) );
+				p_patched_stats->fv_ver[index] = (add_stat_32[udoffset] + (add_stat_32[udoffset+1]<<8) + (add_stat_32[udoffset+2]<<16) + (add_stat_32[udoffset+3]<<24));
+#endif /* NEW_AF_ALGORITHM */
 #endif
 				/*24 Bytes(HW3A AF Block Size) = 6 * uint32(4 Bytes)*/
 				stats_addr_32 += 6;
 
 				add_stat_32 += 24;
 
+#ifdef NEW_AF_ALGORITHM
+/// ALTEK_MODIFIED >>>
+				WRAP_LOG("fv_hor[%d]: %d", index, p_patched_stats->hw_fv.fv_hor[index]);
+/// ALTEK_MODIFIED <<<
+#else
 				WRAP_LOG("fv_hor[%d]: %d", index, p_patched_stats->fv_hor[index]);
+#endif /* NEW_AF_ALGORITHM */
 			}
 		}
 	} else {
@@ -269,12 +364,66 @@ uint32 al3awrapper_dispatchhw3a_afstats(void *isp_meta_data,void *alaf_stats)
 		return ERR_WRP_AF_INVALID_ENGINE;
 	}
 
+#ifdef NEW_AF_ALGORITHM
+/// ALTEK_MODIFIED >>>
+	p_patched_stats->hw_fv.af_token_id = p_meta_data_af->uaftokenid;
+	p_patched_stats->hw_fv.hw3a_frame_id = p_meta_data_af->uframeidx;
+	p_patched_stats->hw_fv.time_stamp.time_stamp_sec = p_meta_data_af->systemtime.tv_sec;
+	p_patched_stats->hw_fv.time_stamp.time_stamp_us = p_meta_data_af->systemtime.tv_usec;
+/// ALTEK_MODIFIED <<<
+#else
 	p_patched_stats->af_token_id = p_meta_data_af->uaftokenid;
 	p_patched_stats->hw3a_frame_id = p_meta_data_af->uframeidx;
 	p_patched_stats->time_stamp.time_stamp_sec = p_meta_data_af->systemtime.tv_sec;
 	p_patched_stats->time_stamp.time_stamp_us = p_meta_data_af->systemtime.tv_usec;
+#endif
+
 	return ERR_WPR_AF_SUCCESS;
 }
+
+#ifdef NEW_AF_ALGORITHM
+/// ALTEK_MODIFIED >>>
+uint32 al3awrapper_dispatchhw3a_yhist(void *isp_yhist,void *alaf_yhist)
+{
+	uint32 ret = ERR_WPR_AF_SUCCESS;
+	struct al3awrapper_stats_yhist_t *p_yhist;
+	struct allib_af_hw_stats_t *p_patched_stats;
+
+	/* check input parameter validity*/
+	if (isp_yhist == NULL) {
+		WRAP_LOG("ERR_WRP_AF_EMPTY_METADATA");
+		return ERR_WRP_AF_EMPTY_METADATA;
+	}
+
+	if (alaf_yhist == NULL) {
+		WRAP_LOG("ERR_WRP_AF_INVALID_INPUT_PARAM");
+		return ERR_WRP_AF_INVALID_INPUT_PARAM;
+	}
+
+	p_yhist = (struct al3awrapper_stats_yhist_t *)isp_yhist;
+	p_patched_stats = (struct allib_af_hw_stats_t *)alaf_yhist;
+
+	p_patched_stats->y_hist.b_is_stats_byaddr = p_yhist->b_is_stats_byaddr;
+	p_patched_stats->y_hist.ustructuresize = p_yhist->ustructuresize;
+	p_patched_stats->y_hist.umagicnum = p_yhist->umagicnum;
+	p_patched_stats->y_hist.uhwengineid = p_yhist->uhwengineid;
+	p_patched_stats->y_hist.uframeidx = p_yhist->uframeidx;
+	p_patched_stats->y_hist.u_yhist_tokenid = p_yhist->u_yhist_tokenid;
+	p_patched_stats->y_hist.u_yhist_statssize = p_yhist->u_yhist_statssize;
+	p_patched_stats->y_hist.systemtime.time_stamp_sec = p_yhist->systemtime.tv_sec;
+	p_patched_stats->y_hist.systemtime.time_stamp_us = p_yhist->systemtime.tv_usec;
+	p_patched_stats->y_hist.udsys_sof_idx = p_yhist->udsys_sof_idx;
+
+	/* switched by stats addr or fix array */
+	if ( p_patched_stats->y_hist.b_is_stats_byaddr ) {
+		p_patched_stats->y_hist.pt_hist_y = p_yhist->pt_hist_y;
+	} else
+		memcpy(p_patched_stats->y_hist.hist_y, p_yhist->hist_y, sizeof(p_yhist->hist_y));
+
+	return ERR_WPR_AF_SUCCESS;
+}
+/// ALTEK_MODIFIED <<<
+#endif /* NEW_AF_ALGORITHM */
 
 /*
  * API name: al3awrapperaf_translatefocusmodetoaptype
@@ -566,6 +715,64 @@ uint32 al3awrapperaf_updateispconfig_af(struct allib_af_out_stats_config_t *lib_
 
 	return ret;
 }
+
+#ifdef NEW_AF_ALGORITHM
+/// ALTEK_MODIFIED >>>
+/*
+ * API name: al3awrapperaf_updateispconfig_yhis
+ * This API is used for translate ISP config
+ * param lib_config[in]: AF stats config info from AF lib
+ * param isp_config[out]: input buffer, API would manage parameter and return via this pointer
+ * return: error code
+ */
+uint32 al3awrapperaf_updateispconfig_yhis(struct allib_af_out_stats_config_t *lib_config, struct alhw3a_yhist_cfginfo_t *isp_config)
+{
+	uint32 ret = ERR_WPR_AF_SUCCESS;
+	uint32 udTemp = 0;
+	WRAP_LOG("al3awrapperaf_updateispconfig_yhis start ID: %d", lib_config->token_id);
+
+	isp_config->tokenid = lib_config->token_id;
+
+	isp_config->tyhistregion.uwblknumx = lib_config->num_blk_hor;
+	WRAP_LOG("uwblknumx: %u", isp_config->tyhistregion.uwblknumx);
+
+	isp_config->tyhistregion.uwblknumy = lib_config->num_blk_ver;
+	WRAP_LOG("uwblknumy: %u", isp_config->tyhistregion.uwblknumy);
+
+	if (0 == lib_config->src_img_sz.uw_width)
+		return ERR_WRP_AF_ZERO_SRC_IMG_WIDTH;
+
+	if (0 == lib_config->src_img_sz.uw_height)
+		return ERR_WRP_AF_ZERO_SRC_IMG_HEIGHT;
+
+	udTemp = 100 * ((uint32)(lib_config->roi.uw_dx)) / ((uint32)(lib_config->src_img_sz.uw_width));
+	WRAP_LOG("uw_dx: %u, uw_width: %u", lib_config->roi.uw_dx, lib_config->src_img_sz.uw_width);
+
+	isp_config->tyhistregion.uwborderratiox = (uint16)udTemp;
+	WRAP_LOG("uwborderratiox: %u", isp_config->tyhistregion.uwborderratiox);
+
+	udTemp = 100 * ((uint32)(lib_config->roi.uw_dy)) / ((uint32)(lib_config->src_img_sz.uw_height));
+	WRAP_LOG("uw_dy: %u, uw_height: %u", lib_config->roi.uw_dy, lib_config->src_img_sz.uw_height);
+
+	isp_config->tyhistregion.uwborderratioy = (uint16)udTemp;
+	WRAP_LOG("uwborderratioy: %u", isp_config->tyhistregion.uwborderratioy);
+
+	udTemp = 100 * ((uint32)(lib_config->roi.uw_left)) / ((uint32)(lib_config->src_img_sz.uw_width));
+	WRAP_LOG("uw_left: %u, uw_width: %u", lib_config->roi.uw_left, lib_config->src_img_sz.uw_width);
+
+	isp_config->tyhistregion.uwoffsetratiox = (uint16)udTemp;
+	WRAP_LOG("uwoffsetratiox: %u", isp_config->tyhistregion.uwoffsetratiox);
+
+	udTemp = 100 * ((uint32)(lib_config->roi.uw_top)) / ((uint32)(lib_config->src_img_sz.uw_height));
+	WRAP_LOG("uw_top: %u, uw_height: %u", lib_config->roi.uw_top, lib_config->src_img_sz.uw_height);
+
+	isp_config->tyhistregion.uwoffsetratioy = (uint16)udTemp;
+	WRAP_LOG("uwoffsetratioy: %u", isp_config->tyhistregion.uwoffsetratioy);
+
+	return ret;
+}
+/// ALTEK_MODIFIED <<<
+#endif /* NEW_AF_ALGORITHM */
 
 /*
  * API name: al3awrapper_updateafreport

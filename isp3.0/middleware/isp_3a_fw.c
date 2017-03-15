@@ -2623,10 +2623,10 @@ cmr_int isp3a_get_info(cmr_handle isp_3a_handle, void *param_ptr)
 		otp_info->current_module_year = cxt->single_otp_data->module_info.year;
 		otp_info->current_module_month = cxt->single_otp_data->module_info.month;
 		otp_info->current_module_day = cxt->single_otp_data->module_info.day;
-		otp_info->current_module_mid = cxt->single_otp_data->module_info.mid;
+		otp_info->current_module_module_house_id = cxt->single_otp_data->module_info.mid;
 		otp_info->current_module_lens_id = cxt->single_otp_data->module_info.lens_id;
 		otp_info->current_module_vcm_id = cxt->single_otp_data->module_info.vcm_id;
-		otp_info->current_module_driver_ic = cxt->single_otp_data->module_info.driver_ic_id;
+		otp_info->current_module_driver_ic_id = cxt->single_otp_data->module_info.driver_ic_id;
 		otp_info->current_module_iso = cxt->single_otp_data->iso_awb_info.iso;
 		otp_info->current_module_r_gain = cxt->single_otp_data->iso_awb_info.gain_r;
 		otp_info->current_module_g_gain = cxt->single_otp_data->iso_awb_info.gain_g;
@@ -3111,8 +3111,8 @@ cmr_int isp3a_set_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr)
 			}
 		}
 	} else {
-		//exif_ptr->other_debug_info1.mirror = exif_info_ptr->ex_jpg_exif.mirror;
-		//exif_ptr->other_debug_info1.orientation = exif_info_ptr->ex_jpg_exif.orientation / 90 - 1;
+		exif_ptr->other_debug_info1.mirror = exif_info_ptr->ex_jpg_exif.mirror;
+		exif_ptr->other_debug_info1.orientation = (exif_info_ptr->ex_jpg_exif.orientation / 90 + 3) % 4;
 	}
 
 	return ret;
@@ -3136,7 +3136,7 @@ cmr_int isp3a_get_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr)
 	strcpy((char *)&exif_ptr->string1[0], "exif_str_g2v1");
 	strcpy((char *)&exif_ptr->end_string[0], "end_exif_str_g2v1");
 	exif_ptr->other_debug_info1.focal_length = cxt->ex_info.focal_length;
-	strcpy((char *)&exif_ptr->project_name[0], "whale2");
+	//strcpy((char *)&exif_ptr->project_name[0], "whale2");
 	exif_ptr->struct_version = DEBUG_STRUCT_VERSION;
 //	exif_ptr->isp_ver_major =       //from isp drv
 //	exif_ptr->isp_ver_minor =
@@ -3150,7 +3150,7 @@ cmr_int isp3a_get_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr)
 		exif_ptr->otp_report_debug_info1.current_module_year = cxt->single_otp_data->module_info.year;
 		exif_ptr->otp_report_debug_info1.current_module_month = cxt->single_otp_data->module_info.month;
 		exif_ptr->otp_report_debug_info1.current_module_day = cxt->single_otp_data->module_info.day;
-		exif_ptr->otp_report_debug_info1.current_module_mid = cxt->single_otp_data->module_info.mid;
+		exif_ptr->otp_report_debug_info1.current_module_module_house_id = cxt->single_otp_data->module_info.mid;
 		exif_ptr->otp_report_debug_info1.current_module_lens_id = cxt->single_otp_data->module_info.lens_id;
 		exif_ptr->otp_report_debug_info1.current_module_vcm_id = cxt->single_otp_data->module_info.vcm_id;
 		exif_ptr->otp_report_debug_info1.current_module_driver_ic = cxt->single_otp_data->module_info.driver_ic_id;
@@ -3174,7 +3174,7 @@ cmr_int isp3a_get_exif_debug_info(cmr_handle isp_3a_handle, void *param_ptr)
 		exif_ptr->otp_report_debug_info1.current_module_b_gain = cxt->bin_cxt.bin_info[0].otp_data_addr->gain_b;
 	}
 
-	ret = isp_dev_access_get_exif_debug_info(cxt->dev_access_handle, exif_ptr);
+	ret = isp_dev_access_get_img_exif_debug_info(cxt->dev_access_handle, exif_ptr);
 	if (ret) {
 		ISP_LOGE("failed to driver exif 0x%lx", ret);
 	}
@@ -3925,7 +3925,7 @@ cmr_int isp3a_handle_debuginfo(cmr_handle isp_3a_handle)
 
 	if (get_info & 0x3) {
 		ret = isp_dev_access_get_exif_debug_info(cxt->dev_access_handle, exif_ptr);
-		isp_mlog(SHADING_FILE, "RPrun:%d, BPrun:%d", exif_ptr->shading_debug_info1.rp_run, exif_ptr->shading_debug_info1.bp_run);
+		isp_mlog(SHADING_FILE, "RPrun:%d, BPrun:%d", exif_ptr->shading_debug_info1.rprun, exif_ptr->shading_debug_info1.bprun);
 		isp_mlog(IRP_FILE, "contrast:%d,saturation:%d,sharpness:%d,effect:%d,mode:%d,quality:%d,sensor_id:%d,s_width:%d,s_height:%d",
 			 cxt->irp_cxt.contrast, cxt->irp_cxt.saturation, cxt->irp_cxt.sharpness, cxt->irp_cxt.effect,
 			 cxt->irp_cxt.mode, cxt->irp_cxt.quality, cxt->irp_cxt.sensor_id, cxt->irp_cxt.s_width, cxt->irp_cxt.s_height);
