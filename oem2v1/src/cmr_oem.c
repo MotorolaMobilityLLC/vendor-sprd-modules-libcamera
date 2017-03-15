@@ -8674,7 +8674,8 @@ cmr_int camera_local_redisplay_data(
     }
     CMR_LOGI("0x%lx %d", (cmr_uint)oem_handle, cxt->snp_cxt.cfg_cap_rot);
     setting_cxt = &cxt->setting_cxt;
-
+    cmr_bzero(&src_img, sizeof(struct img_frm));
+    cmr_bzero(&dst_img, sizeof(struct img_frm));
     rect.start_x = 0;
     rect.start_y = 0;
     rect.width = input_width;

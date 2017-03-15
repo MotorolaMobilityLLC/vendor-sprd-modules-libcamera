@@ -1934,7 +1934,7 @@ int SprdCamera3RangeFinder::checkOtpInfo() { return 0; }
  *==========================================================================*/
 void SprdCamera3RangeFinder::processCaptureResultMain(
     camera3_capture_result_t *result) {
-    uint64_t result_timestamp;
+    uint64_t result_timestamp = 0;;
     uint32_t cur_frame_number;
     uint32_t searchnotifyresult = NOTIFY_NOT_FOUND;
     CameraMetadata metadata;
@@ -2078,7 +2078,7 @@ void SprdCamera3RangeFinder::notifyAux(const camera3_notify_msg_t *msg) {
  *==========================================================================*/
 void SprdCamera3RangeFinder::processCaptureResultAux(
     const camera3_capture_result_t *result) {
-    uint64_t result_timestamp;
+    uint64_t result_timestamp = 0;
     uint32_t cur_frame_number;
     uint32_t searchnotifyresult = NOTIFY_NOT_FOUND;
 

@@ -1647,7 +1647,7 @@ void SprdCamera3StereoPreview::MuxerThread::errorCallback(
         callback_result.partial_result = 0;
         mPreviewMuxer->mCallbackOps->process_capture_result(
             mPreviewMuxer->mCallbackOps, &callback_result);
-        HAL_LOGD(":%d callback.stream=%p,buffer=%p", result.frame_number,
+        HAL_LOGD(":%d callback.stream=%p,buffer=%p", callback_result.frame_number,
                  callback_result_buffers.stream,
                  callback_result_buffers.buffer);
     }
@@ -2241,7 +2241,7 @@ void SprdCamera3StereoPreview::notifyMain(const camera3_notify_msg_t *msg) {
 void SprdCamera3StereoPreview::processCaptureResultMain(
     const camera3_capture_result_t *result) {
 
-    uint64_t result_timestamp;
+    uint64_t result_timestamp = 0;
     uint32_t cur_frame_number;
     uint32_t searchnotifyresult = NOTIFY_NOT_FOUND;
     bool isRecording = false;
@@ -2410,7 +2410,7 @@ void SprdCamera3StereoPreview::notifyAux(const camera3_notify_msg_t *msg) {
 void SprdCamera3StereoPreview::processCaptureResultAux(
     const camera3_capture_result_t *result) {
 
-    uint64_t result_timestamp;
+    uint64_t result_timestamp = 0;
     uint32_t cur_frame_number = result->frame_number;
     uint32_t searchnotifyresult = NOTIFY_NOT_FOUND;
     camera3_stream_t *newStream = NULL;

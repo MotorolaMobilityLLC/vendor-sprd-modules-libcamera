@@ -1216,6 +1216,10 @@ static void *cmr_grab_thread_proc(void *data) {
                         pthread_mutex_unlock(&p_grab->cb_mutex);
                     }
                 } else if (op.parm.frame.irq_type == CAMERA_IRQ_STATIS) {
+                    evt_id = cmr_grab_evt_id(op.evt);
+                    if (CMR_GRAB_MAX == evt_id) {
+                        continue;
+                    }
                     statis_info.buf_size = op.parm.frame.buf_size;
                     statis_info.phy_addr = op.parm.frame.phy_addr;
                     statis_info.vir_addr = op.parm.frame.vir_addr;
