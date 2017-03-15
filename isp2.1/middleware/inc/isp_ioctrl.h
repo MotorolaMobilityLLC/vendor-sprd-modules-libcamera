@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #ifndef _ISP_IOCTRL_H_
-#define _ISP_IOCTRL_H
+#define _ISP_IOCTRL_H_
 
 #include <sys/types.h>
 #include "isp_com.h"
