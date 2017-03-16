@@ -16,7 +16,6 @@
 
 
 #include "sensor_exposure_queue.h"
-#define NULL 0
 #define cmr_int int32_t
 #define cmr_u32 int32_t
 
