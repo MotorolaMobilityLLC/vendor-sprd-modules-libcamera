@@ -12,7 +12,6 @@
 #include "isp_adpt.h"
 
 #define ISP_CALLBACK_EVT 0x00040000
-#define UNUSED(x) (void)x
 #define BLOCK_PARAM_CFG(input, param_data, blk_cmd, blk_id, cfg_ptr, cfg_size)\
 	do {\
 		param_data.cmd = blk_cmd;\
@@ -22,7 +21,6 @@
 		input.param_data_ptr = &param_data;\
 		input.param_num = 1;} while (0);
 
-typedef void* sprd_af_handle_t;
 
 #define AFCTRL_EVT_BASE				0x2000
 #define AFCTRL_EVT_INIT				AFCTRL_EVT_BASE
@@ -58,7 +56,7 @@ static int32_t af_set_pos(void* handle_af, struct af_motor_pos* in_param)
 static int32_t af_end_notice(void* handle_af, struct af_result_param* in_param)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
-	struct isp_af_notice af_notice = {0x00};
+	struct isp_af_notice af_notice = {0x00, 0x00};
 
 	af_notice.mode = ISP_FOCUS_MOVE_END;
 	af_notice.valid_win = in_param->suc_win;
@@ -72,7 +70,7 @@ static int32_t af_end_notice(void* handle_af, struct af_result_param* in_param)
 static int32_t af_start_notice(void* handle_af)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
-	struct isp_af_notice af_notice = {0x00};
+	struct isp_af_notice af_notice = {0x00, 0x00};
 
 	af_notice.mode = ISP_FOCUS_MOVE_START;
 	af_notice.valid_win = 0x00;
@@ -86,8 +84,9 @@ static int32_t af_start_notice(void* handle_af)
 static int32_t af_ae_awb_lock(void* handle_af)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
-	struct ae_calc_out ae_result = {0};
+	struct ae_calc_out ae_result;
 
+	memset(&ae_result, 0x00, sizeof(ae_result));
 	if (cxt_ptr->af_set_cb) {
 		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_AE_AWB_LOCK, NULL, (void *)&ae_result);
 	}
@@ -98,8 +97,9 @@ static int32_t af_ae_awb_lock(void* handle_af)
 static int32_t af_ae_awb_release(void* handle_af)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
-	struct ae_calc_out ae_result = {0};
+	struct ae_calc_out ae_result;
 
+	memset(&ae_result, 0x00, sizeof(ae_result));
 	if (cxt_ptr->af_set_cb) {
 		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, ISP_AF_AE_AWB_RELEASE, NULL, (void *)&ae_result);
 	}
@@ -110,7 +110,9 @@ static int32_t af_ae_awb_release(void* handle_af)
 static int32_t af_lock_module(void* handle_af, cmr_int af_locker_type)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
-	struct ae_calc_out ae_result = {0};
+	struct ae_calc_out ae_result;
+
+	memset(&ae_result, 0x00, sizeof(ae_result));
 	cmr_int rtn = ISP_SUCCESS;
 
 	if (NULL == cxt_ptr->af_set_cb) {
@@ -142,7 +144,9 @@ static int32_t af_lock_module(void* handle_af, cmr_int af_locker_type)
 static int32_t af_unlock_module(void* handle_af, cmr_int af_locker_type)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
-	struct ae_calc_out ae_result = {0};
+	struct ae_calc_out ae_result;
+
+	memset(&ae_result, 0x00, sizeof(ae_result));
 	cmr_int rtn = ISP_SUCCESS;
 
 	if (NULL == cxt_ptr->af_set_cb) {
@@ -271,7 +275,7 @@ static cmr_int afctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 	case AFCTRL_EVT_IOCTRL:
 		break;
 	case AFCTRL_EVT_PROCESS:
-		rtn = afctrl_process(cxt_ptr, (struct af_calc_param *)message->data, &cxt_ptr->proc_out);
+		rtn = afctrl_process(cxt_ptr, (struct af_calc_param *)message->data, (struct af_result_param *)&cxt_ptr->proc_out);
 		break;
 	default:
 		ISP_LOGE("fail to proc ,don't support msg");
@@ -411,7 +415,7 @@ cmr_int af_ctrl_init(struct afctrl_init_in *input_ptr, cmr_handle *handle_af)
 
 	*handle_af = (cmr_handle)cxt_ptr;
 
-	ISP_LOGI(":ISP: done %d", rtn);
+	ISP_LOGI(":ISP: done %ld", rtn);
 	return rtn;
 
 error_adpt_init:
@@ -461,7 +465,7 @@ exit:
 		*handle_af = NULL;
 	}
 
-	ISP_LOGI(":ISP:done %d", rtn);
+	ISP_LOGI(":ISP:done %ld", rtn);
 	return rtn;
 }
 

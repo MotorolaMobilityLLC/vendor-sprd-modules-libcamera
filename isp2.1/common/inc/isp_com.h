@@ -269,8 +269,8 @@ struct isp_ae_info {
 struct isp_statis_mem_info {
 	isp_uint isp_statis_mem_size;
 	isp_uint isp_statis_mem_num;
-	uint64_t isp_statis_k_addr;
-	uint64_t isp_statis_u_addr;
+	isp_uint isp_statis_k_addr;
+	isp_uint isp_statis_u_addr;
 	isp_uint isp_statis_alloc_flag;
 	isp_s32  statis_mfd;
 

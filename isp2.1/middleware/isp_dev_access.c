@@ -84,9 +84,11 @@ cmr_int isp_dev_trans_addr(cmr_handle isp_dev_handle)
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 	struct isp_statis_mem_info *statis_mem_info = &cxt->statis_mem_info;
 	struct isp_file *file = NULL;
-	struct isp_statis_buf_input	isp_statis_buf = {0};
-	struct isp_statis_buf_input	isp_2d_lsc_buf = {0};
+	struct isp_statis_buf_input	isp_statis_buf;
+	struct isp_statis_buf_input	isp_2d_lsc_buf;
 
+	memset(&isp_statis_buf, 0x00, sizeof(isp_statis_buf));
+	memset(&isp_2d_lsc_buf, 0x00, sizeof(isp_2d_lsc_buf));
 	file = (struct isp_file*)(cxt->isp_driver_handle);
 	file->reserved = (void *)statis_mem_info->isp_lsc_virtaddr;
 	/*set buffer to kernel*/
@@ -318,7 +320,7 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void* param_ptr)
 	statis_info->buf_size = irq_info->buf_size;
 	statis_info->mfd = irq_info->mfd;
 
-	ISP_LOGV("got one frame statis paddr 0x%lx vaddr 0x%lx property 0x%lx",statis_info->phy_addr,
+	ISP_LOGV("got one frame statis paddr 0x%x vaddr 0x%x property 0x%d",statis_info->phy_addr,
 			statis_info->vir_addr, statis_info->irq_property);
 	if (irq_info->irq_property == IRQ_AEM_STATIS) {
 		if (cxt->isp_event_cb) {
@@ -438,7 +440,7 @@ cmr_int isp_dev_access_deinit(cmr_handle isp_handler)
 		cxt = NULL;
 	}
 
-	ISP_LOGI("done %d", rtn);
+	ISP_LOGI("done %ld", rtn);
 
 	return rtn;
 }
@@ -527,6 +529,7 @@ static cmr_int dev_set_af_monitor(cmr_handle isp_dev_handle, void *param0, cmr_u
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 	struct af_monitor_set* in_param = (struct af_monitor_set*)param0;
 
+	UNUSED(cur_envi);
 	isp_u_raw_afm_bypass(cxt->isp_driver_handle, 1);
 	isp_u_raw_afm_skip_num_clr(cxt->isp_driver_handle, 1);
 	isp_u_raw_afm_skip_num_clr(cxt->isp_driver_handle, 0);

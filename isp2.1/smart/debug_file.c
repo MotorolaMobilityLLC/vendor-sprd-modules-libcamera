@@ -22,7 +22,6 @@
 **----------------------------------------------------------------------------*/
 #define DEBUG_SUCCESS 	0
 #define DEBUG_ERROR	1
-#define UNUSED(param)  (void)(param)
 struct awbl_debug_file {
 	char file_name[32];
 	char open_mode[4];

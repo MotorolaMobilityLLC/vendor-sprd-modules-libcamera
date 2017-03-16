@@ -1750,9 +1750,9 @@ static cmr_int _ispDenoiseParamRead(cmr_handle isp_alg_handle, void *param_ptr, 
 
 //	if(cxt->commn_cxt.multi_nr_flag == SENSOR_MULTI_MODE_FLAG) {
 		update_param->multi_nr_flag = SENSOR_MULTI_MODE_FLAG;
-		update_param->nr_scene_map_ptr = (uint32_t *)nr_fix->nr_scene_ptr;
-		update_param->nr_level_number_map_ptr = (uint8_t *)nr_fix->nr_level_number_ptr;
-		update_param->nr_default_level_map_ptr = (uint8_t *)nr_fix->nr_default_level_ptr;
+		update_param->nr_scene_map_ptr = nr_fix->nr_scene_ptr;
+		update_param->nr_level_number_map_ptr = nr_fix->nr_level_number_ptr;
+		update_param->nr_default_level_map_ptr = nr_fix->nr_default_level_ptr;
 	if (update_param->nr_level_number_map_ptr) {
 		 ISP_LOGI("ISP_TOOL:update_param->nr_level_number_map_ptr sizeof = %d", sizeof(update_param->nr_level_number_map_ptr));
 	} else {

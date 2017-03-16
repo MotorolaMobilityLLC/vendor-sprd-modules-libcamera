@@ -22,7 +22,6 @@
 #endif
 
 #define ISP_SMART_ALG_MAGIC_FLAG 0xffeeaabb
-#define UNUSED(param)  (void)(param)
 
 struct isp_smart_alg_context {
 	uint32_t magic_flag;

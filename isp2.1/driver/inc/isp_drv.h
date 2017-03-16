@@ -62,6 +62,7 @@ isp_s32 isp_u_capability_time(isp_handle handle, isp_u32 *sec, isp_u32 *usec);
 /*ISP Sub Block: Fetch*/
 isp_s32 isp_u_fetch_block(isp_handle handle, void *block_info);
 isp_s32 isp_u_fetch_slice_size(isp_handle handle, isp_u32 w, isp_u32 h);
+isp_s32 isp_u_fetch_raw_transaddr(isp_handle handle, struct isp_dev_block_addr *addr);
 
 /*ISP Sub Block: BLC*/
 isp_s32 isp_u_blc_block(isp_handle handle, void *block_info);
@@ -327,6 +328,9 @@ isp_s32 isp_u_raw_afm_type2_statistic(isp_handle handle, void *statis);
 isp_s32 isp_u_raw_afm_bypass(isp_handle handle, isp_u32 bypass);
 isp_s32 isp_u_raw_afm_mode(isp_handle handle, isp_u32 mode);
 isp_s32 isp_u_raw_afm_skip_num(isp_handle handle, isp_u32 skip_num);
+isp_s32 isp_u_raw_afm_iir_nr_cfg(isp_handle handle, void *block_info);
+isp_s32 isp_u_raw_afm_modules_cfg(isp_handle handle, void *block_info);
+
 isp_s32 isp_u_raw_afm_skip_num_clr(isp_handle handle, isp_u32 clear);
 isp_s32 isp_u_raw_afm_spsmd_rtgbot_enable(isp_handle handle, isp_u32 enable);
 isp_s32 isp_u_raw_afm_spsmd_diagonal_enable(isp_handle handle, isp_u32 enable);
@@ -350,6 +354,9 @@ isp_s32 isp_u_raw_afm_win_num(isp_handle handle, isp_u32 *win_num);
 isp_s32 isp_u_anti_flicker_block(isp_handle handle, void *block_info);
 isp_s32 isp_u_anti_flicker_statistic(isp_handle handle, void *addr);
 isp_s32 isp_u_anti_flicker_bypass(isp_handle handle, void *block_info);
+isp_s32 isp_u_anti_flicker_new_bypass(isp_handle handle, void *block_info);
+isp_s32 isp_u_anti_flicker_new_block(isp_handle handle, void *block_info);
+
 isp_s32 isp_u_anti_flicker_transaddr(isp_handle handle, isp_u32 phys_addr);
 //isp_s32 isp_u_yiq_afm_block(isp_handle handle, void *block_info);
 //isp_s32 isp_u_yiq_afm_slice_size(isp_handle handle, isp_u32 width, isp_u32 height);
