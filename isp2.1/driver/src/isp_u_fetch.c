@@ -42,7 +42,7 @@ isp_s32 isp_u_fetch_block(isp_handle handle, void *block_info)
 }
 
 isp_s32 isp_u_fetch_raw_transaddr(isp_handle handle,
-	struct isp_dev_fetch_addr *addr)
+	struct isp_dev_block_addr *addr)
 {
 	isp_s32 ret = 0;
 	struct isp_file *file = NULL;

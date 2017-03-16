@@ -167,14 +167,6 @@ isp_s32 isp_u_hist_clear_eb(isp_handle handle, isp_u32 eb);
 isp_s32 isp_u_hist_statistic(isp_handle handle, void *out_value);
 isp_s32 isp_u_hist_statistic_num(isp_handle handle, isp_u32 *num);
 
-/*ISP Sub Block: AUTO CONTRAST ADJUSTMENT*/
-isp_s32 isp_u_aca_block(isp_handle handle, void *block_info);
-isp_s32 isp_u_aca_maxmin_status(isp_handle handle, isp_u32 *status);
-isp_s32 isp_u_aca_bypass(isp_handle handle, isp_u32 bypass);
-isp_s32 isp_u_aca_mode(isp_handle handle, isp_u32 mode);
-isp_s32 isp_u_aca_maxmin(isp_handle handle, isp_u32 in_min, isp_u32 in_max, isp_u32 out_min, isp_u32 out_max);
-isp_s32 isp_u_aca_adjust(isp_handle handle, isp_u32 diff, isp_u32 small, isp_u32 big);
-
 /*ISP Sub Block: AFM*/
 isp_s32 isp_u_afm_block(isp_handle handle, void *block_info);
 isp_s32 isp_u_afm_bypass(isp_handle handle, isp_u32 bypass);
@@ -222,18 +214,6 @@ isp_s32 isp_u_csa_factor(isp_handle handle, isp_u32 factor);
 /*ISP Sub Block: Store*/
 isp_s32 isp_u_store_block(isp_handle handle, void *block_info);
 isp_s32 isp_u_store_slice_size(isp_handle handle, isp_u32 w, isp_u32 h);
-
-/*ISP Sub Block: Feeder*/
-isp_s32 isp_u_feeder_block(isp_handle handle, void *block_info);
-isp_s32 isp_u_feeder_data_type(isp_handle handle, isp_u32 data_type);
-isp_s32 isp_u_feeder_slice_size(isp_handle handle, isp_u32 w, isp_u32 h);
-
-/*ISP Sub Block: HDR*/
-isp_s32 isp_u_hdr_block(isp_handle handle, void *block_info);
-isp_s32 isp_u_hdr_bypass(isp_handle handle, isp_u32 bypass);
-isp_s32 isp_u_hdr_level(isp_handle handle, isp_u32 level);
-isp_s32 isp_u_hdr_index(isp_handle handle, isp_u32 r_index, isp_u32 g_index, isp_u32 b_index);
-isp_s32 isp_u_hdr_tab(isp_handle handle, isp_u8 *com_ptr, isp_u8 *p2e_ptr, isp_u8 *e2p_ptr);
 
 /*ISP Sub Block: NLC*/
 isp_s32 isp_u_nlc_block(isp_handle handle, void *block_info);
@@ -306,25 +286,6 @@ isp_s32 isp_u_glb_gain_slice_size(isp_handle handle, isp_u16 w, isp_u16 h);
 /*ISP Sub Block: RGB gain*/
 isp_s32 isp_u_rgb_gain_block(isp_handle handle, void *block_info);
 isp_s32 isp_u_rgb_dither_block(isp_handle handle, void *block_info);
-
-/*ISP Sub Block: YIQ*/
-isp_s32 isp_u_yiq_ygamma_block(isp_handle handle, void *block_info);
-isp_s32 isp_u_yiq_ae_block(isp_handle handle, void *block_info);
-isp_s32 isp_u_yiq_flicker_block(isp_handle handle, void *block_info);
-isp_s32 isp_u_yiq_ygamma_bypass(isp_handle handle, isp_u32 bypass);
-isp_s32 isp_u_yiq_ygamma_xnode(void *handle, isp_u8 *node);
-isp_s32 isp_u_yiq_ygamma_ynode(isp_handle handle, isp_u8 *node);
-isp_s32 isp_u_yiq_ygamma_index(isp_handle handle, isp_u8 *node);
-isp_s32 isp_u_yiq_ae_bypass(isp_handle handle,isp_u32 bypass);
-isp_s32 isp_u_yiq_ae_src_sel(isp_handle handle, isp_u32 src_sel);
-isp_s32 isp_u_yiq_ae_mode(isp_handle handle, isp_u32 mode);
-isp_s32 isp_u_yiq_ae_skip_num(isp_handle handle, isp_u32 num);
-isp_s32 isp_u_yiq_flicker_bypass(isp_handle handle, isp_u32 bypass);
-isp_s32 isp_u_yiq_flicker_mode(isp_handle handle, isp_u32 mode);
-isp_s32 isp_u_yiq_flicker_vheight(isp_handle handle, isp_u32 height);
-isp_s32 isp_u_yiq_flicker_line_conter(isp_handle handle, isp_u32 counter);
-isp_s32 isp_u_yiq_flicker_line_step(isp_handle handle, isp_u32 step);
-isp_s32 isp_u_yiq_flicker_line_start(isp_handle handle, isp_u32 line_start);
 
 /*ISP Sub Block: Hue*/
 isp_s32 isp_u_hue_block(isp_handle handle, void *block_info);
