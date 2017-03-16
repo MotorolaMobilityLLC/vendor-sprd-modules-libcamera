@@ -88,6 +88,7 @@ enum af_state {
 	STATE_CAF,
 	STATE_RECORD_CAF,
 	STATE_FAF,
+	STATE_FULLSCAN
 };
 
 static const char *state_string[] = {
@@ -97,6 +98,7 @@ static const char *state_string[] = {
 	"caf",
 	"record caf",
 	"faf",
+	"fullscan"
 };
 
 #define STATE_STRING(state)    state_string[state]
@@ -369,6 +371,7 @@ typedef struct _af_ctrl {
 	//porting from isp2.1 af 1.0
 	pthread_mutex_t status_lock;
 	void *caller;
+	uint32_t win_peak_pos[MULTI_STATIC_TOTAL];
 	uint32_t is_high_fps;
 	uint32_t afm_skip_num;
 	 int32_t(*go_position) (void *handle, struct af_motor_pos * in_param);

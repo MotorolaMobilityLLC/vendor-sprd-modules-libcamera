@@ -165,6 +165,7 @@ enum isp_focus_mode {
 	ISP_FOCUS_BYPASS,
 	ISP_FOCUS_MACRO_FIXED,
 	ISP_FOCUS_PICTURE,
+	ISP_FOCUS_FULLSCAN,
 	ISP_FOCUS_MAX
 };
 
@@ -355,6 +356,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SET_AUX_SENSOR_INFO,
 	ISP_CTRL_DIRECT_MSG_END,
 	ISP_CTRL_SET_DCAM_TIMESTAMP,
+	ISP_CTRL_GET_FULLSCAN_INFO,
 	ISP_CTRL_MAX
 };
 
@@ -465,6 +467,25 @@ struct isp_af_win {
 	uint32_t valid_win;
 	uint32_t ae_touch;
 	struct isp_pos_rect ae_touch_rect;
+};
+
+struct isp_af_fullscan_info {
+	/* Register Parameters */
+	/* These params will depend on the AF setting */
+	uint8_t row_num;	/* The number of AF windows with row (i.e. vertical) */ /* depend on the AF Scanning */
+	uint8_t column_num; /* The number of AF windows with row (i.e. horizontal) */ /* depend on the AF Scanning */
+	uint32_t * win_peak_pos; /* The seqence of peak position which be provided via struct isp_af_fullscan_info */ /* depend on the AF Scanning */
+	//uint16_t boundary_ratio; /*  (Unit : Percentage) */ /* depend on the AF Scanning */
+	/* The configuration for the af scanning */
+	//uint8_t valid_depth_clip; /* The up bound of valid_depth */ /* For Tuning */
+	//uint8_t method; /* The depth method. (Resaved) */ /* For Tuning */
+	/* No need to be set */
+	/* Customer Parameter */
+	//uint16_t sel_x; /* The point which be touched */
+	//uint16_t sel_y; /* The point which be touched */
+	//uint8_t sel_size; /* The size of area which be touched (Resaved) */ /* For Tuning */
+	//uint16_t slope; /* For Tuning */
+	//uint8_t valid_depth; /* For Tuning */
 };
 
 enum af_aux_sensor_type {

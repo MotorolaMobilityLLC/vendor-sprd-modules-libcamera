@@ -1098,6 +1098,16 @@ static cmr_int _ispSFTIOGetAfValue(cmr_handle isp_alg_handle, void *param_ptr, i
 	return rtn;
 }
 
+static cmr_int _ispAfIOGetFullScanInfo(cmr_handle isp_alg_handle, void *param_ptr, int (*call_back)()){
+	cmr_int                         rtn = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_af_fullscan_info* af_fullscan_info = (struct isp_af_fullscan_info*)param_ptr;
+
+	rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_GET_AF_FULLSCAN_INFO, (void*)af_fullscan_info, NULL);
+
+	return rtn;
+}
+
 static cmr_int _ispAfIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, int (*call_back)())
 {
 	cmr_int                         rtn = ISP_SUCCESS;
@@ -1413,6 +1423,9 @@ static cmr_int _ispAfModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, int 
 		break;
 	case ISP_FOCUS_PICTURE:
 		set_mode = AF_MODE_PICTURE;
+		break;
+	case ISP_FOCUS_FULLSCAN:
+		set_mode = AF_MODE_FULLSCAN;
 		break;
 	default:
 		set_mode = AF_MODE_NORMAL;

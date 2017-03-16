@@ -38,8 +38,6 @@ extern "C" {
 /**---------------------------------------------------------------------------*
 **				Micro Define					*
 **----------------------------------------------------------------------------*/
-#define MULTI_WIN	1
-#define ROI_RATIO	60
 #define FOCUS_STAT_DATA_NUM	2
 
 	static unsigned int iir_level, nr_mode, cw_mode, fv0_e, fv1_e;
@@ -556,7 +554,7 @@ extern "C" {
 			AF_LOGD("state = %s, mode = %d", STATE_STRING(af->state), af_mode);
 			/*if (STATE_INACTIVE == af->state)
 			   return 0; */
-
+			af->defocus = 0;// make sure defocus mode quit
 			switch (af_mode) {
 			case AF_MODE_CONTINUE:
 			case AF_MODE_VIDEO:
@@ -594,7 +592,12 @@ extern "C" {
 					((int64_t) af->dcam_timestamp - (int64_t) af->vcm_timestamp) / 1000000);
 				get_vcm_registor_pos(af);
 				break;
-
+			case AF_MODE_FULLSCAN:
+				af->request_mode = af_mode;
+				af->state = STATE_FULLSCAN;
+				af->defocus = 1;
+				AF_LOGD("af->defocus : %d \n", af->defocus);
+				break;
 			default:
 				if ((STATE_CAF == af->state) || (STATE_RECORD_CAF == af->state)) {
 					//af->state = STATE_IDLE;
@@ -1050,51 +1053,26 @@ extern "C" {
 	}
 
 // len
+	static int32_t lens_get_pos(af_ctrl_t * af) {
+		// AF_LOGD("pos = %d", af->lens.pos);
+		return af->lens.pos;
+	}
+
 	static void lens_move_to(af_ctrl_t * af, int32_t pos) {
 		struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
 		struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
 		// AF_LOGD("pos = %d", pos);
 		uint16_t last_pos = 0;
-		if_get_motor_pos(&last_pos, af);
+
+		last_pos = lens_get_pos(af);
 
 		if (NULL != af->vcm_ops.set_pos) {
-			///*
-			while (af->soft_landing_step && af->soft_landing_dly && last_pos != pos) {
-				if (pos >= last_pos + af->soft_landing_step)
-					last_pos += af->soft_landing_step;
-				else if (last_pos >= af->soft_landing_step && pos <= last_pos - af->soft_landing_step)
-					last_pos -= af->soft_landing_step;
-				else
-					last_pos = pos;
-				//af->vcm_ops.set_pos(af->caller, last_pos);    // must be provided
-				af->vcm_ops.set_pos(isp_ctx->ioctrl_ptr->caller_handler, last_pos);	// must be provided
-				usleep(1000 * af->soft_landing_dly);
-				AF_LOGD("pos,last_pos,step,dly = %d %d %d %d", pos, last_pos, af->soft_landing_step,
-					af->soft_landing_dly);
-			}
-			//*/
 			if (last_pos != pos)
 				//af->vcm_ops.set_pos(af->caller, pos); // must be provided
 				af->vcm_ops.set_pos(isp_ctx->ioctrl_ptr->caller_handler, pos);	// must be provided
 			AF_LOGD("af->vcm_ops.set_pos = %d", pos);
 			af->lens.pos = pos;
 		}
-	}
-
-	static int32_t lens_get_pos(af_ctrl_t * af) {
-		// AF_LOGD("pos = %d", af->lens.pos);
-		return af->lens.pos;
-	}
-
-	static int32_t lens_move_to_infi(af_ctrl_t * af, uint16 pos) {
-		struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)af->caller;
-		struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)cxt_ptr->caller_handle;
-		if (NULL != af->vcm_ops.set_pos) {
-			//af->vcm_ops.set_pos(af->caller, pos); // must be provided
-			af->vcm_ops.set_pos(isp_ctx->ioctrl_ptr->caller_handler, pos);
-			af->lens.pos = pos;
-		}
-		return 0;
 	}
 // notify
 	enum notify_event {
@@ -1180,10 +1158,10 @@ static void do_notify(af_ctrl_t *af, enum notify_event evt, const notify_result_
 			uint32_t endy = starty + height - 1;
 
 			for (h = 0; h < h_num; ++h) {
-				out[num].start_x = startx & 0xfffffffe;	// make sure coordinations are even
-				out[num].end_x = (startx + width - 1) & 0xfffffffe;
-				out[num].start_y = starty & 0xfffffffe;
-				out[num].end_y = endy & 0xfffffffe;
+				out[num].start_x = (startx>>1)<<1;	// make sure coordinations are even
+				out[num].end_x = ((startx + width - 1)>>1)<<1;
+				out[num].start_y = (starty>>1)<<1;
+				out[num].end_y = (endy>>1)<<1;
 				AF_LOGD("win %d: start_x = %d, start_y = %d, end_x = %d, end_y = %d",
 					num, out[num].start_x, out[num].start_y, out[num].end_x, out[num].end_y);
 
@@ -1201,54 +1179,30 @@ static void do_notify(af_ctrl_t *af, enum notify_event evt, const notify_result_
 		roi_info_t *r = &af->roi;
 		win_coord_t win_info;
 
-#if MULTI_WIN
-		unsigned int i, j;
-		isp_info_t *hw = &af->isp_info;
-		uint32_t w = hw->width * ROI_RATIO / 100;
-		uint32_t h = hw->height * ROI_RATIO / 100;
-		unsigned int x_offset = (hw->width * (100 - ROI_RATIO) / 100) >> 1;
-		unsigned int y_offset = (hw->height * (100 - ROI_RATIO) / 100) >> 1;
-#endif
-
 		if (1 != r->num)
 			return 0;
-/*
-    w = r->win[0];
-    r->num = split_win(&w, 3, 3, r->win);
-*/
+
 		switch (af->state) {
 		case STATE_FAF:
 			win_info = r->win[0];
 			r->num = split_win(&win_info, 3, 3, r->win);
 			break;
+		case STATE_FULLSCAN:// 3x3 windows
+			win_info = r->win[0];
+			r->num = split_win(&win_info, 3, 3, r->win);
+			break;
 		default:
-#if MULTI_WIN
 			/* 0   1   2
 			   3   4   5
 			   6   7   8 */
-			memcpy(&(r->win[4]), &(r->win[0]), sizeof(win_coord_t));
-			w = w / 3;
-			h = h / 3;
-			r->num = 9;
-			for (i = 0; i < (r->num / 3); i++) {
-				for (j = 0; j < (r->num / 3); j++) {
-					r->win[i * 3 + j].start_x = (x_offset + (j * w)) & 0xfffffffe;
-					r->win[i * 3 + j].end_x = (x_offset + ((j + 1) * w)) & 0xfffffffe;
-					r->win[i * 3 + j].start_y = (y_offset + (i * h)) & 0xfffffffe;
-					r->win[i * 3 + j].end_y = (y_offset + ((i + 1) * h)) & 0xfffffffe;
-				}
-			}
-
-			if (af->isp_info.win_num > r->num) {	//sum
-				r->win[r->num].start_x = x_offset & 0xfffffffe;
-				r->win[r->num].end_x = (x_offset + (hw->width * ROI_RATIO / 100)) & 0xfffffffe;
-				r->win[r->num].start_y = y_offset & 0xfffffffe;;
-				r->win[r->num].end_y = (y_offset + (hw->height * ROI_RATIO / 100)) & 0xfffffffe;
-				AF_LOGD("Roi[%d]sx %d sy %d ex %d ey %d \n ", r->num, r->win[r->num].start_x,
-					r->win[r->num].start_y, r->win[r->num].end_x, r->win[r->num].end_y);
-				r->num++;
-			}
-#else
+			r->win[9].start_x = r->win[0].start_x;
+			r->win[9].end_x = r->win[0].end_x;
+			r->win[9].start_y = r->win[0].start_y;
+			r->win[9].end_y = r->win[0].end_y;
+			win_info = r->win[0];
+			r->num = split_win(&win_info, 3, 3, r->win);
+			r->num = r->num+1;
+#if 0
 			r->win[1].start_x = r->win[0].start_x + 1.0 * (r->win[0].end_x - r->win[0].start_x) / 5;
 			r->win[1].end_x = r->win[0].end_x - 1.0 * (r->win[0].end_x - r->win[0].start_x) / 5;
 			r->win[1].start_y = r->win[0].start_y + 1.0 * (r->win[0].end_y - r->win[0].start_y) / 5;
@@ -1280,29 +1234,32 @@ static void do_notify(af_ctrl_t *af, enum notify_event evt, const notify_result_
 		isp_info_t *hw = &af->isp_info;
 		roi_info_t *roi = &af->roi;
 
-#if MULTI_WIN
-		uint32_t w = hw->width * ROI_RATIO / 100;
-		uint32_t h = hw->height * ROI_RATIO / 100;
-#else
 		uint32_t w = hw->width;
 		uint32_t h = hw->height;
-#endif
 
 		switch (af->state) {
 		case STATE_FAF:
 			roi->num = 1;
-			roi->win[0].start_x = af->face_base.sx & 0xfffffffe;	// make sure coordinations are even
-			roi->win[0].start_y = af->face_base.sy & 0xfffffffe;
-			roi->win[0].end_x = af->face_base.ex & 0xfffffffe;
-			roi->win[0].end_y = af->face_base.ey & 0xfffffffe;
+			roi->win[0].start_x = (af->face_base.sx>>1)<<1;	// make sure coordinations are even
+			roi->win[0].start_y = (af->face_base.sy>>1)<<1;
+			roi->win[0].end_x = (af->face_base.ex>>1)<<1;
+			roi->win[0].end_y = (af->face_base.ey>>1)<<1;
+			break;
+		case STATE_FULLSCAN:
+			/* for bokeh center w/5*4 h/5*4 */
+			roi->num = 1;
+			roi->win[0].start_x = (((w >> 1) - (w *4/ 10)) >> 1) << 1;	// make sure coordinations are even
+			roi->win[0].start_y = (((h >> 1) - (h *4/ 10)) >> 1) << 1;
+			roi->win[0].end_x = (((w >> 1) + (w *4/ 10)) >> 1) << 1;
+			roi->win[0].end_y = (((h >> 1) + (h *4/ 10)) >> 1) << 1;
 			break;
 		default:
 			roi->num = 1;
-			/* center w/3 * h/3 */
-			roi->win[0].start_x = ((((w >> 1) - (w / 6)) >> 1) << 1) & 0xfffffffe;	// make sure coordinations are even
-			roi->win[0].start_y = ((((h >> 1) - (h / 6)) >> 1) << 1) & 0xfffffffe;
-			roi->win[0].end_x = ((((w >> 1) + (w / 6)) >> 1) << 1) & 0xfffffffe;
-			roi->win[0].end_y = ((((h >> 1) + (h / 6)) >> 1) << 1) & 0xfffffffe;
+			/* center w/5*3 * h/5*3 */
+			roi->win[0].start_x = (((w >> 1) - (w *3/ 10)) >> 1) << 1;	// make sure coordinations are even
+			roi->win[0].start_y = (((h >> 1) - (h *3/ 10)) >> 1) << 1;
+			roi->win[0].end_x = (((w >> 1) + (w *3/ 10)) >> 1) << 1;
+			roi->win[0].end_y = (((h >> 1) + (h *3/ 10)) >> 1) << 1;
 			break;
 		}
 		AF_LOGD("af_state %s win 0: start_x = %d, start_y = %d, end_x = %d, end_y = %d",
@@ -1322,9 +1279,6 @@ static void do_notify(af_ctrl_t *af, enum notify_event evt, const notify_result_
 			break;
 		case VAF:
 			af->win_config = &af->af_tuning_data.VAF_win;
-			break;
-		case DEFOCUS:
-			af->win_config = &af->af_tuning_data.SAF_win;
 			break;
 		default:
 			af->win_config = &af->af_tuning_data.CAF_win;
@@ -1346,10 +1300,10 @@ static void do_notify(af_ctrl_t *af, enum notify_event evt, const notify_result_
 				af->touch = 1;
 				roi->num = win->win_num;
 				for (i = 0; i < win->win_num; ++i) {
-					roi->win[i].start_x = win->win_pos[i].sx & 0xfffffffe;	// make sure coordinations are even
-					roi->win[i].start_y = win->win_pos[i].sy & 0xfffffffe;
-					roi->win[i].end_x = win->win_pos[i].ex & 0xfffffffe;
-					roi->win[i].end_y = win->win_pos[i].ey & 0xfffffffe;
+					roi->win[i].start_x = (win->win_pos[i].sx>>1)<<1;	// make sure coordinations are even
+					roi->win[i].start_y = (win->win_pos[i].sy>>1)<<1;
+					roi->win[i].end_x = (win->win_pos[i].ex>>1)<<1;
+					roi->win[i].end_y = (win->win_pos[i].ey>>1)<<1;
 					AF_LOGD("win %d: start_x = %d, start_y = %d, end_x = %d, end_y = %d", i,
 						roi->win[i].start_x, roi->win[i].start_y, roi->win[i].end_x,
 						roi->win[i].end_y);
@@ -1363,10 +1317,10 @@ static void do_notify(af_ctrl_t *af, enum notify_event evt, const notify_result_
 				af->touch = 0;
 				roi->num = af->win_config->valid_win_num;
 				for (i = 0; i < roi->num; i++) {	// the last window is for caf trigger
-					roi->win[i].start_x = af->win_config->win_pos[i].start_x & 0xfffffffe;	// make sure coordinations are even
-					roi->win[i].start_y = af->win_config->win_pos[i].start_y & 0xfffffffe;
-					roi->win[i].end_x = af->win_config->win_pos[i].end_x & 0xfffffffe;
-					roi->win[i].end_y = af->win_config->win_pos[i].end_y & 0xfffffffe;
+					roi->win[i].start_x = (af->win_config->win_pos[i].start_x>>1)<<1;	// make sure coordinations are even
+					roi->win[i].start_y = (af->win_config->win_pos[i].start_y>>1)<<1;
+					roi->win[i].end_x = (af->win_config->win_pos[i].end_x>>1)<<1;
+					roi->win[i].end_y = (af->win_config->win_pos[i].end_y>>1)<<1;
 				}
 			} else {	// TAF
 				uint32_t i, taf_w, taf_h;
@@ -1375,10 +1329,10 @@ static void do_notify(af_ctrl_t *af, enum notify_event evt, const notify_result_
 				af->touch = 1;
 				roi->num = win->win_num;
 				for (i = 0; i < win->win_num; ++i) {
-					roi->win[i].start_x = win->win_pos[i].sx & 0xfffffffe;	// make sure coordinations are even
-					roi->win[i].start_y = win->win_pos[i].sy & 0xfffffffe;
-					roi->win[i].end_x = win->win_pos[i].ex & 0xfffffffe;
-					roi->win[i].end_y = win->win_pos[i].ey & 0xfffffffe;
+					roi->win[i].start_x = (win->win_pos[i].sx>>1)<<1;	// make sure coordinations are even
+					roi->win[i].start_y = (win->win_pos[i].sy>>1)<<1;
+					roi->win[i].end_x = (win->win_pos[i].ex>>1)<<1;
+					roi->win[i].end_y = (win->win_pos[i].ey>>1)<<1;
 					AF_LOGD("win %d: start_x = %d, start_y = %d, end_x = %d, end_y = %d", i,
 						roi->win[i].start_x, roi->win[i].start_y, roi->win[i].end_x,
 						roi->win[i].end_y);
@@ -1390,36 +1344,34 @@ static void do_notify(af_ctrl_t *af, enum notify_event evt, const notify_result_
 				roi->num = af->win_config->valid_win_num;
 				for (i = 1; i < roi->num; i++) {
 					roi->win[i].start_x =
-					    1.0 * af->win_config->win_pos[i].start_x / hw->width * taf_w +
+					    1.0 * (af->win_config->win_pos[i].start_x - af->win_config->win_pos[0].start_x) / hw->width * taf_w +
 					    roi->win[0].start_x;
 					roi->win[i].start_y =
-					    1.0 * af->win_config->win_pos[i].start_y / hw->height * taf_h +
+					    1.0 * (af->win_config->win_pos[i].start_y - af->win_config->win_pos[0].start_y) / hw->height * taf_h +
 					    roi->win[0].start_y;
 					roi->win[i].end_x =
-					    1.0 * af->win_config->win_pos[i].end_x / hw->width * taf_w +
+					    1.0 * (af->win_config->win_pos[i].end_x - af->win_config->win_pos[0].start_x)/ hw->width * taf_w +
 					    roi->win[0].start_x;
 					roi->win[i].end_y =
-					    1.0 * af->win_config->win_pos[i].end_y / hw->height * taf_h +
+					    1.0 * (af->win_config->win_pos[i].end_y - af->win_config->win_pos[0].start_y) / hw->height * taf_h +
 					    roi->win[0].start_y;
 
-					roi->win[i].start_x = roi->win[i].start_x & 0xfffffffe;	// make sure coordinations are even
-					roi->win[i].start_y = roi->win[i].start_y & 0xfffffffe;
-					roi->win[i].end_x = roi->win[i].end_x & 0xfffffffe;
-					roi->win[i].end_y = roi->win[i].end_y & 0xfffffffe;
+					roi->win[i].start_x = (roi->win[i].start_x>>1)<<1;	// make sure coordinations are even
+					roi->win[i].start_y = (roi->win[i].start_y>>1)<<1;
+					roi->win[i].end_x = (roi->win[i].end_x>>1)<<1;
+					roi->win[i].end_y = (roi->win[i].end_y>>1)<<1;
 				}
-				roi->win[0].start_x =
-				    1.0 * af->win_config->win_pos[0].start_x / hw->width * taf_w + roi->win[0].start_x;
-				roi->win[0].start_y =
-				    1.0 * af->win_config->win_pos[0].start_y / hw->height * taf_h + roi->win[0].start_y;
+ 				roi->win[0].start_x = roi->win[0].start_x;
+				roi->win[0].start_y = roi->win[0].start_y;
 				roi->win[0].end_x =
-				    1.0 * af->win_config->win_pos[0].end_x / hw->width * taf_w + roi->win[0].start_x;
+				    1.0 * (af->win_config->win_pos[0].end_x - af->win_config->win_pos[0].start_x) / hw->width * taf_w + roi->win[0].start_x;
 				roi->win[0].end_y =
-				    1.0 * af->win_config->win_pos[0].end_y / hw->height * taf_h + roi->win[0].start_y;
+				    1.0 * (af->win_config->win_pos[0].end_y - af->win_config->win_pos[0].start_y) / hw->height * taf_h + roi->win[0].start_y;
 
-				roi->win[0].start_x = roi->win[0].start_x & 0xfffffffe;	// make sure coordinations are even
-				roi->win[0].start_y = roi->win[0].start_y & 0xfffffffe;
-				roi->win[0].end_x = roi->win[0].end_x & 0xfffffffe;
-				roi->win[0].end_y = roi->win[0].end_y & 0xfffffffe;
+				roi->win[0].start_x = (roi->win[0].start_x>>1)<<1;	// make sure coordinations are even
+				roi->win[0].start_y = (roi->win[0].start_y>>1)<<1;
+				roi->win[0].end_x = (roi->win[0].end_x>>1)<<1;
+				roi->win[0].end_y = (roi->win[0].end_y>>1)<<1;
 			}
 		}
 	}
@@ -1684,7 +1636,7 @@ static void do_notify(af_ctrl_t *af, enum notify_event evt, const notify_result_
 		if (STATE_RECORD_CAF == af->state)
 			af->algo_mode = VAF;
 		else
-			af->algo_mode = CAF;//(af->defocus) ? (DEFOCUS) : (CAF);
+			af->algo_mode = CAF;
 
 		calc_roi(af, NULL, af->algo_mode);
 
@@ -2438,16 +2390,15 @@ v=v>(max)?(max):v; hist[v]++;}
 				fv[T_SPSMD] = sum;
 				break;
 			default:
-#if MULTI_WIN
-				sum = spsmd[4];
-#else
-				sum = spsmd[1] + 8 * spsmd[2];
+				sum = spsmd[9];//3///3x3 windows,the 9th window is biggest covering all the other window
+#if 0
+				sum = spsmd[1] + 8 * spsmd[2];/// the 0th window cover 1st and 2nd window,1st window cover 2nd window
 #endif
 				fv[T_SPSMD] = sum;
 				break;
 			}
 
-			if (p_stat_data) {
+			if (p_stat_data) {//for caf calc
 				p_stat_data->roi_num = af->roi.num;
 				p_stat_data->stat_num = FOCUS_STAT_DATA_NUM;
 				/*
@@ -3548,7 +3499,7 @@ v=v>(max)?(max):v; hist[v]++;}
 
 		isp_ctx->af_cxt.log_af = (uint8_t *) af;
 		isp_ctx->af_cxt.log_af_size = sizeof(*af);
-		lens_move_to_infi(af, af->fv.AF_OTP.INF);
+		lens_move_to(af, af->fv.AF_OTP.INF);
 		/*
 		   AF process need to do af once when af init done.
 		 */
@@ -3796,6 +3747,7 @@ static cmr_int af_sprd_adpt_update_aux_sensor(cmr_handle handle, void *in)
 				}
 
 				switch (af->state) {
+				case STATE_FULLSCAN:
 				case STATE_NORMAL_AF:
 					pthread_mutex_lock(&af->af_work_lock);
 					if (saf_process_frame(af)) {
@@ -3985,6 +3937,13 @@ static cmr_int af_sprd_adpt_update_aux_sensor(cmr_handle handle, void *in)
 					rtn = 0;
 					break;
 				}
+
+				if( STATE_FULLSCAN==af->state ){
+					af->caf_state = CAF_IDLE;
+					saf_start(af, NULL);	//SAF, win is NULL using default
+					break;
+				}
+
 				if (STATE_IDLE != af->state) {
 					if (((STATE_CAF == af->state) || (STATE_RECORD_CAF == af->state))
 					    /*&& (0 != win->valid_win) */
@@ -4302,6 +4261,21 @@ static cmr_int af_sprd_adpt_update_aux_sensor(cmr_handle handle, void *in)
 		case AF_CMD_SET_UPDATE_AUX_SENSOR:
 			rtn = af_sprd_adpt_update_aux_sensor(handle, param0);
 			break;
+		case AF_CMD_GET_AF_FULLSCAN_INFO:{
+				uint32_t i=0;
+				struct isp_af_fullscan_info* af_fullscan_info = (struct isp_af_fullscan_info*)param0;
+
+				while(i<sizeof(af->win_peak_pos)/sizeof(af->win_peak_pos[0])){
+					af->win_peak_pos[i] = af->fv.af_proc_data.scan_status.multi_pkpos[i];
+					i++;
+				}
+				if( NULL!=af_fullscan_info ){
+					af_fullscan_info->row_num = 3;
+					af_fullscan_info->column_num = 3;
+					af_fullscan_info->win_peak_pos = af->win_peak_pos;
+				}
+				break;
+			}
 		default:
 			AF_LOGE("cmd not support! cmd: %d", cmd);
 			rtn = AFV1_ERROR;

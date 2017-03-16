@@ -48,6 +48,7 @@ enum af_mode{
 	AF_MODE_VIDEO,
 	AF_MODE_MANUAL,
 	AF_MODE_PICTURE,
+	AF_MODE_FULLSCAN,
 	AF_MODE_MAX
 };
 
@@ -83,6 +84,7 @@ enum af_cmd {
 	AF_CMD_GET_AF_INIT_POS      = 0x2003,
 	AF_CMD_GET_MULTI_WIN_CFG    = 0x2004,
 	AF_CMD_GET_AF_LIB_INFO      = 0x2005,
+	AF_CMD_GET_AF_FULLSCAN_INFO = 0x2006,
 };
 
 enum af_calc_data_type {
