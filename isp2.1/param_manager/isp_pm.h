@@ -75,7 +75,7 @@ struct isp_pm_init_input {
 	struct sensor_raw_fix_info *fix_data[ISP_TUNE_MODE_MAX];
 	struct sensor_nr_fix_info *nr_fix_info;
 	isp_ctrl_context *isp_ctrl_cxt_handle;
-	uint8_t *sensor_name;
+	int8_t *sensor_name;
 };
 
 struct isp_pm_init_output {

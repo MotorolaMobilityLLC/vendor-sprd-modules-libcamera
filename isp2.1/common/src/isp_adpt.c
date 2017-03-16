@@ -163,7 +163,7 @@ static uint32_t (*lsc_product_ops[]) (uint32_t, struct adpt_ops_type **) = {
 	[ADPT_SPRD_LSC_LIB] = get_sprd_lsc_ops,
 };
 
-static cmr_int adpt_get_lsc_ops(struct third_lib_info *lib_info,
+static int32_t adpt_get_lsc_ops(struct third_lib_info *lib_info,
 			       struct adpt_ops_type **ops)
 {
 	cmr_int rtn = -1;

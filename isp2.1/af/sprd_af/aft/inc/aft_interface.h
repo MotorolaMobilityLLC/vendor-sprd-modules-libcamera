@@ -45,12 +45,6 @@ typedef unsigned __int64      uint64_t;
 #include <sys/types.h>
 #endif
 
-typedef uint64_t        cmr_u64;
-typedef int64_t         cmr_s64;
-typedef unsigned int    cmr_u32;
-typedef unsigned short  cmr_u16;
-typedef unsigned char   cmr_u8;
-
 enum aft_posture_type {
 	AFT_POSTURE_ACCELEROMETER,
 	AFT_POSTURE_MAGNETIC,
