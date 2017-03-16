@@ -332,7 +332,7 @@ isp_s32 isp_u_2d_lsc_block(isp_handle handle, void *block_info)
 #endif
 
 	if (0 == file->reserved || 0 == buf_addr ||  ISP_LSC_BUF_SIZE < lens_info->buf_len) {
-		ISP_LOGE("lsc memory error: %x %lx %x", file->reserved, buf_addr, lens_info->buf_len);
+		ISP_LOGE("lsc memory error: 0x%p %lx %x", file->reserved, buf_addr, lens_info->buf_len);
 		return ret;
 	} else {
 		memcpy((void *)file->reserved, (void *)buf_addr, lens_info->buf_len);

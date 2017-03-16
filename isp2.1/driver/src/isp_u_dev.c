@@ -361,7 +361,7 @@ isp_s32 isp_dev_set_statis_buf(isp_handle handle, struct isp_statis_buf_input *p
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_SET_STATIS_BUF, param);
 	if (ret) {
-		ISP_LOGE("isp_dev_set_statis_buf error. 0x%lx", ret);
+		ISP_LOGE("isp_dev_set_statis_buf error. 0x%x", ret);
 	}
 
 	return ret;

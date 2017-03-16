@@ -73,6 +73,8 @@ cmr_int isp_dev_access_init(cmr_s32 fd, cmr_handle *isp_dev_handle);
 cmr_int isp_dev_access_deinit(cmr_handle isp_handler);
 cmr_int isp_dev_access_capability(cmr_handle isp_dev_handle, enum isp_capbility_cmd cmd, void* param_ptr);
 cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle, cmr_int cmd, void *param0, void *param1);
+void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void* param_ptr);
+void isp_dev_irq_info_proc(cmr_handle isp_dev_handle, void* param_ptr);
 
 
 #endif

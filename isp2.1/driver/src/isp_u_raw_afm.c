@@ -113,6 +113,8 @@ isp_s32 isp_u_raw_afm_modules_cfg(isp_handle handle, void *block_info)
 isp_s32 isp_u_raw_afm_type1_statistic(isp_handle handle, void *statis)
 {
 	isp_s32 ret = 0;
+	UNUSED(handle);
+	UNUSED(statis);
 #if 0/*modify for Solve compile problem*/
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -136,6 +138,8 @@ isp_s32 isp_u_raw_afm_type1_statistic(isp_handle handle, void *statis)
 isp_s32 isp_u_raw_afm_type2_statistic(isp_handle handle, void *statis)
 {
 	isp_s32 ret = 0;
+	UNUSED(handle);
+	UNUSED(statis);
 #if 0/*modify for Solve compile problem*/
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -159,6 +163,8 @@ isp_s32 isp_u_raw_afm_type2_statistic(isp_handle handle, void *statis)
 isp_s32 isp_u_raw_afm_statistic_r6p9(isp_handle handle, void *statis)
 {
 	isp_s32 ret = 0;
+	UNUSED(handle);
+	UNUSED(statis);
 #if 0
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -272,6 +278,8 @@ isp_s32 isp_u_raw_afm_skip_num_clr(isp_handle handle, isp_u32 clear)
 isp_s32 isp_u_raw_afm_spsmd_rtgbot_enable(isp_handle handle, isp_u32 enable)
 {
 	isp_s32 ret = 0;
+	UNUSED(handle);
+	UNUSED(enable);
 #if 0
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -295,6 +303,8 @@ isp_s32 isp_u_raw_afm_spsmd_rtgbot_enable(isp_handle handle, isp_u32 enable)
 isp_s32 isp_u_raw_afm_spsmd_diagonal_enable(isp_handle handle, isp_u32 enable)
 {
 	isp_s32 ret = 0;
+	UNUSED(handle);
+	UNUSED(enable);
 #if 0/*modify for Solve compile problem*/
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -318,6 +328,8 @@ isp_s32 isp_u_raw_afm_spsmd_diagonal_enable(isp_handle handle, isp_u32 enable)
 isp_s32 isp_u_raw_afm_spsmd_cal_mode(isp_handle handle, isp_u32 mode)
 {
 	isp_s32 ret = 0;
+	UNUSED(handle);
+	UNUSED(mode);
 #if 0/*modify for Solve compile problem*/
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -341,6 +353,8 @@ isp_s32 isp_u_raw_afm_spsmd_cal_mode(isp_handle handle, isp_u32 mode)
 isp_s32 isp_u_raw_afm_spsmd_square_en(isp_handle handle, isp_u32 en)
 {
 	isp_s32 ret = 0;
+	UNUSED(handle);
+	UNUSED(en);
 #if 0/*modify for Solve compile problem*/
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -364,6 +378,8 @@ isp_s32 isp_u_raw_afm_spsmd_square_en(isp_handle handle, isp_u32 en)
 isp_s32 isp_u_raw_afm_sel_filter1(isp_handle handle, isp_u32 sel_filter)
 {
 	isp_s32 ret = 0;
+	UNUSED(handle);
+	UNUSED(sel_filter);
 #if 0/*modify for Solve compile problem*/
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -387,6 +403,8 @@ isp_s32 isp_u_raw_afm_sel_filter1(isp_handle handle, isp_u32 sel_filter)
 isp_s32 isp_u_raw_afm_sel_filter2(isp_handle handle, isp_u32 sel_filter)
 {
 	isp_s32 ret = 0;
+	UNUSED(handle);
+	UNUSED(sel_filter);
 #if 0/*modify for Solve compile problem*/
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -410,6 +428,8 @@ isp_s32 isp_u_raw_afm_sel_filter2(isp_handle handle, isp_u32 sel_filter)
 isp_s32 isp_u_raw_afm_sobel_type(isp_handle handle, isp_u32 type)
 {
 	isp_s32 ret = 0;
+	UNUSED(handle);
+	UNUSED(type);
 #if 0/*modify for Solve compile problem*/
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -433,6 +453,8 @@ isp_s32 isp_u_raw_afm_sobel_type(isp_handle handle, isp_u32 type)
 isp_s32 isp_u_raw_afm_overflow_protect(isp_handle handle, isp_u32 en)
 {
 	isp_s32 ret = 0;
+	UNUSED(handle);
+	UNUSED(en);
 #if 0/*modify for Solve compile problem*/
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -456,6 +478,8 @@ isp_s32 isp_u_raw_afm_overflow_protect(isp_handle handle, isp_u32 en)
 isp_s32 isp_u_raw_afm_spsmd_type(isp_handle handle, isp_u32 type)
 {
 	isp_s32 ret = 0;
+	UNUSED(handle);
+	UNUSED(type);
 #if 0/*modify for Solve compile problem*/
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -479,6 +503,9 @@ isp_s32 isp_u_raw_afm_spsmd_type(isp_handle handle, isp_u32 type)
 isp_s32 isp_u_raw_afm_subfilter(isp_handle handle, isp_u32 average, isp_u32 median)
 {
 	isp_s32 ret = 0;
+	UNUSED(handle);
+	UNUSED(average);
+	UNUSED(median);
 #if 0/*modify for Solve compile problem*/
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -505,6 +532,8 @@ isp_s32 isp_u_raw_afm_subfilter(isp_handle handle, isp_u32 average, isp_u32 medi
 isp_s32 isp_u_raw_afm_spsmd_touch_mode(isp_handle handle, isp_u32 mode)
 {
 	isp_s32 ret = 0;
+	UNUSED(handle);
+	UNUSED(mode);
 #if 0
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -528,6 +557,10 @@ isp_s32 isp_u_raw_afm_spsmd_touch_mode(isp_handle handle, isp_u32 mode)
 isp_s32 isp_u_raw_afm_shfit(isp_handle handle, isp_u32 spsmd, isp_u32 sobel5, isp_u32 sobel9)
 {
 	isp_s32 ret = 0;
+	UNUSED(handle);
+	UNUSED(spsmd);
+	UNUSED(sobel5);
+	UNUSED(sobel9);
 #if 0
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -555,6 +588,9 @@ isp_s32 isp_u_raw_afm_shfit(isp_handle handle, isp_u32 spsmd, isp_u32 sobel5, is
 isp_s32 isp_u_raw_afm_sobel_threshold(isp_handle handle, isp_u32 min, isp_u32 max)
 {
 	isp_s32 ret = 0;
+	UNUSED(handle);
+	UNUSED(min);
+	UNUSED(max);
 #if 0
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -581,6 +617,9 @@ isp_s32 isp_u_raw_afm_sobel_threshold(isp_handle handle, isp_u32 min, isp_u32 ma
 isp_s32 isp_u_raw_afm_spsmd_threshold(isp_handle handle, isp_u32 min, isp_u32 max)
 {
 	isp_s32 ret = 0;
+	UNUSED(handle);
+	UNUSED(min);
+	UNUSED(max);
 #if 0
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -607,6 +646,8 @@ isp_s32 isp_u_raw_afm_spsmd_threshold(isp_handle handle, isp_u32 min, isp_u32 ma
 isp_s32 isp_u_raw_afm_threshold_rgb(isp_handle handle, void *thr_rgb)
 {
 	isp_s32 ret = 0;
+	UNUSED(handle);
+	UNUSED(thr_rgb);
 #if 0
 	isp_u32 num = 0;
 	struct isp_file *file = NULL;
