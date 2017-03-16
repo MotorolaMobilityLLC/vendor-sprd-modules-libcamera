@@ -292,9 +292,21 @@ struct ae_ctrl_cxt {
 	 */
 	uint8_t manual_ae_on;
 	/*
+	 * for touch ae cb
+	 */
+	 uint8_t ae_cb_cnt;
+	/*
 	 * flash_callback control
 	 */
 	int8_t send_once[3];
+	/*
+	 * HDR control
+	 */
+	int8_t		hdr_flag;
+	int16_t		hdr_up;
+	int16_t		hdr_down;
+	int16_t		hdr_base_ae_idx;
+	uint64_t	hdr_timestamp;
 	/*
 	 * ae misc layer handle
 	 */
@@ -1593,7 +1605,7 @@ static int32_t _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 			else
 				cxt->tuning_param_enable[i] = 0;
 		}
-
+		cxt->ae_cb_cnt = 0;
 		cxt->camera_id = init_param->camera_id;
 		cxt->isp_ops = init_param->isp_ops;
 		cxt->monitor_unit.win_num = init_param->monitor_win_num;
@@ -1643,7 +1655,6 @@ static int32_t _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 	cxt->cnvg_stride_ev_num = cxt->cur_param->cnvg_stride_ev_num;
 	cxt->exp_skip_num = cxt->cur_param->sensor_cfg.exp_skip_num;
 	cxt->gain_skip_num = cxt->cur_param->sensor_cfg.gain_skip_num;
-
 
 	cxt->cur_status.log_level = g_ae_log_level;
 	cxt->cur_status.alg_id = cxt->cur_param->alg_id;
@@ -2643,6 +2654,34 @@ static void _set_led(struct ae_ctrl_cxt *cxt){
 	return;
 }
 
+static void ae_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in * param){
+	cxt->hdr_up = cxt->hdr_down = 50;
+	if (3 == cxt->hdr_flag){
+		cxt->hdr_flag--;
+		cxt->hdr_timestamp = (uint64_t)param->sec * 1000000 + (uint64_t)param->usec;
+		cxt->cur_status.settings.lock_ae = AE_STATE_LOCKED;
+		cxt->cur_status.settings.manual_mode = 1;
+		cxt->cur_status.settings.table_idx = cxt->hdr_base_ae_idx + cxt->hdr_up;
+		AE_LOGD("_isp_hdr_3: %d sec_%d usec_%d %llu\n",
+				cxt->cur_status.settings.table_idx, param->sec, param->usec, cxt->hdr_timestamp);
+	}else if(2 == cxt->hdr_flag){
+		cxt->cur_status.settings.lock_ae = AE_STATE_LOCKED;
+		cxt->cur_status.settings.manual_mode = 1;
+		cxt->cur_status.settings.table_idx = cxt->hdr_base_ae_idx - cxt->hdr_down;
+		cxt->hdr_flag--;
+		AE_LOGD("_isp_hdr_2: %d\n", cxt->cur_status.settings.table_idx);
+	}else if(1 == cxt->hdr_flag){
+		cxt->cur_status.settings.lock_ae = AE_STATE_LOCKED;
+		cxt->cur_status.settings.manual_mode = 1;
+		cxt->cur_status.settings.table_idx = cxt->hdr_base_ae_idx;
+		cxt->hdr_flag--;
+		AE_LOGD("_isp_hdr_1: %d\n", cxt->cur_status.settings.table_idx);
+	}else{
+		;
+	}
+	return;
+}
+
 static int32_t ae_calculation_slow_motion(void* handle, void* param, void* result)
 {
 	int32_t rtn = AE_ERROR;
@@ -2810,7 +2849,6 @@ int32_t ae_calculation(void *handle, void* param, void* result)
 	int32_t i = 0;
 	char ae_exp[PROPERTY_VALUE_MAX];
 	char ae_gain[PROPERTY_VALUE_MAX];
-	static int8_t send_once[3] = {0, 0, 0};
 	struct ae_ctrl_cxt *cxt = NULL;
 	struct ae_alg_calc_param *current_status;
 	struct ae_alg_calc_result *current_result;
@@ -2900,13 +2938,20 @@ int32_t ae_calculation(void *handle, void* param, void* result)
 
 		rtn = ae_misc_calculation(cxt->misc_handle, &misc_calc_in, &misc_calc_out);
 		cxt->cur_status.ae1_finfo.update_flag = 0;	// add by match box for fd_ae reset the status
+		memset((void*)&cxt->cur_status.ae1_finfo.cur_info, 0, sizeof(cxt->cur_status.ae1_finfo.cur_info));
 
 		memcpy(current_result, &cxt->cur_result, sizeof(struct ae_alg_calc_result));
 		make_isp_result(current_result, calc_out);
 		{
 			/*just for debug: reset the status */
+
 			if (1 == cxt->cur_status.settings.touch_scrn_status) {
+				cxt->ae_cb_cnt++;
+				if (cxt->ae_cb_cnt >= 2) {
+					(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_TOUCH_AE_NOTIFY);//temp code for bug642910, remove later
 					cxt->cur_status.settings.touch_scrn_status = 0;
+					cxt->ae_cb_cnt = 0;
+				}
 			}
 		}
 		// AE_LOGD("calc_module_f %.2f %d\r\n",
@@ -2920,7 +2965,7 @@ int32_t ae_calculation(void *handle, void* param, void* result)
 		if (FLASH_PRE_BEFORE_RECEIVE == cxt->cur_result.flash_status && FLASH_PRE_BEFORE == current_status->settings.flash) {
 			AE_LOGD("ae_flash_status shake_1");
 			if (0 == cxt->send_once[0]){
-				send_once[0]++;
+				cxt->send_once[0]++;
 				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_CONVERGED);
 				AE_LOGD("ae_flash_callback do-pre-open!\r\n");
 			}
@@ -3623,6 +3668,23 @@ int32_t ae_sprd_io_ctrl(void *handle, int32_t cmd, void *param, void *result)
 				cxt->cur_status.settings.af_info = 0;
 			}
 			break;
+		case AE_HDR_START:
+			cxt->hdr_flag = 3;
+			cxt->hdr_timestamp = 0;
+			cxt->hdr_base_ae_idx = cxt->sync_cur_result.wts.cur_index;
+			break;
+		case AE_HDR_FINISH:
+			cxt->hdr_timestamp = 0;
+			cxt->cur_status.settings.lock_ae = AE_STATE_NORMAL;
+			break;
+		case AE_HDR_GET_INFO:
+			if (param && result){
+				*(uint64_t *)(param) = cxt->hdr_timestamp;
+				*(uint32_t *)(result) = 4;
+			}else{
+				AE_LOGD("_isp_hdr_error\n");
+			}
+			break;
 
 		default:
 			rtn = AE_ERROR;
@@ -3702,4 +3764,3 @@ struct adpt_ops_type ae_sprd_adpt_ops_ver1 = {
 #ifdef	__cplusplus
 }
 #endif
-

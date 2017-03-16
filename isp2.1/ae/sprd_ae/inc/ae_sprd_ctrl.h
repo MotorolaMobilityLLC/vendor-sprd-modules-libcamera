@@ -48,4 +48,3 @@ int32_t ae_sprd_io_ctrl(void *handler, int32_t cmd, void *in_param, void *out_pa
 #endif
 /**---------------------------------------------------------------------------*/
 #endif
-

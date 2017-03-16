@@ -29,6 +29,29 @@
 /**---------------------------------------------------------------------------*
  **				 Compiler Flag					*
  **---------------------------------------------------------------------------*/
+  struct ae_param_tmp_001{
+	uint32_t version;
+	uint32_t verify;
+	uint32_t alg_id;
+	uint32_t target_lum;
+	uint32_t target_lum_zone; // x16
+	uint32_t convergence_speed; // x16
+	uint32_t flicker_index;
+	uint32_t min_line;
+	uint32_t start_index;
+	uint32_t exp_skip_num;
+	uint32_t gain_skip_num;
+	struct ae_stat_req stat_req;
+	struct ae_flash_tuning flash_tuning;
+	struct touch_zone touch_param;
+	struct ae_ev_table ev_table;
+};
+
+struct ae_param_tmp_002{
+	struct ae_exp_anti exp_anti;
+	struct ae_ev_cali ev_cali;
+	struct ae_convergence_parm cvgn_param[AE_CVGN_NUM];
+};
 
 struct ae_tuning_param {//total bytes must be 263480
 	uint32_t version;

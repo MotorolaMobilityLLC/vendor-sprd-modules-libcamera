@@ -170,6 +170,9 @@ enum ae_io_ctrl_cmd {
 	AE_VIDEO_STOP,
 	AE_VIDEO_START,
 	AE_GET_AF_INFO,
+	AE_HDR_START,
+	AE_HDR_FINISH,
+	AE_HDR_GET_INFO,
 	AE_IO_MAX
 };
 
