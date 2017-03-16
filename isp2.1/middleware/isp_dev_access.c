@@ -242,26 +242,6 @@ cmr_int isp_dev_anti_flicker_new_bypass(cmr_handle isp_dev_handle, cmr_int bypas
 	return rtn;
 }
 
-cmr_int isp_dev_bq_enqueue_buf(cmr_handle isp_dev_handle, cmr_u64 k_addr, cmr_u64 u_addr, cmr_int type)
-{
-	cmr_int rtn = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-
-	rtn = isp_u_bq_enqueue_buf(cxt->isp_driver_handle, k_addr, u_addr, type);
-
-	return rtn;
-}
-
-cmr_int isp_dev_bq_dequeue_buf(cmr_handle isp_dev_handle, void *k_addr, void *u_addr, cmr_int type)
-{
-	cmr_int rtn = ISP_SUCCESS;
-	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-
-	rtn = isp_u_bq_dequeue_buf(cxt->isp_driver_handle, k_addr, u_addr, type);
-
-	return rtn;
-}
-
 cmr_int isp_dev_cfg_block(cmr_handle isp_dev_handle, void *data_ptr, cmr_int data_id)
 {
 	cmr_int rtn = ISP_SUCCESS;

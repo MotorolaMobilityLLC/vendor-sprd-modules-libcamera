@@ -63,8 +63,6 @@ cmr_int isp_dev_set_interface(struct isp_interface_param_v1 *in_ptr);
 cmr_int isp_dev_start(cmr_handle isp_dev_handle, struct isp_interface_param_v1 *in_ptr);
 cmr_int isp_dev_anti_flicker_bypass(cmr_handle isp_dev_handle, cmr_int bypass);
 cmr_int isp_dev_anti_flicker_new_bypass(cmr_handle isp_dev_handle, cmr_int bypass);
-cmr_int isp_dev_bq_enqueue_buf(cmr_handle isp_dev_handle, cmr_u64 k_addr, cmr_u64 u_addr, cmr_int type);
-cmr_int isp_dev_bq_dequeue_buf(cmr_handle isp_dev_handle, void *k_addr, void *u_addr, cmr_int type);
 cmr_int isp_dev_comm_shadow(cmr_handle isp_dev_handle, cmr_int shadow);
 cmr_int isp_dev_lsc_update(cmr_handle isp_dev_handle);
 cmr_int isp_dev_cfg_block(cmr_handle isp_dev_handle, void *data_ptr, cmr_int data_id);
