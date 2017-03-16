@@ -1294,76 +1294,76 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input *in_ptr)
 		if(block_result->smart_id > 8){
 			switch(block_result->smart_id){
 				case 9:
-					nr.PPI[0] = 1;
-					nr.PPI[2] = block_result->component[0].fix_data[0];
+					nr.ppi[0] = 1;
+					nr.ppi[2] = block_result->component[0].fix_data[0];
 					break;
 				case 10:
-					nr.BayerNR[0] = 1;
-					nr.BayerNR[2] = block_result->component[0].fix_data[0];
+					nr.bayer_nr[0] = 1;
+					nr.bayer_nr[2] = block_result->component[0].fix_data[0];
 					break;
 				case 11:
-					nr.RGB_DITHER[0] = 1;
-					nr.RGB_DITHER[2] = block_result->component[0].fix_data[0];
+					nr.rgb_dither[0] = 1;
+					nr.rgb_dither[2] = block_result->component[0].fix_data[0];
 					break;
 				case 12:
-					nr.BPC[0] = 1;
-					nr.BPC[2] = block_result->component[0].fix_data[0];
+					nr.bpc[0] = 1;
+					nr.bpc[2] = block_result->component[0].fix_data[0];
 					break;
 				case 13:
-					nr.GRGB[0] = 1;
-					nr.GRGB[2] = block_result->component[0].fix_data[0];
+					nr.grgb[0] = 1;
+					nr.grgb[2] = block_result->component[0].fix_data[0];
 					break;
 				case 14:
-					nr.CFAE[0] = 1;
-					nr.CFAE[2] = block_result->component[0].fix_data[0];
+					nr.cfae[0] = 1;
+					nr.cfae[2] = block_result->component[0].fix_data[0];
 					break;
 				case 15:
-					nr.RGB_AFM[0] = 1;
-					nr.RGB_AFM[2] = block_result->component[0].fix_data[0];
+					nr.rgb_afm[0] = 1;
+					nr.rgb_afm[2] = block_result->component[0].fix_data[0];
 					break;
 				case 16:
-					nr.UVDIV[0] = 1;
-					nr.UVDIV[2] = block_result->component[0].fix_data[0];
+					nr.uvdiv[0] = 1;
+					nr.uvdiv[2] = block_result->component[0].fix_data[0];
 					break;
 				case 17:
-					nr.DNR3_PRE[0] = 1;
-					nr.DNR3_PRE[2] = block_result->component[0].fix_data[0];
+					nr.dnr3_pre[0] = 1;
+					nr.dnr3_pre[2] = block_result->component[0].fix_data[0];
 					break;
 				case 18:
-					nr.DNR3_CAP[0] = 1;
-					nr.DNR3_CAP[2] = block_result->component[0].fix_data[0];
+					nr.dnr3_cap[0] = 1;
+					nr.dnr3_cap[2] = block_result->component[0].fix_data[0];
 					break;
 				case 19:
-					nr.EDGE[0] = 1;
-					nr.EDGE[2] = block_result->component[0].fix_data[0];
+					nr.edge[0] = 1;
+					nr.edge[2] = block_result->component[0].fix_data[0];
 					break;
 				case 20:
-					nr.YUV_PRECDN[0] = 1;
-					nr.YUV_PRECDN[2] = block_result->component[0].fix_data[0];
+					nr.precdn[0] = 1;
+					nr.precdn[2] = block_result->component[0].fix_data[0];
 					break;
 				case 21:
-					nr.YNR[0] = 1;
-					nr.YNR[2] = block_result->component[0].fix_data[0];
+					nr.ynr[0] = 1;
+					nr.ynr[2] = block_result->component[0].fix_data[0];
 					break;
 				case 22:
-					nr.UVCDN[0] = 1;
-					nr.UVCDN[2] = block_result->component[0].fix_data[0];
+					nr.cdn[0] = 1;
+					nr.cdn[2] = block_result->component[0].fix_data[0];
 					break;
 				case 23:
-					nr.POSTCDN[0] = 1;
-					nr.POSTCDN[2] = block_result->component[0].fix_data[0];
+					nr.postcdn[0] = 1;
+					nr.postcdn[2] = block_result->component[0].fix_data[0];
 					break;
 				case 24:
-					nr.IIRCNR_IIR[0] = 1;
-					nr.IIRCNR_IIR[2] = block_result->component[0].fix_data[0];
+					nr.ccnr[0] = 1;
+					nr.ccnr[2] = block_result->component[0].fix_data[0];
 					break;
 				case 25:
-					nr.IIR_YRANDOM[0] = 1;
-					nr.IIR_YRANDOM[2] = block_result->component[0].fix_data[0];
+					nr.iir_yrandom[0] = 1;
+					nr.iir_yrandom[2] = block_result->component[0].fix_data[0];
 					break;
 				case 26:
-					nr.YUV_NOISEFILTER[0] = 1;
-					nr.YUV_NOISEFILTER[2] = block_result->component[0].fix_data[0];
+					nr.noisefilter[0] = 1;
+					nr.noisefilter[2] = block_result->component[0].fix_data[0];
 					break;
 				default:
 					break;

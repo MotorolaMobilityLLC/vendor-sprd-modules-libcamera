@@ -110,24 +110,24 @@ struct smart_calc_result {
 };
 
 struct nr_data{
-	uint32_t PPI[3];
-	uint32_t BayerNR[3];
-	uint32_t RGB_DITHER[3];
-	uint32_t BPC[3];
-	uint32_t GRGB[3];
-	uint32_t CFAE[3];
-	uint32_t RGB_AFM[3];
-	uint32_t UVDIV[3];
-	uint32_t DNR3_PRE[3];
-	uint32_t DNR3_CAP[3];
-	uint32_t EDGE[3];
-	uint32_t YUV_PRECDN[3];
-	uint32_t YNR[3];
-	uint32_t UVCDN[3];
-	uint32_t POSTCDN[3];
-	uint32_t IIRCNR_IIR[3];
-	uint32_t IIR_YRANDOM[3];
-	uint32_t YUV_NOISEFILTER[3];
+	uint32_t ppi[3];
+	uint32_t bayer_nr[3];
+	uint32_t rgb_dither[3];
+	uint32_t bpc[3];
+	uint32_t grgb[3];
+	uint32_t cfae[3];
+	uint32_t rgb_afm[3];
+	uint32_t uvdiv[3];
+	uint32_t dnr3_pre[3];
+	uint32_t dnr3_cap[3];
+	uint32_t edge[3];
+	uint32_t precdn[3];
+	uint32_t ynr[3];
+	uint32_t cdn[3];
+	uint32_t postcdn[3];
+	uint32_t ccnr[3];
+	uint32_t iir_yrandom[3];
+	uint32_t noisefilter[3];
 };
 
 int32_t smart_ctl_ioctl(smart_handle_t handle, uint32_t cmd, void *param, void *result);
