@@ -62,8 +62,6 @@ extern "C"
 #define AWB_CTRL_SCENEMODE_NUM	10
 #define AWBV_WEIGHT_UNIT 256
 
-#define     UNUSED(param)  (void)(param)
-
 #define AWB_CTRL_TRUE			1
 #define AWB_CTRL_FALSE			0
 #define AWB_CTRL_WORK_MODE_NUM		8
@@ -601,7 +599,7 @@ static void set_result_lsc(TT_AlAwbInterface*	aptIns,void *p)
 		result->use_lsc = 1;
 		result->lsc = aptIns->mttOutLsc.mpiTbl;
 		result->lsc_size = aptIns->mttOutLsc.muiSize*4;
-		AWB_CTRL_LOGE("GET LSC TABLE ADDR 0x%08x",result->lsc);
+		AWB_CTRL_LOGE("GET LSC TABLE ADDR 0x%p",result->lsc);
 
 		memcpy( dmy_lsc, result->lsc, sizeof(dmy_lsc) );
 		result->lsc = dmy_lsc;
@@ -630,7 +628,7 @@ static uint32_t _init(struct awb_ctrl_cxt *cxt, struct awb_ctrl_init_param *para
 	if (cxt->lsc_otp_random != NULL)
 	{
 		split_lsc_otp_random(cxt->lsc_otp_random); // now color order: GrGrGr...GrGr, RRR...RR, BBB...BB, GbGbGb...GbGb
-		correct_lsc_otp_random_16(cxt->lsc_otp_random, lsc_ratio_pow15);
+		correct_lsc_otp_random_16(cxt->lsc_otp_random, (uint16_t*)lsc_ratio_pow15);
 	}
 	cxt->lsc_otp_golden = param->lsc_otp_golden;
 	cxt->lsc_otp_width = param->lsc_otp_width;
@@ -748,7 +746,9 @@ static uint32_t _calc(struct awb_ctrl_cxt *cxt, struct awb_ctrl_calc_param *para
 	uint32_t scene_mode = 0;
 	uint32_t work_mode = cxt->work_mode;
 	struct awb_ctrl_weight bv_result = {{0}, {0}};
-	struct awb_ctrl_bv bv_param = {0};
+	struct awb_ctrl_bv bv_param;
+
+	memset((void*)&bv_param,0,sizeof(struct awb_ctrl_bv));
 
 	if (AWB_CTRL_TRUE != cxt->init) {
 		AWB_CTRL_LOGE("AWB do not init!");
@@ -882,10 +882,10 @@ static uint32_t _calc(struct awb_ctrl_cxt *cxt, struct awb_ctrl_calc_param *para
 	//LSC outputs
 	set_result_lsc(aptIns,result);
 
-	result->log_awb.log = aptIns->mttOut.mpiLog;
+	result->log_awb.log = (uint8_t*)aptIns->mttOut.mpiLog;
 	result->log_awb.size = aptIns->mttOut.muiLogSize;
 
-	result->log_lsc.log = aptIns->mttOutLsc.mpiLog;
+	result->log_lsc.log = (uint8_t*)aptIns->mttOutLsc.mpiLog;
 	result->log_lsc.size = aptIns->mttOutLsc.muiSize;
 
 #if 0	//OTP TEST
@@ -974,7 +974,7 @@ static uint32_t _awb_set_recgain(struct awb_ctrl_cxt *cxt, void *param)
 {
 	UNUSED(param);
 	uint32_t rtn = AWB_CTRL_SUCCESS;
-	struct awb_gain awb_gain = {0x0};
+	struct awb_gain awb_gain = {0x0,0x0,0x0};
 
 	rtn = _awb_get_gain(cxt, (void *)&awb_gain);
 
@@ -1066,7 +1066,7 @@ static uint32_t _awb_get_recgain(struct awb_ctrl_cxt *cxt, void *param)
 {
 	UNUSED(param);
 	uint32_t rtn = AWB_CTRL_SUCCESS;
-	struct awb_ctrl_gain awb_gain = {0x0};
+	struct awb_ctrl_gain awb_gain = {0x0,0x0,0x0};
 
 	awb_gain.r = cxt->recover_gain.r;
 	awb_gain.g = cxt->recover_gain.g;
@@ -1176,9 +1176,10 @@ static uint32_t _awb_set_flash_status(struct awb_ctrl_cxt *cxt, void *param)
 *@           AWB_CTRL_INVALID_HANDLE: failed
 *@	     others: awb ctrl handle
 */
-awb_ctrl_handle_t awb_al_ctrl_init(struct awb_ctrl_init_param *param,
-				struct awb_ctrl_init_result *result)
+cmr_int awb_al_ctrl_init(void *in, void *out)
 {
+	struct awb_ctrl_init_param *param = (struct awb_ctrl_init_param *)in;
+	struct awb_ctrl_init_result *result = (struct awb_ctrl_init_result *)out;
 	uint32_t rtn = AWB_CTRL_SUCCESS;
 	struct awb_ctrl_cxt *cxt = NULL;
 
@@ -1209,12 +1210,12 @@ awb_ctrl_handle_t awb_al_ctrl_init(struct awb_ctrl_init_param *param,
 	cxt->cur_ct = result->ct;
 
 	pthread_mutex_init(&cxt->status_lock, NULL);
-	return (awb_ctrl_handle_t)cxt;
+	return rtn;
 
 ERROR_EXIT:
 	AWB_CTRL_SAFE_FREE(cxt);
 
-	return AWB_CTRL_INVALID_HANDLE;
+	return rtn;
 }
 
 /* awb_ctrl_deinit--
@@ -1225,7 +1226,7 @@ ERROR_EXIT:
 *@           0: successful
 *@	     others: failed
 */
-uint32_t awb_al_ctrl_deinit(awb_ctrl_handle_t handle, void *param, void *result)
+cmr_int awb_al_ctrl_deinit(void * handle, void *param, void *result)
 {
 	UNUSED(param);
 	UNUSED(result);
@@ -1259,13 +1260,13 @@ uint32_t awb_al_ctrl_deinit(awb_ctrl_handle_t handle, void *param, void *result)
 *@           0: successful
 *@	     others: failed
 */
-uint32_t awb_al_ctrl_calculation(awb_ctrl_handle_t handle,
-				struct awb_ctrl_calc_param *param,
-				struct awb_ctrl_calc_result *result)
+cmr_int awb_al_ctrl_calculation(void * handle, void *in, void *out)
 {
+	struct awb_ctrl_calc_param *param = (struct awb_ctrl_calc_param *)in;
+	struct awb_ctrl_calc_result *result = (struct awb_ctrl_calc_result *)out;
 	uint32_t rtn = AWB_CTRL_SUCCESS;
 	struct awb_ctrl_cxt *cxt = (struct awb_ctrl_cxt *)handle;
-	struct awb_gain awb_get_gain = {0};
+	struct awb_gain awb_get_gain = {0,0,0};
 	uint32_t scene_mode = 0;
 
 	if (NULL == param || NULL == result) {
@@ -1304,8 +1305,7 @@ EXIT:
 *@           0: successful
 *@	     others: failed
 */
-uint32_t awb_al_ctrl_ioctrl(awb_ctrl_handle_t handle, enum awb_ctrl_cmd cmd,
-				void *param0, void *param1)
+cmr_int awb_al_ctrl_ioctrl(void * handle, cmr_int cmd, void *param0, void *param1)
 {
 	UNUSED(param1);
 	uint32_t rtn = AWB_CTRL_SUCCESS;
@@ -1388,7 +1388,7 @@ uint32_t awb_al_ctrl_ioctrl(awb_ctrl_handle_t handle, enum awb_ctrl_cmd cmd,
 		break;
 		
 	default:
-		AWB_CTRL_LOGE("invalid cmd = 0x%x", cmd);
+		AWB_CTRL_LOGE("invalid cmd = 0x%lx", cmd);
 		rtn = AWB_CTRL_ERROR;
 		break;
 	}

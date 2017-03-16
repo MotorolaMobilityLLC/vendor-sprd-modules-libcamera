@@ -18,12 +18,10 @@
 /*------------------------------------------------------------------------------*
 *				Data Prototype					*
 *-------------------------------------------------------------------------------*/
-awb_ctrl_handle_t awb_al_ctrl_init(struct awb_ctrl_init_param *param,
-				struct awb_ctrl_init_result *result);
-uint32_t awb_al_ctrl_deinit(awb_ctrl_handle_t handle, void *param, void *result);
-uint32_t awb_al_ctrl_calculation(awb_ctrl_handle_t handle,
-				struct awb_ctrl_calc_param *param,
-				struct awb_ctrl_calc_result *result);
-uint32_t awb_al_ctrl_ioctrl(awb_ctrl_handle_t handle, enum awb_ctrl_cmd cmd,
-				void *param0, void *param1);
+
+cmr_int awb_al_ctrl_init(void *param, void *result);
+cmr_int awb_al_ctrl_deinit(void * handle, void *param, void *result);
+cmr_int awb_al_ctrl_calculation(void * handle, void *param, void *result);
+cmr_int awb_al_ctrl_ioctrl(void * handle, cmr_int cmd, void *param0, void *param1);
+
 #endif
