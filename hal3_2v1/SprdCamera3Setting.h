@@ -73,10 +73,7 @@ namespace sprdcamera {
 #define MIN_DIGITAL_ZOOM_RATIO (1.0f)
 #define MAX_DIGITAL_ZOOM_RATIO (2.0f)
 
-// some vsp and jpeg need height 16 alignment
 #define HEIGHT_2M 1088
-#define HEIGHT_5M 1952
-#define HEIGHT_6M 1840
 
 #ifdef CONFIG_CAMERA_SUPPORT_21M
 #define BACK_SENSOR_ORIG_WIDTH 5312
@@ -92,7 +89,7 @@ namespace sprdcamera {
 #define BACK_SENSOR_ORIG_HEIGHT 2448
 #else
 #define BACK_SENSOR_ORIG_WIDTH 2592
-#define BACK_SENSOR_ORIG_HEIGHT HEIGHT_5M
+#define BACK_SENSOR_ORIG_HEIGHT 1944
 #endif
 
 #ifdef CONFIG_FRONT_CAMERA_SUPPORT_8M
@@ -100,7 +97,7 @@ namespace sprdcamera {
 #define FRONT_SENSOR_ORIG_HEIGHT 2448
 #elif CONFIG_FRONT_CAMERA_SUPPORT_5M
 #define FRONT_SENSOR_ORIG_WIDTH 2592 // select according to max jpg resolution
-#define FRONT_SENSOR_ORIG_HEIGHT HEIGHT_5M
+#define FRONT_SENSOR_ORIG_HEIGHT 1944
 #elif CONFIG_FRONT_CAMERA_SUPPORT_3M
 #define FRONT_SENSOR_ORIG_WIDTH 2048 // select according to max jpg resolution
 #define FRONT_SENSOR_ORIG_HEIGHT 1536

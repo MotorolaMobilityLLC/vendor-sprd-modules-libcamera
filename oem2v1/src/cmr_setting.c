@@ -1424,6 +1424,11 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
     cmr_u32 is_raw_capture = 0;
     char value[PROPERTY_VALUE_MAX];
 
+    property_get("persist.sys.camera.raw.mode", value, "jpeg");
+    if (!strcmp(value, "raw")) {
+        is_raw_capture = 1;
+    }
+
 #define EXIF_DEF_MAKER "Spreadtrum"
 #define EXIF_DEF_MODEL "spxxxx"
     static const char image_desc[] = "Exif_JPEG_420";
@@ -1450,6 +1455,26 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
                                  SETTING_IO_GET_ACTUAL_CAPTURE_SIZE,
                                  &cmd_param);
         exif_unit->actual_picture_size = cmd_param.size_param;
+
+        // workaround jpeg cant handle 16-noalign issue, when jpeg fix this
+        // issue, we will remove these code
+        if (is_raw_capture == 0) {
+            if (exif_unit->picture_size.height == 1952 &&
+                exif_unit->picture_size.width == 2592) {
+                exif_unit->picture_size.height = 1944;
+            } else if (exif_unit->actual_picture_size.height == 1840 &&
+                       exif_unit->picture_size.width == 3264) {
+                exif_unit->picture_size.height = 1836;
+            }
+
+            if (exif_unit->actual_picture_size.height == 1952 &&
+                exif_unit->actual_picture_size.width == 2592) {
+                exif_unit->actual_picture_size.height = 1944;
+            } else if (exif_unit->actual_picture_size.height == 1840 &&
+                       exif_unit->actual_picture_size.width == 3264) {
+                exif_unit->actual_picture_size.height = 1836;
+            }
+        }
     }
 
     time(&timep);
@@ -1498,11 +1523,6 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
              p_exif_info->primary.basic.ImageLength,
              p_exif_info->spec_ptr->basic.PixelXDimension,
              p_exif_info->spec_ptr->basic.PixelYDimension);
-
-    property_get("persist.sys.camera.raw.mode", value, "jpeg");
-    if (!strcmp(value, "raw")) {
-        is_raw_capture = 1;
-    }
 
     if (NULL != p_exif_info->primary.data_struct_ptr) {
 #ifdef MIRROR_FLIP_ROTATION_BY_JPEG
@@ -2511,7 +2531,7 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
             goto EXIT;
         }
         if ((CAMERA_FLASH_MODE_AUTO == flash_mode) &&
-             (ctrl_flash_status == FLASH_OPEN)) {
+            (ctrl_flash_status == FLASH_OPEN)) {
             ret = setting_flash_handle(cpt, parm, flash_mode);
         }
 

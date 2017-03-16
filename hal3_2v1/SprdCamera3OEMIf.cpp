@@ -270,7 +270,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     ATRACE_CALL();
 
     // mIsPerformanceTestable = sprd_isPerformanceTestable();
-    HAL_LOGI(":hal3: E openCamera: cameraId: %d.", cameraId);
+    HAL_LOGI(":hal3: E cameraId: %d.", cameraId);
 
 #ifdef CONFIG_FACE_BEAUTY
     mSkinWhitenNotDetectFDNum = 0;
@@ -351,7 +351,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
         mHalOem->dso = handle;
         mHalOem->ops = omi->ops;
 
-        ALOGI("loaded libcamoem.so handle=%p", handle);
+        HAL_LOGI("loaded libcamoem.so handle=%p", handle);
     }
 
     mCameraId = cameraId;
@@ -445,7 +445,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mVideoParameterSetFlag = false;
     mZslCaptureExitLoop = false;
     mSprdCameraLowpower = 0;
-    HAL_LOGI(":hal3: X openCamera: cameraId: %d.", cameraId);
+    HAL_LOGI(":hal3: X cameraId: %d.", cameraId);
 }
 
 SprdCamera3OEMIf::~SprdCamera3OEMIf() {
@@ -5470,12 +5470,14 @@ int SprdCamera3OEMIf::openCamera() {
 
     int ret = NO_ERROR;
 
+    HAL_LOGI(":hal3: E");
+
     GET_START_TIME;
 
     if (!startCameraIfNecessary()) {
         ret = UNKNOWN_ERROR;
         HAL_LOGE("start failed");
-        return ret;
+        goto exit;
     }
 
     ZSLMode_monitor_thread_init((void *)this);
@@ -5487,6 +5489,9 @@ int SprdCamera3OEMIf::openCamera() {
 #ifdef CONFIG_FACE_BEAUTY
     ts_printVersionInfo();
 #endif
+
+exit:
+    HAL_LOGI(":hal3: X");
     return ret;
 }
 
@@ -8093,7 +8098,7 @@ void SprdCamera3OEMIf::skipZslFrameForFlashCapture() {
             // for exception exit
             if (mZslCaptureExitLoop == true) {
                 HAL_LOGD("zsl loop exit done.");
-                exit;
+                break;
             }
 
             if (cnt > mFlashCaptureSkipNum) {

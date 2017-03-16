@@ -4489,6 +4489,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
     cmr_uint flip_on = 0;
     cmr_u32 is_raw_capture = 0;
     char value[PROPERTY_VALUE_MAX];
+    cmr_u32 tmp = 0;
 
     if (!caller_handle || !oem_handle || !src || !dst || !mean) {
         CMR_LOGE("in parm error");
@@ -4497,6 +4498,11 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
     }
 
     sem_wait(&cxt->access_sm);
+
+    property_get("persist.sys.camera.raw.mode", value, "jpeg");
+    if (!strcmp(value, "raw")) {
+        is_raw_capture = 1;
+    }
 
     cmr_bzero((void *)&enc_in_param, sizeof(enc_in_param));
     cmr_bzero((void *)&setting_param, sizeof(setting_param));
@@ -4511,15 +4517,21 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
     enc_in_param.stream_buf_fd = dst->fd;
     enc_in_param.jpeg_handle = cxt->jpeg_cxt.jpeg_handle;
     enc_in_param.size = src->size;
-    enc_in_param.out_size = dst->size; /*actual picture size*/
     enc_in_param.src_addr_phy = src->addr_phy;
     enc_in_param.src_addr_vir = src->addr_vir;
     enc_in_param.src_fd = src->fd;
     enc_in_param.src_endian = src->data_end;
+    enc_in_param.out_size.width = dst->size.width;
+    enc_in_param.out_size.height = dst->size.height;
 
-    property_get("persist.sys.camera.raw.mode", value, "jpeg");
-    if (!strcmp(value, "raw")) {
-        is_raw_capture = 1;
+    // workaround jpeg cant handle 16-noalign issue, when jpeg fix this issue,
+    // we will remove these code
+    if (is_raw_capture == 0) {
+        if (dst->size.height == 1952 && dst->size.width == 2592) {
+            enc_in_param.out_size.height = 1944;
+        } else if (dst->size.height == 1840 && dst->size.width == 3264) {
+            enc_in_param.out_size.height = 1836;
+        }
     }
 
 /* from sharkl2, jpeg support mirror/flip/rotation, mirror feature always use
@@ -4566,8 +4578,9 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
         }
 
         if ((90 == rotation || 270 == rotation)) {
-            enc_in_param.out_size.height = dst->size.width;
-            enc_in_param.out_size.width = dst->size.height;
+            tmp = enc_in_param.out_size.height;
+            enc_in_param.out_size.height = enc_in_param.out_size.width;
+            enc_in_param.out_size.width = tmp;
         }
     }
 #endif

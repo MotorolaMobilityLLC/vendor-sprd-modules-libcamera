@@ -101,6 +101,8 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
       mDeqBufNum(0), mRecSkipNum(0), mIsSkipFrm(false), mFlush(false) {
     ATRACE_CALL();
 
+    HAL_LOGD(":hal3: E");
+
     // for camera id 2&3 debug
     char value[PROPERTY_VALUE_MAX];
     property_get("persist.sys.camera.id", value, "0");
@@ -152,7 +154,7 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
     mSetting = NULL;
     mSprdCameraLowpower = 0;
 
-    HAL_LOGD("X");
+    HAL_LOGD(":hal3: X");
 }
 
 int SprdCamera3HWI::getNumberOfCameras() {
@@ -164,7 +166,7 @@ int SprdCamera3HWI::getNumberOfCameras() {
 SprdCamera3HWI::~SprdCamera3HWI() {
     ATRACE_CALL();
 
-    HAL_LOGD("E");
+    HAL_LOGD(":hal3: E");
 
     SprdCamera3RegularChannel *regularChannel =
         reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
@@ -218,7 +220,7 @@ SprdCamera3HWI::~SprdCamera3HWI() {
 
     timer_stop();
 
-    HAL_LOGD("X");
+    HAL_LOGD(":hal3: X");
 }
 
 SprdCamera3RegularChannel *SprdCamera3HWI::getRegularChan() {
@@ -307,7 +309,7 @@ static int ispCtrlFlash(uint32_t param, uint32_t status) {
 int SprdCamera3HWI::openCamera(struct hw_device_t **hw_device) {
     ATRACE_CALL();
 
-    HAL_LOGD(":hal3: camera3->open E");
+    HAL_LOGD("camera3->open E");
 
     int ret = 0;
     Mutex::Autolock l(mLock);
@@ -340,15 +342,14 @@ int SprdCamera3HWI::openCamera(struct hw_device_t **hw_device) {
     } else
         *hw_device = NULL;
 
-    HAL_LOGD(":hal3: camera3->open X mCameraSessionActive %d",
-             mCameraSessionActive);
+    HAL_LOGD("camera3->open X mCameraSessionActive %d", mCameraSessionActive);
     return ret;
 }
 
 int SprdCamera3HWI::openCamera() {
     ATRACE_CALL();
 
-    HAL_LOGV(":hal3: E");
+    HAL_LOGD(":hal3: E");
 
     int ret = NO_ERROR;
 
@@ -388,7 +389,7 @@ int SprdCamera3HWI::openCamera() {
     }
 
     mCameraOpened = true;
-    HAL_LOGV(":hal3: X");
+    HAL_LOGD(":hal3: X");
     return NO_ERROR;
 }
 
@@ -795,6 +796,14 @@ int SprdCamera3HWI::configureStreams(
              video_size.height);
     HAL_LOGI(":hal3: raw: w=%d, h=%d, capture: w=%d, h=%d", raw_size.width,
              raw_size.height, capture_size.width, capture_size.height);
+
+    // workaround jpeg cant handle 16-noalign issue, when jpeg fix this issue,
+    // we will remove these code
+    if (capture_size.height == 1944 && capture_size.width == 2592) {
+        capture_size.height = 1952;
+    } else if (capture_size.height == 1836 && capture_size.width == 3264) {
+        capture_size.height = 1840;
+    }
 
     mOEMIf->SetDimensionPreview(preview_size);
     mOEMIf->SetDimensionVideo(video_size);
