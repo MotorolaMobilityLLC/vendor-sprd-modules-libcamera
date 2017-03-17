@@ -7261,11 +7261,15 @@ int SprdCamera3OEMIf::SetDimensionVideo(cam_dimension_t video_size)
 	SPRD_DEF_Tag sprddefInfo;
 	mSetting->getSPRDDEFTag(&sprddefInfo);
 
-	if (mVideoWidth > 2048) {
+#ifdef CONFIG_CAMERA_VIDEOSNAPSHOT_USE_VIDEOBUFFER
+	if (mVideoWidth > 0 && mVideoHeight > 0) {
 		mVideoSnapshotType = 1;
-	} else {
+	}else{
 		mVideoSnapshotType = 0;
 	}
+#else
+	mVideoSnapshotType = 0;
+#endif
 	return NO_ERROR;
 }
 

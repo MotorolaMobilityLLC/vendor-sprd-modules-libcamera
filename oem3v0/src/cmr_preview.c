@@ -518,6 +518,12 @@ static cmr_int prev_set_cap_param(struct prev_handle *handle,
 					cmr_u32 is_lightly,
 					struct preview_out_param *out_param_ptr);
 
+static cmr_int prev_set_videocap_param(struct prev_handle *handle,
+					cmr_u32 camera_id,
+					cmr_u32 is_restart,
+					cmr_u32 is_lightly,
+					struct preview_out_param *out_param_ptr);
+
 static cmr_int prev_update_cap_param(struct prev_handle *handle,
 					cmr_u32 camera_id,
 					cmr_u32 encode_angle,struct snp_proc_param *snp_proc_param);
@@ -6928,9 +6934,12 @@ cmr_int prev_set_param_internal(struct prev_handle *handle,
 
 	CHECK_HANDLE_VALID(handle);
 	CHECK_CAMERA_ID(camera_id);
+
 	if (!out_param_ptr) {
-		CMR_LOGI("out_param_ptr is null");
+		CMR_LOGE("out_param_ptr is null");
+		goto exit;
 	}
+
 
 	/*cmr_bzero(out_param_ptr, sizeof(struct preview_out_param));*/
 
@@ -7005,13 +7014,32 @@ cmr_int prev_set_param_internal(struct prev_handle *handle,
 
 	if (handle->prev_cxt[camera_id].prev_param.snapshot_eb) {
 		if (handle->prev_cxt[camera_id].prev_param.tool_eb) {
+			// raw capture
 			ret = prev_set_cap_param_raw(handle, camera_id, is_restart, out_param_ptr);
+			if (ret) {
+				CMR_LOGE("prev_set_cap_param_raw failed");
+				goto exit;
+			}
+		} else if (handle->prev_cxt[camera_id].prev_param.video_snapshot_type == VIDEO_SNAPSHOT_VIDEO) {
+			// copy video stream for video snapshot
+			ret = prev_set_videocap_param(handle, camera_id, is_restart, 0, out_param_ptr);
+			if (ret) {
+				CMR_LOGE("prev_set_videocap_param failed");
+				goto exit;
+			}
 		} else {
+			if (!handle->prev_cxt[camera_id].prev_param.preview_eb) {
+				ret = prev_pre_set(handle, camera_id);
+				if (ret) {
+					CMR_LOGE("pre set failed");
+					goto exit;
+				}
+			}
 			ret = prev_set_cap_param(handle, camera_id, is_restart, 0, out_param_ptr);
-		}
-		if (ret) {
-			CMR_LOGE("set cap param failed");
-			goto exit;
+			if (ret) {
+				CMR_LOGE("prev_set_cap_param failed");
+				goto exit;
+			}
 		}
 	}
 
@@ -7983,7 +8011,7 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 	if(prev_cxt->prev_param.is_uhd_recording_mode == 1&&
 		prev_cxt->prev_param.video_eb) {
 		CMR_LOGI("is_uhd_recording_mode %d not support", prev_cxt->prev_param.is_uhd_recording_mode);
-		return 0;
+		goto  exit;
 	}
 #endif
 	if (!is_restart) {
@@ -8233,6 +8261,115 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 
 exit:
 	CMR_LOGD("out");
+	ATRACE_END();
+	return ret;
+}
+
+
+cmr_int prev_set_videocap_param(struct prev_handle *handle, cmr_u32 camera_id,
+				cmr_u32 is_restart, cmr_u32 is_lightly,
+				struct preview_out_param *out_param_ptr)
+{
+	ATRACE_BEGIN(__FUNCTION__);
+
+	cmr_int                     ret = CMR_CAMERA_SUCCESS;
+	struct sensor_exp_info      *sensor_info = NULL;
+	struct sensor_mode_info     *sensor_mode_info = NULL;
+	struct prev_context         *prev_cxt = NULL;
+	struct cmr_zoom_param       *zoom_param = NULL;
+	cmr_u32                     channel_id = 0;
+	struct channel_start_param  chn_param;
+	struct video_start_param    video_param;
+	struct img_data_end         endian;
+	struct cmr_path_capability  capability;
+	cmr_u32                     is_capture_zsl = 0;
+	struct buffer_cfg           buf_cfg;
+	cmr_u32                     i;
+
+	CHECK_HANDLE_VALID(handle);
+	CHECK_CAMERA_ID(camera_id);
+
+	cmr_bzero(&video_param, sizeof(struct video_start_param));
+
+	prev_cxt         = &handle->prev_cxt[camera_id];
+	sensor_info      = &prev_cxt->sensor_info;
+	sensor_mode_info = &sensor_info->mode_info[prev_cxt->cap_mode];
+	zoom_param       = &prev_cxt->prev_param.zoom_setting;
+
+	if (!is_restart) {
+		prev_cxt->cap_frm_cnt  = 0;
+		prev_cxt->cap_zsl_frm_cnt = 0;
+	}
+
+	CMR_LOGI("preview_eb %d , snapshot_eb %d, frame_ctrl %d, frame_count %d, is_restart %d",
+		prev_cxt->prev_param.preview_eb,
+		prev_cxt->prev_param.snapshot_eb,
+		prev_cxt->prev_param.frame_ctrl,
+		prev_cxt->prev_param.frame_count,
+		is_restart);
+
+#ifdef CONFIG_CAMERA_UHD_VIDEOSNAPSHOT_SUPPORT
+		CMR_LOGI("is_uhd_recording_mode %d support", prev_cxt->prev_param.is_uhd_recording_mode);
+#else
+		if(prev_cxt->prev_param.is_uhd_recording_mode == 1&&
+			prev_cxt->prev_param.video_eb) {
+			CMR_LOGI("is_uhd_recording_mode %d not support", prev_cxt->prev_param.is_uhd_recording_mode);
+			goto  exit;
+		}
+#endif
+
+	if (prev_cxt->prev_param.video_eb ||
+	    (prev_cxt->prev_param.preview_eb && prev_cxt->prev_param.snapshot_eb)) {
+		prev_get_sensor_mode(handle, camera_id);
+	}
+
+	/*config capture ability*/
+	ret = prev_cap_ability(handle, camera_id, &prev_cxt->actual_pic_size,
+			       &chn_param.cap_inf_cfg.cfg);
+	if (ret) {
+		CMR_LOGE("prev_cap_ability failed");
+		ret = CMR_CAMERA_FAIL;
+		goto exit;
+	}
+
+	/*alloc capture buffer*/
+	ret = prev_alloc_cap_buf(handle, camera_id, is_restart, &chn_param.buffer);
+	if (ret) {
+		CMR_LOGE("alloc cap buf failed");
+		ret = CMR_CAMERA_FAIL;
+		goto exit;
+	}
+
+	prev_cxt->cap_channel_id = CHN_MAX;
+	prev_cxt->cap_mode = prev_cxt->prev_mode;
+	prev_cxt->cap_data_endian = prev_cxt->video_data_endian;
+
+	/*return capture out params*/
+	if (out_param_ptr) {
+		out_param_ptr->snapshot_chn_bits                   = 1 << prev_cxt->cap_channel_id;
+		out_param_ptr->preview_sn_mode                     = prev_cxt->prev_mode;
+		out_param_ptr->snapshot_sn_mode                    = prev_cxt->cap_mode;
+		out_param_ptr->snapshot_data_endian                = prev_cxt->cap_data_endian;
+		out_param_ptr->actual_snapshot_size                = prev_cxt->actual_pic_size;
+		out_param_ptr->zsl_frame = 0;
+		prev_cxt->is_zsl_frm = 0;
+
+		CMR_LOGD("chn_bits 0x%x, prev_mode %d, cap_mode %d, encode_angle %d",
+			out_param_ptr->snapshot_chn_bits,
+			out_param_ptr->preview_sn_mode,
+			out_param_ptr->snapshot_sn_mode,
+			prev_cxt->prev_param.encode_angle);
+
+		ret = prev_get_cap_post_proc_param(handle,
+						camera_id,
+						prev_cxt->prev_param.encode_angle,
+						&out_param_ptr->post_proc_setting);
+		if (ret) {
+			CMR_LOGE("get cap post proc param failed");
+		}
+	}
+
+exit:
 	ATRACE_END();
 	return ret;
 }
@@ -11691,6 +11828,7 @@ cmr_u32 prev_get_aligned_type(cmr_handle preview_handle, cmr_u32 camera_id)
 	cmr_u32                sprd_zsl_enabled;
 	struct img_size        org_pic_size;
 	cmr_u32                width, height = 0;
+	cmr_u32                video_snapshot_type = 0;
 
 	CHECK_HANDLE_VALID(handle);
 	CHECK_CAMERA_ID(camera_id);
@@ -11703,6 +11841,7 @@ cmr_u32 prev_get_aligned_type(cmr_handle preview_handle, cmr_u32 camera_id)
 	snapshot_enable = prev_cxt->prev_param.snapshot_eb;
 	video_enable    = prev_cxt->prev_param.video_eb;
 	sprd_zsl_enabled = prev_cxt->prev_param.sprd_zsl_enabled;
+	video_snapshot_type =  prev_cxt->prev_param.video_snapshot_type;
 
 	property_get("persist.sys.camera.raw.mode", value, "jpeg");
 	if (!strcmp(value, "raw")) {
@@ -11713,7 +11852,8 @@ cmr_u32 prev_get_aligned_type(cmr_handle preview_handle, cmr_u32 camera_id)
 	if (snapshot_enable && !is_raw_capture) {
 		if ((!preview_enable ||   // non zsl takepicture
 			(preview_enable && sprd_zsl_enabled) || // zsl takepicture
-			(preview_enable && video_enable && sprd_zsl_enabled)) &&    // video snapshot takepicture
+			(preview_enable && video_enable && (video_snapshot_type == VIDEO_SNAPSHOT_VIDEO) ) || //  video snapshot takepicture use video buffer
+			(preview_enable && video_enable && sprd_zsl_enabled) )&&    // video snapshot takepicture
 			((height == 1944  && width == 2592) ||
 			(height == 1836 && width == 3264) ||
 			(height == 1080 && width == 1920))) {
