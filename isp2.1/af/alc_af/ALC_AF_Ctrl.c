@@ -25,25 +25,6 @@
 #include "ae_ctrl.h"
 #include "lib_ctrl.h"
 
-
-#ifdef WIN32
-#define ALC_AF_LOG
-#define ALC_AF_LOGW
-#define ALC_AF_LOGI
-#define ALC_AF_LOGD
-#define ALC_AF_LOGV
-#else
-#define ALC_AF_DEBUG_STR     "ALC_AF: %d, %s: "
-#define ALC_AF_DEBUG_ARGS    __LINE__,__FUNCTION__
-
-#define ALC_AF_LOG(format,...) ALOGE(ALC_AF_DEBUG_STR format, ALC_AF_DEBUG_ARGS, ##__VA_ARGS__)
-#define ALC_AF_LOGE(format,...) ALOGE(ALC_AF_DEBUG_STR format, ALC_AF_DEBUG_ARGS, ##__VA_ARGS__)
-#define ALC_AF_LOGW(format,...) ALOGW(ALC_AF_DEBUG_STR format, ALC_AF_DEBUG_ARGS, ##__VA_ARGS__)
-#define ALC_AF_LOGI(format,...) ALOGI(ALC_AF_DEBUG_STR format, ALC_AF_DEBUG_ARGS, ##__VA_ARGS__)
-#define ALC_AF_LOGD(format,...) ALOGD(ALC_AF_DEBUG_STR format, ALC_AF_DEBUG_ARGS, ##__VA_ARGS__)
-#define ALC_AF_LOGV(format,...) ALOGV(ALC_AF_DEBUG_STR format, ALC_AF_DEBUG_ARGS, ##__VA_ARGS__)
-#endif
-
 #define AF_CALLBACK_EVT 0x00040000
 
 void alc_af_log(const char* format, ...)

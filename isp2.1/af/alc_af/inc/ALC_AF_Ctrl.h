@@ -13,6 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#ifdef WIN32
+#define ALC_AF_LOG
+#define ALC_AF_LOGW
+#define ALC_AF_LOGI
+#define ALC_AF_LOGD
+#define ALC_AF_LOGV
+#else
+#define ALC_AF_DEBUG_STR     "ALC_AF: %d, %s: "
+#define ALC_AF_DEBUG_ARGS    __LINE__,__FUNCTION__
+
+#define ALC_AF_LOG(format,...) ALOGE(ALC_AF_DEBUG_STR format, ALC_AF_DEBUG_ARGS, ##__VA_ARGS__)
+#define ALC_AF_LOGE(format,...) ALOGE(ALC_AF_DEBUG_STR format, ALC_AF_DEBUG_ARGS, ##__VA_ARGS__)
+#define ALC_AF_LOGW(format,...) ALOGW(ALC_AF_DEBUG_STR format, ALC_AF_DEBUG_ARGS, ##__VA_ARGS__)
+#define ALC_AF_LOGI(format,...) ALOGI(ALC_AF_DEBUG_STR format, ALC_AF_DEBUG_ARGS, ##__VA_ARGS__)
+#define ALC_AF_LOGD(format,...) ALOGD(ALC_AF_DEBUG_STR format, ALC_AF_DEBUG_ARGS, ##__VA_ARGS__)
+#define ALC_AF_LOGV(format,...) ALOGV(ALC_AF_DEBUG_STR format, ALC_AF_DEBUG_ARGS, ##__VA_ARGS__)
+#endif
+
 #ifndef _ALC_AF_CTRL_H_
 #define _ALC_AF_CTRL_H_
 #include <sys/types.h>
@@ -21,8 +40,7 @@
 #include "ALC_AF_Common.h"
 #include "AfIF.h"//tes_kano_0822
 
-#define ALC_AF_LOGE af_ops->cb_alc_af_log
-
+//#define ALC_AF_LOGE af_ops->cb_alc_af_log
 struct alc_af_context {
 	uint32_t magic_start;
 	void *isp_handle;
