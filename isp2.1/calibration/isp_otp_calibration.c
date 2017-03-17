@@ -20,8 +20,6 @@
 
 #define ISP_CALI_MIN_SIZE (200 * 1024)
 
-#define     UNUSED(param)  (void)(param)
-
 struct golden_header {
 	uint32_t start;
 	uint32_t length;
@@ -129,11 +127,14 @@ static int32_t _golden_parse(struct isp_data_t *golden, struct isp_data_t *lsc, 
 static int32_t _cali_lsc(struct isp_data_t *golden, struct isp_data_t *otp, uint32_t image_pattern, struct isp_data_t *target_buf, uint32_t *size)
 {
 	int32_t rtn = ISP_CALI_SUCCESS;
-	struct isp_calibration_lsc_golden_info lsc_golden_info = {0};
-	struct isp_calibration_lsc_calc_in lsc_calc_param = {0};
-	struct isp_calibration_lsc_calc_out lsc_calc_result = {0};
+	struct isp_calibration_lsc_golden_info lsc_golden_info;
+	struct isp_calibration_lsc_calc_in lsc_calc_param;
+	struct isp_calibration_lsc_calc_out lsc_calc_result;
 	uint32_t i = 0;
 	uint32_t target_buf_size = 0;
+	memset(&lsc_golden_info, 0x00, sizeof(lsc_golden_info));
+	memset(&lsc_calc_param, 0x00, sizeof(lsc_calc_param));
+	memset(&lsc_calc_result, 0x00, sizeof(lsc_calc_result));
 
 	struct isp_cali_lsc_info *lsc_info = PNULL;
 	uint32_t header_size = 0;
@@ -324,9 +325,9 @@ int32_t isp_calibration_get_info(struct isp_data_t *golden_info, struct isp_cali
 int32_t isp_calibration(struct isp_cali_param *param, struct isp_data_t *result)
 {
 	int32_t rtn = ISP_CALI_SUCCESS;
-	struct isp_data_t golden_lsc = {0};
-	struct isp_data_t golden_awb = {0};
-	struct isp_data_t tmp = {0};
+	struct isp_data_t golden_lsc = {0, PNULL};
+	struct isp_data_t golden_awb = {0, PNULL};
+	struct isp_data_t tmp = {0, PNULL};
 	struct isp_cali_data *cali_data = PNULL;
 	uint8_t *cur = PNULL;
 	uint8_t *start = PNULL;
@@ -388,7 +389,7 @@ int32_t isp_calibration(struct isp_cali_param *param, struct isp_data_t *result)
 	return ISP_CALI_SUCCESS;
 }
 
-int32_t isp_parse_calibration_data(struct isp_data_t *cali_data, struct  isp_data_t *lsc, struct isp_data_t *awb)
+int32_t isp_parse_calibration_data(struct isp_data_info *cali_data, struct  isp_data_t *lsc, struct isp_data_t *awb)
 {
 	int32_t rtn = ISP_CALI_SUCCESS;
 	struct isp_cali_data *header = PNULL;
@@ -840,9 +841,10 @@ cmr_int otp_ctrl_init(cmr_handle *isp_otp_handle, struct isp_otp_init_in *input_
 	cmr_int                         rtn = ISP_SUCCESS;
 	struct isp_data_info *calibration_param = (struct isp_data_info *)&input_ptr->calibration_param;
 	struct isp_otp_info             *otp_info = NULL;
-	struct isp_data_t               lsc = {0};
-	struct isp_data_t               awb = {0};
-	struct isp_pm_param_data        update_param = {0};
+	struct isp_data_t               lsc = {0, PNULL};
+	struct isp_data_t               awb = {0, PNULL};
+	struct isp_pm_param_data        update_param;
+	memset(&update_param, 0x00, sizeof(update_param));
 
 	ISP_LOGI("--isp_otp_init-- begin");
 	if (!input_ptr || !isp_otp_handle) {

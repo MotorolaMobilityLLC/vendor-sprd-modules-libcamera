@@ -100,7 +100,7 @@ int32_t isp_calibration_get_info(struct isp_data_t *golden_info, struct isp_cali
 
 int32_t isp_calibration(struct isp_cali_param *param, struct isp_data_t *result);
 
-int32_t isp_parse_calibration_data(struct isp_data_t *cali_data, struct  isp_data_t *lsc, struct isp_data_t *awb );
+int32_t isp_parse_calibration_data(struct isp_data_info*cali_data, struct  isp_data_t *lsc, struct isp_data_t *awb );
 
 int32_t isp_parse_flash_data(struct isp_data_t *flash_data, void *lsc_buf, uint32_t lsc_buf_size, uint32_t image_pattern,
 					uint32_t gain_width, uint32_t gain_height, struct isp_cali_awb_gain *awb_gain);
