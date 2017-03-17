@@ -41,7 +41,7 @@
 #define SFT_AF_DEBUG_ARGS    __LINE__,__FUNCTION__
 
 #define SFT_AF_LOG(format,...) ALOGE(SFT_AF_DEBUG_STR format, SFT_AF_DEBUG_ARGS, ##__VA_ARGS__)
-#define SFT_AF_LOGE(format,...) ALOGE(SFT_AF_DEBUG_STR format, SFT_AF_DEBUG_ARGS, ##__VA_ARGS__)
+//#define SFT_AF_LOGE(format,...) ALOGE(SFT_AF_DEBUG_STR format, SFT_AF_DEBUG_ARGS, ##__VA_ARGS__)
 #define SFT_AF_LOGW(format,...) ALOGW(SFT_AF_DEBUG_STR format, SFT_AF_DEBUG_ARGS, ##__VA_ARGS__)
 #define SFT_AF_LOGI(format,...) ALOGI(SFT_AF_DEBUG_STR format, SFT_AF_DEBUG_ARGS, ##__VA_ARGS__)
 #define SFT_AF_LOGD(format,...) ALOGD(SFT_AF_DEBUG_STR format, SFT_AF_DEBUG_ARGS, ##__VA_ARGS__)
@@ -355,7 +355,7 @@ int32_t get_afm_type1_statistic(sft_af_handle_t handle, uint32_t *statis)
 				}
 				break;
 			default:
-				SFT_AF_LOGE("filtertype1 is not correct");
+				//SFT_AF_LOGE("filtertype1 is not correct");
 				break;
 		}
 	}else{
@@ -398,7 +398,7 @@ int32_t get_afm_type2_statistic(sft_af_handle_t handle, uint32_t *statis)
 				}
 				break;
 			default:
-				SFT_AF_LOGE("filtertype2 is not correct");
+				//SFT_AF_LOGE("filtertype2 is not correct");
 				break;
 		}
 	}else{
@@ -446,7 +446,7 @@ int32_t set_sp_afm_cfg(sft_af_handle_t handle)
 int32_t set_sp_afm_win(sft_af_handle_t handle, struct win_coord *win_range)
 {
 	uint32_t rtn = SFT_AF_SUCCESS;
-	uint32_t max_win_num;
+	uint32_t max_win_num = 0;//just for remove uninitialized warning
 	uint32_t i;
 	struct sft_af_context *af_cxt = (struct sft_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
@@ -473,7 +473,7 @@ int32_t set_sp_afm_win(sft_af_handle_t handle, struct win_coord *win_range)
 int32_t get_sp_afm_statistic(sft_af_handle_t handle, uint32_t *statis)
 {
 	uint32_t rtn = SFT_AF_SUCCESS;
-	uint32_t max_win_num;
+	uint32_t max_win_num= 0;//just for remove uninitialized warning
 	uint32_t i;
 	struct sft_af_context *af_cxt = (struct sft_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
@@ -590,7 +590,8 @@ int32_t lock_ae(sft_af_handle_t handle)
 	uint32_t rtn = SFT_AF_SUCCESS;
 	struct sft_af_context *af_cxt = (struct sft_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
-	struct ae_calc_out ae_result = {0};
+	struct ae_calc_out ae_result;
+	memset(&ae_result, 0x00, sizeof(ae_result));
 
 	SFT_AF_LOG("lock_ae");
 	af_cxt->ae_is_locked = 1;
@@ -617,7 +618,8 @@ int32_t unlock_ae(sft_af_handle_t handle)
 	uint32_t rtn = SFT_AF_SUCCESS;
 	struct sft_af_context *af_cxt = (struct sft_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
-	struct ae_calc_out ae_result = {0};
+	struct ae_calc_out ae_result;
+	memset(&ae_result, 0x00, sizeof(ae_result));
 
 	SFT_AF_LOG("unlock_ae");
 	ctrl_context->ae_lib_fun->ae_io_ctrl(ctrl_context->handle_ae, AE_SET_RESTORE, NULL, (void*)&ae_result);
@@ -721,7 +723,7 @@ int32_t af_finish_notice(sft_af_handle_t handle, uint32_t result)
 
 	SFT_AF_LOG("AF_TAG: move end");
 	if ((ISP_ZERO == isp_system_ptr->isp_callback_bypass) && af_cxt->is_runing) {
-		struct isp_af_notice af_notice = {0x00};
+		struct isp_af_notice af_notice = {0x00, 0x00};
 		af_notice.mode=ISP_FOCUS_MOVE_END;
 		af_notice.valid_win = result?1:0;
 		SFT_AF_LOGD("callback ISP_AF_NOTICE_CALLBACK");
@@ -743,7 +745,7 @@ int32_t af_move_start_notice(sft_af_handle_t handle)
 
 	SFT_AF_LOG("AF_TAG: move start");
 	if ((ISP_ZERO == isp_system_ptr->isp_callback_bypass) && (0 == af_cxt->is_runing) && (1 == af_cxt->caf_active)) {
-		struct isp_af_notice af_notice = {0x00};
+		struct isp_af_notice af_notice = {0x00, 0x00};
 		af_notice.mode=ISP_FOCUS_MOVE_START;
 		af_notice.valid_win = 0;
 		SFT_AF_LOGD("callback ISP_AF_NOTICE_CALLBACK");
@@ -787,7 +789,7 @@ void sft_load_tuning_param(void* isp_handle,uint32_t update){
 	struct isp_pm_ioctl_input af_pm_input;
 	struct isp_pm_ioctl_output af_pm_output;
 	struct sft_tuning_param* sft_param=NULL;
-	uint32_t i=0;
+	uint32_t i = 0;
 
 	if( 0==update ){
 		goto DEFAULT;
@@ -858,7 +860,7 @@ sft_af_handle_t sft_af_init(void* isp_handle)
 	isp_u_raw_afm_bypass(ctrl_context->handle_device,1);
 
 	if (1 == ctrl_context->camera_id) {
-		SFT_AF_LOGE("Front camera nor support AF!");
+		//SFT_AF_LOGE("Front camera nor support AF!");
 		return NULL;
 	}
 
@@ -1021,7 +1023,7 @@ int32_t sft_af_ioctrl(sft_af_handle_t handle, enum sft_af_cmd cmd,
 	uint32_t rtn = SFT_AF_SUCCESS;
 	struct sft_af_context *af_cxt = (struct sft_af_context *)handle;
 	struct isp_parser_buf_rtn *rtn_buf = (struct isp_parser_buf_rtn*)param0;
-	int32_t *bv = (int32_t *)param1;
+	uint32_t *bv = (uint32_t *)param1;
 
 	rtn = _check_handle(handle);
 	if (SFT_AF_SUCCESS != rtn) {
@@ -1288,6 +1290,7 @@ int32_t sft_af_ioctrl_set_af_mode(isp_handle isp_handler, void* param_ptr, int(*
 	isp_ctrl_context* handle = (isp_ctrl_context*)isp_handler;
 	uint32_t set_mode;
 	uint32_t rtn;
+	UNUSED(call_back);
 
 	switch (*(uint32_t *)param_ptr) {
 	case ISP_FOCUS_MACRO:
@@ -1316,6 +1319,7 @@ int32_t sft_af_ioctrl_set_flash_notice(isp_ctrl_context* handle, void* param_ptr
 {
 	struct isp_flash_notice *flash_notice = (struct isp_flash_notice*)param_ptr;
 	int32_t rtn;
+	UNUSED(call_back);
 	rtn = sft_af_ioctrl(handle->handle_af,SFT_AF_CMD_SET_FLASH_NOTICE,(void *)&(flash_notice->mode),NULL);
 
 	return rtn;
@@ -1326,6 +1330,7 @@ int32_t sft_af_ioctrl_get_af_mode(isp_handle isp_handler, void* param_ptr, int(*
 	isp_ctrl_context *handle = (isp_ctrl_context*)isp_handler;
 	uint32_t param = 0;
 	uint32_t rtn;
+	UNUSED(call_back);
 
 	rtn = sft_af_ioctrl(handle->handle_af, SFT_AF_CMD_GET_AF_MODE, (void*)&param,NULL);
 
@@ -1359,6 +1364,7 @@ int32_t sft_af_ioctrl_af_start(isp_handle isp_handler, void* param_ptr, int(*cal
 {
 	int32_t rtn = 0;
 	isp_ctrl_context* handle = (isp_ctrl_context*)isp_handler;
+	UNUSED(call_back);
 	rtn = sft_af_ioctrl(handle->handle_af,SFT_AF_CMD_SET_AF_START,param_ptr,NULL);
 	return rtn;
 }
@@ -1368,6 +1374,7 @@ int32_t sft_af_ioctrl_set_fd_update(isp_handle isp_handler, void* param_ptr, int
 	int32_t rtn = 0;
 	isp_ctrl_context* handle = (isp_ctrl_context*)isp_handler;
 	struct isp_face_area *face_area = (struct isp_face_area*)param_ptr;
+	UNUSED(call_back);
 	if (face_area) {
 		rtn = sft_af_ioctrl(handle->handle_af,SFT_AF_CMD_SET_FD_UPDATE,(void *)face_area,NULL);
 
@@ -1404,6 +1411,7 @@ int32_t sft_af_ioctrl_set_ae_awb_info(isp_ctrl_context* handle,
 		void* bv,
 		void *rgb_statistics)
 {
+	UNUSED(rgb_statistics);
 	int rtn = 0;
 	rtn = handle->ae_lib_fun->ae_io_ctrl(handle->handle_ae, AE_GET_BV_BY_LUM, NULL, (void *)bv);
 	rtn = sft_af_ioctrl(handle->handle_af,SFT_AF_CMD_SET_AE_INFO,(void*)ae_result,(void*)bv);
@@ -1416,6 +1424,7 @@ int32_t sft_af_ioctrl_burst_notice(isp_handle isp_handler, void* param_ptr, int(
 {
 	isp_ctrl_context* handle = (isp_ctrl_context*)isp_handler;
 	int32_t rtn = ISP_SUCCESS;
+	UNUSED(call_back);
 	rtn = sft_af_ioctrl(handle->handle_af,SFT_AF_CMD_BURST_NOTICE,param_ptr,NULL);
 
 	return rtn;
@@ -1425,6 +1434,7 @@ int32_t sft_af_ioctrl_get_af_value(isp_handle isp_handler, void* param_ptr, int(
 {
 	int32_t rtn = 0;
 	isp_ctrl_context* handle = (isp_ctrl_context*)isp_handler;
+	UNUSED(call_back);
 	rtn = sft_af_ioctrl(handle->handle_af,SFT_AF_CMD_GET_AF_VALUE,param_ptr,NULL);
 
 	return rtn;
@@ -1434,6 +1444,7 @@ int32_t sft_af_ioctrl_iowrite(isp_handle isp_handler, void* param_ptr, int(*call
 {
 	int32_t rtn = 0;
 	isp_ctrl_context* handle = (isp_ctrl_context*)isp_handler;
+	UNUSED(call_back);
 	rtn = sft_af_ioctrl(handle->handle_af,SFT_AF_CMD_SET_AF_INFO,param_ptr,NULL);
 
 	return rtn;
@@ -1443,6 +1454,7 @@ int32_t sft_af_ioctrl_ioread(isp_handle isp_handler, void* param_ptr, int(*call_
 {
 	int32_t rtn = 0;
 	isp_ctrl_context* handle = (isp_ctrl_context*)isp_handler;
+	UNUSED(call_back);
 	rtn = sft_af_ioctrl(handle->handle_af,SFT_AF_CMD_GET_AF_INFO,param_ptr,NULL);
 
 	return rtn;
@@ -1452,6 +1464,7 @@ int32_t sft_af_ioctrl_get_af_cur_pos(isp_ctrl_context* handle, void* param_ptr, 
 {
 	int32_t rtn;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)handle;
+	UNUSED(call_back);
 	rtn = sft_af_ioctrl(ctrl_context->handle_af,SFT_AF_CMD_GET_AF_CUR_POS,param_ptr,NULL);
 
 	return rtn;
@@ -1461,6 +1474,7 @@ int32_t sft_af_ioctrl_set_af_pos(isp_ctrl_context* handle, void* param_ptr, int(
 {
 	int32_t rtn;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)handle;
+	UNUSED(call_back);
 	rtn = sft_af_ioctrl(ctrl_context->handle_af,SFT_AF_CMD_SET_AF_POS,param_ptr,NULL);
 
 	return rtn;
@@ -1470,6 +1484,7 @@ int32_t sft_af_ioctrl_set_af_bypass(isp_ctrl_context* handle, void* param_ptr, i
 {
 	int32_t rtn;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)handle;
+	UNUSED(call_back);
 	rtn = sft_af_ioctrl(ctrl_context->handle_af,SFT_AF_CMD_SET_AF_BYPASS,param_ptr,NULL);
 
 	return rtn;
@@ -1479,6 +1494,8 @@ int32_t sft_af_ioctrl_set_af_stop(isp_ctrl_context* handle, void* param_ptr, int
 {
 	int32_t rtn;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)handle;
+	UNUSED(call_back);
+	UNUSED(param_ptr);
 	rtn = sft_af_ioctrl(ctrl_context->handle_af, SFT_AF_CMD_SET_AF_STOP, NULL, NULL);
 
 	return rtn;

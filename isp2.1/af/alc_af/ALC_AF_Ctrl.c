@@ -352,7 +352,7 @@ int32_t alc_set_sp_afm_cfg(alc_af_handle_t handle)
 int32_t alc_set_sp_afm_win(alc_af_handle_t handle, struct alc_win_coord *win_range)
 {
 	uint32_t rtn = ALC_AF_SUCCESS;
-	uint32_t max_win_num;
+	uint32_t max_win_num = 0;//remove uninitialized warning
 	uint32_t i;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
@@ -380,10 +380,11 @@ int32_t alc_set_sp_afm_win(alc_af_handle_t handle, struct alc_win_coord *win_ran
 int32_t alc_get_sp_afm_statistic(alc_af_handle_t handle, uint32_t *statis)
 {
 	uint32_t rtn = ALC_AF_SUCCESS;
-	uint32_t max_win_num;
+	uint32_t max_win_num = 0;
 	uint32_t i;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
+	UNUSED(statis);
 
 	//ALC_AF_LOGI("ALC_callspstatistic ");//for test
 
@@ -521,7 +522,8 @@ int32_t alc_lock_ae(alc_af_handle_t handle)
 	uint32_t rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
-	struct ae_calc_out ae_result = {0};
+	struct ae_calc_out ae_result;
+	memset(&ae_result, 0x00, sizeof(ae_result));
 
 	ALC_AF_LOG("lock_ae");
 	af_cxt->ae_is_locked = 1;
@@ -548,7 +550,8 @@ int32_t alc_unlock_ae(alc_af_handle_t handle)
 	uint32_t rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
-	struct ae_calc_out ae_result = {0};
+	struct ae_calc_out ae_result;
+	memset(&ae_result, 0x00, sizeof(ae_result));
 
 	ALC_AF_LOG("unlock_ae");
 	ctrl_context->ae_lib_fun->ae_io_ctrl(ctrl_context->handle_ae, AE_SET_RESTORE, NULL, (void*)&ae_result);
@@ -648,7 +651,7 @@ int32_t alc_af_finish_notice(alc_af_handle_t handle, uint32_t result)
 
 	ALC_AF_LOG("AF_TAG: move end");
 	if ((ISP_ZERO == isp_system_ptr->isp_callback_bypass) && af_cxt->is_runing) {
-		struct isp_af_notice af_notice = {0x00};
+		struct isp_af_notice af_notice = {0x00, 0x00};
 		af_notice.mode=ISP_FOCUS_MOVE_END;
 		af_notice.valid_win = result?1:0;
 		ALC_AF_LOGD("callback ISP_AF_NOTICE_CALLBACK");
@@ -668,7 +671,7 @@ int32_t alc_af_move_start_notice(alc_af_handle_t handle)
 
 	ALC_AF_LOG("AF_TAG: move start");
 	if ((ISP_ZERO == isp_system_ptr->isp_callback_bypass) && (0 == af_cxt->is_runing) && (1 == af_cxt->caf_active)) {
-		struct isp_af_notice af_notice = {0x00};
+		struct isp_af_notice af_notice = {0x00, 0x00};
 		af_notice.mode=ISP_FOCUS_MOVE_START;
 		af_notice.valid_win = 0;
 		ALC_AF_LOGD("callback ISP_AF_NOTICE_CALLBACK");
@@ -1177,6 +1180,7 @@ int32_t alc_af_ioctrl_af_start(isp_handle isp_handler, void* param_ptr, int(*cal
 {
 	int32_t rtn = 0;
 	isp_ctrl_context* handle = (isp_ctrl_context*)isp_handler;
+	UNUSED(call_back);
 	rtn = alc_af_ioctrl(handle->handle_af,ALC_AF_CMD_SET_AF_START,param_ptr,NULL);
 	return rtn;
 }
@@ -1186,6 +1190,7 @@ int32_t alc_af_ioctrl_set_fd_update(isp_handle isp_handler, void* param_ptr, int
 	int32_t rtn = 0;
 	isp_ctrl_context* handle = (isp_ctrl_context*)isp_handler;
 	struct isp_face_area *face_area = (struct isp_face_area*)param_ptr;
+	UNUSED(call_back);
 	if (face_area) {
 		rtn = alc_af_ioctrl(handle->handle_af,ALC_AF_CMD_SET_FD_UPDATE,(void *)face_area,NULL);
 
@@ -1211,6 +1216,7 @@ int32_t alc_af_ioctrl_set_ae_awb_info(isp_ctrl_context* handle,
 		void* bv,
 		void *rgb_statistics)
 {
+	UNUSED(awb_result);
 	int rtn = 0;
 	rtn = handle->ae_lib_fun->ae_io_ctrl(handle->handle_ae, AE_GET_BV_BY_LUM, NULL,(void *)&bv);
 	rtn = alc_af_ioctrl(handle->handle_af,ALC_AF_CMD_SET_AE_INFO,(void *)ae_result,(void *)rgb_statistics);
@@ -1223,6 +1229,7 @@ int32_t alc_af_ioctrl_set_af_mode(isp_handle isp_handler, void* param_ptr, int(*
 	isp_ctrl_context* handle = (isp_ctrl_context*)isp_handler;
 	uint32_t set_mode;
 	uint32_t rtn;
+	UNUSED(call_back);
 
 	switch (*(uint32_t *)param_ptr) {
 	case ISP_FOCUS_MACRO:

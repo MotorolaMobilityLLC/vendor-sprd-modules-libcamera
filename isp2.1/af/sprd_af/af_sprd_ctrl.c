@@ -27,7 +27,6 @@
 /*------------------------------------------------------------------------------*
 *					Compiler Flag				*
 *-------------------------------------------------------------------------------*/
-#define     UNUSED(param)  (void)(param)
 #ifdef __cplusplus
 extern "C"
 {
@@ -46,7 +45,7 @@ char libaf_path[][20] = {
 	"libaf_v5.so",
 };
 static int32_t _caf_reset(af_handle_t handle);
-cmr_int af_ioctrl(void *handle, cmr_int cmd,
+int32_t af_ioctrl(void *handle, int32_t cmd,
 				void *param0, void *param1);
 
 static int32_t _check_handle(af_handle_t handle)
@@ -567,7 +566,7 @@ exit:
 	return rtn;
 }
 
-cmr_int af_sprd_deinit(cmr_handle handle, void *param, void *result)
+int32_t af_sprd_deinit(cmr_handle handle, void *param, void *result)
 {
 	UNUSED(param);
 	UNUSED(result);
@@ -735,7 +734,7 @@ INIT_ERROR_EXIT:
 	return (cmr_handle)af_cxt;
 }
 
-cmr_int af_sprd_process(af_handle_t handle, void *in, void *out)
+int32_t af_sprd_process(af_handle_t handle, void *in, void *out)
 {
 	cmr_int rtn = AF_SUCCESS;
 	struct af_context_t *af_cxt = (struct af_context_t *)handle;
@@ -796,7 +795,7 @@ cmr_int af_sprd_process(af_handle_t handle, void *in, void *out)
 	return rtn;
 }
 
-cmr_int af_ioctrl(void *handle, cmr_int cmd,
+int32_t af_ioctrl(void *handle, int32_t cmd,
 				void *param0, void *param1)
 {
 	return 0;
@@ -812,7 +811,7 @@ cmr_int af_ioctrl(void *handle, cmr_int cmd,
 		AF_LOGE("_check_cxt failed");
 		return AF_ERROR;
 	}
-	ISP_LOGI("cmd is %lx", cmd);
+	ISP_LOGI("cmd is %x", cmd);
 	switch (cmd) {
 	case AF_CMD_SET_AF_MODE:
 		rtn = _af_set_mode(handle,param0);
@@ -1016,7 +1015,7 @@ cmr_int af_ioctrl(void *handle, cmr_int cmd,
 		*(uint32_t*)param0 = af_cxt->cur_af_pos;
 		break;
 	default:
-		AF_LOGE("cmd not support! cmd: %ld",cmd);
+		AF_LOGE("cmd not support! cmd: %d",cmd);
 		rtn = AF_ERROR;
 		break;
 

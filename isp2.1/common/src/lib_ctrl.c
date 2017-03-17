@@ -203,6 +203,7 @@ uint32_t isp_aflib_init(struct sensor_libuse_info* libuse_info, struct af_lib_fu
 		switch (af_lib_version)
 		{
 		case AF_LIB_VERSION_0:
+#if 0
 			af_lib_fun->af_init_interface		= sft_af_init;
 			af_lib_fun->af_calc_interface		= sft_af_calc;
 			af_lib_fun->af_deinit_interface		= sft_af_deinit;
@@ -224,6 +225,7 @@ uint32_t isp_aflib_init(struct sensor_libuse_info* libuse_info, struct af_lib_fu
 			af_lib_fun->af_ioctrl_set_af_bypass	= sft_af_ioctrl_set_af_bypass;
 			af_lib_fun->af_ioctrl_set_af_stop	= sft_af_ioctrl_set_af_stop;
 			af_lib_fun->af_ioctrl_set_af_param = sft_af_ioctrl_set_af_param;
+#endif
 			break;
 		case AF_LIB_VERSION_1:
 		default :
@@ -235,6 +237,7 @@ uint32_t isp_aflib_init(struct sensor_libuse_info* libuse_info, struct af_lib_fu
 		switch (af_lib_version)
 		{
 		case AF_LIB_VERSION_0:
+#if 0
 			af_lib_fun->af_init_interface		= alc_af_init;
 			af_lib_fun->af_calc_interface		= alc_af_calc;
 			af_lib_fun->af_deinit_interface		= alc_af_deinit;
@@ -244,6 +247,7 @@ uint32_t isp_aflib_init(struct sensor_libuse_info* libuse_info, struct af_lib_fu
 			af_lib_fun->af_ioctrl_af_start		= alc_af_ioctrl_af_start;
 			af_lib_fun->af_ioctrl_set_isp_start_info	= alc_af_ioctrl_set_isp_start_info;
 			af_lib_fun->af_ioctrl_set_ae_awb_info	= alc_af_ioctrl_set_ae_awb_info;
+#endif
 		case AF_LIB_VERSION_1:
 		default :
 			AF_LOGE("af invalid lib version = 0x%x", af_lib_version);

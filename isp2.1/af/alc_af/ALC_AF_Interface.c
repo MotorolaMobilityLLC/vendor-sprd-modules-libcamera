@@ -38,7 +38,7 @@
 #include <utils/Log.h> //for test
 /* ------------------------------------------------------------------------ */
 
-void Al_AF_GetFv(alc_af_handle_t handle,unsigned long dwValue[150])
+void Al_AF_GetFv(alc_af_handle_t handle, uint32_t dwValue[150])
 {
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 

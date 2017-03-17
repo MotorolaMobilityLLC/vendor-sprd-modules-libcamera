@@ -301,7 +301,7 @@ typedef struct {
 	struct isp_system system;
 #endif
 	uint32_t camera_id;
-	int isp_mode;
+	uint isp_mode;
 
 	//new param
 	void *dev_access_handle;

@@ -332,9 +332,9 @@ struct af_context_t{
 };
 
 cmr_handle af_sprd_init(void *in, void *out);
-cmr_int af_sprd_deinit(cmr_handle handle, void *param, void *result);
-cmr_int af_sprd_process(void *handle, void *in, void *out);
-cmr_int af_ioctrl(void *handle, cmr_int cmd, void *param0, void *param1);
+int32_t af_sprd_deinit(cmr_handle handle, void *param, void *result);
+int32_t af_sprd_process(void *handle, void *in, void *out);
+int32_t af_ioctrl(void *handle, int32_t cmd, void *param0, void *param1);
 
 #endif
 

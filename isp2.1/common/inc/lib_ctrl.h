@@ -42,9 +42,7 @@ enum al_awb_lib_version_id {
 	AL_AWB_LIB_VERSION_4				= 0x4,
 };
 
-typedef void* sprd_af_handle_t;
-typedef void* sft_af_handle_t;
-//typedef void* awb_ctrl_handle_t;
+//typedef void* sprd_af_handle_t;
 
 struct awb_lib_fun {
 	cmr_int (*awb_ctrl_init) (void *in, void *out);
@@ -94,9 +92,9 @@ enum af_lib_version_id {
 };
 
 struct af_lib_fun {
-	sprd_af_handle_t (*af_init_interface)(isp_ctrl_context* handle);
+	void* (*af_init_interface)(isp_ctrl_context* handle);
 	int32_t (*af_calc_interface)(isp_ctrl_context* handle);
-	int32_t (*af_deinit_interface)(sft_af_handle_t handle);
+	int32_t (*af_deinit_interface)(void* handle);
 	cmr_int (*af_ioctrl_interface)(void *handle,cmr_int cmd,
 			void *param0, void *param1);
 	int32_t (*af_ioctrl_set_flash_notice)(isp_handle isp_handler,

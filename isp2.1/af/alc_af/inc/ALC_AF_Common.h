@@ -92,7 +92,7 @@ struct alc_win_coord {
 	int32_t (*cb_set_afm_sobel_threshold)(alc_af_handle_t handle, uint32_t min, uint32_t max);
 	int32_t (*cb_set_afm_spsmd_threshold)(alc_af_handle_t handle, uint32_t min, uint32_t max);
 	int32_t (*cb_set_afm_slice_size)(alc_af_handle_t handle, uint32_t width, uint32_t height);
-	int32_t (*cb_set_afm_win)(alc_af_handle_t handle, struct win_coord *win_range);
+	int32_t (*cb_set_afm_win)(alc_af_handle_t handle, struct alc_win_coord *win_range);
 	int32_t (*cb_get_afm_type1_statistic)(alc_af_handle_t handle, uint32_t *statis);
 	int32_t (*cb_get_afm_type2_statistic)(alc_af_handle_t handle, uint32_t *statis);
 	int32_t (*cb_set_active_win)(alc_af_handle_t handle, uint32_t active_win);
