@@ -2118,6 +2118,7 @@ static struct isp_io_ctrl_fun _s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AWB_MODE,                  _ispAwbModeIOCtrl},
 
 	{ISP_CTRL_AF,                        _ispAfIOCtrl},
+	{ISP_CTRL_GET_FULLSCAN_INFO,                        _ispAfIOGetFullScanInfo},
 	{ISP_CTRL_BURST_NOTICE,              _ispBurstIONotice},
 	{ISP_CTRL_SFT_READ,                  _ispSFTIORead},
 	{ISP_CTRL_SFT_WRITE,                 _ispSFTIOWrite},
