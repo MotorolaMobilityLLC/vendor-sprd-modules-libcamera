@@ -1102,6 +1102,7 @@ static cmr_int _ispAfIOGetFullScanInfo(cmr_handle isp_alg_handle, void *param_pt
 	cmr_int                         rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_af_fullscan_info* af_fullscan_info = (struct isp_af_fullscan_info*)param_ptr;
+	UNUSED(call_back);
 
 	rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_GET_AF_FULLSCAN_INFO, (void*)af_fullscan_info, NULL);
 
