@@ -4627,7 +4627,7 @@ cmr_int sensor_af_get_pos(cmr_handle sns_module_handle, uint16_t *pos)
 
     if (module && module->af_dev_info.af_drv_entry && sensor_cxt->af_drv_handle) {
         af_ops = &module->af_dev_info.af_drv_entry->af_ops;
-        if(af_ops->set_pos) {
+        if(af_ops->get_pos) {
             ret = af_ops->get_pos(sensor_cxt->af_drv_handle, pos);
             if(SENSOR_SUCCESS != ret)
                 return SENSOR_FAIL;

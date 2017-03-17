@@ -26,11 +26,6 @@
 #include "sensor_raw.h"
 
 #include "parameters/sensor_gc8024_raw_param_main.c"
-#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-#ifdef CONFIG_AF_VCM_DW9714
-#include "af_dw9714.h"
-#endif
-#endif
 
 #define CAMERA_IMAGE_180
 #define SENSOR_NAME "gc8024"
@@ -1396,20 +1391,7 @@ static uint32_t gc8024_power_on(SENSOR_HW_HANDLE handle, uint32_t power_on) {
         Sensor_PowerDown(!power_down);
         usleep(1 * 1000);
         Sensor_SetResetLevel(!reset_level);
-
-#if 1 // ndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-        Sensor_SetMonitorVoltage(SENSOR_AVDD_2800MV);
-        usleep(5 * 1000);
-#ifdef CONFIG_AF_VCM_DW9714
-        dw9714_init(handle);
-#endif
-#endif
-
     } else {
-#if 1 // ndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-        Sensor_SetMonitorVoltage(SENSOR_AVDD_CLOSED);
-#endif
-
         Sensor_PowerDown(power_down);
         Sensor_SetResetLevel(reset_level);
         Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
@@ -1717,20 +1699,6 @@ static uint32_t gc8024_write_gain_value(SENSOR_HW_HANDLE handle,
     return ret_value;
 }
 
-#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-/*==============================================================================
- * Description:
- * write parameter to vcm
- * please add your VCM function to this function
- *============================================================================*/
-static uint32_t gc8024_write_af(SENSOR_HW_HANDLE handle, uint32_t param) {
-#ifdef CONFIG_AF_VCM_DW9714
-    return dw9714_set_position(handle, param);
-#endif
-    return 0;
-}
-#endif
-
 /*==============================================================================
  * Description:
  * increase gain or shutter for hdr
@@ -1881,9 +1849,6 @@ static SENSOR_IOCTL_FUNC_TAB_T s_gc8024_ioctl_func_tab = {
     .before_snapshort = gc8024_before_snapshot,
     .ex_write_exp = gc8024_write_exposure,
     .write_gain_value = gc8024_write_gain_value,
-#ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
-    .af_enable = gc8024_write_af,
-#endif
     .get_exif = gc8024_get_exif_info,
     .set_focus = gc8024_ext_func,
     //.set_video_mode = gc8024_set_video_mode,
