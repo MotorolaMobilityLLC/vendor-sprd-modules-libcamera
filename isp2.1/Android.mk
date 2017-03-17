@@ -19,8 +19,7 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-#LOCAL_CFLAGS += -fno-strict-aliasing -Werror
-LOCAL_CFLAGS += -fno-strict-aliasing
+LOCAL_CFLAGS += -fno-strict-aliasing -Werror
 
 #AE_WORK_MOD_V0: Old ae algorithm + slow converge
 #AE_WORK_MOD_V1: new ae algorithm + slow converge
