@@ -1117,6 +1117,7 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 	pdaf_param_in.dBv = pdaf_temp[0];
 	memset((void*)&statis_buf, 0, sizeof(statis_buf));
 
+	pdaf_param_in.u_addr = u_addr;
 	rtn = pdaf_ctrl_process(cxt->pdaf_cxt.handle, &pdaf_param_in, NULL);
 
 	statis_buf.buf_size = statis_info->buf_size;

@@ -4256,7 +4256,12 @@ static cmr_int af_sprd_adpt_update_aux_sensor(cmr_handle handle, void *in)
 			}
 
 		case AF_CMD_SET_PD_INFO:
-			ISP_LOGI("pdaf set callback end");
+			{
+				struct pd_result *pd_calc_result = (struct pd_result *)param0;
+				ISP_LOGI("PD_GetResult pd_calc_result.pdConf[4] = %d, pd_calc_result.pdPhaseDiff[4] = 0x%lf",
+						pd_calc_result->pdConf[4], pd_calc_result->pdPhaseDiff[4]);
+				ISP_LOGI("pdaf set callback end");
+			}
 			break;
 		case AF_CMD_SET_UPDATE_AUX_SENSOR:
 			rtn = af_sprd_adpt_update_aux_sensor(handle, param0);

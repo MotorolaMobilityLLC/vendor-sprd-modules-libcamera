@@ -156,6 +156,15 @@ struct afctrl_cxt {
 	isp_af_cb af_set_cb;
 };
 
+#define AREA_LOOP 4
+
+struct pd_result {
+	/*TBD get reset from */
+	int pdConf[AREA_LOOP+1];
+	double pdPhaseDiff[AREA_LOOP+1];
+	int pdGetFrameID;
+};
+
 cmr_int af_ctrl_init(struct afctrl_init_in *input_ptr, cmr_handle *handle_af);
 cmr_int af_ctrl_deinit(cmr_handle *handle_af);
 cmr_int af_ctrl_process(cmr_handle handle_af, void *in_ptr, struct afctrl_calc_out *result);

@@ -21,15 +21,14 @@
 #include "pd_algo.h"
 
 
-#define IMAGE_WIDTH 4106
-#define IMAGE_HEIGHT 3172
-#define BEGIN_X 26
-#define BEGIN_Y 26
+#define IMAGE_WIDTH 4160
+#define IMAGE_HEIGHT 3072
+#define BEGIN_X 24
+#define BEGIN_Y 24
 #define ROI_X 1048
 #define ROI_Y 792
 #define ROI_Width 2048
 #define ROI_Height 1536
-#define AREA_LOOP 4
 #define SENSOR_ID 0
 #define PD_REG_OUT_SIZE	352
 #define PD_OTP_PACK_SIZE	550
@@ -84,11 +83,5 @@ struct sprd_pdaf_report_t {
 	uint32_t pd_reg_size;
 };
 
-struct pd_result {
-	/*TBD get reset from */
-	int pdConf[AREA_LOOP+1];
-	double pdPhaseDiff[AREA_LOOP+1];
-	int pdGetFrameID;
-};
 
 #endif

@@ -297,7 +297,8 @@ cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in *in,
 	memset((void *)cxt, 0x00, sizeof(*cxt));
 	cxt->camera_id = in->camera_id;
 /*TBD we will get pdaf_support info form sensor*/
-	cxt->pdaf_support = 0;//in->pdaf_support;
+	cxt->pdaf_support = 0;
+	ISP_LOGI(":ISP:cxt->pdaf_support = %d", cxt->pdaf_support);
 	//cxt->init_in_param = *in;
 	if (!cxt->pdaf_support) {
 		ISP_LOGI(":ISP:this module isnot support pdaf");

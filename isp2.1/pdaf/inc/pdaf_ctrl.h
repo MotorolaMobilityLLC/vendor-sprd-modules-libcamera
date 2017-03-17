@@ -19,6 +19,7 @@
 
 #include <sys/types.h>
 #include "isp_com.h"
+#include "af_ctrl.h"
 #include "sprd_pdaf_adpt.h"
 
 
@@ -65,6 +66,7 @@ struct pdaf_ctrl_process_in {
 	cmr_u8 bit;
 	cmr_u16 dcurrentVCM;
 	cmr_s32 dBv;
+	cmr_s32 u_addr;
 	//struct pd_raw_info pd_raw;
 };
 
