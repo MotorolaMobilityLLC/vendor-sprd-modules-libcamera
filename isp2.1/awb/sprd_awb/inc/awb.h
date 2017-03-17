@@ -6,7 +6,7 @@
 #else
 #include <linux/types.h>
 #include <sys/types.h>
-#include <utils/Log.h>
+#include <android/log.h>
 #endif
 
 /*------------------------------------------------------------------------------*
@@ -159,7 +159,7 @@ extern "C"
 		unsigned char wbModeNum;
 		unsigned char wbModeId[10];
 		struct awb_rgb_gain wbMode_gain[10];
-		struct awb_rgb_gain mwb_gain[101];	// mwb_gain[0] is init_gain
+		struct awb_rgb_gain mwb_gain[101];	// mwb_gain[0] is init_gain  
 
 		/* AWB parameter */
 		int rgb_12bit_sat_value;
@@ -175,7 +175,7 @@ extern "C"
 		int gmeanCali;
 		int bmeanCali;
 
-		int dct_scale_65536;	//65536=1x
+		int dct_scale_65536;	//65536=1x 
 
 		short pgBalanceBvNum;
 		short pgBalanceBv[5];	//1024
@@ -307,12 +307,12 @@ extern "C"
 	struct awb_lsc_info
 	{
 		/*
-		   value:
+		   value: 
 		   index of light
 		   0 dnp
 		   1 a
 		   2 tl84
-		   3 d65
+		   3 d65 
 		   4 cwf
 		 */
 		uint16_t value[2];

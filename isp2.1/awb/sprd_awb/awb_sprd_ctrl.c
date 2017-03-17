@@ -909,7 +909,7 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 	cxt->otp_info.rdm_stat_info.g = param->otp_info.rdm_stat_info.g;
 	cxt->otp_info.rdm_stat_info.b = param->otp_info.rdm_stat_info.b;
 
-	AWB_CTRL_LOGE("stat %d x %d", param->stat_img_size.w, param->stat_img_size.h);
+	AWB_CTRL_LOGE("AWB stat %d x %d", param->stat_img_size.w, param->stat_img_size.h);
 
 	if (cxt->awb_init_param.tuning_param.skip_frame_num > 8)
 	{

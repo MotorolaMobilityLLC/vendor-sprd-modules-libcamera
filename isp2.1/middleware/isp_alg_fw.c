@@ -1191,8 +1191,8 @@ static cmr_int ispalg_binning_stat_data_parser(cmr_handle isp_alg_handle, void *
 	uint32_t val = 0;
 	uint32_t last_val0 = 0;
 	uint32_t last_val1 = 0;
-	uint32_t binning_hx = 5;
-	uint32_t binning_vx = 5;
+	uint32_t binning_hx = 4;
+	uint32_t binning_vx = 4;
 	uint32_t src_w = cxt->commn_cxt.src.w;
 	uint32_t src_h = cxt->commn_cxt.src.h;
 	uint32_t binnng_w = (src_w >> binning_hx) & ~0x1;
@@ -1993,8 +1993,8 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in *input_ptr, cmr_handle *isp_al
 	cxt->binning_stats.g_info = binning_info + max_binning_num;
 	cxt->binning_stats.b_info = cxt->binning_stats.g_info + max_binning_num;
 
-	uint32_t binning_hx = 5;
-	uint32_t binning_vx = 5;
+	uint32_t binning_hx = 4;
+	uint32_t binning_vx = 4;
 	uint32_t src_w = cxt->commn_cxt.src.w;
 	uint32_t src_h = cxt->commn_cxt.src.h;
 	uint32_t binnng_w = (src_w >> binning_hx) & ~0x1;

@@ -32,8 +32,8 @@
 	memset((void*)&dst_ptr->cur,0x00,sizeof(dst_ptr->cur));
 	/*modify to debug binning*/
 	dst_ptr->cur.bypass = 0;//header_ptr->bypass;
-	dst_ptr->cur.hx = 5;//src_ptr->hx;
-	dst_ptr->cur.vx = 5;//src_ptr->vx;
+	dst_ptr->cur.hx = 4;//src_ptr->hx;
+	dst_ptr->cur.vx = 4;//src_ptr->vx;
 	dst_ptr->cur.img_size.width = img_size_ptr->w;
 	dst_ptr->cur.img_size.height = img_size_ptr->h;
 	header_ptr->is_update = ISP_ONE;
