@@ -2534,6 +2534,8 @@ static void _set_led(struct ae_ctrl_cxt *cxt){
 	}else{
 		if (!strcmp(str, "facali"))
 			type = ISP_FLASH_TYPE_MAIN;
+		else if (!strcmp(str, " facali-pre"))
+			type = ISP_FLASH_TYPE_PREFLASH;
 		else
 			type = ISP_FLASH_TYPE_PREFLASH;
 
@@ -3668,15 +3670,18 @@ int32_t ae_sprd_io_ctrl(void *handle, int32_t cmd, void *param, void *result)
 				cxt->cur_status.settings.af_info = 0;
 			}
 			break;
+
 		case AE_HDR_START:
 			cxt->hdr_flag = 3;
 			cxt->hdr_timestamp = 0;
 			cxt->hdr_base_ae_idx = cxt->sync_cur_result.wts.cur_index;
 			break;
+
 		case AE_HDR_FINISH:
 			cxt->hdr_timestamp = 0;
 			cxt->cur_status.settings.lock_ae = AE_STATE_NORMAL;
 			break;
+
 		case AE_HDR_GET_INFO:
 			if (param && result){
 				*(uint64_t *)(param) = cxt->hdr_timestamp;
