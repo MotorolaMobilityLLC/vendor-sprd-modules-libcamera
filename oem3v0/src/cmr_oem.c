@@ -5529,8 +5529,8 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle, struct video_start_param *
 		isp_param.capture_mode = ISP_CAP_MODE_DRAM;
 	}
 	isp_param.tuning_mode = cmr_camera_get_isp_tuning_mode(cxt->prev_cxt.preview_handle, cxt->camera_id, isp_param.capture_mode);
-	//CMR_LOGI("work_mode %ld, dv_mode %ld, capture_mode %ld, isp_param.tuning_mode %d", work_mode, dv_mode, isp_param.capture_mode, isp_param.tuning_mode);
-	//CMR_LOGI("isp w h, %d %d", isp_param.size.w, isp_param.size.h);
+	CMR_LOGI("work_mode %ld, dv_mode %ld, capture_mode %u, isp_param.tuning_mode %d", work_mode, dv_mode, isp_param.capture_mode, isp_param.tuning_mode);
+	CMR_LOGI("isp w h, %d %d", isp_param.size.w, isp_param.size.h);
 	ret = isp_video_start(isp_cxt->isp_handle, &isp_param);
 	if (!ret) {
 		isp_cxt->is_work = 1;

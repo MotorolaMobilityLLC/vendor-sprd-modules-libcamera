@@ -7389,18 +7389,11 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u
 	CMR_LOGI("need_isp %d, isp_status %ld", chn_param.cap_inf_cfg.cfg.need_isp, prev_cxt->isp_status);
 	if (chn_param.cap_inf_cfg.cfg.need_isp) {
 		if(!prev_cxt->prev_param.sprd_burstmode_enabled) {
-#if defined(CONFIG_CAMERA_NO_DCAM_DATA_PATH)
-			video_param.size.width = prev_cxt->actual_prev_size.width;
-			video_param.size.height = prev_cxt->actual_prev_size.height;
-			CMR_LOGI("snapshot_eb=%d video_param.size.width=%d, video_param.size.height=%d\n",
-				prev_cxt->prev_param.snapshot_eb, video_param.size.width, video_param.size.height);
-#else
 			video_param.size.width = sensor_mode_info->trim_width;
 			if (chn_param.cap_inf_cfg.cfg.need_binning) {
 				video_param.size.width = video_param.size.width >> 1;
 			}
 			video_param.size.height = sensor_mode_info->trim_height;
-#endif
 			video_param.img_format  = ISP_DATA_NORMAL_RAW10;
 			video_param.video_mode  = ISP_VIDEO_MODE_CONTINUE;
 			video_param.work_mode = 0;
