@@ -5648,7 +5648,7 @@ int SprdCamera3OEMIf::CameraConvertCropRegion(uint32_t sensorWidth,
     SensorRotate = mHalOem->ops->camera_get_preview_rot_angle(mCameraHandle);
     if (sensorWidth == sensorOrgW && sensorHeight == sensorOrgH &&
         SensorRotate == IMG_ANGLE_0) {
-        HAL_LOGE("dont' need to convert.");
+        HAL_LOGD("dont' need to convert.");
         return 0;
     }
     /*
