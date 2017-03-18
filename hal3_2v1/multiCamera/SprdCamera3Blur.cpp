@@ -661,7 +661,7 @@ int SprdCamera3Blur::cameraDeviceOpen(__unused int camera_id,
 int SprdCamera3Blur::getCameraInfo(struct camera_info *info) {
     int rc = NO_ERROR;
     int camera_id = m_VirtualCamera.id;
-    HAL_LOGE("E, camera_id = %d", camera_id);
+    HAL_LOGD("E, camera_id = %d", camera_id);
 
     SprdCamera3Setting::initDefaultParameters(camera_id);
 
@@ -682,7 +682,7 @@ int SprdCamera3Blur::getCameraInfo(struct camera_info *info) {
     info->device_version =
         CAMERA_DEVICE_API_VERSION_3_2; // CAMERA_DEVICE_API_VERSION_3_0;
     info->static_camera_characteristics = mStaticMetadata;
-    HAL_LOGE("X  max_size=%d",
+    HAL_LOGD("X  max_size=%d",
              SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size);
     info->conflicting_devices_length = 0;
 
@@ -752,7 +752,7 @@ SprdCamera3Blur::CaptureThread::~CaptureThread() {
  * RETURN     : None
  *==========================================================================*/
 int SprdCamera3Blur::CaptureThread::loadBlurApi() {
-    HAL_LOGD(" E");
+    HAL_LOGD("E");
     const char *error = NULL;
     int i = 0;
 
@@ -762,7 +762,7 @@ int SprdCamera3Blur::CaptureThread::loadBlurApi() {
             HAL_LOGE("mBlurApi malloc failed.");
         }
         memset(mBlurApi[i], 0, sizeof(BlurAPI_t));
-        HAL_LOGE("i = %d", i);
+        HAL_LOGD("i = %d", i);
         if (i == 0) {
             mBlurApi[i]->handle = dlopen(BLUR_LIB_BOKEH_PREVIEW, RTLD_LAZY);
             if (mBlurApi[i]->handle == NULL) {

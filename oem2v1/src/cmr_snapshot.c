@@ -956,74 +956,70 @@ cmr_int snp_start_encode(cmr_handle snp_handle, void *data) {
     CMR_LOGD("jpeg_in_ptr->mean.quality_level=%d",
              jpeg_in_ptr->mean.quality_level);
 
-    if (snp_cxt->ops.start_encode) {
-        char value[PROPERTY_VALUE_MAX];
-        property_get("debug.camera.save.snpfile", value, "0");
-        if (atoi(value) == 4 || atoi(value) == 100 ||
-            (atoi(value) & (1 << 4))) {
-            struct camera_context *cam_ctx = snp_cxt->oem_handle;
-            camera_save_yuv_to_file(
-                FORM_DUMPINDEX(SNP_ENCODE_SRC_DATA, cam_ctx->dump_cnt, 0),
-                IMG_DATA_TYPE_YUV420, jpeg_in_ptr->src.size.width,
-                jpeg_in_ptr->src.size.height, &jpeg_in_ptr->src.addr_vir);
-        }
+    if (snp_cxt->ops.start_encode == NULL) {
+        CMR_LOGE("snp_cxt->ops.start_encode is null");
+        ret = -CMR_CAMERA_FAIL;
+        goto exit;
+    }
+
+    char value[PROPERTY_VALUE_MAX];
+    property_get("debug.camera.save.snpfile", value, "0");
+    if (atoi(value) == 4 || atoi(value) == 100 || (atoi(value) & (1 << 4))) {
+        struct camera_context *cam_ctx = snp_cxt->oem_handle;
+        camera_save_yuv_to_file(
+            FORM_DUMPINDEX(SNP_ENCODE_SRC_DATA, cam_ctx->dump_cnt, 0),
+            IMG_DATA_TYPE_YUV420, jpeg_in_ptr->src.size.width,
+            jpeg_in_ptr->src.size.height, &jpeg_in_ptr->src.addr_vir);
+    }
 
 #ifdef CONFIG_CAPTURE_DENOISE
-        struct camera_context *cxt =
-            (struct camera_context *)snp_cxt->oem_handle;
-        if (cxt->camera_id == 0) {
-            ret = camera_start_uvde(cxt, &jpeg_in_ptr->src);
-            if (ret != CMR_CAMERA_SUCCESS) {
-                CMR_LOGE("camera_start_uvde fail");
-                goto exit;
-            }
+    struct camera_context *cxt = (struct camera_context *)snp_cxt->oem_handle;
+    if (cxt->camera_id == 0) {
+        ret = camera_start_uvde(cxt, &jpeg_in_ptr->src);
+        if (ret != CMR_CAMERA_SUCCESS) {
+            CMR_LOGE("camera_start_uvde fail");
+            goto exit;
         }
+    }
 #endif
 
 #ifdef CONFIG_CAMERA_Y_DENOISE
-        struct camera_context *cxt =
-            (struct camera_context *)snp_cxt->oem_handle;
-        ret = camera_start_yde(cxt, &jpeg_in_ptr->src);
-        if (ret != CMR_CAMERA_SUCCESS) {
-            CMR_LOGE("camera_start_yde fail");
-            goto exit;
-        }
+    struct camera_context *cxt = (struct camera_context *)snp_cxt->oem_handle;
+    ret = camera_start_yde(cxt, &jpeg_in_ptr->src);
+    if (ret != CMR_CAMERA_SUCCESS) {
+        CMR_LOGE("camera_start_yde fail");
+        goto exit;
+    }
 #endif
 
 #ifdef CONFIG_CAMERA_RT_REFOCUS
-        struct camera_context *cxt =
-            (struct camera_context *)snp_cxt->oem_handle;
-        if (cxt->camera_id == 0 && cxt->is_refocus_mode == 1) {
-            ret = camera_start_refocus(cxt, &jpeg_in_ptr->src);
-            if (ret != CMR_CAMERA_SUCCESS) {
-                CMR_LOGE("camera_start_refocus fail");
-                goto exit;
-            }
+    struct camera_context *cxt = (struct camera_context *)snp_cxt->oem_handle;
+    if (cxt->camera_id == 0 && cxt->is_refocus_mode == 1) {
+        ret = camera_start_refocus(cxt, &jpeg_in_ptr->src);
+        if (ret != CMR_CAMERA_SUCCESS) {
+            CMR_LOGE("camera_start_refocus fail");
+            goto exit;
         }
+    }
 #endif
 
-        if ((!snp_cxt->req_param.is_video_snapshot) &&
-            (!snp_cxt->req_param.is_zsl_snapshot) &&
-            (snp_cxt->req_param.mode != CAMERA_ISP_TUNING_MODE)) {
-            snp_img_padding(&jpeg_in_ptr->src, &jpeg_in_ptr->dst, NULL);
-        }
-        camera_take_snapshot_step(CMR_STEP_JPG_ENC_S);
-        ret = snp_cxt->ops.start_encode(snp_cxt->oem_handle, snp_handle,
-                                        &jpeg_in_ptr->src, &jpeg_in_ptr->dst,
-                                        &jpeg_in_ptr->mean);
-        if (ret) {
-            CMR_LOGE("failed to start enc %ld", ret);
-        } else {
-            snp_set_status(snp_handle, CODEC_WORKING);
-        }
-    } else {
-        CMR_LOGE("err start_encode is null");
-        ret = -CMR_CAMERA_FAIL;
+    if ((!snp_cxt->req_param.is_video_snapshot) &&
+        (!snp_cxt->req_param.is_zsl_snapshot) &&
+        (snp_cxt->req_param.mode != CAMERA_ISP_TUNING_MODE)) {
+        snp_img_padding(&jpeg_in_ptr->src, &jpeg_in_ptr->dst, NULL);
     }
-// snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_STATE,
-// SNAPSHOT_EVT_START_ENC, (void*)ret, sizeof(cmr_int));
+    camera_take_snapshot_step(CMR_STEP_JPG_ENC_S);
+    ret = snp_cxt->ops.start_encode(snp_cxt->oem_handle, snp_handle,
+                                    &jpeg_in_ptr->src, &jpeg_in_ptr->dst,
+                                    &jpeg_in_ptr->mean);
+    if (ret) {
+        CMR_LOGE("failed to start enc %ld", ret);
+        goto exit;
+    }
+    snp_set_status(snp_handle, CODEC_WORKING);
+
 exit:
-    CMR_LOGI("done %ld", ret);
+    CMR_LOGI("ret = %ld", ret);
     if (ret) {
         sem_post(&snp_cxt->jpeg_sync_sm);
         snp_cxt->err_code = ret;
@@ -1093,9 +1089,6 @@ cmr_int snp_start_encode_thumb(cmr_handle snp_handle) {
             jpeg_in_ptr->src.size.height, snp_cxt->thumb_stream_size,
             &jpeg_in_ptr->dst.addr_vir);
     }
-
-//	snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_STATE,
-// SNAPSHOT_EVT_ENC_THUMB_DONE, (void*)ret, sizeof(cmr_int));
 
 exit:
     CMR_LOGI("done %ld", ret);
@@ -1250,25 +1243,28 @@ cmr_int snp_start_scale(cmr_handle snp_handle, void *data) {
         ret = CMR_CAMERA_NORNAL_EXIT;
         goto exit;
     }
-    camera_take_snapshot_step(CMR_STEP_SC_S);
-    if (snp_cxt->ops.start_scale) {
-        src = chn_param_ptr->scale[index].src_img;
-        dst = chn_param_ptr->scale[index].dst_img;
-        mean.slice_height = chn_param_ptr->scale[index].slice_height;
-        mean.is_sync = 0;
-        src.data_end = snp_cxt->req_param.post_proc_setting.data_endian;
-        dst.data_end = snp_cxt->req_param.post_proc_setting.data_endian;
-
-        ret = snp_cxt->ops.start_scale(snp_cxt->oem_handle, snp_handle, &src,
-                                       &dst, &mean);
-    } else {
-        CMR_LOGE("err start_scale is null");
+    if (snp_cxt->ops.start_scale == NULL) {
+        CMR_LOGE("snp_cxt->ops.start_scale is null");
         ret = -CMR_CAMERA_FAIL;
+        goto exit;
     }
-//	snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_STATE,
-// SNAPSHOT_EVT_START_SCALE, (void*)ret, sizeof(cmr_int));
+
+    camera_take_snapshot_step(CMR_STEP_SC_S);
+
+    src = chn_param_ptr->scale[index].src_img;
+    dst = chn_param_ptr->scale[index].dst_img;
+    mean.slice_height = chn_param_ptr->scale[index].slice_height;
+    mean.is_sync = 0;
+    src.data_end = snp_cxt->req_param.post_proc_setting.data_endian;
+    dst.data_end = snp_cxt->req_param.post_proc_setting.data_endian;
+    ret = snp_cxt->ops.start_scale(snp_cxt->oem_handle, snp_handle, &src, &dst,
+                                   &mean);
+    if (ret) {
+        CMR_LOGE("snp_cxt->ops.start_scale failed");
+    }
+
 exit:
-    CMR_LOGI("done %ld", ret);
+    CMR_LOGI("ret = %ld", ret);
     if (ret) {
         snp_cxt->err_code = ret;
         sem_post(&snp_cxt->scaler_sync_sm);
