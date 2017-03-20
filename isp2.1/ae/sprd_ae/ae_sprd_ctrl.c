@@ -2529,7 +2529,7 @@ static void _set_led(struct ae_ctrl_cxt *cxt){
 
 	memset(str, 0, sizeof(str));
 	property_get("persist.sys.isp.ae.manual", str, "");
-	if ((strcmp(str, "fasim") & strcmp(str, "facali") & strcmp(str, "led"))){
+	if ((strcmp(str, "fasim") & strcmp(str, "facali") & strcmp(str, "facali-pre") & strcmp(str, "led"))){
 		//AE_LOGD("isp_set_led_noctl!\r\n");
 	}else{
 		if (!strcmp(str, "facali"))
