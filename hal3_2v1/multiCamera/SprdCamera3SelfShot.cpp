@@ -696,7 +696,7 @@ int SprdCamera3SelfShot::processCaptureRequest(
     if (mAvailableSensorSelfSot && !mOpenSubsensor) {
         int phyId = m_pPhyCamera[CAM_TYPE_AUX].id;
 
-        HAL_LOGE("open sub camera E");
+        HAL_LOGD("open sub camera E");
         hw_device_t *hw_dev = NULL;
         SprdCamera3HWI *hw = new SprdCamera3HWI((uint32_t)phyId);
         if (!hw) {
@@ -715,10 +715,10 @@ int SprdCamera3SelfShot::processCaptureRequest(
             reinterpret_cast<camera3_device_t *>(hw_dev);
         m_pPhyCamera[CAM_TYPE_AUX].hwi = hw;
         CHECK_HWI_ERROR(m_pPhyCamera[CAM_TYPE_AUX].hwi);
-        HAL_LOGE("open sub camera ok");
+        HAL_LOGD("open sub camera ok");
         mOpenSubsensor = true;
     } else if (!mAvailableSensorSelfSot && mOpenSubsensor) {
-        HAL_LOGE("close sub camera E");
+        HAL_LOGD("close sub camera E");
         sprdcamera_physical_descriptor_t *sprdCam = NULL;
         sprdCam = &m_pPhyCamera[CAM_TYPE_AUX];
         hw_device_t *dev = (hw_device_t *)(sprdCam->dev);
@@ -726,7 +726,7 @@ int SprdCamera3SelfShot::processCaptureRequest(
         if (rc != NO_ERROR) {
             HAL_LOGE("close sub camera failed");
         }
-        HAL_LOGE("close sub camera ok");
+        HAL_LOGD("close sub camera ok");
         sprdCam->hwi = NULL;
         sprdCam->dev = NULL;
         mOpenSubsensor = false;

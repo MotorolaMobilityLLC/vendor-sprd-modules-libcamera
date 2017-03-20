@@ -699,7 +699,7 @@ int SprdCamera3PageTurn::processCaptureRequest(
     status = timer_settime(mPageTurnPrvTimerID, 0, &ts, NULL);
     {
         Mutex::Autolock l(mWaitFrameMutex);
-        HAL_LOGE("wait frame");
+        HAL_LOGD("wait frame");
         mWaitFrameSignal.waitRelative(mWaitFrameMutex, 1000e6);
     }
     return rc;

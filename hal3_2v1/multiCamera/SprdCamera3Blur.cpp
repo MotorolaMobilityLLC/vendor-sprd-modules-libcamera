@@ -947,7 +947,7 @@ int SprdCamera3Blur::CaptureThread::blurHandle(
                     int64_t deinitStart = systemTime();
                     ret = mBlurApi[i]->iSmoothDeinit(mBlurApi[i]->mHandle);
                     if (ret != 0) {
-                        HAL_LOGD("Deinit Err:%d", ret);
+                        HAL_LOGE("Deinit Err:%d", ret);
                     }
                     mBlurApi[i]->mHandle = NULL;
                     HAL_LOGD("iSmoothDeinit%d cost %lld ms", i,
@@ -973,7 +973,7 @@ int SprdCamera3Blur::CaptureThread::blurHandle(
                 HAL_LOGD("iSmoothInit%d %dx%d cost %lld ms", i, w, h,
                          ns2ms(systemTime() - initStart));
                 if (ret != 0) {
-                    HAL_LOGD("Init Err:%d", ret);
+                    HAL_LOGE("Init Err:%d", ret);
                 }
             }
         }
@@ -1012,7 +1012,7 @@ int SprdCamera3Blur::CaptureThread::blurHandle(
                 ret = mBlurApi[i]->iSmoothCreateWeightMap(mBlurApi[i]->mHandle,
                                                           x, y, f_number, c);
                 if (ret != 0) {
-                    HAL_LOGD("CreateWeightMap Err:%d", ret);
+                    HAL_LOGE("CreateWeightMap Err:%d", ret);
                 }
                 HAL_LOGD("iSmoothCreateWeightMap x:%d y:%d f:%d circle%d cost "
                          "%lld ms",
@@ -1024,7 +1024,7 @@ int SprdCamera3Blur::CaptureThread::blurHandle(
         ret = mBlurApi[libid]->iSmoothBlurImage(mBlurApi[libid]->mHandle,
                                                 srcYUV, destYUV);
         if (ret != 0) {
-            HAL_LOGD("BlurImage Err:%d", ret);
+            HAL_LOGE("BlurImage Err:%d", ret);
         }
         if (libid) {
             HAL_LOGD("capture iSmoothBlurImage cost %lld ms",
@@ -1476,7 +1476,7 @@ int SprdCamera3Blur::configureStreams(
                 rc = mCaptureThread->mBlurApi[0]->iSmoothDeinit(
                     mCaptureThread->mBlurApi[0]->mHandle);
                 if (rc != 0) {
-                    HAL_LOGD("Deinit Err:%d", rc);
+                    HAL_LOGE("Deinit Err:%d", rc);
                 }
                 mCaptureThread->mBlurApi[0]->mHandle = NULL;
                 HAL_LOGD("iSmoothDeinit0 cost %lld ms",
@@ -1528,7 +1528,7 @@ int SprdCamera3Blur::configureStreams(
                     rc = mCaptureThread->mBlurApi[1]->iSmoothDeinit(
                         mCaptureThread->mBlurApi[1]->mHandle);
                     if (rc != 0) {
-                        HAL_LOGD("Deinit Err:%d", rc);
+                        HAL_LOGE("Deinit Err:%d", rc);
                     }
                     mCaptureThread->mBlurApi[1]->mHandle = NULL;
                     HAL_LOGD("iSmoothDeinit1 cost %lld ms",
@@ -1735,6 +1735,14 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
             memcpy(&mCaptureThread->mSavedCapReqstreambuff,
                    &req->output_buffers[i], sizeof(camera3_stream_buffer_t));
 
+            if (NULL != mCaptureThread->mSavedCapReqsettings) {
+                free_camera_metadata(mCaptureThread->mSavedCapReqsettings);
+                mCaptureThread->mSavedCapReqsettings = NULL;
+            }
+            mCaptureThread->mSavedCapReqsettings =
+                clone_camera_metadata(req_main.settings);
+            req_main.settings = mCaptureThread->mSavedCapReqsettings;
+
             mSavedReqStreams[mCaptureThread->mCaptureStreamsNum - 1] =
                 req->output_buffers[i].stream;
             out_streams_main[i].stream =
@@ -1783,13 +1791,6 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
                 }
             }
         }
-        if (NULL != mCaptureThread->mSavedCapReqsettings) {
-            free_camera_metadata(mCaptureThread->mSavedCapReqsettings);
-            mCaptureThread->mSavedCapReqsettings = NULL;
-        }
-        mCaptureThread->mSavedCapReqsettings =
-            clone_camera_metadata(req_main.settings);
-        req_main.settings = mCaptureThread->mSavedCapReqsettings;
     }
     req_main.output_buffers = out_streams_main;
     req_main.settings = metaSettings.release();
@@ -2141,7 +2142,7 @@ uint8_t SprdCamera3Blur::getCoveredValue() {
     SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_AUX].hwi;
     rc = hwiMain->getCoveredValue(&couvered_value);
     if (rc < 0) {
-        HAL_LOGD("read sub sensor failed");
+        HAL_LOGE("read sub sensor failed");
     }
     if (0 != atoi(prop)) {
         couvered_value = atoi(prop);
