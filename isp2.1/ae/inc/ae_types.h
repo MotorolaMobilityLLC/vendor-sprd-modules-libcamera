@@ -265,8 +265,11 @@ struct ae_scene_info {
 	uint32_t max_fps;
 	uint32_t min_fps;
 	uint32_t weight_mode;
-	uint32_t default_index;
-	uint32_t table_enable;
+	//uint32_t default_index;
+	uint8_t table_enable;
+	uint8_t  exp_tbl_mode;
+	uint16_t reserved0;
+	uint32_t reserved1;
 	struct ae_exp_gain_table ae_table[AE_FLICKER_NUM];
 };
 /**---------------------------------------------------------------------------*/

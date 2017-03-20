@@ -195,6 +195,7 @@ struct ae_ctrl_cxt {
 	struct ae_tuning_param tuning_param[AE_MAX_PARAM_NUM];
 	int8_t tuning_param_enable[AE_MAX_PARAM_NUM];
 	struct ae_tuning_param *cur_param;
+	struct ae_exp_gain_table back_scene_mode_ae_table[AE_SCENE_MAX][AE_FLICKER_NUM];
 	/*
 	 * sensor related information
 	 */
@@ -203,6 +204,10 @@ struct ae_ctrl_cxt {
 	 * ae current status: include some tuning
 	 * param/calculatioin result and so on
 	 */
+	struct ae_alg_calc_param prv_status;/*just backup the alg status of normal scene,
+									as switch from special scene mode to normal,
+									and we use is to recover the algorithm status
+									*/
 	struct ae_alg_calc_param cur_status;
 	struct ae_alg_calc_param sync_cur_status;
 	uint32_t sync_aem[3 * 1024 + 4];/*0: frame id;1: exposure time, 2: dummy line, 3: gain;*/
@@ -291,10 +296,6 @@ struct ae_ctrl_cxt {
 	 * for manual ae stat
 	 */
 	uint8_t manual_ae_on;
-	/*
-	 * for touch ae cb
-	 */
-	 uint8_t ae_cb_cnt;
 	/*
 	 * flash_callback control
 	 */
@@ -1504,6 +1505,73 @@ static int32_t _cfg_monitor(struct ae_ctrl_cxt *cxt)
 	return rtn;
 }
 
+//static int32_t exp_time2exp_line(struct ae_ctrl_cxt *cxt, int16_t scene_index, int16_t linetime, int16_t tablemode, struct ae_scene_info *dst)
+static int32_t exp_time2exp_line(struct ae_ctrl_cxt *cxt, struct ae_exp_gain_table src[AE_FLICKER_NUM], struct ae_exp_gain_table dst[AE_FLICKER_NUM], int16_t linetime, int16_t tablemode)
+
+{
+	int32_t rtn = AE_SUCCESS;
+	int32_t i = 0;
+	float tmp_1 = 0;
+	float tmp_2 = 0;
+	int32_t mx = src[AE_FLICKER_50HZ].max_index;
+
+	AE_LOGD("exp2line %d %d %d\r\n", linetime, tablemode, mx);
+	UNUSED(cxt);
+	dst[AE_FLICKER_60HZ].max_index = src[AE_FLICKER_50HZ].max_index;
+	dst[AE_FLICKER_60HZ].min_index = src[AE_FLICKER_50HZ].min_index;
+	if (0 == tablemode){
+		for (i = 0; i <= mx; i++){
+			tmp_1 = src[AE_FLICKER_50HZ].exposure[i] / (float)linetime;
+			dst[AE_FLICKER_50HZ].exposure[i] = (int32_t)tmp_1;
+
+			if (0 == (int32_t)tmp_1)
+				tmp_2 = 1;
+			else
+				tmp_2 = tmp_1 / (int32_t)tmp_1;
+
+			dst[AE_FLICKER_50HZ].again[i] =
+						(int32_t)(0.5 + tmp_2 * src[AE_FLICKER_50HZ].again[i]);
+		}
+
+		for (i = 0; i <= mx; i++){
+			if (83333 <= src[AE_FLICKER_50HZ].exposure[i]){
+				tmp_1 = dst[AE_FLICKER_50HZ].exposure[i] * 5 / 6.0;
+				dst[AE_FLICKER_60HZ].exposure[i] = (int32_t)tmp_1;
+
+				if (0 == (int32_t)tmp_1)
+					tmp_2 = 1;
+				else
+					tmp_2 = (float)(dst[AE_FLICKER_50HZ].exposure[i]) / (int32_t)tmp_1;
+
+				dst[AE_FLICKER_60HZ].again[i] =
+							(int32_t)(0.5 + tmp_2 * dst[AE_FLICKER_50HZ].again[i]);
+			}else{
+				dst[AE_FLICKER_60HZ].exposure[i] = dst[AE_FLICKER_50HZ].exposure[i];
+				dst[AE_FLICKER_60HZ].again[i] = dst[AE_FLICKER_50HZ].again[i];
+			}
+		}
+	}else{
+		for (i = 0; i <= mx; i++){
+			if (83333 <= dst[AE_FLICKER_50HZ].exposure[i] * linetime){
+				tmp_1 = dst[AE_FLICKER_50HZ].exposure[i] * 5 / 6.0;
+				dst[AE_FLICKER_60HZ].exposure[i] = (int32_t)tmp_1;
+
+				if (0 == (int32_t)tmp_1)
+					tmp_2 = 1;
+				else
+					tmp_2 = (float)(dst[AE_FLICKER_50HZ].exposure[i]) / (int32_t)tmp_1;
+
+				dst[AE_FLICKER_60HZ].again[i] =
+							(int32_t)(0.5 + tmp_2 * dst[AE_FLICKER_50HZ].again[i]);
+			}else{
+				dst[AE_FLICKER_60HZ].exposure[i] =	dst[AE_FLICKER_50HZ].exposure[i];
+				dst[AE_FLICKER_60HZ].again[i] = 	dst[AE_FLICKER_50HZ].again[i];
+			}
+		}
+	}
+	return rtn;
+}
+
 static int32_t exposure_time2line(struct ae_tuning_param *tp, int16_t linetime, int16_t tablemode)
 {
 	int32_t rtn = AE_SUCCESS;
@@ -1577,7 +1645,7 @@ static int32_t exposure_time2line(struct ae_tuning_param *tp, int16_t linetime, 
 static int32_t _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_param, struct ae_set_work_param *work_param, int8_t init)
 {
 	int32_t rtn = AE_SUCCESS;
-	uint32_t i = 0;
+	uint32_t i, j = 0;
 	int8_t cur_work_mode = AE_WORK_MODE_COMMON;
 	struct ae_trim trim;
 	struct ae_ev_table *ev_table = NULL;
@@ -1600,12 +1668,25 @@ static int32_t _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 			exposure_time2line(&(cxt->tuning_param[i]), init_param->resolution_info.line_time/SENSOR_LINETIME_BASE,
 								cxt->tuning_param[i].ae_tbl_exp_mode);
 
+			for (j = 0; j < AE_SCENE_MAX; ++j) {
+				memcpy(&cxt->back_scene_mode_ae_table[j][AE_FLICKER_50HZ], &cxt->tuning_param[i].scene_info[j].ae_table[AE_FLICKER_50HZ], AE_FLICKER_NUM * sizeof(struct ae_exp_gain_table));
+				//AE_LOGD("special_scene table_enable_and_table_mode is: %d,%d,%d,%d\n",i,j,cxt->tuning_param[i].scene_info[j].table_enable,cxt->tuning_param[i].scene_info[j].exp_tbl_mode);
+				if ((1 == cxt->tuning_param[i].scene_info[j].table_enable) && (0 == cxt->tuning_param[i].scene_info[j].exp_tbl_mode)) {
+					//exp_time2exp_line(cxt,j, init_param->resolution_info.line_time,
+					//			cxt->tuning_param[i].scene_info[j].exp_tbl_mode, &(cxt->tuning_param[i].scene_info[j]));
+					exp_time2exp_line(cxt, cxt->back_scene_mode_ae_table[j],\
+										cxt->tuning_param[i].scene_info[j].ae_table,\
+										init_param->resolution_info.line_time,\
+										cxt->tuning_param[i].scene_info[j].exp_tbl_mode);
+				}
+			}
+
 			if (AE_SUCCESS == rtn)
 				cxt->tuning_param_enable[i] = 1;
 			else
 				cxt->tuning_param_enable[i] = 0;
 		}
-		cxt->ae_cb_cnt = 0;
+
 		cxt->camera_id = init_param->camera_id;
 		cxt->isp_ops = init_param->isp_ops;
 		cxt->monitor_unit.win_num = init_param->monitor_win_num;
@@ -1865,6 +1946,135 @@ static int32_t _tool_online_ctrl(struct ae_ctrl_cxt *cxt, void *param, void *res
 		rtn = _ae_online_ctrl_get(cxt, result);
 	}
 
+	return rtn;
+}
+
+static int32_t _printf_status_log(struct ae_ctrl_cxt *cxt, int8_t scene_mod, struct ae_alg_calc_param *alg_status)
+{
+	int32_t ret = AE_SUCCESS;
+	UNUSED(cxt);
+	AE_LOGD("scene: %d\n", scene_mod);
+	AE_LOGD("target: %d, zone: %d\n", alg_status->target_lum, alg_status->target_lum_zone);
+	AE_LOGD("iso: %d\n", alg_status->settings.iso);
+	AE_LOGD("ev offset: %d\n", alg_status->settings.ev_index);
+	AE_LOGD("fps: [%d, %d]\n", alg_status->settings.min_fps, alg_status->settings.max_fps);
+	AE_LOGD("metering: %d--ptr%p\n", alg_status->settings.metering_mode, alg_status->weight_table);
+	AE_LOGD("flicker: %d, table: %p, range: [%d, %d]\n", alg_status->settings.flicker, alg_status->ae_table, alg_status->ae_table->min_index, alg_status->ae_table->max_index);
+	return ret;
+}
+
+/*set_scene_mode just be called in ae_sprd_calculation,*/
+static int32_t _set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur_scene_mod, enum ae_scene_mode nxt_scene_mod)
+{
+	int32_t rtn = AE_SUCCESS;
+	struct ae_tuning_param *cur_param = NULL;
+	struct ae_scene_info *scene_info = NULL;
+	struct ae_alg_calc_param *cur_status = NULL;
+	struct ae_alg_calc_param *prv_status = NULL;
+	struct ae_exp_gain_table *ae_table = NULL;
+	struct ae_weight_table *weight_table = NULL;
+	struct ae_set_fps fps_param;
+	uint32_t i = 0;
+	int32_t target_lum = 0;
+	uint32_t iso = 0;
+	uint32_t weight_mode = 0;
+	prv_status = &cxt->prv_status;
+	cur_status = &cxt->cur_status;
+
+	if (nxt_scene_mod >= AE_SCENE_MAX) {
+		AE_LOGE("scene mod is invalidated, %d\n", nxt_scene_mod);
+		return AE_ERROR;
+	}
+
+	cur_param = cxt->cur_param;
+	scene_info = &cur_param->scene_info[0];
+	if ((AE_SCENE_NORMAL == cur_scene_mod) && (AE_SCENE_NORMAL == nxt_scene_mod)) {
+		AE_LOGI("normal  has special setting\n");
+		goto SET_SCENE_MOD_EXIT;
+	}
+
+	if (AE_SCENE_NORMAL != nxt_scene_mod) {
+		for (i = 0; i < AE_SCENE_MAX; ++i) {
+			AE_LOGI("%d: mod: %d, eb: %d\n", i, scene_info[i].scene_mode, scene_info[i].enable);
+			if ((1 == scene_info[i].enable) && (nxt_scene_mod == scene_info[i].scene_mode)) {
+				break;
+			}
+		}
+
+		if ((i >=  AE_SCENE_MAX) && (AE_SCENE_NORMAL != nxt_scene_mod)) {
+			AE_LOGI("Not has special scene setting, just using the normal setting\n");
+			goto SET_SCENE_MOD_EXIT;
+		}
+	}
+
+	if (AE_SCENE_NORMAL != nxt_scene_mod) {
+		/*normal scene--> special scene*/
+		/*special scene--> special scene*/
+		AE_LOGI("i and iso_index is %d,%d,%d",i,scene_info[i].iso_index,scene_info[i].weight_mode);
+		iso = scene_info[i].iso_index;
+		weight_mode = scene_info[i].weight_mode;
+
+		if (iso >= AE_ISO_MAX || weight_mode >= AE_WEIGHT_MAX) {
+			AE_LOGE("error iso=%d, weight_mode=%d", iso, weight_mode);
+			rtn = AE_ERROR;
+			goto SET_SCENE_MOD_EXIT;
+		}
+
+		if (AE_SCENE_NORMAL == cur_scene_mod) {/*from normal scene to special scene*/
+			cxt->prv_status = *cur_status;/*backup the normal scene's information*/
+		}
+		/*ae table*/
+		#if 0
+		for(int j=0; j <= 327; j++){
+			AE_LOGD("Current_status_exp_gain is %d,%d\n",scene_info[i].ae_table[0].exposure[j],scene_info[i].ae_table[0].again[j]);
+		}
+
+		AE_LOGD("CURRENT_STATUS_EXP_GAIN : %d,%d,%d",cur_status->effect_expline,cur_status->effect_gain,cur_status->settings.iso);
+		AE_LOGD("TABLE_ENABLE IS %d",scene_info[i].table_enable);
+		if (scene_info[i].table_enable) {
+			AE_LOGD("mode is %d",i);
+			cur_status->ae_table = &scene_info[i].ae_table[cur_status->settings.flicker];
+		}
+
+		for(int j=0; j <= 327; j++){
+			AE_LOGD("Current_status_exp_gain is %d,%d\n",cur_status->ae_table->exposure[j], cur_status->ae_table->again[j]);
+		}
+		#endif
+		cur_status->settings.iso  = scene_info[i].iso_index;
+		cur_status->settings.min_fps = scene_info[i].min_fps;
+		cur_status->settings.max_fps = scene_info[i].max_fps;
+		target_lum = _calc_target_lum(scene_info[i].target_lum, scene_info[i].ev_offset, &cur_param->ev_table);
+		cur_status->target_lum_zone = (int16_t)(cur_param->target_lum_zone * target_lum * 1.0 / cur_param->target_lum + 0.5);
+		cur_status->target_lum  = target_lum;
+		cur_status->weight_table = (uint8_t *) &cur_param->weight_table[scene_info[i].weight_mode];
+		cur_status->settings.metering_mode = scene_info[i].weight_mode;
+		cur_status->settings.scene_mode = nxt_scene_mod;
+	}
+
+	if (AE_SCENE_NORMAL == nxt_scene_mod){/*special scene --> normal scene*/
+SET_SCENE_MOD_2_NOAMAL:
+		iso = prv_status->settings.iso;
+		weight_mode = prv_status->settings.metering_mode;
+		if (iso >= AE_ISO_MAX || weight_mode >= AE_WEIGHT_MAX) {
+			AE_LOGI("error iso=%d, weight_mode=%d", iso, weight_mode);
+			rtn = AE_ERROR;
+			goto SET_SCENE_MOD_EXIT;
+		}
+		target_lum = _calc_target_lum(cur_param->target_lum, prv_status->settings.ev_index, &cur_param->ev_table);
+		cur_status->target_lum  = target_lum;
+		cur_status->target_lum_zone = (int16_t)(cur_param->target_lum_zone * (target_lum * 1.0 / cur_param->target_lum) + 0.5);
+		cur_status->settings.ev_index = prv_status->settings.ev_index;
+		cur_status->settings.iso = prv_status->settings.iso;
+		cur_status->settings.metering_mode = prv_status->settings.metering_mode;
+		cur_status->weight_table = prv_status->weight_table;
+		//cur_status->ae_table = &cur_param->ae_table[prv_status->settings.flicker][prv_status->settings.iso];
+		cur_status->ae_table = &cur_param->ae_table[prv_status->settings.flicker][AE_ISO_AUTO];
+		cur_status->settings.min_fps = prv_status->settings.min_fps;
+		cur_status->settings.max_fps = prv_status->settings.max_fps;
+		cur_status->settings.scene_mode = nxt_scene_mod;
+	}
+SET_SCENE_MOD_EXIT:
+	AE_LOGI("change scene mode from %d to %d, rtn=%d", cur_scene_mod, nxt_scene_mod, rtn);
 	return rtn;
 }
 /**************************************************************************/
@@ -2854,6 +3064,7 @@ int32_t ae_calculation(void *handle, void* param, void* result)
 	struct ae_ctrl_cxt *cxt = NULL;
 	struct ae_alg_calc_param *current_status;
 	struct ae_alg_calc_result *current_result;
+	struct ae_alg_calc_param *alg_status_ptr =NULL;//DEBUG
 	struct ae_calc_result rt;
 	struct ae_misc_calc_in misc_calc_in = { 0 };
 	struct ae_misc_calc_out misc_calc_out = { 0 };
@@ -2896,12 +3107,68 @@ int32_t ae_calculation(void *handle, void* param, void* result)
 		cxt->cur_status.effect_expline = cxt->actual_cell[cxt->cur_status.frame_id % 20].expline;
 		cxt->cur_status.effect_gain = cxt->actual_cell[cxt->cur_status.frame_id % 20].gain;
 		cxt->cur_status.effect_dummy = cxt->actual_cell[cxt->cur_status.frame_id % 20].dummy;
+		/*
+			due to set_scene_mode just be called in ae_sprd_calculation,
+			and the prv_status just save the normal scene status
+		*/
+		if (AE_SCENE_NORMAL == cxt->cur_status.settings.scene_mode) {
+			cxt->prv_status = cxt->cur_status;
+			if (AE_SCENE_NORMAL != cxt->cur_status.settings.scene_mode) {
+				cxt->prv_status.settings.scene_mode  = AE_SCENE_NORMAL;
+			}
+		}
 	}
 	cxt->cur_result.face_lum = current_result->face_lum;//for debug face lum
 	cxt->sync_aem[3 * 1024] = cxt->cur_status.frame_id;
 	cxt->sync_aem[3 * 1024 + 1] = cxt->cur_status.effect_expline;
 	cxt->sync_aem[3 * 1024 + 2] = cxt->cur_status.effect_dummy;
 	cxt->sync_aem[3 * 1024 + 3] = cxt->cur_status.effect_gain;
+
+//START
+    alg_status_ptr = &cxt->cur_status;
+    cxt->cur_param = &cxt->tuning_param[0];
+    //alg_status_ptr = &cxt->cur_status;
+    // change weight_table
+    alg_status_ptr->weight_table = cxt->cur_param->weight_table[alg_status_ptr->settings.metering_mode].weight;
+    // change ae_table
+#if 0
+    current_status->ae_table = &cxt->cur_param->scene_info[current_status->settings.scene_mode].ae_table[current_status->settings.flicker];
+#else
+    // for now video using
+    alg_status_ptr->ae_table = &cxt->cur_param->ae_table[alg_status_ptr->settings.flicker][AE_ISO_AUTO];
+    alg_status_ptr->ae_table->min_index = 0;//AE table start index = 0
+#endif
+    // change settings related by EV
+    alg_status_ptr->target_lum = _calc_target_lum(cxt->cur_param->target_lum, cxt->cur_status.settings.ev_index, &cxt->cur_param->ev_table);
+    alg_status_ptr->target_lum_zone = cxt->stable_zone_ev[alg_status_ptr->settings.ev_index];
+    alg_status_ptr->stride_config[0] = cxt->cnvg_stride_ev[alg_status_ptr->settings.ev_index * 2];
+    alg_status_ptr->stride_config[1] = cxt->cnvg_stride_ev[alg_status_ptr->settings.ev_index * 2 + 1];
+    {
+        int8_t cur_mod = cxt->sync_cur_status.settings.scene_mode;
+        int8_t nx_mod = cxt->cur_status.settings.scene_mode;
+        if (nx_mod != cur_mod) {
+            AE_LOGD("before set scene mode: \n");
+            _printf_status_log(cxt, cur_mod, &cxt->cur_status);
+            _set_scene_mode(cxt, cur_mod, nx_mod);
+            AE_LOGD("after set scene mode: \n");
+            _printf_status_log(cxt, nx_mod, &cxt->cur_status);
+        }
+    }
+    memcpy(current_status, &cxt->cur_status, sizeof(struct ae_alg_calc_param));
+    memcpy(&cxt->cur_result, current_result, sizeof(struct ae_alg_calc_result));
+//END
+/*
+	{
+			int8_t cur_mod = cxt->sync_cur_status.settings.scene_mode;
+			int8_t nx_mod = cxt->cur_status.settings.scene_mode;
+			if (nx_mod != cur_mod) {
+				AE_LOGD("before set scene mode: \n");
+				_printf_status_log(cxt, cur_mod, &cxt->cur_status);
+				_set_scene_mode(cxt, cur_mod, nx_mod);
+				AE_LOGD("after set scene mode: \n");
+				_printf_status_log(cxt, nx_mod, &cxt->cur_status);
+			}
+		}
 	memcpy(current_status, &cxt->cur_status, sizeof(struct ae_alg_calc_param));
 	memcpy(&cxt->cur_result, current_result, sizeof(struct ae_alg_calc_result));
 	cxt->cur_param = &cxt->tuning_param[0];
@@ -2920,6 +3187,8 @@ int32_t ae_calculation(void *handle, void* param, void* result)
 	current_status->target_lum_zone = cxt->stable_zone_ev[current_status->settings.ev_index];
 	current_status->stride_config[0] = cxt->cnvg_stride_ev[current_status->settings.ev_index * 2];
 	current_status->stride_config[1] = cxt->cnvg_stride_ev[current_status->settings.ev_index * 2 + 1];
+
+*/
 	// AE_LOGD("e_expline %d e_gain %d\r\n",
 	// current_status.effect_expline,
 	// current_status.effect_gain);
@@ -2948,12 +3217,7 @@ int32_t ae_calculation(void *handle, void* param, void* result)
 			/*just for debug: reset the status */
 
 			if (1 == cxt->cur_status.settings.touch_scrn_status) {
-				cxt->ae_cb_cnt++;
-				if (cxt->ae_cb_cnt >= 2) {
-					(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_TOUCH_AE_NOTIFY);//temp code for bug642910, remove later
-					cxt->cur_status.settings.touch_scrn_status = 0;
-					cxt->ae_cb_cnt = 0;
-				}
+				cxt->cur_status.settings.touch_scrn_status = 0;
 			}
 		}
 		// AE_LOGD("calc_module_f %.2f %d\r\n",
@@ -3125,6 +3389,13 @@ int32_t ae_sprd_io_ctrl(void *handle, int32_t cmd, void *param, void *result)
 			break;
 
 		case AE_SET_SCENE_MODE:
+			if (param) {
+				struct ae_set_scene *scene_mode = param;
+				if (scene_mode->mode < AE_SCENE_MAX) {
+					cxt->cur_status.settings.scene_mode = (int8_t)scene_mode->mode;
+				}
+				AE_LOGI(" UI scene: %d\n", scene_mode->mode);
+			}
 			break;
 
 		case AE_SET_ISO:
@@ -3595,6 +3866,15 @@ int32_t ae_sprd_io_ctrl(void *handle, int32_t cmd, void *param, void *result)
 
 				exposure_time2line(&(cxt->tuning_param[work_info->mode]), cxt->cur_status.line_time,
 																cxt->tuning_param[work_info->mode].ae_tbl_exp_mode);
+					//exp_time2exp_line(cxt,cxt->cur_status.settings.scene_mode,cxt->cur_status.line_time,
+								//cxt->tuning_param[work_info->mode].scene_info[cxt->cur_status.settings.scene_mode].exp_tbl_mode,
+								//	&(cxt->tuning_param[work_info->mode].scene_info[cxt->cur_status.settings.scene_mode]));
+				for (int j = 0; j < AE_SCENE_MAX; ++j) {
+					exp_time2exp_line(cxt, cxt->back_scene_mode_ae_table[j],\
+										cxt->tuning_param[work_info->mode].scene_info[j].ae_table,\
+										cxt->cur_status.line_time,\
+										cxt->tuning_param[work_info->mode].scene_info[j].exp_tbl_mode);		
+					}
 				if (1 == cxt->tuning_param_enable[work_info->mode])
 					cxt->cur_param = &cxt->tuning_param[work_info->mode];
 				else
