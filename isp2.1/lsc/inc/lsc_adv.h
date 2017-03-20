@@ -101,7 +101,7 @@ struct alsc_ver_info{
 
 
 struct debug_lsc_param{
-	char LSC_version[20];
+	char LSC_version[50];
 	unsigned short TB_DNP[12];
 	unsigned short TB_A[12];
 	unsigned short TB_TL84[12];
@@ -353,6 +353,7 @@ struct lsc2_context{
 	unsigned int gain_pattern;
 	unsigned int grid;
 
+	unsigned short* lsc_tab_address[9];  // the copy of table in parameter file
 	unsigned short* lsc_table_ptr_r;    // storage to save Rfirst table
 	unsigned short* tabptr[9]; // address of origianl shading table will be used to interperlation in slsc2
 	unsigned short* tabptrPlane[9]; // address R-first shading table ( lsc_table_ptr )
@@ -432,6 +433,7 @@ struct lsc_adv_calc_param{
 	uint32_t isp_id;                    // 0. alg0.c ,  2. alg2.c
 	uint32_t camera_id;                 // 0. back camera  ,  1. front camera
 	struct lsc_size img_size;           // raw size
+	int grid;                           // grid size
 
 	// no use in HLSC_V2.0
 	struct lsc_size block_size;

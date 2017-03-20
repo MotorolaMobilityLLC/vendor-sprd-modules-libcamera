@@ -726,6 +726,40 @@ static int32_t ispGetAeDebugInfoIOCtrl(cmr_handle isp_alg_handle)
 	return ret;
 }
 
+static int32_t ispGetAlscDebugInfoIOCtrl(cmr_handle isp_alg_handle)
+{
+	int32_t rtn = ISP_SUCCESS;
+	int32_t ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct tg_alsc_debug_info lsc_log = {NULL, 0};
+
+	if ( NULL == cxt) {
+		ISP_LOGE("Get ALSC debug info error!");
+		rtn =ISP_ERROR;
+		return rtn;
+	}
+
+       struct alsc_ver_info lsc_ver = {0};
+       rtn  = lsc_ctrl_ioctrl(cxt->lsc_cxt.handle, ALSC_GET_VER, NULL, (void *)&lsc_ver);
+	if (ISP_SUCCESS != rtn) {
+		ISP_LOGE("fail to Get ALSC ver info in debug info!");
+	}
+
+	if( lsc_ver.LSC_SPD_VERSION >= 3 ){
+		if ( 0x00 == cxt->lib_use_info->lsc_lib_info.product_id ) {
+			rtn  = lsc_ctrl_ioctrl(cxt->lsc_cxt.handle, ALSC_CMD_GET_DEBUG_INFO, NULL, (void *)&lsc_log);
+			if ( ISP_SUCCESS != rtn ) {
+				ISP_LOGE("Get ALSC debug info failed!");
+			}
+			cxt->lsc_cxt.log_lsc = lsc_log.log;
+			cxt->lsc_cxt.log_lsc_size = lsc_log.size;
+			ret += rtn;
+		}
+	}
+
+	return ret;
+}
+
 static const char *DEBUG_MAGIC = "SPRD_ISP";  // 8 bytes
 static const char *AE_START    = "ISP_AE__";
 static const char *AE_END      = "ISP_AE__";
@@ -826,6 +860,10 @@ static cmr_int _ispGetInfoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, int
 	} else {
 		if (ISP_SUCCESS != ispGetAeDebugInfoIOCtrl(cxt)) {
 			ISP_LOGE("isp_get_debug_info failed");
+		}
+
+		if (ISP_SUCCESS != ispGetAlscDebugInfoIOCtrl(cxt)) {
+			ISP_LOGE("isp_get_ALSC_debug_info failed");
 		}
 
 		total_size = sizeof(struct sprd_isp_debug_info) + sizeof(isp_log_info_t)

@@ -351,6 +351,8 @@ int32_t alsc_calc(cmr_handle isp_alg_handle,
 		calc_param.ct = awb_ct;
 		calc_param.r_gain = awb_r_gain;
 		calc_param.b_gain = awb_b_gain;
+		calc_param.grid = lsc_info->grid;
+
 
 		gAWBGainR = awb_r_gain;
 		gAWBGainB = awb_b_gain;
