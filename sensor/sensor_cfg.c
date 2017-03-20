@@ -55,6 +55,7 @@ extern struct sns_af_drv_entry dw9718s_drv_entry;
 extern struct sns_af_drv_entry bu64297gwz_drv_entry;
 extern struct sns_af_drv_entry vcm_ak7371_drv_entry;
 extern struct sns_af_drv_entry lc898214_drv_entry;
+extern struct sns_af_drv_entry dw9763_drv_entry;
 
 /*---------------------------------------------------------------------------*
  **                         Constant Variables                                *
@@ -69,7 +70,7 @@ const SENSOR_MATCH_T main_sensor_infor_tab[] = {
 #endif
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
 #ifdef CAMERA_SENSOR_BACK_I2C_SWITCH
-	{"imx258_mipi_raw", &g_imx258_mipi_raw_info, {NULL,0}, NULL},
+    {"imx258_mipi_raw", &g_imx258_mipi_raw_info, {&dw9763_drv_entry,0}, NULL},
 #else
     {"imx258_mipi_raw", &g_imx258_mipi_raw_info, {&lc898214_drv_entry,0},
      &imx258_truly_drv_entry},
