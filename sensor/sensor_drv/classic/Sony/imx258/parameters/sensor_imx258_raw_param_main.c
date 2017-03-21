@@ -30,7 +30,9 @@
 /* Begin Include */
 #include "sensor_imx258_raw_param_common.c"
 #include "sensor_imx258_raw_param_prv_0.c"
+#include "sensor_imx258_raw_param_prv_1.c"
 #include "sensor_imx258_raw_param_cap_0.c"
+#include "sensor_imx258_raw_param_cap_1.c"
 #include "sensor_imx258_raw_param_video_0.c"
 #include "sensor_imx258_raw_param_video_1.c"
 
@@ -46,7 +48,7 @@
 
 
 /* Capture Sizes:
-	4208x3120,1280x720
+	4208x3120,1280x720,2096x1552
 */
 
 
@@ -153,11 +155,11 @@ static struct sensor_raw_info s_imx258_mipi_raw_info=
 	{
 		{s_imx258_tune_info_common, sizeof(s_imx258_tune_info_common)},
 		{s_imx258_tune_info_prv_0, sizeof(s_imx258_tune_info_prv_0)},
-		{NULL, 0},
+		{s_imx258_tune_info_prv_1, sizeof(s_imx258_tune_info_prv_1)},
 		{NULL, 0},
 		{NULL, 0},
 		{s_imx258_tune_info_cap_0, sizeof(s_imx258_tune_info_cap_0)},
-		{NULL, 0},
+		{s_imx258_tune_info_cap_1, sizeof(s_imx258_tune_info_cap_1)},
 		{NULL, 0},
 		{NULL, 0},
 		{s_imx258_tune_info_video_0, sizeof(s_imx258_tune_info_video_0)},
@@ -171,11 +173,11 @@ static struct sensor_raw_info s_imx258_mipi_raw_info=
 	{
 		&s_imx258_fix_info_common,
 		&s_imx258_fix_info_prv_0,
-		NULL,
+		&s_imx258_fix_info_prv_1,
 		NULL,
 		NULL,
 		&s_imx258_fix_info_cap_0,
-		NULL,
+		&s_imx258_fix_info_cap_1,
 		NULL,
 		NULL,
 		&s_imx258_fix_info_video_0,
@@ -186,11 +188,11 @@ static struct sensor_raw_info s_imx258_mipi_raw_info=
 	{
 		{s_imx258_common_tool_ui_input, sizeof(s_imx258_common_tool_ui_input)},
 		{s_imx258_prv_0_tool_ui_input, sizeof(s_imx258_prv_0_tool_ui_input)},
-		{NULL, 0},
+		{s_imx258_prv_1_tool_ui_input, sizeof(s_imx258_prv_1_tool_ui_input)},
 		{NULL, 0},
 		{NULL, 0},
 		{s_imx258_cap_0_tool_ui_input, sizeof(s_imx258_cap_0_tool_ui_input)},
-		{NULL, 0},
+		{s_imx258_cap_1_tool_ui_input, sizeof(s_imx258_cap_1_tool_ui_input)},
 		{NULL, 0},
 		{NULL, 0},
 		{s_imx258_video_0_tool_ui_input, sizeof(s_imx258_video_0_tool_ui_input)},
