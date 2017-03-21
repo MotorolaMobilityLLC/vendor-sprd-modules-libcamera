@@ -2044,7 +2044,7 @@ static int32_t _set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur_s
 		cur_status->settings.min_fps = scene_info[i].min_fps;
 		cur_status->settings.max_fps = scene_info[i].max_fps;
 		target_lum = _calc_target_lum(scene_info[i].target_lum, scene_info[i].ev_offset, &cur_param->ev_table);
-		cur_status->target_lum_zone = (int16_t)(cur_param->target_lum_zone * target_lum * 1.0 / cur_param->target_lum + 0.5);
+		//cur_status->target_lum_zone = (int16_t)(cur_param->target_lum_zone * target_lum * 1.0 / cur_param->target_lum + 0.5);
 		cur_status->target_lum  = target_lum;
 		cur_status->weight_table = (uint8_t *) &cur_param->weight_table[scene_info[i].weight_mode];
 		cur_status->settings.metering_mode = scene_info[i].weight_mode;
@@ -2062,7 +2062,7 @@ SET_SCENE_MOD_2_NOAMAL:
 		}
 		target_lum = _calc_target_lum(cur_param->target_lum, prv_status->settings.ev_index, &cur_param->ev_table);
 		cur_status->target_lum  = target_lum;
-		cur_status->target_lum_zone = (int16_t)(cur_param->target_lum_zone * (target_lum * 1.0 / cur_param->target_lum) + 0.5);
+		//cur_status->target_lum_zone = (int16_t)(cur_param->target_lum_zone * (target_lum * 1.0 / cur_param->target_lum) + 0.5);
 		cur_status->settings.ev_index = prv_status->settings.ev_index;
 		cur_status->settings.iso = prv_status->settings.iso;
 		cur_status->settings.metering_mode = prv_status->settings.metering_mode;
@@ -3111,7 +3111,7 @@ int32_t ae_calculation(void *handle, void* param, void* result)
 			due to set_scene_mode just be called in ae_sprd_calculation,
 			and the prv_status just save the normal scene status
 		*/
-		if (AE_SCENE_NORMAL == cxt->cur_status.settings.scene_mode) {
+		if (AE_SCENE_NORMAL == cxt->sync_cur_status.settings.scene_mode) {
 			cxt->prv_status = cxt->cur_status;
 			if (AE_SCENE_NORMAL != cxt->cur_status.settings.scene_mode) {
 				cxt->prv_status.settings.scene_mode  = AE_SCENE_NORMAL;
