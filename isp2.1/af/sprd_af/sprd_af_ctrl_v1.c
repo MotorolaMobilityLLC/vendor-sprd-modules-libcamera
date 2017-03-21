@@ -2030,6 +2030,7 @@ v=v>(max)?(max):v; hist[v]++;}
 			return 1;
 		}
 */
+#if 0	//Andrew : The control layer does not interfere with the CAF mechanism
 		if( (STATE_CAF==af->state||STATE_RECORD_CAF==af->state) && 
 			0==af->caf_first_stable && 1==af->ae.stable ){
 			af->caf_first_stable=1;
@@ -2038,7 +2039,11 @@ v=v>(max)?(max):v; hist[v]++;}
 
 		if( 1==af->caf_first_stable )
 			return 1;
-
+#else
+		if(STATE_CAF==af->state||STATE_RECORD_CAF==af->state){
+			return 1;
+		}
+#endif
 		return af->ae.stable;
 	}
 	
@@ -2444,7 +2449,15 @@ v=v>(max)?(max):v; hist[v]++;}
 
 		AF_LOGI("[0x%x] fv0e %d, fv1e %d, nr %d, cw %d iir %d"
 			,set_stat,fv0_e,fv1_e,nr_mode,cw_mode,iir_level);
-		//afm_setup(af);
+		afm_setup(af);
+		return 0;
+	}
+	static ERRCODE if_phase_detection_get_data(pd_algo_result_t *pd_result, void *cookie) {
+		af_ctrl_t *af = cookie;
+
+		memcpy(pd_result,&(af->pd),sizeof(pd_algo_result_t));
+		pd_result->pd_roi_dcc = 17;
+		
 		return 0;
 	}
 	static ERRCODE if_lens_get_pos(uint16 * pos, void *cookie) {
@@ -2588,6 +2601,20 @@ v=v>(max)?(max):v; hist[v]++;}
 			af->vcm_ops.get_otp(isp_ctx->ioctrl_ptr->caller_handler, &pAF_OTP->INF, &pAF_OTP->MACRO);
 			af->fv.AF_OTP.bIsExist = T_LENS_BY_OTP;
 			AF_LOGD("otp (infi,macro) = (%d,%d)", pAF_OTP->INF, pAF_OTP->MACRO);
+		}
+
+		if(isp_ctx->otp_data){
+			if(isp_ctx->otp_data->single_otp.af_info.macro_cali > isp_ctx->otp_data->single_otp.af_info.infinite_cali){
+				af->fv.AF_OTP.bIsExist = (T_LENS_BY_OTP);
+				pAF_OTP->INF = isp_ctx->otp_data->single_otp.af_info.infinite_cali;
+				pAF_OTP->MACRO = isp_ctx->otp_data->single_otp.af_info.macro_cali;
+				AF_LOGD("get otp (infi,macro) = (%d,%d)", pAF_OTP->INF, pAF_OTP->MACRO);
+			}
+			else{
+				AF_LOGD("skip invalid otp (infi,macro) = (%d,%d)"
+					,isp_ctx->otp_data->single_otp.af_info.infinite_cali
+					,isp_ctx->otp_data->single_otp.af_info.macro_cali);
+			}
 		}
 
 		return 0;
@@ -3469,6 +3496,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		af->fv.AF_Ops.af_log = if_af_log;
 		af->fv.AF_Ops.af_start_notify = if_af_start_notify;
 		af->fv.AF_Ops.af_end_notify = if_af_end_notify;
+		af->fv.AF_Ops.phase_detection_get_data = if_phase_detection_get_data;
 		af->curr_scene = INDOOR_SCENE;
 
 		af->ae_lock_num = 1;
@@ -4258,8 +4286,12 @@ static cmr_int af_sprd_adpt_update_aux_sensor(cmr_handle handle, void *in)
 		case AF_CMD_SET_PD_INFO:
 			{
 				struct pd_result *pd_calc_result = (struct pd_result *)param0;
-				ISP_LOGI("PD_GetResult pd_calc_result.pdConf[4] = %d, pd_calc_result.pdPhaseDiff[4] = 0x%lf",
-						pd_calc_result->pdConf[4], pd_calc_result->pdPhaseDiff[4]);
+				af->pd.pd_enable = (af->pd.effective_frmid)? 1 : 0;
+				af->pd.effective_frmid = (uint32_t)pd_calc_result->pdGetFrameID;
+				af->pd.confidence = (uint32_t)pd_calc_result->pdConf[4];
+				af->pd.pd_value = pd_calc_result->pdPhaseDiff[4];
+				ISP_LOGI("[%d]PD_GetResult pd_calc_result.pdConf[4] = %d, pd_calc_result.pdPhaseDiff[4] = %lf"
+						,pd_calc_result->pdGetFrameID,pd_calc_result->pdConf[4], pd_calc_result->pdPhaseDiff[4]);
 				ISP_LOGI("pdaf set callback end");
 			}
 			break;

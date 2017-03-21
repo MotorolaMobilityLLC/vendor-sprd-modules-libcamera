@@ -342,6 +342,7 @@ typedef struct _af_ctrl {
 	roi_rgb_y_t roi_RGBY;
 	ae_info_t ae;
 	awb_info_t awb;
+	pd_algo_result_t pd;
 	filter_clip_t filter_clip[SCENE_NUM][GAIN_TOTAL];
 	int32_t bv_threshold[SCENE_NUM][SCENE_NUM];
 	uint8_t pre_scene;

@@ -65,7 +65,7 @@
 //=========================================================================//
 /* ============================================================================================== */
 /*1.System info*/	
-#define VERSION             "2.107"
+#define VERSION             "2.108"
 #define STRING(s) #s
 
 
@@ -125,6 +125,7 @@ typedef enum _eAF_MODE {
   VAF,                   //Video CAF
   FAF,                   //Face AF
   MAF,                   //Multi zone AF 
+  PDAF,                  //PDAF
   TMODE_1,               //Test mode 1
   Wait_Trigger           //wait for AF trigger
 } eAF_MODE;
@@ -246,6 +247,11 @@ typedef enum _e_AF_AE_Gain {
   AE_Gain_Total,
 } e_AF_AE_Gain; 
 
+enum {
+	PD_NO_HINT,
+	PD_DIR_ONLY,		
+	PD_DIR_RANGE ,
+}PDAF_HINT_INFO;
 //=========================================================================================//
 // Public Structure Instance
 //=========================================================================================//
@@ -458,9 +464,9 @@ typedef struct _AF_Tuning
 #define AFAUTO_SCAN_STOP_NMAX (256)
 #define FOCUS_STAT_WIN_TOTAL	(10)
 #define MULTI_STATIC_TOTAL (9)
-#define AF_CHECK_SCENE_HISTORY	(15)
 #define AF_RESULT_DATA_SIZE	(32)
-
+#define AF_CHECK_SCENE_HISTORY	(15)
+#define AF_SCENE_CAL_STDEV_TOTAL	(32)
 
 typedef struct _afscan_status_s {
 	uint32_t n_stops;
@@ -569,6 +575,16 @@ typedef struct _afscan_status_s {
 	uint32_t peak_quad;
 } afscan_status_t;
 
+typedef struct af_ctrl_pd_info_s{
+	uint32_t info_type;
+	uint32_t predict_direction;
+	uint32_t predict_peak;
+	uint32_t predict_far_stop;
+	uint32_t predict_near_stop;
+	uint32_t phase_diff_value;
+	uint32_t confidence_level;
+} pd_info_t;
+
 typedef struct _af_control_status_s {
 	uint32_t				state;
 	uint32_t				frmid;
@@ -590,6 +606,7 @@ typedef struct _af_control_status_s {
 	uint32_t				idsp_reset_frmid;
 	uint32_t				debug_cb;
 	uint32_t				env_avgy_histroy[AF_CHECK_SCENE_HISTORY];
+	pd_info_t				pd_info;
 } afctrl_status_t;
 
 typedef struct af_scan_env_info_s{
@@ -624,19 +641,19 @@ typedef struct af_scan_info_s{
 /* ========================== Structure ============================ */
 typedef struct afstat_frame_buffer_s{
 	uint32_t curr_frm_stat[FOCUS_STAT_WIN_TOTAL];
-	//unsigned int curr_frm_y[FOCUS_STAT_WIN_TOTAL];
+	//uint32_t curr_frm_y[FOCUS_STAT_WIN_TOTAL];
 	uint32_t last_frm_stat[FOCUS_STAT_WIN_TOTAL];
-	//unsigned int last_frm_y[FOCUS_STAT_WIN_TOTAL];
-	//unsigned int focus_block_idx;
-	//unsigned int peak_block_edge;	
-	//unsigned int peak_block_y;
+	//uint32_t last_frm_y[FOCUS_STAT_WIN_TOTAL];
+	//uint32_t focus_block_idx;
+	//uint32_t peak_block_edge;	
+	//uint32_t peak_block_y;
 	//int peak_block_edge_rela;	
 	//int peak_block_y_rela;
 	//int peak_block_around_rela[FOCUS_STAT_AROUND_BLOCK_DATA];
 	uint32_t stat_weight;
 	uint32_t stat_sum;
 	uint32_t luma_avg;
-	//unsigned int multi_grid_sum[MULTI_STATIC_TOTAL];	
+	//uint32_t multi_grid_sum[MULTI_STATIC_TOTAL];	
 	uint32_t multi_stat_tbl[AFAUTO_SCAN_STOP_NMAX][MULTI_STATIC_TOTAL];	/*debug info of defocus function*/
 } afstat_frmbuf_t;
 
@@ -662,6 +679,16 @@ typedef struct _af_process_s
 	aftuning_param_t adapt_af_param;	//adapt AF parameter
 }_af_process_t;
 
+
+typedef struct pd_algo_result_s{
+	uint32_t pd_enable;
+	uint32_t effective_pos;
+	uint32_t effective_frmid;
+	uint32_t confidence;
+	double pd_value;
+	short pd_roi_dcc;
+	uint8_t reserved[10];//aligment to 4 byte
+}pd_algo_result_t;
 #pragma pack(pop)
 
 typedef struct _CAF_Tuning_Para
@@ -735,7 +762,8 @@ typedef struct _AF_Ctrl_Ops
 {
 	ERRCODE (*statistics_wait_cal_done)(void *cookie);
 	ERRCODE (*statistics_get_data)(uint64 fv[T_TOTAL_FILTER_TYPE],_af_stat_data_t *p_stat_data,void *cookie);
-	ERRCODE (*statistics_set_data)(unsigned int set_stat, void * cookie);
+	ERRCODE (*statistics_set_data)(uint32_t set_stat, void * cookie);	
+	ERRCODE (*phase_detection_get_data)(pd_algo_result_t *pd_result, void *cookie);
 	ERRCODE (*lens_get_pos)(uint16 *pos, void *cookie);
 	ERRCODE (*lens_move_to)(uint16 pos, void *cookie);
 	ERRCODE (*lens_wait_stop)(void *cookie);

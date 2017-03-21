@@ -47,6 +47,8 @@
 #define  __AFV1_CAF_H__
 #include "AFv1_Common.h"
 ERRCODE CAF_main(AF_Data* pAF_Data);
+ERRCODE CAF_set_pd_info(AF_Data* pAF_Data,uint32_t* info_param);
+
 /*
 ERRCODE CAF_Init(AF_Data* pAF_Data);
 ERRCODE CAF_DeInit(AF_Data* pAF_Data);
