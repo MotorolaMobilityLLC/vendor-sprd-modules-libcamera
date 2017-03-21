@@ -892,8 +892,8 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 	pthread_mutex_init(&cxt->status_lock, NULL);
 
 	cxt->stat_img_size = param->stat_img_size;
-	cxt->awb_init_param.stat_img_w = param->stat_img_size.w;
-	cxt->awb_init_param.stat_img_h = param->stat_img_size.h;
+	cxt->awb_init_param.stat_w = param->stat_img_size.w;
+	cxt->awb_init_param.stat_h = param->stat_img_size.h;
 	cxt->awb_init_param.otp_random_r = param->otp_info.rdm_stat_info.r;
 	cxt->awb_init_param.otp_random_g = param->otp_info.rdm_stat_info.g;
 	cxt->awb_init_param.otp_random_b = param->otp_info.rdm_stat_info.b;
@@ -908,8 +908,6 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 	cxt->otp_info.rdm_stat_info.r = param->otp_info.rdm_stat_info.r;
 	cxt->otp_info.rdm_stat_info.g = param->otp_info.rdm_stat_info.g;
 	cxt->otp_info.rdm_stat_info.b = param->otp_info.rdm_stat_info.b;
-
-	AWB_CTRL_LOGE("AWB stat %d x %d", param->stat_img_size.w, param->stat_img_size.h);
 
 	if (cxt->awb_init_param.tuning_param.skip_frame_num > 8)
 	{
@@ -1077,6 +1075,8 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	calc_param.stat_img.r = param->stat_img_awb.chn_img.r;
 	calc_param.stat_img.g = param->stat_img_awb.chn_img.g;
 	calc_param.stat_img.b = param->stat_img_awb.chn_img.b;
+	calc_param.stat_img_w = param->stat_width_awb;
+	calc_param.stat_img_h = param->stat_height_awb;
 	calc_param.r_pix_cnt = 1;
 	calc_param.g_pix_cnt = 1;
 	calc_param.b_pix_cnt = 1;
@@ -1091,7 +1091,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	uint64_t time0 = systemTime(CLOCK_MONOTONIC);
 	rtn = cxt->lib_ops.awb_calc_v1(cxt->alg_handle, &calc_param, &calc_result);
 	uint64_t time1 = systemTime(CLOCK_MONOTONIC);
-	AWB_CTRL_LOGD("AWB: (%d,%d,%d) %dK, pg=%d, %dus", calc_result.awb_gain[0].r_gain, calc_result.awb_gain[0].g_gain, calc_result.awb_gain[0].b_gain, calc_result.awb_gain[0].ct, result->pg_flag, (int)((time1-time0)/1000));
+	AWB_CTRL_LOGD("AWB %dx%d: (%d,%d,%d) %dK, pg=%d, %dus", calc_param.stat_img_w, calc_param.stat_img_h, calc_result.awb_gain[0].r_gain, calc_result.awb_gain[0].g_gain, calc_result.awb_gain[0].b_gain, calc_result.awb_gain[0].ct, result->pg_flag, (int)((time1-time0)/1000));
 
 	result->gain.r = calc_result.awb_gain[0].r_gain;
 	result->gain.g = calc_result.awb_gain[0].g_gain;

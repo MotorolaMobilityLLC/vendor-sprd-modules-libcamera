@@ -260,8 +260,8 @@ extern "C"
 
 	struct awb_init_param
 	{
-		uint32_t stat_img_w;
-		uint32_t stat_img_h;
+		uint32_t stat_w;    // will be deprecated
+		uint32_t stat_h;    // will be deprecated
 
 		uint32_t otp_random_r;
 		uint32_t otp_random_g;
@@ -276,6 +276,9 @@ extern "C"
 	struct awb_calc_param
 	{
 		struct awb_stat_img stat_img;
+
+        uint32_t stat_img_w;
+		uint32_t stat_img_h;
 		uint32_t r_pix_cnt;
 		uint32_t g_pix_cnt;
 		uint32_t b_pix_cnt;
