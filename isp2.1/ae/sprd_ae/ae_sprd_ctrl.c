@@ -499,7 +499,9 @@ static int32_t ae_calc_result_queue_write(struct ae_calc_result_queue *queue, st
 	struct ae_calc_result *ori_ae_result = NULL;
 
 	if (NULL == queue || NULL == ae_result || NULL == queue->read || NULL == queue->write) {
-		AE_LOGE("ae_calc_result_queue_write, queue=%p,  ae_result=%p, read=%p, write=%p param is error", queue, ae_result, queue->read, queue->write);
+		AE_LOGE("ae_calc_result_queue_write error");
+		//AE_LOGE("ae_calc_result_queue_write, queue=%p,  ae_result=%p, read=%p, write=%p param is error",
+		//	queue, ae_result, queue->read, queue->write);
 		return AE_ERROR;
 	}
 	AE_LOGI("ae_calc_result_queue_write");
@@ -526,8 +528,9 @@ static int32_t ae_calc_result_queue_read(struct ae_calc_result_queue *queue, str
 	int32_t rtn = AE_SUCCESS;
 
 	if (NULL == queue || NULL == ae_result || NULL == queue->read || NULL == queue->write) {
-		AE_LOGE("ae_calc_result_queue_read, queue=%p,  ae_result=%p, read=%p, write=%p param is error",\
-					queue, ae_result, queue->read, queue->write);
+		AE_LOGE("ae_calc_result_queue_read error");
+		//AE_LOGE("ae_calc_result_queue_read, queue=%p,  ae_result=%p, read=%p, write=%p param is error",\
+		//			queue, ae_result, queue->read, queue->write);
 		return AE_ERROR;
 	}
 	//AE_LOGD("ae_calc_result_queue_read");
@@ -1647,7 +1650,7 @@ static int32_t _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 	int32_t rtn = AE_SUCCESS;
 	uint32_t i, j = 0;
 	int8_t cur_work_mode = AE_WORK_MODE_COMMON;
-	struct ae_trim trim;
+	struct ae_trim trim = {0, 0, 0, 0};
 	struct ae_ev_table *ev_table = NULL;
 	UNUSED(work_param);
 
@@ -1804,11 +1807,11 @@ static int32_t _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 	cxt->cur_status.settings.max_fps = 30;
 
 	AE_LOGI("snr setting fps: %d\n", cxt->snr_info.snr_setting_max_fps);
-	if (0 != cxt->snr_info.snr_setting_max_fps) {
-		cxt->cur_status.settings.sensor_max_fps = 30;//cxt->snr_info.snr_setting_max_fps;
-	} else {
+	//if (0 != cxt->snr_info.snr_setting_max_fps) {
+	//	cxt->cur_status.settings.sensor_max_fps = 30;//cxt->snr_info.snr_setting_max_fps;
+	//} else {
 		cxt->cur_status.settings.sensor_max_fps = 30;
-	}
+	//}
 
 	//flash ae param 
 	cxt->cur_status.settings.flash = 0;
@@ -2709,7 +2712,7 @@ static int32_t _get_flicker_switch_flag(struct ae_ctrl_cxt *cxt, void *in_param)
 	cur_exp = cxt->sync_cur_result.wts.exposure_time;
 	// 50Hz/60Hz
 	if (AE_FLICKER_50HZ == cxt->cur_status.settings.flicker) {
-		if (cur_exp < 83333) {
+		if (cur_exp < 100000) {
 			*flag = 0;
 		} else {
 			*flag = 1;
@@ -3208,6 +3211,12 @@ int32_t ae_calculation(void *handle, void* param, void* result)
 		//4test
 
 		rtn = ae_misc_calculation(cxt->misc_handle, &misc_calc_in, &misc_calc_out);
+		if (rtn) {
+			AE_LOGE("ae_misc_calculation error");
+			rtn = AE_ERROR;
+			goto ERROR_EXIT;
+		}
+
 		cxt->cur_status.ae1_finfo.update_flag = 0;	// add by match box for fd_ae reset the status
 		memset((void*)&cxt->cur_status.ae1_finfo.cur_info, 0, sizeof(cxt->cur_status.ae1_finfo.cur_info));
 
@@ -4029,9 +4038,9 @@ int32_t ae_sprd_deinit(void *handle, void *in_param, void *out_param)
 
 	pthread_mutex_destroy(&cxt->data_sync_lock);
 
-	if (cxt) {
+	//if (cxt) {
 		free(cxt);
-	}
+	//}
 	return rtn;
 }
 
