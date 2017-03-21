@@ -77,6 +77,7 @@ enum ae_calc_func_y_type {
 	AE_CALC_FUNC_Y_TYPE_WEIGHT_VALUE = 1,
 };
 
+typedef void* ae_handle_t;
 struct ae_weight_value {
 	int16_t value[2];
 	int16_t weight[2];

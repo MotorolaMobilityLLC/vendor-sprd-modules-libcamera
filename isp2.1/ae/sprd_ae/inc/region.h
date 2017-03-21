@@ -79,6 +79,13 @@ extern "C" {
 		region_rt result_region;
 		int8_t region_num;
 		float region_lum[10];
+		/*algorithm runtime status*/
+		int16_t lv_record;
+		int16_t region_thd[12];	//u d l r
+		int16_t up_max;
+		int16_t down_max;
+		float vote_region[6];	//u d l r
+		float over_lum;
 		uint32_t log_buf[256];
 	} region_stat;
 

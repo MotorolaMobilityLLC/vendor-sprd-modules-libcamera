@@ -71,6 +71,10 @@ typedef struct  {
 	int8_t debug_level;
 	uint8_t mlog_en;
 	struct flat_tuning_param tune_param;
+	float flat_h;
+	float flat_l;
+	float flat_oft;
+	float flat_oft_uf;
 	flat_in in_flat;
 	flat_rt result_flat;
 	uint32_t mlog_buf[256];
