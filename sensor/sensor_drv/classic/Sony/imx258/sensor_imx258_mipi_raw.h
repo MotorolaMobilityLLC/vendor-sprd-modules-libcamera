@@ -678,7 +678,7 @@ s_imx258_resolution_trim_tab[SENSOR_MODE_MAX] = {
      .trim_height = 1552,
      .line_time = 20650,
      .bps_per_lane = 1296,
-     .frame_line = 3224,
+     .frame_line = 1644,
      .scaler_trim =
          {
              .x = 0, .y = 0, .w = 2096, .h = 1552,

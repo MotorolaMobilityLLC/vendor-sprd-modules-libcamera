@@ -122,7 +122,8 @@ static struct hdr_info_t s_hdr_info = {
     SNAPSHOT_FRAME_LENGTH - FRAME_OFFSET, SENSOR_BASE_GAIN};
 static uint32_t s_current_default_frame_length = PREVIEW_FRAME_LENGTH;
 static struct sensor_ev_info_t s_sensor_ev_info = {
-    PREVIEW_FRAME_LENGTH - FRAME_OFFSET, SENSOR_BASE_GAIN,PREVIEW_FRAME_LENGTH};
+    PREVIEW_FRAME_LENGTH - FRAME_OFFSET, SENSOR_BASE_GAIN,
+    PREVIEW_FRAME_LENGTH};
 
 //#define FEATURE_OTP    /*OTP function switch*/
 
@@ -423,18 +424,22 @@ static const SENSOR_REG_T ov5675_snapshot_setting[] = {
 static SENSOR_REG_TAB_INFO_T s_ov5675_resolution_tab_raw[SENSOR_MODE_MAX] = {
     {ADDR_AND_LEN_OF_ARRAY(ov5675_init_setting), 0, 0, EX_MCLK,
      SENSOR_IMAGE_FORMAT_RAW},
-    /*	{ADDR_AND_LEN_OF_ARRAY(ov5675_preview_setting),
-             PREVIEW_WIDTH, PREVIEW_HEIGHT, EX_MCLK,
-             SENSOR_IMAGE_FORMAT_RAW},*/
+    {ADDR_AND_LEN_OF_ARRAY(ov5675_preview_setting), PREVIEW_WIDTH,
+     PREVIEW_HEIGHT, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
     {ADDR_AND_LEN_OF_ARRAY(ov5675_snapshot_setting), SNAPSHOT_WIDTH,
      SNAPSHOT_HEIGHT, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
 };
 
 static SENSOR_TRIM_T s_ov5675_resolution_trim_tab[SENSOR_MODE_MAX] = {
     {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-    /*	{PREVIEW_TRIM_X, PREVIEW_TRIM_Y, PREVIEW_TRIM_W, PREVIEW_TRIM_H,
-             PREVIEW_LINE_TIME, PREVIEW_MIPI_PER_LANE_BPS, PREVIEW_FRAME_LENGTH,
-             {0, 0, PREVIEW_TRIM_W, PREVIEW_TRIM_H}},*/
+    {PREVIEW_TRIM_X,
+     PREVIEW_TRIM_Y,
+     PREVIEW_TRIM_W,
+     PREVIEW_TRIM_H,
+     PREVIEW_LINE_TIME,
+     PREVIEW_MIPI_PER_LANE_BPS,
+     PREVIEW_FRAME_LENGTH,
+     {0, 0, PREVIEW_TRIM_W, PREVIEW_TRIM_H}},
     {SNAPSHOT_TRIM_X,
      SNAPSHOT_TRIM_Y,
      SNAPSHOT_TRIM_W,
@@ -615,7 +620,7 @@ SENSOR_INFO_T g_ov5675_mipi_raw_info = {
     65,
     /* vertical view angle*/
     60,
-    (cmr_s8 *)"ov5675_v1",
+    (cmr_s8 *) "ov5675_v1",
 };
 
 static SENSOR_STATIC_INFO_T s_ov5675_static_info = {
@@ -716,7 +721,8 @@ static uint32_t ov5675_get_static_info(SENSOR_HW_HANDLE handle,
     ex_info->preview_skip_num = g_ov5675_mipi_raw_info.preview_skip_num;
     ex_info->capture_skip_num = g_ov5675_mipi_raw_info.capture_skip_num;
     ex_info->name = (cmr_s8 *)g_ov5675_mipi_raw_info.name;
-    ex_info->sensor_version_info = (cmr_s8 *)g_ov5675_mipi_raw_info.sensor_version_info;
+    ex_info->sensor_version_info =
+        (cmr_s8 *)g_ov5675_mipi_raw_info.sensor_version_info;
     // vcm_ak7371_get_pose_dis(handle, &up, &down);
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
@@ -1402,7 +1408,8 @@ static uint32_t ov5675_InitExifInfo(void) {
     return SENSOR_SUCCESS;
 }
 
-static unsigned long ov5675_get_exif_info(SENSOR_HW_HANDLE handle, unsigned long param) {
+static unsigned long ov5675_get_exif_info(SENSOR_HW_HANDLE handle,
+                                          unsigned long param) {
     return (unsigned long)&s_ov5675_exif_info;
 }
 
@@ -1475,7 +1482,8 @@ static uint32_t ov5675_identify(SENSOR_HW_HANDLE handle, uint32_t param) {
  * get resolution trim
  *
  *============================================================================*/
-static unsigned long ov5675_get_resolution_trim_tab(SENSOR_HW_HANDLE handle, uint32_t param) {
+static unsigned long ov5675_get_resolution_trim_tab(SENSOR_HW_HANDLE handle,
+                                                    uint32_t param) {
     return (unsigned long)s_ov5675_resolution_trim_tab;
 }
 
@@ -1551,7 +1559,8 @@ snapshot_info:
  * get the shutter from isp
  * please don't change this function unless it's necessary
  *============================================================================*/
-static uint32_t ov5675_write_exposure(SENSOR_HW_HANDLE handle, unsigned long param) {
+static uint32_t ov5675_write_exposure(SENSOR_HW_HANDLE handle,
+                                      unsigned long param) {
     uint32_t ret_value = SENSOR_SUCCESS;
     uint16_t exposure_line = 0x00;
     uint16_t dummy_line = 0x00;
