@@ -19,6 +19,7 @@
  **				Dependencies					*
  **---------------------------------------------------------------------------*/
 #include <sys/types.h>
+#include <cmr_types.h>
 /**---------------------------------------------------------------------------*
  **				Compiler Flag					*
  **---------------------------------------------------------------------------*/
@@ -50,9 +51,9 @@ extern   "C"
 
 
 struct isp_size_info{
-	uint32_t size_id;
-	uint32_t width;
-	uint32_t height;
+	cmr_u32 size_id;
+	cmr_u32 width;
+	cmr_u32 height;
 };
 
 struct isp_size_info* ISP_ParamGetSizeInfo(void);

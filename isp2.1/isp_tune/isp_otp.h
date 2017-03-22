@@ -18,15 +18,15 @@
 
 #include <stdio.h>
 
-int  start_camera(void  *pdev);
-int  stop_camera(void  *pdev);
+cmr_s32  start_camera(void  *pdev);
+cmr_s32  stop_camera(void  *pdev);
 
-int isp_otp_needstopprev(uint8_t *data_buf, uint32_t *data_size);
-int isp_otp_write(isp_handle isp_handler, unsigned char *buf, unsigned int *len);
-int isp_otp_read(isp_handle isp_handler, uint8_t *data_buf, uint32_t *data_size);
+cmr_s32 isp_otp_needstopprev(cmr_u8 *data_buf, cmr_u32 *data_size);
+cmr_s32 isp_otp_write(cmr_handle isp_handler, cmr_u8 *buf, cmr_u32 *len);
+cmr_s32 isp_otp_read(cmr_handle isp_handler, cmr_u8 *data_buf, cmr_u32 *data_size);
 
-int read_sensor_shutter(uint32_t *shutter_val);
-int read_sensor_gain(uint32_t *gain_val);
-int read_position(isp_handle handler, uint32_t *pos);
-int read_otp_awb_gain(isp_handle handler, void *awbc_cfg);
+cmr_s32 read_sensor_shutter(cmr_u32 *shutter_val);
+cmr_s32 read_sensor_gain(cmr_u32 *gain_val);
+cmr_s32 read_position(cmr_handle handler, cmr_u32 *pos);
+cmr_s32 read_otp_awb_gain(cmr_handle handler, void *awbc_cfg);
 #endif

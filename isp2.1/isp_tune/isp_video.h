@@ -39,14 +39,14 @@ enum {
 	REG_MAX,
 };
 extern char raw_filename[200];
-extern uint32_t tool_fmt_pattern;
-extern uint8_t nr_tool_flag[17];
+extern cmr_u32 tool_fmt_pattern;
+extern cmr_u8 nr_tool_flag[17];
 extern struct denoise_param_update nr_update_param;
 
 
-int ispvideo_RegCameraFunc(uint32_t cmd, int(*func)(uint32_t, uint32_t));
-void send_img_data(uint32_t format, uint32_t width, uint32_t height, char *imgptr, int imagelen);
-void send_capture_data(uint32_t format, uint32_t width, uint32_t height, char *ch0_ptr, int ch0_len,char *ch1_ptr, int ch1_len,char *ch2_ptr, int ch2_len);
+cmr_s32 ispvideo_RegCameraFunc(cmr_u32 cmd, cmr_s32(*func)(cmr_u32, cmr_u32));
+void send_img_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, char *imgptr, cmr_s32 imagelen);
+void send_capture_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, char *ch0_ptr, cmr_s32 ch0_len,char *ch1_ptr, cmr_s32 ch1_len,char *ch2_ptr, cmr_s32 ch2_len);
 void startispserver();
 void stopispserver();
 void setispserver(void* handle);

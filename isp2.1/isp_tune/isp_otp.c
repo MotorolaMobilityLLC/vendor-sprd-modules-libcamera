@@ -67,33 +67,33 @@ enum otp_cmd_type {
 };
 
 struct otp_setting {
-    unsigned int shutter; // 4 bytes 1us¡«10s
-    unsigned int line; // 4 bytes 0¡«8000
-    unsigned int gain; // 4 bytes 0¡«1023
-    unsigned int frame_rate; // 4 bytes 0¡«1023
-    unsigned int i2c_clock; // 4 bytes 100¡«2000 khz
-    unsigned int main_clock; // 4 bytes MHz
-    unsigned int image_pattern; // 4 bytes RGB_GR:0x00
-    unsigned int flip; // 4 bytes 0£ºno flip;  1:flip
-    unsigned int set_ev; // 0--14
-    unsigned int set_ae; // 0 lock 1 unlock
-    unsigned int set_af_mode; // 0 no af ,1 normal af ,2 caf
-    unsigned int set_af_position; // 0 ~ 1023
-	unsigned int checksum; // 4 bytes
+    cmr_u32 shutter; // 4 bytes 1us¡«10s
+    cmr_u32 line; // 4 bytes 0¡«8000
+    cmr_u32 gain; // 4 bytes 0¡«1023
+    cmr_u32 frame_rate; // 4 bytes 0¡«1023
+    cmr_u32 i2c_clock; // 4 bytes 100¡«2000 khz
+    cmr_u32 main_clock; // 4 bytes MHz
+    cmr_u32 image_pattern; // 4 bytes RGB_GR:0x00
+    cmr_u32 flip; // 4 bytes 0£ºno flip;  1:flip
+    cmr_u32 set_ev; // 0--14
+    cmr_u32 set_ae; // 0 lock 1 unlock
+    cmr_u32 set_af_mode; // 0 no af ,1 normal af ,2 caf
+    cmr_u32 set_af_position; // 0 ~ 1023
+	cmr_u32 checksum; // 4 bytes
 };
 
 
-static uint8_t s_isp_otp_src_data[DATA_SIZE];
-static uint8_t s_isp_otp_rec_data[DATA_SIZE];
+static cmr_u8 s_isp_otp_src_data[DATA_SIZE];
+static cmr_u8 s_isp_otp_rec_data[DATA_SIZE];
 
 //#define OTP_DATA_TESTLOG
-static unsigned int otp_data_offset = 0;    //3792;
+static cmr_u32 otp_data_offset = 0;    //3792;
 #define otp_data_test_length (256/16)   //3120
 
-static unsigned int  otp_settings_buf[(otp_data_start_index+OTP_DATA_LENG)/4];
+static cmr_u32  otp_settings_buf[(otp_data_start_index+OTP_DATA_LENG)/4];
 
 static void *p_camera_device = NULL;
-uint32_t A3_on = 0;
+cmr_u32 A3_on = 0;
 
 static const char *cmdstring[] =
 {
@@ -113,13 +113,13 @@ static const char *cmdstring[] =
 	"OTP_MAX_CMD"
 };
 
-int memcpy_ex(unsigned char type, void *dest, unsigned char * src, unsigned int lenth)
+cmr_s32 memcpy_ex(cmr_u8 type, void *dest, cmr_u8 * src, cmr_u32 lenth)
 {
-	unsigned int   i = 0;
-	unsigned char  i_type = type;
-	unsigned char  *u8_dest  = NULL;
-	unsigned short *u16_dest = NULL;
-	unsigned int   *u32_dest = NULL;
+	cmr_u32   i = 0;
+	cmr_u8  i_type = type;
+	cmr_u8  *u8_dest  = NULL;
+	cmr_u16 *u16_dest = NULL;
+	cmr_u32   *u32_dest = NULL;
 
 	if (NULL == dest || NULL == src) {
 		return -1;
@@ -127,26 +127,26 @@ int memcpy_ex(unsigned char type, void *dest, unsigned char * src, unsigned int 
 
 	switch (i_type) {
 	case 1 : //byte to byte
-		u8_dest = (unsigned char*)dest;
+		u8_dest = (cmr_u8*)dest;
 		for (i=0 ; i<lenth ; i++) {
 			u8_dest[i] = src[i];
 		}
 		break;
 	case 2://byte to word
-		u16_dest =(unsigned short*)dest;
+		u16_dest =(cmr_u16*)dest;
 		for (i=0; i<lenth ; i++) {
 			(*u16_dest) |= src[i]<<((i)*8);
 		}
 		break;
 	case 4://byte to dword little edd [b0 b1 b2 b3] -->[b3 b2 b1 b0]
-		u32_dest =(unsigned int*) dest;
+		u32_dest =(cmr_u32*) dest;
 		*u32_dest = 0;
 		for (i=0; i<lenth; i++)  {
 			(*u32_dest) |= src[i]<<((i)*8);
 		}
 		break;
 	case 5:// dword[4 bytes] to dword  [b0 b1 b2 b3] -->[b0 b1 b2 b3]
-		u32_dest =(unsigned int*)dest;
+		u32_dest =(cmr_u32*)dest;
 		for (i=0 ; i<lenth ; i++)  {
 			(*u32_dest) |= src[i]<<((lenth -1-i)*8);
 		}
@@ -157,12 +157,12 @@ int memcpy_ex(unsigned char type, void *dest, unsigned char * src, unsigned int 
 	return 0;
 }
 
-int compare(uint8_t * a_data_buf ,uint8_t * b_data_buf ,int length)
+cmr_s32 compare(cmr_u8 * a_data_buf ,cmr_u8 * b_data_buf ,cmr_s32 length)
 {
-	int value = -1;
-	int i = 0;
-	uint8_t *adst = a_data_buf;
-	uint8_t *bdst = b_data_buf;
+	cmr_s32 value = -1;
+	cmr_s32 i = 0;
+	cmr_u8 *adst = a_data_buf;
+	cmr_u8 *bdst = b_data_buf;
 
 	if ( !adst  || !bdst ) {
 		value = -1;
@@ -237,7 +237,7 @@ cmr_int Sensor_Ioctl(SENSOR_IOCTL_CMD_E sns_cmd, void *arg)
 	return ret;
 }
 
-static int Sensor_isRAW(void)
+static cmr_s32 Sensor_isRAW(void)
 {
 	/* ISP can't call the function of OEM */
 	//SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
@@ -248,18 +248,18 @@ static int Sensor_isRAW(void)
 		return 0;
 }
 
-int send_otp_data_to_isp(uint32_t start_addr, uint32_t data_size, uint8_t *data_buf)
+cmr_s32 send_otp_data_to_isp(cmr_u32 start_addr, cmr_u32 data_size, cmr_u8 *data_buf)
 {
-	int ret = 0;
-	uint32_t i = 0;
-	uint32_t j = 0;
-	uint32_t otp_start_addr = 0;
-	uint32_t otp_data_len   = 0;
-	uint8_t *dst = &s_isp_otp_src_data[0];
+	cmr_s32 ret = 0;
+	cmr_u32 i = 0;
+	cmr_u32 j = 0;
+	cmr_u32 otp_start_addr = 0;
+	cmr_u32 otp_data_len   = 0;
+	cmr_u8 *dst = &s_isp_otp_src_data[0];
 	SENSOR_VAL_T  val ;
 	//SENSOR_OTP_PARAM_T param_ptr;
 	struct _sensor_otp_param_tag   param_ptr;
-	int32_t otp_start_addr_emprty = -1;
+	cmr_s32 otp_start_addr_emprty = -1;
 
 	SCI_Trace_Dcam("%s data_size =%d ",__func__,data_size);
 
@@ -364,15 +364,15 @@ int send_otp_data_to_isp(uint32_t start_addr, uint32_t data_size, uint8_t *data_
 	return ret;
 }
 
-int write_otp_calibration_data( uint32_t data_size, uint8_t *data_buf)
+cmr_s32 write_otp_calibration_data( cmr_u32 data_size, cmr_u8 *data_buf)
 {
-	int ret = 0;
-	int otp_data_len = 0;
-	int write_cnt = 0;
-	int addr = 0;
-	int addr_cnt = 0;
-	int i = 0;
-	uint8_t *log_ptr = data_buf;
+	cmr_s32 ret = 0;
+	cmr_s32 otp_data_len = 0;
+	cmr_s32 write_cnt = 0;
+	cmr_s32 addr = 0;
+	cmr_s32 addr_cnt = 0;
+	cmr_s32 i = 0;
+	cmr_u8 *log_ptr = data_buf;
 
 /*	while(index < data_size)  {
 	      SCI_Trace_Dcam ("%s data_buf[%.3d]= %.2x\n", __func__, index++, *log_ptr++);
@@ -391,13 +391,13 @@ int write_otp_calibration_data( uint32_t data_size, uint8_t *data_buf)
 	return ret;
 }
 
-int write_sensor_shutter(uint32_t shutter_val)
+cmr_s32 write_sensor_shutter(cmr_u32 shutter_val)
 {
-	int      ret = 0;
-	uint32_t line_time=0x00;
-	uint32_t frame_line=0x00;
-	unsigned long expsure_line=0x00;
-	uint32_t dummy=0x00;
+	cmr_s32      ret = 0;
+	cmr_u32 line_time=0x00;
+	cmr_u32 frame_line=0x00;
+	cmr_uint expsure_line=0x00;
+	cmr_u32 dummy=0x00;
 
 	/* ISP can't call the function of OEM */
 	//struct sensor_drv_context *sensor_cxt = sensor_get_dev_cxt();
@@ -428,18 +428,18 @@ int write_sensor_shutter(uint32_t shutter_val)
 	return ret;
 }
 
-int write_sensor_line(uint32_t line_val)
+cmr_s32 write_sensor_line(cmr_u32 line_val)
 {
-	int ret = 0;
+	cmr_s32 ret = 0;
 	SCI_Trace_Dcam("%s:0x%x\n",__func__, line_val);
 	//ret = _hi544_set_shutter(line_val);
 
 	return ret;
 }
 
-int write_sensor_gain(uint32_t gain_val)
+cmr_s32 write_sensor_gain(cmr_u32 gain_val)
 {
-	int           ret = 0;
+	cmr_s32           ret = 0;
 	SENSOR_VAL_T  val;
 
 	SCI_Trace_Dcam("%s: gain %d\n",__func__, gain_val);
@@ -452,43 +452,43 @@ int write_sensor_gain(uint32_t gain_val)
 	return ret;
 }
 
-int write_i2c_clock(uint32_t clk)
+cmr_s32 write_i2c_clock(cmr_u32 clk)
 {
-	int ret = 0;
+	cmr_s32 ret = 0;
 	SCI_Trace_Dcam("%s:0x%x\n",__func__, clk);
 
 //	_Sensor_Device_SetI2CClock(clk);
 	return ret;
 }
 
-int write_mclk(uint32_t mclk)
+cmr_s32 write_mclk(cmr_u32 mclk)
 {
-	int ret = 0;
+	cmr_s32 ret = 0;
 
 	SCI_Trace_Dcam("%s:0x%x\n",__func__, mclk);
 //	Sensor_SetMCLK(mclk);
 	return ret;
 }
 
-int write_image_pattern(uint32_t pattern)
+cmr_s32 write_image_pattern(cmr_u32 pattern)
 {
-	int ret = 0;
+	cmr_s32 ret = 0;
 	SCI_Trace_Dcam("%s:0x%x\n",__func__, pattern);
 
 	return ret;
 }
 
-int write_sensor_flip(uint32_t flip)
+cmr_s32 write_sensor_flip(cmr_u32 flip)
 {
-	int ret = 0;
+	cmr_s32 ret = 0;
 	SCI_Trace_Dcam("%s:0x%x\n",__func__, flip);
 //	ret = _hi544_set_flip(flip);
 	return ret;
 }
 
-int write_position(isp_handle handler, uint32_t pos)
+cmr_s32 write_position(cmr_handle handler, cmr_u32 pos)
 {
-	int ret = 0;
+	cmr_s32 ret = 0;
 
 	SCI_Trace_Dcam("%s:0x%x\n",__func__, pos);
 
@@ -499,20 +499,20 @@ int write_position(isp_handle handler, uint32_t pos)
 	return ret;
 }
 
-int write_start_af(isp_handle handler)
+cmr_s32 write_start_af(cmr_handle handler)
 {
-	int ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_af_win isp_af_param;
-	int i = 0;
-	int zone_cnt = 1;
-	int win_width = 100;
-	int win_height = 100;
-	int win_x = 0;
-	int win_y = 0;
+	cmr_s32 i = 0;
+	cmr_s32 zone_cnt = 1;
+	cmr_s32 win_width = 100;
+	cmr_s32 win_height = 100;
+	cmr_s32 win_x = 0;
+	cmr_s32 win_y = 0;
 	SENSOR_EXP_INFO_T *exp_info;
-	uint32_t mode = 0;
-	int image_width = 0;
-	int image_height = 0;
+	cmr_u32 mode = 0;
+	cmr_s32 image_width = 0;
+	cmr_s32 image_height = 0;
 
 	if(!Sensor_isRAW())
 		return 0;
@@ -557,9 +557,9 @@ int write_start_af(isp_handle handler)
 }
 
 
-int write_ev(isp_handle handler, uint32_t ev)
+cmr_s32 write_ev(cmr_handle handler, cmr_u32 ev)
 {
-	int ret = 0;
+	cmr_s32 ret = 0;
 
 	if(!Sensor_isRAW())
 		return 0;
@@ -569,10 +569,10 @@ int write_ev(isp_handle handler, uint32_t ev)
 	return ret;
 }
 
-int write_ae(isp_handle handler, uint32_t ae)
+cmr_s32 write_ae(cmr_handle handler, cmr_u32 ae)
 {
-	int ret = 0;
-	uint32_t cmd_param = ae;
+	cmr_s32 ret = 0;
+	cmr_u32 cmd_param = ae;
 
 	if(!Sensor_isRAW())
 		return 0;
@@ -587,11 +587,11 @@ int write_ae(isp_handle handler, uint32_t ae)
 	return ret;
 }
 
-int write_frame_rate(isp_handle handler, uint32_t rate)
+cmr_s32 write_frame_rate(cmr_handle handler, cmr_u32 rate)
 {
 	UNUSED(handler);
-	int          ret = 0;
-    uint32_t cmd_param = rate;
+	cmr_s32          ret = 0;
+    cmr_u32 cmd_param = rate;
 
 	if(!Sensor_isRAW())
 		return 0;
@@ -601,20 +601,20 @@ int write_frame_rate(isp_handle handler, uint32_t rate)
 	return ret;
 }
 
-int write_af_mode(isp_handle handler, uint32_t af_mode)
+cmr_s32 write_af_mode(cmr_handle handler, cmr_u32 af_mode)
 {
-	int ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_af_win isp_af_param;
-	int i = 0;
-	int zone_cnt = 1;
-	int win_width = 100;
-	int win_height = 100;
-	int win_x = 0;
-	int win_y = 0;
+	cmr_s32 i = 0;
+	cmr_s32 zone_cnt = 1;
+	cmr_s32 win_width = 100;
+	cmr_s32 win_height = 100;
+	cmr_s32 win_x = 0;
+	cmr_s32 win_y = 0;
 	SENSOR_EXP_INFO_T *exp_info;
-	uint32_t mode = 0;
-	int image_width = 0;
-	int image_height = 0;
+	cmr_u32 mode = 0;
+	cmr_s32 image_width = 0;
+	cmr_s32 image_height = 0;
 
 	if(!Sensor_isRAW())
 		return 0;
@@ -669,13 +669,13 @@ int write_af_mode(isp_handle handler, uint32_t af_mode)
 
 	return ret;
 }
-int write_otp_ctrl_param(isp_handle handler, uint32_t data_size, uint8_t *data_buf)
+cmr_s32 write_otp_ctrl_param(cmr_handle handler, cmr_u32 data_size, cmr_u8 *data_buf)
 {
-	int ret = 0;
-	int otp_settings_index = 40;
+	cmr_s32 ret = 0;
+	cmr_s32 otp_settings_index = 40;
 	struct otp_setting write_otp_settings;
-	uint32_t index = 0;
-	uint8_t *log_ptr = data_buf;
+	cmr_u32 index = 0;
+	cmr_u8 *log_ptr = data_buf;
 
 	while(index < data_size)  {
 	      SCI_Trace_Dcam ("%s data_buf[%.3d]= %.2x\n", __func__, index++, *log_ptr++);
@@ -761,19 +761,19 @@ int write_otp_ctrl_param(isp_handle handler, uint32_t data_size, uint8_t *data_b
 	return ret;
 }
 
-int write_otp_actuator_i2c( uint32_t data_size, uint8_t *data_buf)
+cmr_s32 write_otp_actuator_i2c( cmr_u32 data_size, cmr_u8 *data_buf)
 {
-	int ret 		 = 0;
-	int otp_data_len = 0;
-	int write_cnt 	 = 0;
-	int addr 		 = 0;
-	int i 			 = 0;
-	uint32_t index 		 = 0;
-	uint8_t *log_ptr = data_buf;
-	uint8_t *read_ptr ;
-	uint32_t reg_val = 0;
+	cmr_s32 ret 		 = 0;
+	cmr_s32 otp_data_len = 0;
+	cmr_s32 write_cnt 	 = 0;
+	cmr_s32 addr 		 = 0;
+	cmr_s32 i 			 = 0;
+	cmr_u32 index 		 = 0;
+	cmr_u8 *log_ptr = data_buf;
+	cmr_u8 *read_ptr ;
+	cmr_u32 reg_val = 0;
 	SENSOR_VAL_T  io_val;
-	uint32_t param;
+	cmr_u32 param;
 
 	while(index < data_size)  {
 	      SCI_Trace_Dcam ("%s data_buf[%.3d]= %.2x\n", __func__, index++, *log_ptr++);
@@ -805,17 +805,17 @@ int write_otp_actuator_i2c( uint32_t data_size, uint8_t *data_buf)
 	return ret;
 }
 
-int write_otp_sensor_i2c( uint32_t data_size, uint8_t *data_buf)
+cmr_s32 write_otp_sensor_i2c( cmr_u32 data_size, cmr_u8 *data_buf)
 {
-	int ret = 0;
-	int otp_data_len = 0;
-	int write_cnt = 0;
-	int addr = 0;
-	int i = 0;
-	uint32_t index = 0;
-	uint8_t *log_ptr = data_buf;
-	uint8_t *read_ptr ;
-	uint32_t reg_val = 0;
+	cmr_s32 ret = 0;
+	cmr_s32 otp_data_len = 0;
+	cmr_s32 write_cnt = 0;
+	cmr_s32 addr = 0;
+	cmr_s32 i = 0;
+	cmr_u32 index = 0;
+	cmr_u8 *log_ptr = data_buf;
+	cmr_u8 *read_ptr ;
+	cmr_u32 reg_val = 0;
 
 	while(index < data_size)  {
 	      SCI_Trace_Dcam ("%s data_buf[%.3d]= %.2x\n", __func__, index++, *log_ptr++);
@@ -830,7 +830,7 @@ int write_otp_sensor_i2c( uint32_t data_size, uint8_t *data_buf)
 	for (i=0;i<write_cnt;i++) {
 		memcpy_ex(4, &reg_val,read_ptr,4);
 
-		/*ret = dcam_i2c_write_reg_16((uint16_t)addr,(uint16_t)reg_val);*/
+		/*ret = dcam_i2c_write_reg_16((cmr_u16)addr,(cmr_u16)reg_val);*/
 		/* ISP can't call the function of OEM */
 		//Sensor_WriteReg(addr,reg_val);
 
@@ -840,16 +840,16 @@ int write_otp_sensor_i2c( uint32_t data_size, uint8_t *data_buf)
 	return ret;
 }
 
-int write_otp_rom_data( uint32_t data_size, uint8_t *data_buf)
+cmr_s32 write_otp_rom_data( cmr_u32 data_size, cmr_u8 *data_buf)
 {
-	int ret = 0;
-	int otp_data_len = 0;
-	int write_cnt = 0;
-	int addr = 0;
-	int i = 0;
-	int write_val = 0;
-	uint32_t index = 0;
-	uint8_t *log_ptr = data_buf;
+	cmr_s32 ret = 0;
+	cmr_s32 otp_data_len = 0;
+	cmr_s32 write_cnt = 0;
+	cmr_s32 addr = 0;
+	cmr_s32 i = 0;
+	cmr_s32 write_val = 0;
+	cmr_u32 index = 0;
+	cmr_u8 *log_ptr = data_buf;
 
 	while(index < data_size)  {
 	      SCI_Trace_Dcam ("%s data_buf[%.3d]= %.2x\n", __func__, index++, *log_ptr++);
@@ -864,12 +864,12 @@ int write_otp_rom_data( uint32_t data_size, uint8_t *data_buf)
 	return ret;
 }
 
-int write_otp_start_3A(isp_handle handler, uint32_t data_size, uint8_t *data_buf)
+cmr_s32 write_otp_start_3A(cmr_handle handler, cmr_u32 data_size, cmr_u8 *data_buf)
 {
 	UNUSED(data_size);
 	UNUSED(data_buf);
-	int ret = 0;
-	uint32_t cmd_param = 0;
+	cmr_s32 ret = 0;
+	cmr_u32 cmd_param = 0;
 	if(!Sensor_isRAW())
 		return 0;
 
@@ -881,12 +881,12 @@ int write_otp_start_3A(isp_handle handler, uint32_t data_size, uint8_t *data_buf
 	return ret;
 }
 
-int write_otp_stop_3A(isp_handle handler, uint32_t data_size, uint8_t *data_buf)
+cmr_s32 write_otp_stop_3A(cmr_handle handler, cmr_u32 data_size, cmr_u8 *data_buf)
 {
 	UNUSED(data_size);
 	UNUSED(data_buf);
-	int ret = 0;
-	uint32_t cmd_param = 0;
+	cmr_s32 ret = 0;
+	cmr_u32 cmd_param = 0;
 	if(!Sensor_isRAW())
 		return 0;
 
@@ -899,15 +899,15 @@ int write_otp_stop_3A(isp_handle handler, uint32_t data_size, uint8_t *data_buf)
 	return ret;
 }
 
-int write_otp_sn(uint32_t data_size, uint8_t *data_buf)
+cmr_s32 write_otp_sn(cmr_u32 data_size, cmr_u8 *data_buf)
 {
 	UNUSED(data_size);
-	int ret = 0;
-	int fd = -1;
-	int size = 0;
-	int data_len = 0;
+	cmr_s32 ret = 0;
+	cmr_s32 fd = -1;
+	cmr_s32 size = 0;
+	cmr_s32 data_len = 0;
 	//char array[] = {'8','9','8','9','8','9','8','9'};
-	unsigned char *sn_ptr = &data_buf[otp_data_start_index];
+	cmr_u8 *sn_ptr = &data_buf[otp_data_start_index];
 
 	fd = open("/dev/mmcblk0p16", O_CREAT | O_RDWR, 0);
 	if (-1 == fd) {
@@ -927,9 +927,9 @@ int write_otp_sn(uint32_t data_size, uint8_t *data_buf)
 	return ret;
 }
 
-int  _start_camera(void  **pdev )
+cmr_s32  _start_camera(void  **pdev )
 {
-	int  ops_status 		= 0;
+	cmr_s32  ops_status 		= 0;
 #if (MINICAMERA != 1)
 	struct hw_module_t *module;
 	hw_device_t  *tmp	= NULL;
@@ -958,9 +958,9 @@ int  _start_camera(void  **pdev )
 	return ops_status;
 
 }
-int  _stop_camera(void  *pdev)
+cmr_s32  _stop_camera(void  *pdev)
 {
-	int  ops_status = 0;
+	cmr_s32  ops_status = 0;
 #if (MINICAMERA != 1)
 	if(pdev){
 		CMR_LOGW("pdev->close \n");
@@ -978,9 +978,9 @@ int  _stop_camera(void  *pdev)
 #pragma weak stop_camera  =_stop_camera
 
 
-int write_otp_pownon()
+cmr_s32 write_otp_pownon()
 {
-	int ret = 0;
+	cmr_s32 ret = 0;
 	if(!p_camera_device){
 		/* ISP can't call the function of OEM */
 		//ret = start_camera(&p_camera_device);
@@ -989,9 +989,9 @@ int write_otp_pownon()
 	return ret;
 }
 
-int write_otp_pownoff()
+cmr_s32 write_otp_pownoff()
 {
-	int ret = 0;
+	cmr_s32 ret = 0;
 	if(p_camera_device){
 		/* ISP can't call the function of OEM */
 		//ret = stop_camera(p_camera_device);
@@ -1001,11 +1001,11 @@ int write_otp_pownoff()
 	return ret;
 }
 
-int isp_otp_needstopprev(uint8_t *data_buf, uint32_t *data_size)
+cmr_s32 isp_otp_needstopprev(cmr_u8 *data_buf, cmr_u32 *data_size)
 {
 	UNUSED(data_size);
-	int ret = 0;
-	int otp_type = 0;
+	cmr_s32 ret = 0;
+	cmr_s32 otp_type = 0;
 
 	if(data_buf == NULL) {
 		SCI_Trace_Dcam("%s return error \n", __func__);
@@ -1034,10 +1034,10 @@ int isp_otp_needstopprev(uint8_t *data_buf, uint32_t *data_size)
 	return ret;
 }
 
-int isp_otp_write(isp_handle handler, uint8_t *data_buf, uint32_t *data_size)//DATA
+cmr_s32 isp_otp_write(cmr_handle handler, cmr_u8 *data_buf, cmr_u32 *data_size)//DATA
 {
-	int ret = 0;
-	int otp_type = 0;
+	cmr_s32 ret = 0;
+	cmr_s32 otp_type = 0;
 
 	if(data_buf == NULL) {
 		SCI_Trace_Dcam("%s return error \n",__func__);
@@ -1123,14 +1123,14 @@ int isp_otp_write(isp_handle handler, uint8_t *data_buf, uint32_t *data_size)//D
 	return ret;
 }
 
-int read_otp_calibration_data(uint32_t *data_size, uint8_t *data_buf)
+cmr_s32 read_otp_calibration_data(cmr_u32 *data_size, cmr_u8 *data_buf)
 {
-	int ret 				= 0;
-	uint32_t read_cnt 		= 0;
-	uint32_t addr 			= 0;
-	int      addr_cnt = 0;
-	uint32_t otp_start_addr = 0;
-	uint32_t otp_data_len   = 0;
+	cmr_s32 ret 				= 0;
+	cmr_u32 read_cnt 		= 0;
+	cmr_u32 addr 			= 0;
+	cmr_s32      addr_cnt = 0;
+	cmr_u32 otp_start_addr = 0;
+	cmr_u32 otp_data_len   = 0;
 	SENSOR_VAL_T  val ;
 	//SENSOR_OTP_PARAM_T param_ptr;
 	struct _sensor_otp_param_tag   param_ptr;
@@ -1161,14 +1161,14 @@ int read_otp_calibration_data(uint32_t *data_size, uint8_t *data_buf)
 	return ret;
 }
 
-int read_sensor_shutter(uint32_t *shutter_val)
+cmr_s32 read_sensor_shutter(cmr_u32 *shutter_val)
 {
-	int ret 				= 0;
-	uint32_t line_time 		= 0x00;
-	uint32_t expsure_line 	= 0x00;
+	cmr_s32 ret 				= 0;
+	cmr_u32 line_time 		= 0x00;
+	cmr_u32 expsure_line 	= 0x00;
 	//	*shutter_val = _hi544_get_shutter();
 	SENSOR_VAL_T  val 	= {SENSOR_VAL_TYPE_SHUTTER, &expsure_line};
-	uint32_t mode 		= 0;
+	cmr_u32 mode 		= 0;
 	SENSOR_EXP_INFO_T *exp_info;
 
 	ret = Sensor_Ioctl(SENSOR_IOCTL_ACCESS_VAL, (void *)&val);
@@ -1184,20 +1184,20 @@ int read_sensor_shutter(uint32_t *shutter_val)
 	return ret;
 }
 
-int read_sensor_line(uint32_t *line_val)
+cmr_s32 read_sensor_line(cmr_u32 *line_val)
 {
 	UNUSED(line_val);
-	int ret = 0;
+	cmr_s32 ret = 0;
     //*line_val = _hi544_get_shutter();
 	//SCI_Trace_Dcam("%s:0x%x\n",__func__, *line_val);
 	return ret;
 }
 
-int read_sensor_gain(uint32_t *gain_val)
+cmr_s32 read_sensor_gain(cmr_u32 *gain_val)
 {
-	int           ret = 0;
+	cmr_s32           ret = 0;
 	SENSOR_VAL_T  val;
-	uint32_t      gain = 0;
+	cmr_u32      gain = 0;
 
 	val.type = SENSOR_VAL_TYPE_READ_OTP_GAIN;
 	val.pval = &gain;
@@ -1210,47 +1210,47 @@ int read_sensor_gain(uint32_t *gain_val)
 	return ret;
 }
 
-int read_i2c_clock(uint32_t *clk)
+cmr_s32 read_i2c_clock(cmr_u32 *clk)
 {
 	UNUSED(clk);
-	int ret = 0;
+	cmr_s32 ret = 0;
 //	SCI_Trace_Dcam("%s:0x%x\n",__func__, *clk);
 
 	return ret;
 }
 
-int read_mclk(uint32_t *mclk)
+cmr_s32 read_mclk(cmr_u32 *mclk)
 {
 	UNUSED(mclk);
-	int ret = 0;
+	cmr_s32 ret = 0;
 //	SCI_Trace_Dcam("%s:0x%x\n",__func__, *mclk);
 
 	return ret;
 }
 
-int read_image_pattern(uint32_t *pattern)
+cmr_s32 read_image_pattern(cmr_u32 *pattern)
 {
 	UNUSED(pattern);
-	int ret = 0;
+	cmr_s32 ret = 0;
 //	SCI_Trace_Dcam("%s:0x%x\n",__func__, *pattern);
 
 	return ret;
 }
 
-int read_sensor_flip(uint32_t *flip)
+cmr_s32 read_sensor_flip(cmr_u32 *flip)
 {
 	UNUSED(flip);
-	int ret = 0;
+	cmr_s32 ret = 0;
 //	*flip = _hi544_get_flip();
 //	SCI_Trace_Dcam("%s:0x%x\n",__func__, *flip);
 	return ret;
 }
 
-int read_position(isp_handle handler, uint32_t *pos)
+cmr_s32 read_position(cmr_handle handler, cmr_u32 *pos)
 {
-	int ret = 0;
+	cmr_s32 ret = 0;
 	SENSOR_VAL_T  val ;
-	uint32_t cmd_param = 0;
+	cmr_u32 cmd_param = 0;
 
 	SCI_Trace_Dcam("%s:0x%x\n",__func__, *pos);
 
@@ -1263,10 +1263,10 @@ int read_position(isp_handle handler, uint32_t *pos)
 	return ret;
 }
 
-int read_ev(isp_handle handler, uint32_t *ev)
+cmr_s32 read_ev(cmr_handle handler, cmr_u32 *ev)
 {
-	int ret = 0;
-	uint32_t cmd_param = 0;
+	cmr_s32 ret = 0;
+	cmr_u32 cmd_param = 0;
 
 	if(!Sensor_isRAW())
 		return 0;
@@ -1278,10 +1278,10 @@ int read_ev(isp_handle handler, uint32_t *ev)
 	return ret;
 }
 
-int read_ae(isp_handle handler, uint32_t *ae)
+cmr_s32 read_ae(cmr_handle handler, cmr_u32 *ae)
 {
-	int ret = 0;
-	uint32_t cmd_param = 0;
+	cmr_s32 ret = 0;
+	cmr_u32 cmd_param = 0;
 
 	if(!Sensor_isRAW())
 		return 0;
@@ -1294,10 +1294,10 @@ int read_ae(isp_handle handler, uint32_t *ae)
 
 }
 
-int read_frame_rate(isp_handle handler, uint32_t *rate)
+cmr_s32 read_frame_rate(cmr_handle handler, cmr_u32 *rate)
 {
 	UNUSED(handler);
-	int ret = 0;
+	cmr_s32 ret = 0;
 
 
 	if(!Sensor_isRAW())
@@ -1308,10 +1308,10 @@ int read_frame_rate(isp_handle handler, uint32_t *rate)
 	return ret;
 }
 
-int read_af_mode(isp_handle handler, uint32_t *af_mode)
+cmr_s32 read_af_mode(cmr_handle handler, cmr_u32 *af_mode)
 {
-	int ret = 0;
-	uint32_t cmd_param = 0;
+	cmr_s32 ret = 0;
+	cmr_u32 cmd_param = 0;
 
 	if(!Sensor_isRAW())
 		return 0;
@@ -1330,9 +1330,9 @@ int read_af_mode(isp_handle handler, uint32_t *af_mode)
 
 }
 
-int read_otp_awb_gain(isp_handle handler, void *awbc_cfg)
+cmr_s32 read_otp_awb_gain(cmr_handle handler, void *awbc_cfg)
 {
-	int ret = 0;
+	cmr_s32 ret = 0;
 
 	if(!Sensor_isRAW())
 		return 0;
@@ -1343,20 +1343,20 @@ int read_otp_awb_gain(isp_handle handler, void *awbc_cfg)
 
 }
 
-int read_otpdata_checksum(uint32_t *checksum)
+cmr_s32 read_otpdata_checksum(cmr_u32 *checksum)
 {
-	int ret = 0;
+	cmr_s32 ret = 0;
 
     *checksum = 0;
 	SCI_Trace_Dcam("%s:0x%x\n",__func__, *checksum);
 	return ret;
 }
 
-int read_otp_ctrl_param(isp_handle handler, uint32_t *data_size, uint8_t *data_buf)
+cmr_s32 read_otp_ctrl_param(cmr_handle handler, cmr_u32 *data_size, cmr_u8 *data_buf)
 {
-	int          ret = 0;
-	int          index = 0;
-	unsigned int length = 0;
+	cmr_s32          ret = 0;
+	cmr_s32          index = 0;
+	cmr_u32 length = 0;
 	struct otp_setting read_otp_settings;
 
 	memset(&read_otp_settings,0,sizeof(struct otp_setting));
@@ -1530,24 +1530,24 @@ int read_otp_ctrl_param(isp_handle handler, uint32_t *data_size, uint8_t *data_b
 	otp_settings_buf[index] = read_otp_settings.checksum;
 
 	//data lenth bytes
-	length = (++index) * sizeof(uint32_t);
-	memcpy_ex(1, data_buf, (uint8_t*)otp_settings_buf, length);
+	length = (++index) * sizeof(cmr_u32);
+	memcpy_ex(1, data_buf, (cmr_u8*)otp_settings_buf, length);
 
 	*data_size = length;
 
 	return ret;
 }
 
-int read_otp_actuator_i2c(uint32_t *data_size, uint8_t *data_buf)
+cmr_s32 read_otp_actuator_i2c(cmr_u32 *data_size, cmr_u8 *data_buf)
 {
-	int ret 	 = 0;
-	int read_cnt = 0;
-	int addr 	 = 0;
-	int i 		 = 0;
-	uint8_t *read_ptr;
-	uint16_t reg_val = 0;
+	cmr_s32 ret 	 = 0;
+	cmr_s32 read_cnt = 0;
+	cmr_s32 addr 	 = 0;
+	cmr_s32 i 		 = 0;
+	cmr_u8 *read_ptr;
+	cmr_u16 reg_val = 0;
 	SENSOR_VAL_T  io_val ;
-	uint32_t param;
+	cmr_u32 param;
 
 	memcpy_ex(4, &addr, &data_buf[otp_data_start_index], 4);
 	memcpy_ex(4, &read_cnt, &data_buf[otp_data_start_index+4], 4);
@@ -1559,7 +1559,7 @@ int read_otp_actuator_i2c(uint32_t *data_size, uint8_t *data_buf)
 	io_val.pval = &param;
 
 	for (i = 0 ; i < read_cnt ; i++) {
-	//	ret = dcam_i2c_read_reg_16((uint16_t)addr,&reg_val);
+	//	ret = dcam_i2c_read_reg_16((cmr_u16)addr,&reg_val);
 
 		param = addr << 16;
 		ret = Sensor_Ioctl(SENSOR_IOCTL_ACCESS_VAL, (void *)&io_val);
@@ -1581,14 +1581,14 @@ int read_otp_actuator_i2c(uint32_t *data_size, uint8_t *data_buf)
 	return ret;
 }
 
-int read_otp_sensor_i2c(uint32_t *data_size, uint8_t *data_buf)
+cmr_s32 read_otp_sensor_i2c(cmr_u32 *data_size, cmr_u8 *data_buf)
 {
-	int ret = 0;
-	int read_cnt = 0;
-	int addr = 0;
-	int i = 0;
-	uint8_t *read_ptr;
-	uint16_t reg_val = 0;
+	cmr_s32 ret = 0;
+	cmr_s32 read_cnt = 0;
+	cmr_s32 addr = 0;
+	cmr_s32 i = 0;
+	cmr_u8 *read_ptr;
+	cmr_u16 reg_val = 0;
 
 	memcpy_ex(4,&addr,&data_buf[otp_data_start_index],4);
 	memcpy_ex(4,&read_cnt,&data_buf[otp_data_start_index+4],4);
@@ -1597,7 +1597,7 @@ int read_otp_sensor_i2c(uint32_t *data_size, uint8_t *data_buf)
 	//read to calibration data and write to data_buf[write_value_index]
 	read_ptr = &data_buf[otp_data_start_index+4];
 	for (i=0 ; i<read_cnt ; i++) {
-	//	ret = dcam_i2c_read_reg_16((uint16_t)addr,&reg_val);
+	//	ret = dcam_i2c_read_reg_16((cmr_u16)addr,&reg_val);
 		/* ISP can't call the function of OEM */
 		//reg_val = Sensor_ReadReg(addr);
 		*read_ptr++ = reg_val&0xff;
@@ -1612,13 +1612,13 @@ int read_otp_sensor_i2c(uint32_t *data_size, uint8_t *data_buf)
 	return ret;
 }
 
-int read_otp_rom_data(uint32_t *data_size, uint8_t *data_buf)
+cmr_s32 read_otp_rom_data(cmr_u32 *data_size, cmr_u8 *data_buf)
 {
 	UNUSED(data_size);
-	int ret = 0;
-	int otp_data_len = 0;
-	int read_cnt = 0;
-	int addr = 0;
+	cmr_s32 ret = 0;
+	cmr_s32 otp_data_len = 0;
+	cmr_s32 read_cnt = 0;
+	cmr_s32 addr = 0;
 
 	memcpy_ex(4,&addr,&data_buf[otp_data_start_index],4);
 	memcpy_ex(4,&read_cnt,&data_buf[otp_data_start_index+4],4);
@@ -1628,12 +1628,12 @@ int read_otp_rom_data(uint32_t *data_size, uint8_t *data_buf)
 	return ret;
 }
 
-int isp_otp_read(isp_handle handler, uint8_t *data_buf, uint32_t *data_size)//DATA
+cmr_s32 isp_otp_read(cmr_handle handler, cmr_u8 *data_buf, cmr_u32 *data_size)//DATA
 {
-	int          ret = 0;
-	uint32_t   index = 0;
-	uint8_t *log_ptr = data_buf;
-	int     otp_type = 0;
+	cmr_s32          ret = 0;
+	cmr_u32   index = 0;
+	cmr_u8 *log_ptr = data_buf;
+	cmr_s32     otp_type = 0;
 
 	if(data_buf == NULL) {
 		SCI_Trace_Dcam("%s return error \n",__func__);

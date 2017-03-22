@@ -32,7 +32,7 @@ extern   "C"
 /**---------------------------------------------------------------------------*
 **				Micro Define					*
 **----------------------------------------------------------------------------*/
-typedef int32_t (*isp_fun)(isp_handle isp_handler, void* param_ptr);
+typedef cmr_s32 (*isp_fun)(cmr_handle isp_handler, void* param_ptr);
 
 #define ISP_AE_TAB_NUM 0x04
 #define ISP_CMC_NUM 0x09
@@ -134,65 +134,65 @@ enum isp_parser_cmd{
 
 struct isp_main_info{
 	char sensor_id[32];
-	uint32_t version_id;
-	uint32_t preview_format;
-	uint32_t preview_size;
-	uint32_t capture_format;
-	uint32_t capture_num;
-	uint32_t capture_size[8];
+	cmr_u32 version_id;
+	cmr_u32 preview_format;
+	cmr_u32 preview_size;
+	cmr_u32 capture_format;
+	cmr_u32 capture_num;
+	cmr_u32 capture_size[8];
 	char version_info[2][ISP_PARASER_VERSION_INFO_SIZE];
 };
 
 struct isp_version_info{
-	uint32_t version_id;
-	uint32_t srtuct_size;
-	uint32_t reserve;
+	cmr_u32 version_id;
+	cmr_u32 srtuct_size;
+	cmr_u32 reserve;
 };
 
 struct isp_param_info{
 	char main_type[32];
 	char sub_type[32];
 	char third_type[32];
-	uint32_t data_type;
-	uint32_t data_num;
-	uint32_t addr_offset;
+	cmr_u32 data_type;
+	cmr_u32 data_num;
+	cmr_u32 addr_offset;
 };
 
 struct isp_parser_up_data{
-	uint32_t format;
-	uint32_t pattern;
-	uint32_t width;
-	uint32_t height;
-	uint32_t* buf_addr;
-	uint32_t buf_len;
+	cmr_u32 format;
+	cmr_u32 pattern;
+	cmr_u32 width;
+	cmr_u32 height;
+	cmr_u32* buf_addr;
+	cmr_u32 buf_len;
 };
 
 struct isp_parser_buf_in{
-	//uint32_t buf_addr;
-	unsigned long buf_addr;
-	uint32_t buf_len;
+	//cmr_u32 buf_addr;
+	cmr_uint buf_addr;
+	cmr_u32 buf_len;
 };
 
 struct isp_parser_buf_rtn{
-	//uint32_t buf_addr;
-	unsigned long buf_addr;
-	uint32_t buf_len;
+	//cmr_u32 buf_addr;
+	cmr_uint buf_addr;
+	cmr_u32 buf_len;
 };
 
 struct isp_parser_cmd_param{
 	enum isp_parser_cmd cmd;
-	uint32_t param[48]; // capture param format/width/height
+	cmr_u32 param[48]; // capture param format/width/height
 };
 
 struct isp_param_fun{
-	uint32_t cmd;
-	int32_t (*param_fun)(isp_handle isp_handler, void* param_ptr);
+	cmr_u32 cmd;
+	cmr_s32 (*param_fun)(cmr_handle isp_handler, void* param_ptr);
 };
 
-uint32_t ispParserGetSizeID(uint32_t width, uint32_t height);
-int32_t ispParser(isp_handle isp_handler, uint32_t cmd, void* in_param_ptr, void* rtn_param_ptr);
-uint32_t* ispParserAlloc(uint32_t size);
-int32_t ispParserFree(void* addr);
+cmr_u32 ispParserGetSizeID(cmr_u32 width, cmr_u32 height);
+cmr_s32 ispParser(cmr_handle isp_handler, cmr_u32 cmd, void* in_param_ptr, void* rtn_param_ptr);
+cmr_u32* ispParserAlloc(cmr_u32 size);
+cmr_s32 ispParserFree(void* addr);
 
 /**----------------------------------------------------------------------------*
 **				Compiler Flag					*

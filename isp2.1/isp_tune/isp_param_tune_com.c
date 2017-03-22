@@ -38,13 +38,13 @@ extern   "C"
 **----------------------------------------------------------------------------*/
 
 extern void *sensor_get_dev_cxt(void);
-static int32_t _ispParamVerify(void* in_param_ptr)
+static cmr_s32 _ispParamVerify(void* in_param_ptr)
 {
-	int32_t rtn=0x00;
-	uint32_t* param_ptr=(uint32_t*)in_param_ptr;
-	uint32_t verify_id=param_ptr[0];
-	uint32_t packet_size=param_ptr[2];
-	uint32_t end_id=param_ptr[(packet_size/4)-1];
+	cmr_s32 rtn=0x00;
+	cmr_u32* param_ptr=(cmr_u32*)in_param_ptr;
+	cmr_u32 verify_id=param_ptr[0];
+	cmr_u32 packet_size=param_ptr[2];
+	cmr_u32 end_id=param_ptr[(packet_size/4)-1];
 
 	if(ISP_PACKET_VERIFY_ID!=verify_id)
 	{
@@ -59,27 +59,27 @@ static int32_t _ispParamVerify(void* in_param_ptr)
 	return rtn;
 }
 
-static uint32_t _ispParserGetType(void* in_param_ptr)
+static cmr_u32 _ispParserGetType(void* in_param_ptr)
 {
-	uint32_t* param_ptr=(uint32_t*)in_param_ptr;
-	uint32_t type=param_ptr[2];
+	cmr_u32* param_ptr=(cmr_u32*)in_param_ptr;
+	cmr_u32 type=param_ptr[2];
 
 	return type;
 }
 
-static int32_t _ispParserDownParam(isp_handle isp_handler, void* in_param_ptr)
+static cmr_s32 _ispParserDownParam(cmr_handle isp_handler, void* in_param_ptr)
 {
-	uint32_t rtn=0x00;
-	uint32_t* param_ptr=(uint32_t*)((uint8_t*)in_param_ptr+0x0c);// packet data
+	cmr_u32 rtn=0x00;
+	cmr_u32* param_ptr=(cmr_u32*)((cmr_u8*)in_param_ptr+0x0c);// packet data
 
 	// version_id||module_id||packet_len||module_info||data
-	uint32_t version_id=param_ptr[0];
-	uint32_t module_id=param_ptr[1];
-	uint32_t packet_len=param_ptr[2];
-	uint32_t module_bypass=param_ptr[3];
+	cmr_u32 version_id=param_ptr[0];
+	cmr_u32 module_id=param_ptr[1];
+	cmr_u32 packet_len=param_ptr[2];
+	cmr_u32 module_bypass=param_ptr[3];
 	void* data_addr=(void*)&param_ptr[4];
-	uint32_t data_len =packet_len-0x10;
-	uint32_t mode_offset = 0;
+	cmr_u32 data_len =packet_len-0x10;
+	cmr_u32 mode_offset = 0;
 	SENSOR_EXP_INFO_T* sensor_info_ptr=Sensor_GetInfo();
 	CMR_LOGE(" _ispParserDownParam");
 
@@ -99,11 +99,11 @@ static int32_t _ispParserDownParam(isp_handle isp_handler, void* in_param_ptr)
 	return rtn;
 }
 
-static int32_t _ispParserDownLevel(isp_handle isp_handler, void* in_param_ptr)
+static cmr_s32 _ispParserDownLevel(cmr_handle isp_handler, void* in_param_ptr)
 {
-	int32_t rtn=0x00;
-	uint32_t* param_ptr=(uint32_t*)((uint8_t*)in_param_ptr+0x0c);// packet data
-	uint32_t module_id=param_ptr[0];
+	cmr_s32 rtn=0x00;
+	cmr_u32* param_ptr=(cmr_u32*)((cmr_u8*)in_param_ptr+0x0c);// packet data
+	cmr_u32 module_id=param_ptr[0];
 	enum isp_ctrl_cmd cmd=ISP_CTRL_MAX;
 	void* ioctl_param_ptr=NULL;
 
@@ -117,11 +117,11 @@ static int32_t _ispParserDownLevel(isp_handle isp_handler, void* in_param_ptr)
 		SENSOR_EXP_INFO_T_PTR sensor_info_ptr=Sensor_GetInfo();
 		struct isp_af_win af_param;
 		struct isp_af_win* in_af_ptr=(struct isp_af_win*)&param_ptr[3];
-		uint16_t img_width=(param_ptr[2]>>0x10)&0xffff;
-		uint16_t img_height=param_ptr[2]&0xffff;
-		uint16_t prv_width=sensor_info_ptr->sensor_mode_info[1].width;
-		uint16_t prv_height=sensor_info_ptr->sensor_mode_info[1].height;
-		uint32_t i=0x00;
+		cmr_u16 img_width=(param_ptr[2]>>0x10)&0xffff;
+		cmr_u16 img_height=param_ptr[2]&0xffff;
+		cmr_u16 prv_width=sensor_info_ptr->sensor_mode_info[1].width;
+		cmr_u16 prv_height=sensor_info_ptr->sensor_mode_info[1].height;
+		cmr_u32 i=0x00;
 
 		CMR_LOGE("zone prv_width=%d prv_height=%d",prv_width,prv_height);
 
@@ -146,15 +146,15 @@ static int32_t _ispParserDownLevel(isp_handle isp_handler, void* in_param_ptr)
 	return rtn;
 }
 
-static int32_t _ispParserUpMainInfo(void* rtn_param_ptr)
+static cmr_s32 _ispParserUpMainInfo(void* rtn_param_ptr)
 {
-	uint32_t rtn=0x00;
+	cmr_u32 rtn=0x00;
 	SENSOR_EXP_INFO_T_PTR sensor_info_ptr=Sensor_GetInfo();
 	struct isp_parser_buf_rtn* rtn_ptr=(struct isp_parser_buf_rtn*)rtn_param_ptr;
-	uint32_t i=0x00;
-	uint32_t j=0x00;
-	uint32_t* data_addr=NULL;
-	uint32_t data_len =0x10;
+	cmr_u32 i=0x00;
+	cmr_u32 j=0x00;
+	cmr_u32* data_addr=NULL;
+	cmr_u32 data_len =0x10;
 	struct isp_main_info* param_ptr=NULL;
 	struct sensor_version_info *temp_param_version = NULL;
 
@@ -176,7 +176,7 @@ static int32_t _ispParserUpMainInfo(void* rtn_param_ptr)
 
 	memset((void*)data_addr, 0x00, sizeof(struct isp_main_info));
 
-	rtn_ptr->buf_addr=(unsigned long)data_addr;
+	rtn_ptr->buf_addr=(cmr_uint)data_addr;
 	rtn_ptr->buf_len=sizeof(struct isp_main_info);
 
 	if((NULL!=sensor_info_ptr)
@@ -236,7 +236,7 @@ static int32_t _ispParserUpMainInfo(void* rtn_param_ptr)
 		strcpy((char*)&param_ptr->sensor_id, "no sensor identified");
 		param_ptr->version_id = TOOL_DEFAULT_VER;
 #else
-		rtn_ptr->buf_addr = (uint32_t)NULL;
+		rtn_ptr->buf_addr = (cmr_u32)NULL;
 		rtn_ptr->buf_len = 0x00;
 		ispParserFree(data_addr);
 		rtn = 0x01;
@@ -248,17 +248,17 @@ static int32_t _ispParserUpMainInfo(void* rtn_param_ptr)
 	return rtn;
 }
 
-static int32_t _ispParserUpParam(void* rtn_param_ptr)
+static cmr_s32 _ispParserUpParam(void* rtn_param_ptr)
 {
-	int32_t rtn=0x00;
-	int32_t i =0;
+	cmr_s32 rtn=0x00;
+	cmr_s32 i =0;
 	SENSOR_EXP_INFO_T_PTR sensor_info_ptr=Sensor_GetInfo();
-	uint32_t version_id=sensor_info_ptr->raw_info_ptr->version_info->version_id;
+	cmr_u32 version_id=sensor_info_ptr->raw_info_ptr->version_info->version_id;
 	struct sensor_raw_info* sensor_raw_info_ptr=(struct sensor_raw_info*)sensor_info_ptr->raw_info_ptr;
 	struct isp_parser_buf_rtn* rtn_ptr=(struct isp_parser_buf_rtn*)rtn_param_ptr;
-	uint32_t* data_addr=NULL;
-	uint32_t data_len=0;
-	uint32_t data_offset=0;
+	cmr_u32* data_addr=NULL;
+	cmr_u32 data_len=0;
+	cmr_u32 data_offset=0;
 
 	for(i =0; i<MAX_MODE_NUM;i++){
 		data_len += sensor_raw_info_ptr->mode_ptr[i].len;
@@ -266,7 +266,7 @@ static int32_t _ispParserUpParam(void* rtn_param_ptr)
 
 	rtn_ptr->buf_len=data_len+0x10;
 	data_addr=ispParserAlloc(rtn_ptr->buf_len);
-	rtn_ptr->buf_addr=(unsigned long)data_addr;
+	rtn_ptr->buf_addr=(cmr_uint)data_addr;
 
 	if(NULL!=data_addr)
 	{
@@ -291,20 +291,20 @@ static int32_t _ispParserUpParam(void* rtn_param_ptr)
 	}
 	else
 	{
-		rtn_ptr->buf_addr = (unsigned long)NULL;
+		rtn_ptr->buf_addr = (cmr_uint)NULL;
 		rtn_ptr->buf_len = 0x00;
 	}
 
 	return rtn;
 }
 
-static int32_t _ispParserUpdata(void* in_param_ptr, void* rtn_param_ptr)
+static cmr_s32 _ispParserUpdata(void* in_param_ptr, void* rtn_param_ptr)
 {
-	int32_t rtn=0x00;
+	cmr_s32 rtn=0x00;
 	struct isp_parser_up_data* in_ptr=(struct isp_parser_up_data*)in_param_ptr;
 	struct isp_parser_buf_rtn* rtn_ptr=(struct isp_parser_buf_rtn*)rtn_param_ptr;
-	uint32_t* data_addr=NULL;
-	uint32_t data_len=0x10;
+	cmr_u32* data_addr=NULL;
+	cmr_u32 data_len=0x10;
 
 	data_len+=in_ptr->buf_len;
 	data_addr=ispParserAlloc(data_len);
@@ -320,20 +320,20 @@ static int32_t _ispParserUpdata(void* in_param_ptr, void* rtn_param_ptr)
 		memcpy((void*)&data_addr[5], (void*)in_ptr->buf_addr, in_ptr->buf_len);
 
 		// rtn sesult
-		rtn_ptr->buf_addr = (unsigned long)data_addr;
+		rtn_ptr->buf_addr = (cmr_uint)data_addr;
 		rtn_ptr->buf_len = data_len;
 	}
 
 	return rtn;
 }
 
-static int32_t _ispParserCapturesize(void* in_param_ptr, void* rtn_param_ptr)
+static cmr_s32 _ispParserCapturesize(void* in_param_ptr, void* rtn_param_ptr)
 {
-	int32_t rtn=0x00;
+	cmr_s32 rtn=0x00;
 	struct isp_parser_cmd_param* in_ptr=(struct isp_parser_cmd_param*)in_param_ptr;
 	struct isp_parser_buf_rtn* rtn_ptr=(struct isp_parser_buf_rtn*)rtn_param_ptr;
-	uint32_t* data_addr=NULL;
-	uint32_t data_len=0x0c;
+	cmr_u32* data_addr=NULL;
+	cmr_u32 data_len=0x0c;
 
 	data_addr=ispParserAlloc(data_len);
 
@@ -344,27 +344,27 @@ static int32_t _ispParserCapturesize(void* in_param_ptr, void* rtn_param_ptr)
 		data_addr[2]=in_ptr->param[0];
 
 		// rtn sesult
-		rtn_ptr->buf_addr = (unsigned long)data_addr;
+		rtn_ptr->buf_addr = (cmr_uint)data_addr;
 		rtn_ptr->buf_len = data_len;
 	}
 
 	return rtn;
 }
 
-static int32_t _ispParserReadSensorReg(void* in_param_ptr, void* rtn_param_ptr)
+static cmr_s32 _ispParserReadSensorReg(void* in_param_ptr, void* rtn_param_ptr)
 {
-	int32_t rtn=0x00;
+	cmr_s32 rtn=0x00;
 	struct isp_parser_cmd_param* in_ptr=(struct isp_parser_cmd_param*)in_param_ptr;
 	struct isp_parser_buf_rtn* rtn_ptr=(struct isp_parser_buf_rtn*)rtn_param_ptr;
-	uint32_t* data_addr=NULL;
-	uint32_t data_len=0x0c;
-	uint32_t reg_num=in_ptr->param[0];
-	uint16_t reg_addr=(uint16_t)in_ptr->param[1];
-	uint16_t reg_data=0x00;
-	uint32_t i=0x00;
+	cmr_u32* data_addr=NULL;
+	cmr_u32 data_len=0x0c;
+	cmr_u32 reg_num=in_ptr->param[0];
+	cmr_u16 reg_addr=(cmr_u16)in_ptr->param[1];
+	cmr_u16 reg_data=0x00;
+	cmr_u32 i=0x00;
 	struct sensor_drv_context *current_sensor_cxt = (struct sensor_drv_context *)sensor_get_dev_cxt();
 
-	rtn_ptr->buf_addr = (unsigned long)NULL;
+	rtn_ptr->buf_addr = (cmr_uint)NULL;
 	rtn_ptr->buf_len = 0x00;
 
 	data_len+=reg_num*0x08;
@@ -379,55 +379,55 @@ static int32_t _ispParserReadSensorReg(void* in_param_ptr, void* rtn_param_ptr)
 		for(i=0x00; i<reg_num; i++)
 		{
 			reg_data = hw_Sensor_ReadReg(current_sensor_cxt->sensor_hw_handler, reg_addr);
-			data_addr[3+i*2]=(uint32_t)reg_addr;
-			data_addr[4+i*2]=(uint32_t)reg_data;
+			data_addr[3+i*2]=(cmr_u32)reg_addr;
+			data_addr[4+i*2]=(cmr_u32)reg_data;
 			reg_addr++;
 		}
 
 		// rtn sesult
-		rtn_ptr->buf_addr = (unsigned long)data_addr;
+		rtn_ptr->buf_addr = (cmr_uint)data_addr;
 		rtn_ptr->buf_len = data_len;
 	}
 
 	return rtn;
 }
 
-static int32_t _ispParserWriteSensorReg(void* in_param_ptr)
+static cmr_s32 _ispParserWriteSensorReg(void* in_param_ptr)
 {
-	int32_t rtn=0x00;
+	cmr_s32 rtn=0x00;
 	// cmd|packet_len|reg_num|reg_addr|reg_data|...
 	struct isp_parser_cmd_param* in_ptr=(struct isp_parser_cmd_param*)in_param_ptr;
-	uint32_t reg_num=in_ptr->param[1];
-	uint16_t reg_addr=0x00;
-	uint16_t reg_data=0x00;
-	uint32_t i=0x00;
+	cmr_u32 reg_num=in_ptr->param[1];
+	cmr_u16 reg_addr=0x00;
+	cmr_u16 reg_data=0x00;
+	cmr_u32 i=0x00;
 	struct sensor_drv_context *current_sensor_cxt = (struct sensor_drv_context *)sensor_get_dev_cxt();
 
 	for(i=0x00; i<reg_num; i++)
 	{
-		reg_addr=(uint16_t)in_ptr->param[2+i*2];
-		reg_data=(uint16_t)in_ptr->param[3+i*2];
+		reg_addr=(cmr_u16)in_ptr->param[2+i*2];
+		reg_data=(cmr_u16)in_ptr->param[3+i*2];
 		hw_Sensor_WriteReg(current_sensor_cxt->sensor_hw_handler, reg_addr, reg_data);
 	}
 
 	return rtn;
 }
 
-static int32_t _ispParserGetInfo(isp_handle isp_handler, void* in_param_ptr, void* rtn_param_ptr)
+static cmr_s32 _ispParserGetInfo(cmr_handle isp_handler, void* in_param_ptr, void* rtn_param_ptr)
 {
-	int32_t rtn=0x00;
-	uint32_t* param_ptr=(uint32_t*)in_param_ptr;
+	cmr_s32 rtn=0x00;
+	cmr_u32* param_ptr=(cmr_u32*)in_param_ptr;
 	struct isp_parser_buf_rtn* rtn_ptr=(struct isp_parser_buf_rtn*)rtn_param_ptr;
-	uint32_t cmd_id=param_ptr[0];
+	cmr_u32 cmd_id=param_ptr[0];
 	enum isp_ctrl_cmd cmd=param_ptr[1];
 	void* ioctl_param_ptr=NULL;
-	uint32_t* data_addr=NULL;
-	uint32_t data_len=0x14+param_ptr[2];
+	cmr_u32* data_addr=NULL;
+	cmr_u32 data_len=0x14+param_ptr[2];
 
 	rtn_ptr->buf_addr = 0;
 	rtn_ptr->buf_len = 0x00;
 
-	CMR_LOGI("ISP_TOOL:_ispParserGetInfo %d\n", (uint32_t)cmd);
+	CMR_LOGI("ISP_TOOL:_ispParserGetInfo %d\n", (cmr_u32)cmd);
 
 	data_addr=ispParserAlloc(data_len);
 
@@ -446,19 +446,19 @@ static int32_t _ispParserGetInfo(isp_handle isp_handler, void* in_param_ptr, voi
 
 	rtn=isp_ioctl(isp_handler, cmd, ioctl_param_ptr);
 
-	rtn_ptr->buf_addr = (unsigned long)data_addr;
+	rtn_ptr->buf_addr = (cmr_uint)data_addr;
 	rtn_ptr->buf_len = data_len;
 
 	return rtn;
 }
 
-static int32_t _ispParserDownCmd(void* in_param_ptr, void* rtn_param_ptr)
+static cmr_s32 _ispParserDownCmd(void* in_param_ptr, void* rtn_param_ptr)
 {
-	int32_t rtn=0x00;
-	uint32_t* param_ptr=(uint32_t*)in_param_ptr+0x03;
+	cmr_s32 rtn=0x00;
+	cmr_u32* param_ptr=(cmr_u32*)in_param_ptr+0x03;
 	struct isp_parser_cmd_param* rtn_ptr=(struct isp_parser_cmd_param*)rtn_param_ptr;
-	uint32_t cmd=param_ptr[0];
-	uint32_t i=0x00;
+	cmr_u32 cmd=param_ptr[0];
+	cmr_u32 i=0x00;
 	struct isp_size_info* size_info_ptr=ISP_ParamGetSizeInfo();
 
 	rtn_ptr->cmd=cmd;
@@ -521,11 +521,11 @@ static int32_t _ispParserDownCmd(void* in_param_ptr, void* rtn_param_ptr)
 	return rtn;
 }
 
-static int32_t _ispParserDownHandle(isp_handle isp_handler, void* in_param_ptr, void* rtn_param_ptr)
+static cmr_s32 _ispParserDownHandle(cmr_handle isp_handler, void* in_param_ptr, void* rtn_param_ptr)
 {
-	int32_t rtn=0x00;
-	uint32_t* param_ptr=(uint32_t*)in_param_ptr; //packet
-	uint32_t type=param_ptr[1];
+	cmr_s32 rtn=0x00;
+	cmr_u32* param_ptr=(cmr_u32*)in_param_ptr; //packet
+	cmr_u32 type=param_ptr[1];
 
 	rtn=_ispParamVerify(in_param_ptr);
 
@@ -559,13 +559,13 @@ static int32_t _ispParserDownHandle(isp_handle isp_handler, void* in_param_ptr, 
 	return rtn;
 }
 
-static int32_t _ispParserUpHandle(isp_handle isp_handler, uint32_t cmd, void* in_param_ptr, void* rtn_param_ptr)
+static cmr_s32 _ispParserUpHandle(cmr_handle isp_handler, cmr_u32 cmd, void* in_param_ptr, void* rtn_param_ptr)
 {
-	int32_t rtn=0x00;
+	cmr_s32 rtn=0x00;
 	struct isp_parser_up_data* in_ptr=(struct isp_parser_up_data*)in_param_ptr;
 	struct isp_parser_buf_rtn* rtn_ptr=(struct isp_parser_buf_rtn*)rtn_param_ptr;
-	uint32_t* data_addr=NULL;
-	uint32_t data_len=0x10;
+	cmr_u32* data_addr=NULL;
+	cmr_u32 data_len=0x10;
 
 	CMR_LOGI("ISP_TOOL:_ispParserUpHandle %d\n", cmd);
 
@@ -671,7 +671,7 @@ static int32_t _ispParserUpHandle(isp_handle isp_handler, uint32_t cmd, void* in
 			ispParserFree((void*)rtn_ptr->buf_addr);
 
 			// rtn sesult
-			rtn_ptr->buf_addr = (unsigned long)data_addr;
+			rtn_ptr->buf_addr = (cmr_uint)data_addr;
 			rtn_ptr->buf_len = data_len;
 		}
 	}
@@ -679,10 +679,10 @@ static int32_t _ispParserUpHandle(isp_handle isp_handler, uint32_t cmd, void* in
 	return rtn;
 }
 
-uint32_t ispParserGetSizeID(uint32_t width, uint32_t height)
+cmr_u32 ispParserGetSizeID(cmr_u32 width, cmr_u32 height)
 {
-	uint32_t i=0x00;
-	uint32_t size_id=0x00;
+	cmr_u32 i=0x00;
+	cmr_u32 size_id=0x00;
 	struct isp_size_info* size_info_ptr=ISP_ParamGetSizeInfo();
 
 	for(i=0x00; ISP_SIZE_END!=size_info_ptr[i].size_id; i++)
@@ -698,9 +698,9 @@ uint32_t ispParserGetSizeID(uint32_t width, uint32_t height)
 	return size_id;
 }
 
-int32_t ispParser(isp_handle isp_handler, uint32_t cmd, void* in_param_ptr, void* rtn_param_ptr)
+cmr_s32 ispParser(cmr_handle isp_handler, cmr_u32 cmd, void* in_param_ptr, void* rtn_param_ptr)
 {
-	int32_t rtn=0x00;
+	cmr_s32 rtn=0x00;
 
 	CMR_LOGI("ISP_TOOL:cmd = %d\n", cmd);
 
@@ -732,21 +732,21 @@ int32_t ispParser(isp_handle isp_handler, uint32_t cmd, void* in_param_ptr, void
 	return rtn;
 }
 
-uint32_t* ispParserAlloc(uint32_t size)
+cmr_u32* ispParserAlloc(cmr_u32 size)
 {
-	uint32_t* addr=0x00;
+	cmr_u32* addr=0x00;
 
 	if(0x00!=size)
 	{
-		addr=(uint32_t*)malloc(size);
+		addr=(cmr_u32*)malloc(size);
 	}
 
 	return addr;
 }
 
-int32_t ispParserFree(void* addr)
+cmr_s32 ispParserFree(void* addr)
 {
-	int32_t rtn=0x00;
+	cmr_s32 rtn=0x00;
 	void* temp_addr=addr;
 
 	if(NULL!=temp_addr)
