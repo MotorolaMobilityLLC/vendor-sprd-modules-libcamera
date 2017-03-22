@@ -726,7 +726,7 @@ static uint32_t awbsprd_unload_lib(struct awb_ctrl_cxt *cxt)
 		goto exit;
 	}
 
-	if (!cxt->lib_handle) {
+	if (cxt->lib_handle) {
 		dlclose(cxt->lib_handle);
 		cxt->lib_handle = NULL;
 	}
@@ -864,12 +864,13 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 	struct awb_ctrl_init_param *param = (struct awb_ctrl_init_param *)in;
 	struct awb_ctrl_init_result *result = (struct awb_ctrl_init_result *)out;
 	struct awb_ctrl_cxt *cxt = NULL;
-	uint32_t base_gain = param->base_gain;
 
 	if (NULL == param || NULL == result) {
 		AWB_CTRL_LOGE("invalid param: param=%p, result=%p", param, result);
 		goto ERROR_EXIT;
 	}
+
+	uint32_t base_gain = param->base_gain;
 
 	cxt = (struct awb_ctrl_cxt *)malloc(sizeof(struct awb_ctrl_cxt));
 	if (NULL == cxt) {
@@ -948,8 +949,8 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 	return (awb_ctrl_handle_t)cxt;
 
 ERROR_EXIT:
-	AWB_CTRL_SAFE_FREE(cxt);
 	awbsprd_unload_lib(cxt);
+	AWB_CTRL_SAFE_FREE(cxt);
 	ISP_LOGE("done %d", rtn);
 	return AWB_CTRL_INVALID_HANDLE;
 }

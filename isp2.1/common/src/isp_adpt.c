@@ -34,10 +34,11 @@
 #include "ae_alc_ctrl.h"
 #endif
 
-extern struct adpt_ops_type ae_sprd_adpt_ops_ver1;
+extern struct adpt_ops_type ae_sprd_adpt_ops_ver0;
+//extern struct adpt_ops_type ae_sprd_adpt_ops_ver1;
 static uint32_t *ae_sprd_version_ops[]= {
-	(uint32_t*)&ae_sprd_adpt_ops_ver1,
-	(uint32_t*)&ae_sprd_adpt_ops_ver1,
+	(uint32_t*)&ae_sprd_adpt_ops_ver0,
+	NULL, //(uint32_t*)&ae_sprd_adpt_ops_ver1,
 };
 
 uint32_t get_sprd_ae_ops(uint32_t ae_lib_version, struct adpt_ops_type **ae_ops)
@@ -50,6 +51,7 @@ uint32_t get_sprd_ae_ops(uint32_t ae_lib_version, struct adpt_ops_type **ae_ops)
 
 static uint32_t (*ae_product_ops[]) (uint32_t, struct adpt_ops_type **) = {
 	[ADPT_SPRD_AE_LIB] = get_sprd_ae_ops,
+	[ADPT_AL_AE_LIB] = get_sprd_ae_ops,
 };
 
 static int32_t adpt_get_ae_ops(struct third_lib_info *lib_info,
@@ -70,9 +72,10 @@ static int32_t adpt_get_ae_ops(struct third_lib_info *lib_info,
 	return rtn;
 }
 
+//extern struct adpt_ops_type awb_sprd_adpt_ops_ver0;
 extern struct adpt_ops_type awb_sprd_adpt_ops_ver1;
 static uint32_t *awb_sprd_version_ops[]= {
-	(uint32_t*)&awb_sprd_adpt_ops_ver1,
+	NULL,//	(uint32_t*)&awb_sprd_adpt_ops_ver0,
 	(uint32_t*)&awb_sprd_adpt_ops_ver1,
 };
 
@@ -86,6 +89,7 @@ uint32_t get_sprd_awb_ops(uint32_t awb_lib_version, struct adpt_ops_type **awb_o
 
 static uint32_t (*awb_product_ops[]) (uint32_t, struct adpt_ops_type **) = {
 	[ADPT_SPRD_AWB_LIB] = get_sprd_awb_ops,
+	[ADPT_AL_AWb_LIB] = get_sprd_awb_ops,
 };
 
 static int32_t adpt_get_awb_ops(struct third_lib_info *lib_info,
@@ -122,6 +126,8 @@ uint32_t get_sprd_af_ops(uint32_t af_lib_version, struct adpt_ops_type **af_ops)
 
 static uint32_t (*af_product_ops[]) (uint32_t, struct adpt_ops_type **) = {
 	[ADPT_SPRD_AF_LIB] = get_sprd_af_ops,
+	[ADPT_AL_AF_LIB] = get_sprd_af_ops,
+	[ADPT_SFT_AF_LIB] = get_sprd_af_ops,
 };
 
 static int32_t adpt_get_af_ops(struct third_lib_info *lib_info,
@@ -205,8 +211,8 @@ static int32_t adpt_get_pdaf_ops(struct third_lib_info *lib_info,
 
 	pdaf_producer_id = lib_info->product_id;
 	pdaf_lib_version = lib_info->version_id;
-	pdaf_producer_id = 0;
-	pdaf_lib_version = 0;
+//	pdaf_producer_id = 0;
+//	pdaf_lib_version = 0;
 
 	ISP_LOGI("pdaf_producer_id %d,pdaf_lib_version %d",pdaf_producer_id,pdaf_lib_version);
 	if (ADPT_MAX_PDAF_LIB > pdaf_producer_id) {

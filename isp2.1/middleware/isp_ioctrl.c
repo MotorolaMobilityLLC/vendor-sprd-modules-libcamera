@@ -1690,6 +1690,7 @@ static cmr_int _ispHdrIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, int (*c
 	}
 	//add for STACK ERROR
 	return ISP_SUCCESS;
+#if 0
 	isp_hdr = (struct isp_hdr_ev_param*)param_ptr;
 
 	memset(&smart_block_eb, 0x00, sizeof(smart_block_eb));
@@ -1705,6 +1706,7 @@ static cmr_int _ispHdrIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, int (*c
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_SKIP_FRAME_NUM, NULL, &isp_hdr->skip_frame_num);
 
 	return ISP_SUCCESS;
+#endif
 }
 
 static cmr_int _ispSetAeNightModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, int (*call_back)())

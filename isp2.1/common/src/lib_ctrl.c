@@ -58,24 +58,54 @@ uint32_t al_awb_lib_open(uint32_t version_id)
 	ISP_LOGE("E");
 	AWB_LIB = al_libversion_choice(version_id);
 	handle = dlopen(AWB_LIB, RTLD_NOW);
+
 	if(NULL == handle) {
 		ISP_LOGE("dlopen get handle error\n");
 		return ISP_ERROR;
 	}
+
 	al_awb_thirdlib_fun.AlAwbInterfaceInit = (void *)dlsym(handle, "AlAwbInterfaceInit");
-	al_awb_thirdlib_fun.AlAwbInterfaceDestroy =
-		(void *)dlsym(handle, "AlAwbInterfaceDestroy");
+	if(NULL == al_awb_thirdlib_fun.AlAwbInterfaceInit) {
+		ISP_LOGE("dlsym AlAwbInterfaceInit error\n");
+		goto load_error;
+	}
+	al_awb_thirdlib_fun.AlAwbInterfaceDestroy =	(void *)dlsym(handle, "AlAwbInterfaceDestroy");
+	if(NULL == al_awb_thirdlib_fun.AlAwbInterfaceDestroy) {
+		ISP_LOGE("dlsym AlAwbInterfaceDestroy error\n");
+		goto load_error;
+	}
 	al_awb_thirdlib_fun.AlAwbInterfaceReset = (void *)dlsym(handle, "AlAwbInterfaceReset");
-	al_awb_thirdlib_fun.AlAwbInterfaceMain =
-		(void *)dlsym(handle, "AlAwbInterfaceMain");
-	al_awb_thirdlib_fun.AlAwbInterfaceSendCommand =
-		(void *)dlsym(handle, "AlAwbInterfaceSendCommand");
-	al_awb_thirdlib_fun.AlAwbInterfaceShowVersion =
-		(void *)dlsym(handle, "AlAwbInterfaceShowVersion");
+	if(NULL == al_awb_thirdlib_fun.AlAwbInterfaceReset ) {
+		ISP_LOGE("dlsym AlAwbInterfaceReset error\n");
+		goto load_error;
+	}
+	al_awb_thirdlib_fun.AlAwbInterfaceMain =(void *)dlsym(handle, "AlAwbInterfaceMain");
+	if(NULL == al_awb_thirdlib_fun.AlAwbInterfaceMain) {
+		ISP_LOGE("dlsym AlAwbInterfaceMain error\n");
+		goto load_error;
+	}
+	al_awb_thirdlib_fun.AlAwbInterfaceSendCommand =(void *)dlsym(handle, "AlAwbInterfaceSendCommand");
+	if(NULL == al_awb_thirdlib_fun.AlAwbInterfaceSendCommand) {
+		ISP_LOGE("dlsym AlAwbInterfaceSendCommand error\n");
+	}
+	al_awb_thirdlib_fun.AlAwbInterfaceShowVersion =(void *)dlsym(handle, "AlAwbInterfaceShowVersion");
+	if(NULL == al_awb_thirdlib_fun.AlAwbInterfaceShowVersion) {
+		ISP_LOGE("dlsym AlAwbInterfaceShowVersion error\n");
+		goto load_error;
+	}
 	ISP_LOGE("awb_thirdlib_fun.AlAwbInterfaceInit= %p", al_awb_thirdlib_fun.AlAwbInterfaceInit);
 	ISP_LOGE("AWB_LIB= %s", AWB_LIB);
 
-	return 0;
+	return ISP_SUCCESS;
+
+load_error:
+
+	if (NULL != handle){
+		dlclose(handle);
+		handle = NULL;
+	}
+	return ISP_ERROR;
+
 }
 
 uint32_t isp_awblib_init(struct sensor_libuse_info* libuse_info, struct awb_lib_fun* awb_lib_fun)

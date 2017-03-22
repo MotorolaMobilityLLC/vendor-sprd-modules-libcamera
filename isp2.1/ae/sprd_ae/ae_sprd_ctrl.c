@@ -4045,7 +4045,7 @@ int32_t ae_sprd_deinit(void *handle, void *in_param, void *out_param)
 }
 
 
-struct adpt_ops_type ae_sprd_adpt_ops_ver1 = {
+struct adpt_ops_type ae_sprd_adpt_ops_ver0 = {
 	.adpt_init = ae_sprd_init,
 	.adpt_deinit = ae_sprd_deinit,
 	.adpt_process = ae_sprd_calculation,

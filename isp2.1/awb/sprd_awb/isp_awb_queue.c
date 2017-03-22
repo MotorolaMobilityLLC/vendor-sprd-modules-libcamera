@@ -70,11 +70,11 @@ int32_t _initQueue(struct awbl_cyc_queue *queue, uint32_t size)
 
 void _addToCycQueue(struct awbl_cyc_queue *queue, uint32_t value)
 {
-	uint32_t cur_index = queue->cur_index;
-	uint32_t *q = queue->q;
-
 	if (NULL == queue)
 		return;
+
+	uint32_t cur_index = queue->cur_index;
+	uint32_t *q = queue->q;
 
 	//the queue is full, drop the first one
 	if (cur_index == queue->size)
