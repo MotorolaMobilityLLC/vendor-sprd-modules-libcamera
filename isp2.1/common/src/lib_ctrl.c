@@ -24,7 +24,6 @@
 #include "ae_log.h"
 #include "af_log.h"
 #include "lib_ctrl.h"
-#include "af_sprd_ctrl.h"
 #include "sp_af_ctrl.h"
 #include <dlfcn.h>
 #include "ALC_AF_Ctrl.h"

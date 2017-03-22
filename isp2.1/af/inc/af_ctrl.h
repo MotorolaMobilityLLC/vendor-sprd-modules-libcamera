@@ -21,8 +21,8 @@
 *-------------------------------------------------------------------------------*/
 #include <sys/types.h>
 #include "isp_com.h"
-#include "af_sprd_ctrl.h"
-#include "sprd_af_ctrl_v1.h"
+
+#include "af_log.h"
 
 #include "isp_alg_fw.h"
 
@@ -41,6 +41,21 @@ extern "C"
 /*------------------------------------------------------------------------------*
 *					Data Prototype				*
 *-------------------------------------------------------------------------------*/
+#define MAX_AF_WINS 32
+
+enum af_err_type {
+	AF_SUCCESS = 0x00,
+	AF_ERROR,
+	AF_ERR_MAX
+};
+
+enum scene {
+	OUT_SCENE = 0,
+	INDOOR_SCENE,		//INDOOR_SCENE,
+	DARK_SCENE,		//DARK_SCENE,
+	SCENE_NUM,
+};
+
 enum af_mode{
 	AF_MODE_NORMAL=0x00,
 	AF_MODE_MACRO,
@@ -102,34 +117,117 @@ enum af_locker_type {
 	AF_LOCKER_NLM,
 	AF_LOCKER_MAX
 };
+/* used for af1.0 */
+/*
+struct af_plat_info {
+	uint32_t afm_filter_type_cnt;
+	uint32_t afm_win_max_cnt;
+	uint32_t isp_w;
+	uint32_t isp_h;
+};
+
+struct af_tuning_param {
+	uint8_t *data;
+	uint32_t data_len;
+	uint32_t cfg_mode;
+};
+
+struct af_filter_data {
+	uint32_t type;
+	uint64_t *data;
+};
+
+struct af_filter_info {
+	uint32_t filter_num;
+	struct af_filter_data *filter_data;
+};
+*/
+struct ae_out_bv {
+	struct ae_calc_out *ae_result;
+	int32_t bv;
+};
+
+struct af_motor_pos {
+	uint32_t motor_pos;
+	uint32_t skip_frame;
+	uint32_t wait_time;
+};
+
+struct af_result_param {
+	uint32_t motor_pos;
+	uint32_t suc_win;
+};
+
+struct af_monitor_set {
+	uint32_t type;
+	uint32_t bypass;
+	uint32_t int_mode;
+	uint32_t skip_num;
+	uint32_t need_denoise;
+};
+
+struct af_win_rect {
+	uint32_t sx;
+	uint32_t sy;
+	uint32_t ex;
+	uint32_t ey;
+};
+
+struct af_monitor_win {
+	uint32_t type;
+	struct af_win_rect *win_pos;
+};
+
+struct af_trig_info {
+	uint32_t win_num;
+	uint32_t mode;
+	struct af_win_rect win_pos[MAX_AF_WINS];
+};
 
 struct afctrl_init_in{
-	uint32_t af_bypass;
+//	uint32_t af_bypass;
 	void* caller;
-	uint32_t af_mode;
-	uint32_t tuning_param_cnt;
-	uint32_t cur_tuning_mode;
+//	uint32_t af_mode;
+//	uint32_t tuning_param_cnt;
+//	uint32_t cur_tuning_mode;
 	uint32_t camera_id;
 	isp_af_cb af_set_cb;
 	cmr_handle caller_handle;
 	struct third_lib_info lib_param;
-	struct af_plat_info plat_info;
-	struct af_tuning_param *tuning_param;
+//	struct af_plat_info plat_info;
+//	struct af_tuning_param *tuning_param;
 	struct isp_size src;
 	int32_t(*go_position) (void* handle,struct af_motor_pos* in_param);
-	int32_t(*end_notice) (void* handle,struct af_result_param* in_param);
 	int32_t(*start_notice) (void* handle);
+	int32_t(*end_notice) (void* handle,struct af_result_param* in_param);
 	int32_t(*set_monitor) (void* handle, struct af_monitor_set* in_param, uint32_t cur_envi);
 	int32_t(*set_monitor_win) (void* handle, struct af_monitor_win* in_param);
 	int32_t(*get_monitor_win_num) (void* handle, uint32_t *win_num);
-	int32_t(*ae_awb_lock) (void* handle);
-	int32_t(*ae_awb_release) (void* handle);
+//	int32_t(*ae_awb_lock) (void* handle);
+//	int32_t(*ae_awb_release) (void* handle);
 	int32_t(*lock_module) (void* handle, cmr_int af_locker_type);
 	int32_t(*unlock_module) (void* handle, cmr_int af_locker_type);
 };
 
 struct afctrl_init_out {
 	uint32_t init_motor_pos;
+};
+
+struct af_img_blk_info {
+	uint32_t block_w;
+	uint32_t block_h;
+	uint32_t pix_per_blk;
+	uint32_t chn_num;
+	uint32_t *data;
+};
+
+struct af_ae_info {
+	uint32_t exp_time;  //us
+	uint32_t gain;   //256 --> 1X
+	uint32_t cur_fps;
+	uint32_t cur_lum;
+	uint32_t target_lum;
+	uint32_t is_stable;
 };
 
 struct afctrl_calc_in {

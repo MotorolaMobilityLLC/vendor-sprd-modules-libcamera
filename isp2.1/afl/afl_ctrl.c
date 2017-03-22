@@ -124,20 +124,26 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 	cmr_int rtn = ISP_SUCCESS;
 	cmr_int ret = 0;
 	int32_t thr[9] = {0,0,0,0,0,0,0,0,0};
-	struct isp_awb_statistic_info   *ae_stat_ptr = in_ptr->ae_stat_ptr;
-	uint32_t cur_flicker = in_ptr->cur_flicker;
-	uint32_t cur_exp_flag = in_ptr->cur_exp_flag;
-	int32_t ae_exp_flag = in_ptr->ae_exp_flag;
+	struct isp_awb_statistic_info   *ae_stat_ptr = NULL;
+	uint32_t cur_flicker = 0;
+	uint32_t cur_exp_flag = 0;
+	int32_t ae_exp_flag = 0;
 	uint32_t nxt_flicker = 0;
 	cmr_int debug_index = 0;
 	uint32_t i = 0;
 	cmr_int flag = 0;
 	int32_t *addr = NULL;
-	addr = (int32_t *)in_ptr->vir_addr;
+
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("fail to check param is NULL!");
 		goto exit;
 	}
+
+	ae_stat_ptr = in_ptr->ae_stat_ptr;
+	cur_flicker = in_ptr->cur_flicker;
+	cur_exp_flag = in_ptr->cur_exp_flag;
+	ae_exp_flag = in_ptr->ae_exp_flag;
+	addr = (int32_t *)in_ptr->vir_addr;
 
 	if(cur_exp_flag) {
 		if(cur_flicker) {
@@ -396,11 +402,16 @@ cmr_int afl_ctrl_deinit(cmr_handle *isp_afl_handle)
 	cmr_int bypass = 1;
 
 	ISP_CHECK_HANDLE_VALID(isp_afl_handle);
-	if (!cxt_ptr) {
+	if (NULL == cxt_ptr) {
 		ISP_LOGE("fail to check param, in parm is NULL");
 		rtn = ISP_ERROR;
+		return rtn;
 	}
-
+	if (NULL == cxt_ptr->dev_handle) {
+		ISP_LOGE("fail to check param, cxt_ptr->dev_handle is NULL");
+		rtn = ISP_ERROR;
+		return rtn;
+	}
 	isp_dev_anti_flicker_bypass(cxt_ptr->dev_handle, bypass);
 
 	rtn = aflctrl_destroy_thread(cxt_ptr);
@@ -419,8 +430,8 @@ cmr_int afl_ctrl_deinit(cmr_handle *isp_afl_handle)
 	}
 
 exit:
-	if (cxt_ptr) {
-		if (cxt_ptr->addr) {
+	if (NULL != cxt_ptr) {
+		if (NULL != cxt_ptr->addr) {
 			free(cxt_ptr->addr);
 			cxt_ptr->addr = NULL;
 		}

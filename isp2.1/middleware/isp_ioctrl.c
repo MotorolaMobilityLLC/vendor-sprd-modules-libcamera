@@ -1526,7 +1526,7 @@ static cmr_int _ispAfInfoIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, int 
 		monitor_set.need_denoise = 0;
 		monitor_set.skip_num = 0;
 		monitor_set.type = 1;
-		cmr_u32 af_envi_type = AF_ENVI_INDOOR;
+		cmr_u32 af_envi_type = INDOOR_SCENE;
 		rtn = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AF_MONITOR, (void *)&monitor_set, (void *)&af_envi_type);
 		rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_SET_DEFAULT_AF_WIN, NULL, NULL);
 		rtn = af_ctrl_ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AF_POS, (void*)&af_ctrl_ptr->step, NULL);

@@ -441,13 +441,15 @@ int32_t alc_sp_read_i2c(alc_af_handle_t handle,uint16_t slave_addr, uint8_t *cmd
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 
-	
-	if (NULL == ctrl_context
-		|| NULL == ctrl_context->ioctrl_ptr
-		|| NULL == ctrl_context->ioctrl_ptr->read_i2c) {
-			ALC_AF_LOG("cxt=%p,ioctl=%p, set_focus=%p is NULL error", ctrl_context,
-				ctrl_context->ioctrl_ptr, ctrl_context->ioctrl_ptr->read_i2c);
-			return ISP_ERROR;
+	if (NULL == ctrl_context) {
+		ALC_AF_LOG("cxt is NULL error");
+		return ISP_ERROR;
+	} else if (NULL == ctrl_context->ioctrl_ptr){
+		ALC_AF_LOG("cxt=%p,ioctl is NULL error", ctrl_context);
+		return ISP_ERROR;
+	} else if (NULL == ctrl_context->ioctrl_ptr->read_i2c){
+		ALC_AF_LOG("cxt=%p,ioctl=%p, set_focus is NULL error", ctrl_context, ctrl_context->ioctrl_ptr);
+		return ISP_ERROR;
 	}
 
 	if (0 == ctrl_context->camera_id) {

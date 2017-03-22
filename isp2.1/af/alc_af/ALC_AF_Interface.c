@@ -53,7 +53,7 @@ void Al_AF_GetFv(alc_af_handle_t handle, uint32_t dwValue[150])
 //ALC_AF_LOGI("ALC_posdw50 %d : %d %d %d %d %d %d %d",dwValue[50],dwValue[51],dwValue[52],dwValue[53],dwValue[54],dwValue[55],dwValue[56]);
 
 	for(i=0;i<10;i++){
-		dwValue[0+i] = dwValue[0+i];// RGB
+		//dwValue[0+i] = dwValue[0+i];// RGB
 		dwValue[10+i] = dwValue[25+i];// RGB
 	}
 	for(i=0;i<10;i++){

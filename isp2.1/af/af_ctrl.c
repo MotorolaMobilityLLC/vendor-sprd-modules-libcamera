@@ -42,6 +42,8 @@ struct afctrl_cxt {
 	isp_af_cb af_set_cb;
 };
 */
+int32_t g_af_log_level = LOG_LEVEL_LOGD;
+
 static int32_t af_set_pos(void* handle_af, struct af_motor_pos* in_param)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
@@ -208,7 +210,7 @@ static int32_t af_get_monitor_win_num(void* handle_af, uint32_t *win_num)
 	return ISP_SUCCESS;
 }
 
-static cmr_int afctrl_process(struct afctrl_cxt *cxt_ptr, struct af_calc_param *in_ptr, struct af_result_param *out_ptr)
+static cmr_int afctrl_process(struct afctrl_cxt *cxt_ptr, struct afctrl_calc_in *in_ptr, struct af_result_param *out_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct afctrl_work_lib *lib_ptr = NULL;
@@ -275,7 +277,7 @@ static cmr_int afctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 	case AFCTRL_EVT_IOCTRL:
 		break;
 	case AFCTRL_EVT_PROCESS:
-		rtn = afctrl_process(cxt_ptr, (struct af_calc_param *)message->data, (struct af_result_param *)&cxt_ptr->proc_out);
+		rtn = afctrl_process(cxt_ptr, (struct afctrl_calc_in *)message->data, (struct af_result_param *)&cxt_ptr->proc_out);
 		break;
 	default:
 		ISP_LOGE("fail to proc ,don't support msg");
@@ -387,8 +389,8 @@ cmr_int af_ctrl_init(struct afctrl_init_in *input_ptr, cmr_handle *handle_af)
 	input_ptr->set_monitor = af_set_monitor;
 	input_ptr->set_monitor_win = af_set_monitor_win;
 	input_ptr->get_monitor_win_num  = af_get_monitor_win_num;
-	input_ptr->ae_awb_lock = af_ae_awb_lock;
-	input_ptr->ae_awb_release = af_ae_awb_release;
+	//input_ptr->ae_awb_lock = af_ae_awb_lock;
+	//input_ptr->ae_awb_release = af_ae_awb_release;
 	input_ptr->lock_module = af_lock_module;
 	input_ptr->unlock_module = af_unlock_module;
 
@@ -477,13 +479,13 @@ cmr_int af_ctrl_process(cmr_handle handle_af, void *in_ptr, struct afctrl_calc_o
 	ISP_CHECK_HANDLE_VALID(handle_af);
 	CMR_MSG_INIT(message);
 
-	message.data = malloc(sizeof(struct af_calc_param));
+	message.data = malloc(sizeof(struct afctrl_calc_in));
 	if (!message.data) {
 		ISP_LOGE("fail to malloc msg");
 		rtn = ISP_ALLOC_ERROR;
 		goto exit;
 	}
-	memcpy(message.data, (void *)in_ptr, sizeof(struct af_calc_param));
+	memcpy(message.data, (void *)in_ptr, sizeof(struct afctrl_calc_in));
 	message.alloc_flag = 1;
 
 	message.msg_type = AFCTRL_EVT_PROCESS;

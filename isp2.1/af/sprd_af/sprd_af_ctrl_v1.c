@@ -111,7 +111,7 @@ extern "C" {
 
 		if (NULL == af) {
 			AF_LOGE("invalid cxt pointer");
-			return AF_HANDLER_NULL;
+			return AFV1_HANDLER_NULL;
 		}
 /*
 		if (AF_MAGIC_START != cxt->magic_start || AF_MAGIC_END != cxt->magic_end) {
@@ -676,8 +676,9 @@ extern "C" {
 			}
 			af_cxt->af_mode = af_mode;
 		}
-#endif
+
 		return rtn;
+#endif
 
 	}
 
@@ -1930,7 +1931,7 @@ v=v>(max)?(max):v; hist[v]++;}
 
 		uint16_t i = 0, max_index = 0, trigger = 0;
 		uint32_t diff_x = 0, diff_y = 0, diff_area = 0;
-		uint64_t max_area = 0, area = 0;
+		uint32_t max_area = 0, area = 0;
 		isp_info_t *isp_size = &af->isp_info;
 		struct isp_face_area *face_info = &af->face_info;
 		prime_face_base_info_t *face_base = &af->face_base;
@@ -2653,6 +2654,7 @@ v=v>(max)?(max):v; hist[v]++;}
 	static ERRCODE if_binfile_is_exist(uint8 * bisExist, void *cookie) {
 		// TODO
 		af_ctrl_t *af = cookie;
+		int32_t rtn = AFV1_SUCCESS;
 
 		char *af_tuning_path = "/data/misc/cameraserver/af_tuning.bin";
 		FILE *fp = NULL;
@@ -2676,7 +2678,13 @@ v=v>(max)?(max):v; hist[v]++;}
 			}
 
 			fseek(fp, 0, SEEK_SET);
-			fread(&af->af_tuning_data, 1, len, fp);
+			rtn = fread(&af->af_tuning_data, 1, len, fp);
+			if (rtn != sizeof(af->af_tuning_data)){
+				ISP_LOGD("read bin size error");
+				fclose(fp);
+				*bisExist = 0;
+				return 0;
+			}
 			fclose(fp);
 
 			if (0 == af->af_tuning_data.flag) {
@@ -2684,7 +2692,7 @@ v=v>(max)?(max):v; hist[v]++;}
 				*bisExist = 0;
 			} else {
 				af->soft_landing_dly = af->af_tuning_data.soft_landing_dly;
-				af->soft_landing_step = af->af_tuning_data.soft_landing_step;				
+				af->soft_landing_step = af->af_tuning_data.soft_landing_step;
 				memcpy(&af->filter_clip[0], &af->af_tuning_data.filter_clip[0],
 				       sizeof(af->af_tuning_data.filter_clip));
 				memcpy(&af->bv_threshold[0], &af->af_tuning_data.bv_threshold[0],
@@ -2849,15 +2857,12 @@ v=v>(max)?(max):v; hist[v]++;}
 		af->soft_landing_dly = 0;//10;	//avoid vcm crash
 		af->soft_landing_step = 0;//20;
 
-		if (PNULL == af_pm_output->param_data 
-			|| PNULL == af_pm_output->param_data[0].data_ptr
-		    || af_pm_output->param_data[0].data_size != sizeof(af->af_tuning_data)) {
-
-			if (PNULL == af_pm_output->param_data[0].data_ptr)
-				AF_LOGD("sensor tuning param doesn't exist");
-			else
-				AF_LOGD("sensor tuning param size dismatch");
-
+		if (PNULL == af_pm_output->param_data) {
+			AF_LOGD("sensor tuning param null");
+		} else if (PNULL == af_pm_output->param_data[0].data_ptr) {
+			AF_LOGD("sensor tuning param data null");
+		} else if (af_pm_output->param_data[0].data_size != sizeof(af->af_tuning_data)) {
+			AF_LOGD("sensor tuning param size dismatch");
 		} else {
 			memcpy(&af->af_tuning_data, af_pm_output->param_data[0].data_ptr, sizeof(af->af_tuning_data));
 			AF_LOGD("sensor tuning param size match");
@@ -3412,18 +3417,16 @@ v=v>(max)?(max):v; hist[v]++;}
 		AF_LOGI("B");
 		struct afctrl_init_in *init_param = (struct afctrl_init_in *)in;
 		struct afctrl_init_out *result = (struct afctrl_init_out *)out;
-		struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)init_param->caller_handle;
-		int32_t rtn = AFV1_SUCCESS;
-
+		struct isp_alg_fw_context *isp_ctx = NULL;
 		struct isp_pm_ioctl_input af_pm_input;
 		struct isp_pm_ioctl_output af_pm_output;
-		//struct af_tuning_param *af_tuning = NULL;
-		uint32_t i;
+		int32_t rtn = AFV1_SUCCESS;
 
 		if (NULL == init_param) {
 			AF_LOGE("init_param error!!init_param : %p , result : %p  !!!", init_param, result);
 			goto INIT_ERROR_EXIT;
 		}
+		isp_ctx = (struct isp_alg_fw_context *)init_param->caller_handle;
 
 		memset((void *)&af_pm_input, 0, sizeof(af_pm_input));
 		memset((void *)&af_pm_output, 0, sizeof(af_pm_output));
@@ -3432,6 +3435,8 @@ v=v>(max)?(max):v; hist[v]++;}
 		if (ISP_SUCCESS == rtn) {
 			AF_LOGD("load af tuning params succeed");
 #if 0
+			//struct af_tuning_param *af_tuning = NULL;
+
 			af_tuning =
 			    (struct af_tuning_param *)malloc(sizeof(struct af_tuning_param) * af_pm_output.param_num);
 			if (NULL == af_tuning) {
@@ -3456,7 +3461,7 @@ v=v>(max)?(max):v; hist[v]++;}
 			AF_LOGD("malloc fail");
 			return NULL;
 		}
-//              afm_disable(af);//gwb
+		//afm_disable(af);//gwb
 		//afm_setup(isp); // default settings
 
 		memset(af, 0, sizeof(*af));
@@ -3464,14 +3469,14 @@ v=v>(max)?(max):v; hist[v]++;}
 		af->isp_info.height = init_param->src.h;	//init_param->plat_info.isp_h;
 		af->isp_info.win_num = afm_get_win_num(init_param);
 		af->caller = init_param->caller;
-		af->go_position = init_param->go_position;
+		//af->go_position = init_param->go_position;
 		af->end_notice = init_param->end_notice;
 		af->start_notice = init_param->start_notice;
 		af->set_monitor = init_param->set_monitor;
 		af->set_monitor_win = init_param->set_monitor_win;
 		af->get_monitor_win_num = init_param->get_monitor_win_num;
-		af->ae_awb_lock = init_param->ae_awb_lock;
-		af->ae_awb_release = init_param->ae_awb_release;
+		//af->ae_awb_lock = init_param->ae_awb_lock;
+		//af->ae_awb_release = init_param->ae_awb_release;
 		af->lock_module = init_param->lock_module;
 		af->unlock_module = init_param->unlock_module;
 
@@ -3669,10 +3674,9 @@ static cmr_int af_sprd_adpt_update_aux_sensor(cmr_handle handle, void *in)
 	af_ctrl_t *cxt = (af_ctrl_t *)handle;
 	struct af_aux_sensor_info_t *aux_sensor_info = (struct af_aux_sensor_info_t *)in;
 
-
 	switch (aux_sensor_info->type) {
 	case AF_ACCELEROMETER:
-		ISP_LOGI("accelerometer vertical_up = %f vertical_down = %f horizontal = %f",
+		AF_LOGV("accelerometer vertical_up = %f vertical_down = %f horizontal = %f",
 			 aux_sensor_info->gsensor_info.vertical_up,
 			 aux_sensor_info->gsensor_info.vertical_down,
 			 aux_sensor_info->gsensor_info.horizontal);
@@ -3682,21 +3686,21 @@ static cmr_int af_sprd_adpt_update_aux_sensor(cmr_handle handle, void *in)
 		cxt->gsensor_info.valid = 1;
 		break;
 	case AF_MAGNETIC_FIELD:
-		ISP_LOGI("magnetic field E");
+		AF_LOGV("magnetic field E");
 		break;
 	case AF_GYROSCOPE:
 		/*TBD trans_data_to CAF*/
-		ISP_LOGI("af_sprd_adpt_update_aux_sensor");
+		AF_LOGV("af_sprd_adpt_update_aux_sensor");
 		//afaltek_adpt_trans_data_to_caf(cxt, aux_sensor_info, AFT_DATA_SENSOR);
 		break;
 	case AF_LIGHT:
-		ISP_LOGI("light E");
+		AF_LOGV("light E");
 		break;
 	case AF_PROXIMITY:
-		ISP_LOGI("proximity E");
+		AF_LOGV("proximity E");
 		break;
 	default:
-		ISP_LOGI("sensor type not support");
+		AF_LOGI("sensor type not support");
 		break;
 	}
 
@@ -4215,11 +4219,12 @@ static cmr_int af_sprd_adpt_update_aux_sensor(cmr_handle handle, void *in)
 			break;
 
 		case AF_CMD_GET_AF_CUR_POS:
-//              *(uint32_t*)param0 = af_cxt->cur_af_pos;
+			*(uint32_t*)param0 = lens_get_pos(af);;
 			break;
 		case AF_CMD_SET_FACE_DETECT:
 			{
 				break;
+#if 0
 				struct isp_face_area *face = (struct isp_face_area *)param0;
 
 				AF_LOGD("face detect af state = %s", STATE_STRING(af->state));
@@ -4248,6 +4253,7 @@ static cmr_int af_sprd_adpt_update_aux_sensor(cmr_handle handle, void *in)
 					}
 				}
 				break;
+#endif
 			}
 		case AF_CMD_SET_DCAM_TIMESTAMP:
 			{

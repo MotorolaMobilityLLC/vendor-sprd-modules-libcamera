@@ -53,7 +53,6 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/awb/alc_awb/inc \
 	$(LOCAL_PATH)/awb/sprd_awb/inc \
 	$(LOCAL_PATH)/af/inc \
-	$(LOCAL_PATH)/af/sprd_af/afv0/inc \
 	$(LOCAL_PATH)/af/sprd_af/afv1/inc \
 	$(LOCAL_PATH)/af/sprd_af/aft/inc \
 	$(LOCAL_PATH)/af/sft_af/inc \
@@ -81,13 +80,12 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_SHARED_LIBRARIES := libcutils libutils libdl libcamcommon
 
-LOCAL_SHARED_LIBRARIES += libspaf libawb1 liblsc libcalibration libae libsprdlsc
+LOCAL_SHARED_LIBRARIES += libawb1 liblsc libcalibration libae libsprdlsc
 LOCAL_SHARED_LIBRARIES += libAF libsft_af_ctrl libaf_tune
 LOCAL_SHARED_LIBRARIES += libaf_running
 LOCAL_SHARED_LIBRARIES += libcamsensor
 
-LOCAL_SHARED_LIBRARIES += libspafv1 libcutils
-LOCAL_SHARED_LIBRARIES += libspcaftrigger
+LOCAL_SHARED_LIBRARIES += libspafv1 libspcaftrigger libcutils
 
 LOCAL_SHARED_LIBRARIES += libdeflicker
 LOCAL_SHARED_LIBRARIES += libSprdPdAlgo

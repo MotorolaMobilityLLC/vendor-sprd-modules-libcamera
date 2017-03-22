@@ -23,7 +23,6 @@
 #include "lsc_adv.h"
 #include "ae_ctrl.h"
 
-//#include "af_alg.h"
 #include "isp_type.h"
 #include "isp_com.h"
 #include "isp_drv.h"
@@ -34,7 +33,6 @@
 #include "AFv1_Interface.h"
 #include "AFv1_Tune.h"
 
-//#include "af_sprd_ctrl.h"
 #include "aft_interface.h"
 /*------------------------------------------------------------------------------*
 *					Micro Define				*
@@ -174,12 +172,6 @@ typedef struct _isp_awb_statistic_hist_info {
 enum AF_RINGBUFFER {
 	AF_RING_BUFFER_NO,
 	AF_RING_BUFFER_YES,
-};
-enum scene {
-	OUT_SCENE = 0,
-	INDOOR_SCENE,		//INDOOR_SCENE,
-	DARK_SCENE,		//DARK_SCENE,
-	SCENE_NUM,
 };
 
 enum AF_AE_GAIN {
@@ -375,14 +367,14 @@ typedef struct _af_ctrl {
 	uint32_t win_peak_pos[MULTI_STATIC_TOTAL];
 	uint32_t is_high_fps;
 	uint32_t afm_skip_num;
-	 int32_t(*go_position) (void *handle, struct af_motor_pos * in_param);
+	 //int32_t(*go_position) (void *handle, struct af_motor_pos * in_param);
 	 int32_t(*end_notice) (void *handle, struct af_result_param * in_param);
 	 int32_t(*start_notice) (void *handle);
 	 int32_t(*set_monitor) (void *handle, struct af_monitor_set * in_param, uint32_t cur_envi);
 	 int32_t(*set_monitor_win) (void *handler, struct af_monitor_win * in_param);
 	 int32_t(*get_monitor_win_num) (void *handler, uint32_t * win_num);
-	 int32_t(*ae_awb_lock) (void *handle);
-	 int32_t(*ae_awb_release) (void *handle);
+	 //int32_t(*ae_awb_lock) (void *handle);
+	 //int32_t(*ae_awb_release) (void *handle);
 	 int32_t(*lock_module) (void* handle, cmr_int af_locker_type);
 	 int32_t(*unlock_module) (void* handle, cmr_int af_locker_type);
 } af_ctrl_t;
@@ -394,11 +386,6 @@ typedef struct _test_mode_command {
 } test_mode_command_t;
 
 typedef void *afv1_handle_t;
-
-struct ae_out_bv {
-	struct ae_calc_out *ae_result;
-	int32_t bv;
-};
 
 cmr_handle sprd_afv1_init(void *in, void *out);
 int32_t sprd_afv1_deinit(cmr_handle handle, void *param, void *result);

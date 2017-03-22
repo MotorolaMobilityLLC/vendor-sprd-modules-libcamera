@@ -41,15 +41,30 @@ extern "C"
 #define AF_LOGD
 #define AF_LOGV
 #else
+enum {
+	LOG_LEVEL_LOGE = 1,
+	LOG_LEVEL_LOGW,
+	LOG_LEVEL_LOGI,
+	LOG_LEVEL_LOGD,
+	LOG_LEVEL_LOGV,
+};
 #define AF_DEBUG_STR     "ISP_AF: %d, %s: "
 #define AF_DEBUG_ARGS    __LINE__,__FUNCTION__
 
-//#define AF_LOG(format,...) ALOGE(AF_DEBUG_STR format, AF_DEBUG_ARGS, ##__VA_ARGS__)
+extern int32_t g_af_log_level;
+
 #define AF_LOGE(format,...) ALOGE(AF_DEBUG_STR format, AF_DEBUG_ARGS, ##__VA_ARGS__)
+#if 0
 #define AF_LOGW(format,...) ALOGW(AF_DEBUG_STR format, AF_DEBUG_ARGS, ##__VA_ARGS__)
 #define AF_LOGI(format,...) ALOGI(AF_DEBUG_STR format, AF_DEBUG_ARGS, ##__VA_ARGS__)
 #define AF_LOGD(format,...) ALOGD(AF_DEBUG_STR format, AF_DEBUG_ARGS, ##__VA_ARGS__)
 #define AF_LOGV(format,...) ALOGV(AF_DEBUG_STR format, AF_DEBUG_ARGS, ##__VA_ARGS__)
+#endif
+#define AF_LOGW(format,...) ALOGW_IF(g_af_log_level >= LOG_LEVEL_LOGW, AF_DEBUG_STR format, AF_DEBUG_ARGS, ##__VA_ARGS__)
+#define AF_LOGI(format,...) ALOGI_IF(g_af_log_level >= LOG_LEVEL_LOGI, AF_DEBUG_STR format, AF_DEBUG_ARGS, ##__VA_ARGS__)
+#define AF_LOGD(format,...) ALOGD_IF(g_af_log_level >= LOG_LEVEL_LOGD, AF_DEBUG_STR format, AF_DEBUG_ARGS, ##__VA_ARGS__)
+#define AF_LOGV(format,...) ALOGD_IF(g_af_log_level >= LOG_LEVEL_LOGV, AF_DEBUG_STR format, AF_DEBUG_ARGS, ##__VA_ARGS__)
+//#define AF_LOGV(format,...) ALOGV_IF(g_af_log_level >= LOG_LEVEL_LOGV, AF_DEBUG_STR format, AF_DEBUG_ARGS, ##__VA_ARGS__)
 #endif
 
 

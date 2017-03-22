@@ -1024,14 +1024,15 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 	ISP_LOGI(":ISP: begin data_type %d", data_type);
 	switch (data_type) {
 	case AF_DATA_AF:{
-		struct isp_statis_buf_input	statis_buf;
+		struct isp_statis_buf_input statis_buf;
+/*
 		struct isp_af_statistic_info afm_stat;
 		struct af_filter_info afm_param;
 		struct af_filter_data afm_data;
 		memset((void*)&afm_stat, 0, sizeof(afm_stat));
 		memset((void*)&afm_param, 0, sizeof(afm_param));
 		memset((void*)&afm_data, 0, sizeof(afm_data));
-
+*/
 		statis_info = (struct isp_statis_info *)in_ptr;
 		k_addr = statis_info->kaddr;
 		u_addr = statis_info->vir_addr;
@@ -1040,11 +1041,12 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 		for (i=0; i<30; i++) {
 			af_temp[i] = *((uint32_t *)u_addr + i);
 		}
-
+/*
 		afm_data.data = (uint64_t *)&afm_stat;
 		afm_data.type = 1;
 		afm_param.filter_num = 1;
 		afm_param.filter_data = &afm_data;
+*/
 		calc_param.data_type = AF_DATA_AF;
 		calc_param.sensor_fps = cxt->sensor_fps;
 		//calc_param.data = (void*)(&afm_param);
@@ -1689,7 +1691,7 @@ static cmr_int isp_af_sw_init(struct isp_alg_fw_context *cxt)
 	struct afctrl_init_in af_input;
 	struct isp_pm_ioctl_input af_pm_input;
 	struct isp_pm_ioctl_output af_pm_output;
-	struct af_tuning_param *af_tuning = NULL;
+	//struct af_tuning_param *af_tuning = NULL;
 	uint32_t i;
 
 	memset((void*)&af_input, 0, sizeof(af_input));
@@ -1700,7 +1702,10 @@ static cmr_int isp_af_sw_init(struct isp_alg_fw_context *cxt)
 	af_input.lib_param = cxt->lib_use_info->af_lib_info;
 	af_input.caller_handle = (cmr_handle)cxt;
 	af_input.af_set_cb = isp_af_set_cb;
+	af_input.src.w = cxt->commn_cxt.src.w;
+	af_input.src.h = cxt->commn_cxt.src.h;
 
+#if 0 //used for af1.0
 	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AF, &af_pm_input, &af_pm_output);
 	if (ISP_SUCCESS == rtn) {
 		af_input.af_bypass = 0;
@@ -1719,22 +1724,22 @@ static cmr_int isp_af_sw_init(struct isp_alg_fw_context *cxt)
 			af_pm_output.param_data++;
 		}
 
-		af_input.src.w = cxt->commn_cxt.src.w;
-		af_input.src.h = cxt->commn_cxt.src.h;
 		af_input.tuning_param = af_tuning;
 		af_input.plat_info.afm_filter_type_cnt = 1;
 		af_input.plat_info.afm_win_max_cnt = 9;
 		af_input.plat_info.isp_w = cxt->commn_cxt.input_size_trim[cxt->commn_cxt.param_index].width;
 		af_input.plat_info.isp_h = cxt->commn_cxt.input_size_trim[cxt->commn_cxt.param_index].height;
 	}
+#endif
 	rtn = af_ctrl_init(&af_input, &cxt->af_cxt.handle);
 	ISP_TRACE_IF_FAIL(rtn, ("fail to do af_ctrl_init"));
-
+#if 0
 exit:
 	if (af_tuning) {
 		free(af_tuning);
 		af_tuning = NULL;
 	}
+#endif
 	return rtn;
 }
 

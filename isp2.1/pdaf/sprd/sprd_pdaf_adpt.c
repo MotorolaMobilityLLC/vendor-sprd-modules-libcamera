@@ -25,6 +25,7 @@
 #include "dlfcn.h"
 #include "pd_algo.h"
 #include "cmr_common.h"
+#include "isp_dev_access.h"
 
 
 

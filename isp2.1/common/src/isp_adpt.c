@@ -24,7 +24,6 @@
 #include "sensor_raw.h"
 #include "ae_log.h"
 #include "af_log.h"
-#include "af_sprd_ctrl.h"
 #include "sprd_af_ctrl_v1.h"
 #include "sp_af_ctrl.h"
 #include "sprd_pdaf_adpt.h"
@@ -107,10 +106,9 @@ static int32_t adpt_get_awb_ops(struct third_lib_info *lib_info,
 	return rtn;
 }
 
-extern struct adpt_ops_type af_sprd_adpt_ops_ver0;
 extern struct adpt_ops_type af_sprd_adpt_ops_ver1;
 static uint32_t *af_sprd_version_ops[]= {
-	(uint32_t*)&af_sprd_adpt_ops_ver0,
+	NULL,
 	(uint32_t*)&af_sprd_adpt_ops_ver1,
 };
 
