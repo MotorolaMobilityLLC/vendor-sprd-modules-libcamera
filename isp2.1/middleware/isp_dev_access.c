@@ -447,7 +447,7 @@ cmr_int isp_dev_access_capability(cmr_handle isp_dev_handle, enum isp_capbility_
 		break;
 	}
 	case ISP_REG_VAL:
-		rtn = isp_dev_reg_fetch(cxt->isp_driver_handle, 0, (uint32_t*)param_ptr,0x1000);
+		rtn = isp_dev_reg_fetch(cxt->isp_driver_handle, 0, (cmr_u32*)param_ptr,0x1000);
 		break;
 	default:
 		break;
@@ -485,7 +485,7 @@ static cmr_int dev_ae_set_rgb_gain(cmr_handle isp_dev_handle, cmr_u32 *rgb_gain_
 {
 	cmr_int                                rtn = ISP_SUCCESS;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
-	uint32_t rgb_gain_offset = 4096;
+	cmr_u32 rgb_gain_offset = 4096;
 	struct isp_dev_rgb_gain_info gain_info;
 
 	gain_info.bypass		= 0;

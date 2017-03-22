@@ -35,8 +35,8 @@ struct commn_info {
 	cmr_u32 isp_callback_bypass;
 	proc_callback callback;
 	cmr_handle caller_id;
-	uint8_t *log_isp;
-	uint32_t log_isp_size;
+	cmr_u8 *log_isp;
+	cmr_u32 log_isp_size;
 	struct isp_size src;
 	struct isp_ops ops;
 	struct isp_interface_param_v1 interface_param_v1;
@@ -46,12 +46,12 @@ struct commn_info {
 struct ae_info {
 	cmr_handle handle;
 	struct isp_time time;
-	uint8_t* log_alc_ae;
-	uint32_t log_alc_ae_size;
-	uint8_t* log_alc;
-	uint32_t log_alc_size;
-	uint8_t *log_ae;
-	uint32_t log_ae_size;
+	cmr_u8* log_alc_ae;
+	cmr_u32 log_alc_ae_size;
+	cmr_u8* log_alc;
+	cmr_u32 log_alc_size;
+	cmr_u8 *log_ae;
+	cmr_u32 log_ae_size;
 	cmr_uint vir_addr;
 	cmr_int buf_size;
 	cmr_int buf_num;
@@ -63,22 +63,22 @@ struct ae_info {
 
 struct awb_info {
 	cmr_handle handle;
-	uint32_t alc_awb;
-	int awb_pg_flag;
-	uint8_t* log_alc_awb;
-	uint32_t log_alc_awb_size;
-	uint8_t* log_alc_lsc;
-	uint32_t log_alc_lsc_size;
-	uint8_t* log_awb;
-    uint32_t log_awb_size;
+	cmr_u32 alc_awb;
+	cmr_s32 awb_pg_flag;
+	cmr_u8* log_alc_awb;
+	cmr_u32 log_alc_awb_size;
+	cmr_u8* log_alc_lsc;
+	cmr_u32 log_alc_lsc_size;
+	cmr_u8* log_awb;
+    cmr_u32 log_awb_size;
 };
 
 struct smart_info {
 	cmr_handle handle;
-	uint32_t isp_smart_eb;
-	uint8_t *log_smart;
-	uint32_t log_smart_size;
-	uint8_t lock_en;
+	cmr_u32 isp_smart_eb;
+	cmr_u8 *log_smart;
+	cmr_u32 log_smart_size;
+	cmr_u8 lock_en;
 };
 
 struct afl_info {
@@ -95,8 +95,8 @@ struct afl_info {
 
 struct af_info {
 	cmr_handle handle;
-	uint8_t *log_af;
-	uint32_t log_af_size;
+	cmr_u8 *log_af;
+	cmr_u32 log_af_size;
 };
 
 struct pdaf_info {
@@ -108,10 +108,10 @@ struct pdaf_info {
 struct lsc_info {
 	cmr_handle handle;
 	void * lsc_tab_address;
-	uint32_t lsc_tab_size;
-	uint32_t isp_smart_lsc_lock;
-	uint8_t *log_lsc;
-	uint32_t log_lsc_size;
+	cmr_u32 lsc_tab_size;
+	cmr_u32 isp_smart_lsc_lock;
+	cmr_u8 *log_lsc;
+	cmr_u32 log_lsc_size;
 };
 
 struct isp_alg_fw_context {
@@ -135,9 +135,9 @@ struct isp_alg_fw_context {
 	cmr_handle handle_pm;
 	cmr_handle handle_otp;
 
-	uint32_t gamma_sof_cnt;
-	uint32_t gamma_sof_cnt_eb;
-	uint32_t update_gamma_eb;
+	cmr_u32 gamma_sof_cnt;
+	cmr_u32 gamma_sof_cnt_eb;
+	cmr_u32 update_gamma_eb;
 	struct isp_sensor_fps_info sensor_fps;
 	struct sensor_otp_cust_info *otp_data;
 };
@@ -149,7 +149,7 @@ struct isp_alg_fw_init_in {
 
 cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in *input_ptr, cmr_handle *isp_alg_handle);
 cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle);
-cmr_int isp_alg_fw_ioctl(isp_handle isp_alg_handle, enum isp_ctrl_cmd io_cmd, void *param_ptr, int (*call_back)());
+cmr_int isp_alg_fw_ioctl(cmr_handle isp_alg_handle, enum isp_ctrl_cmd io_cmd, void *param_ptr, cmr_s32 (*call_back)());
 cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_ptr);
 cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle);
 cmr_int isp_alg_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in_ptr);

@@ -30,7 +30,7 @@
 
 
 //#define LSC_ADV_ENABLE
-typedef isp_int ( *proc_callback)(isp_handle handler_id, uint32_t mode, void* param_ptr, uint32_t param_len);
+typedef cmr_int ( *proc_callback)(cmr_handle handler_id, cmr_u32 mode, void* param_ptr, cmr_u32 param_len);
 
 #define ISP_EVT_MASK	 0x00000F00
 
@@ -58,7 +58,7 @@ typedef isp_int ( *proc_callback)(isp_handle handler_id, uint32_t mode, void* pa
 #define ISP_CTRL_EVT_BINNING                     (1 << 18)
 
 #define ISP_CTRL_EVT_MONITOR_STOP            (1 << 31)
-#define ISP_CTRL_EVT_MASK                    (uint32_t)(ISP_CTRL_EVT_INIT \
+#define ISP_CTRL_EVT_MASK                    (cmr_u32)(ISP_CTRL_EVT_INIT \
 					|ISP_CTRL_EVT_CONTINUE_STOP|ISP_CTRL_EVT_DEINIT|ISP_CTRL_EVT_CONTINUE \
 					|ISP_CTRL_EVT_SIGNAL|ISP_CTRL_EVT_SIGNAL_NEXT|ISP_CTRL_EVT_IOCTRL \
 					|ISP_CTRL_EVT_TX|ISP_CTRL_EVT_SOF|ISP_CTRL_EVT_EOF|ISP_CTRL_EVT_AWB \
@@ -69,7 +69,7 @@ typedef isp_int ( *proc_callback)(isp_handle handler_id, uint32_t mode, void* pa
 
 #define ISP_PROC_AFL_DONE                    (1 << 2)
 #define ISP_PROC_AFL_STOP                    (1 << 3)
-#define ISP_AFL_EVT_MASK                     (uint32_t)(ISP_PROC_AFL_DONE | ISP_PROC_AFL_STOP)
+#define ISP_AFL_EVT_MASK                     (cmr_u32)(ISP_PROC_AFL_DONE | ISP_PROC_AFL_STOP)
 
 #define ISP_CALLBACK_EVT                     0x00040000
 
@@ -431,8 +431,8 @@ struct trim_info {
 };
 
 struct isp_af_notice {
-	uint32_t mode;
-	uint32_t valid_win;
+	cmr_u32 mode;
+	cmr_u32 valid_win;
 };
 
 enum isp_flash_type {
@@ -442,8 +442,8 @@ enum isp_flash_type {
 };
 
 struct isp_flash_power {
-	int32_t max_charge; //mA
-	int32_t max_time; //ms
+	cmr_s32 max_charge; //mA
+	cmr_s32 max_time; //ms
 };
 
 struct isp_flash_led_info {
@@ -454,38 +454,38 @@ struct isp_flash_led_info {
 
 struct isp_flash_notice {
 	enum isp_flash_mode mode;
-	uint32_t flash_ratio;
-	uint32_t will_capture;
+	cmr_u32 flash_ratio;
+	cmr_u32 will_capture;
 	struct isp_flash_power power;
-	int32_t capture_skip_num;
+	cmr_s32 capture_skip_num;
 	struct isp_flash_led_info led_info;
 };
 
 struct isp_af_win {
 	enum isp_focus_mode mode;
 	struct isp_pos_rect win[9];
-	uint32_t valid_win;
-	uint32_t ae_touch;
+	cmr_u32 valid_win;
+	cmr_u32 ae_touch;
 	struct isp_pos_rect ae_touch_rect;
 };
 
 struct isp_af_fullscan_info {
 	/* Register Parameters */
 	/* These params will depend on the AF setting */
-	uint8_t row_num;	/* The number of AF windows with row (i.e. vertical) */ /* depend on the AF Scanning */
-	uint8_t column_num; /* The number of AF windows with row (i.e. horizontal) */ /* depend on the AF Scanning */
-	uint32_t * win_peak_pos; /* The seqence of peak position which be provided via struct isp_af_fullscan_info */ /* depend on the AF Scanning */
-	//uint16_t boundary_ratio; /*  (Unit : Percentage) */ /* depend on the AF Scanning */
+	cmr_u8 row_num;	/* The number of AF windows with row (i.e. vertical) */ /* depend on the AF Scanning */
+	cmr_u8 column_num; /* The number of AF windows with row (i.e. horizontal) */ /* depend on the AF Scanning */
+	cmr_u32 * win_peak_pos; /* The seqence of peak position which be provided via struct isp_af_fullscan_info */ /* depend on the AF Scanning */
+	//cmr_u16 boundary_ratio; /*  (Unit : Percentage) */ /* depend on the AF Scanning */
 	/* The configuration for the af scanning */
-	//uint8_t valid_depth_clip; /* The up bound of valid_depth */ /* For Tuning */
-	//uint8_t method; /* The depth method. (Resaved) */ /* For Tuning */
+	//cmr_u8 valid_depth_clip; /* The up bound of valid_depth */ /* For Tuning */
+	//cmr_u8 method; /* The depth method. (Resaved) */ /* For Tuning */
 	/* No need to be set */
 	/* Customer Parameter */
-	//uint16_t sel_x; /* The point which be touched */
-	//uint16_t sel_y; /* The point which be touched */
-	//uint8_t sel_size; /* The size of area which be touched (Resaved) */ /* For Tuning */
-	//uint16_t slope; /* For Tuning */
-	//uint8_t valid_depth; /* For Tuning */
+	//cmr_u16 sel_x; /* The point which be touched */
+	//cmr_u16 sel_y; /* The point which be touched */
+	//cmr_u8 sel_size; /* The size of area which be touched (Resaved) */ /* For Tuning */
+	//cmr_u16 slope; /* For Tuning */
+	//cmr_u8 valid_depth; /* For Tuning */
 };
 
 enum af_aux_sensor_type {
@@ -520,24 +520,24 @@ struct af_aux_sensor_info_t {
 };
 
 struct isp_af_ts {
-    uint64_t timestamp;
-    uint32_t capture;
+    cmr_u64 timestamp;
+    cmr_u32 capture;
 };
 
 struct isp_face_info {
-	uint32_t   sx;
-	uint32_t   sy;
-	uint32_t   ex;
-	uint32_t   ey;
-	uint32_t   brightness;
-	int32_t    pose;
+	cmr_u32   sx;
+	cmr_u32   sy;
+	cmr_u32   ex;
+	cmr_u32   ey;
+	cmr_u32   brightness;
+	cmr_s32    pose;
 };
 
 struct isp_face_area {
-	uint16_t type;//focus or ae,
-	uint16_t face_num;
-	uint16_t frame_width;
-	uint16_t frame_height;
+	cmr_u16 type;//focus or ae,
+	cmr_u16 face_num;
+	cmr_u16 frame_width;
+	cmr_u16 frame_height;
 	struct isp_face_info face_info[10];
 };
 
@@ -553,18 +553,18 @@ struct isp_img_frm {
 	struct isp_img_mfd img_fd;
 	struct isp_addr img_addr_phy;
 	struct isp_addr img_addr_vir;
-	uint32_t format_pattern;
+	cmr_u32 format_pattern;
 };
 
 struct isp_flash_element {
-	uint16_t index;
-	uint16_t val;
+	cmr_u16 index;
+	cmr_u16 val;
 };
 
 struct isp_flash_cell {
-	uint8_t type;
-	uint8_t count;
-	uint8_t def_val;
+	cmr_u8 type;
+	cmr_u8 count;
+	cmr_u8 def_val;
 	struct isp_flash_element element[ISP_FLASH_MAX_CELL];
 };
 
@@ -587,9 +587,9 @@ struct  isp_sensor_ex_info {
 };
 
 struct isp_video_limit {
-	uint16_t width;
-	uint16_t height;
-	uint32_t res;
+	cmr_u16 width;
+	cmr_u16 height;
+	cmr_u32 res;
 };
 
 struct isp_sensor_fps_info {
@@ -601,29 +601,29 @@ struct isp_sensor_fps_info {
 };
 
 struct isp_snapshot_notice {
-	uint32_t type;
-	uint32_t preview_line_time;
-	uint32_t capture_line_time;
+	cmr_u32 type;
+	cmr_u32 preview_line_time;
+	cmr_u32 capture_line_time;
 };
 
 struct isp_range_fps {
-	uint16_t min_fps;
-	uint16_t max_fps;
+	cmr_u16 min_fps;
+	cmr_u16 max_fps;
 };
 
 struct isp_ae_fps {
-	uint32_t min_fps;
-	uint32_t max_fps;
+	cmr_u32 min_fps;
+	cmr_u32 max_fps;
 };
 
 struct isp_info {
 	void *addr;
-	int    size;
+	cmr_s32    size;
 };
 
 struct isp_hdr_ev_param {
-	int32_t level;
-	int32_t skip_frame_num; //return from isp
+	cmr_s32 level;
+	cmr_s32 skip_frame_num; //return from isp
 };
 
 struct isp_sensor_resolution_info {
@@ -641,10 +641,10 @@ struct isp_sensor_resolution_info {
 
 struct ips_in_param {
 	struct isp_img_frm src_frame;
-	uint32_t src_avail_height;
-	uint32_t src_slice_height;
+	cmr_u32 src_avail_height;
+	cmr_u32 src_slice_height;
 	struct isp_img_frm dst_frame;
-	uint32_t dst_slice_height;
+	cmr_u32 dst_slice_height;
 
 	struct isp_img_frm dst2_frame;
 	cmr_u32 dst2_slice_height;
@@ -654,20 +654,20 @@ struct ips_in_param {
 };
 
 struct ips_out_param {
-	uint32_t output_height;
+	cmr_u32 output_height;
 };
 
 struct ipn_in_param {
-	uint32_t src_avail_height;
-	uint32_t src_slice_height;
+	cmr_u32 src_avail_height;
+	cmr_u32 src_slice_height;
 	struct isp_addr img_addr_phy;
 	struct isp_addr src_addr_phy;
 	struct isp_addr dst_addr_phy;
 };
 
 struct isp_video_start {
-	uint16_t is_snapshot;
-	uint32_t dv_mode;
+	cmr_u16 is_snapshot;
+	cmr_u32 dv_mode;
 	void* cb_of_malloc;
 	void* cb_of_free;
 	void* buffer_client_data;
@@ -740,9 +740,9 @@ struct isp_init_param {
 	void* setting_param_ptr;
 	struct isp_size size;
 	proc_callback ctrl_callback;
-	isp_handle oem_handle;
+	cmr_handle oem_handle;
 	struct isp_data_info calibration_param;
-	uint32_t camera_id;
+	cmr_u32 camera_id;
 	void* sensor_lsc_golden_data;
 	struct isp_ops ops;
 	struct isp_data_info mode_ptr[ISP_MODE_NUM_MAX];
@@ -762,8 +762,8 @@ struct isp_init_param {
 	cmr_s32           dcam_fd;
 };
 
-typedef isp_uint (*isp_cb_of_malloc)(isp_uint type, isp_uint *size_ptr, isp_uint *sum_ptr, isp_uint *phy_addr, isp_uint *vir_addr, isp_s32 *mfd, void* private_data);
-typedef isp_uint (*isp_cb_of_free)(isp_uint type, isp_uint *phy_addr, isp_uint *vir_addr, isp_s32 *fd, isp_uint sum, void* private_data);
+typedef cmr_uint (*isp_cb_of_malloc)(cmr_uint type, cmr_uint *size_ptr, cmr_uint *sum_ptr, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *mfd, void* private_data);
+typedef cmr_uint (*isp_cb_of_free)(cmr_uint type, cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd, cmr_uint sum, void* private_data);
 typedef cmr_int (*isp_ae_cb)(cmr_handle handle, cmr_int type, void *param0, void *param1);
 typedef cmr_int (*isp_af_cb)(cmr_handle handle, cmr_int type, void *param0, void *param1);
 typedef cmr_int (*isp_pdaf_cb)(cmr_handle handle, cmr_int type, void *param0, void *param1);
@@ -773,13 +773,13 @@ typedef cmr_int (*isp_pdaf_cb)(cmr_handle handle, cmr_int type, void *param0, vo
 **----------------------------------------------------------------------------*/
 
 cmr_int isp_init(struct isp_init_param* ptr, cmr_handle* isp_handler);
-cmr_int isp_deinit(isp_handle isp_handler);
-cmr_int isp_capability(isp_handle isp_handler, enum isp_capbility_cmd cmd, void* param_ptr);
-cmr_int isp_ioctl(isp_handle isp_handler, enum isp_ctrl_cmd cmd, void* param_ptr);
-cmr_int isp_video_start(isp_handle isp_handler, struct isp_video_start* param_ptr);
-cmr_int isp_video_stop(isp_handle isp_handler);
-cmr_int isp_proc_start(isp_handle isp_handler, struct ips_in_param* in_param_ptr, struct ips_out_param *out_ptr);
-cmr_int isp_proc_next(isp_handle isp_handler, struct ipn_in_param* in_ptr, struct ips_out_param *out_ptr);
+cmr_int isp_deinit(cmr_handle isp_handler);
+cmr_int isp_capability(cmr_handle isp_handler, enum isp_capbility_cmd cmd, void* param_ptr);
+cmr_int isp_ioctl(cmr_handle isp_handler, enum isp_ctrl_cmd cmd, void* param_ptr);
+cmr_int isp_video_start(cmr_handle isp_handler, struct isp_video_start* param_ptr);
+cmr_int isp_video_stop(cmr_handle isp_handler);
+cmr_int isp_proc_start(cmr_handle isp_handler, struct ips_in_param* in_param_ptr, struct ips_out_param *out_ptr);
+cmr_int isp_proc_next(cmr_handle isp_handler, struct ipn_in_param* in_ptr, struct ips_out_param *out_ptr);
 cmr_int isp_cap_buff_cfg(cmr_handle isp_handle, struct isp_img_param *buf_cfg);
 void ispmw_dev_buf_cfg_evt_cb(cmr_handle isp_handle, isp_buf_cfg_evt_cb grab_event_cb);
 void isp_statis_evt_cb(cmr_int evt, void* data, void* privdata);

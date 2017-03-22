@@ -34,35 +34,35 @@
 #include <dlfcn.h>
 
 
-uint32_t isp_cur_bv;
-uint32_t isp_cur_ct;
+cmr_u32 isp_cur_bv;
+cmr_u32 isp_cur_ct;
 
 #define LSC_ADV_ENABLE
 //#define ANTI_FLICKER_INFO_VERSION_NEW
 
-int gAWBGainR = 1;
-int gAWBGainB = 1;
-int gCntSendMsgLsc = 0;
-static uint32_t aeStatistic[32*32*4];
+cmr_s32 gAWBGainR = 1;
+cmr_s32 gAWBGainB = 1;
+cmr_s32 gCntSendMsgLsc = 0;
+static cmr_u32 aeStatistic[32*32*4];
 
 
 struct isp_awb_calc_info {
 	struct ae_calc_out ae_result;
 	struct isp_awb_statistic_info *ae_stat_ptr;
 	struct isp_binning_statistic_info *awb_stat_ptr;
-	uint64_t k_addr;
-	uint64_t u_addr;
-	isp_u32 type;
+	cmr_u64 k_addr;
+	cmr_u64 u_addr;
+	cmr_u32 type;
 };
 
 struct isp_alsc_calc_info{
-	uint32_t* stat_ptr;
-	int image_width;
-	int image_height;
+	cmr_u32* stat_ptr;
+	cmr_s32 image_width;
+	cmr_s32 image_height;
 	struct awb_size stat_img_size;
 	struct awb_size win_size;
-	uint32_t awb_ct; int awb_r_gain; int awb_b_gain;
-	uint32_t stable;
+	cmr_u32 awb_ct; cmr_s32 awb_r_gain; cmr_s32 awb_b_gain;
+	cmr_u32 stable;
 };
 
 struct isp_alg_sw_init_in {
@@ -102,7 +102,7 @@ static nsecs_t isp_get_timestamp(void)
 
 static cmr_int isp_get_rgb_gain(cmr_handle isp_fw_handle, cmr_u32 *param)
 {
-	int32_t                         rtn = ISP_SUCCESS;
+	cmr_s32                         rtn = ISP_SUCCESS;
 	struct isp_pm_param_data        param_data;
 	struct isp_pm_ioctl_input       input = {NULL, 0};
 	struct isp_pm_ioctl_output      output = {NULL, 0};
@@ -311,15 +311,15 @@ static cmr_int isp_pdaf_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *pa
 	return rtn;
 }
 
-int32_t alsc_calc(cmr_handle isp_alg_handle,
-					uint32_t* ae_stat_r, uint32_t* ae_stat_g, uint32_t* ae_stat_b,
+cmr_s32 alsc_calc(cmr_handle isp_alg_handle,
+					cmr_u32* ae_stat_r, cmr_u32* ae_stat_g, cmr_u32* ae_stat_b,
 					struct awb_size *stat_img_size,
 					struct awb_size *win_size,
-					int image_width, int image_height,
-					uint32_t awb_ct, int awb_r_gain, int awb_b_gain,
-					uint32_t ae_stable)
+					cmr_s32 image_width, cmr_s32 image_height,
+					cmr_u32 awb_ct, cmr_s32 awb_r_gain, cmr_s32 awb_b_gain,
+					cmr_u32 ae_stable)
 {
-	int32_t	rtn = ISP_SUCCESS;
+	cmr_s32	rtn = ISP_SUCCESS;
 #ifdef 	LSC_ADV_ENABLE
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context*)isp_alg_handle;
 	lsc_adv_handle_t lsc_adv_handle = cxt->lsc_cxt.handle;
@@ -335,8 +335,8 @@ int32_t alsc_calc(cmr_handle isp_alg_handle,
 	}
 
 	if( lsc_ver.LSC_SPD_VERSION >= 2 ){
-		uint32_t i = 0;
-		int32_t bv0 = 0;
+		cmr_u32 i = 0;
+		cmr_s32 bv0 = 0;
 
 		memset(&pm_param, 0, sizeof(pm_param));
 
@@ -356,7 +356,7 @@ int32_t alsc_calc(cmr_handle isp_alg_handle,
 		struct lsc_adv_calc_result calc_result = {0};
 		memset(&calc_param, 0, sizeof(calc_param));
 
-		calc_result.dst_gain = (uint16_t *)lsc_info->data_ptr;
+		calc_result.dst_gain = (cmr_u16 *)lsc_info->data_ptr;
 		calc_param.stat_img.r  = ae_stat_r;
 		calc_param.stat_img.gr = ae_stat_g;
 		calc_param.stat_img.gb  = ae_stat_g;
@@ -367,7 +367,7 @@ int32_t alsc_calc(cmr_handle isp_alg_handle,
 		calc_param.gain_height = lsc_info->gain_h;
 		calc_param.block_size.w = win_size->w;
 		calc_param.block_size.h = win_size->h;
-		calc_param.lum_gain = (uint16_t *)lsc_info->param_ptr;
+		calc_param.lum_gain = (cmr_u16 *)lsc_info->param_ptr;
 		calc_param.ct = awb_ct;
 		calc_param.r_gain = awb_r_gain;
 		calc_param.b_gain = awb_b_gain;
@@ -396,15 +396,15 @@ int32_t alsc_calc(cmr_handle isp_alg_handle,
 
 		if (cxt->lsc_cxt.isp_smart_lsc_lock == 0)
 		{
-			uint64_t time0 = systemTime(CLOCK_MONOTONIC);
+			cmr_u64 time0 = systemTime(CLOCK_MONOTONIC);
 
 			rtn = lsc_ctrl_process(lsc_adv_handle, &calc_param, &calc_result);
 			if (ISP_SUCCESS != rtn) {
 				ALOGE("fail to do lsc adv gain map calc");
 				return rtn;
 			}
-			uint64_t time1 = systemTime(CLOCK_MONOTONIC);
-			//ALOGE("ALSC2 system time alsc_proc time =  %dus", (int)((time1-time0)/1000));
+			cmr_u64 time1 = systemTime(CLOCK_MONOTONIC);
+			//ALOGE("ALSC2 system time alsc_proc time =  %dus", (cmr_s32)((time1-time0)/1000));
 
 			BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
 			io_pm_input.param_data_ptr = &pm_param;
@@ -423,7 +423,7 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 	struct isp_pm_ioctl_input       input = {NULL, 0};
 	struct isp_pm_ioctl_output      output = {NULL, 0};
 	struct isp_pm_param_data        *param_data = NULL;
-	uint32_t                        i;
+	cmr_u32                        i;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 
@@ -471,11 +471,11 @@ static cmr_int ispalg_aem_stat_data_parser(cmr_handle isp_alg_handle, void *data
 	struct isp_awb_statistic_info 	*ae_stat_ptr=NULL;
 	struct isp_statis_buf_input 	statis_buf;
 	struct isp_statis_info 			*statis_info = (struct isp_statis_info *)data;
-	uint64_t k_addr = 0;
-	uint64_t u_addr = 0;
-	uint32_t val0 = 0;
-	uint32_t val1 = 0;
-	uint32_t i =0;
+	cmr_u64 k_addr = 0;
+	cmr_u64 u_addr = 0;
+	cmr_u32 val0 = 0;
+	cmr_u32 val1 = 0;
+	cmr_u32 i =0;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 	k_addr = statis_info->phy_addr;
@@ -484,8 +484,8 @@ static cmr_int ispalg_aem_stat_data_parser(cmr_handle isp_alg_handle, void *data
 	ae_stat_ptr = &cxt->aem_stats;
 
 	for (i = 0x00; i < ISP_RAW_AEM_ITEM; i++) {
-		val0 = *((uint32_t *)u_addr + i * 2);
-		val1 = *(((uint32_t *)u_addr) + i * 2 + 1);
+		val0 = *((cmr_u32 *)u_addr + i * 2);
+		val1 = *(((cmr_u32 *)u_addr) + i * 2 + 1);
 		ae_stat_ptr->r_info[i] = (val1 >> 11) & 0x1fffff;
 		ae_stat_ptr->g_info[i] = ((val1 & 0x7ff) << 11) | ((val0 >> 21) & 0x3ff);
 		ae_stat_ptr->b_info[i] = val0 & 0x1fffff;
@@ -531,8 +531,8 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle,
 
 	in_param.stat_fmt = AE_AEM_FMT_RGB;
 	if (AE_AEM_FMT_RGB & in_param.stat_fmt) {
-		in_param.rgb_stat_img = (uint32_t*)&cxt->aem_stats.r_info[0];
-		in_param.stat_img     = (uint32_t*)&cxt->aem_stats.r_info[0];
+		in_param.rgb_stat_img = (cmr_u32*)&cxt->aem_stats.r_info[0];
+		in_param.stat_img     = (cmr_u32*)&cxt->aem_stats.r_info[0];
 	}
 
 	in_param.sec  = cxt->ae_cxt.time.sec;
@@ -573,8 +573,8 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle, struct isp_awb_calc_in
 	struct ae_monitor_info info;
 	float gain = 0;
 	float exposure = 0;
-	int32_t bv = 0;
-	int32_t iso = 0;
+	cmr_s32 bv = 0;
+	cmr_s32 iso = 0;
 	struct ae_get_ev ae_ev;
 	memset(&ae_ev, 0, sizeof(ae_ev));
 
@@ -616,7 +616,7 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle, struct isp_awb_calc_in
 	out_ptr->ae_info.f_value   = 2.2;
 	out_ptr->ae_info.stable	= in_ptr->ae_result.is_stab;
 	out_ptr->ae_info.ev_index  = ae_ev.ev_index;
-	memcpy(out_ptr->ae_info.ev_table, ae_ev.ev_tab, 16*sizeof(int32_t));
+	memcpy(out_ptr->ae_info.ev_table, ae_ev.ev_tab, 16*sizeof(cmr_s32));
 //ALC_E
 	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_MONITOR_INFO, NULL, (void*)&info);
 	out_ptr->scalar_factor = (info.win_size.h/2)*(info.win_size.w/2);
@@ -633,11 +633,11 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle, struct isp_awb_calc_in
 	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING,  &io_pm_input, &io_pm_output);
 
 	if(io_pm_output.param_data != NULL){
-		uint16_t* cmc_info = io_pm_output.param_data->data_ptr;
+		cmr_u16* cmc_info = io_pm_output.param_data->data_ptr;
 
 		if(cmc_info != NULL){
 			#define CMC10(n) (((n)>>13)?((n)-(1<<14)):(n))
-			int i;
+			cmr_s32 i;
 			for (i=0; i<9; i++)
 			{
 				out_ptr->matrix[i] = CMC10(cmc_info[i]);
@@ -653,7 +653,7 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle, struct isp_awb_calc_in
 		struct isp_dev_gamma_info_v1* gamma_info = io_pm_output.param_data->data_ptr;
 
 		if (gamma_info != NULL){
-			int i;
+			cmr_s32 i;
 			for (i=0; i<256; i++)
 			{
 				out_ptr->gamma[i] = (gamma_info->nodes[i].node_y + gamma_info->nodes[i+1].node_y) / 2;
@@ -711,7 +711,7 @@ cmr_int ispalg_awb_post_process(cmr_handle isp_alg_handle, struct awb_ctrl_calc_
 		struct isp_pm_ioctl_output output = {NULL, 0};
 
 		memset(&param_data, 0x0, sizeof(param_data));
-		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_CMC10, ISP_BLK_CMC10, result->ccm, 9*sizeof(uint16_t));
+		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_CMC10, ISP_BLK_CMC10, result->ccm, 9*sizeof(cmr_u16));
 
 		rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, &output);
 		ISP_TRACE_IF_FAIL(rtn, ("fail to set isp block param"));
@@ -791,8 +791,8 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 	struct awb_size win_size = {0, 0};
 	nsecs_t system_time0 = 0;
 	nsecs_t system_time1 = 0;
-	int32_t bv = 0;
-	int32_t bv_gain = 0;
+	cmr_s32 bv = 0;
+	cmr_s32 bv_gain = 0;
 	struct ae_out_bv ae_out_bv;
 
 	memset(&smart_proc_in, 0, sizeof(smart_proc_in));
@@ -846,13 +846,13 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle, struct isp_a
 			/*send message to alsc process*/
 			struct isp_alsc_calc_info alsc_info;
 
-			uint32_t * buf_stat_lsc = aeStatistic;
-			uint32_t * ptr_r_stat = buf_stat_lsc;
-			uint32_t * ptr_g_stat = buf_stat_lsc + 1024;
-			uint32_t * ptr_b_stat = buf_stat_lsc + 1024*2;
-			memcpy(ptr_r_stat, ae_stat_ptr->r_info, 1024*sizeof(uint32_t));
-			memcpy(ptr_g_stat, ae_stat_ptr->g_info, 1024*sizeof(uint32_t));
-			memcpy(ptr_b_stat, ae_stat_ptr->b_info, 1024*sizeof(uint32_t));
+			cmr_u32 * buf_stat_lsc = aeStatistic;
+			cmr_u32 * ptr_r_stat = buf_stat_lsc;
+			cmr_u32 * ptr_g_stat = buf_stat_lsc + 1024;
+			cmr_u32 * ptr_b_stat = buf_stat_lsc + 1024*2;
+			memcpy(ptr_r_stat, ae_stat_ptr->r_info, 1024*sizeof(cmr_u32));
+			memcpy(ptr_g_stat, ae_stat_ptr->g_info, 1024*sizeof(cmr_u32));
+			memcpy(ptr_b_stat, ae_stat_ptr->b_info, 1024*sizeof(cmr_u32));
 
 			alsc_info.stat_ptr= buf_stat_lsc;
 			alsc_info.awb_b_gain = result->gain.b;
@@ -940,9 +940,9 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	cmr_int                         rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context*)isp_alg_handle;
 	cmr_int bypass = 0;
-	uint32_t cur_flicker = 0;
-	uint32_t cur_exp_flag = 0;
-	int32_t ae_exp_flag = 0;
+	cmr_u32 cur_flicker = 0;
+	cmr_u32 cur_exp_flag = 0;
+	cmr_s32 ae_exp_flag = 0;
 	float ae_exp = 0.0;
 	cmr_int nxt_flicker = 0;
 	struct isp_awb_statistic_info   ae_stat_ptr;
@@ -953,8 +953,8 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	struct afl_ctrl_proc_out afl_output;
 	struct isp_statis_info *statis_info = NULL;
 	struct isp_statis_buf_input     statis_buf;
-	uint32_t k_addr = 0;
-	uint32_t u_addr = 0;
+	cmr_u32 k_addr = 0;
+	cmr_u32 u_addr = 0;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 #if 0
@@ -1031,8 +1031,8 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 	struct afctrl_calc_in calc_param;
 	struct afctrl_calc_out calc_result;
 	struct isp_statis_info *statis_info = NULL;
-	uint32_t k_addr = 0;
-	uint32_t u_addr = 0;
+	cmr_u32 k_addr = 0;
+	cmr_u32 u_addr = 0;
 	cmr_s32 i = 0;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
@@ -1054,12 +1054,12 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 		k_addr = statis_info->kaddr;
 		u_addr = statis_info->vir_addr;
 
-		uint32_t af_temp[30];
+		cmr_u32 af_temp[30];
 		for (i=0; i<30; i++) {
-			af_temp[i] = *((uint32_t *)u_addr + i);
+			af_temp[i] = *((cmr_u32 *)u_addr + i);
 		}
 /*
-		afm_data.data = (uint64_t *)&afm_stat;
+		afm_data.data = (cmr_u64 *)&afm_stat;
 		afm_data.type = 1;
 		afm_param.filter_num = 1;
 		afm_param.filter_data = &afm_data;
@@ -1090,7 +1090,7 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 		img_blk_info.block_h = 32;
 		img_blk_info.chn_num = 3;
 		img_blk_info.pix_per_blk = 1;
-		img_blk_info.data = (uint32_t *)in_ptr;
+		img_blk_info.data = (cmr_u32 *)in_ptr;
 		calc_param.data_type = AF_DATA_IMG_BLK;
 		calc_param.data = (void*)(&img_blk_info);
 		rtn = af_ctrl_process(cxt->af_cxt.handle,(void *)&calc_param,(void *)&calc_result);
@@ -1099,11 +1099,11 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 	case AF_DATA_AE:{
 		struct af_ae_info ae_info;
 		struct ae_calc_out *ae_result = (struct ae_calc_out *)in_ptr;
-		uint32_t line_time = ae_result->line_time;
-		uint32_t frame_len = ae_result->frame_line;
-		uint32_t dummy_line = ae_result->cur_dummy;
-		uint32_t exp_line= ae_result->cur_exp_line;
-		uint32_t frame_time;
+		cmr_u32 line_time = ae_result->line_time;
+		cmr_u32 frame_len = ae_result->frame_line;
+		cmr_u32 dummy_line = ae_result->cur_dummy;
+		cmr_u32 exp_line= ae_result->cur_exp_line;
+		cmr_u32 frame_time;
 
 		memset((void*)&ae_info, 0, sizeof(ae_info));
 		ae_info.exp_time = ae_result->cur_exp_line*line_time/10;
@@ -1136,8 +1136,8 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 	cmr_int 			rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context*)isp_alg_handle;
 	struct isp_statis_info *statis_info = NULL;
-	uint32_t k_addr = 0;
-	uint32_t u_addr = 0;
+	cmr_u32 k_addr = 0;
+	cmr_u32 u_addr = 0;
 	cmr_s32 i = 0;
 	struct pdaf_ctrl_process_in pdaf_param_in;
 	struct isp_statis_buf_input     statis_buf;
@@ -1150,9 +1150,9 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 	k_addr = statis_info->phy_addr;
 	u_addr = statis_info->vir_addr;
 
-	uint32_t pdaf_temp[30];
+	cmr_u32 pdaf_temp[30];
 	for (i=0; i<30; i++) {
-		pdaf_temp[i] = *((uint32_t *)u_addr + i);
+		pdaf_temp[i] = *((cmr_u32 *)u_addr + i);
 	}
 
 	pdaf_param_in.dBv = pdaf_temp[0];
@@ -1173,16 +1173,16 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 	return rtn;
 }
 
-static uint32_t binning_data_cvt(uint32_t bayermode, uint32_t width, uint32_t height, uint16_t *raw_in, struct isp_binning_statistic_info *binning_info)
+static cmr_u32 binning_data_cvt(cmr_u32 bayermode, cmr_u32 width, cmr_u32 height, cmr_u16 *raw_in, struct isp_binning_statistic_info *binning_info)
 {
-	uint32_t rtn = 0;
-	uint32_t i,j;
-	uint32_t *binning_r = binning_info->r_info;
-	uint32_t *binning_g = binning_info->g_info;
-	uint32_t *binning_b = binning_info->b_info;
-	uint32_t blk_id=0;
-	uint32_t *binning_block[4] = {binning_g, binning_r, binning_b, binning_g};
-	uint16_t pixel_type;
+	cmr_u32 rtn = 0;
+	cmr_u32 i,j;
+	cmr_u32 *binning_r = binning_info->r_info;
+	cmr_u32 *binning_g = binning_info->g_info;
+	cmr_u32 *binning_b = binning_info->b_info;
+	cmr_u32 blk_id=0;
+	cmr_u32 *binning_block[4] = {binning_g, binning_r, binning_b, binning_g};
+	cmr_u16 pixel_type;
 
 	if(NULL == raw_in || NULL == binning_r || NULL == binning_g|| NULL == binning_b) {
 		ISP_LOGE("fail to check input param");
@@ -1228,23 +1228,23 @@ static cmr_int ispalg_binning_stat_data_parser(cmr_handle isp_alg_handle, void *
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context*)isp_alg_handle;
 	struct isp_statis_buf_input statis_buf;
 	struct isp_statis_info *statis_info = (struct isp_statis_info *)data;
-	uint64_t k_addr = 0;
-	uint64_t u_addr = 0;
-	uint32_t val = 0;
-	uint32_t last_val0 = 0;
-	uint32_t last_val1 = 0;
-	uint32_t binning_hx = 4;
-	uint32_t binning_vx = 4;
-	uint32_t src_w = cxt->commn_cxt.src.w;
-	uint32_t src_h = cxt->commn_cxt.src.h;
-	uint32_t binnng_w = (src_w >> binning_hx) & ~0x1;
-	uint32_t binnng_h = (src_h >> binning_vx) & ~0x1;
-	uint32_t double_binning_num = binnng_w *binnng_h / 6 * 2;
-	uint32_t remainder = 0;
-	uint16_t *binning_img_data = NULL;
-	uint16_t *binning_img_ptr = NULL;
-	uint32_t bayermode = cxt->commn_cxt.image_pattern;
-	uint32_t i =0;
+	cmr_u64 k_addr = 0;
+	cmr_u64 u_addr = 0;
+	cmr_u32 val = 0;
+	cmr_u32 last_val0 = 0;
+	cmr_u32 last_val1 = 0;
+	cmr_u32 binning_hx = 4;
+	cmr_u32 binning_vx = 4;
+	cmr_u32 src_w = cxt->commn_cxt.src.w;
+	cmr_u32 src_h = cxt->commn_cxt.src.h;
+	cmr_u32 binnng_w = (src_w >> binning_hx) & ~0x1;
+	cmr_u32 binnng_h = (src_h >> binning_vx) & ~0x1;
+	cmr_u32 double_binning_num = binnng_w *binnng_h / 6 * 2;
+	cmr_u32 remainder = 0;
+	cmr_u16 *binning_img_data = NULL;
+	cmr_u16 *binning_img_ptr = NULL;
+	cmr_u32 bayermode = cxt->commn_cxt.image_pattern;
+	cmr_u32 i =0;
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 	k_addr = statis_info->phy_addr;
@@ -1252,7 +1252,7 @@ static cmr_int ispalg_binning_stat_data_parser(cmr_handle isp_alg_handle, void *
 
 	ISP_LOGV("bayer: %d, src_size=(%d,%d)\n", bayermode, src_w, src_h);
 
-	binning_img_data = (uint16_t *)malloc(binnng_w * binnng_h *2);
+	binning_img_data = (cmr_u16 *)malloc(binnng_w * binnng_h *2);
 	if (binning_img_data == NULL) {
 		ISP_LOGE("fail to malloc binning img data\n");
 		return -1;
@@ -1261,14 +1261,14 @@ static cmr_int ispalg_binning_stat_data_parser(cmr_handle isp_alg_handle, void *
 	binning_img_ptr = binning_img_data;
 
 	for (i = 0; i< double_binning_num; i++) {
-		val = *((uint32_t *)u_addr + i);
+		val = *((cmr_u32 *)u_addr + i);
 		*binning_img_ptr++ = val & 0x3FF;
 		*binning_img_ptr++ = (val >> 10) & 0x3FF;
 		*binning_img_ptr++ = (val >> 20) & 0x3FF;
 	}
 	remainder = binnng_w *binnng_h % 6;
-	last_val0 = *((uint32_t *)u_addr + i);
-	last_val1 = *((uint32_t *)u_addr + i + 1);
+	last_val0 = *((cmr_u32 *)u_addr + i);
+	last_val1 = *((cmr_u32 *)u_addr + i + 1);
 
 	switch (remainder) {
 	case 1:{
@@ -1478,10 +1478,10 @@ exit:
 	return rtn;
 }
 
-static uint32_t _ispGetIspParamIndex(struct sensor_raw_resolution_info* input_size_trim, struct isp_size* size)
+static cmr_u32 _ispGetIspParamIndex(struct sensor_raw_resolution_info* input_size_trim, struct isp_size* size)
 {
-	uint32_t                        param_index = 0x01;
-	uint32_t                        i;
+	cmr_u32                        param_index = 0x01;
+	cmr_u32                        i;
 
 	for (i = 0x01; i < ISP_INPUT_SIZE_NUM_MAX; i++) {
 		if (size->h == input_size_trim[i].height) {
@@ -1500,8 +1500,8 @@ static cmr_int isp_ae_sw_init(struct isp_alg_fw_context *cxt)
 	struct isp_pm_ioctl_output      output;
 	struct isp_pm_param_data        *param_data = NULL;
 	struct isp_flash_param *flash = NULL;
-	uint32_t                        num = 0;
-	uint32_t                        i = 0;
+	cmr_u32                        num = 0;
+	cmr_u32                        i = 0;
 
 	memset(&output, 0, sizeof(output));
 	memset((void*)&ae_input, 0, sizeof(ae_input));
@@ -1673,7 +1673,7 @@ static cmr_int isp_smart_sw_init(struct isp_alg_fw_context *cxt)
 	struct smart_init_param         smart_init_param;
 	struct isp_pm_ioctl_input       pm_input;
 	struct isp_pm_ioctl_output      pm_output;
-	uint32_t                        i = 0;
+	cmr_u32                        i = 0;
 
 	memset(&pm_input, 0, sizeof(pm_input));
 	memset(&pm_output, 0, sizeof(pm_output));
@@ -1709,7 +1709,7 @@ static cmr_int isp_af_sw_init(struct isp_alg_fw_context *cxt)
 	struct isp_pm_ioctl_input af_pm_input;
 	struct isp_pm_ioctl_output af_pm_output;
 	//struct af_tuning_param *af_tuning = NULL;
-	uint32_t i;
+	cmr_u32 i;
 
 	memset((void*)&af_input, 0, sizeof(af_input));
 	memset((void*)&af_pm_input, 0, sizeof(af_pm_input));
@@ -1907,8 +1907,8 @@ error_dlsym:
 
 static cmr_int isp_lsc_sw_init(struct isp_alg_fw_context *cxt)
 {
-	uint32_t rtn = ISP_SUCCESS;
-	int i = 0;
+	cmr_u32 rtn = ISP_SUCCESS;
+	cmr_s32 i = 0;
 	lsc_adv_handle_t lsc_adv_handle = NULL;
 	struct lsc_adv_init_param lsc_param;
 	isp_pm_handle_t pm_handle = cxt->handle_pm;
@@ -2003,7 +2003,7 @@ static cmr_int isp_lsc_sw_init(struct isp_alg_fw_context *cxt)
 
 	lsc_param.gain_width = lsc_info->gain_w;
 	lsc_param.gain_height = lsc_info->gain_h;
-	lsc_param.lum_gain = (uint16_t*)lsc_info->data_ptr;
+	lsc_param.lum_gain = (cmr_u16*)lsc_info->data_ptr;
 	lsc_param.grid = lsc_info->grid;
 	lsc_param.lib_param = cxt->lib_use_info->lsc_lib_info;
 
@@ -2045,7 +2045,7 @@ static cmr_int isp_lsc_sw_init(struct isp_alg_fw_context *cxt)
 }
 
 
-static uint32_t isp_alg_sw_init(struct isp_alg_fw_context *cxt, struct isp_alg_sw_init_in *input_ptr)
+static cmr_u32 isp_alg_sw_init(struct isp_alg_fw_context *cxt, struct isp_alg_sw_init_in *input_ptr)
 {
 	cmr_int                         rtn = ISP_SUCCESS;
 
@@ -2084,7 +2084,7 @@ static cmr_int isp_pm_sw_init(cmr_handle isp_alg_handle, struct isp_init_param *
 	struct isp_pm_init_input input;
 	struct isp_otp_init_in otp_input;
 	isp_ctrl_context isp_ctrl_cxt;
-	uint32_t i = 0;
+	cmr_u32 i = 0;
 
 	memset(&isp_ctrl_cxt, 0, sizeof(isp_ctrl_cxt));
 	cxt->sn_cxt.sn_raw_info = sensor_raw_info_ptr;
@@ -2131,7 +2131,7 @@ static cmr_int isp_pm_sw_init(cmr_handle isp_alg_handle, struct isp_init_param *
 	return rtn;
 }
 
-static uint32_t isp_alg_sw_deinit(cmr_handle isp_alg_handle)
+static cmr_u32 isp_alg_sw_deinit(cmr_handle isp_alg_handle)
 {
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
@@ -2168,8 +2168,8 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in *input_ptr, cmr_handle *isp_al
 	struct isp_alg_sw_init_in isp_alg_input;
 	struct sensor_raw_info *sensor_raw_info_ptr = (struct sensor_raw_info*)input_ptr->init_param->setting_param_ptr;
 	struct sensor_libuse_info *libuse_info = NULL;
-	uint32_t *binning_info = NULL;
-	uint32_t max_binning_num = ISP_BINNING_MAX_STAT_W * ISP_BINNING_MAX_STAT_H / 4;
+	cmr_u32 *binning_info = NULL;
+	cmr_u32 max_binning_num = ISP_BINNING_MAX_STAT_W * ISP_BINNING_MAX_STAT_H / 4;
 
 	*isp_alg_handle = NULL;
 
@@ -2192,23 +2192,23 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in *input_ptr, cmr_handle *isp_al
 	cxt->otp_data = input_ptr->init_param->otp_data;
 	isp_alg_input.otp_data = input_ptr->init_param->otp_data;
 
-	binning_info = (uint32_t *)malloc(max_binning_num *3 *sizeof(uint32_t));
+	binning_info = (cmr_u32 *)malloc(max_binning_num *3 *sizeof(cmr_u32));
 	if (!binning_info) {
 		ISP_LOGE("fail to malloc binning buf");
 		rtn = ISP_ALLOC_ERROR;
 		goto exit;
 	}
-	cmr_bzero(binning_info, max_binning_num *3 *sizeof(uint32_t));
+	cmr_bzero(binning_info, max_binning_num *3 *sizeof(cmr_u32));
 	cxt->binning_stats.r_info = binning_info;
 	cxt->binning_stats.g_info = binning_info + max_binning_num;
 	cxt->binning_stats.b_info = cxt->binning_stats.g_info + max_binning_num;
 
-	uint32_t binning_hx = 4;
-	uint32_t binning_vx = 4;
-	uint32_t src_w = cxt->commn_cxt.src.w;
-	uint32_t src_h = cxt->commn_cxt.src.h;
-	uint32_t binnng_w = (src_w >> binning_hx) & ~0x1;
-	uint32_t binnng_h = (src_h >> binning_vx) & ~0x1;
+	cmr_u32 binning_hx = 4;
+	cmr_u32 binning_vx = 4;
+	cmr_u32 src_w = cxt->commn_cxt.src.w;
+	cmr_u32 src_h = cxt->commn_cxt.src.h;
+	cmr_u32 binnng_w = (src_w >> binning_hx) & ~0x1;
+	cmr_u32 binnng_h = (src_h >> binning_vx) & ~0x1;
 	cxt->binning_stats.binning_size.w = binnng_w/2;
 	cxt->binning_stats.binning_size.h = binnng_h/2;
 
@@ -2240,7 +2240,7 @@ exit:
 
 cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 {
-	int32_t                         rtn = ISP_SUCCESS;
+	cmr_s32                         rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
 	if (cxt) {
@@ -2281,14 +2281,14 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 	return rtn;
 }
 
-static int32_t isp_alg_cfg(cmr_handle isp_alg_handle)
+static cmr_s32 isp_alg_cfg(cmr_handle isp_alg_handle)
 {
-	int32_t                         rtn = ISP_SUCCESS;
+	cmr_s32                         rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_pm_ioctl_input input;
 	struct isp_pm_ioctl_output output;
 	struct isp_pm_param_data *param_data;
-	uint32_t i = 0;
+	cmr_u32 i = 0;
 
 	cxt->gamma_sof_cnt = 0;
 	cxt->gamma_sof_cnt_eb = 0;
@@ -2322,9 +2322,9 @@ static int32_t isp_alg_cfg(cmr_handle isp_alg_handle)
 	return rtn;
 }
 
-static cmr_int ae_set_work_mode(cmr_handle isp_alg_handle, uint32_t new_mode, uint32_t fly_mode, struct isp_video_start *param_ptr)
+static cmr_int ae_set_work_mode(cmr_handle isp_alg_handle, cmr_u32 new_mode, cmr_u32 fly_mode, struct isp_video_start *param_ptr)
 {
-	int32_t                         rtn = ISP_SUCCESS;
+	cmr_s32                         rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct ae_set_work_param        ae_param;
 	enum ae_work_mode               ae_mode = 0;
@@ -2389,9 +2389,9 @@ static cmr_int isp_update_alg_param(cmr_handle isp_alg_handle)
 	struct isp_pm_ioctl_input       ioctl_input;
 	struct isp_pm_param_data        ioctl_data;
 	struct isp_awbc_cfg             awbc_cfg;
-	uint32_t                        ct = 0;
-	int32_t                         bv = 0;
-	int32_t                         bv_gain = 0;
+	cmr_u32                        ct = 0;
+	cmr_s32                         bv = 0;
+	cmr_s32                         bv_gain = 0;
 
 	/*update aem information*/
 	cxt->aem_is_update = 0;
@@ -2445,7 +2445,7 @@ static cmr_int isp_update_alg_param(cmr_handle isp_alg_handle)
 	struct isp_pm_param_data param_data;
 	struct lsc_adv_calc_param calc_param;
 	struct lsc_adv_calc_result calc_result = {0};
-	uint32_t i = 0;
+	cmr_u32 i = 0;
 	memset(&param_data, 0, sizeof(param_data));
 	memset(&calc_param, 0, sizeof(calc_param));
 
@@ -2455,7 +2455,7 @@ static cmr_int isp_update_alg_param(cmr_handle isp_alg_handle)
 
 	struct isp_2d_lsc_param* lsc_tab_pram_ptr = (struct isp_2d_lsc_param*)(cxt->lsc_cxt.lsc_tab_address);
 
-	calc_result.dst_gain = (uint16_t *)lsc_info->data_ptr;
+	calc_result.dst_gain = (cmr_u16 *)lsc_info->data_ptr;
 	struct awb_size stat_img_size;
 	struct awb_size win_size;
 	struct isp_ae_grgb_statistic_info *stat_info;
@@ -2479,7 +2479,7 @@ static cmr_int isp_update_alg_param(cmr_handle isp_alg_handle)
 	calc_param.stat_size.h = stat_img_size.h;
 	calc_param.gain_width = lsc_info->gain_w;
 	calc_param.gain_height = lsc_info->gain_h;
-	calc_param.lum_gain = (uint16_t *)lsc_info->param_ptr;
+	calc_param.lum_gain = (cmr_u16 *)lsc_info->param_ptr;
 	calc_param.block_size.w = win_size.w;
 	calc_param.block_size.h = win_size.h;
 	calc_param.ct = ct;
@@ -2518,7 +2518,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 	struct isp_interface_param_v1 *interface_ptr_v1 = &cxt->commn_cxt.interface_param_v1;
 	struct isp_statis_mem_info statis_mem_input;
 	struct isp_size                 org_size;
-	int     mode = 0, dv_mode = 0;
+	cmr_s32     mode = 0, dv_mode = 0;
 
 	if (!isp_alg_handle || !in_ptr) {
 		rtn = ISP_PARAM_ERROR;
@@ -2770,7 +2770,7 @@ exit:
 	return rtn;
 }
 
-cmr_int isp_alg_fw_ioctl(cmr_handle isp_alg_handle, enum isp_ctrl_cmd io_cmd, void *param_ptr, int (*call_back)())
+cmr_int isp_alg_fw_ioctl(cmr_handle isp_alg_handle, enum isp_ctrl_cmd io_cmd, void *param_ptr, cmr_s32 (*call_back)())
 {
 	cmr_int                         rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -2800,21 +2800,21 @@ cmr_int isp_alg_fw_capability(cmr_handle isp_alg_handle, enum isp_capbility_cmd 
 
 	switch (cmd) {
 	case ISP_LOW_LUX_EB: {
-		uint32_t out_param = 0;
+		cmr_u32 out_param = 0;
 		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_EB, NULL, &out_param);
-		*((uint32_t*)param_ptr) = out_param;
+		*((cmr_u32*)param_ptr) = out_param;
 		break;
 	}
 	case ISP_CUR_ISO: {
-		uint32_t out_param = 0;
+		cmr_u32 out_param = 0;
 		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_ISO, NULL, &out_param);
-		*((uint32_t*)param_ptr) = out_param;
+		*((cmr_u32*)param_ptr) = out_param;
 		break;
 	}
 	case ISP_CTRL_GET_AE_LUM: {
-		uint32_t out_param = 0;
+		cmr_u32 out_param = 0;
 		rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_LUM_NEW, NULL, &out_param);
-		*((uint32_t*)param_ptr) = out_param;
+		*((cmr_u32*)param_ptr) = out_param;
 		break;
 	}
 	default:
