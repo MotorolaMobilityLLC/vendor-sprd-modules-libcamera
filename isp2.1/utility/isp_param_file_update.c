@@ -38,28 +38,28 @@ extern "C"
 #define SCENE_INFO_NUM 10
 #define ISP_PARAM_VERSION_V21 0x0005
 
-static int32_t count = 8;
-extern isp_s8 nr_mode_name[MAX_MODE_NUM][8];
+static cmr_s32 count = 8;
+extern cmr_s8 nr_mode_name[MAX_MODE_NUM][8];
 
-int update_param_v1(struct sensor_raw_info* sensor_raw_info_ptr, const char *sensor_name)
+cmr_s32 update_param_v1(struct sensor_raw_info* sensor_raw_info_ptr, const char *sensor_name)
 {
-	int rtn = 0x00;
+	cmr_s32 rtn = 0x00;
 	UNUSED(sensor_raw_info_ptr);
 	UNUSED(sensor_name);
 	return rtn;
 }
 
-int read_nr_level_number_info(FILE *fp, uint8_t *data_ptr)
+cmr_s32 read_nr_level_number_info(FILE *fp, cmr_u8 *data_ptr)
 {
-	int rtn =0x00;
+	cmr_s32 rtn =0x00;
 
 	char line_buff[256] = {0};
-	int i = 0;
-	uint8_t *param_buf = data_ptr;
+	cmr_s32 i = 0;
+	cmr_u8 *param_buf = data_ptr;
 
 	while (!feof(fp)) {
-		uint32_t c[16];
-		int n = 0;
+		cmr_u32 c[16];
+		cmr_s32 n = 0;
 		if (fgets(line_buff, 256, fp) == NULL) {
 			break;
 		}
@@ -77,22 +77,22 @@ int read_nr_level_number_info(FILE *fp, uint8_t *data_ptr)
 
 		n = sscanf(line_buff, "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d", &c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10], &c[11], &c[12], &c[13], &c[14], &c[15]);
 		for (i=0; i<n; i++) {
-			*param_buf ++ = (uint8_t)c[i];
+			*param_buf ++ = (cmr_u8)c[i];
 		}
 	}
 	return rtn;
 }
 
-int read_nr_scene_map_info(FILE *fp, uint32_t *data_ptr)
+cmr_s32 read_nr_scene_map_info(FILE *fp, cmr_u32 *data_ptr)
 {
-	int rtn = 0x00;
+	cmr_s32 rtn = 0x00;
 
-	int i = 0;
+	cmr_s32 i = 0;
 	char line_buf[256] = {0};
-	uint32_t *param_buf = data_ptr;
+	cmr_u32 *param_buf = data_ptr;
 	while (!feof(fp)) {
-		uint32_t c1[16];
-		int n = 0;
+		cmr_u32 c1[16];
+		cmr_s32 n = 0;
 
 		if (fgets(line_buf, 256, fp) == NULL) {
 			break;
@@ -120,17 +120,17 @@ int read_nr_scene_map_info(FILE *fp, uint32_t *data_ptr)
 	return rtn;
 }
 
-int read_tune_info(FILE *fp,uint8_t *data_ptr,uint32_t *data_len)
+cmr_s32 read_tune_info(FILE *fp,cmr_u8 *data_ptr,cmr_u32 *data_len)
 {
-	int rtn =0x00;
+	cmr_s32 rtn =0x00;
 
-	uint8_t *param_buf = data_ptr;
+	cmr_u8 *param_buf = data_ptr;
 	char line_buff[256];
-	int i;
+	cmr_s32 i;
 
 	while (!feof(fp)) {
-		uint32_t c[16];
-		int n = 0;
+		cmr_u32 c[16];
+		cmr_s32 n = 0;
 		if (fgets(line_buff, 256, fp) == NULL) {
 			break;
 		}
@@ -148,25 +148,25 @@ int read_tune_info(FILE *fp,uint8_t *data_ptr,uint32_t *data_len)
 
 		n = sscanf(line_buff, "%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x", &c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10], &c[11], &c[12], &c[13], &c[14], &c[15]);
 		for (i=0; i<n; i++) {
-			*param_buf ++ = (uint8_t)c[i];
+			*param_buf ++ = (cmr_u8)c[i];
 		}
 	}
-	*data_len = (long)param_buf - (long)(data_ptr);
+	*data_len = (cmr_int)param_buf - (cmr_int)(data_ptr);
 	return rtn;
 }
 
 
-int read_ae_table_32bit(FILE *fp,uint32_t *data_ptr,uint32_t *data_len)
+cmr_s32 read_ae_table_32bit(FILE *fp,cmr_u32 *data_ptr,cmr_u32 *data_len)
 {
-	int rtn = 0x00;
+	cmr_s32 rtn = 0x00;
 
-	int i;
-	uint32_t *param_buf = data_ptr;
+	cmr_s32 i;
+	cmr_u32 *param_buf = data_ptr;
 	char line_buf[512];
 
 	while (!feof(fp)) {
-		uint32_t c1[16];
-		int n = 0;
+		cmr_u32 c1[16];
+		cmr_s32 n = 0;
 
 		if (fgets(line_buf, 512, fp) == NULL) {
 			break;
@@ -191,24 +191,24 @@ int read_ae_table_32bit(FILE *fp,uint32_t *data_ptr,uint32_t *data_len)
 		}
 	}
 
-	*data_len = (long)param_buf - (long)data_ptr;
+	*data_len = (cmr_int)param_buf - (cmr_int)data_ptr;
 
 	return rtn;
 }
 
 
 
-int read_ae_table_16bit(FILE *fp,uint16_t *data_ptr,uint32_t *data_len)
+cmr_s32 read_ae_table_16bit(FILE *fp,cmr_u16 *data_ptr,cmr_u32 *data_len)
 {
-	int rtn = 0x00;
+	cmr_s32 rtn = 0x00;
 
-	int i;
-	uint16_t *param_buf = data_ptr;
+	cmr_s32 i;
+	cmr_u16 *param_buf = data_ptr;
 	char line_buf[512];
 
 	while (!feof(fp)) {
-		uint32_t c2[16];
-		int n = 0;
+		cmr_u32 c2[16];
+		cmr_s32 n = 0;
 
 		if (fgets(line_buf, 512, fp) == NULL) {
 			break;
@@ -229,26 +229,26 @@ int read_ae_table_16bit(FILE *fp,uint16_t *data_ptr,uint32_t *data_len)
 		n = sscanf(line_buf, "%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x", &c2[0], &c2[1], &c2[2], &c2[3], &c2[4], &c2[5], &c2[6], &c2[7], &c2[8], &c2[9], &c2[10], &c2[11], &c2[12], &c2[13], &c2[14], &c2[15]);
 
 		for (i=0; i<n; i++) {
-			*param_buf ++ = (uint16_t)c2[i];
+			*param_buf ++ = (cmr_u16)c2[i];
 		}
 	}
 
-	*data_len = (long)param_buf - (long)data_ptr;
+	*data_len = (cmr_int)param_buf - (cmr_int)data_ptr;
 
 	return rtn;
 }
 
-int read_ae_weight(FILE *fp,struct ae_weight_tab *weight_ptr)
+cmr_s32 read_ae_weight(FILE *fp,struct ae_weight_tab *weight_ptr)
 {
-	int rtn = 0x00;
+	cmr_s32 rtn = 0x00;
 
-	uint8_t *param_buf = weight_ptr->weight_table;
-	int i;
+	cmr_u8 *param_buf = weight_ptr->weight_table;
+	cmr_s32 i;
 	char line_buff[512];
 
 	while (!feof(fp)) {
-		uint32_t c[16];
-		int n = 0;
+		cmr_u32 c[16];
+		cmr_s32 n = 0;
 
 		if (fgets(line_buff, 512, fp) == NULL) {
 			break;
@@ -264,26 +264,26 @@ int read_ae_weight(FILE *fp,struct ae_weight_tab *weight_ptr)
 		}
 		n = sscanf(line_buff, "%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x", &c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10], &c[11], &c[12], &c[13], &c[14], &c[15]);
 		for (i=0; i<n; i++) {
-			*param_buf ++ = (uint8_t)c[i];
+			*param_buf ++ = (cmr_u8)c[i];
 		}
 	}
-	weight_ptr->len = (long)param_buf - (long)(weight_ptr->weight_table);
+	weight_ptr->len = (cmr_int)param_buf - (cmr_int)(weight_ptr->weight_table);
 
 	return 0;
 }
 
-int read_ae_scene_info(FILE *fp,struct sensor_ae_tab *ae_ptr,int scene_mode)
+cmr_s32 read_ae_scene_info(FILE *fp,struct sensor_ae_tab *ae_ptr,cmr_s32 scene_mode)
 {
-	int rtn = 0x00;
+	cmr_s32 rtn = 0x00;
 
-	uint32_t *param_buf = ae_ptr->scene_tab[scene_mode][0].scene_info;
-	uint32_t *param_buf1 = ae_ptr->scene_tab[scene_mode][1].scene_info;
-	int i = 0;
+	cmr_u32 *param_buf = ae_ptr->scene_tab[scene_mode][0].scene_info;
+	cmr_u32 *param_buf1 = ae_ptr->scene_tab[scene_mode][1].scene_info;
+	cmr_s32 i = 0;
 	char line_buff[512] = {0};
 
 	while (!feof(fp)) {
-		uint32_t c[16];
-		int n = 0;
+		cmr_u32 c[16];
+		cmr_s32 n = 0;
 
 		if (fgets(line_buff, 512, fp) == NULL) {
 			break;
@@ -304,23 +304,23 @@ int read_ae_scene_info(FILE *fp,struct sensor_ae_tab *ae_ptr,int scene_mode)
 			*param_buf1 ++ = c[i];
 		}
 	}
-	ae_ptr->scene_tab[scene_mode][0].scene_info_len = (long)param_buf - (long)(ae_ptr->scene_tab[scene_mode][0].scene_info);
-	ae_ptr->scene_tab[scene_mode][1].scene_info_len = (long)param_buf - (long)(ae_ptr->scene_tab[scene_mode][1].scene_info);
+	ae_ptr->scene_tab[scene_mode][0].scene_info_len = (cmr_int)param_buf - (cmr_int)(ae_ptr->scene_tab[scene_mode][0].scene_info);
+	ae_ptr->scene_tab[scene_mode][1].scene_info_len = (cmr_int)param_buf - (cmr_int)(ae_ptr->scene_tab[scene_mode][1].scene_info);
 
 	return rtn;
 }
 
-int read_ae_auto_iso(FILE *fp,struct ae_auto_iso_tab_v1 *auto_iso_ptr)
+cmr_s32 read_ae_auto_iso(FILE *fp,struct ae_auto_iso_tab_v1 *auto_iso_ptr)
 {
-	int rtn = 0x00;
+	cmr_s32 rtn = 0x00;
 
-	uint16_t *param_buf = auto_iso_ptr->auto_iso_tab;
-	int i;
+	cmr_u16 *param_buf = auto_iso_ptr->auto_iso_tab;
+	cmr_s32 i;
 	char line_buff[512];
 
 	while (!feof(fp)) {
-		uint32_t c[16];
-		int n = 0;
+		cmr_u32 c[16];
+		cmr_s32 n = 0;
 
 		if (fgets(line_buff, 512, fp) == NULL) {
 			break;
@@ -341,20 +341,20 @@ int read_ae_auto_iso(FILE *fp,struct ae_auto_iso_tab_v1 *auto_iso_ptr)
 
 		n = sscanf(line_buff, "%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x", &c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10], &c[11], &c[12], &c[13], &c[14], &c[15]);
 		for (i=0; i<n; i++) {
-			*param_buf ++ = (uint16_t)c[i];
+			*param_buf ++ = (cmr_u16)c[i];
 		}
 	}
 
-	auto_iso_ptr->len = (long)param_buf - (long)(auto_iso_ptr->auto_iso_tab);
+	auto_iso_ptr->len = (cmr_int)param_buf - (cmr_int)(auto_iso_ptr->auto_iso_tab);
 
 	return 0;
 }
-int read_fix_ae_info(FILE *fp,struct sensor_ae_tab *ae_ptr)
+cmr_s32 read_fix_ae_info(FILE *fp,struct sensor_ae_tab *ae_ptr)
 {
-	int rtn = 0x00;
+	cmr_s32 rtn = 0x00;
 
-	int flag_end = 0;
-	int i,j;
+	cmr_s32 flag_end = 0;
+	cmr_s32 i,j;
 	char *ae_tab_info[5] = {NULL};
 	char *ae_scene_info[6] = {NULL};
 	char ae_auto_iso_info[50];
@@ -390,7 +390,7 @@ int read_fix_ae_info(FILE *fp,struct sensor_ae_tab *ae_ptr)
 		}
 		if (strstr(line_buf,"_common_ae_tab_") != NULL ) {
 			for (i = 0;i < AE_FLICKER_NUM;i++) {
-				int break_flag = 0;
+				cmr_s32 break_flag = 0;
 				for (j = 0;j < AE_ISO_NUM_NEW;j++) {
 					sprintf(ae_tab_info[0],"_common_ae_tab_index_%d%d",i,j);
 					sprintf(ae_tab_info[1],"_common_ae_tab_exposure_%d%d",i,j);
@@ -446,7 +446,7 @@ int read_fix_ae_info(FILE *fp,struct sensor_ae_tab *ae_ptr)
 
 		if (strstr(line_buf,"_ae_flash_tab_") != NULL ) {
 			for (i = 0;i < AE_FLICKER_NUM;i++) {
-				int break_flag = 0;
+				cmr_s32 break_flag = 0;
 				for (j = 0;j < AE_ISO_NUM_NEW;j++) {
 					sprintf(ae_tab_info[0],"_ae_flash_tab_index_%d%d",i,j);
 					sprintf(ae_tab_info[1],"_ae_flash_tab_exposure_%d%d",i,j);
@@ -511,7 +511,7 @@ int read_fix_ae_info(FILE *fp,struct sensor_ae_tab *ae_ptr)
 		}
 		if ((strstr(line_buf,"_scene_") != NULL) && (strstr(line_buf,"_ae_") != NULL) ) {
 			for (i = 0;i < AE_SCENE_NUM;i++) {
-				int break_flag = 0;
+				cmr_s32 break_flag = 0;
 				sprintf(ae_scene_info[0],"_ae_scene_info_%d",i);
 				if (strstr(line_buf,ae_scene_info[0]) != NULL) {
 
@@ -614,17 +614,17 @@ exit:
 	return rtn;
 }
 
-int read_awb_win_map(FILE *fp,struct sensor_awb_map *awb_map_ptr)
+cmr_s32 read_awb_win_map(FILE *fp,struct sensor_awb_map *awb_map_ptr)
 {
-	int rtn = 0x00;
+	cmr_s32 rtn = 0x00;
 
-	uint16_t *param_buf = awb_map_ptr->addr;
-	int i;
+	cmr_u16 *param_buf = awb_map_ptr->addr;
+	cmr_s32 i;
 	char line_buff[512];
 
 	while (!feof(fp)) {
-		uint32_t c[16];
-		int n = 0;
+		cmr_u32 c[16];
+		cmr_s32 n = 0;
 
 		if (fgets(line_buff, 512, fp) == NULL) {
 			break;
@@ -645,26 +645,26 @@ int read_awb_win_map(FILE *fp,struct sensor_awb_map *awb_map_ptr)
 
 		n = sscanf(line_buff, "%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x", &c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10], &c[11], &c[12], &c[13], &c[14], &c[15]);
 		for (i = 0; i < n; i++) {
-			*param_buf ++ = (uint16_t)c[i];
+			*param_buf ++ = (cmr_u16)c[i];
 		}
 	}
 
-	awb_map_ptr->len = (long)param_buf - (long)(awb_map_ptr->addr);
+	awb_map_ptr->len = (cmr_int)param_buf - (cmr_int)(awb_map_ptr->addr);
 
 	return 0;
 }
 
-int read_awb_pos_weight(FILE *fp,struct sensor_awb_weight *awb_weight_ptr)
+cmr_s32 read_awb_pos_weight(FILE *fp,struct sensor_awb_weight *awb_weight_ptr)
 {
-	int rtn = 0x00;
+	cmr_s32 rtn = 0x00;
 
-	uint8_t *param_buf = awb_weight_ptr->addr;
-	int i;
+	cmr_u8 *param_buf = awb_weight_ptr->addr;
+	cmr_s32 i;
 	char line_buff[512];
 
 	while (!feof(fp)) {
-		uint32_t c[16];
-		int n = 0;
+		cmr_u32 c[16];
+		cmr_s32 n = 0;
 
 		if (fgets(line_buff, 512, fp) == NULL) {
 			break;
@@ -686,26 +686,26 @@ int read_awb_pos_weight(FILE *fp,struct sensor_awb_weight *awb_weight_ptr)
 
 		n = sscanf(line_buff, "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d", &c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10], &c[11], &c[12], &c[13], &c[14], &c[15]);
 		for (i=0; i<n; i++) {
-			*param_buf ++ = (uint8_t)c[i];
+			*param_buf ++ = (cmr_u8)c[i];
 		}
 	}
 
-	awb_weight_ptr->weight_len = (long)param_buf - (long)(awb_weight_ptr->addr);
+	awb_weight_ptr->weight_len = (cmr_int)param_buf - (cmr_int)(awb_weight_ptr->addr);
 
 	return rtn;
 }
 
-int	read_awb_width_height(FILE *fp,struct sensor_awb_weight *awb_weight_ptr)
+cmr_s32	read_awb_width_height(FILE *fp,struct sensor_awb_weight *awb_weight_ptr)
 {
-	int rtn = 0x00;
+	cmr_s32 rtn = 0x00;
 
-	uint16_t *param_buf = awb_weight_ptr->size;
-	int i;
+	cmr_u16 *param_buf = awb_weight_ptr->size;
+	cmr_s32 i;
 	char line_buff[512];
 
 	while (!feof(fp)) {
-		uint32_t c[16];
-		int n = 0;
+		cmr_u32 c[16];
+		cmr_s32 n = 0;
 
 		if (fgets(line_buff, 512, fp) == NULL) {
 			break;
@@ -726,20 +726,20 @@ int	read_awb_width_height(FILE *fp,struct sensor_awb_weight *awb_weight_ptr)
 
 		n = sscanf(line_buff, "%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x", &c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10], &c[11], &c[12], &c[13], &c[14], &c[15]);
 		for (i=0; i<n; i++) {
-			*param_buf ++ = (uint16_t)c[i];
+			*param_buf ++ = (cmr_u16)c[i];
 		}
 	}
 
-	awb_weight_ptr->size_param_len = (long)param_buf - (long)(awb_weight_ptr->size);
+	awb_weight_ptr->size_param_len = (cmr_int)param_buf - (cmr_int)(awb_weight_ptr->size);
 
 	return 0;
 }
 
-int read_fix_awb_info(FILE *fp,struct sensor_awb_map_weight_param *awb_ptr)
+cmr_s32 read_fix_awb_info(FILE *fp,struct sensor_awb_map_weight_param *awb_ptr)
 {
-	int rtn = 0x00;
+	cmr_s32 rtn = 0x00;
 
-	int flag_end = 0;
+	cmr_s32 flag_end = 0;
 	char line_buf[512];
 
 	while (!feof(fp)) {
@@ -772,17 +772,17 @@ int read_fix_awb_info(FILE *fp,struct sensor_awb_map_weight_param *awb_ptr)
 	return rtn;
 }
 
-int read_lnc_map_info(FILE *fp,struct sensor_lens_map *lnc_map_ptr)
+cmr_s32 read_lnc_map_info(FILE *fp,struct sensor_lens_map *lnc_map_ptr)
 {
-	int rtn = 0x00;
+	cmr_s32 rtn = 0x00;
 
-	uint32_t *param_buf = lnc_map_ptr->map_info;
-	int i;
+	cmr_u32 *param_buf = lnc_map_ptr->map_info;
+	cmr_s32 i;
 	char line_buff[512];
 
 	while (!feof(fp)) {
-		uint32_t c[16];
-		int n = 0;
+		cmr_u32 c[16];
+		cmr_s32 n = 0;
 
 		if (fgets(line_buff, 512, fp) == NULL)
 		{
@@ -807,21 +807,21 @@ int read_lnc_map_info(FILE *fp,struct sensor_lens_map *lnc_map_ptr)
 		}
 	}
 
-	lnc_map_ptr->map_info_len = (long)param_buf - (long)(lnc_map_ptr->map_info);
+	lnc_map_ptr->map_info_len = (cmr_int)param_buf - (cmr_int)(lnc_map_ptr->map_info);
 
 	return rtn;
 }
 
-int read_lnc_weight_info(FILE *fp,struct sensor_lens_map *lnc_map_ptr)
+cmr_s32 read_lnc_weight_info(FILE *fp,struct sensor_lens_map *lnc_map_ptr)
 {
-	int rtn = 0x00;
-	int i;
+	cmr_s32 rtn = 0x00;
+	cmr_s32 i;
 	char line_buff[512];
-	uint16_t *param_buf = PNULL;
+	cmr_u16 *param_buf = PNULL;
 	param_buf = lnc_map_ptr->weight_info;
 	while (!feof(fp)) {
-		uint32_t c[16];
-		int n = 0;
+		cmr_u32 c[16];
+		cmr_s32 n = 0;
 
 		if (fgets(line_buff, 512, fp) == NULL)
 		{
@@ -842,18 +842,18 @@ int read_lnc_weight_info(FILE *fp,struct sensor_lens_map *lnc_map_ptr)
 
 		n = sscanf(line_buff, "%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x", &c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10], &c[11], &c[12], &c[13], &c[14], &c[15]);
 		for (i=0; i<n; i++) {
-			*param_buf ++ = (uint16_t)c[i];
+			*param_buf ++ = (cmr_u16)c[i];
 		}
 	}
 
-	lnc_map_ptr->weight_info_len= (long)param_buf - (long)(lnc_map_ptr->weight_info);
+	lnc_map_ptr->weight_info_len= (cmr_int)param_buf - (cmr_int)(lnc_map_ptr->weight_info);
 
 	return rtn;
 }
 
- int find_digit(char *dst, const char *src, int out_buff_size)
+ cmr_s32 find_digit(char *dst, const char *src, cmr_s32 out_buff_size)
  {
-	int num = 0, i = 0, cur = 0;
+	cmr_s32 num = 0, i = 0, cur = 0;
 	char *dst_ptr = dst;
 	num = strlen(src);
 	for(i = 0; i < num; i++) {
@@ -872,22 +872,22 @@ int read_lnc_weight_info(FILE *fp,struct sensor_lens_map *lnc_map_ptr)
  	return cur;
 }
 
-int read_lnc_tab_size_offset_info(FILE *fp,struct sensor_lsc_map *lsc_ptr)
+cmr_s32 read_lnc_tab_size_offset_info(FILE *fp,struct sensor_lsc_map *lsc_ptr)
 {
-	int rtn = 0x00;
+	cmr_s32 rtn = 0x00;
 
-	uint32_t map_tab_offset = 0;
-	int i = 0;
+	cmr_u32 map_tab_offset = 0;
+	cmr_s32 i = 0;
 	char line_buff[512];
 	char digit_buff[8];
 	char lsc_2d_macro[64] = {0};
-	int lnc_flag_len = 0;
-	uint32_t c = 0;
+	cmr_s32 lnc_flag_len = 0;
+	cmr_u32 c = 0;
 
 	struct sensor_lens_map  *lnc_map_ptr = PNULL;
-	uint8_t *lnc_start_addr = PNULL;
+	cmr_u8 *lnc_start_addr = PNULL;
 	lnc_map_ptr = (struct sensor_lens_map *)&(lsc_ptr->map[0]);
-	lnc_start_addr = (uint8_t *)lsc_ptr->map[0].lnc_addr;
+	lnc_start_addr = (cmr_u8 *)lsc_ptr->map[0].lnc_addr;
 	for (i = 0; i < LNC_MAP_COUNT; i++) {
 		lnc_flag_len = sprintf(lsc_2d_macro,"#define LSC_2D_MAP_%d",i);
 		while(1) {
@@ -913,7 +913,7 @@ int read_lnc_tab_size_offset_info(FILE *fp,struct sensor_lsc_map *lsc_ptr)
 				}
 				sscanf(digit_buff, "%d", &c);
 
-				lnc_map_ptr[i].lnc_addr  = (uint16_t *)(lnc_start_addr + map_tab_offset);
+				lnc_map_ptr[i].lnc_addr  = (cmr_u16 *)(lnc_start_addr + map_tab_offset);
 				//lnc_map_ptr[i].lnc_len = c;
 				*(lnc_map_ptr[i].lnc_map_tab_len) = c;
 				map_tab_offset += c;
@@ -931,17 +931,17 @@ int read_lnc_tab_size_offset_info(FILE *fp,struct sensor_lsc_map *lsc_ptr)
 	return rtn;
 }
 
-int read_lnc_info(FILE *fp,struct sensor_lens_map *lnc_map_ptr)
+cmr_s32 read_lnc_info(FILE *fp,struct sensor_lens_map *lnc_map_ptr)
 {
-	int rtn = 0x00;
+	cmr_s32 rtn = 0x00;
 
-	uint16_t *param_buf = lnc_map_ptr->lnc_addr;
-	int i;
+	cmr_u16 *param_buf = lnc_map_ptr->lnc_addr;
+	cmr_s32 i;
 	char line_buff[512];
 
 	while (!feof(fp)) {
-		uint32_t c[16];
-		int n = 0;
+		cmr_u32 c[16];
+		cmr_s32 n = 0;
 
 		if (fgets(line_buff, 512, fp) == NULL) {
 			break;
@@ -965,19 +965,19 @@ int read_lnc_info(FILE *fp,struct sensor_lens_map *lnc_map_ptr)
 
 		n = sscanf(line_buff, "%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x", &c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10], &c[11], &c[12], &c[13], &c[14], &c[15]);
 		for (i=0; i<n; i++) {
-			*param_buf ++ = (uint16_t)c[i];
+			*param_buf ++ = (cmr_u16)c[i];
 		}
 	}
 
-	lnc_map_ptr->lnc_len = (long)param_buf - (long)(lnc_map_ptr->lnc_addr);
+	lnc_map_ptr->lnc_len = (cmr_int)param_buf - (cmr_int)(lnc_map_ptr->lnc_addr);
 	return rtn;
 }
-int read_fix_lnc_info(FILE *fp,struct sensor_lsc_map *lnc_ptr)
+cmr_s32 read_fix_lnc_info(FILE *fp,struct sensor_lsc_map *lnc_ptr)
 {
-	int rtn = 0x00;
+	cmr_s32 rtn = 0x00;
 
-	int i;
-	int flag_end = 0;
+	cmr_s32 i;
+	cmr_s32 flag_end = 0;
 
 	char lnc_map_info[50];
 	char lnc_weight_info[50];
@@ -1036,17 +1036,17 @@ int read_fix_lnc_info(FILE *fp,struct sensor_lsc_map *lnc_ptr)
 	return rtn;
 }
 
-int read_lnc_map(FILE *fp,struct sensor_lens_map *lnc_map_ptr)
+cmr_s32 read_lnc_map(FILE *fp,struct sensor_lens_map *lnc_map_ptr)
 {
-	int rtn = 0x00;
+	cmr_s32 rtn = 0x00;
 
-	uint32_t *param_buf = lnc_map_ptr->map_info;
-	int i;
+	cmr_u32 *param_buf = lnc_map_ptr->map_info;
+	cmr_s32 i;
 	char line_buff[512];
 
 	while (!feof(fp)) {
-		uint32_t c[16];
-		int n = 0;
+		cmr_u32 c[16];
+		cmr_s32 n = 0;
 
 		if (fgets(line_buff, 512, fp) == NULL)
 		{
@@ -1071,22 +1071,22 @@ int read_lnc_map(FILE *fp,struct sensor_lens_map *lnc_map_ptr)
 		}
 	}
 
-	lnc_map_ptr->map_info_len = (long)param_buf - (long)(lnc_map_ptr->map_info);
+	lnc_map_ptr->map_info_len = (cmr_int)param_buf - (cmr_int)(lnc_map_ptr->map_info);
 
 	return rtn;
 }
 
-int read_libuse_info(FILE *fp,struct sensor_raw_info *sensor_raw_ptr)
+cmr_s32 read_libuse_info(FILE *fp,struct sensor_raw_info *sensor_raw_ptr)
 {
-	int rtn = 0x00;
+	cmr_s32 rtn = 0x00;
 
-	uint32_t *param_buf = (uint32_t *)sensor_raw_ptr->libuse_info;
-	int i;
+	cmr_u32 *param_buf = (cmr_u32 *)sensor_raw_ptr->libuse_info;
+	cmr_s32 i;
 	char line_buff[512];
 
 	while (!feof(fp)) {
-		uint32_t c[16];
-		int n = 0;
+		cmr_u32 c[16];
+		cmr_s32 n = 0;
 
 		if (fgets(line_buff, 512, fp) == NULL) {
 			break;
@@ -1113,11 +1113,11 @@ int read_libuse_info(FILE *fp,struct sensor_raw_info *sensor_raw_ptr)
 	return 0;
 }
 
-int update_param_v21(struct sensor_raw_info *sensor_raw_ptr,const char *sensor_name)
+cmr_s32 update_param_v21(struct sensor_raw_info *sensor_raw_ptr,const char *sensor_name)
 {
-	int rtn = 0x00;
+	cmr_s32 rtn = 0x00;
 
-	int i,j = 0;
+	cmr_s32 i,j = 0;
 
 	char tune_info[128];
 	char note_name[128];
@@ -1210,11 +1210,11 @@ int update_param_v21(struct sensor_raw_info *sensor_raw_ptr,const char *sensor_n
 	}
 	fclose(fp);
 
-	sprintf(libuse_info,"static uint32_t s_%s_libuse_info",sensor_name);
+	sprintf(libuse_info,"static cmr_u32 s_%s_libuse_info",sensor_name);
 	for (i = 0;i < 14;i++) {
 		sprintf(filename[i],"%ssensor_%s_raw_param_%s.c",CAMERA_DUMP_PATH, sensor_name,&nr_mode_name[i][0]);
-		sprintf(tune_info,"static uint8_t s_%s_tune_info_%s",sensor_name, &nr_mode_name[i][0]);
-		sprintf(note_name,"static uint8_t s_%s_%s_tool_ui_input",sensor_name, &nr_mode_name[i][0]);
+		sprintf(tune_info,"static cmr_u8 s_%s_tune_info_%s",sensor_name, &nr_mode_name[i][0]);
+		sprintf(note_name,"static cmr_u8 s_%s_%s_tool_ui_input",sensor_name, &nr_mode_name[i][0]);
 		sprintf(ae_tab,"static struct ae_table_param_2 s_%s_%s_ae_table_param",sensor_name, &nr_mode_name[i][0]);
 		sprintf(awb_tab,"static struct sensor_awb_table_param s_%s_%s_awb_table_param",sensor_name, &nr_mode_name[i][0]);
 		sprintf(lsc_tab,"static struct sensor_lsc_2d_table_param s_%s_%s_lsc_2d_table_param",sensor_name, &nr_mode_name[i][0]);
@@ -1311,13 +1311,13 @@ exit:
 	}
 	return rtn;
 }
-uint32_t isp_pm_raw_para_update_from_file(struct sensor_raw_info *raw_info_ptr)
+cmr_u32 isp_pm_raw_para_update_from_file(struct sensor_raw_info *raw_info_ptr)
 {
-	int rtn = 0x00;
+	cmr_s32 rtn = 0x00;
 	const char *sensor_name = PNULL;
 	struct sensor_raw_info* sensor_raw_info_ptr = raw_info_ptr;
 
-	int version = 0;
+	cmr_s32 version = 0;
 	char *filename = NULL;
 	char filename0[80];
 	char filename1[80];
@@ -1361,9 +1361,9 @@ uint32_t isp_pm_raw_para_update_from_file(struct sensor_raw_info *raw_info_ptr)
 	return rtn;
 }
 #ifndef WIN32
-uint32_t isp_raw_para_update_from_file(SENSOR_INFO_T *sensor_info_ptr,SENSOR_ID_E sensor_id)
+cmr_u32 isp_raw_para_update_from_file(SENSOR_INFO_T *sensor_info_ptr,SENSOR_ID_E sensor_id)
 {
-	int rtn = 0x00;
+	cmr_s32 rtn = 0x00;
 	struct sensor_raw_info* sensor_raw_info_ptr = *(sensor_info_ptr->raw_info_ptr);
 	UNUSED(sensor_id);
 	isp_pm_raw_para_update_from_file(sensor_raw_info_ptr);
