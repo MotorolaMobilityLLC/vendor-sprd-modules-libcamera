@@ -2520,6 +2520,7 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
                 switch (ctrl_flash_status) {
                 case FLASH_HIGH_LIGHT: // high flash
                     CMR_LOGI("high flash Set Ae setting");
+                    cmr_setting_clear_sem(cpt);
                     hal_param->flash_param.flash_opened = 1;
                     setting_isp_flash_notify(cpt, parm, ISP_FLASH_MAIN_BEFORE);
                     setting_isp_wait_notice(cpt);
