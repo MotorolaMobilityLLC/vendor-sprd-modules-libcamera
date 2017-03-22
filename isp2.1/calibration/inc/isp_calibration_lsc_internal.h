@@ -56,57 +56,57 @@ extern "C"
 #define BLOCK_ID_DIFF_GAIN	0x00020003
 
 struct lsc_golden_header {
-	uint32_t version;
-	uint32_t length;
-	uint32_t block_num;
+	cmr_u32 version;
+	cmr_u32 length;
+	cmr_u32 block_num;
 };
 
 struct lsc_golden_basic_info {
-	uint16_t base_gain;
-	uint16_t algorithm_version;
-	uint16_t compress_flag;
-	uint16_t image_width;
-	uint16_t image_height;
-	uint16_t gain_width;
-	uint16_t gain_height;
-	uint16_t optical_x;
-	uint16_t optical_y;
-	uint16_t grid_width;
-	uint16_t grid_height;
-	uint16_t percent;
-	uint16_t bayer_pattern;
-	uint16_t reserved;
+	cmr_u16 base_gain;
+	cmr_u16 algorithm_version;
+	cmr_u16 compress_flag;
+	cmr_u16 image_width;
+	cmr_u16 image_height;
+	cmr_u16 gain_width;
+	cmr_u16 gain_height;
+	cmr_u16 optical_x;
+	cmr_u16 optical_y;
+	cmr_u16 grid_width;
+	cmr_u16 grid_height;
+	cmr_u16 percent;
+	cmr_u16 bayer_pattern;
+	cmr_u16 reserved;
 };
 
 struct lsc_golden_block_info {
-	uint32_t id;
-	uint32_t offset;
-	uint32_t size;
+	cmr_u32 id;
+	cmr_u32 offset;
+	cmr_u32 size;
 };
 
 struct lsc_golden_gain_info {
-	uint32_t ct;
-	uint32_t gain_num;
+	cmr_u32 ct;
+	cmr_u32 gain_num;
 	void *gain;
 };
 
 struct lsc_random_info {
-	uint32_t version;
-	uint16_t data_length;
-	uint16_t algorithm_version;
-	uint16_t compress_flag;
-	uint16_t image_width;
-	uint16_t image_height;
-	uint16_t gain_width;
-	uint16_t gain_height;
-	uint16_t optical_x;
-	uint16_t optical_y;
-	uint16_t grid_width;
-	uint16_t grid_height;
-	uint16_t percent;
-	uint16_t bayer_pattern;
-	uint16_t gain_num;
-	uint16_t *gain;
+	cmr_u32 version;
+	cmr_u16 data_length;
+	cmr_u16 algorithm_version;
+	cmr_u16 compress_flag;
+	cmr_u16 image_width;
+	cmr_u16 image_height;
+	cmr_u16 gain_width;
+	cmr_u16 gain_height;
+	cmr_u16 optical_x;
+	cmr_u16 optical_y;
+	cmr_u16 grid_width;
+	cmr_u16 grid_height;
+	cmr_u16 percent;
+	cmr_u16 bayer_pattern;
+	cmr_u16 gain_num;
+	cmr_u16 *gain;
 };
 ///////////////////////////////////////////////////////////////////////////////////
 
@@ -170,67 +170,67 @@ enum isp_calibration_lsc_calc_out_table{
 
 
 struct isp_calibration_lsc_random_cali_info{
-	uint16_t img_width;
-	uint16_t img_height;
-	uint16_t center_x;
-	uint16_t center_y;
-	uint16_t* std_gain;
-	uint32_t lsc_pattern;
-	uint32_t compress;
-	uint32_t gain_width;
-	uint32_t gain_height;
+	cmr_u16 img_width;
+	cmr_u16 img_height;
+	cmr_u16 center_x;
+	cmr_u16 center_y;
+	cmr_u16* std_gain;
+	cmr_u32 lsc_pattern;
+	cmr_u32 compress;
+	cmr_u32 gain_width;
+	cmr_u32 gain_height;
 };
 
 struct isp_calibration_lsc_info_from_golden{
 	/*color temperature of the light*/
-	uint32_t standard_light_ct;
-	uint8_t grid_size;
-	uint8_t diff_num;
-	uint16_t grid_width;
-	uint16_t grid_height;
-	uint32_t std_gain_golden_size;
-	uint16_t* std_gain_golden;
+	cmr_u32 standard_light_ct;
+	cmr_u8 grid_size;
+	cmr_u8 diff_num;
+	cmr_u16 grid_width;
+	cmr_u16 grid_height;
+	cmr_u32 std_gain_golden_size;
+	cmr_u16* std_gain_golden;
 };
 
 struct isp_calibration_lsc_flags{
-	uint32_t version;
-	uint32_t compress_flag;
-	uint32_t alg_type;		// 1: 1D; 2: 2D
-	uint32_t alg_version;
-	uint32_t base_gain;
-	uint32_t percent;		//correction percent
+	cmr_u32 version;
+	cmr_u32 compress_flag;
+	cmr_u32 alg_type;		// 1: 1D; 2: 2D
+	cmr_u32 alg_version;
+	cmr_u32 base_gain;
+	cmr_u32 percent;		//correction percent
 };
 
 struct isp_calibration_lsc_module_info{
-	uint32_t id;
-	uint32_t datalen;
-	uint32_t offset;
+	cmr_u32 id;
+	cmr_u32 datalen;
+	cmr_u32 offset;
 };
 
 struct isp_calibration_lsc_predictor_param{
-	uint16_t* std_gain;
-	uint16_t* diff;
-	uint16_t* nonstd_gain;
-	uint32_t difflen;// eyery channel keep the same difflen,so the data in diffptr keep the length of 4*difflen
-	uint16_t grid_width;
-	uint16_t grid_height;
-	uint16_t center_x;
-	uint16_t center_y;
+	cmr_u16* std_gain;
+	cmr_u16* diff;
+	cmr_u16* nonstd_gain;
+	cmr_u32 difflen;// eyery channel keep the same difflen,so the data in diffptr keep the length of 4*difflen
+	cmr_u16 grid_width;
+	cmr_u16 grid_height;
+	cmr_u16 center_x;
+	cmr_u16 center_y;
 };
 
 struct isp_calibration_lsc_golden_cali_info{
-	uint16_t img_width;
-	uint16_t img_height;
-	uint8_t grid_size;
-	uint16_t center_x;
-	uint16_t center_y;
-	uint16_t grid_width;
-	uint16_t grid_height;
-	uint8_t diff_num;
+	cmr_u16 img_width;
+	cmr_u16 img_height;
+	cmr_u8 grid_size;
+	cmr_u16 center_x;
+	cmr_u16 center_y;
+	cmr_u16 grid_width;
+	cmr_u16 grid_height;
+	cmr_u8 diff_num;
 	struct isp_calibration_lsc_param gain[ISP_CALIBRATION_MAX_LSC_NUM];// includes the standard data and nonstandard data
 };
 
-int32_t isp_calibration_lsc_golden_parse(void *golden_data, uint32_t golden_size,
+cmr_s32 isp_calibration_lsc_golden_parse(void *golden_data, cmr_u32 golden_size,
 					struct isp_calibration_lsc_flags *flag,
 					struct isp_calibration_lsc_golden_cali_info *golden_info);
 

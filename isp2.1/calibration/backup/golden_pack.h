@@ -37,49 +37,49 @@ extern "C"
 *				Data Structures					*
 *-------------------------------------------------------------------------------*/
 struct golden_module_info {
-	uint32_t core_version;
-	uint32_t sensor_maker;
-	uint32_t year;
-	uint32_t month;
-	uint32_t module_version;
-	uint32_t release_number;
-	uint32_t cal_dll_version;
-	uint32_t cal_map_version;
+	cmr_u32 core_version;
+	cmr_u32 sensor_maker;
+	cmr_u32 year;
+	cmr_u32 month;
+	cmr_u32 module_version;
+	cmr_u32 release_number;
+	cmr_u32 cal_dll_version;
+	cmr_u32 cal_map_version;
 };
 
 struct golden_lsc_info {
 	/* 1: tshark algorithm; 2: sharkl/tshark2 algorithm  */
-	uint32_t alg_version;
+	cmr_u32 alg_version;
 	/*1: use 1d diff; 2: use 2d diff*/
-	uint32_t alg_type;
+	cmr_u32 alg_type;
 	/* 0: normal gain (16 bits for one gain); 1: compress gain (14 bit for one gain)  */
-	uint32_t compress;
-	uint32_t base_gain;
+	cmr_u32 compress;
+	cmr_u32 base_gain;
 	/* correction percent: 1-100 */
-	uint32_t percent;
-	uint32_t grid_width;
-	uint32_t grid_height;
+	cmr_u32 percent;
+	cmr_u32 grid_width;
+	cmr_u32 grid_height;
 	/*0: gr, 1: r, 2: b, 3: gb*/
-	uint32_t bayer_pattern;
-	uint32_t img_width;
-	uint32_t img_height;
-	uint32_t gain_width;
-	uint32_t gain_height;
-	uint32_t center_x;
-	uint32_t center_y;
+	cmr_u32 bayer_pattern;
+	cmr_u32 img_width;
+	cmr_u32 img_height;
+	cmr_u32 gain_width;
+	cmr_u32 gain_height;
+	cmr_u32 center_x;
+	cmr_u32 center_y;
 	/*std gain*/
 	struct lsc_gain_info std_gain;
-	uint32_t std_ct;
+	cmr_u32 std_ct;
 	/*nonstd diff*/
 	struct lsc_diff_1d_info nonstd_diff[MAX_NONSTD_IMAGE];
-	uint32_t nonstd_ct[MAX_NONSTD_IMAGE];
-	uint32_t nonstd_num;
+	cmr_u32 nonstd_ct[MAX_NONSTD_IMAGE];
+	cmr_u32 nonstd_num;
 };
 
 struct golden_awb_info {
-	uint16_t avg_r;
-	uint16_t avg_g;
-	uint16_t avg_b;
+	cmr_u16 avg_r;
+	cmr_u16 avg_g;
+	cmr_u16 avg_b;
 };
 
 //calibration in para
@@ -88,17 +88,17 @@ struct golden_pack_param {
 	struct golden_lsc_info lsc_info;
 	struct golden_awb_info awb_info;
 	void *target_buf;
-	uint32_t target_buf_size;
+	cmr_u32 target_buf_size;
 };
 
 struct golden_pack_result {
-	uint32_t real_size;
+	cmr_u32 real_size;
 };
 /*------------------------------------------------------------------------------*
 *				Functions														*
 *-------------------------------------------------------------------------------*/
-int32_t golden_pack(struct golden_pack_param *param, struct golden_pack_result *result);
-int32_t get_golden_pack_size(struct golden_pack_param *param, uint32_t *size);
+cmr_s32 golden_pack(struct golden_pack_param *param, struct golden_pack_result *result);
+cmr_s32 get_golden_pack_size(struct golden_pack_param *param, cmr_u32 *size);
 /*------------------------------------------------------------------------------*
 *				Compiler Flag					*
 *-------------------------------------------------------------------------------*/

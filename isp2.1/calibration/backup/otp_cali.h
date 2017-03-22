@@ -60,38 +60,38 @@ extern "C"
 *-------------------------------------------------------------------------------*/
 
 //calc Optical Center by pixel or grid, choose type by setting center_type
-typedef int32_t (*FNUC_OTP_calcOpticalCenter)(void* raw_image,uint32_t raw_width,uint32_t raw_height, uint32_t data_pattern,
-										uint32_t data_type, uint32_t version_id, uint32_t grid, uint32_t base_gain,uint32_t corr_per,
-										uint32_t center_type, uint16_t* oc_centerx, uint16_t* oc_centery);
+typedef cmr_s32 (*FNUC_OTP_calcOpticalCenter)(void* raw_image,cmr_u32 raw_width,cmr_u32 raw_height, cmr_u32 data_pattern,
+										cmr_u32 data_type, cmr_u32 version_id, cmr_u32 grid, cmr_u32 base_gain,cmr_u32 corr_per,
+										cmr_u32 center_type, cmr_u16* oc_centerx, cmr_u16* oc_centery);
 
-OTPDLLV01_API int32_t calcOpticalCenter(void* raw_image,uint32_t raw_width,uint32_t raw_height, uint32_t data_pattern,
-								uint32_t data_type, uint32_t version_id, uint32_t grid, uint32_t base_gain,uint32_t corr_per,
-								uint32_t center_type, uint16_t* oc_centerx, uint16_t* oc_centery);
+OTPDLLV01_API cmr_s32 calcOpticalCenter(void* raw_image,cmr_u32 raw_width,cmr_u32 raw_height, cmr_u32 data_pattern,
+								cmr_u32 data_type, cmr_u32 version_id, cmr_u32 grid, cmr_u32 base_gain,cmr_u32 corr_per,
+								cmr_u32 center_type, cmr_u16* oc_centerx, cmr_u16* oc_centery);
 
 //get the memory size which one channel needs to malloc
-typedef int32_t (*FNUC_OTP_getLSCOneChannelSize)(uint32_t grid, uint32_t raw_width,uint32_t raw_height, uint32_t
-													lsc_algid, uint32_t compress, uint32_t* chnnel_size);
+typedef cmr_s32 (*FNUC_OTP_getLSCOneChannelSize)(cmr_u32 grid, cmr_u32 raw_width,cmr_u32 raw_height, cmr_u32
+													lsc_algid, cmr_u32 compress, cmr_u32* chnnel_size);
 
-OTPDLLV01_API int getLSCOneChannelSize(uint32_t grid, uint32_t raw_width,uint32_t raw_height, uint32_t
-														lsc_algid, uint32_t compress, uint32_t* chnnel_size);
+OTPDLLV01_API cmr_s32 getLSCOneChannelSize(cmr_u32 grid, cmr_u32 raw_width,cmr_u32 raw_height, cmr_u32
+														lsc_algid, cmr_u32 compress, cmr_u32* chnnel_size);
 
 //calc gains of four channels
-typedef int32_t (*FNUC_OTP_calcLSC)(void* raw_image,uint32_t raw_width,uint32_t raw_height, uint32_t data_pattern,uint32_t data_type,
-		uint32_t lsc_algid, uint32_t compress, uint32_t grid, uint32_t base_gain, uint32_t corr_per,
-		uint16_t* lsc_r_gain,uint16_t* lsc_gr_gain,uint16_t* lsc_gb_gain, uint16_t* lsc_b_gain,uint32_t* lsc_versionid);
+typedef cmr_s32 (*FNUC_OTP_calcLSC)(void* raw_image,cmr_u32 raw_width,cmr_u32 raw_height, cmr_u32 data_pattern,cmr_u32 data_type,
+		cmr_u32 lsc_algid, cmr_u32 compress, cmr_u32 grid, cmr_u32 base_gain, cmr_u32 corr_per,
+		cmr_u16* lsc_r_gain,cmr_u16* lsc_gr_gain,cmr_u16* lsc_gb_gain, cmr_u16* lsc_b_gain,cmr_u32* lsc_versionid);
 
-OTPDLLV01_API int32_t calcLSC(void* raw_image,uint32_t raw_width,uint32_t raw_height, uint32_t data_pattern,uint32_t data_type,
-		uint32_t lsc_algid, uint32_t compress, uint32_t grid, uint32_t base_gain, uint32_t corr_per,
-		uint16_t* lsc_r_gain,uint16_t* lsc_gr_gain,uint16_t* lsc_gb_gain, uint16_t* lsc_b_gain,uint32_t* lsc_versionid);
+OTPDLLV01_API cmr_s32 calcLSC(void* raw_image,cmr_u32 raw_width,cmr_u32 raw_height, cmr_u32 data_pattern,cmr_u32 data_type,
+		cmr_u32 lsc_algid, cmr_u32 compress, cmr_u32 grid, cmr_u32 base_gain, cmr_u32 corr_per,
+		cmr_u16* lsc_r_gain,cmr_u16* lsc_gr_gain,cmr_u16* lsc_gb_gain, cmr_u16* lsc_b_gain,cmr_u32* lsc_versionid);
 
 //calc mean r/g/b value of the trim area
-typedef int32_t (*FNUC_OTP_calcAWB)(void* raw_image, uint32_t raw_width, uint32_t raw_height,
-			uint32_t data_pattern, uint32_t data_type, uint32_t trim_width, uint32_t trim_height, int32 trim_x, int32 trim_y,
-			uint16_t* awb_r_Mean, uint16_t* awb_g_Mean, uint16_t* awb_b_Mean, uint32_t* awb_versionid);
+typedef cmr_s32 (*FNUC_OTP_calcAWB)(void* raw_image, cmr_u32 raw_width, cmr_u32 raw_height,
+			cmr_u32 data_pattern, cmr_u32 data_type, cmr_u32 trim_width, cmr_u32 trim_height, int32 trim_x, int32 trim_y,
+			cmr_u16* awb_r_Mean, cmr_u16* awb_g_Mean, cmr_u16* awb_b_Mean, cmr_u32* awb_versionid);
 
-OTPDLLV01_API int32_t calcAWB(void* raw_image, uint32_t raw_width, uint32_t raw_height, uint32_t data_pattern,
-			uint32_t data_type, uint32_t trim_width, uint32_t trim_height, int32 trim_x, int32 trim_y,
-			uint16_t* awb_r_Mean, uint16_t* awb_g_Mean, uint16_t* awb_b_Mean, uint32_t* awb_versionid);
+OTPDLLV01_API cmr_s32 calcAWB(void* raw_image, cmr_u32 raw_width, cmr_u32 raw_height, cmr_u32 data_pattern,
+			cmr_u32 data_type, cmr_u32 trim_width, cmr_u32 trim_height, int32 trim_x, int32 trim_y,
+			cmr_u16* awb_r_Mean, cmr_u16* awb_g_Mean, cmr_u16* awb_b_Mean, cmr_u32* awb_versionid);
 
 
 /*------------------------------------------------------------------------------*

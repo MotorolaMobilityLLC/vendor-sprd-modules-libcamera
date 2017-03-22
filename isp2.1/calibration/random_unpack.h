@@ -38,17 +38,17 @@ extern "C"
 *-------------------------------------------------------------------------------*/
 struct random_info {
 	void *awb;
-	uint32_t awb_size;
+	cmr_u32 awb_size;
 	void *lsc;
-	uint32_t lsc_size;
+	cmr_u32 lsc_size;
 };
 
 /*------------------------------------------------------------------------------*
 *				Functions					*
 *-------------------------------------------------------------------------------*/
-int32_t random_unpack(void *random_data, uint32_t random_size, struct random_info *info);
-int32_t random_lsc_unpack(void *random_lsc, uint32_t random_lsc_size, struct random_lsc_info *lsc_info);
-int32_t random_awb_unpack(void *random_awb, uint32_t random_awb_size, struct random_awb_info *awb_info);
+cmr_s32 random_unpack(void *random_data, cmr_u32 random_size, struct random_info *info);
+cmr_s32 random_lsc_unpack(void *random_lsc, cmr_u32 random_lsc_size, struct random_lsc_info *lsc_info);
+cmr_s32 random_awb_unpack(void *random_awb, cmr_u32 random_awb_size, struct random_awb_info *awb_info);
 /*------------------------------------------------------------------------------*
 *				Compiler Flag					*
 *-------------------------------------------------------------------------------*/

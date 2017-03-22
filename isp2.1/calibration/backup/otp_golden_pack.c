@@ -35,15 +35,15 @@ struct lsc_calc_golden_param {
 	//struct isp_raw_image nonstd_image[MAX_NONSTD_IMAGE];
 	/*image size/formart/pattern are the same as the standard image*/
 	void *nonstd_image[MAX_NONSTD_IMAGE];
-	uint32_t nonstd_image_num;
+	cmr_u32 nonstd_image_num;
 	enum isp_center_type center_type;
 	enum isp_lsc_alg_version algorithm_version;
 	enum isp_lsc_alg_type algorithm_type;
-	uint32_t base_gain;
-	uint32_t percent;
-	uint32_t grid_size;
+	cmr_u32 base_gain;
+	cmr_u32 percent;
+	cmr_u32 grid_size;
 	void *target_buf;
-	uint32_t target_buf_size;
+	cmr_u32 target_buf_size;
 };
 
 struct lsc_calc_golden_result {
@@ -54,27 +54,27 @@ struct lsc_calc_golden_result {
 /*------------------------------------------------------------------------------*
 *				Local functions													*
 *-------------------------------------------------------------------------------*/
-static int32_t _calc_lsc(struct lsc_calc_golden_param *param, struct lsc_calc_golden_result *golden_info)
+static cmr_s32 _calc_lsc(struct lsc_calc_golden_param *param, struct lsc_calc_golden_result *golden_info)
 {
-	int32_t rtn = GOLDEN_ERROR;
+	cmr_s32 rtn = GOLDEN_ERROR;
 	struct lsc_calc_gain_param calc_gain_param = {0};
 	struct lsc_gain_info std_gain = {0};
 	struct lsc_gain_info nonstd_gain = {0};
-	uint32_t nonstd_image_num = 0;
+	cmr_u32 nonstd_image_num = 0;
 	struct isp_raw_image *std_img = NULL;
 	struct isp_raw_image nonstd_img = {0};
 	struct lsc_calc_center_param calc_center_param = {0};
 	struct isp_center grid_center = {0};
 	struct isp_center image_center = {0};
-	uint32_t lsc_gain_size = 0;
-	uint32_t gain_width = 0;
-	uint32_t gain_height = 0;
-	uint16_t *target_buf = NULL;
-	uint32_t target_buf_size = 0;
-	uint16_t *nonstd_buf = NULL;
-	uint32_t std_center_x = 0;
-	uint32_t std_center_y = 0;
-	uint32_t i=0;
+	cmr_u32 lsc_gain_size = 0;
+	cmr_u32 gain_width = 0;
+	cmr_u32 gain_height = 0;
+	cmr_u16 *target_buf = NULL;
+	cmr_u32 target_buf_size = 0;
+	cmr_u16 *nonstd_buf = NULL;
+	cmr_u32 std_center_x = 0;
+	cmr_u32 std_center_y = 0;
+	cmr_u32 i=0;
 
 	if (ISP_LSC_ALG_1D_DIFF != param->algorithm_type)
 		goto EXIT;
@@ -104,7 +104,7 @@ static int32_t _calc_lsc(struct lsc_calc_golden_param *param, struct lsc_calc_go
 		goto EXIT;
 	}
 
-	lsc_gain_size = gain_width * gain_height * sizeof(uint16_t) * LSC_CHN_NUM * 2;
+	lsc_gain_size = gain_width * gain_height * sizeof(cmr_u16) * LSC_CHN_NUM * 2;
 	if (target_buf_size < lsc_gain_size) {
 		goto EXIT;
 	}
@@ -137,12 +137,12 @@ static int32_t _calc_lsc(struct lsc_calc_golden_param *param, struct lsc_calc_go
 #if GOLDEN_DEBUG
 	{
 		char save_name[64] = {0};
-		uint32_t j = 0;
+		cmr_u32 j = 0;
 
 		for (j=0; j<4; j++) {
 			sprintf(save_name, "output\\std_gain_chn[%d].txt", j);
 			write_data_uint16_dec(save_name, std_gain.chn_gain[j], std_gain.gain_width,
-				std_gain.gain_height * std_gain.gain_width * sizeof(uint16_t));
+				std_gain.gain_height * std_gain.gain_width * sizeof(cmr_u16));
 		}
 	}
 #endif
@@ -150,7 +150,7 @@ static int32_t _calc_lsc(struct lsc_calc_golden_param *param, struct lsc_calc_go
 	golden_info->std_gain = std_gain;
 
 	target_buf_size -= lsc_gain_size;
-	target_buf = (uint16_t *)((uint8 *)target_buf+ lsc_gain_size);
+	target_buf = (cmr_u16 *)((uint8 *)target_buf+ lsc_gain_size);
 
 	/*calc grid center*/
 	calc_center_param.algorithm_version = param->algorithm_version;
@@ -177,7 +177,7 @@ static int32_t _calc_lsc(struct lsc_calc_golden_param *param, struct lsc_calc_go
 	}
 
 	/*used to receive nonstandard gain*/
-	nonstd_buf = (uint16_t *)malloc(lsc_gain_size);
+	nonstd_buf = (cmr_u16 *)malloc(lsc_gain_size);
 	if (NULL == nonstd_buf) {
 		goto EXIT;
 	}
@@ -187,8 +187,8 @@ static int32_t _calc_lsc(struct lsc_calc_golden_param *param, struct lsc_calc_go
 	for (i=0; i<nonstd_image_num; i++) {
 
 		struct lsc_calc_diff_param calc_diff_param = {0};
-		uint32_t chn_diff_num = 0;
-		uint32_t j = 0;
+		cmr_u32 chn_diff_num = 0;
+		cmr_u32 j = 0;
 
 		nonstd_img.data = (void *)param->nonstd_image[i];
 		if (NULL == nonstd_img.data) {
@@ -227,7 +227,7 @@ static int32_t _calc_lsc(struct lsc_calc_golden_param *param, struct lsc_calc_go
 			for (j=0; j<4; j++) {
 				sprintf(save_name, "output\\nonstd[%d]_gain_chn[%d].txt", i, j);
 				write_data_uint16_dec(save_name, nonstd_gain.chn_gain[j], std_gain.gain_width,
-					nonstd_gain.gain_height * nonstd_gain.gain_width * sizeof(uint16_t));
+					nonstd_gain.gain_height * nonstd_gain.gain_width * sizeof(cmr_u16));
 			}
 		}
 #endif
@@ -252,12 +252,12 @@ static int32_t _calc_lsc(struct lsc_calc_golden_param *param, struct lsc_calc_go
 				char save_name[64] = {0};
 
 					sprintf(save_name, "output\\nonstd[%d]_diff_chn[%d].txt", i, j);
-					write_data_uint16_dec(save_name, target_buf, 16, chn_diff_num * sizeof(uint16_t));
+					write_data_uint16_dec(save_name, target_buf, 16, chn_diff_num * sizeof(cmr_u16));
 			}
 #endif
 
 			golden_info->nonstd_diff[i].diff[j] = target_buf;
-			target_buf = (uint8_t *)target_buf + chn_diff_num * sizeof(uint16_t);
+			target_buf = (cmr_u8 *)target_buf + chn_diff_num * sizeof(cmr_u16);
 			target_buf_size -= chn_diff_num;
 		}
 
@@ -279,15 +279,15 @@ EXIT:
 /*------------------------------------------------------------------------------*
 *				Public functions												*
 *-------------------------------------------------------------------------------*/
-int32_t otp_golden_size(struct otp_pack_golden_param *param, uint32_t *size)
+cmr_s32 otp_golden_size(struct otp_pack_golden_param *param, cmr_u32 *size)
 {
 	*size = 200 * 1024;
 	return GOLDEN_SUCCESS;
 }
 
-int32_t otp_pack_golden(struct otp_pack_golden_param *param, uint32_t *real_size)
+cmr_s32 otp_pack_golden(struct otp_pack_golden_param *param, cmr_u32 *real_size)
 {
-	int32_t rtn = GOLDEN_ERROR;
+	cmr_s32 rtn = GOLDEN_ERROR;
 	struct lsc_calc_golden_param lsc_calc_param = {0};
 	struct lsc_calc_golden_result lsc_calc_result = {0};
 	struct golden_pack_param pack_param = {0};
@@ -298,11 +298,11 @@ int32_t otp_pack_golden(struct otp_pack_golden_param *param, uint32_t *real_size
 	struct img_rgb average_rgb = {0};
 	struct isp_img_rect awb_roi = {0};
 	struct isp_raw_image std_img = {0};
-	uint32_t lsc_gain_width = 0;
-	uint32_t lsc_gain_height = 0;
+	cmr_u32 lsc_gain_width = 0;
+	cmr_u32 lsc_gain_height = 0;
 	void *golden_buf = NULL;
-	uint32_t golden_buf_size = 0;
-	uint32_t i = 0;
+	cmr_u32 golden_buf_size = 0;
+	cmr_u32 i = 0;
 
 
 	if (NULL == param || NULL == real_size)
@@ -349,7 +349,7 @@ int32_t otp_pack_golden(struct otp_pack_golden_param *param, uint32_t *real_size
 	}
 
 	golden_buf_size = lsc_gain_width * lsc_gain_height * (lsc_calc_param.nonstd_image_num + 1)
-							* sizeof(uint16_t) * LSC_CHN_NUM;
+							* sizeof(cmr_u16) * LSC_CHN_NUM;
 
 	/*allocate target buffer*/
 	golden_buf = (void *)malloc(golden_buf_size);

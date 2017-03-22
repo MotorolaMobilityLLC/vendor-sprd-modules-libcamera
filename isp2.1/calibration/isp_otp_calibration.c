@@ -21,37 +21,37 @@
 #define ISP_CALI_MIN_SIZE (200 * 1024)
 
 struct golden_header {
-	uint32_t start;
-	uint32_t length;
-	uint32_t version;
-	uint32_t block_num;
+	cmr_u32 start;
+	cmr_u32 length;
+	cmr_u32 version;
+	cmr_u32 block_num;
 };
 
 struct block_info {
-	uint32_t id;
-	uint32_t offset;
-	uint32_t length;
+	cmr_u32 id;
+	cmr_u32 offset;
+	cmr_u32 length;
 };
 
 struct isp_cali_data {
-	uint32_t version;
-	uint32_t length;
-	uint32_t block_num;
+	cmr_u32 version;
+	cmr_u32 length;
+	cmr_u32 block_num;
 	struct block_info block[2];
 	void *data;
 };
 
-static int32_t _golden_parse(struct isp_data_t *golden, struct isp_data_t *lsc, struct isp_data_t *awb)
+static cmr_s32 _golden_parse(struct isp_data_t *golden, struct isp_data_t *lsc, struct isp_data_t *awb)
 {
-	uint8_t *start = PNULL;
-	uint8_t *end = PNULL;
+	cmr_u8 *start = PNULL;
+	cmr_u8 *end = PNULL;
 	struct golden_header *header = PNULL;
 	struct block_info *block_info = PNULL;
-	uint8_t module_index = 0xff;
-	uint8_t lsc_index = 0xff;
-	uint8_t awb_index = 0xff;
-	uint16_t version = 0;
-	uint32_t i = 0;
+	cmr_u8 module_index = 0xff;
+	cmr_u8 lsc_index = 0xff;
+	cmr_u8 awb_index = 0xff;
+	cmr_u16 version = 0;
+	cmr_u32 i = 0;
 
 	if (PNULL == golden)
 		return ISP_CALI_ERROR;
@@ -74,10 +74,10 @@ static int32_t _golden_parse(struct isp_data_t *golden, struct isp_data_t *lsc, 
 	if (ISP_GOLDEN_V001 != header->version)
 		return ISP_CALI_ERROR;
 
-	start = (uint8_t *)header;
+	start = (cmr_u8 *)header;
 	end = start + header->length;
 
-	block_info = (struct block_info *)((uint8_t *)header + sizeof(*header));
+	block_info = (struct block_info *)((cmr_u8 *)header + sizeof(*header));
 
 	for (i=0; i<header->block_num; i++) {
 
@@ -124,21 +124,21 @@ static int32_t _golden_parse(struct isp_data_t *golden, struct isp_data_t *lsc, 
 	return ISP_CALI_SUCCESS;
 }
 
-static int32_t _cali_lsc(struct isp_data_t *golden, struct isp_data_t *otp, uint32_t image_pattern, struct isp_data_t *target_buf, uint32_t *size)
+static cmr_s32 _cali_lsc(struct isp_data_t *golden, struct isp_data_t *otp, cmr_u32 image_pattern, struct isp_data_t *target_buf, cmr_u32 *size)
 {
-	int32_t rtn = ISP_CALI_SUCCESS;
+	cmr_s32 rtn = ISP_CALI_SUCCESS;
 	struct isp_calibration_lsc_golden_info lsc_golden_info;
 	struct isp_calibration_lsc_calc_in lsc_calc_param;
 	struct isp_calibration_lsc_calc_out lsc_calc_result;
-	uint32_t i = 0;
-	uint32_t target_buf_size = 0;
+	cmr_u32 i = 0;
+	cmr_u32 target_buf_size = 0;
 	memset(&lsc_golden_info, 0x00, sizeof(lsc_golden_info));
 	memset(&lsc_calc_param, 0x00, sizeof(lsc_calc_param));
 	memset(&lsc_calc_result, 0x00, sizeof(lsc_calc_result));
 
 	struct isp_cali_lsc_info *lsc_info = PNULL;
-	uint32_t header_size = 0;
-	uint32_t data_size = 0;
+	cmr_u32 header_size = 0;
+	cmr_u32 data_size = 0;
 
 	if (PNULL == golden || PNULL == otp || PNULL == target_buf || PNULL == size)
 		return ISP_CALI_ERROR;
@@ -154,7 +154,7 @@ static int32_t _cali_lsc(struct isp_data_t *golden, struct isp_data_t *otp, uint
 	if (target_buf->size < sizeof(struct isp_cali_lsc_info))
 		return ISP_CALI_ERROR;
 
-	header_size = (uint8_t *)&lsc_info->data_area - (uint8_t *)lsc_info;
+	header_size = (cmr_u8 *)&lsc_info->data_area - (cmr_u8 *)lsc_info;
 	target_buf_size = target_buf->size - header_size;
 
 	lsc_calc_param.golden_data = golden->data_ptr;
@@ -209,12 +209,12 @@ static int32_t _cali_lsc(struct isp_data_t *golden, struct isp_data_t *otp, uint
 	return rtn;
 }
 
-static int32_t _cali_awb(struct isp_data_t *golden, struct isp_data_t *otp, struct isp_data_t *target_buf, uint32_t *size)
+static cmr_s32 _cali_awb(struct isp_data_t *golden, struct isp_data_t *otp, struct isp_data_t *target_buf, cmr_u32 *size)
 {
-	int32_t rtn = ISP_CALI_SUCCESS;
-	uint32_t version = 0;
-	uint8_t *start = 0;
-	uint16_t offset = 0;
+	cmr_s32 rtn = ISP_CALI_SUCCESS;
+	cmr_u32 version = 0;
+	cmr_u8 *start = 0;
+	cmr_u16 offset = 0;
 	struct isp_cali_awb_info *awb_info = PNULL;
 
 	if (PNULL == golden || PNULL == otp || PNULL == target_buf || PNULL == size)
@@ -227,28 +227,28 @@ static int32_t _cali_awb(struct isp_data_t *golden, struct isp_data_t *otp, stru
 	if (target_buf->size < sizeof(struct isp_cali_awb_info))
 		return ISP_CALI_ERROR;
 
-	start = (uint8_t *)golden->data_ptr;
-	version = *(uint32_t *)start;
+	start = (cmr_u8 *)golden->data_ptr;
+	version = *(cmr_u32 *)start;
 	start += 4;
 
 	if (ISP_GOLDEN_AWB_V001 != version)
 		return ISP_CALI_ERROR;
 
-	awb_info->golden_avg[0] = *(uint16_t *)start;
+	awb_info->golden_avg[0] = *(cmr_u16 *)start;
 	start += 2;
-	awb_info->golden_avg[1] = *(uint16_t *)start;
+	awb_info->golden_avg[1] = *(cmr_u16 *)start;
 	start += 2;
-	awb_info->golden_avg[2] = *(uint16_t *)start;
+	awb_info->golden_avg[2] = *(cmr_u16 *)start;
 	//start += 2;
 
-	start = (uint8_t *)otp->data_ptr;
-	version = *(uint32_t *)start;
+	start = (cmr_u8 *)otp->data_ptr;
+	version = *(cmr_u32 *)start;
 	start += 4;
-	awb_info->ramdon_avg[0] = *(uint16_t *)start;
+	awb_info->ramdon_avg[0] = *(cmr_u16 *)start;
 	start += 2;
-	awb_info->ramdon_avg[1] = *(uint16_t *)start;
+	awb_info->ramdon_avg[1] = *(cmr_u16 *)start;
 	start += 2;
-	awb_info->ramdon_avg[2] = *(uint16_t *)start;
+	awb_info->ramdon_avg[2] = *(cmr_u16 *)start;
 	start += 2;
 
 	*size = sizeof(*awb_info);
@@ -257,11 +257,11 @@ static int32_t _cali_awb(struct isp_data_t *golden, struct isp_data_t *otp, stru
 }
 
 /*chn_gain[0]: r; chn_gain[1]: gr; chn_gain[2]: gb; chn_gain[3]: b*/
-static int32_t _interlace_gain(uint16_t *chn_gain[4], uint16_t gain_num, uint32_t image_pattern, uint16_t *interlaced_gain)
+static cmr_s32 _interlace_gain(cmr_u16 *chn_gain[4], cmr_u16 gain_num, cmr_u32 image_pattern, cmr_u16 *interlaced_gain)
 {
-	uint32_t i = 0;
-	uint32_t chn_idx[4] = {0};
-	uint16_t *chn[4] = {NULL};
+	cmr_u32 i = 0;
+	cmr_u32 chn_idx[4] = {0};
+	cmr_u16 *chn[4] = {NULL};
 
 	chn[0] = chn_gain[0];
 	chn[1] = chn_gain[1];
@@ -311,7 +311,7 @@ static int32_t _interlace_gain(uint16_t *chn_gain[4], uint16_t gain_num, uint32_
 	return ISP_CALI_SUCCESS;
 }
 
-int32_t isp_calibration_get_info(struct isp_data_t *golden_info, struct isp_cali_info_t *cali_info)
+cmr_s32 isp_calibration_get_info(struct isp_data_t *golden_info, struct isp_cali_info_t *cali_info)
 {
 	if (PNULL == cali_info || PNULL == golden_info)
 		return ISP_CALI_ERROR;
@@ -322,18 +322,18 @@ int32_t isp_calibration_get_info(struct isp_data_t *golden_info, struct isp_cali
 }
 
 
-int32_t isp_calibration(struct isp_cali_param *param, struct isp_data_t *result)
+cmr_s32 isp_calibration(struct isp_cali_param *param, struct isp_data_t *result)
 {
-	int32_t rtn = ISP_CALI_SUCCESS;
+	cmr_s32 rtn = ISP_CALI_SUCCESS;
 	struct isp_data_t golden_lsc = {0, PNULL};
 	struct isp_data_t golden_awb = {0, PNULL};
 	struct isp_data_t tmp = {0, PNULL};
 	struct isp_cali_data *cali_data = PNULL;
-	uint8_t *cur = PNULL;
-	uint8_t *start = PNULL;
-	uint32_t offset = 0;
-	uint32_t awb_size = 0;
-	uint32_t lsc_size = 0;
+	cmr_u8 *cur = PNULL;
+	cmr_u8 *start = PNULL;
+	cmr_u32 offset = 0;
+	cmr_u32 awb_size = 0;
+	cmr_u32 lsc_size = 0;
 
 	if (PNULL == param || PNULL == result)
 		return ISP_CALI_ERROR;
@@ -347,9 +347,9 @@ int32_t isp_calibration(struct isp_cali_param *param, struct isp_data_t *result)
 
 	memset(param->target_buf.data_ptr, 0, param->target_buf.size);
 
-	start = (uint8_t *)param->target_buf.data_ptr;
+	start = (cmr_u8 *)param->target_buf.data_ptr;
 	cali_data = (struct isp_cali_data *)start;
-	cur = (uint8_t *)&cali_data->data;
+	cur = (cmr_u8 *)&cali_data->data;
 
 	cali_data->version = 0x1;
 	cali_data->block_num = 2;
@@ -389,21 +389,21 @@ int32_t isp_calibration(struct isp_cali_param *param, struct isp_data_t *result)
 	return ISP_CALI_SUCCESS;
 }
 
-int32_t isp_parse_calibration_data(struct isp_data_info *cali_data, struct  isp_data_t *lsc, struct isp_data_t *awb)
+cmr_s32 isp_parse_calibration_data(struct isp_data_info *cali_data, struct  isp_data_t *lsc, struct isp_data_t *awb)
 {
-	int32_t rtn = ISP_CALI_SUCCESS;
+	cmr_s32 rtn = ISP_CALI_SUCCESS;
 	struct isp_cali_data *header = PNULL;
-	uint8_t *start = PNULL;
-	uint8_t *end = PNULL;
-	uint8_t lsc_index = 0xff;
-	uint8_t awb_index = 0xff;
-	uint32_t i;
+	cmr_u8 *start = PNULL;
+	cmr_u8 *end = PNULL;
+	cmr_u8 lsc_index = 0xff;
+	cmr_u8 awb_index = 0xff;
+	cmr_u32 i;
 
 	if (NULL == cali_data || NULL == lsc || NULL == awb)
 		return ISP_CALI_ERROR;
 
 	header = (struct isp_cali_data *)cali_data->data_ptr;
-	start = (uint8_t *)header;
+	start = (cmr_u8 *)header;
 
 	if (PNULL == header || cali_data->size < sizeof(*header))
 		return ISP_CALI_ERROR;
@@ -449,10 +449,10 @@ int32_t isp_parse_calibration_data(struct isp_data_info *cali_data, struct  isp_
 }
 
 
-int32_t isp_parse_flash_data(struct isp_data_t *flash_data, void *lsc_buf, uint32_t lsc_buf_size, uint32_t image_pattern,
-					uint32_t gain_width, uint32_t gain_height, struct isp_cali_awb_gain *awb_gain)
+cmr_s32 isp_parse_flash_data(struct isp_data_t *flash_data, void *lsc_buf, cmr_u32 lsc_buf_size, cmr_u32 image_pattern,
+					cmr_u32 gain_width, cmr_u32 gain_height, struct isp_cali_awb_gain *awb_gain)
 {
-	int32_t rtn = ISP_CALI_SUCCESS;
+	cmr_s32 rtn = ISP_CALI_SUCCESS;
 	UNUSED(flash_data);
 	UNUSED(lsc_buf);
 	UNUSED(lsc_buf_size);
@@ -464,8 +464,8 @@ int32_t isp_parse_flash_data(struct isp_data_t *flash_data, void *lsc_buf, uint3
 	struct random_info rdm_info = {0};
 	struct random_lsc_info lsc_info = {0};
 	struct random_awb_info awb_info = {0};
-	uint32_t max_value = 0;
-	uint32_t lsc_gain_num = 0;
+	cmr_u32 max_value = 0;
+	cmr_u32 lsc_gain_num = 0;
 
 	if (NULL == flash_data || NULL == lsc_buf || NULL == awb_gain)
 		return ISP_CALI_ERROR;
@@ -480,7 +480,7 @@ int32_t isp_parse_flash_data(struct isp_data_t *flash_data, void *lsc_buf, uint3
 
 	lsc_gain_num = lsc_info.gain_width * lsc_info.gain_height;
 
-	if (NULL == lsc_buf || lsc_buf_size < lsc_gain_num * 4 * sizeof(uint16_t))
+	if (NULL == lsc_buf || lsc_buf_size < lsc_gain_num * 4 * sizeof(cmr_u16))
 		return ISP_CALI_ERROR;
 
 	rtn = _interlace_gain(lsc_buf, lsc_gain_num, image_pattern, lsc_buf);
@@ -509,15 +509,15 @@ int32_t isp_parse_flash_data(struct isp_data_t *flash_data, void *lsc_buf, uint3
 #ifdef ISP_CALI_DEBUG
 void test_print_golden(struct isp_data_t *golden)
 {
-	int32_t rtn = 0;
-	uint32_t i = 0;
+	cmr_s32 rtn = 0;
+	cmr_u32 i = 0;
 	struct isp_calibration_lsc_golden_cali_info golden_info = {0};
 	struct isp_calibration_lsc_flags flag = {0};
 	struct isp_data_t golden_lsc = {0};
 	struct isp_data_t golden_awb = {0};
 	char file_name[64] = {0};
-	uint32_t envi = 0;
-	uint32_t ct = 0;
+	cmr_u32 envi = 0;
+	cmr_u32 ct = 0;
 
 	if (NULL == golden) {
 		PRINTF("invalid param");
@@ -549,7 +549,7 @@ void test_print_golden(struct isp_data_t *golden)
 	PRINTF("std gain: envi=%d, ct=%d\n", envi, ct);
 	PRINTF("std gain: size=%d\n", golden_info.gain[0].size);
 	sprintf(file_name, "output\\golden_std_%d_[%d_%d].txt", 0, envi, ct);
-	write_data_uint16(file_name, (uint16_t *)golden_info.gain[0].param, golden_info.gain[0].size);
+	write_data_uint16(file_name, (cmr_u16 *)golden_info.gain[0].param, golden_info.gain[0].size);
 
 	PRINTF("diff num: %d\n", golden_info.diff_num);
 	for (i=1; i<golden_info.diff_num+1; i++) {
@@ -558,7 +558,7 @@ void test_print_golden(struct isp_data_t *golden)
 		PRINTF("diff gain: envi=%d, ct=%d\n", envi, ct);
 		PRINTF("diff gain: size=%d\n", golden_info.gain[i].size);
 		sprintf(file_name, "output\\golden_diff_%d_[%d_%d].txt", i, envi, ct);
-		write_data_uint16(file_name, (uint16_t *)golden_info.gain[i].param, golden_info.gain[i].size * 4);
+		write_data_uint16(file_name, (cmr_u16 *)golden_info.gain[i].param, golden_info.gain[i].size * 4);
 
 	}
 }
@@ -581,11 +581,11 @@ void test_print_random_lsc(struct isp_data_t *lsc)
 
 	PRINTF("gain num: %d\n", random_info->gain_num);
 
-	write_data_uint16("output\\random_lsc.txt", (uint16_t *)&random_info->gain, random_info->gain_width * random_info->gain_height * sizeof(uint16_t) * 4);
+	write_data_uint16("output\\random_lsc.txt", (cmr_u16 *)&random_info->gain, random_info->gain_width * random_info->gain_height * sizeof(cmr_u16) * 4);
 }
 
 
-int32_t test_create_calibration_data(uint32_t image_pattern, const char *golden_file,
+cmr_s32 test_create_calibration_data(cmr_u32 image_pattern, const char *golden_file,
 										const char *random_lsc_file, const char *random_awb_file,
 										const char *calibration_file)
 {
@@ -602,7 +602,7 @@ int32_t test_create_calibration_data(uint32_t image_pattern, const char *golden_
 	const char calibration_file[] = "/data/calibration_phone.bin";
 #endif
 #endif
-	int32_t rtn = 0;
+	cmr_s32 rtn = 0;
 	struct isp_data_t golden = {NULL};
 	struct isp_data_t target_buf = {NULL};
 	struct isp_data_t lsc_otp = {NULL};
@@ -772,7 +772,7 @@ EXIT:
 	return ISP_CALI_SUCCESS;
 }
 
-int32_t test_init_calibration_data(struct isp_data_t *calibration_param)
+cmr_s32 test_init_calibration_data(struct isp_data_t *calibration_param)
 {
 	const char calibration_file[] = "/data/calibration_phone.bin";
 	FILE *calibration_handle = NULL;
@@ -848,7 +848,7 @@ cmr_int otp_ctrl_init(cmr_handle *isp_otp_handle, struct isp_otp_init_in *input_
 
 	ISP_LOGI("--isp_otp_init-- begin");
 	if (!input_ptr || !isp_otp_handle) {
-		ISP_LOGE("init param is null,input_ptr is 0x%lx & handler is 0x%lx", (isp_uint)input_ptr,(isp_uint)isp_otp_handle);
+		ISP_LOGE("init param is null,input_ptr is 0x%lx & handler is 0x%lx", (cmr_uint)input_ptr,(cmr_uint)isp_otp_handle);
 		rtn = ISP_PARAM_NULL;
 		goto exit;
 	}
@@ -895,7 +895,7 @@ cmr_int otp_ctrl_init(cmr_handle *isp_otp_handle, struct isp_otp_init_in *input_
 	if (cali_lsc_ptr) {
 		otp_info->width = cali_lsc_ptr->map[0].width;
 		otp_info->height = cali_lsc_ptr->map[0].height;
-		otp_info->lsc_random = (isp_u16 *)((isp_u8 *)&cali_lsc_ptr->data_area + cali_lsc_ptr->map[0].offset);
+		otp_info->lsc_random = (cmr_u16 *)((cmr_u8 *)&cali_lsc_ptr->data_area + cali_lsc_ptr->map[0].offset);
 		otp_info->lsc_golden = input_ptr->lsc_golden_data;
 	}
 #else

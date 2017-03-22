@@ -20,34 +20,34 @@
 #define RANDOM_SUCCESS 0
 #define RANDOM_ERROR 0xff
 
-int32_t random_unpack(void *random_data, uint32_t random_size, struct random_info *info)
+cmr_s32 random_unpack(void *random_data, cmr_u32 random_size, struct random_info *info)
 {
 	struct random_header *header = NULL;
 	struct random_block_info *block_info = NULL;
-	uint8_t *random_end = NULL;
-	uint32_t i = 0;
-	uint32_t awb_index = 0xff;
-	uint32_t awb_offset = 0;
-	uint32_t lsc_index = 0xff;
-	uint32_t lsc_offset = 0;
+	cmr_u8 *random_end = NULL;
+	cmr_u32 i = 0;
+	cmr_u32 awb_index = 0xff;
+	cmr_u32 awb_offset = 0;
+	cmr_u32 lsc_index = 0xff;
+	cmr_u32 lsc_offset = 0;
 
 	if (NULL == random_data || 0 == random_size || NULL == info) {
 		return RANDOM_ERROR;
 	}
 
-	random_end = (uint8_t *)random_data + random_size;
+	random_end = (cmr_u8 *)random_data + random_size;
 
 	header = (struct random_header *)random_data;
 
 	if (RANDOM_START != header->verify)
 		return RANDOM_ERROR;
 
-	if ((uint8_t *)header + sizeof(*header) > random_end)
+	if ((cmr_u8 *)header + sizeof(*header) > random_end)
 		return RANDOM_ERROR;
 
-	block_info = (struct random_block_info *)((uint8_t *)header + sizeof(*header));
+	block_info = (struct random_block_info *)((cmr_u8 *)header + sizeof(*header));
 
-	if ((uint8_t *)block_info + sizeof(*block_info) * header->block_num > random_end)
+	if ((cmr_u8 *)block_info + sizeof(*block_info) * header->block_num > random_end)
 		return RANDOM_ERROR;
 
 	for (i=0; i<header->block_num; i++) {
@@ -68,34 +68,34 @@ int32_t random_unpack(void *random_data, uint32_t random_size, struct random_inf
 	}
 
 	if (awb_index < header->block_num && lsc_index < header->block_num) {
-		info->awb = (void *)((uint8_t *)header + block_info[awb_index].offset);
+		info->awb = (void *)((cmr_u8 *)header + block_info[awb_index].offset);
 		info->awb_size = block_info[awb_index].size;
 
-		info->lsc = (void *)((uint8_t *)header + block_info[lsc_index].offset);
+		info->lsc = (void *)((cmr_u8 *)header + block_info[lsc_index].offset);
 		info->lsc_size = block_info[lsc_index].size;
 	}
 
 	return RANDOM_SUCCESS;
 }
 
-int32_t random_lsc_unpack(void *random_lsc, uint32_t random_lsc_size, struct random_lsc_info *lsc_info)
+cmr_s32 random_lsc_unpack(void *random_lsc, cmr_u32 random_lsc_size, struct random_lsc_info *lsc_info)
 {
 	struct random_map_lsc *basic = NULL;
-	uint16_t *gain_area = NULL;
-	uint32_t chn_gain_num = 0;
-	uint32_t i = 0;
+	cmr_u16 *gain_area = NULL;
+	cmr_u32 chn_gain_num = 0;
+	cmr_u32 i = 0;
 
 	if (NULL == random_lsc || 0 == random_lsc_size || NULL == lsc_info) {
 		return RANDOM_ERROR;
 	}
 
 	basic = (struct random_map_lsc *)random_lsc;
-	gain_area = (uint8_t *)((uint8_t *)random_lsc + sizeof(struct random_map_lsc));
+	gain_area = (cmr_u8 *)((cmr_u8 *)random_lsc + sizeof(struct random_map_lsc));
 	chn_gain_num = basic->gain_num;
 
 	lsc_info->gain_width = basic->gain_width;
 	lsc_info->gain_height = basic->gain_height;
-	lsc_info->chn_gain_size = basic->gain_num * sizeof(uint16_t);
+	lsc_info->chn_gain_size = basic->gain_num * sizeof(cmr_u16);
 
 	for (i=0; i<4; i++) {
 		lsc_info->chn_gain[i] = gain_area + i * lsc_info->gain_width * lsc_info->gain_height;
@@ -104,7 +104,7 @@ int32_t random_lsc_unpack(void *random_lsc, uint32_t random_lsc_size, struct ran
 	return RANDOM_SUCCESS;
 }
 
-int32_t random_awb_unpack(void *random_awb, uint32_t random_awb_size, struct random_awb_info *awb_info)
+cmr_s32 random_awb_unpack(void *random_awb, cmr_u32 random_awb_size, struct random_awb_info *awb_info)
 {
 	struct random_map_awb *awb_map = NULL;
 

@@ -48,61 +48,61 @@ extern "C"
 *				Data Structures					*
 *-------------------------------------------------------------------------------*/
 struct golden_header {
-	uint32_t start;
-	uint32_t length;
-	uint32_t version;
-	uint32_t block_num;
+	cmr_u32 start;
+	cmr_u32 length;
+	cmr_u32 version;
+	cmr_u32 block_num;
 };
 
 struct golden_block_info {
-	uint32_t id;
-	uint32_t offset;
-	uint32_t size;
+	cmr_u32 id;
+	cmr_u32 offset;
+	cmr_u32 size;
 };
 
 struct golden_map_module {
-	uint32_t core_version;
-	uint32_t sensor_maker;
-	uint32_t year;
-	uint32_t month;
-	uint32_t module_version;
-	uint32_t release_number;
-	uint32_t cal_dll_version;
-	uint32_t cal_map_version;
-	uint32_t reserved[8];
+	cmr_u32 core_version;
+	cmr_u32 sensor_maker;
+	cmr_u32 year;
+	cmr_u32 month;
+	cmr_u32 module_version;
+	cmr_u32 release_number;
+	cmr_u32 cal_dll_version;
+	cmr_u32 cal_map_version;
+	cmr_u32 reserved[8];
 };
 
 /*information of LSC module*/
 struct golden_lsc_header {
-	uint32_t version;
-	uint32_t length;
-	uint32_t block_num;
+	cmr_u32 version;
+	cmr_u32 length;
+	cmr_u32 block_num;
 };
 
 struct golden_map_lsc_basic {
-	uint16_t base_gain;
-	uint16_t algorithm_version;
-	uint16_t compress_flag;
-	uint16_t image_width;
-	uint16_t image_height;
-	uint16_t gain_width;
-	uint16_t gain_height;
-	uint16_t optical_x;
-	uint16_t optical_y;
-	uint16_t grid_width;
-	uint16_t grid_height;
-	uint16_t percent;
-	uint16_t bayer_pattern;
-	uint16_t reserved;
+	cmr_u16 base_gain;
+	cmr_u16 algorithm_version;
+	cmr_u16 compress_flag;
+	cmr_u16 image_width;
+	cmr_u16 image_height;
+	cmr_u16 gain_width;
+	cmr_u16 gain_height;
+	cmr_u16 optical_x;
+	cmr_u16 optical_y;
+	cmr_u16 grid_width;
+	cmr_u16 grid_height;
+	cmr_u16 percent;
+	cmr_u16 bayer_pattern;
+	cmr_u16 reserved;
 };
 
 struct golden_map_awb {
-	uint32_t version;
-	uint16_t avg_r;
-	uint16_t avg_g;
-	uint16_t avg_b;
-	uint16_t reserved0;
-	uint16_t reserved1[6];
+	cmr_u32 version;
+	cmr_u16 avg_r;
+	cmr_u16 avg_g;
+	cmr_u16 avg_b;
+	cmr_u16 reserved0;
+	cmr_u16 reserved1[6];
 };
 /*------------------------------------------------------------------------------*
 *				Compiler Flag					*

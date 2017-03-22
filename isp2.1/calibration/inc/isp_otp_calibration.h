@@ -40,7 +40,7 @@ extern "C"
 *				Data Structures					*
 *-------------------------------------------------------------------------------*/
 struct isp_data_t {
-	uint32_t size;
+	cmr_u32 size;
 	void *data_ptr;
 };
 
@@ -50,39 +50,39 @@ struct isp_cali_param {
 	struct isp_data_t golden;
 	struct isp_data_t target_buf;
 	/*0: gr, 1:r, 2: b, 3: gb*/
-	uint32_t image_pattern;
+	cmr_u32 image_pattern;
 };
 
 struct isp_cali_info_t {
-	uint32_t size;
+	cmr_u32 size;
 };
 
 struct isp_cali_awb_info {
-	uint32_t verify[2];
-	uint16_t golden_avg[4];
-	uint16_t ramdon_avg[4];
+	cmr_u32 verify[2];
+	cmr_u16 golden_avg[4];
+	cmr_u16 ramdon_avg[4];
 };
 
 struct isp_cali_lsc_map{
-	uint32_t ct;
-	uint32_t width;
-	uint32_t height;
-	uint32_t grid;
-	uint32_t len;
-	uint32_t offset;
+	cmr_u32 ct;
+	cmr_u32 width;
+	cmr_u32 height;
+	cmr_u32 grid;
+	cmr_u32 len;
+	cmr_u32 offset;
 };
 
 struct isp_cali_lsc_info {
-	uint32_t verify[2];
-	uint32_t num;
+	cmr_u32 verify[2];
+	cmr_u32 num;
 	struct isp_cali_lsc_map map[ISP_CALIBRATION_MAX_LSC_NUM];
 	void *data_area;
 };
 
 struct isp_cali_awb_gain {
-	uint32_t r;
-	uint32_t g;
-	uint32_t b;
+	cmr_u32 r;
+	cmr_u32 g;
+	cmr_u32 b;
 };
 
 struct isp_cali_flash_info {
@@ -96,14 +96,14 @@ struct isp_otp_init_in {
 	struct isp_data_info calibration_param;
 };
 
-int32_t isp_calibration_get_info(struct isp_data_t *golden_info, struct isp_cali_info_t *cali_info);
+cmr_s32 isp_calibration_get_info(struct isp_data_t *golden_info, struct isp_cali_info_t *cali_info);
 
-int32_t isp_calibration(struct isp_cali_param *param, struct isp_data_t *result);
+cmr_s32 isp_calibration(struct isp_cali_param *param, struct isp_data_t *result);
 
-int32_t isp_parse_calibration_data(struct isp_data_info*cali_data, struct  isp_data_t *lsc, struct isp_data_t *awb );
+cmr_s32 isp_parse_calibration_data(struct isp_data_info*cali_data, struct  isp_data_t *lsc, struct isp_data_t *awb );
 
-int32_t isp_parse_flash_data(struct isp_data_t *flash_data, void *lsc_buf, uint32_t lsc_buf_size, uint32_t image_pattern,
-					uint32_t gain_width, uint32_t gain_height, struct isp_cali_awb_gain *awb_gain);
+cmr_s32 isp_parse_flash_data(struct isp_data_t *flash_data, void *lsc_buf, cmr_u32 lsc_buf_size, cmr_u32 image_pattern,
+					cmr_u32 gain_width, cmr_u32 gain_height, struct isp_cali_awb_gain *awb_gain);
 
 cmr_int otp_ctrl_init(cmr_handle *isp_otp_handle, struct isp_otp_init_in *input_ptr);
 cmr_int otp_ctrl_deinit(cmr_handle isp_handler);

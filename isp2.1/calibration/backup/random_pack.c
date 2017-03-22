@@ -22,19 +22,19 @@
 
 struct data_info {
 	void *data;
-	uint32_t size;
+	cmr_u32 size;
 };
 
-static int32_t _lsc_pack(struct random_lsc_info *lsc_info, struct data_info *target, uint32_t *real_size)
+static cmr_s32 _lsc_pack(struct random_lsc_info *lsc_info, struct data_info *target, cmr_u32 *real_size)
 {
 	struct random_map_lsc *lsc_map = target->data;
-	uint32_t gain_size = lsc_info->chn_gain_size * 4;
-	uint32_t crc_len = 4;
-	uint8_t *data_start = NULL;
-	uint16_t *chn_r = NULL;
-	uint16_t *chn_b = NULL;
-	uint16_t *chn_gr = NULL;
-	uint16_t *chn_gb = NULL;
+	cmr_u32 gain_size = lsc_info->chn_gain_size * 4;
+	cmr_u32 crc_len = 4;
+	cmr_u8 *data_start = NULL;
+	cmr_u16 *chn_r = NULL;
+	cmr_u16 *chn_b = NULL;
+	cmr_u16 *chn_gr = NULL;
+	cmr_u16 *chn_gb = NULL;
 
 	if (NULL == target->data || target->size < sizeof(*lsc_map) + gain_size + crc_len) {
 		return RANDOM_ERROR;
@@ -56,7 +56,7 @@ static int32_t _lsc_pack(struct random_lsc_info *lsc_info, struct data_info *tar
 	lsc_map->gain_num = lsc_info->gain_width * lsc_info->gain_height * 4;
 	lsc_map->data_length = sizeof(*lsc_map) + gain_size;
 
-	data_start = (uint8_t *)lsc_map + sizeof(*lsc_map);
+	data_start = (cmr_u8 *)lsc_map + sizeof(*lsc_map);
 
 	memcpy(data_start, lsc_info->chn_gain[0], lsc_info->chn_gain_size);
 	data_start += lsc_info->chn_gain_size;
@@ -68,20 +68,20 @@ static int32_t _lsc_pack(struct random_lsc_info *lsc_info, struct data_info *tar
 	data_start += lsc_info->chn_gain_size;
 
 	//CRC, 4 bytes
-	*(uint32_t *)data_start = 0;
+	*(cmr_u32 *)data_start = 0;
 	data_start += crc_len;
 
-	*real_size = data_start - (uint8_t *)lsc_map;
+	*real_size = data_start - (cmr_u8 *)lsc_map;
 
 	return RANDOM_SUCCESS;
 }
 
 
-static int32_t _awb_pack(struct random_awb_info *awb_info, struct data_info *target, uint32_t *real_size)
+static cmr_s32 _awb_pack(struct random_awb_info *awb_info, struct data_info *target, cmr_u32 *real_size)
 {
 	struct random_map_awb *awb_map = (struct random_map_awb *)target->data;
-	uint8_t *data_start = (uint8_t *)awb_map;
-	uint32_t crc_len = 4;
+	cmr_u8 *data_start = (cmr_u8 *)awb_map;
+	cmr_u32 crc_len = 4;
 
 	if (NULL == target->data || target->size < sizeof(*awb_map) + crc_len) {
 		return RANDOM_ERROR;
@@ -96,25 +96,25 @@ static int32_t _awb_pack(struct random_awb_info *awb_info, struct data_info *tar
 	data_start += sizeof(*awb_map);
 
 	//CRC, 4 bytes
-	*(uint32_t *)data_start = 0;
+	*(cmr_u32 *)data_start = 0;
 	data_start += crc_len;
 
-	*real_size = data_start - (uint8_t *)awb_map;
+	*real_size = data_start - (cmr_u8 *)awb_map;
 
 	return RANDOM_SUCCESS;
 }
 
-int32_t get_random_pack_size(uint32_t chn_gain_size, uint32_t *size)
+cmr_s32 get_random_pack_size(cmr_u32 chn_gain_size, cmr_u32 *size)
 {
-	uint32_t crc_len = 4;
-	uint32_t gain_size = chn_gain_size * 4;
-	uint32_t awb_size = sizeof(struct random_map_awb) + crc_len;
-	uint32_t lsc_size = sizeof(struct random_map_lsc) + gain_size + crc_len;
-	uint32_t header_size = sizeof(struct random_header);
-	uint32_t block_info_size = sizeof(struct random_block_info) * 2;
-	uint32_t end_len = 4;
+	cmr_u32 crc_len = 4;
+	cmr_u32 gain_size = chn_gain_size * 4;
+	cmr_u32 awb_size = sizeof(struct random_map_awb) + crc_len;
+	cmr_u32 lsc_size = sizeof(struct random_map_lsc) + gain_size + crc_len;
+	cmr_u32 header_size = sizeof(struct random_header);
+	cmr_u32 block_info_size = sizeof(struct random_block_info) * 2;
+	cmr_u32 end_len = 4;
 
-	uint32_t total_size = header_size + block_info_size + awb_size + lsc_size + end_len;
+	cmr_u32 total_size = header_size + block_info_size + awb_size + lsc_size + end_len;
 
 	if (NULL == size || 0 == chn_gain_size)
 		return RANDOM_ERROR;
@@ -124,18 +124,18 @@ int32_t get_random_pack_size(uint32_t chn_gain_size, uint32_t *size)
 	return RANDOM_SUCCESS;
 }
 
-int32_t random_pack(struct random_pack_param *param, struct random_pack_result *result)
+cmr_s32 random_pack(struct random_pack_param *param, struct random_pack_result *result)
 {
-	int32_t rtn = RANDOM_ERROR;
+	cmr_s32 rtn = RANDOM_ERROR;
 	struct data_info awb = {0};
 	struct data_info lsc = {0};
-	uint8_t *target_cur = NULL;
-	uint8_t *data_cur = NULL;
-	uint8_t *target_end = NULL;
-	uint32_t real_size = 0;
+	cmr_u8 *target_cur = NULL;
+	cmr_u8 *data_cur = NULL;
+	cmr_u8 *target_end = NULL;
+	cmr_u32 real_size = 0;
 	struct random_header *header = NULL;
 	struct random_block_info *block_info = NULL;
-	uint32_t end_len = 4;
+	cmr_u32 end_len = 4;
 
 	if (NULL == param || NULL == result)
 		return RANDOM_ERROR;
@@ -145,7 +145,7 @@ int32_t random_pack(struct random_pack_param *param, struct random_pack_result *
 
 	memset(param->target_buf, 0, param->target_buf_size);
 
-	target_cur = (uint8_t *)param->target_buf;
+	target_cur = (cmr_u8 *)param->target_buf;
 	target_end = target_cur + param->target_buf_size;
 
 	//write random header
@@ -175,7 +175,7 @@ int32_t random_pack(struct random_pack_param *param, struct random_pack_result *
 
 	awb.size = real_size;
 	block_info[0].id = RANDOM_AWB_BLOCK_ID;
-	block_info[0].offset = target_cur - (uint8_t *)header;
+	block_info[0].offset = target_cur - (cmr_u8 *)header;
 	block_info[0].size = awb.size;
 	target_cur += awb.size;
 
@@ -188,7 +188,7 @@ int32_t random_pack(struct random_pack_param *param, struct random_pack_result *
 
 	lsc.size = real_size;
 	block_info[1].id = RANDOM_LSC_BLOCK_ID;
-	block_info[1].offset = target_cur - (uint8_t *)header;
+	block_info[1].offset = target_cur - (cmr_u8 *)header;
 	block_info[1].size = lsc.size;
 	target_cur += lsc.size;
 
@@ -196,10 +196,10 @@ int32_t random_pack(struct random_pack_param *param, struct random_pack_result *
 		return RANDOM_ERROR;
 
 	/*write end*/
-	*(uint32_t *)target_cur = RANDOM_END;
+	*(cmr_u32 *)target_cur = RANDOM_END;
 	target_cur += end_len;
 
-	result->real_size = target_cur - (uint8_t *)header;
+	result->real_size = target_cur - (cmr_u8 *)header;
 
 	rtn = RANDOM_SUCCESS;
 

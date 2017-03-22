@@ -41,42 +41,42 @@ extern "C"
 
 ///////////////////////////////////////////////////////////////////////////////////
 struct random_map_lsc {
-	uint32_t version;
-	uint16_t data_length;
-	uint16_t algorithm_version;
-	uint16_t compress_flag;
-	uint16_t image_width;
-	uint16_t image_height;
-	uint16_t gain_width;
-	uint16_t gain_height;
-	uint16_t optical_x;
-	uint16_t optical_y;
-	uint16_t grid_width;
-	uint16_t grid_height;
-	uint16_t percent;
-	uint16_t bayer_pattern;
-	uint16_t gain_num;
+	cmr_u32 version;
+	cmr_u16 data_length;
+	cmr_u16 algorithm_version;
+	cmr_u16 compress_flag;
+	cmr_u16 image_width;
+	cmr_u16 image_height;
+	cmr_u16 gain_width;
+	cmr_u16 gain_height;
+	cmr_u16 optical_x;
+	cmr_u16 optical_y;
+	cmr_u16 grid_width;
+	cmr_u16 grid_height;
+	cmr_u16 percent;
+	cmr_u16 bayer_pattern;
+	cmr_u16 gain_num;
 };
 
 struct random_map_awb {
-	uint32_t version;
-	uint16_t avg_r;
-	uint16_t avg_g;
-	uint16_t avg_b;
-	uint16_t reserved;
+	cmr_u32 version;
+	cmr_u16 avg_r;
+	cmr_u16 avg_g;
+	cmr_u16 avg_b;
+	cmr_u16 reserved;
 };
 
 struct random_block_info {
-	uint32_t id;
-	uint32_t offset;
-	uint32_t size;
+	cmr_u32 id;
+	cmr_u32 offset;
+	cmr_u32 size;
 };
 
 struct random_header {
-	uint32_t verify;
-	uint32_t size;
-	uint32_t version;
-	uint32_t block_num;
+	cmr_u32 verify;
+	cmr_u32 size;
+	cmr_u32 version;
+	cmr_u32 block_num;
 };
 /*------------------------------------------------------------------------------*
 *				Data Structures					*

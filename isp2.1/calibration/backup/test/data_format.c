@@ -1,13 +1,13 @@
 #include "sci_types.h"
 #include <stdio.h>
 
-void write_data_uint16(const char *file_name, uint16_t *data, uint32_t size)
+void write_data_uint16(const char *file_name, cmr_u16 *data, cmr_u32 size)
 {
 	FILE *pf = NULL;
-	uint32_t items = size / sizeof(uint16_t);
-	uint32_t item_per_line = 16;
-	uint32_t lines = items / item_per_line;
-	uint32_t i, j;
+	cmr_u32 items = size / sizeof(cmr_u16);
+	cmr_u32 item_per_line = 16;
+	cmr_u32 lines = items / item_per_line;
+	cmr_u32 i, j;
 
 	pf = fopen(file_name, "w+t");
 	if (NULL == pf)
@@ -36,12 +36,12 @@ void write_data_uint16(const char *file_name, uint16_t *data, uint32_t size)
 
 }
 
-void write_data_uint16_dec(const char *file_name, uint16_t *data, uint32_t item_per_line, uint32_t size)
+void write_data_uint16_dec(const char *file_name, cmr_u16 *data, cmr_u32 item_per_line, cmr_u32 size)
 {
 	FILE *pf = NULL;
-	uint32_t items = size / sizeof(uint16_t);
-	uint32_t lines = items / item_per_line;
-	uint32_t i, j;
+	cmr_u32 items = size / sizeof(cmr_u16);
+	cmr_u32 lines = items / item_per_line;
+	cmr_u32 i, j;
 
 	pf = fopen(file_name, "w+t");
 	if (NULL == pf)
@@ -70,11 +70,11 @@ void write_data_uint16_dec(const char *file_name, uint16_t *data, uint32_t item_
 
 }
 
-void write_data_double(const char *file_name, double *data, uint32_t item_per_line, uint32_t items)
+void write_data_double(const char *file_name, double *data, cmr_u32 item_per_line, cmr_u32 items)
 {
 	FILE *pf = NULL;
-	uint32_t lines = items / item_per_line;
-	uint32_t i, j;
+	cmr_u32 lines = items / item_per_line;
+	cmr_u32 i, j;
 
 	pf = fopen(file_name, "w+t");
 	if (NULL == pf)
@@ -103,12 +103,12 @@ void write_data_double(const char *file_name, double *data, uint32_t item_per_li
 
 }
 
-void split_bayer_raw(uint16_t *dst[4], uint16_t *src, uint32_t w, uint32_t h)
+void split_bayer_raw(cmr_u16 *dst[4], cmr_u16 *src, cmr_u32 w, cmr_u32 h)
 {
-	uint32_t i = 0;
-	uint32_t j = 0;
+	cmr_u32 i = 0;
+	cmr_u32 j = 0;
 
-	uint16_t *chn[4] = {NULL};
+	cmr_u16 *chn[4] = {NULL};
 
 	chn[0] = dst[0];
 	chn[1] = dst[1];
@@ -124,16 +124,16 @@ void split_bayer_raw(uint16_t *dst[4], uint16_t *src, uint32_t w, uint32_t h)
 	}
 }
 
-void merge_bayer_raw(uint16_t *dst, uint16_t *src[4], uint32_t w, uint32_t h)
+void merge_bayer_raw(cmr_u16 *dst, cmr_u16 *src[4], cmr_u32 w, cmr_u32 h)
 {
-	uint32_t i = 0;
-	uint32_t j = 0;
+	cmr_u32 i = 0;
+	cmr_u32 j = 0;
 
 	for (i=0; i<h; i++) {
 
 		for (j=0; j<w; j++) {
 
-			uint32_t idx = (i & 1) * 2 + (j & 1);
+			cmr_u32 idx = (i & 1) * 2 + (j & 1);
 
 			*dst++ = *src[idx];
 			src[idx]++;
@@ -141,13 +141,13 @@ void merge_bayer_raw(uint16_t *dst, uint16_t *src[4], uint32_t w, uint32_t h)
 	}
 }
 
-uint32_t read_data_uint16(const char *file_name, uint16_t *data, uint32_t max_size)
+cmr_u32 read_data_uint16(const char *file_name, cmr_u16 *data, cmr_u32 max_size)
 {
 	FILE *pf = NULL;
 	char c0 = 0, c1 = 0;
-	uint32_t val = 0;
-	uint32_t data_num = 0;
-	int32_t rtn = 0;
+	cmr_u32 val = 0;
+	cmr_u32 data_num = 0;
+	cmr_s32 rtn = 0;
 
 	pf = fopen(file_name, "rt");
 	if (NULL == pf)
@@ -175,16 +175,16 @@ uint32_t read_data_uint16(const char *file_name, uint16_t *data, uint32_t max_si
 	fclose(pf);
 	pf = NULL;
 
-	return data_num * sizeof(uint16_t);
+	return data_num * sizeof(cmr_u16);
 }
 
-void write_data_uint16_interlace(const char *file_name, uint16_t *data, uint32_t size)
+void write_data_uint16_interlace(const char *file_name, cmr_u16 *data, cmr_u32 size)
 {
 	FILE *pf = NULL;
-	uint32_t items = size / sizeof(uint16_t);
-	uint32_t item_per_line = 16;
-	uint32_t lines = items / item_per_line;
-	uint32_t i, j;
+	cmr_u32 items = size / sizeof(cmr_u16);
+	cmr_u32 item_per_line = 16;
+	cmr_u32 lines = items / item_per_line;
+	cmr_u32 i, j;
 
 	uint16* tmp0 = data + 0 * items/4;
 	uint16* tmp1 = data + 1 * items/4;
@@ -226,10 +226,10 @@ void write_data_uint16_interlace(const char *file_name, uint16_t *data, uint32_t
 
 }
 
-uint32_t read_file(const char* file_name, void *data_buf,uint32_t buf_size)
+cmr_u32 read_file(const char* file_name, void *data_buf,cmr_u32 buf_size)
 {
 	FILE* pf = NULL;
-	uint32_t file_len = 0;
+	cmr_u32 file_len = 0;
 	pf = fopen(file_name,"rb");
 
 	if (NULL == pf || NULL == data_buf)
@@ -249,10 +249,10 @@ uint32_t read_file(const char* file_name, void *data_buf,uint32_t buf_size)
 	return file_len;
 }
 
-int32_t save_file(const char *file_name, void *data, uint32_t data_size)
+cmr_s32 save_file(const char *file_name, void *data, cmr_u32 data_size)
 {
 	FILE *pf = fopen(file_name, "wb");
-	uint32_t write_bytes = 0;
+	cmr_u32 write_bytes = 0;
 
 	if (NULL == pf)
 		return 0;
@@ -263,12 +263,12 @@ int32_t save_file(const char *file_name, void *data, uint32_t data_size)
 	return write_bytes;
 }
 
-int32_t image_blc(uint16_t *dst, uint16_t *src, uint32_t width, uint32_t height, uint32_t bayer_pattern,
-				 uint16_t blc_gr, uint16_t blc_r, uint16_t blc_b, uint16_t blc_gb)
+cmr_s32 image_blc(cmr_u16 *dst, cmr_u16 *src, cmr_u32 width, cmr_u32 height, cmr_u32 bayer_pattern,
+				 cmr_u16 blc_gr, cmr_u16 blc_r, cmr_u16 blc_b, cmr_u16 blc_gb)
 {
-	uint16_t blc[4] = {0};
-	uint16_t i = 0;
-	uint16_t j = 0;
+	cmr_u16 blc[4] = {0};
+	cmr_u16 i = 0;
+	cmr_u16 j = 0;
 
 	switch (bayer_pattern) {
 	case 0:
@@ -306,9 +306,9 @@ int32_t image_blc(uint16_t *dst, uint16_t *src, uint32_t width, uint32_t height,
 	for (i=0; i<height; i++) {
 		for (j=0; j<width; j++) {
 
-			uint32_t pattern_index = (i & 1) * 2 + (j & 1);
-			uint16_t src_value = *src++;
-			uint16_t dst_value = 0;
+			cmr_u32 pattern_index = (i & 1) * 2 + (j & 1);
+			cmr_u16 src_value = *src++;
+			cmr_u16 dst_value = 0;
 
 			if (src_value > blc[pattern_index])
 				dst_value = src_value - blc[pattern_index];

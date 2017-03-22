@@ -8,16 +8,16 @@
     {
 #endif
 
-void write_data_uint16(const char *file_name, uint16_t *data, uint32_t size);
-void write_data_double(const char *file_name, double *data, uint32_t item_per_line, uint32_t items);
-void write_data_uint16_dec(const char *file_name, uint16_t *data, uint32_t item_per_line, uint32_t size);
-void write_data_uint16_interlace(const char *file_name, uint16_t *data, uint32_t size);
-uint32_t read_data_uint16(const char *file_name, uint16_t *data, uint32_t max_size);
-uint32_t read_file(const char* file_name, void *data_buf,uint32_t buf_size);
-int32_t save_file(const char *file_name, void *data, uint32_t data_size);
-int32_t image_blc(uint16_t *dst, uint16_t *src, uint32_t width, uint32_t height, uint32_t bayer_pattern,
-				 uint16_t blc_gr, uint16_t blc_r, uint16_t blc_b, uint16_t blc_gb);
-void split_bayer_raw(uint16_t *dst[4], uint16_t *src, uint32_t w, uint32_t h);
+void write_data_uint16(const char *file_name, cmr_u16 *data, cmr_u32 size);
+void write_data_double(const char *file_name, double *data, cmr_u32 item_per_line, cmr_u32 items);
+void write_data_uint16_dec(const char *file_name, cmr_u16 *data, cmr_u32 item_per_line, cmr_u32 size);
+void write_data_uint16_interlace(const char *file_name, cmr_u16 *data, cmr_u32 size);
+cmr_u32 read_data_uint16(const char *file_name, cmr_u16 *data, cmr_u32 max_size);
+cmr_u32 read_file(const char* file_name, void *data_buf,cmr_u32 buf_size);
+cmr_s32 save_file(const char *file_name, void *data, cmr_u32 data_size);
+cmr_s32 image_blc(cmr_u16 *dst, cmr_u16 *src, cmr_u32 width, cmr_u32 height, cmr_u32 bayer_pattern,
+				 cmr_u16 blc_gr, cmr_u16 blc_r, cmr_u16 blc_b, cmr_u16 blc_gb);
+void split_bayer_raw(cmr_u16 *dst[4], cmr_u16 *src, cmr_u32 w, cmr_u32 h);
 
 #ifdef __cplusplus
 	}

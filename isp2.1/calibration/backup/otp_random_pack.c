@@ -39,7 +39,7 @@
 /*------------------------------------------------------------------------------*
 *				Public functions												*
 *-------------------------------------------------------------------------------*/
-int32_t otp_random_size(struct otp_pack_random_param *param, uint32_t *real_size)
+cmr_s32 otp_random_size(struct otp_pack_random_param *param, cmr_u32 *real_size)
 {
 	if (NULL == param || NULL == real_size)
 		return RANDOM_ERROR;
@@ -49,9 +49,9 @@ int32_t otp_random_size(struct otp_pack_random_param *param, uint32_t *real_size
 	return RANDOM_SUCCESS;
 }
 
-int32_t otp_pack_random(struct otp_pack_random_param *param, uint32_t *real_size)
+cmr_s32 otp_pack_random(struct otp_pack_random_param *param, cmr_u32 *real_size)
 {
-	int32_t rtn = RANDOM_ERROR;
+	cmr_s32 rtn = RANDOM_ERROR;
 	struct random_pack_param pack_param = {0};
 	struct random_pack_result pack_result = {0};
 	struct lsc_calc_gain_param lsc_calc_param = {0};
@@ -62,23 +62,23 @@ int32_t otp_pack_random(struct otp_pack_random_param *param, uint32_t *real_size
 	struct isp_center gain_center = {0};
 	struct img_rgb average_rgb = {0};
 	struct isp_img_rect awb_roi = {0};
-	uint32_t lsc_gain_width = 0;
-	uint32_t lsc_gain_height = 0;
+	cmr_u32 lsc_gain_width = 0;
+	cmr_u32 lsc_gain_height = 0;
 	void *lsc_gain_buf = NULL;
-	uint32_t lsc_gain_size = 0;
-	uint32_t grid_size = 0;
-	uint16_t chn_size=0;
-	uint16_t * lsc_gain_chn[4] = {NULL};
+	cmr_u32 lsc_gain_size = 0;
+	cmr_u32 grid_size = 0;
+	cmr_u16 chn_size=0;
+	cmr_u16 * lsc_gain_chn[4] = {NULL};
 
-	uint16_t * lsc_r_gain = NULL;
-	uint16_t * lsc_gr_gain = NULL;
-	uint16_t * lsc_gb_gain = NULL;
-	uint16_t * lsc_b_gain = NULL;
+	cmr_u16 * lsc_r_gain = NULL;
+	cmr_u16 * lsc_gr_gain = NULL;
+	cmr_u16 * lsc_gb_gain = NULL;
+	cmr_u16 * lsc_b_gain = NULL;
 
-	uint32_t i=0;
-	uint32_t chn_gain_size=0;
+	cmr_u32 i=0;
+	cmr_u32 chn_gain_size=0;
 
-	uint16_t * compress_buf = NULL;
+	cmr_u16 * compress_buf = NULL;
 
 	const char file_path[] = "output\\";
 	static char pack_name[128] = "";
@@ -114,7 +114,7 @@ int32_t otp_pack_random(struct otp_pack_random_param *param, uint32_t *real_size
 		goto EXIT;
 	}
 
-	lsc_gain_size = lsc_gain_width * lsc_gain_height * sizeof(uint16_t) * LSC_CHN_NUM * 2;
+	lsc_gain_size = lsc_gain_width * lsc_gain_height * sizeof(cmr_u16) * LSC_CHN_NUM * 2;
 
 	/*allocate target buffer*/
 	lsc_gain_buf = (void *)malloc(lsc_gain_size);
@@ -164,16 +164,16 @@ int32_t otp_pack_random(struct otp_pack_random_param *param, uint32_t *real_size
 		goto EXIT;
 		}
 
-		compress_buf = (uint16_t *)malloc(chn_size*LSC_CHN_NUM);
+		compress_buf = (cmr_u16 *)malloc(chn_size*LSC_CHN_NUM);
 		if(NULL == compress_buf){
 		goto EXIT;
 		}
 		memset(compress_buf, 0, chn_size*LSC_CHN_NUM);
 
 		lsc_r_gain = compress_buf;
-		lsc_gr_gain = (uint16_t *)((uint8_t *)lsc_r_gain + chn_size);
-		lsc_gb_gain = (uint16_t *)((uint8_t *)lsc_gr_gain + chn_size);
-		lsc_b_gain = (uint16_t *)((uint8_t *)lsc_gb_gain + chn_size);
+		lsc_gr_gain = (cmr_u16 *)((cmr_u8 *)lsc_r_gain + chn_size);
+		lsc_gb_gain = (cmr_u16 *)((cmr_u8 *)lsc_gr_gain + chn_size);
+		lsc_b_gain = (cmr_u16 *)((cmr_u8 *)lsc_gb_gain + chn_size);
 
 		compress_bit14(lsc_gain.gain_width, lsc_gain.gain_height, lsc_r_gain, lsc_gain.chn_gain[0], &chn_gain_size);
 		compress_bit14(lsc_gain.gain_width, lsc_gain.gain_height, lsc_gr_gain, lsc_gain.chn_gain[1], &chn_gain_size);
@@ -181,9 +181,9 @@ int32_t otp_pack_random(struct otp_pack_random_param *param, uint32_t *real_size
 		compress_bit14(lsc_gain.gain_width, lsc_gain.gain_height, lsc_b_gain, lsc_gain.chn_gain[3], &chn_gain_size);
 
 		lsc_gain.chn_gain[0] = lsc_r_gain;
-		lsc_gain.chn_gain[1] = (uint16_t *)((uint8_t *)lsc_gain.chn_gain[0]+chn_size);
-		lsc_gain.chn_gain[2] = (uint16_t *)((uint8_t *)lsc_gain.chn_gain[1]+chn_size);
-		lsc_gain.chn_gain[3] = (uint16_t *)((uint8_t *)lsc_gain.chn_gain[2]+chn_size);
+		lsc_gain.chn_gain[1] = (cmr_u16 *)((cmr_u8 *)lsc_gain.chn_gain[0]+chn_size);
+		lsc_gain.chn_gain[2] = (cmr_u16 *)((cmr_u8 *)lsc_gain.chn_gain[1]+chn_size);
+		lsc_gain.chn_gain[3] = (cmr_u16 *)((cmr_u8 *)lsc_gain.chn_gain[2]+chn_size);
 
 
 		lsc_gain.chn_size = chn_size;

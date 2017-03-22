@@ -74,23 +74,23 @@ enum isp_bayer_pattern {
 };
 
 struct isp_center {
-	uint32_t x;
-	uint32_t y;
+	cmr_u32 x;
+	cmr_u32 y;
 };
 
 struct isp_raw_image{
 	void *data;
-	uint32_t width;
-	uint32_t height;
-	uint32_t bayer_pattern;
+	cmr_u32 width;
+	cmr_u32 height;
+	cmr_u32 bayer_pattern;
 	enum isp_data_format data_format;
 };
 
 struct isp_img_rect {
-	uint32_t x;
-	uint32_t y;
-	uint32_t w;
-	uint32_t h;
+	cmr_u32 x;
+	cmr_u32 y;
+	cmr_u32 w;
+	cmr_u32 h;
 };
 
 /*------------------------------------------------------------------------------*

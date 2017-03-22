@@ -51,41 +51,41 @@ extern "C"
 *				Data Structures					*
 *-------------------------------------------------------------------------------*/
 struct otp_pack_module_param {
-	uint32_t core_version;
-	uint32_t sensor_maker;
-	uint32_t year;
-	uint32_t month;
-	uint32_t module_version;
-	uint32_t release_number;
-	uint32_t cal_dll_version;
-	uint32_t cal_map_version;
+	cmr_u32 core_version;
+	cmr_u32 sensor_maker;
+	cmr_u32 year;
+	cmr_u32 month;
+	cmr_u32 module_version;
+	cmr_u32 release_number;
+	cmr_u32 cal_dll_version;
+	cmr_u32 cal_map_version;
 };
 
 
 struct otp_pack_lsc_param {
 	/* 1: tshark algorithm; 2: sharkl/tshark2 algorithm  */
-	uint32_t alg_version;
+	cmr_u32 alg_version;
 	/* 1: use 1d diff; 2: use 2d diff */
-	uint32_t alg_type;
+	cmr_u32 alg_type;
 	/* 0: normal gain (16 bits for one gain); 1: compress gain (14 bit for one gain)  */
-	uint32_t compress;
+	cmr_u32 compress;
 	/* correction percent: 1-100 */
-	uint32_t percent;
+	cmr_u32 percent;
 	/*lsc grid size*/
-	uint32_t grid_width;
-	uint32_t grid_height;
+	cmr_u32 grid_width;
+	cmr_u32 grid_height;
 	/*0: physcial type; 1: optical type*/
-	uint32_t center_type;
+	cmr_u32 center_type;
 };
 
 struct otp_pack_awb_param {
 	/*awb algorithm version, must be 1*/
-	uint32_t alg_version;
+	cmr_u32 alg_version;
 	/*region of interest*/
-	uint32_t roi_x;
-	uint32_t roi_y;
-	uint32_t roi_width;
-	uint32_t roi_height;
+	cmr_u32 roi_x;
+	cmr_u32 roi_y;
+	cmr_u32 roi_width;
+	cmr_u32 roi_height;
 };
 
 struct otp_pack_golden_param {
@@ -93,58 +93,58 @@ struct otp_pack_golden_param {
 	struct otp_pack_lsc_param lsc;
 	struct otp_pack_awb_param awb;
 
-	uint32_t base_gain;
+	cmr_u32 base_gain;
 
 	/*image basic info*/
-	uint32_t image_width;
-	uint32_t image_height;
+	cmr_u32 image_width;
+	cmr_u32 image_height;
 	/*0: gr, 1: r, 2: b, 3: gb*/
-	uint32_t image_pattern;
+	cmr_u32 image_pattern;
 	/*0: raw image; 1: mipi raw image*/
-	uint32_t image_format;
+	cmr_u32 image_format;
 
 	/*standard image*/
 	void *std_img;
-	uint32_t std_ct;
+	cmr_u32 std_ct;
 
 	/*nonstandard image*/
 	void *nonstd_img[MAX_NONSTD_IMAGE];
-	uint32_t nonstd_ct[MAX_NONSTD_IMAGE];
-	uint32_t nonstd_num;
+	cmr_u32 nonstd_ct[MAX_NONSTD_IMAGE];
+	cmr_u32 nonstd_num;
 
 	/*buffer to receive output data*/
 	void *target_buf;
-	uint32_t target_buf_size;
+	cmr_u32 target_buf_size;
 };
 
 struct otp_pack_random_param {
 	struct otp_pack_lsc_param lsc;
 	struct otp_pack_awb_param awb;
 
-	uint32_t base_gain;
+	cmr_u32 base_gain;
 
 	/*standard image basic info*/
-	uint32_t image_width;
-	uint32_t image_height;
+	cmr_u32 image_width;
+	cmr_u32 image_height;
 	/*0: gr, 1: r, 2: b, 3: gb*/
-	uint32_t image_pattern;
+	cmr_u32 image_pattern;
 	/*0: raw image; 1: mipi raw image*/
-	uint32_t image_format;
+	cmr_u32 image_format;
 	void *image_data;
-	uint32_t image_ct;
+	cmr_u32 image_ct;
 
 	/*buffer to receive output data*/
 	void *target_buf;
-	uint32_t target_buf_size;
+	cmr_u32 target_buf_size;
 };
 
 /*------------------------------------------------------------------------------*
 *				Functions														*
 *-------------------------------------------------------------------------------*/
-OTPDLLV01_API int32_t otp_pack_golden(struct otp_pack_golden_param *param, uint32_t *real_size);
-OTPDLLV01_API int32_t otp_golden_size(struct otp_pack_golden_param *param, uint32_t *size);
-OTPDLLV01_API int32_t otp_pack_random(struct otp_pack_random_param *param, uint32_t *real_size);
-OTPDLLV01_API int32_t otp_random_size(struct otp_pack_random_param *param, uint32_t *size);
+OTPDLLV01_API cmr_s32 otp_pack_golden(struct otp_pack_golden_param *param, cmr_u32 *real_size);
+OTPDLLV01_API cmr_s32 otp_golden_size(struct otp_pack_golden_param *param, cmr_u32 *size);
+OTPDLLV01_API cmr_s32 otp_pack_random(struct otp_pack_random_param *param, cmr_u32 *real_size);
+OTPDLLV01_API cmr_s32 otp_random_size(struct otp_pack_random_param *param, cmr_u32 *size);
 /*------------------------------------------------------------------------------*
 *				Compiler Flag					*
 *-------------------------------------------------------------------------------*/
