@@ -7959,6 +7959,8 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle, enum takepicture_mode
 
 	if (CAMERA_ZSL_MODE == mode) {
 		camera_capture_zsl_highflash(cxt, cxt->camera_id);
+		cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id, SENSOR_BEFORE_SNAPSHOT,
+			(SENSOR_APERT_CAPTURE_MODE | (SENSOR_APERT_PREVIEW_MODE << CAP_MODE_BITS)));
 	}
 
 	cxt->snp_cxt.actual_capture_size = snp_param.post_proc_setting.chn_out_frm[0].size;

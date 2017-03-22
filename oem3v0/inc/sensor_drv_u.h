@@ -131,6 +131,9 @@ extern	 "C"
 #define SENSOR_EXPOSURE_AUTO                          0x01
 #define SENSOR_EXPOSURE_ZONE                          (0x01<<1)
 
+/*sensor  aperture mode*/
+#define SENSOR_APERT_PREVIEW_MODE                     2
+#define SENSOR_APERT_CAPTURE_MODE                     2
 
 typedef cmr_int  (*cmr_set_flash)(cmr_u32 set_param, cmr_u32 opt, cmr_handle oem_handle);
 
