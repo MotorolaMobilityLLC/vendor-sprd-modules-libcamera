@@ -5927,7 +5927,7 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id)
 	cmr_u32                 cap_rot = 0;
 	cmr_u32                 cfg_cap_rot = 0;
 	cmr_u32                 is_cfg_rot_cap = 0;
-	cmr_u32                 aligned_type = 0;
+	cmr_u32                 aligned_type = CAMERA_MEM_NO_ALIGNED;
 	cmr_u32                 mode_flag = 0;
 	cmr_int                 sn_mode = 0;
 	struct sensor_mode_fps_tag fps_info;
@@ -11680,31 +11680,46 @@ cmr_int prev_is_need_scaling(cmr_handle preview_handle, cmr_u32 camera_id)
 cmr_u32 prev_get_aligned_type(cmr_handle preview_handle, cmr_u32 camera_id)
 {
 	struct prev_handle     *handle = (struct prev_handle*)preview_handle;
-	cmr_u32                 aligned_type = CAMERA_MEM_NO_ALIGNED;
-	char                    value[PROPERTY_VALUE_MAX];
-	cmr_u32                 is_raw_capture = 0;
-	cmr_u32                 is_3D_caputre = 0;
-	struct camera_context*  cxt = (struct camera_context*)handle->oem_handle;
+	struct prev_context    *prev_cxt = NULL;
+	cmr_u32                aligned_type = CAMERA_MEM_NO_ALIGNED;
+	char                   value[PROPERTY_VALUE_MAX];
+	cmr_u32                is_raw_capture = 0;
+	cmr_u32                preview_enable = 0;
+	cmr_u32                snapshot_enable = 0;
+	cmr_u32                video_enable = 0;
+	cmr_u32                sprd_zsl_enabled;
+	struct img_size        org_pic_size;
+	cmr_u32                width, height = 0;
 
 	CHECK_HANDLE_VALID(handle);
 	CHECK_CAMERA_ID(camera_id);
+
+	prev_cxt     = &handle->prev_cxt[camera_id];
+	org_pic_size   = prev_cxt->prev_param.picture_size;
+	width = org_pic_size.width;
+	height = org_pic_size.height;
+	preview_enable  = prev_cxt->prev_param.preview_eb;
+	snapshot_enable = prev_cxt->prev_param.snapshot_eb;
+	video_enable    = prev_cxt->prev_param.video_eb;
+	sprd_zsl_enabled = prev_cxt->prev_param.sprd_zsl_enabled;
 
 	property_get("persist.sys.camera.raw.mode", value, "jpeg");
 	if (!strcmp(value, "raw")) {
 		is_raw_capture = 1;
 	}
 
-	if (cxt->is_multi_mode == MODE_3D_CAPTURE) {
-		is_3D_caputre = 1;
+	//condition scene and size for w/h aligned by 16
+	if (snapshot_enable && !is_raw_capture) {
+		if ((!preview_enable ||   // non zsl takepicture
+			(preview_enable && sprd_zsl_enabled) || // zsl takepicture
+			(preview_enable && video_enable && sprd_zsl_enabled)) &&    // video snapshot takepicture
+			((height == 1944  && width == 2592) ||
+			(height == 1836 && width == 3264) ||
+			(height == 1080 && width == 1920))) {
+			aligned_type =  CAMERA_MEM_ALIGNED;
+		}
 	}
 
-	if ((handle->prev_cxt[camera_id].prev_param.snapshot_eb && (is_raw_capture == 1 || is_3D_caputre == 1))
-		|| handle->prev_cxt[camera_id].prev_param.refocus_mode
-		|| handle->prev_cxt[camera_id].prev_param.sensor_datatype) {
-		aligned_type = CAMERA_MEM_NO_ALIGNED;
-	} else {
-		aligned_type = CAMERA_MEM_ALIGNED;
-	}
-
+	CMR_LOGI("aligned_type %d", aligned_type);
     return aligned_type;
 }
