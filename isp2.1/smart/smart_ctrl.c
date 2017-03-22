@@ -30,13 +30,13 @@
 #define DEBUG_FILE_NAME "/data/mlog/smart.txt"
 
 struct block_name_map {
-	uint32_t block_id;
+	cmr_u32 block_id;
 	char name[8];
 };
 
 struct tuning_param {
-	uint32_t version;
-	uint32_t bypass;
+	cmr_u32 version;
+	cmr_u32 bypass;
 	struct isp_smart_param param;
 };
 
@@ -72,23 +72,23 @@ static const char *s_smart_block_name[] = {
 };
 
 struct smart_context {
-	isp_u32 magic_flag;
+	cmr_u32 magic_flag;
 	pthread_mutex_t status_lock;
 	struct tuning_param tuning_param[SMART_MAX_WORK_MODE];
 	struct tuning_param tuning_param_org[SMART_MAX_WORK_MODE];
 	struct tuning_param *cur_param;
-	uint32_t work_mode;
+	cmr_u32 work_mode;
 	enum smart_ctrl_flash_mode flash_mode;
 	struct smart_block_result calc_result[ISP_SMART_MAX_BLOCK_NUM];
 	struct smart_block_result block_result;
-	uint8_t debug_buf[DEBUG_BUF_SIZE];
+	cmr_u8 debug_buf[DEBUG_BUF_SIZE];
 	debug_handle_t debug_file;
 };
 
-static int32_t is_print_log(void)
+static cmr_s32 is_print_log(void)
 {
 	char value[PROPERTY_VALUE_MAX] = { 0 };
-	uint32_t is_print = 0;
+	cmr_u32 is_print = 0;
 
 	property_get("debug.camera.isp.smart", value, "0");
 
@@ -99,9 +99,9 @@ static int32_t is_print_log(void)
 	return is_print;
 }
 
-static int32_t check_handle_validate(smart_handle_t handle)
+static cmr_s32 check_handle_validate(smart_handle_t handle)
 {
-	int32_t ret = ISP_SUCCESS;
+	cmr_s32 ret = ISP_SUCCESS;
 	struct smart_context *cxt_ptr = (struct smart_context *)handle;
 
 	if (NULL == handle) {
@@ -117,10 +117,10 @@ static int32_t check_handle_validate(smart_handle_t handle)
 	return ret;
 }
 
-static int32_t smart_ctl_set_workmode(struct smart_context *cxt, void *in_param)
+static cmr_s32 smart_ctl_set_workmode(struct smart_context *cxt, void *in_param)
 {
-	int32_t rtn = ISP_SUCCESS;
-	uint32_t work_mode = *(uint32_t *) in_param;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 work_mode = *(cmr_u32 *) in_param;
 
 	if (cxt->tuning_param[work_mode].param.block_num > 0) {
 		cxt->work_mode = work_mode;
@@ -131,9 +131,9 @@ static int32_t smart_ctl_set_workmode(struct smart_context *cxt, void *in_param)
 	return rtn;
 }
 
-static int32_t smart_ctl_set_flash(struct smart_context *cxt, void *in_param)
+static cmr_s32 smart_ctl_set_flash(struct smart_context *cxt, void *in_param)
 {
-	int32_t rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	enum smart_ctrl_flash_mode flash_mode = 0x0;
 
 	if (NULL == in_param) {
@@ -152,15 +152,15 @@ static int32_t smart_ctl_set_flash(struct smart_context *cxt, void *in_param)
 	return rtn;
 }
 
-static int32_t smart_ctl_check_block_param(struct isp_smart_block_cfg *blk_cfg)
+static cmr_s32 smart_ctl_check_block_param(struct isp_smart_block_cfg *blk_cfg)
 {
-	int32_t rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_smart_component_cfg *comp_cfg = NULL;
 	struct isp_piecewise_func *func = NULL;
 	struct isp_range *bv_range = NULL;
-	uint32_t i = 0;
-	uint32_t j = 0;
-	uint32_t k = 0;
+	cmr_u32 i = 0;
+	cmr_u32 j = 0;
+	cmr_u32 k = 0;
 
 	for (i = 0; i < blk_cfg->component_num; i++) {
 		comp_cfg = &blk_cfg->component[i];
@@ -199,11 +199,11 @@ static int32_t smart_ctl_check_block_param(struct isp_smart_block_cfg *blk_cfg)
 	return rtn;
 }
 
-static int32_t smart_ctl_check_param(struct isp_smart_param *param)
+static cmr_s32 smart_ctl_check_param(struct isp_smart_param *param)
 {
-	int32_t rtn = ISP_SUCCESS;
-	uint32_t i = 0;
-	uint32_t j = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i = 0;
+	cmr_u32 j = 0;
 	struct isp_smart_block_cfg *blk_cfg = NULL;
 	struct isp_smart_component_cfg *comp_cfg = NULL;
 	struct isp_piecewise_func *func = NULL;
@@ -230,8 +230,8 @@ static int32_t smart_ctl_check_param(struct isp_smart_param *param)
 
 
 		for (j = 0; j < blk_cfg->component_num; j++) {
-			uint32_t k = 0;
-			uint32_t m = 0;
+			cmr_u32 k = 0;
+			cmr_u32 m = 0;
 
 			comp_cfg = &blk_cfg->component[j];
 
@@ -287,10 +287,10 @@ static int32_t smart_ctl_check_param(struct isp_smart_param *param)
 	return rtn;
 }
 
-static int32_t smart_ctl_parse_tuning_param(struct smart_tuning_param src[], struct tuning_param dst[], uint32_t num)
+static cmr_s32 smart_ctl_parse_tuning_param(struct smart_tuning_param src[], struct tuning_param dst[], cmr_u32 num)
 {
-	int32_t rtn = ISP_SUCCESS;
-	uint32_t i = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i = 0;
 
 	for (i = 0; i < num; i++) {
 		if (NULL != src[i].data.data_ptr && src[i].data.size > 0) {
@@ -309,10 +309,10 @@ static int32_t smart_ctl_parse_tuning_param(struct smart_tuning_param src[], str
 	return ISP_SUCCESS;
 }
 
-static int32_t smart_ctl_get_update_param(struct smart_context *cxt, void *in_param)
+static cmr_s32 smart_ctl_get_update_param(struct smart_context *cxt, void *in_param)
 {
-	int32_t rtn = ISP_SUCCESS;
-	uint32_t i = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i = 0;
 	struct smart_init_param *param = NULL;
 
 	if (NULL == in_param) {
@@ -335,14 +335,14 @@ ERROR_EXIT:
 	return rtn;
 }
 
-static int32_t smart_ctl_piecewise_func_v1(struct isp_piecewise_func *func, int32_t x,
-				  uint32_t weight_unit, struct isp_weight_value *result)
+static cmr_s32 smart_ctl_piecewise_func_v1(struct isp_piecewise_func *func, cmr_s32 x,
+				  cmr_u32 weight_unit, struct isp_weight_value *result)
 {
-	int32_t rtn = ISP_SUCCESS;
-	uint32_t num = func->num;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 num = func->num;
 	struct isp_sample *samples = func->samples;
-	int16_t y = 0;
-	uint32_t i = 0;
+	cmr_s16 y = 0;
+	cmr_u32 i = 0;
 
 	if (0 == num)
 		return ISP_ERROR;
@@ -387,13 +387,13 @@ static int32_t smart_ctl_piecewise_func_v1(struct isp_piecewise_func *func, int3
 	return rtn;
 }
 
-static int32_t smart_ctl_piecewise_func_v0(struct isp_piecewise_func *func, int32_t x, int32_t * result)
+static cmr_s32 smart_ctl_piecewise_func_v0(struct isp_piecewise_func *func, cmr_s32 x, cmr_s32 * result)
 {
-	int32_t rtn = ISP_SUCCESS;
-	uint32_t num = func->num;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 num = func->num;
 	struct isp_sample *samples = func->samples;
-	int32_t y = 0;
-	uint32_t i = 0;
+	cmr_s32 y = 0;
+	cmr_u32 i = 0;
 
 	if (0 == num)
 		return ISP_ERROR;
@@ -424,17 +424,17 @@ static int32_t smart_ctl_piecewise_func_v0(struct isp_piecewise_func *func, int3
 	return rtn;
 }
 
-static int32_t smart_crl_calc_func(struct isp_piecewise_func *func, uint32_t y_type, isp_s32 x,
+static cmr_s32 smart_crl_calc_func(struct isp_piecewise_func *func, cmr_u32 y_type, cmr_s32 x,
 					struct isp_weight_value *result)
 {
-	int32_t rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_weight_value weight_value = { {0}, {0} };
-	int32_t value = 0;
+	cmr_s32 value = 0;
 
 	switch (y_type) {
 	case ISP_SMART_Y_TYPE_VALUE:
 		rtn = smart_ctl_piecewise_func_v0(func, x, &value);
-		result->value[0] = (int16_t) value;
+		result->value[0] = (cmr_s16) value;
 		result->weight[0] = SMART_WEIGHT_UNIT;
 		break;
 
@@ -450,15 +450,15 @@ static int32_t smart_crl_calc_func(struct isp_piecewise_func *func, uint32_t y_t
 	return rtn;
 }
 
-static int32_t smart_ctl_calc_bv_section(struct isp_range bv_range[], uint32_t num, int32_t bv,
+static cmr_s32 smart_ctl_calc_bv_section(struct isp_range bv_range[], cmr_u32 num, cmr_s32 bv,
 						struct isp_weight_value *result)
 {
-	int32_t rtn = ISP_SUCCESS;
-	uint16_t bv_distance[2] = { 0, 1 };
-	int32_t bv_max = 0;
-	int32_t bv_min = 0;
-	uint32_t i = 0;
-	int32_t bv_cur = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u16 bv_distance[2] = { 0, 1 };
+	cmr_s32 bv_max = 0;
+	cmr_s32 bv_min = 0;
+	cmr_u32 i = 0;
+	cmr_s32 bv_cur = 0;
 
 	if (num < 1)
 		return ISP_ERROR;
@@ -501,12 +501,12 @@ static int32_t smart_ctl_calc_bv_section(struct isp_range bv_range[], uint32_t n
 	return rtn;
 }
 
-static int32_t smart_ctl_calc_component(struct isp_smart_component_cfg * cfg, int32_t bv, int32_t bv_gain, uint32_t ct,
+static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg * cfg, cmr_s32 bv, cmr_s32 bv_gain, cmr_u32 ct,
 			struct smart_component_result * result)
 {
-	int32_t rtn = ISP_SUCCESS;
-	uint32_t i = 0;
-	uint32_t section_num = cfg->section_num;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i = 0;
+	cmr_u32 section_num = cfg->section_num;
 	struct isp_range *bv_range = cfg->bv_range;
 	struct isp_weight_value func_result = { {0}, {0} };
 	struct isp_weight_value *fix_data = (struct isp_weight_value *)result->fix_data;
@@ -536,8 +536,8 @@ static int32_t smart_ctl_calc_component(struct isp_smart_component_cfg * cfg, in
 
 			for (i = 0; i < 2; i++) {
 				/*bv result return the index of the bv section */
-				uint32_t bv_idx = (uint32_t) bv_result.value[i];
-				uint32_t bv_weight = bv_result.weight[i];
+				cmr_u32 bv_idx = (cmr_u32) bv_result.value[i];
+				cmr_u32 bv_weight = bv_result.weight[i];
 
 				if (bv_weight > 0 && bv_idx < cfg->section_num) {
 					rtn = smart_crl_calc_func(&cfg->func[bv_idx], cfg->y_type, ct, &tmp_result[i]);
@@ -547,9 +547,9 @@ static int32_t smart_ctl_calc_component(struct isp_smart_component_cfg * cfg, in
 			}
 
 			if (ISP_SMART_Y_TYPE_VALUE == cfg->y_type) {
-				int32_t sum = tmp_result[0].value[0] * bv_result.weight[0]
+				cmr_s32 sum = tmp_result[0].value[0] * bv_result.weight[0]
 				    + tmp_result[1].value[0] * bv_result.weight[1];
-				int32_t weight = bv_result.weight[0] + bv_result.weight[1];
+				cmr_s32 weight = bv_result.weight[0] + bv_result.weight[1];
 
 				if (weight > 0)
 					func_result.value[0] = sum / weight;
@@ -590,7 +590,7 @@ static int32_t smart_ctl_calc_component(struct isp_smart_component_cfg * cfg, in
 
 	switch (cfg->y_type) {
 	case ISP_SMART_Y_TYPE_VALUE:
-		result->size = sizeof(int32_t);
+		result->size = sizeof(cmr_s32);
 		result->fix_data[0] = func_result.value[0];
 		ISP_LOGV("value = %d", result->fix_data[0]);
 		break;
@@ -641,15 +641,15 @@ static int32_t smart_ctl_calc_component(struct isp_smart_component_cfg * cfg, in
 	return rtn;
 }
 
-static int32_t smart_ctl_calc_component_flash(struct isp_smart_component_cfg * cfg, struct smart_component_result * result)
+static cmr_s32 smart_ctl_calc_component_flash(struct isp_smart_component_cfg * cfg, struct smart_component_result * result)
 {
-	int32_t rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_weight_value func_result = { {0}, {0} };
 	struct isp_weight_value *fix_data = (struct isp_weight_value *)result->fix_data;
 
 	switch (cfg->y_type) {
 	case ISP_SMART_Y_TYPE_VALUE:
-		result->size = sizeof(int32_t);
+		result->size = sizeof(cmr_s32);
 		result->fix_data[0] = cfg->flash_val;
 		ISP_LOGI("value = %d", result->fix_data[0]);
 		break;
@@ -676,14 +676,14 @@ static int32_t smart_ctl_calc_component_flash(struct isp_smart_component_cfg * c
 	return rtn;
 }
 
-static int32_t smart_ctl_calc_block(struct isp_smart_block_cfg * cfg, int32_t bv, uint32_t bv_gain, uint32_t ct,
+static cmr_s32 smart_ctl_calc_block(struct isp_smart_block_cfg * cfg, cmr_s32 bv, cmr_u32 bv_gain, cmr_u32 ct,
 		    struct smart_block_result * result, enum smart_ctrl_flash_mode flash_mode)
 {
-	int32_t rtn = ISP_SUCCESS;
-	uint32_t i = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i = 0;
 	struct smart_component_result component_result = { 0, 0, 0,0,{0}, NULL };
-	uint32_t component_num = cfg->component_num;
-	uint32_t update_num = 0;
+	cmr_u32 component_num = cfg->component_num;
+	cmr_u32 update_num = 0;
 
 	if (0 == cfg->enable)
 		return ISP_SUCCESS;
@@ -729,7 +729,7 @@ static int32_t smart_ctl_calc_block(struct isp_smart_block_cfg * cfg, int32_t bv
 	return ISP_SUCCESS;
 }
 
-static const char *smart_ctl_find_block_name(uint32_t smart_id)
+static const char *smart_ctl_find_block_name(cmr_u32 smart_id)
 {
 	if (smart_id >= ISP_SMART_MAX)
 		smart_id = ISP_SMART_MAX;
@@ -743,10 +743,10 @@ static void smart_ctl_print_debug_file(debug_handle_t debug_file, struct smart_c
 	struct smart_block_result *blk = NULL;
 	struct smart_component_result *comp = NULL;
 	struct isp_weight_value *weight_value = NULL;
-	uint32_t i = 0, j = 0, k = 0;
+	cmr_u32 i = 0, j = 0, k = 0;
 	const char *block_name = NULL;
-	int32_t fd = 0;
-	int32_t rtn = ISP_SUCCESS;
+	cmr_s32 fd = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
 	char value[PROPERTY_VALUE_MAX] = { 0 };
 
 	property_get("persist.sys.isp.smartdebug", value, "0");
@@ -808,13 +808,13 @@ static void smart_ctl_print_debug_file(debug_handle_t debug_file, struct smart_c
 	smart_debug_file_close(debug_file);
 }
 
-static void smart_ctl_print_smart_result(uint32_t mode, struct smart_calc_result *result)
+static void smart_ctl_print_smart_result(cmr_u32 mode, struct smart_calc_result *result)
 {
 	struct smart_block_result *blk = NULL;
 	struct smart_component_result *comp = NULL;
 	struct isp_weight_value *weight_value = NULL;
 	struct smart_context *cxt = NULL;
-	uint32_t i = 0, j = 0, k = 0;
+	cmr_u32 i = 0, j = 0, k = 0;
 	const char *block_name = NULL;
 
 	if (0 == is_print_log())
@@ -863,8 +863,8 @@ static void smart_ctl_print_smart_result(uint32_t mode, struct smart_calc_result
 
 smart_handle_t smart_ctl_init(struct smart_init_param *param, void *result)
 {
-	int32_t rtn = ISP_SUCCESS;
-	uint32_t i = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i = 0;
 	smart_handle_t handle = NULL;
 	struct smart_context *cxt = NULL;
 
@@ -908,16 +908,16 @@ param_failed:
 	return handle;
 }
 
-static int32_t smart_ctl_calculation(smart_handle_t handle, struct smart_calc_param * param, struct smart_calc_result * result)
+static cmr_s32 smart_ctl_calculation(smart_handle_t handle, struct smart_calc_param * param, struct smart_calc_result * result)
 {
-	isp_s32 rtn = ISP_SUCCESS;
-	isp_u32 i = 0, mod_num = 0, func_num = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i = 0, mod_num = 0, func_num = 0;
 	struct smart_context *cxt = NULL;
 	struct tuning_param *cur_param = NULL;
 	struct isp_smart_param *smart_param = NULL;
-	uint32_t update_block_num = 0;
+	cmr_u32 update_block_num = 0;
 	enum smart_ctrl_flash_mode flash_mode = SMART_CTRL_FLASH_CLOSE;
-	uint32_t cmd = ISP_SMART_IOCTL_SET_FLASH_MODE;
+	cmr_u32 cmd = ISP_SMART_IOCTL_SET_FLASH_MODE;
 
 	rtn = check_handle_validate(handle);
 	if (ISP_SUCCESS != rtn) {
@@ -972,11 +972,11 @@ EXIT:
 	return rtn;
 }
 
-int32_t smart_ctl_deinit(smart_handle_t *handle, void *param, void *result)
+cmr_s32 smart_ctl_deinit(smart_handle_t *handle, void *param, void *result)
 {
 	UNUSED(param);
 	UNUSED(result);
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct smart_context *cxt_ptr = *handle;
 
 	rtn = check_handle_validate(*handle);
@@ -1002,10 +1002,10 @@ ERROR_EXIT:
 	return rtn;
 }
 
-int32_t smart_ctl_ioctl(smart_handle_t handle, uint32_t cmd, void *param, void *result)
+cmr_s32 smart_ctl_ioctl(smart_handle_t handle, cmr_u32 cmd, void *param, void *result)
 {
 	UNUSED(result);
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct smart_context *cxt_ptr = NULL;
 
 	rtn = check_handle_validate(handle);
@@ -1042,11 +1042,11 @@ ERROR_EXIT:
 	return rtn;
 }
 
-int32_t smart_ctl_block_eb(smart_handle_t handle, void *block_eb, uint32_t is_eb)
+cmr_s32 smart_ctl_block_eb(smart_handle_t handle, void *block_eb, cmr_u32 is_eb)
 {
-	isp_s32 rtn = ISP_SUCCESS;
-	isp_u32 i = 0;
-	int16_t *block_eb_ptr = (int16_t *) block_eb;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i = 0;
+	cmr_s16 *block_eb_ptr = (cmr_s16 *) block_eb;
 	struct smart_context *cxt = NULL;
 	struct tuning_param *cur_param = NULL;
 	struct isp_smart_param *smart_param = NULL;
@@ -1096,10 +1096,10 @@ int32_t smart_ctl_block_eb(smart_handle_t handle, void *block_eb, uint32_t is_eb
 	return rtn;
 }
 
-int32_t smart_ctl_block_enable_recover(smart_handle_t handle, uint32_t smart_id)
+cmr_s32 smart_ctl_block_enable_recover(smart_handle_t handle, cmr_u32 smart_id)
 {
-	isp_s32 rtn = ISP_SUCCESS;
-	isp_u32 i = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i = 0;
 	struct smart_context *cxt = NULL;
 	struct tuning_param *cur_param = NULL;
 	struct tuning_param *org_param = NULL;
@@ -1145,10 +1145,10 @@ int32_t smart_ctl_block_enable_recover(smart_handle_t handle, uint32_t smart_id)
 	return rtn;
 }
 
-int32_t smart_ctl_block_disable(smart_handle_t handle, uint32_t smart_id)
+cmr_s32 smart_ctl_block_disable(smart_handle_t handle, cmr_u32 smart_id)
 {
-	isp_s32 rtn = ISP_SUCCESS;
-	isp_u32 i = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i = 0;
 	struct smart_context *cxt = NULL;
 	struct tuning_param *cur_param = NULL;
 	struct isp_smart_param *smart_param = NULL;
@@ -1202,7 +1202,7 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input *in_ptr)
 	struct nr_data                          nr={{0,9,0},{0,10,0},{0,11,0},{0,12,0},{0,13,0},
 		{0,14,0},{0,15,0},{0,16,0},{0,17,0},{0,18,0},{0,19,0},{0,20,0},{0,21,0},{0,22,0},{0,23,0},{0,24,0},{0,25,0},{0,26,0}};
 	cmr_u32 alc_awb = in_ptr->alc_awb;
-	uint32_t                        i = 0;
+	cmr_u32                        i = 0;
 
 	if (!handle_smart || !in_ptr) {
 		rtn = ISP_PARAM_ERROR;

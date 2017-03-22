@@ -53,29 +53,29 @@ enum smart_ctrl_flash_mode {
 };
 
 struct smart_component_result {
-	uint32_t y_type;	//0: normal data(directly to driver); 1: index (few block support);
+	cmr_u32 y_type;	//0: normal data(directly to driver); 1: index (few block support);
 	// 2: index and weight (few block support); 3 gain: gain (new lens shading support)
-	uint32_t x_type;
-	uint32_t offset;
-	uint32_t size;	//if data is not NULL, use the data as the output buffer
-	int32_t fix_data[12];
+	cmr_u32 x_type;
+	cmr_u32 offset;
+	cmr_u32 size;	//if data is not NULL, use the data as the output buffer
+	cmr_s32 fix_data[12];
 	void *data;
 };
 
 struct smart_block_result {
-	uint32_t block_id;
-	uint32_t smart_id;
-	uint32_t update;
-	uint32_t component_num;
-	uint32_t mode_flag;
-	uint32_t scene_flag;
-	uint32_t mode_flag_changed;
+	cmr_u32 block_id;
+	cmr_u32 smart_id;
+	cmr_u32 update;
+	cmr_u32 component_num;
+	cmr_u32 mode_flag;
+	cmr_u32 scene_flag;
+	cmr_u32 mode_flag_changed;
 	struct smart_component_result component[4];
 };
 
 struct smart_tuning_param {
-	uint32_t version;
-	uint32_t bypass;
+	cmr_u32 version;
+	cmr_u32 bypass;
 	struct isp_data_info data;
 };
 
@@ -84,59 +84,59 @@ struct smart_init_param {
 };
 
 struct smart_calc_param {
-	int32_t bv;
-	int32_t bv_gain;
-	isp_u32 stable;
-	isp_u32 ct;
-	uint32_t alc_awb;
+	cmr_s32 bv;
+	cmr_s32 bv_gain;
+	cmr_u32 stable;
+	cmr_u32 ct;
+	cmr_u32 alc_awb;
 	cmr_handle handle_pm;
 };
 
 struct smart_proc_input {
 	cmr_handle handle_pm;
-	uint32_t alc_awb;
+	cmr_u32 alc_awb;
 	struct smart_calc_param cal_para;
 	cmr_u32 mode_flag;
 	cmr_u32 scene_flag;
-	unsigned int LSC_SPD_VERSION;   // LSC version of Spreadtrum
-	uint8_t *log;
-	uint32_t size;
-	uint8_t lock_nlm;
+	cmr_u32 LSC_SPD_VERSION;   // LSC version of Spreadtrum
+	cmr_u8 *log;
+	cmr_u32 size;
+	cmr_u8 lock_nlm;
 };
 
 struct smart_calc_result {
 	struct smart_block_result *block_result;
-	isp_u32 counts;
+	cmr_u32 counts;
 };
 
 struct nr_data{
-	uint32_t ppi[3];
-	uint32_t bayer_nr[3];
-	uint32_t rgb_dither[3];
-	uint32_t bpc[3];
-	uint32_t grgb[3];
-	uint32_t cfae[3];
-	uint32_t rgb_afm[3];
-	uint32_t uvdiv[3];
-	uint32_t dnr3_pre[3];
-	uint32_t dnr3_cap[3];
-	uint32_t edge[3];
-	uint32_t precdn[3];
-	uint32_t ynr[3];
-	uint32_t cdn[3];
-	uint32_t postcdn[3];
-	uint32_t ccnr[3];
-	uint32_t iir_yrandom[3];
-	uint32_t noisefilter[3];
+	cmr_u32 ppi[3];
+	cmr_u32 bayer_nr[3];
+	cmr_u32 rgb_dither[3];
+	cmr_u32 bpc[3];
+	cmr_u32 grgb[3];
+	cmr_u32 cfae[3];
+	cmr_u32 rgb_afm[3];
+	cmr_u32 uvdiv[3];
+	cmr_u32 dnr3_pre[3];
+	cmr_u32 dnr3_cap[3];
+	cmr_u32 edge[3];
+	cmr_u32 precdn[3];
+	cmr_u32 ynr[3];
+	cmr_u32 cdn[3];
+	cmr_u32 postcdn[3];
+	cmr_u32 ccnr[3];
+	cmr_u32 iir_yrandom[3];
+	cmr_u32 noisefilter[3];
 };
 
-int32_t smart_ctl_ioctl(smart_handle_t handle, uint32_t cmd, void *param, void *result);
-int32_t smart_ctl_block_eb(smart_handle_t handle, void *block_eb, uint32_t is_eb);
-int32_t smart_ctl_block_enable_recover(smart_handle_t handle, uint32_t smart_id);
-int32_t smart_ctl_block_disable(smart_handle_t handle, uint32_t smart_id);
+cmr_s32 smart_ctl_ioctl(smart_handle_t handle, cmr_u32 cmd, void *param, void *result);
+cmr_s32 smart_ctl_block_eb(smart_handle_t handle, void *block_eb, cmr_u32 is_eb);
+cmr_s32 smart_ctl_block_enable_recover(smart_handle_t handle, cmr_u32 smart_id);
+cmr_s32 smart_ctl_block_disable(smart_handle_t handle, cmr_u32 smart_id);
 
 smart_handle_t smart_ctl_init(struct smart_init_param *param, void *result);
-int32_t smart_ctl_deinit(smart_handle_t *handle, void *param, void *result);
+cmr_s32 smart_ctl_deinit(smart_handle_t *handle, void *param, void *result);
 cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input *in_ptr);
 
 #ifdef	 __cplusplus

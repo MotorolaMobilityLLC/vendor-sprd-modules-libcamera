@@ -26,8 +26,8 @@ struct awbl_debug_file {
 	char file_name[32];
 	char open_mode[4];
 	char file_buffer[DEBUG_FILE_BUF_SIZE];
-	uint32_t buffer_size;
-	uint32_t buffer_used_size;
+	cmr_u32 buffer_size;
+	cmr_u32 buffer_used_size;
 	FILE *pf;
 };
 
@@ -43,7 +43,7 @@ static void smart_debug_flush(struct awbl_debug_file *debug_file)
 	}
 }
 
-uint32_t smart_debug_file_open(debug_handle_t handle)
+cmr_u32 smart_debug_file_open(debug_handle_t handle)
 {
 	struct awbl_debug_file *debug_file = NULL;
 
@@ -105,7 +105,7 @@ void smart_debug_file_deinit(debug_handle_t handle)
 void smart_debug_file_print(debug_handle_t handle, char *str)
 {
 	struct awbl_debug_file *debug_file = (struct awbl_debug_file *)handle;
-	uint32_t len = 0;
+	cmr_u32 len = 0;
 
 	ISP_LOGV("handle=%p", handle);
 

@@ -31,37 +31,37 @@ enum isp_smart_interplate_func_type {
 };
 
 struct isp_smart_interplate_input0 {
-	isp_s32 x;
+	cmr_s32 x;
 };
 
 struct isp_smart_interplate_output0 {
-	int32_t index[2];
-	uint32_t weight[2];
+	cmr_s32 index[2];
+	cmr_u32 weight[2];
 };
 
 struct isp_smart_interplate_input1 {
-	int32_t x;
+	cmr_s32 x;
 };
 
 struct isp_smart_interplate_output1 {
-	isp_u32 y;
+	cmr_u32 y;
 };
 
 struct isp_smart_interplate_input2 {
-	isp_s32 x;
+	cmr_s32 x;
 };
 
 struct isp_smart_interplate_output2 {
-	isp_u32 y;
+	cmr_u32 y;
 };
 
 isp_smart_handle_t isp_smart_init(void *in_ptr, void *out_ptr);
 
-int32_t isp_smart_calculation(isp_u32 func_type,
+cmr_s32 isp_smart_calculation(cmr_u32 func_type,
 			      struct isp_smart_interplate_piecewise_func *cur_func,
 			      void *smart_cur_info_in, void *smart_calc_param_out);
 
-int32_t isp_smart_deinit(isp_smart_handle_t handle);
+cmr_s32 isp_smart_deinit(isp_smart_handle_t handle);
 
 #ifdef	 __cplusplus
 }

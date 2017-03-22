@@ -24,16 +24,16 @@
 #define ISP_SMART_ALG_MAGIC_FLAG 0xffeeaabb
 
 struct isp_smart_alg_context {
-	uint32_t magic_flag;
+	cmr_u32 magic_flag;
 };
 
-static int32_t _calc_piecewise_func0(struct isp_smart_interplate_piecewise_func *func, int32_t x, int32_t value[2],
-				     uint32_t weight[2])
+static cmr_s32 _calc_piecewise_func0(struct isp_smart_interplate_piecewise_func *func, cmr_s32 x, cmr_s32 value[2],
+				     cmr_u32 weight[2])
 {
-	uint32_t num = func->num;
+	cmr_u32 num = func->num;
 	struct isp_smart_interplate_sample *samples = func->samples;
-	int16_t y = 0;
-	uint32_t i = 0;
+	cmr_s16 y = 0;
+	cmr_u32 i = 0;
 
 	if (0 == num)
 		return y;
@@ -81,13 +81,13 @@ static int32_t _calc_piecewise_func0(struct isp_smart_interplate_piecewise_func 
 	return y;
 }
 
-static int16_t _calc_piecewise_func1(struct isp_smart_interplate_piecewise_func *func, isp_s32 x)
+static cmr_s16 _calc_piecewise_func1(struct isp_smart_interplate_piecewise_func *func, cmr_s32 x)
 {
 
-	uint32_t num = func->num;
+	cmr_u32 num = func->num;
 	struct isp_smart_interplate_sample *samples = func->samples;
-	int16_t y = 0;
-	uint32_t i = 0;
+	cmr_s16 y = 0;
+	cmr_u32 i = 0;
 
 	ISP_LOGI("num=%d", num);
 
@@ -129,9 +129,9 @@ static struct isp_smart_alg_context *_getcontext_from_hanlde(isp_smart_handle_t 
 	return (struct isp_smart_alg_context *)handle;
 }
 
-static int32_t _check_handle_validate(isp_smart_handle_t handle)
+static cmr_s32 _check_handle_validate(isp_smart_handle_t handle)
 {
-	int32_t ret = ISP_SUCCESS;
+	cmr_s32 ret = ISP_SUCCESS;
 	struct isp_smart_alg_context *cxt_ptr = (struct isp_smart_alg_context *)handle;
 
 	if (ISP_SMART_ALG_MAGIC_FLAG != cxt_ptr->magic_flag) {
@@ -166,14 +166,14 @@ _smart_init_error_exit:
 	return (isp_smart_handle_t) alg_cxt_ptr;
 }
 
-int32_t isp_smart_calculation(isp_u32 func_type,
+cmr_s32 isp_smart_calculation(cmr_u32 func_type,
 			      struct isp_smart_interplate_piecewise_func * cur_func,
 			      void *smart_cur_info_in, void *smart_calc_param_out)
 {
-	int32_t rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	enum isp_smart_interplate_func_type inter_func_type;
 	struct isp_smart_interplate_piecewise_func *func = NULL;
-	uint32_t i = 0;
+	cmr_u32 i = 0;
 
 /*
 	rtn = _check_handle_validate(handle);
@@ -265,9 +265,9 @@ _smart_calc_error_exit:
 
 }
 
-int32_t isp_smart_deinit(isp_smart_handle_t handle)
+cmr_s32 isp_smart_deinit(isp_smart_handle_t handle)
 {
-	int32_t rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 
 	rtn = _check_handle_validate(handle);
 	if (ISP_SUCCESS != rtn) {
