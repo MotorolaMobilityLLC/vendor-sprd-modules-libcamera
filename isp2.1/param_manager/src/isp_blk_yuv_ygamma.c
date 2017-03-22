@@ -19,12 +19,12 @@
 
 
 
- isp_s32 _pm_yuv_ygamma_init(void *dst_gamc_param, void *src_gamc_param, void* param1, void* param_ptr2)
+ cmr_s32 _pm_yuv_ygamma_init(void *dst_gamc_param, void *src_gamc_param, void* param1, void* param_ptr2)
 {
-	isp_u32 i = 0;
-	isp_u32 j = 0;
-	isp_u32 index = 0;
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i = 0;
+	cmr_u32 j = 0;
+	cmr_u32 index = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_yuv_ygamma_param *dst_ptr = (struct isp_yuv_ygamma_param*)dst_gamc_param;
 	struct sensor_y_gamma_param *src_ptr = (struct sensor_y_gamma_param*)src_gamc_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header*)param1;
@@ -63,22 +63,22 @@
 	return rtn;
 }
 
- isp_s32 _pm_yuv_ygamma_set_param(void *gamc_param, isp_u32 cmd, void *param_ptr0, void *param_ptr1)
+ cmr_s32 _pm_yuv_ygamma_set_param(void *gamc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_yuv_ygamma_param *ygamma_ptr = (struct isp_yuv_ygamma_param*)gamc_param;
 	struct isp_pm_block_header *gamc_header_ptr = (struct isp_pm_block_header*)param_ptr1;
 
 	switch (cmd) {
 	case ISP_PM_BLK_YGAMMA_BYPSS:
-		ygamma_ptr->cur.bypass = *((isp_u32*)param_ptr0);
+		ygamma_ptr->cur.bypass = *((cmr_u32*)param_ptr0);
 		gamc_header_ptr->is_update = ISP_ONE;
 	break;
 
 	case ISP_PM_BLK_YGAMMA:
 	{
-		uint32_t gamma_idx = *((isp_u32*)param_ptr0);
-		uint32_t i;
+		cmr_u32 gamma_idx = *((cmr_u32*)param_ptr0);
+		cmr_u32 i;
 
 		ygamma_ptr->cur_idx_weight.x0 = gamma_idx;
 		ygamma_ptr->cur_idx_weight.x1 = gamma_idx;
@@ -100,9 +100,9 @@
 
 	case ISP_PM_BLK_SPECIAL_EFFECT:
 	{
-		isp_u32 idx = *((isp_u32*)param_ptr0);
+		cmr_u32 idx = *((cmr_u32*)param_ptr0);
 		if (0 == idx) {
-			int j = 0;
+			cmr_s32 j = 0;
 			for (j = 0; j < ISP_PINGPANG_YUV_YGAMMA_NUM; j++) {
 				if (j < ISP_PINGPANG_YUV_YGAMMA_NUM - 1) {
 					ygamma_ptr->cur.nodes[j].node_x = (ygamma_ptr->curve_tab[ygamma_ptr->cur_idx].points[j*2].x + ygamma_ptr->curve_tab[ygamma_ptr->cur_idx].points[j*2+1].x) >> 1;
@@ -113,7 +113,7 @@
 				}
 			}
 		} else {
-			int j = 0;
+			cmr_s32 j = 0;
 			for (j = 0; j < ISP_PINGPANG_YUV_YGAMMA_NUM; j++) {
 				if (j < ISP_PINGPANG_YUV_YGAMMA_NUM - 1) {
 					ygamma_ptr->cur.nodes[j].node_x = (ygamma_ptr->specialeffect_tab[idx].points[j*2].x + ygamma_ptr->specialeffect_tab[idx].points[j*2+1].x) >> 1;
@@ -134,7 +134,7 @@
 		struct isp_weight_value *weight_value = NULL;
 		struct isp_weight_value gamc_value = {{0}, {0}};
 		struct isp_range val_range = {0, 0};
-		int i;
+		cmr_s32 i;
 
 		val_range.min = 0;
 		val_range.max = SENSOR_GAMMA_NUM - 1;
@@ -196,12 +196,12 @@
 	return rtn;
 }
 
- isp_s32 _pm_yuv_ygamma_get_param(void *gamc_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
+ cmr_s32 _pm_yuv_ygamma_get_param(void *gamc_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_yuv_ygamma_param *gamc_ptr = (struct isp_yuv_ygamma_param*)gamc_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
-	isp_u32 *update_flag = (isp_u32*)rtn_param1;
+	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_Y_GAMMC;
 	param_data_ptr->cmd = cmd;

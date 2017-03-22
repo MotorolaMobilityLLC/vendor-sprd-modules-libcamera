@@ -17,12 +17,12 @@
 #include "isp_blocks_cfg.h"
 
 
- isp_s32 _pm_cmc10_init(void *dst_cmc10_param, void *src_cmc10_param, void* param1, void* param_ptr2)
+ cmr_s32 _pm_cmc10_init(void *dst_cmc10_param, void *src_cmc10_param, void* param1, void* param_ptr2)
 {
-	isp_u32 i = 0;
-	isp_u32 j = 0;
-	isp_u32 index = 0;
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i = 0;
+	cmr_u32 j = 0;
+	cmr_u32 index = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_cmc10_param *dst_ptr = (struct isp_cmc10_param*)dst_cmc10_param;
 	struct sensor_cmc10_param *src_ptr = (struct sensor_cmc10_param *)src_cmc10_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header*)param1;
@@ -51,17 +51,17 @@
 	return rtn;
 }
 
- isp_s32 _pm_cmc10_adjust(struct isp_cmc10_param *cmc_ptr, isp_u32 is_reduce)
+ cmr_s32 _pm_cmc10_adjust(struct isp_cmc10_param *cmc_ptr, cmr_u32 is_reduce)
 {
-	isp_s32 rtn = ISP_SUCCESS;
-	isp_u16* cmc_matrix_x0 = NULL;
-	isp_u16* cmc_matrix_x1 = NULL;
-	isp_u32 alpha_x0 = 0x00;
-	isp_u32 alpha_x1 = 0x00;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u16* cmc_matrix_x0 = NULL;
+	cmr_u16* cmc_matrix_x1 = NULL;
+	cmr_u32 alpha_x0 = 0x00;
+	cmr_u32 alpha_x1 = 0x00;
 	void *src_matrix[2] = {NULL};
-	isp_u16 weight[2] = {0};
-	uint16_t interp_result[SENSOR_CMC_POINT_NUM] = {0};
-	uint32_t i = 0;
+	cmr_u16 weight[2] = {0};
+	cmr_u16 interp_result[SENSOR_CMC_POINT_NUM] = {0};
+	cmr_u32 i = 0;
 
 
 	if(( cmc_ptr->cur_idx_info.x0 >= ISP_CMC_NUM ) || ( cmc_ptr->cur_idx_info.x1 >= ISP_CMC_NUM )) {
@@ -95,20 +95,20 @@
 	return rtn;
 }
 
- isp_s32 _pm_cmc10_set_param(void *cmc10_param, isp_u32 cmd, void *param_ptr0, void *param_ptr1)
+ cmr_s32 _pm_cmc10_set_param(void *cmc10_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_cmc10_param *cmc10_ptr = (struct isp_cmc10_param*)cmc10_param;
 	struct isp_pm_block_header *cmc10_header_ptr = (struct isp_pm_block_header*)param_ptr1;
 
 	switch(cmd) {
 	case ISP_PM_BLK_CMC10_BYPASS:
-		cmc10_ptr->cur.bypass = *((isp_u32*)param_ptr0);
+		cmc10_ptr->cur.bypass = *((cmr_u32*)param_ptr0);
 		cmc10_header_ptr->is_update = ISP_ONE;
 	break;
 
 	case ISP_PM_BLK_CMC10:
-		memcpy(cmc10_ptr->cur.matrix.val, param_ptr0, 9*sizeof(uint16_t));
+		memcpy(cmc10_ptr->cur.matrix.val, param_ptr0, 9*sizeof(cmr_u16));
 		cmc10_header_ptr->is_update = ISP_ONE;
 	break;
 
@@ -116,9 +116,9 @@
 	{
 		struct smart_block_result *block_result = (struct smart_block_result*)param_ptr0;
 		struct isp_weight_value cmc_value = {{0}, {0}};
-		isp_u32 is_reduce = ISP_ZERO;
+		cmr_u32 is_reduce = ISP_ZERO;
 		struct isp_range val_range = {0, 0};
-		isp_u32 update = 0;
+		cmr_u32 update = 0;
 
 		if (NULL == block_result) {
 			return ISP_ERROR;
@@ -147,16 +147,16 @@
 			struct isp_weight_value *bv_value = &weight_value[0];
 			struct isp_weight_value* ct_value[2] = {&weight_value[1], &weight_value[2]};
 
-			uint16_t bv_result[SENSOR_CMC_POINT_NUM] = {0};
-			uint16_t ct_result[2][SENSOR_CMC_POINT_NUM] = {{0},{0}};
-			int i;
+			cmr_u16 bv_result[SENSOR_CMC_POINT_NUM] = {0};
+			cmr_u16 ct_result[2][SENSOR_CMC_POINT_NUM] = {{0},{0}};
+			cmr_s32 i;
 			for (i=0; i<2; i++)
 			{
 				void *src_matrix[2] = {NULL};
 				src_matrix[0] = cmc10_ptr->matrix[ct_value[i]->value[0]];
 				src_matrix[1] = cmc10_ptr->matrix[ct_value[i]->value[1]];
 
-				isp_u16 weight[2] = {0};
+				cmr_u16 weight[2] = {0};
 				weight[0] = ct_value[i]->weight[0];
 				weight[1] = ct_value[i]->weight[1];
 				weight[0] = weight[0] / (SMART_WEIGHT_UNIT / 16) * (SMART_WEIGHT_UNIT / 16);
@@ -170,7 +170,7 @@
 			src_matrix[0] = &ct_result[0][0];
 			src_matrix[1] = &ct_result[1][0];
 
-			isp_u16 weight[2] = {0};
+			cmr_u16 weight[2] = {0};
 			weight[0] = bv_value->weight[0];
 			weight[1] = bv_value->weight[1];
 			weight[0] = weight[0] / (SMART_WEIGHT_UNIT / 16) * (SMART_WEIGHT_UNIT / 16);
@@ -219,12 +219,12 @@
 	return rtn;
 }
 
- isp_s32 _pm_cmc10_get_param(void *cmc10_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
+ cmr_s32 _pm_cmc10_get_param(void *cmc10_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_cmc10_param *cmc10_ptr = (struct isp_cmc10_param*)cmc10_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
-	isp_u32 *update_flag = (isp_u32*)rtn_param1;
+	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_CMC10;
 	param_data_ptr->cmd = cmd;

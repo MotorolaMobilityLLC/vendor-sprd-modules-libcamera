@@ -18,11 +18,11 @@
 
 
 
-isp_u32 _pm_nlm_convert_param(void *dst_nlm_param, isp_u32 strength_level, isp_u32 mode_flag, isp_u32 scene_flag)
+cmr_u32 _pm_nlm_convert_param(void *dst_nlm_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag)
 {
-	isp_s32 rtn = ISP_SUCCESS;
-	isp_s32 i = 0, j = 0;
-	isp_u32 total_offset_units = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 i = 0, j = 0;
+	cmr_u32 total_offset_units = 0;
 	struct isp_nlm_param_v1 *dst_ptr = (struct isp_nlm_param_v1 *)dst_nlm_param;
 	void *addr = NULL;
 
@@ -35,15 +35,15 @@ isp_u32 _pm_nlm_convert_param(void *dst_nlm_param, isp_u32 strength_level, isp_u
 		vst_param = (struct sensor_vst_level*)(dst_ptr->vst_ptr);
 		ivst_param = (struct sensor_ivst_level*)(dst_ptr->ivst_ptr);
 	} else {
-		isp_u32 *multi_nr_map_ptr = PNULL;
-		multi_nr_map_ptr = (isp_u32 *)dst_ptr->scene_ptr;
+		cmr_u32 *multi_nr_map_ptr = PNULL;
+		multi_nr_map_ptr = (cmr_u32 *)dst_ptr->scene_ptr;
 
 		total_offset_units = _pm_calc_nr_addr_offset(mode_flag, scene_flag, multi_nr_map_ptr);
-		nlm_param = (struct sensor_nlm_level *)((isp_u8 *)dst_ptr->nlm_ptr+ total_offset_units * dst_ptr->level_num * sizeof(struct sensor_nlm_level));
+		nlm_param = (struct sensor_nlm_level *)((cmr_u8 *)dst_ptr->nlm_ptr+ total_offset_units * dst_ptr->level_num * sizeof(struct sensor_nlm_level));
 
-		vst_param = (struct sensor_vst_level *)((isp_u8 *)dst_ptr->vst_ptr+ total_offset_units * dst_ptr->level_num * sizeof(struct sensor_vst_level));
+		vst_param = (struct sensor_vst_level *)((cmr_u8 *)dst_ptr->vst_ptr+ total_offset_units * dst_ptr->level_num * sizeof(struct sensor_vst_level));
 
-		ivst_param = (struct sensor_ivst_level *)((isp_u8 *)dst_ptr->ivst_ptr+ total_offset_units * dst_ptr->level_num * sizeof(struct sensor_ivst_level));
+		ivst_param = (struct sensor_ivst_level *)((cmr_u8 *)dst_ptr->ivst_ptr+ total_offset_units * dst_ptr->level_num * sizeof(struct sensor_ivst_level));
 	}
 
 	strength_level = PM_CLIP(strength_level, 0, dst_ptr->level_num - 1);
@@ -71,7 +71,7 @@ isp_u32 _pm_nlm_convert_param(void *dst_nlm_param, isp_u32 strength_level, isp_u
 		#if 0   //wait for kernel modefy the parameter vst_addr and ivst_addr to vst_addr[2] and ivst_addr[2](array type)
 		if (vst_param != NULL) {
 		#if __WORDSIZE == 64
-			addr = (void*)((isp_uint)dst_ptr->cur.vst_addr[1]<<32 | dst_ptr->cur.vst_addr[0]);
+			addr = (void*)((cmr_uint)dst_ptr->cur.vst_addr[1]<<32 | dst_ptr->cur.vst_addr[0]);
 		#else
 			//addr = (void*)(dst_ptr->cur.vst_addr[0]);
 		#endif
@@ -80,7 +80,7 @@ isp_u32 _pm_nlm_convert_param(void *dst_nlm_param, isp_u32 strength_level, isp_u
 
 		if (ivst_param != NULL) {
 			#if __WORDSIZE == 64
-				addr = (void*)((isp_uint)dst_ptr->cur.ivst_addr[1]<<32 | dst_ptr->cur.ivst_addr[0]);
+				addr = (void*)((cmr_uint)dst_ptr->cur.ivst_addr[1]<<32 | dst_ptr->cur.ivst_addr[0]);
 			#else
 				//addr = (void*)(dst_ptr->cur.ivst_addr[0]);
 			#endif
@@ -125,10 +125,10 @@ isp_u32 _pm_nlm_convert_param(void *dst_nlm_param, isp_u32 strength_level, isp_u
 	return rtn;
 }
 
-isp_s32 _pm_nlm_init(void *dst_nlm_param, void *src_nlm_param, void* param1, void* param_ptr2)
+cmr_s32 _pm_nlm_init(void *dst_nlm_param, void *src_nlm_param, void* param1, void* param_ptr2)
 {
-	isp_s32 rtn = ISP_SUCCESS;
-	isp_s32 i = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 i = 0;
 	void *addr = NULL;
 	struct isp_nlm_param_v1 *dst_ptr = (struct isp_nlm_param_v1 *)dst_nlm_param;
 	struct sensor_nr_header_param *src_ptr = (struct sensor_nr_header_param *)src_nlm_param;
@@ -136,7 +136,7 @@ isp_s32 _pm_nlm_init(void *dst_nlm_param, void *src_nlm_param, void* param1, voi
 	UNUSED(param_ptr2);
 
 	dst_ptr->cur.bypass = header_ptr->bypass;
-	dst_ptr->vst_map.size = 1024 * sizeof(isp_u32);
+	dst_ptr->vst_map.size = 1024 * sizeof(cmr_u32);
 	if (PNULL == dst_ptr->vst_map.data_ptr) {
 		dst_ptr->vst_map.data_ptr = (void *)malloc(dst_ptr->vst_map.size);
 		if (PNULL == dst_ptr->vst_map.data_ptr) {
@@ -147,20 +147,20 @@ isp_s32 _pm_nlm_init(void *dst_nlm_param, void *src_nlm_param, void* param1, voi
 	}
 	memset((void *)dst_ptr->vst_map.data_ptr, 0x00, dst_ptr->vst_map.size);
 	#if 1  //only WORDSIZE 32
-	dst_ptr->cur.vst_addr = (isp_uint)(dst_ptr->vst_map.data_ptr);
+	dst_ptr->cur.vst_addr = (cmr_uint)(dst_ptr->vst_map.data_ptr);
 	#endif
 #if 0 //wait for kernel modefy the parameter vst_addr and ivst_addr to vst_addr[2] and ivst_addr[2](array type)
 #if __WORDSIZE == 64
-	dst_ptr->cur.vst_addr[0] = (isp_uint)(dst_ptr->vst_map.data_ptr) & 0xffffffff;
-	dst_ptr->cur.vst_addr[1] = (isp_uint)(dst_ptr->vst_map.data_ptr) >> 32;
+	dst_ptr->cur.vst_addr[0] = (cmr_uint)(dst_ptr->vst_map.data_ptr) & 0xffffffff;
+	dst_ptr->cur.vst_addr[1] = (cmr_uint)(dst_ptr->vst_map.data_ptr) >> 32;
 #else
-	//dst_ptr->cur.vst_addr[0] = (isp_uint)(dst_ptr->vst_map.data_ptr);
+	//dst_ptr->cur.vst_addr[0] = (cmr_uint)(dst_ptr->vst_map.data_ptr);
 	//dst_ptr->cur.vst_addr[1] = 0;
 #endif
 #endif
 	dst_ptr->cur.vst_len = dst_ptr->vst_map.size;
 
-	dst_ptr->ivst_map.size = 1024 * sizeof(isp_u32);
+	dst_ptr->ivst_map.size = 1024 * sizeof(cmr_u32);
 	if (PNULL == dst_ptr->ivst_map.data_ptr) {
 		dst_ptr->ivst_map.data_ptr = (void *)malloc(dst_ptr->ivst_map.size);
 		if (PNULL == dst_ptr->ivst_map.data_ptr) {
@@ -171,14 +171,14 @@ isp_s32 _pm_nlm_init(void *dst_nlm_param, void *src_nlm_param, void* param1, voi
 	}
 	memset((void *)dst_ptr->ivst_map.data_ptr, 0x00, dst_ptr->ivst_map.size);
 	#if 1 //only WORDSIZE 32
-	dst_ptr->cur.ivst_addr = (isp_uint)(dst_ptr->ivst_map.data_ptr);
+	dst_ptr->cur.ivst_addr = (cmr_uint)(dst_ptr->ivst_map.data_ptr);
 	#endif
 #if 0 //wait for kernel modefy the parameter vst_addr and ivst_addr to vst_addr[2] and ivst_addr[2](array type)
 #if __WORDSIZE == 64
-	dst_ptr->cur.ivst_addr[0] = (isp_uint)(dst_ptr->ivst_map.data_ptr) & 0xffffffff;
-	dst_ptr->cur.ivst_addr[1] = (isp_uint)(dst_ptr->ivst_map.data_ptr) >> 32;
+	dst_ptr->cur.ivst_addr[0] = (cmr_uint)(dst_ptr->ivst_map.data_ptr) & 0xffffffff;
+	dst_ptr->cur.ivst_addr[1] = (cmr_uint)(dst_ptr->ivst_map.data_ptr) >> 32;
 #else
-	//dst_ptr->cur.ivst_addr[0] = (isp_uint)(dst_ptr->ivst_map.data_ptr);
+	//dst_ptr->cur.ivst_addr[0] = (cmr_uint)(dst_ptr->ivst_map.data_ptr);
 	//dst_ptr->cur.ivst_addr[1] = 0;
 #endif
 #endif
@@ -205,15 +205,15 @@ isp_s32 _pm_nlm_init(void *dst_nlm_param, void *src_nlm_param, void* param1, voi
 	return rtn;
 }
 
-isp_s32 _pm_nlm_set_param(void *nlm_param, isp_u32 cmd, void *param_ptr0, void *param_ptr1)
+cmr_s32 _pm_nlm_set_param(void *nlm_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_nlm_param_v1 *nlm_ptr = (struct isp_nlm_param_v1*)nlm_param;
 	struct isp_pm_block_header *nlm_header_ptr = (struct isp_pm_block_header*)param_ptr1;
 
 	switch (cmd) {
 	case ISP_PM_BLK_NLM_BYPASS:
-		nlm_ptr->cur.bypass = *((isp_u32*)param_ptr0);
+		nlm_ptr->cur.bypass = *((cmr_u32*)param_ptr0);
 		nlm_header_ptr->is_update = ISP_ONE;
 	break;
 
@@ -221,7 +221,7 @@ isp_s32 _pm_nlm_set_param(void *nlm_param, isp_u32 cmd, void *param_ptr0, void *
 	{
 		struct smart_block_result *block_result = (struct smart_block_result*)param_ptr0;
 		struct isp_range val_range = {0, 0};
-		isp_u32 nlm_level = 0;
+		cmr_u32 nlm_level = 0;
 
 		val_range.min = 0;
 		val_range.max = 255;
@@ -232,7 +232,7 @@ isp_s32 _pm_nlm_set_param(void *nlm_param, isp_u32 cmd, void *param_ptr0, void *
 			return rtn;
 		}
 
-		nlm_level = (isp_u32)block_result->component[0].fix_data[0];
+		nlm_level = (cmr_u32)block_result->component[0].fix_data[0];
 
 		if (nlm_level != nlm_ptr->cur_level || nr_tool_flag[7] || block_result->mode_flag_changed) {
 			nlm_ptr->cur_level = nlm_level;
@@ -260,12 +260,12 @@ isp_s32 _pm_nlm_set_param(void *nlm_param, isp_u32 cmd, void *param_ptr0, void *
 	return rtn;
 }
 
-isp_s32 _pm_nlm_get_param(void *nlm_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
+cmr_s32 _pm_nlm_get_param(void *nlm_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_nlm_param_v1 *nlm_ptr = (struct isp_nlm_param_v1*)nlm_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
-	isp_u32 *update_flag = (isp_u32*)rtn_param1;
+	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_NLM;
 	param_data_ptr->cmd = cmd;
@@ -284,9 +284,9 @@ isp_s32 _pm_nlm_get_param(void *nlm_param, isp_u32 cmd, void* rtn_param0, void* 
 	return rtn;
 }
 
- isp_s32 _pm_nlm_deinit(void* nlm_param)
+ cmr_s32 _pm_nlm_deinit(void* nlm_param)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_nlm_param_v1 * nlm_ptr = (struct isp_nlm_param_v1 *)nlm_param;
 
 	if (PNULL != nlm_ptr->vst_map.data_ptr) {

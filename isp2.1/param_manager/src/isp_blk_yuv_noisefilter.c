@@ -18,21 +18,21 @@
 #include "isp_blocks_cfg.h"
 
 
-isp_u32 _pm_yuv_noisefilter_convert_param(void *dst_yuv_noisefilter_param, isp_u32 strength_level, isp_u32 mode_flag, isp_u32 scene_flag)
+cmr_u32 _pm_yuv_noisefilter_convert_param(void *dst_yuv_noisefilter_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag)
 {
-	isp_s32 rtn = ISP_SUCCESS;
-	isp_s32 i = 0;
-	isp_u32 total_offset_units = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 i = 0;
+	cmr_u32 total_offset_units = 0;
 	struct isp_dev_noise_filter_param *dst_ptr = (struct isp_dev_noise_filter_param *)dst_yuv_noisefilter_param;
 	struct sensor_yuv_noisefilter_level *yuv_noisefilter_param = PNULL;
 
 	if (SENSOR_MULTI_MODE_FLAG != dst_ptr->nr_mode_setting) {
 		yuv_noisefilter_param = (struct sensor_yuv_noisefilter_level *)(dst_ptr->param_ptr);
 	} else {
-		isp_u32 *multi_nr_map_ptr = PNULL;
-		multi_nr_map_ptr = (isp_u32 *)dst_ptr->scene_ptr;
+		cmr_u32 *multi_nr_map_ptr = PNULL;
+		multi_nr_map_ptr = (cmr_u32 *)dst_ptr->scene_ptr;
 		total_offset_units = _pm_calc_nr_addr_offset(mode_flag, scene_flag, multi_nr_map_ptr);
-		yuv_noisefilter_param = (struct sensor_yuv_noisefilter_level *)((isp_u8 *)dst_ptr->param_ptr +
+		yuv_noisefilter_param = (struct sensor_yuv_noisefilter_level *)((cmr_u8 *)dst_ptr->param_ptr +
 			total_offset_units * dst_ptr->level_num * sizeof(struct sensor_yuv_noisefilter_level));
 	}
 	strength_level = PM_CLIP(strength_level, 0, dst_ptr->level_num - 1);
@@ -65,10 +65,10 @@ isp_u32 _pm_yuv_noisefilter_convert_param(void *dst_yuv_noisefilter_param, isp_u
 	return rtn;
 
 }
-isp_s32 _pm_yuv_noisefilter_init(void *dst_yuv_noisefilter_param, void *src_yuv_noisefilter_param, void *param1, void *param_ptr2)
+cmr_s32 _pm_yuv_noisefilter_init(void *dst_yuv_noisefilter_param, void *src_yuv_noisefilter_param, void *param1, void *param_ptr2)
 {
-	isp_s32 rtn = ISP_SUCCESS;
-	unsigned int i = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i = 0;
 	struct sensor_nr_header_param *src_ptr = (struct sensor_nr_header_param*)src_yuv_noisefilter_param;
 	struct isp_dev_noise_filter_param *dst_ptr = (struct isp_dev_noise_filter_param*)dst_yuv_noisefilter_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header*)param1;
@@ -94,20 +94,20 @@ isp_s32 _pm_yuv_noisefilter_init(void *dst_yuv_noisefilter_param, void *src_yuv_
 	return rtn;
 }
 
-isp_s32 _pm_yuv_noisefilter_set_param(void *yuv_noisefilter_param, isp_u32 cmd, void *param_ptr0, void *param_ptr1)
+cmr_s32 _pm_yuv_noisefilter_set_param(void *yuv_noisefilter_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param_ptr1;
 	struct isp_dev_noise_filter_param *dst_ptr = (struct isp_dev_noise_filter_param *)yuv_noisefilter_param;
 
 	switch (cmd) {
 	case ISP_PM_BLK_YUV_NOISEFILTER_BYPASS:
-		dst_ptr->cur.yrandom_bypass = *((isp_u32*)param_ptr0);
+		dst_ptr->cur.yrandom_bypass = *((cmr_u32*)param_ptr0);
 		header_ptr->is_update = ISP_ONE;
 	break;
 
 	case ISP_PM_BLK_YUV_NOISEFILTER_STRENGTH_LEVEL:
-		dst_ptr->cur_level= *((isp_u32*)param_ptr0);
+		dst_ptr->cur_level= *((cmr_u32*)param_ptr0);
 		header_ptr->is_update = ISP_ONE;
 	break;
 
@@ -115,7 +115,7 @@ isp_s32 _pm_yuv_noisefilter_set_param(void *yuv_noisefilter_param, isp_u32 cmd, 
 	{
 		struct smart_block_result *block_result = (struct smart_block_result*)param_ptr0;
 		struct isp_range val_range = {0, 0};
-		isp_u32 level = 0;
+		cmr_u32 level = 0;
 
 		val_range.min = 0;
 		val_range.max = 255;
@@ -126,7 +126,7 @@ isp_s32 _pm_yuv_noisefilter_set_param(void *yuv_noisefilter_param, isp_u32 cmd, 
 			return rtn;
 		}
 
-		level = (isp_u32)block_result->component[0].fix_data[0];
+		level = (cmr_u32)block_result->component[0].fix_data[0];
 
 		if (level != dst_ptr->cur_level || nr_tool_flag[15] ||block_result->mode_flag_changed) {
 			dst_ptr->cur_level = level;
@@ -151,12 +151,12 @@ isp_s32 _pm_yuv_noisefilter_set_param(void *yuv_noisefilter_param, isp_u32 cmd, 
 	return rtn;
 }
 
-isp_s32 _pm_yuv_noisefilter_get_param(void *yuv_noisefilter_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
+cmr_s32 _pm_yuv_noisefilter_get_param(void *yuv_noisefilter_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_dev_noise_filter_param *yuv_noisefilter_ptr = (struct isp_dev_noise_filter_param *)yuv_noisefilter_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
-	isp_u32 *update_flag = (isp_u32*)rtn_param1;
+	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_YUV_NOISEFILTER;
 	param_data_ptr->cmd = cmd;

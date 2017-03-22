@@ -20,10 +20,10 @@
 
 
 
- isp_s32 _pm_saturation_init_v1(void *dst_csa_param, void *src_csa_param, void *param1, void *param_ptr2)
+ cmr_s32 _pm_saturation_init_v1(void *dst_csa_param, void *src_csa_param, void *param1, void *param_ptr2)
 {
-	isp_s32 rtn = ISP_SUCCESS;
-	isp_u32 i = 0, j = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i = 0, j = 0;
 	struct isp_chrom_saturation_param *dst_csa_ptr = (struct isp_chrom_saturation_param *)dst_csa_param;
 	struct sensor_saturation_param *src_csa_ptr = (struct sensor_saturation_param *)src_csa_param;
 	struct isp_pm_block_header *csa_header_ptr = (struct isp_pm_block_header *)param1;
@@ -48,21 +48,21 @@
 	return rtn;
 }
 
- isp_s32 _pm_saturation_set_param_v1(void *csa_param, isp_u32 cmd, void *param_ptr0, void *param_ptr1)
+ cmr_s32 _pm_saturation_set_param_v1(void *csa_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_chrom_saturation_param *csa_ptr = (struct isp_chrom_saturation_param *)csa_param;
 	struct isp_pm_block_header *csa_header_ptr = (struct isp_pm_block_header *)param_ptr1;
 
 	switch (cmd) {
 	case ISP_PM_BLK_SATURATION_BYPASS:
-		csa_ptr->cur.bypass = *((isp_u32*)param_ptr0);
+		csa_ptr->cur.bypass = *((cmr_u32*)param_ptr0);
 		csa_header_ptr->is_update = ISP_ONE;
 	break;
 
 	case ISP_PM_BLK_SATURATION:
 	{
-		isp_u32 level = *((isp_u32*)param_ptr0);
+		cmr_u32 level = *((cmr_u32*)param_ptr0);
 		csa_ptr->cur_u_idx = level;
 		csa_ptr->cur_v_idx = level;
 		csa_ptr->cur.factor_u = csa_ptr->tab[0][csa_ptr->cur_u_idx];
@@ -73,7 +73,7 @@
 
 	case ISP_PM_BLK_SCENE_MODE:
 	{
-		isp_u32 idx = *((isp_u32*)param_ptr0);
+		cmr_u32 idx = *((cmr_u32*)param_ptr0);
 		if (0 == idx) {
 			csa_ptr->cur.factor_u = csa_ptr->tab[0][csa_ptr->cur_u_idx];
 			csa_ptr->cur.factor_v = csa_ptr->tab[1][csa_ptr->cur_v_idx];
@@ -89,9 +89,9 @@
 	{
 		struct smart_block_result *block_result = (struct smart_block_result*)param_ptr0;
 		struct isp_range val_range = {0, 0};
-		isp_u32 reduce_percent = 0;
-		uint32_t factor_u = 0;
-		uint32_t factor_v = 0;
+		cmr_u32 reduce_percent = 0;
+		cmr_u32 factor_u = 0;
+		cmr_u32 factor_v = 0;
 
 		val_range.min = 0;
 		val_range.max = 255;
@@ -101,7 +101,7 @@
 			return rtn;
 		}
 
-		reduce_percent = (isp_u32)block_result->component[0].fix_data[0];
+		reduce_percent = (cmr_u32)block_result->component[0].fix_data[0];
 		factor_u = csa_ptr->tab[0][csa_ptr->cur_u_idx];
 		factor_v = csa_ptr->tab[1][csa_ptr->cur_v_idx];
 		csa_ptr->cur.factor_u = (factor_u*reduce_percent)/255;
@@ -118,12 +118,12 @@
 	return rtn;
 }
 
- isp_s32 _pm_saturation_get_param_v1(void *csa_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
+ cmr_s32 _pm_saturation_get_param_v1(void *csa_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_chrom_saturation_param *csa_ptr = (struct isp_chrom_saturation_param *)csa_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
-	isp_u32 *update_flag = (isp_u32*)rtn_param1;
+	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_SATURATION;
 	param_data_ptr->cmd = cmd;

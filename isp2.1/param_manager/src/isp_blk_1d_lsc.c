@@ -17,10 +17,10 @@
 
 
 
-isp_s32 _pm_1d_lsc_init(void * dst_lnc_param,void * src_lnc_param,void * param1,void * param2)
+cmr_s32 _pm_1d_lsc_init(void * dst_lnc_param,void * src_lnc_param,void * param1,void * param2)
 {
-	isp_s32 rtn = ISP_SUCCESS;
-	isp_u32 i = 0, j = 0, index = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i = 0, j = 0, index = 0;
 	struct isp_1d_lsc_param *dst_ptr = (struct isp_1d_lsc_param*)dst_lnc_param;
 	struct sensor_1d_lsc_param *src_ptr = (struct sensor_1d_lsc_param*)src_lnc_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header*)param1;
@@ -75,18 +75,18 @@ isp_s32 _pm_1d_lsc_init(void * dst_lnc_param,void * src_lnc_param,void * param1,
 	dst_ptr->cur.init_dr2_r1c1 = src_ptr->map[index].curve_distcptn[3].rlsc_init_dr2;
 	header_ptr->is_update = header_ptr->is_update | ISP_PM_BLK_LSC_UPDATE_MASK_PARAM;
 	#if __WORDSIZE == 64
-	dst_ptr->cur.data_ptr[0] = (isp_uint)(src_ptr->data_area) & 0xffffffff;
-	dst_ptr->cur.data_ptr[1] = (isp_uint)(src_ptr->data_area) >> 32;
+	dst_ptr->cur.data_ptr[0] = (cmr_uint)(src_ptr->data_area) & 0xffffffff;
+	dst_ptr->cur.data_ptr[1] = (cmr_uint)(src_ptr->data_area) >> 32;
 	#else
-	dst_ptr->cur.data_ptr[0] = (isp_uint)(src_ptr->data_area);
+	dst_ptr->cur.data_ptr[0] = (cmr_uint)(src_ptr->data_area);
 	dst_ptr->cur.data_ptr[1] = 0;
 	#endif
 	return rtn;
 }
 
-isp_s32 _pm_1d_lsc_set_param(void *lnc_param, isp_u32 cmd, void* param_ptr0, void *param_ptr1)
+cmr_s32 _pm_1d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void* param_ptr0, void *param_ptr1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_1d_lsc_param *dst_lnc_ptr = PNULL;
 	struct isp_pm_block_header *lnc_header_ptr = (struct isp_pm_block_header*)param_ptr1;
 	dst_lnc_ptr = (struct isp_1d_lsc_param*)lnc_param;
@@ -95,7 +95,7 @@ isp_s32 _pm_1d_lsc_set_param(void *lnc_param, isp_u32 cmd, void* param_ptr0, voi
 
 	switch (cmd) {
 	case ISP_PM_BLK_LSC_BYPASS:
-		dst_lnc_ptr->cur.bypass = *((isp_u32*)param_ptr0);
+		dst_lnc_ptr->cur.bypass = *((cmr_u32*)param_ptr0);
 		lnc_header_ptr->is_update |= ISP_PM_BLK_LSC_UPDATE_MASK_PARAM;
 	break;
 
@@ -110,12 +110,12 @@ isp_s32 _pm_1d_lsc_set_param(void *lnc_param, isp_u32 cmd, void* param_ptr0, voi
 	return rtn;
 }
 
- isp_s32 _pm_1d_lsc_get_param(void *lnc_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
+ cmr_s32 _pm_1d_lsc_get_param(void *lnc_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
 	struct isp_1d_lsc_param *lnc_ptr = (struct isp_1d_lsc_param*)lnc_param;
-	isp_u32 *update_flag = (isp_u32*)rtn_param1;
+	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_1D_LSC;
 	param_data_ptr->cmd = cmd;

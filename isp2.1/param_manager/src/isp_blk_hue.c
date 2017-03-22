@@ -19,9 +19,9 @@
 
 
 
- isp_s32 _pm_hue_init_v1(void *dst_hue_param, void *src_hue_param, void *param1, void *param_ptr2)
+ cmr_s32 _pm_hue_init_v1(void *dst_hue_param, void *src_hue_param, void *param1, void *param_ptr2)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_hue_param_v1 *dst_hue_ptr = (struct isp_hue_param_v1 *)dst_hue_param;
 	struct sensor_hue_param *src_hue_ptr = (struct sensor_hue_param *)src_hue_param;
 	struct isp_pm_block_header *hue_header_ptr = (struct isp_pm_block_header *)param1;
@@ -38,21 +38,21 @@
 	return rtn;
 }
 
- isp_s32 _pm_hue_set_param_v1(void *hue_param, isp_u32 cmd, void *param_ptr0, void *param_ptr1)
+ cmr_s32 _pm_hue_set_param_v1(void *hue_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_hue_param_v1 *hue_ptr = (struct isp_hue_param_v1 *)hue_param;
 	struct isp_pm_block_header *hue_header_ptr = (struct isp_pm_block_header *)param_ptr1;
 	hue_header_ptr->is_update = ISP_ONE;
 
 	switch (cmd) {
 	case ISP_PM_BLK_HUE_BYPASS:
-		hue_ptr->cur.bypass = *((isp_u32*)param_ptr0);
+		hue_ptr->cur.bypass = *((cmr_u32*)param_ptr0);
 	break;
 
 	case ISP_PM_BLK_HUE:
 	{
-		isp_u32 level = *((isp_u32*)param_ptr0);
+		cmr_u32 level = *((cmr_u32*)param_ptr0);
 		hue_ptr->cur_idx = level;
 		hue_ptr->cur.theta = hue_ptr->tab[hue_ptr->cur_idx];
 	}
@@ -66,12 +66,12 @@
 	return rtn;
 }
 
- isp_s32 _pm_hue_get_param_v1(void *hue_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
+ cmr_s32 _pm_hue_get_param_v1(void *hue_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_hue_param_v1 *hue_ptr = (struct isp_hue_param_v1 *)hue_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
-	isp_u32 *update_flag = (isp_u32*)rtn_param1;
+	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_HUE;
 	param_data_ptr->cmd = cmd;

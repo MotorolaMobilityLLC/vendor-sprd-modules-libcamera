@@ -21,10 +21,10 @@
 
 
 
- isp_s32 _pm_2d_lsc_init(void * dst_lnc_param,void * src_lnc_param,void * param1,void * param2)
+ cmr_s32 _pm_2d_lsc_init(void * dst_lnc_param,void * src_lnc_param,void * param1,void * param2)
 {
-	isp_s32 rtn = ISP_SUCCESS;
-	isp_u32 i = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i = 0;
 	intptr_t addr = 0, index = 0;
 	struct isp_size *img_size_ptr = (struct isp_size*)param2;
 	struct isp_2d_lsc_param *dst_ptr = (struct isp_2d_lsc_param*)dst_lnc_param;
@@ -73,17 +73,17 @@
 	dst_ptr->tmp_ptr_b = (void*)malloc(src_ptr->tab_info.lsc_2d_info[0].lsc_2d_len);
 
 #if __WORDSIZE == 64
-	dst_ptr->cur.buf_addr[0] = (isp_uint)(dst_ptr->final_lsc_param.data_ptr) & 0xffffffff;
-	dst_ptr->cur.buf_addr[1] = (isp_uint)(dst_ptr->final_lsc_param.data_ptr) >> 32;
+	dst_ptr->cur.buf_addr[0] = (cmr_uint)(dst_ptr->final_lsc_param.data_ptr) & 0xffffffff;
+	dst_ptr->cur.buf_addr[1] = (cmr_uint)(dst_ptr->final_lsc_param.data_ptr) >> 32;
 #else
-	dst_ptr->cur.buf_addr[0] = (isp_uint)(dst_ptr->final_lsc_param.data_ptr);
+	dst_ptr->cur.buf_addr[0] = (cmr_uint)(dst_ptr->final_lsc_param.data_ptr);
 	dst_ptr->cur.buf_addr[1] = 0;
 #endif
 #if __WORDSIZE == 64
-	dst_ptr->cur.data_ptr[0] = (isp_uint)((void*)src_ptr->tab_info.lsc_2d_info[index].lsc_2d_weight) & 0xffffffff;
-	dst_ptr->cur.data_ptr[1] = (isp_uint)((void*)src_ptr->tab_info.lsc_2d_info[index].lsc_2d_weight) >> 32;
+	dst_ptr->cur.data_ptr[0] = (cmr_uint)((void*)src_ptr->tab_info.lsc_2d_info[index].lsc_2d_weight) & 0xffffffff;
+	dst_ptr->cur.data_ptr[1] = (cmr_uint)((void*)src_ptr->tab_info.lsc_2d_info[index].lsc_2d_weight) >> 32;
 #else
-	dst_ptr->cur.data_ptr[0] = (isp_uint)((void*)src_ptr->tab_info.lsc_2d_info[index].lsc_2d_weight);
+	dst_ptr->cur.data_ptr[0] = (cmr_uint)((void*)src_ptr->tab_info.lsc_2d_info[index].lsc_2d_weight);
 	dst_ptr->cur.data_ptr[1] = 0;
 #endif
 	dst_ptr->cur.slice_size.width = img_size_ptr->w;
@@ -102,16 +102,16 @@
 	return rtn;
 }
 
- isp_s32 _pm_2d_lsc_otp_active(struct sensor_2d_lsc_param *lsc_ptr, struct isp_cali_lsc_info *cali_lsc_ptr)
+ cmr_s32 _pm_2d_lsc_otp_active(struct sensor_2d_lsc_param *lsc_ptr, struct isp_cali_lsc_info *cali_lsc_ptr)
 {
-	isp_s32 rtn = ISP_SUCCESS;
-	isp_u32 i = 0, j = 0, num = 0;
-	isp_u32 buf_size = 0;
-	isp_u32 ct_min = 0, ct_max = 0, ct = 0;
-	isp_u16 *tmp_buf = PNULL;
-	isp_u16 *data_addr = PNULL, *dst_ptr = PNULL;
-	isp_u16* addr_array[ISP_CALIBRATION_MAX_LSC_NUM];
-	isp_u32 is_print_log = _is_print_log();
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i = 0, j = 0, num = 0;
+	cmr_u32 buf_size = 0;
+	cmr_u32 ct_min = 0, ct_max = 0, ct = 0;
+	cmr_u16 *tmp_buf = PNULL;
+	cmr_u16 *data_addr = PNULL, *dst_ptr = PNULL;
+	cmr_u16* addr_array[ISP_CALIBRATION_MAX_LSC_NUM];
+	cmr_u32 is_print_log = _is_print_log();
 
 	if (NULL == lsc_ptr || NULL == cali_lsc_ptr) {
 		ISP_LOGE("invalid parameter");
@@ -137,23 +137,23 @@
 	}
 
 	for (i=0; i<cali_lsc_ptr->num; i++) {
-		isp_u32 src_envi = cali_lsc_ptr->map[i].ct >> 16;
-		isp_u32 src_ct = cali_lsc_ptr->map[i].ct & 0xffff;
-		isp_u16 *src_data = (isp_u16 *)((isp_u8 *)&cali_lsc_ptr->data_area + cali_lsc_ptr->map[i].offset);
-		isp_u32 src_data_size = cali_lsc_ptr->map[i].len;
-		isp_u32 j = 0;
-		isp_u32 dst_index = 0xfff;
-		isp_u32 min_ct_diff = 0xffff;
+		cmr_u32 src_envi = cali_lsc_ptr->map[i].ct >> 16;
+		cmr_u32 src_ct = cali_lsc_ptr->map[i].ct & 0xffff;
+		cmr_u16 *src_data = (cmr_u16 *)((cmr_u8 *)&cali_lsc_ptr->data_area + cali_lsc_ptr->map[i].offset);
+		cmr_u32 src_data_size = cali_lsc_ptr->map[i].len;
+		cmr_u32 j = 0;
+		cmr_u32 dst_index = 0xfff;
+		cmr_u32 min_ct_diff = 0xffff;
 
 		if (is_print_log)
 			ISP_LOGI("%d: ------------------", i);
 
 		for (j=0; j<lsc_ptr->tab_num; j++) {
-			isp_u32 dst_envi = lsc_ptr->tab_info.lsc_2d_info[j].lsc_2d_map_info.envi;
-			isp_u32 dst_ct = lsc_ptr->tab_info.lsc_2d_info[j].lsc_2d_map_info.ct;
+			cmr_u32 dst_envi = lsc_ptr->tab_info.lsc_2d_info[j].lsc_2d_map_info.envi;
+			cmr_u32 dst_ct = lsc_ptr->tab_info.lsc_2d_info[j].lsc_2d_map_info.ct;
 
 			if (dst_envi == src_envi) {
-				isp_u32 ct_diff = abs((isp_s32)dst_ct - (isp_s32)src_ct);
+				cmr_u32 ct_diff = abs((cmr_s32)dst_ct - (cmr_s32)src_ct);
 				if (ct_diff < min_ct_diff) {
 					min_ct_diff = ct_diff;
 					dst_index = j;
@@ -174,8 +174,8 @@
 			src_size.h = cali_lsc_ptr->map[dst_index].height;
 			dst_size.w = lsc_ptr->tab_info.lsc_2d_info[dst_index].lsc_2d_map_info.width;
 			dst_size.h = lsc_ptr->tab_info.lsc_2d_info[dst_index].lsc_2d_map_info.height;
-			isp_u16 *dst_data = (isp_u16 *)((isp_u8 *)&lsc_ptr->tab_info.lsc_2d_map + lsc_ptr->tab_info.lsc_2d_info[dst_index].lsc_2d_offset)  ;
-			isp_u32 dst_data_size = lsc_ptr->tab_info.lsc_2d_info[dst_index].lsc_2d_len;
+			cmr_u16 *dst_data = (cmr_u16 *)((cmr_u8 *)&lsc_ptr->tab_info.lsc_2d_map + lsc_ptr->tab_info.lsc_2d_info[dst_index].lsc_2d_offset)  ;
+			cmr_u32 dst_data_size = lsc_ptr->tab_info.lsc_2d_info[dst_index].lsc_2d_len;
 
 			if (src_size.w == dst_size.w && src_size.h == dst_size.h
 				&& src_data_size == dst_data_size) {
@@ -195,16 +195,16 @@
 	return rtn;
 }
 
- isp_s32 _pm_2d_lsc_set_param(void *lnc_param, isp_u32 cmd, void* param_ptr0, void *param_ptr1)
+ cmr_s32 _pm_2d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void* param_ptr0, void *param_ptr1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_2d_lsc_param *dst_lnc_ptr = (struct isp_2d_lsc_param*)lnc_param;
 	struct isp_pm_block_header *lnc_header_ptr = (struct isp_pm_block_header*)param_ptr1;
 
 	switch (cmd) {
 	case ISP_PM_BLK_LSC_BYPASS:
 	{
-		dst_lnc_ptr->cur.bypass = *((isp_u32*)param_ptr0);
+		dst_lnc_ptr->cur.bypass = *((cmr_u32*)param_ptr0);
 		lnc_header_ptr->is_update |= ISP_PM_BLK_LSC_UPDATE_MASK_PARAM;
 		dst_lnc_ptr->update_flag = lnc_header_ptr->is_update;
 	}
@@ -212,14 +212,14 @@
 
 	case ISP_PM_BLK_LSC_MEM_ADDR:
 	{
-		uint16_t* plsc = param_ptr0;
+		cmr_u16* plsc = param_ptr0;
 		memcpy((void*)dst_lnc_ptr->final_lsc_param.data_ptr, param_ptr0, dst_lnc_ptr->final_lsc_param.size);
 
 #if __WORDSIZE == 64
-	dst_lnc_ptr->cur.buf_addr[0] = (isp_uint)(dst_lnc_ptr->final_lsc_param.data_ptr) & 0xffffffff;
-	dst_lnc_ptr->cur.buf_addr[1] = (isp_uint)(dst_lnc_ptr->final_lsc_param.data_ptr) >> 32;
+	dst_lnc_ptr->cur.buf_addr[0] = (cmr_uint)(dst_lnc_ptr->final_lsc_param.data_ptr) & 0xffffffff;
+	dst_lnc_ptr->cur.buf_addr[1] = (cmr_uint)(dst_lnc_ptr->final_lsc_param.data_ptr) >> 32;
 #else
-	dst_lnc_ptr->cur.buf_addr[0] = (isp_uint)(dst_lnc_ptr->final_lsc_param.data_ptr);
+	dst_lnc_ptr->cur.buf_addr[0] = (cmr_uint)(dst_lnc_ptr->final_lsc_param.data_ptr);
 	dst_lnc_ptr->cur.buf_addr[1] = 0;
 #endif
 	lnc_header_ptr->is_update |= ISP_PM_BLK_LSC_UPDATE_MASK_VALIDATE;
@@ -228,7 +228,7 @@
 	break;
 
 	case ISP_PM_BLK_LSC_VALIDATE:
-		if (0 != *((isp_u32*)param_ptr0)) {
+		if (0 != *((cmr_u32*)param_ptr0)) {
 		lnc_header_ptr->is_update |= ISP_PM_BLK_LSC_UPDATE_MASK_VALIDATE;
 		} else {
 			lnc_header_ptr->is_update &= (~ISP_PM_BLK_LSC_UPDATE_MASK_VALIDATE);
@@ -245,7 +245,7 @@
 		void *src_lsc_ptr0 = NULL;
 		void *src_lsc_ptr1 = NULL;
 		void *dst_lsc_ptr = NULL;
-		isp_u32 index = 0;
+		cmr_u32 index = 0;
 
 		if (block_result->update == 0)
 		{
@@ -267,42 +267,42 @@
 		struct isp_weight_value* ct_value[2] = {&weight_value[1], &weight_value[2]};
 
 		void* ct_result[2] = {dst_lnc_ptr->tmp_ptr_a, dst_lnc_ptr->tmp_ptr_b};
-		int i;
+		cmr_s32 i;
 		for (i=0; i<2; i++)
 		{
 			void *src[2] = {NULL};
 			src[0] = (void*)dst_lnc_ptr->map_tab[ct_value[i]->value[0]].param_addr;
 			src[1] = (void*)dst_lnc_ptr->map_tab[ct_value[i]->value[1]].param_addr;
 
-			isp_u16 weight[2] = {0};
+			cmr_u16 weight[2] = {0};
 			weight[0] = ct_value[i]->weight[0];
 			weight[1] = ct_value[i]->weight[1];
 			weight[0] = weight[0] / (SMART_WEIGHT_UNIT / 16) * (SMART_WEIGHT_UNIT / 16);
 			weight[1] = SMART_WEIGHT_UNIT -weight[0];
 
-			isp_u32 data_num = dst_lnc_ptr->cur.buf_len / sizeof(isp_u16);
+			cmr_u32 data_num = dst_lnc_ptr->cur.buf_len / sizeof(cmr_u16);
 			void *dst = ct_result[i];
-			isp_interp_data(dst, src, (isp_u16*)weight, data_num, ISP_INTERP_UINT16);
+			isp_interp_data(dst, src, (cmr_u16*)weight, data_num, ISP_INTERP_UINT16);
 		}
 
 		void *src[2] = {NULL};
 		src[0] = ct_result[0];
 		src[1] = ct_result[1];
 
-		isp_u16 weight[2] = {0};
+		cmr_u16 weight[2] = {0};
 		weight[0] = bv_value->weight[0];
 		weight[1] = bv_value->weight[1];
 		weight[0] = weight[0] / (SMART_WEIGHT_UNIT / 16) * (SMART_WEIGHT_UNIT / 16);
 		weight[1] = SMART_WEIGHT_UNIT -weight[0];
 
-		isp_u32 data_num = dst_lnc_ptr->cur.buf_len / sizeof(isp_u16);
+		cmr_u32 data_num = dst_lnc_ptr->cur.buf_len / sizeof(cmr_u16);
 		void *dst = NULL;
 		#if __WORDSIZE == 64
-			dst = (void*)((isp_uint)dst_lnc_ptr->cur.buf_addr[1]<<32 | dst_lnc_ptr->cur.buf_addr[0]);
+			dst = (void*)((cmr_uint)dst_lnc_ptr->cur.buf_addr[1]<<32 | dst_lnc_ptr->cur.buf_addr[0]);
 		#else
 			dst = (void*)(dst_lnc_ptr->cur.buf_addr[0]);
 		#endif
-		isp_interp_data(dst, src, (isp_u16*)weight, data_num, ISP_INTERP_UINT16);
+		isp_interp_data(dst, src, (cmr_u16*)weight, data_num, ISP_INTERP_UINT16);
 
 
 		lnc_header_ptr->is_update |= ISP_PM_BLK_LSC_UPDATE_MASK_VALIDATE;
@@ -316,8 +316,8 @@
 	{
 		void *src[2] = {NULL};
 		void *dst = NULL;
-		isp_u32 data_num;
-		isp_u16 weight[2] = {0};
+		cmr_u32 data_num;
+		cmr_u16 weight[2] = {0};
 		struct sensor_2d_lsc_param *lsc_ptr = (struct sensor_2d_lsc_param*)lnc_header_ptr->absolute_addr;
 		struct isp_cali_lsc_info *cali_lsc_ptr = (struct isp_cali_lsc_info*)param_ptr0;
 
@@ -327,12 +327,12 @@
 			src[0] = (void*)dst_lnc_ptr->map_tab[dst_lnc_ptr->cur_index_info.x0].param_addr;
 			src[1] = (void*)dst_lnc_ptr->map_tab[dst_lnc_ptr->cur_index_info.x1].param_addr;
 			dst = (void*)dst_lnc_ptr->final_lsc_param.data_ptr;
-			data_num = dst_lnc_ptr->cur.buf_len / sizeof(isp_u16);
+			data_num = dst_lnc_ptr->cur.buf_len / sizeof(cmr_u16);
 
 			weight[0] = dst_lnc_ptr->cur_index_info.weight0;
 			weight[1] = dst_lnc_ptr->cur_index_info.weight1;
 
-			rtn = isp_interp_data(dst, src, (isp_u16*)weight, data_num, ISP_INTERP_UINT16);
+			rtn = isp_interp_data(dst, src, (cmr_u16*)weight, data_num, ISP_INTERP_UINT16);
 			if (ISP_SUCCESS == rtn) {
 				lnc_header_ptr->is_update |= ISP_PM_BLK_LSC_UPDATE_MASK_VALIDATE;
 				dst_lnc_ptr->update_flag = lnc_header_ptr->is_update;
@@ -348,9 +348,9 @@
 			ISP_LOGI("ISP_PM_BLK_LSC_INFO");
 
 			{
-				uint16_t *ptr = NULL;
+				cmr_u16 *ptr = NULL;
 			#if __WORDSIZE == 64
-				ptr = (void*)((isp_uint)dst_lnc_ptr->cur.buf_addr[1]<<32 | dst_lnc_ptr->cur.buf_addr[0]);
+				ptr = (void*)((cmr_uint)dst_lnc_ptr->cur.buf_addr[1]<<32 | dst_lnc_ptr->cur.buf_addr[0]);
 			#else
 				ptr = (void*)(dst_lnc_ptr->cur.buf_addr[0]);
 			#endif
@@ -372,12 +372,12 @@
 	return rtn;
 }
 
- isp_s32 _pm_2d_lsc_get_param(void *lnc_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
+ cmr_s32 _pm_2d_lsc_get_param(void *lnc_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
 	struct isp_2d_lsc_param *lnc_ptr = (struct isp_2d_lsc_param*)lnc_param;
-	isp_u32 *update_flag = (isp_u32*)rtn_param1;
+	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_2D_LSC;
 	param_data_ptr->cmd = cmd;
@@ -429,9 +429,9 @@
 	return rtn;
 }
 
- isp_s32 _pm_2d_lsc_deinit(void *lnc_param)
+ cmr_s32 _pm_2d_lsc_deinit(void *lnc_param)
 {
-	isp_u32 rtn = ISP_SUCCESS;
+	cmr_u32 rtn = ISP_SUCCESS;
 	struct isp_2d_lsc_param *lsc_param_ptr = (struct isp_2d_lsc_param*)lnc_param;
 
 	if (lsc_param_ptr->final_lsc_param.data_ptr) {

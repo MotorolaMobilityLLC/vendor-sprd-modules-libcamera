@@ -19,10 +19,10 @@
 
 
 
- isp_s32 _pm_nlc_init_v1(void *dst_nlc_param, void *src_nlc_param, void* param1, void* param2)
+ cmr_s32 _pm_nlc_init_v1(void *dst_nlc_param, void *src_nlc_param, void* param1, void* param2)
 {
-	isp_s32 rtn = ISP_SUCCESS;
-	isp_u32 i = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i = 0;
 	struct isp_nlc_param_v1 *dst_ptr = (struct isp_nlc_param_v1 *)dst_nlc_param;
 	struct sensor_nlc_param *src_ptr = (struct sensor_nlc_param *)src_nlc_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
@@ -45,10 +45,10 @@
 	return rtn;
 }
 
- isp_s32 _pm_nlc_set_param_v1(void *nlc_param, isp_u32 cmd, void* param_ptr0, void *param_ptr1)
+ cmr_s32 _pm_nlc_set_param_v1(void *nlc_param, cmr_u32 cmd, void* param_ptr0, void *param_ptr1)
 {
-	isp_u32 i = 0;
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_nlc_param_v1 *dst_ptr = (struct isp_nlc_param_v1*)nlc_param;
 	struct sensor_nlc_param *src_ptr = (struct sensor_nlc_param *)param_ptr0;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header*)param_ptr1;
@@ -68,7 +68,7 @@
 	break;
 
 	case ISP_PM_BLK_NLC_BYPASS:
-		dst_ptr->cur.bypass = *((isp_u32*)param_ptr0);
+		dst_ptr->cur.bypass = *((cmr_u32*)param_ptr0);
 	break;
 
 	default:
@@ -79,12 +79,12 @@
 
 	return rtn;
 }
- isp_s32 _pm_nlc_get_param_v1(void *nlc_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
+ cmr_s32 _pm_nlc_get_param_v1(void *nlc_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
 	struct isp_nlc_param_v1 *nlc_ptr = (struct isp_nlc_param_v1 *)nlc_param;
-	isp_u32 *update_flag = (isp_u32*)rtn_param1;
+	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_NLC;
 	param_data_ptr->cmd = cmd;

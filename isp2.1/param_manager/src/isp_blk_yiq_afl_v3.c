@@ -19,9 +19,9 @@
 
 
 
- isp_s32 _pm_yiq_afl_init_v3(void *dst_afl_param, void *src_afl_param, void* param1, void* param_ptr2)
+ cmr_s32 _pm_yiq_afl_init_v3(void *dst_afl_param, void *src_afl_param, void* param1, void* param_ptr2)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_yiq_afl_param_v3 *dst_ptr = (struct isp_yiq_afl_param_v3 *)dst_afl_param;
 	struct sensor_y_afl_param_v3 *src_ptr = (struct sensor_y_afl_param_v3*)src_afl_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header*)param1;
@@ -47,9 +47,9 @@
 	return rtn;
 }
 
- isp_s32 _pm_yiq_afl_set_param_v3(void *afl_param, isp_u32 cmd, void *param_ptr0, void *param_ptr1)
+ cmr_s32 _pm_yiq_afl_set_param_v3(void *afl_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_yiq_afl_param_v3 *dst_ptr = (struct isp_yiq_afl_param_v3 *)afl_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param_ptr1;
 	struct isp_anti_flicker_cfg *cfl_cfg_ptr = (struct isp_anti_flicker_cfg *)param_ptr0;
@@ -58,7 +58,7 @@
 
 	switch (cmd) {
 	case ISP_PM_BLK_YIQ_AFL_BYPASS:
-		dst_ptr->cur.bypass = *((isp_u32*)param_ptr0);
+		dst_ptr->cur.bypass = *((cmr_u32*)param_ptr0);
 	break;
 
 	case ISP_PM_BLK_YIQ_AFL_CFG:
@@ -80,12 +80,12 @@
 	return rtn;
 }
 
- isp_s32 _pm_yiq_afl_get_param_v3(void *afl_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
+ cmr_s32 _pm_yiq_afl_get_param_v3(void *afl_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_yiq_afl_param_v3 *afl_ptr = (struct isp_yiq_afl_param_v3 *)afl_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
-	isp_u32 *update_flag = (isp_u32*)rtn_param1;
+	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_YIQ_AFL_V3;
 	param_data_ptr->cmd = cmd;

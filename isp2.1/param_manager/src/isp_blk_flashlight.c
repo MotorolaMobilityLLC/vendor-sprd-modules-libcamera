@@ -19,9 +19,9 @@
 
 
 
-isp_s32 _pm_flashlight_init(void *dst_flash_param, void *src_flash_param, void* param1, void* param2)
+cmr_s32 _pm_flashlight_init(void *dst_flash_param, void *src_flash_param, void* param1, void* param2)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_flash_param* dst_flash_ptr = (struct isp_flash_param*)dst_flash_param;
 	struct sensor_flash_cali_param *src_flash_ptr = (struct sensor_flash_cali_param*)src_flash_param;
 	struct isp_pm_block_header *flashlight_header_ptr = (struct isp_pm_block_header*)param1;
@@ -45,9 +45,9 @@ isp_s32 _pm_flashlight_init(void *dst_flash_param, void *src_flash_param, void* 
 	return rtn;
 }
 
-isp_s32 _pm_flashlight_set_param(void *flash_param, isp_u32 cmd, void *param_ptr0, void *param_ptr1)
+cmr_s32 _pm_flashlight_set_param(void *flash_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct sensor_flash_cali_param *src_flash_ptr = PNULL;
 	struct isp_flash_param* dst_flash_ptr = (struct isp_flash_param*)flash_param;
 	struct isp_pm_block_header *flash_header_ptr = (struct isp_pm_block_header*)param_ptr1;
@@ -74,7 +74,7 @@ isp_s32 _pm_flashlight_set_param(void *flash_param, isp_u32 cmd, void *param_ptr
 
 	case ISP_PM_BLK_FLASH_RATION_LUM:
 	{
-		isp_u32 lum_ratio = *((isp_u32*)param_ptr0);
+		cmr_u32 lum_ratio = *((cmr_u32*)param_ptr0);
 		dst_flash_ptr->cur.lum_ratio = lum_ratio;
 	}
 	break;
@@ -96,12 +96,12 @@ isp_s32 _pm_flashlight_set_param(void *flash_param, isp_u32 cmd, void *param_ptr
 	return rtn;
 }
 
- isp_s32 _pm_flashlight_get_param(void *flash_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
+ cmr_s32 _pm_flashlight_get_param(void *flash_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
 	struct isp_flash_param *flash_ptr = (struct isp_flash_param*)flash_param;
-	isp_u32 *update_flag = (isp_u32*)rtn_param1;
+	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_FLASH_CALI;
 	param_data_ptr->cmd = cmd;

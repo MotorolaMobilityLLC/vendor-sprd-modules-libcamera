@@ -20,10 +20,10 @@
 
 
 
- isp_s32 _pm_rgb_gain_init_v1(void *dst_gbl_gain, void *src_gbl_gain, void* param1, void* param2)
+ cmr_s32 _pm_rgb_gain_init_v1(void *dst_gbl_gain, void *src_gbl_gain, void* param1, void* param2)
 {
-	isp_s32 rtn = ISP_SUCCESS;
-	isp_s32 i = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 i = 0;
 	struct sensor_rgb_gain_param *src_ptr = (struct sensor_rgb_gain_param*)src_gbl_gain;
 	struct isp_rgb_gain_param_v1 *dst_ptr = (struct isp_rgb_gain_param_v1*)dst_gbl_gain;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header*)param1;
@@ -38,9 +38,9 @@
 	return rtn;
 }
 
- isp_s32 _pm_rgb_gain_set_param_v1(void *gbl_gain_param, isp_u32 cmd, void* param_ptr0, void* param_ptr1)
+ cmr_s32 _pm_rgb_gain_set_param_v1(void *gbl_gain_param, cmr_u32 cmd, void* param_ptr0, void* param_ptr1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_rgb_gain_param_v1 *rgb_gain_ptr = (struct isp_rgb_gain_param_v1*)gbl_gain_param;
 	struct isp_pm_block_header *rgb_gain_header_ptr =(struct isp_pm_block_header*)param_ptr1;
 
@@ -48,11 +48,11 @@
 
 	switch (cmd) {
 	case ISP_PM_BLK_GBL_GAIN_BYPASS:
-		rgb_gain_ptr->cur.bypass = *((isp_u32*)param_ptr0);
+		rgb_gain_ptr->cur.bypass = *((cmr_u32*)param_ptr0);
 	break;
 
 	case ISP_PM_BLK_GBL_GAIN:
-		rgb_gain_ptr->cur.global_gain = *((isp_u32*)param_ptr0);
+		rgb_gain_ptr->cur.global_gain = *((cmr_u32*)param_ptr0);
 	break;
 
 	default:
@@ -63,12 +63,12 @@
 	return rtn;
 }
 
- isp_s32 _pm_rgb_gain_get_param_v1(void *gbl_gain_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
+ cmr_s32 _pm_rgb_gain_get_param_v1(void *gbl_gain_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_rgb_gain_param_v1 *gbl_gain = (struct isp_rgb_gain_param_v1*)gbl_gain_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
-	isp_u32 *update_flag = (isp_u32*)rtn_param1;
+	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_RGB_GAIN;
 	param_data_ptr->cmd = cmd;

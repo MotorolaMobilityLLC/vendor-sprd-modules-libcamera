@@ -19,12 +19,12 @@
 
 
 
- isp_s32 _pm_frgb_gamc_init(void *dst_gamc_param, void *src_gamc_param, void* param1, void* param_ptr2)
+ cmr_s32 _pm_frgb_gamc_init(void *dst_gamc_param, void *src_gamc_param, void* param1, void* param_ptr2)
 {
-	isp_u32 i = 0;
-	isp_u32 j = 0;
-	isp_u32 index = 0;
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i = 0;
+	cmr_u32 j = 0;
+	cmr_u32 index = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_frgb_gamc_param *dst_ptr = (struct isp_frgb_gamc_param*)dst_gamc_param;
 	struct sensor_frgb_gammac_param *src_ptr = (struct sensor_frgb_gammac_param*)src_gamc_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header*)param1;
@@ -54,23 +54,23 @@
 	return rtn;
 }
 
- isp_s32 _pm_frgb_gamc_set_param(void *gamc_param, isp_u32 cmd, void *param_ptr0, void *param_ptr1)
+ cmr_s32 _pm_frgb_gamc_set_param(void *gamc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_frgb_gamc_param *gamc_ptr = (struct isp_frgb_gamc_param*)gamc_param;
 	struct isp_pm_block_header *gamc_header_ptr = (struct isp_pm_block_header*)param_ptr1;
 
 
 	switch (cmd) {
 	case ISP_PM_BLK_GAMMA_BYPASS:
-		gamc_ptr->cur.bypass = *((isp_u32*)param_ptr0);
+		gamc_ptr->cur.bypass = *((cmr_u32*)param_ptr0);
 		gamc_header_ptr->is_update = ISP_ONE;
 	break;
 
 	case ISP_PM_BLK_GAMMA:
 	{
-		uint32_t gamma_idx = *((isp_u32*)param_ptr0);
-		uint32_t i;
+		cmr_u32 gamma_idx = *((cmr_u32*)param_ptr0);
+		cmr_u32 i;
 
 		gamc_ptr->cur_idx.x0 = gamma_idx;
 		gamc_ptr->cur_idx.x1 = gamma_idx;
@@ -95,7 +95,7 @@
 		struct isp_gamma_curve_info *src_ptr1 = PNULL;
 		struct isp_gamma_curve_info *dst_ptr = PNULL;
 		struct isp_range val_range = {0, 0};
-		int i;
+		cmr_s32 i;
 
 		val_range.min = 0;
 		val_range.max = SENSOR_GAMMA_NUM - 1;
@@ -150,12 +150,12 @@
 	return rtn;
 }
 
- isp_s32 _pm_frgb_gamc_get_param(void *gamc_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
+ cmr_s32 _pm_frgb_gamc_get_param(void *gamc_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_frgb_gamc_param *gamc_ptr = (struct isp_frgb_gamc_param*)gamc_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
-	isp_u32 *update_flag = (isp_u32*)rtn_param1;
+	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_RGB_GAMC;
 	param_data_ptr->cmd = cmd;

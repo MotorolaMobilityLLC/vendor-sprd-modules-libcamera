@@ -20,21 +20,21 @@
 
 
 
- isp_u32 _pm_grgb_convert_param(void *dst_param, isp_u32 strength_level, isp_u32 mode_flag, isp_u32 scene_flag)
+ cmr_u32 _pm_grgb_convert_param(void *dst_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag)
 {
-	isp_s32 rtn = ISP_SUCCESS;
-	isp_s32 i = 0;
-	isp_u32 total_offset_units = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 i = 0;
+	cmr_u32 total_offset_units = 0;
 	struct isp_grgb_param *dst_ptr = (struct isp_grgb_param *)dst_param;
 	struct sensor_grgb_level* grgb_param = PNULL;
 
 	if (SENSOR_MULTI_MODE_FLAG != dst_ptr->nr_mode_setting) {
 		grgb_param = (struct sensor_grgb_level *)(dst_ptr->param_ptr);
 	} else {
-		isp_u32 *multi_nr_map_ptr = PNULL;
-		multi_nr_map_ptr = (isp_u32 *)dst_ptr->scene_ptr;
+		cmr_u32 *multi_nr_map_ptr = PNULL;
+		multi_nr_map_ptr = (cmr_u32 *)dst_ptr->scene_ptr;
 		total_offset_units = _pm_calc_nr_addr_offset(mode_flag, scene_flag, multi_nr_map_ptr);
-		grgb_param = (struct sensor_grgb_level *)((isp_u8 *)dst_ptr->param_ptr + total_offset_units * dst_ptr->level_num * sizeof(struct sensor_grgb_level));
+		grgb_param = (struct sensor_grgb_level *)((cmr_u8 *)dst_ptr->param_ptr + total_offset_units * dst_ptr->level_num * sizeof(struct sensor_grgb_level));
 	}
 
 	strength_level = PM_CLIP(strength_level, 0, dst_ptr->level_num - 1);
@@ -100,9 +100,9 @@
 	return rtn;
 }
 
-isp_s32 _pm_grgb_init_v1(void *dst_grgb_param, void *src_grgb_param, void* param1, void* param2)
+cmr_s32 _pm_grgb_init_v1(void *dst_grgb_param, void *src_grgb_param, void* param1, void* param2)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_grgb_param *dst_ptr = (struct isp_grgb_param *)dst_grgb_param;
 	struct sensor_nr_header_param *src_ptr = (struct sensor_nr_header_param*)src_grgb_param;
 	struct isp_pm_block_header *grgb_header_ptr =(struct isp_pm_block_header*)param1;
@@ -129,15 +129,15 @@ isp_s32 _pm_grgb_init_v1(void *dst_grgb_param, void *src_grgb_param, void* param
 	return rtn;
 }
 
- isp_s32 _pm_grgb_set_param_v1(void *grgb_param, isp_u32 cmd, void* param_ptr0, void* param_ptr1)
+ cmr_s32 _pm_grgb_set_param_v1(void *grgb_param, cmr_u32 cmd, void* param_ptr0, void* param_ptr1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_grgb_param *dst_ptr = (struct isp_grgb_param *)grgb_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header*)param_ptr1;
 
 	switch(cmd){
 	case ISP_PM_BLK_GRGB_BYPASS:
-		dst_ptr->cur.bypass = *((isp_u32*)param_ptr0);
+		dst_ptr->cur.bypass = *((cmr_u32*)param_ptr0);
 		header_ptr->is_update = ISP_ONE;
 	break;
 
@@ -145,7 +145,7 @@ isp_s32 _pm_grgb_init_v1(void *dst_grgb_param, void *src_grgb_param, void* param
 	{
 		struct smart_block_result *block_result = (struct smart_block_result*)param_ptr0;
 		struct isp_range val_range = {0, 0};
-		isp_u32 cur_level = 0;
+		cmr_u32 cur_level = 0;
 
 		val_range.min = 0;
 		val_range.max = 255;
@@ -156,7 +156,7 @@ isp_s32 _pm_grgb_init_v1(void *dst_grgb_param, void *src_grgb_param, void* param
 			return rtn;
 		}
 
-		cur_level = (isp_u32)block_result->component[0].fix_data[0];
+		cur_level = (cmr_u32)block_result->component[0].fix_data[0];
 		if(cur_level != dst_ptr->cur_level || nr_tool_flag[5] || block_result->mode_flag_changed){
 			dst_ptr->cur_level = cur_level;
 			header_ptr->is_update = ISP_ONE;
@@ -180,12 +180,12 @@ isp_s32 _pm_grgb_init_v1(void *dst_grgb_param, void *src_grgb_param, void* param
 
 	return rtn;
 }
- isp_s32 _pm_grgb_get_param_v1(void *grgb_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
+ cmr_s32 _pm_grgb_get_param_v1(void *grgb_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_grgb_param *grgb_ptr = (struct isp_grgb_param *)grgb_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
-	isp_u32 *update_flag = (isp_u32*)rtn_param1;
+	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_GRGB;
 	param_data_ptr->cmd = cmd;

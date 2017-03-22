@@ -18,21 +18,21 @@
 
 
 
-isp_u32 _pm_3d_nr_pre_convert_param(void *dst_3d_nr_param, isp_u32 strength_level, isp_u32 mode_flag, isp_u32 scene_flag)
+cmr_u32 _pm_3d_nr_pre_convert_param(void *dst_3d_nr_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag)
 {
-	isp_s32 rtn = ISP_SUCCESS;
-	isp_s32 i = 0;
-	isp_u32 total_offset_units = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 i = 0;
+	cmr_u32 total_offset_units = 0;
 	struct isp_3d_nr_pre_param *dst_ptr = (struct isp_3d_nr_pre_param*)dst_3d_nr_param;
 	struct sensor_3dnr_level *nr_3d_param = PNULL;
 
 	if (SENSOR_MULTI_MODE_FLAG != dst_ptr->nr_mode_setting) {
 		nr_3d_param = (struct sensor_3dnr_level *)(dst_ptr->param_ptr);
 	} else {
-		isp_u32 *multi_nr_map_ptr = PNULL;
-		multi_nr_map_ptr = (isp_u32 *)dst_ptr->scene_ptr;
+		cmr_u32 *multi_nr_map_ptr = PNULL;
+		multi_nr_map_ptr = (cmr_u32 *)dst_ptr->scene_ptr;
 		total_offset_units = _pm_calc_nr_addr_offset(mode_flag, scene_flag, multi_nr_map_ptr);
-		nr_3d_param = (struct sensor_3dnr_level *)((isp_u8 *)dst_ptr->param_ptr +
+		nr_3d_param = (struct sensor_3dnr_level *)((cmr_u8 *)dst_ptr->param_ptr +
 			total_offset_units * dst_ptr->level_num * sizeof(struct sensor_3dnr_level));
 	}
 	strength_level = PM_CLIP(strength_level, 0, dst_ptr->level_num - 1);
@@ -75,9 +75,9 @@ isp_u32 _pm_3d_nr_pre_convert_param(void *dst_3d_nr_param, isp_u32 strength_leve
 	}
 	return rtn;
 }
-isp_s32 _pm_3d_nr_pre_init(void *dst_3d_nr_param, void *src_3d_nr_param, void *param1, void *param_ptr2)
+cmr_s32 _pm_3d_nr_pre_init(void *dst_3d_nr_param, void *src_3d_nr_param, void *param1, void *param_ptr2)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 
 	struct sensor_nr_header_param *src_ptr = (struct sensor_nr_header_param *)src_3d_nr_param;
 	struct isp_3d_nr_pre_param *dst_ptr = (struct isp_3d_nr_pre_param*)dst_3d_nr_param;
@@ -104,20 +104,20 @@ isp_s32 _pm_3d_nr_pre_init(void *dst_3d_nr_param, void *src_3d_nr_param, void *p
 	return rtn;
 }
 
-isp_s32 _pm_3d_nr_pre_set_param(void *nr_3d_param, isp_u32 cmd, void *param_ptr0, void *param_ptr1)
+cmr_s32 _pm_3d_nr_pre_set_param(void *nr_3d_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header*)param_ptr1;
 	struct isp_3d_nr_pre_param *dst_ptr = (struct isp_3d_nr_pre_param*)nr_3d_param;
 
 	switch (cmd) {
 	case ISP_PM_BLK_3D_NR_BYPASS:
-		dst_ptr->cur.blend_bypass = *((isp_u32*)param_ptr0);
+		dst_ptr->cur.blend_bypass = *((cmr_u32*)param_ptr0);
 		header_ptr->is_update = ISP_ONE;
 	break;
 
 	case ISP_PM_BLK_3D_NR_STRENGTH_LEVEL:
-		dst_ptr->cur_level= *((isp_u32*)param_ptr0);
+		dst_ptr->cur_level= *((cmr_u32*)param_ptr0);
 		header_ptr->is_update = ISP_ONE;
 	break;
 
@@ -125,7 +125,7 @@ isp_s32 _pm_3d_nr_pre_set_param(void *nr_3d_param, isp_u32 cmd, void *param_ptr0
 	{
 		struct smart_block_result *block_result = (struct smart_block_result*)param_ptr0;
 		struct isp_range val_range = {0, 0};
-		isp_u32 level = 0;
+		cmr_u32 level = 0;
 
 		val_range.min = 0;
 		val_range.max = 255;
@@ -136,7 +136,7 @@ isp_s32 _pm_3d_nr_pre_set_param(void *nr_3d_param, isp_u32 cmd, void *param_ptr0
 			return rtn;
 		}
 
-		level = (isp_u32)block_result->component[0].fix_data[0];
+		level = (cmr_u32)block_result->component[0].fix_data[0];
 
 		if (level != dst_ptr->cur_level || nr_tool_flag[1] || block_result->mode_flag_changed) {
 			dst_ptr->cur_level = level;
@@ -162,12 +162,12 @@ isp_s32 _pm_3d_nr_pre_set_param(void *nr_3d_param, isp_u32 cmd, void *param_ptr0
 	return rtn;
 }
 
- isp_s32 _pm_3d_nr_pre_get_param(void *nr_3d_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
+ cmr_s32 _pm_3d_nr_pre_get_param(void *nr_3d_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_3d_nr_pre_param *nr_3d_ptr = (struct isp_3d_nr_pre_param*)nr_3d_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
-	isp_u32 *update_flag = (isp_u32*)rtn_param1;
+	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_3DNR_PRE;
 	param_data_ptr->cmd = cmd;

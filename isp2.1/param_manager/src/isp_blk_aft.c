@@ -18,9 +18,9 @@
 
 
 
-isp_s32 _pm_aft_init(void *dst_aft_param, void *src_aft_param, void *param1, void *param_ptr2)
+cmr_s32 _pm_aft_init(void *dst_aft_param, void *src_aft_param, void *param1, void *param_ptr2)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 
 	struct isp_aft_param *src_aft_ptr = (struct isp_aft_param*)src_aft_param;
 	struct isp_aft_param *dst_aft_ptr = (struct isp_aft_param*)dst_aft_param;
@@ -34,9 +34,9 @@ isp_s32 _pm_aft_init(void *dst_aft_param, void *src_aft_param, void *param1, voi
 	return rtn;
 }
 
-isp_s32 _pm_aft_set_param(void *aft_param, isp_u32 cmd, void *param_ptr0, void *param_ptr1)
+cmr_s32 _pm_aft_set_param(void *aft_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	UNUSED(aft_param);
 	UNUSED(cmd);
 	UNUSED(param_ptr0);
@@ -45,12 +45,12 @@ isp_s32 _pm_aft_set_param(void *aft_param, isp_u32 cmd, void *param_ptr0, void *
 	return rtn;
 }
 
-isp_s32 _pm_aft_get_param(void *aft_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
+cmr_s32 _pm_aft_get_param(void *aft_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_aft_param *aft_ptr = (struct isp_aft_param*)aft_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
-	isp_u32 *update_flag = (isp_u32*)rtn_param1;
+	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
 	param_data_ptr->cmd = cmd;
 	param_data_ptr->id =ISP_BLK_SMART;
 

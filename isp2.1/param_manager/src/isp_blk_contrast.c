@@ -16,9 +16,9 @@
 
 #include "isp_blocks_cfg.h"
 
- isp_s32 _pm_contrast_init(void *dst_contrast, void *src_contrast, void* param1, void* param2)
+ cmr_s32 _pm_contrast_init(void *dst_contrast, void *src_contrast, void* param1, void* param2)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct sensor_contrast_param *src_ptr = (struct sensor_contrast_param*)src_contrast;
 	struct isp_contrast_param *dst_ptr = (struct isp_contrast_param*)dst_contrast;
 	struct isp_pm_block_header *contrast_header_ptr = (struct  isp_pm_block_header*)param1;
@@ -34,9 +34,9 @@
 	return rtn;
 }
 
- isp_s32 _pm_contrast_set_param(void *contrast_param, isp_u32 cmd, void* param_ptr0, void* param_ptr1)
+ cmr_s32 _pm_contrast_set_param(void *contrast_param, cmr_u32 cmd, void* param_ptr0, void* param_ptr1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_contrast_param *contrast_ptr = (struct isp_contrast_param*)contrast_param;
 	struct isp_pm_block_header *contrast_header_ptr = (struct isp_pm_block_header*)param_ptr1;
 
@@ -44,17 +44,17 @@
 
 	switch (cmd) {
 	case ISP_PM_BLK_CONTRAST_BYPASS:
-		contrast_ptr->cur.bypass = *((isp_u32*)param_ptr0);
+		contrast_ptr->cur.bypass = *((cmr_u32*)param_ptr0);
 	break;
 
 	case ISP_PM_BLK_CONTRAST:
-		contrast_ptr->cur_index = *((isp_u32*)param_ptr0);
+		contrast_ptr->cur_index = *((cmr_u32*)param_ptr0);
 		contrast_ptr->cur.factor = contrast_ptr->tab[contrast_ptr->cur_index];
 	break;
 
 	case ISP_PM_BLK_SCENE_MODE:
 	{
-		isp_u32 idx = *((isp_u32*)param_ptr0);
+		cmr_u32 idx = *((cmr_u32*)param_ptr0);
 		if (0 == idx) {
 			contrast_ptr->cur.factor = contrast_ptr->tab[contrast_ptr->cur_index];
 		} else {
@@ -71,12 +71,12 @@
 	return rtn;
 }
 
- isp_s32 _pm_contrast_get_param(void *contrast_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
+ cmr_s32 _pm_contrast_get_param(void *contrast_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_contrast_param *contrast_ptr = (struct isp_contrast_param*)contrast_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
-	isp_u32 *update_flag = (isp_u32*)rtn_param1;
+	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_CONTRAST;
 	param_data_ptr->cmd = cmd;

@@ -18,19 +18,20 @@
 #include "memory.h"
 #include "malloc.h"
 #endif
+#include "cmr_types.h"
 #include "isp_type.h"
 
 #define INTERP_WEIGHT_UNIT 256
 
- isp_s32 isp_gamma_adjust(struct isp_gamma_curve_info *src_ptr0,
+ cmr_s32 isp_gamma_adjust(struct isp_gamma_curve_info *src_ptr0,
 									struct isp_gamma_curve_info *src_ptr1,
 									struct isp_gamma_curve_info *dst_ptr,
 									struct isp_weight_value *point_ptr)
 {
 
-	isp_s32 rtn=ISP_SUCCESS;
-	isp_u32 i = 0, tmp  = 0;
-	isp_u32 scale_coef = 0;
+	cmr_s32 rtn=ISP_SUCCESS;
+	cmr_u32 i = 0, tmp  = 0;
+	cmr_u32 scale_coef = 0;
 
 	if (point_ptr->value[0] == point_ptr->value[1]) {
 		memcpy((void*)dst_ptr, src_ptr0, sizeof(struct isp_gamma_curve_info));
@@ -50,9 +51,9 @@
 	return rtn;
 }
 
- isp_s32 isp_cmc_adjust(isp_u16 src0[9],  isp_u16 src1[9], struct isp_sample_point_info *point_ptr, isp_u16 dst[9])
+ cmr_s32 isp_cmc_adjust(cmr_u16 src0[9],  cmr_u16 src1[9], struct isp_sample_point_info *point_ptr, cmr_u16 dst[9])
 {
-	uint32_t i, scale_coeff;
+	cmr_u32 i, scale_coeff;
 
 	if ((NULL == src0) || (NULL == src1) || (NULL == dst)) {
 		ISP_LOGE("pointer is invalid: src0;%p, src1:%p, dst:%p\n", src0, src1, dst);
@@ -65,20 +66,20 @@
 	}
 
 	if (point_ptr->x0 == point_ptr->x1) {
-		memcpy((void*)dst, (void*)src0, sizeof(isp_u16) * 9);
+		memcpy((void*)dst, (void*)src0, sizeof(cmr_u16) * 9);
 	} else {
 		if (0 == point_ptr->weight0) {
-			memcpy((void*)dst, (void*)src1, sizeof(isp_u16) * 9);
+			memcpy((void*)dst, (void*)src1, sizeof(cmr_u16) * 9);
 		} else if (0 == point_ptr->weight1) {
-			memcpy((void*)dst, (void*)src0, sizeof(isp_u16) * 9);
+			memcpy((void*)dst, (void*)src0, sizeof(cmr_u16) * 9);
 		} else {
 			scale_coeff = point_ptr->weight0 + point_ptr->weight1;
 			for (i=0; i<9; i++)
 			{
-				int32_t x0 = (isp_s16)(src0[i] << 2);
-				int32_t x1 = (isp_s16)(src1[i] << 2);
-				int32_t x = (x0 * point_ptr->weight0 + x1 * point_ptr->weight1) / scale_coeff;
-				dst[i] = (uint16_t)((x >> 2) & 0x3fff);
+				cmr_s32 x0 = (cmr_s16)(src0[i] << 2);
+				cmr_s32 x1 = (cmr_s16)(src1[i] << 2);
+				cmr_s32 x = (x0 * point_ptr->weight0 + x1 * point_ptr->weight1) / scale_coeff;
+				dst[i] = (cmr_u16)((x >> 2) & 0x3fff);
 			}
 		}
 	}
@@ -86,18 +87,18 @@
 	return ISP_SUCCESS;
 }
 
-isp_s32  isp_cmc_adjust_4_reduce_saturation(isp_u16 cmc_in[9], isp_u16 cmc_out[9], isp_u32 percent)
+cmr_s32  isp_cmc_adjust_4_reduce_saturation(cmr_u16 cmc_in[9], cmr_u16 cmc_out[9], cmr_u32 percent)
 {
-	static const int64_t r2y[9] = {299, 587, 114, -168, -331, 500, 500, -419, -81};
-	static const int64_t y2r[9] = {1000, 0, 1402, 1000, -344, -714, 1000, 1772, 0};
-	int64_t cmc_matrix[9];
-	int64_t matrix_0[9];
-	int64_t matrix_1[9];
-	uint8_t i=0x00;
-	int16_t calc_matrix[9];
-	uint16_t *matrix_ptr = PNULL;
+	static const cmr_s64 r2y[9] = {299, 587, 114, -168, -331, 500, 500, -419, -81};
+	static const cmr_s64 y2r[9] = {1000, 0, 1402, 1000, -344, -714, 1000, 1772, 0};
+	cmr_s64 cmc_matrix[9];
+	cmr_s64 matrix_0[9];
+	cmr_s64 matrix_1[9];
+	cmr_u8 i=0x00;
+	cmr_s16 calc_matrix[9];
+	cmr_u16 *matrix_ptr = PNULL;
 
-	matrix_ptr = (uint16_t*)cmc_out;
+	matrix_ptr = (cmr_u16*)cmc_out;
 
 	percent = (0 == percent) ? 1 : percent;
 
@@ -172,15 +173,15 @@ isp_s32  isp_cmc_adjust_4_reduce_saturation(isp_u16 cmc_in[9], isp_u16 cmc_out[9
 		cmc_matrix[7]=cmc_matrix[7]/1000/1000/255;
 		cmc_matrix[8]=cmc_matrix[8]/1000/1000/255;
 
-		calc_matrix[0]=(int16_t)(cmc_matrix[0]&0x3fff);
-		calc_matrix[1]=(int16_t)(cmc_matrix[1]&0x3fff);
-		calc_matrix[2]=(int16_t)(cmc_matrix[2]&0x3fff);
-		calc_matrix[3]=(int16_t)(cmc_matrix[3]&0x3fff);
-		calc_matrix[4]=(int16_t)(cmc_matrix[4]&0x3fff);
-		calc_matrix[5]=(int16_t)(cmc_matrix[5]&0x3fff);
-		calc_matrix[6]=(int16_t)(cmc_matrix[6]&0x3fff);
-		calc_matrix[7]=(int16_t)(cmc_matrix[7]&0x3fff);
-		calc_matrix[8]=(int16_t)(cmc_matrix[8]&0x3fff);
+		calc_matrix[0]=(cmr_s16)(cmc_matrix[0]&0x3fff);
+		calc_matrix[1]=(cmr_s16)(cmc_matrix[1]&0x3fff);
+		calc_matrix[2]=(cmr_s16)(cmc_matrix[2]&0x3fff);
+		calc_matrix[3]=(cmr_s16)(cmc_matrix[3]&0x3fff);
+		calc_matrix[4]=(cmr_s16)(cmc_matrix[4]&0x3fff);
+		calc_matrix[5]=(cmr_s16)(cmc_matrix[5]&0x3fff);
+		calc_matrix[6]=(cmr_s16)(cmc_matrix[6]&0x3fff);
+		calc_matrix[7]=(cmr_s16)(cmc_matrix[7]&0x3fff);
+		calc_matrix[8]=(cmr_s16)(cmc_matrix[8]&0x3fff);
 
 		matrix_ptr[0]=calc_matrix[0];
 		matrix_ptr[1]=calc_matrix[1];
@@ -196,22 +197,22 @@ isp_s32  isp_cmc_adjust_4_reduce_saturation(isp_u16 cmc_in[9], isp_u16 cmc_out[9
 	return 0;
 }
 
-isp_s32 isp_cce_adjust(uint16_t src[9], uint16_t coef[3], uint16_t dst[9], uint16_t base_gain)
+cmr_s32 isp_cce_adjust(cmr_u16 src[9], cmr_u16 coef[3], cmr_u16 dst[9], cmr_u16 base_gain)
 {
-	isp_s32 matrix[3][3];
-	isp_s32 *matrix_ptr = NULL;
-	isp_u16 *src_ptr = NULL;
-	isp_u16 *dst_ptr = NULL;
-	isp_s32 tmp = 0;
-	isp_u32 i = 0, j = 0;
+	cmr_s32 matrix[3][3];
+	cmr_s32 *matrix_ptr = NULL;
+	cmr_u16 *src_ptr = NULL;
+	cmr_u16 *dst_ptr = NULL;
+	cmr_s32 tmp = 0;
+	cmr_u32 i = 0, j = 0;
 
 	if ((NULL == src) || (NULL == dst) || (NULL == coef)) {
 		ISP_LOGE("--isp_InterplateCCE:invalid addr %p, %p, %p\n", src, dst, coef);
 		return ISP_ERROR;
 	}
 
-	src_ptr = (uint16_t*)src;
-	matrix_ptr = (int32_t*)&matrix[0][0];
+	src_ptr = (cmr_u16*)src;
+	matrix_ptr = (cmr_s32*)&matrix[0][0];
 	for (i=0x00; i<9; i++) {
 		if (ISP_ZERO!=(src_ptr[i]&0x8000)) {
 			*(matrix_ptr + i) = (src_ptr[i]) | 0xffff0000;
@@ -220,16 +221,16 @@ isp_s32 isp_cce_adjust(uint16_t src[9], uint16_t coef[3], uint16_t dst[9], uint1
 		}
 	}
 
-	dst_ptr = (uint16_t*)dst;
+	dst_ptr = (cmr_u16*)dst;
 	for (i = 0; i < 3; ++i) {
 		for (j = 0; j < 3; ++j) {
 
 			if (coef[j] == base_gain)
 				tmp = matrix[i][j];
 			else
-				tmp = (((int32_t)coef[j]) * matrix[i][j] + base_gain / 2) / base_gain;
+				tmp = (((cmr_s32)coef[j]) * matrix[i][j] + base_gain / 2) / base_gain;
 
-			*dst_ptr = (uint16_t)(((uint32_t)tmp) & 0xffff);
+			*dst_ptr = (cmr_u16)(((cmr_u32)tmp) & 0xffff);
 			dst_ptr++;
 		}
 	}
@@ -237,16 +238,16 @@ isp_s32 isp_cce_adjust(uint16_t src[9], uint16_t coef[3], uint16_t dst[9], uint1
 	return ISP_SUCCESS;
 }
 
-int32_t isp_lsc_adjust(void* lnc0_ptr,void* lnc1_ptr, uint32_t lnc_len, struct isp_weight_value *point_ptr, void* dst_lnc_ptr)
+cmr_s32 isp_lsc_adjust(void* lnc0_ptr,void* lnc1_ptr, cmr_u32 lnc_len, struct isp_weight_value *point_ptr, void* dst_lnc_ptr)
 {
-	isp_s32 rtn = ISP_SUCCESS;
-	isp_u32 i = 0x00;
-	isp_u32 handler_id = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i = 0x00;
+	cmr_u32 handler_id = 0;
 
 
-	isp_u16 *src0_ptr = (isp_u16*)lnc0_ptr;
-	isp_u16 *src1_ptr = (isp_u16*)lnc1_ptr;
-	isp_u16 *dst_ptr = (isp_u16*)dst_lnc_ptr;
+	cmr_u16 *src0_ptr = (cmr_u16*)lnc0_ptr;
+	cmr_u16 *src1_ptr = (cmr_u16*)lnc1_ptr;
+	cmr_u16 *dst_ptr = (cmr_u16*)dst_lnc_ptr;
 
 	if ((NULL == lnc0_ptr)
 		||(NULL == dst_lnc_ptr)) {
@@ -267,8 +268,8 @@ int32_t isp_lsc_adjust(void* lnc0_ptr,void* lnc1_ptr, uint32_t lnc_len, struct i
 		} else if (0 == point_ptr->weight[1]) {
 			memcpy(dst_lnc_ptr, lnc0_ptr, lnc_len);
 		} else {
-			isp_u32 lnc_num = lnc_len / sizeof(uint16_t);
-			isp_u32 scale_coeff = 0;
+			cmr_u32 lnc_num = lnc_len / sizeof(cmr_u16);
+			cmr_u32 scale_coeff = 0;
 
 			ISP_LOGI("lnc interpolation: index(%d, %d); weight: (%d, %d), num=%d, src0 = %p, src1 = %p",\
 				point_ptr->value[0], point_ptr->value[1], point_ptr->weight[0], point_ptr->weight[1], lnc_num, src0_ptr, src1_ptr);
@@ -284,10 +285,10 @@ int32_t isp_lsc_adjust(void* lnc0_ptr,void* lnc1_ptr, uint32_t lnc_len, struct i
 	return rtn;
 }
 
-int32_t isp_hue_saturation_2_gain(isp_s32 hue, isp_s32 saturation,
+cmr_s32 isp_hue_saturation_2_gain(cmr_s32 hue, cmr_s32 saturation,
 						struct isp_rgb_gains *gain)
 {
-	int32_t rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 
 	gain->gain_r = ISP_FIX_10BIT_UNIT;
 	gain->gain_g = ISP_FIX_10BIT_UNIT;
@@ -297,22 +298,22 @@ int32_t isp_hue_saturation_2_gain(isp_s32 hue, isp_s32 saturation,
 		return rtn;
 	}
 
-	gain->gain_b = (isp_u32)((6000 - 60 * saturation) * ISP_FIX_10BIT_UNIT
+	gain->gain_b = (cmr_u32)((6000 - 60 * saturation) * ISP_FIX_10BIT_UNIT
 			/ (6000 + hue * saturation - 60 * saturation));
-	gain->gain_g = (isp_u32)ISP_FIX_10BIT_UNIT;
-	gain->gain_r = (isp_u32)(((hue - 60) * gain->gain_b + 60 * ISP_FIX_10BIT_UNIT) / hue);
+	gain->gain_g = (cmr_u32)ISP_FIX_10BIT_UNIT;
+	gain->gain_r = (cmr_u32)(((hue - 60) * gain->gain_b + 60 * ISP_FIX_10BIT_UNIT) / hue);
 
 	ISP_LOGV("gain = (%d, %d, %d)", gain->gain_r, gain->gain_g, gain->gain_b);
 
 	return rtn;
 }
 
-static void _interp_uint8(uint8_t *dst, uint8_t *src[2], uint16_t weight[2], uint32_t data_num)
+static void _interp_uint8(cmr_u8 *dst, cmr_u8 *src[2], cmr_u16 weight[2], cmr_u32 data_num)
 {
-	uint32_t data_bytes = 0;
-	uint32_t i = 0;
+	cmr_u32 data_bytes = 0;
+	cmr_u32 i = 0;
 
-	data_bytes = data_num * sizeof(uint8_t);
+	data_bytes = data_num * sizeof(cmr_u8);
 
 	if (INTERP_WEIGHT_UNIT == weight[0]) {
 		memcpy(dst, src[0], data_bytes);
@@ -322,9 +323,9 @@ static void _interp_uint8(uint8_t *dst, uint8_t *src[2], uint16_t weight[2], uin
 
 		for (i=0; i<data_num; i++) {
 
-			uint32_t dst_val = 0;
-			uint32_t src0_val = *src[0]++;
-			uint32_t src1_val = *src[1]++;
+			cmr_u32 dst_val = 0;
+			cmr_u32 src0_val = *src[0]++;
+			cmr_u32 src1_val = *src[1]++;
 
 			dst_val = (src0_val * weight[0] + src1_val * weight[1]) / INTERP_WEIGHT_UNIT;
 
@@ -333,12 +334,12 @@ static void _interp_uint8(uint8_t *dst, uint8_t *src[2], uint16_t weight[2], uin
 	}
 }
 
-static void _interp_uint16(uint16_t *dst, uint16_t *src[2], uint16_t weight[2], uint32_t data_num)
+static void _interp_uint16(cmr_u16 *dst, cmr_u16 *src[2], cmr_u16 weight[2], cmr_u32 data_num)
 {
-	uint32_t data_bytes = 0;
-	uint32_t i = 0;
+	cmr_u32 data_bytes = 0;
+	cmr_u32 i = 0;
 
-	data_bytes = data_num * sizeof(uint16_t);
+	data_bytes = data_num * sizeof(cmr_u16);
 
 	if (INTERP_WEIGHT_UNIT == weight[0]) {
 		memcpy(dst, src[0], data_bytes);
@@ -348,9 +349,9 @@ static void _interp_uint16(uint16_t *dst, uint16_t *src[2], uint16_t weight[2], 
 
 		for (i=0; i<data_num; i++) {
 
-			uint32_t dst_val = 0;
-			uint32_t src0_val = *src[0]++;
-			uint32_t src1_val = *src[1]++;
+			cmr_u32 dst_val = 0;
+			cmr_u32 src0_val = *src[0]++;
+			cmr_u32 src1_val = *src[1]++;
 
 			dst_val = (src0_val * weight[0] + src1_val * weight[1]) / INTERP_WEIGHT_UNIT;
 
@@ -359,12 +360,12 @@ static void _interp_uint16(uint16_t *dst, uint16_t *src[2], uint16_t weight[2], 
 	}
 }
 
-static void _interp_uint32(uint32_t *dst, uint32_t *src[2], uint16_t weight[2], uint32_t data_num)
+static void _interp_uint32(cmr_u32 *dst, cmr_u32 *src[2], cmr_u16 weight[2], cmr_u32 data_num)
 {
-	uint32_t data_bytes = 0;
-	uint32_t i = 0;
+	cmr_u32 data_bytes = 0;
+	cmr_u32 i = 0;
 
-	data_bytes = data_num * sizeof(uint32_t);
+	data_bytes = data_num * sizeof(cmr_u32);
 
 	if (INTERP_WEIGHT_UNIT == weight[0]) {
 		memcpy(dst, src[0], data_bytes);
@@ -374,9 +375,9 @@ static void _interp_uint32(uint32_t *dst, uint32_t *src[2], uint16_t weight[2], 
 
 		for (i=0; i<data_num; i++) {
 
-			uint32_t dst_val = 0;
-			uint32_t src0_val = *src[0]++;
-			uint32_t src1_val = *src[1]++;
+			cmr_u32 dst_val = 0;
+			cmr_u32 src0_val = *src[0]++;
+			cmr_u32 src1_val = *src[1]++;
 
 			dst_val = (src0_val * weight[0] + src1_val * weight[1]) / INTERP_WEIGHT_UNIT;
 
@@ -386,12 +387,12 @@ static void _interp_uint32(uint32_t *dst, uint32_t *src[2], uint16_t weight[2], 
 }
 
 /*special data type for CMC*/
-static void _interp_int14(uint16_t *dst, uint16_t *src[2], uint16_t weight[2], uint32_t data_num)
+static void _interp_int14(cmr_u16 *dst, cmr_u16 *src[2], cmr_u16 weight[2], cmr_u32 data_num)
 {
-	uint32_t data_bytes = 0;
-	uint32_t i = 0;
+	cmr_u32 data_bytes = 0;
+	cmr_u32 i = 0;
 
-	data_bytes = data_num * sizeof(uint16_t);
+	data_bytes = data_num * sizeof(cmr_u16);
 
 	if (INTERP_WEIGHT_UNIT == weight[0]) {
 		memcpy(dst, src[0], data_bytes);
@@ -401,25 +402,25 @@ static void _interp_int14(uint16_t *dst, uint16_t *src[2], uint16_t weight[2], u
 
 		for (i=0; i<data_num; i++) {
 
-			uint16_t dst_val = 0;
-			int16_t src0_val = (int16_t)(*src[0] << 2);
-			int16_t src1_val = (int16_t)(*src[1] << 2);
+			cmr_u16 dst_val = 0;
+			cmr_s16 src0_val = (cmr_s16)(*src[0] << 2);
+			cmr_s16 src1_val = (cmr_s16)(*src[1] << 2);
 
 			dst_val = (src0_val * weight[0] + src1_val * weight[1]) / INTERP_WEIGHT_UNIT;
 
-			*dst++ = (uint16_t)((dst_val >> 2) & 0x3fff);
+			*dst++ = (cmr_u16)((dst_val >> 2) & 0x3fff);
 			src[0]++;
 			src[1]++;
 		}
 	}
 }
 
-static void _interp_uint20(uint32_t *dst, uint32_t *src[2], uint16_t weight[2], uint32_t data_num)
+static void _interp_uint20(cmr_u32 *dst, cmr_u32 *src[2], cmr_u16 weight[2], cmr_u32 data_num)
 {
-	uint32_t data_bytes = 0;
-	uint32_t i = 0;
+	cmr_u32 data_bytes = 0;
+	cmr_u32 i = 0;
 
-	data_bytes = data_num * sizeof(uint32_t);
+	data_bytes = data_num * sizeof(cmr_u32);
 
 	if (INTERP_WEIGHT_UNIT == weight[0]) {
 		memcpy(dst, src[0], data_bytes);
@@ -429,13 +430,13 @@ static void _interp_uint20(uint32_t *dst, uint32_t *src[2], uint16_t weight[2], 
 
 		for (i=0; i<data_num; i++) {
 
-			uint32_t dst_val = 0;
-			uint32_t src0_val = (uint32_t)(*src[0] << 12);
-			uint32_t src1_val = (uint32_t)(*src[1] << 12);
+			cmr_u32 dst_val = 0;
+			cmr_u32 src0_val = (cmr_u32)(*src[0] << 12);
+			cmr_u32 src1_val = (cmr_u32)(*src[1] << 12);
 
 			dst_val = (src0_val * weight[0] + src1_val * weight[1]) / INTERP_WEIGHT_UNIT;
 
-			*dst++ = (uint32_t)((dst_val >> 12) & 0xfffff);
+			*dst++ = (cmr_u32)((dst_val >> 12) & 0xfffff);
 			src[0]++;
 			src[1]++;
 		}
@@ -443,9 +444,9 @@ static void _interp_uint20(uint32_t *dst, uint32_t *src[2], uint16_t weight[2], 
 }
 
 
-int32_t isp_interp_data(void *dst, void *src[2], uint16_t weight[2], uint32_t data_num, uint32_t data_type)
+cmr_s32 isp_interp_data(void *dst, void *src[2], cmr_u16 weight[2], cmr_u32 data_num, cmr_u32 data_type)
 {
-	int32_t rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 
 	ISP_LOGV("src[0]=%p, src[1]=%p, dst=%p, weight=(%d, %d), data_num=%d, type=%d",
 			src[0], src[1], dst, weight[0], weight[1], data_num, data_type);
@@ -463,23 +464,23 @@ int32_t isp_interp_data(void *dst, void *src[2], uint16_t weight[2], uint32_t da
 
 	switch (data_type) {
 	case ISP_INTERP_UINT8:
-		_interp_uint8((uint8_t *)dst, (uint8_t **)src, weight, data_num);
+		_interp_uint8((cmr_u8 *)dst, (cmr_u8 **)src, weight, data_num);
 		break;
 
 	case ISP_INTERP_UINT16:
-		_interp_uint16((uint16_t *)dst, (uint16_t **)src, weight, data_num);
+		_interp_uint16((cmr_u16 *)dst, (cmr_u16 **)src, weight, data_num);
 		break;
 
 	case ISP_INTERP_UINT32:
-		_interp_uint32((uint32_t *)dst, (uint32_t **)src, weight, data_num);
+		_interp_uint32((cmr_u32 *)dst, (cmr_u32 **)src, weight, data_num);
 		break;
 
 	case ISP_INTERP_INT14:
-		 _interp_int14((uint16_t *)dst, (uint16_t **)src, weight, data_num);
+		 _interp_int14((cmr_u16 *)dst, (cmr_u16 **)src, weight, data_num);
 		break;
 
 	case ISP_INTERP_UINT20:
-		_interp_uint20((uint32_t *)dst, (uint32_t **)src, weight, data_num);
+		_interp_uint20((cmr_u32 *)dst, (cmr_u32 **)src, weight, data_num);
 		break;
 
 	default:
@@ -491,14 +492,14 @@ int32_t isp_interp_data(void *dst, void *src[2], uint16_t weight[2], uint32_t da
 }
 
 #if 0
-int32_t isp_scaling_lsc_gain(uint16_t *dst, uint16_t *src, struct isp_size *dst_size, struct isp_size *src_size)
+cmr_s32 isp_scaling_lsc_gain(cmr_u16 *dst, cmr_u16 *src, struct isp_size *dst_size, struct isp_size *src_size)
 {
-	int32_t rtn = ISP_SUCCESS;
-	uint16_t *dst_line = dst;
-	uint32_t i = 0;
-	uint32_t j = 0;
-	uint32_t x_scalar = 0;
-	uint32_t y_scalar = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u16 *dst_line = dst;
+	cmr_u32 i = 0;
+	cmr_u32 j = 0;
+	cmr_u32 x_scalar = 0;
+	cmr_u32 y_scalar = 0;
 
 	if (NULL == dst || NULL == src || NULL == dst_size || NULL == src_size)
 		return ISP_ERROR;
@@ -513,9 +514,9 @@ int32_t isp_scaling_lsc_gain(uint16_t *dst, uint16_t *src, struct isp_size *dst_
 	/*for channel interlaced*/
 	for (i=0; i<dst_size->h; i++) {
 
-		uint32_t src_y = y_scalar * i;
-		uint32_t v = (src_y & (0xffff)) >> 8;
-		uint16_t *src_line[2] = {NULL};
+		cmr_u32 src_y = y_scalar * i;
+		cmr_u32 v = (src_y & (0xffff)) >> 8;
+		cmr_u16 *src_line[2] = {NULL};
 
 		src_y >>= 16;
 
@@ -532,10 +533,10 @@ int32_t isp_scaling_lsc_gain(uint16_t *dst, uint16_t *src, struct isp_size *dst_
 
 		for (j=0; j<dst_size->w; j++) {
 
-			uint32_t src_x = x_scalar * j;
-			uint32_t u = (src_x & (0xffff)) >> 8;
-			uint32_t src_l[4] = {0};
-			uint32_t weight_value[4] = {0};
+			cmr_u32 src_x = x_scalar * j;
+			cmr_u32 u = (src_x & (0xffff)) >> 8;
+			cmr_u32 src_l[4] = {0};
+			cmr_u32 weight_value[4] = {0};
 
 			src_x >>= 16;
 

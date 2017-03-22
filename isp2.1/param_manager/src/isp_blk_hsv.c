@@ -20,14 +20,14 @@
 
 
 
-isp_s32 _pm_hsv_init(void *dst_hsv_param, void *src_hsv_param, void* param1, void* param2)
+cmr_s32 _pm_hsv_init(void *dst_hsv_param, void *src_hsv_param, void* param1, void* param2)
 {
-	isp_u32 i = 0;
-	isp_u32 j = 0;
-	isp_u32 index = 0;
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i = 0;
+	cmr_u32 j = 0;
+	cmr_u32 index = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
 	intptr_t addr = 0, tmp_addr = 0;
-	isp_u32 *buf_ptr = PNULL;
+	cmr_u32 *buf_ptr = PNULL;
 	struct isp_data_bin_info *specialeffect = PNULL;
 	struct isp_hsv_param *dst_ptr = (struct isp_hsv_param *)dst_hsv_param;
 	struct sensor_hsv_param *src_ptr = (struct sensor_hsv_param *)src_hsv_param;
@@ -64,7 +64,7 @@ isp_s32 _pm_hsv_init(void *dst_hsv_param, void *src_hsv_param, void* param1, voi
 		}
 	}
 	memcpy((void*)dst_ptr->final_map.data_ptr, dst_ptr->map[index].data_ptr, dst_ptr->map[index].size);
-	buf_ptr = (isp_u32*)dst_ptr->final_map.data_ptr;
+	buf_ptr = (cmr_u32*)dst_ptr->final_map.data_ptr;
 	dst_ptr->final_map.size = dst_ptr->map[index].size;
 	dst_ptr->cur.bypass = header_ptr->bypass;
 	dst_ptr->cur.buf_sel = 0x00;
@@ -87,10 +87,10 @@ isp_s32 _pm_hsv_init(void *dst_hsv_param, void *src_hsv_param, void* param1, voi
 
 	}
 	#if __WORDSIZE == 64
-	dst_ptr->cur.data_ptr[0] = (isp_uint)(dst_ptr->final_map.data_ptr) & 0xffffffff;
-	dst_ptr->cur.data_ptr[1] = (isp_uint)(dst_ptr->final_map.data_ptr) >> 32;
+	dst_ptr->cur.data_ptr[0] = (cmr_uint)(dst_ptr->final_map.data_ptr) & 0xffffffff;
+	dst_ptr->cur.data_ptr[1] = (cmr_uint)(dst_ptr->final_map.data_ptr) >> 32;
 	#else
-	dst_ptr->cur.data_ptr[0] = (isp_uint)(dst_ptr->final_map.data_ptr);
+	dst_ptr->cur.data_ptr[0] = (cmr_uint)(dst_ptr->final_map.data_ptr);
 	dst_ptr->cur.data_ptr[1] = 0;
 	#endif
 	dst_ptr->cur.size = dst_ptr->final_map.size;
@@ -102,9 +102,9 @@ isp_s32 _pm_hsv_init(void *dst_hsv_param, void *src_hsv_param, void* param1, voi
 	return rtn;
 }
 
-isp_s32 _pm_hsv_set_param(void *hsv_param, isp_u32 cmd, void* param_ptr0, void* param_ptr1)
+cmr_s32 _pm_hsv_set_param(void *hsv_param, cmr_u32 cmd, void* param_ptr0, void* param_ptr1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_hsv_param *dst_hsv_ptr = (struct isp_hsv_param *)hsv_param;
 	struct isp_pm_block_header *hsv_header_ptr = (struct isp_pm_block_header*)param_ptr1;
 
@@ -140,14 +140,14 @@ isp_s32 _pm_hsv_set_param(void *hsv_param, isp_u32 cmd, void* param_ptr0, void* 
 			|| hsv_value.value[0] != dst_hsv_ptr->cur_idx.x0) {
 			void *src[2] = {NULL};
 			void *dst = NULL;
-			isp_u32 data_num = 0;
-			isp_u32 index = 0;
+			cmr_u32 data_num = 0;
+			cmr_u32 index = 0;
 
 			index = hsv_value.value[0];
 			src[0] = (void*)dst_hsv_ptr->map[hsv_value.value[0]].data_ptr;
 			src[1] = (void*)dst_hsv_ptr->map[hsv_value.value[1]].data_ptr;
 			dst = (void*)dst_hsv_ptr->final_map.data_ptr;
-			data_num = dst_hsv_ptr->final_map.size / sizeof(isp_u32);
+			data_num = dst_hsv_ptr->final_map.size / sizeof(cmr_u32);
 
 			rtn = isp_interp_data(dst, src, hsv_value.weight, data_num, ISP_INTERP_UINT20);
 			if (ISP_SUCCESS == rtn) {
@@ -163,25 +163,25 @@ isp_s32 _pm_hsv_set_param(void *hsv_param, isp_u32 cmd, void* param_ptr0, void* 
 
 	case ISP_PM_BLK_SPECIAL_EFFECT:
 	{
-		isp_u32 idx = *((isp_u32*)param_ptr0);
+		cmr_u32 idx = *((cmr_u32*)param_ptr0);
 		if (0 == idx) {
 			dst_hsv_ptr->cur.buf_sel = 0;
 			dst_hsv_ptr->cur.size = dst_hsv_ptr->map[dst_hsv_ptr->cur_idx.x0].size;
 		#if __WORDSIZE == 64
-			dst_hsv_ptr->cur.data_ptr[0] = (isp_uint)(dst_hsv_ptr->map[dst_hsv_ptr->cur_idx.x0].data_ptr) & 0xffffffff;
-			dst_hsv_ptr->cur.data_ptr[1] = (isp_uint)(dst_hsv_ptr->map[dst_hsv_ptr->cur_idx.x0].data_ptr) >> 32;
+			dst_hsv_ptr->cur.data_ptr[0] = (cmr_uint)(dst_hsv_ptr->map[dst_hsv_ptr->cur_idx.x0].data_ptr) & 0xffffffff;
+			dst_hsv_ptr->cur.data_ptr[1] = (cmr_uint)(dst_hsv_ptr->map[dst_hsv_ptr->cur_idx.x0].data_ptr) >> 32;
 		#else
-			dst_hsv_ptr->cur.data_ptr[0] = (isp_uint)(dst_hsv_ptr->map[dst_hsv_ptr->cur_idx.x0].data_ptr);
+			dst_hsv_ptr->cur.data_ptr[0] = (cmr_uint)(dst_hsv_ptr->map[dst_hsv_ptr->cur_idx.x0].data_ptr);
 			dst_hsv_ptr->cur.data_ptr[1] = 0;
 		#endif
 		} else {
 			dst_hsv_ptr->cur.buf_sel = 0;
 			dst_hsv_ptr->cur.size = dst_hsv_ptr->specialeffect_tab[idx].size;
 		#if __WORDSIZE == 64
-			dst_hsv_ptr->cur.data_ptr[0] = (isp_uint)(dst_hsv_ptr->specialeffect_tab[idx].data_ptr) & 0xffffffff;
-			dst_hsv_ptr->cur.data_ptr[1] = (isp_uint)(dst_hsv_ptr->specialeffect_tab[idx].data_ptr) >> 32;
+			dst_hsv_ptr->cur.data_ptr[0] = (cmr_uint)(dst_hsv_ptr->specialeffect_tab[idx].data_ptr) & 0xffffffff;
+			dst_hsv_ptr->cur.data_ptr[1] = (cmr_uint)(dst_hsv_ptr->specialeffect_tab[idx].data_ptr) >> 32;
 		#else
-			dst_hsv_ptr->cur.data_ptr[0] = (isp_uint)(dst_hsv_ptr->specialeffect_tab[idx].data_ptr);
+			dst_hsv_ptr->cur.data_ptr[0] = (cmr_uint)(dst_hsv_ptr->specialeffect_tab[idx].data_ptr);
 			dst_hsv_ptr->cur.data_ptr[1] = 0;
 		#endif
 		}
@@ -200,12 +200,12 @@ isp_s32 _pm_hsv_set_param(void *hsv_param, isp_u32 cmd, void* param_ptr0, void* 
 	return rtn;
 }
 
- isp_s32 _pm_hsv_get_param(void *hsv_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
+ cmr_s32 _pm_hsv_get_param(void *hsv_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_hsv_param *hsv_ptr = (struct isp_hsv_param *)hsv_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
-	isp_u32 *update_flag = (isp_u32*)rtn_param1;
+	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_HSV;
 	param_data_ptr->cmd = cmd;
@@ -224,9 +224,9 @@ isp_s32 _pm_hsv_set_param(void *hsv_param, isp_u32 cmd, void* param_ptr0, void* 
 	return rtn;
 }
 
- isp_s32 _pm_hsv_deinit(void* hsv_param)
+ cmr_s32 _pm_hsv_deinit(void* hsv_param)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_hsv_param *hsv_ptr = (struct isp_hsv_param *)hsv_param;
 
 	if (PNULL != hsv_ptr->final_map.data_ptr) {

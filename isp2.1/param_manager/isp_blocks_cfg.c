@@ -17,6 +17,7 @@
 #include <memory.h>
 #include <string.h>
 #include <malloc.h>
+#include "cmr_types.h"
 #include "isp_type.h"
 #endif
 #include "isp_blocks_cfg.h"
@@ -143,11 +144,11 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_AFT, array_offset(struct isp_context, aft), sizeof(struct isp_aft_param), &s_aft_ops},
 };
 
-struct isp_block_cfg* isp_pm_get_block_cfg(isp_u32 id)
+struct isp_block_cfg* isp_pm_get_block_cfg(cmr_u32 id)
 {
-	isp_u32 num = 0;
-	isp_u32 i = 0;
-	isp_u32 blk_id = 0;
+	cmr_u32 num = 0;
+	cmr_u32 i = 0;
+	cmr_u32 blk_id = 0;
 	struct isp_block_cfg *blk_cfg_ptr = PNULL;
 	struct isp_block_cfg *blk_cfg_array = s_blk_cfgs;
 

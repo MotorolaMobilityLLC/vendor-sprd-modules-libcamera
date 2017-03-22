@@ -18,9 +18,9 @@
 
 
 
-isp_s32 _pm_rgb_aem_init(void *dst_rgb_aem, void *src_rgb_aem, void* param1, void* param2)
+cmr_s32 _pm_rgb_aem_init(void *dst_rgb_aem, void *src_rgb_aem, void* param1, void* param2)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_rgb_aem_param *dst_ptr = (struct isp_rgb_aem_param*)dst_rgb_aem;
 	struct sensor_rgb_aem_param *src_ptr = (struct sensor_rgb_aem_param*)src_rgb_aem;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header*)param1;
@@ -38,25 +38,25 @@ isp_s32 _pm_rgb_aem_init(void *dst_rgb_aem, void *src_rgb_aem, void* param1, voi
 	return rtn;
 }
 
-isp_s32 _pm_rgb_aem_set_param(void *rgb_aem_param, isp_u32 cmd, void* param_ptr0, void* param_ptr1)
+cmr_s32 _pm_rgb_aem_set_param(void *rgb_aem_param, cmr_u32 cmd, void* param_ptr0, void* param_ptr1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_rgb_aem_param *dst_ptr = (struct isp_rgb_aem_param*)rgb_aem_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header*)param_ptr1;
 	UNUSED(cmd);
 
 	header_ptr->is_update = ISP_ONE;
-	dst_ptr->cur.bypass = *((isp_u32*)param_ptr0);
+	dst_ptr->cur.bypass = *((cmr_u32*)param_ptr0);
 
 	return rtn;
 }
 
-isp_s32 _pm_rgb_aem_get_param(void *rgb_aem_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
+cmr_s32 _pm_rgb_aem_get_param(void *rgb_aem_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_rgb_aem_param *rgb_aem_ptr = (struct isp_rgb_aem_param*)rgb_aem_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
-	isp_u32 *update_flag =(isp_u32*)rtn_param1;
+	cmr_u32 *update_flag =(cmr_u32*)rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_RGB_AEM;
 	param_data_ptr->cmd = cmd;

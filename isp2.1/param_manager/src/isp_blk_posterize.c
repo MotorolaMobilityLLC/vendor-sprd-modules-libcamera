@@ -19,11 +19,11 @@
 
 
 
- isp_s32 _pm_posterize_init(void *dst_pstrz_param, void *src_pstrz_param, void* param1, void* param_ptr2)
+ cmr_s32 _pm_posterize_init(void *dst_pstrz_param, void *src_pstrz_param, void* param1, void* param_ptr2)
 {
-	isp_u32 i = 0;
-	isp_u32 j = 0;
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i = 0;
+	cmr_u32 j = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct sensor_posterize_param *src_pstrz_ptr = (struct sensor_posterize_param *)src_pstrz_param;
 	struct isp_posterize_param *dst_pstrz_ptr = (struct isp_posterize_param*)dst_pstrz_param;
 	struct isp_pm_block_header *pstrz_header_ptr = (struct isp_pm_block_header*)param1;
@@ -50,9 +50,9 @@
 	return rtn;
 }
 
- isp_s32 _pm_posterize_set_param(void *pstrz_param, isp_u32 cmd, void *param_ptr0, void *param_ptr1)
+ cmr_s32 _pm_posterize_set_param(void *pstrz_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_posterize_param *pstrz_ptr = (struct isp_posterize_param *)pstrz_param;
 	struct isp_pm_block_header *pstrz_header_ptr = PNULL;
 
@@ -61,12 +61,12 @@
 
 	switch (cmd) {
 	case ISP_PM_BLK_PSTRZ_BYPASS:
-		pstrz_ptr->cur.bypass = *((isp_u32*)param_ptr0);
+		pstrz_ptr->cur.bypass = *((cmr_u32*)param_ptr0);
 	break;
 
 	case ISP_PM_BLK_SPECIAL_EFFECT:
 	{
-		isp_u32 idx = *((isp_u32*)param_ptr0);
+		cmr_u32 idx = *((cmr_u32*)param_ptr0);
 		if (idx == 0) {
 			pstrz_ptr->cur.bypass = 1;
 		} else {
@@ -84,12 +84,12 @@
 	return rtn;
 }
 
- isp_s32 _pm_posterize_get_param(void *pstrz_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
+ cmr_s32 _pm_posterize_get_param(void *pstrz_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_posterize_param *pstrz_ptr = (struct isp_posterize_param*)pstrz_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
-	isp_u32 *update_flag = (isp_u32*)rtn_param1;
+	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_POSTERIZE;
 	param_data_ptr->cmd = cmd;

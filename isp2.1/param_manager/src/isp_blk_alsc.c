@@ -18,9 +18,9 @@
 
 
 
-isp_s32 _pm_alsc_init(void *dst_alsc_param, void *src_alsc_param, void *param1, void *param_ptr2)
+cmr_s32 _pm_alsc_init(void *dst_alsc_param, void *src_alsc_param, void *param1, void *param_ptr2)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	UNUSED(dst_alsc_param);
 	UNUSED(src_alsc_param);
 	UNUSED(param1);
@@ -38,9 +38,9 @@ isp_s32 _pm_alsc_init(void *dst_alsc_param, void *src_alsc_param, void *param1, 
 	return rtn;
 }
 
-isp_s32 _pm_alsc_set_param(void *alsc_param, isp_u32 cmd, void *param_ptr0, void *param_ptr1)
+cmr_s32 _pm_alsc_set_param(void *alsc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	UNUSED(alsc_param);
 	UNUSED(cmd);
 	UNUSED(param_ptr0);
@@ -49,9 +49,9 @@ isp_s32 _pm_alsc_set_param(void *alsc_param, isp_u32 cmd, void *param_ptr0, void
 	return rtn;
 }
 
-isp_s32 _pm_alsc_get_param(void *alsc_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
+cmr_s32 _pm_alsc_get_param(void *alsc_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	UNUSED(alsc_param);
 	UNUSED(cmd);
 	UNUSED(rtn_param0);
@@ -59,7 +59,7 @@ isp_s32 _pm_alsc_get_param(void *alsc_param, isp_u32 cmd, void* rtn_param0, void
 #if 0
 	struct isp_alsc_param *alsc_ptr = (struct isp_alsc_param*)alsc_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
-	isp_u32 *update_flag = (isp_u32*)rtn_param1;
+	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
 	param_data_ptr->cmd = cmd;
 	param_data_ptr->id =ISP_BLK_SMART;
 

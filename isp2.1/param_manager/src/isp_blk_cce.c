@@ -18,17 +18,17 @@
 
 
 
- isp_s32 _pm_cce_adjust_hue_saturation(struct isp_cce_param_v1 *cce_param, isp_u32 hue, isp_u32 saturation)
+ cmr_s32 _pm_cce_adjust_hue_saturation(struct isp_cce_param_v1 *cce_param, cmr_u32 hue, cmr_u32 saturation)
 {
-		isp_s32 rtn = ISP_SUCCESS;
-		isp_u32 cce_coef_index = 0;
-		isp_u16 cce_coef[3] = {0};
-		isp_u32 cur_idx = 0;
+		cmr_s32 rtn = ISP_SUCCESS;
+		cmr_u32 cce_coef_index = 0;
+		cmr_u16 cce_coef[3] = {0};
+		cmr_u32 cur_idx = 0;
 		struct isp_rgb_gains rgb_gain = {0x00, 0x00, 0x00, 0x00};
 		struct isp_cce_param_v1 *dst_cce_ptr = (struct isp_cce_param_v1*)cce_param;
-		isp_u32 i = 0x00;
-		isp_u16 src_matrix[9] = {0};
-		isp_u16 dst_matrix[9] = {0};
+		cmr_u32 i = 0x00;
+		cmr_u16 src_matrix[9] = {0};
+		cmr_u16 dst_matrix[9] = {0};
 
 #if 0
 		ISP_LOGI("origin: **********************");
@@ -64,8 +64,8 @@
 		dst_cce_ptr->cur_level[1] = saturation;
 
 		for(i=0; i<3; i++){
-			uint32_t color_cast_coef = dst_cce_ptr->cce_coef[ISP_CCE_COEF_COLOR_CAST][i];
-			uint32_t gain_offset_coef = dst_cce_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][i];
+			cmr_u32 color_cast_coef = dst_cce_ptr->cce_coef[ISP_CCE_COEF_COLOR_CAST][i];
+			cmr_u32 gain_offset_coef = dst_cce_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][i];
 
 			cce_coef[i] = gain_offset_coef * color_cast_coef / ISP_FIX_8BIT_UNIT;
 		}
@@ -75,13 +75,13 @@
 		cur_idx = dst_cce_ptr->cur_idx;
 
 		for (i = 0; i < 9; ++i){
-			src_matrix[i] = (isp_u16)dst_cce_ptr->cce_tab[cur_idx].matrix[i];
+			src_matrix[i] = (cmr_u16)dst_cce_ptr->cce_tab[cur_idx].matrix[i];
 		}
 
 		isp_cce_adjust(src_matrix, cce_coef, dst_matrix, ISP_FIX_10BIT_UNIT);
 
 		for (i = 0; i < 9; ++i){
-			dst_cce_ptr->cur.matrix[i] = (uint32_t)dst_matrix[i];
+			dst_cce_ptr->cur.matrix[i] = (cmr_u32)dst_matrix[i];
 		}
 
 		dst_cce_ptr->cur.y_offset= dst_cce_ptr->cce_tab[cur_idx].y_offset;
@@ -108,17 +108,17 @@
 		return rtn;
 }
 
- isp_s32 _pm_cce_adjust_gain_offset(struct isp_cce_param_v1 *cce_param, isp_u16 r_gain, isp_u16 g_gain, isp_u16 b_gain)
+ cmr_s32 _pm_cce_adjust_gain_offset(struct isp_cce_param_v1 *cce_param, cmr_u16 r_gain, cmr_u16 g_gain, cmr_u16 b_gain)
 {
-		isp_s32 rtn = ISP_SUCCESS;
-		isp_u32 cce_coef_index = 0;
-		isp_u16 cce_coef[3] = {0};
+		cmr_s32 rtn = ISP_SUCCESS;
+		cmr_u32 cce_coef_index = 0;
+		cmr_u16 cce_coef[3] = {0};
 		struct isp_rgb_gains rgb_gain = {0x00, 0x00, 0x00, 0x00};
 		struct isp_cce_param_v1 *dst_cce_ptr = (struct isp_cce_param_v1*)cce_param;
-		isp_u32 i = 0x00;
-		isp_u32 cur_idx = 0;
-		isp_u16 src_matrix[9] = {0};
-		isp_u16 dst_matrix[9] = {0};
+		cmr_u32 i = 0x00;
+		cmr_u32 cur_idx = 0;
+		cmr_u16 src_matrix[9] = {0};
+		cmr_u16 dst_matrix[9] = {0};
 
 #if 0
 		ISP_LOGI("origin: **********************");
@@ -150,8 +150,8 @@
 		dst_cce_ptr->cce_coef[cce_coef_index][2] = b_gain;
 
 		for(i=0; i<3; i++){
-			uint32_t color_cast_coef = dst_cce_ptr->cce_coef[ISP_CCE_COEF_COLOR_CAST][i];
-			uint32_t gain_offset_coef = dst_cce_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][i];
+			cmr_u32 color_cast_coef = dst_cce_ptr->cce_coef[ISP_CCE_COEF_COLOR_CAST][i];
+			cmr_u32 gain_offset_coef = dst_cce_ptr->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][i];
 
 			cce_coef[i] = gain_offset_coef * color_cast_coef / ISP_FIX_8BIT_UNIT;
 		}
@@ -159,13 +159,13 @@
 		cur_idx = dst_cce_ptr->cur_idx;
 
 		for (i = 0; i < 9; ++i){
-			src_matrix[i] = (isp_u16)dst_cce_ptr->cce_tab[cur_idx].matrix[i];
+			src_matrix[i] = (cmr_u16)dst_cce_ptr->cce_tab[cur_idx].matrix[i];
 		}
 
 		isp_cce_adjust(src_matrix, cce_coef, dst_matrix, ISP_FIX_10BIT_UNIT);
 
 		for (i = 0; i < 9; ++i){
-			dst_cce_ptr->cur.matrix[i] = (uint32_t)dst_matrix[i];
+			dst_cce_ptr->cur.matrix[i] = (cmr_u32)dst_matrix[i];
 		}
 
 		dst_cce_ptr->cur.y_offset = dst_cce_ptr->cce_tab[cur_idx].y_offset;
@@ -192,16 +192,16 @@
 		return rtn;
 }
 
- isp_s32 _pm_cce_adjust(struct isp_cce_param_v1 *cce_param)
+ cmr_s32 _pm_cce_adjust(struct isp_cce_param_v1 *cce_param)
 {
-	isp_s32 rtn0 = ISP_SUCCESS;
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn0 = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 
-	isp_s32 hue = cce_param->cur_level[0];
-	isp_s32 saturation = cce_param->cur_level[1];
-	isp_u16 r_gain = cce_param->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][0];
-	isp_u16 g_gain = cce_param->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][1];
-	isp_u16 b_gain = cce_param->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][2];
+	cmr_s32 hue = cce_param->cur_level[0];
+	cmr_s32 saturation = cce_param->cur_level[1];
+	cmr_u16 r_gain = cce_param->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][0];
+	cmr_u16 g_gain = cce_param->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][1];
+	cmr_u16 b_gain = cce_param->cce_coef[ISP_CCE_COEF_GAIN_OFFSET][2];
 
 	if (0 != cce_param->is_specialeffect) {
 		ISP_LOGI("do not adjust cce for specialeffect");
@@ -224,10 +224,10 @@
 
 }
 
- isp_s32 _pm_cce_init_v1(void *dst_cce_param, void *src_cce_param, void* param1, void* param2)
+ cmr_s32 _pm_cce_init_v1(void *dst_cce_param, void *src_cce_param, void* param1, void* param2)
 {
-	isp_s32 rtn = ISP_SUCCESS;
-	isp_u32 i = 0x00, j = 0, index = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i = 0x00, j = 0, index = 0;
 	struct sensor_cce_param *src_ptr = (struct sensor_cce_param*)src_cce_param;
 	struct isp_cce_param_v1 *dst_ptr = (struct isp_cce_param_v1*)dst_cce_param;
 	struct isp_pm_block_header *cce_header_ptr = (struct isp_pm_block_header*)param1;
@@ -283,18 +283,18 @@
 	return rtn;
 }
 
- isp_s32 _pm_cce_set_param_v1(void *cce_param, isp_u32 cmd, void* param_ptr0, void* param_ptr1)
+ cmr_s32 _pm_cce_set_param_v1(void *cce_param, cmr_u32 cmd, void* param_ptr0, void* param_ptr1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_cce_param_v1 *dst_ptr = (struct isp_cce_param_v1*)cce_param;
 	struct isp_pm_block_header *cce_header_ptr = (struct isp_pm_block_header*)param_ptr1;
 
 	switch (cmd) {
 	case ISP_PM_BLK_CCE:
 	{
-		isp_u32 idx = 0;
-		isp_u32 i = 0x00;
-		idx = *((isp_u32*)param_ptr0);
+		cmr_u32 idx = 0;
+		cmr_u32 i = 0x00;
+		idx = *((cmr_u32*)param_ptr0);
 
 		for (i = 0; i < 9; ++i) {
 			dst_ptr->cur.matrix[i] = dst_ptr->cce_tab[idx].matrix[i];
@@ -315,7 +315,7 @@
 
 	case ISP_PM_BLK_SPECIAL_EFFECT:
 	{
-		isp_u32 idx = *((isp_u32*)param_ptr0);
+		cmr_u32 idx = *((cmr_u32*)param_ptr0);
 		dst_ptr->prv_idx = dst_ptr->cur_idx;
 		dst_ptr->cur_idx = idx;
 		if (0 == idx) {
@@ -350,8 +350,8 @@
 
 			if (ISP_SMART_COLOR_CAST == block_result->smart_id) {
 
-				isp_s32 adjust_hue = dst_ptr->cur_level[0];
-				isp_s32 adjust_saturation = dst_ptr->cur_level[1];
+				cmr_s32 adjust_hue = dst_ptr->cur_level[0];
+				cmr_s32 adjust_saturation = dst_ptr->cur_level[1];
 
 				val_range.min = 0;
 				val_range.max = 360;
@@ -373,9 +373,9 @@
 				}
 
 			}else if (ISP_SMART_GAIN_OFFSET == block_result->smart_id) {
-				isp_u16 r_gain = 0;
-				isp_u16 g_gain = 0;
-				isp_u16 b_gain = 0;
+				cmr_u16 r_gain = 0;
+				cmr_u16 g_gain = 0;
+				cmr_u16 b_gain = 0;
 
 				val_range.min = 0;
 				val_range.max = 360;
@@ -408,12 +408,12 @@
 	return rtn;
 }
 
- isp_s32 _pm_cce_get_param_v1(void *cce_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
+ cmr_s32 _pm_cce_get_param_v1(void *cce_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_cce_param_v1 *cce_ptr = (struct isp_cce_param_v1*)cce_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
-	isp_u32 *update_flag = (isp_u32*)rtn_param1;
+	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_CCE;
 	param_data_ptr->cmd = cmd;

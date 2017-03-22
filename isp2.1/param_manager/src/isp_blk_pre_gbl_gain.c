@@ -19,9 +19,9 @@
 
 
 
- isp_s32 _pm_pre_gbl_gain_init_v1(void *dst_pre_gbl_gain, void *src_pre_gbl_gain, void* param1, void*param2)
+ cmr_s32 _pm_pre_gbl_gain_init_v1(void *dst_pre_gbl_gain, void *src_pre_gbl_gain, void* param1, void*param2)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct sensor_pre_global_gain_param *src_ptr = (struct sensor_pre_global_gain_param*)src_pre_gbl_gain;
 	struct isp_pre_global_gain_param_v1 *dst_ptr = (struct isp_pre_global_gain_param_v1*)dst_pre_gbl_gain;
 	struct isp_pm_block_header* pre_gbl_gain_header_ptr = (struct isp_pm_block_header*)param1;
@@ -36,9 +36,9 @@
 	return rtn;
 }
 
- isp_s32 _pm_pre_gbl_gain_set_param_v1(void *pre_gbl_gain_param, isp_u32 cmd, void* param_ptr0, void *param_ptr1)
+ cmr_s32 _pm_pre_gbl_gain_set_param_v1(void *pre_gbl_gain_param, cmr_u32 cmd, void* param_ptr0, void *param_ptr1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pre_global_gain_param_v1 *pre_gbl_gain_ptr = (struct isp_pre_global_gain_param_v1*)pre_gbl_gain_param;
 	struct isp_pm_block_header *pre_gbl_gain_header_ptr = (struct isp_pm_block_header*)param_ptr1;
 
@@ -53,7 +53,7 @@
 	break;
 
 	case ISP_PM_BLK_PRE_GBL_GIAN_BYPASS:
-		pre_gbl_gain_ptr->cur.bypass = *((isp_u32*)param_ptr0);
+		pre_gbl_gain_ptr->cur.bypass = *((cmr_u32*)param_ptr0);
 	break;
 
 	default:
@@ -64,12 +64,12 @@
 	return rtn;
 }
 
- isp_s32 _pm_pre_gbl_gain_get_param_v1(void *pre_gbl_gain_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
+ cmr_s32 _pm_pre_gbl_gain_get_param_v1(void *pre_gbl_gain_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pre_global_gain_param_v1 *pre_gbl_gain = (struct isp_pre_global_gain_param_v1*)pre_gbl_gain_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
-	isp_u32 *update_flag = (isp_u32*)rtn_param1;
+	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_PRE_GBL_GAIN;
 	param_data_ptr->cmd = cmd;

@@ -19,9 +19,9 @@
 
 
 
- isp_s32 _pm_hist_init_v1(void *dst_hist_param, void *src_hist_param, void *param1, void *param2)
+ cmr_s32 _pm_hist_init_v1(void *dst_hist_param, void *src_hist_param, void *param1, void *param2)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	struct sensor_yuv_hists_param *src_ptr = (struct sensor_yuv_hists_param *)src_hist_param;
 	struct isp_hist_param_v1 *dst_ptr = (struct isp_hist_param_v1 *)dst_hist_param;
@@ -37,16 +37,16 @@
 	return rtn;
 }
 
- isp_s32 _pm_hist_set_param_v1(void *hist_param, isp_u32 cmd, void *param_ptr0, void *param_ptr1)
+ cmr_s32 _pm_hist_set_param_v1(void *hist_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_block_header *hist_header_ptr = (struct isp_pm_block_header *)param_ptr1;
 	struct isp_hist_param_v1 *hist_ptr = (struct isp_hist_param_v1 *)hist_param;
 	hist_header_ptr->is_update = ISP_ONE;
 
 	switch (cmd) {
 	case ISP_PM_BLK_HIST_BYPASS_V1:
-		hist_ptr->cur.bypass = *((isp_u32*)param_ptr0);
+		hist_ptr->cur.bypass = *((cmr_u32*)param_ptr0);
 	break;
 
 	default:
@@ -57,12 +57,12 @@
 	return rtn;
 }
 
- isp_s32 _pm_hist_get_param_v1(void *hist_param, isp_u32 cmd, void *rtn_param0, void *rtn_param1)
+ cmr_s32 _pm_hist_get_param_v1(void *hist_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_hist_param_v1 *hist_ptr = (struct isp_hist_param_v1 *)hist_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
-	isp_u32 *update_flag = (isp_u32*)rtn_param1;
+	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_HIST;
 	param_data_ptr->cmd = ISP_PM_BLK_ISP_SETTING;

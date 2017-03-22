@@ -19,10 +19,10 @@
 
 
 
-isp_s32 _pm_envi_detect_init(void *dst_envi_detect_param, void *src_envi_detect_param, void* param1, void* param2)
+cmr_s32 _pm_envi_detect_init(void *dst_envi_detect_param, void *src_envi_detect_param, void* param1, void* param2)
 {
-	isp_s32 rtn = ISP_SUCCESS;
-	isp_s32 i = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 i = 0;
 	struct isp_envi_detect_param* dst_ptr = (struct isp_envi_detect_param*)dst_envi_detect_param;
 	struct sensor_envi_detect_param *src_ptr = (struct sensor_envi_detect_param*)src_envi_detect_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header*)param1;
@@ -39,10 +39,10 @@ isp_s32 _pm_envi_detect_init(void *dst_envi_detect_param, void *src_envi_detect_
 	return rtn;
 }
 
-isp_s32 _pm_envi_detect_set_param(void *envi_detect_param, isp_u32 cmd, void *param_ptr0, void *param_ptr1)
+cmr_s32 _pm_envi_detect_set_param(void *envi_detect_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
-	isp_s32 i = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 i = 0;
 	struct sensor_envi_detect_param *src_envi_detect_ptr = PNULL;
 	struct isp_envi_detect_param* dst_envi_detect_ptr = (struct isp_envi_detect_param*)envi_detect_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header*)param_ptr1;
@@ -51,7 +51,7 @@ isp_s32 _pm_envi_detect_set_param(void *envi_detect_param, isp_u32 cmd, void *pa
 
 	switch (cmd) {
 	case ISP_PM_BLK_ENVI_DETECT_BYPASS:
-		dst_envi_detect_ptr->enable = *((isp_u32*)param_ptr0);
+		dst_envi_detect_ptr->enable = *((cmr_u32*)param_ptr0);
 		header_ptr->is_update = ISP_ONE;
 	break;
 
@@ -71,12 +71,12 @@ isp_s32 _pm_envi_detect_set_param(void *envi_detect_param, isp_u32 cmd, void *pa
 	return rtn;
 }
 
- isp_s32 _pm_envi_detect_get_param(void *envi_detect_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
+ cmr_s32 _pm_envi_detect_get_param(void *envi_detect_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
 	struct isp_envi_detect_param *envi_detect_ptr = (struct isp_envi_detect_param*)envi_detect_param;
-	isp_u32 *update_flag = (isp_u32*)rtn_param1;
+	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_ENVI_DETECT;
 	param_data_ptr->cmd = cmd;

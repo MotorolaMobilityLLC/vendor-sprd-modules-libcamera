@@ -39,9 +39,9 @@
 #define ISP_NR_13_MODE_BIT (0x01 << 13)
 #define ISP_NR_14_MODE_BIT (0x01 << 14)
 #define ISP_NR_15_MODE_BIT (0x01 << 15)
-uint8_t nr_tool_flag[17] = {0};
+cmr_u8 nr_tool_flag[17] = {0};
 
-isp_u32 scene_mode_matrix[MAX_SCENEMODE_NUM] = {
+cmr_u32 scene_mode_matrix[MAX_SCENEMODE_NUM] = {
 	ISP_NR_AUTO_MODE_BIT,
 	ISP_NR_NIGHT_MODE_BIT,
 	ISP_NR_SPORT_MODE_BIT,
@@ -60,7 +60,7 @@ isp_u32 scene_mode_matrix[MAX_SCENEMODE_NUM] = {
 	ISP_NR_15_MODE_BIT,
 };
 
-isp_u32 sensor_mode_matrix[MAX_MODE_NUM] = {
+cmr_u32 sensor_mode_matrix[MAX_MODE_NUM] = {
 	ISP_MODE_ID_COMMON,
 	ISP_MODE_ID_PRV_0,
 	ISP_MODE_ID_PRV_0,
@@ -75,10 +75,10 @@ isp_u32 sensor_mode_matrix[MAX_MODE_NUM] = {
 	ISP_MODE_ID_VIDEO_0,
 	ISP_MODE_ID_VIDEO_0,
 };
-isp_u32 _pm_calc_nr_addr_offset(isp_u32 mode_flag, isp_u32 scene_flag, isp_u32 * one_multi_mode_ptr)
+cmr_u32 _pm_calc_nr_addr_offset(cmr_u32 mode_flag, cmr_u32 scene_flag, cmr_u32 * one_multi_mode_ptr)
 {
-	isp_u32 offset_units = 0, offset_units_remain = 0;
-	isp_u32 i = 0, j = 0, quotient = 0, remainder = 0;
+	cmr_u32 offset_units = 0, offset_units_remain = 0;
+	cmr_u32 i = 0, j = 0, quotient = 0, remainder = 0;
 
 	if((mode_flag > (MAX_MODE_NUM - 1)) || (scene_flag > (MAX_SCENEMODE_NUM - 1)))
 		return 0;
@@ -131,9 +131,9 @@ isp_u32 _pm_calc_nr_addr_offset(isp_u32 mode_flag, isp_u32 scene_flag, isp_u32 *
 	//ISP_LOGI("mode_flag,scene_flag,offset_units_remain(%d,%d,%d)",mode_flag, scene_flag, offset_units_remain);
 	return offset_units_remain;
 }
- int32_t PM_CLIP(int32_t x, int32_t bottom, int32_t top)
+ cmr_s32 PM_CLIP(cmr_s32 x, cmr_s32 bottom, cmr_s32 top)
 {
-	int32_t val = 0;
+	cmr_s32 val = 0;
 
 	if (x < bottom) {
 		val = bottom;
@@ -146,10 +146,10 @@ isp_u32 _pm_calc_nr_addr_offset(isp_u32 mode_flag, isp_u32 scene_flag, isp_u32 *
 	return val;
 }
 
- int32_t _is_print_log()
+ cmr_s32 _is_print_log()
 {
 	char value[PROPERTY_VALUE_MAX] = {0};
-	uint32_t is_print = 0;
+	cmr_u32 is_print = 0;
 
 	property_get("debug.camera.isp.pm", value, "0");
 
@@ -160,12 +160,12 @@ isp_u32 _pm_calc_nr_addr_offset(isp_u32 mode_flag, isp_u32 scene_flag, isp_u32 *
 	return is_print;
 }
 
- isp_s32 _pm_check_smart_param(struct smart_block_result *block_result,
+ cmr_s32 _pm_check_smart_param(struct smart_block_result *block_result,
 						struct isp_range *range,
-						isp_u32 comp_num,
-						isp_u32 type)
+						cmr_u32 comp_num,
+						cmr_u32 type)
 {
-	isp_u32 i = 0;
+	cmr_u32 i = 0;
 
 	if (NULL == block_result) {
 		ISP_LOGE("invalid pointer\n");
@@ -189,7 +189,7 @@ isp_u32 _pm_calc_nr_addr_offset(isp_u32 mode_flag, isp_u32 scene_flag, isp_u32 *
 		}
 
 		if (ISP_SMART_Y_TYPE_VALUE == type) {
-			isp_s32 value = block_result->component[i].fix_data[0];
+			cmr_s32 value = block_result->component[i].fix_data[0];
 
 			if (value < range->min || value > range->max) {
 				ISP_LOGE("value range error: %d ([%d, %d])\n",
@@ -199,15 +199,15 @@ isp_u32 _pm_calc_nr_addr_offset(isp_u32 mode_flag, isp_u32 scene_flag, isp_u32 *
 		} else if (ISP_SMART_Y_TYPE_WEIGHT_VALUE == type) {
 			struct isp_weight_value *weight_value = (struct isp_weight_value *)block_result->component[i].fix_data;
 
-			if ((isp_s32)weight_value->value[0] < range->min
-				|| (isp_s32)weight_value->value[0] > range->max) {
+			if ((cmr_s32)weight_value->value[0] < range->min
+				|| (cmr_s32)weight_value->value[0] > range->max) {
 				ISP_LOGE("value range error: %d ([%d, %d])\n",
 					weight_value->value[0], range->min, range->max);
 				return ISP_ERROR;
 			}
 
-			if ((isp_s32)weight_value->value[1] < range->min
-				|| (isp_s32)weight_value->value[1] > range->max) {
+			if ((cmr_s32)weight_value->value[1] < range->min
+				|| (cmr_s32)weight_value->value[1] > range->max) {
 				ISP_LOGE("value range error: %d ([%d, %d])\n",
 					weight_value->value[1], range->min, range->max);
 				return ISP_ERROR;
@@ -218,16 +218,16 @@ isp_u32 _pm_calc_nr_addr_offset(isp_u32 mode_flag, isp_u32 scene_flag, isp_u32 *
 	return ISP_SUCCESS;
 }
 
- isp_s32 _pm_common_rest(void *blk_addr, isp_u32 size)
+ cmr_s32 _pm_common_rest(void *blk_addr, cmr_u32 size)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	memset((void*)blk_addr, 0x00, size);
 	return rtn;
 }
 
- isp_u32 _pm_get_lens_grid_mode(isp_u32 grid)
+ cmr_u32 _pm_get_lens_grid_mode(cmr_u32 grid)
 {
-	isp_u32 mode = 0x00;
+	cmr_u32 mode = 0x00;
 
 	switch (grid) {
 	case 16:
@@ -250,9 +250,9 @@ isp_u32 _pm_calc_nr_addr_offset(isp_u32 mode_flag, isp_u32 scene_flag, isp_u32 *
 	return mode;
 }
 
-isp_u16 _pm_get_lens_grid_pitch(isp_u32 grid_pitch, isp_u32 width, isp_u32 flag)
+cmr_u16 _pm_get_lens_grid_pitch(cmr_u32 grid_pitch, cmr_u32 width, cmr_u32 flag)
 {
-	isp_u16 pitch=ISP_SUCCESS;
+	cmr_u16 pitch=ISP_SUCCESS;
 
 	if(0 == grid_pitch) {
 	    return pitch;
@@ -271,10 +271,10 @@ isp_u16 _pm_get_lens_grid_pitch(isp_u32 grid_pitch, isp_u32 width, isp_u32 flag)
     return pitch;
 }
 
- isp_u32 _ispLog2n(isp_u32 index)
+ cmr_u32 _ispLog2n(cmr_u32 index)
 {
-	isp_u32 index_num=index;
-	isp_u32 i=0x00;
+	cmr_u32 index_num=index;
+	cmr_u32 i=0x00;
 
 	for(i=0x00; index_num>1; i++) {
 	    index_num>>=0x01;

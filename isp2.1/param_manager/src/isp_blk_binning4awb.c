@@ -19,9 +19,9 @@
 
 
 
- isp_s32 _pm_binning4awb_init_v1(void *dst_binning4awb, void *src_binning4awb, void* param1, void* param2)
+ cmr_s32 _pm_binning4awb_init_v1(void *dst_binning4awb, void *src_binning4awb, void* param1, void* param2)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 
 	struct isp_binning4awb_param_v1 *dst_ptr = (struct isp_binning4awb_param_v1*)dst_binning4awb;
 	struct isp_bin_param *src_ptr = (struct isp_bin_param*)src_binning4awb;
@@ -41,9 +41,9 @@
 	return rtn;
 }
 
- isp_s32 _pm_binning4awb_set_param_v1(void *binning4awb_param, isp_u32 cmd, void* param_ptr0, void* param_ptr1)
+ cmr_s32 _pm_binning4awb_set_param_v1(void *binning4awb_param, cmr_u32 cmd, void* param_ptr0, void* param_ptr1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_binning4awb_param_v1 *dst_ptr = (struct isp_binning4awb_param_v1*)binning4awb_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header*)param_ptr1;
 
@@ -51,7 +51,7 @@
 
 	switch (cmd) {
 		case ISP_PM_BLK_BINNING4AWB_BYPASS:
-			dst_ptr->cur.bypass = *((isp_u32*)param_ptr0);
+			dst_ptr->cur.bypass = *((cmr_u32*)param_ptr0);
 		break;
 
 		default:
@@ -62,12 +62,12 @@
 	return rtn;
 }
 
- isp_s32 _pm_binning4awb_get_param_v1(void *binning4awb_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
+ cmr_s32 _pm_binning4awb_get_param_v1(void *binning4awb_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_binning4awb_param_v1 *binning4awb_ptr = (struct isp_binning4awb_param_v1*)binning4awb_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
-	isp_u32 *update_flag =(isp_u32*)rtn_param1;
+	cmr_u32 *update_flag =(cmr_u32*)rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_BINNING4AWB;
 	param_data_ptr->cmd = cmd;

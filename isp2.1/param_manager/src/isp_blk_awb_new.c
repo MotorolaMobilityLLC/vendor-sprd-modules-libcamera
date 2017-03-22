@@ -17,10 +17,10 @@
 #include "isp_blocks_cfg.h"
 
 
-isp_s32 _pm_awb_new_init(void *dst_awb_new, void *src_awb_new, void* param1, void* param2)
+cmr_s32 _pm_awb_new_init(void *dst_awb_new, void *src_awb_new, void* param1, void* param2)
 {
 
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_awb_param_v1 *dst_ptr = (struct isp_awb_param_v1*)dst_awb_new;
 	struct sensor_awbc_param *src_ptr = (struct sensor_awbc_param *)src_awb_new;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header*)param1;
@@ -49,10 +49,10 @@ isp_s32 _pm_awb_new_init(void *dst_awb_new, void *src_awb_new, void* param1, voi
 
 }
 
-isp_s32 _pm_awb_new_set_param(void *awb_new_param, isp_u32 cmd, void* param_ptr0, void* param_ptr1)
+cmr_s32 _pm_awb_new_set_param(void *awb_new_param, cmr_u32 cmd, void* param_ptr0, void* param_ptr1)
 {
 
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_awb_param_v1 *dst_ptr = (struct isp_awb_param_v1*)awb_new_param;
 	struct isp_pm_block_header * awb_header_ptr = (struct isp_pm_block_header*)param_ptr1;
 
@@ -78,11 +78,11 @@ isp_s32 _pm_awb_new_set_param(void *awb_new_param, isp_u32 cmd, void* param_ptr0
 	break;
 
 	case ISP_PM_BLK_AWB_CT:
-		dst_ptr->ct_value = *((isp_u32*)param_ptr0);
+		dst_ptr->ct_value = *((cmr_u32*)param_ptr0);
 	break;
 
 	case ISP_PM_BLK_AWBC_BYPASS:
-		dst_ptr->cur.awbc_bypass = *((isp_u32*)param_ptr0);
+		dst_ptr->cur.awbc_bypass = *((cmr_u32*)param_ptr0);
 	break;
 
 	case ISP_PM_BLK_AWBM_BYPASS:
@@ -90,10 +90,10 @@ isp_s32 _pm_awb_new_set_param(void *awb_new_param, isp_u32 cmd, void* param_ptr0
 
 	case ISP_PM_BLK_MEMORY_INIT:
 	{
-		isp_u32 i = 0;
+		cmr_u32 i = 0;
 		struct isp_pm_memory_init_param *memory_ptr = (struct isp_pm_memory_init_param*)param_ptr0;
 		for (i = 0; i < memory_ptr->size_info.count_lines; ++i) {
-			dst_ptr->awb_statistics[i].data_ptr = ((isp_u8*)memory_ptr->buffer.data_ptr + memory_ptr->size_info.pitch * i);
+			dst_ptr->awb_statistics[i].data_ptr = ((cmr_u8*)memory_ptr->buffer.data_ptr + memory_ptr->size_info.pitch * i);
 			dst_ptr->awb_statistics[i].size = memory_ptr->size_info.pitch;
 		}
 	}
@@ -109,12 +109,12 @@ isp_s32 _pm_awb_new_set_param(void *awb_new_param, isp_u32 cmd, void* param_ptr0
 
 }
 
-isp_s32 _pm_awb_new_get_param(void *awb_new_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
+cmr_s32 _pm_awb_new_get_param(void *awb_new_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_awb_param_v1*awb_param_ptr = (struct isp_awb_param_v1*)awb_new_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
-	isp_u32 *update_flag = (isp_u32*)rtn_param1;
+	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_AWB_NEW;
 	param_data_ptr->cmd = cmd;

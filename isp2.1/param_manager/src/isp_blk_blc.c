@@ -18,11 +18,11 @@
 
 
 
-isp_s32 _pm_blc_init(void *dst_blc_param, void *src_blc_param, void* param1, void* param_ptr2)
+cmr_s32 _pm_blc_init(void *dst_blc_param, void *src_blc_param, void* param1, void* param_ptr2)
 {
-	isp_u32 i = 0;
-	isp_u32 index = 0;
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i = 0;
+	cmr_u32 index = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_blc_param *dst_ptr = (struct isp_blc_param *)dst_blc_param;
 	struct sensor_blc_param *src_ptr = (struct sensor_blc_param*)src_blc_param;
 	struct isp_pm_block_header *blc_header_ptr = (struct isp_pm_block_header*)param1;
@@ -49,16 +49,16 @@ isp_s32 _pm_blc_init(void *dst_blc_param, void *src_blc_param, void* param1, voi
 	return rtn;
 }
 
-isp_s32 _pm_blc_set_param(void *blc_param, isp_u32 cmd, void *param_ptr0, void *param_ptr1)
+cmr_s32 _pm_blc_set_param(void *blc_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
-	isp_u32 index = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 index = 0;
 	struct isp_blc_param *blc_ptr = (struct isp_blc_param*)blc_param;
 	struct isp_pm_block_header *blc_header_ptr = (struct isp_pm_block_header*)param_ptr1;
 
 	switch (cmd) {
 		case ISP_PM_BLK_BLC_OFFSET:
-			index = *((isp_u32*)param_ptr0);
+			index = *((cmr_u32*)param_ptr0);
 			blc_ptr->cur.r = blc_ptr->offset[index].r;
 			blc_ptr->cur.gr = blc_ptr->offset[index].gr;
 			blc_ptr->cur.b= blc_ptr->offset[index].b;
@@ -67,12 +67,12 @@ isp_s32 _pm_blc_set_param(void *blc_param, isp_u32 cmd, void *param_ptr0, void *
 		break;
 
 		case ISP_PM_BLK_BLC_BYPASS:
-			blc_ptr->cur.bypass = *((isp_u32*)param_ptr0);
+			blc_ptr->cur.bypass = *((cmr_u32*)param_ptr0);
 			blc_header_ptr->is_update = ISP_ONE;
 		break;
 
 		case ISP_PM_BLK_BLC_MODE:
-			blc_ptr->cur.mode = *((isp_u32*)param_ptr0);
+			blc_ptr->cur.mode = *((cmr_u32*)param_ptr0);
 			blc_header_ptr->is_update = ISP_ONE;
 		break;
 		case ISP_PM_BLK_SMART_SETTING:
@@ -128,12 +128,12 @@ isp_s32 _pm_blc_set_param(void *blc_param, isp_u32 cmd, void *param_ptr0, void *
 	return rtn;
 }
 
- isp_s32 _pm_blc_get_param(void *blc_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
+ cmr_s32 _pm_blc_get_param(void *blc_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_blc_param *blc_ptr = (struct isp_blc_param *)blc_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
-	isp_u32 *update_flag = (isp_u32*)rtn_param1;
+	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
 
 	param_data_ptr->id = ISP_BLK_BLC;
 	param_data_ptr->cmd = cmd;

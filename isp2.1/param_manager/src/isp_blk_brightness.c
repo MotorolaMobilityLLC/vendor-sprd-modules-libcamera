@@ -19,9 +19,9 @@
 
 
 
- isp_s32 _pm_brightness_init(void *dst_brightness, void *src_brightness, void* param1, void* param2)
+ cmr_s32 _pm_brightness_init(void *dst_brightness, void *src_brightness, void* param1, void* param2)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct sensor_bright_param *src_ptr = (struct sensor_bright_param*)src_brightness;
 	struct isp_bright_param *dst_ptr = (struct isp_bright_param*)dst_brightness;
 	struct isp_pm_block_header *bright_header_ptr = (struct isp_pm_block_header*)param1;
@@ -38,9 +38,9 @@
 	return rtn;
 }
 
-isp_s32 _pm_brightness_set_param(void *bright_param, isp_u32 cmd, void* param_ptr0, void* param_ptr1)
+cmr_s32 _pm_brightness_set_param(void *bright_param, cmr_u32 cmd, void* param_ptr0, void* param_ptr1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_bright_param *bright_ptr = (struct isp_bright_param*)bright_param;
 	struct isp_pm_block_header *bright_header_ptr = (struct isp_pm_block_header*)param_ptr1;
 
@@ -49,17 +49,17 @@ isp_s32 _pm_brightness_set_param(void *bright_param, isp_u32 cmd, void* param_pt
 
 	switch (cmd) {
 	case ISP_PM_BLK_BRIGHT_BYPASS:
-		bright_ptr->cur.bypass = *((isp_u32*)param_ptr0);
+		bright_ptr->cur.bypass = *((cmr_u32*)param_ptr0);
 	break;
 
 	case ISP_PM_BLK_BRIGHT:
-		bright_ptr->cur_index = *((isp_u32*)param_ptr0);
+		bright_ptr->cur_index = *((cmr_u32*)param_ptr0);
 		bright_ptr->cur.factor = bright_ptr->bright_tab[bright_ptr->cur_index];
 	break;
 
 	case ISP_PM_BLK_SCENE_MODE:
 	{
-		isp_u32 idx = *((isp_u32*)param_ptr0);
+		cmr_u32 idx = *((cmr_u32*)param_ptr0);
 		if (0 == idx) {
 			bright_ptr->cur.factor = bright_ptr->bright_tab[bright_ptr->cur_index];
 		} else {
@@ -76,12 +76,12 @@ isp_s32 _pm_brightness_set_param(void *bright_param, isp_u32 cmd, void* param_pt
 	return rtn;
 }
 
- isp_s32 _pm_brightness_get_param(void *bright_param, isp_u32 cmd, void* rtn_param0, void* rtn_param1)
+ cmr_s32 _pm_brightness_get_param(void *bright_param, cmr_u32 cmd, void* rtn_param0, void* rtn_param1)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_bright_param *bright_ptr = (struct isp_bright_param*)bright_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data*)rtn_param0;
-	isp_u32 *update_flag = (isp_u32*)rtn_param1;
+	cmr_u32 *update_flag = (cmr_u32*)rtn_param1;
 
 	param_data_ptr->cmd = cmd;
 	param_data_ptr->id = ISP_BLK_BRIGHT;

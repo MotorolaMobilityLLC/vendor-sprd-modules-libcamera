@@ -17,6 +17,7 @@
 #ifndef _ISP_PM_COM_TYPE_H_
 #define _ISP_PM_COM_TYPE_H_
 
+ #include "cmr_types.h"
  #include "isp_type.h"
 
  #ifdef	 __cplusplus
@@ -391,34 +392,34 @@ enum isp_pm_blk_cmd {
 };
 
 struct isp_pm_param_data {
-	uint32_t mod_id;
-	uint32_t id;
-	uint32_t cmd;
+	cmr_u32 mod_id;
+	cmr_u32 id;
+	cmr_u32 cmd;
 	void* data_ptr;
-	uint32_t data_size;
-	uint8_t user_data[4];
+	cmr_u32 data_size;
+	cmr_u8 user_data[4];
 };
 
 struct isp_pm_block_header {
 	char name[8];
-	uint32_t block_id;			//block id: blc / nlc/lsc/cmc
-	uint32_t version_id;		//version id: version_0, version_1, and so on
-	uint32_t param_id;		//cmd/setting/a
-	uint32_t size;
-	uint32_t bypass;
-	uint32_t is_update;	//block param need update
-	uint32_t source_flag;
+	cmr_u32 block_id;			//block id: blc / nlc/lsc/cmc
+	cmr_u32 version_id;		//version id: version_0, version_1, and so on
+	cmr_u32 param_id;		//cmd/setting/a
+	cmr_u32 size;
+	cmr_u32 bypass;
+	cmr_u32 is_update;	//block param need update
+	cmr_u32 source_flag;
 	void* absolute_addr;//
 };
 
 struct isp_pm_mode_param {
 	char mode_name[8];
-	uint32_t mode_id;
-	uint32_t block_num;
+	cmr_u32 mode_id;
+	cmr_u32 block_num;
 	struct isp_size resolution;
-	uint32_t fps;
+	cmr_u32 fps;
 	struct isp_pm_block_header header[ISP_TUNE_BLOCK_MAX];
-	uint32_t data_area[0];
+	cmr_u32 data_area[0];
 };
 
 struct isp_pm_memory_init_param {
