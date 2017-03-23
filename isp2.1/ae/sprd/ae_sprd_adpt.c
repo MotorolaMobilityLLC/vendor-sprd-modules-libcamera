@@ -144,7 +144,7 @@ struct ae_update_list {
 struct ae_fd_info {
 	cmr_s8 enable;
 	cmr_s8 pause;
-	cmr_s8 allow_to_work;	/* When allow_to_work==0, FDAE
+	cmr_s8 allow_to_work;/* When allow_to_work==0, FDAE
 				 * will never work */
 	struct ae_fd_param face_info;	/* The current face information */
 };
@@ -291,11 +291,13 @@ struct ae_ctrl_cxt {
 	/*
 	 * HDR control
 	 */
-	cmr_s8 hdr_flag;
+	cmr_s8	hdr_enable;
+	cmr_s8	hdr_frame_cnt;
+	cmr_s8	hdr_cb_cnt;
+	cmr_s8	hdr_flag;
 	cmr_s16 hdr_up;
 	cmr_s16 hdr_down;
 	cmr_s16 hdr_base_ae_idx;
-	cmr_u64 hdr_timestamp;
 	/*
 	 *dual flash simulation
 	 */
@@ -2677,6 +2679,8 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	cxt->last_aegain = 0;
 	cxt->last_linetime = 0;
 	cxt->last_enable = 0;
+	cxt->hdr_frame_cnt = 0;
+	cxt->hdr_cb_cnt = 0;
 	/*
 	 * CMR_MSG_INIT(msg); msg.msg_type = AE_WRITE_EXP_GAIN;
 	 * //msg.sync_flag = CMR_MSG_SYNC_PROCESSED; //init
@@ -2870,25 +2874,36 @@ static void _set_led(struct ae_ctrl_cxt *cxt)
 
 static void ae_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 {
+	UNUSED(param);
 	cxt->hdr_up = cxt->hdr_down = 50;
+
+	ISP_LOGV("cxt->hdr_frame_cnt=%d", cxt->hdr_frame_cnt);
+	if (cxt->hdr_frame_cnt == cxt->hdr_cb_cnt && cxt->hdr_enable == 1) {
+		cxt->hdr_frame_cnt = 0;
+		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_START);
+		ISP_LOGI("ae hdr cb");
+	}
+
 	if (3 == cxt->hdr_flag) {
-		cxt->hdr_flag--;
-		cxt->hdr_timestamp = (cmr_u64) param->sec * 1000000 + (cmr_u64) param->usec;
 		cxt->cur_status.settings.lock_ae = AE_STATE_LOCKED;
 		cxt->cur_status.settings.manual_mode = 1;
-		cxt->cur_status.settings.table_idx = cxt->hdr_base_ae_idx + cxt->hdr_up;
-		ISP_LOGV("_isp_hdr_3: %d sec_%d usec_%d %llu\n", cxt->cur_status.settings.table_idx, param->sec, param->usec, cxt->hdr_timestamp);
+		cxt->cur_status.settings.table_idx = cxt->hdr_base_ae_idx - cxt->hdr_up;
+		cxt->hdr_flag--;
+		cxt->hdr_frame_cnt++;
+		ISP_LOGV("_isp_hdr_3: %d\n", cxt->cur_status.settings.table_idx);
 	} else if (2 == cxt->hdr_flag) {
 		cxt->cur_status.settings.lock_ae = AE_STATE_LOCKED;
 		cxt->cur_status.settings.manual_mode = 1;
-		cxt->cur_status.settings.table_idx = cxt->hdr_base_ae_idx - cxt->hdr_down;
+		cxt->cur_status.settings.table_idx = cxt->hdr_base_ae_idx + cxt->hdr_down;
 		cxt->hdr_flag--;
+		cxt->hdr_frame_cnt++;
 		ISP_LOGV("_isp_hdr_2: %d\n", cxt->cur_status.settings.table_idx);
 	} else if (1 == cxt->hdr_flag) {
 		cxt->cur_status.settings.lock_ae = AE_STATE_LOCKED;
 		cxt->cur_status.settings.manual_mode = 1;
 		cxt->cur_status.settings.table_idx = cxt->hdr_base_ae_idx;
 		cxt->hdr_flag--;
+		cxt->hdr_frame_cnt++;
 		ISP_LOGV("_isp_hdr_1: %d\n", cxt->cur_status.settings.table_idx);
 	} else {
 		;
@@ -3222,7 +3237,7 @@ current_status->stride_config[1] = cxt->cnvg_stride_ev[current_status->settings.
 
 		//4test
 		_set_led(cxt);
-		//ae_hdr_ctrl(cxt, param);
+		ae_hdr_ctrl(cxt, param);
 		//4test
 
 		rtn = ae_misc_calculation(cxt->misc_handle, &misc_calc_in, &misc_calc_out);
@@ -3983,25 +3998,19 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 		break;
 
 	case AE_HDR_START:
-		cxt->hdr_flag = 3;
-		cxt->hdr_timestamp = 0;
-		cxt->hdr_base_ae_idx = cxt->sync_cur_result.wts.cur_index;
-		break;
-
-	case AE_HDR_FINISH:
-		cxt->hdr_timestamp = 0;
-		cxt->cur_status.settings.lock_ae = AE_STATE_NORMAL;
-		break;
-
-	case AE_HDR_GET_INFO:
-		if (param && result) {
-			*(cmr_u64 *) (param) = cxt->hdr_timestamp;
-			*(cmr_u32 *) (result) = 4;
-		} else {
-			ISP_LOGV("_isp_hdr_error\n");
+		if (param) {
+			struct ae_hdr_param	*hdr_param = (struct ae_hdr_param *)param;
+			cxt->hdr_enable = hdr_param->hdr_enable;
+			cxt->hdr_cb_cnt = hdr_param->ev_effect_valid_num;
+			cxt->hdr_frame_cnt = 0;
+			if(cxt->hdr_enable){
+				cxt->hdr_flag = 3;
+				cxt->hdr_base_ae_idx = cxt->sync_cur_result.wts.cur_index;
+			}else{
+				cxt->cur_status.settings.lock_ae = AE_STATE_NORMAL;
+			}
 		}
 		break;
-
 	default:
 		rtn = AE_ERROR;
 		break;

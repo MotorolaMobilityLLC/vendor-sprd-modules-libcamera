@@ -155,6 +155,8 @@ static cmr_int isp_alg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type)
 		case AE_CB_AE_UNLOCK_NOTIFY:
 			cmd = ISP_AE_UNLOCK_NOTIFY;
 			break;
+		case AE_CB_HDR_START:
+			cmd = ISP_HDR_EV_EFFECT_CALLBACK;
 		default:
 			cmd = ISP_AE_STAB_CALLBACK;
 			break;

@@ -141,6 +141,7 @@ enum isp_callback_cmd {
 	ISP_AE_SYNC_INFO = 0x00000F00,
 	ISP_AE_EXP_TIME = 0x00001000,
 	ISP_VCM_STEP = 0x00002000,
+	ISP_HDR_EV_EFFECT_CALLBACK = 0x00003000,
 	ISP_CALLBACK_CMD_MAX = 0xffffffff
 };
 
@@ -616,6 +617,11 @@ struct isp_range_fps {
 struct isp_ae_fps {
 	cmr_u32 min_fps;
 	cmr_u32 max_fps;
+};
+
+struct isp_hdr_param {
+	cmr_u32 hdr_enable;
+	cmr_u32 ev_effect_valid_num;
 };
 
 struct isp_info {

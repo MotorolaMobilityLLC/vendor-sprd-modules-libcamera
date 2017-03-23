@@ -171,8 +171,6 @@ enum ae_io_ctrl_cmd {
 	AE_VIDEO_START,
 	AE_GET_AF_INFO,
 	AE_HDR_START,
-	AE_HDR_FINISH,
-	AE_HDR_GET_INFO,
 	AE_IO_MAX
 };
 
@@ -207,6 +205,7 @@ enum ae_cb_type {
 	AE_CB_CLOSE_PREFLASH,
 	AE_CB_PREFLASH_PERIOD_END,
 	AE_CB_CLOSE_MAIN_FLASH,
+	AE_CB_HDR_START,
 	AE_CB_MAX
 };
 
@@ -479,6 +478,11 @@ struct ae_fd_param {
 	cmr_u16 height;
 	cmr_u16 face_num;
 	struct ae_face face_area[AE_FD_NUM];
+};
+
+struct ae_hdr_param {
+	cmr_u32 hdr_enable;
+	cmr_u32 ev_effect_valid_num;
 };
 
 struct ae_flash_power {

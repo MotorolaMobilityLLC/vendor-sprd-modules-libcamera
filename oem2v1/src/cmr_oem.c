@@ -1090,6 +1090,10 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
         CMR_LOGI("ISP_VCM_STEP,data %d", *(uint32_t *)data);
         prev_set_vcm_step(cxt->prev_cxt.preview_handle, cxt->camera_id, data);
         break;
+    case ISP_HDR_EV_EFFECT_CALLBACK:
+        CMR_LOGD("ISP_HDR_EV_EFFECT_CALLBACK");
+        cmr_setting_isp_notice_done(cxt->setting_cxt.setting_handle, data);
+        break;
     default:
         break;
     }
@@ -6599,6 +6603,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
     struct isp_pos_rect trim;
     struct isp_range_fps isp_fps;
     struct isp_ae_fps ae_fps;
+    struct isp_hdr_param hdr_param;
 
     if (!oem_handle || !param_ptr) {
         CMR_LOGE("in parm error");
@@ -6816,7 +6821,13 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
 
     case COM_ISP_SET_HDR:
         isp_cmd = ISP_CTRL_HDR;
-        isp_param = param_ptr->cmd_value;
+        hdr_param.hdr_enable = param_ptr->cmd_value;
+        hdr_param.ev_effect_valid_num =
+            cxt->sn_cxt.cur_sns_ex_info.exp_valid_frame_num + 1;
+        ptr_flag = 1;
+        CMR_LOGD("set HDR enable %d, ev_effect_valid_num %d",
+                 hdr_param.hdr_enable, hdr_param.ev_effect_valid_num);
+        isp_param_ptr = (void *)&hdr_param;
         break;
 
     case COM_ISP_SET_AE_LOCK_UNLOCK:
@@ -8230,7 +8241,15 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         cxt->camera_mode = mode;
     }
 
-    camera_capture_highflash(cxt, cxt->camera_id);
+    if ((1 != camera_get_hdr_flag(cxt))) {
+        ret = camera_capture_highflash(oem_handle, cxt->camera_id);
+        if (ret)
+            CMR_LOGE("open high flash fail");
+    } else {
+        ret = camera_hdr_set_ev(oem_handle);
+        if (ret)
+            CMR_LOGE("fail to set hdr ev");
+    }
 
     ret = camera_local_start_capture(oem_handle);
     if (ret) {
@@ -9593,11 +9612,19 @@ cmr_int camera_hdr_set_ev(cmr_handle oem_handle) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct common_sn_cmd_param sn_param;
     struct common_isp_cmd_param isp_param;
+    struct setting_cmd_parameter setting_param;
+    memset(&setting_param, 0, sizeof(setting_param));
 
     if (1 == camera_get_hdr_flag(cxt)) {
         ret = cmr_ipm_pre_proc(cxt->ipm_cxt.hdr_handle);
         if (ret) {
             CMR_LOGE("failed to ipm pre proc, %ld", ret);
+        } else {
+            ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                                    SETTING_CTRL_HDR, &setting_param);
+            if (ret) {
+                CMR_LOGE("failed to wait hdr ev effect");
+            }
         }
     }
     if (cxt->is_vendor_hdr) {
@@ -9682,6 +9709,8 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
                                         &flash_status);
     if (flash_status > 0)
         capture_status = DCAM_CAPTURE_START_WITH_FLASH;
+    else if (1 == camera_get_hdr_flag(cxt))
+        capture_status = DCAM_CAPTURE_START_HDR;
     ret = cmr_grab_start_capture(cxt->grab_cxt.grab_handle, capture_status);
     if (ret) {
         CMR_LOGE("cmr_grab_start_capture failed");

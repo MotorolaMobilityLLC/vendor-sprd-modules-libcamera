@@ -78,7 +78,8 @@ struct smart_info {
 	cmr_u32 isp_smart_eb;
 	cmr_u8 *log_smart;
 	cmr_u32 log_smart_size;
-	cmr_u8 lock_en;
+	cmr_u8	lock_en;
+	cmr_s16 smart_block_eb[ISP_SMART_MAX_BLOCK_NUM];
 };
 
 struct afl_info {

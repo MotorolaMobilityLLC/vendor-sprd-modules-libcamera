@@ -1681,34 +1681,30 @@ static cmr_int _ispHdrIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	cmr_s16 smart_block_eb[ISP_SMART_MAX_BLOCK_NUM];
-	SENSOR_EXT_FUN_PARAM_T hdr_ev_param;
-	struct isp_hdr_ev_param *isp_hdr = NULL;
+	struct isp_hdr_param	*isp_hdr = (struct isp_hdr_param *)param_ptr;
+	struct ae_hdr_param		ae_hdr = {0x00, 0x00};
+	cmr_s16                smart_block_eb[ISP_SMART_MAX_BLOCK_NUM];
+	memset(&smart_block_eb, 0x00, sizeof(smart_block_eb));
 	UNUSED(call_back);
 
 	if (NULL == isp_alg_handle || NULL == param_ptr) {
 		ISP_LOGE("fail to get valid cxt=%p and param_ptr=%p", isp_alg_handle, param_ptr);
 		return ISP_PARAM_NULL;
 	}
-	//add for STACK ERROR
-	return ISP_SUCCESS;
-#if 0
-	isp_hdr = (struct isp_hdr_ev_param *)param_ptr;
 
-	memset(&smart_block_eb, 0x00, sizeof(smart_block_eb));
+	ae_hdr.hdr_enable = isp_hdr->hdr_enable;
+	ae_hdr.ev_effect_valid_num = isp_hdr->ev_effect_valid_num;
 
-	smart_ctl_block_eb(cxt->smart_cxt.handle, &smart_block_eb, 0);
-	rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_LOCK, NULL, NULL);
-
-	hdr_ev_param.cmd = SENSOR_EXT_EV;
-	hdr_ev_param.param = isp_hdr->level & 0xFF;
-	cxt->ioctrl_ptr->ext_fuc(cxt->ioctrl_ptr->caller_handler, &hdr_ev_param);
-	rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_UNLOCK, NULL, NULL);
-	smart_ctl_block_eb(cxt->smart_cxt.handle, &smart_block_eb, 1);
-	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_GET_SKIP_FRAME_NUM, NULL, &isp_hdr->skip_frame_num);
+	rtn = ae_ctrl_ioctrl(cxt->ae_cxt.handle, AE_HDR_START, &ae_hdr, NULL);
+	if (ae_hdr.hdr_enable) {
+		smart_ctl_block_eb(cxt->smart_cxt.handle, &smart_block_eb, 0);
+		rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_LOCK, NULL, NULL);
+	}else {
+		rtn = awb_ctrl_ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_UNLOCK, NULL, NULL);
+		smart_ctl_block_eb(cxt->smart_cxt.handle, &smart_block_eb, 1);
+	}
 
 	return ISP_SUCCESS;
-#endif
 }
 
 static cmr_int _ispSetAeNightModeIOCtrl(cmr_handle isp_alg_handle, void *param_ptr, cmr_s32(*call_back) ())

@@ -121,7 +121,8 @@ static cmr_int hdr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     }
 
     cmr_bzero(hdr_handle, sizeof(struct class_hdr));
-    hdr_handle->ev_effect_frame_interval = in->adgain_valid_frame_num + 1;
+    /*ev effect ctrl by isp, this palce set to zero*/
+    hdr_handle->ev_effect_frame_interval = 0; // in->adgain_valid_frame_num + 1;
 
     out->format = IMG_FMT_YCBCR420;
     out->total_frame_number =
@@ -267,6 +268,7 @@ static cmr_int hdr_transfer_frame(cmr_handle class_handle,
 
     if (hdr_handle->common.save_frame_count ==
         (HDR_CAP_NUM + hdr_handle->ev_effect_frame_interval)) {
+        CMR_LOGD("HDR enable = %d", hdr_enable);
         cmr_bzero(&out->dst_frame, sizeof(struct img_frm));
         sensor_ioctl = hdr_handle->common.ipm_cxt->init_in.ipm_sensor_ioctl;
         isp_ioctl = hdr_handle->common.ipm_cxt->init_in.ipm_isp_ioctl;
@@ -352,7 +354,7 @@ static cmr_int hdr_frame_proc(cmr_handle class_handle) {
     isp_ioctl = hdr_handle->common.ipm_cxt->init_in.ipm_isp_ioctl;
     oem_handle = hdr_handle->common.ipm_cxt->init_in.oem_handle;
 
-    CMR_LOGI("frame cnt %d", frame_in_cnt);
+    CMR_LOGV("frame cnt %d", frame_in_cnt);
     switch (frame_in_cnt) {
     case 1:
         ev_level = OEM_EV_LEVEL_1;
@@ -370,8 +372,7 @@ static cmr_int hdr_frame_proc(cmr_handle class_handle) {
 
     get_sensor_info(oem_handle, sensor_id, &sensor_info);
 
-    CMR_LOGI("HDR ev_level = %d, img_fmt=%d", ev_level,
-             sensor_info.image_format);
+    CMR_LOGI("HDR enable = %d", hdr_enable);
 
 #if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||                                   \
     defined(CONFIG_CAMERA_ISP_VERSION_V4)
@@ -571,6 +572,11 @@ static cmr_int hdr_thread_proc(struct cmr_msg *message, void *private_data) {
                  class_handle->dst_addr.addr_y, class_handle->width,
                  class_handle->height);
         CMR_LOGI("HDR thread proc start ");
+        //  modify "-1 , +1 , 0" to "-1 , 0 , +1" , need modify index "0-1-2" to
+        //  "0-2-1"
+        cmr_u8 *p = class_handle->alloc_addr[1];
+        class_handle->alloc_addr[1] = class_handle->alloc_addr[2];
+        class_handle->alloc_addr[2] = p;
         hdr_arithmetic(class_handle, &class_handle->dst_addr,
                        class_handle->width, class_handle->height);
         CMR_LOGI("HDR thread proc done ");

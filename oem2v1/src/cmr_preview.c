@@ -3534,7 +3534,7 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
         }
     }
 
-    if (snapshot_enable && !preview_enable) {
+    /*if (snapshot_enable && !preview_enable) {
         if (handle->ops.hdr_set_ev) {
             handle->ops.hdr_set_ev(handle->oem_handle);
         } else {
@@ -3542,7 +3542,7 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
             ret = CMR_CAMERA_INVALID_PARAM;
             goto exit;
         }
-    }
+    }*/
 
     ret = handle->ops.channel_start(handle->oem_handle, channel_bits, skip_num);
     if (ret) {
