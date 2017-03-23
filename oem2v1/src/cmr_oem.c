@@ -1850,12 +1850,12 @@ cmr_int camera_focus_pre_proc(cmr_handle oem_handle) {
     }
 #endif
 
-    // wait  AOI converged
-    ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+    // wait ROI converged for 3d calibration
+    /*ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                             SETTING_SET_ROI_CONVERGENCE_REQ, &setting_param);
     if (ret) {
         CMR_LOGE("failed to _SET_ROI_CONVERGENCE_REQ");
-    }
+    }*/
 
     if (need_pre_flash) {
         setting_param.ctrl_flash.is_active = 1;
