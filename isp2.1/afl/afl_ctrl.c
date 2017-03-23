@@ -32,16 +32,16 @@
 
 /*************This code just use for anti-flicker debug*******************/
 /***************************************************************/
-static int32_t cnt = 0;
-static int32_t _set_afl_thr(int *thr)
+static cmr_s32 cnt = 0;
+static cmr_s32 _set_afl_thr(cmr_s32 *thr)
 {
 #ifdef WIN32
 	return -1;
 #else
-	int rtn = ISP_SUCCESS;
-	uint32_t temp = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 temp = 0;
 	char temp_thr[4] = {0};
-	int i = 0, j = 0;
+	cmr_s32 i = 0, j = 0;
 	char value[PROPERTY_VALUE_MAX];
 
 	if (NULL == thr) {
@@ -76,10 +76,10 @@ static int32_t _set_afl_thr(int *thr)
 #endif
 }
 
-static int32_t afl_statistic_save_to_file(int32_t height, int32_t *addr)
+static cmr_s32 afl_statistic_save_to_file(cmr_s32 height, cmr_s32 *addr)
 {
-	int32_t i = 0;
-	int32_t *ptr = addr;
+	cmr_s32 i = 0;
+	cmr_s32 *ptr = addr;
 	FILE *fp = NULL;
 	char file_name[100] = {0};
 	char tmp_str[100];
@@ -104,7 +104,7 @@ static int32_t afl_statistic_save_to_file(int32_t height, int32_t *addr)
 		return -1;
 	}
 
-	//fwrite((void*)ptr, 1, height * sizeof(int32_t), fp);
+	//fwrite((void*)ptr, 1, height * sizeof(cmr_s32), fp);
 	for (i = 0; i < height; i++) {
 		fprintf(fp, "%d\n", *ptr);
 		ptr++;
@@ -123,16 +123,16 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 {
 	cmr_int rtn = ISP_SUCCESS;
 	cmr_int ret = 0;
-	int32_t thr[9] = {0,0,0,0,0,0,0,0,0};
+	cmr_s32 thr[9] = {0,0,0,0,0,0,0,0,0};
 	struct isp_awb_statistic_info   *ae_stat_ptr = NULL;
-	uint32_t cur_flicker = 0;
-	uint32_t cur_exp_flag = 0;
-	int32_t ae_exp_flag = 0;
-	uint32_t nxt_flicker = 0;
+	cmr_u32 cur_flicker = 0;
+	cmr_u32 cur_exp_flag = 0;
+	cmr_s32 ae_exp_flag = 0;
+	cmr_u32 nxt_flicker = 0;
 	cmr_int debug_index = 0;
-	uint32_t i = 0;
+	cmr_u32 i = 0;
 	cmr_int flag = 0;
-	int32_t *addr = NULL;
+	cmr_s32 *addr = NULL;
 
 	if (!cxt_ptr || !in_ptr) {
 		ISP_LOGE("fail to check param is NULL!");
@@ -143,7 +143,7 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 	cur_flicker = in_ptr->cur_flicker;
 	cur_exp_flag = in_ptr->cur_exp_flag;
 	ae_exp_flag = in_ptr->ae_exp_flag;
-	addr = (int32_t *)in_ptr->vir_addr;
+	addr = (cmr_s32 *)in_ptr->vir_addr;
 
 	if(cur_exp_flag) {
 		if(cur_flicker) {
@@ -189,17 +189,17 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt_ptr, struct afl_
 				flag = antiflcker_sw_process(cxt_ptr->width,
 					cxt_ptr->height, addr, 0, thr[0], thr[1],
 					thr[2], thr[3], thr[4], thr[5], thr[6],
-					thr[7], thr[8], (int *)ae_stat_ptr->r_info,
-					(int *)ae_stat_ptr->g_info,
-					(int *)ae_stat_ptr->b_info);
+					thr[7], thr[8], (cmr_s32 *)ae_stat_ptr->r_info,
+					(cmr_s32 *)ae_stat_ptr->g_info,
+					(cmr_s32 *)ae_stat_ptr->b_info);
 				ISP_LOGV("flag %ld %s", flag, "60Hz");
 			} else {
 				flag = antiflcker_sw_process(cxt_ptr->width,
 					cxt_ptr->height, addr, 1, thr[0], thr[1],
 					thr[2], thr[3], thr[4], thr[5], thr[6],
-					thr[7], thr[8], (int *)ae_stat_ptr->r_info,
-					(int *)ae_stat_ptr->g_info,
-					(int *)ae_stat_ptr->b_info);
+					thr[7], thr[8], (cmr_s32 *)ae_stat_ptr->r_info,
+					(cmr_s32 *)ae_stat_ptr->g_info,
+					(cmr_s32 *)ae_stat_ptr->b_info);
 				ISP_LOGV("flag %ld %s", flag, "50Hz");
 			}
 			if (flag)

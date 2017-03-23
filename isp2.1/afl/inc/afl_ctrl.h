@@ -30,10 +30,10 @@ struct afl_ctrl_init_in {
 };
 
 struct afl_proc_in {
-	uint32_t cur_flicker;
-	uint32_t cur_exp_flag;
-	int32_t ae_exp_flag;
-	uint32_t vir_addr;
+	cmr_u32 cur_flicker;
+	cmr_u32 cur_exp_flag;
+	cmr_s32 ae_exp_flag;
+	cmr_u32 vir_addr;
 	struct isp_awb_statistic_info *ae_stat_ptr;
 };
 
