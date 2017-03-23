@@ -1504,8 +1504,17 @@ int SprdCamera3Blur::configureStreams(
                      stream_list->streams[i]->height,
                      ns2ms(systemTime() - initStart));
         } else if (requestStreamType == SNAPSHOT_STREAM) {
+            char prop[PROPERTY_VALUE_MAX] = {
+                0,
+            };
             w = stream_list->streams[i]->width;
             h = stream_list->streams[i]->height;
+
+            property_get("persist.sys.camera.resize5m", prop, "0");
+            if (h == 1944 && 1 != atoi(prop)) {
+                h = 1952;
+            }
+
             if (mCaptureWidth != w && mCaptureHeight != h) {
                 freeLocalCapBuffer();
                 for (size_t j = 0; j < BLUR_LOCAL_CAPBUFF_NUM; j++) {
