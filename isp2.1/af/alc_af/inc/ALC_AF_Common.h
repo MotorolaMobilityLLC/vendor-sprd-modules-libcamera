@@ -15,7 +15,7 @@
  */
 #ifndef _ALC_AF_COMMON_H_
 #define _ALC_AF_COMMON_H_
-#include <sys/types.h>
+#include "cmr_types.h"
 
 typedef void* alc_af_handle_t;
 #define ALC_AF_MAGIC_START		0xe5a55e5a
@@ -71,85 +71,85 @@ enum alc_af_env_mode {
 };
 
 struct alc_win_coord {
-	uint32_t start_x;
-	uint32_t start_y;
-	uint32_t end_x;
-	uint32_t end_y;
+	cmr_u32 start_x;
+	cmr_u32 start_y;
+	cmr_u32 end_x;
+	cmr_u32 end_y;
 } ;
 
  struct alc_af_ctrl_ops{
-	int32_t (*cb_set_afm_bypass)(alc_af_handle_t handle, uint32_t bypass);
-	int32_t (*cb_set_afm_mode)(alc_af_handle_t handle, uint32_t mode);
-	int32_t (*cb_set_afm_skip_num)(alc_af_handle_t handle, uint32_t skip_num);
-	int32_t (*cb_set_afm_skip_num_clr)(alc_af_handle_t handle);
-	int32_t (*cb_set_afm_spsmd_rtgbot_enable)(alc_af_handle_t handle, uint32_t enable);
-	int32_t (*cb_set_afm_spsmd_diagonal_enable)(alc_af_handle_t handle, uint32_t enable);
-	int32_t (*cb_set_afm_spsmd_cal_mode)(alc_af_handle_t handle, uint32_t mode);
-	int32_t (*cb_set_afm_sel_filter1)(alc_af_handle_t handle, uint32_t sel_filter);
-	int32_t (*cb_set_afm_sel_filter2)(alc_af_handle_t handle, uint32_t sel_filter);
-	int32_t (*cb_set_afm_sobel_type)(alc_af_handle_t handle, uint32_t type);
-	int32_t (*cb_set_afm_spsmd_type)(alc_af_handle_t handle, uint32_t type);
-	int32_t (*cb_set_afm_sobel_threshold)(alc_af_handle_t handle, uint32_t min, uint32_t max);
-	int32_t (*cb_set_afm_spsmd_threshold)(alc_af_handle_t handle, uint32_t min, uint32_t max);
-	int32_t (*cb_set_afm_slice_size)(alc_af_handle_t handle, uint32_t width, uint32_t height);
-	int32_t (*cb_set_afm_win)(alc_af_handle_t handle, struct alc_win_coord *win_range);
-	int32_t (*cb_get_afm_type1_statistic)(alc_af_handle_t handle, uint32_t *statis);
-	int32_t (*cb_get_afm_type2_statistic)(alc_af_handle_t handle, uint32_t *statis);
-	int32_t (*cb_set_active_win)(alc_af_handle_t handle, uint32_t active_win);
-	int32_t (*cb_get_cur_env_mode)(alc_af_handle_t handle, uint8_t *mode);
-	int32_t (*cb_set_motor_pos)(alc_af_handle_t handle, uint32_t pos);
-	int32_t (*cb_lock_ae)(alc_af_handle_t handle);
-	int32_t (*cb_lock_awb)(alc_af_handle_t handle);
-	int32_t (*cb_unlock_ae)(alc_af_handle_t handle);
-	int32_t (*cb_unlock_awb)(alc_af_handle_t handle);
-	uint32_t (*cb_get_ae_lum)(alc_af_handle_t handle);
-	uint32_t (*cb_get_ae_status)(alc_af_handle_t handle);
-	uint32_t (*cb_get_awb_status)(alc_af_handle_t handle);
-	int32_t (*cb_get_isp_size)(alc_af_handle_t handle, uint16_t *widith, uint16_t *height);
-	int32_t (*cb_af_finish_notice)(alc_af_handle_t handle, uint32_t result);
+	cmr_s32 (*cb_set_afm_bypass)(alc_af_handle_t handle, cmr_u32 bypass);
+	cmr_s32 (*cb_set_afm_mode)(alc_af_handle_t handle, cmr_u32 mode);
+	cmr_s32 (*cb_set_afm_skip_num)(alc_af_handle_t handle, cmr_u32 skip_num);
+	cmr_s32 (*cb_set_afm_skip_num_clr)(alc_af_handle_t handle);
+	cmr_s32 (*cb_set_afm_spsmd_rtgbot_enable)(alc_af_handle_t handle, cmr_u32 enable);
+	cmr_s32 (*cb_set_afm_spsmd_diagonal_enable)(alc_af_handle_t handle, cmr_u32 enable);
+	cmr_s32 (*cb_set_afm_spsmd_cal_mode)(alc_af_handle_t handle, cmr_u32 mode);
+	cmr_s32 (*cb_set_afm_sel_filter1)(alc_af_handle_t handle, cmr_u32 sel_filter);
+	cmr_s32 (*cb_set_afm_sel_filter2)(alc_af_handle_t handle, cmr_u32 sel_filter);
+	cmr_s32 (*cb_set_afm_sobel_type)(alc_af_handle_t handle, cmr_u32 type);
+	cmr_s32 (*cb_set_afm_spsmd_type)(alc_af_handle_t handle, cmr_u32 type);
+	cmr_s32 (*cb_set_afm_sobel_threshold)(alc_af_handle_t handle, cmr_u32 min, cmr_u32 max);
+	cmr_s32 (*cb_set_afm_spsmd_threshold)(alc_af_handle_t handle, cmr_u32 min, cmr_u32 max);
+	cmr_s32 (*cb_set_afm_slice_size)(alc_af_handle_t handle, cmr_u32 width, cmr_u32 height);
+	cmr_s32 (*cb_set_afm_win)(alc_af_handle_t handle, struct alc_win_coord *win_range);
+	cmr_s32 (*cb_get_afm_type1_statistic)(alc_af_handle_t handle, cmr_u32 *statis);
+	cmr_s32 (*cb_get_afm_type2_statistic)(alc_af_handle_t handle, cmr_u32 *statis);
+	cmr_s32 (*cb_set_active_win)(alc_af_handle_t handle, cmr_u32 active_win);
+	cmr_s32 (*cb_get_cur_env_mode)(alc_af_handle_t handle, cmr_u8 *mode);
+	cmr_s32 (*cb_set_motor_pos)(alc_af_handle_t handle, cmr_u32 pos);
+	cmr_s32 (*cb_lock_ae)(alc_af_handle_t handle);
+	cmr_s32 (*cb_lock_awb)(alc_af_handle_t handle);
+	cmr_s32 (*cb_unlock_ae)(alc_af_handle_t handle);
+	cmr_s32 (*cb_unlock_awb)(alc_af_handle_t handle);
+	cmr_u32 (*cb_get_ae_lum)(alc_af_handle_t handle);
+	cmr_u32 (*cb_get_ae_status)(alc_af_handle_t handle);
+	cmr_u32 (*cb_get_awb_status)(alc_af_handle_t handle);
+	cmr_s32 (*cb_get_isp_size)(alc_af_handle_t handle, cmr_u16 *widith, cmr_u16 *height);
+	cmr_s32 (*cb_af_finish_notice)(alc_af_handle_t handle, cmr_u32 result);
 	void (*cb_alc_af_log)(const char* format, ...);
-	int32_t (*cb_set_sp_afm_cfg)(alc_af_handle_t handle);
-	int32_t (*cb_set_sp_afm_win)(alc_af_handle_t handle, struct alc_win_coord *win_range);
-	int32_t (*cb_get_sp_afm_statistic)(alc_af_handle_t handle, uint32_t *statis);
-	int32_t (*cb_sp_write_i2c)(alc_af_handle_t handle,uint16_t slave_addr, uint8_t *cmd, uint16_t cmd_length);
-	int32_t (*cd_sp_read_i2c)(alc_af_handle_t handle,uint16_t slave_addr, uint8_t *cmd, uint16_t cmd_length);
-	int32_t (*cd_sp_get_cur_prv_mode)(alc_af_handle_t handle,uint32_t *mode);
-	int32_t (*cb_af_move_start_notice)(alc_af_handle_t handle);
-	int32_t (*cb_af_pos_update)(alc_af_handle_t handle, uint32_t pos);
+	cmr_s32 (*cb_set_sp_afm_cfg)(alc_af_handle_t handle);
+	cmr_s32 (*cb_set_sp_afm_win)(alc_af_handle_t handle, struct alc_win_coord *win_range);
+	cmr_s32 (*cb_get_sp_afm_statistic)(alc_af_handle_t handle, cmr_u32 *statis);
+	cmr_s32 (*cb_sp_write_i2c)(alc_af_handle_t handle,cmr_u16 slave_addr, cmr_u8 *cmd, cmr_u16 cmd_length);
+	cmr_s32 (*cd_sp_read_i2c)(alc_af_handle_t handle,cmr_u16 slave_addr, cmr_u8 *cmd, cmr_u16 cmd_length);
+	cmr_s32 (*cd_sp_get_cur_prv_mode)(alc_af_handle_t handle,cmr_u32 *mode);
+	cmr_s32 (*cb_af_move_start_notice)(alc_af_handle_t handle);
+	cmr_s32 (*cb_af_pos_update)(alc_af_handle_t handle, cmr_u32 pos);
 
-	int32_t (*cb_get_motor_range)(alc_af_handle_t handle, uint16_t* min_pos,uint16_t* max_pos);
-	int32_t (*cb_get_lens_info)(alc_af_handle_t handle, uint16_t *f_num, uint16_t *f_len);
-	int32_t (*cb_get_accelerator_sensor_info)(alc_af_handle_t handle, uint16_t* posture);
-	int32_t (*cb_get_magnetic_sensor_info)(alc_af_handle_t handle, uint16_t* ispinning);
+	cmr_s32 (*cb_get_motor_range)(alc_af_handle_t handle, cmr_u16* min_pos,cmr_u16* max_pos);
+	cmr_s32 (*cb_get_lens_info)(alc_af_handle_t handle, cmr_u16 *f_num, cmr_u16 *f_len);
+	cmr_s32 (*cb_get_accelerator_sensor_info)(alc_af_handle_t handle, cmr_u16* posture);
+	cmr_s32 (*cb_get_magnetic_sensor_info)(alc_af_handle_t handle, cmr_u16* ispinning);
 };
 
 struct alc_afm_cfg_info{
-	uint32_t bypass;			//   [0] 0:work, 1:bypass 
-	uint32_t mode;				//   [6] 1
-	uint32_t source_pos;		//   0:RGB, 1:YCbCr
-	uint32_t shift;				//   [5:1] ???????
-	uint32_t skip_num;			//   [10:7] 0
-	uint32_t skip_num_clear;	//   [11] 0
-	uint32_t format;			//   [15:13] 111
-	uint32_t iir_bypass;		//   [16] 0:work, 1:bypass
+	cmr_u32 bypass;			//   [0] 0:work, 1:bypass 
+	cmr_u32 mode;				//   [6] 1
+	cmr_u32 source_pos;		//   0:RGB, 1:YCbCr
+	cmr_u32 shift;				//   [5:1] ???????
+	cmr_u32 skip_num;			//   [10:7] 0
+	cmr_u32 skip_num_clear;	//   [11] 0
+	cmr_u32 format;			//   [15:13] 111
+	cmr_u32 iir_bypass;		//   [16] 0:work, 1:bypass
 	//sp_afm_cfg_info_regs	cfg;
-	int16_t 				IIR_c[11];		 
+	cmr_s16 				IIR_c[11];		 
 };
 
 struct alc_af_face_info {
-	uint32_t   sx;
-	uint32_t   sy;
-	uint32_t   ex;
-	uint32_t   ey;
-	uint32_t   brightness;
-	int32_t    pose;
+	cmr_u32   sx;
+	cmr_u32   sy;
+	cmr_u32   ex;
+	cmr_u32   ey;
+	cmr_u32   brightness;
+	cmr_s32    pose;
 };
 
 struct alc_af_face_area {
-	uint16_t type;//focus or ae,
-	uint16_t face_num;
-	uint16_t frame_width;
-	uint16_t frame_height;
+	cmr_u16 type;//focus or ae,
+	cmr_u16 face_num;
+	cmr_u16 frame_width;
+	cmr_u16 frame_height;
 	struct alc_af_face_info face_info[10];
 };
 

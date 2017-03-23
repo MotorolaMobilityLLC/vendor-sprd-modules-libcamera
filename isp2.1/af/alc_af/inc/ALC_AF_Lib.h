@@ -23,7 +23,7 @@
 
 /* ------------------------------------------------------------------------ */
 
-void ALC_AF_Running(struct alc_af_ctrl_ops* ops , uint32_t* pos , TT_AfIfBuf* ppAfIfBuf);//tes_kano_20150820
+void ALC_AF_Running(struct alc_af_ctrl_ops* ops , cmr_u32* pos , TT_AfIfBuf* ppAfIfBuf);//tes_kano_20150820
 
 
 #endif

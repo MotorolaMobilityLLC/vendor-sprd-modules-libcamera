@@ -39,8 +39,8 @@ extern "C"
 #define MAX_AF_WIN 32
 
 #ifdef WIN32
-typedef __int64               int64_t;
-typedef unsigned __int64      uint64_t;
+typedef __int64               cmr_s64;
+typedef unsigned __int64      cmr_u64;
 #else
 #include <sys/types.h>
 #endif
@@ -204,8 +204,8 @@ struct aft_caf_stats_cfg {
 
 struct aft_ae_skip_info
 {
-	uint32_t ae_select_support;
-	uint32_t ae_skip_line;
+	cmr_u32 ae_select_support;
+	cmr_u32 ae_skip_line;
 };
 
 typedef struct aft_ctrl_ops
@@ -232,12 +232,12 @@ typedef struct aft_context{
 *					Data Prototype				*
 *-------------------------------------------------------------------------------*/
 
-signed int caf_trigger_init(struct aft_tuning_block_param *init_param, aft_proc_handle_t *handle);
-signed int caf_trigger_deinit(aft_proc_handle_t *handle);
-signed int caf_trigger_calculation(aft_proc_handle_t *handle,
+cmr_s32 caf_trigger_init(struct aft_tuning_block_param *init_param, aft_proc_handle_t *handle);
+cmr_s32 caf_trigger_deinit(aft_proc_handle_t *handle);
+cmr_s32 caf_trigger_calculation(aft_proc_handle_t *handle,
 				struct aft_proc_calc_param *aft_calc_in,
 				struct aft_proc_result *aft_calc_result);
-signed int caf_trigger_ioctrl(aft_proc_handle_t *handle, enum aft_cmd cmd, void *param0, void *param1);
+cmr_s32 caf_trigger_ioctrl(aft_proc_handle_t *handle, enum aft_cmd cmd, void *param0, void *param1);
 
 /*------------------------------------------------------------------------------*
 *					Compiler Flag				*

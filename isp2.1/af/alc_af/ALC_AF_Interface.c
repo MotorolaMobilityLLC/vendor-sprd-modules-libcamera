@@ -38,13 +38,13 @@
 #include <utils/Log.h> //for test
 /* ------------------------------------------------------------------------ */
 
-void Al_AF_GetFv(alc_af_handle_t handle, uint32_t dwValue[150])
+void Al_AF_GetFv(alc_af_handle_t handle, cmr_u32 dwValue[150])
 {
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 
 	struct alc_af_ctrl_ops	*af_ops = &af_cxt->af_ctrl_ops;
 
-	unsigned char i,j,k;
+	cmr_u8 i,j,k;
 
 	af_ops->cb_get_afm_type1_statistic(handle, &dwValue[0]);
 	af_ops->cb_get_afm_type2_statistic(handle, &dwValue[25]);
@@ -69,7 +69,7 @@ void Al_AF_GetFv(alc_af_handle_t handle, uint32_t dwValue[150])
 }
 
 
-void Al_FocusDataGet(TT_AfIfBuf *ppAfIfBuf , uint32_t *statis , uint32_t *ae_lumi)//tes_kano_0821
+void Al_FocusDataGet(TT_AfIfBuf *ppAfIfBuf , cmr_u32 *statis , cmr_u32 *ae_lumi)//tes_kano_0821
 {
 	if(ppAfIfBuf->mttInfo.mttAfWindow.muiAfWindowMode == 8){ //tes_kano_0824 for tap af
 		//YIQ IIR2
@@ -562,20 +562,20 @@ void Al_AF_Prv_Start_Notice(alc_af_handle_t handle , TT_AfIfBuf *ppAfIfBuf)
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	struct alc_af_ctrl_ops	*af_ops = &af_cxt->af_ctrl_ops;
 	struct alc_win_coord region[25];
-	uint32_t i = 0;
-	uint32_t j = 0;
-	uint32_t k = 0;
-	uint32_t h1 = 0 ;
-	uint32_t h2 = 0 ;
-	uint32_t v1 = 0 ;
-	uint32_t v2 = 0 ;
-	uint32_t face_max_size=0;
-	uint32_t face_max_size_temp=0;
-	uint32_t face_sx=0;
-	uint32_t face_sy=0;
-	uint32_t face_ex=0;
-	uint32_t face_ey=0;
-	uint32_t saf_init=0;
+	cmr_u32 i = 0;
+	cmr_u32 j = 0;
+	cmr_u32 k = 0;
+	cmr_u32 h1 = 0 ;
+	cmr_u32 h2 = 0 ;
+	cmr_u32 v1 = 0 ;
+	cmr_u32 v2 = 0 ;
+	cmr_u32 face_max_size=0;
+	cmr_u32 face_max_size_temp=0;
+	cmr_u32 face_sx=0;
+	cmr_u32 face_sy=0;
+	cmr_u32 face_ex=0;
+	cmr_u32 face_ey=0;
+	cmr_u32 saf_init=0;
 	
 	af_ops->cb_set_afm_bypass(handle, 1);	//Turn Off
 	ALC_AF_LOGE("DBG_INTERFACE Debug_Start");
@@ -695,12 +695,12 @@ void  Al_AF_Running(alc_af_handle_t handle , TT_AfIfBuf* ppAfIfBuf)//tes_kano_08
 
 	struct alc_af_ctrl_ops	*af_ops = &af_cxt->af_ctrl_ops;
 
-	uint32_t  pos;//for test
-	//static uint32_t  firstfr = 0;//for test
-	uint32_t  statis[150];
-	//static uint32_t  prepos = 0;//for test
-	uint32_t  i;
-	uint32_t ae_lumi[10] ;//tes_kano_0820
+	cmr_u32  pos;//for test
+	//static cmr_u32  firstfr = 0;//for test
+	cmr_u32  statis[150];
+	//static cmr_u32  prepos = 0;//for test
+	cmr_u32  i;
+	cmr_u32 ae_lumi[10] ;//tes_kano_0820
 	
 	UI_16 sx = 1690 ;
 	UI_16 sy = 1269 ;
@@ -843,7 +843,7 @@ static	ushort32_t		AfLuminance[Hno_MAX * Vno_MAX];
 //=====================================================================
 
 //=====================================================================
-int	AfLuminance_Setup( T_EvaluationWindow *AF_Win )
+cmr_s32	AfLuminance_Setup( T_EvaluationWindow *AF_Win )
 {
 uchar	Hno, Vno;
 uchar	EvaWin_LU_Hno, EvaWin_LU_Vno, EvaWin_LU_Hmod, EvaWin_LU_Vmod;
@@ -949,7 +949,7 @@ uchar	EvaWin_RD_Hno, EvaWin_RD_Vno, EvaWin_RD_Hmod, EvaWin_RD_Vmod;
 //=====================================================================
 
 //=====================================================================
-int	AfLuminance_Multiplication( T_isp_awb_statistic_info *af_cxt, ushort32_t *AfLuminance )
+cmr_s32	AfLuminance_Multiplication( T_isp_awb_statistic_info *af_cxt, ushort32_t *AfLuminance )
 {
 uchar		Hno, Vno;
 ushort16_t	Idx;

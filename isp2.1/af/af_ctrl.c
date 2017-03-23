@@ -42,9 +42,9 @@ struct afctrl_cxt {
 	isp_af_cb af_set_cb;
 };
 */
-int32_t g_af_log_level = LOG_LEVEL_LOGD;
+cmr_s32 g_af_log_level = LOG_LEVEL_LOGD;
 
-static int32_t af_set_pos(void* handle_af, struct af_motor_pos* in_param)
+static cmr_s32 af_set_pos(void* handle_af, struct af_motor_pos* in_param)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
 
@@ -55,7 +55,7 @@ static int32_t af_set_pos(void* handle_af, struct af_motor_pos* in_param)
 	return ISP_SUCCESS;
 }
 
-static int32_t af_end_notice(void* handle_af, struct af_result_param* in_param)
+static cmr_s32 af_end_notice(void* handle_af, struct af_result_param* in_param)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
 	struct isp_af_notice af_notice = {0x00, 0x00};
@@ -69,7 +69,7 @@ static int32_t af_end_notice(void* handle_af, struct af_result_param* in_param)
 	return ISP_SUCCESS;
 }
 
-static int32_t af_start_notice(void* handle_af)
+static cmr_s32 af_start_notice(void* handle_af)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
 	struct isp_af_notice af_notice = {0x00, 0x00};
@@ -83,7 +83,7 @@ static int32_t af_start_notice(void* handle_af)
 	return ISP_SUCCESS;
 }
 
-static int32_t af_ae_awb_lock(void* handle_af)
+static cmr_s32 af_ae_awb_lock(void* handle_af)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
 	struct ae_calc_out ae_result;
@@ -96,7 +96,7 @@ static int32_t af_ae_awb_lock(void* handle_af)
 	return ISP_SUCCESS;
 }
 
-static int32_t af_ae_awb_release(void* handle_af)
+static cmr_s32 af_ae_awb_release(void* handle_af)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
 	struct ae_calc_out ae_result;
@@ -109,7 +109,7 @@ static int32_t af_ae_awb_release(void* handle_af)
 	return ISP_SUCCESS;
 }
 
-static int32_t af_lock_module(void* handle_af, cmr_int af_locker_type)
+static cmr_s32 af_lock_module(void* handle_af, cmr_int af_locker_type)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
 	struct ae_calc_out ae_result;
@@ -143,7 +143,7 @@ static int32_t af_lock_module(void* handle_af, cmr_int af_locker_type)
 	return rtn;
 }
 
-static int32_t af_unlock_module(void* handle_af, cmr_int af_locker_type)
+static cmr_s32 af_unlock_module(void* handle_af, cmr_int af_locker_type)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
 	struct ae_calc_out ae_result;
@@ -177,7 +177,7 @@ static int32_t af_unlock_module(void* handle_af, cmr_int af_locker_type)
 	return rtn;
 }
 
-static int32_t af_set_monitor(void* handle_af, struct af_monitor_set* in_param, uint32_t cur_envi)
+static cmr_s32 af_set_monitor(void* handle_af, struct af_monitor_set* in_param, cmr_u32 cur_envi)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
 
@@ -188,7 +188,7 @@ static int32_t af_set_monitor(void* handle_af, struct af_monitor_set* in_param, 
 	return ISP_SUCCESS;
 }
 
-static int32_t af_set_monitor_win(void* handle_af, struct af_monitor_win* in_param)
+static cmr_s32 af_set_monitor_win(void* handle_af, struct af_monitor_win* in_param)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
 
@@ -199,7 +199,7 @@ static int32_t af_set_monitor_win(void* handle_af, struct af_monitor_win* in_par
 	return ISP_SUCCESS;
 }
 
-static int32_t af_get_monitor_win_num(void* handle_af, uint32_t *win_num)
+static cmr_s32 af_get_monitor_win_num(void* handle_af, cmr_u32 *win_num)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt*)handle_af;
 

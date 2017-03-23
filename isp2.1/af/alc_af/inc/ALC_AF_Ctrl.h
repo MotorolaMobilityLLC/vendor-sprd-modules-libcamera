@@ -42,51 +42,51 @@
 
 //#define ALC_AF_LOGE af_ops->cb_alc_af_log
 struct alc_af_context {
-	uint32_t magic_start;
+	cmr_u32 magic_start;
 	void *isp_handle;
-	uint32_t bypass;
-	uint32_t active_win;
-	uint32_t is_inited;
-	uint32_t ae_is_stab;
-	uint32_t ae_cur_lum;
-	uint32_t ae_is_locked;
-	uint32_t awb_is_stab;
-	uint32_t awb_is_locked;
-	uint32_t cur_env_mode;
-	uint32_t af_mode;
-	uint32_t cur_pos;
-	uint32_t is_runing;
+	cmr_u32 bypass;
+	cmr_u32 active_win;
+	cmr_u32 is_inited;
+	cmr_u32 ae_is_stab;
+	cmr_u32 ae_cur_lum;
+	cmr_u32 ae_is_locked;
+	cmr_u32 awb_is_stab;
+	cmr_u32 awb_is_locked;
+	cmr_u32 cur_env_mode;
+	cmr_u32 af_mode;
+	cmr_u32 cur_pos;
+	cmr_u32 is_runing;
 
 	struct alc_afm_cfg_info	sprd_filter;
 	struct alc_af_ctrl_ops af_ctrl_ops;
-	uint32_t touch_win_cnt;
+	cmr_u32 touch_win_cnt;
 	struct alc_win_coord win_pos[25];
-	uint32_t cur_awb_r_gain;
-	uint32_t cur_awb_g_gain;
-	uint32_t cur_awb_b_gain;
-	uint32_t cur_fps;
-	uint32_t cur_frame_time;
-	uint32_t cur_exp_time;
-	uint32_t caf_active;
-	uint32_t flash_on;
+	cmr_u32 cur_awb_r_gain;
+	cmr_u32 cur_awb_g_gain;
+	cmr_u32 cur_awb_b_gain;
+	cmr_u32 cur_fps;
+	cmr_u32 cur_frame_time;
+	cmr_u32 cur_exp_time;
+	cmr_u32 caf_active;
+	cmr_u32 flash_on;
 	struct alc_af_face_area fd_info;
-	uint32_t cur_ae_again;
-	uint32_t cur_ae_dgain;
-	uint32_t cur_ae_iso;
-	uint32_t cur_ae_bv;
-	uint32_t cur_ae_ev;
-	uint32_t magic_end;
+	cmr_u32 cur_ae_again;
+	cmr_u32 cur_ae_dgain;
+	cmr_u32 cur_ae_iso;
+	cmr_u32 cur_ae_bv;
+	cmr_u32 cur_ae_ev;
+	cmr_u32 magic_end;
 	TT_AfIfBuf ttAfIfBuf;//tes_kano_0822
 	
 	//tes_kano_0902
-	uint32_t r_info[1024];
-	uint32_t g_info[1024];
-	uint32_t b_info[1024];
-	uint32_t touch_af;
-	uint32_t fd_af_start_cnt ;
+	cmr_u32 r_info[1024];
+	cmr_u32 g_info[1024];
+	cmr_u32 b_info[1024];
+	cmr_u32 touch_af;
+	cmr_u32 fd_af_start_cnt ;
 	
-	uint32_t sensor_w;
-	uint32_t sensor_h;
+	cmr_u32 sensor_w;
+	cmr_u32 sensor_h;
 };
 
 ////////////////////////// Funcs //////////////////////////
@@ -94,25 +94,25 @@ struct alc_af_context {
 
 ///////////////////// for System ///////////////
 alc_af_handle_t alc_af_init(void* isp_handle);
-int32_t alc_af_deinit(void* isp_handle);
-int32_t alc_af_calc(isp_ctrl_context* handle);
-int32_t alc_af_ioctrl(alc_af_handle_t handle, enum alc_af_cmd cmd,
+cmr_s32 alc_af_deinit(void* isp_handle);
+cmr_s32 alc_af_calc(isp_ctrl_context* handle);
+cmr_s32 alc_af_ioctrl(alc_af_handle_t handle, enum alc_af_cmd cmd,
 				void *param0, void *param1);
 
 
-int32_t alc_af_ioctrl_af_start(isp_handle isp_handler, void* param_ptr, int(*call_back)());
+cmr_s32 alc_af_ioctrl_af_start(isp_handle isp_handler, void* param_ptr, cmr_s32(*call_back)());
 
-int32_t alc_af_ioctrl_set_fd_update(isp_handle isp_handler, void* param_ptr, int(*call_back)());
+cmr_s32 alc_af_ioctrl_set_fd_update(isp_handle isp_handler, void* param_ptr, cmr_s32(*call_back)());
 
-int32_t alc_af_ioctrl_set_isp_start_info(isp_handle isp_handler, struct isp_video_start* param_ptr);
+cmr_s32 alc_af_ioctrl_set_isp_start_info(isp_handle isp_handler, struct isp_video_start* param_ptr);
 
-int32_t alc_af_ioctrl_set_ae_awb_info(isp_ctrl_context* handle,
+cmr_s32 alc_af_ioctrl_set_ae_awb_info(isp_ctrl_context* handle,
 		void* ae_result,
 		void* awb_result,
 		void* bv,
 		void *rgb_statistics);
 
-int32_t alc_af_ioctrl_set_af_mode(isp_handle isp_handler, void* param_ptr, int(*call_back)());
+cmr_s32 alc_af_ioctrl_set_af_mode(isp_handle isp_handler, void* param_ptr, cmr_s32(*call_back)());
 
 void Al_AF_Running(alc_af_handle_t handle , TT_AfIfBuf* ppAfIfBuf);
 void Al_AF_Prv_Start_Notice(alc_af_handle_t handle , TT_AfIfBuf *ppAfIfBuf);

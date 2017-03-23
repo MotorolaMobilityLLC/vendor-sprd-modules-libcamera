@@ -120,125 +120,125 @@ enum af_locker_type {
 /* used for af1.0 */
 /*
 struct af_plat_info {
-	uint32_t afm_filter_type_cnt;
-	uint32_t afm_win_max_cnt;
-	uint32_t isp_w;
-	uint32_t isp_h;
+	cmr_u32 afm_filter_type_cnt;
+	cmr_u32 afm_win_max_cnt;
+	cmr_u32 isp_w;
+	cmr_u32 isp_h;
 };
 
 struct af_tuning_param {
-	uint8_t *data;
-	uint32_t data_len;
-	uint32_t cfg_mode;
+	cmr_u8 *data;
+	cmr_u32 data_len;
+	cmr_u32 cfg_mode;
 };
 
 struct af_filter_data {
-	uint32_t type;
-	uint64_t *data;
+	cmr_u32 type;
+	cmr_u64 *data;
 };
 
 struct af_filter_info {
-	uint32_t filter_num;
+	cmr_u32 filter_num;
 	struct af_filter_data *filter_data;
 };
 */
 struct ae_out_bv {
 	struct ae_calc_out *ae_result;
-	int32_t bv;
+	cmr_s32 bv;
 };
 
 struct af_motor_pos {
-	uint32_t motor_pos;
-	uint32_t skip_frame;
-	uint32_t wait_time;
+	cmr_u32 motor_pos;
+	cmr_u32 skip_frame;
+	cmr_u32 wait_time;
 };
 
 struct af_result_param {
-	uint32_t motor_pos;
-	uint32_t suc_win;
+	cmr_u32 motor_pos;
+	cmr_u32 suc_win;
 };
 
 struct af_monitor_set {
-	uint32_t type;
-	uint32_t bypass;
-	uint32_t int_mode;
-	uint32_t skip_num;
-	uint32_t need_denoise;
+	cmr_u32 type;
+	cmr_u32 bypass;
+	cmr_u32 int_mode;
+	cmr_u32 skip_num;
+	cmr_u32 need_denoise;
 };
 
 struct af_win_rect {
-	uint32_t sx;
-	uint32_t sy;
-	uint32_t ex;
-	uint32_t ey;
+	cmr_u32 sx;
+	cmr_u32 sy;
+	cmr_u32 ex;
+	cmr_u32 ey;
 };
 
 struct af_monitor_win {
-	uint32_t type;
+	cmr_u32 type;
 	struct af_win_rect *win_pos;
 };
 
 struct af_trig_info {
-	uint32_t win_num;
-	uint32_t mode;
+	cmr_u32 win_num;
+	cmr_u32 mode;
 	struct af_win_rect win_pos[MAX_AF_WINS];
 };
 
 struct afctrl_init_in{
-//	uint32_t af_bypass;
+//	cmr_u32 af_bypass;
 	void* caller;
-//	uint32_t af_mode;
-//	uint32_t tuning_param_cnt;
-//	uint32_t cur_tuning_mode;
-	uint32_t camera_id;
+//	cmr_u32 af_mode;
+//	cmr_u32 tuning_param_cnt;
+//	cmr_u32 cur_tuning_mode;
+	cmr_u32 camera_id;
 	isp_af_cb af_set_cb;
 	cmr_handle caller_handle;
 	struct third_lib_info lib_param;
 //	struct af_plat_info plat_info;
 //	struct af_tuning_param *tuning_param;
 	struct isp_size src;
-	int32_t(*go_position) (void* handle,struct af_motor_pos* in_param);
-	int32_t(*start_notice) (void* handle);
-	int32_t(*end_notice) (void* handle,struct af_result_param* in_param);
-	int32_t(*set_monitor) (void* handle, struct af_monitor_set* in_param, uint32_t cur_envi);
-	int32_t(*set_monitor_win) (void* handle, struct af_monitor_win* in_param);
-	int32_t(*get_monitor_win_num) (void* handle, uint32_t *win_num);
-//	int32_t(*ae_awb_lock) (void* handle);
-//	int32_t(*ae_awb_release) (void* handle);
-	int32_t(*lock_module) (void* handle, cmr_int af_locker_type);
-	int32_t(*unlock_module) (void* handle, cmr_int af_locker_type);
+	cmr_s32(*go_position) (void* handle,struct af_motor_pos* in_param);
+	cmr_s32(*start_notice) (void* handle);
+	cmr_s32(*end_notice) (void* handle,struct af_result_param* in_param);
+	cmr_s32(*set_monitor) (void* handle, struct af_monitor_set* in_param, cmr_u32 cur_envi);
+	cmr_s32(*set_monitor_win) (void* handle, struct af_monitor_win* in_param);
+	cmr_s32(*get_monitor_win_num) (void* handle, cmr_u32 *win_num);
+//	cmr_s32(*ae_awb_lock) (void* handle);
+//	cmr_s32(*ae_awb_release) (void* handle);
+	cmr_s32(*lock_module) (void* handle, cmr_int af_locker_type);
+	cmr_s32(*unlock_module) (void* handle, cmr_int af_locker_type);
 };
 
 struct afctrl_init_out {
-	uint32_t init_motor_pos;
+	cmr_u32 init_motor_pos;
 };
 
 struct af_img_blk_info {
-	uint32_t block_w;
-	uint32_t block_h;
-	uint32_t pix_per_blk;
-	uint32_t chn_num;
-	uint32_t *data;
+	cmr_u32 block_w;
+	cmr_u32 block_h;
+	cmr_u32 pix_per_blk;
+	cmr_u32 chn_num;
+	cmr_u32 *data;
 };
 
 struct af_ae_info {
-	uint32_t exp_time;  //us
-	uint32_t gain;   //256 --> 1X
-	uint32_t cur_fps;
-	uint32_t cur_lum;
-	uint32_t target_lum;
-	uint32_t is_stable;
+	cmr_u32 exp_time;  //us
+	cmr_u32 gain;   //256 --> 1X
+	cmr_u32 cur_fps;
+	cmr_u32 cur_lum;
+	cmr_u32 target_lum;
+	cmr_u32 is_stable;
 };
 
 struct afctrl_calc_in {
-	uint32_t data_type;
+	cmr_u32 data_type;
 	void* data;
 	struct isp_sensor_fps_info sensor_fps;
 };
 
 struct afctrl_calc_out{
-	uint32_t motor_pos;
-	uint32_t suc_win;
+	cmr_u32 motor_pos;
+	cmr_u32 suc_win;
 };
 
 struct afctrl_work_lib {
@@ -258,9 +258,9 @@ struct afctrl_cxt {
 
 struct pd_result {
 	/*TBD get reset from */
-	int pdConf[AREA_LOOP+1];
+	cmr_s32 pdConf[AREA_LOOP+1];
 	double pdPhaseDiff[AREA_LOOP+1];
-	int pdGetFrameID;
+	cmr_s32 pdGetFrameID;
 };
 
 cmr_int af_ctrl_init(struct afctrl_init_in *input_ptr, cmr_handle *handle_af);

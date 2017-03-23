@@ -394,33 +394,33 @@ typedef struct _AF_Scan_Table
 }AF_Scan_Table;
 
 typedef struct aftuning_coeff_s{
-	uint32_t 	saf_coeff[8];
-	uint32_t	caf_coeff[8];
-	uint32_t	saf_stat_param[AE_Gain_Total];
-	uint32_t	caf_stat_param[AE_Gain_Total];
-	uint8_t 	reserve[32*4];
+	cmr_u32 	saf_coeff[8];
+	cmr_u32	caf_coeff[8];
+	cmr_u32	saf_stat_param[AE_Gain_Total];
+	cmr_u32	caf_stat_param[AE_Gain_Total];
+	cmr_u8 	reserve[32*4];
 }aftuning_coeff_t;
 
 typedef struct aftuning_param_s{
-	uint32_t 	enable_adapt_af;
-	uint32_t	_alg_select;
-	uint32_t	_lowlight_agc;
-	uint32_t	_flat_rto;
-	uint32_t 	_falling_rto;
-	uint32_t 	_rising_rto;
-	uint32_t	_stat_min_value[AE_Gain_Total];
-	uint32_t	_stat_min_diff[AE_Gain_Total];
-	uint32_t	_break_rto;
-	uint32_t	_turnback_rto;
-	uint32_t	_forcebreak_rto;
-	uint32_t	_break_count;
-	uint32_t	_max_shift_idx;
-	uint32_t	_lowlight_ma_count;
-	int				_posture_diff_slop;
-	uint32_t	_temporal_flat_slop;
-	uint32_t	_limit_search_interval;	
-	uint32_t	_sky_scene_thr;
-	uint8_t 	reserve[32*4];
+	cmr_u32 	enable_adapt_af;
+	cmr_u32	_alg_select;
+	cmr_u32	_lowlight_agc;
+	cmr_u32	_flat_rto;
+	cmr_u32 	_falling_rto;
+	cmr_u32 	_rising_rto;
+	cmr_u32	_stat_min_value[AE_Gain_Total];
+	cmr_u32	_stat_min_diff[AE_Gain_Total];
+	cmr_u32	_break_rto;
+	cmr_u32	_turnback_rto;
+	cmr_u32	_forcebreak_rto;
+	cmr_u32	_break_count;
+	cmr_u32	_max_shift_idx;
+	cmr_u32	_lowlight_ma_count;
+	cmr_s32				_posture_diff_slop;
+	cmr_u32	_temporal_flat_slop;
+	cmr_u32	_limit_search_interval;	
+	cmr_u32	_sky_scene_thr;
+	cmr_u8 	reserve[32*4];
 }aftuning_param_t;
 
 typedef struct _AF_Tuning_Para
@@ -432,7 +432,7 @@ typedef struct _AF_Tuning_Para
     AF_TH   SAF_RS_TH[AE_Gain_Total];      //The threshold of rough search
     AF_TH   SAF_FS_TH[AE_Gain_Total];      //The threshold of fine search
 
-    int dummy[200];
+    cmr_s32 dummy[200];
 }AF_Tuning_Para;
 
 typedef struct _Lens_Info
@@ -454,11 +454,11 @@ typedef struct _AF_Tuning
     AF_Tuning_Para SAFTuningPara;   //SAF parameters
     AF_Tuning_Para CAFTuningPara;   //CAF parameters
     AF_Tuning_Para VCAFTuningPara;  //Video CAF parameters
-    uint32_t tuning_ver_code;		//ex Algo AF2.104 , tuning-0001-> 0x21040001
-    uint32_t tuning_date_code;		//ex 20170306 -> 0x20170306
+    cmr_u32 tuning_ver_code;		//ex Algo AF2.104 , tuning-0001-> 0x21040001
+    cmr_u32 tuning_date_code;		//ex 20170306 -> 0x20170306
     aftuning_coeff_t af_coeff;		//AF coefficient for control speed and overshot
     aftuning_param_t adapt_af_param;	//adapt AF parameter
-    uint8_t dummy[400];
+    cmr_u8 dummy[400];
 }AF_Tuning;
 
 #define AFAUTO_SCAN_STOP_NMAX (256)
@@ -469,203 +469,203 @@ typedef struct _AF_Tuning
 #define AF_SCENE_CAL_STDEV_TOTAL	(32)
 
 typedef struct _afscan_status_s {
-	uint32_t n_stops;
-	uint32_t pos_from;
-	uint32_t pos_to;
-	uint32_t pos_jump;
-	uint32_t scan_idx;
-	uint32_t stat_log[AFAUTO_SCAN_STOP_NMAX];
-	uint32_t stat_sum_log[AFAUTO_SCAN_STOP_NMAX];
-	uint32_t scan_tbl[AFAUTO_SCAN_STOP_NMAX];
-	uint32_t frmid[AFAUTO_SCAN_STOP_NMAX];
-	int bv_log[AFAUTO_SCAN_STOP_NMAX];
-	uint32_t luma[AFAUTO_SCAN_STOP_NMAX];
-	uint32_t gain[AFAUTO_SCAN_STOP_NMAX];
-	uint32_t scan_tbl_posidx[AFAUTO_SCAN_STOP_NMAX];	
-	uint32_t scan_tbl_pos[AFAUTO_SCAN_STOP_NMAX];
-	uint32_t scan_tbl_stat[AFAUTO_SCAN_STOP_NMAX];
-	uint32_t scan_tbl_stat2[AFAUTO_SCAN_STOP_NMAX];
-	uint32_t scan_tbl_macrv[AFAUTO_SCAN_STOP_NMAX]; 
-	int scan_tbl_slop[AFAUTO_SCAN_STOP_NMAX];
-	int scan_tbl_maslop[AFAUTO_SCAN_STOP_NMAX];
-	uint32_t scan_tbl_luma[AFAUTO_SCAN_STOP_NMAX];
-	uint32_t scan_tbl_jump[AFAUTO_SCAN_STOP_NMAX];
-	uint32_t scan_tbl_pkidx[AFAUTO_SCAN_STOP_NMAX];
-	uint32_t scan_tbl_start;
-	uint32_t scan_tbl_end;
-	uint32_t scan_interval;
-	uint32_t peak_idx;
-	uint32_t peak_pos;
-	uint32_t peak_stat;
-	uint32_t peak_stat_sum;
-	uint32_t turnback_status;
-	uint32_t valley_stat;
-	uint32_t valley_idx;
-	uint32_t last_idx;
-	uint32_t last_stat;
-	uint32_t alg_sts;
-	uint32_t scan_dir;
-	uint32_t last_dir;
-	uint32_t init_pos;
-	uint32_t tbl_falling_cnt[AFAUTO_SCAN_STOP_NMAX];
-	uint32_t tbl_flat_cnt[AFAUTO_SCAN_STOP_NMAX];	
-	uint32_t turnback_cnt;
-	uint32_t turnback_idx;
-	uint32_t turnback_cond;
-	uint32_t break_idx;
-	uint32_t break_cond;
-	uint32_t fine_begin;
-	uint32_t fine_end;
-	uint32_t fine_stat;
-	uint32_t fine_pkidx;
-	uint32_t blcpeak_idx;
-	uint32_t bound_cnt;
-	uint32_t stat_vari_rto;
-	uint32_t stat_rising_rto;	
-	uint32_t stat_falling_rto;
-	uint32_t vly_far_stat;
-	uint32_t vly_far_rto;
-	uint32_t vly_far_pos;
-	uint32_t vly_near_stat;
-	uint32_t vly_near_rto;
-	uint32_t vly_near_pos;
-	uint32_t breakcount;
-	uint32_t breakratio;
+	cmr_u32 n_stops;
+	cmr_u32 pos_from;
+	cmr_u32 pos_to;
+	cmr_u32 pos_jump;
+	cmr_u32 scan_idx;
+	cmr_u32 stat_log[AFAUTO_SCAN_STOP_NMAX];
+	cmr_u32 stat_sum_log[AFAUTO_SCAN_STOP_NMAX];
+	cmr_u32 scan_tbl[AFAUTO_SCAN_STOP_NMAX];
+	cmr_u32 frmid[AFAUTO_SCAN_STOP_NMAX];
+	cmr_s32 bv_log[AFAUTO_SCAN_STOP_NMAX];
+	cmr_u32 luma[AFAUTO_SCAN_STOP_NMAX];
+	cmr_u32 gain[AFAUTO_SCAN_STOP_NMAX];
+	cmr_u32 scan_tbl_posidx[AFAUTO_SCAN_STOP_NMAX];	
+	cmr_u32 scan_tbl_pos[AFAUTO_SCAN_STOP_NMAX];
+	cmr_u32 scan_tbl_stat[AFAUTO_SCAN_STOP_NMAX];
+	cmr_u32 scan_tbl_stat2[AFAUTO_SCAN_STOP_NMAX];
+	cmr_u32 scan_tbl_macrv[AFAUTO_SCAN_STOP_NMAX]; 
+	cmr_s32 scan_tbl_slop[AFAUTO_SCAN_STOP_NMAX];
+	cmr_s32 scan_tbl_maslop[AFAUTO_SCAN_STOP_NMAX];
+	cmr_u32 scan_tbl_luma[AFAUTO_SCAN_STOP_NMAX];
+	cmr_u32 scan_tbl_jump[AFAUTO_SCAN_STOP_NMAX];
+	cmr_u32 scan_tbl_pkidx[AFAUTO_SCAN_STOP_NMAX];
+	cmr_u32 scan_tbl_start;
+	cmr_u32 scan_tbl_end;
+	cmr_u32 scan_interval;
+	cmr_u32 peak_idx;
+	cmr_u32 peak_pos;
+	cmr_u32 peak_stat;
+	cmr_u32 peak_stat_sum;
+	cmr_u32 turnback_status;
+	cmr_u32 valley_stat;
+	cmr_u32 valley_idx;
+	cmr_u32 last_idx;
+	cmr_u32 last_stat;
+	cmr_u32 alg_sts;
+	cmr_u32 scan_dir;
+	cmr_u32 last_dir;
+	cmr_u32 init_pos;
+	cmr_u32 tbl_falling_cnt[AFAUTO_SCAN_STOP_NMAX];
+	cmr_u32 tbl_flat_cnt[AFAUTO_SCAN_STOP_NMAX];	
+	cmr_u32 turnback_cnt;
+	cmr_u32 turnback_idx;
+	cmr_u32 turnback_cond;
+	cmr_u32 break_idx;
+	cmr_u32 break_cond;
+	cmr_u32 fine_begin;
+	cmr_u32 fine_end;
+	cmr_u32 fine_stat;
+	cmr_u32 fine_pkidx;
+	cmr_u32 blcpeak_idx;
+	cmr_u32 bound_cnt;
+	cmr_u32 stat_vari_rto;
+	cmr_u32 stat_rising_rto;	
+	cmr_u32 stat_falling_rto;
+	cmr_u32 vly_far_stat;
+	cmr_u32 vly_far_rto;
+	cmr_u32 vly_far_pos;
+	cmr_u32 vly_near_stat;
+	cmr_u32 vly_near_rto;
+	cmr_u32 vly_near_pos;
+	cmr_u32 breakcount;
+	cmr_u32 breakratio;
 
-	uint32_t frm_num;
-	uint32_t pkfrm_num;
-	uint32_t vly_far_idx;
-	uint32_t vly_near_idx;
-	uint32_t spdup_num;
-	int local_scrtbl[AFAUTO_SCAN_STOP_NMAX];
-	int localma_scrtbl[AFAUTO_SCAN_STOP_NMAX];
-	int localsum_scrtbl[AFAUTO_SCAN_STOP_NMAX];
-	int localluma_scrtbl[AFAUTO_SCAN_STOP_NMAX];
-	uint32_t local_idx;
-	uint32_t localma_idx;
-	uint32_t localsum_idx;
-	uint32_t localluma_idx;
-	uint32_t lock_pos;
+	cmr_u32 frm_num;
+	cmr_u32 pkfrm_num;
+	cmr_u32 vly_far_idx;
+	cmr_u32 vly_near_idx;
+	cmr_u32 spdup_num;
+	cmr_s32 local_scrtbl[AFAUTO_SCAN_STOP_NMAX];
+	cmr_s32 localma_scrtbl[AFAUTO_SCAN_STOP_NMAX];
+	cmr_s32 localsum_scrtbl[AFAUTO_SCAN_STOP_NMAX];
+	cmr_s32 localluma_scrtbl[AFAUTO_SCAN_STOP_NMAX];
+	cmr_u32 local_idx;
+	cmr_u32 localma_idx;
+	cmr_u32 localsum_idx;
+	cmr_u32 localluma_idx;
+	cmr_u32 lock_pos;
 	//multi AF
-	uint32_t multi_pkstat[MULTI_STATIC_TOTAL];
-	uint32_t multi_pkpos[MULTI_STATIC_TOTAL];	
+	cmr_u32 multi_pkstat[MULTI_STATIC_TOTAL];
+	cmr_u32 multi_pkpos[MULTI_STATIC_TOTAL];	
 
-	uint32_t min_stat_diff;
-	uint32_t min_stat_val;
+	cmr_u32 min_stat_diff;
+	cmr_u32 min_stat_val;
 
-	uint32_t fine_range;
-	uint32_t luma_slop;
-	uint32_t scan_algorithm;
+	cmr_u32 fine_range;
+	cmr_u32 luma_slop;
+	cmr_u32 scan_algorithm;
 	
-	uint32_t pos_far;
-	uint32_t pos_near;
-	uint32_t far_idx;
-	uint32_t near_idx;	
-	int scan_tbl_full_slop[AFAUTO_SCAN_STOP_NMAX];
-	int far_slop;
-	int near_slop;
-	uint32_t scan_tbl_slop_type;
-	uint32_t far_falling_cnt;
-	uint32_t near_falling_cnt;
-	int lk_loacl_scrtbl[AFAUTO_SCAN_STOP_NMAX];
-	uint32_t lk_local_idx;
-	uint32_t focus_inf;
-	uint32_t focus_macro;
-	uint32_t peak_inverse;
-	uint32_t peak_quad;
+	cmr_u32 pos_far;
+	cmr_u32 pos_near;
+	cmr_u32 far_idx;
+	cmr_u32 near_idx;	
+	cmr_s32 scan_tbl_full_slop[AFAUTO_SCAN_STOP_NMAX];
+	cmr_s32 far_slop;
+	cmr_s32 near_slop;
+	cmr_u32 scan_tbl_slop_type;
+	cmr_u32 far_falling_cnt;
+	cmr_u32 near_falling_cnt;
+	cmr_s32 lk_loacl_scrtbl[AFAUTO_SCAN_STOP_NMAX];
+	cmr_u32 lk_local_idx;
+	cmr_u32 focus_inf;
+	cmr_u32 focus_macro;
+	cmr_u32 peak_inverse;
+	cmr_u32 peak_quad;
 } afscan_status_t;
 
 typedef struct af_ctrl_pd_info_s{
-	uint32_t info_type;
-	uint32_t predict_direction;
-	uint32_t predict_peak;
-	uint32_t predict_far_stop;
-	uint32_t predict_near_stop;
-	uint32_t phase_diff_value;
-	uint32_t confidence_level;
+	cmr_u32 info_type;
+	cmr_u32 predict_direction;
+	cmr_u32 predict_peak;
+	cmr_u32 predict_far_stop;
+	cmr_u32 predict_near_stop;
+	cmr_u32 phase_diff_value;
+	cmr_u32 confidence_level;
 } pd_info_t;
 
 typedef struct _af_control_status_s {
-	uint32_t				state;
-	uint32_t				frmid;
-	uint32_t				scene_reg;
-	uint32_t				scene_result;
-	uint32_t				scene_event;	
-	uint32_t				env_ena;
-	uint32_t				env_reconv_cnt;
-	uint32_t 				env_reconv_limit;
-	uint32_t				motor_excitation;
-	uint32_t				idsp_enable;
-	uint32_t 				idsp_resume_thd;
-	uint32_t 				idsp_reconv_thd;
-	uint32_t 				idsp_reconv_limit;
-	uint32_t 				idsp_reconv_cnt;
-	uint32_t				stat_nsy_enable;
-	uint32_t				idsp_frmbuff_clr_cnt;
-	uint32_t				idsp_frmbuff_clr_limit;
-	uint32_t				idsp_reset_frmid;
-	uint32_t				debug_cb;
-	uint32_t				env_avgy_histroy[AF_CHECK_SCENE_HISTORY];
+	cmr_u32				state;
+	cmr_u32				frmid;
+	cmr_u32				scene_reg;
+	cmr_u32				scene_result;
+	cmr_u32				scene_event;	
+	cmr_u32				env_ena;
+	cmr_u32				env_reconv_cnt;
+	cmr_u32 				env_reconv_limit;
+	cmr_u32				motor_excitation;
+	cmr_u32				idsp_enable;
+	cmr_u32 				idsp_resume_thd;
+	cmr_u32 				idsp_reconv_thd;
+	cmr_u32 				idsp_reconv_limit;
+	cmr_u32 				idsp_reconv_cnt;
+	cmr_u32				stat_nsy_enable;
+	cmr_u32				idsp_frmbuff_clr_cnt;
+	cmr_u32				idsp_frmbuff_clr_limit;
+	cmr_u32				idsp_reset_frmid;
+	cmr_u32				debug_cb;
+	cmr_u32				env_avgy_histroy[AF_CHECK_SCENE_HISTORY];
 	pd_info_t				pd_info;
 } afctrl_status_t;
 
 typedef struct af_scan_env_info_s{
-	uint32_t fps;
-	uint32_t ae_state;
-	uint32_t exp_boundary;
-	uint32_t y_avg;
-	uint32_t y_tgt;	
-	uint32_t curr_gain;
-	uint32_t exp_time;
-	uint32_t y_stdev;
-	int curr_bv;
-	int next_bv;
-	int diff_bv;	
+	cmr_u32 fps;
+	cmr_u32 ae_state;
+	cmr_u32 exp_boundary;
+	cmr_u32 y_avg;
+	cmr_u32 y_tgt;	
+	cmr_u32 curr_gain;
+	cmr_u32 exp_time;
+	cmr_u32 y_stdev;
+	cmr_s32 curr_bv;
+	cmr_s32 next_bv;
+	cmr_s32 diff_bv;	
 } scan_env_info_t;
 
 typedef struct af_scan_info_s{
-	uint32_t lowlight_af;
-	uint32_t dark_af;
-	uint32_t lowcontrast_af;
-	uint32_t curr_fpos;
+	cmr_u32 lowlight_af;
+	cmr_u32 dark_af;
+	cmr_u32 lowcontrast_af;
+	cmr_u32 curr_fpos;
 	scan_env_info_t env;
 	scan_env_info_t report;
-	uint32_t luma_slop;
-	uint32_t times_result;
-	uint32_t position_result[AF_RESULT_DATA_SIZE];
-	uint32_t frmid_result[AF_RESULT_DATA_SIZE];	
-	uint32_t coast_result[AF_RESULT_DATA_SIZE];
-	uint32_t ma_count;
+	cmr_u32 luma_slop;
+	cmr_u32 times_result;
+	cmr_u32 position_result[AF_RESULT_DATA_SIZE];
+	cmr_u32 frmid_result[AF_RESULT_DATA_SIZE];	
+	cmr_u32 coast_result[AF_RESULT_DATA_SIZE];
+	cmr_u32 ma_count;
 }afscan_info_t;
 
 /* ========================== Structure ============================ */
 typedef struct afstat_frame_buffer_s{
-	uint32_t curr_frm_stat[FOCUS_STAT_WIN_TOTAL];
-	//uint32_t curr_frm_y[FOCUS_STAT_WIN_TOTAL];
-	uint32_t last_frm_stat[FOCUS_STAT_WIN_TOTAL];
-	//uint32_t last_frm_y[FOCUS_STAT_WIN_TOTAL];
-	//uint32_t focus_block_idx;
-	//uint32_t peak_block_edge;	
-	//uint32_t peak_block_y;
-	//int peak_block_edge_rela;	
-	//int peak_block_y_rela;
-	//int peak_block_around_rela[FOCUS_STAT_AROUND_BLOCK_DATA];
-	uint32_t stat_weight;
-	uint32_t stat_sum;
-	uint32_t luma_avg;
-	//uint32_t multi_grid_sum[MULTI_STATIC_TOTAL];	
-	uint32_t multi_stat_tbl[AFAUTO_SCAN_STOP_NMAX][MULTI_STATIC_TOTAL];	/*debug info of defocus function*/
+	cmr_u32 curr_frm_stat[FOCUS_STAT_WIN_TOTAL];
+	//cmr_u32 curr_frm_y[FOCUS_STAT_WIN_TOTAL];
+	cmr_u32 last_frm_stat[FOCUS_STAT_WIN_TOTAL];
+	//cmr_u32 last_frm_y[FOCUS_STAT_WIN_TOTAL];
+	//cmr_u32 focus_block_idx;
+	//cmr_u32 peak_block_edge;	
+	//cmr_u32 peak_block_y;
+	//cmr_s32 peak_block_edge_rela;	
+	//cmr_s32 peak_block_y_rela;
+	//cmr_s32 peak_block_around_rela[FOCUS_STAT_AROUND_BLOCK_DATA];
+	cmr_u32 stat_weight;
+	cmr_u32 stat_sum;
+	cmr_u32 luma_avg;
+	//cmr_u32 multi_grid_sum[MULTI_STATIC_TOTAL];	
+	cmr_u32 multi_stat_tbl[AFAUTO_SCAN_STOP_NMAX][MULTI_STATIC_TOTAL];	/*debug info of defocus function*/
 } afstat_frmbuf_t;
 
 typedef struct defocus_param_s{
-	uint32_t scan_from;
-	uint32_t scan_to;
-	uint32_t per_steps;
+	cmr_u32 scan_from;
+	cmr_u32 scan_to;
+	cmr_u32 per_steps;
 }defocus_param_t;
 
 typedef struct afdbg_ctrl_s{
-	uint32_t alg_msg;
-	uint32_t dump_info;
+	cmr_u32 alg_msg;
+	cmr_u32 dump_info;
 	defocus_param_t defocus;
 }afdbg_ctrl_t;
 
@@ -681,19 +681,19 @@ typedef struct _af_process_s
 
 
 typedef struct pd_algo_result_s{
-	uint32_t pd_enable;
-	uint32_t effective_pos;
-	uint32_t effective_frmid;
-	uint32_t confidence;
+	cmr_u32 pd_enable;
+	cmr_u32 effective_pos;
+	cmr_u32 effective_frmid;
+	cmr_u32 confidence;
 	double pd_value;
-	short pd_roi_dcc;
-	uint8_t reserved[10];//aligment to 4 byte
+	cmr_s16 pd_roi_dcc;
+	cmr_u8 reserved[10];//aligment to 4 byte
 }pd_algo_result_t;
 #pragma pack(pop)
 
 typedef struct _CAF_Tuning_Para
 { 
-    int dummy;
+    cmr_s32 dummy;
 }CAF_Tuning_Para;
 
 typedef struct _SAF_INFO
@@ -753,8 +753,8 @@ typedef struct _AF_OTP_Data
 
 typedef struct _af_stat_data_s
 {
-	uint32_t roi_num;
-	uint32_t stat_num;
+	cmr_u32 roi_num;
+	cmr_u32 stat_num;
 	uint64 *p_stat;
 }_af_stat_data_t;
 
@@ -762,7 +762,7 @@ typedef struct _AF_Ctrl_Ops
 {
 	ERRCODE (*statistics_wait_cal_done)(void *cookie);
 	ERRCODE (*statistics_get_data)(uint64 fv[T_TOTAL_FILTER_TYPE],_af_stat_data_t *p_stat_data,void *cookie);
-	ERRCODE (*statistics_set_data)(uint32_t set_stat, void * cookie);	
+	ERRCODE (*statistics_set_data)(cmr_u32 set_stat, void * cookie);	
 	ERRCODE (*phase_detection_get_data)(pd_algo_result_t *pd_result, void *cookie);
 	ERRCODE (*lens_get_pos)(uint16 *pos, void *cookie);
 	ERRCODE (*lens_move_to)(uint16 pos, void *cookie);
@@ -813,11 +813,11 @@ typedef struct _AF_Data
     AE_Report   AE_Rpt[MAX_TIME_SAMPLE_NUM];
     AF_OTP_Data AF_OTP;
     AF_Win AF_Win_Data;
-    uint32_t vcm_register;
+    cmr_u32 vcm_register;
     int8 AF_Version[10];
     AF_Tuning AF_Tuning_Data;
 	_af_process_t af_proc_data;
-	uint32_t dump_log;
+	cmr_u32 dump_log;
     AF_Ctrl_Ops AF_Ops;
 }AF_Data;
 

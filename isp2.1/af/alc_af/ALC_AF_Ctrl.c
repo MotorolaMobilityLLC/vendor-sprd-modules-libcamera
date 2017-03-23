@@ -39,9 +39,9 @@ void alc_af_log(const char* format, ...)
 
 
 
-static int32_t _alc_check_handle(alc_af_handle_t handle)
+static cmr_s32 _alc_check_handle(alc_af_handle_t handle)
 {
-	int32_t rtn = ALC_AF_SUCCESS;
+	cmr_s32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *cxt = (struct alc_af_context *)handle;
 
 	if (NULL == cxt) {
@@ -61,9 +61,9 @@ static int32_t _alc_check_handle(alc_af_handle_t handle)
 
 
 
-int32_t alc_set_afm_bypass(alc_af_handle_t handle,uint32_t bypass)
+cmr_s32 alc_set_afm_bypass(alc_af_handle_t handle,cmr_u32 bypass)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 
@@ -74,9 +74,9 @@ int32_t alc_set_afm_bypass(alc_af_handle_t handle,uint32_t bypass)
 	return rtn;
 }
 
-int32_t alc_set_afm_mode(alc_af_handle_t handle,uint32_t mode)
+cmr_s32 alc_set_afm_mode(alc_af_handle_t handle,cmr_u32 mode)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 
@@ -87,9 +87,9 @@ int32_t alc_set_afm_mode(alc_af_handle_t handle,uint32_t mode)
 	return rtn;
 }
 
-int32_t alc_set_afm_skip_num(alc_af_handle_t handle,uint32_t skip_num)
+cmr_s32 alc_set_afm_skip_num(alc_af_handle_t handle,cmr_u32 skip_num)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 
@@ -98,9 +98,9 @@ int32_t alc_set_afm_skip_num(alc_af_handle_t handle,uint32_t skip_num)
 	return rtn;
 }
 
-int32_t alc_set_afm_skip_num_clr(alc_af_handle_t handle)
+cmr_s32 alc_set_afm_skip_num_clr(alc_af_handle_t handle)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 
@@ -113,9 +113,9 @@ int32_t alc_set_afm_skip_num_clr(alc_af_handle_t handle)
 	return rtn;
 }
 
-int32_t alc_set_afm_spsmd_rtgbot_enable(alc_af_handle_t handle,uint32_t enable)
+cmr_s32 alc_set_afm_spsmd_rtgbot_enable(alc_af_handle_t handle,cmr_u32 enable)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 
@@ -124,9 +124,9 @@ int32_t alc_set_afm_spsmd_rtgbot_enable(alc_af_handle_t handle,uint32_t enable)
 	return rtn;
 }
 
-int32_t alc_set_afm_spsmd_diagonal_enable(alc_af_handle_t handle,uint32_t enable)
+cmr_s32 alc_set_afm_spsmd_diagonal_enable(alc_af_handle_t handle,cmr_u32 enable)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 
@@ -136,9 +136,9 @@ int32_t alc_set_afm_spsmd_diagonal_enable(alc_af_handle_t handle,uint32_t enable
 	return rtn;
 }
 
-int32_t alc_set_afm_spsmd_cal_mode(alc_af_handle_t handle,uint32_t mode)
+cmr_s32 alc_set_afm_spsmd_cal_mode(alc_af_handle_t handle,cmr_u32 mode)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 
@@ -148,9 +148,9 @@ int32_t alc_set_afm_spsmd_cal_mode(alc_af_handle_t handle,uint32_t mode)
 	return rtn;
 }
 
-int32_t alc_set_afm_sel_filter1(alc_af_handle_t handle,uint32_t sel_filter)
+cmr_s32 alc_set_afm_sel_filter1(alc_af_handle_t handle,cmr_u32 sel_filter)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 
@@ -160,9 +160,9 @@ int32_t alc_set_afm_sel_filter1(alc_af_handle_t handle,uint32_t sel_filter)
 	return rtn;
 }
 
-int32_t alc_set_afm_sel_filter2(alc_af_handle_t handle,uint32_t sel_filter)
+cmr_s32 alc_set_afm_sel_filter2(alc_af_handle_t handle,cmr_u32 sel_filter)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 
@@ -172,9 +172,9 @@ int32_t alc_set_afm_sel_filter2(alc_af_handle_t handle,uint32_t sel_filter)
 	return rtn;
 }
 
-int32_t alc_set_afm_sobel_type(alc_af_handle_t handle,uint32_t type)
+cmr_s32 alc_set_afm_sobel_type(alc_af_handle_t handle,cmr_u32 type)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 
@@ -184,9 +184,9 @@ int32_t alc_set_afm_sobel_type(alc_af_handle_t handle,uint32_t type)
 	return rtn;
 }
 
-int32_t alc_set_afm_spsmd_type(alc_af_handle_t handle,uint32_t type)
+cmr_s32 alc_set_afm_spsmd_type(alc_af_handle_t handle,cmr_u32 type)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 
@@ -197,9 +197,9 @@ int32_t alc_set_afm_spsmd_type(alc_af_handle_t handle,uint32_t type)
 	return rtn;
 }
 
-int32_t alc_set_afm_sobel_threshold(alc_af_handle_t handle,uint32_t min, uint32_t max)
+cmr_s32 alc_set_afm_sobel_threshold(alc_af_handle_t handle,cmr_u32 min, cmr_u32 max)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 
@@ -209,9 +209,9 @@ int32_t alc_set_afm_sobel_threshold(alc_af_handle_t handle,uint32_t min, uint32_
 	return rtn;
 }
 
-int32_t alc_set_afm_spsmd_threshold(alc_af_handle_t handle,uint32_t min, uint32_t max)
+cmr_s32 alc_set_afm_spsmd_threshold(alc_af_handle_t handle,cmr_u32 min, cmr_u32 max)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 	ALC_AF_LOG("spsmd_threshold %d %d",min,max);
@@ -220,9 +220,9 @@ int32_t alc_set_afm_spsmd_threshold(alc_af_handle_t handle,uint32_t min, uint32_
 	return rtn;
 }
 
-int32_t alc_set_afm_slice_size(alc_af_handle_t handle,uint32_t width, uint32_t height)
+cmr_s32 alc_set_afm_slice_size(alc_af_handle_t handle,cmr_u32 width, cmr_u32 height)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 
@@ -232,11 +232,11 @@ int32_t alc_set_afm_slice_size(alc_af_handle_t handle,uint32_t width, uint32_t h
 
 	return rtn;
 }
-int32_t alc_set_afm_win(alc_af_handle_t handle, struct alc_win_coord *win_range)
+cmr_s32 alc_set_afm_win(alc_af_handle_t handle, struct alc_win_coord *win_range)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
-	uint32_t max_win_num;
-	uint32_t i;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
+	cmr_u32 max_win_num;
+	cmr_u32 i;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 
@@ -260,11 +260,11 @@ int32_t alc_set_afm_win(alc_af_handle_t handle, struct alc_win_coord *win_range)
 	return rtn;
 }
 
-int32_t alc_get_afm_type1_statistic(alc_af_handle_t handle, uint32_t *statis)
+cmr_s32 alc_get_afm_type1_statistic(alc_af_handle_t handle, cmr_u32 *statis)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
-	uint32_t max_win_num;
-	uint32_t i;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
+	cmr_u32 max_win_num;
+	cmr_u32 i;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 
@@ -281,11 +281,11 @@ int32_t alc_get_afm_type1_statistic(alc_af_handle_t handle, uint32_t *statis)
 	return rtn;
 }
 
-int32_t alc_get_afm_type2_statistic(alc_af_handle_t handle, uint32_t *statis)
+cmr_s32 alc_get_afm_type2_statistic(alc_af_handle_t handle, cmr_u32 *statis)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
-	uint32_t max_win_num;
-	uint32_t i;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
+	cmr_u32 max_win_num;
+	cmr_u32 i;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 
@@ -302,14 +302,14 @@ int32_t alc_get_afm_type2_statistic(alc_af_handle_t handle, uint32_t *statis)
 	return rtn;
 }
 
-int32_t alc_set_sp_afm_cfg(alc_af_handle_t handle)
+cmr_s32 alc_set_sp_afm_cfg(alc_af_handle_t handle)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 	struct isp_dev_yiq_afm_info_v1 afm_info;
 	struct alc_afm_cfg_info *cfg_ptr = &af_cxt->sprd_filter;
-	uint32_t i;
+	cmr_u32 i;
 
 	afm_info.bypass = cfg_ptr->bypass;
 	afm_info.mode= cfg_ptr->mode;
@@ -330,11 +330,11 @@ int32_t alc_set_sp_afm_cfg(alc_af_handle_t handle)
 	return rtn;
 }
 
-int32_t alc_set_sp_afm_win(alc_af_handle_t handle, struct alc_win_coord *win_range)
+cmr_s32 alc_set_sp_afm_win(alc_af_handle_t handle, struct alc_win_coord *win_range)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
-	uint32_t max_win_num = 0;//remove uninitialized warning
-	uint32_t i;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
+	cmr_u32 max_win_num = 0;//remove uninitialized warning
+	cmr_u32 i;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 
@@ -358,11 +358,11 @@ int32_t alc_set_sp_afm_win(alc_af_handle_t handle, struct alc_win_coord *win_ran
 	return rtn;
 }
 
-int32_t alc_get_sp_afm_statistic(alc_af_handle_t handle, uint32_t *statis)
+cmr_s32 alc_get_sp_afm_statistic(alc_af_handle_t handle, cmr_u32 *statis)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
-	uint32_t max_win_num = 0;
-	uint32_t i;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
+	cmr_u32 max_win_num = 0;
+	cmr_u32 i;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 	UNUSED(statis);
@@ -408,9 +408,9 @@ int32_t alc_get_sp_afm_statistic(alc_af_handle_t handle, uint32_t *statis)
 }
 
 
-int32_t alc_sp_write_i2c(alc_af_handle_t handle,uint16_t slave_addr, uint8_t *cmd, uint16_t cmd_length)
+cmr_s32 alc_sp_write_i2c(alc_af_handle_t handle,cmr_u16 slave_addr, cmr_u8 *cmd, cmr_u16 cmd_length)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 
@@ -435,9 +435,9 @@ int32_t alc_sp_write_i2c(alc_af_handle_t handle,uint16_t slave_addr, uint8_t *cm
 
 }
 
-int32_t alc_sp_read_i2c(alc_af_handle_t handle,uint16_t slave_addr, uint8_t *cmd, uint16_t cmd_length)
+cmr_s32 alc_sp_read_i2c(alc_af_handle_t handle,cmr_u16 slave_addr, cmr_u8 *cmd, cmr_u16 cmd_length)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 
@@ -458,7 +458,7 @@ int32_t alc_sp_read_i2c(alc_af_handle_t handle,uint16_t slave_addr, uint8_t *cmd
 			|| NULL == ctrl_context->ioctrl_ptr->set_focus) {
 			ctrl_context->ioctrl_ptr->read_i2c(ctrl_context->ioctrl_ptr->caller_handler,slave_addr,cmd,cmd_length);
 		} else {
-			uint32_t i;
+			cmr_u32 i;
 			for (i=0;i<cmd_length;i++) {
 				cmd[i] = 0;
 			}
@@ -469,9 +469,9 @@ int32_t alc_sp_read_i2c(alc_af_handle_t handle,uint16_t slave_addr, uint8_t *cmd
 
 }
 
-int32_t alc_sp_get_cur_prv_mode(alc_af_handle_t handle,uint32_t *mode)
+cmr_s32 alc_sp_get_cur_prv_mode(alc_af_handle_t handle,cmr_u32 *mode)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 
@@ -487,9 +487,9 @@ int32_t alc_sp_get_cur_prv_mode(alc_af_handle_t handle,uint32_t *mode)
 
 
 
-int32_t alc_set_active_win(alc_af_handle_t handle, uint32_t active_win)
+cmr_s32 alc_set_active_win(alc_af_handle_t handle, cmr_u32 active_win)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 	
@@ -500,9 +500,9 @@ int32_t alc_set_active_win(alc_af_handle_t handle, uint32_t active_win)
 }
 
 
-int32_t alc_lock_ae(alc_af_handle_t handle)
+cmr_s32 alc_lock_ae(alc_af_handle_t handle)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 	struct ae_calc_out ae_result;
@@ -515,9 +515,9 @@ int32_t alc_lock_ae(alc_af_handle_t handle)
 
 }
 
-int32_t alc_lock_awb(alc_af_handle_t handle)
+cmr_s32 alc_lock_awb(alc_af_handle_t handle)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 
@@ -528,9 +528,9 @@ int32_t alc_lock_awb(alc_af_handle_t handle)
 
 }
 
-int32_t alc_unlock_ae(alc_af_handle_t handle)
+cmr_s32 alc_unlock_ae(alc_af_handle_t handle)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 	struct ae_calc_out ae_result;
@@ -543,9 +543,9 @@ int32_t alc_unlock_ae(alc_af_handle_t handle)
 
 }
 
-int32_t alc_unlock_awb(alc_af_handle_t handle)
+cmr_s32 alc_unlock_awb(alc_af_handle_t handle)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 
@@ -556,13 +556,13 @@ int32_t alc_unlock_awb(alc_af_handle_t handle)
 
 }
 
-int32_t alc_get_cur_env_mode(alc_af_handle_t handle, uint8_t *mode)
+cmr_s32 alc_get_cur_env_mode(alc_af_handle_t handle, cmr_u8 *mode)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 
-	*mode = (uint8_t)af_cxt->cur_env_mode;
+	*mode = (cmr_u8)af_cxt->cur_env_mode;
 
 	ALC_AF_LOGV("ISP_AF:cur env mode in get_cur_env_mode is %p  ",mode);
 
@@ -570,9 +570,9 @@ int32_t alc_get_cur_env_mode(alc_af_handle_t handle, uint8_t *mode)
 }
 
 
-int32_t alc_set_motor_pos(alc_af_handle_t handle, uint32_t pos)
+cmr_s32 alc_set_motor_pos(alc_af_handle_t handle, cmr_u32 pos)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 	
@@ -590,7 +590,7 @@ int32_t alc_set_motor_pos(alc_af_handle_t handle, uint32_t pos)
 	return rtn;
 }
 
-uint32_t alc_get_ae_lum(alc_af_handle_t handle)
+cmr_u32 alc_get_ae_lum(alc_af_handle_t handle)
 {
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
@@ -598,7 +598,7 @@ uint32_t alc_get_ae_lum(alc_af_handle_t handle)
 	return af_cxt->ae_cur_lum;
 }
 
-uint32_t alc_get_ae_status(alc_af_handle_t handle)
+cmr_u32 alc_get_ae_status(alc_af_handle_t handle)
 {
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
@@ -606,7 +606,7 @@ uint32_t alc_get_ae_status(alc_af_handle_t handle)
 	return af_cxt->ae_is_stab;
 }
 
-uint32_t alc_get_awb_status(alc_af_handle_t handle)
+cmr_u32 alc_get_awb_status(alc_af_handle_t handle)
 {
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
@@ -614,9 +614,9 @@ uint32_t alc_get_awb_status(alc_af_handle_t handle)
 	return af_cxt->awb_is_stab;
 }
 
-int32_t alc_get_isp_size(alc_af_handle_t handle, uint16_t *widith, uint16_t *height)
+cmr_s32 alc_get_isp_size(alc_af_handle_t handle, cmr_u16 *widith, cmr_u16 *height)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 	*widith = ctrl_context->input_size_trim[ctrl_context->param_index].width;
@@ -625,9 +625,9 @@ int32_t alc_get_isp_size(alc_af_handle_t handle, uint16_t *widith, uint16_t *hei
 	return rtn;
 }
 
-int32_t alc_af_finish_notice(alc_af_handle_t handle, uint32_t result)
+cmr_s32 alc_af_finish_notice(alc_af_handle_t handle, cmr_u32 result)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 	struct isp_system* isp_system_ptr = &ctrl_context->system;
@@ -645,9 +645,9 @@ int32_t alc_af_finish_notice(alc_af_handle_t handle, uint32_t result)
 	return rtn;
 }
 
-int32_t alc_af_move_start_notice(alc_af_handle_t handle)
+cmr_s32 alc_af_move_start_notice(alc_af_handle_t handle)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 	struct isp_system* isp_system_ptr = &ctrl_context->system;
@@ -665,9 +665,9 @@ int32_t alc_af_move_start_notice(alc_af_handle_t handle)
 	return rtn;
 }
 
-int32_t alc_af_pos_update(alc_af_handle_t handle, uint32_t pos)
+cmr_s32 alc_af_pos_update(alc_af_handle_t handle, cmr_u32 pos)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)af_cxt->isp_handle;
 
@@ -687,9 +687,9 @@ int32_t alc_af_pos_update(alc_af_handle_t handle, uint32_t pos)
 	return rtn;
 }
 
-int32_t alc_get_motor_range(alc_af_handle_t handle, uint16_t *min_pos, uint16_t *max_pos)
+cmr_s32 alc_get_motor_range(alc_af_handle_t handle, cmr_u16 *min_pos, cmr_u16 *max_pos)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 
 	*min_pos = 0;
@@ -698,9 +698,9 @@ int32_t alc_get_motor_range(alc_af_handle_t handle, uint16_t *min_pos, uint16_t 
 	return rtn;
 }
 
-int32_t alc_get_lens_info(alc_af_handle_t handle, uint16_t *f_num, uint16_t *f_len)
+cmr_s32 alc_get_lens_info(alc_af_handle_t handle, cmr_u16 *f_num, cmr_u16 *f_len)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 
 	*f_num = 12; // the unit is 0.1
@@ -709,9 +709,9 @@ int32_t alc_get_lens_info(alc_af_handle_t handle, uint16_t *f_num, uint16_t *f_l
 	return rtn;
 }
 
-int32_t alc_get_accelerator_sensor_info(alc_af_handle_t handle, uint16_t* posture)
+cmr_s32 alc_get_accelerator_sensor_info(alc_af_handle_t handle, cmr_u16* posture)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 
 	*posture = 0; // 0 stands for UPWARD , 1 stands for DOWNWARD, 2 stands for HORIZONTAL
@@ -719,9 +719,9 @@ int32_t alc_get_accelerator_sensor_info(alc_af_handle_t handle, uint16_t* postur
 	return rtn;
 }
 
-int32_t alc_get_magnetic_sensor_info(alc_af_handle_t handle, uint16_t* ispinning)
+cmr_s32 alc_get_magnetic_sensor_info(alc_af_handle_t handle, cmr_u16* ispinning)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 
 	*ispinning = 0; // 0 stands for STILL , 1 stands for PINNING
@@ -821,9 +821,9 @@ alc_af_handle_t alc_af_init(void* isp_handle)
 
 
 
-int32_t alc_af_deinit(void* isp_handle)
+cmr_s32 alc_af_deinit(void* isp_handle)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)isp_handle;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)ctrl_context->handle_af;
 
@@ -839,9 +839,9 @@ int32_t alc_af_deinit(void* isp_handle)
 }
 
 
-int32_t alc_af_calc(isp_ctrl_context* handle)
+cmr_s32 alc_af_calc(isp_ctrl_context* handle)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context *)handle;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)ctrl_context->handle_af;
 	struct alc_af_ctrl_ops *af_ops = &af_cxt->af_ctrl_ops;
@@ -933,14 +933,14 @@ int32_t alc_af_calc(isp_ctrl_context* handle)
 }
 
 
-int32_t alc_af_ioctrl(alc_af_handle_t handle, enum alc_af_cmd cmd,
+cmr_s32 alc_af_ioctrl(alc_af_handle_t handle, enum alc_af_cmd cmd,
 				void *param0, void *param1)
 {
-	uint32_t rtn = ALC_AF_SUCCESS;
+	cmr_u32 rtn = ALC_AF_SUCCESS;
 	struct alc_af_context *af_cxt = (struct alc_af_context *)handle;
 	struct alc_af_ctrl_ops *af_ops = &af_cxt->af_ctrl_ops;
 	TT_AfIfBuf *ppAfIfBuf = &af_cxt->ttAfIfBuf ;//tes_kano_0822
-	uint32_t face_af = 0 ; //tes_kano_0903
+	cmr_u32 face_af = 0 ; //tes_kano_0903
 		
 	ALC_AF_LOGI("ALC__af_ioctrl"); //for test
 	rtn = _alc_check_handle(handle);
@@ -958,7 +958,7 @@ int32_t alc_af_ioctrl(alc_af_handle_t handle, enum alc_af_cmd cmd,
 	ALC_AF_LOGI("ALC_AF_CMD_GET_AF_VALUE"); //for test
 		break;
 	case ALC_AF_CMD_SET_AF_MODE:{
-		uint32_t af_mode = *(uint32_t*)param0; // 0 stands for auto , 1 stands for multi-win
+		cmr_u32 af_mode = *(cmr_u32*)param0; // 0 stands for auto , 1 stands for multi-win
 		af_cxt->af_mode = af_mode;//tes_kano_0902
 		ALC_AF_LOGI("alc af mode %d",af_mode);
 		
@@ -973,8 +973,8 @@ int32_t alc_af_ioctrl(alc_af_handle_t handle, enum alc_af_cmd cmd,
 		break;
 	case ALC_AF_CMD_SET_AF_START: {
 		struct isp_af_win* af_ptr = (struct isp_af_win*)param0;
-		uint32_t af_mode = af_cxt->af_mode;
-		uint32_t i=0;
+		cmr_u32 af_mode = af_cxt->af_mode;
+		cmr_u32 i=0;
 		af_cxt->touch_af = 0 ; //tes_kano_0902
 		//ALC_AF_LOG("ALC af start");
 		//ALC_AF_LOG("ALC af start : af_mode=%d",af_mode);
@@ -1031,7 +1031,7 @@ int32_t alc_af_ioctrl(alc_af_handle_t handle, enum alc_af_cmd cmd,
 	case ALC_AF_CMD_SET_AE_INFO:{
 		struct ae_calc_out*  ae_result = (struct ae_calc_out*)param0;
 		struct isp_awb_statistic_info* rgb_statistic = (struct isp_awb_statistic_info*)param1; 
-		//uint32_t i;
+		//cmr_u32 i;
 		//i = ppAfIfBuf->mttAcoAf.vd_cnt % 1200 ;
 #if 0 //tes_kano_0908 rgb_log
 		if(i>1180 && i<1190){
@@ -1080,7 +1080,7 @@ int32_t alc_af_ioctrl(alc_af_handle_t handle, enum alc_af_cmd cmd,
 	}
 	case ALC_AF_CMD_SET_FD_UPDATE:{
 		struct isp_face_area *face_area = (struct isp_face_area*)param0;
-		uint32_t i;
+		cmr_u32 i;
 
 		af_cxt->fd_info.type = face_area->type;
 		af_cxt->fd_info.face_num = face_area->face_num;
@@ -1159,18 +1159,18 @@ int32_t alc_af_ioctrl(alc_af_handle_t handle, enum alc_af_cmd cmd,
 
 
 
-int32_t alc_af_ioctrl_af_start(isp_handle isp_handler, void* param_ptr, int(*call_back)())
+cmr_s32 alc_af_ioctrl_af_start(isp_handle isp_handler, void* param_ptr, cmr_s32(*call_back)())
 {
-	int32_t rtn = 0;
+	cmr_s32 rtn = 0;
 	isp_ctrl_context* handle = (isp_ctrl_context*)isp_handler;
 	UNUSED(call_back);
 	rtn = alc_af_ioctrl(handle->handle_af,ALC_AF_CMD_SET_AF_START,param_ptr,NULL);
 	return rtn;
 }
 
-int32_t alc_af_ioctrl_set_fd_update(isp_handle isp_handler, void* param_ptr, int(*call_back)())
+cmr_s32 alc_af_ioctrl_set_fd_update(isp_handle isp_handler, void* param_ptr, cmr_s32(*call_back)())
 {
-	int32_t rtn = 0;
+	cmr_s32 rtn = 0;
 	isp_ctrl_context* handle = (isp_ctrl_context*)isp_handler;
 	struct isp_face_area *face_area = (struct isp_face_area*)param_ptr;
 	UNUSED(call_back);
@@ -1181,9 +1181,9 @@ int32_t alc_af_ioctrl_set_fd_update(isp_handle isp_handler, void* param_ptr, int
 	return rtn;
 }
 
-int32_t alc_af_ioctrl_set_isp_start_info(isp_handle isp_handler, struct isp_video_start* param_ptr)
+cmr_s32 alc_af_ioctrl_set_isp_start_info(isp_handle isp_handler, struct isp_video_start* param_ptr)
 {
-	int rtn = 0;
+	cmr_s32 rtn = 0;
 	isp_ctrl_context* handle = (isp_ctrl_context*)isp_handler;
 	ALC_AF_LOG("alc_af_ioctrl_set_isp_start_info %d %p",param_ptr->mode,handle->handle_af);
 	if (handle->handle_af && ((ISP_VIDEO_MODE_CONTINUE == param_ptr->mode))) {
@@ -1193,28 +1193,28 @@ int32_t alc_af_ioctrl_set_isp_start_info(isp_handle isp_handler, struct isp_vide
 	return rtn;
 }
 
-int32_t alc_af_ioctrl_set_ae_awb_info(isp_ctrl_context* handle,
+cmr_s32 alc_af_ioctrl_set_ae_awb_info(isp_ctrl_context* handle,
 		void* ae_result,
 		void* awb_result,
 		void* bv,
 		void *rgb_statistics)
 {
 	UNUSED(awb_result);
-	int rtn = 0;
+	cmr_s32 rtn = 0;
 	rtn = handle->ae_lib_fun->ae_io_ctrl(handle->handle_ae, AE_GET_BV_BY_LUM, NULL,(void *)&bv);
 	rtn = alc_af_ioctrl(handle->handle_af,ALC_AF_CMD_SET_AE_INFO,(void *)ae_result,(void *)rgb_statistics);
 
 	return rtn;
 }
 
-int32_t alc_af_ioctrl_set_af_mode(isp_handle isp_handler, void* param_ptr, int(*call_back)())
+cmr_s32 alc_af_ioctrl_set_af_mode(isp_handle isp_handler, void* param_ptr, cmr_s32(*call_back)())
 {
 	isp_ctrl_context* handle = (isp_ctrl_context*)isp_handler;
-	uint32_t set_mode;
-	uint32_t rtn;
+	cmr_u32 set_mode;
+	cmr_u32 rtn;
 	UNUSED(call_back);
 
-	switch (*(uint32_t *)param_ptr) {
+	switch (*(cmr_u32 *)param_ptr) {
 	case ISP_FOCUS_MACRO:
 		set_mode = ALC_AF_MODE_MACRO;
 		break;

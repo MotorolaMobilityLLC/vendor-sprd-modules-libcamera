@@ -51,7 +51,7 @@ enum {
 #define AF_DEBUG_STR     "ISP_AF: %d, %s: "
 #define AF_DEBUG_ARGS    __LINE__,__FUNCTION__
 
-extern int32_t g_af_log_level;
+extern cmr_s32 g_af_log_level;
 
 #define AF_LOGE(format,...) ALOGE(AF_DEBUG_STR format, AF_DEBUG_ARGS, ##__VA_ARGS__)
 #if 0
