@@ -47,11 +47,12 @@ typedef struct {
 	short int   m_wHeight;
 } alPD_RECT;
 
-static uint16_t Reg[256];
+
+static cmr_u16 Reg[256];
 
 typedef struct
 {
-	int dSensorID;//0:for SamSung 1: for Sony
+	cmr_s32 dSensorID;//0:for SamSung 1: for Sony
 	double uwInfVCM;
 	double uwMacroVCM;
 }SensorInfo;
@@ -60,27 +61,27 @@ typedef struct
 typedef struct {
 	/*sensor information*/
 	SensorInfo tSensorInfo;
-	int dcurrentVCM;
+	cmr_s32 dcurrentVCM;
 	// BV value
 	float dBv;
 	// black offset
-	int dBlackOffset;
-	unsigned char ucPrecision;
+	cmr_s32 dBlackOffset;
+	cmr_u8 ucPrecision;
 } PDInReg;
 
 struct pdaf_timestamp {
-	uint32_t sec;
-	uint32_t usec;
+	cmr_u32 sec;
+	cmr_u32 usec;
 };
 
 struct sprd_pdaf_report_t {
-	uint32_t token_id;
-	uint32_t frame_id;
+	cmr_u32 token_id;
+	cmr_u32 frame_id;
 	char enable;
 	struct pdaf_timestamp time_stamp;
 	float pd_value;
 	void *pd_reg_out;
-	uint32_t pd_reg_size;
+	cmr_u32 pd_reg_size;
 };
 
 

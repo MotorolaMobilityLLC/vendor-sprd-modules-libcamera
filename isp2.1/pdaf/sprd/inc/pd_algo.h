@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <isp_type.h>
 
 #define PD_VERSION "PDAF_Algo_Ver: v1.02"
 #define PD_AREA_NUMBER (4)
@@ -26,38 +27,38 @@ extern "C"{
 #endif //__cplusplus
 
 typedef struct {
-	int dX;
-	int dY;
+	cmr_s32 dX;
+	cmr_s32 dY;
 	float fRatio;
-	unsigned char ucType;
+	cmr_u8 ucType;
 }PD_PixelInfo;
 
 typedef struct {
-	int dBeginX;
-	int dBeginY;
-  int dImageW;
-  int dImageH;
-	int dAreaW;
-	int dAreaH;
-	int dDTCTEdgeTh;
-	int dUnitLine;
+	cmr_s32 dBeginX;
+	cmr_s32 dBeginY;
+  cmr_s32 dImageW;
+  cmr_s32 dImageH;
+	cmr_s32 dAreaW;
+	cmr_s32 dAreaH;
+	cmr_s32 dDTCTEdgeTh;
+	cmr_s32 dUnitLine;
 	//PD Sensor Mode
 	//0: Sony IMX258, 1:OV13855
-	int dSensorMode;
+	cmr_s32 dSensorMode;
 } PD_GlobalSetting;
 
-typedef void (*PDCALLBACK) (unsigned char *);
+typedef void (*PDCALLBACK) (cmr_u8 *);
 
-int PD_Init(PD_GlobalSetting *a_pdGSetting);
-int PD_Do(unsigned char *raw,  unsigned char  *y,
-          int a_dRectX, int a_dRectY, int a_dRectW, int a_dRectH, int a_dArea);
-int PD_DoType2(void *a_pInPhaseBuf_left, void *a_pInPhaseBuf_right,
-          int a_dRectX, int a_dRectY, int a_dRectW, int a_dRectH, int a_dArea);
-int PD_SetCurVCM(int CurVCM);
-int PD_GetResult(int *a_pdConf, double *a_pdPhaseDiff, int *a_pdFrameID, int a_dArea);
-int PD_Uninit();
+cmr_s32 PD_Init(PD_GlobalSetting *a_pdGSetting);
+cmr_s32 PD_Do(cmr_u8 *raw,  cmr_u8  *y,
+          cmr_s32 a_dRectX, cmr_s32 a_dRectY, cmr_s32 a_dRectW, cmr_s32 a_dRectH, cmr_s32 a_dArea);
+cmr_s32 PD_DoType2(void *a_pInPhaseBuf_left, void *a_pInPhaseBuf_right,
+          cmr_s32 a_dRectX, cmr_s32 a_dRectY, cmr_s32 a_dRectW, cmr_s32 a_dRectH, cmr_s32 a_dArea);
+cmr_s32 PD_SetCurVCM(cmr_s32 CurVCM);
+cmr_s32 PD_GetResult(cmr_s32 *a_pdConf, double *a_pdPhaseDiff, cmr_s32 *a_pdFrameID, cmr_s32 a_dArea);
+cmr_s32 PD_Uninit();
 
-void FreeBuffer(unsigned char *raw);
+void FreeBuffer(cmr_u8 *raw);
 
 #ifdef __cplusplus
 }

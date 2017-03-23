@@ -106,19 +106,19 @@ struct isp_dev_pdaf_info pdafTestCase[] =
 };
 
 
-struct isp_dev_pdaf_info* ispGetPdafTestCase(uint32_t index)
+struct isp_dev_pdaf_info* ispGetPdafTestCase(cmr_u32 index)
 {
 	return &pdafTestCase[index];
 }
 #define PDAF_PATTERN_COUNT	 8
-cmr_int _ispSetPdafParam(void *param, uint32_t index)
+cmr_int _ispSetPdafParam(void *param, cmr_u32 index)
 {
-	int32_t rtn = ISP_SUCCESS;
-	int32_t i = 0;
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s32 i = 0;
 	struct isp_dev_pdaf_info  *pdaf_info_ptr	 = (struct isp_dev_pdaf_info *)param;
 	struct isp_dev_pdaf_info  *pdafTestCase_ptr	 = ispGetPdafTestCase(index);
-	unsigned short phase_left[128] = {0},phase_right[128] = {0};
-	unsigned int data_left[128] = {0},data_right[128] = {0};
+	cmr_u16 phase_left[128] = {0},phase_right[128] = {0};
+	cmr_u32 data_left[128] = {0},data_right[128] = {0};
 
 #if 0
  //store_info_ptr->bypass	   = ISP_ZERO;
@@ -126,11 +126,11 @@ cmr_int _ispSetPdafParam(void *param, uint32_t index)
 		return rtn;
 #else
 	pdaf_info_ptr->bypass = 0;
-	pdafTestCase_ptr->phase_left_addr = (unsigned int)&phase_left[0];
-	pdafTestCase_ptr->phase_right_addr = (unsigned int)&phase_right[0];
-	pdafTestCase_ptr->data_ptr_left[0] = (unsigned int)&data_left[0];
+	pdafTestCase_ptr->phase_left_addr = (cmr_u32)&phase_left[0];
+	pdafTestCase_ptr->phase_right_addr = (cmr_u32)&phase_right[0];
+	pdafTestCase_ptr->data_ptr_left[0] = (cmr_u32)&data_left[0];
 	pdafTestCase_ptr->data_ptr_left[1] = 0;
-	pdafTestCase_ptr->data_ptr_right[0] = (unsigned int)&data_right[0];
+	pdafTestCase_ptr->data_ptr_right[0] = (cmr_u32)&data_right[0];
 	pdafTestCase_ptr->data_ptr_right[1] = 0;
 #endif
 
@@ -156,9 +156,9 @@ cmr_int _ispSetPdafParam(void *param, uint32_t index)
 	pdaf_info_ptr->gain_ori_right[0] 		= pdafTestCase_ptr->gain_ori_right[0];
 	pdaf_info_ptr->gain_ori_right[1] 		= pdafTestCase_ptr->gain_ori_right[1];
 
-	int block_x = (pdaf_info_ptr->win.end_x - pdaf_info_ptr->win.start_x)/(8 << pdaf_info_ptr->block_size.width);
-	int block_y = (pdaf_info_ptr->win.end_y - pdaf_info_ptr->win.start_y)/(8 << pdaf_info_ptr->block_size.height);
-	uint32_t phasepixel_total_num				= block_x*block_y* PDAF_PATTERN_COUNT / 2;
+	cmr_s32 block_x = (pdaf_info_ptr->win.end_x - pdaf_info_ptr->win.start_x)/(8 << pdaf_info_ptr->block_size.width);
+	cmr_s32 block_y = (pdaf_info_ptr->win.end_y - pdaf_info_ptr->win.start_y)/(8 << pdaf_info_ptr->block_size.height);
+	cmr_u32 phasepixel_total_num				= block_x*block_y* PDAF_PATTERN_COUNT / 2;
 	pdaf_info_ptr->phase_data_dword_num		= (phasepixel_total_num + 5) / 6;
 	pdaf_info_ptr->extractor_bypass			= pdafTestCase_ptr->extractor_bypass;
 	pdaf_info_ptr->mode_sel					= pdafTestCase_ptr->mode_sel;
@@ -181,15 +181,15 @@ cmr_int _ispSetPdafParam(void *param, uint32_t index)
 	memset((void*)pdaf_info_ptr->phase_left_addr, 0, 0x100);
 	memset((void*)pdaf_info_ptr->phase_right_addr, 0, 0x100);
 
-	//memset((void*)pdaf_info_ptr->data_ptr_left, 0, 128 * sizeof(unsigned int));
-	//memset((void*)pdaf_info_ptr->data_ptr_right, 0, 128 * sizeof(unsigned int));
+	//memset((void*)pdaf_info_ptr->data_ptr_left, 0, 128 * sizeof(cmr_u32));
+	//memset((void*)pdaf_info_ptr->data_ptr_right, 0, 128 * sizeof(cmr_u32));
 	return rtn;
 }
 
 
 cmr_int isp_get_pdaf_default_param(struct isp_dev_pdaf_info *pdaf_param)
 {
-	isp_s32 rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	_ispSetPdafParam(pdaf_param, 0);
 
 	return rtn;
@@ -303,17 +303,17 @@ exit:
 	return (cmr_handle)cxt;
 }
 
-static int32_t sprd_pdaf_adpt_deinit(cmr_handle adpt_handle, void *param, void *result)
+static cmr_s32 sprd_pdaf_adpt_deinit(cmr_handle adpt_handle, void *param, void *result)
 {
 	struct sprd_pdaf_context *cxt = (struct sprd_pdaf_context *)adpt_handle;
-	int32_t ret = ISP_SUCCESS;
+	cmr_s32 ret = ISP_SUCCESS;
 
 	UNUSED(param);
 	UNUSED(result);
 	ISP_LOGI("cxt = %p", cxt);
 	if (cxt) {
 		/* deinit lib */
-		ret = (int32_t)PD_Uninit();
+		ret = (cmr_s32)PD_Uninit();
 
 		if (cxt->pd_right) {
 			free(cxt->pd_right);
@@ -331,9 +331,9 @@ static int32_t sprd_pdaf_adpt_deinit(cmr_handle adpt_handle, void *param, void *
 	return ret;
 }
 
-static int32_t sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *out)
+static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *out)
 {
-	int32_t ret = ISP_SUCCESS;
+	cmr_s32 ret = ISP_SUCCESS;
 	struct sprd_pdaf_context *cxt = (struct sprd_pdaf_context *)adpt_handle;
 	struct pdaf_ctrl_process_in *proc_in = (struct pdaf_ctrl_process_in *)in;
 	struct pdaf_ctrl_callback_in callback_in;
@@ -372,13 +372,13 @@ static int32_t sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	void *pInPhaseBuf_left = (cmr_s32 *)(proc_in->u_addr); //TODO
 	void *pInPhaseBuf_right = (cmr_s32 *)(proc_in->u_addr + 0x25800); //TODO
 	ISP_LOGI("pInPhaseBuf_left = %p",pInPhaseBuf_left);
-	int dRectX = ROI_X;
-	int dRectY = ROI_Y;
-	int dRectW = ROI_Width;
-	int dRectH = ROI_Height;
+	cmr_s32 dRectX = ROI_X;
+	cmr_s32 dRectY = ROI_Y;
+	cmr_s32 dRectW = ROI_Width;
+	cmr_s32 dRectH = ROI_Height;
 	struct pd_result pd_calc_result;
 
-	for(int area_index=0;area_index<AREA_LOOP;area_index++) {
+	for(cmr_s32 area_index=0;area_index<AREA_LOOP;area_index++) {
 		ret = PD_DoType2(pInPhaseBuf_left,pInPhaseBuf_right, dRectX, dRectY,
 			    dRectW, dRectH,area_index);
 		if (ret) {
@@ -409,10 +409,10 @@ exit:
 	return ret;
 }
 
-static int32_t sprd_pdaf_adpt_ioctrl(cmr_handle adpt_handle, int32_t cmd,
+static cmr_s32 sprd_pdaf_adpt_ioctrl(cmr_handle adpt_handle, cmr_s32 cmd,
 				   void *in, void *out)
 {
-	int32_t ret = ISP_SUCCESS;
+	cmr_s32 ret = ISP_SUCCESS;
 	struct pdaf_ctrl_param_in *in_ptr = (struct pdaf_ctrl_param_in *)in;
 	struct pdaf_ctrl_param_out *out_ptr = (struct pdaf_ctrl_param_out *)out;
 
