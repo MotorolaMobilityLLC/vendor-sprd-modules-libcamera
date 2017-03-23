@@ -166,7 +166,7 @@ class SprdCamera3Blur {
     int mCaptureHeight;
     bool mIommuEnabled;
     new_ion_mem_blur_t mLocalCapBuffer[BLUR_LOCAL_CAPBUFF_NUM];
-    ;
+    bool mFlushing;
     List<request_saved_blur_t> mSavedRequestList;
     camera3_stream_t *mSavedReqStreams[BLUR_MAX_NUM_STREAMS];
     int mPreviewStreamsNum;
@@ -177,6 +177,7 @@ class SprdCamera3Blur {
     uint32_t mSelCoordX;
     uint32_t mSelCoordY;
     int mjpegSize;
+    bool mIsWaitSnapYuv;
     int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
     int setupPhysicalCameras();
     int getCameraInfo(struct camera_info *info);
@@ -233,6 +234,8 @@ class SprdCamera3Blur {
         void waitMsgAvailable();
     };
     sp<CaptureThread> mCaptureThread;
+    Mutex mMergequeueFinishMutex;
+    Condition mMergequeueFinishSignal;
 
     int initialize(const camera3_callback_ops_t *callback_ops);
     int configureStreams(const struct camera3_device *device,

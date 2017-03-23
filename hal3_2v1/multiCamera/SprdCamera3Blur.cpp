@@ -1152,10 +1152,11 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
                 mBlur->dumpData(buffer_base, 1, MainSizeData, MainWidethData,
                                 MainHeightData);
             }
-
-            blurHandle(
-                (struct private_handle_t *)*(capture_msg.combo_buff.buffer),
-                (struct private_handle_t *)*output_buffer);
+            if (!mBlur->mFlushing) {
+                blurHandle(
+                    (struct private_handle_t *)*(capture_msg.combo_buff.buffer),
+                    (struct private_handle_t *)*output_buffer);
+            }
             char prop2[PROPERTY_VALUE_MAX] = {
                 0,
             };
@@ -1218,6 +1219,7 @@ bool SprdCamera3Blur::CaptureThread::threadLoop() {
                                                            &request)) {
                 HAL_LOGE("failed. process capture request!");
             }
+            mBlur->mIsWaitSnapYuv = false;
             HAL_LOGD("jpeg request ok");
             if (input_buffer != NULL) {
                 free((void *)input_buffer);
@@ -1312,8 +1314,16 @@ int SprdCamera3Blur::getStreamType(camera3_stream_t *new_stream) {
 void SprdCamera3Blur::CaptureThread::waitMsgAvailable() {
     // TODO:what to do for timeout
     while (mCaptureMsgList.empty()) {
-        Mutex::Autolock l(mMergequeueMutex);
-        mMergequeueSignal.waitRelative(mMergequeueMutex, BLUR_THREAD_TIMEOUT);
+        if (mBlur->mFlushing) {
+            Mutex::Autolock l(mBlur->mMergequeueFinishMutex);
+            mBlur->mMergequeueFinishSignal.signal();
+            HAL_LOGD("send mMergequeueFinishSignal.signal");
+        }
+        {
+            Mutex::Autolock l(mMergequeueMutex);
+            mMergequeueSignal.waitRelative(mMergequeueMutex,
+                                           BLUR_THREAD_TIMEOUT);
+        }
     }
 }
 
@@ -1410,6 +1420,8 @@ int SprdCamera3Blur::initialize(const camera3_callback_ops_t *callback_ops) {
     mjpegSize = 0;
     mFNum = 1;
     mCircleSize = 120;
+    mFlushing = false;
+    mIsWaitSnapYuv = false;
 
     rc = hwiMain->initialize(sprdCam.dev, &callback_ops_main);
     if (rc != NO_ERROR) {
@@ -1743,6 +1755,14 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
                 clone_camera_metadata(req_main.settings);
             req_main.settings = mCaptureThread->mSavedCapReqsettings;
 
+            if (mFlushing) {
+                rc = hwiMain->process_capture_request(
+                    m_pPhyCamera[CAM_TYPE_MAIN].dev, request);
+
+                HAL_LOGD("mFlushing rc, d%d", rc);
+                return rc;
+            }
+
             mSavedReqStreams[mCaptureThread->mCaptureStreamsNum - 1] =
                 req->output_buffers[i].stream;
             out_streams_main[i].stream =
@@ -1753,6 +1773,7 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
             out_streams_main[i].buffer = &mLocalCapBuffer[0].native_handle;
             mIsCapturing = true;
             is_captureing = true;
+            mIsWaitSnapYuv = true;
         } else {
             mSavedReqStreams[mPreviewStreamsNum] =
                 req->output_buffers[i].stream;
@@ -1979,10 +2000,13 @@ void SprdCamera3Blur::processCaptureResultMain(
             List<request_saved_blur_t>::iterator i = mSavedRequestList.begin();
             while (i != mSavedRequestList.end()) {
                 if (i->frame_number == result->frame_number) {
-                    mCaptureThread->blurHandle(
-                        (struct private_handle_t *)*(
-                            result->output_buffers->buffer),
-                        NULL);
+                    if (result->output_buffers->status !=
+                        CAMERA3_BUFFER_STATUS_ERROR) {
+                        mCaptureThread->blurHandle(
+                            (struct private_handle_t *)*(
+                                result->output_buffers->buffer),
+                            NULL);
+                    }
                     memcpy(&newResult, result,
                            sizeof(camera3_capture_result_t));
                     memcpy(&newOutput_buffers, &result->output_buffers[0],
@@ -2104,6 +2128,14 @@ int SprdCamera3Blur::_flush(const struct camera3_device *device) {
 
     HAL_LOGD("E flush, mCaptureMsgList.size=%zu, mSavedRequestList.size:%zu",
              mCaptureThread->mCaptureMsgList.size(), mSavedRequestList.size());
+    mFlushing = true;
+
+    while (mIsCapturing && mIsWaitSnapYuv) {
+        Mutex::Autolock l(mMergequeueFinishMutex);
+        mMergequeueFinishSignal.waitRelative(mMergequeueFinishMutex,
+                                             BLUR_THREAD_TIMEOUT);
+    }
+    HAL_LOGD("wait until mCaptureMsgList.empty");
 
     SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
     rc = hwiMain->flush(m_pPhyCamera[CAM_TYPE_MAIN].dev);
@@ -2116,6 +2148,7 @@ int SprdCamera3Blur::_flush(const struct camera3_device *device) {
             mCaptureThread->requestExit();
         }
     }
+    mFlushing = false;
     HAL_LOGD("X");
 
     return rc;
