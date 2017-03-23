@@ -51,7 +51,7 @@ extern "C" {
 
 	struct ae1_fd_param {
 		struct ae1_face_info cur_info;/*297 x 4bytes*/
-		struct ae1_face_info pre_info;/*297 x 4bytes*/
+		//struct ae1_face_info pre_info;/*297 x 4bytes*/
 		uint8_t update_flag;
 		uint8_t enable_flag;
 		uint16_t reserved;/*1 x 4bytes*/

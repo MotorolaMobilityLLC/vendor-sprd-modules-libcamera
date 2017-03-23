@@ -2134,14 +2134,16 @@ static int32_t _fd_info_init(struct ae_ctrl_cxt *cxt)
 	ae1_fd->enable_flag = 1;
 	ae1_fd->update_flag = 0;
 	ae1_fd->cur_info.face_num = 0;
-	ae1_fd->pre_info.face_num = 0;
+	//ae1_fd->pre_info.face_num = 0;
 	for (i = 0; i != 20; i++) {
 		// init pre info
+		/*
 		ae1_fd->pre_info.face_area[i].start_x = 0;
 		ae1_fd->pre_info.face_area[i].start_y = 0;
 		ae1_fd->pre_info.face_area[i].end_x = 0;
 		ae1_fd->pre_info.face_area[i].end_y = 0;
 		ae1_fd->pre_info.face_area[i].pose = -1;
+		*/
 		// init cur_info
 		ae1_fd->cur_info.face_area[i].start_x = 0;
 		ae1_fd->cur_info.face_area[i].start_y = 0;
@@ -2150,7 +2152,7 @@ static int32_t _fd_info_init(struct ae_ctrl_cxt *cxt)
 		ae1_fd->cur_info.face_area[i].pose = -1;
 	}
 	for (i = 0; i != 1024; i++) {
-		ae1_fd->pre_info.rect[i] = 0;
+		//ae1_fd->pre_info.rect[i] = 0;
 		ae1_fd->cur_info.rect[i] = 0;
 	}
 	return rtn;
@@ -2167,14 +2169,18 @@ static int32_t _fd_info_pre_set(struct ae_ctrl_cxt *cxt)
 	}
 	ae1_fd = &(cxt->cur_status.ae1_finfo);
 	ae1_fd->update_flag = 0;	// set updata flag
-	ae1_fd->pre_info.face_num = ae1_fd->cur_info.face_num;
-	for (i = 0; i != ae1_fd->cur_info.face_num; i++) {
+	//ae1_fd->pre_info.face_num = ae1_fd->cur_info.face_num;
+	AE_LOGD("face_num is %d\n",cxt->fdae.face_info.face_num);
+	//for (i = 0; i != ae1_fd->cur_info.face_num; i++) {
+	for (i = 0; i < cxt->fdae.face_info.face_num; i++) {
 		// save pre info
+		/*
 		ae1_fd->pre_info.face_area[i].start_x = ae1_fd->cur_info.face_area[i].start_x;
 		ae1_fd->pre_info.face_area[i].start_y = ae1_fd->cur_info.face_area[i].start_y;
 		ae1_fd->pre_info.face_area[i].end_x = ae1_fd->cur_info.face_area[i].end_x;
 		ae1_fd->pre_info.face_area[i].end_y = ae1_fd->cur_info.face_area[i].end_y;
 		ae1_fd->pre_info.face_area[i].pose = ae1_fd->cur_info.face_area[i].pose;
+		*/
 		// reset cur_info
 		ae1_fd->cur_info.face_area[i].start_x = 0;
 		ae1_fd->cur_info.face_area[i].start_y = 0;
@@ -2183,7 +2189,7 @@ static int32_t _fd_info_pre_set(struct ae_ctrl_cxt *cxt)
 		ae1_fd->cur_info.face_area[i].pose = -1;
 	}
 	for (i = 0; i != 1024; i++) {
-		ae1_fd->pre_info.rect[i] = ae1_fd->cur_info.rect[i];
+		//ae1_fd->pre_info.rect[i] = ae1_fd->cur_info.rect[i];
 		ae1_fd->cur_info.rect[i] = 0;
 	}
 	return rtn;
@@ -2221,7 +2227,6 @@ static int32_t _fd_info_set(struct ae_ctrl_cxt *cxt)
 	ae1_fd->cur_info.face_num = fd->face_num;
 		//AE_LOGD("fd ae face number:%d ", ae1_fd->cur_info.face_num);
 	if (0 == fd->face_num) {// face num = 0 ,no mapping
-	
 		return AE_SUCCESS;
 	}
 	for (i = 0; i < fd->face_num; i++) {

@@ -56,6 +56,7 @@ extern "C"  {
 		float face_roi_lum;
 		float no_face_lum;
 		float tar_offset;
+		float ftar_offset;//
 		float target_offset_smooth[5];
 		char* log;
 	} fae_rt;//calc info
@@ -65,6 +66,9 @@ extern "C"  {
 		uint8_t debug_level;
 		fae_in in_fae;
 		fae_rt result_fae;
+		/*algorithm status*/
+		struct ae1_face_info cur_info;/*297 x 4bytes*/
+		struct ae1_face_info prv_info;/*297 x 4bytes*/
 		uint32_t log_buf[256];
 	} fae_stat;
 
