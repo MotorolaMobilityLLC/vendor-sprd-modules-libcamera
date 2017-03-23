@@ -35,7 +35,7 @@ extern "C" {
 **				Data Prototype				*
 **----------------------------------------------------------------------------*/
 //mul_weight_table;
-	uint8_t g_indoor_table[1024] = {
+	cmr_u8 g_indoor_table[1024] = {
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -70,7 +70,7 @@ extern "C" {
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 };
 
-	uint8_t g_lowlux_table[1024] = {
+	cmr_u8 g_lowlux_table[1024] = {
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -105,7 +105,7 @@ extern "C" {
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 };
 
-	uint8_t g_outdoor_table[1024] = {
+	cmr_u8 g_outdoor_table[1024] = {
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -140,25 +140,25 @@ extern "C" {
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 };
 
-	int8_t 	g_outdoor_target_lum_offset = -4;	//target lum offset
+	cmr_s8 	g_outdoor_target_lum_offset = -4;	//target lum offset
 	float 	g_outdoor_idx0 		= 0.0;			//gamma index
 	float 	g_outdoor_idx1 		= 0.0;
 	float 	g_outdoor_weight0 	= 1.0;			//gamma weight
 	float 	g_outdoor_weight1 	= 0.0;
 
-	int8_t 	g_indoor_target_lum_offset = 0;
+	cmr_s8 	g_indoor_target_lum_offset = 0;
 	float 	g_indoor_idx0 		= 1.0;
 	float 	g_indoor_idx1 		= 1.0;
 	float 	g_indoor_weight0 	= 1.0;
 	float 	g_indoor_weight1 	= 0.0;
 
-	int8_t 		alg_id 				= 2;		//alg id fixed to 2
-	int8_t 		g_enable 			= 1;		//0:disable 1:target 3:target & weight-table 7:target & weight-table & gamma
-	int8_t		g_debug_level		= 2;		//0:no info 1:file log 2:android log
-	uint32_t	g_o_exp_gain_50		= 613 * 17;
-	uint32_t	g_i_exp_gain_50		= 613 * 34;
-	uint32_t	g_o_exp_gain_60		= 511 * 20;
-	uint32_t	g_i_exp_gain_60		= 511 * 41;
+	cmr_s8 		alg_id 				= 2;		//alg id fixed to 2
+	cmr_s8 		g_enable 			= 1;		//0:disable 1:target 3:target & weight-table 7:target & weight-table & gamma
+	cmr_s8		g_debug_level		= 2;		//0:no info 1:file log 2:android log
+	cmr_u32	g_o_exp_gain_50		= 613 * 17;
+	cmr_u32	g_i_exp_gain_50		= 613 * 34;
+	cmr_u32	g_o_exp_gain_60		= 511 * 20;
+	cmr_u32	g_i_exp_gain_60		= 511 * 41;
 /**----------------------------------------------------------------------------*
 **					Compiler Flag				**
 **----------------------------------------------------------------------------*/

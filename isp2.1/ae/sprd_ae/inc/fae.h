@@ -35,23 +35,23 @@ extern "C"  {
 **                              Data Prototype                          *
 **----------------------------------------------------------------------------*/
 	typedef struct  {
-		//uint8_t enable;
-		uint8_t mlog_en;
-		int8_t debug_level;
+		//cmr_u8 enable;
+		cmr_u8 mlog_en;
+		cmr_s8 debug_level;
 		struct ae1_fd_param *alg_face_info;
 		struct face_tuning_param face_tuning;
-		uint8_t * ydata;
-		uint32_t frame_ID;
+		cmr_u8 * ydata;
+		cmr_u32 frame_ID;
 		//float face_target;
 		float real_target;
 		float current_lum;
 	} fae_in;//tuning info
 
 	typedef struct  {
-		int32_t fd_count;
+		cmr_s32 fd_count;
 		float face_stable[25];
-		int32_t no_fd_count;
-		int8_t fidelity;
+		cmr_s32 no_fd_count;
+		cmr_s8 fidelity;
 		float face_lum;
 		float face_roi_lum;
 		float no_face_lum;
@@ -62,23 +62,23 @@ extern "C"  {
 	} fae_rt;//calc info
 
 	typedef struct {
-		uint8_t mlog_en;
-		uint8_t debug_level;
+		cmr_u8 mlog_en;
+		cmr_u8 debug_level;
 		fae_in in_fae;
 		fae_rt result_fae;
 		/*algorithm status*/
 		struct ae1_face_info cur_info;/*297 x 4bytes*/
 		struct ae1_face_info prv_info;/*297 x 4bytes*/
-		uint32_t log_buf[256];
+		cmr_u32 log_buf[256];
 	} fae_stat;
 
 /**---------------------------------------------------------------------------*
 **                              EBD Function Prototype                          *
 **----------------------------------------------------------------------------*/
-	//int32_t fae_init(fae_stat * cxt);
-	int32_t fae_init(fae_stat * cxt, struct face_tuning_param *face_tuning_prt);
-	int32_t fae_calc(fae_stat * fae);
-	int32_t fae_deinit(fae_stat * cxt);
+	//cmr_s32 fae_init(fae_stat * cxt);
+	cmr_s32 fae_init(fae_stat * cxt, struct face_tuning_param *face_tuning_prt);
+	cmr_s32 fae_calc(fae_stat * fae);
+	cmr_s32 fae_deinit(fae_stat * cxt);
 
 /**----------------------------------------------------------------------------*
 **                                      Compiler Flag                           **

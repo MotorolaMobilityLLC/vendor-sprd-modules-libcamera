@@ -35,28 +35,28 @@ extern "C" {
 **				Data Prototype				*
 **----------------------------------------------------------------------------*/
 struct ae_misc_init_in {
-	uint32_t alg_id;
-	uint32_t start_index;
-	void *param_ptr;
-	uint32_t size;
+	cmr_u32 alg_id;
+	cmr_u32 start_index;
+	cmr_handle param_ptr;
+	cmr_u32 size;
 };
 
 struct ae_misc_init_out {
-	uint32_t start_index;
+	cmr_u32 start_index;
 	char alg_id[32];
 };
 
 struct ae_misc_calc_in {
-	void *sync_settings;
+	cmr_handle sync_settings;
 };
 
 struct ae_misc_calc_out {
-	void *ae_output;
+	cmr_handle ae_output;
 };
 
-void *ae_misc_init(struct ae_misc_init_in *in_param, struct ae_misc_init_out *out_param);
-int32_t ae_misc_deinit(void *handle, void *in_param, void *out_param);
-int32_t ae_misc_calculation(void *handle, struct ae_misc_calc_in *in_param, struct ae_misc_calc_out *out_param);
+cmr_handle ae_misc_init(struct ae_misc_init_in *in_param, struct ae_misc_init_out *out_param);
+cmr_s32 ae_misc_deinit(cmr_handle handle, cmr_handle in_param, cmr_handle out_param);
+cmr_s32 ae_misc_calculation(cmr_handle handle, struct ae_misc_calc_in *in_param, struct ae_misc_calc_out *out_param);
 /**----------------------------------------------------------------------------*
 **					Compiler Flag				**
 **----------------------------------------------------------------------------*/

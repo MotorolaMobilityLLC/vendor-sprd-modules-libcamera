@@ -30,16 +30,16 @@
 extern "C" {
 #endif
 struct ae_in_out {
-	uint16_t cur_exp_line;/*current exposure line: the value is related to the resolution */
-	uint16_t cur_dummy;/*dummy line: the value is related to the resolution & fps */
-	int16_t cur_gain;/*current analog gain */
-	int16_t enable;
+	cmr_u16 cur_exp_line;/*current exposure line: the value is related to the resolution */
+	cmr_u16 cur_dummy;/*dummy line: the value is related to the resolution & fps */
+	cmr_s16 cur_gain;/*current analog gain */
+	cmr_s16 enable;
 };
 
-void* ae_sprd_init(void* in_param, void *out_param);
-int32_t ae_sprd_deinit(void *handler, void *in_param, void *out_param);
-int32_t ae_sprd_calculation(void *handler, void* in_param, void* out_param);
-int32_t ae_sprd_io_ctrl(void *handler, int32_t cmd, void *in_param, void *out_param);
+cmr_handle ae_sprd_init(cmr_handle in_param, cmr_handle out_param);
+cmr_s32 ae_sprd_deinit(cmr_handle handler, cmr_handle in_param, cmr_handle out_param);
+cmr_s32 ae_sprd_calculation(cmr_handle handler, cmr_handle in_param, cmr_handle out_param);
+cmr_s32 ae_sprd_io_ctrl(cmr_handle handler, cmr_s32 cmd, cmr_handle in_param, cmr_handle out_param);
 /**----------------------------------------------------------------------------*
 **					Compiler Flag				**
 **----------------------------------------------------------------------------*/

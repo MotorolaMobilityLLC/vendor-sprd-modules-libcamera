@@ -35,8 +35,8 @@ extern "C" {
 **				Data Structures				*
 **---------------------------------------------------------------------------*/
 	struct ae_ctrl_time {
-		uint32_t sec;
-		uint32_t usec;
+		cmr_u32 sec;
+		cmr_u32 usec;
 	};
 
 	struct ae_ctrl_stats_info {
@@ -45,32 +45,32 @@ extern "C" {
 		struct ae_ctrl_time write_sensor_time;
 		struct ae_ctrl_time delay_time;
 		struct ae_ctrl_time frame_time;
-		uint32_t skip_frame;
-		uint32_t delay_frame;
-		uint32_t near_stab;
-		uint32_t frame_id;
+		cmr_u32 skip_frame;
+		cmr_u32 delay_frame;
+		cmr_u32 near_stab;
+		cmr_u32 frame_id;
 	};
 
 	struct ae_history_info {
 		struct ae_ctrl_stats_info stats_info[AE_FRAME_INFO_NUM];	//save the latest 8 exposure time and gain;
 		//0: latest one; 
 		//list will be better
-		uint32_t cur_stat_index;
+		cmr_u32 cur_stat_index;
 		struct ae_ctrl_stats_info last_info;
 		struct ae_ctrl_stats_info cur_info;
 		struct ae_ctrl_stats_info effect_info;
-		uint32_t sensor_effect_delay_num;
+		cmr_u32 sensor_effect_delay_num;
 	};
 
 
 /**---------------------------------------------------------------------------*
 ** 				Function Defination			*
 **---------------------------------------------------------------------------*/
-	int32_t ae_utils_calc_func(struct ae_piecewise_func *func, uint32_t y_type, int32_t x, struct ae_weight_value *result);
-	int32_t ae_utils_get_effect_index(struct ae_history_info *history, uint32_t frame_id, int32_t * effect_index, int32_t * uneffect_index, uint32_t * is_only_calc_lum_flag);
-	int32_t ae_utils_save_stat_info(struct ae_history_info *history, struct ae_ctrl_stats_info *cur_info);
-	int32_t ae_utils_get_stat_info(struct ae_history_info *history, struct ae_ctrl_stats_info *stat_info, uint32_t cur_stat_index, uint32_t frame_id);
-	int32_t ae_utils_get_delay_frame_num(struct ae_history_info *history, struct ae_ctrl_time *eof, struct ae_ctrl_time *write_sensor, uint32_t frame_time);
+	cmr_s32 ae_utils_calc_func(struct ae_piecewise_func *func, cmr_u32 y_type, cmr_s32 x, struct ae_weight_value *result);
+	cmr_s32 ae_utils_get_effect_index(struct ae_history_info *history, cmr_u32 frame_id, cmr_s32 * effect_index, cmr_s32 * uneffect_index, cmr_u32 * is_only_calc_lum_flag);
+	cmr_s32 ae_utils_save_stat_info(struct ae_history_info *history, struct ae_ctrl_stats_info *cur_info);
+	cmr_s32 ae_utils_get_stat_info(struct ae_history_info *history, struct ae_ctrl_stats_info *stat_info, cmr_u32 cur_stat_index, cmr_u32 frame_id);
+	cmr_s32 ae_utils_get_delay_frame_num(struct ae_history_info *history, struct ae_ctrl_time *eof, struct ae_ctrl_time *write_sensor, cmr_u32 frame_time);
 
 /**----------------------------------------------------------------------------*
 **					Compiler Flag			*

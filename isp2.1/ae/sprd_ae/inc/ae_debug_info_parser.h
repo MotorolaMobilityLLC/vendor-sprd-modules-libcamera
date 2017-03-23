@@ -24,32 +24,32 @@ extern "C" {
 
 struct ae_debug_info_packet_in {
 	char id[32];
-	void* aem_stats;
-	void* alg_status;
-	void* alg_results;
-	void *packet_buf;
+	cmr_handle aem_stats;
+	cmr_handle alg_status;
+	cmr_handle alg_results;
+	cmr_handle packet_buf;
 };
 
 struct ae_debug_info_packet_out {
-	uint32_t size;
+	cmr_u32 size;
 };
 
 
 struct ae_debug_info_unpacket_in {
 	char alg_id[32];
-	void *packet_buf;
-	uint32_t packet_len;
-	void* unpacket_buf;
-	uint32_t unpacket_len;
+	cmr_handle packet_buf;
+	cmr_u32 packet_len;
+	cmr_handle unpacket_buf;
+	cmr_u32 unpacket_len;
 };
 
 struct ae_debug_info_unpacket_out {
-	uint32_t reserved;
+	cmr_u32 reserved;
 };
 
-int32_t ae_debug_info_packet(void* input, void* output);
-int32_t ae_debug_info_unpacket(void* input, void* output);
-void* ae_debug_info_get_lib_version(void);
+cmr_s32 ae_debug_info_packet(cmr_handle input, cmr_handle output);
+cmr_s32 ae_debug_info_unpacket(cmr_handle input, cmr_handle output);
+cmr_handle ae_debug_info_get_lib_version(void);
 #ifdef __cplusplus
 }
 #endif

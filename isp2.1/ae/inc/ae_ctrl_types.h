@@ -274,28 +274,28 @@ struct ae_set_scene {
 
 struct ae_resolution_info {
 	struct ae_size frame_size;
-	uint32_t line_time;
-	uint32_t frame_line;
-	uint32_t sensor_size_index;
-	uint32_t snr_setting_max_fps;
+	cmr_u32 line_time;
+	cmr_u32 frame_line;
+	cmr_u32 sensor_size_index;
+	cmr_u32 snr_setting_max_fps;
 };
 
 struct ae_measure_highflash {
-	uint32_t highflash_flag;
-	uint32_t capture_skip_num;
+	cmr_u32 highflash_flag;
+	cmr_u32 capture_skip_num;
 };
 
 struct ae_sensor_fps_info {
-	uint32_t mode;	//sensor mode
-	uint32_t max_fps;
-	uint32_t min_fps;
-	uint32_t is_high_fps;
-	uint32_t high_fps_skip_num;
+	cmr_u32 mode;	//sensor mode
+	cmr_u32 max_fps;
+	cmr_u32 min_fps;
+	cmr_u32 is_high_fps;
+	cmr_u32 high_fps_skip_num;
 };
 
 struct ae_set_work_param {
-	uint16_t fly_eb;
-	uint16_t is_snapshot;
+	cmr_u16 fly_eb;
+	cmr_u16 is_snapshot;
 	enum ae_work_mode mode;
 	struct ae_resolution_info resolution_info;
 	struct ae_measure_highflash highflash_measure;
@@ -307,8 +307,8 @@ struct ae_set_iso {
 };
 
 struct ae_set_pfs {
-	uint32_t fps; // min fps
-	uint32_t fix_fps; // fix fps flag
+	cmr_u32 fps; // min fps
+	cmr_u32 fix_fps; // fix fps flag
 };
 
 struct ae_set_ev {
@@ -317,7 +317,7 @@ struct ae_set_ev {
 
 struct ae_get_ev {
 	enum ae_level ev_index;
-	int32_t ev_tab[16];
+	cmr_s32 ev_tab[16];
 };
 
 struct ae_set_tuoch_zone {
@@ -325,35 +325,35 @@ struct ae_set_tuoch_zone {
 };
 
 struct ae_set_index {
-	uint32_t index;
+	cmr_u32 index;
 };
 
 struct ae_exposure {
-	uint32_t exposure;
-	uint32_t dummy;
-	uint32_t size_index;
+	cmr_u32 exposure;
+	cmr_u32 dummy;
+	cmr_u32 size_index;
 };
 
 struct ae_gain {
-	uint32_t gain;
+	cmr_u32 gain;
 };
 
 struct ae_exposure_gain {
-	int8_t set_mode;	//0: exp&gain   1: table-index
+	cmr_s8 set_mode;	//0: exp&gain   1: table-index
 	float exposure;
-	int16_t index;
-	int16_t expline;
-	int16_t dummy;
-	int16_t again;
-	int16_t dgain;
+	cmr_s16 index;
+	cmr_s16 expline;
+	cmr_s16 dummy;
+	cmr_s16 again;
+	cmr_s16 dgain;
 };
 
 struct ae_monitor_cfg {
-	uint32_t skip_num;
+	cmr_u32 skip_num;
 };
 
 struct ae_monitor_info {
-	uint32_t shift;
+	cmr_u32 shift;
 	struct ae_size win_size;
 	struct ae_size win_num;
 	struct ae_trim trim;
@@ -366,88 +366,88 @@ struct ae_scene_mode_info {
 
 struct ae_mode_info {
 	/*after dcam init, those para will be configered by app*/
-	uint32_t enable;
-	uint32_t ev_offset;
-	uint32_t mode;
-	uint32_t iso;
-	uint32_t flicker;
-	uint32_t fix_fps;
-	uint32_t min_fps;
-	uint32_t weight;
-	uint32_t index_default;
+	cmr_u32 enable;
+	cmr_u32 ev_offset;
+	cmr_u32 mode;
+	cmr_u32 iso;
+	cmr_u32 flicker;
+	cmr_u32 fix_fps;
+	cmr_u32 min_fps;
+	cmr_u32 weight;
+	cmr_u32 index_default;
 	};
 
 struct ae_normal_info {
-	//uint32_t gain; TOB
-	uint32_t exposure;	//unit: s
-	int16_t fps;
-	int8_t stable;
+	//cmr_u32 gain; TOB
+	cmr_u32 exposure;	//unit: s
+	cmr_s16 fps;
+	cmr_s8 stable;
 };
 
 
 struct ae_flash_element {
-	uint16_t index;
-	uint16_t val;
+	cmr_u16 index;
+	cmr_u16 val;
 };
 
 struct ae_flash_cell {
-	uint8_t type;
-	uint8_t count;
-	uint8_t def_val;
+	cmr_u8 type;
+	cmr_u8 count;
+	cmr_u8 def_val;
 	struct ae_flash_element element[AE_FLASH_MAX_CELL];
 };
 
 struct ae_flash_cfg {
-	uint32_t type; // enum isp_flash_type
-	uint32_t led_idx; //enum isp_flash_led
+	cmr_u32 type; // enum isp_flash_type
+	cmr_u32 led_idx; //enum isp_flash_led
 };
 
 struct ae_isp_ctrl_ops {
-	void *isp_handler;
-	 int32_t(*set_exposure) (void *handler, struct ae_exposure * in_param);
-	 int32_t(*set_again) (void *handler, struct ae_gain * in_param);
-	 int32_t(*set_monitor) (void *handler, struct ae_monitor_cfg * in_param);
-	 int32_t(*set_monitor_win) (void *handler, struct ae_monitor_info * in_param);
-	 int32_t(*callback) (void *handler, uint32_t cb_type);
-	 int32_t(*set_monitor_bypass) (void *handler, uint32_t is_bypass);
-	 int32_t(*get_system_time) (void *handler, uint32_t * sec, uint32_t * usec);
-	 int32_t(*set_statistics_mode) (void *handler, enum ae_statistics_mode mode, uint32_t skip_number);
+	cmr_handle isp_handler;
+	 cmr_s32(*set_exposure) (cmr_handle handler, struct ae_exposure * in_param);
+	 cmr_s32(*set_again) (cmr_handle handler, struct ae_gain * in_param);
+	 cmr_s32(*set_monitor) (cmr_handle handler, struct ae_monitor_cfg * in_param);
+	 cmr_s32(*set_monitor_win) (cmr_handle handler, struct ae_monitor_info * in_param);
+	 cmr_s32(*callback) (cmr_handle handler, cmr_u32 cb_type);
+	 cmr_s32(*set_monitor_bypass) (cmr_handle handler, cmr_u32 is_bypass);
+	 cmr_s32(*get_system_time) (cmr_handle handler, cmr_u32 * sec, cmr_u32 * usec);
+	 cmr_s32(*set_statistics_mode) (cmr_handle handler, enum ae_statistics_mode mode, cmr_u32 skip_number);
 
-	 int32_t(*flash_get_charge) (void *handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_cell *cell_ptr);
-	 int32_t(*flash_get_time) (void *handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_cell *cell_ptr);
-	 int32_t(*flash_set_charge) (void *handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_element *element_ptr);
-	 int32_t(*flash_set_time) (void *handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_element *element_ptr);
-	 int32_t(*flash_ctrl) (void *handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_element *element_ptr);
+	 cmr_s32(*flash_get_charge) (cmr_handle handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_cell *cell_ptr);
+	 cmr_s32(*flash_get_time) (cmr_handle handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_cell *cell_ptr);
+	 cmr_s32(*flash_set_charge) (cmr_handle handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_element *element_ptr);
+	 cmr_s32(*flash_set_time) (cmr_handle handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_element *element_ptr);
+	 cmr_s32(*flash_ctrl) (cmr_handle handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_element *element_ptr);
 
-	 int32_t(*ex_set_exposure) (void *handler, struct ae_exposure * in_param);
-	 int32_t(*lcd_set_awb) (void *handler, uint32_t effect);
-	 int32_t(*set_rgb_gain) (void *handler, double rgb_gain_coeff);
-	 int32_t(*set_shutter_gain_delay_info)(void*handler, void* param);
+	 cmr_s32(*ex_set_exposure) (cmr_handle handler, struct ae_exposure * in_param);
+	 cmr_s32(*lcd_set_awb) (cmr_handle handler, cmr_u32 effect);
+	 cmr_s32(*set_rgb_gain) (cmr_handle handler, double rgb_gain_coeff);
+	 cmr_s32(*set_shutter_gain_delay_info)(cmr_handle handler, cmr_handle param);
 };
 
 struct ae_stat_img_info {
-	uint32_t frame_id;
-	int32_t index;
-	uint32_t exposure;
-	uint32_t again;
-	uint32_t dgain;
+	cmr_u32 frame_id;
+	cmr_s32 index;
+	cmr_u32 exposure;
+	cmr_u32 again;
+	cmr_u32 dgain;
 };
 
 struct tg_ae_ctrl_alc_log {
-	uint8_t *log;
-	uint32_t size;
+	cmr_u8 *log;
+	cmr_u32 size;
 };
 
 struct ae_stat_mode {
-	uint32_t mode; //0:normal; 1: G width
-	uint32_t will_capture;
+	cmr_u32 mode; //0:normal; 1: G width
+	cmr_u32 will_capture;
 	struct ae_trim trim;
 };
 
 struct ae_snapshot_notice {
-	uint32_t type;
-	uint32_t preview_line_time;
-	uint32_t capture_line_time;
+	cmr_u32 type;
+	cmr_u32 preview_line_time;
+	cmr_u32 capture_line_time;
 };
 
 enum ae_online_ctrl_mode{
@@ -459,44 +459,44 @@ enum ae_online_ctrl_mode{
 
 struct ae_online_ctrl{
 	enum ae_online_ctrl_mode mode;
-	uint32_t index;
-	uint32_t lum;
-	uint32_t shutter;
-	uint32_t dummy;
-	uint32_t again;
-	uint32_t dgain;
-	uint32_t skipa;
-	uint32_t skipd;
+	cmr_u32 index;
+	cmr_u32 lum;
+	cmr_u32 shutter;
+	cmr_u32 dummy;
+	cmr_u32 again;
+	cmr_u32 dgain;
+	cmr_u32 skipa;
+	cmr_u32 skipd;
 };
 
 struct ae_face {
 	struct ae_rect rect;
-	uint32_t face_lum;
-	int32_t pose;  /* face pose: frontal, half-profile, full-profile */
+	cmr_u32 face_lum;
+	cmr_s32 pose;  /* face pose: frontal, half-profile, full-profile */
 };
 
 struct ae_fd_param {
-	uint16_t width;
-	uint16_t height;
-	uint16_t face_num;
+	cmr_u16 width;
+	cmr_u16 height;
+	cmr_u16 face_num;
 	struct ae_face face_area[AE_FD_NUM];
 };
 
 struct ae_flash_power {
-	int32_t max_charge;	//mA
-	int32_t max_time;	//ms
+	cmr_s32 max_charge;	//mA
+	cmr_s32 max_time;	//ms
 };
 
 struct ae_flash_notice {
-	uint32_t mode;	//enum isp_flash_mode
-	uint32_t will_capture;
+	cmr_u32 mode;	//enum isp_flash_mode
+	cmr_u32 will_capture;
 	union {
-		uint32_t flash_ratio;
+		cmr_u32 flash_ratio;
 		struct ae_flash_power power;
 	};
-	uint32_t capture_skip_num;
-	uint32_t lcd_flash_tune_a;
-	uint32_t lcd_flash_tune_b;
+	cmr_u32 capture_skip_num;
+	cmr_u32 lcd_flash_tune_a;
+	cmr_u32 lcd_flash_tune_b;
 };
 
 /**----------------------------------------------------------------------------*

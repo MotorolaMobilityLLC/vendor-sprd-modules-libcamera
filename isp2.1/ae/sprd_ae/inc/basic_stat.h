@@ -41,25 +41,25 @@ extern "C" {
 **				Data Structures				*
 **---------------------------------------------------------------------------*/
 	typedef struct  {
-		int16_t top_range;//range of bigger value
-		int16_t data_len;
-		int8_t debug_level;
-		int16_t bright_thr;
-		int16_t dark_thr;
+		cmr_s16 top_range;//range of bigger value
+		cmr_s16 data_len;
+		cmr_s8 debug_level;
+		cmr_s16 bright_thr;
+		cmr_s16 dark_thr;
 	} basic_in;//tuning info
 
 	typedef struct  {
-		int16_t histogram[256];
-		int16_t media_1;
-		int16_t media_2;
+		cmr_s16 histogram[256];
+		cmr_s16 media_1;
+		cmr_s16 media_2;
 		float mean;
-		int16_t top;	//average of bigger value
-		int16_t maximum;
-		int16_t minimum;
+		cmr_s16 top;	//average of bigger value
+		cmr_s16 maximum;
+		cmr_s16 minimum;
 		float var;
-		int16_t bright_num;
-		int16_t dark_num;
-		int16_t normal_num;
+		cmr_s16 bright_num;
+		cmr_s16 dark_num;
+		cmr_s16 normal_num;
 	} basic_rt;//calc info
 
 	typedef struct  {
@@ -69,10 +69,10 @@ extern "C" {
 /**---------------------------------------------------------------------------*
 ** 				Function Defination			*
 **---------------------------------------------------------------------------*/
-	int32_t initbasic(basic_stat * basic, uint32_t debug_level);
-	int32_t deinitbasic(basic_stat * basic);
-	int32_t calcbasic(basic_stat * basic, int len, uint8_t * data);
-	int32_t round_ae(float iodata);
+	cmr_s32 initbasic(basic_stat * basic, cmr_u32 debug_level);
+	cmr_s32 deinitbasic(basic_stat * basic);
+	cmr_s32 calcbasic(basic_stat * basic, cmr_s32 len, cmr_u8 * data);
+	cmr_s32 round_ae(float iodata);
 
 /**----------------------------------------------------------------------------*
 **					Compiler Flag			*

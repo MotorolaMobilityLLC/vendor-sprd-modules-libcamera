@@ -21,8 +21,6 @@
  **---------------------------------------------------------------------------*/
 #include "isp_type.h"
 #include "ae_log.h"
-#define cmr_int int32_t
-#define cmr_u32 int32_t
 /**---------------------------------------------------------------------------*
  **				 Compiler Flag				*
  **---------------------------------------------------------------------------*/
@@ -57,10 +55,10 @@ extern "C" {
 		cmr_u32 idx_start_from;
 	};
 
-	cmr_int seq_init(cmr_u32 queue_num, struct seq_init_in *in_ptr, void **handle);
-	cmr_int seq_deinit(void *handle);
-	cmr_int seq_reset(void *handle);
-	cmr_int seq_put(void *handle, struct seq_item *in_est_ptr, struct seq_cell *out_actual_ptr, struct seq_cell *out_write_ptr);
+	cmr_int seq_init(cmr_u32 queue_num, struct seq_init_in *in_ptr, cmr_handle *handle);
+	cmr_int seq_deinit(cmr_handle handle);
+	cmr_int seq_reset(cmr_handle handle);
+	cmr_int seq_put(cmr_handle handle, struct seq_item *in_est_ptr, struct seq_cell *out_actual_ptr, struct seq_cell *out_write_ptr);
 /**----------------------------------------------------------------------------*
 **					Compiler Flag				**
 **----------------------------------------------------------------------------*/

@@ -40,9 +40,9 @@ struct aectrl_cxt {
 	pthread_mutex_t ioctrl_sync_lock;
 };
 
-int32_t _isp_get_flash_cali_param(isp_pm_handle_t pm_handle, struct isp_flash_param **out_param_ptr)
+cmr_s32 _isp_get_flash_cali_param(isp_pm_handle_t pm_handle, struct isp_flash_param **out_param_ptr)
 {
-	int32_t                         rtn = ISP_SUCCESS;
+	cmr_s32                         rtn = ISP_SUCCESS;
 	struct isp_pm_param_data        param_data;
 	struct isp_pm_ioctl_input       input = {NULL, 0};
 	struct isp_pm_ioctl_output      output = {NULL, 0};
@@ -63,7 +63,7 @@ int32_t _isp_get_flash_cali_param(isp_pm_handle_t pm_handle, struct isp_flash_pa
 	return rtn;
 }
 
-static int32_t ae_ex_set_exposure(void *handler, struct ae_exposure *in_param)
+static cmr_s32 ae_ex_set_exposure(cmr_handle handler, struct ae_exposure *in_param)
 {
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
 
@@ -74,7 +74,7 @@ static int32_t ae_ex_set_exposure(void *handler, struct ae_exposure *in_param)
 	return 0;
 }
 
-static int32_t ae_set_exposure(void *handler, struct ae_exposure *in_param)
+static cmr_s32 ae_set_exposure(cmr_handle handler, struct ae_exposure *in_param)
 {
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
 
@@ -85,7 +85,7 @@ static int32_t ae_set_exposure(void *handler, struct ae_exposure *in_param)
 	return 0;
 }
 
-static int32_t ae_set_again(void *handler, struct ae_gain *in_param)
+static cmr_s32 ae_set_again(cmr_handle handler, struct ae_gain *in_param)
 {
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
 
@@ -96,7 +96,7 @@ static int32_t ae_set_again(void *handler, struct ae_gain *in_param)
 	return 0;
 }
 
-static int32_t ae_set_monitor(void *handler, struct ae_monitor_cfg *in_param)
+static cmr_s32 ae_set_monitor(cmr_handle handler, struct ae_monitor_cfg *in_param)
 {
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
 
@@ -107,7 +107,7 @@ static int32_t ae_set_monitor(void *handler, struct ae_monitor_cfg *in_param)
 	return 0;
 }
 
-static int32_t ae_set_monitor_win(void *handler, struct ae_monitor_info *in_param)
+static cmr_s32 ae_set_monitor_win(cmr_handle handler, struct ae_monitor_info *in_param)
 {
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
 
@@ -118,7 +118,7 @@ static int32_t ae_set_monitor_win(void *handler, struct ae_monitor_info *in_para
 	return 0;
 }
 
-static int32_t ae_set_monitor_bypass(void *handler, uint32_t is_bypass)
+static cmr_s32 ae_set_monitor_bypass(cmr_handle handler, cmr_u32 is_bypass)
 {
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
 
@@ -129,7 +129,7 @@ static int32_t ae_set_monitor_bypass(void *handler, uint32_t is_bypass)
 	return 0;
 }
 
-static int32_t ae_set_statistics_mode(void *handler, enum ae_statistics_mode mode, uint32_t skip_number)
+static cmr_s32 ae_set_statistics_mode(cmr_handle handler, enum ae_statistics_mode mode, cmr_u32 skip_number)
 {
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
 
@@ -140,7 +140,7 @@ static int32_t ae_set_statistics_mode(void *handler, enum ae_statistics_mode mod
 	return 0;
 }
 
-static int32_t ae_callback(void *handler, enum ae_cb_type cb_type)
+static cmr_s32 ae_callback(cmr_handle handler, enum ae_cb_type cb_type)
 {
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
 
@@ -151,7 +151,7 @@ static int32_t ae_callback(void *handler, enum ae_cb_type cb_type)
 	return 0;
 }
 
-static int32_t ae_get_system_time(void *handler, uint32_t *sec, uint32_t *usec)
+static cmr_s32 ae_get_system_time(cmr_handle handler, cmr_u32 *sec, cmr_u32 *usec)
 {
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
 
@@ -162,9 +162,9 @@ static int32_t ae_get_system_time(void *handler, uint32_t *sec, uint32_t *usec)
 	return 0;
 }
 
-static int32_t ae_flash_get_charge(void *handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_cell *cell_ptr)
+static cmr_s32 ae_flash_get_charge(cmr_handle handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_cell *cell_ptr)
 {
-	int32_t                         ret = 0;
+	cmr_s32                         ret = 0;
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
 
 	if (cxt_ptr->ae_set_cb) {
@@ -174,9 +174,9 @@ static int32_t ae_flash_get_charge(void *handler, struct ae_flash_cfg *cfg_ptr, 
 	return ret;
 }
 
-static int32_t ae_flash_get_time(void *handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_cell *cell_ptr)
+static cmr_s32 ae_flash_get_time(cmr_handle handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_cell *cell_ptr)
 {
-	int32_t                         ret = 0;
+	cmr_s32                         ret = 0;
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
 
 	if (cxt_ptr->ae_set_cb) {
@@ -186,9 +186,9 @@ static int32_t ae_flash_get_time(void *handler, struct ae_flash_cfg *cfg_ptr, st
 	return ret;
 }
 
-static int32_t ae_flash_set_charge(void *handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_element *element_ptr)
+static cmr_s32 ae_flash_set_charge(cmr_handle handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_element *element_ptr)
 {
-	int32_t                         ret = 0;
+	cmr_s32                         ret = 0;
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
 
 	if (cxt_ptr->ae_set_cb) {
@@ -199,9 +199,9 @@ static int32_t ae_flash_set_charge(void *handler, struct ae_flash_cfg *cfg_ptr, 
 	return ret;
 }
 
-static int32_t ae_flash_set_time(void *handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_element *element_ptr)
+static cmr_s32 ae_flash_set_time(cmr_handle handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_element *element_ptr)
 {
-	int32_t                         ret = 0;
+	cmr_s32                         ret = 0;
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
 
 	if (cxt_ptr->ae_set_cb) {
@@ -211,9 +211,9 @@ static int32_t ae_flash_set_time(void *handler, struct ae_flash_cfg *cfg_ptr, st
 	return ret;
 }
 
-static int32_t ae_flash_ctrl_enable(void *handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_element *element_ptr)
+static cmr_s32 ae_flash_ctrl_enable(cmr_handle handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_element *element_ptr)
 {
-	int32_t                         ret = 0;
+	cmr_s32                         ret = 0;
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
 
 	if (cxt_ptr->ae_set_cb) {
@@ -224,7 +224,7 @@ static int32_t ae_flash_ctrl_enable(void *handler, struct ae_flash_cfg *cfg_ptr,
 	return ret;
 }
 
-static int32_t ae_set_rgb_gain(void *handler, double gain)
+static cmr_s32 ae_set_rgb_gain(cmr_handle handler, double gain)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	cmr_u32 final_gain = 0;
@@ -239,7 +239,7 @@ static int32_t ae_set_rgb_gain(void *handler, double gain)
 	return rtn;
 }
 
-static cmr_int ae_get_rgb_gain(void *handler, cmr_u32 *gain)
+static cmr_int ae_get_rgb_gain(cmr_handle handler, cmr_u32 *gain)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handler;
@@ -251,7 +251,7 @@ static cmr_int ae_get_rgb_gain(void *handler, cmr_u32 *gain)
 	return rtn;
 }
 
-static int32_t ae_set_shutter_gain_delay_info(void* handler, void* param)
+static cmr_s32 ae_set_shutter_gain_delay_info(cmr_handle handler, cmr_handle param)
 {
 	isp_ctrl_context *ctrl_context = (isp_ctrl_context*)handler;
 
@@ -292,7 +292,7 @@ exit:
 	return rtn;
 }
 
-static cmr_int aectrl_ioctrl(struct aectrl_cxt *cxt_ptr, enum ae_io_ctrl_cmd cmd, void *in_ptr, void *out_ptr)
+static cmr_int aectrl_ioctrl(struct aectrl_cxt *cxt_ptr, enum ae_io_ctrl_cmd cmd, cmr_handle in_ptr, cmr_handle out_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct aectrl_work_lib *lib_ptr = NULL;
@@ -338,7 +338,7 @@ exit:
 	return rtn;
 }
 
-static cmr_int aectrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
+static cmr_int aectrl_ctrl_thr_proc(struct cmr_msg *message, cmr_handle p_data)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)p_data;
@@ -378,7 +378,7 @@ static cmr_int aectrl_create_thread(struct aectrl_cxt *cxt_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
 
-	rtn = cmr_thread_create(&cxt_ptr->thr_handle, ISP_THREAD_QUEUE_NUM, aectrl_ctrl_thr_proc, (void*)cxt_ptr);
+	rtn = cmr_thread_create(&cxt_ptr->thr_handle, ISP_THREAD_QUEUE_NUM, aectrl_ctrl_thr_proc, (cmr_handle)cxt_ptr);
 	if (rtn) {
 		ISP_LOGE("fail to create ctrl thread");
 		rtn = ISP_ERROR;
@@ -455,7 +455,7 @@ exit:
 	return rtn;
 }
 
-cmr_int ae_ctrl_ioctrl(cmr_handle handle, enum ae_io_ctrl_cmd cmd, void *in_ptr, void *out_ptr)
+cmr_int ae_ctrl_ioctrl(cmr_handle handle, enum ae_io_ctrl_cmd cmd, cmr_handle in_ptr, cmr_handle out_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt*)handle;
@@ -479,9 +479,9 @@ exit:
 	return rtn;
 }
 
-int32_t ae_ctrl_init(struct ae_init_in *input_ptr, cmr_handle *handle_ae)
+cmr_s32 ae_ctrl_init(struct ae_init_in *input_ptr, cmr_handle *handle_ae)
 {
-	int32_t                         rtn = ISP_SUCCESS;
+	cmr_s32                         rtn = ISP_SUCCESS;
 	struct aectrl_cxt *cxt_ptr = NULL;
 	struct aectrl_work_lib *lib_ptr = NULL;
 
@@ -538,7 +538,7 @@ error_adpt_init:
 	pthread_mutex_destroy(&cxt_ptr->ioctrl_sync_lock);
 exit:
 	if (cxt_ptr) {
-		free((void*)cxt_ptr);
+		free((cmr_handle)cxt_ptr);
 		cxt_ptr = NULL;
 	}
 
@@ -576,7 +576,7 @@ cmr_int ae_ctrl_deinit(cmr_handle *handle_ae)
 	pthread_mutex_destroy(&cxt_ptr->ioctrl_sync_lock);
 exit:
 	if (cxt_ptr) {
-		free((void*)cxt_ptr);
+		free((cmr_handle)cxt_ptr);
 		*handle_ae = NULL;
 	}
 
@@ -598,7 +598,7 @@ cmr_int ae_ctrl_process(cmr_handle handle_ae, struct ae_calc_in *in_ptr, struct 
 		rtn = ISP_ALLOC_ERROR;
 		goto exit;
 	}
-	memcpy(message.data, (void *)in_ptr, sizeof(struct ae_calc_in));
+	memcpy(message.data, (cmr_handle)in_ptr, sizeof(struct ae_calc_in));
 	message.alloc_flag = 1;
 
 	message.msg_type = AECTRL_EVT_PROCESS;

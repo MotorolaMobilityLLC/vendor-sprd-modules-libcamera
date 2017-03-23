@@ -30,17 +30,17 @@
  **				 Compiler Flag					*
  **---------------------------------------------------------------------------*/
   struct ae_param_tmp_001{
-	uint32_t version;
-	uint32_t verify;
-	uint32_t alg_id;
-	uint32_t target_lum;
-	uint32_t target_lum_zone; // x16
-	uint32_t convergence_speed; // x16
-	uint32_t flicker_index;
-	uint32_t min_line;
-	uint32_t start_index;
-	uint32_t exp_skip_num;
-	uint32_t gain_skip_num;
+	cmr_u32 version;
+	cmr_u32 verify;
+	cmr_u32 alg_id;
+	cmr_u32 target_lum;
+	cmr_u32 target_lum_zone; // x16
+	cmr_u32 convergence_speed; // x16
+	cmr_u32 flicker_index;
+	cmr_u32 min_line;
+	cmr_u32 start_index;
+	cmr_u32 exp_skip_num;
+	cmr_u32 gain_skip_num;
 	struct ae_stat_req stat_req;
 	struct ae_flash_tuning flash_tuning;
 	struct touch_zone touch_param;
@@ -54,17 +54,17 @@ struct ae_param_tmp_002{
 };
 
 struct ae_tuning_param {//total bytes must be 263480
-	uint32_t version;
-	uint32_t verify;
-	uint32_t alg_id;
-	uint32_t target_lum;
-	uint32_t target_lum_zone;	// x16
-	uint32_t convergence_speed;// x16
-	uint32_t flicker_index;
-	uint32_t min_line;
-	uint32_t start_index;
-	uint32_t exp_skip_num;
-	uint32_t gain_skip_num;
+	cmr_u32 version;
+	cmr_u32 verify;
+	cmr_u32 alg_id;
+	cmr_u32 target_lum;
+	cmr_u32 target_lum_zone;	// x16
+	cmr_u32 convergence_speed;// x16
+	cmr_u32 flicker_index;
+	cmr_u32 min_line;
+	cmr_u32 start_index;
+	cmr_u32 exp_skip_num;
+	cmr_u32 gain_skip_num;
 	struct ae_stat_req stat_req;
 	struct ae_flash_tuning flash_tuning;
 	struct touch_zone touch_param;
@@ -81,12 +81,12 @@ struct ae_tuning_param {//total bytes must be 263480
 	struct ae_face_tune_param face_info;
 
 	/*13 * 4bytes */
-	uint8_t monitor_mode;	/*0: single, 1: continue */
-	uint8_t ae_tbl_exp_mode;	/*0: ae table exposure is exposure time; 1: ae table exposure is exposure line */
-	uint8_t enter_skip_num;	/*AE alg skip frame as entering camera */
-	uint8_t cnvg_stride_ev_num;
-	int8_t cnvg_stride_ev[32];
-	int8_t stable_zone_ev[16];
+	cmr_u8 monitor_mode;	/*0: single, 1: continue */
+	cmr_u8 ae_tbl_exp_mode;	/*0: ae table exposure is exposure time; 1: ae table exposure is exposure line */
+	cmr_u8 enter_skip_num;	/*AE alg skip frame as entering camera */
+	cmr_u8 cnvg_stride_ev_num;
+	cmr_s8 cnvg_stride_ev[32];
+	cmr_s8 stable_zone_ev[16];
 
 	struct ae_sensor_cfg sensor_cfg;	/*sensor cfg information: 2 * 4bytes */
 
@@ -100,7 +100,7 @@ struct ae_tuning_param {//total bytes must be 263480
 	struct mulaes_tuning_param mulaes_param;	/*9 * 4bytes */
     struct face_tuning_param face_param;
 
-	uint32_t reserved[2046];
+	cmr_u32 reserved[2046];
 };
 
 /**---------------------------------------------------------------------------*/

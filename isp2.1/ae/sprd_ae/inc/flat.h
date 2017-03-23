@@ -35,15 +35,15 @@ extern "C"  {
 **                              Data Prototype                          *
 **----------------------------------------------------------------------------*/
 typedef struct {
-	int16_t thrd[2];
-	int16_t offset[2];
+	cmr_s16 thrd[2];
+	cmr_s16 offset[2];
 } flat_cfg;/*2 * 4bytes */
 
 struct flat_tuning_param {
 	/*1 * 4bytes */
-	uint8_t enable;
-	uint8_t num;
-	uint16_t reserved;
+	cmr_u8 enable;
+	cmr_u8 num;
+	cmr_u16 reserved;
 	/*flat tune param; total 8 group */
 	flat_cfg cfg_info[FLAT_CFG_NUM];/*16 * 4bytes */
 	struct ae_piecewise_func out_piecewise;/*17 * 4bytes */
@@ -51,25 +51,25 @@ struct flat_tuning_param {
 };/*51 * 4bytes */
 
 typedef struct  {
-	uint8_t mlog_en;
-	uint16_t down_scale;
-	uint8_t * ydata;
+	cmr_u8 mlog_en;
+	cmr_u16 down_scale;
+	cmr_u8 * ydata;
 	float real_target;
-	int32_t match_lv;
+	cmr_s32 match_lv;
 } flat_in;//tuning info
 
 typedef struct  {
-	int16_t tar_offset;
-	int16_t input_interpolation[4];
+	cmr_s16 tar_offset;
+	cmr_s16 input_interpolation[4];
 	float degree;
 	float strength;
 	char* log_ptr;
 } flat_rt;//calc info
 
 typedef struct  {
-	int8_t enable;
-	int8_t debug_level;
-	uint8_t mlog_en;
+	cmr_s8 enable;
+	cmr_s8 debug_level;
+	cmr_u8 mlog_en;
 	struct flat_tuning_param tune_param;
 	float flat_h;
 	float flat_l;
@@ -77,14 +77,14 @@ typedef struct  {
 	float flat_oft_uf;
 	flat_in in_flat;
 	flat_rt result_flat;
-	uint32_t mlog_buf[256];
+	cmr_u32 mlog_buf[256];
 } flat_stat;
 /**---------------------------------------------------------------------------*
 **                              FLAT Function Prototype                          *
 **----------------------------------------------------------------------------*/
-int32_t flat_init(flat_stat * cxt, struct flat_tuning_param *tune_param_ptr);
-int32_t flat_calc(flat_stat * cxt);
-int32_t flat_deinit(flat_stat * cxt);
+cmr_s32 flat_init(flat_stat * cxt, struct flat_tuning_param *tune_param_ptr);
+cmr_s32 flat_calc(flat_stat * cxt);
+cmr_s32 flat_deinit(flat_stat * cxt);
 /**----------------------------------------------------------------------------*
 **                                      Compiler Flag                           **
 **----------------------------------------------------------------------------*/

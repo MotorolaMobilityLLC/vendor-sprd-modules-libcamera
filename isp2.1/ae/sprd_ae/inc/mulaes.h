@@ -34,48 +34,48 @@ extern "C"  {
 **                              Data Prototype                                                                                  *
 **----------------------------------------------------------------------------*/
 	struct mulaes_cfg {
-		int16_t x_idx;
-		int16_t y_lum;
+		cmr_s16 x_idx;
+		cmr_s16 y_lum;
 	};
 
 	struct mulaes_tuning_param {
-		uint8_t enable;
-		uint8_t num;
-		uint16_t reserved;	/*1 * 4bytes */
+		cmr_u8 enable;
+		cmr_u8 num;
+		cmr_u16 reserved;	/*1 * 4bytes */
 		struct mulaes_cfg cfg[MULAES_CFG_NUM];/*8 * 4bytes */
 	};/*9 * 4bytes */
 
 	typedef struct {
-		uint8_t mlog_en;
-		int16_t effect_idx;
-		int16_t match_lv;
+		cmr_u8 mlog_en;
+		cmr_s16 effect_idx;
+		cmr_s16 match_lv;
 		float real_target;
 	} mulaes_in;//tuning info
 
 	typedef struct {
 		float artifact_tar;
-		int16_t tar_offset;
+		cmr_s16 tar_offset;
 		char *log;
 	} mulaes_rt;//result info
 
 	typedef struct {
-		int8_t enable;
-		int8_t debug_level;
-		int8_t mlog_en;
-		int8_t reserved;
+		cmr_s8 enable;
+		cmr_s8 debug_level;
+		cmr_s8 mlog_en;
+		cmr_s8 reserved;
 		struct mulaes_tuning_param tune_param;
-		int16_t dynamic_table[600];
+		cmr_s16 dynamic_table[600];
 		mulaes_in in_mulaes;
 		mulaes_rt result_mulaes;
-		uint32_t log_buf[256];
+		cmr_u32 log_buf[256];
 	} mulaes_stat;
 
 /**---------------------------------------------------------------------------*
 **				Function Defination 		*
 **---------------------------------------------------------------------------*/
-	int32_t mulaes_init(mulaes_stat * cxt, struct mulaes_tuning_param *tune_param_ptr);
-	int32_t mulaes_calc(mulaes_stat * cxt);
-	int32_t mulaes_deinit(mulaes_stat * cxt);
+	cmr_s32 mulaes_init(mulaes_stat * cxt, struct mulaes_tuning_param *tune_param_ptr);
+	cmr_s32 mulaes_calc(mulaes_stat * cxt);
+	cmr_s32 mulaes_deinit(mulaes_stat * cxt);
 
 /**----------------------------------------------------------------------------*
 **                                      Compiler Flag                           **

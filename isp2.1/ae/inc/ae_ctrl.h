@@ -36,79 +36,79 @@ extern "C"
 #endif
 
 struct ae_init_in {
-	uint32_t param_num;
+	cmr_u32 param_num;
 	struct ae_param param[AE_MAX_PARAM_NUM];
 	struct ae_size monitor_win_num;
 	struct ae_isp_ctrl_ops isp_ops;
 	struct ae_resolution_info resolution_info;
 	struct third_lib_info lib_param;
-	uint32_t camera_id;
+	cmr_u32 camera_id;
 	cmr_handle caller_handle;
 	isp_ae_cb ae_set_cb;
-	uint32_t has_force_bypass;
+	cmr_u32 has_force_bypass;
 	struct ae_opt_info otp_info;
-	void *lsc_otp_random;
-	void *lsc_otp_golden;
-	uint32_t lsc_otp_width;
-	uint32_t lsc_otp_height;
+	cmr_handle lsc_otp_random;
+	cmr_handle lsc_otp_golden;
+	cmr_u32 lsc_otp_width;
+	cmr_u32 lsc_otp_height;
 };
 
 struct ae_init_out {
-	uint32_t cur_index;
-	uint32_t cur_exposure;
-	uint32_t cur_again;
-	uint32_t cur_dgain;
-	uint32_t cur_dummy;
+	cmr_u32 cur_index;
+	cmr_u32 cur_exposure;
+	cmr_u32 cur_again;
+	cmr_u32 cur_dgain;
+	cmr_u32 cur_dummy;
 };
 
 
 struct ae_calc_in {
-	uint32_t stat_fmt;	//enum ae_aem_fmt
+	cmr_u32 stat_fmt;	//enum ae_aem_fmt
 	union {
-		uint32_t *stat_img;
-		uint32_t *rgb_stat_img;
+		cmr_u32 *stat_img;
+		cmr_u32 *rgb_stat_img;
 	};
-	uint32_t *yiq_stat_img;
-	uint32_t awb_gain_r;
-	uint32_t awb_gain_g;
-	uint32_t awb_gain_b;
+	cmr_u32 *yiq_stat_img;
+	cmr_u32 awb_gain_r;
+	cmr_u32 awb_gain_g;
+	cmr_u32 awb_gain_b;
 	struct ae_stat_img_info info;
-	uint32_t sec;
-	uint32_t usec;
+	cmr_u32 sec;
+	cmr_u32 usec;
 	struct isp_sensor_fps_info sensor_fps;
 };
 
 struct ae_calc_out {
-	uint32_t cur_lum;
-	uint32_t cur_index;
-	uint32_t cur_ev;
-	uint32_t cur_exp_line;
-	uint32_t cur_dummy;
-	uint32_t cur_again;
-	uint32_t cur_dgain;
-	uint32_t cur_iso;
-	uint32_t is_stab;
-	uint32_t line_time;
-	uint32_t frame_line;
-	uint32_t target_lum;
+	cmr_u32 cur_lum;
+	cmr_u32 cur_index;
+	cmr_u32 cur_ev;
+	cmr_u32 cur_exp_line;
+	cmr_u32 cur_dummy;
+	cmr_u32 cur_again;
+	cmr_u32 cur_dgain;
+	cmr_u32 cur_iso;
+	cmr_u32 is_stab;
+	cmr_u32 line_time;
+	cmr_u32 frame_line;
+	cmr_u32 target_lum;
 //dy
-	uint32_t flag;
+	cmr_u32 flag;
 	float *ae_data;
-	int32_t ae_data_size;
+	cmr_s32 ae_data_size;
 
 	struct tg_ae_ctrl_alc_log log_ae;
 };
 
 struct ae_ctrl_param_out {
 	union{
-		uint32_t real_iso;
-		uint32_t ae_effect;
-		uint32_t ae_state;
-		uint32_t flash_eb;
-		uint32_t lum;
-		uint32_t mode;
-		int32_t bv_gain;
-		int32_t bv_lum;
+		cmr_u32 real_iso;
+		cmr_u32 ae_effect;
+		cmr_u32 ae_state;
+		cmr_u32 flash_eb;
+		cmr_u32 lum;
+		cmr_u32 mode;
+		cmr_s32 bv_gain;
+		cmr_s32 bv_lum;
 		float gain;
 		float expoture;
 		struct ae_calc_out ae_result;
@@ -117,11 +117,11 @@ struct ae_ctrl_param_out {
 	};
 };
 
-int32_t ae_ctrl_init(struct ae_init_in *input_ptr, cmr_handle *handle_ae);
+cmr_s32 ae_ctrl_init(struct ae_init_in *input_ptr, cmr_handle *handle_ae);
 cmr_int ae_ctrl_deinit(cmr_handle *handle_ae);
-cmr_int ae_ctrl_ioctrl(cmr_handle handle, enum ae_io_ctrl_cmd cmd, void *in_ptr, void *out_ptr);
+cmr_int ae_ctrl_ioctrl(cmr_handle handle, enum ae_io_ctrl_cmd cmd, cmr_handle in_ptr, cmr_handle out_ptr);
 cmr_int ae_ctrl_process(cmr_handle handle, struct ae_calc_in *in_param, struct ae_calc_out *result);
-int32_t _isp_get_flash_cali_param(isp_pm_handle_t pm_handle, struct isp_flash_param **out_param_ptr);
+cmr_s32 _isp_get_flash_cali_param(isp_pm_handle_t pm_handle, struct isp_flash_param **out_param_ptr);
 /**----------------------------------------------------------------------------*
 **					Compiler Flag				**
 **----------------------------------------------------------------------------*/

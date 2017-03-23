@@ -25,7 +25,7 @@
 #elif WIN32
 #include "ae_porting.h"
 #else
-#include <sys/types.h>
+#include "cmr_types.h"
 #endif
 /**---------------------------------------------------------------------------*
  **				 Compiler Flag					*
@@ -77,127 +77,127 @@ enum ae_calc_func_y_type {
 	AE_CALC_FUNC_Y_TYPE_WEIGHT_VALUE = 1,
 };
 
-typedef void* ae_handle_t;
+typedef cmr_handle ae_handle_t;
 struct ae_weight_value {
-	int16_t value[2];
-	int16_t weight[2];
+	cmr_s16 value[2];
+	cmr_s16 weight[2];
 };
 
 struct ae_sample {
-	int16_t x;
-	int16_t y;
+	cmr_s16 x;
+	cmr_s16 y;
 };
 
 struct ae_piecewise_func {
-	int32_t num;
+	cmr_s32 num;
 	struct ae_sample samples[AE_PIECEWISE_SAMPLE_NUM];
 };
 
 struct ae_range {
-	int32_t min;
-	int32_t max;
+	cmr_s32 min;
+	cmr_s32 max;
 };
 
 struct ae_size {
-	uint32_t w;
-	uint32_t h;
+	cmr_u32 w;
+	cmr_u32 h;
 };
 
 struct ae_trim {
-	uint32_t x;
-	uint32_t y;
-	uint32_t w;
-	uint32_t h;
+	cmr_u32 x;
+	cmr_u32 y;
+	cmr_u32 w;
+	cmr_u32 h;
 };
 
 struct ae_rect {
-	uint32_t start_x;
-	uint32_t start_y;
-	uint32_t end_x;
-	uint32_t end_y;
+	cmr_u32 start_x;
+	cmr_u32 start_y;
+	cmr_u32 end_x;
+	cmr_u32 end_y;
 };
 
 struct ae_param {
-	void *param;
-	uint32_t size;
+	cmr_handle param;
+	cmr_u32 size;
 };
 
 struct ae_exp_gain_delay_info{
-	uint8_t group_hold_flag;
-	uint8_t valid_exp_num;
-	uint8_t valid_gain_num;
+	cmr_u8 group_hold_flag;
+	cmr_u8 valid_exp_num;
+	cmr_u8 valid_gain_num;
 };
 
 struct ae_set_fps {
-	uint32_t min_fps; // min fps
-	uint32_t max_fps; // fix fps flag
+	cmr_u32 min_fps; // min fps
+	cmr_u32 max_fps; // fix fps flag
 };
 
 
 struct ae_exp_gain_table {
-	int32_t min_index;
-	int32_t max_index;
-	uint32_t exposure[AE_EXP_GAIN_TABLE_SIZE];
-	uint32_t dummy[AE_EXP_GAIN_TABLE_SIZE];
-	uint16_t again[AE_EXP_GAIN_TABLE_SIZE];
-	uint16_t dgain[AE_EXP_GAIN_TABLE_SIZE];
+	cmr_s32 min_index;
+	cmr_s32 max_index;
+	cmr_u32 exposure[AE_EXP_GAIN_TABLE_SIZE];
+	cmr_u32 dummy[AE_EXP_GAIN_TABLE_SIZE];
+	cmr_u16 again[AE_EXP_GAIN_TABLE_SIZE];
+	cmr_u16 dgain[AE_EXP_GAIN_TABLE_SIZE];
 };
 
 struct ae_weight_table {
-	uint8_t weight[AE_WEIGHT_TABLE_SIZE];
+	cmr_u8 weight[AE_WEIGHT_TABLE_SIZE];
 };
 
 struct ae_ev_table {
-	int32_t lum_diff[AE_EV_LEVEL_NUM];
+	cmr_s32 lum_diff[AE_EV_LEVEL_NUM];
 	/*number of level*/
-	uint32_t diff_num;
+	cmr_u32 diff_num;
 	/*index of default*/
-	uint32_t default_level;
+	cmr_u32 default_level;
 };
 
 struct ae_flash_ctrl {
-	uint32_t enable;
-	uint32_t main_flash_lum;
-	uint32_t convergence_speed;
+	cmr_u32 enable;
+	cmr_u32 main_flash_lum;
+	cmr_u32 convergence_speed;
 };
 
 struct touch_zone {
-	uint32_t level_0_weight;
-	uint32_t level_1_weight;
-	uint32_t level_1_percent; //x64
-	uint32_t level_2_weight;
-	uint32_t level_2_percent; //x64
+	cmr_u32 level_0_weight;
+	cmr_u32 level_1_weight;
+	cmr_u32 level_1_percent; //x64
+	cmr_u32 level_2_weight;
+	cmr_u32 level_2_percent; //x64
 };
 
 struct ae_flash_tuning {
-	uint32_t exposure_index;
+	cmr_u32 exposure_index;
 };
 
 struct ae_stat_req {
-	uint32_t mode; //0:normal, 1:G(center area)
-	uint32_t G_width; //100:G mode(100x100)
+	cmr_u32 mode; //0:normal, 1:G(center area)
+	cmr_u32 G_width; //100:G mode(100x100)
 };
 
 struct ae_auto_iso_tab {
-	uint16_t tbl[AE_FLICKER_NUM][AE_EXP_GAIN_TABLE_SIZE];
+	cmr_u16 tbl[AE_FLICKER_NUM][AE_EXP_GAIN_TABLE_SIZE];
 };
 
 struct ae_ev_cali_param {
-	uint32_t index;
-	uint32_t lux;
-	uint32_t lv;
+	cmr_u32 index;
+	cmr_u32 lux;
+	cmr_u32 lv;
 };
 
 struct ae_ev_cali {
-	uint32_t num;
-	uint32_t min_lum;	// close all the module of after awb module
+	cmr_u32 num;
+	cmr_u32 min_lum;	// close all the module of after awb module
 	struct ae_ev_cali_param tab[16];	// cali EV sequence is low to high
 };
 
 struct ae_rgb_l {
-	uint32_t r;
-	uint32_t g;
-	uint32_t b;
+	cmr_u32 r;
+	cmr_u32 g;
+	cmr_u32 b;
 };
 
 struct ae_opt_info {
@@ -206,71 +206,71 @@ struct ae_opt_info {
 };
 
 struct ae_exp_anti {
-	uint32_t enable;
-	uint8_t hist_thr[40];
-	uint8_t hist_weight[40];
-	uint8_t pos_lut[256];
-	uint8_t hist_thr_num;
-	uint8_t adjust_thr;
-	uint8_t stab_conter;
-	uint8_t reserved1;
+	cmr_u32 enable;
+	cmr_u8 hist_thr[40];
+	cmr_u8 hist_weight[40];
+	cmr_u8 pos_lut[256];
+	cmr_u8 hist_thr_num;
+	cmr_u8 adjust_thr;
+	cmr_u8 stab_conter;
+	cmr_u8 reserved1;
 
-	uint32_t reserved[175];
+	cmr_u32 reserved[175];
 };
 
 struct ae_convergence_parm {
-	uint32_t highcount;
-	uint32_t lowcount;
-	uint32_t highlum_offset_default[AE_OFFSET_NUM];
-	uint32_t lowlum_offset_default[AE_OFFSET_NUM];
-	uint32_t highlum_index[AE_OFFSET_NUM];
-	uint32_t lowlum_index[AE_OFFSET_NUM];
+	cmr_u32 highcount;
+	cmr_u32 lowcount;
+	cmr_u32 highlum_offset_default[AE_OFFSET_NUM];
+	cmr_u32 lowlum_offset_default[AE_OFFSET_NUM];
+	cmr_u32 highlum_index[AE_OFFSET_NUM];
+	cmr_u32 lowlum_index[AE_OFFSET_NUM];
 };
 
 struct ae_flash_tuning_param {
-	uint8_t skip_num;
-	uint8_t target_lum;
-	uint8_t adjust_ratio;	/* 1x --> 32 */
-	uint8_t reserved;
+	cmr_u8 skip_num;
+	cmr_u8 target_lum;
+	cmr_u8 adjust_ratio;	/* 1x --> 32 */
+	cmr_u8 reserved;
 };
 
 struct ae_sensor_cfg {
-	uint16_t max_gain;
-	uint16_t min_gain;
-	uint8_t gain_precision;
-	uint8_t exp_skip_num;
-	uint8_t gain_skip_num;
-	uint8_t reserved;
+	cmr_u16 max_gain;
+	cmr_u16 min_gain;
+	cmr_u8 gain_precision;
+	cmr_u8 exp_skip_num;
+	cmr_u8 gain_skip_num;
+	cmr_u8 reserved;
 };
 
 struct ae_lv_calibration {
-	uint16_t lux_value;
-	int16_t bv_value;
+	cmr_u16 lux_value;
+	cmr_s16 bv_value;
 };
 
 struct ae_face_tune_param {
-	int32_t param_face_weight;/* The ratio of face area weight (in percent) */
-	int32_t param_convergence_speed;/* AE convergence speed */
-	int32_t param_lock_ae;/* frames to lock AE */
-	int32_t param_lock_weight_has_face;/* frames to lock the weight table, when has faces */
-	int32_t param_lock_weight_no_face;/* frames to lock the weight table, when no faces */
-	int32_t param_shrink_face_ratio;/* The ratio to shrink face area. In percent */
+	cmr_s32 param_face_weight;/* The ratio of face area weight (in percent) */
+	cmr_s32 param_convergence_speed;/* AE convergence speed */
+	cmr_s32 param_lock_ae;/* frames to lock AE */
+	cmr_s32 param_lock_weight_has_face;/* frames to lock the weight table, when has faces */
+	cmr_s32 param_lock_weight_no_face;/* frames to lock the weight table, when no faces */
+	cmr_s32 param_shrink_face_ratio;/* The ratio to shrink face area. In percent */
 };
 
 struct ae_scene_info {
-	uint32_t enable;
-	uint32_t scene_mode;
-	uint32_t target_lum;
-	uint32_t iso_index;
-	uint32_t ev_offset;
-	uint32_t max_fps;
-	uint32_t min_fps;
-	uint32_t weight_mode;
-	//uint32_t default_index;
-	uint8_t table_enable;
-	uint8_t  exp_tbl_mode;
-	uint16_t reserved0;
-	uint32_t reserved1;
+	cmr_u32 enable;
+	cmr_u32 scene_mode;
+	cmr_u32 target_lum;
+	cmr_u32 iso_index;
+	cmr_u32 ev_offset;
+	cmr_u32 max_fps;
+	cmr_u32 min_fps;
+	cmr_u32 weight_mode;
+	//cmr_u32 default_index;
+	cmr_u8 table_enable;
+	cmr_u8  exp_tbl_mode;
+	cmr_u16 reserved0;
+	cmr_u32 reserved1;
 	struct ae_exp_gain_table ae_table[AE_FLICKER_NUM];
 };
 /**---------------------------------------------------------------------------*/

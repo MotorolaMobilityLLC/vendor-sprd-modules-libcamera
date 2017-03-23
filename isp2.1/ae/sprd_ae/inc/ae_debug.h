@@ -45,14 +45,14 @@ extern "C" {
 /*------------------------------------------------------------------------------*
 *				Data Structures					*
 *-------------------------------------------------------------------------------*/
-	typedef void *debug_handle_t;
+	typedef cmr_handle debug_handle_t;
 
 	struct ae_debug_file {
 		char file_name[32];
 		char open_mode[4];
 		char file_buffer[AE_DEBUG_FILE_BUF_SIZE];
-		uint32_t buffer_size;
-		uint32_t buffer_used_size;
+		cmr_u32 buffer_size;
+		cmr_u32 buffer_used_size;
 		FILE *pf;
 	};
 /*------------------------------------------------------------------------------*
@@ -63,20 +63,20 @@ extern "C" {
 *				Functions					*
 *-------------------------------------------------------------------------------*/
 /*new interface*/
-	uint32_t debug_print_enable(void);
+	cmr_u32 debug_print_enable(void);
 	debug_handle_t debug_file_init(const char file_name[], const char open_mode[]);
 
 	void debug_file_deinit(debug_handle_t handle);
 
-	uint32_t debug_file_open(debug_handle_t handle, uint32_t debug_level, uint32_t debug_level_thres);
+	cmr_u32 debug_file_open(debug_handle_t handle, cmr_u32 debug_level, cmr_u32 debug_level_thres);
 
 	void debug_file_close(debug_handle_t handle);
 
 	void debug_file_print(debug_handle_t handle, char *str);
 
-	void write_data_uint8_dec(const char *file_name, uint8_t * data, uint32_t item_per_line, uint32_t size);
+	void write_data_uint8_dec(const char *file_name, cmr_u8 * data, cmr_u32 item_per_line, cmr_u32 size);
 
-	void write_data_uint32_dec(const char *file_name, uint32_t * data, uint32_t item_per_line, uint32_t size);
+	void write_data_uint32_dec(const char *file_name, cmr_u32 * data, cmr_u32 item_per_line, cmr_u32 size);
 
 /*------------------------------------------------------------------------------*
 *				Compiler Flag					*

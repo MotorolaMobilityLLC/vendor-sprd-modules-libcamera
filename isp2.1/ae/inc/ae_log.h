@@ -53,7 +53,7 @@ enum {
 };
 
 /*android*/
-extern uint32_t g_ae_log_level;
+extern cmr_u32 g_ae_log_level;
 #define AE_LOG(fmt, args...) ALOGE("%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
 #define AE_LOGE(fmt, args...)  ALOGE("%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
 #define AE_LOGW(fmt, args...) ALOGW_IF(g_ae_log_level >= AE_LOG_LEVEL_OVER_LOGW, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
