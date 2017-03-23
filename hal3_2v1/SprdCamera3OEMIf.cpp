@@ -930,7 +930,9 @@ int SprdCamera3OEMIf::zslTakePicture() {
     }
 
     if (isPreviewing()) {
-        mHalOem->ops->camera_start_preflash(mCameraHandle);
+        if (!(mMultiCameraMode == MODE_BLUR && mSprdReprocessing)) {
+            mHalOem->ops->camera_start_preflash(mCameraHandle);
+        }
         mHalOem->ops->camera_snapshot_is_need_flash(mCameraHandle, mCameraId,
                                                     &mFlashCaptureFlag);
         HAL_LOGD("mFlashCaptureFlag=%d", mFlashCaptureFlag);
