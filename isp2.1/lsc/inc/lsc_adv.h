@@ -90,49 +90,49 @@ enum alsc_io_ctrl_cmd{
 
 
 struct tg_alsc_debug_info {
-	uint8_t *log;
-	uint32_t size;
+	cmr_u8 *log;
+	cmr_u32 size;
 };
 
 
 struct alsc_ver_info{
-	unsigned int LSC_SPD_VERSION;   // LSC version of Spreadtrum
+	cmr_u32 LSC_SPD_VERSION;   // LSC version of Spreadtrum
 };
 
 
 struct debug_lsc_param{
 	char LSC_version[50];
-	unsigned short TB_DNP[12];
-	unsigned short TB_A[12];
-	unsigned short TB_TL84[12];
-	unsigned short TB_D65[12];
-	unsigned short TB_CWF[12];
-	unsigned int STAT_R[5];
-	unsigned int STAT_GR[5];
-	unsigned int STAT_GB[5];
-	unsigned int STAT_B[5];
-	unsigned int gain_width;
-	unsigned int gain_height;
-	unsigned int gain_pattern;
-	unsigned int grid;
+	cmr_u16 TB_DNP[12];
+	cmr_u16 TB_A[12];
+	cmr_u16 TB_TL84[12];
+	cmr_u16 TB_D65[12];
+	cmr_u16 TB_CWF[12];
+	cmr_u32 STAT_R[5];
+	cmr_u32 STAT_GR[5];
+	cmr_u32 STAT_GB[5];
+	cmr_u32 STAT_B[5];
+	cmr_u32 gain_width;
+	cmr_u32 gain_height;
+	cmr_u32 gain_pattern;
+	cmr_u32 grid;
 
 	//SLSC
-	int error_x10000[9];
-	int eratio_before_smooth_x10000[9];
-	int eratio_after_smooth_x10000[9];
-	int final_ratio_x10000;
-	int final_index;
-	unsigned short smart_lsc_table[1024*4];
+	cmr_s32 error_x10000[9];
+	cmr_s32 eratio_before_smooth_x10000[9];
+	cmr_s32 eratio_after_smooth_x10000[9];
+	cmr_s32 final_ratio_x10000;
+	cmr_s32 final_index;
+	cmr_u16 smart_lsc_table[1024*4];
 
 	//ALSC
-	unsigned short alsc_lsc_table[1024*4];
+	cmr_u16 alsc_lsc_table[1024*4];
 
 	//ALSC_SMOOTH
-	unsigned short alsc_smooth_lsc_table[1024*4];
+	cmr_u16 alsc_smooth_lsc_table[1024*4];
 
 	//OUTPUT
-	unsigned short last_lsc_table[1024*4];
-	unsigned short output_lsc_table[1024*4];
+	cmr_u16 last_lsc_table[1024*4];
+	cmr_u16 output_lsc_table[1024*4];
 };
 
 
@@ -145,8 +145,8 @@ enum lsc_gain_pattern {
 
 
 struct LSC_info2AWB{
-	uint16_t  value[2];//final_index;
-	uint16_t  weight[2];// final_ratio;
+	cmr_u16  value[2];//final_index;
+	cmr_u16  weight[2];// final_ratio;
 };
 
 
@@ -181,20 +181,20 @@ enum interp_table_index{
 };
 
 struct LSC_Segs{
-	int table_pair[2];//The index to the shading table pair.
-	int max_CT;//The maximum CT that the pair will be used.
-	int min_CT;//The minimum CT that the pair will be used.
+	cmr_s32 table_pair[2];//The index to the shading table pair.
+	cmr_s32 max_CT;//The maximum CT that the pair will be used.
+	cmr_s32 min_CT;//The minimum CT that the pair will be used.
 };
 
 struct LSC_Setting{
 	struct LSC_Segs segs[MAX_SEGS];//The shading table pairs.
-	int seg_count;//The number of shading table pairs.
+	cmr_s32 seg_count;//The number of shading table pairs.
 
 	double smooth_ratio;//the smooth ratio for the output weighting
-	int proc_inter;//process interval of LSC(unit=frames)
+	cmr_s32 proc_inter;//process interval of LSC(unit=frames)
 
-	int num_seg_queue;//The number of elements for segement voting.
-	int num_seg_vote_th;//The voting threshold for segmenet voting.
+	cmr_s32 num_seg_queue;//The number of elements for segement voting.
+	cmr_s32 num_seg_vote_th;//The voting threshold for segmenet voting.
 };
 */
 
@@ -206,32 +206,32 @@ struct LSC_Setting{
 
 
 struct lsc_adv_tune_param {
-	uint32_t enable;
-	uint32_t alg_id;
+	cmr_u32 enable;
+	cmr_u32 alg_id;
 
-	uint32_t debug_level;
-	uint32_t restore_open;
+	cmr_u32 debug_level;
+	cmr_u32 restore_open;
 
 	/* alg 0 */
-	int strength_level;
+	cmr_s32 strength_level;
 	float pa;				//threshold for seg
 	float pb;
-	uint32_t fft_core_id; 	//fft param ID
-	uint32_t con_weight;	//convergence rate
-	uint32_t freq;
+	cmr_u32 fft_core_id; 	//fft param ID
+	cmr_u32 con_weight;	//convergence rate
+	cmr_u32 freq;
 
 	/* alg 1 */
 	//global
-	uint32_t alg_effective_freq;
+	cmr_u32 alg_effective_freq;
 	double gradient_threshold_rg_coef[5];
 	double gradient_threshold_bg_coef[5];
-	uint32_t thres_bv;
+	cmr_u32 thres_bv;
 	double ds_sub_pixel_ratio;
 	double es_statistic_credibility;
-	uint32_t thres_s1_mi;
+	cmr_u32 thres_s1_mi;
 	double es_credibility_s3_ma;
-	int WindowSize_rg;
-	int WindowSize_bg;
+	cmr_s32 WindowSize_rg;
+	cmr_s32 WindowSize_bg;
 	double dSigma_rg_dx;
 	double dSigma_rg_dy;
 	double dSigma_bg_dx;
@@ -243,68 +243,68 @@ struct lsc_adv_tune_param {
 struct alsc_alg0_turn_para{
 	float pa;				//threshold for seg
 	float pb;
-	uint32_t fft_core_id; 	//fft param ID
-	uint32_t con_weight;	//convergence rate
-	uint32_t bv;
-	uint32_t ct;
-	uint32_t pre_ct;
-	uint32_t pre_bv;
-	uint32_t restore_open;
-	uint32_t freq;
+	cmr_u32 fft_core_id; 	//fft param ID
+	cmr_u32 con_weight;	//convergence rate
+	cmr_u32 bv;
+	cmr_u32 ct;
+	cmr_u32 pre_ct;
+	cmr_u32 pre_bv;
+	cmr_u32 restore_open;
+	cmr_u32 freq;
 	float threshold_grad;
 };
 
 
 struct lsc_weight_value {
-	int32_t value[2];
-	uint32_t weight[2];
+	cmr_s32 value[2];
+	cmr_u32 weight[2];
 };
 
 
 // smart1.0_log_info
 struct lsc_adv_info {
-	uint32_t flat_num;
-	uint32_t flat_status1;
-	uint32_t flat_status2;
-	uint32_t stat_r_var;
-	uint32_t stat_b_var;
-	uint32_t cali_status;
+	cmr_u32 flat_num;
+	cmr_u32 flat_status1;
+	cmr_u32 flat_status2;
+	cmr_u32 stat_r_var;
+	cmr_u32 stat_b_var;
+	cmr_u32 cali_status;
 
-	uint32_t alg_calc_cnt;
+	cmr_u32 alg_calc_cnt;
 	struct lsc_weight_value cur_index;
 	struct lsc_weight_value calc_index;
-	uint32_t cur_ct;
+	cmr_u32 cur_ct;
 
-	uint32_t alg2_enable;
-	uint32_t alg2_seg1_num;
-	uint32_t alg2_seg2_num;
-	uint32_t alg2_seg_num;
-	uint32_t alg2_seg_valid;
-	uint32_t alg2_cnt;
-	uint32_t center_same_num[4];
+	cmr_u32 alg2_enable;
+	cmr_u32 alg2_seg1_num;
+	cmr_u32 alg2_seg2_num;
+	cmr_u32 alg2_seg_num;
+	cmr_u32 alg2_seg_valid;
+	cmr_u32 alg2_cnt;
+	cmr_u32 center_same_num[4];
 };
 
 
 struct lsc_adv_context {
-    unsigned int LSC_SPD_VERSION;
-	uint32_t grid;
-	int32_t gain_pattern;
-	int gain_width;
-    int gain_height;
+    cmr_u32 LSC_SPD_VERSION;
+	cmr_u32 grid;
+	cmr_s32 gain_pattern;
+	cmr_s32 gain_width;
+    cmr_s32 gain_height;
 
-	int32_t alg_locked;  // lock alsc or not from ioctrl
-	uint32_t alg_open;   // open front camera or not
+	cmr_s32 alg_locked;  // lock alsc or not from ioctrl
+	cmr_u32 alg_open;   // open front camera or not
 
 	pthread_mutex_t 	mutex_stat_buf;
-	uint32_t * stat_ptr;
-	uint32_t* stat_for_alsc;
+	cmr_u32 * stat_ptr;
+	cmr_u32* stat_for_alsc;
 
 	void* lsc_alg;
-    uint16_t *lum_gain;
-    uint32_t pbayer_r_sums[NUM_ROWS * NUM_COLS];
-    uint32_t pbayer_gr_sums[NUM_ROWS * NUM_COLS];
-    uint32_t pbayer_gb_sums[NUM_ROWS * NUM_COLS];
-    uint32_t pbayer_b_sums[NUM_ROWS * NUM_COLS];
+    cmr_u16 *lum_gain;
+    cmr_u32 pbayer_r_sums[NUM_ROWS * NUM_COLS];
+    cmr_u32 pbayer_gr_sums[NUM_ROWS * NUM_COLS];
+    cmr_u32 pbayer_gb_sums[NUM_ROWS * NUM_COLS];
+    cmr_u32 pbayer_b_sums[NUM_ROWS * NUM_COLS];
 	float color_gain[NUM_ROWS * NUM_COLS * 4];
     float color_gain_bak[NUM_ROWS * NUM_COLS * 4];
     struct alsc_alg0_turn_para alg0_turn_para;
@@ -316,47 +316,47 @@ struct lsc_adv_context {
 
 struct lsc2_tune_param{     // if modified, please contact to TOOL team
 	// system setting
-	unsigned int LSC_SPD_VERSION;   // LSC version of Spreadtrum
-	unsigned int number_table;          // number of used original shading tables
+	cmr_u32 LSC_SPD_VERSION;   // LSC version of Spreadtrum
+	cmr_u32 number_table;          // number of used original shading tables
 
 	// control_param
-	unsigned int alg_mode;
-	unsigned int table_base_index;
-	unsigned int user_mode;
-	unsigned int freq;
-	unsigned int IIR_weight;
+	cmr_u32 alg_mode;
+	cmr_u32 table_base_index;
+	cmr_u32 user_mode;
+	cmr_u32 freq;
+	cmr_u32 IIR_weight;
 
 	// slsc2_param
-	unsigned int num_seg_queue;
-	unsigned int num_seg_vote_th;
-	unsigned int IIR_smart2;
+	cmr_u32 num_seg_queue;
+	cmr_u32 num_seg_vote_th;
+	cmr_u32 IIR_smart2;
 
 	// alsc1_param
-	int strength;
+	cmr_s32 strength;
 
 	// alsc2_param
-	unsigned int lambda_r;        // need to add lambda_r , lambda_b and change type to unsigned int
-	unsigned int lambda_b;        // need to add lambda_r , lambda_b and change type to unsigned int
-	unsigned int weight_r;	 // need to add weight_r , weight_b and change type to unsigned int
-	unsigned int weight_b;	 // need to add weight_r , weight_b and change type to unsigned int
+	cmr_u32 lambda_r;        // need to add lambda_r , lambda_b and change type to cmr_u32
+	cmr_u32 lambda_b;        // need to add lambda_r , lambda_b and change type to cmr_u32
+	cmr_u32 weight_r;	 // need to add weight_r , weight_b and change type to cmr_u32
+	cmr_u32 weight_b;	 // need to add weight_r , weight_b and change type to cmr_u32
 };
 
 
 struct lsc2_context{
 	pthread_mutex_t 	mutex_stat_buf;
-	unsigned int LSC_SPD_VERSION;   // LSC version of Spreadtrum
-	unsigned int alg_locked;         // lock alsc or not by ioctrl
-	unsigned int flash_mode;
-	unsigned int alg_open;           // complie alg0.c or alg2.c
-	unsigned int gain_width;
-	unsigned int gain_height;
-	unsigned int gain_pattern;
-	unsigned int grid;
+	cmr_u32 LSC_SPD_VERSION;   // LSC version of Spreadtrum
+	cmr_u32 alg_locked;         // lock alsc or not by ioctrl
+	cmr_u32 flash_mode;
+	cmr_u32 alg_open;           // complie alg0.c or alg2.c
+	cmr_u32 gain_width;
+	cmr_u32 gain_height;
+	cmr_u32 gain_pattern;
+	cmr_u32 grid;
 
-	unsigned short* lsc_tab_address[9];  // the copy of table in parameter file
-	unsigned short* lsc_table_ptr_r;    // storage to save Rfirst table
-	unsigned short* tabptr[9]; // address of origianl shading table will be used to interperlation in slsc2
-	unsigned short* tabptrPlane[9]; // address R-first shading table ( lsc_table_ptr )
+	cmr_u16* lsc_tab_address[9];  // the copy of table in parameter file
+	cmr_u16* lsc_table_ptr_r;    // storage to save Rfirst table
+	cmr_u16* tabptr[9]; // address of origianl shading table will be used to interperlation in slsc2
+	cmr_u16* tabptrPlane[9]; // address R-first shading table ( lsc_table_ptr )
 
 	void* control_param;
 	void* slsc2_param;
@@ -365,117 +365,117 @@ struct lsc2_context{
 	void* lsc1d_param;
 
 	// tmp storage
-	unsigned short* color_gain_r;
-	unsigned short* color_gain_gr;
-	unsigned short* color_gain_gb;
-	unsigned short* color_gain_b;
+	cmr_u16* color_gain_r;
+	cmr_u16* color_gain_gr;
+	cmr_u16* color_gain_gb;
+	cmr_u16* color_gain_b;
 
 	// debug info output address
 	void* lsc_debug_info_ptr;
 
 	// AEM storage address
-	unsigned int* stat_for_lsc;
+	cmr_u32* stat_for_lsc;
 
 	// Copy the dst_gain address
-	uint16_t* dst_gain;
+	cmr_u16* dst_gain;
 };
 
 
 ////////////////////////////// calculation dependent //////////////////////////////
 struct lsc_size {
-	uint32_t w;
-	uint32_t h;
+	cmr_u32 w;
+	cmr_u32 h;
 };
 
 
 struct lsc_adv_init_param {
-	unsigned int alg_open;   // complie alg0.c or alg2.c
-	unsigned int gain_width;
-	unsigned int gain_height;
-	unsigned int gain_pattern;
-	unsigned int grid;
+	cmr_u32 alg_open;   // complie alg0.c or alg2.c
+	cmr_u32 gain_width;
+	cmr_u32 gain_height;
+	cmr_u32 gain_pattern;
+	cmr_u32 grid;
 
 	// isp2.1 added , need to modify to match old version
 	struct third_lib_info lib_param;
 
 	/* added parameters */
 	void* tune_param_ptr;
-	unsigned short* lsc_tab_address[9];  // the copy of table in parameter file
+	cmr_u16* lsc_tab_address[9];  // the copy of table in parameter file
 	struct lsc2_tune_param lsc2_tune_param;  // HLSC_V2.0 tuning structure
 
 	/* no use in lsc_adv2 */
-	uint32_t param_level;
-	uint16_t *lum_gain;  // space to save pre_table from smart1.0
+	cmr_u32 param_level;
+	cmr_u16 *lum_gain;  // space to save pre_table from smart1.0
 	struct lsc_adv_tune_param tune_param;
 
 	//otp data
-	uint32_t lsc_otp_table_en;
-	uint32_t lsc_otp_table_width;
-	uint32_t lsc_otp_table_height;
-	unsigned short*lsc_otp_table_addr;
+	cmr_u32 lsc_otp_table_en;
+	cmr_u32 lsc_otp_table_width;
+	cmr_u32 lsc_otp_table_height;
+	cmr_u16*lsc_otp_table_addr;
 
-	uint32_t lsc_otp_oc_en;
-	uint32_t lsc_otp_oc_r_x;
-	uint32_t lsc_otp_oc_r_y;
-	uint32_t lsc_otp_oc_gr_x;
-	uint32_t lsc_otp_oc_gr_y;
-	uint32_t lsc_otp_oc_gb_x;
-	uint32_t lsc_otp_oc_gb_y;
-	uint32_t lsc_otp_oc_b_x;
-	uint32_t lsc_otp_oc_b_y;
+	cmr_u32 lsc_otp_oc_en;
+	cmr_u32 lsc_otp_oc_r_x;
+	cmr_u32 lsc_otp_oc_r_y;
+	cmr_u32 lsc_otp_oc_gr_x;
+	cmr_u32 lsc_otp_oc_gr_y;
+	cmr_u32 lsc_otp_oc_gb_x;
+	cmr_u32 lsc_otp_oc_gb_y;
+	cmr_u32 lsc_otp_oc_b_x;
+	cmr_u32 lsc_otp_oc_b_y;
 };
 
 
 struct statistic_raw_t {
-	uint32_t *r;
-	uint32_t *gr;
-	uint32_t *gb;
-	uint32_t *b;
+	cmr_u32 *r;
+	cmr_u32 *gr;
+	cmr_u32 *gb;
+	cmr_u32 *b;
 };
 
 
 struct lsc_adv_calc_param{
 	struct statistic_raw_t stat_img;    // statistic value of 4 channels
 	struct lsc_size stat_size;          // size of statistic value matrix
-	int gain_width;                     // width  of shading table
-	int gain_height;	                // height of shading table
-	uint32_t ct;                        // ct from AWB calc
-	int r_gain;                         // r_gain from AWB calc
-	int b_gain;                         // b_gain from AWB calc
-	uint32_t bv;                        // bv from AE calc
-	uint32_t isp_mode;                  // about the mode of interperlation of shading table
-	uint32_t isp_id;                    // 0. alg0.c ,  2. alg2.c
-	uint32_t camera_id;                 // 0. back camera  ,  1. front camera
+	cmr_s32 gain_width;                     // width  of shading table
+	cmr_s32 gain_height;	                // height of shading table
+	cmr_u32 ct;                        // ct from AWB calc
+	cmr_s32 r_gain;                         // r_gain from AWB calc
+	cmr_s32 b_gain;                         // b_gain from AWB calc
+	cmr_u32 bv;                        // bv from AE calc
+	cmr_u32 isp_mode;                  // about the mode of interperlation of shading table
+	cmr_u32 isp_id;                    // 0. alg0.c ,  2. alg2.c
+	cmr_u32 camera_id;                 // 0. back camera  ,  1. front camera
 	struct lsc_size img_size;           // raw size
-	int grid;                           // grid size
+	cmr_s32 grid;                           // grid size
 
 	// no use in HLSC_V2.0
 	struct lsc_size block_size;
-	uint16_t *lum_gain;                 // pre_table from smart1.0
-	uint32_t ae_stable;                 // ae stable info from AE calc
-	int awb_pg_flag;
+	cmr_u16 *lum_gain;                 // pre_table from smart1.0
+	cmr_u32 ae_stable;                 // ae stable info from AE calc
+	cmr_s32 awb_pg_flag;
 
-	unsigned short* lsc_tab_address[9]; // lsc_tab_address
-	uint32_t lsc_tab_size;
+	cmr_u16* lsc_tab_address[9]; // lsc_tab_address
+	cmr_u32 lsc_tab_size;
 
 	// not fount in isp_app.c
-	uint32_t pre_bv;
-	uint32_t pre_ct;
+	cmr_u32 pre_bv;
+	cmr_u32 pre_ct;
 };
 
 
 struct lsc_adv_calc_result {
-	uint16_t *dst_gain;
+	cmr_u16 *dst_gain;
 };
 
 
 
 
 struct lsc_lib_ops{
-	int32_t (* alsc_calc)(void* handle, struct lsc_adv_calc_param *param, struct lsc_adv_calc_result *adv_calc_result);
+	cmr_s32 (* alsc_calc)(void* handle, struct lsc_adv_calc_param *param, struct lsc_adv_calc_result *adv_calc_result);
 	void* (* alsc_init)(struct lsc_adv_init_param *param);
-	int32_t (* alsc_deinit)(void* handle);
-	int32_t (*alsc_io_ctrl)(void* handler, enum alsc_io_ctrl_cmd cmd, void *in_param, void *out_param);
+	cmr_s32 (* alsc_deinit)(void* handle);
+	cmr_s32 (*alsc_io_ctrl)(void* handler, enum alsc_io_ctrl_cmd cmd, void *in_param, void *out_param);
 };
 
 struct lsc_ctrl_context{
@@ -491,30 +491,30 @@ struct lsc_ctrl_context{
 **----------------------------------------------------------------------------*/
 typedef lsc_adv_handle_t (* fun_lsc_adv_init)(struct lsc_adv_init_param *param);
 typedef const char* (* fun_lsc_adv_get_ver_str)(lsc_adv_handle_t handle);
-typedef int32_t (* fun_lsc_adv_calculation)(lsc_adv_handle_t handle, struct lsc_adv_calc_param *param, struct lsc_adv_calc_result *result);
-typedef int32_t (* fun_lsc_adv_ioctrl)(lsc_adv_handle_t handle, enum alsc_io_ctrl_cmd cmd, void *in_param, void *out_param);
-typedef int32_t (* fun_lsc_adv_deinit)(lsc_adv_handle_t handle);
+typedef cmr_s32 (* fun_lsc_adv_calculation)(lsc_adv_handle_t handle, struct lsc_adv_calc_param *param, struct lsc_adv_calc_result *result);
+typedef cmr_s32 (* fun_lsc_adv_ioctrl)(lsc_adv_handle_t handle, enum alsc_io_ctrl_cmd cmd, void *in_param, void *out_param);
+typedef cmr_s32 (* fun_lsc_adv_deinit)(lsc_adv_handle_t handle);
 
 //lsc.so API
 lsc_adv_handle_t lsc_adv_init(struct lsc_adv_init_param *param);
 const char* lsc_adv_get_ver_str(lsc_adv_handle_t handle);
-int32_t lsc_adv_calculation(lsc_adv_handle_t handle, struct lsc_adv_calc_param *param, struct lsc_adv_calc_result *result);
-int32_t lsc_adv_ioctrl(lsc_adv_handle_t handle, enum alsc_io_ctrl_cmd cmd, void *in_param, void *out_param);
-int32_t lsc_adv_deinit(lsc_adv_handle_t handle);
-int32_t is_print_lsc_log(void);
+cmr_s32 lsc_adv_calculation(lsc_adv_handle_t handle, struct lsc_adv_calc_param *param, struct lsc_adv_calc_result *result);
+cmr_s32 lsc_adv_ioctrl(lsc_adv_handle_t handle, enum alsc_io_ctrl_cmd cmd, void *in_param, void *out_param);
+cmr_s32 lsc_adv_deinit(lsc_adv_handle_t handle);
+cmr_s32 is_print_lsc_log(void);
 
 // extern used API
 cmr_int lsc_ctrl_init(struct lsc_adv_init_param *input_ptr, cmr_handle *handle_lsc);
 cmr_int lsc_ctrl_deinit(cmr_handle *handle_lsc);
 cmr_int lsc_ctrl_process(cmr_handle handle_lsc, struct lsc_adv_calc_param *in_ptr, struct lsc_adv_calc_result *result);
-cmr_int lsc_ctrl_ioctrl(cmr_handle handle_lsc, int32_t cmd, void *in_ptr, void *out_ptr);
+cmr_int lsc_ctrl_ioctrl(cmr_handle handle_lsc, cmr_s32 cmd, void *in_ptr, void *out_ptr);
 
-int otp_lsc_mod(unsigned short* otpLscTabGolden, unsigned short* otpLSCTabRandom,  //T1, T2
-				    unsigned short* otpLscTabGoldenRef, //Ts1
-				    unsigned int* otpAWBMeanGolden, unsigned int* otpAWBMeanRandom,
-				    unsigned short* otpLscTabGoldenMod, //output: Td2
-				    unsigned int gainWidth, unsigned int gainHeight,
-				    int bayerPattern
+cmr_s32 otp_lsc_mod(cmr_u16* otpLscTabGolden, cmr_u16* otpLSCTabRandom,  //T1, T2
+				    cmr_u16* otpLscTabGoldenRef, //Ts1
+				    cmr_u32* otpAWBMeanGolden, cmr_u32* otpAWBMeanRandom,
+				    cmr_u16* otpLscTabGoldenMod, //output: Td2
+				    cmr_u32 gainWidth, cmr_u32 gainHeight,
+				    cmr_s32 bayerPattern
 				    );
 /**----------------------------------------------------------------------------*
 **					Compiler Flag				**

@@ -30,7 +30,7 @@ char liblsc_path[][20] = {
 	"liblsc_v5.so",
 };
 
-static int32_t _lscctrl_deinit_adpt(struct lsc_ctrl_cxt *cxt_ptr)
+static cmr_s32 _lscctrl_deinit_adpt(struct lsc_ctrl_cxt *cxt_ptr)
 {
 	cmr_int rtn = LSC_SUCCESS;
 	struct lsc_ctrl_work_lib *lib_ptr = NULL;
@@ -53,7 +53,7 @@ exit:
 }
 
 
-static int32_t _lscctrl_destroy_thread(struct lsc_ctrl_cxt *cxt_ptr)
+static cmr_s32 _lscctrl_destroy_thread(struct lsc_ctrl_cxt *cxt_ptr)
 {
 	cmr_int rtn = LSC_SUCCESS;
 
@@ -76,7 +76,7 @@ exit:
 	return rtn;
 }
 
-static int32_t _lscctrl_process(struct lsc_ctrl_cxt *cxt_ptr, struct lsc_adv_calc_param *in_ptr, struct lsc_adv_calc_result *out_ptr)
+static cmr_s32 _lscctrl_process(struct lsc_ctrl_cxt *cxt_ptr, struct lsc_adv_calc_param *in_ptr, struct lsc_adv_calc_result *out_ptr)
 {
 	cmr_int rtn = LSC_SUCCESS;
 	struct lsc_ctrl_work_lib *lib_ptr = NULL;
@@ -128,7 +128,7 @@ exit:
 	return rtn;
 }
 
-static int32_t _lscctrl_init_lib(struct lsc_ctrl_cxt *cxt_ptr, struct lsc_adv_init_param *in_ptr)
+static cmr_s32 _lscctrl_init_lib(struct lsc_ctrl_cxt *cxt_ptr, struct lsc_adv_init_param *in_ptr)
 {
 	cmr_int rtn = LSC_SUCCESS;
 	struct lsc_ctrl_work_lib *lib_ptr = NULL;
@@ -149,7 +149,7 @@ exit:
 	return rtn;
 }
 
-static int32_t _lscctrl_init_adpt(struct lsc_ctrl_cxt *cxt_ptr, struct lsc_adv_init_param *in_ptr)
+static cmr_s32 _lscctrl_init_adpt(struct lsc_ctrl_cxt *cxt_ptr, struct lsc_adv_init_param *in_ptr)
 {
 	cmr_int rtn = LSC_SUCCESS;
 	struct lsc_ctrl_work_lib *lib_ptr = NULL;
@@ -172,7 +172,7 @@ exit:
 	return rtn;
 }
 
-static int32_t _lscctrl_create_thread(struct lsc_ctrl_cxt *cxt_ptr)
+static cmr_s32 _lscctrl_create_thread(struct lsc_ctrl_cxt *cxt_ptr)
 {
 	cmr_int rtn = LSC_SUCCESS;
 
@@ -186,9 +186,9 @@ static int32_t _lscctrl_create_thread(struct lsc_ctrl_cxt *cxt_ptr)
 	return rtn;
 }
 
-static int32_t _lscsprd_unload_lib(struct lsc_ctrl_context *cxt)
+static cmr_s32 _lscsprd_unload_lib(struct lsc_ctrl_context *cxt)
 {
-	int32_t rtn = LSC_SUCCESS;
+	cmr_s32 rtn = LSC_SUCCESS;
 
 	if (NULL == cxt) {
 		ISP_LOGE("fail to check param, Param is NULL");
@@ -205,11 +205,11 @@ exit:
 	return rtn;
 }
 
-static int32_t _lscsprd_load_lib(struct lsc_ctrl_context *cxt)
+static cmr_s32 _lscsprd_load_lib(struct lsc_ctrl_context *cxt)
 {
-	int32_t rtn = LSC_SUCCESS;
-	uint32_t v_count = 0;
-	uint32_t version_id = cxt->lib_info->version_id;
+	cmr_s32 rtn = LSC_SUCCESS;
+	cmr_u32 v_count = 0;
+	cmr_u32 version_id = cxt->lib_info->version_id;
 
 	if (NULL == cxt) {
 		ISP_LOGE("fail to check param,Param is NULL");
@@ -274,7 +274,7 @@ exit:
 
 static void* lsc_sprd_init(void *in, void *out)
 {
-	int32_t rtn = LSC_SUCCESS;
+	cmr_s32 rtn = LSC_SUCCESS;
 	struct lsc_ctrl_context *cxt = NULL;
 	struct lsc_adv_init_param *init_param = (struct lsc_adv_init_param *)in;
 	void *alsc_handle = NULL;
@@ -329,9 +329,9 @@ EXIT:
 	return NULL;
 }
 
-static int32_t lsc_sprd_deinit(void *handle, void *in, void *out)
+static cmr_s32 lsc_sprd_deinit(void *handle, void *in, void *out)
 {
-	int32_t rtn =LSC_SUCCESS;
+	cmr_s32 rtn =LSC_SUCCESS;
 	struct lsc_ctrl_context *cxt = NULL;
 	UNUSED(in);
 	UNUSED(out);
@@ -362,7 +362,7 @@ static int32_t lsc_sprd_deinit(void *handle, void *in, void *out)
 	return rtn;
 }
 
-static int32_t lsc_sprd_calculation(void* handle, void *in, void *out)
+static cmr_s32 lsc_sprd_calculation(void* handle, void *in, void *out)
 {
 	cmr_int rtn = LSC_SUCCESS;
 	struct lsc_ctrl_context *cxt = NULL;
@@ -381,7 +381,7 @@ static int32_t lsc_sprd_calculation(void* handle, void *in, void *out)
 	return rtn;
 }
 
-static int32_t lsc_sprd_ioctrl(void* handle, int32_t cmd,void *in, void *out)
+static cmr_s32 lsc_sprd_ioctrl(void* handle, cmr_s32 cmd,void *in, void *out)
 {
 	cmr_int rtn = LSC_SUCCESS;
 	struct lsc_ctrl_context *cxt = NULL;
@@ -490,7 +490,7 @@ exit:
 
 cmr_int lsc_ctrl_deinit(cmr_handle *handle_lsc)
 {
-	int rtn = LSC_SUCCESS;
+	cmr_s32 rtn = LSC_SUCCESS;
 	struct lsc_ctrl_cxt *cxt_ptr = *handle_lsc;
 
 	if (!cxt_ptr) {
@@ -562,7 +562,7 @@ exit:
 	return rtn;
 }
 
-cmr_int lsc_ctrl_ioctrl(cmr_handle handle_lsc,  int32_t cmd, void *in_ptr, void *out_ptr)
+cmr_int lsc_ctrl_ioctrl(cmr_handle handle_lsc,  cmr_s32 cmd, void *in_ptr, void *out_ptr)
 {
 	cmr_int rtn = LSC_SUCCESS;
 	struct lsc_ctrl_cxt *cxt_ptr = (struct lsc_ctrl_cxt*)handle_lsc;
