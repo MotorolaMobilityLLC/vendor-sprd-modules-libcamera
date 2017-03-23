@@ -18,15 +18,15 @@
 
 #include "isp_drv.h"
 
-isp_s32 isp_u_fetch_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_fetch_block(isp_handle handle, void *block_info)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
 		ISP_LOGE("handle is null error: 0x%lx 0x%lx",
-				(isp_uint)handle, (isp_uint)block_info);
+				(cmr_uint)handle, (cmr_uint)block_info);
 		return -1;
 	}
 
@@ -41,10 +41,10 @@ isp_s32 isp_u_fetch_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-isp_s32 isp_u_fetch_raw_transaddr(isp_handle handle,
+cmr_s32 isp_u_fetch_raw_transaddr(isp_handle handle,
 	struct isp_dev_block_addr *addr)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -65,9 +65,9 @@ isp_s32 isp_u_fetch_raw_transaddr(isp_handle handle,
 }
 
 
-isp_s32 isp_u_fetch_slice_size(isp_handle handle, isp_u32 w, isp_u32 h)
+cmr_s32 isp_u_fetch_slice_size(isp_handle handle, cmr_u32 w, cmr_u32 h)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 	struct isp_img_size size;
@@ -90,9 +90,9 @@ isp_s32 isp_u_fetch_slice_size(isp_handle handle, isp_u32 w, isp_u32 h)
 	return ret;
 }
 
-isp_s32 isp_u_fetch_start_isp(isp_handle handle, isp_u32 fetch_start)
+cmr_s32 isp_u_fetch_start_isp(isp_handle handle, cmr_u32 fetch_start)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -112,15 +112,15 @@ isp_s32 isp_u_fetch_start_isp(isp_handle handle, isp_u32 fetch_start)
 	return ret;
 }
 
-isp_s32 isp_u_fetch_yuv_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_fetch_yuv_block(isp_handle handle, void *block_info)
 {
-       isp_s32 ret = 0;
+       cmr_s32 ret = 0;
        struct isp_file *file = NULL;
        struct isp_io_param param;
 
        if (!handle || !block_info) {
                ISP_LOGE("handle is null error: 0x%lx 0x%lx",
-                               (isp_uint)handle, (isp_uint)block_info);
+                               (cmr_uint)handle, (cmr_uint)block_info);
                return -1;
        }
 
@@ -134,9 +134,9 @@ isp_s32 isp_u_fetch_yuv_block(isp_handle handle, void *block_info)
 
        return ret;
 }
-isp_s32 isp_u_fetch_yuv_slice_size(isp_handle handle, isp_u32 w, isp_u32 h)
+cmr_s32 isp_u_fetch_yuv_slice_size(isp_handle handle, cmr_u32 w, cmr_u32 h)
 {
-       isp_s32 ret = 0;
+       cmr_s32 ret = 0;
        struct isp_file *file = NULL;
        struct isp_io_param param;
        struct isp_img_size size;
@@ -159,9 +159,9 @@ isp_s32 isp_u_fetch_yuv_slice_size(isp_handle handle, isp_u32 w, isp_u32 h)
        return ret;
 }
 
-isp_s32 isp_u_fetch_yuv_start_isp(isp_handle handle, isp_u32 fetch_start)
+cmr_s32 isp_u_fetch_yuv_start_isp(isp_handle handle, cmr_u32 fetch_start)
 {
-       isp_s32 ret = 0;
+       cmr_s32 ret = 0;
        struct isp_file *file = NULL;
        struct isp_io_param param;
 

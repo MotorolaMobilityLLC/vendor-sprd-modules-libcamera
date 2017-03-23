@@ -27,9 +27,9 @@
 
 typedef struct lnc_bicubic_weight_t_64_tag
 {
-	int16_t w0;
-	int16_t w1;
-	int16_t w2;
+	cmr_s16 w0;
+	cmr_s16 w1;
+	cmr_s16 w2;
 }LNC_BICUBIC_WEIGHT_TABLE_T;
 
 static LNC_BICUBIC_WEIGHT_TABLE_T lnc_bicubic_weight_t_96_simple[] =
@@ -154,15 +154,15 @@ static LNC_BICUBIC_WEIGHT_TABLE_T lnc_bicubic_weight_t_128_simple[] =
 	{-64,	576,	576},
 };
 
-static uint16_t ISP_Cubic1D(uint16_t a, uint16_t b, uint16_t c, uint16_t d, uint16_t u, uint16_t box)
+static cmr_u16 ISP_Cubic1D(cmr_u16 a, cmr_u16 b, cmr_u16 c, cmr_u16 d, cmr_u16 u, cmr_u16 box)
 {
-	int32_t out_value;
-	uint16_t out_value_uint16_t;
-	int16_t w0, w1, w2, w3;
-	uint32_t out_value_tmp;
-	int16_t sub_tmp0;
-	int16_t sub_tmp1;
-	int16_t sub_tmp2;
+	cmr_s32 out_value;
+	cmr_u16 out_value_uint16_t;
+	cmr_s16 w0, w1, w2, w3;
+	cmr_u32 out_value_tmp;
+	cmr_s16 sub_tmp0;
+	cmr_s16 sub_tmp1;
+	cmr_s16 sub_tmp2;
 
 	if(box ==96)
 	{
@@ -176,7 +176,7 @@ static uint16_t ISP_Cubic1D(uint16_t a, uint16_t b, uint16_t c, uint16_t d, uint
 			sub_tmp0 = a-d;
 			sub_tmp1 = b-d;
 			sub_tmp2 = c-d;
-			out_value_tmp = ((uint32_t)d)<<10;
+			out_value_tmp = ((cmr_u32)d)<<10;
 			out_value = out_value_tmp + sub_tmp0 * w0  + sub_tmp1 * w1 + sub_tmp2 * w2;
 		}
 		else
@@ -188,7 +188,7 @@ static uint16_t ISP_Cubic1D(uint16_t a, uint16_t b, uint16_t c, uint16_t d, uint
 			sub_tmp0 = b-a;
 			sub_tmp1 = c-a;
 			sub_tmp2 = d-a;
-			out_value_tmp = ((uint32_t)a)<<10;
+			out_value_tmp = ((cmr_u32)a)<<10;
 			out_value = out_value_tmp + sub_tmp0 * w1  + sub_tmp1 * w2 + sub_tmp2 * w3;
 		}
 
@@ -207,7 +207,7 @@ static uint16_t ISP_Cubic1D(uint16_t a, uint16_t b, uint16_t c, uint16_t d, uint
 			sub_tmp0 = a-d;
 			sub_tmp1 = b-d;
 			sub_tmp2 = c-d;
-			out_value_tmp = ((uint32_t)d)<<10;
+			out_value_tmp = ((cmr_u32)d)<<10;
 			out_value = out_value_tmp + sub_tmp0 * w0  + sub_tmp1 * w1 + sub_tmp2 * w2;
 		}
 		else
@@ -219,7 +219,7 @@ static uint16_t ISP_Cubic1D(uint16_t a, uint16_t b, uint16_t c, uint16_t d, uint
 			sub_tmp0 = b-a;
 			sub_tmp1 = c-a;
 			sub_tmp2 = d-a;
-			out_value_tmp = ((uint32_t)a)<<10;
+			out_value_tmp = ((cmr_u32)a)<<10;
 			out_value = out_value_tmp + sub_tmp0 * w1  + sub_tmp1 * w2 + sub_tmp2 * w3;
 		}
 	}
@@ -227,18 +227,18 @@ static uint16_t ISP_Cubic1D(uint16_t a, uint16_t b, uint16_t c, uint16_t d, uint
 	//CLIP(out_value, 4095*1024*2, 1024*1024);	// for LSC gain, 1024 = 1.0, 4095 = 4.0 ; 4095*2 is for boundary extension.
 	CLIP1(out_value, 16383*1024, 1024*1024);	// for LSC gain, 1024 = 1.0, 16383 = 16.0 ; 16383 is for boundary extension, 14 bit parameter is used.
 
-	out_value_uint16_t = (uint16_t)((out_value + 512) >> 10);
+	out_value_uint16_t = (cmr_u16)((out_value + 512) >> 10);
 
 	return out_value_uint16_t;
 }
 
 
-static int32_t ISP_GenerateQValues(uint32_t word_endian, uint32_t q_val[][5], unsigned long param_address, uint16_t grid_w, uint16_t grid_num, uint16_t u)
+static cmr_s32 ISP_GenerateQValues(cmr_u32 word_endian, cmr_u32 q_val[][5], cmr_uint param_address, cmr_u16 grid_w, cmr_u16 grid_num, cmr_u16 u)
 {
-	uint8_t i;
-	uint16_t a0 = 0, b0 = 0, c0 = 0, d0 = 0;
-	uint16_t a1 = 0, b1 = 0, c1 = 0, d1 = 0;
-	uint32_t *addr = (uint32_t *)param_address;
+	cmr_u8 i;
+	cmr_u16 a0 = 0, b0 = 0, c0 = 0, d0 = 0;
+	cmr_u16 a1 = 0, b1 = 0, c1 = 0, d1 = 0;
+	cmr_u32 *addr = (cmr_u32 *)param_address;
 
 	if (param_address == 0x0 || grid_num == 0x0) {
 		ISP_LOGE("ISP_GenerateQValues param_address error addr=0x%lx grid_num=%d \n",param_address, grid_num);
@@ -248,14 +248,14 @@ static int32_t ISP_GenerateQValues(uint32_t word_endian, uint32_t q_val[][5], un
 
 	#if 0
 	for (i = 0; i < 5; i++) {
-		A0  = (uint16_t)*(addr + i * 2) & 0xFFFF;
-		B0  = (uint16_t)*(addr + i * 2 + grid_w * 2) & 0xFFFF;
-		C0  = (uint16_t)*(addr + i * 2 + grid_w * 2 * 2) & 0xFFFF;
-		D0  = (uint16_t)*(addr + i * 2 + grid_w * 2 * 3) & 0xFFFF;
-		A1  = (uint16_t)(*(addr + i * 2) >> 16);
-		B1  = (uint16_t)(*(addr + i * 2 + grid_w * 2) >> 16);
-		C1  = (uint16_t)(*(addr + i * 2 + grid_w * 2 * 2) >> 16);
-		D1  = (uint16_t)(*(addr + i * 2 + grid_w * 2 * 3) >> 16);
+		A0  = (cmr_u16)*(addr + i * 2) & 0xFFFF;
+		B0  = (cmr_u16)*(addr + i * 2 + grid_w * 2) & 0xFFFF;
+		C0  = (cmr_u16)*(addr + i * 2 + grid_w * 2 * 2) & 0xFFFF;
+		D0  = (cmr_u16)*(addr + i * 2 + grid_w * 2 * 3) & 0xFFFF;
+		A1  = (cmr_u16)(*(addr + i * 2) >> 16);
+		B1  = (cmr_u16)(*(addr + i * 2 + grid_w * 2) >> 16);
+		C1  = (cmr_u16)(*(addr + i * 2 + grid_w * 2 * 2) >> 16);
+		D1  = (cmr_u16)(*(addr + i * 2 + grid_w * 2 * 3) >> 16);
 		q_val[0][i] = ISP_Cubic1D(A0, B0, C0, D0, u, grid_num);
 		q_val[1][i] = ISP_Cubic1D(A1, B1, C1, D1, u, grid_num);
 	}
@@ -308,25 +308,25 @@ static int32_t ISP_GenerateQValues(uint32_t word_endian, uint32_t q_val[][5], un
 }
 /*end cal Q value*/
 
-isp_s32 isp_u_2d_lsc_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_2d_lsc_block(isp_handle handle, void *block_info)
 {
-	isp_s32 ret = 0, i = 0;
+	cmr_s32 ret = 0, i = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
 		ISP_LOGE("handle is null error: 0x%lx 0x%lx",
-				(isp_uint)handle, (isp_uint)block_info);
+				(cmr_uint)handle, (cmr_uint)block_info);
 		return -1;
 	}
 
 	file = (struct isp_file *)(handle);
 
 	struct isp_dev_2d_lsc_info *lens_info = (struct isp_dev_2d_lsc_info *)(block_info);
-	unsigned long buf_addr;
+	cmr_uint buf_addr;
 
 #if __WORDSIZE == 64
-	buf_addr = ((unsigned long)lens_info->buf_addr[1] << 32) | lens_info->buf_addr[0];
+	buf_addr = ((cmr_uint)lens_info->buf_addr[1] << 32) | lens_info->buf_addr[0];
 #else
 	buf_addr = lens_info->buf_addr[0];
 #endif
@@ -339,7 +339,7 @@ isp_s32 isp_u_2d_lsc_block(isp_handle handle, void *block_info)
 	}
 
 	ret = ISP_GenerateQValues(1, lens_info->q_value, buf_addr,
-			((uint16_t)lens_info->grid_x_num & 0xFF) + 2,(lens_info->grid_width & 0xFF), (lens_info->relative_y & 0xFF)>>1);
+			((cmr_u16)lens_info->grid_x_num & 0xFF) + 2,(lens_info->grid_width & 0xFF), (lens_info->relative_y & 0xFF)>>1);
 	if (0 != ret) {
 		ISP_LOGE("ISP_GenerateQValues is error");
 		return ret;
@@ -355,9 +355,9 @@ isp_s32 isp_u_2d_lsc_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-isp_s32 isp_u_2d_lsc_bypass(isp_handle handle, isp_u32 bypass)
+cmr_s32 isp_u_2d_lsc_bypass(isp_handle handle, cmr_u32 bypass)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -377,10 +377,10 @@ isp_s32 isp_u_2d_lsc_bypass(isp_handle handle, isp_u32 bypass)
 	return ret;
 }
 
-isp_s32 isp_u_2d_lsc_param_update(isp_handle handle)
+cmr_s32 isp_u_2d_lsc_param_update(isp_handle handle)
 {
-	isp_s32 ret = 0;
-	isp_u32 upsdate_param = 0;
+	cmr_s32 ret = 0;
+	cmr_u32 upsdate_param = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -400,9 +400,9 @@ isp_s32 isp_u_2d_lsc_param_update(isp_handle handle)
 	return ret;
 }
 
-isp_s32 isp_u_2d_lsc_pos(isp_handle handle, isp_u32 x, isp_u32 y)
+cmr_s32 isp_u_2d_lsc_pos(isp_handle handle, cmr_u32 x, cmr_u32 y)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 	struct isp_img_offset offset;
@@ -425,9 +425,9 @@ isp_s32 isp_u_2d_lsc_pos(isp_handle handle, isp_u32 x, isp_u32 y)
 	return ret;
 }
 
-isp_s32 isp_u_2d_lsc_grid_size(isp_handle handle, isp_u32 w, isp_u32 h)
+cmr_s32 isp_u_2d_lsc_grid_size(isp_handle handle, cmr_u32 w, cmr_u32 h)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 	struct isp_img_size size;
@@ -450,9 +450,9 @@ isp_s32 isp_u_2d_lsc_grid_size(isp_handle handle, isp_u32 w, isp_u32 h)
 	return ret;
 }
 
-isp_s32 isp_u_2d_lsc_slice_size(isp_handle handle, isp_u32 w, isp_u32 h)
+cmr_s32 isp_u_2d_lsc_slice_size(isp_handle handle, cmr_u32 w, cmr_u32 h)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 	struct isp_img_size size;
@@ -475,9 +475,9 @@ isp_s32 isp_u_2d_lsc_slice_size(isp_handle handle, isp_u32 w, isp_u32 h)
 	return ret;
 }
 
-isp_s32 isp_u_2d_lsc_transaddr(isp_handle handle, struct isp_statis_buf_input *buf)
+cmr_s32 isp_u_2d_lsc_transaddr(isp_handle handle, struct isp_statis_buf_input *buf)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 	struct isp_dev_block_addr lsc_buf;

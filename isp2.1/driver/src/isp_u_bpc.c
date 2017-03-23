@@ -18,15 +18,15 @@
 
 #include "isp_drv.h"
 
-isp_s32 isp_u_bpc_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_bpc_block(isp_handle handle, void *block_info)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
 		ISP_LOGE("handle is null error: 0x%lx 0x%lx",
-				(isp_uint)handle, (isp_uint)block_info);
+				(cmr_uint)handle, (cmr_uint)block_info);
 		return -1;
 	}
 
@@ -42,9 +42,9 @@ isp_s32 isp_u_bpc_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-isp_s32 isp_u_bpc_bypass(isp_handle handle, isp_u32 bypass)
+cmr_s32 isp_u_bpc_bypass(isp_handle handle, cmr_u32 bypass)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -64,9 +64,9 @@ isp_s32 isp_u_bpc_bypass(isp_handle handle, isp_u32 bypass)
 	return ret;
 }
 
-isp_s32 isp_u_bpc_mode(isp_handle handle, isp_u32 mode)
+cmr_s32 isp_u_bpc_mode(isp_handle handle, cmr_u32 mode)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -86,12 +86,12 @@ isp_s32 isp_u_bpc_mode(isp_handle handle, isp_u32 mode)
 	return ret;
 }
 
-isp_s32 isp_u_bpc_param_common(isp_handle handle,
-		isp_u32 pattern_type,
-		isp_u32 detect_thrd,
-		isp_u32 super_bad_thrd)
+cmr_s32 isp_u_bpc_param_common(isp_handle handle,
+		cmr_u32 pattern_type,
+		cmr_u32 detect_thrd,
+		cmr_u32 super_bad_thrd)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 	struct isp_bpc_common bpc_param;
@@ -115,12 +115,12 @@ isp_s32 isp_u_bpc_param_common(isp_handle handle,
 	return ret;
 }
 
-isp_s32 isp_u_bpc_thrd(isp_handle handle,
-		isp_u32 flat,
-		isp_u32 std,
-		isp_u32 texture)
+cmr_s32 isp_u_bpc_thrd(isp_handle handle,
+		cmr_u32 flat,
+		cmr_u32 std,
+		cmr_u32 texture)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 	struct isp_bpc_thrd thrd;
@@ -144,9 +144,9 @@ isp_s32 isp_u_bpc_thrd(isp_handle handle,
 	return ret;
 }
 
-isp_s32 isp_u_bpc_map_addr(isp_handle handle, isp_u32 addr)
+cmr_s32 isp_u_bpc_map_addr(isp_handle handle, cmr_u32 addr)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -166,9 +166,9 @@ isp_s32 isp_u_bpc_map_addr(isp_handle handle, isp_u32 addr)
 	return ret;
 }
 
-isp_s32 isp_u_bpc_pixel_num(isp_handle handle, isp_u32 pixel_num)
+cmr_s32 isp_u_bpc_pixel_num(isp_handle handle, cmr_u32 pixel_num)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 

@@ -18,9 +18,9 @@
 
 #include "isp_drv.h"
 
-isp_s32 isp_u_capability_chip_id(isp_handle handle, isp_u32 *chip_id)
+cmr_s32 isp_u_capability_chip_id(isp_handle handle, cmr_u32 *chip_id)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_capability param;
 
@@ -43,11 +43,11 @@ isp_s32 isp_u_capability_chip_id(isp_handle handle, isp_u32 *chip_id)
 	return ret;
 }
 
-isp_s32 isp_u_capability_single_size(isp_handle handle,
-		isp_u16 *width,
-		isp_u16 *height)
+cmr_s32 isp_u_capability_single_size(isp_handle handle,
+		cmr_u16 *width,
+		cmr_u16 *height)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_img_size size;
 	struct isp_capability param;
@@ -75,11 +75,11 @@ isp_s32 isp_u_capability_single_size(isp_handle handle,
 	return ret;
 }
 
-isp_s32 isp_u_capability_continue_size(isp_handle handle,
-		isp_u16 *width,
-		isp_u16 *height)
+cmr_s32 isp_u_capability_continue_size(isp_handle handle,
+		cmr_u16 *width,
+		cmr_u16 *height)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_img_size size;
 	struct isp_capability param;
@@ -107,11 +107,11 @@ isp_s32 isp_u_capability_continue_size(isp_handle handle,
 	return ret;
 }
 
-isp_s32 isp_u_capability_awb_win(isp_handle handle,
-		isp_u16 *width,
-		isp_u16 *height)
+cmr_s32 isp_u_capability_awb_win(isp_handle handle,
+		cmr_u16 *width,
+		cmr_u16 *height)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_img_size size;
 	struct isp_capability param;
@@ -139,10 +139,10 @@ isp_s32 isp_u_capability_awb_win(isp_handle handle,
 	return ret;
 }
 
-isp_u32 isp_u_capability_awb_default_gain(isp_handle handle)
+cmr_u32 isp_u_capability_awb_default_gain(isp_handle handle)
 {
-	isp_s32 ret = 0;
-	isp_u32 gain = 0;
+	cmr_s32 ret = 0;
+	cmr_u32 gain = 0;
 	struct isp_file *file = NULL;
 	struct isp_capability param;
 
@@ -164,10 +164,10 @@ isp_u32 isp_u_capability_awb_default_gain(isp_handle handle)
 	return gain;
 }
 
-isp_u32 isp_u_capability_af_max_win_num(isp_handle handle)
+cmr_u32 isp_u_capability_af_max_win_num(isp_handle handle)
 {
-	isp_s32 ret = 0;
-	isp_u32 win_num = 0;
+	cmr_s32 ret = 0;
+	cmr_u32 win_num = 0;
 	struct isp_file *file = NULL;
 	struct isp_capability param;
 
@@ -189,9 +189,9 @@ isp_u32 isp_u_capability_af_max_win_num(isp_handle handle)
 	return win_num;
 }
 
-isp_s32 isp_u_capability_time(isp_handle handle, isp_u32 *sec, isp_u32 *usec)
+cmr_s32 isp_u_capability_time(isp_handle handle, cmr_u32 *sec, cmr_u32 *usec)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_capability param;
 	struct isp_time time = {0, 0};

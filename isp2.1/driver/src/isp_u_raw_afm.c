@@ -18,9 +18,9 @@
 
 #include "isp_drv.h"
 
-isp_s32 isp_u_raw_afm_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_raw_afm_block(isp_handle handle, void *block_info)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -38,9 +38,9 @@ isp_s32 isp_u_raw_afm_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-isp_s32 isp_u_raw_afm_slice_size(isp_handle handle, isp_u32 width, isp_u32 height)
+cmr_s32 isp_u_raw_afm_slice_size(isp_handle handle, cmr_u32 width, cmr_u32 height)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 	struct isp_img_size size;
@@ -64,9 +64,9 @@ isp_s32 isp_u_raw_afm_slice_size(isp_handle handle, isp_u32 width, isp_u32 heigh
 
 
 
-isp_s32 isp_u_raw_afm_iir_nr_cfg(isp_handle handle, void *block_info)
+cmr_s32 isp_u_raw_afm_iir_nr_cfg(isp_handle handle, void *block_info)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -87,9 +87,9 @@ isp_s32 isp_u_raw_afm_iir_nr_cfg(isp_handle handle, void *block_info)
 }
 
 
-isp_s32 isp_u_raw_afm_modules_cfg(isp_handle handle, void *block_info)
+cmr_s32 isp_u_raw_afm_modules_cfg(isp_handle handle, void *block_info)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -110,9 +110,9 @@ isp_s32 isp_u_raw_afm_modules_cfg(isp_handle handle, void *block_info)
 }
 
 
-isp_s32 isp_u_raw_afm_type1_statistic(isp_handle handle, void *statis)
+cmr_s32 isp_u_raw_afm_type1_statistic(isp_handle handle, void *statis)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	UNUSED(handle);
 	UNUSED(statis);
 #if 0/*modify for Solve compile problem*/
@@ -135,9 +135,9 @@ isp_s32 isp_u_raw_afm_type1_statistic(isp_handle handle, void *statis)
 	return ret;
 }
 
-isp_s32 isp_u_raw_afm_type2_statistic(isp_handle handle, void *statis)
+cmr_s32 isp_u_raw_afm_type2_statistic(isp_handle handle, void *statis)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	UNUSED(handle);
 	UNUSED(statis);
 #if 0/*modify for Solve compile problem*/
@@ -160,9 +160,9 @@ isp_s32 isp_u_raw_afm_type2_statistic(isp_handle handle, void *statis)
 	return ret;
 }
 
-isp_s32 isp_u_raw_afm_statistic_r6p9(isp_handle handle, void *statis)
+cmr_s32 isp_u_raw_afm_statistic_r6p9(isp_handle handle, void *statis)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	UNUSED(handle);
 	UNUSED(statis);
 #if 0
@@ -185,9 +185,9 @@ isp_s32 isp_u_raw_afm_statistic_r6p9(isp_handle handle, void *statis)
 	return ret;
 }
 
-isp_s32 isp_u_raw_afm_bypass(isp_handle handle, isp_u32 bypass)
+cmr_s32 isp_u_raw_afm_bypass(isp_handle handle, cmr_u32 bypass)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -206,9 +206,9 @@ isp_s32 isp_u_raw_afm_bypass(isp_handle handle, isp_u32 bypass)
 	return ret;
 }
 
-isp_s32 isp_u_raw_afm_mode(isp_handle handle, isp_u32 mode)
+cmr_s32 isp_u_raw_afm_mode(isp_handle handle, cmr_u32 mode)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -229,9 +229,9 @@ isp_s32 isp_u_raw_afm_mode(isp_handle handle, isp_u32 mode)
 	return ret;
 }
 
-isp_s32 isp_u_raw_afm_skip_num(isp_handle handle, isp_u32 skip_num)
+cmr_s32 isp_u_raw_afm_skip_num(isp_handle handle, cmr_u32 skip_num)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -252,9 +252,9 @@ isp_s32 isp_u_raw_afm_skip_num(isp_handle handle, isp_u32 skip_num)
 	return ret;
 }
 
-isp_s32 isp_u_raw_afm_skip_num_clr(isp_handle handle, isp_u32 clear)
+cmr_s32 isp_u_raw_afm_skip_num_clr(isp_handle handle, cmr_u32 clear)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -275,9 +275,9 @@ isp_s32 isp_u_raw_afm_skip_num_clr(isp_handle handle, isp_u32 clear)
 	return ret;
 }
 
-isp_s32 isp_u_raw_afm_spsmd_rtgbot_enable(isp_handle handle, isp_u32 enable)
+cmr_s32 isp_u_raw_afm_spsmd_rtgbot_enable(isp_handle handle, cmr_u32 enable)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	UNUSED(handle);
 	UNUSED(enable);
 #if 0
@@ -300,9 +300,9 @@ isp_s32 isp_u_raw_afm_spsmd_rtgbot_enable(isp_handle handle, isp_u32 enable)
 	return ret;
 }
 
-isp_s32 isp_u_raw_afm_spsmd_diagonal_enable(isp_handle handle, isp_u32 enable)
+cmr_s32 isp_u_raw_afm_spsmd_diagonal_enable(isp_handle handle, cmr_u32 enable)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	UNUSED(handle);
 	UNUSED(enable);
 #if 0/*modify for Solve compile problem*/
@@ -325,9 +325,9 @@ isp_s32 isp_u_raw_afm_spsmd_diagonal_enable(isp_handle handle, isp_u32 enable)
 	return ret;
 }
 
-isp_s32 isp_u_raw_afm_spsmd_cal_mode(isp_handle handle, isp_u32 mode)
+cmr_s32 isp_u_raw_afm_spsmd_cal_mode(isp_handle handle, cmr_u32 mode)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	UNUSED(handle);
 	UNUSED(mode);
 #if 0/*modify for Solve compile problem*/
@@ -350,9 +350,9 @@ isp_s32 isp_u_raw_afm_spsmd_cal_mode(isp_handle handle, isp_u32 mode)
 	return ret;
 }
 
-isp_s32 isp_u_raw_afm_spsmd_square_en(isp_handle handle, isp_u32 en)
+cmr_s32 isp_u_raw_afm_spsmd_square_en(isp_handle handle, cmr_u32 en)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	UNUSED(handle);
 	UNUSED(en);
 #if 0/*modify for Solve compile problem*/
@@ -375,9 +375,9 @@ isp_s32 isp_u_raw_afm_spsmd_square_en(isp_handle handle, isp_u32 en)
 	return ret;
 }
 
-isp_s32 isp_u_raw_afm_sel_filter1(isp_handle handle, isp_u32 sel_filter)
+cmr_s32 isp_u_raw_afm_sel_filter1(isp_handle handle, cmr_u32 sel_filter)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	UNUSED(handle);
 	UNUSED(sel_filter);
 #if 0/*modify for Solve compile problem*/
@@ -400,9 +400,9 @@ isp_s32 isp_u_raw_afm_sel_filter1(isp_handle handle, isp_u32 sel_filter)
 	return ret;
 }
 
-isp_s32 isp_u_raw_afm_sel_filter2(isp_handle handle, isp_u32 sel_filter)
+cmr_s32 isp_u_raw_afm_sel_filter2(isp_handle handle, cmr_u32 sel_filter)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	UNUSED(handle);
 	UNUSED(sel_filter);
 #if 0/*modify for Solve compile problem*/
@@ -425,9 +425,9 @@ isp_s32 isp_u_raw_afm_sel_filter2(isp_handle handle, isp_u32 sel_filter)
 	return ret;
 }
 
-isp_s32 isp_u_raw_afm_sobel_type(isp_handle handle, isp_u32 type)
+cmr_s32 isp_u_raw_afm_sobel_type(isp_handle handle, cmr_u32 type)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	UNUSED(handle);
 	UNUSED(type);
 #if 0/*modify for Solve compile problem*/
@@ -450,9 +450,9 @@ isp_s32 isp_u_raw_afm_sobel_type(isp_handle handle, isp_u32 type)
 	return ret;
 }
 
-isp_s32 isp_u_raw_afm_overflow_protect(isp_handle handle, isp_u32 en)
+cmr_s32 isp_u_raw_afm_overflow_protect(isp_handle handle, cmr_u32 en)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	UNUSED(handle);
 	UNUSED(en);
 #if 0/*modify for Solve compile problem*/
@@ -475,9 +475,9 @@ isp_s32 isp_u_raw_afm_overflow_protect(isp_handle handle, isp_u32 en)
 	return ret;
 }
 
-isp_s32 isp_u_raw_afm_spsmd_type(isp_handle handle, isp_u32 type)
+cmr_s32 isp_u_raw_afm_spsmd_type(isp_handle handle, cmr_u32 type)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	UNUSED(handle);
 	UNUSED(type);
 #if 0/*modify for Solve compile problem*/
@@ -500,9 +500,9 @@ isp_s32 isp_u_raw_afm_spsmd_type(isp_handle handle, isp_u32 type)
 	return ret;
 }
 
-isp_s32 isp_u_raw_afm_subfilter(isp_handle handle, isp_u32 average, isp_u32 median)
+cmr_s32 isp_u_raw_afm_subfilter(isp_handle handle, cmr_u32 average, cmr_u32 median)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	UNUSED(handle);
 	UNUSED(average);
 	UNUSED(median);
@@ -529,9 +529,9 @@ isp_s32 isp_u_raw_afm_subfilter(isp_handle handle, isp_u32 average, isp_u32 medi
 	return ret;
 }
 
-isp_s32 isp_u_raw_afm_spsmd_touch_mode(isp_handle handle, isp_u32 mode)
+cmr_s32 isp_u_raw_afm_spsmd_touch_mode(isp_handle handle, cmr_u32 mode)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	UNUSED(handle);
 	UNUSED(mode);
 #if 0
@@ -554,9 +554,9 @@ isp_s32 isp_u_raw_afm_spsmd_touch_mode(isp_handle handle, isp_u32 mode)
 	return ret;
 }
 
-isp_s32 isp_u_raw_afm_shfit(isp_handle handle, isp_u32 spsmd, isp_u32 sobel5, isp_u32 sobel9)
+cmr_s32 isp_u_raw_afm_shfit(isp_handle handle, cmr_u32 spsmd, cmr_u32 sobel5, cmr_u32 sobel9)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	UNUSED(handle);
 	UNUSED(spsmd);
 	UNUSED(sobel5);
@@ -585,9 +585,9 @@ isp_s32 isp_u_raw_afm_shfit(isp_handle handle, isp_u32 spsmd, isp_u32 sobel5, is
 	return ret;
 }
 
-isp_s32 isp_u_raw_afm_sobel_threshold(isp_handle handle, isp_u32 min, isp_u32 max)
+cmr_s32 isp_u_raw_afm_sobel_threshold(isp_handle handle, cmr_u32 min, cmr_u32 max)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	UNUSED(handle);
 	UNUSED(min);
 	UNUSED(max);
@@ -614,9 +614,9 @@ isp_s32 isp_u_raw_afm_sobel_threshold(isp_handle handle, isp_u32 min, isp_u32 ma
 	return ret;
 }
 
-isp_s32 isp_u_raw_afm_spsmd_threshold(isp_handle handle, isp_u32 min, isp_u32 max)
+cmr_s32 isp_u_raw_afm_spsmd_threshold(isp_handle handle, cmr_u32 min, cmr_u32 max)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	UNUSED(handle);
 	UNUSED(min);
 	UNUSED(max);
@@ -643,13 +643,13 @@ isp_s32 isp_u_raw_afm_spsmd_threshold(isp_handle handle, isp_u32 min, isp_u32 ma
 	return ret;
 }
 
-isp_s32 isp_u_raw_afm_threshold_rgb(isp_handle handle, void *thr_rgb)
+cmr_s32 isp_u_raw_afm_threshold_rgb(isp_handle handle, void *thr_rgb)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	UNUSED(handle);
 	UNUSED(thr_rgb);
 #if 0
-	isp_u32 num = 0;
+	cmr_u32 num = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -669,9 +669,9 @@ isp_s32 isp_u_raw_afm_threshold_rgb(isp_handle handle, void *thr_rgb)
 	return ret;
 }
 
-isp_s32 isp_u_raw_afm_win(isp_handle handle, void *win_range)
+cmr_s32 isp_u_raw_afm_win(isp_handle handle, void *win_range)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -691,9 +691,9 @@ isp_s32 isp_u_raw_afm_win(isp_handle handle, void *win_range)
 	return ret;
 }
 
-isp_s32 isp_u_raw_afm_win_num(isp_handle handle, isp_u32 *win_num)
+cmr_s32 isp_u_raw_afm_win_num(isp_handle handle, cmr_u32 *win_num)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 
 	struct isp_file *file = NULL;
 	struct isp_io_param param;

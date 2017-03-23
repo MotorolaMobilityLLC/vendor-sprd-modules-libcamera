@@ -18,15 +18,15 @@
 
 #include "isp_drv.h"
 
-isp_s32 isp_u_binning4awb_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_binning4awb_block(isp_handle handle, void *block_info)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
 		ISP_LOGE("handle is null error: 0x%lx 0x%lx",
-				(isp_uint)handle, (isp_uint)block_info);
+				(cmr_uint)handle, (cmr_uint)block_info);
 		return -1;
 	}
 
@@ -41,9 +41,9 @@ isp_s32 isp_u_binning4awb_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-isp_s32 isp_u_binning4awb_bypass(isp_handle handle, isp_u32 bypass)
+cmr_s32 isp_u_binning4awb_bypass(isp_handle handle, cmr_u32 bypass)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -63,9 +63,9 @@ isp_s32 isp_u_binning4awb_bypass(isp_handle handle, isp_u32 bypass)
 	return ret;
 }
 
-isp_s32 isp_u_binning4awb_endian(isp_handle handle, isp_u32 endian)
+cmr_s32 isp_u_binning4awb_endian(isp_handle handle, cmr_u32 endian)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -85,9 +85,9 @@ isp_s32 isp_u_binning4awb_endian(isp_handle handle, isp_u32 endian)
 	return ret;
 }
 
-isp_s32 isp_u_binning4awb_scaling_ratio(isp_handle handle, isp_u32 vertical, isp_u32 horizontal)
+cmr_s32 isp_u_binning4awb_scaling_ratio(isp_handle handle, cmr_u32 vertical, cmr_u32 horizontal)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 	struct isp_scaling_ratio scaling_ratio;
@@ -110,9 +110,9 @@ isp_s32 isp_u_binning4awb_scaling_ratio(isp_handle handle, isp_u32 vertical, isp
 	return ret;
 }
 
-isp_s32 isp_u_binning4awb_get_scaling_ratio(isp_handle handle, isp_u32 *vertical, isp_u32 *horizontal)
+cmr_s32 isp_u_binning4awb_get_scaling_ratio(isp_handle handle, cmr_u32 *vertical, cmr_u32 *horizontal)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 	struct isp_scaling_ratio scaling_ratio;
@@ -136,9 +136,9 @@ isp_s32 isp_u_binning4awb_get_scaling_ratio(isp_handle handle, isp_u32 *vertical
 	return ret;
 }
 
-isp_s32 isp_u_binning4awb_mem_addr(isp_handle handle, isp_u32 phy_addr)
+cmr_s32 isp_u_binning4awb_mem_addr(isp_handle handle, cmr_u32 phy_addr)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -158,12 +158,12 @@ isp_s32 isp_u_binning4awb_mem_addr(isp_handle handle, isp_u32 phy_addr)
 	return ret;
 }
 
-isp_s32 isp_u_binning4awb_statistics_buf(isp_handle handle, isp_u32 *buf_id)
+cmr_s32 isp_u_binning4awb_statistics_buf(isp_handle handle, cmr_u32 *buf_id)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
-	isp_u32 id;
+	cmr_u32 id;
 
 	if (!handle) {
 		ISP_LOGE("handle is null error.");
@@ -182,16 +182,16 @@ isp_s32 isp_u_binning4awb_statistics_buf(isp_handle handle, isp_u32 *buf_id)
 	return ret;
 }
 
-isp_s32 isp_u_binning4awb_transaddr(isp_handle handle, isp_u32 phys0, isp_u32 phys1)
+cmr_s32 isp_u_binning4awb_transaddr(isp_handle handle, cmr_u32 phys0, cmr_u32 phys1)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 	struct isp_b4awb_phys phys_addr;
 
 	if (!handle) {
 		ISP_LOGE("handle is null error: %lx",
-				(isp_uint)handle);
+				(cmr_uint)handle);
 		return -1;
 	}
 
@@ -208,15 +208,15 @@ isp_s32 isp_u_binning4awb_transaddr(isp_handle handle, isp_u32 phys0, isp_u32 ph
 	return ret;
 }
 
-isp_s32 isp_u_binning4awb_initbuf(isp_handle handle)
+cmr_s32 isp_u_binning4awb_initbuf(isp_handle handle)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
 	if (!handle) {
 		ISP_LOGE("handle is null error: %lx",
-				(isp_uint)handle);
+				(cmr_uint)handle);
 		return -1;
 	}
 

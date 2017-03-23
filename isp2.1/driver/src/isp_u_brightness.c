@@ -18,15 +18,15 @@
 
 #include "isp_drv.h"
 
-isp_s32 isp_u_brightness_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_brightness_block(isp_handle handle, void *block_info)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
 		ISP_LOGE("handle is null error: 0x%lx 0x%lx",
-				(isp_uint)handle, (isp_uint)block_info);
+				(cmr_uint)handle, (cmr_uint)block_info);
 		return -1;
 	}
 
@@ -41,9 +41,9 @@ isp_s32 isp_u_brightness_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-isp_s32 isp_u_brightness_slice_size(isp_handle handle, isp_u32 w, isp_u32 h)
+cmr_s32 isp_u_brightness_slice_size(isp_handle handle, cmr_u32 w, cmr_u32 h)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 	struct isp_img_size size;
@@ -66,9 +66,9 @@ isp_s32 isp_u_brightness_slice_size(isp_handle handle, isp_u32 w, isp_u32 h)
 	return ret;
 }
 
-isp_s32 isp_u_brightness_slice_info(isp_handle handle, isp_u32 info)
+cmr_s32 isp_u_brightness_slice_info(isp_handle handle, cmr_u32 info)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 

@@ -18,15 +18,15 @@
 
 #include "isp_drv.h"
 
-isp_s32 isp_u_nlc_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_nlc_block(isp_handle handle, void *block_info)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
 		ISP_LOGE("handle is null error: 0x%lx 0x%lx",
-				(isp_uint)handle, (isp_uint)block_info);
+				(cmr_uint)handle, (cmr_uint)block_info);
 		return -1;
 	}
 
@@ -41,9 +41,9 @@ isp_s32 isp_u_nlc_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-isp_s32 isp_u_nlc_bypass(isp_handle handle, isp_u32 bypass)
+cmr_s32 isp_u_nlc_bypass(isp_handle handle, cmr_u32 bypass)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -63,15 +63,15 @@ isp_s32 isp_u_nlc_bypass(isp_handle handle, isp_u32 bypass)
 	return ret;
 }
 
-isp_s32 isp_u_nlc_r_node(isp_handle handle, isp_u16 *r_node_ptr)
+cmr_s32 isp_u_nlc_r_node(isp_handle handle, cmr_u16 *r_node_ptr)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
 	if (!handle || !r_node_ptr) {
 		ISP_LOGE("handle is null error: 0x%lx 0x%lx",
-				(isp_uint)handle, (isp_uint)r_node_ptr);
+				(cmr_uint)handle, (cmr_uint)r_node_ptr);
 		return -1;
 	}
 
@@ -86,15 +86,15 @@ isp_s32 isp_u_nlc_r_node(isp_handle handle, isp_u16 *r_node_ptr)
 	return ret;
 }
 
-isp_s32 isp_u_nlc_g_node(isp_handle handle, isp_u16 *g_node_ptr)
+cmr_s32 isp_u_nlc_g_node(isp_handle handle, cmr_u16 *g_node_ptr)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
 	if (!handle || !g_node_ptr) {
 		ISP_LOGE("handle is null error: 0x%lx 0x%lx",
-				(isp_uint)handle, (isp_uint)g_node_ptr);
+				(cmr_uint)handle, (cmr_uint)g_node_ptr);
 		return -1;
 	}
 
@@ -109,15 +109,15 @@ isp_s32 isp_u_nlc_g_node(isp_handle handle, isp_u16 *g_node_ptr)
 	return ret;
 }
 
-isp_s32 isp_u_nlc_b_node(isp_handle handle, isp_u16 *b_node_ptr)
+cmr_s32 isp_u_nlc_b_node(isp_handle handle, cmr_u16 *b_node_ptr)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
 	if (!handle || !b_node_ptr) {
 		ISP_LOGE("handle is null error: 0x%lx 0x%lx",
-				(isp_uint)handle, (isp_uint)b_node_ptr);
+				(cmr_uint)handle, (cmr_uint)b_node_ptr);
 		return -1;
 	}
 
@@ -132,15 +132,15 @@ isp_s32 isp_u_nlc_b_node(isp_handle handle, isp_u16 *b_node_ptr)
 	return ret;
 }
 
-isp_s32 isp_u_nlc_l_node(isp_handle handle, isp_u16 *l_node_ptr)
+cmr_s32 isp_u_nlc_l_node(isp_handle handle, cmr_u16 *l_node_ptr)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
 	if (!handle || !l_node_ptr) {
 		ISP_LOGE("handle is null error: 0x%lx 0x%lx",
-				(isp_uint)handle, (isp_uint)l_node_ptr);
+				(cmr_uint)handle, (cmr_uint)l_node_ptr);
 		return -1;
 	}
 

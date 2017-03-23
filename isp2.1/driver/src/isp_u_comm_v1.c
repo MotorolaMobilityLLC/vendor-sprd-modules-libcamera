@@ -18,16 +18,16 @@
 
 #include "isp_drv.h"
 
-isp_s32 isp_u_comm_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_comm_block(isp_handle handle, void *block_info)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 #if 1
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
 		ISP_LOGE("handle is null error: 0x%lx x%lx",
-				(isp_uint)handle, (isp_uint)block_info);
+				(cmr_uint)handle, (cmr_uint)block_info);
 		return -1;
 	}
 
@@ -42,9 +42,9 @@ isp_s32 isp_u_comm_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-isp_s32 isp_u_shadow_ctrl_all(isp_handle handle, isp_u32 auto_shadow)
+cmr_s32 isp_u_shadow_ctrl_all(isp_handle handle, cmr_u32 auto_shadow)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 #if 1
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -65,9 +65,9 @@ isp_s32 isp_u_shadow_ctrl_all(isp_handle handle, isp_u32 auto_shadow)
 	return ret;
 }
 
-isp_s32 isp_u_awbm_shadow_ctrl(isp_handle handle, isp_u32 shadow_done)
+cmr_s32 isp_u_awbm_shadow_ctrl(isp_handle handle, cmr_u32 shadow_done)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 #if 1
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -88,9 +88,9 @@ isp_s32 isp_u_awbm_shadow_ctrl(isp_handle handle, isp_u32 shadow_done)
 	return ret;
 }
 
-isp_s32 isp_u_ae_shadow_ctrl(isp_handle handle, isp_u32 shadow_done)
+cmr_s32 isp_u_ae_shadow_ctrl(isp_handle handle, cmr_u32 shadow_done)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 #if 1
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -111,9 +111,9 @@ isp_s32 isp_u_ae_shadow_ctrl(isp_handle handle, isp_u32 shadow_done)
 	return ret;
 }
 
-isp_s32 isp_u_af_shadow_ctrl(isp_handle handle, isp_u32 shadow_done)
+cmr_s32 isp_u_af_shadow_ctrl(isp_handle handle, cmr_u32 shadow_done)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 #if 1
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -134,9 +134,9 @@ isp_s32 isp_u_af_shadow_ctrl(isp_handle handle, isp_u32 shadow_done)
 	return ret;
 }
 
-isp_s32 isp_u_afl_shadow_ctrl(isp_handle handle, isp_u32 shadow_done)
+cmr_s32 isp_u_afl_shadow_ctrl(isp_handle handle, cmr_u32 shadow_done)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 #if 1
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -157,9 +157,9 @@ isp_s32 isp_u_afl_shadow_ctrl(isp_handle handle, isp_u32 shadow_done)
 	return ret;
 }
 
-isp_s32 isp_u_comm_shadow_ctrl(isp_handle handle, isp_u32 shadow_done)
+cmr_s32 isp_u_comm_shadow_ctrl(isp_handle handle, cmr_u32 shadow_done)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 #if 1
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -180,9 +180,9 @@ isp_s32 isp_u_comm_shadow_ctrl(isp_handle handle, isp_u32 shadow_done)
 	return ret;
 }
 
-isp_s32 isp_u_3a_ctrl(isp_handle handle, isp_u32 enable)
+cmr_s32 isp_u_3a_ctrl(isp_handle handle, cmr_u32 enable)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 #if 1
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -203,9 +203,9 @@ isp_s32 isp_u_3a_ctrl(isp_handle handle, isp_u32 enable)
 	return ret;
 }
 
-isp_s32 isp_u_comm_channel0_y_aem_pos(isp_handle handle, isp_u32 pos)
+cmr_s32 isp_u_comm_channel0_y_aem_pos(isp_handle handle, cmr_u32 pos)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 #if 1
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
@@ -226,9 +226,9 @@ isp_s32 isp_u_comm_channel0_y_aem_pos(isp_handle handle, isp_u32 pos)
 	return ret;
 }
 
-isp_s32 isp_u_comm_channel1_y_aem_pos(isp_handle handle, isp_u32 pos)
+cmr_s32 isp_u_comm_channel1_y_aem_pos(isp_handle handle, cmr_u32 pos)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 #if 1
 	struct isp_file *file = NULL;
 	struct isp_io_param param;

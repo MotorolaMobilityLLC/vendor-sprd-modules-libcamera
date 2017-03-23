@@ -19,15 +19,15 @@
 #include "isp_drv.h"
 
 
-isp_s32 isp_u_cce_matrix_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_cce_matrix_block(isp_handle handle, void *block_info)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
 		ISP_LOGE("handle is null error: 0x%lx 0x%lx",
-				(isp_uint)handle, (isp_uint)block_info);
+				(cmr_uint)handle, (cmr_uint)block_info);
 		return -1;
 	}
 
@@ -42,15 +42,15 @@ isp_s32 isp_u_cce_matrix_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-isp_s32 isp_u_cce_uv_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_cce_uv_block(isp_handle handle, void *block_info)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
 		ISP_LOGE("handle is null error: 0x%lx 0x%lx",
-				(isp_uint)handle, (isp_uint)block_info);
+				(cmr_uint)handle, (cmr_uint)block_info);
 		return -1;
 	}
 
@@ -66,9 +66,9 @@ isp_s32 isp_u_cce_uv_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-isp_s32 isp_u_cce_uvdivision_bypass(isp_handle handle, isp_u32 bypass)
+cmr_s32 isp_u_cce_uvdivision_bypass(isp_handle handle, cmr_u32 bypass)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -88,9 +88,9 @@ isp_s32 isp_u_cce_uvdivision_bypass(isp_handle handle, isp_u32 bypass)
 	return ret;
 }
 
-isp_s32 isp_u_cce_mode(isp_handle handle, isp_u32 mode)
+cmr_s32 isp_u_cce_mode(isp_handle handle, cmr_u32 mode)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -110,9 +110,9 @@ isp_s32 isp_u_cce_mode(isp_handle handle, isp_u32 mode)
 	return ret;
 }
 
-isp_s32 isp_u_cce_matrix(isp_handle handle, isp_u16 *matrix_ptr)
+cmr_s32 isp_u_cce_matrix(isp_handle handle, cmr_u16 *matrix_ptr)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 	struct isp_cce_matrix_tab matrix_tab;
@@ -135,12 +135,12 @@ isp_s32 isp_u_cce_matrix(isp_handle handle, isp_u16 *matrix_ptr)
 	return ret;
 }
 
-isp_s32 isp_u_cce_shift(isp_handle handle,
-		isp_u32 y_shift,
-		isp_u32 u_shift,
-		isp_u32 v_shift)
+cmr_s32 isp_u_cce_shift(isp_handle handle,
+		cmr_u32 y_shift,
+		cmr_u32 u_shift,
+		cmr_u32 v_shift)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 	struct isp_cce_shift cce_shift;
@@ -165,9 +165,9 @@ isp_s32 isp_u_cce_shift(isp_handle handle,
 	return ret;
 }
 
-isp_s32 isp_u_cce_uvd(isp_handle handle, isp_u8 *div_ptr)
+cmr_s32 isp_u_cce_uvd(isp_handle handle, cmr_u8 *div_ptr)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 	struct isp_cce_uvd cce_uvd;
@@ -190,10 +190,10 @@ isp_s32 isp_u_cce_uvd(isp_handle handle, isp_u8 *div_ptr)
 	return ret;
 }
 
-isp_s32 isp_u_cce_uvc(isp_handle handle, isp_u8 *t_ptr, isp_u8 *m_ptr)
+cmr_s32 isp_u_cce_uvc(isp_handle handle, cmr_u8 *t_ptr, cmr_u8 *m_ptr)
 {
-	isp_s32 ret = 0;
-	isp_u32 val = 0;
+	cmr_s32 ret = 0;
+	cmr_u32 val = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 	struct isp_cce_uvc cce_uvc;

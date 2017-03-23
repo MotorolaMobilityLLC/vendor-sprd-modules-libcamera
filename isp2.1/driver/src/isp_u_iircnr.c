@@ -19,15 +19,15 @@
 #include "isp_drv.h"
 
 
-isp_s32 isp_u_iircnr_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_iircnr_block(isp_handle handle, void *block_info)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
 		ISP_LOGE("handle is null error: 0x%lx 0x%lx",
-				(isp_uint)handle, (isp_uint)block_info);
+				(cmr_uint)handle, (cmr_uint)block_info);
 		return -1;
 	}
 
@@ -43,15 +43,15 @@ isp_s32 isp_u_iircnr_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-isp_s32 isp_u_yrandom_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_yrandom_block(isp_handle handle, void *block_info)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
 		ISP_LOGE("handle is null error: 0x%lx 0x%lx",
-				(isp_uint)handle, (isp_uint)block_info);
+				(cmr_uint)handle, (cmr_uint)block_info);
 		return -1;
 	}
 

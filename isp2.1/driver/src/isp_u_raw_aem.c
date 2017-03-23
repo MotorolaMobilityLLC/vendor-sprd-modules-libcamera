@@ -18,15 +18,15 @@
 
 #include "isp_drv.h"
 
-isp_s32 isp_u_raw_aem_block(isp_handle handle, void *block_info)
+cmr_s32 isp_u_raw_aem_block(isp_handle handle, void *block_info)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
 	if (!handle) {
 		ISP_LOGE("handle is null error: 0x%lx 0x%lx",
-				(isp_uint)handle, (isp_uint)block_info);
+				(cmr_uint)handle, (cmr_uint)block_info);
 		return -1;
 	}
 
@@ -50,15 +50,15 @@ isp_s32 isp_u_raw_aem_block(isp_handle handle, void *block_info)
 	return ret;
 }
 
-isp_s32 isp_u_raw_aem_bypass(isp_handle handle, void *block_info)
+cmr_s32 isp_u_raw_aem_bypass(isp_handle handle, void *block_info)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
 	if (!handle || !block_info) {
 		ISP_LOGE("handle is null error: 0x%lx x%lx",
-				(isp_uint)handle, (isp_uint)block_info);
+				(cmr_uint)handle, (cmr_uint)block_info);
 		return -1;
 	}
 
@@ -73,15 +73,15 @@ isp_s32 isp_u_raw_aem_bypass(isp_handle handle, void *block_info)
 	return ret;
 }
 
-isp_s32 isp_u_raw_aem_mode(isp_handle handle, isp_u32 mode)
+cmr_s32 isp_u_raw_aem_mode(isp_handle handle, cmr_u32 mode)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
 	if (!handle) {
 		ISP_LOGE("handle is null error: 0x%lx",
-				(isp_uint)handle);
+				(cmr_uint)handle);
 		return -1;
 	}
 
@@ -96,12 +96,12 @@ isp_s32 isp_u_raw_aem_mode(isp_handle handle, isp_u32 mode)
 	return ret;
 }
 
-isp_s32 isp_u_raw_aem_statistics(isp_handle handle,
-		isp_u32 *r_info,
-		isp_u32 *g_info,
-		isp_u32 *b_info)
+cmr_s32 isp_u_raw_aem_statistics(isp_handle handle,
+		cmr_u32 *r_info,
+		cmr_u32 *g_info,
+		cmr_u32 *b_info)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 	struct isp_raw_aem_statistics *aem_statistics = NULL;
@@ -113,7 +113,7 @@ isp_s32 isp_u_raw_aem_statistics(isp_handle handle,
 
 	if (!r_info || !g_info || !b_info) {
 		ISP_LOGE("data ptr is null error: 0x%lx 0x%lx 0x%lx",
-			(isp_uint)r_info, (isp_uint)g_info, (isp_uint)b_info);
+			(cmr_uint)r_info, (cmr_uint)g_info, (cmr_uint)b_info);
 		return -1;
 	}
 
@@ -147,9 +147,9 @@ isp_s32 isp_u_raw_aem_statistics(isp_handle handle,
 	return ret;
 }
 
-isp_s32 isp_u_raw_aem_skip_num(isp_handle handle, isp_u32 skip_num)
+cmr_s32 isp_u_raw_aem_skip_num(isp_handle handle, cmr_u32 skip_num)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -169,9 +169,9 @@ isp_s32 isp_u_raw_aem_skip_num(isp_handle handle, isp_u32 skip_num)
 	return ret;
 }
 
-isp_s32 isp_u_raw_aem_shift(isp_handle handle, isp_u32 shift)
+cmr_s32 isp_u_raw_aem_shift(isp_handle handle, cmr_u32 shift)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 
@@ -191,9 +191,9 @@ isp_s32 isp_u_raw_aem_shift(isp_handle handle, isp_u32 shift)
 	return ret;
 }
 
-isp_s32 isp_u_raw_aem_offset(isp_handle handle, isp_u32 x, isp_u32 y)
+cmr_s32 isp_u_raw_aem_offset(isp_handle handle, cmr_u32 x, cmr_u32 y)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 	struct img_offset offset;
@@ -216,9 +216,9 @@ isp_s32 isp_u_raw_aem_offset(isp_handle handle, isp_u32 x, isp_u32 y)
 	return ret;
 }
 
-isp_s32 isp_u_raw_aem_blk_size(isp_handle handle, isp_u32 width, isp_u32 height)
+cmr_s32 isp_u_raw_aem_blk_size(isp_handle handle, cmr_u32 width, cmr_u32 height)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 	struct isp_img_size size;
@@ -241,9 +241,9 @@ isp_s32 isp_u_raw_aem_blk_size(isp_handle handle, isp_u32 width, isp_u32 height)
 	return ret;
 }
 
-isp_s32 isp_u_raw_aem_slice_size(isp_handle handle, isp_u32 width, isp_u32 height)
+cmr_s32 isp_u_raw_aem_slice_size(isp_handle handle, cmr_u32 width, cmr_u32 height)
 {
-	isp_s32 ret = 0;
+	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;
 	struct isp_io_param param;
 	struct isp_img_size size;
