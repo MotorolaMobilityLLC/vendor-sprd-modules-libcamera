@@ -505,12 +505,12 @@ public:
 	int setCOLORTag(COLOR_Tag colorInfo);
 	int getCOLORTag(COLOR_Tag* colorInfo);
 
-	int setCONTROLTag(CONTROL_Tag controlInfo);
+	int setCONTROLTag(CONTROL_Tag* controlInfo);
 	int getCONTROLTag(CONTROL_Tag* controlInfo);
 
-	int setAeCONTROLTag(CONTROL_Tag controlInfo);
-	int setAfCONTROLTag(CONTROL_Tag controlInfo);
-	int setAwbCONTROLTag(CONTROL_Tag controlInfo);
+	int setAeCONTROLTag(CONTROL_Tag* controlInfo);
+	int setAfCONTROLTag(CONTROL_Tag* controlInfo);
+	int setAwbCONTROLTag(CONTROL_Tag* controlInfo);
 
 	int setEDGETag(EDGE_Tag edgeInfo);
 	int getEDGETag(EDGE_Tag* edgeInfo);
@@ -541,19 +541,19 @@ public:
 	int androidAntibandingModeToDrvAntibandingMode(uint8_t androidAntibandingMode, int8_t *convertAntibandingMode);
 	int androidAmModeToDrvAwbMode(uint8_t androidAmMode, struct cmr_ae_param* ae_param);
 	int androidAfModeToDrvAfMode(uint8_t androidAfMode, int8_t *convertDrvMode);
-	int setTONEMAPTag(TONEMAP_Tag toneInfo);
+	int setTONEMAPTag(TONEMAP_Tag* toneInfo);
 	int getTONEMAPTag(TONEMAP_Tag* toneInfo);
 
 	int setSTATISTICSINFOTag(STATISTICS_INFO_Tag statis_InfoInfo);
 	int getSTATISTICSINFOTag(STATISTICS_INFO_Tag* statis_InfoInfo);
 
-	int setSCALERTag(SCALER_Tag scalerInfo);
+	int setSCALERTag(SCALER_Tag* scalerInfo);
 	int getSCALERTag(SCALER_Tag* scalerInfo);
 
 	int setQUIRKSTag(QUIRKS_Tag quirksInfo);
 	int getQUIRKSTag(QUIRKS_Tag* quirksInfo);
 
-	int setREQUESTTag(REQUEST_Tag requestInfo);
+	int setREQUESTTag(REQUEST_Tag* requestInfo);
 	int getREQUESTTag(REQUEST_Tag* requestInfo);
 
 	int setSPRDDEFTag(SPRD_DEF_Tag sprddefInfo);
@@ -580,7 +580,7 @@ public:
 	int setLEDTag(LED_Tag ledInfo);
 	int getLEDTag(LED_Tag* ledInfo);
 
-	int setFACETag(FACE_Tag faceInfo);
+	int setFACETag(FACE_Tag* faceInfo);
 	int getFACETag(FACE_Tag* faceInfo);
 
 	int setEISCROPTag(EIS_CROP_Tag eiscrop_Info);

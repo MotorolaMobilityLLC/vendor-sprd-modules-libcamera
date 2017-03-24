@@ -1359,7 +1359,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info)
 				mSetting->getREQUESTTag(&requestInfo);
 				requestInfo.id = i->request_id;
 				requestInfo.frame_count = i->frame_number;
-				mSetting->setREQUESTTag(requestInfo);
+				mSetting->setREQUESTTag(&requestInfo);
 				metaInfo.flash_mode = i->meta_info.flash_mode;
 				memcpy(metaInfo.ae_regions, i->meta_info.ae_regions, 5 * sizeof(i->meta_info.ae_regions[0]));
 				memcpy(metaInfo.af_regions, i->meta_info.af_regions, 5 * sizeof(i->meta_info.af_regions[0]));
@@ -1395,7 +1395,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info)
 				mSetting->getREQUESTTag(&requestInfo);
 				requestInfo.id = i->request_id;
 				requestInfo.frame_count = i->frame_number;
-				mSetting->setREQUESTTag(requestInfo);
+				mSetting->setREQUESTTag(&requestInfo);
 				metaInfo.flash_mode = i->meta_info.flash_mode;
 				memcpy(metaInfo.ae_regions, i->meta_info.ae_regions, 5 * sizeof(i->meta_info.ae_regions[0]));
 				memcpy(metaInfo.af_regions, i->meta_info.af_regions, 5 * sizeof(i->meta_info.af_regions[0]));

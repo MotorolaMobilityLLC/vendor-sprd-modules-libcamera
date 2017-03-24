@@ -4499,8 +4499,11 @@ int SprdCamera3Setting::get_tag_type(const vendor_tag_ops_t* ops, uint32_t tag)
 	uint32_t tag_index = tag & 0xFFFF;
 
 	UNUSED(ops);
-	if (tag_section >= ANDROID_VENDOR_SECTION_COUNT
-		|| tag >= (uint32_t)(cam_hal_metadata_section_bounds[tag_section][1])) {
+	if (tag_section >= ANDROID_VENDOR_SECTION_COUNT) {// modify for coverity 124179
+		HAL_LOGE("####get_tag_type: hal %d, tag_section=%x, >= ANDROID_VENDOR_SECTION_COUNT\n", __LINE__, tag_section);
+		return -1;
+		}
+		else if (tag >= (uint32_t)(cam_hal_metadata_section_bounds[tag_section][1])) {
 		return -1;
 	}
 	return cam_tag_info[tag_section][tag_index].tag_type;
@@ -4895,9 +4898,9 @@ int SprdCamera3Setting::getFLASHINFOTag(FLASH_INFO_Tag* flash_InfoInfo)
 	return 0;
 }
 
-int SprdCamera3Setting::setTONEMAPTag(TONEMAP_Tag toneInfo)
+int SprdCamera3Setting::setTONEMAPTag(TONEMAP_Tag* toneInfo)
 {
-	s_setting[mCameraId].toneInfo= toneInfo;
+	s_setting[mCameraId].toneInfo = *toneInfo;
 	return 0;
 }
 
@@ -4919,10 +4922,10 @@ int SprdCamera3Setting::getSTATISTICSINFOTag(STATISTICS_INFO_Tag* statis_InfoInf
 	return 0;
 }
 
-int SprdCamera3Setting::setSCALERTag(SCALER_Tag scalerInfo)
+int SprdCamera3Setting::setSCALERTag(SCALER_Tag* scalerInfo)
 {
 	Mutex::Autolock l(mLock);
-	s_setting[mCameraId].scalerInfo= scalerInfo;
+	s_setting[mCameraId].scalerInfo= *scalerInfo;
 	return 0;
 }
 
@@ -4933,31 +4936,31 @@ int SprdCamera3Setting::getSCALERTag(SCALER_Tag* scalerInfo)
 	return 0;
 }
 
-int SprdCamera3Setting::setCONTROLTag(CONTROL_Tag controlInfo)
+int SprdCamera3Setting::setCONTROLTag(CONTROL_Tag* controlInfo)
 {
 	Mutex::Autolock l(mLock);
-	s_setting[mCameraId].controlInfo= controlInfo;
+	s_setting[mCameraId].controlInfo= *controlInfo;
 	return 0;
 }
 
-int SprdCamera3Setting::setAeCONTROLTag(CONTROL_Tag controlInfo)
+int SprdCamera3Setting::setAeCONTROLTag(CONTROL_Tag* controlInfo)
 {
 	Mutex::Autolock l(mLock);
-	s_setting[mCameraId].controlInfo.ae_state = controlInfo.ae_state;
+	s_setting[mCameraId].controlInfo.ae_state = controlInfo->ae_state;
 	return 0;
 }
 
-int SprdCamera3Setting::setAfCONTROLTag(CONTROL_Tag controlInfo)
+int SprdCamera3Setting::setAfCONTROLTag(CONTROL_Tag* controlInfo)
 {
 	Mutex::Autolock l(mLock);
-	s_setting[mCameraId].controlInfo.af_state = controlInfo.af_state;
+	s_setting[mCameraId].controlInfo.af_state = controlInfo->af_state;
 	return 0;
 }
 
-int SprdCamera3Setting::setAwbCONTROLTag(CONTROL_Tag controlInfo)
+int SprdCamera3Setting::setAwbCONTROLTag(CONTROL_Tag* controlInfo)
 {
 	Mutex::Autolock l(mLock);
-	s_setting[mCameraId].controlInfo.awb_state = controlInfo.awb_state;
+	s_setting[mCameraId].controlInfo.awb_state = controlInfo->awb_state;
 	return 0;
 }
 
@@ -4991,9 +4994,9 @@ int SprdCamera3Setting::getQUIRKSTag(QUIRKS_Tag* quirksInfo)
 	return 0;
 }
 
-int SprdCamera3Setting::setREQUESTTag(REQUEST_Tag requestInfo)
+int SprdCamera3Setting::setREQUESTTag(REQUEST_Tag* requestInfo)
 {
-	s_setting[mCameraId].requestInfo= requestInfo;
+	s_setting[mCameraId].requestInfo= *requestInfo;
 	return 0;
 }
 
@@ -5098,9 +5101,9 @@ int SprdCamera3Setting::getLEDTag(LED_Tag* ledInfo)
 	*ledInfo = s_setting[mCameraId].ledInfo;
 	return 0;
 }
-int SprdCamera3Setting::setFACETag(FACE_Tag faceInfo)
+int SprdCamera3Setting::setFACETag(FACE_Tag* faceInfo)
 {
-	s_setting[mCameraId].faceInfo= faceInfo;
+	s_setting[mCameraId].faceInfo= *faceInfo;
 	return 0;
 }
 
