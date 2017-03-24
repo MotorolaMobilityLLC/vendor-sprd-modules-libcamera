@@ -2907,11 +2907,16 @@ v=v>(max)?(max):v; hist[v]++;}
 	}
 
 	static void trigger_saf(af_ctrl_t * af, char *test_param) {
+		UNUSED(test_param);
 		af->request_mode = AF_MODE_NORMAL;
 		af->state = STATE_NORMAL_AF;
 		af->caf_state = CAF_IDLE;
-		af->defocus = (1 == atoi(test_param))? (1):(af->defocus);
-		saf_start(af, NULL);	//SAF, win is NULL using default
+		//af->defocus = (1 == atoi(test_param))? (1):(af->defocus);
+		//saf_start(af, NULL);	//SAF, win is NULL using default
+		af->algo_mode = SAF;
+		do_start_af(af);
+		AF_Trigger(&af->fv, af->algo_mode, (1==af->defocus)? DEFOCUS : RF_NORMAL);
+		af->vcm_stable = 0;
 	}
 
 	static void calibration_ae_mean(af_ctrl_t * af, char *test_param) {
@@ -2946,12 +2951,12 @@ v=v>(max)?(max):v; hist[v]++;}
 
 		af->defocus = atoi(test_param);
 		AF_LOGD("af->defocus : %d \n", af->defocus);
-
+/*
 		af->request_mode = AF_MODE_NORMAL;
 		af->state = STATE_NORMAL_AF;
 		af->caf_state = CAF_IDLE;
 		saf_start(af, NULL);	//SAF, win is NULL using default    
-
+*/
 		return;
 	}
 
@@ -2990,6 +2995,84 @@ v=v>(max)?(max):v; hist[v]++;}
 		return;
 	}
 
+	static void set_roi(af_ctrl_t * af, char *test_param) {
+		char *p1 = NULL;
+		char *p2 = NULL;
+		char* string = NULL;
+		uint32_t len = 0;
+		uint8 num=0;
+		roi_info_t *r = &af->roi;
+		FILE* fp=NULL;
+		UNUSED(test_param);
+
+		if (0 == access("/data/misc/cameraserver/AF_roi.bin", R_OK)) {
+			fp=fopen("/data/misc/cameraserver/AF_roi.bin","rb");
+			if( NULL==fp ){
+				AF_LOGI("open file AF_roi.bin fails");
+				return;
+			}
+
+			fseek(fp,0,SEEK_END);
+			len = ftell(fp);
+			string = malloc(len);
+			if( NULL==string ){
+				AF_LOGI("malloc len of file AF_roi.bin fails");
+				fclose(fp);
+				return;
+			}
+			fseek(fp,0,SEEK_SET);
+			fread(string,1,len,fp);
+			fclose(fp);
+			//parsing argumets start
+			p1 = p2 = string;
+			while (*p2 != '~' && *p2 != '\0')
+				p2++;
+			*p2++ = '\0';
+
+			r->num = atoi(p1);
+
+			num=0;
+			while( num<r->num ){//set AF ROI
+				p1 = p2;
+				while (*p2 != '~' && *p2 != '\0')
+					p2++;
+				*p2++ = '\0';
+				r->win[num].start_x = atoi(p1);
+				r->win[num].start_x = (r->win[num].start_x>>1)<<1;
+				p1 = p2;
+				while (*p2 != '~' && *p2 != '\0')
+					p2++;
+				*p2++ = '\0';
+				r->win[num].start_y = atoi(p1);
+				r->win[num].start_y = (r->win[num].start_y>>1)<<1;
+				p1 = p2;
+				while (*p2 != '~' && *p2 != '\0')
+					p2++;
+				*p2++ = '\0';
+				r->win[num].end_x = atoi(p1);
+				r->win[num].end_x = (r->win[num].end_x>>1)<<1;
+				p1 = p2;
+				while (*p2 != '~' && *p2 != '\0')
+					p2++;
+				*p2++ = '\0';
+				r->win[num].end_y = atoi(p1);
+				r->win[num].end_y = (r->win[num].end_y>>1)<<1;
+				AF_LOGI("ROI %d win,(startx,starty,endx,endy) = (%d,%d,%d,%d)",num,
+					r->win[num].start_x,r->win[num].start_y,r->win[num].end_x,r->win[num].end_y);
+				num++;
+			}
+			//parsing argumets end
+			if( NULL!=string )
+				free(string);
+
+		}else{
+			AF_LOGI("file AF_roi.bin doesn't exist");
+			return;
+		}
+
+		return;
+	}
+
 	static test_mode_command_t test_mode_set[] = {
 		{"ISP_FOCUS_MANUAL", 0, &set_manual},
 		{"ISP_FOCUS_CAF", 0, &trigger_caf},
@@ -3002,6 +3085,7 @@ v=v>(max)?(max):v; hist[v]++;}
 		{"ISP_FOCUS_DEFOCUS", 0, &trigger_defocus},
 		{"ISP_FOCUS_DUMP_LOG", 0, &dump_focus_log},
 		{"ISP_FOCUS_STAT_REG", 0, &set_focus_stat_reg},
+		{"ISP_FOCUS_SET_ROI", 0, &set_roi},
 		{"ISP_DEFAULT", 0, NULL},
 	};
 
