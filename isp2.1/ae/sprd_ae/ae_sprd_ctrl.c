@@ -509,8 +509,8 @@ static int32_t ae_calc_result_queue_write(struct ae_calc_result_queue *queue, st
 	ori_ae_result = queue->write;
 	*queue->write++ = *ae_result;
 	queue->wcnt++;
-	AE_LOGI("ae_calc_result_queue_write -- queue->write %p", queue->write);
-	AE_LOGI("ae_calc_result_queue_write -- queue->wcnt %u", queue->wcnt);
+	AE_LOGV("ae_calc_result_queue_write -- queue->write %p", queue->write);
+	AE_LOGV("ae_calc_result_queue_write -- queue->wcnt %u", queue->wcnt);
 	if (queue->write > &queue->ae_result[AE_CALC_RESULT_QUEUE_LENGTH - 1]) {
 		queue->write = &queue->ae_result[0];
 	}
@@ -3323,24 +3323,24 @@ int32_t ae_calculation(void *handle, void* param, void* result)
 /***********************************************************/
 /******bethany lock ae*******
   *****touch have 3 states,0:touch before/release;1:touch doing; 2: toch done and AE stable*****/
-    AE_LOGD("TCCTL_tcAE_status and ae_stable is %d,%d",current_result->tcAE_status,current_result->wts.stable);
+    AE_LOGV("TCCTL_tcAE_status and ae_stable is %d,%d",current_result->tcAE_status,current_result->wts.stable);
 	if(1 == current_result->tcAE_status && 1 == current_result->wts.stable){
 		AE_LOGD("TC_start lock ae");
 		//AE_LOGD("TC_pause num is %d",cxt->cur_status.settings.pause_cnt);
 		rtn = _set_pause(cxt);
-		AE_LOGD("touch ae stable cb");
+		AE_LOGV("touch ae stable cb");
 		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_TOUCH_AE_NOTIFY);
 		current_result->tcAE_status = 2;
 	}
 	cxt->cur_status.to_ae_state = current_result->tcAE_status;
-	AE_LOGD("TCCTL_to_AE_state is %d",cxt->cur_status.to_ae_state);
-	AE_LOGD("TCCTL_rls_cond is %d,%d",current_result->tcAE_status,current_result->tcRls_flag);
+	AE_LOGV("TCCTL_to_AE_state is %d",cxt->cur_status.to_ae_state);
+	AE_LOGV("TCCTL_rls_cond is %d,%d",current_result->tcAE_status,current_result->tcRls_flag);
 	if(0 == current_result->tcAE_status && 1 == current_result->tcRls_flag){
 		rtn = _set_restore_cnt(cxt);
 		AE_LOGD("TC_start release lock ae");
 		current_result->tcRls_flag = 0;
 	}
-	AE_LOGD("TCCTL_rls_ae_lock is %d",cxt->cur_status.settings.lock_ae);
+	AE_LOGV("TCCTL_rls_ae_lock is %d",cxt->cur_status.settings.lock_ae);
 /***********************************************************/
 /*display the AE running status*/
 	if (1 == cxt->debug_enable) {
