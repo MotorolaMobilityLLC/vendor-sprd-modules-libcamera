@@ -121,64 +121,64 @@ enum awb_ctrl_flash_status {
 
 
 struct awb_ctrl_chn_img {
-	uint32_t *r;
-	uint32_t *g;
-	uint32_t *b;
+	cmr_u32 *r;
+	cmr_u32 *g;
+	cmr_u32 *b;
 };
 
 struct awb_ctrl_weight {
-	uint32_t value[2];
-	uint32_t weight[2];
+	cmr_u32 value[2];
+	cmr_u32 weight[2];
 };
 struct awb_ctrl_size {
-	uint16_t w;
-	uint16_t h;
+	cmr_u16 w;
+	cmr_u16 h;
 };
 
 struct awb_ctrl_pos {
-	int16_t x;
-	int16_t y;
+	cmr_s16 x;
+	cmr_s16 y;
 };
 
 struct awb_ctrl_gain {
-	uint32_t r;
-	uint32_t g;
-	uint32_t b;
+	cmr_u32 r;
+	cmr_u32 g;
+	cmr_u32 b;
 };
 
 struct awb_ctrl_range {
-	short	min;
-	short  	max;
+	cmr_s16	min;
+	cmr_s16  	max;
 };
 
 struct awb_ctrl_bv {
-	uint32_t enable;
-	uint32_t num;
+	cmr_u32 enable;
+	cmr_u32 num;
 	struct awb_ctrl_range bv_range[AWB_CTRL_ENVI_NUM];
 };
 
 struct awb_ctrl_envi_info {
 	enum awb_ctrl_envi_id envi_id;
-	uint32_t weight;
+	cmr_u32 weight;
 };
 
 struct awb_flash_info {
 	enum awb_ctrl_flash_mode flash_mode;
 	struct awb_ctrl_gain flash_ratio;
-	uint32_t effect;
-	uint32_t patten;
+	cmr_u32 effect;
+	cmr_u32 patten;
 	enum awb_ctrl_flash_status flash_status;
 };
 union awb_ctrl_stat_img {
 	struct awb_ctrl_chn_img chn_img;
-	uint8_t *raw_img_8;
-	uint16_t *raw_img_16;
+	cmr_u8 *raw_img_8;
+	cmr_u16 *raw_img_16;
 };
 
 struct awb_ctrl_rgb_l {
-	uint32_t r;
-	uint32_t g;
-	uint32_t b;
+	cmr_u32 r;
+	cmr_u32 g;
+	cmr_u32 b;
 };
 
 struct awb_ctrl_opt_info {
@@ -186,8 +186,8 @@ struct awb_ctrl_opt_info {
 	struct awb_ctrl_rgb_l rdm_stat_info;
 };
 struct awb_ctrl_init_param {
-	uint32_t base_gain;
-	uint32_t awb_enable;
+	cmr_u32 base_gain;
+	cmr_u32 awb_enable;
 	enum awb_ctrl_wb_mode wb_mode;
 	enum awb_ctrl_stat_img_format stat_img_format;
 	struct awb_ctrl_size stat_img_size;
@@ -195,100 +195,100 @@ struct awb_ctrl_init_param {
 	struct awb_ctrl_opt_info otp_info;
 	struct third_lib_info lib_param;
 	void *tuning_param;
-	uint32_t param_size;
-	uint32_t camera_id;
+	cmr_u32 param_size;
+	cmr_u32 camera_id;
 	void* lsc_otp_random;
 	void* lsc_otp_golden;
-	uint32_t lsc_otp_width;
-	uint32_t lsc_otp_height;
-	uint32_t img_width;
-	uint32_t img_height;
+	cmr_u32 lsc_otp_width;
+	cmr_u32 lsc_otp_height;
+	cmr_u32 img_width;
+	cmr_u32 img_height;
 	void* priv_handle;
 };
 
 struct awb_ctrl_init_result {
 	struct awb_ctrl_gain gain;
-	uint32_t ct;
+	cmr_u32 ct;
 //ALC_S 20150517
-	uint32_t use_ccm;
-	uint16_t ccm[9];
+	cmr_u32 use_ccm;
+	cmr_u16 ccm[9];
 //ALC_S 20150517
 
 //ALC_S 20150519
-	uint32_t use_lsc;
-	uint16_t* lsc;
+	cmr_u32 use_lsc;
+	cmr_u16* lsc;
 //ALC_S 20150519
-	uint32_t lsc_size;
+	cmr_u32 lsc_size;
 };
 
 /*ALC_S*/
 struct awb_ctrl_ae_info {
-	int32_t bv;
-	int32_t iso;
+	cmr_s32 bv;
+	cmr_s32 iso;
 	float gain;
 	float exposure;
 	float f_value;
-	uint32_t stable;
+	cmr_u32 stable;
 
-	int32_t ev_index; /* 0 ~ 15, such as 0(ev-2.0), 1(ev-1.5), 2(ev-1.0), 3(ev-0.5), 4(ev0), 5(ev+0.5), 6(ev+1.0), 7(ev+1.5), 8(ev+2.0) */
-	int32_t ev_table[16];
+	cmr_s32 ev_index; /* 0 ~ 15, such as 0(ev-2.0), 1(ev-1.5), 2(ev-1.0), 3(ev-0.5), 4(ev0), 5(ev+0.5), 6(ev+1.0), 7(ev+1.5), 8(ev+2.0) */
+	cmr_s32 ev_table[16];
 };
 
 struct awb_ctrl_calc_param {
-	uint32_t quick_mode;
-	int32_t bv;
+	cmr_u32 quick_mode;
+	cmr_s32 bv;
 	union awb_ctrl_stat_img stat_img;	// stat from aem
 
 	union awb_ctrl_stat_img stat_img_awb;	// stat from binning
-	unsigned int stat_width_awb;
-	unsigned int stat_height_awb;
+	cmr_u32 stat_width_awb;
+	cmr_u32 stat_height_awb;
 
 	struct awb_ctrl_ae_info ae_info;
-	uint32_t scalar_factor;
+	cmr_u32 scalar_factor;
 
 	// just for simulation
-	int matrix[9];
-	unsigned char gamma[256];
+	cmr_s32 matrix[9];
+	cmr_u8 gamma[256];
 };
 
 
 struct tg_awb_ctrl_alc_log
 {
-	uint8_t* log;
-	uint32_t size;
+	cmr_u8* log;
+	cmr_u32 size;
 }log_awb,log_lsc;
 
 
 struct awb_ctrl_calc_result {
 	struct awb_ctrl_gain gain;
-	uint32_t ct;
-	uint32_t use_ccm;
-	uint16_t ccm[9];
+	cmr_u32 ct;
+	cmr_u32 use_ccm;
+	cmr_u16 ccm[9];
 //ALC_S 20150519
-	uint32_t use_lsc;
-	uint16_t* lsc;
+	cmr_u32 use_lsc;
+	cmr_u16* lsc;
 //ALC_S 20150519
-	uint32_t lsc_size;
+	cmr_u32 lsc_size;
 /*ALC_S*/
 	struct tg_awb_ctrl_alc_log log_awb;
 	struct tg_awb_ctrl_alc_log log_lsc;
 /*ALC_E*/
 
-	int pg_flag;
-	int32_t green100;
+	cmr_s32 pg_flag;
+	cmr_s32 green100;
 };
 
 struct awb_ctrl_lock_info {
 	struct awb_ctrl_gain lock_gain;
-	uint32_t lock_mode;
-	uint32_t lock_ct;
-	uint32_t lock_num;
-	uint32_t unlock_num;
+	cmr_u32 lock_mode;
+	cmr_u32 lock_ct;
+	cmr_u32 lock_num;
+	cmr_u32 unlock_num;
 };
 
 struct awb_data_info {
 	void *data_ptr;
-	uint32_t data_size;
+	cmr_u32 data_size;
 };
 
 

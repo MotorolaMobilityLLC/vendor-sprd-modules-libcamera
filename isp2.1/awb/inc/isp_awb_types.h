@@ -26,6 +26,7 @@
 #include <linux/types.h>
 #include <sys/types.h>
 #include <utils/Log.h>
+#include "isp_type.h"
 #endif
 
 /*------------------------------------------------------------------------------*
@@ -68,18 +69,18 @@ enum awb_cmd {
 };
 
 struct awb_size {
-	uint16_t	w;
-	uint16_t	h;
+	cmr_u16	w;
+	cmr_u16	h;
 };
 
 struct awb_range {
-	uint16_t	min;
-	uint16_t  	max;
+	cmr_u16	min;
+	cmr_u16  	max;
 };
 
 struct awb_point {
-	uint16_t	x;
-	uint16_t	y;
+	cmr_u16	x;
+	cmr_u16	y;
 };
 
 struct awb_rect {
@@ -88,22 +89,22 @@ struct awb_rect {
 };
 
 struct awb_gain {
-	uint16_t r;
-	uint16_t g;
-	uint16_t b;
+	cmr_u16 r;
+	cmr_u16 g;
+	cmr_u16 b;
 };
 
 struct awb_linear_func {
-	int32_t a;
-	int32_t b;
-	uint32_t shift;
+	cmr_s32 a;
+	cmr_s32 b;
+	cmr_u32 shift;
 };
 
 struct awb_sample {
 	/* input value of the sample point */
-	int32_t	x;
+	cmr_s32	x;
 	/* output value of the sample point */
-	int32_t	y;
+	cmr_s32	y;
 };
 
 /* piecewise linear function */
@@ -112,21 +113,21 @@ struct awb_piecewise_func {
 	 of the samples must be in an ascending sort  order */
 	struct awb_sample samples[AWB_MAX_PIECEWISE_NUM];
 	/* number of the samples*/
-	uint16_t num;
-	uint16_t base;
+	cmr_u16 num;
+	cmr_u16 base;
 };
 
 /* scanline */
 struct awb_scanline {
-	uint16_t y;
-	uint16_t x0;
-	uint16_t x1;
+	cmr_u16 y;
+	cmr_u16 x0;
+	cmr_u16 x1;
 };
 
 /* scanline of the window */
 struct awb_win_scanline {
 	/* scanline number */
-	uint16_t num;
+	cmr_u16 num;
 	struct awb_scanline scanline;
 };
 /*------------------------------------------------------------------------------*

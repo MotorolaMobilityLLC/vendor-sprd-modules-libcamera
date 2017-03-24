@@ -49,13 +49,13 @@ extern "C"
 *				Data Structures					*
 *-------------------------------------------------------------------------------*/
 struct awb_alg_size {
-	uint16_t w;
-	uint16_t h;
+	cmr_u16 w;
+	cmr_u16 h;
 };
 
 struct awb_alg_pos {
-	int16_t x;
-	int16_t y;
+	cmr_s16 x;
+	cmr_s16 y;
 };
 
 struct awb_param_ctrl {
@@ -73,7 +73,7 @@ struct awb_param_ctrl {
 	struct awb_alg_bv bv_range;
 	/*init gain and ct*/
 	struct awb_alg_gain init_gain;
-	uint32_t init_ct;
+	cmr_u32 init_ct;
 };
 
 struct awb_param_tuning {
@@ -81,14 +81,14 @@ struct awb_param_tuning {
 	/*algorithm param*/
 	void *alg_param;
 	/*algorithm param size*/
-	uint32_t alg_param_size;
+	cmr_u32 alg_param_size;
 };
 /*------------------------------------------------------------------------------*
 *				Functions					*
 *-------------------------------------------------------------------------------*/
 
-//int32_t awb_param_pack(struct awb_param *awb_param, uint32_t pack_buf_size, void *pack_buf, uint32_t *pack_data_size);
-int32_t awb_param_unpack(void *pack_data, uint32_t data_size, struct awb_param_tuning *tuning_param);
+//cmr_s32 awb_param_pack(struct awb_param *awb_param, cmr_u32 pack_buf_size, void *pack_buf, cmr_u32 *pack_data_size);
+cmr_s32 awb_param_unpack(void *pack_data, cmr_u32 data_size, struct awb_param_tuning *tuning_param);
 
 /*------------------------------------------------------------------------------*
 *				Compiler Flag					*

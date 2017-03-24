@@ -26,6 +26,9 @@ This file is made automatically.
 *//*-------------------------------------------------------------------------*/
 #ifndef AL_TYP_STD_H
 #define AL_TYP_STD_H
+
+#include "isp_type.h"
+
 /*============================================================================**
 
 Platform definition
@@ -130,19 +133,19 @@ Select MSM8xxx
 /*----------------------------------------------------------**
   integer
 **----------------------------------------------------------*/
-typedef signed char	SI_08;        /**<8bit signed integer*/
-typedef unsigned char	UI_08;        /**<8bit unsigned integer*/
-typedef signed short	SI_16;        /**<16bit signed integer*/
-typedef unsigned short	UI_16;        /**<16bit unsigned integer*/
-typedef signed int	SI_32;        /**<32bit signed integer*/
-typedef unsigned int	UI_32;        /**<32bit unsigned integer*/
+typedef cmr_s8	SI_08;        /**<8bit cmr_s32eger*/
+typedef cmr_u8	UI_08;        /**<8bit cmr_u32eger*/
+typedef cmr_s16	SI_16;        /**<16bit cmr_s32eger*/
+typedef cmr_u16	UI_16;        /**<16bit cmr_u32eger*/
+typedef cmr_s32	SI_32;        /**<32bit cmr_s32eger*/
+typedef cmr_u32	UI_32;        /**<32bit cmr_u32eger*/
 /*----------------------------------------------------------**
    fixed point
 **----------------------------------------------------------*/
-typedef signed short	SQ_16;        /**<16bit (S0.15) Fixed point */
-typedef unsigned short	UQ_16;        /**<16bit (0.16) Fixed point */
-typedef signed int	SQ_32;        /**<32bit (S15.16) Fixed point */
-typedef unsigned int	UQ_32;        /**<32bit (16.16) Fixed point */
+typedef cmr_s16	SQ_16;        /**<16bit (S0.15) Fixed point */
+typedef cmr_u16	UQ_16;        /**<16bit (0.16) Fixed point */
+typedef cmr_s32	SQ_32;        /**<32bit (S15.16) Fixed point */
+typedef cmr_u32	UQ_32;        /**<32bit (16.16) Fixed point */
 /*----------------------------------------------------------**
  Floationg point
 **----------------------------------------------------------*/

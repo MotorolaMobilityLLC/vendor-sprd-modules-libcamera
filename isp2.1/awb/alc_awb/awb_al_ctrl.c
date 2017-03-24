@@ -82,7 +82,7 @@ extern struct al_awb_thirdlib_fun al_awb_thirdlib_fun;
 *-------------------------------------------------------------------------------*/
 struct awb_ctrl_tuning_param {
 	/**/
-	uint32_t enable;
+	cmr_u32 enable;
 	/*window size of statistic image*/
 	struct awb_ctrl_size stat_win_size;
 	/*start position of statistic area*/
@@ -97,25 +97,25 @@ struct awb_ctrl_tuning_param {
 	struct awb_ctrl_bv bv_range;
 	/*init gain and ct*/
 	struct awb_ctrl_gain init_gain;
-	uint32_t init_ct;
+	cmr_u32 init_ct;
 	/*algorithm param*/
 	void *alg_param;
 	/*algorithm param size*/
-	uint32_t alg_param_size;
+	cmr_u32 alg_param_size;
 };
 
 struct tg_dmy_log
 {
 	char	head[4+4];
-	uint16_t tar[20*16*4];
-	uint16_t ref[20*16*4];
+	cmr_u16 tar[20*16*4];
+	cmr_u16 ref[20*16*4];
 	char	foot[4];
 };//dmy_log;
 
 
 struct awb_ctrl_cxt {
 	/*must be the first one*/
-	uint32_t magic_begin;
+	cmr_u32 magic_begin;
 	/*awb status lock*/
 	pthread_mutex_t status_lock;
 	/*initialize parameter*/
@@ -123,15 +123,15 @@ struct awb_ctrl_cxt {
 	/*tuning parameter for each work mode*/
 	struct awb_ctrl_tuning_param tuning_param[AWB_CTRL_WORK_MODE_NUM];
 	/*whether initialized*/
-	uint32_t init;
+	cmr_u32 init;
 	/*camera id*/
-	uint32_t camera_id; /* 0: back camera, 1: front camera */
+	cmr_u32 camera_id; /* 0: back camera, 1: front camera */
 	void* lsc_otp_random;
 	void* lsc_otp_golden;
-	uint32_t lsc_otp_width;
-	uint32_t lsc_otp_height;
+	cmr_u32 lsc_otp_width;
+	cmr_u32 lsc_otp_height;
 	/*work mode*/
-	uint32_t work_mode;   /* 0: preview, 1:capture, 2:video */
+	cmr_u32 work_mode;   /* 0: preview, 1:capture, 2:video */
 	/*white balance mode: auto or manual*/
 	enum awb_ctrl_wb_mode wb_mode;
 	/*scene mode*/
@@ -145,31 +145,31 @@ struct awb_ctrl_cxt {
 	/*flash info*/
 	struct awb_flash_info flash_info;
 	/*previous ct*/
-	uint32_t prv_ct;
+	cmr_u32 prv_ct;
 	/*current gain*/
 	struct awb_ctrl_gain cur_gain;
 	/*output gain*/
 	struct awb_ctrl_gain output_gain;
 	/*output ct*/
-	uint32_t output_ct;
+	cmr_u32 output_ct;
 	/*recover gain*/
 	struct awb_ctrl_gain recover_gain;
 	/*recover ct*/
-	uint32_t recover_ct;
+	cmr_u32 recover_ct;
 	/*recover awb mode*/
 	enum awb_ctrl_wb_mode recover_mode;
 	/*awb lock info */
 	struct awb_ctrl_lock_info lock_info;
 	/*current ct*/
-	uint32_t cur_ct;
+	cmr_u32 cur_ct;
 	/*whether to update awb gain*/
-	uint32_t update;
+	cmr_u32 update;
 	/*algorithm handle*/
 	void *alg_handle;
 	/*statistic image buffer*/
 	void *stat_img_buf;
 	/*statistic image buffer size*/
-	uint32_t stat_img_buf_size;
+	cmr_u32 stat_img_buf_size;
 
 //Acutelogic modified
 	void*   mpvLib;
@@ -186,19 +186,19 @@ struct awb_ctrl_cxt {
 	void	(*AlAwbInterfaceShowVersion)(TT_AlAwbInterface*		pptInterface	);
 #endif	//#ifdef LIB_DYNAMIC_LOAD
 	/*must be the last one*/
-	uint32_t magic_end;
+	cmr_u32 magic_end;
 };
 
 /*------------------------------------------------------------------------------*
 *					local function declaration		*
 *-------------------------------------------------------------------------------*/
 
-static uint32_t _awb_get_gain(struct awb_ctrl_cxt *cxt, void *param);
+static cmr_u32 _awb_get_gain(struct awb_ctrl_cxt *cxt, void *param);
 /*------------------------------------------------------------------------------*
 *					local variable				*
 *-------------------------------------------------------------------------------*/
 
-static const uint16_t lsc_ratio_pow15[20*16*4] =
+static const cmr_u16 lsc_ratio_pow15[20*16*4] =
 {
 	/*Gr*/
 	46138,43825,41834,40537,39506,38630,37898,37348,36970,36776,36784,36951,37294,37807,38478,39254,40257,41511,43723,46241,
@@ -276,14 +276,14 @@ static const uint16_t lsc_ratio_pow15[20*16*4] =
 /*------------------------------------------------------------------------------*
 *					local functions				*
 *-------------------------------------------------------------------------------*/
-static void split_lsc_otp_random(uint16_t* buffer)
+static void split_lsc_otp_random(cmr_u16* buffer)
 {
-	uint16_t tmp[20*16*4];
-	int i;
+	cmr_u16 tmp[20*16*4];
+	cmr_s32 i;
 
 	memcpy((void*)tmp, (void*)buffer, 20*16*4*2);
 
-	uint16_t* pbuf = buffer;
+	cmr_u16* pbuf = buffer;
 	for (i=0; i<20*16; i++)
 	{
 		*pbuf++ = tmp[4*i+0];
@@ -303,35 +303,35 @@ static void split_lsc_otp_random(uint16_t* buffer)
 
 }
 
-static void correct_lsc_otp_random_16(uint16_t* buffer, uint16_t* ratio)
+static void correct_lsc_otp_random_16(cmr_u16* buffer, cmr_u16* ratio)
 {
-	int i;
+	cmr_s32 i;
 
-	uint16_t* pbuf_a = buffer;
-	uint16_t* pbuf_b = ratio;
+	cmr_u16* pbuf_a = buffer;
+	cmr_u16* pbuf_b = ratio;
 	for (i=0; i<20*16*4; i++)
 	{
-		uint16_t a = *pbuf_a;
-		uint16_t b = *pbuf_b ++;
-		uint32_t m = (a * b) + (1 << 14);
-		*pbuf_a ++ = (uint16_t)(m >> 15);
+		cmr_u16 a = *pbuf_a;
+		cmr_u16 b = *pbuf_b ++;
+		cmr_u32 m = (a * b) + (1 << 14);
+		*pbuf_a ++ = (cmr_u16)(m >> 15);
 	}
 }
 
-static void fill_lsc_outer(uint16_t* buffer, int w, int h)
+static void fill_lsc_outer(cmr_u16* buffer, cmr_s32 w, cmr_s32 h)
 {
-	int i, j;
+	cmr_s32 i, j;
 
 	for (j=1; j<h-1; j++)
 	{
 		// left
 		for (i=0; i<4; i++)
 		{
-			uint16_t a = buffer[j * w * 4 + i + 4];
-			uint16_t b = buffer[j * w * 4 + i + 8];
-			uint16_t c = buffer[j * w * 4 + i + 12];
+			cmr_u16 a = buffer[j * w * 4 + i + 4];
+			cmr_u16 b = buffer[j * w * 4 + i + 8];
+			cmr_u16 c = buffer[j * w * 4 + i + 12];
 
-			int16_t d = 3 * a - 3 * b + c;
+			cmr_s16 d = 3 * a - 3 * b + c;
 			if (d < 1024)
 			{
 				d = a;
@@ -347,11 +347,11 @@ static void fill_lsc_outer(uint16_t* buffer, int w, int h)
 		// right
 		for (i=4*w-4; i<4*w; i++)
 		{
-			uint16_t a = buffer[j * w * 4 + i - 4];
-			uint16_t b = buffer[j * w * 4 + i - 8];
-			uint16_t c = buffer[j * w * 4 + i - 12];
+			cmr_u16 a = buffer[j * w * 4 + i - 4];
+			cmr_u16 b = buffer[j * w * 4 + i - 8];
+			cmr_u16 c = buffer[j * w * 4 + i - 12];
 
-			int16_t d = 3 * a - 3 * b + c;
+			cmr_s16 d = 3 * a - 3 * b + c;
 			if (d < 1024)
 			{
 				d = a;
@@ -368,11 +368,11 @@ static void fill_lsc_outer(uint16_t* buffer, int w, int h)
 	// top line
 	for (i=0; i<4*w; i++)
 	{
-		uint16_t a = buffer[1 * w * 4 + i];
-		uint16_t b = buffer[2 * w * 4 + i];
-		uint16_t c = buffer[3 * w * 4 + i];
+		cmr_u16 a = buffer[1 * w * 4 + i];
+		cmr_u16 b = buffer[2 * w * 4 + i];
+		cmr_u16 c = buffer[3 * w * 4 + i];
 
-		int16_t d = 3 * a - 3 * b + c;
+		cmr_s16 d = 3 * a - 3 * b + c;
 		if (d < 1024)
 		{
 			d = a;
@@ -388,11 +388,11 @@ static void fill_lsc_outer(uint16_t* buffer, int w, int h)
 	// bottom line
 	for (i=0; i<4*w; i++)
 	{
-		uint16_t a = buffer[(h-2) * w * 4 + i];
-		uint16_t b = buffer[(h-3) * w * 4 + i];
-		uint16_t c = buffer[(h-4) * w * 4 + i];
+		cmr_u16 a = buffer[(h-2) * w * 4 + i];
+		cmr_u16 b = buffer[(h-3) * w * 4 + i];
+		cmr_u16 c = buffer[(h-4) * w * 4 + i];
 
-		int16_t d = 3 * a - 3 * b + c;
+		cmr_s16 d = 3 * a - 3 * b + c;
 		if (d < 1024)
 		{
 			d = a;
@@ -406,9 +406,9 @@ static void fill_lsc_outer(uint16_t* buffer, int w, int h)
 	}
 }
 
-static uint32_t _check_handle(awb_ctrl_handle_t handle)
+static cmr_u32 _check_handle(awb_ctrl_handle_t handle)
 {
-	uint32_t rtn = AWB_CTRL_SUCCESS;
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
 	struct awb_ctrl_cxt *cxt = (struct awb_ctrl_cxt *)handle;
 
 	if (NULL == cxt) {
@@ -481,9 +481,9 @@ UI_16	 ais_cmd_set_awb_LockMode(
 	 return al_awb_thirdlib_fun.AlAwbInterfaceSendCommand(awb_al_ins  ,&attCmd	 );
 }/*--------------------- End of function -----------------------*/
 
-static uint32_t _deinit(struct awb_ctrl_cxt *cxt)
+static cmr_u32 _deinit(struct awb_ctrl_cxt *cxt)
 {
-	uint32_t rtn = AWB_CTRL_SUCCESS;
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
 
 	if (AWB_CTRL_TRUE != cxt->init) {
 		AWB_CTRL_LOGE("AWB do not init!");
@@ -501,12 +501,12 @@ static uint32_t _deinit(struct awb_ctrl_cxt *cxt)
 static void set_result_ccm(TT_AlAwbInterface*	aptIns,void *p)
 {
 	struct awb_ctrl_init_result * result = (struct awb_ctrl_init_result *)p;
-	int asiLp;
+	cmr_s32 asiLp;
 
 //CCM outputs
 #ifdef CCM_DEBUG_FREQ_CHAMGE
 //for Test
-	static int i = 0;
+	static cmr_s32 i = 0;
 	const float ccm_dmy[2][9] ={
 	{
 		0.0,0.0,1.0,
@@ -527,7 +527,7 @@ static void set_result_ccm(TT_AlAwbInterface*	aptIns,void *p)
 	for(asiLp=0;asiLp<9;asiLp++)
 	{
 		result->ccm[asiLp] =
-		 ((int16_t)(pccm[asiLp] * 4096.0) >> 2) & 0x3fff;	//ccm coversion :from Shan@SPRD
+		 ((cmr_s16)(pccm[asiLp] * 4096.0) >> 2) & 0x3fff;	//ccm coversion :from Shan@SPRD
 	}
 	result->use_ccm = 1;
 }
@@ -537,10 +537,10 @@ static void set_result_lsc(TT_AlAwbInterface*	aptIns,void *p)
 	struct awb_ctrl_init_result * result = (struct awb_ctrl_init_result *)p;
 #ifdef LSC_DEBUG_TABLE
 	//Just Test
-	int asiLp;
-	uint16_t w,h;
+	cmr_s32 asiLp;
+	cmr_u16 w,h;
 
-	static uint16_t dmy_lsc[25*20*4];
+	static cmr_u16 dmy_lsc[25*20*4];
 
 	result->use_lsc = 1;
 
@@ -565,8 +565,8 @@ static void set_result_lsc(TT_AlAwbInterface*	aptIns,void *p)
 		dmy_lsc[asiLp+3] = 0x1 << 10;	// B    |  R
 	}
 	asiLp=0;
-	int asiLp2;
-	uint16_t* pt;
+	cmr_s32 asiLp2;
+	cmr_u16* pt;
 
 	//LEFT side
 	for(asiLp2=0;asiLp2<h;asiLp2++)
@@ -594,7 +594,7 @@ static void set_result_lsc(TT_AlAwbInterface*	aptIns,void *p)
 		result->lsc = aptIns->mttOutLsc.mpiTbl;
 		result->lsc_size = aptIns->mttOutLsc.muiSize*4;
 	#else
-		static uint16_t dmy_lsc[25*20*4];
+		static cmr_u16 dmy_lsc[25*20*4];
 
 		result->use_lsc = 1;
 		result->lsc = aptIns->mttOutLsc.mpiTbl;
@@ -613,11 +613,11 @@ static void set_result_lsc(TT_AlAwbInterface*	aptIns,void *p)
 #endif
 }
 
-static uint32_t _init(struct awb_ctrl_cxt *cxt, struct awb_ctrl_init_param *param,
+static cmr_u32 _init(struct awb_ctrl_cxt *cxt, struct awb_ctrl_init_param *param,
 					struct awb_ctrl_init_result *result)
 {
-	uint32_t rtn = AWB_CTRL_SUCCESS;
-	uint32_t base_gain = param->base_gain;
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
+	cmr_u32 base_gain = param->base_gain;
 
 	memset(cxt, 0, sizeof(*cxt));
 
@@ -628,7 +628,7 @@ static uint32_t _init(struct awb_ctrl_cxt *cxt, struct awb_ctrl_init_param *para
 	if (cxt->lsc_otp_random != NULL)
 	{
 		split_lsc_otp_random(cxt->lsc_otp_random); // now color order: GrGrGr...GrGr, RRR...RR, BBB...BB, GbGbGb...GbGb
-		correct_lsc_otp_random_16(cxt->lsc_otp_random, (uint16_t*)lsc_ratio_pow15);
+		correct_lsc_otp_random_16(cxt->lsc_otp_random, (cmr_u16*)lsc_ratio_pow15);
 	}
 	cxt->lsc_otp_golden = param->lsc_otp_golden;
 	cxt->lsc_otp_width = param->lsc_otp_width;
@@ -715,9 +715,9 @@ static uint32_t _init(struct awb_ctrl_cxt *cxt, struct awb_ctrl_init_param *para
 	al_awb_thirdlib_fun.AlAwbInterfaceInit(aptIns);
 //Set Init Value
 	//Convert s15.16  -> u4.10
-	result->gain.r = (uint32_t)((uint32_t)aptIns->mttOut.muiWbg[0] >> 6);
-	result->gain.g = (uint32_t)((uint32_t)aptIns->mttOut.muiWbg[1] >> 6);
-	result->gain.b = (uint32_t)((uint32_t)aptIns->mttOut.muiWbg[2] >> 6);
+	result->gain.r = (cmr_u32)((cmr_u32)aptIns->mttOut.muiWbg[0] >> 6);
+	result->gain.g = (cmr_u32)((cmr_u32)aptIns->mttOut.muiWbg[1] >> 6);
+	result->gain.b = (cmr_u32)((cmr_u32)aptIns->mttOut.muiWbg[2] >> 6);
 	result->ct = aptIns->mttOut.msiCtemp;
 
 	//CCM outputs
@@ -737,14 +737,14 @@ static uint32_t _init(struct awb_ctrl_cxt *cxt, struct awb_ctrl_init_param *para
 	return rtn;
 }
 
-static uint32_t _calc(struct awb_ctrl_cxt *cxt, struct awb_ctrl_calc_param *param,
+static cmr_u32 _calc(struct awb_ctrl_cxt *cxt, struct awb_ctrl_calc_param *param,
 					struct awb_ctrl_calc_result *result)
 {
-	uint32_t rtn = AWB_CTRL_SUCCESS;
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
 	void *alg_handle = NULL;
-	uint32_t mawb_id = cxt->wb_mode;
-	uint32_t scene_mode = 0;
-	uint32_t work_mode = cxt->work_mode;
+	cmr_u32 mawb_id = cxt->wb_mode;
+	cmr_u32 scene_mode = 0;
+	cmr_u32 work_mode = cxt->work_mode;
 	struct awb_ctrl_weight bv_result = {{0}, {0}};
 	struct awb_ctrl_bv bv_param;
 
@@ -758,7 +758,7 @@ static uint32_t _calc(struct awb_ctrl_cxt *cxt, struct awb_ctrl_calc_param *para
 	AWB_CTRL_LOGE("camera_id = %d, work_mode = %d, flash_mode = %d, flash_effect = %d, ev_index = %d", cxt->camera_id, cxt->work_mode, cxt->flash_info.flash_mode, cxt->flash_info.effect, param->ae_info.ev_index);
 //	AWB_CTRL_LOGE("ev_table[] = [%d, %d, %d, %d, %d, %d, %d, %d, %d]", param->ae_info.ev_table[0], param->ae_info.ev_table[1], param->ae_info.ev_table[2], param->ae_info.ev_table[3], param->ae_info.ev_table[4], param->ae_info.ev_table[5], param->ae_info.ev_table[6], param->ae_info.ev_table[7], param->ae_info.ev_table[8]);
 
-	int asiLp;
+	cmr_s32 asiLp;
 	TT_AlAwbInterface*	aptIns = &cxt->mttInferface;
 
 	if( work_mode != aptIns->mttIn.muiCamMode )
@@ -806,7 +806,7 @@ static uint32_t _calc(struct awb_ctrl_cxt *cxt, struct awb_ctrl_calc_param *para
 }
 
 {
-	int ev_index  = param->ae_info.ev_index;
+	cmr_s32 ev_index  = param->ae_info.ev_index;
 	float aaa = (float)param->ae_info.ev_table[ev_index]/(float)param->ae_info.ev_table[4];
 	float evb = (float)log2( aaa );
 	//SQ_32 evb_ = (SQ_32)(evb*65536);
@@ -842,7 +842,7 @@ static uint32_t _calc(struct awb_ctrl_cxt *cxt, struct awb_ctrl_calc_param *para
 
 	//------------------------------------
 	//for UI Setting
-	uint32_t lock_mode = 0;
+	cmr_u32 lock_mode = 0;
 
 	lock_mode = cxt->lock_info.lock_num;
 	scene_mode = cxt->scene_mode;
@@ -858,17 +858,17 @@ static uint32_t _calc(struct awb_ctrl_cxt *cxt, struct awb_ctrl_calc_param *para
 	al_awb_thirdlib_fun.AlAwbInterfaceMain(aptIns);
 
 	//Convert s15.16  -> u4.10
-	cxt->output_gain.r = (uint32_t)((uint32_t)aptIns->mttOut.muiWbg[0] >> 6);
-	cxt->output_gain.g = (uint32_t)((uint32_t)aptIns->mttOut.muiWbg[1] >> 6);
-	cxt->output_gain.b = (uint32_t)((uint32_t)aptIns->mttOut.muiWbg[2] >> 6);
+	cxt->output_gain.r = (cmr_u32)((cmr_u32)aptIns->mttOut.muiWbg[0] >> 6);
+	cxt->output_gain.g = (cmr_u32)((cmr_u32)aptIns->mttOut.muiWbg[1] >> 6);
+	cxt->output_gain.b = (cmr_u32)((cmr_u32)aptIns->mttOut.muiWbg[2] >> 6);
 	cxt->output_ct = aptIns->mttOut.msiCtemp;
 
 	if( cxt->work_mode == 1)
 	{
 #if 1
-		cxt->output_gain.r = (uint32_t)((uint32_t)aptIns->mttOutLed.muiWbg[0] >> 6);
-		cxt->output_gain.g = (uint32_t)((uint32_t)aptIns->mttOutLed.muiWbg[1] >> 6);
-		cxt->output_gain.b = (uint32_t)((uint32_t)aptIns->mttOutLed.muiWbg[2] >> 6);
+		cxt->output_gain.r = (cmr_u32)((cmr_u32)aptIns->mttOutLed.muiWbg[0] >> 6);
+		cxt->output_gain.g = (cmr_u32)((cmr_u32)aptIns->mttOutLed.muiWbg[1] >> 6);
+		cxt->output_gain.b = (cmr_u32)((cmr_u32)aptIns->mttOutLed.muiWbg[2] >> 6);
 #else
 		cxt->output_gain.r = 1 <<10;
 		cxt->output_gain.g = 3 <<10;
@@ -882,10 +882,10 @@ static uint32_t _calc(struct awb_ctrl_cxt *cxt, struct awb_ctrl_calc_param *para
 	//LSC outputs
 	set_result_lsc(aptIns,result);
 
-	result->log_awb.log = (uint8_t*)aptIns->mttOut.mpiLog;
+	result->log_awb.log = (cmr_u8*)aptIns->mttOut.mpiLog;
 	result->log_awb.size = aptIns->mttOut.muiLogSize;
 
-	result->log_lsc.log = (uint8_t*)aptIns->mttOutLsc.mpiLog;
+	result->log_lsc.log = (cmr_u8*)aptIns->mttOutLsc.mpiLog;
 	result->log_lsc.size = aptIns->mttOutLsc.muiSize;
 
 #if 0	//OTP TEST
@@ -906,7 +906,7 @@ static uint32_t _calc(struct awb_ctrl_cxt *cxt, struct awb_ctrl_calc_param *para
 	}
 	//disable AWB log
 	//result->log_lsc.size = 0;//strlen(result->log_lsc.log);
-	result->log_awb.log = (uint8_t*)dmy_log;
+	result->log_awb.log = (cmr_u8*)dmy_log;
 	result->log_awb.size = sizeof(struct tg_dmy_log);
 }
 #endif	//OTP TEST
@@ -931,49 +931,49 @@ static uint32_t _calc(struct awb_ctrl_cxt *cxt, struct awb_ctrl_calc_param *para
 	return rtn;
 }
 
-static uint32_t _awb_set_wbmode(struct awb_ctrl_cxt *cxt, void *in_param)
+static cmr_u32 _awb_set_wbmode(struct awb_ctrl_cxt *cxt, void *in_param)
 {
-	uint32_t rtn = AWB_CTRL_SUCCESS;
-	uint32_t awb_mode = *(uint32_t*)in_param;
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
+	cmr_u32 awb_mode = *(cmr_u32*)in_param;
 
 	cxt->wb_mode = awb_mode;
 	AWB_CTRL_LOGE("debug wbmode changed!");
 	return rtn;
 }
 
-static uint32_t _awb_set_workmode(struct awb_ctrl_cxt *cxt, void *in_param)
+static cmr_u32 _awb_set_workmode(struct awb_ctrl_cxt *cxt, void *in_param)
 {
-	uint32_t rtn = AWB_CTRL_SUCCESS;
-	uint32_t work_mode = *(uint32_t*)in_param;
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
+	cmr_u32 work_mode = *(cmr_u32*)in_param;
 
 	cxt->work_mode = work_mode;
 
 	return rtn;
 }
 
-static uint32_t _awb_set_flashratio(struct awb_ctrl_cxt *cxt, void *in_param)
+static cmr_u32 _awb_set_flashratio(struct awb_ctrl_cxt *cxt, void *in_param)
 {
-	uint32_t rtn = AWB_CTRL_SUCCESS;
-	uint32_t flash_ratio = *(uint32_t*)in_param;
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
+	cmr_u32 flash_ratio = *(cmr_u32*)in_param;
 
 	cxt->flash_info.effect = flash_ratio;
 
 	return rtn;
 }
 
-static uint32_t _awb_set_scenemode(struct awb_ctrl_cxt *cxt, void *in_param)
+static cmr_u32 _awb_set_scenemode(struct awb_ctrl_cxt *cxt, void *in_param)
 {
-	uint32_t rtn = AWB_CTRL_SUCCESS;
-	uint32_t scene_mode = *(uint32_t*)in_param;
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
+	cmr_u32 scene_mode = *(cmr_u32*)in_param;
 
 	cxt->scene_mode = scene_mode;
 	return rtn;
 }
 
-static uint32_t _awb_set_recgain(struct awb_ctrl_cxt *cxt, void *param)
+static cmr_u32 _awb_set_recgain(struct awb_ctrl_cxt *cxt, void *param)
 {
 	UNUSED(param);
-	uint32_t rtn = AWB_CTRL_SUCCESS;
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
 	struct awb_gain awb_gain = {0x0,0x0,0x0};
 
 	rtn = _awb_get_gain(cxt, (void *)&awb_gain);
@@ -993,10 +993,10 @@ static uint32_t _awb_set_recgain(struct awb_ctrl_cxt *cxt, void *param)
 	return rtn;
 }
 
-static uint32_t _awb_get_gain(struct awb_ctrl_cxt *cxt, void *param)
+static cmr_u32 _awb_get_gain(struct awb_ctrl_cxt *cxt, void *param)
 {
-	uint32_t rtn = AWB_CTRL_SUCCESS;
-	uint32_t mawb_id = cxt->wb_mode;
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
+	cmr_u32 mawb_id = cxt->wb_mode;
 	struct awb_gain *awb_result = (struct awb_gain*)param;
 
 	awb_result->r = cxt->output_gain.r;
@@ -1006,9 +1006,9 @@ static uint32_t _awb_get_gain(struct awb_ctrl_cxt *cxt, void *param)
 	if( cxt->work_mode == 1)
 	{
 #if 1
-		awb_result->r = (uint32_t)((uint32_t)cxt->mttInferface.mttOutLed.muiWbg[0] >> 6);
-		awb_result->g = (uint32_t)((uint32_t)cxt->mttInferface.mttOutLed.muiWbg[1] >> 6);
-		awb_result->b = (uint32_t)((uint32_t)cxt->mttInferface.mttOutLed.muiWbg[2] >> 6);
+		awb_result->r = (cmr_u32)((cmr_u32)cxt->mttInferface.mttOutLed.muiWbg[0] >> 6);
+		awb_result->g = (cmr_u32)((cmr_u32)cxt->mttInferface.mttOutLed.muiWbg[1] >> 6);
+		awb_result->b = (cmr_u32)((cmr_u32)cxt->mttInferface.mttOutLed.muiWbg[2] >> 6);
 #else
 		awb_result->r = 1 <<10;
 		awb_result->g = 3 <<10;
@@ -1023,9 +1023,9 @@ static uint32_t _awb_get_gain(struct awb_ctrl_cxt *cxt, void *param)
 
 }
 
-static uint32_t _awb_get_stat_size(struct awb_ctrl_cxt *cxt, void *param)
+static cmr_u32 _awb_get_stat_size(struct awb_ctrl_cxt *cxt, void *param)
 {
-	uint32_t rtn = AWB_CTRL_SUCCESS;
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
 	struct awb_size *stat_size = (struct awb_size*)param;
 
 	stat_size->w = cxt->init_param.stat_img_size.w;
@@ -1036,10 +1036,10 @@ static uint32_t _awb_get_stat_size(struct awb_ctrl_cxt *cxt, void *param)
 	return rtn;
 }
 
-static uint32_t _awb_get_winsize(struct awb_ctrl_cxt *cxt, void *param)
+static cmr_u32 _awb_get_winsize(struct awb_ctrl_cxt *cxt, void *param)
 {
-	uint32_t rtn = AWB_CTRL_SUCCESS;
-	uint32_t workmode = cxt->work_mode;
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
+	cmr_u32 workmode = cxt->work_mode;
 	struct awb_size *win_size = (struct awb_size*)param;
 
 	win_size->w = cxt->tuning_param[workmode].stat_win_size.w;
@@ -1050,10 +1050,10 @@ static uint32_t _awb_get_winsize(struct awb_ctrl_cxt *cxt, void *param)
 	return rtn;
 }
 
-static uint32_t _awb_get_ct(struct awb_ctrl_cxt *cxt, void *param)
+static cmr_u32 _awb_get_ct(struct awb_ctrl_cxt *cxt, void *param)
 {
-	uint32_t rtn = AWB_CTRL_SUCCESS;
-	uint32_t *ct = (uint32_t *)param;
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
+	cmr_u32 *ct = (cmr_u32 *)param;
 
 	*ct = cxt->output_ct;
 
@@ -1062,10 +1062,10 @@ static uint32_t _awb_get_ct(struct awb_ctrl_cxt *cxt, void *param)
 	return rtn;
 }
 
-static uint32_t _awb_get_recgain(struct awb_ctrl_cxt *cxt, void *param)
+static cmr_u32 _awb_get_recgain(struct awb_ctrl_cxt *cxt, void *param)
 {
 	UNUSED(param);
-	uint32_t rtn = AWB_CTRL_SUCCESS;
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
 	struct awb_ctrl_gain awb_gain = {0x0,0x0,0x0};
 
 	awb_gain.r = cxt->recover_gain.r;
@@ -1089,10 +1089,10 @@ static uint32_t _awb_get_recgain(struct awb_ctrl_cxt *cxt, void *param)
 
 }
 
-static uint32_t _awb_set_flash_gain(struct awb_ctrl_cxt *cxt, void *param)
+static cmr_u32 _awb_set_flash_gain(struct awb_ctrl_cxt *cxt, void *param)
 {
 	UNUSED(param);
-	uint32_t rtn = AWB_CTRL_SUCCESS;
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
 	struct awb_flash_info*flash_info = (struct awb_flash_info*)param;
 
 	//cxt->flash_info.flash_mode = AWB_CTRL_FLASH_MAIN;
@@ -1109,10 +1109,10 @@ static uint32_t _awb_set_flash_gain(struct awb_ctrl_cxt *cxt, void *param)
 
 }
 
-static uint32_t _awb_set_lock(struct awb_ctrl_cxt *cxt, void *param)
+static cmr_u32 _awb_set_lock(struct awb_ctrl_cxt *cxt, void *param)
 {
 	UNUSED(param);
-	uint32_t rtn = AWB_CTRL_SUCCESS;
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
 
 	cxt->lock_info.lock_num += 1;
 
@@ -1133,10 +1133,10 @@ static uint32_t _awb_set_lock(struct awb_ctrl_cxt *cxt, void *param)
 
 }
 
-static uint32_t _awb_get_unlock(struct awb_ctrl_cxt *cxt, void *param)
+static cmr_u32 _awb_get_unlock(struct awb_ctrl_cxt *cxt, void *param)
 {
 	UNUSED(param);
-	uint32_t rtn = AWB_CTRL_SUCCESS;
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
 	AWB_CTRL_LOGE("AWB_TEST _awb_get_unlock0: lock_num=%d, mode:=%d", cxt->lock_info.lock_num, cxt->lock_info.lock_mode);
 	if (0 != cxt->lock_info.lock_num) {
 		cxt->lock_info.lock_num -= 1;
@@ -1151,10 +1151,10 @@ static uint32_t _awb_get_unlock(struct awb_ctrl_cxt *cxt, void *param)
 	return rtn;
 }
 
-static uint32_t _awb_set_flash_status(struct awb_ctrl_cxt *cxt, void *param)
+static cmr_u32 _awb_set_flash_status(struct awb_ctrl_cxt *cxt, void *param)
 {
 	UNUSED(param);
-	uint32_t rtn = AWB_CTRL_SUCCESS;
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
 	enum awb_ctrl_flash_status *flash_status = (enum awb_ctrl_flash_status*)param;
 
 	cxt->flash_info.flash_status = *flash_status;
@@ -1180,7 +1180,7 @@ cmr_int awb_al_ctrl_init(void *in, void *out)
 {
 	struct awb_ctrl_init_param *param = (struct awb_ctrl_init_param *)in;
 	struct awb_ctrl_init_result *result = (struct awb_ctrl_init_result *)out;
-	uint32_t rtn = AWB_CTRL_SUCCESS;
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
 	struct awb_ctrl_cxt *cxt = NULL;
 
 	if (NULL == param || NULL == result) {
@@ -1230,7 +1230,7 @@ cmr_int awb_al_ctrl_deinit(void * handle, void *param, void *result)
 {
 	UNUSED(param);
 	UNUSED(result);
-	uint32_t rtn = AWB_CTRL_SUCCESS;
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
 	struct awb_ctrl_cxt *cxt = (struct awb_ctrl_cxt *)handle;
 
 	rtn = _check_handle(handle);
@@ -1264,10 +1264,10 @@ cmr_int awb_al_ctrl_calculation(void * handle, void *in, void *out)
 {
 	struct awb_ctrl_calc_param *param = (struct awb_ctrl_calc_param *)in;
 	struct awb_ctrl_calc_result *result = (struct awb_ctrl_calc_result *)out;
-	uint32_t rtn = AWB_CTRL_SUCCESS;
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
 	struct awb_ctrl_cxt *cxt = (struct awb_ctrl_cxt *)handle;
 	struct awb_gain awb_get_gain = {0,0,0};
-	uint32_t scene_mode = 0;
+	cmr_u32 scene_mode = 0;
 
 	if (NULL == param || NULL == result) {
 		AWB_CTRL_LOGE("invalid param: param=%p, result=%p", param, result);
@@ -1308,7 +1308,7 @@ EXIT:
 cmr_int awb_al_ctrl_ioctrl(void * handle, cmr_int cmd, void *param0, void *param1)
 {
 	UNUSED(param1);
-	uint32_t rtn = AWB_CTRL_SUCCESS;
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
 	struct awb_ctrl_cxt *cxt = (struct awb_ctrl_cxt *)handle;
 
 	rtn = _check_handle(handle);

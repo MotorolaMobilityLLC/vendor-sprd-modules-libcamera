@@ -19,20 +19,20 @@ extern "C"
 
 	struct awb_stat_img
 	{
-		uint32_t *r;
-		uint32_t *g;
-		uint32_t *b;
+		cmr_u32 *r;
+		cmr_u32 *g;
+		cmr_u32 *b;
 	};
 
 	struct awb_rgb_gain
 	{
-		uint32_t r_gain;
-		uint32_t g_gain;
-		uint32_t b_gain;
+		cmr_u32 r_gain;
+		cmr_u32 g_gain;
+		cmr_u32 b_gain;
 
-		uint32_t ct;
-		int32_t pg;				//0 neutral, -: green, +: purple
-		int32_t green100;
+		cmr_u32 ct;
+		cmr_s32 pg;				//0 neutral, -: green, +: purple
+		cmr_s32 green100;
 	};
 
 	enum
@@ -50,19 +50,19 @@ extern "C"
 
 	struct awbParaGenIn
 	{
-		int version;
+		cmr_s32 version;
 
 		// AWB OTP
-		unsigned int otp_golden_r;
-		unsigned int otp_golden_g;
-		unsigned int otp_golden_b;
-		unsigned int otp_random_r;
-		unsigned int otp_random_g;
-		unsigned int otp_random_b;
+		cmr_u32 otp_golden_r;
+		cmr_u32 otp_golden_g;
+		cmr_u32 otp_golden_b;
+		cmr_u32 otp_random_r;
+		cmr_u32 otp_random_g;
+		cmr_u32 otp_random_b;
 
 		// graychart under neutral light
-		int grayNum;			/* [3, 10] */
-		int grayCt[10];
+		cmr_s32 grayNum;			/* [3, 10] */
+		cmr_s32 grayCt[10];
 		double grayRgb[10][3];
 
 		// graychart under CWF
@@ -72,7 +72,7 @@ extern "C"
 		double colorChecker24[24][3];
 
 		// weight table
-		int wTabSz;
+		cmr_s32 wTabSz;
 		double wTabEv[4];
 		double wTabData[4][6];	// start, mid, mid2, end, peak, dc
 
@@ -84,38 +84,38 @@ extern "C"
 		double null_data2[4];
 		double null_data3[4];
 
-		int ctShiftTickNum[4];
+		cmr_s32 ctShiftTickNum[4];
 		float ctShiftTick[4][64];
 		float ctShiftValTick[4][64];
 		float pgrShiftTick[4][64];
 
 		//purple
-		short purpleBvNum;
+		cmr_s16 purpleBvNum;
 		float purpleBv[5];
-		short purpleNodeNum[5];
+		cmr_s16 purpleNodeNum[5];
 		float purpleUpPgratioOri[5];
 		float purpleDnPgratioOri[5];
-		short purpleCt[5][10];
-		short purpleUpCt[5][10];
+		cmr_s16 purpleCt[5][10];
+		cmr_s16 purpleUpCt[5][10];
 		float purpleUpPgRatio[5][10];
-		short purpleDnCt[5][10];
+		cmr_s16 purpleDnCt[5][10];
 		float purpleDnPgRatio[5][10];
 
 		// Green
 		double grassYellowLevel;
 		double grassGreenLevel;
 
-		short pgBalanceBvNum;
+		cmr_s16 pgBalanceBvNum;
 		float pgBalanceBv[5];
-		short pgBalanceNodeNum[5];
-		short pgBalanceCt[5][10];
+		cmr_s16 pgBalanceNodeNum[5];
+		cmr_s16 pgBalanceCt[5][10];
 		float artificialGreenRatio[5][10];
 		float purpleBalanceRatio[5][10];
 		float purpleBalanceTransRatio[5][10];
 
 		//boundary
-		short limNum;
-		short limMode;
+		cmr_s16 limNum;
+		cmr_s16 limMode;
 		float limBv[4];
 		float limCtRt[4];
 		float limCtLt[4];
@@ -136,139 +136,139 @@ extern "C"
 		float limDefaultPgRatio[4];
 
 		//awbMode
-		int modeNum;
-		int modeId[10];
+		cmr_s32 modeNum;
+		cmr_s32 modeId[10];
 		double modeCt[10];
 		double modePgr[10];
 
-		int ctShiftNum;
-		short ctShiftCt[10];
+		cmr_s32 ctShiftNum;
+		cmr_s16 ctShiftCt[10];
 		float ctShiftPgRatio[10];
-		short ctShiftNeutral[10];
-		short ctShiftDown[10];
+		cmr_s16 ctShiftNeutral[10];
+		cmr_s16 ctShiftDown[10];
 	};
 
 	struct awb_tuning_param
 	{
-		int magic;
-		int version;
-		int date;
-		int time;
+		cmr_s32 magic;
+		cmr_s32 version;
+		cmr_s32 date;
+		cmr_s32 time;
 
 		/* MWB table */
-		unsigned char wbModeNum;
-		unsigned char wbModeId[10];
+		cmr_u8 wbModeNum;
+		cmr_u8 wbModeId[10];
 		struct awb_rgb_gain wbMode_gain[10];
 		struct awb_rgb_gain mwb_gain[101];	// mwb_gain[0] is init_gain  
 
 		/* AWB parameter */
-		int rgb_12bit_sat_value;
+		cmr_s32 rgb_12bit_sat_value;
 
-		int pg_x_ratio;
-		int pg_y_ratio;
-		int pg_shift;
+		cmr_s32 pg_x_ratio;
+		cmr_s32 pg_y_ratio;
+		cmr_s32 pg_shift;
 
-		int isotherm_ratio;
-		int isotherm_shift;
+		cmr_s32 isotherm_ratio;
+		cmr_s32 isotherm_shift;
 
-		int rmeanCali;
-		int gmeanCali;
-		int bmeanCali;
+		cmr_s32 rmeanCali;
+		cmr_s32 gmeanCali;
+		cmr_s32 bmeanCali;
 
-		int dct_scale_65536;	//65536=1x 
+		cmr_s32 dct_scale_65536;	//65536=1x 
 
-		short pgBalanceBvNum;
-		short pgBalanceBv[5];	//1024
-		short pg_center[512];
-		short pg_up[5][512];
-		short pg_up_trans[5][512];
-		short pg_dn[5][512];
+		cmr_s16 pgBalanceBvNum;
+		cmr_s16 pgBalanceBv[5];	//1024
+		cmr_s16 pg_center[512];
+		cmr_s16 pg_up[5][512];
+		cmr_s16 pg_up_trans[5][512];
+		cmr_s16 pg_dn[5][512];
 
-		short cct_tab[512];
-		short cct_tab_div;
-		short cct_tab_sz;
-		int cct_tab_a[40];
-		int cct_tab_b[40];
+		cmr_s16 cct_tab[512];
+		cmr_s16 cct_tab_div;
+		cmr_s16 cct_tab_sz;
+		cmr_s32 cct_tab_a[40];
+		cmr_s32 cct_tab_b[40];
 
-		int dct_start;
-		int pg_start;
+		cmr_s32 dct_start;
+		cmr_s32 pg_start;
 
-		int dct_div1;
-		int dct_div2;
+		cmr_s32 dct_div1;
+		cmr_s32 dct_div2;
 
-		int w_lv_len;
-		short w_lv[6];
-		short w_lv_tab[6][512];
+		cmr_s32 w_lv_len;
+		cmr_s16 w_lv[6];
+		cmr_s16 w_lv_tab[6][512];
 
-		int dct_sh_bv[4];
-		short dct_sh[4][512];
-		short dct_pg_sh100[4][512];
-		short null_data1[4][2];
-		short null_data2[4];
-		short null_data3[4];
-		short null_data4[4];
-		short null_data5[4];
+		cmr_s32 dct_sh_bv[4];
+		cmr_s16 dct_sh[4][512];
+		cmr_s16 dct_pg_sh100[4][512];
+		cmr_s16 null_data1[4][2];
+		cmr_s16 null_data2[4];
+		cmr_s16 null_data3[4];
+		cmr_s16 null_data4[4];
+		cmr_s16 null_data5[4];
 
-		int red_num;
-		short red_x[10];
-		short red_y[10];
+		cmr_s32 red_num;
+		cmr_s16 red_x[10];
+		cmr_s16 red_y[10];
 
-		int blue_num;
-		short blue_x[10];
-		short blue_comp[10];
-		short blue_sh[10];
+		cmr_s32 blue_num;
+		cmr_s16 blue_x[10];
+		cmr_s16 blue_comp[10];
+		cmr_s16 blue_sh[10];
 
-		short ctCompX1;
-		short ctCompX2;
-		short ctCompY1;
-		short ctCompY2;
+		cmr_s16 ctCompX1;
+		cmr_s16 ctCompX2;
+		cmr_s16 ctCompY1;
+		cmr_s16 ctCompY2;
 
-		short defnum;
-		short defev1024[4];
-		short defx[9][4];
-		short defxDev[4][4];
-		short defrange[4][4];
-		short defxy[2][4];
+		cmr_s16 defnum;
+		cmr_s16 defev1024[4];
+		cmr_s16 defx[9][4];
+		cmr_s16 defxDev[4][4];
+		cmr_s16 defrange[4][4];
+		cmr_s16 defxy[2][4];
 
-		short grassGreenLevel;	//1024;
+		cmr_s16 grassGreenLevel;	//1024;
 
 		//purple
-		short purpleBvNum;
-		short purpleBv[5];
-		short purpleNodeNum[5];
-		short purpleUpPgOri[5];
-		short purpleDnPgOri[5];
-		short purpleCt[5][10];
-		short purpleUpCt[5][10];
-		short purpleUpPg[5][10];
-		short purpleDnCt[5][10];
-		short purpleDnPg[5][10];
+		cmr_s16 purpleBvNum;
+		cmr_s16 purpleBv[5];
+		cmr_s16 purpleNodeNum[5];
+		cmr_s16 purpleUpPgOri[5];
+		cmr_s16 purpleDnPgOri[5];
+		cmr_s16 purpleCt[5][10];
+		cmr_s16 purpleUpCt[5][10];
+		cmr_s16 purpleUpPg[5][10];
+		cmr_s16 purpleDnCt[5][10];
+		cmr_s16 purpleDnPg[5][10];
 
-		int cwfPgAbs100;
+		cmr_s32 cwfPgAbs100;
 
-		unsigned char ui_data[sizeof(struct awbParaGenIn)];
+		cmr_u8 ui_data[sizeof(struct awbParaGenIn)];
 
-		int reserved[(8204 - sizeof(struct awbParaGenIn)) / 4];
+		cmr_s32 reserved[(8204 - sizeof(struct awbParaGenIn)) / 4];
 
 		// awb control param
-		unsigned int skip_frame_num;
-		unsigned int calc_interval_num;
-		unsigned int smooth_buffer_num;
+		cmr_u32 skip_frame_num;
+		cmr_u32 calc_interval_num;
+		cmr_u32 smooth_buffer_num;
 
-		int check;
+		cmr_s32 check;
 	};
 
 	struct awb_init_param
 	{
-		uint32_t stat_w;    // will be deprecated
-		uint32_t stat_h;    // will be deprecated
+		cmr_u32 stat_w;    // will be deprecated
+		cmr_u32 stat_h;    // will be deprecated
 
-		uint32_t otp_random_r;
-		uint32_t otp_random_g;
-		uint32_t otp_random_b;
-		uint32_t otp_golden_r;
-		uint32_t otp_golden_g;
-		uint32_t otp_golden_b;
+		cmr_u32 otp_random_r;
+		cmr_u32 otp_random_g;
+		cmr_u32 otp_random_b;
+		cmr_u32 otp_golden_r;
+		cmr_u32 otp_golden_g;
+		cmr_u32 otp_golden_b;
 
 		struct awb_tuning_param tuning_param;
 	};
@@ -277,28 +277,28 @@ extern "C"
 	{
 		struct awb_stat_img stat_img;
 
-        uint32_t stat_img_w;
-		uint32_t stat_img_h;
-		uint32_t r_pix_cnt;
-		uint32_t g_pix_cnt;
-		uint32_t b_pix_cnt;
+        cmr_u32 stat_img_w;
+		cmr_u32 stat_img_h;
+		cmr_u32 r_pix_cnt;
+		cmr_u32 g_pix_cnt;
+		cmr_u32 b_pix_cnt;
 
-		int bv;
-		int iso;
-		int date;				//ex: 20160331
-		int time;				//ex: 221059
+		cmr_s32 bv;
+		cmr_s32 iso;
+		cmr_s32 date;				//ex: 20160331
+		cmr_s32 time;				//ex: 221059
 
 		// just for simulation
-		int matrix[9];
-		unsigned char gamma[256];
+		cmr_s32 matrix[9];
+		cmr_u8 gamma[256];
 	};
 
 	struct awb_calc_result
 	{
 		struct awb_rgb_gain awb_gain[10];
 
-		uint8_t *log_buffer;
-		uint32_t log_size;
+		cmr_u8 *log_buffer;
+		cmr_u32 log_size;
 	};
 
 	enum
@@ -318,8 +318,8 @@ extern "C"
 		   3 d65 
 		   4 cwf
 		 */
-		uint16_t value[2];
-		uint16_t weight[2];
+		cmr_u16 value[2];
+		cmr_u16 weight[2];
 	};
 
 /*------------------------------------------------------------------------------*
@@ -327,9 +327,9 @@ extern "C"
 *-------------------------------------------------------------------------------*/
 #ifdef WIN32
 void *awb_init_v1(struct awb_init_param *init_param, struct awb_rgb_gain *gain);
-int awb_calc_v1(void *awb_handle, struct awb_calc_param *calc_param, struct awb_calc_result *calc_result);
-int awb_ioctrl_v1(void *awb_handle, int cmd, void *param);
-int awb_deinit_v1(void *awb_handle);
+cmr_s32 awb_calc_v1(void *awb_handle, struct awb_calc_param *calc_param, struct awb_calc_result *calc_result);
+cmr_s32 awb_ioctrl_v1(void *awb_handle, cmr_s32 cmd, void *param);
+cmr_s32 awb_deinit_v1(void *awb_handle);
 #endif
 
 /*------------------------------------------------------------------------------*

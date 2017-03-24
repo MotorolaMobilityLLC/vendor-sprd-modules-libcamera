@@ -42,10 +42,10 @@ typedef void* queue_handle_t;
 
 struct awbl_cyc_queue
 {
-	uint32_t				q[AWBL_MAX_QUEUE_SIZE];
-	uint32_t				size;
-	uint32_t				cur_index;
-	int32_t					gradient;
+	cmr_u32				q[AWBL_MAX_QUEUE_SIZE];
+	cmr_u32				size;
+	cmr_u32				cur_index;
+	cmr_s32					gradient;
 };
 
 /*------------------------------------------------------------------------------*
@@ -53,24 +53,24 @@ struct awbl_cyc_queue
 *-------------------------------------------------------------------------------*/
 
 //queue functions
-int32_t _initQueue(struct awbl_cyc_queue *queue, uint32_t size);
+cmr_s32 _initQueue(struct awbl_cyc_queue *queue, cmr_u32 size);
 
-void _addToCycQueue(struct awbl_cyc_queue *queue, uint32_t value);
+void _addToCycQueue(struct awbl_cyc_queue *queue, cmr_u32 value);
 
-int32_t _isQueueFull(struct awbl_cyc_queue *queue);
+cmr_s32 _isQueueFull(struct awbl_cyc_queue *queue);
 
-uint32_t _calcAvgValueOfQueue(struct awbl_cyc_queue *queue);
+cmr_u32 _calcAvgValueOfQueue(struct awbl_cyc_queue *queue);
 
-int32_t _calcDeltaValueOfQueue(struct awbl_cyc_queue *queue);
+cmr_s32 _calcDeltaValueOfQueue(struct awbl_cyc_queue *queue);
 
-queue_handle_t queue_init(uint32_t size);
-void queue_add(queue_handle_t queue, uint32_t value);
-uint32_t queue_average(queue_handle_t queue);
-uint32_t queue_max(queue_handle_t queue);
-uint32_t queue_min(queue_handle_t queue);
-uint32_t queue_delta(queue_handle_t queue);
-uint32_t queue_statis(queue_handle_t queue, uint32_t statis_value);
-uint32_t queue_weighted_average(queue_handle_t queue_value, queue_handle_t queue_weight);
+queue_handle_t queue_init(cmr_u32 size);
+void queue_add(queue_handle_t queue, cmr_u32 value);
+cmr_u32 queue_average(queue_handle_t queue);
+cmr_u32 queue_max(queue_handle_t queue);
+cmr_u32 queue_min(queue_handle_t queue);
+cmr_u32 queue_delta(queue_handle_t queue);
+cmr_u32 queue_statis(queue_handle_t queue, cmr_u32 statis_value);
+cmr_u32 queue_weighted_average(queue_handle_t queue_value, queue_handle_t queue_weight);
 void queue_deinit(queue_handle_t queue);
 void queue_clear(queue_handle_t queue);
 
