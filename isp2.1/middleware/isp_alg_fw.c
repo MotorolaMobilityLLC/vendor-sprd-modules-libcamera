@@ -2222,8 +2222,8 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in *input_ptr, cmr_handle *isp_al
 exit:
 	if (rtn) {
 		if (cxt) {
-			isp_alg_sw_deinit((cmr_handle)cxt);
 			isp_alg_destroy_thread_proc((cmr_handle)cxt);
+			isp_alg_sw_deinit((cmr_handle)cxt);
 			if(binning_info) {
 				free((void*)binning_info);
 			}
@@ -2242,10 +2242,14 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 {
 	cmr_s32                         rtn = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	if (!cxt) {
+		ISP_LOGE("cxt is NULL");
+		goto exit;
+	}
+	isp_alg_destroy_thread_proc((cmr_handle)cxt);
 
-	if (cxt) {
-		rtn = isp_alg_sw_deinit((cmr_handle)cxt);
-		ISP_TRACE_IF_FAIL(rtn, ("fail to do _ispAlgDeInit"));
+	rtn = isp_alg_sw_deinit((cmr_handle)cxt);
+	ISP_TRACE_IF_FAIL(rtn, ("fail to do _ispAlgDeInit"));
 
 	rtn = isp_pm_deinit(cxt->handle_pm, NULL, NULL);
 	ISP_TRACE_IF_FAIL(rtn, ("fail to do isp_pm_deinit"));
@@ -2268,15 +2272,16 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 		cxt->commn_cxt.log_isp = NULL;
 	}
 
-	isp_alg_destroy_thread_proc((cmr_handle)cxt);
 	if(cxt->binning_stats.r_info) {
 		free((void*)cxt->binning_stats.r_info);
 	}
 
+	if (cxt) {
 		free((void*)cxt);
 		cxt = NULL;
 	}
 
+exit:
 	ISP_LOGI(":ISP:done %d", rtn);
 	return rtn;
 }
