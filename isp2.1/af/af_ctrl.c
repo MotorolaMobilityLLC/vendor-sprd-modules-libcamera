@@ -226,7 +226,7 @@ static cmr_int afctrl_process(struct afctrl_cxt *cxt_ptr, struct afctrl_calc_in 
 		ISP_LOGI(":ISP:ioctrl fun is NULL");
 	}
 exit:
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGV(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -263,7 +263,7 @@ static cmr_int afctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 		ISP_LOGE("fail to check param");
 		goto exit;
 	}
-	ISP_LOGI(":ISP:message.msg_type 0x%x, data %p", message->msg_type,
+	ISP_LOGV(":ISP:message.msg_type 0x%x, data %p", message->msg_type,
 		 message->data);
 
 	switch (message->msg_type) {
@@ -285,7 +285,7 @@ static cmr_int afctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 	}
 
 exit:
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGV(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -504,7 +504,7 @@ cmr_int af_ctrl_process(cmr_handle handle_af, void *in_ptr, struct afctrl_calc_o
 	}
 
 exit:
-	ISP_LOGI(":ISP:done %ld", rtn);
+	ISP_LOGV(":ISP:done %ld", rtn);
 	return rtn;
 }
 
@@ -527,6 +527,6 @@ cmr_int af_ctrl_ioctrl(cmr_handle handle_af, cmr_int cmd, void *in_ptr, void *ou
 	}
 
 exit:
-	ISP_LOGI(":ISP:cmd = %ld,done %ld", cmd, rtn);
+	ISP_LOGV(":ISP:cmd = %ld,done %ld", cmd, rtn);
 	return rtn;
 }
