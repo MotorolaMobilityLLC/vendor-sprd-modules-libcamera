@@ -7980,7 +7980,8 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id, cmr_u3
 #ifdef CONFIG_CAMERA_UHD_VIDEOSNAPSHOT_SUPPORT
 	CMR_LOGI("is_uhd_recording_mode %d support", prev_cxt->prev_param.is_uhd_recording_mode);
 #else
-	if(prev_cxt->prev_param.is_uhd_recording_mode == 1) {
+	if(prev_cxt->prev_param.is_uhd_recording_mode == 1&&
+		prev_cxt->prev_param.video_eb) {
 		CMR_LOGI("is_uhd_recording_mode %d not support", prev_cxt->prev_param.is_uhd_recording_mode);
 		return 0;
 	}

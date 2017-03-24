@@ -7222,7 +7222,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle, enum takepicture_mode mo
 		goto exit;
 	}
 	out_param_ptr->is_uhd_recording_mode =  setting_param.cmd_type_value;
-	CMR_LOGD("is_udh_recording_mode flag %d", out_param_ptr->is_uhd_recording_mode);
+	CMR_LOGD("is_uhd_recording_mode flag %d", out_param_ptr->is_uhd_recording_mode);
 
 	// init value
 	cxt->burst_mode = 0;

@@ -2928,7 +2928,10 @@ int SprdCamera3OEMIf::startPreviewInternal()
 
 	if(mVideoWidth*mVideoHeight >= UHD_WIDTH*UHD_HEIGHT){
 		mUhdRecodingEnabled = true;
+	}else{
+		mUhdRecodingEnabled = false;
 	}
+
 	HAL_LOGD("mUhdRecodingEnabled=%d", mUhdRecodingEnabled);
 	SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_UHD_RECORDING_ENABLED, (cmr_uint)mUhdRecodingEnabled);
 
