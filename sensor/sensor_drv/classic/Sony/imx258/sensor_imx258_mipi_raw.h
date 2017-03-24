@@ -879,7 +879,11 @@ SENSOR_INFO_T g_imx258_mipi_raw_info = {
     .name = SENSOR_NAME,
     .image_format = SENSOR_IMAGE_FORMAT_RAW,
 #if defined(CONFIG_CAMERA_ISP_DIR_3)
+#ifndef CAMERA_SENSOR_BACK_I2C_SWITCH
     .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_B,
+#else
+	.image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_R,
+#endif
 #else
     .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_R,
 #endif
