@@ -8554,9 +8554,8 @@ void *SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data) {
     int ret = 0;
     ssize_t n;
     ASensorEvent buffer[8];
-    uint32_t GyroRate = 10; // ms
-    uint32_t default_max_fps = 30;
-    uint32_t eventRate = default_max_fps;
+    uint32_t GyroInterval = 10 * 1000; // us
+    uint32_t GsensorInterval = 50 * 1000; //us
 
     int events;
     int32_t result = 0;
@@ -8607,7 +8606,7 @@ void *SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data) {
     sp<Looper> loop = NULL;
 
     if (gyroscope != NULL) {
-        ret = q->enableSensor(gyroscope, ms2ns(GyroRate));
+        ret = q->enableSensor(gyroscope, GyroInterval);
         if (ret)
             HAL_LOGE("enable gyroscope fail");
         else
@@ -8615,15 +8614,15 @@ void *SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data) {
     } else
         HAL_LOGW("this device not support gyro");
 
-    if (NULL != obj->mCameraHandle) {
+    /*if (NULL != obj->mCameraHandle) {
         obj->mHalOem->ops->camera_get_sensor_max_fps(
             obj->mCameraHandle, obj->mCameraId, &eventRate);
         if (0 == eventRate)
             eventRate = default_max_fps;
         eventRate = 1000 / eventRate; // fps->rate:ms
-    }
+    }*/
     if (gsensor != NULL) {
-        ret = q->enableSensor(gsensor, ms2ns(eventRate));
+        ret = q->enableSensor(gsensor, GsensorInterval);
         if (ret) {
             HAL_LOGE("enable gsensor fail");
             if (Gyro_flag == 0)
