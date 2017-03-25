@@ -562,6 +562,37 @@ void SprdCamera3OEMIf::closeCamera() {
         stopPreviewInternal();
     }
 
+    SprdCamera3Flash::releaseFlash(mCameraId);
+
+#ifdef CONFIG_CAMERA_GYRO
+    gyro_monitor_thread_deinit((void *)this);
+#endif
+
+    if (isCameraInit()) {
+        // When libqcamera detects an error, it calls camera_cb from the
+        // call to camera_stop, which would cause a deadlock if we
+        // held the mStateLock.  For this reason, we have an intermediate
+        // state SPRD_INTERNAL_STOPPING, which we use to check to see if the
+        // camera_cb was called inline.
+        setCameraState(SPRD_INTERNAL_STOPPING, STATE_CAMERA);
+
+        HAL_LOGD(":hal3: stopping camera");
+        if (CMR_CAMERA_SUCCESS != mHalOem->ops->camera_deinit(mCameraHandle)) {
+            setCameraState(SPRD_ERROR, STATE_CAMERA);
+            mReleaseFLag = true;
+            HAL_LOGE("release X: fail to camera_stop().");
+            return;
+        }
+
+        WaitForCameraStop();
+    }
+
+    pre_alloc_cap_mem_thread_deinit((void *)this);
+    ZSLMode_monitor_thread_deinit((void *)this);
+
+    deinitCapture(0);
+    FreeReDisplayMem();
+
 #ifdef USE_ONE_RESERVED_BUF
     if (NULL != mCommonHeapReserved) {
         freeCameraMem(mCommonHeapReserved);
@@ -605,38 +636,9 @@ void SprdCamera3OEMIf::closeCamera() {
         mPdafRawHeapReserved = NULL;
     }
 
-    SprdCamera3Flash::releaseFlash(mCameraId);
     // Performance optimization:move Callback_CaptureFree to closeCamera
     // function
     Callback_CaptureFree(0, 0, 0, 0);
-
-#ifdef CONFIG_CAMERA_GYRO
-    gyro_monitor_thread_deinit((void *)this);
-#endif
-    if (isCameraInit()) {
-        // When libqcamera detects an error, it calls camera_cb from the
-        // call to camera_stop, which would cause a deadlock if we
-        // held the mStateLock.  For this reason, we have an intermediate
-        // state SPRD_INTERNAL_STOPPING, which we use to check to see if the
-        // camera_cb was called inline.
-        setCameraState(SPRD_INTERNAL_STOPPING, STATE_CAMERA);
-
-        HAL_LOGD(":hal3: stopping camera");
-        if (CMR_CAMERA_SUCCESS != mHalOem->ops->camera_deinit(mCameraHandle)) {
-            setCameraState(SPRD_ERROR, STATE_CAMERA);
-            mReleaseFLag = true;
-            HAL_LOGE("release X: fail to camera_stop().");
-            return;
-        }
-
-        WaitForCameraStop();
-    }
-
-    pre_alloc_cap_mem_thread_deinit((void *)this);
-    ZSLMode_monitor_thread_deinit((void *)this);
-
-    deinitCapture(0);
-    FreeReDisplayMem();
 
     mReleaseFLag = true;
     HAL_LOGI(":hal3: X");
