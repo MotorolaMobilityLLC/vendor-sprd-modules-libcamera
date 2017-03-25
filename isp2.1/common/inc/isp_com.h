@@ -273,6 +273,7 @@ struct isp_statis_mem_info {
 	isp_uint isp_statis_u_addr;
 	isp_uint isp_statis_alloc_flag;
 	isp_s32  statis_mfd;
+	isp_s32  statis_buf_dev_fd;
 
 	isp_uint isp_lsc_mem_size;
 	isp_uint isp_lsc_mem_num;

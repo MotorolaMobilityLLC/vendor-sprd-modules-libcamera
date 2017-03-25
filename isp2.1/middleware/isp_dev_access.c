@@ -42,6 +42,7 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 	struct isp_statis_mem_info *statis_mem_info = &cxt->statis_mem_info;
 	cmr_uint type = 0;
+	cmr_s32	 fds[2];
 
 	statis_mem_info->isp_lsc_mem_size = in_ptr->isp_lsc_mem_size;
 	statis_mem_info->isp_lsc_mem_num = in_ptr->isp_lsc_mem_num;
@@ -65,13 +66,16 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 				  &statis_mem_info->isp_statis_mem_num,
 				  &statis_mem_info->isp_statis_k_addr,
 				  &statis_mem_info->isp_statis_u_addr,
-				  &statis_mem_info->statis_mfd,
+				  //&statis_mem_info->statis_mfd,
+				  fds,
 				  statis_mem_info->buffer_client_data);
 		} else {
 			ISP_LOGE("failed to malloc statis_bq buffer");
 			return ISP_PARAM_NULL;
 		}
 
+		statis_mem_info->statis_mfd = fds[0];
+		statis_mem_info->statis_buf_dev_fd = fds[1];
 		statis_mem_info->isp_statis_alloc_flag = 1;
 	}
 
@@ -104,6 +108,7 @@ cmr_int isp_dev_trans_addr(cmr_handle isp_dev_handle)
 	isp_statis_buf.vir_addr = statis_mem_info->isp_statis_u_addr;
 	isp_statis_buf.buf_flag = 0;
 	isp_statis_buf.mfd      = statis_mem_info->statis_mfd;
+	isp_statis_buf.dev_fd   = statis_mem_info->statis_buf_dev_fd;
 	/*isp lsc addr transfer*/
 	isp_u_2d_lsc_transaddr(cxt->isp_driver_handle, &isp_2d_lsc_buf);
 
