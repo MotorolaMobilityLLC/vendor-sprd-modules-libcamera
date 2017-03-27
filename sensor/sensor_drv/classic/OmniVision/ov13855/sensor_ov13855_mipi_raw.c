@@ -340,7 +340,8 @@ static uint32_t ov13855_get_static_info(SENSOR_HW_HANDLE handle,
     ex_info->preview_skip_num = g_ov13855_mipi_raw_info.preview_skip_num;
     ex_info->capture_skip_num = g_ov13855_mipi_raw_info.capture_skip_num;
     ex_info->name = (cmr_s8 *)g_ov13855_mipi_raw_info.name;
-    ex_info->sensor_version_info = (cmr_s8 *)g_ov13855_mipi_raw_info.sensor_version_info;
+    ex_info->sensor_version_info =
+        (cmr_s8 *)g_ov13855_mipi_raw_info.sensor_version_info;
     // vcm_dw9800_get_pose_dis(handle, &up, &down);
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
@@ -433,7 +434,7 @@ static unsigned long ov13855_access_val(SENSOR_HW_HANDLE handle,
         ret = ov13855_get_fps_info(handle, param_ptr->pval);
         break;
     case SENSOR_VAL_TYPE_SET_SENSOR_CLOSE_FLAG:
-        //		ret = ov13855_set_sensor_close_flag(handle);
+        ret = ov13855_set_sensor_close_flag(handle);
         break;
     default:
         break;
@@ -576,7 +577,7 @@ snapshot_info:
  * please don't change this function unless it's necessary
  *============================================================================*/
 static uint32_t ov13855_write_exposure(SENSOR_HW_HANDLE handle,
-                                            unsigned long param) {
+                                       unsigned long param) {
     uint32_t ret_value = SENSOR_SUCCESS;
     uint16_t exposure_line = 0x00;
     uint16_t dummy_line = 0x00;
@@ -838,10 +839,11 @@ static uint32_t ov13855_stream_off(SENSOR_HW_HANDLE handle, uint32_t param) {
     unsigned int sleep_time = 0, frame_time;
 
     value = Sensor_ReadReg(0x0100);
-    if (value == 0x01) {
+    if (value != 0x00) {
         Sensor_WriteReg(0x0100, 0x00);
         if (!s_ov13855_sensor_close_flag) {
-            usleep(50 * 1000);
+            sleep_time = 50 * 1000;
+            usleep(sleep_time);
         }
     } else {
         Sensor_WriteReg(0x0100, 0x00);
