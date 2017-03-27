@@ -3837,6 +3837,7 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 				cmr_s32 again;
 				float	rgb_gain_coeff;
 				cmr_s32 ae_skip_num = 0;
+				cmr_s32 mode = 0;
 				struct ae_trim trim;
 				struct ae_set_work_param *work_info = param;
 
@@ -3877,8 +3878,11 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 
 				cxt->cur_status.win_size = cxt->monitor_unit.win_size;
 				cxt->cur_status.win_num = cxt->monitor_unit.win_num;
-
-				exposure_time2line(&(cxt->tuning_param[work_info->mode]), cxt->cur_status.line_time,
+				if (1 == cxt->tuning_param_enable[work_info->mode])
+					mode = work_info->mode;
+				else
+					mode = AE_WORK_MODE_COMMON;
+				exposure_time2line(&(cxt->tuning_param[mode]), cxt->cur_status.line_time,
 																cxt->tuning_param[work_info->mode].ae_tbl_exp_mode);
 					//exp_time2exp_line(cxt,cxt->cur_status.settings.scene_mode,cxt->cur_status.line_time,
 								//cxt->tuning_param[work_info->mode].scene_info[cxt->cur_status.settings.scene_mode].exp_tbl_mode,
