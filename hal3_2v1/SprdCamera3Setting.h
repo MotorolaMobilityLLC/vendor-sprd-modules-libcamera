@@ -353,7 +353,7 @@ typedef struct {
     uint8_t availabe_contrast[7];
     uint8_t availabe_saturation[7];
     uint8_t availabe_iso[7];
-    uint8_t availabe_slow_motion[4];
+    uint8_t availabe_slow_motion[3];
     uint8_t flash_mode_support;
     uint8_t prev_rec_size_diff_support;
     uint8_t rec_snap_support;
