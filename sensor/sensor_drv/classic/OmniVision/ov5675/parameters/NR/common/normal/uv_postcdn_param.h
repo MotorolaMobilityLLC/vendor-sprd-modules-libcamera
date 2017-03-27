@@ -127,13 +127,13 @@
 
 	},
 	/*sigma_d*/
-	10.00,
+	5.00,
 	/*sigma_u*/
-	10.00,
+	8.00,
 	/*sigma_v*/
-	10.00,
+	8.00,
 	/*adpt_med_thr*/
-	0x0028,
+	0x0050,
 	/*median_mode*/
 	0x01,
 	/*uv_joint*/
@@ -281,7 +281,7 @@
 	/*sigma_v*/
 	10.00,
 	/*adpt_med_thr*/
-	0x0028,
+	0x003C,
 	/*median_mode*/
 	0x01,
 	/*uv_joint*/
@@ -425,11 +425,11 @@
 	/*sigma_d*/
 	10.00,
 	/*sigma_u*/
-	10.00,
+	15.00,
 	/*sigma_v*/
-	10.00,
+	15.00,
 	/*adpt_med_thr*/
-	0x0028,
+	0x003C,
 	/*median_mode*/
 	0x01,
 	/*uv_joint*/
@@ -573,11 +573,11 @@
 	/*sigma_d*/
 	10.00,
 	/*sigma_u*/
-	10.00,
+	20.00,
 	/*sigma_v*/
-	10.00,
+	20.00,
 	/*adpt_med_thr*/
-	0x0028,
+	0x003C,
 	/*median_mode*/
 	0x01,
 	/*uv_joint*/
@@ -721,11 +721,11 @@
 	/*sigma_d*/
 	10.00,
 	/*sigma_u*/
-	10.00,
+	25.00,
 	/*sigma_v*/
-	10.00,
+	25.00,
 	/*adpt_med_thr*/
-	0x0028,
+	0x003C,
 	/*median_mode*/
 	0x01,
 	/*uv_joint*/
