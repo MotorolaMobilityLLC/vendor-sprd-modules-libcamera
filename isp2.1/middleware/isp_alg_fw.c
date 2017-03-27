@@ -2577,8 +2577,6 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 		mode = ISP_MODE_ID_PRV_0;
 		break;
 	}
-
-
 	if( SENSOR_MULTI_MODE_FLAG != cxt->commn_cxt.multi_nr_flag) {
 		if ((mode != cxt->commn_cxt.isp_mode) && (org_size.w != cxt->commn_cxt.src.w)) {
 			cxt->commn_cxt.isp_mode = mode;
@@ -2696,6 +2694,7 @@ cmr_int isp_alg_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in_pt
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_interface_param_v1 *interface_ptr_v1 = &cxt->commn_cxt.interface_param_v1;
 	struct isp_size                 org_size;
+	cmr_s32     mode = 0;
 
 	ISP_LOGI(":ISP:isp proc start\n");
 	org_size.w    = cxt->commn_cxt.src.w;
@@ -2733,9 +2732,12 @@ cmr_int isp_alg_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in_pt
 	rtn = isp_dev_set_interface(interface_ptr_v1);
 	ISP_RETURN_IF_FAIL(rtn, ("fail to set param"));
 
+	rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_MODEID_BY_RESOLUTION, in_ptr, &mode);
+	ISP_RETURN_IF_FAIL(rtn, ("fail to get isp_mode"));
+
 	if (org_size.w != cxt->commn_cxt.src.w) {
-		cxt->commn_cxt.isp_mode = ISP_MODE_ID_CAP_1;
-		cxt->commn_cxt.mode_flag = ISP_MODE_ID_CAP_1;
+		cxt->commn_cxt.isp_mode = mode;
+		cxt->commn_cxt.mode_flag = mode;
 		rtn = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &cxt->commn_cxt.isp_mode, NULL);
 		ISP_RETURN_IF_FAIL(rtn, ("isp_pm_ioctl fail "));
 	}
