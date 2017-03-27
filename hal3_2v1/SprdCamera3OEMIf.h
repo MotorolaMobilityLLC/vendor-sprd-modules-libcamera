@@ -414,6 +414,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int initDefaultParameters();
     int handleCbData(hal3_trans_info_t &result_info, void *userdata);
     int zslTakePicture();
+    int reprocessYuvForJpeg();
     int VideoTakePicture();
     int setVideoSnapshotParameter();
     int chooseDefaultThumbnailSize(uint32_t *thumbWidth, uint32_t *thumbHeight);

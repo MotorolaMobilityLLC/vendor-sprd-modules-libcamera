@@ -709,7 +709,12 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
             ret = takePicture();
         else if (mTakePictureMode == SNAPSHOT_ZSL_MODE) {
             mVideoSnapshotFrameNum = frame_number;
-            ret = zslTakePicture();
+            if (mSprdReprocessing) {
+                ret = reprocessYuvForJpeg();
+                mNeededTimestamp = 0;
+            } else {
+                ret = zslTakePicture();
+            }
         } else if (mTakePictureMode == SNAPSHOT_VIDEO_MODE) {
             if (mVideoParameterSetFlag == false &&
                 mBurstVideoSnapshot == false) {
@@ -933,9 +938,7 @@ int SprdCamera3OEMIf::zslTakePicture() {
     }
 
     if (isPreviewing()) {
-        if (!(mMultiCameraMode == MODE_BLUR && mSprdReprocessing)) {
-            mHalOem->ops->camera_start_preflash(mCameraHandle);
-        }
+        mHalOem->ops->camera_start_preflash(mCameraHandle);
         mHalOem->ops->camera_snapshot_is_need_flash(mCameraHandle, mCameraId,
                                                     &mFlashCaptureFlag);
         HAL_LOGD("mFlashCaptureFlag=%d", mFlashCaptureFlag);
@@ -966,34 +969,6 @@ int SprdCamera3OEMIf::zslTakePicture() {
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_SIZE,
              (cmr_uint)&jpeg_thumb_size);
 
-    if (mSprdYuvCallBack && (!mSprdReprocessing)) {
-        mSprdYuvCallBack = true;
-        if (getMultiCameraMode() == MODE_3D_CAPTURE) {
-            mSprd3dCalibrationEnabled = true;
-            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DCAL_ENABLE,
-                     mSprd3dCalibrationEnabled);
-            HAL_LOGD("yuv call back mode, force enable 3d cal");
-        }
-
-        if (getMultiCameraMode() == MODE_BLUR) {
-            SET_PARM(mHalOem, mCameraHandle,
-                     CAMERA_PARAM_SPRD_YUV_CALLBACK_ENABLE, mSprdYuvCallBack);
-            HAL_LOGD("yuv call back mode");
-        }
-    } else {
-        mSprdYuvCallBack = false;
-        if (getMultiCameraMode() == MODE_3D_CAPTURE) {
-            mSprd3dCalibrationEnabled = sprddefInfo.sprd_3dcalibration_enabled;
-            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DCAL_ENABLE,
-                     sprddefInfo.sprd_3dcalibration_enabled);
-        }
-        if (getMultiCameraMode() == MODE_BLUR) {
-            SET_PARM(mHalOem, mCameraHandle,
-                     CAMERA_PARAM_SPRD_YUV_CALLBACK_ENABLE, mSprdYuvCallBack);
-            HAL_LOGD("reprocess mode, force enable reprocess");
-        }
-    }
-
 #ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
     if (sprddefInfo.capture_mode == 1) {
         HAL_LOGV("set focus af mode %d", CAMERA_FOCUS_MODE_PICTURE);
@@ -1017,10 +992,7 @@ int SprdCamera3OEMIf::zslTakePicture() {
     if (mSprdZslEnabled == 1 && mVideoSnapshotType == 0) {
         mFlagOffLineZslStart = 1;
     }
-
-    if ((mSprdZslEnabled == true) &&
-        (!mSprdReprocessing)) { /**add for 3d capture, enable reprocess
-                                   request*/
+    if (mSprdZslEnabled == true) {
         CMR_MSG_INIT(message);
         mZslShotPushFlag = 1;
         message.msg_type = CMR_EVT_ZSL_MON_SNP;
@@ -1033,10 +1005,52 @@ int SprdCamera3OEMIf::zslTakePicture() {
             return NO_ERROR;
         }
         HAL_LOGD("mZslShotPushFlag %d", mZslShotPushFlag);
-    } else {
-        PushZslSnapShotbuff();
     }
 
+    print_time();
+
+exit:
+    HAL_LOGI("X");
+    return NO_ERROR;
+}
+
+int SprdCamera3OEMIf::reprocessYuvForJpeg() {
+    ATRACE_CALL();
+
+    uint32_t ret = 0;
+    SPRD_DEF_Tag sprddefInfo;
+    mSetting->getSPRDDEFTag(&sprddefInfo);
+
+    HAL_LOGI("E");
+    GET_START_TIME;
+    print_time();
+
+    if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
+        HAL_LOGE("oem is null or oem ops is null");
+        return UNKNOWN_ERROR;
+    }
+
+    mSprdYuvCallBack = false;
+    if (getMultiCameraMode() == MODE_3D_CAPTURE) {
+        mSprd3dCalibrationEnabled = sprddefInfo.sprd_3dcalibration_enabled;
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DCAL_ENABLE,
+                 sprddefInfo.sprd_3dcalibration_enabled);
+    }
+    if (getMultiCameraMode() == MODE_BLUR) {
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_YUV_CALLBACK_ENABLE,
+                 mSprdYuvCallBack);
+        HAL_LOGD("reprocess mode, force enable reprocess");
+    }
+
+    setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
+    if (CMR_CAMERA_SUCCESS !=
+        mHalOem->ops->camera_take_picture(mCameraHandle, mCaptureMode)) {
+        setCameraState(SPRD_ERROR, STATE_CAPTURE);
+        HAL_LOGE("fail to camera_take_picture.");
+        return UNKNOWN_ERROR;
+    }
+
+    PushZslSnapShotbuff();
     print_time();
 
 exit:
@@ -1329,6 +1343,20 @@ void SprdCamera3OEMIf::setCallBackYuvMode(bool mode) {
     }
     HAL_LOGD("setCallBackYuvMode: %d, %d", mode, mSprdYuvCallBack);
     mSprdYuvCallBack = mode;
+    if (mSprdYuvCallBack && (!mSprdReprocessing)) {
+        if (getMultiCameraMode() == MODE_3D_CAPTURE) {
+            mSprd3dCalibrationEnabled = true;
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DCAL_ENABLE,
+                     mSprd3dCalibrationEnabled);
+            HAL_LOGD("yuv call back mode, force enable 3d cal");
+        }
+
+        if (getMultiCameraMode() == MODE_BLUR) {
+            SET_PARM(mHalOem, mCameraHandle,
+                     CAMERA_PARAM_SPRD_YUV_CALLBACK_ENABLE, mSprdYuvCallBack);
+            HAL_LOGD("yuv call back mode");
+        }
+    }
 }
 
 void SprdCamera3OEMIf::setMultiCallBackYuvMode(bool mode) {
@@ -8166,8 +8194,6 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
         }
 
         HAL_LOGD("fd=0x%x", zsl_frame.fd);
-        // 3d guys shoud move the folowing line to a better place
-        mNeededTimestamp = 0; /**add for 3dcapture, clean needed timestamp*/
         mHalOem->ops->camera_set_zsl_snapshot_buffer(
             obj->mCameraHandle, zsl_frame.y_phy_addr, zsl_frame.y_vir_addr,
             zsl_frame.fd);
