@@ -7450,6 +7450,7 @@ int SprdCamera3OEMIf::SetDimensionCapture(cam_dimension_t capture_size) {
     int i;
     int raw_width = 0;
     int raw_height = 0;
+    struct img_size req_size;
 
     HAL_LOGD("capture_size.width = %d, capture_size.height = %d",
              capture_size.width, capture_size.height);
@@ -7499,6 +7500,10 @@ int SprdCamera3OEMIf::SetDimensionCapture(cam_dimension_t capture_size) {
                 }
             }
         }
+        req_size.width = mCaptureWidth;
+        req_size.height = mCaptureHeight;
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_RAW_CAPTURE_SIZE,
+                 (cmr_uint)&req_size);
         HAL_LOGD("raw capture mode: mCaptureWidth=%d, mCaptureHeight=%d",
                  mCaptureWidth, mCaptureHeight);
     }

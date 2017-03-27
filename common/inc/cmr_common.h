@@ -644,7 +644,7 @@ struct sensor_mode_info {
     cmr_u32 frame_line;
     cmr_u32 padding;
     struct img_rect scaler_trim;
-    cmr_u16 out_width; // sensor output width after binning and trimming
+    cmr_u16 out_width;  // sensor output width after binning and trimming
     cmr_u16 out_height; // sensor outpout width after binning and trimming
 };
 
@@ -725,7 +725,7 @@ struct common_isp_cmd_param {
         struct cmr_win_area win_area;
         struct isp_flash_notice flash_notice;
         //#if defined(CONFIG_CAMERA_ISP_VERSION_V3) ||
-        //defined(CONFIG_CAMERA_ISP_VERSION_V4)
+        // defined(CONFIG_CAMERA_ISP_VERSION_V4)
         struct isp_face_area fd_param;
         struct isp_ae_fps fps_param;
 
@@ -947,8 +947,8 @@ enum {
 enum {
     CAMERA_SCENE_MODE_AUTO = 0,
     CAMERA_SCENE_MODE_NIGHT,
-    CAMERA_SCENE_MODE_ACTION, // not support
-    CAMERA_SCENE_MODE_PORTRAIT, // not support
+    CAMERA_SCENE_MODE_ACTION,    // not support
+    CAMERA_SCENE_MODE_PORTRAIT,  // not support
     CAMERA_SCENE_MODE_LANDSCAPE, // not support
     CAMERA_SCENE_MODE_NORMAL,
     CAMERA_SCENE_MODE_HDR,
@@ -1073,6 +1073,7 @@ enum camera_param_type {
     CAMERA_PARAM_ROTATION_CAPTURE,
     CAMERA_PARAM_POSITION,
     CAMERA_PARAM_PREVIEW_SIZE,
+    CAMERA_PARAM_RAW_CAPTURE_SIZE,
     CAMERA_PARAM_PREVIEW_FORMAT,
     CAMERA_PARAM_CAPTURE_SIZE,
     CAMERA_PARAM_CAPTURE_FORMAT,
@@ -1207,8 +1208,8 @@ typedef enum {
     MODE_RANGE_FINDER, // Camera2 apk open  camera id is
                        // MODE_RANGE_FINDER,camera hal transform to open physics
                        // Camera id is 1 and 3
-    MODE_3D_CAPTURE, // Camera2 apk open  camera id is MODE_3D_CAPTURE,camera
-                     // hal transform to open physics Camera id is 1 and 3
+    MODE_3D_CAPTURE,   // Camera2 apk open  camera id is MODE_3D_CAPTURE,camera
+                       // hal transform to open physics Camera id is 1 and 3
     MODE_3D_CALIBRATION = 8, // ValidationTools apk open  camera id is
                              // MODE_3D_CALIBRATION and 3 ,camera hal transform
                              // to open physics Camera id is 1 and 3

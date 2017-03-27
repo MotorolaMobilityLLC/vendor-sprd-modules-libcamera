@@ -5736,16 +5736,36 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
         search_height = target_size->height;
     }
 
-    CMR_LOGI("search_height = %d", search_height);
-    for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
-        if (SENSOR_MODE_MAX != sensor_info->mode_info[i].mode) {
-            height = sensor_info->mode_info[i].trim_height;
-            width = sensor_info->mode_info[i].trim_width;
-            CMR_LOGI("candidate height = %d, width = %d", height, width);
-            height = CAMERA_ALIGNED_16(height);
-            if (IMG_DATA_TYPE_JPEG != sensor_info->mode_info[i].image_format) {
-                if (search_height <= height && search_width <= width) {
-                    if (is_raw_capture == 0) {
+    if (is_raw_capture == 1) {
+        search_height =
+            handle->prev_cxt[camera_id].prev_param.raw_capture_size.height;
+        search_width =
+            handle->prev_cxt[camera_id].prev_param.raw_capture_size.width;
+        CMR_LOGI("search_height = %d", search_height);
+        for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
+            if (SENSOR_MODE_MAX != sensor_info->mode_info[i].mode) {
+                height = sensor_info->mode_info[i].trim_height;
+                width = sensor_info->mode_info[i].trim_width;
+                CMR_LOGI("candidate height = %d, width = %d", height, width);
+                if (search_height == height && search_width == width) {
+                    target_mode = i;
+                    ret = CMR_CAMERA_SUCCESS;
+                    break;
+                } else {
+                    last_one = i;
+                }
+            }
+        }
+    } else {
+        CMR_LOGI("search_height = %d", search_height);
+        for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
+            if (SENSOR_MODE_MAX != sensor_info->mode_info[i].mode) {
+                height = sensor_info->mode_info[i].trim_height;
+                width = sensor_info->mode_info[i].trim_width;
+                CMR_LOGI("candidate height = %d, width = %d", height, width);
+                if (IMG_DATA_TYPE_JPEG !=
+                    sensor_info->mode_info[i].image_format) {
+                    if (search_height <= height && search_width <= width) {
                         /* dont choose high fps setting for no-slowmotion */
                         ret = handle->ops.get_sensor_fps_info(
                             handle->oem_handle, camera_id, i, &fps_info);
@@ -5755,12 +5775,12 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
                             CMR_LOGD("dont choose high fps setting");
                             continue;
                         }
+                        target_mode = i;
+                        ret = CMR_CAMERA_SUCCESS;
+                        break;
+                    } else {
+                        last_one = i;
                     }
-                    target_mode = i;
-                    ret = CMR_CAMERA_SUCCESS;
-                    break;
-                } else {
-                    last_one = i;
                 }
             }
         }
@@ -5817,30 +5837,51 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
         search_height = target_size->height;
     }
 
-    CMR_LOGI("search_height = %d", search_height);
-    for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
-        if (SENSOR_MODE_MAX != sensor_info->mode_info[i].mode) {
-            height = sensor_info->mode_info[i].trim_height;
-            width = sensor_info->mode_info[i].trim_width;
-            CMR_LOGI("height = %d, width = %d", height, width);
-            height = CAMERA_ALIGNED_16(height);
-            if (search_height <= height && search_width <= width) {
-                if (is_raw_capture == 0) {
-                    /* dont choose high fps setting for no-slowmotion */
-                    ret = handle->ops.get_sensor_fps_info(
-                        handle->oem_handle, camera_id, i, &fps_info);
-                    CMR_LOGV("mode=%d, is_high_fps=%d", i,
-                             fps_info.is_high_fps);
-                    if (fps_info.is_high_fps) {
-                        CMR_LOGD("dont choose high fps setting");
-                        continue;
+    if (is_raw_capture == 1) {
+        CMR_LOGI("search_height = %d", search_height);
+        for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
+            if (SENSOR_MODE_MAX != sensor_info->mode_info[i].mode) {
+                height = sensor_info->mode_info[i].trim_height;
+                width = sensor_info->mode_info[i].trim_width;
+                CMR_LOGI("height = %d, width = %d", height, width);
+                if (IMG_DATA_TYPE_JPEG !=
+                    sensor_info->mode_info[i].image_format) {
+                    if (search_height == height && search_width == width) {
+                        target_mode = i;
+                        ret = CMR_CAMERA_SUCCESS;
+                        break;
+                    } else {
+                        last_mode = i;
                     }
                 }
-                target_mode = i;
-                ret = CMR_CAMERA_SUCCESS;
-                break;
-            } else {
-                last_mode = i;
+            }
+        }
+    } else {
+        CMR_LOGI("search_height = %d", search_height);
+        for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
+            if (SENSOR_MODE_MAX != sensor_info->mode_info[i].mode) {
+                height = sensor_info->mode_info[i].trim_height;
+                width = sensor_info->mode_info[i].trim_width;
+                CMR_LOGI("height = %d, width = %d", height, width);
+                if (IMG_DATA_TYPE_JPEG !=
+                    sensor_info->mode_info[i].image_format) {
+                    if (search_height <= height && search_width <= width) {
+                        /* dont choose high fps setting for no-slowmotion */
+                        ret = handle->ops.get_sensor_fps_info(
+                            handle->oem_handle, camera_id, i, &fps_info);
+                        CMR_LOGV("mode=%d, is_high_fps=%d", i,
+                                 fps_info.is_high_fps);
+                        if (fps_info.is_high_fps) {
+                            CMR_LOGD("dont choose high fps setting");
+                            continue;
+                        }
+                        target_mode = i;
+                        ret = CMR_CAMERA_SUCCESS;
+                        break;
+                    } else {
+                        last_mode = i;
+                    }
+                }
             }
         }
     }

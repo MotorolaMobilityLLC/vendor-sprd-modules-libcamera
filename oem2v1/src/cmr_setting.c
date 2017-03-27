@@ -139,6 +139,7 @@ struct setting_hal_param {
     cmr_uint encode_rotation;
 
     struct img_size preview_size;
+    struct img_size raw_capture_size;
     cmr_uint preview_format;
     cmr_uint preview_angle;
 
@@ -1720,6 +1721,27 @@ static cmr_int setting_set_position(struct setting_component *cpt,
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
     hal_param->position_info = parm->position_info;
+    return ret;
+}
+
+static cmr_int
+setting_get_raw_capture_size(struct setting_component *cpt,
+                             struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    parm->size_param = hal_param->raw_capture_size;
+    return ret;
+}
+
+static cmr_int
+setting_set_raw_capture_size(struct setting_component *cpt,
+                             struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    hal_param->raw_capture_size = parm->size_param;
+
     return ret;
 }
 
@@ -3306,6 +3328,7 @@ cmr_int cmr_setting_ioctl(cmr_handle setting_handle, cmr_uint cmd_type,
         {CAMERA_PARAM_ROTATION_CAPTURE, setting_set_rotation_capture},
         {CAMERA_PARAM_POSITION, setting_set_position},
         {CAMERA_PARAM_PREVIEW_SIZE, setting_set_preview_size},
+        {CAMERA_PARAM_RAW_CAPTURE_SIZE, setting_set_raw_capture_size},
         {CAMERA_PARAM_PREVIEW_FORMAT, setting_set_preview_format},
         {CAMERA_PARAM_CAPTURE_SIZE, setting_set_capture_size},
         {CAMERA_PARAM_CAPTURE_FORMAT, setting_set_capture_format},
@@ -3341,6 +3364,7 @@ cmr_int cmr_setting_ioctl(cmr_handle setting_handle, cmr_uint cmd_type,
         {SETTING_GET_CAPTURE_SIZE, setting_get_capture_size},
         {SETTING_GET_CAPTURE_FORMAT, setting_get_capture_format},
         {SETTING_GET_PREVIEW_SIZE, setting_get_preview_size},
+        {SETTING_GET_RAW_CAPTURE_SIZE, setting_get_raw_capture_size},
         {SETTING_GET_PREVIEW_FORMAT, setting_get_preview_format},
         {SETTING_GET_VIDEO_SIZE, setting_get_video_size},
         {SETTING_GET_HDR, setting_get_hdr},

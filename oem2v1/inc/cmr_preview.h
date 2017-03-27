@@ -157,6 +157,7 @@ struct preview_param {
     struct img_size video_size;
     /*snapshot param*/
     struct img_size picture_size;
+    struct img_size raw_capture_size;
     struct img_size thumb_size;
     cmr_uint cap_fmt;
     cmr_u32 cap_rot;

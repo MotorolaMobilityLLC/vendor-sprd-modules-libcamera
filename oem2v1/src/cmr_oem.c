@@ -7043,6 +7043,17 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
             goto exit;
         }
         out_param_ptr->prev_rot = setting_param.cmd_type_value;
+        /*get raw capture size*/
+        if (is_raw_capture == 1) {
+            ret =
+                cmr_setting_ioctl(setting_cxt->setting_handle,
+                                  SETTING_GET_RAW_CAPTURE_SIZE, &setting_param);
+            if (ret) {
+                CMR_LOGE("failed to get prev size %ld", ret);
+                goto exit;
+            }
+            out_param_ptr->raw_capture_size = setting_param.size_param;
+        }
         /*get prev size*/
         ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                                 SETTING_GET_PREVIEW_SIZE, &setting_param);
@@ -7798,6 +7809,16 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
                                     &setting_param);
         } else {
             CMR_LOGE("err, postition param is null");
+            ret = -CMR_CAMERA_INVALID_PARAM;
+        }
+        break;
+    case CAMERA_PARAM_RAW_CAPTURE_SIZE:
+        if (param) {
+            setting_param.size_param = *(struct img_size *)param;
+            ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                    &setting_param);
+        } else {
+            CMR_LOGE("err, raw capture size param is null");
             ret = -CMR_CAMERA_INVALID_PARAM;
         }
         break;
