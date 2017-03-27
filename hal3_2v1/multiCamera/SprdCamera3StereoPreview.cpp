@@ -1176,6 +1176,7 @@ SprdCamera3StereoPreview::MuxerThread::MuxerThread() {
         HAL_LOGE("mGpuApi malloc failed.");
     }
     memset(mGpuApi, 0, sizeof(GPUAPI_t));
+    memset(&pt_stream_info, 0, sizeof(struct stream_info_s));
 
     if (loadGpuApi() < 0) {
         HAL_LOGE("load gpu api failed.");

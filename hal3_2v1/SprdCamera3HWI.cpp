@@ -153,6 +153,9 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
     mFrameNum = 0;
     mSetting = NULL;
     mSprdCameraLowpower = 0;
+    mReciveQeqMax = 0;
+    mHDRProcessFlag = 0;
+    mCurFrameTimeStamp = 0;
 
     HAL_LOGI(":hal3: X");
 }

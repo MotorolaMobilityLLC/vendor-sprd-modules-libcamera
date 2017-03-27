@@ -6710,12 +6710,12 @@ int SprdCamera3OEMIf::Callback_RefocusMalloc(cmr_u32 size, cmr_u32 sum,
         return BAD_VALUE;
     }
 
-    if ((mRefocusHeapNum + sum) >= (kRefocusBufferCount + 1)) {
+    if (sum >= (kRefocusBufferCount + 1)) {
         HAL_LOGE("malloc is too more %d %d", mRefocusHeapNum, sum);
         return BAD_VALUE;
     }
 
-    if (sum >= kRefocusBufferCount) {
+    if (sum >= mRefocusHeapNum) {
         // mRefocusHeapNum = kRefocusBufferCount;
         // phy_addr += kRefocusBufferCount;
         // vir_addr += kRefocusBufferCount;
@@ -6782,12 +6782,12 @@ int SprdCamera3OEMIf::Callback_PdafRawMalloc(cmr_u32 size, cmr_u32 sum,
         return BAD_VALUE;
     }
 
-    if ((mPdafRawHeapNum + sum) >= (kPdafRawBufferCount + 1)) {
+    if (sum >= (kPdafRawBufferCount + 1)) {
         HAL_LOGE("malloc is too more %d %d", mPdafRawHeapNum, sum);
         return BAD_VALUE;
     }
 
-    if (sum >= kPdafRawBufferCount) {
+    if (sum >= mPdafRawHeapNum) {
         // mPdafRawHeapNum = kPdafRawBufferCount;
         // phy_addr += kPdafRawBufferCount;
         // vir_addr += kPdafRawBufferCount;
@@ -8028,7 +8028,7 @@ int SprdCamera3OEMIf::getZSLQueueFrameNum() {
 
 void SprdCamera3OEMIf::matchZSLQueue(ZslBufferQueue frame) {
     List<ZslBufferQueue>::iterator itor1, itor2;
-    List<ZslBufferQueue> *match_ZSLQueue;
+    List<ZslBufferQueue> *match_ZSLQueue = NULL;
     ZslBufferQueue *frame1 = NULL;
     ZslBufferQueue frame_queue;
     HAL_LOGV("E");
@@ -8038,7 +8038,7 @@ void SprdCamera3OEMIf::matchZSLQueue(ZslBufferQueue frame) {
     if (mCameraId == 3) {
         match_ZSLQueue = mMultiCameraMatchZsl->cam1_ZSLQueue;
     }
-    if (match_ZSLQueue->empty()) {
+    if (NULL == match_ZSLQueue || match_ZSLQueue->empty()) {
         HAL_LOGD("camera %d,match_queue.cam3_ZSLQueue empty", mCameraId);
         return;
     } else {

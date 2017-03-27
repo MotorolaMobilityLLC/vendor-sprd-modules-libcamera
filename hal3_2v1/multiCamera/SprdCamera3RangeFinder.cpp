@@ -126,6 +126,16 @@ SprdCamera3RangeFinder::SprdCamera3RangeFinder() {
     mLastWidth = 0;
     mLastHeight = 0;
     m_VirtualCamera.id = 0; // hardcode main camera id here
+    memset(&m_VirtualCamera, 0, sizeof(sprd_virtual_camera_t));
+    mDepthWidth = 0;
+    mDepthHeight = 0;
+    memset(mAuxStreams, 0, sizeof(camera3_stream_t) * 3);
+    m_pMainDepthStream = NULL;
+    mConfigStreamNum = 0;
+    mPreviewStreamsNum = 0;
+    mCurrentState = STATE_IDLE;
+    mVcmSteps = 0;
+    mUwDepth = 0;
     HAL_LOGD("X");
 }
 
@@ -785,7 +795,10 @@ SprdCamera3RangeFinder::SyncThread::SyncThread() {
     HAL_LOGD("E");
     mSyncMsgList.clear();
     mGetNewestFrameForMeasure = false;
-
+    mVFps = 0;
+    mVFrameCount = 0;
+    mVLastFpsTime = 0;
+    mVLastFrameCount = 0;
     HAL_LOGD("X");
 }
 /*===========================================================================
@@ -933,6 +946,11 @@ SprdCamera3RangeFinder::MeasureThread::MeasureThread() {
     if (loadDepthEngine() < 0) {
         HAL_LOGE("load DepthEngine API failed.");
     }
+    mLocalBuffer = NULL;
+    mMaxLocalBufferNum = 0;
+    memset(mNativeBuffer, 0,
+           sizeof(native_handle_t *) * MAX_FINDER_QEQUEST_BUF);
+    memset(&mLastPreCoods, 0, sizeof(uw_Coordinate));
     HAL_LOGD("X");
 }
 /*===========================================================================

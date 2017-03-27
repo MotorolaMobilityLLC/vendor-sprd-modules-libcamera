@@ -861,6 +861,19 @@ int SprdCamera3Capture::setupPhysicalCameras() {
 SprdCamera3Capture::CaptureThread::CaptureThread() {
     HAL_LOGD(" E");
     mCaptureMsgList.clear();
+    memset(mMainStreams, 0, sizeof(camera3_stream_t) * MAX_NUM_STREAMS);
+    memset(mAuxStreams, 0, sizeof(camera3_stream_t) * MAX_NUM_STREAMS);
+    mCaptureStreamsNum = 0;
+    m3DCaptureWidth = 0;
+    m3DCaptureHeight = 0;
+    mReprocessing = false;
+    mGpuApi = NULL;
+    memset(&pt_stream_info, 0, sizeof(struct stream_info_s));
+    isInitRenderContest = false;
+    mVFrameCount = 0;
+    mVLastFrameCount = 0;
+    mVLastFpsTime = 0;
+    mVFps = 0;
 }
 /*===========================================================================
  * FUNCTION   :~~CaptureThread
