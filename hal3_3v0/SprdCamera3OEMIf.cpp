@@ -3791,6 +3791,12 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 
 		//recording stream
 		if(rec_stream) {
+			//reset timestamp and mIsRecording after recording
+			rec_stream->getQBufListNum(&buf_deq_num);
+			if (buf_deq_num == 0) {
+				mSlowPara.last_frm_timestamp = 0;
+				mIsRecording = false;
+			}
 			ret = rec_stream->getQBufNumForVir(buff_vir, &frame_num);
 			if(ret == NO_ERROR) {
 				ATRACE_BEGIN("video_frame");
@@ -3802,7 +3808,6 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 						if(mVideoShotFlag && (frame_num >=  mVideoSnapshotFrameNum))
 							PushVideoSnapShotbuff(frame_num, CAMERA_STREAM_TYPE_VIDEO);
 					}
-					rec_stream->getQBufListNum(&buf_deq_num);
 					if (mSlowPara.last_frm_timestamp == 0) {/*record first frame*/
 						mSlowPara.last_frm_timestamp = buffer_timestamp;
 						mSlowPara.rec_timestamp = buffer_timestamp;
@@ -3821,10 +3826,6 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame)
 						mSlowPara.rec_timestamp = buffer_timestamp;
 					}
 					channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp, CAMERA_STREAM_TYPE_VIDEO);
-					if (buf_deq_num == 0) {
-						mSlowPara.last_frm_timestamp = 0;
-						mIsRecording = false;
-					}
 					if(frame_num == (mDropVideoFrameNum+1)) //for IOMMU error
 						channel->channelClearInvalidQBuff(mDropVideoFrameNum, buffer_timestamp, CAMERA_STREAM_TYPE_VIDEO);
 				}
