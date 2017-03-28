@@ -3891,7 +3891,7 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 					exp_time2exp_line(cxt, cxt->back_scene_mode_ae_table[j],\
 										cxt->tuning_param[work_info->mode].scene_info[j].ae_table,\
 										cxt->cur_status.line_time,\
-										cxt->tuning_param[work_info->mode].scene_info[j].exp_tbl_mode);		
+										cxt->tuning_param[work_info->mode].scene_info[j].exp_tbl_mode);
 					}
 				if (1 == cxt->tuning_param_enable[work_info->mode])
 					cxt->cur_param = &cxt->tuning_param[work_info->mode];
@@ -3899,7 +3899,7 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 					cxt->cur_param = &cxt->tuning_param[AE_WORK_MODE_COMMON];
 
 				cxt->cur_status.ae_table = &cxt->cur_param->ae_table[AE_FLICKER_50HZ][AE_ISO_AUTO];
-
+				AE_LOGD("last exp=%d, gain=%d", cxt->last_expline, cxt->last_aegain);
 				if (1 == cxt->last_enable){
 					if (cxt->cur_status.line_time == cxt->last_linetime){
 						cxt->ae_result.expline	= cxt->last_expline;
@@ -3918,8 +3918,8 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 					cxt->ae_result.expline	= cxt->cur_status.ae_table->exposure[cxt->cur_status.start_index];
 					cxt->ae_result.gain 	= cxt->cur_status.ae_table->again[cxt->cur_status.start_index];
 					cxt->ae_result.dummy	= 0;
-
 				}
+				AE_LOGD("after convert exp=%d, gain=%d", cxt->ae_result.expline, cxt->ae_result.gain);
 				cxt->sensor_calc_item.cell.exp_line = cxt->ae_result.expline;
 				cxt->sensor_calc_item.cell.gain 	= cxt->ae_result.gain;
 				cxt->sensor_calc_item.cell.dummy	= cxt->ae_result.dummy;
@@ -3945,6 +3945,10 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 				}
 
 				cxt->isp_ops.set_rgb_gain(cxt->isp_ops.isp_handler, rgb_gain_coeff);
+
+				cxt->No_sof_expline = 0;
+				cxt->No_sof_dummy = 0;
+				cxt->No_sof_aegain = 0;
 				_ae_write_exp_gain(cxt, cxt->ae_result.expline, cxt->sensor_calc_item.cell.dummy, again);
 
 				if (0 == work_info->is_snapshot){
