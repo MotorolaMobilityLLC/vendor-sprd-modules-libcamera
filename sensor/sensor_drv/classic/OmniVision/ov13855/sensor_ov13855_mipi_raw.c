@@ -26,7 +26,7 @@
  */
 /* frame length*/
 #define SNAPSHOT_FRAME_LENGTH 3214
-#define PREVIEW_FRAME_LENGTH 1608
+#define PREVIEW_FRAME_LENGTH 3216
 
 #define IMAGE_NORMAL_MIRROR
 /*==============================================================================

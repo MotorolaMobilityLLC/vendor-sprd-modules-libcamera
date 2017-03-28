@@ -40,7 +40,11 @@
 #define CAMERA_IMAGE_180
 
 #define SENSOR_NAME "ov5675"
-#define I2C_SLAVE_ADDR 0x20 // 0x6c    /* 8bit slave address*/
+#if defined(CONFIG_DUAL_CAMERA)
+#define I2C_SLAVE_ADDR 0x6c /* 8bit slave address*/
+#else
+#define I2C_SLAVE_ADDR 0x20 /* 8bit slave address*/
+#endif
 
 #define ov5675_PID_ADDR 0x300B
 #define ov5675_PID_VALUE 0x56

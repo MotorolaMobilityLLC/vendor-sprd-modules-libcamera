@@ -121,6 +121,9 @@ const SENSOR_MATCH_T sensor2_infor_tab[] = {
 #ifdef CONFIG_COVERED_SENSOR
     {"g_c2580_mipi_raw", &g_c2580_mipi_raw_info, {NULL, 0}, NULL},
 #endif
+#if defined(CONFIG_DUAL_CAMERA)
+    {"ov5675_mipi_raw", &g_ov5675_mipi_raw_info, {NULL, 0}, NULL},
+#endif
 #endif
     {0}};
 
