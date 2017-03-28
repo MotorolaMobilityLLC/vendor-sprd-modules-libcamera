@@ -19,16 +19,16 @@
 #include "awb_ctrl.h"
 #include "ae_sprd_ctrl.h"
 #include "af_ctrl.h"
-#include "awb_al_ctrl.h"
+//#include "awb_al_ctrl.h"
 #include "awb_sprd_ctrl.h"
 #include "sensor_raw.h"
 #include "ae_log.h"
 #include "af_log.h"
 #include "sprd_af_ctrl_v1.h"
-#include "sp_af_ctrl.h"
+//#include "sp_af_ctrl.h"
 #include "sprd_pdaf_adpt.h"
 #include <dlfcn.h>
-#include "ALC_AF_Ctrl.h"
+//#include "ALC_AF_Ctrl.h"
 
 #ifdef CONFIG_USE_ALC_AE
 #include "ae_alc_ctrl.h"

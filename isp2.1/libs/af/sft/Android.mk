@@ -15,6 +15,7 @@
 #
 LOCAL_PATH := $(call my-dir)
 
+ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
 include $(CLEAR_VARS)
 LOCAL_MODULE := libAF
 LOCAL_MODULE_64 := libAF_64
@@ -50,4 +51,4 @@ LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
 LOCAL_SRC_FILES_32 := lib/$(LOCAL_MODULE).so
 LOCAL_SRC_FILES_64 := lib64/$(LOCAL_MODULE_64).so
 include $(BUILD_PREBUILT)
-
+endif

@@ -18,15 +18,15 @@
 #include "awb_ctrl.h"
 #include "ae_sprd_ctrl.h"
 #include "af_ctrl.h"
-#include "awb_al_ctrl.h"
+//#include "awb_al_ctrl.h"
 #include "awb_sprd_ctrl.h"
 #include "sensor_raw.h"
 #include "ae_log.h"
 #include "af_log.h"
 #include "lib_ctrl.h"
-#include "sp_af_ctrl.h"
+//#include "sp_af_ctrl.h"
 #include <dlfcn.h>
-#include "ALC_AF_Ctrl.h"
+//#include "ALC_AF_Ctrl.h"
 
 #ifdef CONFIG_USE_ALC_AE
 #include "ae_alc_ctrl.h"
@@ -35,7 +35,7 @@
 struct awb_lib_fun awb_lib_fun;
 struct ae_lib_fun ae_lib_fun;
 struct af_lib_fun af_lib_fun;
-struct al_awb_thirdlib_fun al_awb_thirdlib_fun;
+//struct al_awb_thirdlib_fun al_awb_thirdlib_fun;
 
 char* al_libversion_choice(uint32_t version_id)
 {
@@ -50,7 +50,7 @@ char* al_libversion_choice(uint32_t version_id)
 
 	return NULL;
 }
-
+#if 0
 uint32_t al_awb_lib_open(uint32_t version_id)
 {
 	void *handle;
@@ -107,7 +107,7 @@ load_error:
 	return ISP_ERROR;
 
 }
-
+#endif
 uint32_t isp_awblib_init(struct sensor_libuse_info* libuse_info, struct awb_lib_fun* awb_lib_fun)
 {
 	uint32_t rtn = AWB_CTRL_SUCCESS;
@@ -144,12 +144,13 @@ uint32_t isp_awblib_init(struct sensor_libuse_info* libuse_info, struct awb_lib_
 		break;
 
 	case AL_AWB_LIB:
-		al_awb_lib_version = awb_lib_version;
-		al_awb_lib_open(al_awb_lib_version);
-		awb_lib_fun->awb_ctrl_init 		= awb_al_ctrl_init;
-		awb_lib_fun->awb_ctrl_deinit		= awb_al_ctrl_deinit;
-		awb_lib_fun->awb_ctrl_calculation	= awb_al_ctrl_calculation;
-		awb_lib_fun->awb_ctrl_ioctrl		= awb_al_ctrl_ioctrl;
+		awb_lib_fun = NULL;
+		//al_awb_lib_version = awb_lib_version;
+		//al_awb_lib_open(al_awb_lib_version);
+		//awb_lib_fun->awb_ctrl_init 		= awb_al_ctrl_init;
+		//awb_lib_fun->awb_ctrl_deinit		= awb_al_ctrl_deinit;
+		//awb_lib_fun->awb_ctrl_calculation	= awb_al_ctrl_calculation;
+		//awb_lib_fun->awb_ctrl_ioctrl		= awb_al_ctrl_ioctrl;
 		break;
 
 	default:

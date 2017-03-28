@@ -20,7 +20,7 @@
 #include "awb_sprd_ctrl.h"
 #include "awb.h"
 #include "isp_adpt.h"
-#include "awb_packet.h"
+//#include "awb_packet.h"
 #include "isp_com.h"
 #include "ae_misc.h"
 #include "dlfcn.h"

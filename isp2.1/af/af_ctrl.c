@@ -1,7 +1,7 @@
 #include "isp_com.h"
 #include "isp_pm.h"
 #include "lib_ctrl.h"
-#include "awb_al_ctrl.h"
+//#include "awb_al_ctrl.h"
 #include "awb_sprd_ctrl.h"
 #include "ae_ctrl.h"
 #include "af_ctrl.h"

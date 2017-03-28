@@ -80,9 +80,9 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_SHARED_LIBRARIES := libcutils libutils libdl libcamcommon
 
-LOCAL_SHARED_LIBRARIES += libawb1 liblsc libcalibration libae libsprdlsc
-LOCAL_SHARED_LIBRARIES += libAF libsft_af_ctrl libaf_tune
-LOCAL_SHARED_LIBRARIES += libaf_running
+LOCAL_SHARED_LIBRARIES += libawb1 liblsc libcalibration libae #libsprdlsc
+#LOCAL_SHARED_LIBRARIES += libAF libsft_af_ctrl libaf_tune
+#LOCAL_SHARED_LIBRARIES += libaf_running
 LOCAL_SHARED_LIBRARIES += libcamsensor
 
 LOCAL_SHARED_LIBRARIES += libspafv1 libspcaftrigger libcutils
@@ -95,7 +95,7 @@ LOCAL_CFLAGS += -DCONFIG_USE_ALC_AE
 LOCAL_CFLAGS += -DCONFIG_USE_ALC_AWB
 LOCAL_SHARED_LIBRARIES += libAl_Ais libAl_Ais_Sp
 else
-LOCAL_CFLAGS += -DCONFIG_USE_ALC_AWB
+#LOCAL_CFLAGS += -DCONFIG_USE_ALC_AWB
 endif
 
 include $(BUILD_SHARED_LIBRARY)

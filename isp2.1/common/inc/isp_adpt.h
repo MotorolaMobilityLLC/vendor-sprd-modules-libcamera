@@ -1,6 +1,6 @@
 #ifndef _ISP_ADPT_H_
 #define _ISP_ADPT_H_
-#include "AlAwbInterface.h"
+//#include "AlAwbInterface.h"
 #include <sys/types.h>
 
 enum ae_product_lib_id {
