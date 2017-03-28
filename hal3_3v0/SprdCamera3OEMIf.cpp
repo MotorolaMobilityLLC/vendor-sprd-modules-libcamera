@@ -253,6 +253,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting):
 	mPreviewFormat(CAMERA_DATA_FORMAT_YUV422),
 	mPictureFormat(1),
 	mPreviewStartFlag(0),
+	mIsCancellingCapture(0),
 	mIsDvPreview(0),
 	mIsStoppingPreview(0),
 	mRecordingMode(0),
@@ -922,7 +923,12 @@ int SprdCamera3OEMIf::takePicture()
 		}
 	}
 
-	setCameraState(SPRD_FLASH_IN_PROGRESS, STATE_CAPTURE);
+	if (mIsCancellingCapture) {
+		HAL_LOGW("when is cancelling capture, this place can't change capture state");
+		return result;
+	} else {
+		setCameraState(SPRD_FLASH_IN_PROGRESS, STATE_CAPTURE);
+	}
 
 	if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE ||
 	    mTakePictureMode == SNAPSHOT_PREVIEW_MODE ||
@@ -1010,7 +1016,12 @@ int SprdCamera3OEMIf::takePicture()
 	SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_BURSTMODE_ENABLED, (cmr_uint)mSprdBurstModeEnabled);
 
 	setCameraPreviewFormat();
-	setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
+	if (mIsCancellingCapture) {
+		HAL_LOGW("when is cancelling capture, this place can't change capture state");
+		return result;
+	} else {
+		setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
+	}
 	if (CMR_CAMERA_SUCCESS != mHalOem->ops->camera_take_picture(mCameraHandle, mCaptureMode)) {
 		setCameraState(SPRD_ERROR, STATE_CAPTURE);
 		HAL_LOGE("fail to camera_take_picture.");
@@ -1110,7 +1121,12 @@ int SprdCamera3OEMIf::zslTakePicture()
 	}
 	/**add for 3d capture, set raw call back mode & reprocess capture size end*/
 
-	setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
+	if (mIsCancellingCapture) {
+		HAL_LOGW("when is cancelling capture, this place can't change capture state");
+		return NO_ERROR;
+	} else {
+		setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
+	}
 	if (CMR_CAMERA_SUCCESS != mHalOem->ops->camera_take_picture(mCameraHandle, mCaptureMode)) {
 		setCameraState(SPRD_ERROR, STATE_CAPTURE);
 		HAL_LOGE("fail to camera_take_picture.");
@@ -1168,7 +1184,11 @@ int SprdCamera3OEMIf::VideoTakePicture()
 		mBurstVideoSnapshot = false;
 		setVideoSnapshotParameter();
 	}
-	setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
+	if (mIsCancellingCapture) {
+		HAL_LOGW("when is cancelling capture, this place can't change capture state");
+	} else {
+		setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
+	}
 	mVideoShotPushFlag = 1;
 	mVideoShotWait.signal();
 	print_time();
@@ -3074,6 +3094,7 @@ int SprdCamera3OEMIf::cancelPictureInternal()
 	case SPRD_WAITING_JPEG:
 	case SPRD_FLASH_IN_PROGRESS:
 		HAL_LOGD("camera state is %s, stopping picture.", getCameraStateStr(getCaptureState()));
+		mIsCancellingCapture = 1;
 
 		setCameraState(SPRD_INTERNAL_CAPTURE_STOPPING, STATE_CAPTURE);
 		if (0 != mHalOem->ops->camera_cancel_takepicture(mCameraHandle)) {
@@ -3082,6 +3103,7 @@ int SprdCamera3OEMIf::cancelPictureInternal()
 		}
 
 		result = WaitForCaptureDone();
+		mIsCancellingCapture = 0;
 		if (!iSZslMode()) {
 			deinitCapture(mIsPreAllocCapMem);
 			//camera_set_capture_trace(0);
