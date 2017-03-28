@@ -98,6 +98,7 @@ struct setting_flash_param {
 	cmr_uint      has_preflashed;
 	cmr_uint      flash_hw_status;
 	cmr_uint      set_flash_mode_off_after_close_flash;
+	cmr_uint      flash_opened;
 };
 
 struct setting_hal_common {
@@ -780,11 +781,14 @@ static cmr_int setting_set_flash_mode(struct setting_component *cpt,
 	cmr_uint                      flash_mode = 0;
 	cmr_uint                      status = 0;
 
-	flash_param->set_flash_mode_off_after_close_flash = 0;
 	flash_mode = parm->cmd_type_value;
 
-	CMR_LOGI("flash_mode:%lu has_preflashed:%lu", flash_mode, flash_param->has_preflashed);
-	if ((flash_mode == CAMERA_FLASH_MODE_OFF) && flash_param->has_preflashed){
+	CMR_LOGD("flash_mode:%lu has_preflashed:%lu,flash_opened"
+		 "%lu,set_flash_mode_off_after_close_flash %lu",
+		 flash_mode, flash_param->has_preflashed, flash_param->flash_opened,
+		 flash_param->set_flash_mode_off_after_close_flash);
+	if ((flash_mode == CAMERA_FLASH_MODE_OFF) && flash_param->flash_opened) {
+		CMR_LOGD("during open flash don't set off, just keep it");
 		flash_param->set_flash_mode_off_after_close_flash = 1;
 		return ret;
 	}
@@ -2577,7 +2581,7 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
 					CMR_LOGI("high flash open");
 					setting_isp_flash_notify(cpt, parm, ISP_FLASH_MAIN_BEFORE);
 					setting_set_flashdevice(cpt, parm, ctrl_flash_status);
-
+					hal_param->flash_param.flash_opened = 1;
 					setting_isp_flash_notify(cpt, parm, ISP_FLASH_MAIN_LIGHTING);
 					hal_param->flash_param.has_preflashed = 0;
 					break;
@@ -2588,6 +2592,7 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
 				default:
 					CMR_LOGI("pre flash open");
 					hal_param->flash_param.has_preflashed = 1;
+					hal_param->flash_param.flash_opened = 1;
 					cmr_sem_getvalue(&cpt->preflash_sem, &tmpVal);
 					while (0 < tmpVal) {
 						cmr_sem_trywait(&cpt->preflash_sem);
@@ -2651,6 +2656,7 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
 				if (!parm->ctrl_flash.will_capture) {
 					hal_param->flash_param.has_preflashed = 0;
 				}
+				hal_param->flash_param.flash_opened = 0;
 				if ((hal_param->flash_param.has_preflashed == 0) && hal_param->flash_param.set_flash_mode_off_after_close_flash)
 				{
 					hal_param->flash_param.flash_mode = CAMERA_FLASH_MODE_OFF;
@@ -2685,6 +2691,13 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
 					setting_isp_wait_notice(cpt);
 				}
 				setting_isp_flash_notify(cpt, parm, ISP_FLASH_MAIN_AFTER);
+			}
+		         if (hal_param->flash_param.set_flash_mode_off_after_close_flash ==1) {
+		                CMR_LOGD("set flash mode off after close flash");
+		                hal_param->flash_param.set_flash_mode_off_after_close_flash = 0;
+		                hal_param->flash_param.has_preflashed = 0;
+					    parm->cmd_type_value = CAMERA_FLASH_MODE_OFF;
+					    setting_set_flash_mode(cpt, parm);
 			}
 		}
 
@@ -3069,7 +3082,7 @@ static cmr_int setting_set_pre_lowflash (struct setting_component *cpt,
 	cmr_uint                       image_format = 0;
 	cmr_uint                       been_preflash = 0;
 	struct setting_init_in         *init_in = &cpt->init_in;
-//#ifdef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
+
 	image_format = local_param->sensor_static_info.image_format;
 	flash_mode = hal_param->flash_param.flash_mode;
 	been_preflash = hal_param->flash_param.has_preflashed;
@@ -3078,19 +3091,16 @@ static cmr_int setting_set_pre_lowflash (struct setting_component *cpt,
 		flash_mode,
 		been_preflash);
 
-	//wait  AOI converged
-	ret =  setting_set_roi_convergence_req(cpt,parm);
-	if (ret) {
-		CMR_LOGE("failed to setting_set_roi_convergence_req");
-	}
 
 	if (!been_preflash) {
 		if (CAMERA_FLASH_MODE_AUTO == flash_mode) {
-			ret = setting_flash_handle(cpt, parm, flash_mode);
+		    ret = setting_flash_handle(cpt, parm, flash_mode);
 		}
 
-		if (setting_is_need_flash(cpt, parm)) {
-			CMR_LOGI("preflash low open");
+	        if (setting_is_need_flash(cpt, parm)) {
+			CMR_LOGD("preflash low open");
+			hal_param->flash_param.flash_opened = 1;
+			hal_param->flash_param.has_preflashed = 1;
 			if (IMG_DATA_TYPE_RAW == image_format) {
 				cmr_setting_clear_sem(cpt);
 				setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_BEFORE);
@@ -3100,7 +3110,7 @@ static cmr_int setting_set_pre_lowflash (struct setting_component *cpt,
 				cmr_setting_clear_sem(cpt);
 				setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_LIGHTING);
 				setting_isp_wait_notice_withtime(cpt, ISP_PREFLASH_ALG_TIMEOUT);
-			} else {
+		} else {
 				setting_set_flashdevice(cpt, parm, (uint32_t)FLASH_OPEN);
 			}
 		}
@@ -3111,25 +3121,11 @@ static cmr_int setting_set_pre_lowflash (struct setting_component *cpt,
 			if (IMG_DATA_TYPE_RAW == image_format) {
 				setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_AFTER);
 			}
-			CMR_LOGI("preflash low close");
+			CMR_LOGD("preflash low close");
+			hal_param->flash_param.flash_opened = 0;
 		}
-	} else {
-		struct timespec ts;
-		cmr_int tmpVal = 0;
-
-		if (clock_gettime(CLOCK_REALTIME, &ts)) {
-			CMR_LOGE("get time failed.");
-		} else {
-			ts.tv_sec += ISP_ALG_TIMEOUT;
-			if (cmr_sem_timedwait((&cpt->preflash_sem), &ts)) {
-				CMR_LOGW("timeout.");
-			} else {
-				CMR_LOGI("done.");
-			}
-		}
-
 	}
-//#endif
+
 	return ret;
 }
 
