@@ -49,8 +49,6 @@
 
 namespace sprdcamera {
 
-#define SELFSHOT_ALL_CONVERED_VALURE 70
-
 typedef enum {
     /* Main camera device id*/
     SELF_SHOT_CAM_MAIN_ID = 1,
@@ -103,6 +101,7 @@ class SprdCamera3SelfShot {
     int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
     int setupPhysicalCameras();
     int getCameraInfo(struct camera_info *info);
+    void convertToRegions(int32_t *rect, int32_t *region, int weight);
 
   public:
     SprdCamera3SelfShot();
@@ -114,7 +113,7 @@ class SprdCamera3SelfShot {
     int processCaptureRequest(const struct camera3_device *device,
                               camera3_capture_request_t *request);
     void notifyMain(const camera3_notify_msg_t *msg);
-    int getCoveredValue();
+    int getCoveredValue(CameraMetadata &frame_settings);
     void processCaptureResultMain(camera3_capture_result_t *result);
     const camera_metadata_t *
     constructDefaultRequestSettings(const struct camera3_device *device,

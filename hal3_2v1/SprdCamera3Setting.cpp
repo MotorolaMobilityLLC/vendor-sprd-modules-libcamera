@@ -44,7 +44,11 @@ namespace sprdcamera {
 
 /**********************Macro Define**********************/
 #ifdef CONFIG_CAMERA_FACE_DETECT
+#ifdef CONFIG_COVERED_SENSOR
+#define CAMERA3MAXFACE 11
+#else
 #define CAMERA3MAXFACE 10
+#endif
 #else
 #define CAMERA3MAXFACE 0
 #endif

@@ -1916,7 +1916,7 @@ void SprdCamera3Blur::processCaptureResultMain(
             }
         }
         if (2 == m_nPhyCameras) {
-            int mCoveredValue = getCoveredValue();
+            int mCoveredValue = getCoveredValue(metadata);
             if (cur_frame_number > 100) {
                 metadata.update(ANDROID_SPRD_BLUR_COVERED, &mCoveredValue, 1);
                 result->result = metadata.release();
@@ -2170,6 +2170,26 @@ int SprdCamera3Blur::_flush(const struct camera3_device *device) {
 }
 
 /*===========================================================================
+ * FUNCTION   :convertToRegions
+ *
+ * DESCRIPTION:
+ *
+ * PARAMETERS :
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void SprdCamera3Blur::convertToRegions(int32_t *rect, int32_t *region,
+                                       int weight) {
+    region[0] = rect[0];
+    region[1] = rect[1];
+    region[2] = rect[2];
+    region[3] = rect[3];
+    if (weight > -1) {
+        region[4] = weight;
+    }
+}
+
+/*===========================================================================
  * FUNCTION   :getCoveredValue
  *
  * DESCRIPTION: get Sub Camera Cover value
@@ -2179,7 +2199,7 @@ int SprdCamera3Blur::_flush(const struct camera3_device *device) {
  *
  * RETURN     : value
  *==========================================================================*/
-uint8_t SprdCamera3Blur::getCoveredValue() {
+uint8_t SprdCamera3Blur::getCoveredValue(CameraMetadata &frame_settings) {
     int rc = 0;
     uint32_t couvered_value = 0;
     char prop[PROPERTY_VALUE_MAX] = {
@@ -2187,17 +2207,48 @@ uint8_t SprdCamera3Blur::getCoveredValue() {
     };
     property_get("debug.camera.covered", prop, "0");
 
-    SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_AUX].hwi;
-    rc = hwiMain->getCoveredValue(&couvered_value);
+    SprdCamera3HWI *hwiSub = m_pPhyCamera[CAM_TYPE_AUX].hwi;
+    rc = hwiSub->getCoveredValue(&couvered_value);
     if (rc < 0) {
-        HAL_LOGE("read sub sensor failed");
+        HAL_LOGD("read sub sensor failed");
     }
     if (0 != atoi(prop)) {
         couvered_value = atoi(prop);
     }
-    if (couvered_value < BLUR_ALL_CONVERED_VALURE && couvered_value)
-        couvered_value = 1;
+    if (couvered_value < MAX_CONVERED_VALURE && couvered_value) {
+        couvered_value = BLUR_SELFSHOT_CONVERED;
+    } else {
+        couvered_value = BLUR_SELFSHOT_NO_CONVERED;
+    }
     HAL_LOGD("get cover_value %u", couvered_value);
+    // update face[10].score info to mean convered value when api1 is used
+    {
+        FACE_Tag *faceDetectionInfo = (FACE_Tag *)&(
+            hwiSub->mSetting->s_setting[CAM_BLUR_AUX_ID].faceInfo);
+        uint8_t numFaces = faceDetectionInfo->face_num;
+        uint8_t faceScores[CAMERA3MAXFACE];
+        uint8_t dataSize = CAMERA3MAXFACE;
+        int32_t faceRectangles[CAMERA3MAXFACE * 4];
+        int j = 0;
+
+        numFaces = CAMERA3MAXFACE;
+        for (int i = 0; i < numFaces; i++) {
+            faceScores[i] = faceDetectionInfo->face[i].score;
+            if (faceScores[i] == 0) {
+
+                faceScores[i] = 1;
+            }
+            convertToRegions(faceDetectionInfo->face[i].rect,
+                             faceRectangles + j, -1);
+            j += 4;
+        }
+        faceScores[10] = couvered_value;
+
+        frame_settings.update(ANDROID_STATISTICS_FACE_SCORES, faceScores,
+                              dataSize);
+        frame_settings.update(ANDROID_STATISTICS_FACE_RECTANGLES,
+                              faceRectangles, dataSize * 4);
+    }
     return couvered_value;
 }
 };

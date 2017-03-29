@@ -60,7 +60,6 @@ namespace sprdcamera {
 #define BLUR_CIRCLE_SIZE_SCALE (3)
 #define BLUR_SMOOTH_SIZE_SCALE (8)
 #define BLUR_CIRCLE_VALUE_MIN (20)
-#define BLUR_ALL_CONVERED_VALURE (70)
 
 /*
 YUV_IMG_SIZE = (3264 * 2448 * 3/2)
@@ -187,7 +186,8 @@ class SprdCamera3Blur {
                     new_ion_mem_blur_t *new_mem);
     int validateCaptureRequest(camera3_capture_request_t *request);
     void saveRequest(camera3_capture_request_t *request);
-    uint8_t getCoveredValue();
+    void convertToRegions(int32_t *rect, int32_t *region, int weight);
+    uint8_t getCoveredValue(CameraMetadata &frame_settings);
 
   public:
     SprdCamera3Blur();

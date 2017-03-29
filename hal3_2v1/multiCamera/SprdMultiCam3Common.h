@@ -31,6 +31,7 @@
 #define SPRDMULTICAMERACOMMON_H_HEADER
 
 #include "../SprdCamera3HWI.h"
+#include <string>
 
 namespace sprdcamera {
 
@@ -40,6 +41,8 @@ namespace sprdcamera {
 #define CONTEXT_SUCCESS 1
 #define CONTEXT_FAIL 0
 #define TIME_DIFF (15e6)
+#define MAX_CONVERED_VALURE 5
+#define CAMERA3MAXFACE 11
 
 typedef enum { STATE_NOT_READY, STATE_IDLE, STATE_BUSY } currentStatus;
 
@@ -197,6 +200,15 @@ typedef struct line_buf_s {
     float warp_matrix[18];
     int points[32];
 } line_buf_t;
+
+typedef enum {
+    BLUR_SELFSHOT_LOWLIGHT_DISABLE = 0,
+    BLUR_SELFSHOT_NO_CONVERED,
+    BLUR_SELFSHOT_CONVERED,
+    NORMAL_LIGHT = 3,
+    LOW_LIGHT,
+    MAX_EXIT
+} sprd_convered_info_t;
 
 enum rot_angle { ROT_0 = 0, ROT_90, ROT_180, ROT_270, ROT_MAX };
 };

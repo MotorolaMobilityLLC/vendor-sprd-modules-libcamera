@@ -50,8 +50,6 @@
 
 namespace sprdcamera {
 
-#define PAGETURN_ALL_CONVERED_VALURE 70
-
 typedef enum {
     /* Main camera device id*/
     PAGE_TURN_CAM_MAIN_ID = 2,
@@ -99,6 +97,7 @@ class SprdCamera3PageTurn {
     int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
     int setupPhysicalCameras();
     int getCameraInfo(struct camera_info *info);
+    void convertToRegions(int32_t *rect, int32_t *region, int weight);
     int32_t mOldRequestId;
 
   public:
@@ -120,7 +119,7 @@ class SprdCamera3PageTurn {
     void _dump(const struct camera3_device *device, int fd);
     int _flush(const struct camera3_device *device);
     int closeCameraDevice();
-    int getCoveredValue();
+    int getCoveredValue(CameraMetadata &frame_settings);
 };
 };
 
