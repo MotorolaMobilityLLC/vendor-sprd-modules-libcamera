@@ -1979,7 +1979,7 @@ static cmr_int isp_lsc_sw_init(struct isp_alg_fw_context *cxt)
 			lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr+lsc_otp_len_chn*3), lsc_16_bits+lsc_otp_chn_gain_num*3, lsc_otp_chn_gain_num);
 
 			lsc_table = lsc_table_wrapper(lsc_16_bits, otp_grid, lsc_tab_param_ptr->resolution.w, lsc_tab_param_ptr->resolution.h, &gain_w, &gain_h); //  wrapper otp table
-
+			free(lsc_16_bits);
 			lsc_param.lsc_otp_table_width = gain_w;
 			lsc_param.lsc_otp_table_height = gain_h;
 			lsc_param.lsc_otp_table_addr = lsc_table;
