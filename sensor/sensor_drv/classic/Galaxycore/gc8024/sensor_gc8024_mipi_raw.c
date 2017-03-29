@@ -100,8 +100,8 @@
 #define EX_MCLK 24
 
 //#define IMAGE_NORMAL_MIRROR
-//#define IMAGE_H_MIRROR
-#define IMAGE_V_MIRROR
+#define IMAGE_H_MIRROR
+//#define IMAGE_V_MIRROR
 //#define IMAGE_HV_MIRROR
 
 #ifdef IMAGE_NORMAL_MIRROR
@@ -561,7 +561,7 @@ static const SENSOR_REG_T gc8024_snapshot_setting[] = {
     {0xfe, 0x00},
 };
 
-static SENSOR_REG_TAB_INFO_T s_gc8024_resolution_tab_raw[SENSOR_MODE_MAX] = {
+static SENSOR_REG_TAB_INFO_T s_gc8024_resolution_tab_raw[] = {
     {ADDR_AND_LEN_OF_ARRAY(gc8024_init_setting), 0, 0, EX_MCLK,
      SENSOR_IMAGE_FORMAT_RAW},
     /*	{ADDR_AND_LEN_OF_ARRAY(gc8024_preview_setting),
@@ -569,9 +569,14 @@ static SENSOR_REG_TAB_INFO_T s_gc8024_resolution_tab_raw[SENSOR_MODE_MAX] = {
              SENSOR_IMAGE_FORMAT_RAW},*/
     {ADDR_AND_LEN_OF_ARRAY(gc8024_snapshot_setting), SNAPSHOT_WIDTH,
      SNAPSHOT_HEIGHT, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
+     {PNULL, 0, 0, 0, 0, 0},
+    {PNULL, 0, 0, 0, 0, 0},
+    {PNULL, 0, 0, 0, 0, 0},
+    {PNULL, 0, 0, 0, 0, 0},
+    {PNULL, 0, 0, 0, 0, 0},
 };
 
-static SENSOR_TRIM_T s_gc8024_resolution_trim_tab[SENSOR_MODE_MAX] = {
+static SENSOR_TRIM_T s_gc8024_resolution_trim_tab[] = {
     {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
     /*	{PREVIEW_TRIM_X, PREVIEW_TRIM_Y, PREVIEW_TRIM_W, PREVIEW_TRIM_H,
              PREVIEW_LINE_TIME, PREVIEW_MIPI_PER_LANE_BPS, PREVIEW_FRAME_LENGTH,
@@ -584,6 +589,11 @@ static SENSOR_TRIM_T s_gc8024_resolution_trim_tab[SENSOR_MODE_MAX] = {
      SNAPSHOT_MIPI_PER_LANE_BPS,
      SNAPSHOT_FRAME_LENGTH,
      {0, 0, SNAPSHOT_TRIM_W, SNAPSHOT_TRIM_H}},
+    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 };
 
 static const SENSOR_REG_T

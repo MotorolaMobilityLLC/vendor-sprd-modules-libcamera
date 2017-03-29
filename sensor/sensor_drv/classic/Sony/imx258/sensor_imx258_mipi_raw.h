@@ -31,9 +31,9 @@
 
 #define SENSOR_NAME "imx258_mipi_raw"
 #ifdef CAMERA_SENSOR_BACK_I2C_SWITCH
-#define I2C_SLAVE_ADDR  0x20//0x34 // 0x20    /* 16bit slave address*/
+#define I2C_SLAVE_ADDR 0x20 // 0x34 // 0x20    /* 16bit slave address*/
 #else
-#define I2C_SLAVE_ADDR  0x34 // 0x20    /* 16bit slave address*/
+#define I2C_SLAVE_ADDR 0x34 // 0x20    /* 16bit slave address*/
 #endif
 
 #define BINNING_FACTOR 2
@@ -544,213 +544,29 @@ static SENSOR_MODE_FPS_INFO_T s_imx258_mode_fps_info = {
  * please modify this variable acording your spec
  *============================================================================*/
 LOCAL SENSOR_REG_TAB_INFO_T s_imx258_resolution_tab_raw[] = {
-    {
-        .sensor_reg_tab_ptr = (SENSOR_REG_T *)imx258_init_setting,
-        .reg_count = NUMBER_OF_ARRAY(imx258_init_setting),
-        .width = 0,
-        .height = 0,
-        .xclk_to_sensor = 24,
-        .image_format = SENSOR_IMAGE_FORMAT_RAW,
-    },
-    /*	{
-                    .sensor_reg_tab_ptr =
-       (SENSOR_REG_T*)imx258_1040x768_setting,
-                    .reg_count          =
-       NUMBER_OF_ARRAY(imx258_1040x768_setting),
-                    .width              = 1040,
-                    .height             = 768,
-                    .xclk_to_sensor     = 24,
-                    .image_format       = SENSOR_IMAGE_FORMAT_RAW,
-            },*/
-    {
-        .sensor_reg_tab_ptr = (SENSOR_REG_T *)imx258_1280x720_setting,
-        .reg_count = NUMBER_OF_ARRAY(imx258_1280x720_setting),
-        .width = 1280,
-        .height = 720,
-        .xclk_to_sensor = 24,
-        .image_format = SENSOR_IMAGE_FORMAT_RAW,
-    },
-    {
-        .sensor_reg_tab_ptr = (SENSOR_REG_T *)imx258_2096x1552_setting,
-        .reg_count = NUMBER_OF_ARRAY(imx258_2096x1552_setting),
-        .width = 2096,
-        .height = 1552,
-        .xclk_to_sensor = 24,
-        .image_format = SENSOR_IMAGE_FORMAT_RAW,
-    },
-    {
-        .sensor_reg_tab_ptr = (SENSOR_REG_T *)imx258_4208x3120_setting,
-        .reg_count = NUMBER_OF_ARRAY(imx258_4208x3120_setting),
-        .width = 4208,
-        .height = 3120,
-        .xclk_to_sensor = 24,
-        .image_format = SENSOR_IMAGE_FORMAT_RAW,
-    },
-    {
-        .sensor_reg_tab_ptr = PNULL,
-        .reg_count = 0,
-        .width = 0,
-        .height = 0,
-        .xclk_to_sensor = 0,
-        .image_format = 0,
-    },
-    {
-        .sensor_reg_tab_ptr = PNULL,
-        .reg_count = 0,
-        .width = 0,
-        .height = 0,
-        .xclk_to_sensor = 0,
-        .image_format = 0,
-    },
-    {
-        .sensor_reg_tab_ptr = PNULL,
-        .reg_count = 0,
-        .width = 0,
-        .height = 0,
-        .xclk_to_sensor = 0,
-        .image_format = 0,
-    },
-    {
-        .sensor_reg_tab_ptr = PNULL,
-        .reg_count = 0,
-        .width = 0,
-        .height = 0,
-        .xclk_to_sensor = 0,
-        .image_format = 0,
-    },
-    {
-        .sensor_reg_tab_ptr = PNULL,
-        .reg_count = 0,
-        .width = 0,
-        .height = 0,
-        .xclk_to_sensor = 0,
-        .image_format = 0,
-    },
+    {ADDR_AND_LEN_OF_ARRAY(imx258_init_setting), 0, 0, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
+    /*	{ ADDR_AND_LEN_OF_ARRAY(imx258_1040x768_setting),1040,768,EX_MCLK,SENSOR_IMAGE_FORMAT_RAW },*/
+    {ADDR_AND_LEN_OF_ARRAY(imx258_1280x720_setting), 1280, 720, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
+    {ADDR_AND_LEN_OF_ARRAY(imx258_2096x1552_setting), 2096, 1552, EX_MCLK,SENSOR_IMAGE_FORMAT_RAW},
+    {ADDR_AND_LEN_OF_ARRAY(imx258_4208x3120_setting), 4208, 3120, EX_MCLK,SENSOR_IMAGE_FORMAT_RAW},
+    {PNULL, 0, 0, 0, 0, 0},
+    {PNULL, 0, 0, 0, 0, 0},
+    {PNULL, 0, 0, 0, 0, 0},
+    {PNULL, 0, 0, 0, 0, 0},
+    {PNULL, 0, 0, 0, 0, 0},
 };
 
-LOCAL
-SENSOR_TRIM_T
-s_imx258_resolution_trim_tab[SENSOR_MODE_MAX] = {
-    {/*init trim*/
-     .trim_start_x = 0,
-     .trim_start_y = 0,
-     .trim_width = 0,
-     .trim_height = 0,
-     .line_time = 0,
-     .bps_per_lane = 0,
-     .frame_line = 0,
-     .scaler_trim =
-         {
-             .x = 0, .y = 0, .w = 0, .h = 0,
-         }},
-    /*	{ //mode1
-                    .trim_start_x   = 0,
-                    .trim_start_y   = 0,
-                    .trim_width     = 1040,
-                    .trim_height    = 768,
-                    .line_time      = 10325,
-                    .bps_per_lane   = 1296,
-                    .frame_line     = 812,
-                    .scaler_trim =
-                    {
-                            .x = 0,
-                            .y = 0,
-                            .w = 1040,
-                            .h = 768,
-                    }
-            },*/
-    {// mode1
-     .trim_start_x = 0,
-     .trim_start_y = 0,
-     .trim_width = 1280,
-     .trim_height = 720,
-     .line_time = 13939,
-     .bps_per_lane = 960,
-     .frame_line = 796,
-     .scaler_trim =
-         {
-             .x = 0, .y = 0, .w = 1280, .h = 720,
-         }},
-    {// mode2
-     .trim_start_x = 0,
-     .trim_start_y = 0,
-     .trim_width = 2096,
-     .trim_height = 1552,
-     .line_time = 20650,
-     .bps_per_lane = 1296,
-     .frame_line = 1644,
-     .scaler_trim =
-         {
-             .x = 0, .y = 0, .w = 2096, .h = 1552,
-         }},
-    {// mode3
-     .trim_start_x = 0,
-     .trim_start_y = 0,
-     .trim_width = 4208,
-     .trim_height = 3120,
-     .line_time = 10325,
-     .bps_per_lane = 1296,
-     .frame_line = 3224,
-     .scaler_trim =
-         {
-             .x = 0, .y = 0, .w = 4208, .h = 3120,
-         }},
-    {.trim_start_x = 0,
-     .trim_start_y = 0,
-     .trim_width = 0,
-     .trim_height = 0,
-     .line_time = 0,
-     .bps_per_lane = 0,
-     .frame_line = 0,
-     .scaler_trim =
-         {
-             .x = 0, .y = 0, .w = 0, .h = 0,
-         }},
-    {.trim_start_x = 0,
-     .trim_start_y = 0,
-     .trim_width = 0,
-     .trim_height = 0,
-     .line_time = 0,
-     .bps_per_lane = 0,
-     .frame_line = 0,
-     .scaler_trim =
-         {
-             .x = 0, .y = 0, .w = 0, .h = 0,
-         }},
-    {.trim_start_x = 0,
-     .trim_start_y = 0,
-     .trim_width = 0,
-     .trim_height = 0,
-     .line_time = 0,
-     .bps_per_lane = 0,
-     .frame_line = 0,
-     .scaler_trim =
-         {
-             .x = 0, .y = 0, .w = 0, .h = 0,
-         }},
-    {.trim_start_x = 0,
-     .trim_start_y = 0,
-     .trim_width = 0,
-     .trim_height = 0,
-     .line_time = 0,
-     .bps_per_lane = 0,
-     .frame_line = 0,
-     .scaler_trim =
-         {
-             .x = 0, .y = 0, .w = 0, .h = 0,
-         }},
-    {.trim_start_x = 0,
-     .trim_start_y = 0,
-     .trim_width = 0,
-     .trim_height = 0,
-     .line_time = 0,
-     .bps_per_lane = 0,
-     .frame_line = 0,
-     .scaler_trim =
-         {
-             .x = 0, .y = 0, .w = 0, .h = 0,
-         }},
-
+LOCAL SENSOR_TRIM_T s_imx258_resolution_trim_tab[] = {
+    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+    /*	{0,0, 1040, 768,10325,1296, 812, { 0,0,1040,768}},*/
+    {0, 0, 1280, 720, 13939, 960, 796, {0, 0, 1280, 720}},
+    {0, 0, 2096, 1552, 20650, 1296, 1644, {0, 0, 2096, 1552}},
+    {0, 0, 4208, 3120, 10325, 1296, 3224, {0, 0, 4208, 3120}},
+    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 };
 
 LOCAL const SENSOR_REG_T
@@ -882,7 +698,7 @@ SENSOR_INFO_T g_imx258_mipi_raw_info = {
 #ifndef CAMERA_SENSOR_BACK_I2C_SWITCH
     .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_B,
 #else
-	.image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_R,
+    .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_R,
 #endif
 #else
     .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_R,

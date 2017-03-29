@@ -286,242 +286,31 @@ static SENSOR_MODE_FPS_INFO_T s_ov13855_mode_fps_info = {
  * sensor all info
  * please modify this variable acording your spec
  *============================================================================*/
+
 LOCAL SENSOR_REG_TAB_INFO_T s_ov13855_resolution_tab_raw[] = {
-    {
-        .sensor_reg_tab_ptr = (SENSOR_REG_T *)ov13855_init_setting,
-        .reg_count = NUMBER_OF_ARRAY(ov13855_init_setting),
-        .width = 0,
-        .height = 0,
-        .xclk_to_sensor = 24,
-        .image_format = SENSOR_IMAGE_FORMAT_RAW,
-    },
-    {
-        .sensor_reg_tab_ptr = (SENSOR_REG_T *)ov13855_1280x720_setting,
-        .reg_count = NUMBER_OF_ARRAY(ov13855_1280x720_setting),
-        .width = 1280,
-        .height = 720,
-        .xclk_to_sensor = 24,
-        .image_format = SENSOR_IMAGE_FORMAT_RAW,
-    },
-    /*
-{
-    .sensor_reg_tab_ptr = (SENSOR_REG_T *)ov13855_1024x768_setting,
-    .reg_count = NUMBER_OF_ARRAY(ov13855_1024x768_setting),
-    .width = 1024,
-    .height = 768,
-    .xclk_to_sensor = 24,
-    .image_format = SENSOR_IMAGE_FORMAT_RAW,
-},
-    */
-    {
-        .sensor_reg_tab_ptr = (SENSOR_REG_T *)ov13855_2112x1568_setting,
-        .reg_count = NUMBER_OF_ARRAY(ov13855_2112x1568_setting),
-        .width = 2112,
-        .height = 1568,
-        .xclk_to_sensor = 24,
-        .image_format = SENSOR_IMAGE_FORMAT_RAW,
-    },
-    {
-        .sensor_reg_tab_ptr = (SENSOR_REG_T *)ov13855_4224x3136_30fps_setting,
-        .reg_count = NUMBER_OF_ARRAY(ov13855_4224x3136_30fps_setting),
-        .width = 4224,
-        .height = 3136,
-        .xclk_to_sensor = 24,
-        .image_format = SENSOR_IMAGE_FORMAT_RAW,
-    },
-    {
-        .sensor_reg_tab_ptr = PNULL,
-        .reg_count = 0,
-        .width = 0,
-        .height = 0,
-        .xclk_to_sensor = 0,
-        .image_format = 0,
-    },
-    {
-        .sensor_reg_tab_ptr = PNULL,
-        .reg_count = 0,
-        .width = 0,
-        .height = 0,
-        .xclk_to_sensor = 0,
-        .image_format = 0,
-    },
-    {
-        .sensor_reg_tab_ptr = PNULL,
-        .reg_count = 0,
-        .width = 0,
-        .height = 0,
-        .xclk_to_sensor = 0,
-        .image_format = 0,
-    },
-    {
-        .sensor_reg_tab_ptr = PNULL,
-        .reg_count = 0,
-        .width = 0,
-        .height = 0,
-        .xclk_to_sensor = 0,
-        .image_format = 0,
-    },
-    {
-        .sensor_reg_tab_ptr = PNULL,
-        .reg_count = 0,
-        .width = 0,
-        .height = 0,
-        .xclk_to_sensor = 0,
-        .image_format = 0,
-    },
-
-    //	{
-    //		.sensor_reg_tab_ptr =
-    //(SENSOR_REG_T*)ov13855_4224x3136_15fps_setting,
-    //		.reg_count          =
-    // NUMBER_OF_ARRAY(ov13855_4224x3136_15fps_setting),
-    //		.width              = 4224,
-    //		.height             = 3136,
-    //		.xclk_to_sensor     = 24,
-    //		.image_format       = SENSOR_IMAGE_FORMAT_RAW,
-    //	},
-
+    {ADDR_AND_LEN_OF_ARRAY(ov13855_init_setting),0, 0, 24, SENSOR_IMAGE_FORMAT_RAW},
+    {ADDR_AND_LEN_OF_ARRAY(ov13855_1280x720_setting),1280,720, 24, SENSOR_IMAGE_FORMAT_RAW},
+    /*{ADDR_AND_LEN_OF_ARRAY(ov13855_1024x768_setting),1024,768,24,SENSOR_IMAGE_FORMAT_RAW},*/
+    {ADDR_AND_LEN_OF_ARRAY(ov13855_2112x1568_setting),2112,1568,24,SENSOR_IMAGE_FORMAT_RAW},
+    {ADDR_AND_LEN_OF_ARRAY(ov13855_4224x3136_30fps_setting),4224,3136,24,SENSOR_IMAGE_FORMAT_RAW },
+    {PNULL,0, 0,0,0,0 },
+    {PNULL,0, 0, 0, 0, 0},
+    {PNULL, 0,0,0, 0, 0},
+    {PNULL,0,0,0, 0, 0},
+    {PNULL,0,0,0,0,0 },
 };
 
-LOCAL
-    SENSOR_TRIM_T
-        s_ov13855_resolution_trim_tab[SENSOR_MODE_MAX] =
-            {
-                {/*init trim*/
-                 .trim_start_x = 0,
-                 .trim_start_y = 0,
-                 .trim_width = 0,
-                 .trim_height = 0,
-                 .line_time = 0,
-                 .bps_per_lane = 0,
-                 .frame_line = 0,
-                 .scaler_trim =
-                     {
-                         .x = 0, .y = 0, .w = 0, .h = 0,
-                     }},
-                {// mode1
-                 .trim_start_x = 0,
-                 .trim_start_y = 0,
-                 .trim_width = 1280,
-                 .trim_height = 720,
-                 .line_time = 10380,
-                 .bps_per_lane = 540,
-                 .frame_line = 1608,
-                 .scaler_trim =
-                     {
-                         .x = 0, .y = 0, .w = 1280, .h = 720,
-                     }},
-                /*{// mode2
-                 .trim_start_x = 0,
-                 .trim_start_y = 0,
-                 .trim_width = 1024,
-                 .trim_height = 768,
-                 .line_time = 10380,
-                 .bps_per_lane = 270,
-                 .frame_line = 804,
-                 .scaler_trim =
-                     {
-                         .x = 0, .y = 0, .w = 1024, .h = 768,
-                     }}, */
-                {// mode3
-                 .trim_start_x = 0,
-                 .trim_start_y = 0,
-                 .trim_width = 2112,
-                 .trim_height = 1568,
-                 .line_time = 10380,
-                 .bps_per_lane = 540,
-                 .frame_line = 3216,
-                 .scaler_trim =
-                     {
-                         .x = 0, .y = 0, .w = 2112, .h = 1568,
-                     }},
-                {// fps 30 full size
-                 .trim_start_x = 0,
-                 .trim_start_y = 0,
-                 .trim_width =  4224,
-                 .trim_height = 3136,
-                 .line_time = 10380,
-                 .bps_per_lane = 1080,
-                 .frame_line = 3214, // 3214
-                 .scaler_trim =
-                     {
-                         .x = 0,
-                         .y = 0,
-                         .w = 4224,
-                         .h = 3136,
-                     }},
-                {.trim_start_x = 0,
-                 .trim_start_y = 0,
-                 .trim_width = 0,
-                 .trim_height = 0,
-                 .line_time = 0,
-                 .bps_per_lane = 0,
-                 .frame_line = 0,
-                 .scaler_trim =
-                     {
-                         .x = 0, .y = 0, .w = 0, .h = 0,
-                     }},
-                {.trim_start_x = 0,
-                 .trim_start_y = 0,
-                 .trim_width = 0,
-                 .trim_height = 0,
-                 .line_time = 0,
-                 .bps_per_lane = 0,
-                 .frame_line = 0,
-                 .scaler_trim =
-                     {
-                         .x = 0, .y = 0, .w = 0, .h = 0,
-                     }},
-                {.trim_start_x = 0,
-                 .trim_start_y = 0,
-                 .trim_width = 0,
-                 .trim_height = 0,
-                 .line_time = 0,
-                 .bps_per_lane = 0,
-                 .frame_line = 0,
-                 .scaler_trim =
-                     {
-                         .x = 0, .y = 0, .w = 0, .h = 0,
-                     }},
-                {.trim_start_x = 0,
-                 .trim_start_y = 0,
-                 .trim_width = 0,
-                 .trim_height = 0,
-                 .line_time = 0,
-                 .bps_per_lane = 0,
-                 .frame_line = 0,
-                 .scaler_trim =
-                     {
-                         .x = 0, .y = 0, .w = 0, .h = 0,
-                     }},
-                {.trim_start_x = 0,
-                 .trim_start_y = 0,
-                 .trim_width = 0,
-                 .trim_height = 0,
-                 .line_time = 0,
-                 .bps_per_lane = 0,
-                 .frame_line = 0,
-                 .scaler_trim =
-                     {
-                         .x = 0, .y = 0, .w = 0, .h = 0,
-                     }},
-
-                //	{ //fps 15 full size
-                //		.trim_start_x   = 0,
-                //		.trim_start_y   = 0,
-                //		.trim_width     = 4224,
-                //		.trim_height    = 3136,
-                //		.line_time      = 20770,
-                //		.bps_per_lane   = 540,
-                //		.frame_line     = 3214,
-                //		.scaler_trim    =
-                //		{
-                //			.x = 0,
-                //			.y = 0,
-                //			.w = 4224,
-                //			.h = 3136,
-                //		}
-                //	},
+LOCAL SENSOR_TRIM_T s_ov13855_resolution_trim_tab[] = {
+                {0,0, 0, 0, 0,0, 0, {0, 0, 0, 0 }},
+                {0, 0,1280,720,10380,540,1608, {0, 0, 1280,720 }},
+                /*{0,0,1024, 768,10380, 270,804,{ 0, 0, 1024, 768 }}, */
+                { 0, 0, 2112,1568,10380,540,3216, { 0,0, 2112, 1568}},
+                { 0, 0, 4224,3136,10380,1080,3214, { 0,0,4224,3136}},
+                {0,0,0, 0, 0, 0,0,{ 0, 0,  0, 0}},
+                {0, 0,0, 0, 0, 0,0,{ 0, 0, 0, 0 }},
+                {0,0,0,0, 0, 0, 0, { 0, 0, 0,  0}},
+                {0, 0, 0,0,0, 0,0, { 0, 0, 0,  0}},
+                {0, 0, 0, 0,0, 0, 0,{0, 0, 0,  0}},
 };
 
 LOCAL const SENSOR_REG_T

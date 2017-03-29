@@ -421,16 +421,21 @@ static const SENSOR_REG_T ov5675_snapshot_setting[] = {
     {0x3821, 0x01}, {0x4008, 0x02}, {0x4009, 0x0d}, {0x4041, 0x07},
 };
 
-static SENSOR_REG_TAB_INFO_T s_ov5675_resolution_tab_raw[SENSOR_MODE_MAX] = {
+static SENSOR_REG_TAB_INFO_T s_ov5675_resolution_tab_raw[] = {
     {ADDR_AND_LEN_OF_ARRAY(ov5675_init_setting), 0, 0, EX_MCLK,
      SENSOR_IMAGE_FORMAT_RAW},
     {ADDR_AND_LEN_OF_ARRAY(ov5675_preview_setting), PREVIEW_WIDTH,
      PREVIEW_HEIGHT, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
     {ADDR_AND_LEN_OF_ARRAY(ov5675_snapshot_setting), SNAPSHOT_WIDTH,
      SNAPSHOT_HEIGHT, EX_MCLK, SENSOR_IMAGE_FORMAT_RAW},
+    {PNULL, 0, 0, 0, 0, 0},
+    {PNULL, 0, 0, 0, 0, 0},
+    {PNULL, 0, 0, 0, 0, 0},
+    {PNULL, 0, 0, 0, 0, 0},
+    {PNULL, 0, 0, 0, 0, 0},
 };
 
-static SENSOR_TRIM_T s_ov5675_resolution_trim_tab[SENSOR_MODE_MAX] = {
+static SENSOR_TRIM_T s_ov5675_resolution_trim_tab[] = {
     {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
     {PREVIEW_TRIM_X,
      PREVIEW_TRIM_Y,
@@ -448,6 +453,11 @@ static SENSOR_TRIM_T s_ov5675_resolution_trim_tab[SENSOR_MODE_MAX] = {
      SNAPSHOT_MIPI_PER_LANE_BPS,
      SNAPSHOT_FRAME_LENGTH,
      {0, 0, SNAPSHOT_TRIM_W, SNAPSHOT_TRIM_H}},
+    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 };
 
 static const SENSOR_REG_T
