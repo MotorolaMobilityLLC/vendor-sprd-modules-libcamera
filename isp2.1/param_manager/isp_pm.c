@@ -569,6 +569,7 @@ struct isp_nr_param_update_info {
 static cmr_s32 isp_nr_param_update(struct isp_nr_param_update_info * nr_param_update_ptr )
 {
 	cmr_u32 rtn = ISP_SUCCESS;
+	cmr_s32 ret;
 	cmr_u32 basic_offset_units = 0;
 	cmr_u32 * one_multi_mode_ptr = PNULL;
 	cmr_u8 * nr_param_ptr = PNULL;
@@ -612,7 +613,13 @@ static cmr_s32 isp_nr_param_update(struct isp_nr_param_update_info * nr_param_up
 				} else {
 					if( NULL!=(fp=fopen(filename,"rb")) ) {
 						ISP_LOGV("param open %s, succeed!",filename);
-						fread((void*)nr_param_ptr,1, size_of_per_unit, fp);
+						ret = fread((void*)nr_param_ptr,1, size_of_per_unit, fp);
+						if (ret < 0) {
+							ISP_LOGE("failed to read .");
+							fclose(fp);
+							rtn = ret;
+							return rtn;
+						}
 						fclose(fp);
 					}else{
 						ISP_LOGV("param open %s, not succeed!",filename);

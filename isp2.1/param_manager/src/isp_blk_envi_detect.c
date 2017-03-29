@@ -30,8 +30,8 @@ cmr_s32 _pm_envi_detect_init(void *dst_envi_detect_param, void *src_envi_detect_
 
 	dst_ptr->enable = src_ptr->enable;
 	for (i = 0; i < SENSOR_ENVI_NUM; i ++) {
-		dst_ptr->envi_range[SENSOR_ENVI_NUM].min = src_ptr->envi_range[SENSOR_ENVI_NUM].min;
-		dst_ptr->envi_range[SENSOR_ENVI_NUM].max = src_ptr->envi_range[SENSOR_ENVI_NUM].max;
+		dst_ptr->envi_range[i].min = src_ptr->envi_range[SENSOR_ENVI_NUM].min;
+		dst_ptr->envi_range[i].max = src_ptr->envi_range[SENSOR_ENVI_NUM].max;
 	}
 
 	header_ptr->is_update = ISP_ONE;
@@ -56,10 +56,11 @@ cmr_s32 _pm_envi_detect_set_param(void *envi_detect_param, cmr_u32 cmd, void *pa
 	break;
 
 	case ISP_PM_BLK_ENVI_DETECT:
+		src_envi_detect_ptr = (struct sensor_envi_detect_param *)param_ptr0 ;
 		dst_envi_detect_ptr->enable = src_envi_detect_ptr->enable;
 		for (i = 0; i < SENSOR_ENVI_NUM; i ++) {
-			dst_envi_detect_ptr->envi_range[SENSOR_ENVI_NUM].min = src_envi_detect_ptr->envi_range[SENSOR_ENVI_NUM].min;
-			dst_envi_detect_ptr->envi_range[SENSOR_ENVI_NUM].max = src_envi_detect_ptr->envi_range[SENSOR_ENVI_NUM].max;
+			dst_envi_detect_ptr->envi_range[i].min = src_envi_detect_ptr->envi_range[i].min;
+			dst_envi_detect_ptr->envi_range[i].max = src_envi_detect_ptr->envi_range[i].max;
 		}
 	break;
 

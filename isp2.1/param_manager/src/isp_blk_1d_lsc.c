@@ -49,7 +49,7 @@ cmr_s32 _pm_1d_lsc_init(void * dst_lnc_param,void * src_lnc_param,void * param1,
 
 	index = src_ptr->cur_idx.x0;
 
-	dst_ptr->cur.radius_step = src_ptr->map[i].rlsc_radius_step;
+	dst_ptr->cur.radius_step = src_ptr->map[index].rlsc_radius_step;
 	dst_ptr->cur.center_r0c0_col_x = src_ptr->map[index].curve_distcptn[0].center_pos.x;
 	dst_ptr->cur.center_r0c0_row_y = src_ptr->map[index].curve_distcptn[0].center_pos.y;
 	dst_ptr->cur.center_r0c1_col_x = src_ptr->map[index].curve_distcptn[1].center_pos.x;

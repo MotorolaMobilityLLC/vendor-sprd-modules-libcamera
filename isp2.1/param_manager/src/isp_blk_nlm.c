@@ -26,9 +26,9 @@ cmr_u32 _pm_nlm_convert_param(void *dst_nlm_param, cmr_u32 strength_level, cmr_u
 	struct isp_nlm_param_v1 *dst_ptr = (struct isp_nlm_param_v1 *)dst_nlm_param;
 	void *addr = NULL;
 
-	struct sensor_nlm_level* nlm_param = PNULL;
-	struct sensor_vst_level* vst_param = PNULL;
-	struct sensor_ivst_level* ivst_param = PNULL;
+	struct sensor_nlm_level* nlm_param = NULL;
+	struct sensor_vst_level* vst_param = NULL;
+	struct sensor_ivst_level* ivst_param = NULL;
 
 	if (SENSOR_MULTI_MODE_FLAG != dst_ptr->nr_mode_setting) {
 		nlm_param = (struct sensor_nlm_level*)(dst_ptr->nlm_ptr);
@@ -47,7 +47,9 @@ cmr_u32 _pm_nlm_convert_param(void *dst_nlm_param, cmr_u32 strength_level, cmr_u
 	}
 
 	strength_level = PM_CLIP(strength_level, 0, dst_ptr->level_num - 1);
-	if (nlm_param != NULL) {
+	if (NULL == nlm_param){
+		return -1;
+	} else {
 		dst_ptr->cur.direction_mode_bypass = nlm_param[strength_level].nlm_dic.direction_mode_bypass;
 
 		dst_ptr->cur.dist_mode = nlm_param[strength_level].nlm_dic.dist_mode;
