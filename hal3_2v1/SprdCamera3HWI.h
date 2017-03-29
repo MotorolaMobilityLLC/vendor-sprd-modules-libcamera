@@ -107,6 +107,7 @@ class SprdCamera3HWI {
     static bool isMultiCameraMode(int cameraId);
     void setSprdCameraLowpower(int flag);
     int getCoveredValue(uint32_t *value);
+    int setSensorStream(uint32_t on_off);
 
   private:
     int openCamera();

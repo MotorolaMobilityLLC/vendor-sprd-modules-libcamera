@@ -1438,6 +1438,11 @@ int SprdCamera3Blur::initialize(const camera3_callback_ops_t *callback_ops) {
             HAL_LOGE("Error aux camera while initialize !! ");
             return rc;
         }
+        rc = hwiAux->setSensorStream(STREAM_ON);
+        if (rc != NO_ERROR) {
+            HAL_LOGE("Error while aux camera streamon !! ");
+            return rc;
+        }
     }
     // init buffer_handle_t
     memset(mLocalCapBuffer, 0,

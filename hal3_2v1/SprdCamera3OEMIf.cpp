@@ -1382,6 +1382,16 @@ void SprdCamera3OEMIf::setCaptureReprocessMode(bool mode, uint32_t width,
         mCameraHandle, mSprdReprocessing, mCameraId, width, height);
 }
 
+int SprdCamera3OEMIf::setSensorStream(uint32_t on_off) {
+    int ret;
+
+    HAL_LOGD("E");
+    ret = mHalOem->ops->camera_ioctrl(
+        mCameraHandle, CAMERA_IOCTRL_COVERED_SENSOR_STREAM_CTRL, &on_off);
+
+    return ret;
+}
+
 int SprdCamera3OEMIf::getCoveredValue(uint32_t *value) {
     int32_t ret = 0;
 

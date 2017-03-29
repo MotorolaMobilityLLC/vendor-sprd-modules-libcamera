@@ -1947,4 +1947,14 @@ int SprdCamera3HWI::getCoveredValue(uint32_t *value) {
     return rc;
 }
 
+int SprdCamera3HWI::setSensorStream(uint32_t on_off) {
+    int ret = 0;
+
+    HAL_LOGD("set on_off %d", on_off);
+
+    ret = mOEMIf->setSensorStream(on_off);
+
+    return ret;
+}
+
 }; // end namespace sprdcamera

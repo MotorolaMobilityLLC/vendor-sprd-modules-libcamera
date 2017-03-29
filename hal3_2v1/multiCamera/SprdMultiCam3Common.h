@@ -71,6 +71,11 @@ typedef enum {
     SNAPSHOT_STREAM,
 } streamType_t;
 
+enum sensor_stream_ctrl {
+    STREAM_OFF = 0,
+    STREAM_ON = 1,
+};
+
 typedef struct {
     uint32_t frame_number;
     int32_t vcm_steps;

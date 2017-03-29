@@ -1053,6 +1053,10 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
         ret = camera_local_get_cover(handle, (cmr_u32 *)param);
         break;
     }
+    case CAMERA_IOCTRL_COVERED_SENSOR_STREAM_CTRL:
+        CMR_LOGD("force sensor stream on %u", *(uint32_t *)param);
+        ret = camera_stream_ctrl(handle, *(uint32_t *)param);
+        break;
     default:
         break;
     }

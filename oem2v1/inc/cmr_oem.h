@@ -426,6 +426,7 @@ cmr_int camera_local_stop_capture(cmr_handle oem_handle);
 void camera_set_oem_multimode(multiCameraMode camera_mode);
 
 cmr_int camera_local_get_cover(cmr_handle cmr_handle, cmr_u32 *cover_value);
+cmr_int camera_stream_ctrl(cmr_handle cmr_handle, cmr_u32 on_off);
 #ifdef __cplusplus
 }
 #endif

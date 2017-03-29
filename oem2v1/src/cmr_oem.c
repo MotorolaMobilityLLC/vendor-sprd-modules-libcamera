@@ -9719,3 +9719,20 @@ cmr_int camera_local_get_cover(cmr_handle oem_handle, cmr_u32 *cover_value) {
     CMR_LOGD("done");
     return ret;
 }
+
+cmr_int camera_stream_ctrl(cmr_handle oem_handle, cmr_u32 on_off) {
+    cmr_int ret;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    CMR_LOGD("set %u", on_off);
+    if (cxt->camera_id != SENSOR_DEVICE2)
+        CMR_LOGW("should not direct open sensors except for SENSOR_DEVICE2");
+    if (on_off == 0)
+        ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id,
+                               SENSOR_STREAM_OFF, 0);
+    else
+        ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id,
+                               SENSOR_STREAM_ON, 0);
+
+    CMR_LOGD("done");
+    return ret;
+}

@@ -442,26 +442,30 @@ int SprdCamera3SelfShot::cameraDeviceOpen(__unused int camera_id,
     uint32_t phyId = 0;
 
     HAL_LOGD(" E");
-    hw_device_t *hw_dev = NULL;
+    hw_device_t *hw_dev[m_nPhyCameras];
     mOpenSubsensor = 0;
-    phyId = m_pPhyCamera[CAM_TYPE_MAIN].id;
-    SprdCamera3HWI *hw = new SprdCamera3HWI((uint32_t)phyId);
-    if (!hw) {
-        HAL_LOGE("Allocation of hardware interface failed");
-        return NO_MEMORY;
-    }
-    hw->setMultiCameraMode((multiCameraMode)camera_id);
-    rc = hw->openCamera(&hw_dev);
-    if (rc != NO_ERROR) {
-        HAL_LOGE("failed, camera id:%d", phyId);
-        delete hw;
-        closeCameraDevice();
-        return rc;
+    for (uint32_t i = 0; i < m_nPhyCameras; i++) {
+        phyId = m_pPhyCamera[i].id;
+        SprdCamera3HWI *hw = new SprdCamera3HWI((uint32_t)phyId);
+        if (!hw) {
+            HAL_LOGE("Allocation of hardware interface failed");
+            return NO_MEMORY;
+        }
+        hw_dev[i] = NULL;
+
+        hw->setMultiCameraMode((multiCameraMode)camera_id);
+        rc = hw->openCamera(&hw_dev[i]);
+        if (rc != NO_ERROR) {
+            HAL_LOGE("failed, camera id:%d", phyId);
+            delete hw;
+            closeCameraDevice();
+            return rc;
+        }
+
+        m_pPhyCamera[i].dev = reinterpret_cast<camera3_device_t *>(hw_dev[i]);
+        m_pPhyCamera[i].hwi = hw;
     }
 
-    m_pPhyCamera[CAM_TYPE_MAIN].dev =
-        reinterpret_cast<camera3_device_t *>(hw_dev);
-    m_pPhyCamera[CAM_TYPE_MAIN].hwi = hw;
     m_VirtualCamera.dev.common.tag = HARDWARE_DEVICE_TAG;
     m_VirtualCamera.dev.common.version = CAMERA_DEVICE_API_VERSION_3_2;
     m_VirtualCamera.dev.common.close = close_camera_device;
@@ -694,41 +698,24 @@ int SprdCamera3SelfShot::processCaptureRequest(
         return rc;
     }
     if (mAvailableSensorSelfSot && !mOpenSubsensor) {
-        int phyId = m_pPhyCamera[CAM_TYPE_AUX].id;
-
-        HAL_LOGD("open sub camera E");
-        hw_device_t *hw_dev = NULL;
-        SprdCamera3HWI *hw = new SprdCamera3HWI((uint32_t)phyId);
-        if (!hw) {
-            HAL_LOGE("Allocation of hardware interface failed");
-            return NO_MEMORY;
-        }
-        hw->setMultiCameraMode((multiCameraMode)MODE_SELF_SHOT);
-        rc = hw->openCamera(&hw_dev);
-        if (rc != NO_ERROR) {
-            HAL_LOGE("failed, camera id:%d", phyId);
-            delete hw;
-            closeCameraDevice();
-            return rc;
-        }
-        m_pPhyCamera[CAM_TYPE_AUX].dev =
-            reinterpret_cast<camera3_device_t *>(hw_dev);
-        m_pPhyCamera[CAM_TYPE_AUX].hwi = hw;
+        HAL_LOGD("cover camera stream on");
         CHECK_HWI_ERROR(m_pPhyCamera[CAM_TYPE_AUX].hwi);
+        SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_AUX].hwi;
+        rc = hwiAux->setSensorStream(STREAM_ON);
+        if (rc != NO_ERROR) {
+            HAL_LOGE("cover sensor stream on failed");
+        }
         HAL_LOGD("open sub camera ok");
         mOpenSubsensor = true;
     } else if (!mAvailableSensorSelfSot && mOpenSubsensor) {
-        HAL_LOGD("close sub camera E");
-        sprdcamera_physical_descriptor_t *sprdCam = NULL;
-        sprdCam = &m_pPhyCamera[CAM_TYPE_AUX];
-        hw_device_t *dev = (hw_device_t *)(sprdCam->dev);
-        rc = SprdCamera3HWI::close_camera_device(dev);
+        HAL_LOGD("cover camera stream off");
+        CHECK_HWI_ERROR(m_pPhyCamera[CAM_TYPE_AUX].hwi);
+        SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_AUX].hwi;
+        rc = hwiAux->setSensorStream(STREAM_OFF);
         if (rc != NO_ERROR) {
-            HAL_LOGE("close sub camera failed");
+            HAL_LOGE("cover sensor stream off failed");
         }
         HAL_LOGD("close sub camera ok");
-        sprdCam->hwi = NULL;
-        sprdCam->dev = NULL;
         mOpenSubsensor = false;
     }
 

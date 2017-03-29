@@ -213,6 +213,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int getMultiCameraMode(void);
     void setSprdCameraLowpower(int flag);
     int getCoveredValue(uint32_t *value);
+    int setSensorStream(uint32_t on_off);
 
   public:
     static int pre_alloc_cap_mem_thread_init(void *p_data);
