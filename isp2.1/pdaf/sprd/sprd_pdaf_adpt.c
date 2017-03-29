@@ -216,7 +216,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	struct pdaf_ctrl_init_out *out_p = (struct pdaf_ctrl_init_out *)out;
 	struct sprd_pdaf_context *cxt = NULL;
 	struct sensor_otp_af_info *otp_af_info = NULL;
-	struct isp_alg_fw_context *isp_ctx = (struct isp_alg_fw_context *)in_p->caller_handle;
+	struct isp_alg_fw_context *isp_ctx = NULL;
 
 	cmr_u32 pd_in_size = 0;
 
@@ -232,6 +232,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 		goto exit;
 	}
 #endif
+	isp_ctx = (struct isp_alg_fw_context *)in_p->caller_handle;
 	cxt = (struct sprd_pdaf_context *)malloc(sizeof(*cxt));
 	if (NULL == cxt) {
 		ISP_LOGE("failed to malloc pdaf");
@@ -268,7 +269,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	cxt->pd_gobal_setting.dBeginY = BEGIN_Y;/*TBD get from sensor*/
 
 	/*TBD dSensorID 0:for imx258 1: for OV13850*/
-	cxt->pd_gobal_setting.dSensorMode = in_p->camera_id;
+	/*cxt->pd_gobal_setting.dSensorMode = in_p->camera_id;*/
 	cxt->pd_gobal_setting.dSensorMode = SENSOR_ID;/*TBD get from sensor id*/
 /*TBD init sharkle isp*/
 	pdaf_setup(cxt);
@@ -285,7 +286,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 
 	return (cmr_handle)cxt;
 
-error_lib_init:
+//error_lib_init:
 	//pdafaltek_libops_deinit(pdaf);
 exit:
 	if (cxt) {

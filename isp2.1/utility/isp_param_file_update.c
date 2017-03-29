@@ -1166,6 +1166,8 @@ cmr_s32 update_param_v21(struct sensor_raw_info *sensor_raw_ptr,const char *sens
 	fp = fopen(filename[0],"r");
 	if (NULL == fp) {
 		ISP_LOGI("The param file %s is not exit!\n",filename[0]);
+		rtn = 0x01;
+		goto exit;
 	}
 
 	while (!feof(fp))

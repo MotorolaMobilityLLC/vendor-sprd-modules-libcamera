@@ -1194,14 +1194,14 @@ cmr_s32 smart_ctl_block_disable(smart_handle_t handle, cmr_u32 smart_id)
 cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input *in_ptr)
 {
 	cmr_int                        rtn = ISP_SUCCESS;
-	struct smart_calc_param *smart_calc_param = &in_ptr->cal_para;
+	struct smart_calc_param *smart_calc_param = NULL;
 	struct smart_calc_result        smart_calc_result = {NULL, 0};
 	struct isp_pm_ioctl_input       io_pm_input = {NULL, 0};
 	struct isp_pm_param_data        pm_param = {0,0,0,NULL,0,{0}};
 	struct smart_block_result       *block_result = NULL;
 	struct nr_data                          nr={{0,9,0},{0,10,0},{0,11,0},{0,12,0},{0,13,0},
 		{0,14,0},{0,15,0},{0,16,0},{0,17,0},{0,18,0},{0,19,0},{0,20,0},{0,21,0},{0,22,0},{0,23,0},{0,24,0},{0,25,0},{0,26,0}};
-	cmr_u32 alc_awb = in_ptr->alc_awb;
+	cmr_u32 alc_awb = 0;
 	cmr_u32                        i = 0;
 
 	if (!handle_smart || !in_ptr) {
@@ -1209,6 +1209,8 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input *in_ptr)
 		goto exit;
 	}
 
+	smart_calc_param = &in_ptr->cal_para;
+	alc_awb = in_ptr->alc_awb;
 	rtn = smart_ctl_calculation(handle_smart, smart_calc_param, &smart_calc_result);
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("smart init failed");

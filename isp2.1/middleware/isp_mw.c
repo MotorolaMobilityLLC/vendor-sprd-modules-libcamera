@@ -101,6 +101,7 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handler)
 	ISP_LOGI(":ISP:E");
 
 	cxt = (struct isp_mw_context *)malloc(sizeof(struct isp_mw_context));
+	memset((void*)cxt, 0x00, sizeof(struct isp_mw_context));
 	if (!input_ptr || !isp_handler) {
 		ISP_LOGE("fail to check init param,input_ptr is 0x%lx & handler is 0x%lx", (cmr_uint)input_ptr,(cmr_uint)isp_handler);
 		rtn = ISP_PARAM_NULL;
@@ -108,8 +109,6 @@ cmr_int isp_init(struct isp_init_param *input_ptr, cmr_handle *isp_handler)
 	}
 
 	*isp_handler = NULL;
-
-	memset((void*)cxt, 0x00, sizeof(struct isp_mw_context));
 
 	rtn = isp_dev_access_init(input_ptr->dcam_fd, &cxt->dev_access_handle);
 	if (rtn) {

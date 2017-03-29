@@ -277,13 +277,13 @@ cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in *in,
 	/* create handle */
 	struct pdafctrl_context *cxt = NULL;
 
-	in->af_set_pdinfo = af_set_pdinfo;
-
 	if (!in ||  !handle) {
 		ISP_LOGE("fail to check init param, input_ptr is %p", in);
 		ret = ISP_PARAM_NULL;
 		goto exit;
 	}
+
+	in->af_set_pdinfo = af_set_pdinfo;
 
 	*handle = NULL;
 	cxt = (struct pdafctrl_context *)malloc(sizeof(*cxt));
