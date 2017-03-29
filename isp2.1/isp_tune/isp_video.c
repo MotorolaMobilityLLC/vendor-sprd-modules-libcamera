@@ -1383,12 +1383,12 @@ static cmr_s32 isp_nr_write(cmr_handle handler, cmr_u8 *tx_buf, cmr_u8 *rx_buf)
 				rsp_len += ispvideo_SetreTurnValue(tx_buf + rsp_len, ISP_SUCCESS);
 				*(tx_buf + rsp_len) = 0x7e;
 				msg_ret->len = rsp_len - 1;
-				send(sockfd, tx_buf, rsp_len + 1, 0);
+				ret = send(sockfd, tx_buf, rsp_len + 1, 0);
 			}else {
 				rsp_len+=ispvideo_SetreTurnValue(tx_buf + rsp_len, 0x01);
 				*(tx_buf + rsp_len) = 0x7e;
 				msg_ret->len = rsp_len - 1;
-				send(sockfd, tx_buf, rsp_len + 1, 0);
+				ret = send(sockfd, tx_buf, rsp_len + 1, 0);
 			}
 		}
 	}

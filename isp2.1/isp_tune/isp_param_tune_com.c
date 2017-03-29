@@ -106,6 +106,7 @@ static cmr_s32 _ispParserDownLevel(cmr_handle isp_handler, void* in_param_ptr)
 	cmr_u32 module_id=param_ptr[0];
 	enum isp_ctrl_cmd cmd=ISP_CTRL_MAX;
 	void* ioctl_param_ptr=NULL;
+	struct isp_af_win af_param;
 
 	cmd=module_id;
 
@@ -115,7 +116,6 @@ static cmr_s32 _ispParserDownLevel(cmr_handle isp_handler, void* in_param_ptr)
 	if(ISP_CTRL_AF==cmd)
 	{
 		SENSOR_EXP_INFO_T_PTR sensor_info_ptr=Sensor_GetInfo();
-		struct isp_af_win af_param;
 		struct isp_af_win* in_af_ptr=(struct isp_af_win*)&param_ptr[3];
 		cmr_u16 img_width=(param_ptr[2]>>0x10)&0xffff;
 		cmr_u16 img_height=param_ptr[2]&0xffff;
