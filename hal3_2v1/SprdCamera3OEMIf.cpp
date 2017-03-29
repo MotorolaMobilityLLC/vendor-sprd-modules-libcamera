@@ -7452,8 +7452,14 @@ int SprdCamera3OEMIf::SetDimensionCapture(cam_dimension_t capture_size) {
     int raw_height = 0;
     struct img_size req_size;
 
+    if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
+        HAL_LOGE("oem is null or oem ops is null");
+        return UNKNOWN_ERROR;
+    }
+
     HAL_LOGD("capture_size.width = %d, capture_size.height = %d",
              capture_size.width, capture_size.height);
+
     if ((mCaptureWidth != capture_size.width) ||
         (mCaptureHeight != capture_size.height)) {
         mCaptureWidth = capture_size.width;
@@ -7462,42 +7468,14 @@ int SprdCamera3OEMIf::SetDimensionCapture(cam_dimension_t capture_size) {
     }
 
     if (!strcmp(value, "raw")) {
-        HAL_LOGD("raw capture mode");
-
-        if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
-            HAL_LOGE("oem is null or oem ops is null");
-            return UNKNOWN_ERROR;
-        }
         mHalOem->ops->camera_get_sensor_info_for_raw(mCameraHandle, mode_info);
-        if (mCameraId == 2) {
-            for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
-                HAL_LOGD("trim w=%d, h=%d", mode_info[i].trim_width,
-                         mode_info[i].trim_height);
-                if (mode_info[i].trim_width * mode_info[i].trim_height != 0 &&
-                    mode_info[i].trim_width * mode_info[i].trim_height <=
-                        mCaptureWidth * mCaptureHeight) {
-                    if (raw_width * raw_height <=
-                        mode_info[i].trim_width * mode_info[i].trim_height) {
-                        raw_width = mode_info[i].trim_width;
-                        raw_height = mode_info[i].trim_height;
-                    }
-                }
-            }
-            if (raw_width * raw_height != 0) {
-                mCaptureWidth = raw_width;
-                mCaptureHeight = raw_height;
-            } else
-                HAL_LOGW("There no raw setting for capture");
-        } else {
-            for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
-                HAL_LOGD("trim w=%d, h=%d", mode_info[i].trim_width,
-                         mode_info[i].trim_height);
-                if (mode_info[i].trim_width * mode_info[i].trim_height >=
-                    mCaptureWidth * mCaptureHeight) {
-                    mCaptureWidth = mode_info[i].trim_width;
-                    mCaptureHeight = mode_info[i].trim_height;
-                    break;
-                }
+        for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
+            HAL_LOGD("trim w=%d, h=%d", mode_info[i].trim_width,
+                     mode_info[i].trim_height);
+            if (mode_info[i].trim_width >= mCaptureWidth) {
+                mCaptureWidth = mode_info[i].trim_width;
+                mCaptureHeight = mode_info[i].trim_height;
+                break;
             }
         }
         req_size.width = mCaptureWidth;
