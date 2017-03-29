@@ -45,20 +45,62 @@
 		dst_ptr->map_tab[i].gain_h = _pm_get_lens_grid_pitch(src_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.grid, img_size_ptr->h, ISP_ONE);
 
 	}
-	if ((PNULL != dst_ptr->final_lsc_param.data_ptr)\
-		&& (dst_ptr->final_lsc_param.size < src_ptr->tab_info.lsc_2d_info[0].lsc_2d_len)) {
-		free(dst_ptr->final_lsc_param.data_ptr);
-		dst_ptr->final_lsc_param.data_ptr = PNULL;
+	if(dst_ptr->final_lsc_param.size < src_ptr->tab_info.lsc_2d_info[0].lsc_2d_len){
+		if(NULL != dst_ptr->final_lsc_param.data_ptr){
+			free(dst_ptr->final_lsc_param.data_ptr);
+			dst_ptr->final_lsc_param.data_ptr = NULL;
+		}
+		if (NULL != dst_ptr->final_lsc_param.param_ptr) {
+			free(dst_ptr->final_lsc_param.param_ptr);
+			dst_ptr->final_lsc_param.param_ptr = NULL;
+		}
+		if (NULL != dst_ptr->tmp_ptr_a) {
+			free(dst_ptr->tmp_ptr_a);
+			dst_ptr->tmp_ptr_a = NULL;
+		}
+		if (NULL != dst_ptr->tmp_ptr_b) {
+			free(dst_ptr->tmp_ptr_b);
+			dst_ptr->tmp_ptr_b = NULL;
+		}
 		dst_ptr->final_lsc_param.size = 0;
 	}
-	if (PNULL == dst_ptr->final_lsc_param.data_ptr) {
+
+	if (NULL == dst_ptr->final_lsc_param.data_ptr) {
 		dst_ptr->final_lsc_param.data_ptr = (void*)malloc(src_ptr->tab_info.lsc_2d_info[0].lsc_2d_len);
-		if (PNULL == dst_ptr->final_lsc_param.data_ptr) {
+		if (NULL == dst_ptr->final_lsc_param.data_ptr) {
 			rtn = ISP_ERROR;
 			ISP_LOGE("_pm_2d_lsc_init: malloc failed\n");
 			return rtn;
 		}
 	}
+
+	if (NULL == dst_ptr->final_lsc_param.param_ptr) {
+		dst_ptr->final_lsc_param.param_ptr = (void*)malloc(src_ptr->tab_info.lsc_2d_info[0].lsc_2d_len);
+		if (NULL == dst_ptr->final_lsc_param.param_ptr) {
+			rtn = ISP_ERROR;
+			ISP_LOGE("failed to malloc\n");
+			return rtn;
+		}
+	}
+
+	if (NULL == dst_ptr->tmp_ptr_a) {
+		dst_ptr->tmp_ptr_a = (void*)malloc(src_ptr->tab_info.lsc_2d_info[0].lsc_2d_len);
+		if (NULL == dst_ptr->tmp_ptr_a) {
+			rtn = ISP_ERROR;
+			ISP_LOGE("failed to malloc\n");
+			return rtn;
+		}
+	}
+
+	if (NULL == dst_ptr->tmp_ptr_b) {
+		dst_ptr->tmp_ptr_b = (void*)malloc(src_ptr->tab_info.lsc_2d_info[0].lsc_2d_len);
+		if (NULL == dst_ptr->tmp_ptr_b) {
+			rtn = ISP_ERROR;
+			ISP_LOGE("failed to malloc\n");
+			return rtn;
+		}
+	}
+
 	dst_ptr->tab_num = src_ptr->tab_num;
 	dst_ptr->cur_index_info = src_ptr->cur_idx;
 	index  = src_ptr->cur_idx.x0;
@@ -68,10 +110,6 @@
 	memcpy((void*)dst_ptr->final_lsc_param.data_ptr, (void*)dst_ptr->map_tab[index].param_addr, dst_ptr->map_tab[index].len);
 	dst_ptr->cur.buf_len = dst_ptr->final_lsc_param.size;
 	dst_ptr->cur.weight_num = sizeof(src_ptr->tab_info.lsc_2d_info[index].lsc_2d_weight);
-	dst_ptr->final_lsc_param.param_ptr = (void*)malloc(src_ptr->tab_info.lsc_2d_info[0].lsc_2d_len);
-	dst_ptr->tmp_ptr_a = (void*)malloc(src_ptr->tab_info.lsc_2d_info[0].lsc_2d_len);
-	dst_ptr->tmp_ptr_b = (void*)malloc(src_ptr->tab_info.lsc_2d_info[0].lsc_2d_len);
-
 #if __WORDSIZE == 64
 	dst_ptr->cur.buf_addr[0] = (cmr_uint)(dst_ptr->final_lsc_param.data_ptr) & 0xffffffff;
 	dst_ptr->cur.buf_addr[1] = (cmr_uint)(dst_ptr->final_lsc_param.data_ptr) >> 32;
