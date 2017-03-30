@@ -4583,9 +4583,9 @@ int SprdCamera3Setting::getFLASHTag(FLASH_Tag* flashInfo)
 	return 0;
 }
 
-int SprdCamera3Setting::setOTPTag(OTP_Tag otpInfo)
+int SprdCamera3Setting::setOTPTag(OTP_Tag* otpInfo)
 {
-	s_setting[mCameraId].otpInfo= otpInfo;
+	s_setting[mCameraId].otpInfo= *otpInfo;
 	return 0;
 }
 int SprdCamera3Setting::getOTPTag(OTP_Tag* otpInfo)

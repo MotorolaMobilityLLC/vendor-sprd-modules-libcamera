@@ -593,7 +593,7 @@ class SprdCamera3Setting {
                                   corresponding with request meta */
     int getMETAInfo(meta_info_t *metaInfo);
 
-    int setOTPTag(OTP_Tag otpInfo);
+    int setOTPTag(OTP_Tag *otpInfo);
     int getOTPTag(OTP_Tag *otpInfo);
 
     int setVCMTag(VCM_Tag vcmInfo);

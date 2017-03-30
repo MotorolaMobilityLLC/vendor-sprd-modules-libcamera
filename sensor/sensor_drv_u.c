@@ -243,6 +243,10 @@ void sensor_set_export_Info(struct sensor_drv_context *sensor_cxt) {
     SENSOR_DRV_CHECK_ZERO_VOID(sensor_cxt);
 
     SENSOR_EXP_INFO_T *exp_info_ptr = &sensor_cxt->sensor_exp_info;
+    if(PNULL == exp_info_ptr) {
+        CMR_LOGE("X. sensor_exp_info is null");
+        return;
+    }
     SENSOR_MATCH_T *module = sensor_cxt->module_cxt;
     if (PNULL == sensor_cxt->sensor_info_ptr) {
         SENSOR_LOGE("X. sensor_info_ptr is null.");
@@ -271,7 +275,7 @@ void sensor_set_export_Info(struct sensor_drv_context *sensor_cxt) {
             (struct sensor_raw_info *)*sensor_info_ptr->raw_info_ptr;
     }
 
-    if ((NULL != exp_info_ptr) && (NULL != exp_info_ptr->raw_info_ptr) &&
+    if ((NULL != exp_info_ptr->raw_info_ptr) &&
         (NULL != exp_info_ptr->raw_info_ptr->resolution_info_ptr)) {
         exp_info_ptr->raw_info_ptr->resolution_info_ptr->image_pattern =
             sensor_info_ptr->image_pattern;
@@ -3226,7 +3230,7 @@ void sensor_rid_save_sensor_info(struct sensor_drv_context *sensor_cxt) {
 
 LOCAL cmr_int sensor_af_init(cmr_handle sns_module_handle)
 {
-    cmr_int ret;
+    cmr_int ret = SENSOR_SUCCESS;
     struct af_drv_init_para input_ptr;
     struct sns_af_drv_ops *af_ops = NULL;
     SENSOR_DRV_CHECK_ZERO(sns_module_handle);
@@ -3255,7 +3259,7 @@ LOCAL cmr_int sensor_af_init(cmr_handle sns_module_handle)
 
 LOCAL cmr_int sensor_af_deinit(cmr_handle sns_module_handle)
 {
-    cmr_int ret;
+    cmr_int ret = SENSOR_SUCCESS;
     struct sns_af_drv_ops *af_ops = NULL;
     SENSOR_DRV_CHECK_ZERO(sns_module_handle);
     struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)sns_module_handle;
@@ -3281,7 +3285,7 @@ LOCAL cmr_int sensor_af_deinit(cmr_handle sns_module_handle)
 
 LOCAL cmr_int sensor_af_set_pos(cmr_handle sns_module_handle, uint16_t pos)
 {
-    cmr_int ret;
+    cmr_int ret = SENSOR_SUCCESS;
     struct sns_af_drv_ops *af_ops = NULL;
     SENSOR_DRV_CHECK_ZERO(sns_module_handle);
     struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)sns_module_handle;
@@ -3307,7 +3311,7 @@ LOCAL cmr_int sensor_af_set_pos(cmr_handle sns_module_handle, uint16_t pos)
 
 LOCAL cmr_int sensor_af_get_pos(cmr_handle sns_module_handle, uint16_t *pos)
 {
-    cmr_int ret;
+    cmr_int ret = SENSOR_SUCCESS;
     struct sns_af_drv_ops *af_ops = NULL;
     SENSOR_DRV_CHECK_ZERO(sns_module_handle);
     struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)sns_module_handle;
@@ -3332,7 +3336,7 @@ LOCAL cmr_int sensor_af_get_pos(cmr_handle sns_module_handle, uint16_t *pos)
 LOCAL cmr_int sensor_otp_module_init(struct sensor_drv_context *sensor_cxt) {
     ATRACE_BEGIN(__FUNCTION__);
 
-    cmr_int ret;
+    cmr_int ret = SENSOR_SUCCESS;
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
     SENSOR_LOGI("in");
     SENSOR_MATCH_T *module = sensor_cxt->module_cxt;
@@ -3343,9 +3347,7 @@ LOCAL cmr_int sensor_otp_module_init(struct sensor_drv_context *sensor_cxt) {
         input_para.sensor_name = sensor_cxt->sensor_info_ptr->name;
         ret = module->otp_drv_info->otp_ops.sensor_otp_create(&input_para,&sensor_cxt->otp_drv_handle);
     } else {
-        SENSOR_LOGE("error:Don't register otp_driver please double check! "
-                    "module:0x%x,otp_drv:0x%x",
-                    module, module->otp_drv_info);
+        SENSOR_LOGE("error:Don't register otp_driver please double check! ");
     }
     SENSOR_LOGI("out");
     ATRACE_END();
@@ -3353,13 +3355,13 @@ LOCAL cmr_int sensor_otp_module_init(struct sensor_drv_context *sensor_cxt) {
 }
 
 LOCAL cmr_int sensor_otp_module_deinit(struct sensor_drv_context *sensor_cxt) {
-    cmr_int ret;
+    cmr_int ret = SENSOR_SUCCESS;
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
     SENSOR_LOGI("in");
     SENSOR_MATCH_T *module = sensor_cxt->module_cxt;
 
     if (module && (module->otp_drv_info) && sensor_cxt->otp_drv_handle) {
-        module->otp_drv_info->otp_ops.sensor_otp_delete(
+        ret = module->otp_drv_info->otp_ops.sensor_otp_delete(
             sensor_cxt->otp_drv_handle);
         sensor_cxt->otp_drv_handle = NULL;
     } else {

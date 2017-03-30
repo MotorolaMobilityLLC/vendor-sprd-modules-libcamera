@@ -2616,7 +2616,7 @@ cmr_int snp_set_channel_out_param(cmr_handle snp_handle)
 		CMR_LOGI("data format %d", chn_out_frm_ptr->fmt);
 		if (IMG_DATA_TYPE_JPEG != chn_out_frm_ptr->fmt) {
 			if (IMG_DATA_TYPE_RAW != chn_out_frm_ptr->fmt) {
-				cmr_copy((void*)&cxt->chn_param.chn_frm[0], (void*)chn_out_frm_ptr, CMR_CAPTURE_MEM_SUM*sizeof(cxt->chn_param.chn_frm));
+				cmr_copy((void*)&cxt->chn_param.chn_frm[0], (void*)chn_out_frm_ptr, CMR_CAPTURE_MEM_SUM*sizeof(struct img_frm));
 			} else {
 				if (CAMERA_AUTOTEST_MODE != cxt->req_param.mode) {
 					for (i=0 ; i<CMR_CAPTURE_MEM_SUM ; i++) {
@@ -2624,7 +2624,7 @@ cmr_int snp_set_channel_out_param(cmr_handle snp_handle)
 						cxt->chn_param.chn_frm[i].fmt = IMG_DATA_TYPE_YUV420;
 					}
 				} else {
-					cmr_copy((void*)&cxt->chn_param.chn_frm[0], (void*)chn_out_frm_ptr, CMR_CAPTURE_MEM_SUM*sizeof(cxt->chn_param.chn_frm));
+					cmr_copy((void*)&cxt->chn_param.chn_frm[0], (void*)chn_out_frm_ptr, CMR_CAPTURE_MEM_SUM*sizeof(struct img_frm));
 				}
 			}
 		} else {
@@ -3491,6 +3491,10 @@ cmr_int snp_set_post_proc_param(cmr_handle snp_handle, struct snapshot_param *pa
 		}
 	} else {
 		ret = snp_clean_thumb_param(snp_handle);
+		if (ret) {
+			CMR_LOGE("failed to clean thumb param %ld", ret);
+			goto exit;
+		}
 	}
 
 	ret = snp_set_jpeg_exif_param(snp_handle);

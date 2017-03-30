@@ -224,9 +224,7 @@ class SprdCamera3StereoVideo {
     List<buffer_handle_t *> mVideoLocalBufferList;
     Mutex mVideoLocalBufferListLock;
 
-    const native_handle_t *mVideoNativeBuffer[MAX_VIDEO_QEQUEST_BUF];
     new_mem_t *mVideoLocalBuffer;
-    const native_handle_t *mPreviewNativeBuffer;
     new_mem_t mPreviewLocalBuffer;
     int32_t mPerfectskinlevel;
     int mrotation;

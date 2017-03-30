@@ -2536,7 +2536,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary()
 					otpInfo.dual_otp_flag = 1;
 					HAL_LOGD("camera_id: %d,dual_otp_data %p dual_otp_flag %d", mCameraId, dual_otp_data,otpInfo.dual_otp_flag);
 			}
-			mSetting->setOTPTag(otpInfo);
+			mSetting->setOTPTag(&otpInfo);
 
 			if (dual_otp_data != NULL) {
 				free(dual_otp_data);
@@ -2560,7 +2560,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary()
 					otpInfo.dual_otp_flag = 0;
 					HAL_LOGD("camera_id: %d, dual_otp_flag %d", mCameraId, otpInfo.dual_otp_flag);
 			}
-			mSetting->setOTPTag(otpInfo);
+			mSetting->setOTPTag(&otpInfo);
 #endif
 		}
 		/*read refoucs otp end*/

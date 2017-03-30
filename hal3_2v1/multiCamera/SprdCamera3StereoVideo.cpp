@@ -106,7 +106,9 @@ camera3_callback_ops SprdCamera3StereoVideo::callback_ops_aux = {
  *   @num_of_cameras  : Number of Physical Cameras on device
  *
  *==========================================================================*/
-SprdCamera3StereoVideo::SprdCamera3StereoVideo() {
+SprdCamera3StereoVideo::SprdCamera3StereoVideo()
+    : mIsRecording(false),mFirstConfig(false),mIommuEnabled(false),mVideoLocalBuffer(NULL),
+      mrotation(0),mCallbackOps(NULL),mMaxPendingCount(4),mPendingRequest(0) {
     HAL_LOGI(" E");
     m_nPhyCameras = 2; // m_nPhyCameras should always be 2 with dual camera mode
 
@@ -125,6 +127,19 @@ SprdCamera3StereoVideo::SprdCamera3StereoVideo() {
     mFirstShowPreviewDeviceId = mShowPreviewDeviceId;
     mLastShowPreviewDeviceId = mShowPreviewDeviceId;
     mLastLowpowerFlag = 0;
+    mPreviewStreamsNum = 0;
+    mVideoStreamsNum = 1;
+    mFirstFrameNum = 0;
+    mWaitFrameNumber = 0;
+    mHasSendFrameNumber = 0;
+    mPreviewLocalBuffer.native_handle = NULL;
+    mPreviewLocalBuffer.pHeapIon = NULL;
+    mPerfectskinlevel = 0;
+    mVideoSize.srcWidth = 0;
+    mVideoSize.srcHeight = 0;
+    mVideoSize.stereoVideoWidth = 0;
+    mVideoSize.stereoVideoHeight = 0;
+    memset(mAuxStreams, 0, sizeof(mAuxStreams));
     HAL_LOGI("X");
 }
 
@@ -801,6 +816,8 @@ SprdCamera3StereoVideo::ReProcessThread::ReProcessThread() {
     HAL_LOGI(" E");
     mVFrameCount = 0;
     mVLastFpsTime = 0;
+    mVLastFrameCount = 0;
+    mVFps = 0;
     mReprocessMsgList.clear();
 
     HAL_LOGI("X");
@@ -1153,11 +1170,17 @@ void SprdCamera3StereoVideo::ReProcessThread::dumpFps() {
  *==========================================================================*/
 SprdCamera3StereoVideo::MuxerThread::MuxerThread() {
     mMuxerMsgList.clear();
+    pt_stream_info.dst_height = 0;
+    pt_stream_info.dst_width = 0;
+    pt_stream_info.src_height = 0;
+    pt_stream_info.src_width = 0;
+    pt_stream_info.rot_angle = ROT_0 ;
     mGpuApi = (GPUAPI_t *)malloc(sizeof(GPUAPI_t));
     if (mGpuApi == NULL) {
         HAL_LOGE("mGpuApi malloc failed.");
+    } else {
+        memset(mGpuApi, 0, sizeof(GPUAPI_t));
     }
-    memset(mGpuApi, 0, sizeof(GPUAPI_t));
 
     if (loadGpuApi() < 0) {
         HAL_LOGE("load gpu api failed.");
@@ -1779,29 +1802,13 @@ int SprdCamera3StereoVideo::initialize(
     HAL_LOGI("E");
     CHECK_HWI_ERROR(hwiMain);
 
-    mIommuEnabled = 0;
     mNotifyListAux.clear();
     mNotifyListMain.clear();
     mUnmatchedFrameListMain.clear();
     mUnmatchedFrameListAux.clear();
-    mPreviewStreamsNum = 0;
-    mVideoStreamsNum = 1;
     mOldPreviewRequestList.clear();
     mOldVideoRequestList.clear();
     mCallbackOps = callback_ops;
-    mPerfectskinlevel = 0;
-    mVideoSize.srcWidth = 0;
-    mVideoSize.srcHeight = 0;
-    mVideoSize.stereoVideoWidth = 0;
-    mVideoSize.stereoVideoHeight = 0;
-    mWaitFrameNumber = 0;
-    mHasSendFrameNumber = 0;
-    mPreviewLocalBuffer.native_handle = NULL;
-    mPreviewLocalBuffer.pHeapIon = NULL;
-    mFirstConfig = false;
-    mFirstFrameNum = 0;
-    mPendingRequest = 0;
-    mMaxPendingCount = 4;
     mLastShowPreviewDeviceId = CAM_TYPE_MAIN;
     rc = hwiMain->initialize(sprdCam.dev, &callback_ops_main);
     if (rc != NO_ERROR) {
@@ -1863,12 +1870,6 @@ int SprdCamera3StereoVideo::configureStreams(
 
     Mutex::Autolock l(mLock);
     streamNum = stream_list->num_streams;
-    for (size_t i = 0; i < stream_list->num_streams; i++) {
-        newStream = stream_list->streams[i];
-        if (getStreamType(newStream) == VIDEO_STREAM) {
-            is_recording = true;
-        }
-    }
 
     for (size_t i = 0; i < stream_list->num_streams; i++) {
         newStream = stream_list->streams[i];
@@ -1878,6 +1879,7 @@ int SprdCamera3StereoVideo::configureStreams(
             pAuxStreams[mPreviewStreamsNum] = &mAuxStreams[mPreviewStreamsNum];
             pMainStreams[mPreviewStreamsNum] = previewStream;
         } else if (getStreamType(newStream) == VIDEO_STREAM) {
+            is_recording = true;
             videoStream = stream_list->streams[i];
             w = videoStream->width;
             h = videoStream->height;
@@ -2786,14 +2788,15 @@ void SprdCamera3StereoVideo::dumpImg(void *addr, int size, int w, int h,
 
     FILE *file_fd = fopen(name, "w");
 
-    if (file_fd == NULL) {
+    if(file_fd != NULL) {
+        int count = fwrite(addr, 1, size, file_fd);
+        if(count != size) {
+            HAL_LOGE("write dst.yuv failed\n");
+        }
+        fclose(file_fd);
+    } else {
         HAL_LOGE("open yuv file failed!\n");
     }
-    int count = fwrite(addr, 1, size, file_fd);
-    if (count != size) {
-        HAL_LOGE("write dst.yuv failed\n");
-    }
-    fclose(file_fd);
 
     HAL_LOGI("X");
 }

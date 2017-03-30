@@ -634,7 +634,7 @@ static cmr_int prev_fd_ctrl(struct prev_handle *handle, cmr_u32 camera_id,
                             cmr_u32 on_off);
 
 static cmr_int prev_depthmap_open(struct prev_handle *handle, cmr_u32 camera_id,
-                                  struct sensor_data_info otp_data);
+                                  struct sensor_data_info *otp_data);
 
 static cmr_int prev_depthmap_close(struct prev_handle *handle,
                                    cmr_u32 camera_id);
@@ -1007,6 +1007,7 @@ cmr_int cmr_camera_isp_stop_video(cmr_handle preview_handle,
     if (!handle->ops.isp_stop_video) {
         CMR_LOGE("ops is null");
         ret = CMR_CAMERA_INVALID_PARAM;
+        goto exit;
     }
 
     /*stop isp*/
@@ -1017,7 +1018,7 @@ cmr_int cmr_camera_isp_stop_video(cmr_handle preview_handle,
             CMR_LOGE("Failed to stop ISP video mode, %ld", ret);
         }
     }
-
+exit:
     return ret;
 }
 
@@ -3580,7 +3581,7 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
                      sensor_otp.dual_otp.dual_flag);
             if (sensor_otp.total_otp.data_ptr != NULL &&
                 sensor_otp.dual_otp.dual_flag)
-                prev_depthmap_open(handle, camera_id, sensor_otp.total_otp);
+                prev_depthmap_open(handle, camera_id, &sensor_otp.total_otp);
         }
 #endif
     }
@@ -10262,7 +10263,7 @@ cmr_int prev_get_cap_post_proc_param(struct prev_handle *handle,
 
                 prev_cxt->dealign_actual_pic_size.width = org_pic_size->height;
                 prev_cxt->dealign_actual_pic_size.height = org_pic_size->width;
-            } else if (IMG_ANGLE_0 != cap_rot || IMG_ANGLE_180 != cap_rot) {
+            } else if (IMG_ANGLE_180 != cap_rot) {
                 prev_cxt->actual_pic_size.width =
                     prev_cxt->aligned_pic_size.width;
                 prev_cxt->actual_pic_size.height =
@@ -10850,7 +10851,7 @@ cmr_int prev_fd_ctrl(struct prev_handle *handle, cmr_u32 camera_id,
 }
 
 cmr_int prev_depthmap_open(struct prev_handle *handle, cmr_u32 camera_id,
-                           struct sensor_data_info otp_data) {
+                           struct sensor_data_info *otp_data) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct prev_context *prev_cxt = NULL;
     struct ipm_open_in in_param;
@@ -10884,7 +10885,7 @@ cmr_int prev_depthmap_open(struct prev_handle *handle, cmr_u32 camera_id,
         in_param.frame_rect.width = in_param.frame_size.height;
         in_param.frame_rect.height = in_param.frame_size.width;
         in_param.otp_data.otp_size = 8192;             // otp_data->size;//TBD
-        in_param.otp_data.otp_ptr = otp_data.data_ptr; // TBD
+        in_param.otp_data.otp_ptr = otp_data->data_ptr; // TBD
     } else {
         in_param.frame_size.width = prev_cxt->actual_prev_size.width;
         in_param.frame_size.height = prev_cxt->actual_prev_size.height;
@@ -10893,7 +10894,7 @@ cmr_int prev_depthmap_open(struct prev_handle *handle, cmr_u32 camera_id,
         in_param.frame_rect.width = in_param.frame_size.width;
         in_param.frame_rect.height = in_param.frame_size.height;
         in_param.otp_data.otp_size = 8192;             // otp_data->size;//TBD
-        in_param.otp_data.otp_ptr = otp_data.data_ptr; // TBD
+        in_param.otp_data.otp_ptr = otp_data->data_ptr; // TBD
     }
 
     in_param.reg_cb = prev_depthmap_cb;

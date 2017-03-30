@@ -8889,8 +8889,8 @@ cmr_int camera_local_zsl_snapshot_need_pause(cmr_handle oem_handle, cmr_int *fla
 	camera_channel_path_capability(oem_handle, &capability);
 //	*flag = capability.capture_pause;
 	*flag = 0;
-exit:
 	CMR_LOGV("out flag %ld", *flag);
+exit:
 	return ret;
 }
 
@@ -8910,8 +8910,8 @@ cmr_int camera_local_normal_snapshot_need_pause(cmr_handle oem_handle, cmr_int *
 
 	camera_channel_path_capability(oem_handle, &capability);
 	*flag = capability.capture_pause;
-exit:
 	CMR_LOGV("out flag %ld", *flag);
+exit:
 	return ret;
 }
 

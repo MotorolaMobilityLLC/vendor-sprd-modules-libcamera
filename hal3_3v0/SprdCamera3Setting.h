@@ -590,7 +590,7 @@ public:
 	int setMETAInfo(meta_info_t metaInfo);/*   for some metadata,   result meta should be  corresponding with request meta */
 	int getMETAInfo(meta_info_t* metaInfo);
 
-	int setOTPTag(OTP_Tag otpInfo);
+	int setOTPTag(OTP_Tag *otpInfo);
 	int getOTPTag(OTP_Tag *otpInfo);
 
 	int setVCMTag(VCM_Tag vcmInfo);

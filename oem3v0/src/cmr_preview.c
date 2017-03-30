@@ -942,6 +942,7 @@ cmr_int cmr_camera_isp_stop_video(cmr_handle  preview_handle, cmr_u32 camera_id)
 	if (!handle->ops.isp_stop_video) {
 		CMR_LOGE("ops is null");
 		ret = CMR_CAMERA_INVALID_PARAM;
+		goto exit;
 	}
 
 	/*stop isp*/
@@ -952,7 +953,7 @@ cmr_int cmr_camera_isp_stop_video(cmr_handle  preview_handle, cmr_u32 camera_id)
 			CMR_LOGE("Failed to stop ISP video mode, %ld", ret);
 		}
 	}
-
+exit:
 	return ret;
 }
 
@@ -6404,21 +6405,13 @@ cmr_int prev_get_cap_max_size(struct prev_handle *handle,
 	prev_capture_zoom_post_cap(handle, &zoom_post_proc, camera_id);
 	if (IMG_DATA_TYPE_YUV422 == sn_mode->image_format) {
 		original_fmt = IMG_DATA_TYPE_YUV420;
-		if (ZOOM_POST_PROCESS == zoom_post_proc) {
-			zoom_proc_mode = zoom_post_proc;
-		} else {
-			zoom_proc_mode = zoom_post_proc;
-		}
+		zoom_proc_mode = zoom_post_proc;
 	} else if (IMG_DATA_TYPE_RAW == sn_mode->image_format) {
 		if (sn_mode->trim_width <= isp_width_limit) {
 			CMR_LOGI("Need ISP to work at video mode");
 			need_isp = 1;
 			original_fmt   = IMG_DATA_TYPE_YUV420;
-			if (ZOOM_POST_PROCESS == zoom_post_proc) {
-				zoom_proc_mode = zoom_post_proc;
-			} else {
-				zoom_proc_mode = zoom_post_proc;
-			}
+			zoom_proc_mode = zoom_post_proc;
 		} else {
 			CMR_LOGI("Need to process raw data");
 			need_isp = 0;
@@ -10810,7 +10803,7 @@ cmr_int prev_get_cap_post_proc_param(struct prev_handle *handle,
 
 				prev_cxt->dealign_actual_pic_size.width  = org_pic_size->height;
 				prev_cxt->dealign_actual_pic_size.height = org_pic_size->width;
-			} else if (IMG_ANGLE_0 != cap_rot || IMG_ANGLE_180 != cap_rot) {
+			} else if (IMG_ANGLE_180 != cap_rot) {
 				prev_cxt->actual_pic_size.width  = prev_cxt->aligned_pic_size.width;
 				prev_cxt->actual_pic_size.height = prev_cxt->aligned_pic_size.height;
 

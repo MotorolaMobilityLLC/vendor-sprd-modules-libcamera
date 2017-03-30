@@ -2514,7 +2514,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
                          dual_otp_data);
                 memcpy(otpInfo.otp_data, dual_otp_data, SPRD_DUAL_OTP_SIZE);
             }
-            mSetting->setOTPTag(otpInfo);
+            mSetting->setOTPTag(&otpInfo);
 
             if (dual_otp_data != NULL) {
                 free(dual_otp_data);
@@ -2537,7 +2537,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
                 memcpy(otpInfo.otp_data, otp_info.total_otp.data_ptr,
                        otp_info.total_otp.size);
             }
-            mSetting->setOTPTag(otpInfo);
+            mSetting->setOTPTag(&otpInfo);
 #endif
         }
         /*read refoucs otp end*/
