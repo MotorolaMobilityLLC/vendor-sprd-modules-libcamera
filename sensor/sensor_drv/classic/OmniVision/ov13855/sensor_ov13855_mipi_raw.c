@@ -818,6 +818,15 @@ unsigned long _ov13855_SetMaster_FrameSync(SENSOR_HW_HANDLE handle,
  * please modify this function acording your spec
  *============================================================================*/
 static uint32_t ov13855_stream_on(SENSOR_HW_HANDLE handle, uint32_t param) {
+
+#if 1
+    char value1[PROPERTY_VALUE_MAX];
+    property_get("debug.camera.test.mode", value1, "0");
+    if (!strcmp(value1, "1")) {
+        Sensor_WriteReg(0x4503, 0x80);
+    }
+#endif
+
     SENSOR_PRINT("E");
     //_ov13855_SetMaster_FrameSync(handle,param);
 
