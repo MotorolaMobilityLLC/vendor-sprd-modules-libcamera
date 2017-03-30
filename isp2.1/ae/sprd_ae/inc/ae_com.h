@@ -125,6 +125,8 @@ struct ae_alg_calc_param {
 	cmr_s16 target_lum;
 	cmr_s16 target_lum_zone;
 	cmr_s16 line_time;
+	cmr_s16 snr_max_fps;
+	cmr_s16 snr_min_fps;
 	cmr_u32 frame_id;
 	cmr_u32 * r;
 	cmr_u32 * g;

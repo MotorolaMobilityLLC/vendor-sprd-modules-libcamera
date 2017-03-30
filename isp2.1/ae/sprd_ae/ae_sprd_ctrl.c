@@ -580,12 +580,13 @@ static cmr_s32 ae_write_thread_proc(struct cmr_msg *message, cmr_handle data)
 			// pthread_mutex_unlock(&cxt->status_lock);
 			seq_put(cxt->seq_handle, &cxt->sensor_calc_item, &cxt->out_actual_cell, &cxt->out_write_cell);
 
-			//AE_LOGD("D-gain--AE lib---,%d,%d,%d,\n", cxt->sensor_calc_item.cell.frame_id, cxt->sensor_calc_item.cell.exp_line, cxt->sensor_calc_item.cell.gain);
-			//AE_LOGD("D-gain--to_sensor,%d,%d,%d,\n", cxt->out_write_cell.frame_id, cxt->out_write_cell.exp_line, cxt->out_write_cell.gain);
-			//AE_LOGD("D-gain--valid_out,%d,%d,%d,\n\n", cxt->out_actual_cell.frame_id, cxt->out_actual_cell.exp_line, cxt->out_actual_cell.gain);
+			AE_LOGV("D-gain--AE lib---,%d,%d,%d,%d\n", cxt->sensor_calc_item.cell.frame_id, cxt->sensor_calc_item.cell.exp_line, cxt->sensor_calc_item.cell.gain, cxt->sensor_calc_item.cell.dummy);
+			AE_LOGV("D-gain--to_sensor,%d,%d,%d,%d\n", cxt->out_write_cell.frame_id, cxt->out_write_cell.exp_line, cxt->out_write_cell.gain, cxt->out_write_cell.dummy);
+			AE_LOGV("D-gain--valid_out,%d,%d,%d,%d\n\n", cxt->out_actual_cell.frame_id, cxt->out_actual_cell.exp_line, cxt->out_actual_cell.gain, cxt->out_actual_cell.dummy);
 			// maintain for matching E&G
 			cxt->actual_cell[cxt->sof_id % 20].expline = cxt->out_actual_cell.exp_line;
 			cxt->actual_cell[cxt->sof_id % 20].gain = cxt->out_actual_cell.gain;
+			cxt->actual_cell[cxt->sof_id % 20].dummy = cxt->out_actual_cell.dummy;
 			// maintain for matching E&G 
 
 			expline = cxt->out_write_cell.exp_line;
@@ -614,6 +615,7 @@ static cmr_s32 ae_write_thread_proc(struct cmr_msg *message, cmr_handle data)
 			seq_put(cxt->seq_handle, &cxt->sensor_calc_item, &cxt->out_actual_cell, &cxt->out_write_cell);
 			cxt->actual_cell[cxt->sof_id % 20].expline = cxt->sensor_calc_item.cell.exp_line;
 			cxt->actual_cell[cxt->sof_id % 20].gain = cxt->sensor_calc_item.cell.gain;
+			cxt->actual_cell[cxt->sof_id % 20].dummy = cxt->sensor_calc_item.cell.dummy;
 			break;
 
 		default:
@@ -3022,7 +3024,7 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 			rt.dummy   = cxt->cur_result.wts.cur_dummy;
 		}
 
-		//AE_LOGD(" expline = %d, gain = %d, dummy = %d", rt.expline, rt.gain, rt.dummy);
+		//AE_LOGD(" fps: expline = %d, gain = %d, dummy = %d", rt.expline, rt.gain, rt.dummy);
 		expline = rt.expline;
 		dummy = rt.dummy;
 		max_again = cxt->cur_status.max_gain;
@@ -3226,6 +3228,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		memset((cmr_handle)&cxt->cur_status.ae1_finfo.cur_info, 0, sizeof(cxt->cur_status.ae1_finfo.cur_info));
 
 		memcpy(current_result, &cxt->cur_result, sizeof(struct ae_alg_calc_result));
+		//AE_LOGI("fps: %d, %d, %d", cxt->cur_result.wts.cur_exp_line, cxt->cur_result.wts.cur_again, cxt->cur_result.wts.cur_dummy);
 		make_isp_result(current_result, calc_out);
 		{
 			/*just for debug: reset the status */
@@ -3845,11 +3848,13 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 					AE_LOGE("work mode param is error");
 					work_info->mode = AE_WORK_MODE_COMMON;
 				}
-
+				//AE_LOGE("sensor_max_min_fps:%d,%d\n",work_info->sensor_fps.max_fps,work_info->sensor_fps.min_fps);
 				cxt->snr_info = work_info->resolution_info;
 				cxt->cur_status.frame_size = work_info->resolution_info.frame_size;
 				cxt->cur_status.line_time = work_info->resolution_info.line_time/SENSOR_LINETIME_BASE;
-
+				cxt->cur_status.snr_max_fps = work_info->sensor_fps.max_fps;
+				cxt->cur_status.snr_min_fps = work_info->sensor_fps.min_fps;
+				
 				cxt->start_id = AE_START_ID;
 				cxt->monitor_unit.mode = AE_STATISTICS_MODE_CONTINUE;
 				cxt->monitor_unit.cfg.skip_num = 0;

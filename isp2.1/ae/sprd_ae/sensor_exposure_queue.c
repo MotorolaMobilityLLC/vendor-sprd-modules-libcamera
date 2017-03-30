@@ -78,8 +78,9 @@ static cmr_int seq_push_actual_element(struct seq_cxt *cxt_ptr, cmr_u32 is_add_i
 	offset_idx = cur_idx + offset;
 
 	offset_idx = offset_idx % cxt_ptr->actual_q.max_num;
-	if (in_ptr->dummy)
-		(cxt_ptr->actual_q.cell_ptr + offset_idx)->dummy = in_ptr->dummy;
+
+	(cxt_ptr->actual_q.cell_ptr + offset_idx)->dummy = in_ptr->dummy;
+
 	if (in_ptr->exp_time)
 		(cxt_ptr->actual_q.cell_ptr + offset_idx)->exp_time = in_ptr->exp_time;
 	if (in_ptr->exp_line)
@@ -139,6 +140,7 @@ static cmr_int seq_push_write_element(struct seq_cxt *cxt_ptr,cmr_u32 is_add_idx
 	offset_idx = offset_idx % cxt_ptr->write_q.max_num;
 
 	(cxt_ptr->write_q.cell_ptr + offset_idx)->dummy = in_ptr->dummy;
+
 	if (in_ptr->exp_time)
 		(cxt_ptr->write_q.cell_ptr + offset_idx)->exp_time = in_ptr->exp_time;
 	if (in_ptr->exp_line)

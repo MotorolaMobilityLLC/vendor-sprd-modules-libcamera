@@ -24,7 +24,8 @@
 #elif WIN32
 #include "ae_porting.h"
 #else/*  */
-#include <sys/types.h>
+//#include <sys/types.h>
+#include "ae_types.h"
 #endif	/*  */
 /**---------------------------------------------------------------------------*
 **				 Compiler Flag				*
