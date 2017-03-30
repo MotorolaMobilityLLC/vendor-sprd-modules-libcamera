@@ -785,9 +785,12 @@ static cmr_int setting_set_flash_mode(struct setting_component *cpt,
 
     flash_mode = parm->cmd_type_value;
 
-    CMR_LOGI("flash_mode:%lu has_preflashed:%lu", flash_mode,
-             flash_param->has_preflashed);
+    CMR_LOGI("flash_mode:%lu has_preflashed:%lu,flash_opened"
+             "%lu,set_flash_mode_off_after_close_flash %lu",
+             flash_mode, flash_param->has_preflashed, flash_param->flash_opened,
+             flash_param->set_flash_mode_off_after_close_flash);
     if ((flash_mode == CAMERA_FLASH_MODE_OFF) && flash_param->flash_opened) {
+        CMR_LOGI("during open flash don't set off, just keep it");
         flash_param->set_flash_mode_off_after_close_flash = 1;
         return ret;
     }
@@ -2678,7 +2681,9 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
                 hal_param->flash_param.has_preflashed = 0;
                 setting_isp_flash_notify(cpt, parm, ISP_FLASH_MAIN_AFTER);
             }
-            if (hal_param->flash_param.set_flash_mode_off_after_close_flash) {
+            if (hal_param->flash_param.set_flash_mode_off_after_close_flash ==
+                1) {
+                CMR_LOGI("set flash mode off after close flash");
                 hal_param->flash_param.set_flash_mode_off_after_close_flash = 0;
                 hal_param->flash_param.has_preflashed = 0;
                 parm->cmd_type_value = CAMERA_FLASH_MODE_OFF;
@@ -3063,15 +3068,14 @@ static cmr_int setting_set_pre_lowflash(struct setting_component *cpt,
              image_format, flash_mode, been_preflash);
 
     if (!been_preflash) {
-        hal_param->flash_param.flash_opened = 1;
-        hal_param->flash_param.has_preflashed = 1;
-
         if (CAMERA_FLASH_MODE_AUTO == flash_mode) {
             ret = setting_flash_handle(cpt, parm, flash_mode);
         }
 
         if (setting_is_need_flash(cpt, parm)) {
             CMR_LOGI("preflash low open");
+            hal_param->flash_param.flash_opened = 1;
+            hal_param->flash_param.has_preflashed = 1;
             if (IMG_DATA_TYPE_RAW == image_format) {
                 cmr_setting_clear_sem(cpt);
                 setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_BEFORE);
@@ -3094,6 +3098,7 @@ static cmr_int setting_set_pre_lowflash(struct setting_component *cpt,
                 setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_AFTER);
             }
             CMR_LOGI("preflash low close");
+            hal_param->flash_param.flash_opened = 0;
         }
     }
     return ret;
