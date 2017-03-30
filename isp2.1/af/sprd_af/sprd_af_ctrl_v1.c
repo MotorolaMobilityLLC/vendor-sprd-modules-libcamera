@@ -554,7 +554,6 @@ extern "C" {
 			AF_LOGD("state = %s, mode = %d", STATE_STRING(af->state), af_mode);
 			/*if (STATE_INACTIVE == af->state)
 			   return 0; */
-			af->defocus = 0;// make sure defocus mode quit
 			switch (af_mode) {
 			case AF_MODE_CONTINUE:
 			case AF_MODE_VIDEO:
@@ -595,8 +594,6 @@ extern "C" {
 			case AF_MODE_FULLSCAN:
 				af->request_mode = af_mode;
 				af->state = STATE_FULLSCAN;
-				af->defocus = 1;
-				AF_LOGD("af->defocus : %d \n", af->defocus);
 				break;
 			default:
 				if ((STATE_CAF == af->state) || (STATE_RECORD_CAF == af->state)) {
@@ -3739,7 +3736,6 @@ static cmr_int af_sprd_adpt_update_aux_sensor(cmr_handle handle, void *in)
 				}
 
 				switch (af->state) {
-				case STATE_FULLSCAN:
 				case STATE_NORMAL_AF:
 					pthread_mutex_lock(&af->af_work_lock);
 					if (saf_process_frame(af)) {
@@ -3754,6 +3750,7 @@ static cmr_int af_sprd_adpt_update_aux_sensor(cmr_handle handle, void *in)
 					}
 					pthread_mutex_unlock(&af->af_work_lock);
 					break;
+				case STATE_FULLSCAN:
 				case STATE_CAF:
 				case STATE_RECORD_CAF:
 					caf_process_af(af);
@@ -3931,8 +3928,11 @@ static cmr_int af_sprd_adpt_update_aux_sensor(cmr_handle handle, void *in)
 				}
 
 				if( STATE_FULLSCAN==af->state ){
-					af->caf_state = CAF_IDLE;
-					saf_start(af, NULL);	//SAF, win is NULL using default
+					af->caf_state = CAF_SEARCHING;
+					af->algo_mode = CAF;
+					trigger_stop(af);
+					AF_Trigger(&af->fv, af->algo_mode, DEFOCUS);
+					do_start_af(af);
 					break;
 				}
 
@@ -4262,6 +4262,15 @@ static cmr_int af_sprd_adpt_update_aux_sensor(cmr_handle handle, void *in)
 					af_fullscan_info->row_num = 3;
 					af_fullscan_info->column_num = 3;
 					af_fullscan_info->win_peak_pos = af->win_peak_pos;
+				}
+				if(isp_ctx->otp_data){
+					if(isp_ctx->otp_data->single_otp.af_info.macro_cali > isp_ctx->otp_data->single_otp.af_info.infinite_cali){
+						af_fullscan_info->vcm_dac_low_bound = isp_ctx->otp_data->single_otp.af_info.infinite_cali;
+						af_fullscan_info->vcm_dac_up_bound = isp_ctx->otp_data->single_otp.af_info.macro_cali;
+					}
+				}else{
+					af_fullscan_info->vcm_dac_low_bound = 0;
+					af_fullscan_info->vcm_dac_up_bound = 1023;
 				}
 				break;
 			}
