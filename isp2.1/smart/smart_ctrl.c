@@ -83,6 +83,7 @@ struct smart_context {
 	struct smart_block_result block_result;
 	cmr_u8 debug_buf[DEBUG_BUF_SIZE];
 	debug_handle_t debug_file;
+	struct nr_data nr_param;
 };
 
 static cmr_s32 is_print_log(void)
@@ -890,6 +891,60 @@ smart_handle_t smart_ctl_init(struct smart_init_param *param, void *result)
 		goto parse_tuning_failed;
 	}
 
+	cxt->nr_param.ppi[0] = 0;
+	cxt->nr_param.ppi[1] = 9;
+	cxt->nr_param.ppi[2] = 0;
+	cxt->nr_param.bayer_nr[0] = 0;
+	cxt->nr_param.bayer_nr[1] = 10;
+	cxt->nr_param.bayer_nr[2] = 0;
+	cxt->nr_param.rgb_dither[0] = 0;
+	cxt->nr_param.rgb_dither[1] = 11;
+	cxt->nr_param.rgb_dither[2] = 0;
+	cxt->nr_param.bpc[0] = 0;
+	cxt->nr_param.bpc[1] = 12;
+	cxt->nr_param.bpc[2] = 0;
+	cxt->nr_param.grgb[0] = 0;
+	cxt->nr_param.grgb[1] = 13;
+	cxt->nr_param.grgb[2] = 0;
+	cxt->nr_param.cfae[0] = 0;
+	cxt->nr_param.cfae[1] = 14;
+	cxt->nr_param.cfae[2] = 0;
+	cxt->nr_param.rgb_afm[0] = 0;
+	cxt->nr_param.rgb_afm[1] = 15;
+	cxt->nr_param.rgb_afm[2] = 0;
+	cxt->nr_param.uvdiv[0] = 0;
+	cxt->nr_param.uvdiv[1] = 16;
+	cxt->nr_param.uvdiv[2] = 0;
+	cxt->nr_param.dnr3_pre[0] = 0;
+	cxt->nr_param.dnr3_pre[1] = 17;
+	cxt->nr_param.dnr3_pre[2] = 0;
+	cxt->nr_param.dnr3_cap[0] = 0;
+	cxt->nr_param.dnr3_cap[1] = 18;
+	cxt->nr_param.dnr3_cap[2] = 0;
+	cxt->nr_param.edge[0] = 0;
+	cxt->nr_param.edge[1] = 19;
+	cxt->nr_param.edge[2] = 0;
+	cxt->nr_param.precdn[0] = 0;
+	cxt->nr_param.precdn[1] = 20;
+	cxt->nr_param.precdn[2] = 0;
+	cxt->nr_param.ynr[0] = 0;
+	cxt->nr_param.ynr[1] = 21;
+	cxt->nr_param.ynr[2] = 0;
+	cxt->nr_param.cdn[0] = 0;
+	cxt->nr_param.cdn[1] = 22;
+	cxt->nr_param.cdn[2] = 0;
+	cxt->nr_param.postcdn[0] = 0;
+	cxt->nr_param.postcdn[1] = 23;
+	cxt->nr_param.postcdn[2] = 0;
+	cxt->nr_param.ccnr[0] = 0;
+	cxt->nr_param.ccnr[1] = 24;
+	cxt->nr_param.ccnr[2] = 0;
+	cxt->nr_param.iir_yrandom[0] = 0;
+	cxt->nr_param.iir_yrandom[1] = 25;
+	cxt->nr_param.iir_yrandom[2] = 0;
+	cxt->nr_param.noisefilter[0] = 0;
+	cxt->nr_param.noisefilter[1] = 26;
+	cxt->nr_param.noisefilter[2] = 0;
 	cxt->magic_flag = ISP_SMART_MAGIC_FLAG;
 	cxt->work_mode = 0;
 	cxt->flash_mode = SMART_CTRL_FLASH_CLOSE;
@@ -915,6 +970,7 @@ static cmr_s32 smart_ctl_calculation(smart_handle_t handle, struct smart_calc_pa
 	struct smart_context *cxt = NULL;
 	struct tuning_param *cur_param = NULL;
 	struct isp_smart_param *smart_param = NULL;
+	struct smart_block_result *blk = NULL;
 	cmr_u32 update_block_num = 0;
 	enum smart_ctrl_flash_mode flash_mode = SMART_CTRL_FLASH_CLOSE;
 	cmr_u32 cmd = ISP_SMART_IOCTL_SET_FLASH_MODE;
@@ -965,6 +1021,87 @@ static cmr_s32 smart_ctl_calculation(smart_handle_t handle, struct smart_calc_pa
 	ISP_LOGV("bv=%d, ct=%d, flash=%d", param->bv, param->ct, flash_mode);
 	smart_ctl_print_smart_result(cxt->flash_mode, result);
 	smart_ctl_print_debug_file(cxt->debug_file, param,  result, (char *)cxt->debug_buf);
+	for (i = 0; i < result->counts; i++) {
+		blk = &result->block_result[i];
+		if(blk->smart_id > 8){
+			switch(blk->smart_id){
+				case 9:
+					cxt->nr_param.ppi[0] = 1;
+					cxt->nr_param.ppi[2] = blk->component[0].fix_data[0];
+					break;
+				case 10:
+					cxt->nr_param.bayer_nr[0] = 1;
+					cxt->nr_param.bayer_nr[2] = blk->component[0].fix_data[0];
+					break;
+				case 11:
+					cxt->nr_param.rgb_dither[0] = 1;
+					cxt->nr_param.rgb_dither[2] = blk->component[0].fix_data[0];
+					break;
+				case 12:
+					cxt->nr_param.bpc[0] = 1;
+					cxt->nr_param.bpc[2] = blk->component[0].fix_data[0];
+					break;
+				case 13:
+					cxt->nr_param.grgb[0] = 1;
+					cxt->nr_param.grgb[2] = blk->component[0].fix_data[0];
+					break;
+				case 14:
+					cxt->nr_param.cfae[0] = 1;
+					cxt->nr_param.cfae[2] = blk->component[0].fix_data[0];
+					break;
+				case 15:
+					cxt->nr_param.rgb_afm[0] = 1;
+					cxt->nr_param.rgb_afm[2] = blk->component[0].fix_data[0];
+					break;
+				case 16:
+					cxt->nr_param.uvdiv[0] = 1;
+					cxt->nr_param.uvdiv[2] = blk->component[0].fix_data[0];
+					break;
+				case 17:
+					cxt->nr_param.dnr3_pre[0] = 1;
+					cxt->nr_param.dnr3_pre[2] = blk->component[0].fix_data[0];
+					break;
+				case 18:
+					cxt->nr_param.dnr3_cap[0] = 1;
+					cxt->nr_param.dnr3_cap[2] = blk->component[0].fix_data[0];
+					break;
+				case 19:
+					cxt->nr_param.edge[0] = 1;
+					cxt->nr_param.edge[2] = blk->component[0].fix_data[0];
+					break;
+				case 20:
+					cxt->nr_param.precdn[0] = 1;
+					cxt->nr_param.precdn[2] = blk->component[0].fix_data[0];
+					break;
+				case 21:
+					cxt->nr_param.ynr[0] = 1;
+					cxt->nr_param.ynr[2] = blk->component[0].fix_data[0];
+					break;
+				case 22:
+					cxt->nr_param.cdn[0] = 1;
+					cxt->nr_param.cdn[2] = blk->component[0].fix_data[0];
+					break;
+				case 23:
+					cxt->nr_param.postcdn[0] = 1;
+					cxt->nr_param.postcdn[2] = blk->component[0].fix_data[0];
+					break;
+				case 24:
+					cxt->nr_param.ccnr[0] = 1;
+					cxt->nr_param.ccnr[2] = blk->component[0].fix_data[0];
+					break;
+				case 25:
+					cxt->nr_param.iir_yrandom[0] = 1;
+					cxt->nr_param.iir_yrandom[2] = blk->component[0].fix_data[0];
+					break;
+				case 26:
+					cxt->nr_param.noisefilter[0] = 1;
+					cxt->nr_param.noisefilter[2] = blk->component[0].fix_data[0];
+					break;
+				default:
+					break;
+				}
+			}
+	}
 
 EXIT:
 
@@ -1199,8 +1336,7 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input *in_ptr)
 	struct isp_pm_ioctl_input       io_pm_input = {NULL, 0};
 	struct isp_pm_param_data        pm_param = {0,0,0,NULL,0,{0}};
 	struct smart_block_result       *block_result = NULL;
-	struct nr_data                          nr={{0,9,0},{0,10,0},{0,11,0},{0,12,0},{0,13,0},
-		{0,14,0},{0,15,0},{0,16,0},{0,17,0},{0,18,0},{0,19,0},{0,20,0},{0,21,0},{0,22,0},{0,23,0},{0,24,0},{0,25,0},{0,26,0}};
+	struct smart_context *cxt = NULL;
 	cmr_u32 alc_awb = 0;
 	cmr_u32                        i = 0;
 
@@ -1216,6 +1352,10 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input *in_ptr)
 		ISP_LOGE("smart init failed");
 		return rtn;
 	}
+
+	cxt = (struct smart_context *)handle_smart;
+	in_ptr->log = (cmr_u8 *)&(cxt->nr_param);
+	in_ptr->size = (sizeof(cxt->nr_param));
 
 	//use LSC_SPD_VERSION to control the output of smart lsc
 	if( in_ptr->LSC_SPD_VERSION >= 3 ){
@@ -1291,90 +1431,7 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input *in_ptr)
 		}
 	#endif
 	}
-	for (i = 0; i < ISP_SMART_MAX; i++) {
-		block_result = &smart_calc_result.block_result[i];
-		if(block_result->smart_id > 8){
-			switch(block_result->smart_id){
-				case 9:
-					nr.ppi[0] = 1;
-					nr.ppi[2] = block_result->component[0].fix_data[0];
-					break;
-				case 10:
-					nr.bayer_nr[0] = 1;
-					nr.bayer_nr[2] = block_result->component[0].fix_data[0];
-					break;
-				case 11:
-					nr.rgb_dither[0] = 1;
-					nr.rgb_dither[2] = block_result->component[0].fix_data[0];
-					break;
-				case 12:
-					nr.bpc[0] = 1;
-					nr.bpc[2] = block_result->component[0].fix_data[0];
-					break;
-				case 13:
-					nr.grgb[0] = 1;
-					nr.grgb[2] = block_result->component[0].fix_data[0];
-					break;
-				case 14:
-					nr.cfae[0] = 1;
-					nr.cfae[2] = block_result->component[0].fix_data[0];
-					break;
-				case 15:
-					nr.rgb_afm[0] = 1;
-					nr.rgb_afm[2] = block_result->component[0].fix_data[0];
-					break;
-				case 16:
-					nr.uvdiv[0] = 1;
-					nr.uvdiv[2] = block_result->component[0].fix_data[0];
-					break;
-				case 17:
-					nr.dnr3_pre[0] = 1;
-					nr.dnr3_pre[2] = block_result->component[0].fix_data[0];
-					break;
-				case 18:
-					nr.dnr3_cap[0] = 1;
-					nr.dnr3_cap[2] = block_result->component[0].fix_data[0];
-					break;
-				case 19:
-					nr.edge[0] = 1;
-					nr.edge[2] = block_result->component[0].fix_data[0];
-					break;
-				case 20:
-					nr.precdn[0] = 1;
-					nr.precdn[2] = block_result->component[0].fix_data[0];
-					break;
-				case 21:
-					nr.ynr[0] = 1;
-					nr.ynr[2] = block_result->component[0].fix_data[0];
-					break;
-				case 22:
-					nr.cdn[0] = 1;
-					nr.cdn[2] = block_result->component[0].fix_data[0];
-					break;
-				case 23:
-					nr.postcdn[0] = 1;
-					nr.postcdn[2] = block_result->component[0].fix_data[0];
-					break;
-				case 24:
-					nr.ccnr[0] = 1;
-					nr.ccnr[2] = block_result->component[0].fix_data[0];
-					break;
-				case 25:
-					nr.iir_yrandom[0] = 1;
-					nr.iir_yrandom[2] = block_result->component[0].fix_data[0];
-					break;
-				case 26:
-					nr.noisefilter[0] = 1;
-					nr.noisefilter[2] = block_result->component[0].fix_data[0];
-					break;
-				default:
-					break;
-				}
-			}
-	}
-	in_ptr->log = (void *)malloc(sizeof(struct nr_data));
-	memcpy(in_ptr->log, &nr, sizeof(struct nr_data));
-	in_ptr->size = (sizeof(struct nr_data));
+
 exit:
 	ISP_LOGI(":ISP: done %ld", rtn);
 	return rtn;
