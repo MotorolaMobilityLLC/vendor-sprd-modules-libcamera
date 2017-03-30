@@ -467,9 +467,8 @@ static void eng_dcamtest_switchTB(uint8_t *buffer, uint16_t width,
             memcpy(src, dst, linesize);
             memcpy(dst, tmpBuf, linesize);
         }
-
-        free(tmpBuf);
     }
+    free(tmpBuf);
 }
 
 static int eng_test_rotation(uint32_t agree, uint32_t width, uint32_t height,
@@ -1842,6 +1841,8 @@ cmr_int autotest_load_hal_lib(void) {
 
         handle = dlopen(OEM_LIBRARY_PATH, RTLD_NOW);
 
+        mHalOem->dso = handle;
+
         if (handle == NULL) {
             char const *err_str = dlerror();
             ALOGE("dlopen error%s", err_str ? err_str : "unknown");
@@ -1858,7 +1859,6 @@ cmr_int autotest_load_hal_lib(void) {
             goto loaderror;
         }
 
-        mHalOem->dso = handle;
         mHalOem->ops = omi->ops;
 
         ALOGV("loaded HAL libcamoem handle=%p", handle);

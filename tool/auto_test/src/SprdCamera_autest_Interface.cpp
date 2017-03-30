@@ -356,9 +356,8 @@ static void auto_dcamtest_switchTB(uint8_t *buffer, uint16_t width,
             memcpy(src, dst, linesize);
             memcpy(dst, tmpBuf, linesize);
         }
-
-        free(tmpBuf);
     }
+    free(tmpBuf);
 }
 
 static int autotest_rotation(uint32_t agree, uint32_t width, uint32_t height,

@@ -120,6 +120,18 @@ SprdCamera3Capture::SprdCamera3Capture() {
     mCaptureWidth = 0;
     mCaptureHeight = 0;
     mIsCapturing = false;
+    memset(&m_VirtualCamera, 0, sizeof(sprd_virtual_camera_t));
+    memset(mNativeBuffer, 0,
+           sizeof(sprd_virtual_camera_t) * MAX_CAP_QEQUEST_BUF);
+    memset(mNativeCapBuffer, 0,
+           sizeof(sprd_virtual_camera_t) * LOCAL_CAPBUFF_NUM);
+    memset(mSavedReqStreams, 0, sizeof(camera3_stream_t) * MAX_NUM_STREAMS);
+    mPreviewStreamsNum = 0;
+    mPreviewID = 0;
+    mLastShowPreviewDeviceId = 0;
+    mHasSendFrameNumber = 0;
+    mWaitFrameNumber = 0;
+    mPerfectskinlevel = 0;
     HAL_LOGD("X");
 }
 
@@ -1322,6 +1334,11 @@ bool SprdCamera3Capture::CaptureThread::threadLoop() {
                     sizeof(camera3_stream_buffer_t));
                 if (!input_buffer) {
                     HAL_LOGE("failed");
+                    if (output_buffers != NULL) {
+                        free((void *)output_buffers);
+                        output_buffers = NULL;
+                    }
+
                     return false;
                 }
                 memset(input_buffer, 0x00, sizeof(camera3_stream_buffer_t));
@@ -1364,16 +1381,15 @@ bool SprdCamera3Capture::CaptureThread::threadLoop() {
                     "reprocess request input buff %p, stream:%p, yaddr_v:%p, "
                     "width:%d, height:%d",
                     request.input_buffer->buffer, request.input_buffer->stream,
-                    ((struct private_handle_t *)(*request.input_buffer
-                                                               ->buffer))
+                    ((struct private_handle_t *)(*request.input_buffer->buffer))
                         ->base,
                     input_buffer->stream->width, input_buffer->stream->height);
                 HAL_LOGD("reprocess request output buff %p, stream:%p, "
                          "yaddr_v:%p, width:%d, height:%d",
                          request.output_buffers[0].buffer,
                          request.output_buffers[0].stream,
-                         ((struct private_handle_t
-                                        *)(*request.output_buffers[0].buffer))
+                         ((struct private_handle_t *)(*request.output_buffers[0]
+                                                           .buffer))
                              ->base,
                          request.output_buffers[0].stream->width,
                          request.output_buffers[0].stream->height);
@@ -2050,8 +2066,8 @@ int SprdCamera3Capture::processCaptureRequest(
             HAL_LOGD("org snp request output buff %p, stream:%p, yaddr_v:%p",
                      request->output_buffers[i].buffer,
                      request->output_buffers[i].stream,
-                     ((struct private_handle_t
-                                    *)(*request->output_buffers[i].buffer))
+                     ((struct private_handle_t *)(*request->output_buffers[i]
+                                                       .buffer))
                          ->base);
             memcpy(&mCaptureThread->mSavedCapRequest, req,
                    sizeof(camera3_capture_request_t));
@@ -2104,6 +2120,7 @@ int SprdCamera3Capture::processCaptureRequest(
     memset(out_streams_aux, 0,
            (sizeof(camera3_stream_buffer_t)) * (req_aux.num_output_buffers));
 
+    req_aux.output_buffers = out_streams_aux;
     for (size_t i = 0; i < req->num_output_buffers; i++) {
         new_stream = (req->output_buffers[i]).stream;
         HAL_LOGD("num_output_buffers:%d, , streamtype:%d",
@@ -2143,7 +2160,6 @@ int SprdCamera3Capture::processCaptureRequest(
             out_streams_aux[i].acquire_fence = -1;
         }
     }
-    req_aux.output_buffers = out_streams_aux;
 
     if (req_main.output_buffers[0].stream->format == HAL_PIXEL_FORMAT_BLOB) {
         HAL_LOGD("capture request, idx:%d", req_main.frame_number);
@@ -2359,10 +2375,10 @@ void SprdCamera3Capture::processCaptureResultMain(
         memcpy(&newOutput_buffers, &result->output_buffers[0],
                sizeof(camera3_stream_buffer_t));
 
-        HAL_LOGD(
-            "result stream:%p, result buffer:%p, savedreqstream:0x%x",
-            result->output_buffers[0].stream, result->output_buffers[0].buffer,
-            mSavedReqStreams[mCaptureThread->mCaptureStreamsNum - 1]);
+        HAL_LOGD("result stream:%p, result buffer:%p, savedreqstream:0x%x",
+                 result->output_buffers[0].stream,
+                 result->output_buffers[0].buffer,
+                 mSavedReqStreams[mCaptureThread->mCaptureStreamsNum - 1]);
         memcpy(mSavedReqStreams[mCaptureThread->mCaptureStreamsNum - 1],
                result->output_buffers[0].stream, sizeof(camera3_stream_t));
         newOutput_buffers.stream =

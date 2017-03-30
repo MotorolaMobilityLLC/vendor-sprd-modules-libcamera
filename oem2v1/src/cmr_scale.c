@@ -417,9 +417,11 @@ cmr_int cmr_scale_open(cmr_handle *scale_handle) {
         // fd = cmr_grab_get_cpp_fd(*scale_handle);
         fd = open(scaler_dev_name, O_RDWR, 0);
         ret = ioctl(fd, SPRD_CPP_IO_OPEN_SCALE, &val);
-        if (ret)
+        if (ret) {
+            close(fd);
+            fd = -1;
             usleep(50 * 1000);
-        else
+        } else
             break;
 #if 0
 		if (-1 == fd) {

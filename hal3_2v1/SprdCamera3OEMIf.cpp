@@ -3734,8 +3734,10 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         int64_t timestamp = 0;
 
         fps_range_offset = 1000000000 / fps_param.max_fps;
-        fps_range_low = (1000000000 / fps_param.max_fps) * (1 - 0.015);
-        fps_range_up = (1000000000 / fps_param.min_fps) * (1 + 0.015);
+        fps_range_low =
+            (int64_t)((1000000000.0 / fps_param.max_fps) * (1 - 0.015));
+        fps_range_up =
+            (int64_t)((1000000000.0 / fps_param.min_fps) * (1 + 0.015));
 
         if (mPrvBufferTimestamp == 0) {
             buffer_timestamp_fps = frame->timestamp;

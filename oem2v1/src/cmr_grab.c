@@ -154,6 +154,7 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr,
         if (0 == res.flag) {
             CMR_LOGE("get dcam res failed!");
             pthread_mutex_unlock(&p_grab->dcam_mutex);
+            cmr_grap_free_grab(p_grab);
             return -1;
         }
         p_grab->res = res.flag;

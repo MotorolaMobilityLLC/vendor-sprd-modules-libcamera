@@ -86,6 +86,10 @@ cmr_int cmr_rot_open(cmr_handle *rot_handle) {
     goto open_out;
 
 rot_free:
+    if (fd > 0) {
+        close(fd);
+        fd = -1;
+    }
     if (file)
         free(file);
     file = NULL;

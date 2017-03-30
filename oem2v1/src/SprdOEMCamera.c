@@ -666,16 +666,7 @@ int camera_pre_capture_get_buffer_id(cmr_u32 camera_id, cmr_u16 width,
     return buffer_id;
 }
 
-uint32_t camera_get_size_align_page(uint32_t size) {
-    return size;
-    uint32_t buffer_size, page_size;
-
-    page_size = getpagesize();
-    buffer_size = size;
-    buffer_size = (buffer_size + page_size - 1) & ~(page_size - 1);
-
-    return buffer_size;
-}
+uint32_t camera_get_size_align_page(uint32_t size) { return size; }
 
 cmr_int camera_fast_ctrl(cmr_handle camera_handle, enum fast_ctrl_mode mode,
                          cmr_u32 param) {
@@ -948,7 +939,7 @@ cmr_uint camera_get_sensor_vcm_step(cmr_handle camera_handle, cmr_u32 camera_id,
     if (NULL == camera_handle) {
         CMR_LOGE("input param is null!");
         ret = CMR_CAMERA_INVALID_PARAM;
-        return ret;
+        goto exit;
     }
     ret = cmr_get_sensor_vcm_step(camera_handle, camera_id, vcm_step);
     CMR_LOGI("vcm_step %d", *vcm_step);

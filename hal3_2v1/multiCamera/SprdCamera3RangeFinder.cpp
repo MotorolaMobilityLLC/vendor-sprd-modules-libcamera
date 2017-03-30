@@ -927,8 +927,9 @@ SprdCamera3RangeFinder::MeasureThread::MeasureThread() {
     mDepthEngineApi = (depth_engine_api_t *)malloc(sizeof(depth_engine_api_t));
     if (mDepthEngineApi == NULL) {
         HAL_LOGE("mDepthEngineApi malloc failed.");
+    } else {
+        memset(mDepthEngineApi, 0, sizeof(depth_engine_api_t));
     }
-    memset(mDepthEngineApi, 0, sizeof(depth_engine_api_t));
     if (loadDepthEngine() < 0) {
         HAL_LOGE("load DepthEngine API failed.");
     }
@@ -947,6 +948,10 @@ SprdCamera3RangeFinder::MeasureThread::~MeasureThread() {
     HAL_LOGD("E");
     mMeasureMsgList.clear();
     mLocalBufferList.clear();
+    if (mDepthEngineApi != NULL) {
+        free(mDepthEngineApi);
+        mDepthEngineApi = NULL;
+    }
     HAL_LOGD("X");
 }
 
@@ -1811,7 +1816,7 @@ int SprdCamera3RangeFinder::processCaptureRequest(
         sizeof(camera3_stream_buffer_t) * (req_main.num_output_buffers));
     if (!out_streams_main) {
         HAL_LOGE("failed");
-        return -1;
+        goto mem_fail;
     }
     memset(out_streams_main, 0x00,
            (sizeof(camera3_stream_buffer_t)) * (req_main.num_output_buffers));
@@ -1827,7 +1832,7 @@ int SprdCamera3RangeFinder::processCaptureRequest(
     out_streams_main[1].release_fence = -1;
     if (NULL == out_streams_main[1].buffer) {
         HAL_LOGE("failed, LocalBufferList is empty!");
-        return NO_MEMORY;
+        goto mem_fail;
     }
 
     req_main.output_buffers = out_streams_main;
@@ -1841,7 +1846,7 @@ int SprdCamera3RangeFinder::processCaptureRequest(
         (camera3_stream_buffer_t *)malloc(sizeof(camera3_stream_buffer_t));
     if (!out_streams_aux) {
         HAL_LOGE("failed");
-        return NO_MEMORY;
+        goto mem_fail;
     }
     memset(out_streams_aux, 0x00,
            (sizeof(camera3_stream_buffer_t)) * (req_aux.num_output_buffers));
@@ -1853,7 +1858,7 @@ int SprdCamera3RangeFinder::processCaptureRequest(
     out_streams_aux[0].acquire_fence = -1;
     if (NULL == out_streams_aux[0].buffer) {
         HAL_LOGE("failed, LocalBufferList is empty!");
-        return NO_MEMORY;
+        goto mem_fail;
     }
 
     req_aux.output_buffers = out_streams_aux;
@@ -1892,6 +1897,18 @@ req_fail:
     }
 
     return rc;
+
+mem_fail:
+    if (NULL != out_streams_main) {
+        free((void *)out_streams_main);
+        out_streams_main = NULL;
+    }
+
+    if (NULL != out_streams_aux) {
+        free((void *)out_streams_aux);
+        out_streams_aux = NULL;
+    }
+    return NO_MEMORY;
 }
 /*===========================================================================
  * FUNCTION   :notifyMain
