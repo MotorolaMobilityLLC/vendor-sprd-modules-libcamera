@@ -243,6 +243,8 @@ struct camera_context {
     sem_t hdr_flag_sm;
     sem_t share_path_sm;
     sem_t access_sm;
+    sem_t prestart_sync_sm;
+    cmr_u32 is_prestart;
     cmr_uint share_path_sm_flag;
     cmr_handle init_thread;
 
@@ -429,7 +431,7 @@ cmr_int camera_local_get_cover(cmr_handle cmr_handle, cmr_u32 *cover_value);
 cmr_int camera_stream_ctrl(cmr_handle cmr_handle, cmr_u32 on_off);
 cmr_int cmr_get_isp_af_fullscan(cmr_handle oem_handle,
                                 struct isp_af_fullscan_info *af_fullscan_info);
-
+cmr_int camera_local_wait_camera_init_done(cmr_handle oem_handle);
 #ifdef __cplusplus
 }
 #endif

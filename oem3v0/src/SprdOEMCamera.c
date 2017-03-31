@@ -1045,6 +1045,12 @@ cmr_int camera_set_sensor_close_flag(cmr_handle camera_handle)
 	return 0;
 }
 
+cmr_int camera_wait_camera_init_done(cmr_handle camera_handle)
+{
+    CMR_LOGD("Not Implement at oem3v0");
+    return 0;
+}
+
 static oem_ops_t oem_module_ops = {
 	camera_init,
 	camera_deinit,
@@ -1112,6 +1118,7 @@ static oem_ops_t oem_module_ops = {
 	camera_set_reprocess_picture_size,
 	camera_pre_capture_set_buffer_size,
 	camera_ioctrl,
+	camera_wait_camera_init_done,
 };
 
 struct oem_module OEM_MODULE_INFO_SYM = {

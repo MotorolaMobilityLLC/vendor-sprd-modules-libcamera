@@ -41,6 +41,7 @@
 #define CMR_EVT_INIT (CMR_EVT_OEM_BASE)
 #define CMR_EVT_WAIT (CMR_EVT_OEM_BASE + 1)
 #define CMR_EVT_EXIT (CMR_EVT_OEM_BASE + 2)
+#define CMR_EVT_INIT_ISP (CMR_EVT_OEM_BASE + 3)
 
 #define CAMERA_OEM_MSG_QUEUE_SIZE 10
 #define CAMERA_RECOVER_CNT 3
@@ -3411,6 +3412,7 @@ exit:
     }
 #endif
     CMR_LOGD("done %ld", ret);
+    sem_post(&cxt->prestart_sync_sm);
     ATRACE_END();
     return ret;
 }
@@ -4252,7 +4254,10 @@ static cmr_int camera_init_thread_proc(struct cmr_msg *message, void *p_data) {
         camera_res_deinit_internal((cmr_handle)cxt);
         CMR_LOGI("camera exit");
         break;
-
+    case CMR_EVT_INIT_ISP:
+        camera_isp_init((cmr_handle)cxt);
+        CMR_LOGD("isp init done");
+        break;
     default:
         break;
     }
@@ -4273,8 +4278,10 @@ cmr_int camera_res_init(cmr_handle oem_handle) {
     sem_init(&cxt->hdr_flag_sm, 0, 1);
     sem_init(&cxt->share_path_sm, 0, 0);
     sem_init(&cxt->access_sm, 0, 1);
+    sem_init(&cxt->prestart_sync_sm, 0, 0);
 
     cxt->err_code = CMR_CAMERA_SUCCESS;
+    cxt->is_prestart = 0;
     /*create thread*/
     ret = cmr_thread_create((cmr_handle *)&cxt->init_thread,
                             CAMERA_OEM_MSG_QUEUE_SIZE, camera_init_thread_proc,
@@ -4344,6 +4351,8 @@ static cmr_int camera_res_deinit(cmr_handle oem_handle) {
     sem_destroy(&cxt->hdr_flag_sm);
     sem_destroy(&cxt->share_path_sm);
     sem_destroy(&cxt->access_sm);
+    sem_destroy(&cxt->prestart_sync_sm);
+    cxt->is_prestart = 0;
     ATRACE_END();
     return ret;
 }
@@ -4359,6 +4368,7 @@ cmr_int camera_init_internal(cmr_handle oem_handle, cmr_uint is_autotest) {
     }
     pthread_mutex_unlock(&close_mutex);
     struct camera_context *cxt = (struct camera_context *)oem_handle;
+    CMR_MSG_INIT(message);
 
     CMR_LOGI("E");
     /*for multicamera mode,when open convered sensor,only need to init sensor
@@ -4396,12 +4406,18 @@ cmr_int camera_init_internal(cmr_handle oem_handle, cmr_uint is_autotest) {
         goto grab_deinit;
     }
 
-    ret = camera_isp_init(oem_handle);
-    if (ret) {
-        CMR_LOGE("failed to init isp %ld", ret);
-        goto res_deinit;
-    }
     ret = camera_res_init_done(oem_handle);
+
+    message.msg_type = CMR_EVT_INIT_ISP;
+    message.sync_flag = CMR_MSG_SYNC_NONE;
+    ret = cmr_thread_msg_send(cxt->init_thread, &message);
+    if (ret) {
+        CMR_LOGE("send msg failed!");
+        ret = CMR_CAMERA_FAIL;
+        goto exit;
+    }
+    cxt->is_prestart = 1;
+
     goto exit;
 
 res_deinit:
@@ -9759,6 +9775,16 @@ cmr_int cmr_get_isp_af_fullscan(cmr_handle oem_handle,
     CMR_LOGI("E");
     ret = isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_GET_FULLSCAN_INFO,
                     isp_param_ptr);
+    return ret;
+}
 
+cmr_int camera_local_wait_camera_init_done(cmr_handle camera_handle) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)camera_handle;
+    CMR_LOGD("Wait until post");
+    if (cxt->is_prestart) {
+        sem_wait(&cxt->prestart_sync_sm);
+        cxt->is_prestart = 0;
+    }
     return ret;
 }

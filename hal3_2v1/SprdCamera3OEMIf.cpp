@@ -1494,6 +1494,13 @@ SprdCamera3OEMIf::getCameraStateStr(SprdCamera3OEMIf::Sprd_camera_state s) {
     return states[s];
 }
 
+void SprdCamera3OEMIf::waitCameraInitDone() {
+    HAL_LOGD("Enter waitCameraInitDone");
+    if (mCameraHandle) {
+        mHalOem->ops->camera_wait_camera_init_done(mCameraHandle);
+    }
+}
+
 void SprdCamera3OEMIf::print_time() {
 #if PRINT_TIME
     struct timeval time;
