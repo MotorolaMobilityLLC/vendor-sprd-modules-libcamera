@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define LOG_TAG "ae_ctrl_v2"
+#define LOG_TAG "ae_sprd_ctrl_v2"
 #include "ae_sprd_ctrl.h"
 #include "ae_misc.h"
 #include "ae_log.h"
@@ -504,7 +504,7 @@ static cmr_s32 ae_calc_result_queue_write(struct ae_calc_result_queue *queue, st
 		//	queue, ae_result, queue->read, queue->write);
 		return AE_ERROR;
 	}
-	AE_LOGI("ae_calc_result_queue_write");
+	AE_LOGV("ae_calc_result_queue_write");
 
 	ori_ae_result = queue->write;
 	*queue->write++ = *ae_result;
@@ -1808,7 +1808,7 @@ static cmr_s32 _set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_pa
 	cxt->cur_status.settings.min_fps = 5;
 	cxt->cur_status.settings.max_fps = 30;
 
-	AE_LOGI("snr setting fps: %d\n", cxt->snr_info.snr_setting_max_fps);
+	AE_LOGD("snr setting fps: %d\n", cxt->snr_info.snr_setting_max_fps);
 	//if (0 != cxt->snr_info.snr_setting_max_fps) {
 	//	cxt->cur_status.settings.sensor_max_fps = 30;//cxt->snr_info.snr_setting_max_fps;
 	//} else {
@@ -2172,7 +2172,7 @@ static cmr_s32 _fd_info_pre_set(struct ae_ctrl_cxt *cxt)
 	ae1_fd = &(cxt->cur_status.ae1_finfo);
 	ae1_fd->update_flag = 0;	// set updata flag
 	//ae1_fd->pre_info.face_num = ae1_fd->cur_info.face_num;
-	AE_LOGD("face_num is %d\n",cxt->fdae.face_info.face_num);
+	AE_LOGV("face_num is %d\n",cxt->fdae.face_info.face_num);
 	//for (i = 0; i != ae1_fd->cur_info.face_num; i++) {
 	for (i = 0; i < cxt->fdae.face_info.face_num; i++) {
 		// save pre info
@@ -2280,7 +2280,7 @@ static cmr_s32 _fd_process(struct ae_ctrl_cxt *cxt, cmr_handle param)
 		cxt->fdae.face_info.face_num = 0;
 		return rtn;
 	}
-	AE_LOGD("fd num is %d",fd->face_num);
+	AE_LOGV("fd num is %d",fd->face_num);
 	if (fd->face_num > 0) {
 		memcpy(&(cxt->fdae.face_info), fd, sizeof(struct ae_fd_param));
 	} else {
@@ -2291,8 +2291,8 @@ static cmr_s32 _fd_process(struct ae_ctrl_cxt *cxt, cmr_handle param)
 	_fd_info_pre_set(cxt);
 	_fd_info_set(cxt);
 	// add end;
-	AE_LOGD("FDAE: sx %d sy %d", fd->face_area[0].rect.start_x, fd->face_area[0].rect.start_y);
-	AE_LOGD("FDAE: ex %d ey %d", fd->face_area[0].rect.end_x, fd->face_area[0].rect.end_y);
+	AE_LOGV("FDAE: sx %d sy %d", fd->face_area[0].rect.start_x, fd->face_area[0].rect.start_y);
+	AE_LOGV("FDAE: ex %d ey %d", fd->face_area[0].rect.end_x, fd->face_area[0].rect.end_y);
 	return rtn;
 }
 /*  END: FDAE related functions  */
@@ -2732,7 +2732,7 @@ static cmr_s32 _get_flicker_switch_flag(struct ae_ctrl_cxt *cxt, cmr_handle in_p
 		}
 	}
 
-	AE_LOGD("ANTI_FLAG: %d, %d, %d", cur_exp, cxt->snr_info.line_time, *flag);
+	AE_LOGV("ANTI_FLAG: %d, %d, %d", cur_exp, cxt->snr_info.line_time, *flag);
 	return rtn;
 }
 
@@ -2933,7 +2933,7 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	rtn = _check_handle(handle);
 	AE_RETURN_IF_FAIL(rtn, ("handle = %p", handle));
 	cxt = (struct ae_ctrl_cxt *)handle;
-
+	AE_LOGD("is slow motion=%d", cxt->high_fps_info.is_high_fps);
 	pthread_mutex_lock(&cxt->data_sync_lock);
 
 	current_status = &cxt->sync_cur_status;
@@ -3365,12 +3365,12 @@ cmr_s32 ae_sprd_calculation(cmr_handle handle, cmr_handle param, cmr_handle resu
 {
 	cmr_s32 rtn = AE_ERROR;
 	struct ae_ctrl_cxt *cxt = (struct ae_ctrl_cxt *)handle;
-	AE_LOGD("is slow motion=%d", cxt->high_fps_info.is_high_fps);
 
 	if (cxt->high_fps_info.is_high_fps)
 		rtn = ae_calculation_slow_motion(handle, param, result);
 	else
 		rtn = ae_calculation(handle, param, result);
+
 	return rtn;
 }
 
@@ -3411,7 +3411,7 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 				if (scene_mode->mode < AE_SCENE_MAX) {
 					cxt->cur_status.settings.scene_mode = (cmr_s8)scene_mode->mode;
 				}
-				AE_LOGI(" UI scene: %d\n", scene_mode->mode);
+				AE_LOGV(" UI scene: %d\n", scene_mode->mode);
 			}
 			break;
 
@@ -3445,7 +3445,6 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 			if (param) {
 				struct ae_set_weight *weight = param;
 
-				AE_LOGD("setweight %d", weight->mode);
 				if (weight->mode < AE_WEIGHT_MAX) {
 					cxt->cur_status.settings.metering_mode = weight->mode;
 				}
@@ -3472,7 +3471,6 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 		case AE_SET_EV_OFFSET:
 			if (param) {
 				struct ae_set_ev *ev = param;
-				AE_LOGD("setev %d", ev->level);
 				if (ev->level < AE_LEVEL_MAX) {
 					cxt->cur_status.settings.ev_index = ev->level;
 				}
@@ -3904,7 +3902,7 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 					cxt->cur_param = &cxt->tuning_param[AE_WORK_MODE_COMMON];
 
 				cxt->cur_status.ae_table = &cxt->cur_param->ae_table[AE_FLICKER_50HZ][AE_ISO_AUTO];
-				AE_LOGD("last exp=%d, gain=%d", cxt->last_expline, cxt->last_aegain);
+
 				if (1 == cxt->last_enable){
 					if (cxt->cur_status.line_time == cxt->last_linetime){
 						cxt->ae_result.expline	= cxt->last_expline;
@@ -3924,7 +3922,7 @@ cmr_s32 ae_sprd_io_ctrl(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_ha
 					cxt->ae_result.gain 	= cxt->cur_status.ae_table->again[cxt->cur_status.start_index];
 					cxt->ae_result.dummy	= 0;
 				}
-				AE_LOGD("after convert exp=%d, gain=%d", cxt->ae_result.expline, cxt->ae_result.gain);
+
 				cxt->sensor_calc_item.cell.exp_line = cxt->ae_result.expline;
 				cxt->sensor_calc_item.cell.gain 	= cxt->ae_result.gain;
 				cxt->sensor_calc_item.cell.dummy	= cxt->ae_result.dummy;

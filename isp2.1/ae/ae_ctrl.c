@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
+#define LOG_TAG "ae_ctrl"
 #include "ae_ctrl.h"
 
 #define AECTRL_EVT_BASE            0x2000
@@ -92,7 +91,7 @@ static cmr_s32 ae_set_again(cmr_handle handler, struct ae_gain *in_param)
 	if (cxt_ptr->ae_set_cb) {
 		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_GAIN, &in_param->gain, NULL);
 	}
-	ISP_LOGD("AE set gain %d", in_param->gain);
+
 	return 0;
 }
 
