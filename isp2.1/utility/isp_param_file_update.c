@@ -1212,11 +1212,11 @@ cmr_s32 update_param_v21(struct sensor_raw_info *sensor_raw_ptr,const char *sens
 	}
 	fclose(fp);
 
-	sprintf(libuse_info,"static cmr_u32 s_%s_libuse_info",sensor_name);
+	sprintf(libuse_info,"static uint32_t s_%s_libuse_info",sensor_name);
 	for (i = 0;i < 14;i++) {
 		sprintf(filename[i],"%ssensor_%s_raw_param_%s.c",CAMERA_DUMP_PATH, sensor_name,&nr_mode_name[i][0]);
-		sprintf(tune_info,"static cmr_u8 s_%s_tune_info_%s",sensor_name, &nr_mode_name[i][0]);
-		sprintf(note_name,"static cmr_u8 s_%s_%s_tool_ui_input",sensor_name, &nr_mode_name[i][0]);
+		sprintf(tune_info,"static uint8_t s_%s_tune_info_%s",sensor_name, &nr_mode_name[i][0]);
+		sprintf(note_name,"static uint8_t s_%s_%s_tool_ui_input",sensor_name, &nr_mode_name[i][0]);
 		sprintf(ae_tab,"static struct ae_table_param_2 s_%s_%s_ae_table_param",sensor_name, &nr_mode_name[i][0]);
 		sprintf(awb_tab,"static struct sensor_awb_table_param s_%s_%s_awb_table_param",sensor_name, &nr_mode_name[i][0]);
 		sprintf(lsc_tab,"static struct sensor_lsc_2d_table_param s_%s_%s_lsc_2d_table_param",sensor_name, &nr_mode_name[i][0]);
