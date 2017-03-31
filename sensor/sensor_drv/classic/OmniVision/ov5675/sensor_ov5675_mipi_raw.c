@@ -437,6 +437,11 @@ static SENSOR_REG_TAB_INFO_T s_ov5675_resolution_tab_raw[] = {
     {PNULL, 0, 0, 0, 0, 0},
     {PNULL, 0, 0, 0, 0, 0},
     {PNULL, 0, 0, 0, 0, 0},
+    {PNULL, 0, 0, 0, 0, 0},
+    {PNULL, 0, 0, 0, 0, 0},
+    {PNULL, 0, 0, 0, 0, 0},
+    {PNULL, 0, 0, 0, 0, 0},
+    {PNULL, 0, 0, 0, 0, 0},
 };
 
 static SENSOR_TRIM_T s_ov5675_resolution_trim_tab[] = {
@@ -457,6 +462,11 @@ static SENSOR_TRIM_T s_ov5675_resolution_trim_tab[] = {
      SNAPSHOT_MIPI_PER_LANE_BPS,
      SNAPSHOT_FRAME_LENGTH,
      {0, 0, SNAPSHOT_TRIM_W, SNAPSHOT_TRIM_H}},
+    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
+    {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
     {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
     {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
     {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},

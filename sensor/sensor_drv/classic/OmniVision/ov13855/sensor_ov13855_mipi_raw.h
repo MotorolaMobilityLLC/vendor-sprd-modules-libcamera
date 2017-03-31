@@ -335,6 +335,10 @@ LOCAL SENSOR_REG_TAB_INFO_T s_ov13855_resolution_tab_raw[] = {
     {PNULL, 0,0,0, 0, 0},
     {PNULL,0,0,0, 0, 0},
     {PNULL,0,0,0,0,0 },
+    {PNULL,0, 0, 0, 0, 0},
+    {PNULL, 0,0,0, 0, 0},
+    {PNULL,0,0,0, 0, 0},
+    {PNULL,0,0,0,0,0 },
 };
 
 LOCAL SENSOR_TRIM_T s_ov13855_resolution_trim_tab[] = {
@@ -348,6 +352,10 @@ LOCAL SENSOR_TRIM_T s_ov13855_resolution_trim_tab[] = {
                 {0,0,0,0, 0, 0, 0, { 0, 0, 0,  0}},
                 {0, 0, 0,0,0, 0,0, { 0, 0, 0,  0}},
                 {0, 0, 0, 0,0, 0, 0,{0, 0, 0,  0}},
+                {0,0,0, 0, 0, 0,0,{ 0, 0,  0, 0}},
+                {0, 0,0, 0, 0, 0,0,{ 0, 0, 0, 0 }},
+                {0,0,0,0, 0, 0, 0, { 0, 0, 0,  0}},
+                {0, 0, 0,0,0, 0,0, { 0, 0, 0,  0}},
 };
 
 LOCAL const SENSOR_REG_T
