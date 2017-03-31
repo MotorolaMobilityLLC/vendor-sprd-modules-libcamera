@@ -727,9 +727,8 @@ cmr_int cmr_preview_init(struct preview_init_param *init_param_ptr,
     handle->oem_cb = init_param_ptr->oem_cb;
     handle->ops = init_param_ptr->ops;
     handle->private_data = init_param_ptr->private_data;
-    CMR_LOGD("oem_handle: 0x%lx, sensor_bits: %ld, private_data: 0x%lx",
-             (cmr_uint)handle->oem_handle, handle->sensor_bits,
-             (cmr_uint)handle->private_data);
+    CMR_LOGI("oem_handle: %p, sensor_bits: %ld, private_data: %p",
+             handle->oem_handle, handle->sensor_bits, handle->private_data);
 
     /*create thread*/
     ret = prev_create_thread(handle);
@@ -759,7 +758,7 @@ init_end:
         }
     }
 
-    CMR_LOGD("ret %ld", ret);
+    CMR_LOGI("ret %ld", ret);
     return ret;
 }
 
@@ -1710,7 +1709,7 @@ cmr_int prev_create_thread(struct prev_handle *handle) {
 
     CHECK_HANDLE_VALID(handle);
 
-    CMR_LOGD("is_inited %ld", handle->thread_cxt.is_inited);
+    CMR_LOGI("is_inited %ld", handle->thread_cxt.is_inited);
 
     if (!handle->thread_cxt.is_inited) {
         pthread_mutex_init(&handle->thread_cxt.prev_mutex, NULL);
@@ -1753,7 +1752,7 @@ end:
         handle->thread_cxt.is_inited = 0;
     }
 
-    CMR_LOGD("ret %ld", ret);
+    CMR_LOGI("ret %ld", ret);
     return ret;
 }
 
@@ -1763,7 +1762,7 @@ cmr_int prev_destroy_thread(struct prev_handle *handle) {
 
     CHECK_HANDLE_VALID(handle);
 
-    CMR_LOGD("is_inited %ld", handle->thread_cxt.is_inited);
+    CMR_LOGI("E is_inited %ld", handle->thread_cxt.is_inited);
 
     if (handle->thread_cxt.is_inited) {
         message.msg_type = PREV_EVT_EXIT;
@@ -1784,7 +1783,7 @@ cmr_int prev_destroy_thread(struct prev_handle *handle) {
         handle->thread_cxt.is_inited = 0;
     }
 
-    CMR_LOGD("out, ret %ld", ret);
+    CMR_LOGI("X ret %ld", ret);
     return ret;
 }
 
@@ -1794,7 +1793,7 @@ cmr_int prev_create_cb_thread(struct prev_handle *handle) {
 
     CHECK_HANDLE_VALID(handle);
 
-    CMR_LOGD("in");
+    CMR_LOGI("E");
 
     ret = cmr_thread_create(&handle->thread_cxt.cb_thread_handle,
                             PREV_MSG_QUEUE_SIZE, prev_cb_thread_proc,
@@ -1815,7 +1814,7 @@ cmr_int prev_create_cb_thread(struct prev_handle *handle) {
     }
 
 end:
-    CMR_LOGD("ret %ld", ret);
+    CMR_LOGI("ret %ld", ret);
     return ret;
 }
 
@@ -1825,7 +1824,7 @@ cmr_int prev_destroy_cb_thread(struct prev_handle *handle) {
 
     CHECK_HANDLE_VALID(handle);
 
-    CMR_LOGD("in");
+    CMR_LOGI("E");
 
     message.msg_type = PREV_EVT_CB_EXIT;
     message.sync_flag = CMR_MSG_SYNC_PROCESSED;
@@ -1837,7 +1836,7 @@ cmr_int prev_destroy_cb_thread(struct prev_handle *handle) {
     ret = cmr_thread_destroy(handle->thread_cxt.cb_thread_handle);
     handle->thread_cxt.cb_thread_handle = 0;
 
-    CMR_LOGD("ret %ld", ret);
+    CMR_LOGI("X ret %ld", ret);
     return ret;
 }
 
@@ -3186,7 +3185,7 @@ cmr_int prev_error_handle(struct prev_handle *handle, cmr_u32 camera_id,
     }
     cmr_bzero(&cb_data_info, sizeof(struct prev_cb_info));
 
-    CMR_LOGD("error type 0x%lx, camera_id %d", evt_type, camera_id);
+    CMR_LOGE("error type 0x%lx, camera_id %d", evt_type, camera_id);
 
     prev_cxt = &handle->prev_cxt[camera_id];
 
@@ -7845,7 +7844,7 @@ static cmr_int prev_update_cap_param(struct prev_handle *handle,
     sensor_mode_info = &sensor_info->mode_info[prev_cxt->cap_mode];
     zoom_param = &prev_cxt->prev_param.zoom_setting;
 
-    CMR_LOGD("@xin preview_eb %d , snapshot_eb %d, frame_ctrl %d, frame_count "
+    CMR_LOGD("preview_eb %d , snapshot_eb %d, frame_ctrl %d, frame_count "
              "%d, encode_angle %d",
              prev_cxt->prev_param.preview_eb, prev_cxt->prev_param.snapshot_eb,
              prev_cxt->prev_param.frame_ctrl, prev_cxt->prev_param.frame_count,
@@ -7880,7 +7879,7 @@ cmr_int prev_set_zsl_param_lightly(struct prev_handle *handle,
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
 
-    CMR_LOGD(" in");
+    CMR_LOGD("E");
 
     cmr_bzero(&chn_param, sizeof(struct channel_start_param));
     prev_cxt = &handle->prev_cxt[camera_id];
@@ -7940,7 +7939,7 @@ cmr_int prev_set_zsl_param_lightly(struct prev_handle *handle,
     CMR_LOGD("returned chn id is %d", channel_id);
 
 exit:
-    CMR_LOGD(" out");
+    CMR_LOGD("X");
     return ret;
 }
 

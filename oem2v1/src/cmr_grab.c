@@ -1159,95 +1159,94 @@ static void *cmr_grab_thread_proc(void *data) {
         if (cnt != read(p_grab->fd, &op, sizeof(struct sprd_img_read_op))) {
             CMR_LOGE("read failed");
             break;
+        }
+
+        if (IMG_TX_STOP == op.evt) {
+            // stopped , to do release resource
+            CMR_LOGI("TX Stopped, exit thread");
+            break;
+        } else if (IMG_SYS_BUSY == op.evt) {
+            usleep(10000);
+            CMR_LOGI("continue");
+            continue;
         } else {
-            if (IMG_TX_STOP == op.evt) {
-                // stopped , to do release resource
-                CMR_LOGI("TX Stopped, exit thread");
-                break;
-            } else if (IMG_SYS_BUSY == op.evt) {
-                usleep(10000);
-                CMR_LOGI("continue");
-                continue;
-            } else {
-                // normal irq
-                if (op.parm.frame.irq_type == CAMERA_IRQ_IMG) {
-                    evt_id = cmr_grab_evt_id(op.evt);
-                    if (CMR_GRAB_MAX == evt_id) {
-                        continue;
-                    }
+            // normal irq
+            if (op.parm.frame.irq_type == CAMERA_IRQ_IMG) {
+                evt_id = cmr_grab_evt_id(op.evt);
+                if (CMR_GRAB_MAX == evt_id) {
+                    continue;
+                }
 
-                    frame.channel_id = op.parm.frame.channel_id;
+                frame.channel_id = op.parm.frame.channel_id;
 
-                    CMR_LOGV("sensor_id %d, channel_id "
-                             "0x%x, id 0x%x, evt_id 0x%x sec %u usec %u fd "
-                             "0x%x, yaddr_vir 0x%x",
-                             p_grab->init_param.sensor_id,
-                             op.parm.frame.channel_id, op.parm.frame.index,
-                             evt_id, op.parm.frame.sec, op.parm.frame.usec,
-                             op.parm.frame.mfd, op.parm.frame.yaddr_vir);
+                CMR_LOGV("sensor_id %d, channel_id "
+                         "0x%x, id 0x%x, evt_id 0x%x sec %u usec %u fd "
+                         "0x%x, yaddr_vir 0x%x",
+                         p_grab->init_param.sensor_id, op.parm.frame.channel_id,
+                         op.parm.frame.index, evt_id, op.parm.frame.sec,
+                         op.parm.frame.usec, op.parm.frame.mfd,
+                         op.parm.frame.yaddr_vir);
 
-                    frame.height = op.parm.frame.height;
-                    frame.frame_id = op.parm.frame.index;
-                    frame.frame_real_id = op.parm.frame.real_index;
-                    frame.sec = op.parm.frame.sec;
-                    frame.usec = op.parm.frame.usec;
-                    frame.monoboottime = op.parm.frame.monoboottime;
-                    frame.length = op.parm.frame.length;
-                    frame.base = op.parm.frame.frm_base_id;
-                    frame.fmt = cmr_grab_get_img_type(op.parm.frame.img_fmt);
-                    frame.yaddr = op.parm.frame.yaddr;
-                    frame.uaddr = op.parm.frame.uaddr;
-                    frame.vaddr = op.parm.frame.vaddr;
-                    frame.yaddr_vir = op.parm.frame.yaddr_vir;
-                    frame.uaddr_vir = op.parm.frame.uaddr_vir;
-                    frame.vaddr_vir = op.parm.frame.vaddr_vir;
-                    frame.fd = op.parm.frame.mfd;
+                frame.height = op.parm.frame.height;
+                frame.frame_id = op.parm.frame.index;
+                frame.frame_real_id = op.parm.frame.real_index;
+                frame.sec = op.parm.frame.sec;
+                frame.usec = op.parm.frame.usec;
+                frame.monoboottime = op.parm.frame.monoboottime;
+                frame.length = op.parm.frame.length;
+                frame.base = op.parm.frame.frm_base_id;
+                frame.fmt = cmr_grab_get_img_type(op.parm.frame.img_fmt);
+                frame.yaddr = op.parm.frame.yaddr;
+                frame.uaddr = op.parm.frame.uaddr;
+                frame.vaddr = op.parm.frame.vaddr;
+                frame.yaddr_vir = op.parm.frame.yaddr_vir;
+                frame.uaddr_vir = op.parm.frame.uaddr_vir;
+                frame.vaddr_vir = op.parm.frame.vaddr_vir;
+                frame.fd = op.parm.frame.mfd;
 
-                    pthread_mutex_lock(&p_grab->status_mutex);
-                    on_flag = p_grab->is_on;
-                    pthread_mutex_unlock(&p_grab->status_mutex);
-                    if (on_flag) {
-                        pthread_mutex_lock(&p_grab->cb_mutex);
-                        if (p_grab->grab_evt_cb) {
-                            (*p_grab->grab_evt_cb)(
-                                evt_id, &frame,
-                                (void *)p_grab->init_param.oem_handle);
-                        }
-                        pthread_mutex_unlock(&p_grab->cb_mutex);
-                    }
-                } else if (op.parm.frame.irq_type == CAMERA_IRQ_STATIS) {
-                    evt_id = cmr_grab_evt_id(op.evt);
-                    if (CMR_GRAB_MAX == evt_id) {
-                        continue;
-                    }
-                    statis_info.buf_size = op.parm.frame.buf_size;
-                    statis_info.phy_addr = op.parm.frame.phy_addr;
-                    statis_info.vir_addr = op.parm.frame.vir_addr;
-                    statis_info.kaddr = op.parm.frame.kaddr;
-                    statis_info.irq_property = op.parm.frame.irq_property;
-                    statis_info.mfd = op.parm.frame.mfd;
-                    CMR_LOGV("got one frame statis buf_size 0x%x phy_addr 0x%x "
-                             "vir_addr 0x%x irq_property 0x%x",
-                             statis_info.buf_size, statis_info.phy_addr,
-                             statis_info.vir_addr, statis_info.irq_property);
-
+                pthread_mutex_lock(&p_grab->status_mutex);
+                on_flag = p_grab->is_on;
+                pthread_mutex_unlock(&p_grab->status_mutex);
+                if (on_flag) {
                     pthread_mutex_lock(&p_grab->cb_mutex);
-                    if (p_grab->isp_statis_evt_cb) {
-                        (*p_grab->isp_statis_evt_cb)(
-                            evt_id, &statis_info,
-                            (void *)cxt->isp_cxt.isp_handle);
-                    }
-                    pthread_mutex_unlock(&p_grab->cb_mutex);
-                } else if (op.parm.frame.irq_type == CAMERA_IRQ_DONE) {
-                    irq_info.irq_property = op.parm.frame.irq_property;
-
-                    pthread_mutex_lock(&p_grab->cb_mutex);
-                    if (p_grab->isp_irq_proc_evt_cb) {
-                        (p_grab->isp_irq_proc_evt_cb)(
-                            evt_id, &irq_info, (void *)cxt->isp_cxt.isp_handle);
+                    if (p_grab->grab_evt_cb) {
+                        (*p_grab->grab_evt_cb)(
+                            evt_id, &frame,
+                            (void *)p_grab->init_param.oem_handle);
                     }
                     pthread_mutex_unlock(&p_grab->cb_mutex);
                 }
+            } else if (op.parm.frame.irq_type == CAMERA_IRQ_STATIS) {
+                evt_id = cmr_grab_evt_id(op.evt);
+                if (CMR_GRAB_MAX == evt_id) {
+                    continue;
+                }
+                statis_info.buf_size = op.parm.frame.buf_size;
+                statis_info.phy_addr = op.parm.frame.phy_addr;
+                statis_info.vir_addr = op.parm.frame.vir_addr;
+                statis_info.kaddr = op.parm.frame.kaddr;
+                statis_info.irq_property = op.parm.frame.irq_property;
+                statis_info.mfd = op.parm.frame.mfd;
+                CMR_LOGV("got one frame statis buf_size 0x%x phy_addr 0x%x "
+                         "vir_addr 0x%x irq_property 0x%x",
+                         statis_info.buf_size, statis_info.phy_addr,
+                         statis_info.vir_addr, statis_info.irq_property);
+
+                pthread_mutex_lock(&p_grab->cb_mutex);
+                if (p_grab->isp_statis_evt_cb) {
+                    (*p_grab->isp_statis_evt_cb)(
+                        evt_id, &statis_info, (void *)cxt->isp_cxt.isp_handle);
+                }
+                pthread_mutex_unlock(&p_grab->cb_mutex);
+            } else if (op.parm.frame.irq_type == CAMERA_IRQ_DONE) {
+                irq_info.irq_property = op.parm.frame.irq_property;
+
+                pthread_mutex_lock(&p_grab->cb_mutex);
+                if (p_grab->isp_irq_proc_evt_cb) {
+                    (p_grab->isp_irq_proc_evt_cb)(
+                        evt_id, &irq_info, (void *)cxt->isp_cxt.isp_handle);
+                }
+                pthread_mutex_unlock(&p_grab->cb_mutex);
             }
         }
     }

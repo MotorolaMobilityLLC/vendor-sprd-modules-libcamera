@@ -2394,6 +2394,8 @@ exit:
 cmr_int snp_create_thread(cmr_handle snp_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
 
+    CMR_LOGI("E");
+
     ret = snp_create_main_thread(snp_handle);
     if (ret) {
         goto exit;
@@ -2449,12 +2451,14 @@ destroy_postproc_thr:
 destroy_main_thr:
     snp_destroy_main_thread(snp_handle);
 exit:
-    CMR_LOGV("done %ld", ret);
+    CMR_LOGI("X ret = %ld", ret);
     return ret;
 }
 
 cmr_int snp_destroy_thread(cmr_handle snp_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
+
+    CMR_LOGI("E");
 
     ret = snp_destroy_write_exif_thread(snp_handle);
     if (ret) {
@@ -2492,7 +2496,7 @@ cmr_int snp_destroy_thread(cmr_handle snp_handle) {
     if (ret) {
         CMR_LOGE("failed to destroy main thread %ld", ret);
     }
-    CMR_LOGD("done");
+    CMR_LOGI("X");
     return ret;
 }
 
@@ -4704,10 +4708,10 @@ cmr_int snp_stop_proc(cmr_handle snp_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct snp_context *cxt = (struct snp_context *)snp_handle;
 
-    CMR_LOGD("s");
+    CMR_LOGI("E");
     ret = snp_checkout_exit(snp_handle);
     snp_set_status(snp_handle, IDLE);
-    CMR_LOGD("e");
+    CMR_LOGI("X");
     return ret;
 }
 cmr_int snp_proc_android_zsl_data(cmr_handle snp_handle, void *data) {
@@ -4823,7 +4827,7 @@ cmr_int cmr_snapshot_init(struct snapshot_init_param *param_ptr,
         CMR_LOGE("failed to create thread %ld", ret);
     }
 exit:
-    CMR_LOGD("done %ld", ret);
+    CMR_LOGI("done %ld", ret);
     if (CMR_CAMERA_SUCCESS == ret) {
         *snapshot_handle = (cmr_handle)cxt;
         cxt->is_inited = 1;
@@ -4863,7 +4867,7 @@ cmr_int cmr_snapshot_deinit(cmr_handle snapshot_handle) {
     snp_local_deinit(snapshot_handle);
     free((void *)snapshot_handle);
 exit:
-    CMR_LOGD("done %ld", ret);
+    CMR_LOGI("done %ld", ret);
     return ret;
 }
 

@@ -756,6 +756,7 @@ int SprdCamera3OEMIf::stop(camera_channel_type_t channel_type,
         break;
     }
 
+    HAL_LOGI("X");
     return ret;
 }
 
@@ -2419,7 +2420,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
     }
 
     if (!isCameraInit()) {
-        HAL_LOGD("wait for camera_init");
+        HAL_LOGI("wait for camera_init");
         if (CMR_CAMERA_SUCCESS !=
             mHalOem->ops->camera_init(mCameraId, camera_cb, this, 0,
                                       &mCameraHandle, (void *)Callback_Malloc,
@@ -2452,7 +2453,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
         mSetting->getLENSTag(&lensInfo);
         lensInfo.aperture = exif_info.aperture;
         mSetting->setLENSTag(lensInfo);
-        HAL_LOGD("camera_id: %d.apert %f", mCameraId, lensInfo.aperture);
+        HAL_LOGI("camera_id: %d.apert %f", mCameraId, lensInfo.aperture);
         /*get sensor and lens info from oem layer*/
 
         /*get sensor otp from oem layer*/
@@ -2554,7 +2555,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
            getMultiCameraMode() == MODE_SELF_SHOT ||
            getMultiCameraMode() == MODE_PAGE_TURN)))
         mIommuEnabled = IommuIsEnabled();
-    HAL_LOGD("mIommuEnabled=%d mSprdRefocusEnabled %d", mIommuEnabled,
+    HAL_LOGI("mIommuEnabled=%d mSprdRefocusEnabled %d", mIommuEnabled,
              mSprdRefocusEnabled);
 
     return true;
@@ -2590,11 +2591,12 @@ sprd_camera_memory_t *SprdCamera3OEMIf::allocReservedMem(int buf_size,
     }
 
     if (is_cache) {
-        pHeapIon = new MemIon("/dev/ion", mem_size, 0,
-                              (1 << 31) | ION_HEAP_ID_MASK_CAM);
+        pHeapIon =
+            new MemIon("/dev/ion", mem_size, 0,
+                       (1 << 31) | ION_HEAP_ID_MASK_CAM | ION_FLAG_NO_CLEAR);
     } else {
         pHeapIon = new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING,
-                              ION_HEAP_ID_MASK_CAM);
+                              ION_HEAP_ID_MASK_CAM | ION_FLAG_NO_CLEAR);
     }
 
     if (pHeapIon == NULL || pHeapIon->getHeapID() < 0) {
@@ -2658,19 +2660,21 @@ sprd_camera_memory_t *SprdCamera3OEMIf::allocCameraMem(int buf_size,
 
     if (!mIommuEnabled) {
         if (is_cache) {
-            pHeapIon = new MemIon("/dev/ion", mem_size, 0,
-                                  (1 << 31) | ION_HEAP_ID_MASK_MM);
+            pHeapIon =
+                new MemIon("/dev/ion", mem_size, 0,
+                           (1 << 31) | ION_HEAP_ID_MASK_MM | ION_FLAG_NO_CLEAR);
         } else {
             pHeapIon = new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING,
-                                  ION_HEAP_ID_MASK_MM);
+                                  ION_HEAP_ID_MASK_MM | ION_FLAG_NO_CLEAR);
         }
     } else {
         if (is_cache) {
             pHeapIon = new MemIon("/dev/ion", mem_size, 0,
-                                  (1 << 31) | ION_HEAP_ID_MASK_SYSTEM);
+                                  (1 << 31) | ION_HEAP_ID_MASK_SYSTEM |
+                                      ION_FLAG_NO_CLEAR);
         } else {
             pHeapIon = new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING,
-                                  ION_HEAP_ID_MASK_SYSTEM);
+                                  ION_HEAP_ID_MASK_SYSTEM | ION_FLAG_NO_CLEAR);
         }
     }
 
@@ -2850,7 +2854,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     char multicameramode[PROPERTY_VALUE_MAX];
     struct img_size jpeg_thumb_size;
 
-    HAL_LOGD("E camera id %d", mCameraId);
+    HAL_LOGI("E camera id %d", mCameraId);
 
     SPRD_DEF_Tag sprddefInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
@@ -2968,7 +2972,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     PushFirstVideobuff();
     PushFirstZslbuff();
 
-    HAL_LOGD("X camera id %d", mCameraId);
+    HAL_LOGI("X camera id %d", mCameraId);
 
     return NO_ERROR;
 }
@@ -2985,7 +2989,7 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
         return;
     }
 
-    HAL_LOGD("E camera id %d", mCameraId);
+    HAL_LOGI("E camera id %d", mCameraId);
     if (isCapturing()) {
         setCameraState(SPRD_INTERNAL_CAPTURE_STOPPING, STATE_CAPTURE);
         if (0 != mHalOem->ops->camera_cancel_takepicture(mCameraHandle)) {
@@ -3018,12 +3022,12 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
     deinitPreview();
     end_timestamp = systemTime();
 
-    HAL_LOGD("X Time:%lld(ms). camera id %d",
+    HAL_LOGI("X Time:%lld(ms). camera id %d",
              (end_timestamp - start_timestamp) / 1000000, mCameraId);
 }
 
 takepicture_mode SprdCamera3OEMIf::getCaptureMode() {
-    HAL_LOGD("cap mode %d.\n", mCaptureMode);
+    HAL_LOGD("cap mode %d", mCaptureMode);
 
     return mCaptureMode;
 }
@@ -3371,11 +3375,13 @@ int SprdCamera3OEMIf::allocOneFrameMem(
     /* alloc input y buffer */
     HAL_LOGD(" %d  %d  %d\n", mIommuEnabled, ptr->width, ptr->height);
     if (!mIommuEnabled) {
-        ptr->pmem_hp = new MemIon("/dev/ion", ptr->width * ptr->height,
-                                  MemIon::NO_CACHING, ION_HEAP_ID_MASK_MM);
+        ptr->pmem_hp =
+            new MemIon("/dev/ion", ptr->width * ptr->height, MemIon::NO_CACHING,
+                       ION_HEAP_ID_MASK_MM | ION_FLAG_NO_CLEAR);
     } else {
-        ptr->pmem_hp = new MemIon("/dev/ion", ptr->width * ptr->height,
-                                  MemIon::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
+        ptr->pmem_hp =
+            new MemIon("/dev/ion", ptr->width * ptr->height, MemIon::NO_CACHING,
+                       ION_HEAP_ID_MASK_SYSTEM | ION_FLAG_NO_CLEAR);
     }
     if (ptr->pmem_hp->getHeapID() < 0) {
         HAL_LOGE("getHeapID failed\n");
@@ -8530,7 +8536,7 @@ int SprdCamera3OEMIf::gyro_monitor_thread_init(void *p_data) {
         return -1;
     }
 
-    HAL_LOGD("E inited=%d", obj->mGyroInit);
+    HAL_LOGI("E inited=%d", obj->mGyroInit);
 
     if (!obj->mGyroInit) {
         obj->mGyroInit = 1;
