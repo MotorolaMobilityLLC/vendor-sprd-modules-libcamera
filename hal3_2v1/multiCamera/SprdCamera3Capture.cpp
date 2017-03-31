@@ -104,7 +104,7 @@ camera3_callback_ops SprdCamera3Capture::callback_ops_aux = {
  *
  *==========================================================================*/
 SprdCamera3Capture::SprdCamera3Capture() {
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
     m_nPhyCameras = 2; // m_nPhyCameras should always be 2 with dual camera mode
     m_VirtualCamera.id = 1; // hardcode left front camera here
     mStaticMetadata = NULL;
@@ -132,7 +132,7 @@ SprdCamera3Capture::SprdCamera3Capture() {
     mHasSendFrameNumber = 0;
     mWaitFrameNumber = 0;
     mPerfectskinlevel = 0;
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 
 /*===========================================================================
@@ -142,13 +142,13 @@ SprdCamera3Capture::SprdCamera3Capture() {
  *
  *==========================================================================*/
 SprdCamera3Capture::~SprdCamera3Capture() {
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     mCaptureThread = NULL;
     if (m_pPhyCamera) {
         delete[] m_pPhyCamera;
         m_pPhyCamera = NULL;
     }
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 /*===========================================================================
  * FUNCTION         : getCameraCapture
@@ -269,7 +269,7 @@ int SprdCamera3Capture::closeCameraDevice() {
 
     int rc = NO_ERROR;
     sprdcamera_physical_descriptor_t *sprdCam = NULL;
-    HAL_LOGD("E");
+    HAL_LOGI("E");
 
     // Attempt to close all cameras regardless of unbundle results
     for (uint32_t i = 0; i < m_nPhyCameras; i++) {
@@ -301,7 +301,7 @@ int SprdCamera3Capture::closeCameraDevice() {
         free(mCaptureThread->mGpuApi);
         mCaptureThread->mGpuApi = NULL;
     }
-    HAL_LOGD("X, rc: %d", rc);
+    HAL_LOGI("X, rc: %d", rc);
 
     return rc;
 }
@@ -437,7 +437,7 @@ void SprdCamera3Capture::process_capture_result_aux(
  *==========================================================================*/
 void SprdCamera3Capture::notifyMain(const struct camera3_callback_ops *ops,
                                     const camera3_notify_msg_t *msg) {
-    HAL_LOGD("idx:%d", msg->message.shutter.frame_number);
+    HAL_LOGI("idx:%d", msg->message.shutter.frame_number);
     CHECK_CAPTURE();
     mCapture->notifyMain(msg);
 }
@@ -452,7 +452,7 @@ void SprdCamera3Capture::notifyMain(const struct camera3_callback_ops *ops,
  *==========================================================================*/
 void SprdCamera3Capture::notifyAux(const struct camera3_callback_ops *ops,
                                    const camera3_notify_msg_t *msg) {
-    HAL_LOGD("idx:%d", msg->message.shutter.frame_number);
+    HAL_LOGI("idx:%d", msg->message.shutter.frame_number);
     CHECK_CAPTURE();
     mCapture->notifyAux(msg);
 }
@@ -703,7 +703,7 @@ int SprdCamera3Capture::cameraDeviceOpen(__unused int camera_id,
     int rc = NO_ERROR;
     uint32_t phyId = 0;
 
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
     hw_device_t *hw_dev[m_nPhyCameras];
     // Open all physical cameras
     for (uint32_t i = 0; i < m_nPhyCameras; i++) {
@@ -749,7 +749,7 @@ int SprdCamera3Capture::cameraDeviceOpen(__unused int camera_id,
         return UNKNOWN_ERROR;
     }
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
     return rc;
 }
 
@@ -859,7 +859,7 @@ int SprdCamera3Capture::setupPhysicalCameras() {
  * RETURN     : None
  *==========================================================================*/
 SprdCamera3Capture::CaptureThread::CaptureThread() {
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
     mCaptureMsgList.clear();
     memset(mMainStreams, 0, sizeof(camera3_stream_t) * MAX_NUM_STREAMS);
     memset(mAuxStreams, 0, sizeof(camera3_stream_t) * MAX_NUM_STREAMS);
@@ -885,7 +885,7 @@ SprdCamera3Capture::CaptureThread::CaptureThread() {
  * RETURN     : None
  *==========================================================================*/
 SprdCamera3Capture::CaptureThread::~CaptureThread() {
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
     mCaptureMsgList.clear();
 }
 
@@ -1042,7 +1042,7 @@ void SprdCamera3Capture::CaptureThread::reProcessFrame(
  * RETURN     : None
  *==========================================================================*/
 int SprdCamera3Capture::CaptureThread::loadGpuApi() {
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
     const char *error = NULL;
 
     if (mGpuApi == NULL) {
@@ -1098,14 +1098,14 @@ int SprdCamera3Capture::CaptureThread::loadGpuApi() {
  * RETURN     : None
  *==========================================================================*/
 void SprdCamera3Capture::CaptureThread::unLoadGpuApi() {
-    HAL_LOGD("E");
+    HAL_LOGI("E");
 
     if (mGpuApi->handle != NULL) {
         dlclose(mGpuApi->handle);
         mGpuApi->handle = NULL;
     }
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 /*===========================================================================
  * FUNCTION   :initGpuData
@@ -1293,7 +1293,7 @@ bool SprdCamera3Capture::CaptureThread::threadLoop() {
     buffer_handle_t *output_buffer = NULL;
     capture_queue_msg_t capture_msg;
 
-    HAL_LOGD("E: isInitRenderContest:%d", isInitRenderContest);
+    HAL_LOGI("E: isInitRenderContest:%d", isInitRenderContest);
     if (!isInitRenderContest)
         initGpuData();
 
@@ -1675,7 +1675,7 @@ int SprdCamera3Capture::initialize(const camera3_callback_ops_t *callback_ops) {
     sprdcamera_physical_descriptor_t sprdCam = m_pPhyCamera[CAM_TYPE_MAIN];
     SprdCamera3HWI *hwiMain = sprdCam.hwi;
 
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     CHECK_HWI_ERROR(hwiMain);
 
     mLastWidth = 0;
@@ -1726,7 +1726,7 @@ int SprdCamera3Capture::initialize(const camera3_callback_ops_t *callback_ops) {
 
     mCaptureThread->mCallbackOps = callback_ops;
     mCaptureThread->mDevMain = &m_pPhyCamera[CAM_TYPE_MAIN];
-    HAL_LOGD("X");
+    HAL_LOGI("X");
     return rc;
 }
 
@@ -2592,9 +2592,9 @@ void SprdCamera3Capture::processCaptureResultAux(
  *==========================================================================*/
 void SprdCamera3Capture::_dump(const struct camera3_device *device, int fd) {
 
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 /*===========================================================================
  * FUNCTION   :dump
@@ -2608,7 +2608,7 @@ void SprdCamera3Capture::_dump(const struct camera3_device *device, int fd) {
  *==========================================================================*/
 void SprdCamera3Capture::dumpImg(void *addr, int size, int frameId) {
 
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
     char name[128];
     snprintf(name, sizeof(name), "/data/misc/media/%d_%d.yuv", size, frameId);
 
@@ -2623,7 +2623,7 @@ void SprdCamera3Capture::dumpImg(void *addr, int size, int frameId) {
     }
     fclose(file_fd);
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 
 /*===========================================================================
@@ -2637,7 +2637,7 @@ void SprdCamera3Capture::dumpImg(void *addr, int size, int frameId) {
  *==========================================================================*/
 int SprdCamera3Capture::_flush(const struct camera3_device *device) {
     int rc = 0;
-    HAL_LOGD("E");
+    HAL_LOGI("E");
 
     HAL_LOGD("flush, mCaptureMsgList.size=%d, mSavedRequestList.size:%d",
              mCaptureThread->mCaptureMsgList.size(), mSavedRequestList.size());
@@ -2653,7 +2653,7 @@ int SprdCamera3Capture::_flush(const struct camera3_device *device) {
             mCaptureThread->requestExit();
         }
     }
-    HAL_LOGD("X");
+    HAL_LOGI("X");
     return rc;
 }
 };

@@ -988,6 +988,7 @@ enum cmr_focus_mode {
     CAMERA_FOCUS_MODE_CAF_VIDEO = 5,
     CAMERA_FOCUS_MODE_MACRO_FIXED = 6,
     CAMERA_FOCUS_MODE_PICTURE = 7,
+    CAMERA_FOCUS_MODE_FULLSCAN = 8,
     CAMERA_FOCUS_MODE_MAX
 };
 
@@ -1232,6 +1233,7 @@ typedef enum {
                          // hal transform to open physics Camera id is 1 and 2
     MODE_PAGE_TURN = 14, // Camera2 apk open  camera id is MODE_PAGE_TURN,camera
                          // hal transform to open physics Camera id is 2
+    MODE_BLUR_FRONT = 15,
     MODE_CAMERA_MAX
 } multiCameraMode;
 
@@ -1239,6 +1241,7 @@ typedef enum {
     CAMERA_IOCTRL_SET_MULTI_CAMERAMODE = 0,
     CAMERA_IOCTRL_GET_SENSOR_LUMA,
     CAMERA_IOCTRL_COVERED_SENSOR_STREAM_CTRL,
+    CAMERA_IOCTRL_GET_FULLSCAN_INFO,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 

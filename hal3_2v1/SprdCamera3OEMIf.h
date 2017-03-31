@@ -214,6 +214,9 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void setSprdCameraLowpower(int flag);
     int getCoveredValue(uint32_t *value);
     int setSensorStream(uint32_t on_off);
+    int autoFocusToFaceFocus();
+    bool isNeedAfFullscan();
+    int getIspAfFullscanInfo(struct isp_af_fullscan_info *af_fullscan_info);
 
   public:
     static int pre_alloc_cap_mem_thread_init(void *p_data);

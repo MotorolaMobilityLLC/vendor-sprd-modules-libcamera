@@ -9756,3 +9756,16 @@ cmr_int camera_stream_ctrl(cmr_handle oem_handle, cmr_u32 on_off) {
     CMR_LOGD("done");
     return ret;
 }
+
+cmr_int cmr_get_isp_af_fullscan(cmr_handle oem_handle,
+                                struct isp_af_fullscan_info *af_fullscan_info) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    void *isp_param_ptr = (void *)af_fullscan_info;
+
+    CMR_LOGI("E");
+    ret = isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_GET_FULLSCAN_INFO,
+                    isp_param_ptr);
+
+    return ret;
+}

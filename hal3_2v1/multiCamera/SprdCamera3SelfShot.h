@@ -98,6 +98,7 @@ class SprdCamera3SelfShot {
     int mAvailableSensorSelfSot;
     bool mOpenSubsensor;
     int mCoveredValue;
+    int64_t mStartPreviewTime;
     int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
     int setupPhysicalCameras();
     int getCameraInfo(struct camera_info *info);

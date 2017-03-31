@@ -99,6 +99,7 @@ class SprdCamera3PageTurn {
     int getCameraInfo(struct camera_info *info);
     void convertToRegions(int32_t *rect, int32_t *region, int weight);
     int32_t mOldRequestId;
+    int64_t mStartPreviewTime;
 
   public:
     SprdCamera3PageTurn();

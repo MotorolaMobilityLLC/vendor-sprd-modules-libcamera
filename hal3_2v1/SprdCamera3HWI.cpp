@@ -1925,6 +1925,15 @@ int SprdCamera3HWI::getCoveredValue(uint32_t *value) {
     return rc;
 }
 
+int SprdCamera3HWI::getIspAfFullscanInfo(
+    struct isp_af_fullscan_info *af_fullscan_info) {
+    int rc = 0;
+
+    rc = mOEMIf->getIspAfFullscanInfo(af_fullscan_info);
+
+    return rc;
+}
+
 int SprdCamera3HWI::setSensorStream(uint32_t on_off) {
     int ret = 0;
 

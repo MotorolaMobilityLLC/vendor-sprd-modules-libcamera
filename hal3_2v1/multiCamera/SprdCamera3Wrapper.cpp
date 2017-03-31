@@ -61,7 +61,7 @@ int SprdCamera3Wrapper::cameraDeviceOpen(
 
     int rc = NO_ERROR;
 
-    HAL_LOGD("id= %d", atoi(id));
+    HAL_LOGI("id= %d", atoi(id));
 
     switch (atoi(id)) {
     case MODE_3D_VIDEO:
@@ -78,6 +78,7 @@ int SprdCamera3Wrapper::cameraDeviceOpen(
         return rc;
 #ifdef CONFIG_BLUR_SUPPORT
     case MODE_BLUR:
+    case MODE_BLUR_FRONT:
         rc = mBlur->camera_device_open(module, id, hw_device);
         return rc;
 #endif
@@ -103,7 +104,7 @@ int SprdCamera3Wrapper::getCameraInfo(__unused int camera_id,
 
     int rc = NO_ERROR;
 
-    HAL_LOGD("id= %d", camera_id);
+    HAL_LOGI("id= %d", camera_id);
 
     switch (camera_id) {
     case MODE_3D_VIDEO:
@@ -120,6 +121,7 @@ int SprdCamera3Wrapper::getCameraInfo(__unused int camera_id,
         return rc;
 #ifdef CONFIG_BLUR_SUPPORT
     case MODE_BLUR:
+    case MODE_BLUR_FRONT:
         rc = mBlur->get_camera_info(camera_id, info);
         return rc;
 #endif

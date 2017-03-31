@@ -305,7 +305,7 @@ bool SprdCamera3Factory::isSingleIdExposeOnMultiCameraMode(int cameraId) {
     if ((MODE_3D_VIDEO == cameraId) || (MODE_RANGE_FINDER == cameraId) ||
         (MODE_3D_CAPTURE == cameraId) || (MODE_3D_PREVIEW == cameraId) ||
         (MODE_BLUR == cameraId) || (MODE_SELF_SHOT == cameraId) ||
-        (MODE_PAGE_TURN == cameraId)) {
+        (MODE_PAGE_TURN == cameraId) || (MODE_BLUR_FRONT == cameraId)) {
         return true;
     } else if (MODE_REFOCUS == cameraId || (MODE_3D_CALIBRATION == cameraId)) {
         return false;

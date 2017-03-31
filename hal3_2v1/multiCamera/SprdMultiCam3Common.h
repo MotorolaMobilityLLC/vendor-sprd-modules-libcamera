@@ -41,7 +41,7 @@ namespace sprdcamera {
 #define CONTEXT_SUCCESS 1
 #define CONTEXT_FAIL 0
 #define TIME_DIFF (15e6)
-#define MAX_CONVERED_VALURE 5
+#define MAX_CONVERED_VALURE 10
 #define CAMERA3MAXFACE 11
 
 typedef enum { STATE_NOT_READY, STATE_IDLE, STATE_BUSY } currentStatus;

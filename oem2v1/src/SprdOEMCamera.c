@@ -1058,6 +1058,11 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
         CMR_LOGD("force sensor stream on %u", *(uint32_t *)param);
         ret = camera_stream_ctrl(handle, *(uint32_t *)param);
         break;
+    case CAMERA_IOCTRL_GET_FULLSCAN_INFO: {
+        ret = cmr_get_isp_af_fullscan(handle,
+                                      (struct isp_af_fullscan_info *)param);
+        break;
+    }
     default:
         break;
     }

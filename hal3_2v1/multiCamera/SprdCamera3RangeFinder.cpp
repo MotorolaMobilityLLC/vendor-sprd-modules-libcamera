@@ -114,7 +114,7 @@ camera3_callback_ops SprdCamera3RangeFinder::callback_ops_aux = {
  *
  *==========================================================================*/
 SprdCamera3RangeFinder::SprdCamera3RangeFinder() {
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
     m_nPhyCameras = 2; // m_nPhyCameras should always be 2 with dual camera mode
 
     mStaticMetadata = NULL;
@@ -136,7 +136,7 @@ SprdCamera3RangeFinder::SprdCamera3RangeFinder() {
     mCurrentState = STATE_IDLE;
     mVcmSteps = 0;
     mUwDepth = 0;
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 
 /*===========================================================================
@@ -146,7 +146,7 @@ SprdCamera3RangeFinder::SprdCamera3RangeFinder() {
  *
  *==========================================================================*/
 SprdCamera3RangeFinder::~SprdCamera3RangeFinder() {
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     mSyncThread = NULL;
     mNotifyListAux.clear();
     mNotifyListMain.clear();
@@ -159,7 +159,7 @@ SprdCamera3RangeFinder::~SprdCamera3RangeFinder() {
         m_pPhyCamera = NULL;
     }
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 
 /*===========================================================================
@@ -203,11 +203,11 @@ int SprdCamera3RangeFinder::get_camera_info(__unused int camera_id,
 
     int rc = NO_ERROR;
 
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     if (info) {
         rc = gRangeFinder->getCameraInfo(info);
     }
-    HAL_LOGD("X, rc: %d", rc);
+    HAL_LOGI("X, rc: %d", rc);
 
     return rc;
 }
@@ -334,7 +334,7 @@ int SprdCamera3RangeFinder::closeCameraDevice() {
         sprdCam->dev = NULL;
     }
 
-    HAL_LOGD("X, rc: %d", rc);
+    HAL_LOGI("X, rc: %d", rc);
 
     return rc;
 }
@@ -353,11 +353,11 @@ int SprdCamera3RangeFinder::initialize(
     const camera3_callback_ops_t *callback_ops) {
     int rc = NO_ERROR;
 
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     CHECK_RANGEFINDER_ERR();
     rc = gRangeFinder->initialize(callback_ops);
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
     return rc;
 }
 
@@ -375,14 +375,14 @@ SprdCamera3RangeFinder::construct_default_request_settings(
     const struct camera3_device *device, int type) {
     const camera_metadata_t *rc;
 
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     if (!gRangeFinder) {
         HAL_LOGE("Error getting finder");
         return NULL;
     }
     rc = gRangeFinder->constructDefaultRequestSettings(device, type);
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 
     return rc;
 }
@@ -400,12 +400,12 @@ int SprdCamera3RangeFinder::configure_streams(
     camera3_stream_configuration_t *stream_list) {
     int rc = 0;
 
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
     CHECK_RANGEFINDER_ERR();
 
     rc = gRangeFinder->configureStreams(device, stream_list);
 
-    HAL_LOGD(" X");
+    HAL_LOGI(" X");
 
     return rc;
 }
@@ -640,7 +640,7 @@ int SprdCamera3RangeFinder::cameraDeviceOpen(__unused int camera_id,
     m_VirtualCamera.dev.priv = (void *)&m_VirtualCamera;
     *hw_device = &m_VirtualCamera.dev.common;
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
     return rc;
 }
 /*===========================================================================
@@ -659,7 +659,7 @@ int SprdCamera3RangeFinder::cameraDeviceOpen(__unused int camera_id,
 int SprdCamera3RangeFinder::getCameraInfo(struct camera_info *info) {
     int rc = NO_ERROR;
     int camera_id = m_VirtualCamera.id;
-    HAL_LOGD("E, camera_id = %d", camera_id);
+    HAL_LOGI("E, camera_id = %d", camera_id);
 
     SprdCamera3Setting::initDefaultParameters(camera_id);
 
@@ -673,7 +673,7 @@ int SprdCamera3RangeFinder::getCameraInfo(struct camera_info *info) {
     info->device_version =
         CAMERA_DEVICE_API_VERSION_3_2; // CAMERA_DEVICE_API_VERSION_3_0;
     info->static_camera_characteristics = mStaticMetadata;
-    HAL_LOGD("X");
+    HAL_LOGI("X");
     return rc;
 }
 /*===========================================================================
@@ -792,14 +792,14 @@ bool SprdCamera3RangeFinder::matchTwoFrame(hwi_frame_buffer_info_t result1,
  * RETURN     : None
  *==========================================================================*/
 SprdCamera3RangeFinder::SyncThread::SyncThread() {
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     mSyncMsgList.clear();
     mGetNewestFrameForMeasure = false;
     mVFps = 0;
     mVFrameCount = 0;
     mVLastFpsTime = 0;
     mVLastFrameCount = 0;
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 /*===========================================================================
  * FUNCTION   :~~SyncThread
@@ -811,9 +811,9 @@ SprdCamera3RangeFinder::SyncThread::SyncThread() {
  * RETURN     : None
  *==========================================================================*/
 SprdCamera3RangeFinder::SyncThread::~SyncThread() {
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     mSyncMsgList.clear();
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 
 /*===========================================================================
@@ -929,7 +929,7 @@ void SprdCamera3RangeFinder::SyncThread::dumpFps() {
  * RETURN     : None
  *==========================================================================*/
 SprdCamera3RangeFinder::MeasureThread::MeasureThread() {
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     mCurUwcoods.uwInX1 = 0;
     mCurUwcoods.uwInY1 = 0;
     mCurUwcoods.uwInX2 = 0;
@@ -951,7 +951,7 @@ SprdCamera3RangeFinder::MeasureThread::MeasureThread() {
     memset(mNativeBuffer, 0,
            sizeof(native_handle_t *) * MAX_FINDER_QEQUEST_BUF);
     memset(&mLastPreCoods, 0, sizeof(uw_Coordinate));
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 /*===========================================================================
  * FUNCTION   :~MeasureThread
@@ -963,14 +963,14 @@ SprdCamera3RangeFinder::MeasureThread::MeasureThread() {
  * RETURN     : None
  *==========================================================================*/
 SprdCamera3RangeFinder::MeasureThread::~MeasureThread() {
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     mMeasureMsgList.clear();
     mLocalBufferList.clear();
     if (mDepthEngineApi != NULL) {
         free(mDepthEngineApi);
         mDepthEngineApi = NULL;
     }
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 
 /*===========================================================================
@@ -1040,7 +1040,7 @@ int SprdCamera3RangeFinder::MeasureThread::allocateOne(int w, int h,
     new_mem->native_handle = buffer;
     new_mem->pHeapIon = pHeapIon;
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 
     return result;
 
@@ -1159,7 +1159,7 @@ void SprdCamera3RangeFinder::MeasureThread::waitMsgAvailable() {
  *==========================================================================*/
 int SprdCamera3RangeFinder::MeasureThread::loadDepthEngine() {
 
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
     mDepthEngineApi->handle = dlopen(DEPTH_ENGINE_PATH, RTLD_NOW);
     if (mDepthEngineApi->handle == NULL) {
         HAL_LOGE("open depth engine API failed.error");
@@ -1191,7 +1191,7 @@ int SprdCamera3RangeFinder::MeasureThread::loadDepthEngine() {
                            unsigned short a_uwInImageHeight))
             dlsym(mDepthEngineApi->handle, "alSDE2_HolelessPolish");
 
-    HAL_LOGD("load depth engine Api succuss.");
+    HAL_LOGI("load depth engine Api succuss.");
 
     return 0;
 }
@@ -1552,12 +1552,12 @@ getpmem_fail:
  * RETURN     :
  *==========================================================================*/
 void SprdCamera3RangeFinder::dump(const struct camera3_device *device, int fd) {
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     CHECK_FINDER();
 
     gRangeFinder->_dump(device, fd);
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 /*===========================================================================
  * FUNCTION   :flush
@@ -1571,12 +1571,12 @@ void SprdCamera3RangeFinder::dump(const struct camera3_device *device, int fd) {
 int SprdCamera3RangeFinder::flush(const struct camera3_device *device) {
     int rc = 0;
 
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
     CHECK_RANGEFINDER_ERR();
 
     rc = gRangeFinder->_flush(device);
 
-    HAL_LOGD(" X");
+    HAL_LOGI(" X");
 
     return rc;
 }
@@ -1596,7 +1596,7 @@ int SprdCamera3RangeFinder::initialize(
         m_pPhyCamera[RANGE_CAM_TYPE_MAIN];
     SprdCamera3HWI *hwiMain = sprdCam.hwi;
 
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     CHECK_HWI_ERROR(hwiMain);
 
     mNotifyListAux.clear();
@@ -1637,7 +1637,7 @@ int SprdCamera3RangeFinder::initialize(
 
     mCallbackOps = callback_ops;
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
     return rc;
 }
 
@@ -1653,7 +1653,7 @@ int SprdCamera3RangeFinder::initialize(
 int SprdCamera3RangeFinder::configureStreams(
     const struct camera3_device *device,
     camera3_stream_configuration_t *stream_list) {
-    HAL_LOGD("E");
+    HAL_LOGI("E");
 
     int rc = NO_ERROR;
     camera3_stream_t *newStream = NULL;
@@ -1769,7 +1769,7 @@ int SprdCamera3RangeFinder::configureStreams(
 const camera_metadata_t *
 SprdCamera3RangeFinder::constructDefaultRequestSettings(
     const struct camera3_device *device, int type) {
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     const camera_metadata_t *fwk_metadata = NULL;
 
     SprdCamera3HWI *hw = m_pPhyCamera[RANGE_CAM_TYPE_MAIN].hwi;
@@ -1794,7 +1794,7 @@ SprdCamera3RangeFinder::constructDefaultRequestSettings(
                SPRD_DUAL_OTP_SIZE);
         checkOtpInfo();
     }
-    HAL_LOGD("X");
+    HAL_LOGI("X");
     return fwk_metadata;
 }
 
@@ -2213,9 +2213,9 @@ void SprdCamera3RangeFinder::processCaptureResultAux(
 void SprdCamera3RangeFinder::_dump(const struct camera3_device *device,
                                    int fd) {
 
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 /*===========================================================================
  * FUNCTION   :dump
@@ -2230,7 +2230,7 @@ void SprdCamera3RangeFinder::_dump(const struct camera3_device *device,
 void SprdCamera3RangeFinder::dumpImg(void *addr, int size, int frameId,
                                      int flag) {
 
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
     char name[128];
     snprintf(name, sizeof(name), "/data/misc/media/%d_%d_%d.yuv", size, frameId,
              flag);
@@ -2246,7 +2246,7 @@ void SprdCamera3RangeFinder::dumpImg(void *addr, int size, int frameId,
     }
     fclose(file_fd);
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 
 /*===========================================================================

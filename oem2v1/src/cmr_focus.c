@@ -77,6 +77,7 @@ struct af_isp_mode_pairs af_isp_focus_mode[CAMERA_FOCUS_MODE_MAX] = {
     {CAMERA_FOCUS_MODE_MACRO_FIXED, ISP_FOCUS_MACRO_FIXED}, /* engineer mode */
     {CAMERA_FOCUS_MODE_PICTURE,
      ISP_FOCUS_PICTURE}, /* before snapshot set wait sem */
+    {CAMERA_FOCUS_MODE_FULLSCAN, ISP_FOCUS_FULLSCAN},
 };
 
 #define CMR_CHECK_AF_HANDLE                                                    \

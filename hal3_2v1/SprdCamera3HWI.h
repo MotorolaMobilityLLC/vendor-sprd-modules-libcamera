@@ -108,6 +108,7 @@ class SprdCamera3HWI {
     void setSprdCameraLowpower(int flag);
     int getCoveredValue(uint32_t *value);
     int setSensorStream(uint32_t on_off);
+    int getIspAfFullscanInfo(struct isp_af_fullscan_info *af_fullscan_info);
 
   private:
     int openCamera();

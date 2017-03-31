@@ -107,7 +107,7 @@ camera3_callback_ops SprdCamera3StereoPreview::callback_ops_aux = {
  *
  *==========================================================================*/
 SprdCamera3StereoPreview::SprdCamera3StereoPreview() {
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
 
     m_nPhyCameras = 2; // m_nPhyCameras should always be 2 with dual camera mode
     mStaticMetadata = NULL;
@@ -121,7 +121,19 @@ SprdCamera3StereoPreview::SprdCamera3StereoPreview() {
     setupPhysicalCameras();
     m_VirtualCamera.id = CAM_MAIN_ID; // hardcode left front camera id here
 
-    HAL_LOGD("X");
+    memset(&mAuxStreams, 0, sizeof(camera3_stream_t));
+    memset(&mMainStreams, 0, sizeof(camera3_stream_t));
+    mIommuEnabled = false;
+    mhasCallbackStream = false;
+    memset(mPreviewNativeBuffer, 0,
+           sizeof(native_handle_t *) * MAX_PREVIEW_QEQUEST_BUF);
+    mPerfectskinlevel = 0;
+    mrotation = 0;
+    memset(&mPreviewSize, 0, sizeof(stereo_preview_size));
+    mMaxPendingCount = 0;
+    mPendingRequest = 0;
+
+    HAL_LOGI("X");
 }
 
 /*===========================================================================
@@ -131,7 +143,7 @@ SprdCamera3StereoPreview::SprdCamera3StereoPreview() {
  *
  *==========================================================================*/
 SprdCamera3StereoPreview::~SprdCamera3StereoPreview() {
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     mNotifyListAux.clear();
     mNotifyListMain.clear();
     mUnmatchedFrameListMain.clear();
@@ -142,7 +154,7 @@ SprdCamera3StereoPreview::~SprdCamera3StereoPreview() {
         delete[] m_pPhyCamera;
         m_pPhyCamera = NULL;
     }
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 /*===========================================================================
  * FUNCTION         : freeLocalBuffer
@@ -217,11 +229,11 @@ int SprdCamera3StereoPreview::get_camera_info(__unused int camera_id,
 
     int rc = NO_ERROR;
 
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     if (info) {
         rc = mPreviewMuxer->getCameraInfo(info);
     }
-    HAL_LOGD("X, rc: %d", rc);
+    HAL_LOGI("X, rc: %d", rc);
 
     return rc;
 }
@@ -245,13 +257,13 @@ int SprdCamera3StereoPreview::camera_device_open(
     __unused const struct hw_module_t *module, const char *id,
     struct hw_device_t **hw_device) {
     int rc = NO_ERROR;
-    HAL_LOGD("id= %d", atoi(id));
+    HAL_LOGI("id= %d", atoi(id));
     if (!id) {
         HAL_LOGE("Invalid camera id");
         return BAD_VALUE;
     }
     rc = mPreviewMuxer->cameraDeviceOpen(atoi(id), hw_device);
-    HAL_LOGD("id= %d, rc: %d", atoi(id), rc);
+    HAL_LOGI("id= %d, rc: %d", atoi(id), rc);
     return rc;
 }
 
@@ -315,7 +327,7 @@ int SprdCamera3StereoPreview::closeCameraDevice() {
         mLocalBuffer = NULL;
     }
 
-    HAL_LOGD("X, rc: %d", rc);
+    HAL_LOGI("X, rc: %d", rc);
     return rc;
 }
 
@@ -332,10 +344,10 @@ int SprdCamera3StereoPreview::initialize(
     __unused const struct camera3_device *device,
     const camera3_callback_ops_t *callback_ops) {
     int rc = NO_ERROR;
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     CHECK_MUXER_ERROR();
     rc = mPreviewMuxer->initialize(callback_ops);
-    HAL_LOGD("X");
+    HAL_LOGI("X");
     return rc;
 }
 
@@ -352,13 +364,13 @@ const camera_metadata_t *
 SprdCamera3StereoPreview::construct_default_request_settings(
     const struct camera3_device *device, int type) {
     const camera_metadata_t *rc;
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     if (!mPreviewMuxer) {
         HAL_LOGE("Error getting muxer ");
         return NULL;
     }
     rc = mPreviewMuxer->constructDefaultRequestSettings(device, type);
-    HAL_LOGD("X");
+    HAL_LOGI("X");
     return rc;
 }
 /*===========================================================================
@@ -374,10 +386,10 @@ int SprdCamera3StereoPreview::configure_streams(
     const struct camera3_device *device,
     camera3_stream_configuration_t *stream_list) {
     int rc = 0;
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
     CHECK_MUXER_ERROR();
     rc = mPreviewMuxer->configureStreams(device, stream_list);
-    HAL_LOGD(" X");
+    HAL_LOGI(" X");
     return rc;
 }
 /*===========================================================================
@@ -494,7 +506,7 @@ int SprdCamera3StereoPreview::allocateOne(int w, int h, uint32_t is_cache,
     MemIon *pHeapIon = NULL;
     private_handle_t *buffer;
 
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     mem_size = w * h * 3 / 2;
     // to make it page size aligned
     //  mem_size = (mem_size + 4095U) & (~4095U);
@@ -553,7 +565,7 @@ int SprdCamera3StereoPreview::allocateOne(int w, int h, uint32_t is_cache,
     new_mem->native_handle = buffer;
     new_mem->pHeapIon = pHeapIon;
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 
     return result;
 
@@ -650,7 +662,7 @@ int SprdCamera3StereoPreview::cameraDeviceOpen(__unused int camera_id,
     int rc = NO_ERROR;
     uint32_t phyId = 0;
 
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
     hw_device_t *hw_dev[m_nPhyCameras];
     // Open all physical cameras
     for (uint32_t i = 0; i < m_nPhyCameras; i++) {
@@ -682,7 +694,7 @@ int SprdCamera3StereoPreview::cameraDeviceOpen(__unused int camera_id,
     m_VirtualCamera.dev.priv = (void *)&m_VirtualCamera;
     *hw_device = &m_VirtualCamera.dev.common;
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
     return rc;
 }
 
@@ -702,7 +714,7 @@ int SprdCamera3StereoPreview::cameraDeviceOpen(__unused int camera_id,
 int SprdCamera3StereoPreview::getCameraInfo(struct camera_info *info) {
     int rc = NO_ERROR;
     int camera_id = m_VirtualCamera.id;
-    HAL_LOGD("E, camera_id = %d", camera_id);
+    HAL_LOGI("E, camera_id = %d", camera_id);
 
     SprdCamera3Setting::initDefaultParameters(camera_id);
 
@@ -717,7 +729,7 @@ int SprdCamera3StereoPreview::getCameraInfo(struct camera_info *info) {
         CAMERA_DEVICE_API_VERSION_3_2; // CAMERA_DEVICE_API_VERSION_3_0;
     info->static_camera_characteristics = mStaticMetadata;
     info->conflicting_devices_length = 0;
-    HAL_LOGD("X");
+    HAL_LOGI("X");
     return rc;
 }
 /*===========================================================================
@@ -773,12 +785,12 @@ int SprdCamera3StereoPreview::setupPhysicalCameras() {
  * RETURN     : None
  *==========================================================================*/
 SprdCamera3StereoPreview::ReProcessThread::ReProcessThread() {
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
     mVFrameCount = 0;
     mVLastFpsTime = 0;
     mReprocessMsgList.clear();
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 /*===========================================================================
  * FUNCTION   :~ReProcessThread
@@ -790,11 +802,11 @@ SprdCamera3StereoPreview::ReProcessThread::ReProcessThread() {
  * RETURN     : None
  *==========================================================================*/
 SprdCamera3StereoPreview::ReProcessThread::~ReProcessThread() {
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
 
     mReprocessMsgList.clear();
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 
 /*===========================================================================
@@ -1171,7 +1183,7 @@ SprdCamera3StereoPreview::MuxerThread::MuxerThread() {
         HAL_LOGE("load gpu api failed.");
     }
     mReProcessThread = new ReProcessThread();
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 /*===========================================================================
  * FUNCTION   :~~MuxerThread
@@ -1183,14 +1195,14 @@ SprdCamera3StereoPreview::MuxerThread::MuxerThread() {
  * RETURN     : None
  *==========================================================================*/
 SprdCamera3StereoPreview::MuxerThread::~MuxerThread() {
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
     mPreviewMuxerMsgList.clear();
     if (mGpuApi != NULL) {
         unLoadGpuApi();
         free(mGpuApi);
         mGpuApi = NULL;
     }
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 /*===========================================================================
  * FUNCTION   :loadGpuApi
@@ -1202,7 +1214,7 @@ SprdCamera3StereoPreview::MuxerThread::~MuxerThread() {
  * RETURN     : None
  *==========================================================================*/
 int SprdCamera3StereoPreview::MuxerThread::loadGpuApi() {
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
     const char *error = NULL;
     mGpuApi->handle = dlopen(LIB_GPU_PATH, RTLD_LAZY);
     if (mGpuApi->handle == NULL) {
@@ -1251,14 +1263,14 @@ int SprdCamera3StereoPreview::MuxerThread::loadGpuApi() {
  * RETURN     : None
  *==========================================================================*/
 void SprdCamera3StereoPreview::MuxerThread::unLoadGpuApi() {
-    HAL_LOGD("E");
+    HAL_LOGI("E");
 
     if (mGpuApi->handle != NULL) {
         dlclose(mGpuApi->handle);
         mGpuApi->handle = NULL;
     }
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 /*===========================================================================
  * FUNCTION   :initGpuData
@@ -1774,12 +1786,12 @@ bool SprdCamera3StereoPreview::matchTwoFrame(
  *==========================================================================*/
 void SprdCamera3StereoPreview::dump(const struct camera3_device *device,
                                     int fd) {
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     CHECK_MUXER();
 
     mPreviewMuxer->_dump(device, fd);
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 /*===========================================================================
  * FUNCTION   :flush
@@ -1793,12 +1805,12 @@ void SprdCamera3StereoPreview::dump(const struct camera3_device *device,
 int SprdCamera3StereoPreview::flush(const struct camera3_device *device) {
     int rc = 0;
 
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
     CHECK_MUXER_ERROR();
 
     rc = mPreviewMuxer->_flush(device);
 
-    HAL_LOGD(" X");
+    HAL_LOGI(" X");
 
     return rc;
 }
@@ -1817,7 +1829,7 @@ int SprdCamera3StereoPreview::initialize(
     sprdcamera_physical_descriptor_t sprdCam = m_pPhyCamera[CAM_TYPE_MAIN];
     SprdCamera3HWI *hwiMain = sprdCam.hwi;
 
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     CHECK_HWI_ERROR(hwiMain);
 
     mIommuEnabled = 0;
@@ -1860,7 +1872,7 @@ int SprdCamera3StereoPreview::initialize(
         return NO_MEMORY;
     }
     memset(mLocalBuffer, 0, sizeof(new_mem_t) * mMaxLocalBufferNum);
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 
     return rc;
 }
@@ -1993,7 +2005,7 @@ int SprdCamera3StereoPreview::configureStreams(
 const camera_metadata_t *
 SprdCamera3StereoPreview::constructDefaultRequestSettings(
     const struct camera3_device *device, int type) {
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     const camera_metadata_t *fwk_metadata = NULL;
 
     SprdCamera3HWI *hw = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
@@ -2009,7 +2021,7 @@ SprdCamera3StereoPreview::constructDefaultRequestSettings(
         HAL_LOGE("constructDefaultMetadata failed");
         return NULL;
     }
-    HAL_LOGD("X");
+    HAL_LOGI("X");
     return fwk_metadata;
 }
 /*===========================================================================
@@ -2217,7 +2229,7 @@ int SprdCamera3StereoPreview::processCaptureRequest(
 void SprdCamera3StereoPreview::notifyMain(const camera3_notify_msg_t *msg) {
     camera3_notify_msg_t newMsg = *msg;
 
-    HAL_LOGD("main:id%d time=%llu", msg->message.shutter.frame_number,
+    HAL_LOGI("main:id%d time=%llu", msg->message.shutter.frame_number,
              msg->message.shutter.timestamp);
     mCallbackOps->notify(mCallbackOps, msg);
     {
@@ -2388,7 +2400,7 @@ void SprdCamera3StereoPreview::processCaptureResultMain(
 void SprdCamera3StereoPreview::notifyAux(const camera3_notify_msg_t *msg) {
     camera3_notify_msg_t newMsg = *msg;
 
-    HAL_LOGD("aux:id%d time=%llu", msg->message.shutter.frame_number,
+    HAL_LOGI("aux:id%d time=%llu", msg->message.shutter.frame_number,
              msg->message.shutter.timestamp);
     {
         Mutex::Autolock l(mNotifyLockAux);
@@ -2416,7 +2428,7 @@ void SprdCamera3StereoPreview::processCaptureResultAux(
     uint32_t searchnotifyresult = NOTIFY_NOT_FOUND;
     camera3_stream_t *newStream = NULL;
 
-    HAL_LOGD("id= %d output_buffers=%p", result->frame_number,
+    HAL_LOGI("id= %d output_buffers=%p", result->frame_number,
              result->output_buffers);
 
     if (result->output_buffers == NULL) {
@@ -2513,9 +2525,9 @@ void SprdCamera3StereoPreview::processCaptureResultAux(
 void SprdCamera3StereoPreview::_dump(const struct camera3_device *device,
                                      int fd) {
 
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 /*===========================================================================
  * FUNCTION   :dump
@@ -2530,7 +2542,7 @@ void SprdCamera3StereoPreview::_dump(const struct camera3_device *device,
 void SprdCamera3StereoPreview::dumpImg(void *addr, int size, int w, int h,
                                        int frameId, int flag) {
 
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
 
     char name[128];
     snprintf(name, sizeof(name), "/data/misc/media/%d_%d__%d_%d.yuv", w, h,
@@ -2547,7 +2559,7 @@ void SprdCamera3StereoPreview::dumpImg(void *addr, int size, int w, int h,
     }
     fclose(file_fd);
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 
 /*===========================================================================
@@ -2562,7 +2574,7 @@ void SprdCamera3StereoPreview::dumpImg(void *addr, int size, int w, int h,
 int SprdCamera3StereoPreview::_flush(const struct camera3_device *device) {
     int rc = 0;
 
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
     rc = hwiMain->flush(m_pPhyCamera[CAM_TYPE_MAIN].dev);
     HAL_LOGD("flush aux camera");
@@ -2584,7 +2596,7 @@ int SprdCamera3StereoPreview::_flush(const struct camera3_device *device) {
         mPreviewMuxerThread->mReProcessThread->join();
     }
     clearFrameNeverMatched(CAM_TYPE_AUX);
-    HAL_LOGD("X");
+    HAL_LOGI("X");
     return rc;
 }
 /*===========================================================================

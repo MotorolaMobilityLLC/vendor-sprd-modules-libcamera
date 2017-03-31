@@ -872,9 +872,13 @@ int SprdCamera3OEMIf::zslTakePicture() {
 #ifndef CONFIG_CAMERA_AUTOFOCUS_NOT_SUPPORT
     if (sprddefInfo.capture_mode == 1) {
         HAL_LOGV("set focus af mode %d", CAMERA_FOCUS_MODE_PICTURE);
-        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE,
-                 CAMERA_FOCUS_MODE_PICTURE);
-
+        if (getMultiCameraMode() == MODE_BLUR && isNeedAfFullscan()) {
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE,
+                     CAMERA_FOCUS_MODE_FULLSCAN);
+        } else {
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE,
+                     CAMERA_FOCUS_MODE_PICTURE);
+        }
         /*after caf picture, set af mode again to isp*/
         SetCameraParaTag(ANDROID_CONTROL_AF_MODE);
     }
@@ -1124,6 +1128,62 @@ status_t SprdCamera3OEMIf::faceDectect_enable(bool enable) {
     return ret;
 }
 
+int SprdCamera3OEMIf::autoFocusToFaceFocus() {
+    FACE_Tag faceInfo;
+    mSetting->getFACETag(&faceInfo);
+    if (faceInfo.face_num > 0) {
+        int i = 0;
+        int k = 0;
+        int x1 = 0;
+        int x2 = 0;
+        int max = 0;
+        int max_width = 0;
+        int max_height = 0;
+        struct cmr_focus_param focus_para;
+        CONTROL_Tag controlInfo;
+        mSetting->getCONTROLTag(&controlInfo);
+        if (mCameraId == 1 || mCameraId == 3) {
+            max_width = FRONT_SENSOR_ORIG_WIDTH;
+            max_height = FRONT_SENSOR_ORIG_HEIGHT;
+        } else {
+            max_width = BACK_SENSOR_ORIG_WIDTH;
+            max_height = BACK_SENSOR_ORIG_HEIGHT;
+        }
+        for (i = 0; i < faceInfo.face_num; i++) {
+            x1 = faceInfo.face[i].rect[0];
+            x2 = faceInfo.face[i].rect[2];
+            if (x2 - x1 > max) {
+                k = i;
+                max = x2 - x1;
+            }
+        }
+
+        HAL_LOGD("max_width:%d, max_height:%d, focus src x:%d  y:%d", max_width,
+                 max_height, controlInfo.af_regions[0],
+                 controlInfo.af_regions[1]);
+        controlInfo.af_regions[0] =
+            ((faceInfo.face[k].rect[0] + faceInfo.face[k].rect[2]) / 2 +
+             (faceInfo.face[k].rect[2] - faceInfo.face[k].rect[0]) / 10);
+        controlInfo.af_regions[1] =
+            (faceInfo.face[k].rect[1] + faceInfo.face[k].rect[3]) / 2;
+        controlInfo.af_regions[2] = 624;
+        controlInfo.af_regions[3] = 624;
+        focus_para.zone[0].start_x = controlInfo.af_regions[0];
+        focus_para.zone[0].start_y = controlInfo.af_regions[1];
+        focus_para.zone[0].width = controlInfo.af_regions[2];
+        focus_para.zone[0].height = controlInfo.af_regions[3];
+        focus_para.zone_cnt = 1;
+        HAL_LOGD("focus face x:%d  y:%d", controlInfo.af_regions[0],
+                 controlInfo.af_regions[1]);
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE,
+                 CAMERA_FOCUS_MODE_AUTO);
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FOCUS_RECT,
+                 (cmr_uint)&focus_para);
+    }
+
+    return NO_ERROR;
+}
+
 status_t SprdCamera3OEMIf::autoFocus(void *user_data) {
     ATRACE_CALL();
 
@@ -1166,8 +1226,21 @@ status_t SprdCamera3OEMIf::autoFocus(void *user_data) {
         else if (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_AUTO)
             mHalOem->ops->camera_transfer_af_to_caf(mCameraHandle);
 
-        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE,
-                 CAMERA_FOCUS_MODE_AUTO);
+        if (getMultiCameraMode() == MODE_BLUR &&
+            controlInfo.af_trigger == ANDROID_CONTROL_AF_TRIGGER_START &&
+            controlInfo.af_regions[0] == 0 && controlInfo.af_regions[1] == 0 &&
+            controlInfo.af_regions[2] == 0 && controlInfo.af_regions[3] == 0) {
+            HAL_LOGD("set full scan mode");
+            if (mCameraId == 1) {
+                autoFocusToFaceFocus();
+            }
+            mHalOem->ops->camera_transfer_af_to_caf(mCameraHandle);
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE,
+                     CAMERA_FOCUS_MODE_FULLSCAN);
+        } else {
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE,
+                     CAMERA_FOCUS_MODE_AUTO);
+        }
     }
     controlInfo.af_state = ANDROID_CONTROL_AF_STATE_ACTIVE_SCAN;
     mSetting->setAfCONTROLTag(&controlInfo);
@@ -1300,6 +1373,36 @@ int SprdCamera3OEMIf::getCoveredValue(uint32_t *value) {
     HAL_LOGD("E");
     ret = mHalOem->ops->camera_ioctrl(mCameraHandle,
                                       CAMERA_IOCTRL_GET_SENSOR_LUMA, value);
+
+    return ret;
+}
+
+bool SprdCamera3OEMIf::isNeedAfFullscan() {
+    bool ret = false;
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
+    if (getMultiCameraMode() != MODE_BLUR) {
+        return ret;
+    }
+    if (mCameraId == 1) {
+        property_get("persist.sys.cam.fr.blur.version", prop, "0");
+    } else {
+        property_get("persist.sys.cam.ba.blur.version", prop, "0");
+    }
+    if (2 == atoi(prop)) {
+        ret = true;
+    }
+    return ret;
+}
+
+int SprdCamera3OEMIf::getIspAfFullscanInfo(
+    struct isp_af_fullscan_info *af_fullscan_info) {
+    int32_t ret = 0;
+
+    HAL_LOGI("E");
+    ret = mHalOem->ops->camera_ioctrl(
+        mCameraHandle, CAMERA_IOCTRL_GET_FULLSCAN_INFO, af_fullscan_info);
 
     return ret;
 }

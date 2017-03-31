@@ -56,7 +56,13 @@ namespace sprdcamera {
 #define BLUR_LIB_BOKEH_CAPTURE "libbokeh_gaussian_cap.so"
 #define BLUR_LIB_BOKEH_NUM (2)
 #define BLUR_USE_DUAL_CAMERA (1)
-#define BLUR_REFOCUS_PARAM_NUM (13)
+#define BLUR_REFOCUS_COMMON_PARAM_NUM (15)
+#define BLUR_REFOCUS_2_PARAM_NUM (14)
+#define BLUR_AF_WINDOW_NUM (9)
+#define BLUR_REFOCUS_PARAM_NUM                                                 \
+    (BLUR_AF_WINDOW_NUM + BLUR_REFOCUS_2_PARAM_NUM +                           \
+     BLUR_REFOCUS_COMMON_PARAM_NUM)
+
 #define BLUR_CIRCLE_SIZE_SCALE (3)
 #define BLUR_SMOOTH_SIZE_SCALE (8)
 #define BLUR_CIRCLE_VALUE_MIN (20)
@@ -88,8 +94,12 @@ typedef enum {
 typedef enum {
     /* Main camera device id*/
     CAM_BLUR_MAIN_ID = 0,
+    /* Main front camera device id*/
+    CAM_BLUR_MAIN_ID_2 = 1,
     /* Aux camera device id*/
-    CAM_BLUR_AUX_ID = 2
+    CAM_BLUR_AUX_ID = 2,
+    /* Aux front camera device id*/
+    CAM_BLUR_AUX_ID_2 = 3,
 } CameraBlurID;
 
 typedef struct {
@@ -104,24 +114,81 @@ typedef struct {
 } blur_queue_msg_t;
 
 typedef struct {
+    const native_handle_t *native_handle;
+    MemIon *pHeapIon;
+} new_ion_mem_blur_t;
+
+typedef struct {
+    int width;                       // image width
+    int height;                      // image height
+    float min_slope;                 // 0.001~0.01, default is 0.005
+    float max_slope;                 // 0.01~0.1, default is 0.05
+    float findex2gamma_adjust_ratio; // 2~11, default is 6.0
+} preview_init_params_t;
+
+typedef struct {
+    int f_number;         // 1 ~ 20
+    unsigned short sel_x; /* The point which be touched */
+    unsigned short sel_y; /* The point which be touched */
+    int circle_size;      // for version 1.0 only
+    bool update;
+} preview_weight_params_t;
+
+typedef struct {
+    int width;                       // image width
+    int height;                      // image height
+    float min_slope;                 // 0.001~0.01, default is 0.005
+    float max_slope;                 // 0.01~0.1, default is 0.05
+    float findex2gamma_adjust_ratio; // 2~11, default is 6.0
+    int Scalingratio;                // only support 2,4,6,8
+    int SmoothWinSize;               // odd number
+    // below for 2.0 only
+    /* Register Parameters : depend on sensor module */
+    unsigned short vcm_dac_up_bound;  /* Default value : 0 */
+    unsigned short vcm_dac_low_bound; /* Default value : 0 */
+    unsigned short *vcm_dac_info;     /* Default value : NULL (Resaved) */
+    /* Register Parameters : For Tuning */
+    unsigned char vcm_dac_gain;     /* Default value : 16 */
+    unsigned char valid_depth_clip; /* The up bound of valid_depth */
+    unsigned char method;           /* The depth method. (Resaved) */
+    /* Register Parameters : depend on AF Scanning */
+    /* The number of AF windows with row (i.e. vertical) */
+    unsigned char row_num;
+    /* The number of AF windows with row (i.e. horizontal) */
+    unsigned char column_num;
+    unsigned char boundary_ratio; /*  (Unit : Percentage) */
+    /* Customer Parameter */
+    /* Range: [0, 16] Default value : 0*/
+    unsigned char sel_size;
+    /* For Tuning Range : [0, 32], Default value : 4 */
+    unsigned char valid_depth;
+    unsigned short slope; /* For Tuning : Range : [0, 16] default is 8 */
+} capture_init_params_t;
+
+typedef struct {
+    int version;                  // 1~2, 1: 1.0 bokeh; 2: 2.0 bokeh with AF
+    int f_number;                 // 1 ~ 20
+    unsigned short sel_x;         /* The point which be touched */
+    unsigned short sel_y;         /* The point which be touched */
+    unsigned short *win_peak_pos; /* The seqence of peak position which be
+                                     provided via struct isp_af_fullscan_info */
+    int circle_size;              // for version 1.0 only
+} capture_weight_params_t;
+
+typedef struct {
     void *handle;
     int (*iSmoothInit)(void **handle, int width, int height, float min_slope,
-                       float max_slope, float Findex2Gamma_AdjustRatio);
-    int (*iSmoothCapInit)(void **handle, int width, int height, float min_slope,
-                          float max_slope, float Findex2Gamma_AdjustRatio,
-                          int scaleSmoothWidth, int scalerSmoothHeight);
+                       float max_slope, float findex2gamma_adjust_ratio);
+    int (*iSmoothCapInit)(void **handle, capture_init_params_t *params);
     int (*iSmoothDeinit)(void *handle);
     int (*iSmoothCreateWeightMap)(void *handle, int sel_x, int sel_y,
-                                  int F_number, int CircleSize);
+                                  int f_number, int circle_size);
+    int (*iSmoothCapCreateWeightMap)(void *handle,
+                                     capture_weight_params_t *params);
     int (*iSmoothBlurImage)(void *handle, unsigned char *Src_YUV,
                             unsigned char *Output_YUV);
     void *mHandle;
 } BlurAPI_t;
-
-typedef struct {
-    const native_handle_t *native_handle;
-    MemIon *pHeapIon;
-} new_ion_mem_blur_t;
 
 class SprdCamera3Blur {
   public:
@@ -171,15 +238,12 @@ class SprdCamera3Blur {
     int mPreviewStreamsNum;
     Mutex mRequestLock;
     bool mIsCapturing;
-    uint32_t mFNum;
-    uint32_t mCircleSize;
-    uint32_t mSelCoordX;
-    uint32_t mSelCoordY;
     int mjpegSize;
     bool mIsWaitSnapYuv;
+    uint8_t mCameraId;
     int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
     int setupPhysicalCameras();
-    int getCameraInfo(struct camera_info *info);
+    int getCameraInfo(int blur_camera_id, struct camera_info *info);
     int getStreamType(camera3_stream_t *new_stream);
     void freeLocalCapBuffer();
     int allocateOne(int w, int h, uint32_t is_cache,
@@ -201,8 +265,17 @@ class SprdCamera3Blur {
         virtual void requestExit();
         int loadBlurApi();
         void unLoadBlurApi();
+        void initBlur20Params();
+        void initBlurInitParams();
+        void initBlurWeightParams();
+        bool isBlurInitParamsChanged();
+        void updateBlurWeightParams(CameraMetadata metaSettings, int type);
+        void saveCaptureBlurParams(buffer_handle_t *mSavedResultBuff,
+                                   buffer_handle_t *buffer);
+        uint8_t getIspAfFullscanInfo();
         int blurHandle(struct private_handle_t *input,
                        struct private_handle_t *output);
+        void dumpFps();
         // This queue stores matched buffer as frame_matched_info_t
         List<blur_queue_msg_t> mCaptureMsgList;
         Mutex mMergequeueMutex;
@@ -217,20 +290,23 @@ class SprdCamera3Blur {
         uint8_t mCaptureStreamsNum;
         bool mReprocessing;
         BlurAPI_t *mBlurApi[BLUR_LIB_BOKEH_NUM];
-        int mLastSelCoordX;
-        int mLastSelCoordY;
-        int mLastCircleSize;
-        int mLastFNum;
         int mLastMinScope;
         int mLastMaxScope;
         int mLastAdjustRati;
-
-      private:
+        bool mFirstCapture;
+        bool mFirstPreview;
+        bool mUpdateCaptureWeightParams;
+        uint8_t mLastFaceNum;
         int mVFrameCount;
         int mVLastFrameCount;
         nsecs_t mVLastFpsTime;
-        double mVFps;
-        void dumpFps();
+        unsigned short mWinPeakPos[BLUR_AF_WINDOW_NUM];
+        preview_init_params_t mPreviewInitParams;
+        preview_weight_params_t mPreviewWeightParams;
+        capture_init_params_t mCaptureInitParams;
+        capture_weight_params_t mCaptureWeightParams;
+
+      private:
         void waitMsgAvailable();
     };
     sp<CaptureThread> mCaptureThread;

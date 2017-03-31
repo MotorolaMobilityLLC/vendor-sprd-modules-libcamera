@@ -102,13 +102,13 @@ camera3_callback_ops SprdCamera3SelfShot::callback_ops_aux = {
  *
  *==========================================================================*/
 SprdCamera3SelfShot::SprdCamera3SelfShot() {
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
     m_nPhyCameras = 2;
 
     mStaticMetadata = NULL;
     setupPhysicalCameras();
     m_VirtualCamera.id = SELF_SHOT_CAM_MAIN_ID;
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 
 /*===========================================================================
@@ -118,12 +118,12 @@ SprdCamera3SelfShot::SprdCamera3SelfShot() {
  *
  *==========================================================================*/
 SprdCamera3SelfShot::~SprdCamera3SelfShot() {
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     if (m_pPhyCamera) {
         delete[] m_pPhyCamera;
         m_pPhyCamera = NULL;
     }
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 
 /*===========================================================================
@@ -169,11 +169,11 @@ int SprdCamera3SelfShot::get_camera_info(__unused int camera_id,
 
     int rc = NO_ERROR;
 
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     if (info) {
         rc = mSelfShot->getCameraInfo(info);
     }
-    HAL_LOGD("X, rc: %d", rc);
+    HAL_LOGI("X, rc: %d", rc);
 
     return rc;
 }
@@ -199,14 +199,14 @@ int SprdCamera3SelfShot::camera_device_open(
 
     int rc = NO_ERROR;
 
-    HAL_LOGD("id= %d", atoi(id));
+    HAL_LOGI("id= %d", atoi(id));
     if (!id) {
         HAL_LOGE("Invalid camera id");
         return BAD_VALUE;
     }
 
     rc = mSelfShot->cameraDeviceOpen(atoi(id), hw_device);
-    HAL_LOGD("id= %d, rc: %d", atoi(id), rc);
+    HAL_LOGI("id= %d, rc: %d", atoi(id), rc);
 
     return rc;
 }
@@ -265,7 +265,7 @@ int SprdCamera3SelfShot::closeCameraDevice() {
         sprdCam->dev = NULL;
     }
 
-    HAL_LOGD("X, rc: %d", rc);
+    HAL_LOGI("X, rc: %d", rc);
     return rc;
 }
 
@@ -283,12 +283,12 @@ int SprdCamera3SelfShot::initialize(
     const camera3_callback_ops_t *callback_ops) {
     int rc = NO_ERROR;
 
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     CHECK_MUXER_ERROR();
 
     rc = mSelfShot->initialize(callback_ops);
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
     return rc;
 }
 
@@ -306,14 +306,14 @@ SprdCamera3SelfShot::construct_default_request_settings(
     const struct camera3_device *device, int type) {
     const camera_metadata_t *rc;
 
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     if (!mSelfShot) {
         HAL_LOGE("Error getting muxer ");
         return NULL;
     }
     rc = mSelfShot->constructDefaultRequestSettings(device, type);
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 
     return rc;
 }
@@ -332,11 +332,11 @@ int SprdCamera3SelfShot::configure_streams(
     camera3_stream_configuration_t *stream_list) {
     int rc = 0;
 
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
     CHECK_MUXER_ERROR();
     rc = mSelfShot->configureStreams(device, stream_list);
 
-    HAL_LOGD(" X");
+    HAL_LOGI(" X");
 
     return rc;
 }
@@ -441,7 +441,7 @@ int SprdCamera3SelfShot::cameraDeviceOpen(__unused int camera_id,
     int rc = NO_ERROR;
     uint32_t phyId = 0;
 
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
     hw_device_t *hw_dev[m_nPhyCameras];
     mOpenSubsensor = 0;
     for (uint32_t i = 0; i < m_nPhyCameras; i++) {
@@ -473,7 +473,7 @@ int SprdCamera3SelfShot::cameraDeviceOpen(__unused int camera_id,
     m_VirtualCamera.dev.priv = (void *)&m_VirtualCamera;
     *hw_device = &m_VirtualCamera.dev.common;
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
     return rc;
 }
 
@@ -492,7 +492,7 @@ int SprdCamera3SelfShot::cameraDeviceOpen(__unused int camera_id,
 int SprdCamera3SelfShot::getCameraInfo(struct camera_info *info) {
     int rc = NO_ERROR;
     int camera_id = m_VirtualCamera.id;
-    HAL_LOGD("E, camera_id = %d", camera_id);
+    HAL_LOGI("E, camera_id = %d", camera_id);
 
     SprdCamera3Setting::initDefaultParameters(camera_id);
 
@@ -508,7 +508,7 @@ int SprdCamera3SelfShot::getCameraInfo(struct camera_info *info) {
     info->static_camera_characteristics = mStaticMetadata;
 
     info->conflicting_devices_length = 0;
-    HAL_LOGD("X");
+    HAL_LOGI("X");
     return rc;
 }
 
@@ -545,12 +545,12 @@ int SprdCamera3SelfShot::setupPhysicalCameras() {
  * RETURN     :
  *==========================================================================*/
 void SprdCamera3SelfShot::dump(const struct camera3_device *device, int fd) {
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     CHECK_MUXER();
 
     mSelfShot->_dump(device, fd);
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 
 /*===========================================================================
@@ -565,12 +565,12 @@ void SprdCamera3SelfShot::dump(const struct camera3_device *device, int fd) {
 int SprdCamera3SelfShot::flush(const struct camera3_device *device) {
     int rc = 0;
 
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
     CHECK_MUXER_ERROR();
 
     rc = mSelfShot->_flush(device);
 
-    HAL_LOGD(" X");
+    HAL_LOGI(" X");
 
     return rc;
 }
@@ -590,10 +590,11 @@ int SprdCamera3SelfShot::initialize(
     sprdcamera_physical_descriptor_t sprdCam = m_pPhyCamera[CAM_TYPE_MAIN];
     SprdCamera3HWI *hwiMain = sprdCam.hwi;
 
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     CHECK_HWI_ERROR(hwiMain);
     mAvailableSensorSelfSot = 1;
     mCallbackOps = callback_ops;
+    mStartPreviewTime = systemTime();
 
     rc = hwiMain->initialize(sprdCam.dev, &callback_ops_main);
     if (rc != NO_ERROR) {
@@ -639,7 +640,7 @@ int SprdCamera3SelfShot::configureStreams(
  *==========================================================================*/
 const camera_metadata_t *SprdCamera3SelfShot::constructDefaultRequestSettings(
     const struct camera3_device *device, int type) {
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     const camera_metadata_t *fwk_metadata = NULL;
 
     SprdCamera3HWI *hw = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
@@ -655,7 +656,7 @@ const camera_metadata_t *SprdCamera3SelfShot::constructDefaultRequestSettings(
         HAL_LOGE("constructDefaultMetadata failed");
         return NULL;
     }
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 
     return fwk_metadata;
 }
@@ -832,7 +833,7 @@ void SprdCamera3SelfShot::processCaptureResultMain(
     uint32_t cur_frame_number = result->frame_number;
 
     if (result->output_buffers == NULL) {
-        if (mOpenSubsensor && cur_frame_number > 100) {
+        if (mOpenSubsensor && ns2ms(systemTime() - mStartPreviewTime) > 1000) {
             CameraMetadata metadata;
             metadata = result->result;
             mCoveredValue = getCoveredValue(metadata);
@@ -859,9 +860,9 @@ void SprdCamera3SelfShot::processCaptureResultMain(
  * RETURN     : None
  *==========================================================================*/
 void SprdCamera3SelfShot::_dump(const struct camera3_device *device, int fd) {
-    HAL_LOGD(" E");
+    HAL_LOGI(" E");
 
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 }
 
 /*===========================================================================
@@ -876,10 +877,10 @@ void SprdCamera3SelfShot::_dump(const struct camera3_device *device, int fd) {
 int SprdCamera3SelfShot::_flush(const struct camera3_device *device) {
     int rc = 0;
 
-    HAL_LOGD("E");
+    HAL_LOGI("E");
     SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
     rc = hwiMain->flush(m_pPhyCamera[CAM_TYPE_MAIN].dev);
-    HAL_LOGD("X");
+    HAL_LOGI("X");
 
     return rc;
 }
