@@ -30,8 +30,8 @@ cmr_s32 _pm_envi_detect_init(void *dst_envi_detect_param, void *src_envi_detect_
 
 	dst_ptr->enable = src_ptr->enable;
 	for (i = 0; i < SENSOR_ENVI_NUM; i ++) {
-		dst_ptr->envi_range[i].min = src_ptr->envi_range[SENSOR_ENVI_NUM].min;
-		dst_ptr->envi_range[i].max = src_ptr->envi_range[SENSOR_ENVI_NUM].max;
+		dst_ptr->envi_range[i].min = src_ptr->envi_range[i].min;
+		dst_ptr->envi_range[i].max = src_ptr->envi_range[i].max;
 	}
 
 	header_ptr->is_update = ISP_ONE;
