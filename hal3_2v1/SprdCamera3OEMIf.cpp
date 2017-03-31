@@ -5400,7 +5400,7 @@ void SprdCamera3OEMIf::camera_cb(enum camera_cb_type cb,
 
     SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)client_data;
     HAL_LOGV("E");
-    HAL_LOGV("cb = %d func = %d parm4 = 0x%x", cb, func, (cmr_u32)parm4);
+    HAL_LOGV("cb = %d func = %d parm4 = %p", cb, func, parm4);
     switch (func) {
     case CAMERA_FUNC_START_PREVIEW:
         obj->HandleStartPreview(cb, parm4);

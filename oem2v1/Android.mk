@@ -2,7 +2,7 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_CFLAGS += -fno-strict-aliasing -Wno-unused-parameter -Werror
+LOCAL_CFLAGS += -fno-strict-aliasing -Wno-unused-parameter -Werror -Wno-error=format
 
 TARGET_BOARD_CAMERA_READOTP_METHOD?=0
 

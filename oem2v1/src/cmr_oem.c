@@ -97,7 +97,7 @@ static void camera_scaler_evt_cb(cmr_int evt, void *data, void *privdata);
 static void camera_jpeg_evt_cb(cmr_int evt, void *data, void *privdata);
 static cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
                                  cmr_u32 data_len);
-static void camera_focus_evt_cb(enum af_cb_type cb, cmr_s32 param,
+static void camera_focus_evt_cb(enum af_cb_type cb, cmr_uint param,
                                 void *privdata);
 static cmr_int camera_preview_cb(cmr_handle oem_handle,
                                  enum preview_cb_type cb_type,
@@ -1097,7 +1097,7 @@ exit:
     return ret;
 }
 
-void camera_focus_evt_cb(enum af_cb_type cb, cmr_s32 param, void *privdata) {
+void camera_focus_evt_cb(enum af_cb_type cb, cmr_uint param, void *privdata) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)privdata;
     cmr_int oem_cb;

@@ -1361,18 +1361,18 @@ bool SprdCamera3Capture::CaptureThread::threadLoop() {
                 HAL_LOGD("capture combined success: cmbbuff %p", output_buffer);
 
                 HAL_LOGD(
-                    "reprocess request input buff %p, stream:%p, yaddr_v:%d, "
+                    "reprocess request input buff %p, stream:%p, yaddr_v:%p, "
                     "width:%d, height:%d",
                     request.input_buffer->buffer, request.input_buffer->stream,
-                    (cmr_s32)((struct private_handle_t *)(*request.input_buffer
+                    ((struct private_handle_t *)(*request.input_buffer
                                                                ->buffer))
                         ->base,
                     input_buffer->stream->width, input_buffer->stream->height);
                 HAL_LOGD("reprocess request output buff %p, stream:%p, "
-                         "yaddr_v:%d, width:%d, height:%d",
+                         "yaddr_v:%p, width:%d, height:%d",
                          request.output_buffers[0].buffer,
                          request.output_buffers[0].stream,
-                         (cmr_s32)((struct private_handle_t
+                         ((struct private_handle_t
                                         *)(*request.output_buffers[0].buffer))
                              ->base,
                          request.output_buffers[0].stream->width,
@@ -1529,15 +1529,15 @@ int SprdCamera3Capture::CaptureThread::combineTwoPicture(
         }
     }
     HAL_LOGD(" combine rot_angle:%d", dcam.rot_angle);
-    HAL_LOGD(" before cmb yaddr_v:%d",
-             (cmr_s32)((struct private_handle_t *)output_buf)->base);
+    HAL_LOGD(" before cmb yaddr_v:%p",
+             ((struct private_handle_t *)output_buf)->base);
     if (mGpuApi->imageStitchingWithGPU == NULL) {
         HAL_LOGE("mGpuApi imageStitchingWithGPU is null.");
         return -1;
     }
     mGpuApi->imageStitchingWithGPU(&dcam);
-    HAL_LOGD(" after cmb yaddr_v:%d",
-             (cmr_s32)((struct private_handle_t *)output_buf)->base);
+    HAL_LOGD(" after cmb yaddr_v:%p",
+             ((struct private_handle_t *)output_buf)->base);
     {
         char prop[PROPERTY_VALUE_MAX] = {
             0,
@@ -2047,10 +2047,10 @@ int SprdCamera3Capture::processCaptureRequest(
             CameraMetadata meta;
             HAL_LOGD(" orgtype:%d", req->output_buffers[i].stream->format);
             mCaptureThread->mSavedResultBuff = NULL;
-            HAL_LOGD("org snp request output buff %p, stream:%p, yaddr_v:%d",
+            HAL_LOGD("org snp request output buff %p, stream:%p, yaddr_v:%p",
                      request->output_buffers[i].buffer,
                      request->output_buffers[i].stream,
-                     (cmr_s32)((struct private_handle_t
+                     ((struct private_handle_t
                                     *)(*request->output_buffers[i].buffer))
                          ->base);
             memcpy(&mCaptureThread->mSavedCapRequest, req,
@@ -2362,7 +2362,7 @@ void SprdCamera3Capture::processCaptureResultMain(
         HAL_LOGD(
             "result stream:%p, result buffer:%p, savedreqstream:0x%x",
             result->output_buffers[0].stream, result->output_buffers[0].buffer,
-            (cmr_u32)mSavedReqStreams[mCaptureThread->mCaptureStreamsNum - 1]);
+            mSavedReqStreams[mCaptureThread->mCaptureStreamsNum - 1]);
         memcpy(mSavedReqStreams[mCaptureThread->mCaptureStreamsNum - 1],
                result->output_buffers[0].stream, sizeof(camera3_stream_t));
         newOutput_buffers.stream =

@@ -103,7 +103,7 @@ LOCAL_SRC_FILES+= \
 	hal3_$(ISP_HW_VER)/SprdCamera3Stream.cpp \
 	hal3_$(ISP_HW_VER)/SprdCamera3Flash.cpp \
 
-ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
+ifneq ($(TARGET_BOARD_PLATFORM), $(filter $(TARGET_BOARD_PLATFORM), sp9861e sp9861g))
 LOCAL_SRC_FILES+= \
 	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3StereoVideo.cpp \
 	hal3_$(ISP_HW_VER)/multiCamera/SprdCamera3StereoPreview.cpp \
@@ -127,7 +127,7 @@ endif
 endif
 endif
 
-LOCAL_CFLAGS += -fno-strict-aliasing -D_VSP_ -DJPEG_ENC -D_VSP_LINUX_ -DCHIP_ENDIAN_LITTLE -Wno-unused-parameter -Werror
+LOCAL_CFLAGS += -fno-strict-aliasing -D_VSP_ -DJPEG_ENC -D_VSP_LINUX_ -DCHIP_ENDIAN_LITTLE -Wno-unused-parameter -Werror -Wno-error=format
 
 include $(LOCAL_PATH)/SprdCtrl.mk
 
