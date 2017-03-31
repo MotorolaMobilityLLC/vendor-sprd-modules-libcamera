@@ -639,23 +639,6 @@ int SprdCamera3HWI::configureStreams(
 
         tranStreamAndChannelType(newStream, &stream_type, &channel_type);
 
-        /* temp code; for CTS */
-        if (channel_type == CAMERA_CHANNEL_TYPE_RAW_CALLBACK &&
-            (newStream->width >= 4160 && newStream->height >= 3120)) {
-            HAL_LOGE("Callback stream occured for 13M :temp cts");
-            return BAD_VALUE;
-        }
-
-        /* temp code; for CTS */
-        if (streamList->num_streams == 1) {
-            HAL_LOGE("Number of stream requested : %d",
-                     streamList->num_streams);
-            if (stream_type == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT &&
-                channel_type == CAMERA_CHANNEL_TYPE_PICTURE) {
-                return BAD_VALUE;
-            }
-        }
-
 /*temp code; for debug refocus depth map, del it if depth map quality is OK*/
 #ifdef CONFIG_CAMERA_RT_REFOCUS
         char value[PROPERTY_VALUE_MAX];

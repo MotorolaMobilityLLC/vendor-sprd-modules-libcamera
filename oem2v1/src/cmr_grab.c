@@ -399,11 +399,8 @@ cmr_int cmr_grab_sn_cfg(cmr_handle grab_handle, struct sn_cfg *config) {
     p_grab = (struct cmr_grab *)grab_handle;
     CMR_CHECK_HANDLE;
 
-    if (1 == config->frm_num) {
-        mode = 0; /* means single-frame sample mode */
-    } else {
-        mode = 1; /* means multi-frame sample mode */
-    }
+    mode = 1; /* means multi-frame sample mode */
+
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_MODE, &mode);
     CMR_RTN_IF_ERR(ret);
 
