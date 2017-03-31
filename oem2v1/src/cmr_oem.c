@@ -359,7 +359,7 @@ cmr_int camera_free(cmr_u32 mem_type, cmr_handle oem_handle, cmr_uint *phy_addr,
                  mem_type, oem_handle, fd, vir_addr);
         return -CMR_CAMERA_INVALID_PARAM;
     }
-    CMR_LOGI("mem_type=%d, sum=%d", mem_type, sum);
+    CMR_LOGD("mem_type=%d, sum=%d", mem_type, sum);
     ret =
         cxt->hal_free(mem_type, phy_addr, vir_addr, fd, sum, cxt->client_data);
 
@@ -1127,7 +1127,7 @@ void camera_focus_evt_cb(enum af_cb_type cb, cmr_s32 param, void *privdata) {
         CMR_LOGE("done %ld", ret);
         return;
     }
-    CMR_LOGI("param =0x%lx camera_cb 0x%lx focus cb %ld, oem cb 0x%lx",
+    CMR_LOGD("param =0x%lx camera_cb 0x%lx focus cb %ld, oem cb 0x%lx",
              (cmr_uint)param, (cmr_uint)cb, (cmr_uint)oem_cb,
              (cmr_uint)cxt->camera_cb);
     if (cxt->camera_cb) {
@@ -1135,7 +1135,7 @@ void camera_focus_evt_cb(enum af_cb_type cb, cmr_s32 param, void *privdata) {
         cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_START_FOCUS,
                        (void *)param);
     } else {
-        CMR_LOGI("cxt->camera_cb null error");
+        CMR_LOGD("cxt->camera_cb null error");
     }
 }
 
@@ -1801,7 +1801,7 @@ cmr_int camera_after_set(cmr_handle oem_handle,
     } else {
         skip_num = param->skip_number;
     }
-    CMR_LOGI("sensor fmt %d, skip num %d", cxt->sn_cxt.sensor_info.image_format,
+    CMR_LOGD("sensor fmt %d, skip num %d", cxt->sn_cxt.sensor_info.image_format,
              skip_num);
 
     ret = cmr_preview_after_set_param(cxt->prev_cxt.preview_handle,
@@ -5580,7 +5580,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
     isp_param.lsc_virt_addr = cxt->isp_lsc_virt_addr;
     isp_param.lsc_mfd = cxt->lsc_mfd;
 
-    CMR_LOGD("lsc_phys_addr 0x%lx,lsc_virt_addr 0x%lx", isp_param.lsc_phys_addr,
+    CMR_LOGI("lsc_phys_addr 0x%lx,lsc_virt_addr 0x%lx", isp_param.lsc_phys_addr,
              isp_param.lsc_virt_addr);
     isp_param.cb_of_malloc = cxt->hal_malloc;
     isp_param.cb_of_free = cxt->hal_free;
@@ -5703,9 +5703,9 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
     if (1 == cxt->isp_to_dram) {
         isp_param.capture_mode = ISP_CAP_MODE_DRAM;
     }
-    CMR_LOGI("work_mode %ld, dv_mode %ld, capture_mode %d", work_mode, dv_mode,
+    CMR_LOGD("work_mode %ld, dv_mode %ld, capture_mode %d", work_mode, dv_mode,
              isp_param.capture_mode);
-    CMR_LOGI("isp w h, %d %d", isp_param.size.w, isp_param.size.h);
+    CMR_LOGD("isp w h, %d %d", isp_param.size.w, isp_param.size.h);
     ret = isp_video_start(isp_cxt->isp_handle, &isp_param);
     if (!ret) {
         isp_cxt->is_work = 1;
@@ -5773,7 +5773,7 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
     CMR_LOGV("param_ptr->cap_inf_cfg.buffer_cfg_isp %d",
              param_ptr->cap_inf_cfg.buffer_cfg_isp);
     if (param_ptr->is_lightly) {
-        CMR_LOGI("channel id %d, caller_handle 0x%lx, skip num %d", *channel_id,
+        CMR_LOGD("channel id %d, caller_handle 0x%lx, skip num %d", *channel_id,
                  (cmr_uint)caller_handle, param_ptr->skip_num);
         ret = cmr_grab_cap_cfg_lightly(cxt->grab_cxt.grab_handle,
                                        &param_ptr->cap_inf_cfg, *channel_id);
@@ -5792,7 +5792,7 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
         goto exit;
     }
 
-    CMR_LOGI("frm_num 0x%x", param_ptr->frm_num);
+    CMR_LOGD("frm_num 0x%x", param_ptr->frm_num);
 
     sensor_mode_info = &sensor_info.mode_info[param_ptr->sensor_mode];
     sensor_cfg.sn_size.width = sensor_mode_info->width;
@@ -5838,7 +5838,7 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
 
     if (caller_handle == cxt->prev_cxt.preview_handle) {
         cxt->prev_cxt.rect = param_ptr->cap_inf_cfg.cfg.src_img_rect;
-        CMR_LOGI("prev rect %d %d %d %d", cxt->prev_cxt.rect.start_x,
+        CMR_LOGD("prev rect %d %d %d %d", cxt->prev_cxt.rect.start_x,
                  cxt->prev_cxt.rect.start_y, cxt->prev_cxt.rect.width,
                  cxt->prev_cxt.rect.height);
     }
@@ -5854,7 +5854,7 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
 
     cxt->grab_cxt.caller_handle[*channel_id] = caller_handle;
     cxt->grab_cxt.skip_number[*channel_id] = param_ptr->skip_num;
-    CMR_LOGI("channel id %d, caller_handle 0x%lx, skip num %d", *channel_id,
+    CMR_LOGD("channel id %d, caller_handle 0x%lx, skip num %d", *channel_id,
              (cmr_uint)caller_handle, param_ptr->skip_num);
 exit:
     CMR_LOGV("done %ld", ret);
@@ -6651,14 +6651,14 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         if (ISP_AE_MODE_MAX == isp_param) {
             set_isp_flag = 0;
         }
-        CMR_LOGI("ae mode %d", param_ptr->cmd_value);
+        CMR_LOGD("ae mode %d", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_AE_MEASURE_LUM:
         if (cxt->is_enter_focus)
             goto exit;
         isp_cmd = ISP_CTRL_AE_MEASURE_LUM;
         isp_param = param_ptr->cmd_value;
-        CMR_LOGI("aw measure lum %d", param_ptr->cmd_value);
+        CMR_LOGD("aw measure lum %d", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_AE_METERING_AREA:
         if (cxt->is_enter_focus)
@@ -6678,7 +6678,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
             trim.end_y = param_ptr->win_area.rect[0].start_y +
                          param_ptr->win_area.rect[0].height - 1;
 
-        CMR_LOGI("AE ROI (%d,%d,%d,%d)", trim.start_x, trim.start_y, trim.end_x,
+        CMR_LOGD("AE ROI (%d,%d,%d,%d)", trim.start_x, trim.start_y, trim.end_x,
                  trim.end_y);
         ptr_flag = 1;
         isp_param_ptr = (void *)&trim;
@@ -6688,33 +6688,33 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         set_exif_flag = 1;
         exif_cmd = SENSOR_EXIF_CTRL_BRIGHTNESSVALUE;
         isp_param = param_ptr->cmd_value;
-        CMR_LOGI("brightness %d", param_ptr->cmd_value);
+        CMR_LOGD("brightness %d", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_CONTRAST:
         isp_cmd = ISP_CTRL_CONTRAST;
         set_exif_flag = 1;
         exif_cmd = SENSOR_EXIF_CTRL_CONTRAST;
         isp_param = param_ptr->cmd_value;
-        CMR_LOGI("contrast %d", param_ptr->cmd_value);
+        CMR_LOGD("contrast %d", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_SATURATION:
         isp_cmd = ISP_CTRL_SATURATION;
         set_exif_flag = 1;
         exif_cmd = SENSOR_EXIF_CTRL_SATURATION;
         isp_param = param_ptr->cmd_value;
-        CMR_LOGI("saturation %d", param_ptr->cmd_value);
+        CMR_LOGD("saturation %d", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_SHARPNESS:
         isp_cmd = ISP_CTRL_SHARPNESS;
         set_exif_flag = 1;
         exif_cmd = SENSOR_EXIF_CTRL_SHARPNESS;
         isp_param = param_ptr->cmd_value;
-        CMR_LOGI("sharpness %d", param_ptr->cmd_value);
+        CMR_LOGD("sharpness %d", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_SPECIAL_EFFECT:
         isp_cmd = ISP_CTRL_SPECIAL_EFFECT;
         isp_param = param_ptr->cmd_value;
-        CMR_LOGI("effect %d", param_ptr->cmd_value);
+        CMR_LOGD("effect %d", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_EV:
         isp_cmd = ISP_CTRL_EV;
@@ -6722,33 +6722,33 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
 #if defined(CONFIG_CAMERA_ISP_VERSION_V4)
         isp_param = camera_param_to_isp(COM_ISP_SET_EV, param_ptr);
 #endif
-        CMR_LOGI("ev %d", isp_param);
+        CMR_LOGD("ev %d", isp_param);
         break;
     case COM_ISP_SET_AWB_MODE:
-        CMR_LOGI("awb mode 00 %d isp param %d", param_ptr->cmd_value,
+        CMR_LOGD("awb mode 00 %d isp param %d", param_ptr->cmd_value,
                  isp_param);
         isp_cmd = ISP_CTRL_AWB_MODE;
         set_exif_flag = 1;
         exif_cmd = SENSOR_EXIF_CTRL_LIGHTSOURCE;
         isp_param = camera_param_to_isp(COM_ISP_SET_AWB_MODE, param_ptr);
-        CMR_LOGI("awb mode %d isp param %d", param_ptr->cmd_value, isp_param);
+        CMR_LOGD("awb mode %d isp param %d", param_ptr->cmd_value, isp_param);
         break;
     case COM_ISP_SET_ANTI_BANDING:
         isp_cmd = ISP_CTRL_FLICKER;
         isp_param = param_ptr->cmd_value;
-        CMR_LOGI("flicker %d", param_ptr->cmd_value);
+        CMR_LOGD("flicker %d", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_ISO:
         isp_cmd = ISP_CTRL_ISO;
         set_exif_flag = 1;
         exif_cmd = SENSOR_EXIF_CTRL_ISOSPEEDRATINGS;
         isp_param = param_ptr->cmd_value;
-        CMR_LOGI("iso %d", param_ptr->cmd_value);
+        CMR_LOGD("iso %d", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_VIDEO_MODE:
         isp_cmd = ISP_CTRL_VIDEO_MODE;
         isp_param = param_ptr->cmd_value;
-        CMR_LOGI("isp video mode %d", param_ptr->cmd_value);
+        CMR_LOGD("isp video mode %d", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_FLASH_EG:
         isp_cmd = ISP_CTRL_FLASH_EG;
@@ -6773,17 +6773,17 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_cmd = ISP_CTRL_AF;
         ptr_flag = 1;
         isp_param_ptr = (void *)&param_ptr->af_param;
-        CMR_LOGI("isp_cmd =%d", isp_cmd);
+        CMR_LOGD("isp_cmd =%d", isp_cmd);
         break;
     case COM_ISP_SET_AF_MODE:
         isp_cmd = ISP_CTRL_AF_MODE;
         isp_param = param_ptr->cmd_value;
-        CMR_LOGI("af mode %d", param_ptr->cmd_value);
+        CMR_LOGD("af mode %d", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_AF_STOP:
         isp_cmd = ISP_CTRL_AF_STOP;
         isp_param = param_ptr->cmd_value;
-        CMR_LOGI("isp_cmd =%d af mode %d", isp_cmd, param_ptr->cmd_value);
+        CMR_LOGD("isp_cmd =%d af mode %d", isp_cmd, param_ptr->cmd_value);
         break;
     case COM_ISP_GET_LOW_LUX_EB:
         isp_cmd = ISP_LOW_LUX_EB;
@@ -6798,14 +6798,14 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_cmd = ISP_CTRL_FLASH_NOTICE;
         ptr_flag = 1;
         isp_param_ptr = (void *)&param_ptr->flash_notice;
-        CMR_LOGI("isp_cmd = %d, mode = %d", isp_cmd,
+        CMR_LOGD("isp_cmd = %d, mode = %d", isp_cmd,
                  param_ptr->flash_notice.mode);
         break;
     case COM_ISP_SET_FACE_AREA:
         isp_cmd = ISP_CTRL_FACE_AREA;
         ptr_flag = 1;
         isp_param_ptr = (void *)&param_ptr->fd_param;
-        CMR_LOGI("isp_cmd = %d, face_num = %d", isp_cmd,
+        CMR_LOGD("isp_cmd = %d, face_num = %d", isp_cmd,
                  param_ptr->fd_param.face_num);
         break;
     case COM_ISP_SET_RANGE_FPS:
@@ -6831,7 +6831,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
     case COM_ISP_SET_AE_LOCK_UNLOCK:
         isp_cmd = ISP_CTRL_SET_AE_LOCK_UNLOCK;
         isp_param = param_ptr->cmd_value;
-        CMR_LOGI("set AE Lock & Unlock %d", isp_param);
+        CMR_LOGD("set AE Lock & Unlock %d", isp_param);
         break;
 
     case COM_ISP_SET_ROI_CONVERGENCE_REQ:
@@ -7114,7 +7114,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         goto exit;
     }
     cxt->is_refocus_mode = setting_param.cmd_type_value;
-    CMR_LOGI("is_refocus_mode %d", cxt->is_refocus_mode);
+    CMR_LOGD("is_refocus_mode %d", cxt->is_refocus_mode);
     if (cxt->is_refocus_mode == 2 && cxt->camera_id == 2 && is_snapshot) {
         // cxt->isp_to_dram = 1;
         // out_param_ptr->isp_to_dram = 1;
@@ -7122,7 +7122,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
 
     /*TBD need to get refocus flag*/
     out_param_ptr->refocus_eb = cxt->is_refocus_mode;
-    CMR_LOGI("refocus_eb %d", out_param_ptr->refocus_eb);
+    CMR_LOGD("refocus_eb %d", out_param_ptr->refocus_eb);
 
     ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                             SETTING_GET_CAPTURE_FORMAT, &setting_param);
@@ -7155,7 +7155,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         out_param_ptr->pdaf_eb = 0;
     }
     haf_enable = out_param_ptr->pdaf_eb;
-    CMR_LOGI("haf_enable %d", haf_enable);
+    CMR_LOGD("haf_enable %d", haf_enable);
 
     out_param_ptr->zoom_setting = setting_param.zoom_param;
     CMR_LOGV("aspect ratio prev=%f, video=%f, cap=%f",
@@ -7308,7 +7308,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         goto exit;
     }
     out_param_ptr->sprd_zsl_enabled = setting_param.cmd_type_value;
-    CMR_LOGI("sprd zsl_enabled flag %d", out_param_ptr->sprd_zsl_enabled);
+    CMR_LOGD("sprd zsl_enabled flag %d", out_param_ptr->sprd_zsl_enabled);
 
     if (1 == camera_get_hdr_flag(cxt)) {
         struct ipm_open_in in_param;
@@ -7415,24 +7415,24 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
              out_param_ptr->sprd_3dcalibration_enabled);
 
 exit:
-    CMR_LOGI(
+    CMR_LOGD(
         "prev size %d %d pic size %d %d", out_param_ptr->preview_size.width,
         out_param_ptr->preview_size.height, out_param_ptr->picture_size.width,
         out_param_ptr->picture_size.height);
-    CMR_LOGI("video size %d %d android zsl flag %d",
+    CMR_LOGD("video size %d %d android zsl flag %d",
              out_param_ptr->video_size.width, out_param_ptr->video_size.height,
              cxt->is_android_zsl);
-    CMR_LOGI("prev rot %ld snp rot %d rot snp %d", out_param_ptr->prev_rot,
+    CMR_LOGD("prev rot %ld snp rot %d rot snp %d", out_param_ptr->prev_rot,
              out_param_ptr->cap_rot, out_param_ptr->is_cfg_rot_cap);
-    CMR_LOGI("zoom mode %ld fd %ld is dv %d tool eb %d",
+    CMR_LOGD("zoom mode %ld fd %ld is dv %d tool eb %d",
              out_param_ptr->zoom_setting.mode, out_param_ptr->is_fd_on,
              out_param_ptr->is_dv, out_param_ptr->tool_eb);
-    CMR_LOGI("q %d thumb q %d enc angle %d thumb size %d %d",
+    CMR_LOGD("q %d thumb q %d enc angle %d thumb size %d %d",
              jpeg_cxt->param.quality, jpeg_cxt->param.thumb_quality,
              jpeg_cxt->param.set_encode_rotation,
              jpeg_cxt->param.thum_size.width, jpeg_cxt->param.thum_size.height);
-    CMR_LOGI("frame cnt %d", out_param_ptr->frame_count);
-    CMR_LOGI("out_param_ptr->flip_on  %d", out_param_ptr->flip_on);
+    CMR_LOGD("frame cnt %d", out_param_ptr->frame_count);
+    CMR_LOGD("out_param_ptr->flip_on  %d", out_param_ptr->flip_on);
 
     ATRACE_END();
     return ret;

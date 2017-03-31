@@ -33,13 +33,26 @@ void isp_init_log_level(void) {
 }
 
 void oem_init_log_level(void) {
-    char prop[PROPERTY_VALUE_MAX];
+    char value[PROPERTY_VALUE_MAX];
     int val = 0;
+    int turn_off_flag = 0;
 
-    property_get("persist.sys.camera.hal.log", prop, "0");
-    val = atoi(prop);
+    property_get("persist.sys.camera.hal.log", value, "0");
+    val = atoi(value);
     if (0 < val)
         g_oem_log_level = val;
+
+    // to turn off camera log:
+    // adb shell setprop persist.sys.camera.log off
+    property_get("persist.sys.camera.log", value, "on");
+    if (!strcmp(value, "off")) {
+        turn_off_flag = 1;
+    }
+    // user verson/turn off camera log dont print >= LOGD
+    property_get("ro.build.type", value, "userdebug");
+    if (!strcmp(value, "user") || turn_off_flag) {
+        g_oem_log_level = LEVEL_OVER_LOGI;
+    }
 }
 
 void sensor_init_log_level(void) {

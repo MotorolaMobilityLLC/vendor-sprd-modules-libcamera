@@ -101,7 +101,7 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
       mDeqBufNum(0), mRecSkipNum(0), mIsSkipFrm(false), mFlush(false) {
     ATRACE_CALL();
 
-    HAL_LOGD(":hal3: E");
+    HAL_LOGI(":hal3: E");
 
     // for camera id 2&3 debug
     char value[PROPERTY_VALUE_MAX];
@@ -154,7 +154,7 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
     mSetting = NULL;
     mSprdCameraLowpower = 0;
 
-    HAL_LOGD(":hal3: X");
+    HAL_LOGI(":hal3: X");
 }
 
 int SprdCamera3HWI::getNumberOfCameras() {
@@ -166,7 +166,7 @@ int SprdCamera3HWI::getNumberOfCameras() {
 SprdCamera3HWI::~SprdCamera3HWI() {
     ATRACE_CALL();
 
-    HAL_LOGD(":hal3: E");
+    HAL_LOGI(":hal3: E");
 
     SprdCamera3RegularChannel *regularChannel =
         reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
@@ -220,7 +220,7 @@ SprdCamera3HWI::~SprdCamera3HWI() {
 
     timer_stop();
 
-    HAL_LOGD(":hal3: X");
+    HAL_LOGI(":hal3: X");
 }
 
 SprdCamera3RegularChannel *SprdCamera3HWI::getRegularChan() {
@@ -349,7 +349,7 @@ int SprdCamera3HWI::openCamera(struct hw_device_t **hw_device) {
 int SprdCamera3HWI::openCamera() {
     ATRACE_CALL();
 
-    HAL_LOGD(":hal3: E");
+    HAL_LOGI(":hal3: E");
 
     int ret = NO_ERROR;
 
@@ -389,14 +389,14 @@ int SprdCamera3HWI::openCamera() {
     }
 
     mCameraOpened = true;
-    HAL_LOGD(":hal3: X");
+    HAL_LOGI(":hal3: X");
     return NO_ERROR;
 }
 
 int SprdCamera3HWI::closeCamera() {
     ATRACE_CALL();
 
-    HAL_LOGD(":hal3: E");
+    HAL_LOGI(":hal3: E");
     int ret = NO_ERROR;
 
     if (mOEMIf) {
@@ -416,7 +416,7 @@ int SprdCamera3HWI::closeCamera() {
 
     mCameraOpened = false;
 
-    HAL_LOGD(":hal3: X");
+    HAL_LOGI(":hal3: X");
     return ret;
 }
 
@@ -673,8 +673,10 @@ int SprdCamera3HWI::configureStreams(
         if (stream_type == CAMERA_STREAM_TYPE_PREVIEW &&
             channel_type == CAMERA_CHANNEL_TYPE_REGULAR &&
             newStream->width > 1600 && newStream->height > 1200) {
-          HAL_LOGE("temp cts return for newStream->width %d newStream->height %d", newStream->width, newStream->height);
-          return BAD_VALUE;
+            HAL_LOGE(
+                "temp cts return for newStream->width %d newStream->height %d",
+                newStream->width, newStream->height);
+            return BAD_VALUE;
         }
 
         char value[PROPERTY_VALUE_MAX];
@@ -947,7 +949,7 @@ int SprdCamera3HWI::validateCaptureRequest(camera3_capture_request_t *request) {
 void SprdCamera3HWI::flushRequest(uint32_t frame_num) {
     ATRACE_CALL();
 
-    HAL_LOGD(":hal3: E");
+    HAL_LOGI(":hal3: E");
 
     SprdCamera3RegularChannel *regularChannel =
         reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
@@ -984,17 +986,31 @@ void SprdCamera3HWI::flushRequest(uint32_t frame_num) {
         picChannel->channelClearAllQBuff(timestamp,
                                          CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT);
     }
-    HAL_LOGD(":hal3: X");
+    HAL_LOGI(":hal3: X");
 }
 
 void SprdCamera3HWI::getLogLevel() {
-    char prop[PROPERTY_VALUE_MAX];
+    char value[PROPERTY_VALUE_MAX];
     int val = 0;
+    int turn_off_flag = 0;
 
-    property_get("persist.sys.camera.hal.log", prop, "0");
-    val = atoi(prop);
+    property_get("persist.sys.camera.hal.log", value, "0");
+    val = atoi(value);
     if (val > 0) {
         gHALLogLevel = (uint32_t)val;
+    }
+
+    // to turn off camera log:
+    // adb shell setprop persist.sys.camera.log off
+    property_get("persist.sys.camera.log", value, "on");
+    if (!strcmp(value, "off")) {
+        turn_off_flag = 1;
+    }
+
+    // user verson/turn off camera log dont print >= LOGD
+    property_get("ro.build.type", value, "userdebug");
+    if (!strcmp(value, "user") || turn_off_flag) {
+        gHALLogLevel = LEVEL_OVER_LOGI;
     }
 }
 
@@ -1117,7 +1133,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     else
         mOldRequesId = capturePara.cap_request_id;
 
-    HAL_LOGI("num_output_buffers=%d, frame_num=%d, mPictureRequest=%d, "
+    HAL_LOGD("num_output_buffers=%d, frame_num=%d, mPictureRequest=%d, "
              "captureIntent=%d, mFirstRegularRequest=%d mVideoSnapshotHint =%d",
              request->num_output_buffers, request->frame_number,
              mPictureRequest, capturePara.cap_intent, mFirstRegularRequest,
@@ -1386,12 +1402,12 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
          i != mPendingRequestsList.end();) {
         camera3_capture_result_t result;
         camera3_notify_msg_t notify_msg;
-        HAL_LOGI("i->frame_number = %d, frame_number = %d, i->request_id = %d",
+        HAL_LOGD("i->frame_number = %d, frame_number = %d, i->request_id = %d",
                  i->frame_number, frame_number, i->request_id);
 
         if (i->frame_number < frame_number) {
             /**add for 3d capture reprocessing begin   */
-            HAL_LOGI("result stream format =%d", result_info->stream->format);
+            HAL_LOGD("result stream format =%d", result_info->stream->format);
             if (NULL != i->input_buffer) {
                 HAL_LOGI("reprocess capture request, continue search");
                 i++;
@@ -1510,7 +1526,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                 }
             }
 
-            HAL_LOGI("num_buffers =%d, mPendingRequest =%d", i->num_buffers,
+            HAL_LOGD("num_buffers =%d, mPendingRequest =%d", i->num_buffers,
                      mPendingRequest);
 
             if (0 == i->num_buffers) {
@@ -1523,7 +1539,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
             }
         } else if (i->frame_number > frame_number) {
             /**add for 3d capture reprocessing begin   */
-            HAL_LOGI("result stream format =%d", result_info->stream->format);
+            HAL_LOGD("result stream format =%d", result_info->stream->format);
             if (HAL_PIXEL_FORMAT_BLOB == result_info->stream->format) {
                 HAL_LOGI("capture result, continue search");
                 i++;
@@ -1587,7 +1603,7 @@ void SprdCamera3HWI::dump(int /*fd */) {
 int SprdCamera3HWI::flush() {
     ATRACE_CALL();
 
-    HAL_LOGD(":hal3: E");
+    HAL_LOGI(":hal3: E");
 
     /*Enable lock when we implement this function */
     int ret = NO_ERROR;
@@ -1634,7 +1650,7 @@ int SprdCamera3HWI::flush() {
     }
 
     mFlush = false;
-    HAL_LOGD(":hal3: X");
+    HAL_LOGI(":hal3: X");
     return 0;
 }
 

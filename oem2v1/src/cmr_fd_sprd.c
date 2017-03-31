@@ -166,7 +166,7 @@ static cmr_int fd_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     }
 
     fd_img_size = &in->frame_size;
-    CMR_LOGI("fd_img_size height = %d, width = %d", fd_img_size->height,
+    CMR_LOGD("fd_img_size height = %d, width = %d", fd_img_size->height,
              fd_img_size->width);
     ret = fd_call_init(fd_handle, fd_img_size);
     if (ret) {
@@ -861,7 +861,7 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
             class_handle->frame_in.src_frame.size.height;
 
         duration = (end_time - start_time) * 1000 / CLOCKS_PER_SEC;
-        CMR_LOGI("SPRD_FD: frame(%dx%d), face_num=%ld, time=%d ms",
+        CMR_LOGD("SPRD_FD: frame(%dx%d), face_num=%ld, time=%d ms",
                  class_handle->frame_in.src_frame.size.width,
                  class_handle->frame_in.src_frame.size.height,
                  class_handle->frame_out.face_area.face_count, duration);

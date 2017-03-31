@@ -84,7 +84,7 @@ cmr_int camera_get_trim_rect(struct img_rect *src_trim_rect,
     src_trim_rect->start_y = CAMERA_HEIGHT(src_trim_rect->start_y);
     src_trim_rect->width = CAMERA_WIDTH(trim_width);
     src_trim_rect->height = CAMERA_HEIGHT(trim_height);
-    CMR_LOGI("zoom_level %ld trim rect %d %d %d %d", zoom_level,
+    CMR_LOGD("zoom_level %ld trim rect %d %d %d %d", zoom_level,
              src_trim_rect->start_x, src_trim_rect->start_y,
              src_trim_rect->width, src_trim_rect->height);
 exit:
@@ -114,7 +114,7 @@ cmr_int camera_get_trim_rect2(struct img_rect *src_trim_rect, float zoom_ratio,
         return -CMR_CAMERA_INVALID_PARAM;
     }
 
-    CMR_LOGI("src_trim_rect %d %d %d %d, sn w/h %d %d, zoom_ratio %f, "
+    CMR_LOGD("src_trim_rect %d %d %d %d, sn w/h %d %d, zoom_ratio %f, "
              "dst_aspect_ratio %f",
              src_trim_rect->start_x, src_trim_rect->start_y,
              src_trim_rect->width, src_trim_rect->height, sensor_w, sensor_h,
@@ -143,7 +143,7 @@ cmr_int camera_get_trim_rect2(struct img_rect *src_trim_rect, float zoom_ratio,
     src_trim_rect->width = CAMERA_WIDTH(trim_width);
     src_trim_rect->height = CAMERA_HEIGHT(trim_height);
 
-    CMR_LOGI("output trim rect %d %d %d %d", src_trim_rect->start_x,
+    CMR_LOGD("output trim rect %d %d %d %d", src_trim_rect->start_x,
              src_trim_rect->start_y, src_trim_rect->width,
              src_trim_rect->height);
     ATRACE_END();
@@ -201,7 +201,7 @@ cmr_int camera_scale_down_software(struct img_frm *src, struct img_frm *dst) {
             *dst_uv_buf++ = src_uv_buf[cur_byte + 1]; // v
         }
     }
-    CMR_LOGI("done");
+    CMR_LOGD("done");
     return 0;
 }
 
@@ -212,7 +212,7 @@ cmr_int camera_save_y_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
     char tmp_str[10];
     FILE *fp = NULL;
 
-    CMR_LOGI("index %d format %d width %d heght %d", index, img_fmt, width,
+    CMR_LOGD("index %d format %d width %d heght %d", index, img_fmt, width,
              height);
 
     cmr_bzero(file_name, 40);
@@ -228,11 +228,11 @@ cmr_int camera_save_y_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
         sprintf(tmp_str, "%d", index);
         strcat(file_name, tmp_str);
         strcat(file_name, ".raw");
-        CMR_LOGI("file name %s", file_name);
+        CMR_LOGD("file name %s", file_name);
         fp = fopen(file_name, "wb");
 
         if (NULL == fp) {
-            CMR_LOGI("can not open file: %s \n", file_name);
+            CMR_LOGD("can not open file: %s \n", file_name);
             return 0;
         }
 
@@ -249,7 +249,7 @@ cmr_int camera_save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
     char tmp_str[10];
     FILE *fp = NULL;
 
-    CMR_LOGI("index 0x%x format %d width %d height %d, addr 0x%lx 0x%lx", index,
+    CMR_LOGD("index 0x%x format %d width %d height %d, addr 0x%lx 0x%lx", index,
              img_fmt, width, height, addr->addr_y, addr->addr_u);
 
     cmr_bzero(file_name, 0x40);
@@ -266,10 +266,10 @@ cmr_int camera_save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
 
         strcat(file_name, "_y");
         strcat(file_name, ".raw");
-        CMR_LOGI("file name %s", file_name);
+        CMR_LOGD("file name %s", file_name);
         fp = fopen(file_name, "wb");
         if (NULL == fp) {
-            CMR_LOGI("can not open file: %s \n", file_name);
+            CMR_LOGD("can not open file: %s \n", file_name);
             return 0;
         }
         fwrite((void *)addr->addr_y, 1, width * height, fp);
@@ -286,10 +286,10 @@ cmr_int camera_save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
         strcat(file_name, tmp_str);
         strcat(file_name, "_uv");
         strcat(file_name, ".raw");
-        CMR_LOGI("file name %s", file_name);
+        CMR_LOGD("file name %s", file_name);
         fp = fopen(file_name, "wb");
         if (NULL == fp) {
-            CMR_LOGI("can not open file: %s \n", file_name);
+            CMR_LOGD("can not open file: %s \n", file_name);
             return 0;
         }
 
@@ -341,7 +341,7 @@ cmr_int camera_save_jpg_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
     char tmp_str[10];
     FILE *fp = NULL;
 
-    CMR_LOGI("index 0x%x format %d width %d height %d, addr 0x%lx 0x%lx", index,
+    CMR_LOGD("index 0x%x format %d width %d height %d, addr 0x%lx 0x%lx", index,
              img_fmt, width, height, addr->addr_y, addr->addr_u);
 
     cmr_bzero(file_name, 40);
@@ -355,11 +355,11 @@ cmr_int camera_save_jpg_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
     sprintf(tmp_str, "%d", height);
     strcat(file_name, tmp_str);
     strcat(file_name, ".jpg");
-    CMR_LOGI("file name %s", file_name);
+    CMR_LOGD("file name %s", file_name);
 
     fp = fopen(file_name, "wb");
     if (NULL == fp) {
-        CMR_LOGI("can not open file: %s \n", file_name);
+        CMR_LOGD("can not open file: %s \n", file_name);
         return 0;
     }
 
@@ -491,7 +491,7 @@ cmr_int camera_parse_raw_filename(char *file_name,
     strncpy(tmp_str, ptr0 + 4, ptr1 - (ptr0 + 4));
     scene_param->smart_bv = atoi(tmp_str);
 
-    CMR_LOGI("w/h %d/%d, gain %d awb_r %d, awb_g %d awb_b %d ct %d bv %d",
+    CMR_LOGD("w/h %d/%d, gain %d awb_r %d, awb_g %d awb_b %d ct %d bv %d",
              scene_param->width, scene_param->height, scene_param->gain,
              scene_param->awb_gain_r, scene_param->awb_gain_g,
              scene_param->awb_gain_b, scene_param->smart_ct,
@@ -506,7 +506,7 @@ cmr_int camera_get_data_from_file(char *file_name, cmr_u32 img_fmt,
     FILE *fp = NULL;
     cmr_int ret = CMR_CAMERA_SUCCESS;
 
-    CMR_LOGI("file_name:%s format %d width %d heght %d", file_name, img_fmt,
+    CMR_LOGD("file_name:%s format %d width %d heght %d", file_name, img_fmt,
              width, height);
     if (IMG_DATA_TYPE_YUV420 == img_fmt || IMG_DATA_TYPE_YUV422 == img_fmt) {
         return 0;
@@ -515,7 +515,7 @@ cmr_int camera_get_data_from_file(char *file_name, cmr_u32 img_fmt,
     } else if (IMG_DATA_TYPE_RAW == img_fmt) {
         fp = fopen(file_name, "rb");
         if (NULL == fp) {
-            CMR_LOGI("can not open file: %s \n", file_name);
+            CMR_LOGD("can not open file: %s \n", file_name);
             return 0;
         }
 

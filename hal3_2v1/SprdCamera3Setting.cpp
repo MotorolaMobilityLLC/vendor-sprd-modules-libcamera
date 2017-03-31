@@ -333,7 +333,7 @@ const int32_t
             {HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 2048, 1536,
              ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
             //{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 1920, 1920,
-             //ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
+            // ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
             {HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 1920, HEIGHT_2M,
              ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
             //	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 1600, 1200,
@@ -422,7 +422,7 @@ const int32_t
             {HAL_PIXEL_FORMAT_YCbCr_420_888, 2048, 1536,
              ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
             //{HAL_PIXEL_FORMAT_YCbCr_420_888, 1920, 1920,
-             //ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
+            // ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
             {HAL_PIXEL_FORMAT_YCbCr_420_888, 1920, HEIGHT_2M,
              ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
             //	{HAL_PIXEL_FORMAT_YCbCr_420_888, 1600, 1200,
@@ -480,7 +480,7 @@ const int32_t
             {HAL_PIXEL_FORMAT_BLOB, 2048, 1536,
              ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
             //{HAL_PIXEL_FORMAT_BLOB, 1920, 1920,
-             //ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
+            // ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
             {HAL_PIXEL_FORMAT_BLOB, 1920, HEIGHT_2M,
              ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
             //	{HAL_PIXEL_FORMAT_BLOB, 1600, 1200,
@@ -522,7 +522,7 @@ const int32_t kavailable_front_stream_configurations
         {HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 2048, 1536,
          ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
         //{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 1920, 1920,
-         //ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
+        // ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
         {HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 1920, HEIGHT_2M,
          ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
         //	{HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 1600, 1200,
@@ -594,7 +594,7 @@ const int32_t kavailable_front_stream_configurations
         {HAL_PIXEL_FORMAT_YCbCr_420_888, 2048, 1536,
          ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
         //{HAL_PIXEL_FORMAT_YCbCr_420_888, 1920, 1920,
-         //ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
+        // ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
         {HAL_PIXEL_FORMAT_YCbCr_420_888, 1920, HEIGHT_2M,
          ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
         //	{HAL_PIXEL_FORMAT_YCbCr_420_888, 1600, 1200,
@@ -639,7 +639,7 @@ const int32_t kavailable_front_stream_configurations
         {HAL_PIXEL_FORMAT_BLOB, 2048, 1152,
          ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
         //{HAL_PIXEL_FORMAT_BLOB, 1920, 1920,
-         //ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
+        // ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
         {HAL_PIXEL_FORMAT_BLOB, 1920, HEIGHT_2M,
          ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
         //	{HAL_PIXEL_FORMAT_BLOB, 1600, 1200,
@@ -4032,7 +4032,7 @@ int SprdCamera3Setting::updateWorkParameters(
         valueU8 = frame_settings.find(ANDROID_CONTROL_SCENE_MODE).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.scene_mode, valueU8,
                          ANDROID_CONTROL_SCENE_MODE)
-        HAL_LOGI("scene %d", valueU8);
+        HAL_LOGD("scene %d", valueU8);
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_EFFECT_MODE)) {
@@ -4160,7 +4160,7 @@ int SprdCamera3Setting::updateWorkParameters(
             s_setting[mCameraId].controlInfo.ae_regions[3] != area[3]) {
             UpdateAE = true;
         }
-        HAL_LOGI("metering mod is %d, need update %d",
+        HAL_LOGD("metering mod is %d, need update %d",
                  s_setting[mCameraId].sprddefInfo.am_mode, UpdateAE);
 
         area[2] = area[2] - area[0];
@@ -5050,11 +5050,14 @@ int SprdCamera3Setting::get_tag_type(const vendor_tag_ops_t *ops,
     uint32_t tag_index = tag & 0xFFFF;
 
     UNUSED(ops);
-    if (tag_section >= ANDROID_VENDOR_SECTION_COUNT) {// modify for coverity 124179
-        HAL_LOGE("####get_tag_type: hal %d, tag_section=%x, >= ANDROID_VENDOR_SECTION_COUNT\n", __LINE__, tag_section);
+    if (tag_section >=
+        ANDROID_VENDOR_SECTION_COUNT) { // modify for coverity 124179
+        HAL_LOGE("####get_tag_type: hal %d, tag_section=%x, >= "
+                 "ANDROID_VENDOR_SECTION_COUNT\n",
+                 __LINE__, tag_section);
         return -1;
-        }
-        else if (tag >= (uint32_t)(cam_hal_metadata_section_bounds[tag_section][1])) {
+    } else if (tag >=
+               (uint32_t)(cam_hal_metadata_section_bounds[tag_section][1])) {
         return -1;
     }
     return cam_tag_info[tag_section][tag_index].tag_type;
@@ -5141,7 +5144,7 @@ int SprdCamera3Setting::androidAeModeToDrvAeMode(uint8_t androidAeMode,
                                                  int8_t *convertDrvMode) {
     int ret = 0;
 
-    HAL_LOGI("aeMode %d", androidAeMode);
+    HAL_LOGD("aeMode %d", androidAeMode);
     switch (androidAeMode) {
     case ANDROID_CONTROL_AE_MODE_OFF:
         *convertDrvMode = -1;
@@ -5171,7 +5174,7 @@ int SprdCamera3Setting::androidFlashModeToDrvFlashMode(uint8_t androidFlashMode,
                                                        int8_t *convertDrvMode) {
     int ret = 0;
 
-    HAL_LOGI("flashMode %d", androidFlashMode);
+    HAL_LOGD("flashMode %d", androidFlashMode);
 
     switch (androidFlashMode) {
     case ANDROID_FLASH_MODE_TORCH:

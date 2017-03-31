@@ -289,7 +289,7 @@ cmr_int cmr_msg_post(cmr_handle queue_handle, struct cmr_msg *message,
 
     if (message->msg_type == CMR_THREAD_EXIT_EVT) {
         msg_cxt->will_destroy_msg_queue_flag = 1;
-        CMR_LOGI(
+        CMR_LOGD(
             "posting CMR_THREAD_EXIT_EVT, set will_destroy_msg_queue_flag");
     }
 

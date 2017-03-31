@@ -301,7 +301,7 @@ int camera_pre_capture_buf_id(cmr_u32 camera_id) {
 #endif
     }
 
-    CMR_LOGI("buffer id = %d", buffer_id);
+    CMR_LOGD("buffer id = %d", buffer_id);
 
     return buffer_id;
 }
@@ -321,7 +321,7 @@ int camera_reserve_buf_size(cmr_u32 camera_id, cmr_s32 mem_size_id,
     mem_tab_ptr = (struct cap_size_to_mem *)&reserve_mem_size_tab[0];
     *mem_size = mem_tab_ptr[mem_size_id].mem_size;
 
-    CMR_LOGI("mem_size_id = %d, mem_size = 0x%x", mem_size_id,
+    CMR_LOGD("mem_size_id = %d, mem_size = 0x%x", mem_size_id,
              mem_tab_ptr[mem_size_id].mem_size);
 
     return 0;
@@ -361,19 +361,19 @@ int camera_pre_capture_buf_size(cmr_u32 camera_id, cmr_s32 mem_size_id,
 
         cameraMode = is_multi_camera_mode_mem;
         if (cameraMode == MODE_3D_VIDEO) {
-            CMR_LOGI("current mode is 3D video");
+            CMR_LOGD("current mode is 3D video");
             mem_tab_ptr =
                 (struct cap_size_to_mem *)&Stereo_video_mem_size_tab[0];
             yuv_mem_tab_ptr =
                 (struct cap_size_to_mem *)&Stereo_video_mem_size_tab[0];
         } else if (cameraMode == MODE_3D_PREVIEW) {
-            CMR_LOGI("current mode is 3D preview");
+            CMR_LOGD("current mode is 3D preview");
             mem_tab_ptr =
                 (struct cap_size_to_mem *)&Stereo_video_mem_size_tab[0];
             yuv_mem_tab_ptr =
                 (struct cap_size_to_mem *)&Stereo_video_mem_size_tab[0];
         } else if (cameraMode == MODE_3D_CAPTURE) {
-            CMR_LOGI("current mode is 3D capture");
+            CMR_LOGD("current mode is 3D capture");
             mem_tab_ptr = (struct cap_size_to_mem *)&front_cam_mem_size_tab[0];
             yuv_mem_tab_ptr =
                 (struct cap_size_to_mem *)&front_cam_mem_size_tab[0];
@@ -391,7 +391,7 @@ int camera_pre_capture_buf_size(cmr_u32 camera_id, cmr_s32 mem_size_id,
         *mem_size = mem_tab_ptr[mem_size_id].mem_size;
     }
 
-    CMR_LOGI("image size num, %d, mem size 0x%x", mem_size_id,
+    CMR_LOGD("image size num, %d, mem size 0x%x", mem_size_id,
              mem_tab_ptr[mem_size_id].mem_size);
 
     return 0;
@@ -441,7 +441,7 @@ int camera_capture_buf_size(uint32_t camera_id, uint32_t sn_fmt,
         CMR_LOGE("No matched size for this image, 0x%x", size_pixel);
         return -1;
     } else {
-        CMR_LOGI("image size num, %d, mem size 0x%x", i,
+        CMR_LOGD("image size num, %d, mem size 0x%x", i,
                  mem_tab_ptr[i].mem_size);
     }
 
@@ -472,15 +472,15 @@ int camera_arrange_capture_buf(
     channel_size = (uint32_t)(image_size->width * image_size->height);
     mem_res = cap_2_frm->mem_frm.buf_size;
 
-    CMR_LOGI("mem frame, 0x%lx 0x%lx, fd 0x%x, buf_size = %d bytes",
+    CMR_LOGD("mem frame, 0x%lx 0x%lx, fd 0x%x, buf_size = %d bytes",
              cap_2_frm->mem_frm.addr_phy.addr_y,
              cap_2_frm->mem_frm.addr_vir.addr_y, cap_2_frm->mem_frm.fd,
              cap_2_frm->mem_frm.buf_size);
 
-    CMR_LOGI("channel_size, 0x%x, image_cnt %d, rot %d, orig_fmt %d",
+    CMR_LOGD("channel_size, 0x%x, image_cnt %d, rot %d, orig_fmt %d",
              channel_size, image_cnt, need_rot, orig_fmt);
 
-    CMR_LOGI(
+    CMR_LOGD(
         "sn_size %d %d, sn_trim %d %d %d %d, image_size %d %d, cap_size %d %d",
         sn_size->width, sn_size->height, sn_trim->start_x, sn_trim->start_y,
         sn_trim->width, sn_trim->height, image_size->width, image_size->height,
@@ -538,7 +538,7 @@ int camera_arrange_capture_buf(
         }
     }
 
-    CMR_LOGI("mem_end, mem_res: 0x%x 0x%x ", mem_end, mem_res);
+    CMR_LOGD("mem_end, mem_res: 0x%x 0x%x ", mem_end, mem_res);
 
     /* resize target jpeg buffer */
     cap_mem->target_jpeg.addr_phy.addr_y =
@@ -756,7 +756,7 @@ int arrange_jpeg_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
         NULL == io_mem_end || NULL == io_channel_size) {
         return -1;
     }
-    CMR_LOGI("jpeg fmt buf arrange");
+    CMR_LOGD("jpeg fmt buf arrange");
 
     align16_image_size.width =
         camera_get_aligned_size(cap_2_frm->type, image_size->width);
@@ -783,7 +783,7 @@ int arrange_jpeg_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     tmp = (uint32_t)(sn_size->height * sn_size->width);
     y_end = yy_to_y + MAX(channel_size, tmp);
 
-    CMR_LOGI("yy_to_y, 0x%x, tmp 0x%x", yy_to_y, tmp);
+    CMR_LOGD("yy_to_y, 0x%x, tmp 0x%x", yy_to_y, tmp);
 
     cap_mem->target_yuv.addr_phy.addr_u =
         cap_mem->target_yuv.addr_phy.addr_y + y_end;
@@ -921,7 +921,7 @@ int arrange_yuv_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     tmp2 = max_size * 3 / 2 + cap_mem->target_jpeg.buf_size;
     offset = tmp1 > tmp2 ? tmp1 : tmp2;
 
-    CMR_LOGI("offset %d", offset);
+    CMR_LOGD("offset %d", offset);
     CMR_NO_MEM(offset, mem_res);
     mem_end = CMR_ADDR_ALIGNED(offset);
     mem_res = mem_res - mem_end;
@@ -962,7 +962,7 @@ int arrange_misc_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
         /* calculate the address of target_jpeg, start */
         size_pixel = get_size[i](image_size->width, image_size->height,
                                  thum_size->width, thum_size->height);
-        CMR_LOGI("i %d %x reseved in buffer, alloc %x buffers\n", i, mem_res,
+        CMR_LOGD("i %d %x reseved in buffer, alloc %x buffers\n", i, mem_res,
                  size_pixel);
         if (mem_res >= size_pixel) {
             img_frame[i].buf_size = size_pixel;
@@ -1203,7 +1203,7 @@ uint32_t get_isp_tmp_size(uint32_t width, uint32_t height, uint32_t thum_width,
 uint32_t camera_get_aligned_size(uint32_t type, uint32_t size) {
     uint32_t size_aligned = 0;
 
-    CMR_LOGI("type %d", type);
+    CMR_LOGD("type %d", type);
     if (CAMERA_MEM_NO_ALIGNED == type) {
         size_aligned = size;
     } else {

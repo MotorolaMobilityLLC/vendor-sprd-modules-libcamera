@@ -253,7 +253,7 @@ cmr_int cmr_af_start_notice_focus(cmr_handle af_handle) {
     cmr_int ret = 0;
     struct af_context *af_cxt = (struct af_context *)af_handle;
 
-    CMR_LOGI("E");
+    CMR_LOGD("E");
     pthread_mutex_lock(&af_cxt->af_isp_caf_mutex);
     af_cxt->focus_need_quit = FOCUS_START;
     pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
@@ -265,7 +265,7 @@ cmr_int cmr_af_cancel_notice_focus(cmr_handle af_handle) {
     cmr_int ret = 0;
     struct af_context *af_cxt = (struct af_context *)af_handle;
 
-    CMR_LOGI("E");
+    CMR_LOGD("E");
     pthread_mutex_lock(&af_cxt->af_isp_caf_mutex);
     af_cxt->focus_need_quit = FOCUS_NEED_QUIT;
     pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
@@ -282,7 +282,7 @@ cmr_int cmr_transfer_caf_to_af(cmr_handle af_handle) {
 
     pthread_mutex_lock(&af_cxt->af_isp_caf_mutex);
     af_cxt->af_mode_inflight = CAMERA_FOCUS_MODE_CAF;
-    CMR_LOGI("E");
+    CMR_LOGD("E");
     pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
 
     return ret;
@@ -294,7 +294,7 @@ cmr_int cmr_transfer_af_to_caf(cmr_handle af_handle) {
 
     pthread_mutex_lock(&af_cxt->af_isp_caf_mutex);
     af_cxt->af_mode_inflight = CAMERA_FOCUS_MODE_AUTO;
-    CMR_LOGI("E");
+    CMR_LOGD("E");
     pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
 
     return ret;
@@ -305,7 +305,7 @@ cmr_int cmr_focus_start(cmr_handle af_handle, cmr_u32 camera_id) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct af_context *af_cxt = (struct af_context *)af_handle;
     CMR_MSG_INIT(message);
-    CMR_LOGI("E");
+    CMR_LOGD("E");
 
     if (!af_cxt) {
         CMR_LOGE("invalid param");
@@ -323,7 +323,7 @@ cmr_int cmr_focus_start(cmr_handle af_handle, cmr_u32 camera_id) {
         CMR_LOGE("Failedto send one msg to af thread");
     }
 
-    CMR_LOGI("X ret = %ld", ret);
+    CMR_LOGD("X ret = %ld", ret);
     return ret;
 }
 
@@ -332,7 +332,7 @@ cmr_int cmr_focus_stop(cmr_handle af_handle, cmr_u32 camera_id,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct af_context *af_cxt = (struct af_context *)af_handle;
     CMR_MSG_INIT(message);
-    CMR_LOGI("E");
+    CMR_LOGD("E");
 
     if (!af_cxt) {
         CMR_LOGE("handle param invalid");
@@ -340,10 +340,10 @@ cmr_int cmr_focus_stop(cmr_handle af_handle, cmr_u32 camera_id,
     }
 
     pthread_mutex_lock(&af_cxt->set_af_cancel_mutex);
-    CMR_LOGI("is_need_abort_msg 0x%x", is_need_abort_msg);
+    CMR_LOGD("is_need_abort_msg 0x%x", is_need_abort_msg);
     af_cxt->af_cancelled |= 0x01;
     af_cxt->af_cancelled |= (is_need_abort_msg & 0x1) << 1;
-    CMR_LOGI("af_cancelled 0x%x", af_cxt->af_cancelled);
+    CMR_LOGD("af_cancelled 0x%x", af_cxt->af_cancelled);
     pthread_mutex_unlock(&af_cxt->set_af_cancel_mutex);
 
     af_try_stop(af_handle, camera_id);
@@ -358,7 +358,7 @@ cmr_int cmr_focus_stop(cmr_handle af_handle, cmr_u32 camera_id,
         CMR_LOGE("Faile to send one msg to af thread");
     }
 
-    CMR_LOGI("ret= %ld X", ret);
+    CMR_LOGD("ret= %ld X", ret);
 
     return ret;
 }
@@ -417,7 +417,7 @@ cmr_int af_thread_proc(struct cmr_msg *message, void *data) {
              (CAMERA_FOCUS_MODE_CAF_VIDEO == af_cxt->af_mode)) &&
             af_get_focusmove_flag(af_handle)) {
             /*caf move done, return directly*/
-            CMR_LOGI("CAF move done already isp_af_win_val=%d ",
+            CMR_LOGD("CAF move done already isp_af_win_val=%d ",
                      af_cxt->isp_af_win_val);
 
             if (NULL != af_cxt->ops.af_pre_proc) {
@@ -434,7 +434,7 @@ cmr_int af_thread_proc(struct cmr_msg *message, void *data) {
         }
 
         ret = af_start(af_handle, camera_id);
-        CMR_LOGI("af_start ret=%ld", ret);
+        CMR_LOGD("af_start ret=%ld", ret);
 
         af_need_exit(af_handle, &ex_af_cancel_flag);
         if (0x01 == ex_af_cancel_flag) {
@@ -444,7 +444,7 @@ cmr_int af_thread_proc(struct cmr_msg *message, void *data) {
         } else {
             cb_type = AF_CB_FAILED;
         }
-        CMR_LOGI("cb_type=%d", cb_type);
+        CMR_LOGD("cb_type=%d", cb_type);
 
         af_cxt->evt_cb(cb_type, 0, af_cxt->oem_handle);
 
@@ -486,7 +486,7 @@ cmr_int af_thread_proc(struct cmr_msg *message, void *data) {
         if (PREVIEWING == af_cxt->ops.get_preview_status(af_cxt->oem_handle) &&
             ((CAMERA_FOCUS_MODE_CAF == af_cxt->af_mode) ||
              (CAMERA_FOCUS_MODE_CAF_VIDEO == af_cxt->af_mode))) {
-            CMR_LOGI("CMR_EVT_CAF_MOVE_START");
+            CMR_LOGD("CMR_EVT_CAF_MOVE_START");
 
             af_cxt->evt_cb(AF_CB_FOCUS_MOVE, 1, af_cxt->oem_handle);
         }
@@ -502,14 +502,14 @@ cmr_int af_thread_proc(struct cmr_msg *message, void *data) {
         if (PREVIEWING == af_cxt->ops.get_preview_status(af_cxt->oem_handle) &&
             ((CAMERA_FOCUS_MODE_CAF == af_cxt->af_mode) ||
              (CAMERA_FOCUS_MODE_CAF_VIDEO == af_cxt->af_mode))) {
-            CMR_LOGI("CMR_EVT_CAF_MOVE_STOP");
+            CMR_LOGD("CMR_EVT_CAF_MOVE_STOP");
 
             af_cxt->evt_cb(AF_CB_FOCUS_MOVE, 0, af_cxt->oem_handle);
         }
         break;
 
     case CMR_EVT_AF_STOP:
-        CMR_LOGI("AF stop");
+        CMR_LOGD("AF stop");
         camera_id = (cmr_u32)((unsigned long)message->data);
         is_need_abort_msg = message->sub_msg_type;
         CMR_LOGI("camera_id = %d is_need_abort_msg = %d", camera_id,
@@ -546,11 +546,11 @@ cmr_int cmr_focus_isp_handle(cmr_handle af_handle, cmr_u32 evt_type,
         return CMR_CAMERA_INVALID_PARAM;
     }
 
-    CMR_LOGI("evt_type = 0x%x", evt_type);
+    CMR_LOGV("evt_type = 0x%x", evt_type);
 
     switch (evt_type) {
     case FOCUS_EVT_ISP_AF_NOTICE:
-        CMR_LOGI("af_mode %d, af_busy %d", af_cxt->af_mode, af_cxt->af_busy);
+        CMR_LOGD("af_mode %d, af_busy %d", af_cxt->af_mode, af_cxt->af_busy);
         is_caf_mode = (CAMERA_FOCUS_MODE_CAF == af_cxt->af_mode) ||
                       (CAMERA_FOCUS_MODE_CAF_VIDEO == af_cxt->af_mode);
         pthread_mutex_lock(&af_cxt->af_isp_caf_mutex);
@@ -578,7 +578,7 @@ cmr_int cmr_focus_isp_handle(cmr_handle af_handle, cmr_u32 evt_type,
         break;
     }
 
-    CMR_LOGI("X ret = %ld", ret);
+    CMR_LOGD("X ret = %ld", ret);
 
     return ret;
 }
@@ -626,7 +626,7 @@ cmr_int cmr_focus_set_param(cmr_handle af_handle, cmr_u32 came_id,
             struct cmr_focus_param temp = *(struct cmr_focus_param *)param;
 
             for (loop = 0; loop < temp.zone_cnt; loop++)
-                CMR_LOGI("temp.zone_cnt=%d x=%d ,y=%d, w=%d ,h=%d ",
+                CMR_LOGD("temp.zone_cnt=%d x=%d ,y=%d, w=%d ,h=%d ",
                          temp.zone_cnt, temp.zone[loop].start_x,
                          temp.zone[loop].start_y, temp.zone[loop].width,
                          temp.zone[loop].height);
@@ -641,7 +641,7 @@ cmr_int cmr_focus_set_param(cmr_handle af_handle, cmr_u32 came_id,
         break;
 
     default:
-        CMR_LOGI("unsupported parmater id= %d", id);
+        CMR_LOGD("unsupported parmater id= %d", id);
         break;
     }
 
@@ -660,7 +660,7 @@ cmr_int caf_move_start_handle(cmr_handle af_handle) {
         return CMR_CAMERA_INVALID_PARAM;
     }
 
-    CMR_LOGI("caf start move");
+    CMR_LOGD("caf start move");
 
     message.msg_type = CMR_EVT_CAF_MOVE_START;
     message.sync_flag = CMR_MSG_SYNC_NONE;
@@ -677,7 +677,7 @@ cmr_int caf_move_stop_handle(cmr_handle af_handle) {
     struct af_context *af_cxt = (struct af_context *)af_handle;
     CMR_MSG_INIT(message);
 
-    CMR_LOGI("E");
+    CMR_LOGD("E");
 
     if (!af_cxt) {
         CMR_LOGE("handle param invalid");
@@ -719,7 +719,7 @@ cmr_int af_get_focusmove_flag(cmr_handle af_handle) {
 
     is_move_done = af_cxt->caf_move_done;
 
-    CMR_LOGI("move_done %ld", is_move_done);
+    CMR_LOGD("move_done %ld", is_move_done);
 
     return is_move_done;
 }
@@ -728,7 +728,7 @@ cmr_int af_isp_done(cmr_handle af_handle, void *data) {
     struct af_context *af_cxt = (struct af_context *)af_handle;
     struct isp_af_notice *isp_af = (struct isp_af_notice *)data;
 
-    CMR_LOGI("E");
+    CMR_LOGD("E");
 
     if (!af_cxt) {
         CMR_LOGE("handle param invalid");
@@ -741,7 +741,7 @@ cmr_int af_isp_done(cmr_handle af_handle, void *data) {
     }
 
     pthread_mutex_lock(&af_cxt->af_isp_caf_mutex);
-    CMR_LOGI("AF done, valid_win 0x%x, isp_af_timeout %d", isp_af->valid_win,
+    CMR_LOGD("AF done, valid_win 0x%x, isp_af_timeout %d", isp_af->valid_win,
              af_cxt->isp_af_timeout);
     af_cxt->isp_af_win_val = isp_af->valid_win;
     if (af_cxt->isp_af_timeout == 0) {
@@ -750,7 +750,7 @@ cmr_int af_isp_done(cmr_handle af_handle, void *data) {
     }
     pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
 
-    CMR_LOGI("X");
+    CMR_LOGD("X");
     return 0;
 }
 
@@ -812,11 +812,11 @@ cmr_int af_set_mode(cmr_handle af_handle, cmr_u32 came_id, cmr_u32 af_mode) {
         goto exit;
     }
 
-    CMR_LOGI("af_mode,af_cxt->af_mode %d,%d", af_mode, af_cxt->af_mode);
+    CMR_LOGD("af_mode,af_cxt->af_mode %d,%d", af_mode, af_cxt->af_mode);
 
     if (af_mode < CAMERA_FOCUS_MODE_MAX) {
         if (af_cxt->af_mode == af_mode) {
-            CMR_LOGI("some mode, no need set again");
+            CMR_LOGD("some mode, no need set again");
             goto exit;
         }
 
@@ -848,7 +848,7 @@ cmr_int af_set_mode(cmr_handle af_handle, cmr_u32 came_id, cmr_u32 af_mode) {
     }
 
 exit:
-    CMR_LOGI("ret %ld", ret);
+    CMR_LOGD("ret %ld", ret);
     return ret;
 }
 
@@ -871,7 +871,7 @@ cmr_int af_start(cmr_handle af_handle, cmr_u32 camera_id) {
     cmr_bzero(&com_isp_af, sizeof(com_isp_af));
     cmr_bzero(&yuv_sn_param, sizeof(yuv_sn_param));
 
-    CMR_LOGI("E");
+    CMR_LOGD("E");
 
     if (!af_cxt) {
         CMR_LOGE("handle param invalid");
@@ -895,7 +895,7 @@ cmr_int af_start(cmr_handle af_handle, cmr_u32 camera_id) {
     ptr = (cmr_u32 *)&af_cxt->focus_zone_param[0];
     zone_cnt = *ptr++;
 
-    CMR_LOGI("zone_cnt %d, x y w h, %d %d %d %d", zone_cnt, ptr[0], ptr[1],
+    CMR_LOGD("zone_cnt %d, x y w h, %d %d %d %d", zone_cnt, ptr[0], ptr[1],
              ptr[2], ptr[3]);
 
     CMR_PRINT_TIME;
@@ -927,7 +927,7 @@ cmr_int af_start(cmr_handle af_handle, cmr_u32 camera_id) {
         isp_af_param.valid_win = af_param.zone_cnt;
         focus_rect_param_to_isp(af_param, &isp_af_param);
         CMR_LOGV("TYPE_RAW");
-        CMR_LOGI("af_win num %d, x:%d y:%d e_x:%d e_y:%d",
+        CMR_LOGD("af_win num %d, x:%d y:%d e_x:%d e_y:%d",
                  isp_af_param.valid_win, isp_af_param.win[i].start_x,
                  isp_af_param.win[i].start_y, isp_af_param.win[i].end_x,
                  isp_af_param.win[i].end_y);
@@ -939,7 +939,7 @@ cmr_int af_start(cmr_handle af_handle, cmr_u32 camera_id) {
         } else {
             focus_stop_prew = 0;
         }
-        CMR_LOGI("focus_stop_prew %d", focus_stop_prew);
+        CMR_LOGD("focus_stop_prew %d", focus_stop_prew);
 
         pthread_mutex_lock(&af_cxt->af_isp_caf_mutex);
         af_cxt->isp_af_timeout = 0;
@@ -947,7 +947,7 @@ cmr_int af_start(cmr_handle af_handle, cmr_u32 camera_id) {
         com_isp_af.af_param = isp_af_param;
 
         flash = af_cxt->ops.get_flash_info(af_cxt->oem_handle, camera_id);
-        CMR_LOGI("flash %d af_cxt->af_mode_inflight %d", flash,
+        CMR_LOGD("flash %d af_cxt->af_mode_inflight %d", flash,
                  af_cxt->af_mode_inflight);
 
         pthread_mutex_lock(&af_cxt->af_isp_caf_mutex);
@@ -1000,7 +1000,7 @@ exit:
     // if (FOCUS_NEED_QUIT != af_cxt->focus_need_quit) {
     af_cxt->ops.af_post_proc(af_cxt->oem_handle, focus_stop_prew);
     //}
-    CMR_LOGI("af_cxt->focus_need_quit %d ret %ld", af_cxt->focus_need_quit,
+    CMR_LOGD("af_cxt->focus_need_quit %d ret %ld", af_cxt->focus_need_quit,
              ret);
     return ret;
 }
@@ -1014,7 +1014,7 @@ cmr_int af_start_lightly(cmr_handle af_handle, cmr_u32 camera_id) {
     struct common_sn_cmd_param yuv_sn_param;
     cmr_bzero(&yuv_sn_param, sizeof(yuv_sn_param));
 
-    CMR_LOGI("E");
+    CMR_LOGD("E");
 
     if (!af_cxt) {
         CMR_LOGE("handle param invalid");
@@ -1063,7 +1063,7 @@ cmr_int af_start_lightly(cmr_handle af_handle, cmr_u32 camera_id) {
     }
 
 exit:
-    CMR_LOGI("ret %ld", ret);
+    CMR_LOGD("ret %ld", ret);
     return ret;
 }
 
@@ -1072,7 +1072,7 @@ cmr_int af_quit(cmr_handle af_handle, cmr_u32 camera_id) {
     struct sensor_exp_info sensor_info;
     struct af_context *af_cxt = (struct af_context *)af_handle;
 
-    CMR_LOGI("E");
+    CMR_LOGD("E");
 
     if (!af_cxt) {
         CMR_LOGE("handle param invalid");
@@ -1100,7 +1100,7 @@ cmr_int af_quit(cmr_handle af_handle, cmr_u32 camera_id) {
         return ret;
     }
     pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
-    CMR_LOGI("set autofocus quit");
+    CMR_LOGD("set autofocus quit");
     if (IMG_DATA_TYPE_RAW == sensor_info.image_format) {
         struct isp_af_win isp_af_param;
 
@@ -1119,7 +1119,7 @@ cmr_int af_quit(cmr_handle af_handle, cmr_u32 camera_id) {
 
 exit:
 
-    CMR_LOGI("ret %ld", ret);
+    CMR_LOGD("ret %ld", ret);
     return ret;
 }
 
@@ -1130,7 +1130,7 @@ cmr_int af_stop(cmr_handle af_handle, cmr_u32 came_id,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct af_context *af_cxt = (struct af_context *)af_handle;
 
-    CMR_LOGI("E");
+    CMR_LOGD("E");
 
     if (!af_cxt) {
         CMR_LOGE("handle param invalid");
@@ -1139,7 +1139,7 @@ cmr_int af_stop(cmr_handle af_handle, cmr_u32 came_id,
 
     ret = af_quit(af_handle, came_id);
 
-    CMR_LOGI("X");
+    CMR_LOGD("X");
     return ret;
 }
 
@@ -1181,7 +1181,7 @@ cmr_int af_need_exit(cmr_handle af_handle, cmr_u32 *is_need_abort_msg) {
                  *is_need_abort_msg);
     }
 
-    CMR_LOGI("ret %ld", ret);
+    CMR_LOGD("ret %ld", ret);
     return ret;
 }
 
@@ -1223,21 +1223,21 @@ cmr_int af_check_area(cmr_handle af_handle, struct img_rect *sensor_rect_ptr,
     ret = cmr_sensor_get_mode(cam_cxt->sn_cxt.sensor_handle, camera_id,
                               &sensor_mode);
 
-    CMR_LOGI("camera_id %d sensor_mode %ld rect_num %d", camera_id, sensor_mode,
+    CMR_LOGD("camera_id %d sensor_mode %ld rect_num %d", camera_id, sensor_mode,
              rect_num);
 
     sensor_mode_info = &sensor_info.mode_info[sensor_mode];
 
     for (i = 0; i < rect_num; i++) {
-        CMR_LOGW("rect_ptr[i].width =%d rect_ptr[i].height=%d",
+        CMR_LOGD("rect_ptr[i].width =%d rect_ptr[i].height=%d",
                  rect_ptr[i].width, rect_ptr[i].height);
-        CMR_LOGW("rect_ptr->width =%d sensor_mode_info->trim_width=%d",
+        CMR_LOGD("rect_ptr->width =%d sensor_mode_info->trim_width=%d",
                  rect_ptr->width, sensor_mode_info->trim_width);
-        CMR_LOGW("rect_ptr->height =%d sensor_mode_info->trim_height=%d",
+        CMR_LOGD("rect_ptr->height =%d sensor_mode_info->trim_height=%d",
                  rect_ptr->height, sensor_mode_info->trim_height);
-        CMR_LOGW("rect_ptr->start_x =%d sensor_mode_info->trim_start_x=%d",
+        CMR_LOGD("rect_ptr->start_x =%d sensor_mode_info->trim_start_x=%d",
                  rect_ptr->start_x, sensor_mode_info->trim_start_x);
-        CMR_LOGW("rect_ptr->start_y =%d sensor_mode_info->trim_start_y=%d",
+        CMR_LOGD("rect_ptr->start_y =%d sensor_mode_info->trim_start_y=%d",
                  rect_ptr->start_y, sensor_mode_info->trim_start_y);
 
         if ((0 == rect_ptr[i].width) || (0 == rect_ptr[i].height) ||
@@ -1255,7 +1255,7 @@ cmr_int af_check_area(cmr_handle af_handle, struct img_rect *sensor_rect_ptr,
 
 exit:
 
-    CMR_LOGI("ret %ld, result %s", ret,
+    CMR_LOGD("ret %ld, result %s", ret,
              (ret == CMR_CAMERA_SUCCESS) ? "ok" : "error");
     return ret;
 }
@@ -1275,7 +1275,7 @@ cmr_int focus_rect_parse(cmr_handle af_handle,
         ret = CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
-    CMR_LOGI("E");
+    CMR_LOGD("E");
 
     ptr = (uint32_t *)&af_cxt->focus_zone_param[0];
     if (!ptr) {
@@ -1286,7 +1286,7 @@ cmr_int focus_rect_parse(cmr_handle af_handle,
     zone_cnt = *ptr++;
     cmr_bzero(&af_param, sizeof(af_param));
 
-    CMR_LOGI("af_mode %d zone_cnt %d, x y w h, %d %d %d %d", af_cxt->af_mode,
+    CMR_LOGD("af_mode %d zone_cnt %d, x y w h, %d %d %d %d", af_cxt->af_mode,
              zone_cnt, ptr[0], ptr[1], ptr[2], ptr[3]);
 
     switch (af_cxt->af_mode) {
@@ -1398,7 +1398,7 @@ cmr_int focus_rect_parse(cmr_handle af_handle,
         af_param.zone[0].y = *ptr++;
         af_param.zone[0].w = *ptr++;
         af_param.zone[0].h = *ptr++;
-        CMR_LOGI("x %d y %d ,w %d h %d", af_param.zone[0].x, af_param.zone[0].y,
+        CMR_LOGD("x %d y %d ,w %d h %d", af_param.zone[0].x, af_param.zone[0].y,
                  af_param.zone[0].w, af_param.zone[0].h);
 
         af_rect_zone[0].start_x = af_param.zone[0].x;
@@ -1445,7 +1445,7 @@ cmr_int focus_rect_param_to_isp(SENSOR_EXT_FUN_PARAM_T focus_rect,
     cmr_bzero(&isp_af_param, sizeof(struct isp_af_win));
     isp_af_param.mode = focus_rect.param;
     isp_af_param.valid_win = focus_rect.zone_cnt;
-    CMR_LOGI("mode %d valid_win %d", isp_af_param.mode, isp_af_param.valid_win);
+    CMR_LOGD("mode %d valid_win %d", isp_af_param.mode, isp_af_param.valid_win);
 
     for (i = 0; i < focus_rect.zone_cnt; i++) {
         isp_af_param.win[i].start_x = focus_rect.zone[i].x;
@@ -1454,7 +1454,7 @@ cmr_int focus_rect_param_to_isp(SENSOR_EXT_FUN_PARAM_T focus_rect,
             focus_rect.zone[i].x + focus_rect.zone[i].w - 1;
         isp_af_param.win[i].end_y =
             focus_rect.zone[i].y + focus_rect.zone[i].h - 1;
-        CMR_LOGI("af_win num:%d, x:%d y:%d e_x:%d e_y:%d",
+        CMR_LOGD("af_win num:%d, x:%d y:%d e_x:%d e_y:%d",
                  isp_af_param.valid_win, isp_af_param.win[i].start_x,
                  isp_af_param.win[i].start_y, isp_af_param.win[i].end_x,
                  isp_af_param.win[i].end_y);
@@ -1463,7 +1463,7 @@ cmr_int focus_rect_param_to_isp(SENSOR_EXT_FUN_PARAM_T focus_rect,
     *p_isp_af_param = isp_af_param;
 
 exit:
-    CMR_LOGI("ret %ld", ret);
+    CMR_LOGD("ret %ld", ret);
     return ret;
 }
 
@@ -1533,13 +1533,13 @@ cmr_int wait_isp_focus_result(cmr_handle af_handle, cmr_u32 camera_id,
                 CMR_LOGE("isp focus failed");
                 ret = -1;
             }
-            CMR_LOGI("isp focus ret %ld", ret);
+            CMR_LOGD("isp focus ret %ld", ret);
         }
     }
 
 exit:
 
-    CMR_LOGI("ret %ld", ret);
+    CMR_LOGD("ret %ld", ret);
     return ret;
 }
 
@@ -1548,7 +1548,7 @@ void af_try_stop(cmr_handle af_handle, cmr_u32 camera_id) {
     struct af_context *af_cxt = (struct af_context *)af_handle;
     struct sensor_exp_info sensor_info;
 
-    CMR_LOGI("s");
+    CMR_LOGD("s");
     if (!af_cxt || !af_cxt->ops.get_sensor_info) {
         goto exit;
     }
@@ -1567,10 +1567,10 @@ void af_try_stop(cmr_handle af_handle, cmr_u32 camera_id) {
         if (0 != sem_trywait(&af_cxt->isp_af_sem)) {
             af_cxt->isp_af_timeout = 1;
             sem_post(&af_cxt->isp_af_sem);
-            CMR_LOGI("post isp sem");
+            CMR_LOGD("post isp sem");
         }
     }
     pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
 exit:
-    CMR_LOGI("done");
+    CMR_LOGD("done");
 }

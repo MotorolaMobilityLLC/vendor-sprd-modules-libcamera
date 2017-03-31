@@ -712,7 +712,7 @@ static cmr_uint setting_flash_mode_to_status(struct setting_component *cpt,
             ret =
                 setting_sn_ctrl(cpt, COM_SN_GET_AUTO_FLASH_STATE, &ctrl_param);
         }
-        CMR_LOGI("auto flash status %ld", ctrl_param.cmd_type_value);
+        CMR_LOGD("auto flash status %ld", ctrl_param.cmd_type_value);
 
         if (ret) {
             ctrl_param.cmd_type_value = 1;
@@ -771,7 +771,7 @@ static cmr_int setting_get_flash_status(struct setting_component *cpt,
     cmr_int ret = 0;
 
     parm->cmd_type_value = setting_is_need_flash(cpt, parm);
-    CMR_LOGI("flash_status %ld", parm->cmd_type_value);
+    CMR_LOGD("flash_status %ld", parm->cmd_type_value);
     return ret;
 }
 
@@ -785,12 +785,12 @@ static cmr_int setting_set_flash_mode(struct setting_component *cpt,
 
     flash_mode = parm->cmd_type_value;
 
-    CMR_LOGI("flash_mode:%lu has_preflashed:%lu,flash_opened"
+    CMR_LOGD("flash_mode:%lu has_preflashed:%lu,flash_opened"
              "%lu,set_flash_mode_off_after_close_flash %lu",
              flash_mode, flash_param->has_preflashed, flash_param->flash_opened,
              flash_param->set_flash_mode_off_after_close_flash);
     if ((flash_mode == CAMERA_FLASH_MODE_OFF) && flash_param->flash_opened) {
-        CMR_LOGI("during open flash don't set off, just keep it");
+        CMR_LOGD("during open flash don't set off, just keep it");
         flash_param->set_flash_mode_off_after_close_flash = 1;
         return ret;
     }
@@ -836,7 +836,7 @@ setting_set_auto_exposure_mode(struct setting_component *cpt,
     struct isp_pos_rect trim;
 
     ret = setting_set_general(cpt, SETTING_GENERAL_AUTO_EXPOSURE_MODE, parm);
-    CMR_LOGI("parm->ae_param.mode:%ld", parm->ae_param.mode);
+    CMR_LOGD("parm->ae_param.mode:%ld", parm->ae_param.mode);
     // delete this if because app change metering condition
     // if (CAMERA_AE_SPOT_METERING == parm->ae_param.mode)
     {
@@ -849,7 +849,7 @@ setting_set_auto_exposure_mode(struct setting_component *cpt,
             trim.end_y = isp_param.win_area.rect[0].start_y +
                          isp_param.win_area.rect[0].height;
 
-            CMR_LOGI("AE ROI (%d,%d,%d,%d)", trim.start_x, trim.start_y,
+            CMR_LOGD("AE ROI (%d,%d,%d,%d)", trim.start_x, trim.start_y,
                      trim.end_x, trim.end_y);
             cpt->is_touch_focus = 1;
             if (trim.end_x <= (uint32_t)trim.start_x ||
@@ -939,7 +939,7 @@ static cmr_int setting_set_scene_mode(struct setting_component *cpt,
     cmr_int ret = 0;
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
-    CMR_LOGI("set scene mode %ld", parm->cmd_type_value);
+    CMR_LOGD("set scene mode %ld", parm->cmd_type_value);
     if (CAMERA_SCENE_MODE_HDR == parm->cmd_type_value) {
         hal_param->is_hdr = 1;
     } else {
@@ -1009,7 +1009,7 @@ static cmr_int setting_set_range_fps(struct setting_component *cpt,
         hal_param->range_fps = parm->range_fps;
     }
 
-    CMR_LOGI("min_fps=%ld, max_fps=%ld", hal_param->range_fps.min_fps,
+    CMR_LOGD("min_fps=%ld, max_fps=%ld", hal_param->range_fps.min_fps,
              hal_param->range_fps.max_fps);
 
     return ret;
@@ -1198,7 +1198,7 @@ static void get_seconds_from_double(double d, uint32_t *numerator,
     while (str[j] == '0')
         --j;
     num = j - i + 1;
-    CMR_LOGI("%s, i=%d, j=%d, num=%d \n", str, i, j, num);
+    CMR_LOGD("%s, i=%d, j=%d, num=%d \n", str, i, j, num);
 
     for (i = 0; i < num; i++)
         value *= 10.0;
@@ -1206,7 +1206,7 @@ static void get_seconds_from_double(double d, uint32_t *numerator,
     *numerator = seconds * value;
     *denominator = value;
 
-    CMR_LOGI("data=%f, num=%d, denom=%d \n", seconds, *numerator, *denominator);
+    CMR_LOGD("data=%f, num=%d, denom=%d \n", seconds, *numerator, *denominator);
 }
 
 static uint32_t get_data_from_double(double d,
@@ -2365,7 +2365,7 @@ static cmr_int setting_get_hdr(struct setting_component *cpt,
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
     parm->cmd_type_value = hal_param->is_hdr;
-    CMR_LOGI("get hdr %ld", parm->cmd_type_value);
+    CMR_LOGD("get hdr %ld", parm->cmd_type_value);
 
     return ret;
 }
@@ -2387,7 +2387,7 @@ static cmr_int setting_is_need_flash(struct setting_component *cpt,
     shot_num = hal_param->shot_num;
     pre_flash_status = hal_param->flash_param.has_preflashed;
 
-    CMR_LOGI("flash_mode=%ld, flash_status=%ld, capture_mode=%d, shot_num=%ld",
+    CMR_LOGD("flash_mode=%ld, flash_status=%ld, capture_mode=%d, shot_num=%ld",
              flash_mode, flash_status, capture_mode, shot_num);
 
     if (CAMERA_FLASH_MODE_TORCH != flash_mode && flash_status &&
@@ -2458,7 +2458,7 @@ static cmr_int setting_isp_flash_notify(struct setting_component *cpt,
         isp_param.flash_notice.capture_skip_num =
             local_param->sensor_static_info.capture_skip_num;
 
-        CMR_LOGI("max_time=%d, max_charge=%d", max_time, max_charge);
+        CMR_LOGD("max_time=%d, max_charge=%d", max_time, max_charge);
     } break;
 
     case ISP_FLASH_PRE_LIGHTING: {
@@ -2504,7 +2504,7 @@ static cmr_int setting_set_flashdevice(struct setting_component *cpt,
     struct setting_flash_param *flash_param =
         get_flash_param(cpt, parm->camera_id);
 
-    CMR_LOGI("flash_status=%d", flash_status);
+    CMR_LOGD("flash_status=%d", flash_status);
     if (init_in->io_cmd_ioctl) {
         io_param.camera_id = parm->camera_id;
         io_param.cmd_value = flash_status;
@@ -2543,7 +2543,7 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
     flash_hw_status = hal_param->flash_param.flash_hw_status;
 
     ctrl_flash_status = parm->ctrl_flash.flash_type;
-    CMR_LOGI(
+    CMR_LOGD(
         "is_active %ld, flash_mode %ld, ctrl_flash_status %d flash_status %ld",
         is_active, flash_mode, (cmr_u32)ctrl_flash_status, flash_hw_status);
 
@@ -2564,24 +2564,24 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
             if (IMG_DATA_TYPE_RAW == image_format) {
                 switch (ctrl_flash_status) {
                 case FLASH_HIGH_LIGHT: // high flash
-                    CMR_LOGI("high flash Set Ae setting");
+                    CMR_LOGD("high flash Set Ae setting");
                     cmr_setting_clear_sem(cpt);
                     hal_param->flash_param.flash_opened = 1;
                     setting_isp_flash_notify(cpt, parm, ISP_FLASH_MAIN_BEFORE);
                     setting_isp_wait_notice(cpt);
-                    CMR_LOGI("high flash Open flash");
+                    CMR_LOGD("high flash Open flash");
                     setting_set_flashdevice(cpt, parm, ctrl_flash_status);
                     setting_isp_flash_notify(cpt, parm,
                                              ISP_FLASH_MAIN_LIGHTING);
                     setting_isp_wait_notice(cpt);
-                    CMR_LOGI("high flash Will do-capture");
+                    CMR_LOGD("high flash Will do-capture");
                     break;
                 case FLASH_AF_DONE:
-                    CMR_LOGI("pre flash AF DONE");
+                    CMR_LOGD("pre flash AF DONE");
                     setting_isp_flash_notify(cpt, parm, ISP_FLASH_AF_DONE);
                     break;
                 default:
-                    CMR_LOGI("pre flash open");
+                    CMR_LOGD("pre flash open");
                     hal_param->flash_param.has_preflashed = 1;
                     hal_param->flash_param.flash_opened = 1;
                     cmr_sem_getvalue(&cpt->preflash_sem, &tmpVal);
@@ -2634,7 +2634,7 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
 
         if (product_id) {
             if (FLASH_WAIT_TO_CLOSE == ctrl_flash_status) {
-                CMR_LOGI("wait to close");
+                CMR_LOGD("wait to close");
                 setting_isp_wait_notice(cpt);
             }
         }
@@ -2644,8 +2644,8 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
             /*open flash*/
             if ((uint32_t)CAMERA_FLASH_MODE_TORCH != flash_mode) {
                 setting_set_flashdevice(cpt, parm, FLASH_CLOSE_AFTER_OPEN);
-                CMR_LOGI("flash close");
-                CMR_LOGI("parm->ctrl_flash.will_capture=%ld",
+                CMR_LOGD("flash close");
+                CMR_LOGD("parm->ctrl_flash.will_capture=%ld",
                          parm->ctrl_flash.will_capture);
                 if (!parm->ctrl_flash.will_capture) {
                     hal_param->flash_param.has_preflashed = 0;
@@ -2675,7 +2675,7 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
                 cmr_sem_post(&cpt->preflash_sem);
             } else {
                 if (product_id) {
-                    CMR_LOGI("wait to capture end");
+                    CMR_LOGD("wait to capture end");
                     setting_isp_wait_notice(cpt);
                 }
                 hal_param->flash_param.has_preflashed = 0;
@@ -2683,7 +2683,7 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
             }
             if (hal_param->flash_param.set_flash_mode_off_after_close_flash ==
                 1) {
-                CMR_LOGI("set flash mode off after close flash");
+                CMR_LOGD("set flash mode off after close flash");
                 hal_param->flash_param.set_flash_mode_off_after_close_flash = 0;
                 hal_param->flash_param.has_preflashed = 0;
                 parm->cmd_type_value = CAMERA_FLASH_MODE_OFF;
@@ -2693,7 +2693,7 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
 
         if (product_id) {
             if (FLASH_WAIT_TO_CLOSE == ctrl_flash_status) {
-                CMR_LOGI("wait to preflash period end");
+                CMR_LOGD("wait to preflash period end");
                 setting_isp_wait_notice(cpt);
             }
         }
@@ -2910,7 +2910,7 @@ setting_get_pre_lowflash_value(struct setting_component *cpt,
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
     parm->cmd_type_value = hal_param->flash_param.has_preflashed;
-    CMR_LOGI("hal_param->flash_param.has_preflashed=%ld",
+    CMR_LOGD("hal_param->flash_param.has_preflashed=%ld",
              hal_param->flash_param.has_preflashed);
 
     return ret;
@@ -2974,7 +2974,7 @@ static cmr_int setting_isp_wait_notice_withtime(struct setting_component *cpt,
         } else {
             pthread_mutex_lock(&cpt->isp_mutex);
             cpt->isp_is_timeout = 0;
-            CMR_LOGI("done.");
+            CMR_LOGD("done.");
         }
     }
     pthread_mutex_unlock(&cpt->isp_mutex);
@@ -2991,7 +2991,7 @@ cmr_int cmr_setting_isp_notice_done(cmr_handle setting_handle, void *data) {
     }
 
     pthread_mutex_lock(&cpt->isp_mutex);
-    CMR_LOGI("isp notice done.");
+    CMR_LOGD("isp notice done.");
     // if (0 == cpt->isp_is_timeout) {
     cmr_sem_post(&cpt->isp_sem);
     //} else {
@@ -3025,7 +3025,7 @@ static cmr_int setting_quick_ae_wait_notice(struct setting_component *cpt) {
             CMR_LOGW("timeout.");
         } else {
             pthread_mutex_lock(&cpt->isp_mutex);
-            CMR_LOGI("done.");
+            CMR_LOGD("done.");
         }
     }
     pthread_mutex_unlock(&cpt->isp_mutex);
@@ -3043,7 +3043,7 @@ cmr_int cmr_setting_quick_ae_notice_done(cmr_handle setting_handle,
     }
 
     pthread_mutex_lock(&cpt->isp_mutex);
-    CMR_LOGI("isp quick ae done.");
+    CMR_LOGD("isp quick ae done.");
     cmr_sem_post(&cpt->quick_ae_sem);
     pthread_mutex_unlock(&cpt->isp_mutex);
     return 0;
@@ -3063,7 +3063,7 @@ static cmr_int setting_set_pre_lowflash(struct setting_component *cpt,
     image_format = local_param->sensor_static_info.image_format;
     flash_mode = hal_param->flash_param.flash_mode;
     been_preflash = hal_param->flash_param.has_preflashed;
-    CMR_LOGI("camera_preflash without AF, image_format %ld, flash_mode %ld, "
+    CMR_LOGD("camera_preflash without AF, image_format %ld, flash_mode %ld, "
              "been_preflash %ld",
              image_format, flash_mode, been_preflash);
 
@@ -3073,7 +3073,7 @@ static cmr_int setting_set_pre_lowflash(struct setting_component *cpt,
         }
 
         if (setting_is_need_flash(cpt, parm)) {
-            CMR_LOGI("preflash low open");
+            CMR_LOGD("preflash low open");
             hal_param->flash_param.flash_opened = 1;
             hal_param->flash_param.has_preflashed = 1;
             if (IMG_DATA_TYPE_RAW == image_format) {
@@ -3097,7 +3097,7 @@ static cmr_int setting_set_pre_lowflash(struct setting_component *cpt,
             if (IMG_DATA_TYPE_RAW == image_format) {
                 setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_AFTER);
             }
-            CMR_LOGI("preflash low close");
+            CMR_LOGD("preflash low close");
             hal_param->flash_param.flash_opened = 0;
         }
     }
@@ -3221,7 +3221,7 @@ setting_out:
 cmr_int cmr_setting_deinit_notice(cmr_handle setting_handle) {
     cmr_int ret = 0;
     struct setting_component *cpt = (struct setting_component *)setting_handle;
-    CMR_LOGI("cmr_setting_deinit_notice");
+    CMR_LOGD("cmr_setting_deinit_notice");
 
     pthread_mutex_lock(&cpt->isp_mutex);
     cpt->flash_need_quit = FLASH_NEED_QUIT;
@@ -3235,7 +3235,7 @@ cmr_int cmr_setting_deinit_notice(cmr_handle setting_handle) {
 cmr_int cmr_pre_flash_notice_flash(cmr_handle setting_handle) {
     cmr_int ret = 0;
     struct setting_component *cpt = (struct setting_component *)setting_handle;
-    CMR_LOGI("cmr_pre_flash_notice_flash");
+    CMR_LOGD("cmr_pre_flash_notice_flash");
 
     pthread_mutex_lock(&cpt->isp_mutex);
     cpt->flash_need_quit = FLASH_OPEN;
@@ -3247,7 +3247,7 @@ cmr_int cmr_pre_flash_notice_flash(cmr_handle setting_handle) {
 cmr_int cmr_af_start_notice_flash(cmr_handle setting_handle) {
     cmr_int ret = 0;
     struct setting_component *cpt = (struct setting_component *)setting_handle;
-    CMR_LOGI("cmr_af_start_notice_flash");
+    CMR_LOGD("cmr_af_start_notice_flash");
 
     pthread_mutex_lock(&cpt->isp_mutex);
     cpt->flash_need_quit = FLASH_OPEN;
@@ -3259,7 +3259,7 @@ cmr_int cmr_af_start_notice_flash(cmr_handle setting_handle) {
 cmr_int cmr_af_cancel_notice_flash(cmr_handle setting_handle) {
     cmr_int ret = 0;
     struct setting_component *cpt = (struct setting_component *)setting_handle;
-    CMR_LOGI("cmr_af_cancel_notice_flash");
+    CMR_LOGD("cmr_af_cancel_notice_flash");
 
     pthread_mutex_lock(&cpt->isp_mutex);
     cpt->flash_need_quit = FLASH_NEED_QUIT;

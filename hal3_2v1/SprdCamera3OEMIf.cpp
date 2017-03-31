@@ -536,7 +536,7 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf() {
         mHalOem = NULL;
     }
 
-    HAL_LOGD(":hal3: X cameraId: %d.", mCameraId);
+    HAL_LOGI(":hal3: X cameraId: %d.", mCameraId);
     timer_stop();
 }
 
@@ -577,7 +577,7 @@ void SprdCamera3OEMIf::closeCamera() {
         // camera_cb was called inline.
         setCameraState(SPRD_INTERNAL_STOPPING, STATE_CAMERA);
 
-        HAL_LOGD(":hal3: stopping camera");
+        HAL_LOGI(":hal3: stopping camera");
         if (CMR_CAMERA_SUCCESS != mHalOem->ops->camera_deinit(mCameraHandle)) {
             setCameraState(SPRD_ERROR, STATE_CAMERA);
             mReleaseFLag = true;
@@ -3820,7 +3820,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         }
 
         ATRACE_BEGIN("video_frame");
-        HAL_LOGI("record, fd=%d, vir = 0x%lx, frame_num = %d, timestamp = "
+        HAL_LOGD("record, fd=%d, vir = 0x%lx, frame_num = %d, timestamp = "
                  "%lld, frame->type = %ld rec=%lld",
                  frame->fd, buff_vir, frame_num, buffer_timestamp, frame->type,
                  mSlowPara.rec_timestamp);
@@ -3908,7 +3908,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 
         ATRACE_BEGIN("preview_frame");
 
-        HAL_LOGI("prev buff fd=%d, buff_vir=0x%lx, num %d, ret %d, time %lld, "
+        HAL_LOGD("prev buff fd=%d, buff_vir=0x%lx, num %d, ret %d, time %lld, "
                  "frame type = %ld rec=%lld, ",
                  frame->fd, buff_vir, frame_num, ret, buffer_timestamp,
                  frame->type, mSlowPara.rec_timestamp);
@@ -4065,7 +4065,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 
         ATRACE_BEGIN("callback_frame");
 
-        HAL_LOGI("callback buff fd=%d, vir=0x%lx, num %d, ret %d, time %lld, "
+        HAL_LOGD("callback buff fd=%d, vir=0x%lx, num %d, ret %d, time %lld, "
                  "frame type = %ld",
                  frame->fd, buff_vir, frame_num, ret, buffer_timestamp,
                  frame->type);
@@ -4105,7 +4105,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         if (PREVIEW_ZSL_FRAME == frame->type) {
             ATRACE_BEGIN("zsl_frame");
 
-            HAL_LOGI("zsl buff fd=0x%x, frame type=%ld", frame->fd,
+            HAL_LOGD("zsl buff fd=0x%x, frame type=%ld", frame->fd,
                      frame->type);
             pushZslFrame(frame);
 

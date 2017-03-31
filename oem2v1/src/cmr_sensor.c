@@ -1290,7 +1290,8 @@ cmr_int cmr_sns_ioctl(struct sensor_drv_context *sensor_cxt, cmr_uint cmd,
             SENSOR_VAL_T *val = (SENSOR_VAL_T *)arg;
             if (val->type == SENSOR_VAL_TYPE_READ_OTP)
                 sensor_drv_ioctl(sensor_cxt,
-                                  CMD_SNS_OTP_DATA_COMPATIBLE_CONVERT, (void *)arg);
+                                 CMD_SNS_OTP_DATA_COMPATIBLE_CONVERT,
+                                 (void *)arg);
         }
     }
 
@@ -1412,7 +1413,7 @@ cmr_sns_kill_monitor_thread(struct cmr_sensor_handle *sensor_handle) {
     if (sensor_handle->monitor_thread_cxt.thread_handle) {
         sensor_handle->monitor_thread_cxt.is_exit = 1;
         while (1 == sensor_handle->monitor_thread_cxt.is_exit) {
-            CMR_LOGW("Wait 1 ms");
+            CMR_LOGD("Wait 1 ms");
             usleep(1000);
         }
         ret = pthread_join(sensor_handle->monitor_thread_cxt.thread_handle,

@@ -127,7 +127,7 @@ extern "C" {
 #define CMR_PRINT_TIME                                                         \
     do {                                                                       \
         nsecs_t timestamp = systemTime(CLOCK_MONOTONIC);                       \
-        CMR_LOGI("timestamp = %ld.", timestamp / 1000000);                     \
+        CMR_LOGD("timestamp = %ld.", timestamp / 1000000);                     \
     } while (0)
 
 #define CMR_PRINT_TIME_V                                                       \
@@ -139,7 +139,7 @@ extern "C" {
 #define CMR_PRINT_TIME                                                         \
     do {                                                                       \
         nsecs_t timestamp = systemTime(CLOCK_MONOTONIC);                       \
-        CMR_LOGI("timestamp = %lld.", timestamp / 1000000);                    \
+        CMR_LOGD("timestamp = %lld.", timestamp / 1000000);                    \
     } while (0)
 
 #define CMR_PRINT_TIME_V                                                       \
