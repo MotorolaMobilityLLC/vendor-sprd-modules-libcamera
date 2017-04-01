@@ -64,8 +64,8 @@ cmr_u32 _pm_iircnr_iir_convert_param(void *dst_param, cmr_u32 strength_level, cm
 		dst_ptr->cur.middle_factor_y_0 = iir_cnr_param[strength_level].middle_factor_y[0];
 		dst_ptr->cur.uv_high_thr2_0 = iir_cnr_param[strength_level].iircnr_str.cnr_uv_thr2[0].uv_high_thr2;
 		for (i = 0; i < 7; i++) {
-			dst_ptr->cur.uv_low_thr[i][0] = iir_cnr_param[strength_level].iircnr_ee.uv_low_thr1[i + 1];
-			dst_ptr->cur.uv_low_thr[i][1] = iir_cnr_param[strength_level].iircnr_str.cnr_uv_thr2[i + 1].uv_low_thr2;
+			dst_ptr->cur.uv_low_thr[i][1]= iir_cnr_param[strength_level].iircnr_ee.uv_low_thr1[i + 1];
+			dst_ptr->cur.uv_low_thr[i][0] = iir_cnr_param[strength_level].iircnr_str.cnr_uv_thr2[i + 1].uv_low_thr2;
 			dst_ptr->cur.uv_high_thr2[i] = iir_cnr_param[strength_level].iircnr_str.cnr_uv_thr2[i + 1].uv_high_thr2;
 			dst_ptr->cur.slope_y[i] = iir_cnr_param[strength_level].slop_y[i + 1];
 			dst_ptr->cur.middle_factor_y[i] = iir_cnr_param[strength_level].middle_factor_y[i + 1];
