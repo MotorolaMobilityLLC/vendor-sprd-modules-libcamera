@@ -381,7 +381,7 @@ cmr_int read_file(const char *file_name, void *data_buf, uint32_t buf_size) {
     file_len = ftell(pf);
     fseek(pf, 0, SEEK_SET);
 
-    if (buf_size >= file_len)
+    if (buf_size >= file_len && file_len > 0)
         file_len = fread(data_buf, 1, file_len, pf);
     else
         file_len = 0;

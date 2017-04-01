@@ -2594,7 +2594,7 @@ cmr_int snp_set_channel_out_param(cmr_handle snp_handle) {
         CMR_LOGD("data format %d", chn_out_frm_ptr->fmt);
         if (IMG_DATA_TYPE_JPEG != chn_out_frm_ptr->fmt) {
             if (IMG_DATA_TYPE_RAW != chn_out_frm_ptr->fmt) {
-                cmr_copy((void *)&cxt->chn_param.chn_frm[0],
+                cmr_copy((void *)cxt->chn_param.chn_frm,
                          (void *)chn_out_frm_ptr,
                          CMR_CAPTURE_MEM_SUM * sizeof(cxt->chn_param.chn_frm));
             } else {
@@ -2605,10 +2605,9 @@ cmr_int snp_set_channel_out_param(cmr_handle snp_handle) {
                         cxt->chn_param.chn_frm[i].fmt = IMG_DATA_TYPE_YUV420;
                     }
                 } else {
-                    cmr_copy((void *)&cxt->chn_param.chn_frm[0],
-                             (void *)chn_out_frm_ptr,
-                             CMR_CAPTURE_MEM_SUM *
-                                 sizeof(cxt->chn_param.chn_frm));
+                    cmr_copy(
+                        (void *)cxt->chn_param.chn_frm, (void *)chn_out_frm_ptr,
+                        CMR_CAPTURE_MEM_SUM * sizeof(cxt->chn_param.chn_frm));
                 }
             }
         } else {

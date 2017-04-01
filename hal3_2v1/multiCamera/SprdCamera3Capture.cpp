@@ -2587,12 +2587,13 @@ void SprdCamera3Capture::dumpImg(void *addr, int size, int frameId) {
 
     if (file_fd == NULL) {
         HAL_LOGE("open yuv file fail!\n");
+    } else {
+        int count = fwrite(addr, 1, size, file_fd);
+        if (count != size) {
+            HAL_LOGE("write dst.yuv fail\n");
+        }
+        fclose(file_fd);
     }
-    int count = fwrite(addr, 1, size, file_fd);
-    if (count != size) {
-        HAL_LOGE("write dst.yuv fail\n");
-    }
-    fclose(file_fd);
 
     HAL_LOGD("X");
 }
