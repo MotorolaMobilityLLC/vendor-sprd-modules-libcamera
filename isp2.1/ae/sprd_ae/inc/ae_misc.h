@@ -65,4 +65,3 @@ cmr_s32 ae_misc_calculation(cmr_handle handle, struct ae_misc_calc_in *in_param,
 #endif
 /**---------------------------------------------------------------------------*/
 #endif
-

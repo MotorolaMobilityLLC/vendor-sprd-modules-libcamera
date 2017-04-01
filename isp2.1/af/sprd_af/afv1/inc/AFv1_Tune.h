@@ -46,15 +46,15 @@
 
 #include "AFv1_Common.h"
 
-#define MC_MIN  220      //minimal mechenical position
-#define MC_MAX  950      //maximal mechenical position
+#define MC_MIN  220		//minimal mechenical position
+#define MC_MAX  950		//maximal mechenical position
 
-#define OTP_INF  350      //INF position of OTP
-#define OTP_MACRO  700    //MACRO position of OTP
+#define OTP_INF  350		//INF position of OTP
+#define OTP_MACRO  700		//MACRO position of OTP
 
-#define HYPER    410      //Hyper Focus position
+#define HYPER    410		//Hyper Focus position
 
-#define Move_TH  50      //skip one frame if move position is bigger than TH
+#define Move_TH  50		//skip one frame if move position is bigger than TH
 /*
 #define MC_MIN  332      //minimal mechenical position
 #define MC_MAX  980      //maximal mechenical position
@@ -159,7 +159,6 @@
 #define	SAF_FS_SPSMD_LB_Ratio_TH_J2_16x	400
 #define	SAF_FS_SPSMD_LB_Ratio_TH_J3_16x	450
 
-
 #define	SAF_SPSMD_MIN_FV_TH_16x	    1000
 
 // the threshold of FV0
@@ -227,12 +226,10 @@
 
 #define Final_Select_Filter T_SPSMD
 
-ERRCODE Get_AF_tuning_Data(AF_Data* pAF_Data);
-ERRCODE Get_Defocus_RoughScan_Table(AF_Data* pAF_Data);
-ERRCODE Get_SAF_RoughScan_Table(AF_Data* pAF_Data);
-ERRCODE Get_SAF_FineScan_Table(AF_Data* pAF_Data, uint8 startIdx, uint8 dirrection);
-ERRCODE Get_SAF_Search_Threshold(AF_Data* pAF_Data);
-
+ERRCODE Get_AF_tuning_Data(AF_Data * pAF_Data);
+ERRCODE Get_Defocus_RoughScan_Table(AF_Data * pAF_Data);
+ERRCODE Get_SAF_RoughScan_Table(AF_Data * pAF_Data);
+ERRCODE Get_SAF_FineScan_Table(AF_Data * pAF_Data, uint8 startIdx, uint8 dirrection);
+ERRCODE Get_SAF_Search_Threshold(AF_Data * pAF_Data);
 
 #endif
-

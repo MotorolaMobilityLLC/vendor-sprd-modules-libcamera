@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- #ifndef _RANDOM_UNPACK_H_
+#ifndef _RANDOM_UNPACK_H_
 #define _RANDOM_UNPACK_H_
 
 /*------------------------------------------------------------------------------*
@@ -25,8 +25,7 @@
 *				Compiler Flag					*
 *-------------------------------------------------------------------------------*/
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 /*------------------------------------------------------------------------------*
 				Micro Define					*
@@ -56,6 +55,5 @@ cmr_s32 random_awb_unpack(void *random_awb, cmr_u32 random_awb_size, struct rand
 }
 #endif
 /*------------------------------------------------------------------------------*/
-
 #endif
 // End

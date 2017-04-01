@@ -22,13 +22,11 @@
 //#include <sys/types.h>
 //#include "cmr_type.h"
 
-
 /*------------------------------------------------------------------------------*
 *					Compiler Flag				*
 *-------------------------------------------------------------------------------*/
 #ifdef  __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 /*------------------------------------------------------------------------------*
@@ -39,8 +37,8 @@ extern "C"
 #define MAX_AF_WIN 32
 
 #ifdef WIN32
-typedef __int64               cmr_s64;
-typedef unsigned __int64      cmr_u64;
+typedef __int64 cmr_s64;
+typedef unsigned __int64 cmr_u64;
 #else
 #include <sys/types.h>
 #endif
@@ -60,7 +58,7 @@ enum aft_err_type {
 	AFT_ERR_MAX
 };
 
-enum aft_mode{
+enum aft_mode {
 	AFT_MODE_NORMAL = 0x00,
 	AFT_MODE_MACRO,
 	AFT_MODE_CONTINUE,
@@ -75,18 +73,17 @@ enum aft_calc_data_type {
 	AFT_DATA_SENSOR,
 	AFT_DATA_CAF,
 	AFT_DATA_MAX
-
 };
 
 enum aft_cmd {
-	AFT_CMD_SET_BASE 			= 0x1000,
-	AFT_CMD_SET_AF_MODE			= 0x1001,
-	AFT_CMD_SET_CAF_RESET		= 0x1002,
-	AFT_CMD_SET_CAF_STOP			= 0x1003,
+	AFT_CMD_SET_BASE = 0x1000,
+	AFT_CMD_SET_AF_MODE = 0x1001,
+	AFT_CMD_SET_CAF_RESET = 0x1002,
+	AFT_CMD_SET_CAF_STOP = 0x1003,
 
-	AFT_CMD_GET_BASE			= 0x2000,
-	AFT_CMD_GET_FV_STATS_CFG	= 0X2001,
-	AFT_CMD_GET_AE_SKIP_INFO	= 0X2002
+	AFT_CMD_GET_BASE = 0x2000,
+	AFT_CMD_GET_FV_STATS_CFG = 0X2001,
+	AFT_CMD_GET_AE_SKIP_INFO = 0X2002
 };
 
 enum aft_log_level {
@@ -102,7 +99,6 @@ struct aft_tuning_block_param {
 	cmr_u8 *data;
 	cmr_u32 data_len;
 };
-
 
 struct aft_af_win_rect {
 	cmr_u32 sx;
@@ -141,22 +137,21 @@ struct aft_img_blk_info {
 	cmr_u32 *data;
 };
 
-
 struct aft_ae_info {
-	cmr_u32 exp_time;  //us
-	cmr_u32 gain;   //256 --> 1X
+	cmr_u32 exp_time;	//us
+	cmr_u32 gain;	//256 --> 1X
 	cmr_u32 cur_lum;
 	cmr_u32 target_lum;
 	cmr_u32 is_stable;
 	cmr_u32 bv;
 	cmr_u32 y_sum;
 	cmr_u32 cur_scene;
-	cmr_u32 registor_pos;//gwb
+	cmr_u32 registor_pos;	//gwb
 };
 
 struct aft_sensor_info {
 	cmr_u32 sensor_type;
-//	cmr_s64 timestamp;
+//      cmr_s64 timestamp;
 	float x;
 	float y;
 	float z;
@@ -202,42 +197,38 @@ struct aft_caf_stats_cfg {
 	cmr_u8 num_blk_ver;
 };
 
-struct aft_ae_skip_info
-{
+struct aft_ae_skip_info {
 	cmr_u32 ae_select_support;
 	cmr_u32 ae_skip_line;
 };
 
-typedef struct aft_ctrl_ops
-{
-	cmr_u8 (*get_sys_time)(cmr_u64* p_time,void *cookie);
-	cmr_u8 (*binfile_is_exist)(cmr_u8* is_exist, void *cookie);
-	cmr_u8 (*is_aft_mlog)(cmr_u32 *is_mlog, void *cookie);
-	cmr_u8 (*aft_log)(cmr_u32 log_level, const char* format, ...);
+typedef struct aft_ctrl_ops {
+	cmr_u8(*get_sys_time) (cmr_u64 * p_time, void *cookie);
+	cmr_u8(*binfile_is_exist) (cmr_u8 * is_exist, void *cookie);
+	cmr_u8(*is_aft_mlog) (cmr_u32 * is_mlog, void *cookie);
+	cmr_u8(*aft_log) (cmr_u32 log_level, const char *format, ...);
 
 	void *aft_cookie;
 } aft_ctrl_ops_t;
 
-typedef void* aft_sub_handle_t;
+typedef void *aft_sub_handle_t;
 
-typedef struct aft_context{
+typedef struct aft_context {
 	aft_sub_handle_t aft_sub_handle;
 	cmr_u16 tuning_param_len;
 	cmr_u32 af_mode;
 	struct aft_ae_info ae_info;
 	aft_ctrl_ops_t aft_ops;
-}aft_proc_handle_t;
+} aft_proc_handle_t;
 
 /*------------------------------------------------------------------------------*
 *					Data Prototype				*
 *-------------------------------------------------------------------------------*/
 
-cmr_s32 caf_trigger_init(struct aft_tuning_block_param *init_param, aft_proc_handle_t *handle);
-cmr_s32 caf_trigger_deinit(aft_proc_handle_t *handle);
-cmr_s32 caf_trigger_calculation(aft_proc_handle_t *handle,
-				struct aft_proc_calc_param *aft_calc_in,
-				struct aft_proc_result *aft_calc_result);
-cmr_s32 caf_trigger_ioctrl(aft_proc_handle_t *handle, enum aft_cmd cmd, void *param0, void *param1);
+cmr_s32 caf_trigger_init(struct aft_tuning_block_param *init_param, aft_proc_handle_t * handle);
+cmr_s32 caf_trigger_deinit(aft_proc_handle_t * handle);
+cmr_s32 caf_trigger_calculation(aft_proc_handle_t * handle, struct aft_proc_calc_param *aft_calc_in, struct aft_proc_result *aft_calc_result);
+cmr_s32 caf_trigger_ioctrl(aft_proc_handle_t * handle, enum aft_cmd cmd, void *param0, void *param1);
 
 /*------------------------------------------------------------------------------*
 *					Compiler Flag				*

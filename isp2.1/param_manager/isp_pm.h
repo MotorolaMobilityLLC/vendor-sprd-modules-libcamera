@@ -20,8 +20,7 @@
 #include "isp_pm_com_type.h"
 
 #ifdef	 __cplusplus
-extern	 "C"
-{
+extern "C" {
 #endif
 
 #define isp_pm_cmd_mask 0xf000
@@ -29,46 +28,45 @@ extern	 "C"
 #define ISP_PARAM_FROM_TOOL 1
 
 enum isp_pm_cmd {
-	ISP_PM_CMD_SET_BASE 				= 0x1000,
-	ISP_PM_CMD_SET_MODE				,
-	ISP_PM_CMD_SET_AWB				,
-	ISP_PM_CMD_SET_AE				,
-	ISP_PM_CMD_SET_AF				,
-	ISP_PM_CMD_SET_SMART				,
-	ISP_PM_CMD_SET_OTHERS			,	//init isp block parameter, except 3A&Smart Blocks
+	ISP_PM_CMD_SET_BASE = 0x1000,
+	ISP_PM_CMD_SET_MODE,
+	ISP_PM_CMD_SET_AWB,
+	ISP_PM_CMD_SET_AE,
+	ISP_PM_CMD_SET_AF,
+	ISP_PM_CMD_SET_SMART,
+	ISP_PM_CMD_SET_OTHERS,	//init isp block parameter, except 3A&Smart Blocks
 	ISP_PM_CMD_SET_SCENE_MODE,
 	ISP_PM_CMD_SET_SPECIAL_EFFECT,
-	ISP_PM_CMD_ALLOC_BUF_MEMORY       ,
+	ISP_PM_CMD_ALLOC_BUF_MEMORY,
 	ISP_PM_CMD_SET_PARAM_SOURCE,
-	ISP_PM_CMD_GET_BASE				= 0x2000,
-	ISP_PM_CMD_GET_INIT_AE			,
-	ISP_PM_CMD_GET_INIT_ALSC        ,
-	ISP_PM_CMD_GET_INIT_AWB			,
-	ISP_PM_CMD_GET_INIT_AF			,
-	ISP_PM_CMD_GET_INIT_AF_NEW		,
-	ISP_PM_CMD_GET_INIT_SMART		,
-	ISP_PM_CMD_GET_INIT_AFT			,
-	ISP_PM_CMD_GET_SINGLE_SETTING   ,
-	ISP_PM_CMD_GET_ISP_SETTING		,
-	ISP_PM_CMD_GET_ISP_ALL_SETTING	,
+	ISP_PM_CMD_GET_BASE = 0x2000,
+	ISP_PM_CMD_GET_INIT_AE,
+	ISP_PM_CMD_GET_INIT_ALSC,
+	ISP_PM_CMD_GET_INIT_AWB,
+	ISP_PM_CMD_GET_INIT_AF,
+	ISP_PM_CMD_GET_INIT_AF_NEW,
+	ISP_PM_CMD_GET_INIT_SMART,
+	ISP_PM_CMD_GET_INIT_AFT,
+	ISP_PM_CMD_GET_SINGLE_SETTING,
+	ISP_PM_CMD_GET_ISP_SETTING,
+	ISP_PM_CMD_GET_ISP_ALL_SETTING,
 	ISP_PM_CMD_GET_MODEID_BY_FPS,
 	ISP_PM_CMD_GET_MODEID_BY_RESOLUTION,
 	ISP_PM_CMD_GET_DV_MODEID_BY_RESOLUTION,
 	ISP_PM_CMD_GET_AE_VERSION_ID,
-	ISP_PM_CMD_UPDATE_BASE			= 0x3000,
+	ISP_PM_CMD_UPDATE_BASE = 0x3000,
 	ISP_PM_CMD_UPDATE_ALL_PARAMS,
-	ISP_PM_CMD_UPDATE_LSC_OTP		,
+	ISP_PM_CMD_UPDATE_LSC_OTP,
 
-	ISP_PM_CMD_SET_THIRD_PART_BASE	= 0x4000,
-	ISP_PM_CMD_GET_THIRD_PART_BASE	= 0x5000,
+	ISP_PM_CMD_SET_THIRD_PART_BASE = 0x4000,
+	ISP_PM_CMD_GET_THIRD_PART_BASE = 0x5000,
 	ISP_PM_CMD_GET_THIRD_PART_INIT_SFT_AF,
 
-	ISP_PM_CMD_UPDATE_THIRD_PART_BASE	= 0x6000,
+	ISP_PM_CMD_UPDATE_THIRD_PART_BASE = 0x6000,
 
 };
 
 typedef cmr_handle isp_pm_handle_t;
-
 
 struct isp_pm_init_input {
 	cmr_u32 num;
@@ -80,7 +78,7 @@ struct isp_pm_init_input {
 };
 
 struct isp_pm_init_output {
-	void* param_ptr;
+	void *param_ptr;
 	cmr_u32 param_size;
 };
 
@@ -99,18 +97,16 @@ struct isp_pm_update_input {
 	struct isp_data_info tuning_data[ISP_TUNE_MODE_MAX];
 };
 struct isp_pm_update_output {
-	void* param_ptr;
+	void *param_ptr;
 	cmr_u32 param_size;
 };
 
-isp_pm_handle_t isp_pm_init(struct isp_pm_init_input *input, void* output);
+isp_pm_handle_t isp_pm_init(struct isp_pm_init_input *input, void *output);
 cmr_s32 isp_pm_ioctl(isp_pm_handle_t handle, enum isp_pm_cmd cmd, void *input, void *output);
 cmr_s32 isp_pm_update(isp_pm_handle_t handle, enum isp_pm_cmd cmd, void *input, void *output);
-cmr_s32 isp_pm_deinit(isp_pm_handle_t handle, void *input, void* output);
-
+cmr_s32 isp_pm_deinit(isp_pm_handle_t handle, void *input, void *output);
 
 #ifdef	 __cplusplus
 }
 #endif
-
-#endif //_ISP_PM_H_
+#endif				//_ISP_PM_H_

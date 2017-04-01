@@ -21,23 +21,23 @@
 #define PD_LINE_H_PIX (16)
 #define PD_UNIT_W_SHIFT (4)
 #define PD_UNIT_H_SHIFT (4)
-#define PD_SLIDE_RANGE (33)   /* number of 33 means -16 to +16 */
+#define PD_SLIDE_RANGE (33)	/* number of 33 means -16 to +16 */
 #ifdef __cplusplus
-extern "C"{
-#endif //__cplusplus
+extern "C" {
+#endif				//__cplusplus
 
 typedef struct {
 	cmr_s32 dX;
 	cmr_s32 dY;
 	float fRatio;
 	cmr_u8 ucType;
-}PD_PixelInfo;
+} PD_PixelInfo;
 
 typedef struct {
 	cmr_s32 dBeginX;
 	cmr_s32 dBeginY;
-  cmr_s32 dImageW;
-  cmr_s32 dImageH;
+	cmr_s32 dImageW;
+	cmr_s32 dImageH;
 	cmr_s32 dAreaW;
 	cmr_s32 dAreaH;
 	cmr_s32 dDTCTEdgeTh;
@@ -49,19 +49,16 @@ typedef struct {
 
 typedef void (*PDCALLBACK) (cmr_u8 *);
 
-cmr_s32 PD_Init(PD_GlobalSetting *a_pdGSetting);
-cmr_s32 PD_Do(cmr_u8 *raw,  cmr_u8  *y,
-          cmr_s32 a_dRectX, cmr_s32 a_dRectY, cmr_s32 a_dRectW, cmr_s32 a_dRectH, cmr_s32 a_dArea);
-cmr_s32 PD_DoType2(void *a_pInPhaseBuf_left, void *a_pInPhaseBuf_right,
-          cmr_s32 a_dRectX, cmr_s32 a_dRectY, cmr_s32 a_dRectW, cmr_s32 a_dRectH, cmr_s32 a_dArea);
+cmr_s32 PD_Init(PD_GlobalSetting * a_pdGSetting);
+cmr_s32 PD_Do(cmr_u8 * raw, cmr_u8 * y, cmr_s32 a_dRectX, cmr_s32 a_dRectY, cmr_s32 a_dRectW, cmr_s32 a_dRectH, cmr_s32 a_dArea);
+cmr_s32 PD_DoType2(void *a_pInPhaseBuf_left, void *a_pInPhaseBuf_right, cmr_s32 a_dRectX, cmr_s32 a_dRectY, cmr_s32 a_dRectW, cmr_s32 a_dRectH, cmr_s32 a_dArea);
 cmr_s32 PD_SetCurVCM(cmr_s32 CurVCM);
-cmr_s32 PD_GetResult(cmr_s32 *a_pdConf, double *a_pdPhaseDiff, cmr_s32 *a_pdFrameID, cmr_s32 a_dArea);
+cmr_s32 PD_GetResult(cmr_s32 * a_pdConf, double *a_pdPhaseDiff, cmr_s32 * a_pdFrameID, cmr_s32 a_dArea);
 cmr_s32 PD_Uninit();
 
-void FreeBuffer(cmr_u8 *raw);
+void FreeBuffer(cmr_u8 * raw);
 
 #ifdef __cplusplus
 }
-#endif //__cplusplus
-
-#endif /* _PD_ALGO_ */
+#endif				//__cplusplus
+#endif				/* _PD_ALGO_ */

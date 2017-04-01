@@ -26,8 +26,7 @@
 *				Compiler Flag					*
 *-------------------------------------------------------------------------------*/
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 /*------------------------------------------------------------------------------*
 				Micro Define					*
@@ -49,7 +48,7 @@ struct isp_cali_param {
 	struct isp_data_t awb_otp;
 	struct isp_data_t golden;
 	struct isp_data_t target_buf;
-	/*0: gr, 1:r, 2: b, 3: gb*/
+	/*0: gr, 1:r, 2: b, 3: gb */
 	cmr_u32 image_pattern;
 };
 
@@ -63,7 +62,7 @@ struct isp_cali_awb_info {
 	cmr_u16 ramdon_avg[4];
 };
 
-struct isp_cali_lsc_map{
+struct isp_cali_lsc_map {
 	cmr_u32 ct;
 	cmr_u32 width;
 	cmr_u32 height;
@@ -100,12 +99,11 @@ cmr_s32 isp_calibration_get_info(struct isp_data_t *golden_info, struct isp_cali
 
 cmr_s32 isp_calibration(struct isp_cali_param *param, struct isp_data_t *result);
 
-cmr_s32 isp_parse_calibration_data(struct isp_data_info*cali_data, struct  isp_data_t *lsc, struct isp_data_t *awb );
+cmr_s32 isp_parse_calibration_data(struct isp_data_info *cali_data, struct isp_data_t *lsc, struct isp_data_t *awb);
 
-cmr_s32 isp_parse_flash_data(struct isp_data_t *flash_data, void *lsc_buf, cmr_u32 lsc_buf_size, cmr_u32 image_pattern,
-					cmr_u32 gain_width, cmr_u32 gain_height, struct isp_cali_awb_gain *awb_gain);
+cmr_s32 isp_parse_flash_data(struct isp_data_t *flash_data, void *lsc_buf, cmr_u32 lsc_buf_size, cmr_u32 image_pattern, cmr_u32 gain_width, cmr_u32 gain_height, struct isp_cali_awb_gain *awb_gain);
 
-cmr_int otp_ctrl_init(cmr_handle *isp_otp_handle, struct isp_otp_init_in *input_ptr);
+cmr_int otp_ctrl_init(cmr_handle * isp_otp_handle, struct isp_otp_init_in *input_ptr);
 cmr_int otp_ctrl_deinit(cmr_handle isp_handler);
 
 /*------------------------------------------------------------------------------*
@@ -117,4 +115,3 @@ cmr_int otp_ctrl_deinit(cmr_handle isp_handler);
 /*------------------------------------------------------------------------------*/
 #endif
 // End
-

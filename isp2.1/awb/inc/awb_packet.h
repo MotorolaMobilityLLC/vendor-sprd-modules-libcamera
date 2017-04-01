@@ -32,8 +32,7 @@
 *				Compiler Flag					*
 *-------------------------------------------------------------------------------*/
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 /*------------------------------------------------------------------------------*
@@ -59,28 +58,28 @@ struct awb_alg_pos {
 };
 
 struct awb_param_ctrl {
-	/*window size of statistic image*/
+	/*window size of statistic image */
 	struct awb_alg_size stat_win_size;
-	/*start position of statistic area*/
+	/*start position of statistic area */
 	struct awb_alg_pos stat_start_pos;
-	/*compensate gain for each resolution*/
+	/*compensate gain for each resolution */
 	struct awb_alg_gain compensate_gain[AWB_ALG_RESOLUTION_NUM];
-	/*gain for each manual white balance*/
+	/*gain for each manual white balance */
 	struct awb_alg_gain mwb_gain[AWB_ALG_MWB_NUM];
-	/*gain for each scenemode gain*/
+	/*gain for each scenemode gain */
 	struct awb_alg_gain scene_gain[AWB_CTRL_SCENEMODE_NUM];
-	/*bv value range for awb*/
+	/*bv value range for awb */
 	struct awb_alg_bv bv_range;
-	/*init gain and ct*/
+	/*init gain and ct */
 	struct awb_alg_gain init_gain;
 	cmr_u32 init_ct;
 };
 
 struct awb_param_tuning {
 	struct awb_param_ctrl common;
-	/*algorithm param*/
+	/*algorithm param */
 	void *alg_param;
-	/*algorithm param size*/
+	/*algorithm param size */
 	cmr_u32 alg_param_size;
 };
 /*------------------------------------------------------------------------------*
@@ -99,4 +98,3 @@ cmr_s32 awb_param_unpack(void *pack_data, cmr_u32 data_size, struct awb_param_tu
 /*------------------------------------------------------------------------------*/
 #endif
 // End
-

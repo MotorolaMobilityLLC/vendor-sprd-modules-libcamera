@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- #ifndef _AE_DEBUG_INFO_PARSER_H_
- #define _AE_DEBUG_INFO_PARSER_H_
+#ifndef _AE_DEBUG_INFO_PARSER_H_
+#define _AE_DEBUG_INFO_PARSER_H_
 
 #include "ae_types.h"
 
@@ -34,7 +34,6 @@ struct ae_debug_info_packet_out {
 	cmr_u32 size;
 };
 
-
 struct ae_debug_info_unpacket_in {
 	char alg_id[32];
 	cmr_handle packet_buf;
@@ -53,5 +52,4 @@ cmr_handle ae_debug_info_get_lib_version(void);
 #ifdef __cplusplus
 }
 #endif
-
-#endif//_AE_DEBUG_INFO_PARSER_H_
+#endif				//_AE_DEBUG_INFO_PARSER_H_

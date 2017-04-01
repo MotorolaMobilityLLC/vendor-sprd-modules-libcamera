@@ -29,13 +29,13 @@
 /**---------------------------------------------------------------------------*
  **				 Compiler Flag					*
  **---------------------------------------------------------------------------*/
-  struct ae_param_tmp_001{
+struct ae_param_tmp_001 {
 	cmr_u32 version;
 	cmr_u32 verify;
 	cmr_u32 alg_id;
 	cmr_u32 target_lum;
-	cmr_u32 target_lum_zone; // x16
-	cmr_u32 convergence_speed; // x16
+	cmr_u32 target_lum_zone;	// x16
+	cmr_u32 convergence_speed;	// x16
 	cmr_u32 flicker_index;
 	cmr_u32 min_line;
 	cmr_u32 start_index;
@@ -47,19 +47,19 @@
 	struct ae_ev_table ev_table;
 };
 
-struct ae_param_tmp_002{
+struct ae_param_tmp_002 {
 	struct ae_exp_anti exp_anti;
 	struct ae_ev_cali ev_cali;
 	struct ae_convergence_parm cvgn_param[AE_CVGN_NUM];
 };
 
-struct ae_tuning_param {//total bytes must be 263480
+struct ae_tuning_param {	//total bytes must be 263480
 	cmr_u32 version;
 	cmr_u32 verify;
 	cmr_u32 alg_id;
 	cmr_u32 target_lum;
 	cmr_u32 target_lum_zone;	// x16
-	cmr_u32 convergence_speed;// x16
+	cmr_u32 convergence_speed;	// x16
 	cmr_u32 flicker_index;
 	cmr_u32 min_line;
 	cmr_u32 start_index;
@@ -77,7 +77,7 @@ struct ae_tuning_param {//total bytes must be 263480
 	struct ae_exp_anti exp_anti;
 	struct ae_ev_cali ev_cali;
 	struct ae_convergence_parm cvgn_param[AE_CVGN_NUM];
-	struct ae_touch_param touch_info;/*it is in here,just for compatible; 3 * 4bytes */
+	struct ae_touch_param touch_info;	/*it is in here,just for compatible; 3 * 4bytes */
 	struct ae_face_tune_param face_info;
 
 	/*13 * 4bytes */
@@ -98,7 +98,7 @@ struct ae_tuning_param {//total bytes must be 263480
 	struct ae_flash_tuning_param flash_param;	/*1 * 4bytes */
 	struct region_tuning_param region_param;	/*180 * 4bytes */
 	struct mulaes_tuning_param mulaes_param;	/*9 * 4bytes */
-    struct face_tuning_param face_param;
+	struct face_tuning_param face_param;
 
 	cmr_u32 reserved[2046];
 };

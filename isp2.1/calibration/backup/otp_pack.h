@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- #ifndef _OTP_PACK_H_
+#ifndef _OTP_PACK_H_
 #define _OTP_PACK_H_
 
 // The following ifdef block is the standard way of creating macros which make exporting
@@ -36,8 +36,7 @@
 *				Compiler Flag					*
 *-------------------------------------------------------------------------------*/
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 /*------------------------------------------------------------------------------*
 				Micro Define					*
@@ -61,7 +60,6 @@ struct otp_pack_module_param {
 	cmr_u32 cal_map_version;
 };
 
-
 struct otp_pack_lsc_param {
 	/* 1: tshark algorithm; 2: sharkl/tshark2 algorithm  */
 	cmr_u32 alg_version;
@@ -71,17 +69,17 @@ struct otp_pack_lsc_param {
 	cmr_u32 compress;
 	/* correction percent: 1-100 */
 	cmr_u32 percent;
-	/*lsc grid size*/
+	/*lsc grid size */
 	cmr_u32 grid_width;
 	cmr_u32 grid_height;
-	/*0: physcial type; 1: optical type*/
+	/*0: physcial type; 1: optical type */
 	cmr_u32 center_type;
 };
 
 struct otp_pack_awb_param {
-	/*awb algorithm version, must be 1*/
+	/*awb algorithm version, must be 1 */
 	cmr_u32 alg_version;
-	/*region of interest*/
+	/*region of interest */
 	cmr_u32 roi_x;
 	cmr_u32 roi_y;
 	cmr_u32 roi_width;
@@ -95,24 +93,24 @@ struct otp_pack_golden_param {
 
 	cmr_u32 base_gain;
 
-	/*image basic info*/
+	/*image basic info */
 	cmr_u32 image_width;
 	cmr_u32 image_height;
-	/*0: gr, 1: r, 2: b, 3: gb*/
+	/*0: gr, 1: r, 2: b, 3: gb */
 	cmr_u32 image_pattern;
-	/*0: raw image; 1: mipi raw image*/
+	/*0: raw image; 1: mipi raw image */
 	cmr_u32 image_format;
 
-	/*standard image*/
+	/*standard image */
 	void *std_img;
 	cmr_u32 std_ct;
 
-	/*nonstandard image*/
+	/*nonstandard image */
 	void *nonstd_img[MAX_NONSTD_IMAGE];
 	cmr_u32 nonstd_ct[MAX_NONSTD_IMAGE];
 	cmr_u32 nonstd_num;
 
-	/*buffer to receive output data*/
+	/*buffer to receive output data */
 	void *target_buf;
 	cmr_u32 target_buf_size;
 };
@@ -123,17 +121,17 @@ struct otp_pack_random_param {
 
 	cmr_u32 base_gain;
 
-	/*standard image basic info*/
+	/*standard image basic info */
 	cmr_u32 image_width;
 	cmr_u32 image_height;
-	/*0: gr, 1: r, 2: b, 3: gb*/
+	/*0: gr, 1: r, 2: b, 3: gb */
 	cmr_u32 image_pattern;
-	/*0: raw image; 1: mipi raw image*/
+	/*0: raw image; 1: mipi raw image */
 	cmr_u32 image_format;
 	void *image_data;
 	cmr_u32 image_ct;
 
-	/*buffer to receive output data*/
+	/*buffer to receive output data */
 	void *target_buf;
 	cmr_u32 target_buf_size;
 };
@@ -141,10 +139,10 @@ struct otp_pack_random_param {
 /*------------------------------------------------------------------------------*
 *				Functions														*
 *-------------------------------------------------------------------------------*/
-OTPDLLV01_API cmr_s32 otp_pack_golden(struct otp_pack_golden_param *param, cmr_u32 *real_size);
-OTPDLLV01_API cmr_s32 otp_golden_size(struct otp_pack_golden_param *param, cmr_u32 *size);
-OTPDLLV01_API cmr_s32 otp_pack_random(struct otp_pack_random_param *param, cmr_u32 *real_size);
-OTPDLLV01_API cmr_s32 otp_random_size(struct otp_pack_random_param *param, cmr_u32 *size);
+OTPDLLV01_API cmr_s32 otp_pack_golden(struct otp_pack_golden_param *param, cmr_u32 * real_size);
+OTPDLLV01_API cmr_s32 otp_golden_size(struct otp_pack_golden_param *param, cmr_u32 * size);
+OTPDLLV01_API cmr_s32 otp_pack_random(struct otp_pack_random_param *param, cmr_u32 * real_size);
+OTPDLLV01_API cmr_s32 otp_random_size(struct otp_pack_random_param *param, cmr_u32 * size);
 /*------------------------------------------------------------------------------*
 *				Compiler Flag					*
 *-------------------------------------------------------------------------------*/
@@ -152,6 +150,5 @@ OTPDLLV01_API cmr_s32 otp_random_size(struct otp_pack_random_param *param, cmr_u
 }
 #endif
 /*------------------------------------------------------------------------------*/
-
 #endif
 // End

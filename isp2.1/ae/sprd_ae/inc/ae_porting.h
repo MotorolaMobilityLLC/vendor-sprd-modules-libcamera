@@ -20,7 +20,7 @@
  **                         Compiler Flag                                     *
  **---------------------------------------------------------------------------*/
 #ifdef __cplusplus
-extern "C"  {
+extern "C" {
 
 #endif				/*  */
 
@@ -36,8 +36,8 @@ extern "C"  {
 #undef FALSE
 #endif				/*  */
 
-#define TRUE   1   /* Boolean true value. */
-#define FALSE  0   /* Boolean false value. */
+#define TRUE   1		/* Boolean true value. */
+#define FALSE  0		/* Boolean false value. */
 
 #ifndef NULL
 #define NULL  0
@@ -50,31 +50,31 @@ extern "C"  {
 /* -----------------------------------------------------------------------
 ** Standard Types
 ** ----------------------------------------------------------------------- */
-	typedef unsigned char BOOLEAN;
-	typedef unsigned char uint8;
-	typedef unsigned short uint16;
-	typedef unsigned long int uint32;
-	typedef unsigned __int64 uint64;
-	typedef unsigned int uint;
+typedef unsigned char BOOLEAN;
+typedef unsigned char uint8;
+typedef unsigned short uint16;
+typedef unsigned long int uint32;
+typedef unsigned __int64 uint64;
+typedef unsigned int uint;
 
 typedef signed char int8;
-	typedef signed short int16;
-	typedef signed long int int32;
+typedef signed short int16;
+typedef signed long int int32;
 
 typedef unsigned char boolean;
-	typedef unsigned char uint8_t;
-	typedef unsigned short uint16_t;
+typedef unsigned char uint8_t;
+typedef unsigned short uint16_t;
 typedef unsigned int uint32_t;
-	typedef unsigned __int64 uint64_t;
-	typedef unsigned int uint_t;
+typedef unsigned __int64 uint64_t;
+typedef unsigned int uint_t;
 
 typedef signed char int8_t;
-	typedef signed short int16_t;
+typedef signed short int16_t;
 typedef signed int int32_t;
-	typedef signed __int64 int64_t;
+typedef signed __int64 int64_t;
 
 typedef unsigned __int64 __u64;
-	typedef __int64 __s64;
+typedef __int64 __s64;
 
 #ifdef WIN_UNIT_TEST
 #define LOCAL
@@ -92,7 +92,7 @@ typedef unsigned __int64 __u64;
 #define PUBLIC
 
 /*
-	Bit define
+Bit define
 */
 #define BIT_0               0x00000001
 #define BIT_1               0x00000002
@@ -136,7 +136,7 @@ typedef unsigned __int64 __u64;
 #define  WORD_LO(_xxx)  ((uint8) ((int16)(_xxx)))
 #define  WORD_HI(_xxx)  ((uint8) ((int16)(_xxx) >> 8))
 
-#define RND8( _x )       ((((_x) + 7) / 8 ) * 8 ) /*rounds a number up to the nearest multiple of 8 */
+#define RND8( _x )       ((((_x) + 7) / 8 ) * 8 )	/*rounds a number up to the nearest multiple of 8 */
 
 #define  UPCASE( _c ) ( ((_c) >= 'a' && (_c) <= 'z') ? ((_c) - 0x20) : (_c) )
 
@@ -164,7 +164,5 @@ int property_get(const char *key, char *value, const char *default_value);
  **---------------------------------------------------------------------------*/
 #ifdef __cplusplus
 }
-#endif/*  */
-
-#endif	/* SCI_TYPES_H */
-
+#endif				/*  */
+#endif				/* SCI_TYPES_H */

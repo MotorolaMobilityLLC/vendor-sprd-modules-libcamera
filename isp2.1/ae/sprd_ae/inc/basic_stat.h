@@ -23,17 +23,17 @@
 #include "stdint.h"
 #elif WIN32
 #include "ae_porting.h"
-#else/*  */
+#else /*  */
 //#include <sys/types.h>
 #include "ae_types.h"
-#endif	/*  */
+#endif /*  */
 /**---------------------------------------------------------------------------*
 **				 Compiler Flag				*
 **---------------------------------------------------------------------------*/
 #ifdef __cplusplus
 extern "C" {
 
-#endif	/*  */
+#endif				/*  */
 /**---------------------------------------------------------------------------*
 **				Macro Define				*
 **----------------------------------------------------------------------------*/
@@ -41,45 +41,44 @@ extern "C" {
 /**---------------------------------------------------------------------------*
 **				Data Structures				*
 **---------------------------------------------------------------------------*/
-	typedef struct  {
-		cmr_s16 top_range;//range of bigger value
-		cmr_s16 data_len;
-		cmr_s8 debug_level;
-		cmr_s16 bright_thr;
-		cmr_s16 dark_thr;
-	} basic_in;//tuning info
+typedef struct {
+	cmr_s16 top_range;	//range of bigger value
+	cmr_s16 data_len;
+	cmr_s8 debug_level;
+	cmr_s16 bright_thr;
+	cmr_s16 dark_thr;
+} basic_in;		//tuning info
 
-	typedef struct  {
-		cmr_s16 histogram[256];
-		cmr_s16 media_1;
-		cmr_s16 media_2;
-		float mean;
-		cmr_s16 top;	//average of bigger value
-		cmr_s16 maximum;
-		cmr_s16 minimum;
-		float var;
-		cmr_s16 bright_num;
-		cmr_s16 dark_num;
-		cmr_s16 normal_num;
-	} basic_rt;//calc info
+typedef struct {
+	cmr_s16 histogram[256];
+	cmr_s16 media_1;
+	cmr_s16 media_2;
+	float mean;
+	cmr_s16 top;	//average of bigger value
+	cmr_s16 maximum;
+	cmr_s16 minimum;
+	float var;
+	cmr_s16 bright_num;
+	cmr_s16 dark_num;
+	cmr_s16 normal_num;
+} basic_rt;		//calc info
 
-	typedef struct  {
-		basic_in in_basic;
-		basic_rt result_basic;
-	} basic_stat;//statistic information of single channel
+typedef struct {
+	basic_in in_basic;
+	basic_rt result_basic;
+} basic_stat;		//statistic information of single channel
 /**---------------------------------------------------------------------------*
 ** 				Function Defination			*
 **---------------------------------------------------------------------------*/
-	cmr_s32 initbasic(basic_stat * basic, cmr_u32 debug_level);
-	cmr_s32 deinitbasic(basic_stat * basic);
-	cmr_s32 calcbasic(basic_stat * basic, cmr_s32 len, cmr_u8 * data);
-	cmr_s32 round_ae(float iodata);
+cmr_s32 initbasic(basic_stat * basic, cmr_u32 debug_level);
+cmr_s32 deinitbasic(basic_stat * basic);
+cmr_s32 calcbasic(basic_stat * basic, cmr_s32 len, cmr_u8 * data);
+cmr_s32 round_ae(float iodata);
 
 /**----------------------------------------------------------------------------*
 **					Compiler Flag			*
 **----------------------------------------------------------------------------*/
 #ifdef __cplusplus
 }
-#endif	/*  */
-
-#endif	/*  */
+#endif				/*  */
+#endif				/*  */

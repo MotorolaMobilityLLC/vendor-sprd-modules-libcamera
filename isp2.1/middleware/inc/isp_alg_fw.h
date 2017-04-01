@@ -46,9 +46,9 @@ struct commn_info {
 struct ae_info {
 	cmr_handle handle;
 	struct isp_time time;
-	cmr_u8* log_alc_ae;
+	cmr_u8 *log_alc_ae;
 	cmr_u32 log_alc_ae_size;
-	cmr_u8* log_alc;
+	cmr_u8 *log_alc;
 	cmr_u32 log_alc_size;
 	cmr_u8 *log_ae;
 	cmr_u32 log_ae_size;
@@ -58,19 +58,19 @@ struct ae_info {
 	cmr_uint phy_addr;
 	cmr_uint mfd;
 	cmr_int buf_property;
-	void*  buffer_client_data;
+	void *buffer_client_data;
 };
 
 struct awb_info {
 	cmr_handle handle;
 	cmr_u32 alc_awb;
 	cmr_s32 awb_pg_flag;
-	cmr_u8* log_alc_awb;
+	cmr_u8 *log_alc_awb;
 	cmr_u32 log_alc_awb_size;
-	cmr_u8* log_alc_lsc;
+	cmr_u8 *log_alc_lsc;
 	cmr_u32 log_alc_lsc_size;
-	cmr_u8* log_awb;
-    cmr_u32 log_awb_size;
+	cmr_u8 *log_awb;
+	cmr_u32 log_awb_size;
 };
 
 struct smart_info {
@@ -90,7 +90,7 @@ struct afl_info {
 	cmr_u32 afl_mode;
 	cmr_uint mfd;
 	cmr_int buf_property;
-	void*  buffer_client_data;
+	void *buffer_client_data;
 };
 
 struct af_info {
@@ -107,7 +107,7 @@ struct pdaf_info {
 
 struct lsc_info {
 	cmr_handle handle;
-	void * lsc_tab_address;
+	void *lsc_tab_address;
 	cmr_u32 lsc_tab_size;
 	cmr_u32 isp_smart_lsc_lock;
 	cmr_u8 *log_lsc;
@@ -129,7 +129,7 @@ struct isp_alg_fw_context {
 	struct afl_info afl_cxt;
 	struct pdaf_info pdaf_cxt;
 	struct sensor_libuse_info *lib_use_info;
-	struct sensor_raw_ioctrl* ioctrl_ptr;
+	struct sensor_raw_ioctrl *ioctrl_ptr;
 	cmr_handle thr_handle;
 	cmr_handle dev_access_handle;
 	cmr_handle handle_pm;
@@ -147,16 +147,15 @@ struct isp_alg_fw_init_in {
 	struct isp_init_param *init_param;
 };
 
-cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in *input_ptr, cmr_handle *isp_alg_handle);
+cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in *input_ptr, cmr_handle * isp_alg_handle);
 cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle);
-cmr_int isp_alg_fw_ioctl(cmr_handle isp_alg_handle, enum isp_ctrl_cmd io_cmd, void *param_ptr, cmr_s32 (*call_back)());
+cmr_int isp_alg_fw_ioctl(cmr_handle isp_alg_handle, enum isp_ctrl_cmd io_cmd, void *param_ptr, cmr_s32(*call_back) ());
 cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_ptr);
 cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle);
 cmr_int isp_alg_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in_ptr);
 cmr_int isp_alg_proc_next(cmr_handle isp_alg_handle, struct ipn_in_param *in_ptr);
-cmr_int isp_alg_fw_capability(cmr_handle isp_alg_handle, enum isp_capbility_cmd cmd, void* param_ptr);
+cmr_int isp_alg_fw_capability(cmr_handle isp_alg_handle, enum isp_capbility_cmd cmd, void *param_ptr);
 
 /**---------------------------------------------------------------------------*/
 
 #endif
-

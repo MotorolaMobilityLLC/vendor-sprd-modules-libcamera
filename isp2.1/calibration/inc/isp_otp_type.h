@@ -22,21 +22,16 @@
 #include "sci_types.h"
 #endif
 
-
 #if 0
 #define PNULL	0
 #define NULL	0
 #endif
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
-
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif //for _ISP_OTP_HEADER_H_
-
+#endif				//for _ISP_OTP_HEADER_H_

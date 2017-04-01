@@ -98,7 +98,7 @@ struct smart_proc_input {
 	struct smart_calc_param cal_para;
 	cmr_u32 mode_flag;
 	cmr_u32 scene_flag;
-	cmr_u32 LSC_SPD_VERSION;   // LSC version of Spreadtrum
+	cmr_u32 LSC_SPD_VERSION;	// LSC version of Spreadtrum
 	cmr_u8 *log;
 	cmr_u32 size;
 	cmr_u8 lock_nlm;
@@ -109,7 +109,7 @@ struct smart_calc_result {
 	cmr_u32 counts;
 };
 
-struct nr_data{
+struct nr_data {
 	cmr_u32 ppi[3];
 	cmr_u32 bayer_nr[3];
 	cmr_u32 rgb_dither[3];
@@ -136,7 +136,7 @@ cmr_s32 smart_ctl_block_enable_recover(smart_handle_t handle, cmr_u32 smart_id);
 cmr_s32 smart_ctl_block_disable(smart_handle_t handle, cmr_u32 smart_id);
 
 smart_handle_t smart_ctl_init(struct smart_init_param *param, void *result);
-cmr_s32 smart_ctl_deinit(smart_handle_t *handle, void *param, void *result);
+cmr_s32 smart_ctl_deinit(smart_handle_t * handle, void *param, void *result);
 cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input *in_ptr);
 
 #ifdef	 __cplusplus

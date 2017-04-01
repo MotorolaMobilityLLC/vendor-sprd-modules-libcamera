@@ -24,5 +24,3 @@
 io_fun _ispGetIOCtrlFun(enum isp_ctrl_cmd cmd);
 
 #endif
-
-

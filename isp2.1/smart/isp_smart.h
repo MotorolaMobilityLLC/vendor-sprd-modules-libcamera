@@ -57,9 +57,7 @@ struct isp_smart_interplate_output2 {
 
 isp_smart_handle_t isp_smart_init(void *in_ptr, void *out_ptr);
 
-cmr_s32 isp_smart_calculation(cmr_u32 func_type,
-			      struct isp_smart_interplate_piecewise_func *cur_func,
-			      void *smart_cur_info_in, void *smart_calc_param_out);
+cmr_s32 isp_smart_calculation(cmr_u32 func_type, struct isp_smart_interplate_piecewise_func *cur_func, void *smart_cur_info_in, void *smart_calc_param_out);
 
 cmr_s32 isp_smart_deinit(isp_smart_handle_t handle);
 

@@ -25,8 +25,7 @@
 *				Compiler Flag					*
 *-------------------------------------------------------------------------------*/
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 /*------------------------------------------------------------------------------*
 				Micro Define					*
@@ -52,70 +51,70 @@ enum isp_calibration_lsc_pattern {
 };
 
 struct isp_calibration_lsc_param {
-	/*output lnc per light souce gain*/
+	/*output lnc per light souce gain */
 	cmr_u16 *param;
-	/*param real size,in and out param*/
+	/*param real size,in and out param */
 	cmr_u32 size;
-	/*color temperature of the light*/
+	/*color temperature of the light */
 	cmr_u32 light_ct;
 };
 
 struct isp_calibration_lsc_calc_in {
-	/*lsc otp data read from sensor*/
+	/*lsc otp data read from sensor */
 	void *otp_data;
-	/*size of lsc otp data*/
+	/*size of lsc otp data */
 	cmr_u32 otp_data_size;
 
-	/*golden sensor data*/
+	/*golden sensor data */
 	void *golden_data;
-	/*size of golden sensor data*/
+	/*size of golden sensor data */
 	cmr_u32 golden_data_size;
 
-	/*width of image to use the lsc parameter*/
+	/*width of image to use the lsc parameter */
 	cmr_u32 img_width;
-	/*height of image to use the lsc parameter*/
+	/*height of image to use the lsc parameter */
 	cmr_u32 img_height;
 
-	/*target buffer*/
+	/*target buffer */
 	void *target_buf;
 	cmr_u32 target_buf_size;
 
-	/*bayer pattern of image which decide the lsc gain layout*/
-	/*0: gr, 1: r, 2: b, 3: gb*/
+	/*bayer pattern of image which decide the lsc gain layout */
+	/*0: gr, 1: r, 2: b, 3: gb */
 	cmr_u32 lsc_pattern;
 };
 
 struct isp_calibration_lsc_setting {
-	/*number of lsc parameter*/
+	/*number of lsc parameter */
 	cmr_u32 lsc_param_num;
-	/*length of lsc parameters for each light*/
+	/*length of lsc parameters for each light */
 	cmr_u32 lsc_param_len[ISP_CALIBRATION_MAX_LSC_NUM];
 };
 
-struct isp_calibration_lsc_golden_info{
-	/*image width*/
+struct isp_calibration_lsc_golden_info {
+	/*image width */
 	cmr_u32 img_width;
 	cmr_u32 img_height;
-	/*number of lsc parameter*/
+	/*number of lsc parameter */
 	cmr_u32 lsc_param_num;
-	/*length of lsc parameters for each light*/
+	/*length of lsc parameters for each light */
 	cmr_u32 lsc_param_len;
-	/*golden_std_gain*/
-	cmr_u16 * std_gain_golden;
+	/*golden_std_gain */
+	cmr_u16 *std_gain_golden;
 };
 
 struct isp_calibration_lsc_calc_out {
-	/*grid size*/
+	/*grid size */
 	cmr_u32 grid;
-	/*width for lsc data*/
+	/*width for lsc data */
 	cmr_u32 width;
-	/*height for lsc data*/
+	/*height for lsc data */
 	cmr_u32 height;
-	/*num of lsc parameter in lsc_param array according to light source*/
+	/*num of lsc parameter in lsc_param array according to light source */
 	cmr_u32 lsc_param_num;
 	/*the address and the size of parameter buffer should be set by the caller,
-	and then the lsc parameters will be written in the buffer. The size of the buffer
-	should be large enough to recieve the lsc data*/
+	   and then the lsc parameters will be written in the buffer. The size of the buffer
+	   should be large enough to recieve the lsc data */
 	struct isp_calibration_lsc_param lsc_param[ISP_CALIBRATION_MAX_LSC_NUM];
 };
 
@@ -126,7 +125,6 @@ cmr_s32 isp_calibration_lsc_calc(struct isp_calibration_lsc_calc_in *in_param, s
 cmr_s32 isp_calibration_lsc_get_golden_info(void *golden_data, cmr_u32 golden_data_size, struct isp_calibration_lsc_golden_info *golden_info);
 
 ///////////////////////////////////////////////////////////////////////////////////
-
 
 /*------------------------------------------------------------------------------*
 *				Compiler Flag					*

@@ -43,13 +43,12 @@ extern cmr_u32 tool_fmt_pattern;
 extern cmr_u8 nr_tool_flag[17];
 extern struct denoise_param_update nr_update_param;
 
-
-cmr_s32 ispvideo_RegCameraFunc(cmr_u32 cmd, cmr_s32(*func)(cmr_u32, cmr_u32));
+cmr_s32 ispvideo_RegCameraFunc(cmr_u32 cmd, cmr_s32(*func) (cmr_u32, cmr_u32));
 void send_img_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, char *imgptr, cmr_s32 imagelen);
-void send_capture_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, char *ch0_ptr, cmr_s32 ch0_len,char *ch1_ptr, cmr_s32 ch1_len,char *ch2_ptr, cmr_s32 ch2_len);
+void send_capture_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, char *ch0_ptr, cmr_s32 ch0_len, char *ch1_ptr, cmr_s32 ch1_len, char *ch2_ptr, cmr_s32 ch2_len);
 void startispserver();
 void stopispserver();
-void setispserver(void* handle);
+void setispserver(void *handle);
 void send_capture_complete_msg();
-void* ispvideo_GetIspHandle(void);
+void *ispvideo_GetIspHandle(void);
 #endif

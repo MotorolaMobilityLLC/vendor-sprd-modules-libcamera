@@ -17,12 +17,11 @@
 #ifndef _ISP_PM_COM_TYPE_H_
 #define _ISP_PM_COM_TYPE_H_
 
- #include "cmr_types.h"
- #include "isp_type.h"
+#include "cmr_types.h"
+#include "isp_type.h"
 
- #ifdef	 __cplusplus
-extern	 "C"
-{
+#ifdef	 __cplusplus
+extern "C" {
 #endif
 
 #define ISP_TUNE_MODE_MAX 16
@@ -54,20 +53,20 @@ enum isp_pm_blk_cmd {
 	ISP_PM_BLK_LSC_BYPASS,
 	ISP_PM_BLK_LSC_INFO,
 	ISP_PM_BLK_LSC_OTP,
-	ISP_PM_BLK_LSC_UPDATE_MASK_VALIDATE = (1<<0),
-	ISP_PM_BLK_LSC_UPDATE_MASK_PARAM = (1<<1),
+	ISP_PM_BLK_LSC_UPDATE_MASK_VALIDATE = (1 << 0),
+	ISP_PM_BLK_LSC_UPDATE_MASK_PARAM = (1 << 1),
 	ISP_PM_BLK_LSC_GET_LSCTAB,
 
 	//for awb
-	ISP_PM_BLK_AWB_BASE =0x0400,
+	ISP_PM_BLK_AWB_BASE = 0x0400,
 	ISP_PM_BLK_AWBM_BYPASS,
 	ISP_PM_BLK_AWBC_BYPASS,
 	ISP_PM_BLK_AWB_CT,
 	ISP_PM_BLK_AWBM,
 	ISP_PM_BLK_AWBC,
 	ISP_PM_BLK_AWBM_STATISTIC,
-	ISP_PM_BLK_AWB_MASK_AWBC = (1<<0),
-	ISP_PM_BLK_AWB_MASK_AWBM = (1<<1),
+	ISP_PM_BLK_AWB_MASK_AWBC = (1 << 0),
+	ISP_PM_BLK_AWB_MASK_AWBM = (1 << 1),
 
 	//for ae
 	ISP_PM_BLK_AE_BASE = 0x0500,
@@ -324,7 +323,7 @@ enum isp_pm_blk_cmd {
 	ISP_PM_BLK_UV_CDN_BYPASS_V1,
 
 	//for Bilateral Denoise
-	ISP_PM_BLK_BDN_BASE  = (ISP_PM_BLK_UV_CDN_BASE_V1 + 0x100),
+	ISP_PM_BLK_BDN_BASE = (ISP_PM_BLK_UV_CDN_BASE_V1 + 0x100),
 	ISP_PM_BLK_BDN_BYPASS,
 	ISP_PM_BLK_BDN_RADIAL_BYPASS,
 	ISP_PM_BLK_BDN_STRENGTH_LEVEL,
@@ -367,7 +366,6 @@ enum isp_pm_blk_cmd {
 	ISP_PM_BLK_YUV_NOISEFILTER_BYPASS,
 	ISP_PM_BLK_YUV_NOISEFILTER_STRENGTH_LEVEL,
 
-
 	//for aem
 	ISP_PM_BLK_AEM_BASE = (ISP_PM_BLK_YUV_NOISEFILTER_BASE + 0x100),
 	ISP_PM_BLK_AEM_BYPASS,
@@ -395,21 +393,21 @@ struct isp_pm_param_data {
 	cmr_u32 mod_id;
 	cmr_u32 id;
 	cmr_u32 cmd;
-	void* data_ptr;
+	void *data_ptr;
 	cmr_u32 data_size;
 	cmr_u8 user_data[4];
 };
 
 struct isp_pm_block_header {
 	char name[8];
-	cmr_u32 block_id;			//block id: blc / nlc/lsc/cmc
-	cmr_u32 version_id;		//version id: version_0, version_1, and so on
-	cmr_u32 param_id;		//cmd/setting/a
+	cmr_u32 block_id;	//block id: blc / nlc/lsc/cmc
+	cmr_u32 version_id;	//version id: version_0, version_1, and so on
+	cmr_u32 param_id;	//cmd/setting/a
 	cmr_u32 size;
 	cmr_u32 bypass;
 	cmr_u32 is_update;	//block param need update
 	cmr_u32 source_flag;
-	void* absolute_addr;//
+	void *absolute_addr;	//
 };
 
 struct isp_pm_mode_param {
@@ -428,7 +426,6 @@ struct isp_pm_memory_init_param {
 };
 
 #ifdef	 __cplusplus
- 	}
+}
 #endif
-
 #endif

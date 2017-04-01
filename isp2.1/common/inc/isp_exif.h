@@ -16,10 +16,9 @@
 #ifndef _ISP_EXIF_H_
 #define _ISP_EXIF_H_
 
-
 #define EXIF_APP3	0XFFE3
 #define APP3_STATUS	0X1234
-struct exif_blc_param{
+struct exif_blc_param {
 	uint32_t mode;
 	uint16_t r;
 	uint16_t gr;
@@ -27,48 +26,47 @@ struct exif_blc_param{
 	uint16_t b;
 };
 
-struct exif_nlc_param{
+struct exif_nlc_param {
 	uint16_t r_node[29];
 	uint16_t g_node[29];
 	uint16_t b_node[29];
 	uint16_t l_node[29];
 };
 
-struct exif_lnc_param{
+struct exif_lnc_param {
 	uint16_t grid;
 	uint16_t r_pec;
 	uint16_t g_pec;
 	uint16_t b_pec;
 };
 
-struct exif_awb_map{
+struct exif_awb_map {
 	uint16_t *addr;
 	uint32_t len;		//by bytes
 };
 
-
-struct exif_ae_param{
+struct exif_ae_param {
 	uint32_t iso;
 	uint32_t exposure;
 	uint32_t gain;
 	uint32_t cur_lum;
 };
 
-struct exif_awb_param{
+struct exif_awb_param {
 	uint16_t alg_id;
 	uint16_t r_gain;
 	uint16_t g_gain;
 	uint16_t b_gain;
 };
 
-struct exif_bpc_param{
+struct exif_bpc_param {
 	uint16_t flat_thr;
 	uint16_t std_thr;
 	uint16_t texture_thr;
 	uint16_t reserved;
 };
 
-struct exif_denoise_param{
+struct exif_denoise_param {
 	uint32_t write_back;
 	uint16_t r_thr;
 	uint16_t g_thr;
@@ -79,55 +77,54 @@ struct exif_denoise_param{
 	uint8_t reserved0;
 };
 
-struct exif_grgb_param{
+struct exif_grgb_param {
 	uint16_t edge_thr;
 	uint16_t diff_thr;
 };
 
-struct exif_cfa_param{
+struct exif_cfa_param {
 	uint16_t edge_thr;
 	uint16_t diff_thr;
 };
 
-struct exif_cmc_param{
+struct exif_cmc_param {
 	uint16_t matrix[9];
 	uint16_t reserved;
 };
 
-struct exif_cce_parm{
+struct exif_cce_parm {
 	uint16_t matrix[9];
 	uint16_t y_shift;
 	uint16_t u_shift;
 	uint16_t v_shift;
 };
 
-struct exif_gamma_param{
+struct exif_gamma_param {
 	uint16_t axis[2][26];
 };
 
-struct exif_cce_uvdiv{
+struct exif_cce_uvdiv {
 	uint8_t thrd[7];
 	uint8_t t[2];
 	uint8_t m[3];
 };
 
-struct exif_pref_param{
+struct exif_pref_param {
 	uint8_t write_back;
 	uint8_t y_thr;
 	uint8_t u_thr;
 	uint8_t v_thr;
 };
 
-struct exif_bright_param{
+struct exif_bright_param {
 	uint8_t factor;
 };
 
-struct exif_contrast_param{
+struct exif_contrast_param {
 	uint8_t factor;
 };
 
-struct exif_hist_param
-{
+struct exif_hist_param {
 	uint16_t low_ratio;
 	uint16_t high_ratio;
 	uint8_t mode;
@@ -136,18 +133,18 @@ struct exif_hist_param
 	uint8_t reserved0;
 };
 
-struct exif_auto_contrast_param{
+struct exif_auto_contrast_param {
 	uint8_t mode;
 	uint8_t reserved2;
 	uint8_t reserved1;
 	uint8_t reserved0;
 };
 
-struct exif_saturation_param{
+struct exif_saturation_param {
 	uint8_t factor;
 };
 
-struct exif_af_param{
+struct exif_af_param {
 	uint8_t magic[16];
 	uint16_t alg_id;
 	uint16_t cur_step;
@@ -163,25 +160,25 @@ struct exif_af_param{
 	uint16_t time[32];
 };
 
-struct exif_emboss_param{
+struct exif_emboss_param {
 	uint8_t step;
 	uint8_t reserved2;
 	uint8_t reserved1;
 	uint8_t reserved0;
 };
 
-struct exif_edge_info{
+struct exif_edge_info {
 	uint8_t detail_thr;
 	uint8_t smooth_thr;
 	uint8_t strength;
 	uint8_t reserved;
 };
 
-struct exif_global_gain_param{
+struct exif_global_gain_param {
 	uint32_t gain;
 };
 
-struct exif_chn_gain_param{
+struct exif_chn_gain_param {
 	uint8_t r_gain;
 	uint8_t g_gain;
 	uint8_t b_gain;
@@ -192,7 +189,7 @@ struct exif_chn_gain_param{
 	uint16_t reserved1;
 };
 
-struct exif_flash_cali_param{
+struct exif_flash_cali_param {
 	uint16_t effect;
 	uint16_t lum_ratio;
 	uint16_t r_ratio;
@@ -200,7 +197,7 @@ struct exif_flash_cali_param{
 	uint16_t b_ratio;
 };
 
-struct exif_css_param{
+struct exif_css_param {
 	uint8_t low_thr[7];
 	uint8_t lum_thr;
 	uint8_t low_sum_thr[7];
@@ -208,11 +205,11 @@ struct exif_css_param{
 	uint8_t ratio[8];
 };
 
-struct eixf_read_check{
+struct eixf_read_check {
 	uint16_t app_head;
 	uint16_t status;
 };
-typedef struct exif_isp_info{
+typedef struct exif_isp_info {
 	uint32_t is_exif_validate;
 	uint32_t tool_version;
 	uint32_t version_id;
@@ -270,9 +267,9 @@ typedef struct exif_isp_info{
 	struct exif_flash_cali_param flash;
 	struct eixf_read_check exif_check;
 
-}EXIF_ISP_INFO_T;
+} EXIF_ISP_INFO_T;
 
-typedef struct exif_isp_debug_info{
+typedef struct exif_isp_debug_info {
 	void *addr;
 	int size;
 } EXIF_ISP_DEBUG_INFO_T;

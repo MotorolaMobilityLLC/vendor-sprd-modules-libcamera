@@ -25,8 +25,7 @@
 *				Compiler Flag					*
 *-------------------------------------------------------------------------------*/
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 /*------------------------------------------------------------------------------*
 *				Micro Define					*
@@ -38,14 +37,13 @@ extern "C"
 /*------------------------------------------------------------------------------*
 *				Data Structures					*
 *-------------------------------------------------------------------------------*/
-typedef void* queue_handle_t;
+typedef void *queue_handle_t;
 
-struct awbl_cyc_queue
-{
-	cmr_u32				q[AWBL_MAX_QUEUE_SIZE];
-	cmr_u32				size;
-	cmr_u32				cur_index;
-	cmr_s32					gradient;
+struct awbl_cyc_queue {
+	cmr_u32 q[AWBL_MAX_QUEUE_SIZE];
+	cmr_u32 size;
+	cmr_u32 cur_index;
+	cmr_s32 gradient;
 };
 
 /*------------------------------------------------------------------------------*

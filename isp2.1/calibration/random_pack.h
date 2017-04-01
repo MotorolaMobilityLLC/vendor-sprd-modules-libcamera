@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- #ifndef _RANDOM_PACK_H_
+#ifndef _RANDOM_PACK_H_
 #define _RANDOM_PACK_H_
 
 /*------------------------------------------------------------------------------*
@@ -24,8 +24,7 @@
 *				Compiler Flag					*
 *-------------------------------------------------------------------------------*/
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 /*------------------------------------------------------------------------------*
 				Micro Define					*
@@ -45,10 +44,10 @@ struct random_lsc_info {
 	cmr_u32 percent;
 	cmr_u32 grid_width;
 	cmr_u32 grid_height;
-	/*four channel gain placed one by one*/
+	/*four channel gain placed one by one */
 	cmr_u16 *chn_gain[4];
 	cmr_u16 chn_gain_size;
-	/*0: gr, 1: r, 2: b, 3: gb*/
+	/*0: gr, 1: r, 2: b, 3: gb */
 	cmr_u32 bayer_pattern;
 	cmr_u32 img_width;
 	cmr_u32 img_height;
@@ -58,9 +57,8 @@ struct random_lsc_info {
 	cmr_u32 center_y;
 };
 
-struct random_awb_info
-{
-	/*average value of std image*/
+struct random_awb_info {
+	/*average value of std image */
 	cmr_u16 avg_r;
 	cmr_u16 avg_g;
 	cmr_u16 avg_b;
@@ -82,7 +80,7 @@ struct random_pack_result {
 *				Functions														*
 *-------------------------------------------------------------------------------*/
 cmr_s32 random_pack(struct random_pack_param *param, struct random_pack_result *result);
-cmr_s32 get_random_pack_size(cmr_u32 chn_gain_size, cmr_u32 *size);
+cmr_s32 get_random_pack_size(cmr_u32 chn_gain_size, cmr_u32 * size);
 /*------------------------------------------------------------------------------*
 *				Compiler Flag					*
 *-------------------------------------------------------------------------------*/
@@ -90,7 +88,5 @@ cmr_s32 get_random_pack_size(cmr_u32 chn_gain_size, cmr_u32 *size);
 }
 #endif
 /*------------------------------------------------------------------------------*/
-
 #endif
 // End
-

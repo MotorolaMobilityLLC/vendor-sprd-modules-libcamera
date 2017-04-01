@@ -20,7 +20,6 @@
 #include <pthread.h>
 #include "pd_algo.h"
 
-
 #define IMAGE_WIDTH 4160
 #define IMAGE_HEIGHT 3072
 #define BEGIN_X 24
@@ -33,33 +32,30 @@
 #define PD_REG_OUT_SIZE	352
 #define PD_OTP_PACK_SIZE	550
 
-typedef struct{
-	short int   m_wLeft;
-	short int   m_wTop;
-	short int   m_wWidth;
-	short int   m_wHeight;
+typedef struct {
+	short int m_wLeft;
+	short int m_wTop;
+	short int m_wWidth;
+	short int m_wHeight;
 } alGE_RECT;
 
 typedef struct {
-	short int   m_wLeft;
-	short int   m_wTop;
-	short int   m_wWidth;
-	short int   m_wHeight;
+	short int m_wLeft;
+	short int m_wTop;
+	short int m_wWidth;
+	short int m_wHeight;
 } alPD_RECT;
-
 
 static cmr_u16 Reg[256];
 
-typedef struct
-{
-	cmr_s32 dSensorID;//0:for SamSung 1: for Sony
+typedef struct {
+	cmr_s32 dSensorID;	//0:for SamSung 1: for Sony
 	double uwInfVCM;
 	double uwMacroVCM;
-}SensorInfo;
-
+} SensorInfo;
 
 typedef struct {
-	/*sensor information*/
+	/*sensor information */
 	SensorInfo tSensorInfo;
 	cmr_s32 dcurrentVCM;
 	// BV value
@@ -83,6 +79,5 @@ struct sprd_pdaf_report_t {
 	void *pd_reg_out;
 	cmr_u32 pd_reg_size;
 };
-
 
 #endif

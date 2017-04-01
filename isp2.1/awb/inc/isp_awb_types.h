@@ -33,8 +33,7 @@
 *				Compiler Flag					*
 *-------------------------------------------------------------------------------*/
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 /*------------------------------------------------------------------------------*
 *				Micro Define					*
@@ -54,33 +53,31 @@ extern "C"
 /*------------------------------------------------------------------------------*
 *				Data Structures					*
 *-------------------------------------------------------------------------------*/
-typedef void* awb_handle_t;
-
-
+typedef void *awb_handle_t;
 
 enum awb_cmd {
-	AWB_CMD_SET_BASE 			= 0x1000,
-	AWB_CMD_SET_INIT_PARAM			= (AWB_CMD_SET_BASE + 1),
-	AWB_CMD_GET_BASE			= 0x2000,
-	AWB_CMD_GET_INIT_PARAM			= (AWB_CMD_GET_BASE + 1),
-	AWB_CMD_GET_CALC_DETAIL			= (AWB_CMD_GET_BASE + 2),
+	AWB_CMD_SET_BASE = 0x1000,
+	AWB_CMD_SET_INIT_PARAM = (AWB_CMD_SET_BASE + 1),
+	AWB_CMD_GET_BASE = 0x2000,
+	AWB_CMD_GET_INIT_PARAM = (AWB_CMD_GET_BASE + 1),
+	AWB_CMD_GET_CALC_DETAIL = (AWB_CMD_GET_BASE + 2),
 
-	AWB_CMD_UNKNOWN				= 0xffffffff
+	AWB_CMD_UNKNOWN = 0xffffffff
 };
 
 struct awb_size {
-	cmr_u16	w;
-	cmr_u16	h;
+	cmr_u16 w;
+	cmr_u16 h;
 };
 
 struct awb_range {
-	cmr_u16	min;
-	cmr_u16  	max;
+	cmr_u16 min;
+	cmr_u16 max;
 };
 
 struct awb_point {
-	cmr_u16	x;
-	cmr_u16	y;
+	cmr_u16 x;
+	cmr_u16 y;
 };
 
 struct awb_rect {
@@ -102,17 +99,17 @@ struct awb_linear_func {
 
 struct awb_sample {
 	/* input value of the sample point */
-	cmr_s32	x;
+	cmr_s32 x;
 	/* output value of the sample point */
-	cmr_s32	y;
+	cmr_s32 y;
 };
 
 /* piecewise linear function */
 struct awb_piecewise_func {
 	/* sample points of the piecewise linear function, the x value
-	 of the samples must be in an ascending sort  order */
+	   of the samples must be in an ascending sort  order */
 	struct awb_sample samples[AWB_MAX_PIECEWISE_NUM];
-	/* number of the samples*/
+	/* number of the samples */
 	cmr_u16 num;
 	cmr_u16 base;
 };

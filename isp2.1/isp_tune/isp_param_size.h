@@ -24,8 +24,7 @@
  **				Compiler Flag					*
  **---------------------------------------------------------------------------*/
 #ifdef   __cplusplus
-extern   "C"
-{
+extern "C" {
 #endif
 
 /**---------------------------------------------------------------------------*
@@ -49,14 +48,13 @@ extern   "C"
 #define ISP_SIZE_4208x3120 (1<<15)
 #define ISP_SIZE_END 0xffffffff
 
-
-struct isp_size_info{
+struct isp_size_info {
 	cmr_u32 size_id;
 	cmr_u32 width;
 	cmr_u32 height;
 };
 
-struct isp_size_info* ISP_ParamGetSizeInfo(void);
+struct isp_size_info *ISP_ParamGetSizeInfo(void);
 
 /**----------------------------------------------------------------------------*
 **				Compiler Flag					*
@@ -67,4 +65,3 @@ struct isp_size_info* ISP_ParamGetSizeInfo(void);
 /**---------------------------------------------------------------------------*/
 #endif
 // End
-

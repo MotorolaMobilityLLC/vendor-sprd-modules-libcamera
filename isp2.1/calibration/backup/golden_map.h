@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- #ifndef _GOLDEN_MAP_H_
+#ifndef _GOLDEN_MAP_H_
 #define _GOLDEN_MAP_H_
 
 /*------------------------------------------------------------------------------*
@@ -24,8 +24,7 @@
 *				Compiler Flag					*
 *-------------------------------------------------------------------------------*/
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 /*------------------------------------------------------------------------------*
 				Micro Define					*
@@ -111,6 +110,5 @@ struct golden_map_awb {
 }
 #endif
 /*------------------------------------------------------------------------------*/
-
 #endif
 // End

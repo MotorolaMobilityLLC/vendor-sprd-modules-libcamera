@@ -34,8 +34,7 @@
 *					Compiler Flag				*
 *-------------------------------------------------------------------------------*/
 #ifdef  __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 /*------------------------------------------------------------------------------*
@@ -51,13 +50,13 @@ enum af_err_type {
 
 enum scene {
 	OUT_SCENE = 0,
-	INDOOR_SCENE,		//INDOOR_SCENE,
-	DARK_SCENE,		//DARK_SCENE,
+	INDOOR_SCENE,	//INDOOR_SCENE,
+	DARK_SCENE,	//DARK_SCENE,
 	SCENE_NUM,
 };
 
-enum af_mode{
-	AF_MODE_NORMAL=0x00,
+enum af_mode {
+	AF_MODE_NORMAL = 0x00,
 	AF_MODE_MACRO,
 	AF_MODE_CONTINUE,
 	AF_MODE_VIDEO,
@@ -68,37 +67,37 @@ enum af_mode{
 };
 
 enum af_cmd {
-	AF_CMD_SET_BASE             = 0x1000,
-	AF_CMD_SET_AF_MODE          = 0x1001,
-	AF_CMD_SET_AF_POS           = 0x1002,
-	AF_CMD_SET_TUNING_MODE      = 0x1003,
-	AF_CMD_SET_SCENE_MODE       = 0x1004,
-	AF_CMD_SET_AF_START         = 0x1005,
-	AF_CMD_SET_AF_STOP          = 0x1006,
-	AF_CMD_SET_AF_RESTART       = 0x1007,
-	AF_CMD_SET_CAF_RESET        = 0x1008,
-	AF_CMD_SET_CAF_STOP         = 0x1009,
-	AF_CMD_SET_AF_FINISH        = 0x100A,
-	AF_CMD_SET_AF_BYPASS        = 0x100B,
-	AF_CMD_SET_DEFAULT_AF_WIN   = 0x100C,
-	AF_CMD_SET_FLASH_NOTICE     = 0x100D,
-	AF_CMD_SET_ISP_START_INFO   = 0x100E,
-	AF_CMD_SET_ISP_STOP_INFO    = 0x100F,
+	AF_CMD_SET_BASE = 0x1000,
+	AF_CMD_SET_AF_MODE = 0x1001,
+	AF_CMD_SET_AF_POS = 0x1002,
+	AF_CMD_SET_TUNING_MODE = 0x1003,
+	AF_CMD_SET_SCENE_MODE = 0x1004,
+	AF_CMD_SET_AF_START = 0x1005,
+	AF_CMD_SET_AF_STOP = 0x1006,
+	AF_CMD_SET_AF_RESTART = 0x1007,
+	AF_CMD_SET_CAF_RESET = 0x1008,
+	AF_CMD_SET_CAF_STOP = 0x1009,
+	AF_CMD_SET_AF_FINISH = 0x100A,
+	AF_CMD_SET_AF_BYPASS = 0x100B,
+	AF_CMD_SET_DEFAULT_AF_WIN = 0x100C,
+	AF_CMD_SET_FLASH_NOTICE = 0x100D,
+	AF_CMD_SET_ISP_START_INFO = 0x100E,
+	AF_CMD_SET_ISP_STOP_INFO = 0x100F,
 	AF_CMD_SET_ISP_TOOL_AF_TEST = 0x1010,
-	AF_CMD_SET_CAF_TRIG_START   = 0x1011,
-	AF_CMD_SET_AE_INFO          = 0x1012,
-	AF_CMD_SET_AWB_INFO         = 0x1013,
-	AF_CMD_SET_FACE_DETECT      = 0x1014,
-	AF_CMD_SET_DCAM_TIMESTAMP   = 0x1015,
-	AF_CMD_SET_PD_INFO	    = 0x1016,
+	AF_CMD_SET_CAF_TRIG_START = 0x1011,
+	AF_CMD_SET_AE_INFO = 0x1012,
+	AF_CMD_SET_AWB_INFO = 0x1013,
+	AF_CMD_SET_FACE_DETECT = 0x1014,
+	AF_CMD_SET_DCAM_TIMESTAMP = 0x1015,
+	AF_CMD_SET_PD_INFO = 0x1016,
 	AF_CMD_SET_UPDATE_AUX_SENSOR = 0x1017,
 
-	AF_CMD_GET_BASE             = 0x2000,
-	AF_CMD_GET_AF_MODE          = 0X2001,
-	AF_CMD_GET_AF_CUR_POS       = 0x2002,
-	AF_CMD_GET_AF_INIT_POS      = 0x2003,
-	AF_CMD_GET_MULTI_WIN_CFG    = 0x2004,
-	AF_CMD_GET_AF_LIB_INFO      = 0x2005,
+	AF_CMD_GET_BASE = 0x2000,
+	AF_CMD_GET_AF_MODE = 0X2001,
+	AF_CMD_GET_AF_CUR_POS = 0x2002,
+	AF_CMD_GET_AF_INIT_POS = 0x2003,
+	AF_CMD_GET_MULTI_WIN_CFG = 0x2004,
+	AF_CMD_GET_AF_LIB_INFO = 0x2005,
 	AF_CMD_GET_AF_FULLSCAN_INFO = 0x2006,
 };
 
@@ -184,29 +183,29 @@ struct af_trig_info {
 	struct af_win_rect win_pos[MAX_AF_WINS];
 };
 
-struct afctrl_init_in{
-//	cmr_u32 af_bypass;
-	void* caller;
-//	cmr_u32 af_mode;
-//	cmr_u32 tuning_param_cnt;
-//	cmr_u32 cur_tuning_mode;
+struct afctrl_init_in {
+//      cmr_u32 af_bypass;
+	void *caller;
+//      cmr_u32 af_mode;
+//      cmr_u32 tuning_param_cnt;
+//      cmr_u32 cur_tuning_mode;
 	cmr_u32 camera_id;
 	isp_af_cb af_set_cb;
 	cmr_handle caller_handle;
 	struct third_lib_info lib_param;
-//	struct af_plat_info plat_info;
-//	struct af_tuning_param *tuning_param;
+//      struct af_plat_info plat_info;
+//      struct af_tuning_param *tuning_param;
 	struct isp_size src;
-	cmr_s32(*go_position) (void* handle,struct af_motor_pos* in_param);
-	cmr_s32(*start_notice) (void* handle);
-	cmr_s32(*end_notice) (void* handle,struct af_result_param* in_param);
-	cmr_s32(*set_monitor) (void* handle, struct af_monitor_set* in_param, cmr_u32 cur_envi);
-	cmr_s32(*set_monitor_win) (void* handle, struct af_monitor_win* in_param);
-	cmr_s32(*get_monitor_win_num) (void* handle, cmr_u32 *win_num);
-//	cmr_s32(*ae_awb_lock) (void* handle);
-//	cmr_s32(*ae_awb_release) (void* handle);
-	cmr_s32(*lock_module) (void* handle, cmr_int af_locker_type);
-	cmr_s32(*unlock_module) (void* handle, cmr_int af_locker_type);
+	 cmr_s32(*go_position) (void *handle, struct af_motor_pos * in_param);
+	 cmr_s32(*start_notice) (void *handle);
+	 cmr_s32(*end_notice) (void *handle, struct af_result_param * in_param);
+	 cmr_s32(*set_monitor) (void *handle, struct af_monitor_set * in_param, cmr_u32 cur_envi);
+	 cmr_s32(*set_monitor_win) (void *handle, struct af_monitor_win * in_param);
+	 cmr_s32(*get_monitor_win_num) (void *handle, cmr_u32 * win_num);
+//      cmr_s32(*ae_awb_lock) (void* handle);
+//      cmr_s32(*ae_awb_release) (void* handle);
+	 cmr_s32(*lock_module) (void *handle, cmr_int af_locker_type);
+	 cmr_s32(*unlock_module) (void *handle, cmr_int af_locker_type);
 };
 
 struct afctrl_init_out {
@@ -222,8 +221,8 @@ struct af_img_blk_info {
 };
 
 struct af_ae_info {
-	cmr_u32 exp_time;  //us
-	cmr_u32 gain;   //256 --> 1X
+	cmr_u32 exp_time;	//us
+	cmr_u32 gain;	//256 --> 1X
 	cmr_u32 cur_fps;
 	cmr_u32 cur_lum;
 	cmr_u32 target_lum;
@@ -232,11 +231,11 @@ struct af_ae_info {
 
 struct afctrl_calc_in {
 	cmr_u32 data_type;
-	void* data;
+	void *data;
 	struct isp_sensor_fps_info sensor_fps;
 };
 
-struct afctrl_calc_out{
+struct afctrl_calc_out {
 	cmr_u32 motor_pos;
 	cmr_u32 suc_win;
 };
@@ -258,13 +257,13 @@ struct afctrl_cxt {
 
 struct pd_result {
 	/*TBD get reset from */
-	cmr_s32 pdConf[AREA_LOOP+1];
-	double pdPhaseDiff[AREA_LOOP+1];
+	cmr_s32 pdConf[AREA_LOOP + 1];
+	double pdPhaseDiff[AREA_LOOP + 1];
 	cmr_s32 pdGetFrameID;
 };
 
-cmr_int af_ctrl_init(struct afctrl_init_in *input_ptr, cmr_handle *handle_af);
-cmr_int af_ctrl_deinit(cmr_handle *handle_af);
+cmr_int af_ctrl_init(struct afctrl_init_in *input_ptr, cmr_handle * handle_af);
+cmr_int af_ctrl_deinit(cmr_handle * handle_af);
 cmr_int af_ctrl_process(cmr_handle handle_af, void *in_ptr, struct afctrl_calc_out *result);
 cmr_int af_ctrl_ioctrl(cmr_handle handle_af, cmr_int cmd, void *in_ptr, void *out_ptr);
 /*------------------------------------------------------------------------------*

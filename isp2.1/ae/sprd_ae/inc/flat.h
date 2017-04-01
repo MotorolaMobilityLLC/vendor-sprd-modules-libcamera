@@ -25,8 +25,8 @@
  **                              Compiler Flag                          *
  **---------------------------------------------------------------------------*/
 #ifdef __cplusplus
-extern "C"  {
-#endif/*  */
+extern "C" {
+#endif				/*  */
 /**---------------------------------------------------------------------------*
 **                               Macro Define                           *
 **----------------------------------------------------------------------------*/
@@ -37,7 +37,7 @@ extern "C"  {
 typedef struct {
 	cmr_s16 thrd[2];
 	cmr_s16 offset[2];
-} flat_cfg;/*2 * 4bytes */
+} flat_cfg;		/*2 * 4bytes */
 
 struct flat_tuning_param {
 	/*1 * 4bytes */
@@ -45,28 +45,28 @@ struct flat_tuning_param {
 	cmr_u8 num;
 	cmr_u16 reserved;
 	/*flat tune param; total 8 group */
-	flat_cfg cfg_info[FLAT_CFG_NUM];/*16 * 4bytes */
-	struct ae_piecewise_func out_piecewise;/*17 * 4bytes */
-	struct ae_piecewise_func in_piecewise;/*17 * 4bytes */
-};/*51 * 4bytes */
+	flat_cfg cfg_info[FLAT_CFG_NUM];	/*16 * 4bytes */
+	struct ae_piecewise_func out_piecewise;	/*17 * 4bytes */
+	struct ae_piecewise_func in_piecewise;	/*17 * 4bytes */
+};			/*51 * 4bytes */
 
-typedef struct  {
+typedef struct {
 	cmr_u8 mlog_en;
 	cmr_u16 down_scale;
-	cmr_u8 * ydata;
+	cmr_u8 *ydata;
 	float real_target;
 	cmr_s32 match_lv;
-} flat_in;//tuning info
+} flat_in;		//tuning info
 
-typedef struct  {
+typedef struct {
 	cmr_s16 tar_offset;
 	cmr_s16 input_interpolation[4];
 	float degree;
 	float strength;
-	char* log_ptr;
-} flat_rt;//calc info
+	char *log_ptr;
+} flat_rt;		//calc info
 
-typedef struct  {
+typedef struct {
 	cmr_s8 enable;
 	cmr_s8 debug_level;
 	cmr_u8 mlog_en;
@@ -82,14 +82,14 @@ typedef struct  {
 /**---------------------------------------------------------------------------*
 **                              FLAT Function Prototype                          *
 **----------------------------------------------------------------------------*/
-cmr_s32 flat_init(flat_stat * cxt, struct flat_tuning_param *tune_param_ptr);
-cmr_s32 flat_calc(flat_stat * cxt);
-cmr_s32 flat_deinit(flat_stat * cxt);
+	cmr_s32 flat_init(flat_stat * cxt, struct flat_tuning_param *tune_param_ptr);
+	cmr_s32 flat_calc(flat_stat * cxt);
+	cmr_s32 flat_deinit(flat_stat * cxt);
 /**----------------------------------------------------------------------------*
 **                                      Compiler Flag                           **
 **----------------------------------------------------------------------------*/
 #ifdef __cplusplus
 }
-#endif/*  */
+#endif				/*  */
 /**---------------------------------------------------------------------------*/
-#endif/*  */
+#endif				/*  */

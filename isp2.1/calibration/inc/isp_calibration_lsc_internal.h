@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- #ifndef _ISP_CALIBRATION_LSC_INTERNAL_H_
+#ifndef _ISP_CALIBRATION_LSC_INTERNAL_H_
 #define _ISP_CALIBRATION_LSC_INTERNAL_H_
 
 /*------------------------------------------------------------------------------*
@@ -31,17 +31,11 @@
 #define PRINTF(format,...) ALOGE(LSC_DEBUG_STR format, LSC_DEBUG_ARGS, ##__VA_ARGS__)
 #endif
 
-
-
-
-
-
 /*------------------------------------------------------------------------------*
 *				Compiler Flag					*
 *-------------------------------------------------------------------------------*/
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 /*------------------------------------------------------------------------------*
 				Micro Define					*
@@ -113,7 +107,7 @@ struct lsc_random_info {
 /*------------------------------------------------------------------------------*
 *				Data Structures					*
 *-------------------------------------------------------------------------------*/
-enum isp_calibration_lsc_random_cali_info_table{
+enum isp_calibration_lsc_random_cali_info_table {
 	R_VERSION_ID = 0,
 	R_IMG_WIDTH = 2,
 	R_IMG_HEIGHT = 4,
@@ -123,7 +117,7 @@ enum isp_calibration_lsc_random_cali_info_table{
 	R_STANDARD = 12
 };
 
-enum isp_calibration_lsc_golden_cali_info_table{
+enum isp_calibration_lsc_golden_cali_info_table {
 	G_VERSION_LOW_16BITS = 0,
 	G_VERSION_HIGH_16BITS = 2,
 	G_IMG_WIDTH = 4,
@@ -145,7 +139,6 @@ enum isp_calibration_lsc_golden_cali_info_table{
 	G_MODULE_INFO_MASK = 0x0003,
 	G_MODULE_INFO_SHIFT = 0,
 
-
 	G_PARA_INFO = 0,
 	G_STANDARD_INFO = 1,
 
@@ -160,65 +153,63 @@ enum isp_calibration_lsc_golden_cali_info_table{
 	G_NONCOMPRESS = 0,
 	G_DIM_1D = 1,
 	G_DIM_2D = 2
-
 };
 
-enum isp_calibration_lsc_calc_out_table{
+enum isp_calibration_lsc_calc_out_table {
 	OUT_STANDARD = 0,
 	OUT_NONSTANDARD = 1,
 };
 
-
-struct isp_calibration_lsc_random_cali_info{
+struct isp_calibration_lsc_random_cali_info {
 	cmr_u16 img_width;
 	cmr_u16 img_height;
 	cmr_u16 center_x;
 	cmr_u16 center_y;
-	cmr_u16* std_gain;
+	cmr_u16 *std_gain;
 	cmr_u32 lsc_pattern;
 	cmr_u32 compress;
 	cmr_u32 gain_width;
 	cmr_u32 gain_height;
 };
 
-struct isp_calibration_lsc_info_from_golden{
-	/*color temperature of the light*/
+struct isp_calibration_lsc_info_from_golden {
+	/*color temperature of the light */
 	cmr_u32 standard_light_ct;
 	cmr_u8 grid_size;
 	cmr_u8 diff_num;
 	cmr_u16 grid_width;
 	cmr_u16 grid_height;
 	cmr_u32 std_gain_golden_size;
-	cmr_u16* std_gain_golden;
+	cmr_u16 *std_gain_golden;
 };
 
-struct isp_calibration_lsc_flags{
+struct isp_calibration_lsc_flags {
 	cmr_u32 version;
 	cmr_u32 compress_flag;
-	cmr_u32 alg_type;		// 1: 1D; 2: 2D
+	cmr_u32 alg_type;	// 1: 1D; 2: 2D
 	cmr_u32 alg_version;
 	cmr_u32 base_gain;
-	cmr_u32 percent;		//correction percent
+	cmr_u32 percent;	//correction percent
 };
 
-struct isp_calibration_lsc_module_info{
+struct isp_calibration_lsc_module_info {
 	cmr_u32 id;
 	cmr_u32 datalen;
 	cmr_u32 offset;
 };
 
-struct isp_calibration_lsc_predictor_param{
-	cmr_u16* std_gain;
-	cmr_u16* diff;
-	cmr_u16* nonstd_gain;
-	cmr_u32 difflen;// eyery channel keep the same difflen,so the data in diffptr keep the length of 4*difflen
+struct isp_calibration_lsc_predictor_param {
+	cmr_u16 *std_gain;
+	cmr_u16 *diff;
+	cmr_u16 *nonstd_gain;
+	cmr_u32 difflen;	// eyery channel keep the same difflen,so the data in diffptr keep the length of 4*difflen
 	cmr_u16 grid_width;
 	cmr_u16 grid_height;
 	cmr_u16 center_x;
 	cmr_u16 center_y;
 };
 
-struct isp_calibration_lsc_golden_cali_info{
+struct isp_calibration_lsc_golden_cali_info {
 	cmr_u16 img_width;
 	cmr_u16 img_height;
 	cmr_u8 grid_size;
@@ -227,12 +218,10 @@ struct isp_calibration_lsc_golden_cali_info{
 	cmr_u16 grid_width;
 	cmr_u16 grid_height;
 	cmr_u8 diff_num;
-	struct isp_calibration_lsc_param gain[ISP_CALIBRATION_MAX_LSC_NUM];// includes the standard data and nonstandard data
+	struct isp_calibration_lsc_param gain[ISP_CALIBRATION_MAX_LSC_NUM];	// includes the standard data and nonstandard data
 };
 
-cmr_s32 isp_calibration_lsc_golden_parse(void *golden_data, cmr_u32 golden_size,
-					struct isp_calibration_lsc_flags *flag,
-					struct isp_calibration_lsc_golden_cali_info *golden_info);
+cmr_s32 isp_calibration_lsc_golden_parse(void *golden_data, cmr_u32 golden_size, struct isp_calibration_lsc_flags *flag, struct isp_calibration_lsc_golden_cali_info *golden_info);
 
 /*------------------------------------------------------------------------------*
 *				Compiler Flag					*
@@ -241,6 +230,5 @@ cmr_s32 isp_calibration_lsc_golden_parse(void *golden_data, cmr_u32 golden_size,
 }
 #endif
 /*------------------------------------------------------------------------------*/
-
 #endif
 // End

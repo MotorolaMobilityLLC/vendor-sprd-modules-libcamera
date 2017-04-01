@@ -30,9 +30,9 @@
 extern "C" {
 #endif
 struct ae_in_out {
-	cmr_u16 cur_exp_line;/*current exposure line: the value is related to the resolution */
-	cmr_u16 cur_dummy;/*dummy line: the value is related to the resolution & fps */
-	cmr_s16 cur_gain;/*current analog gain */
+	cmr_u16 cur_exp_line;	/*current exposure line: the value is related to the resolution */
+	cmr_u16 cur_dummy;	/*dummy line: the value is related to the resolution & fps */
+	cmr_s16 cur_gain;	/*current analog gain */
 	cmr_s16 enable;
 };
 

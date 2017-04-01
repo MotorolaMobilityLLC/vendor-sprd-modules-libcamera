@@ -43,10 +43,10 @@ enum adpt_lib_type {
 };
 
 struct adpt_ops_type {
-	void * (*adpt_init) (void *in, void *out);
-	int32_t (*adpt_deinit)(void* handle, void *in, void *out);
-	int32_t (*adpt_process)(void* handle, void *in, void *out);
-	int32_t (*adpt_ioctrl)(void* handle, int32_t cmd, void *in, void *out);
+	void *(*adpt_init) (void *in, void *out);
+	 int32_t(*adpt_deinit) (void *handle, void *in, void *out);
+	 int32_t(*adpt_process) (void *handle, void *in, void *out);
+	 int32_t(*adpt_ioctrl) (void *handle, int32_t cmd, void *in, void *out);
 };
 
 struct adpt_register_type {
@@ -55,6 +55,5 @@ struct adpt_register_type {
 	struct adpt_ops_type *ops;
 };
 
-int32_t adpt_get_ops(int32_t lib_type, struct third_lib_info *lib_info,
-		     struct adpt_ops_type **ops);
+int32_t adpt_get_ops(int32_t lib_type, struct third_lib_info *lib_info, struct adpt_ops_type **ops);
 #endif

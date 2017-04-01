@@ -25,14 +25,13 @@
  **				Compiler Flag					*
  **---------------------------------------------------------------------------*/
 #ifdef   __cplusplus
-extern   "C"
-{
+extern "C" {
 #endif
 
 /**---------------------------------------------------------------------------*
 **				Micro Define					*
 **----------------------------------------------------------------------------*/
-typedef cmr_s32 (*isp_fun)(cmr_handle isp_handler, void* param_ptr);
+typedef cmr_s32(*isp_fun) (cmr_handle isp_handler, void *param_ptr);
 
 #define ISP_AE_TAB_NUM 0x04
 #define ISP_CMC_NUM 0x09
@@ -116,8 +115,8 @@ typedef cmr_s32 (*isp_fun)(cmr_handle isp_handler, void* param_ptr);
 **				Data Prototype					*
 **----------------------------------------------------------------------------*/
 
-enum isp_parser_cmd{
-	ISP_PREVIEW=0x00,
+enum isp_parser_cmd {
+	ISP_PREVIEW = 0x00,
 	ISP_STOP_PREVIEW,
 	ISP_CAPTURE,
 	ISP_UP_PREVIEW_DATA,
@@ -132,7 +131,7 @@ enum isp_parser_cmd{
 	ISP_PARSER_CMD_MAX
 };
 
-struct isp_main_info{
+struct isp_main_info {
 	char sensor_id[32];
 	cmr_u32 version_id;
 	cmr_u32 preview_format;
@@ -143,13 +142,13 @@ struct isp_main_info{
 	char version_info[2][ISP_PARASER_VERSION_INFO_SIZE];
 };
 
-struct isp_version_info{
+struct isp_version_info {
 	cmr_u32 version_id;
 	cmr_u32 srtuct_size;
 	cmr_u32 reserve;
 };
 
-struct isp_param_info{
+struct isp_param_info {
 	char main_type[32];
 	char sub_type[32];
 	char third_type[32];
@@ -158,41 +157,41 @@ struct isp_param_info{
 	cmr_u32 addr_offset;
 };
 
-struct isp_parser_up_data{
+struct isp_parser_up_data {
 	cmr_u32 format;
 	cmr_u32 pattern;
 	cmr_u32 width;
 	cmr_u32 height;
-	cmr_u32* buf_addr;
+	cmr_u32 *buf_addr;
 	cmr_u32 buf_len;
 };
 
-struct isp_parser_buf_in{
+struct isp_parser_buf_in {
 	//cmr_u32 buf_addr;
 	cmr_uint buf_addr;
 	cmr_u32 buf_len;
 };
 
-struct isp_parser_buf_rtn{
+struct isp_parser_buf_rtn {
 	//cmr_u32 buf_addr;
 	cmr_uint buf_addr;
 	cmr_u32 buf_len;
 };
 
-struct isp_parser_cmd_param{
+struct isp_parser_cmd_param {
 	enum isp_parser_cmd cmd;
-	cmr_u32 param[48]; // capture param format/width/height
+	cmr_u32 param[48];	// capture param format/width/height
 };
 
-struct isp_param_fun{
+struct isp_param_fun {
 	cmr_u32 cmd;
-	cmr_s32 (*param_fun)(cmr_handle isp_handler, void* param_ptr);
+	 cmr_s32(*param_fun) (cmr_handle isp_handler, void *param_ptr);
 };
 
 cmr_u32 ispParserGetSizeID(cmr_u32 width, cmr_u32 height);
-cmr_s32 ispParser(cmr_handle isp_handler, cmr_u32 cmd, void* in_param_ptr, void* rtn_param_ptr);
-cmr_u32* ispParserAlloc(cmr_u32 size);
-cmr_s32 ispParserFree(void* addr);
+cmr_s32 ispParser(cmr_handle isp_handler, cmr_u32 cmd, void *in_param_ptr, void *rtn_param_ptr);
+cmr_u32 *ispParserAlloc(cmr_u32 size);
+cmr_s32 ispParserFree(void *addr);
 
 /**----------------------------------------------------------------------------*
 **				Compiler Flag					*
@@ -203,4 +202,3 @@ cmr_s32 ispParserFree(void* addr);
 /**---------------------------------------------------------------------------*/
 #endif
 // End
-

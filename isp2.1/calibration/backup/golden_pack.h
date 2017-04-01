@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- #ifndef _GOLDEN_PACK_H_
+#ifndef _GOLDEN_PACK_H_
 #define _GOLDEN_PACK_H_
 
 /*------------------------------------------------------------------------------*
@@ -25,8 +25,7 @@
 *				Compiler Flag					*
 *-------------------------------------------------------------------------------*/
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 /*------------------------------------------------------------------------------*
 				Micro Define					*
@@ -50,7 +49,7 @@ struct golden_module_info {
 struct golden_lsc_info {
 	/* 1: tshark algorithm; 2: sharkl/tshark2 algorithm  */
 	cmr_u32 alg_version;
-	/*1: use 1d diff; 2: use 2d diff*/
+	/*1: use 1d diff; 2: use 2d diff */
 	cmr_u32 alg_type;
 	/* 0: normal gain (16 bits for one gain); 1: compress gain (14 bit for one gain)  */
 	cmr_u32 compress;
@@ -59,7 +58,7 @@ struct golden_lsc_info {
 	cmr_u32 percent;
 	cmr_u32 grid_width;
 	cmr_u32 grid_height;
-	/*0: gr, 1: r, 2: b, 3: gb*/
+	/*0: gr, 1: r, 2: b, 3: gb */
 	cmr_u32 bayer_pattern;
 	cmr_u32 img_width;
 	cmr_u32 img_height;
@@ -67,10 +66,10 @@ struct golden_lsc_info {
 	cmr_u32 gain_height;
 	cmr_u32 center_x;
 	cmr_u32 center_y;
-	/*std gain*/
+	/*std gain */
 	struct lsc_gain_info std_gain;
 	cmr_u32 std_ct;
-	/*nonstd diff*/
+	/*nonstd diff */
 	struct lsc_diff_1d_info nonstd_diff[MAX_NONSTD_IMAGE];
 	cmr_u32 nonstd_ct[MAX_NONSTD_IMAGE];
 	cmr_u32 nonstd_num;
@@ -98,7 +97,7 @@ struct golden_pack_result {
 *				Functions														*
 *-------------------------------------------------------------------------------*/
 cmr_s32 golden_pack(struct golden_pack_param *param, struct golden_pack_result *result);
-cmr_s32 get_golden_pack_size(struct golden_pack_param *param, cmr_u32 *size);
+cmr_s32 get_golden_pack_size(struct golden_pack_param *param, cmr_u32 * size);
 /*------------------------------------------------------------------------------*
 *				Compiler Flag					*
 *-------------------------------------------------------------------------------*/
@@ -106,7 +105,5 @@ cmr_s32 get_golden_pack_size(struct golden_pack_param *param, cmr_u32 *size);
 }
 #endif
 /*------------------------------------------------------------------------------*/
-
 #endif
 // End
-

@@ -30,22 +30,22 @@
 /**---------------------------------------------------------------------------*
  **				 Compiler Flag					*
  **---------------------------------------------------------------------------*/
- #define AE_EXP_GAIN_TABLE_SIZE 512
- #define AE_WEIGHT_TABLE_SIZE	1024
- #define AE_ISO_NUM	6
- #define AE_ISO_NUM_NEW 8
- #define AE_SCENE_NUM	8
- #define AE_FLICKER_NUM 2
- #define AE_WEIGHT_TABLE_NUM 3
- #define AE_EV_LEVEL_NUM 16
- #define AE_PARAM_VERIFY	0x61656165
- #define AE_OFFSET_NUM 20
- #define AE_CVGN_NUM  4
- #define AE_TABLE_32
- #define AE_BAYER_CHNL_NUM 4
- #define AE_PIECEWISE_MAX_NUM 16
- #define AE_WEIGHT_UNIT 256
- #define AE_FIX_PCT 1024
+#define AE_EXP_GAIN_TABLE_SIZE 512
+#define AE_WEIGHT_TABLE_SIZE	1024
+#define AE_ISO_NUM	6
+#define AE_ISO_NUM_NEW 8
+#define AE_SCENE_NUM	8
+#define AE_FLICKER_NUM 2
+#define AE_WEIGHT_TABLE_NUM 3
+#define AE_EV_LEVEL_NUM 16
+#define AE_PARAM_VERIFY	0x61656165
+#define AE_OFFSET_NUM 20
+#define AE_CVGN_NUM  4
+#define AE_TABLE_32
+#define AE_BAYER_CHNL_NUM 4
+#define AE_PIECEWISE_MAX_NUM 16
+#define AE_WEIGHT_UNIT 256
+#define AE_FIX_PCT 1024
 #define AE_PIECEWISE_SAMPLE_NUM 0x10
 #define AE_CFG_NUM 8
 
@@ -57,7 +57,7 @@ enum ae_environ_mod {
 	ae_environ_num,
 };
 
- enum ae_return_value {
+enum ae_return_value {
 	AE_SUCCESS = 0x00,
 	AE_ERROR,
 	AE_PARAM_ERROR,
@@ -122,17 +122,16 @@ struct ae_param {
 	cmr_u32 size;
 };
 
-struct ae_exp_gain_delay_info{
+struct ae_exp_gain_delay_info {
 	cmr_u8 group_hold_flag;
 	cmr_u8 valid_exp_num;
 	cmr_u8 valid_gain_num;
 };
 
 struct ae_set_fps {
-	cmr_u32 min_fps; // min fps
-	cmr_u32 max_fps; // fix fps flag
+	cmr_u32 min_fps;	// min fps
+	cmr_u32 max_fps;	// fix fps flag
 };
-
 
 struct ae_exp_gain_table {
 	cmr_s32 min_index;
@@ -149,9 +148,9 @@ struct ae_weight_table {
 
 struct ae_ev_table {
 	cmr_s32 lum_diff[AE_EV_LEVEL_NUM];
-	/*number of level*/
+	/*number of level */
 	cmr_u32 diff_num;
-	/*index of default*/
+	/*index of default */
 	cmr_u32 default_level;
 };
 
@@ -164,9 +163,9 @@ struct ae_flash_ctrl {
 struct touch_zone {
 	cmr_u32 level_0_weight;
 	cmr_u32 level_1_weight;
-	cmr_u32 level_1_percent; //x64
+	cmr_u32 level_1_percent;	//x64
 	cmr_u32 level_2_weight;
-	cmr_u32 level_2_percent; //x64
+	cmr_u32 level_2_percent;	//x64
 };
 
 struct ae_flash_tuning {
@@ -174,8 +173,8 @@ struct ae_flash_tuning {
 };
 
 struct ae_stat_req {
-	cmr_u32 mode; //0:normal, 1:G(center area)
-	cmr_u32 G_width; //100:G mode(100x100)
+	cmr_u32 mode;		//0:normal, 1:G(center area)
+	cmr_u32 G_width;	//100:G mode(100x100)
 };
 
 struct ae_auto_iso_tab {
@@ -249,12 +248,12 @@ struct ae_lv_calibration {
 };
 
 struct ae_face_tune_param {
-	cmr_s32 param_face_weight;/* The ratio of face area weight (in percent) */
-	cmr_s32 param_convergence_speed;/* AE convergence speed */
-	cmr_s32 param_lock_ae;/* frames to lock AE */
-	cmr_s32 param_lock_weight_has_face;/* frames to lock the weight table, when has faces */
-	cmr_s32 param_lock_weight_no_face;/* frames to lock the weight table, when no faces */
-	cmr_s32 param_shrink_face_ratio;/* The ratio to shrink face area. In percent */
+	cmr_s32 param_face_weight;	/* The ratio of face area weight (in percent) */
+	cmr_s32 param_convergence_speed;	/* AE convergence speed */
+	cmr_s32 param_lock_ae;	/* frames to lock AE */
+	cmr_s32 param_lock_weight_has_face;	/* frames to lock the weight table, when has faces */
+	cmr_s32 param_lock_weight_no_face;	/* frames to lock the weight table, when no faces */
+	cmr_s32 param_shrink_face_ratio;	/* The ratio to shrink face area. In percent */
 };
 
 struct ae_scene_info {
@@ -268,7 +267,7 @@ struct ae_scene_info {
 	cmr_u32 weight_mode;
 	//cmr_u32 default_index;
 	cmr_u8 table_enable;
-	cmr_u8  exp_tbl_mode;
+	cmr_u8 exp_tbl_mode;
 	cmr_u16 reserved0;
 	cmr_u32 reserved1;
 	struct ae_exp_gain_table ae_table[AE_FLICKER_NUM];

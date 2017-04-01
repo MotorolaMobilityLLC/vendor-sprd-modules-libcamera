@@ -22,7 +22,6 @@
 #include "af_ctrl.h"
 #include "sprd_pdaf_adpt.h"
 
-
 enum pdaf_ctrl_data_type {
 	PDAF_DATA_TYPE_RAW = 0,
 	PDAF_DATA_TYPE_LEFT,
@@ -37,7 +36,7 @@ enum pdaf_ctrl_cmd_type {
 	/*
 	 * warning if you wanna set ioctrl directly
 	 * please add msg id below here
-	  * */
+	 * */
 	PDAF_CTRL_CMD_DIRECT_BEGIN,
 	PDAF_CTRL_CMD_GET_BUSY,
 	PDAF_CTRL_CMD_SET_CONFIG,
@@ -70,26 +69,24 @@ struct pdaf_ctrl_process_in {
 	//struct pd_raw_info pd_raw;
 };
 
-
 struct pdaf_ctrl_process_out {
 	struct sprd_pdaf_report_t pd_report_data;
 };
 
 struct pdaf_ctrl_callback_in {
 	union {
-	struct pdaf_ctrl_process_out proc_out;
+		struct pdaf_ctrl_process_out proc_out;
 	};
 };
 
 struct pdaf_ctrl_cb_ops_type {
-	cmr_int (*call_back)(cmr_handle caller_handle,
-			   struct pdaf_ctrl_callback_in *in);
+	cmr_int(*call_back) (cmr_handle caller_handle, struct pdaf_ctrl_callback_in * in);
 };
 
 struct pdaf_ctrl_param_in {
 	union {
 		struct isp3a_pd_config_t *pd_config;
-		cmr_int (*pd_set_buffer) (struct pd_frame_in *cb_param);
+		 cmr_int(*pd_set_buffer) (struct pd_frame_in * cb_param);
 	};
 };
 
@@ -110,7 +107,7 @@ struct isp_lib_config {
 
 struct pdaf_ctrl_init_in {
 	cmr_u32 camera_id;
-	void* caller;
+	void *caller;
 	cmr_handle caller_handle;
 	cmr_u8 pdaf_support;
 	cmr_s8 *name;
@@ -122,7 +119,7 @@ struct pdaf_ctrl_init_in {
 /*add for sharkl2*/
 	isp_pdaf_cb pdaf_set_cb;
 	struct third_lib_info lib_param;
-	cmr_u32(*af_set_pdinfo) (void *handle, struct pd_result* in_parm);
+	 cmr_u32(*af_set_pdinfo) (void *handle, struct pd_result * in_parm);
 };
 
 struct pdaf_ctrl_init_out {
@@ -136,15 +133,11 @@ struct pdafctrl_work_lib {
 	struct adpt_ops_type *adpt_ops;
 };
 
-cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in *in,
-		     struct pdaf_ctrl_init_out *out, cmr_handle *handle);
+cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in *in, struct pdaf_ctrl_init_out *out, cmr_handle * handle);
 
-cmr_int pdaf_ctrl_deinit(cmr_handle *handle);
+cmr_int pdaf_ctrl_deinit(cmr_handle * handle);
 
-cmr_int pdaf_ctrl_process(cmr_handle handle, struct pdaf_ctrl_process_in *in,
-			struct pdaf_ctrl_process_out *out);
+cmr_int pdaf_ctrl_process(cmr_handle handle, struct pdaf_ctrl_process_in *in, struct pdaf_ctrl_process_out *out);
 
-cmr_int pdaf_ctrl_ioctrl(cmr_handle handle, cmr_int cmd,
-		       struct pdaf_ctrl_param_in *in,
-		       struct pdaf_ctrl_param_out *out);
+cmr_int pdaf_ctrl_ioctrl(cmr_handle handle, cmr_int cmd, struct pdaf_ctrl_param_in *in, struct pdaf_ctrl_param_out *out);
 #endif

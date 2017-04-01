@@ -160,12 +160,12 @@ struct sensor_flash_attrib_param {
 	uint32_t b_sum;
 };
 
-struct sensor_flash_attrib_cali{
+struct sensor_flash_attrib_cali {
 	struct sensor_flash_attrib_param global;
 	struct sensor_flash_attrib_param random;
 };
 
-struct sensor_flash_cali_param{
+struct sensor_flash_cali_param {
 	uint16_t auto_threshold;
 	uint16_t r_ratio;
 	uint16_t g_ratio;
@@ -184,14 +184,10 @@ struct sensor_envi_detect_param {
 	struct isp_range envi_range[SENSOR_ENVI_NUM];
 };
 
-
-
 #define AE_FLICKER_NUM 2
 #define AE_ISO_NUM_NEW 8
 #define AE_WEIGHT_TABLE_NUM 3
 #define AE_SCENE_NUM 8
-
-
 
 #define _HAIT_MODIFIED_FLAG
 #define SENSOR_CCE_NUM 0x09
@@ -210,8 +206,6 @@ struct sensor_envi_detect_param {
 #define SENSOR_CMC_POINT_NUM 9
 //#define SENSOR_SMART_LEVEL_NUM 25
 //#define SENSOR_SMART_LEVEL_DEFAULT 15
-
-
 
 /************************************************************************************/
 //Pre-global gain
@@ -244,18 +238,18 @@ struct sensor_postblc_param {
 // ppi, phase pixel inspector,PDAF
 // definiton of phase pixel location, should define in sensor driver
 struct sensor_pdaf_pattern_map {
-         uint32_t is_right;
-         struct isp_pos pattern_pixel;
+	uint32_t is_right;
+	struct isp_pos pattern_pixel;
 };
 
 struct sensor_pdaf_region {
-         uint16_t start_col;
-         uint16_t start_row;
-         uint16_t end_col;
-         uint16_t end_row;
-         uint16_t width;
-         uint16_t height;
-         struct sensor_pdaf_pattern_map pdaf_pattern[64];
+	uint16_t start_col;
+	uint16_t start_row;
+	uint16_t end_col;
+	uint16_t end_row;
+	uint16_t width;
+	uint16_t height;
+	struct sensor_pdaf_pattern_map pdaf_pattern[64];
 };
 
 /************************************************************************************/
@@ -297,14 +291,14 @@ struct sensor_pdaf_correction_level {
 	uint16_t hot_pixel_th[3];
 	uint16_t dead_pixel_th[3];
 	uint16_t phase_map_corr_eb;
-	uint8_t pdaf_grid;//0:1/32, 1:1/64
+	uint8_t pdaf_grid;	//0:1/32, 1:1/64
 	uint8_t gfilter_flag;
 	uint8_t flat_smt_index;
 	uint8_t txt_smt_index;
 	uint16_t phase_l_gain_map[128];
 	uint16_t phase_r_gain_map[128];
 	struct sensor_pdaf_rgb_upboundary pdaf_upperbound;
-	struct sensor_blc_offset pdaf_blacklevel;//should be set to OB
+	struct sensor_blc_offset pdaf_blacklevel;	//should be set to OB
 	struct sensor_pdaf_edge_ratio pdaf_edgeRatio;
 	uint32_t corrector_bypass;
 };
@@ -402,8 +396,8 @@ struct sensor_multi_curve_discription {
 struct sensor_1d_lsc_map {
 	uint32_t rlsc_radius_step;
 	struct sensor_multi_curve_discription curve_distcptn[SENSOR_LNC_RC_NUM];
-	uint32_t len;  // indirect parameter
-	uint32_t offset; //indirect parameter
+	uint32_t len;		// indirect parameter
+	uint32_t offset;	//indirect parameter
 };
 
 struct sensor_1d_lsc_param {
@@ -481,9 +475,9 @@ struct sensor_bpc_rules {
 };
 
 struct sensor_bpc_comm {
-	uint8_t bpc_mode;//0:normal,1:map,2:both
+	uint8_t bpc_mode;	//0:normal,1:map,2:both
 	uint8_t hv_mode;
-	uint8_t rd_mode;//0:3x3,1:5x5,2:line mask
+	uint8_t rd_mode;	//0:3x3,1:5x5,2:line mask
 	uint8_t reserved;
 	uint16_t lut_level[8];
 	uint16_t slope_k[8];
@@ -543,7 +537,7 @@ struct sensor_ynr_den_str {
 	uint8_t sal_offset[8];
 	uint8_t subthresh[9];
 	uint8_t lut_thresh[7];
-	uint8_t addback[9];//filter_ratio in ISP TOOL
+	uint8_t addback[9];	//filter_ratio in ISP TOOL
 	uint8_t reserved[3];
 	struct sensor_ynr_layer_str layer1;
 	struct sensor_ynr_layer_str layer2;
@@ -599,7 +593,7 @@ struct sensor_cce_uvdiv_ratio {
 	uint8_t reserved[2];
 };
 
-struct sensor_cce_uvdiv_level{
+struct sensor_cce_uvdiv_level {
 	struct sensor_cce_uvdiv_lum uvdiv_lum;
 	struct sensor_cce_uvdiv_chroma uvdiv_chroma;
 	struct sensor_cce_uvdiv_th u_th_1;
@@ -667,20 +661,20 @@ struct sensor_grgb_ratio {
 	uint8_t gr_ratio;
 	uint8_t gb_ratio;
 	uint16_t reserved;
-	};
+};
 struct sensor_grgb_t_cfg {
-	uint16_t  grgb_t1_cfg;
-	uint16_t  grgb_t2_cfg;
-	uint16_t  grgb_t3_cfg;
-	uint16_t  grgb_t4_cfg;
-	};
+	uint16_t grgb_t1_cfg;
+	uint16_t grgb_t2_cfg;
+	uint16_t grgb_t3_cfg;
+	uint16_t grgb_t4_cfg;
+};
 
 struct sensor_grgb_r_cfg {
 	uint8_t grgb_r1_cfg;
 	uint8_t grgb_r2_cfg;
 	uint8_t grgb_r3_cfg;
 	uint8_t reserved;
-	};
+};
 struct sensor_grgb_curve {
 	struct sensor_grgb_t_cfg t_cfg;
 	struct sensor_grgb_r_cfg r_cfg;
@@ -713,10 +707,9 @@ struct sensor_rgb_gain2_param {
 	uint16_t b_offset;
 };
 
-
 /************************************************************************************/
 // nlm
-struct sesor_simple_bpc{
+struct sesor_simple_bpc {
 	uint8_t simple_bpc_bypass;
 	uint8_t simple_bpc_thr;
 	uint16_t simple_bpc_lum_thr;
@@ -726,10 +719,10 @@ struct sensor_nlm_flat_degree {
 	uint8_t flat_inc_str;
 	uint8_t flat_match_cnt;
 	uint16_t flat_thresh;
-	uint16_t addback0;//for G channel
-	uint16_t addback1;//for R and B channel
-	uint16_t addback_clip_max;//plus noise
-	uint16_t addback_clip_min;//minus noise
+	uint16_t addback0;	//for G channel
+	uint16_t addback1;	//for R and B channel
+	uint16_t addback_clip_max;	//plus noise
+	uint16_t addback_clip_min;	//minus noise
 };
 
 struct sensor_nlm_texture {
@@ -863,11 +856,11 @@ struct sensor_cfai_level {
 	uint8_t reserved[3];
 	uint16_t grid_tr;
 	uint32_t smooth_tr;
-	uint16_t uni_dir_intplt_tr;//cfa_uni_dir_intplt_tr_new
+	uint16_t uni_dir_intplt_tr;	//cfa_uni_dir_intplt_tr_new
 	uint16_t rb_high_sat_thr;
 	struct sensor_cfai_gref_thr gref_thr;
 	struct sensor_cfai_wgtctrl cfai_dir_intplt;
-	uint32_t cfa_bypass;//cfa interpolatin control, always open!!!
+	uint32_t cfa_bypass;	//cfa interpolatin control, always open!!!
 };
 
 struct sensor_cfa_param_level {
@@ -885,7 +878,7 @@ struct sensor_rgb_afm_iir_denoise {
 };
 
 struct sensor_rgb_afm_enhanced_fv {
-	uint8_t fv_enhanced_mode;//0~5
+	uint8_t fv_enhanced_mode;	//0~5
 	uint8_t clip_en;
 	uint8_t fv_shift;
 	uint8_t reserved;
@@ -894,13 +887,13 @@ struct sensor_rgb_afm_enhanced_fv {
 };
 
 struct sensor_rgb_afm_enhanced_pre {
-	uint8_t channel_sel;//R/G/B for calc
+	uint8_t channel_sel;	//R/G/B for calc
 	uint8_t denoise_mode;
-	uint8_t center_wgt;//2^n
+	uint8_t center_wgt;	//2^n
 };
 
 struct sensor_rgb_afm_enhanced_process {
-	uint8_t fv1_coeff[4][9];//4x3x3, fv0 is fixed in the code
+	uint8_t fv1_coeff[4][9];	//4x3x3, fv0 is fixed in the code
 };
 
 struct sensor_rgb_afm_enhanced_post {
@@ -974,9 +967,9 @@ struct sensor_hsv_param {
 	struct sensor_hsv_cfg sensor_hsv_cfg[5];
 	struct isp_sample_point_info cur_idx;
 	struct isp_data_bin_info map[SENSOR_HSV_NUM];
-	void* data_area;
+	void *data_area;
 	struct isp_data_bin_info specialeffect[MAX_SPECIALEFFECT_NUM];
-	void* specialeffect_data_area;
+	void *specialeffect_data_area;
 };
 
 /************************************************************************************/
@@ -998,7 +991,7 @@ struct sensor_radial_csc_param {
 /************************************************************************************/
 //pre-color noise remove in rgb domain
 #if 0
-struct sensor_rgb_precdn_level{
+struct sensor_rgb_precdn_level {
 	uint16_t thru0;
 	uint16_t thru1;
 	uint16_t thrv0;
@@ -1009,7 +1002,7 @@ struct sensor_rgb_precdn_level{
 };
 
 struct sensor_rgb_precdn_param {
-	isp_uint *param_ptr; /* if not null, read from noise/xxxx_param.h */
+	isp_uint *param_ptr;	/* if not null, read from noise/xxxx_param.h */
 	struct sensor_rgb_precdn_level rgb_precdn_level;
 	uint32_t strength_level;
 	isp_u32 reserved[2];
@@ -1030,23 +1023,22 @@ struct sensor_posterize_param {
 //AF monitor in rgb domain
 #if 0
 struct sensor_rgb_afm_sobel {
-	uint32_t af_sobel_type;			//sobel filter win control
-	struct isp_range sobel;		// filter thresholds
+	uint32_t af_sobel_type;	//sobel filter win control
+	struct isp_range sobel;	// filter thresholds
 };
 
 struct sensor_rgb_afm_filter_sel {
-	uint8_t af_sel_filter1;		//filter select control
-	uint8_t af_sel_filter2;		//filter select control
+	uint8_t af_sel_filter1;	//filter select control
+	uint8_t af_sel_filter2;	//filter select control
 	uint8_t reserved[2];
 };
 
-
 struct sensor_rgb_afm_spsmd {
-	uint8_t af_spsmd_rtgbot;		//filter data mode control
+	uint8_t af_spsmd_rtgbot;	//filter data mode control
 	uint8_t af_spsmd_diagonal;	//filter data mode control
 	uint8_t af_spsmd_cal_mode;	//data output mode control
-	uint8_t af_spsmd_type;		//data output mode control
-	struct isp_range spsmd;		// filter thresholds
+	uint8_t af_spsmd_type;	//data output mode control
+	struct isp_range spsmd;	// filter thresholds
 };
 
 struct sensor_rgb_afm_param {
@@ -1055,8 +1047,8 @@ struct sensor_rgb_afm_param {
 	struct sensor_rgb_afm_spsmd spsmd_ctl;
 	struct sensor_rgb_afm_sobel sobel_ctl;
 	struct isp_rect windows[25];
-	uint32_t af_sobel_type;			//sobel filter win control
-	struct isp_range sobel;		// filter thresholds
+	uint32_t af_sobel_type;	//sobel filter win control
+	struct isp_range sobel;	// filter thresholds
 };
 #endif
 /************************************************************************************/
@@ -1076,8 +1068,8 @@ struct sensor_y_afl_param_v1 {
 	uint8_t reserved0;
 	uint16_t v_height;
 	uint16_t reserved1;
-	uint16_t col_st;//x st
-	uint16_t col_ed;//x end
+	uint16_t col_st;	//x st
+	uint16_t col_ed;	//x end
 };
 
 struct sensor_y_afl_param_v3 {
@@ -1100,7 +1092,7 @@ struct sensor_y_afm_level {
 	uint8_t afm_position_sel;	//choose afm after CFA or auto contrust adjust
 	uint8_t shift;
 	uint16_t win[25][4];
-	uint16_t coef[11];		//int16
+	uint16_t coef[11];	//int16
 	uint16_t reserved1;
 };
 
@@ -1120,16 +1112,16 @@ struct sensor_yuv_precdn_comm {
 	uint32_t median_thr;
 };
 
-struct sensor_yuv_precdn_level{
+struct sensor_yuv_precdn_level {
 	struct sensor_yuv_precdn_comm precdn_comm;
 	float sigma_y;
 	float sigma_d;
 	float sigma_u;
 	float sigma_v;
-	uint8_t r_segu[2][7];							// param1
-	uint8_t r_segv[2][7];							// param2
-	uint8_t r_segy[2][7];							// param3
-	uint8_t dist_w[25];								// param4
+	uint8_t r_segu[2][7];	// param1
+	uint8_t r_segv[2][7];	// param2
+	uint8_t r_segy[2][7];	// param3
+	uint8_t dist_w[25];	// param4
 	uint8_t reserved0;
 	uint32_t bypass;
 };
@@ -1291,265 +1283,263 @@ struct sensor_ee_level {
 /************************************************************************************/
 //4A, smart, AFT
 #if 0
-struct ae_new_tuning_param {//total bytes must be 263480
-    uint32_t version;
-    uint32_t verify;
-    uint32_t alg_id;
-    uint32_t target_lum;
-    uint32_t target_lum_zone;   // x16
-    uint32_t convergence_speed;// x16
-    uint32_t flicker_index;
-    uint32_t min_line;
-    uint32_t start_index;
-    uint32_t exp_skip_num;
-    uint32_t gain_skip_num;
-    struct ae_stat_req stat_req;
-    struct ae_flash_tuning flash_tuning;
-    struct touch_zone touch_param;
-    struct ae_ev_table ev_table;
-    struct ae_exp_gain_table ae_table[AE_FLICKER_NUM][AE_ISO_NUM];
-    struct ae_exp_gain_table flash_table[AE_FLICKER_NUM][AE_ISO_NUM];
-    struct ae_weight_table weight_table[AE_WEIGHT_TABLE_NUM];
-    struct ae_scene_info scene_info[AE_SCENE_NUM];
-    struct ae_auto_iso_tab auto_iso_tab;
-    struct ae_exp_anti exp_anti;
-    struct ae_ev_cali ev_cali;
-    struct ae_convergence_parm cvgn_param[AE_CVGN_NUM];
-    struct ae_touch_param touch_info;/*it is in here,just for compatible; 3 * 4bytes */
-    struct ae_face_tune_param face_info;
+struct ae_new_tuning_param {	//total bytes must be 263480
+	uint32_t version;
+	uint32_t verify;
+	uint32_t alg_id;
+	uint32_t target_lum;
+	uint32_t target_lum_zone;	// x16
+	uint32_t convergence_speed;	// x16
+	uint32_t flicker_index;
+	uint32_t min_line;
+	uint32_t start_index;
+	uint32_t exp_skip_num;
+	uint32_t gain_skip_num;
+	struct ae_stat_req stat_req;
+	struct ae_flash_tuning flash_tuning;
+	struct touch_zone touch_param;
+	struct ae_ev_table ev_table;
+	struct ae_exp_gain_table ae_table[AE_FLICKER_NUM][AE_ISO_NUM];
+	struct ae_exp_gain_table flash_table[AE_FLICKER_NUM][AE_ISO_NUM];
+	struct ae_weight_table weight_table[AE_WEIGHT_TABLE_NUM];
+	struct ae_scene_info scene_info[AE_SCENE_NUM];
+	struct ae_auto_iso_tab auto_iso_tab;
+	struct ae_exp_anti exp_anti;
+	struct ae_ev_cali ev_cali;
+	struct ae_convergence_parm cvgn_param[AE_CVGN_NUM];
+	struct ae_touch_param touch_info;	/*it is in here,just for compatible; 3 * 4bytes */
+	struct ae_face_tune_param face_info;
 
-    /*13 * 4bytes */
-    uint8_t monitor_mode;   /*0: single, 1: continue */
-    uint8_t ae_tbl_exp_mode;    /*0: ae table exposure is exposure time; 1: ae table exposure is exposure line */
-    uint8_t enter_skip_num; /*AE alg skip frame as entering camera */
-    uint8_t cnvg_stride_ev_num;
-    int8_t cnvg_stride_ev[32];
-    int8_t stable_zone_ev[16];
+	/*13 * 4bytes */
+	uint8_t monitor_mode;	/*0: single, 1: continue */
+	uint8_t ae_tbl_exp_mode;	/*0: ae table exposure is exposure time; 1: ae table exposure is exposure line */
+	uint8_t enter_skip_num;	/*AE alg skip frame as entering camera */
+	uint8_t cnvg_stride_ev_num;
+	int8_t cnvg_stride_ev[32];
+	int8_t stable_zone_ev[16];
 
-    struct ae_sensor_cfg sensor_cfg;    /*sensor cfg information: 2 * 4bytes */
+	struct ae_sensor_cfg sensor_cfg;	/*sensor cfg information: 2 * 4bytes */
 
-    struct ae_lv_calibration lv_cali;   /*1 * 4bytes */
-    /*scene detect and others alg */
-    /*for touch info */
+	struct ae_lv_calibration lv_cali;	/*1 * 4bytes */
+	/*scene detect and others alg */
+	/*for touch info */
 
-    struct flat_tuning_param flat_param;    /*51 * 4bytes */
-    struct ae_flash_tuning_param flash_param;   /*1 * 4bytes */
-    struct region_tuning_param region_param;    /*180 * 4bytes */
-    struct mulaes_tuning_param mulaes_param;    /*9 * 4bytes */
-    struct face_tuning_param face_param;
+	struct flat_tuning_param flat_param;	/*51 * 4bytes */
+	struct ae_flash_tuning_param flash_param;	/*1 * 4bytes */
+	struct region_tuning_param region_param;	/*180 * 4bytes */
+	struct mulaes_tuning_param mulaes_param;	/*9 * 4bytes */
+	struct face_tuning_param face_param;
 
-    uint32_t reserved[2046];
+	uint32_t reserved[2046];
 };
 
-typedef struct _af_tuning_param{
-    uint8_t             flag;// Tuning parameter switch, 1 enable tuning parameter, 0 disenable it
-    filter_clip_t       filter_clip[SCENE_NUM][GAIN_TOTAL];// AF filter threshold
-    int32_t             bv_threshold[SCENE_NUM][SCENE_NUM];//BV threshold
-    AF_Window_Config SAF_win;// SAF window config
-    AF_Window_Config CAF_win; // CAF window config
-    AF_Window_Config VAF_win; // VAF window config
-    // default param for indoor/outdoor/dark
-    AF_Tuning AF_Tuning_Data[SCENE_NUM];// Algorithm related parameter
-    uint8_t dummy[101];// for 4-bytes alignment issue
-}af_tuning_param_t;
+typedef struct _af_tuning_param {
+	uint8_t flag;		// Tuning parameter switch, 1 enable tuning parameter, 0 disenable it
+	filter_clip_t filter_clip[SCENE_NUM][GAIN_TOTAL];	// AF filter threshold
+	int32_t bv_threshold[SCENE_NUM][SCENE_NUM];	//BV threshold
+	AF_Window_Config SAF_win;	// SAF window config
+	AF_Window_Config CAF_win;	// CAF window config
+	AF_Window_Config VAF_win;	// VAF window config
+	// default param for indoor/outdoor/dark
+	AF_Tuning AF_Tuning_Data[SCENE_NUM];	// Algorithm related parameter
+	uint8_t dummy[101];	// for 4-bytes alignment issue
+} af_tuning_param_t;
 
 #endif
 /**********************************************************************************/
 //aft
-typedef struct isp_aft_param{
-    uint32_t img_blk_support;
-    uint32_t hist_support;
-    uint32_t afm_support;
-    uint32_t caf_blk_support;
-    uint32_t gyro_support;
-    uint32_t gyro_debug_support;
-    uint32_t gsensor_support;
-    uint32_t need_rough_support;
-    uint32_t abort_af_support;
-    uint32_t need_print_trigger_support;
-    uint32_t ae_select_support;
-    uint32_t ae_calibration_support;
-    uint32_t dump_support;
-    uint32_t afm_abort_support;
-    uint32_t ae_skip_line;
-    uint32_t img_blk_value_thr;
-    uint32_t img_blk_num_thr;
-    uint32_t img_blk_cnt_thr;
-    uint32_t img_blk_value_stab_thr;
-    uint32_t img_blk_num_stab_thr;
-    uint32_t img_blk_cnt_stab_thr;
-    uint32_t img_blk_cnt_stab_max_thr;
-    uint32_t img_blk_skip_cnt;
-    uint32_t img_blk_value_video_thr;
-    uint32_t img_blk_num_video_thr;
-    uint32_t img_blk_cnt_video_thr;
-    uint32_t img_blk_value_video_stab_thr;
-    uint32_t img_blk_num_video_stab_thr;
-    uint32_t img_blk_cnt_video_stab_thr;
-    uint32_t img_blk_value_abort_thr;
-    uint32_t img_blk_num_abort_thr;
-    uint32_t img_blk_cnt_abort_thr;
-    uint32_t ae_mean_sat_thr[3];//saturation
-    uint8_t afm_roi_left_ration;
-    uint8_t afm_roi_top_ration;
-    uint8_t afm_roi_width_ration;
-    uint8_t afm_roi_heigth_ration;
-    uint8_t afm_num_blk_hor;
-    uint8_t afm_num_blk_vec;
-    uint32_t afm_value_thr;
-    uint32_t afm_num_thr;
-    uint32_t afm_value_stab_thr;
-    uint32_t afm_num_stab_thr;
-    uint32_t afm_cnt_stab_thr;
-    uint32_t afm_cnt_move_thr;
-    uint32_t afm_value_video_thr;
-    uint32_t afm_num_video_thr;
-    uint32_t afm_cnt_video_move_thr;
-    uint32_t afm_value_video_stab_thr;
-    uint32_t afm_num_video_stab_thr;
-    uint32_t afm_cnt_video_stab_thr;
-    uint32_t afm_skip_cnt;
-    uint32_t afm_need_af_cnt_thr[3];
-    uint32_t afm_fv_diff_thr[3];
-    uint32_t afm_fv_queue_cnt[3];
-    uint32_t afm_fv_stab_diff_thr[3];
-    uint32_t afm_need_af_cnt_video_thr[3];
-    uint32_t afm_fv_video_diff_thr[3];
-    uint32_t afm_fv_video_queue_cnt[3];
-    uint32_t afm_fv_video_stab_diff_thr[3];
-    uint32_t afm_need_af_cnt_abort_thr[3];
-    uint32_t afm_fv_diff_abort_thr[3];
+typedef struct isp_aft_param {
+	uint32_t img_blk_support;
+	uint32_t hist_support;
+	uint32_t afm_support;
+	uint32_t caf_blk_support;
+	uint32_t gyro_support;
+	uint32_t gyro_debug_support;
+	uint32_t gsensor_support;
+	uint32_t need_rough_support;
+	uint32_t abort_af_support;
+	uint32_t need_print_trigger_support;
+	uint32_t ae_select_support;
+	uint32_t ae_calibration_support;
+	uint32_t dump_support;
+	uint32_t afm_abort_support;
+	uint32_t ae_skip_line;
+	uint32_t img_blk_value_thr;
+	uint32_t img_blk_num_thr;
+	uint32_t img_blk_cnt_thr;
+	uint32_t img_blk_value_stab_thr;
+	uint32_t img_blk_num_stab_thr;
+	uint32_t img_blk_cnt_stab_thr;
+	uint32_t img_blk_cnt_stab_max_thr;
+	uint32_t img_blk_skip_cnt;
+	uint32_t img_blk_value_video_thr;
+	uint32_t img_blk_num_video_thr;
+	uint32_t img_blk_cnt_video_thr;
+	uint32_t img_blk_value_video_stab_thr;
+	uint32_t img_blk_num_video_stab_thr;
+	uint32_t img_blk_cnt_video_stab_thr;
+	uint32_t img_blk_value_abort_thr;
+	uint32_t img_blk_num_abort_thr;
+	uint32_t img_blk_cnt_abort_thr;
+	uint32_t ae_mean_sat_thr[3];	//saturation
+	uint8_t afm_roi_left_ration;
+	uint8_t afm_roi_top_ration;
+	uint8_t afm_roi_width_ration;
+	uint8_t afm_roi_heigth_ration;
+	uint8_t afm_num_blk_hor;
+	uint8_t afm_num_blk_vec;
+	uint32_t afm_value_thr;
+	uint32_t afm_num_thr;
+	uint32_t afm_value_stab_thr;
+	uint32_t afm_num_stab_thr;
+	uint32_t afm_cnt_stab_thr;
+	uint32_t afm_cnt_move_thr;
+	uint32_t afm_value_video_thr;
+	uint32_t afm_num_video_thr;
+	uint32_t afm_cnt_video_move_thr;
+	uint32_t afm_value_video_stab_thr;
+	uint32_t afm_num_video_stab_thr;
+	uint32_t afm_cnt_video_stab_thr;
+	uint32_t afm_skip_cnt;
+	uint32_t afm_need_af_cnt_thr[3];
+	uint32_t afm_fv_diff_thr[3];
+	uint32_t afm_fv_queue_cnt[3];
+	uint32_t afm_fv_stab_diff_thr[3];
+	uint32_t afm_need_af_cnt_video_thr[3];
+	uint32_t afm_fv_video_diff_thr[3];
+	uint32_t afm_fv_video_queue_cnt[3];
+	uint32_t afm_fv_video_stab_diff_thr[3];
+	uint32_t afm_need_af_cnt_abort_thr[3];
+	uint32_t afm_fv_diff_abort_thr[3];
 //    uint32_t bv_thr[3];
-    uint32_t afm_need_rough_thr;
-    uint32_t caf_work_lum_thr;  //percent of ae target
-    float gyro_move_thr;
-    uint32_t gyro_move_cnt_thr;
-    float gyro_stab_thr;
-    uint32_t gyro_stab_cnt_thr;
-    float gyro_video_move_thr;
-    uint32_t gyro_video_move_cnt_thr;
-    float gyro_video_stab_thr;
-    uint32_t gyro_video_stab_cnt_thr;
-    float gyro_move_abort_thr;
-    uint32_t gyro_move_cnt_abort_thr;
-    uint32_t sensor_queue_cnt;
-    uint32_t gyro_move_percent_thr;
-    uint32_t gyro_stab_percent_thr;
-    float gsensor_stab_thr;
-    float hist_stab_thr;
-    float hist_stab_diff_thr;
-    float hist_base_stab_thr;
-    float hist_need_rough_cc_thr;
-    uint32_t hist_max_frame_queue;
-    uint32_t hist_stab_cnt_thr;
-    uint32_t vcm_pos_abort_thr;
-    uint32_t abort_af_y_thr;
-    uint32_t reserved[16];
-}isp_aft_param_t;
+	uint32_t afm_need_rough_thr;
+	uint32_t caf_work_lum_thr;	//percent of ae target
+	float gyro_move_thr;
+	uint32_t gyro_move_cnt_thr;
+	float gyro_stab_thr;
+	uint32_t gyro_stab_cnt_thr;
+	float gyro_video_move_thr;
+	uint32_t gyro_video_move_cnt_thr;
+	float gyro_video_stab_thr;
+	uint32_t gyro_video_stab_cnt_thr;
+	float gyro_move_abort_thr;
+	uint32_t gyro_move_cnt_abort_thr;
+	uint32_t sensor_queue_cnt;
+	uint32_t gyro_move_percent_thr;
+	uint32_t gyro_stab_percent_thr;
+	float gsensor_stab_thr;
+	float hist_stab_thr;
+	float hist_stab_diff_thr;
+	float hist_base_stab_thr;
+	float hist_need_rough_cc_thr;
+	uint32_t hist_max_frame_queue;
+	uint32_t hist_stab_cnt_thr;
+	uint32_t vcm_pos_abort_thr;
+	uint32_t abort_af_y_thr;
+	uint32_t reserved[16];
+} isp_aft_param_t;
 
-typedef struct aft_tuning_param{
-    uint32_t version;
-    struct isp_aft_param aft_tuning_param;
-}aft_tuning_param_t;
+typedef struct aft_tuning_param {
+	uint32_t version;
+	struct isp_aft_param aft_tuning_param;
+} aft_tuning_param_t;
 #if 0
-struct awb_tuning_param
-{
-    int magic;
-    int version;
-    int date;
-    int time;
+struct awb_tuning_param {
+	int magic;
+	int version;
+	int date;
+	int time;
 
-    /* MWB table */
-    unsigned char wbModeNum;
-    unsigned char wbModeId[10];
-    struct awb_rgb_gain wbMode_gain[10];   // mwb_gain[0] is init_gain
-    struct awb_rgb_gain mwb_gain[101];   // mwb_gain[0] is init_gain
+	/* MWB table */
+	unsigned char wbModeNum;
+	unsigned char wbModeId[10];
+	struct awb_rgb_gain wbMode_gain[10];	// mwb_gain[0] is init_gain
+	struct awb_rgb_gain mwb_gain[101];	// mwb_gain[0] is init_gain
 
-    /* AWB parameter */
-    int rgb_12bit_sat_value;
+	/* AWB parameter */
+	int rgb_12bit_sat_value;
 
-    int pg_x_ratio;
-    int pg_y_ratio;
-    int pg_shift;
+	int pg_x_ratio;
+	int pg_y_ratio;
+	int pg_shift;
 
-    int isotherm_ratio;
-    int isotherm_shift;
+	int isotherm_ratio;
+	int isotherm_shift;
 
-    int rmeanCali;
-    int gmeanCali;
-    int bmeanCali;
+	int rmeanCali;
+	int gmeanCali;
+	int bmeanCali;
 
-    int dct_scale_65536; //65536=1x
+	int dct_scale_65536;	//65536=1x
 
+	short pg_center[512];
+	short pg_up[512];
+	short pg_dn[512];
 
-    short pg_center[512];
-    short pg_up[512];
-    short pg_dn[512];
+	short cct_tab[512];
+	short cct_tab_div;
+	short cct_tab_sz;
+	int cct_tab_a[40];
+	int cct_tab_b[40];
 
-    short cct_tab[512];
-    short cct_tab_div;
-    short cct_tab_sz;
-    int cct_tab_a[40];
-    int cct_tab_b[40];
+	int dct_start;
+	int pg_start;
 
-    int dct_start;
-    int pg_start;
+	int dct_div1;
+	int dct_div2;
 
-    int dct_div1;
-    int dct_div2;
+	int w_lv_len;
+	short w_lv[8];
+	short w_lv_tab[8][512];
 
-    int w_lv_len;
-    short w_lv[8];
-    short w_lv_tab[8][512];
+	int dct_sh_bv[4];
+	short dct_sh[4][512];
+	short dct_pg_sh100[4][512];
+	short dct_range[4][2];
+	short dct_range2[4];
+	short dct_range3[4];
+	short dct_def[4];
+	short dct_def2[4];
 
-    int dct_sh_bv[4];
-    short dct_sh[4][512];
-    short dct_pg_sh100[4][512];
-    short dct_range[4][2];
-    short dct_range2[4];
-    short dct_range3[4];
-    short dct_def[4];
-    short dct_def2[4];
+	int red_num;
+	short red_x[10];
+	short red_y[10];
 
-    int red_num;
-    short red_x[10];
-    short red_y[10];
+	int blue_num;
+	short blue_x[10];
+	short blue_comp[10];
+	short blue_sh[10];
 
-    int blue_num;
-    short blue_x[10];
-    short blue_comp[10];
-    short blue_sh[10];
+	short ctCompX1;
+	short ctCompX2;
+	short ctCompY1;
+	short ctCompY2;
 
-    short ctCompX1;
-    short ctCompX2;
-    short ctCompY1;
-    short ctCompY2;
+	short defev100[2];
+	short defx[2][9];
 
-    short defev100[2];
-    short defx[2][9];
+	int check;
 
-    int check;
-
-    int reserved[20160/4];
+	int reserved[20160 / 4];
 };
-struct alsc_alg0_turn_para{
-    float pa;               //threshold for seg
-    float pb;
-    uint32_t fft_core_id;   //fft param ID
-    uint32_t con_weight;        //convergence rate
-    uint32_t bv;
-    uint32_t ct;
-    uint32_t pre_ct;
-    uint32_t pre_bv;
-    uint32_t restore_open;
-    uint32_t freq;
-    float threshold_grad;
+struct alsc_alg0_turn_para {
+	float pa;		//threshold for seg
+	float pb;
+	uint32_t fft_core_id;	//fft param ID
+	uint32_t con_weight;	//convergence rate
+	uint32_t bv;
+	uint32_t ct;
+	uint32_t pre_ct;
+	uint32_t pre_bv;
+	uint32_t restore_open;
+	uint32_t freq;
+	float threshold_grad;
 };
 
 struct tuning_param {
-    uint32_t version;
-    uint32_t bypass;
-    struct isp_smart_param param;
+	uint32_t version;
+	uint32_t bypass;
+	struct isp_smart_param param;
 };
 #endif
 
@@ -1568,7 +1558,7 @@ struct isp_alsc_param {
 /************************************************************************************/
 //smart param begin
 #define ISP_SMART_MAX_BV_SECTION 8
-#define ISP_SMART_MAX_BLOCK_NUM 32 //28
+#define ISP_SMART_MAX_BLOCK_NUM 32	//28
 #define ISP_SMART_MAX_VALUE_NUM 4
 
 enum isp_smart_x_type {
@@ -1667,8 +1657,8 @@ struct sensor_hue_param {
 /************************************************************************************/
 //post-color denoise
 struct sensor_postcdn_thr {
-	uint16_t thr0;//algorithm reserved
-	uint16_t thr1;//algorithm reserved
+	uint16_t thr0;		//algorithm reserved
+	uint16_t thr1;		//algorithm reserved
 };
 
 struct sensor_postcdn_r_seg {
@@ -1682,7 +1672,7 @@ struct sensor_postcdn_distw {
 	uint8_t reserved0;
 };
 
-struct sensor_uv_postcdn_level{
+struct sensor_uv_postcdn_level {
 	struct sensor_postcdn_r_seg r_segu;
 	struct sensor_postcdn_r_seg r_segv;
 	struct sensor_postcdn_distw r_distw;
@@ -1745,7 +1735,7 @@ struct sensor_iircnr_post {
 	uint32_t iircnr_css_lum_thr;
 };
 
-struct sensor_iircnr_level{
+struct sensor_iircnr_level {
 	uint16_t cnr_iir_mode;
 	uint16_t cnr_uv_pg_th;
 	uint32_t ymd_u;
@@ -1781,10 +1771,10 @@ struct sensor_iircnr_yrandom_param {
 /************************************************************************************/
 //alsc
 struct alsc_alg0_turn_param {
-	float pa;				//threshold for seg
+	float pa;		//threshold for seg
 	float pb;
-	uint32_t fft_core_id; 	//fft param ID
-	uint32_t con_weight;		//convergence rate
+	uint32_t fft_core_id;	//fft param ID
+	uint32_t con_weight;	//convergence rate
 	uint32_t bv;
 	uint32_t ct;
 	uint32_t pre_ct;
@@ -1802,19 +1792,19 @@ enum ISP_BLK_ID {
 	ISP_BLK_BLC = 0x4002,
 	ISP_BLK_PDAF_EXTRACT = 0x4003,
 	ISP_BLK_PDAF_CORRECT = 0x4004,
-	ISP_BLK_NLM = 0x4005, // + ISP_BLK_VST + ISP_BLK_IVST
+	ISP_BLK_NLM = 0x4005,	// + ISP_BLK_VST + ISP_BLK_IVST
 	ISP_BLK_POSTBLC = 0x4006,
 	ISP_BLK_RGB_GAIN = 0x4007,
-	ISP_BLK_RGB_DITHER = 0x4008,//RGBgain yrandom
+	ISP_BLK_RGB_DITHER = 0x4008,	//RGBgain yrandom
 	ISP_BLK_NLC = 0x4009,
 	ISP_BLK_2D_LSC = 0x400A,
-	ISP_BLK_1D_LSC = 0x400B,//radial lens
+	ISP_BLK_1D_LSC = 0x400B,	//radial lens
 	ISP_BLK_BINNING4AWB = 0x400C,
 	ISP_BLK_AWBC = 0x400D,
 	ISP_BLK_RGB_AEM = 0x400E,
 	ISP_BLK_BPC = 0x400F,
 	ISP_BLK_GRGB = 0x4010,
-	ISP_BLK_CFA = 0x4011,//include CFAI intplt and CFAI CSS
+	ISP_BLK_CFA = 0x4011,	//include CFAI intplt and CFAI CSS
 	ISP_BLK_RGB_AFM = 0x4012,
 	ISP_BLK_CMC10 = 0x4013,
 	ISP_BLK_RGB_GAMC = 0x4014,
@@ -1823,8 +1813,8 @@ enum ISP_BLK_ID {
 	ISP_BLK_CCE = 0x4017,
 	ISP_BLK_UVDIV = 0x4018,
 	ISP_BLK_YIQ_AFL_V1 = 0x4019,
-	ISP_BLK_YIQ_AFL_V3  = 0x401A,
-	ISP_BLK_3DNR_PRE= 0x401B,
+	ISP_BLK_YIQ_AFL_V3 = 0x401A,
+	ISP_BLK_3DNR_PRE = 0x401B,
 	ISP_BLK_3DNR_CAP = 0x401C,
 	ISP_BLK_YUV_PRECDN = 0x401D,
 	ISP_BLK_YNR = 0x401E,
@@ -1841,12 +1831,12 @@ enum ISP_BLK_ID {
 	ISP_BLK_HUE = 0x4029,
 	ISP_BLK_IIRCNR_IIR = 0x402A,
 	ISP_BLK_IIRCNR_YRANDOM = 0x402B,
-	ISP_BLK_YUV_NOISEFILTER= 0X402C,
+	ISP_BLK_YUV_NOISEFILTER = 0X402C,
 //3A and smart
 	ISP_BLK_SMART = 0x402D,
 	ISP_BLK_SFT_AF = 0x402E,
 	ISP_BLK_ALSC = 0x402F,
-	ISP_BLK_AFT	= 0x4030,
+	ISP_BLK_AFT = 0x4030,
 	ISP_BLK_AE_NEW = 0X4031,
 	ISP_BLK_AWB_NEW = 0x4032,
 	ISP_BLK_AF_NEW = 0x4033,
@@ -1909,14 +1899,14 @@ enum {
 struct isp_block_param {
 	struct isp_block_header block_header;
 
-	unsigned int* data_ptr;
-	unsigned int  data_size;
+	unsigned int *data_ptr;
+	unsigned int data_size;
 };
 
-union sensor_version_name{
-		uint32_t sensor_name_in_word[8];
-		int8_t sensor_name[32];
-	};
+union sensor_version_name {
+	uint32_t sensor_name_in_word[8];
+	int8_t sensor_name[32];
+};
 
 struct sensor_version_info {
 	uint32_t version_id;
@@ -1936,20 +1926,20 @@ struct sensor_version_info {
 
 struct sensor_ae_tab_param {
 	uint8_t *ae;
-	uint32_t  ae_len;
+	uint32_t ae_len;
 };
 
 struct sensor_awb_tab_param {
 	uint8_t *awb;
-	uint32_t  awb_len;
+	uint32_t awb_len;
 };
 
 struct sensor_lnc_tab_param {
 	uint8_t *lnc;
-	uint32_t  lnc_len;
+	uint32_t lnc_len;
 };
 
- struct ae_exp_gain_tab{
+struct ae_exp_gain_tab {
 	uint32_t *index;
 	uint32_t index_len;
 	uint32_t *exposure;
@@ -1962,7 +1952,7 @@ struct sensor_lnc_tab_param {
 	uint32_t dgain_len;
 };
 
-  struct ae_scene_exp_gain_tab{
+struct ae_scene_exp_gain_tab {
 	uint32_t *scene_info;
 	uint32_t scene_info_len;
 	uint32_t *index;
@@ -1977,23 +1967,23 @@ struct sensor_lnc_tab_param {
 	uint32_t dgain_len;
 };
 
- struct ae_weight_tab{
+struct ae_weight_tab {
 	uint8_t *weight_table;
 	uint32_t len;
- };
+};
 
- struct ae_auto_iso_tab_v1{
-	 uint16_t *auto_iso_tab;
-	 uint32_t len;
- };
+struct ae_auto_iso_tab_v1 {
+	uint16_t *auto_iso_tab;
+	uint32_t len;
+};
 
-struct sensor_ae_tab{
+struct sensor_ae_tab {
 	struct sensor_ae_tab_param ae_param;
 	struct ae_exp_gain_tab ae_tab[AE_FLICKER_NUM][AE_ISO_NUM_NEW];
 	struct ae_exp_gain_tab ae_flash_tab[AE_FLICKER_NUM][AE_ISO_NUM_NEW];
 	struct ae_weight_tab weight_tab[AE_WEIGHT_TABLE_NUM];
 	struct ae_scene_exp_gain_tab scene_tab[AE_SCENE_NUM][AE_FLICKER_NUM];
-	struct ae_auto_iso_tab_v1  auto_iso_tab[AE_FLICKER_NUM];
+	struct ae_auto_iso_tab_v1 auto_iso_tab[AE_FLICKER_NUM];
 };
 /*******************************new***************/
 struct sensor_2d_lsc_param_v1 {
@@ -2003,8 +1993,7 @@ struct sensor_2d_lsc_param_v1 {
 	//void *data_area;
 };
 
-
-struct sensor_lens_map_info{
+struct sensor_lens_map_info {
 	uint32_t envi;
 	uint32_t ct;
 	uint32_t width;
@@ -2014,16 +2003,16 @@ struct sensor_lens_map_info{
 
 struct sensor_lens_map {
 	uint32_t *map_info;
-	uint32_t  map_info_len;
+	uint32_t map_info_len;
 	uint16_t *weight_info;
-	uint32_t  weight_info_len;
+	uint32_t weight_info_len;
 	uint32_t *lnc_map_tab_len;
 	uint32_t *lnc_map_tab_offset;
 	uint16_t *lnc_addr;
 	uint32_t lnc_len;
 };
 
-struct sensor_lsc_map{
+struct sensor_lsc_map {
 	struct sensor_lnc_tab_param lnc_param;
 	struct sensor_lens_map map[LNC_MAP_COUNT];
 };
@@ -2044,84 +2033,83 @@ struct sensor_nr_map_group_param {
 };
 
 struct nr_set_group_unit {
-	uint8_t*  nr_ptr;
-	uint32_t  nr_len;
+	uint8_t *nr_ptr;
+	uint32_t nr_len;
 };
 struct sensor_nr_set_group_param {
 	uint8_t *pdaf_correct;
-	uint32_t  pdaf_correct_len;
+	uint32_t pdaf_correct_len;
 	uint8_t *nlm;
-	uint32_t  nlm_len;
+	uint32_t nlm_len;
 	uint8_t *vst;
-	uint32_t  vst_len;
+	uint32_t vst_len;
 	uint8_t *ivst;
-	uint32_t  ivst_len;
+	uint32_t ivst_len;
 	uint8_t *rgb_dither;
-	uint32_t  rgb_dither_len;
+	uint32_t rgb_dither_len;
 	uint8_t *bpc;
-	uint32_t  bpc_len;
+	uint32_t bpc_len;
 	uint8_t *grgb;
-	uint32_t  grgb_len;
+	uint32_t grgb_len;
 	uint8_t *cfa;
-	uint32_t  cfa_len;
+	uint32_t cfa_len;
 	uint8_t *rgb_afm;
-	uint32_t  rgb_afm_len;
+	uint32_t rgb_afm_len;
 	uint8_t *uvdiv;
-	uint32_t  uvdiv_len;
+	uint32_t uvdiv_len;
 	uint8_t *nr3d_pre;
-	uint32_t  nr3d_pre_len;
+	uint32_t nr3d_pre_len;
 	uint8_t *nr3d_cap;
-	uint32_t  nr3d_cap_len;
+	uint32_t nr3d_cap_len;
 	uint8_t *yuv_precdn;
-	uint32_t  yuv_precdn_len;
+	uint32_t yuv_precdn_len;
 	uint8_t *cdn;
-	uint32_t  cdn_len;
+	uint32_t cdn_len;
 	uint8_t *postcdn;
-	uint32_t  postcdn_len;
+	uint32_t postcdn_len;
 	uint8_t *ynr;
-	uint32_t  ynr_len;
+	uint32_t ynr_len;
 	uint8_t *edge;
-	uint32_t  edge_len;
+	uint32_t edge_len;
 	uint8_t *iircnr;
-	uint32_t  iircnr_len;
+	uint32_t iircnr_len;
 	uint8_t *yuv_noisefilter;
-	uint32_t  yuv_noisefilter_len;
+	uint32_t yuv_noisefilter_len;
 };
-struct sensor_nr_param{
+struct sensor_nr_param {
 	struct sensor_nr_set_group_param nr_set_group;
 };
 
-
-struct sensor_awb_map{
+struct sensor_awb_map {
 	uint16_t *addr;
 	uint32_t len;		//by bytes
 };
 
-struct sensor_awb_weight{
+struct sensor_awb_weight {
 	uint8_t *addr;
 	uint32_t weight_len;
 	uint16_t *size;
 	uint32_t size_param_len;
 };
 
-struct sensor_awb_map_weight_param{
+struct sensor_awb_map_weight_param {
 	struct sensor_awb_tab_param awb_param;
 	struct sensor_awb_map awb_map;
 	struct sensor_awb_weight awb_weight;
 };
 struct sensor_awb_table_param {
 	uint8_t awb_pos_weight[AWB_POS_WEIGHT_LEN];
-	uint16_t awb_pos_weight_width_height[AWB_POS_WEIGHT_WIDTH_HEIGHT/sizeof(uint16_t)];
+	uint16_t awb_pos_weight_width_height[AWB_POS_WEIGHT_WIDTH_HEIGHT / sizeof(uint16_t)];
 	uint16_t awb_map[];
 };
-struct sensor_raw_fix_info{
+struct sensor_raw_fix_info {
 	struct sensor_ae_tab ae;
 	struct sensor_lsc_map lnc;
 	struct sensor_awb_map_weight_param awb;
 	struct sensor_nr_param nr;
 };
 
-struct sensor_raw_note_info{
+struct sensor_raw_note_info {
 	uint8_t *note;
 	uint32_t node_len;
 };
@@ -2146,8 +2134,8 @@ struct sensor_raw_info {
 struct raw_param_info_tab {
 	uint32_t param_id;
 	struct sensor_raw_info *info_ptr;
-	uint32_t(*identify_otp) (void *param_ptr);
-	uint32_t(*cfg_otp) (void *param_ptr);
+	 uint32_t(*identify_otp) (void *param_ptr);
+	 uint32_t(*cfg_otp) (void *param_ptr);
 };
 #endif
 struct denoise_param_update {
@@ -2175,6 +2163,5 @@ struct denoise_param_update {
 	struct sensor_nr_level_map_param *nr_default_level_map_ptr;
 	uint32_t multi_nr_flag;
 };
-
 
 #endif

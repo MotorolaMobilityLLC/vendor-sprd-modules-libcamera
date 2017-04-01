@@ -134,8 +134,8 @@ enum ae_io_ctrl_cmd {
 	AE_GET_BV_BY_LUM_NEW,
 	AE_GET_BV_BY_GAIN_NEW,
 	AE_SET_G_STAT,
-	AE_SET_FORCE_PAUSE, //for mp tool, not change by af or other
-	AE_SET_FORCE_RESTORE, //for mp tool, not change by af or other
+	AE_SET_FORCE_PAUSE,	//for mp tool, not change by af or other
+	AE_SET_FORCE_RESTORE,	//for mp tool, not change by af or other
 	AE_SET_TARGET_LUM,
 	AE_SET_SNAPSHOT_NOTICE,
 	AE_GET_MONITOR_INFO,
@@ -307,8 +307,8 @@ struct ae_set_iso {
 };
 
 struct ae_set_pfs {
-	cmr_u32 fps; // min fps
-	cmr_u32 fix_fps; // fix fps flag
+	cmr_u32 fps;	// min fps
+	cmr_u32 fix_fps;	// fix fps flag
 };
 
 struct ae_set_ev {
@@ -365,7 +365,7 @@ struct ae_scene_mode_info {
 };
 
 struct ae_mode_info {
-	/*after dcam init, those para will be configered by app*/
+	/*after dcam init, those para will be configered by app */
 	cmr_u32 enable;
 	cmr_u32 ev_offset;
 	cmr_u32 mode;
@@ -375,7 +375,7 @@ struct ae_mode_info {
 	cmr_u32 min_fps;
 	cmr_u32 weight;
 	cmr_u32 index_default;
-	};
+};
 
 struct ae_normal_info {
 	//cmr_u32 gain; TOB
@@ -383,7 +383,6 @@ struct ae_normal_info {
 	cmr_s16 fps;
 	cmr_s8 stable;
 };
-
 
 struct ae_flash_element {
 	cmr_u16 index;
@@ -398,8 +397,8 @@ struct ae_flash_cell {
 };
 
 struct ae_flash_cfg {
-	cmr_u32 type; // enum isp_flash_type
-	cmr_u32 led_idx; //enum isp_flash_led
+	cmr_u32 type;	// enum isp_flash_type
+	cmr_u32 led_idx;	//enum isp_flash_led
 };
 
 struct ae_isp_ctrl_ops {
@@ -413,16 +412,16 @@ struct ae_isp_ctrl_ops {
 	 cmr_s32(*get_system_time) (cmr_handle handler, cmr_u32 * sec, cmr_u32 * usec);
 	 cmr_s32(*set_statistics_mode) (cmr_handle handler, enum ae_statistics_mode mode, cmr_u32 skip_number);
 
-	 cmr_s32(*flash_get_charge) (cmr_handle handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_cell *cell_ptr);
-	 cmr_s32(*flash_get_time) (cmr_handle handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_cell *cell_ptr);
-	 cmr_s32(*flash_set_charge) (cmr_handle handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_element *element_ptr);
-	 cmr_s32(*flash_set_time) (cmr_handle handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_element *element_ptr);
-	 cmr_s32(*flash_ctrl) (cmr_handle handler, struct ae_flash_cfg *cfg_ptr, struct ae_flash_element *element_ptr);
+	 cmr_s32(*flash_get_charge) (cmr_handle handler, struct ae_flash_cfg * cfg_ptr, struct ae_flash_cell * cell_ptr);
+	 cmr_s32(*flash_get_time) (cmr_handle handler, struct ae_flash_cfg * cfg_ptr, struct ae_flash_cell * cell_ptr);
+	 cmr_s32(*flash_set_charge) (cmr_handle handler, struct ae_flash_cfg * cfg_ptr, struct ae_flash_element * element_ptr);
+	 cmr_s32(*flash_set_time) (cmr_handle handler, struct ae_flash_cfg * cfg_ptr, struct ae_flash_element * element_ptr);
+	 cmr_s32(*flash_ctrl) (cmr_handle handler, struct ae_flash_cfg * cfg_ptr, struct ae_flash_element * element_ptr);
 
 	 cmr_s32(*ex_set_exposure) (cmr_handle handler, struct ae_exposure * in_param);
 	 cmr_s32(*lcd_set_awb) (cmr_handle handler, cmr_u32 effect);
 	 cmr_s32(*set_rgb_gain) (cmr_handle handler, double rgb_gain_coeff);
-	 cmr_s32(*set_shutter_gain_delay_info)(cmr_handle handler, cmr_handle param);
+	 cmr_s32(*set_shutter_gain_delay_info) (cmr_handle handler, cmr_handle param);
 };
 
 struct ae_stat_img_info {
@@ -439,7 +438,7 @@ struct tg_ae_ctrl_alc_log {
 };
 
 struct ae_stat_mode {
-	cmr_u32 mode; //0:normal; 1: G width
+	cmr_u32 mode;	//0:normal; 1: G width
 	cmr_u32 will_capture;
 	struct ae_trim trim;
 };
@@ -450,14 +449,14 @@ struct ae_snapshot_notice {
 	cmr_u32 capture_line_time;
 };
 
-enum ae_online_ctrl_mode{
-	AE_CTRL_SET_INDEX=0x00,
+enum ae_online_ctrl_mode {
+	AE_CTRL_SET_INDEX = 0x00,
 	AE_CTRL_SET,
 	AE_CTRL_GET,
 	AE_CTRL_MODE_MAX
 };
 
-struct ae_online_ctrl{
+struct ae_online_ctrl {
 	enum ae_online_ctrl_mode mode;
 	cmr_u32 index;
 	cmr_u32 lum;
@@ -472,7 +471,7 @@ struct ae_online_ctrl{
 struct ae_face {
 	struct ae_rect rect;
 	cmr_u32 face_lum;
-	cmr_s32 pose;  /* face pose: frontal, half-profile, full-profile */
+	cmr_s32 pose;	/* face pose: frontal, half-profile, full-profile */
 };
 
 struct ae_fd_param {
@@ -507,4 +506,3 @@ struct ae_flash_notice {
 #endif
 /**---------------------------------------------------------------------------*/
 #endif
-

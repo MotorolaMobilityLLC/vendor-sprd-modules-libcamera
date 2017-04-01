@@ -25,8 +25,7 @@
 *				Compiler Flag					*
 *-------------------------------------------------------------------------------*/
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 /*------------------------------------------------------------------------------*
 *				Micro Define					*
@@ -37,7 +36,7 @@ extern "C"
 /*------------------------------------------------------------------------------*
 *				Data Structures					*
 *-------------------------------------------------------------------------------*/
-typedef void* awb_ctrl_handle_t;
+typedef void *awb_ctrl_handle_t;
 
 enum awb_ctrl_rtn {
 	AWB_CTRL_SUCCESS = 0,
@@ -74,25 +73,25 @@ enum awb_ctrl_cmd {
 };
 
 enum awb_ctrl_wb_mode {
-	AWB_CTRL_WB_MODE_AUTO			= 0x0,
-	AWB_CTRL_MWB_MODE_SUNNY			= 0x1,
-	AWB_CTRL_MWB_MODE_CLOUDY		= 0x2,
-	AWB_CTRL_MWB_MODE_FLUORESCENT		= 0x3,
-	AWB_CTRL_MWB_MODE_INCANDESCENT		= 0x4,
-	AWB_CTRL_MWB_MODE_USER_0		= 0x5,
-	AWB_CTRL_MWB_MODE_USER_1		= 0x6,
+	AWB_CTRL_WB_MODE_AUTO = 0x0,
+	AWB_CTRL_MWB_MODE_SUNNY = 0x1,
+	AWB_CTRL_MWB_MODE_CLOUDY = 0x2,
+	AWB_CTRL_MWB_MODE_FLUORESCENT = 0x3,
+	AWB_CTRL_MWB_MODE_INCANDESCENT = 0x4,
+	AWB_CTRL_MWB_MODE_USER_0 = 0x5,
+	AWB_CTRL_MWB_MODE_USER_1 = 0x6,
 };
 
 enum awb_ctrl_scene_mode {
-	AWB_CTRL_SCENEMODE_AUTO			= 0x0,
-	AWB_CTRL_SCENEMODE_DUSK			= 0x1,
-	AWB_CTRL_SCENEMODE_USER_0		= 0x2,
-	AWB_CTRL_SCENEMODE_USER_1		= 0x3
+	AWB_CTRL_SCENEMODE_AUTO = 0x0,
+	AWB_CTRL_SCENEMODE_DUSK = 0x1,
+	AWB_CTRL_SCENEMODE_USER_0 = 0x2,
+	AWB_CTRL_SCENEMODE_USER_1 = 0x3
 };
 enum awb_ctrl_stat_img_format {
-	AWB_CTRL_STAT_IMG_CHN			= 0x0,
-	AWB_CTRL_STAT_IMG_RAW_8			= 0x1,
-	AWB_CTRL_STAT_IMG_RAW_16		= 0x2
+	AWB_CTRL_STAT_IMG_CHN = 0x0,
+	AWB_CTRL_STAT_IMG_RAW_8 = 0x1,
+	AWB_CTRL_STAT_IMG_RAW_16 = 0x2
 };
 
 enum awb_ctrl_envi_id {
@@ -118,7 +117,6 @@ enum awb_ctrl_flash_status {
 	AWB_FLASH_MAIN_AFTER,
 	AWB_FLASH_MODE_MAX
 };
-
 
 struct awb_ctrl_chn_img {
 	cmr_u32 *r;
@@ -147,8 +145,8 @@ struct awb_ctrl_gain {
 };
 
 struct awb_ctrl_range {
-	cmr_s16	min;
-	cmr_s16  	max;
+	cmr_s16 min;
+	cmr_s16 max;
 };
 
 struct awb_ctrl_bv {
@@ -197,13 +195,13 @@ struct awb_ctrl_init_param {
 	void *tuning_param;
 	cmr_u32 param_size;
 	cmr_u32 camera_id;
-	void* lsc_otp_random;
-	void* lsc_otp_golden;
+	void *lsc_otp_random;
+	void *lsc_otp_golden;
 	cmr_u32 lsc_otp_width;
 	cmr_u32 lsc_otp_height;
 	cmr_u32 img_width;
 	cmr_u32 img_height;
-	void* priv_handle;
+	void *priv_handle;
 };
 
 struct awb_ctrl_init_result {
@@ -216,7 +214,7 @@ struct awb_ctrl_init_result {
 
 //ALC_S 20150519
 	cmr_u32 use_lsc;
-	cmr_u16* lsc;
+	cmr_u16 *lsc;
 //ALC_S 20150519
 	cmr_u32 lsc_size;
 };
@@ -230,7 +228,7 @@ struct awb_ctrl_ae_info {
 	float f_value;
 	cmr_u32 stable;
 
-	cmr_s32 ev_index; /* 0 ~ 15, such as 0(ev-2.0), 1(ev-1.5), 2(ev-1.0), 3(ev-0.5), 4(ev0), 5(ev+0.5), 6(ev+1.0), 7(ev+1.5), 8(ev+2.0) */
+	cmr_s32 ev_index;	/* 0 ~ 15, such as 0(ev-2.0), 1(ev-1.5), 2(ev-1.0), 3(ev-0.5), 4(ev0), 5(ev+0.5), 6(ev+1.0), 7(ev+1.5), 8(ev+2.0) */
 	cmr_s32 ev_table[16];
 };
 
@@ -251,13 +249,10 @@ struct awb_ctrl_calc_param {
 	cmr_u8 gamma[256];
 };
 
-
-struct tg_awb_ctrl_alc_log
-{
-	cmr_u8* log;
+struct tg_awb_ctrl_alc_log {
+	cmr_u8 *log;
 	cmr_u32 size;
-}log_awb,log_lsc;
-
+} log_awb, log_lsc;
 
 struct awb_ctrl_calc_result {
 	struct awb_ctrl_gain gain;
@@ -266,7 +261,7 @@ struct awb_ctrl_calc_result {
 	cmr_u16 ccm[9];
 //ALC_S 20150519
 	cmr_u32 use_lsc;
-	cmr_u16* lsc;
+	cmr_u16 *lsc;
 //ALC_S 20150519
 	cmr_u32 lsc_size;
 /*ALC_S*/
@@ -291,14 +286,13 @@ struct awb_data_info {
 	cmr_u32 data_size;
 };
 
-
 /*------------------------------------------------------------------------------*
 *				Data Prototype					*
 *-------------------------------------------------------------------------------*/
 
-cmr_int awb_ctrl_init(struct awb_ctrl_init_param *input_ptr, cmr_handle *handle_awb);
+cmr_int awb_ctrl_init(struct awb_ctrl_init_param *input_ptr, cmr_handle * handle_awb);
 cmr_int awb_ctrl_process(cmr_handle handle_awb, struct awb_ctrl_calc_param *param, struct awb_ctrl_calc_result *result);
-cmr_int  awb_ctrl_deinit(cmr_handle *handle_awb);
+cmr_int awb_ctrl_deinit(cmr_handle * handle_awb);
 cmr_int awb_ctrl_ioctrl(cmr_handle handle_awb, enum awb_ctrl_cmd cmd, void *in_ptr, void *out_ptr);
 
 /*------------------------------------------------------------------------------*
@@ -310,4 +304,3 @@ cmr_int awb_ctrl_ioctrl(cmr_handle handle_awb, enum awb_ctrl_cmd cmd, void *in_p
 /*------------------------------------------------------------------------------*/
 #endif
 // End
-

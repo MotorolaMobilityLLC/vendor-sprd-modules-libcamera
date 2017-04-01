@@ -46,19 +46,15 @@
 #define  __AFV1_DEBUG_H__
 #include "AFv1_Common.h"
 
-
 #ifdef WIN32
 
 #define AllSetpLog
 #define FinalLog
 #define TuningLog
 
-
 #endif
 
-
-ERRCODE AF_Debug_WriteAFData(AF_Data* pAF_Data);
-ERRCODE af_dump_log_to_buffer(AF_Data* pAF_Data);
-
+ERRCODE AF_Debug_WriteAFData(AF_Data * pAF_Data);
+ERRCODE af_dump_log_to_buffer(AF_Data * pAF_Data);
 
 #endif

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- #ifndef _RANDOM_MAP_H_
+#ifndef _RANDOM_MAP_H_
 #define _RANDOM_MAP_H_
 
 /*------------------------------------------------------------------------------*
@@ -24,8 +24,7 @@
 *				Compiler Flag					*
 *-------------------------------------------------------------------------------*/
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 /*------------------------------------------------------------------------------*
 				Micro Define					*
@@ -89,7 +88,5 @@ struct random_header {
 }
 #endif
 /*------------------------------------------------------------------------------*/
-
 #endif
 // End
-

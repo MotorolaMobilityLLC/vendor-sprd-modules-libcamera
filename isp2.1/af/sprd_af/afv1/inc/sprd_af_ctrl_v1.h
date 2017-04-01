@@ -246,8 +246,7 @@ typedef struct _caf_trigger_ops {
 	struct aft_ae_skip_info ae_skip_info;
 	 cmr_s32(*init) (struct aft_tuning_block_param * init_param, aft_proc_handle_t * handle);
 	 cmr_s32(*deinit) (aft_proc_handle_t * handle);
-	 cmr_s32(*calc) (aft_proc_handle_t * handle, struct aft_proc_calc_param * alg_calc_in,
-			 struct aft_proc_result * alg_calc_result);
+	 cmr_s32(*calc) (aft_proc_handle_t * handle, struct aft_proc_calc_param * alg_calc_in, struct aft_proc_result * alg_calc_result);
 	 cmr_s32(*ioctrl) (aft_proc_handle_t * handle, enum aft_cmd cmd, void *param0, void *param1);
 } caf_trigger_ops_t;
 
@@ -263,12 +262,12 @@ typedef struct _ae_cali {
 } ae_cali_t;
 
 typedef struct _vcm_ops {
-	cmr_u32 (*set_pos) (void* handle, cmr_u16 pos);
-	cmr_u32 (*get_otp) (void* handle, cmr_u16 * inf, cmr_u16 * macro);
-	cmr_u32 (*set_motor_bestmode) (void* handle);
-	cmr_u32 (*set_test_vcm_mode) (void* handle, char *vcm_mode);
-	cmr_u32 (*get_test_vcm_mode) (void* handle);
-	cmr_u32 (*get_motor_pos) (void* handle, cmr_u16 * pos);
+	cmr_u32(*set_pos) (void *handle, cmr_u16 pos);
+	cmr_u32(*get_otp) (void *handle, cmr_u16 * inf, cmr_u16 * macro);
+	cmr_u32(*set_motor_bestmode) (void *handle);
+	cmr_u32(*set_test_vcm_mode) (void *handle, char *vcm_mode);
+	cmr_u32(*get_test_vcm_mode) (void *handle);
+	cmr_u32(*get_motor_pos) (void *handle, cmr_u16 * pos);
 } vcm_ops_t;
 
 typedef struct _prime_face_base_info {
@@ -310,7 +309,7 @@ typedef struct _af_ctrl {
 	cmr_u64 takepic_timestamp;
 	AF_Data fv;
 	//Andrew : close address begin for easy parsing
-	af_fv	af_fv_val;
+	af_fv af_fv_val;
 	struct af_iir_nr_info af_iir_nr;
 	struct af_enhanced_module_info af_enhanced_module;
 	struct afm_thrd_rgb thrd;
@@ -367,16 +366,16 @@ typedef struct _af_ctrl {
 	cmr_u32 win_peak_pos[MULTI_STATIC_TOTAL];
 	cmr_u32 is_high_fps;
 	cmr_u32 afm_skip_num;
-	 //cmr_s32(*go_position) (void *handle, struct af_motor_pos * in_param);
+	//cmr_s32(*go_position) (void *handle, struct af_motor_pos * in_param);
 	 cmr_s32(*end_notice) (void *handle, struct af_result_param * in_param);
 	 cmr_s32(*start_notice) (void *handle);
 	 cmr_s32(*set_monitor) (void *handle, struct af_monitor_set * in_param, cmr_u32 cur_envi);
 	 cmr_s32(*set_monitor_win) (void *handler, struct af_monitor_win * in_param);
 	 cmr_s32(*get_monitor_win_num) (void *handler, cmr_u32 * win_num);
-	 //cmr_s32(*ae_awb_lock) (void *handle);
-	 //cmr_s32(*ae_awb_release) (void *handle);
-	 cmr_s32(*lock_module) (void* handle, cmr_int af_locker_type);
-	 cmr_s32(*unlock_module) (void* handle, cmr_int af_locker_type);
+	//cmr_s32(*ae_awb_lock) (void *handle);
+	//cmr_s32(*ae_awb_release) (void *handle);
+	 cmr_s32(*lock_module) (void *handle, cmr_int af_locker_type);
+	 cmr_s32(*unlock_module) (void *handle, cmr_int af_locker_type);
 } af_ctrl_t;
 
 typedef struct _test_mode_command {

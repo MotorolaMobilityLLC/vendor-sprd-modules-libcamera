@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- #ifndef _OTP_ALG_APP_H_
+#ifndef _OTP_ALG_APP_H_
 #define _OTP_ALG_APP_H_
 
 /*------------------------------------------------------------------------------*
@@ -24,8 +24,7 @@
 *				Compiler Flag					*
 *-------------------------------------------------------------------------------*/
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 /*------------------------------------------------------------------------------*
 				Micro Define					*
@@ -34,7 +33,7 @@ extern "C"
 /*------------------------------------------------------------------------------*
 *				Data Structures					*
 *-------------------------------------------------------------------------------*/
-cmr_s32 compress_bit14(cmr_u16 width, cmr_u16 height, cmr_u16 *dst, cmr_u16 *src, cmr_u32 *size);
+cmr_s32 compress_bit14(cmr_u16 width, cmr_u16 height, cmr_u16 * dst, cmr_u16 * src, cmr_u32 * size);
 /*------------------------------------------------------------------------------*
 *				Compiler Flag					*
 *-------------------------------------------------------------------------------*/
@@ -42,6 +41,5 @@ cmr_s32 compress_bit14(cmr_u16 width, cmr_u16 height, cmr_u16 *dst, cmr_u16 *src
 }
 #endif
 /*------------------------------------------------------------------------------*/
-
 #endif
 // End

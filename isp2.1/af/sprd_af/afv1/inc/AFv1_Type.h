@@ -45,33 +45,31 @@
 #ifndef __AFV1_TYPE_H__
 #define  __AFV1_TYPE_H__
 
-
 //=========================================================================//
 // Public Definition
 //=========================================================================//
-typedef signed char           int8_t;
-typedef unsigned char         uint8_t;
-typedef signed short int      int16_t;
-typedef unsigned short int    uint16_t;
-typedef signed int 	          int32_t;
-typedef unsigned int 	      uint32_t;
+typedef signed char int8_t;
+typedef unsigned char uint8_t;
+typedef signed short int int16_t;
+typedef unsigned short int uint16_t;
+typedef signed int int32_t;
+typedef unsigned int uint32_t;
 #ifdef WIN32
-typedef __int64               int64_t;
-typedef unsigned __int64      uint64_t;
+typedef __int64 int64_t;
+typedef unsigned __int64 uint64_t;
 #else
 #include <sys/types.h>
 #include <sys/time.h>
 #endif
 
-typedef int8_t     int8;
-typedef uint8_t    uint8;
-typedef int16_t    int16;
-typedef uint16_t   uint16;
-typedef int32_t    int32;
-typedef uint32_t   uint32;
-typedef int64_t    int64;
-typedef uint64_t   uint64;
-typedef uint8      ERRCODE;
-
+typedef int8_t int8;
+typedef uint8_t uint8;
+typedef int16_t int16;
+typedef uint16_t uint16;
+typedef int32_t int32;
+typedef uint32_t uint32;
+typedef int64_t int64;
+typedef uint64_t uint64;
+typedef uint8 ERRCODE;
 
 #endif

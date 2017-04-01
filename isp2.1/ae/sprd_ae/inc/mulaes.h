@@ -24,8 +24,8 @@
  **                              Compiler Flag                          *
  **---------------------------------------------------------------------------*/
 #ifdef __cplusplus
-extern "C"  {
-#endif/*  */
+extern "C" {
+#endif				/*  */
 /**---------------------------------------------------------------------------*
 **                               Macro Define                           *
 **----------------------------------------------------------------------------*/
@@ -33,42 +33,42 @@ extern "C"  {
 /**---------------------------------------------------------------------------*
 **                              Data Prototype                                                                                  *
 **----------------------------------------------------------------------------*/
-	struct mulaes_cfg {
-		cmr_s16 x_idx;
-		cmr_s16 y_lum;
-	};
+struct mulaes_cfg {
+	cmr_s16 x_idx;
+	cmr_s16 y_lum;
+};
 
-	struct mulaes_tuning_param {
-		cmr_u8 enable;
-		cmr_u8 num;
-		cmr_u16 reserved;	/*1 * 4bytes */
-		struct mulaes_cfg cfg[MULAES_CFG_NUM];/*8 * 4bytes */
-	};/*9 * 4bytes */
+struct mulaes_tuning_param {
+	cmr_u8 enable;
+	cmr_u8 num;
+	cmr_u16 reserved;	/*1 * 4bytes */
+	struct mulaes_cfg cfg[MULAES_CFG_NUM];	/*8 * 4bytes */
+};			/*9 * 4bytes */
 
-	typedef struct {
-		cmr_u8 mlog_en;
-		cmr_s16 effect_idx;
-		cmr_s16 match_lv;
-		float real_target;
-	} mulaes_in;//tuning info
+typedef struct {
+	cmr_u8 mlog_en;
+	cmr_s16 effect_idx;
+	cmr_s16 match_lv;
+	float real_target;
+} mulaes_in;		//tuning info
 
-	typedef struct {
-		float artifact_tar;
-		cmr_s16 tar_offset;
-		char *log;
-	} mulaes_rt;//result info
+typedef struct {
+	float artifact_tar;
+	cmr_s16 tar_offset;
+	char *log;
+} mulaes_rt;		//result info
 
-	typedef struct {
-		cmr_s8 enable;
-		cmr_s8 debug_level;
-		cmr_s8 mlog_en;
-		cmr_s8 reserved;
-		struct mulaes_tuning_param tune_param;
-		cmr_s16 dynamic_table[600];
-		mulaes_in in_mulaes;
-		mulaes_rt result_mulaes;
-		cmr_u32 log_buf[256];
-	} mulaes_stat;
+typedef struct {
+	cmr_s8 enable;
+	cmr_s8 debug_level;
+	cmr_s8 mlog_en;
+	cmr_s8 reserved;
+	struct mulaes_tuning_param tune_param;
+	cmr_s16 dynamic_table[600];
+	mulaes_in in_mulaes;
+	mulaes_rt result_mulaes;
+	cmr_u32 log_buf[256];
+} mulaes_stat;
 
 /**---------------------------------------------------------------------------*
 **				Function Defination 		*
@@ -82,6 +82,6 @@ extern "C"  {
 **----------------------------------------------------------------------------*/
 #ifdef __cplusplus
 }
-#endif/*  */
+#endif				/*  */
 /**---------------------------------------------------------------------------*/
-#endif/*  */
+#endif				/*  */

@@ -31,8 +31,7 @@
  **				 Compiler Flag				*
  **---------------------------------------------------------------------------*/
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 struct ae_init_in {
@@ -60,7 +59,6 @@ struct ae_init_out {
 	cmr_u32 cur_dgain;
 	cmr_u32 cur_dummy;
 };
-
 
 struct ae_calc_in {
 	cmr_u32 stat_fmt;	//enum ae_aem_fmt
@@ -100,7 +98,7 @@ struct ae_calc_out {
 };
 
 struct ae_ctrl_param_out {
-	union{
+	union {
 		cmr_u32 real_iso;
 		cmr_u32 ae_effect;
 		cmr_u32 ae_state;
@@ -117,8 +115,8 @@ struct ae_ctrl_param_out {
 	};
 };
 
-cmr_s32 ae_ctrl_init(struct ae_init_in *input_ptr, cmr_handle *handle_ae);
-cmr_int ae_ctrl_deinit(cmr_handle *handle_ae);
+cmr_s32 ae_ctrl_init(struct ae_init_in *input_ptr, cmr_handle * handle_ae);
+cmr_int ae_ctrl_deinit(cmr_handle * handle_ae);
 cmr_int ae_ctrl_ioctrl(cmr_handle handle, enum ae_io_ctrl_cmd cmd, cmr_handle in_ptr, cmr_handle out_ptr);
 cmr_int ae_ctrl_process(cmr_handle handle, struct ae_calc_in *in_param, struct ae_calc_out *result);
 cmr_s32 _isp_get_flash_cali_param(isp_pm_handle_t pm_handle, struct isp_flash_param **out_param_ptr);
@@ -130,4 +128,3 @@ cmr_s32 _isp_get_flash_cali_param(isp_pm_handle_t pm_handle, struct isp_flash_pa
 #endif
 /**---------------------------------------------------------------------------*/
 #endif
-

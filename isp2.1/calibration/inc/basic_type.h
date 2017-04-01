@@ -24,8 +24,7 @@
 *				Compiler Flag					*
 *-------------------------------------------------------------------------------*/
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 /*------------------------------------------------------------------------------*
 				Micro Define					*
@@ -41,12 +40,12 @@ extern "C"
 /*------------------------------------------------------------------------------*
 *				Data Structures					*
 *-------------------------------------------------------------------------------*/
-enum isp_center_type{
+enum isp_center_type {
 	ISP_PHYSCIAL_CENTER = 0,
 	ISP_OPTICAL_CENTER = 1
 };
 
-enum isp_lsc_alg_version{
+enum isp_lsc_alg_version {
 	ISP_LSC_ALG_V1 = 1,
 	ISP_LSC_ALG_V2 = 2
 };
@@ -56,7 +55,7 @@ enum isp_lsc_alg_type {
 	ISP_LSC_ALG_2D_DIFF = 2
 };
 
-enum isp_coord_type{
+enum isp_coord_type {
 	ISP_COORD_IMAGE = 0,
 	ISP_COORD_GRID = 1,
 };
@@ -78,7 +77,7 @@ struct isp_center {
 	cmr_u32 y;
 };
 
-struct isp_raw_image{
+struct isp_raw_image {
 	void *data;
 	cmr_u32 width;
 	cmr_u32 height;
@@ -104,6 +103,5 @@ struct isp_img_rect {
 }
 #endif
 /*------------------------------------------------------------------------------*/
-
 #endif
 // End
