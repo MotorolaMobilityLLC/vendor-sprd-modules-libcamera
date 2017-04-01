@@ -1010,9 +1010,9 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     Mutex::Autolock l(mLock);
 
     ret = validateCaptureRequest(request);
-    if (ret != NO_ERROR) {
+    if (ret) {
         HAL_LOGE("incoming request is not valid");
-        return ret;
+        goto exit;
     }
     mFrameNum = request->frame_number;
     meta = request->settings;
@@ -1143,9 +1143,9 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         sp<Fence> acquireFence = new Fence(output.acquire_fence);
 
         ret = acquireFence->wait(Fence::TIMEOUT_NEVER);
-        if (ret != OK) {
-            HAL_LOGE("%s: fence wait failed %d", __func__, ret);
-            return ret;
+        if (ret) {
+            HAL_LOGE("fence wait failed %d", ret);
+            goto exit;
         }
 
         acquireFence = NULL;
@@ -1186,7 +1186,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             if (channel != mCallbackChan) {
                 ret = channel->request(stream, output.buffer, frameNumber);
                 if (ret) {
-                    HAL_LOGE("request buff %p (%d)failed", output.buffer,
+                    HAL_LOGE("channel->request failed %p (%d)", output.buffer,
                              frameNumber);
                     continue;
                 }
@@ -1224,29 +1224,25 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                     ret = mRegularChan->request(stream, output.buffer,
                                                 frameNumber);
                     if (ret) {
-                        HAL_LOGE("request buff %p (%d)failed", output.buffer,
-                                 frameNumber);
+                        HAL_LOGE("mRegularChan->request failed %p (%d)",
+                                 output.buffer, frameNumber);
                         continue;
                     }
                 } else if (capturePara.cap_intent ==
                                ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE ||
                            capturePara.cap_intent ==
                                ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT) {
-                    /**add for 3d capture, set raw callback mode when stream
-                     * format is 420_888 begin*/
                     if ((mMultiCameraMode == MODE_BLUR ||
                          mMultiCameraMode == MODE_3D_CAPTURE ||
                          mMultiCameraMode == MODE_3D_CALIBRATION) &&
                         stream->format == HAL_PIXEL_FORMAT_YCbCr_420_888) {
-                        HAL_LOGE("call back stream request!");
+                        HAL_LOGD("call back stream request");
                         mOEMIf->setCallBackYuvMode(1);
                     }
-                    /**add for 3d capture, set raw callback mode when stream
-                     * format is 420_888 end*/
                     ret = mPicChan->request(stream, output.buffer, frameNumber);
                     if (ret) {
-                        HAL_LOGE("request buff %p (%d)failed", output.buffer,
-                                 frameNumber);
+                        HAL_LOGE("mPicChan->request failed %p (%d)",
+                                 output.buffer, frameNumber);
                         continue;
                     }
                 }
@@ -1269,10 +1265,11 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
 
             if (channel == NULL) {
                 HAL_LOGE("invalid channel pointer for stream");
-                return INVALID_OPERATION;
+                goto exit;
             }
 
-            HAL_LOGD("input buff %p (%d)", input->buffer, frameNumber);
+            HAL_LOGD("input->buffer = %p frameNumber = %d", input->buffer,
+                     frameNumber);
             mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_ZSL_SNAPSHOT,
                                    frameNumber);
             mPictureRequest = true;
@@ -1280,9 +1277,9 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                                             stream->height);
             ret = mRegularChan->setZSLInputBuff(input->buffer);
             if (ret) {
-                HAL_LOGE("zsl input buff %p (%d)failed", input->buffer,
+                HAL_LOGE("setZSLInputBuff failed %p (%d)", input->buffer,
                          frameNumber);
-                return INVALID_OPERATION;
+                goto exit;
             }
         }
     }
@@ -1292,7 +1289,8 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         mPictureRequest = false;
         timer_set(this, 1);
         usleep(200 * 1000);
-        return NO_ERROR;
+        HAL_LOGE("invalid request");
+        goto exit;
     }
 
     mMetadataChannel->start(mFrameNum);
@@ -1305,8 +1303,9 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             channel = (SprdCamera3Channel *)stream->priv;
             if (channel == mRegularChan || channel == mCallbackChan) {
                 ret = mRegularChan->start(mFrameNum);
-                if (ret != NO_ERROR) {
-                    return ret;
+                if (ret) {
+                    HAL_LOGE("mRegularChan->start failed, ret=%d", ret);
+                    goto exit;
                 }
                 mFirstRegularRequest = false;
                 break;
@@ -1331,8 +1330,9 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             channel = (SprdCamera3Channel *)stream->priv;
             if (channel == mPicChan || channel == mCallbackChan) {
                 ret = mPicChan->start(mFrameNum);
-                if (ret != NO_ERROR) {
-                    HAL_LOGE("fail to take picture");
+                if (ret) {
+                    HAL_LOGE("mPicChan->start failed, ret=%d", ret);
+                    goto exit;
                 }
                 mPictureRequest = false;
                 break;
@@ -1345,21 +1345,23 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         size_t pendingCount = 0;
         while (mPendingRequest >= receive_req_max) {
             mRequestSignal.waitRelative(mRequestLock, kPendingTime);
-            if (mFlush || pendingCount > kPendingTimeOut / kPendingTime) {
-                HAL_LOGD("mFlush=%d, pendingCount=%d", mFlush, pendingCount);
-                if (mFlush)
-                    ret = 0;
-                else
-                    ret = -ENODEV;
+            if (pendingCount > kPendingTimeOut / kPendingTime) {
+                HAL_LOGE("TimeOut pendingCount=%d", pendingCount);
+                ret = -ENODEV;
+                break;
+            }
+            if (mFlush) {
+                HAL_LOGI("mFlush = %d", mFlush);
                 break;
             }
             pendingCount++;
         }
     }
+
     if (ret == -ENODEV)
         flushRequest(request->frame_number);
+exit:
     mHDRProcessFlag = false;
-
     return ret;
 }
 

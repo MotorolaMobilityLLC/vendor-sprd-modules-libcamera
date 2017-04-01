@@ -279,6 +279,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     };
 
     void freeCameraMem(sprd_camera_memory_t *camera_memory);
+    void freeAllCameraMemIon();
     void canclePreviewMem();
     bool allocatePreviewMemByGraphics();
     bool allocatePreviewMem();
@@ -540,8 +541,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
 
     uint32_t m_zslValidDataWidth;
     uint32_t m_zslValidDataHeight;
-    sprd_camera_memory_t *mRawHeap;
-    uint32_t mRawHeapSize;
 
     sprd_camera_memory_t *mSubRawHeapArray[MAX_SUB_RAWHEAP_NUM];
     sprd_camera_memory_t *mPathRawHeapArray[MAX_SUB_RAWHEAP_NUM];
@@ -671,8 +670,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     sprd_camera_memory_t *mIspRawAemHeapReserved[kISPB4awbCount];
 
     uint32_t mPreviewHeapBakUseFlag;
-    sprd_camera_memory_t mRawHeapInfoBak;
-    uint32_t mRawHeapBakUseFlag;
     uint32_t mPreviewHeapArray_size[kPreviewBufferCount +
                                     kPreviewRotBufferCount + 1];
     buffer_handle_t *mPreviewBufferHandle[kPreviewBufferCount];
