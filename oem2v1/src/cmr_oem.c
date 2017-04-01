@@ -5759,7 +5759,6 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
     struct sensor_exp_info sensor_info;
     struct sensor_mode_info *sensor_mode_info, *tmp;
     struct sn_cfg sensor_cfg;
-    struct img_size sensor_max_size;
 
     if (!oem_handle || !caller_handle || !param_ptr || !channel_id || !endian) {
         CMR_LOGE("in parm error 0x%lx 0x%lx 0x%lx 0x%lx 0x%lx",
@@ -5810,19 +5809,11 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
     else
         param_ptr->sn_if.res[0] = 0;
 
-    cmr_bzero(&sensor_max_size, sizeof(sensor_max_size));
-    for (i = 1; i < SENSOR_MODE_MAX; i++) {
-        tmp = &sensor_info.mode_info[i];
-        if (tmp->width * tmp->height >
-            sensor_max_size.width * sensor_max_size.height) {
-            sensor_max_size.width = tmp->width;
-            sensor_max_size.height = tmp->height;
-        }
-    }
-    sensor_cfg.sensor_max_size.width = sensor_max_size.width;
-    sensor_cfg.sensor_max_size.height = sensor_max_size.height;
-    CMR_LOGD("sensor_max_size: width=%d, height=%d", sensor_max_size.width,
-             sensor_max_size.height);
+    sensor_cfg.sensor_max_size.width = sensor_info.source_width_max;
+    sensor_cfg.sensor_max_size.height = sensor_info.source_height_max;
+    CMR_LOGD("sensor_max_size: width=%d, height=%d",
+             sensor_cfg.sensor_max_size.width,
+             sensor_cfg.sensor_max_size.height);
 
     ret = cmr_grab_if_cfg(cxt->grab_cxt.grab_handle, &param_ptr->sn_if);
     if (ret) {

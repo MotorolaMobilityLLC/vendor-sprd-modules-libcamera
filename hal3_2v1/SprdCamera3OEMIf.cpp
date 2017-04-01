@@ -2454,10 +2454,6 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
             mParameters.setZSLSupport("false");
         }
 
-        /*if (isPreAllocCapMem()) {
-                pre_alloc_cap_mem_thread_init((void *)this);
-        }*/
-
         /*get sensor and lens info from oem layer*/
         mHalOem->ops->camera_get_sensor_exif_info(mCameraHandle, &exif_info);
         mSetting->getLENSTag(&lensInfo);
@@ -4853,7 +4849,7 @@ void SprdCamera3OEMIf::HandleStartPreview(enum camera_cb_type cb, void *parm4) {
 
     switch (cb) {
     case CAMERA_EXIT_CB_PREPARE:
-        if (isPreAllocCapMem() && mTakePictureMode != SNAPSHOT_ONLY_MODE) {
+        if (isPreAllocCapMem() && mSprdZslEnabled == 1) {
             pre_alloc_cap_mem_thread_init((void *)this);
         }
 
@@ -8571,7 +8567,7 @@ void *SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data) {
     ssize_t n;
     ASensorEvent buffer[8];
     uint32_t GyroInterval = 10 * 1000; // us
-    uint32_t GsensorInterval = 50 * 1000; //us
+    uint32_t GsensorInterval = 50 * 1000; // us
 
     int events;
     int32_t result = 0;

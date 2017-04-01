@@ -82,7 +82,7 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr,
     struct cmr_grab *p_grab = NULL;
     struct sprd_img_res res;
 
-    CMR_LOGD("E");
+    CMR_LOGI("E");
 
     cmr_bzero(&res, sizeof(res));
     p_grab = (struct cmr_grab *)malloc(sizeof(struct cmr_grab));
@@ -183,7 +183,7 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr,
     *grab_handle = (cmr_handle)p_grab;
 
 exit:
-    CMR_LOGD("X");
+    CMR_LOGI("X");
     ATRACE_END();
     return ret;
 }
